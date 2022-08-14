@@ -37,18 +37,21 @@ using tier4_autoware_utils::createPoint;
 
 SurroundObstacleCheckerDebugNode::SurroundObstacleCheckerDebugNode(
   const Polygon2d & ego_polygon, const double base_link2front,
-  const double & surround_check_distance, const rclcpp::Clock::SharedPtr clock, rclcpp::Node & node)
+  const double & surround_check_distance, const geometry_msgs::msg::Pose & self_pose,
+  const rclcpp::Clock::SharedPtr clock, rclcpp::Node & node)
 : ego_polygon_(ego_polygon),
   base_link2front_(base_link2front),
   surround_check_distance_(surround_check_distance),
+  self_pose_(self_pose),
   clock_(clock)
 {
   debug_virtual_wall_pub_ =
     node.create_publisher<visualization_msgs::msg::MarkerArray>("~/virtual_wall", 1);
   debug_viz_pub_ = node.create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/marker", 1);
   stop_reason_pub_ = node.create_publisher<StopReasonArray>("~/output/stop_reasons", 1);
-  pub_vehicle_footprint_ = node.create_publisher<PolygonStamped>("~/debug/footprint", 1);
-  pub_vehicle_footprint_offset_ = node.create_publisher<PolygonStamped>("~/debug/footprint_offset", 1);
+  vehicle_footprint_pub_ = node.create_publisher<PolygonStamped>("~/debug/footprint", 1);
+  vehicle_footprint_offset_pub_ =
+    node.create_publisher<PolygonStamped>("~/debug/footprint_offset", 1);
 }
 
 bool SurroundObstacleCheckerDebugNode::pushPose(
@@ -75,6 +78,15 @@ bool SurroundObstacleCheckerDebugNode::pushObstaclePoint(
   }
 }
 
+void SurroundObstacleCheckerDebugNode::publishFootprints()
+{
+  /* publish vehicle footprint polygon */
+  const auto footprint = boostPolygonToPolygonStamped(ego_polygon_, self_pose_.position.z);
+  vehicle_footprint_pub_->publish(footprint);
+
+  /* publish vehicle footprint polygon with offset */
+}
+
 void SurroundObstacleCheckerDebugNode::publish()
 {
   /* publish virtual_wall marker for rviz */
@@ -88,10 +100,6 @@ void SurroundObstacleCheckerDebugNode::publish()
   /* publish stop reason for autoware api */
   const auto stop_reason_msg = makeStopReasonArray();
   stop_reason_pub_->publish(stop_reason_msg);
-
-  /* publish vehicle footprint polygon */
-
-  /* publish vehicle footprint polygon with offset */
 
   /* reset variables */
   stop_pose_ptr_ = nullptr;
@@ -157,6 +165,24 @@ StopReasonArray SurroundObstacleCheckerDebugNode::makeStopReasonArray()
   stop_reason_array.header = header;
   stop_reason_array.stop_reasons.emplace_back(stop_reason_msg);
   return stop_reason_array;
+}
+
+PolygonStamped SurroundObstacleCheckerDebugNode::boostPolygonToPolygonStamped(
+  const Polygon2d & boost_polygon, const double & z)
+{
+  PolygonStamped polygon_stamped;
+  polygon_stamped.header.frame_id = "base_link";
+  polygon_stamped.header.stamp = this->clock_->now();
+
+  for (auto const & p : boost_polygon.outer()) {
+    geometry_msgs::msg::Point32 gp;
+    gp.x = p.x();
+    gp.y = p.y();
+    gp.z = z;
+    polygon_stamped.polygon.points.push_back(gp);
+  }
+
+  return polygon_stamped;
 }
 
 }  // namespace surround_obstacle_checker

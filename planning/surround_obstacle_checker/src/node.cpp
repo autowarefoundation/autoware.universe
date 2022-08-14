@@ -44,7 +44,6 @@
 
 namespace surround_obstacle_checker
 {
-
 namespace bg = boost::geometry;
 using Point2d = bg::model::d2::point_xy<double>;
 using Polygon2d = bg::model::polygon<Point2d>;
@@ -184,13 +183,24 @@ SurroundObstacleCheckerNode::SurroundObstacleCheckerNode(const rclcpp::NodeOptio
   vehicle_stop_checker_ = std::make_unique<VehicleStopChecker>(this);
 
   // Debug
+  auto const self_polygon = createSelfPolygon(vehicle_info_);
+  odometry_ptr_ = std::make_shared<nav_msgs::msg::Odometry>();
+
   debug_ptr_ = std::make_shared<SurroundObstacleCheckerDebugNode>(
-    createSelfPolygon(vehicle_info_), vehicle_info_.max_longitudinal_offset_m,
-    node_param_.surround_check_distance, this->get_clock(), *this);
+    self_polygon, vehicle_info_.max_longitudinal_offset_m, node_param_.surround_check_distance,
+    odometry_ptr_->pose.pose, this->get_clock(), *this);
 }
 
 void SurroundObstacleCheckerNode::onTimer()
 {
+  if (!odometry_ptr_) {
+    RCLCPP_WARN_THROTTLE(
+      this->get_logger(), *this->get_clock(), 1000 /* ms */, "waiting for current velocity...");
+    return;
+  }
+
+  debug_ptr_->publishFootprints();
+
   if (node_param_.use_pointcloud && !pointcloud_ptr_) {
     RCLCPP_WARN_THROTTLE(
       this->get_logger(), *this->get_clock(), 1000 /* ms */, "waiting for pointcloud info...");
@@ -200,12 +210,6 @@ void SurroundObstacleCheckerNode::onTimer()
   if (node_param_.use_dynamic_object && !object_ptr_) {
     RCLCPP_WARN_THROTTLE(
       this->get_logger(), *this->get_clock(), 1000 /* ms */, "waiting for dynamic object info...");
-    return;
-  }
-
-  if (!odometry_ptr_) {
-    RCLCPP_WARN_THROTTLE(
-      this->get_logger(), *this->get_clock(), 1000 /* ms */, "waiting for current velocity...");
     return;
   }
 
