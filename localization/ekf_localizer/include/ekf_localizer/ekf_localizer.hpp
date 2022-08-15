@@ -85,7 +85,7 @@ public:
 
     // Prediction step (current stddev_)
     double dt = (time - latest_time_).seconds();
-    double proc_dev_x_d = proc_dev_x_c_ * dt;
+    double proc_dev_x_d = proc_dev_x_c_ * dt * dt;
     dev_ = dev_ + proc_dev_x_d;
 
     // Update step
