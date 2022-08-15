@@ -834,7 +834,7 @@ void ObstacleStopPlannerNode::insertVelocity(
         if (lon_offset < 0) {
           stop_seg_idx = std::max(static_cast<size_t>(0), stop_point.index - 1);
         } else {
-          stop_seg_idx = std::min(output.size() - 2, stop_point.index + 1);
+          stop_seg_idx = std::min(output.size() - 2, stop_point.index);
         }
 
         return calcSignedArcLength(
