@@ -43,6 +43,7 @@
 namespace motion_planning
 {
 using motion_utils::calcLongitudinalOffsetPose;
+using motion_utils::calcLongitudinalOffsetToSegment;
 using motion_utils::calcSignedArcLength;
 using motion_utils::findFirstNearestIndexWithSoftConstraints;
 using motion_utils::findFirstNearestSegmentIndexWithSoftConstraints;
@@ -818,11 +819,30 @@ void ObstacleStopPlannerNode::insertVelocity(
         stop_param);
 
       const auto & ego_pose = planner_data.current_pose;
-      const auto & ego_pos = planner_data.current_pose.position;
-      const auto stop_point_distance =
-        calcSignedArcLength(output, ego_pos, getPoint(stop_point.point));
+      const size_t ego_seg_idx = findFirstNearestIndexWithSoftConstraints(
+        output, ego_pose, node_param_.ego_nearest_dist_threshold,
+        node_param_.ego_nearest_yaw_threshold);
+
+      const double stop_point_distance = [&]() {
+        if (output.size() < 2) {
+          return 0.0;
+        }
+
+        size_t stop_seg_idx = 0;
+        const double lon_offset =
+          calcLongitudinalOffsetToSegment(output, stop_point.index, getPoint(stop_point.point));
+        if (lon_offset < 0) {
+          stop_seg_idx = std::max(static_cast<size_t>(0), stop_point.index - 1);
+        } else {
+          stop_seg_idx = std::min(output.size() - 2, stop_point.index + 1);
+        }
+
+        return calcSignedArcLength(
+          output, ego_pose.position, ego_seg_idx, getPoint(stop_point.point), stop_seg_idx);
+      }();
       const auto is_stopped = current_vel < 0.01;
 
+      const auto & ego_pos = planner_data.current_pose.position;
       if (stop_point_distance < stop_param_.hold_stop_margin_distance && is_stopped) {
         const auto ego_pos_on_path = calcLongitudinalOffsetPose(output, ego_pos, 0.0);
 
