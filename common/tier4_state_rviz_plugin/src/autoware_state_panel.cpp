@@ -287,7 +287,7 @@ void AutowareStatePanel::onClickVelocityLimit()
 
 void AutowareStatePanel::onClickAutowareEngage()
 {
-  using Engage = tier4_external_api_msgs::srv::Engage;
+  using tier4_external_api_msgs::srv::Engage;
 
   auto req = std::make_shared<Engage::Request>();
   req->engage = !current_engage_;
