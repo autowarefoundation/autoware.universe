@@ -287,8 +287,10 @@ void AutowareStatePanel::onClickVelocityLimit()
 
 void AutowareStatePanel::onClickAutowareEngage()
 {
-  auto req = std::make_shared<tier4_external_api_msgs::srv::Engage::Request>();
-  req->engage = current_engage_ ? false : true;
+  using Engage = tier4_external_api_msgs::srv::Engage;
+
+  auto req = std::make_shared<Engage::Request>();
+  req->engage = !current_engage_;
 
   RCLCPP_INFO(raw_node_->get_logger(), "client request");
 
@@ -298,7 +300,7 @@ void AutowareStatePanel::onClickAutowareEngage()
   }
 
   client_engage_->async_send_request(
-    req, [this](rclcpp::Client<tier4_external_api_msgs::srv::Engage>::SharedFuture result) {
+    req, [this](rclcpp::Client<Engage>::SharedFuture result) { // NOLINT
       RCLCPP_INFO(
         raw_node_->get_logger(), "Status: %d, %s", result.get()->status.code,
         result.get()->status.message.c_str());
@@ -307,20 +309,18 @@ void AutowareStatePanel::onClickAutowareEngage()
 
 void AutowareStatePanel::onClickEmergencyButton()
 {
-  auto request = std::make_shared<tier4_external_api_msgs::srv::SetEmergency::Request>();
-  if (current_emergency_) {
-    request->emergency = false;
-  } else {
-    request->emergency = true;
-  }
+  using SetEmergency = tier4_external_api_msgs::srv::SetEmergency;
+  using ResponseStatus = tier4_external_api_msgs::msg::ResponseStatus;
+
+  auto request = std::make_shared<SetEmergency::Request>();
+  request->emergency = !current_emergency_;
+
   RCLCPP_INFO(raw_node_->get_logger(), request->emergency ? "Set Emergency" : "Clear Emergency");
 
   client_emergency_stop_->async_send_request(
-    request,
-    [this]([[maybe_unused]] rclcpp::Client<tier4_external_api_msgs::srv::SetEmergency>::SharedFuture
-             result) {
-      auto response = result.get();
-      if (response->status.code == tier4_external_api_msgs::msg::ResponseStatus::SUCCESS) {
+    request, [this](rclcpp::Client<SetEmergency>::SharedFuture result) { // NOLINT
+      const auto & response = result.get();
+      if (response->status.code == ResponseStatus::SUCCESS) {
         RCLCPP_INFO(raw_node_->get_logger(), "service succeeded");
       } else {
         RCLCPP_WARN(
