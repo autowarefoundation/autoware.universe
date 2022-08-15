@@ -299,12 +299,11 @@ void AutowareStatePanel::onClickAutowareEngage()
     return;
   }
 
-  client_engage_->async_send_request(
-    req, [this](rclcpp::Client<Engage>::SharedFuture result) {
-      RCLCPP_INFO(
-        raw_node_->get_logger(), "Status: %d, %s", result.get()->status.code,
-        result.get()->status.message.c_str());
-    });
+  client_engage_->async_send_request(req, [this](rclcpp::Client<Engage>::SharedFuture result) {
+    RCLCPP_INFO(
+      raw_node_->get_logger(), "Status: %d, %s", result.get()->status.code,
+      result.get()->status.message.c_str());
+  });
 }
 
 void AutowareStatePanel::onClickEmergencyButton()
