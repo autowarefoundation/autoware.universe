@@ -44,7 +44,7 @@ public:
   explicit AutowareStatePanel(QWidget * parent = nullptr);
   void onInitialize() override;
 
-public Q_SLOTS: // NOLINT
+public Q_SLOTS:  // NOLINT
   void onClickAutowareEngage();
   void onClickVelocityLimit();
   void onClickGateMode();
