@@ -300,7 +300,7 @@ void AutowareStatePanel::onClickAutowareEngage()
   }
 
   client_engage_->async_send_request(
-    req, [this](rclcpp::Client<Engage>::SharedFuture result) {  // NOLINT
+    req, [this](rclcpp::Client<Engage>::SharedFuture result) {
       RCLCPP_INFO(
         raw_node_->get_logger(), "Status: %d, %s", result.get()->status.code,
         result.get()->status.message.c_str());
@@ -318,7 +318,7 @@ void AutowareStatePanel::onClickEmergencyButton()
   RCLCPP_INFO(raw_node_->get_logger(), request->emergency ? "Set Emergency" : "Clear Emergency");
 
   client_emergency_stop_->async_send_request(
-    request, [this](rclcpp::Client<SetEmergency>::SharedFuture result) {  // NOLINT
+    request, [this](rclcpp::Client<SetEmergency>::SharedFuture result) {
       const auto & response = result.get();
       if (response->status.code == ResponseStatus::SUCCESS) {
         RCLCPP_INFO(raw_node_->get_logger(), "service succeeded");
