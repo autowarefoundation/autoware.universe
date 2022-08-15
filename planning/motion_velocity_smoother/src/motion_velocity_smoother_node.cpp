@@ -148,7 +148,8 @@ rcl_interfaces::msg::SetParametersResult MotionVelocitySmootherNode::onParameter
     update_param("extract_ahead_dist", p.extract_ahead_dist);
     update_param("extract_behind_dist", p.extract_behind_dist);
     update_param("stop_dist_to_prohibit_engage", p.stop_dist_to_prohibit_engage);
-    update_param("delta_yaw_threshold", p.delta_yaw_threshold);
+    update_param("ego_nearest_dist_threshold", p.ego_nearest_dist_threshold);
+    update_param("ego_nearest_yaw_threshold", p.ego_nearest_yaw_threshold);
   }
 
   {
@@ -245,7 +246,8 @@ void MotionVelocitySmootherNode::initCommonParam()
   p.extract_ahead_dist = declare_parameter("extract_ahead_dist", 200.0);
   p.extract_behind_dist = declare_parameter("extract_behind_dist", 3.0);
   p.stop_dist_to_prohibit_engage = declare_parameter("stop_dist_to_prohibit_engage", 1.5);
-  p.delta_yaw_threshold = declare_parameter("delta_yaw_threshold", M_PI / 3.0);
+  p.ego_nearest_dist_threshold = declare_parameter<double>("ego_nearest_dist_threshold");
+  p.ego_nearest_yaw_threshold = declare_parameter<double>("ego_nearest_yaw_threshold");
   p.post_resample_param.max_trajectory_length =
     declare_parameter("post_max_trajectory_length", 300.0);
   p.post_resample_param.min_trajectory_length =
@@ -379,7 +381,8 @@ void MotionVelocitySmootherNode::onCurrentTrajectory(const Trajectory::ConstShar
   // Note that output velocity is resampled by linear interpolation
   auto output_resampled = resampling::resampleTrajectory(
     output, current_odometry_ptr_->twist.twist.linear.x, current_pose_ptr_->pose,
-    node_param_.delta_yaw_threshold, node_param_.post_resample_param, false);
+    node_param_.ego_nearest_dist_threshold, node_param_.ego_nearest_yaw_threshold,
+    node_param_.post_resample_param, false);
   if (!output_resampled) {
     RCLCPP_WARN(get_logger(), "Failed to get the resampled output trajectory");
     return;
@@ -432,16 +435,10 @@ TrajectoryPoints MotionVelocitySmootherNode::calcTrajectoryVelocity(
   TrajectoryPoints output{};  // velocity is optimized by qp solver
 
   // Extract trajectory around self-position with desired forward-backward length
-  const auto input_closest = findNearestIndexFromEgo(traj_input);
-
-  if (!input_closest) {
-    RCLCPP_WARN_THROTTLE(
-      get_logger(), *clock_, 5000, "Cannot find the closest point from input trajectory");
-    return prev_output_;
-  }
+  const size_t input_closest = findNearestIndexFromEgo(traj_input);
 
   auto traj_extracted = trajectory_utils::extractPathAroundIndex(
-    traj_input, *input_closest, node_param_.extract_ahead_dist, node_param_.extract_behind_dist);
+    traj_input, input_closest, node_param_.extract_ahead_dist, node_param_.extract_behind_dist);
   if (traj_extracted.empty()) {
     RCLCPP_WARN(get_logger(), "Fail to extract the path from the input trajectory");
     return prev_output_;
@@ -458,12 +455,7 @@ TrajectoryPoints MotionVelocitySmootherNode::calcTrajectoryVelocity(
   applyExternalVelocityLimit(traj_extracted);
 
   // Change trajectory velocity to zero when current_velocity == 0 & stop_dist is close
-  const auto traj_extracted_closest = findNearestIndexFromEgo(traj_extracted);
-
-  if (!traj_extracted_closest) {
-    RCLCPP_WARN(get_logger(), "Cannot find the closest point from extracted trajectory");
-    return prev_output_;
-  }
+  const size_t traj_extracted_closest = findNearestIndexFromEgo(traj_extracted);
 
   // Apply velocity to approach stop point
   applyStopApproachingVelocity(traj_extracted);
@@ -476,7 +468,7 @@ TrajectoryPoints MotionVelocitySmootherNode::calcTrajectoryVelocity(
   }
 
   // Smoothing velocity
-  if (!smoothVelocity(traj_extracted, *traj_extracted_closest, output)) {
+  if (!smoothVelocity(traj_extracted, traj_extracted_closest, output)) {
     return prev_output_;
   }
 
@@ -500,17 +492,13 @@ bool MotionVelocitySmootherNode::smoothVelocity(
   // Resample trajectory with ego-velocity based interval distance
   auto traj_resampled = smoother_->resampleTrajectory(
     *traj_lateral_acc_filtered, current_odometry_ptr_->twist.twist.linear.x,
-    current_pose_ptr_->pose, node_param_.delta_yaw_threshold);
+    current_pose_ptr_->pose, node_param_.ego_nearest_dist_threshold,
+    node_param_.ego_nearest_yaw_threshold);
   if (!traj_resampled) {
     RCLCPP_WARN(get_logger(), "Fail to do resampling before the optimization");
     return false;
   }
-  const auto traj_resampled_closest = findNearestIndexFromEgo(*traj_resampled);
-
-  if (!traj_resampled_closest) {
-    RCLCPP_WARN(get_logger(), "Cannot find closest waypoint for resampled trajectory");
-    return false;
-  }
+  const size_t traj_resampled_closest = findNearestIndexFromEgo(*traj_resampled);
 
   // Set 0[m/s] in the terminal point
   if (!traj_resampled->empty()) {
@@ -523,7 +511,7 @@ bool MotionVelocitySmootherNode::smoothVelocity(
   // Clip trajectory from closest point
   TrajectoryPoints clipped;
   clipped.insert(
-    clipped.end(), traj_resampled->begin() + *traj_resampled_closest, traj_resampled->end());
+    clipped.end(), traj_resampled->begin() + traj_resampled_closest, traj_resampled->end());
 
   std::vector<TrajectoryPoints> debug_trajectories;
   if (!smoother_->apply(
@@ -536,7 +524,7 @@ bool MotionVelocitySmootherNode::smoothVelocity(
 
   traj_smoothed.insert(
     traj_smoothed.begin(), traj_resampled->begin(),
-    traj_resampled->begin() + *traj_resampled_closest);
+    traj_resampled->begin() + traj_resampled_closest);
 
   // For the endpoint of the trajectory
   if (!traj_smoothed.empty()) {
@@ -545,10 +533,10 @@ bool MotionVelocitySmootherNode::smoothVelocity(
 
   // Max velocity filter for safety
   trajectory_utils::applyMaximumVelocityLimit(
-    *traj_resampled_closest, traj_smoothed.size(), node_param_.max_velocity, traj_smoothed);
+    traj_resampled_closest, traj_smoothed.size(), node_param_.max_velocity, traj_smoothed);
 
   // Insert behind velocity for output's consistency
-  insertBehindVelocity(*traj_resampled_closest, type, traj_smoothed);
+  insertBehindVelocity(traj_resampled_closest, type, traj_smoothed);
 
   RCLCPP_DEBUG(get_logger(), "smoothVelocity : traj_smoothed.size() = %lu", traj_smoothed.size());
   if (publish_debug_trajs_) {
@@ -567,10 +555,10 @@ bool MotionVelocitySmootherNode::smoothVelocity(
       for (auto & debug_trajectory : debug_trajectories) {
         debug_trajectory.insert(
           debug_trajectory.begin(), traj_resampled->begin(),
-          traj_resampled->begin() + *traj_resampled_closest);
-        for (size_t i = 0; i < *traj_resampled_closest; ++i) {
+          traj_resampled->begin() + traj_resampled_closest);
+        for (size_t i = 0; i < traj_resampled_closest; ++i) {
           debug_trajectory.at(i).longitudinal_velocity_mps =
-            debug_trajectory.at(*traj_resampled_closest).longitudinal_velocity_mps;
+            debug_trajectory.at(traj_resampled_closest).longitudinal_velocity_mps;
         }
       }
     }
@@ -605,11 +593,7 @@ void MotionVelocitySmootherNode::insertBehindVelocity(
 
 void MotionVelocitySmootherNode::publishStopDistance(const TrajectoryPoints & trajectory) const
 {
-  const auto closest_optional = findNearestIndexFromEgo(trajectory);
-  if (!closest_optional) {
-    return;
-  }
-  const auto closest = *closest_optional;
+  const size_t closest = findNearestIndexFromEgo(trajectory);
 
   // stop distance calculation
   const double stop_dist_lim{50.0};
@@ -715,7 +699,9 @@ void MotionVelocitySmootherNode::overwriteStopPoint(
   }
 
   // Get Closest Point from Output
-  const auto nearest_output_point_idx = findNearestIndex(output, input.at(*stop_idx).pose);
+  const auto nearest_output_point_idx = motion_utils::findNearestIndex(
+    output, input.at(*stop_idx).pose, node_param_.ego_nearest_dist_threshold,
+    node_param_.ego_nearest_yaw_threshold);
 
   // check over velocity
   bool is_stop_velocity_exceeded{false};
@@ -759,13 +745,10 @@ void MotionVelocitySmootherNode::applyExternalVelocityLimit(TrajectoryPoints & t
   trajectory_utils::applyMaximumVelocityLimit(
     0, traj.size(), max_velocity_with_deceleration_, traj);
 
-  const auto closest_idx = findNearestIndexFromEgo(traj);
-  if (!closest_idx) {
-    return;
-  }
+  const size_t closest_idx = findNearestIndexFromEgo(traj);
 
   double dist = 0.0;
-  for (size_t idx = *closest_idx; idx < traj.size() - 1; ++idx) {
+  for (size_t idx = closest_idx; idx < traj.size() - 1; ++idx) {
     dist += tier4_autoware_utils::calcDistance2d(traj.at(idx), traj.at(idx + 1));
     if (dist > external_velocity_limit_dist_) {
       trajectory_utils::applyMaximumVelocityLimit(
@@ -925,17 +908,11 @@ Trajectory MotionVelocitySmootherNode::toTrajectoryMsg(
   return trajectory;
 }
 
-boost::optional<size_t> MotionVelocitySmootherNode::findNearestIndexFromEgo(
-  const TrajectoryPoints & points) const
+size_t MotionVelocitySmootherNode::findNearestIndexFromEgo(const TrajectoryPoints & points) const
 {
-  return findNearestIndex(points, current_pose_ptr_->pose);
-}
-
-boost::optional<size_t> MotionVelocitySmootherNode::findNearestIndex(
-  const TrajectoryPoints & points, const geometry_msgs::msg::Pose & p) const
-{
-  return motion_utils::findNearestIndex(
-    points, p, std::numeric_limits<double>::max(), node_param_.delta_yaw_threshold);
+  return motion_utils::findFirstNearestIndexWithSoftConstraints(
+    points, current_pose_ptr_->pose, node_param_.ego_nearest_dist_threshold,
+    node_param_.ego_nearest_yaw_threshold);
 }
 
 bool MotionVelocitySmootherNode::isReverse(const TrajectoryPoints & points) const
