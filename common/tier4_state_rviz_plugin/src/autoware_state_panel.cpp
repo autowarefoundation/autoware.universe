@@ -309,8 +309,8 @@ void AutowareStatePanel::onClickAutowareEngage()
 
 void AutowareStatePanel::onClickEmergencyButton()
 {
-  using SetEmergency = tier4_external_api_msgs::srv::SetEmergency;
-  using ResponseStatus = tier4_external_api_msgs::msg::ResponseStatus;
+  using tier4_external_api_msgs::srv::SetEmergency;
+  using tier4_external_api_msgs::msg::ResponseStatus;
 
   auto request = std::make_shared<SetEmergency::Request>();
   request->emergency = !current_emergency_;
