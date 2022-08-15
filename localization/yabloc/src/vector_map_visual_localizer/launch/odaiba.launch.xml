@@ -1,5 +1,8 @@
 <launch>
-    <arg name="road_marking_labels" default="[zebra_marking, line_thin, line_thick, pedestrian_marking, stop_line, road_border]"/>
+    <arg name="use_all_lines" default="true"/> 
+    <arg name="road_marking_labels" default="[zebra_marking, line_thin, line_thick, pedestrian_marking, stop_line, road_border]" if="$(var use_all_lines)" />
+    <arg name="road_marking_labels" default="[line_thin, line_thick, road_border]" unless="$(var use_all_lines)" />
+
     <arg name="min_segment_length" default="1.5" description="[m]"/>
     <arg name="max_segment_distance" default="30.0" description="[m]"/>
     <arg name="rtk_enabled" default="false" description="GNSS-RTK is enabled?"/>

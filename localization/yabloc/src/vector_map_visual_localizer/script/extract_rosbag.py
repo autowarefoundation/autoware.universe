@@ -42,6 +42,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-l', '--lidar',  action='store_true', help='include lidar topics')
     parser.add_argument('-c', '--camera', action='store_true', help='include camera topics')
+    parser.add_argument('-o', '--output', default='filtered', help='include camera topics')
     args = parser.parse_args()
 
     if args.camera:
@@ -71,7 +72,7 @@ def main():
 
     # Merge tmp files
     print_highlight('Merge filtered files.')
-    command = ['ros2', 'bag', 'merge',  '-o', 'filtered']
+    command = ['ros2', 'bag', 'merge',  '-o', args.output]
     for f in dst_files:
         command.append(f)
     subprocess.run(command)
