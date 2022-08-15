@@ -23,19 +23,6 @@
       </include>
     </group>
 
-    <!-- State Monitor -->
-    <group>
-      <let name="config_file" value="$(var tier4_system_launch_param_path)/ad_service_state_monitor/ad_service_state_monitor.param.yaml" if="$(eval &quot;'$(var run_mode)'=='online'&quot;)"/>
-      <let
-        name="config_file"
-        value="$(var tier4_system_launch_param_path)/ad_service_state_monitor/ad_service_state_monitor.planning_simulation.param.yaml"
-        if="$(eval &quot;'$(var run_mode)'=='planning_simulation'&quot;)"
-      />
-      <include file="$(find-pkg-share ad_service_state_monitor)/launch/ad_service_state_monitor.launch.xml">
-        <arg name="config_file" value="$(var config_file)"/>
-      </include>
-    </group>
-
     <!-- Error Monitor -->
     <group>
       <let name="config_file" value="$(var tier4_system_launch_param_path)/system_error_monitor/system_error_monitor.param.yaml" if="$(eval &quot;'$(var run_mode)'=='online'&quot;)"/>

@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import csv
+
+from pathlib import Path
 
 import launch
 from launch.actions import DeclareLaunchArgument
@@ -24,26 +25,18 @@ from launch_ros.actions import ComposableNodeContainer
 from launch_ros.actions import Node
 from launch_ros.descriptions import ComposableNode
 from launch_ros.substitutions import FindPackageShare
+import yaml
 
 
 def create_topic_monitor_name(row, diag_name):
-    return "topic_state_monitor_{}: {}".format(row["suffix"], diag_name)
+    return "topic_state_monitor_{}: {}".format(row["args"]["node_name_suffix"], diag_name)
 
 
 def create_topic_monitor_node(row, diag_name):
+    tf_mode = "" if "topic_type" in row["args"] else "_tf"
     package = FindPackageShare("topic_state_monitor")
-    include = PathJoinSubstitution([package, "launch/topic_state_monitor.launch.xml"])
-    arguments = [
-        ("diag_name", diag_name),
-        ("node_name_suffix", row["suffix"]),
-        ("topic", row["topic"]),
-        ("topic_type", row["topic_type"]),
-        ("timeout", row["timeout"]),
-        ("warn_rate", row["warn_rate"]),
-        ("error_rate", row["error_rate"]),
-        ("best_effort", row["best_effort"]),
-        ("transient_local", row["transient_local"]),
-    ]
+    include = PathJoinSubstitution([package, f"launch/topic_state_monitor{tf_mode}.launch.xml"])
+    arguments = [("diag_name", diag_name)] + [(k, str(v)) for k, v in row["args"].items()]
     return IncludeLaunchDescription(include, launch_arguments=arguments)
 
 
@@ -53,23 +46,24 @@ def create_api_node(node_name, class_name, **kwargs):
         name=node_name,
         package="default_ad_api",
         plugin="default_ad_api::" + class_name,
-        **kwargs
+        **kwargs,
     )
 
 
 def launch_setup(context, *args, **kwargs):
     # create topic monitors
-    with open(LaunchConfiguration("config_file").perform(context)) as fp:
-        rows = list(csv.DictReader(fp))
-    diag_name = "default_ad_api"
-    topic_monitor_nodes = [create_topic_monitor_node(row, diag_name) for row in rows]
-    topic_monitor_names = [create_topic_monitor_name(row, diag_name) for row in rows]
-    params_operation_mode = [{"topic_monitor_names": topic_monitor_names}]
+    mode = LaunchConfiguration("online_mode").perform(context)
+    rows = yaml.safe_load(Path(LaunchConfiguration("config_file").perform(context)).read_text())
+    rows = rows if mode else [row for row in rows if not rows["only_online_mode"]]
+    name = "default_ad_api"
+    topic_monitor_nodes = [create_topic_monitor_node(row, name) for row in rows]
+    topic_monitor_names = [create_topic_monitor_name(row, name) for row in rows]
+    param_operation_mode = [{"topic_monitor_names": topic_monitor_names}]
 
     # create api components
     components = [
         create_api_node("interface", "InterfaceNode"),
-        create_api_node("operation_mode", "OperationModeNode", parameters=params_operation_mode),
+        create_api_node("operation_mode", "OperationModeNode", parameters=param_operation_mode),
     ]
     container = ComposableNodeContainer(
         namespace="default_ad_api",
@@ -85,6 +79,7 @@ def generate_launch_description():
     return launch.LaunchDescription(
         [
             DeclareLaunchArgument("config_file"),
+            DeclareLaunchArgument("online_mode"),
             OpaqueFunction(function=launch_setup),
             Node(
                 package="default_ad_api",
