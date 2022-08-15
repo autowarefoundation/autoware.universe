@@ -14,6 +14,7 @@
 
 #include "trajectory_follower/mpc_lateral_controller.hpp"
 
+#include "motion_utils/motion_utils.hpp"
 #include "tf2_ros/create_timer_ros.h"
 
 #include <algorithm>
@@ -139,6 +140,12 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node) : node_{&node}
       node_->declare_parameter<float64_t>("error_deriv_lpf_cutoff_hz");
     m_mpc.initializeLowPassFilters(steering_lpf_cutoff_hz, error_deriv_lpf_cutoff_hz);
   }
+
+  // ego nearest index search
+  ego_nearest_dist_threshold_ = node_->declare_parameter<double>("ego_nearest_dist_threshold");
+  ego_nearest_yaw_threshold_ = node_->declare_parameter<double>("ego_nearest_yaw_threshold");
+  m_mpc.ego_nearest_dist_threshold = ego_nearest_dist_threshold_;
+  m_mpc.ego_nearest_yaw_threshold = ego_nearest_yaw_threshold_;
 
   m_pub_predicted_traj = node_->create_publisher<autoware_auto_planning_msgs::msg::Trajectory>(
     "~/output/predicted_trajectory", 1);
@@ -360,8 +367,9 @@ bool8_t MpcLateralController::isStoppedState() const
   // for the stop state judgement. However, it has been removed since the steering
   // control was turned off when approaching/exceeding the stop line on a curve or
   // emergency stop situation and it caused large tracking error.
-  const int64_t nearest = trajectory_follower::MPCUtils::calcNearestIndex(
-    *m_current_trajectory_ptr, m_current_pose_ptr->pose);
+  const size_t nearest = motion_utils::findFirstNearestIndexWithSoftConstraints(
+    m_current_trajectory_ptr->points, m_current_pose_ptr->pose, ego_nearest_dist_threshold_,
+    ego_nearest_yaw_threshold_);
 
   // If the nearest index is not found, return false
   if (nearest < 0) {
