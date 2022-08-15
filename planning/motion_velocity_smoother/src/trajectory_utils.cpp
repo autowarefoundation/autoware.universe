@@ -59,7 +59,7 @@ inline double integ_v(double v0, double a0, double j0, double t)
 inline double integ_a(double a0, double j0, double t) { return a0 + j0 * t; }
 
 TrajectoryPoint calcInterpolatedTrajectoryPoint(
-  const TrajectoryPoints & trajectory, const Pose & target_pose)
+  const TrajectoryPoints & trajectory, const Pose & target_pose, const size_t seg_idx)
 {
   TrajectoryPoint traj_p{};
   traj_p.pose = target_pose;

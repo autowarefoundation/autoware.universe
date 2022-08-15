@@ -100,6 +100,7 @@ bool JerkFilteredSmoother::apply(
   debug_trajectories[2] = filtered;
 
   // Resample TrajectoryPoints for Optimization
+  // TODO(planning/control team) deal with overlapped lanes with the same direction
   const auto initial_traj_pose = filtered.front().pose;
   auto opt_resampled_trajectory = resampling::resampleTrajectory(
     filtered, v0, initial_traj_pose, std::numeric_limits<double>::max(),

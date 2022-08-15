@@ -580,8 +580,27 @@ void MotionVelocitySmootherNode::insertBehindVelocity(
       output.at(i).longitudinal_velocity_mps = output.at(output_closest).longitudinal_velocity_mps;
       output.at(i).acceleration_mps2 = output.at(output_closest).acceleration_mps2;
     } else {
+      // TODO(planning/control team) deal with overlapped lanes with the same direction
+      const size_t seg_idx = [&]() {
+        // with distance and yaw thresholds
+        const auto opt_nearest_seg_idx = motion_utils::findNearestSegmentIndex(
+          prev_output_, output.at(i).pose, node_param_.ego_nearest_dist_threshold,
+          node_param_.ego_nearest_yaw_threshold);
+        if (opt_nearest_seg_idx) {
+          return opt_nearest_seg_idx.get();
+        }
+
+        // with distance threshold
+        const auto opt_second_nearest_seg_idx = motion_utils::findNearestSegmentIndex(
+          prev_output_, output.at(i).pose, node_param_.ego_nearest_dist_threshold);
+        if (opt_second_nearest_seg_idx) {
+          return opt_second_nearest_seg_idx.get();
+        }
+
+        return motion_utils::findNearestSegmentIndex(prev_output_, output.at(i).pose.position);
+      }();
       const auto prev_output_point =
-        trajectory_utils::calcInterpolatedTrajectoryPoint(prev_output_, output.at(i).pose);
+        trajectory_utils::calcInterpolatedTrajectoryPoint(prev_output_, output.at(i).pose, seg_idx);
 
       // output should be always positive: TODO(Horibe) think better way
       output.at(i).longitudinal_velocity_mps =
@@ -629,8 +648,11 @@ MotionVelocitySmootherNode::calcInitialMotion(
     return std::make_pair(initial_motion, type);
   }
 
-  const auto prev_output_closest_point =
-    trajectory_utils::calcInterpolatedTrajectoryPoint(prev_traj, current_pose_ptr_->pose);
+  const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+    prev_traj, current_pose_ptr_->pose, node_param_.ego_nearest_dist_threshold,
+    node_param_.ego_nearest_yaw_threshold);
+  const auto prev_output_closest_point = trajectory_utils::calcInterpolatedTrajectoryPoint(
+    prev_traj, current_pose_ptr_->pose, current_seg_idx);
 
   // when velocity tracking deviation is large
   const double desired_vel{prev_output_closest_point.longitudinal_velocity_mps};
@@ -699,6 +721,7 @@ void MotionVelocitySmootherNode::overwriteStopPoint(
   }
 
   // Get Closest Point from Output
+  // TODO(planning/control team) deal with overlapped lanes with the same directions
   const auto nearest_output_point_idx = motion_utils::findNearestIndex(
     output, input.at(*stop_idx).pose, node_param_.ego_nearest_dist_threshold,
     node_param_.ego_nearest_yaw_threshold);
@@ -805,8 +828,11 @@ void MotionVelocitySmootherNode::publishClosestVelocity(
   const TrajectoryPoints & trajectory, const Pose & current_pose,
   const rclcpp::Publisher<Float32Stamped>::SharedPtr pub) const
 {
+  const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+    trajectory, current_pose, node_param_.ego_nearest_dist_threshold,
+    node_param_.ego_nearest_yaw_threshold);
   const auto closest_point =
-    trajectory_utils::calcInterpolatedTrajectoryPoint(trajectory, current_pose);
+    trajectory_utils::calcInterpolatedTrajectoryPoint(trajectory, current_pose, current_seg_idx);
 
   Float32Stamped vel_data{};
   vel_data.stamp = this->now();
@@ -816,8 +842,11 @@ void MotionVelocitySmootherNode::publishClosestVelocity(
 
 void MotionVelocitySmootherNode::publishClosestState(const TrajectoryPoints & trajectory)
 {
-  const auto closest_point =
-    trajectory_utils::calcInterpolatedTrajectoryPoint(trajectory, current_pose_ptr_->pose);
+  const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+    trajectory, current_pose_ptr_->pose, node_param_.ego_nearest_dist_threshold,
+    node_param_.ego_nearest_yaw_threshold);
+  const auto closest_point = trajectory_utils::calcInterpolatedTrajectoryPoint(
+    trajectory, current_pose_ptr_->pose, current_seg_idx);
 
   auto publishFloat = [=](const double data, const auto pub) {
     Float32Stamped msg{};
@@ -854,8 +883,11 @@ void MotionVelocitySmootherNode::updatePrevValues(const TrajectoryPoints & final
 {
   prev_output_ = final_result;
 
-  const auto closest_point =
-    trajectory_utils::calcInterpolatedTrajectoryPoint(final_result, current_pose_ptr_->pose);
+  const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+    final_result, current_pose_ptr_->pose, node_param_.ego_nearest_dist_threshold,
+    node_param_.ego_nearest_yaw_threshold);
+  const auto closest_point = trajectory_utils::calcInterpolatedTrajectoryPoint(
+    final_result, current_pose_ptr_->pose, current_seg_idx);
   prev_closest_point_ = closest_point;
 }
 
@@ -881,8 +913,11 @@ MotionVelocitySmootherNode::AlgorithmType MotionVelocitySmootherNode::getAlgorit
 
 double MotionVelocitySmootherNode::calcTravelDistance() const
 {
-  const auto closest_point =
-    trajectory_utils::calcInterpolatedTrajectoryPoint(prev_output_, current_pose_ptr_->pose);
+  const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+    prev_output_, current_pose_ptr_->pose, node_param_.ego_nearest_dist_threshold,
+    node_param_.ego_nearest_yaw_threshold);
+  const auto closest_point = trajectory_utils::calcInterpolatedTrajectoryPoint(
+    prev_output_, current_pose_ptr_->pose, current_seg_idx);
 
   if (prev_closest_point_) {
     const double travel_dist =
