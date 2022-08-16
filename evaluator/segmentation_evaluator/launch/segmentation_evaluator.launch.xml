@@ -1,0 +1,12 @@
+<launch>
+  <arg name="input/pcl/to/eval" default="/perception/obstacle_segmentation/single_frame/pointcloud_raw"/>
+  <arg name="input/pcl/gt/ground" default="/pcl_div/pcl_gt_ground"/>
+  <arg name="input/pcl/gt/obj" default="/pcl_div/pcl_gt_obj"/>
+
+  <node name="segmentation_evaluator" exec="segmentation_evaluator" pkg="segmentation_evaluator" output="screen">
+    <param from="$(find-pkg-share segmentation_evaluator)/param/segmentation_evaluator.defaults.yaml"/>
+    <remap from="~/input/pcl/to/eval" to="$(var input/pcl/to/eval)"/>
+    <remap from="~/input/pcl/gt/ground" to="$(var input/pcl/gt/ground)"/>
+    <remap from="~/input/pcl/gt/obj" to="$(var input/pcl/gt/obj)"/>
+  </node>
+</launch>

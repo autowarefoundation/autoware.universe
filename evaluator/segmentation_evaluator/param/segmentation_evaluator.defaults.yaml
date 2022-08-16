@@ -1,0 +1,6 @@
+/**:
+  ros__parameters:
+    output_file: "metrics.results" # if empty, metrics are not written to file
+
+    selected_metrics:
+      - segment_stat
