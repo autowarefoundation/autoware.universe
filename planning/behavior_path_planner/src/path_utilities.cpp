@@ -17,11 +17,8 @@
 #include "behavior_path_planner/utilities.hpp"
 
 #include <interpolation/spline_interpolation.hpp>
-#include <lanelet2_extension/utility/message_conversion.hpp>
-#include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <motion_utils/resample/resample.hpp>
-#include <opencv2/opencv.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <tf2/utils.h>
@@ -31,9 +28,7 @@
 #include <utility>
 #include <vector>
 
-namespace behavior_path_planner
-{
-namespace util
+namespace behavior_path_planner::util
 {
 /**
  * @brief calc path arclength on each points from start point to end point.
@@ -327,5 +322,4 @@ std::pair<TurnIndicatorsCommand, double> getPathTurnSignal(
   return std::make_pair(turn_signal, max_distance);
 }
 
-}  // namespace util
-}  // namespace behavior_path_planner
+}  // namespace behavior_path_planner::util

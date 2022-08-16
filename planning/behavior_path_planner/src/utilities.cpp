@@ -17,8 +17,6 @@
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
-#include <opencv2/opencv.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <algorithm>
 #include <limits>
@@ -244,13 +242,12 @@ std::array<double, 4> getPathScope(
 }
 }  // namespace drivable_area_utils
 
-namespace behavior_path_planner
-{
-namespace util
+namespace behavior_path_planner::util
 {
 using autoware_auto_perception_msgs::msg::ObjectClassification;
 using autoware_auto_perception_msgs::msg::Shape;
 using geometry_msgs::msg::PoseWithCovarianceStamped;
+using tier4_autoware_utils::Point2d;
 
 std::vector<Point> convertToPointArray(const PathWithLaneId & path)
 {
@@ -1967,5 +1964,4 @@ lanelet::ConstLanelets getExtendedCurrentLanes(
   return current_lanes;
 }
 
-}  // namespace util
-}  // namespace behavior_path_planner
+}  // namespace behavior_path_planner::util

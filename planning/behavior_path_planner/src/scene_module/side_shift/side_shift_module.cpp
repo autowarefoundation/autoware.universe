@@ -19,9 +19,6 @@
 #include "behavior_path_planner/utilities.hpp"
 
 #include <lanelet2_extension/utility/utilities.hpp>
-#include <opencv2/opencv.hpp>
-
-#include <tf2/utils.h>
 
 #include <algorithm>
 #include <memory>
