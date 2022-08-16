@@ -1,0 +1,7 @@
+<library path="rosbag2_rviz_plugins">
+    <class name="rosbag2_rviz_plugins/PlayerPanel" type="rosbag2_rviz_plugins::PlayerPanel" base_class_type="rviz_common::Panel">
+        <description>
+            Panel to interact with rosbag2 player.
+        </description>
+    </class>
+</library>
