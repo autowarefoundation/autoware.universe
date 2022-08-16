@@ -39,10 +39,7 @@
 #include <tier4_planning_msgs/msg/approval.hpp>
 #include <tier4_planning_msgs/msg/avoidance_debug_msg_array.hpp>
 #include <tier4_planning_msgs/msg/path_change_module.hpp>
-#include <tier4_planning_msgs/msg/path_change_module_array.hpp>
-#include <tier4_planning_msgs/msg/path_change_module_id.hpp>
 #include <tier4_planning_msgs/msg/scenario.hpp>
-#include <tier4_planning_msgs/msg/stop_reason_array.hpp>
 
 #include <memory>
 #include <mutex>
@@ -64,7 +61,6 @@ using nav_msgs::msg::OccupancyGrid;
 using nav_msgs::msg::Odometry;
 using tier4_planning_msgs::msg::AvoidanceDebugMsgArray;
 using tier4_planning_msgs::msg::PathChangeModule;
-using tier4_planning_msgs::msg::PathChangeModuleArray;
 using tier4_planning_msgs::msg::Scenario;
 using visualization_msgs::msg::MarkerArray;
 
@@ -150,8 +146,6 @@ private:
     const std::vector<std::shared_ptr<SceneModuleStatus>> & statuses) const;
 
   // debug
-
-private:
   rclcpp::Publisher<OccupancyGrid>::SharedPtr debug_drivable_area_publisher_;
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_drivable_area_lanelets_publisher_;
   rclcpp::Publisher<Path>::SharedPtr debug_path_publisher_;
