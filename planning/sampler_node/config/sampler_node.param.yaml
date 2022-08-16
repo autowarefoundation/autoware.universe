@@ -1,6 +1,9 @@
 /**:
   ros__parameters:
     fallback_trajectory_timeout: 0.5  # [s] age below which a fallback trajectory can be used
+    preprocessing:
+      force_zero_initial_deviation: True  # if true, initial planning starts from the reference path
+      force_zero_initial_heading: True # if true, initial planning starts with a heading aligned with the reference path
     constraints:
       hard:
         max_curvature: 0.1
