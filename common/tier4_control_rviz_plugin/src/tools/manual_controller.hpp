@@ -54,21 +54,21 @@ public:
   explicit ManualController(QWidget * parent = nullptr);
   void onInitialize() override;
 
-public Q_SLOTS:
-  void onClickCruiseVelocity();
-  void onClickEnableButton();
-  void onManualSteering();
+public Q_SLOTS:  // NOLINT for Qt
+  void on_click_cruise_velocity();
+  void on_click_enable_button();
+  void on_manual_steering();
   void update();
 
 protected:
   // Timer
   rclcpp::TimerBase::SharedPtr timer_;
-  void onTimer();
-  void onPublishControlCommand();
-  void onGateMode(const GateMode::ConstSharedPtr msg);
-  void onVelocity(const VelocityReport::ConstSharedPtr msg);
-  void onEngageStatus(const Engage::ConstSharedPtr msg);
-  void onGear(const GearReport::ConstSharedPtr msg);
+  void on_timer();
+  void on_publish_control_command();
+  void on_gate_mode(const GateMode::ConstSharedPtr msg);
+  void on_velocity(const VelocityReport::ConstSharedPtr msg);
+  void on_engage_status(const Engage::ConstSharedPtr msg);
+  void on_gear(const GearReport::ConstSharedPtr msg);
   rclcpp::Node::SharedPtr raw_node_;
   rclcpp::Subscription<GateMode>::SharedPtr sub_gate_mode_;
   rclcpp::Subscription<VelocityReport>::SharedPtr sub_velocity_;
@@ -95,7 +95,7 @@ protected:
   QDial * steering_slider_ptr_;
   QLabel * steering_angle_ptr_;
 
-  bool current_engage_;
+  bool current_engage_{false};
 };
 
 }  // namespace rviz_plugins

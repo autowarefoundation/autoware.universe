@@ -30,7 +30,7 @@ using std::placeholders::_1;
 namespace rviz_plugins
 {
 
-double lowpassFilter(
+double lowpass_filter(
   const double current_value, const double prev_value, double cutoff, const double dt)
 {
   const double tau = 1.0 / (2.0 * M_PI * cutoff);
@@ -102,7 +102,7 @@ ManualController::ManualController(QWidget * parent) : rviz_common::Panel(parent
   v_layout->addLayout(cruise_velocity_layout);
   setLayout(v_layout);
 
-  QTimer * timer = new QTimer(this);
+  auto * timer = new QTimer(this);
   connect(timer, &QTimer::timeout, this, &ManualController::update);
   timer->start(30);
 }
@@ -144,7 +144,7 @@ void ManualController::update()
   pub_gear_cmd_->publish(gear_cmd);
 }
 
-void ManualController::onManualSteering()
+void ManualController::on_manual_steering()
 {
   const double scale_factor = -0.25;
   steering_angle_ = scale_factor * steering_slider_ptr_->sliderPosition() * M_PI / 180.0;
@@ -153,7 +153,7 @@ void ManualController::onManualSteering()
   steering_angle_ptr_->setText(steering_string);
 }
 
-void ManualController::onClickCruiseVelocity()
+void ManualController::on_click_cruise_velocity()
 {
   cruise_velocity_ = cruise_velocity_input_->value() / 3.6;
 }
@@ -163,16 +163,16 @@ void ManualController::onInitialize()
   raw_node_ = this->getDisplayContext()->getRosNodeAbstraction().lock()->get_raw_node();
 
   sub_gate_mode_ = raw_node_->create_subscription<GateMode>(
-    "/control/current_gate_mode", 10, std::bind(&ManualController::onGateMode, this, _1));
+    "/control/current_gate_mode", 10, std::bind(&ManualController::on_gate_mode, this, _1));
 
   sub_velocity_ = raw_node_->create_subscription<VelocityReport>(
-    "/vehicle/status/velocity_status", 1, std::bind(&ManualController::onVelocity, this, _1));
+    "/vehicle/status/velocity_status", 1, std::bind(&ManualController::on_velocity, this, _1));
 
   sub_engage_ = raw_node_->create_subscription<Engage>(
-    "/api/autoware/get/engage", 10, std::bind(&ManualController::onEngageStatus, this, _1));
+    "/api/autoware/get/engage", 10, std::bind(&ManualController::on_engage_status, this, _1));
 
   sub_gear_ = raw_node_->create_subscription<GearReport>(
-    "/vehicle/status/gear_status", 10, std::bind(&ManualController::onGear, this, _1));
+    "/vehicle/status/gear_status", 10, std::bind(&ManualController::on_gear, this, _1));
 
   client_engage_ = raw_node_->create_client<EngageSrv>(
     "/api/autoware/set/engage", rmw_qos_profile_services_default);
@@ -185,7 +185,7 @@ void ManualController::onInitialize()
   pub_gear_cmd_ = raw_node_->create_publisher<GearCommand>("/external/selected/gear_cmd", 1);
 }
 
-void ManualController::onGateMode(const tier4_control_msgs::msg::GateMode::ConstSharedPtr msg)
+void ManualController::on_gate_mode(const tier4_control_msgs::msg::GateMode::ConstSharedPtr msg)
 {
   switch (msg->data) {
     case tier4_control_msgs::msg::GateMode::AUTO:
@@ -204,7 +204,7 @@ void ManualController::onGateMode(const tier4_control_msgs::msg::GateMode::Const
       break;
   }
 }
-void ManualController::onEngageStatus(const Engage::ConstSharedPtr msg)
+void ManualController::on_engage_status(const Engage::ConstSharedPtr msg)
 {
   current_engage_ = msg->engage;
   if (current_engage_) {
@@ -216,7 +216,7 @@ void ManualController::onEngageStatus(const Engage::ConstSharedPtr msg)
   }
 }
 
-void ManualController::onVelocity(const VelocityReport::ConstSharedPtr msg)
+void ManualController::on_velocity(const VelocityReport::ConstSharedPtr msg)
 {
   current_velocity_ = msg->longitudinal_velocity;
   if (previous_velocity_) {
@@ -227,14 +227,14 @@ void ManualController::onVelocity(const VelocityReport::ConstSharedPtr msg)
       current_acceleration_ = std::make_unique<double>(acc);
     } else {
       current_acceleration_ =
-        std::make_unique<double>(lowpassFilter(acc, *current_acceleration_, cutoff, dt));
+        std::make_unique<double>(lowpass_filter(acc, *current_acceleration_, cutoff, dt));
     }
   }
   previous_velocity_ = std::make_unique<double>(msg->longitudinal_velocity);
   prev_stamp_ = rclcpp::Time(msg->header.stamp);
 }
 
-void ManualController::onGear(const GearReport::ConstSharedPtr msg)
+void ManualController::on_gear(const GearReport::ConstSharedPtr msg)
 {
   switch (msg->report) {
     case GearReport::PARK:
@@ -252,7 +252,7 @@ void ManualController::onGear(const GearReport::ConstSharedPtr msg)
   }
 }
 
-void ManualController::onClickEnableButton()
+void ManualController::on_click_enable_button()
 {
   // gate mode
   {
@@ -268,7 +268,7 @@ void ManualController::onClickEnableButton()
       return;
     }
     client_engage_->async_send_request(
-      req, [this]([[maybe_unused]] rclcpp::Client<EngageSrv>::SharedFuture result) {});
+      req, []([[maybe_unused]] rclcpp::Client<EngageSrv>::SharedFuture result) {});
   }
 }
 
