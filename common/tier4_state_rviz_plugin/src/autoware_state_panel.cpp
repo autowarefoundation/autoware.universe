@@ -146,7 +146,8 @@ void AutowareStatePanel::onInitialize()
     "/api/external/get/engage", 10, std::bind(&AutowareStatePanel::on_engage_status, this, _1));
 
   sub_emergency_ = raw_node_->create_subscription<tier4_external_api_msgs::msg::Emergency>(
-    "/api/autoware/get/emergency", 10, std::bind(&AutowareStatePanel::on_emergency_status, this, _1));
+    "/api/autoware/get/emergency", 10,
+    std::bind(&AutowareStatePanel::on_emergency_status, this, _1));
 
   client_engage_ = raw_node_->create_client<tier4_external_api_msgs::srv::Engage>(
     "/api/external/set/engage", rmw_qos_profile_services_default);
