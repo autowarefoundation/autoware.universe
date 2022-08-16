@@ -4,6 +4,7 @@
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
+#include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
 #include <std_msgs/msg/float32.hpp>
@@ -16,6 +17,7 @@ class TwistEstimator : public rclcpp::Node
 {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  using TwistCovStamped = geometry_msgs::msg::TwistWithCovarianceStamped;
   using TwistStamped = geometry_msgs::msg::TwistStamped;
   using Imu = sensor_msgs::msg::Imu;
   using NavPVT = ublox_msgs::msg::NavPVT;
@@ -37,6 +39,7 @@ private:
   rclcpp::Publisher<PoseStamped>::SharedPtr pub_pose_;
   rclcpp::Publisher<String>::SharedPtr pub_string_;
   rclcpp::Publisher<Float>::SharedPtr pub_doppler_vel_;
+  rclcpp::Publisher<TwistCovStamped>::SharedPtr pub_twist_with_covariance_;
 
   rclcpp::Subscription<NavPVT>::SharedPtr sub_navpvt_;
   rclcpp::Subscription<Imu>::SharedPtr sub_imu_;

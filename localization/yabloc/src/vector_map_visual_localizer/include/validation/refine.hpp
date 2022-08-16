@@ -12,6 +12,7 @@
 #include <sophus/geometry.hpp>
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <sensor_msgs/msg/camera_info.hpp>
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
@@ -30,6 +31,7 @@ class RefineOptimizer : public rclcpp::Node
 public:
   using Pose = geometry_msgs::msg::Pose;
   using PoseStamped = geometry_msgs::msg::PoseStamped;
+  using PoseCovStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
   using PointCloud2 = sensor_msgs::msg::PointCloud2;
   using LineSegments = pcl::PointCloud<pcl::PointNormal>;
   using CameraInfo = sensor_msgs::msg::CameraInfo;
@@ -49,6 +51,7 @@ protected:
   rclcpp::Subscription<Float32Array>::SharedPtr sub_ground_plane_;
   rclcpp::Publisher<Image>::SharedPtr pub_image_;
   rclcpp::Publisher<PoseStamped>::SharedPtr pub_pose_;
+  rclcpp::Publisher<PoseCovStamped>::SharedPtr pub_pose_cov_stamped_;
   rclcpp::Publisher<String>::SharedPtr pub_string_;
 
   std::optional<CameraInfo> info_{std::nullopt};

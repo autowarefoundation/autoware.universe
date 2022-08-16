@@ -44,6 +44,7 @@ RefineOptimizer::RefineOptimizer()
   // Publisher
   pub_image_ = create_publisher<Image>("/refine_image", 10);
   pub_pose_ = create_publisher<PoseStamped>("/refine_pose", 10);
+  pub_pose_cov_stamped_ = create_publisher<PoseCovStamped>("/refine_pose_with_covariance", 10);
   pub_string_ = create_publisher<String>("/refine_string", 10);
 
   opt_config_ = RefineConfig{this};
@@ -149,6 +150,18 @@ void RefineOptimizer::imageAndLsdCallback(const Image & image_msg, const PointCl
   pose_stamped.header.stamp = stamp;
   pose_stamped.pose = util::se32Pose(opt_pose);
   pub_pose_->publish(pose_stamped);
+  {
+    PoseCovStamped cov_msg;
+    cov_msg.header = pose_stamped.header;
+    cov_msg.pose.pose = pose_stamped.pose;
+    cov_msg.pose.covariance.at(6 * 0 + 0) = 0.1;
+    cov_msg.pose.covariance.at(6 * 1 + 1) = 0.1;
+    cov_msg.pose.covariance.at(6 * 2 + 2) = 0.1;
+    cov_msg.pose.covariance.at(6 * 3 + 3) = 0.01;
+    cov_msg.pose.covariance.at(6 * 4 + 4) = 0.01;
+    cov_msg.pose.covariance.at(6 * 5 + 5) = 0.01;
+    pub_pose_cov_stamped_->publish(cov_msg);
+  }
   // cv::imshow("6DoF fine optimization", rgb_image);
   // cv::waitKey(5);
 }

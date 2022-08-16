@@ -28,6 +28,8 @@ TwistEstimator::TwistEstimator()
   pub_pose_ = create_publisher<PoseStamped>("/kalman/doppler", 10);
   pub_string_ = create_publisher<String>("/kalman/status", 10);
   pub_doppler_vel_ = create_publisher<Float>("/kalman/doppler_vel", 10);
+  pub_twist_with_covariance_ =
+    create_publisher<TwistCovStamped>("/kalman/twist_with_covariance", 10);
 
   // rotation, velocity, bias, scale
   state_ = Eigen::Vector4f(0, 20, 0, 1);
@@ -102,6 +104,15 @@ void TwistEstimator::publishTwist(const Imu & imu)
   msg.twist.angular.z = imu.angular_velocity.z + state_[BIAS];
   msg.twist.linear.x = state_[VELOCITY];
   pub_twist_->publish(msg);
+
+  {
+    TwistCovStamped cov_msg;
+    cov_msg.header = msg.header;
+    cov_msg.twist.twist = msg.twist;
+    cov_msg.twist.covariance.at(0) = 0.1;
+    cov_msg.twist.covariance.at(35) = 0.1;
+    pub_twist_with_covariance_->publish(cov_msg);
+  }
 }
 
 void TwistEstimator::callbackTwistStamped(const TwistStamped & msg)
