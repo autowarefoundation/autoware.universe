@@ -38,6 +38,8 @@ namespace ns_control_toolbox
 class tf2ss
 {
  public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
   // Constructors
   tf2ss() = default;
 
@@ -95,7 +97,6 @@ class tf2ss
   Eigen::Index N_{};  // system size (A.rows+1).
 
   // Data members
-
   // system matrices  in a single matrix form of [A, B;C, D]
   /**
    *	A_ = ss_system.topLeftCorner(nx, nx);
@@ -103,20 +104,41 @@ class tf2ss
    *	C_ = ss_system.bottomLeftCorner(1, nx);
    *	D_ = ss_system.bottomRightCorner(1, 1);
    * */
-  Eigen::MatrixXd Tsimilarity_mat_{};  // Similarity mat of A, Aprime = Tinv * A *T.
+  Eigen::MatrixXd Tsimilarity_mat_{Eigen::MatrixXd::Identity(1, 1)};  // Similarity mat of A, Aprime = Tinv * A *T.
 
   // Data members
   // Continuous time state-space model
-  Eigen::MatrixXd A_{};
-  Eigen::MatrixXd B_{};
-  Eigen::MatrixXd C_{};
-  Eigen::MatrixXd D_{};
+  Eigen::MatrixXd A_{Eigen::MatrixXd::Identity(1, 1)};
+  Eigen::MatrixXd B_{Eigen::MatrixXd::Zero(1, 1)};
+  Eigen::MatrixXd C_{Eigen::MatrixXd::Zero(1, 1)};
+  Eigen::MatrixXd D_{Eigen::MatrixXd::Zero(1, 1)};
 
   // Discrete time state-space model
-  Eigen::MatrixXd Ad_{};
-  Eigen::MatrixXd Bd_{};
-  Eigen::MatrixXd Cd_{};
-  Eigen::MatrixXd Dd_{};
+  Eigen::MatrixXd Ad_{Eigen::MatrixXd::Zero(1, 1)};
+  Eigen::MatrixXd Bd_{Eigen::MatrixXd::Zero(1, 1)};
+  Eigen::MatrixXd Cd_{Eigen::MatrixXd::Zero(1, 1)};
+  Eigen::MatrixXd Dd_{Eigen::MatrixXd::Zero(1, 1)};
+};
+
+class scalarFilters_ss
+{
+ public:
+  scalarFilters_ss() = default;
+  scalarFilters_ss(tf const &sys_tf, const double &Ts);
+
+  double simulateOneStep(double const &u);
+
+  void print() const;
+
+ private:
+  double ad_{};
+  double bd_{};
+  double cd_{};
+  double dd_{};
+
+  // internal state
+  double x0_{};
+
 };
 
 // Type definitions.

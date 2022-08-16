@@ -19,14 +19,14 @@
 #include <utility>
 
 InputDisturbance_TimeDelayPade::InputDisturbance_TimeDelayPade(
-  DelayModelSISO delay_model, double const & lambda_exp, double const & td_fluctuation_amp,
-  double const & td_angular_velocity, bool const & use_time_varying_delay)
-: delay_model_(std::move(delay_model)),
-  time_delay_exp_dist_{std::exponential_distribution<>(lambda_exp)},
-  lambda_exp_rate_{lambda_exp},
-  time_delay_fluctuation_percentage_{td_fluctuation_amp}, /* percentage */
-  w_of_sin_{td_angular_velocity},
-  use_time_varying_delay_{use_time_varying_delay}
+  DelayModelSISO delay_model, double const &lambda_exp, double const &td_fluctuation_amp,
+  double const &td_angular_velocity, bool const &use_time_varying_delay)
+  : delay_model_(std::move(delay_model)),
+    time_delay_exp_dist_{std::exponential_distribution<>(lambda_exp)},
+    lambda_exp_rate_{lambda_exp},
+    time_delay_fluctuation_percentage_{td_fluctuation_amp}, /* percentage */
+    w_of_sin_{td_angular_velocity},
+    use_time_varying_delay_{use_time_varying_delay}
 {
   std::random_device dev;
   generator_ = std::mt19937(dev());
@@ -47,14 +47,15 @@ void InputDisturbance_TimeDelayPade::checkTimeAndUpdateModel()
 {
   // Change the current time delay model, if the change event time arrived.
   auto tp_now{std::chrono::steady_clock::now()};
-  auto && diff = tp_now - tp_previous_;
+  auto &&diff = tp_now - tp_previous_;
   std::chrono::duration<double> time_since_previous_time_point{diff};
 
   // Change random seed
   std::random_device dev;
   generator_ = std::mt19937(dev());
 
-  if (time_since_previous_time_point.count() > next_time_interval_) {
+  if (time_since_previous_time_point.count() > next_time_interval_)
+  {
     // update the time-delay models.
     auto time_from_beginning = std::chrono::duration<double>(tp_now - tp_instantiation_);
     // ns_utils::print("Time since beginning : ", time_from_beginning.count());
@@ -63,10 +64,10 @@ void InputDisturbance_TimeDelayPade::checkTimeAndUpdateModel()
      * Any method or randomization can be used to generate a new Td value.
      * */
     auto meanTd = delay_model_.getMeanTimeDelay();
-    auto && sinus_magnitude = time_delay_fluctuation_percentage_ * meanTd;
+    auto &&sinus_magnitude = time_delay_fluctuation_percentage_ * meanTd;
 
     double Td_new = delay_model_.getMeanTimeDelay() +
-      sinus_magnitude * sin(w_of_sin_ * time_from_beginning.count());
+                    sinus_magnitude * sin(w_of_sin_ * time_from_beginning.count());
 
     // Update
     delay_model_.updateModel(Td_new);
@@ -77,9 +78,10 @@ void InputDisturbance_TimeDelayPade::checkTimeAndUpdateModel()
   }
 }
 
-double InputDisturbance_TimeDelayPade::getDisturbedInput(const double & input)
+double InputDisturbance_TimeDelayPade::getDisturbedInput(const double &input)
 {
-  if (use_time_varying_delay_) {
+  if (use_time_varying_delay_)
+  {
     checkTimeAndUpdateModel();  // Check if it is time to change the time delay model.
   }
 
@@ -98,12 +100,12 @@ double InputDisturbance_TimeDelayPade::getDisturbedInput(const double & input)
   return delay_model_.getCurrentTimeDelay();
 }
 
-DelayModelSISO::DelayModelSISO(const double & Td, size_t const & pade_order, const double & dt)
-: meanTd_{Td},
-  pade_order_{pade_order},
-  dt_{dt},
-  Td_{Td},
-  x0_(Eigen::MatrixXd::Zero(static_cast<Eigen::Index>(pade_order), 1))
+DelayModelSISO::DelayModelSISO(const double &Td, size_t const &pade_order, const double &dt)
+  : meanTd_{Td},
+    pade_order_{pade_order},
+    dt_{dt},
+    Td_{Td},
+    x0_(Eigen::MatrixXd::Zero(static_cast<Eigen::Index>(pade_order), 1))
 {
   tf_ = ns_control_toolbox::pade(meanTd_, pade_order);
   ss_ = ns_control_toolbox::tf2ss(tf_, dt);
@@ -114,7 +116,7 @@ DelayModelSISO::DelayModelSISO(const double & Td, size_t const & pade_order, con
  * the time-delay.
  * @param newTd time-delay value.
  * */
-void DelayModelSISO::updateModel(const double & newTd)
+void DelayModelSISO::updateModel(const double &newTd)
 {
   Td_ = newTd;
 
@@ -124,11 +126,11 @@ void DelayModelSISO::updateModel(const double & newTd)
   // ns_utils::print("Time delay changed to ", Td_);
 }
 
-double DelayModelSISO::getNextState(const double & u)
+double DelayModelSISO::getNextState(const double &u)
 {
   // Discrete state-space update equations.
   // Comput output y
-  auto && u_delayed = (ss_.Cd() * x0_ + ss_.Dd() * u)(0);
+  auto &&u_delayed = (ss_.Cd() * x0_ + ss_.Dd() * u)(0);
 
   // Update the internal state
   x0_.noalias() = ss_.Ad() * x0_ + ss_.Bd() * u;
@@ -152,13 +154,13 @@ void DelayModelSISO::printModelTF()
 }
 
 OutputDisturbance_SlopeVariation::OutputDisturbance_SlopeVariation(
-  const double & rs_mean_slope_val, const double & rs_fluctuation_,
-  const double & rs_angular_velocity, const bool & rs_use_time_varying_slope)
-: mean_road_slope_{rs_mean_slope_val},
-  current_road_slope_{rs_mean_slope_val},
-  road_slope_fluctuation_{rs_fluctuation_},
-  w_of_sin_{rs_angular_velocity},
-  use_time_varying_slope_{rs_use_time_varying_slope}
+  const double &rs_mean_slope_val, const double &rs_fluctuation_,
+  const double &rs_angular_velocity, const bool &rs_use_time_varying_slope)
+  : mean_road_slope_{rs_mean_slope_val},
+    current_road_slope_{rs_mean_slope_val},
+    road_slope_fluctuation_{rs_fluctuation_},
+    w_of_sin_{rs_angular_velocity},
+    use_time_varying_slope_{rs_use_time_varying_slope}
 {
 }
 
@@ -169,7 +171,8 @@ OutputDisturbance_SlopeVariation::OutputDisturbance_SlopeVariation(
 double OutputDisturbance_SlopeVariation::getDisturbedOutput()
 {
   // Compute time-varying slope.
-  if (use_time_varying_slope_) {
+  if (use_time_varying_slope_)
+  {
     auto tp_now{std::chrono::steady_clock::now()};
 
     // update the slope current slope value.
@@ -186,13 +189,13 @@ double OutputDisturbance_SlopeVariation::getDisturbedOutput()
   return current_slope_disturbance_;
 }
 
-InputDisturbance_DeadZone::InputDisturbance_DeadZone(
-  const double & m_lr_variance, const double & b_lr_mean,
-  const double & b_lr_variance_in_percent, /*in percentage*/
-  const double & sin_mag, const bool & use_time_varying_deadzone)
-: b_mean_th_{b_lr_mean}, a_sin_mag_{sin_mag}, use_time_varying_deadzone_{use_time_varying_deadzone}
+InputDisturbance_DeadZone::InputDisturbance_DeadZone(const double &m_lr_variance, const double &b_lr_mean,
+                                                     const double &b_lr_variance_in_percent, /*in percentage*/
+                                                     const double &sin_mag, const bool &use_time_varying_deadzone)
+  : b_mean_th_{b_lr_mean}, a_sin_mag_{sin_mag}, use_time_varying_deadzone_{use_time_varying_deadzone}
 {
-  if (m_lr_variance < 0. || m_lr_variance > 1.0) {
+  if (m_lr_variance < 0. || m_lr_variance > 1.0)
+  {
     throw std::invalid_argument("Slope variance should not exceed 1.0 and must be positive");
   }
 
@@ -226,7 +229,8 @@ InputDisturbance_DeadZone::InputDisturbance_DeadZone(
   sampler_b_ = std::uniform_real_distribution<>(b_low, b_high);
 
   // Sample parameters and set
-  if (use_time_varying_deadzone_) {
+  if (use_time_varying_deadzone_)
+  {
     current_ml_slope_ = sampler_m_(generator_);
     current_mr_slope_ = sampler_m_(generator_);
 
@@ -235,7 +239,8 @@ InputDisturbance_DeadZone::InputDisturbance_DeadZone(
 
     phi_phase_ = sampler_phi_(generator_);
 
-  } else {
+  } else
+  {
     current_br_threshold_ = b_lr_mean;
     current_bl_threshold_ = -b_lr_mean;
     current_ml_slope_ = 1.0;
@@ -243,12 +248,13 @@ InputDisturbance_DeadZone::InputDisturbance_DeadZone(
   }
 }
 
-double InputDisturbance_DeadZone::getDisturbedInput(const double & delta_u)
+double InputDisturbance_DeadZone::getDisturbedInput(const double &delta_u)
 {
   double delta_v{};  // deadzone output
 
   // if time-varying deadzone, sample
-  if (use_time_varying_deadzone_) {
+  if (use_time_varying_deadzone_)
+  {
     // Sample sinus phase.
     // Change random seed
     std::random_device dev;
@@ -264,7 +270,8 @@ double InputDisturbance_DeadZone::getDisturbedInput(const double & delta_u)
     ns_utils::print(
       "In deadzone sampling, sampled slope and deadzone ", m_slope_sample, b_deadzone_thr);
 
-    if (delta_u > b_deadzone_thr) {
+    if (delta_u >= b_deadzone_thr)
+    {
       current_mr_slope_ = m_slope_sample;
       current_br_threshold_ = b_deadzone_thr;
 
@@ -274,7 +281,8 @@ double InputDisturbance_DeadZone::getDisturbedInput(const double & delta_u)
 
       delta_v = current_mr_slope_ * (delta_u + a_sin_mag_ * sin(M_2_PI * delta_u + phi_phase_));
 
-    } else if (delta_u < -1.0 * b_deadzone_thr) {
+    } else if (delta_u <= -1.0 * b_deadzone_thr)
+    {
       current_ml_slope_ = m_slope_sample;
       current_bl_threshold_ = -1. * b_deadzone_thr;
 
@@ -284,20 +292,25 @@ double InputDisturbance_DeadZone::getDisturbedInput(const double & delta_u)
 
       delta_v = current_ml_slope_ * (delta_u + a_sin_mag_ * sin(M_2_PI * delta_u + phi_phase_));
 
-    } else {
+    } else
+    {
       delta_v = 0.;
     }
 
-  } else { // omit sinusoidal part.
-    if (delta_u > current_br_threshold_) {
+  } else
+  { // omit sinusoidal part.
+    if (delta_u >= current_br_threshold_)
+    {
       // delta_v = current_mr_slope_ * (delta_u - current_br_threshold_);
       delta_v = current_mr_slope_ * delta_u;
 
-    } else if (delta_u < current_bl_threshold_) {
+    } else if (delta_u <= current_bl_threshold_)
+    {
       // delta_v = current_ml_slope_ * (delta_u - current_bl_threshold_);
       delta_v = current_ml_slope_ * delta_u;
 
-    } else {
+    } else
+    {
       delta_v = 0.;
     }
   }

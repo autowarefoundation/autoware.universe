@@ -1,0 +1,17 @@
+
+:	cpp:S1117³"$declaration shadows a local variable(øÿç
+:	cpp:S1117´"$declaration shadows a local variable(§Õ…œ
+E	cpp:S5812"0Concatenate this namespace with the nested ones.(îåìÒ
+8	cpp:S2193^"#Do not use a counter of type float.(ƒ´¤Á
+K	cpp:S1659Ò"0Define each identifier in a dedicated statement.(Æß‰Çıÿÿÿÿ
+B	cpp:S5827Ó"'Replace the redundant type with "auto".(„Ó˜àÿÿÿÿÿ
+6	cpp:S1905"Remove this redundant cast.(’¶‹£ûÿÿÿÿ
+1	cpp:S1905"Remove this redundant cast.(İşÛÙ
+6	cpp:S1905"Remove this redundant cast.(ıÚìîıÿÿÿÿ
+_	cpp:S6004Î"DUse the init-statement to declare "err_yaw" inside the if statement.(ÚÌ§øÿÿÿÿ
+_	cpp:S6004î"DUse the init-statement to declare "err_yaw" inside the if statement.(ÚÌ§øÿÿÿÿ
+1	cpp:S1905å"Remove this redundant cast.(ŒÉÅÍ
+6	cpp:S1905ç"Remove this redundant cast.(¾é—–ûÿÿÿÿ
+B	cpp:S5827‰"'Replace the redundant type with "auto".(¼ÃŸèÿÿÿÿÿ
+B	cpp:S5827"'Replace the redundant type with "auto".(˜‚Íëúÿÿÿÿ
+=	cpp:S5827"'Replace the redundant type with "auto".(ÈşÆ•
