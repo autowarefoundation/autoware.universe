@@ -1,6 +1,7 @@
 #pragma once
 
-#include "refine_optimizer.hpp"
+#include "config.hpp"
+#include "optimizer.hpp"
 
 #include <common/gamma_converter.hpp>
 #include <common/ground_plane.hpp>
@@ -42,6 +43,13 @@ public:
   RefineOptimizer();
 
 protected:
+  const int pixel_interval_;
+  const bool show_grad_image_;
+  boost::circular_buffer<PoseStamped> pose_buffer_;
+
+  GammaConverter gamma_converter_{5.0};
+  RefineConfig opt_config_;
+
   common::StaticTfSubscriber tf_subscriber_;
   GroundPlane ground_plane_;
 
@@ -57,13 +65,7 @@ protected:
   std::optional<CameraInfo> info_{std::nullopt};
   std::optional<Sophus::SE3f> camera_extrinsic_{std::nullopt};
   LineSegments ll2_cloud_;
-  boost::circular_buffer<PoseStamped> pose_buffer_;
   SynchroSubscriber<Image, PointCloud2>::SharedPtr sub_synchro_;
-
-  const int pixel_interval_;
-  const bool show_grad_image_;
-  GammaConverter gamma_converter_{5.0};
-  RefineConfig opt_config_;
 
   void infoCallback(const CameraInfo & msg);
 

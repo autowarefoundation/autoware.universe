@@ -8,8 +8,7 @@ if(NOT CMAKE_CXX_STANDARD)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  # add_compile_options(-Wall -Wextra -Wpedantic -Werror)
-  add_compile_options(-Wall -Wextra -Wpedantic)
+  add_compile_options(-Wall -Wextra -Wpedantic -Werror)
 endif()
 
 # ===================================================
@@ -83,7 +82,7 @@ macro(ADD_EXE)
   target_link_libraries(${TARGET_NAME} ${_ARG_LIB})
 endmacro()
 
-ADD_LIB(TARGET refine_lib SRC src/refine_optimizer.cpp INC include LIB ${CERES_LIBRARIES})
+ADD_LIB(TARGET refine_lib SRC src/optimizer.cpp src/config.cpp src/refine_core.cpp INC include LIB ${CERES_LIBRARIES})
 ADD_EXE(TARGET refine_node SRC src/refine_node.cpp INC include LIB refine_lib)
 
 # ===================================================
