@@ -1,4 +1,5 @@
-- only_online_mode: false
+- module: map
+  only_online_mode: false
   args:
     node_name_suffix: vector_map
     topic: /map/vector_map
@@ -9,7 +10,8 @@
     error_rate: 0.0
     timeout: 0.0
 
-- only_online_mode: true
+- module: map
+  only_online_mode: true
   args:
     node_name_suffix: pointcloud_map
     topic: /map/pointcloud_map
@@ -20,7 +22,8 @@
     error_rate: 0.0
     timeout: 0.0
 
-- only_online_mode: false
+- module: localization
+  only_online_mode: false
   args:
     node_name_suffix: initialpose3d
     topic: /initialpose3d
@@ -31,7 +34,8 @@
     error_rate: 0.0
     timeout: 0.0
 
-- only_online_mode: true
+- module: localization
+  only_online_mode: true
   args:
     node_name_suffix: pose_twist_fusion_filter_pose
     topic: /localization/pose_twist_fusion_filter/pose
@@ -42,7 +46,8 @@
     error_rate: 1.0
     timeout: 1.0
 
-- only_online_mode: true
+- module: sensing
+  only_online_mode: true
   args:
     node_name_suffix: obstacle_segmentation_pointcloud
     topic: /perception/obstacle_segmentation/pointcloud
@@ -53,7 +58,8 @@
     error_rate: 1.0
     timeout: 1.0
 
-- only_online_mode: false
+- module: perception
+  only_online_mode: false
   args:
     node_name_suffix: object_recognition_objects
     topic: /perception/object_recognition/objects
@@ -64,7 +70,8 @@
     error_rate: 1.0
     timeout: 1.0
 
-- only_online_mode: false
+- module: planning
+  only_online_mode: false
   args:
     node_name_suffix: mission_planning_route
     topic: /planning/mission_planning/route
@@ -75,7 +82,8 @@
     error_rate: 0.0
     timeout: 0.0
 
-- only_online_mode: false
+- module: planning
+  only_online_mode: false
   args:
     node_name_suffix: scenario_planning_trajectory
     topic: /planning/scenario_planning/trajectory
@@ -86,7 +94,8 @@
     error_rate: 1.0
     timeout: 1.0
 
-- only_online_mode: false
+- module: control
+  only_online_mode: false
   args:
     node_name_suffix: trajectory_follower_control_cmd
     topic: /control/trajectory_follower/control_cmd
@@ -97,7 +106,8 @@
     error_rate: 1.0
     timeout: 1.0
 
-- only_online_mode: false
+- module: control
+  only_online_mode: false
   args:
     node_name_suffix: control_command_control_cmd
     topic: /control/command/control_cmd
@@ -108,7 +118,8 @@
     error_rate: 1.0
     timeout: 1.0
 
-- only_online_mode: false
+- module: vehicle
+  only_online_mode: false
   args:
     node_name_suffix: vehicle_status_velocity_status
     topic: /vehicle/status/velocity_status
@@ -119,7 +130,8 @@
     error_rate: 1.0
     timeout: 1.0
 
-- only_online_mode: false
+- module: vehicle
+  only_online_mode: false
   args:
     node_name_suffix: vehicle_status_steering_status
     topic: /vehicle/status/steering_status
@@ -130,7 +142,8 @@
     error_rate: 1.0
     timeout: 1.0
 
-- only_online_mode: false
+- module: system
+  only_online_mode: false
   args:
     node_name_suffix: system_emergency_control_cmd
     topic: /system/emergency/control_cmd
@@ -141,7 +154,8 @@
     error_rate: 1.0
     timeout: 1.0
 
-- only_online_mode: false
+- module: localization
+  only_online_mode: false
   args:
     node_name_suffix: transform_map_to_base_link
     topic: /tf

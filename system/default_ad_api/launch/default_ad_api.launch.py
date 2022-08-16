@@ -28,14 +28,20 @@ from launch_ros.substitutions import FindPackageShare
 import yaml
 
 
-def create_topic_monitor_name(row, diag_name):
+def create_diagnostic_name(row):
+    return '"default_ad_api: {}_topic_status"'.format(row["module"])
+
+
+def create_topic_monitor_name(row):
+    diag_name = create_diagnostic_name(row)
     return "topic_state_monitor_{}: {}".format(row["args"]["node_name_suffix"], diag_name)
 
 
-def create_topic_monitor_node(row, diag_name):
+def create_topic_monitor_node(row):
     tf_mode = "" if "topic_type" in row["args"] else "_tf"
     package = FindPackageShare("topic_state_monitor")
     include = PathJoinSubstitution([package, f"launch/topic_state_monitor{tf_mode}.launch.xml"])
+    diag_name = create_diagnostic_name(row)
     arguments = [("diag_name", diag_name)] + [(k, str(v)) for k, v in row["args"].items()]
     return IncludeLaunchDescription(include, launch_arguments=arguments)
 
@@ -55,9 +61,8 @@ def launch_setup(context, *args, **kwargs):
     mode = LaunchConfiguration("online_mode").perform(context)
     rows = yaml.safe_load(Path(LaunchConfiguration("config_file").perform(context)).read_text())
     rows = rows if mode else [row for row in rows if not rows["only_online_mode"]]
-    name = "default_ad_api"
-    topic_monitor_nodes = [create_topic_monitor_node(row, name) for row in rows]
-    topic_monitor_names = [create_topic_monitor_name(row, name) for row in rows]
+    topic_monitor_nodes = [create_topic_monitor_node(row) for row in rows]
+    topic_monitor_names = [create_topic_monitor_name(row) for row in rows]
     param_operation_mode = [{"topic_monitor_names": topic_monitor_names}]
 
     # create api components
