@@ -1,4 +1,4 @@
-#include "validation/refine_optimizer.hpp"
+#include "refine_optimizer.hpp"
 
 #include "common/timer.hpp"
 

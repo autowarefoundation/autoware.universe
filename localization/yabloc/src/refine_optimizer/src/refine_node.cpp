@@ -1,6 +1,5 @@
 #include "common/util.hpp"
-#include "validation/overlay.hpp"
-#include "validation/refine.hpp"
+#include "refine.hpp"
 
 #include <eigen3/Eigen/StdVector>
 #include <opencv4/opencv2/calib3d.hpp>
@@ -61,9 +60,9 @@ void RefineOptimizer::infoCallback(const CameraInfo & msg)
 
 void addText(const std::string & text, const cv::Mat & image)
 {
-  const int fontscale = 2;
-  const int fontface = cv::FONT_HERSHEY_PLAIN;
-  const int thickness = 2;
+  constexpr int fontscale = 2;
+  constexpr int fontface = cv::FONT_HERSHEY_PLAIN;
+  constexpr int thickness = 2;
   int cumulative_height = 10;
   int max_width = 10;
 
