@@ -5,7 +5,7 @@
 #include <ceres/cubic_interpolation.h>
 #include <ceres/rotation.h>
 
-namespace validation
+namespace refine_optimizer
 {
 using Grid = ceres::Grid2D<uint8_t>;
 using Interpolator = ceres::BiCubicInterpolator<Grid>;
@@ -70,4 +70,4 @@ struct ProjectionCost
   const Sophus::SE3d & extrinsic_;
   const Sophus::SE3d & pose_;
 };
-}  // namespace validation
+}  // namespace refine_optimizer

@@ -1,7 +1,6 @@
 #pragma once
 
-#include "config.hpp"
-#include "optimizer.hpp"
+#include "refine_optimizer/optimizer.hpp"
 
 #include <common/gamma_converter.hpp>
 #include <common/ground_plane.hpp>
@@ -25,7 +24,7 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
-namespace validation
+namespace refine_optimizer
 {
 class RefineOptimizer : public rclcpp::Node
 {
@@ -48,7 +47,7 @@ protected:
   boost::circular_buffer<PoseStamped> pose_buffer_;
 
   GammaConverter gamma_converter_{5.0};
-  RefineConfig opt_config_;
+  std::shared_ptr<Optimizer> optimizer_;
 
   common::StaticTfSubscriber tf_subscriber_;
   GroundPlane ground_plane_;
@@ -86,4 +85,4 @@ protected:
     cv::Mat & image, const Sophus::SE3f & pose_affine, const LineSegments & linesegments,
     const cv::Scalar & color);
 };
-}  // namespace validation
+}  // namespace refine_optimizer

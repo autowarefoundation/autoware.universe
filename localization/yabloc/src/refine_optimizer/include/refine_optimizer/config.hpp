@@ -1,7 +1,7 @@
 #pragma once
 #include <rclcpp/node.hpp>
 
-namespace validation
+namespace refine_optimizer
 {
 struct RefineConfig
 {
@@ -22,4 +22,4 @@ struct RefineConfig
   double height_bound_;
 };
 
-}  // namespace validation
+}  // namespace refine_optimizer

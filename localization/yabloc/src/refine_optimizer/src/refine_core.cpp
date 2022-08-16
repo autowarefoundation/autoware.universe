@@ -1,6 +1,6 @@
 #include "common/util.hpp"
-#include "refine.hpp"
-#include "util.hpp"
+#include "refine_optimizer/refine.hpp"
+#include "refine_optimizer/util.hpp"
 
 #include <eigen3/Eigen/StdVector>
 #include <opencv4/opencv2/calib3d.hpp>
@@ -13,7 +13,7 @@
 
 #include <pcl_conversions/pcl_conversions.h>
 
-namespace validation
+namespace refine_optimizer
 {
 RefineOptimizer::RefineOptimizer()
 : Node("refine"),
@@ -25,8 +25,8 @@ RefineOptimizer::RefineOptimizer()
   using std::placeholders::_1, std::placeholders::_2;
 
   auto cb_synchro = std::bind(&RefineOptimizer::imageAndLsdCallback, this, _1, _2);
-  sub_synchro_ =
-    std::make_shared<SynchroSubscriber<Image, PointCloud2>>(this, "/src_image", "/lsd_cloud");
+  using MySynchroSub = SynchroSubscriber<Image, PointCloud2>;
+  sub_synchro_ = std::make_shared<MySynchroSub>(this, "/src_image", "/lsd_cloud");
   sub_synchro_->setCallback(cb_synchro);
 
   // Subscriber
@@ -47,9 +47,9 @@ RefineOptimizer::RefineOptimizer()
   pub_pose_cov_stamped_ = create_publisher<PoseCovStamped>("/refine_pose_with_covariance", 10);
   pub_string_ = create_publisher<String>("/refine_string", 10);
 
-  opt_config_ = RefineConfig{this};
+  optimizer_ = std::make_shared<Optimizer>(RefineConfig{this});
 
-  float gamma = declare_parameter<float>("refine.gamma", 5);
+  const float gamma = declare_parameter<float>("refine.gamma", 5);
   gamma_converter_.reset(gamma);
 }
 
@@ -91,8 +91,8 @@ void RefineOptimizer::imageAndLsdCallback(const Image & image_msg, const PointCl
     Eigen::Matrix3f K =
       Eigen::Map<Eigen::Matrix<double, 3, 3>>(info_->k.data()).cast<float>().transpose();
     Sophus::SE3f T = camera_extrinsic_.value();
-
-    opt_pose = refinePose(T, K, cost_image, raw_pose, samples, opt_config_, &summary_text);
+    optimizer_->setStaticParams(K, T);
+    opt_pose = optimizer_->execute(cost_image, raw_pose, samples, &summary_text);
   }
 
   cv::Mat rgb_image;
@@ -284,4 +284,4 @@ pcl::PointCloud<pcl::PointXYZ> RefineOptimizer::sampleUniformlyOnImage(
   return samples;
 }
 
-}  // namespace validation
+}  // namespace refine_optimizer

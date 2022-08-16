@@ -4,7 +4,7 @@
 
 #include <string>
 
-namespace validation
+namespace refine_optimizer
 {
 void addText(const std::string & text, const cv::Mat & image)
 {
@@ -37,4 +37,4 @@ void addText(const std::string & text, const cv::Mat & image)
   }
 }
 
-}  // namespace validation
+}  // namespace refine_optimizer

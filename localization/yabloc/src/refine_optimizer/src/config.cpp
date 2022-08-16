@@ -1,6 +1,6 @@
-#include "config.hpp"
+#include "refine_optimizer/config.hpp"
 
-namespace validation
+namespace refine_optimizer
 {
 RefineConfig::RefineConfig(rclcpp::Node * node)
 {
@@ -13,4 +13,4 @@ RefineConfig::RefineConfig(rclcpp::Node * node)
   height_bound_ = node->declare_parameter<double>("refine.height_bound", 0.1);
 }
 
-}  // namespace validation
+}  // namespace refine_optimizer
