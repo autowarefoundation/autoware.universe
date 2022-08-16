@@ -113,3 +113,4 @@ void ns_models::KinematicModelSingleTrackModel::testModel()
   ns_eigen_utils::printEigenMat(A);
   ns_eigen_utils::printEigenMat(B);
 }
+

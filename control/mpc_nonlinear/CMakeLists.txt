@@ -151,12 +151,14 @@ set(NONLINEAR_MPC_CORE_SOURCE
         src/nonlinear_mpc_core/nmpc_kalman_filter.cpp
         src/nonlinear_mpc_core/initialization_lpv.cpp
         src/utils/nmpc_utils.cpp
+        src/deadzone/inverse_deadzone_backstepping.cpp
         )
 
 set(NONLINEAR_MPC_CORE_INCLUDE_DIR
         include/nonlinear_mpc_core
         include/utils
         include/vehicle_models
+        include/deadzone
         )
 
 

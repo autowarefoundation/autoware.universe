@@ -67,6 +67,7 @@
 #include "autoware_auto_vehicle_msgs/msg/steering_report.hpp"
 #include "autoware_auto_control_msgs/msg/ackermann_control_command.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
+#include "deadzone/inverse_deadzone_backstepping.hpp"
 
 // NMPC package headers.
 #include "nonlinear_mpc_core/nmpc_core.hpp"
@@ -186,10 +187,10 @@ class NonlinearMPCNode : public rclcpp::Node
   rclcpp::Subscription<VelocityMsg>::SharedPtr sub_velocity_{nullptr};
 
   // subscribe to the measured vehicle steering.
-  rclcpp::Subscription<SteeringMeasuredMsg>::SharedPtr sub_vehicle_steering_;
+  rclcpp::Subscription<SteeringMeasuredMsg>::SharedPtr sub_vehicle_steering_{nullptr};
 
   //!< @brief subscription for current communication delay compensator messages.
-  rclcpp::Subscription<DelayCompensationRefs>::SharedPtr sub_com_delay_;
+  rclcpp::Subscription<DelayCompensationRefs>::SharedPtr sub_com_delay_{nullptr};
 
   // subscribe to the measured vehicle steering.
   tf2::BufferCore tf_buffer_{tf2::BUFFER_CORE_DEFAULT_CACHE_TIME};
@@ -201,14 +202,14 @@ class NonlinearMPCNode : public rclcpp::Node
   // Node members.
   double wheel_base_{};
   ns_data::ParamsNMPCNode params_node_{};
-  std::unique_ptr<ns_nmpc_interface::NonlinearMPCController> nonlinear_mpc_controller_ptr_;
+  std::unique_ptr<ns_nmpc_interface::NonlinearMPCController> nonlinear_mpc_controller_ptr_{nullptr};
 
   /**
    *  @brief Bspline interpolators, takes a fixed size trajectory EigenMatrix [x, y] and yields a interpolated smooth
    *  [x, y] matrix. These smoothed coordinates are used to interpolate their first and second derivatives rdot(x, y),
    *  rddot(x,y). We compute a curvature vector using these derivatives.
    * */
-  std::unique_ptr<bspline_type_t> bspline_interpolator_ptr_;  // smoothing interpolator.
+  std::unique_ptr<bspline_type_t> bspline_interpolator_ptr_{nullptr};  // smoothing interpolator.
   // std::unique_ptr<ns_splines::BSplineSmoother> bspline_interpolator_ptr_{nullptr};
 
   /**
@@ -220,6 +221,12 @@ class NonlinearMPCNode : public rclcpp::Node
    * @brief Finite State Machine for tracking vehicle motion states.
    * */
   ns_states::VehicleMotionFSM vehicle_motion_fsm_{};
+
+  /**
+   * @brief Finite State Machine for tracking vehicle motion states.
+   * */
+  ns_deadzone::sDeadZone deadzone_inverter_{};
+  ns_deadzone::ExtremumSeeker extremum_seeker_{};
 
   // Pointers to the received messages.
   size_t current_trajectory_size_{};
@@ -270,7 +277,7 @@ class NonlinearMPCNode : public rclcpp::Node
   std::unique_ptr<size_t> idx_next_wp_ptr_{nullptr};
 
   // BUFFERS. Use a single buffer.
-  std::deque<ControlCmdMsg> inputs_buffer_;  // !< @brief an input buffer for state prediction.
+  std::deque<ControlCmdMsg> inputs_buffer_{};  // !< @brief an input buffer for state prediction.
 
   // Data members.
   bool is_control_cmd_prev_initialized_{false};  // !< @brief flag of control_cmd_prev_ initialization
@@ -361,6 +368,9 @@ class NonlinearMPCNode : public rclcpp::Node
                              ns_data::ParamsOptimization &params_optimization);
 
   void loadFilterParameters(ns_data::ParamsFilters &params_filters);
+
+  void loadDeadzoneParameters();
+  void loadExtremumSeekerParameters(ns_deadzone::sExtremumSeekerParams &es_params);
 
   /**
    *   @brief We use state and control scaling for within the optimization algorithms.
