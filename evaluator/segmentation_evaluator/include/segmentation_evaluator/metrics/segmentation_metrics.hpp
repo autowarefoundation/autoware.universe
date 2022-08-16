@@ -43,7 +43,8 @@ Stat<double> updatePclStats(
  * @return calculated statistics
  */
 std::vector<int> computeConfusionMatrix(
-  const PointCloud2 & pcl, const PointCloud2 & pcl_gt_ground, const PointCloud2 & pcl_gt_obj, PointCloud2 & pcl_no_ex);
+  const PointCloud2 & pcl, const PointCloud2 & pcl_gt_ground, const PointCloud2 & pcl_gt_obj,
+  PointCloud2 & pcl_no_ex);
 
 }  // namespace metrics
 }  // namespace segmentation_diagnostics

@@ -27,8 +27,8 @@ namespace segmentation_diagnostics
 struct Parameters
 {
   std::array<bool, static_cast<size_t>(Metric::SIZE)> metrics{};  // default values to false
-};  // struct Parameters
+};                                                                // struct Parameters
 
-}  // namespace localiaztion_diagnostics
+}  // namespace segmentation_diagnostics
 
 #endif  // SEGMENTATION_EVALUATOR__PARAMETERS_HPP_

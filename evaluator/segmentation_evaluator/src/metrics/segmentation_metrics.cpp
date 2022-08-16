@@ -14,17 +14,17 @@
 
 #include "segmentation_evaluator/metrics/segmentation_metrics.hpp"
 
-#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
-
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
-#include <pcl_conversions/pcl_conversions.h>
 #include "rclcpp/serialization.hpp"
 #include "rclcpp/serialized_message.hpp"
+#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 
 #include "boost/container_hash/hash.hpp"
+
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+#include <pcl_conversions/pcl_conversions.h>
 
 namespace segmentation_diagnostics
 {
@@ -50,17 +50,15 @@ Stat<double> updatePclStats(
   return stat;
 }
 
-float r(float v)
-{
-  return floor(v*1000.0) / 1000.0;
-}
+float r(float v) { return floor(v * 1000.0) / 1000.0; }
 
 std::vector<int> computeConfusionMatrix(
   const PointCloud2 & pcl_to_eval, const PointCloud2 & pcl_gt_ground,
   const PointCloud2 & pcl_gt_obj, PointCloud2 & pcl_no_ex)
 {
   // std::cout << pcl_gt_ground.row_step << " + " << pcl_gt_obj.row_step << " = "
-  //           << pcl_gt_ground.row_step + pcl_gt_obj.row_step << "    !eval: " << pcl_to_eval.row_step
+  //           << pcl_gt_ground.row_step + pcl_gt_obj.row_step << "    !eval: " <<
+  //           pcl_to_eval.row_step
   //           << std::endl;
   pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_no_ex_xyz(new pcl::PointCloud<pcl::PointXYZ>);
   pcl_no_ex_xyz->points.reserve(pcl_to_eval.row_step);
@@ -120,9 +118,9 @@ std::vector<int> computeConfusionMatrix(
 
   // std::cout << "ZEROS in pred: " << cnt_zero << "\n";
   // std::cout << "NONEX in pred: " << cnt_non_ex << "\n";
-  std::cout << "Accuracy: " << float(tp+tn)/float(tp+tn+fn+fp) << "\n";
-  std::cout << "Precision: " << float(tp)/float(tp+fp) << "\n";  
-  std::cout << "Recall: " << float(tp)/float(tp+fn) << "\n";  
+  std::cout << "Accuracy: " << float(tp + tn) / float(tp + tn + fn + fp) << "\n";
+  std::cout << "Precision: " << float(tp) / float(tp + fp) << "\n";
+  std::cout << "Recall: " << float(tp) / float(tp + fn) << "\n";
 
   pcl::toROSMsg(*pcl_no_ex_xyz, pcl_no_ex);
   pcl_no_ex.set__header(pcl_to_eval.header);

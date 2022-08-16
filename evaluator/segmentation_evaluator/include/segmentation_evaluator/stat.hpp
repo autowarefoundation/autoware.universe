@@ -66,16 +66,20 @@ public:
    */
   void printConfMat()
   {
-    std::cout << std::left << std::fixed <<
-    "            ┌──────────────┬─────────────────────────────┐\n"
-    "            │              │       Predicted values      │\n"
-    "            │  Confusion   ├──────────────┬──────────────┤\n"    
-    "            │   matrix     │    object    │    ground    │\n"
-    "┌───────────┼──────────────┼──────────────┼──────────────┤\n"
-    "│  Actual   │    object    │" << std::setw(14) << tp_ << "│" << std::setw(13) << fn_ << " │\n"
-    "│  values   ├──────────────┼──────────────┼──────────────┤\n"
-    "│           │    ground    │" << std::setw(14) << fp_ << "│" << std::setw(13) << tn_ << " │\n"
-    "└───────────┴──────────────┴──────────────┴──────────────┘\n";
+    std::cout << std::left << std::fixed
+              << "            ┌──────────────┬─────────────────────────────┐\n"
+                 "            │              │       Predicted values      │\n"
+                 "            │  Confusion   ├──────────────┬──────────────┤\n"
+                 "            │   matrix     │    object    │    ground    │\n"
+                 "┌───────────┼──────────────┼──────────────┼──────────────┤\n"
+                 "│  Actual   │    object    │"
+              << std::setw(14) << tp_ << "│" << std::setw(13) << fn_
+              << " │\n"
+                 "│  values   ├──────────────┼──────────────┼──────────────┤\n"
+                 "│           │    ground    │"
+              << std::setw(14) << fp_ << "│" << std::setw(13) << tn_
+              << " │\n"
+                 "└───────────┴──────────────┴──────────────┴──────────────┘\n";
   }
 
   /**
@@ -83,37 +87,43 @@ public:
    */
   void printConfMatAccu()
   {
-    std::cout << std::left << std::fixed <<
-    "            ┌──────────────┬─────────────────────────────┐\n"
-    "            │              │       Predicted values      │\n"
-    "            │  Confusion   ├──────────────┬──────────────┤\n"    
-    "            │   matrix     │    object    │    ground    │\n"
-    "┌───────────┼──────────────┼──────────────┼──────────────┤\n"
-    "│  Actual   │    object    │" << std::setw(14) << tp_accu_ << "│" << std::setw(13) << fn_accu_ << " │\n"
-    "│  values   ├──────────────┼──────────────┼──────────────┤\n"
-    "│           │    ground    │" << std::setw(14) << fp_accu_ << "│" << std::setw(13) << tn_accu_ << " │\n"
-    "└───────────┴──────────────┴──────────────┴──────────────┘\n";
+    std::cout << std::left << std::fixed
+              << "            ┌──────────────┬─────────────────────────────┐\n"
+                 "            │              │       Predicted values      │\n"
+                 "            │  Confusion   ├──────────────┬──────────────┤\n"
+                 "            │   matrix     │    object    │    ground    │\n"
+                 "┌───────────┼──────────────┼──────────────┼──────────────┤\n"
+                 "│  Actual   │    object    │"
+              << std::setw(14) << tp_accu_ << "│" << std::setw(13) << fn_accu_
+              << " │\n"
+                 "│  values   ├──────────────┼──────────────┼──────────────┤\n"
+                 "│           │    ground    │"
+              << std::setw(14) << fp_accu_ << "│" << std::setw(13) << tn_accu_
+              << " │\n"
+                 "└───────────┴──────────────┴──────────────┴──────────────┘\n";
   }
 
-   /**
+  /**
    * @brief set confusion matrix
    */
-  void setConfustionMatPerCloud(const std::vector<int> & conf_mat) { 
+  void setConfustionMatPerCloud(const std::vector<int> & conf_mat)
+  {
     tp_ = conf_mat[0];
     fn_ = conf_mat[1];
     fp_ = conf_mat[2];
-    tn_ = conf_mat[3]; 
+    tn_ = conf_mat[3];
     accumulateConfustionMat(conf_mat);
   }
 
-   /**
+  /**
    * @brief accumulate confusion matrix
    */
-  void accumulateConfustionMat(const std::vector<int> & conf_mat) { 
+  void accumulateConfustionMat(const std::vector<int> & conf_mat)
+  {
     tp_accu_ += conf_mat[0];
     fn_accu_ += conf_mat[1];
     fp_accu_ += conf_mat[2];
-    tn_accu_ += conf_mat[3]; 
+    tn_accu_ += conf_mat[3];
   }
 
   /**

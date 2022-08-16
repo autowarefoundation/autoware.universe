@@ -71,7 +71,8 @@ private:
   message_filters::Subscriber<PointCloud2> pcl_sub_, pcl_gt_ground_sub_, pcl_gt_obj_sub_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pcl_no_ex_pub_;
 
-  typedef message_filters::sync_policies::ApproximateTime<PointCloud2, PointCloud2, PointCloud2> SyncPolicy;
+  typedef message_filters::sync_policies::ApproximateTime<PointCloud2, PointCloud2, PointCloud2>
+    SyncPolicy;
   typedef message_filters::Synchronizer<SyncPolicy> SyncExact;
   SyncExact sync_;
   rclcpp::Publisher<DiagnosticArray>::SharedPtr metrics_pub_;
@@ -91,4 +92,4 @@ private:
 };
 }  // namespace segmentation_diagnostics
 
-#endif  // SEGMENTATION_EVALUATOR__MOTION_EVALUATOR_NODE_HPP_
+#endif  // SEGMENTATION_EVALUATOR__SEGMENTATION_EVALUATOR_NODE_HPP_

@@ -41,7 +41,6 @@ SegmentationEvaluatorNode::SegmentationEvaluatorNode(const rclcpp::NodeOptions &
 
   pcl_no_ex_pub_ = this->create_publisher<PointCloud2>("~/pcl_no_ex", rclcpp::SensorDataQoS());
 
-
   output_file_str_ = declare_parameter<std::string>("output_file");
   if (output_file_str_.empty()) {
     RCLCPP_INFO(
@@ -89,8 +88,8 @@ void SegmentationEvaluatorNode::syncCallback(
   metrics_msg.header.stamp = now();
   PointCloud2 pcl_no_ex;
   for (Metric metric : metrics_) {
-    metrics_dict_[metric] =
-      metrics_calculator_.updateStat(metrics_dict_[metric], metric, *msg, *msg_gt_ground, *msg_gt_obj, pcl_no_ex);
+    metrics_dict_[metric] = metrics_calculator_.updateStat(
+      metrics_dict_[metric], metric, *msg, *msg_gt_ground, *msg_gt_obj, pcl_no_ex);
     // std::cout << metrics_dict_[metric] << "\n";
     // std::cout << "metric dict count" << metrics_dict_[metric].count() << "\n";
     if (metrics_dict_[metric].count() > 0) {

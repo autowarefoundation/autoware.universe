@@ -31,16 +31,13 @@ enum class Metric {
 };
 
 static const std::unordered_map<std::string, Metric> str_to_metric = {
-  {"segment_stat", Metric::segment_stat}
-};
+  {"segment_stat", Metric::segment_stat}};
 static const std::unordered_map<Metric, std::string> metric_to_str = {
-  {Metric::segment_stat, "segment_stat"}
-};
+  {Metric::segment_stat, "segment_stat"}};
 
 // Metrics descriptions
 static const std::unordered_map<Metric, std::string> metric_descriptions = {
-  {Metric::segment_stat, "segment_stat [percentage]"}
-};
+  {Metric::segment_stat, "segment_stat [percentage]"}};
 
 namespace details
 {

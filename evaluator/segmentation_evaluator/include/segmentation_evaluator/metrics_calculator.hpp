@@ -54,7 +54,8 @@ public:
    */
   Stat<double> updateStat(
     const Stat<double> stat_prev, const Metric metric, const PointCloud2 & pcl,
-    const PointCloud2 & pcl_gt_ground, const PointCloud2 & pcl_gt_obj, PointCloud2 & pcl_no_ex) const;
+    const PointCloud2 & pcl_gt_ground, const PointCloud2 & pcl_gt_obj,
+    PointCloud2 & pcl_no_ex) const;
 };  // class MetricsCalculator
 
 }  // namespace segmentation_diagnostics
