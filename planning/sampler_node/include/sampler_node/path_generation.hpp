@@ -50,6 +50,12 @@ struct Parameters
     } frenet;
     bezier_sampler::SamplingParameters bezier{};
   } sampling;
+
+  struct
+  {
+    bool force_zero_deviation{};
+    bool force_zero_heading{};
+  } preprocessing{};
 };
 
 /**

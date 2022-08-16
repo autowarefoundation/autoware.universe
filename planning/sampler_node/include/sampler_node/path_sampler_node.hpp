@@ -114,6 +114,8 @@ private:
   std::optional<sampler_common::State> getCurrentEgoState();
   static std::optional<sampler_common::Path> selectBestPath(
     const std::vector<sampler_common::Path> & paths);
+  sampler_common::State getPlanningState(
+    sampler_common::State state, const sampler_common::transform::Spline2D & path_spline) const;
 
 public:
   explicit PathSamplerNode(const rclcpp::NodeOptions & node_options);

@@ -121,6 +121,10 @@ PathSamplerNode::PathSamplerNode(const rclcpp::NodeOptions & node_options)
   params_.sampling.bezier.nb_t = declare_parameter<int>("sampling.bezier.nb_t");
   params_.sampling.bezier.mt_min = declare_parameter<double>("sampling.bezier.mt_min");
   params_.sampling.bezier.mt_max = declare_parameter<double>("sampling.bezier.mt_max");
+  params_.preprocessing.force_zero_deviation =
+    declare_parameter<bool>("preprocessing.force_zero_initial_deviation");
+  params_.preprocessing.force_zero_heading =
+    declare_parameter<bool>("preprocessing.force_zero_initial_heading");
 
   // const auto half_wheel_tread = vehicle_info_.wheel_tread_m / 2.0;
   const auto left_offset = vehicle_info_.vehicle_width_m / 2.0;
@@ -196,6 +200,10 @@ rcl_interfaces::msg::SetParametersResult PathSamplerNode::onParameter(
       params_.sampling.bezier.mt_min = parameter.as_double();
     } else if (parameter.get_name() == "sampling.bezier.mt_max") {
       params_.sampling.bezier.mt_max = parameter.as_double();
+    } else if (parameter.get_name() == "preprocessing.force_zero_initial_deviation") {
+      params_.preprocessing.force_zero_deviation = parameter.as_bool();
+    } else if (parameter.get_name() == "preprocessing.force_zero_initial_heading") {
+      params_.preprocessing.force_zero_heading = parameter.as_bool();
     } else {
       RCLCPP_WARN(get_logger(), "Unknown parameter %s", parameter.get_name().c_str());
       result.successful = false;
@@ -224,12 +232,13 @@ void PathSamplerNode::pathCallback(const autoware_auto_planning_msgs::msg::Path:
   const auto calc_begin = std::chrono::steady_clock::now();
 
   const auto path_spline = preparePathSpline(*msg);
+  const auto planning_state = getPlanningState(*current_state, path_spline);
   prepareConstraints(
     params_.constraints, *in_objects_ptr_, *lanelet_map_ptr_, drivable_ids_, prefered_ids_,
     msg->drivable_area);
 
   auto paths =
-    generateCandidatePaths(*current_state, prev_path_, path_spline, *msg, *w_.plotter_, params_);
+    generateCandidatePaths(planning_state, prev_path_, path_spline, *msg, *w_.plotter_, params_);
   for (auto & path : paths) {
     const auto nb_violations =
       sampler_common::constraints::checkHardConstraints(path, params_.constraints);
@@ -405,6 +414,20 @@ void PathSamplerNode::fallbackCallback(
   const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr fallback_msg)
 {
   fallback_traj_ptr_ = fallback_msg;
+}
+
+sampler_common::State PathSamplerNode::getPlanningState(
+  sampler_common::State state, const sampler_common::transform::Spline2D & path_spline) const
+{
+  const auto current_frenet = path_spline.frenet(state.pose);
+  if (params_.preprocessing.force_zero_deviation) {
+    state.pose = path_spline.cartesian(current_frenet.s);
+  }
+  if (params_.preprocessing.force_zero_heading) {
+    state.heading = path_spline.yaw(current_frenet.s);
+  }
+  state.curvature = path_spline.curvature(current_frenet.s);
+  return state;
 }
 }  // namespace sampler_node
 
