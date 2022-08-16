@@ -9,8 +9,7 @@
 namespace initialpose_plugins
 {
 
-InitialPosePanel::InitialPosePanel(QWidget * parent)
-: Panel(parent), logger_(rclcpp::get_logger("initialpose_plugins"))
+InitialPosePanel::InitialPosePanel(QWidget * parent) : Panel(parent)
 {
   // Button
   toggle_button_ = new QPushButton();
@@ -54,7 +53,7 @@ void InitialPosePanel::onInitialize()
 
   auto timer_cb = std::bind(&InitialPosePanel::timerCallback, this);
   using namespace std::literals::chrono_literals;
-  timer_ = rclcpp::create_timer(node, clock_, 1000ms, std::move(timer_cb));
+  timer_ = rclcpp::create_timer(node, clock_, 100ms, std::move(timer_cb));
 }
 
 void InitialPosePanel::save(rviz_common::Config config) const
@@ -109,9 +108,13 @@ void InitialPosePanel::timerCallback()
     ss << std::setprecision(3) << std::fixed << dt << " sec";
     time_label_->setText(ss.str().c_str());
 
-    if (std::abs(dt) < 0.55) {
+    if ((dt < 0) & (last_dt_ > 0)) {
       pose_pub_->publish(last_initial_pose_.value());
     }
+    QFont font;
+    if (dt > 0) font.setBold(true);
+    time_label_->setFont(font);
+    last_dt_ = dt;
   }
 }
 

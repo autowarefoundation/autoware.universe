@@ -2,7 +2,6 @@
 
 #include <QLabel>
 #include <QPushButton>
-#include <rclcpp/logger.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rviz_common/display_context.hpp>
 #include <rviz_common/panel.hpp>
@@ -27,12 +26,12 @@ public:
 
   void load(const rviz_common::Config & config) override;
   void save(rviz_common::Config config) const override;
-  rclcpp::Logger logger_;
 
 private Q_SLOTS:
   void toggle();
 
 private:
+  double last_dt_{0};
   rclcpp::Publisher<PoseCovStamped>::SharedPtr pose_pub_;
   rclcpp::Subscription<PoseCovStamped>::SharedPtr pose_sub_;
   rclcpp::TimerBase::SharedPtr timer_;
