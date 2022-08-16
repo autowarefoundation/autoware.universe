@@ -78,7 +78,14 @@ int main()
   ns_utils::print("\nQfilter Discrete State Space \n");
   Qss.print_discrete_system();
 
-  // Test on the vehicle model.
+  // Print test.
+  ns_utils::print("Testing print", 1, 2, 3);
+  ns_utils::print("Testing print", 5, 2, 3);
+
+  // First order filter
+  ns_utils::print("First order filter ...");
+  auto forderfilt = ns_control_toolbox::tf2ss({1., 0}, {1., 1.}, 0.05);
+  forderfilt.print_discrete_system();
 
   return 0;
 }

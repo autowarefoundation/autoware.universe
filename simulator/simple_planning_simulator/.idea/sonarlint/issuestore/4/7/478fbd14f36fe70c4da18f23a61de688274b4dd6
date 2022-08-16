@@ -1,0 +1,5 @@
+
+\cpp:S107"HThis function has 10 parameters, which is greater than the 7 authorized.(ªÑà“
+D	cpp:S5817¤")This function should be declared "const".(ÎÖºôüÿÿÿÿ
+g	cpp:S1871Ã"QThe code of this branch is a duplicate; refactor so that all branches are unique.(å¥‡
+	cpp:S3230"xDo not use the constructor's initializer list for data member "MIN_TIME_CONSTANT". Use the in-class initializer instead.(«éÆï

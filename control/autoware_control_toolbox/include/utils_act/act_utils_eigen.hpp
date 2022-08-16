@@ -18,7 +18,6 @@
 #define UTILS__ACT_UTILS_EIGEN_HPP_
 
 #include "eigen3/Eigen/Core"
-
 #include <eigen3/Eigen/Sparse>
 
 #include <iostream>

@@ -22,28 +22,17 @@ ns_control_toolbox::tf2ss::tf2ss(const ns_control_toolbox::tf &sys_tf, const dou
 {
   // N_ = sys_tf.order(); // size of A will be order of the TF.
   auto const &nx = N_;
-  A_.resize(nx, nx);
-  B_.resize(nx, 1);
-  C_.resize(1, nx);
-  D_.resize(1, 1);
+  A_ = Eigen::MatrixXd::Zero(nx, nx);
+  B_ = Eigen::MatrixXd::Zero(nx, 1);
+  C_ = Eigen::MatrixXd::Zero(1, nx);
+  D_ = Eigen::MatrixXd::Zero(1, 1);
 
-  Ad_.resize(nx, nx);
-  Bd_.resize(nx, 1);
-  Cd_.resize(1, nx);
-  Dd_.resize(1, 1);
+  Ad_ = Eigen::MatrixXd::Zero(nx, nx);
+  Bd_ = Eigen::MatrixXd::Zero(nx, 1);
+  Cd_ = Eigen::MatrixXd::Zero(1, nx);
+  Dd_ = Eigen::MatrixXd::Zero(1, 1);
 
-  Tsimilarity_mat_.resize(nx, nx);
-
-  A_.setZero();
-  B_.setZero();
-  C_.setZero();
-  D_.setZero();
-
-  Ad_.setZero();
-  Bd_.setZero();
-  Cd_.setZero();
-  Dd_.setZero();
-  Tsimilarity_mat_.setIdentity();
+  Tsimilarity_mat_ = Eigen::MatrixXd::Identity(nx, nx);
 
   updateStateSpace(sys_tf);
 }
@@ -101,27 +90,17 @@ ns_control_toolbox::tf2ss::tf2ss(
 
   // Initialize the system matrices.
   auto const &nx = N_;
-  A_.resize(nx, nx);
-  B_.resize(nx, 1);
-  C_.resize(1, nx);
-  D_.resize(1, 1);
+  A_ = Eigen::MatrixXd::Zero(nx, nx);
+  B_ = Eigen::MatrixXd::Zero(nx, 1);
+  C_ = Eigen::MatrixXd::Zero(1, nx);
+  D_ = Eigen::MatrixXd::Zero(1, 1);
 
-  Ad_.resize(nx, nx);
-  Bd_.resize(nx, 1);
-  Cd_.resize(1, nx);
-  Dd_.resize(1, 1);
+  Ad_ = Eigen::MatrixXd::Zero(nx, nx);
+  Bd_ = Eigen::MatrixXd::Zero(nx, 1);
+  Cd_ = Eigen::MatrixXd::Zero(1, nx);
+  Dd_ = Eigen::MatrixXd::Zero(1, 1);
 
-  Tsimilarity_mat_.resize(nx, nx);
-
-  A_.setZero();
-  B_.setZero();
-  C_.setZero();
-  D_.setZero();
-
-  Ad_.setZero();
-  Bd_.setZero();
-  Cd_.setZero();
-  Dd_.setZero();
+  Tsimilarity_mat_ = Eigen::MatrixXd::Identity(nx, nx);
 
   // Compute the system matrices.
   computeSystemMatrices(num, den);
@@ -140,27 +119,17 @@ void ns_control_toolbox::tf2ss::computeSystemMatrices(const std::vector<double> 
 
   if (A_.rows() != nx && A_.cols() != nx)
   {
-    A_.resize(nx, nx);
-    B_.resize(nx, 1);
-    C_.resize(1, nx);
-    D_.resize(1, 1);
+    A_ = Eigen::MatrixXd::Zero(nx, nx);
+    B_ = Eigen::MatrixXd::Zero(nx, 1);
+    C_ = Eigen::MatrixXd::Zero(1, nx);
+    D_ = Eigen::MatrixXd::Zero(1, 1);
 
-    Ad_.resize(nx, nx);
-    Bd_.resize(nx, 1);
-    Cd_.resize(1, nx);
-    Dd_.resize(1, 1);
+    Ad_ = Eigen::MatrixXd::Zero(nx, nx);
+    Bd_ = Eigen::MatrixXd::Zero(nx, 1);
+    Cd_ = Eigen::MatrixXd::Zero(1, nx);
+    Dd_ = Eigen::MatrixXd::Zero(1, 1);
 
-    Tsimilarity_mat_.resize(nx, nx);
-
-    A_.setZero();
-    B_.setZero();
-    C_.setZero();
-    D_.setZero();
-
-    Ad_.setZero();
-    Bd_.setZero();
-    Cd_.setZero();
-    Dd_.setZero();
+    Tsimilarity_mat_ = Eigen::MatrixXd::Identity(nx, nx);
   }
 
   B_ = Eigen::MatrixXd::Identity(nx, 1);
@@ -369,3 +338,68 @@ double ns_control_toolbox::tf2ss::simulateOneStep(Eigen::MatrixXd &x0, const dou
 
 Eigen::MatrixXd ns_control_toolbox::tf2ss::T() const
 { return Tsimilarity_mat_; }
+
+ns_control_toolbox::scalarFilters_ss::scalarFilters_ss(const ns_control_toolbox::tf &sys_tf, const double &Ts)
+{
+
+  // Low-pass filter case
+  auto num = sys_tf.num();
+  auto den = sys_tf.den();
+
+  double a_{};
+  double b_{};
+  double c_{};
+  double d_{};
+
+  if (num.size() == 1) // low-pass filter
+  {
+    auto a0 = num[0];
+    auto b0 = den[0];
+    auto b1 = den[1];
+
+    // state space
+    a_ = -b1 / b0;
+    b_ = 1 / b0;
+    c_ = a0;
+    d_ = 0.;
+  }
+
+  if (num.size() == 2) // high-pass filter
+  {
+    auto a0 = num[0];
+    auto a1 = num[1];
+
+    auto b0 = den[0];
+    auto b1 = den[1];
+
+    // state space
+    a_ = -b1 / b0;
+    b_ = 1 / b0;
+
+    c_ = a1 - a0 * b1 / b0;
+    d_ = a0 / b0;
+  }
+
+  auto inv_a = 1. / (1. - a_ * Ts / 2);
+
+  ad_ = inv_a * (1. + a_ * Ts / 2.);
+  bd_ = inv_a * b_ * Ts;
+  cd_ = c_ * inv_a;
+  dd_ = d_ + c_ * bd_ / 2.;
+
+}
+double ns_control_toolbox::scalarFilters_ss::simulateOneStep(const double &u)
+{
+  double const &y = cd_ * x0_ + dd_ * u;
+  x0_ = ad_ * x0_ + bd_ * u;
+
+  return y;
+}
+
+void ns_control_toolbox::scalarFilters_ss::print() const
+{
+  ns_utils::print("Scalar filter discrete-time state space");
+  ns_utils::print("Ad, Bd, Cd, Dd : ", ad_, bd_, cd_, dd_);
+
+}
+

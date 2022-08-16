@@ -81,7 +81,7 @@ std::vector<T> operator*(T const &a, std::vector<T> const &vec)
   return temp;
 }
 
-template<typename T, typename std::enable_if_t<std::is_floating_point<T>::value, std::vector<T>> * = nullptr>
+template<typename T, typename std::enable_if_t<std::is_floating_point_v<T>, std::vector<T>> * = nullptr>
 
 std::vector<T> &operator*=(T const &a, std::vector<T> &vec)
 {
@@ -516,14 +516,25 @@ constexpr void print(T const &msg)
 template<typename T0, typename T1>
 constexpr void print(T0 const &msg0, T1 const &msg1)
 {
-  std::cout << msg0 << "  " << msg1 << std::endl;
+  std::cout << "\n" << msg0 << "  " << msg1 << std::endl;
 }
 
-template<typename... Args>
-void print(Args &&... args)
+template<class T0, class ... Args>
+constexpr void print(T0 &first, Args const &... args)
 {
-  ((std::cout << args << " "), ...);
+  std::cout << first << " ";
+  print(args ...);
 }
+
+// Fold expression
+//template<typename... Args>
+//void print(Args &&... args)
+//{
+//  ((std::cout << args << " "), ...);
+//
+//}
+
+
 
 // ------------ TIME MODULES -----------------------
 double tic();

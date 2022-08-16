@@ -1,0 +1,25 @@
+
+O	cpp:S1135ö"4Complete the task associated to this "TODO" comment.(§ÀÉÖúÿÿÿÿ
+I	cpp:S5812G"/Concatenate this namespace with the nested one.(¯½Äúøÿÿÿÿ
+s	cpp:S1186O"YAdd a nested comment explaining why this method is empty, or complete the implementation.(ã„ßêúÿÿÿÿ
+S	cpp:S1199™"8Extract this nested code block into a separate function.(ÒÌâ–øÿÿÿÿ
+S	cpp:S1199‰"8Extract this nested code block into a separate function.(ÒÌâ–øÿÿÿÿ
+S	cpp:S1199"8Extract this nested code block into a separate function.(ÒÌâ–øÿÿÿÿ
+S	cpp:S6005±"=Replace this declaration by a structured binding declaration.(²‘üç
+X	cpp:S6005·"=Replace this declaration by a structured binding declaration.(¹­™øÿÿÿÿ
+X	cpp:S6005Á"=Replace this declaration by a structured binding declaration.(ºÙ¬’üÿÿÿÿ
+D	cpp:S5817ñ")This function should be declared "const".(¶†Îàúÿÿÿÿ
+?	cpp:S5817÷")This function should be declared "const".(ÑÍ±é
+>	cpp:S5817“")This function should be declared "const".(ºúßW
+^	cpp:S1238”"CPass expensive to copy object "parent_frame" by reference to const.(şãÇâúÿÿÿÿ
+]	cpp:S1238”"BPass expensive to copy object "child_frame" by reference to const.(şãÇâúÿÿÿÿ
+	cpp:S5350"sMake the type of this variable a reference-to-const. The current type of "ex" is "class tf2::TransformException &".(×ËÂÍşÿÿÿÿ
+k	cpp:S6004€"UUse the init-statement to declare "use_steering_input_delay" inside the if statement.(ÂÅì™
+t	cpp:S6004 "YUse the init-statement to declare "use_acceleration_input_delay" inside the if statement.(ôÍßÀùÿÿÿÿ
+r	cpp:S6004¿"WUse the init-statement to declare "use_road_slope_disturbance" inside the if statement.(õ ÏÛúÿÿÿÿ
+B	cpp:S5827"'Replace the redundant type with "auto".(°Í  øÿÿÿÿ
+V	cpp:S6011™";Remove temporary variable "steer_td_time_varying_dist_gen".(¨ç‰ÿÿÿÿÿ
+B	cpp:S5827®"'Replace the redundant type with "auto".(‘Õ¨ªıÿÿÿÿ
+T	cpp:S6011¸"9Remove temporary variable "acc_td_time_varying_dist_gen".(§¼‹«üÿÿÿÿ
+G	cpp:S6011Ï",Remove temporary variable "road_slope_dist".(›ìâòşÿÿÿÿ
+J	cpp:S6011å"4Remove temporary variable "steer_deadzone_dist_gen".(…¢»ë
