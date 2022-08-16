@@ -981,12 +981,21 @@ void ns_nmpc_interface::NonlinearMPCController::getControlSolutions(Model::input
   u_solution_last_ = u_solution;
 }
 
-double ns_nmpc_interface::NonlinearMPCController::getEstimatedVxControl()
+double ns_nmpc_interface::NonlinearMPCController::getPredictedVxControl()
 {
   auto const &v0 = data_nmpc_.trajectory_data.X[0](ns_utils::toUType(VehicleStateIds::vx));
   auto const &v1 = data_nmpc_.trajectory_data.X[1](ns_utils::toUType(VehicleStateIds::vx));
 
   return (v0 + v1) / 2;
+
+}
+
+double ns_nmpc_interface::NonlinearMPCController::getPredictedSteeringState()
+{
+  // auto const &d0 = data_nmpc_.trajectory_data.X[0](ns_utils::toUType(VehicleStateIds::steering));
+  auto const &d1 = data_nmpc_.trajectory_data.X[1](ns_utils::toUType(VehicleStateIds::steering));
+
+  return d1;
 
 }
 
