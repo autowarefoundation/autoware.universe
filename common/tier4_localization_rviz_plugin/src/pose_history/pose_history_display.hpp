@@ -27,16 +27,13 @@ namespace rviz_rendering
 {
 class BillboardLine;
 }  // namespace rviz_rendering
-namespace rviz_common
-{
-namespace properties
+namespace rviz_common::properties
 {
 class ColorProperty;
 class FloatProperty;
 class IntProperty;
 class BoolProperty;
-}  // namespace properties
-}  // namespace rviz_common
+}  // namespace rviz_common::properties
 
 namespace rviz_plugins
 {
@@ -54,16 +51,14 @@ protected:
   void onDisable() override;
   void update(float wall_dt, float ros_dt) override;
 
-private Q_SLOTS:
-  void subscribe();
-  void unsubscribe();
-  void processMessage(const geometry_msgs::msg::PoseStamped::ConstSharedPtr message);
-
-private:  // NOLINT for Qt
+private:
+  void subscribe() override;
+  void unsubscribe() override;
+  void processMessage(const geometry_msgs::msg::PoseStamped::ConstSharedPtr message) override;
   void updateHistory();
   void updateLines();
 
-private:
+
   std::string target_frame_;
   std::deque<geometry_msgs::msg::PoseStamped::ConstSharedPtr> history_;
   std::unique_ptr<rviz_rendering::BillboardLine> lines_;
