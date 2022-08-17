@@ -142,8 +142,14 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node) : node_{&node}
   }
 
   // ego nearest index search
-  ego_nearest_dist_threshold_ = node_->declare_parameter<double>("ego_nearest_dist_threshold");
-  ego_nearest_yaw_threshold_ = node_->declare_parameter<double>("ego_nearest_yaw_threshold");
+  ego_nearest_dist_threshold_ =
+    node_->has_parameter("ego_nearest_dist_threshold")
+      ? node_->get_parameter("ego_nearest_dist_threshold").as_double()
+      : node_->declare_parameter<double>("ego_nearest_dist_threshold");  // [m]
+  ego_nearest_yaw_threshold_ =
+    node_->has_parameter("ego_nearest_yaw_threshold")
+      ? node_->get_parameter("ego_nearest_yaw_threshold").as_double()
+      : node_->declare_parameter<double>("ego_nearest_yaw_threshold");  // [rad]
   m_mpc.ego_nearest_dist_threshold = ego_nearest_dist_threshold_;
   m_mpc.ego_nearest_yaw_threshold = ego_nearest_yaw_threshold_;
 

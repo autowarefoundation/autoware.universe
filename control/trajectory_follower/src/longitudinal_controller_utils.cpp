@@ -72,8 +72,9 @@ float64_t calcStopDistance(
   const size_t end_idx = stop_idx_opt ? *stop_idx_opt : traj.points.size() - 1;
   const size_t seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
     traj.points, current_pose, max_dist, max_yaw);
-  const float64_t signed_length_on_traj =
-    motion_utils::calcSignedArcLength(traj.points, current_pose.position, seg_idx, end_idx);
+  const float64_t signed_length_on_traj = motion_utils::calcSignedArcLength(
+    traj.points, current_pose.position, seg_idx, traj.points.at(end_idx).pose.position,
+    std::min(end_idx, traj.points.size() - 2));
 
   if (std::isnan(signed_length_on_traj)) {
     return 0.0;

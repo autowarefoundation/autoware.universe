@@ -180,9 +180,13 @@ PidLongitudinalController::PidLongitudinalController(rclcpp::Node & node) : node
 
   // ego nearest index search
   ego_nearest_dist_threshold_ =
-    node_->declare_parameter<double>("ego_nearest_dist_threshold");  // [m]
+    node_->has_parameter("ego_nearest_dist_threshold")
+      ? node_->get_parameter("ego_nearest_dist_threshold").as_double()
+      : node_->declare_parameter<double>("ego_nearest_dist_threshold");  // [m]
   ego_nearest_yaw_threshold_ =
-    node_->declare_parameter<double>("ego_nearest_yaw_threshold");  // [rad]
+    node_->has_parameter("ego_nearest_yaw_threshold")
+      ? node_->get_parameter("ego_nearest_yaw_threshold").as_double()
+      : node_->declare_parameter<double>("ego_nearest_yaw_threshold");  // [rad]
 
   // subscriber, publisher
   m_pub_slope =
@@ -434,8 +438,10 @@ PidLongitudinalController::ControlData PidLongitudinalController::getControlData
   const bool is_dist_deviation_large =
     m_state_transition_params.emergency_state_traj_trans_dev <
     tier4_autoware_utils::calcDistance2d(nearest_point, current_pose);
-  const bool is_yaw_deviation_large = m_state_transition_params.emergency_state_traj_rot_dev <
-                                      std::abs(tf2::getYaw(nearest_point.orientation));
+  const bool is_yaw_deviation_large =
+    m_state_transition_params.emergency_state_traj_rot_dev <
+    std::abs(tier4_autoware_utils::normalizeRadian(
+      tf2::getYaw(nearest_point.orientation) - tf2::getYaw(current_pose.orientation)));
   if (is_dist_deviation_large || is_yaw_deviation_large) {
     // return here if nearest index is not found
     control_data.is_far_from_trajectory = true;

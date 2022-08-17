@@ -309,7 +309,7 @@ bool8_t calcNearestPoseInterp(
 
   autoware_auto_planning_msgs::msg::Trajectory autoware_traj;
   convertToAutowareTrajectory(traj, autoware_traj);
-  if (autoware_traj.points.size().empty()) {
+  if (autoware_traj.points.empty()) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
       logger, clock, 5000,
       "[calcNearestPoseInterp] fail to get nearest. autoware_traj.points.size = %zu",
