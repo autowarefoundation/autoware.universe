@@ -99,17 +99,17 @@ SafeMotion calculateSafeMotion(const Velocity & v, const double ttv)
   double t2 = a_max / j_max;
   double & v_safe = sm.safe_velocity;
   double & stop_dist = sm.stop_dist;
-  if (ttc <= t1) {
+  if (ttv <= t1) {
     // delay
     v_safe = 0;
     stop_dist = 0;
-  } else if (ttc <= t2 + t1) {
+  } else if (ttv <= t2 + t1) {
     // delay + const jerk
-    t2 = ttc - t1;
+    t2 = ttv - t1;
     v_safe = -0.5 * j_max * t2 * t2;
     stop_dist = v_safe * t1 - j_max * t2 * t2 * t2 / 6;
   } else {
-    const double t3 = ttc - t2 - t1;
+    const double t3 = ttv - t2 - t1;
     // delay + const jerk + const accel
     const double v2 = -0.5 * j_max * t2 * t2;
     v_safe = v2 - a_max * t3;
