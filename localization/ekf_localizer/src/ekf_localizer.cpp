@@ -363,10 +363,10 @@ void EKFLocalizer::initEKF()
   Eigen::MatrixXd P = Eigen::MatrixXd::Identity(dim_x_, dim_x_) * 1.0E15;  // for x & y
   P(IDX::YAW, IDX::YAW) = 50.0;                                            // for yaw
   if (enable_yaw_bias_estimation_) {
-    P(IDX::YAWB, IDX::YAWB) = 0.0001;                                      // for yaw bias
+    P(IDX::YAWB, IDX::YAWB) = 0.0001;  // for yaw bias
   }
-  P(IDX::VX, IDX::VX) = 1000.0;                                            // for vx
-  P(IDX::WZ, IDX::WZ) = 50.0;                                              // for wz
+  P(IDX::VX, IDX::VX) = 1000.0;  // for vx
+  P(IDX::WZ, IDX::WZ) = 50.0;    // for wz
 
   ekf_.init(X, P, extend_state_step_);
 }
@@ -436,10 +436,10 @@ void EKFLocalizer::predictKinematicsModel()
 
   Q(IDX::X, IDX::X) = 0.0;
   Q(IDX::Y, IDX::Y) = 0.0;
-  Q(IDX::YAW, IDX::YAW) = proc_cov_yaw_d_;         // for yaw
+  Q(IDX::YAW, IDX::YAW) = proc_cov_yaw_d_;  // for yaw
   Q(IDX::YAWB, IDX::YAWB) = 0.0;
-  Q(IDX::VX, IDX::VX) = proc_cov_vx_d_;            // for vx
-  Q(IDX::WZ, IDX::WZ) = proc_cov_wz_d_;            // for wz
+  Q(IDX::VX, IDX::VX) = proc_cov_vx_d_;  // for vx
+  Q(IDX::WZ, IDX::WZ) = proc_cov_wz_d_;  // for wz
 
   ekf_.predictWithDelay(X_next, A, Q);
 
