@@ -36,7 +36,10 @@ TurnIndicatorsCommand TurnSignalDecider::getTurnSignal(
   const auto intersection_turn_signal = intersection_result.first;
   const auto intersection_distance = intersection_result.second;
 
-  if (intersection_distance < plan_distance) {
+  if (
+    intersection_distance < plan_distance turn_signal_plan.command ==
+      TurnIndicatorsCommand::NO_COMMAND ||
+    turn_signal_plan.command == TurnIndicatorsCommand::DISABLE) {
     turn_signal.command = intersection_turn_signal.command;
   }
 
