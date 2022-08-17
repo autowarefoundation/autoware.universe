@@ -2,6 +2,7 @@
   <name>operation_mode_transition_manager</name>
   <version>0.1.0</version>
   <description>The vehicle_cmd_gate package</description>
+  <author email="horibe.takamasa@gmail.com">Takamasa Horibe</author>
   <maintainer email="horibe.takamasa@gmail.com">Takamasa Horibe</maintainer>
   <license>Apache License 2.0</license>
 
