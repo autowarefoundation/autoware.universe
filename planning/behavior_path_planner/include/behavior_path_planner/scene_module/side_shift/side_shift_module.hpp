@@ -104,7 +104,7 @@ private:
   PathShifter path_shifter_;
 
   ShiftedPath prev_output_;
-  ShiftPoint prev_shiftpoint_;
+  ShiftPoint prev_shift_point_;
 
   // NOTE: this function is ported from avoidance.
   PoseStamped getUnshiftedEgoPose(const ShiftedPath & prev_path) const;

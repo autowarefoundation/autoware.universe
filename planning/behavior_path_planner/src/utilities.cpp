@@ -91,7 +91,7 @@ std::array<double, 4> getPathScope(
     return path_lanes;
   }();
 
-  // claculate nearest lane idx
+  // calculate nearest lane idx
   const int nearest_lane_idx = [&]() -> int {
     lanelet::ConstLanelet closest_lanelet;
     if (lanelet::utils::query::getClosestLanelet(path_lanes, current_pose, &closest_lanelet)) {
@@ -1064,7 +1064,7 @@ bool containsGoal(const lanelet::ConstLanelets & lanes, const lanelet::Id & goal
 // input lanes must be in sequence
 // NOTE: lanes in the path argument is used to calculate the size of the drivable area to cover
 // designated forward and backward length by getPathScope function.
-//       lanes argument is used to determinte (= draw) the drivable area.
+//       lanes argument is used to determine (= draw) the drivable area.
 //       This is because lanes argument has multiple parallel lanes which makes hard to calculate
 //       the size of the drivable area
 OccupancyGrid generateDrivableArea(

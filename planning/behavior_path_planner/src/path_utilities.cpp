@@ -287,10 +287,10 @@ std::pair<TurnIndicatorsCommand, double> getPathTurnSignal(
   }
 
   bool cross_line = false;
-  bool TEMPORARY_SET_CROSSLINE_TRUE =
+  bool TEMPORARY_SET_CROSS_LINE_TRUE =
     true;  // due to a bug. See link:
            // https://github.com/autowarefoundation/autoware.universe/pull/748
-  if (TEMPORARY_SET_CROSSLINE_TRUE) {
+  if (TEMPORARY_SET_CROSS_LINE_TRUE) {
     cross_line = true;
   } else {
     cross_line =
