@@ -31,13 +31,18 @@ private:
   rclcpp::Publisher<ParticleArray>::SharedPtr pub_particle_;
   rclcpp::Publisher<Marker>::SharedPtr pub_marker_;
 
+  lanelet::LaneletMapPtr lanelet_map_{nullptr};
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_{nullptr};
   pcl::KdTreeFLANN<pcl::PointXYZ>::Ptr kdtree_{nullptr};
+  std::unordered_map<int, lanelet::Id> point_id_to_lanelet_id_;
 
   void onInitialpose(const PoseCovStamped & initialpose);
   void onMap(const HADMapBin & bin_map);
 
-  void searchLandingLanelet(const Eigen::Vector3f & pos);
-  void publishRangeMarker(const Eigen::Vector3f & pos);
+  int searchLandingLanelet(const Eigen::Vector3f & pos);
+  void publishRangeMarker(
+    const Eigen::Vector3f & pos, const Eigen::Vector3f & tangent = Eigen::Vector3f::UnitX());
+
+  Eigen::Vector3f tangentDirection(const lanelet::Lanelet & lane, const Eigen::Vector3f & position);
 };
 }  // namespace particle_filter
