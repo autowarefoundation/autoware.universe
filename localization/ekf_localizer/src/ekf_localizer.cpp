@@ -363,7 +363,7 @@ void EKFLocalizer::initEKF()
   Eigen::MatrixXd P = Eigen::MatrixXd::Identity(dim_x_, dim_x_) * 1.0E15;  // for x & y
   P(IDX::YAW, IDX::YAW) = 50.0;                                            // for yaw
   if (enable_yaw_bias_estimation_) {
-    P(IDX::YAWB, IDX::YAWB) = 50.0;                                        // for yaw bias
+    P(IDX::YAWB, IDX::YAWB) = 50.0;  // for yaw bias
   }
   P(IDX::VX, IDX::VX) = 1000.0;  // for vx
   P(IDX::WZ, IDX::WZ) = 50.0;    // for wz
