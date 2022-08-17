@@ -310,6 +310,11 @@ bool IntersectionModule::checkCollision(
       continue;
     }
 
+    if (auto object_it = map_object_lane_.find(object.object_id);
+        object_it != map_object_lane_.end()) {
+      // push its corresponding lane
+      // map_object_lane_[object.object_id].push_back(0);
+    }
     // ignore vehicle in ego-lane && behind ego
     const auto object_pose = object.kinematics.initial_pose_with_covariance.pose;
     const bool is_in_ego_lane = bg::within(to_bg2d(object_pose.position), ego_poly);

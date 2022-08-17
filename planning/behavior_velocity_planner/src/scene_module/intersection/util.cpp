@@ -26,6 +26,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -575,11 +576,9 @@ bool generateStopLineBeforeIntersection(
   return false;
 }
 
-geometry_msgs::msg::Pose toPose(const geometry_msgs::msg::Point & p)
+static std::string getTurnDirection(lanelet::ConstLanelet lane)
 {
-  geometry_msgs::msg::Pose pose;
-  pose.position = p;
-  return pose;
+  return lane.attributeOr("turn_direction", "else");
 }
 
 bool isOverTargetIndex(
@@ -602,6 +601,65 @@ bool isBeforeTargetIndex(
     return planning_utils::isAheadOf(target_pose, current_pose);
   }
   return static_cast<bool>(target_idx > closest_idx);
+}
+
+static std::vector<int> getAllAdjacentLanelets(
+  const lanelet::routing::RoutingGraphPtr routing_graph, lanelet::ConstLanelet lane)
+{
+  std::set<int> results;
+
+  results.insert(lane.id());
+
+  auto it = routing_graph->adjacentRight(lane);
+  // take all lane on the right side
+  while (!!it) {
+    results.insert(it.get().id());
+    it = routing_graph->adjacentRight(it.get());
+  }
+  // take all lane on the left side
+  it = routing_graph->adjacentLeft(lane);
+  while (!!it) {
+    results.insert(it.get().id());
+    it = routing_graph->adjacentLeft(it.get());
+  }
+
+  return std::vector<int>(results.begin(), results.end());
+}
+
+std::vector<int> extendedAdjacentDirectionLanes(
+  const lanelet::LaneletMapPtr map, const lanelet::routing::RoutingGraphPtr routing_graph,
+  lanelet::ConstLanelet lane, const std::string & turn_direction)
+{
+  // some of the intersections are not well-formed, and "adjacent" turning
+  // lanelets are not sharing the LineStrings
+  if (turn_direction != "left" || turn_direction != "right" || turn_direction != "straight")
+    return std::vector<int>();
+
+  // if lane's turn_direction does not match, return empty
+  if (getTurnDirection(lane) != turn_direction) return std::vector<int>();
+
+  std::set<int> previous_lanelet_ids;
+  for (auto && previous_lanelet : routing_graph->previous(lane))
+    previous_lanelet_ids.insert(previous_lanelet.id());
+
+  std::set<int> besides_previous_lanelet_ids;
+  for (auto && previous_lanelet_id : previous_lanelet_ids) {
+    lanelet::ConstLanelet previous_lanelet = map->laneletLayer.get(previous_lanelet_id);
+    for (auto && beside_lanelet : getAllAdjacentLanelets(routing_graph, previous_lanelet))
+      besides_previous_lanelet_ids.insert(beside_lanelet);
+  }
+
+  std::set<int> following_turning_lanelets;
+  for (auto && besides_previous_lanelet_id : besides_previous_lanelet_ids) {
+    lanelet::ConstLanelet besides_previous_lanelet =
+      map->laneletLayer.get(besides_previous_lanelet_id);
+    for (auto && following_lanelet : routing_graph->following(besides_previous_lanelet)) {
+      // if this has {"turn_direction", "${turn_direction}"}, take this
+      if (getTurnDirection(following_lanelet) == turn_direction)
+        following_turning_lanelets.insert(following_lanelet.id());
+    }
+  }
+  return std::vector<int>(following_turning_lanelets.begin(), following_turning_lanelets.end());
 }
 
 }  // namespace util
