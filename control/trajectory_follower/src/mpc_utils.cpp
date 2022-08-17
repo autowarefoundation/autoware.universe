@@ -298,64 +298,6 @@ void dynamicSmoothingVelocity(
   calcMPCTrajectoryTime(traj);
 }
 
-// int64_t calcNearestIndex(const MPCTrajectory & traj, const geometry_msgs::msg::Pose & self_pose)
-// {
-//   if (traj.empty()) {
-//     return -1;
-//   }
-//   const float64_t my_yaw = ::motion::motion_common::to_angle(self_pose.orientation);
-//   int64_t nearest_idx = -1;
-//   float64_t min_dist_squared = std::numeric_limits<float64_t>::max();
-//   for (size_t i = 0; i < traj.size(); ++i) {
-//     const float64_t dx = self_pose.position.x - traj.x[i];
-//     const float64_t dy = self_pose.position.y - traj.y[i];
-//     const float64_t dist_squared = dx * dx + dy * dy;
-//
-//     /* ignore when yaw error is large, for crossing path */
-//     const float64_t err_yaw = autoware::common::helper_functions::wrap_angle(my_yaw -
-//     traj.yaw[i]); if (std::fabs(err_yaw) > (M_PI / 3.0)) {
-//       continue;
-//     }
-//     if (dist_squared < min_dist_squared) {
-//       min_dist_squared = dist_squared;
-//       nearest_idx = static_cast<int64_t>(i);
-//     }
-//   }
-//   return nearest_idx;
-// }
-//
-// int64_t calcNearestIndex(
-//   const autoware_auto_planning_msgs::msg::Trajectory & traj,
-//   const geometry_msgs::msg::Pose & self_pose)
-// {
-//   if (traj.points.empty()) {
-//     return -1;
-//   }
-//   const float64_t my_yaw = ::motion::motion_common::to_angle(self_pose.orientation);
-//   int64_t nearest_idx = -1;
-//   float64_t min_dist_squared = std::numeric_limits<float64_t>::max();
-//   for (size_t i = 0; i < traj.points.size(); ++i) {
-//     const float64_t dx =
-//       self_pose.position.x - static_cast<float64_t>(traj.points.at(i).pose.position.x);
-//     const float64_t dy =
-//       self_pose.position.y - static_cast<float64_t>(traj.points.at(i).pose.position.y);
-//     const float64_t dist_squared = dx * dx + dy * dy;
-//
-//     /* ignore when yaw error is large, for crossing path */
-//     const float64_t traj_yaw =
-//       ::motion::motion_common::to_angle(traj.points.at(i).pose.orientation);
-//     const float64_t err_yaw = autoware::common::helper_functions::wrap_angle(my_yaw - traj_yaw);
-//     if (std::fabs(err_yaw) > (M_PI / 3.0)) {
-//       continue;
-//     }
-//     if (dist_squared < min_dist_squared) {
-//       min_dist_squared = dist_squared;
-//       nearest_idx = static_cast<int64_t>(i);
-//     }
-//   }
-//   return nearest_idx;
-// }
-
 bool8_t calcNearestPoseInterp(
   const MPCTrajectory & traj, const geometry_msgs::msg::Pose & self_pose,
   geometry_msgs::msg::Pose * nearest_pose, size_t * nearest_index, float64_t * nearest_time,
@@ -367,6 +309,14 @@ bool8_t calcNearestPoseInterp(
 
   autoware_auto_planning_msgs::msg::Trajectory autoware_traj;
   convertToAutowareTrajectory(traj, autoware_traj);
+  if (autoware_traj.points.size().empty()) {
+    RCLCPP_WARN_SKIPFIRST_THROTTLE(
+      logger, clock, 5000,
+      "[calcNearestPoseInterp] fail to get nearest. autoware_traj.points.size = %zu",
+      autoware_traj.points.size());
+    return false;
+  }
+
   *nearest_index = motion_utils::findFirstNearestIndexWithSoftConstraints(
     autoware_traj.points, self_pose, max_dist, max_yaw);
   const int64_t traj_size = static_cast<int64_t>(traj.size());

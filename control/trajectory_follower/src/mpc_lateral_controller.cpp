@@ -363,6 +363,11 @@ MpcLateralController::getInitialControlCommand() const
 
 bool8_t MpcLateralController::isStoppedState() const
 {
+  // If the nearest index is not found, return false
+  if (m_current_trajectory_ptr->points.empty()) {
+    return false;
+  }
+
   // Note: This function used to take into account the distance to the stop line
   // for the stop state judgement. However, it has been removed since the steering
   // control was turned off when approaching/exceeding the stop line on a curve or
@@ -370,11 +375,6 @@ bool8_t MpcLateralController::isStoppedState() const
   const size_t nearest = motion_utils::findFirstNearestIndexWithSoftConstraints(
     m_current_trajectory_ptr->points, m_current_pose_ptr->pose, ego_nearest_dist_threshold_,
     ego_nearest_yaw_threshold_);
-
-  // If the nearest index is not found, return false
-  if (nearest < 0) {
-    return false;
-  }
 
   const float64_t current_vel = m_current_odometry_ptr->twist.twist.linear.x;
   const float64_t target_vel =
