@@ -60,7 +60,6 @@
     <param name="twist_gate_dist" value="$(var twist_gate_dist)"/>
 
     <param name="proc_stddev_yaw_c" value="$(var proc_stddev_yaw_c)"/>
-    <param name="proc_stddev_yaw_bias_c" value="$(var proc_stddev_yaw_bias_c)"/>
     <param name="proc_stddev_vx_c" value="$(var proc_stddev_vx_c)"/>
     <param name="proc_stddev_wz_c" value="$(var proc_stddev_wz_c)"/>
 

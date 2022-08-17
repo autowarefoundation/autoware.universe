@@ -57,12 +57,8 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
 
   /* process noise */
   proc_stddev_yaw_c_ = declare_parameter("proc_stddev_yaw_c", 0.005);
-  proc_stddev_yaw_bias_c_ = declare_parameter("proc_stddev_yaw_bias_c", 0.001);
   proc_stddev_vx_c_ = declare_parameter("proc_stddev_vx_c", 5.0);
   proc_stddev_wz_c_ = declare_parameter("proc_stddev_wz_c", 1.0);
-  if (!enable_yaw_bias_estimation_) {
-    proc_stddev_yaw_bias_c_ = 0.0;
-  }
 
   /* convert to continuous to discrete */
   proc_cov_vx_d_ = std::pow(proc_stddev_vx_c_ * ekf_dt_, 2.0);
@@ -131,7 +127,6 @@ void EKFLocalizer::updatePredictFrequency()
       proc_cov_vx_d_ = std::pow(proc_stddev_vx_c_ * ekf_dt_, 2.0);
       proc_cov_wz_d_ = std::pow(proc_stddev_wz_c_ * ekf_dt_, 2.0);
       proc_cov_yaw_d_ = std::pow(proc_stddev_yaw_c_ * ekf_dt_, 2.0);
-      proc_cov_yaw_bias_d_ = std::pow(proc_stddev_yaw_bias_c_ * ekf_dt_, 2.0);
     }
   }
   last_predict_time_ = std::make_shared<const rclcpp::Time>(get_clock()->now());
