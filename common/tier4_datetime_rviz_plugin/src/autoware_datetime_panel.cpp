@@ -25,7 +25,7 @@
 void setFormatTime(QLineEdit * line, double time)
 {
   char buffer[128];
-  time_t seconds = static_cast<time_t>(time);
+  auto seconds = static_cast<time_t>(time);
   strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", localtime(&seconds));
   line->setText(QString(buffer) + QString::number((time - seconds), 'f', 3).rightRef(4));
 }
@@ -38,14 +38,14 @@ AutowareDateTimePanel::AutowareDateTimePanel(QWidget * parent) : rviz_common::Pa
   wall_time_label_ = new QLineEdit;
   wall_time_label_->setReadOnly(true);
 
-  QHBoxLayout * layout = new QHBoxLayout(this);
+  auto * layout = new QHBoxLayout(this);
   layout->addWidget(new QLabel("ROS Time:"));
   layout->addWidget(ros_time_label_);
   layout->addWidget(new QLabel("Wall Time:"));
   layout->addWidget(wall_time_label_);
   setLayout(layout);
 
-  QTimer * timer = new QTimer(this);
+  auto * timer = new QTimer(this);
   connect(timer, &QTimer::timeout, this, &AutowareDateTimePanel::update);
   timer->start(60);
 }
