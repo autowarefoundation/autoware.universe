@@ -142,16 +142,16 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node) : node_{&node}
   }
 
   // ego nearest index search
-  ego_nearest_dist_threshold_ =
+  m_ego_nearest_dist_threshold =
     node_->has_parameter("ego_nearest_dist_threshold")
       ? node_->get_parameter("ego_nearest_dist_threshold").as_double()
       : node_->declare_parameter<double>("ego_nearest_dist_threshold");  // [m]
-  ego_nearest_yaw_threshold_ =
+  m_ego_nearest_yaw_threshold =
     node_->has_parameter("ego_nearest_yaw_threshold")
       ? node_->get_parameter("ego_nearest_yaw_threshold").as_double()
       : node_->declare_parameter<double>("ego_nearest_yaw_threshold");  // [rad]
-  m_mpc.ego_nearest_dist_threshold = ego_nearest_dist_threshold_;
-  m_mpc.ego_nearest_yaw_threshold = ego_nearest_yaw_threshold_;
+  m_mpc.ego_nearest_dist_threshold = m_ego_nearest_dist_threshold;
+  m_mpc.ego_nearest_yaw_threshold = m_ego_nearest_yaw_threshold;
 
   m_pub_predicted_traj = node_->create_publisher<autoware_auto_planning_msgs::msg::Trajectory>(
     "~/output/predicted_trajectory", 1);
@@ -379,8 +379,8 @@ bool8_t MpcLateralController::isStoppedState() const
   // control was turned off when approaching/exceeding the stop line on a curve or
   // emergency stop situation and it caused large tracking error.
   const size_t nearest = motion_utils::findFirstNearestIndexWithSoftConstraints(
-    m_current_trajectory_ptr->points, m_current_pose_ptr->pose, ego_nearest_dist_threshold_,
-    ego_nearest_yaw_threshold_);
+    m_current_trajectory_ptr->points, m_current_pose_ptr->pose, m_ego_nearest_dist_threshold,
+    m_ego_nearest_yaw_threshold);
 
   const float64_t current_vel = m_current_odometry_ptr->twist.twist.linear.x;
   const float64_t target_vel =

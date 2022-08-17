@@ -311,15 +311,13 @@ bool8_t calcNearestPoseInterp(
   convertToAutowareTrajectory(traj, autoware_traj);
   if (autoware_traj.points.empty()) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
-      logger, clock, 5000,
-      "[calcNearestPoseInterp] fail to get nearest. autoware_traj.points.size = %zu",
-      autoware_traj.points.size());
+      logger, clock, 5000, "[calcNearestPoseInterp] input trajectory is empty");
     return false;
   }
 
   *nearest_index = motion_utils::findFirstNearestIndexWithSoftConstraints(
     autoware_traj.points, self_pose, max_dist, max_yaw);
-  const int64_t traj_size = static_cast<int64_t>(traj.size());
+  const size_t traj_size = traj.size();
 
   if (traj.size() == 1) {
     nearest_pose->position.x = traj.x[*nearest_index];
@@ -337,8 +335,8 @@ bool8_t calcNearestPoseInterp(
     };
 
   /* get second nearest index = next to nearest_index */
-  const size_t next =
-    static_cast<size_t>(std::min(static_cast<int64_t>(*nearest_index) + 1, traj_size - 1));
+  const size_t next = static_cast<size_t>(
+    std::min(static_cast<int64_t>(*nearest_index) + 1, static_cast<int64_t>(traj_size) - 1));
   const size_t prev =
     static_cast<size_t>(std::max(static_cast<int64_t>(*nearest_index) - 1, int64_t(0)));
   const float64_t dist_to_next = calcSquaredDist(self_pose, traj, next);

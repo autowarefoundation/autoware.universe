@@ -139,8 +139,8 @@ private:
   tf2_ros::TransformListener m_tf_listener{m_tf_buffer};
 
   // ego nearest index search
-  double ego_nearest_dist_threshold_;
-  double ego_nearest_yaw_threshold_;
+  double m_ego_nearest_dist_threshold;
+  double m_ego_nearest_yaw_threshold;
 
   //!< initialize timer to work in real, simulation, and replay
   void initTimer(float64_t period_s);

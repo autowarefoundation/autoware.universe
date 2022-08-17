@@ -187,8 +187,8 @@ private:
   float64_t m_min_pitch_rad;
 
   // ego nearest index search
-  double ego_nearest_dist_threshold_;
-  double ego_nearest_yaw_threshold_;
+  double m_ego_nearest_dist_threshold;
+  double m_ego_nearest_yaw_threshold;
 
   // 1st order lowpass filter for acceleration
   std::shared_ptr<trajectory_follower::LowpassFilter1d> m_lpf_acc{nullptr};

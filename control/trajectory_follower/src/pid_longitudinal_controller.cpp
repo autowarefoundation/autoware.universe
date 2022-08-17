@@ -179,11 +179,11 @@ PidLongitudinalController::PidLongitudinalController(rclcpp::Node & node) : node
   m_min_pitch_rad = node_->declare_parameter<float64_t>("min_pitch_rad");  // [rad]
 
   // ego nearest index search
-  ego_nearest_dist_threshold_ =
+  m_ego_nearest_dist_threshold =
     node_->has_parameter("ego_nearest_dist_threshold")
       ? node_->get_parameter("ego_nearest_dist_threshold").as_double()
       : node_->declare_parameter<double>("ego_nearest_dist_threshold");  // [m]
-  ego_nearest_yaw_threshold_ =
+  m_ego_nearest_yaw_threshold =
     node_->has_parameter("ego_nearest_yaw_threshold")
       ? node_->get_parameter("ego_nearest_yaw_threshold").as_double()
       : node_->declare_parameter<double>("ego_nearest_yaw_threshold");  // [rad]
@@ -430,8 +430,8 @@ PidLongitudinalController::ControlData PidLongitudinalController::getControlData
 
   // nearest idx
   const size_t nearest_idx = motion_utils::findFirstNearestIndexWithSoftConstraints(
-    m_trajectory_ptr->points, current_pose, ego_nearest_dist_threshold_,
-    ego_nearest_yaw_threshold_);
+    m_trajectory_ptr->points, current_pose, m_ego_nearest_dist_threshold,
+    m_ego_nearest_yaw_threshold);
   const auto & nearest_point = m_trajectory_ptr->points.at(nearest_idx).pose;
 
   // check if the deviation is worth emergency
@@ -458,7 +458,7 @@ PidLongitudinalController::ControlData PidLongitudinalController::getControlData
 
   // distance to stopline
   control_data.stop_dist = trajectory_follower::longitudinal_utils::calcStopDistance(
-    current_pose, *m_trajectory_ptr, ego_nearest_dist_threshold_, ego_nearest_yaw_threshold_);
+    current_pose, *m_trajectory_ptr, m_ego_nearest_dist_threshold, m_ego_nearest_yaw_threshold);
 
   // pitch
   const float64_t raw_pitch =
@@ -848,7 +848,7 @@ PidLongitudinalController::calcInterpolatedTargetValue(
 
   // apply linear interpolation
   return trajectory_follower::longitudinal_utils::lerpTrajectoryPoint(
-    traj.points, pose, ego_nearest_dist_threshold_, ego_nearest_yaw_threshold_);
+    traj.points, pose, m_ego_nearest_dist_threshold, m_ego_nearest_yaw_threshold);
 }
 
 float64_t PidLongitudinalController::predictedVelocityInTargetPoint(

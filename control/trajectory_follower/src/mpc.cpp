@@ -493,11 +493,12 @@ trajectory_follower::MPCTrajectory MPC::applyVelocityDynamicsFilter(
   autoware_auto_planning_msgs::msg::Trajectory autoware_traj;
   autoware::motion::control::trajectory_follower::MPCUtils::convertToAutowareTrajectory(
     input, autoware_traj);
-  const size_t nearest_idx = motion_utils::findFirstNearestIndexWithSoftConstraints(
-    autoware_traj.points, current_pose, ego_nearest_dist_threshold, ego_nearest_yaw_threshold);
-  if (nearest_idx < 0) {
+  if (autoware_traj.points.empty()) {
     return input;
   }
+
+  const size_t nearest_idx = motion_utils::findFirstNearestIndexWithSoftConstraints(
+    autoware_traj.points, current_pose, ego_nearest_dist_threshold, ego_nearest_yaw_threshold);
 
   const float64_t acc_lim = m_param.acceleration_limit;
   const float64_t tau = m_param.velocity_time_constant;
