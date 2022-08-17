@@ -59,8 +59,8 @@ struct Param
   double max_longitudinal_deviation;
   double max_yaw_deviation_deg;
   // nearest search to ego
-  double nearest_ego_dist_threshold;
-  double nearest_ego_yaw_threshold;
+  double ego_nearest_dist_threshold;
+  double ego_nearest_yaw_threshold;
 };
 
 struct Input
