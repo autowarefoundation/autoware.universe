@@ -320,7 +320,7 @@ void EKFLocalizer::callbackInitialPose(
   P(IDX::X, IDX::X) = initialpose->pose.covariance[0];
   P(IDX::Y, IDX::Y) = initialpose->pose.covariance[6 + 1];
   P(IDX::YAW, IDX::YAW) = initialpose->pose.covariance[6 * 5 + 5];
-  P(IDX::YAWB, IDX::YAWB) = 0.0001;
+  P(IDX::YAWB, IDX::YAWB) = proc_stddev_yaw_bias_c_;
   P(IDX::VX, IDX::VX) = 0.01;
   P(IDX::WZ, IDX::WZ) = 0.01;
 
