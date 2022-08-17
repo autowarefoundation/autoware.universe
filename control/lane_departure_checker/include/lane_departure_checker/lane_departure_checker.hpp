@@ -58,7 +58,9 @@ struct Param
   double max_lateral_deviation;
   double max_longitudinal_deviation;
   double max_yaw_deviation_deg;
-  double delta_yaw_threshold_for_closest_point;
+  // nearest search to ego
+  double nearest_ego_dist_threshold;
+  double nearest_ego_yaw_threshold;
 };
 
 struct Input
@@ -112,7 +114,7 @@ private:
 
   static PoseDeviation calcTrajectoryDeviation(
     const Trajectory & trajectory, const geometry_msgs::msg::Pose & pose,
-    const double yaw_threshold);
+    const double dist_threshold, const double yaw_threshold);
 
   //! This function assumes the input trajectory is sampled dense enough
   static TrajectoryPoints resampleTrajectory(const Trajectory & trajectory, const double interval);
