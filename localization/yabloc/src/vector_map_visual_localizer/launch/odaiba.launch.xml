@@ -21,4 +21,9 @@
         <arg name="min_segment_length" value="$(var min_segment_length)"/>
         <arg name="max_segment_distance" value="$(var max_segment_distance)"/>
     </include>
+
+    <node name="particle_initializer_node" pkg="vector_map_visual_localizer" exec="particle_initializer_node" output="screen" args="--ros-args --log-level info">
+    </node>
+
+
 </launch>

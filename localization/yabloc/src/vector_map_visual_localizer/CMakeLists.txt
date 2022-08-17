@@ -122,6 +122,7 @@ ADD_EXE(TARGET camera_corrector_node
   SRC src/particle_filter/camera_corrector*.cpp
   INC include LIB util cost_map)
 ADD_EXE(TARGET gnss_corrector_node SRC src/particle_filter/gnss_corrector*.cpp INC include LIB util Geographic)
+ADD_EXE(TARGET particle_initializer_node SRC src/particle_filter/particle_initializer*.cpp INC include LIB util)
 
 # validation
 ADD_EXE(TARGET overlay_node SRC src/validation/overlay_*.cpp INC include LIB util)

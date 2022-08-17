@@ -30,8 +30,8 @@
     <!-- ========================================= -->
     <node name="pose_to_path" pkg="vector_map_visual_localizer" exec="pose_to_path_node" output="log" args="--ros-args --log-level info">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
-        <param name="sub_topics" value="[/sensing/gnss/ublox/pose, /localization/pose_estimator/pose, /particle_pose, /eagleye/pose, /autoware/pose]"/>
-        <param name="pub_topics" value="[/sensing/gnss/ublox/path, /localization/pose_estimator/path, /particle_path, /eagleye/path, /autoware/path]"/>
+        <param name="sub_topics" value="[/sensing/gnss/ublox/pose, /localization/pose_estimator/pose, /particle_pose, /eagleye/pose, /refine_pose]"/>
+        <param name="pub_topics" value="[/sensing/gnss/ublox/path, /localization/pose_estimator/path, /particle_path, /eagleye/path, /refine_path]"/>
     </node>
 
     <!-- ========================================= -->
