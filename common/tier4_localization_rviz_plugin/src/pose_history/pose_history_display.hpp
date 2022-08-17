@@ -37,7 +37,7 @@ class BoolProperty;
 
 namespace rviz_plugins
 {
-class PoseHistory : public rviz_common::MessageFilterDisplay<geometry_msgs::msg::PoseStamped>
+class PoseHistory : public rviz_common::MessageFilterDisplay<geometry_msgs::msg::PoseStamped> // NOLINT [cppcoreguidelines-special-member-functions]
 {
   Q_OBJECT
 
