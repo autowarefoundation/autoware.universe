@@ -58,7 +58,6 @@ private:
   void updateHistory();
   void updateLines();
 
-
   std::string target_frame_;
   std::deque<geometry_msgs::msg::PoseStamped::ConstSharedPtr> history_;
   std::unique_ptr<rviz_rendering::BillboardLine> lines_;
