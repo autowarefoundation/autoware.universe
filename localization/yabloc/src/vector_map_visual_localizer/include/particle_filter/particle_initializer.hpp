@@ -28,7 +28,7 @@ public:
 private:
   rclcpp::Subscription<PoseCovStamped>::SharedPtr sub_initialpose_;
   rclcpp::Subscription<HADMapBin>::SharedPtr sub_map_;
-  rclcpp::Publisher<ParticleArray>::SharedPtr pub_particle_;
+  rclcpp::Publisher<PoseCovStamped>::SharedPtr pub_initialpose_;
   rclcpp::Publisher<Marker>::SharedPtr pub_marker_;
 
   lanelet::LaneletMapPtr lanelet_map_{nullptr};
@@ -39,9 +39,12 @@ private:
   void onInitialpose(const PoseCovStamped & initialpose);
   void onMap(const HADMapBin & bin_map);
 
-  int searchLandingLanelet(const Eigen::Vector3f & pos);
-  void publishRangeMarker(
-    const Eigen::Vector3f & pos, const Eigen::Vector3f & tangent = Eigen::Vector3f::UnitX());
+  int searchNearestPointIndex(const Eigen::Vector3f & pos);
+
+  void publishRangeMarker(const Eigen::Vector3f & pos, const Eigen::Vector3f & tangent);
+  void publishRectifiedInitialpose(
+    const Eigen::Vector3f & pos, const Eigen::Vector3f & tangent,
+    const PoseCovStamped & raw_initialpose);
 
   Eigen::Vector3f tangentDirection(const lanelet::Lanelet & lane, const Eigen::Vector3f & position);
 };

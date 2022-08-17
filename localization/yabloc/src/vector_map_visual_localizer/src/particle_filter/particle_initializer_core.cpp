@@ -11,7 +11,7 @@ ParticleInitializer::ParticleInitializer() : Node("particle_initializer")
   const rclcpp::QoS map_qos = rclcpp::QoS(10).transient_local().reliable();
 
   // Publisher
-  pub_particle_ = create_publisher<ParticleArray>("initial_particles", 10);
+  pub_initialpose_ = create_publisher<PoseCovStamped>("rectified/initialpose", 10);
   pub_marker_ = create_publisher<Marker>("init/marker", 10);
 
   // Subscriber
@@ -33,16 +33,17 @@ void ParticleInitializer::onInitialpose(const PoseCovStamped & initialpose)
   Eigen::Vector3f pos_vec3f;
   pos_vec3f << position.x, position.y, position.z;
 
-  int nearest_index = searchLandingLanelet(pos_vec3f);
+  int nearest_index = searchNearestPointIndex(pos_vec3f);
   lanelet::Id id = lanelet::InvalId;
   if (nearest_index >= 0) id = point_id_to_lanelet_id_.at(nearest_index);
   if (id == lanelet::InvalId) return;
 
-  pos_vec3f.z() = cloud_->at(nearest_index).z;
+  pos_vec3f = cloud_->at(nearest_index).getArray3fMap();
 
   const lanelet::Lanelet lane = *lanelet_map_->laneletLayer.find(id);
   Eigen::Vector3f tangent = tangentDirection(lane, pos_vec3f);
   publishRangeMarker(pos_vec3f, tangent);
+  publishRectifiedInitialpose(pos_vec3f, tangent, initialpose);
 }
 
 void ParticleInitializer::onMap(const HADMapBin & bin_map)
@@ -70,7 +71,7 @@ void ParticleInitializer::onMap(const HADMapBin & bin_map)
   kdtree_->setInputCloud(cloud_);
 }
 
-int ParticleInitializer::searchLandingLanelet(const Eigen::Vector3f & pos)
+int ParticleInitializer::searchNearestPointIndex(const Eigen::Vector3f & pos)
 {
   pcl::PointXYZ query(pos.x(), pos.y(), pos.z());
   std::vector<int> indices;
@@ -96,8 +97,8 @@ void ParticleInitializer::publishRangeMarker(
   msg.type = Marker::LINE_STRIP;
   msg.header.stamp = get_clock()->now();
   msg.header.frame_id = "map";
-  msg.scale.x = 0.5;
-  msg.scale.y = 0.5;
+  msg.scale.x = 0.2;
+  msg.scale.y = 0.2;
 
   msg.color.r = 0;
   msg.color.g = 1;
@@ -115,11 +116,11 @@ void ParticleInitializer::publishRangeMarker(
   Eigen::Vector3f binormal;
   binormal << -tangent.y(), tangent.x(), tangent.z();
 
-  msg.points.push_back(cast2gp(pos + tangent));
-  msg.points.push_back(cast2gp(pos + binormal));
-  msg.points.push_back(cast2gp(pos - tangent));
-  msg.points.push_back(cast2gp(pos - binormal));
-  msg.points.push_back(cast2gp(pos + tangent));
+  msg.points.push_back(cast2gp(pos + tangent + binormal));
+  msg.points.push_back(cast2gp(pos + tangent - binormal));
+  msg.points.push_back(cast2gp(pos - tangent - binormal));
+  msg.points.push_back(cast2gp(pos - tangent + binormal));
+  msg.points.push_back(cast2gp(pos + tangent + binormal));
 
   pub_marker_->publish(msg);
 }
@@ -154,6 +155,36 @@ Eigen::Vector3f ParticleInitializer::tangentDirection(
   }
 
   return (to - from).normalized();
+}
+
+void ParticleInitializer::publishRectifiedInitialpose(
+  const Eigen::Vector3f & pos, const Eigen::Vector3f & tangent,
+  const PoseCovStamped & raw_initialpose)
+{
+  PoseCovStamped msg = raw_initialpose;
+  msg.pose.pose.position.x = pos.x();
+  msg.pose.pose.position.y = pos.y();
+  msg.pose.pose.position.z = pos.z();
+
+  float theta = std::atan2(tangent.y(), tangent.x());
+
+  msg.pose.pose.orientation.w = std::cos(theta / 2);
+  msg.pose.pose.orientation.x = 0;
+  msg.pose.pose.orientation.y = 0;
+  msg.pose.pose.orientation.z = std::sin(theta / 2);
+
+  Eigen::Matrix2f cov;
+  cov << 4.00, 0, 0, 0.25;
+  Eigen::Rotation2D r(theta);
+  cov = r * cov * r.inverse();
+
+  msg.pose.covariance.at(6 * 0 + 0) = cov(0, 0);
+  msg.pose.covariance.at(6 * 0 + 1) = cov(0, 1);
+  msg.pose.covariance.at(6 * 1 + 0) = cov(1, 0);
+  msg.pose.covariance.at(6 * 1 + 1) = cov(1, 1);
+  msg.pose.covariance.at(6 * 5 + 5) = 0.0076;  // 0.0076 = (5deg)^2
+
+  pub_initialpose_->publish(msg);
 }
 
 }  // namespace particle_filter

@@ -1,6 +1,8 @@
 #ifndef MODULARIZED_PARTICLE_FILTER__COMMON__PREDICTION_UTIL_HPP_
 #define MODULARIZED_PARTICLE_FILTER__COMMON__PREDICTION_UTIL_HPP_
 
+#include <eigen3/Eigen/SVD>
+
 #include <numeric>
 #include <optional>
 #include <random>
@@ -10,6 +12,20 @@ namespace modularized_particle_filter::util
 {
 std::random_device seed_gen;
 std::default_random_engine engine(seed_gen());
+
+Eigen::Vector2d nrand2d(const Eigen::Matrix2d cov)
+{
+  Eigen::JacobiSVD<Eigen::Matrix2d> svd;
+  svd.compute(cov, Eigen::ComputeFullU | Eigen::ComputeFullV);
+  Eigen::Vector2d std = svd.singularValues();
+  std = std.cwiseMax(0.01);
+
+  std::normal_distribution<> dist(0.0, 1.0);
+  Eigen::Vector2d xy;
+  xy.x() = std::sqrt(std.x()) * dist(engine);
+  xy.y() = std::sqrt(std.y()) * dist(engine);
+  return svd.matrixU() * xy;
+}
 
 double nrand(double std)
 {
