@@ -22,7 +22,6 @@
 
   <!-- for process model -->
   <arg name="proc_stddev_yaw_c" default="0.005"/>
-  <arg name="proc_stddev_yaw_bias_c" default="0.001"/>
   <arg name="proc_stddev_vx_c" default="5.0"/>
   <arg name="proc_stddev_wz_c" default="1.0"/>
 
