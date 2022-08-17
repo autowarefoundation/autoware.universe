@@ -4,6 +4,7 @@
   <name>mission_planner</name>
   <version>0.1.0</version>
   <description>The mission_planner package</description>
+  <author email="ryohsuke.mitsudome@tier4.jp">mitsudome-r</author>
   <maintainer email="ryohsuke.mitsudome@tier4.jp">mitsudome-r</maintainer>
   <license>Apache License 2.0</license>
 

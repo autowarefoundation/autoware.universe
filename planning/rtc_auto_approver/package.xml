@@ -5,6 +5,7 @@
   <version>0.1.0</version>
   <description>The rtc_auto_approver package</description>
 
+  <author email="fumiya.watanabe@tier4.jp">Fumiya Watanabe</author>
   <maintainer email="fumiya.watanabe@tier4.jp">Fumiya Watanabe</maintainer>
 
   <license>Apache License 2.0</license>

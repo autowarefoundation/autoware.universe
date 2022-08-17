@@ -4,6 +4,7 @@
   <name>surround_obstacle_checker</name>
   <version>0.1.0</version>
   <description>The surround_obstacle_checker package</description>
+  <author email="satoshi.ota@tier4.jp">Satoshi Ota</author>
   <maintainer email="satoshi.ota@tier4.jp">Satoshi Ota</maintainer>
   <license>Apache License 2.0</license>
 

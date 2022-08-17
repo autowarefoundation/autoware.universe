@@ -3,7 +3,8 @@
 <package format="3">
   <name>obstacle_avoidance_planner</name>
   <version>0.1.0</version>
-  <description>The path_planner package</description>
+  <description>The obstacle_avoidance_planner package</description>
+  <author email="takayuki.murooka@tier4.jp">Takayuki Murooka</author>
   <maintainer email="takayuki.murooka@tier4.jp">Takayuki Murooka</maintainer>
   <license>Apache License 2.0</license>
 

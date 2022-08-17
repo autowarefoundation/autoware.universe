@@ -4,6 +4,7 @@
   <name>scenario_selector</name>
   <version>0.1.0</version>
   <description>The scenario_selector ROS2 package</description>
+  <author email="kenji.miyake@tier4.jp">Kenji Miyake</author>
   <maintainer email="kenji.miyake@tier4.jp">Kenji Miyake</maintainer>
   <license>Apache License 2.0</license>
 
