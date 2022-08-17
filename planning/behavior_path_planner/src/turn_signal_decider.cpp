@@ -99,10 +99,11 @@ std::pair<TurnIndicatorsCommand, double> TurnSignalDecider::getIntersectionTurnS
       if (lighting_turn_signal) {
         if (lane_attribute == std::string("left")) {
           turn_signal.command = TurnIndicatorsCommand::ENABLE_LEFT;
+          distance = distance_from_vehicle_front;
         } else if (lane_attribute == std::string("right")) {
           turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
+          distance = distance_from_vehicle_front;
         }
-        distance = distance_from_vehicle_front;
       }
     }
   }
