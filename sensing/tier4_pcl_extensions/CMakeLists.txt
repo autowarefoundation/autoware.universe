@@ -14,6 +14,7 @@ add_definitions(${PCL_DEFINITIONS})
 
 ament_auto_add_library(tier4_pcl_extensions SHARED
   src/voxel_grid_nearest_centroid.cpp
+  src/voxel_grid_triplets.cpp
 )
 
 target_link_libraries(tier4_pcl_extensions ${PCL_LIBRARIES})
