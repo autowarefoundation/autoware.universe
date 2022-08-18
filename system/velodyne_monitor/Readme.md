@@ -62,7 +62,7 @@ None
 
 ### About temperature threshold
 
-According to the datasheet of each models, operational temperatures are below.
+According to the datasheet of each model, operational temperatures are below.
 
 | Model Name     | Operational Temperature [℃] |
 | -------------- | ---------------------------- |
