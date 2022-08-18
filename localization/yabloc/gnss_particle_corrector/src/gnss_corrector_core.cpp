@@ -4,26 +4,43 @@
 #include <vml_common/fix2mgrs.hpp>
 #include <vml_common/util.hpp>
 
-namespace particle_filter
+namespace modularized_particle_filter
 {
 GnssParticleCorrector::GnssParticleCorrector()
 : AbstCorrector("gnss_particle_corrector"),
-  flat_radius_(declare_parameter("flat_radius", 1.0f)),
-  min_prob_(declare_parameter("min_prob", 0.01f)),
-  sigma_(declare_parameter("sigma", 25.0f)),
   float_range_gain_(5.0f),
+  likelihood_min_weight_(declare_parameter("likelihood_min_weight", 0.01f)),
+  likelihood_stdev_(declare_parameter("likelihood_stdev", 25.0f)),
+  likelihood_flat_radius_(declare_parameter("likelihood_flat_radius", 1.0f)),
   rtk_enabled_(declare_parameter("rtk_enabled", true))
 {
   using std::placeholders::_1;
-  auto ublox_callback = std::bind(&GnssParticleCorrector::ubloxCallback, this, _1);
-  auto height_callback = [this](const Float32 & height) { this->latest_height_ = height; };
+  auto cb_pose = std::bind(&GnssParticleCorrector::onPose, this, _1);
+  auto cb_ublox = std::bind(&GnssParticleCorrector::onUblox, this, _1);
+  auto cb_height = [this](const Float32 & height) { this->latest_height_ = height; };
+  ublox_sub_ = create_subscription<NavPVT>("/sensing/gnss/ublox/navpvt", 10, cb_ublox);
+  pose_sub_ = create_subscription<PoseCovStamped>("/pose_with_covariance", 10, cb_pose);
+  height_sub_ = create_subscription<Float32>("/height", 10, cb_height);
 
-  ublox_sub_ = create_subscription<NavPVT>("/sensing/gnss/ublox/navpvt", 10, ublox_callback);
-  height_sub_ = create_subscription<Float32>("/height", 10, height_callback);
   marker_pub_ = create_publisher<MarkerArray>("/gnss/effect_marker", 10);
 }
 
-void GnssParticleCorrector::ubloxCallback(const NavPVT::ConstSharedPtr ublox_msg)
+void GnssParticleCorrector::onPose(const PoseCovStamped::ConstSharedPtr pose_msg)
+{
+  const rclcpp::Time stamp = pose_msg->header.stamp;
+  std::optional<ParticleArray> opt_particles = getSyncronizedParticleArray(stamp);
+  if (!opt_particles.has_value()) return;
+
+  auto position = pose_msg->pose.pose.position;
+  Eigen::Vector3f position_vec3f;
+  position_vec3f << position.x, position.y, position.z;
+
+  ParticleArray weighted_particles{weightParticles(
+    opt_particles.value(), position_vec3f, likelihood_stdev_, likelihood_flat_radius_)};
+  setWeightedParticleArray(weighted_particles);
+}
+
+void GnssParticleCorrector::onUblox(const NavPVT::ConstSharedPtr ublox_msg)
 {
   const rclcpp::Time stamp = vml_common::ubloxTime2Stamp(*ublox_msg);
 
@@ -48,11 +65,20 @@ void GnssParticleCorrector::ubloxCallback(const NavPVT::ConstSharedPtr ublox_msg
   fix.longitude = ublox_msg->lon * 1e-7f;
   fix.altitude = ublox_msg->height * 1e-3f;
 
-  const bool fixed = (ublox_msg->flags & FIX_FLAG);
+  const bool is_rtk_fixed = (ublox_msg->flags & FIX_FLAG);
 
   Eigen::Vector3f position = vml_common::fix2Mgrs(fix).cast<float>();
-  ParticleArray weighted_particles{weightParticles(opt_particles.value(), position, fixed)};
-  // setWeightedParticleArray(weighted_particles);
+
+  float sigma = likelihood_stdev_;
+  float flat_radius = likelihood_flat_radius_;
+  if (!is_rtk_fixed) {
+    sigma *= float_range_gain_;
+    flat_radius *= float_range_gain_;
+  }
+
+  ParticleArray weighted_particles{
+    weightParticles(opt_particles.value(), position, sigma, flat_radius)};
+
   geometry_msgs::msg::Pose mean_pose = modularized_particle_filter::meanPose(weighted_particles);
   Eigen::Vector3f mean_position = vml_common::pose2Affine(mean_pose).translation();
   if ((mean_position - last_mean_position_).squaredNorm() > 1) {
@@ -62,10 +88,10 @@ void GnssParticleCorrector::ubloxCallback(const NavPVT::ConstSharedPtr ublox_msg
     RCLCPP_WARN_STREAM(get_logger(), "Skip weighting because almost same positon");
   }
 
-  publishMarker(position, fixed);
+  publishMarker(position, is_rtk_fixed);
 }
 
-void GnssParticleCorrector::publishMarker(const Eigen::Vector3f & position, bool fixed)
+void GnssParticleCorrector::publishMarker(const Eigen::Vector3f & position, bool is_rtk_fixed)
 {
   using namespace std::literals::chrono_literals;
   using Point = geometry_msgs::msg::Point;
@@ -92,18 +118,19 @@ void GnssParticleCorrector::publishMarker(const Eigen::Vector3f & position, bool
     marker.pose.position.y = position.y();
     marker.pose.position.z = latest_height_.data;
 
-    float prob = (1 - min_prob_) * i / 4 + min_prob_;
+    float prob = (1 - likelihood_min_weight_) * i / 4 + likelihood_min_weight_;
     marker.color = vml_common::toJet(prob);
     marker.color.a = 0.3f;
     marker.scale.x = 0.1;
-    drawCircle(marker.points, inversePdf(prob, fixed));
+    drawCircle(marker.points, inverseNormalPdf(prob, is_rtk_fixed));
     array_msg.markers.push_back(marker);
   }
   marker_pub_->publish(array_msg);
 }
 
 GnssParticleCorrector::ParticleArray GnssParticleCorrector::weightParticles(
-  const ParticleArray & predicted_particles, const Eigen::Vector3f & pose, bool fixed)
+  const ParticleArray & predicted_particles, const Eigen::Vector3f & pose, float sigma,
+  float flat_radius)
 {
   ParticleArray weighted_particles{predicted_particles};
 
@@ -112,20 +139,13 @@ GnssParticleCorrector::ParticleArray GnssParticleCorrector::weightParticles(
       predicted_particles.particles[i].pose.position.x - pose.x(),
       predicted_particles.particles[i].pose.position.y - pose.y()))};
 
-    if (fixed) {
-      if (distance < flat_radius_)
-        weighted_particles.particles[i].weight = 1.0f;
-      else
-        weighted_particles.particles[i].weight = normalPdf(distance - flat_radius_, 0.0, sigma_);
-    } else {
-      if (distance < float_range_gain_ * flat_radius_)
-        weighted_particles.particles[i].weight = 1.0f;
-      else
-        weighted_particles.particles[i].weight =
-          normalPdf(distance - float_range_gain_ * flat_radius_, 0.0, float_range_gain_ * sigma_);
-    }
+    if (distance < flat_radius)
+      weighted_particles.particles[i].weight = 1.0f;
+    else
+      weighted_particles.particles[i].weight = normalPdf(distance - flat_radius, 0.0, sigma);
+
     weighted_particles.particles[i].weight =
-      std::max(weighted_particles.particles[i].weight, min_prob_);
+      std::max(weighted_particles.particles[i].weight, likelihood_min_weight_);
   }
 
   return weighted_particles;
@@ -133,18 +153,20 @@ GnssParticleCorrector::ParticleArray GnssParticleCorrector::weightParticles(
 
 float GnssParticleCorrector::normalPdf(float x, float mu, float sigma)
 {
-  // NOTE: This is not exact normal distribution
+  // NOTE: This is not exact normal distribution because of no scale factor depending on sigma
   float a = (x - mu) / sigma;
   return std::exp(-0.5f * a * a);
 }
 
-float GnssParticleCorrector::inversePdf(float prob, bool fixed) const
+float GnssParticleCorrector::inverseNormalPdf(float prob, bool is_rtk_fixed) const
 {
-  float gain = (fixed) ? 1 : float_range_gain_;
+  float gain = (is_rtk_fixed) ? 1 : float_range_gain_;
 
-  if (prob > 1 - 1e-6f) return gain * flat_radius_;
-  if (prob < min_prob_) return gain * flat_radius_ + sigma_ * std::sqrt(-2.f * std::log(min_prob_));
-  return gain * flat_radius_ + sigma_ * std::sqrt(-2.f * std::log(prob));
+  if (prob > 1 - 1e-6f) return gain * likelihood_flat_radius_;
+  if (prob < likelihood_min_weight_)
+    return gain * likelihood_flat_radius_ +
+           likelihood_stdev_ * std::sqrt(-2.f * std::log(likelihood_min_weight_));
+  return gain * likelihood_flat_radius_ + likelihood_stdev_ * std::sqrt(-2.f * std::log(prob));
 }
 
-}  // namespace particle_filter
+}  // namespace modularized_particle_filter

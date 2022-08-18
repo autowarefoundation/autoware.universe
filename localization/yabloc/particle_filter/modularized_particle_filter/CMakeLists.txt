@@ -42,17 +42,6 @@ ament_auto_add_executable(predictor_node
 )
 target_link_libraries(predictor_node predictor)
 
-# ament_auto_add_executable(lidar_pose_corrector
-# src/correction/lidar_pose_corrector_node.cpp
-# src/correction/lidar_pose_corrector.cpp
-# src/correction/correction_util.cpp
-# )
-
-# ament_auto_add_executable(gnss_pose_corrector
-# src/correction/gnss_pose_corrector_node.cpp
-# src/correction/gnss_pose_corrector.cpp
-# src/correction/correction_util.cpp
-# )
 ament_auto_add_executable(particle_visualize
   src/common/particle_visualize_node.cpp
 )

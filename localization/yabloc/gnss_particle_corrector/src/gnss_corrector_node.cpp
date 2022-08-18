@@ -3,7 +3,7 @@
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<particle_filter::GnssParticleCorrector>());
+  rclcpp::spin(std::make_shared<modularized_particle_filter::GnssParticleCorrector>());
   rclcpp::shutdown();
   return 0;
 }
