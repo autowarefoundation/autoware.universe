@@ -14,14 +14,10 @@
 
 #include "behavior_path_planner/scene_module/pull_over/pull_over_module.hpp"
 
-#include "behavior_path_planner/behavior_path_planner_node.hpp"
 #include "behavior_path_planner/path_utilities.hpp"
-#include "behavior_path_planner/scene_module/avoidance/debug.hpp"
 #include "behavior_path_planner/scene_module/pull_over/util.hpp"
 #include "behavior_path_planner/scene_module/utils/path_shifter.hpp"
-#include "behavior_path_planner/utilities.hpp"
 
-#include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <motion_utils/motion_utils.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -36,7 +32,6 @@
 
 using motion_utils::calcLongitudinalOffsetPose;
 using motion_utils::calcSignedArcLength;
-using motion_utils::findNearestIndex;
 using nav_msgs::msg::OccupancyGrid;
 using tier4_autoware_utils::calcDistance2d;
 using tier4_autoware_utils::calcOffsetPose;
@@ -44,9 +39,7 @@ using tier4_autoware_utils::createDefaultMarker;
 using tier4_autoware_utils::createMarkerColor;
 using tier4_autoware_utils::createMarkerScale;
 using tier4_autoware_utils::createPoint;
-using tier4_autoware_utils::createQuaternionFromYaw;
 using tier4_autoware_utils::inverseTransformPose;
-using tier4_autoware_utils::transformPose;
 
 namespace behavior_path_planner
 {
@@ -157,16 +150,23 @@ bool PullOverModule::isExecutionRequested() const
   if (current_state_ == BT::NodeStatus::RUNNING) {
     return true;
   }
-
-  const auto current_lanes = util::getCurrentLanes(planner_data_);
-  const auto goal_pose = planner_data_->route_handler->getGoalPose();
+  const auto & current_lanes = util::getCurrentLanes(planner_data_);
+  const auto & current_pose = planner_data_->self_pose->pose;
+  const auto & goal_pose = planner_data_->route_handler->getGoalPose();
 
   // check if goal_pose is far
-  const double goal_arc_length = lanelet::utils::getArcCoordinates(current_lanes, goal_pose).length;
-  const double self_arc_length =
-    lanelet::utils::getArcCoordinates(current_lanes, planner_data_->self_pose->pose).length;
-  const double self_to_goal_arc_length = goal_arc_length - self_arc_length;
-  if (self_to_goal_arc_length > parameters_.request_length) return false;
+  const bool is_in_goal_route_section =
+    planner_data_->route_handler->isInGoalRouteSection(current_lanes.back());
+  // current_lanes does not have the goal
+  if (!is_in_goal_route_section) {
+    return false;
+  }
+  const double self_to_goal_arc_length =
+    util::getSignedDistance(current_pose, goal_pose, current_lanes);
+  // goal is away behind
+  if (self_to_goal_arc_length > parameters_.request_length || self_to_goal_arc_length < 0.0) {
+    return false;
+  }
 
   // check if goal_pose is in shoulder lane
   bool goal_is_in_shoulder_lane = false;

@@ -21,11 +21,11 @@
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
-#include <opencv2/opencv.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
+#include <tier4_planning_msgs/msg/avoidance_debug_factor.hpp>
+
 #include <algorithm>
-#include <iomanip>
 #include <limits>
 #include <memory>
 #include <set>
@@ -44,7 +44,7 @@ using motion_utils::calcSignedArcLength;
 using motion_utils::findNearestIndex;
 using tier4_autoware_utils::calcDistance2d;
 using tier4_autoware_utils::calcLateralDeviation;
-using tier4_autoware_utils::createPoint;
+using tier4_planning_msgs::msg::AvoidanceDebugFactor;
 
 AvoidanceModule::AvoidanceModule(
   const std::string & name, rclcpp::Node & node, const AvoidanceParameters & parameters)
@@ -2347,11 +2347,6 @@ boost::optional<AvoidPointArray> AvoidanceModule::findNewShiftPoint(
     //   continue;
     // }
 
-    if (calcJerk(candidate) > parameters_.max_lateral_jerk) {
-      DEBUG_PRINT("%s, this shift exceeds jerk limit (%f). skip.", pfx, calcJerk(candidate));
-      continue;
-    }
-
     const auto current_shift = prev_linear_shift_path_.shift_length.at(
       findNearestIndex(prev_reference_.points, candidate.end.position));
 
@@ -2360,6 +2355,12 @@ boost::optional<AvoidPointArray> AvoidanceModule::findNewShiftPoint(
 
     const auto new_point_threshold = parameters_.avoidance_execution_lateral_threshold;
     if (std::abs(candidate.length - current_shift) > new_point_threshold) {
+      if (calcJerk(candidate) > parameters_.max_lateral_jerk) {
+        DEBUG_PRINT(
+          "%s, Failed to find new shift: jerk limit over (%f).", pfx, calcJerk(candidate));
+        break;
+      }
+
       DEBUG_PRINT(
         "%s, New shift point is found!!! shift change: %f -> %f", pfx, current_shift,
         candidate.length);
