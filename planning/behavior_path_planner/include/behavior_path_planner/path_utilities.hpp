@@ -16,7 +16,7 @@
 #define BEHAVIOR_PATH_PLANNER__PATH_UTILITIES_HPP_
 
 #include <behavior_path_planner/parameters.hpp>
-#include <behavior_path_planner/path_shifter/path_shifter.hpp>
+#include <behavior_path_planner/scene_module/utils/path_shifter.hpp>
 #include <opencv2/opencv.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path.hpp>
@@ -67,7 +67,7 @@ void clipPathLength(
 std::pair<TurnIndicatorsCommand, double> getPathTurnSignal(
   const lanelet::ConstLanelets & current_lanes, const ShiftedPath & path,
   const ShiftPoint & shift_point, const Pose & pose, const double & velocity,
-  const BehaviorPathPlannerParameters & common_parameter, const double & search_distance);
+  const BehaviorPathPlannerParameters & common_parameter);
 
 }  // namespace util
 }  // namespace behavior_path_planner

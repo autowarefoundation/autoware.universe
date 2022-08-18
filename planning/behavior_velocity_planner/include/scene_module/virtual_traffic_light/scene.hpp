@@ -68,6 +68,7 @@ public:
     double max_delay_sec;
     double near_line_distance;
     double dead_line_margin;
+    double hold_stop_margin_distance;
     double max_yaw_deviation_rad;
     bool check_timeout_after_stop_line;
   };
@@ -83,6 +84,7 @@ public:
     tier4_planning_msgs::msg::StopReason * stop_reason) override;
 
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
+  visualization_msgs::msg::MarkerArray createVirtualWallMarkerArray() override;
 
 private:
   const int64_t module_id_;

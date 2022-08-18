@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <motion_utils/trajectory/trajectory.hpp>
 #include <scene_module/traffic_light/scene.hpp>
-#include <tier4_autoware_utils/trajectory/trajectory.hpp>
 #include <utilization/util.hpp>
 
 #include <boost/optional.hpp>  // To be replaced by std::optional in C++17
@@ -228,6 +228,8 @@ bool TrafficLightModule::modifyPathVelocity(
         planner_param_.stop_margin + planner_data_->vehicle_info_.max_longitudinal_offset_m,
         planner_data_->stop_line_extend_length, stop_line_point, stop_line_point_idx)) {
     RCLCPP_WARN_THROTTLE(logger_, *clock_, 5000, "Failed to calculate stop point and insert index");
+    setSafe(true);
+    setDistance(std::numeric_limits<double>::lowest());
     return false;
   }
 
@@ -235,8 +237,9 @@ bool TrafficLightModule::modifyPathVelocity(
   geometry_msgs::msg::Point stop_line_point_msg;
   stop_line_point_msg.x = stop_line_point.x();
   stop_line_point_msg.y = stop_line_point.y();
-  const double signed_arc_length_to_stop_point = tier4_autoware_utils::calcSignedArcLength(
+  const double signed_arc_length_to_stop_point = motion_utils::calcSignedArcLength(
     input_path.points, self_pose.pose.position, stop_line_point_msg);
+  setDistance(signed_arc_length_to_stop_point);
 
   // Check state
   if (state_ == State::APPROACH) {
@@ -251,7 +254,8 @@ bool TrafficLightModule::modifyPathVelocity(
     first_ref_stop_path_point_index_ = stop_line_point_idx;
 
     // Check if stop is coming.
-    if (!isStopSignal(traffic_lights)) {
+    setSafe(!isStopSignal(traffic_lights));
+    if (isActivated()) {
       is_prev_state_stop_ = false;
       return true;
     }

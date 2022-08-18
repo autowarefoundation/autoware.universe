@@ -51,11 +51,12 @@ public:
     CURRENT_VEL = 0,
     CURRENT_ACC = 1,
     CURRENT_FORWARD_MARGIN = 2,
-    OBSTACLE_DISTANCE = 3,
-    FLAG_FIND_COLLISION_OBSTACLE = 4,
-    FLAG_FIND_SLOW_DOWN_OBSTACLE = 5,
-    FLAG_ADAPTIVE_CRUISE = 6,
-    FLAG_EXTERNAL = 7,
+    SLOWDOWN_OBSTACLE_DISTANCE = 3,
+    COLLISION_OBSTACLE_DISTANCE = 4,
+    FLAG_FIND_COLLISION_OBSTACLE = 5,
+    FLAG_FIND_SLOW_DOWN_OBSTACLE = 6,
+    FLAG_ADAPTIVE_CRUISE = 7,
+    FLAG_EXTERNAL = 8,
     SIZE
   };
 
@@ -99,6 +100,7 @@ public:
   bool pushPose(const geometry_msgs::msg::Pose & pose, const PoseType & type);
   bool pushObstaclePoint(const geometry_msgs::msg::Point & obstacle_point, const PointType & type);
   bool pushObstaclePoint(const pcl::PointXYZ & obstacle_point, const PointType & type);
+  visualization_msgs::msg::MarkerArray makeVirtualWallMarker();
   visualization_msgs::msg::MarkerArray makeVisualizationMarker();
   tier4_planning_msgs::msg::StopReasonArray makeStopReasonArray();
 
@@ -109,6 +111,7 @@ public:
   void publish();
 
 private:
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr virtual_wall_pub_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_viz_pub_;
   rclcpp::Publisher<tier4_planning_msgs::msg::StopReasonArray>::SharedPtr stop_reason_pub_;
   rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr pub_debug_values_;

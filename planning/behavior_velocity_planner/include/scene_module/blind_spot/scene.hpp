@@ -120,11 +120,13 @@ public:
     tier4_planning_msgs::msg::StopReason * stop_reason) override;
 
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
+  visualization_msgs::msg::MarkerArray createVirtualWallMarkerArray() override;
 
 private:
   int64_t lane_id_;
   TurnDirection turn_direction_;
   bool has_traffic_light_;
+  bool is_over_pass_judge_line_;
 
   // Parameter
   PlannerParam planner_param_;

@@ -14,6 +14,8 @@
 
 #include "pose_initializer/pose_initializer_core.hpp"
 
+#include "pose_initializer/copy_vector_to_array.hpp"
+
 #include <pcl_conversions/pcl_conversions.h>
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
@@ -50,29 +52,21 @@ PoseInitializer::PoseInitializer()
 {
   enable_gnss_callback_ = this->declare_parameter("enable_gnss_callback", true);
 
-  std::vector<double> initialpose_particle_covariance =
+  const std::vector<double> initialpose_particle_covariance =
     this->declare_parameter<std::vector<double>>("initialpose_particle_covariance");
-  for (std::size_t i = 0; i < initialpose_particle_covariance.size(); ++i) {
-    initialpose_particle_covariance_[i] = initialpose_particle_covariance[i];
-  }
+  CopyVectorToArray(initialpose_particle_covariance, initialpose_particle_covariance_);
 
-  std::vector<double> gnss_particle_covariance =
+  const std::vector<double> gnss_particle_covariance =
     this->declare_parameter<std::vector<double>>("gnss_particle_covariance");
-  for (std::size_t i = 0; i < gnss_particle_covariance.size(); ++i) {
-    gnss_particle_covariance_[i] = gnss_particle_covariance[i];
-  }
+  CopyVectorToArray(gnss_particle_covariance, gnss_particle_covariance_);
 
-  std::vector<double> service_particle_covariance =
+  const std::vector<double> service_particle_covariance =
     this->declare_parameter<std::vector<double>>("service_particle_covariance");
-  for (std::size_t i = 0; i < service_particle_covariance.size(); ++i) {
-    service_particle_covariance_[i] = service_particle_covariance[i];
-  }
+  CopyVectorToArray(service_particle_covariance, service_particle_covariance_);
 
-  std::vector<double> output_pose_covariance =
+  const std::vector<double> output_pose_covariance =
     this->declare_parameter<std::vector<double>>("output_pose_covariance");
-  for (std::size_t i = 0; i < output_pose_covariance.size(); ++i) {
-    output_pose_covariance_[i] = output_pose_covariance[i];
-  }
+  CopyVectorToArray(output_pose_covariance, output_pose_covariance_);
 
   // We can't use _1 because pcl leaks an alias to boost::placeholders::_1, so it would be ambiguous
   initial_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
@@ -92,8 +86,10 @@ PoseInitializer::PoseInitializer()
   initial_pose_pub_ =
     this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("initialpose3d", 10);
 
-  ndt_client_ =
-    this->create_client<tier4_localization_msgs::srv::PoseWithCovarianceStamped>("ndt_align_srv");
+  initialize_pose_service_group_ =
+    create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+  ndt_client_ = this->create_client<tier4_localization_msgs::srv::PoseWithCovarianceStamped>(
+    "ndt_align_srv", rmw_qos_profile_services_default, initialize_pose_service_group_);
   while (!ndt_client_->wait_for_service(std::chrono::seconds(1)) && rclcpp::ok()) {
     RCLCPP_INFO(get_logger(), "Waiting for service...");
   }
@@ -225,24 +221,26 @@ bool PoseInitializer::callAlignServiceAndPublishResult(
   req->seq = ++request_id_;
 
   RCLCPP_INFO(get_logger(), "call NDT Align Server");
+  auto result = ndt_client_->async_send_request(req).get();
 
-  ndt_client_->async_send_request(
-    req,
-    [this](rclcpp::Client<tier4_localization_msgs::srv::PoseWithCovarianceStamped>::SharedFuture
-             result) {
-      if (result.get()->success) {
-        RCLCPP_INFO(get_logger(), "called NDT Align Server");
-        response_id_ = result.get()->seq;
-        // NOTE temporary cov
-        geometry_msgs::msg::PoseWithCovarianceStamped & pose_with_covariance =
-          result.get()->pose_with_covariance;
-        pose_with_covariance.pose.covariance = output_pose_covariance_;
-        initial_pose_pub_->publish(pose_with_covariance);
-        enable_gnss_callback_ = false;
-      } else {
-        RCLCPP_INFO(get_logger(), "failed NDT Align Server");
-        response_id_ = result.get()->seq;
-      }
-    });
+  if (!result->success) {
+    RCLCPP_INFO(get_logger(), "failed NDT Align Server");
+    response_id_ = result->seq;
+    return false;
+  }
+
+  RCLCPP_INFO(get_logger(), "called NDT Align Server");
+  response_id_ = result->seq;
+  // NOTE temporary cov
+  geometry_msgs::msg::PoseWithCovarianceStamped & pose_with_cov = result->pose_with_covariance;
+  pose_with_cov.pose.covariance[0] = 1.0;
+  pose_with_cov.pose.covariance[1 * 6 + 1] = 1.0;
+  pose_with_cov.pose.covariance[2 * 6 + 2] = 0.01;
+  pose_with_cov.pose.covariance[3 * 6 + 3] = 0.01;
+  pose_with_cov.pose.covariance[4 * 6 + 4] = 0.01;
+  pose_with_cov.pose.covariance[5 * 6 + 5] = 0.2;
+  initial_pose_pub_->publish(pose_with_cov);
+  enable_gnss_callback_ = false;
+
   return true;
 }

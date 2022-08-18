@@ -30,7 +30,7 @@ LaneFollowingModule::LaneFollowingModule(
 
 void LaneFollowingModule::initParam()
 {
-  approval_handler_.clearWaitApproval();  // no need approval
+  clearWaitingApproval();  // no need approval
 }
 
 bool LaneFollowingModule::isExecutionRequested() const { return true; }
@@ -49,7 +49,10 @@ BehaviorModuleOutput LaneFollowingModule::plan()
   output.path = std::make_shared<PathWithLaneId>(getReferencePath());
   return output;
 }
-PathWithLaneId LaneFollowingModule::planCandidate() const { return getReferencePath(); }
+CandidateOutput LaneFollowingModule::planCandidate() const
+{
+  return CandidateOutput(getReferencePath());
+}
 void LaneFollowingModule::onEntry()
 {
   initParam();
@@ -81,7 +84,8 @@ PathWithLaneId LaneFollowingModule::getReferencePath() const
 
   lanelet::ConstLanelet current_lane;
   if (!planner_data_->route_handler->getClosestLaneletWithinRoute(current_pose, &current_lane)) {
-    RCLCPP_ERROR(getLogger(), "failed to find closest lanelet within route!!!");
+    RCLCPP_ERROR_THROTTLE(
+      getLogger(), *clock_, 5000, "failed to find closest lanelet within route!!!");
     return reference_path;  // TODO(Horibe)
   }
 
@@ -99,7 +103,7 @@ PathWithLaneId LaneFollowingModule::getReferencePath() const
   {
     double optional_lengths{0.0};
     const auto isInIntersection = util::checkLaneIsInIntersection(
-      *route_handler, reference_path, current_lanes, optional_lengths);
+      *route_handler, reference_path, current_lanes, p, optional_lengths);
 
     if (isInIntersection) {
       reference_path = util::getCenterLinePath(
@@ -138,7 +142,7 @@ PathWithLaneId LaneFollowingModule::getReferencePath() const
   }
 
   reference_path.drivable_area = util::generateDrivableArea(
-    current_lanes, p.drivable_area_resolution, p.vehicle_length, planner_data_);
+    reference_path, current_lanes, p.drivable_area_resolution, p.vehicle_length, planner_data_);
 
   return reference_path;
 }

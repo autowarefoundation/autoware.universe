@@ -29,6 +29,7 @@ namespace ground_segmentation
 using pointcloud_preprocessor::get_param;
 using tier4_autoware_utils::calcDistance3d;
 using tier4_autoware_utils::deg2rad;
+using tier4_autoware_utils::normalizeDegree;
 using tier4_autoware_utils::normalizeRadian;
 using vehicle_info_util::VehicleInfoUtil;
 
@@ -87,7 +88,8 @@ void ScanGroundFilterComponent::convertPointcloud(
   for (size_t i = 0; i < in_cloud->points.size(); ++i) {
     auto radius{static_cast<float>(std::hypot(in_cloud->points[i].x, in_cloud->points[i].y))};
     auto theta{normalizeRadian(std::atan2(in_cloud->points[i].x, in_cloud->points[i].y), 0.0)};
-    auto radial_div{static_cast<size_t>(std::floor(theta / radial_divider_angle_rad_))};
+    auto radial_div{
+      static_cast<size_t>(std::floor(normalizeDegree(theta / radial_divider_angle_rad_, 0.0)))};
 
     current_point.radius = radius;
     current_point.theta = theta;
@@ -166,8 +168,12 @@ void ScanGroundFilterComponent::classifyPointCloud(
         (points_distance <
          (p->radius * radial_divider_angle_rad_ + split_points_distance_tolerance_));
 
+      float global_slope = std::atan2(p->orig_point->z, p->radius);
       // check points which is far enough from previous point
-      if (
+      if (global_slope > global_slope_max_angle) {
+        p->point_state = PointLabel::NON_GROUND;
+        calculate_slope = false;
+      } else if (
         (prev_point_label == PointLabel::NON_GROUND) &&
         (std::abs(height_from_obj) >= split_height_distance_)) {
         calculate_slope = true;
@@ -184,14 +190,8 @@ void ScanGroundFilterComponent::classifyPointCloud(
       }
       if (calculate_slope) {
         // far from the previous point
-
-        float global_slope = std::atan2(p->orig_point->z, p->radius);
         local_slope = std::atan2(height_from_gnd, radius_distance_from_gnd);
-
-        if (global_slope > global_slope_max_angle) {
-          // the point is outside of the global slope threshold
-          p->point_state = PointLabel::NON_GROUND;
-        } else if (local_slope - prev_gnd_slope > local_slope_max_angle) {
+        if (local_slope - prev_gnd_slope > local_slope_max_angle) {
           // the point is outside of the local slope threshold
           p->point_state = PointLabel::NON_GROUND;
         } else {

@@ -19,14 +19,14 @@ find_package(Eigen3 REQUIRED)
 include_directories(
   include
   SYSTEM
-  ${PCL_COMMON_INCLUDE_DIRS}
-  ${PCL_INCLUDE_DIRS}
+    ${EIGEN3_INCLUDE_DIRS}
+    ${PCL_COMMON_INCLUDE_DIRS}
+    ${PCL_INCLUDE_DIRS}
 )
 
 # Generate exe file
 set(DETECTION_BY_TRACKER_SRC
   src/detection_by_tracker_core.cpp
-  src/utils.cpp
 )
 
 ament_auto_add_library(detection_by_tracker_node SHARED

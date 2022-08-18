@@ -16,8 +16,8 @@
 #define UTILIZATION__UTIL_HPP_
 
 #include <lanelet2_extension/utility/query.hpp>
-#include <tier4_autoware_utils/geometry/geometry.hpp>
-#include <tier4_autoware_utils/trajectory/trajectory.hpp>
+#include <motion_utils/motion_utils.hpp>
+#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 #include <utilization/boost_geometry_helper.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
@@ -46,18 +46,12 @@
 
 #include <algorithm>
 #include <limits>
+#include <memory>
+#include <set>
 #include <string>
+#include <unordered_map>
+#include <utility>
 #include <vector>
-
-namespace tier4_autoware_utils
-{
-template <>
-inline geometry_msgs::msg::Point getPoint(
-  const autoware_auto_planning_msgs::msg::PathPointWithLaneId & p)
-{
-  return p.point.pose.position;
-}
-}  // namespace tier4_autoware_utils
 
 namespace behavior_velocity_planner
 {
@@ -82,51 +76,34 @@ struct PointWithSearchRangeIndex
   SearchRangeIndex index;
 };
 
+using geometry_msgs::msg::Pose;
+using BasicPolygons2d = std::vector<lanelet::BasicPolygon2d>;
+using Polygons2d = std::vector<Polygon2d>;
 using Point2d = boost::geometry::model::d2::point_xy<double>;
+using autoware_auto_perception_msgs::msg::PredictedObject;
+using autoware_auto_perception_msgs::msg::PredictedObjects;
+using autoware_auto_perception_msgs::msg::Shape;
+using autoware_auto_planning_msgs::msg::Path;
 using autoware_auto_planning_msgs::msg::PathPoint;
 using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
-using BasicPolygons2d = std::vector<lanelet::BasicPolygon2d>;
-using Polygons2d = std::vector<Polygon2d>;
+using autoware_auto_planning_msgs::msg::Trajectory;
+using motion_utils::calcLongitudinalOffsetToSegment;
+using motion_utils::calcSignedArcLength;
+using motion_utils::findNearestIndex;
+using motion_utils::findNearestSegmentIndex;
+using motion_utils::validateNonEmpty;
+using tier4_autoware_utils::calcAzimuthAngle;
+using tier4_autoware_utils::calcDistance2d;
+using tier4_autoware_utils::calcOffsetPose;
+using tier4_autoware_utils::calcSquaredDistance2d;
+using tier4_autoware_utils::createQuaternionFromYaw;
+using tier4_autoware_utils::getPoint;
+using tier4_planning_msgs::msg::StopFactor;
+using tier4_planning_msgs::msg::StopReason;
+
 namespace planning_utils
 {
-using geometry_msgs::msg::Pose;
-inline geometry_msgs::msg::Point getPoint(const geometry_msgs::msg::Point & p) { return p; }
-inline geometry_msgs::msg::Point getPoint(const geometry_msgs::msg::Pose & p) { return p.position; }
-inline geometry_msgs::msg::Point getPoint(const geometry_msgs::msg::PoseStamped & p)
-{
-  return p.pose.position;
-}
-inline geometry_msgs::msg::Point getPoint(const autoware_auto_planning_msgs::msg::PathPoint & p)
-{
-  return p.pose.position;
-}
-inline geometry_msgs::msg::Point getPoint(
-  const autoware_auto_planning_msgs::msg::PathPointWithLaneId & p)
-{
-  return p.point.pose.position;
-}
-inline geometry_msgs::msg::Point getPoint(
-  const autoware_auto_planning_msgs::msg::TrajectoryPoint & p)
-{
-  return p.pose.position;
-}
-inline geometry_msgs::msg::Pose getPose(
-  const autoware_auto_planning_msgs::msg::Path & path, int idx)
-{
-  return path.points.at(idx).pose;
-}
-inline geometry_msgs::msg::Pose getPose(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, int idx)
-{
-  return path.points.at(idx).point.pose;
-}
-inline geometry_msgs::msg::Pose getPose(
-  const autoware_auto_planning_msgs::msg::Trajectory & traj, int idx)
-{
-  return traj.points.at(idx).pose;
-}
-
 // create detection area from given range return false if creation failure
 bool createDetectionAreaPolygons(
   Polygons2d & slices, const PathWithLaneId & path, const geometry_msgs::msg::Pose & current_pose,
@@ -160,6 +137,12 @@ double calcDist2d(const T1 & a, const T2 & b)
 }
 
 template <class T>
+double calcDist2d(const T & a, const T & b)
+{
+  return std::sqrt(calcSquaredDist2d<T, T>(a, b));
+}
+
+template <class T>
 bool calcClosestIndex(
   const T & path, const geometry_msgs::msg::Pose & pose, int & closest, double dist_thr = 3.0,
   double angle_thr = M_PI_4);
@@ -172,8 +155,7 @@ geometry_msgs::msg::Pose transformRelCoordinate2D(
   const geometry_msgs::msg::Pose & target, const geometry_msgs::msg::Pose & origin);
 geometry_msgs::msg::Pose transformAbsCoordinate2D(
   const geometry_msgs::msg::Pose & relative, const geometry_msgs::msg::Pose & origin);
-SearchRangeIndex getPathIndexRangeIncludeLaneId(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int64_t lane_id);
+SearchRangeIndex getPathIndexRangeIncludeLaneId(const PathWithLaneId & path, const int64_t lane_id);
 /**
  * @brief find nearest segment index with search range
  */
@@ -183,13 +165,13 @@ size_t findNearestSegmentIndex(const T & points, const PointWithSearchRangeIndex
   const auto & index = point_with_index.index;
   const auto point = point_with_index.point;
 
-  tier4_autoware_utils::validateNonEmpty(points);
+  validateNonEmpty(points);
 
   double min_dist = std::numeric_limits<double>::max();
   size_t nearest_idx = 0;
 
   for (size_t i = index.min_idx; i <= index.max_idx; ++i) {
-    const auto dist = tier4_autoware_utils::calcSquaredDistance2d(points.at(i), point);
+    const auto dist = calcSquaredDistance2d(points.at(i), point);
     if (dist < min_dist) {
       min_dist = dist;
       nearest_idx = i;
@@ -203,8 +185,7 @@ size_t findNearestSegmentIndex(const T & points, const PointWithSearchRangeIndex
     return points.size() - 2;
   }
 
-  const double signed_length =
-    tier4_autoware_utils::calcLongitudinalOffsetToSegment(points, nearest_idx, point);
+  const double signed_length = calcLongitudinalOffsetToSegment(points, nearest_idx, point);
 
   if (signed_length <= 0) {
     return nearest_idx - 1;
@@ -219,9 +200,10 @@ template <class T>
 PointWithSearchRangeIndex findFirstNearSearchRangeIndex(
   const T & points, const geometry_msgs::msg::Point & point, const double distance_thresh = 9.0)
 {
-  tier4_autoware_utils::validateNonEmpty(points);
+  validateNonEmpty(points);
 
   bool min_idx_found = false;
+  bool max_idx_found = false;
   PointWithSearchRangeIndex point_with_range = {point, {static_cast<size_t>(0), points.size() - 1}};
   for (size_t i = 0; i < points.size(); i++) {
     const auto & p = points.at(i).point.pose.position;
@@ -231,7 +213,10 @@ PointWithSearchRangeIndex findFirstNearSearchRangeIndex(
         point_with_range.index.min_idx = i;
         min_idx_found = true;
       }
-      point_with_range.index.max_idx = i;
+      if (!max_idx_found) point_with_range.index.max_idx = i;
+    } else if (min_idx_found) {
+      // found close index and farther than distance_thresh, stop update max index
+      max_idx_found = true;
     }
   }
   return point_with_range;
@@ -244,21 +229,20 @@ double calcSignedArcLengthWithSearchIndex(
   const T & points, const PointWithSearchRangeIndex & src_point_with_range,
   const PointWithSearchRangeIndex & dst_point_with_range)
 {
-  tier4_autoware_utils::validateNonEmpty(points);
+  validateNonEmpty(points);
   const size_t src_idx = planning_utils::findNearestSegmentIndex(points, src_point_with_range);
   const size_t dst_idx = planning_utils::findNearestSegmentIndex(points, dst_point_with_range);
-  const double signed_length = tier4_autoware_utils::calcSignedArcLength(points, src_idx, dst_idx);
-  const double signed_length_src_offset = tier4_autoware_utils::calcLongitudinalOffsetToSegment(
-    points, src_idx, src_point_with_range.point);
-  const double signed_length_dst_offset = tier4_autoware_utils::calcLongitudinalOffsetToSegment(
-    points, dst_idx, dst_point_with_range.point);
+  const double signed_length = calcSignedArcLength(points, src_idx, dst_idx);
+  const double signed_length_src_offset =
+    calcLongitudinalOffsetToSegment(points, src_idx, src_point_with_range.point);
+  const double signed_length_dst_offset =
+    calcLongitudinalOffsetToSegment(points, dst_idx, dst_point_with_range.point);
   return signed_length - signed_length_src_offset + signed_length_dst_offset;
 }
-Polygon2d toFootprintPolygon(const autoware_auto_perception_msgs::msg::PredictedObject & object);
+Polygon2d toFootprintPolygon(const PredictedObject & object);
 bool isAheadOf(const geometry_msgs::msg::Pose & target, const geometry_msgs::msg::Pose & origin);
 Polygon2d generatePathPolygon(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const size_t start_idx,
-  const size_t end_idx, const double width);
+  const PathWithLaneId & path, const size_t start_idx, const size_t end_idx, const double width);
 
 double calcJudgeLineDistWithAccLimit(
   const double velocity, const double max_stop_acceleration, const double delay_response_time);
@@ -275,14 +259,11 @@ double findReachTime(
   const double jerk, const double accel, const double velocity, const double distance,
   const double t_min, const double t_max);
 
-tier4_planning_msgs::msg::StopReason initializeStopReason(const std::string & stop_reason);
+StopReason initializeStopReason(const std::string & stop_reason);
 
-void appendStopReason(
-  const tier4_planning_msgs::msg::StopFactor stop_factor,
-  tier4_planning_msgs::msg::StopReason * stop_reason);
+void appendStopReason(const StopFactor stop_factor, StopReason * stop_reason);
 
-std::vector<geometry_msgs::msg::Point> toRosPoints(
-  const autoware_auto_perception_msgs::msg::PredictedObjects & object);
+std::vector<geometry_msgs::msg::Point> toRosPoints(const PredictedObjects & object);
 
 geometry_msgs::msg::Point toRosPoint(const pcl::PointXYZ & pcl_point);
 geometry_msgs::msg::Point toRosPoint(const Point2d & boost_point, const double z);
@@ -298,6 +279,80 @@ std::vector<T> concatVector(const std::vector<T> & vec1, const std::vector<T> & 
   concat_vec.insert(std::end(concat_vec), std::begin(vec2), std::end(vec2));
   return concat_vec;
 }
+
+boost::optional<int64_t> getNearestLaneId(
+  const PathWithLaneId & path, const lanelet::LaneletMapPtr lanelet_map,
+  const geometry_msgs::msg::Pose & current_pose, boost::optional<size_t> & nearest_segment_idx);
+
+template <class T>
+std::unordered_map<typename std::shared_ptr<const T>, lanelet::ConstLanelet> getRegElemMapOnPath(
+  const PathWithLaneId & path, const lanelet::LaneletMapPtr lanelet_map,
+  const geometry_msgs::msg::Pose & current_pose)
+{
+  std::unordered_map<typename std::shared_ptr<const T>, lanelet::ConstLanelet> reg_elem_map_on_path;
+
+  // Add current lane id
+  boost::optional<size_t> nearest_segment_idx;
+  const auto nearest_lane_id =
+    getNearestLaneId(path, lanelet_map, current_pose, nearest_segment_idx);
+
+  std::vector<int64_t> unique_lane_ids;
+  if (nearest_lane_id) {
+    unique_lane_ids.emplace_back(*nearest_lane_id);
+  }
+
+  // Add forward path lane_id
+  const size_t start_idx = nearest_segment_idx ? *nearest_segment_idx + 1 : 0;
+  for (size_t i = start_idx; i < path.points.size(); i++) {
+    const int64_t lane_id = path.points.at(i).lane_ids.at(0);
+    if (
+      std::find(unique_lane_ids.begin(), unique_lane_ids.end(), lane_id) == unique_lane_ids.end()) {
+      unique_lane_ids.emplace_back(lane_id);
+    }
+  }
+
+  for (const auto lane_id : unique_lane_ids) {
+    const auto ll = lanelet_map->laneletLayer.get(lane_id);
+
+    for (const auto & reg_elem : ll.regulatoryElementsAs<const T>()) {
+      reg_elem_map_on_path.insert(std::make_pair(reg_elem, ll));
+    }
+  }
+
+  return reg_elem_map_on_path;
+}
+
+template <class T>
+std::set<int64_t> getRegElemIdSetOnPath(
+  const PathWithLaneId & path, const lanelet::LaneletMapPtr lanelet_map,
+  const geometry_msgs::msg::Pose & current_pose)
+{
+  std::set<int64_t> reg_elem_id_set;
+  for (const auto & m : getRegElemMapOnPath<const T>(path, lanelet_map, current_pose)) {
+    reg_elem_id_set.insert(m.first->id());
+  }
+  return reg_elem_id_set;
+}
+
+template <class T>
+std::set<int64_t> getLaneletIdSetOnPath(
+  const PathWithLaneId & path, const lanelet::LaneletMapPtr lanelet_map,
+  const geometry_msgs::msg::Pose & current_pose)
+{
+  std::set<int64_t> id_set;
+  for (const auto & m : getRegElemMapOnPath<const T>(path, lanelet_map, current_pose)) {
+    id_set.insert(m.second.id());
+  }
+  return id_set;
+}
+
+std::vector<lanelet::ConstLanelet> getLaneletsOnPath(
+  const PathWithLaneId & path, const lanelet::LaneletMapPtr lanelet_map,
+  const geometry_msgs::msg::Pose & current_pose);
+
+std::set<int64_t> getLaneIdSetOnPath(
+  const PathWithLaneId & path, const lanelet::LaneletMapPtr lanelet_map,
+  const geometry_msgs::msg::Pose & current_pose);
 }  // namespace planning_utils
 }  // namespace behavior_velocity_planner
 

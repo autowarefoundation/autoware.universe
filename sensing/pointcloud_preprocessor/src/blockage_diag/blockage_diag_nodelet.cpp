@@ -77,27 +77,29 @@ void BlockageDiagComponent::onBlockageChecker(DiagnosticStatusWrapper & stat)
   // TODO(badai-nguyen): consider sky_blockage_ratio_ for DiagnosticsStatus." [todo]
 
   auto level = DiagnosticStatus::OK;
+  std::string msg;
   if (ground_blockage_ratio_ < 0) {
     level = DiagnosticStatus::STALE;
+    msg = "STALE";
   } else if (
     (ground_blockage_ratio_ > blockage_ratio_threshold_) &&
     (ground_blockage_count_ > blockage_count_threshold_)) {
     level = DiagnosticStatus::ERROR;
+    msg = "ERROR";
   } else if (ground_blockage_ratio_ > 0.0f) {
     level = DiagnosticStatus::WARN;
+    msg = "WARN";
   } else {
     level = DiagnosticStatus::OK;
+    msg = "OK";
   }
 
-  std::string msg;
-  if (level == DiagnosticStatus::OK) {
-    msg = "OK";
-  } else if (level == DiagnosticStatus::WARN) {
-    msg = "WARNING: LiDAR blockage";
-  } else if (level == DiagnosticStatus::ERROR) {
-    msg = "ERROR: LiDAR blockage";
-  } else if (level == DiagnosticStatus::STALE) {
-    msg = "STALE";
+  if ((ground_blockage_ratio_ > 0.0f) && (sky_blockage_ratio_ > 0.0f)) {
+    msg = msg + ": LIDAR both blockage";
+  } else if (ground_blockage_ratio_ > 0.0f) {
+    msg = msg + ": LIDAR ground blockage";
+  } else if (sky_blockage_ratio_ > 0.0f) {
+    msg = msg + ": LIDAR sky blockage";
   }
   stat.summary(level, msg);
 }
@@ -106,7 +108,7 @@ void BlockageDiagComponent::filter(
   const PointCloud2ConstPtr & input, [[maybe_unused]] const IndicesPtr & indices,
   PointCloud2 & output)
 {
-  boost::mutex::scoped_lock lock(mutex_);
+  std::scoped_lock lock(mutex_);
   uint horizontal_bins = static_cast<uint>((angle_range_deg_[1] - angle_range_deg_[0]));
   uint vertical_bins = vertical_bins_;
   pcl::PointCloud<PointXYZIRADRT>::Ptr pcl_input(new pcl::PointCloud<PointXYZIRADRT>);
@@ -224,7 +226,7 @@ void BlockageDiagComponent::filter(
 rcl_interfaces::msg::SetParametersResult BlockageDiagComponent::paramCallback(
   const std::vector<rclcpp::Parameter> & p)
 {
-  boost::mutex::scoped_lock lock(mutex_);
+  std::scoped_lock lock(mutex_);
   if (get_param(p, "blockage_ratio_threshold", blockage_ratio_threshold_)) {
     RCLCPP_DEBUG(
       get_logger(), "Setting new blockage_ratio_threshold to: %f.", blockage_ratio_threshold_);

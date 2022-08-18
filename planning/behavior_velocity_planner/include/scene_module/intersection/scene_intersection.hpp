@@ -89,6 +89,7 @@ public:
     geometry_msgs::msg::Pose stop_point_pose;
     geometry_msgs::msg::Pose judge_point_pose;
     geometry_msgs::msg::Polygon ego_lane_polygon;
+    std::vector<lanelet::CompoundPolygon3d> detection_area_with_margin;
     geometry_msgs::msg::Polygon stuck_vehicle_detect_area;
     geometry_msgs::msg::Polygon candidate_collision_ego_lane_polygon;
     std::vector<geometry_msgs::msg::Polygon> candidate_collision_object_polygons;
@@ -96,13 +97,13 @@ public:
     std::vector<lanelet::CompoundPolygon3d> detection_area;
     autoware_auto_perception_msgs::msg::PredictedObjects conflicting_targets;
     autoware_auto_perception_msgs::msg::PredictedObjects stuck_targets;
+    geometry_msgs::msg::Pose predicted_obj_pose;
   };
 
 public:
   struct PlannerParam
   {
     double state_transit_margin_time;
-    double decel_velocity;    //! used when in straight and traffic_light lane
     double stop_line_margin;  //! distance from auto-generated stopline to detection_area boundary
     double stuck_vehicle_detect_dist;  //! distance from end point to finish stuck vehicle check
     double
@@ -111,13 +112,21 @@ public:
     double intersection_velocity;  //! used for intersection passing time
     double intersection_max_acc;   //! used for calculating intersection velocity
     double detection_area_margin;  //! used for detecting objects in detection area
-    double detection_area_length;  //! used to create detection area polygon
-    double detection_area_angle_thr;  //! threshold in checking the angle of detecting objects
+    double detection_area_right_margin;  //! used for detecting objects in detection area only right
+                                         //! direction
+    double detection_area_left_margin;   //! used for detecting objects in detection area only left
+                                         //! direction
+    double detection_area_length;        //! used to create detection area polygon
+    double detection_area_angle_thr;     //! threshold in checking the angle of detecting objects
     double min_predicted_path_confidence;
     //! minimum confidence value of predicted path to use for collision detection
     double external_input_timeout;       //! used to disable external input
     double collision_start_margin_time;  //! start margin time to check collision
     double collision_end_margin_time;    //! end margin time to check collision
+    bool use_stuck_stopline;  //! stopline generate before the intersection lanelet when is_stuck.
+    double
+      assumed_front_car_decel;  //! the expected deceleration of front car when front car as well
+    bool enable_front_car_decel_prediction;  //! flag for using above feature
   };
 
   IntersectionModule(
@@ -134,11 +143,13 @@ public:
     tier4_planning_msgs::msg::StopReason * stop_reason) override;
 
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
+  visualization_msgs::msg::MarkerArray createVirtualWallMarkerArray() override;
 
 private:
   int64_t lane_id_;
   std::string turn_direction_;
   bool has_traffic_light_;
+  bool is_go_out_;
 
   // Parameter
   PlannerParam planner_param_;
@@ -148,7 +159,6 @@ private:
    * actual collision check algorithm inside this function)
    * @param lanelet_map_ptr  lanelet map
    * @param path             ego-car lane
-   * @param detection_areas  collision check is performed for vehicles that exist in this area
    * @param detection_area_lanelet_ids  angle check is performed for obstacles using this lanelet
    * ids
    * @param objects_ptr      target objects
@@ -158,10 +168,9 @@ private:
   bool checkCollision(
     lanelet::LaneletMapConstPtr lanelet_map_ptr,
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-    const std::vector<lanelet::CompoundPolygon3d> & detection_areas,
     const std::vector<int> & detection_area_lanelet_ids,
     const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
-    const int closest_idx);
+    const int closest_idx, const Polygon2d & stuck_vehicle_detect_area);
 
   /**
    * @brief Check if there is a stopped vehicle on the ego-lane.
@@ -172,10 +181,8 @@ private:
    * @return true if exists
    */
   bool checkStuckVehicleInIntersection(
-    lanelet::LaneletMapConstPtr lanelet_map_ptr,
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
-    const int stop_idx,
-    const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr) const;
+    const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
+    const Polygon2d & stuck_vehicle_detect_area) const;
 
   /**
    * @brief Calculate the polygon of the path from the ego-car position to the end of the
@@ -284,6 +291,19 @@ private:
     lanelet::LaneletMapConstPtr lanelet_map_ptr,
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const size_t closest_idx) const;
 
+  /**
+   * @brief Check if the ego is expected to stop in the opposite lane if the front vehicle starts
+   * deceleration from current velocity and stop befor the crosswalk. If the stop position of front
+   * vehicle is in stuck area, and the position `ego_length` meter behind is in detection area,
+   * return true
+   * @param ego_poly Polygon of ego_with_next_lane
+   * @param closest_lanelet
+   * @return true if the ego is expected to stop in the opposite lane
+   */
+  bool checkFrontVehicleDeceleration(
+    lanelet::ConstLanelets & ego_lane_with_next_lane, lanelet::ConstLanelet & closest_lanelet,
+    const Polygon2d & stuck_vehicle_detect_area,
+    const autoware_auto_perception_msgs::msg::PredictedObject & object) const;
   StateMachine state_machine_;  //! for state
 
   // Debug

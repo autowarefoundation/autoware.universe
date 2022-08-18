@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <motion_utils/trajectory/trajectory.hpp>
 #include <scene_module/virtual_traffic_light/scene.hpp>
-#include <tier4_autoware_utils/trajectory/trajectory.hpp>
 #include <utilization/util.hpp>
 
 #include <tier4_v2x_msgs/msg/key_value.hpp>
@@ -22,16 +22,6 @@
 #include <limits>
 #include <string>
 #include <vector>
-
-namespace tier4_autoware_utils
-{
-template <>
-inline geometry_msgs::msg::Pose getPose(
-  const autoware_auto_planning_msgs::msg::PathPointWithLaneId & p)
-{
-  return p.point.pose;
-}
-}  // namespace tier4_autoware_utils
 
 namespace behavior_velocity_planner
 {
@@ -267,8 +257,8 @@ size_t insertStopVelocityAtCollision(
   const SegmentIndexWithPoint & collision, const double offset,
   autoware_auto_planning_msgs::msg::PathWithLaneId * path)
 {
-  const auto collision_offset = tier4_autoware_utils::calcLongitudinalOffsetToSegment(
-    path->points, collision.index, collision.point);
+  const auto collision_offset =
+    motion_utils::calcLongitudinalOffsetToSegment(path->points, collision.index, collision.point);
 
   const auto offset_segment = findOffsetSegment(*path, collision.index, offset + collision_offset);
   const auto interpolated_pose =
@@ -372,7 +362,7 @@ bool VirtualTrafficLightModule::modifyPathVelocity(
   }
 
   // Do nothing if vehicle is after any end line
-  if (isAfterAnyEndLine()) {
+  if (isAfterAnyEndLine() || state_ == State::FINALIZED) {
     RCLCPP_DEBUG(logger_, "after end_line");
     state_ = State::FINALIZED;
     updateInfrastructureCommand();
@@ -471,7 +461,7 @@ bool VirtualTrafficLightModule::isBeforeStartLine()
   }
 
   const double max_dist = std::numeric_limits<double>::max();
-  const auto signed_arc_length = tier4_autoware_utils::calcSignedArcLength(
+  const auto signed_arc_length = motion_utils::calcSignedArcLength(
     module_data_.path.points, module_data_.head_pose, collision->point, max_dist,
     planner_param_.max_yaw_deviation_rad);
 
@@ -489,7 +479,7 @@ bool VirtualTrafficLightModule::isBeforeStopLine()
   }
 
   const double max_dist = std::numeric_limits<double>::max();
-  const auto signed_arc_length = tier4_autoware_utils::calcSignedArcLength(
+  const auto signed_arc_length = motion_utils::calcSignedArcLength(
     module_data_.path.points, module_data_.head_pose, collision->point, max_dist,
     planner_param_.max_yaw_deviation_rad);
 
@@ -512,7 +502,7 @@ bool VirtualTrafficLightModule::isAfterAnyEndLine()
   }
 
   const double max_dist = std::numeric_limits<double>::max();
-  const auto signed_arc_length = tier4_autoware_utils::calcSignedArcLength(
+  const auto signed_arc_length = motion_utils::calcSignedArcLength(
     module_data_.path.points, module_data_.head_pose, collision->point, max_dist,
     planner_param_.max_yaw_deviation_rad);
 
@@ -528,7 +518,7 @@ bool VirtualTrafficLightModule::isNearAnyEndLine()
   }
 
   const double max_dist = std::numeric_limits<double>::max();
-  const auto signed_arc_length = tier4_autoware_utils::calcSignedArcLength(
+  const auto signed_arc_length = motion_utils::calcSignedArcLength(
     module_data_.path.points, module_data_.head_pose, collision->point, max_dist,
     planner_param_.max_yaw_deviation_rad);
 
@@ -575,15 +565,40 @@ void VirtualTrafficLightModule::insertStopVelocityAtStopLine(
   tier4_planning_msgs::msg::StopReason * stop_reason)
 {
   const auto collision = findCollision(path->points, *map_data_.stop_line);
+  const auto offset = -planner_data_->vehicle_info_.max_longitudinal_offset_m;
 
   geometry_msgs::msg::Pose stop_pose{};
   if (!collision) {
     insertStopVelocityFromStart(path);
     stop_pose = planner_data_->current_pose.pose;
   } else {
-    const auto offset = -planner_data_->vehicle_info_.max_longitudinal_offset_m;
-    const auto insert_index = insertStopVelocityAtCollision(*collision, offset, path);
-    stop_pose = path->points.at(insert_index).point.pose;
+    const auto & ego_pos = planner_data_->current_pose.pose.position;
+    const auto stop_distance =
+      motion_utils::calcSignedArcLength(path->points, ego_pos, collision.get().point) + offset;
+    const auto is_stopped = planner_data_->isVehicleStopped();
+
+    if (stop_distance < planner_param_.hold_stop_margin_distance && is_stopped) {
+      SegmentIndexWithPoint new_collision;
+      const auto ego_pos_on_path =
+        motion_utils::calcLongitudinalOffsetPoint(path->points, ego_pos, 0.0);
+
+      if (ego_pos_on_path) {
+        new_collision.point = ego_pos_on_path.get();
+        new_collision.index = motion_utils::findNearestSegmentIndex(path->points, ego_pos);
+        insertStopVelocityAtCollision(new_collision, 0.0, path);
+      }
+
+      // for virtual wall
+      {
+        auto path_tmp = path;
+        const auto insert_index = insertStopVelocityAtCollision(*collision, offset, path_tmp);
+        stop_pose = path_tmp->points.at(insert_index).point.pose;
+      }
+
+    } else {
+      const auto insert_index = insertStopVelocityAtCollision(*collision, offset, path);
+      stop_pose = path->points.at(insert_index).point.pose;
+    }
   }
 
   // Set StopReason
