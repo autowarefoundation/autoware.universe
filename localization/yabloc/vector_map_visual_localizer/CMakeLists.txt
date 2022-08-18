@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
+
 project(vector_map_visual_localizer)
 
 if(NOT CMAKE_CXX_STANDARD)
@@ -121,7 +122,6 @@ ADD_EXE(TARGET velocity_report_node SRC src/trajectory/velocity_report_node.cpp 
 ADD_EXE(TARGET camera_corrector_node
   SRC src/particle_filter/camera_corrector*.cpp
   INC include LIB util cost_map)
-ADD_EXE(TARGET gnss_corrector_node SRC src/particle_filter/gnss_corrector*.cpp INC include LIB util Geographic)
 ADD_EXE(TARGET particle_initializer_node SRC src/particle_filter/particle_initializer*.cpp INC include LIB util)
 
 # validation
@@ -133,11 +133,6 @@ ADD_EXE(TARGET ape_node SRC src/validation/ape_*.cpp INC include LIB util)
 ADD_EXE(TARGET ll2_decompose_node SRC src/map/ll2_decompose_*.cpp INC LIB ll2_util Geographic)
 ADD_EXE(TARGET ground_server_node SRC src/map/ground_server_*.cpp INC LIB)
 ADD_EXE(TARGET ground_client_node SRC src/map/ground_client_*.cpp INC LIB)
-
-# sign_board
-# ADD_LIB(TARGET sign_lib SRC src/sign_board/sign_lib.cpp INC include LIB)
-# ADD_EXE(TARGET sign_node SRC src/sign_board/sign_detector.cpp INC LIB util sign_lib)
-# ADD_EXE(TARGET sign_corrector_node SRC src/particle_filter/sign_corrector_*.cpp INC include LIB util)
 
 # ===================================================
 ament_auto_package(INSTALL_TO_SHARE launch config)

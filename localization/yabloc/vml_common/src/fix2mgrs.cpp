@@ -1,10 +1,11 @@
-#pragma once
-#include <Eigen/StdVector>
+#include "vml_common/fix2mgrs.hpp"
+
 #include <GeographicLib/MGRS.hpp>
 #include <GeographicLib/UTMUPS.hpp>
-#include <sensor_msgs/msg/nav_sat_fix.hpp>
 
-inline Eigen::Vector3d fix2Mgrs(const sensor_msgs::msg::NavSatFix& msg)
+namespace vml_common
+{
+Eigen::Vector3d fix2Mgrs(const sensor_msgs::msg::NavSatFix & msg)
 {
   using namespace GeographicLib;
   double x, y;
@@ -20,3 +21,4 @@ inline Eigen::Vector3d fix2Mgrs(const sensor_msgs::msg::NavSatFix& msg)
   double local_y = std::stoi(mgrs.substr(5 + DIGIT, DIGIT)) * std::pow(10, 5 - DIGIT);
   return {local_x, local_y, 0};
 }
+}  // namespace vml_common

@@ -1,9 +1,8 @@
-#include "particle_filter/gnss_corrector.hpp"
+#include "gnss_particle_corrector/gnss_particle_corrector.hpp"
 
-#include <GeographicLib/Geocentric.hpp>
-#include <common/color.hpp>
-#include <common/util.hpp>
-#include <trajectory/fix2mgrs.hpp>
+#include <vml_common/color.hpp>
+#include <vml_common/fix2mgrs.hpp>
+#include <vml_common/util.hpp>
 
 namespace particle_filter
 {
@@ -12,8 +11,8 @@ GnssParticleCorrector::GnssParticleCorrector()
   flat_radius_(declare_parameter("flat_radius", 1.0f)),
   min_prob_(declare_parameter("min_prob", 0.01f)),
   sigma_(declare_parameter("sigma", 25.0f)),
-  rtk_enabled_(declare_parameter("rtk_enabled", true)),
-  float_range_gain_(5.0f)
+  float_range_gain_(5.0f),
+  rtk_enabled_(declare_parameter("rtk_enabled", true))
 {
   using std::placeholders::_1;
   auto ublox_callback = std::bind(&GnssParticleCorrector::ubloxCallback, this, _1);
@@ -26,7 +25,7 @@ GnssParticleCorrector::GnssParticleCorrector()
 
 void GnssParticleCorrector::ubloxCallback(const NavPVT::ConstSharedPtr ublox_msg)
 {
-  const rclcpp::Time stamp = util::ubloxTime2Stamp(*ublox_msg);
+  const rclcpp::Time stamp = vml_common::ubloxTime2Stamp(*ublox_msg);
 
   const int FIX_FLAG = ublox_msgs::msg::NavPVT::CARRIER_PHASE_FIXED;
   const int FLOAT_FLAG = ublox_msgs::msg::NavPVT::CARRIER_PHASE_FLOAT;
@@ -51,11 +50,11 @@ void GnssParticleCorrector::ubloxCallback(const NavPVT::ConstSharedPtr ublox_msg
 
   const bool fixed = (ublox_msg->flags & FIX_FLAG);
 
-  Eigen::Vector3f position = fix2Mgrs(fix).cast<float>();
+  Eigen::Vector3f position = vml_common::fix2Mgrs(fix).cast<float>();
   ParticleArray weighted_particles{weightParticles(opt_particles.value(), position, fixed)};
   // setWeightedParticleArray(weighted_particles);
   geometry_msgs::msg::Pose mean_pose = modularized_particle_filter::meanPose(weighted_particles);
-  Eigen::Vector3f mean_position = util::pose2Affine(mean_pose).translation();
+  Eigen::Vector3f mean_position = vml_common::pose2Affine(mean_pose).translation();
   if ((mean_position - last_mean_position_).squaredNorm() > 1) {
     this->setWeightedParticleArray(weighted_particles);
     last_mean_position_ = mean_position;
@@ -94,7 +93,7 @@ void GnssParticleCorrector::publishMarker(const Eigen::Vector3f & position, bool
     marker.pose.position.z = latest_height_.data;
 
     float prob = (1 - min_prob_) * i / 4 + min_prob_;
-    marker.color = util::toJet(prob);
+    marker.color = vml_common::toJet(prob);
     marker.color.a = 0.3f;
     marker.scale.x = 0.1;
     drawCircle(marker.points, inversePdf(prob, fixed));
