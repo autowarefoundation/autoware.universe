@@ -202,6 +202,7 @@ void RayGroundFilterComponent::ClassifyPointCloud(
       double local_max_slope = local_max_slope_;
       if (j == 0) {
         local_max_slope = initial_max_slope_;
+        prev_height = in_radial_ordered_clouds[i][j].point.z;
         if (use_vehicle_footprint_) {
           // calc intersection of vehicle footprint and initial point vector
           const auto radius = calcPointVehicleIntersection(
@@ -241,8 +242,8 @@ void RayGroundFilterComponent::ClassifyPointCloud(
           // if previous points wasn't ground
           if (!prev_ground) {
             if (
-              current_height <= general_height_threshold &&
-              current_height >= -general_height_threshold) {
+              current_height - prev_height <= general_height_threshold &&
+              current_height -prev_height >= -general_height_threshold) {
               current_ground = true;
             } else {
               current_ground = false;
@@ -254,8 +255,8 @@ void RayGroundFilterComponent::ClassifyPointCloud(
           // check if previous point is too far from previous one, if so classify again
           if (
             points_distance > reclass_distance_threshold_ &&
-            (current_height <= general_height_threshold &&
-             current_height >= -general_height_threshold)) {
+            (current_height - prev_height<= general_height_threshold &&
+             current_height -prev_height >= -general_height_threshold)) {
             current_ground = true;
           } else {
             current_ground = false;
