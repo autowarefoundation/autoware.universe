@@ -50,7 +50,6 @@ inline std::vector<double> getYawArray(const T & points)
   std::vector<double> yaw_arr;
   for (const auto & p : points) {
     yaw_arr.push_back(getYaw(p));
-    std::cerr << getYaw(p) << " ";
   }
   return yaw_arr;
 }
