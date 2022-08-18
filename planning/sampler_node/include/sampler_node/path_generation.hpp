@@ -55,6 +55,7 @@ struct Parameters
   {
     bool force_zero_deviation{};
     bool force_zero_heading{};
+    bool smooth_reference{};
   } preprocessing{};
 };
 

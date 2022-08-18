@@ -4,6 +4,7 @@
     preprocessing:
       force_zero_initial_deviation: True  # if true, initial planning starts from the reference path
       force_zero_initial_heading: True # if true, initial planning starts with a heading aligned with the reference path
+      smooth_reference_trajectory: True  # if true, the reference trajectory is smoothed before being used for planning
     constraints:
       hard:
         max_curvature: 0.1
