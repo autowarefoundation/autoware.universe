@@ -4,9 +4,9 @@
   <name>obstacle_collision_checker</name>
   <version>0.1.0</version>
   <description>The obstacle_collision_checker package</description>
-  <author email="kenji.miyake@tier4.jp">Kenji Miyake</author>
   <maintainer email="kenji.miyake@tier4.jp">Kenji Miyake</maintainer>
   <license>Apache License 2.0</license>
+  <author email="kenji.miyake@tier4.jp">Kenji Miyake</author>
 
   <author email="satoshi.tanaka@tier4.jp">Satoshi Tanaka</author>
 

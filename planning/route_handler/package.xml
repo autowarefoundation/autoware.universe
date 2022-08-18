@@ -4,9 +4,9 @@
   <name>route_handler</name>
   <version>0.1.0</version>
   <description>The route_handling package</description>
-  <author email="fumiya.watanabe@tier4.jp">Fumiya Watanabe</author>
   <maintainer email="fumiya.watanabe@tier4.jp">Fumiya Watanabe</maintainer>
   <license>Apache License 2.0</license>
+  <author email="fumiya.watanabe@tier4.jp">Fumiya Watanabe</author>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 

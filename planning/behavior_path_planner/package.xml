@@ -5,14 +5,6 @@
   <version>0.1.0</version>
   <description>The behavior_path_planner package</description>
 
-  <author email="takamasa.horibe@tier4.jp">Takamasa Horibe</author>
-  <author email="fumiya.watanabe@tier4.jp">Fumiya Watanabe</author>
-  <author email="zulfaqar.azmi@tier4.jp">Zulfaqar Azmi</author>
-  <author email="kosuke.takeuchi@tier4.jp">Kosuke Takeuchi</author>
-  <author email="yutaka.shimizu@tier4.jp">Yutaka Shimizu</author>
-  <author email="takayuki.murooka@tier4.jp">Takayuki Murooka</author>
-  <author email="ryohsuke.mitsudome@tier4.jp">mitsudome-r</author>
-
   <!-- lane change module -->
   <maintainer email="zulfaqar.azmi@tier4.jp">Zulfaqar Azmi</maintainer>
   <!-- pull over module -->
@@ -29,6 +21,14 @@
   <maintainer email="takayuki.murooka@tier4.jp">Takayuki Murooka</maintainer>
 
   <license>Apache License 2.0</license>
+
+  <author email="takamasa.horibe@tier4.jp">Takamasa Horibe</author>
+  <author email="fumiya.watanabe@tier4.jp">Fumiya Watanabe</author>
+  <author email="zulfaqar.azmi@tier4.jp">Zulfaqar Azmi</author>
+  <author email="kosuke.takeuchi@tier4.jp">Kosuke Takeuchi</author>
+  <author email="yutaka.shimizu@tier4.jp">Yutaka Shimizu</author>
+  <author email="takayuki.murooka@tier4.jp">Takayuki Murooka</author>
+  <author email="ryohsuke.mitsudome@tier4.jp">mitsudome-r</author>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 

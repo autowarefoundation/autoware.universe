@@ -4,12 +4,13 @@
   <version>0.1.0</version>
   <description>The obstacle_cruise_planner package</description>
 
-  <author email="takayuki.murooka@tier4.jp">Takayuki Murooka</author>
-  <author email="yutaka.shimizu@tier4.jp">Yutaka Shimizu</author>
   <maintainer email="takayuki.murooka@tier4.jp">Takayuki Murooka</maintainer>
   <maintainer email="yutaka.shimizu@tier4.jp">Yutaka Shimizu</maintainer>
 
   <license>Apache License 2.0</license>
+
+  <author email="takayuki.murooka@tier4.jp">Takayuki Murooka</author>
+  <author email="yutaka.shimizu@tier4.jp">Yutaka Shimizu</author>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 

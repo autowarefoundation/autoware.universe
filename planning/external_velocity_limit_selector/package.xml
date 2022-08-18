@@ -4,9 +4,9 @@
   <name>external_velocity_limit_selector</name>
   <version>0.1.0</version>
   <description>The external_velocity_limit_selector ROS2 package</description>
-  <author email="satoshi.ota@tier4.jp">Satoshi Ota</author>
   <maintainer email="satoshi.ota@tier4.jp">Satoshi Ota</maintainer>
   <license>Apache License 2.0</license>
+  <author email="satoshi.ota@tier4.jp">Satoshi Ota</author>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
