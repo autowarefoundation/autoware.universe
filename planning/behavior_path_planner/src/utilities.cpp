@@ -45,12 +45,8 @@ double calcInterpolatedZ(
 }
 
 double calcInterpolatedVelocity(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & input,
-  const geometry_msgs::msg::Point target_pos, const size_t seg_idx)
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & input, const size_t seg_idx)
 {
-  const double closest_to_target_dist = motion_utils::calcSignedArcLength(
-    input.points, input.points.at(seg_idx).point.pose.position,
-    target_pos);  // TODO(murooka) implement calcSignedArcLength(points, idx, point)
   const double seg_dist = motion_utils::calcSignedArcLength(input.points, seg_idx, seg_idx + 1);
 
   const double closest_vel = input.points.at(seg_idx).point.longitudinal_velocity_mps;
@@ -945,8 +941,8 @@ bool setGoal(
       motion_utils::findNearestSegmentIndex(input.points, pre_refined_goal.point.pose.position);
     pre_refined_goal.point.pose.position.z =
       calcInterpolatedZ(input, pre_refined_goal.point.pose.position, closest_seg_idx_for_pre_goal);
-    pre_refined_goal.point.longitudinal_velocity_mps = calcInterpolatedVelocity(
-      input, pre_refined_goal.point.pose.position, closest_seg_idx_for_pre_goal);
+    pre_refined_goal.point.longitudinal_velocity_mps =
+      calcInterpolatedVelocity(input, closest_seg_idx_for_pre_goal);
 
     // find min_dist_index whose distance to goal is shorter than search_radius_range
     const auto min_dist_index_opt =
