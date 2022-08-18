@@ -53,7 +53,7 @@ None
 | `ip_address`      | string | "192.168.1.201" | IP address of target Velodyne LiDAR                                                                                       |
 | `temp_cold_warn`  | double | -5.0            | If the temperature of Velodyne LiDAR is lower than this value, the diagnostics status becomes WARN [°C]                   |
 | `temp_cold_error` | double | -10.0           | If the temperature of Velodyne LiDAR is lower than this value, the diagnostics status becomes ERROR [°C]                  |
-| `temp_hot_warn`   | double | 75.0            | If the temperature of Velodyne LiDAR is higher than this value, the diagnostics status becomes WARN [°C]                  |
+| `temp_hot_warn`   | double | 55.0            | If the temperature of Velodyne LiDAR is higher than this value, the diagnostics status becomes WARN [°C]                  |
 | `temp_hot_error`  | double | 60.0            | If the temperature of Velodyne LiDAR is higher than this value, the diagnostics status becomes ERROR [°C]                 |
 | `rpm_ratio_warn`  | double | 0.80            | If the rpm rate of the motor (= current rpm / default rpm) is lower than this value, the diagnostics status becomes WARN  |
 | `rpm_ratio_error` | double | 0.70            | If the rpm rate of the motor (= current rpm / default rpm) is lower than this value, the diagnostics status becomes ERROR |
