@@ -13,4 +13,4 @@ jobs:
 
       - name: Run setup script
         run: |
-          ./setup-dev-env.sh -y -v --no-nvidia local_dev_env
+          ./setup-dev-env.sh -y -v local_dev_env
