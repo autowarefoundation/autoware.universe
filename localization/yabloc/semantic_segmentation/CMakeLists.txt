@@ -16,6 +16,7 @@ find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
 # ===================================================
+file(MAKE_DIRECTORY data)
 ament_auto_package(INSTALL_TO_SHARE data launch)
 
 install(PROGRAMS
