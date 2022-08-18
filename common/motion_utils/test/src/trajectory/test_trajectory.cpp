@@ -1340,9 +1340,10 @@ TEST(trajectory, calcLongitudinalOffsetPoseFromIndex_quatSphericalInterpolation)
   // Found pose(forward)
   for (double len = 0.0; len < total_length; len += 0.1) {
     const auto p_out = calcLongitudinalOffsetPose(traj.points, 0, len, true);
-    const auto ratio = 1 - (len / total_length);
+    // ratio between two points
+    const auto ratio = len / total_length;
     const auto ans_quat =
-      createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(45.0 * ratio));
+      createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(45.0 - 45.0 * ratio));
 
     EXPECT_NE(p_out, boost::none);
     EXPECT_NEAR(p_out.get().position.x, len * std::cos(deg2rad(45.0)), epsilon);
@@ -1357,6 +1358,7 @@ TEST(trajectory, calcLongitudinalOffsetPoseFromIndex_quatSphericalInterpolation)
   // Found pose(backward)
   for (double len = total_length; 0.0 < len; len -= 0.1) {
     const auto p_out = calcLongitudinalOffsetPose(traj.points, 1, -len, true);
+    // ratio between two points
     const auto ratio = len / total_length;
     const auto ans_quat =
       createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(45.0 * ratio));
@@ -1600,9 +1602,10 @@ TEST(trajectory, calcLongitudinalOffsetPoseFromPoint_quatSphericalInterpolation)
 
     for (double len = -src_offset; len < total_length - src_offset; len += 0.1) {
       const auto p_out = calcLongitudinalOffsetPose(traj.points, p_src, len, true);
-      const auto ratio = 1 - ((src_offset + len) / total_length);
+      // ratio between two points
+      const auto ratio = (src_offset + len) / total_length;
       const auto ans_quat =
-        createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(45.0 * ratio));
+        createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(45.0 - 45.0 * ratio));
 
       EXPECT_NE(p_out, boost::none);
       EXPECT_NEAR(
