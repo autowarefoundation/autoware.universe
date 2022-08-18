@@ -126,7 +126,7 @@ def launch_setup(context, *args, **kwargs):
                 "/control/trajectory_follower/lateral/predicted_trajectory",
             ),
         ],
-        parameters=[nearest_search_param_path, lane_departure_checker_param, vehicle_info_param],
+        parameters=[nearest_search_param, lane_departure_checker_param, vehicle_info_param],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
 
