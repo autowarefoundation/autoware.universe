@@ -116,7 +116,7 @@ public:
   /** @brief Copy msg into current_map_ and call showMap(). */
   void processMessage(autoware_auto_planning_msgs::msg::Path::ConstSharedPtr msg) override;
 
-public Q_SLOTS: // NOLINT
+public Q_SLOTS:  // NOLINT
   void showMap();
 
 Q_SIGNALS:
@@ -131,7 +131,7 @@ protected Q_SLOTS:
   void transformMap();
   void updateMapUpdateTopic();
 
-protected: // NOLINT for Qt
+protected:  // NOLINT for Qt
   void updateTopic() override;
   void update(float wall_dt, float ros_dt) override;
 
@@ -143,7 +143,8 @@ protected: // NOLINT for Qt
   /** @brief Copy update's data into current_map_ and call showMap(). */
   void incomingUpdate(map_msgs::msg::OccupancyGridUpdate::ConstSharedPtr update);
 
-  [[nodiscard]] bool updateDataOutOfBounds(map_msgs::msg::OccupancyGridUpdate::ConstSharedPtr update) const;
+  [[nodiscard]] bool updateDataOutOfBounds(
+    map_msgs::msg::OccupancyGridUpdate::ConstSharedPtr update) const;
   void updateMapDataInMemory(map_msgs::msg::OccupancyGridUpdate::ConstSharedPtr update);
 
   void clear();
@@ -159,7 +160,8 @@ protected: // NOLINT for Qt
   void tryCreateSwatches(
     size_t width, size_t height, float resolution, size_t swatch_width, size_t swatch_height,
     int number_swatches);
-  static size_t getEffectiveDimension(size_t map_dimension, size_t swatch_dimension, size_t position);
+  static size_t getEffectiveDimension(
+    size_t map_dimension, size_t swatch_dimension, size_t position);
   void updateSwatches() const;
 
   std::vector<std::shared_ptr<Swatch>> swatches_;
