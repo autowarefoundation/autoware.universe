@@ -60,4 +60,14 @@ None
 
 ## Assumptions / Known limits
 
-TBD.
+### About temperature threshold
+
+According to the datasheet of each models, operational temperatures are below.
+
+| Model Name     | Operational Temperature [℃] |
+| -------------- | ---------------------------- |
+| VLP-16         | -10 to 60                    |
+| VLP-32C        | -20 to 60                    |
+| VLS-128        | -20 to 60                    |
+| Velarray M1600 | -40 to 85                    |
+| HDL-32E        | -10 to 60                    |
