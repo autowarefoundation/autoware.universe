@@ -936,9 +936,9 @@ bool setGoal(
     refined_goal.point.pose.position.z =
       calcInterpolatedZ(input, goal.position, closest_seg_idx_for_goal);
     refined_goal.point.longitudinal_velocity_mps = 0.0;
-    refined_goal.lane_ids = input.points.back().lane_ids;
 
-    // calculate pre_goal
+    // calculate pre_refined_goal with interpolation
+    // NOTE: z and velocity are filled
     PathPointWithLaneId pre_refined_goal{};
     pre_refined_goal.point.pose = tier4_autoware_utils::calcOffsetPose(goal, -1.0, 0.0, 0.0);
     const size_t closest_seg_idx_for_pre_goal =
@@ -947,7 +947,6 @@ bool setGoal(
       calcInterpolatedZ(input, pre_refined_goal.point.pose.position, closest_seg_idx_for_pre_goal);
     pre_refined_goal.point.longitudinal_velocity_mps = calcInterpolatedVelocity(
       input, pre_refined_goal.point.pose.position, closest_seg_idx_for_pre_goal);
-    pre_refined_goal.lane_ids = input.points.back().lane_ids;
 
     // find min_dist_index whose distance to goal is shorter than search_radius_range
     const auto min_dist_index_opt =
@@ -971,12 +970,30 @@ bool setGoal(
       }
     }
 
+    // create output points
     for (size_t i = 0; i <= min_dist_out_of_circle_index; ++i) {
       output_ptr->points.push_back(input.points.at(i));
     }
-
     output_ptr->points.push_back(pre_refined_goal);
     output_ptr->points.push_back(refined_goal);
+
+    {  // fill skipped lane ids
+      // pre refined goal
+      auto & pre_goal = output_ptr->points.at(output_ptr->points.size() - 2);
+      for (size_t i = min_dist_out_of_circle_index + 1; i < input.points.size(); ++i) {
+        for (const auto target_lane_id : input.points.at(i).lane_ids) {
+          const bool is_lane_id_found =
+            std::find(pre_goal.lane_ids.begin(), pre_goal.lane_ids.end(), target_lane_id) !=
+            pre_goal.lane_ids.end();
+          if (!is_lane_id_found) {
+            pre_goal.lane_ids.push_back(target_lane_id);
+          }
+        }
+      }
+
+      // goal
+      output_ptr->points.back().lane_ids = input.points.back().lane_ids;
+    }
 
     output_ptr->drivable_area = input.drivable_area;
     return true;
