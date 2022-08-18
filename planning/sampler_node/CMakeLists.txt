@@ -47,9 +47,18 @@ rclcpp_components_register_node(sampler_node
 
 # Demos
 add_executable(acc_velocity_demo
-  src/demos/acc_velocity_profile.cpp
+  demos/acc_velocity_profile.cpp
 )
 target_link_libraries(acc_velocity_demo
+  Qt5::Widgets
+  ${QCustomPlot_LIBRARIES}
+  sampler_node
+)
+
+add_executable(eigen_smoothing
+  demos/eigen_smoothing.cpp
+)
+target_link_libraries(eigen_smoothing
   Qt5::Widgets
   ${QCustomPlot_LIBRARIES}
   sampler_node
