@@ -118,7 +118,7 @@ SafeMotion calculateSafeMotion(const Velocity & v, const double ttv)
     stop_dist = v_safe * t1 - j_max * t2 * t2 * t2 / 6 + v2 * t3 - 0.5 * a_max * t3 * t3;
   }
   // Note: safe_margin controls behavior insert point
-  // stop_dist += v.safe_margin;
+  stop_dist += v.safe_margin;
   return sm;
 }
 }  // namespace occlusion_spot_utils
