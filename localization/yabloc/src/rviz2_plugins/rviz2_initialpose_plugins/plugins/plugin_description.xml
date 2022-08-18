@@ -1,6 +1,0 @@
-<library path="rviz2_initialpose_plugins">
-  <class name="initialpose_plugins/InitialPosePanel"
-         type="initialpose_plugins::InitialPosePanel"
-         base_class_type="rviz_common::Panel">
-  </class>
-</library>
