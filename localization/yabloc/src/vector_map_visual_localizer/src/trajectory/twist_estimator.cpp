@@ -181,17 +181,20 @@ void TwistEstimator::callbackNavPVT(const NavPVT & msg)
   Eigen::Matrix2f R = Eigen::Rotation2D(state_[ANGLE]).toRotationMatrix();
   Eigen::Vector2f error = R * state_[VELOCITY] * Eigen::Vector2f::UnitX() - vel_xy;
 
-  float std_vel = std::sqrt(cov_(VELOCITY, VELOCITY));
+  // Check validity of doppler velocity measurement
+  {
+    const float vel_std = std::sqrt(cov_(VELOCITY, VELOCITY));
+    float norm_error = std::abs(state_[VELOCITY] - vel_xy.norm());
+    RCLCPP_INFO_STREAM(
+      get_logger(),
+      state_[VELOCITY] << " " << vel_xy.norm() << " " << norm_error << " " << vel_std);
 
-  RCLCPP_INFO_STREAM(
-    get_logger(),
-    state_[VELOCITY] << " " << vel_xy.norm() << " " << error.transpose() << " " << std_vel);
-
-  if (error.norm() > std_vel) {
-    RCLCPP_WARN_STREAM(
-      get_logger(), "skip GNSS update because velocity error is too large " << error.transpose()
-                                                                            << " " << std_vel);
-    return;
+    if (norm_error > vel_std) {
+      RCLCPP_WARN_STREAM(
+        get_logger(),
+        "skip GNSS update because velocity error is too large " << norm_error << " " << vel_std);
+      return;
+    }
   }
 
   cov_ = rectifyPositiveSemiDefinite(cov_);
