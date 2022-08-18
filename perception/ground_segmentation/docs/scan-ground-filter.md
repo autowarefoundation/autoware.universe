@@ -30,7 +30,6 @@ This implementation inherits `pointcloud_preprocessor::Filter` class, please ref
 
 | Name                              | Type   | Default Value | Description                                                                   |
 | --------------------------------- | ------ | ------------- | ----------------------------------------------------------------------------- |
-| `base_frame`                      | string | "base_link"   | base_link frame                                                               |
 | `global_slope_max`                | double | 8.0           | The global angle to classify as the ground or object [deg]                    |
 | `local_max_slope`                 | double | 6.0           | The local angle to classify as the ground or object [deg]                     |
 | `radial_divider_angle`            | double | 1.0           | The angle which divide the whole pointcloud to sliced group [deg]             |
