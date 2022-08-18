@@ -125,6 +125,8 @@ PathSamplerNode::PathSamplerNode(const rclcpp::NodeOptions & node_options)
     declare_parameter<bool>("preprocessing.force_zero_initial_deviation");
   params_.preprocessing.force_zero_heading =
     declare_parameter<bool>("preprocessing.force_zero_initial_heading");
+  params_.preprocessing.smooth_reference =
+    declare_parameter<bool>("preprocessing.smooth_reference_trajectory");
 
   // const auto half_wheel_tread = vehicle_info_.wheel_tread_m / 2.0;
   const auto left_offset = vehicle_info_.vehicle_width_m / 2.0;
@@ -204,6 +206,8 @@ rcl_interfaces::msg::SetParametersResult PathSamplerNode::onParameter(
       params_.preprocessing.force_zero_deviation = parameter.as_bool();
     } else if (parameter.get_name() == "preprocessing.force_zero_initial_heading") {
       params_.preprocessing.force_zero_heading = parameter.as_bool();
+    } else if (parameter.get_name() == "preprocessing.smooth_reference_trajectory") {
+      params_.preprocessing.smooth_reference = parameter.as_bool();
     } else {
       RCLCPP_WARN(get_logger(), "Unknown parameter %s", parameter.get_name().c_str());
       result.successful = false;
@@ -231,7 +235,7 @@ void PathSamplerNode::pathCallback(const autoware_auto_planning_msgs::msg::Path:
 
   const auto calc_begin = std::chrono::steady_clock::now();
 
-  const auto path_spline = preparePathSpline(*msg);
+  const auto path_spline = preparePathSpline(*msg, params_.preprocessing.smooth_reference);
   const auto planning_state = getPlanningState(*current_state, path_spline);
   prepareConstraints(
     params_.constraints, *in_objects_ptr_, *lanelet_map_ptr_, drivable_ids_, prefered_ids_,

@@ -56,7 +56,7 @@ frenet_planner::SamplingParameters prepareSamplingParameters(
   const Parameters & params);
 /// @brief prepare the 2D spline representation of the given Path message
 sampler_common::transform::Spline2D preparePathSpline(
-  const autoware_auto_planning_msgs::msg::Path & path_msg);
+  const autoware_auto_planning_msgs::msg::Path & path_msg, const bool smooth_path);
 /// @brief prepare the previous trajectory
 frenet_planner::Trajectory preparePreviousTrajectory(
   const frenet_planner::Trajectory & prev_trajectory,
