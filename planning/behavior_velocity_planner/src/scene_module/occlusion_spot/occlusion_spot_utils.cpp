@@ -150,7 +150,10 @@ void calcSlowDownPointsForPossibleCollision(
         const double d1 = dist_along_next_path_point;
         const auto p0 = p_prev.pose.position;
         const auto p1 = p_next.pose.position;
-        const double v = p_prev.longitudinal_velocity_mps;
+        const double dist_to_next = std::abs(d1 - dist_to_col);
+        const double v0 = p_prev.longitudinal_velocity_mps;
+        const double v1 = p_next.longitudinal_velocity_mps;
+        const double v = (dist_to_next < 1e-6) ? v1 : v0;
         const double z = getInterpolatedValue(d0, p0.z, dist_to_col, d1, p1.z);
         // height is used to visualize marker correctly
         auto & col = possible_collisions.at(collision_index);
