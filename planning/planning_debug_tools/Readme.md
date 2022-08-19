@@ -132,7 +132,7 @@ You can launch by
 ros2 run planning_debug_tools closest_velocity_checker.py
 ```
 
-![](image/closest-velocity-checker.png)
+![closest-velocity-checker](image/closest-velocity-checker.png)
 
 ## Trajectory visualizer
 
