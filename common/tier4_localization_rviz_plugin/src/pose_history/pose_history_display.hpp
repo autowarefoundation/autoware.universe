@@ -39,13 +39,17 @@ namespace rviz_plugins
 {
 class PoseHistory
 : public rviz_common::MessageFilterDisplay<
-    geometry_msgs::msg::PoseStamped>  // NOLINT [cppcoreguidelines-special-member-functions]
+    geometry_msgs::msg::PoseStamped>
 {
   Q_OBJECT
 
 public:
   PoseHistory();
   ~PoseHistory() override;
+  PoseHistory(const PoseHistory &) = delete;
+  PoseHistory(const PoseHistory &&) = delete;
+  PoseHistory& operator=(const PoseHistory &) = delete;
+  PoseHistory& operator=(const PoseHistory &&) = delete;
 
 protected:
   void onInitialize() override;
