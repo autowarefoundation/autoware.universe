@@ -48,7 +48,7 @@ BigVehicleTracker::BigVehicleTracker(
   object_ = object;
 
   // initialize params
-  ekf_params_.use_measurement_covariance = true;
+  ekf_params_.use_measurement_covariance = false;
   float q_stddev_x = 1.5;                                     // [m/s]
   float q_stddev_y = 1.5;                                     // [m/s]
   float q_stddev_yaw = tier4_autoware_utils::deg2rad(20);     // [rad/s]
