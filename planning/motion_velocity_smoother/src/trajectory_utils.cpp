@@ -169,41 +169,36 @@ std::vector<double> calcTrajectoryIntervalDistance(const TrajectoryPoints & traj
 std::vector<double> calcTrajectoryCurvatureFrom3Points(
   const TrajectoryPoints & trajectory, size_t idx_dist)
 {
-  using tier4_autoware_utils::calcCurvature;
-  using tier4_autoware_utils::getPoint;
+    using tier4_autoware_utils::calcCurvature;
+    using tier4_autoware_utils::getPoint;
 
-  if (trajectory.size() < 3) {
-    const std::vector<double> k_arr(trajectory.size(), 0.0);
-    return k_arr;
-  }
-
-  // if the idx size is not enough, change the idx_dist
-  const auto max_idx_dist = static_cast<size_t>(std::floor((trajectory.size() - 1) / 2.0));
-  idx_dist = std::max(1ul, std::min(idx_dist, max_idx_dist));
-
-  if (idx_dist < 1) {
-    throw std::logic_error("idx_dist less than 1 is not expected");
-  }
-
-  // calculate curvature by circle fitting from three points
-  std::vector<double> k_arr;
-  for (size_t i = idx_dist; i < trajectory.size() - idx_dist; ++i) {
-    try {
-      const auto p0 = getPoint(trajectory.at(i - idx_dist));
-      const auto p1 = getPoint(trajectory.at(i));
-      const auto p2 = getPoint(trajectory.at(i + idx_dist));
-      k_arr.push_back(calcCurvature(p0, p1, p2));
-    } catch (...) {
-      k_arr.push_back(0.0);  // points are too close. No curvature.
+    if (trajectory.size() < 3) {
+        const std::vector<double> k_arr(trajectory.size(), 0.0);
+        return k_arr;
     }
-  }
 
-  // first and last curvature is copied from next value
-  for (size_t i = 0; i < idx_dist; ++i) {
-    k_arr.insert(k_arr.begin(), k_arr.front());
-    k_arr.push_back(k_arr.back());
-  }
-  return k_arr;
+    // if the idx size is not enough, change the idx_dist
+    const auto max_idx_dist = static_cast<size_t>(std::floor((trajectory.size() - 1) / 2.0));
+    idx_dist = std::max(1ul, std::min(idx_dist, max_idx_dist));
+
+    if (idx_dist < 1) {
+        throw std::logic_error("idx_dist less than 1 is not expected");
+    }
+
+    // calculate curvature by circle fitting from three points
+    std::vector<double> k_arr;
+    //  for first point curvature = 0;
+    k_arr.push_back(0.0);
+    for (size_t i = 1; i + 1 < trajectory.size(); i++) {
+        const auto p0 = getPoint(trajectory.at(i - std::min(idx_dist, i)));
+        const auto p1 = getPoint(trajectory.at(i));
+        const auto p2 = getPoint(trajectory.at(i + std::min(idx_dist, trajectory.size() - 1 - i)));
+        k_arr.push_back(calcCurvature(p0, p1, p2));
+    }
+    // for last point curvature = 0;
+    k_arr.push_back(0.0);
+
+    return k_arr;
 }
 
 void setZeroVelocity(TrajectoryPoints & trajectory)
