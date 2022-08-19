@@ -3,8 +3,6 @@
     <arg name="log_level" default="warn"/>
     <arg name="rtk_enabled" default="true"/>
     <arg name="use_eagleye" default="false"/>
-    <arg name="force_zero_tilt" default="false"/>
-    
 
     <!-- ========================================= -->
     <!-- =============== STATIC TF =============== -->
@@ -14,12 +12,12 @@
     <!-- ========================================= -->
     <!-- =============== FIX TO POSE ============= -->
     <!-- ========================================= -->
-    <node name="fix_to_pose" pkg="vector_map_visual_localizer" exec="fix_to_pose_node" output="log" args="--ros-args --log-level warn">
+    <node name="fix_to_pose" pkg="vmvl_trajectory" exec="fix_to_pose_node" output="log" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <remap from="pose" to="/sensing/gnss/ublox/pose"/>
         <remap from="fix_topic" to="/sensing/gnss/ublox/nav_sat_fix"/>
     </node>
-    <node name="fix_to_pose2" pkg="vector_map_visual_localizer" exec="fix_to_pose_node" output="log" args="--ros-args --log-level warn">
+    <node name="fix_to_pose2" pkg="vmvl_trajectory" exec="fix_to_pose_node" output="log" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <remap from="pose" to="/eagleye/pose"/>
         <remap from="fix_topic" to="/eagleye/fix"/>
@@ -28,26 +26,16 @@
     <!-- ========================================= -->
     <!-- ============== POSE TO PATH ============= -->
     <!-- ========================================= -->
-    <node name="pose_to_path" pkg="vector_map_visual_localizer" exec="pose_to_path_node" output="log" args="--ros-args --log-level info">
+    <node name="pose_to_path" pkg="vmvl_trajectory" exec="pose_to_path_node" output="log" args="--ros-args --log-level info">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="sub_topics" value="[/sensing/gnss/ublox/pose, /localization/pose_estimator/pose, /particle_pose, /eagleye/pose, /refine_pose]"/>
         <param name="pub_topics" value="[/sensing/gnss/ublox/path, /localization/pose_estimator/path, /particle_path, /eagleye/path, /refine_path]"/>
     </node>
 
     <!-- ========================================= -->
-    <!-- ============== GROUND SERVER ============ -->
-    <!-- ========================================= -->
-    <node name="ground_server" pkg="vector_map_visual_localizer" exec="ground_server_node" output="screen" args="--ros-args --log-level info">
-        <param name="use_sim_time" value="$(var use_sim_time)"/>
-        <param name="force_zero_tilt" value="$(var force_zero_tilt)"/>
-        <param name="K" value="50"/>
-        <param name="R" value="10"/>
-    </node>
-
-    <!-- ========================================= -->
     <!-- ============= TWIST ESTIMATOR =========== -->
     <!-- ========================================= -->
-    <node name="twist_estimator" pkg="vector_map_visual_localizer" exec="twist_node" output="screen" args="--ros-args --log-level warn">
+    <node name="twist_estimator" pkg="vmvl_trajectory" exec="twist_node" output="screen" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="rtk_enabled" value="$(var rtk_enabled)"/>
     </node>
@@ -55,22 +43,24 @@
     <!-- ========================================= -->
     <!-- ====== VELOCITY REPORT CONVERTER ======== -->
     <!-- ========================================= -->
-    <node name="velocity_report_node" pkg="vector_map_visual_localizer" exec="velocity_report_node" output="screen" args="--ros-args --log-level warn">
+    <node name="velocity_report_node" pkg="vmvl_trajectory" exec="velocity_report_node" output="screen" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
     </node>
 
     <!-- ========================================= -->
     <!-- ============ POSE INITIALIZER =========== -->
     <!-- ========================================= -->
-    <node name="pose_initializer" pkg="vector_map_visual_localizer" exec="pose_init_node" output="log" args="--ros-args --log-level warn">
+    <node name="pose_initializer" pkg="vmvl_trajectory" exec="pose_init_node" output="log" args="--ros-args --log-level warn">
         <remap from="ublox_topic" to="/sensing/gnss/ublox/navpvt"/>
         <remap from="pose" to="/init/pose"/>
         <param name="rtk_enabled" value="$(var rtk_enabled)"/>
     </node>
 
-    <node if="$(var use_eagleye)" name="eagleye_bridge" pkg="vector_map_visual_localizer" exec="eagleye_bridge_node" output="log" args="--ros-args --log-level warn">
+    <!-- ========================================= -->
+    <!-- ============= EAGLEYE BRIDGE ============ -->
+    <!-- ========================================= -->
+    <node if="$(var use_eagleye)" name="eagleye_bridge" pkg="vmvl_trajectory" exec="eagleye_bridge_node" output="log" args="--ros-args --log-level warn">
         <remap from="/in/fix" to="/eagleye/fix"/>
         <remap from="/out/navpvt" to="/bridge/navpvt"/>
     </node>
-
 </launch>

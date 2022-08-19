@@ -7,8 +7,8 @@
 #include <opencv4/opencv2/imgproc.hpp>
 #include <sophus/geometry.hpp>
 #include <vml_common/cv_decompress.hpp>
+#include <vml_common/pose_conversions.hpp>
 #include <vml_common/pub_sub.hpp>
-#include <vml_common/util.hpp>
 
 #include <pcl_conversions/pcl_conversions.h>
 

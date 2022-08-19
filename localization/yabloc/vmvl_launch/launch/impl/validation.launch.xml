@@ -1,33 +1,23 @@
 <launch>
-    <arg name="refiner" default="false"/>
-    <node name="overlay" pkg="vector_map_visual_localizer" exec="overlay_node" output="screen" args="--ros-args --log-level warn">
+    <!-- ========================================= -->
+    <!-- ============= IMAGE OVERLAY ============= -->
+    <!-- ========================================= -->
+    <node name="overlay" pkg="vmvl_validation" exec="overlay_node" output="screen" args="--ros-args --log-level warn">
         <remap from="/src_image" to="$(var resized_image)"/>
         <remap from="/src_info" to="$(var resized_info)"/>
         <remap from="/particle_pose" to="/particle_pose"/>
     </node>
 
-    <node if="$(var refiner)" name="refine" pkg="refine_optimizer" exec="refine_node" output="screen" args="--ros-args --log-level warn">
-        <remap from="/src_image" to="$(var resized_image)"/>
-        <remap from="/src_info" to="$(var resized_info)"/>
-        <remap from="/particle_pose" to="/particle_pose"/>
-
-        <param name="refine.verbose" value="false"/>
-        <param name="refine.max_iteration" value="50"/>
-        <param name="refine.pixel_interval" value="20"/>
-
-        <!-- If give a minus value to euler_bound, then rotation is not optimized -->
-        <param name="refine.euler_bound" value="-2.0"/>
-
-        <param name="refine.long_bound" value="0.1"/>
-        <param name="refine.late_bound" value="0.5"/>
-        <param name="refine.height_bound" value="0.1"/>
-        <param name="refine.show_grad_image" value="true"/>
+    <!-- ========================================= -->
+    <!-- ========= COVARIANCE VISUALIZER ========= -->
+    <!-- ========================================= -->
+    <node name="covariance" pkg="vmvl_validation" exec="covariance_node" output="screen" args="--ros-args --log-level warn">
     </node>
 
-    <node name="covariance" pkg="vector_map_visual_localizer" exec="covariance_node" output="screen" args="--ros-args --log-level warn">
-    </node>
-
-    <node name="ape" pkg="vector_map_visual_localizer" exec="ape_node" output="screen" args="--ros-args --log-level warn">
+    <!-- ========================================= -->
+    <!-- =============== APE CHECKER ============= -->
+    <!-- ========================================= -->
+    <node name="ape" pkg="vmvl_validation" exec="ape_node" output="screen" args="--ros-args --log-level warn">
         <param name="reference_bags_path" value="$(env HOME)/Reference/05-20-wangansen/"/>
     </node>
 </launch>

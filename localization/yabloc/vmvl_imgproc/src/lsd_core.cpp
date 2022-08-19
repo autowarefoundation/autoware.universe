@@ -3,7 +3,6 @@
 #include <vml_common/cv_decompress.hpp>
 #include <vml_common/pub_sub.hpp>
 #include <vml_common/timer.hpp>
-#include <vml_common/util.hpp>
 
 #include <pcl_conversions/pcl_conversions.h>
 

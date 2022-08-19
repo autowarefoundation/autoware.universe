@@ -5,7 +5,6 @@
 #include <opencv4/opencv2/highgui.hpp>
 #include <opencv4/opencv2/imgproc.hpp>
 #include <vml_common/color.hpp>
-#include <vml_common/util.hpp>
 
 namespace modularized_particle_filter
 {

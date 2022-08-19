@@ -2,7 +2,8 @@
 
 #include <vml_common/color.hpp>
 #include <vml_common/fix2mgrs.hpp>
-#include <vml_common/util.hpp>
+#include <vml_common/pose_conversions.hpp>
+#include <vml_common/ublox_stamp.hpp>
 
 namespace modularized_particle_filter
 {

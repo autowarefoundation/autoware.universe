@@ -4,7 +4,6 @@
 #include <Eigen/Eigenvalues>
 #include <vml_common/color.hpp>
 #include <vml_common/pub_sub.hpp>
-#include <vml_common/util.hpp>
 
 #include <pcl/ModelCoefficients.h>
 #include <pcl/filters/voxel_grid.h>

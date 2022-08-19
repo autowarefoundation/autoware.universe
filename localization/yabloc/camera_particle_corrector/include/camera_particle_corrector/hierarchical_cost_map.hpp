@@ -1,9 +1,8 @@
 #pragma once
-#include "common/gamma_converter.hpp"
-
 #include <eigen3/Eigen/StdVector>
 #include <opencv4/opencv2/core.hpp>
 #include <rclcpp/node.hpp>
+#include <vml_common/gamma_converter.hpp>
 
 #include <visualization_msgs/msg/marker_array.hpp>
 
@@ -75,7 +74,7 @@ private:
   const size_t max_map_count_;
   rclcpp::Logger logger_;
 
-  GammaConverter gamma_converter{4.0f};
+  vml_common::GammaConverter gamma_converter{4.0f};
 
   std::unordered_map<Area, bool, Area> map_accessed_;
 

@@ -6,7 +6,6 @@
 #include <vml_common/cv_decompress.hpp>
 #include <vml_common/pub_sub.hpp>
 #include <vml_common/timer.hpp>
-#include <vml_common/util.hpp>
 
 #include <sensor_msgs/msg/camera_info.hpp>
 #include <sensor_msgs/msg/compressed_image.hpp>

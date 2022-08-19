@@ -3,7 +3,6 @@
 #include <rosbag2_cpp/reader.hpp>
 #include <rosbag2_cpp/readers/sequential_reader.hpp>
 #include <vml_common/pose_conversions.hpp>
-#include <vml_common/util.hpp>
 
 #include <filesystem>
 #include <sstream>
@@ -29,7 +28,7 @@ AbsolutePoseError::AbsolutePoseError() : Node("ape_node")
 
 void AbsolutePoseError::loadReferenceRosbag(const std::string & bag_file)
 {
-  RCLCPP_INFO_STREAM(get_logger(), "opeing " << bag_file.size());
+  RCLCPP_INFO_STREAM(get_logger(), "opening " << bag_file.size());
 
   Reference reference;
   rosbag2_cpp::Reader reader;

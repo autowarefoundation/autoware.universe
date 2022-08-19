@@ -1,0 +1,24 @@
+<launch>
+    <arg name="use_sim_time" default="true"/>
+    <arg name="force_zero_tilt" default="false"/>
+    
+
+    <!-- ========================================= -->
+    <!-- ============== GROUND SERVER ============ -->
+    <!-- ========================================= -->
+    <node name="ground_server" pkg="vmvl_map" exec="ground_server_node" output="screen" args="--ros-args --log-level info">
+        <param name="use_sim_time" value="$(var use_sim_time)"/>
+        <param name="force_zero_tilt" value="$(var force_zero_tilt)"/>
+        <param name="K" value="50"/>
+        <param name="R" value="10"/>
+    </node>
+
+    <!-- ========================================= -->
+    <!-- ================ LANELET2 =============== -->
+    <!-- ========================================= -->
+    <node name="ll2_decompose" pkg="vmvl_map" exec="ll2_decompose_node" output="log" args="--ros-args --log-level $(var log_level)">
+        <param name="use_sim_time" value="$(var use_sim_time)"/>
+        <param name="road_marking_labels" value="$(var road_marking_labels)"/>
+    </node>
+</launch>
+

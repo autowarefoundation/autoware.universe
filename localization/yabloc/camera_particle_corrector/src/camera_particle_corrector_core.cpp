@@ -1,7 +1,8 @@
 #include "camera_particle_corrector/camera_particle_corrector.hpp"
-#include "common/util.hpp"
 
 #include <opencv4/opencv2/imgproc.hpp>
+#include <vml_common/pose_conversions.hpp>
+#include <vml_common/pub_sub.hpp>
 
 #include <pcl_conversions/pcl_conversions.h>
 
@@ -55,7 +56,7 @@ void CameraParticleCorrector::lsdCallback(const sensor_msgs::msg::PointCloud2 & 
   ParticleArray weighted_particles = opt_array.value();
 
   for (auto & particle : weighted_particles.particles) {
-    Eigen::Affine3f transform = util::pose2Affine(particle.pose);
+    Eigen::Affine3f transform = vml_common::pose2Affine(particle.pose);
     LineSegment transformed_lsd = transformCloud(lsd_cloud, transform);
 
     float raw_score = computeScore(transformed_lsd, transform.translation());
@@ -66,7 +67,7 @@ void CameraParticleCorrector::lsdCallback(const sensor_msgs::msg::PointCloud2 & 
 
   // NOTE:
   Pose mean_pose = modularized_particle_filter::meanPose(weighted_particles);
-  Eigen::Vector3f mean_position = util::pose2Affine(mean_pose).translation();
+  Eigen::Vector3f mean_position = vml_common::pose2Affine(mean_pose).translation();
   if ((mean_position - last_mean_position_).squaredNorm() > 1) {
     this->setWeightedParticleArray(weighted_particles);
     last_mean_position_ = mean_position;
@@ -79,16 +80,16 @@ void CameraParticleCorrector::lsdCallback(const sensor_msgs::msg::PointCloud2 & 
   // DEBUG: just visualization
   {
     Pose mean_pose = modularized_particle_filter::meanPose(weighted_particles);
-    Eigen::Affine3f transform = util::pose2Affine(mean_pose);
+    Eigen::Affine3f transform = vml_common::pose2Affine(mean_pose);
     LineSegment transformed_lsd = transformCloud(lsd_cloud, transform);
     pcl::PointCloud<pcl::PointXYZI> cloud = evaluateCloud(transformed_lsd, transform.translation());
-    util::publishCloud(*pub_scored_cloud_, cloud, lsd_msg.header.stamp);
+    vml_common::publishCloud(*pub_scored_cloud_, cloud, lsd_msg.header.stamp);
   }
 }
 
 void CameraParticleCorrector::poseCallback(const PoseStamped & msg)
 {
-  util::publishImage(*pub_image_, cost_map_.getMapImage(msg.pose), msg.header.stamp);
+  vml_common::publishImage(*pub_image_, cost_map_.getMapImage(msg.pose), msg.header.stamp);
 }
 
 void CameraParticleCorrector::ll2Callback(const PointCloud2 & ll2_msg)

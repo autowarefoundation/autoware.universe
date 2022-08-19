@@ -12,12 +12,11 @@
     <arg name="min_segment_length" default="-1.0"/>
     <arg name="max_segment_distance" default="-1.0"/>
 
-    <arg name="semseg" default="false"/>
 
     <!-- ========================================= -->
     <!-- ============ PARTICLE FILTER ============ -->
     <!-- ========================================= -->
-    <include file="$(find-pkg-share vector_map_visual_localizer)/launch/impl/pf.launch.xml">
+    <include file="$(find-pkg-share vmvl_launch)/launch/impl/pf.launch.xml">
         <arg name="use_sim_time" value="$(var use_sim_time)" />
         <arg name="log_level" value="$(var log_level)"/>
     </include>
@@ -25,7 +24,7 @@
     <!-- ========================================= -->
     <!-- ============ IMAGE PROCESSING =========== -->
     <!-- ========================================= -->
-    <include file="$(find-pkg-share vector_map_visual_localizer)/launch/impl/imgproc.launch.xml">
+    <include file="$(find-pkg-share vmvl_launch)/launch/impl/imgproc.launch.xml">
         <arg name="use_sim_time" value="$(var use_sim_time)" />
         <arg name="log_level" value="$(var log_level)"/>
         <arg name="src_image" value="$(var src_image)"/>
@@ -39,7 +38,7 @@
     <!-- ========================================= -->
     <!-- =============== TRAJECTORY ============== -->
     <!-- ========================================= -->
-    <include file="$(find-pkg-share vector_map_visual_localizer)/launch/impl/trajectory.launch.xml">
+    <include file="$(find-pkg-share vmvl_launch)/launch/impl/trajectory.launch.xml">
         <arg name="use_sim_time" value="$(var use_sim_time)" />
         <arg name="log_level" value="$(var log_level)"/>
     </include>
@@ -49,28 +48,15 @@
     <!-- ========================================= -->
     <group>
         <push-ros-namespace namespace="validation"/>
-        <include file="$(find-pkg-share vector_map_visual_localizer)/launch/impl/validation.launch.xml"/>
+        <include file="$(find-pkg-share vmvl_launch)/launch/impl/validation.launch.xml"/>
     </group>
 
     <!-- ========================================= -->
-    <!-- ================ LANELET2 =============== -->
+    <!-- ================== MAP ================== -->
     <!-- ========================================= -->
-    <node name="ll2_decompose" pkg="vector_map_visual_localizer" exec="ll2_decompose_node" output="log" args="--ros-args --log-level $(var log_level)">
-        <param name="use_sim_time" value="$(var use_sim_time)"/>
-        <param name="road_marking_labels" value="$(var road_marking_labels)"/>
-    </node>
+    <group>
+        <push-ros-namespace namespace="map"/>
+        <include file="$(find-pkg-share vmvl_launch)/launch/impl/map.launch.xml"/>
+    </group>
 
-    <!-- ========================================= -->
-    <!-- ================ SIGN BOARD ============= -->
-    <!-- ========================================= -->
-    <node if="false" name="sign_node" pkg="vector_map_visual_localizer" exec="sign_node" output="screen" args="--ros-args --log-level info">
-        <remap from="/src_image" to="$(var resized_image)"/>
-        <remap from="/src_info" to="$(var resized_info)"/>
-    </node>
-
-    <!-- ========================================= -->
-    <!-- ========== SEMANTIC SEGMENTATION ======== -->
-    <!-- ========================================= -->
-    <include file="$(find-pkg-share semantic_segmentation)/launch/semseg.launch.xml" if="$(var semseg)">
-    </include>
 </launch>

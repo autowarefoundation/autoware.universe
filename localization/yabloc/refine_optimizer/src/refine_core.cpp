@@ -1,4 +1,3 @@
-#include "common/util.hpp"
 #include "refine_optimizer/refine.hpp"
 #include "refine_optimizer/util.hpp"
 
@@ -8,6 +7,9 @@
 #include <opencv4/opencv2/highgui.hpp>
 #include <opencv4/opencv2/imgproc.hpp>
 #include <sophus/geometry.hpp>
+#include <vml_common/cv_decompress.hpp>
+#include <vml_common/pose_conversions.hpp>
+#include <vml_common/pub_sub.hpp>
 
 #include <boost/functional/hash.hpp>
 
@@ -80,7 +82,7 @@ void RefineOptimizer::imageAndLsdCallback(const Image & image_msg, const PointCl
   pcl::fromROSMsg(lsd_msg, lsd);
   cv::Mat cost_image = makeCostMap(lsd);
 
-  Sophus::SE3f raw_pose = util::pose2Se3(synched_pose.pose);
+  Sophus::SE3f raw_pose = vml_common::pose2Se3(synched_pose.pose);
   auto linesegments = extractNaerLineSegments(raw_pose, ll2_cloud_);
   pcl::PointCloud<pcl::PointXYZ> samples = sampleUniformlyOnImage(raw_pose, linesegments);
 
@@ -99,7 +101,7 @@ void RefineOptimizer::imageAndLsdCallback(const Image & image_msg, const PointCl
   if (show_grad_image_) {
     cv::applyColorMap(cost_image, rgb_image, cv::COLORMAP_JET);
   } else {
-    rgb_image = util::decompress2CvMat(image_msg);
+    rgb_image = vml_common::decompress2CvMat(image_msg);
   }
   drawOverlayPoints(rgb_image, raw_pose, samples, cv::Scalar::all(0));
   drawOverlayLineSegments(rgb_image, opt_pose, linesegments, cv::Scalar(255, 255, 255));
@@ -112,12 +114,12 @@ void RefineOptimizer::imageAndLsdCallback(const Image & image_msg, const PointCl
     pub_string_->publish(msg);
   }
 
-  util::publishImage(*pub_image_, rgb_image, stamp);
+  vml_common::publishImage(*pub_image_, rgb_image, stamp);
 
   PoseStamped pose_stamped;
   pose_stamped.header.frame_id = "map";
   pose_stamped.header.stamp = stamp;
-  pose_stamped.pose = util::se32Pose(opt_pose);
+  pose_stamped.pose = vml_common::se32Pose(opt_pose);
   pub_pose_->publish(pose_stamped);
   {
     PoseCovStamped cov_msg;

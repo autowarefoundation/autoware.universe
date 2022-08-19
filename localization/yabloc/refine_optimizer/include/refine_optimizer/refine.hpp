@@ -2,14 +2,14 @@
 
 #include "refine_optimizer/optimizer.hpp"
 
-#include <common/gamma_converter.hpp>
-#include <common/static_tf_subscriber.hpp>
-#include <common/synchro_subscriber.hpp>
 #include <eigen3/Eigen/Geometry>
 #include <opencv4/opencv2/core.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <sophus/geometry.hpp>
+#include <vml_common/gamma_converter.hpp>
 #include <vml_common/ground_plane.hpp>
+#include <vml_common/static_tf_subscriber.hpp>
+#include <vml_common/synchro_subscriber.hpp>
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
@@ -23,6 +23,8 @@
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
+
+#include <optional>
 
 namespace refine_optimizer
 {
@@ -46,11 +48,11 @@ protected:
   const bool show_grad_image_;
   boost::circular_buffer<PoseStamped> pose_buffer_;
 
-  GammaConverter gamma_converter_{5.0};
+  vml_common::GammaConverter gamma_converter_{5.0};
   std::shared_ptr<Optimizer> optimizer_;
 
-  common::StaticTfSubscriber tf_subscriber_;
-  GroundPlane ground_plane_;
+  vml_common::StaticTfSubscriber tf_subscriber_;
+  vml_common::GroundPlane ground_plane_;
 
   rclcpp::Subscription<PoseStamped>::SharedPtr sub_pose_;
   rclcpp::Subscription<CameraInfo>::SharedPtr sub_info_;

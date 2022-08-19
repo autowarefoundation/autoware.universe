@@ -19,7 +19,6 @@
 
   <depend>modularized_particle_filter</depend>
   <depend>vml_common</depend>
-  <depend>vector_map_visual_localizer</depend>
 
   <export>
     <build_type>ament_cmake</build_type>

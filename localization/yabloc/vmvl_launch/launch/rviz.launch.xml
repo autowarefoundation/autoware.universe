@@ -1,6 +1,6 @@
 <launch>
     <!-- ========================================= -->
-    <arg name="path" default="$(find-pkg-share vector_map_visual_localizer)/config"/>
+    <arg name="path" default="$(find-pkg-share vmvl_launch)/config"/>
     <arg name="use_sim_time" default="true"/>
     <arg name="rviz_config" default="default.rviz"/>
 

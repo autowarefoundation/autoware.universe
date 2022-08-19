@@ -36,7 +36,7 @@
     <!-- ========================================= -->
     <!-- ============ camera  correction ========= -->
     <!-- ========================================= -->
-    <node name="camera_corrector" pkg="vector_map_visual_localizer" exec="camera_corrector_node" output="screen" args="--ros-args --log-level fatal">
+    <node name="camera_corrector" pkg="camera_particle_corrector" exec="camera_particle_corrector" output="screen" args="--ros-args --log-level fatal">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="image_size" value="800"/>
         <param name="max_range" value="40.0"/>
@@ -53,7 +53,7 @@
     <!-- ========================================= -->
     <!-- ============= gnss correction =========== -->
     <!-- ========================================= -->
-    <node if="$(var use_eagleye)" name="gnss_corrector" pkg="vector_map_visual_localizer" exec="gnss_corrector_node" output="screen" args="--ros-args --log-level warn">
+    <node if="$(var use_eagleye)" name="gnss_particle_corrector" pkg="gnss_particle_corrector" exec="gnss_particle_corrector" output="screen" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="min_prob" value="0.1"/>
         <param name="flat_radius" value="2.0"/>
@@ -62,7 +62,7 @@
 
         <remap from="/sensing/gnss/ublox/navpvt" to="/bridge/navpvt"/>
     </node>
-    <node unless="$(var use_eagleye)" name="gnss_corrector" pkg="vector_map_visual_localizer" exec="gnss_corrector_node" output="screen" args="--ros-args --log-level warn">
+    <node unless="$(var use_eagleye)" name="gnss_particle_corrector" pkg="gnss_particle_corrector" exec="gnss_particle_corrector" output="screen" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="min_prob" value="0.1"/>
         <param name="flat_radius" value="2.0"/>

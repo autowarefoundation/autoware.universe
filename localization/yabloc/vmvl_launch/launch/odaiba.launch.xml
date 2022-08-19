@@ -15,14 +15,14 @@
 
     <arg name="refiner" default="false"/>
 
-    <include file="$(find-pkg-share vector_map_visual_localizer)/launch/run.launch.xml">
+    <include file="$(find-pkg-share vmvl_launch)/launch/run.launch.xml">
         <arg name="rtk_enabled" value="$(var rtk_enabled)"/>
         <arg name="road_marking_labels" value="$(var road_marking_labels)"/>
         <arg name="min_segment_length" value="$(var min_segment_length)"/>
         <arg name="max_segment_distance" value="$(var max_segment_distance)"/>
     </include>
 
-    <node name="particle_initializer_node" pkg="vector_map_visual_localizer" exec="particle_initializer_node" output="screen" args="--ros-args --log-level info">
+    <node name="particle_initializer_node" pkg="particle_initializer" exec="particle_initializer_node" output="screen" args="--ros-args --log-level info">
     </node>
 
 

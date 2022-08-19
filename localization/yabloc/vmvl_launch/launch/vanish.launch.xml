@@ -10,7 +10,7 @@
     <!-- ========================================= -->
     <!-- ============ undistort & resize ========= -->
     <!-- ========================================= -->
-    <node name="undistort" pkg="vector_map_visual_localizer" exec="undistort_node" output="screen" args="--ros-args --log-level $(var log_level)">
+    <node name="undistort" pkg="vmvl_imgproc" exec="undistort_node" output="screen" args="--ros-args --log-level $(var log_level)">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="width" value="800"/>
     </node>
@@ -18,7 +18,7 @@
     <!-- ========================================= -->
     <!-- ========== line segment detector ======== -->
     <!-- ========================================= -->
-    <node if="false" name="lsd" pkg="vector_map_visual_localizer" exec="lsd_node" output="screen" args="--ros-args --log-level $(var log_level)">
+    <node if="false" name="lsd" pkg="vmvl_imgproc" exec="lsd_node" output="screen" args="--ros-args --log-level $(var log_level)">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="max_range" value="$(var max_range)"/>
         <param name="image_size" value="$(var image_size)"/>
@@ -33,10 +33,10 @@
     <!-- ========================================= -->
     <!-- ========= vanish point estimator ======== -->
     <!-- ========================================= -->
-    <node if="true" name="vanish" pkg="vector_map_visual_localizer" exec="vanish_node" output="screen" args="--ros-args --log-level $(var log_level)">
+    <node if="true" name="vanish" pkg="vmvl_imgproc" exec="vanish_node" output="screen" args="--ros-args --log-level $(var log_level)">
         <remap from="$(var src_image)" to="$(var resized_image)"/>
         <remap from="$(var src_info)" to="$(var resized_info)"/>
-        <param from="$(find-pkg-share vector_map_visual_localizer)/config/vanish.param.yaml"/>
+        <param from="$(find-pkg-share vmvl_imgproc)/config/vanish.param.yaml"/>
     </node>
 
 </launch>
