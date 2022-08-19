@@ -169,7 +169,6 @@ void RayGroundFilterComponent::ClassifyPointCloud(
       double local_max_slope = local_max_slope_;
       if (j == 0) {
         local_max_slope = initial_max_slope_;
-        prev_height = in_radial_ordered_clouds[i][j].point.z;
         if (use_vehicle_footprint_) {
           // calc intersection of vehicle footprint and initial point vector
           const auto radius = calcPointVehicleIntersection(
