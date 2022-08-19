@@ -21,7 +21,7 @@ GnssParticleCorrector::GnssParticleCorrector()
   auto cb_pose = std::bind(&GnssParticleCorrector::onPose, this, _1);
   auto cb_ublox = std::bind(&GnssParticleCorrector::onUblox, this, _1);
   auto cb_height = [this](const Float32 & height) { this->latest_height_ = height; };
-  ublox_sub_ = create_subscription<NavPVT>("/sensing/gnss/ublox/navpvt", 10, cb_ublox);
+  ublox_sub_ = create_subscription<NavPVT>("/input/navpvt", 10, cb_ublox);
   pose_sub_ = create_subscription<PoseCovStamped>("/pose_with_covariance", 10, cb_pose);
   height_sub_ = create_subscription<Float32>("/height", 10, cb_height);
 
@@ -61,7 +61,7 @@ void GnssParticleCorrector::onUblox(const NavPVT::ConstSharedPtr ublox_msg)
   auto dt = (stamp - rclcpp::Time(opt_particles->header.stamp));
   if (std::abs(dt.seconds()) > 0.1) {
     RCLCPP_WARN_STREAM(
-      get_logger(), "Timestamp gap between gnss and particles is LARGE " << dt.seconds());
+      get_logger(), "Timestamp gap between gnss and particles is too large: " << dt.seconds());
   }
 
   NavSatFix fix;
@@ -89,7 +89,8 @@ void GnssParticleCorrector::onUblox(const NavPVT::ConstSharedPtr ublox_msg)
     this->setWeightedParticleArray(weighted_particles);
     last_mean_position_ = mean_position;
   } else {
-    RCLCPP_WARN_STREAM(get_logger(), "Skip weighting because almost same positon");
+    RCLCPP_WARN_STREAM_THROTTLE(
+      get_logger(), *get_clock(), 2000, "Skip weighting because almost same positon");
   }
 
   publishMarker(position, is_rtk_fixed);

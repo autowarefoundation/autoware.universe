@@ -55,18 +55,20 @@
     <!-- ========================================= -->
     <node if="$(var use_eagleye)" name="gnss_particle_corrector" pkg="gnss_particle_corrector" exec="gnss_particle_corrector" output="screen" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
-        <param name="min_prob" value="0.1"/>
-        <param name="flat_radius" value="2.0"/>
-        <param name="sigma" value="4.0"/>
+        <param name="likelihood_min_weight" value="0.1"/>
+        <param name="likelihood_flat_radius" value="2.0"/>
+        <param name="likelihood_stddev" value="4.0"/>
         <param name="rtk_enabled" value="$(var rtk_enabled)"/>
 
-        <remap from="/sensing/gnss/ublox/navpvt" to="/bridge/navpvt"/>
+        <remap from="/input/navpvt" to="/bridge/navpvt"/>
     </node>
     <node unless="$(var use_eagleye)" name="gnss_particle_corrector" pkg="gnss_particle_corrector" exec="gnss_particle_corrector" output="screen" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
-        <param name="min_prob" value="0.1"/>
-        <param name="flat_radius" value="2.0"/>
-        <param name="sigma" value="4.0"/>
+        <param name="likelihood_min_weight" value="0.1"/>
+        <param name="likelihood_flat_radius" value="2.0"/>
+        <param name="likelihood_stddev" value="4.0"/>
         <param name="rtk_enabled" value="$(var rtk_enabled)"/>
+
+        <remap from="/input/navpvt" to="/sensing/gnss/ublox/navpvt"/>
     </node>
 </launch>

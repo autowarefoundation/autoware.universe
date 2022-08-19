@@ -12,7 +12,7 @@
 | Name         | Type                      | Description           |
 | ------------ | ------------------------- | --------------------- |
 | `/predicted_particles` | `modularized_particle_filter_msgs::msg::ParticleArray` | predicted particles |
-| `/sensing/gnss/ublox/navpvt` | `ublox_msgs::msg::NavPVT` | position measurement |
+| `/input/navpvt` | `ublox_msgs::msg::NavPVT` | position measurement |
 | `/pose_with_covariance` | `geometry_msgs::msg::PoseWithCovarianceStamped` | position measurement |
 | `/height` | `std_msgs::msg::Float32` | ground height (optional) |
 
