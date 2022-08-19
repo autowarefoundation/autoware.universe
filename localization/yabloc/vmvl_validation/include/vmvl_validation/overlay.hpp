@@ -1,11 +1,10 @@
 #pragma once
-#include "common/static_tf_subscriber.hpp"
-#include "common/timer.hpp"
-
 #include <eigen3/Eigen/Geometry>
 #include <opencv4/opencv2/core.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <vml_common/ground_plane.hpp>
+#include <vml_common/static_tf_subscriber.hpp>
+#include <vml_common/timer.hpp>
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <sensor_msgs/msg/camera_info.hpp>
@@ -19,7 +18,7 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
-namespace validation
+namespace vmvl_validation
 {
 class Overlay : public rclcpp::Node
 {
@@ -36,8 +35,8 @@ public:
   Overlay();
 
 private:
-  common::StaticTfSubscriber tf_subscriber_;
-  GroundPlane ground_plane_;
+  vml_common::StaticTfSubscriber tf_subscriber_;
+  vml_common::GroundPlane ground_plane_;
 
   rclcpp::Publisher<Image>::SharedPtr pub_image_;
   rclcpp::Subscription<PoseStamped>::SharedPtr sub_pose_;
@@ -67,4 +66,4 @@ private:
 
   void makeVisMarker(const LineSegments & ls, const Pose & pose, const rclcpp::Time & stamp);
 };
-}  // namespace validation
+}  // namespace vmvl_validation

@@ -1,10 +1,10 @@
-#include "common/util.hpp"
-#include "map/ll2_util.hpp"
-#include "validation/freespace.hpp"
+#include "vmvl_validation/freespace.hpp"
 
 #include <opencv4/opencv2/imgproc.hpp>
+#include <vml_common/util.hpp>
+#include <vmvl_map/ll2_util.hpp>
 
-namespace validation
+namespace vmvl_validation
 {
 FreeSpace::FreeSpace() : rclcpp::Node("freespace"), tf_subscriber_(get_clock())
 {
@@ -206,4 +206,4 @@ void FreeSpace::incrementAlongLine(cv::Mat image, const cv::Point2i & from, cons
   }
 }
 
-}  // namespace validation
+}  // namespace vmvl_validation

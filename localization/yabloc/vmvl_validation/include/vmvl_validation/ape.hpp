@@ -7,7 +7,7 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <std_msgs/msg/string.hpp>
 
-namespace validation
+namespace vmvl_validation
 {
 class AbsolutePoseError : public rclcpp::Node
 {
@@ -36,4 +36,4 @@ private:
   void poseCallback(const PoseCovStamped & pose_cov);
   void loadReferenceRosbag(const std::string & bag_file);
 };
-}  // namespace validation
+}  // namespace vmvl_validation

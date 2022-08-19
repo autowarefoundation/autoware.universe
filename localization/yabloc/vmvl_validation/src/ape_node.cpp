@@ -1,12 +1,14 @@
-#include "common/util.hpp"
-#include "rosbag2_cpp/reader.hpp"
-#include "rosbag2_cpp/readers/sequential_reader.hpp"
-#include "validation/ape.hpp"
+#include "vmvl_validation/ape.hpp"
+
+#include <rosbag2_cpp/reader.hpp>
+#include <rosbag2_cpp/readers/sequential_reader.hpp>
+#include <vml_common/pose_conversions.hpp>
+#include <vml_common/util.hpp>
 
 #include <filesystem>
 #include <sstream>
 
-namespace validation
+namespace vmvl_validation
 {
 AbsolutePoseError::AbsolutePoseError() : Node("ape_node")
 {
@@ -65,8 +67,8 @@ Eigen::Vector2f AbsolutePoseError::computeApe(
       return rclcpp::Time(a.header.stamp) < rclcpp::Time(b.header.stamp);
     });
 
-  Eigen::Affine3f ref_affine = util::pose2Affine(itr->pose);
-  Eigen::Affine3f est_affine = util::pose2Affine(pose_cov.pose.pose);
+  Eigen::Affine3f ref_affine = vml_common::pose2Affine(itr->pose);
+  Eigen::Affine3f est_affine = vml_common::pose2Affine(pose_cov.pose.pose);
 
   Eigen::Affine3f diff_affine = ref_affine.inverse() * est_affine;
   Eigen::Vector3f ape = diff_affine.translation();
@@ -79,7 +81,7 @@ void AbsolutePoseError::poseCallback(const PoseCovStamped & pose_cov)
   std::optional<Reference> corresponding_reference{std::nullopt};
 
   for (const Reference & ref : references_) {
-    if (stamp > ref.start_stamp_ & stamp < ref.end_stamp_) corresponding_reference = ref;
+    if ((stamp > ref.start_stamp_) & (stamp < ref.end_stamp_)) corresponding_reference = ref;
   }
 
   std::stringstream ss;
@@ -98,12 +100,12 @@ void AbsolutePoseError::poseCallback(const PoseCovStamped & pose_cov)
   pub_string_->publish(msg);
 }
 
-}  // namespace validation
+}  // namespace vmvl_validation
 
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<validation::AbsolutePoseError>());
+  rclcpp::spin(std::make_shared<vmvl_validation::AbsolutePoseError>());
   rclcpp::shutdown();
   return 0;
 }

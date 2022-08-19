@@ -1,5 +1,4 @@
-#include "common/util.hpp"
-#include "validation/overlay.hpp"
+#include "vmvl_validation/overlay.hpp"
 
 #include <eigen3/Eigen/StdVector>
 #include <opencv4/opencv2/calib3d.hpp>
@@ -7,12 +6,15 @@
 #include <opencv4/opencv2/highgui.hpp>
 #include <opencv4/opencv2/imgproc.hpp>
 #include <sophus/geometry.hpp>
+#include <vml_common/cv_decompress.hpp>
+#include <vml_common/pub_sub.hpp>
+#include <vml_common/util.hpp>
 
 #include <pcl_conversions/pcl_conversions.h>
 
-namespace validation
+namespace vmvl_validation
 {
-Overlay::Overlay() : Node("overlay"), pose_buffer_{40}, tf_subscriber_(get_clock())
+Overlay::Overlay() : Node("overlay"), tf_subscriber_(get_clock()), pose_buffer_{40}
 {
   using std::placeholders::_1;
 
@@ -48,7 +50,7 @@ void Overlay::infoCallback(const CameraInfo & msg)
 
 void Overlay::imageCallback(const sensor_msgs::msg::Image & msg)
 {
-  cv::Mat image = util::decompress2CvMat(msg);
+  cv::Mat image = vml_common::decompress2CvMat(msg);
   const rclcpp::Time stamp = msg.header.stamp;
 
   // Search synchronized pose
@@ -104,7 +106,7 @@ void Overlay::drawOverlay(const cv::Mat & image, const Pose & pose, const rclcpp
 
   cv::Mat show_image;
   cv::addWeighted(image, 0.8, overlayed_image, 0.8, 1, show_image);
-  util::publishImage(*pub_image_, show_image, stamp);
+  vml_common::publishImage(*pub_image_, show_image, stamp);
 }
 
 void Overlay::drawOverlayLineSegments(
@@ -114,8 +116,7 @@ void Overlay::drawOverlayLineSegments(
     Eigen::Map<Eigen::Matrix<double, 3, 3> >(info_->k.data()).cast<float>().transpose();
   Eigen::Affine3f T = camera_extrinsic_.value();
 
-  Eigen::Affine3f transform = ground_plane_.alignWithSlope(util::pose2Affine(pose));
-  // Eigen::Affine3f transform = (util::pose2Affine(pose));
+  Eigen::Affine3f transform = ground_plane_.alignWithSlope(vml_common::pose2Affine(pose));
 
   auto project = [K, T, transform](const Eigen::Vector3f & xyz) -> std::optional<cv::Point2i> {
     Eigen::Vector3f from_camera = K * T.inverse() * transform.inverse() * xyz;
@@ -190,4 +191,4 @@ Overlay::LineSegments Overlay::extractNaerLineSegments(
   return near_linestrings;
 }
 
-}  // namespace validation
+}  // namespace vmvl_validation

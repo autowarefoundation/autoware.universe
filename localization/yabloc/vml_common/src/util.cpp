@@ -1,32 +1,9 @@
 #include "vml_common/util.hpp"
 
+#include <time.h>
+
 namespace vml_common
 {
-Eigen::Affine3f pose2Affine(const geometry_msgs::msg::Pose & pose)
-{
-  const auto pos = pose.position;
-  const auto ori = pose.orientation;
-  Eigen::Translation3f t(pos.x, pos.y, pos.z);
-  Eigen::Quaternionf q(ori.w, ori.x, ori.y, ori.z);
-  return t * q;
-}
-
-geometry_msgs::msg::Pose affine2Pose(const Eigen::Affine3f & affine)
-{
-  geometry_msgs::msg::Pose pose;
-  Eigen::Vector3f pos = affine.translation();
-  Eigen::Quaternionf ori(affine.rotation());
-  pose.position.x = pos.x();
-  pose.position.y = pos.y();
-  pose.position.z = pos.z();
-  pose.orientation.w = ori.w();
-  pose.orientation.x = ori.x();
-  pose.orientation.y = ori.y();
-  pose.orientation.z = ori.z();
-  return pose;
-}
-
-#include <time.h>
 rclcpp::Time ubloxTime2Stamp(const ublox_msgs::msg::NavPVT & msg)
 {
   // TODO: Day 31 may cause invalid convertion

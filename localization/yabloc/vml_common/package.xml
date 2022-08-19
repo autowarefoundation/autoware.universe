@@ -19,6 +19,7 @@
   <depend>sensor_msgs</depend>
   <depend>ublox_msgs</depend>
   <depend>pcl_conversions</depend>
+  <depend>sophus</depend>
 
 
   <export>

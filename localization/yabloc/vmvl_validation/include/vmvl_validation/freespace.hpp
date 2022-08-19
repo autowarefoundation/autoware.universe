@@ -1,11 +1,11 @@
 #pragma once
-#include "common/static_tf_subscriber.hpp"
-#include "validation/graph_segmentation.hpp"
+#include "vmvl_validation/graph_segmentation.hpp"
 
 #include <Eigen/Geometry>
 #include <opencv4/opencv2/core.hpp>
 #include <opencv4/opencv2/features2d.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <vml_common/static_tf_subscriber.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
@@ -17,7 +17,7 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
-namespace validation
+namespace vmvl_validation
 {
 class FreeSpace : public rclcpp::Node
 {
@@ -62,4 +62,4 @@ private:
   using GraphSegmentation = cv::ximgproc::modified::GraphSegmentation;
   cv::Ptr<GraphSegmentation> segmentation_;
 };
-}  // namespace validation
+}  // namespace vmvl_validation
