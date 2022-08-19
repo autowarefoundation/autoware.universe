@@ -2129,7 +2129,7 @@ BehaviorModuleOutput AvoidanceModule::plan()
     addShiftPointIfApproved(*new_shift_points);
   } else if (isWaitingApproval()) {
     clearWaitingApproval();
-    removeRTCStatus();
+    removeCandaiteRTCStatus();
   }
 
   // generate path with shift points that have been inserted.
@@ -2222,7 +2222,7 @@ BehaviorModuleOutput AvoidanceModule::planWaitingApproval()
     waitApproval();
   } else {
     clearWaitingApproval();
-    removeRTCStatus();
+    removeCandaiteRTCStatus();
   }
   out.path_candidate = std::make_shared<PathWithLaneId>(candidate.path_candidate);
   return out;
