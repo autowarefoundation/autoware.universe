@@ -33,6 +33,27 @@
 namespace perception_utils
 {
 /**
+ * @brief Return a predicted path that has the highest confidence
+ * @param predicted_paths Input predicted paths
+ * @return a single predicted path with highest confidence
+ */
+inline autoware_auto_perception_msgs::msg::PredictedPath getPredictedPathWithHighestConfidence(
+  const std::vector<autoware_auto_perception_msgs::msg::PredictedPath> & predicted_paths)
+{
+  if (predicted_paths.empty()) {
+    throw std::invalid_argument("Predicted paths are empty.");
+  }
+
+  return *std::max_element(
+    predicted_paths.begin(), predicted_paths.end(),
+    [](
+      const autoware_auto_perception_msgs::msg::PredictedPath & a,
+      const autoware_auto_perception_msgs::msg::PredictedPath & b) {
+      return a.confidence < b.confidence;
+    });
+}
+
+/**
  * @brief Calculate Interpolated Pose from predicted path by time
  * @param path Input predicted path
  * @param relative_time time at interpolated point. This should be within [0.0,

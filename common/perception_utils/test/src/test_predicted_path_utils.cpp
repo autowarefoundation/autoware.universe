@@ -41,10 +41,10 @@ geometry_msgs::msg::Pose createPose(
 
 PredictedPath createTestPredictedPath(
   const size_t num_points, const double point_time_interval, const double vel,
-  const double init_theta = 0.0, const double delta_theta = 0.0)
+  const double init_theta = 0.0, const double delta_theta = 0.0, const double confidence = 1.0)
 {
   PredictedPath path;
-  path.confidence = 1.0;
+  path.confidence = confidence;
   path.time_step = rclcpp::Duration::from_seconds(point_time_interval);
 
   const double point_interval = vel * point_time_interval;
@@ -59,6 +59,56 @@ PredictedPath createTestPredictedPath(
   return path;
 }
 }  // namespace
+
+TEST(predicted_path_utils, testgetPredictedPathWithHighestConfidence)
+{
+  using autoware_auto_perception_msgs::msg::PredictedPath;
+  using perception_utils::getPredictedPathWithHighestConfidence;
+
+  // Different confidence
+  {
+    std::vector<PredictedPath> predicted_paths(10);
+    for (size_t i = 0; i < 10; ++i) {
+      const auto path = createTestPredictedPath(100, 0.1, (i + 1) * 1.0, 0.0, 0.0, (i + 1) * 0.1);
+      predicted_paths.at(i) = path;
+    }
+    const auto path = getPredictedPathWithHighestConfidence(predicted_paths);
+
+    EXPECT_NEAR(path.confidence, 1.0, epsilon);
+    EXPECT_NEAR(path.path.size(), 100, epsilon);
+  }
+
+  // Same confidence
+  {
+    std::vector<PredictedPath> predicted_paths(10);
+    for (size_t i = 0; i < 10; ++i) {
+      const auto path = createTestPredictedPath((i + 1) * 10, 0.1, (i + 1) * 1.0, 0.0, 0.0, 0.1);
+      predicted_paths.at(i) = path;
+    }
+    const auto path = getPredictedPathWithHighestConfidence(predicted_paths);
+
+    EXPECT_NEAR(path.confidence, 0.1, epsilon);
+    EXPECT_NEAR(path.path.size(), 10, epsilon);
+  }
+
+  // One predicted path
+  {
+    std::vector<PredictedPath> predicted_paths(1);
+    for (size_t i = 0; i < 1; ++i) {
+      const auto path = createTestPredictedPath((i + 1) * 10, 0.1, (i + 1) * 1.0, 0.0, 0.0, 0.1);
+      predicted_paths.at(i) = path;
+    }
+    const auto path = getPredictedPathWithHighestConfidence(predicted_paths);
+
+    EXPECT_NEAR(path.confidence, 0.1, epsilon);
+    EXPECT_NEAR(path.path.size(), 10, epsilon);
+  }
+
+  // Empty Path
+  {
+    EXPECT_THROW(getPredictedPathWithHighestConfidence({}), std::invalid_argument);
+  }
+}
 
 TEST(predicted_path_utils, testCalcInterpolatedPose)
 {
