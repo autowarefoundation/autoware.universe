@@ -31,7 +31,7 @@ GnssParticleCorrector::GnssParticleCorrector()
 void GnssParticleCorrector::onPose(const PoseCovStamped::ConstSharedPtr pose_msg)
 {
   const rclcpp::Time stamp = pose_msg->header.stamp;
-  std::optional<ParticleArray> opt_particles = getSyncronizedParticleArray(stamp);
+  std::optional<ParticleArray> opt_particles = getSynchronizedParticleArray(stamp);
   if (!opt_particles.has_value()) return;
 
   auto position = pose_msg->pose.pose.position;
@@ -54,7 +54,7 @@ void GnssParticleCorrector::onUblox(const NavPVT::ConstSharedPtr ublox_msg)
     if (!(ublox_msg->flags & FIX_FLAG) & !(ublox_msg->flags & FLOAT_FLAG)) return;
   }
 
-  std::optional<ParticleArray> opt_particles = getSyncronizedParticleArray(stamp);
+  std::optional<ParticleArray> opt_particles = getSynchronizedParticleArray(stamp);
   if (!opt_particles.has_value()) return;
 
   auto dt = (stamp - rclcpp::Time(opt_particles->header.stamp));

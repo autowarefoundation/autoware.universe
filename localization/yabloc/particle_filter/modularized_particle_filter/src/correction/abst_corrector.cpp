@@ -18,7 +18,7 @@ void AbstCorrector::particleArrayCallback(const ParticleArray & particle_array)
   particle_array_buffer_.push_back(particle_array);
 }
 
-std::optional<AbstCorrector::ParticleArray> AbstCorrector::getSyncronizedParticleArray(
+std::optional<AbstCorrector::ParticleArray> AbstCorrector::getSynchronizedParticleArray(
   const rclcpp::Time & stamp)
 {
   auto itr = particle_array_buffer_.begin();

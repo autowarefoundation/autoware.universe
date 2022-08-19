@@ -25,7 +25,7 @@ protected:
   rclcpp::Publisher<ParticleArray>::SharedPtr particle_pub_;
   std::list<ParticleArray> particle_array_buffer_;
 
-  std::optional<ParticleArray> getSyncronizedParticleArray(const rclcpp::Time & stamp);
+  std::optional<ParticleArray> getSynchronizedParticleArray(const rclcpp::Time & stamp);
   std::shared_ptr<ParticleVisualizer> visualizer_;
 
   void setWeightedParticleArray(const ParticleArray & particle_array);

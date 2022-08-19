@@ -154,32 +154,16 @@ float calculateLocalGridMatchingWeight(
 }  // namespace
 
 LidarPoseCorrector::LidarPoseCorrector()
-: Node("lidar_pose_corrector"),
-  map_resolution_(declare_parameter("map_resolution", 0.2f)),
-  particles_buffer_size_(declare_parameter("particles_buffer_size", 50)),
-  particles_circular_buffer_(particles_buffer_size_)
+: AbstCorrector("lidar_pose_corrector"), map_resolution_(declare_parameter("map_resolution", 0.2f))
 {
-  particles_circular_buffer_ =
-    boost::circular_buffer<modularized_particle_filter_msgs::msg::ParticleArray>(
-      particles_buffer_size_);
-
   occupancy_grid_.info.resolution = map_resolution_;
   occupancy_grid_.info.width = declare_parameter("map_grid_width", 1000);
   occupancy_grid_.info.height = declare_parameter("map_grid_height", 1000);
   occupancy_grid_.data.resize(occupancy_grid_.info.width * occupancy_grid_.info.height);
 
-  prev_time_ = this->now();
-
-  weighted_particle_pub_ =
-    this->create_publisher<modularized_particle_filter_msgs::msg::ParticleArray>(
-      "weighted_particles", 10);
-
   map_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "map_pointcloud", rclcpp::QoS{1}.transient_local(),
     std::bind(&LidarPoseCorrector::mapPointCloudCallback, this, std::placeholders::_1));
-  particle_sub_ = this->create_subscription<modularized_particle_filter_msgs::msg::ParticleArray>(
-    "predicted_particles", 10,
-    std::bind(&LidarPoseCorrector::particleCallback, this, std::placeholders::_1));
   scan_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "scan_pointcloud", rclcpp::SensorDataQoS().keep_last(0),
     std::bind(&LidarPoseCorrector::scanPointCloudCallback, this, std::placeholders::_1));
@@ -277,12 +261,6 @@ void LidarPoseCorrector::mapPointCloudCallback(
 #endif  // debug
 }
 
-void LidarPoseCorrector::particleCallback(
-  const modularized_particle_filter_msgs::msg::ParticleArray::ConstSharedPtr particles)
-{
-  particles_circular_buffer_.push_front(*particles);
-}
-
 void LidarPoseCorrector::scanPointCloudCallback(
   const sensor_msgs::msg::PointCloud2::ConstSharedPtr lidar_pointcloud_msg)
 {
@@ -294,13 +272,11 @@ void LidarPoseCorrector::scanPointCloudCallback(
     RCLCPP_WARN(this->get_logger(), "No map.");
     return;
   }
-  // if ((rclcpp::Time(lidar_pointcloud_msg->header.stamp) - prev_time_).seconds() < 1) {
-  //   prev_time_ = lidar_pointcloud_msg->header.stamp;
-  //   return;
-  // }
 
-  std::optional<modularized_particle_filter_msgs::msg::ParticleArray> synced_particles_opt{
-    findSyncedParticles(particles_circular_buffer_, lidar_pointcloud_msg->header.stamp)};
+  const rclcpp::Time stamp = lidar_pointcloud_msg->header.stamp;
+  std::optional<modularized_particle_filter_msgs::msg::ParticleArray> synced_particles_opt =
+    getSynchronizedParticleArray(stamp);
+
   if (!synced_particles_opt.has_value()) {
     RCLCPP_WARN(this->get_logger(), "No synced particles.");
     return;
@@ -395,7 +371,7 @@ void LidarPoseCorrector::scanPointCloudCallback(
     }
   }
 
-  weighted_particle_pub_->publish(synced_particles);
+  setWeightedParticleArray(synced_particles);
 }
 
 }  // namespace modularized_particle_filter

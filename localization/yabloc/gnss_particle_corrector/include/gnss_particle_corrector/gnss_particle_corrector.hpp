@@ -13,7 +13,7 @@
 
 namespace modularized_particle_filter
 {
-class GnssParticleCorrector : public modularized_particle_filter::AbstCorrector
+class GnssParticleCorrector : public AbstCorrector
 {
 public:
   using PoseCovStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
