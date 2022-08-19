@@ -624,7 +624,6 @@ bool isOverLine(
          0.0;
 }
 
-
 boost::optional<geometry_msgs::msg::Pose> insertDecelPoint(
   const geometry_msgs::msg::Point & stop_point, PathWithLaneId & output,
   const float target_velocity)
