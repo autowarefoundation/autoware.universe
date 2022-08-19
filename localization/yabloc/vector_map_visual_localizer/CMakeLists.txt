@@ -76,7 +76,6 @@ macro(ADD_LIB)
   target_compile_definitions(${_ARG_TARGET} PUBLIC SOPHUS_USE_BASIC_LOGGING=1)
 endmacro()
 
-ADD_LIB(TARGET cv_lsd SRC 3rd/opencv_lsd/lsd/*.cpp INC 3rd/opencv_lsd LIB ${OpenCV_LIBS})
 ADD_LIB(TARGET util SRC lib/util.cpp lib/color.cpp lib/base_camera_info_node.cpp INC include)
 ADD_LIB(TARGET modified_seg SRC lib/graph_segmentation.cpp INC include)
 ADD_LIB(TARGET vanish SRC lib/ransac_vanish_point.cpp INC include)
@@ -100,13 +99,6 @@ macro(ADD_EXE)
   target_link_libraries(${TARGET_NAME} ${_ARG_LIB})
 endmacro()
 
-# imgproc
-ADD_EXE(TARGET vanish_node SRC src/imgproc/vanish_*.cpp INC include LIB util cv_lsd vanish orientation)
-ADD_EXE(TARGET lsd_node SRC src/imgproc/lsd_*.cpp INC 3rd/opencv_lsd LIB util cv_lsd ${OpenCV_LIBS})
-ADD_EXE(TARGET undistort_node SRC src/imgproc/undistort_node.cpp INC LIB util)
-ADD_EXE(TARGET segment_filter_node SRC src/imgproc/segment_filter_node.cpp INC LIB util)
-ADD_EXE(TARGET graph_segment_node SRC src/imgproc/graph_segment_node.cpp INC LIB util)
-
 # trajectory
 ADD_EXE(TARGET fix_to_pose_node SRC src/trajectory/fix_to_pose_node.cpp INC LIB util Geographic ${PCL_LIBRARIES})
 ADD_EXE(TARGET pose_to_path_node SRC src/trajectory/pose_to_path_node.cpp INC LIB)
@@ -114,9 +106,6 @@ ADD_EXE(TARGET twist_node SRC src/trajectory/twist_*.cpp INC include LIB util Ge
 ADD_EXE(TARGET pose_init_node SRC src/trajectory/pose_initializer.cpp INC include LIB util Geographic)
 ADD_EXE(TARGET eagleye_bridge_node SRC src/trajectory/eagleye_bridge.cpp INC include LIB util)
 ADD_EXE(TARGET velocity_report_node SRC src/trajectory/velocity_report_node.cpp INC include LIB)
-
-# particle_filter
-# ADD_EXE(TARGET particle_initializer_node SRC src/particle_filter/particle_initializer*.cpp INC include LIB util)
 
 # validation
 ADD_EXE(TARGET overlay_node SRC src/validation/overlay_*.cpp INC include LIB util)

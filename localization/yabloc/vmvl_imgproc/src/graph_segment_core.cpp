@@ -1,7 +1,9 @@
-#include "common/util.hpp"
-#include "imgproc/graph_segment.hpp"
+#include "vmvl_imgproc/graph_segment.hpp"
 
 #include <opencv4/opencv2/imgproc.hpp>
+#include <vml_common/cv_decompress.hpp>
+#include <vml_common/pub_sub.hpp>
+#include <vml_common/util.hpp>
 
 namespace imgproc
 {
@@ -25,7 +27,7 @@ GraphSegment::GraphSegment()
 
 void GraphSegment::callbackImage(const Image & msg)
 {
-  cv::Mat image = util::decompress2CvMat(msg);
+  cv::Mat image = vml_common::decompress2CvMat(msg);
   cv::Mat resized;
   cv::resize(image, resized, cv::Size(), 0.5, 0.5);
 
@@ -83,7 +85,7 @@ void GraphSegment::callbackImage(const Image & msg)
     pcl::PointXYZ xyz(p.x, p.y, 0);
     cloud.push_back(xyz);
   }
-  util::publishCloud(*pub_cloud_, cloud, msg.header.stamp);
+  vml_common::publishCloud(*pub_cloud_, cloud, msg.header.stamp);
 
   publishImage(image, segmented, msg.header.stamp, target_class);
 }
@@ -125,15 +127,7 @@ void GraphSegment::publishImage(
 
   cv::Mat show_image;
   cv::addWeighted(raw_image, 0.5, segmented_image, 0.8, 1.0, show_image);
-  util::publishImage(*pub_image_, show_image, stamp);
+  vml_common::publishImage(*pub_image_, show_image, stamp);
 }
 
 }  // namespace imgproc
-
-int main(int argc, char * argv[])
-{
-  rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<imgproc::GraphSegment>());
-  rclcpp::shutdown();
-  return 0;
-}

@@ -1,4 +1,4 @@
-#include "imgproc/lsd.hpp"
+#include "vmvl_imgproc/lsd.hpp"
 
 int main(int argc, char * argv[])
 {

@@ -8,7 +8,7 @@
 #include <memory>
 #include <optional>
 
-namespace common
+namespace vml_common
 {
 struct StaticTfSubscriber
 {
@@ -57,4 +57,4 @@ struct StaticTfSubscriber
   }
 };
 
-}  // namespace common
+}  // namespace vml_common

@@ -1,6 +1,9 @@
-#include "common/timer.hpp"
-#include "common/util.hpp"
-#include "imgproc/lsd.hpp"
+#include "vmvl_imgproc/lsd.hpp"
+
+#include <vml_common/cv_decompress.hpp>
+#include <vml_common/pub_sub.hpp>
+#include <vml_common/timer.hpp>
+#include <vml_common/util.hpp>
 
 #include <pcl_conversions/pcl_conversions.h>
 
@@ -27,7 +30,7 @@ LineSegmentDetector::LineSegmentDetector()
 
 void LineSegmentDetector::imageCallback(const sensor_msgs::msg::Image & msg)
 {
-  cv::Mat image = util::decompress2CvMat(msg);
+  cv::Mat image = vml_common::decompress2CvMat(msg);
   execute(image, msg.header.stamp);
 }
 
@@ -44,7 +47,7 @@ void LineSegmentDetector::execute(const cv::Mat & image, const rclcpp::Time & st
     RCLCPP_INFO_STREAM(this->get_logger(), "lsd: " << timer);
   }
 
-  util::publishImage(*pub_image_lsd_, gray_image, stamp);
+  vml_common::publishImage(*pub_image_lsd_, gray_image, stamp);
 
   pcl::PointCloud<pcl::PointNormal> line_cloud;
   for (int i = 0; i < lines.rows; i++) {
@@ -57,7 +60,7 @@ void LineSegmentDetector::execute(const cv::Mat & image, const rclcpp::Time & st
     pn.getNormalVector3fMap() = xy2;
     line_cloud.push_back(pn);
   }
-  util::publishCloud(*pub_cloud_, line_cloud, stamp);
+  vml_common::publishCloud(*pub_cloud_, line_cloud, stamp);
 }
 
 }  // namespace imgproc

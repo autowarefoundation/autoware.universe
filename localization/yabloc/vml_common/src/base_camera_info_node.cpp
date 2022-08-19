@@ -1,5 +1,7 @@
-#include "common/base_camera_info_node.hpp"
+#include "vml_common/base_camera_info_node.hpp"
 
+namespace vml_common
+{
 BaseCameraInfoNode::BaseCameraInfoNode(
   const std::string node_name, const rclcpp::NodeOptions & options)
 : Node(node_name, options)
@@ -20,3 +22,4 @@ Eigen::Matrix3f BaseCameraInfoNode::intrinsic() const
   const Eigen::Matrix3d Kd_t = Eigen::Map<const Eigen::Matrix<double, 3, 3>>(opt_info_->k.data());
   return Kd_t.cast<float>().transpose();
 }
+}  // namespace vml_common

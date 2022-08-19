@@ -39,6 +39,8 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/util.cpp
   src/pub_sub.cpp
   src/fix2mgrs.cpp
+  src/base_camera_info_node.cpp
+  src/cv_decompress.cpp
   src/color.cpp)
 target_link_libraries(${PROJECT_NAME} Geographic ${PCL_LIBRARIES})
 target_include_directories(

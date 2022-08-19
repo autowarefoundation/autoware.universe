@@ -1,10 +1,9 @@
 #pragma once
-#include "common/base_camera_info_node.hpp"
-#include "common/static_tf_subscriber.hpp"
-#include "common/synchro_subscriber.hpp"
-
 #include <opencv4/opencv2/core.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <vml_common/base_camera_info_node.hpp>
+#include <vml_common/static_tf_subscriber.hpp>
+#include <vml_common/synchro_subscriber.hpp>
 
 #include <sensor_msgs/msg/camera_info.hpp>
 #include <sensor_msgs/msg/image.hpp>
@@ -13,9 +12,9 @@
 #include <pcl/pcl_base.h>
 #include <pcl/point_types.h>
 
-namespace imgproc
+namespace vmvl_imgproc
 {
-class SegmentFilter : public BaseCameraInfoNode
+class SegmentFilter : public vml_common::BaseCameraInfoNode
 {
 public:
   using PointCloud2 = sensor_msgs::msg::PointCloud2;
@@ -32,7 +31,7 @@ private:
   const float max_segment_distance_;
 
   SynchroSubscriber<PointCloud2, PointCloud2> subscriber_;
-  common::StaticTfSubscriber tf_subscriber_;
+  vml_common::StaticTfSubscriber tf_subscriber_;
   rclcpp::Publisher<PointCloud2>::SharedPtr pub_cloud_;
   rclcpp::Publisher<Image>::SharedPtr pub_image_;
 
@@ -51,4 +50,4 @@ private:
   bool isLowerElement(const pcl::PointNormal & pn, pcl::PointNormal & truncated_pn) const;
   bool isNearElement(const pcl::PointNormal & pn, pcl::PointNormal & truncated_pn) const;
 };
-}  // namespace imgproc
+}  // namespace vmvl_imgproc

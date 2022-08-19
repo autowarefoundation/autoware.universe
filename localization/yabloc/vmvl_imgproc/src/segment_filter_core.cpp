@@ -1,16 +1,17 @@
-#include "common/util.hpp"
-#include "imgproc/segment_filter.hpp"
+#include "vmvl_imgproc/segment_filter.hpp"
 
 #include <opencv4/opencv2/core.hpp>
 #include <opencv4/opencv2/highgui.hpp>
 #include <opencv4/opencv2/imgproc.hpp>
+#include <vml_common/pub_sub.hpp>
+#include <vml_common/util.hpp>
 
 #include <pcl/filters/extract_indices.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
 
-namespace imgproc
+namespace vmvl_imgproc
 {
 SegmentFilter::SegmentFilter()
 : BaseCameraInfoNode("segment_filter"),
@@ -92,7 +93,7 @@ void SegmentFilter::execute(const PointCloud2 & lsd_msg, const PointCloud2 & seg
   extract.setInputCloud(projected_lines);
   pcl::PointCloud<pcl::PointNormal> reliable_edges;
   extract.filter(reliable_edges);
-  util::publishCloud(*pub_cloud_, reliable_edges, stamp);
+  vml_common::publishCloud(*pub_cloud_, reliable_edges, stamp);
 
   // Draw image
   cv::Mat reliable_line_image = cv::Mat::zeros(cv::Size{image_size_, image_size_}, CV_8UC3);
@@ -118,7 +119,7 @@ void SegmentFilter::execute(const PointCloud2 & lsd_msg, const PointCloud2 & seg
     }
   }
 
-  util::publishImage(*pub_image_, reliable_line_image, stamp);
+  vml_common::publishImage(*pub_image_, reliable_line_image, stamp);
 }
 
 bool SegmentFilter::isNearElement(
@@ -267,12 +268,4 @@ pcl::PointIndices SegmentFilter::filtByMask(
   return reliable_indices;
 }
 
-}  // namespace imgproc
-
-int main(int argc, char * argv[])
-{
-  rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<imgproc::SegmentFilter>());
-  rclcpp::shutdown();
-  return 0;
-}
+}  // namespace vmvl_imgproc

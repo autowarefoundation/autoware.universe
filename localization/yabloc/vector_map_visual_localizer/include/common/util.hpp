@@ -16,18 +16,6 @@
 
 namespace util
 {
-cv::Mat decompress2CvMat(const sensor_msgs::msg::Image & img);
-
-sensor_msgs::msg::Image::ConstSharedPtr decompress2RosMsg(
-  const sensor_msgs::msg::CompressedImage & compressed_img);
-
-cv::Mat decompress2CvMat(const sensor_msgs::msg::CompressedImage & compressed_img);
-sensor_msgs::msg::Image::ConstSharedPtr decompress2RosMsg(
-  const sensor_msgs::msg::CompressedImage & compressed_img);
-
-void publishImage(
-  rclcpp::Publisher<sensor_msgs::msg::Image> & publisher, const cv::Mat & image,
-  const rclcpp::Time & stamp);
 
 Eigen::Affine3f pose2Affine(const geometry_msgs::msg::Pose & pose);
 geometry_msgs::msg::Pose affine2Pose(const Eigen::Affine3f & affine);

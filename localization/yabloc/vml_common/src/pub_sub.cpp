@@ -1,9 +1,22 @@
 #include "vml_common/pub_sub.hpp"
 
+#include <cv_bridge/cv_bridge.h>
 #include <pcl_conversions/pcl_conversions.h>
 
 namespace vml_common
 {
+void publishImage(
+  rclcpp::Publisher<sensor_msgs::msg::Image> & publisher, const cv::Mat & image,
+  const rclcpp::Time & stamp)
+{
+  cv_bridge::CvImage raw_image;
+  raw_image.header.stamp = stamp;
+  raw_image.header.frame_id = "map";
+  raw_image.encoding = "bgr8";
+  raw_image.image = image;
+  publisher.publish(*raw_image.toImageMsg());
+}
+
 template <typename PointT>
 void publishCloud(
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2> & publisher,

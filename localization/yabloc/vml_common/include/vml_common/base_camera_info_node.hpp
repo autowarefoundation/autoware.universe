@@ -4,6 +4,9 @@
 
 #include <sensor_msgs/msg/camera_info.hpp>
 
+#include <optional>
+namespace vml_common
+{
 class BaseCameraInfoNode : public rclcpp::Node
 {
 public:
@@ -22,3 +25,4 @@ private:
   rclcpp::Subscription<CameraInfo>::SharedPtr sub_info_;
   std::optional<CameraInfo> opt_info_;
 };
+}  // namespace vml_common
