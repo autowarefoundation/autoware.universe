@@ -38,7 +38,7 @@ ament_auto_add_library(predictor
 # ===================================================
 # Executables
 ament_auto_add_executable(predictor_node
-  src/app/predictor_node.cpp
+  src/prediction/predictor_node.cpp
 )
 target_link_libraries(predictor_node predictor)
 

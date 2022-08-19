@@ -2,8 +2,9 @@
 
 int main(int argc, char * argv[])
 {
+  namespace mpf = modularized_particle_filter;
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<modularized_particle_filter::GnssParticleCorrector>());
+  rclcpp::spin(std::make_shared<mpf::GnssParticleCorrector>());
   rclcpp::shutdown();
   return 0;
 }

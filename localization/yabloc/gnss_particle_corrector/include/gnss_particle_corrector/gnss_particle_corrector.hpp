@@ -1,4 +1,6 @@
-#pragma once
+
+#ifndef GNSS_PARTILCE_CORRECTOR__GNSS_PARTICLE_CORRECTOR_HPP_
+#define GNSS_PARTILCE_CORRECTOR__GNSS_PARTICLE_CORRECTOR_HPP_
 
 #include <eigen3/Eigen/StdVector>
 #include <modularized_particle_filter/correction/abst_corrector.hpp>
@@ -51,3 +53,5 @@ private:
   void publishMarker(const Eigen::Vector3f & position, bool fixed);
 };
 }  // namespace modularized_particle_filter
+
+#endif  // GNSS_PARTILCE_CORRECTOR__GNSS_PARTICLE_CORRECTOR_HPP_

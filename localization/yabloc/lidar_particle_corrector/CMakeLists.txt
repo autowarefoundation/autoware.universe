@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(gnss_particle_corrector)
+project(lidar_particle_corrector)
 
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
@@ -20,19 +20,11 @@ ament_auto_find_build_dependencies()
 find_package(Eigen3 REQUIRED)
 
 # ===================================================
-# GeographicLib
-find_package(PkgConfig)
-find_path(GeographicLib_INCLUDE_DIR GeographicLib/Config.h
-  PAHT_SUFFIXES GeographicLib
-)
-set(GeographicLib_INCLUDE_DIRS ${GeographicLib_INCLUDE_DIR})
-find_library(GeographicLib_LIBRARIES NAMES Geographic)
-
-# ===================================================
 # Executable
-ament_auto_add_executable(gnss_particle_corrector src/gnss_corrector_node.cpp src/gnss_corrector_core.cpp)
-target_include_directories(gnss_particle_corrector PUBLIC include)
-target_include_directories(gnss_particle_corrector PUBLIC SYSTEM ${GeographicLib_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS})
+set(TARGET lidar_particle_corrector)
+ament_auto_add_executable(${TARGET} src/lidar_particle_corrector_node.cpp src/lidar_particle_corrector_core.cpp)
+target_include_directories(${TARGET} PUBLIC include)
+target_include_directories(${TARGET} SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIRS})
 
 # ===================================================
 ament_auto_package()

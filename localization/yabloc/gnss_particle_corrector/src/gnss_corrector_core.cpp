@@ -8,13 +8,15 @@ namespace modularized_particle_filter
 {
 GnssParticleCorrector::GnssParticleCorrector()
 : AbstCorrector("gnss_particle_corrector"),
-  float_range_gain_(5.0f),
+  float_range_gain_(declare_parameter("float_range_gain", 5.0f)),
   likelihood_min_weight_(declare_parameter("likelihood_min_weight", 0.01f)),
-  likelihood_stdev_(declare_parameter("likelihood_stdev", 25.0f)),
+  likelihood_stdev_(declare_parameter("likelihood_stdev", 5.0f)),
   likelihood_flat_radius_(declare_parameter("likelihood_flat_radius", 1.0f)),
   rtk_enabled_(declare_parameter("rtk_enabled", true))
 {
   using std::placeholders::_1;
+
+  // Subscriber
   auto cb_pose = std::bind(&GnssParticleCorrector::onPose, this, _1);
   auto cb_ublox = std::bind(&GnssParticleCorrector::onUblox, this, _1);
   auto cb_height = [this](const Float32 & height) { this->latest_height_ = height; };
@@ -22,6 +24,7 @@ GnssParticleCorrector::GnssParticleCorrector()
   pose_sub_ = create_subscription<PoseCovStamped>("/pose_with_covariance", 10, cb_pose);
   height_sub_ = create_subscription<Float32>("/height", 10, cb_height);
 
+  // Publisher
   marker_pub_ = create_publisher<MarkerArray>("/gnss/effect_marker", 10);
 }
 

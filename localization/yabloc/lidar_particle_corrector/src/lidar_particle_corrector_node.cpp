@@ -1,7 +1,4 @@
-#include "modularized_particle_filter/correction/lidar_pose_corrector.hpp"
-#include "rclcpp/rclcpp.hpp"
-
-#include <memory>
+#include "lidar_particle_corrector/lidar_particle_corrector.hpp"
 
 int main(int argc, char ** argv)
 {

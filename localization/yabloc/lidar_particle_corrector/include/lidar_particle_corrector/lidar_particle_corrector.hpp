@@ -1,5 +1,5 @@
-#ifndef MODULARIZED_PARTICLE_FILTER__CORRECTION__LIDAR_POSE_CORRECTOR_HPP_
-#define MODULARIZED_PARTICLE_FILTER__CORRECTION__LIDAR_POSE_CORRECTOR_HPP_
+#ifndef LIDAR_PARTICLE_CORRECTOR__LIDAR_PARTICLE_CORRECTOR_HPP_
+#define LIDAR_PARTICLE_CORRECTOR__LIDAR_PARTICLE_CORRECTOR_HPP_
 
 #include "rclcpp/rclcpp.hpp"
 #include "tf2_ros/static_transform_broadcaster.h"
@@ -7,7 +7,7 @@
 
 #include <pcl_ros/impl/transforms.hpp>
 
-#include "modularized_particle_filter_msgs/msg/particle_array.hpp"
+#include <modularized_particle_filter_msgs/msg/particle_array.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
@@ -59,4 +59,4 @@ private:
 };
 }  // namespace modularized_particle_filter
 
-#endif  // MODULARIZED_PARTICLE_FILTER__CORRECTION__LIDAR_POSE_CORRECTOR_HPP_
+#endif  // LIDAR_PARTICLE_CORRECTOR__LIDAR_PARTICLE_CORRECTOR_HPP_
