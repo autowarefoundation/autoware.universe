@@ -63,18 +63,19 @@ jobs:
         uses: peter-evans/create-pull-request@v4
         with:
           token: ${{ steps.generate-token.outputs.token }}
-          commit-message: "chore: update rc branch"
+          commit-message: "chore: update beta branch"
           committer: GitHub <noreply@github.com>
           author: GitHub <noreply@github.com>
           signoff: false
           base: ${{ env.BASE_BRANCH }}
           branch: ${{ env.SYNC_BRANCH_PREFIX }}/${{ env.BASE_BRANCH }}
           delete-branch: true
-          title: "chore: update rc branch"
+          title: "chore: update beta branch"
           body: |
-            update rc branch
+            update beta branch
           labels: |
-            update-rc-branch
+            bot
+            update-beta-branch
           draft: false
 
       - name: Check outputs
