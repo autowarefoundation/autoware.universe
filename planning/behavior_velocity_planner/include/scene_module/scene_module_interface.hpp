@@ -120,6 +120,8 @@ public:
   {
     const auto ns = std::string("~/debug/") + module_name;
     pub_debug_ = node.create_publisher<visualization_msgs::msg::MarkerArray>(ns, 20);
+    pub_debug_path_ = node.create_publisher<autoware_auto_planning_msgs::msg::PathWithLaneId>(
+      std::string("~/debug/path_with_lane_id/") + module_name, 20);
     pub_virtual_wall_ = node.create_publisher<visualization_msgs::msg::MarkerArray>(
       std::string("~/virtual_wall/") + module_name, 20);
     pub_stop_reason_ =
@@ -157,7 +159,7 @@ protected:
   {
     StopWatch<std::chrono::milliseconds> stop_watch;
     stop_watch.tic("Total");
-
+    const bool publish_debug_scene_module_path = true;
     visualization_msgs::msg::MarkerArray debug_marker_array;
     visualization_msgs::msg::MarkerArray virtual_wall_marker_array;
     tier4_planning_msgs::msg::StopReasonArray stop_reason_array;
@@ -199,6 +201,9 @@ protected:
     }
     pub_infrastructure_commands_->publish(infrastructure_command_array);
     pub_debug_->publish(debug_marker_array);
+    if(publish_debug_scene_module_path) {
+      pub_debug_path_->publish(*path);
+    }
     pub_virtual_wall_->publish(virtual_wall_marker_array);
     processing_time_publisher_->publish<Float64Stamped>(
       std::string(getModuleName()) + "/processing_time_ms", stop_watch.toc("Total"));
@@ -258,6 +263,7 @@ protected:
   rclcpp::Logger logger_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_virtual_wall_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_debug_;
+  rclcpp::Publisher<autoware_auto_planning_msgs::msg::PathWithLaneId>::SharedPtr pub_debug_path_;
   rclcpp::Publisher<tier4_planning_msgs::msg::StopReasonArray>::SharedPtr pub_stop_reason_;
   rclcpp::Publisher<tier4_v2x_msgs::msg::InfrastructureCommandArray>::SharedPtr
     pub_infrastructure_commands_;

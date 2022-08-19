@@ -1,0 +1,28 @@
+<launch>
+  <node pkg="planning_debug_tools" exec="trajectory_analyzer_exe" name="trajectory_analyzer" output="screen">
+    <param name="path_topics" value="[/planning/scenario_planning/lane_driving/behavior_planning/path]"/>
+    <param 
+      name="path_wlid_topics" 
+      value="[/planning/scenario_planning/lane_driving/behavior_planning/path_with_lane_id
+              ,/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/path_with_lane_id/blind_spot
+              ,/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/path_with_lane_id/crosswalk
+              ,/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/path_with_lane_id/detection_area
+              ,/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/path_with_lane_id/intersection
+              ,/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/path_with_lane_id/merge_from_private
+              ,/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/path_with_lane_id/no_stopping_area
+              ,/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/path_with_lane_id/occlusion_spot
+              ,/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/path_with_lane_id/stop_line
+              ,/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/path_with_lane_id/traffic_light
+              ,/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/path_with_lane_id/virtual_traffic_light
+              ,/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/path_with_lane_id/walkway
+              ,/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/path_with_lane_id/run_out]"
+    />
+    <param
+      name="trajectory_topics"
+      value="[
+              ,/planning/scenario_planning/lane_driving/motion_planning/obstacle_avoidance_planner/trajectory
+              ,/planning/scenario_planning/trajectory]"
+    />
+    <remap from="ego_kinematics" to="/localization/kinematic_state"/>
+  </node>
+</launch>
