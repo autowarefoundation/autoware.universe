@@ -137,7 +137,6 @@ private:
   std::string turn_direction_;
   bool has_traffic_light_;
   bool is_go_out_;
-  std::unordered_map<unique_identifier_msgs::msg::UUID, std::vector<int>> map_object_lane_;
 
   // Parameter
   PlannerParam planner_param_;

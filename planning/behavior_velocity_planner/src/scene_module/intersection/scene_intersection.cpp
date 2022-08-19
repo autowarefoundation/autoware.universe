@@ -310,11 +310,6 @@ bool IntersectionModule::checkCollision(
       continue;
     }
 
-    if (auto object_it = map_object_lane_.find(object.object_id);
-        object_it != map_object_lane_.end()) {
-      // push its corresponding lane
-      // map_object_lane_[object.object_id].push_back(0);
-    }
     // ignore vehicle in ego-lane && behind ego
     const auto object_pose = object.kinematics.initial_pose_with_covariance.pose;
     const bool is_in_ego_lane = bg::within(to_bg2d(object_pose.position), ego_poly);
@@ -625,6 +620,7 @@ bool IntersectionModule::checkAngleForTargetLanelets(
     const double ll_angle = lanelet::utils::getLaneletAngle(ll, pose.position);
     const double pose_angle = tf2::getYaw(pose.orientation);
     const double angle_diff = tier4_autoware_utils::normalizeRadian(ll_angle - pose_angle);
+    // detection_areaのlaneletの内部にありかつ姿勢が一致するobjectは検知対象とする(からtrue)
     if (std::fabs(angle_diff) < planner_param_.detection_area_angle_thr) {
       return true;
     }

@@ -576,6 +576,13 @@ bool generateStopLineBeforeIntersection(
   return false;
 }
 
+geometry_msgs::msg::Pose toPose(const geometry_msgs::msg::Point & p)
+{
+  geometry_msgs::msg::Pose pose;
+  pose.position = p;
+  return pose;
+}
+
 static std::string getTurnDirection(lanelet::ConstLanelet lane)
 {
   return lane.attributeOr("turn_direction", "else");
@@ -660,6 +667,17 @@ std::vector<int> extendedAdjacentDirectionLanes(
     }
   }
   return std::vector<int>(following_turning_lanelets.begin(), following_turning_lanelets.end());
+}
+
+std::optional<lanelet::BasicPolygon2d> getIntersectionArea(
+  lanelet::ConstLanelet assigned_lane, lanelet::LaneletMapConstPtr lanelet_map_ptr)
+{
+  const std::string area_id_str = assigned_lane.attributeOr("intersection_area", "else");
+  if (area_id_str == "else") return std::nullopt;
+
+  const int area_id = std::atoi(area_id_str.c_str());
+  const auto poly_3d = lanelet_map_ptr->polygonLayer.get(area_id);
+  return std::make_optional(lanelet::utils::to2D(poly_3d).basicPolygon());
 }
 
 }  // namespace util

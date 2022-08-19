@@ -27,6 +27,7 @@
 #endif
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -142,6 +143,9 @@ bool isOverTargetIndex(
 bool isBeforeTargetIndex(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
   const geometry_msgs::msg::Pose & current_pose, const int target_idx);
+
+std::optional<lanelet::BasicPolygon2d> getIntersectionArea(
+  lanelet::ConstLanelet assigned_lane, lanelet::LaneletMapConstPtr lanelet_map_ptr);
 
 }  // namespace util
 }  // namespace behavior_velocity_planner
