@@ -1,16 +1,15 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>vector_map_visual_localizer</name>
+  <name>vmvl_map</name>
   <version>0.0.0</version>
-  <description>Visual Localizer in vector map</description>
+  <description>map library for vector map visual localizer</description>
   <maintainer email="kento.yabuuchi.2@tier4.jp">kentoyabuuchi2</maintainer>
   <license>Apache 2</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <depend>rclcpp</depend>
-  <depend>rclpy</depend>
 
   <depend>tf2</depend>
   <depend>tf2_ros</depend>
@@ -18,17 +17,15 @@
   <depend>sensor_msgs</depend>
   <depend>nav_msgs</depend>
   <depend>visualization_msgs</depend>
-  <depend>cv_bridge</depend>
   <depend>lanelet2_core</depend>
   <depend>lanelet2_io</depend>
+  <depend>cv_bridge</depend>
 
   <depend>rosbag2</depend>
   <depend>rosbag2_cpp</depend>
 
-  <depend>ublox_msgs</depend>
-  <depend>autoware_auto_vehicle_msgs</depend>
+  <depend>autoware_auto_mapping_msgs</depend>
 
-  <depend>vmvl_map</depend>
   <depend>vmvl_msgs</depend>
   <depend>vml_common</depend>
 
@@ -39,3 +36,4 @@
     <build_type>ament_cmake</build_type>
   </export>
 </package>
+

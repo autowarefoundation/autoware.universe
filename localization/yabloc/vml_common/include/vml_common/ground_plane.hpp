@@ -5,6 +5,8 @@
 
 #include <std_msgs/msg/float32_multi_array.hpp>
 
+namespace vml_common
+{
 struct GroundPlane
 {
   using Float32Array = std_msgs::msg::Float32MultiArray;
@@ -62,3 +64,4 @@ struct GroundPlane
     return array;
   }
 };
+}  // namespace vml_common

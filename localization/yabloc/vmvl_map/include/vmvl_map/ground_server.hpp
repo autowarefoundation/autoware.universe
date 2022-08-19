@@ -1,9 +1,7 @@
 #pragma once
-#include "common/ground_plane.hpp"
-
 #include <rclcpp/rclcpp.hpp>
+#include <vml_common/ground_plane.hpp>
 
-#include "vmvl_msgs/srv/ground.hpp"
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
@@ -11,6 +9,7 @@
 #include <std_msgs/msg/float32_multi_array.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
+#include <vmvl_msgs/srv/ground.hpp>
 
 #include <boost/circular_buffer.hpp>
 
@@ -24,6 +23,7 @@ namespace map
 class GroundServer : public rclcpp::Node
 {
 public:
+  using GroundPlane = vml_common::GroundPlane;
   using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
   using Ground = vmvl_msgs::srv::Ground;
   using Pose = geometry_msgs::msg::Pose;
@@ -37,9 +37,9 @@ public:
   GroundServer();
 
 private:
+  const bool force_zero_tilt_;
   const float R;
   const int K;
-  const bool force_zero_tilt_;
 
   rclcpp::Service<Ground>::SharedPtr service_;
 

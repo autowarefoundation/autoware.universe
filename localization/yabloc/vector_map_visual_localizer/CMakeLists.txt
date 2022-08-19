@@ -77,8 +77,6 @@ macro(ADD_LIB)
 endmacro()
 
 ADD_LIB(TARGET cv_lsd SRC 3rd/opencv_lsd/lsd/*.cpp INC 3rd/opencv_lsd LIB ${OpenCV_LIBS})
-ADD_LIB(TARGET regulatory_elements SRC 3rd/regulatory_elements/lib/*.cpp INC 3rd/regulatory_elements/include)
-ADD_LIB(TARGET ll2_util SRC lib/ll2_util.cpp INC 3rd/regulatory_elements/include include)
 ADD_LIB(TARGET util SRC lib/util.cpp lib/color.cpp lib/base_camera_info_node.cpp INC include)
 ADD_LIB(TARGET modified_seg SRC lib/graph_segmentation.cpp INC include)
 ADD_LIB(TARGET vanish SRC lib/ransac_vanish_point.cpp INC include)
@@ -118,17 +116,12 @@ ADD_EXE(TARGET eagleye_bridge_node SRC src/trajectory/eagleye_bridge.cpp INC inc
 ADD_EXE(TARGET velocity_report_node SRC src/trajectory/velocity_report_node.cpp INC include LIB)
 
 # particle_filter
-ADD_EXE(TARGET particle_initializer_node SRC src/particle_filter/particle_initializer*.cpp INC include LIB util)
+# ADD_EXE(TARGET particle_initializer_node SRC src/particle_filter/particle_initializer*.cpp INC include LIB util)
 
 # validation
 ADD_EXE(TARGET overlay_node SRC src/validation/overlay_*.cpp INC include LIB util)
 ADD_EXE(TARGET covariance_node SRC src/validation/covariance_*.cpp INC include LIB util)
 ADD_EXE(TARGET ape_node SRC src/validation/ape_*.cpp INC include LIB util)
-
-# map
-ADD_EXE(TARGET ll2_decompose_node SRC src/map/ll2_decompose_*.cpp INC LIB ll2_util Geographic)
-ADD_EXE(TARGET ground_server_node SRC src/map/ground_server_*.cpp INC LIB)
-ADD_EXE(TARGET ground_client_node SRC src/map/ground_client_*.cpp INC LIB)
 
 # ===================================================
 ament_auto_package(INSTALL_TO_SHARE launch config)

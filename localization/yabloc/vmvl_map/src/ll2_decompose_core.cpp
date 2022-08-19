@@ -1,7 +1,9 @@
-#include "common/color.hpp"
-#include "common/util.hpp"
-#include "map/ll2_decomposer.hpp"
-#include "map/ll2_util.hpp"
+#include "vmvl_map/ll2_decomposer.hpp"
+#include "vmvl_map/ll2_util.hpp"
+
+#include <vml_common/color.hpp>
+#include <vml_common/pub_sub.hpp>
+#include <vml_common/util.hpp>
 
 #include <pcl_conversions/pcl_conversions.h>
 
@@ -48,8 +50,8 @@ void Ll2Decomposer::mapCallback(const HADMapBin & msg)
   pcl::PointCloud<pcl::PointNormal> ll2_road_marking = splitLineStrings(tmp2);
 
   publishSignMarker(lanelet_map->lineStringLayer);
-  util::publishCloud(*pub_sign_board_, ll2_sign_board, stamp);
-  util::publishCloud(*pub_cloud_, ll2_road_marking, stamp);
+  vml_common::publishCloud(*pub_sign_board_, ll2_sign_board, stamp);
+  vml_common::publishCloud(*pub_cloud_, ll2_road_marking, stamp);
 }
 
 pcl::PointCloud<pcl::PointNormal> Ll2Decomposer::splitLineStrings(
@@ -108,7 +110,7 @@ Ll2Decomposer::MarkerArray Ll2Decomposer::makeSignMarkerMsg(
     marker.header.frame_id = "map";
     marker.header.stamp = get_clock()->now();
     marker.type = Marker::LINE_STRIP;
-    marker.color = util::color(0.6f, 0.6f, 0.6f, 0.999f);
+    marker.color = vml_common::color(0.6f, 0.6f, 0.6f, 0.999f);
     marker.scale.x = 0.1;
     marker.ns = ns;
     marker.id = id++;

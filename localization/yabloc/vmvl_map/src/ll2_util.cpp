@@ -1,4 +1,4 @@
-#include "map/ll2_util.hpp"
+#include "vmvl_map/ll2_util.hpp"
 
 #include <lanelet2_extension/regulatory_elements/detection_area.hpp>
 
@@ -6,6 +6,8 @@
 
 #include <lanelet2_io/io_handlers/Serialize.h>
 
+namespace map
+{
 lanelet::LaneletMapPtr fromBinMsg(const autoware_auto_mapping_msgs::msg::HADMapBin & msg)
 {
   lanelet::LaneletMapPtr map = std::make_shared<lanelet::LaneletMap>();
@@ -22,3 +24,5 @@ lanelet::LaneletMapPtr fromBinMsg(const autoware_auto_mapping_msgs::msg::HADMapB
   lanelet::utils::registerId(id_counter);
   return map;
 }
+
+}  // namespace map

@@ -1,9 +1,10 @@
-#include "common/color.hpp"
-#include "common/util.hpp"
-#include "map/ground_server.hpp"
-#include "map/ll2_util.hpp"
+#include "vmvl_map/ground_server.hpp"
+#include "vmvl_map/ll2_util.hpp"
 
 #include <Eigen/Eigenvalues>
+#include <vml_common/color.hpp>
+#include <vml_common/pub_sub.hpp>
+#include <vml_common/util.hpp>
 
 #include <pcl/ModelCoefficients.h>
 #include <pcl/filters/voxel_grid.h>
@@ -70,7 +71,8 @@ void GroundServer::callbackPoseStamped(const PoseStamped & msg)
   {
     pcl::PointCloud<pcl::PointXYZ> near_cloud;
     for (int index : last_near_point_indices_) near_cloud.push_back(cloud_->at(index));
-    if (!near_cloud.empty()) util::publishCloud(*pub_near_cloud_, near_cloud, msg.header.stamp);
+    if (!near_cloud.empty())
+      vml_common::publishCloud(*pub_near_cloud_, near_cloud, msg.header.stamp);
   }
 }
 
@@ -165,7 +167,7 @@ std::vector<int> GroundServer::ransacEstimation(const std::vector<int> & indices
   return inliers->indices;
 }
 
-GroundPlane GroundServer::estimateGround(const Point & point)
+GroundServer::GroundPlane GroundServer::estimateGround(const Point & point)
 {
   std::vector<int> k_indices, r_indices;
   std::vector<float> distances;
@@ -236,7 +238,7 @@ void GroundServer::publishMarker(const GroundPlane & plane)
   marker.header.stamp = get_clock()->now();
   marker.type = Marker::TRIANGLE_LIST;
   marker.id = 0;
-  marker.color = util::color(0.0, 0.5, 0.0, 0.1);
+  marker.color = vml_common::color(0.0, 0.5, 0.0, 0.1);
   marker.scale.x = 1.0;
   marker.scale.y = 1.0;
   marker.scale.z = 1.0;
