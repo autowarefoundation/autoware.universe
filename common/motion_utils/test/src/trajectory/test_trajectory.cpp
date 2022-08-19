@@ -1339,7 +1339,7 @@ TEST(trajectory, calcLongitudinalOffsetPoseFromIndex_quatSphericalInterpolation)
 
   // Found pose(forward)
   for (double len = 0.0; len < total_length; len += 0.1) {
-    const auto p_out = calcLongitudinalOffsetPose(traj.points, 0, len, true);
+    const auto p_out = calcLongitudinalOffsetPose(traj.points, 0, len, false);
     // ratio between two points
     const auto ratio = len / total_length;
     const auto ans_quat =
@@ -1357,7 +1357,7 @@ TEST(trajectory, calcLongitudinalOffsetPoseFromIndex_quatSphericalInterpolation)
 
   // Found pose(backward)
   for (double len = total_length; 0.0 < len; len -= 0.1) {
-    const auto p_out = calcLongitudinalOffsetPose(traj.points, 1, -len, true);
+    const auto p_out = calcLongitudinalOffsetPose(traj.points, 1, -len, false);
     // ratio between two points
     const auto ratio = len / total_length;
     const auto ans_quat =
@@ -1375,7 +1375,7 @@ TEST(trajectory, calcLongitudinalOffsetPoseFromIndex_quatSphericalInterpolation)
 
   // Boundary condition
   {
-    const auto p_out = calcLongitudinalOffsetPose(traj.points, 0, total_length, true);
+    const auto p_out = calcLongitudinalOffsetPose(traj.points, 0, total_length, false);
     const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
 
     EXPECT_NE(p_out, boost::none);
@@ -1390,7 +1390,7 @@ TEST(trajectory, calcLongitudinalOffsetPoseFromIndex_quatSphericalInterpolation)
 
   // Boundary condition
   {
-    const auto p_out = calcLongitudinalOffsetPose(traj.points, 1, 0.0, true);
+    const auto p_out = calcLongitudinalOffsetPose(traj.points, 1, 0.0, false);
     const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
 
     EXPECT_NE(p_out, boost::none);
@@ -1601,7 +1601,7 @@ TEST(trajectory, calcLongitudinalOffsetPoseFromPoint_quatSphericalInterpolation)
     const auto src_offset = calcLongitudinalOffsetToSegment(traj.points, 0, p_src);
 
     for (double len = -src_offset; len < total_length - src_offset; len += 0.1) {
-      const auto p_out = calcLongitudinalOffsetPose(traj.points, p_src, len, true);
+      const auto p_out = calcLongitudinalOffsetPose(traj.points, p_src, len, false);
       // ratio between two points
       const auto ratio = (src_offset + len) / total_length;
       const auto ans_quat =
@@ -1628,7 +1628,7 @@ TEST(trajectory, calcLongitudinalOffsetPoseFromPoint_quatSphericalInterpolation)
     const auto src_offset = calcLongitudinalOffsetToSegment(traj.points, 0, p_src);
 
     const auto p_out =
-      calcLongitudinalOffsetPose(traj.points, p_src, total_length - src_offset, true);
+      calcLongitudinalOffsetPose(traj.points, p_src, total_length - src_offset, false);
     const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
 
     EXPECT_NE(p_out, boost::none);
