@@ -9,6 +9,7 @@
   <arg name="input_route" default="/planning/mission_planning/route"/>
   <arg name="output_trajectory" default="/planning/scenario_planning/apparent_safe_velocity_limiter/trajectory"/>
   <arg name="output_debug_markers" default="/planning/scenario_planning/apparent_safe_velocity_limiter/debug_markers"/>
+  <arg name="use_sim_time" default="false"/>
 
   <arg name="param_path" default="$(find-pkg-share apparent_safe_velocity_limiter)/config/default_apparent_safe_velocity_limiter.param.yaml"/>
   <arg name="vehicle_info_param_file" default="$(find-pkg-share vehicle_info_util)/config/vehicle_info.param.yaml"/>
@@ -22,9 +23,11 @@
 
     <param name="input_frame" value="base_link"/>
     <param name="output_frame" value="map"/>
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
   </node>
   <node pkg="apparent_safe_velocity_limiter" exec="apparent_safe_velocity_limiter" name="apparent_safe_velocity_limiter" output="screen" launch-prefix="$(var gdb-launch-prefix)">
     <param from="$(var param_path)"/>
+    <param name="use_sim_time" value="$(var use_sim_time)"/>
     <param from="$(var vehicle_info_param_file)"/>
     <remap from="~/input/occupancy_grid" to="$(var input_occupancy_grid)"/>
     <remap from="~/input/obstacle_pointcloud" to="$(var input_obstacle_pointcloud)/downsampled"/>

@@ -167,8 +167,15 @@ rcl_interfaces::msg::SetParametersResult ApparentSafeVelocityLimiterNode::onPara
 void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstSharedPtr msg)
 {
   const auto t_start = std::chrono::system_clock::now();
-  const auto ego_idx = autoware::motion::motion_common::findNearestIndex(
-    msg->points, self_pose_listener_.getCurrentPose()->pose);
+  const auto current_pose_ptr = self_pose_listener_.getCurrentPose();
+  if (!current_pose_ptr) {
+    RCLCPP_WARN_THROTTLE(
+      get_logger(), *get_clock(), rcutils_duration_value_t(1000),
+      "Cannot get current pose with self pose listener");
+    return;
+  }
+  const auto ego_idx =
+    autoware::motion::motion_common::findNearestIndex(msg->points, current_pose_ptr->pose);
   if (!validInputs(ego_idx)) return;
   auto original_traj = *msg;
   if (preprocessing_params_.calculate_steering_angles)
