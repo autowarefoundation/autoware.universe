@@ -5,6 +5,8 @@
 
 #include <boost/circular_buffer.hpp>
 
+namespace vmvl_trajectory
+{
 class Pose2Path : public rclcpp::Node
 {
 public:
@@ -71,11 +73,12 @@ private:
     psm.publish(msg.header);
   }
 };
+}  // namespace vmvl_trajectory
 
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<Pose2Path>());
+  rclcpp::spin(std::make_shared<vmvl_trajectory::Pose2Path>());
   rclcpp::shutdown();
   return 0;
 }

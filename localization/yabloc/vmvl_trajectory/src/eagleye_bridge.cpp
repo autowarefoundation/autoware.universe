@@ -1,13 +1,12 @@
-#include "common/util.hpp"
-
 #include <rclcpp/rclcpp.hpp>
+#include <vml_common/util.hpp>
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
 #include <ublox_msgs/msg/nav_pvt.hpp>
 
-namespace trajectory
+namespace vmvl_trajectory
 {
 
 class EagleyeBridge : public rclcpp::Node
@@ -25,7 +24,7 @@ public:
     sub_fix_ = create_subscription<NavSatFix>("/in/fix", 10, fix_cb);
 
     // Publisher
-    pub_navpvt_ = this->create_publisher<NavPVT>("/out/navpvt", 10);
+    pub_navpvt_ = create_publisher<NavPVT>("/out/navpvt", 10);
   }
 
 private:
@@ -34,7 +33,7 @@ private:
 
   void fixCallback(const NavSatFix & msg)
   {
-    NavPVT navpvt = util::stamp2UbloxTime(msg.header.stamp);
+    NavPVT navpvt = vml_common::stamp2UbloxTime(msg.header.stamp);
     navpvt.flags = 0;
     navpvt.lat = msg.latitude * 1e7f;
     navpvt.lon = msg.longitude * 1e7f;
@@ -43,11 +42,12 @@ private:
   }
 };
 
-}  // namespace trajectory
+}  // namespace vmvl_trajectory
+
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<trajectory::EagleyeBridge>());
+  rclcpp::spin(std::make_shared<vmvl_trajectory::EagleyeBridge>());
   rclcpp::shutdown();
   return 0;
 }

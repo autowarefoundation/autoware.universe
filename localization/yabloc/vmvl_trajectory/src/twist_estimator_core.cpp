@@ -1,11 +1,11 @@
-#include "trajectory/twist_estimator.hpp"
+#include "vmvl_trajectory/twist_estimator.hpp"
 
 #include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/QR>
 #include <eigen3/Eigen/SVD>
 #include <sophus/geometry.hpp>
 
-namespace trajectory
+namespace vmvl_trajectory
 {
 TwistEstimator::TwistEstimator()
 : Node("twist_estimaotr"),
@@ -284,4 +284,4 @@ Eigen::MatrixXf TwistEstimator::rectifyPositiveSemiDefinite(const Eigen::MatrixX
   return U * S * U.transpose();
 }
 
-}  // namespace trajectory
+}  // namespace vmvl_trajectory

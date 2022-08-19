@@ -1,7 +1,6 @@
-#include "common/util.hpp"
-
 #include <rclcpp/rclcpp.hpp>
 #include <vml_common/fix2mgrs.hpp>
+#include <vml_common/util.hpp>
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <ublox_msgs/msg/nav_pvt.hpp>
@@ -42,7 +41,7 @@ private:
     Eigen::Vector3f position = ublox2Position(msg);
     geometry_msgs::msg::PoseStamped pose;
     pose.header.frame_id = "map";
-    pose.header.stamp = util::ubloxTime2Stamp(msg);
+    pose.header.stamp = vml_common::ubloxTime2Stamp(msg);
     pose.pose.position.x = position.x();
     pose.pose.position.y = position.y();
     pose.pose.position.z = 0;

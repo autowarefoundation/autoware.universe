@@ -19,7 +19,6 @@ public:
   Fix2Pose() : Node("fix_to_pose")
   {
     using std::placeholders::_1;
-    const rclcpp::QoS map_qos = rclcpp::QoS(10).transient_local().reliable();
 
     // Subscriber
     auto fix_cb = std::bind(&Fix2Pose::fixCallback, this, _1);

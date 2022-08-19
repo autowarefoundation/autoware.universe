@@ -99,14 +99,6 @@ macro(ADD_EXE)
   target_link_libraries(${TARGET_NAME} ${_ARG_LIB})
 endmacro()
 
-# trajectory
-ADD_EXE(TARGET fix_to_pose_node SRC src/trajectory/fix_to_pose_node.cpp INC LIB util Geographic ${PCL_LIBRARIES})
-ADD_EXE(TARGET pose_to_path_node SRC src/trajectory/pose_to_path_node.cpp INC LIB)
-ADD_EXE(TARGET twist_node SRC src/trajectory/twist_*.cpp INC include LIB util Geographic)
-ADD_EXE(TARGET pose_init_node SRC src/trajectory/pose_initializer.cpp INC include LIB util Geographic)
-ADD_EXE(TARGET eagleye_bridge_node SRC src/trajectory/eagleye_bridge.cpp INC include LIB util)
-ADD_EXE(TARGET velocity_report_node SRC src/trajectory/velocity_report_node.cpp INC include LIB)
-
 # validation
 ADD_EXE(TARGET overlay_node SRC src/validation/overlay_*.cpp INC include LIB util)
 ADD_EXE(TARGET covariance_node SRC src/validation/covariance_*.cpp INC include LIB util)

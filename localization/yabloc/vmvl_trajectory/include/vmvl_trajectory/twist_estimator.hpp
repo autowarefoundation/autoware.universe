@@ -11,7 +11,9 @@
 #include <std_msgs/msg/string.hpp>
 #include <ublox_msgs/msg/nav_pvt.hpp>
 
-namespace trajectory
+#include <optional>
+
+namespace vmvl_trajectory
 {
 class TwistEstimator : public rclcpp::Node
 {
@@ -77,4 +79,4 @@ private:
 
   Eigen::Vector3f extractEnuVel(const NavPVT & msg) const;
 };
-}  // namespace trajectory
+}  // namespace vmvl_trajectory

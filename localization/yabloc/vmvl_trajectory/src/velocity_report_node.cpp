@@ -1,11 +1,10 @@
-#include "common/util.hpp"
-
 #include <rclcpp/rclcpp.hpp>
+#include <vml_common/util.hpp>
 
 #include <autoware_auto_vehicle_msgs/msg/velocity_report.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 
-namespace trajectory
+namespace vmvl_trajectory
 {
 class VelocityReportDecoder : public rclcpp::Node
 {
@@ -40,12 +39,12 @@ private:
     pub_twist_stamped_->publish(ts);
   }
 };
-}  // namespace trajectory
+}  // namespace vmvl_trajectory
 
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<trajectory::VelocityReportDecoder>());
+  rclcpp::spin(std::make_shared<vmvl_trajectory::VelocityReportDecoder>());
   rclcpp::shutdown();
   return 0;
 }
