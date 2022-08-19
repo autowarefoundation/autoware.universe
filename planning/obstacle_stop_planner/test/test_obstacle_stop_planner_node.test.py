@@ -48,7 +48,10 @@ def generate_test_description():
             [FindPackageShare("vehicle_info_util"), "/config/vehicle_info.param.yaml"],
             [FindPackageShare("obstacle_stop_planner"), "/config/obstacle_stop_planner.param.yaml"],
             [FindPackageShare("obstacle_stop_planner"), "/config/default_common.param.yaml"],
-            [FindPackageShare("obstacle_stop_planner"), "/config/default_nearest_search.param.yaml"],
+            [
+                FindPackageShare("obstacle_stop_planner"),
+                "/config/default_nearest_search.param.yaml",
+            ],
             [
                 FindPackageShare("obstacle_stop_planner"),
                 "/config/adaptive_cruise_control.param.yaml",
