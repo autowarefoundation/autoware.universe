@@ -1,8 +1,32 @@
 # Planning Debug Tools
 
+This package contains several planning-related debug tools.
+
+- **Trajectory analyzer**: visualizes the information (speed, curvature, yaw, etc) along the trajectory
+- **Closest velocity checker**: prints the velocity information indicated by each modules
+
+## Trajectory analyzer
+
+The `trajectory_analyzer` visualizes the information (speed, curvature, yaw, etc) along the trajectory. This feature would be helpful for purposes such as "_investigating the reason why the vehicle decelerates here_". This feature employs the OSS [PlotJuggler](https://www.plotjuggler.io/).
+
 ![how this works](https://user-images.githubusercontent.com/21360593/179361367-a9fa136c-cd65-4f3c-ad7c-f542346a8d37.mp4)
 
-add below to reactive script and save it!
+### How to use
+
+please launch the analyzer node
+
+```bash
+ros2 launch planning_debug_tools trajectory_analyzer.launch.xml
+```
+
+and visualize the analyzed data on the plot juggler following below.
+
+#### setup PlotJuggler
+
+For the first time, please add the following code to reactive script and save it as the picture below!
+(Looking for the way to automatically load the configuration file...)
+
+You can customize what you plot by editing this code.
 
 ![image](./image/lua.png)
 
@@ -88,16 +112,28 @@ function PlotCurrentVelocity(name, kinematics_name, timestamp)
 end
 ```
 
-## environment setting
+Then, run the plot juggler.
 
-```.sh
-ros-galactic-plotjuggler-dbgsym/focal 3.5.1-1focal.20220730.024308 amd64
-ros-galactic-plotjuggler-msgs-dbgsym/focal 0.2.3-1focal.20220729.134451 amd64
-ros-galactic-plotjuggler-msgs/focal 0.2.3-1focal.20220729.134451 amd64
-ros-galactic-plotjuggler-ros-dbgsym/focal 1.7.3-1focal.20220730.075513 amd64
-ros-galactic-plotjuggler-ros/focal,now 1.7.3-1focal.20220730.075513 amd64
-ros-galactic-plotjuggler/focal 3.5.1-1focal.20220730.024308 amd64
-ros-galactic-rqt-plot/focal 1.1.1-1focal.20220730.023507 amd64
+### How to customize the plot
+
+Add Path/PathWithLaneIds/Trajectory topics you want to plot in the `trajectory_analyzer.launch.xml`, then the analyzed topics for these messages will be published with `TrajectoryDebugINfo.msg` type. You can then visualize these data by editing the reactive script on the PlotJuggler.
+
+### Requirements
+
+The version of the plotJuggler must be > `3.5.0`
+
+## Closest velocity checker
+
+This node prints the velocity information indicated by planning/control modules on a terminal. For trajectories calculated by planning modules, the target velocity on the trajectory point which is closest to the ego vehicle is printed. For control commands calculated by control modules, the target velocity and acceleration is directly printed. This feature would be helpful for purposes such as "_investigating the reason why the vehicle does not move_".
+
+You can launch by
+
+```bash
+ros2 run planning_debug_tools closest_velocity_checker.py
 ```
 
-for more description tbd...
+![](image/closest-velocity-checker.png)
+
+## Trajectory visualizer
+
+The old version of the trajectory analyzer. It is written in Python and more flexible, but very slow.
