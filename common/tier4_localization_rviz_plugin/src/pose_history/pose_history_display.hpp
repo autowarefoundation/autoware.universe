@@ -37,9 +37,7 @@ class BoolProperty;
 
 namespace rviz_plugins
 {
-class PoseHistory
-: public rviz_common::MessageFilterDisplay<
-    geometry_msgs::msg::PoseStamped>
+class PoseHistory : public rviz_common::MessageFilterDisplay<geometry_msgs::msg::PoseStamped>
 {
   Q_OBJECT
 
@@ -48,8 +46,8 @@ public:
   ~PoseHistory() override;
   PoseHistory(const PoseHistory &) = delete;
   PoseHistory(const PoseHistory &&) = delete;
-  PoseHistory& operator=(const PoseHistory &) = delete;
-  PoseHistory& operator=(const PoseHistory &&) = delete;
+  PoseHistory & operator=(const PoseHistory &) = delete;
+  PoseHistory & operator=(const PoseHistory &&) = delete;
 
 protected:
   void onInitialize() override;
