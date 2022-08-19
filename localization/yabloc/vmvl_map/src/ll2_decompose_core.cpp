@@ -59,13 +59,13 @@ pcl::PointCloud<pcl::PointNormal> Ll2Decomposer::splitLineStrings(
 {
   pcl::PointCloud<pcl::PointNormal> extracted;
   for (const lanelet::ConstLineString3d & line : line_strings) {
-    std::optional<lanelet::ConstPoint3d> from = std::nullopt;
-    for (const lanelet::ConstPoint3d to : line) {
-      if (from.has_value()) {
-        pcl::PointNormal pn = toPointNormal(from.value(), to);
+    lanelet::ConstPoint3d const * from = nullptr;
+    for (const lanelet::ConstPoint3d & to : line) {
+      if (from != nullptr) {
+        pcl::PointNormal pn = toPointNormal(*from, to);
         extracted.push_back(pn);
       }
-      from = to;
+      from = &to;
     }
   }
   return extracted;

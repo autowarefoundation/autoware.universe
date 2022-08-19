@@ -106,10 +106,10 @@ void GroundServer::callbackMap(const HADMapBin & msg)
     lanelet::Attribute attr = line.attribute(lanelet::AttributeName::Type);
     if (visible_labels.count(attr.value()) == 0) continue;
 
-    std::optional<lanelet::ConstPoint3d> from = std::nullopt;
-    for (const lanelet::ConstPoint3d p : line) {
-      if (from.has_value()) upSample(from.value(), p, upsampled_cloud);
-      from = p;
+    lanelet::ConstPoint3d const * from = nullptr;
+    for (const lanelet::ConstPoint3d & p : line) {
+      if (from != nullptr) upSample(*from, p, upsampled_cloud);
+      from = &p;
     }
   }
 
