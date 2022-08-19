@@ -1,7 +1,7 @@
 #include "common/util.hpp"
-#include "trajectory/fix2mgrs.hpp"
 
 #include <rclcpp/rclcpp.hpp>
+#include <vml_common/fix2mgrs.hpp>
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <ublox_msgs/msg/nav_pvt.hpp>
@@ -64,7 +64,7 @@ private:
     fix.latitude = msg.lat * 1e-7f;
     fix.longitude = msg.lon * 1e-7f;
     fix.altitude = msg.height * 1e-3f;
-    return fix2Mgrs(fix).cast<float>();
+    return vml_common::fix2Mgrs(fix).cast<float>();
   }
 };
 

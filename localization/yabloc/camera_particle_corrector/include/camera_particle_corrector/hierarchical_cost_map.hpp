@@ -12,7 +12,7 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
-namespace particle_filter
+namespace modularized_particle_filter
 {
 struct Area
 {
@@ -86,4 +86,4 @@ private:
   cv::Point toCvPoint(const Area & are, const Eigen::Vector2f);
   void buildMap(const Area & area);
 };
-}  // namespace particle_filter
+}  // namespace modularized_particle_filter

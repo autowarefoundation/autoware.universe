@@ -1,5 +1,5 @@
 #pragma once
-#include "particle_filter/hierarchical_cost_map.hpp"
+#include "camera_particle_corrector/hierarchical_cost_map.hpp"
 
 #include <modularized_particle_filter/correction/abst_corrector.hpp>
 #include <opencv4/opencv2/core.hpp>
@@ -11,7 +11,7 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
-namespace particle_filter
+namespace modularized_particle_filter
 {
 class CameraParticleCorrector : public modularized_particle_filter::AbstCorrector
 {
@@ -53,4 +53,4 @@ private:
 
   Eigen::Vector3f last_mean_position_;
 };
-}  // namespace particle_filter
+}  // namespace modularized_particle_filter

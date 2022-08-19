@@ -1,8 +1,6 @@
-#include "particle_filter/direct_cost_map.hpp"
+#include "camera_particle_corrector/direct_cost_map.hpp"
 
-#include <iostream>
-
-namespace particle_filter
+namespace modularized_particle_filter
 {
 cv::Mat directCostMap(const cv::Mat & cost_map, const cv::Mat & intensity)
 {
@@ -82,7 +80,7 @@ cv::Mat visualizeDirectionMap(const cv::Mat & cost_map)
   return rgb;
 }
 
-}  // namespace particle_filter
+}  // namespace modularized_particle_filter
 
 // #include <opencv4/opencv2/highgui.hpp>
 

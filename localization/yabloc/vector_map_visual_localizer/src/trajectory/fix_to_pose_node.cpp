@@ -1,11 +1,10 @@
-#include "trajectory/fix2mgrs.hpp"
-
 #include <rclcpp/rclcpp.hpp>
+#include <vml_common/fix2mgrs.hpp>
 
-#include "vmvl_msgs/srv/ground.hpp"
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
+#include <vmvl_msgs/srv/ground.hpp>
 
 #include <pcl-1.10/pcl/kdtree/kdtree_flann.h>
 #include <pcl-1.10/pcl/point_cloud.h>
@@ -76,7 +75,7 @@ private:
 
   void fixCallback(const sensor_msgs::msg::NavSatFix & msg)
   {
-    Eigen::Vector3d mgrs = fix2Mgrs(msg);
+    Eigen::Vector3d mgrs = vml_common::fix2Mgrs(msg);
     callGroundService(mgrs.cast<float>());
 
     if (!ground_pose_.has_value()) return;

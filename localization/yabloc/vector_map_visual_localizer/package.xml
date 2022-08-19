@@ -8,7 +8,6 @@
   <license>Apache 2</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
-  <buildtool_depend>ament_cmake_python</buildtool_depend>
 
   <depend>rclcpp</depend>
   <depend>rclpy</depend>
@@ -33,6 +32,7 @@
   <depend>modularized_particle_filter</depend>
   <depend>modularized_particle_filter_msgs</depend>
   <depend>vmvl_msgs</depend>
+  <depend>vml_common</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

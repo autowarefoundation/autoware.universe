@@ -80,7 +80,6 @@ ADD_LIB(TARGET cv_lsd SRC 3rd/opencv_lsd/lsd/*.cpp INC 3rd/opencv_lsd LIB ${Open
 ADD_LIB(TARGET regulatory_elements SRC 3rd/regulatory_elements/lib/*.cpp INC 3rd/regulatory_elements/include)
 ADD_LIB(TARGET ll2_util SRC lib/ll2_util.cpp INC 3rd/regulatory_elements/include include)
 ADD_LIB(TARGET util SRC lib/util.cpp lib/color.cpp lib/base_camera_info_node.cpp INC include)
-ADD_LIB(TARGET cost_map SRC src/particle_filter/hierarchical_cost_map.cpp src/particle_filter/direct_cost_map.cpp INC include)
 ADD_LIB(TARGET modified_seg SRC lib/graph_segmentation.cpp INC include)
 ADD_LIB(TARGET vanish SRC lib/ransac_vanish_point.cpp INC include)
 ADD_LIB(TARGET orientation SRC lib/orientation_optimizer.cpp INC include LIB ${CERES_LIBRARIES})
@@ -119,9 +118,6 @@ ADD_EXE(TARGET eagleye_bridge_node SRC src/trajectory/eagleye_bridge.cpp INC inc
 ADD_EXE(TARGET velocity_report_node SRC src/trajectory/velocity_report_node.cpp INC include LIB)
 
 # particle_filter
-ADD_EXE(TARGET camera_corrector_node
-  SRC src/particle_filter/camera_corrector*.cpp
-  INC include LIB util cost_map)
 ADD_EXE(TARGET particle_initializer_node SRC src/particle_filter/particle_initializer*.cpp INC include LIB util)
 
 # validation

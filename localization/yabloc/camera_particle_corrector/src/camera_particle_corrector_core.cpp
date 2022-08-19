@@ -1,10 +1,11 @@
+#include "camera_particle_corrector/camera_particle_corrector.hpp"
 #include "common/util.hpp"
-#include "particle_filter/camera_corrector.hpp"
 
 #include <opencv4/opencv2/imgproc.hpp>
 
 #include <pcl_conversions/pcl_conversions.h>
-namespace particle_filter
+
+namespace modularized_particle_filter
 {
 
 CameraParticleCorrector::CameraParticleCorrector()
@@ -34,7 +35,7 @@ CameraParticleCorrector::CameraParticleCorrector()
 void CameraParticleCorrector::lsdCallback(const sensor_msgs::msg::PointCloud2 & lsd_msg)
 {
   const rclcpp::Time stamp = lsd_msg.header.stamp;
-  std::optional<ParticleArray> opt_array = this->getSyncronizedParticleArray(stamp);
+  std::optional<ParticleArray> opt_array = this->getSynchronizedParticleArray(stamp);
 
   if (!opt_array.has_value()) return;
 
@@ -176,4 +177,4 @@ CameraParticleCorrector::LineSegment CameraParticleCorrector::transformCloud(
   return dst;
 }
 
-}  // namespace particle_filter
+}  // namespace modularized_particle_filter

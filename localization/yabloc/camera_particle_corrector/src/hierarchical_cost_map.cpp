@@ -1,13 +1,13 @@
-#include "particle_filter/hierarchical_cost_map.hpp"
+#include "camera_particle_corrector/hierarchical_cost_map.hpp"
 
-#include "common/color.hpp"
-#include "common/util.hpp"
-#include "particle_filter/direct_cost_map.hpp"
+#include "camera_particle_corrector/direct_cost_map.hpp"
 
 #include <opencv4/opencv2/highgui.hpp>
 #include <opencv4/opencv2/imgproc.hpp>
+#include <vml_common/color.hpp>
+#include <vml_common/util.hpp>
 
-namespace particle_filter
+namespace modularized_particle_filter
 {
 float Area::unit_length_ = -1;
 
@@ -86,7 +86,7 @@ void HierarchicalCostMap::buildMap(const Area & area)
   cv::threshold(distance, distance, 100, 100, cv::THRESH_TRUNC);
   distance.convertTo(distance, CV_8UC1, -2.55, 255);
 
-  cv::Mat whole_orientation = particle_filter::directCostMap(orientation, image);
+  cv::Mat whole_orientation = directCostMap(orientation, image);
   cv::Mat directed_cost_map;
   cv::merge(std::vector<cv::Mat>{gamma_converter(distance), whole_orientation}, directed_cost_map);
 
@@ -114,7 +114,7 @@ HierarchicalCostMap::MarkerArray HierarchicalCostMap::showMapRange() const
     marker.header.frame_id = "map";
     marker.id = id++;
     marker.type = Marker::LINE_STRIP;
-    marker.color = util::color(0, 0, 1.0f, 1.0f);
+    marker.color = vml_common::color(0, 0, 1.0f, 1.0f);
     marker.scale.x = 0.1;
     Eigen::Vector2f xy = area.realScale();
     marker.points.push_back(gpoint(xy.x(), xy.y()));
@@ -175,4 +175,4 @@ void HierarchicalCostMap::eraseObsolete()
   map_accessed_.clear();
 }
 
-}  // namespace particle_filter
+}  // namespace modularized_particle_filter
