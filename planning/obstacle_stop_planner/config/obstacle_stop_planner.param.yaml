@@ -4,7 +4,7 @@
 
     stop_planner:
       stop_margin: 5.0 # stop margin distance from obstacle on the path [m]
-      min_behavior_stop_margin: 2.0 # stop margin distance when any other stop point is inserted in stop margin [m]
+      min_behavior_stop_margin: 5.0 # stop margin distance when any other stop point is inserted in stop margin [m]
       step_length: 1.0 # step length for pointcloud search range [m]
       extend_distance: 0.0 # extend trajectory to consider after goal obstacle in the extend_distance
       expand_stop_range: 0.0 # margin of vehicle footprint [m]
