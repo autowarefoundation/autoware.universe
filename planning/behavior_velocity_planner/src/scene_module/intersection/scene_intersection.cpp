@@ -675,13 +675,18 @@ lanelet::ConstLanelets IntersectionModule::getEgoLaneWithNextLane(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path) const
 {
   const auto & assigned_lanelet = lanelet_map_ptr->laneletLayer.get(lane_id_);
-  const auto last_itr = std::find_if(
-    path.points.crbegin(), path.points.crend(),
-    [this](const auto & p) { return p.lane_ids.front() == lane_id_; });
+  const auto last_itr =
+    std::find_if(path.points.crbegin(), path.points.crend(), [this](const auto & p) {
+      for (const auto lane_id : p.lane_ids) {
+        if (lane_id == lane_id_) {
+          return true;
+        }
+      }
+      return false;
+    });
   lanelet::ConstLanelets ego_lane_with_next_lane;
   if (last_itr.base() != path.points.end()) {
-    const auto & next_lanelet =
-      lanelet_map_ptr->laneletLayer.get((*last_itr.base()).lane_ids.front());
+    const auto & next_lanelet = lanelet_map_ptr->laneletLayer.get(lane_id_);
     ego_lane_with_next_lane = {assigned_lanelet, next_lanelet};
   } else {
     ego_lane_with_next_lane = {assigned_lanelet};
@@ -694,9 +699,15 @@ double IntersectionModule::calcDistanceUntilIntersectionLanelet(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const size_t closest_idx) const
 {
   const auto & assigned_lanelet = lanelet_map_ptr->laneletLayer.get(lane_id_);
-  const auto intersection_first_itr = std::find_if(
-    path.points.cbegin(), path.points.cend(),
-    [this](const auto & p) { return p.lane_ids.front() == lane_id_; });
+  const auto intersection_first_itr =
+    std::find_if(path.points.cbegin(), path.points.cend(), [this](const auto & p) {
+      for (const auto lane_id : p.lane_ids) {
+        if (lane_id == lane_id_) {
+          return true;
+        }
+      }
+      return false;
+    });  // TODO(murooka) use only front lane_id
   if (
     intersection_first_itr == path.points.begin() || intersection_first_itr == path.points.end()) {
     return 0.0;

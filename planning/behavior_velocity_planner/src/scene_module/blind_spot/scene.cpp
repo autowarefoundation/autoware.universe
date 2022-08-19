@@ -449,9 +449,11 @@ boost::optional<BlindSpotPolygons> BlindSpotModule::generateBlindSpotPolygons(
   lanelet::ConstLanelets blind_spot_lanelets;
   /* get lane ids until intersection */
   for (const auto & point : path.points) {
-    lane_ids.push_back(point.lane_ids.front());
-    if (point.lane_ids.front() == lane_id_) {
-      break;
+    for (const auto lane_id : point.lane_ids) {
+      lane_ids.push_back(lane_id);
+      if (lane_id == lane_id_) {
+        break;
+      }
     }
   }
   /* remove adjacent duplicates */
