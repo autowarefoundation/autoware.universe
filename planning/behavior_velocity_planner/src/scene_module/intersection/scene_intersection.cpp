@@ -707,7 +707,7 @@ double IntersectionModule::calcDistanceUntilIntersectionLanelet(
         }
       }
       return false;
-    });  // TODO(murooka) use only front lane_id
+    });
   if (
     intersection_first_itr == path.points.begin() || intersection_first_itr == path.points.end()) {
     return 0.0;
