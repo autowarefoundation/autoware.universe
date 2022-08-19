@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>particle_initializer</name>
+  <version>0.1.0</version>
+  <description>The particle initializer based on vector map</description>
+  <maintainer email="kento.yabuuchi.2@tier4.jp">kentoyabuuchi2</maintainer>
+  <license>TODO</license>
+
+  <buildtool_depend>ament_cmake_ros</buildtool_depend>
+
+  <depend>rcl_interfaces</depend>
+  <depend>rclcpp</depend>
+  <depend>rclcpp_components</depend>
+  <depend>tf2</depend>
+  <depend>std_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>visualization_msgs</depend>
+
+  <depend>modularized_particle_filter</depend>
+  <depend>vml_common</depend>
+  <depend>vmvl_map</depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
