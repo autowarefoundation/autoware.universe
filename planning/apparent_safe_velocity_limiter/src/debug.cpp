@@ -59,7 +59,8 @@ visualization_msgs::msg::MarkerArray makeDebugMarkers(
   const Obstacles & obstacles, const std::vector<multilinestring_t> & original_projections,
   const std::vector<multilinestring_t> & adjusted_projections,
   const std::vector<polygon_t> & original_footprints,
-  const std::vector<polygon_t> & adjusted_footprints, const Float marker_z)
+  const std::vector<polygon_t> & adjusted_footprints, const ObstacleMasks & obstacle_masks,
+  const Float marker_z)
 {
   visualization_msgs::msg::MarkerArray debug_markers;
   auto original_projections_id_offset = 0;
@@ -126,13 +127,36 @@ visualization_msgs::msg::MarkerArray makeDebugMarkers(
   }
   debug_markers.markers.push_back(points_marker);
 
+  // Obstacle Masks
+  auto mask_id = 0lu;
+  for (const auto & negative_mask : obstacle_masks.negative_masks) {
+    auto marker = makePolygonMarker(negative_mask, marker_z);
+    marker.ns = "obstacle_masks";
+    marker.id = mask_id++;
+    marker.color.r = 0.8;
+    debug_markers.markers.push_back(marker);
+  }
+  {
+    auto marker = makePolygonMarker(obstacle_masks.positive_mask, marker_z);
+    marker.ns = "obstacle_masks";
+    marker.id = mask_id++;
+    marker.color.g = 0.8;
+    debug_markers.markers.push_back(marker);
+  }
+
   static auto prev_max_id = 0lu;
   static auto prev_size = 0lu;
   static auto prev_max_obs_id = 0lu;
+  static auto prev_max_mask_id = 0lu;
   visualization_msgs::msg::Marker marker;
   marker.action = visualization_msgs::msg::Marker::DELETE;
   marker.ns = "obstacles";
   for (auto delete_id = obs_id; delete_id < prev_max_obs_id; ++delete_id) {
+    marker.id = delete_id;
+    debug_markers.markers.push_back(marker);
+  }
+  marker.ns = "obstacle_masks";
+  for (auto delete_id = mask_id; delete_id < prev_max_mask_id; ++delete_id) {
     marker.id = delete_id;
     debug_markers.markers.push_back(marker);
   }
@@ -154,6 +178,7 @@ visualization_msgs::msg::MarkerArray makeDebugMarkers(
   prev_max_id = max_id;
   prev_size = original_projections.size();
   prev_max_obs_id = obs_id;
+  prev_max_mask_id = mask_id;
   return debug_markers;
 }
 

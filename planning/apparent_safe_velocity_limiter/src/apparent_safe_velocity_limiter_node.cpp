@@ -220,13 +220,15 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
   RCLCPP_WARN(get_logger(), "onTrajectory() runtime: %li us", runtime.count());
   pub_runtime_->publish(std_msgs::msg::Int64().set__data(runtime.count()));
 
-  const auto safe_projected_linestrings =
-    createProjectedLines(downsampled_traj, projection_params_);
-  const auto safe_footprint_polygons =
-    createFootprintPolygons(safe_projected_linestrings, vehicle_lateral_offset_);
-  pub_debug_markers_->publish(makeDebugMarkers(
-    obstacles, projected_linestrings, safe_projected_linestrings, footprint_polygons,
-    safe_footprint_polygons, occupancy_grid_ptr_->info.origin.position.z));
+  if (pub_debug_markers_->get_subscription_count() > 0) {
+    const auto safe_projected_linestrings =
+      createProjectedLines(downsampled_traj, projection_params_);
+    const auto safe_footprint_polygons =
+      createFootprintPolygons(safe_projected_linestrings, vehicle_lateral_offset_);
+    pub_debug_markers_->publish(makeDebugMarkers(
+      obstacles, projected_linestrings, safe_projected_linestrings, footprint_polygons,
+      safe_footprint_polygons, obstacle_masks, occupancy_grid_ptr_->info.origin.position.z));
+  }
 }
 
 bool ApparentSafeVelocityLimiterNode::validInputs(

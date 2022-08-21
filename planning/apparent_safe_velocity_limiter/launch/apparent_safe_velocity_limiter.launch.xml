@@ -25,7 +25,7 @@
     <param name="output_frame" value="map"/>
     <param name="use_sim_time" value="$(var use_sim_time)"/>
   </node>
-  <node pkg="apparent_safe_velocity_limiter" exec="apparent_safe_velocity_limiter" name="apparent_safe_velocity_limiter" output="screen" launch-prefix="$(var gdb-launch-prefix)">
+  <node pkg="apparent_safe_velocity_limiter" exec="apparent_safe_velocity_limiter" name="apparent_safe_velocity_limiter" output="screen" launch-prefix="">
     <param from="$(var param_path)"/>
     <param name="use_sim_time" value="$(var use_sim_time)"/>
     <param from="$(var vehicle_info_param_file)"/>
