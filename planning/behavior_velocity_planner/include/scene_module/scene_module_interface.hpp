@@ -120,7 +120,11 @@ public:
   {
     const auto ns = std::string("~/debug/") + module_name;
     pub_debug_ = node.create_publisher<visualization_msgs::msg::MarkerArray>(ns, 20);
-    bool is_publish_debug_path_ = node.declare_parameter("is_publish_debug_path", false);
+    if (!node.has_parameter("is_publish_debug_path")) {
+      is_publish_debug_path_ = node.declare_parameter("is_publish_debug_path", false);
+    } else {
+      is_publish_debug_path_ = node.get_parameter("is_publish_debug_path").as_bool();
+    }
     if (is_publish_debug_path_) {
       pub_debug_path_ = node.create_publisher<autoware_auto_planning_msgs::msg::PathWithLaneId>(
         std::string("~/debug/path_with_lane_id/") + module_name, 1);
@@ -204,7 +208,9 @@ protected:
     pub_infrastructure_commands_->publish(infrastructure_command_array);
     pub_debug_->publish(debug_marker_array);
     if (is_publish_debug_path_) {
-      pub_debug_path_->publish(*path);
+      autoware_auto_planning_msgs::msg::PathWithLaneId debug_path;
+      debug_path.points = path->points;
+      pub_debug_path_->publish(debug_path);
     }
     pub_virtual_wall_->publish(virtual_wall_marker_array);
     processing_time_publisher_->publish<Float64Stamped>(
@@ -262,7 +268,7 @@ protected:
   boost::optional<int> first_stop_path_point_index_;
   rclcpp::Clock::SharedPtr clock_;
   // Debug
-  bool is_publish_debug_path_;  // note : this is very heavy debug topic option
+  bool is_publish_debug_path_ = {false};  // note : this is very heavy debug topic option
   rclcpp::Logger logger_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_virtual_wall_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_debug_;
