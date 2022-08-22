@@ -2222,7 +2222,7 @@ BehaviorModuleOutput AvoidanceModule::planWaitingApproval()
     waitApproval();
   } else {
     clearWaitingApproval();
-    removeCandaiteRTCStatus();
+    removeCandidateRTCStatus();
   }
   out.path_candidate = std::make_shared<PathWithLaneId>(candidate.path_candidate);
   return out;
