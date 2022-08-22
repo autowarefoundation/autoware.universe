@@ -22,7 +22,7 @@
 
 #include <ctime>
 
-void set_format_time(QLineEdit * line, double time)
+void setFormatTime(QLineEdit * line, double time)
 {
   char buffer[128];
   auto seconds = static_cast<time_t>(time);
@@ -57,9 +57,9 @@ void AutowareDateTimePanel::onInitialize()
 
 void AutowareDateTimePanel::update()
 {
-  set_format_time(
+  setFormatTime(
     ros_time_label_, rviz_ros_node_.lock()->get_raw_node()->get_clock()->now().seconds());
-  set_format_time(wall_time_label_, rclcpp::Clock().now().seconds());
+  setFormatTime(wall_time_label_, rclcpp::Clock().now().seconds());
 }
 
 #include <pluginlib/class_list_macros.hpp>
