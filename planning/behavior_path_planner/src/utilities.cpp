@@ -2071,29 +2071,13 @@ void getProjectedDistancePointFromPolygons(
 
   bool points_in_ego{false};
 
-  {
-    const auto segments =
-      boost::make_iterator_range(bg::segments_begin(ego_polygon), bg::segments_end(ego_polygon));
-    const auto points =
-      boost::make_iterator_range(bg::points_begin(object_polygon), bg::points_end(object_polygon));
-
-    for (auto && segment : segments) {
-      for (auto && point : points) {
-        const auto projected = pointToSegment(point, *segment.first, *segment.second);
-        if (!current_point || projected.distance < nearest.distance) {
-          current_point = std::make_unique<Point2d>(point);
-          nearest = projected;
-          points_in_ego = false;
-        }
-      }
-    }
-  }
-
-  {
+  const auto findPoints = [&nearest, &current_point, &points_in_ego](
+                            const Polygon2d & polygon_for_segment,
+                            const Polygon2d & polygon_for_points, const bool & ego_is_points) {
     const auto segments = boost::make_iterator_range(
-      bg::segments_begin(object_polygon), bg::segments_end(object_polygon));
-    const auto points =
-      boost::make_iterator_range(bg::points_begin(ego_polygon), bg::points_end(ego_polygon));
+      bg::segments_begin(polygon_for_segment), bg::segments_end(polygon_for_segment));
+    const auto points = boost::make_iterator_range(
+      bg::points_begin(polygon_for_points), bg::points_end(polygon_for_points));
 
     for (auto && segment : segments) {
       for (auto && point : points) {
@@ -2101,11 +2085,14 @@ void getProjectedDistancePointFromPolygons(
         if (!current_point || projected.distance < nearest.distance) {
           current_point = std::make_unique<Point2d>(point);
           nearest = projected;
-          points_in_ego = true;
+          points_in_ego = ego_is_points;
         }
       }
     }
-  }
+  };
+
+  std::invoke(findPoints, ego_polygon, object_polygon, false);
+  std::invoke(findPoints, object_polygon, ego_polygon, true);
 
   if (!points_in_ego) {
     point_on_object.position.x = current_point->x();
@@ -2143,11 +2130,7 @@ bool getObjectExpectedPoseAndConvertToPolygon(
   }
   expected_pose.orientation = object.kinematics.initial_pose_with_covariance.pose.orientation;
 
-  if (!util::calcObjectPolygon(object, &obj_polygon)) {
-    return false;
-  }
-
-  return true;
+  return util::calcObjectPolygon(object, &obj_polygon);
 }
 
 std::vector<PredictedPath> getPredictedPathFromObj(
@@ -2155,9 +2138,10 @@ std::vector<PredictedPath> getPredictedPathFromObj(
 {
   std::vector<PredictedPath> predicted_path_vec;
   if (is_use_all_predicted_path) {
-    std::copy(
-      obj.kinematics.predicted_paths.begin(), obj.kinematics.predicted_paths.end(),
-      predicted_path_vec.begin());
+    std::copy_if(
+      obj.kinematics.predicted_paths.cbegin(), obj.kinematics.predicted_paths.cend(),
+      std::back_inserter(predicted_path_vec),
+      [](const PredictedPath & path) { return !path.path.empty(); });
   } else {
     const auto max_confidence_path = std::max_element(
       obj.kinematics.predicted_paths.begin(), obj.kinematics.predicted_paths.end(),
