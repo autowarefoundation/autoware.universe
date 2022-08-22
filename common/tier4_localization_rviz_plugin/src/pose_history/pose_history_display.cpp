@@ -62,7 +62,7 @@ void PoseHistory::update(float wall_dt, float ros_dt)
   if (!history_.empty()) {
     lines_->clear();
     if (property_line_view_->getBool()) {
-      update_lines();
+      updateLines();
     }
   }
 }
@@ -92,7 +92,7 @@ void PoseHistory::processMessage(const geometry_msgs::msg::PoseStamped::ConstSha
   history_.emplace_back(message);
   last_stamp_ = message->header.stamp;
 
-  update_history();
+  updateHistory();
 }
 
 void PoseHistory::updateHistory()
