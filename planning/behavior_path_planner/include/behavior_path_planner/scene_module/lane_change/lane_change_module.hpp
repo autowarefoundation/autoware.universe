@@ -49,7 +49,6 @@ struct LaneChangeParameters
   bool enable_collision_check_at_prepare_phase;
   bool use_predicted_path_outside_lanelet;
   bool use_all_predicted_path;
-  double lane_change_search_distance;
 };
 
 struct LaneChangeStatus

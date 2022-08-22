@@ -322,15 +322,14 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
   p.prediction_time_resolution = dp("prediction_time_resolution", 0.5);
   p.maximum_deceleration = dp("maximum_deceleration", 1.0);
   p.lane_change_sampling_num = dp("lane_change_sampling_num", 10);
-  p.enable_abort_lane_change = dp("enable_abort_lane_change", true);
-  p.enable_collision_check_at_prepare_phase = dp("enable_collision_check_at_prepare_phase", true);
-  p.use_predicted_path_outside_lanelet = dp("use_predicted_path_outside_lanelet", true);
-  p.use_all_predicted_path = dp("use_all_predicted_path", false);
   p.abort_lane_change_velocity_thresh = dp("abort_lane_change_velocity_thresh", 0.5);
   p.abort_lane_change_angle_thresh =
     dp("abort_lane_change_angle_thresh", tier4_autoware_utils::deg2rad(10.0));
   p.abort_lane_change_distance_thresh = dp("abort_lane_change_distance_thresh", 0.3);
-  p.lane_change_search_distance = dp("lane_change_search_distance", 30.0);
+  p.enable_abort_lane_change = dp("enable_abort_lane_change", true);
+  p.enable_collision_check_at_prepare_phase = dp("enable_collision_check_at_prepare_phase", true);
+  p.use_predicted_path_outside_lanelet = dp("use_predicted_path_outside_lanelet", true);
+  p.use_all_predicted_path = dp("use_all_predicted_path", false);
 
   // validation of parameters
   if (p.lane_change_sampling_num < 1) {
