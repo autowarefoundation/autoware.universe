@@ -741,12 +741,8 @@ void CrosswalkModule::applySafetySlowDownSpeed(PathWithLaneId & output)
     static_cast<float>(crosswalk_.attribute("safety_slow_down_speed").asDouble().get());
 
   if (!passed_safety_slow_point_) {
-    // Safety slow down distance
-    double safety_slow_down_distance = 2.0;  // [m]
-    if (crosswalk_.hasAttribute("safety_slow_down_distance")) {
-      safety_slow_down_distance =
-        crosswalk_.attribute("safety_slow_down_distance").asDouble().get();
-    }
+    // Safety slow down distance [m]
+    double safety_slow_down_distance = crosswalk_.attributeOr("safety_slow_down_distance", 2.0);
 
     // the range until to the point where ego will have a const safety slow down speed
     auto safety_slow_point_range =
@@ -758,7 +754,7 @@ void CrosswalkModule::applySafetySlowDownSpeed(PathWithLaneId & output)
     const auto & p_safety_slow =
       calcLongitudinalOffsetPoint(ego_path.points, ego_pos, safety_slow_point_range);
 
-    insertDecelPoint(p_safety_slow.get(), safety_slow_down_speed, output);
+    insertDecelPointWithDebugInfo(p_safety_slow.get(), safety_slow_down_speed, output);
 
     if (safety_slow_point_range < 0.0) {
       passed_safety_slow_point_ = true;
