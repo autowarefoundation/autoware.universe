@@ -95,7 +95,7 @@ void PoseHistory::processMessage(const geometry_msgs::msg::PoseStamped::ConstSha
   update_history();
 }
 
-void PoseHistory::update_history()
+void PoseHistory::updateHistory()
 {
   const auto buffer_size = static_cast<size_t>(property_buffer_size_->getInt());
   while (buffer_size < history_.size()) {
@@ -103,7 +103,7 @@ void PoseHistory::update_history()
   }
 }
 
-void PoseHistory::update_lines()
+void PoseHistory::updateLines()
 {
   Ogre::ColourValue color = rviz_common::properties::qtToOgre(property_line_color_->getColor());
   color.a = property_line_alpha_->getFloat();
