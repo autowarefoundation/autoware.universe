@@ -138,15 +138,12 @@ boost::optional<LateralOutput> PurePursuitLateralController::run()
 AckermannLateralCommand PurePursuitLateralController::generateCtrlCmdMsg(
   const double target_curvature)
 {
-  const double tmp_steering = planning_utils::convertCurvatureToSteeringAngle(
-    param_.wheel_base,
-    target_curvature);
+  const double tmp_steering =
+    planning_utils::convertCurvatureToSteeringAngle(param_.wheel_base, target_curvature);
   AckermannLateralCommand cmd;
   cmd.stamp = node_->get_clock()->now();
-  cmd.steering_tire_angle =
-    static_cast<float>(std::min(
-      std::max(tmp_steering, -param_.max_steering_angle),
-      param_.max_steering_angle));
+  cmd.steering_tire_angle = static_cast<float>(
+    std::min(std::max(tmp_steering, -param_.max_steering_angle), param_.max_steering_angle));
 
   // pub_ctrl_cmd_->publish(cmd);
   return cmd;
