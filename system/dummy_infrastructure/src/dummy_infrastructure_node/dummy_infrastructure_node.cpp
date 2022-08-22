@@ -49,14 +49,22 @@ bool update_param(
 
 boost::optional<InfrastructureCommand> findCommand(
   const InfrastructureCommandArray & command_array, const std::string & instrument_id,
-  const bool use_first_command)
+  const bool use_first_command, const bool use_instrument_id)
 {
   if (use_first_command && !command_array.commands.empty()) {
     return command_array.commands.front();
   }
 
+  if (use_instrument_id) {
+    for (const auto & command : command_array.commands) {
+      if (command.id == instrument_id) {
+        return command;
+      }
+    }
+  }
+
   for (const auto & command : command_array.commands) {
-    if (command.id == instrument_id) {
+    if (command.state >= 1) {
       return command;
     }
   }
@@ -75,6 +83,7 @@ DummyInfrastructureNode::DummyInfrastructureNode(const rclcpp::NodeOptions & nod
   // Parameter
   node_param_.update_rate_hz = declare_parameter<double>("update_rate_hz", 10.0);
   node_param_.use_first_command = declare_parameter<bool>("use_first_command", true);
+  node_param_.use_instrument_id = declare_parameter<bool>("use_instrument_id", false);
   node_param_.instrument_id = declare_parameter<std::string>("instrument_id", "");
   node_param_.approval = declare_parameter<bool>("approval", false);
   node_param_.is_finalized = declare_parameter<bool>("is_finalized", false);
@@ -95,7 +104,9 @@ DummyInfrastructureNode::DummyInfrastructureNode(const rclcpp::NodeOptions & nod
 
 void DummyInfrastructureNode::onCommandArray(const InfrastructureCommandArray::ConstSharedPtr msg)
 {
-  command_array_ = msg;
+  if (!msg->commands.empty()) {
+    command_array_ = msg;
+  }
 }
 
 rcl_interfaces::msg::SetParametersResult DummyInfrastructureNode::onSetParam(
@@ -110,6 +121,7 @@ rcl_interfaces::msg::SetParametersResult DummyInfrastructureNode::onSetParam(
     // Update params
     update_param(params, "update_rate_hz", p.update_rate_hz);
     update_param(params, "use_first_command", p.use_first_command);
+    update_param(params, "use_instrument_id", p.use_instrument_id);
     update_param(params, "instrument_id", p.instrument_id);
     update_param(params, "approval", p.approval);
     update_param(params, "is_finalized", p.is_finalized);
@@ -143,13 +155,14 @@ void DummyInfrastructureNode::onTimer()
     return;
   }
 
-  const auto command =
-    findCommand(*command_array_, node_param_.instrument_id, node_param_.use_first_command);
+  const auto command = findCommand(
+    *command_array_, node_param_.instrument_id, node_param_.use_first_command,
+    node_param_.use_instrument_id);
 
   VirtualTrafficLightState state;
   state.stamp = get_clock()->now();
   state.id = command ? command->id : node_param_.instrument_id;
-  state.type = "dummy_infrastructure";
+  state.type = command ? command->type : "dummy_infrastructure";
   state.approval = command ? node_param_.approval : false;
   state.is_finalized = node_param_.is_finalized;
 
