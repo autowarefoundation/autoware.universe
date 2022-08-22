@@ -33,7 +33,7 @@ jobs:
       - name: Update clang-format version
         run: |
           sd -f ms \
-            '(https://github.com/autowarefoundation/autoware.git#/ansible.*version): .*' \
+            '(https://github.com/autowarefoundation/autoware.git#/ansible.*version): \w+' \
             '$1: ${{ steps.get-latest-autoware-version.outputs.version }}' \
             ansible-galaxy-requirements.yaml
 
@@ -46,7 +46,7 @@ jobs:
           branch: update-ansible-galaxy-requirements
           title: "chore: update ansible-galaxy-requirements.yaml"
           commit-message: "chore: update ansible-galaxy-requirements.yaml"
-          body: ""
+          body: https://github.com/autowarefoundation/autoware/commit/${{ steps.get-latest-autoware-version.outputs.version }}
           labels: |
             bot
             dependencies
