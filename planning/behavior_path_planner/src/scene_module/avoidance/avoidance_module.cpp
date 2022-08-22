@@ -2129,7 +2129,7 @@ BehaviorModuleOutput AvoidanceModule::plan()
     addShiftPointIfApproved(*new_shift_points);
   } else if (isWaitingApproval()) {
     clearWaitingApproval();
-    removeCandaiteRTCStatus();
+    removeCandidateRTCStatus();
   }
 
   // generate path with shift points that have been inserted.
