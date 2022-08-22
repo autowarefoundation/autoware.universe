@@ -129,7 +129,7 @@ private:
     rtc_interface_right_.clearCooperateStatus();
   }
 
-  void removeCandaiteRTCStatus()
+  void removeCandidateRTCStatus()
   {
     if (rtc_interface_left_.isRegistered(candidate_uuid_)) {
       rtc_interface_left_.removeCooperateStatus(candidate_uuid_);
