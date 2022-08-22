@@ -100,7 +100,7 @@ PathWithLaneId LaneFollowingModule::getReferencePath() const
     return reference_path;
   }
 
-  // calculate path with backward margin to avoid end points' unstability by spline interpolation
+  // calculate path with backward margin to avoid end points' instability by spline interpolation
   constexpr double extra_margin = 10.0;
   const double backward_length =
     std::max(p.backward_path_length, p.backward_path_length + extra_margin);
