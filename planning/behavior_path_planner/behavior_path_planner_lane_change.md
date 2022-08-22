@@ -321,6 +321,42 @@ The following figure illustrate the intersection case.
 
 ![intersection](./image/lane_change/lane_change-intersection_case.png)
 
+### Abort lane change
+
+The lane changing process can still be aborted if the proper conditions are satisfied. The following states are validated before the abort request is approved.
+
+1. Ego's current speed is under the threshold, and ego is still in the current lane
+2. ego relative distance from the centerline and ego relative yaw from lanelet's orientation is under the threshold.
+
+The following depicts the flow of the abort lane change check.
+
+```plantuml
+@startuml
+skinparam monochrome true
+skinparam defaultTextAlignment center
+
+title Abort Lane Change
+start
+if (path if safe?) then (**NO**)
+    if (current velocity < abort_lane_change_velocity_thresh && ego is in current lane ?) then (**TRUE**)
+    :**ABORT**;
+    stop
+    else (**FALSE**)
+        if (distance of ego to centerline < abort_lane_change_distance_thresh
+        &&
+        ego's current yaw with reference to current lane's orientation < abort_lane_change_angle_thresh) then (**TRUE**)
+        :**ABORT**;
+        stop
+        else (**FALSE**)
+        endif
+    endif
+else (**YES**)
+endif
+:**DONT ABORT**;
+stop
+@enduml
+```
+
 ## Parameters
 
 ### Essential lane change parameters
@@ -347,8 +383,6 @@ The following parameters are configurable in `lane_change.param.yaml`.
 | `use_all_predicted_path`          | [-]     | boolean | If false, use only the predicted path that has the maximum confidence.                  | false         |
 | `lane_change_search_distance`     | [m]     | double  | The turn signal activation distance during the lane change preparation phase.           | 30.0          |
 
-(\*1) If path is already approved, this doesn't cancel lane change.
-
 ### Collision checks during lane change
 
 The following parameters are configurable in `behavior_path_planner.param.yaml`.
@@ -363,6 +397,17 @@ The following parameters are configurable in `behavior_path_planner.param.yaml`.
 | `rear_vehicle_safety_time_margin`     | [s]     | double | The time buffer for the rear vehicle to come into complete stop when its driver perform sudden braking.                                                        | 2.0           |
 
 (\*2) the value must be negative.
+
+### Abort lane change
+
+The following parameters are configurable in `lane_change.param.yaml`.
+
+| Name                                   | Unit  | Type    | Description                                                                          | Default value |
+| :------------------------------------- | ----- | ------- | ------------------------------------------------------------------------------------ | ------------- |
+| `enable_abort_lane_change`             | [-]   | boolean | Enable abort lane change. (\*1)                                                      | false         |
+| `abort_lane_change_velocity_thresh`    | [m/s] | double  | The velocity threshold to abort lane change while ego is still in current lane.      | 0.5           |
+| `abort_lane_change_angle_threshold`    | [deg] | double  | The angle threshold based on angle between ego's current yaw and lane's orientation. | 10.0          |
+| `abort_lane_change_distance_threshold` | [m]   | double  | The distance threshold based on relative distance from ego pose to the centerline.   | 0.3           |
 
 ### Debug
 
