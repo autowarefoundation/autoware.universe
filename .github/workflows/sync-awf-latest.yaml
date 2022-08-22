@@ -1,4 +1,4 @@
-name: sync-latest
+name: sync-awf-latest
 
 on:
   schedule:
@@ -21,11 +21,11 @@ jobs:
         with:
           token: ${{ steps.generate-token.outputs.token }}
           base-branch: awf-latest
-          sync-pr-branch: sync-latest
+          sync-pr-branch: sync-awf-latest
           sync-target-repository: https://github.com/tier4/pilot-auto
           sync-target-branch: tier4/universe
-          pr-title: "chore: sync latest"
+          pr-title: "chore: sync awf-latest"
           pr-labels: |
             bot
-            sync-latest
+            sync-awf-latest
           auto-merge-method: merge
