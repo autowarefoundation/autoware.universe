@@ -15,3 +15,7 @@ repositories:
     type: git
     url: git@github.com:tier4/ndt_convergence_evaluation.git
     version: feature/standalone
+  simulator/vendor/ros2_numpy:
+    type: git
+    url: https://github.com/Box-Robotics/ros2_numpy.git
+    version: humble
