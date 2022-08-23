@@ -43,7 +43,7 @@ inline bool isNotDecreasing(const std::vector<double> & x)
   }
 
   for (size_t i = 0; i < x.size() - 1; ++i) {
-    if (x.at(i) > x.at(i + 1)) {
+    if (x.at(i) >= x.at(i + 1)) {
       return false;
     }
   }
