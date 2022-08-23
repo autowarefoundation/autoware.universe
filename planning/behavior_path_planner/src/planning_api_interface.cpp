@@ -32,20 +32,19 @@ void PlanningAPIInterface::publishSteeringFactor(const rclcpp::Time & stamp)
 }
 
 void PlanningAPIInterface::updateSteeringFactor(
-  const std::vector<Pose> & pose, const std::vector<float> distance, const uint16_t type,
+  const std::vector<Pose> & pose, const std::vector<double> distance, const uint16_t type,
   const uint16_t direction, const uint16_t status, const std::string detail)
 {
   std::lock_guard<std::mutex> lock(mutex_);
   SteeringFactor factor;
   factor.pose = pose;
-  factor.distance = distance;
+  std::vector<float> convert_distance(distance.begin(), distance.end());
+  factor.distance = convert_distance;
   factor.type = type;
   factor.direction = direction;
   factor.status = status;
   factor.detail = detail;
   registered_steering_factors_.factors = {factor};
-
-  RCLCPP_WARN_STREAM(getLogger(), "[Update] new factor: " << type << std::endl);
 }
 
 void PlanningAPIInterface::clearSteeringFactors()
