@@ -19,7 +19,6 @@
 
 #include <gtest/gtest.h>
 
-
 using tier4_autoware_utils::Polygon2d;
 
 namespace
