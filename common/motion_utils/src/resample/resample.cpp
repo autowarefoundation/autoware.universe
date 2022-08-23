@@ -16,6 +16,7 @@
 
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 
+constexpr double CLOSE_S_THRESHOLD = 0.001;
 namespace motion_utils
 {
 std::vector<geometry_msgs::msg::Pose> resamplePath(
@@ -48,6 +49,9 @@ std::vector<geometry_msgs::msg::Pose> resamplePath(
     const auto & prev_pt = points.at(i - 1);
     const auto & curr_pt = points.at(i);
     const double ds = tier4_autoware_utils::calcDistance2d(prev_pt.position, curr_pt.position);
+    if (ds < CLOSE_S_THRESHOLD) {
+      continue;
+    }
     input_arclength.at(i) = ds + input_arclength.at(i - 1);
     x.at(i) = curr_pt.position.x;
     y.at(i) = curr_pt.position.y;
@@ -135,6 +139,9 @@ autoware_auto_planning_msgs::msg::PathWithLaneId resamplePath(
     const auto & curr_pt = input_path.points.at(i).point;
     const double ds =
       tier4_autoware_utils::calcDistance2d(prev_pt.pose.position, curr_pt.pose.position);
+    if (ds < CLOSE_S_THRESHOLD) {
+      continue;
+    }
     input_arclength.at(i) = ds + input_arclength.at(i - 1);
     input_pose.at(i) = curr_pt.pose;
     v_lon.at(i) = curr_pt.longitudinal_velocity_mps;
@@ -291,6 +298,9 @@ autoware_auto_planning_msgs::msg::Path resamplePath(
     const auto & curr_pt = input_path.points.at(i);
     const double ds =
       tier4_autoware_utils::calcDistance2d(prev_pt.pose.position, curr_pt.pose.position);
+    if (ds < CLOSE_S_THRESHOLD) {
+      continue;
+    }
     input_arclength.at(i) = ds + input_arclength.at(i - 1);
     input_pose.at(i) = curr_pt.pose;
     v_lon.at(i) = curr_pt.longitudinal_velocity_mps;
@@ -376,6 +386,9 @@ autoware_auto_planning_msgs::msg::Trajectory resampleTrajectory(
     const auto & curr_pt = input_trajectory.points.at(i);
     const double ds =
       tier4_autoware_utils::calcDistance2d(prev_pt.pose.position, curr_pt.pose.position);
+    if (ds < CLOSE_S_THRESHOLD) {
+      continue;
+    }
     input_arclength.at(i) = ds + input_arclength.at(i - 1);
     input_pose.at(i) = curr_pt.pose;
     v_lon.at(i) = curr_pt.longitudinal_velocity_mps;
