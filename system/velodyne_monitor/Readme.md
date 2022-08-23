@@ -74,4 +74,4 @@ Now, `VLP-16.param.yaml` is used as default argument because it is lowest spec.
 
 ## Assumptions / Known limits
 
-TBD
+TBD.
