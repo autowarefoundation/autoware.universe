@@ -60,6 +60,9 @@ private:
 
   void mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg);
 
+  // parameter
+  std::string polygon_type_;
+
 public:
   PCL_MAKE_ALIGNED_OPERATOR_NEW
   explicit NoDetectionAreaFilterComponent(const rclcpp::NodeOptions & options);

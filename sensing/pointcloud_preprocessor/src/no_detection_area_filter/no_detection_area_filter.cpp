@@ -88,8 +88,10 @@ NoDetectionAreaFilterComponent::NoDetectionAreaFilterComponent(
   const rclcpp::NodeOptions & node_options)
 : Filter("NoDetectionAreaFilter", node_options)
 {
-  using std::placeholders::_1;
+  polygon_type_ =
+    static_cast<std::string>(declare_parameter("polygon_type", "no_obstacle_segmentation_area"));
 
+  using std::placeholders::_1;
   // Set subscriber
   map_sub_ = this->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
     "input/vector_map", rclcpp::QoS{1}.transient_local(),
@@ -131,7 +133,8 @@ void NoDetectionAreaFilterComponent::mapCallback(
 
   const auto lanelet_map_ptr = std::make_shared<lanelet::LaneletMap>();
   lanelet::utils::conversion::fromBinMsg(*map_msg, lanelet_map_ptr);
-  no_detection_area_lanelets_ = lanelet::utils::query::getAllNoDetectionArea(lanelet_map_ptr);
+  no_detection_area_lanelets_ =
+    lanelet::utils::query::getAllPolygonsByType(lanelet_map_ptr, polygon_type_);
 }
 
 }  // namespace pointcloud_preprocessor

@@ -49,6 +49,11 @@ def generate_launch_description():
                 ("input/vector_map", "/map/vector_map"),
                 ("output", "no_detection_area_filtered/pointcloud"),
             ],
+            parameters=[
+                {
+                    "polygon_type": LaunchConfiguration("polygon_type"),
+                }
+            ],
             # this node has QoS of transient local
             extra_arguments=[{"use_intra_process_comms": False}],
         )
@@ -75,6 +80,7 @@ def generate_launch_description():
             add_launch_arg("use_multithread", "true"),
             add_launch_arg("use_pointcloud_container", "true"),
             add_launch_arg("container_name", "no_detection_area_filter_container"),
+            add_launch_arg("polygon_type", "no_obstacle_segmentation_area_for_run_out"),
             set_container_executable,
             set_container_mt_executable,
             no_detection_area_filter_container,

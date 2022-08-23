@@ -425,6 +425,7 @@ def launch_setup(context, *args, **kwargs):
             "use_pointcloud_container": LaunchConfiguration("use_pointcloud_container"),
             "container_name": LaunchConfiguration("container_name"),
             "use_multithread": "true",
+            "polygon_type": "no_obstacle_segmentation_area_for_run_out",
         }.items(),
         # launch no detection area filter only when run_out module is enabled and detection method is Points
         condition=IfCondition(launch_run_out_with_points_method),
