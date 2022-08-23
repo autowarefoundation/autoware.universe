@@ -152,6 +152,7 @@ SurroundObstacleCheckerNode::SurroundObstacleCheckerNode(const rclcpp::NodeOptio
     p.surround_check_recover_distance =
       this->declare_parameter("surround_check_recover_distance", 2.5);
     p.state_clear_time = this->declare_parameter("state_clear_time", 2.0);
+    p.publish_debug_footprints = this->declare_parameter("publish_debug_footprints", true);
   }
 
   vehicle_info_ = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
@@ -200,7 +201,9 @@ void SurroundObstacleCheckerNode::onTimer()
     return;
   }
 
-  debug_ptr_->publishFootprints();
+  if (node_param_.publish_debug_footprints) {
+    debug_ptr_->publishFootprints();
+  }
 
   if (node_param_.use_pointcloud && !pointcloud_ptr_) {
     RCLCPP_WARN_THROTTLE(
