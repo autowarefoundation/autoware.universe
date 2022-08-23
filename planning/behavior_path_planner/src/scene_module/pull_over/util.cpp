@@ -288,16 +288,26 @@ std::vector<ShiftParkingPath> selectValidPaths(
   const std::vector<ShiftParkingPath> & paths, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & target_lanes,
   const lanelet::routing::RoutingGraphContainer & overall_graphs, const Pose & current_pose,
-  const bool isInGoalRouteSection, const Pose & goal_pose)
+  const bool isInGoalRouteSection, const Pose & goal_pose,
+  const lane_departure_checker::LaneDepartureChecker & lane_departure_checker)
 {
-  std::vector<ShiftParkingPath> available_paths;
+  // combine road and shoulder lanes
+  lanelet::ConstLanelets lanes = current_lanes;
+  lanes.insert(lanes.end(), target_lanes.begin(), target_lanes.end());
 
+  std::vector<ShiftParkingPath> available_paths;
   for (const auto & path : paths) {
-    if (hasEnoughDistance(
+    if (!hasEnoughDistance(
           path, current_lanes, target_lanes, current_pose, isInGoalRouteSection, goal_pose,
           overall_graphs)) {
-      available_paths.push_back(path);
+      continue;
     }
+
+    if (lane_departure_checker.checkPathWillLeaveLane(lanes, path.shifted_path.path)) {
+      continue;
+    }
+
+    available_paths.push_back(path);
   }
 
   return available_paths;
