@@ -6,6 +6,7 @@
   <description>The gyro_odometer package as a ROS2 node</description>
   <maintainer email="yamato.ando@tier4.jp">Yamato Ando</maintainer>
   <license>Apache License 2.0</license>
+  <author email="yamato.ando@tier4.jp">Yamato Ando</author>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
