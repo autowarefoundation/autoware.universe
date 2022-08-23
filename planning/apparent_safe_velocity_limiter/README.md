@@ -39,16 +39,19 @@ When a collision point is found within the footprint, the distance is calculated
 
 #### Bicycle Model
 
-The bicycle model uses a constant heading, velocity, and steering of the vehicle at a trajectory point to simulate the future motion.
+The bicycle model uses the constant heading, velocity, and steering of the vehicle at a trajectory point to simulate the future motion.
 The simulated forward motion corresponds to an arc around the circle of curvature associated with the steering.
 Uncertainty in the steering can be introduced with the `simulation.steering_offset` parameter which will generate a range of motion from a left-most to a right-most steering.
 This results in 3 curved lines starting from the same trajectory point.
 A parameter `simulation.nb_points` is used to adjust the precision of these lines, with a minimum of `2` resulting in straight lines and higher values increasing the precision of the curves.
 
+By default, the steering values contained in the trajectory message are used.
+Parameter `trajectory_preprocessing.calculate_steering_angles` allows to recalculate these values when set to `true`.
+
 ##### Footprint
 
 The footprint of the bicycle model is created from lines parallel to the left and right simulated motion at a distance of half the vehicle width.
-In addition, points on the left and right of the end point of the central simulated motion are used to complete the polygon.
+In addition, the two points on the left and right of the end point of the central simulated motion are used to complete the polygon.
 
 ![bicycle_footprint_image](./media/bicycle_footprint.png)
 
@@ -60,16 +63,39 @@ The distance to a collision point is calculated by finding the curvature circle 
 
 ### Obstacle Detection
 
-For efficient collision detection with a footprint polygon, linestrings along obstacles are created from
-3 possible sources: the lanelet map, an occupancy grid, and a pointcloud.
+Obstacles are represented as points or linestrings (i.e., sequence of points) around the obstacles and are constructed from an occupancy grid, a pointcloud, or the lanelet map.
 The lanelet map is always checked for obstacles but the other source is switched using parameter `obstacles.dynamic_source`.
 
-Collision detection relies on
-[`boost::geometry::intersection`](https://www.boost.org/doc/libs/1_78_0/libs/geometry/doc/html/geometry/reference/algorithms/intersection/intersection_3.html) to find the intersection between an obstacle's linestring and a footprint polygon.
+To efficiently find obstacles intersecting with a footprint, they are stored in a [R-tree](https://www.boost.org/doc/libs/1_80_0/libs/geometry/doc/html/geometry/reference/spatial_indexes/boost__geometry__index__rtree.html).
+Two trees are used, one for the obstacle points, and one for the obstacle linestrings (which are decomposed into segments to simplify the R-tree).
 
-Some dynamic obstacles are ignored and must be masked out from the occupancy grid and pointcloud.
-Parameter `dynamic_obstacles_min_vel` sets the velocity above which a dynamic obstacle is masked out.
-Parameter `dynamic_obstacles_buffer` sets the extra distance around dynamic obstacles used for masking.
+#### Obstacle masks
+
+##### Dynamic obstacles
+
+Moving obstacles such as other cars should not be considered by this module.
+These obstacles are detected by the perception modules and represented as polygons.
+Obstacles inside these polygons are ignored.
+
+Only dynamic obstacles with a velocity above parameter `obstacles.dynamic_obstacles_min_vel` are removed.
+
+To deal with delays and precision errors, the polygons can be enlarged with parameter `obstacles.dynamic_obstacles_buffer`.
+
+##### Obstacles outside of the safety envelope
+
+Obstacles that are not inside any forward simulated footprint are ignored if parameter `obstacles.filter_envelope` is set to true.
+The safety envelope polygon is built from all the footprints and used as a positive mask on the occupancy grid or pointcloud.
+
+This option can reduce the total number of obstacles which reduces the cost of collision detection.
+However, the cost of masking the envelope is usually too high to be interesting.
+
+##### Obstacles on the ego path
+
+If parameter `obstacles.ignore_obstacles_on_path` is set to `true`, a polygon mask is built from the trajectory and the vehicle dimension. Any obstacle in this polygon is ignored.
+
+The size of the polygon can be increased using parameter `obstacles.ignore_extra_distance` which is added to the vehicle lateral offset.
+
+This option is a bit expensive and should only be used in case of noisy dynamic obstacles where obstacles are wrongly detected on the ego path, causing unwanted velocity limits.
 
 #### Lanelet Map
 
@@ -78,21 +104,19 @@ First, the ego route is used to list all lanelets that the ego may drive through
 The tags of the left and right linestrings from each of these lanelets are then checked.
 If any is tagged with one of the value from parameter `obstacles.static_map_tags`, then it will be used as an obstacle.
 
+Obstacles from the lanelet map are not impacted by the masks.
+
 #### Occupancy Grid
 
-First, dynamic obstacles are masked from occupancy grid in order
-to avoid incorrectly detecting collision with vehicle moving at velocities higher than parameter `obstacles.dynamic_obstacles_min_vel`.
-Parameter `obstacles.dynamic_obstacles_buffer` is also used to increase the size of the mask and reduce noise.
-
-After the occupancy grid has been converted to an image, a threshold is applied to only keep cells with a value above parameter `obstacles.occupancy_grid_threshold`.
-
-Contours are then extracted from the image and corresponding linestrings are created
-the occupancy grid using the opencv function
+Masking is performed by iterating through the cells inside each polygon mask using the [`grid_map_utils::PolygonIterator`](https://github.com/autowarefoundation/autoware.universe/tree/main/common/grid_map_utils) function.
+A threshold is then applied to only keep cells with an occupancy value above parameter `obstacles.occupancy_grid_threshold`.
+Finally, the image is converted to an image and obstacle linestrings are extracted using the opencv function
 [`findContour`](https://docs.opencv.org/3.4/d3/dc0/group__imgproc__shape.html#ga17ed9f5d79ae97bd4c7cf18403e1689a).
 
 #### Pointcloud
 
-TODO once finalized
+Masking is performed using the [`pcl::CropHull`](https://pointclouds.org/documentation/classpcl_1_1_crop_hull.html) function.
+Points from the pointcloud are then directly used as obstacles.
 
 ### Velocity Adjustment
 
@@ -109,14 +133,15 @@ provides a lower bound on the modified velocity.
 ### Trajectory preprocessing
 
 The node only modifies part of the input trajectory, starting from the current ego position.
-A parameter `start_distance` is used to adjust how far ahead of the ego position the velocities will start being modified.
+Parameter `trajectory_preprocessing.start_distance` is used to adjust how far ahead of the ego position the velocities will start being modified.
+Parameters `trajectory_preprocessing.max_length` and `trajectory_preprocessing.max_duration` are used to control how much of the trajectory will see its velocity adjusted.
 
-To reduce computation cost at the cost of precision, the trajectory can be downsampled using parameter `downsample_factor`.
+To reduce computation cost at the cost of precision, the trajectory can be downsampled using parameter `trajectory_preprocessing.downsample_factor`.
 For example a value of `1` means all trajectory points will be evaluated while a value of `10` means only 1/10th of the points will be evaluated.
 
 ## Inputs / Outputs
 
-### Input
+### Inputs
 
 | Name                          | Type                                             | Description                                        |
 | ----------------------------- | ------------------------------------------------ | -------------------------------------------------- |
@@ -128,33 +153,37 @@ For example a value of `1` means all trajectory points will be evaluated while a
 | `~/input/map`                 | `autoware_auto_mapping_msgs/HADMapBin`           | Vector map used to retrieve static obstacles       |
 | `~/input/route`               | `autoware_auto_mapping_msgs/HADMapRoute`         | Route taken by ego on the map                      |
 
-### Output
+### Outputs
 
-| Name                     | Type                                     | Description                                  |
-| ------------------------ | ---------------------------------------- | -------------------------------------------- |
-| `~/output/trajectory`    | `autoware_auto_planning_msgs/Trajectory` | Trajectory with adjusted velocities          |
-| `~/output/debug_markers` | `visualization_msgs/MarkerArray`         | Debug markers (envelopes, obstacle polygons) |
+| Name                     | Type                                     | Description                                              |
+| ------------------------ | ---------------------------------------- | -------------------------------------------------------- |
+| `~/output/trajectory`    | `autoware_auto_planning_msgs/Trajectory` | Trajectory with adjusted velocities                      |
+| `~/output/debug_markers` | `visualization_msgs/MarkerArray`         | Debug markers (envelopes, obstacle polygons)             |
+| `~/output/runtime_us`    | `std_msgs/Int64`                         | Time taken to calculate the trajectory (in microseconds) |
 
 ## Parameters
 
-| Name                                  | Type        | Description                                                                                                                             |
-| ------------------------------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `min_ttc`                             | float       | [s] required minimum time with no collision at each point of the trajectory assuming constant heading and velocity.                     |
-| `distance_buffer`                     | float       | [m] required distance buffer with the obstacles.                                                                                        |
-| `min_adjusted_velocity`               | float       | [m/s] minimum adjusted velocity this node can set.                                                                                      |
-| `max_deceleration`                    | float       | [m/s²] maximum deceleration an adjusted velocity can cause.                                                                             |
-| `start_distance`                      | float       | [m] controls from which part of the trajectory (relative to the current ego pose) the velocity is adjusted.                             |
-| `downsample_factor`                   | int         | trajectory downsampling factor to allow tradeoff between precision and performance.                                                     |
-| `simulation.model`                    | string      | model to use for forward simulation. Either "particle" or "bicycle".                                                                    |
-| `simulation.distance_method`          | string      | method to use for calculating distance to collision. Either "exact" or "approximation".                                                 |
-| `simulation.steering_offset`          | float       | offset around the steering used by the bicycle model.                                                                                   |
-| `simulation.nb_points`                | int         | number of points used to simulate motion with the bicycle model.                                                                        |
-| `obstacles.dynamic_source`            | string      | source of dynamic obstacle used for collision checking. Can be "occupancy_grid", "point_cloud", or "static_only" (no dynamic obstacle). |
-| `obstacles.occupancy_grid_threshold`  | int         | value in the occupancy grid above which a cell is considered an obstacle.                                                               |
-| `obstacles.dynamic_obstacles_buffer`  | float       | buffer around dynamic obstacles used when masking an obstacle in order to prevent noise.                                                |
-| `obstacles.dynamic_obstacles_min_vel` | float       | velocity above which to mask a dynamic obstacle.                                                                                        |
-| `obstacles.static_map_tags`           | string list | linestring of the lanelet map with this tags are used as obstacles.                                                                     |
-| `obstacles.filter_envelope`           | bool        | wether to use the safety envelope to filter the dynamic obstacles source.                                                               |
+| Name                                                | Type        | Description                                                                                                                             |
+| --------------------------------------------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `min_ttc`                                           | float       | [s] required minimum time with no collision at each point of the trajectory assuming constant heading and velocity.                     |
+| `distance_buffer`                                   | float       | [m] required distance buffer with the obstacles.                                                                                        |
+| `min_adjusted_velocity`                             | float       | [m/s] minimum adjusted velocity this node can set.                                                                                      |
+| `max_deceleration`                                  | float       | [m/s²] maximum deceleration an adjusted velocity can cause.                                                                             |
+| `trajectory_preprocessing.start_distance`           | float       | [m] controls from which part of the trajectory (relative to the current ego pose) the velocity is adjusted.                             |
+| `trajectory_preprocessing.max_length`               | float       | [m] controls the maximum length (starting from the `start_distance`) where the velocity is adjusted.                                    |
+| `trajectory_preprocessing.max_distance`             | float       | [s] controls the maximum duration (measured from the `start_distance`) where the velocity is adjusted.                                  |
+| `trajectory_preprocessing.downsample_factor`        | int         | trajectory downsampling factor to allow tradeoff between precision and performance.                                                     |
+| `trajectory_preprocessing.calculate_steering_angle` | bool        | if true, the steering angles of the trajectory message are not used but are recalculated.                                               |
+| `simulation.model`                                  | string      | model to use for forward simulation. Either "particle" or "bicycle".                                                                    |
+| `simulation.distance_method`                        | string      | method to use for calculating distance to collision. Either "exact" or "approximation".                                                 |
+| `simulation.steering_offset`                        | float       | offset around the steering used by the bicycle model.                                                                                   |
+| `simulation.nb_points`                              | int         | number of points used to simulate motion with the bicycle model.                                                                        |
+| `obstacles.dynamic_source`                          | string      | source of dynamic obstacle used for collision checking. Can be "occupancy_grid", "point_cloud", or "static_only" (no dynamic obstacle). |
+| `obstacles.occupancy_grid_threshold`                | int         | value in the occupancy grid above which a cell is considered an obstacle.                                                               |
+| `obstacles.dynamic_obstacles_buffer`                | float       | buffer around dynamic obstacles used when masking an obstacle in order to prevent noise.                                                |
+| `obstacles.dynamic_obstacles_min_vel`               | float       | velocity above which to mask a dynamic obstacle.                                                                                        |
+| `obstacles.static_map_tags`                         | string list | linestring of the lanelet map with this tags are used as obstacles.                                                                     |
+| `obstacles.filter_envelope`                         | bool        | wether to use the safety envelope to filter the dynamic obstacles source.                                                               |
 
 ## Assumptions / Known limits
 
