@@ -53,21 +53,25 @@ None
 | `ip_address`      | string | "192.168.1.201" | IP address of target Velodyne LiDAR                                                                                       |
 | `temp_cold_warn`  | double | -5.0            | If the temperature of Velodyne LiDAR is lower than this value, the diagnostics status becomes WARN [°C]                   |
 | `temp_cold_error` | double | -10.0           | If the temperature of Velodyne LiDAR is lower than this value, the diagnostics status becomes ERROR [°C]                  |
-| `temp_hot_warn`   | double | 55.0            | If the temperature of Velodyne LiDAR is higher than this value, the diagnostics status becomes WARN [°C]                  |
-| `temp_hot_error`  | double | 60.0            | If the temperature of Velodyne LiDAR is higher than this value, the diagnostics status becomes ERROR [°C]                 |
+| `temp_hot_warn`   | double | 75.0            | If the temperature of Velodyne LiDAR is higher than this value, the diagnostics status becomes WARN [°C]                  |
+| `temp_hot_error`  | double | 80.0            | If the temperature of Velodyne LiDAR is higher than this value, the diagnostics status becomes ERROR [°C]                 |
 | `rpm_ratio_warn`  | double | 0.80            | If the rpm rate of the motor (= current rpm / default rpm) is lower than this value, the diagnostics status becomes WARN  |
 | `rpm_ratio_error` | double | 0.70            | If the rpm rate of the motor (= current rpm / default rpm) is lower than this value, the diagnostics status becomes ERROR |
 
+### Config files
+
+Config files for several velodyne models are prepared.
+The `temp_**` parameters are set with reference to the operational temperature from datasheets.
+Now, `VLP-16.param.yaml` is used as default argument because it is lowest spec.
+
+| Model Name     | Config name               | Operational Temperature [℃] |
+| -------------- | ------------------------- | --------------------------- |
+| VLP-16         | VLP-16.param.yaml         | -10 to 60                   |
+| VLP-32C        | VLP-32C.param.yaml        | -20 to 60                   |
+| VLS-128        | VLS-128.param.yaml        | -20 to 60                   |
+| Velarray M1600 | Velarray_M1600.param.yaml | -40 to 85                   |
+| HDL-32E        | HDL-32E.param.yaml        | -10 to 60                   |
+
 ## Assumptions / Known limits
 
-### About temperature threshold
-
-According to the datasheet of each model, operational temperatures are below.
-
-| Model Name     | Operational Temperature [℃] |
-| -------------- | ---------------------------- |
-| VLP-16         | -10 to 60                    |
-| VLP-32C        | -20 to 60                    |
-| VLS-128        | -20 to 60                    |
-| Velarray M1600 | -40 to 85                    |
-| HDL-32E        | -10 to 60                    |
+TBD
