@@ -80,6 +80,7 @@ void LaneChangeModule::onExit()
 {
   clearWaitingApproval();
   removeRTCStatus();
+  planning_api_interface_ptr_->clearSteeringFactors();
   current_state_ = BT::NodeStatus::IDLE;
   RCLCPP_DEBUG(getLogger(), "LANE_CHANGE onExit");
 }

@@ -2479,6 +2479,7 @@ void AvoidanceModule::onExit()
   current_state_ = BT::NodeStatus::IDLE;
   clearWaitingApproval();
   removeRTCStatus();
+  planning_api_interface_ptr_->clearSteeringFactors();
 }
 
 void AvoidanceModule::setParameters(const AvoidanceParameters & parameters)

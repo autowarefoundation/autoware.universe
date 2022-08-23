@@ -140,6 +140,7 @@ void PullOverModule::onExit()
   RCLCPP_DEBUG(getLogger(), "PULL_OVER onExit");
   clearWaitingApproval();
   removeRTCStatus();
+  planning_api_interface_ptr_->clearSteeringFactors();
 
   // A child node must never return IDLE
   // https://github.com/BehaviorTree/BehaviorTree.CPP/blob/master/include/behaviortree_cpp_v3/basic_types.h#L34
@@ -491,6 +492,7 @@ BehaviorModuleOutput PullOverModule::plan()
       // request approval again one the final path is decided
       waitApproval();
       removeRTCStatus();
+      planning_api_interface_ptr_->clearSteeringFactors();
       uuid_ = generateUUID();
       current_state_ = BT::NodeStatus::SUCCESS;  // for breaking loop
       status_.has_requested_approval_ = true;

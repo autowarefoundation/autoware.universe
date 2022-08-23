@@ -64,6 +64,7 @@ void PullOutModule::onExit()
 {
   clearWaitingApproval();
   removeRTCStatus();
+  planning_api_interface_ptr_->clearSteeringFactors();
   current_state_ = BT::NodeStatus::IDLE;
   RCLCPP_DEBUG(getLogger(), "PULL_OUT onExit");
 }
