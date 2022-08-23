@@ -56,6 +56,7 @@ AvoidanceModule::AvoidanceModule(
   uuid_right_{generateUUID()}
 {
   using std::placeholders::_1;
+  planning_api_interface_ptr_ = std::make_shared<PlanningAPIInterface>(&node, "avoidance");
 }
 
 bool AvoidanceModule::isExecutionRequested() const

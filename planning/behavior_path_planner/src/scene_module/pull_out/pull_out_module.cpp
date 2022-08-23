@@ -36,6 +36,7 @@ PullOutModule::PullOutModule(
 : SceneModuleInterface{name, node}, parameters_{parameters}
 {
   rtc_interface_ptr_ = std::make_shared<RTCInterface>(&node, "pull_out");
+  planning_api_interface_ptr_ = std::make_shared<PlanningAPIInterface>(&node, "pull_out");
 }
 
 BehaviorModuleOutput PullOutModule::run()

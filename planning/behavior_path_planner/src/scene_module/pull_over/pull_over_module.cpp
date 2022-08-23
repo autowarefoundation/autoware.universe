@@ -48,6 +48,7 @@ PullOverModule::PullOverModule(
 : SceneModuleInterface{name, node}, parameters_{parameters}, clock_{node.get_clock()}
 {
   rtc_interface_ptr_ = std::make_shared<RTCInterface>(&node, "pull_over");
+  planning_api_interface_ptr_ = std::make_shared<PlanningAPIInterface>(&node, "pull_over");
   goal_pose_pub_ =
     node.create_publisher<PoseStamped>("/planning/scenario_planning/modified_goal", 1);
   parking_area_pub_ = node.create_publisher<MarkerArray>("~/pull_over/debug/parking_area", 1);

@@ -18,6 +18,7 @@
 #include "behavior_path_planner/data_manager.hpp"
 #include "behavior_path_planner/utilities.hpp"
 
+#include <behavior_path_planner/planning_api_interface.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <route_handler/route_handler.hpp>
 #include <rtc_interface/rtc_interface.hpp>
@@ -42,6 +43,10 @@ namespace behavior_path_planner
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
 using autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand;
+using planning_api_interface::PlanningAPIInterface;
+using route_handler::LaneChangeDirection;
+using route_handler::PullOutDirection;
+using route_handler::PullOverDirection;
 using rtc_interface::RTCInterface;
 using tier4_planning_msgs::msg::AvoidanceDebugMsgArray;
 using unique_identifier_msgs::msg::UUID;
@@ -214,6 +219,14 @@ public:
     return false;
   }
 
+  virtual void publishSteeringFactor()
+  {
+    if (!planning_api_interface_ptr_) {
+      return;
+    }
+    planning_api_interface_ptr_->publishSteeringFactor(clock_->now());
+  }
+
   /**
    * @brief set planner data
    */
@@ -247,6 +260,7 @@ protected:
   mutable MarkerArray debug_marker_;
 
   std::shared_ptr<RTCInterface> rtc_interface_ptr_;
+  std::shared_ptr<PlanningAPIInterface> planning_api_interface_ptr_;
   UUID uuid_;
   bool is_waiting_approval_;
 

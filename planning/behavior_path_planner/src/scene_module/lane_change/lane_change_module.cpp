@@ -46,6 +46,7 @@ LaneChangeModule::LaneChangeModule(
   uuid_left_{generateUUID()},
   uuid_right_{generateUUID()}
 {
+  planning_api_interface_ptr_ = std::make_shared<PlanningAPIInterface>(&node, "lane_change");
 }
 
 BehaviorModuleOutput LaneChangeModule::run()
