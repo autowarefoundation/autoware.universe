@@ -188,7 +188,8 @@ SurroundObstacleCheckerNode::SurroundObstacleCheckerNode(const rclcpp::NodeOptio
 
   debug_ptr_ = std::make_shared<SurroundObstacleCheckerDebugNode>(
     self_polygon, vehicle_info_.max_longitudinal_offset_m, node_param_.surround_check_distance,
-    odometry_ptr_->pose.pose, this->get_clock(), *this);
+    node_param_.surround_check_recover_distance, odometry_ptr_->pose.pose, this->get_clock(),
+    *this);
 }
 
 void SurroundObstacleCheckerNode::onTimer()

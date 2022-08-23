@@ -50,8 +50,9 @@ class SurroundObstacleCheckerDebugNode
 public:
   explicit SurroundObstacleCheckerDebugNode(
     const Polygon2d & ego_polygon, const double base_link2front,
-    const double & surround_check_distance, const geometry_msgs::msg::Pose & self_pose,
-    const rclcpp::Clock::SharedPtr clock, rclcpp::Node & node);
+    const double & surround_check_distance, const double & surround_check_recover_distance,
+    const geometry_msgs::msg::Pose & self_pose, const rclcpp::Clock::SharedPtr clock,
+    rclcpp::Node & node);
 
   bool pushPose(const geometry_msgs::msg::Pose & pose, const PoseType & type);
   bool pushObstaclePoint(const geometry_msgs::msg::Point & obstacle_point, const PointType & type);
@@ -64,10 +65,12 @@ private:
   rclcpp::Publisher<StopReasonArray>::SharedPtr stop_reason_pub_;
   rclcpp::Publisher<PolygonStamped>::SharedPtr vehicle_footprint_pub_;
   rclcpp::Publisher<PolygonStamped>::SharedPtr vehicle_footprint_offset_pub_;
+  rclcpp::Publisher<PolygonStamped>::SharedPtr vehicle_footprint_recover_offset_pub_;
 
   Polygon2d ego_polygon_;
   double base_link2front_;
   double surround_check_distance_;
+  double surround_check_recover_distance_;
   geometry_msgs::msg::Pose self_pose_;
 
   MarkerArray makeVirtualWallMarker();

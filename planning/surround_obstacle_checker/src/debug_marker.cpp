@@ -37,11 +37,13 @@ using tier4_autoware_utils::createPoint;
 
 SurroundObstacleCheckerDebugNode::SurroundObstacleCheckerDebugNode(
   const Polygon2d & ego_polygon, const double base_link2front,
-  const double & surround_check_distance, const geometry_msgs::msg::Pose & self_pose,
-  const rclcpp::Clock::SharedPtr clock, rclcpp::Node & node)
+  const double & surround_check_distance, const double & surround_check_recover_distance,
+  const geometry_msgs::msg::Pose & self_pose, const rclcpp::Clock::SharedPtr clock,
+  rclcpp::Node & node)
 : ego_polygon_(ego_polygon),
   base_link2front_(base_link2front),
   surround_check_distance_(surround_check_distance),
+  surround_check_recover_distance_(surround_check_recover_distance),
   self_pose_(self_pose),
   clock_(clock)
 {
@@ -52,6 +54,8 @@ SurroundObstacleCheckerDebugNode::SurroundObstacleCheckerDebugNode(
   vehicle_footprint_pub_ = node.create_publisher<PolygonStamped>("~/debug/footprint", 1);
   vehicle_footprint_offset_pub_ =
     node.create_publisher<PolygonStamped>("~/debug/footprint_offset", 1);
+  vehicle_footprint_recover_offset_pub_ =
+    node.create_publisher<PolygonStamped>("~/debug/footprint_recover_offset", 1);
 }
 
 bool SurroundObstacleCheckerDebugNode::pushPose(
@@ -90,6 +94,13 @@ void SurroundObstacleCheckerDebugNode::publishFootprints()
   const auto footprint_with_offset =
     boostPolygonToPolygonStamped(polygon_with_offset, self_pose_.position.z);
   vehicle_footprint_offset_pub_->publish(footprint_with_offset);
+
+  /* publish vehicle footprint polygon with recover offset */
+  const auto polygon_with_recover_offset =
+    createSelfPolygonWithOffset(ego_polygon_, surround_check_recover_distance_);
+  const auto footprint_with_recover_offset =
+    boostPolygonToPolygonStamped(polygon_with_recover_offset, self_pose_.position.z);
+  vehicle_footprint_recover_offset_pub_->publish(footprint_with_recover_offset);
 }
 
 void SurroundObstacleCheckerDebugNode::publish()
