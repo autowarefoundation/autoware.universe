@@ -156,8 +156,8 @@ void Predictor::updateWithDynamicNoise(
     geometry_msgs::msg::Pose pose{particle_array.particles[i].pose};
 
     float yaw{static_cast<float>(tf2::getYaw(pose.orientation))};
-    float vx{linear_x + nrand(16) * std_linear_x * gain_linear};
-    float wz{angular_z + nrand(1) * std_angular_z * gain_linear};
+    float vx{linear_x + nrand(16.f) * std_linear_x * gain_linear};
+    float wz{angular_z + nrand(1.f) * std_angular_z * gain_linear};
 
     tf2::Quaternion q;
     q.setRPY(roll, pitch, yaw + wz * dt);
@@ -185,13 +185,14 @@ void Predictor::updateWithStaticNoise(
   for (size_t i{0}; i < particle_array.particles.size(); i++) {
     geometry_msgs::msg::Pose pose{particle_array.particles[i].pose};
 
+    const float stddev_vx = static_cast<float>(std::sqrt(twist.twist.covariance[6 * 0 + 0]));
+    const float stddev_wz = static_cast<float>(std::sqrt(twist.twist.covariance[6 * 5 + 5]));
+
     const float roll{0.0f};
     const float pitch{0.0f};
     const float yaw{static_cast<float>(tf2::getYaw(pose.orientation))};
-    const float vx{
-      twist.twist.twist.linear.x + util::nrand(16 * std::sqrt(twist.twist.covariance[6 * 0 + 0]))};
-    const float wz{
-      twist.twist.twist.angular.z + util::nrand(1 * std::sqrt(twist.twist.covariance[6 * 5 + 5]))};
+    const float vx{static_cast<float>(twist.twist.twist.linear.x) + util::nrand(stddev_vx)};
+    const float wz{static_cast<float>(twist.twist.twist.angular.z) + util::nrand(stddev_wz)};
     tf2::Quaternion q;
     q.setRPY(roll, pitch, util::normalizeRadian(yaw + wz * dt));
 

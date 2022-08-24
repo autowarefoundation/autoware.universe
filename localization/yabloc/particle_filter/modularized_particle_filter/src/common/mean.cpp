@@ -106,7 +106,6 @@ Eigen::Vector3f stdOfDistribution(
   const modularized_particle_filter_msgs::msg::ParticleArray & particle_array)
 {
   using Particle = modularized_particle_filter_msgs::msg::Particle;
-  using ParticleArray = modularized_particle_filter_msgs::msg::ParticleArray;
   using Pose = geometry_msgs::msg::Pose;
 
   Pose mean_pose = meanPose(particle_array);
@@ -135,8 +134,6 @@ Eigen::Vector3f stdOfDistribution(
 float stdOfWeight(const modularized_particle_filter_msgs::msg::ParticleArray & particle_array)
 {
   using Particle = modularized_particle_filter_msgs::msg::Particle;
-  using ParticleArray = modularized_particle_filter_msgs::msg::ParticleArray;
-  using Pose = geometry_msgs::msg::Pose;
 
   const float invN = 1.f / particle_array.particles.size();
   float mean = 0;

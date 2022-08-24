@@ -27,9 +27,10 @@ Eigen::Vector2d nrand2d(const Eigen::Matrix2d cov)
   return svd.matrixU() * xy;
 }
 
-double nrand(double std)
+template <typename T = float>
+T nrand(T std)
 {
-  std::normal_distribution<> dist(0.0, std);
+  std::normal_distribution<T> dist(0.0, std);
   return dist(engine);
 }
 
