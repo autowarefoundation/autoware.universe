@@ -9,7 +9,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   interface/srv/InterfaceVersion.srv
   routing/msg/RouteState.msg
   routing/msg/Route.msg
-  routing/msg/RouteBody.msg
+  routing/msg/RouteData.msg
   routing/msg/RoutePrimitive.msg
   routing/msg/RouteSegment.msg
   routing/srv/ClearRoute.srv

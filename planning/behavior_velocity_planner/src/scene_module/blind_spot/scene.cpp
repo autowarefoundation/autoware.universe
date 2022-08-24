@@ -16,7 +16,6 @@
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <scene_module/blind_spot/scene.hpp>
-#include <scene_module/intersection/util.hpp>
 #include <tier4_autoware_utils/geometry/path_with_lane_id_geometry.hpp>
 #include <utilization/boost_geometry_helper.hpp>
 #include <utilization/path_utilization.hpp>
@@ -112,7 +111,7 @@ bool BlindSpotModule::modifyPathVelocity(
   const size_t closest_idx = closest_idx_opt.get();
 
   /* get debug info */
-  const auto stop_line_pose = util::getAheadPose(
+  const auto stop_line_pose = planning_utils::getAheadPose(
     stop_line_idx, planner_data_->vehicle_info_.max_longitudinal_offset_m, *path);
   debug_data_.virtual_wall_pose = stop_line_pose;
   debug_data_.stop_point_pose = path->points.at(stop_line_idx).point.pose;
@@ -122,7 +121,7 @@ bool BlindSpotModule::modifyPathVelocity(
   is_over_pass_judge_line_ = static_cast<bool>(static_cast<int>(closest_idx) > pass_judge_line_idx);
   if (static_cast<int>(closest_idx) == pass_judge_line_idx) {
     geometry_msgs::msg::Pose pass_judge_line = path->points.at(pass_judge_line_idx).point.pose;
-    is_over_pass_judge_line_ = util::isAheadOf(current_pose.pose, pass_judge_line);
+    is_over_pass_judge_line_ = planning_utils::isAheadOf(current_pose.pose, pass_judge_line);
   }
   if (planner_param_.use_pass_judge_line) {
     if (current_state == State::GO && is_over_pass_judge_line_) {
@@ -149,7 +148,7 @@ bool BlindSpotModule::modifyPathVelocity(
     path->points, current_pose.pose.position, path->points.at(stop_line_idx).point.pose.position));
   if (!isActivated()) {
     constexpr double stop_vel = 0.0;
-    util::setVelocityFrom(stop_line_idx, stop_vel, path);
+    planning_utils::setVelocityFromIndex(stop_line_idx, stop_vel, path);
 
     /* get stop point and stop factor */
     tier4_planning_msgs::msg::StopFactor stop_factor;
@@ -319,8 +318,8 @@ int BlindSpotModule::insertPoint(
   }
   int insert_idx = -1;
   // initialize with epsilon so that comparison with insert_point_s = 0.0 would work
-  constexpr double eps = 1e-4;
-  double accum_s = eps * 2.0;
+  constexpr double eps = 1e-2;
+  double accum_s = eps + std::numeric_limits<double>::epsilon();
   for (size_t i = 1; i < inout_path->points.size(); i++) {
     accum_s += tier4_autoware_utils::calcDistance2d(
       inout_path->points[i].point.pose.position, inout_path->points[i - 1].point.pose.position);
@@ -341,6 +340,15 @@ int BlindSpotModule::insertPoint(
       tier4_autoware_utils::calcDistance2d(
         inserted_point, inout_path->points.at(insert_idx).point) < min_dist) {
       inout_path->points.at(insert_idx).point.longitudinal_velocity_mps = 0.0;
+      is_point_inserted = false;
+      return insert_idx;
+    } else if (
+      insert_idx != 0 &&
+      tier4_autoware_utils::calcDistance2d(
+        inserted_point, inout_path->points.at(static_cast<size_t>(insert_idx - 1)).point) <
+        min_dist) {
+      inout_path->points.at(insert_idx - 1).point.longitudinal_velocity_mps = 0.0;
+      insert_idx--;
       is_point_inserted = false;
       return insert_idx;
     }
@@ -449,13 +457,17 @@ boost::optional<BlindSpotPolygons> BlindSpotModule::generateBlindSpotPolygons(
   lanelet::ConstLanelets blind_spot_lanelets;
   /* get lane ids until intersection */
   for (const auto & point : path.points) {
-    lane_ids.push_back(point.lane_ids.front());
-    if (point.lane_ids.front() == lane_id_) {
-      break;
+    for (const auto lane_id : point.lane_ids) {
+      // make lane_ids unique
+      if (std::find(lane_ids.begin(), lane_ids.end(), lane_id) == lane_ids.end()) {
+        lane_ids.push_back(lane_id);
+      }
+
+      if (lane_id == lane_id_) {
+        break;
+      }
     }
   }
-  /* remove adjacent duplicates */
-  lane_ids.erase(std::unique(lane_ids.begin(), lane_ids.end()), lane_ids.end());
 
   /* reverse lane ids */
   std::reverse(lane_ids.begin(), lane_ids.end());
