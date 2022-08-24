@@ -15,14 +15,16 @@
 #ifndef SHAPE_ESTIMATION__CORRECTOR__UTILS_HPP_
 #define SHAPE_ESTIMATION__CORRECTOR__UTILS_HPP_
 
+#include "shape_estimation/shape_estimator.hpp"
+
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <autoware_auto_perception_msgs/msg/shape.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 
-namespace utils
+namespace corrector_utils
 {
-struct CorrectionParameters
+struct CorrectionBBParameters
 {
   double min_width;
   double max_width;
@@ -32,11 +34,14 @@ struct CorrectionParameters
   double avg_length;
 };
 bool correctVehicleBoundingBox(
-  const CorrectionParameters & param, autoware_auto_perception_msgs::msg::Shape & shape_output,
+  const CorrectionBBParameters & param, autoware_auto_perception_msgs::msg::Shape & shape_output,
   geometry_msgs::msg::Pose & pose_output);
+bool correctVehicleBoundingBoxWithReferenceShape(
+  const ReferenceShapeSizeInfo & ref_shape_size_info,
+  autoware_auto_perception_msgs::msg::Shape & shape_output, geometry_msgs::msg::Pose & pose_output);
 bool correctVehicleBoundingBoxWithReferenceYaw(
-  const CorrectionParameters & param, autoware_auto_perception_msgs::msg::Shape & shape_output,
+  const CorrectionBBParameters & param, autoware_auto_perception_msgs::msg::Shape & shape_output,
   geometry_msgs::msg::Pose & pose_output);
-}  // namespace utils
+}  // namespace corrector_utils
 
 #endif  // SHAPE_ESTIMATION__CORRECTOR__UTILS_HPP_

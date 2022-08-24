@@ -34,10 +34,10 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
-namespace utils
+namespace corrector_utils
 {
 bool correctVehicleBoundingBox(
-  const CorrectionParameters & param, autoware_auto_perception_msgs::msg::Shape & shape,
+  const CorrectionBBParameters & param, autoware_auto_perception_msgs::msg::Shape & shape,
   geometry_msgs::msg::Pose & pose)
 {
   // TODO(Yukihiro Saito): refactor following code
@@ -249,7 +249,7 @@ bool correctVehicleBoundingBox(
 }
 
 bool correctVehicleBoundingBoxWithReferenceYaw(
-  const CorrectionParameters & param, autoware_auto_perception_msgs::msg::Shape & shape,
+  const CorrectionBBParameters & param, autoware_auto_perception_msgs::msg::Shape & shape,
   geometry_msgs::msg::Pose & pose)
 {
   /*
@@ -279,16 +279,9 @@ bool correctVehicleBoundingBoxWithReferenceYaw(
     base2obj_transform *
     Eigen::Vector3d(-shape.dimensions.x * 0.5, -shape.dimensions.y * 0.5, 0.0));
 
-  double distance = std::pow(24, 24);
-  size_t nearest_idx = 0;
-  for (size_t i = 0; i < v_point.size(); i++) {
-    if (v_point.at(i).norm() < distance) {
-      distance = v_point.at(i).norm();
-      nearest_idx = i;
-    }
-  }
-
-  c1 = v_point.at(nearest_idx);
+  c1 = *(std::min_element(v_point.begin(), v_point.end(), [](const auto & a, const auto & b) {
+    return a.norm() < b.norm();
+  }));
 
   Eigen::Vector3d c = Eigen::Vector3d::Zero();
   Eigen::Vector3d local_c1 = base2obj_transform.inverse() * c1;
@@ -325,4 +318,78 @@ bool correctVehicleBoundingBoxWithReferenceYaw(
   return true;
 }
 
-}  // namespace utils
+bool correctVehicleBoundingBoxWithReferenceShape(
+  const ReferenceShapeSizeInfo & ref_shape_size_info,
+  autoware_auto_perception_msgs::msg::Shape & shape, geometry_msgs::msg::Pose & pose)
+{
+  /*
+  c1 is nearest point and other points are arranged like below
+  c is center of bounding box
+  width
+  4---2
+  |   |
+  | c |length
+  |   |
+  3---1
+ */
+
+  Eigen::Vector3d c1, c2, c3, c4;
+
+  Eigen::Affine3d base2obj_transform;
+  tf2::fromMsg(pose, base2obj_transform);
+
+  std::vector<Eigen::Vector3d> v_point;
+  v_point.push_back(
+    base2obj_transform * Eigen::Vector3d(shape.dimensions.x * 0.5, shape.dimensions.y * 0.5, 0.0));
+  v_point.push_back(
+    base2obj_transform * Eigen::Vector3d(-shape.dimensions.x * 0.5, shape.dimensions.y * 0.5, 0.0));
+  v_point.push_back(
+    base2obj_transform * Eigen::Vector3d(shape.dimensions.x * 0.5, -shape.dimensions.y * 0.5, 0.0));
+  v_point.push_back(
+    base2obj_transform *
+    Eigen::Vector3d(-shape.dimensions.x * 0.5, -shape.dimensions.y * 0.5, 0.0));
+
+  c1 = *(std::min_element(v_point.begin(), v_point.end(), [](const auto & a, const auto & b) {
+    return a.norm() < b.norm();
+  }));
+
+  Eigen::Vector3d c = Eigen::Vector3d::Zero();
+  Eigen::Vector3d local_c1 = base2obj_transform.inverse() * c1;
+  Eigen::Vector3d radiation_vec = c - local_c1;
+
+  double ex = radiation_vec.x();
+  double ey = radiation_vec.y();
+  Eigen::Vector3d e1 = (Eigen::Vector3d(0, -ey, 0) - local_c1).normalized();
+  Eigen::Vector3d e2 = (Eigen::Vector3d(-ex, 0, 0) - local_c1).normalized();
+
+  double length;
+  if (
+    ref_shape_size_info.mode == ReferenceShapeSizeInfo::Mode::Min &&
+    ref_shape_size_info.shape.dimensions.x < shape.dimensions.x) {
+    length = shape.dimensions.x;
+  } else {
+    length = ref_shape_size_info.shape.dimensions.x;
+  }
+
+  double width;
+  if (
+    ref_shape_size_info.mode == ReferenceShapeSizeInfo::Mode::Min &&
+    ref_shape_size_info.shape.dimensions.y < shape.dimensions.y) {
+    width = shape.dimensions.y;
+  } else {
+    width = ref_shape_size_info.shape.dimensions.y;
+  }
+
+  c2 = c1 + base2obj_transform.rotation() * (e1 * length);
+  c3 = c1 + base2obj_transform.rotation() * (e2 * width);
+  c4 = c1 + (c2 - c1) + (c3 - c1);
+
+  shape.dimensions.x = (c2 - c1).norm();
+  shape.dimensions.y = (c3 - c1).norm();
+  Eigen::Vector3d new_centroid = c1 + ((c4 - c1) * 0.5);
+  pose.position.x = new_centroid.x();
+  pose.position.y = new_centroid.y();
+  pose.position.z = new_centroid.z();
+  return true;
+}
+}  // namespace corrector_utils

@@ -21,11 +21,15 @@
 class TruckCorrector : public ShapeEstimationCorrectorInterface
 {
 private:
-  utils::CorrectionParameters params_;
+  corrector_utils::CorrectionBBParameters params_;
   bool use_reference_yaw_;
+  boost::optional<ReferenceShapeSizeInfo> ref_shape_size_info_;
 
 public:
-  explicit TruckCorrector(bool use_reference_yaw = false) : use_reference_yaw_(use_reference_yaw)
+  explicit TruckCorrector(
+    bool use_reference_yaw = false,
+    const boost::optional<ReferenceShapeSizeInfo> & ref_shape_size_info = boost::none)
+  : use_reference_yaw_(use_reference_yaw), ref_shape_size_info_(ref_shape_size_info)
   {
     params_.min_width = 1.5;
     params_.max_width = 3.2;

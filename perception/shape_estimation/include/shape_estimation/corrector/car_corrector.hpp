@@ -16,16 +16,21 @@
 #define SHAPE_ESTIMATION__CORRECTOR__CAR_CORRECTOR_HPP_
 
 #include "shape_estimation/corrector/corrector_interface.hpp"
+#include "shape_estimation/shape_estimator.hpp"
 #include "utils.hpp"
 
 class CarCorrector : public ShapeEstimationCorrectorInterface
 {
 private:
-  utils::CorrectionParameters params_;
+  corrector_utils::CorrectionBBParameters params_;
   bool use_reference_yaw_;
+  boost::optional<ReferenceShapeSizeInfo> ref_shape_size_info_;
 
 public:
-  explicit CarCorrector(bool use_reference_yaw = false) : use_reference_yaw_(use_reference_yaw)
+  explicit CarCorrector(
+    bool use_reference_yaw = false,
+    const boost::optional<ReferenceShapeSizeInfo> & ref_shape_size_info = boost::none)
+  : use_reference_yaw_(use_reference_yaw), ref_shape_size_info_(ref_shape_size_info)
   {
     params_.min_width = 1.2;
     params_.max_width = 2.2;
