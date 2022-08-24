@@ -31,7 +31,7 @@ void DetectedObjectsDisplay::processMessage(DetectedObjects::ConstSharedPtr msg)
   clear_markers();
   int id = 0;
   for (const auto & object : msg->objects) {
-    // TODO: fixing from string label to one string
+    // TODO(Satoshi Tanaka): fixing from string label to one string
     // Get marker for shape
     auto shape_marker = get_shape_marker_ptr(
       object.shape, object.kinematics.pose_with_covariance.pose.position,
