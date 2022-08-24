@@ -19,12 +19,14 @@ namespace default_ad_api
 
 InterfaceNode::InterfaceNode(const rclcpp::NodeOptions & options) : Node("interface", options)
 {
-  const auto node = component_interface_utils::NodeAdaptor(this);
-  node.init_srv(srv_, [](auto, auto res) {
+  const auto on_interface_version = [](auto, auto res) {
     res->major = 0;
     res->minor = 1;
     res->patch = 0;
-  });
+  };
+
+  const auto adaptor = component_interface_utils::NodeAdaptor(this);
+  adaptor.init_srv(srv_, on_interface_version);
 }
 
 }  // namespace default_ad_api
