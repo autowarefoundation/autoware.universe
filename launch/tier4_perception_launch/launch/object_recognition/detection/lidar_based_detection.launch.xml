@@ -122,6 +122,7 @@
       <arg name="input/object0" value="temporary_merged_objects"/>
       <arg name="input/object1" value="detection_by_tracker/objects"/>
       <arg name="output/object" value="objects_before_filter"/>
+      <arg name="priority_mode" value="1"/>
     </include>
   </group>
 

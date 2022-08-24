@@ -3,6 +3,7 @@
   <arg name="input/object0" default="object0"/>
   <arg name="input/object1" default="object1"/>
   <arg name="output/object" default="merged_object"/>
+  <arg name="priority_mode" default="2" description="0: Object0, 1: Object1, 2: Confidence"/>
   <arg name="data_association_matrix_path" default="$(find-pkg-share object_merger)/config/data_association_matrix.param.yaml"/>
 
   <node pkg="object_merger" exec="object_association_merger_node" name="$(anon object_association_merger)" output="screen">
@@ -10,5 +11,6 @@
     <remap from="input/object1" to="$(var input/object1)"/>
     <remap from="output/object" to="$(var output/object)"/>
     <param from="$(var data_association_matrix_path)"/>
+    <param name="priority_mode" value="$(var priority_mode)"/>
   </node>
 </launch>

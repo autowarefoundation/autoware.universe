@@ -207,7 +207,7 @@
 
   <group>
     <include file="$(find-pkg-share object_merger)/launch/object_association_merger.launch.xml">
-      <arg name="input/object0" value="detection_by_tracker/objects"/>
+      <arg name="input/object0" value="clustering/objects"/>
       <arg name="input/object1" value="camera_lidar_fusion/objects"/>
       <arg name="output/object" value="temporary_merged_objects"/>
     </include>
@@ -216,8 +216,9 @@
   <group>
     <include file="$(find-pkg-share object_merger)/launch/object_association_merger.launch.xml">
       <arg name="input/object0" value="temporary_merged_objects"/>
-      <arg name="input/object1" value="clustering/objects"/>
+      <arg name="input/object1" value="detection_by_tracker/objects"/>
       <arg name="output/object" value="objects_before_filter"/>
+      <arg name="priority_mode" value="1"/>
     </include>
   </group>
 
