@@ -18,17 +18,6 @@
 
 namespace
 {
-bool pointWithinLanelets(const Point2d & point, const lanelet::ConstPolygons3d & lanelets)
-{
-  for (const auto & lanelet : lanelets) {
-    if (boost::geometry::within(point, lanelet::utils::to2D(lanelet).basicPolygon())) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
 tier4_autoware_utils::Box2d calcBoundingBox(
   const pcl::PointCloud<pcl::PointXYZ>::ConstPtr & input_cloud)
 {
@@ -53,17 +42,15 @@ lanelet::ConstPolygons3d calcIntersectedPolygons(
 }
 
 pcl::PointCloud<pcl::PointXYZ> removePointsWithinPolygons(
-  const lanelet::ConstPolygons3d & polygons, const pcl::PointCloud<pcl::PointXYZ>::Ptr & cloud)
+  const pcl::PointCloud<pcl::PointXYZ>::Ptr & cloud_in, const lanelet::ConstPolygons3d & polygons)
 {
-  pcl::PointCloud<pcl::PointXYZ> filtered_cloud;
-  filtered_cloud.header = cloud->header;
+  pcl::PointCloud<pcl::PointXYZ> filtered_cloud = *cloud_in;
 
-  for (const auto & p : cloud->points) {
-    if (pointWithinLanelets(Point2d(p.x, p.y), polygons)) {
-      continue;
-    }
-
-    filtered_cloud.points.push_back(p);
+  for (const auto & polygon : polygons) {
+    const auto lanelet_poly = lanelet::utils::to2D(polygon).basicPolygon();
+    const auto cgal_poly = pointcloud_preprocessor::utils::to_cgal_polygon(lanelet_poly);
+    filtered_cloud =
+      pointcloud_preprocessor::utils::remove_polygon_cgal_from_cloud(filtered_cloud, cgal_poly);
   }
 
   return filtered_cloud;
@@ -108,7 +95,7 @@ void NoDetectionAreaFilterComponent::filter(
     calcIntersectedPolygons(bounding_box, no_detection_area_lanelets_);
 
   // filter pointcloud by lanelet
-  const auto filtered_pc = removePointsWithinPolygons(intersected_lanelets, pc_input);
+  const auto filtered_pc = removePointsWithinPolygons(pc_input, intersected_lanelets);
 
   // convert to ROS message
   pcl::toROSMsg(filtered_pc, output);

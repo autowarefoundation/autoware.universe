@@ -16,6 +16,7 @@
 #define POINTCLOUD_PREPROCESSOR__NO_DETECTION_AREA_FILTER__NO_DETECTION_AREA_FILTER_HPP_
 
 #include "pointcloud_preprocessor/filter.hpp"
+#include "pointcloud_preprocessor/utility/utilities.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
