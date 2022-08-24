@@ -350,6 +350,7 @@ int BlindSpotModule::insertPoint(
       inout_path->points.at(insert_idx - 1).point.longitudinal_velocity_mps = 0.0;
       insert_idx--;
       is_point_inserted = false;
+      return insert_idx;
     }
     inout_path->points.insert(it, inserted_point);
     is_point_inserted = true;
