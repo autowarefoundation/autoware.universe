@@ -11,7 +11,6 @@
 
   <build_depend>autoware_cmake</build_depend>
 
-  <depend>autoware_ad_api_specs</depend>
   <depend>autoware_ad_api_msgs</depend>
   <depend>autoware_ad_api_specs</depend>
   <depend>component_interface_utils</depend>
