@@ -57,18 +57,13 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
 
   /* process noise */
   proc_stddev_yaw_c_ = declare_parameter("proc_stddev_yaw_c", 0.005);
-  proc_stddev_yaw_bias_c_ = declare_parameter("proc_stddev_yaw_bias_c", 0.001);
   proc_stddev_vx_c_ = declare_parameter("proc_stddev_vx_c", 5.0);
   proc_stddev_wz_c_ = declare_parameter("proc_stddev_wz_c", 1.0);
-  if (!enable_yaw_bias_estimation_) {
-    proc_stddev_yaw_bias_c_ = 0.0;
-  }
 
   /* convert to continuous to discrete */
   proc_cov_vx_d_ = std::pow(proc_stddev_vx_c_ * ekf_dt_, 2.0);
   proc_cov_wz_d_ = std::pow(proc_stddev_wz_c_ * ekf_dt_, 2.0);
   proc_cov_yaw_d_ = std::pow(proc_stddev_yaw_c_ * ekf_dt_, 2.0);
-  proc_cov_yaw_bias_d_ = std::pow(proc_stddev_yaw_bias_c_ * ekf_dt_, 2.0);
 
   /* initialize ros system */
   auto period_control_ns =
@@ -106,9 +101,9 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
 
   initEKF();
 
-  z_filter_.set_proc_stddev(1.0);
-  roll_filter_.set_proc_stddev(0.1);
-  pitch_filter_.set_proc_stddev(0.1);
+  z_filter_.set_proc_dev(1.0);
+  roll_filter_.set_proc_dev(0.01);
+  pitch_filter_.set_proc_dev(0.01);
 
   /* debug */
   pub_debug_ = create_publisher<tier4_debug_msgs::msg::Float64MultiArrayStamped>("debug", 1);
@@ -132,7 +127,6 @@ void EKFLocalizer::updatePredictFrequency()
       proc_cov_vx_d_ = std::pow(proc_stddev_vx_c_ * ekf_dt_, 2.0);
       proc_cov_wz_d_ = std::pow(proc_stddev_wz_c_ * ekf_dt_, 2.0);
       proc_cov_yaw_d_ = std::pow(proc_stddev_yaw_c_ * ekf_dt_, 2.0);
-      proc_cov_yaw_bias_d_ = std::pow(proc_stddev_yaw_bias_c_ * ekf_dt_, 2.0);
     }
   }
   last_predict_time_ = std::make_shared<const rclcpp::Time>(get_clock()->now());
@@ -317,10 +311,12 @@ void EKFLocalizer::callbackInitialPose(
   X(IDX::VX) = 0.0;
   X(IDX::WZ) = 0.0;
 
-  P(IDX::X, IDX::X) = initialpose->pose.covariance[0];
-  P(IDX::Y, IDX::Y) = initialpose->pose.covariance[6 + 1];
+  P(IDX::X, IDX::X) = initialpose->pose.covariance[6 * 0 + 0];
+  P(IDX::Y, IDX::Y) = initialpose->pose.covariance[6 * 1 + 1];
   P(IDX::YAW, IDX::YAW) = initialpose->pose.covariance[6 * 5 + 5];
-  P(IDX::YAWB, IDX::YAWB) = 0.0001;
+  if (enable_yaw_bias_estimation_) {
+    P(IDX::YAWB, IDX::YAWB) = 0.0001;
+  }
   P(IDX::VX, IDX::VX) = 0.01;
   P(IDX::WZ, IDX::WZ) = 0.01;
 
@@ -361,9 +357,11 @@ void EKFLocalizer::initEKF()
   Eigen::MatrixXd X = Eigen::MatrixXd::Zero(dim_x_, 1);
   Eigen::MatrixXd P = Eigen::MatrixXd::Identity(dim_x_, dim_x_) * 1.0E15;  // for x & y
   P(IDX::YAW, IDX::YAW) = 50.0;                                            // for yaw
-  P(IDX::YAWB, IDX::YAWB) = proc_cov_yaw_bias_d_;                          // for yaw bias
-  P(IDX::VX, IDX::VX) = 1000.0;                                            // for vx
-  P(IDX::WZ, IDX::WZ) = 50.0;                                              // for wz
+  if (enable_yaw_bias_estimation_) {
+    P(IDX::YAWB, IDX::YAWB) = 50.0;  // for yaw bias
+  }
+  P(IDX::VX, IDX::VX) = 1000.0;  // for vx
+  P(IDX::WZ, IDX::WZ) = 50.0;    // for wz
 
   ekf_.init(X, P, extend_state_step_);
 }
@@ -433,10 +431,10 @@ void EKFLocalizer::predictKinematicsModel()
 
   Q(IDX::X, IDX::X) = 0.0;
   Q(IDX::Y, IDX::Y) = 0.0;
-  Q(IDX::YAW, IDX::YAW) = proc_cov_yaw_d_;         // for yaw
-  Q(IDX::YAWB, IDX::YAWB) = proc_cov_yaw_bias_d_;  // for yaw bias
-  Q(IDX::VX, IDX::VX) = proc_cov_vx_d_;            // for vx
-  Q(IDX::WZ, IDX::WZ) = proc_cov_wz_d_;            // for wz
+  Q(IDX::YAW, IDX::YAW) = proc_cov_yaw_d_;  // for yaw
+  Q(IDX::YAWB, IDX::YAWB) = 0.0;
+  Q(IDX::VX, IDX::VX) = proc_cov_vx_d_;  // for vx
+  Q(IDX::WZ, IDX::WZ) = proc_cov_wz_d_;  // for wz
 
   ekf_.predictWithDelay(X_next, A, Q);
 
@@ -764,11 +762,11 @@ void EKFLocalizer::updateSimple1DFilters(const geometry_msgs::msg::PoseWithCovar
   tf2::fromMsg(pose.pose.pose.orientation, q_tf);
   tf2::Matrix3x3(q_tf).getRPY(roll, pitch, yaw_tmp);
 
-  double z_stddev = std::sqrt(pose.pose.covariance[2 * 6 + 2]);
-  double roll_stddev = std::sqrt(pose.pose.covariance[3 * 6 + 3]);
-  double pitch_stddev = std::sqrt(pose.pose.covariance[4 * 6 + 4]);
+  double z_dev = pose.pose.covariance[2 * 6 + 2];
+  double roll_dev = pose.pose.covariance[3 * 6 + 3];
+  double pitch_dev = pose.pose.covariance[4 * 6 + 4];
 
-  z_filter_.update(z, z_stddev, pose.header.stamp);
-  roll_filter_.update(roll, roll_stddev, pose.header.stamp);
-  pitch_filter_.update(pitch, pitch_stddev, pose.header.stamp);
+  z_filter_.update(z, z_dev, pose.header.stamp);
+  roll_filter_.update(roll, roll_dev, pose.header.stamp);
+  pitch_filter_.update(pitch, pitch_dev, pose.header.stamp);
 }
