@@ -14,14 +14,10 @@
 
 #include "behavior_path_planner/scene_module/pull_over/pull_over_module.hpp"
 
-#include "behavior_path_planner/behavior_path_planner_node.hpp"
 #include "behavior_path_planner/path_utilities.hpp"
-#include "behavior_path_planner/scene_module/avoidance/debug.hpp"
 #include "behavior_path_planner/scene_module/pull_over/util.hpp"
 #include "behavior_path_planner/scene_module/utils/path_shifter.hpp"
-#include "behavior_path_planner/utilities.hpp"
 
-#include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <motion_utils/motion_utils.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -36,7 +32,6 @@
 
 using motion_utils::calcLongitudinalOffsetPose;
 using motion_utils::calcSignedArcLength;
-using motion_utils::findNearestIndex;
 using nav_msgs::msg::OccupancyGrid;
 using tier4_autoware_utils::calcDistance2d;
 using tier4_autoware_utils::calcOffsetPose;
@@ -44,9 +39,7 @@ using tier4_autoware_utils::createDefaultMarker;
 using tier4_autoware_utils::createMarkerColor;
 using tier4_autoware_utils::createMarkerScale;
 using tier4_autoware_utils::createPoint;
-using tier4_autoware_utils::createQuaternionFromYaw;
 using tier4_autoware_utils::inverseTransformPose;
-using tier4_autoware_utils::transformPose;
 
 namespace behavior_path_planner
 {
@@ -157,16 +150,22 @@ bool PullOverModule::isExecutionRequested() const
   if (current_state_ == BT::NodeStatus::RUNNING) {
     return true;
   }
-
-  const auto current_lanes = util::getCurrentLanes(planner_data_);
-  const auto goal_pose = planner_data_->route_handler->getGoalPose();
+  const auto & current_lanes = util::getCurrentLanes(planner_data_);
+  const auto & current_pose = planner_data_->self_pose->pose;
+  const auto & goal_pose = planner_data_->route_handler->getGoalPose();
 
   // check if goal_pose is far
-  const double goal_arc_length = lanelet::utils::getArcCoordinates(current_lanes, goal_pose).length;
-  const double self_arc_length =
-    lanelet::utils::getArcCoordinates(current_lanes, planner_data_->self_pose->pose).length;
-  const double self_to_goal_arc_length = goal_arc_length - self_arc_length;
-  if (self_to_goal_arc_length > parameters_.request_length) return false;
+  const bool is_in_goal_route_section =
+    planner_data_->route_handler->isInGoalRouteSection(current_lanes.back());
+  // current_lanes does not have the goal
+  if (!is_in_goal_route_section) {
+    return false;
+  }
+  const double self_to_goal_arc_length =
+    util::getSignedDistance(current_pose, goal_pose, current_lanes);
+  if (self_to_goal_arc_length > parameters_.request_length) {
+    return false;
+  }
 
   // check if goal_pose is in shoulder lane
   bool goal_is_in_shoulder_lane = false;
@@ -336,12 +335,9 @@ bool PullOverModule::planWithEfficientPath()
     for (const auto goal_candidate : goal_candidates_) {
       modified_goal_pose_ = goal_candidate.goal_pose;
       if (
-        planShiftPath() &&
-        isLongEnoughToParkingStart(
-          shift_parking_path_.path, shift_parking_path_.shift_point.start) &&
-        !lane_departure_checker_->checkPathWillLeaveLane(
-          status_.lanes, shift_parking_path_.shifted_path.path)) {
-        // shift parking path already confirm safe in it's own function.
+        planShiftPath() && isLongEnoughToParkingStart(
+                             shift_parking_path_.path, shift_parking_path_.shift_point.start)) {
+        // shift parking plan already confirms safety and no lane departure in it's own function.
         status_.path = shift_parking_path_.path;
         status_.path_type = PathType::SHIFT;
         status_.is_safe = true;
@@ -404,10 +400,8 @@ bool PullOverModule::planWithCloseGoal()
     // Generate arc shift path.
     if (
       parameters_.enable_shift_parking && planShiftPath() &&
-      isLongEnoughToParkingStart(shift_parking_path_.path, shift_parking_path_.shift_point.start) &&
-      !lane_departure_checker_->checkPathWillLeaveLane(
-        status_.lanes, shift_parking_path_.shifted_path.path)) {
-      // shift parking path already confirm safe in it's own function.
+      isLongEnoughToParkingStart(shift_parking_path_.path, shift_parking_path_.shift_point.start)) {
+      // shift parking plan already confirms safety and no lane departure in it's own function.
       status_.path = shift_parking_path_.path;
       status_.path_type = PathType::SHIFT;
       status_.is_safe = true;
@@ -646,6 +640,9 @@ bool PullOverModule::planShiftPath()
   // Find pull_over path
   bool found_valid_path, found_safe_path;
   std::tie(found_valid_path, found_safe_path) = getSafePath(shift_parking_path_);
+  if (!found_safe_path) {
+    return found_safe_path;
+  }
 
   shift_parking_path_.path.drivable_area = util::generateDrivableArea(
     shift_parking_path_.path, status_.lanes, common_parameters.drivable_area_resolution,
@@ -674,12 +671,19 @@ PathWithLaneId PullOverModule::getReferencePath() const
   // generate center line path to stop_pose
   const auto arc_position_stop_pose =
     lanelet::utils::getArcCoordinates(status_.current_lanes, stop_pose);
+  const double s_forward = arc_position_stop_pose.length;
   const auto arc_position_current_pose =
     lanelet::utils::getArcCoordinates(status_.current_lanes, current_pose);
-  const auto s_backward =
+  const double s_backward =
     std::max(0.0, arc_position_current_pose.length - common_parameters.backward_path_length);
-  PathWithLaneId reference_path = route_handler->getCenterLinePath(
-    status_.current_lanes, s_backward, arc_position_stop_pose.length, true);
+
+  // stop pose is behind current pose
+  if (s_forward < s_backward) {
+    return getStopPath();
+  }
+
+  PathWithLaneId reference_path =
+    route_handler->getCenterLinePath(status_.current_lanes, s_backward, s_forward, true);
   reference_path.header = route_handler->getRouteHeader();
 
   // slow down for turn signal, insert stop point to stop_pose
@@ -700,7 +704,7 @@ PathWithLaneId PullOverModule::getReferencePath() const
   return reference_path;
 }
 
-PathWithLaneId PullOverModule::getStopPath()
+PathWithLaneId PullOverModule::getStopPath() const
 {
   PathWithLaneId reference_path;
 
@@ -802,7 +806,7 @@ std::pair<bool, bool> PullOverModule::getSafePath(ShiftParkingPath & safe_path) 
     valid_paths = pull_over_utils::selectValidPaths(
       pull_over_paths, status_.current_lanes, check_lanes, *route_handler->getOverallGraphPtr(),
       current_pose, route_handler->isInGoalRouteSection(status_.current_lanes.back()),
-      modified_goal_pose_);
+      modified_goal_pose_, *lane_departure_checker_);
 
     if (valid_paths.empty()) {
       return std::make_pair(false, false);
