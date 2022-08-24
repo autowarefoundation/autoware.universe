@@ -19,10 +19,10 @@ from launch_ros.descriptions import ComposableNode
 
 def create_component(node_name, class_name, **kwargs):
     return ComposableNode(
-        namespace="default_ad_api/helpers",
+        namespace="default_ad_api/helpers/rviz",
         name=node_name,
-        package="default_ad_api_helpers",
-        plugin="default_ad_api_helpers::" + class_name,
+        package="ad_api_adaptors",
+        plugin="ad_api_adaptors::" + class_name,
         **kwargs
     )
 

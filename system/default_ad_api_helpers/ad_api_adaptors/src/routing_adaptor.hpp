@@ -23,7 +23,7 @@
 
 #include <string>
 
-namespace default_ad_api_helpers
+namespace ad_api_adaptors
 {
 
 class RoutingAdaptor : public rclcpp::Node
@@ -44,6 +44,6 @@ private:
   void on_waypoint(const PoseStamped::ConstSharedPtr pose);
 };
 
-}  // namespace default_ad_api_helpers
+}  // namespace ad_api_adaptors
 
 #endif  // ROUTING_ADAPTOR_HPP_

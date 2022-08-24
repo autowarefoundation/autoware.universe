@@ -1,4 +1,4 @@
-# default_ad_api_helpers
+# ad_api_adaptors
 
 ## routing_adaptor
 

@@ -16,7 +16,7 @@
 
 #include <memory>
 
-namespace default_ad_api_helpers
+namespace ad_api_adaptors
 {
 
 RoutingAdaptor::RoutingAdaptor(const rclcpp::NodeOptions & options)
@@ -54,7 +54,7 @@ void RoutingAdaptor::on_waypoint(const PoseStamped::ConstSharedPtr pose)
   cli_route_->async_send_request(route_points_);
 }
 
-}  // namespace default_ad_api_helpers
+}  // namespace ad_api_adaptors
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(default_ad_api_helpers::RoutingAdaptor)
+RCLCPP_COMPONENTS_REGISTER_NODE(ad_api_adaptors::RoutingAdaptor)
