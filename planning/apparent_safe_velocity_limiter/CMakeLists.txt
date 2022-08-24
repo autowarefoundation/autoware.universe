@@ -4,10 +4,17 @@ project(apparent_safe_velocity_limiter)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
-find_package(Boost REQUIRED)
+find_package(PCL REQUIRED COMPONENTS common)
+find_package(pcl_conversions REQUIRED)
 
 ament_auto_add_library(apparent_safe_velocity_limiter_node SHARED
   DIRECTORY src
+)
+
+ament_target_dependencies(apparent_safe_velocity_limiter_node PCL)
+target_include_directories(apparent_safe_velocity_limiter_node
+  SYSTEM PUBLIC
+    "${PCL_INCLUDE_DIRS}"
 )
 
 # Disable warnings due to external dependencies
@@ -23,8 +30,7 @@ rclcpp_components_register_node(apparent_safe_velocity_limiter_node
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
-
-  ament_add_gtest(test_${PROJECT_NAME}
+  ament_add_ros_isolated_gtest(test_${PROJECT_NAME}
     test/test_forward_projection.cpp
     test/test_obstacles.cpp
     test/test_collision_distance.cpp

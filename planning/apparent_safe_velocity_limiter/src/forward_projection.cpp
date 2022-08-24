@@ -26,6 +26,11 @@
 #include <boost/geometry/strategies/cartesian/buffer_point_circle.hpp>
 #include <boost/geometry/strategies/cartesian/buffer_side_straight.hpp>
 
+#ifdef ROS_DISTRO_GALACTIC
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#else
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#endif
 #include <tf2/utils.h>
 
 namespace apparent_safe_velocity_limiter

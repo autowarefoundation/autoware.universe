@@ -23,8 +23,6 @@
 #include <boost/geometry.hpp>
 #include <boost/geometry/algorithms/correct.hpp>
 
-#include <pcl_conversions/pcl_conversions.h>
-
 namespace apparent_safe_velocity_limiter
 {
 
