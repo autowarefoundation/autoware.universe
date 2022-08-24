@@ -20,10 +20,8 @@
 #include <component_interface_utils/rclcpp.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-using Initialize1 = autoware_ad_api::localization::Initialize;
-using Initialize2 = localization_interface::Initialize;
-using State1 = autoware_ad_api::localization::InitializationState;
-using State2 = localization_interface::InitializationState;
+// This file should be included after messages.
+#include "utils/types.hpp"
 
 namespace default_ad_api
 {
@@ -34,11 +32,11 @@ public:
   explicit LocalizationNode(const rclcpp::NodeOptions & options);
 
 private:
-  rclcpp::CallbackGroup::SharedPtr group_srv_;
-  component_interface_utils::Service<Initialize1>::SharedPtr srv_initialize_;
-  component_interface_utils::Client<Initialize2>::SharedPtr cli_initialize_;
-  component_interface_utils::Publisher<State1>::SharedPtr pub_state_;
-  component_interface_utils::Subscription<State2>::SharedPtr sub_state_;
+  rclcpp::CallbackGroup::SharedPtr group_cli_;
+  Srv<autoware_ad_api::localization::Initialize> srv_initialize_;
+  Pub<autoware_ad_api::localization::InitializationState> pub_state_;
+  Cli<localization_interface::Initialize> cli_initialize_;
+  Sub<localization_interface::InitializationState> sub_state_;
 };
 
 }  // namespace default_ad_api
