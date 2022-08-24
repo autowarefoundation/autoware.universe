@@ -81,16 +81,15 @@ bool BlindSpotModule::modifyPathVelocity(
 
   /* set stop-line and stop-judgement-line for base_link */
   int stop_line_idx = -1;
-  int pass_judge_line_idx = -1;
   const auto straight_lanelets = getStraightLanelets(lanelet_map_ptr, routing_graph_ptr, lane_id_);
-  if (!generateStopLine(straight_lanelets, path, &stop_line_idx, &pass_judge_line_idx)) {
+  if (!generateStopLine(straight_lanelets, path, &stop_line_idx)) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
       logger_, *clock_, 1000 /* ms */, "[BlindSpotModule::run] setStopLineIdx fail");
     *path = input_path;  // reset path
     return false;
   }
 
-  if (stop_line_idx <= 0 || (planner_param_.use_pass_judge_line && pass_judge_line_idx <= 0)) {
+  if (stop_line_idx <= 0) {
     RCLCPP_DEBUG(
       logger_, "[Blind Spot] stop line or pass judge line is at path[0], ignore planning.");
     *path = input_path;  // reset path
@@ -110,21 +109,32 @@ bool BlindSpotModule::modifyPathVelocity(
   }
   const size_t closest_idx = closest_idx_opt.get();
 
+  /* set judge line dist */
+  const double current_vel = planner_data_->current_velocity->twist.linear.x;
+  const double max_acc = planner_data_->max_stop_acceleration_threshold;
+  const double delay_response_time = planner_data_->delay_response_time;
+  const double pass_judge_line_dist =
+    planning_utils::calcJudgeLineDistWithAccLimit(current_vel, max_acc, delay_response_time);
+  const auto stop_point_pose = path->points.at(stop_line_idx).point.pose;
+  const auto distnce_until_stop = motion_utils::calcSignedArcLength(
+    input_path.points, current_pose.pose, stop_point_pose.position);
+  if (distnce_until_stop == boost::none) return true;
+
   /* get debug info */
   const auto stop_line_pose = planning_utils::getAheadPose(
     stop_line_idx, planner_data_->vehicle_info_.max_longitudinal_offset_m, *path);
   debug_data_.virtual_wall_pose = stop_line_pose;
-  debug_data_.stop_point_pose = path->points.at(stop_line_idx).point.pose;
-  debug_data_.judge_point_pose = path->points.at(pass_judge_line_idx).point.pose;
+  const auto stop_pose = path->points.at(stop_line_idx).point.pose;
+  debug_data_.stop_point_pose = stop_pose;
+  // debug_data_.judge_point_pose = path->points.at(pass_judge_line_idx).point.pose;
+  auto offset_pose = motion_utils::calcLongitudinalOffsetPose(
+    path->points, stop_pose.position, -pass_judge_line_dist);
+  if (offset_pose) debug_data_.judge_point_pose = *offset_pose;
 
   /* if current_state = GO, and current_pose is over judge_line, ignore planning. */
-  is_over_pass_judge_line_ = static_cast<bool>(static_cast<int>(closest_idx) > pass_judge_line_idx);
-  if (static_cast<int>(closest_idx) == pass_judge_line_idx) {
-    geometry_msgs::msg::Pose pass_judge_line = path->points.at(pass_judge_line_idx).point.pose;
-    is_over_pass_judge_line_ = planning_utils::isAheadOf(current_pose.pose, pass_judge_line);
-  }
   if (planner_param_.use_pass_judge_line) {
-    if (current_state == State::GO && is_over_pass_judge_line_) {
+    const double eps = 1e-1;  // to prevent hunting
+    if (current_state == State::GO && *distnce_until_stop + eps < pass_judge_line_dist) {
       RCLCPP_DEBUG(logger_, "over the pass judge line. no plan needed.");
       *path = input_path;  // reset path
       setSafe(true);
@@ -193,22 +203,13 @@ boost::optional<int> BlindSpotModule::getFirstPointConflictingLanelets(
 
 bool BlindSpotModule::generateStopLine(
   const lanelet::ConstLanelets straight_lanelets,
-  autoware_auto_planning_msgs::msg::PathWithLaneId * path, int * stop_line_idx,
-  int * pass_judge_line_idx) const
+  autoware_auto_planning_msgs::msg::PathWithLaneId * path, int * stop_line_idx) const
 {
-  /* set judge line dist */
-  const double current_vel = planner_data_->current_velocity->twist.linear.x;
-  const double max_acc = planner_data_->max_stop_acceleration_threshold;
-  const double delay_response_time = planner_data_->delay_response_time;
-  const double pass_judge_line_dist =
-    planning_utils::calcJudgeLineDistWithAccLimit(current_vel, max_acc, delay_response_time);
-
   /* set parameters */
   constexpr double interval = 0.2;
   const int margin_idx_dist = std::ceil(planner_param_.stop_line_margin / interval);
   const int base2front_idx_dist =
     std::ceil(planner_data_->vehicle_info_.max_longitudinal_offset_m / interval);
-  const int pass_judge_idx_dist = std::ceil(pass_judge_line_dist / interval);
 
   /* spline interpolation */
   autoware_auto_planning_msgs::msg::PathWithLaneId path_ip;
@@ -260,26 +261,9 @@ bool BlindSpotModule::generateStopLine(
     }
   }
 
-  /* insert judge point */
-  // need to remove const because pass judge idx will be changed by insert stop point
-  int pass_judge_idx_ip = std::min(
-    static_cast<int>(path_ip.points.size()) - 1, std::max(stop_idx_ip - pass_judge_idx_dist, 0));
-  if (has_prior_stopline || stop_idx_ip == pass_judge_idx_ip) {
-    *pass_judge_line_idx = *stop_line_idx;
-  } else {
-    bool is_pass_judge_point_inserted = true;
-    //! insertPoint check if there is no duplicated point
-    *pass_judge_line_idx =
-      insertPoint(pass_judge_idx_ip, path_ip, path, is_pass_judge_point_inserted);
-    if (is_pass_judge_point_inserted)
-      ++(*stop_line_idx);  // stop index is incremented by judge line insertion
-  }
-
   RCLCPP_DEBUG(
-    logger_,
-    "generateStopLine() : stop_idx = %d, pass_judge_idx = %d, stop_idx_ip = %d, "
-    "pass_judge_idx_ip = %d, has_prior_stopline = %d",
-    *stop_line_idx, *pass_judge_line_idx, stop_idx_ip, pass_judge_idx_ip, has_prior_stopline);
+    logger_, "generateStopLine() : stop_idx = %d, stop_idx_ip = %d, has_prior_stopline = %d",
+    *stop_line_idx, stop_idx_ip, has_prior_stopline);
 
   return true;
 }
