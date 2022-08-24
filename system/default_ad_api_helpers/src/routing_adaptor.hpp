@@ -29,7 +29,7 @@ namespace default_ad_api_helpers
 class RoutingAdaptor : public rclcpp::Node
 {
 public:
-  RoutingAdaptor();
+  explicit RoutingAdaptor(const rclcpp::NodeOptions & options);
 
 private:
   using PoseStamped = geometry_msgs::msg::PoseStamped;

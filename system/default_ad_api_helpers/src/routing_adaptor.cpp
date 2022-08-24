@@ -19,7 +19,8 @@
 namespace default_ad_api_helpers
 {
 
-RoutingAdaptor::RoutingAdaptor() : Node("routing_adaptor")
+RoutingAdaptor::RoutingAdaptor(const rclcpp::NodeOptions & options)
+: Node("routing_adaptor", options)
 {
   sub_goal_ = create_subscription<PoseStamped>(
     "~/input/goal", 5, std::bind(&RoutingAdaptor::on_goal, this, std::placeholders::_1));
@@ -55,5 +56,5 @@ void RoutingAdaptor::on_waypoint(const PoseStamped::ConstSharedPtr pose)
 
 }  // namespace default_ad_api_helpers
 
-#include "macros/create_node.hpp"
-CREATE_SINGLE_THREAD_NODE(default_ad_api_helpers::RoutingAdaptor)
+#include <rclcpp_components/register_node_macro.hpp>
+RCLCPP_COMPONENTS_REGISTER_NODE(default_ad_api_helpers::RoutingAdaptor)
