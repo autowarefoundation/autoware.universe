@@ -144,21 +144,16 @@ void MissionPlanner::OnSetRoute(
   // Use common header for transforms
   PoseStamped pose;
   pose.header = req->header;
+  pose.pose = req->goal;
 
   // Convert route points.
-  autoware_ad_api_msgs::msg::RouteBody body;
-  body.segments = req->segments;
-  if (req->start.empty()) {
-    body.start = GetEgoVehiclePose().pose;
-  } else {
-    pose.pose = req->start.front();
-    body.start = TransformPose(pose).pose;
-  }
-  pose.pose = req->goal;
-  body.goal = TransformPose(pose).pose;
+  autoware_ad_api_msgs::msg::RouteData data;
+  data.start = GetEgoVehiclePose().pose;
+  data.goal = TransformPose(pose).pose;
+  data.segments = req->segments;
 
   // Convert route.
-  HADMapRoute route = conversion::ConvertRoute(body);
+  HADMapRoute route = conversion::ConvertRoute(data);
   route.header.stamp = req->header.stamp;
   route.header.frame_id = map_frame_;
 
@@ -188,12 +183,7 @@ void MissionPlanner::OnSetRoutePoints(
 
   // Convert route points.
   PlannerPlugin::RoutePoints points;
-  if (req->start.empty()) {
-    points.push_back(GetEgoVehiclePose().pose);
-  } else {
-    pose.pose = req->start.front();
-    points.push_back(TransformPose(pose).pose);
-  }
+  points.push_back(GetEgoVehiclePose().pose);
   for (const auto & waypoint : req->waypoints) {
     pose.pose = waypoint;
     points.push_back(TransformPose(pose).pose);

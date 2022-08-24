@@ -95,18 +95,18 @@ APIRoute CreateEmptyRoute(const rclcpp::Time & stamp)
 
 APIRoute ConvertRoute(const HADRoute & had)
 {
-  APIRouteBody body;
-  body.start = had.start_pose;
-  body.goal = had.goal_pose;
-  body.segments = ConvertVector<APISegment>(had.segments);
+  APIRouteData data;
+  data.start = had.start_pose;
+  data.goal = had.goal_pose;
+  data.segments = ConvertVector<APISegment>(had.segments);
 
   APIRoute api;
   api.header = had.header;
-  api.body.push_back(body);
+  api.data.push_back(data);
   return api;
 }
 
-HADRoute ConvertRoute(const APIRouteBody & api)
+HADRoute ConvertRoute(const APIRouteData & api)
 {
   // The header is assigned by mission planner.
   HADRoute had;

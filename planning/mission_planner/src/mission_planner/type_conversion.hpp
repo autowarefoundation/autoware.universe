@@ -18,19 +18,19 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_ad_api_msgs/msg/route.hpp>
-#include <autoware_ad_api_msgs/msg/route_body.hpp>
+#include <autoware_ad_api_msgs/msg/route_data.hpp>
 #include <autoware_auto_planning_msgs/msg/had_map_route.hpp>
 
 namespace mission_planner::conversion
 {
 
-using APIRouteBody = autoware_ad_api_msgs::msg::RouteBody;
+using APIRouteData = autoware_ad_api_msgs::msg::RouteData;
 using APIRoute = autoware_ad_api_msgs::msg::Route;
 using HADRoute = autoware_auto_planning_msgs::msg::HADMapRoute;
 
 APIRoute CreateEmptyRoute(const rclcpp::Time & stamp);
 APIRoute ConvertRoute(const HADRoute & had);
-HADRoute ConvertRoute(const APIRouteBody & api);
+HADRoute ConvertRoute(const APIRouteData & api);
 
 }  // namespace mission_planner::conversion
 
