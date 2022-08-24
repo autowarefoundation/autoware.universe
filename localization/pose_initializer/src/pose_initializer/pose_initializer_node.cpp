@@ -25,4 +25,5 @@ int main(int argc, char ** argv)
   executor.spin();
   executor.remove_node(node);
   rclcpp::shutdown();
+  return 0;
 }
