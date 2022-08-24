@@ -15,12 +15,12 @@
 #ifndef DEFAULT_AD_API__SPECS__INTERFACE__VERSION_HPP_
 #define DEFAULT_AD_API__SPECS__INTERFACE__VERSION_HPP_
 
-#include "autoware_ad_api_msgs/srv/interface_version.hpp"
+#include <autoware_ad_api_msgs/srv/interface_version.hpp>
 
-namespace ad_api::interface::version
+namespace autoware_ad_api::interface
 {
 
-struct T
+struct Version
 {
   using Service = autoware_ad_api_msgs::srv::InterfaceVersion;
   static constexpr char name[] = "/api/interface/version";
