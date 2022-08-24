@@ -196,13 +196,12 @@ std::vector<double> calcTrajectoryCurvatureFrom3Points(
     const auto p2 = getPoint(trajectory.at(i + std::min(idx_dist, trajectory.size() - 1 - i)));
     try {
       curvature = calcCurvature(p0, p1, p2);
-    } catch (std::exception const& e) {
+    } catch (std::exception const & e) {
       // ...code that handles the error...
       RCLCPP_WARN(
-        rclcpp::get_logger("motion_velocity_smoother").get_child("trajectory_utils"),
-        "%s", e.what());
-      if(!k_arr.empty())
-      {
+        rclcpp::get_logger("motion_velocity_smoother").get_child("trajectory_utils"), "%s",
+        e.what());
+      if (!k_arr.empty()) {
         curvature = k_arr.back();  // previous curvature
       } else {
         curvature = 0.0;
