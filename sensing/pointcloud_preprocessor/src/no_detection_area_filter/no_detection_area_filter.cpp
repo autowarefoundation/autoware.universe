@@ -16,17 +16,6 @@
 
 #include "pointcloud_preprocessor/filter.hpp"
 
-#include <pcl_ros/transforms.hpp>
-
-#include <lanelet2_core/geometry/Polygon.h>
-#include <tf2_ros/create_timer_ros.h>
-
-#include <memory>
-#include <string>
-#include <unordered_map>
-#include <utility>
-#include <vector>
-
 namespace
 {
 bool pointWithinLanelets(const Point2d & point, const lanelet::ConstPolygons3d & lanelets)

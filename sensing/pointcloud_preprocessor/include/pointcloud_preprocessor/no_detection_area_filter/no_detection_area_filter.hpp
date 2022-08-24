@@ -19,28 +19,11 @@
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
-#include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 
-#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
-#include <sensor_msgs/msg/point_cloud2.hpp>
-#include <tier4_debug_msgs/msg/float32_stamped.hpp>
+#include <lanelet2_core/geometry/Polygon.h>
 
-#include <pcl/filters/voxel_grid.h>
-#include <pcl_conversions/pcl_conversions.h>
-
-#ifdef ROS_DISTRO_GALACTIC
-#include <tf2_eigen/tf2_eigen.h>
-#else
-#include <tf2_eigen/tf2_eigen.hpp>
-#endif
-
-#include <tf2_ros/transform_listener.h>
-
-#include <memory>
-#include <mutex>
 #include <string>
-#include <vector>
 
 using tier4_autoware_utils::LinearRing2d;
 using tier4_autoware_utils::MultiPoint2d;
