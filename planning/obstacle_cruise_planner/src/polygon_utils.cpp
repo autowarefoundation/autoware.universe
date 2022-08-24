@@ -14,6 +14,7 @@
 
 #include "obstacle_cruise_planner/polygon_utils.hpp"
 
+#include "motion_utils/trajectory/trajectory.hpp"
 #include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
 
 namespace
@@ -86,11 +87,12 @@ Polygon2d createOneStepPolygon(
 
 namespace polygon_utils
 {
-boost::optional<size_t> getFirstCollisionIndex(
-  const std::vector<Polygon2d> & traj_polygons, const Polygon2d & obj_polygon,
-  const std_msgs::msg::Header & obj_header,
+boost::optional<size_t> getCollisionIndex(
+  const std::vector<Polygon2d> & traj_polygons, const geometry_msgs::msg::PoseStamped & obj_pose,
+  const autoware_auto_perception_msgs::msg::Shape & shape,
   std::vector<geometry_msgs::msg::PointStamped> & collision_geom_points)
 {
+  const auto obj_polygon = tier4_autoware_utils::toPolygon2d(obj_pose.pose, shape);
   for (size_t i = 0; i < traj_polygons.size(); ++i) {
     std::deque<Polygon2d> collision_polygons;
     boost::geometry::intersection(traj_polygons.at(i), obj_polygon, collision_polygons);
@@ -102,7 +104,7 @@ boost::optional<size_t> getFirstCollisionIndex(
 
         for (const auto & collision_point : collision_polygon.outer()) {
           geometry_msgs::msg::PointStamped collision_geom_point;
-          collision_geom_point.header = obj_header;
+          collision_geom_point.header = obj_pose.header;
           collision_geom_point.point.x = collision_point.x();
           collision_geom_point.point.y = collision_point.y();
           collision_geom_points.push_back(collision_geom_point);
@@ -140,6 +142,41 @@ boost::optional<size_t> getFirstNonCollisionIndex(
     }
   }
   return {};
+}
+
+std::vector<geometry_msgs::msg::PointStamped> getCollisionPoints(
+  const autoware_auto_planning_msgs::msg::Trajectory & traj,
+  const std::vector<Polygon2d> & traj_polygons, const std_msgs::msg::Header & obj_header,
+  const autoware_auto_perception_msgs::msg::PredictedPath & predicted_path,
+  const autoware_auto_perception_msgs::msg::Shape & shape, const rclcpp::Time & current_time,
+  const double vehicle_max_longitudinal_offset, const bool is_driving_forward)
+{
+  std::vector<geometry_msgs::msg::PointStamped> collision_points;
+  for (size_t i = 0; i < predicted_path.path.size(); ++i) {
+    const auto object_time =
+      rclcpp::Time(obj_header.stamp) + rclcpp::Duration(predicted_path.time_step) * i;
+    // Ignore past position
+    if ((object_time - current_time).seconds() < 0.0) {
+      continue;
+    }
+
+    geometry_msgs::msg::PoseStamped obj_pose;
+    obj_pose.header.frame_id = obj_header.frame_id;
+    obj_pose.header.stamp = object_time;
+    obj_pose.pose = predicted_path.path.at(i);
+
+    std::vector<geometry_msgs::msg::PointStamped> current_collision_points;
+    const auto collision_idx =
+      getCollisionIndex(traj_polygons, obj_pose, shape, current_collision_points);
+    if (collision_idx) {
+      const auto nearest_collision_point = calcNearestCollisionPoint(
+        *collision_idx, current_collision_points, traj, vehicle_max_longitudinal_offset,
+        is_driving_forward);
+      collision_points.push_back(nearest_collision_point);
+    }
+  }
+
+  return collision_points;
 }
 
 boost::optional<size_t> willCollideWithSurroundObstacle(
@@ -239,5 +276,45 @@ std::vector<Polygon2d> createOneStepPolygons(
     polygons.push_back(polygon);
   }
   return polygons;
+}
+
+geometry_msgs::msg::PointStamped calcNearestCollisionPoint(
+  const size_t & first_within_idx,
+  const std::vector<geometry_msgs::msg::PointStamped> & collision_points,
+  const autoware_auto_planning_msgs::msg::Trajectory & decimated_traj,
+  const double vehicle_max_longitudinal_offset, const bool is_driving_forward)
+{
+  std::array<geometry_msgs::msg::Point, 2> segment_points;
+  if (first_within_idx == 0) {
+    const auto & traj_front_pose = decimated_traj.points.at(0).pose;
+    const auto front_pos = tier4_autoware_utils::calcOffsetPose(
+                             traj_front_pose, vehicle_max_longitudinal_offset, 0.0, 0.0)
+                             .position;
+    if (is_driving_forward) {
+      segment_points.at(0) = traj_front_pose.position;
+      segment_points.at(1) = front_pos;
+    } else {
+      segment_points.at(0) = front_pos;
+      segment_points.at(1) = traj_front_pose.position;
+    }
+  } else {
+    const size_t seg_idx = first_within_idx - 1;
+    segment_points.at(0) = decimated_traj.points.at(seg_idx).pose.position;
+    segment_points.at(1) = decimated_traj.points.at(seg_idx + 1).pose.position;
+  }
+
+  size_t min_idx = 0;
+  double min_dist = std::numeric_limits<double>::max();
+  for (size_t cp_idx = 0; cp_idx < collision_points.size(); ++cp_idx) {
+    const auto & collision_point = collision_points.at(cp_idx);
+    const double dist =
+      motion_utils::calcLongitudinalOffsetToSegment(segment_points, 0, collision_point.point);
+    if (dist < min_dist) {
+      min_dist = dist;
+      min_idx = cp_idx;
+    }
+  }
+
+  return collision_points.at(min_idx);
 }
 }  // namespace polygon_utils
