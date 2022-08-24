@@ -23,8 +23,7 @@ Predictor::Predictor()
   resampling_interval_seconds_(declare_parameter("resampling_interval_seconds", 1.0f)),
   static_linear_covariance_(declare_parameter("static_linear_covariance", 0.01)),
   static_angular_covariance_(declare_parameter("static_angular_covariance", 0.01)),
-  use_dynamic_noise_(declare_parameter("use_dynamic_noise", false)),
-  log_std_weight_threshold_(declare_parameter("log_std_weight_threshold", -6))
+  use_dynamic_noise_(declare_parameter("use_dynamic_noise", false))
 {
   const double prediction_rate{declare_parameter("prediction_rate", 50.0f)};
 
@@ -156,8 +155,8 @@ void Predictor::updateWithDynamicNoise(
     geometry_msgs::msg::Pose pose{particle_array.particles[i].pose};
 
     float yaw{static_cast<float>(tf2::getYaw(pose.orientation))};
-    float vx{linear_x + nrand(16.f) * std_linear_x * gain_linear};
-    float wz{angular_z + nrand(1.f) * std_angular_z * gain_linear};
+    float vx{linear_x + nrand(std_linear_x * gain_linear)};
+    float wz{angular_z + nrand(std_angular_z * gain_linear)};
 
     tf2::Quaternion q;
     q.setRPY(roll, pitch, yaw + wz * dt);
