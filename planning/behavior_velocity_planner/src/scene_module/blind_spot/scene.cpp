@@ -248,9 +248,8 @@ bool BlindSpotModule::generateStopLine(
     stop_idx_ip = std::max(stop_idx_ip - base2front_idx_dist, 0);
   }
 
-  /* insert stop_point */
-  [[maybe_unused]] bool is_stop_point_inserted = true;
-  *stop_line_idx = insertPoint(stop_idx_ip, path_ip, path, is_stop_point_inserted);
+  /* insert stop_point to use interpolated path*/
+  *stop_line_idx = insertPoint(stop_idx_ip, path_ip, path);
 
   /* if another stop point exist before intersection stop_line, disable judge_line. */
   bool has_prior_stopline = false;
@@ -293,7 +292,7 @@ void BlindSpotModule::cutPredictPathWithDuration(
 
 int BlindSpotModule::insertPoint(
   const int insert_idx_ip, const autoware_auto_planning_msgs::msg::PathWithLaneId path_ip,
-  autoware_auto_planning_msgs::msg::PathWithLaneId * inout_path, bool & is_point_inserted) const
+  autoware_auto_planning_msgs::msg::PathWithLaneId * inout_path) const
 {
   double insert_point_s = 0.0;
   for (int i = 1; i <= insert_idx_ip; i++) {
@@ -324,7 +323,6 @@ int BlindSpotModule::insertPoint(
       tier4_autoware_utils::calcDistance2d(
         inserted_point, inout_path->points.at(insert_idx).point) < min_dist) {
       inout_path->points.at(insert_idx).point.longitudinal_velocity_mps = 0.0;
-      is_point_inserted = false;
       return insert_idx;
     } else if (
       insert_idx != 0 &&
@@ -333,11 +331,9 @@ int BlindSpotModule::insertPoint(
         min_dist) {
       inout_path->points.at(insert_idx - 1).point.longitudinal_velocity_mps = 0.0;
       insert_idx--;
-      is_point_inserted = false;
       return insert_idx;
     }
     inout_path->points.insert(it, inserted_point);
-    is_point_inserted = true;
   }
   return insert_idx;
 }

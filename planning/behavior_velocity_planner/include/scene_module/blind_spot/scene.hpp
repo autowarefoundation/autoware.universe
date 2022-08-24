@@ -218,7 +218,7 @@ private:
    */
   int insertPoint(
     const int insert_idx_ip, const autoware_auto_planning_msgs::msg::PathWithLaneId path_ip,
-    autoware_auto_planning_msgs::msg::PathWithLaneId * path, bool & is_point_inserted) const;
+    autoware_auto_planning_msgs::msg::PathWithLaneId * path) const;
 
   /**
    * @brief Calculate first path index that is conflicting lanelets.
