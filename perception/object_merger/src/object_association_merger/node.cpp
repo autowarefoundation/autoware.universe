@@ -36,7 +36,7 @@ bool isUnknownObjectOverlapped(
   const autoware_auto_perception_msgs::msg::DetectedObject & known_object,
   const double precision_threshold, const double recall_threshold)
 {
-  constexpr double sq_distance_threshold = std::pow(5.0, 2.0);
+  constexpr double sq_distance_threshold = std::pow(7.0, 2.0);
   const double sq_distance = tier4_autoware_utils::calcSquaredDistance2d(
     unknown_object.kinematics.pose_with_covariance.pose,
     known_object.kinematics.pose_with_covariance.pose);
@@ -66,6 +66,8 @@ ObjectAssociationMergerNode::ObjectAssociationMergerNode(const rclcpp::NodeOptio
 
   // Parameters
   base_link_frame_id_ = declare_parameter<std::string>("base_link_frame_id", "base_link");
+  priority_mode_ = static_cast<PriorityMode>(
+    declare_parameter<int>("priority_mode", static_cast<int>(PriorityMode::Confidence)));
   remove_overlapped_unknown_objects_ =
     declare_parameter<bool>("remove_overlapped_unknown_objects", true);
   overlapped_judge_param_.precision_threshold =
@@ -117,10 +119,20 @@ void ObjectAssociationMergerNode::objectsCallback(
     const auto & object0 = objects0.at(object0_idx);
     if (direct_assignment.find(object0_idx) != direct_assignment.end()) {  // found and merge
       const auto & object1 = objects1.at(direct_assignment.at(object0_idx));
-      if (object1.existence_probability <= object0.existence_probability)
-        output_msg.objects.push_back(object0);
-      else
-        output_msg.objects.push_back(object1);
+      switch (priority_mode_) {
+        case PriorityMode::Object0:
+          output_msg.objects.push_back(object0);
+          break;
+        case PriorityMode::Object1:
+          output_msg.objects.push_back(object1);
+          break;
+        case PriorityMode::Confidence:
+          if (object1.existence_probability <= object0.existence_probability)
+            output_msg.objects.push_back(object0);
+          else
+            output_msg.objects.push_back(object1);
+          break;
+      }
     } else {  // not found
       output_msg.objects.push_back(object0);
     }
