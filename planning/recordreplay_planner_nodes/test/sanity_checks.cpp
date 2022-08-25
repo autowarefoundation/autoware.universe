@@ -23,11 +23,8 @@
 #include <algorithm>
 #include <memory>
 
-#include "object_collision_estimator_nodes/object_collision_estimator_node.hpp"
-
 
 using motion::planning::recordreplay_planner_nodes::RecordReplayPlannerNode;
-using motion::planning::object_collision_estimator_nodes::ObjectCollisionEstimatorNode;
 using motion::motion_testing::make_state;
 using std::chrono::system_clock;
 using autoware_auto_planning_msgs::msg::Trajectory;
@@ -41,30 +38,11 @@ TEST(MytestBase, Basic)
   const auto min_record_distance = 0.0;
   rclcpp::init(0, nullptr);
 
-  rclcpp::NodeOptions node_options_rr, node_options_ob;
-  node_options_ob.append_parameter_override("vehicle.cg_to_front_m", 1.0);
-  node_options_ob.append_parameter_override("vehicle.cg_to_rear_m", 1.0);
-  node_options_ob.append_parameter_override("vehicle.front_corner_stiffness", 0.5);
-  node_options_ob.append_parameter_override("vehicle.rear_corner_stiffness", 0.5);
-  node_options_ob.append_parameter_override("vehicle.mass_kg", 1500.0);
-  node_options_ob.append_parameter_override("vehicle.yaw_inertia_kgm2", 12.0);
-  node_options_ob.append_parameter_override("vehicle.width_m", 2.0);
-  node_options_ob.append_parameter_override("vehicle.front_overhang_m", 0.5);
-  node_options_ob.append_parameter_override("vehicle.rear_overhang_m", 0.2);
-  node_options_ob.append_parameter_override("safety_factor", 2.0);
-  node_options_ob.append_parameter_override("stop_margin", 5.0);
-  node_options_ob.append_parameter_override("min_obstacle_dimension_m", 0.0004);
-  node_options_ob.append_parameter_override("trajectory_smoother.kernel_std", 5.0);
-  node_options_ob.append_parameter_override("trajectory_smoother.kernel_size", 25);
-  node_options_ob.append_parameter_override("staleness_threshold_ms", 500);
-  node_options_ob.append_parameter_override("target_frame_id", "map");
-  auto object_collision_estimator_node = std::make_shared<ObjectCollisionEstimatorNode>(
-    node_options_ob);
+  rclcpp::NodeOptions node_options_rr;
 
   node_options_rr.append_parameter_override("heading_weight", heading_weight);
   node_options_rr.append_parameter_override("min_record_distance", min_record_distance);
-  node_options_rr.append_parameter_override("enable_object_collision_estimator", true);
-  node_options_rr.append_parameter_override("enable_object_collision_estimator", true);
+  node_options_rr.append_parameter_override("enable_object_collision_estimator", false);
   node_options_rr.append_parameter_override("goal_distance_threshold_m", 0.75);
   node_options_rr.append_parameter_override("loop_trajectory", false);
   node_options_rr.append_parameter_override("loop_max_gap_m", 0.0);

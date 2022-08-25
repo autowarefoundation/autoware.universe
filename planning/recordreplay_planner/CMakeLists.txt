@@ -1,16 +1,13 @@
-cmake_minimum_required(VERSION 3.6)
-
+cmake_minimum_required(VERSION 3.14)
 project(recordreplay_planner)
 
-### Dependencies
-find_package(ament_cmake_auto REQUIRED)
-ament_auto_find_build_dependencies()
+find_package(autoware_cmake REQUIRED)
+autoware_package()
 
 # Build library
 ament_auto_add_library(${PROJECT_NAME} SHARED
   src/recordreplay_planner/recordreplay_planner.cpp
 )
-autoware_set_compile_options(${PROJECT_NAME})
 
 ### Test
 if(BUILD_TESTING)
@@ -21,7 +18,6 @@ if(BUILD_TESTING)
   ament_add_gtest(recordreplay_planner_unit_tests
     test/gtest_main.cpp
     test/sanity_checks.cpp)
-  autoware_set_compile_options(recordreplay_planner_unit_tests)
   target_compile_options(recordreplay_planner_unit_tests PRIVATE -Wno-conversion -Wno-double-promotion)
   target_link_libraries(recordreplay_planner_unit_tests ${PROJECT_NAME})
   target_include_directories(recordreplay_planner_unit_tests PRIVATE "include")

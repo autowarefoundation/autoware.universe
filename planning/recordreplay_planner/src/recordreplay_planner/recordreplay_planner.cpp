@@ -250,6 +250,10 @@ const Trajectory & RecordReplayPlanner::from_record(const State & current_state)
   m_traj_start_idx = get_closest_state(current_state);
 
   // Determine how long the published trajectory will be
+
+  // A max length from 100 is as in Autoware.Auto.
+  // TODO(haoru): refactor the lookup to be flexible and distance-based
+  static constexpr size_t MAX_TRAJECTORY_LENGTH = 100;
   auto & trajectory = m_trajectory;
   const auto record_length = get_record_length();
   std::size_t publication_len;
@@ -261,11 +265,9 @@ const Trajectory & RecordReplayPlanner::from_record(const State & current_state)
     // the start index to the end of the recording, or
     // the maximum length of recording, whichever is shorter.
     publication_len =
-      std::min(
-      record_length - m_traj_start_idx, trajectory.points.max_size());
+      std::min({record_length - m_traj_start_idx, MAX_TRAJECTORY_LENGTH});
   } else {
-    publication_len =
-      std::min(record_length, trajectory.points.max_size());
+    publication_len = std::min({record_length, MAX_TRAJECTORY_LENGTH});
   }
 
   m_traj_end_idx = m_traj_start_idx + publication_len;

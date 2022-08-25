@@ -37,14 +37,14 @@ RecordReplayPlannerNode::RecordReplayPlannerNode(const rclcpp::NodeOptions & nod
   const auto ego_topic = "vehicle_state";
   const auto trajectory_topic = "planned_trajectory";
   const auto trajectory_viz_topic = "planned_trajectory_viz";
-  const auto heading_weight = declare_parameter("heading_weight").get<float64_t>();
-  const auto min_record_distance = declare_parameter("min_record_distance").get<float64_t>();
-  const auto skip_first_velocity = declare_parameter("skip_first_velocity").get<bool8_t>();
-  m_goal_distance_threshold_m = declare_parameter("goal_distance_threshold_m").get<float32_t>();
-  m_goal_angle_threshold_rad = declare_parameter("goal_angle_threshold_rad").get<float32_t>();
-  m_enable_loop = declare_parameter("loop_trajectory").get<bool>();
-  m_max_loop_gap_m = declare_parameter("loop_max_gap_m").get<float64_t>();
-  m_recording_frame = declare_parameter("recording_frame").get<std::string>();
+  const auto heading_weight = declare_parameter<float64_t>("heading_weight");
+  const auto min_record_distance = declare_parameter<float64_t>("min_record_distance");
+  const auto skip_first_velocity = declare_parameter<bool8_t>("skip_first_velocity");
+  m_goal_distance_threshold_m = declare_parameter<float32_t>("goal_distance_threshold_m");
+  m_goal_angle_threshold_rad = declare_parameter<float32_t>("goal_angle_threshold_rad");
+  m_enable_loop = declare_parameter<bool8_t>("loop_trajectory");
+  m_max_loop_gap_m = declare_parameter<float64_t>("loop_max_gap_m");
+  m_recording_frame = declare_parameter<std::string>("recording_frame");
 
   using rclcpp::QoS;
   using namespace std::chrono_literals;
@@ -91,7 +91,7 @@ RecordReplayPlannerNode::RecordReplayPlannerNode(const rclcpp::NodeOptions & nod
     create_publisher<MarkerArray>(trajectory_viz_topic, QoS{10});
 
   // Set up services
-  if (declare_parameter("enable_object_collision_estimator").get<bool>()) {
+  if (declare_parameter<bool8_t>("enable_object_collision_estimator")) {
     m_modify_trajectory_client = this->create_client<ModifyTrajectory>("estimate_collision");
     while (!m_modify_trajectory_client->wait_for_service(3s)) {
       if (!rclcpp::ok()) {

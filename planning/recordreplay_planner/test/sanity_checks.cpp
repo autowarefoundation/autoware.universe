@@ -86,7 +86,7 @@ TEST_P(SanityChecksTrajectoryProperties, Basicproperties)
   EXPECT_NEAR(trajectory_time_length, endpoint_sec, ep);
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
   TrajectoryProperties,
   SanityChecksTrajectoryProperties,
   testing::Values(
@@ -95,7 +95,7 @@ INSTANTIATE_TEST_CASE_P(
     PropertyTestParameters{std::chrono::milliseconds(100), system_clock::from_time_t(10)},
     PropertyTestParameters{std::chrono::milliseconds(200), system_clock::from_time_t(10)}
     // cppcheck-suppress syntaxError
-  ), );
+));
 
 
 //------------------ Test that length cropping properly works
@@ -126,18 +126,21 @@ TEST_P(SanityChecksTrajectoryLength, Length)
   EXPECT_EQ(planner_.get_record_length(), N);
   auto trajectory = planner_.plan(dummy_state);
 
+  // A max length from 100 is as in Autoware.Auto.
+  // TODO(haoru): refactor the lookup to be flexible and distance-based
+  const uint32_t MAX_TRAJECTORY_LENGTH = 100;
   EXPECT_EQ(
     trajectory.points.size(),
-    std::min(N, static_cast<uint32_t>(trajectory.points.max_size())));
+    std::min(N, MAX_TRAJECTORY_LENGTH));
 }
 
-INSTANTIATE_TEST_CASE_P(
+INSTANTIATE_TEST_SUITE_P(
   TrajectoryLength,
   SanityChecksTrajectoryLength,
   testing::Values(
     LengthTestParameters{80},
     LengthTestParameters{200}
-  ), );
+));
 
 
 // Test setup helper function. This creates a planner and records a trajectory

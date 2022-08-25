@@ -1,15 +1,12 @@
-cmake_minimum_required(VERSION 3.6)
-
+cmake_minimum_required(VERSION 3.14)
 project(recordreplay_planner_nodes)
 
-### Dependencies
-find_package(ament_cmake_auto REQUIRED)
-ament_auto_find_build_dependencies()
+find_package(autoware_cmake REQUIRED)
+autoware_package()
 
 set(RECORDREPLAY_PLANNER_NODE_LIB recordreplay_planner_node)
 ament_auto_add_library(${RECORDREPLAY_PLANNER_NODE_LIB} SHARED
   src/recordreplay_planner_nodes/recordreplay_planner_node.cpp)
-autoware_set_compile_options(${RECORDREPLAY_PLANNER_NODE_LIB})
 
 set(NODE_NAME ${RECORDREPLAY_PLANNER_NODE_LIB}_exe)
 rclcpp_components_register_node(${RECORDREPLAY_PLANNER_NODE_LIB}
@@ -32,7 +29,6 @@ if(BUILD_TESTING)
   ament_add_gtest(${RECORDREPLAY_PLANNER_NODE_LIB}_unit_tests
     test/gtest_main.cpp
     test/sanity_checks.cpp)
-  autoware_set_compile_options(${RECORDREPLAY_PLANNER_NODE_LIB}_unit_tests)
   target_link_libraries(${RECORDREPLAY_PLANNER_NODE_LIB}_unit_tests ${RECORDREPLAY_PLANNER_NODE_LIB})
   target_include_directories(${RECORDREPLAY_PLANNER_NODE_LIB}_unit_tests PRIVATE "include")
 endif()
