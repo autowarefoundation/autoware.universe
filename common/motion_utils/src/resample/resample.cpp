@@ -16,7 +16,7 @@
 
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 
-constexpr double CLOSE_S_THRESHOLD = 0.001;
+constexpr double CLOSE_S_THRESHOLD = 1e-6;
 namespace motion_utils
 {
 std::vector<geometry_msgs::msg::Pose> resamplePath(
