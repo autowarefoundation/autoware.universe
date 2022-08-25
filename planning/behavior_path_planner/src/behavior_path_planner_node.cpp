@@ -17,14 +17,11 @@
 #include "behavior_path_planner/debug_utilities.hpp"
 #include "behavior_path_planner/path_utilities.hpp"
 #include "behavior_path_planner/scene_module/avoidance/avoidance_module.hpp"
-#include "behavior_path_planner/scene_module/lane_change/lane_change_module.hpp"
-#include "behavior_path_planner/scene_module/pull_out/pull_out_module.hpp"
-#include "behavior_path_planner/scene_module/pull_over/pull_over_module.hpp"
-#include "behavior_path_planner/scene_module/side_shift/side_shift_module.hpp"
-#include "behavior_path_planner/utilities.hpp"
 
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
+
+#include <tier4_planning_msgs/msg/path_change_module_id.hpp>
 
 #include <memory>
 #include <string>
@@ -210,6 +207,7 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   p.turn_light_on_threshold_dis_lat = declare_parameter("turn_light_on_threshold_dis_lat", 0.3);
   p.turn_light_on_threshold_dis_long = declare_parameter("turn_light_on_threshold_dis_long", 10.0);
   p.turn_light_on_threshold_time = declare_parameter("turn_light_on_threshold_time", 3.0);
+  p.path_interval = declare_parameter<double>("path_interval");
   p.visualize_drivable_area_for_shared_linestrings_lanelet =
     declare_parameter("visualize_drivable_area_for_shared_linestrings_lanelet", true);
 
@@ -626,7 +624,10 @@ PathWithLaneId::SharedPtr BehaviorPathPlannerNode::getPath(
   path->header.stamp = this->now();
   RCLCPP_DEBUG(
     get_logger(), "BehaviorTreeManager: output is %s.", bt_output.path ? "FOUND" : "NOT FOUND");
-  return path;
+
+  const auto resampled_path =
+    util::resamplePathWithSpline(*path, planner_data_->parameters.path_interval);
+  return std::make_shared<PathWithLaneId>(resampled_path);
 }
 
 PathWithLaneId::SharedPtr BehaviorPathPlannerNode::getPathCandidate(
