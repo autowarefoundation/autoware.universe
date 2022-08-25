@@ -126,7 +126,6 @@ bool BlindSpotModule::modifyPathVelocity(
   debug_data_.virtual_wall_pose = stop_line_pose;
   const auto stop_pose = path->points.at(stop_line_idx).point.pose;
   debug_data_.stop_point_pose = stop_pose;
-  // debug_data_.judge_point_pose = path->points.at(pass_judge_line_idx).point.pose;
   auto offset_pose = motion_utils::calcLongitudinalOffsetPose(
     path->points, stop_pose.position, -pass_judge_line_dist);
   if (offset_pose) debug_data_.judge_point_pose = *offset_pose;
