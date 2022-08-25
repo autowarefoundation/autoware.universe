@@ -116,9 +116,9 @@ bool BlindSpotModule::modifyPathVelocity(
   const double pass_judge_line_dist =
     planning_utils::calcJudgeLineDistWithAccLimit(current_vel, max_acc, delay_response_time);
   const auto stop_point_pose = path->points.at(stop_line_idx).point.pose;
-  const auto distnce_until_stop = motion_utils::calcSignedArcLength(
+  const auto distance_until_stop = motion_utils::calcSignedArcLength(
     input_path.points, current_pose.pose, stop_point_pose.position);
-  if (distnce_until_stop == boost::none) return true;
+  if (distance_until_stop == boost::none) return true;
 
   /* get debug info */
   const auto stop_line_pose = planning_utils::getAheadPose(
@@ -134,7 +134,7 @@ bool BlindSpotModule::modifyPathVelocity(
   /* if current_state = GO, and current_pose is over judge_line, ignore planning. */
   if (planner_param_.use_pass_judge_line) {
     const double eps = 1e-1;  // to prevent hunting
-    if (current_state == State::GO && *distnce_until_stop + eps < pass_judge_line_dist) {
+    if (current_state == State::GO && *distance_until_stop + eps < pass_judge_line_dist) {
       RCLCPP_DEBUG(logger_, "over the pass judge line. no plan needed.");
       *path = input_path;  // reset path
       setSafe(true);
