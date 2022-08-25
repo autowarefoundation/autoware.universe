@@ -51,6 +51,9 @@ size_t getIdxByArclength(
 void clipPathLength(
   PathWithLaneId & path, const size_t target_idx, const double forward, const double backward);
 
+void clipPathLength(
+  PathWithLaneId & path, const size_t target_idx, const BehaviorPathPlannerParameters & params);
+
 std::pair<TurnIndicatorsCommand, double> getPathTurnSignal(
   const lanelet::ConstLanelets & current_lanes, const ShiftedPath & path,
   const ShiftPoint & shift_point, const Pose & pose, const double & velocity,

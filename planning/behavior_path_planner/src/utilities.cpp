@@ -61,6 +61,20 @@ double calcInterpolatedVelocity(
 
 namespace drivable_area_utils
 {
+template <class T>
+size_t findNearestSegmentIndex(
+  const std::vector<T> & points, const geometry_msgs::msg::Pose & pose, const double dist_threshold,
+  const double yaw_threshold)
+{
+  const auto nearest_idx =
+    motion_utils::findNearestSegmentIndex(points, pose, dist_threshold, yaw_threshold);
+  if (nearest_idx) {
+    return nearest_idx.get();
+  }
+
+  return motion_utils::findNearestSegmentIndex(points, pose.position);
+}
+
 double quantize(const double val, const double resolution)
 {
   return std::round(val / resolution) * resolution;
@@ -192,8 +206,8 @@ std::array<double, 4> getPathScope(
         points, current_pose, max_dist, max_yaw);
 
     // forward lanelet
-    const auto forward_offset_length =
-      motion_utils::calcSignedArcLength(points, current_pose.position, nearest_segment_idx);
+    const auto forward_offset_length = motion_utils::calcSignedArcLength(
+      points, current_pose.position, nearest_segment_idx, nearest_segment_idx);
     double sum_length = std::min(forward_offset_length, 0.0);
     size_t current_lane_idx = nearest_lane_idx;
     auto current_lane = path_lanes.at(current_lane_idx);
@@ -240,8 +254,8 @@ std::array<double, 4> getPathScope(
 
     // backward lanelet
     current_point_idx = nearest_segment_idx + 1;
-    const auto backward_offset_length =
-      motion_utils::calcSignedArcLength(points, nearest_segment_idx + 1, current_pose.position);
+    const auto backward_offset_length = motion_utils::calcSignedArcLength(
+      points, nearest_segment_idx + 1, current_pose.position, nearest_segment_idx);
     sum_length = std::min(backward_offset_length, 0.0);
     current_lane_idx = nearest_lane_idx;
     current_lane = path_lanes.at(current_lane_idx);
@@ -1702,6 +1716,7 @@ bool checkLaneIsInIntersection(
   return true;
 }
 
+// for lane following
 PathWithLaneId setDecelerationVelocity(
   const RouteHandler & route_handler, const PathWithLaneId & input,
   const lanelet::ConstLanelets & lanelet_sequence, const double lane_change_prepare_duration,
@@ -1762,6 +1777,8 @@ PathWithLaneId setDecelerationVelocity(
   return reference_path;
 }
 
+// TODO(planning/control team) remove calcSignedArcLength using findNearestSegmentIndex inside the
+// function
 PathWithLaneId setDecelerationVelocity(
   const PathWithLaneId & input, const double target_velocity, const Pose target_pose,
   const double buffer, const double deceleration_interval)
@@ -1791,6 +1808,8 @@ PathWithLaneId setDecelerationVelocity(
   return reference_path;
 }
 
+// TODO(planning/control team) remove calcSignedArcLength using findNearestSegmentIndex inside the
+// function
 PathWithLaneId setDecelerationVelocityForTurnSignal(
   const PathWithLaneId & input, const Pose target_pose, const double turn_light_on_threshold_time)
 {

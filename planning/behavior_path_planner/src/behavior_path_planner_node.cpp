@@ -567,9 +567,7 @@ void BehaviorPathPlannerNode::run()
     clipped_path = modifyPathForSmoothGoalConnection(*path);
   }
   const size_t target_idx = findEgoIndex(clipped_path.points);
-  util::clipPathLength(
-    clipped_path, target_idx, planner_data_->parameters.forward_path_length,
-    planner_data_->parameters.backward_path_length);
+  util::clipPathLength(clipped_path, target_idx, planner_data_->parameters);
 
   if (!clipped_path.points.empty()) {
     path_publisher_->publish(clipped_path);
