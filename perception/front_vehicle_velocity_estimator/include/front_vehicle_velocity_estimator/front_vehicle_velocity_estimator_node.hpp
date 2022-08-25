@@ -76,10 +76,7 @@ private:
   rclcpp::Publisher<PointCloud2>::SharedPtr pub_nearest_neighbor_pointcloud_{};
 
   // Timer
-  rclcpp::TimerBase::SharedPtr timer_{};
-
   bool isDataReady();
-  void onTimer();
 
   // Parameter Server
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;

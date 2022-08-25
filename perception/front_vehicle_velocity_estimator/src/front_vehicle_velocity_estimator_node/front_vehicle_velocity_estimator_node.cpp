@@ -91,12 +91,6 @@ FrontVehicleVelocityEstimatorNode::FrontVehicleVelocityEstimatorNode(
   pub_objects_ = create_publisher<DetectedObjects>("~/output/objects", 1);
   pub_nearest_neighbor_pointcloud_ =
     create_publisher<PointCloud2>("~/debug/nearest_neighbor_pointcloud", 1);
-
-  // Timer
-  const auto update_period_ns = rclcpp::Rate(node_param_.update_rate_hz).period();
-  timer_ = rclcpp::create_timer(
-    this, get_clock(), update_period_ns,
-    std::bind(&FrontVehicleVelocityEstimatorNode::onTimer, this));
 }
 
 void FrontVehicleVelocityEstimatorNode::onData(
@@ -106,6 +100,27 @@ void FrontVehicleVelocityEstimatorNode::onData(
   pointcloud_data_ = pointcloud_msg;
   objects_data_ = object_msg;
   odometry_data_ = odometry_msg;
+
+  if (!isDataReady()) {
+    return;
+  }
+
+  if (!odometry_data_) {
+    // If odometry data does not come, publish original objects
+    pub_objects_->publish(*objects_data_);
+  } else {
+    // Set input data
+    input_.objects = objects_data_;
+    input_.pointcloud = pointcloud_data_;
+    input_.odometry = odometry_data_;
+
+    // Update
+    output_ = front_vehicle_velocity_estimator_->update(input_);
+
+    // Publish
+    pub_objects_->publish(output_.objects);
+    pub_nearest_neighbor_pointcloud_->publish(output_.nearest_neighbor_pointcloud);
+  }
 }
 
 rcl_interfaces::msg::SetParametersResult FrontVehicleVelocityEstimatorNode::onSetParam(
@@ -164,31 +179,6 @@ bool FrontVehicleVelocityEstimatorNode::isDataReady()
   }
   return true;
 }
-
-void FrontVehicleVelocityEstimatorNode::onTimer()
-{
-  if (!isDataReady()) {
-    return;
-  }
-
-  if (!odometry_data_) {
-    // If odometry data does not come, publish original objects
-    pub_objects_->publish(*objects_data_);
-  } else {
-    // Set input data
-    input_.objects = objects_data_;
-    input_.pointcloud = pointcloud_data_;
-    input_.odometry = odometry_data_;
-
-    // Update
-    output_ = front_vehicle_velocity_estimator_->update(input_);
-
-    // Publish
-    pub_objects_->publish(output_.objects);
-    pub_nearest_neighbor_pointcloud_->publish(output_.nearest_neighbor_pointcloud);
-  }
-}
-
 }  // namespace front_vehicle_velocity_estimator
 
 #include "rclcpp_components/register_node_macro.hpp"
