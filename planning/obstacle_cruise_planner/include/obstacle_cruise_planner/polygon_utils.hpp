@@ -55,8 +55,7 @@ std::vector<geometry_msgs::msg::PointStamped> willCollideWithSurroundObstacle(
   const std::vector<Polygon2d> & traj_polygons, const std_msgs::msg::Header & obj_header,
   const autoware_auto_perception_msgs::msg::PredictedPath & predicted_path,
   const autoware_auto_perception_msgs::msg::Shape & shape, const rclcpp::Time & current_time,
-  const double max_dist,
-  const double ego_obstacle_overlap_time_threshold,
+  const double max_dist, const double ego_obstacle_overlap_time_threshold,
   const double max_prediction_time_for_collision_check,
   const double vehicle_max_longitudinal_offset, const bool is_driving_forward);
 

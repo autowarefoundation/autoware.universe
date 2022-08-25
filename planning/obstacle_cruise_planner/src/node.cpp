@@ -717,8 +717,8 @@ std::vector<TargetObstacle> ObstacleCruisePlannerNode::filterObstacles(
       // ignore running vehicle crossing the ego trajectory with high speed with some condition
       if (!is_angle_aligned && has_high_speed && !collision_points.empty()) {
         const double collision_time_margin = calcCollisionTimeMargin(
-          current_pose, current_vel, collision_points, predicted_object,
-          decimated_traj, is_driving_forward);
+          current_pose, current_vel, collision_points, predicted_object, decimated_traj,
+          is_driving_forward);
         if (collision_time_margin > obstacle_filtering_param_.collision_time_margin) {
           // Ignore vehicle obstacles inside the trajectory, which is crossing the trajectory with
           // high speed and does not collide with ego in a certain time.
@@ -766,7 +766,8 @@ std::vector<TargetObstacle> ObstacleCruisePlannerNode::filterObstacles(
         predicted_object.shape, current_time,
         vehicle_info_.vehicle_width_m + obstacle_filtering_param_.rough_detection_area_expand_width,
         obstacle_filtering_param_.ego_obstacle_overlap_time_threshold,
-        obstacle_filtering_param_.max_prediction_time_for_collision_check, vehicle_info_.max_longitudinal_offset_m, is_driving_forward);
+        obstacle_filtering_param_.max_prediction_time_for_collision_check,
+        vehicle_info_.max_longitudinal_offset_m, is_driving_forward);
 
       if (collision_points.empty()) {
         // Ignore vehicle obstacles outside the trajectory, whose predicted path
@@ -779,7 +780,7 @@ std::vector<TargetObstacle> ObstacleCruisePlannerNode::filterObstacles(
         continue;
       }
 
-      for(const auto cp : collision_points) {
+      for (const auto cp : collision_points) {
         debug_data.collision_points.push_back(cp.point);
       }
     }
@@ -910,8 +911,7 @@ void ObstacleCruisePlannerNode::checkConsistency(
 double ObstacleCruisePlannerNode::calcCollisionTimeMargin(
   const geometry_msgs::msg::Pose & current_pose, const double current_vel,
   const std::vector<geometry_msgs::msg::PointStamped> & collision_points,
-  const PredictedObject & predicted_object,
-  const Trajectory & decimated_traj,
+  const PredictedObject & predicted_object, const Trajectory & decimated_traj,
   const bool is_driving_forward)
 {
   const auto predicted_path = getHighestConfidencePredictedPath(predicted_object);
@@ -930,7 +930,9 @@ double ObstacleCruisePlannerNode::calcCollisionTimeMargin(
     return dist_from_ego_to_obstacle / std::max(1e-6, std::abs(current_vel));
   }();
 
-  const double time_to_obstacle_getting_out = (rclcpp::Time(collision_points.back().header.stamp) - rclcpp::Time(collision_points.front().header.stamp)).seconds();
+  const double time_to_obstacle_getting_out = (rclcpp::Time(collision_points.back().header.stamp) -
+                                               rclcpp::Time(collision_points.front().header.stamp))
+                                                .seconds();
 
   return time_to_collision - time_to_obstacle_getting_out;
 }

@@ -91,13 +91,12 @@ boost::optional<size_t> getCollisionIndex(
   const autoware_auto_planning_msgs::msg::Trajectory & traj,
   const std::vector<Polygon2d> & traj_polygons, const geometry_msgs::msg::PoseStamped & obj_pose,
   const autoware_auto_perception_msgs::msg::Shape & shape,
-  std::vector<geometry_msgs::msg::PointStamped> & collision_geom_points,
-  const double max_dist)
+  std::vector<geometry_msgs::msg::PointStamped> & collision_geom_points, const double max_dist)
 {
   const auto obj_polygon = tier4_autoware_utils::toPolygon2d(obj_pose.pose, shape);
   for (size_t i = 0; i < traj_polygons.size(); ++i) {
     const double approximated_dist =
-        tier4_autoware_utils::calcDistance2d(traj.points.at(i).pose, obj_pose.pose);
+      tier4_autoware_utils::calcDistance2d(traj.points.at(i).pose, obj_pose.pose);
     if (approximated_dist > max_dist) {
       continue;
     }
@@ -134,8 +133,7 @@ std::vector<geometry_msgs::msg::PointStamped> getCollisionPoints(
   const autoware_auto_perception_msgs::msg::PredictedPath & predicted_path,
   const autoware_auto_perception_msgs::msg::Shape & shape, const rclcpp::Time & current_time,
   const double vehicle_max_longitudinal_offset, const bool is_driving_forward,
-  const double max_dist,
-  const double max_prediction_time_for_collision_check)
+  const double max_dist, const double max_prediction_time_for_collision_check)
 {
   std::vector<geometry_msgs::msg::PointStamped> collision_points;
   for (size_t i = 0; i < predicted_path.path.size(); ++i) {
@@ -176,16 +174,19 @@ std::vector<geometry_msgs::msg::PointStamped> willCollideWithSurroundObstacle(
   const std::vector<Polygon2d> & traj_polygons, const std_msgs::msg::Header & obj_header,
   const autoware_auto_perception_msgs::msg::PredictedPath & predicted_path,
   const autoware_auto_perception_msgs::msg::Shape & shape, const rclcpp::Time & current_time,
-  const double max_dist,
-  const double ego_obstacle_overlap_time_threshold,
+  const double max_dist, const double ego_obstacle_overlap_time_threshold,
   const double max_prediction_time_for_collision_check,
   const double vehicle_max_longitudinal_offset, const bool is_driving_forward)
 {
-  const auto collision_points = getCollisionPoints(traj, traj_polygons, obj_header, predicted_path, shape, current_time,
-                                                   vehicle_max_longitudinal_offset, is_driving_forward, max_dist, max_prediction_time_for_collision_check);
+  const auto collision_points = getCollisionPoints(
+    traj, traj_polygons, obj_header, predicted_path, shape, current_time,
+    vehicle_max_longitudinal_offset, is_driving_forward, max_dist,
+    max_prediction_time_for_collision_check);
 
-  const double overlap_time = (rclcpp::Time(collision_points.back().header.stamp) - rclcpp::Time(collision_points.front().header.stamp)).seconds();
-  if(overlap_time < ego_obstacle_overlap_time_threshold) {
+  const double overlap_time = (rclcpp::Time(collision_points.back().header.stamp) -
+                               rclcpp::Time(collision_points.front().header.stamp))
+                                .seconds();
+  if (overlap_time < ego_obstacle_overlap_time_threshold) {
     return {};
   }
 
