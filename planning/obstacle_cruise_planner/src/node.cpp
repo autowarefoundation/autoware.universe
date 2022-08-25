@@ -779,10 +779,11 @@ std::vector<TargetObstacle> ObstacleCruisePlannerNode::filterObstacles(
         debug_data.intentionally_ignored_obstacles.push_back(predicted_object);
         continue;
       }
+    }
 
-      for (const auto cp : collision_points) {
-        debug_data.collision_points.push_back(cp.point);
-      }
+    // For debug
+    for (const auto cp : collision_points) {
+      debug_data.collision_points.push_back(cp.point);
     }
 
     // convert to obstacle type
