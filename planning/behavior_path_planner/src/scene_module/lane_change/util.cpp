@@ -292,8 +292,10 @@ bool selectSafePath(
   std::unordered_map<std::string, CollisionCheckDebug> & debug_data)
 {
   for (const auto & path : paths) {
+    const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+      path.path.points, current_pose, common_parameters.ego_nearestdist_threshold, common_parameters.ego_nearest_yaw_threshold);
     if (isLaneChangePathSafe(
-          path.path, current_lanes, target_lanes, dynamic_objects, current_pose, current_twist,
+          path.path, current_lanes, target_lanes, dynamic_objects, current_pose, current_seg_idx, current_twist,
           common_parameters, ros_parameters, debug_data, true, path.acceleration)) {
       *selected_path = path;
       return true;
@@ -344,6 +346,7 @@ bool isLaneChangePathSafe(
   const PathWithLaneId & path, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & target_lanes,
   const PredictedObjects::ConstSharedPtr dynamic_objects, const Pose & current_pose,
+  const size_t current_seg_idx,
   const Twist & current_twist, const BehaviorPathPlannerParameters & common_parameters,
   const LaneChangeParameters & lane_change_parameters,
   std::unordered_map<std::string, CollisionCheckDebug> & debug_data, const bool use_buffer,
