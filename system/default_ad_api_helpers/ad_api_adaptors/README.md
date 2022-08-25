@@ -1,4 +1,4 @@
-# default_ad_api_helpers
+# ad_api_adaptors
 
 ## initial_pose_adaptor
 
@@ -11,13 +11,3 @@ This node depends on fitting to map height service.
 | Subscription | initialpose    | /initialpose                      | The pose for localization initialization. |
 | Client       | fit_map_height | /localization/util/fit_map_height | To fix initial pose to map height         |
 | Client       | -              | /api/localization/initialize      | The localization initialize API.          |
-
-## automatic_pose_initializer
-
-This node calls localization initialize API when the localization initialization state is uninitialized.
-Since the API uses GNSS pose when no pose is specified, initialization using GNSS can be performed automatically.
-
-| Interface    | Local Name | Global Name                            | Description                                |
-| ------------ | ---------- | -------------------------------------- | ------------------------------------------ |
-| Subscription | -          | /api/localization/initialization_state | The localization initialization state API. |
-| Client       | -          | /api/localization/initialize           | The localization initialize API.           |

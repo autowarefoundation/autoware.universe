@@ -19,13 +19,13 @@
 #include <component_interface_utils/rclcpp.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-namespace default_ad_api_helpers
+namespace automatic_pose_initializer
 {
 
 class AutomaticPoseInitializer : public rclcpp::Node
 {
 public:
-  AutomaticPoseInitializer();
+  explicit AutomaticPoseInitializer();
 
 private:
   void OnTimer();
@@ -38,6 +38,6 @@ private:
   State::Message state_;
 };
 
-}  // namespace default_ad_api_helpers
+}  // namespace automatic_pose_initializer
 
 #endif  // AUTOMATIC_POSE_INITIALIZER_HPP_

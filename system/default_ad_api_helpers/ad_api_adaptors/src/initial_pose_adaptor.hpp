@@ -22,7 +22,7 @@
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <tier4_localization_msgs/srv/pose_with_covariance_stamped.hpp>
 
-namespace default_ad_api_helpers
+namespace ad_api_adaptors
 {
 
 class InitialPoseAdaptor : public rclcpp::Node
@@ -42,6 +42,6 @@ private:
   void OnInitialPose(PoseWithCovarianceStamped::ConstSharedPtr msg);
 };
 
-}  // namespace default_ad_api_helpers
+}  // namespace ad_api_adaptors
 
 #endif  // INITIAL_POSE_ADAPTOR_HPP_

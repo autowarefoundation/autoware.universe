@@ -1,0 +1,3 @@
+<launch>
+  <node pkg="automatic_pose_initializer" exec="automatic_pose_initializer" name="automatic_pose_initializer"/>
+</launch>

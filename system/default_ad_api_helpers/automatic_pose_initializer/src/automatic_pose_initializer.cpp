@@ -16,7 +16,7 @@
 
 #include <memory>
 
-namespace default_ad_api_helpers
+namespace automatic_pose_initializer
 {
 
 AutomaticPoseInitializer::AutomaticPoseInitializer() : Node("automatic_pose_initializer")
@@ -44,7 +44,15 @@ void AutomaticPoseInitializer::OnTimer()
   }
 }
 
-}  // namespace default_ad_api_helpers
+}  // namespace automatic_pose_initializer
 
-#include "macros/create_node.hpp"
-CREATE_MULTI_THREAD_NODE(default_ad_api_helpers::AutomaticPoseInitializer)
+int main(int argc, char ** argv)
+{
+  rclcpp::init(argc, argv);
+  rclcpp::executors::MultiThreadedExecutor executor;
+  auto node = std::make_shared<automatic_pose_initializer::AutomaticPoseInitializer>();
+  executor.add_node(node);
+  executor.spin();
+  executor.remove_node(node);
+  rclcpp::shutdown();
+}

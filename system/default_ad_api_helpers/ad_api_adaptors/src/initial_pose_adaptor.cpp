@@ -18,7 +18,7 @@
 #include <string>
 #include <vector>
 
-namespace default_ad_api_helpers
+namespace ad_api_adaptors
 {
 template <class ServiceT>
 using Future = typename rclcpp::Client<ServiceT>::SharedFuture;
@@ -58,7 +58,15 @@ void InitialPoseAdaptor::OnInitialPose(PoseWithCovarianceStamped::ConstSharedPtr
   });
 }
 
-}  // namespace default_ad_api_helpers
+}  // namespace ad_api_adaptors
 
-#include "macros/create_node.hpp"
-CREATE_SINGLE_THREAD_NODE(default_ad_api_helpers::InitialPoseAdaptor)
+int main(int argc, char ** argv)
+{
+  rclcpp::init(argc, argv);
+  rclcpp::executors::SingleThreadedExecutor executor;
+  auto node = std::make_shared<ad_api_adaptors::InitialPoseAdaptor>();
+  executor.add_node(node);
+  executor.spin();
+  executor.remove_node(node);
+  rclcpp::shutdown();
+}

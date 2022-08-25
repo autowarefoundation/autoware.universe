@@ -1,0 +1,7 @@
+<launch>
+  <node pkg="ad_api_adaptors" exec="initial_pose_adaptor" name="initial_pose_adaptor">
+    <param from="$(find-pkg-share ad_api_adaptors)/config/initial_pose.param.yaml"/>
+    <remap from="initialpose" to="/initialpose"/>
+    <remap from="fit_map_height" to="/localization/util/fit_map_height"/>
+  </node>
+</launch>
