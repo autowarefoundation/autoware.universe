@@ -12,9 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "pointcloud_preprocessor/no_detection_area_filter/no_detection_area_filter.hpp"
-
-#include "pointcloud_preprocessor/filter.hpp"
+#include "pointcloud_preprocessor/vector_map_filter/vector_map_inside_area_filter.hpp"
 
 namespace
 {
@@ -60,9 +58,9 @@ pcl::PointCloud<pcl::PointXYZ> removePointsWithinPolygons(
 
 namespace pointcloud_preprocessor
 {
-NoDetectionAreaFilterComponent::NoDetectionAreaFilterComponent(
+VectorMapInsideAreaFilterComponent::VectorMapInsideAreaFilterComponent(
   const rclcpp::NodeOptions & node_options)
-: Filter("NoDetectionAreaFilter", node_options)
+: Filter("VectorMapInsideAreaFilter", node_options)
 {
   polygon_type_ =
     static_cast<std::string>(declare_parameter("polygon_type", "no_obstacle_segmentation_area"));
@@ -71,14 +69,14 @@ NoDetectionAreaFilterComponent::NoDetectionAreaFilterComponent(
   // Set subscriber
   map_sub_ = this->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
     "input/vector_map", rclcpp::QoS{1}.transient_local(),
-    std::bind(&NoDetectionAreaFilterComponent::mapCallback, this, _1));
+    std::bind(&VectorMapInsideAreaFilterComponent::mapCallback, this, _1));
 }
 
-void NoDetectionAreaFilterComponent::filter(
+void VectorMapInsideAreaFilterComponent::filter(
   const PointCloud2ConstPtr & input, [[maybe_unused]] const IndicesPtr & indices,
   PointCloud2 & output)
 {
-  if (no_detection_area_lanelets_.empty()) {
+  if (polygon_lanelets_.empty()) {
     output = *input;
     return;
   }
@@ -91,8 +89,7 @@ void NoDetectionAreaFilterComponent::filter(
   const auto bounding_box = calcBoundingBox(pc_input);
 
   // use only intersected lanelets to reduce calculation cost
-  const auto intersected_lanelets =
-    calcIntersectedPolygons(bounding_box, no_detection_area_lanelets_);
+  const auto intersected_lanelets = calcIntersectedPolygons(bounding_box, polygon_lanelets_);
 
   // filter pointcloud by lanelet
   const auto filtered_pc = removePointsWithinPolygons(pc_input, intersected_lanelets);
@@ -102,18 +99,17 @@ void NoDetectionAreaFilterComponent::filter(
   output.header = input->header;
 }
 
-void NoDetectionAreaFilterComponent::mapCallback(
+void VectorMapInsideAreaFilterComponent::mapCallback(
   const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr map_msg)
 {
   tf_input_frame_ = map_msg->header.frame_id;
 
   const auto lanelet_map_ptr = std::make_shared<lanelet::LaneletMap>();
   lanelet::utils::conversion::fromBinMsg(*map_msg, lanelet_map_ptr);
-  no_detection_area_lanelets_ =
-    lanelet::utils::query::getAllPolygonsByType(lanelet_map_ptr, polygon_type_);
+  polygon_lanelets_ = lanelet::utils::query::getAllPolygonsByType(lanelet_map_ptr, polygon_type_);
 }
 
 }  // namespace pointcloud_preprocessor
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(pointcloud_preprocessor::NoDetectionAreaFilterComponent)
+RCLCPP_COMPONENTS_REGISTER_NODE(pointcloud_preprocessor::VectorMapInsideAreaFilterComponent)

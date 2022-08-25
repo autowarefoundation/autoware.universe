@@ -42,12 +42,12 @@ def generate_launch_description():
     composable_nodes = [
         ComposableNode(
             package="pointcloud_preprocessor",
-            plugin="pointcloud_preprocessor::NoDetectionAreaFilterComponent",
-            name="no_detection_area_filter",
+            plugin="pointcloud_preprocessor::VectorMapInsideAreaFilterComponent",
+            name="vector_map_inside_area_filter_node",
             remappings=[
                 ("input", "/perception/obstacle_segmentation/pointcloud"),
                 ("input/vector_map", "/map/vector_map"),
-                ("output", "no_detection_area_filtered/pointcloud"),
+                ("output", "vector_map_inside_area_filtered/pointcloud"),
             ],
             parameters=[
                 {
@@ -55,12 +55,14 @@ def generate_launch_description():
                 }
             ],
             # this node has QoS of transient local
-            extra_arguments=[{"use_intra_process_comms": False}],
-        )
+            extra_arguments=[
+                {"use_intra_process_comms": False}
+            ],
+        ),
     ]
 
-    no_detection_area_filter_container = ComposableNodeContainer(
-        name="no_detection_area_filter_container",
+    vector_map_inside_area_filter_container = ComposableNodeContainer(
+        name="vector_map_inside_area_filter_container",
         namespace="",
         package="rclcpp_components",
         executable=LaunchConfiguration("container_executable"),
@@ -79,11 +81,11 @@ def generate_launch_description():
         [
             add_launch_arg("use_multithread", "true"),
             add_launch_arg("use_pointcloud_container", "true"),
-            add_launch_arg("container_name", "no_detection_area_filter_container"),
+            add_launch_arg("container_name", "vector_map_inside_area_filter_container"),
             add_launch_arg("polygon_type", "no_obstacle_segmentation_area_for_run_out"),
             set_container_executable,
             set_container_mt_executable,
-            no_detection_area_filter_container,
+            vector_map_inside_area_filter_container,
             load_composable_nodes,
         ]
     )

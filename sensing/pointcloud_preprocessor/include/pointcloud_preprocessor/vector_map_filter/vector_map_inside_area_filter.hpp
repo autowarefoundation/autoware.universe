@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef POINTCLOUD_PREPROCESSOR__NO_DETECTION_AREA_FILTER__NO_DETECTION_AREA_FILTER_HPP_
-#define POINTCLOUD_PREPROCESSOR__NO_DETECTION_AREA_FILTER__NO_DETECTION_AREA_FILTER_HPP_
+#ifndef POINTCLOUD_PREPROCESSOR__VECTOR_MAP_INSIDE_AREA_FILTER__VECTOR_MAP_INSIDE_AREA_FILTER_HPP_
+#define POINTCLOUD_PREPROCESSOR__VECTOR_MAP_INSIDE_AREA_FILTER__VECTOR_MAP_INSIDE_AREA_FILTER_HPP_
 
 #include "pointcloud_preprocessor/filter.hpp"
 #include "pointcloud_preprocessor/utility/utilities.hpp"
@@ -26,13 +26,14 @@
 
 #include <string>
 
+// TODO: remove
 using tier4_autoware_utils::LinearRing2d;
 using tier4_autoware_utils::MultiPoint2d;
 using tier4_autoware_utils::Point2d;
 
 namespace pointcloud_preprocessor
 {
-class NoDetectionAreaFilterComponent : public pointcloud_preprocessor::Filter
+class VectorMapInsideAreaFilterComponent : public pointcloud_preprocessor::Filter
 {
 private:
   void filter(
@@ -40,7 +41,7 @@ private:
     PointCloud2 & output) override;
 
   rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr map_sub_;
-  lanelet::ConstPolygons3d no_detection_area_lanelets_;
+  lanelet::ConstPolygons3d polygon_lanelets_;
 
   void mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg);
 
@@ -49,9 +50,9 @@ private:
 
 public:
   PCL_MAKE_ALIGNED_OPERATOR_NEW
-  explicit NoDetectionAreaFilterComponent(const rclcpp::NodeOptions & options);
+  explicit VectorMapInsideAreaFilterComponent(const rclcpp::NodeOptions & options);
 };
 
 }  // namespace pointcloud_preprocessor
 
-#endif  // POINTCLOUD_PREPROCESSOR__NO_DETECTION_AREA_FILTER__NO_DETECTION_AREA_FILTER_HPP_
+#endif  // POINTCLOUD_PREPROCESSOR__VECTOR_MAP_INSIDE_AREA_FILTER__VECTOR_MAP_INSIDE_AREA_FILTER_HPP_

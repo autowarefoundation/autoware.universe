@@ -414,11 +414,11 @@ def launch_setup(context, *args, **kwargs):
         condition=IfCondition(launch_run_out_with_points_method),
     )
 
-    load_no_detection_area_filter = IncludeLaunchDescription(
+    load_vector_map_inside_area_filter = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             [
                 FindPackageShare("tier4_planning_launch"),
-                "/launch/scenario_planning/lane_driving/behavior_planning/no_detection_area_filter.launch.py",
+                "/launch/scenario_planning/lane_driving/behavior_planning/vector_map_inside_area_filter.launch.py",
             ]
         ),
         launch_arguments={
@@ -427,7 +427,7 @@ def launch_setup(context, *args, **kwargs):
             "use_multithread": "true",
             "polygon_type": "no_obstacle_segmentation_area_for_run_out",
         }.items(),
-        # launch no detection area filter only when run_out module is enabled and detection method is Points
+        # launch vector map filter only when run_out module is enabled and detection method is Points
         condition=IfCondition(launch_run_out_with_points_method),
     )
 
@@ -435,7 +435,7 @@ def launch_setup(context, *args, **kwargs):
         [
             container,
             load_compare_map,
-            load_no_detection_area_filter,
+            load_vector_map_inside_area_filter,
         ]
     )
 

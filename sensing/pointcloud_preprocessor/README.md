@@ -24,7 +24,7 @@ Detail description of each filter's algorithm is in the following links.
 | passthrough_filter       | remove points on the outside of a range in given field (e.g. x, y, z, intensity)   | [link](docs/passthrough-filter.md)       |
 | pointcloud_accumulator   | accumulate pointclouds for a given amount of time                                  | [link](docs/pointcloud-accumulator.md)   |
 | vector_map_filter        | remove points on the outside of lane by using vector map                           | [link](docs/vector-map-filter.md)        |
-| no_detection_area_filter | remove points inside of lanelet maps tagged as no detection area                   | [link](docs/no-detection-area-filter.md) |
+| vector_map_inside_area_filter | remove points inside of vector map area that has given type by parameter                   | [link](docs/vector-map-inside-area-filter.md) |
 
 ## Inputs / Outputs
 
