@@ -19,9 +19,9 @@ This implementation inherits `pointcloud_preprocessor::Filter` class, so please 
 
 ### Input
 
-| Name                 | Type                                         | Description                            |
-| -------------------- | -------------------------------------------- | -------------------------------------- |
-| `~/input`            | `sensor_msgs::msg::PointCloud2`              | input points                           |
+| Name                 | Type                                         | Description                          |
+| -------------------- | -------------------------------------------- | ------------------------------------ |
+| `~/input`            | `sensor_msgs::msg::PointCloud2`              | input points                         |
 | `~/input/vector_map` | `autoware_auto_mapping_msgs::msg::HADMapBin` | vector map used for filtering points |
 
 ### Output
@@ -32,8 +32,8 @@ This implementation inherits `pointcloud_preprocessor::Filter` class, so please 
 
 ### Core Parameters
 
-| Name                       | Type   | Description                                        |
-| -------------------------- | ------ | -------------------------------------------------- |
-| `polygon_type` | string  | polygon type to be filtered               |
+| Name           | Type   | Description                 |
+| -------------- | ------ | --------------------------- |
+| `polygon_type` | string | polygon type to be filtered |
 
 ## Assumptions / Known limits

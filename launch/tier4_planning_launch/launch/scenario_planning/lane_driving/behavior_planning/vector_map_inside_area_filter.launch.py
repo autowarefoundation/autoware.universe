@@ -55,9 +55,7 @@ def generate_launch_description():
                 }
             ],
             # this node has QoS of transient local
-            extra_arguments=[
-                {"use_intra_process_comms": False}
-            ],
+            extra_arguments=[{"use_intra_process_comms": False}],
         ),
     ]
 

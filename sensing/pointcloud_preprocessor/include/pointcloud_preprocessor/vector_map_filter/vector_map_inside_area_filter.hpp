@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef POINTCLOUD_PREPROCESSOR__VECTOR_MAP_INSIDE_AREA_FILTER__VECTOR_MAP_INSIDE_AREA_FILTER_HPP_
-#define POINTCLOUD_PREPROCESSOR__VECTOR_MAP_INSIDE_AREA_FILTER__VECTOR_MAP_INSIDE_AREA_FILTER_HPP_
+#ifndef POINTCLOUD_PREPROCESSOR__VECTOR_MAP_FILTER__VECTOR_MAP_INSIDE_AREA_FILTER_HPP_
+#define POINTCLOUD_PREPROCESSOR__VECTOR_MAP_FILTER__VECTOR_MAP_INSIDE_AREA_FILTER_HPP_
 
 #include "pointcloud_preprocessor/filter.hpp"
 #include "pointcloud_preprocessor/utility/utilities.hpp"
@@ -55,4 +55,4 @@ public:
 
 }  // namespace pointcloud_preprocessor
 
-#endif  // POINTCLOUD_PREPROCESSOR__VECTOR_MAP_INSIDE_AREA_FILTER__VECTOR_MAP_INSIDE_AREA_FILTER_HPP_
+#endif  // POINTCLOUD_PREPROCESSOR__VECTOR_MAP_FILTER__VECTOR_MAP_INSIDE_AREA_FILTER_HPP_
