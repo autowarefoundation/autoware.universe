@@ -470,7 +470,7 @@ def generate_launch_description():
     add_launch_arg("use_intra_process", "false", "use ROS2 component container communication")
     add_launch_arg("use_multithread", "false", "use multithread")
 
-    # for compare map
+    # for points filter of run out module
     add_launch_arg("use_pointcloud_container", "true")
     add_launch_arg("container_name", "pointcloud_container")
 
