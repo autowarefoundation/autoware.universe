@@ -177,6 +177,12 @@ void clipPathLength(
   path.points = clipped_points;
 }
 
+void clipPathLength(
+  PathWithLaneId & path, const size_t target_idx, const BehaviorPathPlannerParameters & params)
+{
+  clipPathLength(path, target_idx, params.forward_path_length, params.backward_path_length);
+}
+
 std::pair<TurnIndicatorsCommand, double> getPathTurnSignal(
   const lanelet::ConstLanelets & current_lanes, const ShiftedPath & path,
   const ShiftPoint & shift_point, const Pose & pose, const double & velocity,

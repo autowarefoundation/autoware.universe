@@ -2044,9 +2044,7 @@ BehaviorModuleOutput AvoidanceModule::plan()
   output.path = std::make_shared<PathWithLaneId>(avoidance_path.path);
 
   const size_t ego_idx = findEgoIndex(output.path->points);
-  util::clipPathLength(
-    *output.path, ego_idx, planner_data_->parameters.forward_path_length,
-    planner_data_->parameters.backward_path_length);
+  util::clipPathLength(*output.path, ego_idx, planner_data_->parameters);
 
   DEBUG_PRINT("exit plan(): set prev output (back().lat = %f)", prev_output_.shift_length.back());
 
@@ -2088,9 +2086,7 @@ CandidateOutput AvoidanceModule::planCandidate() const
   }
 
   const size_t ego_idx = findEgoIndex(shifted_path.path.points);
-  util::clipPathLength(
-    shifted_path.path, ego_idx, planner_data_->parameters.forward_path_length,
-    planner_data_->parameters.backward_path_length);
+  util::clipPathLength(shifted_path.path, ego_idx, planner_data_->parameters);
 
   output.path_candidate = shifted_path.path;
 
