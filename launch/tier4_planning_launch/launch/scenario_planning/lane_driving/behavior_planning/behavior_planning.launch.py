@@ -384,7 +384,7 @@ def launch_setup(context, *args, **kwargs):
         output="screen",
     )
 
-    # This condition determine whether the points filter below are launched
+    # This condition is true if run_out module is enabled and its detection method is Points
     launch_run_out_with_points_method = PythonExpression(
         [
             LaunchConfiguration(
