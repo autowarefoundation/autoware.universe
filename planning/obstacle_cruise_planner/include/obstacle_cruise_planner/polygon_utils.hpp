@@ -26,6 +26,7 @@
 #include <boost/geometry.hpp>
 #include <boost/optional.hpp>
 
+#include <limits>
 #include <vector>
 
 namespace polygon_utils
