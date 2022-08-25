@@ -39,7 +39,7 @@ private:
   component_interface_utils::Client<Initialize>::SharedPtr cli_initialize_;
   std::array<double, 36> rviz_particle_covariance_;
 
-  void on_initial_pose(PoseWithCovarianceStamped::ConstSharedPtr msg);
+  void on_initial_pose(const PoseWithCovarianceStamped::ConstSharedPtr msg);
 };
 
 }  // namespace ad_api_adaptors

@@ -28,7 +28,7 @@ public:
   explicit AutomaticPoseInitializer();
 
 private:
-  void OnTimer();
+  void on_timer();
   using Initialize = autoware_ad_api::localization::Initialize;
   using State = autoware_ad_api::localization::InitializationState;
   rclcpp::CallbackGroup::SharedPtr group_cli_;

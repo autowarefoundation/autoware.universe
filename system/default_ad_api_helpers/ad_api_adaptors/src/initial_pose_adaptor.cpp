@@ -46,7 +46,7 @@ InitialPoseAdaptor::InitialPoseAdaptor() : Node("initial_pose_adaptor")
   adaptor.init_cli(cli_initialize_);
 }
 
-void InitialPoseAdaptor::on_initial_pose(PoseWithCovarianceStamped::ConstSharedPtr msg)
+void InitialPoseAdaptor::on_initial_pose(const PoseWithCovarianceStamped::ConstSharedPtr msg)
 {
   const auto req = std::make_shared<RequestHeightFitting::Request>();
   req->pose_with_covariance = *msg;
