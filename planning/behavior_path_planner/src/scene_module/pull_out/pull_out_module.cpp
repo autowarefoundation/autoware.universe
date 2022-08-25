@@ -173,6 +173,21 @@ BehaviorModuleOutput PullOutModule::plan()
   output.turn_signal_info =
     calcTurnSignalInfo(status_.pull_out_path.start_pose, status_.pull_out_path.end_pose);
 
+  if (status_.back_finished) {
+    const double start_distance = motion_utils::calcSignedArcLength(
+      path.points, planner_data_->self_pose->pose.position,
+      status_.pull_out_path.start_pose.position);
+    const double finish_distance = motion_utils::calcSignedArcLength(
+      path.points, planner_data_->self_pose->pose.position,
+      status_.pull_out_path.end_pose.position);
+    updateRTCStatus(start_distance, finish_distance);
+  } else {
+    const double distance = motion_utils::calcSignedArcLength(
+      path.points, planner_data_->self_pose->pose.position,
+      status_.pull_out_path.start_pose.position);
+    updateRTCStatus(0.0, distance);
+  }
+
   setDebugData();
 
   return output;
@@ -234,8 +249,20 @@ BehaviorModuleOutput PullOutModule::planWaitingApproval()
   output.path_candidate = std::make_shared<PathWithLaneId>(candidate_path);
 
   waitApproval();
-  // requset approval when stopped at the corresponding point, so distance is 0
-  updateRTCStatus(0.0);
+  if (status_.back_finished) {
+    const double start_distance = motion_utils::calcSignedArcLength(
+      candidate_path.points, planner_data_->self_pose->pose.position,
+      status_.pull_out_path.start_pose.position);
+    const double finish_distance = motion_utils::calcSignedArcLength(
+      candidate_path.points, planner_data_->self_pose->pose.position,
+      status_.pull_out_path.end_pose.position);
+    updateRTCStatus(start_distance, finish_distance);
+  } else {
+    const double distance = motion_utils::calcSignedArcLength(
+      candidate_path.points, planner_data_->self_pose->pose.position,
+      status_.pull_out_path.start_pose.position);
+    updateRTCStatus(0.0, distance);
+  }
 
   setDebugData();
   return output;
@@ -493,8 +520,6 @@ void PullOutModule::checkBackFinished()
     waitApproval();
     removeRTCStatus();
     uuid_ = generateUUID();
-    // requset approval when stopped at the corresponding point, so distance is 0
-    updateRTCStatus(0.0);
     current_state_ = BT::NodeStatus::SUCCESS;  // for breaking loop
   }
 }
