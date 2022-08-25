@@ -59,8 +59,8 @@ def generate_launch_description():
         ),
     ]
 
-    vector_map_inside_area_filter_container = ComposableNodeContainer(
-        name="vector_map_inside_area_filter_container",
+    vector_map_area_filter_container = ComposableNodeContainer(
+        name="vector_map_area_filter_container",
         namespace="",
         package="rclcpp_components",
         executable=LaunchConfiguration("container_executable"),
@@ -79,11 +79,10 @@ def generate_launch_description():
         [
             add_launch_arg("use_multithread", "true"),
             add_launch_arg("use_pointcloud_container", "true"),
-            add_launch_arg("container_name", "vector_map_inside_area_filter_container"),
-            add_launch_arg("polygon_type", "no_obstacle_segmentation_area_for_run_out"),
+            add_launch_arg("container_name", "vector_map_area_filter_container"),
             set_container_executable,
             set_container_mt_executable,
-            vector_map_inside_area_filter_container,
+            vector_map_area_filter_container,
             load_composable_nodes,
         ]
     )
