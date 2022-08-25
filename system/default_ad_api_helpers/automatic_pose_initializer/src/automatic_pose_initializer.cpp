@@ -21,10 +21,10 @@ namespace automatic_pose_initializer
 
 AutomaticPoseInitializer::AutomaticPoseInitializer() : Node("automatic_pose_initializer")
 {
-  const auto node = component_interface_utils::NodeAdaptor(this);
+  const auto adaptor = component_interface_utils::NodeAdaptor(this);
   group_cli_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-  node.init_cli(cli_initialize_, group_cli_);
-  node.init_sub(sub_state_, [this](const State::Message::ConstSharedPtr msg) { state_ = *msg; });
+  adaptor.init_cli(cli_initialize_, group_cli_);
+  adaptor.init_sub(sub_state_, [this](const State::Message::ConstSharedPtr msg) { state_ = *msg; });
 
   const auto period = rclcpp::Rate(1.0).period();
   timer_ = rclcpp::create_timer(this, get_clock(), period, [this]() { on_timer(); });
