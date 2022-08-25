@@ -208,9 +208,11 @@ CandidateOutput PullOutModule::planCandidate() const
         selected_retreat_path.pull_out_path.path.header =
           planner_data_->route_handler->getRouteHeader();
         CandidateOutput output_retreat(selected_retreat_path.pull_out_path.path);
-        output_retreat.distance_to_path_change = motion_utils::calcSignedArcLength(
+        output_retreat.start_distance_to_path_change = motion_utils::calcSignedArcLength(
           selected_retreat_path.pull_out_path.path.points, current_pose.position,
           selected_retreat_path.backed_pose.position);
+        output_retreat.finish_distance_to_path_change =
+          output_retreat.start_distance_to_path_change;
         return output_retreat;
       }
     }
@@ -219,8 +221,11 @@ CandidateOutput PullOutModule::planCandidate() const
 
   selected_path.path.header = planner_data_->route_handler->getRouteHeader();
   CandidateOutput output(selected_path.path);
-  output.distance_to_path_change = motion_utils::calcSignedArcLength(
+  output.start_distance_to_path_change = motion_utils::calcSignedArcLength(
     selected_path.path.points, current_pose.position, selected_path.shift_point.start.position);
+  output.finish_distance_to_path_change = motion_utils::calcSignedArcLength(
+    selected_path.path.points, current_pose.position, selected_path.shift_point.end.position);
+
   const auto finish_distance_to_path_change = motion_utils::calcSignedArcLength(
     selected_path.path.points, current_pose.position, selected_path.shift_point.end.position);
 
@@ -256,7 +261,8 @@ BehaviorModuleOutput PullOutModule::planWaitingApproval()
     candidate_path.drivable_area = util::generateDrivableArea(
       candidate_path, lanes, resolution, common_parameters.vehicle_length, planner_data_);
 
-    updateRTCStatus(candidate.distance_to_path_change);
+    updateRTCStatus(
+      candidate.start_distance_to_path_change, candidate.finish_distance_to_path_change);
   }
   for (size_t i = 1; i < candidate_path.points.size(); i++) {
     candidate_path.points.at(i).point.longitudinal_velocity_mps = 0.0;
