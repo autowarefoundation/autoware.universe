@@ -92,10 +92,9 @@ private:
     const Trajectory & traj, std::vector<TargetObstacle> & target_obstacles);
   double calcCollisionTimeMargin(
     const geometry_msgs::msg::Pose & current_pose, const double current_vel,
-    const geometry_msgs::msg::Point & nearest_collision_point,
-    const PredictedObject & predicted_object, const size_t first_within_idx,
+    const std::vector<geometry_msgs::msg::PointStamped> & collision_points,
+    const PredictedObject & predicted_object,
     const Trajectory & decimated_traj,
-    const std::vector<tier4_autoware_utils::Polygon2d> & decimated_traj_polygons,
     const bool is_driving_forward);
   void publishVelocityLimit(const boost::optional<VelocityLimit> & vel_limit);
   void publishDebugData(const DebugData & debug_data) const;
