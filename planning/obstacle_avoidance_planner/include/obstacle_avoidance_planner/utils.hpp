@@ -115,6 +115,10 @@ std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> interpolate2DTraj
   const std::vector<double> & base_x, const std::vector<double> & base_y,
   const std::vector<double> & base_yaw, const double resolution);
 
+std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> interpolate2DTrajectoryPoints(
+  const std::vector<double> & base_x, const std::vector<double> & base_y,
+  const double resolution);
+
 template <typename T>
 std::vector<geometry_msgs::msg::Point> getInterpolatedPoints(
   const T & points, const double delta_arc_length, const double offset = 0)
