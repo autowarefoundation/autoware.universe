@@ -7,7 +7,7 @@
   <maintainer email="takamasa.horibe@tier4.jp">Takamasa Horibe</maintainer>
   <license>Apache License 2.0</license>
 
-  <author email="h_ohta@ertl.jp">h_ohta</author>
+  <author email="hiroki.ota@tier4.jp">Hiroki OTA</author>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
