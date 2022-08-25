@@ -21,5 +21,3 @@
         split_points_distance_tolerance: 0.2
         split_height_distance: 0.3
         use_virtual_ground_point: True
-        input_frame: base_link
-        output_frame: base_link
