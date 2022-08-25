@@ -112,10 +112,8 @@ std::array<std::vector<double>, 3> slerp(
   }
   // interpolate base_keys at query_keys
   return {
-    interpolator_x.getSplineInterpolatedValues(query_keys), 
-    interpolator_y.getSplineInterpolatedValues(query_keys), 
-    yaw_vec
-  };
+    interpolator_x.getSplineInterpolatedValues(query_keys),
+    interpolator_y.getSplineInterpolatedValues(query_keys), yaw_vec};
 }
 
 std::vector<double> slerpByAkima(

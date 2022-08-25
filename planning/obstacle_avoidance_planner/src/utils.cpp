@@ -367,8 +367,7 @@ std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> interpolate2DTraj
 }
 
 std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> interpolate2DTrajectoryPoints(
-  const std::vector<double> & base_x, const std::vector<double> & base_y,
-  const double resolution)
+  const std::vector<double> & base_x, const std::vector<double> & base_y, const double resolution)
 {
   if (base_x.empty() || base_y.empty()) {
     return std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>{};
@@ -384,7 +383,8 @@ std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> interpolate2DTraj
 
   // spline interpolation
   //  x = interpolated[0], y = interpolated[1], yaw = interpolated[2]
-  std::array<std::vector<double>, 3> interpolated = interpolation::slerp(base_s, base_x, base_y, new_s);
+  std::array<std::vector<double>, 3> interpolated =
+    interpolation::slerp(base_s, base_x, base_y, new_s);
   const auto & interpolated_x = interpolated[0];
   const auto & interpolated_y = interpolated[1];
   const auto & interpolated_yaw = interpolated[2];
