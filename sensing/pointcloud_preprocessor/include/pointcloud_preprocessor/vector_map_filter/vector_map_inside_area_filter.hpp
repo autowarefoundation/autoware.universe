@@ -26,10 +26,7 @@
 
 #include <string>
 
-// TODO: remove
-using tier4_autoware_utils::LinearRing2d;
 using tier4_autoware_utils::MultiPoint2d;
-using tier4_autoware_utils::Point2d;
 
 namespace pointcloud_preprocessor
 {
