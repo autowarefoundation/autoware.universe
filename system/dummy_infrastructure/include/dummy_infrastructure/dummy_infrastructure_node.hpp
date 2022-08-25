@@ -41,7 +41,7 @@ public:
   {
     double update_rate_hz{};
     bool use_first_command{};
-    bool use_instrument_id{};
+    bool use_command_state{};
     std::string instrument_id{};
     bool approval{};
     bool is_finalized{};
