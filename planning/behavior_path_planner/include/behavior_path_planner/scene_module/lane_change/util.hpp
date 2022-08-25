@@ -70,6 +70,7 @@ bool isLaneChangePathSafe(
   const PathWithLaneId & path, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & target_lanes,
   const PredictedObjects::ConstSharedPtr dynamic_objects, const Pose & current_pose,
+  const size_t current_seg_idx, 
   const Twist & current_twist, const BehaviorPathPlannerParameters & common_parameters,
   const LaneChangeParameters & lane_change_parameters, const bool use_buffer = true,
   const double acceleration = 0.0);

@@ -455,8 +455,9 @@ bool LaneChangeModule::isAbortConditionSatisfied() const
     const auto check_lanes = route_handler->getCheckTargetLanesFromPath(
       path.path, status_.lane_change_lanes, check_distance_with_path);
 
+    const size_t current_seg_idx = findEgoSegmentIndex(path.path.points);
     is_path_safe = lane_change_utils::isLaneChangePathSafe(
-      path.path, current_lanes, check_lanes, objects, current_pose, current_twist,
+      path.path, current_lanes, check_lanes, objects, current_pose, current_seg_idx, current_twist,
       common_parameters, parameters_, false, status_.lane_change_path.acceleration);
   }
 
