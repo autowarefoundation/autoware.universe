@@ -37,9 +37,9 @@ std::array<double, 36> GetCovarianceParameter(rclcpp::Node * node, const std::st
 InitialPoseAdaptor::InitialPoseAdaptor() : Node("initial_pose_adaptor")
 {
   rviz_particle_covariance_ = GetCovarianceParameter(this, "initial_pose_particle_covariance");
-  cli_map_fit_ = create_client<RequestHeightFitting>("fit_map_height");
+  cli_map_fit_ = create_client<RequestHeightFitting>("~/fit_map_height");
   sub_initial_pose_ = create_subscription<PoseWithCovarianceStamped>(
-    "initialpose", rclcpp::QoS(1),
+    "~/initialpose", rclcpp::QoS(1),
     std::bind(&InitialPoseAdaptor::OnInitialPose, this, std::placeholders::_1));
 
   const auto node = component_interface_utils::NodeAdaptor(this);
