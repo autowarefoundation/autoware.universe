@@ -107,6 +107,7 @@ RadarFusionToDetectedObject::Output RadarFusionToDetectedObject::update(
         if (isYawCorrect(split_object, twist_with_covariance, param_.threshold_yaw_diff)) {
           split_object.kinematics.twist_with_covariance = twist_with_covariance;
           split_object.kinematics.has_twist = true;
+          split_object.kinematics.has_twist_covariance = true;
         }
       }
 

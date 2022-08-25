@@ -105,6 +105,7 @@ private:
   bool isYawCorrect(
     const DetectedObject & object, const TwistWithCovariance & twist_with_covariance,
     const double & yaw_threshold);
+  bool hasTwistCovariance(const TwistWithCovariance & twist_with_covariance);
   Eigen::Vector2d toVector2d(const TwistWithCovariance & twist_with_covariance);
   TwistWithCovariance toTwistWithCovariance(const Eigen::Vector2d & vector2d);
 
