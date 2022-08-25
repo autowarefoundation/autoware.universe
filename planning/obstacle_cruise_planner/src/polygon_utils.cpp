@@ -183,6 +183,10 @@ std::vector<geometry_msgs::msg::PointStamped> willCollideWithSurroundObstacle(
     vehicle_max_longitudinal_offset, is_driving_forward, max_dist,
     max_prediction_time_for_collision_check);
 
+  if (collision_points.empty()) {
+    return {};
+  }
+
   const double overlap_time = (rclcpp::Time(collision_points.back().header.stamp) -
                                rclcpp::Time(collision_points.front().header.stamp))
                                 .seconds();
