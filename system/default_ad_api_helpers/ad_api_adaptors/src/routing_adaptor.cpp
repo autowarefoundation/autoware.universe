@@ -19,17 +19,16 @@
 namespace ad_api_adaptors
 {
 
-RoutingAdaptor::RoutingAdaptor(const rclcpp::NodeOptions & options)
-: Node("routing_adaptor", options)
+RoutingAdaptor::RoutingAdaptor() : Node("routing_adaptor")
 {
   sub_goal_ = create_subscription<PoseStamped>(
     "~/input/goal", 5, std::bind(&RoutingAdaptor::on_goal, this, std::placeholders::_1));
   sub_waypoint_ = create_subscription<PoseStamped>(
     "~/input/waypoint", 5, std::bind(&RoutingAdaptor::on_waypoint, this, std::placeholders::_1));
 
-  const auto node = component_interface_utils::NodeAdaptor(this);
-  node.init_cli(cli_route_);
-  node.init_cli(cli_clear_);
+  const auto adaptor = component_interface_utils::NodeAdaptor(this);
+  adaptor.init_cli(cli_route_);
+  adaptor.init_cli(cli_clear_);
   route_points_ = std::make_shared<SetRoutePoints::Service::Request>();
 }
 
@@ -56,5 +55,13 @@ void RoutingAdaptor::on_waypoint(const PoseStamped::ConstSharedPtr pose)
 
 }  // namespace ad_api_adaptors
 
-#include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(ad_api_adaptors::RoutingAdaptor)
+int main(int argc, char ** argv)
+{
+  rclcpp::init(argc, argv);
+  rclcpp::executors::SingleThreadedExecutor executor;
+  auto node = std::make_shared<ad_api_adaptors::RoutingAdaptor>();
+  executor.add_node(node);
+  executor.spin();
+  executor.remove_node(node);
+  rclcpp::shutdown();
+}
