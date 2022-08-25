@@ -25,7 +25,7 @@ using Future = typename rclcpp::Client<ServiceT>::SharedFuture;
 
 std::array<double, 36> get_covariance_parameter(rclcpp::Node * node, const std::string & name)
 {
-  const auto vector = node->template declare_parameter<std::vector<double>>(name);
+  const auto vector = node->declare_parameter<std::vector<double>>(name);
   if (vector.size() != 36) {
     throw std::invalid_argument("The covariance parameter size is not 36.");
   }
