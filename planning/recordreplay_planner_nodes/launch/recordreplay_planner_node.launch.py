@@ -22,26 +22,22 @@ def generate_launch_description():
     """Launch recordreplay_planner_node with default configuration."""
     # -------------------------------- Nodes-----------------------------------
     recordreplay_planner_node = launch_ros.actions.Node(
-        package='recordreplay_planner_nodes',
-        executable='recordreplay_planner_node_exe',
-        name='recordreplay_planner',
-        namespace='planning',
-        output='screen',
+        package="recordreplay_planner_nodes",
+        executable="recordreplay_planner_node_exe",
+        name="recordreplay_planner",
+        namespace="planning",
+        output="screen",
         parameters=[
             "{}/param/defaults.param.yaml".format(
-                ament_index_python.get_package_share_directory(
-                    "recordreplay_planner_nodes"
-                )
+                ament_index_python.get_package_share_directory("recordreplay_planner_nodes")
             ),
         ],
         remappings=[
-            ('vehicle_state', '/vehicle/vehicle_kinematic_state'),
-            ('planned_trajectory', '/planning/trajectory'),
-            ('obstacle_bounding_boxes', '/perception/lidar_bounding_boxes'),
-        ]
+            ("vehicle_state", "/vehicle/vehicle_kinematic_state"),
+            ("planned_trajectory", "/planning/trajectory"),
+            ("obstacle_bounding_boxes", "/perception/lidar_bounding_boxes"),
+        ],
     )
 
-    ld = launch.LaunchDescription([
-        recordreplay_planner_node]
-    )
+    ld = launch.LaunchDescription([recordreplay_planner_node])
     return ld

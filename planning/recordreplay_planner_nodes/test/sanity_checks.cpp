@@ -12,22 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <gtest/gtest.h>
-#include <recordreplay_planner_nodes/recordreplay_planner_node.hpp>
-#include <autoware_auto_planning_msgs/msg/trajectory.hpp>
+#include <motion_common/config.hpp>
 #include <motion_testing/motion_testing.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <motion_common/config.hpp>
+#include <recordreplay_planner_nodes/recordreplay_planner_node.hpp>
 
-#include <chrono>
+#include <autoware_auto_planning_msgs/msg/trajectory.hpp>
+
+#include <gtest/gtest.h>
+
 #include <algorithm>
+#include <chrono>
 #include <memory>
 
-
-using motion::planning::recordreplay_planner_nodes::RecordReplayPlannerNode;
-using motion::motion_testing::make_state;
-using std::chrono::system_clock;
 using autoware_auto_planning_msgs::msg::Trajectory;
+using motion::motion_testing::make_state;
+using motion::planning::recordreplay_planner_nodes::RecordReplayPlannerNode;
+using std::chrono::system_clock;
 using State = autoware_auto_vehicle_msgs::msg::VehicleKinematicState;
 
 using motion::motion_common::VehicleConfig;
@@ -47,15 +48,13 @@ TEST(MytestBase, Basic)
   node_options_rr.append_parameter_override("loop_trajectory", false);
   node_options_rr.append_parameter_override("loop_max_gap_m", 0.0);
   node_options_rr.append_parameter_override(
-    "goal_angle_threshold_rad",
-    autoware::common::types::PI_2);
+    "goal_angle_threshold_rad", autoware::common::types::PI_2);
   node_options_rr.append_parameter_override("skip_first_velocity", false);
   node_options_rr.append_parameter_override("recording_frame", "odom");
   auto plannernode = std::make_shared<RecordReplayPlannerNode>(node_options_rr);
 
   using PubAllocT = rclcpp::PublisherOptionsWithAllocator<std::allocator<void>>;
-  const auto publisher = std::make_shared<rclcpp::Node>(
-    "recordreplay_node_testpublisher");
+  const auto publisher = std::make_shared<rclcpp::Node>("recordreplay_node_testpublisher");
   const auto pub = publisher->create_publisher<State>(
     "vehicle_state", rclcpp::QoS{10}.transient_local(), PubAllocT{});
 

@@ -1,5 +1,4 @@
-RecordReplay planner {#recordreplay-planner}
-====================
+# RecordReplay planner {#recordreplay-planner}
 
 # Purpose / Use cases
 
@@ -9,7 +8,6 @@ driving a trajectory, then reset vehicle position, then start replay and see wha
 
 The trajectories can be a loop , which can be determined naively by checking the distance between the first and last
 point of the trajectory, but the user has the ultimate control over toggling this behavior.
-
 
 # Design
 
@@ -27,10 +25,10 @@ There is no interpolation between points along the trajectory, and localization 
 The list of recorded states is simply iterated over.
 
 The stopping concept only works if one can assume that the downstream controller and the vehicle are able
-to track the desired velocity going to zero in a single trajectory step. 
+to track the desired velocity going to zero in a single trajectory step.
 
 Making sure this assumption is satisfied by construction would involve creating a dynamically feasible
-velocity profile for stopping - this has not been done yet. 
+velocity profile for stopping - this has not been done yet.
 
 It is the user's responsibility to check if the trajectory is suitable for looping, and call `set_loop` accordingly
 to toggle the looping behavior with regard to the current trajectory that the controller is replaying. `is_loop`,
@@ -47,30 +45,28 @@ the path file that the user obtained while recording.
 
 Inputs:
 
-* `VehicleKinematicState.msg` is the state that gets recorded
-* `BoundingBoxArray.msg` is a list of bounding boxes of obstacles
+- `VehicleKinematicState.msg` is the state that gets recorded
+- `BoundingBoxArray.msg` is a list of bounding boxes of obstacles
 
 Outputs:
 
-* `Trajectory.msg` is the trajectory that gets published
-
+- `Trajectory.msg` is the trajectory that gets published
 
 ## Complexity
 
 Recording is `O(1)` in time and `O(n)` in space, replay is `O(n)` in both time and space, where `n` is the
 number of recorded states. Collision checking currently happens on every replay even if obstacles do not
-change, and has a complexity that is linear in the number of obstacles but proportional to the product of 
+change, and has a complexity that is linear in the number of obstacles but proportional to the product of
 the number of halfplanes in the ego vehicle and a single obstacle.
 
-# Security considerations 
+# Security considerations
 
 TBD by a security specialist.
 
 # Future extensions / Unimplemented parts
 
-* Trajectory buffer clearing
-* Proper `tf` support
-* rosbag2 support for recording and later replaying
+- Trajectory buffer clearing
+- Proper `tf` support
+- rosbag2 support for recording and later replaying
 
 # Related issues
-

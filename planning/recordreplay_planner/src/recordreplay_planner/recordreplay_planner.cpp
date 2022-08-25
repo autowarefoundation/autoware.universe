@@ -14,26 +14,27 @@
 
 #include "recordreplay_planner/recordreplay_planner.hpp"
 
-#include <geometry_msgs/msg/point32.hpp>
-#include <time_utils/time_utils.hpp>
-#include <motion_common/motion_common.hpp>
 #include <common/types.hpp>
+#include <motion_common/motion_common.hpp>
+#include <time_utils/time_utils.hpp>
+
+#include <geometry_msgs/msg/point32.hpp>
 
 #include <algorithm>
 #include <cmath>
 #include <fstream>
 #include <iostream>
+#include <map>
 #include <memory>
 #include <sstream>
 #include <string>
 #include <vector>
-#include <map>
 
 using autoware::common::types::bool8_t;
 using autoware::common::types::char8_t;
-using autoware::common::types::uchar8_t;
 using autoware::common::types::float32_t;
 using autoware::common::types::float64_t;
+using autoware::common::types::uchar8_t;
 using Csv = std::vector<std::vector<std::string>>;
 using Association = std::map<std::string /* label */, int32_t /* row */>;
 namespace
@@ -70,8 +71,7 @@ void deleteUnit(std::string & string)
 }
 
 bool loadData(
-  const std::string & file_name, Association & label_row_association_map,
-  Csv & file_data)
+  const std::string & file_name, Association & label_row_association_map, Csv & file_data)
 {
   file_data.clear();
   label_row_association_map.clear();
@@ -147,16 +147,12 @@ void RecordReplayPlanner::stop_replaying() noexcept
   m_recordreplaystate = RecordReplayState::IDLE;
 }
 
-void RecordReplayPlanner::clear_record() noexcept
-{
-  m_record_buffer.clear();
-}
+void RecordReplayPlanner::clear_record() noexcept { m_record_buffer.clear(); }
 
 std::size_t RecordReplayPlanner::get_record_length() const noexcept
 {
   return m_record_buffer.size();
 }
-
 
 void RecordReplayPlanner::set_heading_weight(float64_t heading_weight)
 {
@@ -166,10 +162,7 @@ void RecordReplayPlanner::set_heading_weight(float64_t heading_weight)
   m_heading_weight = heading_weight;
 }
 
-float64_t RecordReplayPlanner::get_heading_weight()
-{
-  return m_heading_weight;
-}
+float64_t RecordReplayPlanner::get_heading_weight() { return m_heading_weight; }
 
 void RecordReplayPlanner::set_min_record_distance(float64_t min_record_distance)
 {
@@ -179,10 +172,7 @@ void RecordReplayPlanner::set_min_record_distance(float64_t min_record_distance)
   m_min_record_distance = min_record_distance;
 }
 
-float64_t RecordReplayPlanner::get_min_record_distance() const
-{
-  return m_min_record_distance;
-}
+float64_t RecordReplayPlanner::get_min_record_distance() const { return m_min_record_distance; }
 
 void RecordReplayPlanner::set_skip_first_velocity(const bool8_t skip_first_velocity)
 {
@@ -199,11 +189,11 @@ bool RecordReplayPlanner::record_state(const State & state_to_record)
   auto previous_state = m_record_buffer.back();
   auto distance_sq =
     (state_to_record.state.pose.position.x - previous_state.state.pose.position.x) *
-    (state_to_record.state.pose.position.x - previous_state.state.pose.position.x) +
+      (state_to_record.state.pose.position.x - previous_state.state.pose.position.x) +
     (state_to_record.state.pose.position.y - previous_state.state.pose.position.y) *
-    (state_to_record.state.pose.position.y - previous_state.state.pose.position.y);
+      (state_to_record.state.pose.position.y - previous_state.state.pose.position.y);
 
-  if (distance_sq >= (m_min_record_distance * m_min_record_distance) ) {
+  if (distance_sq >= (m_min_record_distance * m_min_record_distance)) {
     m_record_buffer.push_back(state_to_record);
     return true;
   } else {
@@ -216,33 +206,26 @@ const Trajectory & RecordReplayPlanner::plan(const State & current_state)
   return from_record(current_state);
 }
 
-
 std::size_t RecordReplayPlanner::get_closest_state(const State & current_state)
 {
   // Find the closest point to the current state in the stored states buffer
-  const auto distance_from_current_state =
-    [this, &current_state](State & other_state) {
-      const auto s1 = current_state.state, s2 = other_state.state;
-      return (s1.pose.position.x - s2.pose.position.x) * (s1.pose.position.x - s2.pose.position.x) +
-             (s1.pose.position.y - s2.pose.position.y) * (s1.pose.position.y - s2.pose.position.y) +
-             m_heading_weight * std::abs(
-        ::motion::motion_common::to_angle(
-          s1.pose.orientation - s2.pose.orientation));
-    };
-  const auto comparison_function =
-    [&distance_from_current_state](State & one, State & two)
-    {return distance_from_current_state(one) < distance_from_current_state(two);};
-
+  const auto distance_from_current_state = [this, &current_state](State & other_state) {
+    const auto s1 = current_state.state, s2 = other_state.state;
+    return (s1.pose.position.x - s2.pose.position.x) * (s1.pose.position.x - s2.pose.position.x) +
+           (s1.pose.position.y - s2.pose.position.y) * (s1.pose.position.y - s2.pose.position.y) +
+           m_heading_weight *
+             std::abs(::motion::motion_common::to_angle(s1.pose.orientation - s2.pose.orientation));
+  };
+  const auto comparison_function = [&distance_from_current_state](State & one, State & two) {
+    return distance_from_current_state(one) < distance_from_current_state(two);
+  };
 
   const auto minimum_index_iterator =
-    std::min_element(
-    std::begin(m_record_buffer), std::end(m_record_buffer),
-    comparison_function);
+    std::min_element(std::begin(m_record_buffer), std::end(m_record_buffer), comparison_function);
   auto minimum_idx = std::distance(std::begin(m_record_buffer), minimum_index_iterator);
 
   return static_cast<std::size_t>(minimum_idx);
 }
-
 
 const Trajectory & RecordReplayPlanner::from_record(const State & current_state)
 {
@@ -264,8 +247,7 @@ const Trajectory & RecordReplayPlanner::from_record(const State & current_state)
     // can record - this will either be the distance from
     // the start index to the end of the recording, or
     // the maximum length of recording, whichever is shorter.
-    publication_len =
-      std::min({record_length - m_traj_start_idx, MAX_TRAJECTORY_LENGTH});
+    publication_len = std::min({record_length - m_traj_start_idx, MAX_TRAJECTORY_LENGTH});
   } else {
     publication_len = std::min({record_length, MAX_TRAJECTORY_LENGTH});
   }
@@ -362,19 +344,19 @@ void RecordReplayPlanner::writeTrajectoryBufferToFile(const std::string & record
   if (!ofs.is_open()) {
     throw std::runtime_error("Could not open file.");
   }
-  ofs << "t_sec, t_nanosec, x, y, orientation_x, orientation_y, orientation_z, orientation_w, " <<
-    "longitudinal_velocity_mps, lateral_velocity_mps, acceleration_mps2, heading_rate_rps, " <<
-    "front_wheel_angle_rad, rear_wheel_angle_rad" << std::endl;
+  ofs << "t_sec, t_nanosec, x, y, orientation_x, orientation_y, orientation_z, orientation_w, "
+      << "longitudinal_velocity_mps, lateral_velocity_mps, acceleration_mps2, heading_rate_rps, "
+      << "front_wheel_angle_rad, rear_wheel_angle_rad" << std::endl;
 
   for (const auto & trajectory_point : m_record_buffer) {
     const auto & s = trajectory_point.state;
     const auto & t = s.time_from_start;
-    ofs << t.sec << ", " << t.nanosec << ", " << s.pose.position.x << ", " << s.pose.position.y <<
-      ", " << s.pose.orientation.x << ", " << s.pose.orientation.y << ", " <<
-      s.pose.orientation.z << ", " << s.pose.orientation.w << ", " <<
-      s.longitudinal_velocity_mps << ", " << s.lateral_velocity_mps << ", " <<
-      s.acceleration_mps2 << ", " << s.heading_rate_rps << ", " << s.front_wheel_angle_rad <<
-      ", " << s.rear_wheel_angle_rad << std::endl;
+    ofs << t.sec << ", " << t.nanosec << ", " << s.pose.position.x << ", " << s.pose.position.y
+        << ", " << s.pose.orientation.x << ", " << s.pose.orientation.y << ", "
+        << s.pose.orientation.z << ", " << s.pose.orientation.w << ", "
+        << s.longitudinal_velocity_mps << ", " << s.lateral_velocity_mps << ", "
+        << s.acceleration_mps2 << ", " << s.heading_rate_rps << ", " << s.front_wheel_angle_rad
+        << ", " << s.rear_wheel_angle_rad << std::endl;
   }
   ofs.close();
 }
@@ -433,19 +415,12 @@ void RecordReplayPlanner::readTrajectoryBufferFromFile(const std::string & repla
   }
 }
 
-void RecordReplayPlanner::set_loop(const bool8_t loop)
-{
-  m_enable_loop = loop;
-}
+void RecordReplayPlanner::set_loop(const bool8_t loop) { m_enable_loop = loop; }
 
-bool8_t RecordReplayPlanner::get_loop() const
-{
-  return m_enable_loop;
-}
+bool8_t RecordReplayPlanner::get_loop() const { return m_enable_loop; }
 
 bool8_t RecordReplayPlanner::reached_goal(
-  const State & current_state,
-  const float64_t & distance_thresh,
+  const State & current_state, const float64_t & distance_thresh,
   const float64_t & angle_thresh) const
 {
   if (m_trajectory.points.empty()) {
@@ -459,9 +434,7 @@ bool8_t RecordReplayPlanner::reached_goal(
     ego_state.pose.position.y - goal_state.pose.position.y);
   const auto angle_diff_rad = std::abs(
     ::motion::motion_common::to_angle(ego_state.pose.orientation - goal_state.pose.orientation));
-  if (distance2d < distance_thresh &&
-    angle_diff_rad < angle_thresh)
-  {
+  if (distance2d < distance_thresh && angle_diff_rad < angle_thresh) {
     return true;
   }
   return false;
@@ -469,8 +442,7 @@ bool8_t RecordReplayPlanner::reached_goal(
 
 // Uses code similar to RecordReplayPlanner::reached_goal(),
 // but does not check the heading alignment
-bool8_t RecordReplayPlanner::is_loop(
-  const float64_t & distance_thresh) const
+bool8_t RecordReplayPlanner::is_loop(const float64_t & distance_thresh) const
 {
   bool retval = false;
 
@@ -478,8 +450,7 @@ bool8_t RecordReplayPlanner::is_loop(
   if (get_record_length() > 1) {
     const auto & goal_state = m_record_buffer.front().state;
     const auto & start_state = m_record_buffer.back().state;
-    const auto distance2d =
-      std::hypot(
+    const auto distance2d = std::hypot(
       start_state.pose.position.x - goal_state.pose.position.x,
       start_state.pose.position.y - goal_state.pose.position.y);
 

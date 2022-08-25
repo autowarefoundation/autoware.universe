@@ -16,21 +16,21 @@
 #define RECORDREPLAY_PLANNER__VISIBILITY_CONTROL_HPP_
 
 #if defined(__WIN32)
-  #if defined(RECORDREPLAY_PLANNER_BUILDING_DLL) || defined(RECORDREPLAY_PLANNER_EXPORTS)
-    #define RECORDREPLAY_PLANNER_PUBLIC __declspec(dllexport)
-    #define RECORDREPLAY_PLANNER_LOCAL
-  #else  // defined(RECORDREPLAY_PLANNER_BUILDING_DLL) || defined(RECORDREPLAY_PLANNER_EXPORTS)
-    #define RECORDREPLAY_PLANNER_PUBLIC __declspec(dllimport)
-    #define RECORDREPLAY_PLANNER_LOCAL
-  #endif  // defined(RECORDREPLAY_PLANNER_BUILDING_DLL) || defined(RECORDREPLAY_PLANNER_EXPORTS)
+#if defined(RECORDREPLAY_PLANNER_BUILDING_DLL) || defined(RECORDREPLAY_PLANNER_EXPORTS)
+#define RECORDREPLAY_PLANNER_PUBLIC __declspec(dllexport)
+#define RECORDREPLAY_PLANNER_LOCAL
+#else  // defined(RECORDREPLAY_PLANNER_BUILDING_DLL) || defined(RECORDREPLAY_PLANNER_EXPORTS)
+#define RECORDREPLAY_PLANNER_PUBLIC __declspec(dllimport)
+#define RECORDREPLAY_PLANNER_LOCAL
+#endif  // defined(RECORDREPLAY_PLANNER_BUILDING_DLL) || defined(RECORDREPLAY_PLANNER_EXPORTS)
 #elif defined(__linux__)
-  #define RECORDREPLAY_PLANNER_PUBLIC __attribute__((visibility("default")))
-  #define RECORDREPLAY_PLANNER_LOCAL __attribute__((visibility("hidden")))
+#define RECORDREPLAY_PLANNER_PUBLIC __attribute__((visibility("default")))
+#define RECORDREPLAY_PLANNER_LOCAL __attribute__((visibility("hidden")))
 #elif defined(__APPLE__)
-  #define RECORDREPLAY_PLANNER_PUBLIC __attribute__((visibility("default")))
-  #define RECORDREPLAY_PLANNER_LOCAL __attribute__((visibility("hidden")))
+#define RECORDREPLAY_PLANNER_PUBLIC __attribute__((visibility("default")))
+#define RECORDREPLAY_PLANNER_LOCAL __attribute__((visibility("hidden")))
 #else  // defined(_LINUX)
-  #error "Unsupported Build Configuration"
+#error "Unsupported Build Configuration"
 #endif  // defined(_WINDOWS)
 
 #endif  // RECORDREPLAY_PLANNER__VISIBILITY_CONTROL_HPP_

@@ -12,18 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
+#include <autoware_auto_tf2/tf2_autoware_auto_msgs.hpp>
 #include <common/types.hpp>
 #include <recordreplay_planner_nodes/recordreplay_planner_node.hpp>
-#include <autoware_auto_tf2/tf2_autoware_auto_msgs.hpp>
+
 #include <tf2/LinearMath/Quaternion.h>
+
 #include <memory>
 #include <string>
 #include <utility>
 
+using autoware::common::types::bool8_t;
 using autoware::common::types::float32_t;
 using autoware::common::types::float64_t;
-using autoware::common::types::bool8_t;
 
 namespace motion
 {
@@ -53,42 +54,32 @@ RecordReplayPlannerNode::RecordReplayPlannerNode(const rclcpp::NodeOptions & nod
   rclcpp::Clock::SharedPtr clock = std::make_shared<rclcpp::Clock>(RCL_ROS_TIME);
   tf_buffer_ = std::make_shared<tf2_ros::Buffer>(clock);
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(
-    *tf_buffer_,
-    std::shared_ptr<rclcpp::Node>(this, [](auto) {}), false);
+    *tf_buffer_, std::shared_ptr<rclcpp::Node>(this, [](auto) {}), false);
 
   // Set up action for control of recording and replaying
   m_recordserver = rclcpp_action::create_server<RecordTrajectory>(
-    this->get_node_base_interface(),
-    this->get_node_clock_interface(),
-    this->get_node_logging_interface(),
-    this->get_node_waitables_interface(),
-    "recordtrajectory",
-    [this](auto uuid, auto goal) {return this->record_handle_goal(uuid, goal);},
-    [this](auto goal_handle) {return this->record_handle_cancel(goal_handle);},
-    [this](auto goal_handle) {return this->record_handle_accepted(goal_handle);});
+    this->get_node_base_interface(), this->get_node_clock_interface(),
+    this->get_node_logging_interface(), this->get_node_waitables_interface(), "recordtrajectory",
+    [this](auto uuid, auto goal) { return this->record_handle_goal(uuid, goal); },
+    [this](auto goal_handle) { return this->record_handle_cancel(goal_handle); },
+    [this](auto goal_handle) { return this->record_handle_accepted(goal_handle); });
 
   m_replayserver = rclcpp_action::create_server<ReplayTrajectory>(
-    this->get_node_base_interface(),
-    this->get_node_clock_interface(),
-    this->get_node_logging_interface(),
-    this->get_node_waitables_interface(),
-    "replaytrajectory",
-    [this](auto uuid, auto goal) {return this->replay_handle_goal(uuid, goal);},
-    [this](auto goal_handle) {return this->replay_handle_cancel(goal_handle);},
-    [this](auto goal_handle) {return this->replay_handle_accepted(goal_handle);});
+    this->get_node_base_interface(), this->get_node_clock_interface(),
+    this->get_node_logging_interface(), this->get_node_waitables_interface(), "replaytrajectory",
+    [this](auto uuid, auto goal) { return this->replay_handle_goal(uuid, goal); },
+    [this](auto goal_handle) { return this->replay_handle_cancel(goal_handle); },
+    [this](auto goal_handle) { return this->replay_handle_accepted(goal_handle); });
 
   // Set up subscribers for the actual recording
   using SubAllocT = rclcpp::SubscriptionOptionsWithAllocator<std::allocator<void>>;
   m_ego_sub = create_subscription<State>(
-    ego_topic, QoS{10},
-    [this](const State::SharedPtr msg) {on_ego(msg);}, SubAllocT{});
+    ego_topic, QoS{10}, [this](const State::SharedPtr msg) { on_ego(msg); }, SubAllocT{});
 
   // Set up publishers
   using PubAllocT = rclcpp::PublisherOptionsWithAllocator<std::allocator<void>>;
-  m_trajectory_pub =
-    create_publisher<Trajectory>(trajectory_topic, QoS{10}, PubAllocT{});
-  m_trajectory_viz_pub =
-    create_publisher<MarkerArray>(trajectory_viz_topic, QoS{10});
+  m_trajectory_pub = create_publisher<Trajectory>(trajectory_topic, QoS{10}, PubAllocT{});
+  m_trajectory_viz_pub = create_publisher<MarkerArray>(trajectory_viz_topic, QoS{10});
 
   // Set up services
   if (declare_parameter<bool8_t>("enable_object_collision_estimator")) {
@@ -111,9 +102,7 @@ RecordReplayPlannerNode::RecordReplayPlannerNode(const rclcpp::NodeOptions & nod
 }
 
 Marker RecordReplayPlannerNode::to_marker(
-  const TrajectoryPoint & traj_point,
-  const std::string & frame_id,
-  int32_t index,
+  const TrajectoryPoint & traj_point, const std::string & frame_id, int32_t index,
   const std::string & ns)
 {
   Marker marker;
@@ -180,9 +169,8 @@ void RecordReplayPlannerNode::on_ego(const State::SharedPtr & msg)
   Transform tf_map2odom;
   State msg_world = *msg;
   try {
-    tf_map2odom = tf_buffer_->lookupTransform(
-      m_recording_frame, msg->header.frame_id,
-      tf2::TimePointZero);
+    tf_map2odom =
+      tf_buffer_->lookupTransform(m_recording_frame, msg->header.frame_id, tf2::TimePointZero);
   } catch (...) {
     // skip recording/replaying if tf failed to get a transform to world frame.
     RCLCPP_ERROR_THROTTLE(
@@ -200,12 +188,9 @@ void RecordReplayPlannerNode::on_ego(const State::SharedPtr & msg)
 
     if (added) {
       // Publish visualization markers
-      m_recorded_markers.markers.push_back(
-        to_marker(
-          msg_world.state,
-          msg_world.header.frame_id,
-          static_cast<int>(m_planner->get_record_length()),
-          "record"));
+      m_recorded_markers.markers.push_back(to_marker(
+        msg_world.state, msg_world.header.frame_id,
+        static_cast<int>(m_planner->get_record_length()), "record"));
       m_trajectory_viz_pub->publish(m_recorded_markers);
     }
 
@@ -224,9 +209,9 @@ void RecordReplayPlannerNode::on_ego(const State::SharedPtr & msg)
       auto request = std::make_shared<ModifyTrajectory::Request>();
       request->original_trajectory = traj_raw;
       auto result = m_modify_trajectory_client->async_send_request(
-        request, std::bind(
-          &RecordReplayPlannerNode::modify_trajectory_response,
-          this, std::placeholders::_1));
+        request,
+        std::bind(
+          &RecordReplayPlannerNode::modify_trajectory_response, this, std::placeholders::_1));
     } else {
       m_trajectory_pub->publish(traj_raw);
 
@@ -242,8 +227,7 @@ void RecordReplayPlannerNode::on_ego(const State::SharedPtr & msg)
 
     // If we reach the destination and are not in a loop, terminate replay
     if (m_planner->reached_goal(
-        msg_world, m_goal_distance_threshold_m, m_goal_angle_threshold_rad))
-    {
+          msg_world, m_goal_distance_threshold_m, m_goal_angle_threshold_rad)) {
       if (!m_planner->get_loop()) {
         m_replaygoalhandle->succeed(std::make_shared<ReplayTrajectory::Result>());
         m_planner->stop_replaying();
@@ -271,8 +255,7 @@ void RecordReplayPlannerNode::modify_trajectory_response(
 }
 
 rclcpp_action::GoalResponse RecordReplayPlannerNode::record_handle_goal(
-  const rclcpp_action::GoalUUID & uuid,
-  const std::shared_ptr<const RecordTrajectory::Goal> goal)
+  const rclcpp_action::GoalUUID & uuid, const std::shared_ptr<const RecordTrajectory::Goal> goal)
 {
   (void)goal;
   (void)uuid;
@@ -296,8 +279,7 @@ rclcpp_action::CancelResponse RecordReplayPlannerNode::record_handle_cancel(
     // If a path is specified
     if (record_path.length() > 0) {
       // Write trajectory to file
-      m_planner->writeTrajectoryBufferToFile(
-        goal_handle->get_goal()->record_path);
+      m_planner->writeTrajectoryBufferToFile(goal_handle->get_goal()->record_path);
     }
   }
 
@@ -317,8 +299,7 @@ void RecordReplayPlannerNode::record_handle_accepted(
 }
 
 rclcpp_action::GoalResponse RecordReplayPlannerNode::replay_handle_goal(
-  const rclcpp_action::GoalUUID & uuid,
-  const std::shared_ptr<const ReplayTrajectory::Goal> goal)
+  const rclcpp_action::GoalUUID & uuid, const std::shared_ptr<const ReplayTrajectory::Goal> goal)
 {
   (void)goal;
   (void)uuid;
@@ -353,8 +334,7 @@ void RecordReplayPlannerNode::replay_handle_accepted(
   // If a path is specified
   if (replay_path.length() > 0) {
     // Read trajectory from file
-    m_planner->readTrajectoryBufferFromFile(
-      goal_handle->get_goal()->replay_path);
+    m_planner->readTrajectoryBufferFromFile(goal_handle->get_goal()->replay_path);
     // Set looping behavior
     const auto loop_good = m_planner->is_loop(m_max_loop_gap_m);
     m_planner->set_loop(m_enable_loop && loop_good);
