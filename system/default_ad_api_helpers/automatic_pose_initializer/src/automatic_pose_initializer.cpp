@@ -27,13 +27,13 @@ AutomaticPoseInitializer::AutomaticPoseInitializer() : Node("automatic_pose_init
   node.init_sub(sub_state_, [this](const State::Message::ConstSharedPtr msg) { state_ = *msg; });
 
   const auto period = rclcpp::Rate(1.0).period();
-  timer_ = rclcpp::create_timer(this, get_clock(), period, [this]() { OnTimer(); });
+  timer_ = rclcpp::create_timer(this, get_clock(), period, [this]() { on_timer(); });
 
   state_.stamp = now();
   state_.state = State::Message::UNKNOWN;
 }
 
-void AutomaticPoseInitializer::OnTimer()
+void AutomaticPoseInitializer::on_timer()
 {
   if (state_.state == State::Message::UNINITIALIZED) {
     try {

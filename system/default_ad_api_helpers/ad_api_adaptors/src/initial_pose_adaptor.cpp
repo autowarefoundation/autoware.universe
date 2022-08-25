@@ -23,7 +23,7 @@ namespace ad_api_adaptors
 template <class ServiceT>
 using Future = typename rclcpp::Client<ServiceT>::SharedFuture;
 
-std::array<double, 36> GetCovarianceParameter(rclcpp::Node * node, const std::string & name)
+std::array<double, 36> get_covariance_parameter(rclcpp::Node * node, const std::string & name)
 {
   const auto vector = node->template declare_parameter<std::vector<double>>(name);
   if (vector.size() != 36) {
@@ -36,17 +36,17 @@ std::array<double, 36> GetCovarianceParameter(rclcpp::Node * node, const std::st
 
 InitialPoseAdaptor::InitialPoseAdaptor() : Node("initial_pose_adaptor")
 {
-  rviz_particle_covariance_ = GetCovarianceParameter(this, "initial_pose_particle_covariance");
+  rviz_particle_covariance_ = get_covariance_parameter(this, "initial_pose_particle_covariance");
   cli_map_fit_ = create_client<RequestHeightFitting>("~/fit_map_height");
   sub_initial_pose_ = create_subscription<PoseWithCovarianceStamped>(
     "~/initialpose", rclcpp::QoS(1),
-    std::bind(&InitialPoseAdaptor::OnInitialPose, this, std::placeholders::_1));
+    std::bind(&InitialPoseAdaptor::on_initial_pose, this, std::placeholders::_1));
 
-  const auto node = component_interface_utils::NodeAdaptor(this);
-  node.init_cli(cli_initialize_);
+  const auto adaptor = component_interface_utils::NodeAdaptor(this);
+  adaptor.init_cli(cli_initialize_);
 }
 
-void InitialPoseAdaptor::OnInitialPose(PoseWithCovarianceStamped::ConstSharedPtr msg)
+void InitialPoseAdaptor::on_initial_pose(PoseWithCovarianceStamped::ConstSharedPtr msg)
 {
   const auto req = std::make_shared<RequestHeightFitting::Request>();
   req->pose_with_covariance = *msg;
