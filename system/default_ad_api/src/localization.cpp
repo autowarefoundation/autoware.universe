@@ -20,10 +20,10 @@ namespace default_ad_api
 LocalizationNode::LocalizationNode(const rclcpp::NodeOptions & options)
 : Node("localization", options)
 {
-  const auto node = component_interface_utils::NodeAdaptor(this);
-  group_srv_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-  node.relay_message(pub_state_, sub_state_);
-  node.relay_service(cli_initialize_, srv_initialize_, group_srv_);
+  const auto adaptor = component_interface_utils::NodeAdaptor(this);
+  group_cli_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+  adaptor.relay_message(pub_state_, sub_state_);
+  adaptor.relay_service(cli_initialize_, srv_initialize_, group_cli_);
 }
 
 }  // namespace default_ad_api
