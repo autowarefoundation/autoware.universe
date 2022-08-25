@@ -47,7 +47,7 @@ struct ClearRoute
 struct RouteState
 {
   using Message = autoware_ad_api_msgs::msg::RouteState;
-  static constexpr char name[] = "/planning/mission_planning/state";
+  static constexpr char name[] = "/planning/mission_planning/route_state";
   static constexpr size_t depth = 3;
   static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL;
