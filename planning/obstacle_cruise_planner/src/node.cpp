@@ -782,7 +782,7 @@ std::vector<TargetObstacle> ObstacleCruisePlannerNode::filterObstacles(
     }
 
     // For debug
-    for (const auto cp : collision_points) {
+    for (const auto & cp : collision_points) {
       debug_data.collision_points.push_back(cp.point);
     }
 
