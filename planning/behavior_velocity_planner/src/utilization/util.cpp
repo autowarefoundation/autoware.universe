@@ -621,6 +621,7 @@ boost::optional<geometry_msgs::msg::Pose> insertDecelPoint(
 {
   // TODO(tanaka): consider proper overlap threshold for inserting decel point
   const double overlap_threshold = 5e-2;
+  // TODO(planning/control team): remove this function for u-turn and crossing-path
   const size_t base_idx = motion_utils::findNearestSegmentIndex(output.points, stop_point);
   const auto insert_idx =
     motion_utils::insertTargetPoint(base_idx, stop_point, output.points, overlap_threshold);
@@ -640,6 +641,7 @@ boost::optional<geometry_msgs::msg::Pose> insertDecelPoint(
 boost::optional<geometry_msgs::msg::Pose> insertStopPoint(
   const geometry_msgs::msg::Point & stop_point, PathWithLaneId & output)
 {
+  // TODO(planning/control team): remove this function for u-turn and crossing-path
   const size_t base_idx = motion_utils::findNearestSegmentIndex(output.points, stop_point);
   const auto insert_idx = motion_utils::insertTargetPoint(base_idx, stop_point, output.points);
 
