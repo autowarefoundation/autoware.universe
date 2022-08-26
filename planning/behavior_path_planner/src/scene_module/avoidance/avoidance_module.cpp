@@ -1704,22 +1704,21 @@ void AvoidanceModule::generateExtendedDrivableArea(ShiftedPath * shifted_path) c
   const auto & current_lanes = avoidance_data_.current_lanelets;
   lanelet::ConstLanelets extended_lanelets = current_lanes;
 
-  const auto shared_linestring_lanelets = [this,
-                                           &route_handler](const lanelet::ConstLanelet & lane) {
-    const auto ignore_opposite = !parameters_.enable_avoidance_over_opposite_direction;
-    if (ignore_opposite) {
-      return route_handler->getAllSharedLineStringLanelets(lane, true, true, ignore_opposite);
-    }
-
-    return route_handler->getAllSharedLineStringLanelets(lane);
-  };
-
   for (const auto & current_lane : avoidance_data_.current_lanelets) {
     if (!parameters_.enable_avoidance_over_opposite_direction) {
       break;
     }
 
-    const auto extend_from_current_lane = std::invoke(shared_linestring_lanelets, current_lane);
+    const auto extend_from_current_lane = std::invoke(
+      [this, &route_handler](const lanelet::ConstLanelet & lane) {
+        const auto ignore_opposite = !parameters_.enable_avoidance_over_opposite_direction;
+        if (ignore_opposite) {
+          return route_handler->getAllSharedLineStringLanelets(lane, true, true, ignore_opposite);
+        }
+
+        return route_handler->getAllSharedLineStringLanelets(lane);
+      },
+      current_lane);
     extended_lanelets.reserve(extended_lanelets.size() + extend_from_current_lane.size());
     extended_lanelets.insert(
       extended_lanelets.end(), extend_from_current_lane.begin(), extend_from_current_lane.end());
