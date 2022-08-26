@@ -17,11 +17,8 @@
 #include "behavior_path_planner/utilities.hpp"
 
 #include <interpolation/spline_interpolation.hpp>
-#include <lanelet2_extension/utility/message_conversion.hpp>
-#include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <motion_utils/resample/resample.hpp>
-#include <opencv2/opencv.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <tf2/utils.h>
@@ -31,9 +28,7 @@
 #include <utility>
 #include <vector>
 
-namespace behavior_path_planner
-{
-namespace util
+namespace behavior_path_planner::util
 {
 /**
  * @brief calc path arclength on each points from start point to end point.
@@ -94,9 +89,9 @@ PathWithLaneId resamplePathWithSpline(const PathWithLaneId & path, double interv
     return path;
   }
 
-  std::vector<geometry_msgs::msg::Pose> transformed_path(path.points.size());
+  std::vector<autoware_auto_planning_msgs::msg::PathPoint> transformed_path(path.points.size());
   for (size_t i = 0; i < path.points.size(); ++i) {
-    transformed_path.at(i) = path.points.at(i).point.pose;
+    transformed_path.at(i) = path.points.at(i).point;
   }
 
   constexpr double epsilon = 0.01;
@@ -131,8 +126,16 @@ PathWithLaneId resamplePathWithSpline(const PathWithLaneId & path, double interv
       s_out.push_back(s);
     }
   }
+
+  // Insert Terminal Point
   if (!has_almost_same_value(s_out, path_len)) {
     s_out.push_back(path_len);
+  }
+
+  // Insert Stop Point
+  const auto closest_stop_dist = motion_utils::calcDistanceToForwardStopPoint(transformed_path);
+  if (closest_stop_dist && !has_almost_same_value(s_out, *closest_stop_dist)) {
+    s_out.push_back(*closest_stop_dist);
   }
 
   std::sort(s_out.begin(), s_out.end());
@@ -292,10 +295,10 @@ std::pair<TurnIndicatorsCommand, double> getPathTurnSignal(
   }
 
   bool cross_line = false;
-  bool TEMPORARY_SET_CROSSLINE_TRUE =
+  bool TEMPORARY_SET_CROSS_LINE_TRUE =
     true;  // due to a bug. See link:
            // https://github.com/autowarefoundation/autoware.universe/pull/748
-  if (TEMPORARY_SET_CROSSLINE_TRUE) {
+  if (TEMPORARY_SET_CROSS_LINE_TRUE) {
     cross_line = true;
   } else {
     cross_line =
@@ -327,5 +330,4 @@ std::pair<TurnIndicatorsCommand, double> getPathTurnSignal(
   return std::make_pair(turn_signal, max_distance);
 }
 
-}  // namespace util
-}  // namespace behavior_path_planner
+}  // namespace behavior_path_planner::util

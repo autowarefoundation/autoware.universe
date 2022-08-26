@@ -17,8 +17,6 @@
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
-#include <opencv2/opencv.hpp>
-#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <algorithm>
 #include <limits>
@@ -93,7 +91,7 @@ std::array<double, 4> getPathScope(
     return path_lanes;
   }();
 
-  // claculate nearest lane idx
+  // calculate nearest lane idx
   const int nearest_lane_idx = [&]() -> int {
     lanelet::ConstLanelet closest_lanelet;
     if (lanelet::utils::query::getClosestLanelet(path_lanes, current_pose, &closest_lanelet)) {
@@ -244,13 +242,12 @@ std::array<double, 4> getPathScope(
 }
 }  // namespace drivable_area_utils
 
-namespace behavior_path_planner
-{
-namespace util
+namespace behavior_path_planner::util
 {
 using autoware_auto_perception_msgs::msg::ObjectClassification;
 using autoware_auto_perception_msgs::msg::Shape;
 using geometry_msgs::msg::PoseWithCovarianceStamped;
+using tier4_autoware_utils::Point2d;
 
 std::vector<Point> convertToPointArray(const PathWithLaneId & path)
 {
@@ -1067,7 +1064,7 @@ bool containsGoal(const lanelet::ConstLanelets & lanes, const lanelet::Id & goal
 // input lanes must be in sequence
 // NOTE: lanes in the path argument is used to calculate the size of the drivable area to cover
 // designated forward and backward length by getPathScope function.
-//       lanes argument is used to determinte (= draw) the drivable area.
+//       lanes argument is used to determine (= draw) the drivable area.
 //       This is because lanes argument has multiple parallel lanes which makes hard to calculate
 //       the size of the drivable area
 OccupancyGrid generateDrivableArea(
@@ -1180,9 +1177,11 @@ OccupancyGrid generateDrivableArea(
         tf2::doTransform(geom_pt, transformed_geom_pt, geom_tf_map2grid);
         cv_polygon.push_back(toCVPoint(transformed_geom_pt, width, height, resolution));
       }
-      cv_polygons.push_back(cv_polygon);
-      // fill in drivable area and copy to occupancy grid
-      cv::fillPoly(cv_image, cv_polygons, cv::Scalar(free_space));
+      if (!cv_polygon.empty()) {
+        cv_polygons.push_back(cv_polygon);
+        // fill in drivable area and copy to occupancy grid
+        cv::fillPoly(cv_image, cv_polygons, cv::Scalar(free_space));
+      }
     }
 
     // Closing
@@ -1967,5 +1966,4 @@ lanelet::ConstLanelets getExtendedCurrentLanes(
   return current_lanes;
 }
 
-}  // namespace util
-}  // namespace behavior_path_planner
+}  // namespace behavior_path_planner::util
