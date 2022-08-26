@@ -167,6 +167,17 @@ BehaviorModuleOutput PullOutModule::plan()
   output.path = std::make_shared<PathWithLaneId>(path);
   output.turn_signal_info = calcTurnSignalInfo(status_.pull_out_path.shift_point);
 
+  uint16_t direction;
+  if (output.turn_signal_info.turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {
+    direction = SteeringFactor::LEFT;
+  } else {
+    direction = SteeringFactor::RIGHT;
+  }
+
+  planning_api_interface_ptr_->updateSteeringFactor(
+    {status_.pull_out_path.shift_point.start, status_.pull_out_path.shift_point.end},
+    {output.turn_signal_info.signal_distance}, SteeringFactor::PULL_OUT, direction, SteeringFactor::TURNING, "");
+
   return output;
 }
 
@@ -209,6 +220,19 @@ CandidateOutput PullOutModule::planCandidate() const
   CandidateOutput output(selected_path.path);
   output.distance_to_path_change = motion_utils::calcSignedArcLength(
     selected_path.path.points, current_pose.position, selected_path.shift_point.start.position);
+  const auto finish_distance_to_path_change = motion_utils::calcSignedArcLength(
+    selected_path.path.points, current_pose.position, selected_path.shift_point.end.position);
+
+  uint16_t direction;
+  if (output.lateral_shift > 0.0) {
+    direction = SteeringFactor::LEFT;
+  } else {
+    direction = SteeringFactor::RIGHT;
+  }
+  planning_api_interface_ptr_->updateSteeringFactor(
+    {selected_path.shift_point.start, selected_path.shift_point.end},
+    {output.distance_to_path_change, finish_distance_to_path_change}, SteeringFactor::PULL_OUT, direction,
+    SteeringFactor::APPROACHING, "");
   return output;
 }
 
