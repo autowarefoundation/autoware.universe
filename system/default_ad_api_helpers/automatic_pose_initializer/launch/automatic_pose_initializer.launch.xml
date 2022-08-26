@@ -1,3 +1,6 @@
 <launch>
-  <node pkg="automatic_pose_initializer" exec="automatic_pose_initializer" name="automatic_pose_initializer"/>
+  <group>
+    <push-ros-namespace namespace="default_ad_api/helpers"/>
+    <node pkg="automatic_pose_initializer" exec="automatic_pose_initializer" name="automatic_pose_initializer"/>
+  </group>
 </launch>
