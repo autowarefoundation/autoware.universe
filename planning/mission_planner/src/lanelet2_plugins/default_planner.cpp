@@ -141,54 +141,17 @@ void DefaultPlanner::Initialize(rclcpp::Node * node)
 
 bool DefaultPlanner::Ready() const { return is_graph_ready_; }
 
-PlannerPlugin::HADMapRoute DefaultPlanner::Plan(const RoutePoints & points)
+void DefaultPlanner::mapCallback(
+  const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg)
 {
-  std::stringstream log_ss;
-  for (const auto & point : points) {
-    log_ss << "x: " << point.position.x << " "
-           << "y: " << point.position.y << std::endl;
-  }
-  RCLCPP_INFO_STREAM(
-    node_->get_logger(), "start planning route with checkpoints: " << std::endl
-                                                                   << log_ss.str());
-
-  autoware_auto_planning_msgs::msg::HADMapRoute route_msg;
-  RouteSections route_sections;
-
-  if (!isGoalValid(points.back())) {
-    RCLCPP_WARN(
-      node_->get_logger(), "Goal is not valid! Please check position and angle of goal_pose");
-    return route_msg;
-  }
-
-  for (std::size_t i = 1; i < points.size(); i++) {
-    const auto start_checkpoint = points.at(i - 1);
-    const auto goal_checkpoint = points.at(i);
-    lanelet::ConstLanelets path_lanelets;
-    if (!route_handler_.planPathLaneletsBetweenCheckpoints(
-          start_checkpoint, goal_checkpoint, &path_lanelets)) {
-      return route_msg;
-    }
-    // create local route sections
-    route_handler_.setRouteLanelets(path_lanelets);
-    const auto local_route_sections = route_handler_.createMapSegments(path_lanelets);
-    route_sections = combineConsecutiveRouteSections(route_sections, local_route_sections);
-  }
-
-  if (isRouteLooped(route_sections)) {
-    RCLCPP_WARN(
-      node_->get_logger(),
-      "Loop detected within route! Be aware that looped route is not debugged!");
-  }
-
-  const auto goal = refineGoalHeight(points.back(), route_sections);
-  RCLCPP_DEBUG(node_->get_logger(), "Goal Pose Z : %lf", goal.position.z);
-
-  // The header is assigned by mission planner.
-  route_msg.start_pose = points.front();
-  route_msg.goal_pose = goal;
-  route_msg.segments = route_sections;
-  return route_msg;
+  route_handler_.setMap(*msg);
+  lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
+  lanelet::utils::conversion::fromBinMsg(
+    *msg, lanelet_map_ptr_, &traffic_rules_ptr_, &routing_graph_ptr_);
+  lanelet::ConstLanelets all_lanelets = lanelet::utils::query::laneletLayer(lanelet_map_ptr_);
+  road_lanelets_ = lanelet::utils::query::roadLanelets(all_lanelets);
+  shoulder_lanelets_ = lanelet::utils::query::shoulderLanelets(all_lanelets);
+  is_graph_ready_ = true;
 }
 
 PlannerPlugin::MarkerArray DefaultPlanner::Visualize(const HADMapRoute & route) const
@@ -290,17 +253,54 @@ bool DefaultPlanner::isGoalValid(const geometry_msgs::msg::Pose & goal) const
   return false;
 }
 
-void DefaultPlanner::mapCallback(
-  const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg)
+PlannerPlugin::HADMapRoute DefaultPlanner::Plan(const RoutePoints & points)
 {
-  route_handler_.setMap(*msg);
-  lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
-  lanelet::utils::conversion::fromBinMsg(
-    *msg, lanelet_map_ptr_, &traffic_rules_ptr_, &routing_graph_ptr_);
-  lanelet::ConstLanelets all_lanelets = lanelet::utils::query::laneletLayer(lanelet_map_ptr_);
-  road_lanelets_ = lanelet::utils::query::roadLanelets(all_lanelets);
-  shoulder_lanelets_ = lanelet::utils::query::shoulderLanelets(all_lanelets);
-  is_graph_ready_ = true;
+  std::stringstream log_ss;
+  for (const auto & point : points) {
+    log_ss << "x: " << point.position.x << " "
+           << "y: " << point.position.y << std::endl;
+  }
+  RCLCPP_INFO_STREAM(
+    node_->get_logger(), "start planning route with checkpoints: " << std::endl
+                                                                   << log_ss.str());
+
+  autoware_auto_planning_msgs::msg::HADMapRoute route_msg;
+  RouteSections route_sections;
+
+  if (!isGoalValid(points.back())) {
+    RCLCPP_WARN(
+      node_->get_logger(), "Goal is not valid! Please check position and angle of goal_pose");
+    return route_msg;
+  }
+
+  for (std::size_t i = 1; i < points.size(); i++) {
+    const auto start_checkpoint = points.at(i - 1);
+    const auto goal_checkpoint = points.at(i);
+    lanelet::ConstLanelets path_lanelets;
+    if (!route_handler_.planPathLaneletsBetweenCheckpoints(
+          start_checkpoint, goal_checkpoint, &path_lanelets)) {
+      return route_msg;
+    }
+    // create local route sections
+    route_handler_.setRouteLanelets(path_lanelets);
+    const auto local_route_sections = route_handler_.createMapSegments(path_lanelets);
+    route_sections = combineConsecutiveRouteSections(route_sections, local_route_sections);
+  }
+
+  if (isRouteLooped(route_sections)) {
+    RCLCPP_WARN(
+      node_->get_logger(),
+      "Loop detected within route! Be aware that looped route is not debugged!");
+  }
+
+  const auto goal = refineGoalHeight(points.back(), route_sections);
+  RCLCPP_DEBUG(node_->get_logger(), "Goal Pose Z : %lf", goal.position.z);
+
+  // The header is assigned by mission planner.
+  route_msg.start_pose = points.front();
+  route_msg.goal_pose = goal;
+  route_msg.segments = route_sections;
+  return route_msg;
 }
 
 geometry_msgs::msg::Pose DefaultPlanner::refineGoalHeight(
