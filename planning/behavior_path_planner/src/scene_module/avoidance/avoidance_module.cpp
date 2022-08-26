@@ -1704,7 +1704,7 @@ void AvoidanceModule::generateExtendedDrivableArea(ShiftedPath * shifted_path) c
   const auto & current_lanes = avoidance_data_.current_lanelets;
   lanelet::ConstLanelets extended_lanelets = current_lanes;
 
-  for (const auto & current_lane : avoidance_data_.current_lanelets) {
+  for (const auto & current_lane : current_lanes) {
     if (!parameters_.enable_avoidance_over_opposite_direction) {
       break;
     }
