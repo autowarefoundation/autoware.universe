@@ -576,6 +576,18 @@ BehaviorModuleOutput PullOverModule::plan()
   const double distance_to_path_change = calcDistanceToPathChange();
   updateRTCStatus(distance_to_path_change);
 
+  uint16_t direction;
+  if (getTurnInfo().first.command == TurnIndicatorsCommand::ENABLE_LEFT) {
+    direction = SteeringFactor::LEFT;
+  } else {
+    direction = SteeringFactor::RIGHT;
+  }
+
+  // TODO: add end distance
+  planning_api_interface_ptr_->updateSteeringFactor(
+    {getParkingStartPose(), getRefinedGoal()},
+    {distance_to_path_change}, SteeringFactor::PULL_OVER, direction, SteeringFactor::TURNING, "");
+
   publishDebugData();
 
   // For evaluations
@@ -604,6 +616,19 @@ BehaviorModuleOutput PullOverModule::planWaitingApproval()
 
   const double distance_to_path_change = calcDistanceToPathChange();
   updateRTCStatus(distance_to_path_change);
+
+  uint16_t direction;
+  if (out.turn_signal_info.turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {
+    direction = SteeringFactor::LEFT;
+  } else {
+    direction = SteeringFactor::RIGHT;
+  }
+
+  // TODO: add end distance
+  planning_api_interface_ptr_->updateSteeringFactor(
+    {getParkingStartPose(), getRefinedGoal()},
+    {distance_to_path_change}, SteeringFactor::PULL_OVER, direction, SteeringFactor::APPROACHING, "");
+
   waitApproval();
 
   return out;
