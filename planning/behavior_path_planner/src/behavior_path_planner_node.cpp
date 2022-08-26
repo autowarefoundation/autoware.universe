@@ -496,20 +496,32 @@ BehaviorTreeManagerParam BehaviorPathPlannerNode::getBehaviorTreeManagerParam()
 // wait until mandatory data is ready
 bool BehaviorPathPlannerNode::isDataReady()
 {
-  if (!current_scenario_) return false;
-
-  mutex_pd_.lock();  // for planner_data_
-  if (
-    !planner_data_->route_handler->isHandlerReady() || !planner_data_->dynamic_object ||
-    !planner_data_->self_odometry) {
+  const auto missing = [this](const auto & name) {
+    RCLCPP_INFO_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for %s", name);
     mutex_pd_.unlock();
     return false;
+  };
+
+  mutex_pd_.lock();  // for planner_data_
+  if (!current_scenario_) {
+    return missing("scenario_topic");
+  }
+
+  if (!planner_data_->route_handler->isHandlerReady()) {
+    return missing("route");
+  }
+
+  if (!planner_data_->dynamic_object) {
+    return missing("dynamic_object");
+  }
+
+  if (!planner_data_->self_odometry) {
+    return missing("self_odometry");
   }
 
   planner_data_->self_pose = self_pose_listener_.getCurrentPose();
   if (!planner_data_->self_pose) {
-    mutex_pd_.unlock();
-    return false;
+    return missing("self_pose");
   }
 
   mutex_pd_.unlock();
@@ -519,7 +531,6 @@ bool BehaviorPathPlannerNode::isDataReady()
 void BehaviorPathPlannerNode::run()
 {
   if (!isDataReady()) {
-    RCLCPP_INFO_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), 5000, "waiting data...");
     return;
   }
 
