@@ -1,7 +1,7 @@
 <launch>
   <arg name="modified_goal_topic_name" default="/planning/scenario_planning/modified_goal"/>
-  <arg name="map_topic_name" default="/map/vector_map"/>
   <arg name="route_topic_name" default="/planning/mission_planning/route"/>
+  <arg name="map_topic_name" default="/map/vector_map"/>
   <arg name="visualization_topic_name" default="/planning/mission_planning/route_marker"/>
 
   <node pkg="mission_planner" exec="mission_planner_node" name="mission_planner" output="screen">
