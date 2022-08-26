@@ -2,7 +2,7 @@
 
 ## Purpose
 
-`Mission Planner` calculates a route that navigates from the start pose to the goal pose following the given check points.
+`Mission Planner` calculates a route that navigates from the current ego pose to the goal pose following the given check points.
 The route is made of a sequence of lanes on a static map.
 Dynamic objects (e.g. pedestrians and other vehicles) and dynamic map information (e.g. road construction which blocks some lanes) are not considered during route planning.
 Therefore, the output topic is only published when the goal pose or check points are given and will be latched until the new goal pose or check points are given.
