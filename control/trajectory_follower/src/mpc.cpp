@@ -14,6 +14,8 @@
 
 #include "trajectory_follower/mpc.hpp"
 
+#include "motion_utils/motion_utils.hpp"
+
 #include <algorithm>
 #include <deque>
 #include <limits>
@@ -92,7 +94,8 @@ bool8_t MPC::calculateMPC(
   /* set control command */
   {
     ctrl_cmd.steering_tire_angle = static_cast<float>(u_filtered);
-    ctrl_cmd.steering_tire_rotation_rate = static_cast<float>((Uex(1) - Uex(0)) / prediction_dt);
+    ctrl_cmd.steering_tire_rotation_rate =
+      static_cast<float>((u_filtered - current_steer.steering_tire_angle) / prediction_dt);
   }
 
   storeSteerCmd(u_filtered);
@@ -193,6 +196,11 @@ void MPC::setReferenceTrajectory(
     return;
   }
 
+  const auto is_forward_shift =
+    motion_utils::isDrivingForward(mpc_traj_resampled.toTrajectoryPoints());
+  // if driving direction is unknown, use previous value
+  m_is_forward_shift = is_forward_shift ? is_forward_shift.get() : m_is_forward_shift;
+
   /* path smoothing */
   mpc_traj_smoothed = mpc_traj_resampled;
   const int64_t mpc_traj_resampled_size = static_cast<int64_t>(mpc_traj_resampled.size());
@@ -213,11 +221,7 @@ void MPC::setReferenceTrajectory(
 
   /* calculate yaw angle */
   if (current_pose_ptr) {
-    const int64_t nearest_idx =
-      MPCUtils::calcNearestIndex(mpc_traj_smoothed, current_pose_ptr->pose);
-    const float64_t ego_yaw = tf2::getYaw(current_pose_ptr->pose.orientation);
-    trajectory_follower::MPCUtils::calcTrajectoryYawFromXY(
-      &mpc_traj_smoothed, nearest_idx, ego_yaw);
+    trajectory_follower::MPCUtils::calcTrajectoryYawFromXY(&mpc_traj_smoothed, m_is_forward_shift);
     trajectory_follower::MPCUtils::convertEulerAngleToMonotonic(&mpc_traj_smoothed.yaw);
   }
 
@@ -260,8 +264,8 @@ bool8_t MPC::getData(
   static constexpr auto duration = 5000 /*ms*/;
   size_t nearest_idx;
   if (!trajectory_follower::MPCUtils::calcNearestPoseInterp(
-        traj, current_pose, &(data->nearest_pose), &(nearest_idx), &(data->nearest_time), m_logger,
-        *m_clock)) {
+        traj, current_pose, &(data->nearest_pose), &(nearest_idx), &(data->nearest_time),
+        ego_nearest_dist_threshold, ego_nearest_yaw_threshold, m_logger, *m_clock)) {
     // reset previous MPC result
     // Note: When a large deviation from the trajectory occurs, the optimization stops and
     // the vehicle will return to the path by re-planning the trajectory or external operation.
@@ -486,10 +490,15 @@ trajectory_follower::MPCTrajectory MPC::applyVelocityDynamicsFilter(
   const trajectory_follower::MPCTrajectory & input, const geometry_msgs::msg::Pose & current_pose,
   const float64_t v0) const
 {
-  int64_t nearest_idx = trajectory_follower::MPCUtils::calcNearestIndex(input, current_pose);
-  if (nearest_idx < 0) {
+  autoware_auto_planning_msgs::msg::Trajectory autoware_traj;
+  autoware::motion::control::trajectory_follower::MPCUtils::convertToAutowareTrajectory(
+    input, autoware_traj);
+  if (autoware_traj.points.empty()) {
     return input;
   }
+
+  const size_t nearest_idx = motion_utils::findFirstNearestIndexWithSoftConstraints(
+    autoware_traj.points, current_pose, ego_nearest_dist_threshold, ego_nearest_yaw_threshold);
 
   const float64_t acc_lim = m_param.acceleration_limit;
   const float64_t tau = m_param.velocity_time_constant;
@@ -545,17 +554,15 @@ MPCMatrix MPC::generateMPCMatrix(
   MatrixXd Cd(DIM_Y, DIM_X);
   MatrixXd Uref(DIM_U, 1);
 
-  constexpr float64_t ep = 1.0e-3;  // large enough to ignore velocity noise
+  const float64_t sign_vx = m_is_forward_shift ? 1 : -1;
 
   /* predict dynamics for N times */
   for (int64_t i = 0; i < N; ++i) {
     const float64_t ref_vx = reference_trajectory.vx[static_cast<size_t>(i)];
     const float64_t ref_vx_squared = ref_vx * ref_vx;
 
-    // curvature will be 0 when vehicle stops
-    const float64_t ref_k = reference_trajectory.k[static_cast<size_t>(i)] * m_sign_vx;
-    const float64_t ref_smooth_k =
-      reference_trajectory.smooth_k[static_cast<size_t>(i)] * m_sign_vx;
+    const float64_t ref_k = reference_trajectory.k[static_cast<size_t>(i)] * sign_vx;
+    const float64_t ref_smooth_k = reference_trajectory.smooth_k[static_cast<size_t>(i)] * sign_vx;
 
     /* get discrete state matrix A, B, C, W */
     m_vehicle_model_ptr->setVelocity(ref_vx);
@@ -612,8 +619,7 @@ MPCMatrix MPC::generateMPCMatrix(
   /* add lateral jerk : weight for (v * {u(i) - u(i-1)} )^2 */
   for (int64_t i = 0; i < N - 1; ++i) {
     const float64_t ref_vx = reference_trajectory.vx[static_cast<size_t>(i)];
-    m_sign_vx = ref_vx > ep ? 1 : (ref_vx < -ep ? -1 : m_sign_vx);
-    const float64_t ref_k = reference_trajectory.k[static_cast<size_t>(i)] * m_sign_vx;
+    const float64_t ref_k = reference_trajectory.k[static_cast<size_t>(i)] * sign_vx;
     const float64_t j = ref_vx * ref_vx * getWeightLatJerk(ref_k) / (DT * DT);
     const Eigen::Matrix2d J = (Eigen::Matrix2d() << j, -j, -j, j).finished();
     m.R2ex.block(i, i, 2, 2) += J;
@@ -782,8 +788,11 @@ float64_t MPC::getPredictionDeletaTime(
   const geometry_msgs::msg::Pose & current_pose) const
 {
   // Calculate the time min_prediction_length ahead from current_pose
-  const size_t nearest_idx =
-    static_cast<size_t>(trajectory_follower::MPCUtils::calcNearestIndex(input, current_pose));
+  autoware_auto_planning_msgs::msg::Trajectory autoware_traj;
+  autoware::motion::control::trajectory_follower::MPCUtils::convertToAutowareTrajectory(
+    input, autoware_traj);
+  const size_t nearest_idx = motion_utils::findFirstNearestIndexWithSoftConstraints(
+    autoware_traj.points, current_pose, ego_nearest_dist_threshold, ego_nearest_yaw_threshold);
   float64_t sum_dist = 0;
   const float64_t target_time = [&]() {
     const float64_t t_ext =

@@ -17,7 +17,7 @@
 
 #include "behavior_path_planner/behavior_tree_manager.hpp"
 #include "behavior_path_planner/data_manager.hpp"
-#include "behavior_path_planner/scene_module/avoidance/avoidance_module.hpp"
+#include "behavior_path_planner/scene_module/avoidance/avoidance_module_data.hpp"
 #include "behavior_path_planner/scene_module/lane_change/lane_change_module.hpp"
 #include "behavior_path_planner/scene_module/lane_following/lane_following_module.hpp"
 #include "behavior_path_planner/scene_module/pull_out/pull_out_module.hpp"
@@ -25,7 +25,6 @@
 #include "behavior_path_planner/scene_module/side_shift/side_shift_module.hpp"
 #include "behavior_path_planner/turn_signal_decider.hpp"
 
-#include <route_handler/route_handler.hpp>
 #include <tier4_autoware_utils/ros/self_pose_listener.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
@@ -38,18 +37,9 @@
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <tier4_planning_msgs/msg/approval.hpp>
-#include <tier4_planning_msgs/msg/avoidance_debug_factor.hpp>
-#include <tier4_planning_msgs/msg/avoidance_debug_msg.hpp>
 #include <tier4_planning_msgs/msg/avoidance_debug_msg_array.hpp>
 #include <tier4_planning_msgs/msg/path_change_module.hpp>
-#include <tier4_planning_msgs/msg/path_change_module_array.hpp>
-#include <tier4_planning_msgs/msg/path_change_module_id.hpp>
 #include <tier4_planning_msgs/msg/scenario.hpp>
-#include <tier4_planning_msgs/msg/stop_reason_array.hpp>
-
-#include <lanelet2_core/LaneletMap.h>
-#include <lanelet2_routing/RoutingGraph.h>
-#include <lanelet2_traffic_rules/TrafficRulesFactory.h>
 
 #include <memory>
 #include <mutex>
@@ -69,12 +59,8 @@ using autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand;
 using geometry_msgs::msg::TwistStamped;
 using nav_msgs::msg::OccupancyGrid;
 using nav_msgs::msg::Odometry;
-using route_handler::RouteHandler;
-using tier4_planning_msgs::msg::AvoidanceDebugFactor;
-using tier4_planning_msgs::msg::AvoidanceDebugMsg;
 using tier4_planning_msgs::msg::AvoidanceDebugMsgArray;
 using tier4_planning_msgs::msg::PathChangeModule;
-using tier4_planning_msgs::msg::PathChangeModuleArray;
 using tier4_planning_msgs::msg::Scenario;
 using visualization_msgs::msg::MarkerArray;
 
@@ -90,13 +76,8 @@ private:
   rclcpp::Subscription<Scenario>::SharedPtr scenario_subscriber_;
   rclcpp::Subscription<PredictedObjects>::SharedPtr perception_subscriber_;
   rclcpp::Subscription<OccupancyGrid>::SharedPtr occupancy_grid_subscriber_;
-  rclcpp::Subscription<ApprovalMsg>::SharedPtr external_approval_subscriber_;
-  rclcpp::Subscription<PathChangeModule>::SharedPtr force_approval_subscriber_;
   rclcpp::Publisher<PathWithLaneId>::SharedPtr path_publisher_;
   rclcpp::Publisher<Path>::SharedPtr path_candidate_publisher_;
-  rclcpp::Publisher<PathChangeModuleArray>::SharedPtr force_available_publisher_;
-  rclcpp::Publisher<PathChangeModule>::SharedPtr plan_ready_publisher_;
-  rclcpp::Publisher<PathChangeModuleArray>::SharedPtr plan_running_publisher_;
   rclcpp::Publisher<TurnIndicatorsCommand>::SharedPtr turn_signal_publisher_;
   rclcpp::Publisher<HazardLightsCommand>::SharedPtr hazard_signal_publisher_;
   rclcpp::TimerBase::SharedPtr timer_;
@@ -106,17 +87,13 @@ private:
   tier4_autoware_utils::SelfPoseListener self_pose_listener_{this};
   Scenario::SharedPtr current_scenario_{nullptr};
 
-  std::string prev_ready_module_name_ = "NONE";
-  PathChangeModule ready_module_{};
-  PathChangeModuleArray running_modules_{};
-
   TurnSignalDecider turn_signal_decider_;
 
   std::mutex mutex_pd_;  // mutex for planner_data_
   std::mutex mutex_bt_;  // mutex for bt_manager_
 
   // setup
-  void waitForData();
+  bool isDataReady();
 
   // parameters
   BehaviorPathPlannerParameters getCommonParam();
@@ -169,11 +146,7 @@ private:
     const std::vector<std::shared_ptr<SceneModuleStatus>> & statuses) const;
 
   // debug
-
-private:
-  rclcpp::Publisher<OccupancyGrid>::SharedPtr debug_drivable_area_publisher_;
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_drivable_area_lanelets_publisher_;
-  rclcpp::Publisher<Path>::SharedPtr debug_path_publisher_;
   rclcpp::Publisher<AvoidanceDebugMsgArray>::SharedPtr debug_avoidance_msg_array_publisher_;
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_marker_publisher_;
   void publishDebugMarker(const std::vector<MarkerArray> & debug_markers);

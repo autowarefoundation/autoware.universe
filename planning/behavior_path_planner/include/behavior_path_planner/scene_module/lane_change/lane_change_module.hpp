@@ -17,19 +17,13 @@
 
 #include "behavior_path_planner/scene_module/lane_change/lane_change_path.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
-#include "behavior_path_planner/utilities.hpp"
 
-#include <lanelet2_extension/utility/message_conversion.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_auto_planning_msgs/msg/path.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
-#include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
 
 #include <tf2/utils.h>
 
-#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -60,7 +54,6 @@ struct LaneChangeParameters
   bool use_predicted_path_outside_lanelet;
   bool use_all_predicted_path;
   bool enable_blocked_by_obstacle;
-  double lane_change_search_distance;
 };
 
 struct LaneChangeStatus

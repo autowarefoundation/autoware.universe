@@ -20,12 +20,10 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
-#include <autoware_auto_planning_msgs/msg/path.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
-#include <geometry_msgs/msg/pose_stamped.hpp>
-#include <tier4_planning_msgs/msg/avoidance_debug_factor.hpp>
-#include <tier4_planning_msgs/msg/avoidance_debug_msg.hpp>
 #include <tier4_planning_msgs/msg/avoidance_debug_msg_array.hpp>
+
+#include <lanelet2_core/geometry/Lanelet.h>
 
 #include <memory>
 #include <string>
@@ -34,16 +32,12 @@
 namespace behavior_path_planner
 {
 using autoware_auto_perception_msgs::msg::PredictedObject;
-using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 
-using tier4_planning_msgs::msg::AvoidanceDebugFactor;
-using tier4_planning_msgs::msg::AvoidanceDebugMsg;
 using tier4_planning_msgs::msg::AvoidanceDebugMsgArray;
 
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
-using geometry_msgs::msg::PoseStamped;
 
 struct AvoidanceParameters
 {
@@ -143,10 +137,6 @@ struct AvoidanceParameters
   // To prevent large acceleration while avoidance. The max velocity is limited with this
   // acceleration.
   double max_avoidance_acceleration;
-
-  // if distance between vehicle front and shift end point is larger than this length,
-  // turn signal is not turned on.
-  double avoidance_search_distance;
 
   // The avoidance path generation is performed when the shift distance of the
   // avoidance points is greater than this threshold.

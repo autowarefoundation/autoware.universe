@@ -17,14 +17,11 @@
 #include "behavior_path_planner/debug_utilities.hpp"
 #include "behavior_path_planner/path_utilities.hpp"
 #include "behavior_path_planner/scene_module/avoidance/avoidance_module.hpp"
-#include "behavior_path_planner/scene_module/lane_change/lane_change_module.hpp"
-#include "behavior_path_planner/scene_module/pull_out/pull_out_module.hpp"
-#include "behavior_path_planner/scene_module/pull_over/pull_over_module.hpp"
-#include "behavior_path_planner/scene_module/side_shift/side_shift_module.hpp"
-#include "behavior_path_planner/utilities.hpp"
 
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
+
+#include <tier4_planning_msgs/msg/path_change_module_id.hpp>
 
 #include <memory>
 #include <string>
@@ -68,16 +65,8 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   turn_signal_publisher_ =
     create_publisher<TurnIndicatorsCommand>("~/output/turn_indicators_cmd", 1);
   hazard_signal_publisher_ = create_publisher<HazardLightsCommand>("~/output/hazard_lights_cmd", 1);
-  debug_drivable_area_publisher_ = create_publisher<OccupancyGrid>("~/debug/drivable_area", 1);
-  debug_path_publisher_ = create_publisher<Path>("~/debug/path_for_visualize", 1);
   debug_avoidance_msg_array_publisher_ =
     create_publisher<AvoidanceDebugMsgArray>("~/debug/avoidance_debug_message_array", 1);
-
-  // For remote operation
-  plan_ready_publisher_ = create_publisher<PathChangeModule>("~/output/ready", 1);
-  plan_running_publisher_ = create_publisher<PathChangeModuleArray>("~/output/running", 1);
-  force_available_publisher_ =
-    create_publisher<PathChangeModuleArray>("~/output/force_available", 1);
 
   // Debug
   debug_marker_publisher_ = create_publisher<MarkerArray>("~/debug/markers", 1);
@@ -104,13 +93,6 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     [this](const Scenario::ConstSharedPtr msg) {
       current_scenario_ = std::make_shared<Scenario>(*msg);
     },
-    createSubscriptionOptions(this));
-  external_approval_subscriber_ = create_subscription<ApprovalMsg>(
-    "~/input/external_approval", 1,
-    std::bind(&BehaviorPathPlannerNode::onExternalApproval, this, _1),
-    createSubscriptionOptions(this));
-  force_approval_subscriber_ = create_subscription<PathChangeModule>(
-    "~/input/force_approval", 1, std::bind(&BehaviorPathPlannerNode::onForceApproval, this, _1),
     createSubscriptionOptions(this));
 
   // route_handler
@@ -164,9 +146,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
       planner_data_->parameters.base_link2front, intersection_search_distance);
   }
 
-  waitForData();
-
-  // Start timer. This must be done after all data (e.g. vehicle pose, velocity) are ready.
+  // Start timer
   {
     const auto planning_hz = declare_parameter("planning_hz", 10.0);
     const auto period_ns = rclcpp::Rate(planning_hz).period();
@@ -177,9 +157,34 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
 
 BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
 {
-  // ROS parameters
   BehaviorPathPlannerParameters p{};
-  p.backward_path_length = declare_parameter("backward_path_length", 5.0);
+
+  // vehicle info
+  const auto vehicle_info = VehicleInfoUtil(*this).getVehicleInfo();
+  p.vehicle_info = vehicle_info;
+  p.vehicle_width = vehicle_info.vehicle_width_m;
+  p.vehicle_length = vehicle_info.vehicle_length_m;
+  p.wheel_tread = vehicle_info.wheel_tread_m;
+  p.wheel_base = vehicle_info.wheel_base_m;
+  p.front_overhang = vehicle_info.front_overhang_m;
+  p.rear_overhang = vehicle_info.rear_overhang_m;
+  p.left_over_hang = vehicle_info.left_overhang_m;
+  p.right_over_hang = vehicle_info.right_overhang_m;
+  p.base_link2front = vehicle_info.max_longitudinal_offset_m;
+  p.base_link2rear = p.rear_overhang;
+
+  // NOTE: backward_path_length is used not only calculating path length but also calculating the
+  // size of a drivable area.
+  //       The drivable area has to cover not the base link but the vehicle itself. Therefore
+  //       rear_overhang must be added to backward_path_length. In addition, because of the
+  //       calculation of the drivable area in the obstacle_avoidance_planner package, the drivable
+  //       area has to be a little longer than the backward_path_length parameter by adding
+  //       min_backward_offset.
+  constexpr double min_backward_offset = 1.0;
+  const double backward_offset = vehicle_info.rear_overhang_m + min_backward_offset;
+
+  // ROS parameters
+  p.backward_path_length = declare_parameter("backward_path_length", 5.0) + backward_offset;
   p.forward_path_length = declare_parameter("forward_path_length", 100.0);
   p.backward_length_buffer_for_end_of_lane =
     declare_parameter("backward_length_buffer_for_end_of_lane", 5.0);
@@ -198,22 +203,9 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   p.turn_light_on_threshold_dis_lat = declare_parameter("turn_light_on_threshold_dis_lat", 0.3);
   p.turn_light_on_threshold_dis_long = declare_parameter("turn_light_on_threshold_dis_long", 10.0);
   p.turn_light_on_threshold_time = declare_parameter("turn_light_on_threshold_time", 3.0);
+  p.path_interval = declare_parameter<double>("path_interval");
   p.visualize_drivable_area_for_shared_linestrings_lanelet =
     declare_parameter("visualize_drivable_area_for_shared_linestrings_lanelet", true);
-
-  // vehicle info
-  const auto vehicle_info = VehicleInfoUtil(*this).getVehicleInfo();
-  p.vehicle_info = vehicle_info;
-  p.vehicle_width = vehicle_info.vehicle_width_m;
-  p.vehicle_length = vehicle_info.vehicle_length_m;
-  p.wheel_tread = vehicle_info.wheel_tread_m;
-  p.wheel_base = vehicle_info.wheel_base_m;
-  p.front_overhang = vehicle_info.front_overhang_m;
-  p.rear_overhang = vehicle_info.rear_overhang_m;
-  p.left_over_hang = vehicle_info.left_overhang_m;
-  p.right_over_hang = vehicle_info.right_overhang_m;
-  p.base_link2front = vehicle_info.max_longitudinal_offset_m;
-  p.base_link2rear = p.rear_overhang;
 
   return p;
 }
@@ -281,7 +273,6 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
 
   p.min_avoidance_speed_for_acc_prevention = dp("min_avoidance_speed_for_acc_prevention", 3.0);
   p.max_avoidance_acceleration = dp("max_avoidance_acceleration", 0.5);
-  p.avoidance_search_distance = dp("avoidance_search_distance", 30.0);
 
   p.publish_debug_marker = dp("publish_debug_marker", false);
   p.print_debug_info = dp("print_debug_info", false);
@@ -340,7 +331,6 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
     dp("abort_lane_change_angle_thresh", tier4_autoware_utils::deg2rad(10.0));
   p.abort_lane_change_distance_thresh = dp("abort_lane_change_distance_thresh", 0.3);
   p.enable_blocked_by_obstacle = dp("enable_blocked_by_obstacle", false);
-  p.lane_change_search_distance = dp("lane_change_search_distance", 30.0);
 
   // validation of parameters
   if (p.lane_change_sampling_num < 1) {
@@ -502,46 +492,47 @@ BehaviorTreeManagerParam BehaviorPathPlannerNode::getBehaviorTreeManagerParam()
   return p;
 }
 
-void BehaviorPathPlannerNode::waitForData()
+// wait until mandatory data is ready
+bool BehaviorPathPlannerNode::isDataReady()
 {
-  // wait until mandatory data is ready
-  while (!current_scenario_ && rclcpp::ok()) {
-    RCLCPP_INFO_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for scenario topic");
-    rclcpp::spin_some(this->get_node_base_interface());
-    rclcpp::Rate(100).sleep();
-  }
+  const auto missing = [this](const auto & name) {
+    RCLCPP_INFO_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for %s", name);
+    mutex_pd_.unlock();
+    return false;
+  };
 
   mutex_pd_.lock();  // for planner_data_
-  while (!planner_data_->route_handler->isHandlerReady() && rclcpp::ok()) {
-    mutex_pd_.unlock();
-    RCLCPP_INFO_SKIPFIRST_THROTTLE(
-      get_logger(), *get_clock(), 5000, "waiting for route to be ready");
-    rclcpp::spin_some(this->get_node_base_interface());
-    rclcpp::Rate(100).sleep();
-    mutex_pd_.lock();
+  if (!current_scenario_) {
+    return missing("scenario_topic");
   }
 
-  while (rclcpp::ok()) {
-    if (planner_data_->dynamic_object && planner_data_->self_odometry) {
-      break;
-    }
-
-    mutex_pd_.unlock();
-    RCLCPP_INFO_SKIPFIRST_THROTTLE(
-      get_logger(), *get_clock(), 5000,
-      "waiting for vehicle pose, vehicle_velocity, and obstacles");
-    rclcpp::spin_some(this->get_node_base_interface());
-    rclcpp::Rate(100).sleep();
-    mutex_pd_.lock();
+  if (!planner_data_->route_handler->isHandlerReady()) {
+    return missing("route");
   }
 
-  self_pose_listener_.waitForFirstPose();
+  if (!planner_data_->dynamic_object) {
+    return missing("dynamic_object");
+  }
+
+  if (!planner_data_->self_odometry) {
+    return missing("self_odometry");
+  }
+
   planner_data_->self_pose = self_pose_listener_.getCurrentPose();
+  if (!planner_data_->self_pose) {
+    return missing("self_pose");
+  }
+
   mutex_pd_.unlock();
+  return true;
 }
 
 void BehaviorPathPlannerNode::run()
 {
+  if (!isDataReady()) {
+    return;
+  }
+
   RCLCPP_DEBUG(get_logger(), "----- BehaviorPathPlannerNode start -----");
   mutex_bt_.lock();  // for bt_manager_
   mutex_pd_.lock();  // for planner_data_
@@ -583,9 +574,6 @@ void BehaviorPathPlannerNode::run()
   }
 
   path_candidate_publisher_->publish(util::toPath(*path_candidate));
-
-  // debug_path_publisher_->publish(util::toPath(path));
-  debug_drivable_area_publisher_->publish(path->drivable_area);
 
   // for turn signal
   {
@@ -630,7 +618,10 @@ PathWithLaneId::SharedPtr BehaviorPathPlannerNode::getPath(
   path->header.stamp = this->now();
   RCLCPP_DEBUG(
     get_logger(), "BehaviorTreeManager: output is %s.", bt_output.path ? "FOUND" : "NOT FOUND");
-  return path;
+
+  const auto resampled_path =
+    util::resamplePathWithSpline(*path, planner_data_->parameters.path_interval);
+  return std::make_shared<PathWithLaneId>(resampled_path);
 }
 
 PathWithLaneId::SharedPtr BehaviorPathPlannerNode::getPathCandidate(

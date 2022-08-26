@@ -21,6 +21,8 @@
 
 #define EIGEN_MPL2_ONLY
 #include "tier4_autoware_utils/geometry/boost_geometry.hpp"
+#include "tier4_autoware_utils/math/constants.hpp"
+#include "tier4_autoware_utils/math/normalization.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -31,6 +33,8 @@
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <geometry_msgs/msg/quaternion.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
+
+#include <tf2/utils.h>
 
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
@@ -176,7 +180,26 @@ inline geometry_msgs::msg::Pose getPose(const autoware_auto_planning_msgs::msg::
 }
 
 template <class T>
-void setPose(const geometry_msgs::msg::Pose & pose, [[maybe_unused]] T & p)
+double getLongitudinalVelocity([[maybe_unused]] const T & p)
+{
+  static_assert(sizeof(T) == 0, "Only specializations of getVelocity can be used.");
+  throw std::logic_error("Only specializations of getVelocity can be used.");
+}
+
+template <>
+inline double getLongitudinalVelocity(const autoware_auto_planning_msgs::msg::PathPoint & p)
+{
+  return p.longitudinal_velocity_mps;
+}
+
+template <>
+inline double getLongitudinalVelocity(const autoware_auto_planning_msgs::msg::TrajectoryPoint & p)
+{
+  return p.longitudinal_velocity_mps;
+}
+
+template <class T>
+void setPose([[maybe_unused]] const geometry_msgs::msg::Pose & pose, [[maybe_unused]] T & p)
 {
   static_assert(sizeof(T) == 0, "Only specializations of getPose can be used.");
   throw std::logic_error("Only specializations of getPose can be used.");
@@ -206,6 +229,35 @@ inline void setPose(
   const geometry_msgs::msg::Pose & pose, autoware_auto_planning_msgs::msg::TrajectoryPoint & p)
 {
   p.pose = pose;
+}
+
+template <class T>
+inline void setOrientation(const geometry_msgs::msg::Quaternion & orientation, T & p)
+{
+  auto pose = getPose(p);
+  pose.orientation = orientation;
+  setPose(pose, p);
+}
+
+template <class T>
+void setLongitudinalVelocity([[maybe_unused]] const double velocity, [[maybe_unused]] T & p)
+{
+  static_assert(sizeof(T) == 0, "Only specializations of getLongitudinalVelocity can be used.");
+  throw std::logic_error("Only specializations of getLongitudinalVelocity can be used.");
+}
+
+template <>
+inline void setLongitudinalVelocity(
+  const double velocity, autoware_auto_planning_msgs::msg::TrajectoryPoint & p)
+{
+  p.longitudinal_velocity_mps = velocity;
+}
+
+template <>
+inline void setLongitudinalVelocity(
+  const double velocity, autoware_auto_planning_msgs::msg::PathPoint & p)
+{
+  p.longitudinal_velocity_mps = velocity;
 }
 
 inline geometry_msgs::msg::Point createPoint(const double x, const double y, const double z)
@@ -369,7 +421,7 @@ inline geometry_msgs::msg::Transform pose2transform(const geometry_msgs::msg::Po
 }
 
 inline geometry_msgs::msg::TransformStamped pose2transform(
-  const geometry_msgs::msg::PoseStamped & pose, const std::string child_frame_id)
+  const geometry_msgs::msg::PoseStamped & pose, const std::string & child_frame_id)
 {
   geometry_msgs::msg::TransformStamped transform;
   transform.header = pose.header;
@@ -401,7 +453,7 @@ inline Point2d transformPoint(
 }
 
 inline Eigen::Vector3d transformPoint(
-  const Eigen::Vector3d point, const geometry_msgs::msg::Pose pose)
+  const Eigen::Vector3d & point, const geometry_msgs::msg::Pose & pose)
 {
   geometry_msgs::msg::Transform transform;
   transform.translation.x = pose.position.x;
@@ -414,7 +466,7 @@ inline Eigen::Vector3d transformPoint(
 }
 
 inline geometry_msgs::msg::Point transformPoint(
-  const geometry_msgs::msg::Point point, const geometry_msgs::msg::Pose pose)
+  const geometry_msgs::msg::Point & point, const geometry_msgs::msg::Pose & pose)
 {
   const Eigen::Vector3d vec = Eigen::Vector3d(point.x, point.y, point.z);
   auto transformed_vec = transformPoint(vec, pose);
@@ -502,21 +554,21 @@ inline geometry_msgs::msg::Pose inverseTransformPose(
 
 // Transform point in world coordinates to local coordinates
 inline Eigen::Vector3d inverseTransformPoint(
-  const Eigen::Vector3d point, const geometry_msgs::msg::Pose pose)
+  const Eigen::Vector3d & point, const geometry_msgs::msg::Pose & pose)
 {
   const Eigen::Quaterniond q(
     pose.orientation.w, pose.orientation.x, pose.orientation.y, pose.orientation.z);
   const Eigen::Matrix3d R = q.normalized().toRotationMatrix();
 
   const Eigen::Vector3d local_origin(pose.position.x, pose.position.y, pose.position.z);
-  const Eigen::Vector3d local_point = R.transpose() * point - R.transpose() * local_origin;
+  Eigen::Vector3d local_point = R.transpose() * point - R.transpose() * local_origin;
 
   return local_point;
 }
 
 // Transform point in world coordinates to local coordinates
 inline geometry_msgs::msg::Point inverseTransformPoint(
-  const geometry_msgs::msg::Point point, const geometry_msgs::msg::Pose pose)
+  const geometry_msgs::msg::Point & point, const geometry_msgs::msg::Pose & pose)
 {
   const Eigen::Vector3d local_vec =
     inverseTransformPoint(Eigen::Vector3d(point.x, point.y, point.z), pose);
@@ -539,6 +591,15 @@ inline double calcCurvature(
     throw std::runtime_error("points are too close for curvature calculation.");
   }
   return 2.0 * ((p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x)) / denominator;
+}
+
+template <class Pose1, class Pose2>
+bool isDrivingForward(const Pose1 & src_pose, const Pose2 & dst_pose)
+{
+  // check the first point direction
+  const double src_yaw = tf2::getYaw(getPose(src_pose).orientation);
+  const double pose_direction_yaw = calcAzimuthAngle(getPoint(src_pose), getPoint(dst_pose));
+  return std::fabs(normalizeRadian(src_yaw - pose_direction_yaw)) < pi / 2.0;
 }
 
 /**
@@ -598,7 +659,7 @@ geometry_msgs::msg::Point calcInterpolatedPoint(
 
 /**
  * @brief Calculate a pose by linear interpolation.
- * Note that if ratio>=1.0 or dist(src_pose, dst_pose)<=0.01
+ * Note that if dist(src_pose, dst_pose)<=0.01
  * the orientation of the output pose is same as the orientation
  * of the dst_pose
  * @param src source point
@@ -613,24 +674,30 @@ geometry_msgs::msg::Pose calcInterpolatedPose(
   const bool set_orientation_from_position_direction = true)
 {
   const double clamped_ratio = std::clamp(ratio, 0.0, 1.0);
+
   geometry_msgs::msg::Pose output_pose;
   output_pose.position =
     calcInterpolatedPoint(getPoint(src_pose), getPoint(dst_pose), clamped_ratio);
 
   if (set_orientation_from_position_direction) {
     const double input_poses_dist = calcDistance2d(getPoint(src_pose), getPoint(dst_pose));
+    const bool is_driving_forward = isDrivingForward(src_pose, dst_pose);
 
     // Get orientation from interpolated point and src_pose
-    if (clamped_ratio < 1.0 && input_poses_dist > 1e-3) {
-      const double pitch = calcElevationAngle(getPoint(output_pose), getPoint(dst_pose));
-      const double yaw = calcAzimuthAngle(output_pose.position, getPoint(dst_pose));
-      output_pose.orientation = createQuaternionFromRPY(0.0, pitch, yaw);
-    } else {
+    if ((is_driving_forward && clamped_ratio > 1.0 - (1e-6)) || input_poses_dist < 1e-3) {
       output_pose.orientation = getPose(dst_pose).orientation;
+    } else if (!is_driving_forward && clamped_ratio < 1e-6) {
+      output_pose.orientation = getPose(src_pose).orientation;
+    } else {
+      const auto & base_pose = is_driving_forward ? dst_pose : src_pose;
+      const double pitch = calcElevationAngle(getPoint(output_pose), getPoint(base_pose));
+      const double yaw = calcAzimuthAngle(getPoint(output_pose), getPoint(base_pose));
+      output_pose.orientation = createQuaternionFromRPY(0.0, pitch, yaw);
     }
   } else {
     // Get orientation by spherical linear interpolation
-    tf2::Transform src_tf, dst_tf;
+    tf2::Transform src_tf;
+    tf2::Transform dst_tf;
     tf2::fromMsg(getPose(src_pose), src_tf);
     tf2::fromMsg(getPose(dst_pose), dst_tf);
     const auto & quaternion = tf2::slerp(src_tf.getRotation(), dst_tf.getRotation(), clamped_ratio);

@@ -14,6 +14,8 @@
 
 #include "obstacle_cruise_planner/utils.hpp"
 
+#include "perception_utils/predicted_path_utils.hpp"
+
 namespace obstacle_cruise_utils
 {
 bool isVehicle(const uint8_t label)
@@ -74,39 +76,16 @@ boost::optional<geometry_msgs::msg::Pose> calcForwardPose(
   return tier4_autoware_utils::calcInterpolatedPose(pre_pose, next_pose, lerp_ratio);
 }
 
-boost::optional<geometry_msgs::msg::Pose> lerpByTimeStamp(
-  const autoware_auto_perception_msgs::msg::PredictedPath & path, const rclcpp::Duration & rel_time)
-{
-  auto clock{rclcpp::Clock{RCL_ROS_TIME}};
-  if (
-    path.path.empty() || rel_time < rclcpp::Duration::from_seconds(0.0) ||
-    rel_time > rclcpp::Duration(path.time_step) * (static_cast<double>(path.path.size()) - 1)) {
-    return boost::none;
-  }
-
-  for (size_t i = 1; i < path.path.size(); ++i) {
-    const auto & pt = path.path.at(i);
-    const auto & prev_pt = path.path.at(i - 1);
-    if (rel_time <= rclcpp::Duration(path.time_step) * static_cast<double>(i)) {
-      const auto offset = rel_time - rclcpp::Duration(path.time_step) * static_cast<double>(i - 1);
-      const auto ratio = offset.seconds() / rclcpp::Duration(path.time_step).seconds();
-      return tier4_autoware_utils::calcInterpolatedPose(prev_pt, pt, ratio);
-    }
-  }
-
-  return boost::none;
-}
-
 boost::optional<geometry_msgs::msg::Pose> getCurrentObjectPoseFromPredictedPath(
   const autoware_auto_perception_msgs::msg::PredictedPath & predicted_path,
   const rclcpp::Time & obj_base_time, const rclcpp::Time & current_time)
 {
-  const auto rel_time = current_time - obj_base_time;
-  if (rel_time.seconds() < 0.0) {
+  const double rel_time = (current_time - obj_base_time).seconds();
+  if (rel_time < 0.0) {
     return boost::none;
   }
 
-  return lerpByTimeStamp(predicted_path, rel_time);
+  return perception_utils::calcInterpolatedPose(predicted_path, rel_time);
 }
 
 boost::optional<geometry_msgs::msg::Pose> getCurrentObjectPoseFromPredictedPaths(
@@ -128,12 +107,16 @@ boost::optional<geometry_msgs::msg::Pose> getCurrentObjectPoseFromPredictedPaths
   return getCurrentObjectPoseFromPredictedPath(*predicted_path, obj_base_time, current_time);
 }
 
-geometry_msgs::msg::Pose getCurrentObjectPose(
+geometry_msgs::msg::PoseStamped getCurrentObjectPose(
   const autoware_auto_perception_msgs::msg::PredictedObject & predicted_object,
-  const rclcpp::Time & obj_base_time, const rclcpp::Time & current_time, const bool use_prediction)
+  const std_msgs::msg::Header & obj_header, const rclcpp::Time & current_time,
+  const bool use_prediction)
 {
   if (!use_prediction) {
-    return predicted_object.kinematics.initial_pose_with_covariance.pose;
+    geometry_msgs::msg::PoseStamped current_pose;
+    current_pose.pose = predicted_object.kinematics.initial_pose_with_covariance.pose;
+    current_pose.header = obj_header;
+    return current_pose;
   }
 
   std::vector<autoware_auto_perception_msgs::msg::PredictedPath> predicted_paths;
@@ -141,78 +124,22 @@ geometry_msgs::msg::Pose getCurrentObjectPose(
     predicted_paths.push_back(path);
   }
   const auto interpolated_pose =
-    getCurrentObjectPoseFromPredictedPaths(predicted_paths, obj_base_time, current_time);
+    getCurrentObjectPoseFromPredictedPaths(predicted_paths, obj_header.stamp, current_time);
 
   if (!interpolated_pose) {
     RCLCPP_WARN(
       rclcpp::get_logger("ObstacleCruisePlanner"), "Failed to find the interpolated obstacle pose");
-    return predicted_object.kinematics.initial_pose_with_covariance.pose;
+    geometry_msgs::msg::PoseStamped current_pose;
+    current_pose.pose = predicted_object.kinematics.initial_pose_with_covariance.pose;
+    current_pose.header = obj_header;
+    return current_pose;
   }
 
-  return interpolated_pose.get();
-}
-
-autoware_auto_planning_msgs::msg::Trajectory insertStopPoint(
-  const autoware_auto_planning_msgs::msg::Trajectory & trajectory,
-  const double distance_to_stop_point)
-{
-  if (trajectory.points.size() < 2) {
-    return trajectory;
-  }
-
-  const double traj_length = motion_utils::calcArcLength(trajectory.points);
-  if (traj_length < distance_to_stop_point) {
-    return trajectory;
-  }
-
-  autoware_auto_planning_msgs::msg::Trajectory output;
-  output.header = trajectory.header;
-
-  double accumulated_length = 0;
-  size_t insert_idx = trajectory.points.size();
-  for (size_t i = 0; i < trajectory.points.size() - 1; ++i) {
-    const auto curr_traj_point = trajectory.points.at(i);
-    const auto next_traj_point = trajectory.points.at(i + 1);
-    const auto curr_pose = curr_traj_point.pose;
-    const auto next_pose = next_traj_point.pose;
-    const double segment_length = tier4_autoware_utils::calcDistance2d(curr_pose, next_pose);
-    accumulated_length += segment_length;
-
-    if (accumulated_length > distance_to_stop_point) {
-      const double ratio = 1 - (accumulated_length - distance_to_stop_point) / segment_length;
-
-      autoware_auto_planning_msgs::msg::TrajectoryPoint stop_point;
-      stop_point.pose = tier4_autoware_utils::calcInterpolatedPose(curr_pose, next_pose, ratio);
-      stop_point.lateral_velocity_mps = 0.0;
-      const double front_dist = tier4_autoware_utils::calcDistance2d(curr_pose, stop_point.pose);
-      const double back_dist = tier4_autoware_utils::calcDistance2d(stop_point.pose, next_pose);
-      if (front_dist < 1e-3) {
-        auto traj_point = trajectory.points.at(i);
-        traj_point.longitudinal_velocity_mps = 0.0;
-        output.points.push_back(traj_point);
-      } else if (back_dist < 1e-3) {
-        output.points.push_back(curr_traj_point);
-      } else {
-        output.points.push_back(curr_traj_point);
-        output.points.push_back(stop_point);
-      }
-      insert_idx = i + 1;
-      break;
-    }
-
-    output.points.push_back(curr_traj_point);
-  }
-
-  for (size_t i = insert_idx; i < trajectory.points.size() - 1; ++i) {
-    auto traj_point = trajectory.points.at(i);
-    traj_point.longitudinal_velocity_mps = 0.0;
-    output.points.push_back(traj_point);
-  }
-
-  // Terminal Velocity Should be zero
-  output.points.back().longitudinal_velocity_mps = 0.0;
-
-  return output;
+  geometry_msgs::msg::PoseStamped current_pose;
+  current_pose.pose = interpolated_pose.get();
+  current_pose.header.frame_id = obj_header.frame_id;
+  current_pose.header.stamp = current_time;
+  return current_pose;
 }
 
 boost::optional<TargetObstacle> getClosestStopObstacle(
@@ -227,12 +154,12 @@ boost::optional<TargetObstacle> getClosestStopObstacle(
   double dist_to_closest_stop_obstacle = std::numeric_limits<double>::max();
   for (const auto & obstacle : target_obstacles) {
     // Ignore obstacle that has not stopped
-    if (!obstacle.has_stopped) {
+    if (!obstacle.has_stopped || obstacle.collision_points.empty()) {
       continue;
     }
 
     const double dist_to_stop_obstacle =
-      motion_utils::calcSignedArcLength(traj.points, 0, obstacle.collision_point);
+      motion_utils::calcSignedArcLength(traj.points, 0, obstacle.collision_points.front().point);
     if (dist_to_stop_obstacle < dist_to_closest_stop_obstacle) {
       dist_to_closest_stop_obstacle = dist_to_stop_obstacle;
       closest_stop_obstacle = obstacle;

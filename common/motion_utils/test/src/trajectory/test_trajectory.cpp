@@ -1312,6 +1312,98 @@ TEST(trajectory, calcLongitudinalOffsetPoseFromIndex_quatInterpolation)
   }
 }
 
+TEST(trajectory, calcLongitudinalOffsetPoseFromIndex_quatSphericalInterpolation)
+{
+  using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+  using motion_utils::calcArcLength;
+  using motion_utils::calcLongitudinalOffsetPose;
+  using tier4_autoware_utils::deg2rad;
+
+  Trajectory traj{};
+
+  {
+    TrajectoryPoint p;
+    p.pose = createPose(0.0, 0.0, 0.0, deg2rad(0.0), deg2rad(0.0), deg2rad(45.0));
+    p.longitudinal_velocity_mps = 0.0;
+    traj.points.push_back(p);
+  }
+
+  {
+    TrajectoryPoint p;
+    p.pose = createPose(1.0, 1.0, 0.0, deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+    p.longitudinal_velocity_mps = 0.0;
+    traj.points.push_back(p);
+  }
+
+  const auto total_length = calcArcLength(traj.points);
+
+  // Found pose(forward)
+  for (double len = 0.0; len < total_length; len += 0.1) {
+    const auto p_out = calcLongitudinalOffsetPose(traj.points, 0, len, false);
+    // ratio between two points
+    const auto ratio = len / total_length;
+    const auto ans_quat =
+      createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(45.0 - 45.0 * ratio));
+
+    EXPECT_NE(p_out, boost::none);
+    EXPECT_NEAR(p_out.get().position.x, len * std::cos(deg2rad(45.0)), epsilon);
+    EXPECT_NEAR(p_out.get().position.y, len * std::sin(deg2rad(45.0)), epsilon);
+    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().orientation.x, ans_quat.x, epsilon);
+    EXPECT_NEAR(p_out.get().orientation.y, ans_quat.y, epsilon);
+    EXPECT_NEAR(p_out.get().orientation.z, ans_quat.z, epsilon);
+    EXPECT_NEAR(p_out.get().orientation.w, ans_quat.w, epsilon);
+  }
+
+  // Found pose(backward)
+  for (double len = total_length; 0.0 < len; len -= 0.1) {
+    const auto p_out = calcLongitudinalOffsetPose(traj.points, 1, -len, false);
+    // ratio between two points
+    const auto ratio = len / total_length;
+    const auto ans_quat =
+      createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(45.0 * ratio));
+
+    EXPECT_NE(p_out, boost::none);
+    EXPECT_NEAR(p_out.get().position.x, 1.0 - len * std::cos(deg2rad(45.0)), epsilon);
+    EXPECT_NEAR(p_out.get().position.y, 1.0 - len * std::sin(deg2rad(45.0)), epsilon);
+    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().orientation.x, ans_quat.x, epsilon);
+    EXPECT_NEAR(p_out.get().orientation.y, ans_quat.y, epsilon);
+    EXPECT_NEAR(p_out.get().orientation.z, ans_quat.z, epsilon);
+    EXPECT_NEAR(p_out.get().orientation.w, ans_quat.w, epsilon);
+  }
+
+  // Boundary condition
+  {
+    const auto p_out = calcLongitudinalOffsetPose(traj.points, 0, total_length, false);
+    const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+
+    EXPECT_NE(p_out, boost::none);
+    EXPECT_NEAR(p_out.get().position.x, 1.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.y, 1.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().orientation.x, ans_quat.x, epsilon);
+    EXPECT_NEAR(p_out.get().orientation.y, ans_quat.y, epsilon);
+    EXPECT_NEAR(p_out.get().orientation.z, ans_quat.z, epsilon);
+    EXPECT_NEAR(p_out.get().orientation.w, ans_quat.w, epsilon);
+  }
+
+  // Boundary condition
+  {
+    const auto p_out = calcLongitudinalOffsetPose(traj.points, 1, 0.0, false);
+    const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+
+    EXPECT_NE(p_out, boost::none);
+    EXPECT_NEAR(p_out.get().position.x, 1.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.y, 1.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().orientation.x, ans_quat.x, epsilon);
+    EXPECT_NEAR(p_out.get().orientation.y, ans_quat.y, epsilon);
+    EXPECT_NEAR(p_out.get().orientation.z, ans_quat.z, epsilon);
+    EXPECT_NEAR(p_out.get().orientation.w, ans_quat.w, epsilon);
+  }
+}
+
 TEST(trajectory, calcLongitudinalOffsetPoseFromPoint)
 {
   using motion_utils::calcArcLength;
@@ -1459,6 +1551,84 @@ TEST(trajectory, calcLongitudinalOffsetPoseFromPoint_quatInterpolation)
     const auto src_offset = calcLongitudinalOffsetToSegment(traj.points, 0, p_src);
 
     const auto p_out = calcLongitudinalOffsetPose(traj.points, p_src, total_length - src_offset);
+    const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+
+    EXPECT_NE(p_out, boost::none);
+    EXPECT_NEAR(p_out.get().position.x, 1.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.y, 1.0, epsilon);
+    EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
+    EXPECT_NEAR(p_out.get().orientation.x, ans_quat.x, epsilon);
+    EXPECT_NEAR(p_out.get().orientation.y, ans_quat.y, epsilon);
+    EXPECT_NEAR(p_out.get().orientation.z, ans_quat.z, epsilon);
+    EXPECT_NEAR(p_out.get().orientation.w, ans_quat.w, epsilon);
+  }
+}
+
+TEST(trajectory, calcLongitudinalOffsetPoseFromPoint_quatSphericalInterpolation)
+{
+  using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+  using motion_utils::calcArcLength;
+  using motion_utils::calcLongitudinalOffsetPose;
+  using motion_utils::calcLongitudinalOffsetToSegment;
+  using tier4_autoware_utils::createPoint;
+  using tier4_autoware_utils::deg2rad;
+
+  Trajectory traj{};
+
+  {
+    TrajectoryPoint p;
+    p.pose = createPose(0.0, 0.0, 0.0, deg2rad(0.0), deg2rad(0.0), deg2rad(45.0));
+    p.longitudinal_velocity_mps = 0.0;
+    traj.points.push_back(p);
+  }
+
+  {
+    TrajectoryPoint p;
+    p.pose = createPose(1.0, 1.0, 0.0, deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+    p.longitudinal_velocity_mps = 0.0;
+    traj.points.push_back(p);
+  }
+
+  const auto total_length = calcArcLength(traj.points);
+
+  // Found pose
+  for (double len_start = 0.0; len_start < total_length; len_start += 0.1) {
+    constexpr double deviation = 0.1;
+
+    const auto p_src = createPoint(
+      len_start * std::cos(deg2rad(45.0)) + deviation,
+      len_start * std::sin(deg2rad(45.0)) - deviation, 0.0);
+    const auto src_offset = calcLongitudinalOffsetToSegment(traj.points, 0, p_src);
+
+    for (double len = -src_offset; len < total_length - src_offset; len += 0.1) {
+      const auto p_out = calcLongitudinalOffsetPose(traj.points, p_src, len, false);
+      // ratio between two points
+      const auto ratio = (src_offset + len) / total_length;
+      const auto ans_quat =
+        createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(45.0 - 45.0 * ratio));
+
+      EXPECT_NE(p_out, boost::none);
+      EXPECT_NEAR(
+        p_out.get().position.x, p_src.x + len * std::cos(deg2rad(45.0)) - deviation, epsilon);
+      EXPECT_NEAR(
+        p_out.get().position.y, p_src.y + len * std::sin(deg2rad(45.0)) + deviation, epsilon);
+      EXPECT_NEAR(p_out.get().position.z, 0.0, epsilon);
+      EXPECT_NEAR(p_out.get().orientation.x, ans_quat.x, epsilon);
+      EXPECT_NEAR(p_out.get().orientation.y, ans_quat.y, epsilon);
+      EXPECT_NEAR(p_out.get().orientation.z, ans_quat.z, epsilon);
+      EXPECT_NEAR(p_out.get().orientation.w, ans_quat.w, epsilon);
+    }
+  }
+
+  // Boundary condition
+  {
+    constexpr double deviation = 0.1;
+
+    const auto p_src = createPoint(1.0 + deviation, 1.0 - deviation, 0.0);
+    const auto src_offset = calcLongitudinalOffsetToSegment(traj.points, 0, p_src);
+
+    const auto p_out =
+      calcLongitudinalOffsetPose(traj.points, p_src, total_length - src_offset, false);
     const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
 
     EXPECT_NE(p_out, boost::none);
@@ -1688,6 +1858,64 @@ TEST(trajectory, insertTargetPoint)
     auto empty_traj = generateTestTrajectory<Trajectory>(0, 1.0);
     const size_t segment_idx = 0;
     EXPECT_FALSE(insertTargetPoint(segment_idx, geometry_msgs::msg::Point{}, empty_traj.points));
+  }
+}
+
+TEST(trajectory, insertTargetPoint_Reverse)
+{
+  using motion_utils::calcArcLength;
+  using motion_utils::findNearestSegmentIndex;
+  using motion_utils::insertTargetPoint;
+  using tier4_autoware_utils::calcDistance2d;
+  using tier4_autoware_utils::createPoint;
+  using tier4_autoware_utils::createQuaternionFromYaw;
+  using tier4_autoware_utils::deg2rad;
+  using tier4_autoware_utils::getPose;
+
+  constexpr double overlap_threshold = 1e-4;
+  auto traj = generateTestTrajectory<Trajectory>(10, 1.0);
+  for (size_t i = 0; i < traj.points.size(); ++i) {
+    traj.points.at(i).pose.orientation = createQuaternionFromYaw(tier4_autoware_utils::pi);
+  }
+  const auto total_length = calcArcLength(traj.points);
+
+  for (double x_start = 0.0; x_start < total_length; x_start += 1.0) {
+    auto traj_out = traj;
+
+    const auto p_target = createPoint(x_start + 1.1e-4, 0.0, 0.0);
+    const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
+    const auto insert_idx =
+      insertTargetPoint(base_idx, p_target, traj_out.points, overlap_threshold);
+
+    EXPECT_NE(insert_idx, boost::none);
+    EXPECT_EQ(insert_idx.get(), base_idx + 1);
+    EXPECT_EQ(traj_out.points.size(), traj.points.size() + 1);
+
+    for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
+      EXPECT_TRUE(
+        calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > overlap_threshold);
+    }
+
+    {
+      const auto p_insert = getPose(traj_out.points.at(insert_idx.get()));
+      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(180));
+      EXPECT_EQ(p_insert.position.x, p_target.x);
+      EXPECT_EQ(p_insert.position.y, p_target.y);
+      EXPECT_EQ(p_insert.position.z, p_target.z);
+      EXPECT_NEAR(p_insert.orientation.x, ans_quat.x, epsilon);
+      EXPECT_NEAR(p_insert.orientation.y, ans_quat.y, epsilon);
+      EXPECT_NEAR(p_insert.orientation.z, ans_quat.z, epsilon);
+      EXPECT_NEAR(p_insert.orientation.w, ans_quat.w, epsilon);
+    }
+
+    {
+      const auto p_base = getPose(traj_out.points.at(base_idx));
+      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(180));
+      EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
+      EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
+      EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
+      EXPECT_NEAR(p_base.orientation.w, ans_quat.w, epsilon);
+    }
   }
 }
 
@@ -3429,5 +3657,680 @@ TEST(trajectory, insertStopPoint_from_a_pose)
     const double max_dist = std::numeric_limits<double>::max();
     EXPECT_EQ(insertStopPoint(src_pose, 1.0, traj_out.points, max_dist, deg2rad(45)), boost::none);
     EXPECT_EQ(insertStopPoint(src_pose, 10.0, traj_out.points, max_dist, deg2rad(45)), boost::none);
+  }
+}
+
+TEST(trajectory, findFirstNearestIndexWithSoftConstraints)
+{
+  using motion_utils::findFirstNearestIndexWithSoftConstraints;
+  using motion_utils::findFirstNearestSegmentIndexWithSoftConstraints;
+  using tier4_autoware_utils::pi;
+
+  const auto traj = generateTestTrajectory<Trajectory>(10, 1.0);
+
+  // Non overlapped points
+  {
+    // 1. Dist and yaw thresholds are given
+    // Normal cases
+    EXPECT_EQ(
+      findFirstNearestIndexWithSoftConstraints(
+        traj.points, createPose(2.4, 1.3, 0.0, 0.0, 0.0, 0.3), 2.0, 0.4),
+      2U);
+    EXPECT_EQ(
+      findFirstNearestSegmentIndexWithSoftConstraints(
+        traj.points, createPose(2.4, 1.3, 0.0, 0.0, 0.0, 0.3), 2.0, 0.4),
+      2U);
+
+    EXPECT_EQ(
+      findFirstNearestIndexWithSoftConstraints(
+        traj.points, createPose(4.1, 0.3, 0.0, 0.0, 0.0, -0.8), 0.5, 1.0),
+      4U);
+    EXPECT_EQ(
+      findFirstNearestSegmentIndexWithSoftConstraints(
+        traj.points, createPose(4.1, 0.3, 0.0, 0.0, 0.0, -0.8), 0.5, 1.0),
+      4U);
+
+    EXPECT_EQ(
+      findFirstNearestIndexWithSoftConstraints(
+        traj.points, createPose(8.5, -0.5, 0.0, 0.0, 0.0, 0.0), 1.0, 0.1),
+      8U);
+    EXPECT_EQ(
+      findFirstNearestSegmentIndexWithSoftConstraints(
+        traj.points, createPose(8.5, -0.5, 0.0, 0.0, 0.0, 0.0), 1.0, 0.1),
+      8U);
+
+    // Dist is out of range
+    EXPECT_EQ(
+      findFirstNearestIndexWithSoftConstraints(
+        traj.points, createPose(2.4, 1.3, 0.0, 0.0, 0.0, 0.3), 1.0, 0.4),
+      2U);
+    EXPECT_EQ(
+      findFirstNearestSegmentIndexWithSoftConstraints(
+        traj.points, createPose(2.4, 1.3, 0.0, 0.0, 0.0, 0.3), 1.0, 0.4),
+      2U);
+
+    // Yaw is out of range
+    EXPECT_EQ(
+      findFirstNearestIndexWithSoftConstraints(
+        traj.points, createPose(2.4, 1.3, 0.0, 0.0, 0.0, 0.3), 2.0, 0.2),
+      2U);
+    EXPECT_EQ(
+      findFirstNearestSegmentIndexWithSoftConstraints(
+        traj.points, createPose(2.4, 1.3, 0.0, 0.0, 0.0, 0.3), 2.0, 0.2),
+      2U);
+
+    // Dist and yaw is out of range
+    EXPECT_EQ(
+      findFirstNearestIndexWithSoftConstraints(
+        traj.points, createPose(2.4, 1.3, 0.0, 0.0, 0.0, 0.3), 1.0, 0.2),
+      2U);
+    EXPECT_EQ(
+      findFirstNearestSegmentIndexWithSoftConstraints(
+        traj.points, createPose(2.4, 1.3, 0.0, 0.0, 0.0, 0.3), 1.0, 0.2),
+      2U);
+
+    // Empty points
+    EXPECT_THROW(
+      findFirstNearestIndexWithSoftConstraints(
+        Trajectory{}.points, createPose(2.4, 1.3, 0.0, 0.0, 0.0, 0.3), 1.0, 0.2),
+      std::invalid_argument);
+    EXPECT_THROW(
+      findFirstNearestSegmentIndexWithSoftConstraints(
+        Trajectory{}.points, createPose(2.4, 1.3, 0.0, 0.0, 0.0, 0.3), 1.0, 0.2),
+      std::invalid_argument);
+
+    // 2. Dist threshold is given
+    // Normal cases
+    EXPECT_EQ(
+      findFirstNearestIndexWithSoftConstraints(
+        traj.points, createPose(2.4, 1.3, 0.0, 0.0, 0.0, 0.3), 2.0),
+      2U);
+    EXPECT_EQ(
+      findFirstNearestSegmentIndexWithSoftConstraints(
+        traj.points, createPose(2.4, 1.3, 0.0, 0.0, 0.0, 0.3), 2.0),
+      2U);
+
+    EXPECT_EQ(
+      findFirstNearestIndexWithSoftConstraints(
+        traj.points, createPose(4.1, 0.3, 0.0, 0.0, 0.0, -0.8), 0.5),
+      4U);
+    EXPECT_EQ(
+      findFirstNearestSegmentIndexWithSoftConstraints(
+        traj.points, createPose(4.1, 0.3, 0.0, 0.0, 0.0, -0.8), 0.5),
+      4U);
+
+    EXPECT_EQ(
+      findFirstNearestIndexWithSoftConstraints(
+        traj.points, createPose(8.5, -0.5, 0.0, 0.0, 0.0, 0.0), 1.0),
+      8U);
+    EXPECT_EQ(
+      findFirstNearestSegmentIndexWithSoftConstraints(
+        traj.points, createPose(8.5, -0.5, 0.0, 0.0, 0.0, 0.0), 1.0),
+      8U);
+
+    // Dist is out of range
+    EXPECT_EQ(
+      findFirstNearestIndexWithSoftConstraints(
+        traj.points, createPose(2.4, 1.3, 0.0, 0.0, 0.0, 0.3), 1.0),
+      2U);
+    EXPECT_EQ(
+      findFirstNearestSegmentIndexWithSoftConstraints(
+        traj.points, createPose(2.4, 1.3, 0.0, 0.0, 0.0, 0.3), 1.0),
+      2U);
+
+    // 3. No threshold is given
+    // Normal cases
+    EXPECT_EQ(
+      findFirstNearestIndexWithSoftConstraints(
+        traj.points, createPose(2.4, 1.3, 0.0, 0.0, 0.0, 0.3)),
+      2U);
+    EXPECT_EQ(
+      findFirstNearestSegmentIndexWithSoftConstraints(
+        traj.points, createPose(2.4, 1.3, 0.0, 0.0, 0.0, 0.3)),
+      2U);
+
+    EXPECT_EQ(
+      findFirstNearestIndexWithSoftConstraints(
+        traj.points, createPose(4.1, 0.3, 0.0, 0.0, 0.0, -0.8)),
+      4U);
+    EXPECT_EQ(
+      findFirstNearestSegmentIndexWithSoftConstraints(
+        traj.points, createPose(4.1, 0.3, 0.0, 0.0, 0.0, -0.8)),
+      4U);
+
+    EXPECT_EQ(
+      findFirstNearestIndexWithSoftConstraints(
+        traj.points, createPose(8.5, -0.5, 0.0, 0.0, 0.0, 0.0)),
+      8U);
+    EXPECT_EQ(
+      findFirstNearestSegmentIndexWithSoftConstraints(
+        traj.points, createPose(8.5, -0.5, 0.0, 0.0, 0.0, 0.0)),
+      8U);
+  }
+
+  // Vertically crossing points
+  {
+    //       ___
+    //      |  |
+    //   S__|__|
+    //      |
+    //      |
+    //      G
+    std::vector<geometry_msgs::msg::Pose> poses;
+    poses.push_back(createPose(-2.0, 0.0, 0.0, 0.0, 0.0, 0.0));
+    poses.push_back(createPose(-1.0, 0.0, 0.0, 0.0, 0.0, 0.0));
+    poses.push_back(createPose(0.0, 0.0, 0.0, 0.0, 0.0, 0.0));
+    poses.push_back(createPose(1.0, 0.0, 0.0, 0.0, 0.0, 0.0));
+    poses.push_back(createPose(2.0, 0.0, 0.0, 0.0, 0.0, pi / 2.0));
+    poses.push_back(createPose(2.0, 1.0, 0.0, 0.0, 0.0, pi / 2.0));
+    poses.push_back(createPose(2.0, 2.0, 0.0, 0.0, 0.0, pi));
+    poses.push_back(createPose(1.0, 2.0, 0.0, 0.0, 0.0, pi));
+    poses.push_back(createPose(0.0, 2.0, 0.0, 0.0, 0.0, -pi / 2.0));
+    poses.push_back(createPose(0.0, 1.0, 0.0, 0.0, 0.0, -pi / 2.0));
+    poses.push_back(createPose(0.0, 0.0, 0.0, 0.0, 0.0, -pi / 2.0));
+    poses.push_back(createPose(0.0, -1.0, 0.0, 0.0, 0.0, -pi / 2.0));
+    poses.push_back(createPose(0.0, -2.0, 0.0, 0.0, 0.0, -pi / 2.0));
+
+    // 1. Dist and yaw thresholds are given
+    {
+      // Normal cases
+      EXPECT_EQ(
+        findFirstNearestIndexWithSoftConstraints(
+          poses, createPose(0.3, 0.3, 0.0, 0.0, 0.0, 0.0), 1.0, 0.4),
+        2U);
+      EXPECT_EQ(
+        findFirstNearestSegmentIndexWithSoftConstraints(
+          poses, createPose(0.3, 0.3, 0.0, 0.0, 0.0, 0.0), 1.0, 0.4),
+        2U);
+
+      EXPECT_EQ(
+        findFirstNearestIndexWithSoftConstraints(
+          poses, createPose(0.3, 0.3, 0.0, 0.0, 0.0, -pi / 2.0), 1.0, 0.4),
+        10U);
+      EXPECT_EQ(
+        findFirstNearestSegmentIndexWithSoftConstraints(
+          poses, createPose(0.3, 0.3, 0.0, 0.0, 0.0, -pi / 2.0), 1.0, 0.4),
+        9U);
+
+      // Several nearest index within threshold
+      EXPECT_EQ(
+        findFirstNearestIndexWithSoftConstraints(
+          poses, createPose(0.3, 0.3, 0.0, 0.0, 0.0, 0.0), 10.0, pi * 2.0),
+        2U);
+      EXPECT_EQ(
+        findFirstNearestSegmentIndexWithSoftConstraints(
+          poses, createPose(0.3, 0.3, 0.0, 0.0, 0.0, 0.0), 10.0, pi * 2.0),
+        2U);
+
+      // Dist is out of range
+      EXPECT_EQ(
+        findFirstNearestIndexWithSoftConstraints(
+          poses, createPose(0.3, 0.3, 0.0, 0.0, 0.0, 0.0), 0.0, 0.4),
+        2U);
+      EXPECT_EQ(
+        findFirstNearestSegmentIndexWithSoftConstraints(
+          poses, createPose(0.3, 0.3, 0.0, 0.0, 0.0, 0.0), 0.0, 0.4),
+        2U);
+
+      // Yaw is out of range
+      EXPECT_EQ(
+        findFirstNearestIndexWithSoftConstraints(
+          poses, createPose(0.3, 0.3, 0.0, 0.0, 0.0, 0.3), 1.0, 0.0),
+        2U);
+      EXPECT_EQ(
+        findFirstNearestSegmentIndexWithSoftConstraints(
+          poses, createPose(0.3, 0.3, 0.0, 0.0, 0.0, 0.3), 1.0, 0.0),
+        2U);
+
+      // Dist and yaw is out of range
+      EXPECT_EQ(
+        findFirstNearestIndexWithSoftConstraints(
+          poses, createPose(0.3, 0.3, 0.0, 0.0, 0.0, 0.3), 0.0, 0.0),
+        2U);
+      EXPECT_EQ(
+        findFirstNearestSegmentIndexWithSoftConstraints(
+          poses, createPose(0.3, 0.3, 0.0, 0.0, 0.0, 0.3), 0.0, 0.0),
+        2U);
+    }
+
+    // 2. Dist threshold is given
+    {
+      // Normal cases
+      EXPECT_EQ(
+        findFirstNearestIndexWithSoftConstraints(
+          poses, createPose(0.3, 0.3, 0.0, 0.0, 0.0, 0.0), 1.0),
+        2U);
+      EXPECT_EQ(
+        findFirstNearestSegmentIndexWithSoftConstraints(
+          poses, createPose(0.3, 0.3, 0.0, 0.0, 0.0, 0.0), 1.0),
+        2U);
+
+      // Several nearest index within threshold
+      EXPECT_EQ(
+        findFirstNearestIndexWithSoftConstraints(
+          poses, createPose(0.3, 0.3, 0.0, 0.0, 0.0, 0.0), 10.0),
+        2U);
+      EXPECT_EQ(
+        findFirstNearestSegmentIndexWithSoftConstraints(
+          poses, createPose(0.3, 0.3, 0.0, 0.0, 0.0, 0.0), 10.0),
+        2U);
+
+      // Dist is out of range
+      EXPECT_EQ(
+        findFirstNearestIndexWithSoftConstraints(
+          poses, createPose(0.3, 0.3, 0.0, 0.0, 0.0, 0.0), 0.0),
+        2U);
+      EXPECT_EQ(
+        findFirstNearestSegmentIndexWithSoftConstraints(
+          poses, createPose(0.3, 0.3, 0.0, 0.0, 0.0, 0.0), 0.0),
+        2U);
+    }
+
+    // 3. No threshold is given
+    {
+      // Normal cases
+      EXPECT_EQ(
+        findFirstNearestIndexWithSoftConstraints(poses, createPose(0.3, 0.3, 0.0, 0.0, 0.0, 0.0)),
+        2U);
+      EXPECT_EQ(
+        findFirstNearestSegmentIndexWithSoftConstraints(
+          poses, createPose(0.3, 0.3, 0.0, 0.0, 0.0, 0.0)),
+        2U);
+    }
+  }
+
+  {
+    // Points has a loop structure with the opposite direction (= u-turn)
+    //         __
+    // S/G ___|_|
+
+    std::vector<geometry_msgs::msg::Pose> poses;
+    poses.push_back(createPose(-3.0, 0.0, 0.0, 0.0, 0.0, 0.0));
+    poses.push_back(createPose(-2.0, 0.0, 0.0, 0.0, 0.0, 0.0));
+    poses.push_back(createPose(-1.0, 0.0, 0.0, 0.0, 0.0, 0.0));
+    poses.push_back(createPose(0.0, 0.0, 0.0, 0.0, 0.0, 0.0));
+    poses.push_back(createPose(1.0, 0.0, 0.0, 0.0, 0.0, pi / 2.0));
+    poses.push_back(createPose(1.0, 1.0, 0.0, 0.0, 0.0, pi));
+    poses.push_back(createPose(0.0, 1.0, 0.0, 0.0, 0.0, -pi / 2.0));
+    poses.push_back(createPose(0.0, 0.0, 0.0, 0.0, 0.0, pi));
+    poses.push_back(createPose(-1.0, 0.0, 0.0, 0.0, 0.0, pi));
+    poses.push_back(createPose(-2.0, 0.0, 0.0, 0.0, 0.0, pi));
+    poses.push_back(createPose(-3.0, 0.0, 0.0, 0.0, 0.0, pi));
+
+    // 1. Dist and yaw thresholds are given
+    {
+      // Normal cases
+      EXPECT_EQ(
+        findFirstNearestIndexWithSoftConstraints(
+          poses, createPose(-2.1, 0.1, 0.0, 0.0, 0.0, 0.0), 1.0, 0.4),
+        1U);
+      EXPECT_EQ(
+        findFirstNearestSegmentIndexWithSoftConstraints(
+          poses, createPose(-2.1, 0.1, 0.0, 0.0, 0.0, 0.0), 1.0, 0.4),
+        0U);
+
+      EXPECT_EQ(
+        findFirstNearestIndexWithSoftConstraints(
+          poses, createPose(-2.1, 0.1, 0.0, 0.0, 0.0, pi), 1.0, 0.4),
+        9U);
+      EXPECT_EQ(
+        findFirstNearestSegmentIndexWithSoftConstraints(
+          poses, createPose(-2.1, 0.1, 0.0, 0.0, 0.0, pi), 1.0, 0.4),
+        9U);
+
+      // Several nearest index within threshold
+      EXPECT_EQ(
+        findFirstNearestIndexWithSoftConstraints(
+          poses, createPose(-2.1, 0.1, 0.0, 0.0, 0.0, pi), 10.0, pi * 2.0),
+        1U);
+      EXPECT_EQ(
+        findFirstNearestSegmentIndexWithSoftConstraints(
+          poses, createPose(-2.1, 0.1, 0.0, 0.0, 0.0, pi), 10.0, pi * 2.0),
+        0U);
+
+      // Dist is out of range
+      EXPECT_EQ(
+        findFirstNearestIndexWithSoftConstraints(
+          poses, createPose(-2.1, 0.1, 0.0, 0.0, 0.0, pi), 0.0, 0.4),
+        1U);
+      EXPECT_EQ(
+        findFirstNearestSegmentIndexWithSoftConstraints(
+          poses, createPose(-2.1, 0.1, 0.0, 0.0, 0.0, pi), 0.0, 0.4),
+        0U);
+
+      // Yaw is out of range
+      EXPECT_EQ(
+        findFirstNearestIndexWithSoftConstraints(
+          poses, createPose(-2.1, 0.1, 0.0, 0.0, 0.0, pi * 0.9), 1.0, 0.0),
+        1U);
+      EXPECT_EQ(
+        findFirstNearestSegmentIndexWithSoftConstraints(
+          poses, createPose(-2.1, 0.1, 0.0, 0.0, 0.0, pi * 0.9), 1.0, 0.0),
+        0U);
+
+      // Dist and yaw is out of range
+      EXPECT_EQ(
+        findFirstNearestIndexWithSoftConstraints(
+          poses, createPose(-2.1, 0.1, 0.0, 0.0, 0.0, pi * 0.9), 0.0, 0.0),
+        1U);
+      EXPECT_EQ(
+        findFirstNearestSegmentIndexWithSoftConstraints(
+          poses, createPose(-2.1, 0.1, 0.0, 0.0, 0.0, pi * 0.9), 0.0, 0.0),
+        0U);
+    }
+
+    // 2. Dist threshold is given
+    {
+      // Normal cases
+      EXPECT_EQ(
+        findFirstNearestIndexWithSoftConstraints(
+          poses, createPose(-2.1, 0.1, 0.0, 0.0, 0.0, 0.0), 1.0),
+        1U);
+      EXPECT_EQ(
+        findFirstNearestSegmentIndexWithSoftConstraints(
+          poses, createPose(-2.1, 0.1, 0.0, 0.0, 0.0, 0.0), 1.0),
+        0U);
+
+      // Several nearest index within threshold
+      EXPECT_EQ(
+        findFirstNearestIndexWithSoftConstraints(
+          poses, createPose(-2.1, 0.1, 0.0, 0.0, 0.0, 0.0), 10.0),
+        1U);
+      EXPECT_EQ(
+        findFirstNearestSegmentIndexWithSoftConstraints(
+          poses, createPose(-2.1, 0.1, 0.0, 0.0, 0.0, 0.0), 10.0),
+        0U);
+
+      // Dist is out of range
+      EXPECT_EQ(
+        findFirstNearestIndexWithSoftConstraints(
+          poses, createPose(-2.1, 0.1, 0.0, 0.0, 0.0, 0.0), 0.0),
+        1U);
+      EXPECT_EQ(
+        findFirstNearestSegmentIndexWithSoftConstraints(
+          poses, createPose(-2.1, 0.1, 0.0, 0.0, 0.0, 0.0), 0.0),
+        0U);
+    }
+
+    // 3. No threshold is given
+    {
+      // Normal cases
+      EXPECT_EQ(
+        findFirstNearestIndexWithSoftConstraints(poses, createPose(-2.1, 0.1, 0.0, 0.0, 0.0, 0.0)),
+        1U);
+      EXPECT_EQ(
+        findFirstNearestSegmentIndexWithSoftConstraints(
+          poses, createPose(-2.1, 0.1, 0.0, 0.0, 0.0, 0.0)),
+        0U);
+    }
+  }
+
+  {  // Points has a loop structure with the same direction
+     //      ___
+     //     |  |
+     //  S__|__|__G
+    std::vector<geometry_msgs::msg::Pose> poses;
+    poses.push_back(createPose(0.0, 0.0, 0.0, 0.0, 0.0, 0.0));
+    poses.push_back(createPose(1.0, 0.0, 0.0, 0.0, 0.0, 0.0));
+    poses.push_back(createPose(2.0, 0.0, 0.0, 0.0, 0.0, 0.0));
+    poses.push_back(createPose(3.0, 0.0, 0.0, 0.0, 0.0, 0.0));
+    poses.push_back(createPose(4.0, 0.0, 0.0, 0.0, 0.0, pi / 2.0));
+    poses.push_back(createPose(4.0, 1.0, 0.0, 0.0, 0.0, pi / 2.0));
+    poses.push_back(createPose(4.0, 2.0, 0.0, 0.0, 0.0, pi));
+    poses.push_back(createPose(3.0, 2.0, 0.0, 0.0, 0.0, pi));
+    poses.push_back(createPose(2.0, 2.0, 0.0, 0.0, 0.0, -pi / 2.0));
+    poses.push_back(createPose(2.0, 1.0, 0.0, 0.0, 0.0, -pi / 2.0));
+    poses.push_back(createPose(2.0, 0.0, 0.0, 0.0, 0.0, 0.0));
+    poses.push_back(createPose(3.0, 0.0, 0.0, 0.0, 0.0, 0.0));
+    poses.push_back(createPose(4.0, 0.0, 0.0, 0.0, 0.0, 0.0));
+    poses.push_back(createPose(5.0, 0.0, 0.0, 0.0, 0.0, 0.0));
+    poses.push_back(createPose(6.0, 0.0, 0.0, 0.0, 0.0, 0.0));
+
+    // 1. Dist and yaw thresholds are given
+    {
+      // Normal cases
+      EXPECT_EQ(
+        findFirstNearestIndexWithSoftConstraints(
+          poses, createPose(3.1, 0.1, 0.0, 0.0, 0.0, 0.0), 1.0, 0.4),
+        3U);
+      EXPECT_EQ(
+        findFirstNearestSegmentIndexWithSoftConstraints(
+          poses, createPose(3.1, 0.1, 0.0, 0.0, 0.0, 0.0), 1.0, 0.4),
+        3U);
+
+      // Several nearest index within threshold
+      EXPECT_EQ(
+        findFirstNearestIndexWithSoftConstraints(
+          poses, createPose(3.1, 0.1, 0.0, 0.0, 0.0, 0.0), 10.0, pi * 2.0),
+        3U);
+      EXPECT_EQ(
+        findFirstNearestSegmentIndexWithSoftConstraints(
+          poses, createPose(3.1, 0.1, 0.0, 0.0, 0.0, 0.0), 10.0, pi * 2.0),
+        3U);
+
+      // Dist is out of range
+      EXPECT_EQ(
+        findFirstNearestIndexWithSoftConstraints(
+          poses, createPose(3.1, 0.1, 0.0, 0.0, 0.0, 0.0), 0.0, 0.4),
+        3U);
+      EXPECT_EQ(
+        findFirstNearestSegmentIndexWithSoftConstraints(
+          poses, createPose(3.1, 0.1, 0.0, 0.0, 0.0, 0.0), 0.0, 0.4),
+        3U);
+
+      // Yaw is out of range
+      EXPECT_EQ(
+        findFirstNearestIndexWithSoftConstraints(
+          poses, createPose(3.1, 0.1, 0.0, 0.0, 0.0, 0.0), 1.0, 0.0),
+        3U);
+      EXPECT_EQ(
+        findFirstNearestSegmentIndexWithSoftConstraints(
+          poses, createPose(3.1, 0.1, 0.0, 0.0, 0.0, 0.0), 1.0, 0.0),
+        3U);
+
+      // Dist and yaw is out of range
+      EXPECT_EQ(
+        findFirstNearestIndexWithSoftConstraints(
+          poses, createPose(3.1, 0.1, 0.0, 0.0, 0.0, 0.0), 0.0, 0.0),
+        3U);
+      EXPECT_EQ(
+        findFirstNearestSegmentIndexWithSoftConstraints(
+          poses, createPose(3.1, 0.1, 0.0, 0.0, 0.0, 0.0), 0.0, 0.0),
+        3U);
+    }
+
+    // 2. Dist threshold is given
+    {
+      // Normal cases
+      EXPECT_EQ(
+        findFirstNearestIndexWithSoftConstraints(
+          poses, createPose(3.1, 0.1, 0.0, 0.0, 0.0, 0.0), 1.0),
+        3U);
+      EXPECT_EQ(
+        findFirstNearestSegmentIndexWithSoftConstraints(
+          poses, createPose(3.1, 0.1, 0.0, 0.0, 0.0, 0.0), 1.0),
+        3U);
+
+      // Several nearest index within threshold
+      EXPECT_EQ(
+        findFirstNearestIndexWithSoftConstraints(
+          poses, createPose(3.1, 0.1, 0.0, 0.0, 0.0, 0.0), 10.0),
+        3U);
+      EXPECT_EQ(
+        findFirstNearestSegmentIndexWithSoftConstraints(
+          poses, createPose(3.1, 0.1, 0.0, 0.0, 0.0, 0.0), 10.0),
+        3U);
+
+      // Dist is out of range
+      EXPECT_EQ(
+        findFirstNearestIndexWithSoftConstraints(
+          poses, createPose(3.1, 0.1, 0.0, 0.0, 0.0, 0.0), 0.0),
+        3U);
+      EXPECT_EQ(
+        findFirstNearestSegmentIndexWithSoftConstraints(
+          poses, createPose(3.1, 0.1, 0.0, 0.0, 0.0, 0.0), 0.0),
+        3U);
+    }
+
+    // 3. No threshold is given
+    {
+      // Normal cases
+      EXPECT_EQ(
+        findFirstNearestIndexWithSoftConstraints(poses, createPose(3.1, 0.1, 0.0, 0.0, 0.0, 0.0)),
+        3U);
+      EXPECT_EQ(
+        findFirstNearestSegmentIndexWithSoftConstraints(
+          poses, createPose(3.1, 0.1, 0.0, 0.0, 0.0, 0.0)),
+        3U);
+    }
+  }
+}
+
+TEST(trajectory, calcSignedArcLengthFromPointAndSegmentIndexToPointAndSegmentIndex)
+{
+  using motion_utils::calcSignedArcLength;
+
+  const auto traj = generateTestTrajectory<Trajectory>(10, 1.0);
+
+  // Empty
+  EXPECT_DOUBLE_EQ(calcSignedArcLength(Trajectory{}.points, {}, {}), 0.0);
+
+  // Same point
+  {
+    const auto p = createPoint(3.0, 0.0, 0.0);
+    EXPECT_NEAR(calcSignedArcLength(traj.points, p, 2, p, 2), 0, epsilon);
+    EXPECT_NEAR(calcSignedArcLength(traj.points, p, 3, p, 3), 0, epsilon);
+  }
+
+  // Forward
+  {
+    const auto p1 = createPoint(0.0, 0.0, 0.0);
+    const auto p2 = createPoint(3.0, 1.0, 0.0);
+    EXPECT_NEAR(calcSignedArcLength(traj.points, p1, 0, p2, 2), 3, epsilon);
+    EXPECT_NEAR(calcSignedArcLength(traj.points, p1, 0, p2, 3), 3, epsilon);
+  }
+
+  // Backward
+  {
+    const auto p1 = createPoint(9.0, 0.0, 0.0);
+    const auto p2 = createPoint(8.0, 0.0, 0.0);
+    EXPECT_NEAR(calcSignedArcLength(traj.points, p1, 8, p2, 7), -1, epsilon);
+    EXPECT_NEAR(calcSignedArcLength(traj.points, p1, 8, p2, 8), -1, epsilon);
+  }
+
+  // Point before start point
+  {
+    const auto p1 = createPoint(-3.9, 3.0, 0.0);
+    const auto p2 = createPoint(6.0, -10.0, 0.0);
+    EXPECT_NEAR(calcSignedArcLength(traj.points, p1, 0, p2, 5), 9.9, epsilon);
+    EXPECT_NEAR(calcSignedArcLength(traj.points, p1, 0, p2, 6), 9.9, epsilon);
+  }
+
+  // Point after end point
+  {
+    const auto p1 = createPoint(7.0, -5.0, 0.0);
+    const auto p2 = createPoint(13.3, -10.0, 0.0);
+    EXPECT_NEAR(calcSignedArcLength(traj.points, p1, 6, p2, 8), 6.3, epsilon);
+    EXPECT_NEAR(calcSignedArcLength(traj.points, p1, 7, p2, 8), 6.3, epsilon);
+  }
+
+  // Point before start point and after end point
+  {
+    const auto p1 = createPoint(-4.3, 10.0, 0.0);
+    const auto p2 = createPoint(13.8, -1.0, 0.0);
+    EXPECT_NEAR(calcSignedArcLength(traj.points, p1, 0, p2, 8), 18.1, epsilon);
+  }
+
+  // Random cases
+  {
+    const auto p1 = createPoint(1.0, 3.0, 0.0);
+    const auto p2 = createPoint(9.0, -1.0, 0.0);
+    EXPECT_NEAR(calcSignedArcLength(traj.points, p1, 0, p2, 8), 8, epsilon);
+    EXPECT_NEAR(calcSignedArcLength(traj.points, p1, 1, p2, 8), 8, epsilon);
+  }
+  {
+    const auto p1 = createPoint(4.3, 7.0, 0.0);
+    const auto p2 = createPoint(2.0, 3.0, 0.0);
+    EXPECT_NEAR(calcSignedArcLength(traj.points, p1, 4, p2, 2), -2.3, epsilon);
+    EXPECT_NEAR(calcSignedArcLength(traj.points, p1, 4, p2, 1), -2.3, epsilon);
+  }
+}
+
+TEST(trajectory, calcSignedArcLengthFromPointAndSegmentIndexToPointIndex)
+{
+  using motion_utils::calcSignedArcLength;
+
+  const auto traj = generateTestTrajectory<Trajectory>(10, 1.0);
+
+  // Empty
+  EXPECT_DOUBLE_EQ(calcSignedArcLength(Trajectory{}.points, {}, {}), 0.0);
+
+  // Same point
+  {
+    const auto p = createPoint(3.0, 0.0, 0.0);
+    EXPECT_NEAR(calcSignedArcLength(traj.points, p, 2, 3), 0, epsilon);
+    EXPECT_NEAR(calcSignedArcLength(traj.points, 3, p, 3), 0, epsilon);
+  }
+
+  // Forward
+  {
+    const auto p1 = createPoint(0.0, 0.0, 0.0);
+    const auto p2 = createPoint(3.0, 1.0, 0.0);
+    EXPECT_NEAR(calcSignedArcLength(traj.points, p1, 0, 3), 3, epsilon);
+    EXPECT_NEAR(calcSignedArcLength(traj.points, 0, p2, 2), 3, epsilon);
+    EXPECT_NEAR(calcSignedArcLength(traj.points, 0, p2, 3), 3, epsilon);
+  }
+
+  // Backward
+  {
+    const auto p1 = createPoint(9.0, 0.0, 0.0);
+    const auto p2 = createPoint(8.0, 0.0, 0.0);
+    EXPECT_NEAR(calcSignedArcLength(traj.points, p1, 8, 8), -1, epsilon);
+    EXPECT_NEAR(calcSignedArcLength(traj.points, 8, p2, 7), 0, epsilon);
+    EXPECT_NEAR(calcSignedArcLength(traj.points, 8, p2, 8), 0, epsilon);
+  }
+
+  // Point before start point
+  {
+    const auto p1 = createPoint(-3.9, 3.0, 0.0);
+    EXPECT_NEAR(calcSignedArcLength(traj.points, p1, 0, 6), 9.9, epsilon);
+  }
+
+  // Point after end point
+  {
+    const auto p2 = createPoint(13.3, -10.0, 0.0);
+    EXPECT_NEAR(calcSignedArcLength(traj.points, 7, p2, 8), 6.3, epsilon);
+  }
+
+  // Start point
+  {
+    const auto p1 = createPoint(0.0, 3.0, 0.0);
+    const auto p2 = createPoint(5.3, -10.0, 0.0);
+    EXPECT_NEAR(calcSignedArcLength(traj.points, p1, 0, 5), 5, epsilon);
+    EXPECT_NEAR(calcSignedArcLength(traj.points, 0, p2, 5), 5.3, epsilon);
+  }
+
+  // Point after end point
+  {
+    const auto p1 = createPoint(7.3, -5.0, 0.0);
+    const auto p2 = createPoint(9.0, -10.0, 0.0);
+    EXPECT_NEAR(calcSignedArcLength(traj.points, p1, 7, 9), 1.7, epsilon);
+    EXPECT_NEAR(calcSignedArcLength(traj.points, 7, p2, 8), 2.0, epsilon);
+  }
+
+  // Random cases
+  {
+    const auto p1 = createPoint(1.0, 3.0, 0.0);
+    const auto p2 = createPoint(9.0, -1.0, 0.0);
+    EXPECT_NEAR(calcSignedArcLength(traj.points, p1, 0, 9), 8, epsilon);
+    EXPECT_NEAR(calcSignedArcLength(traj.points, p1, 1, 9), 8, epsilon);
+    EXPECT_NEAR(calcSignedArcLength(traj.points, 1, p2, 8), 8, epsilon);
+  }
+  {
+    const auto p1 = createPoint(4.3, 7.0, 0.0);
+    const auto p2 = createPoint(2.3, 3.0, 0.0);
+    EXPECT_NEAR(calcSignedArcLength(traj.points, p1, 4, 2), -2.3, epsilon);
+    EXPECT_NEAR(calcSignedArcLength(traj.points, 4, p2, 2), -1.7, epsilon);
+    EXPECT_NEAR(calcSignedArcLength(traj.points, 4, p2, 1), -1.7, epsilon);
   }
 }

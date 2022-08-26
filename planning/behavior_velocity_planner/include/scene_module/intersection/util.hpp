@@ -34,18 +34,10 @@ namespace behavior_velocity_planner
 {
 namespace util
 {
-bool setVelocityFrom(
-  const size_t idx, const double vel, autoware_auto_planning_msgs::msg::PathWithLaneId * input);
-
 int insertPoint(
   const geometry_msgs::msg::Pose & in_pose,
   autoware_auto_planning_msgs::msg::PathWithLaneId * inout_path);
 
-geometry_msgs::msg::Pose getAheadPose(
-  const size_t start_idx, const double ahead_dist,
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path);
-
-bool isAheadOf(const geometry_msgs::msg::Pose & target, const geometry_msgs::msg::Pose & origin);
 bool hasLaneId(const autoware_auto_planning_msgs::msg::PathPointWithLaneId & p, const int id);
 bool hasDuplicatedPoint(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
@@ -58,7 +50,7 @@ bool getObjectiveLanelets(
   lanelet::LaneletMapConstPtr lanelet_map_ptr, lanelet::routing::RoutingGraphPtr routing_graph_ptr,
   const int lane_id, const double detection_area_length, const double right_margin,
   const double left_margin, std::vector<lanelet::ConstLanelets> * conflicting_lanelets_result,
-  std::vector<lanelet::ConstLanelets> * objective_lanelets_result,
+  lanelet::ConstLanelets * objective_lanelets_result,
   std::vector<lanelet::ConstLanelets> * objective_lanelets_with_margin_result,
   const rclcpp::Logger logger);
 
@@ -79,6 +71,21 @@ bool generateStopLine(
   autoware_auto_planning_msgs::msg::PathWithLaneId * original_path,
   const autoware_auto_planning_msgs::msg::PathWithLaneId & target_path, int * stop_line_idx,
   int * pass_judge_line_idx, int * first_idx_inside_lane, const rclcpp::Logger logger);
+
+/**
+ * @brief If use_stuck_stopline is true, a stop line is generated before the intersection.
+ * @param input_path      input path
+ * @param output_path     output path
+ * @param stuck_stop_line_idx   generated stuck stop line index
+ * @param pass_judge_line_idx  generated pass judge line index
+ * @return false when generation failed
+ */
+bool generateStopLineBeforeIntersection(
+  const int lane_id, lanelet::LaneletMapConstPtr lanelet_map_ptr,
+  const std::shared_ptr<const PlannerData> & planner_data,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path,
+  autoware_auto_planning_msgs::msg::PathWithLaneId * output_path, int * stuck_stop_line_idx,
+  int * pass_judge_line_idx, const rclcpp::Logger logger);
 
 /**
  * @brief Calculate first path index that is in the polygon.
@@ -103,14 +110,14 @@ bool getStopPoseIndexFromMap(
 std::vector<lanelet::CompoundPolygon3d> getPolygon3dFromLaneletsVec(
   const std::vector<lanelet::ConstLanelets> & ll_vec, double clip_length);
 
-std::vector<int> getLaneletIdsFromLaneletsVec(const std::vector<lanelet::ConstLanelets> & ll_vec);
+std::vector<lanelet::CompoundPolygon3d> getPolygon3dFromLanelets(
+  const lanelet::ConstLanelets & ll_vec, double clip_length);
 
-double calcArcLengthFromPath(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path, const size_t src_idx,
-  const size_t dst_idx);
+std::vector<int> getLaneletIdsFromLaneletsVec(const std::vector<lanelet::ConstLanelets> & ll_vec);
 
 lanelet::ConstLanelet generateOffsetLanelet(
   const lanelet::ConstLanelet lanelet, double right_margin, double left_margin);
+geometry_msgs::msg::Pose toPose(const geometry_msgs::msg::Point & p);
 }  // namespace util
 }  // namespace behavior_velocity_planner
 

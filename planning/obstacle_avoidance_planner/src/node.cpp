@@ -268,9 +268,9 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
     "/planning/scenario_planning/lane_driving/obstacle_avoidance_approval", rclcpp::QoS{10},
     std::bind(&ObstacleAvoidancePlanner::enableAvoidanceCallback, this, std::placeholders::_1));
 
+  const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
   {  // vehicle param
     vehicle_param_ = VehicleParam{};
-    const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
     vehicle_param_.width = vehicle_info.vehicle_width_m;
     vehicle_param_.length = vehicle_info.vehicle_length_m;
     vehicle_param_.wheelbase = vehicle_info.wheel_base_m;
@@ -400,8 +400,7 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
       declare_parameter<double>("mpt.common.delta_arc_length_for_mpt_points");
 
     // kinematics
-    mpt_param_.max_steer_rad =
-      declare_parameter<double>("mpt.kinematics.max_steer_deg") * M_PI / 180.0;
+    mpt_param_.max_steer_rad = vehicle_info.max_steer_angle_rad;
 
     // By default, optimization_center_offset will be vehicle_info.wheel_base * 0.8
     // The 0.8 scale is adopted as it performed the best.
@@ -662,9 +661,6 @@ rcl_interfaces::msg::SetParametersResult ObstacleAvoidancePlanner::paramCallback
       mpt_param_.delta_arc_length_for_mpt_points);
 
     // kinematics
-    double max_steer_deg = mpt_param_.max_steer_rad * 180.0 / M_PI;
-    updateParam<double>(parameters, "mpt.kinematics.max_steer_deg", max_steer_deg);
-    mpt_param_.max_steer_rad = max_steer_deg * M_PI / 180.0;
     updateParam<double>(
       parameters, "mpt.kinematics.optimization_center_offset",
       mpt_param_.optimization_center_offset);
@@ -892,11 +888,13 @@ autoware_auto_planning_msgs::msg::Trajectory ObstacleAvoidancePlanner::generateT
 {
   autoware_auto_planning_msgs::msg::Trajectory output_traj_msg;
 
-  // TODO(someone): support backward velocity
-  if (isBackwardPath(path)) {
+  // TODO(someone): support backward path
+  const auto is_driving_forward = motion_utils::isDrivingForward(path.points);
+  is_driving_forward_ = is_driving_forward ? is_driving_forward.get() : is_driving_forward_;
+  if (!is_driving_forward_) {
     RCLCPP_WARN_THROTTLE(
       get_logger(), *get_clock(), 3000,
-      "[ObstacleAvoidancePlanner] Negative velocity is NOT supported. Just converting path to "
+      "[ObstacleAvoidancePlanner] Backward path is NOT supported. Just converting path to "
       "trajectory");
     const auto traj_points = points_utils::convertToTrajectoryPoints(path.points);
     output_traj_msg = motion_utils::convertToTrajectory(traj_points);
@@ -916,16 +914,6 @@ autoware_auto_planning_msgs::msg::Trajectory ObstacleAvoidancePlanner::generateT
 
   output_traj_msg.header = path.header;
   return output_traj_msg;
-}
-
-bool ObstacleAvoidancePlanner::isBackwardPath(
-  const autoware_auto_planning_msgs::msg::Path & path) const
-{
-  const bool has_negative_velocity = std::any_of(
-    path.points.begin(), path.points.end(),
-    [&](const auto & p) { return p.longitudinal_velocity_mps < 0; });
-
-  return has_negative_velocity;
 }
 
 std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>
@@ -1495,7 +1483,13 @@ ObstacleAvoidancePlanner::alignVelocity(
   auto fine_traj_points_with_vel = fine_traj_points_with_path_zero_vel;
   size_t prev_begin_idx = 0;
   for (size_t i = 0; i < fine_traj_points_with_vel.size(); ++i) {
-    const auto truncated_points = points_utils::clipForwardPoints(path_points, prev_begin_idx, 5.0);
+    auto truncated_points = points_utils::clipForwardPoints(path_points, prev_begin_idx, 5.0);
+    if (truncated_points.size() < 2) {
+      // NOTE: At least, two points must be contained in truncated_points
+      truncated_points = std::vector<autoware_auto_planning_msgs::msg::PathPoint>(
+        path_points.begin() + prev_begin_idx,
+        path_points.begin() + std::min(path_points.size(), prev_begin_idx + 2));
+    }
 
     const auto & target_pose = fine_traj_points_with_vel[i].pose;
     const auto closest_seg_idx_optional = motion_utils::findNearestSegmentIndex(

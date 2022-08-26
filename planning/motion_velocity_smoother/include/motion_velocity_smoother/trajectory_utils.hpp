@@ -40,7 +40,7 @@ using geometry_msgs::msg::Pose;
 TrajectoryPoint calcInterpolatedTrajectoryPoint(
   const TrajectoryPoints & trajectory, const Pose & target_pose);
 
-boost::optional<TrajectoryPoints> extractPathAroundIndex(
+TrajectoryPoints extractPathAroundIndex(
   const TrajectoryPoints & trajectory, const size_t index, const double & ahead_length,
   const double & behind_length);
 
@@ -50,8 +50,8 @@ std::vector<double> calcArclengthArray(const TrajectoryPoints & trajectory);
 
 std::vector<double> calcTrajectoryIntervalDistance(const TrajectoryPoints & trajectory);
 
-boost::optional<std::vector<double>> calcTrajectoryCurvatureFrom3Points(
-  const TrajectoryPoints & trajectory, const size_t & idx_dist);
+std::vector<double> calcTrajectoryCurvatureFrom3Points(
+  const TrajectoryPoints & trajectory, size_t idx_dist);
 
 void setZeroVelocity(TrajectoryPoints & trajectory);
 
@@ -63,10 +63,6 @@ void applyMaximumVelocityLimit(
   const size_t from, const size_t to, const double max_vel, TrajectoryPoints & trajectory);
 
 boost::optional<size_t> searchZeroVelocityIdx(const TrajectoryPoints & trajectory);
-
-boost::optional<TrajectoryPoints> applyLinearInterpolation(
-  const std::vector<double> & base_index, const TrajectoryPoints & base_trajectory,
-  const std::vector<double> & out_index, const bool use_spline_for_pose = false);
 
 bool calcStopDistWithJerkConstraints(
   const double v0, const double a0, const double jerk_acc, const double jerk_dec,
@@ -84,6 +80,10 @@ boost::optional<TrajectoryPoints> applyDecelFilterWithJerkConstraint(
 
 boost::optional<std::tuple<double, double, double, double>> updateStateWithJerkConstraint(
   const double v0, const double a0, const std::map<double, double> & jerk_profile, const double t);
+
+std::vector<double> calcVelocityProfileWithConstantJerkAndAccelerationLimit(
+  const TrajectoryPoints & trajectory, const double v0, const double a0, const double jerk,
+  const double acc_max, const double acc_min);
 
 }  // namespace trajectory_utils
 }  // namespace motion_velocity_smoother

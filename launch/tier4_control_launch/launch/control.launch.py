@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+
 import launch
 from launch.actions import DeclareLaunchArgument
 from launch.actions import GroupAction
@@ -33,26 +35,50 @@ def launch_setup(context, *args, **kwargs):
     vehicle_info_param_path = LaunchConfiguration("vehicle_info_param_file").perform(context)
     with open(vehicle_info_param_path, "r") as f:
         vehicle_info_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-    lat_controller_param_path = LaunchConfiguration("lat_controller_param_path").perform(context)
+
+    lat_controller_param_path = os.path.join(
+        LaunchConfiguration("tier4_control_launch_param_path").perform(context),
+        "trajectory_follower",
+        "lateral_controller.param.yaml",
+    )
     with open(lat_controller_param_path, "r") as f:
         lat_controller_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-    lon_controller_param_path = LaunchConfiguration("lon_controller_param_path").perform(context)
+
+    nearest_search_param_path = os.path.join(
+        LaunchConfiguration("tier4_control_launch_param_path").perform(context),
+        "common",
+        "nearest_search.param.yaml",
+    )
+    with open(nearest_search_param_path, "r") as f:
+        nearest_search_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+
+    lon_controller_param_path = os.path.join(
+        LaunchConfiguration("tier4_control_launch_param_path").perform(context),
+        "trajectory_follower",
+        "longitudinal_controller.param.yaml",
+    )
     with open(lon_controller_param_path, "r") as f:
         lon_controller_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-    vehicle_cmd_gate_param_path = LaunchConfiguration("vehicle_cmd_gate_param_path").perform(
-        context
+
+    vehicle_cmd_gate_param_path = os.path.join(
+        LaunchConfiguration("tier4_control_launch_param_path").perform(context),
+        "vehicle_cmd_gate",
+        "vehicle_cmd_gate.param.yaml",
     )
     with open(vehicle_cmd_gate_param_path, "r") as f:
         vehicle_cmd_gate_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+
     lane_departure_checker_param_path = LaunchConfiguration(
         "lane_departure_checker_param_path"
     ).perform(context)
     with open(lane_departure_checker_param_path, "r") as f:
         lane_departure_checker_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
-    operation_mode_transition_manager_param_path = LaunchConfiguration(
-        "operation_mode_transition_manager_param_path"
-    ).perform(context)
+    operation_mode_transition_manager_param_path = os.path.join(
+        LaunchConfiguration("tier4_control_launch_param_path").perform(context),
+        "operation_mode_transition_manager",
+        "operation_mode_transition_manager.param.yaml",
+    )
     with open(operation_mode_transition_manager_param_path, "r") as f:
         operation_mode_transition_manager_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
@@ -76,8 +102,10 @@ def launch_setup(context, *args, **kwargs):
                 "ctrl_period": 0.03,
                 "lateral_controller_mode": LaunchConfiguration("lateral_controller_mode"),
             },
+            nearest_search_param,
             lon_controller_param,
             lat_controller_param,
+            vehicle_info_param,
         ],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
@@ -98,7 +126,7 @@ def launch_setup(context, *args, **kwargs):
                 "/control/trajectory_follower/lateral/predicted_trajectory",
             ),
         ],
-        parameters=[lane_departure_checker_param, vehicle_info_param],
+        parameters=[nearest_search_param, lane_departure_checker_param, vehicle_info_param],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
 
@@ -184,6 +212,7 @@ def launch_setup(context, *args, **kwargs):
             ("control_mode_request", "/control/control_mode_request"),
         ],
         parameters=[
+            nearest_search_param_path,
             operation_mode_transition_manager_param,
             vehicle_info_param,
         ],
@@ -247,8 +276,17 @@ def generate_launch_description():
             DeclareLaunchArgument(name, default_value=default_value, description=description)
         )
 
-    # lateral controller
+    # parameter
+    add_launch_arg(
+        "tier4_control_launch_param_path",
+        [
+            FindPackageShare("tier4_control_launch"),
+            "/config",
+        ],
+        "tier4_control_launch parameter path",
+    )
 
+    # lateral controller
     add_launch_arg(
         "lateral_controller_mode",
         "mpc_follower",
@@ -265,40 +303,8 @@ def generate_launch_description():
     )
 
     add_launch_arg(
-        "lat_controller_param_path",
-        [
-            FindPackageShare("tier4_control_launch"),
-            "/config/trajectory_follower/lateral_controller.param.yaml",
-        ],
-        "path to the parameter file of lateral controller",
-    )
-    add_launch_arg(
-        "lon_controller_param_path",
-        [
-            FindPackageShare("tier4_control_launch"),
-            "/config/trajectory_follower/longitudinal_controller.param.yaml",
-        ],
-        "path to the parameter file of longitudinal controller",
-    )
-    add_launch_arg(
-        "vehicle_cmd_gate_param_path",
-        [
-            FindPackageShare("tier4_control_launch"),
-            "/config/vehicle_cmd_gate/vehicle_cmd_gate.param.yaml",
-        ],
-        "path to the parameter file of vehicle_cmd_gate",
-    )
-    add_launch_arg(
         "lane_departure_checker_param_path",
         [FindPackageShare("lane_departure_checker"), "/config/lane_departure_checker.param.yaml"],
-    )
-    add_launch_arg(
-        "operation_mode_transition_manager_param_path",
-        [
-            FindPackageShare("tier4_control_launch"),
-            "/config/operation_mode_transition_manager/operation_mode_transition_manager.param.yaml",
-        ],
-        "path to the parameter file of vehicle_cmd_gate",
     )
 
     # velocity controller

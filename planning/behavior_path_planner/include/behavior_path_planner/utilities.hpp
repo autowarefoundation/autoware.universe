@@ -16,13 +16,10 @@
 #define BEHAVIOR_PATH_PLANNER__UTILITIES_HPP_
 
 #include "behavior_path_planner/data_manager.hpp"
-#include "behavior_path_planner/scene_module/lane_change/lane_change_path.hpp"
 #include "behavior_path_planner/scene_module/pull_out/pull_out_path.hpp"
 
 #include <opencv2/opencv.hpp>
-#include <rclcpp/rclcpp.hpp>
 #include <route_handler/route_handler.hpp>
-#include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <autoware_auto_perception_msgs/msg/object_classification.hpp>
@@ -36,14 +33,7 @@
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/pose_array.hpp>
 
-#include <boost/geometry/geometries/box.hpp>
-#include <boost/geometry/geometries/point_xy.hpp>
-#include <boost/geometry/geometries/polygon.hpp>
-#include <boost/geometry/geometry.hpp>
-
 #include <lanelet2_core/geometry/Lanelet.h>
-#include <lanelet2_routing/Route.h>
-#include <lanelet2_routing/RoutingGraph.h>
 #include <lanelet2_routing/RoutingGraphContainer.h>
 #include <tf2/utils.h>
 
@@ -58,9 +48,7 @@
 #include <string>
 #include <vector>
 
-namespace behavior_path_planner
-{
-namespace util
+namespace behavior_path_planner::util
 {
 using autoware_auto_perception_msgs::msg::ObjectClassification;
 using autoware_auto_perception_msgs::msg::PredictedObject;
@@ -78,7 +66,6 @@ using geometry_msgs::msg::Vector3;
 using nav_msgs::msg::OccupancyGrid;
 using route_handler::RouteHandler;
 using tier4_autoware_utils::LineString2d;
-using tier4_autoware_utils::Point2d;
 using tier4_autoware_utils::Polygon2d;
 
 struct FrenetCoordinate3d
@@ -193,8 +180,8 @@ cv::Point toCVPoint(
   const Point & geom_point, const double width_m, const double height_m, const double resolution);
 
 OccupancyGrid generateDrivableArea(
-  const lanelet::ConstLanelets & lanes, const double resolution, const double vehicle_length,
-  const std::shared_ptr<const PlannerData> planner_data);
+  const PathWithLaneId & path, const lanelet::ConstLanelets & lanes, const double resolution,
+  const double vehicle_length, const std::shared_ptr<const PlannerData> planner_data);
 
 lanelet::ConstLineStrings3d getDrivableAreaForAllSharedLinestringLanelets(
   const std::shared_ptr<const PlannerData> & planner_data);
@@ -277,7 +264,9 @@ PathWithLaneId setDecelerationVelocity(
 
 bool checkLaneIsInIntersection(
   const RouteHandler & route_handler, const PathWithLaneId & ref,
-  const lanelet::ConstLanelets & lanelet_sequence, double & additional_length_to_add);
+  const lanelet::ConstLanelets & lanelet_sequence, const BehaviorPathPlannerParameters & parameters,
+  double & additional_length_to_add);
+
 PathWithLaneId setDecelerationVelocity(
   const PathWithLaneId & input, const double target_velocity, const Pose target_pose,
   const double buffer, const double deceleration_interval);
@@ -293,7 +282,6 @@ lanelet::ConstLanelets getCurrentLanes(const std::shared_ptr<const PlannerData> 
 lanelet::ConstLanelets getExtendedCurrentLanes(
   const std::shared_ptr<const PlannerData> & planner_data);
 
-}  // namespace util
-}  // namespace behavior_path_planner
+}  // namespace behavior_path_planner::util
 
 #endif  // BEHAVIOR_PATH_PLANNER__UTILITIES_HPP_

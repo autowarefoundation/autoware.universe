@@ -124,8 +124,13 @@ void PIDBasedPlanner::calcObstaclesToCruise(
   for (size_t o_idx = 0; o_idx < planner_data.target_obstacles.size(); ++o_idx) {
     const auto & obstacle = planner_data.target_obstacles.at(o_idx);
 
+    if (obstacle.collision_points.empty()) {
+      continue;
+    }
+
     // NOTE: from ego's front to obstacle's back
-    const double dist_to_obstacle = calcDistanceToObstacle(planner_data, obstacle);
+    const double dist_to_obstacle =
+      calcDistanceToCollisionPoint(planner_data, obstacle.collision_points.front().point);
 
     if (!obstacle.has_stopped) {  // cruise
       // calculate distance between ego and obstacle based on RSS
@@ -152,21 +157,6 @@ void PIDBasedPlanner::calcObstaclesToCruise(
   }
 }
 
-double PIDBasedPlanner::calcDistanceToObstacle(
-  const ObstacleCruisePlannerData & planner_data, const TargetObstacle & obstacle)
-{
-  const size_t ego_segment_idx =
-    findExtendedNearestSegmentIndex(planner_data.traj, planner_data.current_pose);
-  const double segment_offset = std::max(
-    0.0, motion_utils::calcLongitudinalOffsetToSegment(
-           planner_data.traj.points, ego_segment_idx, planner_data.current_pose.position));
-  const double offset = vehicle_info_.max_longitudinal_offset_m + segment_offset;
-
-  return motion_utils::calcSignedArcLength(
-           planner_data.traj.points, ego_segment_idx, obstacle.collision_point) -
-         offset;
-}
-
 void PIDBasedPlanner::planCruise(
   const ObstacleCruisePlannerData & planner_data, boost::optional<VelocityLimit> & vel_limit,
   const boost::optional<CruiseObstacleInfo> & cruise_obstacle_info, DebugData & debug_data)
@@ -189,6 +179,11 @@ void PIDBasedPlanner::planCruise(
     // reset previous target velocity if adaptive cruise is not enabled
     prev_target_vel_ = {};
     lpf_cruise_ptr_->reset();
+
+    // delete marker
+    const auto markers =
+      motion_utils::createDeletedSlowDownVirtualWallMarker(planner_data.current_time, 0);
+    tier4_autoware_utils::appendMarkerArray(markers, &debug_data.cruise_wall_marker);
   }
 }
 
@@ -238,9 +233,11 @@ VelocityLimit PIDBasedPlanner::doCruise(
     longitudinal_info_.max_jerk, longitudinal_info_.min_jerk);
 
   // virtual wall marker for cruise
-  const double dist_to_rss_wall = std::min(
-    dist_to_cruise + vehicle_info_.max_longitudinal_offset_m,
-    dist_to_obstacle + vehicle_info_.max_longitudinal_offset_m);
+  const double abs_ego_offset = planner_data.is_driving_forward
+                                  ? std::abs(vehicle_info_.max_longitudinal_offset_m)
+                                  : std::abs(vehicle_info_.min_longitudinal_offset_m);
+  const double dist_to_rss_wall =
+    std::min(dist_to_cruise + abs_ego_offset, dist_to_obstacle + abs_ego_offset);
   const size_t wall_idx = obstacle_cruise_utils::getIndexWithLongitudinalOffset(
     planner_data.traj.points, dist_to_rss_wall, ego_idx);
 
