@@ -6,7 +6,7 @@
 
 `Segment` in Autoware is the line segment between two successive points as follows.
 
-![segment](./media/segment.svg)
+![segment](./media/segment.svg){: style="width:600px"}
 
 The nearest segment index and nearest point index to a certain position is not always th same.
 Therefore, we prepare two different utility functions to calculate a nearest index for points and segments.
