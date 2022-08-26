@@ -67,7 +67,7 @@
 #include "autoware_auto_vehicle_msgs/msg/steering_report.hpp"
 #include "autoware_auto_control_msgs/msg/ackermann_control_command.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
-#include "deadzone/inverse_deadzone_backstepping.hpp"
+
 
 // NMPC package headers.
 #include "nonlinear_mpc_core/nmpc_core.hpp"
@@ -222,12 +222,6 @@ class NonlinearMPCNode : public rclcpp::Node
    * */
   ns_states::VehicleMotionFSM vehicle_motion_fsm_{};
 
-  /**
-   * @brief Finite State Machine for tracking vehicle motion states.
-   * */
-  ns_deadzone::sDeadZone deadzone_inverter_{};
-  ns_deadzone::ExtremumSeeker extremum_seeker_{};
-
   // Pointers to the received messages.
   size_t current_trajectory_size_{};
   TrajectoryMsg::SharedPtr current_trajectory_ptr_{nullptr};
@@ -368,9 +362,6 @@ class NonlinearMPCNode : public rclcpp::Node
                              ns_data::ParamsOptimization &params_optimization);
 
   void loadFilterParameters(ns_data::ParamsFilters &params_filters);
-
-  void loadDeadzoneParameters();
-  void loadExtremumSeekerParameters(ns_deadzone::sExtremumSeekerParams &es_params);
 
   /**
    *   @brief We use state and control scaling for within the optimization algorithms.
