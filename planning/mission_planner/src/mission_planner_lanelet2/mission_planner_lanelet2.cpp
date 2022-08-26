@@ -279,8 +279,8 @@ autoware_auto_planning_msgs::msg::HADMapRoute MissionPlannerLanelet2::planRoute(
   }
 
   if (route_handler_.isRouteLooped(route_sections)) {
-    RCLCPP_WARN(
-      get_logger(), "Loop detected within route! Be aware that looped route is not debugged!");
+    RCLCPP_WARN(get_logger(), "Loop detected within route!");
+    return route_msg;
   }
 
   refineGoalHeight(route_sections);
