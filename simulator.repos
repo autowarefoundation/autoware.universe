@@ -1,0 +1,21 @@
+repositories:
+  simulator/scenario_simulator:
+    type: git
+    url: https://github.com/tier4/scenario_simulator_v2.git
+    version: master
+  simulator/logsim:
+    type: git
+    url: git@github.com:tier4/logsim.git
+    version: main
+  simulator/awml_evaluation:
+    type: git
+    url: git@github.com:tier4/AWMLevaluation.git
+    version: main
+  simulator/ndt_convergence_evaluation:
+    type: git
+    url: git@github.com:tier4/ndt_convergence_evaluation.git
+    version: feature/standalone
+  simulator/vendor/ros2_numpy:
+    type: git
+    url: https://github.com/Box-Robotics/ros2_numpy.git
+    version: humble

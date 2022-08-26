@@ -1,4 +1,4 @@
-name: sync-latest
+name: sync-awf-latest
 
 on:
   schedule:
@@ -20,12 +20,12 @@ jobs:
         uses: autowarefoundation/autoware-github-actions/sync-branches@v1
         with:
           token: ${{ steps.generate-token.outputs.token }}
-          base-branch: latest
-          sync-pr-branch: sync-latest
+          base-branch: awf-latest
+          sync-pr-branch: sync-awf-latest
           sync-target-repository: https://github.com/tier4/pilot-auto
           sync-target-branch: tier4/universe
-          pr-title: "chore: sync latest"
+          pr-title: "chore: sync awf-latest"
           pr-labels: |
             bot
-            sync-latest
+            sync-awf-latest
           auto-merge-method: merge

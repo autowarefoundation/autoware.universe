@@ -63,21 +63,30 @@ jobs:
         uses: peter-evans/create-pull-request@v4
         with:
           token: ${{ steps.generate-token.outputs.token }}
-          commit-message: "chore: update rc branch"
+          commit-message: "chore: update beta branch for ${{ env.BASE_BRANCH }}"
           committer: GitHub <noreply@github.com>
           author: GitHub <noreply@github.com>
           signoff: false
           base: ${{ env.BASE_BRANCH }}
           branch: ${{ env.SYNC_BRANCH_PREFIX }}/${{ env.BASE_BRANCH }}
           delete-branch: true
-          title: "chore: update rc branch"
+          title: "chore: update beta branch for ${{ env.BASE_BRANCH }}"
           body: |
-            update rc branch
+            update beta branch for ${{ env.BASE_BRANCH }}
           labels: |
-            update-rc-branch
+            bot
+            update-beta-branch
           draft: false
 
       - name: Check outputs
         run: |
           echo "Pull Request Number - ${{ steps.create-pr.outputs.pull-request-number }}"
           echo "Pull Request URL - ${{ steps.create-pr.outputs.pull-request-url }}"
+
+      - name: Enable auto-merge
+        if: ${{ steps.create-pr.outputs.pull-request-operation == 'created' }}
+        uses: peter-evans/enable-pull-request-automerge@v2
+        with:
+          token: ${{ steps.generate-token.outputs.token }}
+          pull-request-number: ${{ steps.create-pr.outputs.pull-request-number }}
+          merge-method: squash
