@@ -45,12 +45,12 @@ MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
   const auto period = rclcpp::Duration::from_seconds(1.0);
   timer_ = rclcpp::create_timer(this, get_clock(), period, [this]() { on_arrival_check(); });
 
-  const auto node = component_interface_utils::NodeAdaptor(this);
-  node.init_pub(pub_state_);
-  node.init_pub(pub_api_route_);
-  node.init_srv(srv_clear_route_, this, &MissionPlanner::on_clear_route);
-  node.init_srv(srv_set_route_, this, &MissionPlanner::on_set_route);
-  node.init_srv(srv_set_route_points_, this, &MissionPlanner::on_set_route_points);
+  const auto adaptor = component_interface_utils::NodeAdaptor(this);
+  adaptor.init_pub(pub_state_);
+  adaptor.init_pub(pub_api_route_);
+  adaptor.init_srv(srv_clear_route_, this, &MissionPlanner::on_clear_route);
+  adaptor.init_srv(srv_set_route_, this, &MissionPlanner::on_set_route);
+  adaptor.init_srv(srv_set_route_points_, this, &MissionPlanner::on_set_route_points);
 
   change_state(RouteState::Message::UNSET);
 }
