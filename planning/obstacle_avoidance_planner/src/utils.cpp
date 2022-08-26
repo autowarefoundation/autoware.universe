@@ -384,7 +384,7 @@ std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> interpolate2DTraj
   // spline interpolation
   //  x = interpolated[0], y = interpolated[1], yaw = interpolated[2]
   std::array<std::vector<double>, 3> interpolated =
-    interpolation::slerp(base_s, base_x, base_y, new_s);
+    interpolation::slerp2dFromXY(base_s, base_x, base_y, new_s);
   const auto & interpolated_x = interpolated[0];
   const auto & interpolated_y = interpolated[1];
   const auto & interpolated_yaw = interpolated[2];
