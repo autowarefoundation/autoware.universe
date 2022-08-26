@@ -35,10 +35,10 @@ namespace mission_planner::lanelet2
 class DefaultPlanner : public mission_planner::PlannerPlugin
 {
 public:
-  void Initialize(rclcpp::Node * node) override;
-  bool Ready() const override;
-  HADMapRoute Plan(const RoutePoints & points) override;
-  MarkerArray Visualize(const HADMapRoute & route) const override;
+  void initialize(rclcpp::Node * node) override;
+  bool ready() const override;
+  HADMapRoute plan(const RoutePoints & points) override;
+  MarkerArray visualize(const HADMapRoute & route) const override;
 
 private:
   using RouteSections = std::vector<autoware_auto_mapping_msgs::msg::HADMapSegment>;
@@ -54,9 +54,9 @@ private:
   rclcpp::Node * node_;
   rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr map_subscriber_;
 
-  void mapCallback(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg);
-  bool isGoalValid(const geometry_msgs::msg::Pose & goal) const;
-  Pose refineGoalHeight(const Pose & goal, const RouteSections & route_sections);
+  void map_callback(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg);
+  bool is_goal_valid(const geometry_msgs::msg::Pose & goal) const;
+  Pose refine_goal_height(const Pose & goal, const RouteSections & route_sections);
 };
 
 }  // namespace mission_planner::lanelet2

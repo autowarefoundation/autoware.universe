@@ -36,21 +36,21 @@ ArrivalChecker::ArrivalChecker(rclcpp::Node * node) : vehicle_stop_checker_(node
     [this](const geometry_msgs::msg::PoseStamped::ConstSharedPtr msg) { goal_pose_ = msg; });
 }
 
-void ArrivalChecker::ResetGoal()
+void ArrivalChecker::reset_goal()
 {
   // Disable checking until the modified goal is received.
   goal_pose_.reset();
 }
 
 // TODO(Takagi, Isamu): remove when modified goal is always published
-void ArrivalChecker::ResetGoal(const geometry_msgs::msg::PoseStamped & goal)
+void ArrivalChecker::reset_goal(const geometry_msgs::msg::PoseStamped & goal)
 {
   const auto pose = std::make_shared<geometry_msgs::msg::PoseStamped>();
   *pose = goal;
   goal_pose_ = pose;
 }
 
-bool ArrivalChecker::IsArrived(const geometry_msgs::msg::PoseStamped & pose) const
+bool ArrivalChecker::is_arrived(const geometry_msgs::msg::PoseStamped & pose) const
 {
   // Check if the modified goal is received.
   if (goal_pose_ == nullptr) {

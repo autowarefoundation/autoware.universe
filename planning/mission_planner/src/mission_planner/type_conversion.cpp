@@ -25,21 +25,21 @@ using APISegment = autoware_ad_api_msgs::msg::RouteSegment;
 using HADSegment = autoware_auto_mapping_msgs::msg::HADMapSegment;
 
 template <class RetT, class ArgT>
-RetT Convert(const ArgT & arg);
+RetT convert(const ArgT & arg);
 
 template <class RetT, class ArgT>
-std::vector<RetT> ConvertVector(const std::vector<ArgT> & args)
+std::vector<RetT> convert_vector(const std::vector<ArgT> & args)
 {
   std::vector<RetT> result;
   result.reserve(args.size());
   for (const auto & arg : args) {
-    result.push_back(Convert<RetT, ArgT>(arg));
+    result.push_back(convert<RetT, ArgT>(arg));
   }
   return result;
 }
 
 template <>
-APIPrimitive Convert(const HADPrimitive & had)
+APIPrimitive convert(const HADPrimitive & had)
 {
   APIPrimitive api;
   api.id = had.id;
@@ -48,7 +48,7 @@ APIPrimitive Convert(const HADPrimitive & had)
 }
 
 template <>
-HADPrimitive Convert(const APIPrimitive & api)
+HADPrimitive convert(const APIPrimitive & api)
 {
   HADPrimitive had;
   had.id = api.id;
@@ -57,10 +57,10 @@ HADPrimitive Convert(const APIPrimitive & api)
 }
 
 template <>
-APISegment Convert(const HADSegment & had)
+APISegment convert(const HADSegment & had)
 {
   APISegment api;
-  api.alternatives = ConvertVector<APIPrimitive>(had.primitives);
+  api.alternatives = convert_vector<APIPrimitive>(had.primitives);
   for (auto iter = api.alternatives.begin(); iter != api.alternatives.end(); ++iter) {
     if (iter->id == had.preferred_primitive_id) {
       api.preferred = *iter;
@@ -72,11 +72,11 @@ APISegment Convert(const HADSegment & had)
 }
 
 template <>
-HADSegment Convert(const APISegment & api)
+HADSegment convert(const APISegment & api)
 {
   HADSegment had;
-  had.primitives = ConvertVector<HADPrimitive>(api.alternatives);
-  had.primitives.push_back(Convert<HADPrimitive>(api.preferred));
+  had.primitives = convert_vector<HADPrimitive>(api.alternatives);
+  had.primitives.push_back(convert<HADPrimitive>(api.preferred));
   had.preferred_primitive_id = had.primitives.back().id;
   return had;
 }
@@ -86,19 +86,19 @@ HADSegment Convert(const APISegment & api)
 namespace mission_planner::conversion
 {
 
-APIRoute CreateEmptyRoute(const rclcpp::Time & stamp)
+APIRoute create_empty_route(const rclcpp::Time & stamp)
 {
   APIRoute api_route;
   api_route.header.stamp = stamp;
   return api_route;
 }
 
-APIRoute ConvertRoute(const HADRoute & had)
+APIRoute convert_route(const HADRoute & had)
 {
   APIRouteData data;
   data.start = had.start_pose;
   data.goal = had.goal_pose;
-  data.segments = ConvertVector<APISegment>(had.segments);
+  data.segments = convert_vector<APISegment>(had.segments);
 
   APIRoute api;
   api.header = had.header;
@@ -106,13 +106,13 @@ APIRoute ConvertRoute(const HADRoute & had)
   return api;
 }
 
-HADRoute ConvertRoute(const APIRouteData & api)
+HADRoute convert_route(const APIRouteData & api)
 {
   // The header is assigned by mission planner.
   HADRoute had;
   had.start_pose = api.start;
   had.goal_pose = api.goal;
-  had.segments = ConvertVector<HADSegment>(api.segments);
+  had.segments = convert_vector<HADSegment>(api.segments);
   return had;
 }
 

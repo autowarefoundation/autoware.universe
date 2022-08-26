@@ -59,32 +59,32 @@ private:
   std::string map_frame_;
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
-  PoseStamped GetEgoVehiclePose();
-  PoseStamped TransformPose(const PoseStamped & input);
+  PoseStamped get_ego_vehicle_pose();
+  PoseStamped transform_pose(const PoseStamped & input);
 
   rclcpp::TimerBase::SharedPtr timer_;
-  void OnArrivalCheck();
+  void on_arrival_check();
 
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_marker_;
   rclcpp::Publisher<HADMapRoute>::SharedPtr pub_had_route_;
-  void ChangeRoute();
-  void ChangeRoute(const HADMapRoute & route);
+  void change_route();
+  void change_route(const HADMapRoute & route);
 
   RouteState::Message state_;
   component_interface_utils::Publisher<RouteState>::SharedPtr pub_state_;
   component_interface_utils::Publisher<Route>::SharedPtr pub_api_route_;
-  void ChangeState(RouteState::Message::_state_type state);
+  void change_state(RouteState::Message::_state_type state);
 
   component_interface_utils::Service<ClearRoute>::SharedPtr srv_clear_route_;
   component_interface_utils::Service<SetRoute>::SharedPtr srv_set_route_;
   component_interface_utils::Service<SetRoutePoints>::SharedPtr srv_set_route_points_;
-  void OnClearRoute(
+  void on_clear_route(
     const ClearRoute::Service::Request::SharedPtr req,
     const ClearRoute::Service::Response::SharedPtr res);
-  void OnSetRoute(
+  void on_set_route(
     const SetRoute::Service::Request::SharedPtr req,
     const SetRoute::Service::Response::SharedPtr res);
-  void OnSetRoutePoints(
+  void on_set_route_points(
     const SetRoutePoints::Service::Request::SharedPtr req,
     const SetRoutePoints::Service::Response::SharedPtr res);
 };

@@ -20,6 +20,7 @@
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <lanelet2_extension/visualization/visualization.hpp>
+#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_core/geometry/Lanelet.h>
@@ -33,7 +34,7 @@
 namespace
 {
 using RouteSections = std::vector<autoware_auto_mapping_msgs::msg::HADMapSegment>;
-RouteSections combineConsecutiveRouteSections(
+RouteSections combine_consecutive_route_sections(
   const RouteSections & route_sections1, const RouteSections & route_sections2)
 {
   RouteSections route_sections;
@@ -48,7 +49,7 @@ RouteSections combineConsecutiveRouteSections(
   return route_sections;
 }
 
-bool isRouteLooped(const RouteSections & route_sections)
+bool is_route_looped(const RouteSections & route_sections)
 {
   for (std::size_t i = 0; i < route_sections.size(); i++) {
     const auto & route_section = route_sections.at(i);
@@ -64,17 +65,7 @@ bool isRouteLooped(const RouteSections & route_sections)
   return false;
 }
 
-double normalizeRadian(const double rad, const double min_rad = -M_PI, const double max_rad = M_PI)
-{
-  const auto value = std::fmod(rad, 2 * M_PI);
-  if (min_rad < value && value <= max_rad) {
-    return value;
-  } else {
-    return value - std::copysign(2 * M_PI, value);
-  }
-}
-
-bool isInLane(const lanelet::ConstLanelet & lanelet, const lanelet::ConstPoint3d & point)
+bool is_in_lane(const lanelet::ConstLanelet & lanelet, const lanelet::ConstPoint3d & point)
 {
   // check if goal is on a lane at appropriate angle
   const auto distance = boost::geometry::distance(
@@ -83,7 +74,7 @@ bool isInLane(const lanelet::ConstLanelet & lanelet, const lanelet::ConstPoint3d
   return distance < th_distance;
 }
 
-bool isInParkingSpace(
+bool is_in_parking_space(
   const lanelet::ConstLineStrings3d & parking_spaces, const lanelet::ConstPoint3d & point)
 {
   for (const auto & parking_space : parking_spaces) {
@@ -103,7 +94,7 @@ bool isInParkingSpace(
   return false;
 }
 
-bool isInParkingLot(
+bool is_in_parking_lot(
   const lanelet::ConstPolygons3d & parking_lots, const lanelet::ConstPoint3d & point)
 {
   for (const auto & parking_lot : parking_lots) {
@@ -131,17 +122,17 @@ double projectGoalToMap(
 namespace mission_planner::lanelet2
 {
 
-void DefaultPlanner::Initialize(rclcpp::Node * node)
+void DefaultPlanner::initialize(rclcpp::Node * node)
 {
   node_ = node;
   map_subscriber_ = node_->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
     "input/vector_map", rclcpp::QoS{10}.transient_local(),
-    std::bind(&DefaultPlanner::mapCallback, this, std::placeholders::_1));
+    std::bind(&DefaultPlanner::map_callback, this, std::placeholders::_1));
 }
 
-bool DefaultPlanner::Ready() const { return is_graph_ready_; }
+bool DefaultPlanner::ready() const { return is_graph_ready_; }
 
-void DefaultPlanner::mapCallback(
+void DefaultPlanner::map_callback(
   const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg)
 {
   route_handler_.setMap(*msg);
@@ -154,7 +145,7 @@ void DefaultPlanner::mapCallback(
   is_graph_ready_ = true;
 }
 
-PlannerPlugin::MarkerArray DefaultPlanner::Visualize(const HADMapRoute & route) const
+PlannerPlugin::MarkerArray DefaultPlanner::visualize(const HADMapRoute & route) const
 {
   lanelet::ConstLanelets route_lanelets;
   lanelet::ConstLanelets end_lanelets;
@@ -174,33 +165,33 @@ PlannerPlugin::MarkerArray DefaultPlanner::Visualize(const HADMapRoute & route) 
   }
 
   std_msgs::msg::ColorRGBA cl_route, cl_ll_borders, cl_end, cl_normal, cl_goal;
-  setColor(&cl_route, 0.2, 0.4, 0.2, 0.05);
-  setColor(&cl_goal, 0.2, 0.4, 0.4, 0.05);
-  setColor(&cl_end, 0.2, 0.2, 0.4, 0.05);
-  setColor(&cl_normal, 0.2, 0.4, 0.2, 0.05);
-  setColor(&cl_ll_borders, 1.0, 1.0, 1.0, 0.999);
+  set_color(&cl_route, 0.2, 0.4, 0.2, 0.05);
+  set_color(&cl_goal, 0.2, 0.4, 0.4, 0.05);
+  set_color(&cl_end, 0.2, 0.2, 0.4, 0.05);
+  set_color(&cl_normal, 0.2, 0.4, 0.2, 0.05);
+  set_color(&cl_ll_borders, 1.0, 1.0, 1.0, 0.999);
 
   visualization_msgs::msg::MarkerArray route_marker_array;
-  insertMarkerArray(
+  insert_marker_array(
     &route_marker_array,
     lanelet::visualization::laneletsBoundaryAsMarkerArray(route_lanelets, cl_ll_borders, false));
-  insertMarkerArray(
+  insert_marker_array(
     &route_marker_array, lanelet::visualization::laneletsAsTriangleMarkerArray(
                            "route_lanelets", route_lanelets, cl_route));
-  insertMarkerArray(
+  insert_marker_array(
     &route_marker_array,
     lanelet::visualization::laneletsAsTriangleMarkerArray("end_lanelets", end_lanelets, cl_end));
-  insertMarkerArray(
+  insert_marker_array(
     &route_marker_array, lanelet::visualization::laneletsAsTriangleMarkerArray(
                            "normal_lanelets", normal_lanelets, cl_normal));
-  insertMarkerArray(
+  insert_marker_array(
     &route_marker_array,
     lanelet::visualization::laneletsAsTriangleMarkerArray("goal_lanelets", goal_lanelets, cl_goal));
 
   return route_marker_array;
 }
 
-bool DefaultPlanner::isGoalValid(const geometry_msgs::msg::Pose & goal) const
+bool DefaultPlanner::is_goal_valid(const geometry_msgs::msg::Pose & goal) const
 {
   lanelet::Lanelet closest_lanelet;
   if (!lanelet::utils::query::getClosestLanelet(road_lanelets_, goal, &closest_lanelet)) {
@@ -208,10 +199,10 @@ bool DefaultPlanner::isGoalValid(const geometry_msgs::msg::Pose & goal) const
   }
   const auto goal_lanelet_pt = lanelet::utils::conversion::toLaneletPoint(goal.position);
 
-  if (isInLane(closest_lanelet, goal_lanelet_pt)) {
+  if (is_in_lane(closest_lanelet, goal_lanelet_pt)) {
     const auto lane_yaw = lanelet::utils::getLaneletAngle(closest_lanelet, goal.position);
     const auto goal_yaw = tf2::getYaw(goal.orientation);
-    const auto angle_diff = normalizeRadian(lane_yaw - goal_yaw);
+    const auto angle_diff = tier4_autoware_utils::normalizeRadian(lane_yaw - goal_yaw);
 
     constexpr double th_angle = M_PI / 4;
 
@@ -222,13 +213,13 @@ bool DefaultPlanner::isGoalValid(const geometry_msgs::msg::Pose & goal) const
 
   // check if goal is in parking space
   const auto parking_spaces = lanelet::utils::query::getAllParkingSpaces(lanelet_map_ptr_);
-  if (isInParkingSpace(parking_spaces, goal_lanelet_pt)) {
+  if (is_in_parking_space(parking_spaces, goal_lanelet_pt)) {
     return true;
   }
 
   // check if goal is in parking lot
   const auto parking_lots = lanelet::utils::query::getAllParkingLots(lanelet_map_ptr_);
-  if (isInParkingLot(parking_lots, goal_lanelet_pt)) {
+  if (is_in_parking_lot(parking_lots, goal_lanelet_pt)) {
     return true;
   }
 
@@ -239,10 +230,10 @@ bool DefaultPlanner::isGoalValid(const geometry_msgs::msg::Pose & goal) const
     return false;
   }
   // check if goal pose is in shoulder lane
-  if (isInLane(closest_shoulder_lanelet, goal_lanelet_pt)) {
+  if (is_in_lane(closest_shoulder_lanelet, goal_lanelet_pt)) {
     const auto lane_yaw = lanelet::utils::getLaneletAngle(closest_shoulder_lanelet, goal.position);
     const auto goal_yaw = tf2::getYaw(goal.orientation);
-    const auto angle_diff = normalizeRadian(lane_yaw - goal_yaw);
+    const auto angle_diff = tier4_autoware_utils::normalizeRadian(lane_yaw - goal_yaw);
 
     constexpr double th_angle = M_PI / 4;
     if (std::abs(angle_diff) < th_angle) {
@@ -253,7 +244,7 @@ bool DefaultPlanner::isGoalValid(const geometry_msgs::msg::Pose & goal) const
   return false;
 }
 
-PlannerPlugin::HADMapRoute DefaultPlanner::Plan(const RoutePoints & points)
+PlannerPlugin::HADMapRoute DefaultPlanner::plan(const RoutePoints & points)
 {
   std::stringstream log_ss;
   for (const auto & point : points) {
@@ -267,7 +258,7 @@ PlannerPlugin::HADMapRoute DefaultPlanner::Plan(const RoutePoints & points)
   autoware_auto_planning_msgs::msg::HADMapRoute route_msg;
   RouteSections route_sections;
 
-  if (!isGoalValid(points.back())) {
+  if (!is_goal_valid(points.back())) {
     RCLCPP_WARN(
       node_->get_logger(), "Goal is not valid! Please check position and angle of goal_pose");
     return route_msg;
@@ -284,16 +275,16 @@ PlannerPlugin::HADMapRoute DefaultPlanner::Plan(const RoutePoints & points)
     // create local route sections
     route_handler_.setRouteLanelets(path_lanelets);
     const auto local_route_sections = route_handler_.createMapSegments(path_lanelets);
-    route_sections = combineConsecutiveRouteSections(route_sections, local_route_sections);
+    route_sections = combine_consecutive_route_sections(route_sections, local_route_sections);
   }
 
-  if (isRouteLooped(route_sections)) {
+  if (is_route_looped(route_sections)) {
     RCLCPP_WARN(
       node_->get_logger(),
       "Loop detected within route! Be aware that looped route is not debugged!");
   }
 
-  const auto goal = refineGoalHeight(points.back(), route_sections);
+  const auto goal = refine_goal_height(points.back(), route_sections);
   RCLCPP_DEBUG(node_->get_logger(), "Goal Pose Z : %lf", goal.position.z);
 
   // The header is assigned by mission planner.
@@ -303,7 +294,7 @@ PlannerPlugin::HADMapRoute DefaultPlanner::Plan(const RoutePoints & points)
   return route_msg;
 }
 
-geometry_msgs::msg::Pose DefaultPlanner::refineGoalHeight(
+geometry_msgs::msg::Pose DefaultPlanner::refine_goal_height(
   const Pose & goal, const RouteSections & route_sections)
 {
   const auto goal_lane_id = route_sections.back().preferred_primitive_id;
