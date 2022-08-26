@@ -34,14 +34,15 @@ namespace behavior_velocity_planner
 namespace bg = boost::geometry;
 using motion_utils::calcLongitudinalOffsetPose;
 using motion_utils::calcSignedArcLength;
-using motion_utils::findNearestSegmentIndex;
 using motion_utils::insertTargetPoint;
 
 DetectionAreaModule::DetectionAreaModule(
-  const int64_t module_id, const lanelet::autoware::DetectionArea & detection_area_reg_elem,
+  const int64_t module_id, const int64_t lane_id,
+  const lanelet::autoware::DetectionArea & detection_area_reg_elem,
   const PlannerParam & planner_param, const rclcpp::Logger logger,
   const rclcpp::Clock::SharedPtr clock)
 : SceneModuleInterface(module_id, logger, clock),
+  lane_id_(lane_id),
   detection_area_reg_elem_(detection_area_reg_elem),
   state_(State::GO),
   planner_param_(planner_param)
@@ -80,7 +81,7 @@ bool DetectionAreaModule::modifyPathVelocity(PathWithLaneId * path, StopReason *
 
   // Get stop point
   const auto stop_point = arc_lane_utils::createTargetPoint(
-    original_path, stop_line, planner_param_.stop_margin,
+    original_path, stop_line, lane_id_, planner_param_.stop_margin,
     planner_data_->vehicle_info_.max_longitudinal_offset_m);
   if (!stop_point) {
     return true;
@@ -117,7 +118,7 @@ bool DetectionAreaModule::modifyPathVelocity(PathWithLaneId * path, StopReason *
   if (planner_param_.use_dead_line) {
     // Use '-' for margin because it's the backward distance from stop line
     const auto dead_line_point = arc_lane_utils::createTargetPoint(
-      original_path, stop_line, -planner_param_.dead_line_margin,
+      original_path, stop_line, lane_id_, -planner_param_.dead_line_margin,
       planner_data_->vehicle_info_.max_longitudinal_offset_m);
 
     if (dead_line_point) {

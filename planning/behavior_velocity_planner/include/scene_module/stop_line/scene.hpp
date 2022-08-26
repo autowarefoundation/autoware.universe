@@ -90,8 +90,6 @@ public:
   visualization_msgs::msg::MarkerArray createVirtualWallMarkerArray() override;
 
 private:
-  int64_t module_id_;
-
   geometry_msgs::msg::Point getCenterOfStopLine(const lanelet::ConstLineString3d & stop_line);
 
   boost::optional<StopLineModule::SegmentIndexWithPoint2d> findCollision(
@@ -111,8 +109,11 @@ private:
     const StopLineModule::SegmentIndexWithPose & insert_index_with_pose,
     tier4_planning_msgs::msg::StopReason * stop_reason);
 
-  lanelet::ConstLineString3d stop_line_;
   int64_t lane_id_;
+
+  lanelet::ConstLineString3d stop_line_;
+
+  // State machine
   State state_;
 
   // Parameter

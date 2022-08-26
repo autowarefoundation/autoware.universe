@@ -187,14 +187,36 @@ boost::optional<size_t> insertStopVelocityAtCollision(
   behavior_velocity_planner::planning_utils::insertVelocity(*path, insert_point, 0.0, insert_index);
   return insert_index;
 }
+
+template <class T>
+size_t calcSegmentIndexFromPointIndex(
+  const std::vector<T> & points, const geometry_msgs::msg::Point & point, const size_t idx)
+{
+  if (idx == 0) {
+    return 0;
+  }
+  if (idx == points.size() - 1) {
+    return idx - 1;
+  }
+  if (points.size() < 3) {
+    return 0;
+  }
+
+  const double offset_to_seg = motion_utils::calcLongitudinalOffsetToSegment(points, idx, point);
+  if (0 < offset_to_seg) {
+    return idx;
+  }
+  return idx - 1;
+}
 }  // namespace
 
 VirtualTrafficLightModule::VirtualTrafficLightModule(
-  const int64_t module_id, const lanelet::autoware::VirtualTrafficLight & reg_elem,
-  lanelet::ConstLanelet lane, const PlannerParam & planner_param, const rclcpp::Logger logger,
+  const int64_t module_id, const int64_t lane_id,
+  const lanelet::autoware::VirtualTrafficLight & reg_elem, lanelet::ConstLanelet lane,
+  const PlannerParam & planner_param, const rclcpp::Logger logger,
   const rclcpp::Clock::SharedPtr clock)
 : SceneModuleInterface(module_id, logger, clock),
-  module_id_(module_id),
+  lane_id_(lane_id),
   reg_elem_(reg_elem),
   lane_(lane),
   planner_param_(planner_param)
@@ -370,13 +392,17 @@ bool VirtualTrafficLightModule::isBeforeStartLine()
   if (!collision) {
     return false;
   }
+  const size_t collision_seg_idx =
+    calcSegmentIndexFromPointIndex(module_data_.path.points, collision->point, collision->index);
 
-  const double max_dist = std::numeric_limits<double>::max();
+  const auto & ego_pose = planner_data_->current_pose.pose;
+  const size_t ego_seg_idx = findEgoSegmentIndex(module_data_.path.points);
   const auto signed_arc_length = motion_utils::calcSignedArcLength(
-    module_data_.path.points, module_data_.head_pose, collision->point, max_dist,
-    planner_param_.max_yaw_deviation_rad);
+                                   module_data_.path.points, ego_pose.position, ego_seg_idx,
+                                   collision->point, collision_seg_idx) -
+                                 planner_data_->vehicle_info_.max_longitudinal_offset_m;
 
-  return *signed_arc_length > 0;
+  return signed_arc_length > 0;
 }
 
 bool VirtualTrafficLightModule::isBeforeStopLine()
@@ -388,13 +414,17 @@ bool VirtualTrafficLightModule::isBeforeStopLine()
   if (!collision) {
     return false;
   }
+  const size_t collision_seg_idx =
+    calcSegmentIndexFromPointIndex(module_data_.path.points, collision->point, collision->index);
 
-  const double max_dist = std::numeric_limits<double>::max();
+  const auto & ego_pose = planner_data_->current_pose.pose;
+  const size_t ego_seg_idx = findEgoSegmentIndex(module_data_.path.points);
   const auto signed_arc_length = motion_utils::calcSignedArcLength(
-    module_data_.path.points, module_data_.head_pose, collision->point, max_dist,
-    planner_param_.max_yaw_deviation_rad);
+                                   module_data_.path.points, ego_pose.position, ego_seg_idx,
+                                   collision->point, collision_seg_idx) -
+                                 planner_data_->vehicle_info_.max_longitudinal_offset_m;
 
-  return *signed_arc_length > -planner_param_.dead_line_margin;
+  return signed_arc_length > -planner_param_.dead_line_margin;
 }
 
 bool VirtualTrafficLightModule::isAfterAnyEndLine()
@@ -411,13 +441,17 @@ bool VirtualTrafficLightModule::isAfterAnyEndLine()
   if (!collision) {
     return false;
   }
+  const size_t collision_seg_idx =
+    calcSegmentIndexFromPointIndex(module_data_.path.points, collision->point, collision->index);
 
-  const double max_dist = std::numeric_limits<double>::max();
+  const auto & ego_pose = planner_data_->current_pose.pose;
+  const size_t ego_seg_idx = findEgoSegmentIndex(module_data_.path.points);
   const auto signed_arc_length = motion_utils::calcSignedArcLength(
-    module_data_.path.points, module_data_.head_pose, collision->point, max_dist,
-    planner_param_.max_yaw_deviation_rad);
+                                   module_data_.path.points, ego_pose.position, ego_seg_idx,
+                                   collision->point, collision_seg_idx) -
+                                 planner_data_->vehicle_info_.max_longitudinal_offset_m;
 
-  return *signed_arc_length < -planner_param_.dead_line_margin;
+  return signed_arc_length < -planner_param_.dead_line_margin;
 }
 
 bool VirtualTrafficLightModule::isNearAnyEndLine()
@@ -427,13 +461,17 @@ bool VirtualTrafficLightModule::isNearAnyEndLine()
   if (!collision) {
     return false;
   }
+  const size_t collision_seg_idx =
+    calcSegmentIndexFromPointIndex(module_data_.path.points, collision->point, collision->index);
 
-  const double max_dist = std::numeric_limits<double>::max();
+  const auto & ego_pose = planner_data_->current_pose.pose;
+  const size_t ego_seg_idx = findEgoSegmentIndex(module_data_.path.points);
   const auto signed_arc_length = motion_utils::calcSignedArcLength(
-    module_data_.path.points, module_data_.head_pose, collision->point, max_dist,
-    planner_param_.max_yaw_deviation_rad);
+                                   module_data_.path.points, ego_pose.position, ego_seg_idx,
+                                   collision->point, collision_seg_idx) -
+                                 planner_data_->vehicle_info_.max_longitudinal_offset_m;
 
-  return std::abs(*signed_arc_length) < planner_param_.near_line_distance;
+  return std::abs(signed_arc_length) < planner_param_.near_line_distance;
 }
 
 boost::optional<tier4_v2x_msgs::msg::VirtualTrafficLightState>
@@ -483,19 +521,25 @@ void VirtualTrafficLightModule::insertStopVelocityAtStopLine(
     insertStopVelocityFromStart(path);
     stop_pose = planner_data_->current_pose.pose;
   } else {
-    const auto & ego_pos = planner_data_->current_pose.pose.position;
+    const auto & ego_pose = planner_data_->current_pose.pose;
+    const size_t ego_seg_idx = findEgoSegmentIndex(path->points);
+    const size_t collision_seg_idx =
+      calcSegmentIndexFromPointIndex(path->points, collision->point, collision->index);
+
     const auto stop_distance =
-      motion_utils::calcSignedArcLength(path->points, ego_pos, collision.get().point) + offset;
+      motion_utils::calcSignedArcLength(
+        path->points, ego_pose.position, ego_seg_idx, collision.get().point, collision_seg_idx) +
+      offset;
     const auto is_stopped = planner_data_->isVehicleStopped();
 
     if (stop_distance < planner_param_.hold_stop_margin_distance && is_stopped) {
       SegmentIndexWithPoint new_collision;
       const auto ego_pos_on_path =
-        motion_utils::calcLongitudinalOffsetPoint(path->points, ego_pos, 0.0);
+        motion_utils::calcLongitudinalOffsetPoint(path->points, ego_pose.position, 0.0);
 
       if (ego_pos_on_path) {
         new_collision.point = ego_pos_on_path.get();
-        new_collision.index = motion_utils::findNearestSegmentIndex(path->points, ego_pos);
+        new_collision.index = ego_seg_idx;
         insertStopVelocityAtCollision(new_collision, 0.0, path);
       }
 

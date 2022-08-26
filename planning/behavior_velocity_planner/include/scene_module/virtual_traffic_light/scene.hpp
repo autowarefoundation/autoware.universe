@@ -75,8 +75,9 @@ public:
 
 public:
   VirtualTrafficLightModule(
-    const int64_t module_id, const lanelet::autoware::VirtualTrafficLight & reg_elem,
-    lanelet::ConstLanelet lane, const PlannerParam & planner_param, const rclcpp::Logger logger,
+    const int64_t module_id, const int64_t lane_id,
+    const lanelet::autoware::VirtualTrafficLight & reg_elem, lanelet::ConstLanelet lane,
+    const PlannerParam & planner_param, const rclcpp::Logger logger,
     const rclcpp::Clock::SharedPtr clock);
 
   bool modifyPathVelocity(
@@ -87,7 +88,7 @@ public:
   visualization_msgs::msg::MarkerArray createVirtualWallMarkerArray() override;
 
 private:
-  const int64_t module_id_;
+  const int64_t lane_id_;
   const lanelet::autoware::VirtualTrafficLight & reg_elem_;
   const lanelet::ConstLanelet lane_;
   const PlannerParam planner_param_;
