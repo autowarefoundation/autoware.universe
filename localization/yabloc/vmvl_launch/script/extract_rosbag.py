@@ -6,18 +6,20 @@ import re
 import argparse
 
 # fmt: off
-TOPICS = [
+BASIC_TOPICS = [
     '/sensing/gnss/ublox/fix_velocity', 
     '/sensing/gnss/ublox/nav_sat_fix', 
     '/sensing/gnss/ublox/navpvt',
     '/sensing/imu/tamagawa/imu_raw',
-    '/vehicle/status/actuation_status',
-    '/vehicle/status/shift',
-    '/vehicle/status/steering',
-    '/vehicle/status/control_mode',
-    '/vehicle/status/twist',
-    '/vehicle/status/velocity_status'
-    ]
+    '/vehicle/status/actuation_status', # iv, universe
+    '/vehicle/status/shift', # iv
+    '/vehicle/status/control_mode', # iv, universe
+    '/vehicle/status/twist', # iv
+    '/vehicle/status/velocity_status' # universe
+    '/vehicle/status/steering', # iv
+    '/vehicle/status/steering_status', # universe
+]
+
 LIDAR_TOPICS = [
     '/sensing/lidar/top/velodyne_packets',
 ]
@@ -40,15 +42,24 @@ def extractIndex(name):
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument('-b', '--basic',  action='store_true', help='include basic topics')
     parser.add_argument('-l', '--lidar',  action='store_true', help='include lidar topics')
     parser.add_argument('-c', '--camera', action='store_true', help='include camera topics')
     parser.add_argument('-o', '--output', default='filtered', help='include camera topics')
     args = parser.parse_args()
 
+    TOPICS = []
+    if args.basic:
+        TOPICS.extend(BASIC_TOPICS)
     if args.camera:
         TOPICS.extend(CAMERA_TOPICS)
     if args.lidar:
         TOPICS.extend(LIDAR_TOPICS)
+
+    if len(TOPICS) == 0:
+        print_highlight('You have to choice at least on topics among `basic`, `lidar`, `camera`')
+        parser.print_help()
+        return
 
     # Sort files
     files = glob.glob('./*.db3')
