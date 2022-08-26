@@ -143,6 +143,8 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
       planner_data_->parameters.base_link2front, intersection_search_distance);
   }
 
+  planning_api_interface_ptr_ = std::make_shared<PlanningAPIInterface>(this, "intersection");
+
   // Start timer
   {
     const auto planning_hz = declare_parameter("planning_hz", 10.0);
@@ -589,7 +591,25 @@ void BehaviorPathPlannerNode::run()
     hazard_signal.stamp = get_clock()->now();
     turn_signal_publisher_->publish(turn_signal);
     hazard_signal_publisher_->publish(hazard_signal);
+
+    if (turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT || turn_signal.command == TurnIndicatorsCommand::ENABLE_RIGHT) {
+      uint16_t direction;
+      if (turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {
+        direction = SteeringFactor::LEFT;
+      } else {
+        direction = SteeringFactor::RIGHT;
+      }
+
+      // TODO: get pose
+      planning_api_interface_ptr_->updateSteeringFactor(
+        {},
+        {output.turn_signal_info.signal_distance}, SteeringFactor::INTERSECTION, direction, SteeringFactor::TURNING, "");
+    } else {
+      planning_api_interface_ptr_->clearSteeringFactors();
+    }
+    planning_api_interface_ptr_->publishSteeringFactor(get_clock()->now());
   }
+
 
   // for debug
   debug_avoidance_msg_array_publisher_->publish(bt_manager_->getAvoidanceDebugMsgArray());
