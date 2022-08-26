@@ -88,13 +88,6 @@ NonlinearMPCNode::NonlinearMPCNode(const rclcpp::NodeOptions &node_options)
    * Its aim is to eliminate other node dependency to load the wheel_base.
    */
   loadNodeParameters();  // read the parameters used by the node.
-  loadDeadzoneParameters(); // reads the deadzone params and assigns the deadzone inverter.
-
-  ns_deadzone::sExtremumSeekerParams es_params;
-  es_params.dt = params_node_.control_period;
-
-  loadExtremumSeekerParameters(es_params);
-  extremum_seeker_ = ns_deadzone::ExtremumSeeker(es_params);
 
   // Load vehicle model parameters.
   ns_models::ParamsVehicle params_vehicle{};
@@ -545,55 +538,6 @@ void NonlinearMPCNode::onTimer()
     u_solution_(1) += dob_steering_ff;
   }
 
-
-  /**
-   * @brief Extremum-seeker optimal deadzone threshold finder.
-   * */
-  auto const &current_steering = static_cast<double>(current_steering_ptr_->steering_tire_angle);
-  auto const
-    &e_steering = -(current_steering - u0_kalman_(1)) / params_node_.steering_tau;
-
-  nmpc_performance_vars_.es_error = std::fabs(e_steering); // extremum_seeker_.getMeanError();
-
-  if (params_node_.use_extremum_seeker &&
-      (current_fsm_state_ == ns_states::motionStateEnums::isMoving ||
-       current_fsm_state_ != ns_states::motionStateEnums::isStoppedWillMove))
-  {
-    // auto const &ey = x0_predicted_(ns_utils::toUType(VehicleStateIds::ey)); // lateral error
-    // auto const &eyaw = x0_predicted_(ns_utils::toUType(VehicleStateIds::eyaw)); // heading error
-    // auto const &predicted_steering = nonlinear_mpc_controller_ptr_->getPredictedSteeringState();
-    // auto const &e_steering = x0_predicted_(7) - current_steering;
-
-    // auto const &error_es = std::hypot(ey, eyaw, e_steering);
-    auto const &error_es = std::hypot(e_steering, e_steering);
-
-    //    auto const &error_es = std::hypot(eyaw, eyaw);
-    //    auto const &error_es = std::hypot(ey, ey);
-
-    auto const &theta = extremum_seeker_.getTheta(error_es);
-
-    nmpc_performance_vars_.es_theta = theta;
-
-    deadzone_inverter_.updateCurrentBreakpoints(theta);
-
-  }
-
-  /**
-   * @brief Deadzone inversion code block
-   * */
-  if (params_node_.use_deadzone_inverse)
-  {
-
-    auto const &steering_deviation = current_steering - u0_kalman_(1);
-
-
-    // auto const &u_steer_dz_inv = deadzone_inverter_.invDeadzoneOutput(u_solution_(1), steering_deviation);
-
-    auto const &u_steer_dz_inv = deadzone_inverter_.invDeadzoneOutput(u_solution_(1), steering_deviation);
-    u_solution_(1) = u_steer_dz_inv;
-
-  }
-
   auto const
     steering_rate =
     (u_solution_(1) - static_cast<double>(control_cmd_prev_.lateral.steering_tire_angle)) / params_node_.control_period;
@@ -950,32 +894,6 @@ void NonlinearMPCNode::loadFilterParameters(ns_data::ParamsFilters &params_filte
   params_filters.ukf_beta = declare_parameter("kalman_filters.beta", 2.0);
 }
 
-void NonlinearMPCNode::loadDeadzoneParameters()
-{
-  // Deadzone
-  params_node_.use_deadzone_inverse = declare_parameter<bool>("deadzone_params.use_deadzone_inv");
-  auto const &mr = declare_parameter<double>("deadzone_params.mr");
-  auto const &br = declare_parameter<double>("deadzone_params.br");
-
-  auto const &ml = declare_parameter<double>("deadzone_params.ml");
-  auto const &bl = declare_parameter<double>("deadzone_params.bl");
-  auto const &bmax = declare_parameter<double>("deadzone_params.bmax");
-  deadzone_inverter_ = ns_deadzone::sDeadZone(mr, br, ml, bl, bmax);
-}
-
-void NonlinearMPCNode::loadExtremumSeekerParameters(ns_deadzone::sExtremumSeekerParams &es_params)
-{
-  // Deadzone
-  params_node_.use_extremum_seeker = declare_parameter<bool>("deadzone_params.use_extremum_seeker");
-
-  es_params.K = declare_parameter<double>("deadzone_params.K_ex");
-  es_params.ay = declare_parameter<double>("deadzone_params.ay");
-  es_params.freq_low_pass = declare_parameter<double>("deadzone_params.freq_low_ex");
-  es_params.freq_high_pass = declare_parameter<double>("deadzone_params.freq_high_ex");
-  es_params.freq_dither = declare_parameter<double>("deadzone_params.freq_dither_ex");
-
-}
-
 void NonlinearMPCNode::loadVehicleParameters(ns_models::ParamsVehicle &params_vehicle)
 {
   params_vehicle.wheel_base = wheel_base_;
@@ -1250,26 +1168,6 @@ void NonlinearMPCNode::onCommDelayCompensation(const DelayCompensationRefs::Shar
 {
   current_comm_delay_ptr_ = msg;
 
-  //	if (current_comm_delay_ptr_)
-  //	{
-  //		RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), (1000ms).count(),
-  //												 "In lateral control, ey refs read
-  //%4.2f
-  //",
-  //msg->lateral_deviation_error_compensation_ref);
-  //
-  //		RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), (1000ms).count(),
-  //												 "In lateral control, eyaw refs read
-  //%4.2f
-  //",
-  //msg->heading_angle_error_compensation_ref);
-  //
-  //		RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), (1000ms).count(),
-  //												 "In lateral control, eyaw refs read
-  //%4.2f
-  //",
-  //msg->steering_compensation_ref);
-  //	}
 }
 
 void NonlinearMPCNode::onSteeringMeasured(SteeringMeasuredMsg::SharedPtr msg)
