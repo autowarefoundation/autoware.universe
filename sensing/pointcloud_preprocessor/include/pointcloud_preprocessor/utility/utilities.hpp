@@ -36,26 +36,28 @@ namespace pointcloud_preprocessor::utils
 /**
  * @brief convert ROS polygon to CGAL polygon
  */
-std::vector<PointCgal> to_cgal_polygon(
-  const geometry_msgs::msg::Polygon::ConstSharedPtr & polygon_in);
+void to_cgal_polygon(
+  const geometry_msgs::msg::Polygon & polygon_in, std::vector<PointCgal> & polygon_out);
 
 /**
  * @brief convert lanelet polygon to CGAL polygon
  */
-std::vector<PointCgal> to_cgal_polygon(const lanelet::BasicPolygon2d & polygon_in);
+void to_cgal_polygon(
+  const lanelet::BasicPolygon2d & polygon_in, std::vector<PointCgal> & polygon_out);
 
 /**
  * @brief remove points in the given polygon
  */
-sensor_msgs::msg::PointCloud2 remove_polygon_cgal_from_cloud(
-  const sensor_msgs::msg::PointCloud2::ConstSharedPtr & cloud_in_ptr,
-  const std::vector<PointCgal> & polyline_polygon);
+void remove_polygon_cgal_from_cloud(
+  const sensor_msgs::msg::PointCloud2 & cloud_in, const std::vector<PointCgal> & polyline_polygon,
+  sensor_msgs::msg::PointCloud2 & cloud_out);
 
 /**
  * @brief remove points in the given polygon
  */
-pcl::PointCloud<pcl::PointXYZ> remove_polygon_cgal_from_cloud(
-  const pcl::PointCloud<pcl::PointXYZ> & cloud_in, const std::vector<PointCgal> & polyline_polygon);
+void remove_polygon_cgal_from_cloud(
+  const pcl::PointCloud<pcl::PointXYZ> & cloud_in, const std::vector<PointCgal> & polyline_polygon,
+  pcl::PointCloud<pcl::PointXYZ> & cloud_out);
 
 }  // namespace pointcloud_preprocessor::utils
 

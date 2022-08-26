@@ -70,7 +70,7 @@ void PolygonRemoverComponent::filter(
 void PolygonRemoverComponent::update_polygon(
   const geometry_msgs::msg::Polygon::ConstSharedPtr & polygon_in)
 {
-  polygon_cgal_ = pointcloud_preprocessor::utils::to_cgal_polygon(polygon_in);
+  pointcloud_preprocessor::utils::to_cgal_polygon(*polygon_in, polygon_cgal_);
   if (will_visualize_) {
     marker_.ns = "";
     marker_.id = 0;
@@ -131,7 +131,10 @@ sensor_msgs::msg::PointCloud2 PolygonRemoverComponent::remove_updated_polygon_fr
     throw std::runtime_error("Polygon is not initialized. Please use `update_polygon` first.");
   }
 
-  return pointcloud_preprocessor::utils::remove_polygon_cgal_from_cloud(cloud_in, polygon_cgal_);
+  PointCloud2 cloud_out;
+  pointcloud_preprocessor::utils::remove_polygon_cgal_from_cloud(
+    *cloud_in, polygon_cgal_, cloud_out);
+  return cloud_out;
 }
 }  // namespace pointcloud_preprocessor
 
