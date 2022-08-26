@@ -21,10 +21,10 @@
 
     obstacles:
       dynamic_source: pointcloud # source of dynamic obstacles. Must be 'pointcloud', 'occupancy_grid', or 'static_only'.
-      ignore_obstacles_on_path: true # if true, obstacles on the ego paths are ignored
+      ignore_obstacles_on_path: false # if true, obstacles on the ego paths are ignored
       ignore_extra_distance: 1.0 # [m] extra lateral distance where obstacles along the path are ignored
       occupancy_grid_threshold: 60 # occupancy grid values higher than this are considered to be obstacles
-      dynamic_obstacles_buffer: 1.0 # [m] extra distance around dynamic obstacles used to mask the occupancy grid and avoid false obstacle detection
+      dynamic_obstacles_buffer: 1.5 # [m] extra distance around dynamic obstacles used to mask the occupancy grid and avoid false obstacle detection
       dynamic_obstacles_min_vel: 0.5 # [m/s] velocity above which a dynamic obstacle is ignored by the module
       static_map_tags: # linestring tags in the lanelet maps that will be used as static obstacles
         - curbstone

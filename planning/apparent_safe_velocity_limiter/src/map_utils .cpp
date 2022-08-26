@@ -17,6 +17,8 @@
 #include "apparent_safe_velocity_limiter/types.hpp"
 #include "lanelet2_core/primitives/LineString.h"
 
+#include <boost/geometry.hpp>
+
 #include <lanelet2_core/Attribute.h>
 
 #include <algorithm>
@@ -24,37 +26,31 @@
 namespace apparent_safe_velocity_limiter
 {
 multilinestring_t extractStaticObstacles(
-  const lanelet::LaneletMap & lanelet_map,
-  const autoware_auto_planning_msgs::msg::HADMapRoute & route,
-  const std::vector<std::string> & tags, const std::vector<int64_t> & obstacle_ids)
+  const lanelet::LaneletMap & lanelet_map, const std::vector<std::string> & tags,
+  const std::vector<int64_t> & obstacle_ids)
 {
   multilinestring_t lines;
-  lanelet::Ids ids;
-  for (const auto & segment : route.segments) {
-    ids.push_back(segment.preferred_primitive_id);
-    for (const auto & primitive : segment.primitives) ids.push_back(primitive.id);
-  }
-  for (const auto & id : ids) {
-    const auto lanelet = lanelet_map.laneletLayer.find(id);
-    if (lanelet == lanelet_map.laneletLayer.end()) continue;
-    for (const auto & ls : {lanelet->leftBound2d(), lanelet->rightBound2d()}) {
-      if (isObstacle(ls, tags, obstacle_ids)) {
-        linestring_t ls;
-        for (const auto & p : ls) ls.push_back(point_t{p.x(), p.y()});
-        lines.push_back(ls);
-      }
+  linestring_t line;
+  linestring_t simplified_line;
+  for (const auto & ls : lanelet_map.lineStringLayer) {
+    if (isObstacle(ls, tags, obstacle_ids)) {
+      line.clear();
+      simplified_line.clear();
+      for (const auto & p : ls) line.push_back(point_t{p.x(), p.y()});
+      boost::geometry::simplify(line, simplified_line, 0.5);
+      lines.push_back(simplified_line);
     }
   }
   return lines;
 }
 
 bool isObstacle(
-  const lanelet::ConstLineString2d & ls, const std::vector<std::string> & tags,
+  const lanelet::ConstLineString3d & ls, const std::vector<std::string> & tags,
   const std::vector<int64_t> & ids)
 {
-  constexpr auto NONE = "";
-  const auto type = ls.attributeOr(lanelet::AttributeName::Type, NONE);
-  return type != NONE && (std::find(tags.begin(), tags.end(), type) != tags.end() ||
-                          std::find(ids.begin(), ids.end(), ls.id()) != ids.end());
+  constexpr auto no_type = "";
+  const auto type = ls.attributeOr(lanelet::AttributeName::Type, no_type);
+  return std::find(ids.begin(), ids.end(), ls.id()) != ids.end() ||
+         (type != no_type && std::find(tags.begin(), tags.end(), type) != tags.end());
 }
 }  // namespace apparent_safe_velocity_limiter

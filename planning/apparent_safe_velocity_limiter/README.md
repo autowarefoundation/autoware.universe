@@ -99,10 +99,8 @@ This option is a bit expensive and should only be used in case of noisy dynamic 
 
 #### Lanelet Map
 
-Information about static obstacles are stored in the Lanelet map in the form of tags associated linestrings.
-First, the ego route is used to list all lanelets that the ego may drive through.
-The tags of the left and right linestrings from each of these lanelets are then checked.
-If any is tagged with one of the value from parameter `obstacles.static_map_tags`, then it will be used as an obstacle.
+Information about static obstacles can be stored in the Lanelet map using the value of the `type` tag of linestrings.
+If any linestring has a `type` with one of the value from parameter `obstacles.static_map_tags`, then it will be used as an obstacle.
 
 Obstacles from the lanelet map are not impacted by the masks.
 
@@ -151,7 +149,6 @@ For example a value of `1` means all trajectory points will be evaluated while a
 | `~/input/dynamic_obstacles`   | `autoware_auto_perception_msgs/PredictedObjects` | Dynamic objects                                    |
 | `~/input/odometry`            | `nav_msgs/Odometry`                              | Odometry used to retrieve the current ego velocity |
 | `~/input/map`                 | `autoware_auto_mapping_msgs/HADMapBin`           | Vector map used to retrieve static obstacles       |
-| `~/input/route`               | `autoware_auto_mapping_msgs/HADMapRoute`         | Route taken by ego on the map                      |
 
 ### Outputs
 

@@ -29,6 +29,8 @@
 #include <rclcpp/qos.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
+#include <boost/geometry.hpp>
+
 #include <algorithm>
 #include <chrono>
 
@@ -61,10 +63,9 @@ ApparentSafeVelocityLimiterNode::ApparentSafeVelocityLimiterNode(
     "~/input/map", rclcpp::QoS{1}.transient_local(),
     [this](const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg) {
       lanelet::utils::conversion::fromBinMsg(*msg, lanelet_map_ptr_);
+      static_map_obstacles_ = extractStaticObstacles(
+        *lanelet_map_ptr_, obstacle_params_.static_map_tags, static_map_obstacle_ids_);
     });
-  route_sub_ = create_subscription<autoware_auto_planning_msgs::msg::HADMapRoute>(
-    "~/input/route", rclcpp::QoS{1}.transient_local(),
-    std::bind(&ApparentSafeVelocityLimiterNode::onRoute, this, std::placeholders::_1));
 
   pub_trajectory_ = create_publisher<Trajectory>("~/output/trajectory", 1);
   pub_debug_markers_ =
@@ -133,6 +134,9 @@ rcl_interfaces::msg::SetParametersResult ApparentSafeVelocityLimiterNode::onPara
       obstacle_params_.dynamic_obstacles_min_vel = static_cast<Float>(parameter.as_double());
     } else if (parameter.get_name() == ObstacleParameters::MAP_TAGS_PARAM) {
       obstacle_params_.static_map_tags = parameter.as_string_array();
+      if (lanelet_map_ptr_)
+        static_map_obstacles_ = extractStaticObstacles(
+          *lanelet_map_ptr_, obstacle_params_.static_map_tags, static_map_obstacle_ids_);
     } else if (parameter.get_name() == ObstacleParameters::FILTERING_PARAM) {
       obstacle_params_.filter_envelope = parameter.as_bool();
     } else if (parameter.get_name() == ObstacleParameters::IGNORE_ON_PATH_PARAM) {
@@ -156,6 +160,9 @@ rcl_interfaces::msg::SetParametersResult ApparentSafeVelocityLimiterNode::onPara
       projection_params_.updateDistanceMethod(*this, parameter.as_string());
     } else if (parameter.get_name() == "obstacles.static_map_ids") {
       static_map_obstacle_ids_ = parameter.as_integer_array();
+      if (lanelet_map_ptr_)
+        static_map_obstacles_ = extractStaticObstacles(
+          *lanelet_map_ptr_, obstacle_params_.static_map_tags, static_map_obstacle_ids_);
     } else {
       RCLCPP_WARN(get_logger(), "Unknown parameter %s", parameter.get_name().c_str());
       result.successful = false;
@@ -245,15 +252,8 @@ bool ApparentSafeVelocityLimiterNode::validInputs(
   if (!current_ego_velocity_)
     RCLCPP_WARN_THROTTLE(
       get_logger(), *get_clock(), one_sec, "Current ego velocity not yet received");
-  return occupancy_grid_ptr_ && dynamic_obstacles_ptr_ && ego_idx && current_ego_velocity_;
-}
 
-void ApparentSafeVelocityLimiterNode::onRoute(
-  const autoware_auto_planning_msgs::msg::HADMapRoute::ConstSharedPtr msg)
-{
-  if (!lanelet_map_ptr_) return;
-  static_map_obstacles_ = extractStaticObstacles(
-    *lanelet_map_ptr_, *msg, obstacle_params_.static_map_tags, static_map_obstacle_ids_);
+  return occupancy_grid_ptr_ && dynamic_obstacles_ptr_ && ego_idx && current_ego_velocity_;
 }
 }  // namespace apparent_safe_velocity_limiter
 

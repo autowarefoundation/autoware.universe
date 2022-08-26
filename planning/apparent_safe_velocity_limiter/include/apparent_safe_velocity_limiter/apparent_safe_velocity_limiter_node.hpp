@@ -26,7 +26,6 @@
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
-#include <autoware_auto_planning_msgs/msg/had_map_route.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
@@ -69,7 +68,6 @@ private:
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr
     sub_odom_;  //!< @brief subscriber for the current velocity
   rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr map_sub_;
-  rclcpp::Subscription<autoware_auto_planning_msgs::msg::HADMapRoute>::SharedPtr route_sub_;
 
   // cached inputs
   PredictedObjects::ConstSharedPtr dynamic_obstacles_ptr_;
@@ -102,10 +100,6 @@ private:
   /// @brief callback for input trajectories. Publishes a trajectory with updated velocities
   /// @param[in] msg input trajectory message
   void onTrajectory(const Trajectory::ConstSharedPtr msg);
-
-  /// @brief callback for input route. Updates the static obstacles.
-  /// @param[in] msg input route message
-  void onRoute(const autoware_auto_planning_msgs::msg::HADMapRoute::ConstSharedPtr msg);
 
   /// @brief validate the inputs of the node
   /// @param[in] ego_idx trajectory index closest to the current ego pose
