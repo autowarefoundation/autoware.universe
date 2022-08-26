@@ -88,7 +88,7 @@ public:
     const Pose & start_checkpoint, const Pose & goal_checkpoint,
     lanelet::ConstLanelets * path_lanelets) const;
   std::vector<HADMapSegment> createMapSegments(const lanelet::ConstLanelets & path_lanelets) const;
-  bool isRouteLooped(const RouteSections & route_sections);
+  bool isRouteLooped(const RouteSections & route_sections) const;
 
   // for goal
   bool isInGoalRouteSection(const lanelet::ConstLanelet & lanelet) const;

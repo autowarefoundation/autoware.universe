@@ -183,7 +183,7 @@ void RouteHandler::setMap(const HADMapBin & map_msg)
   setLaneletsFromRouteMsg();
 }
 
-bool isRouteLooped(const RouteSections & route_sections)
+bool RouteHandler::isRouteLooped(const RouteSections & route_sections) const
 {
   std::vector<lanelet::Id> lane_primitives;
   for (const auto & route_section : route_sections) {
