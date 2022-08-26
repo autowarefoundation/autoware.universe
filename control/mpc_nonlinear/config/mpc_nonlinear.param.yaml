@@ -12,7 +12,7 @@
     # -- Simulation model for planning simulator --
     use_mpc_controller: true    # if false it uses the feedback controllers.
     use_delay_sim_model: true   # for DELAY_STEER planning simulator model. For debugging only.
-    input_delay_time: 0.24 # 0.3    # input dead-time [s]
+    input_delay_time: 0.1 # 0.3    # input dead-time [s]
 
     # -- Use time or arc-length as the interpolation coordinates for predictions --
     use_acceleration_inputs: true                 # if false, traj speeds are used in the simulations
@@ -100,18 +100,3 @@
       Vprocess: [ 0.2, 0.2, 0.05, 0.1, 0.02, 0.01, 0.2, 0.03, 0.1 ]  # process [model] uncertainty variance estimate.
       Wmeasurement: [ 0.4, 0.4, 0.06, 0.2,  0.15, 0.1, 0.1, 0.02, 0.2 ]  # measurement uncertainty variance estimate
 
-
-    deadzone_params:
-      use_deadzone_inv: true
-      bmax: 0.06
-      mr: 1.
-      br: 0.05
-      ml: 1.
-      bl: 0.05
-
-      use_extremum_seeker: false
-      K_ex: 5. # Gain
-      ay: 0.01 # dithering sinusoidal amplitude.
-      freq_low_ex: 5. #low-pass filter cut-off frequency in Hertz
-      freq_high_ex: 1. #high-pass filter cut-off frequency
-      freq_dither_ex: 1.0 #dither signal frequency
