@@ -55,6 +55,10 @@ boost::optional<geometry_msgs::msg::Point> checkCollision(
   }
 
   const double t = ((p4.y - p3.y) * (p4.x - p2.x) + (p3.x - p4.x) * (p4.y - p2.y)) / det;
+  if (t < 0.0 || 1.0 < t) {
+    // collision is outside the segment line
+    return boost::none;
+  }
 
   geometry_msgs::msg::Point p;
   p.x = t * p1.x + (1.0 - t) * p2.x;
@@ -119,8 +123,10 @@ boost::optional<PathIndexWithPoint> findCollisionSegment(
     const auto & p2 = path.points.at(i + 1).point.pose.position;  // Point after collision point
 
     const auto collision_point = checkCollision(p1, p2, stop_line_p1, stop_line_p2);
+    std::cerr << i << std::endl;
 
     if (collision_point) {
+      std::cerr << "found" << std::endl;
       return std::make_pair(i, collision_point.get());
     }
   }
