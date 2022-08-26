@@ -24,11 +24,11 @@ In current Autoware.universe, only Lanelet2 map format is supported.
 
 ### Services
 
-| Name                                 | Type                                      | Description                       |
-| ------------------------------------ | ----------------------------------------- | --------------------------------- |
-| `/planning/routing/set_route_points` | autoware_ad_api_msgs::msg::SetRoutePoints | route request with pose waypoints |
-| `/planning/routing/set_route`        | autoware_ad_api_msgs::msg::SetRoute       | route request with HAD map format |
-| `/planning/routing/clear_route`      | autoware_ad_api_msgs::msg::ClearRoute     | route clear request               |
+| Name                                 | Type                                       | Description                       |
+| ------------------------------------ | ------------------------------------------ | --------------------------------- |
+| `/planning/routing/set_route_points` | autoware_ad_api_msgs::srv::SetRoutePoints  | route request with pose waypoints |
+| `/planning/routing/set_route`        | autoware_auto_planning_msgs::srv::SetRoute | route request with HAD map format |
+| `/planning/routing/clear_route`      | autoware_ad_api_msgs::srv::ClearRoute      | route clear request               |
 
 ### Subscriptions
 
@@ -39,12 +39,11 @@ In current Autoware.universe, only Lanelet2 map format is supported.
 
 ### Publications
 
-| Name                            | Type                                    | Description                 |
-| ------------------------------- | --------------------------------------- | --------------------------- |
-| `/planning/routing/route_state` | autoware_ad_api_msgs::msg::RouteState   | route state                 |
-| `/planning/routing/route`       | autoware_ad_api_msgs::msg::RouteState   | current route               |
-| `output/route`                  | autoware_auto_planning_msgs/HADMapRoute | route from ego pose to goal |
-| `debug/route_marker`            | visualization_msgs::msg::MarkerArray    | route marker for debug      |
+| Name                            | Type                                    | Description            |
+| ------------------------------- | --------------------------------------- | ---------------------- |
+| `/planning/routing/route_state` | autoware_ad_api_msgs::msg::RouteState   | route state            |
+| `/planning/routing/route`       | autoware_auto_planning_msgs/HADMapRoute | route                  |
+| `debug/route_marker`            | visualization_msgs::msg::MarkerArray    | route marker for debug |
 
 ## Route section
 

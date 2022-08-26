@@ -14,8 +14,6 @@
 
 #include "mission_planner.hpp"
 
-#include "type_conversion.hpp"
-
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #else
@@ -39,7 +37,6 @@ MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
   planner_->initialize(this);
 
   const auto durable_qos = rclcpp::QoS(1).transient_local();
-  pub_had_route_ = create_publisher<HADMapRoute>("output/route", durable_qos);
   pub_marker_ = create_publisher<MarkerArray>("debug/route_marker", durable_qos);
 
   const auto period = rclcpp::Duration::from_seconds(1.0);
@@ -47,7 +44,7 @@ MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
 
   const auto adaptor = component_interface_utils::NodeAdaptor(this);
   adaptor.init_pub(pub_state_);
-  adaptor.init_pub(pub_api_route_);
+  adaptor.init_pub(pub_route_);
   adaptor.init_srv(srv_clear_route_, this, &MissionPlanner::on_clear_route);
   adaptor.init_srv(srv_set_route_, this, &MissionPlanner::on_set_route);
   adaptor.init_srv(srv_set_route_points_, this, &MissionPlanner::on_set_route_points);
@@ -97,7 +94,7 @@ void MissionPlanner::on_arrival_check()
 void MissionPlanner::change_route()
 {
   arrival_checker_.reset_goal();
-  pub_api_route_->publish(conversion::create_empty_route(now()));
+  // TODO(Takagi, Isamu): publish an empty route here
 }
 
 void MissionPlanner::change_route(const HADMapRoute & route)
@@ -109,8 +106,7 @@ void MissionPlanner::change_route(const HADMapRoute & route)
   goal.pose = route.goal_pose;
   arrival_checker_.reset_goal(goal);
 
-  pub_api_route_->publish(conversion::convert_route(route));
-  pub_had_route_->publish(route);
+  pub_route_->publish(route);
   pub_marker_->publish(planner_->visualize(route));
 }
 
@@ -141,21 +137,18 @@ void MissionPlanner::on_set_route(
       SetRoute::Service::Response::ERROR_ROUTE_EXISTS, "The route is already set.");
   }
 
-  // Use common header for transforms
+  // Use temporary pose stapmed for transform.
   PoseStamped pose;
   pose.header = req->header;
   pose.pose = req->goal;
 
-  // Convert route points.
-  autoware_ad_api_msgs::msg::RouteData data;
-  data.start = get_ego_vehicle_pose().pose;
-  data.goal = transform_pose(pose).pose;
-  data.segments = req->segments;
-
   // Convert route.
-  HADMapRoute route = conversion::convert_route(data);
+  HADMapRoute route;
   route.header.stamp = req->header.stamp;
   route.header.frame_id = map_frame_;
+  route.start_pose = get_ego_vehicle_pose().pose;
+  route.goal_pose = transform_pose(pose).pose;
+  route.segments = req->segments;
 
   // Update route.
   change_route(route);
@@ -177,7 +170,7 @@ void MissionPlanner::on_set_route_points(
       SetRoutePoints::Service::Response::ERROR_PLANNER_UNREADY, "The planner is not ready.");
   }
 
-  // Use common header for transforms.
+  // Use temporary pose stapmed for transform.
   PoseStamped pose;
   pose.header = req->header;
 

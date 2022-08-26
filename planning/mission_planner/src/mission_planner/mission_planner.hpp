@@ -66,13 +66,12 @@ private:
   void on_arrival_check();
 
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_marker_;
-  rclcpp::Publisher<HADMapRoute>::SharedPtr pub_had_route_;
   void change_route();
   void change_route(const HADMapRoute & route);
 
   RouteState::Message state_;
   component_interface_utils::Publisher<RouteState>::SharedPtr pub_state_;
-  component_interface_utils::Publisher<Route>::SharedPtr pub_api_route_;
+  component_interface_utils::Publisher<Route>::SharedPtr pub_route_;
   void change_state(RouteState::Message::_state_type state);
 
   component_interface_utils::Service<ClearRoute>::SharedPtr srv_clear_route_;

@@ -1,6 +1,9 @@
 <launch>
-  <node pkg="ad_api_adaptors" exec="routing_adaptor" name="routing_adaptor">
-    <remap from="~/input/goal" to="/planning/mission_planning/goal"/>
-    <remap from="~/input/waypoint" to="/planning/mission_planning/checkpoint"/>
-  </node>
+  <group>
+    <push-ros-namespace namespace="default_ad_api/helpers"/>
+    <node pkg="ad_api_adaptors" exec="routing_adaptor" name="routing_adaptor">
+      <remap from="~/input/goal" to="/planning/mission_planning/goal"/>
+      <remap from="~/input/waypoint" to="/planning/mission_planning/checkpoint"/>
+    </node>
+  </group>
 </launch>
