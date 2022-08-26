@@ -46,6 +46,7 @@ void RoutingAdaptor::on_waypoint(const PoseStamped::ConstSharedPtr pose)
 {
   if (route_points_->header.frame_id != pose->header.frame_id) {
     RCLCPP_ERROR_STREAM(get_logger(), "The waypoint frame does not match the goal.");
+    return;
   }
   route_points_->waypoints.push_back(pose->pose);
 
