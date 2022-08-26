@@ -14,9 +14,6 @@
 
 #include "pointcloud_preprocessor/polygon_remover/polygon_remover.hpp"
 
-using K = CGAL::Exact_predicates_inexact_constructions_kernel;
-using PointCgal = K::Point_2;
-
 namespace pointcloud_preprocessor
 {
 PolygonRemoverComponent::PolygonRemoverComponent(const rclcpp::NodeOptions & options)

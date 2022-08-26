@@ -27,9 +27,6 @@
 
 #include <vector>
 
-using K = CGAL::Exact_predicates_inexact_constructions_kernel;
-using PointCgal = K::Point_2;
-
 namespace pointcloud_preprocessor
 {
 class PolygonRemoverComponent : public pointcloud_preprocessor::Filter
@@ -41,12 +38,11 @@ protected:
   void publishRemovedPolygon();
 
   void update_polygon(const geometry_msgs::msg::Polygon::ConstSharedPtr & polygon_in);
-  static std::vector<PointCgal> polygon_geometry_to_cgal(
+  static PolygonCgal polygon_geometry_to_cgal(
     const geometry_msgs::msg::Polygon::ConstSharedPtr & polygon_in);
   PointCloud2 remove_updated_polygon_from_cloud(const PointCloud2ConstPtr & cloud_in);
   PointCloud2 remove_polygon_cgal_from_cloud(
-    const PointCloud2::ConstSharedPtr & cloud_in_ptr,
-    const std::vector<PointCgal> & polyline_polygon);
+    const PointCloud2::ConstSharedPtr & cloud_in_ptr, const PolygonCgal & polyline_polygon);
 
 private:
   rclcpp::Parameter param;
@@ -55,7 +51,7 @@ private:
 
   bool polygon_is_initialized_;
   bool will_visualize_;
-  std::vector<PointCgal> polygon_cgal_;
+  PolygonCgal polygon_cgal_;
   visualization_msgs::msg::Marker marker_;
 
   rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr pub_marker_ptr_;

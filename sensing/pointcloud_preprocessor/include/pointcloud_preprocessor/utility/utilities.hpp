@@ -30,33 +30,32 @@
 
 using K = CGAL::Exact_predicates_inexact_constructions_kernel;
 using PointCgal = K::Point_2;
+using PolygonCgal = std::vector<PointCgal>;
 
 namespace pointcloud_preprocessor::utils
 {
 /**
  * @brief convert ROS polygon to CGAL polygon
  */
-void to_cgal_polygon(
-  const geometry_msgs::msg::Polygon & polygon_in, std::vector<PointCgal> & polygon_out);
+void to_cgal_polygon(const geometry_msgs::msg::Polygon & polygon_in, PolygonCgal & polygon_out);
 
 /**
  * @brief convert lanelet polygon to CGAL polygon
  */
-void to_cgal_polygon(
-  const lanelet::BasicPolygon2d & polygon_in, std::vector<PointCgal> & polygon_out);
+void to_cgal_polygon(const lanelet::BasicPolygon2d & polygon_in, PolygonCgal & polygon_out);
 
 /**
  * @brief remove points in the given polygon
  */
 void remove_polygon_cgal_from_cloud(
-  const sensor_msgs::msg::PointCloud2 & cloud_in, const std::vector<PointCgal> & polyline_polygon,
+  const sensor_msgs::msg::PointCloud2 & cloud_in, const PolygonCgal & polyline_polygon,
   sensor_msgs::msg::PointCloud2 & cloud_out);
 
 /**
  * @brief remove points in the given polygon
  */
 void remove_polygon_cgal_from_cloud(
-  const pcl::PointCloud<pcl::PointXYZ> & cloud_in, const std::vector<PointCgal> & polyline_polygon,
+  const pcl::PointCloud<pcl::PointXYZ> & cloud_in, const PolygonCgal & polyline_polygon,
   pcl::PointCloud<pcl::PointXYZ> & cloud_out);
 
 }  // namespace pointcloud_preprocessor::utils

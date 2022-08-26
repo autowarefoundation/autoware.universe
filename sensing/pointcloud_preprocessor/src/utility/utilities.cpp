@@ -16,8 +16,7 @@
 
 namespace pointcloud_preprocessor::utils
 {
-void to_cgal_polygon(
-  const geometry_msgs::msg::Polygon & polygon_in, std::vector<PointCgal> & polygon_out)
+void to_cgal_polygon(const geometry_msgs::msg::Polygon & polygon_in, PolygonCgal & polygon_out)
 {
   if (polygon_in.points.size() < 3) {
     throw std::length_error("Polygon vertex count should be larger than 2.");
@@ -30,8 +29,7 @@ void to_cgal_polygon(
     [](const geometry_msgs::msg::Point32 & p_in) { return PointCgal(p_in.x, p_in.y); });
 }
 
-void to_cgal_polygon(
-  const lanelet::BasicPolygon2d & polygon_in, std::vector<PointCgal> & polygon_out)
+void to_cgal_polygon(const lanelet::BasicPolygon2d & polygon_in, PolygonCgal & polygon_out)
 {
   if (polygon_in.size() < 3) {
     throw std::length_error("Polygon vertex count should be larger than 2.");
@@ -45,7 +43,7 @@ void to_cgal_polygon(
 }
 
 void remove_polygon_cgal_from_cloud(
-  const sensor_msgs::msg::PointCloud2 & cloud_in, const std::vector<PointCgal> & polyline_polygon,
+  const sensor_msgs::msg::PointCloud2 & cloud_in, const PolygonCgal & polyline_polygon,
   sensor_msgs::msg::PointCloud2 & cloud_out)
 {
   pcl::PointCloud<pcl::PointXYZ> pcl_output;
@@ -71,7 +69,7 @@ void remove_polygon_cgal_from_cloud(
 }
 
 void remove_polygon_cgal_from_cloud(
-  const pcl::PointCloud<pcl::PointXYZ> & cloud_in, const std::vector<PointCgal> & polyline_polygon,
+  const pcl::PointCloud<pcl::PointXYZ> & cloud_in, const PolygonCgal & polyline_polygon,
   pcl::PointCloud<pcl::PointXYZ> & cloud_out)
 {
   cloud_out.clear();

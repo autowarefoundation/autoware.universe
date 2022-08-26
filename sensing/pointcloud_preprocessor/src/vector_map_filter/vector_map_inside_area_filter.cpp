@@ -46,7 +46,7 @@ pcl::PointCloud<pcl::PointXYZ> removePointsWithinPolygons(
 
   for (const auto & polygon : polygons) {
     const auto lanelet_poly = lanelet::utils::to2D(polygon).basicPolygon();
-    std::vector<PointCgal> cgal_poly;
+    PolygonCgal cgal_poly;
     pointcloud_preprocessor::utils::to_cgal_polygon(lanelet_poly, cgal_poly);
 
     const auto filter_input_cloud = filtered_cloud;
