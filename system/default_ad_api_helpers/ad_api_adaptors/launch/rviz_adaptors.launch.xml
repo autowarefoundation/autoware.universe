@@ -4,4 +4,9 @@
     <remap from="~/initialpose" to="/initialpose"/>
     <remap from="~/fit_map_height" to="/localization/util/fit_map_height"/>
   </node>
+
+  <node pkg="ad_api_adaptors" exec="routing_adaptor" name="routing_adaptor">
+    <remap from="~/input/goal" to="/planning/mission_planning/goal"/>
+    <remap from="~/input/waypoint" to="/planning/mission_planning/checkpoint"/>
+  </node>
 </launch>

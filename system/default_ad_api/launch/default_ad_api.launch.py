@@ -32,6 +32,7 @@ def generate_launch_description():
     components = [
         _create_api_node("interface", "InterfaceNode"),
         _create_api_node("localization", "LocalizationNode"),
+        _create_api_node("routing", "RoutingNode"),
     ]
     container = ComposableNodeContainer(
         namespace="default_ad_api",
