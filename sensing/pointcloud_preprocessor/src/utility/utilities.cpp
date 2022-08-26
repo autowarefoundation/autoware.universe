@@ -73,6 +73,7 @@ void remove_polygon_cgal_from_cloud(
   pcl::PointCloud<pcl::PointXYZ> & cloud_out)
 {
   cloud_out.clear();
+  cloud_out.header = cloud_in.header;
 
   for (const auto & p : cloud_in) {
     // check if the point is inside the polygon
@@ -83,6 +84,67 @@ void remove_polygon_cgal_from_cloud(
       cloud_out.emplace_back(p);
     }
   }
-}  // namespace
+}
+
+void remove_polygon_cgal_from_cloud(
+  const sensor_msgs::msg::PointCloud2 & cloud_in,
+  const std::vector<PolygonCgal> & polyline_polygons, sensor_msgs::msg::PointCloud2 & cloud_out)
+{
+  if (polyline_polygons.empty()) {
+    cloud_out = cloud_in;
+    return;
+  }
+
+  pcl::PointCloud<pcl::PointXYZ> filtered_cloud;
+  for (sensor_msgs::PointCloud2ConstIterator<float> iter_x(cloud_in, "x"), iter_y(cloud_in, "y"),
+       iter_z(cloud_in, "z");
+       iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z) {
+    // if the point is inside the polygon, skip inserting and check the next point
+    pcl::PointXYZ p(*iter_x, *iter_y, *iter_z);
+    if (point_within_cgal_polys(p, polyline_polygons)) {
+      continue;
+    }
+    filtered_cloud.emplace_back(p);
+  }
+
+  pcl::toROSMsg(filtered_cloud, cloud_out);
+  cloud_out.header = cloud_in.header;
+}
+
+void remove_polygon_cgal_from_cloud(
+  const pcl::PointCloud<pcl::PointXYZ> & cloud_in,
+  const std::vector<PolygonCgal> & polyline_polygons, pcl::PointCloud<pcl::PointXYZ> & cloud_out)
+{
+  if (polyline_polygons.empty()) {
+    cloud_out = cloud_in;
+    return;
+  }
+
+  pcl::PointCloud<pcl::PointXYZ> filtered_cloud;
+  for (const auto & p : cloud_in) {
+    // if the point is inside the polygon, skip inserting and check the next point
+    if (point_within_cgal_polys(p, polyline_polygons)) {
+      continue;
+    }
+    filtered_cloud.emplace_back(p);
+  }
+
+  cloud_out = filtered_cloud;
+  cloud_out.header = cloud_in.header;
+}
+
+bool point_within_cgal_polys(
+  const pcl::PointXYZ & point, const std::vector<PolygonCgal> & polyline_polygons)
+{
+  for (const auto & polygon : polyline_polygons) {
+    if (
+      CGAL::bounded_side_2(polygon.cbegin(), polygon.cend(), PointCgal(point.x, point.y), K()) ==
+      CGAL::ON_BOUNDED_SIDE) {
+      return true;
+    }
+  }
+
+  return false;
+}
 
 }  // namespace pointcloud_preprocessor::utils

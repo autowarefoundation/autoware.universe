@@ -58,6 +58,26 @@ void remove_polygon_cgal_from_cloud(
   const pcl::PointCloud<pcl::PointXYZ> & cloud_in, const PolygonCgal & polyline_polygon,
   pcl::PointCloud<pcl::PointXYZ> & cloud_out);
 
+/**
+ * @brief remove points in the given polygons
+ */
+void remove_polygon_cgal_from_cloud(
+  const sensor_msgs::msg::PointCloud2 & cloud_in,
+  const std::vector<PolygonCgal> & polyline_polygons, sensor_msgs::msg::PointCloud2 & cloud_out);
+
+/**
+ * @brief remove points in the given polygons
+ */
+void remove_polygon_cgal_from_cloud(
+  const pcl::PointCloud<pcl::PointXYZ> & cloud_in,
+  const std::vector<PolygonCgal> & polyline_polygons, pcl::PointCloud<pcl::PointXYZ> & cloud_out);
+
+/**
+ * @brief return true if the given point is inside the at least one of the polygons
+ */
+bool point_within_cgal_polys(
+  const pcl::PointXYZ & point, const std::vector<PolygonCgal> & polyline_polygons);
+
 }  // namespace pointcloud_preprocessor::utils
 
 #endif  // POINTCLOUD_PREPROCESSOR__UTILITY__UTILITIES_HPP_
