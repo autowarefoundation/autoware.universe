@@ -29,12 +29,12 @@ namespace apparent_safe_velocity_limiter
 /// @brief calculate the closest distance to a collision
 /// @param [in] projection forward projection line
 /// @param [in] footprint footprint of the projection
-/// @param [in] obstacle_tree tree for efficient obstacle collision queries
+/// @param [in] collision_checker object to retrieve collision points
 /// @param [in] params projection parameters
 /// @return distance to the closest collision if any
 std::optional<double> distanceToClosestCollision(
-  const linestring_t & projection, const polygon_t & footprint, const ObstacleTree & obstacle_tree,
-  const ProjectionParameters & params);
+  const linestring_t & projection, const polygon_t & footprint,
+  const CollisionChecker & collision_checker, const ProjectionParameters & params);
 
 /// @brief calculate the closest distance along a circle to a given target point
 /// @param [in] origin starting point

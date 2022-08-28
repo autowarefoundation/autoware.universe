@@ -143,6 +143,10 @@ rcl_interfaces::msg::SetParametersResult ApparentSafeVelocityLimiterNode::onPara
       obstacle_params_.ignore_on_path = parameter.as_bool();
     } else if (parameter.get_name() == ObstacleParameters::IGNORE_DIST_PARAM) {
       obstacle_params_.ignore_extra_distance = static_cast<Float>(parameter.as_double());
+    } else if (parameter.get_name() == ObstacleParameters::RTREE_POINTS_PARAM) {
+      obstacle_params_.updateRtreeMinPoints(*this, static_cast<int>(parameter.as_int()));
+    } else if (parameter.get_name() == ObstacleParameters::RTREE_SEGMENTS_PARAM) {
+      obstacle_params_.updateRtreeMinSegments(*this, static_cast<int>(parameter.as_int()));
       // Projection parameters
     } else if (parameter.get_name() == ProjectionParameters::MODEL_PARAM) {
       if (!projection_params_.updateModel(*this, parameter.as_string())) {
@@ -214,8 +218,10 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
       original_traj.header.frame_id, obstacle_params_);
   }
   limitVelocity(
-    downsampled_traj, obstacles, projected_linestrings, footprint_polygons, projection_params_,
-    velocity_params_);
+    downsampled_traj,
+    CollisionChecker(
+      obstacles, obstacle_params_.rtree_min_points, obstacle_params_.rtree_min_segments),
+    projected_linestrings, footprint_polygons, projection_params_, velocity_params_);
   auto safe_trajectory = copyDownsampledVelocity(
     downsampled_traj, original_traj, start_idx, preprocessing_params_.downsample_factor);
   safe_trajectory.header.stamp = now();

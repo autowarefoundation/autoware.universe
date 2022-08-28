@@ -36,6 +36,8 @@ struct ObstacleParameters
   static constexpr auto FILTERING_PARAM = "obstacles.filter_envelope";
   static constexpr auto IGNORE_ON_PATH_PARAM = "obstacles.ignore_obstacles_on_path";
   static constexpr auto IGNORE_DIST_PARAM = "obstacles.ignore_extra_distance";
+  static constexpr auto RTREE_SEGMENTS_PARAM = "obstacles.rtree_min_segments";
+  static constexpr auto RTREE_POINTS_PARAM = "obstacles.rtree_min_points";
 
   enum { POINTCLOUD, OCCUPANCYGRID, STATIC_ONLY } dynamic_source = OCCUPANCYGRID;
   int8_t occupancy_grid_threshold{};
@@ -45,6 +47,8 @@ struct ObstacleParameters
   bool filter_envelope;
   bool ignore_on_path;
   Float ignore_extra_distance;
+  size_t rtree_min_points{};
+  size_t rtree_min_segments{};
 
   ObstacleParameters() = default;
   explicit ObstacleParameters(rclcpp::Node & node)
@@ -58,6 +62,9 @@ struct ObstacleParameters
     filter_envelope = node.declare_parameter<bool>(FILTERING_PARAM);
     ignore_on_path = node.declare_parameter<bool>(IGNORE_ON_PATH_PARAM);
     ignore_extra_distance = static_cast<Float>(node.declare_parameter<Float>(IGNORE_DIST_PARAM));
+    updateRtreeMinPoints(node, static_cast<int>(node.declare_parameter<int>(RTREE_POINTS_PARAM)));
+    updateRtreeMinSegments(
+      node, static_cast<int>(node.declare_parameter<int>(RTREE_SEGMENTS_PARAM)));
   }
 
   bool updateType(rclcpp::Node & node, const std::string & type)
@@ -75,6 +82,28 @@ struct ObstacleParameters
         DYN_SOURCE_PARAM, type.c_str());
       return false;
     }
+    return true;
+  }
+
+  bool updateRtreeMinPoints(rclcpp::Node & node, const int & size)
+  {
+    if (size < 0) {
+      RCLCPP_WARN(
+        node.get_logger(), "Min points for the Rtree must be positive. %d was given.", size);
+      return false;
+    }
+    rtree_min_segments = static_cast<size_t>(size);
+    return true;
+  }
+
+  bool updateRtreeMinSegments(rclcpp::Node & node, const int & size)
+  {
+    if (size < 0) {
+      RCLCPP_WARN(
+        node.get_logger(), "Min segments for the Rtree must be positive. %d was given.", size);
+      return false;
+    }
+    rtree_min_segments = static_cast<size_t>(size);
     return true;
   }
 };

@@ -34,3 +34,5 @@
       static_map_ids: # linestring with these ids will be used as static obstacles # TODO:FOR DEBUGING, REMOVE BEFORE MERGING
         - 34644
       filter_envelope : false # whether to calculate the apparent safety envelope and use it to filter obstacles
+      rtree_min_points: 500 # from this number of obstacle points, a rtree is used for collision detection
+      rtree_min_segments: 1600 # from this number of obstacle segments, a rtree is used for collision detection

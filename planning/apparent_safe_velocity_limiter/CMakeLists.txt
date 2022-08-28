@@ -41,6 +41,13 @@ if(BUILD_TESTING)
   )
 endif()
 
+add_executable(collision_benchmark
+  benchmarks/collision_checker_benchmark.cpp
+)
+target_link_libraries(collision_benchmark
+  apparent_safe_velocity_limiter_node
+)
+
 ament_auto_package(
   INSTALL_TO_SHARE
     launch

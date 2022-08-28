@@ -16,7 +16,6 @@
 
 #include "apparent_safe_velocity_limiter/distance.hpp"
 #include "apparent_safe_velocity_limiter/forward_projection.hpp"
-#include "apparent_safe_velocity_limiter/types.hpp"
 
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 
@@ -114,11 +113,10 @@ std::vector<multilinestring_t> createProjectedLines(
 }
 
 void limitVelocity(
-  Trajectory & trajectory, const Obstacles & obstacles,
+  Trajectory & trajectory, const CollisionChecker & collision_checker,
   const std::vector<multilinestring_t> & projections, const std::vector<polygon_t> & footprints,
   ProjectionParameters & projection_params, const VelocityParameters & velocity_params)
 {
-  const ObstacleTree obstacle_tree(obstacles);
   Float time = 0.0;
   for (size_t i = 0; i < trajectory.points.size(); ++i) {
     auto & trajectory_point = trajectory.points[i];
@@ -132,7 +130,7 @@ void limitVelocity(
     if (projections[i].empty()) continue;
     projection_params.update(trajectory_point);
     const auto dist_to_collision = distanceToClosestCollision(
-      projections[i][0], footprints[i], obstacle_tree, projection_params);
+      projections[i][0], footprints[i], collision_checker, projection_params);
     if (dist_to_collision) {
       const auto min_feasible_velocity =
         velocity_params.current_ego_velocity - velocity_params.max_deceleration * time;

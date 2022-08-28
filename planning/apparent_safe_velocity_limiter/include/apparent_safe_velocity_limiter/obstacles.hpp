@@ -24,11 +24,13 @@
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/vector3.hpp>
 
+#include <boost/geometry.hpp>
 #include <boost/geometry/algorithms/intersection.hpp>
+#include <boost/geometry/algorithms/overlaps.hpp>
 #include <boost/geometry/index/predicates.hpp>
 #include <boost/geometry/index/rtree.hpp>
 
-#include <iterator>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -43,17 +45,41 @@ struct Obstacles
 };
 
 namespace bgi = boost::geometry::index;
+template <class T>
 struct ObstacleTree
 {
-  using box_t = boost::geometry::model::box<point_t>;
+  explicit ObstacleTree(const T & obstacles);
+  [[nodiscard]] std::vector<point_t> intersections(const polygon_t & polygon) const;
+};
+template <>
+struct ObstacleTree<multipoint_t>
+{
   bgi::rtree<point_t, bgi::rstar<16>> points_rtree;
+
+  explicit ObstacleTree(const multipoint_t & obstacles) : points_rtree(obstacles) {}
+
+  [[nodiscard]] std::vector<point_t> intersections(const polygon_t & polygon) const
+  {
+    std::vector<point_t> result;
+    // Query the points
+    points_rtree.query(bgi::covered_by(polygon), std::back_inserter(result));
+    return result;
+  }
+};
+
+template <>
+struct ObstacleTree<multilinestring_t>
+{
   bgi::rtree<segment_t, bgi::rstar<16>> segments_rtree;
 
-  explicit ObstacleTree(const Obstacles & obstacles) : points_rtree(obstacles.points)
+  explicit ObstacleTree(const multilinestring_t & obstacles)
   {
+    auto segment_count = 0lu;
+    for (const auto & line : obstacles)
+      if (!line.empty()) segment_count += line.size() - 1;
     std::vector<segment_t> segments;
-    segments.reserve(obstacles.lines.size() * 4);
-    for (const auto & line : obstacles.lines)
+    segments.reserve(segment_count);
+    for (const auto & line : obstacles)
       for (size_t i = 0; i + 1 < line.size(); ++i) segments.emplace_back(line[i], line[i + 1]);
     segments_rtree = bgi::rtree<segment_t, bgi::rstar<16>>(segments);
   }
@@ -61,8 +87,6 @@ struct ObstacleTree
   [[nodiscard]] std::vector<point_t> intersections(const polygon_t & polygon) const
   {
     std::vector<point_t> result;
-    // Query the points
-    points_rtree.query(bgi::covered_by(polygon), std::back_inserter(result));
     // Query the segments
     std::vector<segment_t> candidates;
     segments_rtree.query(bgi::intersects(polygon), std::back_inserter(candidates));
@@ -81,6 +105,44 @@ struct ObstacleTree
       } else {
         result.insert(result.end(), intersection_points.begin(), intersection_points.end());
       }
+    }
+    return result;
+  }
+};
+
+struct CollisionChecker
+{
+  const Obstacles obstacles;
+  std::unique_ptr<ObstacleTree<multipoint_t>> point_obstacle_tree_ptr;
+  std::unique_ptr<ObstacleTree<multilinestring_t>> line_obstacle_tree_ptr;
+
+  explicit CollisionChecker(
+    Obstacles obs, const size_t rtree_min_points, const size_t rtree_min_segments)
+  : obstacles(std::move(obs))
+  {
+    auto segment_count = 0lu;
+    for (const auto & line : obstacles.lines)
+      if (!line.empty()) segment_count += line.size() - 1;
+    if (segment_count > rtree_min_segments)
+      line_obstacle_tree_ptr = std::make_unique<ObstacleTree<multilinestring_t>>(obstacles.lines);
+    if (obstacles.points.size() > rtree_min_points)
+      point_obstacle_tree_ptr = std::make_unique<ObstacleTree<multipoint_t>>(obstacles.points);
+  }
+
+  [[nodiscard]] std::vector<point_t> intersections(const polygon_t & polygon) const
+  {
+    std::vector<point_t> result;
+    if (line_obstacle_tree_ptr) {
+      result = line_obstacle_tree_ptr->intersections(polygon);
+    } else {
+      boost::geometry::intersection(polygon, obstacles.lines, result);
+    }
+    if (point_obstacle_tree_ptr) {
+      const auto & point_result = point_obstacle_tree_ptr->intersections(polygon);
+      result.insert(result.end(), point_result.begin(), point_result.end());
+    } else {
+      for (const auto & point : obstacles.points)
+        if (boost::geometry::intersects(polygon, point)) result.push_back(point);
     }
     return result;
   }

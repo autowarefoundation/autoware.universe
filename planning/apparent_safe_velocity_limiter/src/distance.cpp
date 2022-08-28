@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "apparent_safe_velocity_limiter/obstacles.hpp"
+
 #include <apparent_safe_velocity_limiter/distance.hpp>
 
 #include <boost/geometry.hpp>
@@ -27,13 +29,13 @@ namespace apparent_safe_velocity_limiter
 namespace bg = boost::geometry;
 
 std::optional<double> distanceToClosestCollision(
-  const linestring_t & projection, const polygon_t & footprint, const ObstacleTree & obstacle_tree,
-  const ProjectionParameters & params)
+  const linestring_t & projection, const polygon_t & footprint,
+  const CollisionChecker & collision_checker, const ProjectionParameters & params)
 {
   std::optional<double> distance;
   if (projection.empty()) return distance;
   double min_dist = std::numeric_limits<double>::max();
-  for (const auto & obs_point : obstacle_tree.intersections(footprint)) {
+  for (const auto & obs_point : collision_checker.intersections(footprint)) {
     if (params.distance_method == ProjectionParameters::EXACT) {
       if (params.model == ProjectionParameters::PARTICLE) {
         const auto euclidian_dist = bg::distance(obs_point, projection.front());
