@@ -185,19 +185,13 @@ void RouteHandler::setMap(const HADMapBin & map_msg)
 
 bool RouteHandler::isRouteLooped(const RouteSections & route_sections) const
 {
-  std::vector<lanelet::Id> lane_primitives;
+  std::set<lanelet::Id> lane_primitives;
   for (const auto & route_section : route_sections) {
     for (const auto & primitive : route_section.primitives) {
-      lane_primitives.emplace_back(primitive.id);
-    }
-
-    for (auto itr = lane_primitives.begin(); itr != lane_primitives.end(); ++itr) {
-      const auto next_itr = itr + 1;
-      if (next_itr == lane_primitives.end()) break;
-      const auto target_id = *itr;
-      if (std::any_of(
-            next_itr, lane_primitives.end(), [target_id](auto p) { return p == target_id; })) {
-        return true;
+      if (lane_primitives.find(primitive.id) == lane_primitives.end()) {
+        lane_primitives.insert(primitive.id);
+      } else {
+        return true;  // find duplicated id
       }
     }
   }
