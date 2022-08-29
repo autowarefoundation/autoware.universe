@@ -50,7 +50,7 @@ void DetectionAreaModuleManager::launchNewModules(
          planner_data_->current_pose.pose)) {
     // Use lanelet_id to unregister module when the route is changed
     const auto lane_id = detection_area_with_lane_id.second.id();
-    const auto module_id = lane_id;
+    const auto module_id = detection_area_with_lane_id.first->id();
     if (!isModuleRegistered(module_id)) {
       registerModule(std::make_shared<DetectionAreaModule>(
         module_id, lane_id, *detection_area_with_lane_id.first, planner_param_,

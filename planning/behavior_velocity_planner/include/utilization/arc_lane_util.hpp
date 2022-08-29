@@ -123,10 +123,8 @@ boost::optional<PathIndexWithPoint> findCollisionSegment(
     const auto & p2 = path.points.at(i + 1).point.pose.position;  // Point after collision point
 
     const auto collision_point = checkCollision(p1, p2, stop_line_p1, stop_line_p2);
-    std::cerr << i << std::endl;
 
     if (collision_point) {
-      std::cerr << "found" << std::endl;
       return std::make_pair(i, collision_point.get());
     }
   }
