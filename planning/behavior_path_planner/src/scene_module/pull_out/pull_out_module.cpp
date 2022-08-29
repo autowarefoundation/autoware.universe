@@ -226,9 +226,6 @@ CandidateOutput PullOutModule::planCandidate() const
   output.finish_distance_to_path_change = motion_utils::calcSignedArcLength(
     selected_path.path.points, current_pose.position, selected_path.shift_point.end.position);
 
-  const auto finish_distance_to_path_change = motion_utils::calcSignedArcLength(
-    selected_path.path.points, current_pose.position, selected_path.shift_point.end.position);
-
   uint16_t direction;
   if (output.lateral_shift > 0.0) {
     direction = SteeringFactor::LEFT;
@@ -237,7 +234,7 @@ CandidateOutput PullOutModule::planCandidate() const
   }
   planning_api_interface_ptr_->updateSteeringFactor(
     {selected_path.shift_point.start, selected_path.shift_point.end},
-    {output.distance_to_path_change, finish_distance_to_path_change}, SteeringFactor::PULL_OUT,
+    {output.start_distance_to_path_change, output.finish_distance_to_path_change}, SteeringFactor::PULL_OUT,
     direction, SteeringFactor::APPROACHING, "");
   return output;
 }

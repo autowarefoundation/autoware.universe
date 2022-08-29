@@ -189,7 +189,7 @@ BehaviorModuleOutput LaneChangeModule::plan()
 
   planning_api_interface_ptr_->updateSteeringFactor(
     {status_.lane_change_path.shift_point.start, status_.lane_change_path.shift_point.end},
-    {turn_signal_info.second}, SteeringFactor::LANE_CHANGE, direction, SteeringFactor::TURNING, "");
+    {output.turn_signal_info.signal_distance}, SteeringFactor::LANE_CHANGE, direction, SteeringFactor::TURNING, "");
   return output;
 }
 
@@ -221,10 +221,6 @@ CandidateOutput LaneChangeModule::planCandidate() const
     selected_path.path.points, planner_data_->self_pose->pose.position,
     selected_path.shift_point.end.position);
 
-  const auto distance_to_path_end = motion_utils::calcSignedArcLength(
-    selected_path.path.points, planner_data_->self_pose->pose.position,
-    selected_path.shift_point.end.position);
-
   uint16_t direction;
   if (output.lateral_shift > 0.0) {
     direction = SteeringFactor::LEFT;
@@ -233,9 +229,8 @@ CandidateOutput LaneChangeModule::planCandidate() const
   }
   planning_api_interface_ptr_->updateSteeringFactor(
     {selected_path.shift_point.start, selected_path.shift_point.end},
-    {output.distance_to_path_change, distance_to_path_end}, SteeringFactor::LANE_CHANGE, direction,
+    {output.start_distance_to_path_change, output.finish_distance_to_path_change}, SteeringFactor::LANE_CHANGE, direction,
     SteeringFactor::APPROACHING, "");
-  // can use pose, selected_path
   return output;
 }
 
