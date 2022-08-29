@@ -616,7 +616,7 @@ void MotionVelocitySmootherNode::publishStopDistance(const TrajectoryPoints & tr
   double stop_dist{stop_dist_lim};
   const auto stop_idx{motion_utils::searchZeroVelocityIndex(trajectory)};
   if (stop_idx) {
-    stop_dist = trajectory_utils::calcArcLength(trajectory, closest, *stop_idx);
+    stop_dist = std::max(motion_utils::calcSignedArcLength(trajectory, closest, *stop_idx), 0.0);
     stop_dist = closest > *stop_idx ? stop_dist : -stop_dist;
   } else {
     stop_dist = closest > 0 ? stop_dist : -stop_dist;
