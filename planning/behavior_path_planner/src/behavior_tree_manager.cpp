@@ -98,6 +98,7 @@ BehaviorModuleOutput BehaviorTreeManager::run(const std::shared_ptr<PlannerData>
   RCLCPP_DEBUG(logger_, "BehaviorPathPlanner::run end status = %s", BT::toStr(res).c_str());
 
   std::for_each(scene_modules_.begin(), scene_modules_.end(), [](const auto & m) {
+    m->publishDebugMarker();
     if (!m->isExecutionRequested()) {
       m->onExit();
     }
