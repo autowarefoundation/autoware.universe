@@ -50,8 +50,6 @@ filtering.
 
 The tracking is not accurate if the first point of the reference trajectory is at or in front of the current ego pose.
 
-- Issue to add points behind ego: <https://gitlab.com/autowarefoundation/autoware.auto/AutowareAuto/-/issues/1273>
-
 ## Inputs / Outputs / API
 
 <!-- Required -->
@@ -178,5 +176,3 @@ AutonomouStuff Lexus RX 450h for under 40 km/h driving.
 
 <!-- Required -->
 
-- <https://gitlab.com/autowarefoundation/autoware.auto/AutowareAuto/-/issues/1057>
-- <https://gitlab.com/autowarefoundation/autoware.auto/AutowareAuto/-/issues/1058>

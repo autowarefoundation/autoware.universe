@@ -242,6 +242,3 @@ If the ego is still running, strong acceleration (`strong_stop_acc`) to stop rig
 ## Future extensions / Unimplemented parts
 
 ## Related issues
-
-- <https://gitlab.com/autowarefoundation/autoware.auto/AutowareAuto/-/issues/1058>
-- <https://github.com/autowarefoundation/autoware.universe/issues/701>

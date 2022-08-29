@@ -53,6 +53,3 @@ Also, the benefits of simultaneous longitudinal and lateral control are small if
 ## Related issues
 
 <!-- Required -->
-
-- <https://gitlab.com/autowarefoundation/autoware.auto/AutowareAuto/-/issues/1057>
-- <https://gitlab.com/autowarefoundation/autoware.auto/AutowareAuto/-/issues/1058>
