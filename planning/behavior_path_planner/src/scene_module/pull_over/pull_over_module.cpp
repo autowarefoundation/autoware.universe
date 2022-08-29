@@ -585,8 +585,8 @@ BehaviorModuleOutput PullOverModule::plan()
 
   // TODO: add end distance
   planning_api_interface_ptr_->updateSteeringFactor(
-    {getParkingStartPose(), getRefinedGoal()},
-    {distance_to_path_change}, SteeringFactor::PULL_OVER, direction, SteeringFactor::TURNING, "");
+    {getParkingStartPose(), getRefinedGoal()}, {distance_to_path_change}, SteeringFactor::PULL_OVER,
+    direction, SteeringFactor::TURNING, "");
 
   publishDebugData();
 
@@ -626,8 +626,8 @@ BehaviorModuleOutput PullOverModule::planWaitingApproval()
 
   // TODO: add end distance
   planning_api_interface_ptr_->updateSteeringFactor(
-    {getParkingStartPose(), getRefinedGoal()},
-    {distance_to_path_change}, SteeringFactor::PULL_OVER, direction, SteeringFactor::APPROACHING, "");
+    {getParkingStartPose(), getRefinedGoal()}, {distance_to_path_change}, SteeringFactor::PULL_OVER,
+    direction, SteeringFactor::APPROACHING, "");
 
   waitApproval();
 

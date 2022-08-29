@@ -176,7 +176,8 @@ BehaviorModuleOutput PullOutModule::plan()
 
   planning_api_interface_ptr_->updateSteeringFactor(
     {status_.pull_out_path.shift_point.start, status_.pull_out_path.shift_point.end},
-    {output.turn_signal_info.signal_distance}, SteeringFactor::PULL_OUT, direction, SteeringFactor::TURNING, "");
+    {output.turn_signal_info.signal_distance}, SteeringFactor::PULL_OUT, direction,
+    SteeringFactor::TURNING, "");
 
   return output;
 }
@@ -231,8 +232,8 @@ CandidateOutput PullOutModule::planCandidate() const
   }
   planning_api_interface_ptr_->updateSteeringFactor(
     {selected_path.shift_point.start, selected_path.shift_point.end},
-    {output.distance_to_path_change, finish_distance_to_path_change}, SteeringFactor::PULL_OUT, direction,
-    SteeringFactor::APPROACHING, "");
+    {output.distance_to_path_change, finish_distance_to_path_change}, SteeringFactor::PULL_OUT,
+    direction, SteeringFactor::APPROACHING, "");
   return output;
 }
 
