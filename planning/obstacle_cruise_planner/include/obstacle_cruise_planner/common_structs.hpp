@@ -50,8 +50,8 @@ struct TargetObstacle
 {
   TargetObstacle(
     const rclcpp::Time & arg_time_stamp, const PredictedObject & object,
-    const double aligned_velocity, const geometry_msgs::msg::PointStamped & arg_collision_point,
-    const bool arg_is_on_ego_trajectory)
+    const double aligned_velocity,
+    const std::vector<geometry_msgs::msg::PointStamped> & arg_collision_points)
   {
     time_stamp = arg_time_stamp;
     orientation_reliable = true;
@@ -60,7 +60,6 @@ struct TargetObstacle
     velocity = aligned_velocity;
     is_classified = true;
     classification = object.classification.at(0);
-    shape = object.shape;
     uuid = toHexString(object.object_id);
 
     predicted_paths.clear();
@@ -68,9 +67,8 @@ struct TargetObstacle
       predicted_paths.push_back(path);
     }
 
-    collision_point = arg_collision_point;
+    collision_points = arg_collision_points;
     has_stopped = false;
-    is_on_ego_trajectory = arg_is_on_ego_trajectory;
   }
 
   rclcpp::Time time_stamp;
@@ -80,12 +78,10 @@ struct TargetObstacle
   float velocity;
   bool is_classified;
   ObjectClassification classification;
-  Shape shape;
   std::string uuid;
   std::vector<PredictedPath> predicted_paths;
-  geometry_msgs::msg::PointStamped collision_point;
+  std::vector<geometry_msgs::msg::PointStamped> collision_points;
   bool has_stopped;
-  bool is_on_ego_trajectory;
 };
 
 struct ObstacleCruisePlannerData

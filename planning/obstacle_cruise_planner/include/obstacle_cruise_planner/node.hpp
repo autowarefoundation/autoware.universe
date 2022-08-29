@@ -90,7 +90,7 @@ private:
   void checkConsistency(
     const rclcpp::Time & current_time, const PredictedObjects & predicted_objects,
     const Trajectory & traj, std::vector<TargetObstacle> & target_obstacles);
-  geometry_msgs::msg::PointStamped calcNearestCollisionPoint(
+  std::vector<geometry_msgs::msg::PointStamped> calcNearestCollisionPoint(
     const size_t & first_within_idx,
     const std::vector<geometry_msgs::msg::PointStamped> & collision_points,
     const Trajectory & decimated_traj, const bool is_driving_forward);
@@ -177,6 +177,7 @@ private:
     double collision_time_margin;
     // outside
     double outside_rough_detection_area_expand_width;
+    double outside_obstacle_min_velocity_threshold;
     double ego_obstacle_overlap_time_threshold;
     double max_prediction_time_for_collision_check;
     double crossing_obstacle_traj_angle_threshold;

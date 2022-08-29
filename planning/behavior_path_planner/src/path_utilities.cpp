@@ -17,11 +17,8 @@
 #include "behavior_path_planner/utilities.hpp"
 
 #include <interpolation/spline_interpolation.hpp>
-#include <lanelet2_extension/utility/message_conversion.hpp>
-#include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <motion_utils/resample/resample.hpp>
-#include <opencv2/opencv.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <tf2/utils.h>
@@ -31,9 +28,7 @@
 #include <utility>
 #include <vector>
 
-namespace behavior_path_planner
-{
-namespace util
+namespace behavior_path_planner::util
 {
 /**
  * @brief calc path arclength on each points from start point to end point.
@@ -94,15 +89,10 @@ PathWithLaneId resamplePathWithSpline(const PathWithLaneId & path, double interv
     return path;
   }
 
-  double s = 0.0;
-  std::vector<double> s_in{0.0};
-  for (size_t i = 0; i < path.points.size() - 1; ++i) {
-    s += tier4_autoware_utils::calcDistance2d(
-      path.points.at(i).point.pose, path.points.at(i + 1).point.pose);
-    s_in.push_back(s);
+  std::vector<autoware_auto_planning_msgs::msg::PathPoint> transformed_path(path.points.size());
+  for (size_t i = 0; i < path.points.size(); ++i) {
+    transformed_path.at(i) = path.points.at(i).point;
   }
-
-  std::vector<double> s_out = s_in;
 
   constexpr double epsilon = 0.01;
   const auto has_almost_same_value = [&](const auto & vec, const auto x) {
@@ -111,10 +101,41 @@ PathWithLaneId resamplePathWithSpline(const PathWithLaneId & path, double interv
     return std::find_if(vec.begin(), vec.end(), has_close) != vec.end();
   };
 
-  for (double s = 0.0; s < s_in.back(); s += interval) {
+  // Get lane ids that are not duplicated
+  std::vector<double> s_in;
+  std::vector<int64_t> unique_lane_ids;
+  for (size_t i = 0; i < path.points.size(); ++i) {
+    const double s = motion_utils::calcSignedArcLength(transformed_path, 0, i);
+    for (const auto & lane_id : path.points.at(i).lane_ids) {
+      if (
+        std::find(unique_lane_ids.begin(), unique_lane_ids.end(), lane_id) !=
+        unique_lane_ids.end()) {
+        unique_lane_ids.push_back(lane_id);
+        if (!has_almost_same_value(s_in, s)) {
+          s_in.push_back(s);
+        }
+      }
+    }
+  }
+
+  std::vector<double> s_out = s_in;
+
+  const double path_len = motion_utils::calcArcLength(transformed_path);
+  for (double s = 0.0; s < path_len; s += interval) {
     if (!has_almost_same_value(s_out, s)) {
       s_out.push_back(s);
     }
+  }
+
+  // Insert Terminal Point
+  if (!has_almost_same_value(s_out, path_len)) {
+    s_out.push_back(path_len);
+  }
+
+  // Insert Stop Point
+  const auto closest_stop_dist = motion_utils::calcDistanceToForwardStopPoint(transformed_path);
+  if (closest_stop_dist && !has_almost_same_value(s_out, *closest_stop_dist)) {
+    s_out.push_back(*closest_stop_dist);
   }
 
   std::sort(s_out.begin(), s_out.end());
@@ -274,10 +295,10 @@ std::pair<TurnIndicatorsCommand, double> getPathTurnSignal(
   }
 
   bool cross_line = false;
-  bool TEMPORARY_SET_CROSSLINE_TRUE =
+  bool TEMPORARY_SET_CROSS_LINE_TRUE =
     true;  // due to a bug. See link:
            // https://github.com/autowarefoundation/autoware.universe/pull/748
-  if (TEMPORARY_SET_CROSSLINE_TRUE) {
+  if (TEMPORARY_SET_CROSS_LINE_TRUE) {
     cross_line = true;
   } else {
     cross_line =
@@ -309,5 +330,4 @@ std::pair<TurnIndicatorsCommand, double> getPathTurnSignal(
   return std::make_pair(turn_signal, max_distance);
 }
 
-}  // namespace util
-}  // namespace behavior_path_planner
+}  // namespace behavior_path_planner::util

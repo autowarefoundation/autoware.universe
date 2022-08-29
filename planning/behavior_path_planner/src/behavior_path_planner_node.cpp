@@ -17,14 +17,11 @@
 #include "behavior_path_planner/debug_utilities.hpp"
 #include "behavior_path_planner/path_utilities.hpp"
 #include "behavior_path_planner/scene_module/avoidance/avoidance_module.hpp"
-#include "behavior_path_planner/scene_module/lane_change/lane_change_module.hpp"
-#include "behavior_path_planner/scene_module/pull_out/pull_out_module.hpp"
-#include "behavior_path_planner/scene_module/pull_over/pull_over_module.hpp"
-#include "behavior_path_planner/scene_module/side_shift/side_shift_module.hpp"
-#include "behavior_path_planner/utilities.hpp"
 
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
+
+#include <tier4_planning_msgs/msg/path_change_module_id.hpp>
 
 #include <memory>
 #include <string>
@@ -68,8 +65,6 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   turn_signal_publisher_ =
     create_publisher<TurnIndicatorsCommand>("~/output/turn_indicators_cmd", 1);
   hazard_signal_publisher_ = create_publisher<HazardLightsCommand>("~/output/hazard_lights_cmd", 1);
-  debug_drivable_area_publisher_ = create_publisher<OccupancyGrid>("~/debug/drivable_area", 1);
-  debug_path_publisher_ = create_publisher<Path>("~/debug/path_for_visualize", 1);
   debug_avoidance_msg_array_publisher_ =
     create_publisher<AvoidanceDebugMsgArray>("~/debug/avoidance_debug_message_array", 1);
 
@@ -151,9 +146,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
       planner_data_->parameters.base_link2front, intersection_search_distance);
   }
 
-  waitForData();
-
-  // Start timer. This must be done after all data (e.g. vehicle pose, velocity) are ready.
+  // Start timer
   {
     const auto planning_hz = declare_parameter("planning_hz", 10.0);
     const auto period_ns = rclcpp::Rate(planning_hz).period();
@@ -210,6 +203,7 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   p.turn_light_on_threshold_dis_lat = declare_parameter("turn_light_on_threshold_dis_lat", 0.3);
   p.turn_light_on_threshold_dis_long = declare_parameter("turn_light_on_threshold_dis_long", 10.0);
   p.turn_light_on_threshold_time = declare_parameter("turn_light_on_threshold_time", 3.0);
+  p.path_interval = declare_parameter<double>("path_interval");
   p.visualize_drivable_area_for_shared_linestrings_lanelet =
     declare_parameter("visualize_drivable_area_for_shared_linestrings_lanelet", true);
 
@@ -498,46 +492,47 @@ BehaviorTreeManagerParam BehaviorPathPlannerNode::getBehaviorTreeManagerParam()
   return p;
 }
 
-void BehaviorPathPlannerNode::waitForData()
+// wait until mandatory data is ready
+bool BehaviorPathPlannerNode::isDataReady()
 {
-  // wait until mandatory data is ready
-  while (!current_scenario_ && rclcpp::ok()) {
-    RCLCPP_INFO_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for scenario topic");
-    rclcpp::spin_some(this->get_node_base_interface());
-    rclcpp::Rate(100).sleep();
-  }
+  const auto missing = [this](const auto & name) {
+    RCLCPP_INFO_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for %s", name);
+    mutex_pd_.unlock();
+    return false;
+  };
 
   mutex_pd_.lock();  // for planner_data_
-  while (!planner_data_->route_handler->isHandlerReady() && rclcpp::ok()) {
-    mutex_pd_.unlock();
-    RCLCPP_INFO_SKIPFIRST_THROTTLE(
-      get_logger(), *get_clock(), 5000, "waiting for route to be ready");
-    rclcpp::spin_some(this->get_node_base_interface());
-    rclcpp::Rate(100).sleep();
-    mutex_pd_.lock();
+  if (!current_scenario_) {
+    return missing("scenario_topic");
   }
 
-  while (rclcpp::ok()) {
-    if (planner_data_->dynamic_object && planner_data_->self_odometry) {
-      break;
-    }
-
-    mutex_pd_.unlock();
-    RCLCPP_INFO_SKIPFIRST_THROTTLE(
-      get_logger(), *get_clock(), 5000,
-      "waiting for vehicle pose, vehicle_velocity, and obstacles");
-    rclcpp::spin_some(this->get_node_base_interface());
-    rclcpp::Rate(100).sleep();
-    mutex_pd_.lock();
+  if (!planner_data_->route_handler->isHandlerReady()) {
+    return missing("route");
   }
 
-  self_pose_listener_.waitForFirstPose();
+  if (!planner_data_->dynamic_object) {
+    return missing("dynamic_object");
+  }
+
+  if (!planner_data_->self_odometry) {
+    return missing("self_odometry");
+  }
+
   planner_data_->self_pose = self_pose_listener_.getCurrentPose();
+  if (!planner_data_->self_pose) {
+    return missing("self_pose");
+  }
+
   mutex_pd_.unlock();
+  return true;
 }
 
 void BehaviorPathPlannerNode::run()
 {
+  if (!isDataReady()) {
+    return;
+  }
+
   RCLCPP_DEBUG(get_logger(), "----- BehaviorPathPlannerNode start -----");
   mutex_bt_.lock();  // for bt_manager_
   mutex_pd_.lock();  // for planner_data_
@@ -579,9 +574,6 @@ void BehaviorPathPlannerNode::run()
   }
 
   path_candidate_publisher_->publish(util::toPath(*path_candidate));
-
-  // debug_path_publisher_->publish(util::toPath(path));
-  debug_drivable_area_publisher_->publish(path->drivable_area);
 
   // for turn signal
   {
@@ -626,7 +618,10 @@ PathWithLaneId::SharedPtr BehaviorPathPlannerNode::getPath(
   path->header.stamp = this->now();
   RCLCPP_DEBUG(
     get_logger(), "BehaviorTreeManager: output is %s.", bt_output.path ? "FOUND" : "NOT FOUND");
-  return path;
+
+  const auto resampled_path =
+    util::resamplePathWithSpline(*path, planner_data_->parameters.path_interval);
+  return std::make_shared<PathWithLaneId>(resampled_path);
 }
 
 PathWithLaneId::SharedPtr BehaviorPathPlannerNode::getPathCandidate(
