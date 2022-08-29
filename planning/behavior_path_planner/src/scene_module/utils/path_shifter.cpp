@@ -326,7 +326,7 @@ bool PathShifter::sortShiftPointsAlongPath([[maybe_unused]] const PathWithLaneId
 }
 
 void PathShifter::removeBehindShiftPointAndSetBaseOffset(
-  const Pose & pose, const size_t nearest_idx)
+  [[maybe_unused]] const Pose & pose, const size_t nearest_idx)
 {
   // If shift_point.end is behind the ego_pose, remove the shift_point and
   // set its shift_length to the base_offset.
