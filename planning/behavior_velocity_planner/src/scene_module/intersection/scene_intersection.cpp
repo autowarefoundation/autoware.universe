@@ -159,7 +159,7 @@ bool IntersectionModule::modifyPathVelocity(
     geometry_msgs::msg::Pose pass_judge_line = path->points.at(pass_judge_line_idx).point.pose;
     is_over_pass_judge_line = planning_utils::isAheadOf(current_pose.pose, pass_judge_line);
   }
-  if (is_go_out_ && is_over_pass_judge_line && !external_stop) {
+  if (is_go_out_ && isActivated() && is_over_pass_judge_line && !external_stop) {
     RCLCPP_DEBUG(logger_, "over the pass judge line. no plan needed.");
     RCLCPP_DEBUG(logger_, "===== plan end =====");
     setSafe(true);
@@ -198,7 +198,7 @@ bool IntersectionModule::modifyPathVelocity(
     path->points, planner_data_->current_pose.pose.position,
     path->points.at(stop_line_idx).point.pose.position));
 
-  if (!isActivated()) {
+  if (!isActivated() || is_entry_prohibited) {
     constexpr double v = 0.0;
     is_go_out_ = false;
     if (planner_param_.use_stuck_stopline && is_stuck) {
