@@ -11,7 +11,7 @@
 - Adaptive Cruise Controller (ACC)
   - embeds target velocity in trajectory when there is a dynamic point cloud on the trajectory.
 
-## Input topics
+### Input topics
 
 | Name                        | Type                                            | Description         |
 | --------------------------- | ----------------------------------------------- | ------------------- |
@@ -22,14 +22,12 @@
 | `~/input/dynamic_objects`   | autoware_auto_perception_msgs::PredictedObjects | dynamic objects     |
 | `~/input/expand_stop_range` | tier4_planning_msgs::msg::ExpandStopRange       | expand stop range   |
 
-## Output topics
+### Output topics
 
 | Name                   | Type                                    | Description                            |
 | ---------------------- | --------------------------------------- | -------------------------------------- |
 | `~output/trajectory`   | autoware_auto_planning_msgs::Trajectory | trajectory to be followed              |
 | `~output/stop_reasons` | tier4_planning_msgs::StopReasonArray    | reasons that cause the vehicle to stop |
-
-## Modules
 
 ### Common Parameter
 
@@ -40,36 +38,81 @@
 | `hunting_threshold` | double | even if the obstacle disappears, the stop judgment continues for hunting_threshold [s] |
 | `lowpass_gain`      | double | low pass gain for calculating acceleration [-]                                         |
 
-### Obstacle Stop Planner
+## Obstacle Stop Planner
 
-#### Role
+### Role
 
-`obstacle stop planner` module inserts the stop point in the trajectory and modifies that's velocity if there is any obstacle point cloud that has risk to collide with the ego on the trajectory.
-
-This module inserts the stop point before the obstacle with margin. In nominal case, the margin is the sum of `baselink_to_front` and `max_longitudinal_margin`. The `baselink_to_front` means the distance between `base_link`(center of rear-wheel axis) and front of the car.
+This module inserts the stop point before the obstacle with margin. In nominal case, the margin is the sum of `baselink_to_front` and `max_longitudinal_margin`. The `baselink_to_front` means the distance between `baselink`(center of rear-wheel axis) and front of the car. The detection area is generated along the processed trajectory as following figure. (This module cut off the input trajectory behind the ego position and decimates the trajectory points for reducing computational costs.)
 
 <figure markdown>
   ![example](./docs/collision_parameters.svg){width=1000}
   <figcaption>parameters for obstacle stop planner</figcaption>
 </figure>
 
+<figure markdown>
+  ![example](./docs/stop_target.svg){width=1000}
+  <figcaption>target for obstacle stop planner</figcaption>
+</figure>
+
 If another stop point has already been inserted by other modules within `max_longitudinal_margin`, the margin is the sum of `baselink_to_front` and `min_longitudinal_margin`. This feature exists to avoid stopping unnaturally position. (For example, the ego stops unnaturally far away from stop line of crosswalk that pedestrians cross to without this feature.)
 
 <figure markdown>
   ![example](./docs/min_longitudinal_margin.svg){width=1000}
-  <figcaption>minimium longitudinal margin</figcaption>
+  <figcaption>minimum longitudinal margin</figcaption>
 </figure>
 
-| Parameter                                | Type   | Description                                                                                                                                    |
-| ---------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `stop_planner.max_longitudinal_margin`   | double | stop margin distance from obstacle on the path [m]                                                                                             |
-| `stop_planner.min_longitudinal_margin`   | double | if any obstacle exists within `max_longitudinal_margin`, this module set margin as the value of _stop margin_ to `min_longitudinal_margin` [m] |
-| `stop_planner.lateral_margin`            | double | lateral margin from the vehicle footprint for collision obstacle detection area [m]                                                            |
-| `stop_planner.step_length`               | double | step length for pointcloud search range [m]                                                                                                    |
-| `stop_planner.extend_distance`           | double | extend trajectory to consider after goal obstacle in the extend_distance [m]                                                                   |
-| `stop_planner.hold_stop_margin_distance` | double | parameter for restart prevention (See following section) [m]                                                                                   |
+The module searches the obstacle pointcloud within detection area. When the pointcloud is found, `Adaptive Cruise Controller` modules starts to work. only when `Adaptive Cruise Controller` modules does not insert target velocity, the stop point is inserted to the trajectory. The stop point means the point with 0 velocity.
 
-#### Flowchart
+### Restart prevention
+
+If it needs X meters (e.g. 0.5 meters) to stop once the vehicle starts moving due to the poor vehicle control performance, the vehicle goes over the stopping position that should be strictly observed when the vehicle starts to moving in order to approach the near stop point (e.g. 0.3 meters away).
+
+This module has parameter `hold_stop_margin_distance` in order to prevent from these redundant restart. If the vehicle is stopped within `hold_stop_margin_distance` meters from stop point of the module, the module judges that the vehicle has already stopped for the module's stop point and plans to keep stopping current position even if the vehicle is stopped due to other factors.
+
+<figure markdown>
+  ![example](./docs/restart_prevention.svg){width=1000}
+  <figcaption>parameters</figcaption>
+</figure>
+
+<figure markdown>
+  ![example](./docs/restart.svg){width=1000}
+  <figcaption>outside the hold_stop_margin_distance</figcaption>
+</figure>
+
+<figure markdown>
+  ![example](./docs/keep_stopping.svg){width=1000}
+  <figcaption>inside the hold_stop_margin_distance</figcaption>
+</figure>
+
+### Parameters
+
+#### Longitudinal margin between the obstacle and the ego
+
+| Parameter                 | Type   | Description                                                                                                                                    |
+| ------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `max_longitudinal_margin` | double | margin between obstacle and the ego's front [m]                                                                                                |
+| `min_longitudinal_margin` | double | if any obstacle exists within `max_longitudinal_margin`, this module set margin as the value of _stop margin_ to `min_longitudinal_margin` [m] |
+
+#### Obstacle detection area
+
+| Parameter                           | Type   | Description                                                                         |
+| ----------------------------------- | ------ | ----------------------------------------------------------------------------------- |
+| `lateral_buffer_for_detection_area` | double | lateral margin from the vehicle footprint for collision obstacle detection area [m] |
+
+#### Trajectory pre-process
+
+| Parameter         | Type   | Description                                                                  |
+| ----------------- | ------ | ---------------------------------------------------------------------------- |
+| `step_length`     | double | step length for pointcloud search range [m]                                  |
+| `extend_distance` | double | extend trajectory to consider after goal obstacle in the extend_distance [m] |
+
+#### Restart prevention
+
+| Parameter                   | Type   | Description                                              |
+| --------------------------- | ------ | -------------------------------------------------------- |
+| `hold_stop_margin_distance` | double | parameter for restart prevention (See above section) [m] |
+
+### Flowchart
 
 ```plantuml
 @startuml
@@ -102,52 +145,19 @@ stop
 @enduml
 ```
 
-First, this module cut off the trajectory behind the car and decimates the points of trajectory for reducing computational costs.
+## Slow Down Planner
 
-Then, a detection area is generated by the decimated trajectory as following figure. The detection area means the area through which the vehicle-body passes.
-
-![vehicle_shape](./docs/vehicle_shape.drawio.svg)
-
-The module searches the obstacle pointcloud within detection area. When the pointcloud is found, `Adaptive Cruise Controller` modules starts to work. only when `Adaptive Cruise Controller` modules does not insert target velocity, the stop point is inserted to the trajectory. The stop point means the point with 0 velocity.
-
-![pointcloud](./docs/point_cloud.drawio.svg)
-
-#### Restart prevention
-
-If it needs X meters (e.g. 0.5 meters) to stop once the vehicle starts moving due to the poor vehicle control performance, the vehicle goes over the stopping position that should be strictly observed when the vehicle starts to moving in order to approach the near stop point (e.g. 0.3 meters away).
-
-This module has parameter `hold_stop_margin_distance` in order to prevent from these redundant restart. If the vehicle is stopped within `hold_stop_margin_distance` meters from stop point of the module (\front_to_stop_line < hold_stop_margin_distance), the module judges that the vehicle has already stopped for the module's stop point and plans to keep stopping current position even if the vehicle is stopped due to other factors.
-
-<figure markdown>
-  ![example](./docs/restart_prevention.svg){width=1000}
-  <figcaption>parameters</figcaption>
-</figure>
-
-<figure markdown>
-  ![example](./docs/restart.svg){width=1000}
-  <figcaption>outside the hold_stop_margin_distance</figcaption>
-</figure>
-
-<figure markdown>
-  ![example](./docs/keep_stopping.svg){width=1000}
-  <figcaption>inside the hold_stop_margin_distance</figcaption>
-</figure>
-
-### Slow Down Planner
-
-#### Role
-
-`slow down planner` module inserts the deceleration point in trajectory when there is a point cloud near the trajectory.
+### Role
 
 This module inserts the slow down section before the obstacle with forward margin and backward margin. The forward margin is the sum of `baselink_to_front` and `longitudinal_forward_margin`, and the backward margin is the sum of `baselink_to_front` and `longitudinal_backward_margin`. The ego keeps slow down velocity in slow down section. The velocity is calculated the following equation.
 
 $v_{target} = v_{min} + \frac{l_{ld} - l_{vw}/2}{l_{margin}} (v_{max} - v_{min} )$
 
 - $v_{target}$ : slow down target velocity [m/s]
-- $v_{min}$ : `slow_down_planner.min_slow_down_velocity` [m/s]
-- $v_{max}$ : `slow_down_planner.max_slow_down_velocity` [m/s]
+- $v_{min}$ : `min_slow_down_velocity` [m/s]
+- $v_{max}$ : `max_slow_down_velocity` [m/s]
 - $l_{ld}$ : lateral deviation between the obstacle and the ego footprint [m]
-- $l_{margin}$ : `slow_down_planner.lateral_margin` [m]
+- $l_{margin}$ : `lateral_buffer_for_detection_area` [m]
 - $l_{vw}$ : width of the ego footprint [m]
 
 The above equation means that the smaller the lateral deviation of the pointcloud, the lower the velocity of the slow down section.
@@ -157,15 +167,34 @@ The above equation means that the smaller the lateral deviation of the pointclou
   <figcaption>parameters for slow down planner</figcaption>
 </figure>
 
-| Parameter                                        | Type   | Description                                                                         |
-| ------------------------------------------------ | ------ | ----------------------------------------------------------------------------------- |
-| `slow_down_planner.longitudinal_forward_margin`  | double | margin distance from slow down point to vehicle front [m]                           |
-| `slow_down_planner.longitudinal_backward_margin` | double | margin distance from slow down point to vehicle rear [m]                            |
-| `slow_down_planner.lateral_margin`               | double | lateral margin from the vehicle footprint for slow down obstacle detection area [m] |
-| `slow_down_planner.max_slow_down_velocity`       | double | max slow down velocity [m/s]                                                        |
-| `slow_down_planner.min_slow_down_velocity`       | double | min slow down velocity [m/s]                                                        |
+<figure markdown>
+  ![example](./docs/slow_down_target.svg){width=1000}
+  <figcaption>target for slow down planner</figcaption>
+</figure>
 
-#### Flowchart
+### Parameters
+
+#### Longitudinal margin between the obstacle and the ego
+
+| Parameter                      | Type   | Description                                     |
+| ------------------------------ | ------ | ----------------------------------------------- |
+| `longitudinal_forward_margin`  | double | margin between obstacle and the ego's front [m] |
+| `longitudinal_backward_margin` | double | margin between obstacle and the ego's rear [m]  |
+
+#### Obstacle detection area
+
+| Parameter                           | Type   | Description                                                                         |
+| ----------------------------------- | ------ | ----------------------------------------------------------------------------------- |
+| `lateral_buffer_for_detection_area` | double | lateral margin from the vehicle footprint for slow down obstacle detection area [m] |
+
+## Slow down target velocity
+
+| Parameter                | Type   | Description                  |
+| ------------------------ | ------ | ---------------------------- |
+| `max_slow_down_velocity` | double | max slow down velocity [m/s] |
+| `min_slow_down_velocity` | double | min slow down velocity [m/s] |
+
+### Flowchart
 
 ```plantuml
 @startuml
@@ -193,23 +222,9 @@ stop
 @enduml
 ```
 
-First, this module cut off the trajectory behind the car and decimates the points of trajectory for reducing computational costs. ( This is the same process as that of `Obstacle Stop planner` module. )
+## Adaptive Cruise Controller
 
-Then, a detection area is generated by the decimated trajectory as following figure. The detection area in this module is the extended area of the detection area used in `Obstacle Stop Planner` module. The distance to be extended depends on the above parameter `lateral_margin`.
-
-![vehicle_shape_decel](./docs/vehicle_shape_decel.drawio.svg)
-
-The module searches the obstacle pointcloud within detection area. When the pointcloud is found, the deceleration point is inserted to the trajectory.
-
-![pointcloud_decel](./docs/point_cloud_decel.drawio.svg)
-
-<!-- Moreover, to avoid sudden deceleration, If the current velocity of vehicle is higher than $v_{target}$, the deceleration is planned based on the current velocity. This indicates that there are cases where it is not possible to decelerate according to $v_{target}$ in such a situation that a point cloud in the detection area is suddenly appeared near the vehicle. -->
-
-<!-- ![velocity_limitation](./docs/velocity_limitation.drawio.svg) -->
-
-### Adaptive Cruise Controller
-
-#### Role
+### Role
 
 `Adaptive Cruise Controller` module embeds maximum velocity in trajectory when there is a dynamic point cloud on the trajectory. The value of maximum velocity depends on the own velocity, the velocity of the point cloud ( = velocity of the front car), and the distance to the point cloud (= distance to the front car).
 
@@ -246,7 +261,7 @@ The module searches the obstacle pointcloud within detection area. When the poin
 | `adaptive_cruise_control.use_rough_velocity_estimation:`         | bool   | Use rough estimated velocity if the velocity estimation is failed                                               |
 | `adaptive_cruise_control.rough_velocity_rate`                    | double | In the rough velocity estimation, the velocity of front car is estimated as self current velocity \* this value |
 
-#### Flowchart
+### Flowchart
 
 ```plantuml
 @startuml
