@@ -189,7 +189,7 @@ bool RouteHandler::isRouteLooped(const RouteSections & route_sections) const
   for (const auto & route_section : route_sections) {
     for (const auto & primitive : route_section.primitives) {
       if (lane_primitives.find(primitive.id) == lane_primitives.end()) {
-        lane_primitives.insert(primitive.id);
+        lane_primitives.emplace(primitive.id);
       } else {
         return true;  // find duplicated id
       }
