@@ -253,11 +253,11 @@ void PathShifter::updateShiftPointIndices()
   for (auto & p : shift_points_) {
     p.start_idx = motion_utils::findNearestIndex(
       reference_path_.points,
-      p.start.position);  // TODO(planning/control team) remove findNearestIndex for except
+      p.start.position);  // TODO(murooka) remove findNearestIndex for except
                           // lane_following to support u-turn & crossing path
     p.end_idx = motion_utils::findNearestIndex(
       reference_path_.points,
-      p.end.position);  // TODO(planning/control team) remove findNearestIndex for except
+      p.end.position);  // TODO(murooka) remove findNearestIndex for except
                         // lane_following to support u-turn & crossing path
   }
   is_index_aligned_ = true;
