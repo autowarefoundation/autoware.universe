@@ -29,7 +29,7 @@ Different vehicle models are implemented:
 - dynamics : bicycle dynamics model considering slip angle.
   The kinematics model is being used by default. Please see the reference [1] for more details.
 
-For the optimization, a Quadratic Programming (QP) solver is used with two options are currently implemented:
+For the optimization, a Quadratic Programming (QP) solver is used and two options are currently implemented:
 
 - unconstraint_fast : use least square method to solve unconstraint QP with eigen.
 - [osqp](https://osqp.org/): run the [following ADMM](https://web.stanford.edu/~boyd/papers/admm_distr_stats.html) algorithm (for more details see the related papers at the [Citing OSQP](https://web.stanford.edu/~boyd/papers/admm_distr_stats.html) section):
