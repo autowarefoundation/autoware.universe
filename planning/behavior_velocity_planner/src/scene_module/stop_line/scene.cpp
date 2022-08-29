@@ -25,46 +25,6 @@ namespace bg = boost::geometry;
 
 namespace
 {
-double calcYawFromPoints(
-  const geometry_msgs::msg::Point & p_front, const geometry_msgs::msg::Point & p_back)
-{
-  return std::atan2(p_back.y - p_front.y, p_back.x - p_front.x);
-}
-
-geometry_msgs::msg::Pose calcInterpolatedPose(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  const StopLineModule::SegmentIndexWithOffset & offset_segment)
-{
-  // Get segment points
-  const auto & p_front = path.points.at(offset_segment.index).point.pose.position;
-  const auto & p_back = path.points.at(offset_segment.index + 1).point.pose.position;
-
-  // To Eigen point
-  const auto p_eigen_front = Eigen::Vector2d(p_front.x, p_front.y);
-  const auto p_eigen_back = Eigen::Vector2d(p_back.x, p_back.y);
-
-  // Calculate interpolation ratio
-  const auto interpolate_ratio = offset_segment.offset / (p_eigen_back - p_eigen_front).norm();
-
-  // Add offset to front point
-  const auto interpolated_point_2d =
-    p_eigen_front + interpolate_ratio * (p_eigen_back - p_eigen_front);
-  const double interpolated_z = p_front.z + interpolate_ratio * (p_back.z - p_front.z);
-
-  // Calculate orientation so that X-axis would be along the trajectory
-  tf2::Quaternion quat;
-  quat.setRPY(0, 0, calcYawFromPoints(p_front, p_back));
-
-  // To Pose
-  geometry_msgs::msg::Pose interpolated_pose;
-  interpolated_pose.position.x = interpolated_point_2d.x();
-  interpolated_pose.position.y = interpolated_point_2d.y();
-  interpolated_pose.position.z = interpolated_z;
-  interpolated_pose.orientation = tf2::toMsg(quat);
-
-  return interpolated_pose;
-}
-
 boost::optional<StopLineModule::SegmentIndexWithOffset> findBackwardOffsetSegment(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const size_t base_idx,
   const double offset_length)
@@ -72,10 +32,10 @@ boost::optional<StopLineModule::SegmentIndexWithOffset> findBackwardOffsetSegmen
   double sum_length = 0.0;
   const auto start = static_cast<std::int32_t>(base_idx) - 1;
   for (std::int32_t i = start; i >= 0; --i) {
-    const auto p_front = to_bg2d(path.points.at(i).point.pose.position);
-    const auto p_back = to_bg2d(path.points.at(i + 1).point.pose.position);
+    const auto p_front = path.points.at(i).point.pose.position;
+    const auto p_back = path.points.at(i + 1).point.pose.position;
 
-    sum_length += bg::distance(p_front, p_back);
+    sum_length += tier4_autoware_utils::calcDistance2d(p_front, p_back);
 
     // If it's over offset point, return front index and remain offset length
     if (sum_length >= offset_length) {
@@ -166,8 +126,13 @@ boost::optional<StopLineModule::SegmentIndexWithPose> StopLineModule::calcStopPo
     return StopLineModule::SegmentIndexWithPose{0, path.points.front().point.pose};
   }
 
+  // Calculate Interpolated Pose
+  const auto & p_front = path.points.at(offset_segment->index).point.pose;
+  const auto & p_back = path.points.at(offset_segment->index + 1).point.pose;
+  const auto ratio = offset_segment->offset / tier4_autoware_utils::calcDistance2d(p_front, p_back);
+
   return StopLineModule::SegmentIndexWithPose{
-    offset_segment->index, calcInterpolatedPose(path, *offset_segment)};
+    offset_segment->index, tier4_autoware_utils::calcInterpolatedPose(p_front, p_back, ratio)};
 }
 
 autoware_auto_planning_msgs::msg::PathWithLaneId StopLineModule::insertStopPose(
