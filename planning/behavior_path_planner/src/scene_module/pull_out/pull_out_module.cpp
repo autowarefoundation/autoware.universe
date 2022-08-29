@@ -234,8 +234,8 @@ CandidateOutput PullOutModule::planCandidate() const
   }
   planning_api_interface_ptr_->updateSteeringFactor(
     {selected_path.shift_point.start, selected_path.shift_point.end},
-    {output.start_distance_to_path_change, output.finish_distance_to_path_change}, SteeringFactor::PULL_OUT,
-    direction, SteeringFactor::APPROACHING, "");
+    {output.start_distance_to_path_change, output.finish_distance_to_path_change},
+    SteeringFactor::PULL_OUT, direction, SteeringFactor::APPROACHING, "");
   return output;
 }
 

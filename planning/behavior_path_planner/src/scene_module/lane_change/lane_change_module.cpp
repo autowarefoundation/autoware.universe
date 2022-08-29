@@ -189,7 +189,8 @@ BehaviorModuleOutput LaneChangeModule::plan()
 
   planning_api_interface_ptr_->updateSteeringFactor(
     {status_.lane_change_path.shift_point.start, status_.lane_change_path.shift_point.end},
-    {output.turn_signal_info.signal_distance}, SteeringFactor::LANE_CHANGE, direction, SteeringFactor::TURNING, "");
+    {output.turn_signal_info.signal_distance}, SteeringFactor::LANE_CHANGE, direction,
+    SteeringFactor::TURNING, "");
   return output;
 }
 
@@ -229,8 +230,8 @@ CandidateOutput LaneChangeModule::planCandidate() const
   }
   planning_api_interface_ptr_->updateSteeringFactor(
     {selected_path.shift_point.start, selected_path.shift_point.end},
-    {output.start_distance_to_path_change, output.finish_distance_to_path_change}, SteeringFactor::LANE_CHANGE, direction,
-    SteeringFactor::APPROACHING, "");
+    {output.start_distance_to_path_change, output.finish_distance_to_path_change},
+    SteeringFactor::LANE_CHANGE, direction, SteeringFactor::APPROACHING, "");
   return output;
 }
 
