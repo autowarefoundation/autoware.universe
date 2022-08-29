@@ -118,6 +118,27 @@ size_t calcPointIndexFromSegmentIndex(
   return next_point_idx;
 }
 
+template <class T>
+size_t calcSegmentIndexFromPointIndex(
+  const std::vector<T> & points, const geometry_msgs::msg::Point & point, const size_t idx)
+{
+  if (idx == 0) {
+    return 0;
+  }
+  if (idx == points.size() - 1) {
+    return idx - 1;
+  }
+  if (points.size() < 3) {
+    return 0;
+  }
+
+  const double offset_to_seg = motion_utils::calcLongitudinalOffsetToSegment(points, idx, point);
+  if (0 < offset_to_seg) {
+    return idx;
+  }
+  return idx - 1;
+}
+
 // create detection area from given range return false if creation failure
 bool createDetectionAreaPolygons(
   Polygons2d & da_polys, const PathWithLaneId & path, const geometry_msgs::msg::Pose & target_pose,
@@ -269,6 +290,8 @@ bool isOverLine(
 
 boost::optional<geometry_msgs::msg::Pose> insertStopPoint(
   const geometry_msgs::msg::Point & stop_point, PathWithLaneId & output);
+boost::optional<geometry_msgs::msg::Pose> insertStopPoint(
+  const geometry_msgs::msg::Point & stop_point, const size_t stop_seg_idx, PathWithLaneId & output);
 }  // namespace planning_utils
 }  // namespace behavior_velocity_planner
 

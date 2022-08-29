@@ -72,7 +72,7 @@ bool StopLineModule::modifyPathVelocity(
    * |----------------------------|
    * s---ego----------x--|--------g
    */
-  const size_t stop_line_seg_idx = planning_utils::calcPointIndexFromSegmentIndex(
+  const size_t stop_line_seg_idx = planning_utils::calcSegmentIndexFromPointIndex(
     path->points, stop_pose.position, stop_point_idx);
   const double stop_line_margin = base_link2front + planner_param_.stop_margin;
   const size_t current_seg_idx = findEgoSegmentIndex(path->points);
@@ -83,7 +83,7 @@ bool StopLineModule::modifyPathVelocity(
     stop_line_margin;
   if (state_ == State::APPROACH) {
     // Insert stop pose
-    planning_utils::insertStopPoint(stop_pose.position, *path);
+    planning_utils::insertStopPoint(stop_pose.position, stop_line_seg_idx, *path);
 
     // Update first stop index
     first_stop_path_point_index_ = static_cast<int>(stop_point_idx);

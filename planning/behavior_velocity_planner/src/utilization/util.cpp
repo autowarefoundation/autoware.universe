@@ -82,7 +82,7 @@ bool createDetectionAreaPolygons(
     const auto & pp = path.points;
     const double ds = calcDistance2d(pp.at(target_seg_idx), pp.at(target_seg_idx + 1));
     const double dist_to_target_seg =
-      calcSignedArcLength(path.points, target_seg_idx, target_pose.position);
+      calcSignedArcLength(path.points, target_seg_idx, target_pose.position, target_seg_idx);
     const double ratio = dist_to_target_seg / ds;
     p0 = getLerpPathPointWithLaneId(
       pp.at(target_seg_idx).point, pp.at(target_seg_idx + 1).point, ratio);
@@ -605,6 +605,7 @@ std::vector<int64_t> getSubsequentLaneIdsSetOnPath(
   return subsequent_lane_ids;
 }
 
+// TODO(murooka) remove calcSignedArcLength using findNearestSegmentIndex
 bool isOverLine(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const geometry_msgs::msg::Pose & self_pose, const geometry_msgs::msg::Pose & line_pose,
@@ -621,7 +622,7 @@ boost::optional<geometry_msgs::msg::Pose> insertDecelPoint(
 {
   // TODO(tanaka): consider proper overlap threshold for inserting decel point
   const double overlap_threshold = 5e-2;
-  // TODO(planning/control team): remove this function for u-turn and crossing-path
+  // TODO(murooka): remove this function for u-turn and crossing-path
   const size_t base_idx = motion_utils::findNearestSegmentIndex(output.points, stop_point);
   const auto insert_idx =
     motion_utils::insertTargetPoint(base_idx, stop_point, output.points, overlap_threshold);
@@ -638,12 +639,28 @@ boost::optional<geometry_msgs::msg::Pose> insertDecelPoint(
   return tier4_autoware_utils::getPose(output.points.at(insert_idx.get()));
 }
 
+// TODO(murooka): remove this function for u-turn and crossing-path
 boost::optional<geometry_msgs::msg::Pose> insertStopPoint(
   const geometry_msgs::msg::Point & stop_point, PathWithLaneId & output)
 {
-  // TODO(planning/control team): remove this function for u-turn and crossing-path
   const size_t base_idx = motion_utils::findNearestSegmentIndex(output.points, stop_point);
   const auto insert_idx = motion_utils::insertTargetPoint(base_idx, stop_point, output.points);
+
+  if (!insert_idx) {
+    return {};
+  }
+
+  for (size_t i = insert_idx.get(); i < output.points.size(); ++i) {
+    output.points.at(i).point.longitudinal_velocity_mps = 0.0;
+  }
+
+  return tier4_autoware_utils::getPose(output.points.at(insert_idx.get()));
+}
+
+boost::optional<geometry_msgs::msg::Pose> insertStopPoint(
+  const geometry_msgs::msg::Point & stop_point, const size_t stop_seg_idx, PathWithLaneId & output)
+{
+  const auto insert_idx = motion_utils::insertTargetPoint(stop_seg_idx, stop_point, output.points);
 
   if (!insert_idx) {
     return {};

@@ -40,56 +40,6 @@
 #define EIGEN_MPL2_ONLY
 #include <Eigen/Core>
 
-namespace
-{
-geometry_msgs::msg::Point operator+(
-  const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2)
-{
-  geometry_msgs::msg::Point p;
-  p.x = p1.x + p2.x;
-  p.y = p1.y + p2.y;
-  p.z = p1.z + p2.z;
-
-  return p;
-}
-
-geometry_msgs::msg::Point operator*(const geometry_msgs::msg::Point & p, const double v)
-{
-  geometry_msgs::msg::Point multipled_p;
-  multipled_p.x = p.x * v;
-  multipled_p.y = p.y * v;
-  multipled_p.z = p.z * v;
-
-  return multipled_p;
-}
-
-geometry_msgs::msg::Point operator*(const double v, const geometry_msgs::msg::Point & p)
-{
-  return p * v;
-}
-
-// calculate one collision point between the line (from p1 to p2) and the line (from p3 to p4)
-boost::optional<geometry_msgs::msg::Point> checkCollision(
-  const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2,
-  const geometry_msgs::msg::Point & p3, const geometry_msgs::msg::Point & p4)
-{
-  const double det = (p1.x - p2.x) * (p4.y - p3.y) - (p4.x - p3.x) * (p1.y - p2.y);
-
-  if (det == 0.0) {
-    // collision is not one point.
-    return boost::none;
-  }
-
-  const double t = ((p4.y - p3.y) * (p4.x - p2.x) + (p3.x - p4.x) * (p4.y - p2.y)) / det;
-  if (t < 0.0 || 1.0 < t) {
-    // collision is outside the segment line
-    return boost::none;
-  }
-
-  return p1 * t + p2 * (1.0 - t);
-}
-}  // namespace
-
 namespace behavior_velocity_planner
 {
 namespace bg = boost::geometry;
@@ -103,6 +53,34 @@ geometry_msgs::msg::Point convertToGeomPoint(const Point2d & p)
   geom_p.y = p.y();
 
   return geom_p;
+}
+
+geometry_msgs::msg::Point operator+(
+  const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2)
+{
+  geometry_msgs::msg::Point p;
+  p.x = p1.x + p2.x;
+  p.y = p1.y + p2.y;
+  p.z = p1.z + p2.z;
+
+  return p;
+}
+
+[[maybe_unused]] geometry_msgs::msg::Point operator*(
+  const geometry_msgs::msg::Point & p, const double v)
+{
+  geometry_msgs::msg::Point multiplied_p;
+  multiplied_p.x = p.x * v;
+  multiplied_p.y = p.y * v;
+  multiplied_p.z = p.z * v;
+
+  return multiplied_p;
+}
+
+[[maybe_unused]] geometry_msgs::msg::Point operator*(
+  const double v, const geometry_msgs::msg::Point & p)
+{
+  return p * v;
 }
 }  // namespace
 
@@ -122,13 +100,32 @@ inline double calcSignedDistance(
   return basecoords_p2.x() >= 0 ? basecoords_p2.norm() : -basecoords_p2.norm();
 }
 
+// calculate one collision point between the line (from p1 to p2) and the line (from p3 to p4)
+inline boost::optional<geometry_msgs::msg::Point> checkCollision(
+  const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2,
+  const geometry_msgs::msg::Point & p3, const geometry_msgs::msg::Point & p4)
+{
+  const double det = (p1.x - p2.x) * (p4.y - p3.y) - (p4.x - p3.x) * (p1.y - p2.y);
+
+  if (det == 0.0) {
+    // collision is not one point.
+    return boost::none;
+  }
+
+  const double t = ((p4.y - p3.y) * (p4.x - p2.x) + (p3.x - p4.x) * (p4.y - p2.y)) / det;
+  if (t < 0.0 || 1.0 < t) {
+    // collision is outside the segment line
+    return boost::none;
+  }
+
+  return p1 * t + p2 * (1.0 - t);
+}
+
 template <class T>
 boost::optional<PathIndexWithPoint> findCollisionSegment(
-  const T & path, const LineString2d & stop_line, const size_t target_lane_id)
+  const T & path, const geometry_msgs::msg::Point & stop_line_p1,
+  const geometry_msgs::msg::Point & stop_line_p2, const size_t target_lane_id)
 {
-  const auto stop_line_p1 = convertToGeomPoint(stop_line.at(0));
-  const auto stop_line_p2 = convertToGeomPoint(stop_line.at(1));
-
   for (size_t i = 0; i < path.points.size() - 1; ++i) {
     const auto & prev_lane_ids = path.points.at(i).lane_ids;
     const auto & next_lane_ids = path.points.at(i + 1).lane_ids;
@@ -141,8 +138,10 @@ boost::optional<PathIndexWithPoint> findCollisionSegment(
       continue;
     }
 
-    const auto & p1 = path.points.at(i).point.pose.position;      // Point before collision point
-    const auto & p2 = path.points.at(i + 1).point.pose.position;  // Point after collision point
+    const auto & p1 =
+      tier4_autoware_utils::getPoint(path.points.at(i));  // Point before collision point
+    const auto & p2 =
+      tier4_autoware_utils::getPoint(path.points.at(i + 1));  // Point after collision point
 
     const auto collision_point = checkCollision(p1, p2, stop_line_p1, stop_line_p2);
 
@@ -152,6 +151,16 @@ boost::optional<PathIndexWithPoint> findCollisionSegment(
   }
 
   return {};
+}
+
+template <class T>
+boost::optional<PathIndexWithPoint> findCollisionSegment(
+  const T & path, const LineString2d & stop_line, const size_t target_lane_id)
+{
+  const auto stop_line_p1 = convertToGeomPoint(stop_line.at(0));
+  const auto stop_line_p2 = convertToGeomPoint(stop_line.at(1));
+
+  return findCollisionSegment(path, stop_line_p1, stop_line_p2, target_lane_id);
 }
 
 template <class T>
