@@ -23,9 +23,14 @@ Mainly, it implements two algorithms:
 There are lateral and longitudinal base interface classes and each algorithm inherits from this class to implement.
 The interface class has the following base functions.
 
-- `setInputData()`: Input the data subscribed in [controller_node](../../trajectory_follower_nodes/design/trajectory_follower-design.md). This must be implemented with the inherited algorithm and the used data must be selected.
-- `run()`: Compute control commands and return to [controller_node](../../trajectory_follower_nodes/design/). This must be implemented by inherited algorithms.
+- `setInputData()`: Input the data subscribed in [Trajectory Follower Nodes](../../trajectory_follower_nodes/design/trajectory_follower-design.md). This must be implemented with the inherited algorithm and the used data must be selected.
+- `run()`: Compute control commands and return to [Trajectory Follower Nodes](../../trajectory_follower_nodes/design/trajectory_follower-design.md). This must be implemented by inherited algorithms.
 - `syncData()`: Input the result of running the other controller.
+  - steer angle convergence
+    - allow keeping stopped until steer is converged.
+  - velocity convergence(currently not used)
+
+See [the Design of Trajectory Follower Nodes](../../trajectory_follower_nodes/design/trajectory_follower-design.md#Design) for how these functions work in the node.
 
 ## Separated lateral (steering) and longitudinal (velocity) controls
 
