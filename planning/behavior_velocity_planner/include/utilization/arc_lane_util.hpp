@@ -42,6 +42,32 @@
 
 namespace
 {
+geometry_msgs::msg::Point operator+(
+  const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2)
+{
+  geometry_msgs::msg::Point p;
+  p.x = p1.x + p2.x;
+  p.y = p1.y + p2.y;
+  p.z = p1.z + p2.z;
+
+  return p;
+}
+
+geometry_msgs::msg::Point operator*(const geometry_msgs::msg::Point & p, const double v)
+{
+  geometry_msgs::msg::Point multipled_p;
+  multipled_p.x = p.x * v;
+  multipled_p.y = p.y * v;
+  multipled_p.z = p.z * v;
+
+  return multipled_p;
+}
+
+geometry_msgs::msg::Point operator*(const double v, const geometry_msgs::msg::Point & p)
+{
+  return p * v;
+}
+
 // calculate one collision point between the line (from p1 to p2) and the line (from p3 to p4)
 boost::optional<geometry_msgs::msg::Point> checkCollision(
   const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2,
@@ -60,11 +86,7 @@ boost::optional<geometry_msgs::msg::Point> checkCollision(
     return boost::none;
   }
 
-  geometry_msgs::msg::Point p;
-  p.x = t * p1.x + (1.0 - t) * p2.x;
-  p.y = t * p1.y + (1.0 - t) * p2.y;
-
-  return p;
+  return p1 * t + p2 * (1.0 - t);
 }
 }  // namespace
 

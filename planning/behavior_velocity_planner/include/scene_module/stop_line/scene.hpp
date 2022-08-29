@@ -92,10 +92,6 @@ public:
 private:
   geometry_msgs::msg::Point getCenterOfStopLine(const lanelet::ConstLineString3d & stop_line);
 
-  boost::optional<StopLineModule::SegmentIndexWithPoint2d> findCollision(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const LineString2d & stop_line,
-    const SearchRangeIndex & search_index);
-
   boost::optional<StopLineModule::SegmentIndexWithOffset> findOffsetSegment(
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
     const StopLineModule::SegmentIndexWithPoint2d & collision);
