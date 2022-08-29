@@ -24,19 +24,42 @@ set(scene_modules
   run_out
 )
 
+# for utilization. this comes first
+ament_auto_add_library(behavior_velocity_planner_utilitzation SHARED
+  src/utilization/path_utilization.cpp
+  src/utilization/util.cpp
+)
+target_include_directories(behavior_velocity_planner_utilitzation
+  SYSTEM PUBLIC
+    ${BOOST_INCLUDE_DIRS}
+    ${PCL_INCLUDE_DIRS}
+    ${tf2_geometry_msgs_INCLUDE_DIRS}
+    ${EIGEN3_INCLUDE_DIR}
+)
+
+# for each scene module export different library
+macro(add_scene_module_library scene_module)
+  file(GLOB_RECURSE ${scene_module}_srcs "src/scene_module/${scene_module}/*")
+  ament_auto_add_library(behavior_velocity_planner_${scene_module} SHARED ${${scene_module}_srcs})
+  target_link_libraries(behavior_velocity_planner_${scene_module} behavior_velocity_planner_utilitzation)
+  target_include_directories(behavior_velocity_planner_${scene_module}
+    SYSTEM PUBLIC
+    ${BOOST_INCLUDE_DIRS}
+    ${PCL_INCLUDE_DIRS}
+    ${tf2_geometry_msgs_INCLUDE_DIRS}
+    ${EIGEN3_INCLUDE_DIR}
+  )
+endmacro()
+
 foreach(scene_module IN LISTS scene_modules)
-  file(GLOB_RECURSE scene_module_src "src/scene_module/${scene_module}/*")
-  list(APPEND scene_modules_src ${scene_module_src})
+  add_scene_module_library(${scene_module})
 endforeach()
 
+# main node
 ament_auto_add_library(behavior_velocity_planner SHARED
   src/node.cpp
   src/planner_manager.cpp
-  src/utilization/path_utilization.cpp
-  src/utilization/util.cpp
-  ${scene_modules_src}
 )
-
 target_include_directories(behavior_velocity_planner
   SYSTEM PUBLIC
     ${BOOST_INCLUDE_DIRS}
@@ -44,6 +67,10 @@ target_include_directories(behavior_velocity_planner
     ${tf2_geometry_msgs_INCLUDE_DIRS}
     ${EIGEN3_INCLUDE_DIR}
 )
+# link each scene_module
+foreach(scene_module IN LISTS scene_modules)
+  target_link_libraries(behavior_velocity_planner behavior_velocity_planner_${scene_module})
+endforeach()
 
 ament_target_dependencies(behavior_velocity_planner
   Boost
