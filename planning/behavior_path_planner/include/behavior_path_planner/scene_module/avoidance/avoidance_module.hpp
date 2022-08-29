@@ -128,10 +128,11 @@ private:
       rtc_interface_left_.updateCooperateStatus(
         left_shift.uuid, true, start_distance, finish_distance, clock_->now());
 
-      planning_api_interface_ptr_->updateSteeringFactor(
-        {left_shift.start_pose, left_shift.finish_pose}, {start_distance, finish_distance},
-        SteeringFactor::AVOIDANCE_PATH_CHANGE, SteeringFactor::LEFT, SteeringFactor::APPROACHING,
-        "");
+      // TODO(tkhmy): publish approaching avoidance, currently will overright the turning
+      // planning_api_interface_ptr_->updateSteeringFactor(
+      //   {left_shift.start_pose, left_shift.finish_pose}, {start_distance, finish_distance},
+      //   SteeringFactor::AVOIDANCE_PATH_CHANGE, SteeringFactor::LEFT, SteeringFactor::APPROACHING,
+      //   "");
     }
 
     for (const auto & right_shift : right_shift_array_) {
@@ -142,10 +143,12 @@ private:
       rtc_interface_right_.updateCooperateStatus(
         right_shift.uuid, true, start_distance, finish_distance, clock_->now());
 
-      planning_api_interface_ptr_->updateSteeringFactor(
-        {right_shift.start_pose, right_shift.finish_pose}, {start_distance, finish_distance},
-        SteeringFactor::AVOIDANCE_PATH_CHANGE, SteeringFactor::RIGHT, SteeringFactor::APPROACHING,
-        "");
+      // TODO(tkhmy): publish approaching avoidance, currently will overright the turning
+      // planning_api_interface_ptr_->updateSteeringFactor(
+      //   {right_shift.start_pose, right_shift.finish_pose}, {start_distance, finish_distance},
+      //   SteeringFactor::AVOIDANCE_PATH_CHANGE, SteeringFactor::RIGHT,
+      //   SteeringFactor::APPROACHING,
+      //   "");
     }
   }
 
