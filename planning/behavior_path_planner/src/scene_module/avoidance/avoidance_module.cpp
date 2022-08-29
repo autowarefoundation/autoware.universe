@@ -2083,6 +2083,19 @@ CandidateOutput AvoidanceModule::planCandidate() const
     output.lateral_shift = new_shift_points->at(i).getRelativeLength();
     output.start_distance_to_path_change = new_shift_points->front().start_longitudinal;
     output.finish_distance_to_path_change = new_shift_points->back().end_longitudinal;
+
+    // TODO(tkhmy): fix will continue publish the old avoidance logic
+    uint16_t direction;
+    if (output.lateral_shift > 0.0) {
+      direction = SteeringFactor::LEFT;
+    } else {
+      direction = SteeringFactor::RIGHT;
+    }
+
+    planning_api_interface_ptr_->updateSteeringFactor(
+      {new_shift_points->front().start, new_shift_points->back().end},
+      {output.start_distance_to_path_change, output.finish_distance_to_path_change}, SteeringFactor::APPROACHING, direction,
+      SteeringFactor::TURNING, "");
   }
 
   clipPathLength(shifted_path.path);
