@@ -113,15 +113,6 @@ BehaviorTreeManager::getModulesStatus()
   return modules_status_;
 }
 
-std::vector<MarkerArray> BehaviorTreeManager::getDebugMarkers()
-{
-  std::vector<MarkerArray> data;
-  for (const auto & module : scene_modules_) {
-    data.push_back(module->getDebugMarker());
-  }
-  return data;
-}
-
 AvoidanceDebugMsgArray BehaviorTreeManager::getAvoidanceDebugMsgArray()
 {
   const auto avoidance_module = std::find_if(

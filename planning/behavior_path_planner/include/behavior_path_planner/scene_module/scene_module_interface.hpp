@@ -227,8 +227,6 @@ public:
 
   std::shared_ptr<const PlannerData> planner_data_;
 
-  MarkerArray getDebugMarker() { return debug_marker_; }
-
   AvoidanceDebugMsgArray::SharedPtr getAvoidanceDebugMsgArray()
   {
     if (debug_avoidance_msg_array_ptr_) {
