@@ -2094,8 +2094,8 @@ CandidateOutput AvoidanceModule::planCandidate() const
 
     planning_api_interface_ptr_->updateSteeringFactor(
       {new_shift_points->front().start, new_shift_points->back().end},
-      {output.start_distance_to_path_change, output.finish_distance_to_path_change}, SteeringFactor::APPROACHING, direction,
-      SteeringFactor::TURNING, "");
+      {output.start_distance_to_path_change, output.finish_distance_to_path_change},
+      SteeringFactor::APPROACHING, direction, SteeringFactor::TURNING, "");
   }
 
   clipPathLength(shifted_path.path);
