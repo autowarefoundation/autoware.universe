@@ -1777,7 +1777,7 @@ PathWithLaneId setDecelerationVelocity(
   return reference_path;
 }
 
-// TODO(planning/control team) remove calcSignedArcLength using findNearestSegmentIndex inside the
+// TODO(murooka) remove calcSignedArcLength using findNearestSegmentIndex inside the
 // function
 PathWithLaneId setDecelerationVelocity(
   const PathWithLaneId & input, const double target_velocity, const Pose target_pose,
@@ -1808,7 +1808,7 @@ PathWithLaneId setDecelerationVelocity(
   return reference_path;
 }
 
-// TODO(planning/control team) remove calcSignedArcLength using findNearestSegmentIndex inside the
+// TODO(murooka) remove calcSignedArcLength using findNearestSegmentIndex inside the
 // function
 PathWithLaneId setDecelerationVelocityForTurnSignal(
   const PathWithLaneId & input, const Pose target_pose, const double turn_light_on_threshold_time)
