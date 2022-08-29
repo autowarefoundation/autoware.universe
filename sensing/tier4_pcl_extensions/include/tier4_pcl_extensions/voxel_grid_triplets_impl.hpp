@@ -170,7 +170,7 @@ void pcl::VoxelGridTriplets<PointT>::applyFilter(PointCloud & output)
         std::floor((*input_)[index].z * inverse_leaf_size_[2]) - static_cast<float>(min_b_[2]));
 
       // Compute the centroid leaf index
-      int idx = ijk0 * divb_mul_[0] + ijk1 * divb_mul_[1] + ijk2 * divb_mul_[2];
+      // int idx = ijk0 * divb_mul_[0] + ijk1 * divb_mul_[1] + ijk2 * divb_mul_[2];
       index_vector.emplace_back(
         static_cast<unsigned int>(ijk0), static_cast<unsigned int>(ijk1),
         static_cast<unsigned int>(ijk2), index);
