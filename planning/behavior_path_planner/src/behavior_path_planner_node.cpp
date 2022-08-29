@@ -602,7 +602,7 @@ void BehaviorPathPlannerNode::run()
         direction = SteeringFactor::RIGHT;
       }
 
-      // TODO: get pose
+      // TODO(tkhmy): get pose
       planning_api_interface_ptr_->updateSteeringFactor(
         {}, {output.turn_signal_info.signal_distance}, SteeringFactor::INTERSECTION, direction,
         SteeringFactor::TURNING, "");
