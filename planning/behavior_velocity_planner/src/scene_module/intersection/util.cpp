@@ -662,7 +662,7 @@ std::vector<int> extendedAdjacentDirectionLanes(
   return std::vector<int>(following_turning_lanelets.begin(), following_turning_lanelets.end());
 }
 
-std::optional<lanelet::BasicPolygon2d> getIntersectionArea(
+std::optional<lanelet::ConstPolygon3d> getIntersectionArea(
   lanelet::ConstLanelet assigned_lane, lanelet::LaneletMapConstPtr lanelet_map_ptr)
 {
   const std::string area_id_str = assigned_lane.attributeOr("intersection_area", "else");
@@ -670,7 +670,7 @@ std::optional<lanelet::BasicPolygon2d> getIntersectionArea(
 
   const int area_id = std::atoi(area_id_str.c_str());
   const auto poly_3d = lanelet_map_ptr->polygonLayer.get(area_id);
-  return std::make_optional(lanelet::utils::to2D(poly_3d).basicPolygon());
+  return std::make_optional(poly_3d);
 }
 
 }  // namespace util
