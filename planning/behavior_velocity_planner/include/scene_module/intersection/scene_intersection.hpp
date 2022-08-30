@@ -147,6 +147,7 @@ private:
    * @param path             ego-car lane
    * @param detection_area_lanelet_ids  angle check is performed for obstacles using this lanelet
    * ids
+   * @param intersection_area associated intersection_area if exists
    * @param objects_ptr      target objects
    * @param closest_idx      ego-car position index on the lane
    * @return true if collision is detected
@@ -155,6 +156,7 @@ private:
     lanelet::LaneletMapConstPtr lanelet_map_ptr,
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
     const std::vector<int> & detection_area_lanelet_ids,
+    const std::optional<lanelet::BasicPolygon2d> & intersection_area,
     const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
     const int closest_idx, const Polygon2d & stuck_vehicle_detect_area);
 
@@ -236,7 +238,8 @@ private:
    * @return true if the given pose belongs to any target lanelet
    */
   bool checkAngleForTargetLanelets(
-    const geometry_msgs::msg::Pose & pose, const std::vector<int> & target_lanelet_ids);
+    const geometry_msgs::msg::Pose & pose, const std::vector<int> & target_lanelet_ids,
+    const double margin = 0);
 
   /**
    * @brief Get lanes including ego lanelet and next lanelet
