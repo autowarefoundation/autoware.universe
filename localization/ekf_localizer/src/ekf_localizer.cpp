@@ -33,6 +33,25 @@
 
 using std::placeholders::_1;
 
+using Vector6d = Eigen::Matrix<double, 6, 1>;
+
+TimeDelayKalmanFilter InitEKF(
+  const int extend_state_step_,
+  const bool enable_yaw_bias_estimation_)
+{
+  Eigen::MatrixXd P = Eigen::MatrixXd::Identity(6, 6) * 1.0E15;  // for x & y
+  P(2, 2) = 50.0;                                            // for yaw
+  if (enable_yaw_bias_estimation_) {
+    P(3, 3) = 50.0;  // for yaw bias
+  }
+  P(4, 4) = 1000.0;  // for vx
+  P(5, 5) = 50.0;    // for wz
+
+  TimeDelayKalmanFilter ekf;
+  ekf.init(Vector6d::Zero(), P, extend_state_step_);
+  return ekf;
+}
+
 EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOptions & node_options)
 : rclcpp::Node(node_name, node_options), dim_x_(6 /* x, y, yaw, yaw_bias, vx, wz */)
 {
@@ -101,7 +120,7 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
   tf_br_ = std::make_shared<tf2_ros::TransformBroadcaster>(
     std::shared_ptr<rclcpp::Node>(this, [](auto) {}));
 
-  initEKF();
+  ekf_ = InitEKF(extend_state_step_, enable_yaw_bias_estimation_);
 
   z_filter_.set_proc_dev(1.0);
   roll_filter_.set_proc_dev(0.01);
@@ -359,23 +378,6 @@ void EKFLocalizer::callbackTwistWithCovariance(
 {
   TwistInfo twist_info = {msg, 0, twist_smoothing_steps_};
   current_twist_info_queue_.push(twist_info);
-}
-
-/*
- * initEKF
- */
-void EKFLocalizer::initEKF()
-{
-  Eigen::MatrixXd X = Eigen::MatrixXd::Zero(dim_x_, 1);
-  Eigen::MatrixXd P = Eigen::MatrixXd::Identity(dim_x_, dim_x_) * 1.0E15;  // for x & y
-  P(2, 2) = 50.0;                                            // for yaw
-  if (enable_yaw_bias_estimation_) {
-    P(3, 3) = 50.0;  // for yaw bias
-  }
-  P(4, 4) = 1000.0;  // for vx
-  P(5, 5) = 50.0;    // for wz
-
-  ekf_.init(X, P, extend_state_step_);
 }
 
 /*
