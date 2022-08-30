@@ -206,6 +206,13 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   p.visualize_drivable_area_for_shared_linestrings_lanelet =
     declare_parameter("visualize_drivable_area_for_shared_linestrings_lanelet", true);
 
+  p.lateral_distance_max_threshold = declare_parameter("lateral_distance_max_threshold", 3.0);
+  p.longitudinal_distance_min_threshold =
+    declare_parameter("longitudinal_distance_min_threshold", 3.0);
+  p.expected_front_deceleration = declare_parameter("expected_front_deceleration", -1.0);
+  p.expected_rear_deceleration = declare_parameter("expected_rear_deceleration", -1.0);
+  p.rear_vehicle_reaction_time = declare_parameter("rear_vehicle_reaction_time", 2.0);
+  p.rear_vehicle_safety_time_margin = declare_parameter("rear_vehicle_safety_time_margin", 2.0);
   return p;
 }
 
@@ -309,27 +316,23 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
   };
 
   LaneChangeParameters p{};
-  p.min_stop_distance = dp("min_stop_distance", 5.0);
-  p.stop_time = dp("stop_time", 2.0);
-  p.hysteresis_buffer_distance = dp("hysteresis_buffer_distance", 2.0);
   p.lane_change_prepare_duration = dp("lane_change_prepare_duration", 2.0);
   p.lane_changing_duration = dp("lane_changing_duration", 4.0);
+  p.minimum_lane_change_prepare_distance = dp("minimum_lane_change_prepare_distance", 4.0);
   p.lane_change_finish_judge_buffer = dp("lane_change_finish_judge_buffer", 3.0);
   p.minimum_lane_change_velocity = dp("minimum_lane_change_velocity", 8.3);
-  p.prediction_duration = dp("prediction_duration", 8.0);
   p.prediction_time_resolution = dp("prediction_time_resolution", 0.5);
-  p.static_obstacle_velocity_thresh = dp("static_obstacle_velocity_thresh", 0.1);
   p.maximum_deceleration = dp("maximum_deceleration", 1.0);
   p.lane_change_sampling_num = dp("lane_change_sampling_num", 10);
-  p.enable_abort_lane_change = dp("enable_abort_lane_change", true);
-  p.enable_collision_check_at_prepare_phase = dp("enable_collision_check_at_prepare_phase", true);
-  p.use_predicted_path_outside_lanelet = dp("use_predicted_path_outside_lanelet", true);
-  p.use_all_predicted_path = dp("use_all_predicted_path", false);
   p.abort_lane_change_velocity_thresh = dp("abort_lane_change_velocity_thresh", 0.5);
   p.abort_lane_change_angle_thresh =
     dp("abort_lane_change_angle_thresh", tier4_autoware_utils::deg2rad(10.0));
   p.abort_lane_change_distance_thresh = dp("abort_lane_change_distance_thresh", 0.3);
-  p.enable_blocked_by_obstacle = dp("enable_blocked_by_obstacle", false);
+  p.enable_abort_lane_change = dp("enable_abort_lane_change", true);
+  p.enable_collision_check_at_prepare_phase = dp("enable_collision_check_at_prepare_phase", true);
+  p.use_predicted_path_outside_lanelet = dp("use_predicted_path_outside_lanelet", true);
+  p.use_all_predicted_path = dp("use_all_predicted_path", true);
+  p.publish_debug_marker = dp("publish_debug_marker", false);
 
   // validation of parameters
   if (p.lane_change_sampling_num < 1) {
@@ -367,7 +370,7 @@ PullOverParameters BehaviorPathPlannerNode::getPullOverParam()
   p.min_acc = dp("min_acc", -0.5);
   p.enable_shift_parking = dp("enable_shift_parking", true);
   p.enable_arc_forward_parking = dp("enable_arc_forward_parking", true);
-  p.enable_arc_backward_parking = dp("enable_arc_backward_parking", false);
+  p.enable_arc_backward_parking = dp("enable_arc_backward_parking", true);
   // goal research
   p.search_priority = dp("search_priority", "efficient_path");
   p.enable_goal_research = dp("enable_goal_research", true);
@@ -552,18 +555,19 @@ void BehaviorPathPlannerNode::run()
 
   // path handling
   const auto path = getPath(output, planner_data);
-  const auto path_candidate = getPathCandidate(output, planner_data);
 
   // update planner data
   planner_data_->prev_output_path = path;
   mutex_pd_.unlock();
 
   PathWithLaneId clipped_path;
-  if (skipSmoothGoalConnection(bt_manager_->getModulesStatus())) {
+  const auto module_status_ptr_vec = bt_manager_->getModulesStatus();
+  if (skipSmoothGoalConnection(module_status_ptr_vec)) {
     clipped_path = *path;
   } else {
     clipped_path = modifyPathForSmoothGoalConnection(*path);
   }
+
   clipPathLength(clipped_path);
   if (!clipped_path.points.empty()) {
     path_publisher_->publish(clipped_path);
@@ -572,6 +576,7 @@ void BehaviorPathPlannerNode::run()
       get_logger(), *get_clock(), 5000, "behavior path output is empty! Stop publish.");
   }
 
+  const auto path_candidate = getPathCandidate(output, planner_data);
   path_candidate_publisher_->publish(util::toPath(*path_candidate));
 
   // for turn signal
@@ -646,12 +651,39 @@ PathWithLaneId::SharedPtr BehaviorPathPlannerNode::getPathCandidate(
 {
   auto path_candidate =
     bt_output.path_candidate ? bt_output.path_candidate : std::make_shared<PathWithLaneId>();
+
+  if (isForcedCandidatePath()) {
+    for (auto & path_point : path_candidate->points) {
+      path_point.point.longitudinal_velocity_mps = 1.0;
+    }
+  }
+
   path_candidate->header = planner_data->route_handler->getRouteHeader();
   path_candidate->header.stamp = this->now();
   RCLCPP_DEBUG(
     get_logger(), "BehaviorTreeManager: path candidate is %s.",
     bt_output.path_candidate ? "FOUND" : "NOT FOUND");
   return path_candidate;
+}
+
+bool BehaviorPathPlannerNode::isForcedCandidatePath() const
+{
+  const auto & module_status_ptr_vec = bt_manager_->getModulesStatus();
+  for (const auto & module_status_ptr : module_status_ptr_vec) {
+    if (!module_status_ptr) {
+      continue;
+    }
+    if (module_status_ptr->module_name != "LaneChange") {
+      continue;
+    }
+    const auto & is_waiting_approval = module_status_ptr->is_waiting_approval;
+    const auto & is_execution_ready = module_status_ptr->is_execution_ready;
+    if (is_waiting_approval && !is_execution_ready) {
+      return true;
+    }
+    break;
+  }
+  return false;
 }
 
 bool BehaviorPathPlannerNode::skipSmoothGoalConnection(
