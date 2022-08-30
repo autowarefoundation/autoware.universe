@@ -163,7 +163,7 @@ void MissionPlanner::on_set_route_points(
   // NOTE: The route services should be mutually exclusive by callback group.
   if (state_.state != RouteState::Message::UNSET) {
     throw component_interface_utils::ServiceException(
-      SetRoute::Service::Response::ERROR_ROUTE_EXISTS, "The route is already set.");
+      SetRoutePoints::Service::Response::ERROR_ROUTE_EXISTS, "The route is already set.");
   }
   if (!planner_->ready()) {
     throw component_interface_utils::ServiceException(
