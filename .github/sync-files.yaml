@@ -10,6 +10,7 @@
     - source: .github/workflows/spell-check-differential.yaml
     - source: .github/workflows/sync-files.yaml
     - source: .clang-format
+    - source: .clang-tidy
     - source: .markdownlint.yaml
     - source: .pre-commit-config.yaml
     - source: .pre-commit-config-ansible.yaml
