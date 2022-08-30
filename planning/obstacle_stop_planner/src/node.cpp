@@ -466,56 +466,76 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
   {
     auto & p = stop_param_;
     const std::string ns = "stop_planner.";
-    p.max_longitudinal_margin = declare_parameter(ns + "max_longitudinal_margin", 5.0);
-    p.min_longitudinal_margin = declare_parameter(ns + "min_longitudinal_margin", 2.0);
-    p.lateral_buffer_for_detection_area =
-      declare_parameter(ns + "lateral_buffer_for_detection_area", 0.0);
-    p.extend_distance = declare_parameter(ns + "extend_distance", 0.0);
-    p.step_length = declare_parameter(ns + "step_length", 1.0);
+
+    // params for stop position
+    p.max_longitudinal_margin =
+      declare_parameter(ns + "stop_position.max_longitudinal_margin", 5.0);
+    p.min_longitudinal_margin =
+      declare_parameter(ns + "stop_position.min_longitudinal_margin", 2.0);
+    p.hold_stop_margin_distance =
+      declare_parameter(ns + "stop_position.hold_stop_margin_distance", 0.0);
+
+    // params for detection area
+    p.lateral_margin = declare_parameter(ns + "detection_area.lateral_margin", 0.0);
+    p.extend_distance = declare_parameter(ns + "detection_area.extend_distance", 0.0);
+    p.step_length = declare_parameter(ns + "detection_area.step_length", 1.0);
+
+    // apply offset
     p.max_longitudinal_margin += i.max_longitudinal_offset_m;
     p.min_longitudinal_margin += i.max_longitudinal_offset_m;
     p.stop_search_radius =
       p.step_length +
-      std::hypot(
-        i.vehicle_width_m / 2.0 + p.lateral_buffer_for_detection_area, i.vehicle_length_m / 2.0);
-    p.hold_stop_margin_distance = declare_parameter(ns + "hold_stop_margin_distance", 0.0);
+      std::hypot(i.vehicle_width_m / 2.0 + p.lateral_margin, i.vehicle_length_m / 2.0);
   }
 
   {
     auto & p = slow_down_param_;
     const std::string ns = "slow_down_planner.";
+
     // common param
     p.normal_min_jerk = declare_parameter("normal.min_jerk", -0.3);
     p.normal_min_acc = declare_parameter("normal.min_acc", -1.0);
     p.limit_min_jerk = declare_parameter("limit.min_jerk", -1.5);
     p.limit_min_acc = declare_parameter("limit.min_acc", -2.5);
-    // slow down planner specific parameters
-    p.longitudinal_forward_margin = declare_parameter(ns + "longitudinal_forward_margin", 5.0);
-    p.longitudinal_backward_margin = declare_parameter(ns + "longitudinal_backward_margin", 5.0);
-    p.lateral_buffer_for_detection_area =
-      declare_parameter(ns + "lateral_buffer_for_detection_area", 1.0);
-    p.max_slow_down_velocity = declare_parameter(ns + "max_slow_down_velocity", 4.0);
-    p.min_slow_down_velocity = declare_parameter(ns + "min_slow_down_velocity", 2.0);
+
+    // params for slow down section
+    p.longitudinal_forward_margin =
+      declare_parameter(ns + "slow_down_section.longitudinal_forward_margin", 5.0);
+    p.longitudinal_backward_margin =
+      declare_parameter(ns + "slow_down_section.longitudinal_backward_margin", 5.0);
+    p.min_longitudinal_forward_margin =
+      declare_parameter(ns + "slow_down_section.min_longitudinal_forward_margin", 1.0);
+    p.longitudinal_margin_span =
+      declare_parameter(ns + "slow_down_section.longitudinal_margin_span", -0.1);
+
+    // params for detection area
+    p.lateral_margin = declare_parameter(ns + "detection_area.lateral_margin", 1.0);
+
+    // params for target velocity
+    p.max_slow_down_velocity =
+      declare_parameter(ns + "target_velocity.max_slow_down_velocity", 4.0);
+    p.min_slow_down_velocity =
+      declare_parameter(ns + "target_velocity.min_slow_down_velocity", 2.0);
+    p.slow_down_velocity = declare_parameter(ns + "target_velocity.slow_down_velocity", 1.39);
+
     // consider jerk/dec constraints in slow down
     p.consider_constraints = declare_parameter(ns + "consider_constraints", false);
-    p.min_longitudinal_forward_margin =
-      declare_parameter(ns + "min_longitudinal_forward_margin", 1.0);
-    p.longitudinal_margin_span = declare_parameter(ns + "longitudinal_margin_span", -0.1);
-    p.slow_down_min_jerk = declare_parameter(ns + "jerk_min_slow_down", -0.3);
-    p.jerk_start = declare_parameter(ns + "jerk_start", -0.1);
-    p.jerk_span = declare_parameter(ns + "jerk_span", -0.01);
-    p.slow_down_velocity = declare_parameter(ns + "slow_down_velocity", 1.39);
+    p.slow_down_min_jerk = declare_parameter(ns + "constraints.jerk_min_slow_down", -0.3);
+    p.jerk_start = declare_parameter(ns + "constraints.jerk_start", -0.1);
+    p.jerk_span = declare_parameter(ns + "constraints.jerk_span", -0.01);
+
     p.velocity_threshold_decel_complete =
       declare_parameter(ns + "velocity_threshold_decel_complete", 0.2);
     p.acceleration_threshold_decel_complete =
       declare_parameter(ns + "acceleration_threshold_decel_complete", 0.1);
+
+    // apply offset
     p.longitudinal_forward_margin += i.max_longitudinal_offset_m;
     p.min_longitudinal_forward_margin += i.wheel_base_m + i.front_overhang_m;
     p.longitudinal_backward_margin += i.rear_overhang_m;
     p.slow_down_search_radius =
       stop_param_.step_length +
-      std::hypot(
-        i.vehicle_width_m / 2.0 + p.lateral_buffer_for_detection_area, i.vehicle_length_m / 2.0);
+      std::hypot(i.vehicle_width_m / 2.0 + p.lateral_margin, i.vehicle_length_m / 2.0);
   }
 
   // Initializer
@@ -706,7 +726,7 @@ void ObstacleStopPlannerNode::searchObstacle(
       // create one step polygon for slow_down range
       createOneStepPolygon(
         p_front, p_back, one_step_move_slow_down_range_polygon, vehicle_info,
-        slow_down_param_.lateral_buffer_for_detection_area);
+        slow_down_param_.lateral_margin);
       debug_ptr_->pushPolygon(
         one_step_move_slow_down_range_polygon, p_front.position.z, PolygonType::SlowDownRange);
 
@@ -744,8 +764,7 @@ void ObstacleStopPlannerNode::searchObstacle(
       std::vector<cv::Point2d> one_step_move_vehicle_polygon;
       // create one step polygon for vehicle
       createOneStepPolygon(
-        p_front, p_back, one_step_move_vehicle_polygon, vehicle_info,
-        stop_param.lateral_buffer_for_detection_area);
+        p_front, p_back, one_step_move_vehicle_polygon, vehicle_info, stop_param.lateral_margin);
       debug_ptr_->pushPolygon(
         one_step_move_vehicle_polygon, decimate_trajectory.at(i).pose.position.z,
         PolygonType::Vehicle);
@@ -1003,12 +1022,10 @@ void ObstacleStopPlannerNode::externalExpandStopRangeCallback(
   std::lock_guard<std::mutex> lock(mutex_);
 
   const auto & i = vehicle_info_;
-  stop_param_.lateral_buffer_for_detection_area = input_msg->expand_stop_range;
+  stop_param_.lateral_margin = input_msg->expand_stop_range;
   stop_param_.stop_search_radius =
     stop_param_.step_length +
-    std::hypot(
-      i.vehicle_width_m / 2.0 + stop_param_.lateral_buffer_for_detection_area,
-      i.vehicle_length_m / 2.0);
+    std::hypot(i.vehicle_width_m / 2.0 + stop_param_.lateral_margin, i.vehicle_length_m / 2.0);
 }
 
 void ObstacleStopPlannerNode::insertStopPoint(
@@ -1137,7 +1154,7 @@ SlowDownSection ObstacleStopPlannerNode::createSlowDownSection(
       slow_down_param_.min_slow_down_velocity +
       (slow_down_param_.max_slow_down_velocity - slow_down_param_.min_slow_down_velocity) *
         std::max(lateral_deviation - vehicle_info.vehicle_width_m / 2, 0.0) /
-        slow_down_param_.lateral_buffer_for_detection_area;
+        slow_down_param_.lateral_margin;
 
     return createSlowDownSectionFromMargin(
       idx, base_trajectory, update_forward_margin_from_vehicle, update_backward_margin_from_vehicle,

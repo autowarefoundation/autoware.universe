@@ -88,7 +88,7 @@ struct StopParam
   // the boundary of the detection area for collision obstacles [m]
   // if any obstacles exist within the detection area, this module plans to stop
   // before the obstacle.
-  double lateral_buffer_for_detection_area;
+  double lateral_margin;
 
   // =================================
   // params for trajectory pre-process
@@ -137,7 +137,7 @@ struct SlowDownParam
 
   // lateral margin between the ego's footprint and the boundary of the detection area for slow down
   // obstacles [m]
-  double lateral_buffer_for_detection_area;
+  double lateral_margin;
 
   // ===================
   // params for velocity

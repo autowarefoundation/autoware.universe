@@ -86,31 +86,21 @@ This module has parameter `hold_stop_margin_distance` in order to prevent from t
 
 ### Parameters
 
-#### Longitudinal margin between the obstacle and the ego
+#### Stop position
 
-| Parameter                 | Type   | Description                                                                                                                                    |
-| ------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `max_longitudinal_margin` | double | margin between obstacle and the ego's front [m]                                                                                                |
-| `min_longitudinal_margin` | double | if any obstacle exists within `max_longitudinal_margin`, this module set margin as the value of _stop margin_ to `min_longitudinal_margin` [m] |
+| Parameter                   | Type   | Description                                                                                                                                    |
+| --------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `max_longitudinal_margin`   | double | margin between obstacle and the ego's front [m]                                                                                                |
+| `min_longitudinal_margin`   | double | if any obstacle exists within `max_longitudinal_margin`, this module set margin as the value of _stop margin_ to `min_longitudinal_margin` [m] |
+| `hold_stop_margin_distance` | double | parameter for restart prevention (See above section) [m]                                                                                       |
 
 #### Obstacle detection area
 
-| Parameter                           | Type   | Description                                                                         |
-| ----------------------------------- | ------ | ----------------------------------------------------------------------------------- |
-| `lateral_buffer_for_detection_area` | double | lateral margin from the vehicle footprint for collision obstacle detection area [m] |
-
-#### Trajectory pre-process
-
-| Parameter         | Type   | Description                                                                  |
-| ----------------- | ------ | ---------------------------------------------------------------------------- |
-| `step_length`     | double | step length for pointcloud search range [m]                                  |
-| `extend_distance` | double | extend trajectory to consider after goal obstacle in the extend_distance [m] |
-
-#### Restart prevention
-
-| Parameter                   | Type   | Description                                              |
-| --------------------------- | ------ | -------------------------------------------------------- |
-| `hold_stop_margin_distance` | double | parameter for restart prevention (See above section) [m] |
+| Parameter         | Type   | Description                                                                         |
+| ----------------- | ------ | ----------------------------------------------------------------------------------- |
+| `lateral_margin`  | double | lateral margin from the vehicle footprint for collision obstacle detection area [m] |
+| `step_length`     | double | step length for pointcloud search range [m]                                         |
+| `extend_distance` | double | extend trajectory to consider after goal obstacle in the extend_distance [m]        |
 
 ### Flowchart
 
@@ -157,7 +147,7 @@ $v_{target} = v_{min} + \frac{l_{ld} - l_{vw}/2}{l_{margin}} (v_{max} - v_{min} 
 - $v_{min}$ : `min_slow_down_velocity` [m/s]
 - $v_{max}$ : `max_slow_down_velocity` [m/s]
 - $l_{ld}$ : lateral deviation between the obstacle and the ego footprint [m]
-- $l_{margin}$ : `lateral_buffer_for_detection_area` [m]
+- $l_{margin}$ : `lateral_margin` [m]
 - $l_{vw}$ : width of the ego footprint [m]
 
 The above equation means that the smaller the lateral deviation of the pointcloud, the lower the velocity of the slow down section.
@@ -174,7 +164,7 @@ The above equation means that the smaller the lateral deviation of the pointclou
 
 ### Parameters
 
-#### Longitudinal margin between the obstacle and the ego
+#### Slow down section
 
 | Parameter                      | Type   | Description                                     |
 | ------------------------------ | ------ | ----------------------------------------------- |
@@ -183,11 +173,11 @@ The above equation means that the smaller the lateral deviation of the pointclou
 
 #### Obstacle detection area
 
-| Parameter                           | Type   | Description                                                                         |
-| ----------------------------------- | ------ | ----------------------------------------------------------------------------------- |
-| `lateral_buffer_for_detection_area` | double | lateral margin from the vehicle footprint for slow down obstacle detection area [m] |
+| Parameter        | Type   | Description                                                                         |
+| ---------------- | ------ | ----------------------------------------------------------------------------------- |
+| `lateral_margin` | double | lateral margin from the vehicle footprint for slow down obstacle detection area [m] |
 
-## Slow down target velocity
+#### Slow down target velocity
 
 | Parameter                | Type   | Description                  |
 | ------------------------ | ------ | ---------------------------- |
