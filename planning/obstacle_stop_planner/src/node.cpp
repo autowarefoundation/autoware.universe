@@ -155,31 +155,38 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
   last_detect_time_collision_point_ = this->now();
 
   // Publishers
-  path_pub_ = this->create_publisher<Trajectory>("~/output/trajectory", 1);
-  stop_reason_diag_pub_ = this->create_publisher<DiagnosticStatus>("~/output/stop_reason", 1);
+  pub_trajectory_ = this->create_publisher<Trajectory>("~/output/trajectory", 1);
+
+  pub_stop_reason_ = this->create_publisher<DiagnosticStatus>("~/output/stop_reason", 1);
+
   pub_clear_velocity_limit_ = this->create_publisher<VelocityLimitClearCommand>(
     "~/output/velocity_limit_clear_command", rclcpp::QoS{1}.transient_local());
+
   pub_velocity_limit_ = this->create_publisher<VelocityLimit>(
     "~/output/max_velocity", rclcpp::QoS{1}.transient_local());
 
   // Subscribers
-  obstacle_pointcloud_sub_ = this->create_subscription<PointCloud2>(
+  sub_point_cloud_ = this->create_subscription<PointCloud2>(
     "~/input/pointcloud", rclcpp::SensorDataQoS(),
     std::bind(&ObstacleStopPlannerNode::onPointCloud, this, std::placeholders::_1),
     createSubscriptionOptions(this));
-  path_sub_ = this->create_subscription<Trajectory>(
+
+  sub_trajectory_ = this->create_subscription<Trajectory>(
     "~/input/trajectory", 1,
     std::bind(&ObstacleStopPlannerNode::onTriger, this, std::placeholders::_1),
     createSubscriptionOptions(this));
-  current_velocity_sub_ = this->create_subscription<Odometry>(
+
+  sub_odometry_ = this->create_subscription<Odometry>(
     "~/input/odometry", 1,
     std::bind(&ObstacleStopPlannerNode::onOdometry, this, std::placeholders::_1),
     createSubscriptionOptions(this));
-  dynamic_object_sub_ = this->create_subscription<PredictedObjects>(
+
+  sub_dynamic_objects_ = this->create_subscription<PredictedObjects>(
     "~/input/objects", 1,
     std::bind(&ObstacleStopPlannerNode::onDynamicObjects, this, std::placeholders::_1),
     createSubscriptionOptions(this));
-  expand_stop_range_sub_ = this->create_subscription<ExpandStopRange>(
+
+  sub_expand_stop_range_ = this->create_subscription<ExpandStopRange>(
     "~/input/expand_stop_range", 1,
     std::bind(&ObstacleStopPlannerNode::onExpandStopRange, this, std::placeholders::_1),
     createSubscriptionOptions(this));
@@ -255,7 +262,7 @@ void ObstacleStopPlannerNode::onTriger(const Trajectory::ConstSharedPtr input_ms
   if (!is_driving_forward_) {
     RCLCPP_WARN_THROTTLE(
       get_logger(), *get_clock(), 3000, "Backward path is NOT supported. publish input as it is.");
-    path_pub_->publish(*input_msg);
+    pub_trajectory_->publish(*input_msg);
     return;
   }
 
@@ -298,7 +305,7 @@ void ObstacleStopPlannerNode::onTriger(const Trajectory::ConstSharedPtr input_ms
   publishDebugData(planner_data, current_acc, current_vel);
 
   trajectory.header = input_msg->header;
-  path_pub_->publish(trajectory);
+  pub_trajectory_->publish(trajectory);
 }
 
 void ObstacleStopPlannerNode::searchObstacle(
@@ -590,7 +597,7 @@ void ObstacleStopPlannerNode::insertVelocity(
     }
   }
 
-  stop_reason_diag_pub_->publish(planner_data.stop_reason_diag);
+  pub_stop_reason_->publish(planner_data.stop_reason_diag);
 }
 
 void ObstacleStopPlannerNode::onExpandStopRange(const ExpandStopRange::ConstSharedPtr input_msg)

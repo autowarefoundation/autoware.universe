@@ -95,18 +95,22 @@ public:
   explicit ObstacleStopPlannerNode(const rclcpp::NodeOptions & node_options);
 
 private:
-  /*
-   * ROS
-   */
-  // publisher and subscriber
-  rclcpp::Subscription<Trajectory>::SharedPtr path_sub_;
-  rclcpp::Subscription<PointCloud2>::SharedPtr obstacle_pointcloud_sub_;
-  rclcpp::Subscription<Odometry>::SharedPtr current_velocity_sub_;
-  rclcpp::Subscription<PredictedObjects>::SharedPtr dynamic_object_sub_;
-  rclcpp::Subscription<ExpandStopRange>::SharedPtr expand_stop_range_sub_;
-  rclcpp::Publisher<Trajectory>::SharedPtr path_pub_;
-  rclcpp::Publisher<DiagnosticStatus>::SharedPtr stop_reason_diag_pub_;
+  rclcpp::Subscription<Trajectory>::SharedPtr sub_trajectory_;
+
+  rclcpp::Subscription<PointCloud2>::SharedPtr sub_point_cloud_;
+
+  rclcpp::Subscription<Odometry>::SharedPtr sub_odometry_;
+
+  rclcpp::Subscription<PredictedObjects>::SharedPtr sub_dynamic_objects_;
+
+  rclcpp::Subscription<ExpandStopRange>::SharedPtr sub_expand_stop_range_;
+
+  rclcpp::Publisher<Trajectory>::SharedPtr pub_trajectory_;
+
+  rclcpp::Publisher<DiagnosticStatus>::SharedPtr pub_stop_reason_;
+
   rclcpp::Publisher<VelocityLimitClearCommand>::SharedPtr pub_clear_velocity_limit_;
+
   rclcpp::Publisher<VelocityLimit>::SharedPtr pub_velocity_limit_;
 
   std::unique_ptr<AdaptiveCruiseController> acc_controller_;
