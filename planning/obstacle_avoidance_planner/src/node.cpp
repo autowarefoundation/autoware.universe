@@ -190,7 +190,7 @@ std::tuple<std::vector<double>, std::vector<double>> calcVehicleCirclesInfo(
 }
 
 template <class T>
-size_t findNearestIndexWithSoftYawConstraints(
+[[maybe_unused]] size_t findNearestIndexWithSoftYawConstraints(
   const std::vector<T> & points, const geometry_msgs::msg::Pose & pose, const double dist_threshold,
   const double yaw_threshold)
 {
@@ -201,7 +201,7 @@ size_t findNearestIndexWithSoftYawConstraints(
 }
 
 template <>
-size_t findNearestIndexWithSoftYawConstraints(
+[[maybe_unused]] size_t findNearestIndexWithSoftYawConstraints(
   const std::vector<geometry_msgs::msg::Point> & points, const geometry_msgs::msg::Pose & pose,
   const double dist_threshold, const double yaw_threshold)
 {
@@ -212,7 +212,7 @@ size_t findNearestIndexWithSoftYawConstraints(
 }
 
 template <class T>
-size_t findNearestSegmentIndexWithSoftYawConstraints(
+[[maybe_unused]] size_t findNearestSegmentIndexWithSoftYawConstraints(
   const std::vector<T> & points, const geometry_msgs::msg::Pose & pose, const double dist_threshold,
   const double yaw_threshold)
 {
@@ -223,7 +223,7 @@ size_t findNearestSegmentIndexWithSoftYawConstraints(
 }
 
 template <>
-size_t findNearestSegmentIndexWithSoftYawConstraints(
+[[maybe_unused]] size_t findNearestSegmentIndexWithSoftYawConstraints(
   const std::vector<geometry_msgs::msg::Point> & points, const geometry_msgs::msg::Pose & pose,
   const double dist_threshold, const double yaw_threshold)
 {
