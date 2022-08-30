@@ -173,11 +173,16 @@ BehaviorModuleOutput PullOutModule::plan()
   } else {
     direction = SteeringFactor::RIGHT;
   }
+  const auto current_pose = planner_data_->self_pose->pose;
+  const double start_distance = motion_utils::calcSignedArcLength(
+    output.path->points, current_pose.position, status_.pull_out_path.shift_point.start.position);
+  const double finish_distance = motion_utils::calcSignedArcLength(
+    output.path->points, current_pose.position, status_.pull_out_path.shift_point.end.position);
 
   planning_api_interface_ptr_->updateSteeringFactor(
     {status_.pull_out_path.shift_point.start, status_.pull_out_path.shift_point.end},
-    {output.turn_signal_info.signal_distance}, SteeringFactor::PULL_OUT, direction,
-    SteeringFactor::TURNING, "");
+    {start_distance, finish_distance}, SteeringFactor::PULL_OUT, direction, SteeringFactor::TURNING,
+    "");
 
   return output;
 }
