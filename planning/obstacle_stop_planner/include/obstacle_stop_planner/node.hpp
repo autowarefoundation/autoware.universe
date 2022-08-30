@@ -88,6 +88,7 @@ using tier4_planning_msgs::msg::VelocityLimitClearCommand;
 using vehicle_info_util::VehicleInfo;
 
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
+using PointCloud = pcl::PointCloud<pcl::PointXYZ>;
 
 class ObstacleStopPlannerNode : public rclcpp::Node
 {
@@ -150,8 +151,8 @@ private:
 private:
   bool withinPolygon(
     const std::vector<cv::Point2d> & cv_polygon, const double radius, const Point2d & prev_point,
-    const Point2d & next_point, pcl::PointCloud<pcl::PointXYZ>::Ptr candidate_points_ptr,
-    pcl::PointCloud<pcl::PointXYZ>::Ptr within_points_ptr);
+    const Point2d & next_point, PointCloud::Ptr candidate_points_ptr,
+    PointCloud::Ptr within_points_ptr);
 
   bool convexHull(
     const std::vector<cv::Point2d> & pointcloud, std::vector<cv::Point2d> & polygon_points);
@@ -174,7 +175,7 @@ private:
 
   bool searchPointcloudNearTrajectory(
     const TrajectoryPoints & trajectory, const PointCloud2::ConstSharedPtr & input_points_ptr,
-    pcl::PointCloud<pcl::PointXYZ>::Ptr output_points_ptr, const Header & trajectory_header,
+    PointCloud::Ptr output_points_ptr, const Header & trajectory_header,
     const VehicleInfo & vehicle_info, const StopParam & stop_param);
 
   void createOneStepPolygon(
@@ -184,12 +185,12 @@ private:
   bool getSelfPose(const Header & header, const tf2_ros::Buffer & tf_buffer, Pose & self_pose);
 
   void getNearestPoint(
-    const pcl::PointCloud<pcl::PointXYZ> & pointcloud, const Pose & base_pose,
-    pcl::PointXYZ * nearest_collision_point, rclcpp::Time * nearest_collision_point_time);
+    const PointCloud & pointcloud, const Pose & base_pose, pcl::PointXYZ * nearest_collision_point,
+    rclcpp::Time * nearest_collision_point_time);
 
   void getLateralNearestPoint(
-    const pcl::PointCloud<pcl::PointXYZ> & pointcloud, const Pose & base_pose,
-    pcl::PointXYZ * lateral_nearest_point, double * deviation);
+    const PointCloud & pointcloud, const Pose & base_pose, pcl::PointXYZ * lateral_nearest_point,
+    double * deviation);
 
   Pose getVehicleCenterFromBase(const Pose & base_pose, const VehicleInfo & vehicle_info);
 

@@ -581,10 +581,9 @@ void ObstacleStopPlannerNode::obstaclePointcloudCallback(
 
   obstacle_ros_pointcloud_ptr_ = std::make_shared<PointCloud2>();
   pcl::VoxelGrid<pcl::PointXYZ> filter;
-  pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::PointCloud<pcl::PointXYZ>::Ptr no_height_pointcloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::PointCloud<pcl::PointXYZ>::Ptr no_height_filtered_pointcloud_ptr(
-    new pcl::PointCloud<pcl::PointXYZ>);
+  PointCloud::Ptr pointcloud_ptr(new PointCloud);
+  PointCloud::Ptr no_height_pointcloud_ptr(new PointCloud);
+  PointCloud::Ptr no_height_filtered_pointcloud_ptr(new PointCloud);
 
   pcl::fromROSMsg(*input_msg, *pointcloud_ptr);
 
@@ -696,9 +695,8 @@ void ObstacleStopPlannerNode::searchObstacle(
   const StopParam & stop_param, const PointCloud2::SharedPtr obstacle_ros_pointcloud_ptr)
 {
   // search candidate obstacle pointcloud
-  pcl::PointCloud<pcl::PointXYZ>::Ptr slow_down_pointcloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::PointCloud<pcl::PointXYZ>::Ptr obstacle_candidate_pointcloud_ptr(
-    new pcl::PointCloud<pcl::PointXYZ>);
+  PointCloud::Ptr slow_down_pointcloud_ptr(new PointCloud);
+  PointCloud::Ptr obstacle_candidate_pointcloud_ptr(new PointCloud);
   if (!searchPointcloudNearTrajectory(
         decimate_trajectory, obstacle_ros_pointcloud_ptr, obstacle_candidate_pointcloud_ptr,
         trajectory_header, vehicle_info, stop_param)) {
@@ -762,8 +760,7 @@ void ObstacleStopPlannerNode::searchObstacle(
         one_step_move_vehicle_polygon, decimate_trajectory.at(i).pose.position.z,
         PolygonType::Vehicle);
 
-      pcl::PointCloud<pcl::PointXYZ>::Ptr collision_pointcloud_ptr(
-        new pcl::PointCloud<pcl::PointXYZ>);
+      PointCloud::Ptr collision_pointcloud_ptr(new PointCloud);
       collision_pointcloud_ptr->header = obstacle_candidate_pointcloud_ptr->header;
 
       planner_data.found_collision_points = withinPolygon(
@@ -986,8 +983,8 @@ void ObstacleStopPlannerNode::insertVelocity(
 
 bool ObstacleStopPlannerNode::withinPolygon(
   const std::vector<cv::Point2d> & cv_polygon, const double radius, const Point2d & prev_point,
-  const Point2d & next_point, pcl::PointCloud<pcl::PointXYZ>::Ptr candidate_points_ptr,
-  pcl::PointCloud<pcl::PointXYZ>::Ptr within_points_ptr)
+  const Point2d & next_point, PointCloud::Ptr candidate_points_ptr,
+  PointCloud::Ptr within_points_ptr)
 {
   Polygon2d boost_polygon;
   bool find_within_points = false;
@@ -1380,7 +1377,7 @@ TrajectoryPoints ObstacleStopPlannerNode::trimTrajectoryWithIndexFromSelfPose(
 
 bool ObstacleStopPlannerNode::searchPointcloudNearTrajectory(
   const TrajectoryPoints & trajectory, const PointCloud2::ConstSharedPtr & input_points_ptr,
-  pcl::PointCloud<pcl::PointXYZ>::Ptr output_points_ptr, const Header & trajectory_header,
+  PointCloud::Ptr output_points_ptr, const Header & trajectory_header,
   const VehicleInfo & vehicle_info, const StopParam & stop_param)
 {
   // transform pointcloud
@@ -1400,7 +1397,7 @@ bool ObstacleStopPlannerNode::searchPointcloudNearTrajectory(
   const Eigen::Matrix4f affine_matrix =
     tf2::transformToEigen(transform_stamped.transform).matrix().cast<float>();
   pcl_ros::transformPointCloud(affine_matrix, *input_points_ptr, transformed_points);
-  pcl::PointCloud<pcl::PointXYZ>::Ptr transformed_points_ptr(new pcl::PointCloud<pcl::PointXYZ>);
+  PointCloud::Ptr transformed_points_ptr(new PointCloud);
   pcl::fromROSMsg(transformed_points, *transformed_points_ptr);
 
   output_points_ptr->header = transformed_points_ptr->header;
@@ -1524,8 +1521,8 @@ bool ObstacleStopPlannerNode::getSelfPose(
 }
 
 void ObstacleStopPlannerNode::getNearestPoint(
-  const pcl::PointCloud<pcl::PointXYZ> & pointcloud, const Pose & base_pose,
-  pcl::PointXYZ * nearest_collision_point, rclcpp::Time * nearest_collision_point_time)
+  const PointCloud & pointcloud, const Pose & base_pose, pcl::PointXYZ * nearest_collision_point,
+  rclcpp::Time * nearest_collision_point_time)
 {
   double min_norm = 0.0;
   bool is_init = false;
@@ -1546,8 +1543,8 @@ void ObstacleStopPlannerNode::getNearestPoint(
 }
 
 void ObstacleStopPlannerNode::getLateralNearestPoint(
-  const pcl::PointCloud<pcl::PointXYZ> & pointcloud, const Pose & base_pose,
-  pcl::PointXYZ * lateral_nearest_point, double * deviation)
+  const PointCloud & pointcloud, const Pose & base_pose, pcl::PointXYZ * lateral_nearest_point,
+  double * deviation)
 {
   double min_norm = std::numeric_limits<double>::max();
   const auto yaw = getRPY(base_pose).z;
