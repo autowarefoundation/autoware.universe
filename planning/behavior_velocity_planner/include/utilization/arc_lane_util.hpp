@@ -105,20 +105,22 @@ inline boost::optional<geometry_msgs::msg::Point> checkCollision(
   const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2,
   const geometry_msgs::msg::Point & p3, const geometry_msgs::msg::Point & p4)
 {
-  const double det = (p1.x - p2.x) * (p4.y - p3.y) - (p4.x - p3.x) * (p1.y - p2.y);
+  const double det = (p2.x - p1.x) * (p4.y - p3.y) - (p2.y - p1.y) * (p4.x - p3.x);
 
   if (det == 0.0) {
     // collision is not one point.
     return boost::none;
   }
 
-  const double t = ((p4.y - p3.y) * (p4.x - p2.x) + (p3.x - p4.x) * (p4.y - p2.y)) / det;
-  if (t < 0.0 || 1.0 < t) {
-    // collision is outside the segment line
+  const double t1 = ((p4.y - p3.y) * (p4.x - p1.x) - (p4.x - p3.x) * (p4.y - p1.y)) / det;
+  const double t2 = ((p2.x - p1.x) * (p4.y - p1.y) - (p2.y - p1.y) * (p4.x - p1.x)) / det;
+
+  // check collision is outside the segment line
+  if (t1 < 0.0 || 1.0 < t1 || t2 < 0.0 || 1.0 < t2) {
     return boost::none;
   }
 
-  return p1 * t + p2 * (1.0 - t);
+  return p1 * (1.0 - t1) + p2 * t1;
 }
 
 template <class T>

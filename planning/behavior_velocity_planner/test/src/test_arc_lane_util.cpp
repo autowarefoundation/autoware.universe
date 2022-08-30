@@ -118,3 +118,75 @@ TEST(findOffsetSegment, case_backward_offset_segment)
     EXPECT_FALSE(offset_segment);
   }
 }
+
+TEST(checkCollision, various_cases)
+{
+  using behavior_velocity_planner::arc_lane_utils::checkCollision;
+  constexpr double epsilon = 1e-6;
+
+  {  // normal case with collision
+    const auto p1 = createPoint(-1.0, 0.0, 0.0);
+    const auto p2 = createPoint(2.0, 0.0, 0.0);
+    const auto p3 = createPoint(0.0, -1.0, 0.0);
+    const auto p4 = createPoint(0.0, 2.0, 0.0);
+
+    const auto collision = checkCollision(p1, p2, p3, p4);
+    EXPECT_NE(collision, boost::none);
+    EXPECT_NEAR(collision->x, 0.0, epsilon);
+    EXPECT_NEAR(collision->y, 0.0, epsilon);
+    EXPECT_NEAR(collision->z, 0.0, epsilon);
+  }
+
+  {  // normal case without collision
+    const auto p1 = createPoint(1.0, 0.0, 0.0);
+    const auto p2 = createPoint(2.0, 0.0, 0.0);
+    const auto p3 = createPoint(0.0, -1.0, 0.0);
+    const auto p4 = createPoint(0.0, 2.0, 0.0);
+
+    const auto collision = checkCollision(p1, p2, p3, p4);
+    EXPECT_EQ(collision, boost::none);
+  }
+
+  {  // normal case without collision
+    const auto p1 = createPoint(-1.0, 0.0, 0.0);
+    const auto p2 = createPoint(2.0, 0.0, 0.0);
+    const auto p3 = createPoint(0.0, 1.0, 0.0);
+    const auto p4 = createPoint(0.0, 2.0, 0.0);
+
+    const auto collision = checkCollision(p1, p2, p3, p4);
+    EXPECT_EQ(collision, boost::none);
+  }
+
+  {  // line and point
+    const auto p1 = createPoint(-1.0, 0.0, 0.0);
+    const auto p2 = createPoint(2.0, 0.0, 0.0);
+    const auto p3 = createPoint(0.0, 0.0, 0.0);
+    const auto p4 = createPoint(0.0, 0.0, 0.0);
+
+    const auto collision = checkCollision(p1, p2, p3, p4);
+    EXPECT_EQ(collision, boost::none);
+  }
+
+  {  // point and line
+    const auto p1 = createPoint(0.0, 0.0, 0.0);
+    const auto p2 = createPoint(0.0, 0.0, 0.0);
+    const auto p3 = createPoint(-1.0, 0.0, 0.0);
+    const auto p4 = createPoint(2.0, 0.0, 0.0);
+
+    const auto collision = checkCollision(p1, p2, p3, p4);
+    EXPECT_EQ(collision, boost::none);
+  }
+
+  {  // collision with edge
+    const auto p1 = createPoint(-1.0, 0.0, 0.0);
+    const auto p2 = createPoint(0.0, 0.0, 0.0);
+    const auto p3 = createPoint(0.0, 0.0, 0.0);
+    const auto p4 = createPoint(0.0, 2.0, 0.0);
+
+    const auto collision = checkCollision(p1, p2, p3, p4);
+    EXPECT_NE(collision, boost::none);
+    EXPECT_NEAR(collision->x, 0.0, epsilon);
+    EXPECT_NEAR(collision->y, 0.0, epsilon);
+    EXPECT_NEAR(collision->z, 0.0, epsilon);
+  }
+}
