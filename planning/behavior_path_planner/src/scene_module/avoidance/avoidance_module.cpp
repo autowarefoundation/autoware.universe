@@ -2086,16 +2086,16 @@ CandidateOutput AvoidanceModule::planCandidate() const
     output.finish_distance_to_path_change = new_shift_points->back().end_longitudinal;
 
     // TODO(tkhmy): Find a way to not overlay with the approved avoidance module
-    // uint16_t direction;
-    // if (output.lateral_shift > 0.0) {
-    //   direction = SteeringFactor::LEFT;
-    // } else {
-    //   direction = SteeringFactor::RIGHT;
-    // }
-    // planning_api_interface_ptr_->updateSteeringFactor(
-    //   {new_shift_points->front().start, new_shift_points->back().end},
-    //   {output.start_distance_to_path_change, output.finish_distance_to_path_change},
-    //   SteeringFactor::AVOIDANCE_PATH_CHANGE, direction, SteeringFactor::APPROACHING, "");
+    uint16_t direction;
+    if (output.lateral_shift > 0.0) {
+      direction = SteeringFactor::LEFT;
+    } else {
+      direction = SteeringFactor::RIGHT;
+    }
+    planning_api_interface_ptr_->updateSteeringFactor(
+      {new_shift_points->front().start, new_shift_points->back().end},
+      {output.start_distance_to_path_change, output.finish_distance_to_path_change},
+      SteeringFactor::AVOIDANCE_PATH_CHANGE, direction, SteeringFactor::APPROACHING, "");
   }
 
   clipPathLength(shifted_path.path);
