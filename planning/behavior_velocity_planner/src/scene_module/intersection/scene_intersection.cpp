@@ -115,7 +115,7 @@ bool IntersectionModule::modifyPathVelocity(
   }
   debug_data_.detection_area = detection_areas;
 
-  /* get interection area */
+  /* get intersection area */
   const auto & assigned_lanelet =
     planner_data_->route_handler_->getLaneletMapPtr()->laneletLayer.get(lane_id_);
   const auto intersection_area = util::getIntersectionArea(assigned_lanelet, lanelet_map_ptr);

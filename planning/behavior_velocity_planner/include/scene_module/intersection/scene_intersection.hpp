@@ -26,33 +26,14 @@
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <geometry_msgs/msg/point.hpp>
 
-#include <boost/functional/hash.hpp>
-#include <boost/uuid/uuid.hpp>
-
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_routing/RoutingGraph.h>
 
 #include <algorithm>
 #include <memory>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <vector>
-
-namespace std
-{
-template <>
-struct hash<unique_identifier_msgs::msg::UUID>
-{
-  size_t operator()(const unique_identifier_msgs::msg::UUID & uid) const
-  {
-    const auto & ids = uid.uuid;
-    boost::uuids::uuid u = {ids[0], ids[1], ids[2],  ids[3],  ids[4],  ids[5],  ids[6],  ids[7],
-                            ids[8], ids[9], ids[10], ids[11], ids[12], ids[13], ids[14], ids[15]};
-    return boost::hash<boost::uuids::uuid>()(u);
-  }
-};
-}  // namespace std
 
 namespace behavior_velocity_planner
 {
