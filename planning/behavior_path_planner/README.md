@@ -314,11 +314,12 @@ Generate two forward arc paths.
 
 ###### Parameters arc forward parking
 
-| Name                                    | Unit  | Type   | Description                                      | Default value |
-| :-------------------------------------- | :---- | :----- | :----------------------------------------------- | :------------ |
-| enable_arc_forward_parking              | [-]   | bool   | flag whether to enable arc forward parking       | true          |
-| after_forward_parking_straight_distance | [m]   | double | straight line distance after pull over end point | 2.0           |
-| forward_parking_velocity                | [m/s] | double | velocity when forward parking                    | 0.3           |
+| Name                                    | Unit  | Type   | Description                                                                      | Default value |
+| :-------------------------------------- | :---- | :----- | :------------------------------------------------------------------------------- | :------------ |
+| enable_arc_forward_parking              | [-]   | bool   | flag whether to enable arc forward parking                                       | true          |
+| after_forward_parking_straight_distance | [m]   | double | straight line distance after pull over end point                                 | 2.0           |
+| forward_parking_velocity                | [m/s] | double | velocity when forward parking                                                    | 0.3           |
+| forward_parking_lane_departure_margin   | [m/s] | double | lane departure margin for front left corner of ego-vehicle when forkward parking | 0.0           |
 
 ###### arc backward parking
 
@@ -330,11 +331,12 @@ Generate two backward arc paths.
 
 ###### Parameters arc backward parking
 
-| Name                                     | Unit  | Type   | Description                                      | Default value |
-| :--------------------------------------- | :---- | :----- | :----------------------------------------------- | :------------ |
-| enable_arc_backward_parking              | [-]   | bool   | flag whether to enable arc backward parking      | false         |
-| after_backward_parking_straight_distance | [m]   | double | straight line distance after pull over end point | 2.0           |
-| backward_parking_velocity                | [m/s] | double | velocity when backward parking                   | -0.3          |
+| Name                                     | Unit  | Type   | Description                                                               | Default value |
+| :--------------------------------------- | :---- | :----- | :------------------------------------------------------------------------ | :------------ |
+| enable_arc_backward_parking              | [-]   | bool   | flag whether to enable arc backward parking                               | true          |
+| after_backward_parking_straight_distance | [m]   | double | straight line distance after pull over end point                          | 2.0           |
+| backward_parking_velocity                | [m/s] | double | velocity when backward parking                                            | -0.3          |
+| backward_parking_lane_departure_margin   | [m/s] | double | lane departure margin for front right corner of ego-vehicle when backward | 0.0           |
 
 #### Unimplemented parts / limitations for pull over
 
