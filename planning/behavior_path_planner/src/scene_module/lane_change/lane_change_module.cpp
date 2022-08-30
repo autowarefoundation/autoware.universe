@@ -62,11 +62,18 @@ BehaviorModuleOutput LaneChangeModule::run()
     status_.lane_change_path.shift_point.start.position);
   const double finish_distance = motion_utils::calcSignedArcLength(
     output.path->points, current_pose.position, status_.lane_change_path.shift_point.end.position);
+  uint16_t direction = SteeringFactor::UNKNOWN;
   if (turn_signal_info.turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {
     waitApprovalLeft(start_distance, finish_distance);
+    direction = SteeringFactor::LEFT;
   } else if (turn_signal_info.turn_signal.command == TurnIndicatorsCommand::ENABLE_RIGHT) {
     waitApprovalRight(start_distance, finish_distance);
+    direction = SteeringFactor::RIGHT;
   }
+  planning_api_interface_ptr_->updateSteeringFactor(
+    {status_.lane_change_path.shift_point.start, status_.lane_change_path.shift_point.end},
+    {start_distance, finish_distance}, SteeringFactor::LANE_CHANGE, direction,
+    SteeringFactor::TURNING, "");
   return output;
 }
 
@@ -180,17 +187,6 @@ BehaviorModuleOutput LaneChangeModule::plan()
   output.turn_signal_info.turn_signal.command = turn_signal_info.first.command;
   output.turn_signal_info.signal_distance = turn_signal_info.second;
 
-  uint16_t direction;
-  if (turn_signal_info.first.command == TurnIndicatorsCommand::ENABLE_LEFT) {
-    direction = SteeringFactor::LEFT;
-  } else {
-    direction = SteeringFactor::RIGHT;
-  }
-
-  planning_api_interface_ptr_->updateSteeringFactor(
-    {status_.lane_change_path.shift_point.start, status_.lane_change_path.shift_point.end},
-    {output.turn_signal_info.signal_distance}, SteeringFactor::LANE_CHANGE, direction,
-    SteeringFactor::TURNING, "");
   return output;
 }
 
