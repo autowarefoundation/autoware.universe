@@ -4,9 +4,11 @@
   <name>mission_planner</name>
   <version>0.1.0</version>
   <description>The mission_planner package</description>
-  <maintainer email="ryohsuke.mitsudome@tier4.jp">mitsudome-r</maintainer>
+  <maintainer email="ryohsuke.mitsudome@tier4.jp">Ryohsuke Mitsudome</maintainer>
   <maintainer email="isamu.takagi@tier4.jp">Takagi, Isamu</maintainer>
   <license>Apache License 2.0</license>
+
+  <author email="ryohsuke.mitsudome@tier4.jp">Ryohsuke Mitsudome</author>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 

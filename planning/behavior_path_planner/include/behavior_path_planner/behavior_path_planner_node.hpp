@@ -93,7 +93,7 @@ private:
   std::mutex mutex_bt_;  // mutex for bt_manager_
 
   // setup
-  void waitForData();
+  bool isDataReady();
 
   // parameters
   BehaviorPathPlannerParameters getCommonParam();
@@ -119,8 +119,6 @@ private:
    */
   PathWithLaneId modifyPathForSmoothGoalConnection(
     const PathWithLaneId & path) const;  // (TODO) move to util
-
-  void clipPathLength(PathWithLaneId & path) const;  // (TODO) move to util
 
   /**
    * @brief Execute behavior tree and publish planned data.
@@ -148,8 +146,28 @@ private:
   // debug
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_drivable_area_lanelets_publisher_;
   rclcpp::Publisher<AvoidanceDebugMsgArray>::SharedPtr debug_avoidance_msg_array_publisher_;
-  rclcpp::Publisher<MarkerArray>::SharedPtr debug_marker_publisher_;
-  void publishDebugMarker(const std::vector<MarkerArray> & debug_markers);
+  /**
+   * @brief check path if it is unsafe or forced
+   */
+  bool isForcedCandidatePath() const;
+
+  template <class T>
+  size_t findEgoIndex(const std::vector<T> & points) const
+  {
+    const auto & p = planner_data_;
+    return motion_utils::findFirstNearestIndexWithSoftConstraints(
+      points, p->self_pose->pose, p->parameters.ego_nearest_dist_threshold,
+      p->parameters.ego_nearest_yaw_threshold);
+  }
+
+  template <class T>
+  size_t findEgoSegmentIndex(const std::vector<T> & points) const
+  {
+    const auto & p = planner_data_;
+    return motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+      points, p->self_pose->pose, p->parameters.ego_nearest_dist_threshold,
+      p->parameters.ego_nearest_yaw_threshold);
+  }
 };
 }  // namespace behavior_path_planner
 
