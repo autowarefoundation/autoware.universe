@@ -417,6 +417,22 @@ Matrix6d StateTransitionModel(const Vector6d & X_curr, const double dt)
   return A;
 }
 
+Matrix6d ProcessNoiseCovariance(
+  const double proc_cov_yaw_d_,
+  const double proc_cov_vx_d_,
+  const double proc_cov_wz_d_)
+{
+  Vector6d q;
+  q <<
+    0.0,
+    0.0,
+    proc_cov_yaw_d_,  // for yaw
+    0.0,
+    proc_cov_vx_d_,  // for vx
+    proc_cov_wz_d_;  // for wz
+  return q.asDiagonal();
+}
+
 /*
  * predictKinematicsModel
  */
@@ -454,14 +470,7 @@ void EKFLocalizer::predictKinematicsModel()
   const double dt = ekf_dt_;
   const Vector6d X_next = PredictNextState(X_curr, dt);
   const Matrix6d A = StateTransitionModel(X_curr, dt);
-
-  Eigen::MatrixXd Q = Eigen::MatrixXd::Zero(dim_x_, dim_x_);
-  Q(0, 0) = 0.0;
-  Q(1, 1) = 0.0;
-  Q(2, 2) = proc_cov_yaw_d_;  // for yaw
-  Q(3, 3) = 0.0;
-  Q(4, 4) = proc_cov_vx_d_;  // for vx
-  Q(5, 5) = proc_cov_wz_d_;  // for wz
+  const Matrix6d Q = ProcessNoiseCovariance(proc_cov_yaw_d_, proc_cov_vx_d_, proc_cov_wz_d_);
 
   ekf_.predictWithDelay(X_next, A, Q);
 
