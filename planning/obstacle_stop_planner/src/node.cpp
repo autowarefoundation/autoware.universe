@@ -379,8 +379,7 @@ boost::optional<std::pair<size_t, TrajectoryPoint>> getBackwardInsertPointFromBa
   return {};
 }
 boost::optional<std::pair<size_t, double>> findNearestFrontIndex(
-  const size_t start_idx, const TrajectoryPoints & trajectory,
-  const geometry_msgs::msg::Point & point)
+  const size_t start_idx, const TrajectoryPoints & trajectory, const Point & point)
 {
   for (size_t i = start_idx; i < trajectory.size(); ++i) {
     const auto & p_traj = trajectory.at(i).pose;
@@ -399,8 +398,7 @@ boost::optional<std::pair<size_t, double>> findNearestFrontIndex(
 
   return {};
 }
-bool isInFrontOfTargetPoint(
-  const geometry_msgs::msg::Pose & pose, const geometry_msgs::msg::Point & point)
+bool isInFrontOfTargetPoint(const Pose & pose, const Point & point)
 {
   const auto yaw = getRPY(pose).z;
   const Point2d pose_direction(std::cos(yaw), std::sin(yaw));
@@ -408,9 +406,7 @@ bool isInFrontOfTargetPoint(
 
   return pose_direction.dot(to_target) < 0.0;
 }
-bool checkValidIndex(
-  const geometry_msgs::msg::Pose & p_base, const geometry_msgs::msg::Pose & p_next,
-  const geometry_msgs::msg::Pose & p_target)
+bool checkValidIndex(const Pose & p_base, const Pose & p_next, const Pose & p_target)
 {
   const Point2d base2target(
     p_target.position.x - p_base.position.x, p_target.position.y - p_base.position.y);
@@ -418,7 +414,7 @@ bool checkValidIndex(
     p_next.position.x - p_target.position.x, p_next.position.y - p_target.position.y);
   return base2target.dot(target2next) > 0.0;
 }
-std::string jsonDumpsPose(const geometry_msgs::msg::Pose & pose)
+std::string jsonDumpsPose(const Pose & pose)
 {
   const std::string json_dumps_pose =
     (boost::format(
@@ -428,12 +424,11 @@ std::string jsonDumpsPose(const geometry_msgs::msg::Pose & pose)
       .str();
   return json_dumps_pose;
 }
-diagnostic_msgs::msg::DiagnosticStatus makeStopReasonDiag(
-  const std::string stop_reason, const geometry_msgs::msg::Pose & stop_pose)
+DiagnosticStatus makeStopReasonDiag(const std::string stop_reason, const Pose & stop_pose)
 {
-  diagnostic_msgs::msg::DiagnosticStatus stop_reason_diag;
-  diagnostic_msgs::msg::KeyValue stop_reason_diag_kv;
-  stop_reason_diag.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
+  DiagnosticStatus stop_reason_diag;
+  KeyValue stop_reason_diag_kv;
+  stop_reason_diag.level = DiagnosticStatus::OK;
   stop_reason_diag.name = "stop_reason";
   stop_reason_diag.message = stop_reason;
   stop_reason_diag_kv.key = "stop_pose";
@@ -539,7 +534,7 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
   }
 
   // Initializer
-  acc_controller_ = std::make_unique<motion_planning::AdaptiveCruiseController>(
+  acc_controller_ = std::make_unique<AdaptiveCruiseController>(
     this, i.vehicle_width_m, i.vehicle_length_m, i.max_longitudinal_offset_m);
   debug_ptr_ = std::make_shared<ObstacleStopPlannerDebugNode>(this, i.max_longitudinal_offset_m);
   last_detect_time_slowdown_point_ = this->now();
@@ -547,15 +542,14 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
 
   // Publishers
   path_pub_ = this->create_publisher<Trajectory>("~/output/trajectory", 1);
-  stop_reason_diag_pub_ =
-    this->create_publisher<diagnostic_msgs::msg::DiagnosticStatus>("~/output/stop_reason", 1);
+  stop_reason_diag_pub_ = this->create_publisher<DiagnosticStatus>("~/output/stop_reason", 1);
   pub_clear_velocity_limit_ = this->create_publisher<VelocityLimitClearCommand>(
     "~/output/velocity_limit_clear_command", rclcpp::QoS{1}.transient_local());
   pub_velocity_limit_ = this->create_publisher<VelocityLimit>(
     "~/output/max_velocity", rclcpp::QoS{1}.transient_local());
 
   // Subscribers
-  obstacle_pointcloud_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
+  obstacle_pointcloud_sub_ = this->create_subscription<PointCloud2>(
     "~/input/pointcloud", rclcpp::SensorDataQoS(),
     std::bind(&ObstacleStopPlannerNode::obstaclePointcloudCallback, this, std::placeholders::_1),
     createSubscriptionOptions(this));
@@ -563,7 +557,7 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
     "~/input/trajectory", 1,
     std::bind(&ObstacleStopPlannerNode::pathCallback, this, std::placeholders::_1),
     createSubscriptionOptions(this));
-  current_velocity_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
+  current_velocity_sub_ = this->create_subscription<Odometry>(
     "~/input/odometry", 1,
     std::bind(&ObstacleStopPlannerNode::currentVelocityCallback, this, std::placeholders::_1),
     createSubscriptionOptions(this));
@@ -579,13 +573,13 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
 }
 
 void ObstacleStopPlannerNode::obstaclePointcloudCallback(
-  const sensor_msgs::msg::PointCloud2::ConstSharedPtr input_msg)
+  const PointCloud2::ConstSharedPtr input_msg)
 {
   // mutex for obstacle_ros_pointcloud_ptr_
   // NOTE: *obstacle_ros_pointcloud_ptr_ is used
   std::lock_guard<std::mutex> lock(mutex_);
 
-  obstacle_ros_pointcloud_ptr_ = std::make_shared<sensor_msgs::msg::PointCloud2>();
+  obstacle_ros_pointcloud_ptr_ = std::make_shared<PointCloud2>();
   pcl::VoxelGrid<pcl::PointXYZ> filter;
   pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
   pcl::PointCloud<pcl::PointXYZ>::Ptr no_height_pointcloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
@@ -698,9 +692,8 @@ void ObstacleStopPlannerNode::pathCallback(const Trajectory::ConstSharedPtr inpu
 
 void ObstacleStopPlannerNode::searchObstacle(
   const TrajectoryPoints & decimate_trajectory, TrajectoryPoints & output,
-  PlannerData & planner_data, const std_msgs::msg::Header & trajectory_header,
-  const VehicleInfo & vehicle_info, const StopParam & stop_param,
-  const sensor_msgs::msg::PointCloud2::SharedPtr obstacle_ros_pointcloud_ptr)
+  PlannerData & planner_data, const Header & trajectory_header, const VehicleInfo & vehicle_info,
+  const StopParam & stop_param, const PointCloud2::SharedPtr obstacle_ros_pointcloud_ptr)
 {
   // search candidate obstacle pointcloud
   pcl::PointCloud<pcl::PointXYZ>::Ptr slow_down_pointcloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
@@ -811,9 +804,9 @@ void ObstacleStopPlannerNode::searchObstacle(
 }
 
 void ObstacleStopPlannerNode::insertVelocity(
-  TrajectoryPoints & output, PlannerData & planner_data,
-  const std_msgs::msg::Header & trajectory_header, const VehicleInfo & vehicle_info,
-  const double current_acc, const double current_vel, const StopParam & stop_param)
+  TrajectoryPoints & output, PlannerData & planner_data, const Header & trajectory_header,
+  const VehicleInfo & vehicle_info, const double current_acc, const double current_vel,
+  const StopParam & stop_param)
 {
   const auto & base_link2front = vehicle_info.max_longitudinal_offset_m;
   const auto no_hunting_collision_point =
@@ -1029,8 +1022,7 @@ void ObstacleStopPlannerNode::externalExpandStopRangeCallback(
 }
 
 void ObstacleStopPlannerNode::insertStopPoint(
-  const StopPoint & stop_point, TrajectoryPoints & output,
-  diagnostic_msgs::msg::DiagnosticStatus & stop_reason_diag)
+  const StopPoint & stop_point, TrajectoryPoints & output, DiagnosticStatus & stop_reason_diag)
 {
   const auto traj_end_idx = output.size() - 1;
   const auto & stop_idx = stop_point.index;
@@ -1264,8 +1256,7 @@ void ObstacleStopPlannerNode::dynamicObjectCallback(
   object_ptr_ = input_msg;
 }
 
-void ObstacleStopPlannerNode::currentVelocityCallback(
-  const nav_msgs::msg::Odometry::ConstSharedPtr input_msg)
+void ObstacleStopPlannerNode::currentVelocityCallback(const Odometry::ConstSharedPtr input_msg)
 {
   // mutex for current_acc_, lpf_acc_
   std::lock_guard<std::mutex> lock(mutex_);
@@ -1302,7 +1293,7 @@ TrajectoryPoint ObstacleStopPlannerNode::getExtendTrajectoryPoint(
   q.setRPY(0, 0, 0);
   local_extend_point.setRotation(q);
   const auto map2extend_point = map2goal * local_extend_point;
-  geometry_msgs::msg::Pose extend_pose;
+  Pose extend_pose;
   tf2::toMsg(map2extend_point, extend_pose);
   TrajectoryPoint extend_trajectory_point;
   extend_trajectory_point.pose = extend_pose;
@@ -1371,7 +1362,7 @@ TrajectoryPoints ObstacleStopPlannerNode::decimateTrajectory(
 }
 
 TrajectoryPoints ObstacleStopPlannerNode::trimTrajectoryWithIndexFromSelfPose(
-  const TrajectoryPoints & input, const geometry_msgs::msg::Pose & self_pose, size_t & index)
+  const TrajectoryPoints & input, const Pose & self_pose, size_t & index)
 {
   TrajectoryPoints output{};
 
@@ -1388,14 +1379,12 @@ TrajectoryPoints ObstacleStopPlannerNode::trimTrajectoryWithIndexFromSelfPose(
 }
 
 bool ObstacleStopPlannerNode::searchPointcloudNearTrajectory(
-  const TrajectoryPoints & trajectory,
-  const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_points_ptr,
-  pcl::PointCloud<pcl::PointXYZ>::Ptr output_points_ptr,
-  const std_msgs::msg::Header & trajectory_header, const VehicleInfo & vehicle_info,
-  const StopParam & stop_param)
+  const TrajectoryPoints & trajectory, const PointCloud2::ConstSharedPtr & input_points_ptr,
+  pcl::PointCloud<pcl::PointXYZ>::Ptr output_points_ptr, const Header & trajectory_header,
+  const VehicleInfo & vehicle_info, const StopParam & stop_param)
 {
   // transform pointcloud
-  geometry_msgs::msg::TransformStamped transform_stamped{};
+  TransformStamped transform_stamped{};
   try {
     transform_stamped = tf_buffer_.lookupTransform(
       trajectory_header.frame_id, input_points_ptr->header.frame_id, input_points_ptr->header.stamp,
@@ -1407,7 +1396,7 @@ bool ObstacleStopPlannerNode::searchPointcloudNearTrajectory(
     return false;
   }
 
-  sensor_msgs::msg::PointCloud2 transformed_points{};
+  PointCloud2 transformed_points{};
   const Eigen::Matrix4f affine_matrix =
     tf2::transformToEigen(transform_stamped.transform).matrix().cast<float>();
   pcl_ros::transformPointCloud(affine_matrix, *input_points_ptr, transformed_points);
@@ -1440,8 +1429,8 @@ bool ObstacleStopPlannerNode::searchPointcloudNearTrajectory(
 }
 
 void ObstacleStopPlannerNode::createOneStepPolygon(
-  const geometry_msgs::msg::Pose & base_step_pose, const geometry_msgs::msg::Pose & next_step_pose,
-  std::vector<cv::Point2d> & polygon, const VehicleInfo & vehicle_info, const double expand_width)
+  const Pose & base_step_pose, const Pose & next_step_pose, std::vector<cv::Point2d> & polygon,
+  const VehicleInfo & vehicle_info, const double expand_width)
 {
   std::vector<cv::Point2d> one_step_move_vehicle_corner_points;
 
@@ -1515,11 +1504,10 @@ bool ObstacleStopPlannerNode::convexHull(
 }
 
 bool ObstacleStopPlannerNode::getSelfPose(
-  const std_msgs::msg::Header & header, const tf2_ros::Buffer & tf_buffer,
-  geometry_msgs::msg::Pose & self_pose)
+  const Header & header, const tf2_ros::Buffer & tf_buffer, Pose & self_pose)
 {
   try {
-    geometry_msgs::msg::TransformStamped transform;
+    TransformStamped transform;
     transform = tf_buffer.lookupTransform(
       header.frame_id, "base_link", header.stamp, rclcpp::Duration::from_seconds(0.1));
     self_pose.position.x = transform.transform.translation.x;
@@ -1536,7 +1524,7 @@ bool ObstacleStopPlannerNode::getSelfPose(
 }
 
 void ObstacleStopPlannerNode::getNearestPoint(
-  const pcl::PointCloud<pcl::PointXYZ> & pointcloud, const geometry_msgs::msg::Pose & base_pose,
+  const pcl::PointCloud<pcl::PointXYZ> & pointcloud, const Pose & base_pose,
   pcl::PointXYZ * nearest_collision_point, rclcpp::Time * nearest_collision_point_time)
 {
   double min_norm = 0.0;
@@ -1558,7 +1546,7 @@ void ObstacleStopPlannerNode::getNearestPoint(
 }
 
 void ObstacleStopPlannerNode::getLateralNearestPoint(
-  const pcl::PointCloud<pcl::PointXYZ> & pointcloud, const geometry_msgs::msg::Pose & base_pose,
+  const pcl::PointCloud<pcl::PointXYZ> & pointcloud, const Pose & base_pose,
   pcl::PointXYZ * lateral_nearest_point, double * deviation)
 {
   double min_norm = std::numeric_limits<double>::max();
@@ -1577,13 +1565,13 @@ void ObstacleStopPlannerNode::getLateralNearestPoint(
   *deviation = min_norm;
 }
 
-geometry_msgs::msg::Pose ObstacleStopPlannerNode::getVehicleCenterFromBase(
-  const geometry_msgs::msg::Pose & base_pose, const VehicleInfo & vehicle_info)
+Pose ObstacleStopPlannerNode::getVehicleCenterFromBase(
+  const Pose & base_pose, const VehicleInfo & vehicle_info)
 {
   const auto & i = vehicle_info;
   const auto yaw = getRPY(base_pose).z;
 
-  geometry_msgs::msg::Pose center_pose;
+  Pose center_pose;
   center_pose.position.x =
     base_pose.position.x + (i.vehicle_length_m / 2.0 - i.rear_overhang_m) * std::cos(yaw);
   center_pose.position.y =

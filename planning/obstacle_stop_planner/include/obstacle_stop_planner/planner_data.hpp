@@ -25,6 +25,7 @@ namespace motion_planning
 {
 
 using diagnostic_msgs::msg::DiagnosticStatus;
+using geometry_msgs::msg::Pose;
 
 struct StopPoint
 {
@@ -210,7 +211,7 @@ struct PlannerData
 {
   DiagnosticStatus stop_reason_diag{};
 
-  geometry_msgs::msg::Pose current_pose{};
+  Pose current_pose{};
 
   pcl::PointXYZ nearest_collision_point;
 

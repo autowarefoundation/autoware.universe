@@ -62,11 +62,21 @@
 
 namespace motion_planning
 {
+
 namespace bg = boost::geometry;
+
+using diagnostic_msgs::msg::DiagnosticStatus;
+using diagnostic_msgs::msg::KeyValue;
+using geometry_msgs::msg::Point;
+using geometry_msgs::msg::Pose;
+using geometry_msgs::msg::TransformStamped;
+using nav_msgs::msg::Odometry;
+using sensor_msgs::msg::PointCloud2;
+using std_msgs::msg::Header;
+
 using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
-using TrajectoryPoints = std::vector<TrajectoryPoint>;
 using tier4_autoware_utils::Point2d;
 using tier4_autoware_utils::Polygon2d;
 using tier4_debug_msgs::msg::BoolStamped;
@@ -76,6 +86,8 @@ using tier4_planning_msgs::msg::ExpandStopRange;
 using tier4_planning_msgs::msg::VelocityLimit;
 using tier4_planning_msgs::msg::VelocityLimitClearCommand;
 using vehicle_info_util::VehicleInfo;
+
+using TrajectoryPoints = std::vector<TrajectoryPoint>;
 
 class ObstacleStopPlannerNode : public rclcpp::Node
 {
@@ -88,29 +100,29 @@ private:
    */
   // publisher and subscriber
   rclcpp::Subscription<Trajectory>::SharedPtr path_sub_;
-  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr obstacle_pointcloud_sub_;
-  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr current_velocity_sub_;
+  rclcpp::Subscription<PointCloud2>::SharedPtr obstacle_pointcloud_sub_;
+  rclcpp::Subscription<Odometry>::SharedPtr current_velocity_sub_;
   rclcpp::Subscription<PredictedObjects>::SharedPtr dynamic_object_sub_;
   rclcpp::Subscription<ExpandStopRange>::SharedPtr expand_stop_range_sub_;
   rclcpp::Publisher<Trajectory>::SharedPtr path_pub_;
-  rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticStatus>::SharedPtr stop_reason_diag_pub_;
+  rclcpp::Publisher<DiagnosticStatus>::SharedPtr stop_reason_diag_pub_;
   rclcpp::Publisher<VelocityLimitClearCommand>::SharedPtr pub_clear_velocity_limit_;
   rclcpp::Publisher<VelocityLimit>::SharedPtr pub_velocity_limit_;
 
-  std::unique_ptr<motion_planning::AdaptiveCruiseController> acc_controller_;
+  std::unique_ptr<AdaptiveCruiseController> acc_controller_;
   std::shared_ptr<ObstacleStopPlannerDebugNode> debug_ptr_;
   std::shared_ptr<LowpassFilter1d> lpf_acc_{nullptr};
   boost::optional<StopPoint> latest_stop_point_{boost::none};
   boost::optional<SlowDownSection> latest_slow_down_section_{boost::none};
   tf2_ros::Buffer tf_buffer_{get_clock()};
   tf2_ros::TransformListener tf_listener_{tf_buffer_};
-  sensor_msgs::msg::PointCloud2::SharedPtr obstacle_ros_pointcloud_ptr_{nullptr};
+  PointCloud2::SharedPtr obstacle_ros_pointcloud_ptr_{nullptr};
   PredictedObjects::ConstSharedPtr object_ptr_{nullptr};
   rclcpp::Time last_detect_time_collision_point_;
   rclcpp::Time last_detect_time_slowdown_point_;
 
-  nav_msgs::msg::Odometry::ConstSharedPtr current_velocity_ptr_{nullptr};
-  nav_msgs::msg::Odometry::ConstSharedPtr prev_velocity_ptr_{nullptr};
+  Odometry::ConstSharedPtr current_velocity_ptr_{nullptr};
+  Odometry::ConstSharedPtr prev_velocity_ptr_{nullptr};
   double current_acc_{0.0};
   bool is_driving_forward_{true};
 
@@ -129,10 +141,10 @@ private:
   /*
    * Callback
    */
-  void obstaclePointcloudCallback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr input_msg);
+  void obstaclePointcloudCallback(const PointCloud2::ConstSharedPtr input_msg);
   void pathCallback(const Trajectory::ConstSharedPtr input_msg);
   void dynamicObjectCallback(const PredictedObjects::ConstSharedPtr input_msg);
-  void currentVelocityCallback(const nav_msgs::msg::Odometry::ConstSharedPtr input_msg);
+  void currentVelocityCallback(const Odometry::ConstSharedPtr input_msg);
   void externalExpandStopRangeCallback(const ExpandStopRange::ConstSharedPtr input_msg);
 
 private:
@@ -146,51 +158,43 @@ private:
 
   void searchObstacle(
     const TrajectoryPoints & decimate_trajectory, TrajectoryPoints & output,
-    PlannerData & planner_data, const std_msgs::msg::Header & trajectory_header,
-    const VehicleInfo & vehicle_info, const StopParam & stop_param,
-    const sensor_msgs::msg::PointCloud2::SharedPtr obstacle_ros_pointcloud_ptr);
+    PlannerData & planner_data, const Header & trajectory_header, const VehicleInfo & vehicle_info,
+    const StopParam & stop_param, const PointCloud2::SharedPtr obstacle_ros_pointcloud_ptr);
 
   void insertVelocity(
-    TrajectoryPoints & trajectory, PlannerData & planner_data,
-    const std_msgs::msg::Header & trajectory_header, const VehicleInfo & vehicle_info,
-    const double current_acc, const double current_vel, const StopParam & stop_param);
+    TrajectoryPoints & trajectory, PlannerData & planner_data, const Header & trajectory_header,
+    const VehicleInfo & vehicle_info, const double current_acc, const double current_vel,
+    const StopParam & stop_param);
 
   TrajectoryPoints decimateTrajectory(
     const TrajectoryPoints & input, const double step_length, std::map<size_t, size_t> & index_map);
 
   TrajectoryPoints trimTrajectoryWithIndexFromSelfPose(
-    const TrajectoryPoints & input, const geometry_msgs::msg::Pose & self_pose, size_t & index);
+    const TrajectoryPoints & input, const Pose & self_pose, size_t & index);
 
   bool searchPointcloudNearTrajectory(
-    const TrajectoryPoints & trajectory,
-    const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_points_ptr,
-    pcl::PointCloud<pcl::PointXYZ>::Ptr output_points_ptr,
-    const std_msgs::msg::Header & trajectory_header, const VehicleInfo & vehicle_info,
-    const StopParam & stop_param);
+    const TrajectoryPoints & trajectory, const PointCloud2::ConstSharedPtr & input_points_ptr,
+    pcl::PointCloud<pcl::PointXYZ>::Ptr output_points_ptr, const Header & trajectory_header,
+    const VehicleInfo & vehicle_info, const StopParam & stop_param);
 
   void createOneStepPolygon(
-    const geometry_msgs::msg::Pose & base_step_pose,
-    const geometry_msgs::msg::Pose & next_step_pose, std::vector<cv::Point2d> & polygon,
+    const Pose & base_step_pose, const Pose & next_step_pose, std::vector<cv::Point2d> & polygon,
     const VehicleInfo & vehicle_info, const double expand_width = 0.0);
 
-  bool getSelfPose(
-    const std_msgs::msg::Header & header, const tf2_ros::Buffer & tf_buffer,
-    geometry_msgs::msg::Pose & self_pose);
+  bool getSelfPose(const Header & header, const tf2_ros::Buffer & tf_buffer, Pose & self_pose);
 
   void getNearestPoint(
-    const pcl::PointCloud<pcl::PointXYZ> & pointcloud, const geometry_msgs::msg::Pose & base_pose,
+    const pcl::PointCloud<pcl::PointXYZ> & pointcloud, const Pose & base_pose,
     pcl::PointXYZ * nearest_collision_point, rclcpp::Time * nearest_collision_point_time);
 
   void getLateralNearestPoint(
-    const pcl::PointCloud<pcl::PointXYZ> & pointcloud, const geometry_msgs::msg::Pose & base_pose,
+    const pcl::PointCloud<pcl::PointXYZ> & pointcloud, const Pose & base_pose,
     pcl::PointXYZ * lateral_nearest_point, double * deviation);
 
-  geometry_msgs::msg::Pose getVehicleCenterFromBase(
-    const geometry_msgs::msg::Pose & base_pose, const VehicleInfo & vehicle_info);
+  Pose getVehicleCenterFromBase(const Pose & base_pose, const VehicleInfo & vehicle_info);
 
   void insertStopPoint(
-    const StopPoint & stop_point, TrajectoryPoints & output,
-    diagnostic_msgs::msg::DiagnosticStatus & stop_reason_diag);
+    const StopPoint & stop_point, TrajectoryPoints & output, DiagnosticStatus & stop_reason_diag);
 
   StopPoint searchInsertPoint(
     const int idx, const TrajectoryPoints & base_trajectory, const double dist_remain,
