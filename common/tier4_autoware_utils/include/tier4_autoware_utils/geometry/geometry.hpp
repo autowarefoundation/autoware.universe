@@ -15,6 +15,7 @@
 #ifndef TIER4_AUTOWARE_UTILS__GEOMETRY__GEOMETRY_HPP_
 #define TIER4_AUTOWARE_UTILS__GEOMETRY__GEOMETRY_HPP_
 
+#include <algorithm>
 #include <exception>
 #include <string>
 #include <vector>
@@ -717,6 +718,22 @@ geometry_msgs::msg::Pose calcInterpolatedPose(
   }
 
   return output_pose;
+}
+
+/**
+ * @brief Calculate Ratio of the target point
+ * @param src source point
+ * @param dst destination point
+ * @param target target point
+ * @return ratio of the target
+ */
+template <class Point1, class Point2, class Point3>
+double calcRatio(const Point1 & src, const Point2 & dst, const Point3 & target)
+{
+  const auto v1 = point2tfVector(src, dst);
+  const auto v2 = point2tfVector(src, target);
+
+  return v1.dot(v2) / std::max(v1.length2(), 1e-6);
 }
 }  // namespace tier4_autoware_utils
 
