@@ -198,15 +198,6 @@ private:
 
   bool is_initialized_;
 
-  enum IDX {
-    X = 0,
-    Y = 1,
-    YAW = 2,
-    YAWB = 3,
-    VX = 4,
-    WZ = 5,
-  };
-
   /* for model prediction */
   std::queue<TwistInfo> current_twist_info_queue_;    //!< @brief current measured pose
   std::queue<PoseInfo> current_pose_info_queue_;      //!< @brief current measured pose
