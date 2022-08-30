@@ -211,9 +211,9 @@ std::vector<double> calcTrajectoryCurvatureFrom3Points(
   }
 
   // calculate curvature by circle fitting from three points
-  std::vector<double> k_arr;
-  //  for first point curvature = 0;
-  k_arr.push_back(0.0);
+  std::vector<double> k_arr(trajectory.size(), 0.0);
+
+
   for (size_t i = 1; i + 1 < trajectory.size(); i++) {
     double curvature = 0.0;
     const auto p0 = getPoint(trajectory.at(i - std::min(idx_dist, i)));
@@ -226,16 +226,17 @@ std::vector<double> calcTrajectoryCurvatureFrom3Points(
       RCLCPP_WARN(
         rclcpp::get_logger("motion_velocity_smoother").get_child("trajectory_utils"), "%s",
         e.what());
-      if (!k_arr.empty()) {
-        curvature = k_arr.back();  // previous curvature
+      if (i > 1) {
+        curvature = k_arr.at(i - 1);  // previous curvature
       } else {
         curvature = 0.0;
       }
     }
-    k_arr.push_back(curvature);
+    k_arr.at(i) = curvature;
   }
-  // for last point curvature = 0;
-  k_arr.push_back(0.0);
+  // copy curvatures for the last and first points;
+  k_arr.at(0) = k_arr.at(1);
+  k_arr.back() = k_arr.at((trajectory.size() - 2));
 
   return k_arr;
 }
