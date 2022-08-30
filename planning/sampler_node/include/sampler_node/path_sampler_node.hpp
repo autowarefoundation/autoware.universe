@@ -116,6 +116,8 @@ private:
     const std::vector<sampler_common::Path> & paths);
   sampler_common::State getPlanningState(
     sampler_common::State state, const sampler_common::transform::Spline2D & path_spline) const;
+  sampler_common::Path prependPath(
+    const sampler_common::Path & path, const sampler_common::transform::Spline2D & reference);
 
 public:
   explicit PathSamplerNode(const rclcpp::NodeOptions & node_options);
