@@ -47,7 +47,7 @@ geometry_msgs::msg::Pose getAheadPose(
 
 bool isAheadOf(const geometry_msgs::msg::Pose & target, const geometry_msgs::msg::Pose & origin);
 bool hasLaneId(const autoware_auto_planning_msgs::msg::PathPointWithLaneId & p, const int id);
-bool hasDuplicatedPoint(
+bool getDuplicatedPointIdx(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const geometry_msgs::msg::Point & point, int * duplicated_point_idx);
 
@@ -61,6 +61,14 @@ bool getObjectiveLanelets(
   lanelet::ConstLanelets * objective_lanelets_result,
   std::vector<lanelet::ConstLanelets> * objective_lanelets_with_margin_result,
   const rclcpp::Logger logger);
+
+struct StopLineIdx
+{
+  int first_idx_inside_lane = -1;
+  int pass_judge_line_idx = -1;
+  int stop_line_idx = -1;
+  int keep_detection_line_idx = -1;
+};
 
 /**
  * @brief Generate a stop line and insert it into the path. If the stop line is defined in the map,
@@ -76,9 +84,10 @@ bool getObjectiveLanelets(
 bool generateStopLine(
   const int lane_id, const std::vector<lanelet::CompoundPolygon3d> detection_areas,
   const std::shared_ptr<const PlannerData> & planner_data, const double stop_line_margin,
+  const double keep_detection_line_margin,
   autoware_auto_planning_msgs::msg::PathWithLaneId * original_path,
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & target_path, int * stop_line_idx,
-  int * pass_judge_line_idx, int * first_idx_inside_lane, const rclcpp::Logger logger);
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & target_path,
+  StopLineIdx * stop_line_idxs, const rclcpp::Logger logger);
 
 /**
  * @brief If use_stuck_stopline is true, a stop line is generated before the intersection.
@@ -129,6 +138,23 @@ double calcArcLengthFromPath(
 
 lanelet::ConstLanelet generateOffsetLanelet(
   const lanelet::ConstLanelet lanelet, double right_margin, double left_margin);
+geometry_msgs::msg::Pose toPose(const geometry_msgs::msg::Point & p);
+
+/**
+ * @brief check if ego is over the target_idx. If the index is same, compare the exact pose
+ * @param path path
+ * @param closest_idx ego's closest index on the path
+ * @param current_pose ego's exact pose
+ * @return true if ego is over the target_idx
+ */
+bool isOverTargetIndex(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
+  const geometry_msgs::msg::Pose & current_pose, const int target_idx);
+
+bool isBeforeTargetIndex(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
+  const geometry_msgs::msg::Pose & current_pose, const int target_idx);
+
 }  // namespace util
 }  // namespace behavior_velocity_planner
 
