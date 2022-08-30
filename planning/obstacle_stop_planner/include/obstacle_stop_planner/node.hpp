@@ -147,14 +147,6 @@ private:
   void currentVelocityCallback(const Odometry::ConstSharedPtr input_msg);
   void externalExpandStopRangeCallback(const ExpandStopRange::ConstSharedPtr input_msg);
 
-  bool withinPolygon(
-    const std::vector<cv::Point2d> & cv_polygon, const double radius, const Point2d & prev_point,
-    const Point2d & next_point, PointCloud::Ptr candidate_points_ptr,
-    PointCloud::Ptr within_points_ptr);
-
-  bool convexHull(
-    const std::vector<cv::Point2d> & pointcloud, std::vector<cv::Point2d> & polygon_points);
-
   void searchObstacle(
     const TrajectoryPoints & decimate_trajectory, TrajectoryPoints & output,
     PlannerData & planner_data, const Header & trajectory_header, const VehicleInfo & vehicle_info,
@@ -165,43 +157,18 @@ private:
     const VehicleInfo & vehicle_info, const double current_acc, const double current_vel,
     const StopParam & stop_param);
 
-  TrajectoryPoints decimateTrajectory(
-    const TrajectoryPoints & input, const double step_length, std::map<size_t, size_t> & index_map);
-
-  TrajectoryPoints trimTrajectoryWithIndexFromSelfPose(
-    const TrajectoryPoints & input, const Pose & self_pose, size_t & index);
-
   bool searchPointcloudNearTrajectory(
     const TrajectoryPoints & trajectory, const PointCloud2::ConstSharedPtr & input_points_ptr,
     PointCloud::Ptr output_points_ptr, const Header & trajectory_header,
     const VehicleInfo & vehicle_info, const StopParam & stop_param);
 
-  void createOneStepPolygon(
-    const Pose & base_step_pose, const Pose & next_step_pose, std::vector<cv::Point2d> & polygon,
-    const VehicleInfo & vehicle_info, const double expand_width = 0.0);
-
-  bool getSelfPose(const Header & header, const tf2_ros::Buffer & tf_buffer, Pose & self_pose);
-
-  void getNearestPoint(
-    const PointCloud & pointcloud, const Pose & base_pose, pcl::PointXYZ * nearest_collision_point,
-    rclcpp::Time * nearest_collision_point_time);
-
-  void getLateralNearestPoint(
-    const PointCloud & pointcloud, const Pose & base_pose, pcl::PointXYZ * lateral_nearest_point,
-    double * deviation);
-
-  Pose getVehicleCenterFromBase(const Pose & base_pose, const VehicleInfo & vehicle_info);
-
-  void insertStopPoint(
-    const StopPoint & stop_point, TrajectoryPoints & output, DiagnosticStatus & stop_reason_diag);
+  StopPoint createTargetPoint(
+    const int idx, const double margin, const TrajectoryPoints & base_trajectory,
+    const double dist_remain);
 
   StopPoint searchInsertPoint(
     const int idx, const TrajectoryPoints & base_trajectory, const double dist_remain,
     const StopParam & stop_param);
-
-  StopPoint createTargetPoint(
-    const int idx, const double margin, const TrajectoryPoints & base_trajectory,
-    const double dist_remain);
 
   SlowDownSection createSlowDownSection(
     const int idx, const TrajectoryPoints & base_trajectory, const double lateral_deviation,
@@ -214,10 +181,8 @@ private:
 
   void insertSlowDownSection(const SlowDownSection & slow_down_section, TrajectoryPoints & output);
 
-  TrajectoryPoints extendTrajectory(const TrajectoryPoints & input, const double extend_distance);
-
-  TrajectoryPoint getExtendTrajectoryPoint(
-    double extend_distance, const TrajectoryPoint & goal_point);
+  TrajectoryPoints trimTrajectoryWithIndexFromSelfPose(
+    const TrajectoryPoints & input, const Pose & self_pose, size_t & index);
 
   void setExternalVelocityLimit();
 

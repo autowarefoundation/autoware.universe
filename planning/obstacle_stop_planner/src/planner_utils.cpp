@@ -21,9 +21,13 @@
 
 #include <boost/format.hpp>
 
+#include <pcl_conversions/pcl_conversions.h>
+
 namespace motion_planning
 {
 
+using motion_utils::findFirstNearestIndexWithSoftConstraints;
+using motion_utils::findFirstNearestSegmentIndexWithSoftConstraints;
 using tier4_autoware_utils::calcDistance2d;
 using tier4_autoware_utils::getRPY;
 
@@ -421,4 +425,289 @@ rclcpp::SubscriptionOptions createSubscriptionOptions(rclcpp::Node * node_ptr)
   return sub_opt;
 }
 
+bool withinPolygon(
+  const std::vector<cv::Point2d> & cv_polygon, const double radius, const Point2d & prev_point,
+  const Point2d & next_point, PointCloud::Ptr candidate_points_ptr,
+  PointCloud::Ptr within_points_ptr)
+{
+  Polygon2d boost_polygon;
+  bool find_within_points = false;
+  for (const auto & point : cv_polygon) {
+    boost_polygon.outer().push_back(bg::make<Point2d>(point.x, point.y));
+  }
+  boost_polygon.outer().push_back(bg::make<Point2d>(cv_polygon.front().x, cv_polygon.front().y));
+
+  for (size_t j = 0; j < candidate_points_ptr->size(); ++j) {
+    Point2d point(candidate_points_ptr->at(j).x, candidate_points_ptr->at(j).y);
+    if (bg::distance(prev_point, point) < radius || bg::distance(next_point, point) < radius) {
+      if (bg::within(point, boost_polygon)) {
+        within_points_ptr->push_back(candidate_points_ptr->at(j));
+        find_within_points = true;
+      }
+    }
+  }
+  return find_within_points;
+}
+
+bool convexHull(
+  const std::vector<cv::Point2d> & pointcloud, std::vector<cv::Point2d> & polygon_points)
+{
+  cv::Point2d centroid;
+  centroid.x = 0;
+  centroid.y = 0;
+  for (const auto & point : pointcloud) {
+    centroid.x += point.x;
+    centroid.y += point.y;
+  }
+  centroid.x = centroid.x / static_cast<double>(pointcloud.size());
+  centroid.y = centroid.y / static_cast<double>(pointcloud.size());
+
+  std::vector<cv::Point> normalized_pointcloud;
+  std::vector<cv::Point> normalized_polygon_points;
+  for (const auto & p : pointcloud) {
+    normalized_pointcloud.emplace_back(
+      cv::Point((p.x - centroid.x) * 1000.0, (p.y - centroid.y) * 1000.0));
+  }
+  cv::convexHull(normalized_pointcloud, normalized_polygon_points);
+
+  for (const auto & p : normalized_polygon_points) {
+    cv::Point2d polygon_point;
+    polygon_point.x = (p.x / 1000.0 + centroid.x);
+    polygon_point.y = (p.y / 1000.0 + centroid.y);
+    polygon_points.push_back(polygon_point);
+  }
+  return true;
+}
+
+void createOneStepPolygon(
+  const Pose & base_step_pose, const Pose & next_step_pose, std::vector<cv::Point2d> & polygon,
+  const VehicleInfo & vehicle_info, const double expand_width)
+{
+  std::vector<cv::Point2d> one_step_move_vehicle_corner_points;
+
+  const auto & i = vehicle_info;
+  const auto & front_m = i.max_longitudinal_offset_m;
+  const auto & width_m = i.vehicle_width_m / 2.0 + expand_width;
+  const auto & back_m = i.rear_overhang_m;
+  // start step
+  {
+    const auto yaw = getRPY(base_step_pose).z;
+    one_step_move_vehicle_corner_points.emplace_back(cv::Point2d(
+      base_step_pose.position.x + std::cos(yaw) * front_m - std::sin(yaw) * width_m,
+      base_step_pose.position.y + std::sin(yaw) * front_m + std::cos(yaw) * width_m));
+    one_step_move_vehicle_corner_points.emplace_back(cv::Point2d(
+      base_step_pose.position.x + std::cos(yaw) * front_m - std::sin(yaw) * -width_m,
+      base_step_pose.position.y + std::sin(yaw) * front_m + std::cos(yaw) * -width_m));
+    one_step_move_vehicle_corner_points.emplace_back(cv::Point2d(
+      base_step_pose.position.x + std::cos(yaw) * -back_m - std::sin(yaw) * -width_m,
+      base_step_pose.position.y + std::sin(yaw) * -back_m + std::cos(yaw) * -width_m));
+    one_step_move_vehicle_corner_points.emplace_back(cv::Point2d(
+      base_step_pose.position.x + std::cos(yaw) * -back_m - std::sin(yaw) * width_m,
+      base_step_pose.position.y + std::sin(yaw) * -back_m + std::cos(yaw) * width_m));
+  }
+  // next step
+  {
+    const auto yaw = getRPY(next_step_pose).z;
+    one_step_move_vehicle_corner_points.emplace_back(cv::Point2d(
+      next_step_pose.position.x + std::cos(yaw) * front_m - std::sin(yaw) * width_m,
+      next_step_pose.position.y + std::sin(yaw) * front_m + std::cos(yaw) * width_m));
+    one_step_move_vehicle_corner_points.emplace_back(cv::Point2d(
+      next_step_pose.position.x + std::cos(yaw) * front_m - std::sin(yaw) * -width_m,
+      next_step_pose.position.y + std::sin(yaw) * front_m + std::cos(yaw) * -width_m));
+    one_step_move_vehicle_corner_points.emplace_back(cv::Point2d(
+      next_step_pose.position.x + std::cos(yaw) * -back_m - std::sin(yaw) * -width_m,
+      next_step_pose.position.y + std::sin(yaw) * -back_m + std::cos(yaw) * -width_m));
+    one_step_move_vehicle_corner_points.emplace_back(cv::Point2d(
+      next_step_pose.position.x + std::cos(yaw) * -back_m - std::sin(yaw) * width_m,
+      next_step_pose.position.y + std::sin(yaw) * -back_m + std::cos(yaw) * width_m));
+  }
+  convexHull(one_step_move_vehicle_corner_points, polygon);
+}
+
+void insertStopPoint(
+  const StopPoint & stop_point, TrajectoryPoints & output, DiagnosticStatus & stop_reason_diag)
+{
+  const auto traj_end_idx = output.size() - 1;
+  const auto & stop_idx = stop_point.index;
+
+  const auto & p_base = output.at(stop_idx);
+  const auto & p_next = output.at(std::min(stop_idx + 1, traj_end_idx));
+  const auto & p_insert = stop_point.point;
+
+  constexpr double min_dist = 1e-3;
+
+  const auto is_p_base_and_p_insert_overlap = calcDistance2d(p_base, p_insert) < min_dist;
+  const auto is_p_next_and_p_insert_overlap = calcDistance2d(p_next, p_insert) < min_dist;
+  const auto is_valid_index = checkValidIndex(p_base.pose, p_next.pose, p_insert.pose);
+
+  auto update_stop_idx = stop_idx;
+
+  if (!is_p_base_and_p_insert_overlap && !is_p_next_and_p_insert_overlap && is_valid_index) {
+    // insert: start_idx and end_idx are shifted by one
+    output.insert(output.begin() + stop_idx + 1, p_insert);
+    update_stop_idx = std::min(update_stop_idx + 1, traj_end_idx);
+  } else if (is_p_next_and_p_insert_overlap) {
+    // not insert: p_insert is merged into p_next
+    update_stop_idx = std::min(update_stop_idx + 1, traj_end_idx);
+  }
+
+  for (size_t i = update_stop_idx; i < output.size(); ++i) {
+    output.at(i).longitudinal_velocity_mps = 0.0;
+  }
+
+  stop_reason_diag = makeStopReasonDiag("obstacle", p_insert.pose);
+}
+
+TrajectoryPoint getExtendTrajectoryPoint(
+  const double extend_distance, const TrajectoryPoint & goal_point)
+{
+  tf2::Transform map2goal;
+  tf2::fromMsg(goal_point.pose, map2goal);
+  tf2::Transform local_extend_point;
+  local_extend_point.setOrigin(tf2::Vector3(extend_distance, 0.0, 0.0));
+  tf2::Quaternion q;
+  q.setRPY(0, 0, 0);
+  local_extend_point.setRotation(q);
+  const auto map2extend_point = map2goal * local_extend_point;
+  Pose extend_pose;
+  tf2::toMsg(map2extend_point, extend_pose);
+  TrajectoryPoint extend_trajectory_point;
+  extend_trajectory_point.pose = extend_pose;
+  extend_trajectory_point.longitudinal_velocity_mps = goal_point.longitudinal_velocity_mps;
+  extend_trajectory_point.lateral_velocity_mps = goal_point.lateral_velocity_mps;
+  extend_trajectory_point.acceleration_mps2 = goal_point.acceleration_mps2;
+  return extend_trajectory_point;
+}
+
+TrajectoryPoints decimateTrajectory(
+  const TrajectoryPoints & input, const double step_length,
+  std::map<size_t /* decimate */, size_t /* origin */> & index_map)
+{
+  TrajectoryPoints output{};
+
+  double trajectory_length_sum = 0.0;
+  double next_length = 0.0;
+
+  for (int i = 0; i < static_cast<int>(input.size()) - 1; ++i) {
+    const auto & p_front = input.at(i);
+    const auto & p_back = input.at(i + 1);
+    constexpr double epsilon = 1e-3;
+
+    if (next_length <= trajectory_length_sum + epsilon) {
+      const auto p_interpolate =
+        getBackwardPointFromBasePoint(p_front, p_back, p_back, next_length - trajectory_length_sum);
+      output.push_back(p_interpolate);
+
+      index_map.insert(std::make_pair(output.size() - 1, size_t(i)));
+      next_length += step_length;
+      continue;
+    }
+
+    trajectory_length_sum += calcDistance2d(p_front, p_back);
+  }
+  if (!input.empty()) {
+    output.push_back(input.back());
+    index_map.insert(std::make_pair(output.size() - 1, input.size() - 1));
+  }
+
+  return output;
+}
+
+TrajectoryPoints extendTrajectory(const TrajectoryPoints & input, const double extend_distance)
+{
+  TrajectoryPoints output = input;
+
+  if (extend_distance < std::numeric_limits<double>::epsilon()) {
+    return output;
+  }
+
+  const auto goal_point = input.back();
+  double interpolation_distance = 0.1;
+
+  double extend_sum = 0.0;
+  while (extend_sum <= (extend_distance - interpolation_distance)) {
+    const auto extend_trajectory_point = getExtendTrajectoryPoint(extend_sum, goal_point);
+    output.push_back(extend_trajectory_point);
+    extend_sum += interpolation_distance;
+  }
+  const auto extend_trajectory_point = getExtendTrajectoryPoint(extend_distance, goal_point);
+  output.push_back(extend_trajectory_point);
+
+  return output;
+}
+
+bool getSelfPose(const Header & header, const tf2_ros::Buffer & tf_buffer, Pose & self_pose)
+{
+  try {
+    TransformStamped transform;
+    transform = tf_buffer.lookupTransform(
+      header.frame_id, "base_link", header.stamp, rclcpp::Duration::from_seconds(0.1));
+    self_pose.position.x = transform.transform.translation.x;
+    self_pose.position.y = transform.transform.translation.y;
+    self_pose.position.z = transform.transform.translation.z;
+    self_pose.orientation.x = transform.transform.rotation.x;
+    self_pose.orientation.y = transform.transform.rotation.y;
+    self_pose.orientation.z = transform.transform.rotation.z;
+    self_pose.orientation.w = transform.transform.rotation.w;
+    return true;
+  } catch (tf2::TransformException & ex) {
+    return false;
+  }
+}
+
+void getNearestPoint(
+  const PointCloud & pointcloud, const Pose & base_pose, pcl::PointXYZ * nearest_collision_point,
+  rclcpp::Time * nearest_collision_point_time)
+{
+  double min_norm = 0.0;
+  bool is_init = false;
+  const auto yaw = getRPY(base_pose).z;
+  const Eigen::Vector2d base_pose_vec(std::cos(yaw), std::sin(yaw));
+
+  for (const auto & p : pointcloud) {
+    const Eigen::Vector2d pointcloud_vec(p.x - base_pose.position.x, p.y - base_pose.position.y);
+    double norm = base_pose_vec.dot(pointcloud_vec);
+    if (norm < min_norm || !is_init) {
+      min_norm = norm;
+      *nearest_collision_point = p;
+      *nearest_collision_point_time = pcl_conversions::fromPCL(pointcloud.header).stamp;
+      is_init = true;
+    }
+  }
+}
+
+void getLateralNearestPoint(
+  const PointCloud & pointcloud, const Pose & base_pose, pcl::PointXYZ * lateral_nearest_point,
+  double * deviation)
+{
+  double min_norm = std::numeric_limits<double>::max();
+  const auto yaw = getRPY(base_pose).z;
+  const Eigen::Vector2d base_pose_vec(std::cos(yaw), std::sin(yaw));
+  for (size_t i = 0; i < pointcloud.size(); ++i) {
+    const Eigen::Vector2d pointcloud_vec(
+      pointcloud.at(i).x - base_pose.position.x, pointcloud.at(i).y - base_pose.position.y);
+    double norm =
+      std::abs(base_pose_vec.x() * pointcloud_vec.y() - base_pose_vec.y() * pointcloud_vec.x());
+    if (norm < min_norm) {
+      min_norm = norm;
+      *lateral_nearest_point = pointcloud.at(i);
+    }
+  }
+  *deviation = min_norm;
+}
+
+Pose getVehicleCenterFromBase(const Pose & base_pose, const VehicleInfo & vehicle_info)
+{
+  const auto & i = vehicle_info;
+  const auto yaw = getRPY(base_pose).z;
+
+  Pose center_pose;
+  center_pose.position.x =
+    base_pose.position.x + (i.vehicle_length_m / 2.0 - i.rear_overhang_m) * std::cos(yaw);
+  center_pose.position.y =
+    base_pose.position.y + (i.vehicle_length_m / 2.0 - i.rear_overhang_m) * std::sin(yaw);
+  center_pose.position.z = base_pose.position.z;
+  center_pose.orientation = base_pose.orientation;
+  return center_pose;
+}
 }  // namespace motion_planning
