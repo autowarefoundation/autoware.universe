@@ -167,7 +167,6 @@ private:
 
   int dim_x_;              //!< @brief  dimension of EKF state
   int extend_state_step_;  //!< @brief  for time delay compensation
-  int dim_x_ex_;  //!< @brief  dimension of extended EKF state (dim_x_ * extended_state_step)
 
   /* Pose */
   double pose_additional_delay_;          //!< @brief  compensated pose delay time =
