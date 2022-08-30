@@ -127,6 +127,8 @@ PathSamplerNode::PathSamplerNode(const rclcpp::NodeOptions & node_options)
     declare_parameter<bool>("preprocessing.force_zero_initial_heading");
   params_.preprocessing.smooth_reference =
     declare_parameter<bool>("preprocessing.smooth_reference_trajectory");
+  params_.postprocessing.desired_traj_behind_length =
+    declare_parameter<double>("postprocessing.desired_traj_behind_length");
 
   // const auto half_wheel_tread = vehicle_info_.wheel_tread_m / 2.0;
   const auto left_offset = vehicle_info_.vehicle_width_m / 2.0;
@@ -208,6 +210,8 @@ rcl_interfaces::msg::SetParametersResult PathSamplerNode::onParameter(
       params_.preprocessing.force_zero_heading = parameter.as_bool();
     } else if (parameter.get_name() == "preprocessing.smooth_reference_trajectory") {
       params_.preprocessing.smooth_reference = parameter.as_bool();
+    } else if (parameter.get_name() == "postprocessing.desired_traj_behind_length") {
+      params_.postprocessing.desired_traj_behind_length = parameter.as_double();
     } else {
       RCLCPP_WARN(get_logger(), "Unknown parameter %s", parameter.get_name().c_str());
       result.successful = false;
@@ -253,7 +257,9 @@ void PathSamplerNode::pathCallback(const autoware_auto_planning_msgs::msg::Path:
   }
   const auto selected_path = selectBestPath(paths);
   if (selected_path) {
-    publishPath(*selected_path, msg);
+    const auto final_path = prependPath(*selected_path, path_spline);
+
+    publishPath(final_path, msg);
     prev_path_ = *selected_path;
   } else {
     RCLCPP_WARN(
@@ -383,7 +389,7 @@ void PathSamplerNode::publishPath(
     q.setRPY(0, 0, path.yaws[i]);
     point.pose.orientation = tf2::toMsg(q);
     point.longitudinal_velocity_mps = static_cast<float>(velocities[i]);
-    point.front_wheel_angle_rad = static_cast<float>(path.curvatures[i]);
+    point.front_wheel_angle_rad = 0.0f;
     point.rear_wheel_angle_rad = 0.0f;
     traj_msg.points.push_back(point);
   }
@@ -432,6 +438,22 @@ sampler_common::State PathSamplerNode::getPlanningState(
   }
   state.curvature = path_spline.curvature(current_frenet.s);
   return state;
+}
+
+sampler_common::Path PathSamplerNode::prependPath(
+  const sampler_common::Path & path, const sampler_common::transform::Spline2D & reference)
+{
+  if (path.points.empty()) return {};
+  const auto current_frenet = reference.frenet(path.points.front());
+  const auto resolution = params_.sampling.resolution;
+  sampler_common::Path path_to_prepend;
+  const auto first_s = current_frenet.s - params_.postprocessing.desired_traj_behind_length;
+  for (auto s = std::max(0.0, first_s); s < current_frenet.s; s += resolution) {
+    path_to_prepend.points.push_back(reference.cartesian(s));
+    path_to_prepend.yaws.push_back(reference.yaw(s));
+    path_to_prepend.intervals.push_back(resolution);
+  }
+  return path_to_prepend.extend(path);
 }
 }  // namespace sampler_node
 

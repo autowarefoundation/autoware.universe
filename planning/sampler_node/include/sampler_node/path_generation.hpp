@@ -57,6 +57,10 @@ struct Parameters
     bool force_zero_heading{};
     bool smooth_reference{};
   } preprocessing{};
+  struct
+  {
+    double desired_traj_behind_length{};
+  } postprocessing{};
 };
 
 /**
