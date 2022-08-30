@@ -34,6 +34,7 @@
 using std::placeholders::_1;
 
 using Vector6d = Eigen::Matrix<double, 6, 1>;
+using Matrix6d = Eigen::Matrix<double, 6, 6>;
 
 TimeDelayKalmanFilter InitEKF(
   const int extend_state_step_,
@@ -390,13 +391,30 @@ Vector6d PredictNextState(const Vector6d & X_curr, const double dt)
   const double wz = X_curr(5);
 
   Vector6d X_next;
-  X_next(0) = x + vx * cos(yaw + yaw_bias) * dt,  // dx = v * cos(yaw)
-  X_next(1) = y + vx * sin(yaw + yaw_bias) * dt,  // dy = v * sin(yaw)
-  X_next(2) = normalizeYaw(yaw + (wz)*dt),  // dyaw = omega + omega_bias
-  X_next(3) = yaw_bias,
-  X_next(4) = vx,
+  X_next(0) = x + vx * cos(yaw + yaw_bias) * dt;  // dx = v * cos(yaw)
+  X_next(1) = y + vx * sin(yaw + yaw_bias) * dt;  // dy = v * sin(yaw)
+  X_next(2) = normalizeYaw(yaw + (wz)*dt);  // dyaw = omega + omega_bias
+  X_next(3) = yaw_bias;
+  X_next(4) = vx;
   X_next(5) = wz;
   return X_next;
+}
+
+Matrix6d StateTransitionModel(const Vector6d & X_curr, const double dt)
+{
+  const double yaw = X_curr(2);
+  const double yaw_bias = X_curr(3);
+  const double vx = X_curr(4);
+
+  Matrix6d A = Matrix6d::Identity();
+  A(0, 2) = -vx * sin(yaw + yaw_bias) * dt;
+  A(0, 3) = -vx * sin(yaw + yaw_bias) * dt;
+  A(0, 4) = cos(yaw + yaw_bias) * dt;
+  A(1, 2) = vx * cos(yaw + yaw_bias) * dt;
+  A(1, 3) = vx * cos(yaw + yaw_bias) * dt;
+  A(1, 4) = sin(yaw + yaw_bias) * dt;
+  A(2, 5) = dt;
+  return A;
 }
 
 /*
@@ -435,23 +453,9 @@ void EKFLocalizer::predictKinematicsModel()
 
   const double dt = ekf_dt_;
   const Vector6d X_next = PredictNextState(X_curr, dt);
-
-  const double yaw = X_curr(2);
-  const double yaw_bias = X_curr(3);
-  const double vx = X_curr(4);
-
-  /* Set A matrix for latest state */
-  Eigen::MatrixXd A = Eigen::MatrixXd::Identity(dim_x_, dim_x_);
-  A(0, 2) = -vx * sin(yaw + yaw_bias) * dt;
-  A(0, 3) = -vx * sin(yaw + yaw_bias) * dt;
-  A(0, 4) = cos(yaw + yaw_bias) * dt;
-  A(1, 2) = vx * cos(yaw + yaw_bias) * dt;
-  A(1, 3) = vx * cos(yaw + yaw_bias) * dt;
-  A(1, 4) = sin(yaw + yaw_bias) * dt;
-  A(2, 5) = dt;
+  const Matrix6d A = StateTransitionModel(X_curr, dt);
 
   Eigen::MatrixXd Q = Eigen::MatrixXd::Zero(dim_x_, dim_x_);
-
   Q(0, 0) = 0.0;
   Q(1, 1) = 0.0;
   Q(2, 2) = proc_cov_yaw_d_;  // for yaw
