@@ -122,9 +122,14 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createDebugMarkerArray(
     &debug_marker_array, now);
 
   appendMarkerArray(
-    debug::createPolygonMarkerArray(
-      debug_data_.ego_lane_polygon, "ego_lane", module_id_, now, 0.3, 0.0, 0.0, 0.0, 0.3, 0.7),
-    &debug_marker_array, now);
+    createPolygonMarkerArray(
+      debug_data_.intersection_area, "intersection_area", lane_id_, 0.0, 1.0, 0.0),
+    &debug_marker_array, current_time);
+
+  appendMarkerArray(
+    createPolygonMarkerArray(
+      debug_data_.ego_lane_polygon, "ego_lane", lane_id_, 0.3, 0.0, 0.00.0, 0.3, 0.7),
+    &debug_marker_array, current_time);
 
   appendMarkerArray(
     debug::createPolygonMarkerArray(
