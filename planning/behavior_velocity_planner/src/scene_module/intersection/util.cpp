@@ -311,11 +311,9 @@ bool getStopPoseIndexFromMap(
 
 bool getObjectiveLanelets(
   lanelet::LaneletMapConstPtr lanelet_map_ptr, lanelet::routing::RoutingGraphPtr routing_graph_ptr,
-  const int lane_id, const double detection_area_length, double right_margin, double left_margin,
+  const int lane_id, const double detection_area_length,
   std::vector<lanelet::ConstLanelets> * conflicting_lanelets_result,
-  lanelet::ConstLanelets * objective_lanelets_result,
-  std::vector<lanelet::ConstLanelets> * objective_lanelets_with_margin_result,
-  const rclcpp::Logger logger)
+  lanelet::ConstLanelets * objective_lanelets_result, const rclcpp::Logger logger)
 {
   const auto & assigned_lanelet = lanelet_map_ptr->laneletLayer.get(lane_id);
 
@@ -356,7 +354,6 @@ bool getObjectiveLanelets(
   std::vector<lanelet::ConstLanelets>                      // conflicting lanes with "lane_id"
     conflicting_lanelets_ex_yield_ego;                     // excluding ego lanes and yield lanes
   std::vector<lanelet::ConstLanelets> objective_lanelets;  // final objective lanelets
-  std::vector<lanelet::ConstLanelets> objective_lanelets_with_margin;  // final objective lanelets
 
   // exclude yield lanelets and ego lanelets from objective_lanelets
   for (const auto & conflicting_lanelet : conflicting_lanelets) {
@@ -366,11 +363,8 @@ bool getObjectiveLanelets(
     if (lanelet::utils::contains(ego_lanelets, conflicting_lanelet)) {
       continue;
     }
-    const auto objective_lanelet_with_margin =
-      generateOffsetLanelet(conflicting_lanelet, right_margin, left_margin);
     conflicting_lanelets_ex_yield_ego.push_back({conflicting_lanelet});
     objective_lanelets.push_back({conflicting_lanelet});
-    objective_lanelets_with_margin.push_back({objective_lanelet_with_margin});
   }
 
   // get possible lanelet path that reaches conflicting_lane longer than given length
@@ -397,7 +391,6 @@ bool getObjectiveLanelets(
 
   *conflicting_lanelets_result = conflicting_lanelets_ex_yield_ego;
   *objective_lanelets_result = objective_and_preceding_lanelets;
-  *objective_lanelets_with_margin_result = objective_lanelets_with_margin;
 
   // set this flag true when debugging
   const bool is_debug = false;

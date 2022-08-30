@@ -122,11 +122,6 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createDebugMarkerArray(
     &debug_marker_array, now);
 
   appendMarkerArray(
-    createLaneletPolygonsMarkerArray(
-      debug_data_.detection_area_with_margin, "detection_area_with_margin", module_id_),
-    &debug_marker_array, now);
-
-  appendMarkerArray(
     debug::createPolygonMarkerArray(
       debug_data_.ego_lane_polygon, "ego_lane", module_id_, now, 0.3, 0.0, 0.0, 0.0, 0.3, 0.7),
     &debug_marker_array, now);

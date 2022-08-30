@@ -94,20 +94,14 @@ bool IntersectionModule::modifyPathVelocity(
   /* get detection area and conflicting area */
   lanelet::ConstLanelets detection_area_lanelets;
   std::vector<lanelet::ConstLanelets> conflicting_area_lanelets;
-  std::vector<lanelet::ConstLanelets> detection_area_lanelets_with_margin;
 
   util::getObjectiveLanelets(
     lanelet_map_ptr, routing_graph_ptr, lane_id_, planner_param_.detection_area_length,
-    planner_param_.detection_area_right_margin, planner_param_.detection_area_left_margin,
-    &conflicting_area_lanelets, &detection_area_lanelets, &detection_area_lanelets_with_margin,
-    logger_);
+    &conflicting_area_lanelets, &detection_area_lanelets, logger_);
   std::vector<lanelet::CompoundPolygon3d> conflicting_areas = util::getPolygon3dFromLaneletsVec(
     conflicting_area_lanelets, planner_param_.detection_area_length);
   std::vector<lanelet::CompoundPolygon3d> detection_areas =
     util::getPolygon3dFromLanelets(detection_area_lanelets, planner_param_.detection_area_length);
-  std::vector<lanelet::CompoundPolygon3d> detection_areas_with_margin =
-    util::getPolygon3dFromLaneletsVec(
-      detection_area_lanelets_with_margin, planner_param_.detection_area_length);
   std::vector<int> conflicting_area_lanelet_ids =
     util::getLaneletIdsFromLaneletsVec(conflicting_area_lanelets);
   std::vector<int> detection_area_lanelet_ids =
@@ -120,7 +114,6 @@ bool IntersectionModule::modifyPathVelocity(
     return true;
   }
   debug_data_.detection_area = detection_areas;
-  debug_data_.detection_area_with_margin = detection_areas_with_margin;
 
   /* set stop-line and stop-judgement-line for base_link */
   util::StopLineIdx stop_line_idxs;
@@ -620,7 +613,6 @@ bool IntersectionModule::checkAngleForTargetLanelets(
     const double ll_angle = lanelet::utils::getLaneletAngle(ll, pose.position);
     const double pose_angle = tf2::getYaw(pose.orientation);
     const double angle_diff = tier4_autoware_utils::normalizeRadian(ll_angle - pose_angle);
-    // detection_areaのlaneletの内部にありかつ姿勢が一致するobjectは検知対象とする(からtrue)
     if (std::fabs(angle_diff) < planner_param_.detection_area_angle_thr) {
       return true;
     }
