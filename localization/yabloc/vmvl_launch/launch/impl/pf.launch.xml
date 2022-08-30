@@ -9,7 +9,7 @@
     <arg name="predict_twist" default="/eagleye/twist" if="$(var use_eagleye)"/>
     <arg name="predict_twist" default="/kalman/twist" unless="$(var use_eagleye)"/>
 
-    <arg name="static_linear_covariance" default="0.05"/>
+    <arg name="static_linear_covariance" default="12.00"/>
     <arg name="static_angular_covariance" default="0.005"/>
 
     <!-- ========================================= -->

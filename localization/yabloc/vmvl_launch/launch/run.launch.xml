@@ -12,6 +12,8 @@
     <arg name="min_segment_length" default="-1.0"/>
     <arg name="max_segment_distance" default="-1.0"/>
 
+    <node name="particle_initializer_node" pkg="particle_initializer" exec="particle_initializer_node" output="screen" args="--ros-args --log-level info">
+    </node>
 
     <!-- ========================================= -->
     <!-- ============ PARTICLE FILTER ============ -->

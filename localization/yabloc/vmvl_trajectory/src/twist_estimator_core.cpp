@@ -11,7 +11,8 @@ TwistEstimator::TwistEstimator()
 : Node("twist_estimaotr"),
   upside_down(true),
   rtk_enabled_(declare_parameter("rtk_enabled", true)),
-  stop_vel_threshold_(declare_parameter("stop_vel_threshold", 0.05f))
+  stop_vel_threshold_(declare_parameter("stop_vel_threshold", 0.05f)),
+  static_scale_factor_(declare_parameter("static_scale_factor", -1.f))
 {
   using std::placeholders::_1;
   using namespace std::literals::chrono_literals;
@@ -103,6 +104,11 @@ void TwistEstimator::publishTwist(const Imu & imu)
   msg.header.frame_id = "base_link";
   msg.twist.angular.z = imu.angular_velocity.z + state_[BIAS];
   msg.twist.linear.x = state_[VELOCITY];
+
+  if (static_scale_factor_ > 0) {
+    msg.twist.linear.x = static_scale_factor_ * last_wheel_vel_;
+  }
+
   pub_twist_->publish(msg);
 
   {
@@ -126,6 +132,7 @@ void TwistEstimator::callbackTwistStamped(const TwistStamped & msg)
     return;
   }
   const float wheel = msg.twist.linear.x;
+  last_wheel_vel_ = wheel;
 
   if (std::abs(wheel) < stop_vel_threshold_) return;
 
@@ -246,17 +253,23 @@ void TwistEstimator::publishDoppler(const NavPVT & navpvt)
   msg.pose.orientation.z = std::sin(theta / 2.0f);
   msg.pose.orientation.w = std::cos(theta / 2.0f);
   pub_pose_->publish(msg);
+
+  last_doppler_vel_ = vel;
 }
 
 void TwistEstimator::publishString()
 {
   std::stringstream ss;
   ss << "--- Twist Estimator Status ----" << std::endl;
+  ss << std::fixed << std::setprecision(3);
   ss << "angle: " << state_[0] << std::endl;
   ss << "vel: " << state_[1] << std::endl;
   ss << "bias: " << state_[2] << std::endl;
   ss << "scale: " << state_[3] << std::endl;
   ss << std::endl;
+  ss << "doppler: " << last_doppler_vel_.norm() << std::endl;
+  ss << "wheel: " << last_wheel_vel_ << std::endl;
+
   switch (last_rtk_quality_) {
     case 2:
       ss << "RTK: FIX" << std::endl;

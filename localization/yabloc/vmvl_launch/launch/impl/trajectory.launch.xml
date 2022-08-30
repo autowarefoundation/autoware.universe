@@ -3,6 +3,7 @@
     <arg name="log_level" default="warn"/>
     <arg name="rtk_enabled" default="true"/>
     <arg name="use_eagleye" default="false"/>
+    <arg name="static_scale_factor" default="-1.0"/>
 
     <!-- ========================================= -->
     <!-- =============== STATIC TF =============== -->
@@ -38,6 +39,7 @@
     <node name="twist_estimator" pkg="vmvl_trajectory" exec="twist_node" output="screen" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="rtk_enabled" value="$(var rtk_enabled)"/>
+        <param name="static_scale_factor" value="$(var static_scale_factor)"/>
     </node>
 
     <!-- ========================================= -->

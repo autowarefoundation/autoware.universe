@@ -54,11 +54,14 @@ private:
   const bool upside_down;
   const bool rtk_enabled_;
   const float stop_vel_threshold_;
+  const float static_scale_factor_;
 
   Eigen::Matrix4f cov_predict_;
   int last_rtk_quality_{0};
 
   rclcpp::TimerBase::SharedPtr timer_;
+  Eigen::Vector2f last_doppler_vel_;
+  float last_wheel_vel_;
 
   bool scale_covariance_reset_flag{false};
   void callbackTimer();

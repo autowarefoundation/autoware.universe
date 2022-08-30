@@ -15,7 +15,7 @@ BASIC_TOPICS = [
     '/vehicle/status/shift', # iv
     '/vehicle/status/control_mode', # iv, universe
     '/vehicle/status/twist', # iv
-    '/vehicle/status/velocity_status' # universe
+    '/vehicle/status/velocity_status', # universe
     '/vehicle/status/steering', # iv
     '/vehicle/status/steering_status', # universe
 ]
