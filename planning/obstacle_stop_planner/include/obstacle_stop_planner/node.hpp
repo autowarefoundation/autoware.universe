@@ -45,7 +45,6 @@
 
 #include <boost/assert.hpp>
 #include <boost/assign/list_of.hpp>
-#include <boost/format.hpp>
 #include <boost/geometry.hpp>
 
 #include <pcl/common/transforms.h>
