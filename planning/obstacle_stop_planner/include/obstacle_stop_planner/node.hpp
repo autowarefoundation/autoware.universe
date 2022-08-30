@@ -147,7 +147,6 @@ private:
   void currentVelocityCallback(const Odometry::ConstSharedPtr input_msg);
   void externalExpandStopRangeCallback(const ExpandStopRange::ConstSharedPtr input_msg);
 
-private:
   bool withinPolygon(
     const std::vector<cv::Point2d> & cv_polygon, const double radius, const Point2d & prev_point,
     const Point2d & next_point, PointCloud::Ptr candidate_points_ptr,

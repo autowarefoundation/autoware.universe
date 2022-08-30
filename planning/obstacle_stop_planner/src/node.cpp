@@ -46,7 +46,6 @@ using motion_utils::calcLongitudinalOffsetToSegment;
 using motion_utils::calcSignedArcLength;
 using motion_utils::findFirstNearestIndexWithSoftConstraints;
 using motion_utils::findFirstNearestSegmentIndexWithSoftConstraints;
-using tier4_autoware_utils::calcAzimuthAngle;
 using tier4_autoware_utils::calcDistance2d;
 using tier4_autoware_utils::createPoint;
 using tier4_autoware_utils::getPoint;
@@ -1100,16 +1099,16 @@ bool ObstacleStopPlannerNode::convexHull(
 
   std::vector<cv::Point> normalized_pointcloud;
   std::vector<cv::Point> normalized_polygon_points;
-  for (size_t i = 0; i < pointcloud.size(); ++i) {
-    normalized_pointcloud.push_back(cv::Point(
-      (pointcloud.at(i).x - centroid.x) * 1000.0, (pointcloud.at(i).y - centroid.y) * 1000.0));
+  for (const auto & p : pointcloud) {
+    normalized_pointcloud.push_back(
+      cv::Point((p.x - centroid.x) * 1000.0, (p.y - centroid.y) * 1000.0));
   }
   cv::convexHull(normalized_pointcloud, normalized_polygon_points);
 
-  for (size_t i = 0; i < normalized_polygon_points.size(); ++i) {
+  for (const auto & p : normalized_polygon_points) {
     cv::Point2d polygon_point;
-    polygon_point.x = (normalized_polygon_points.at(i).x / 1000.0 + centroid.x);
-    polygon_point.y = (normalized_polygon_points.at(i).y / 1000.0 + centroid.y);
+    polygon_point.x = (p.x / 1000.0 + centroid.x);
+    polygon_point.y = (p.y / 1000.0 + centroid.y);
     polygon_points.push_back(polygon_point);
   }
   return true;
@@ -1144,13 +1143,12 @@ void ObstacleStopPlannerNode::getNearestPoint(
   const auto yaw = getRPY(base_pose).z;
   const Eigen::Vector2d base_pose_vec(std::cos(yaw), std::sin(yaw));
 
-  for (size_t i = 0; i < pointcloud.size(); ++i) {
-    const Eigen::Vector2d pointcloud_vec(
-      pointcloud.at(i).x - base_pose.position.x, pointcloud.at(i).y - base_pose.position.y);
+  for (const auto & p : pointcloud) {
+    const Eigen::Vector2d pointcloud_vec(p.x - base_pose.position.x, p.y - base_pose.position.y);
     double norm = base_pose_vec.dot(pointcloud_vec);
     if (norm < min_norm || !is_init) {
       min_norm = norm;
-      *nearest_collision_point = pointcloud.at(i);
+      *nearest_collision_point = p;
       *nearest_collision_point_time = pcl_conversions::fromPCL(pointcloud.header).stamp;
       is_init = true;
     }

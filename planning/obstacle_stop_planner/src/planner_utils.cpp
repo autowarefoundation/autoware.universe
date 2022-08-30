@@ -24,16 +24,7 @@
 namespace motion_planning
 {
 
-using motion_utils::calcLongitudinalOffsetPose;
-using motion_utils::calcLongitudinalOffsetToSegment;
-using motion_utils::calcSignedArcLength;
-using motion_utils::findFirstNearestIndexWithSoftConstraints;
-using motion_utils::findFirstNearestSegmentIndexWithSoftConstraints;
-using tier4_autoware_utils::calcAzimuthAngle;
 using tier4_autoware_utils::calcDistance2d;
-using tier4_autoware_utils::createPoint;
-using tier4_autoware_utils::getPoint;
-using tier4_autoware_utils::getPose;
 using tier4_autoware_utils::getRPY;
 
 bool validCheckDecelPlan(
