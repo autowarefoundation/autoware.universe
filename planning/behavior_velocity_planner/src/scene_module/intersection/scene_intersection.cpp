@@ -120,7 +120,7 @@ bool IntersectionModule::modifyPathVelocity(
     planner_data_->route_handler_->getLaneletMapPtr()->laneletLayer.get(lane_id_);
   const auto intersection_area = util::getIntersectionArea(assigned_lanelet, lanelet_map_ptr);
   if (intersection_area) {
-    const auto intersection_area_2d = lanelet::utils::to2D(intersection_area.value());
+    const auto intersection_area_2d = intersection_area.value();
     debug_data_.intersection_area = toGeomMsg(intersection_area_2d);
   }
 
@@ -286,7 +286,7 @@ bool IntersectionModule::checkCollision(
   lanelet::LaneletMapConstPtr lanelet_map_ptr,
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const std::vector<int> & detection_area_lanelet_ids,
-  const std::optional<lanelet::ConstPolygon3d> & intersection_area,
+  const std::optional<Polygon2d> & intersection_area,
   const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
   const int closest_idx, const Polygon2d & stuck_vehicle_detect_area)
 {
@@ -331,8 +331,7 @@ bool IntersectionModule::checkCollision(
     const auto object_direction = getObjectPoseWithVelocityDirection(object.kinematics);
     if (intersection_area) {
       const auto obj_poly = toFootprintPolygon(object);
-      const auto intersection_area_2d =
-        lanelet::utils::to2D(lanelet::utils::toHybrid(intersection_area.value()));
+      const auto intersection_area_2d = intersection_area.value();
       const auto is_in_intersection_area = bg::within(obj_poly, intersection_area_2d);
       if (is_in_intersection_area) {
         target_objects.objects.push_back(object);
