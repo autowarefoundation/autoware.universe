@@ -213,7 +213,6 @@ std::vector<double> calcTrajectoryCurvatureFrom3Points(
   // calculate curvature by circle fitting from three points
   std::vector<double> k_arr(trajectory.size(), 0.0);
 
-
   for (size_t i = 1; i + 1 < trajectory.size(); i++) {
     double curvature = 0.0;
     const auto p0 = getPoint(trajectory.at(i - std::min(idx_dist, i)));
