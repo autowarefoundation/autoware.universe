@@ -282,13 +282,6 @@ private:
     geometry_msgs::msg::TransformStamped & transform);
 
   /**
-   * @brief normalize yaw angle
-   * @param yaw yaw angle
-   * @return normalized yaw
-   */
-  double normalizeYaw(const double & yaw) const;
-
-  /**
    * @brief set current EKF estimation result to current_ekf_pose_ & current_ekf_twist_
    */
   void setCurrentResult();

@@ -151,9 +151,6 @@ void EKFLocalizer::updatePredictFrequency()
   last_predict_time_ = std::make_shared<const rclcpp::Time>(get_clock()->now());
 }
 
-/*
- * timerCallback
- */
 void EKFLocalizer::timerCallback()
 {
   if (!is_initialized_) {
@@ -378,6 +375,30 @@ void EKFLocalizer::callbackTwistWithCovariance(
   current_twist_info_queue_.push(twist_info);
 }
 
+double normalizeYaw(const double & yaw)
+{
+  return std::atan2(std::sin(yaw), std::cos(yaw));
+}
+
+Vector6d PredictNextState(const Vector6d & X_curr, const double dt)
+{
+  const double x = X_curr(0);
+  const double y = X_curr(1);
+  const double yaw = X_curr(2);
+  const double yaw_bias = X_curr(3);
+  const double vx = X_curr(4);
+  const double wz = X_curr(5);
+
+  Vector6d X_next;
+  X_next(0) = x + vx * cos(yaw + yaw_bias) * dt,  // dx = v * cos(yaw)
+  X_next(1) = y + vx * sin(yaw + yaw_bias) * dt,  // dy = v * sin(yaw)
+  X_next(2) = normalizeYaw(yaw + (wz)*dt),  // dyaw = omega + omega_bias
+  X_next(3) = yaw_bias,
+  X_next(4) = vx,
+  X_next(5) = wz;
+  return X_next;
+}
+
 /*
  * predictKinematicsModel
  */
@@ -406,28 +427,18 @@ void EKFLocalizer::predictKinematicsModel()
    */
 
   Eigen::MatrixXd X_curr(dim_x_, 1);  // current state
-  Eigen::MatrixXd X_next(dim_x_, 1);  // predicted state
   ekf_.getLatestX(X_curr);
   DEBUG_PRINT_MAT(X_curr.transpose());
 
   Eigen::MatrixXd P_curr;
   ekf_.getLatestP(P_curr);
 
+  const double dt = ekf_dt_;
+  const Vector6d X_next = PredictNextState(X_curr, dt);
+
   const double yaw = X_curr(2);
   const double yaw_bias = X_curr(3);
   const double vx = X_curr(4);
-  const double wz = X_curr(5);
-  const double dt = ekf_dt_;
-
-  /* Update for latest state */
-  X_next(0) = X_curr(0) + vx * cos(yaw + yaw_bias) * dt;  // dx = v * cos(yaw)
-  X_next(1) = X_curr(1) + vx * sin(yaw + yaw_bias) * dt;  // dy = v * sin(yaw)
-  X_next(2) = X_curr(2) + (wz)*dt;                    // dyaw = omega + omega_bias
-  X_next(3) = yaw_bias;
-  X_next(4) = vx;
-  X_next(5) = wz;
-
-  X_next(2) = std::atan2(std::sin(X_next(2)), std::cos(X_next(2)));
 
   /* Set A matrix for latest state */
   Eigen::MatrixXd A = Eigen::MatrixXd::Identity(dim_x_, dim_x_);
@@ -758,11 +769,6 @@ void EKFLocalizer::publishEstimateResult()
   msg.data.push_back(tier4_autoware_utils::rad2deg(pose_yaw));      // [1] measurement yaw angle
   msg.data.push_back(tier4_autoware_utils::rad2deg(X(3)));  // [2] yaw bias
   pub_debug_->publish(msg);
-}
-
-double EKFLocalizer::normalizeYaw(const double & yaw) const
-{
-  return std::atan2(std::sin(yaw), std::cos(yaw));
 }
 
 void EKFLocalizer::updateSimple1DFilters(const geometry_msgs::msg::PoseWithCovarianceStamped & pose)
