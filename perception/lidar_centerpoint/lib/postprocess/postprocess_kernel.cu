@@ -93,7 +93,7 @@ __global__ void generateBoxes3D_kernel(
   const float vel_y = out_vel[down_grid_size * 1 + idx];
 
   det_boxes3d[idx].label = label;
-  det_boxes3d[idx].score = max_score >= yaw_norm_threshold ? max_score : 0.f;
+  det_boxes3d[idx].score = yaw_norm >= yaw_norm_threshold ? max_score : 0.f;
   det_boxes3d[idx].x = x;
   det_boxes3d[idx].y = y;
   det_boxes3d[idx].z = z;
