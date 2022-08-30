@@ -138,15 +138,6 @@ private:
   //   (current_velocity_ptr_, prev_velocity_ptr_)
   std::mutex mutex_;
 
-  /*
-   * Callback
-   */
-  void obstaclePointcloudCallback(const PointCloud2::ConstSharedPtr input_msg);
-  void pathCallback(const Trajectory::ConstSharedPtr input_msg);
-  void dynamicObjectCallback(const PredictedObjects::ConstSharedPtr input_msg);
-  void currentVelocityCallback(const Odometry::ConstSharedPtr input_msg);
-  void externalExpandStopRangeCallback(const ExpandStopRange::ConstSharedPtr input_msg);
-
   void searchObstacle(
     const TrajectoryPoints & decimate_trajectory, TrajectoryPoints & output,
     PlannerData & planner_data, const Header & trajectory_header, const VehicleInfo & vehicle_info,
@@ -190,6 +181,17 @@ private:
 
   void publishDebugData(
     const PlannerData & planner_data, const double current_acc, const double current_vel);
+
+  // Callback
+  void onTriger(const Trajectory::ConstSharedPtr input_msg);
+
+  void onOdometry(const Odometry::ConstSharedPtr input_msg);
+
+  void onPointCloud(const PointCloud2::ConstSharedPtr input_msg);
+
+  void onDynamicObjects(const PredictedObjects::ConstSharedPtr input_msg);
+
+  void onExpandStopRange(const ExpandStopRange::ConstSharedPtr input_msg);
 };
 }  // namespace motion_planning
 

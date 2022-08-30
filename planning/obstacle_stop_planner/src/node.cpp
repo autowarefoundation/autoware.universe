@@ -165,29 +165,27 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
   // Subscribers
   obstacle_pointcloud_sub_ = this->create_subscription<PointCloud2>(
     "~/input/pointcloud", rclcpp::SensorDataQoS(),
-    std::bind(&ObstacleStopPlannerNode::obstaclePointcloudCallback, this, std::placeholders::_1),
+    std::bind(&ObstacleStopPlannerNode::onPointCloud, this, std::placeholders::_1),
     createSubscriptionOptions(this));
   path_sub_ = this->create_subscription<Trajectory>(
     "~/input/trajectory", 1,
-    std::bind(&ObstacleStopPlannerNode::pathCallback, this, std::placeholders::_1),
+    std::bind(&ObstacleStopPlannerNode::onTriger, this, std::placeholders::_1),
     createSubscriptionOptions(this));
   current_velocity_sub_ = this->create_subscription<Odometry>(
     "~/input/odometry", 1,
-    std::bind(&ObstacleStopPlannerNode::currentVelocityCallback, this, std::placeholders::_1),
+    std::bind(&ObstacleStopPlannerNode::onOdometry, this, std::placeholders::_1),
     createSubscriptionOptions(this));
   dynamic_object_sub_ = this->create_subscription<PredictedObjects>(
     "~/input/objects", 1,
-    std::bind(&ObstacleStopPlannerNode::dynamicObjectCallback, this, std::placeholders::_1),
+    std::bind(&ObstacleStopPlannerNode::onDynamicObjects, this, std::placeholders::_1),
     createSubscriptionOptions(this));
   expand_stop_range_sub_ = this->create_subscription<ExpandStopRange>(
     "~/input/expand_stop_range", 1,
-    std::bind(
-      &ObstacleStopPlannerNode::externalExpandStopRangeCallback, this, std::placeholders::_1),
+    std::bind(&ObstacleStopPlannerNode::onExpandStopRange, this, std::placeholders::_1),
     createSubscriptionOptions(this));
 }
 
-void ObstacleStopPlannerNode::obstaclePointcloudCallback(
-  const PointCloud2::ConstSharedPtr input_msg)
+void ObstacleStopPlannerNode::onPointCloud(const PointCloud2::ConstSharedPtr input_msg)
 {
   // mutex for obstacle_ros_pointcloud_ptr_
   // NOTE: *obstacle_ros_pointcloud_ptr_ is used
@@ -211,7 +209,7 @@ void ObstacleStopPlannerNode::obstaclePointcloudCallback(
   obstacle_ros_pointcloud_ptr_->header = input_msg->header;
 }
 
-void ObstacleStopPlannerNode::pathCallback(const Trajectory::ConstSharedPtr input_msg)
+void ObstacleStopPlannerNode::onTriger(const Trajectory::ConstSharedPtr input_msg)
 {
   mutex_.lock();
   // NOTE: these variables must not be referenced for multithreading
@@ -595,8 +593,7 @@ void ObstacleStopPlannerNode::insertVelocity(
   stop_reason_diag_pub_->publish(planner_data.stop_reason_diag);
 }
 
-void ObstacleStopPlannerNode::externalExpandStopRangeCallback(
-  const ExpandStopRange::ConstSharedPtr input_msg)
+void ObstacleStopPlannerNode::onExpandStopRange(const ExpandStopRange::ConstSharedPtr input_msg)
 {
   // mutex for vehicle_info_, stop_param_
   std::lock_guard<std::mutex> lock(mutex_);
@@ -801,15 +798,14 @@ void ObstacleStopPlannerNode::insertSlowDownSection(
   debug_ptr_->pushPose(p_base_end.pose, PoseType::SlowDownEnd);
 }
 
-void ObstacleStopPlannerNode::dynamicObjectCallback(
-  const PredictedObjects::ConstSharedPtr input_msg)
+void ObstacleStopPlannerNode::onDynamicObjects(const PredictedObjects::ConstSharedPtr input_msg)
 {
   std::lock_guard<std::mutex> lock(mutex_);
 
   object_ptr_ = input_msg;
 }
 
-void ObstacleStopPlannerNode::currentVelocityCallback(const Odometry::ConstSharedPtr input_msg)
+void ObstacleStopPlannerNode::onOdometry(const Odometry::ConstSharedPtr input_msg)
 {
   // mutex for current_acc_, lpf_acc_
   std::lock_guard<std::mutex> lock(mutex_);
