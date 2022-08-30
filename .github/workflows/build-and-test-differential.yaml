@@ -6,23 +6,25 @@ on:
 jobs:
   build-and-test-differential:
     runs-on: ubuntu-latest
-    container: ${{ matrix.container }}
+    container: ${{ matrix.container }}${{ matrix.container-suffix }}
     strategy:
       fail-fast: false
       matrix:
         rosdistro:
           - galactic
           - humble
+        container-suffix:
+          - -cuda
         include:
           - rosdistro: galactic
-            container: ghcr.io/autowarefoundation/autoware-universe:galactic-latest-cuda
+            container: ghcr.io/autowarefoundation/autoware-universe:galactic-latest
             build-depends-repos: build_depends.repos
           - rosdistro: humble
-            container: ghcr.io/autowarefoundation/autoware-universe:humble-latest-cuda
+            container: ghcr.io/autowarefoundation/autoware-universe:humble-latest
             build-depends-repos: build_depends.humble.repos
     steps:
       - name: Cancel previous runs
-        uses: styfle/cancel-workflow-action@0.9.1
+        uses: styfle/cancel-workflow-action@0.10.0
 
       - name: Check out repository
         uses: actions/checkout@v3
@@ -64,7 +66,7 @@ jobs:
 
   clang-tidy-differential:
     runs-on: ubuntu-latest
-    container: ghcr.io/autowarefoundation/autoware-universe:galactic-latest-cuda
+    container: ghcr.io/autowarefoundation/autoware-universe:humble-latest-cuda
     needs: build-and-test-differential
     steps:
       - name: Check out repository
@@ -83,7 +85,7 @@ jobs:
         if: ${{ steps.get-modified-packages.outputs.modified-packages != '' }}
         uses: autowarefoundation/autoware-github-actions/clang-tidy@v1
         with:
-          rosdistro: galactic
+          rosdistro: humble
           target-packages: ${{ steps.get-modified-packages.outputs.modified-packages }}
           clang-tidy-config-url: https://raw.githubusercontent.com/autowarefoundation/autoware/main/.clang-tidy
-          build-depends-repos: build_depends.repos
+          build-depends-repos: build_depends.humble.repos

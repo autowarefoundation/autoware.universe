@@ -127,7 +127,7 @@ struct ReferencePoint
   //       one is fixing points around ego for stability
   //       second is fixing current ego pose when no velocity for planning from ego pose
   boost::optional<Eigen::Vector2d> fix_kinematic_state = boost::none;
-  bool plan_from_ego = false;
+  bool plan_from_ego = true;
   Eigen::Vector2d optimized_kinematic_state;
   double optimized_input;
 
@@ -296,7 +296,7 @@ private:
 
   size_t findNearestIndexWithSoftYawConstraints(
     const std::vector<geometry_msgs::msg::Point> & points, const geometry_msgs::msg::Pose & pose,
-    const double yaw_threshold) const;
+    const double dist_threshold, const double yaw_threshold) const;
 
 public:
   MPTOptimizer(

@@ -4,7 +4,7 @@
   <name>simple_planning_simulator</name>
   <version>1.0.0</version>
   <description>simple_planning_simulator as a ROS 2 node</description>
-  <maintainer email="horibe.takamasa@gmail.com">Takamasa HORIBE</maintainer>
+  <maintainer email="takamasa.horibe@tier4.jp">Takamasa Horibe</maintainer>
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
@@ -27,6 +27,7 @@
   <depend>tier4_api_utils</depend>
   <depend>tier4_autoware_utils</depend>
   <depend>tier4_external_api_msgs</depend>
+  <depend>tier4_vehicle_msgs</depend>
   <depend>vehicle_info_util</depend>
 
   <exec_depend>launch_ros</exec_depend>

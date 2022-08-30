@@ -42,7 +42,7 @@ enum class PolygonType : int8_t { Vehicle = 0, Collision, SlowDownRange, SlowDow
 
 enum class PointType : int8_t { Stop = 0, SlowDown };
 
-enum class PoseType : int8_t { Stop = 0, SlowDownStart, SlowDownEnd };
+enum class PoseType : int8_t { Stop = 0, TargetStop, SlowDownStart, SlowDownEnd };
 
 class DebugValues
 {
@@ -51,11 +51,12 @@ public:
     CURRENT_VEL = 0,
     CURRENT_ACC = 1,
     CURRENT_FORWARD_MARGIN = 2,
-    OBSTACLE_DISTANCE = 3,
-    FLAG_FIND_COLLISION_OBSTACLE = 4,
-    FLAG_FIND_SLOW_DOWN_OBSTACLE = 5,
-    FLAG_ADAPTIVE_CRUISE = 6,
-    FLAG_EXTERNAL = 7,
+    SLOWDOWN_OBSTACLE_DISTANCE = 3,
+    COLLISION_OBSTACLE_DISTANCE = 4,
+    FLAG_FIND_COLLISION_OBSTACLE = 5,
+    FLAG_FIND_SLOW_DOWN_OBSTACLE = 6,
+    FLAG_ADAPTIVE_CRUISE = 7,
+    FLAG_EXTERNAL = 8,
     SIZE
   };
 
@@ -118,6 +119,7 @@ private:
   double base_link2front_;
 
   std::shared_ptr<geometry_msgs::msg::Pose> stop_pose_ptr_;
+  std::shared_ptr<geometry_msgs::msg::Pose> target_stop_pose_ptr_;
   std::shared_ptr<geometry_msgs::msg::Pose> slow_down_start_pose_ptr_;
   std::shared_ptr<geometry_msgs::msg::Pose> slow_down_end_pose_ptr_;
   std::shared_ptr<geometry_msgs::msg::Point> stop_obstacle_point_ptr_;

@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "mission_planner/lanelet2_impl/mission_planner_lanelet2.hpp"
+#include "mission_planner_lanelet2.hpp"
 
-#include "mission_planner/lanelet2_impl/utility_functions.hpp"
+#include "utility_functions.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
@@ -122,12 +122,21 @@ bool isInParkingLot(
   return false;
 }
 
+double projectGoalToMap(
+  const lanelet::Lanelet & lanelet_component, const lanelet::ConstPoint3d & goal_point)
+{
+  const lanelet::ConstLineString3d center_line =
+    lanelet::utils::generateFineCenterline(lanelet_component);
+  lanelet::BasicPoint3d project = lanelet::geometry::project(center_line, goal_point.basicPoint());
+  return project.z();
+}
+
 }  // anonymous namespace
 
 namespace mission_planner
 {
 MissionPlannerLanelet2::MissionPlannerLanelet2(const rclcpp::NodeOptions & node_options)
-: MissionPlanner("mission_planner_node", node_options), is_graph_ready_(false)
+: MissionPlanner("mission_planner", node_options), is_graph_ready_(false)
 {
   using std::placeholders::_1;
   map_subscriber_ = create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
@@ -254,14 +263,14 @@ bool MissionPlannerLanelet2::isGoalValid() const
 
 autoware_auto_planning_msgs::msg::HADMapRoute MissionPlannerLanelet2::planRoute()
 {
-  std::stringstream ss;
+  std::stringstream log_ss;
   for (const auto & checkpoint : checkpoints_) {
-    ss << "x: " << checkpoint.pose.position.x << " "
-       << "y: " << checkpoint.pose.position.y << std::endl;
+    log_ss << "x: " << checkpoint.pose.position.x << " "
+           << "y: " << checkpoint.pose.position.y << std::endl;
   }
   RCLCPP_INFO_STREAM(
     get_logger(), "start planning route with checkpoints: " << std::endl
-                                                            << ss.str());
+                                                            << log_ss.str());
 
   autoware_auto_planning_msgs::msg::HADMapRoute route_msg;
   RouteSections route_sections;
@@ -290,12 +299,25 @@ autoware_auto_planning_msgs::msg::HADMapRoute MissionPlannerLanelet2::planRoute(
       get_logger(), "Loop detected within route! Be aware that looped route is not debugged!");
   }
 
+  refineGoalHeight(route_sections);
+
   route_msg.header.stamp = this->now();
   route_msg.header.frame_id = map_frame_;
   route_msg.segments = route_sections;
   route_msg.goal_pose = goal_pose_.pose;
 
+  RCLCPP_DEBUG(get_logger(), "Goal Pose Z : %lf", goal_pose_.pose.position.z);
   return route_msg;
+}
+
+void MissionPlannerLanelet2::refineGoalHeight(const RouteSections & route_sections)
+{
+  const auto goal_lane_id = route_sections.back().preferred_primitive_id;
+  lanelet::Lanelet goal_lanelet = lanelet_map_ptr_->laneletLayer.get(goal_lane_id);
+  const auto goal_lanelet_pt = lanelet::utils::conversion::toLaneletPoint(goal_pose_.pose.position);
+  double goal_height = projectGoalToMap(goal_lanelet, goal_lanelet_pt);
+  goal_pose_.pose.position.z = goal_height;
+  checkpoints_.back().pose.position.z = goal_height;
 }
 
 }  // namespace mission_planner

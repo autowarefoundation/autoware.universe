@@ -55,7 +55,7 @@ bool RunOutModule::modifyPathVelocity(
   const auto current_acc = planner_data_->current_accel.get();
   const auto & current_pose = planner_data_->current_pose.pose;
 
-  // smooth velocity of the path to calcute time to collision accurately
+  // smooth velocity of the path to calculate time to collision accurately
   PathWithLaneId smoothed_path;
   if (!smoothPath(*path, smoothed_path, planner_data_)) {
     return true;
@@ -71,7 +71,8 @@ bool RunOutModule::modifyPathVelocity(
     run_out_utils::trimPathFromSelfPose(extended_smoothed_path, current_pose, trim_distance);
 
   // create abstracted dynamic obstacles from objects or points
-  dynamic_obstacle_creator_->setData(*planner_data_, *path);
+  const auto detection_area_poly = createDetectionAreaPolygon(extended_smoothed_path);
+  dynamic_obstacle_creator_->setData(*planner_data_, *path, detection_area_poly);
   const auto dynamic_obstacles = dynamic_obstacle_creator_->createDynamicObstacles();
   debug_ptr_->setDebugValues(DebugValues::TYPE::NUM_OBSTACLES, dynamic_obstacles.size());
 
@@ -109,7 +110,6 @@ bool RunOutModule::modifyPathVelocity(
     applyMaxJerkLimit(current_pose, current_vel, current_acc, *path);
   }
 
-  visualizeDetectionArea(trim_smoothed_path);
   publishDebugValue(
     trim_smoothed_path, partition_excluded_obstacles, dynamic_obstacle, current_pose);
 
@@ -123,27 +123,16 @@ bool RunOutModule::modifyPathVelocity(
   return true;
 }
 
-pcl::PointCloud<pcl::PointXYZ> RunOutModule::extractObstaclePointsWithRectangle(
-  const pcl::PointCloud<pcl::PointXYZ> & input_points,
-  const geometry_msgs::msg::Pose & current_pose) const
-{
-  const auto detection_area_polygon =
-    createDetectionAreaPolygon(current_pose, planner_param_.detection_area);
-
-  debug_ptr_->pushDebugPolygons(detection_area_polygon);
-
-  const auto extracted_points = pointsWithinPolygon(detection_area_polygon, input_points);
-
-  return extracted_points;
-}
-
-void RunOutModule::visualizeDetectionArea(const PathWithLaneId & smoothed_path) const
+Polygons2d RunOutModule::createDetectionAreaPolygon(const PathWithLaneId & smoothed_path) const
 {
   // calculate distance needed to stop with jerk and acc constraints
   const float initial_vel = planner_data_->current_velocity->twist.linear.x;
   const float initial_acc = planner_data_->current_accel.get();
   const float target_vel = 0.0;
-  const float jerk_dec = planner_param_.run_out.deceleration_jerk;
+  const float jerk_dec_max = planner_param_.smoother.start_jerk;
+  const float jerk_dec = planner_param_.run_out.specify_decel_jerk
+                           ? planner_param_.run_out.deceleration_jerk
+                           : jerk_dec_max;
   const float jerk_acc = std::abs(jerk_dec);
   const float planning_dec = jerk_dec < planner_param_.common.normal_min_jerk
                                ? planner_param_.common.limit_min_acc
@@ -152,47 +141,31 @@ void RunOutModule::visualizeDetectionArea(const PathWithLaneId & smoothed_path) 
     initial_vel, target_vel, initial_acc, planning_dec, jerk_acc, jerk_dec);
 
   if (!stop_dist) {
-    return;
+    stop_dist = boost::make_optional<double>(0.0);
   }
 
+  // create detection area polygon
   DetectionRange da_range;
-  const float obstacle_vel_mps = planner_param_.dynamic_obstacle.max_vel_kmph / 3.6;
-  da_range.interval = planner_param_.run_out.detection_distance;
-  da_range.min_longitudinal_distance = planner_param_.vehicle_param.base_to_front;
-  da_range.max_longitudinal_distance = *stop_dist + planner_param_.run_out.stop_margin;
-  da_range.min_lateral_distance = planner_param_.vehicle_param.width / 2.0;
-  da_range.max_lateral_distance =
-    obstacle_vel_mps * planner_param_.dynamic_obstacle.max_prediction_time;
+  const auto & p = planner_param_;
+  const double obstacle_vel_mps = p.dynamic_obstacle.max_vel_kmph / 3.6;
+  da_range.interval = p.run_out.detection_distance;
+  da_range.min_longitudinal_distance =
+    p.vehicle_param.base_to_front - p.detection_area.margin_behind;
+  da_range.max_longitudinal_distance =
+    *stop_dist + p.run_out.stop_margin + p.detection_area.margin_ahead;
+  da_range.min_lateral_distance = p.vehicle_param.width / 2.0;
+  da_range.max_lateral_distance = obstacle_vel_mps * p.dynamic_obstacle.max_prediction_time;
   Polygons2d detection_area_poly;
+  const size_t ego_seg_idx = findEgoSegmentIndex(smoothed_path.points);
   planning_utils::createDetectionAreaPolygons(
-    detection_area_poly, smoothed_path, planner_data_->current_pose.pose, da_range,
-    planner_param_.dynamic_obstacle.max_vel_kmph / 3.6);
+    detection_area_poly, smoothed_path, planner_data_->current_pose.pose, ego_seg_idx, da_range,
+    p.dynamic_obstacle.max_vel_kmph / 3.6);
 
   for (const auto & poly : detection_area_poly) {
     debug_ptr_->pushDetectionAreaPolygons(poly);
   }
-}
 
-pcl::PointCloud<pcl::PointXYZ> RunOutModule::pointsWithinPolygon(
-  const std::vector<geometry_msgs::msg::Point> & polygon,
-  const pcl::PointCloud<pcl::PointXYZ> & candidate_points) const
-{
-  // convert to boost type
-  const tier4_autoware_utils::Polygon2d bg_poly = run_out_utils::createBoostPolyFromMsg(polygon);
-
-  // find points in detection area
-  pcl::PointCloud<pcl::PointXYZ> within_points;
-  for (const auto & p : candidate_points) {
-    tier4_autoware_utils::Point2d point(p.x, p.y);
-
-    if (!bg::covered_by(point, bg_poly)) {
-      continue;
-    }
-
-    within_points.push_back(p);
-  }
-
-  return within_points;
+  return detection_area_poly;
 }
 
 boost::optional<DynamicObstacle> RunOutModule::detectCollision(
@@ -269,10 +242,10 @@ boost::optional<DynamicObstacle> RunOutModule::findNearestCollisionObstacle(
   std::sort(
     dynamic_obstacles.begin(), dynamic_obstacles.end(),
     [&path, &base_pose](const auto & lhs, const auto & rhs) -> bool {
-      const auto dist_lhs = tier4_autoware_utils::calcSignedArcLength(
-        path.points, base_pose.position, lhs.pose.position);
-      const auto dist_rhs = tier4_autoware_utils::calcSignedArcLength(
-        path.points, base_pose.position, rhs.pose.position);
+      const auto dist_lhs =
+        motion_utils::calcSignedArcLength(path.points, base_pose.position, lhs.pose.position);
+      const auto dist_rhs =
+        motion_utils::calcSignedArcLength(path.points, base_pose.position, rhs.pose.position);
 
       return dist_lhs < dist_rhs;
     });
@@ -505,10 +478,15 @@ std::vector<geometry_msgs::msg::Point> RunOutModule::createBoundingBoxForRangedP
     tier4_autoware_utils::calcDistance2d(pose_with_range.pose_min, pose_with_range.pose_max);
 
   geometry_msgs::msg::Pose p_min_to_p_max;
-  const auto azimuth_angle = tier4_autoware_utils::calcAzimuthAngle(
-    pose_with_range.pose_min.position, pose_with_range.pose_max.position);
-  p_min_to_p_max.position = pose_with_range.pose_min.position;
-  p_min_to_p_max.orientation = tier4_autoware_utils::createQuaternionFromYaw(azimuth_angle);
+  if (dist_p1_p2 < std::numeric_limits<double>::epsilon()) {
+    // can't calculate the angle if two points are the same
+    p_min_to_p_max = pose_with_range.pose_min;
+  } else {
+    const auto azimuth_angle = tier4_autoware_utils::calcAzimuthAngle(
+      pose_with_range.pose_min.position, pose_with_range.pose_max.position);
+    p_min_to_p_max.position = pose_with_range.pose_min.position;
+    p_min_to_p_max.orientation = tier4_autoware_utils::createQuaternionFromYaw(azimuth_angle);
+  }
 
   std::vector<geometry_msgs::msg::Point> poly;
   poly.emplace_back(
@@ -574,7 +552,7 @@ boost::optional<geometry_msgs::msg::Pose> RunOutModule::calcStopPoint(
   }
 
   // calculate distance to collision with the obstacle
-  const float dist_to_collision_point = tier4_autoware_utils::calcSignedArcLength(
+  const float dist_to_collision_point = motion_utils::calcSignedArcLength(
     path.points, current_pose.position, dynamic_obstacle->nearest_collision_point);
   const float dist_to_collision =
     dist_to_collision_point - planner_param_.vehicle_param.base_to_front;
@@ -664,8 +642,15 @@ void RunOutModule::insertStopPoint(
 
   // find nearest point index behind the stop point
   const auto nearest_seg_idx =
-    tier4_autoware_utils::findNearestSegmentIndex(path.points, stop_point->position);
+    motion_utils::findNearestSegmentIndex(path.points, stop_point->position);
   auto insert_idx = nearest_seg_idx + 1;
+
+  // if stop point is ahead of the end of the path, don't insert
+  if (
+    insert_idx == path.points.size() - 1 &&
+    planning_utils::isAheadOf(*stop_point, path.points.at(insert_idx).point.pose)) {
+    return;
+  }
 
   // to PathPointWithLaneId
   autoware_auto_planning_msgs::msg::PathPointWithLaneId stop_point_with_lane_id;
@@ -687,7 +672,7 @@ void RunOutModule::insertVelocity(
   }
 
   const auto longitudinal_offset_to_collision_point =
-    tier4_autoware_utils::calcSignedArcLength(
+    motion_utils::calcSignedArcLength(
       smoothed_path.points, current_pose.position, dynamic_obstacle->nearest_collision_point) -
     planner_param_.vehicle_param.base_to_front;
   // enough distance to the obstacle
@@ -756,7 +741,7 @@ void RunOutModule::insertApproachingVelocity(
 {
   // insert slow down velocity from nearest segment point
   const auto nearest_seg_idx =
-    tier4_autoware_utils::findNearestSegmentIndex(output_path.points, current_pose.position);
+    motion_utils::findNearestSegmentIndex(output_path.points, current_pose.position);
   run_out_utils::insertPathVelocityFromIndexLimited(
     nearest_seg_idx, approaching_vel, output_path.points);
 
@@ -776,7 +761,7 @@ void RunOutModule::insertApproachingVelocity(
     stop_point, planner_param_.vehicle_param.base_to_front, 0, 0));
 
   const auto nearest_seg_idx_stop =
-    tier4_autoware_utils::findNearestSegmentIndex(output_path.points, stop_point.position);
+    motion_utils::findNearestSegmentIndex(output_path.points, stop_point.position);
   auto insert_idx_stop = nearest_seg_idx_stop + 1;
 
   // to PathPointWithLaneId
@@ -799,7 +784,7 @@ void RunOutModule::applyMaxJerkLimit(
 
   const auto stop_point = path.points.at(stop_point_idx.get()).point.pose.position;
   const auto dist_to_stop_point =
-    tier4_autoware_utils::calcSignedArcLength(path.points, current_pose.position, stop_point);
+    motion_utils::calcSignedArcLength(path.points, current_pose.position, stop_point);
 
   // calculate desired velocity with limited jerk
   const auto jerk_limited_vel = planning_utils::calcDecelerationVelocityFromDistanceToTarget(
@@ -844,15 +829,15 @@ void RunOutModule::publishDebugValue(
   const geometry_msgs::msg::Pose & current_pose) const
 {
   if (dynamic_obstacle) {
-    const auto lateral_dist = std::abs(tier4_autoware_utils::calcLateralOffset(
-                                path.points, dynamic_obstacle->pose.position)) -
-                              planner_param_.vehicle_param.width / 2.0;
+    const auto lateral_dist =
+      std::abs(motion_utils::calcLateralOffset(path.points, dynamic_obstacle->pose.position)) -
+      planner_param_.vehicle_param.width / 2.0;
     const auto longitudinal_dist_to_obstacle =
-      tier4_autoware_utils::calcSignedArcLength(
+      motion_utils::calcSignedArcLength(
         path.points, current_pose.position, dynamic_obstacle->pose.position) -
       planner_param_.vehicle_param.base_to_front;
 
-    const float dist_to_collision_point = tier4_autoware_utils::calcSignedArcLength(
+    const float dist_to_collision_point = motion_utils::calcSignedArcLength(
       path.points, current_pose.position, dynamic_obstacle->nearest_collision_point);
     const auto dist_to_collision =
       dist_to_collision_point - planner_param_.vehicle_param.base_to_front;

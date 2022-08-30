@@ -48,7 +48,8 @@ std::shared_ptr<LongitudinalController> makeLongitudinalNode()
   node_options.arguments(
     {"--ros-args", "--params-file",
      share_dir + "/param/longitudinal_controller_defaults.param.yaml", "--params-file",
-     share_dir + "/param/test_vehicle_info.param.yaml"});
+     share_dir + "/param/test_vehicle_info.param.yaml", "--params-file",
+     share_dir + "/param/test_nearest_search.param.yaml"});
   std::shared_ptr<LongitudinalController> node =
     std::make_shared<LongitudinalController>(node_options);
 
@@ -468,17 +469,4 @@ TEST_F(FakeNodeFixture, longitudinal_emergency)
   // Emergencies (e.g., far from trajectory) produces braking command (0 vel, negative accel)
   EXPECT_DOUBLE_EQ(cmd_msg->speed, 0.0f);
   EXPECT_LT(cmd_msg->acceleration, 0.0f);
-}
-
-TEST_F(FakeNodeFixture, longitudinal_set_param_smoke_test)
-{
-  // Node
-  std::shared_ptr<LongitudinalController> node = makeLongitudinalNode();
-
-  // give the node some time to initialize completely
-  std::this_thread::sleep_for(std::chrono::milliseconds{100LL});
-
-  // Change some parameter value
-  auto result = node->set_parameter(rclcpp::Parameter("kp", 1.0));
-  EXPECT_TRUE(result.successful);
 }

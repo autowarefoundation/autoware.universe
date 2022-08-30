@@ -106,13 +106,17 @@ private:
   // member
   PlannerData planner_data_;
   BehaviorVelocityPlannerManager planner_manager_;
+  bool is_driving_forward_{true};
 
   // mutex for planner_data_
   std::mutex mutex_;
 
   // function
   geometry_msgs::msg::PoseStamped getCurrentPose();
-  bool isDataReady(const PlannerData planner_data) const;
+  bool isDataReady(const PlannerData planner_data, rclcpp::Clock clock) const;
+  autoware_auto_planning_msgs::msg::Path generatePath(
+    const autoware_auto_planning_msgs::msg::PathWithLaneId::ConstSharedPtr input_path_msg,
+    const PlannerData & planner_data);
 };
 }  // namespace behavior_velocity_planner
 

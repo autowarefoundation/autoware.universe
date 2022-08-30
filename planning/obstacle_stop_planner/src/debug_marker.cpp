@@ -14,6 +14,7 @@
 
 #include "obstacle_stop_planner/debug_marker.hpp"
 
+#include <motion_utils/motion_utils.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #ifdef ROS_DISTRO_GALACTIC
@@ -25,6 +26,10 @@
 #include <memory>
 #include <vector>
 
+using motion_utils::createDeletedSlowDownVirtualWallMarker;
+using motion_utils::createDeletedStopVirtualWallMarker;
+using motion_utils::createSlowDownVirtualWallMarker;
+using motion_utils::createStopVirtualWallMarker;
 using tier4_autoware_utils::appendMarkerArray;
 using tier4_autoware_utils::calcOffsetPose;
 using tier4_autoware_utils::createDefaultMarker;
@@ -32,8 +37,6 @@ using tier4_autoware_utils::createMarkerColor;
 using tier4_autoware_utils::createMarkerOrientation;
 using tier4_autoware_utils::createMarkerScale;
 using tier4_autoware_utils::createPoint;
-using tier4_autoware_utils::createSlowDownVirtualWallMarker;
-using tier4_autoware_utils::createStopVirtualWallMarker;
 
 namespace motion_planning
 {
@@ -98,6 +101,9 @@ bool ObstacleStopPlannerDebugNode::pushPose(
   switch (type) {
     case PoseType::Stop:
       stop_pose_ptr_ = std::make_shared<geometry_msgs::msg::Pose>(pose);
+      return true;
+    case PoseType::TargetStop:
+      target_stop_pose_ptr_ = std::make_shared<geometry_msgs::msg::Pose>(pose);
       return true;
     case PoseType::SlowDownStart:
       slow_down_start_pose_ptr_ = std::make_shared<geometry_msgs::msg::Pose>(pose);
@@ -178,6 +184,9 @@ visualization_msgs::msg::MarkerArray ObstacleStopPlannerDebugNode::makeVirtualWa
     const auto p = calcOffsetPose(*stop_pose_ptr_, base_link2front_, 0.0, 0.0);
     const auto markers = createStopVirtualWallMarker(p, "obstacle on the path", current_time, 0);
     appendMarkerArray(markers, &msg);
+  } else {
+    const auto markers = createDeletedStopVirtualWallMarker(current_time, 0);
+    appendMarkerArray(markers, &msg);
   }
 
   if (slow_down_start_pose_ptr_ != nullptr && stop_pose_ptr_ == nullptr) {
@@ -195,6 +204,9 @@ visualization_msgs::msg::MarkerArray ObstacleStopPlannerDebugNode::makeVirtualWa
       markers.markers.back().ns = "slow_down_start_factor_text";
       appendMarkerArray(markers, &msg);
     }
+  } else {
+    const auto markers = createDeletedSlowDownVirtualWallMarker(current_time, 0);
+    appendMarkerArray(markers, &msg);
   }
 
   if (slow_down_end_pose_ptr_ != nullptr && stop_pose_ptr_ == nullptr) {
@@ -305,6 +317,16 @@ visualization_msgs::msg::MarkerArray ObstacleStopPlannerDebugNode::makeVisualiza
       }
     }
     msg.markers.push_back(marker);
+  }
+
+  if (target_stop_pose_ptr_ != nullptr) {
+    const auto p = calcOffsetPose(*target_stop_pose_ptr_, base_link2front_, 0.0, 0.0);
+    const auto markers =
+      createStopVirtualWallMarker(p, "obstacle_stop_target_stop_line", current_time, 0);
+    appendMarkerArray(markers, &msg);
+  } else {
+    const auto markers = createDeletedStopVirtualWallMarker(current_time, 0);
+    appendMarkerArray(markers, &msg);
   }
 
   if (stop_obstacle_point_ptr_ != nullptr) {
