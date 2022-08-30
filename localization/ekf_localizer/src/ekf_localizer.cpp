@@ -368,7 +368,7 @@ void EKFLocalizer::initEKF()
 {
   Eigen::MatrixXd X = Eigen::MatrixXd::Zero(dim_x_, 1);
   Eigen::MatrixXd P = Eigen::MatrixXd::Identity(dim_x_, dim_x_) * 1.0E15;  // for x & y
-  P(2, 2) = 50.0;                                            // for yaw
+  P(2, 2) = 50.0;                                                          // for yaw
   if (enable_yaw_bias_estimation_) {
     P(3, 3) = 50.0;  // for yaw bias
   }
@@ -422,7 +422,7 @@ void EKFLocalizer::predictKinematicsModel()
   /* Update for latest state */
   X_next(0) = X_curr(0) + vx * cos(yaw + yaw_bias) * dt;  // dx = v * cos(yaw)
   X_next(1) = X_curr(1) + vx * sin(yaw + yaw_bias) * dt;  // dy = v * sin(yaw)
-  X_next(2) = X_curr(2) + (wz)*dt;                    // dyaw = omega + omega_bias
+  X_next(2) = X_curr(2) + (wz)*dt;                        // dyaw = omega + omega_bias
   X_next(3) = yaw_bias;
   X_next(4) = vx;
   X_next(5) = wz;
@@ -513,8 +513,8 @@ void EKFLocalizer::measurementUpdatePose(const geometry_msgs::msg::PoseWithCovar
 
   /* Gate */
   Eigen::MatrixXd y_ekf(dim_y, 1);
-  y_ekf << ekf_.getXelement(delay_step * dim_x_ + 0),
-    ekf_.getXelement(delay_step * dim_x_ + 1), ekf_yaw;
+  y_ekf << ekf_.getXelement(delay_step * dim_x_ + 0), ekf_.getXelement(delay_step * dim_x_ + 1),
+    ekf_yaw;
   Eigen::MatrixXd P_curr, P_y;
   ekf_.getLatestP(P_curr);
   P_y = P_curr.block(0, 0, dim_y, dim_y);
@@ -532,8 +532,8 @@ void EKFLocalizer::measurementUpdatePose(const geometry_msgs::msg::PoseWithCovar
 
   /* Set measurement matrix */
   Eigen::MatrixXd C = Eigen::MatrixXd::Zero(dim_y, dim_x_);
-  C(0, 0) = 1.0;    // for pos x
-  C(1, 1) = 1.0;    // for pos y
+  C(0, 0) = 1.0;  // for pos x
+  C(1, 1) = 1.0;  // for pos y
   C(2, 2) = 1.0;  // for yaw
 
   /* Set measurement noise covariance */
@@ -613,8 +613,7 @@ void EKFLocalizer::measurementUpdateTwist(
 
   /* Gate */
   Eigen::MatrixXd y_ekf(dim_y, 1);
-  y_ekf << ekf_.getXelement(delay_step * dim_x_ + 4),
-    ekf_.getXelement(delay_step * dim_x_ + 5);
+  y_ekf << ekf_.getXelement(delay_step * dim_x_ + 4), ekf_.getXelement(delay_step * dim_x_ + 5);
   Eigen::MatrixXd P_curr, P_y;
   ekf_.getLatestP(P_curr);
   P_y = P_curr.block(4, 4, dim_y, dim_y);
@@ -754,9 +753,9 @@ void EKFLocalizer::publishEstimateResult()
 
   tier4_debug_msgs::msg::Float64MultiArrayStamped msg;
   msg.stamp = current_time;
-  msg.data.push_back(tier4_autoware_utils::rad2deg(X(2)));   // [0] ekf yaw angle
-  msg.data.push_back(tier4_autoware_utils::rad2deg(pose_yaw));      // [1] measurement yaw angle
-  msg.data.push_back(tier4_autoware_utils::rad2deg(X(3)));  // [2] yaw bias
+  msg.data.push_back(tier4_autoware_utils::rad2deg(X(2)));      // [0] ekf yaw angle
+  msg.data.push_back(tier4_autoware_utils::rad2deg(pose_yaw));  // [1] measurement yaw angle
+  msg.data.push_back(tier4_autoware_utils::rad2deg(X(3)));      // [2] yaw bias
   pub_debug_->publish(msg);
 }
 
