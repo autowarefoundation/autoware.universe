@@ -859,7 +859,7 @@ bool setGoal(
     // NOTE: goal does not have valid z, that will be calculated by interpolation here
     PathPointWithLaneId refined_goal{};
     const size_t closest_seg_idx_for_goal =
-      motion_utils::findNearestSegmentIndex(input.points, goal.position);
+      drivable_area_utils::findNearestSegmentIndex(input.points, goal, 3.0, M_PI_4);
     refined_goal.point.pose = goal;
     refined_goal.point.pose.position.z =
       calcInterpolatedZ(input, goal.position, closest_seg_idx_for_goal);
@@ -871,8 +871,8 @@ bool setGoal(
     constexpr double goal_to_pre_goal_distance = -1.0;
     pre_refined_goal.point.pose =
       tier4_autoware_utils::calcOffsetPose(goal, goal_to_pre_goal_distance, 0.0, 0.0);
-    const size_t closest_seg_idx_for_pre_goal =
-      motion_utils::findNearestSegmentIndex(input.points, pre_refined_goal.point.pose.position);
+    const size_t closest_seg_idx_for_pre_goal = drivable_area_utils::findNearestSegmentIndex(
+      input.points, pre_refined_goal.point.pose, 3.0, M_PI_4);
     pre_refined_goal.point.pose.position.z =
       calcInterpolatedZ(input, pre_refined_goal.point.pose.position, closest_seg_idx_for_pre_goal);
     pre_refined_goal.point.longitudinal_velocity_mps =
