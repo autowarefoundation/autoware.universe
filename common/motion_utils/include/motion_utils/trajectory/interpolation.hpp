@@ -29,9 +29,20 @@
 
 namespace motion_utils
 {
+/**
+ * @brief An interpolation function that finds the closest interpolated point on the trajectory from
+ * the given pose
+ * @param trajectory input trajectory
+ * @param target_pose target_pose
+ * @param use_zero_order_for_twist flag to decide wether to use zero order hold interpolation for
+ * twist information
+ * @return resampled path(poses)
+ */
 autoware_auto_planning_msgs::msg::TrajectoryPoint calcInterpolatedPoint(
   const autoware_auto_planning_msgs::msg::Trajectory & trajectory,
-  const geometry_msgs::msg::Pose & target_pose, const bool use_zero_order_hold_for_twist = false);
+  const geometry_msgs::msg::Pose & target_pose, const bool use_zero_order_hold_for_twist = false,
+  const double dist_threshold = std::numeric_limits<double>::max(),
+  const double yaw_threshold = std::numeric_limits<double>::max());
 
 }  // namespace motion_utils
 

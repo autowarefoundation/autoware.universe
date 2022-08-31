@@ -25,34 +25,39 @@ namespace motion_utils
 {
 TrajectoryPoint calcInterpolatedPoint(
   const Trajectory & trajectory, const geometry_msgs::msg::Pose & target_pose,
-  const bool use_zero_order_hold_for_twist)
+  const bool use_zero_order_hold_for_twist, const double dist_threshold, const double yaw_threshold)
 {
   if (trajectory.points.empty()) {
     TrajectoryPoint interpolated_point{};
     interpolated_point.pose = target_pose;
     return interpolated_point;
   } else if (trajectory.points.size() == 1) {
-    TrajectoryPoint interpolated_point = trajectory.points.front();
-    interpolated_point.pose = target_pose;
-    return interpolated_point;
+    return trajectory.points.front();
   }
 
-  const size_t segment_idx =
-    motion_utils::findNearestSegmentIndex(trajectory.points, target_pose.position);
+  const size_t segment_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+    trajectory.points, target_pose, dist_threshold, yaw_threshold);
 
   // Calculate interpolation ratio
-  const double ratio = tier4_autoware_utils::calcRatio(
-    trajectory.points.at(segment_idx).pose, trajectory.points.at(segment_idx + 1).pose,
-    target_pose);
+  const auto & curr_pt = trajectory.points.at(segment_idx);
+  const auto & next_pt = trajectory.points.at(segment_idx + 1);
+  const auto v1 = tier4_autoware_utils::point2tfVector(curr_pt, next_pt);
+  const auto v2 = tier4_autoware_utils::point2tfVector(curr_pt, target_pose);
+  if (v1.length2() < 1e-3) {
+    return curr_pt;
+  }
+
+  const double ratio = v1.dot(v2) / v1.length2();
   const double clamped_ratio = std::clamp(ratio, 0.0, 1.0);
 
   // Interpolate
-  const auto & curr_pt = trajectory.points.at(segment_idx);
-  const auto & next_pt = trajectory.points.at(segment_idx + 1);
-
   TrajectoryPoint interpolated_point{};
+
+  // pose interpolation
   interpolated_point.pose =
     tier4_autoware_utils::calcInterpolatedPose(curr_pt, next_pt, clamped_ratio);
+
+  // twist interpolation
   if (use_zero_order_hold_for_twist) {
     interpolated_point.longitudinal_velocity_mps = curr_pt.longitudinal_velocity_mps;
     interpolated_point.lateral_velocity_mps = curr_pt.lateral_velocity_mps;
@@ -65,12 +70,18 @@ TrajectoryPoint calcInterpolatedPoint(
     interpolated_point.acceleration_mps2 =
       interpolation::lerp(curr_pt.acceleration_mps2, next_pt.acceleration_mps2, clamped_ratio);
   }
+
+  // heading rate interpolation
   interpolated_point.heading_rate_rps =
     interpolation::lerp(curr_pt.heading_rate_rps, next_pt.heading_rate_rps, clamped_ratio);
+
+  // wheel interpolation
   interpolated_point.front_wheel_angle_rad = interpolation::lerp(
     curr_pt.front_wheel_angle_rad, next_pt.front_wheel_angle_rad, clamped_ratio);
   interpolated_point.rear_wheel_angle_rad =
     interpolation::lerp(curr_pt.rear_wheel_angle_rad, next_pt.rear_wheel_angle_rad, clamped_ratio);
+
+  // time interpolation
   const double interpolated_time = interpolation::lerp(
     rclcpp::Duration(curr_pt.time_from_start).seconds(),
     rclcpp::Duration(next_pt.time_from_start).seconds(), clamped_ratio);
