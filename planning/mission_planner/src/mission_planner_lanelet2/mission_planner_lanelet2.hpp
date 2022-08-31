@@ -61,9 +61,9 @@ private:
   void refine_goal_height(const RouteSections & route_sections);
 
   // virtual functions
-  bool isRoutingGraphReady() const override;
-  autoware_auto_planning_msgs::msg::HADMapRoute planRoute() override;
-  void visualizeRoute(const autoware_auto_planning_msgs::msg::HADMapRoute & route) const override;
+  bool is_routing_graph_ready() const override;
+  autoware_auto_planning_msgs::msg::HADMapRoute plan_route() override;
+  void visualize_route(const autoware_auto_planning_msgs::msg::HADMapRoute & route) const override;
 };
 }  // namespace mission_planner
 

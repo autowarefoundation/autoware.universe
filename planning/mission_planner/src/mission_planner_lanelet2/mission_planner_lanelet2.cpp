@@ -140,10 +140,10 @@ MissionPlannerLanelet2::MissionPlannerLanelet2(const rclcpp::NodeOptions & node_
   using std::placeholders::_1;
   map_subscriber_ = create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
     "input/vector_map", rclcpp::QoS{10}.transient_local(),
-    std::bind(&MissionPlannerLanelet2::mapCallback, this, _1));
+    std::bind(&MissionPlannerLanelet2::map_callback, this, _1));
 }
 
-void MissionPlannerLanelet2::mapCallback(
+void MissionPlannerLanelet2::map_callback(
   const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg)
 {
   route_handler_.setMap(*msg);
@@ -156,9 +156,9 @@ void MissionPlannerLanelet2::mapCallback(
   is_graph_ready_ = true;
 }
 
-bool MissionPlannerLanelet2::isRoutingGraphReady() const { return is_graph_ready_; }
+bool MissionPlannerLanelet2::is_routing_graph_ready() const { return is_graph_ready_; }
 
-void MissionPlannerLanelet2::visualizeRoute(
+void MissionPlannerLanelet2::visualize_route(
   const autoware_auto_planning_msgs::msg::HADMapRoute & route) const
 {
   lanelet::ConstLanelets route_lanelets;
@@ -183,32 +183,32 @@ void MissionPlannerLanelet2::visualizeRoute(
   std_msgs::msg::ColorRGBA cl_end;
   std_msgs::msg::ColorRGBA cl_normal;
   std_msgs::msg::ColorRGBA cl_goal;
-  setColor(&cl_route, 0.2, 0.4, 0.2, 0.05);
-  setColor(&cl_goal, 0.2, 0.4, 0.4, 0.05);
-  setColor(&cl_end, 0.2, 0.2, 0.4, 0.05);
-  setColor(&cl_normal, 0.2, 0.4, 0.2, 0.05);
-  setColor(&cl_ll_borders, 1.0, 1.0, 1.0, 0.999);
+  set_color(&cl_route, 0.2, 0.4, 0.2, 0.05);
+  set_color(&cl_goal, 0.2, 0.4, 0.4, 0.05);
+  set_color(&cl_end, 0.2, 0.2, 0.4, 0.05);
+  set_color(&cl_normal, 0.2, 0.4, 0.2, 0.05);
+  set_color(&cl_ll_borders, 1.0, 1.0, 1.0, 0.999);
 
   visualization_msgs::msg::MarkerArray route_marker_array;
-  insertMarkerArray(
+  insert_marker_array(
     &route_marker_array,
     lanelet::visualization::laneletsBoundaryAsMarkerArray(route_lanelets, cl_ll_borders, false));
-  insertMarkerArray(
+  insert_marker_array(
     &route_marker_array, lanelet::visualization::laneletsAsTriangleMarkerArray(
                            "route_lanelets", route_lanelets, cl_route));
-  insertMarkerArray(
+  insert_marker_array(
     &route_marker_array,
     lanelet::visualization::laneletsAsTriangleMarkerArray("end_lanelets", end_lanelets, cl_end));
-  insertMarkerArray(
+  insert_marker_array(
     &route_marker_array, lanelet::visualization::laneletsAsTriangleMarkerArray(
                            "normal_lanelets", normal_lanelets, cl_normal));
-  insertMarkerArray(
+  insert_marker_array(
     &route_marker_array,
     lanelet::visualization::laneletsAsTriangleMarkerArray("goal_lanelets", goal_lanelets, cl_goal));
   marker_publisher_->publish(route_marker_array);
 }
 
-bool MissionPlannerLanelet2::isGoalValid() const
+bool MissionPlannerLanelet2::is_goal_valid() const
 {
   lanelet::Lanelet closest_lanelet;
   if (!lanelet::utils::query::getClosestLanelet(
@@ -264,7 +264,7 @@ bool MissionPlannerLanelet2::isGoalValid() const
   return false;
 }
 
-autoware_auto_planning_msgs::msg::HADMapRoute MissionPlannerLanelet2::planRoute()
+autoware_auto_planning_msgs::msg::HADMapRoute MissionPlannerLanelet2::plan_route()
 {
   std::stringstream log_ss;
   for (const auto & checkpoint : checkpoints_) {
@@ -278,7 +278,7 @@ autoware_auto_planning_msgs::msg::HADMapRoute MissionPlannerLanelet2::planRoute(
   autoware_auto_planning_msgs::msg::HADMapRoute route_msg;
   RouteSections route_sections;
 
-  if (!isGoalValid()) {
+  if (!is_goal_valid()) {
     RCLCPP_WARN(get_logger(), "Goal is not valid! Please check position and angle of goal_pose");
     return route_msg;
   }
@@ -302,7 +302,7 @@ autoware_auto_planning_msgs::msg::HADMapRoute MissionPlannerLanelet2::planRoute(
       get_logger(), "Loop detected within route! Be aware that looped route is not debugged!");
   }
 
-  refineGoalHeight(route_sections);
+  refine_goal_height(route_sections);
 
   route_msg.header.stamp = this->now();
   route_msg.header.frame_id = map_frame_;
@@ -313,7 +313,7 @@ autoware_auto_planning_msgs::msg::HADMapRoute MissionPlannerLanelet2::planRoute(
   return route_msg;
 }
 
-void MissionPlannerLanelet2::refineGoalHeight(const RouteSections & route_sections)
+void MissionPlannerLanelet2::refine_goal_height(const RouteSections & route_sections)
 {
   const auto goal_lane_id = route_sections.back().preferred_primitive_id;
   lanelet::Lanelet goal_lanelet = lanelet_map_ptr_->laneletLayer.get(goal_lane_id);
