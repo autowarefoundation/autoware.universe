@@ -55,11 +55,6 @@ PullOutModule::PullOutModule(
   if (pull_out_planners_.empty()) {
     RCLCPP_DEBUG(getLogger(), "Not found enabled planner");
   }
-
-  // debug publisher
-  pull_out_start_pose_pub_ = node.create_publisher<PoseStamped>("~/pull_out/debug/backed_pose", 1);
-  full_path_pose_array_pub_ =
-    node.create_publisher<PoseArray>("~/pull_out/debug/full_path_pose_array", 1);
 }
 
 BehaviorModuleOutput PullOutModule::run()
@@ -178,7 +173,7 @@ BehaviorModuleOutput PullOutModule::plan()
   output.turn_signal_info =
     calcTurnSignalInfo(status_.pull_out_path.start_pose, status_.pull_out_path.end_pose);
 
-  publishDebugData();
+  setDebugData();
 
   return output;
 }
@@ -242,7 +237,7 @@ BehaviorModuleOutput PullOutModule::planWaitingApproval()
   // requset approval when stopped at the corresponding point, so distance is 0
   updateRTCStatus(0.0);
 
-  publishDebugData();
+  setDebugData();
   return output;
 }
 
@@ -530,17 +525,16 @@ TurnSignalInfo PullOutModule::calcTurnSignalInfo(const Pose start_pose, const Po
   return turn_signal;
 }
 
-void PullOutModule::publishDebugData() const
+void PullOutModule::setDebugData() const
 {
-  auto header = planner_data_->route_handler->getRouteHeader();
+  using marker_utils::createPathMarkerArray;
+  using marker_utils::createPoseMarkerArray;
 
-  PoseStamped pull_out_start_pose;
-  pull_out_start_pose.pose = status_.pull_out_start_pose;
-  pull_out_start_pose.header = header;
-  pull_out_start_pose_pub_->publish(pull_out_start_pose);
+  const auto add = [this](const MarkerArray & added) {
+    tier4_autoware_utils::appendMarkerArray(added, &debug_marker_);
+  };
 
-  auto full_path_pose_array = util::convertToGeometryPoseArray(getFullPath());
-  full_path_pose_array.header = header;
-  full_path_pose_array_pub_->publish(full_path_pose_array);
+  add(createPoseMarkerArray(status_.pull_out_start_pose, "pull_out_start_pose", 0, 0.9, 0.3, 0.3));
+  add(createPathMarkerArray(getFullPath(), "full_path", 0, 0.0, 0.5, 0.9));
 }
 }  // namespace behavior_path_planner

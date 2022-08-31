@@ -90,8 +90,6 @@ private:
   PoseStamped backed_pose_;
   std::deque<nav_msgs::msg::Odometry::ConstSharedPtr> odometry_buffer_;
 
-  rclcpp::Publisher<PoseStamped>::SharedPtr pull_out_start_pose_pub_;
-  rclcpp::Publisher<PoseArray>::SharedPtr full_path_pose_array_pub_;
   std::unique_ptr<rclcpp::Time> last_route_received_time_;
   std::unique_ptr<rclcpp::Time> last_pull_out_start_update_time_;
 
@@ -117,7 +115,7 @@ private:
   bool isStopped();
   bool hasFinishedCurrentPath();
 
-  void publishDebugData() const;
+  void setDebugData() const;
 };
 }  // namespace behavior_path_planner
 
