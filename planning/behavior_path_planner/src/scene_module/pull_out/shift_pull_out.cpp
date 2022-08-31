@@ -42,67 +42,69 @@ boost::optional<PullOutPath> ShiftPullOut::plan(Pose start_pose, Pose goal_pose)
   const auto & common_parameters = planner_data_->parameters;
   const auto & dynamic_objects = planner_data_->dynamic_object;
   const auto & road_lanes = util::getCurrentLanes(planner_data_);
-  const auto & shoulder_lanes = getPullOutLanes(road_lanes, planner_data_);
   const auto & current_pose = planner_data_->self_pose->pose;
+  const auto & shoulder_lanes = getPullOutLanes(road_lanes, planner_data_);
+  if (shoulder_lanes.empty()) {
+    return boost::none;
+  }
 
   lanelet::ConstLanelets lanes;
   lanes.insert(lanes.end(), road_lanes.begin(), road_lanes.end());
   lanes.insert(lanes.end(), shoulder_lanes.begin(), shoulder_lanes.end());
 
-  if (!shoulder_lanes.empty()) {
-    // find candidate paths
-    auto pull_out_paths = getPullOutPaths(
-      *route_handler, road_lanes, shoulder_lanes, start_pose, goal_pose, common_parameters,
-      parameters_);
-    if (pull_out_paths.empty()) {
-      return boost::none;
-    }
-
-    // extract objects in shoulder lane for collision check
-    const auto shoulder_lane_objects =
-      util::filterObjectsByLanelets(*dynamic_objects, shoulder_lanes);
-
-    // get safe path
-    for (auto & pull_out_path : pull_out_paths) {
-      auto & shift_path =
-        pull_out_path.partial_paths.front();  // shift path is not separate but only one.
-
-      // check lane_depature and collsion with path between current to pull_out_end
-      PathWithLaneId path_current_to_shift_end;
-      {
-        const auto current_idx = findNearestIndex(shift_path.points, current_pose);
-        const auto pull_out_end_idx = findNearestIndex(shift_path.points, pull_out_path.end_pose);
-        path_current_to_shift_end.points.insert(
-          path_current_to_shift_end.points.begin(), shift_path.points.begin() + *current_idx,
-          shift_path.points.begin() + *pull_out_end_idx + 1);
-      }
-
-      // check lane departure
-      if (lane_departure_checker_->checkPathWillLeaveLane(lanes, path_current_to_shift_end)) {
-        continue;
-      }
-
-      // check collision
-      if (util::checkCollisionBetweenPathFootprintsAndObjects(
-            vehicle_footprint_, path_current_to_shift_end, shoulder_lane_objects,
-            parameters_.collision_check_margin)) {
-        continue;
-      }
-
-      // Generate drivable area
-      const double resolution = common_parameters.drivable_area_resolution;
-      shift_path.drivable_area = util::generateDrivableArea(
-        shift_path, lanes, resolution, common_parameters.vehicle_length, planner_data_);
-
-      shift_path.header = planner_data_->route_handler->getRouteHeader();
-
-      return pull_out_path;
-    }
+  // find candidate paths
+  auto pull_out_paths = calcPullOutPaths(
+    *route_handler, road_lanes, shoulder_lanes, start_pose, goal_pose, common_parameters,
+    parameters_);
+  if (pull_out_paths.empty()) {
+    return boost::none;
   }
+
+  // extract objects in shoulder lane for collision check
+  const auto shoulder_lane_objects =
+    util::filterObjectsByLanelets(*dynamic_objects, shoulder_lanes);
+
+  // get safe path
+  for (auto & pull_out_path : pull_out_paths) {
+    auto & shift_path =
+      pull_out_path.partial_paths.front();  // shift path is not separate but only one.
+
+    // check lane_depature and collsion with path between current to pull_out_end
+    PathWithLaneId path_current_to_shift_end;
+    {
+      const auto current_idx = findNearestIndex(shift_path.points, current_pose);
+      const auto pull_out_end_idx = findNearestIndex(shift_path.points, pull_out_path.end_pose);
+      path_current_to_shift_end.points.insert(
+        path_current_to_shift_end.points.begin(), shift_path.points.begin() + *current_idx,
+        shift_path.points.begin() + *pull_out_end_idx + 1);
+    }
+
+    // check lane departure
+    if (lane_departure_checker_->checkPathWillLeaveLane(lanes, path_current_to_shift_end)) {
+      continue;
+    }
+
+    // check collision
+    if (util::checkCollisionBetweenPathFootprintsAndObjects(
+          vehicle_footprint_, path_current_to_shift_end, shoulder_lane_objects,
+          parameters_.collision_check_margin)) {
+      continue;
+    }
+
+    // Generate drivable area
+    const double resolution = common_parameters.drivable_area_resolution;
+    shift_path.drivable_area = util::generateDrivableArea(
+      shift_path, lanes, resolution, common_parameters.vehicle_length, planner_data_);
+
+    shift_path.header = planner_data_->route_handler->getRouteHeader();
+
+    return pull_out_path;
+  }
+
   return boost::none;
 }
 
-std::vector<PullOutPath> ShiftPullOut::getPullOutPaths(
+std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & road_lanes,
   const lanelet::ConstLanelets & shoulder_lanes, const Pose & start_pose, const Pose & goal_pose,
   const BehaviorPathPlannerParameters & common_parameter, const PullOutParameters & parameter)

@@ -37,7 +37,6 @@ PullOutModule::PullOutModule(
   const std::string & name, rclcpp::Node & node, const PullOutParameters & parameters)
 : SceneModuleInterface{name, node},
   parameters_{parameters},
-  clock_{node.get_clock()},
   vehicle_info_{vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo()}
 {
   rtc_interface_ptr_ = std::make_shared<RTCInterface>(&node, "pull_out");
@@ -468,7 +467,7 @@ bool PullOutModule::isStopped()
 {
   odometry_buffer_.push_back(planner_data_->self_odometry);
   // Delete old data in buffer
-  while (true) {
+  while (rclcpp::ok()) {
     const auto time_diff = rclcpp::Time(odometry_buffer_.back()->header.stamp) -
                            rclcpp::Time(odometry_buffer_.front()->header.stamp);
     if (time_diff.seconds() < parameters_.th_stopped_time) {

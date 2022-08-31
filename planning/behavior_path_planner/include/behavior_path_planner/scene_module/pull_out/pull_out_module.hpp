@@ -81,7 +81,6 @@ public:
 
 private:
   PullOutParameters parameters_;
-  rclcpp::Clock::SharedPtr clock_;
   vehicle_info_util::VehicleInfo vehicle_info_;
 
   std::vector<std::shared_ptr<PullOutPlannerBase>> pull_out_planners_;

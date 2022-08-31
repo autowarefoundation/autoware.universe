@@ -39,7 +39,7 @@ public:
   PlannerType getPlannerType() override { return PlannerType::SHIFT; };
   boost::optional<PullOutPath> plan(Pose start_pose, Pose goal_pose) override;
 
-  std::vector<PullOutPath> getPullOutPaths(
+  std::vector<PullOutPath> calcPullOutPaths(
     const RouteHandler & route_handler, const lanelet::ConstLanelets & road_lanes,
     const lanelet::ConstLanelets & shoulder_lanes, const Pose & start_pose, const Pose & goal_pose,
     const BehaviorPathPlannerParameters & common_parameter,
