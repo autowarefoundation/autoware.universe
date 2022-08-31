@@ -23,7 +23,7 @@
       backward_velocity: -1.0
       pull_out_max_steer_angle: 0.26  # 15deg
       # search start pose backward
-      enable_back: false
+      enable_back: true
       max_back_distance: 15.0
       backward_search_resolution: 2.0
       backward_path_update_duration: 3.0
