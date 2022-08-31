@@ -723,32 +723,39 @@ PathWithLaneId PullOverModule::getReferencePath() const
 
 PathWithLaneId PullOverModule::getStopPath() const
 {
-  PathWithLaneId reference_path;
-
   const auto & route_handler = planner_data_->route_handler;
   const auto current_pose = planner_data_->self_pose->pose;
   const auto common_parameters = planner_data_->parameters;
 
   const double current_vel = planner_data_->self_odometry->twist.twist.linear.x;
-  const double current_to_stop_distance =
-    std::pow(current_vel, 2) / parameters_.maximum_deceleration / 2;
-  const auto arclength_current_pose =
-    lanelet::utils::getArcCoordinates(status_.current_lanes, current_pose).length;
-
-  reference_path = util::getCenterLinePath(
+  auto reference_path = util::getCenterLinePath(
     *route_handler, status_.current_lanes, current_pose, common_parameters.backward_path_length,
     common_parameters.forward_path_length, common_parameters);
 
+  // stop immediately if current_vel is less than min_vel
+  constexpr double min_vel = 1.0;
+  if (current_vel < min_vel) {
+    for (auto & point : reference_path.points) {
+      point.point.longitudinal_velocity_mps = 0.0;
+    }
+    return reference_path;
+  }
+
+  const double current_to_stop_distance =
+    std::pow(current_vel, 2) / parameters_.maximum_deceleration / 2;
+  const double arclength_current_pose =
+    lanelet::utils::getArcCoordinates(status_.current_lanes, current_pose).length;
+
   for (auto & point : reference_path.points) {
-    const auto arclength =
+    const double arclength =
       lanelet::utils::getArcCoordinates(status_.current_lanes, point.point.pose).length;
-    const auto arclength_current_to_point = arclength - arclength_current_pose;
-    if (0 < arclength_current_to_point) {
-      point.point.longitudinal_velocity_mps = std::min(
-        point.point.longitudinal_velocity_mps,
-        static_cast<float>(std::max(
-          0.0, current_vel * (current_to_stop_distance - arclength_current_to_point) /
-                 current_to_stop_distance)));
+    const double arclength_current_to_point = arclength - arclength_current_pose;
+    if (0.0 < arclength_current_to_point) {
+      point.point.longitudinal_velocity_mps = std::clamp(
+        static_cast<float>(
+          current_vel * (current_to_stop_distance - arclength_current_to_point) /
+          current_to_stop_distance),
+        0.0f, point.point.longitudinal_velocity_mps);
     } else {
       point.point.longitudinal_velocity_mps =
         std::min(point.point.longitudinal_velocity_mps, static_cast<float>(current_vel));
