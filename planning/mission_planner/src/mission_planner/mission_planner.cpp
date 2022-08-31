@@ -70,7 +70,7 @@ bool MissionPlanner::getEgoVehiclePose(geometry_msgs::msg::PoseStamped * ego_veh
 
 bool MissionPlanner::transformPose(
   const geometry_msgs::msg::PoseStamped & input_pose, geometry_msgs::msg::PoseStamped * output_pose,
-  const std::string target_frame)
+  const std::string & target_frame)
 {
   geometry_msgs::msg::TransformStamped transform;
   try {
