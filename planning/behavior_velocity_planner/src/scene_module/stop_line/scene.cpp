@@ -74,13 +74,10 @@ bool StopLineModule::modifyPathVelocity(
    */
   const size_t stop_line_seg_idx = planning_utils::calcSegmentIndexFromPointIndex(
     path->points, stop_pose.position, stop_point_idx);
-  const double stop_line_margin = base_link2front + planner_param_.stop_margin;
   const size_t current_seg_idx = findEgoSegmentIndex(path->points);
-  const double signed_arc_dist_to_stop_point =
-    motion_utils::calcSignedArcLength(
-      path->points, planner_data_->current_pose.pose.position, current_seg_idx, stop_pose.position,
-      stop_line_seg_idx) -
-    stop_line_margin;
+  const double signed_arc_dist_to_stop_point = motion_utils::calcSignedArcLength(
+    path->points, planner_data_->current_pose.pose.position, current_seg_idx, stop_pose.position,
+    stop_line_seg_idx);
   switch (state_) {
     case State::APPROACH: {
       // Insert stop pose
@@ -127,8 +124,7 @@ bool StopLineModule::modifyPathVelocity(
 
       SegmentIndexWithPose ego_pos_on_path;
       ego_pos_on_path.pose = stopped_pose.get();
-      ego_pos_on_path.index = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-        path->points, stopped_pose.get());
+      ego_pos_on_path.index = findEgoSegmentIndex(path->points);
 
       // Insert stop pose
       planning_utils::insertStopPoint(ego_pos_on_path.pose.position, ego_pos_on_path.index, *path);
