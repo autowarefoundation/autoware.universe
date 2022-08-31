@@ -227,9 +227,7 @@ void PathSamplerNode::pathCallback(const autoware_auto_planning_msgs::msg::Path:
   sampler_node::debug::Debug debug;
   const auto current_state = getCurrentEgoState();
   // TODO(Maxime CLEMENT): move to "validInputs(current_state, msg)"
-  if (
-    msg->points.size() < 2 || msg->drivable_area.data.empty() || !current_state ||
-    !current_steer_ptr_) {
+  if (msg->points.size() < 2 || msg->drivable_area.data.empty() || !current_state) {
     RCLCPP_INFO(
       get_logger(),
       "[pathCallback] incomplete inputs: current_state: %d | drivable_area: %d | path points: %ld",
@@ -324,12 +322,6 @@ std::optional<sampler_common::Path> PathSamplerNode::selectBestPath(
   return best_path;
 }
 
-void PathSamplerNode::steerCallback(
-  const autoware_auto_vehicle_msgs::msg::SteeringReport::ConstSharedPtr msg)
-{
-  current_steer_ptr_ = msg;
-}
-
 std::optional<sampler_common::State> PathSamplerNode::getCurrentEgoState()
 {
   geometry_msgs::msg::TransformStamped tf_current_pose;
@@ -345,7 +337,6 @@ std::optional<sampler_common::State> PathSamplerNode::getCurrentEgoState()
   auto state = sampler_common::State();
   state.pose = {tf_current_pose.transform.translation.x, tf_current_pose.transform.translation.y};
   state.heading = tf2::getYaw(tf_current_pose.transform.rotation);
-  state.curvature = std::sin(current_steer_ptr_->steering_tire_angle) / vehicle_info_.wheel_base_m;
   return state;
 }
 
@@ -441,7 +432,7 @@ sampler_common::State PathSamplerNode::getPlanningState(
 }
 
 sampler_common::Path PathSamplerNode::prependPath(
-  const sampler_common::Path & path, const sampler_common::transform::Spline2D & reference)
+  const sampler_common::Path & path, const sampler_common::transform::Spline2D & reference) const
 {
   if (path.points.empty()) return {};
   const auto current_frenet = reference.frenet(path.points.front());
