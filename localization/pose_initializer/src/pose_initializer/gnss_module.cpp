@@ -47,6 +47,6 @@ geometry_msgs::msg::PoseWithCovarianceStamped GnssModule::get_pose() const
   const auto req = std::make_shared<RequestHeightFitting::Request>();
   req->pose_with_covariance = *pose_;
 
-  const auto future = cli_map_fit_->async_send_request(req);
+  auto future = cli_map_fit_->async_send_request(req);
   return future.get()->pose_with_covariance;
 }
