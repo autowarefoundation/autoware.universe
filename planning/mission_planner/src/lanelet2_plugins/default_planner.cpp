@@ -108,7 +108,7 @@ bool is_in_parking_lot(
   return false;
 }
 
-double projectGoalToMap(
+double project_goal_to_map(
   const lanelet::Lanelet & lanelet_component, const lanelet::ConstPoint3d & goal_point)
 {
   const lanelet::ConstLineString3d center_line =
@@ -164,7 +164,11 @@ PlannerPlugin::MarkerArray DefaultPlanner::visualize(const HADMapRoute & route) 
     }
   }
 
-  std_msgs::msg::ColorRGBA cl_route, cl_ll_borders, cl_end, cl_normal, cl_goal;
+  std_msgs::msg::ColorRGBA cl_route;
+  std_msgs::msg::ColorRGBA cl_ll_borders;
+  std_msgs::msg::ColorRGBA cl_end;
+  std_msgs::msg::ColorRGBA cl_normal;
+  std_msgs::msg::ColorRGBA cl_goal;
   set_color(&cl_route, 0.2, 0.4, 0.2, 0.05);
   set_color(&cl_goal, 0.2, 0.4, 0.4, 0.05);
   set_color(&cl_end, 0.2, 0.2, 0.4, 0.05);
@@ -300,7 +304,7 @@ geometry_msgs::msg::Pose DefaultPlanner::refine_goal_height(
   const auto goal_lane_id = route_sections.back().preferred_primitive_id;
   lanelet::Lanelet goal_lanelet = lanelet_map_ptr_->laneletLayer.get(goal_lane_id);
   const auto goal_lanelet_pt = lanelet::utils::conversion::toLaneletPoint(goal.position);
-  double goal_height = projectGoalToMap(goal_lanelet, goal_lanelet_pt);
+  double goal_height = project_goal_to_map(goal_lanelet, goal_lanelet_pt);
 
   Pose refined_goal = goal;
   refined_goal.position.z = goal_height;
