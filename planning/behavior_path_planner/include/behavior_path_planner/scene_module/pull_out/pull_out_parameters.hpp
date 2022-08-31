@@ -20,9 +20,9 @@ namespace behavior_path_planner
 {
 struct PullOutParameters
 {
-  double th_arrived_distance_m;
-  double th_stopped_velocity_mps;
-  double th_stopped_time_sec;
+  double th_arrived_distance;
+  double th_stopped_velocity;
+  double th_stopped_time;
   double collision_check_margin;
   double pull_out_finish_judge_buffer;
   // shift pull out
@@ -40,7 +40,7 @@ struct PullOutParameters
   double arc_path_interval;
   double lane_departure_margin;
   double backward_velocity;
-  double max_steer_rad;
+  double pull_out_max_steer_angle;
   // search start pose backward
   bool enable_back;
   double max_back_distance;

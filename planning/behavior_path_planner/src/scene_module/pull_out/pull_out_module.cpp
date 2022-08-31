@@ -116,7 +116,7 @@ bool PullOutModule::isExecutionRequested() const
   }
 
   const bool is_stopped = util::l2Norm(planner_data_->self_odometry->twist.twist.linear) <
-                          parameters_.th_arrived_distance_m;
+                          parameters_.th_arrived_distance;
 
   lanelet::Lanelet closest_shoulder_lanelet;
   if (
@@ -257,12 +257,12 @@ ParallelParkingParameters PullOutModule::getGeometricPullOutParameters() const
 {
   ParallelParkingParameters params{};
 
-  params.th_arrived_distance_m = parameters_.th_arrived_distance_m;
-  params.th_stopped_velocity_mps = parameters_.th_stopped_velocity_mps;
+  params.th_arrived_distance = parameters_.th_arrived_distance;
+  params.th_stopped_velocity = parameters_.th_stopped_velocity;
   params.arc_path_interval = parameters_.arc_path_interval;
   params.departing_velocity = parameters_.geometric_pull_out_velocity;
   params.departing_lane_departure_margin = parameters_.lane_departure_margin;
-  params.max_steer_rad = parameters_.max_steer_rad;
+  params.max_steer_angle = parameters_.pull_out_max_steer_angle;
 
   return params;
 }
@@ -446,9 +446,9 @@ void PullOutModule::checkBackFinished()
   const auto distance =
     tier4_autoware_utils::calcDistance2d(current_pose, status_.pull_out_start_pose);
 
-  const bool is_near = distance < parameters_.th_arrived_distance_m;
+  const bool is_near = distance < parameters_.th_arrived_distance;
   const double ego_vel = util::l2Norm(planner_data_->self_odometry->twist.twist.linear);
-  const bool is_stopped = ego_vel < parameters_.th_stopped_velocity_mps;
+  const bool is_stopped = ego_vel < parameters_.th_stopped_velocity;
 
   if (!status_.back_finished && is_near && is_stopped) {
     RCLCPP_INFO(getLogger(), "back finished");
@@ -471,7 +471,7 @@ bool PullOutModule::isStopped()
   while (true) {
     const auto time_diff = rclcpp::Time(odometry_buffer_.back()->header.stamp) -
                            rclcpp::Time(odometry_buffer_.front()->header.stamp);
-    if (time_diff.seconds() < parameters_.th_stopped_time_sec) {
+    if (time_diff.seconds() < parameters_.th_stopped_time) {
       break;
     }
     odometry_buffer_.pop_front();
@@ -479,7 +479,7 @@ bool PullOutModule::isStopped()
   bool is_stopped = true;
   for (const auto & odometry : odometry_buffer_) {
     const double ego_vel = util::l2Norm(odometry->twist.twist.linear);
-    if (ego_vel > parameters_.th_stopped_velocity_mps) {
+    if (ego_vel > parameters_.th_stopped_velocity) {
       is_stopped = false;
       break;
     }
@@ -493,7 +493,7 @@ bool PullOutModule::hasFinishedCurrentPath()
   const auto current_path_end = current_path.points.back();
   const auto self_pose = planner_data_->self_pose->pose;
   const bool is_near_target = tier4_autoware_utils::calcDistance2d(current_path_end, self_pose) <
-                              parameters_.th_arrived_distance_m;
+                              parameters_.th_arrived_distance;
 
   return is_near_target && isStopped();
 }

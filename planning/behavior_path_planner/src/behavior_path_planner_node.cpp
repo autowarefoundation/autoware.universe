@@ -447,9 +447,9 @@ PullOutParameters BehaviorPathPlannerNode::getPullOutParam()
 
   PullOutParameters p;
 
-  p.th_arrived_distance_m = dp("th_arrived_distance_m", 1.0);
-  p.th_stopped_velocity_mps = dp("th_stopped_velocity_mps", 0.01);
-  p.th_stopped_time_sec = dp("th_stopped_time_sec", 1.0);
+  p.th_arrived_distance = dp("th_arrived_distance", 1.0);
+  p.th_stopped_velocity = dp("th_stopped_velocity", 0.01);
+  p.th_stopped_time = dp("th_stopped_time", 1.0);
   p.collision_check_margin = dp("collision_check_margin", 1.0);
   p.pull_out_finish_judge_buffer = dp("pull_out_finish_judge_buffer", 1.0);
   // shift pull out
@@ -467,7 +467,7 @@ PullOutParameters BehaviorPathPlannerNode::getPullOutParam()
   p.arc_path_interval = dp("arc_path_interval", 1.0);
   p.lane_departure_margin = dp("lane_departure_margin", 0.2);
   p.backward_velocity = dp("backward_velocity", -0.3);
-  p.max_steer_rad = dp("max_steer_rad", 0.26);  // 15deg
+  p.pull_out_max_steer_angle = dp("pull_out_max_steer_angle", 0.26);  // 15deg
   // search start pose backward
   p.enable_back = dp("enable_back", true);
   p.max_back_distance = dp("max_back_distance", 15.0);
