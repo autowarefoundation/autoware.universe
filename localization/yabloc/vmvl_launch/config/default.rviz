@@ -8,7 +8,7 @@ Panels:
         - /VectorMap1/Namespaces1
         - /TF1/Frames1
       Splitter Ratio: 0.6005586385726929
-    Tree Height: 741
+    Tree Height: 736
   - Class: rviz_common/Selection
     Name: Selection
   - Class: rviz_common/Tool Properties
@@ -29,6 +29,8 @@ Panels:
     SyncSource: ""
   - Class: rosbag2_rviz_plugins/PlayerPanel
     Name: PlayerPanel
+  - Class: initialpose_plugins/InitialPosePanel
+    Name: InitialPosePanel
 Visualization Manager:
   Class: ""
   Displays:
@@ -55,10 +57,10 @@ Visualization Manager:
       Name: VectorMap
       Namespaces:
         center_lane_line: true
-        center_line_arrows: false
-        lane_start_bound: true
+        lanelet direction: true
         lanelet_id: false
         left_lane_bound: true
+        partitions: true
         right_lane_bound: true
         road_lanelets: false
       Topic:
@@ -167,10 +169,6 @@ Visualization Manager:
           Value: true
         map:
           Value: true
-        particle_filter:
-          Value: true
-        sensing/gnss/ublox/pose:
-          Value: true
         sensor_kit_base_link:
           Value: true
         tamagawa/imu_link:
@@ -208,57 +206,6 @@ Visualization Manager:
       Show Names: false
       Tree:
         map:
-          particle_filter:
-            base_link:
-              livox_front_left_base_link:
-                livox_front_left:
-                  {}
-              livox_front_right_base_link:
-                livox_front_right:
-                  {}
-              sensor_kit_base_link:
-                camera0/camera_link:
-                  camera0/camera_optical_link:
-                    {}
-                camera1/camera_link:
-                  camera1/camera_optical_link:
-                    {}
-                camera2/camera_link:
-                  camera2/camera_optical_link:
-                    {}
-                camera3/camera_link:
-                  camera3/camera_optical_link:
-                    {}
-                camera4/camera_link:
-                  camera4/camera_optical_link:
-                    {}
-                camera5/camera_link:
-                  camera5/camera_optical_link:
-                    {}
-                gnss_link:
-                  {}
-                tamagawa/imu_link:
-                  {}
-                traffic_light_left_camera/camera_link:
-                  traffic_light_left_camera/camera_optical_link:
-                    {}
-                traffic_light_right_camera/camera_link:
-                  traffic_light_right_camera/camera_optical_link:
-                    {}
-                velodyne_left_base_link:
-                  velodyne_left:
-                    {}
-                velodyne_right_base_link:
-                  velodyne_right:
-                    {}
-                velodyne_top_base_link:
-                  velodyne_top:
-                    {}
-              velodyne_rear_base_link:
-                velodyne_rear:
-                  {}
-          sensing/gnss/ublox/pose:
-            {}
           viewer:
             {}
       Update Interval: 0
@@ -326,7 +273,7 @@ Visualization Manager:
       Enabled: true
       Name: Particles
       Namespaces:
-        "": true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -338,7 +285,7 @@ Visualization Manager:
       Enabled: true
       Name: ProjectedLsd
       Namespaces:
-        "": true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -351,7 +298,7 @@ Visualization Manager:
       Enabled: true
       Name: GnssEffectRange
       Namespaces:
-        "": true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -435,8 +382,7 @@ Visualization Manager:
       Enabled: true
       Name: SignMarker
       Namespaces:
-        sign_board: true
-        virtual: true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Transient Local
@@ -545,9 +491,11 @@ Window Geometry:
   Height: 1043
   Hide Left Dock: false
   Hide Right Dock: true
+  InitialPosePanel:
+    collapsed: false
   PlayerPanel:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd00000004000000000000016800000370fc020000000bfb000000100044006900730070006c006100790073010000003d00000370000000c900fffffffb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000c00430061006d006500720061000000033e000002610000000000000000fb0000000a0049006d00610067006500000001f8000001ba0000000000000000fb0000000a0049006d00610067006501000003ae000001f1000000000000000000000001000002d100000370fc0200000003fb0000000a00560069006500770073000000003d00000370000000a400fffffffb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000078000000043fc0100000003fb000000160050006c006100790065007200500061006e0065006c0100000000000000b20000008500fffffffb0000000800540069006d006501000000b8000006c8000002eb00fffffffb0000000800540069006d00650100000000000004500000000000000000000006120000037000000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000400000000000001680000036bfc020000000bfb000000100044006900730070006c006100790073010000003d0000036b000000c900fffffffb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000c00430061006d006500720061000000033e000002610000000000000000fb0000000a0049006d00610067006500000001f8000001ba0000000000000000fb0000000a0049006d00610067006501000003ae000001f1000000000000000000000001000002d100000370fc0200000003fb0000000a00560069006500770073000000003d00000370000000a400fffffffb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000078000000048fc0100000004fb000000160050006c006100790065007200500061006e0065006c01000000000000008f0000008500fffffffb0000000800540069006d00650100000095000004a5000002eb00fffffffb000000200049006e0069007400690061006c0050006f0073006500500061006e0065006c010000054000000240000000d300fffffffb0000000800540069006d00650100000000000004500000000000000000000006120000036b00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:

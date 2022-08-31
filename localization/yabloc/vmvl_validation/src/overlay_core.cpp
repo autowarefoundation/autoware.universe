@@ -118,17 +118,39 @@ void Overlay::drawOverlayLineSegments(
 
   Eigen::Affine3f transform = ground_plane_.alignWithSlope(vml_common::pose2Affine(pose));
 
-  auto project = [K, T, transform](const Eigen::Vector3f & xyz) -> std::optional<cv::Point2i> {
-    Eigen::Vector3f from_camera = K * T.inverse() * transform.inverse() * xyz;
-    if (from_camera.z() < 1e-3f) return std::nullopt;
-    Eigen::Vector3f uv1 = from_camera /= from_camera.z();
-    return cv::Point2i(uv1.x(), uv1.y());
+  auto projectLineSegment =
+    [K, T, transform](
+      const Eigen::Vector3f & p1,
+      const Eigen::Vector3f & p2) -> std::tuple<bool, cv::Point2i, cv::Point2i> {
+    Eigen::Vector3f from_camera1 = K * T.inverse() * transform.inverse() * p1;
+    Eigen::Vector3f from_camera2 = K * T.inverse() * transform.inverse() * p2;
+    bool p1_is_visible = from_camera1.z() > 1e-3f;
+    bool p2_is_visible = from_camera2.z() > 1e-3f;
+    if ((!p1_is_visible) && (!p2_is_visible)) return {false, cv::Point2i{}, cv::Point2i{}};
+
+    Eigen::Vector3f uv1, uv2;
+    if (p1_is_visible) uv1 = from_camera1 / from_camera1.z();
+    if (p2_is_visible) uv2 = from_camera2 / from_camera2.z();
+
+    if ((p1_is_visible) && (p2_is_visible))
+      return {true, cv::Point2i(uv1.x(), uv1.y()), cv::Point2i(uv2.x(), uv2.y())};
+
+    Eigen::Vector3f tangent = from_camera2 - from_camera1;
+    float mu = (1e-3f - from_camera1.z()) / (tangent.z());
+    if (!p1_is_visible) {
+      from_camera1 = from_camera1 + mu * tangent;
+      uv1 = from_camera1 / from_camera1.z();
+    }
+    if (!p2_is_visible) {
+      from_camera2 = from_camera1 + mu * tangent;
+      uv2 = from_camera2 / from_camera2.z();
+    }
+    return {true, cv::Point2i(uv1.x(), uv1.y()), cv::Point2i(uv2.x(), uv2.y())};
   };
 
   for (const pcl::PointNormal & pn : near_segments) {
-    auto p1 = project(pn.getArray3fMap()), p2 = project(pn.getNormalVector3fMap());
-    if (!p1.has_value() || !p2.has_value()) continue;
-    cv::line(image, p1.value(), p2.value(), cv::Scalar(0, 255, 255), 2);
+    auto [success, u1, u2] = projectLineSegment(pn.getVector3fMap(), pn.getNormalVector3fMap());
+    if (success) cv::line(image, u1, u2, cv::Scalar(0, 255, 255), 2);
   }
 }
 
@@ -167,19 +189,20 @@ Overlay::LineSegments Overlay::extractNaerLineSegments(
 
   // Compute distance between pose and linesegment of linestring
   auto checkIntersection = [this, pose_vector](const pcl::PointNormal & pn) -> bool {
-    const float max_range = 40;
+    const float max_range = 80;
 
     const Eigen::Vector3f from = pn.getVector3fMap() - pose_vector;
     const Eigen::Vector3f to = pn.getNormalVector3fMap() - pose_vector;
+
     Eigen::Vector3f tangent = to - from;
-    float inner = from.dot(tangent);
     if (tangent.squaredNorm() < 1e-3f) {
       return from.norm() < 1.42 * max_range;
     }
 
-    float mu = std::clamp(inner / tangent.squaredNorm(), 0.f, 1.0f);
-    Eigen::Vector3f nearest = from + tangent * mu;
-    return nearest.norm() < 2 * 1.42 * max_range;
+    float inner = from.dot(tangent);
+    float mu = std::clamp(inner / tangent.squaredNorm(), -1.0f, 0.0f);
+    Eigen::Vector3f nearest = from - tangent * mu;
+    return nearest.norm() < 1.42 * max_range;
   };
 
   LineSegments near_linestrings;

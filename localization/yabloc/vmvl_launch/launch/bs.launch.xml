@@ -1,0 +1,22 @@
+<launch>
+    <arg name="min_segment_length" default="1.5" description="[m]"/>
+    <arg name="max_segment_distance" default="30.0" description="[m]"/>
+    <arg name="rtk_enabled" default="false" description="GNSS-RTK is enabled?"/>
+
+    <arg name="use_eagleye" default="false"/>
+    <arg name="force_zero_tilt" default="false"/>
+
+    <arg name="static_linear_covariance" default="12.00"/>
+    <arg name="static_angular_covariance" default="0.0015"/>
+    <arg name="static_scale_factor" default="1.009"/>
+
+    <arg name="refiner" default="false"/>
+    <arg name="reference_bags_path" default="$(env HOME)/Reference/odaiba_weather/"/>
+
+
+    <include file="$(find-pkg-share vmvl_launch)/launch/run.launch.xml">
+        <arg name="min_segment_length" value="$(var min_segment_length)"/>
+        <arg name="max_segment_distance" value="$(var max_segment_distance)"/>
+    </include>
+
+</launch>
