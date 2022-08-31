@@ -36,6 +36,7 @@
 
 #include <deque>
 #include <memory>
+#include <vector>
 
 namespace rviz_plugins
 {
