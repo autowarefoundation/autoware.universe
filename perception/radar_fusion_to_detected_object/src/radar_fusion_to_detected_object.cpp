@@ -115,6 +115,8 @@ RadarFusionToDetectedObject::Output RadarFusionToDetectedObject::update(
         split_object.classification.at(0).probability =
           std::max(split_object.classification.at(0).probability, param_.threshold_probability);
         output.objects.objects.emplace_back(split_object);
+      } else {
+        output.debug_low_confidence_objects.objects.emplace_back(split_object);
       }
     }
   }

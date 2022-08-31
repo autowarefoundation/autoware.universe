@@ -59,6 +59,7 @@ private:
 
   // Publisher
   rclcpp::Publisher<DetectedObjects>::SharedPtr pub_objects_{};
+  rclcpp::Publisher<DetectedObjects>::SharedPtr pub_debug_low_confidence_objects_{};
 
   // Timer
   rclcpp::TimerBase::SharedPtr timer_{};
