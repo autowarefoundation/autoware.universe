@@ -101,6 +101,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     "~/input/route", qos_transient_local, std::bind(&BehaviorPathPlannerNode::onRoute, this, _1),
     createSubscriptionOptions(this));
 
+  avoidance_param_ptr = std::make_shared<AvoidanceParameters>(getAvoidanceParam());
   lane_change_param_ptr = std::make_shared<LaneChangeParameters>(getLaneChangeParam());
 
   m_set_param_res = this->add_on_set_parameters_callback(
@@ -116,7 +117,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     bt_manager_->registerSceneModule(side_shift_module);
 
     auto avoidance_module =
-      std::make_shared<AvoidanceModule>("Avoidance", *this, getAvoidanceParam());
+      std::make_shared<AvoidanceModule>("Avoidance", *this, avoidance_param_ptr);
     bt_manager_->registerSceneModule(avoidance_module);
 
     auto lane_following_module =
@@ -749,7 +750,7 @@ SetParametersResult BehaviorPathPlannerNode::paramCallback(
 {
   rcl_interfaces::msg::SetParametersResult result;
 
-  if (!lane_change_param_ptr) {
+  if (!lane_change_param_ptr && !avoidance_param_ptr) {
     result.successful = false;
     result.reason = "param not initialized";
     return result;
@@ -759,6 +760,8 @@ SetParametersResult BehaviorPathPlannerNode::paramCallback(
   result.reason = "success";
 
   try {
+    update_param(
+      parameters, "avoidance.publish_debug_marker", avoidance_param_ptr->publish_debug_marker);
     update_param(
       parameters, "lane_change.publish_debug_marker", lane_change_param_ptr->publish_debug_marker);
   } catch (const rclcpp::exceptions::InvalidParameterTypeException & e) {

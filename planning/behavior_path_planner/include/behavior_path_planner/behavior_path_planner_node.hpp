@@ -109,6 +109,9 @@ private:
   bool isDataReady();
 
   // parameters
+  std::shared_ptr<AvoidanceParameters> avoidance_param_ptr;
+  std::shared_ptr<LaneChangeParameters> lane_change_param_ptr;
+
   BehaviorPathPlannerParameters getCommonParam();
   BehaviorTreeManagerParam getBehaviorTreeManagerParam();
   SideShiftParameters getSideShiftParam();
@@ -127,7 +130,6 @@ private:
   void onMap(const HADMapBin::ConstSharedPtr map_msg);
   void onRoute(const HADMapRoute::ConstSharedPtr route_msg);
   SetParametersResult paramCallback(const std::vector<rclcpp::Parameter> & parameters);
-  std::shared_ptr<LaneChangeParameters> lane_change_param_ptr;
 
   /**
    * @brief Modify the path points near the goal to smoothly connect the lanelet and the goal point.
