@@ -24,28 +24,6 @@
 #include <memory>
 #include <string>
 
-namespace
-{
-lanelet::ConstLanelets calcLaneAroundPose(
-  const std::shared_ptr<const behavior_path_planner::PlannerData> & planner_data,
-  const geometry_msgs::msg::Pose & pose, const double backward_length)
-{
-  const auto & p = planner_data->parameters;
-  const auto & route_handler = planner_data->route_handler;
-
-  lanelet::ConstLanelet current_lane;
-  if (!route_handler->getClosestLaneletWithinRoute(pose, &current_lane)) {
-    return {};  // TODO(Horibe)
-  }
-
-  // For current_lanes with desired length
-  lanelet::ConstLanelets current_lanes =
-    route_handler->getLaneletSequence(current_lane, pose, backward_length, p.forward_path_length);
-
-  return current_lanes;
-}
-}  // namespace
-
 namespace behavior_path_planner
 {
 using geometry_msgs::msg::Point;
@@ -197,7 +175,8 @@ void SideShiftModule::updateData()
   current_lanelets_ = route_handler->getLaneletSequence(
     current_lane, reference_pose.pose, p.backward_path_length, p.forward_path_length);
 
-  path_shifter_.removeBehindShiftPointAndSetBaseOffset(planner_data_->self_pose->pose.position);
+  const size_t nearest_idx = findEgoIndex(path_shifter_.getReferencePath().points);
+  path_shifter_.removeBehindShiftPointAndSetBaseOffset(planner_data_->self_pose->pose, nearest_idx);
 }
 
 bool SideShiftModule::addShiftPoint()
@@ -384,7 +363,6 @@ ShiftPoint SideShiftModule::calcShiftPoint() const
 {
   const auto & p = parameters_;
   const auto ego_speed = std::abs(planner_data_->self_odometry->twist.twist.linear.x);
-  const auto ego_pose = planner_data_->self_pose->pose;
 
   const double dist_to_start =
     std::max(p.min_distance_to_start_shifting, ego_speed * p.time_to_start_shifting);
@@ -401,11 +379,12 @@ ShiftPoint SideShiftModule::calcShiftPoint() const
     return dist_to_end;
   }();
 
+  const size_t nearest_idx = findEgoIndex(reference_path_->points);
   ShiftPoint shift_point;
   shift_point.length = lateral_offset_;
-  shift_point.start_idx = util::getIdxByArclength(*reference_path_, ego_pose, dist_to_start);
+  shift_point.start_idx = util::getIdxByArclength(*reference_path_, nearest_idx, dist_to_start);
   shift_point.start = reference_path_->points.at(shift_point.start_idx).point.pose;
-  shift_point.end_idx = util::getIdxByArclength(*reference_path_, ego_pose, dist_to_end);
+  shift_point.end_idx = util::getIdxByArclength(*reference_path_, nearest_idx, dist_to_end);
   shift_point.end = reference_path_->points.at(shift_point.end_idx).point.pose;
 
   return shift_point;
@@ -488,7 +467,7 @@ PathWithLaneId SideShiftModule::calcCenterLinePath(
     p.backward_path_length, longest_dist_to_shift_point, backward_length);
 
   const lanelet::ConstLanelets current_lanes =
-    calcLaneAroundPose(planner_data, pose.pose, backward_length);
+    util::calcLaneAroundPose(route_handler, pose.pose, p.forward_path_length, backward_length);
   centerline_path = util::getCenterLinePath(
     *route_handler, current_lanes, pose.pose, backward_length, p.forward_path_length, p);
 
