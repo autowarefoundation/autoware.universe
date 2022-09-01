@@ -21,6 +21,17 @@
 
 constexpr double epsilon = 1e-6;
 
+namespace
+{
+inline geometry_msgs::msg::Quaternion createQuaternionFromRPY(
+  const double roll, const double pitch, const double yaw)
+{
+  tf2::Quaternion q;
+  q.setRPY(roll, pitch, yaw);
+  return tf2::toMsg(q);
+}
+}  // namespace
+
 TEST(spherical_linear_interpolation, slerp_scalar)
 {
   using interpolation::spherical_linear_interpolation;
@@ -29,19 +40,13 @@ TEST(spherical_linear_interpolation, slerp_scalar)
   {
     const double src_yaw = 0.0;
     const double dst_yaw = 0.0;
-    tf2::Quaternion src_quat;
-    tf2::Quaternion dst_quat;
-    src_quat.setRPY(0, 0, src_yaw);
-    dst_quat.setRPY(0, 0, dst_yaw);
+    const auto src_quat = createQuaternionFromRPY(0.0, 0.0, src_yaw);
+    const auto dst_quat = createQuaternionFromRPY(0.0, 0.0, dst_yaw);
 
-    const double ans_yaw = 0.0;
-    tf2::Quaternion ans;
-    ans.setRPY(0, 0, ans_yaw);
-    const geometry_msgs::msg::Quaternion ans_quat = tf2::toMsg(ans);
+    const auto ans_quat = createQuaternionFromRPY(0.0, 0.0, 0.0);
 
     for (double ratio = -2.0; ratio < 2.0 + epsilon; ratio += 0.1) {
-      const auto interpolated_quat =
-        spherical_linear_interpolation(tf2::toMsg(src_quat), tf2::toMsg(dst_quat), ratio);
+      const auto interpolated_quat = spherical_linear_interpolation(src_quat, dst_quat, ratio);
       EXPECT_NEAR(ans_quat.x, interpolated_quat.x, epsilon);
       EXPECT_NEAR(ans_quat.y, interpolated_quat.y, epsilon);
       EXPECT_NEAR(ans_quat.z, interpolated_quat.z, epsilon);
@@ -53,19 +58,75 @@ TEST(spherical_linear_interpolation, slerp_scalar)
   {
     const double src_yaw = 0.0;
     const double dst_yaw = M_PI;
-    tf2::Quaternion src_quat;
-    tf2::Quaternion dst_quat;
-    src_quat.setRPY(0, 0, src_yaw);
-    dst_quat.setRPY(0, 0, dst_yaw);
+    const auto src_quat = createQuaternionFromRPY(0.0, 0.0, src_yaw);
+    const auto dst_quat = createQuaternionFromRPY(0.0, 0.0, dst_yaw);
 
     for (double ratio = -2.0; ratio < 2.0 + epsilon; ratio += 0.1) {
-      const auto interpolated_quat =
-        spherical_linear_interpolation(tf2::toMsg(src_quat), tf2::toMsg(dst_quat), ratio);
+      const auto interpolated_quat = spherical_linear_interpolation(src_quat, dst_quat, ratio);
 
       const double ans_yaw = M_PI * ratio;
       tf2::Quaternion ans;
       ans.setRPY(0, 0, ans_yaw);
       const geometry_msgs::msg::Quaternion ans_quat = tf2::toMsg(ans);
+
+      EXPECT_NEAR(ans_quat.x, interpolated_quat.x, epsilon);
+      EXPECT_NEAR(ans_quat.y, interpolated_quat.y, epsilon);
+      EXPECT_NEAR(ans_quat.z, interpolated_quat.z, epsilon);
+      EXPECT_NEAR(ans_quat.w, interpolated_quat.w, epsilon);
+    }
+  }
+}
+
+TEST(spherical_linear_interpolation, slerp_vector)
+{
+  using interpolation::spherical_linear_interpolation;
+
+  // query keys are same as base keys
+  {
+    const std::vector<double> base_keys{0.0, 1.0, 2.0, 3.0, 4.0};
+    std::vector<geometry_msgs::msg::Quaternion> base_values;
+    for (size_t i = 0; i < 5; ++i) {
+      const auto quat = createQuaternionFromRPY(0.0, 0.0, i * M_PI / 5.0);
+      base_values.push_back(quat);
+    }
+    const std::vector<double> query_keys = base_keys;
+    const auto ans = base_values;
+
+    const auto results = spherical_linear_interpolation(base_keys, base_values, query_keys);
+
+    for (size_t i = 0; i < results.size(); ++i) {
+      const auto interpolated_quat = results.at(i);
+      const auto ans_quat = ans.at(i);
+
+      EXPECT_NEAR(ans_quat.x, interpolated_quat.x, epsilon);
+      EXPECT_NEAR(ans_quat.y, interpolated_quat.y, epsilon);
+      EXPECT_NEAR(ans_quat.z, interpolated_quat.z, epsilon);
+      EXPECT_NEAR(ans_quat.w, interpolated_quat.w, epsilon);
+    }
+  }
+
+  // random
+  {
+    const std::vector<double> base_keys{0.0, 1.0, 2.0, 3.0, 4.0};
+    std::vector<geometry_msgs::msg::Quaternion> base_values;
+    for (size_t i = 0; i < 5; ++i) {
+      const auto quat = createQuaternionFromRPY(0.0, 0.0, i * M_PI / 5.0);
+      base_values.push_back(quat);
+    }
+    const std::vector<double> query_keys = {0.0, 0.1, 1.5, 2.6, 3.1, 3.8};
+    std::vector<geometry_msgs::msg::Quaternion> ans(query_keys.size());
+    ans.at(0) = createQuaternionFromRPY(0.0, 0.0, 0.0);
+    ans.at(1) = createQuaternionFromRPY(0.0, 0.0, 0.1 * M_PI / 5.0);
+    ans.at(2) = createQuaternionFromRPY(0.0, 0.0, 0.5 * M_PI / 5.0 + M_PI / 5.0);
+    ans.at(3) = createQuaternionFromRPY(0.0, 0.0, 0.6 * M_PI / 5.0 + 2.0 * M_PI / 5.0);
+    ans.at(4) = createQuaternionFromRPY(0.0, 0.0, 0.1 * M_PI / 5.0 + 3.0 * M_PI / 5.0);
+    ans.at(5) = createQuaternionFromRPY(0.0, 0.0, 0.8 * M_PI / 5.0 + 3.0 * M_PI / 5.0);
+
+    const auto results = spherical_linear_interpolation(base_keys, base_values, query_keys);
+
+    for (size_t i = 0; i < results.size(); ++i) {
+      const auto interpolated_quat = results.at(i);
+      const auto ans_quat = ans.at(i);
 
       EXPECT_NEAR(ans_quat.x, interpolated_quat.x, epsilon);
       EXPECT_NEAR(ans_quat.y, interpolated_quat.y, epsilon);
