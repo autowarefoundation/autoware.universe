@@ -680,7 +680,8 @@ void NDTScanMatcher::publish_tf(
   result_pose_stamped_msg.header.stamp = sensor_ros_time;
   result_pose_stamped_msg.header.frame_id = map_frame_;
   result_pose_stamped_msg.pose = result_pose_msg;
-  tf2_broadcaster_.sendTransform(tier4_autoware_utils::pose2transform(result_pose_stamped_msg, ndt_base_frame_));
+  tf2_broadcaster_.sendTransform(
+    tier4_autoware_utils::pose2transform(result_pose_stamped_msg, ndt_base_frame_));
 }
 
 void NDTScanMatcher::publish_pose(
