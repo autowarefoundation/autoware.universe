@@ -270,7 +270,8 @@ NDTScanMatcher::NDTScanMatcher()
 
   service_ = this->create_service<tier4_localization_msgs::srv::PoseWithCovarianceStamped>(
     "ndt_align_srv",
-    std::bind(&NDTScanMatcher::service_ndt_align, this, std::placeholders::_1, std::placeholders::_2),
+    std::bind(
+      &NDTScanMatcher::service_ndt_align, this, std::placeholders::_1, std::placeholders::_2),
     rclcpp::ServicesQoS().get_rmw_qos_profile(), main_callback_group);
 
   diagnostic_thread_ = std::thread(&NDTScanMatcher::timer_diagnostic, this);
