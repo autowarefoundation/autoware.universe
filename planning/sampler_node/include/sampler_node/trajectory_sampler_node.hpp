@@ -12,16 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SAMPLER_NODE__PATH_SAMPLER_NODE_HPP_
-#define SAMPLER_NODE__PATH_SAMPLER_NODE_HPP_
+#ifndef SAMPLER_NODE__TRAJECTORY_SAMPLER_NODE_HPP_
+#define SAMPLER_NODE__TRAJECTORY_SAMPLER_NODE_HPP_
 
 #include "frenet_planner/frenet_planner.hpp"
 #include "sampler_common/constraints/hard_constraint.hpp"
 #include "sampler_common/structures.hpp"
 #include "sampler_common/transform/spline_transform.hpp"
 #include "sampler_node/parameters.hpp"
-#include "sampler_node/path_generation.hpp"
 #include "sampler_node/plot/debug_window.hpp"
+#include "sampler_node/trajectory_generation.hpp"
 #include "vehicle_info_util/vehicle_info.hpp"
 
 #include <QApplication>
@@ -54,12 +54,12 @@
 namespace sampler_node
 {
 
-class PathSamplerNode : public rclcpp::Node
+class TrajectorySamplerNode : public rclcpp::Node
 {
 private:
   // Debug visualization
   int argc_ = 1;
-  std::vector<char *> argv_ = {std::string("Frenet Debug Visualization").data()};
+  std::vector<char *> argv_ = {std::string("Debug Visualization").data()};
   QApplication qapplication_;
   std::unique_ptr<QApplication> qt_app_;
   std::unique_ptr<plot::MainWindow> qt_window_;
@@ -81,7 +81,7 @@ private:
   std::unique_ptr<geometry_msgs::msg::Pose> prev_ego_pose_ptr_;
   std::unique_ptr<autoware_auto_perception_msgs::msg::PredictedObjects> in_objects_ptr_;
   autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr fallback_traj_ptr_{};
-  sampler_common::Path prev_path_;
+  sampler_common::Trajectory prev_traj_;
   lanelet::LaneletMapPtr lanelet_map_ptr_;
   lanelet::Ids drivable_ids_;
   lanelet::Ids prefered_ids_;
@@ -109,20 +109,21 @@ private:
   void fallbackCallback(const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr);
 
   // other functions
-  void publishPath(
-    const sampler_common::Path & path,
-    const autoware_auto_planning_msgs::msg::Path::ConstSharedPtr path_msg);
-  std::optional<sampler_common::State> getCurrentEgoState();
-  static std::optional<sampler_common::Path> selectBestPath(
-    const std::vector<sampler_common::Path> & paths);
-  sampler_common::State getPlanningState(
-    sampler_common::State state, const sampler_common::transform::Spline2D & path_spline) const;
-  sampler_common::Path prependPath(
-    const sampler_common::Path & path, const sampler_common::transform::Spline2D & reference) const;
+  void publishTrajectory(
+    const sampler_common::Trajectory & trajectory, const std::string & frame_id);
+  std::optional<sampler_common::Configuration> getCurrentEgoConfiguration();
+  static std::optional<sampler_common::Trajectory> selectBestTrajectory(
+    const std::vector<sampler_common::Trajectory> & trajectories);
+  sampler_common::Configuration getPlanningConfiguration(
+    sampler_common::Configuration configuration,
+    const sampler_common::transform::Spline2D & path_spline) const;
+  sampler_common::Trajectory prependTrajectory(
+    const sampler_common::Trajectory & trajectory,
+    const sampler_common::transform::Spline2D & reference) const;
 
 public:
-  explicit PathSamplerNode(const rclcpp::NodeOptions & node_options);
+  explicit TrajectorySamplerNode(const rclcpp::NodeOptions & node_options);
 };
 }  // namespace sampler_node
 
-#endif  // SAMPLER_NODE__PATH_SAMPLER_NODE_HPP_
+#endif  // SAMPLER_NODE__TRAJECTORY_SAMPLER_NODE_HPP_

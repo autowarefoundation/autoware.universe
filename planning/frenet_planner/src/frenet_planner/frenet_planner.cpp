@@ -18,8 +18,6 @@
 
 #include <frenet_planner/polynomials.hpp>
 #include <frenet_planner/structures.hpp>
-#include <sampler_common/constraints/hard_constraint.hpp>
-#include <sampler_common/constraints/soft_constraint.hpp>
 #include <sampler_common/structures.hpp>
 #include <sampler_common/transform/spline_transform.hpp>
 
@@ -31,19 +29,11 @@ namespace frenet_planner
 {
 std::vector<Trajectory> generateTrajectories(
   const sampler_common::transform::Spline2D & reference_spline, const FrenetState & initial_state,
-  const SamplingParameters & sampling_parameters, const sampler_common::Constraints & constraints,
-  Debug & debug)
+  const SamplingParameters & sampling_parameters)
 {
   auto candidates = generateCandidates(initial_state, sampling_parameters);
   for (auto & candidate : candidates) {
     calculateCartesian(reference_spline, candidate);
-    // Check hard constraints (Cartesian)
-    const auto nb_of_violation =
-      sampler_common::constraints::checkHardConstraints(candidate, constraints);
-    debug.nb_constraint_violations.collision += nb_of_violation.collision;
-    debug.nb_constraint_violations.curvature += nb_of_violation.curvature;
-    // Calculate objective function
-    sampler_common::constraints::calculateCost(candidate, constraints, reference_spline);
   }
   return candidates;
 }

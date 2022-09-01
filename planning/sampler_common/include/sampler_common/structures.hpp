@@ -46,6 +46,12 @@ struct State
   double heading{};
 };
 
+struct Configuration : State
+{
+  double velocity{};
+  double acceleration{};
+};
+
 /// @brief Path
 struct Path
 {

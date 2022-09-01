@@ -29,8 +29,7 @@ namespace frenet_planner
 /// @brief generate all trajectories
 std::vector<Trajectory> generateTrajectories(
   const sampler_common::transform::Spline2D & reference_spline, const FrenetState & initial_state,
-  const SamplingParameters & sampling_parameters, const sampler_common::Constraints & constraints,
-  Debug & debug);
+  const SamplingParameters & sampling_parameters);
 /// @brief generate all paths
 std::vector<Path> generatePaths(
   const sampler_common::transform::Spline2D & reference_spline, const FrenetState & initial_state,
