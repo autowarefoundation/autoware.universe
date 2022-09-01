@@ -18,6 +18,7 @@
 #include "ndt_scan_matcher/util_func.hpp"
 
 #include <rclcpp/rclcpp.hpp>
+
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 
 #include <deque>
@@ -29,15 +30,12 @@ private:
 
 public:
   PoseArrayInterpolator(
-    rclcpp::Node * node,
-    const rclcpp::Time target_ros_time,
+    rclcpp::Node * node, const rclcpp::Time target_ros_time,
     const std::deque<PoseWithCovarianceStamped::ConstSharedPtr> & pose_msg_ptr_array,
-    const double & pose_timeout_sec,
-    const double & pose_distance_tolerance_meters);
+    const double & pose_timeout_sec, const double & pose_distance_tolerance_meters);
 
   PoseArrayInterpolator(
-    rclcpp::Node * node,
-    const rclcpp::Time target_ros_time,
+    rclcpp::Node * node, const rclcpp::Time target_ros_time,
     const std::deque<PoseWithCovarianceStamped::ConstSharedPtr> & pose_msg_ptr_array);
 
   void interpolate(
@@ -60,8 +58,8 @@ private:
     const rclcpp::Time & target_time, const rclcpp::Time & reference_time,
     const double time_tolerance_sec);
   void validate_position_difference(
-    const geometry_msgs::msg::Point & target_point, const geometry_msgs::msg::Point & reference_point,
-    const double distance_tolerance_m_);
+    const geometry_msgs::msg::Point & target_point,
+    const geometry_msgs::msg::Point & reference_point, const double distance_tolerance_m_);
 };
 
 #endif  // NDT_SCAN_MATCHER__POSE_ARRAY_INTERPOLATOR_HPP_

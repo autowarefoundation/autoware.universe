@@ -83,5 +83,4 @@ T transform(const T & input, const geometry_msgs::msg::TransformStamped & transf
 
 double norm(const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2);
 
-
 #endif  // NDT_SCAN_MATCHER__UTIL_FUNC_HPP_

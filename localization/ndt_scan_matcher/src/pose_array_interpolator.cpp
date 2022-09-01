@@ -15,11 +15,9 @@
 #include "ndt_scan_matcher/pose_array_interpolator.hpp"
 
 PoseArrayInterpolator::PoseArrayInterpolator(
-  rclcpp::Node * node,
-  const rclcpp::Time target_ros_time,
+  rclcpp::Node * node, const rclcpp::Time target_ros_time,
   const std::deque<PoseWithCovarianceStamped::ConstSharedPtr> & pose_msg_ptr_array,
-  const double & pose_timeout_sec,
-  const double & pose_distance_tolerance_meters)
+  const double & pose_timeout_sec, const double & pose_distance_tolerance_meters)
 : logger_(node->get_logger()), clock_(*node->get_clock())
 {
   success_ = true;
@@ -34,7 +32,8 @@ PoseArrayInterpolator::PoseArrayInterpolator(
   validate_time_stamp_difference(new_pose_ptr_->header.stamp, target_ros_time, pose_timeout_sec);
 
   // check the position jumping (ex. immediately after the initial pose estimation)
-  validate_position_difference(old_pose_ptr_->pose.pose.position, new_pose_ptr_->pose.pose.position,
+  validate_position_difference(
+    old_pose_ptr_->pose.pose.position, new_pose_ptr_->pose.pose.position,
     pose_distance_tolerance_meters);
 
   // all validations must be true
@@ -44,8 +43,7 @@ PoseArrayInterpolator::PoseArrayInterpolator(
 }
 
 PoseArrayInterpolator::PoseArrayInterpolator(
-  rclcpp::Node * node,
-  const rclcpp::Time target_ros_time,
+  rclcpp::Node * node, const rclcpp::Time target_ros_time,
   const std::deque<PoseWithCovarianceStamped::ConstSharedPtr> & pose_msg_ptr_array)
 : logger_(node->get_logger()), clock_(*node->get_clock())
 {
@@ -57,7 +55,6 @@ PoseArrayInterpolator::PoseArrayInterpolator(
   interpolate(pose_msg_ptr_array, target_ros_time);
 }
 
-
 void PoseArrayInterpolator::interpolate(
   const std::deque<PoseWithCovarianceStamped::ConstSharedPtr> & pose_msg_ptr_array,
   const rclcpp::Time target_ros_time)
@@ -67,8 +64,7 @@ void PoseArrayInterpolator::interpolate(
     success_ = false;
     return;
   }
-  get_nearest_timestamp_pose(
-    pose_msg_ptr_array, target_ros_time, old_pose_ptr_, new_pose_ptr_);
+  get_nearest_timestamp_pose(pose_msg_ptr_array, target_ros_time, old_pose_ptr_, new_pose_ptr_);
   const geometry_msgs::msg::PoseStamped interpolated_pose_msg =
     interpolate_pose(*old_pose_ptr_, *new_pose_ptr_, target_ros_time);
   current_pose_ptr_->header = interpolated_pose_msg.header;
@@ -91,10 +87,7 @@ geometry_msgs::msg::PoseWithCovarianceStamped PoseArrayInterpolator::get_new_pos
   return *new_pose_ptr_;
 }
 
-bool PoseArrayInterpolator::is_success()
-{
-  return success_;
-}
+bool PoseArrayInterpolator::is_success() { return success_; }
 
 void PoseArrayInterpolator::validate_time_stamp_difference(
   const rclcpp::Time & target_time, const rclcpp::Time & reference_time,
