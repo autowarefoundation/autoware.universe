@@ -17,7 +17,6 @@
 
 #include "behavior_path_planner/data_manager.hpp"
 #include "behavior_path_planner/parameters.hpp"
-#include "behavior_path_planner/scene_module/pull_out/planner_type.hpp"
 #include "behavior_path_planner/scene_module/pull_out/pull_out_parameters.hpp"
 #include "behavior_path_planner/scene_module/pull_out/pull_out_path.hpp"
 #include "behavior_path_planner/util/create_vehicle_footprint.hpp"
@@ -36,6 +35,12 @@ using tier4_autoware_utils::LinearRing2d;
 
 namespace behavior_path_planner
 {
+enum class PlannerType {
+  NONE = 0,
+  SHIFT = 1,
+  GEOMETRIC = 2,
+};
+
 class PullOutPlannerBase
 {
 public:
