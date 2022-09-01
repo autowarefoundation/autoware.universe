@@ -36,41 +36,41 @@
 #include <vector>
 
 // ref by http://takacity.blog.fc2.com/blog-entry-69.html
-std_msgs::msg::ColorRGBA ExchangeColorCrc(double x);
+std_msgs::msg::ColorRGBA exchange_color_crc(double x);
 
-double calcDiffForRadian(const double lhs_rad, const double rhs_rad);
+double calc_diff_for_radian(const double lhs_rad, const double rhs_rad);
 
 // x: roll, y: pitch, z: yaw
-geometry_msgs::msg::Vector3 getRPY(const geometry_msgs::msg::Pose & pose);
-geometry_msgs::msg::Vector3 getRPY(const geometry_msgs::msg::PoseStamped & pose);
-geometry_msgs::msg::Vector3 getRPY(const geometry_msgs::msg::PoseWithCovarianceStamped & pose);
+geometry_msgs::msg::Vector3 get_rpy(const geometry_msgs::msg::Pose & pose);
+geometry_msgs::msg::Vector3 get_rpy(const geometry_msgs::msg::PoseStamped & pose);
+geometry_msgs::msg::Vector3 get_rpy(const geometry_msgs::msg::PoseWithCovarianceStamped & pose);
 
-geometry_msgs::msg::Twist calcTwist(
+geometry_msgs::msg::Twist calc_twist(
   const geometry_msgs::msg::PoseStamped & pose_a, const geometry_msgs::msg::PoseStamped & pose_b);
 
-void getNearestTimeStampPose(
+void get_nearest_timestamp_pose(
   const std::deque<geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr> &
     pose_cov_msg_ptr_array,
   const rclcpp::Time & time_stamp,
   geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr & output_old_pose_cov_msg_ptr,
   geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr & output_new_pose_cov_msg_ptr);
 
-geometry_msgs::msg::PoseStamped interpolatePose(
+geometry_msgs::msg::PoseStamped interpolate_pose(
   const geometry_msgs::msg::PoseStamped & pose_a, const geometry_msgs::msg::PoseStamped & pose_b,
   const rclcpp::Time & time_stamp);
 
-geometry_msgs::msg::PoseStamped interpolatePose(
+geometry_msgs::msg::PoseStamped interpolate_pose(
   const geometry_msgs::msg::PoseWithCovarianceStamped & pose_a,
   const geometry_msgs::msg::PoseWithCovarianceStamped & pose_b, const rclcpp::Time & time_stamp);
 
-void popOldPose(
+void pop_old_pose(
   std::deque<geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr> &
     pose_cov_msg_ptr_array,
   const rclcpp::Time & time_stamp);
 
-Eigen::Affine3d fromRosPoseToEigen(const geometry_msgs::msg::Pose & ros_pose);
+Eigen::Affine3d from_ros_pose_to_eigen(const geometry_msgs::msg::Pose & ros_pose);
 
-std::vector<geometry_msgs::msg::Pose> createRandomPoseArray(
+std::vector<geometry_msgs::msg::Pose> create_random_pose_array(
   const geometry_msgs::msg::PoseWithCovarianceStamped & base_pose_with_cov, const int particle_num);
 
 template <class T>
