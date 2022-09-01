@@ -495,6 +495,10 @@ boost::optional<TrajectoryPoints> applyDecelFilterWithJerkConstraint(
     distance_all.begin(), distance_all.end(), [&xs](double x) { return x > xs.back(); });
   const std::vector<double> distance{distance_all.begin() + start_index, it_end};
 
+  if (xs.size() < 2 || vs.size() < 2 || as.size() < 2 || distance.empty()) {
+    return {};
+  }
+
   const auto vel_at_wp = interpolation::lerp(xs, vs, distance);
   const auto acc_at_wp = interpolation::lerp(xs, as, distance);
 
