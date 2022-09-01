@@ -456,8 +456,8 @@ void NDTScanMatcher::callback_sensor_points(
   const std::string & sensor_frame = sensor_points_sensorTF_msg_ptr->header.frame_id;
 
   pcl::fromROSMsg(*sensor_points_sensorTF_msg_ptr, *sensor_points_sensorTF_ptr);
-  transform_sensor_measurement(sensor_frame, base_frame_,
-    sensor_points_sensorTF_ptr, sensor_points_baselinkTF_ptr);
+  transform_sensor_measurement(
+    sensor_frame, base_frame_, sensor_points_sensorTF_ptr, sensor_points_baselinkTF_ptr);
   ndt_ptr_->setInputSource(sensor_points_baselinkTF_ptr);
 
   // calculate initial pose
