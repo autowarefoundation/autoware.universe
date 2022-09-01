@@ -500,7 +500,7 @@ void NDTScanMatcher::callback_sensor_points(
   https://github.com/PointCloudLibrary/pcl/blob/424c1c6a0ca97d94ca63e5daff4b183a4db8aae4/registration/include/pcl/registration/impl/ndt.hpp#L73-L180
   *****************************************************************************/
   bool is_ok_iteration_num =
-    validate_num_iteration(ndt_result.iteration_num, ndt_result.iteration_num_max + 2);
+    validate_num_iteration(ndt_result.iteration_num, ndt_ptr_->getMaximumIterations() + 2);
   bool is_local_optimal_solution_oscillation = false;
   if (!is_ok_iteration_num) {
     is_local_optimal_solution_oscillation = validate_local_optimal_solution_oscillation(
@@ -621,7 +621,6 @@ NdtResult NDTScanMatcher::align(const geometry_msgs::msg::Pose & initial_pose_ms
   ndt_result.nearest_voxel_transformation_likelihood =
     ndt_ptr_->getNearestVoxelTransformationLikelihood();
   ndt_result.iteration_num = ndt_ptr_->getFinalNumIteration();
-  ndt_result.iteration_num_max = ndt_ptr_->getMaximumIterations();
   return ndt_result;
 }
 

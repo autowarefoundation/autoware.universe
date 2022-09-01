@@ -74,7 +74,6 @@ struct NdtResult
   float transform_probability;
   float nearest_voxel_transformation_likelihood;
   int iteration_num;
-  int iteration_num_max;
   std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>> transformation_array;
 };
 
