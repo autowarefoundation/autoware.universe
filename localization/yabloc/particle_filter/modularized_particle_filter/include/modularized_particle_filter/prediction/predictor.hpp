@@ -24,20 +24,20 @@ namespace modularized_particle_filter
 class Predictor : public rclcpp::Node
 {
 public:
-  Predictor();
-
-private:
   using ParticleArray = modularized_particle_filter_msgs::msg::ParticleArray;
   using PoseStamped = geometry_msgs::msg::PoseStamped;
-  using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
-  using TwistWithCovarianceStamped = geometry_msgs::msg::TwistWithCovarianceStamped;
+  using PoseCovStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
+  using TwistCovStamped = geometry_msgs::msg::TwistWithCovarianceStamped;
   using TwistStamped = geometry_msgs::msg::TwistStamped;
   using OptParticleArray = std::optional<ParticleArray>;
 
+  Predictor();
+
+private:
   // Subscriber
-  rclcpp::Subscription<PoseWithCovarianceStamped>::SharedPtr initialpose_sub_;
+  rclcpp::Subscription<PoseCovStamped>::SharedPtr initialpose_sub_;
   rclcpp::Subscription<PoseStamped>::SharedPtr gnss_sub_;
-  rclcpp::Subscription<TwistWithCovarianceStamped>::SharedPtr twist_cov_sub_;
+  rclcpp::Subscription<TwistCovStamped>::SharedPtr twist_cov_sub_;
   rclcpp::Subscription<TwistStamped>::SharedPtr twist_sub_;
   rclcpp::Subscription<ParticleArray>::SharedPtr particles_sub_;
   rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr height_sub_;
@@ -60,22 +60,21 @@ private:
   std::shared_ptr<ParticleVisualizer> visualizer_{nullptr};
   std::shared_ptr<RetroactiveResampler> resampler_ptr_{nullptr};
   std::optional<ParticleArray> particle_array_opt_{std::nullopt};
-  std::optional<TwistWithCovarianceStamped> twist_opt_{std::nullopt};
+  std::optional<TwistCovStamped> twist_opt_{std::nullopt};
 
   // Callback
-  void gnssposeCallback(const PoseStamped::ConstSharedPtr initialpose);
-  void initialposeCallback(const PoseWithCovarianceStamped::ConstSharedPtr initialpose);
+  void onGnssPose(const PoseStamped::ConstSharedPtr initialpose);
+  void onInitialPose(const PoseCovStamped::ConstSharedPtr initialpose);
 
-  void initializeParticles(const PoseWithCovarianceStamped & initialpose);
+  void onTwist(const TwistStamped::ConstSharedPtr twist);
+  void onTwistCov(const TwistCovStamped::ConstSharedPtr twist_cov);
+  void onWeightedParticles(const ParticleArray::ConstSharedPtr weighted_particles);
+  void onTimer();
 
-  void twistCallback(const TwistStamped::ConstSharedPtr twist);
-  void weightedParticlesCallback(const ParticleArray::ConstSharedPtr weighted_particles);
-  void timerCallback();
+  void initializeParticles(const PoseCovStamped & initialpose);
 
-  void updateWithStaticNoise(
-    ParticleArray & particle_array, const TwistWithCovarianceStamped & twist);
-  void updateWithDynamicNoise(
-    ParticleArray & particle_array, const TwistWithCovarianceStamped & twist);
+  void updateWithStaticNoise(ParticleArray & particle_array, const TwistCovStamped & twist);
+  void updateWithDynamicNoise(ParticleArray & particle_array, const TwistCovStamped & twist);
 
   void publishMeanPose(const geometry_msgs::msg::Pose & mean_pose, const rclcpp::Time & stamp);
 };

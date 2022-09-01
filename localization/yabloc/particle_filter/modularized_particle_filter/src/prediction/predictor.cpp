@@ -35,15 +35,17 @@ Predictor::Predictor()
 
   // Subscribers
   using std::placeholders::_1;
-  auto gnss_cb = std::bind(&Predictor::gnssposeCallback, this, _1);
-  auto initial_cb = std::bind(&Predictor::initialposeCallback, this, _1);
-  auto twist_cb = std::bind(&Predictor::twistCallback, this, _1);
-  auto particle_cb = std::bind(&Predictor::weightedParticlesCallback, this, _1);
+  auto gnss_cb = std::bind(&Predictor::onGnssPose, this, _1);
+  auto initial_cb = std::bind(&Predictor::onInitialPose, this, _1);
+  auto twist_cb = std::bind(&Predictor::onTwist, this, _1);
+  auto twist_cov_cb = std::bind(&Predictor::onTwistCov, this, _1);
+  auto particle_cb = std::bind(&Predictor::onWeightedParticles, this, _1);
   auto height_cb = [this](std_msgs::msg::Float32 m) -> void { this->ground_height_ = m.data; };
 
   gnss_sub_ = create_subscription<PoseStamped>("pose", 1, gnss_cb);
-  initialpose_sub_ = create_subscription<PoseWithCovarianceStamped>("initialpose", 1, initial_cb);
+  initialpose_sub_ = create_subscription<PoseCovStamped>("initialpose", 1, initial_cb);
   twist_sub_ = create_subscription<TwistStamped>("twist", 10, twist_cb);
+  twist_cov_sub_ = create_subscription<TwistStamped>("twist_cov", 10, twist_cov_cb);
   particles_sub_ = create_subscription<ParticleArray>("weighted_particles", 10, particle_cb);
   height_sub_ = create_subscription<std_msgs::msg::Float32>("height", 10, height_cb);
 
@@ -52,14 +54,14 @@ Predictor::Predictor()
   // Timer callback
   auto chrono_period = std::chrono::duration_cast<std::chrono::nanoseconds>(
     std::chrono::duration<double>(1.0f / prediction_rate));
-  auto cb_timer = std::bind(&Predictor::timerCallback, this);
+  auto cb_timer = std::bind(&Predictor::onTimer, this);
   timer_ = rclcpp::create_timer(this, this->get_clock(), chrono_period, std::move(cb_timer));
 }
 
-void Predictor::gnssposeCallback(const PoseStamped::ConstSharedPtr pose)
+void Predictor::onGnssPose(const PoseStamped::ConstSharedPtr pose)
 {
   if (particle_array_opt_.has_value()) return;
-  PoseWithCovarianceStamped pose_cov;
+  PoseCovStamped pose_cov;
   pose_cov.header = pose->header;
   pose_cov.pose.pose = pose->pose;
   pose_cov.pose.covariance[6 * 0 + 0] = 0.25;
@@ -68,12 +70,12 @@ void Predictor::gnssposeCallback(const PoseStamped::ConstSharedPtr pose)
   initializeParticles(pose_cov);
 }
 
-void Predictor::initialposeCallback(const PoseWithCovarianceStamped::ConstSharedPtr initialpose)
+void Predictor::onInitialPose(const PoseCovStamped::ConstSharedPtr initialpose)
 {
   initializeParticles(*initialpose);
 }
 
-void Predictor::initializeParticles(const PoseWithCovarianceStamped & initialpose)
+void Predictor::initializeParticles(const PoseCovStamped & initialpose)
 {
   RCLCPP_INFO_STREAM(this->get_logger(), "initiposeCallback");
   modularized_particle_filter_msgs::msg::ParticleArray particle_array{};
@@ -114,9 +116,9 @@ void Predictor::initializeParticles(const PoseWithCovarianceStamped & initialpos
     std::make_shared<RetroactiveResampler>(resampling_interval_seconds_, number_of_particles_, 100);
 }
 
-void Predictor::twistCallback(const TwistStamped::ConstSharedPtr twist)
+void Predictor::onTwist(const TwistStamped::ConstSharedPtr twist)
 {
-  TwistWithCovarianceStamped twist_covariance;
+  TwistCovStamped twist_covariance;
   twist_covariance.header = twist->header;
   twist_covariance.twist.twist = twist->twist;
   twist_covariance.twist.covariance.at(0) = static_linear_covariance_;
@@ -128,8 +130,13 @@ void Predictor::twistCallback(const TwistStamped::ConstSharedPtr twist)
   twist_opt_ = twist_covariance;
 }
 
+void Predictor::onTwistCov(const TwistCovStamped::ConstSharedPtr twist_cov)
+{
+  twist_opt_ = *twist_cov;
+}
+
 void Predictor::updateWithDynamicNoise(
-  ParticleArray & particle_array, const TwistWithCovarianceStamped & twist)
+  ParticleArray & particle_array, const TwistCovStamped & twist)
 {
   rclcpp::Time current_time{this->now()};
   rclcpp::Time msg_time{particle_array.header.stamp};
@@ -169,8 +176,7 @@ void Predictor::updateWithDynamicNoise(
   }
 }
 
-void Predictor::updateWithStaticNoise(
-  ParticleArray & particle_array, const TwistWithCovarianceStamped & twist)
+void Predictor::updateWithStaticNoise(ParticleArray & particle_array, const TwistCovStamped & twist)
 {
   rclcpp::Time current_time{this->now()};
   const float dt =
@@ -204,12 +210,12 @@ void Predictor::updateWithStaticNoise(
   }
 }
 
-void Predictor::timerCallback()
+void Predictor::onTimer()
 {
   if (!particle_array_opt_.has_value()) return;
   if (!twist_opt_.has_value()) return;
   ParticleArray particle_array = particle_array_opt_.value();
-  TwistWithCovarianceStamped twist{twist_opt_.value()};
+  TwistCovStamped twist{twist_opt_.value()};
 
   if (use_dynamic_noise_) {
     updateWithDynamicNoise(particle_array, twist);
@@ -228,8 +234,7 @@ void Predictor::timerCallback()
   particle_array_opt_ = particle_array;
 }
 
-void Predictor::weightedParticlesCallback(
-  const ParticleArray::ConstSharedPtr weighted_particles_ptr)
+void Predictor::onWeightedParticles(const ParticleArray::ConstSharedPtr weighted_particles_ptr)
 {
   RCLCPP_INFO_STREAM(this->get_logger(), "weightedParticleCallback is called");
 
