@@ -138,12 +138,6 @@ private:
     pcl::shared_ptr<pcl::PointCloud<PointSource>> sensor_points_output_ptr);
   void update_transforms();
 
-  bool calculate_initial_pose(
-    const rclcpp::Time & sensor_ros_time,
-    geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr & initial_pose_cov_msg_ptr,
-    geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr & initial_pose_old_msg_ptr,
-    geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr & initial_pose_new_msg_ptr);
-
   void publish_tf(
     const rclcpp::Time & sensor_ros_time, const geometry_msgs::msg::Pose & result_pose_msg);
   void publish_pose(
@@ -166,12 +160,6 @@ private:
     const std::string & target_frame, const std::string & source_frame,
     const geometry_msgs::msg::TransformStamped::SharedPtr & transform_stamped_ptr);
 
-  bool validate_time_stamp_difference(
-    const rclcpp::Time & target_time, const rclcpp::Time & reference_time,
-    const double time_tolerance_sec);
-  bool validate_position_difference(
-    const geometry_msgs::msg::Point & target_point,
-    const geometry_msgs::msg::Point & reference_point, const double distance_tolerance_m_);
   bool validate_num_iteration(const int iter_num, const int max_iter_num);
   bool validate_score(
     const double score, const double score_threshold, const std::string score_name);

@@ -559,46 +559,6 @@ void NDTScanMatcher::transform_sensor_measurement(
     *sensor_points_input_ptr, *sensor_points_output_ptr, base_to_sensor_matrix);
 }
 
-// bool NDTScanMatcher::calculate_initial_pose(
-//   const rclcpp::Time & sensor_ros_time,
-//   geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr & initial_pose_cov_msg_ptr,
-//   geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr & initial_pose_old_msg_ptr,
-//   geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr & initial_pose_new_msg_ptr)
-// {
-//   // check
-//   if (initial_pose_msg_ptr_array_.size() <= 1) {
-//     RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1, "No Pose!");
-//     return false;
-//   }
-//   // searchNNPose using timestamp
-//   PoseArrayInterpolator interpolator(sensor_ros_time, initial_pose_msg_ptr_array_);
-//   pop_old_pose(initial_pose_msg_ptr_array_, sensor_ros_time);
-
-//   initial_pose_cov_msg_ptr = interpolator.get_current_pose_ptr();
-//   initial_pose_old_msg_ptr = interpolator.get_current_pose_ptr();
-//   initial_pose_new_msg_ptr = interpolator.get__pose_ptr();
-
-//   // check the time stamp
-//   bool valid_old_timestamp = validate_time_stamp_difference(
-//     interpolator.get_old_pose().header.stamp, sensor_ros_time, initial_pose_timeout_sec_);
-//   bool valid_new_timestamp = validate_time_stamp_difference(
-//     interpolator.get_new_pose().header.stamp, sensor_ros_time, initial_pose_timeout_sec_);
-
-//   // check the position jumping (ex. immediately after the initial pose estimation)
-//   bool valid_new_to_old_distance = validate_position_difference(
-//     interpolator.get_old_pose().pose.pose.position, interpolator.get_new_pose().pose.pose.position,
-//     initial_pose_distance_tolerance_m_);
-
-//   // must all validations are true
-//   if (!(valid_old_timestamp && valid_new_timestamp && valid_new_to_old_distance)) {
-//     RCLCPP_WARN(get_logger(), "Validation error.");
-//     return false;
-//   }
-
-//   initial_pose_cov_msg_ptr = 
-//   return true;
-// }
-
 NdtResult NDTScanMatcher::align(const geometry_msgs::msg::Pose & initial_pose_msg)
 {
   const Eigen::Affine3d initial_pose_affine = from_ros_pose_to_eigen(initial_pose_msg);
@@ -643,7 +603,6 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_using_monte_
 
     Particle particle(
       initial_pose, ndt_result.pose, ndt_result.transform_probability, ndt_result.iteration_num);
-
     particle_array.push_back(particle);
     const auto marker_array = make_debug_markers(
       this->now(), map_frame_, tier4_autoware_utils::createMarkerScale(0.3, 0.1, 0.1), particle, i);
