@@ -355,7 +355,7 @@ void NDTScanMatcher::service_ndt_align(
   }
 
   // mutex Map
-  std::lock_guard<std::mutex> lock(ndt_map_mtx_);
+  std::lock_guard<std::mutex> lock(ndt_ptr_mtx_);
 
   key_value_stdmap_["state"] = "Aligning";
   res->pose_with_covariance = align_using_monte_carlo(ndt_ptr_, mapTF_initial_pose_msg);
@@ -438,20 +438,21 @@ void NDTScanMatcher::callback_map_points(
   new_ndt_ptr->align(*output_cloud, Eigen::Matrix4f::Identity());
 
   // swap
-  ndt_map_mtx_.lock();
+  ndt_ptr_mtx_.lock();
   ndt_ptr_ = new_ndt_ptr;
-  ndt_map_mtx_.unlock();
+  ndt_ptr_mtx_.unlock();
 }
 
 void NDTScanMatcher::callback_sensor_points(
   sensor_msgs::msg::PointCloud2::ConstSharedPtr sensor_points_sensorTF_msg_ptr)
 {
+  // mutex ndt_ptr_
+  std::lock_guard<std::mutex> lock(ndt_ptr_mtx_);
+
   const auto exe_start_time = std::chrono::system_clock::now();
   const rclcpp::Time sensor_ros_time = sensor_points_sensorTF_msg_ptr->header.stamp;
 
-  // mutex Map
-  std::lock_guard<std::mutex> lock(ndt_map_mtx_);
-
+  // preprocess input pointcloud
   pcl::shared_ptr<pcl::PointCloud<PointSource>> sensor_points_baselinkTF_ptr(
     new pcl::PointCloud<PointSource>);
   transform_sensor_measurement(sensor_points_sensorTF_msg_ptr, sensor_points_baselinkTF_ptr);
@@ -468,7 +469,7 @@ void NDTScanMatcher::callback_sensor_points(
   initial_pose_array_lock.unlock();
   if (!found_valid_initial_pose) return;
 
-  // If regularization is enabled and available, set pose to NDT for regularization
+  // if regularization is enabled and available, set pose to NDT for regularization
   if (regularization_enabled_ && (ndt_implement_type_ == NDTImplementType::OMP))
     add_regularization_pose(sensor_ros_time);
 
