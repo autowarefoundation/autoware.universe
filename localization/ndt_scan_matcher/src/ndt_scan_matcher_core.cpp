@@ -522,7 +522,8 @@ void NDTScanMatcher::callback_sensor_points(
   // publish
   initial_pose_with_covariance_pub_->publish(*initial_pose_cov_msg_ptr);
   exe_time_pub_->publish(make_float32_stamped(sensor_ros_time, exe_time));
-  transform_probability_pub_->publish(make_float32_stamped(sensor_ros_time, ndt_result.transform_probability));
+  transform_probability_pub_->publish(
+    make_float32_stamped(sensor_ros_time, ndt_result.transform_probability));
   nearest_voxel_transformation_likelihood_pub_->publish(
     make_float32_stamped(sensor_ros_time, ndt_result.nearest_voxel_transformation_likelihood));
   iteration_num_pub_->publish(make_int32_stamped(sensor_ros_time, ndt_result.iteration_num));
