@@ -65,7 +65,6 @@
 
 namespace pcl
 {
-
 struct cloud_point_index_idx_triplets
 {
   unsigned int idx0;
