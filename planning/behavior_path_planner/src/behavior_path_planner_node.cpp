@@ -105,7 +105,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   lane_change_param_ptr = std::make_shared<LaneChangeParameters>(getLaneChangeParam());
 
   m_set_param_res = this->add_on_set_parameters_callback(
-    std::bind(&BehaviorPathPlannerNode::paramCallback, this, std::placeholders::_1));
+    std::bind(&BehaviorPathPlannerNode::onSetParam, this, std::placeholders::_1));
   // behavior tree manager
   {
     mutex_bt_.lock();
@@ -745,7 +745,7 @@ void BehaviorPathPlannerNode::onRoute(const HADMapRoute::ConstSharedPtr msg)
   }
 }
 
-SetParametersResult BehaviorPathPlannerNode::paramCallback(
+SetParametersResult BehaviorPathPlannerNode::onSetParam(
   const std::vector<rclcpp::Parameter> & parameters)
 {
   rcl_interfaces::msg::SetParametersResult result;

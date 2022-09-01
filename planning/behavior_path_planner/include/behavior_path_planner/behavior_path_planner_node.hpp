@@ -129,7 +129,7 @@ private:
   void onForceApproval(const PathChangeModule::ConstSharedPtr msg);
   void onMap(const HADMapBin::ConstSharedPtr map_msg);
   void onRoute(const HADMapRoute::ConstSharedPtr route_msg);
-  SetParametersResult paramCallback(const std::vector<rclcpp::Parameter> & parameters);
+  SetParametersResult onSetParam(const std::vector<rclcpp::Parameter> & parameters);
 
   /**
    * @brief Modify the path points near the goal to smoothly connect the lanelet and the goal point.
