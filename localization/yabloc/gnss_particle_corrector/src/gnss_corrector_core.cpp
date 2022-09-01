@@ -22,8 +22,8 @@ GnssParticleCorrector::GnssParticleCorrector()
   auto cb_ublox = std::bind(&GnssParticleCorrector::onUblox, this, _1);
   auto cb_height = [this](const Float32 & height) { this->latest_height_ = height; };
   ublox_sub_ = create_subscription<NavPVT>("/input/navpvt", 10, cb_ublox);
-  pose_sub_ = create_subscription<PoseCovStamped>("/pose_with_covariance", 10, cb_pose);
-  height_sub_ = create_subscription<Float32>("/height", 10, cb_height);
+  pose_sub_ = create_subscription<PoseCovStamped>("/input/pose_with_covariance", 10, cb_pose);
+  height_sub_ = create_subscription<Float32>("/input/height", 10, cb_height);
 
   // Publisher
   marker_pub_ = create_publisher<MarkerArray>("/gnss/effect_marker", 10);
