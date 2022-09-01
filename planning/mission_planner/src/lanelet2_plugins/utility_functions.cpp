@@ -14,25 +14,13 @@
 
 #include "utility_functions.hpp"
 
-#include <rclcpp/rclcpp.hpp>
-
 #include <lanelet2_core/geometry/Lanelet.h>
 
-#include <string>
 #include <unordered_set>
-#include <utility>
-#include <vector>
 
 bool exists(const std::unordered_set<lanelet::Id> & set, const lanelet::Id & id)
 {
   return set.find(id) != set.end();
-}
-
-std::string to_string(const geometry_msgs::msg::Pose & pose)
-{
-  std::stringstream ss;
-  ss << "(" << pose.position.x << ", " << pose.position.y << "," << pose.position.z << ")";
-  return ss.str();
 }
 
 void set_color(std_msgs::msg::ColorRGBA * cl, double r, double g, double b, double a)
