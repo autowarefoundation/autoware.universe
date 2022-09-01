@@ -45,7 +45,7 @@ Predictor::Predictor()
   gnss_sub_ = create_subscription<PoseStamped>("pose", 1, gnss_cb);
   initialpose_sub_ = create_subscription<PoseCovStamped>("initialpose", 1, initial_cb);
   twist_sub_ = create_subscription<TwistStamped>("twist", 10, twist_cb);
-  twist_cov_sub_ = create_subscription<TwistStamped>("twist_cov", 10, twist_cov_cb);
+  twist_cov_sub_ = create_subscription<TwistCovStamped>("twist_cov", 10, twist_cov_cb);
   particles_sub_ = create_subscription<ParticleArray>("weighted_particles", 10, particle_cb);
   height_sub_ = create_subscription<std_msgs::msg::Float32>("height", 10, height_cb);
 
