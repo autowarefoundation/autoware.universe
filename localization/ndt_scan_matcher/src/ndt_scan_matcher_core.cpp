@@ -499,13 +499,15 @@ void NDTScanMatcher::callbackSensorPoints(
   These bugs are now resolved in original pcl implementation.
   https://github.com/PointCloudLibrary/pcl/blob/424c1c6a0ca97d94ca63e5daff4b183a4db8aae4/registration/include/pcl/registration/impl/ndt.hpp#L73-L180
   *****************************************************************************/
-  bool is_ok_iteration_num = validateNumIteration(ndt_result.iteration_num, ndt_result.iteration_num_max + 2);
+  bool is_ok_iteration_num =
+    validateNumIteration(ndt_result.iteration_num, ndt_result.iteration_num_max + 2);
   bool is_local_optimal_solution_oscillation = false;
   if (!is_ok_iteration_num) {
     is_local_optimal_solution_oscillation = isLocalOptimalSolutionOscillation(
       ndt_result.transformation_array, oscillation_threshold_, inversion_vector_threshold_);
   }
-  bool is_ok_converged_param = validateConvergedParam(ndt_result.transform_probability, ndt_result.nearest_voxel_transformation_likelihood);
+  bool is_ok_converged_param = validateConvergedParam(
+    ndt_result.transform_probability, ndt_result.nearest_voxel_transformation_likelihood);
   bool is_converged = is_ok_iteration_num && is_ok_converged_param;
   static size_t skipping_publish_num = 0;
   if (is_converged) {
@@ -520,12 +522,12 @@ void NDTScanMatcher::callbackSensorPoints(
   publishPose(sensor_ros_time, ndt_result.pose, is_converged);
   publishPointCloud(sensor_ros_time, ndt_result.pose, sensor_points_baselinkTF_ptr);
   publishMarker(sensor_ros_time, ndt_result.transformation_array);
-  publishScalars(sensor_ros_time, exe_time,
-    ndt_result.transform_probability,
-    ndt_result.nearest_voxel_transformation_likelihood,
-    ndt_result.iteration_num);
-  publishInitialToResultDistances(sensor_ros_time, ndt_result.pose, *initial_pose_cov_msg_ptr,
-    *initial_pose_old_msg_ptr, *initial_pose_new_msg_ptr);
+  publishScalars(
+    sensor_ros_time, exe_time, ndt_result.transform_probability,
+    ndt_result.nearest_voxel_transformation_likelihood, ndt_result.iteration_num);
+  publishInitialToResultDistances(
+    sensor_ros_time, ndt_result.pose, *initial_pose_cov_msg_ptr, *initial_pose_old_msg_ptr,
+    *initial_pose_new_msg_ptr);
 
   key_value_stdmap_["transform_probability"] = std::to_string(ndt_result.transform_probability);
   key_value_stdmap_["nearest_voxel_transformation_likelihood"] =
@@ -590,7 +592,7 @@ bool NDTScanMatcher::calculateInitialPose(
   // must all validations are true
   if (!(valid_old_timestamp && valid_new_timestamp && valid_new_to_old_distance)) {
     RCLCPP_WARN(get_logger(), "Validation error.");
-    return false; 
+    return false;
   }
 
   const geometry_msgs::msg::PoseStamped initial_pose_msg =
@@ -600,8 +602,7 @@ bool NDTScanMatcher::calculateInitialPose(
   return true;
 }
 
-NdtResult NDTScanMatcher::align(
-  const geometry_msgs::msg::Pose & initial_pose_msg)
+NdtResult NDTScanMatcher::align(const geometry_msgs::msg::Pose & initial_pose_msg)
 {
   const Eigen::Affine3d initial_pose_affine = fromRosPoseToEigen(initial_pose_msg);
   const Eigen::Matrix4f initial_pose_matrix = initial_pose_affine.matrix().cast<float>();
@@ -623,7 +624,6 @@ NdtResult NDTScanMatcher::align(
   ndt_result.iteration_num_max = ndt_ptr_->getMaximumIterations();
   return ndt_result;
 }
-
 
 geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::alignUsingMonteCarlo(
   const std::shared_ptr<NormalDistributionsTransformBase<PointSource, PointTarget>> & ndt_ptr,
@@ -693,10 +693,8 @@ void NDTScanMatcher::publishTF(
   tf2_broadcaster_.sendTransform(tier4_autoware_utils::pose2transform(pose_msg, child_frame_id));
 }
 
-
 void NDTScanMatcher::publishPose(
-  const rclcpp::Time & sensor_ros_time,
-  const geometry_msgs::msg::Pose & result_pose_msg,
+  const rclcpp::Time & sensor_ros_time, const geometry_msgs::msg::Pose & result_pose_msg,
   const bool is_converged)
 {
   geometry_msgs::msg::PoseStamped result_pose_stamped_msg;
@@ -716,12 +714,12 @@ void NDTScanMatcher::publishPose(
   }
 
   publishTF(ndt_base_frame_, result_pose_stamped_msg);
-  tf2_broadcaster_.sendTransform(tier4_autoware_utils::pose2transform(result_pose_stamped_msg, ndt_base_frame_));
+  tf2_broadcaster_.sendTransform(
+    tier4_autoware_utils::pose2transform(result_pose_stamped_msg, ndt_base_frame_));
 }
 
 void NDTScanMatcher::publishPointCloud(
-  const rclcpp::Time & sensor_ros_time,
-  const geometry_msgs::msg::Pose & result_pose,
+  const rclcpp::Time & sensor_ros_time, const geometry_msgs::msg::Pose & result_pose,
   const std::shared_ptr<const pcl::PointCloud<pcl::PointXYZ>> & sensor_points_baselinkTF_ptr)
 {
   const Eigen::Affine3d result_pose_affine = fromRosPoseToEigen(result_pose);
@@ -739,7 +737,8 @@ void NDTScanMatcher::publishPointCloud(
 
 void NDTScanMatcher::publishMarker(
   const rclcpp::Time & sensor_ros_time,
-  const std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>> & result_pose_matrix_array)
+  const std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>> &
+    result_pose_matrix_array)
 {
   visualization_msgs::msg::MarkerArray marker_array;
   visualization_msgs::msg::Marker marker;
@@ -772,10 +771,8 @@ void NDTScanMatcher::publishMarker(
 }
 
 void NDTScanMatcher::publishScalars(
-  const rclcpp::Time & sensor_ros_time,
-  const double & exe_time,
-  const double & transform_probability,
-  const double & nearest_voxel_transformation_likelihood,
+  const rclcpp::Time & sensor_ros_time, const double & exe_time,
+  const double & transform_probability, const double & nearest_voxel_transformation_likelihood,
   const double & iteration_num)
 {
   exe_time_pub_->publish(makeFloat32Stamped(sensor_ros_time, exe_time));
@@ -788,8 +785,7 @@ void NDTScanMatcher::publishScalars(
 }
 
 void NDTScanMatcher::publishInitialToResultDistances(
-  const rclcpp::Time & sensor_ros_time,
-  const geometry_msgs::msg::Pose & result_pose_msg,
+  const rclcpp::Time & sensor_ros_time, const geometry_msgs::msg::Pose & result_pose_msg,
   const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_cov_msg,
   const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_old_msg,
   const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_new_msg)
@@ -868,7 +864,6 @@ bool NDTScanMatcher::validatePositionDifference(
   return true;
 }
 
-
 bool NDTScanMatcher::validateNumIteration(const int iter_num, const int max_iter_num)
 {
   bool is_ok_iter_num = iter_num < max_iter_num;
@@ -883,14 +878,13 @@ bool NDTScanMatcher::validateNumIteration(const int iter_num, const int max_iter
 }
 
 bool NDTScanMatcher::validateScore(
-  const double score, const double score_threshold,
-  const std::string score_name)
+  const double score, const double score_threshold, const std::string score_name)
 {
   bool is_ok_score = score > score_threshold;
   if (!is_ok_score) {
     RCLCPP_WARN(
-      get_logger(), "%s is below the threshold. Score: %lf, Threshold: %lf",
-      score_name.c_str(), score, score_threshold);
+      get_logger(), "%s is below the threshold. Score: %lf, Threshold: %lf", score_name.c_str(),
+      score, score_threshold);
   }
   return is_ok_score;
 }
@@ -904,7 +898,8 @@ bool NDTScanMatcher::validateConvergedParam(
       transform_probability, converged_param_transform_probability_, "Transform Probability");
   } else if (converged_param_type_ == ConvergedParamType::NEAREST_VOXEL_TRANSFORMATION_LIKELIHOOD) {
     is_ok_converged_param = validateScore(
-      nearest_voxel_transformation_likelihood, converged_param_nearest_voxel_transformation_likelihood_,
+      nearest_voxel_transformation_likelihood,
+      converged_param_nearest_voxel_transformation_likelihood_,
       "Nearest Voxel Transformation Likelihood");
   } else {
     is_ok_converged_param = false;
@@ -942,7 +937,6 @@ std::optional<Eigen::Matrix4f> NDTScanMatcher::interpolateRegularizationPose(
   tf2::fromMsg(regularization_pose_msg.pose, regularization_pose_affine);
   return regularization_pose_affine.matrix().cast<float>();
 }
-
 
 void NDTScanMatcher::addRegularizationPose(const rclcpp::Time & sensor_ros_time)
 {
