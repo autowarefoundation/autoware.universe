@@ -6,7 +6,9 @@
 
 namespace modularized_particle_filter
 {
-ParticleInitializer::ParticleInitializer() : Node("particle_initializer")
+ParticleInitializer::ParticleInitializer()
+: Node("particle_initializer"),
+  cov_xx_yy_{declare_parameter("cov_xx_yy", std::vector<double>{4.0, 0.25}).data()}
 {
   using std::placeholders::_1;
   const rclcpp::QoS map_qos = rclcpp::QoS(10).transient_local().reliable();
@@ -176,7 +178,7 @@ void ParticleInitializer::publishRectifiedInitialpose(
   msg.pose.pose.orientation.z = std::sin(theta / 2);
 
   Eigen::Matrix2f cov;
-  cov << 4.00, 0, 0, 0.25;
+  cov << cov_xx_yy_(0), 0, 0, cov_xx_yy_(1);
   Eigen::Rotation2D r(theta);
   cov = r * cov * r.inverse();
 

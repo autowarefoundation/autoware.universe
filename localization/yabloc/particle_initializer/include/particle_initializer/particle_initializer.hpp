@@ -17,6 +17,7 @@ namespace modularized_particle_filter
 class ParticleInitializer : public rclcpp::Node
 {
 public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using Particle = modularized_particle_filter_msgs::msg::Particle;
   using ParticleArray = modularized_particle_filter_msgs::msg::ParticleArray;
   using PoseCovStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
@@ -26,6 +27,7 @@ public:
   ParticleInitializer();
 
 private:
+  const Eigen::Vector2d cov_xx_yy_;
   rclcpp::Subscription<PoseCovStamped>::SharedPtr sub_initialpose_;
   rclcpp::Subscription<HADMapBin>::SharedPtr sub_map_;
   rclcpp::Publisher<PoseCovStamped>::SharedPtr pub_initialpose_;

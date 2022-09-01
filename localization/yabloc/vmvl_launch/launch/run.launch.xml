@@ -12,7 +12,11 @@
     <arg name="min_segment_length" default="-1.0"/>
     <arg name="max_segment_distance" default="-1.0"/>
 
+    <!-- ========================================= -->
+    <!-- ============~~ INITIALIZER ============== -->
+    <!-- ========================================= -->
     <node name="particle_initializer_node" pkg="particle_initializer" exec="particle_initializer_node" output="screen" args="--ros-args --log-level info">
+        <param name="cov_xx_yy" value="[16.0,0.25]" />
     </node>
 
     <!-- ========================================= -->
