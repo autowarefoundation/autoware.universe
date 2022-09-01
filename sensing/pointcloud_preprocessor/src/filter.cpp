@@ -162,7 +162,7 @@ void pointcloud_preprocessor::Filter::unsubscribe()
 void pointcloud_preprocessor::Filter::computePublish(
   const PointCloud2ConstPtr & input, const IndicesPtr & indices)
 {
-  auto output = std::make_unique<PointCloud2>();
+  auto output = pub_output_->borrow_loaned_message();
 
   // Call the virtual method in the child
   filter(input, indices, *output);
@@ -180,7 +180,7 @@ void pointcloud_preprocessor::Filter::computePublish(
         output->header.frame_id.c_str(), tf_output_frame_.c_str());
       return;
     }
-    output = std::move(cloud_transformed);
+    output.get().data = cloud_transformed;
   }
   if (tf_output_frame_.empty() && output->header.frame_id != tf_input_orig_frame_) {
     // no tf_output_frame given, transform the dataset to its original frame
@@ -196,7 +196,7 @@ void pointcloud_preprocessor::Filter::computePublish(
         output->header.frame_id.c_str(), tf_input_orig_frame_.c_str());
       return;
     }
-    output = std::move(cloud_transformed);
+    output.get().data = cloud_transformed;
   }
 
   // Copy timestamp to keep it
