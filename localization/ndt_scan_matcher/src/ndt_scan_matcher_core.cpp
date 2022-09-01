@@ -17,8 +17,8 @@
 #include "ndt_scan_matcher/debug.hpp"
 #include "ndt_scan_matcher/matrix_type.hpp"
 #include "ndt_scan_matcher/particle.hpp"
-#include "ndt_scan_matcher/util_func.hpp"
 #include "ndt_scan_matcher/pose_array_interpolator.hpp"
+#include "ndt_scan_matcher/util_func.hpp"
 
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
@@ -63,7 +63,6 @@ geometry_msgs::msg::TransformStamped identity_transform_stamped(
   transform.transform.translation = tier4_autoware_utils::createTranslation(0.0, 0.0, 0.0);
   return transform;
 }
-
 
 bool validate_local_optimal_solution_oscillation(
   const std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>> &
@@ -462,8 +461,9 @@ void NDTScanMatcher::callback_sensor_points(
 
   // calculate initial pose
   std::unique_lock<std::mutex> initial_pose_array_lock(initial_pose_array_mtx_);
-  PoseArrayInterpolator interpolator(this, sensor_ros_time, initial_pose_msg_ptr_array_,
-    initial_pose_timeout_sec_, initial_pose_distance_tolerance_m_);
+  PoseArrayInterpolator interpolator(
+    this, sensor_ros_time, initial_pose_msg_ptr_array_, initial_pose_timeout_sec_,
+    initial_pose_distance_tolerance_m_);
   if (!interpolator.is_success()) return;
   pop_old_pose(initial_pose_msg_ptr_array_, sensor_ros_time);
   initial_pose_array_lock.unlock();
@@ -813,8 +813,7 @@ std::optional<Eigen::Matrix4f> NDTScanMatcher::interpolate_regularization_pose(
   }
 
   // synchronization
-  PoseArrayInterpolator interpolator(this, sensor_ros_time,
-    regularization_pose_msg_ptr_array_);
+  PoseArrayInterpolator interpolator(this, sensor_ros_time, regularization_pose_msg_ptr_array_);
 
   pop_old_pose(regularization_pose_msg_ptr_array_, sensor_ros_time);
 
