@@ -526,6 +526,7 @@ void NDTScanMatcher::callback_sensor_points(
   nearest_voxel_transformation_likelihood_pub_->publish(
     make_float32_stamped(sensor_ros_time, ndt_result.nearest_voxel_transformation_likelihood));
   iteration_num_pub_->publish(make_int32_stamped(sensor_ros_time, ndt_result.iteration_num));
+  publish_tf(sensor_ros_time, ndt_result.pose);
   publish_pose(sensor_ros_time, ndt_result.pose, is_converged);
   publish_point_cloud(sensor_ros_time, ndt_result.pose, sensor_points_baselinkTF_ptr);
   publish_marker(sensor_ros_time, ndt_result.transformation_array);
@@ -559,8 +560,6 @@ void NDTScanMatcher::transform_sensor_measurement(
   get_transform(base_frame_, sensor_frame, TF_base_to_sensor_ptr);
   const Eigen::Affine3d base_to_sensor_affine = tf2::transformToEigen(*TF_base_to_sensor_ptr);
   const Eigen::Matrix4f base_to_sensor_matrix = base_to_sensor_affine.matrix().cast<float>();
-  // pcl::shared_ptr<pcl::PointCloud<PointSource>> sensor_points_baselinkTF_ptr(
-  //   new pcl::PointCloud<PointSource>);
   pcl::transformPointCloud(
     *sensor_points_sensorTF_ptr, *sensor_points_baselinkTF_ptr, base_to_sensor_matrix);
 }
@@ -674,9 +673,13 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_using_monte_
 }
 
 void NDTScanMatcher::publish_tf(
-  const std::string & child_frame_id, const geometry_msgs::msg::PoseStamped & pose_msg)
+  const rclcpp::Time & sensor_ros_time, const geometry_msgs::msg::Pose & result_pose_msg)
 {
-  tf2_broadcaster_.sendTransform(tier4_autoware_utils::pose2transform(pose_msg, child_frame_id));
+  geometry_msgs::msg::PoseStamped result_pose_stamped_msg;
+  result_pose_stamped_msg.header.stamp = sensor_ros_time;
+  result_pose_stamped_msg.header.frame_id = map_frame_;
+  result_pose_stamped_msg.pose = result_pose_msg;
+  tf2_broadcaster_.sendTransform(tier4_autoware_utils::pose2transform(result_pose_stamped_msg, ndt_base_frame_));
 }
 
 void NDTScanMatcher::publish_pose(
@@ -699,7 +702,6 @@ void NDTScanMatcher::publish_pose(
     ndt_pose_with_covariance_pub_->publish(result_pose_with_cov_msg);
   }
 
-  publish_tf(ndt_base_frame_, result_pose_stamped_msg);
   tf2_broadcaster_.sendTransform(
     tier4_autoware_utils::pose2transform(result_pose_stamped_msg, ndt_base_frame_));
 }

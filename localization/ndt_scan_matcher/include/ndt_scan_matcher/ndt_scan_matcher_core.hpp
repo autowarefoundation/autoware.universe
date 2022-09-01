@@ -144,7 +144,7 @@ private:
     geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr & initial_pose_new_msg_ptr);
 
   void publish_tf(
-    const std::string & child_frame_id, const geometry_msgs::msg::PoseStamped & pose_msg);
+    const rclcpp::Time & sensor_ros_time, const geometry_msgs::msg::Pose & result_pose_msg);
   void publish_pose(
     const rclcpp::Time & sensor_ros_time, const geometry_msgs::msg::Pose & result_pose_msg,
     const bool is_converged);
