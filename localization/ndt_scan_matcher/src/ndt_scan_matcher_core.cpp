@@ -643,35 +643,17 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::alignUsingMonteCar
 
   for (unsigned int i = 0; i < initial_poses.size(); i++) {
     const auto & initial_pose = initial_poses[i];
+    const NdtResult ndt_result = align(initial_pose);
 
-    const Eigen::Affine3d initial_pose_affine = fromRosPoseToEigen(initial_pose);
-    const Eigen::Matrix4f initial_pose_matrix = initial_pose_affine.matrix().cast<float>();
+    Particle particle(initial_pose, ndt_result.pose,
+      ndt_result.transform_probability, ndt_result.iteration_num);
 
-    ndt_ptr->align(*output_cloud, initial_pose_matrix);
-
-    const Eigen::Matrix4f result_pose_matrix = ndt_ptr->getFinalTransformation();
-    Eigen::Affine3d result_pose_affine;
-    result_pose_affine.matrix() = result_pose_matrix.cast<double>();
-    const geometry_msgs::msg::Pose result_pose = tf2::toMsg(result_pose_affine);
-
-    const auto transform_probability = ndt_ptr->getTransformationProbability();
-    const auto num_iteration = ndt_ptr->getFinalNumIteration();
-
-    Particle particle(initial_pose, result_pose, transform_probability, num_iteration);
     particle_array.push_back(particle);
     const auto marker_array = makeDebugMarkers(
       this->now(), map_frame_, tier4_autoware_utils::createMarkerScale(0.3, 0.1, 0.1), particle, i);
     ndt_monte_carlo_initial_pose_marker_pub_->publish(marker_array);
 
-    auto sensor_points_mapTF_ptr = std::make_shared<pcl::PointCloud<PointSource>>();
-    const auto sensor_points_baselinkTF_ptr = ndt_ptr->getInputSource();
-    pcl::transformPointCloud(
-      *sensor_points_baselinkTF_ptr, *sensor_points_mapTF_ptr, result_pose_matrix);
-    sensor_msgs::msg::PointCloud2 sensor_points_mapTF_msg;
-    pcl::toROSMsg(*sensor_points_mapTF_ptr, sensor_points_mapTF_msg);
-    sensor_points_mapTF_msg.header.stamp = initial_pose_with_cov.header.stamp;
-    sensor_points_mapTF_msg.header.frame_id = map_frame_;
-    sensor_aligned_pose_pub_->publish(sensor_points_mapTF_msg);
+    publishPointCloud(initial_pose_with_cov.header.stamp, ndt_result.pose, ndt_ptr->getInputSource());
   }
 
   auto best_particle_ptr = std::max_element(
