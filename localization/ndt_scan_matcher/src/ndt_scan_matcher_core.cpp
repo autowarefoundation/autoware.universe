@@ -645,15 +645,16 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::alignUsingMonteCar
     const auto & initial_pose = initial_poses[i];
     const NdtResult ndt_result = align(initial_pose);
 
-    Particle particle(initial_pose, ndt_result.pose,
-      ndt_result.transform_probability, ndt_result.iteration_num);
+    Particle particle(
+      initial_pose, ndt_result.pose, ndt_result.transform_probability, ndt_result.iteration_num);
 
     particle_array.push_back(particle);
     const auto marker_array = makeDebugMarkers(
       this->now(), map_frame_, tier4_autoware_utils::createMarkerScale(0.3, 0.1, 0.1), particle, i);
     ndt_monte_carlo_initial_pose_marker_pub_->publish(marker_array);
 
-    publishPointCloud(initial_pose_with_cov.header.stamp, ndt_result.pose, ndt_ptr->getInputSource());
+    publishPointCloud(
+      initial_pose_with_cov.header.stamp, ndt_result.pose, ndt_ptr->getInputSource());
   }
 
   auto best_particle_ptr = std::max_element(
