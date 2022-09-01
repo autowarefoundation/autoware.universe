@@ -462,8 +462,8 @@ void NDTScanMatcher::callback_sensor_points(
 
   // calculate initial pose
   std::unique_lock<std::mutex> initial_pose_array_lock(initial_pose_array_mtx_);
-  PoseArrayInterpolator interpolator(this, sensor_ros_time,
-    initial_pose_timeout_sec_, initial_pose_distance_tolerance_m_, initial_pose_msg_ptr_array_);
+  PoseArrayInterpolator interpolator(this, sensor_ros_time, initial_pose_msg_ptr_array_,
+    initial_pose_timeout_sec_, initial_pose_distance_tolerance_m_);
   if (!interpolator.is_success()) return;
   pop_old_pose(initial_pose_msg_ptr_array_, sensor_ros_time);
   initial_pose_array_lock.unlock();
@@ -854,24 +854,18 @@ std::optional<Eigen::Matrix4f> NDTScanMatcher::interpolate_regularization_pose(
   }
 
   // synchronization
-  auto regularization_old_msg_ptr =
-    std::make_shared<geometry_msgs::msg::PoseWithCovarianceStamped>();
-  auto regularization_new_msg_ptr =
-    std::make_shared<geometry_msgs::msg::PoseWithCovarianceStamped>();
-  get_nearest_timestamp_pose(
-    regularization_pose_msg_ptr_array_, sensor_ros_time, regularization_old_msg_ptr,
-    regularization_new_msg_ptr);
+  PoseArrayInterpolator interpolator(this, sensor_ros_time,
+    regularization_pose_msg_ptr_array_);
+
   pop_old_pose(regularization_pose_msg_ptr_array_, sensor_ros_time);
 
-  const geometry_msgs::msg::PoseStamped regularization_pose_msg =
-    interpolate_pose(*regularization_old_msg_ptr, *regularization_new_msg_ptr, sensor_ros_time);
   // if the interpolate_pose fails, 0.0 is stored in the stamp
-  if (rclcpp::Time(regularization_pose_msg.header.stamp).seconds() == 0.0) {
+  if (rclcpp::Time(interpolator.get_current_pose().header.stamp).seconds() == 0.0) {
     return std::nullopt;
   }
 
   Eigen::Affine3d regularization_pose_affine;
-  tf2::fromMsg(regularization_pose_msg.pose, regularization_pose_affine);
+  tf2::fromMsg(interpolator.get_current_pose().pose.pose, regularization_pose_affine);
   return regularization_pose_affine.matrix().cast<float>();
 }
 
