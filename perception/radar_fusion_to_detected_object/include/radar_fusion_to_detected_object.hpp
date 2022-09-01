@@ -64,6 +64,7 @@ public:
     // Parameters for fixed object information
     bool convert_doppler_to_twist{};
     float threshold_probability{};
+    bool compensate_probability{};
   };
 
   struct RadarInput
