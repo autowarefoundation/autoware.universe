@@ -534,6 +534,7 @@ void PullOutModule::setDebugData() const
     tier4_autoware_utils::appendMarkerArray(added, &debug_marker_);
   };
 
+  debug_marker_.markers.clear();
   add(createPoseMarkerArray(status_.pull_out_start_pose, "pull_out_start_pose", 0, 0.9, 0.3, 0.3));
   add(createPathMarkerArray(getFullPath(), "full_path", 0, 0.0, 0.5, 0.9));
 }
