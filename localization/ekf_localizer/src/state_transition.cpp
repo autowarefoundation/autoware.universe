@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <cmath>
-
 #include "ekf_localizer/matrix_types.hpp"
 #include "ekf_localizer/state_index.hpp"
+
+#include <cmath>
 
 double NormalizeYaw(const double & yaw)
 {
@@ -36,7 +36,7 @@ Vector6d PredictNextState(const Vector6d & X_curr, const double dt)
   Vector6d X_next;
   X_next(IDX::X) = x + vx * std::cos(yaw + yaw_bias) * dt;  // dx = v * cos(yaw)
   X_next(IDX::Y) = y + vx * std::sin(yaw + yaw_bias) * dt;  // dy = v * sin(yaw)
-  X_next(IDX::YAW) = NormalizeYaw(yaw + wz*dt);  // dyaw = omega + omega_bias
+  X_next(IDX::YAW) = NormalizeYaw(yaw + wz * dt);           // dyaw = omega + omega_bias
   X_next(IDX::YAWB) = yaw_bias;
   X_next(IDX::VX) = vx;
   X_next(IDX::WZ) = wz;
@@ -62,9 +62,7 @@ Matrix6d CreateStateTransitionMatrix(const Vector6d & X_curr, const double dt)
 }
 
 Matrix6d ProcessNoiseCovariance(
-  const double proc_cov_yaw_d,
-  const double proc_cov_vx_d,
-  const double proc_cov_wz_d)
+  const double proc_cov_yaw_d, const double proc_cov_vx_d, const double proc_cov_wz_d)
 {
   Matrix6d Q = Matrix6d::Zero();
   Q(IDX::X, IDX::X) = 0.0;

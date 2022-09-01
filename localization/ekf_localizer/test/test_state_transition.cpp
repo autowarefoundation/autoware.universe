@@ -13,13 +13,11 @@
 // limitations under the License.
 
 #define _USE_MATH_DEFINES
-#include <math.h>
-
-#include <gtest/gtest.h>
-
 #include "ekf_localizer/state_index.hpp"
 #include "ekf_localizer/state_transition.hpp"
 
+#include <gtest/gtest.h>
+#include <math.h>
 
 TEST(StateTransition, NormalizeYaw)
 {

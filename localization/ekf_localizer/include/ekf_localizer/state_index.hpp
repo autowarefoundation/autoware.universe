@@ -15,8 +15,7 @@
 #ifndef EKF_LOCALIZER__STATE_INDEX_HPP_
 #define EKF_LOCALIZER__STATE_INDEX_HPP_
 
-enum IDX
-{
+enum IDX {
   X = 0,
   Y = 1,
   YAW = 2,

@@ -13,9 +13,10 @@
 // limitations under the License.
 
 #include "ekf_localizer/ekf_localizer.hpp"
-#include "ekf_localizer/state_transition.hpp"
-#include "ekf_localizer/state_index.hpp"
+
 #include "ekf_localizer/matrix_types.hpp"
+#include "ekf_localizer/state_index.hpp"
+#include "ekf_localizer/state_transition.hpp"
 
 #include <rclcpp/logging.hpp>
 #include <tier4_autoware_utils/math/unit_conversion.hpp>
