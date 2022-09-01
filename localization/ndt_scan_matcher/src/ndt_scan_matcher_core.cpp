@@ -521,12 +521,14 @@ void NDTScanMatcher::callback_sensor_points(
 
   // publish
   initial_pose_with_covariance_pub_->publish(*initial_pose_cov_msg_ptr);
+  exe_time_pub_->publish(make_float32_stamped(sensor_ros_time, exe_time));
+  transform_probability_pub_->publish(make_float32_stamped(sensor_ros_time, ndt_result.transform_probability));
+  nearest_voxel_transformation_likelihood_pub_->publish(
+    make_float32_stamped(sensor_ros_time, ndt_result.nearest_voxel_transformation_likelihood));
+  iteration_num_pub_->publish(make_int32_stamped(sensor_ros_time, ndt_result.iteration_num));
   publish_pose(sensor_ros_time, ndt_result.pose, is_converged);
   publish_point_cloud(sensor_ros_time, ndt_result.pose, sensor_points_baselinkTF_ptr);
   publish_marker(sensor_ros_time, ndt_result.transformation_array);
-  publish_scalars(
-    sensor_ros_time, exe_time, ndt_result.transform_probability,
-    ndt_result.nearest_voxel_transformation_likelihood, ndt_result.iteration_num);
   publish_initial_to_result_distances(
     sensor_ros_time, ndt_result.pose, *initial_pose_cov_msg_ptr, *initial_pose_old_msg_ptr,
     *initial_pose_new_msg_ptr);
@@ -752,20 +754,6 @@ void NDTScanMatcher::publish_marker(
     marker_array.markers.push_back(marker);
   }
   ndt_marker_pub_->publish(marker_array);
-}
-
-void NDTScanMatcher::publish_scalars(
-  const rclcpp::Time & sensor_ros_time, const double & exe_time,
-  const double & transform_probability, const double & nearest_voxel_transformation_likelihood,
-  const double & iteration_num)
-{
-  exe_time_pub_->publish(make_float32_stamped(sensor_ros_time, exe_time));
-
-  transform_probability_pub_->publish(make_float32_stamped(sensor_ros_time, transform_probability));
-  nearest_voxel_transformation_likelihood_pub_->publish(
-    make_float32_stamped(sensor_ros_time, nearest_voxel_transformation_likelihood));
-
-  iteration_num_pub_->publish(make_int32_stamped(sensor_ros_time, iteration_num));
 }
 
 void NDTScanMatcher::publish_initial_to_result_distances(

@@ -155,10 +155,6 @@ private:
     const rclcpp::Time & sensor_ros_time,
     const std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>> &
       result_pose_matrix_array);
-  void publish_scalars(
-    const rclcpp::Time & sensor_ros_msg, const double & exe_time,
-    const double & transform_probability, const double & nearest_voxel_transformation_likelihood,
-    const double & iteration_num);
   void publish_initial_to_result_distances(
     const rclcpp::Time & sensor_ros_msg, const geometry_msgs::msg::Pose & result_pose_msg,
     const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_cov_msg,
