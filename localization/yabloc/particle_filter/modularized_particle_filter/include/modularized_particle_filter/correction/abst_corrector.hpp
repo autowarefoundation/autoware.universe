@@ -21,6 +21,10 @@ public:
   AbstCorrector(const std::string & node_name);
 
 protected:
+  const float acceptable_max_delay_;  // [sec]
+  const bool visualize_;
+  const rclcpp::Logger logger_;
+
   rclcpp::Subscription<ParticleArray>::SharedPtr particle_sub_;
   rclcpp::Publisher<ParticleArray>::SharedPtr particle_pub_;
   std::list<ParticleArray> particle_array_buffer_;
@@ -29,8 +33,6 @@ protected:
   std::shared_ptr<ParticleVisualizer> visualizer_;
 
   void setWeightedParticleArray(const ParticleArray & particle_array);
-
-  const bool visualize_;
 
 private:
   void particleArrayCallback(const ParticleArray & particle_array);
