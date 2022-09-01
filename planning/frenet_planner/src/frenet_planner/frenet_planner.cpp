@@ -18,8 +18,6 @@
 
 #include <frenet_planner/polynomials.hpp>
 #include <frenet_planner/structures.hpp>
-#include <sampler_common/constraints/hard_constraint.hpp>
-#include <sampler_common/constraints/soft_constraint.hpp>
 #include <sampler_common/structures.hpp>
 #include <sampler_common/transform/spline_transform.hpp>
 
@@ -31,19 +29,11 @@ namespace frenet_planner
 {
 std::vector<Trajectory> generateTrajectories(
   const sampler_common::transform::Spline2D & reference_spline, const FrenetState & initial_state,
-  const SamplingParameters & sampling_parameters, const sampler_common::Constraints & constraints,
-  Debug & debug)
+  const SamplingParameters & sampling_parameters)
 {
   auto candidates = generateCandidates(initial_state, sampling_parameters);
   for (auto & candidate : candidates) {
     calculateCartesian(reference_spline, candidate);
-    // Check hard constraints (Cartesian)
-    const auto nb_of_violation =
-      sampler_common::constraints::checkHardConstraints(candidate, constraints);
-    debug.nb_constraint_violations.collision += nb_of_violation.collision;
-    debug.nb_constraint_violations.curvature += nb_of_violation.curvature;
-    // Calculate objective function
-    sampler_common::constraints::calculateCost(candidate, constraints, reference_spline);
   }
   return candidates;
 }
@@ -78,7 +68,6 @@ std::vector<Trajectory> generateCandidates(
   const FrenetState & initial_state, const SamplingParameters & sp)
 {
   std::vector<Trajectory> candidates;
-  Trajectory trajectory;
   FrenetState target_state;
   for (const auto target_s : sp.target_longitudinal_positions) {
     target_state.position.s = target_s;
@@ -119,7 +108,7 @@ Trajectory generateCandidate(
     initial_state.position.d, initial_state.lateral_velocity, initial_state.lateral_acceleration,
     target_state.position.d, target_state.lateral_velocity, target_state.lateral_acceleration,
     duration);
-  for (double t = 0.0; t <= duration; t += time_resolution) {
+  for (double t = time_resolution; t <= duration; t += time_resolution) {
     trajectory.times.push_back(t);
     trajectory.frenet_points.emplace_back(
       trajectory.longitudinal_polynomial->position(t), trajectory.lateral_polynomial->position(t));
@@ -136,7 +125,7 @@ Path generateCandidate(
     initial_state.position.d, initial_state.lateral_velocity, initial_state.lateral_acceleration,
     target_state.position.d, target_state.lateral_velocity, target_state.lateral_acceleration,
     delta_s);
-  for (double s = 0; s <= delta_s; s += s_resolution) {
+  for (double s = s_resolution; s <= delta_s; s += s_resolution) {
     path.frenet_points.emplace_back(
       initial_state.position.s + s, path.lateral_polynomial->position(s));
   }
@@ -195,12 +184,16 @@ void calculateCartesian(
     for (size_t i = 1; i < trajectory.yaws.size(); ++i) {
       const auto dyaw = trajectory.yaws[i] - trajectory.yaws[i - 1];
       trajectory.curvatures.push_back(dyaw / trajectory.intervals[i - 1]);
+    }
+    for (size_t i = 0; i < trajectory.times.size(); ++i) {
       trajectory.longitudinal_velocities.push_back(
-        trajectory.longitudinal_polynomial->velocity(trajectory.times[i - 1]));
+        trajectory.longitudinal_polynomial->velocity(trajectory.times[i]));
       trajectory.longitudinal_accelerations.push_back(
-        trajectory.longitudinal_polynomial->acceleration(trajectory.times[i - 1]));
+        trajectory.longitudinal_polynomial->acceleration(trajectory.times[i]));
       trajectory.lateral_velocities.push_back(
-        trajectory.lateral_polynomial->velocity(trajectory.times[i - 1]));
+        trajectory.lateral_polynomial->velocity(trajectory.times[i]));
+      trajectory.lateral_accelerations.push_back(
+        trajectory.lateral_polynomial->acceleration(trajectory.times[i]));
     }
   }
 }

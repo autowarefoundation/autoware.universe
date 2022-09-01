@@ -18,7 +18,7 @@
 #include "lanelet2_core/LaneletMap.h"
 #include "sampler_common/structures.hpp"
 #include "sampler_common/transform/spline_transform.hpp"
-#include "sampler_node/path_generation.hpp"
+#include "sampler_node/calculate_sampling_parameters.hpp"
 #include "sampler_node/utils/occupancy_grid_to_polygons.hpp"
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
@@ -84,12 +84,54 @@ frenet_planner::SamplingParameters prepareSamplingParameters(
   return sampling_parameters;
 }
 
+// TODO(Maxime CLEMENT):
+// - Implement some strategies so generate the target s and target velocity
+//  - determine if we should decel/accel/keep.
+//  - use some min_decel profile from the min_velocity points to determine the "latest time to
+//  slowdown" points.
+//    1 - find all pairs of min (t, v)
+//    2 - for each pair calculate the fn: t' -> v' where (v'-v)/(t-t') = max_decel * t
+//    3 - keep the (t, v)
+// - Implement a fn: target_s, current_vel, current_accel --> target_duration
+frenet_planner::SamplingParameters prepareSamplingParameters(
+  const sampler_common::Configuration & initial_configuration,
+  const autoware_auto_planning_msgs::msg::Path & path, const double base_length,
+  const sampler_common::transform::Spline2D & path_spline, const Parameters & params)
+{
+  frenet_planner::SamplingParameters sampling_parameters;
+  sampling_parameters.time_resolution = params.sampling.resolution;
+  sampling_parameters.target_lateral_positions = params.sampling.frenet.target_lateral_positions;
+  sampling_parameters.target_lateral_velocities = params.sampling.frenet.target_lateral_velocities;
+  sampling_parameters.target_lateral_accelerations =
+    params.sampling.frenet.target_lateral_accelerations;
+  calculateLongitudinalTargets(
+    sampling_parameters, initial_configuration, path, path_spline, params);
+  const auto max_s =
+    path_spline.frenet({path.points.back().pose.position.x, path.points.back().pose.position.y}).s;
+  for (const auto target_length : params.sampling.target_lengths) {
+    const auto target_s =
+      path_spline.frenet(initial_configuration.pose).s + std::max(0.0, target_length - base_length);
+    // Prevent a target past the end of the reference path
+    if (target_s < max_s)
+      sampling_parameters.target_longitudinal_positions.push_back(target_s);
+    else
+      break;
+  }
+  // Stopping case
+  if (sampling_parameters.target_longitudinal_positions.empty()) {
+    sampling_parameters.target_longitudinal_positions = {max_s};
+    sampling_parameters.target_longitudinal_velocities = {0.0};
+  }
+  return sampling_parameters;
+}
+
 sampler_common::transform::Spline2D preparePathSpline(
   const autoware_auto_planning_msgs::msg::Path & path_msg, const bool smooth_path)
 {
   std::vector<double> x;
   std::vector<double> y;
   if (smooth_path) {
+    // TODO(Maxime CLEMENT): this version using Eigen::Spline often crashes
     constexpr auto spline_dim = 3;
     Eigen::MatrixXd control_points(path_msg.points.size(), 2);
     for (auto i = 0lu; i < path_msg.points.size(); ++i) {

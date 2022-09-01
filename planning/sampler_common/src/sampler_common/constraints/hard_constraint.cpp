@@ -103,4 +103,13 @@ NumberOfViolations checkHardConstraints(Path & path, const Constraints & constra
   return number_of_violations;
 }
 
+NumberOfViolations checkHardConstraints(Trajectory & traj, const Constraints & constraints)
+{
+  Path & path = traj;
+  auto number_of_violations = checkHardConstraints(path, constraints);
+  for (const auto & vel : traj.longitudinal_velocities)
+    if (vel < 0) path.valid = false;
+  return number_of_violations;
+}
+
 }  // namespace sampler_common::constraints

@@ -28,8 +28,10 @@ struct NumberOfViolations
   uint32_t curvature = 0;
   uint32_t outside = 0;
 };
-/// @brief Check if the path satisfy the hard constraints
+/// @brief Check if the path satisfies the hard constraints
 NumberOfViolations checkHardConstraints(Path & path, const Constraints & constraints);
+/// @brief Check if the trajectory satisfies the hard constraints
+NumberOfViolations checkHardConstraints(Trajectory & traj, const Constraints & constraints);
 }  // namespace sampler_common::constraints
 
 #endif  // SAMPLER_COMMON__CONSTRAINTS__HARD_CONSTRAINT_HPP_

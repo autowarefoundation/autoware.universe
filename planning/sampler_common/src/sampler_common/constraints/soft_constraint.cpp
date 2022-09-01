@@ -40,10 +40,10 @@ void calculateLengthCost(Path & path, const Constraints & constraints)
 void calculateCost(
   Path & path, const Constraints & constraints, const transform::Spline2D & reference)
 {
+  if (path.points.empty()) return;
   path.cost = 0.0f;
   calculateCurvatureCost(path, constraints);
   calculateLengthCost(path, constraints);
-  (void)reference;
   // calculateLateralDeviationCost(path, constraints, reference);
   double lateral_deviation_sum = 0.0;
   const auto fp = reference.frenet(path.points.back());

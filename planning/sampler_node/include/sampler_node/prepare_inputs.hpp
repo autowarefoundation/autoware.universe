@@ -17,7 +17,7 @@
 
 #include "frenet_planner/structures.hpp"
 #include "sampler_common/transform/spline_transform.hpp"
-#include "sampler_node/path_generation.hpp"
+#include "sampler_node/parameters.hpp"
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path.hpp>
@@ -54,6 +54,10 @@ frenet_planner::SamplingParameters prepareSamplingParameters(
   const sampler_common::State & initial_state, const autoware_auto_planning_msgs::msg::Path & path,
   const double base_length, const sampler_common::transform::Spline2D & path_spline,
   const Parameters & params);
+frenet_planner::SamplingParameters prepareSamplingParameters(
+  const sampler_common::Configuration & initial_configuration,
+  const autoware_auto_planning_msgs::msg::Path & path, const double base_length,
+  const sampler_common::transform::Spline2D & path_spline, const Parameters & params);
 /// @brief prepare the 2D spline representation of the given Path message
 sampler_common::transform::Spline2D preparePathSpline(
   const autoware_auto_planning_msgs::msg::Path & path_msg, const bool smooth_path);

@@ -162,7 +162,6 @@ std::vector<frenet_planner::Path> generateFrenetPaths(
   // From appendix I of Optimal Trajectory Generation for Dynamic Street Scenarios in a Frenet Frame
   const auto frenet_yaw = initial_state.heading - path_spline.yaw(s);
   const auto path_curv = path_spline.curvature(s);
-  // TODO(Maxime CLEMENT): there should be an analytical way to get the derivative of curvature
   const auto delta_s = 0.001;
   initial_frenet_state.lateral_velocity = (1 - path_curv * d) * std::tan(frenet_yaw);
   const auto path_curv_deriv = (path_spline.curvature(s + delta_s) - path_curv) / delta_s;

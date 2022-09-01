@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "sampler_node/path_sampler_node.hpp"
+#include "sampler_node/trajectory_sampler_node.hpp"
 
 #include "Eigen/src/Core/Matrix.h"
 #include "frenet_planner/structures.hpp"
@@ -25,6 +25,7 @@
 #include "sampler_node/debug.hpp"
 #include "sampler_node/plot/debug_window.hpp"
 #include "sampler_node/prepare_inputs.hpp"
+#include "sampler_node/trajectory_generation.hpp"
 #include "sampler_node/utils/occupancy_grid_to_polygons.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
@@ -52,8 +53,8 @@
 
 namespace sampler_node
 {
-PathSamplerNode::PathSamplerNode(const rclcpp::NodeOptions & node_options)
-: Node("path_sampler_node", node_options),
+TrajectorySamplerNode::TrajectorySamplerNode(const rclcpp::NodeOptions & node_options)
+: Node("trajectory_sampler_node", node_options),
   qapplication_(argc_, argv_.data()),
   tf_buffer_(this->get_clock()),
   tf_listener_(tf_buffer_),
@@ -65,22 +66,31 @@ PathSamplerNode::PathSamplerNode(const rclcpp::NodeOptions & node_options)
 
   path_sub_ = create_subscription<autoware_auto_planning_msgs::msg::Path>(
     "~/input/path", rclcpp::QoS{1},
-    std::bind(&PathSamplerNode::pathCallback, this, std::placeholders::_1));
+    std::bind(&TrajectorySamplerNode::pathCallback, this, std::placeholders::_1));
   // steer_sub_ = create_subscription<autoware_auto_vehicle_msgs::msg::SteeringReport>(
-  //  "~/input/steer", rclcpp::QoS{1},
-  //  std::bind(&PathSamplerNode::steerCallback, this, std::placeholders::_1));
+  //   "~/input/steer", rclcpp::QoS{1},
+  //   std::bind(&TrajectorySamplerNode::steerCallback, this, std::placeholders::_1));
   objects_sub_ = create_subscription<autoware_auto_perception_msgs::msg::PredictedObjects>(
     "~/input/objects", rclcpp::QoS{10},
-    std::bind(&PathSamplerNode::objectsCallback, this, std::placeholders::_1));
+    std::bind(&TrajectorySamplerNode::objectsCallback, this, std::placeholders::_1));
   map_sub_ = create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
     "~/input/vector_map", rclcpp::QoS{1}.transient_local(),
-    std::bind(&PathSamplerNode::mapCallback, this, std::placeholders::_1));
+    std::bind(&TrajectorySamplerNode::mapCallback, this, std::placeholders::_1));
   route_sub_ = create_subscription<autoware_auto_planning_msgs::msg::HADMapRoute>(
     "~/input/route", rclcpp::QoS{1}.transient_local(),
-    std::bind(&PathSamplerNode::routeCallback, this, std::placeholders::_1));
+    std::bind(&TrajectorySamplerNode::routeCallback, this, std::placeholders::_1));
   fallback_sub_ = create_subscription<autoware_auto_planning_msgs::msg::Trajectory>(
     "~/input/fallback", rclcpp::QoS{1},
-    std::bind(&PathSamplerNode::fallbackCallback, this, std::placeholders::_1));
+    std::bind(&TrajectorySamplerNode::fallbackCallback, this, std::placeholders::_1));
+  vel_sub_ = create_subscription<nav_msgs::msg::Odometry>(
+    "~/input/velocity", rclcpp::QoS{1}, [&](nav_msgs::msg::Odometry::ConstSharedPtr msg) {
+      current_velocity_ = msg->twist.twist.linear.x;
+    });
+  acc_sub_ = create_subscription<geometry_msgs::msg::AccelWithCovarianceStamped>(
+    "~/input/acceleration", rclcpp::QoS{1},
+    [&](geometry_msgs::msg::AccelWithCovarianceStamped::ConstSharedPtr msg) {
+      current_velocity_ = msg->accel.accel.linear.x;
+    });
 
   in_objects_ptr_ = std::make_unique<autoware_auto_perception_msgs::msg::PredictedObjects>();
 
@@ -148,7 +158,7 @@ PathSamplerNode::PathSamplerNode(const rclcpp::NodeOptions & node_options)
     create_wall_timer(std::chrono::milliseconds(100), []() { QCoreApplication::processEvents(); });
 }
 
-rcl_interfaces::msg::SetParametersResult PathSamplerNode::onParameter(
+rcl_interfaces::msg::SetParametersResult TrajectorySamplerNode::onParameter(
   const std::vector<rclcpp::Parameter> & parameters)
 {
   rcl_interfaces::msg::SetParametersResult result;
@@ -221,11 +231,12 @@ rcl_interfaces::msg::SetParametersResult PathSamplerNode::onParameter(
 }
 
 // ROS callback functions
-void PathSamplerNode::pathCallback(const autoware_auto_planning_msgs::msg::Path::ConstSharedPtr msg)
+void TrajectorySamplerNode::pathCallback(
+  const autoware_auto_planning_msgs::msg::Path::ConstSharedPtr msg)
 {
   w_.plotter_->clear();
   sampler_node::debug::Debug debug;
-  const auto current_state = getCurrentEgoState();
+  const auto current_state = getCurrentEgoConfiguration();
   // TODO(Maxime CLEMENT): move to "validInputs(current_state, msg)"
   if (msg->points.size() < 2 || msg->drivable_area.data.empty() || !current_state) {
     RCLCPP_INFO(
@@ -238,27 +249,26 @@ void PathSamplerNode::pathCallback(const autoware_auto_planning_msgs::msg::Path:
   const auto calc_begin = std::chrono::steady_clock::now();
 
   const auto path_spline = preparePathSpline(*msg, params_.preprocessing.smooth_reference);
-  const auto planning_state = getPlanningState(*current_state, path_spline);
+  const auto planning_configuration = getPlanningConfiguration(*current_state, path_spline);
   prepareConstraints(
     params_.constraints, *in_objects_ptr_, *lanelet_map_ptr_, drivable_ids_, prefered_ids_,
     msg->drivable_area);
 
-  auto paths =
-    generateCandidatePaths(planning_state, prev_path_, path_spline, *msg, *w_.plotter_, params_);
-  for (auto & path : paths) {
+  auto trajectories = generateCandidateTrajectories(
+    planning_configuration, prev_traj_, path_spline, *msg, *w_.plotter_, params_);
+  for (auto & trajectory : trajectories) {
     const auto nb_violations =
-      sampler_common::constraints::checkHardConstraints(path, params_.constraints);
+      sampler_common::constraints::checkHardConstraints(trajectory, params_.constraints);
     debug.violations.outside += nb_violations.outside;
     debug.violations.collision += nb_violations.collision;
     debug.violations.curvature += nb_violations.curvature;
-    sampler_common::constraints::calculateCost(path, params_.constraints, path_spline);
+    sampler_common::constraints::calculateCost(trajectory, params_.constraints, path_spline);
   }
-  const auto selected_path = selectBestPath(paths);
-  if (selected_path) {
-    const auto final_path = prependPath(*selected_path, path_spline);
-
-    publishPath(final_path, msg);
-    prev_path_ = *selected_path;
+  auto selected_trajectory = selectBestTrajectory(trajectories);
+  if (selected_trajectory) {
+    auto final_trajectory = prependTrajectory(*selected_trajectory, path_spline);
+    publishTrajectory(final_trajectory, msg->header.frame_id);
+    prev_traj_ = *selected_trajectory;
   } else {
     RCLCPP_WARN(
       get_logger(), "All candidates rejected: out=%d coll=%d curv=%d", debug.violations.outside,
@@ -268,9 +278,9 @@ void PathSamplerNode::pathCallback(const autoware_auto_planning_msgs::msg::Path:
       (now() - fallback_traj_ptr_->header.stamp).seconds() < fallback_timeout_) {
       RCLCPP_WARN(get_logger(), "Using fallback trajectory");
       trajectory_pub_->publish(*fallback_traj_ptr_);
-      prev_path_.clear();
+      prev_traj_.clear();
     } else {
-      publishPath(prev_path_, msg);
+      publishTrajectory(prev_traj_, msg->header.frame_id);
     }
   }
   std::chrono::steady_clock::time_point calc_end = std::chrono::steady_clock::now();
@@ -288,41 +298,43 @@ void PathSamplerNode::pathCallback(const autoware_auto_planning_msgs::msg::Path:
     y.push_back(p.pose.position.y);
   }
   w_.plotter_->plotReferencePath(x, y);
+  /*
   w_.plotter_->plotPaths(paths);
-  if (selected_path) {
-    w_.plotter_->plotSelectedPath(*selected_path);
+  if (selected_trajectory) {
+    w_.plotter_->plotSelectedPath(*selected_trajectory);
     w_.plotter_->plotPolygons(
-      {sampler_common::constraints::buildFootprintPolygon(*selected_path, params_.constraints)});
+      {sampler_common::constraints::buildFootprintPolygon(*selected_trajectory,
+  params_.constraints)});
   }
-
+  */
   w_.plotter_->plotCurrentPose(path_spline.frenet(current_state->pose), current_state->pose);
   w_.replot();
   QCoreApplication::processEvents();
   w_.update();
   std::chrono::steady_clock::time_point plot_end = std::chrono::steady_clock::now();
   w_.setStatus(
-    paths.size(),
+    trajectories.size(),
     static_cast<double>(
       std::chrono::duration_cast<std::chrono::milliseconds>(calc_end - calc_begin).count()),
     static_cast<double>(
       std::chrono::duration_cast<std::chrono::milliseconds>(plot_end - plot_begin).count()));
 }
 
-std::optional<sampler_common::Path> PathSamplerNode::selectBestPath(
-  const std::vector<sampler_common::Path> & paths)
+std::optional<sampler_common::Trajectory> TrajectorySamplerNode::selectBestTrajectory(
+  const std::vector<sampler_common::Trajectory> & trajectories)
 {
   auto min_cost = std::numeric_limits<double>::max();
-  std::optional<sampler_common::Path> best_path;
-  for (const auto & path : paths) {
-    if (path.valid && path.cost < min_cost) {
-      min_cost = path.cost;
-      best_path = path;
+  std::optional<sampler_common::Trajectory> best_trajectory;
+  for (const auto & traj : trajectories) {
+    if (traj.valid && traj.cost < min_cost) {
+      min_cost = traj.cost;
+      best_trajectory = traj;
     }
   }
-  return best_path;
+  return best_trajectory;
 }
 
-std::optional<sampler_common::State> PathSamplerNode::getCurrentEgoState()
+std::optional<sampler_common::Configuration> TrajectorySamplerNode::getCurrentEgoConfiguration()
 {
   geometry_msgs::msg::TransformStamped tf_current_pose;
 
@@ -330,56 +342,42 @@ std::optional<sampler_common::State> PathSamplerNode::getCurrentEgoState()
     tf_current_pose = tf_buffer_.lookupTransform(
       "map", "base_link", rclcpp::Time(0), rclcpp::Duration::from_seconds(1.0));
   } catch (tf2::TransformException & ex) {
-    RCLCPP_ERROR(get_logger(), "[PathSamplerNode] %s", ex.what());
+    RCLCPP_ERROR(get_logger(), "[TrajectorySamplerNode] %s", ex.what());
     return {};
   }
 
-  auto state = sampler_common::State();
-  state.pose = {tf_current_pose.transform.translation.x, tf_current_pose.transform.translation.y};
-  state.heading = tf2::getYaw(tf_current_pose.transform.rotation);
-  return state;
+  auto config = sampler_common::Configuration();
+  config.pose = {tf_current_pose.transform.translation.x, tf_current_pose.transform.translation.y};
+  config.heading = tf2::getYaw(tf_current_pose.transform.rotation);
+  config.velocity = current_velocity_;
+  config.acceleration = current_acceleration_;
+  return config;
 }
 
-void PathSamplerNode::objectsCallback(
+void TrajectorySamplerNode::objectsCallback(
   const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr msg)
 {
   in_objects_ptr_ = std::make_unique<autoware_auto_perception_msgs::msg::PredictedObjects>(*msg);
 }
 
-void PathSamplerNode::publishPath(
-  const sampler_common::Path & path,
-  const autoware_auto_planning_msgs::msg::Path::ConstSharedPtr path_msg)
+void TrajectorySamplerNode::publishTrajectory(
+  const sampler_common::Trajectory & trajectory, const std::string & frame_id)
 {
-  if (path.points.size() < 2) {
-    return;
-  }
-  std::vector<double> velocities(path.intervals.size());
-  double path_arc_length = 0.0;
-  double msg_arc_length = 0.0;
-  size_t msg_idx = 0;
-  for (size_t i = 0; i < path.intervals.size(); ++i) {
-    path_arc_length += path.intervals[i];
-    while (msg_arc_length < path_arc_length && msg_idx + 1 < path_msg->points.size()) {
-      const auto x0 = path_msg->points[msg_idx].pose.position.x;
-      const auto y0 = path_msg->points[msg_idx].pose.position.y;
-      const auto x1 = path_msg->points[msg_idx + 1].pose.position.x;
-      const auto y1 = path_msg->points[msg_idx + 1].pose.position.y;
-      msg_arc_length += std::hypot(x1 - x0, y1 - y0);
-      ++msg_idx;
-    }
-    velocities[i] = path_msg->points[msg_idx].longitudinal_velocity_mps;
-  }
   tf2::Quaternion q;  // to convert yaw angle to Quaternion orientation
   autoware_auto_planning_msgs::msg::Trajectory traj_msg;
-  traj_msg.header.frame_id = path_msg->header.frame_id;
+  traj_msg.header.frame_id = frame_id;
   traj_msg.header.stamp = now();
-  for (size_t i = 0; i < path.points.size() - 2; ++i) {
+  for (size_t i = 0; i + 2 < trajectory.points.size(); ++i) {
     autoware_auto_planning_msgs::msg::TrajectoryPoint point;
-    point.pose.position.x = path.points[i].x();
-    point.pose.position.y = path.points[i].y();
-    q.setRPY(0, 0, path.yaws[i]);
+    point.pose.position.x = trajectory.points[i].x();
+    point.pose.position.y = trajectory.points[i].y();
+    q.setRPY(0, 0, trajectory.yaws[i]);
     point.pose.orientation = tf2::toMsg(q);
-    point.longitudinal_velocity_mps = static_cast<float>(velocities[i]);
+    point.longitudinal_velocity_mps = static_cast<float>(trajectory.longitudinal_velocities[i]);
+    point.acceleration_mps2 = static_cast<float>(trajectory.longitudinal_accelerations[i]);
+    point.lateral_velocity_mps = static_cast<float>(trajectory.lateral_velocities[i]);
+    point.heading_rate_rps =
+      static_cast<float>(point.longitudinal_velocity_mps * trajectory.curvatures[i]);
     point.front_wheel_angle_rad = 0.0f;
     point.rear_wheel_angle_rad = 0.0f;
     traj_msg.points.push_back(point);
@@ -388,7 +386,7 @@ void PathSamplerNode::publishPath(
 }
 
 // TODO(Maxime CLEMENT): unused in favor of the Path's drivable area
-void PathSamplerNode::mapCallback(
+void TrajectorySamplerNode::mapCallback(
   const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr map_msg)
 {
   lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
@@ -396,7 +394,7 @@ void PathSamplerNode::mapCallback(
 }
 
 // TODO(Maxime CLEMENT): unused in favor of the Path's drivable area
-void PathSamplerNode::routeCallback(
+void TrajectorySamplerNode::routeCallback(
   const autoware_auto_planning_msgs::msg::HADMapRoute::ConstSharedPtr route_msg)
 {
   prefered_ids_.clear();
@@ -411,14 +409,15 @@ void PathSamplerNode::routeCallback(
   }
 }
 
-void PathSamplerNode::fallbackCallback(
+void TrajectorySamplerNode::fallbackCallback(
   const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr fallback_msg)
 {
   fallback_traj_ptr_ = fallback_msg;
 }
 
-sampler_common::State PathSamplerNode::getPlanningState(
-  sampler_common::State state, const sampler_common::transform::Spline2D & path_spline) const
+sampler_common::Configuration TrajectorySamplerNode::getPlanningConfiguration(
+  sampler_common::Configuration state,
+  const sampler_common::transform::Spline2D & path_spline) const
 {
   const auto current_frenet = path_spline.frenet(state.pose);
   if (params_.preprocessing.force_zero_deviation) {
@@ -431,22 +430,33 @@ sampler_common::State PathSamplerNode::getPlanningState(
   return state;
 }
 
-sampler_common::Path PathSamplerNode::prependPath(
-  const sampler_common::Path & path, const sampler_common::transform::Spline2D & reference) const
+sampler_common::Trajectory TrajectorySamplerNode::prependTrajectory(
+  const sampler_common::Trajectory & trajectory,
+  const sampler_common::transform::Spline2D & reference) const
 {
-  if (path.points.empty()) return {};
-  const auto current_frenet = reference.frenet(path.points.front());
+  if (trajectory.points.empty()) return {};
+  const auto current_frenet = reference.frenet(trajectory.points.front());
   const auto resolution = params_.sampling.resolution;
-  sampler_common::Path path_to_prepend;
+  sampler_common::Trajectory trajectory_to_prepend;
   const auto first_s = current_frenet.s - params_.postprocessing.desired_traj_behind_length;
-  for (auto s = std::max(0.0, first_s); s < current_frenet.s; s += resolution) {
-    path_to_prepend.points.push_back(reference.cartesian(s));
-    path_to_prepend.yaws.push_back(reference.yaw(s));
-    path_to_prepend.intervals.push_back(resolution);
+  std::vector<double> ss;
+  for (auto s = std::max(resolution, first_s); s < current_frenet.s; s += resolution)
+    ss.push_back(s);
+  for (const auto s : ss) {
+    trajectory_to_prepend.points.push_back(reference.cartesian(s));
+    trajectory_to_prepend.yaws.push_back(reference.yaw(s));
+    trajectory_to_prepend.curvatures.push_back(reference.curvature(s));
+    trajectory_to_prepend.intervals.push_back(resolution);
+    trajectory_to_prepend.longitudinal_velocities.push_back(
+      trajectory.longitudinal_velocities.front());
+    trajectory_to_prepend.lateral_velocities.push_back(trajectory.lateral_velocities.front());
+    trajectory_to_prepend.longitudinal_accelerations.push_back(
+      trajectory.longitudinal_accelerations.front());
+    trajectory_to_prepend.lateral_accelerations.push_back(trajectory.lateral_accelerations.front());
   }
-  return path_to_prepend.extend(path);
+  return trajectory_to_prepend.extend(trajectory);
 }
 }  // namespace sampler_node
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(sampler_node::PathSamplerNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(sampler_node::TrajectorySamplerNode)

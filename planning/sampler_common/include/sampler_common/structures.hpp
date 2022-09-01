@@ -46,6 +46,12 @@ struct State
   double heading{};
 };
 
+struct Configuration : State
+{
+  double velocity{};
+  double acceleration{};
+};
+
 /// @brief Path
 struct Path
 {
@@ -196,9 +202,10 @@ struct Trajectory : Path
       to.insert(to.end(), std::next(from.begin(), from_idx), std::next(from.begin(), to_idx));
     };
 
-    copy_subset(lateral_velocities, subtraj->lateral_velocities);
     copy_subset(longitudinal_velocities, subtraj->longitudinal_velocities);
     copy_subset(longitudinal_accelerations, subtraj->longitudinal_accelerations);
+    copy_subset(lateral_velocities, subtraj->lateral_velocities);
+    copy_subset(lateral_accelerations, subtraj->lateral_accelerations);
     // copy(jerks, subtraj->jerks);
     copy_subset(times, subtraj->times);
     subtraj->duration = 0;
