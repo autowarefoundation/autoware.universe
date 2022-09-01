@@ -418,9 +418,9 @@ void EKFLocalizer::predictKinematicsModel()
 
   const double dt = ekf_dt_;
 
-  const Vector6d X_next = PredictNextState(X_curr, dt);
-  const Matrix6d A = CreateStateTransitionMatrix(X_curr, dt);
-  const Matrix6d Q = ProcessNoiseCovariance(proc_cov_yaw_d_, proc_cov_vx_d_, proc_cov_wz_d_);
+  const Vector6d X_next = predictNextState(X_curr, dt);
+  const Matrix6d A = createStateTransitionMatrix(X_curr, dt);
+  const Matrix6d Q = processNoiseCovariance(proc_cov_yaw_d_, proc_cov_vx_d_, proc_cov_wz_d_);
 
   ekf_.predictWithDelay(X_next, A, Q);
 
@@ -471,7 +471,7 @@ void EKFLocalizer::measurementUpdatePose(const geometry_msgs::msg::PoseWithCovar
   /* Set yaw */
   double yaw = tf2::getYaw(pose.pose.pose.orientation);
   const double ekf_yaw = ekf_.getXelement(delay_step * dim_x_ + IDX::YAW);
-  const double yaw_error = NormalizeYaw(yaw - ekf_yaw);  // normalize the error not to exceed 2 pi
+  const double yaw_error = normalizeYaw(yaw - ekf_yaw);  // normalize the error not to exceed 2 pi
   yaw = yaw_error + ekf_yaw;
 
   /* Set measurement matrix */

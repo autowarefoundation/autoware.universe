@@ -17,14 +17,14 @@
 
 #include <cmath>
 
-double NormalizeYaw(const double & yaw)
+double normalizeYaw(const double & yaw)
 {
   // FIXME(IshitaTakeshi) I think the computation here can be simplified
   // FIXME(IshitaTakeshi) Rename the function. This is not normalization
   return std::atan2(std::sin(yaw), std::cos(yaw));
 }
 
-Vector6d PredictNextState(const Vector6d & X_curr, const double dt)
+Vector6d predictNextState(const Vector6d & X_curr, const double dt)
 {
   const double x = X_curr(IDX::X);
   const double y = X_curr(IDX::Y);
@@ -36,7 +36,7 @@ Vector6d PredictNextState(const Vector6d & X_curr, const double dt)
   Vector6d X_next;
   X_next(IDX::X) = x + vx * std::cos(yaw + yaw_bias) * dt;  // dx = v * cos(yaw)
   X_next(IDX::Y) = y + vx * std::sin(yaw + yaw_bias) * dt;  // dy = v * sin(yaw)
-  X_next(IDX::YAW) = NormalizeYaw(yaw + wz * dt);           // dyaw = omega + omega_bias
+  X_next(IDX::YAW) = normalizeYaw(yaw + wz * dt);           // dyaw = omega + omega_bias
   X_next(IDX::YAWB) = yaw_bias;
   X_next(IDX::VX) = vx;
   X_next(IDX::WZ) = wz;
@@ -44,7 +44,7 @@ Vector6d PredictNextState(const Vector6d & X_curr, const double dt)
 }
 
 // TODO(TakeshiIshita) show where the equation come from
-Matrix6d CreateStateTransitionMatrix(const Vector6d & X_curr, const double dt)
+Matrix6d createStateTransitionMatrix(const Vector6d & X_curr, const double dt)
 {
   const double yaw = X_curr(IDX::YAW);
   const double yaw_bias = X_curr(IDX::YAWB);
@@ -61,7 +61,7 @@ Matrix6d CreateStateTransitionMatrix(const Vector6d & X_curr, const double dt)
   return A;
 }
 
-Matrix6d ProcessNoiseCovariance(
+Matrix6d processNoiseCovariance(
   const double proc_cov_yaw_d, const double proc_cov_vx_d, const double proc_cov_wz_d)
 {
   Matrix6d Q = Matrix6d::Zero();

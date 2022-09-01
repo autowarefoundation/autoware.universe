@@ -22,10 +22,10 @@
 TEST(StateTransition, NormalizeYaw)
 {
   const double tolerance = 1e-6;
-  EXPECT_NEAR(NormalizeYaw(M_PI * 4 / 3), -M_PI * 2 / 3, tolerance);
-  EXPECT_NEAR(NormalizeYaw(-M_PI * 4 / 3), M_PI * 2 / 3, tolerance);
-  EXPECT_NEAR(NormalizeYaw(M_PI * 9 / 2), M_PI * 1 / 2, tolerance);
-  EXPECT_NEAR(NormalizeYaw(M_PI * 4), M_PI * 0, tolerance);
+  EXPECT_NEAR(normalizeYaw(M_PI * 4 / 3), -M_PI * 2 / 3, tolerance);
+  EXPECT_NEAR(normalizeYaw(-M_PI * 4 / 3), M_PI * 2 / 3, tolerance);
+  EXPECT_NEAR(normalizeYaw(M_PI * 9 / 2), M_PI * 1 / 2, tolerance);
+  EXPECT_NEAR(normalizeYaw(M_PI * 4), M_PI * 0, tolerance);
 }
 
 TEST(PredictNextState, PredictNextState)
@@ -42,12 +42,12 @@ TEST(PredictNextState, PredictNextState)
 
   const double dt = 0.5;
 
-  const Vector6d X_next = PredictNextState(X_curr, dt);
+  const Vector6d X_next = predictNextState(X_curr, dt);
 
   const double tolerance = 1e-10;
   EXPECT_NEAR(X_next(0), 2. + 10. * std::cos(M_PI / 2. + M_PI / 4.) * 0.5, tolerance);
   EXPECT_NEAR(X_next(1), 3. + 10. * std::sin(M_PI / 2. + M_PI / 4.) * 0.5, tolerance);
-  EXPECT_NEAR(X_next(2), NormalizeYaw(M_PI / 2. + M_PI / 3.), tolerance);
+  EXPECT_NEAR(X_next(2), normalizeYaw(M_PI / 2. + M_PI / 3.), tolerance);
   EXPECT_NEAR(X_next(3), X_curr(3), tolerance);
   EXPECT_NEAR(X_next(4), X_curr(4), tolerance);
   EXPECT_NEAR(X_next(5), X_curr(5), tolerance);
@@ -64,8 +64,8 @@ TEST(CreateStateTransitionMatrix, NumericalApproximation)
     const Vector6d dx = 0.1 * Vector6d::Ones();
     const Vector6d x = Vector6d::Zero();
 
-    const Matrix6d A = CreateStateTransitionMatrix(x, dt);
-    const Vector6d df = PredictNextState(x + dx, dt) - PredictNextState(x, dt);
+    const Matrix6d A = createStateTransitionMatrix(x, dt);
+    const Vector6d df = predictNextState(x + dx, dt) - predictNextState(x, dt);
 
     EXPECT_LT((df - A * dx).norm(), 2e-3);
   }
@@ -76,8 +76,8 @@ TEST(CreateStateTransitionMatrix, NumericalApproximation)
     const Vector6d dx = 0.1 * Vector6d::Ones();
     const Vector6d x = (Vector6d() << 0.1, 0.2, 0.1, 0.4, 0.1, 0.3).finished();
 
-    const Matrix6d A = CreateStateTransitionMatrix(x, dt);
-    const Vector6d df = PredictNextState(x + dx, dt) - PredictNextState(x, dt);
+    const Matrix6d A = createStateTransitionMatrix(x, dt);
+    const Vector6d df = predictNextState(x + dx, dt) - predictNextState(x, dt);
 
     EXPECT_LT((df - A * dx).norm(), 5e-3);
   }
@@ -85,11 +85,11 @@ TEST(CreateStateTransitionMatrix, NumericalApproximation)
 
 TEST(ProcessNoiseCovariance, ProcessNoiseCovariance)
 {
-  const Matrix6d Q = ProcessNoiseCovariance(1., 2., 3.);
+  const Matrix6d Q = processNoiseCovariance(1., 2., 3.);
   EXPECT_EQ(Q(2, 2), 1.);  // for yaw
   EXPECT_EQ(Q(4, 4), 2.);  // for vx
   EXPECT_EQ(Q(5, 5), 3.);  // for wz
 
   // Make sure other elements are zero
-  EXPECT_EQ(ProcessNoiseCovariance(0, 0, 0).norm(), 0.);
+  EXPECT_EQ(processNoiseCovariance(0, 0, 0).norm(), 0.);
 }
