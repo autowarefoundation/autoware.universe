@@ -18,6 +18,7 @@
 #include "ndt_scan_matcher/matrix_type.hpp"
 #include "ndt_scan_matcher/particle.hpp"
 #include "ndt_scan_matcher/util_func.hpp"
+#include "ndt_scan_matcher/pose_array_interpolator.hpp"
 
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
@@ -63,11 +64,6 @@ geometry_msgs::msg::TransformStamped identity_transform_stamped(
   return transform;
 }
 
-double norm(const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2)
-{
-  return std::sqrt(
-    std::pow(p1.x - p2.x, 2.0) + std::pow(p1.y - p2.y, 2.0) + std::pow(p1.z - p2.z, 2.0));
-}
 
 bool validate_local_optimal_solution_oscillation(
   const std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>> &
@@ -466,14 +462,11 @@ void NDTScanMatcher::callback_sensor_points(
 
   // calculate initial pose
   std::unique_lock<std::mutex> initial_pose_array_lock(initial_pose_array_mtx_);
-  auto initial_pose_old_msg_ptr = std::make_shared<geometry_msgs::msg::PoseWithCovarianceStamped>();
-  auto initial_pose_new_msg_ptr = std::make_shared<geometry_msgs::msg::PoseWithCovarianceStamped>();
-  auto initial_pose_cov_msg_ptr = std::make_shared<geometry_msgs::msg::PoseWithCovarianceStamped>();
-
-  bool found_valid_initial_pose = calculate_initial_pose(
-    sensor_ros_time, initial_pose_cov_msg_ptr, initial_pose_old_msg_ptr, initial_pose_new_msg_ptr);
+  PoseArrayInterpolator interpolator(this, sensor_ros_time,
+    initial_pose_timeout_sec_, initial_pose_distance_tolerance_m_, initial_pose_msg_ptr_array_);
+  if (!interpolator.is_success()) return;
+  pop_old_pose(initial_pose_msg_ptr_array_, sensor_ros_time);
   initial_pose_array_lock.unlock();
-  if (!found_valid_initial_pose) return;
 
   // if regularization is enabled and available, set pose to NDT for regularization
   if (regularization_enabled_ && (ndt_implement_type_ == NDTImplementType::OMP))
@@ -484,9 +477,9 @@ void NDTScanMatcher::callback_sensor_points(
     return;
   }
 
-  // perform NDT
+  // perform ndt scan matching
   key_value_stdmap_["state"] = "Aligning";
-  const NdtResult ndt_result = align(initial_pose_cov_msg_ptr->pose.pose);
+  const NdtResult ndt_result = align(interpolator.get_current_pose().pose.pose);
   key_value_stdmap_["state"] = "Sleeping";
 
   const auto exe_end_time = std::chrono::system_clock::now();
@@ -526,7 +519,7 @@ void NDTScanMatcher::callback_sensor_points(
   }
 
   // publish
-  initial_pose_with_covariance_pub_->publish(*initial_pose_cov_msg_ptr);
+  initial_pose_with_covariance_pub_->publish(interpolator.get_current_pose());
   exe_time_pub_->publish(make_float32_stamped(sensor_ros_time, exe_time));
   transform_probability_pub_->publish(
     make_float32_stamped(sensor_ros_time, ndt_result.transform_probability));
@@ -538,8 +531,8 @@ void NDTScanMatcher::callback_sensor_points(
   publish_point_cloud(sensor_ros_time, ndt_result.pose, sensor_points_baselinkTF_ptr);
   publish_marker(sensor_ros_time, ndt_result.transformation_array);
   publish_initial_to_result_distances(
-    sensor_ros_time, ndt_result.pose, *initial_pose_cov_msg_ptr, *initial_pose_old_msg_ptr,
-    *initial_pose_new_msg_ptr);
+    sensor_ros_time, ndt_result.pose, interpolator.get_current_pose(), interpolator.get_old_pose(),
+    interpolator.get_new_pose());
 
   key_value_stdmap_["transform_probability"] = std::to_string(ndt_result.transform_probability);
   key_value_stdmap_["nearest_voxel_transformation_likelihood"] =
@@ -566,46 +559,45 @@ void NDTScanMatcher::transform_sensor_measurement(
     *sensor_points_input_ptr, *sensor_points_output_ptr, base_to_sensor_matrix);
 }
 
-bool NDTScanMatcher::calculate_initial_pose(
-  const rclcpp::Time & sensor_ros_time,
-  geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr & initial_pose_cov_msg_ptr,
-  geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr & initial_pose_old_msg_ptr,
-  geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr & initial_pose_new_msg_ptr)
-{
-  // check
-  if (initial_pose_msg_ptr_array_.size() <= 1) {
-    RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1, "No Pose!");
-    return false;
-  }
-  // searchNNPose using timestamp
-  get_nearest_timestamp_pose(
-    initial_pose_msg_ptr_array_, sensor_ros_time, initial_pose_old_msg_ptr,
-    initial_pose_new_msg_ptr);
-  pop_old_pose(initial_pose_msg_ptr_array_, sensor_ros_time);
+// bool NDTScanMatcher::calculate_initial_pose(
+//   const rclcpp::Time & sensor_ros_time,
+//   geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr & initial_pose_cov_msg_ptr,
+//   geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr & initial_pose_old_msg_ptr,
+//   geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr & initial_pose_new_msg_ptr)
+// {
+//   // check
+//   if (initial_pose_msg_ptr_array_.size() <= 1) {
+//     RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1, "No Pose!");
+//     return false;
+//   }
+//   // searchNNPose using timestamp
+//   PoseArrayInterpolator interpolator(sensor_ros_time, initial_pose_msg_ptr_array_);
+//   pop_old_pose(initial_pose_msg_ptr_array_, sensor_ros_time);
 
-  // check the time stamp
-  bool valid_old_timestamp = validate_time_stamp_difference(
-    initial_pose_old_msg_ptr->header.stamp, sensor_ros_time, initial_pose_timeout_sec_);
-  bool valid_new_timestamp = validate_time_stamp_difference(
-    initial_pose_new_msg_ptr->header.stamp, sensor_ros_time, initial_pose_timeout_sec_);
+//   initial_pose_cov_msg_ptr = interpolator.get_current_pose_ptr();
+//   initial_pose_old_msg_ptr = interpolator.get_current_pose_ptr();
+//   initial_pose_new_msg_ptr = interpolator.get__pose_ptr();
 
-  // check the position jumping (ex. immediately after the initial pose estimation)
-  bool valid_new_to_old_distance = validate_position_difference(
-    initial_pose_old_msg_ptr->pose.pose.position, initial_pose_new_msg_ptr->pose.pose.position,
-    initial_pose_distance_tolerance_m_);
+//   // check the time stamp
+//   bool valid_old_timestamp = validate_time_stamp_difference(
+//     interpolator.get_old_pose().header.stamp, sensor_ros_time, initial_pose_timeout_sec_);
+//   bool valid_new_timestamp = validate_time_stamp_difference(
+//     interpolator.get_new_pose().header.stamp, sensor_ros_time, initial_pose_timeout_sec_);
 
-  // must all validations are true
-  if (!(valid_old_timestamp && valid_new_timestamp && valid_new_to_old_distance)) {
-    RCLCPP_WARN(get_logger(), "Validation error.");
-    return false;
-  }
+//   // check the position jumping (ex. immediately after the initial pose estimation)
+//   bool valid_new_to_old_distance = validate_position_difference(
+//     interpolator.get_old_pose().pose.pose.position, interpolator.get_new_pose().pose.pose.position,
+//     initial_pose_distance_tolerance_m_);
 
-  const geometry_msgs::msg::PoseStamped initial_pose_msg =
-    interpolate_pose(*initial_pose_old_msg_ptr, *initial_pose_new_msg_ptr, sensor_ros_time);
-  initial_pose_cov_msg_ptr->header = initial_pose_msg.header;
-  initial_pose_cov_msg_ptr->pose.pose = initial_pose_msg.pose;
-  return true;
-}
+//   // must all validations are true
+//   if (!(valid_old_timestamp && valid_new_timestamp && valid_new_to_old_distance)) {
+//     RCLCPP_WARN(get_logger(), "Validation error.");
+//     return false;
+//   }
+
+//   initial_pose_cov_msg_ptr = 
+//   return true;
+// }
 
 NdtResult NDTScanMatcher::align(const geometry_msgs::msg::Pose & initial_pose_msg)
 {
@@ -804,38 +796,6 @@ bool NDTScanMatcher::get_transform(
       get_logger(), "Please publish TF %s to %s", target_frame.c_str(), source_frame.c_str());
 
     *transform_stamped_ptr = identity;
-    return false;
-  }
-  return true;
-}
-
-bool NDTScanMatcher::validate_time_stamp_difference(
-  const rclcpp::Time & target_time, const rclcpp::Time & reference_time,
-  const double time_tolerance_sec)
-{
-  const double dt = std::abs((target_time - reference_time).seconds());
-  if (dt > time_tolerance_sec) {
-    RCLCPP_WARN(
-      get_logger(),
-      "Validation error. The reference time is %lf[sec], but the target time is %lf[sec]. The "
-      "difference is %lf[sec] (the tolerance is %lf[sec]).",
-      reference_time.seconds(), target_time.seconds(), dt, time_tolerance_sec);
-    return false;
-  }
-  return true;
-}
-
-bool NDTScanMatcher::validate_position_difference(
-  const geometry_msgs::msg::Point & target_point, const geometry_msgs::msg::Point & reference_point,
-  const double distance_tolerance_m_)
-{
-  double distance = norm(target_point, reference_point);
-  if (distance > distance_tolerance_m_) {
-    RCLCPP_WARN(
-      get_logger(),
-      "Validation error. The distance from reference position to target position is %lf[m] (the "
-      "tolerance is %lf[m]).",
-      distance, distance_tolerance_m_);
     return false;
   }
   return true;
