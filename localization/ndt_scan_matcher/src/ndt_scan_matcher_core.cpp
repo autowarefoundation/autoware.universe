@@ -453,9 +453,15 @@ void NDTScanMatcher::callback_sensor_points(
   const rclcpp::Time sensor_ros_time = sensor_points_sensorTF_msg_ptr->header.stamp;
 
   // preprocess input pointcloud
+  pcl::shared_ptr<pcl::PointCloud<PointSource>> sensor_points_sensorTF_ptr(
+    new pcl::PointCloud<PointSource>);
   pcl::shared_ptr<pcl::PointCloud<PointSource>> sensor_points_baselinkTF_ptr(
     new pcl::PointCloud<PointSource>);
-  transform_sensor_measurement(sensor_points_sensorTF_msg_ptr, sensor_points_baselinkTF_ptr);
+  const std::string & sensor_frame = sensor_points_sensorTF_msg_ptr->header.frame_id;
+
+  pcl::fromROSMsg(*sensor_points_sensorTF_msg_ptr, *sensor_points_sensorTF_ptr);
+  transform_sensor_measurement(sensor_frame, base_frame_,
+    sensor_points_sensorTF_ptr, sensor_points_baselinkTF_ptr);
   ndt_ptr_->setInputSource(sensor_points_baselinkTF_ptr);
 
   // calculate initial pose
@@ -548,21 +554,16 @@ void NDTScanMatcher::callback_sensor_points(
 }
 
 void NDTScanMatcher::transform_sensor_measurement(
-  sensor_msgs::msg::PointCloud2::ConstSharedPtr & sensor_points_sensorTF_msg_ptr,
-  pcl::shared_ptr<pcl::PointCloud<PointSource>> sensor_points_baselinkTF_ptr)
+  const std::string source_frame, const std::string target_frame,
+  const pcl::shared_ptr<pcl::PointCloud<PointSource>> sensor_points_input_ptr,
+  pcl::shared_ptr<pcl::PointCloud<PointSource>> sensor_points_output_ptr)
 {
-  const std::string & sensor_frame = sensor_points_sensorTF_msg_ptr->header.frame_id;
-
-  pcl::shared_ptr<pcl::PointCloud<PointSource>> sensor_points_sensorTF_ptr(
-    new pcl::PointCloud<PointSource>);
-  pcl::fromROSMsg(*sensor_points_sensorTF_msg_ptr, *sensor_points_sensorTF_ptr);
-  // get TF base to sensor
-  auto TF_base_to_sensor_ptr = std::make_shared<geometry_msgs::msg::TransformStamped>();
-  get_transform(base_frame_, sensor_frame, TF_base_to_sensor_ptr);
-  const Eigen::Affine3d base_to_sensor_affine = tf2::transformToEigen(*TF_base_to_sensor_ptr);
+  auto TF_target_to_source_ptr = std::make_shared<geometry_msgs::msg::TransformStamped>();
+  get_transform(target_frame, source_frame, TF_target_to_source_ptr);
+  const Eigen::Affine3d base_to_sensor_affine = tf2::transformToEigen(*TF_target_to_source_ptr);
   const Eigen::Matrix4f base_to_sensor_matrix = base_to_sensor_affine.matrix().cast<float>();
   pcl::transformPointCloud(
-    *sensor_points_sensorTF_ptr, *sensor_points_baselinkTF_ptr, base_to_sensor_matrix);
+    *sensor_points_input_ptr, *sensor_points_output_ptr, base_to_sensor_matrix);
 }
 
 bool NDTScanMatcher::calculate_initial_pose(

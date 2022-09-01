@@ -133,8 +133,9 @@ private:
     const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_with_cov);
 
   void transform_sensor_measurement(
-    sensor_msgs::msg::PointCloud2::ConstSharedPtr & sensor_points_sensorTF_msg_ptr,
-    pcl::shared_ptr<pcl::PointCloud<PointSource>> sensor_points_baselinkTF_ptr);
+    const std::string source_frame, const std::string target_frame,
+    const pcl::shared_ptr<pcl::PointCloud<PointSource>> sensor_points_input_ptr,
+    pcl::shared_ptr<pcl::PointCloud<PointSource>> sensor_points_output_ptr);
   void update_transforms();
 
   bool calculate_initial_pose(
