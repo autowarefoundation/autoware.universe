@@ -102,6 +102,8 @@ RadarObjectFusionToDetectedObjectNode::RadarObjectFusionToDetectedObjectNode(
 
   // Publisher
   pub_objects_ = create_publisher<DetectedObjects>("~/output/objects", 1);
+  pub_debug_low_confidence_objects_ =
+    create_publisher<DetectedObjects>("~/debug/low_confidence_objects", 1);
 
   // Timer
   const auto update_period_ns = rclcpp::Rate(node_param_.update_rate_hz).period();
@@ -216,6 +218,7 @@ void RadarObjectFusionToDetectedObjectNode::onTimer()
   // Update
   output_ = radar_fusion_to_detected_object_->update(input);
   pub_objects_->publish(output_.objects);
+  pub_debug_low_confidence_objects_->publish(output_.debug_low_confidence_objects);
 }
 
 RadarFusionToDetectedObject::RadarInput RadarObjectFusionToDetectedObjectNode::setRadarInput(

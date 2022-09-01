@@ -63,9 +63,10 @@ ros2 launch radar_fusion_to_detected_object radar_object_to_detected_object.laun
 
 ### Output
 
-| Name               | Type                                                  | Description                    |
-| ------------------ | ----------------------------------------------------- | ------------------------------ |
-| `~/output/objects` | autoware_auto_perception_msgs/msg/DetectedObjects.msg | 3D detected object with twist. |
+| Name                             | Type                                                  | Description                                                                            |
+| -------------------------------- | ----------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `~/output/objects`               | autoware_auto_perception_msgs/msg/DetectedObjects.msg | 3D detected object with twist.                                                         |
+| `~/debug/low_confidence_objects` | autoware_auto_perception_msgs/msg/DetectedObjects.msg | 3D detected object that doesn't output as `~/output/objects` because of low confidence |
 
 ### Parameters
 

@@ -84,6 +84,7 @@ public:
   struct Output
   {
     DetectedObjects objects{};
+    DetectedObjects debug_low_confidence_objects{};
   };
 
   void setParam(const Param & param);

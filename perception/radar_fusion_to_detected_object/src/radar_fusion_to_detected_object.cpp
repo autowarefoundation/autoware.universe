@@ -118,6 +118,8 @@ RadarFusionToDetectedObject::Output RadarFusionToDetectedObject::update(
             std::max(split_object.existence_probability, param_.threshold_probability);
         }
         output.objects.objects.emplace_back(split_object);
+      } else {
+        output.debug_low_confidence_objects.objects.emplace_back(split_object);
       }
     }
   }
