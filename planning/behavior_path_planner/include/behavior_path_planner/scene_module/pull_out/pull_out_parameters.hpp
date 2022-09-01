@@ -16,6 +16,8 @@
 #ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__PULL_OUT__PULL_OUT_PARAMETERS_HPP_
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__PULL_OUT__PULL_OUT_PARAMETERS_HPP_
 
+#include <string>
+
 namespace behavior_path_planner
 {
 struct PullOutParameters
@@ -42,6 +44,7 @@ struct PullOutParameters
   double backward_velocity;
   double pull_out_max_steer_angle;
   // search start pose backward
+  std::string search_priority;  // "efficient_path" or "short_back_distance"
   bool enable_back;
   double max_back_distance;
   double backward_search_resolution;

@@ -469,6 +469,8 @@ PullOutParameters BehaviorPathPlannerNode::getPullOutParam()
   p.backward_velocity = dp("backward_velocity", -0.3);
   p.pull_out_max_steer_angle = dp("pull_out_max_steer_angle", 0.26);  // 15deg
   // search start pose backward
+  p.search_priority =
+    dp("search_priority", "efficient_path");  // "efficient_path" or "short_back_distance"
   p.enable_back = dp("enable_back", true);
   p.max_back_distance = dp("max_back_distance", 15.0);
   p.backward_search_resolution = dp("backward_search_resolution", 2.0);

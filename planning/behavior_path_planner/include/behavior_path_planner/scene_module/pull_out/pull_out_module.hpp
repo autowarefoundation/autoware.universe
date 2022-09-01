@@ -106,6 +106,10 @@ private:
 
   void incrementPathIndex();
   PathWithLaneId getCurrentPath() const;
+  void planWithPriorityOnEfficientPath(
+    const std::vector<Pose> & start_pose_candidates, const Pose & goal_pose);
+  void planWithPriorityOnShortBackDistance(
+    const std::vector<Pose> & start_pose_candidates, const Pose & goal_pose);
   void updatePullOutStatus();
   static bool isInLane(
     const lanelet::ConstLanelet & candidate_lanelet,

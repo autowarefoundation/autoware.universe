@@ -272,6 +272,58 @@ PathWithLaneId PullOutModule::getCurrentPath() const
   return status_.pull_out_path.partial_paths.at(status_.current_path_idx);
 }
 
+void PullOutModule::planWithPriorityOnEfficientPath(
+  const std::vector<Pose> & start_pose_candidates, const Pose & goal_pose)
+{
+  status_.is_safe = false;
+
+  for (const auto & planner : pull_out_planners_) {
+    for (const auto & pull_out_start_pose : start_pose_candidates) {
+      // plan with each planner
+      planner->setPlannerData(planner_data_);
+      const auto pull_out_path = planner->plan(pull_out_start_pose, goal_pose);
+      if (pull_out_path) {  // found safe path
+        status_.is_safe = true;
+        status_.pull_out_path = *pull_out_path;
+        status_.pull_out_start_pose = pull_out_start_pose;
+        status_.planner_type = planner->getPlannerType();
+        break;
+      }
+      // pull out start pose is not current_pose(index > 0), so need back.
+      status_.back_finished = false;
+    }
+    if (status_.is_safe) {
+      break;
+    }
+  }
+}
+
+void PullOutModule::planWithPriorityOnShortBackDistance(
+  const std::vector<Pose> & start_pose_candidates, const Pose & goal_pose)
+{
+  status_.is_safe = false;
+
+  for (const auto & pull_out_start_pose : start_pose_candidates) {
+    // plan with each planner
+    for (const auto & planner : pull_out_planners_) {
+      planner->setPlannerData(planner_data_);
+      const auto pull_out_path = planner->plan(pull_out_start_pose, goal_pose);
+      if (pull_out_path) {  // found safe path
+        status_.is_safe = true;
+        status_.pull_out_path = *pull_out_path;
+        status_.pull_out_start_pose = pull_out_start_pose;
+        status_.planner_type = planner->getPlannerType();
+        break;
+      }
+    }
+    if (status_.is_safe) {
+      break;
+    }
+    // pull out start pose is not current_pose(index > 0), so need back.
+    status_.back_finished = false;
+  }
+}
+
 void PullOutModule::updatePullOutStatus()
 {
   const auto & route_handler = planner_data_->route_handler;
@@ -287,39 +339,29 @@ void PullOutModule::updatePullOutStatus()
   status_.pull_out_lanes = pull_out_lanes;
 
   // search pull out start candidates backward
-  std::vector<Pose> pull_out_start_candidates;
+  std::vector<Pose> start_pose_candidates;
   {
     if (parameters_.enable_back) {
       // the first element is current_pose
-      pull_out_start_candidates = searchBackedPoses();
+      start_pose_candidates = searchBackedPoses();
     } else {
       // pull_out_start candidate is only current pose
-      pull_out_start_candidates.push_back(current_pose);
+      start_pose_candidates.push_back(current_pose);
     }
   }
 
-  bool found_safe_path = false;
-  for (const auto & pull_out_start_pose : pull_out_start_candidates) {
-    // plan with each planner
-    for (const auto & planner : pull_out_planners_) {
-      planner->setPlannerData(planner_data_);
-      const auto pull_out_path = planner->plan(pull_out_start_pose, goal_pose);
-      if (pull_out_path) {  // found safe path
-        found_safe_path = true;
-        status_.pull_out_path = *pull_out_path;
-        status_.pull_out_start_pose = pull_out_start_pose;
-        status_.planner_type = planner->getPlannerType();
-        break;
-      }
-    }
-    if (found_safe_path) {
-      break;
-    }
-    // pull out start pose is not current_pose(index > 0), so need back.
-    status_.back_finished = false;
+  if (parameters_.search_priority == "efficient_path") {
+    planWithPriorityOnEfficientPath(start_pose_candidates, goal_pose);
+  } else if (parameters_.search_priority == "short_back_distance") {
+    planWithPriorityOnShortBackDistance(start_pose_candidates, goal_pose);
+  } else {
+    RCLCPP_ERROR(
+      getLogger(),
+      "search_priority should be efficient_path or short_back_distance, but %s is given.",
+      parameters_.search_priority.c_str());
   }
 
-  if (!found_safe_path) {
+  if (!status_.is_safe) {
     RCLCPP_ERROR_THROTTLE(getLogger(), *clock_, 5000, "Not found safe pull out path");
     status_.is_safe = false;
     return;
@@ -336,7 +378,6 @@ void PullOutModule::updatePullOutStatus()
   }
 
   // Update status
-  status_.is_safe = found_safe_path;
   status_.lane_follow_lane_ids = util::getIds(current_lanes);
   status_.pull_out_lane_ids = util::getIds(pull_out_lanes);
 }
@@ -435,7 +476,7 @@ bool PullOutModule::hasFinishedPullOut() const
 
 void PullOutModule::checkBackFinished()
 {
-  // check ego car is close enough to goal pose
+  // check ego car is close enough to pull out start pose
   const auto current_pose = planner_data_->self_pose->pose;
   const auto distance =
     tier4_autoware_utils::calcDistance2d(current_pose, status_.pull_out_start_pose);
