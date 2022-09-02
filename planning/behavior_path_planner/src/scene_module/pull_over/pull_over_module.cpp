@@ -578,7 +578,7 @@ BehaviorModuleOutput PullOverModule::plan()
     // safe -> not_safe or no prev_stop_path: generate new stop_path
     output.path = std::make_shared<PathWithLaneId>(generateStopPath());
     status_.prev_stop_path = output.path;
-  } else {  // not_safe -> not_safe: use previout stop path
+  } else {  // not_safe -> not_safe: use previous stop path
     output.path = status_.prev_stop_path;
   }
   status_.prev_is_safe = status_.is_safe;
