@@ -2,6 +2,7 @@
   files:
     # General
     - source: .github/dependabot.yaml
+    - source: .github/workflows/cancel-previous-workflows.yaml
     - source: .github/workflows/github-release.yaml
     - source: .github/workflows/pre-commit.yaml
     - source: .github/workflows/pre-commit-ansible.yaml
