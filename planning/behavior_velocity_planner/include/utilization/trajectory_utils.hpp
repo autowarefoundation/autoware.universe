@@ -81,7 +81,7 @@ inline Quaternion lerpOrientation(
   tf2::fromMsg(o_from, q_from);
   tf2::fromMsg(o_to, q_to);
 
-  const auto q_interpolated = q_from.spline(q_to, ratio);
+  const auto q_interpolated = q_from.slerp(q_to, ratio);
   return tf2::toMsg(q_interpolated);
 }
 

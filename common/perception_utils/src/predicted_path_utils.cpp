@@ -68,14 +68,14 @@ autoware_auto_perception_msgs::msg::PredictedPath resamplePredictedPath(
   const auto spline = [&](const auto & input) {
     return interpolation::spline(input_time, input, resampled_time);
   };
-  const auto spline = [&](const auto & input) {
+  const auto slerp = [&](const auto & input) {
     return interpolation::slerp(input_time, input, resampled_time);
   };
 
   const auto interpolated_x = use_spline_for_xy ? spline(x) : lerp(x);
   const auto interpolated_y = use_spline_for_xy ? spline(y) : lerp(y);
   const auto interpolated_z = use_spline_for_z ? spline(z) : lerp(z);
-  const auto interpolated_quat = spline(quat);
+  const auto interpolated_quat = slerp(quat);
 
   autoware_auto_perception_msgs::msg::PredictedPath resampled_path;
   const auto resampled_size = std::min(resampled_path.path.max_size(), resampled_time.size());

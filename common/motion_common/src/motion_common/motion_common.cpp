@@ -159,7 +159,7 @@ Orientation spline(const Orientation & a, const Orientation & b, const Real t)
   tf2::Quaternion quat_b;
   tf2::fromMsg(a, quat_a);
   tf2::fromMsg(b, quat_b);
-  return tf2::toMsg(quat_a.spline(quat_b, t));
+  return tf2::toMsg(quat_a.slerp(quat_b, t));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
