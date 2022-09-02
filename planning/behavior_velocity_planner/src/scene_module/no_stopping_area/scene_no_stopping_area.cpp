@@ -234,7 +234,7 @@ bool NoStoppingAreaModule::checkStuckVehiclesInNoStoppingArea(
     const bool is_in_stuck_area = !bg::disjoint(obj_footprint, poly);
     if (is_in_stuck_area) {
       RCLCPP_DEBUG(logger_, "stuck vehicle found.");
-      for (const auto p : obj_footprint.outer()) {
+      for (const auto & p : obj_footprint.outer()) {
         geometry_msgs::msg::Point point;
         point.x = p.x();
         point.y = p.y();
