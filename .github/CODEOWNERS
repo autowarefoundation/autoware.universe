@@ -1,5 +1,4 @@
 ### Copied from .github/CODEOWNERS-manual ###
-.github/* @autowarefoundation/autoware-maintainers
 
 ### Automatically generated from package.xml ###
 control/external_cmd_selector/* kenji.miyake@tier4.jp
