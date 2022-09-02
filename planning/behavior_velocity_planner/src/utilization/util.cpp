@@ -272,7 +272,7 @@ geometry_msgs::msg::Pose getAheadPose(
       tf2::Quaternion q0_tf, q1_tf;
       tf2::fromMsg(p0.orientation, q0_tf);
       tf2::fromMsg(p1.orientation, q1_tf);
-      p.orientation = tf2::toMsg(q0_tf.slerp(q1_tf, w_p1));
+      p.orientation = tf2::toMsg(q0_tf.spline(q1_tf, w_p1));
       return p;
     }
     prev_dist = curr_dist;
