@@ -57,6 +57,8 @@ Polygon2d pointsToPoly(const Point2d p0, const Point2d p1, const double radius)
   line_poly.outer().emplace_back(p0.x() - r * sin(angle), p0.y() + r * cos(angle));
   // std::cout << boost::geometry::wkt(line_poly) << std::endl;
   // std::cout << boost::geometry::wkt(line) << std::endl;
+
+  bg::correct(line_poly);
   return line_poly;
 }
 
