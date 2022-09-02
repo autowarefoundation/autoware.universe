@@ -43,6 +43,7 @@ using behavior_velocity_planner::Point2d;
 using behavior_velocity_planner::Polygon2d;
 using behavior_velocity_planner::grid_utils::occlusion_cost_value::OCCUPIED;
 using behavior_velocity_planner::grid_utils::occlusion_cost_value::UNKNOWN;
+namespace bg = boost::geometry;
 
 Polygon2d pointsToPoly(const Point2d p0, const Point2d p1, const double radius)
 {

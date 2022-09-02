@@ -101,37 +101,6 @@ inline Polygon2d lines2polygon(const LineString2d & left_line, const LineString2
   return polygon;
 }
 
-inline double calcOverlapAreaRate(const Polygon2d & target, const Polygon2d & base)
-{
-  /* OverlapAreaRate: common area(target && base) / target area */
-
-  if (bg::within(target, base)) {
-    // target is within base, common area = target area
-    return 1.0;
-  }
-
-  if (!bg::intersects(target, base)) {
-    // target and base has not intersect area
-    return 0.0;
-  }
-
-  // calculate intersect polygon
-  std::vector<Polygon2d> intersects;
-  bg::intersection(target, base, intersects);
-
-  // calculate area of polygon
-  double intersect_area = 0.0;
-  for (const auto & intersect : intersects) {
-    intersect_area += bg::area(intersect);
-  }
-  const double target_area = bg::area(target);
-  // specification of boost1.65
-  // common area is not intersect area
-  const double common_area = target_area - intersect_area;
-
-  return common_area / target_area;
-}
-
 inline geometry_msgs::msg::Polygon toGeomPoly(const Polygon2d & polygon)
 {
   geometry_msgs::msg::Polygon polygon_msg;
