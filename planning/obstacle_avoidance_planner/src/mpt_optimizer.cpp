@@ -745,26 +745,19 @@ boost::optional<Eigen::VectorXd> MPTOptimizer::executeOptimization(
       ref_front_point.orientation =
         tier4_autoware_utils::createQuaternionFromYaw(ref_points.front().yaw);
 
-      const size_t seg_idx = findNearestIndexWithSoftYawConstraints(
+      const size_t front_idx = findNearestIndexWithSoftYawConstraints(
         points_utils::convertToPoints(prev_trajs->mpt_ref_points), ref_front_point,
         traj_param_.ego_nearest_dist_threshold, traj_param_.ego_nearest_yaw_threshold);
-      double offset = motion_utils::calcLongitudinalOffsetToSegment(
-        prev_trajs->mpt_ref_points, seg_idx, ref_points.front().p);
 
-      u0(0) = prev_trajs->mpt_ref_points.at(seg_idx).optimized_kinematic_state(0);
-      u0(1) = prev_trajs->mpt_ref_points.at(seg_idx).optimized_kinematic_state(1);
+      // set initial state
+      u0(0) = prev_trajs->mpt_ref_points.at(front_idx).optimized_kinematic_state(0);
+      u0(1) = prev_trajs->mpt_ref_points.at(front_idx).optimized_kinematic_state(1);
 
+      // set steer angle
       for (size_t i = 0; i + 1 < N_ref; ++i) {
-        size_t prev_idx = seg_idx + i;
-        const size_t prev_N_ref = prev_trajs->mpt_ref_points.size();
-        if (prev_idx + 2 > prev_N_ref) {
-          prev_idx = static_cast<int>(prev_N_ref) - 2;
-          offset = 0.5;
-        }
-
-        const double prev_val = prev_trajs->mpt_ref_points.at(prev_idx).optimized_input;
-        const double next_val = prev_trajs->mpt_ref_points.at(prev_idx + 1).optimized_input;
-        u0(D_x + i) = interpolation::lerp(prev_val, next_val, offset);
+        const size_t prev_target_idx =
+          std::min(front_idx + i, prev_trajs->mpt_ref_points.size() - 1);
+        u0(D_x + i) = prev_trajs->mpt_ref_points.at(prev_target_idx).optimized_input;
       }
     }
   }
@@ -848,6 +841,7 @@ boost::optional<Eigen::VectorXd> MPTOptimizer::executeOptimization(
     mpt_param_.enable_manual_warm_start
       ? optimized_control_variables + u0.segment(0, DIM_X + (N_ref - 1) * DIM_U)
       : optimized_control_variables;
+
   return optimized_control_variables_with_offset;
 }
 
