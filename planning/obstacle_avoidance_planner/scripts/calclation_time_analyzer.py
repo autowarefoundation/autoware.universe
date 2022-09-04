@@ -62,7 +62,7 @@ class CalculationCostAnalyzer(Node):
             if len(self.y_vec[f_idx]) > 100:
                 self.y_vec[f_idx].popleft()
 
-            x_vec = (i for i in range(len(self.y_vec[f_idx])))
+            x_vec = list(range(len(self.y_vec[f_idx])))
 
             self.lines[f_idx].set_xdata(x_vec)
             self.lines[f_idx].set_ydata(self.y_vec[f_idx])
