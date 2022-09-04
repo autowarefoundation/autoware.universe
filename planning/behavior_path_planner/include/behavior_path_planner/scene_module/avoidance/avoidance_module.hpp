@@ -40,7 +40,7 @@ class AvoidanceModule : public SceneModuleInterface
 
 public:
   AvoidanceModule(
-    const std::string & name, rclcpp::Node & node, const AvoidanceParameters & parameters);
+    const std::string & name, rclcpp::Node & node, std::shared_ptr<AvoidanceParameters> parameters);
 
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
@@ -69,10 +69,8 @@ public:
     return false;
   }
 
-  void setParameters(const AvoidanceParameters & parameters);
-
 private:
-  AvoidanceParameters parameters_;
+  std::shared_ptr<AvoidanceParameters> parameters_;
 
   AvoidancePlanningData avoidance_data_;
 
@@ -259,8 +257,6 @@ private:
 
   PathWithLaneId calcCenterLinePath(
     const std::shared_ptr<const PlannerData> & planner_data, const PoseStamped & pose) const;
-
-  void clipPathLength(PathWithLaneId & path) const;
 
   // TODO(Horibe): think later.
   // for unique ID

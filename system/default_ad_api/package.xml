@@ -13,6 +13,7 @@
 
   <depend>autoware_ad_api_msgs</depend>
   <depend>autoware_ad_api_specs</depend>
+  <depend>component_interface_specs</depend>
   <depend>component_interface_utils</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
