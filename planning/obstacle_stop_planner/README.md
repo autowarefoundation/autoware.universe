@@ -11,13 +11,20 @@
 - Adaptive Cruise Controller (ACC)
   - embeds target velocity in trajectory when there is a dynamic point cloud on the trajectory.
 
-When the stop point that has 0 velocity is inserted, the point is inserted in front of the target point cloud by the distance of `baselink to front` + `stop margin`. The `baselink to front` means the distance between `base_link`(center of rear-wheel axis) and front of the car. `stop margin` is determined by the parameters described below.
+In order to stop with a `stop margin` from the obstacle exists, the stop point (`v=0`) is inserted at a distance of `baselink to front` + `stop margin` from the obstacle. The `baselink to front` means the distance between `base_link`(center of rear-wheel axis) and front of the car.
 
-![insert_stop_velocity](./docs/insert_velocity.drawio.svg)
+If a stop point has already been inserted by other nodes between the obstacle and a position which is `stop margin` meters away from the obstacle, the stop point is inserted at a distance of `baselink to front` + `min behavior stop margin` from the obstacle.
+
+<div align="center">
+  <img src="./docs/insert_velocity1.drawio.svg" width=45%>
+  <img src="./docs/insert_velocity2.drawio.svg" width=45%>
+</div>
 
 When the deceleration section is inserted, the start point of the section is inserted in front of the target point cloud by the distance of `baselink to front` + `slow down forward margin`. the end point of the section is inserted behind the target point cloud by the distance of `slow down backward margin` + `baselink to rear`. The `baselink to rear` means the distance between `base_link` and rear of the car. The velocities of points in the deceleration section are modified to the deceleration velocity. `slow down backward margin` and `slow down forward margin` are determined by the parameters described below.
 
-![insert_stop_velocity](./docs/insert_decel_velocity.drawio.svg)
+<div align="center">
+  <img src="./docs/insert_decel_velocity.drawio.svg" width=45%>
+</div>
 
 ## Input topics
 
@@ -39,19 +46,29 @@ When the deceleration section is inserted, the start point of the section is ins
 
 ## Modules
 
+### Common Parameter
+
+| Parameter           | Type   | Description                                                                              |
+| ------------------- | ------ | ---------------------------------------------------------------------------------------- |
+| `enable_slow_down`  | bool   | enable slow down planner [-]                                                             |
+| `max_velocity`      | double | max velocity [m/s]                                                                       |
+| `hunting_threshold` | double | # even if the obstacle disappears, the stop judgment continues for hunting_threshold [s] |
+| `lowpass_gain`      | double | low pass gain for calculating acceleration [-]                                           |
+
 ### Obstacle Stop Planner
 
 #### Role
 
 `Obstacle Stop Planner` module inserts a stop point in trajectory when there is a static point cloud on the trajectory. This module does not work when `Adaptive Cruise Controller` works.
 
-| Parameter                               | Type   | Description                                                                   |
-| --------------------------------------- | ------ | ----------------------------------------------------------------------------- |
-| `stop_planner.stop_margin`              | double | stop margin distance from obstacle on the path [m]                            |
-| `stop_planner.min_behavior_stop_margin` | double | stop margin distance when any other stop point is inserted in stop margin [m] |
-| `stop_planner.step_length`              | double | step length for pointcloud search range [m]                                   |
-| `stop_planner.extend_distance`          | double | extend trajectory to consider after goal obstacle in the extend_distance [m]  |
-| `stop_planner.expand_stop_range`        | double | margin of vehicle footprint [m]                                               |
+| Parameter                                | Type   | Description                                                                   |
+| ---------------------------------------- | ------ | ----------------------------------------------------------------------------- |
+| `stop_planner.stop_margin`               | double | stop margin distance from obstacle on the path [m]                            |
+| `stop_planner.min_behavior_stop_margin`  | double | stop margin distance when any other stop point is inserted in stop margin [m] |
+| `stop_planner.step_length`               | double | step length for pointcloud search range [m]                                   |
+| `stop_planner.extend_distance`           | double | extend trajectory to consider after goal obstacle in the extend_distance [m]  |
+| `stop_planner.expand_stop_range`         | double | margin of vehicle footprint [m]                                               |
+| `stop_planner.hold_stop_margin_distance` | double | parameter for restart prevention (See following section) [m]                  |
 
 #### Flowchart
 
@@ -95,6 +112,27 @@ Then, a detection area is generated by the decimated trajectory as following fig
 The module searches the obstacle pointcloud within detection area. When the pointcloud is found, `Adaptive Cruise Controller` modules starts to work. only when `Adaptive Cruise Controller` modules does not insert target velocity, the stop point is inserted to the trajectory. The stop point means the point with 0 velocity.
 
 ![pointcloud](./docs/point_cloud.drawio.svg)
+
+#### Restart prevention
+
+If it needs X meters (e.g. 0.5 meters) to stop once the vehicle starts moving due to the poor vehicle control performance, the vehicle goes over the stopping position that should be strictly observed when the vehicle starts to moving in order to approach the near stop point (e.g. 0.3 meters away).
+
+This module has parameter `hold_stop_margin_distance` in order to prevent from these redundant restart. If the vehicle is stopped within `hold_stop_margin_distance` meters from stop point of the module (\_front_to_stop_line < hold_stop_margin_distance), the module judges that the vehicle has already stopped for the module's stop point and plans to keep stopping current position even if the vehicle is stopped due to other factors.
+
+<figure markdown>
+  ![example](./docs/restart_prevention.svg){width=1000}
+  <figcaption>parameters</figcaption>
+</figure>
+
+<figure markdown>
+  ![example](./docs/restart.svg){width=1000}
+  <figcaption>outside the hold_stop_margin_distance</figcaption>
+</figure>
+
+<figure markdown>
+  ![example](./docs/keep_stopping.svg){width=1000}
+  <figcaption>inside the hold_stop_margin_distance</figcaption>
+</figure>
 
 ### Slow Down Planner
 
@@ -309,3 +347,5 @@ If the target velocity exceeds the value of `thresh_vel_to_stop`, the target vel
 - It is strongly depends on velocity planning module whether or not it moves according to the target speed embedded by `Adaptive Cruise Controller` module. If the velocity planning module is updated, please take care of the vehicle's behavior as much as possible and always be ready for overriding.
 
 - The velocity estimation algorithm in `Adaptive Cruise Controller` is depend on object tracking module. Please note that if the object-tracking fails or the tracking result is incorrect, it the possibility that the vehicle behaves dangerously.
+
+- It does not work for backward driving, but publishes the path of the input as it is. Please use [obstacle_cruise_planner](../obstacle_cruise_planner/README.md) if you want to stop against an obstacle when backward driving.

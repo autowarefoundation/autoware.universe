@@ -4,13 +4,15 @@
   <name>pose_initializer</name>
   <version>0.1.0</version>
   <description>The pose_initializer package</description>
-  <maintainer email="yamato.ando@gmail.com">Yamato Ando</maintainer>
+  <maintainer email="yamato.ando@tier4.jp">Yamato Ando</maintainer>
   <license>Apache License 2.0</license>
+  <author email="yamato.ando@tier4.jp">Yamato Ando</author>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <build_depend>autoware_cmake</build_depend>
 
+  <depend>fmt</depend>
   <depend>geometry_msgs</depend>
   <depend>libpcl-all-dev</depend>
   <depend>pcl_conversions</depend>
@@ -25,6 +27,7 @@
   <depend>tier4_localization_msgs</depend>
 
   <test_depend>ament_cmake_cppcheck</test_depend>
+  <test_depend>ament_cmake_gmock</test_depend>
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>
 

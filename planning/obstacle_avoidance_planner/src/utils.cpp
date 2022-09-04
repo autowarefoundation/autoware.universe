@@ -110,7 +110,7 @@ std::array<std::vector<double>, 2> validatePoints(
 }
 
 // only two points is supported
-std::vector<double> slerpTwoPoints(
+std::vector<double> splineTwoPoints(
   std::vector<double> base_s, std::vector<double> base_x, const double begin_diff,
   const double end_diff, std::vector<double> new_s)
 {
@@ -259,8 +259,8 @@ std::vector<geometry_msgs::msg::Point> interpolate2DPoints(
   }
 
   // spline interpolation
-  const std::vector<double> interpolated_x = interpolation::slerp(base_s, base_x, new_s);
-  const std::vector<double> interpolated_y = interpolation::slerp(base_s, base_y, new_s);
+  const std::vector<double> interpolated_x = interpolation::spline(base_s, base_x, new_s);
+  const std::vector<double> interpolated_y = interpolation::spline(base_s, base_y, new_s);
   for (size_t i = 0; i < interpolated_x.size(); ++i) {
     if (std::isnan(interpolated_x[i]) || std::isnan(interpolated_y[i])) {
       return std::vector<geometry_msgs::msg::Point>{};
@@ -296,9 +296,9 @@ std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> interpolateConnec
 
   // spline interpolation
   const auto interpolated_x =
-    slerpTwoPoints(base_s, base_x, std::cos(begin_yaw), std::cos(end_yaw), new_s);
+    splineTwoPoints(base_s, base_x, std::cos(begin_yaw), std::cos(end_yaw), new_s);
   const auto interpolated_y =
-    slerpTwoPoints(base_s, base_y, std::sin(begin_yaw), std::sin(end_yaw), new_s);
+    splineTwoPoints(base_s, base_y, std::sin(begin_yaw), std::sin(end_yaw), new_s);
 
   for (size_t i = 0; i < interpolated_x.size(); i++) {
     if (std::isnan(interpolated_x[i]) || std::isnan(interpolated_y[i])) {
@@ -343,9 +343,9 @@ std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> interpolate2DTraj
   const auto monotonic_base_yaw = convertEulerAngleToMonotonic(base_yaw);
 
   // spline interpolation
-  const auto interpolated_x = interpolation::slerp(base_s, base_x, new_s);
-  const auto interpolated_y = interpolation::slerp(base_s, base_y, new_s);
-  const auto interpolated_yaw = interpolation::slerp(base_s, monotonic_base_yaw, new_s);
+  const auto interpolated_x = interpolation::spline(base_s, base_x, new_s);
+  const auto interpolated_y = interpolation::spline(base_s, base_y, new_s);
+  const auto interpolated_yaw = interpolation::spline(base_s, monotonic_base_yaw, new_s);
 
   for (size_t i = 0; i < interpolated_x.size(); i++) {
     if (std::isnan(interpolated_x[i]) || std::isnan(interpolated_y[i])) {
@@ -493,7 +493,7 @@ int getNearestIdx(
 
 namespace utils
 {
-void logOSQPSolutionStatus(const int solution_status)
+void logOSQPSolutionStatus(const int solution_status, const std::string & msg)
 {
   /******************
    * Solver Status  *
@@ -514,38 +514,48 @@ void logOSQPSolutionStatus(const int solution_status)
   } else if (solution_status == LOCAL_OSQP_DUAL_INFEASIBLE_INACCURATE) {
     RCLCPP_WARN(
       rclcpp::get_logger("util"),
-      "[Avoidance] OSQP solution status: OSQP_DUAL_INFEASIBLE_INACCURATE");
+      "[Avoidance] %s OSQP solution status: OSQP_DUAL_INFEASIBLE_INACCURATE", msg.c_str());
   } else if (solution_status == LOCAL_OSQP_PRIMAL_INFEASIBLE_INACCURATE) {
     RCLCPP_WARN(
       rclcpp::get_logger("util"),
-      "[Avoidance] OSQP solution status: OSQP_PRIMAL_INFEASIBLE_INACCURATE");
+      "[Avoidance] %s OSQP solution status: OSQP_PRIMAL_INFEASIBLE_INACCURATE", msg.c_str());
   } else if (solution_status == LOCAL_OSQP_SOLVED_INACCURATE) {
     RCLCPP_WARN(
-      rclcpp::get_logger("util"), "[Avoidance] OSQP solution status: OSQP_SOLVED_INACCURATE");
+      rclcpp::get_logger("util"), "[Avoidance] %s OSQP solution status: OSQP_SOLVED_INACCURATE",
+      msg.c_str());
   } else if (solution_status == LOCAL_OSQP_MAX_ITER_REACHED) {
-    RCLCPP_WARN(rclcpp::get_logger("util"), "[Avoidance] OSQP solution status: OSQP_ITER_REACHED");
+    RCLCPP_WARN(
+      rclcpp::get_logger("util"), "[Avoidance] %s OSQP solution status: OSQP_ITER_REACHED",
+      msg.c_str());
   } else if (solution_status == LOCAL_OSQP_PRIMAL_INFEASIBLE) {
     RCLCPP_WARN(
-      rclcpp::get_logger("util"), "[Avoidance] OSQP solution status: OSQP_PRIMAL_INFEASIBLE");
+      rclcpp::get_logger("util"), "[Avoidance] %s OSQP solution status: OSQP_PRIMAL_INFEASIBLE",
+      msg.c_str());
   } else if (solution_status == LOCAL_OSQP_DUAL_INFEASIBLE) {
     RCLCPP_WARN(
-      rclcpp::get_logger("util"), "[Avoidance] OSQP solution status: OSQP_DUAL_INFEASIBLE");
+      rclcpp::get_logger("util"), "[Avoidance] %s OSQP solution status: OSQP_DUAL_INFEASIBLE",
+      msg.c_str());
   } else if (solution_status == LOCAL_OSQP_SIGINT) {
-    RCLCPP_WARN(rclcpp::get_logger("util"), "[Avoidance] OSQP solution status: OSQP_SIGINT");
+    RCLCPP_WARN(
+      rclcpp::get_logger("util"), "[Avoidance] %s OSQP solution status: OSQP_SIGINT", msg.c_str());
     RCLCPP_WARN(
       rclcpp::get_logger("util"), "[Avoidance] Interrupted by user, process will be finished.");
     std::exit(0);
   } else if (solution_status == LOCAL_OSQP_TIME_LIMIT_REACHED) {
     RCLCPP_WARN(
-      rclcpp::get_logger("util"), "[Avoidance] OSQP solution status: OSQP_TIME_LIMIT_REACHED");
+      rclcpp::get_logger("util"), "[Avoidance] %s OSQP solution status: OSQP_TIME_LIMIT_REACHED",
+      msg.c_str());
   } else if (solution_status == LOCAL_OSQP_UNSOLVED) {
-    RCLCPP_WARN(rclcpp::get_logger("util"), "[Avoidance] OSQP solution status: OSQP_UNSOLVED");
+    RCLCPP_WARN(
+      rclcpp::get_logger("util"), "[Avoidance] %s OSQP solution status: OSQP_UNSOLVED",
+      msg.c_str());
   } else if (solution_status == LOCAL_OSQP_NON_CVX) {
-    RCLCPP_WARN(rclcpp::get_logger("util"), "[Avoidance] OSQP solution status: OSQP_NON_CVX");
+    RCLCPP_WARN(
+      rclcpp::get_logger("util"), "[Avoidance] %s OSQP solution status: OSQP_NON_CVX", msg.c_str());
   } else {
     RCLCPP_WARN(
-      rclcpp::get_logger("util"), "[Avoidance] OSQP solution status: Not defined %d",
-      solution_status);
+      rclcpp::get_logger("util"), "[Avoidance] %s OSQP solution status: Not defined %d",
+      msg.c_str(), solution_status);
   }
 }
 }  // namespace utils

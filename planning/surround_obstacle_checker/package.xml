@@ -7,6 +7,8 @@
   <maintainer email="satoshi.ota@tier4.jp">Satoshi Ota</maintainer>
   <license>Apache License 2.0</license>
 
+  <author email="satoshi.ota@tier4.jp">Satoshi Ota</author>
+
   <buildtool_depend>ament_cmake</buildtool_depend>
   <buildtool_depend>eigen3_cmake_module</buildtool_depend>
 
@@ -14,9 +16,11 @@
 
   <depend>autoware_auto_perception_msgs</depend>
   <depend>autoware_auto_planning_msgs</depend>
+  <depend>autoware_auto_tf2</depend>
   <depend>diagnostic_msgs</depend>
   <depend>eigen</depend>
   <depend>libpcl-all-dev</depend>
+  <depend>motion_utils</depend>
   <depend>pcl_conversions</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>

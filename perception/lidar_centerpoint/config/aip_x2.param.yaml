@@ -1,3 +1,0 @@
-/**:
-  ros__parameters:
-    class_names: ["CAR", "TRUCK", "BUS", "BICYCLE", "PEDESTRIAN"]

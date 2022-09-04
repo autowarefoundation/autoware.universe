@@ -59,7 +59,7 @@ struct Deleter
   void operator()(T * obj) const
   {
     if (obj) {
-      obj->destroy();
+      delete obj;
     }
   }
 };
@@ -130,6 +130,7 @@ public:
 
 private:
   unique_ptr<nvinfer1::IRuntime> runtime_ = nullptr;
+  unique_ptr<nvinfer1::IHostMemory> plan_ = nullptr;
   unique_ptr<nvinfer1::ICudaEngine> engine_ = nullptr;
   unique_ptr<nvinfer1::IExecutionContext> context_ = nullptr;
   cudaStream_t stream_ = nullptr;
@@ -145,6 +146,16 @@ private:
   // Infer using pre-allocated GPU buffers {data, scores, boxes}
   void infer(std::vector<void *> & buffers, const int batch_size);
 };
+
+bool set_cuda_device(int gpu_id)
+{
+  cudaError_t status = cudaSetDevice(gpu_id);
+  if (status != cudaSuccess) {
+    return false;
+  } else {
+    return true;
+  }
+}
 
 }  // namespace yolo
 

@@ -14,6 +14,7 @@
 
 #include "path_distance_calculator.hpp"
 
+#include <motion_utils/motion_utils.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <algorithm>
@@ -47,8 +48,12 @@ PathDistanceCalculator::PathDistanceCalculator(const rclcpp::NodeOptions & optio
       RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 5000, "path empty");
     }
 
-    const double distance = tier4_autoware_utils::calcSignedArcLength(
-      path->points, pose->pose.position, path->points.size() - 1);
+    if (path->points.size() == 1) {
+      RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 5000, "too short path");
+    }
+
+    const double distance =
+      motion_utils::calcSignedArcLength(path->points, pose->pose.position, path->points.size() - 1);
 
     tier4_debug_msgs::msg::Float64Stamped msg;
     msg.stamp = pose->header.stamp;

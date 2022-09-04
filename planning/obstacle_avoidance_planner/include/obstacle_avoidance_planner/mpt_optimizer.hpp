@@ -127,7 +127,7 @@ struct ReferencePoint
   //       one is fixing points around ego for stability
   //       second is fixing current ego pose when no velocity for planning from ego pose
   boost::optional<Eigen::Vector2d> fix_kinematic_state = boost::none;
-  bool plan_from_ego = false;
+  bool plan_from_ego = true;
   Eigen::Vector2d optimized_kinematic_state;
   double optimized_input;
 
@@ -219,6 +219,7 @@ private:
 
   void calcBounds(
     std::vector<ReferencePoint> & ref_points, const bool enable_avoidance, const CVMaps & maps,
+    const std::unique_ptr<Trajectories> & prev_trajs,
     std::shared_ptr<DebugData> debug_data_ptr) const;
 
   void calcVehicleBounds(
@@ -230,12 +231,6 @@ private:
   // const std::unique_ptr<Trajectories> & prev_trajs) const;
 
   void calcOrientation(std::vector<ReferencePoint> & ref_points) const;
-
-  void calcVelocity(std::vector<ReferencePoint> & ref_points) const;
-
-  void calcVelocity(
-    std::vector<ReferencePoint> & ref_points,
-    const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points) const;
 
   void calcCurvature(std::vector<ReferencePoint> & ref_points) const;
 

@@ -14,16 +14,17 @@
 
 import os
 
-from ament_index_python.packages import get_package_share_directory
 import launch
 from launch.actions import DeclareLaunchArgument
-from launch.actions import ExecuteProcess
 from launch.actions import GroupAction
+from launch.actions import IncludeLaunchDescription
 from launch.actions import OpaqueFunction
 from launch.actions import SetLaunchConfiguration
 from launch.conditions import IfCondition
 from launch.conditions import UnlessCondition
+from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
+from launch.substitutions import PythonExpression
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
 from launch_ros.substitutions import FindPackageShare
@@ -37,10 +38,19 @@ def launch_setup(context, *args, **kwargs):
     with open(vehicle_info_param_path, "r") as f:
         vehicle_info_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
+    # nearest search parameter
+    nearest_search_param_path = os.path.join(
+        LaunchConfiguration("tier4_planning_launch_param_path").perform(context),
+        "scenario_planning",
+        "common",
+        "nearest_search.param.yaml",
+    )
+    with open(nearest_search_param_path, "r") as f:
+        nearest_search_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+
     # behavior path planner
     side_shift_param_path = os.path.join(
-        get_package_share_directory("tier4_planning_launch"),
-        "config",
+        LaunchConfiguration("tier4_planning_launch_param_path").perform(context),
         "scenario_planning",
         "lane_driving",
         "behavior_planning",
@@ -52,8 +62,7 @@ def launch_setup(context, *args, **kwargs):
         side_shift_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     avoidance_param_path = os.path.join(
-        get_package_share_directory("tier4_planning_launch"),
-        "config",
+        LaunchConfiguration("tier4_planning_launch_param_path").perform(context),
         "scenario_planning",
         "lane_driving",
         "behavior_planning",
@@ -65,8 +74,7 @@ def launch_setup(context, *args, **kwargs):
         avoidance_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     lane_change_param_path = os.path.join(
-        get_package_share_directory("tier4_planning_launch"),
-        "config",
+        LaunchConfiguration("tier4_planning_launch_param_path").perform(context),
         "scenario_planning",
         "lane_driving",
         "behavior_planning",
@@ -78,8 +86,7 @@ def launch_setup(context, *args, **kwargs):
         lane_change_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     lane_following_param_path = os.path.join(
-        get_package_share_directory("tier4_planning_launch"),
-        "config",
+        LaunchConfiguration("tier4_planning_launch_param_path").perform(context),
         "scenario_planning",
         "lane_driving",
         "behavior_planning",
@@ -91,8 +98,7 @@ def launch_setup(context, *args, **kwargs):
         lane_following_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     pull_over_param_path = os.path.join(
-        get_package_share_directory("tier4_planning_launch"),
-        "config",
+        LaunchConfiguration("tier4_planning_launch_param_path").perform(context),
         "scenario_planning",
         "lane_driving",
         "behavior_planning",
@@ -104,8 +110,7 @@ def launch_setup(context, *args, **kwargs):
         pull_over_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     pull_out_param_path = os.path.join(
-        get_package_share_directory("tier4_planning_launch"),
-        "config",
+        LaunchConfiguration("tier4_planning_launch_param_path").perform(context),
         "scenario_planning",
         "lane_driving",
         "behavior_planning",
@@ -117,8 +122,7 @@ def launch_setup(context, *args, **kwargs):
         pull_out_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     behavior_path_planner_param_path = os.path.join(
-        get_package_share_directory("tier4_planning_launch"),
-        "config",
+        LaunchConfiguration("tier4_planning_launch_param_path").perform(context),
         "scenario_planning",
         "lane_driving",
         "behavior_planning",
@@ -139,36 +143,12 @@ def launch_setup(context, *args, **kwargs):
             ("~/input/perception", "/perception/object_recognition/objects"),
             ("~/input/odometry", "/localization/kinematic_state"),
             ("~/input/scenario", "/planning/scenario_planning/scenario"),
-            (
-                "~/input/external_approval",
-                "/planning/scenario_planning/lane_driving/behavior_planning/"
-                "behavior_path_planner/path_change_approval",
-            ),
-            (
-                "~/input/force_approval",
-                "/planning/scenario_planning/lane_driving/behavior_planning/"
-                "behavior_path_planner/path_change_force",
-            ),
             ("~/output/path", "path_with_lane_id"),
-            (
-                "~/output/ready",
-                "/planning/scenario_planning/lane_driving/behavior_planning/"
-                "behavior_path_planner/ready_module",
-            ),
-            (
-                "~/output/running",
-                "/planning/scenario_planning/lane_driving/behavior_planning/"
-                "behavior_path_planner/running_modules",
-            ),
-            (
-                "~/output/force_available",
-                "/planning/scenario_planning/lane_driving/behavior_planning/"
-                "behavior_path_planner/force_available",
-            ),
             ("~/output/turn_indicators_cmd", "/planning/turn_indicators_cmd"),
             ("~/output/hazard_lights_cmd", "/planning/hazard_lights_cmd"),
         ],
         parameters=[
+            nearest_search_param,
             side_shift_param,
             avoidance_param,
             lane_change_param,
@@ -188,10 +168,39 @@ def launch_setup(context, *args, **kwargs):
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
 
+    # smoother param
+    common_param_path = os.path.join(
+        LaunchConfiguration("tier4_planning_launch_param_path").perform(context),
+        "scenario_planning",
+        "common",
+        "common.param.yaml",
+    )
+    with open(common_param_path, "r") as f:
+        common_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+
+    motion_velocity_smoother_param_path = os.path.join(
+        LaunchConfiguration("tier4_planning_launch_param_path").perform(context),
+        "scenario_planning",
+        "common",
+        "motion_velocity_smoother",
+        "motion_velocity_smoother.param.yaml",
+    )
+    with open(motion_velocity_smoother_param_path, "r") as f:
+        motion_velocity_smoother_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+
+    smoother_type_param_path = os.path.join(
+        LaunchConfiguration("tier4_planning_launch_param_path").perform(context),
+        "scenario_planning",
+        "common",
+        "motion_velocity_smoother",
+        "Analytical.param.yaml",
+    )
+    with open(smoother_type_param_path, "r") as f:
+        smoother_type_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+
     # behavior velocity planner
     blind_spot_param_path = os.path.join(
-        get_package_share_directory("tier4_planning_launch"),
-        "config",
+        LaunchConfiguration("tier4_planning_launch_param_path").perform(context),
         "scenario_planning",
         "lane_driving",
         "behavior_planning",
@@ -202,8 +211,7 @@ def launch_setup(context, *args, **kwargs):
         blind_spot_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     crosswalk_param_path = os.path.join(
-        get_package_share_directory("tier4_planning_launch"),
-        "config",
+        LaunchConfiguration("tier4_planning_launch_param_path").perform(context),
         "scenario_planning",
         "lane_driving",
         "behavior_planning",
@@ -214,8 +222,7 @@ def launch_setup(context, *args, **kwargs):
         crosswalk_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     detection_area_param_path = os.path.join(
-        get_package_share_directory("tier4_planning_launch"),
-        "config",
+        LaunchConfiguration("tier4_planning_launch_param_path").perform(context),
         "scenario_planning",
         "lane_driving",
         "behavior_planning",
@@ -226,8 +233,7 @@ def launch_setup(context, *args, **kwargs):
         detection_area_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     intersection_param_path = os.path.join(
-        get_package_share_directory("tier4_planning_launch"),
-        "config",
+        LaunchConfiguration("tier4_planning_launch_param_path").perform(context),
         "scenario_planning",
         "lane_driving",
         "behavior_planning",
@@ -238,8 +244,7 @@ def launch_setup(context, *args, **kwargs):
         intersection_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     stop_line_param_path = os.path.join(
-        get_package_share_directory("tier4_planning_launch"),
-        "config",
+        LaunchConfiguration("tier4_planning_launch_param_path").perform(context),
         "scenario_planning",
         "lane_driving",
         "behavior_planning",
@@ -250,8 +255,7 @@ def launch_setup(context, *args, **kwargs):
         stop_line_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     traffic_light_param_path = os.path.join(
-        get_package_share_directory("tier4_planning_launch"),
-        "config",
+        LaunchConfiguration("tier4_planning_launch_param_path").perform(context),
         "scenario_planning",
         "lane_driving",
         "behavior_planning",
@@ -262,8 +266,7 @@ def launch_setup(context, *args, **kwargs):
         traffic_light_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     virtual_traffic_light_param_path = os.path.join(
-        get_package_share_directory("tier4_planning_launch"),
-        "config",
+        LaunchConfiguration("tier4_planning_launch_param_path").perform(context),
         "scenario_planning",
         "lane_driving",
         "behavior_planning",
@@ -274,8 +277,7 @@ def launch_setup(context, *args, **kwargs):
         virtual_traffic_light_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     occlusion_spot_param_path = os.path.join(
-        get_package_share_directory("tier4_planning_launch"),
-        "config",
+        LaunchConfiguration("tier4_planning_launch_param_path").perform(context),
         "scenario_planning",
         "lane_driving",
         "behavior_planning",
@@ -286,8 +288,7 @@ def launch_setup(context, *args, **kwargs):
         occlusion_spot_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     no_stopping_area_param_path = os.path.join(
-        get_package_share_directory("tier4_planning_launch"),
-        "config",
+        LaunchConfiguration("tier4_planning_launch_param_path").perform(context),
         "scenario_planning",
         "lane_driving",
         "behavior_planning",
@@ -296,6 +297,28 @@ def launch_setup(context, *args, **kwargs):
     )
     with open(no_stopping_area_param_path, "r") as f:
         no_stopping_area_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+
+    run_out_param_path = os.path.join(
+        LaunchConfiguration("tier4_planning_launch_param_path").perform(context),
+        "scenario_planning",
+        "lane_driving",
+        "behavior_planning",
+        "behavior_velocity_planner",
+        "run_out.param.yaml",
+    )
+    with open(run_out_param_path, "r") as f:
+        run_out_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+
+    behavior_velocity_planner_param_path = os.path.join(
+        LaunchConfiguration("tier4_planning_launch_param_path").perform(context),
+        "scenario_planning",
+        "lane_driving",
+        "behavior_planning",
+        "behavior_velocity_planner",
+        "behavior_velocity_planner.param.yaml",
+    )
+    with open(behavior_velocity_planner_param_path, "r") as f:
+        behavior_velocity_planner_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     behavior_velocity_planner_component = ComposableNode(
         package="behavior_velocity_planner",
@@ -312,12 +335,20 @@ def launch_setup(context, *args, **kwargs):
                 "/perception/obstacle_segmentation/pointcloud",
             ),
             (
+                "~/input/compare_map_filtered_pointcloud",
+                "compare_map_filtered/pointcloud",
+            ),
+            (
                 "~/input/traffic_signals",
                 "/perception/traffic_light_recognition/traffic_signals",
             ),
             (
                 "~/input/external_traffic_signals",
                 "/external/traffic_light_recognition/traffic_signals",
+            ),
+            (
+                "~/input/external_velocity_limit_mps",
+                "/planning/scenario_planning/max_velocity_default",
             ),
             ("~/input/virtual_traffic_light_states", "/awapi/tmp/virtual_traffic_light_states"),
             (
@@ -333,21 +364,8 @@ def launch_setup(context, *args, **kwargs):
             ("~/output/traffic_signal", "debug/traffic_signal"),
         ],
         parameters=[
-            {
-                "launch_stop_line": True,
-                "launch_crosswalk": True,
-                "launch_traffic_light": True,
-                "launch_intersection": True,
-                "launch_blind_spot": True,
-                "launch_detection_area": True,
-                "launch_virtual_traffic_light": True,
-                "launch_occlusion_spot": True,
-                "launch_no_stopping_area": True,
-                "forward_path_length": 1000.0,
-                "backward_path_length": 5.0,
-                "max_accel": -2.8,
-                "delay_response_time": 1.3,
-            },
+            nearest_search_param,
+            behavior_velocity_planner_param,
             blind_spot_param,
             crosswalk_param,
             detection_area_param,
@@ -358,6 +376,10 @@ def launch_setup(context, *args, **kwargs):
             occlusion_spot_param,
             no_stopping_area_param,
             vehicle_info_param,
+            run_out_param,
+            common_param,
+            motion_velocity_smoother_param,
+            smoother_type_param,
         ],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
@@ -374,22 +396,58 @@ def launch_setup(context, *args, **kwargs):
         output="screen",
     )
 
+    # This condition is true if run_out module is enabled and its detection method is Points
+    launch_run_out_with_points_method = PythonExpression(
+        [
+            LaunchConfiguration(
+                "launch_run_out", default=behavior_velocity_planner_param["launch_run_out"]
+            ),
+            " and ",
+            "'",
+            run_out_param["run_out"]["detection_method"],
+            "' == 'Points'",
+        ]
+    )
+
+    # load compare map for run_out module
+    load_compare_map = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            [
+                FindPackageShare("tier4_planning_launch"),
+                "/launch/scenario_planning/lane_driving/behavior_planning/compare_map.launch.py",
+            ],
+        ),
+        launch_arguments={
+            "use_pointcloud_container": LaunchConfiguration("use_pointcloud_container"),
+            "container_name": LaunchConfiguration("container_name"),
+            "use_multithread": "true",
+        }.items(),
+        # launch compare map only when run_out module is enabled and detection method is Points
+        condition=IfCondition(launch_run_out_with_points_method),
+    )
+
+    load_vector_map_inside_area_filter = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            [
+                FindPackageShare("tier4_planning_launch"),
+                "/launch/scenario_planning/lane_driving/behavior_planning/vector_map_inside_area_filter.launch.py",
+            ]
+        ),
+        launch_arguments={
+            "use_pointcloud_container": LaunchConfiguration("use_pointcloud_container"),
+            "container_name": LaunchConfiguration("container_name"),
+            "use_multithread": "true",
+            "polygon_type": "no_obstacle_segmentation_area_for_run_out",
+        }.items(),
+        # launch vector map filter only when run_out module is enabled and detection method is Points
+        condition=IfCondition(launch_run_out_with_points_method),
+    )
+
     group = GroupAction(
         [
             container,
-            ExecuteProcess(
-                cmd=[
-                    "ros2",
-                    "topic",
-                    "pub",
-                    "/planning/scenario_planning/lane_driving/behavior_planning/"
-                    "behavior_path_planner/path_change_approval",
-                    "tier4_planning_msgs/msg/Approval",
-                    "{approval: true}",
-                    "-r",
-                    "10",
-                ]
-            ),
+            load_compare_map,
+            load_vector_map_inside_area_filter,
         ]
     )
 
@@ -418,9 +476,15 @@ def generate_launch_description():
     )
     add_launch_arg("map_topic_name", "/map/vector_map", "input topic of map")
 
+    add_launch_arg("tier4_planning_launch_param_path", None, "tier4_planning_launch parameter path")
+
     # component
     add_launch_arg("use_intra_process", "false", "use ROS2 component container communication")
     add_launch_arg("use_multithread", "false", "use multithread")
+
+    # for points filter of run out module
+    add_launch_arg("use_pointcloud_container", "true")
+    add_launch_arg("container_name", "pointcloud_container")
 
     set_container_executable = SetLaunchConfiguration(
         "container_executable",

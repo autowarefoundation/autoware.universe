@@ -31,6 +31,7 @@ target_compile_options(${PROJECT_NAME} PRIVATE -Wno-error=old-style-cast -Wno-er
 target_include_directories(osqp_interface
   SYSTEM PUBLIC
     "${OSQP_INCLUDE_DIR}"
+    "${EIGEN3_INCLUDE_DIR}"
 )
 
 ament_target_dependencies(osqp_interface
@@ -49,7 +50,7 @@ if(BUILD_TESTING)
     test/test_csc_matrix_conv.cpp
   )
   set(TEST_OSQP_INTERFACE_EXE test_osqp_interface)
-  ament_add_gtest(${TEST_OSQP_INTERFACE_EXE} ${TEST_SOURCES})
+  ament_add_ros_isolated_gtest(${TEST_OSQP_INTERFACE_EXE} ${TEST_SOURCES})
   target_link_libraries(${TEST_OSQP_INTERFACE_EXE} ${PROJECT_NAME})
 endif()
 

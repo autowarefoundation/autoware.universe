@@ -42,9 +42,9 @@ TrtCommon::TrtCommon(std::string model_path, std::string precision)
   precision_(precision),
   input_name_("input_0"),
   output_name_("output_0"),
-  is_initialized_(false),
-  max_batch_size_(1)
+  is_initialized_(false)
 {
+  runtime_ = UniquePtr<nvinfer1::IRuntime>(nvinfer1::createInferRuntime(logger_));
 }
 
 void TrtCommon::setup()
@@ -86,9 +86,8 @@ bool TrtCommon::loadEngine(std::string engine_file_path)
   std::stringstream engine_buffer;
   engine_buffer << engine_file.rdbuf();
   std::string engine_str = engine_buffer.str();
-  runtime_ = UniquePtr<nvinfer1::IRuntime>(nvinfer1::createInferRuntime(logger_));
   engine_ = UniquePtr<nvinfer1::ICudaEngine>(runtime_->deserializeCudaEngine(
-    reinterpret_cast<const void *>(engine_str.data()), engine_str.size(), nullptr));
+    reinterpret_cast<const void *>(engine_str.data()), engine_str.size()));
   return true;
 }
 
@@ -106,8 +105,11 @@ bool TrtCommon::buildEngineFromOnnx(std::string onnx_file_path, std::string outp
     return false;
   }
 
-  builder->setMaxBatchSize(max_batch_size_);
+#if (NV_TENSORRT_MAJOR * 1000) + (NV_TENSORRT_MINOR * 100) + NV_TENSOR_PATCH >= 8400
+  config->setMemoryPoolLimit(nvinfer1::MemoryPoolType::kWORKSPACE, 16 << 20);
+#else
   config->setMaxWorkspaceSize(16 << 20);
+#endif
 
   if (precision_ == "fp16") {
     config->setFlag(nvinfer1::BuilderFlag::kFP16);
@@ -117,19 +119,23 @@ bool TrtCommon::buildEngineFromOnnx(std::string onnx_file_path, std::string outp
     return false;
   }
 
-  engine_ = UniquePtr<nvinfer1::ICudaEngine>(builder->buildEngineWithConfig(*network, *config));
+  auto plan = UniquePtr<nvinfer1::IHostMemory>(builder->buildSerializedNetwork(*network, *config));
+  if (!plan) {
+    return false;
+  }
+  engine_ =
+    UniquePtr<nvinfer1::ICudaEngine>(runtime_->deserializeCudaEngine(plan->data(), plan->size()));
   if (!engine_) {
     return false;
   }
 
   // save engine
-  nvinfer1::IHostMemory * data = engine_->serialize();
   std::ofstream file;
   file.open(output_engine_file_path, std::ios::binary | std::ios::out);
   if (!file.is_open()) {
     return false;
   }
-  file.write((const char *)data->data(), data->size());
+  file.write((const char *)plan->data(), plan->size());
   file.close();
 
   return true;

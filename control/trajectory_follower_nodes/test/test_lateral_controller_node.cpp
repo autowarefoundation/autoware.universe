@@ -51,7 +51,8 @@ std::shared_ptr<LateralController> makeLateralNode()
   rclcpp::NodeOptions node_options;
   node_options.arguments(
     {"--ros-args", "--params-file", share_dir + "/param/lateral_controller_defaults.param.yaml",
-     "--params-file", share_dir + "/param/test_vehicle_info.param.yaml"});
+     "--params-file", share_dir + "/param/test_vehicle_info.param.yaml", "--params-file",
+     share_dir + "/param/test_nearest_search.param.yaml"});
   std::shared_ptr<LateralController> node = std::make_shared<LateralController>(node_options);
 
   // Enable all logging in the node
@@ -432,17 +433,4 @@ TEST_F(FakeNodeFixture, stopped)
   EXPECT_EQ(cmd_msg->steering_tire_angle, steer_msg.steering_tire_angle);
   EXPECT_EQ(cmd_msg->steering_tire_rotation_rate, 0.0f);
   EXPECT_GT(rclcpp::Time(cmd_msg->stamp), rclcpp::Time(traj_msg.header.stamp));
-}
-
-// TODO(Maxime CLEMENT): disabled as this test crashes in the CI but works locally
-TEST_F(FakeNodeFixture, DISABLED_set_lateral_param_smoke_test)
-{
-  // Node
-  std::shared_ptr<LateralController> node = makeLateralNode();
-  // give the node some time to initialize completely
-  std::this_thread::sleep_for(std::chrono::milliseconds{100LL});
-
-  // Change some parameter value
-  auto result = node->set_parameter(rclcpp::Parameter("mpc_prediction_horizon", 10));
-  EXPECT_TRUE(result.successful);
 }

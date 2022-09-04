@@ -18,6 +18,8 @@
 #include "obstacle_stop_planner/adaptive_cruise_control.hpp"
 #include "obstacle_stop_planner/debug_marker.hpp"
 
+#include <motion_utils/trajectory/tmp_conversion.hpp>
+#include <motion_utils/trajectory/trajectory.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -26,8 +28,6 @@
 #include <signal_processing/lowpass_filter_1d.hpp>
 #include <tier4_autoware_utils/math/unit_conversion.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
-#include <tier4_autoware_utils/trajectory/tmp_conversion.hpp>
-#include <tier4_autoware_utils/trajectory/trajectory.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
@@ -98,22 +98,23 @@ public:
 
   struct NodeParam
   {
-    bool enable_slow_down;         // set True, slow down for obstacle beside the path
-    double max_velocity;           // max velocity [m/s]
-    double lowpass_gain;           // smoothing calculated current acceleration [-]
-    double hunting_threshold;      // keep slow down or stop state if obstacle vanished [s]
-    double max_yaw_deviation_rad;  // maximum ego yaw deviation from trajectory [rad] (measures
-                                   // against overlapping lanes)
+    bool enable_slow_down;              // set True, slow down for obstacle beside the path
+    double max_velocity;                // max velocity [m/s]
+    double lowpass_gain;                // smoothing calculated current acceleration [-]
+    double hunting_threshold;           // keep slow down or stop state if obstacle vanished [s]
+    double ego_nearest_dist_threshold;  // dist threshold for ego's nearest index
+    double ego_nearest_yaw_threshold;   // yaw threshold for ego's nearest index
   };
 
   struct StopParam
   {
-    double stop_margin;               // stop margin distance from obstacle on the path [m]
-    double min_behavior_stop_margin;  // margin distance, any other stop point is inserted [m]
-    double expand_stop_range;         // margin of vehicle footprint [m]
-    double extend_distance;           // trajectory extend_distance [m]
-    double step_length;               // step length for pointcloud search range [m]
-    double stop_search_radius;        // search radius for obstacle point cloud [m]
+    double stop_margin;                // stop margin distance from obstacle on the path [m]
+    double min_behavior_stop_margin;   // margin distance, any other stop point is inserted [m]
+    double expand_stop_range;          // margin of vehicle footprint [m]
+    double extend_distance;            // trajectory extend_distance [m]
+    double step_length;                // step length for pointcloud search range [m]
+    double stop_search_radius;         // search radius for obstacle point cloud [m]
+    double hold_stop_margin_distance;  // keep stopping if the ego is in this margin [m]
   };
 
   struct SlowDownParam
@@ -184,16 +185,19 @@ private:
   std::unique_ptr<motion_planning::AdaptiveCruiseController> acc_controller_;
   std::shared_ptr<ObstacleStopPlannerDebugNode> debug_ptr_;
   std::shared_ptr<LowpassFilter1d> lpf_acc_{nullptr};
-  boost::optional<SlowDownSection> latest_slow_down_section_{};
+  boost::optional<StopPoint> latest_stop_point_{boost::none};
+  boost::optional<SlowDownSection> latest_slow_down_section_{boost::none};
   tf2_ros::Buffer tf_buffer_{get_clock()};
   tf2_ros::TransformListener tf_listener_{tf_buffer_};
   sensor_msgs::msg::PointCloud2::SharedPtr obstacle_ros_pointcloud_ptr_{nullptr};
   PredictedObjects::ConstSharedPtr object_ptr_{nullptr};
-  rclcpp::Time last_detection_time_;
+  rclcpp::Time last_detect_time_collision_point_;
+  rclcpp::Time last_detect_time_slowdown_point_;
 
   nav_msgs::msg::Odometry::ConstSharedPtr current_velocity_ptr_{nullptr};
   nav_msgs::msg::Odometry::ConstSharedPtr prev_velocity_ptr_{nullptr};
   double current_acc_{0.0};
+  bool is_driving_forward_{true};
 
   bool set_velocity_limit_{false};
 
@@ -234,7 +238,7 @@ private:
   void insertVelocity(
     TrajectoryPoints & trajectory, PlannerData & planner_data,
     const std_msgs::msg::Header & trajectory_header, const VehicleInfo & vehicle_info,
-    const double current_acc, const StopParam & stop_param);
+    const double current_acc, const double current_vel, const StopParam & stop_param);
 
   TrajectoryPoints decimateTrajectory(
     const TrajectoryPoints & input, const double step_length, std::map<size_t, size_t> & index_map);
@@ -284,7 +288,7 @@ private:
   SlowDownSection createSlowDownSection(
     const int idx, const TrajectoryPoints & base_trajectory, const double lateral_deviation,
     const double dist_remain, const double dist_vehicle_to_obstacle,
-    const VehicleInfo & vehicle_info, const double current_acc);
+    const VehicleInfo & vehicle_info, const double current_acc, const double current_vel);
 
   SlowDownSection createSlowDownSectionFromMargin(
     const int idx, const TrajectoryPoints & base_trajectory, const double forward_margin,
@@ -299,9 +303,10 @@ private:
 
   void setExternalVelocityLimit();
 
-  void resetExternalVelocityLimit(const double current_acc);
+  void resetExternalVelocityLimit(const double current_acc, const double current_vel);
 
-  void publishDebugData(const PlannerData & planner_data, const double current_acc);
+  void publishDebugData(
+    const PlannerData & planner_data, const double current_acc, const double current_vel);
 };
 }  // namespace motion_planning
 

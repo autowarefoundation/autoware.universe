@@ -17,12 +17,10 @@
 
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 
-#include <lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 
-#include <memory>
 #include <string>
 
 namespace behavior_path_planner
@@ -47,7 +45,7 @@ public:
   bool isExecutionReady() const override;
   BT::NodeStatus updateState() override;
   BehaviorModuleOutput plan() override;
-  PathWithLaneId planCandidate() const override;
+  CandidateOutput planCandidate() const override;
   void onEntry() override;
   void onExit() override;
 
