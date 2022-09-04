@@ -339,8 +339,9 @@ std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
       }
 
       // calc non fixed traj points
-      const auto fixed_ref_points_with_yaw = points_utils::convertToPosesWithYawEstimation(
-        points_utils::convertToPoints(fixed_ref_points));
+      // const auto fixed_ref_points_with_yaw = points_utils::convertToPosesWithYawEstimation(
+      // points_utils::convertToPoints(fixed_ref_points));
+      const auto fixed_ref_points_with_yaw = points_utils::convertToPoses(fixed_ref_points);
       const auto seg_idx_optional = motion_utils::findNearestSegmentIndex(
         smoothed_points, fixed_ref_points_with_yaw.back(), std::numeric_limits<double>::max(),
         traj_param_.delta_yaw_threshold_for_closest_point);
@@ -528,6 +529,9 @@ std::vector<ReferencePoint> MPTOptimizer::getFixedReferencePoints(
     fixed_ref_point.fix_kinematic_state = prev_ref_point.optimized_kinematic_state;
 
     fixed_ref_points.push_back(fixed_ref_point);
+    if (mpt_param_.is_fixed_point_single) {
+      break;
+    }
   }
 
   return fixed_ref_points;
