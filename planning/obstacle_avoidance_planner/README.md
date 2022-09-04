@@ -810,5 +810,4 @@ Although it has a cons to converge to the local minima, it can get a good soluti
 
 # Debug
 
-Debug information are writen here.
-[Debug](docs/debug.md)
+Debug information are writen [here](debug.md).
