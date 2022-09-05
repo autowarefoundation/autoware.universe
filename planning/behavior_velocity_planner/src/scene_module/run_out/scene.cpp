@@ -593,16 +593,7 @@ boost::optional<geometry_msgs::msg::Pose> RunOutModule::calcStopPoint(
     stop_dist = boost::make_optional<double>(dist_to_collision);
   }
 
-  // debug
-  {
-    const float base_to_obstacle =
-      planner_param_.vehicle_param.base_to_front + planner_param_.run_out.stop_margin;
-    const auto vehicle_stop_idx = run_out_utils::calcIndexByLength(
-      path.points, current_pose, stop_dist.get() + base_to_obstacle);
-    const auto & p = path.points.at(vehicle_stop_idx).point.pose.position;
-    debug_ptr_->pushDebugPoints(p, PointType::Yellow);
-    debug_ptr_->setDebugValues(DebugValues::TYPE::STOP_DISTANCE, *stop_dist);
-  }
+  debug_ptr_->setDebugValues(DebugValues::TYPE::STOP_DISTANCE, *stop_dist);
 
   // vehicle have to decelerate if there is not enough distance with deceleration_jerk
   const bool deceleration_needed =
