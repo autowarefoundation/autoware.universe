@@ -561,6 +561,7 @@ BehaviorModuleOutput PullOverModule::plan()
       RCLCPP_ERROR(
         getLogger(), "search_priority should be efficient_path or close_goal, but %s is given.",
         parameters_.search_priority.c_str());
+      throw std::domain_error("[pull_over] invalid search_priority");
     }
 
     // Decelerate before the minimum shift distance from the goal search area.
@@ -580,12 +581,16 @@ BehaviorModuleOutput PullOverModule::plan()
   // safe: use pull over path
   if (status_.is_safe) {
     output.path = std::make_shared<PathWithLaneId>(status_.path);
-  } else if (status_.prev_is_safe || status_.prev_stop_path == nullptr) {
+  } else {
+    RCLCPP_WARN_THROTTLE(
+      getLogger(), *clock_, 5000, "Not found safe pull_over path. Stop in road lane.");
     // safe -> not_safe or no prev_stop_path: generate new stop_path
-    output.path = std::make_shared<PathWithLaneId>(generateStopPath());
-    status_.prev_stop_path = output.path;
-  } else {  // not_safe -> not_safe: use previous stop path
-    output.path = status_.prev_stop_path;
+    if (status_.prev_is_safe || status_.prev_stop_path == nullptr) {
+      output.path = std::make_shared<PathWithLaneId>(generateStopPath());
+      status_.prev_stop_path = output.path;
+    } else {  // not_safe -> not_safe: use previous stop path
+      output.path = status_.prev_stop_path;
+    }
   }
   status_.prev_is_safe = status_.is_safe;
 
