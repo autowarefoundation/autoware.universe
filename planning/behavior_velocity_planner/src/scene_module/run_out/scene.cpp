@@ -156,8 +156,9 @@ Polygons2d RunOutModule::createDetectionAreaPolygon(const PathWithLaneId & smoot
   da_range.min_lateral_distance = p.vehicle_param.width / 2.0;
   da_range.max_lateral_distance = obstacle_vel_mps * p.dynamic_obstacle.max_prediction_time;
   Polygons2d detection_area_poly;
+  const size_t ego_seg_idx = findEgoSegmentIndex(smoothed_path.points);
   planning_utils::createDetectionAreaPolygons(
-    detection_area_poly, smoothed_path, planner_data_->current_pose.pose, da_range,
+    detection_area_poly, smoothed_path, planner_data_->current_pose.pose, ego_seg_idx, da_range,
     p.dynamic_obstacle.max_vel_kmph / 3.6);
 
   for (const auto & poly : detection_area_poly) {
@@ -411,8 +412,8 @@ boost::optional<geometry_msgs::msg::Pose> RunOutModule::calcPredictedObstaclePos
 }
 
 bool RunOutModule::checkCollisionWithShape(
-  const tier4_autoware_utils::Polygon2d & vehicle_polygon, const PoseWithRange pose_with_range,
-  const Shape & shape, std::vector<geometry_msgs::msg::Point> & collision_points) const
+  const Polygon2d & vehicle_polygon, const PoseWithRange pose_with_range, const Shape & shape,
+  std::vector<geometry_msgs::msg::Point> & collision_points) const
 {
   bool collision_detected = false;
   switch (shape.type) {
@@ -438,8 +439,8 @@ bool RunOutModule::checkCollisionWithShape(
 }
 
 bool RunOutModule::checkCollisionWithCylinder(
-  const tier4_autoware_utils::Polygon2d & vehicle_polygon, const PoseWithRange pose_with_range,
-  const float radius, std::vector<geometry_msgs::msg::Point> & collision_points) const
+  const Polygon2d & vehicle_polygon, const PoseWithRange pose_with_range, const float radius,
+  std::vector<geometry_msgs::msg::Point> & collision_points) const
 {
   // create bounding box for min and max velocity point
   const auto bounding_box_for_points =
@@ -503,7 +504,7 @@ std::vector<geometry_msgs::msg::Point> RunOutModule::createBoundingBoxForRangedP
 }
 
 bool RunOutModule::checkCollisionWithBoundingBox(
-  const tier4_autoware_utils::Polygon2d & vehicle_polygon, const PoseWithRange pose_with_range,
+  const Polygon2d & vehicle_polygon, const PoseWithRange pose_with_range,
   const geometry_msgs::msg::Vector3 & dimension,
   std::vector<geometry_msgs::msg::Point> & collision_points) const
 {

@@ -37,6 +37,7 @@
 #include <set>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 // Debug
 #include <rclcpp/rclcpp.hpp>
@@ -110,6 +111,22 @@ protected:
 
   void setSafe(const bool safe) { safe_ = safe; }
   void setDistance(const double distance) { distance_ = distance; }
+
+  template <class T>
+  size_t findEgoSegmentIndex(const std::vector<T> & points) const
+  {
+    const auto & p = planner_data_;
+    return motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+      points, p->current_pose.pose, p->ego_nearest_dist_threshold, p->ego_nearest_yaw_threshold);
+  }
+
+  template <class T>
+  size_t findEgoIndex(const std::vector<T> & points) const
+  {
+    const auto & p = planner_data_;
+    return motion_utils::findFirstNearestIndexWithSoftConstraints(
+      points, p->current_pose.pose, p->ego_nearest_dist_threshold, p->ego_nearest_yaw_threshold);
+  }
 };
 
 class SceneModuleManagerInterface
@@ -209,6 +226,7 @@ protected:
     pub_debug_->publish(debug_marker_array);
     if (is_publish_debug_path_) {
       autoware_auto_planning_msgs::msg::PathWithLaneId debug_path;
+      debug_path.header = path->header;
       debug_path.points = path->points;
       pub_debug_path_->publish(debug_path);
     }
@@ -258,6 +276,23 @@ protected:
       scene_module->getModuleId());
     registered_module_id_set_.erase(scene_module->getModuleId());
     scene_modules_.erase(scene_module);
+  }
+
+  template <class T>
+  size_t findEgoSegmentIndex(const std::vector<T> & points) const
+  {
+    const auto & p = planner_data_;
+    return motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+      points, p->current_pose.pose, p->ego_nearest_dist_threshold, p->ego_nearest_yaw_threshold);
+  }
+
+  template <class T>
+  size_t findEgoIndex(
+    const std::vector<T> & points, const geometry_msgs::msg::Pose & ego_pose) const
+  {
+    const auto & p = planner_data_;
+    return motion_utils::findFirstNearestIndexWithSoftConstraints(
+      points, p->current_pose.pose, p->ego_nearest_dist_threshold, p->ego_nearest_yaw_threshold);
   }
 
   std::set<std::shared_ptr<SceneModuleInterface>> scene_modules_;

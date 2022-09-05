@@ -105,6 +105,10 @@ public:
   {
     double state_transit_margin_time;
     double stop_line_margin;  //! distance from auto-generated stopline to detection_area boundary
+    double keep_detection_line_margin;  //! distance (toward path end) from generated stop line.
+                                        //! keep detection if ego is before this line and ego.vel <
+                                        //! keep_detection_vel_thr
+    double keep_detection_vel_thr;
     double stuck_vehicle_detect_dist;  //! distance from end point to finish stuck vehicle check
     double
       stuck_vehicle_ignore_dist;   //! distance from intersection start to start stuck vehicle check
@@ -234,24 +238,6 @@ private:
    */
   bool isTargetStuckVehicleType(
     const autoware_auto_perception_msgs::msg::PredictedObject & object) const;
-
-  /**
-   * @brief convert object to footprint polygon
-   * @param object detected object
-   * @return 2d polygon of the object footprint
-   */
-  Polygon2d toFootprintPolygon(
-    const autoware_auto_perception_msgs::msg::PredictedObject & object) const;
-
-  /**
-   * @brief convert predicted object to footprint polygon
-   * @param object detected object
-   * @param predicted_pose predicted object pose
-   * @return 2d polygon of the object footprint
-   */
-  Polygon2d toPredictedFootprintPolygon(
-    const autoware_auto_perception_msgs::msg::PredictedObject & object,
-    const geometry_msgs::msg::Pose & predicted_pose) const;
 
   /**
    * @brief Whether target tier4_api_msgs::Intersection::status is valid or not
