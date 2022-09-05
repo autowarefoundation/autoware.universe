@@ -49,8 +49,6 @@ public:
 
 private:
   // Subscriber
-  // rclcpp::Subscription<DetectedObjects>::SharedPtr sub_object_{};
-  // rclcpp::Subscription<TrackedObjects>::SharedPtr sub_radar_{};
   message_filters::Subscriber<DetectedObjects> sub_object_{};
   message_filters::Subscriber<TrackedObjects> sub_radar_{};
 
@@ -60,8 +58,6 @@ private:
   typename std::shared_ptr<Sync> sync_ptr_;
 
   // Callback
-  // void onDetectedObjects(const DetectedObjects::ConstSharedPtr msg);
-  // void onRadarObjects(const TrackedObjects::ConstSharedPtr msg);
   void onData(
     const DetectedObjects::ConstSharedPtr object_msg,
     const TrackedObjects::ConstSharedPtr radar_msg);
@@ -72,9 +68,6 @@ private:
 
   // Publisher
   rclcpp::Publisher<DetectedObjects>::SharedPtr pub_objects_{};
-
-  // Timer
-  // rclcpp::TimerBase::SharedPtr timer_{};
 
   bool isDataReady();
   // void onTimer();

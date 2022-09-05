@@ -100,33 +100,9 @@ RadarObjectFusionToDetectedObjectNode::RadarObjectFusionToDetectedObjectNode(
   sync_ptr_->registerCallback(
     std::bind(&RadarObjectFusionToDetectedObjectNode::onData, this, _1, _2));
 
-  // sub_object_ = create_subscription<DetectedObjects>(
-  //  "~/input/objects", rclcpp::QoS{1},
-  //  std::bind(&RadarObjectFusionToDetectedObjectNode::onDetectedObjects, this, _1));
-  // sub_radar_ = create_subscription<TrackedObjects>(
-  //  "~/input/radars", rclcpp::QoS{1},
-  //  std::bind(&RadarObjectFusionToDetectedObjectNode::onRadarObjects, this, _1));
-
   // Publisher
   pub_objects_ = create_publisher<DetectedObjects>("~/output/objects", 1);
-
-  // Timer
-  // const auto update_period_ns = rclcpp::Rate(node_param_.update_rate_hz).period();
-  // timer_ = rclcpp::create_timer(
-  //   this, get_clock(), update_period_ns,
-  //   std::bind(&RadarObjectFusionToDetectedObjectNode::onTimer, this));
 }
-
-// void RadarObjectFusionToDetectedObjectNode::onDetectedObjects(
-//   const DetectedObjects::ConstSharedPtr msg)
-//{
-//   detected_objects_ = msg;
-// }
-// void RadarObjectFusionToDetectedObjectNode::onRadarObjects(const TrackedObjects::ConstSharedPtr
-// msg)
-//{
-//   radar_objects_ = msg;
-// }
 
 rcl_interfaces::msg::SetParametersResult RadarObjectFusionToDetectedObjectNode::onSetParam(
   const std::vector<rclcpp::Parameter> & params)
