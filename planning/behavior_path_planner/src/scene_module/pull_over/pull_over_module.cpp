@@ -296,7 +296,7 @@ void PullOverModule::researchGoal()
   for (double dx = -parameters_.backward_goal_search_length;
        dx <= parameters_.forward_goal_search_length; dx += parameters_.goal_search_interval) {
     const Pose search_pose = calcOffsetPose(refined_goal_pose, dx, 0, 0);
-    if (checkCollision(search_pose)) {
+    if (checkCollisionWithPose(search_pose)) {
       continue;
     }
 
@@ -347,7 +347,7 @@ bool PullOverModule::isLongEnoughToParkingStart(
   return *dist_to_parking_start_pose > current_to_stop_distance;
 }
 
-bool PullOverModule::checkCollision(const Pose & pose) const
+bool PullOverModule::checkCollisionWithPose(const Pose & pose) const
 {
   if (parameters_.use_occupancy_grid) {
     const Pose pose_grid_coords = global2local(occupancy_grid_map_.getMap(), pose);
@@ -369,7 +369,7 @@ bool PullOverModule::checkCollision(const Pose & pose) const
   return false;
 }
 
-bool PullOverModule::checkCollision(const PathWithLaneId & path) const
+bool PullOverModule::checkCollisionWithPath(const PathWithLaneId & path) const
 {
   if (parameters_.use_occupancy_grid) {
     const bool check_out_of_range = false;
@@ -417,7 +417,7 @@ bool PullOverModule::planWithEfficientPath()
         isLongEnoughToParkingStart(
           parallel_parking_planner_.getCurrentPath(),
           parallel_parking_planner_.getStartPose().pose) &&
-        !checkCollision(parallel_parking_planner_.getArcPath()) &&
+        !checkCollisionWithPath(parallel_parking_planner_.getArcPath()) &&
         !lane_departure_checker_->checkPathWillLeaveLane(
           status_.lanes, parallel_parking_planner_.getArcPath())) {
         status_.path = parallel_parking_planner_.getCurrentPath();
@@ -439,7 +439,7 @@ bool PullOverModule::planWithEfficientPath()
         isLongEnoughToParkingStart(
           parallel_parking_planner_.getCurrentPath(),
           parallel_parking_planner_.getStartPose().pose) &&
-        !checkCollision(parallel_parking_planner_.getArcPath()) &&
+        !checkCollisionWithPath(parallel_parking_planner_.getArcPath()) &&
         !lane_departure_checker_->checkPathWillLeaveLane(
           status_.lanes, parallel_parking_planner_.getArcPath())) {
         status_.path = parallel_parking_planner_.getCurrentPath();
@@ -479,7 +479,7 @@ bool PullOverModule::planWithCloseGoal()
       isLongEnoughToParkingStart(
         parallel_parking_planner_.getCurrentPath(),
         parallel_parking_planner_.getStartPose().pose) &&
-      !checkCollision(parallel_parking_planner_.getArcPath()) &&
+      !checkCollisionWithPath(parallel_parking_planner_.getArcPath()) &&
       !lane_departure_checker_->checkPathWillLeaveLane(
         status_.lanes, parallel_parking_planner_.getArcPath())) {
       status_.path = parallel_parking_planner_.getCurrentPath();
@@ -496,7 +496,7 @@ bool PullOverModule::planWithCloseGoal()
       isLongEnoughToParkingStart(
         parallel_parking_planner_.getCurrentPath(),
         parallel_parking_planner_.getStartPose().pose) &&
-      !checkCollision(parallel_parking_planner_.getArcPath()) &&
+      !checkCollisionWithPath(parallel_parking_planner_.getArcPath()) &&
       !lane_departure_checker_->checkPathWillLeaveLane(
         status_.lanes, parallel_parking_planner_.getArcPath())) {
       status_.path = parallel_parking_planner_.getCurrentPath();
@@ -886,7 +886,7 @@ std::pair<bool, bool> PullOverModule::getSafePath(ShiftParkingPath & safe_path) 
     // select safe path
     bool found_safe_path = false;
     for (const auto & path : valid_paths) {
-      if (!checkCollision(path.shifted_path.path)) {
+      if (!checkCollisionWithPath(path.shifted_path.path)) {
         safe_path = path;
         found_safe_path = true;
         break;

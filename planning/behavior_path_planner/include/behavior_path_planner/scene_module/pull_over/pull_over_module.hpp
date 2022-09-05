@@ -215,8 +215,8 @@ private:
   void updateOccupancyGrid();
   void researchGoal();
   void resetStatus();
-  bool checkCollision(const Pose & pose) const;
-  bool checkCollision(const PathWithLaneId & path) const;
+  bool checkCollisionWithPose(const Pose & pose) const;
+  bool checkCollisionWithPath(const PathWithLaneId & path) const;
 
   // turn signal
   std::pair<HazardLightsCommand, double> getHazardInfo() const;
