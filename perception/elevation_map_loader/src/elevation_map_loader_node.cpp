@@ -105,14 +105,14 @@ void ElevationMapLoaderNode::publish()
       data_manager_.elevation_map_path_->c_str());
 
     // Check if bag can be loaded
-    bool isBagLoaded = false;
+    bool is_bag_loaded = false;
     try {
-      isBagLoaded = grid_map::GridMapRosConverter::loadFromBag(
+      is_bag_loaded = grid_map::GridMapRosConverter::loadFromBag(
         *data_manager_.elevation_map_path_, "elevation_map", elevation_map_);
     } catch (rosbag2_storage_plugins::SqliteException & e) {
-      isBagLoaded = false;
+      is_bag_loaded = false;
     }
-    if (!isBagLoaded) {
+    if (!is_bag_loaded) {
       // Delete directory including elevation map if bag is broken
       RCLCPP_ERROR(
         this->get_logger(), "Try to loading bag, but bag is broken. Remove %s",
