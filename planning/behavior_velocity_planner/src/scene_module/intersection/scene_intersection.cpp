@@ -122,7 +122,7 @@ bool IntersectionModule::modifyPathVelocity(
   const auto intersection_area = util::getIntersectionArea(assigned_lanelet, lanelet_map_ptr);
   if (intersection_area) {
     const auto intersection_area_2d = intersection_area.value();
-    debug_data_.intersection_area = toGeomMsg(intersection_area_2d);
+    debug_data_.intersection_area = toGeomPoly(intersection_area_2d);
   }
 
   /* get adjacent lanelets */
@@ -341,7 +341,7 @@ bool IntersectionModule::checkCollision(
     // check direction of objects
     const auto object_direction = getObjectPoseWithVelocityDirection(object.kinematics);
     if (intersection_area) {
-      const auto obj_poly = toFootprintPolygon(object);
+      const auto obj_poly = tier4_autoware_utils::toPolygon2d(object);
       const auto intersection_area_2d = intersection_area.value();
       const auto is_in_intersection_area = bg::within(obj_poly, intersection_area_2d);
       const auto is_in_adjacent_lanelets = checkAngleForTargetLanelets(
