@@ -385,8 +385,6 @@ bool PullOverModule::checkCollision(const PathWithLaneId & path) const
       return true;
     }
   }
-
-  // no collsion
   return false;
 }
 
