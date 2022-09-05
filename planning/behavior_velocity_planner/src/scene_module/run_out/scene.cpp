@@ -101,8 +101,7 @@ bool RunOutModule::modifyPathVelocity(
       dynamic_obstacle, current_pose, current_vel, current_acc, trim_smoothed_path, *path);
   } else {
     // just insert zero velocity for stopping
-    insertStoppingVelocity(
-      dynamic_obstacle, current_pose, current_vel, current_acc, trim_smoothed_path, *path);
+    insertStoppingVelocity(dynamic_obstacle, current_pose, current_vel, current_acc, *path);
   }
 
   // apply max jerk limit if the ego can't stop with specified max jerk and acc
@@ -560,17 +559,20 @@ boost::optional<geometry_msgs::msg::Pose> RunOutModule::calcStopPoint(
   // insert the stop point without considering the distance from the obstacle
   // smoother will calculate appropriate jerk for deceleration
   if (!planner_param_.run_out.specify_decel_jerk) {
-    // calculate index of stop point
+    // calculate the stop point for base link
     const float base_to_collision_point =
       planner_param_.run_out.stop_margin + planner_param_.vehicle_param.base_to_front;
-    const size_t stop_index = run_out_utils::calcIndexByLengthReverse(
-      path.points, dynamic_obstacle->nearest_collision_point, base_to_collision_point);
-    const auto & stop_point = path.points.at(stop_index).point.pose;
+    const auto stop_point = motion_utils::calcLongitudinalOffsetPose(
+      path.points, dynamic_obstacle->nearest_collision_point, -base_to_collision_point, false);
+    if (!stop_point) {
+      RCLCPP_WARN_STREAM(logger_, "failed to calculate stop point.");
+      return {};
+    }
 
     // debug
     debug_ptr_->setAccelReason(RunOutDebug::AccelReason::STOP);
     debug_ptr_->pushStopPose(tier4_autoware_utils::calcOffsetPose(
-      stop_point, planner_param_.vehicle_param.base_to_front, 0, 0));
+      *stop_point, planner_param_.vehicle_param.base_to_front, 0, 0));
 
     return stop_point;
   }
@@ -615,17 +617,20 @@ boost::optional<geometry_msgs::msg::Pose> RunOutModule::calcStopPoint(
     return {};
   }
 
-  // calculate index of stop point
+  // calculate the stop point for base link
   const float base_to_collision_point =
     planner_param_.run_out.stop_margin + planner_param_.vehicle_param.base_to_front;
-  const size_t stop_index = run_out_utils::calcIndexByLengthReverse(
-    path.points, dynamic_obstacle->nearest_collision_point, base_to_collision_point);
-  const auto & stop_point = path.points.at(stop_index).point.pose;
+  const auto stop_point = motion_utils::calcLongitudinalOffsetPose(
+    path.points, dynamic_obstacle->nearest_collision_point, -base_to_collision_point, false);
+  if (!stop_point) {
+    RCLCPP_WARN_STREAM(logger_, "failed to calculate stop point.");
+    return {};
+  }
 
   // debug
   debug_ptr_->setAccelReason(RunOutDebug::AccelReason::STOP);
   debug_ptr_->pushStopPose(tier4_autoware_utils::calcOffsetPose(
-    stop_point, planner_param_.vehicle_param.base_to_front, 0, 0));
+    *stop_point, planner_param_.vehicle_param.base_to_front, 0, 0));
 
   return stop_point;
 }
@@ -691,8 +696,7 @@ void RunOutModule::insertVelocity(
         state_ = State::STOP;
       }
 
-      insertStoppingVelocity(
-        dynamic_obstacle, current_pose, current_vel, current_acc, smoothed_path, output_path);
+      insertStoppingVelocity(dynamic_obstacle, current_pose, current_vel, current_acc, output_path);
       break;
     }
 
@@ -703,8 +707,7 @@ void RunOutModule::insertVelocity(
         elapsed_time > planner_param_.approaching.stop_time_thresh ? State::APPROACH : State::STOP;
       RCLCPP_DEBUG_STREAM(logger_, "elapsed time: " << elapsed_time);
 
-      insertStoppingVelocity(
-        dynamic_obstacle, current_pose, current_vel, current_acc, smoothed_path, output_path);
+      insertStoppingVelocity(dynamic_obstacle, current_pose, current_vel, current_acc, output_path);
       break;
     }
 
@@ -712,7 +715,7 @@ void RunOutModule::insertVelocity(
       RCLCPP_DEBUG_STREAM(logger_, "APPROACH state");
       insertApproachingVelocity(
         *dynamic_obstacle, current_pose, planner_param_.approaching.limit_vel_kmph / 3.6,
-        planner_param_.approaching.margin, smoothed_path, output_path);
+        planner_param_.approaching.margin, output_path);
       debug_ptr_->setAccelReason(RunOutDebug::AccelReason::STOP);
       break;
     }
@@ -727,17 +730,16 @@ void RunOutModule::insertVelocity(
 void RunOutModule::insertStoppingVelocity(
   const boost::optional<DynamicObstacle> & dynamic_obstacle,
   const geometry_msgs::msg::Pose & current_pose, const float current_vel, const float current_acc,
-  const PathWithLaneId & smoothed_path, PathWithLaneId & output_path)
+  PathWithLaneId & output_path)
 {
   const auto stop_point =
-    calcStopPoint(dynamic_obstacle, smoothed_path, current_pose, current_vel, current_acc);
+    calcStopPoint(dynamic_obstacle, output_path, current_pose, current_vel, current_acc);
   insertStopPoint(stop_point, output_path);
 }
 
 void RunOutModule::insertApproachingVelocity(
   const DynamicObstacle & dynamic_obstacle, const geometry_msgs::msg::Pose & current_pose,
-  const float approaching_vel, const float approach_margin, const PathWithLaneId & resampled_path,
-  PathWithLaneId & output_path)
+  const float approaching_vel, const float approach_margin, PathWithLaneId & output_path)
 {
   // insert slow down velocity from nearest segment point
   const auto nearest_seg_idx =
@@ -752,25 +754,29 @@ void RunOutModule::insertApproachingVelocity(
   // calculate stop point to insert 0 velocity
   const float base_to_collision_point =
     approach_margin + planner_param_.vehicle_param.base_to_front;
-  const auto stop_idx = run_out_utils::calcIndexByLengthReverse(
-    resampled_path.points, dynamic_obstacle.nearest_collision_point, base_to_collision_point);
-  const auto & stop_point = resampled_path.points.at(stop_idx).point.pose;
+  const auto stop_point = motion_utils::calcLongitudinalOffsetPose(
+    output_path.points, dynamic_obstacle.nearest_collision_point, -base_to_collision_point, false);
+  if (!stop_point) {
+    RCLCPP_WARN_STREAM(logger_, "failed to calculate stop point.");
+    return;
+  }
 
   // debug
   debug_ptr_->pushStopPose(tier4_autoware_utils::calcOffsetPose(
-    stop_point, planner_param_.vehicle_param.base_to_front, 0, 0));
+    *stop_point, planner_param_.vehicle_param.base_to_front, 0, 0));
 
   const auto nearest_seg_idx_stop =
-    motion_utils::findNearestSegmentIndex(output_path.points, stop_point.position);
+    motion_utils::findNearestSegmentIndex(output_path.points, stop_point->position);
   auto insert_idx_stop = nearest_seg_idx_stop + 1;
 
   // to PathPointWithLaneId
   // use lane id of point behind inserted point
   autoware_auto_planning_msgs::msg::PathPointWithLaneId stop_point_with_lane_id;
   stop_point_with_lane_id = output_path.points.at(nearest_seg_idx_stop);
-  stop_point_with_lane_id.point.pose = stop_point;
+  stop_point_with_lane_id.point.pose = *stop_point;
 
-  planning_utils::insertVelocity(output_path, stop_point_with_lane_id, 0.0, insert_idx_stop);
+  constexpr double eps = 0.05;
+  planning_utils::insertVelocity(output_path, stop_point_with_lane_id, 0.0, insert_idx_stop, eps);
 }
 
 void RunOutModule::applyMaxJerkLimit(
