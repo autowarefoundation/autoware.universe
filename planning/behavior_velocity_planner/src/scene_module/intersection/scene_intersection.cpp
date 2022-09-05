@@ -27,7 +27,6 @@
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>
 
 #include <algorithm>
-#include <limits>
 #include <memory>
 #include <vector>
 
@@ -128,12 +127,11 @@ bool IntersectionModule::modifyPathVelocity(
   /* get adjacent lanelets */
   const auto adjacent_lanelet_ids =
     util::extendedAdjacentDirectionLanes(lanelet_map_ptr, routing_graph_ptr, assigned_lanelet);
-  if (!adjacent_lanelet_ids.empty()) {
-    std::vector<lanelet::CompoundPolygon3d> adjacent_lanes;
-    for (auto && adjacent_lanelet_id : adjacent_lanelet_ids)
-      adjacent_lanes.push_back(lanelet_map_ptr->laneletLayer.get(adjacent_lanelet_id).polygon3d());
-    debug_data_.adjacent_area = adjacent_lanes;
+  std::vector<lanelet::CompoundPolygon3d> adjacent_lanes;
+  for (auto && adjacent_lanelet_id : adjacent_lanelet_ids) {
+    adjacent_lanes.push_back(lanelet_map_ptr->laneletLayer.get(adjacent_lanelet_id).polygon3d());
   }
+  debug_data_.adjacent_area = adjacent_lanes;
 
   /* set stop-line and stop-judgement-line for base_link */
   util::StopLineIdx stop_line_idxs;
@@ -348,15 +346,11 @@ bool IntersectionModule::checkCollision(
         object_direction, adjacent_lanelet_ids, planner_param_.detection_area_margin);
       if (is_in_intersection_area) {
         if (!is_in_adjacent_lanelets) {
-          std::cout << "in intersection_area and not in adjacent lane, detecting" << std::endl;
           target_objects.objects.push_back(object);
-        } else {
-          std::cout << "in intersection area, but in adjacent lane, not detecting" << std::endl;
         }
       } else if (checkAngleForTargetLanelets(
                    object_direction, detection_area_lanelet_ids,
                    planner_param_.detection_area_margin)) {
-        std::cout << "not in intersection_area, but in detection_area, detecting" << std::endl;
         target_objects.objects.push_back(object);
       }
     } else if (checkAngleForTargetLanelets(
@@ -649,7 +643,6 @@ bool IntersectionModule::checkAngleForTargetLanelets(
   const geometry_msgs::msg::Pose & pose, const std::vector<int> & target_lanelet_ids,
   const double margin)
 {
-  double min_angle = std::numeric_limits<double>::infinity();
   for (const int lanelet_id : target_lanelet_ids) {
     const auto ll = planner_data_->route_handler_->getLaneletMapPtr()->laneletLayer.get(lanelet_id);
     if (!lanelet::utils::isInLanelet(pose, ll, margin)) {
@@ -658,8 +651,8 @@ bool IntersectionModule::checkAngleForTargetLanelets(
     const double ll_angle = lanelet::utils::getLaneletAngle(ll, pose.position);
     const double pose_angle = tf2::getYaw(pose.orientation);
     const double angle_diff = tier4_autoware_utils::normalizeRadian(ll_angle - pose_angle);
-    if (std::fabs(angle_diff) < min_angle) {
-      min_angle = std::fabs(angle_diff);
+    if (std::fabs(angle_diff) < planner_param_.detection_area_angle_thr) {
+      return true;
     }
   }
   return false;

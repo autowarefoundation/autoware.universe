@@ -632,25 +632,25 @@ std::vector<int> extendedAdjacentDirectionLanes(
 {
   // some of the intersections are not well-formed, and "adjacent" turning
   // lanelets are not sharing the LineStrings
-  const std::string turn_direction = lane.attributeOr("turn_direction", "else");
-  if (turn_direction != "left" || turn_direction != "right" || turn_direction != "straight")
+  const std::string turn_direction = getTurnDirection(lane);
+  if (turn_direction != "left" && turn_direction != "right" && turn_direction != "straight")
     return std::vector<int>();
 
-  // if lane's turn_direction does not match, return empty
-  if (getTurnDirection(lane) != turn_direction) return std::vector<int>();
-
   std::set<int> previous_lanelet_ids;
-  for (auto && previous_lanelet : routing_graph->previous(lane))
+  for (auto && previous_lanelet : routing_graph->previous(lane)) {
     previous_lanelet_ids.insert(previous_lanelet.id());
+  }
 
   std::set<int> besides_previous_lanelet_ids;
   for (auto && previous_lanelet_id : previous_lanelet_ids) {
     lanelet::ConstLanelet previous_lanelet = map->laneletLayer.get(previous_lanelet_id);
-    for (auto && beside_lanelet : getAllAdjacentLanelets(routing_graph, previous_lanelet))
+    for (auto && beside_lanelet : getAllAdjacentLanelets(routing_graph, previous_lanelet)) {
       besides_previous_lanelet_ids.insert(beside_lanelet);
+    }
   }
 
   std::set<int> following_turning_lanelets;
+  following_turning_lanelets.insert(lane.id());
   for (auto && besides_previous_lanelet_id : besides_previous_lanelet_ids) {
     lanelet::ConstLanelet besides_previous_lanelet =
       map->laneletLayer.get(besides_previous_lanelet_id);

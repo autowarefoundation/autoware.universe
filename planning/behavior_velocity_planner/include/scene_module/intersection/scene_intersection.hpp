@@ -86,6 +86,7 @@ public:
     double detection_area_left_margin;   //! used for detecting objects in detection area only left
                                          //! direction
     double detection_area_length;        //! used to create detection area polygon
+    double detection_area_angle_thr;     //! threshold in checking the angle of detecting objects
     double min_predicted_path_confidence;
     //! minimum confidence value of predicted path to use for collision detection
     double external_input_timeout;       //! used to disable external input

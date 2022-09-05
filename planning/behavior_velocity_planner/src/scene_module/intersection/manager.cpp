@@ -46,6 +46,8 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
   ip.detection_area_right_margin = node.declare_parameter(ns + ".detection_area_right_margin", 0.5);
   ip.detection_area_left_margin = node.declare_parameter(ns + ".detection_area_left_margin", 0.5);
   ip.detection_area_length = node.declare_parameter(ns + ".detection_area_length", 200.0);
+  ip.detection_area_angle_thr =
+    node.declare_parameter(ns + ".detection_area_angle_threshold", M_PI / 4.0);
   ip.min_predicted_path_confidence =
     node.declare_parameter(ns + ".min_predicted_path_confidence", 0.05);
   ip.external_input_timeout = node.declare_parameter(ns + ".walkway.external_input_timeout", 1.0);
