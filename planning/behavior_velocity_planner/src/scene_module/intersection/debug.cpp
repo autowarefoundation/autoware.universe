@@ -291,7 +291,7 @@ visualization_msgs::msg::MarkerArray MergeFromPrivateRoadModule::createDebugMark
   const auto state = state_machine_.getState();
 
   const auto now = this->clock_->now();
-  if (state == MergeFromPrivateRoadModule::State::STOP) {
+  if (state == StateMachine::State::STOP) {
     appendMarkerArray(
       createPoseMarkerArray(
         debug_data_.stop_point_pose, "stop_point_pose", lane_id_, 1.0, 0.0, 0.0),
@@ -308,7 +308,7 @@ visualization_msgs::msg::MarkerArray MergeFromPrivateRoadModule::createVirtualWa
   const auto state = state_machine_.getState();
 
   const auto now = this->clock_->now();
-  if (state == MergeFromPrivateRoadModule::State::STOP) {
+  if (state == StateMachine::State::STOP) {
     appendMarkerArray(
       motion_utils::createStopVirtualWallMarker(
         debug_data_.virtual_wall_pose, "merge_from_private_road", now, lane_id_),
