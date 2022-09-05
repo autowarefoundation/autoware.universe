@@ -61,6 +61,7 @@ private:
   void onData(
     const DetectedObjects::ConstSharedPtr object_msg,
     const TrackedObjects::ConstSharedPtr radar_msg);
+  bool isDataReady();
 
   // Data Buffer
   DetectedObjects::ConstSharedPtr detected_objects_{};
@@ -68,9 +69,6 @@ private:
 
   // Publisher
   rclcpp::Publisher<DetectedObjects>::SharedPtr pub_objects_{};
-
-  bool isDataReady();
-  // void onTimer();
 
   // Parameter Server
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
