@@ -766,8 +766,7 @@ void RunOutModule::insertApproachingVelocity(
   stop_point_with_lane_id = output_path.points.at(nearest_seg_idx_stop);
   stop_point_with_lane_id.point.pose = *stop_point;
 
-  constexpr double eps = 0.05;
-  planning_utils::insertVelocity(output_path, stop_point_with_lane_id, 0.0, insert_idx_stop, eps);
+  planning_utils::insertVelocity(output_path, stop_point_with_lane_id, 0.0, insert_idx_stop);
 }
 
 void RunOutModule::applyMaxJerkLimit(
