@@ -124,12 +124,6 @@ struct PUllOverStatus
   bool has_requested_approval_ = false;
 };
 
-struct PullOverArea
-{
-  Pose start_pose{};
-  Pose end_pose{};
-};
-
 struct GoalCandidate
 {
   Pose goal_pose{};
@@ -182,7 +176,6 @@ private:
 
   PUllOverStatus status_;
   OccupancyGridBasedCollisionDetector occupancy_grid_map_;
-  std::vector<PullOverArea> pull_over_areas_;
   Pose modified_goal_pose_;
   Pose refined_goal_pose_;
   std::vector<GoalCandidate> goal_candidates_;

@@ -250,46 +250,6 @@ Pose PullOverModule::getRefinedGoal() const
 
 void PullOverModule::researchGoal()
 {
-  const auto common_param = occupancy_grid_map_.getParam();
-  const Pose goal_pose = getRefinedGoal();
-  double dx = -parameters_.backward_goal_search_length;
-
-  // Avoid adding areas that are in conflict from the start.
-  bool prev_is_collided = true;
-
-  pull_over_areas_.clear();
-  const Pose goal_pose_map_coords = global2local(occupancy_grid_map_.getMap(), goal_pose);
-  Pose start_pose = calcOffsetPose(goal_pose, dx, 0, 0);
-  // Search non collision areas around the goal
-  while (rclcpp::ok()) {
-    bool is_last_search = (dx >= parameters_.forward_goal_search_length);
-    Pose search_pose = calcOffsetPose(goal_pose_map_coords, dx, 0, 0);
-    bool is_collided = occupancy_grid_map_.detectCollision(
-      pose2index(occupancy_grid_map_.getMap(), search_pose, common_param.theta_size), false);
-    // Add area when (1) change non-collision -> collision or (2) last search without collision
-    if ((!prev_is_collided && is_collided) || (!is_collided && is_last_search)) {
-      Pose end_pose = calcOffsetPose(goal_pose, dx, 0, 0);
-      if (!pull_over_areas_.empty()) {
-        auto prev_area = pull_over_areas_.back();
-        // If the current area overlaps the previous area, merge them.
-        if (
-          calcDistance2d(prev_area.end_pose, start_pose) <
-          planner_data_->parameters.vehicle_length) {
-          pull_over_areas_.pop_back();
-          start_pose = prev_area.start_pose;
-        }
-      }
-      pull_over_areas_.push_back(PullOverArea{start_pose, end_pose});
-    }
-    if (is_last_search) break;
-
-    if ((prev_is_collided && !is_collided)) {
-      start_pose = calcOffsetPose(goal_pose, dx, 0, 0);
-    }
-    prev_is_collided = is_collided;
-    dx += 0.05;
-  }
-
   // Find goals in pull over areas.
   goal_candidates_.clear();
   const Pose refined_goal_pose = getRefinedGoal();
