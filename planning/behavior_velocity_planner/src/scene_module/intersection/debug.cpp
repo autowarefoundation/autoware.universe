@@ -122,6 +122,10 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createDebugMarkerArray(
     &debug_marker_array, now);
 
   appendMarkerArray(
+    createLaneletPolygonsMarkerArray(debug_data_.adjacent_area, "adjacent_area", lane_id_),
+    &debug_marker_array, current_time);
+
+  appendMarkerArray(
     createPolygonMarkerArray(
       debug_data_.intersection_area, "intersection_area", lane_id_, 0.0, 1.0, 0.0),
     &debug_marker_array, current_time);

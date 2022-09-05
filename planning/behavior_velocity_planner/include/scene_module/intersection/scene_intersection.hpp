@@ -59,6 +59,7 @@ public:
     std::vector<lanelet::ConstLanelet> intersection_detection_lanelets;
     std::vector<lanelet::CompoundPolygon3d> detection_area;
     geometry_msgs::msg::Polygon intersection_area;
+    std::vector<lanelet::CompoundPolygon3d> adjacent_area;
     autoware_auto_perception_msgs::msg::PredictedObjects conflicting_targets;
     autoware_auto_perception_msgs::msg::PredictedObjects stuck_targets;
     geometry_msgs::msg::Pose predicted_obj_pose;
@@ -85,7 +86,6 @@ public:
     double detection_area_left_margin;   //! used for detecting objects in detection area only left
                                          //! direction
     double detection_area_length;        //! used to create detection area polygon
-    double detection_area_angle_thr;     //! threshold in checking the angle of detecting objects
     double min_predicted_path_confidence;
     //! minimum confidence value of predicted path to use for collision detection
     double external_input_timeout;       //! used to disable external input
@@ -138,6 +138,7 @@ private:
     lanelet::LaneletMapConstPtr lanelet_map_ptr,
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
     const std::vector<int> & detection_area_lanelet_ids,
+    const std::vector<int> & adjacent_lanelet_ids,
     const std::optional<Polygon2d> & intersection_area,
     const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
     const int closest_idx, const Polygon2d & stuck_vehicle_detect_area);

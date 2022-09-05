@@ -628,10 +628,11 @@ static std::vector<int> getAllAdjacentLanelets(
 
 std::vector<int> extendedAdjacentDirectionLanes(
   const lanelet::LaneletMapPtr map, const lanelet::routing::RoutingGraphPtr routing_graph,
-  lanelet::ConstLanelet lane, const std::string & turn_direction)
+  lanelet::ConstLanelet lane)
 {
   // some of the intersections are not well-formed, and "adjacent" turning
   // lanelets are not sharing the LineStrings
+  const std::string turn_direction = lane.attributeOr("turn_direction", "else");
   if (turn_direction != "left" || turn_direction != "right" || turn_direction != "straight")
     return std::vector<int>();
 

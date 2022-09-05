@@ -142,6 +142,10 @@ bool isBeforeTargetIndex(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
   const geometry_msgs::msg::Pose & current_pose, const int target_idx);
 
+std::vector<int> extendedAdjacentDirectionLanes(
+  const lanelet::LaneletMapPtr map, const lanelet::routing::RoutingGraphPtr routing_graph,
+  lanelet::ConstLanelet lane);
+
 std::optional<Polygon2d> getIntersectionArea(
   lanelet::ConstLanelet assigned_lane, lanelet::LaneletMapConstPtr lanelet_map_ptr);
 
