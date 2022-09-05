@@ -12,7 +12,10 @@ tbd.
 
 1. Start rviz and select panels/Add new panel.
    ![select_panel](./images/select_panels.png)
+2. Select bag_time_manager_rviz_plugin/BagTimeManagerPanel and press OK.
+   ![select_manager_plugin](./images/add_bag_time_manager_panel.png)
+3. See bag_time_manager_rviz_plugin/BagTimeManagerPanel is added.
+   ![manager_plugin](./images/bag_time_manager_panel.png)
 
    - Pause/Resume button: pause/resume the clock.
-   - Apply: apply rate of the clock.
-   - Rate: publishing rate of the clock.
+   - ApplyRate: apply rate of the clock.

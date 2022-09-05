@@ -45,8 +45,8 @@ BagTimeManagerPanel::BagTimeManagerPanel(QWidget *parent)
     rate_combo_ = new QComboBox();
     rate_combo_->addItems({"0.01", "0.1", "0.5", "1.0", "2.0", "5.0", "10.0"});
     rate_combo_->setCurrentText(QString("1.0"));
-    time_label_ = new QLabel("X real time ");
-    time_label_->setAlignment(Qt::AlignCenter);
+    time_label_ = new QLabel("X  real time ");
+    rate_label_->setAlignment(Qt::AlignCenter);
   }
 
   auto *layout = new QHBoxLayout();
