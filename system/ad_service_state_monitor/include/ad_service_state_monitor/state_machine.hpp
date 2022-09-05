@@ -81,7 +81,10 @@ struct Flags
 class StateMachine
 {
 public:
-  explicit StateMachine(const StateParam & state_param, rclcpp::Logger logger) : state_param_(state_param), logger_(logger) {}
+  explicit StateMachine(const StateParam & state_param, rclcpp::Logger logger)
+  : state_param_(state_param), logger_(logger)
+  {
+  }
 
   AutowareState getCurrentState() const { return autoware_state_; }
   AutowareState updateState(const StateInput & state_input);

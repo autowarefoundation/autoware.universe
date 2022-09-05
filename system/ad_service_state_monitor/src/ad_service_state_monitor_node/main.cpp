@@ -16,9 +16,9 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <memory>
-
 #include <glog/logging.h>
+
+#include <memory>
 
 int main(int argc, char * argv[])
 {
