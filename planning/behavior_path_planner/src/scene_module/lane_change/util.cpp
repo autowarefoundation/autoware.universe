@@ -129,7 +129,7 @@ std::vector<LaneChangePath> getLaneChangePaths(
       minimum_lane_change_prepare_distance);
     const double lane_changing_distance = getDistanceWhenDecelerate(
       lane_change_prepare_velocity, acceleration, lane_changing_duration,
-      minimum_lane_change_length + buffer);
+      minimum_lane_change_length);
 
     if (prepare_distance < target_distance) {
       continue;
