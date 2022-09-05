@@ -29,19 +29,21 @@
 #include <memory>
 #include <string>
 
-namespace rviz_plugins {
+namespace rviz_plugins
+{
 using rosbag2_interfaces::srv::Pause;
 using rosbag2_interfaces::srv::Resume;
 using rosbag2_interfaces::srv::SetRate;
-class BagTimeManagerPanel : public rviz_common::Panel {
+class BagTimeManagerPanel : public rviz_common::Panel
+{
   Q_OBJECT
 public:
-  explicit BagTimeManagerPanel(QWidget *parent = nullptr);
+  explicit BagTimeManagerPanel(QWidget * parent = nullptr);
   void onInitialize() override;
 
 protected Q_SLOTS:
   /// @brief callback for when the publishing rate is changed
-  void onRateChanged(){};
+  void onRateChanged() {}
   /// @brief callback for when the step button is clicked
   void onPauseClicked();
   void onApplyRateClicked();
@@ -54,17 +56,17 @@ protected:
   rclcpp::Client<SetRate>::SharedPtr client_set_rate_;
 
   // GUI
-  QPushButton *pause_button_;
-  QPushButton *apply_rate_button_;
-  QLabel *rate_label_;
-  QLabel *time_label_;
-  QComboBox *rate_combo_;
+  QPushButton * pause_button_;
+  QPushButton * apply_rate_button_;
+  QLabel * rate_label_;
+  QLabel * time_label_;
+  QComboBox * rate_combo_;
 
 private:
   enum STATE { PAUSE, RESUME };
   STATE current_state_{RESUME};
 };
 
-} // namespace rviz_plugins
+}  // namespace rviz_plugins
 
-#endif // BAG_TIME_MANAGER_PANEL_HPP_
+#endif  // BAG_TIME_MANAGER_PANEL_HPP_

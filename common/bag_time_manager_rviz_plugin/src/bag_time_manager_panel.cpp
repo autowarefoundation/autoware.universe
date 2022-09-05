@@ -21,9 +21,10 @@
 #include <qt5/QtWidgets/QWidget>
 #include <rviz_common/display_context.hpp>
 
-namespace rviz_plugins {
-BagTimeManagerPanel::BagTimeManagerPanel(QWidget *parent)
-    : rviz_common::Panel(parent) {
+namespace rviz_plugins
+{
+BagTimeManagerPanel::BagTimeManagerPanel(QWidget * parent) : rviz_common::Panel(parent)
+{
   // pause / resume
   {
     pause_button_ = new QPushButton("Pause");
@@ -49,7 +50,7 @@ BagTimeManagerPanel::BagTimeManagerPanel(QWidget *parent)
     rate_label_->setAlignment(Qt::AlignCenter);
   }
 
-  auto *layout = new QHBoxLayout();
+  auto * layout = new QHBoxLayout();
   layout->addWidget(pause_button_);
   layout->addWidget(apply_rate_button_);
   layout->addWidget(rate_label_);
@@ -58,24 +59,23 @@ BagTimeManagerPanel::BagTimeManagerPanel(QWidget *parent)
   setLayout(layout);
 
   connect(pause_button_, SIGNAL(clicked()), this, SLOT(onPauseClicked()));
-  connect(apply_rate_button_, SIGNAL(clicked()), this,
-          SLOT(onApplyRateClicked()));
-  connect(rate_combo_, SIGNAL(currentIndexChanged(int)), this,
-          SLOT(onRateChanged()));
+  connect(apply_rate_button_, SIGNAL(clicked()), this, SLOT(onApplyRateClicked()));
+  connect(rate_combo_, SIGNAL(currentIndexChanged(int)), this, SLOT(onRateChanged()));
 }
 
-void BagTimeManagerPanel::onInitialize() {
-  raw_node_ =
-      this->getDisplayContext()->getRosNodeAbstraction().lock()->get_raw_node();
-  client_pause_ = raw_node_->create_client<Pause>(
-      "/rosbag2_player/pause", rmw_qos_profile_services_default);
-  client_resume_ = raw_node_->create_client<Resume>(
-      "/rosbag2_player/resume", rmw_qos_profile_services_default);
-  client_set_rate_ = raw_node_->create_client<SetRate>(
-      "/rosbag2_player/set_rate", rmw_qos_profile_services_default);
+void BagTimeManagerPanel::onInitialize()
+{
+  raw_node_ = this->getDisplayContext()->getRosNodeAbstraction().lock()->get_raw_node();
+  client_pause_ =
+    raw_node_->create_client<Pause>("/rosbag2_player/pause", rmw_qos_profile_services_default);
+  client_resume_ =
+    raw_node_->create_client<Resume>("/rosbag2_player/resume", rmw_qos_profile_services_default);
+  client_set_rate_ =
+    raw_node_->create_client<SetRate>("/rosbag2_player/set_rate", rmw_qos_profile_services_default);
 }
 
-void BagTimeManagerPanel::onPauseClicked() {
+void BagTimeManagerPanel::onPauseClicked()
+{
   if (current_state_ == STATE::PAUSE) {
     // do resume
     current_state_ = STATE::RESUME;
@@ -84,9 +84,7 @@ void BagTimeManagerPanel::onPauseClicked() {
     pause_button_->setStyleSheet("background-color: #00FF00;");
     auto req = std::make_shared<Resume::Request>();
     client_resume_->async_send_request(
-        req,
-        [this]([[maybe_unused]] rclcpp::Client<Resume>::SharedFuture result) {
-        });
+      req, [this]([[maybe_unused]] rclcpp::Client<Resume>::SharedFuture result) {});
   } else {
     // do pause
     current_state_ = STATE::PAUSE;
@@ -95,26 +93,25 @@ void BagTimeManagerPanel::onPauseClicked() {
     pause_button_->setStyleSheet("background-color: #FF0000;");
     auto req = std::make_shared<Pause::Request>();
     client_pause_->async_send_request(
-        req,
-        [this]([[maybe_unused]] rclcpp::Client<Pause>::SharedFuture result) {});
+      req, [this]([[maybe_unused]] rclcpp::Client<Pause>::SharedFuture result) {});
   }
 }
 
-void BagTimeManagerPanel::onApplyRateClicked() {
+void BagTimeManagerPanel::onApplyRateClicked()
+{
   auto request = std::make_shared<SetRate::Request>();
   request->rate = std::stod(rate_combo_->currentText().toStdString());
   client_set_rate_->async_send_request(
-      request, [this, request](rclcpp::Client<SetRate>::SharedFuture result) {
-        const auto &response = result.get();
-        if (response->success) {
-          RCLCPP_INFO(raw_node_->get_logger(),
-                      "set ros bag rate %f x real time", request->rate);
-        } else {
-          RCLCPP_WARN(raw_node_->get_logger(), "service failed");
-        }
-      });
+    request, [this, request](rclcpp::Client<SetRate>::SharedFuture result) {
+      const auto & response = result.get();
+      if (response->success) {
+        RCLCPP_INFO(raw_node_->get_logger(), "set ros bag rate %f x real time", request->rate);
+      } else {
+        RCLCPP_WARN(raw_node_->get_logger(), "service failed");
+      }
+    });
 }
-} // namespace rviz_plugins
+}  // namespace rviz_plugins
 
 #include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(rviz_plugins::BagTimeManagerPanel, rviz_common::Panel)
