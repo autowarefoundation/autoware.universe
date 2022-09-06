@@ -203,7 +203,7 @@ private:
   std::queue<PoseInfo> current_pose_info_queue_;      //!< @brief current measured pose
   geometry_msgs::msg::PoseStamped current_ekf_pose_;  //!< @brief current estimated pose
   geometry_msgs::msg::PoseStamped
-    current_biased_ekf_pose_;  //!< @brief current estimated pose w/o yaw bias
+    current_biased_ekf_pose_;  //!< @brief current estimated pose without yaw bias correction
   geometry_msgs::msg::TwistStamped current_ekf_twist_;  //!< @brief current estimated twist
   std::array<double, 36ul> current_pose_covariance_;
   std::array<double, 36ul> current_twist_covariance_;
