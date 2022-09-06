@@ -636,7 +636,7 @@ BehaviorModuleOutput PullOverModule::planWaitingApproval()
 std::pair<double, double> PullOverModule::calcDistanceToPathChange() const
 {
   const Pose parking_start_pose = getParkingStartPose();
-  const Pose parking_end_pose = getRefinedGoal();
+  const Pose parking_end_pose = modified_goal_pose_;
   const auto dist_to_parking_start_pose = calcSignedArcLength(
     status_.path.points, planner_data_->self_pose->pose, parking_start_pose.position,
     std::numeric_limits<double>::max(), M_PI_2);
