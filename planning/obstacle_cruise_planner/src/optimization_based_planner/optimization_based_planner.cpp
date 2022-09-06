@@ -292,8 +292,9 @@ std::tuple<double, double> OptimizationBasedPlanner::calcInitialMotion(
   const auto & current_pose = planner_data.current_pose;
   const auto & input_traj = planner_data.traj;
   const double vehicle_speed{std::abs(current_vel)};
-  const auto current_closest_point =
-    motion_utils::calcInterpolatedPoint(input_traj, planner_data.current_pose);
+  const auto current_closest_point = motion_utils::calcInterpolatedPoint(
+    input_traj, planner_data.current_pose, nearest_dist_deviation_threshold_,
+    nearest_yaw_deviation_threshold_);
   const double target_vel{std::abs(current_closest_point.longitudinal_velocity_mps)};
 
   double initial_vel{};
@@ -308,10 +309,12 @@ std::tuple<double, double> OptimizationBasedPlanner::calcInitialMotion(
 
   TrajectoryPoint prev_output_closest_point;
   if (smoothed_trajectory_ptr_) {
-    prev_output_closest_point =
-      motion_utils::calcInterpolatedPoint(*smoothed_trajectory_ptr_, current_pose);
+    prev_output_closest_point = motion_utils::calcInterpolatedPoint(
+      *smoothed_trajectory_ptr_, current_pose, nearest_dist_deviation_threshold_,
+      nearest_yaw_deviation_threshold_);
   } else {
-    prev_output_closest_point = motion_utils::calcInterpolatedPoint(prev_traj, current_pose);
+    prev_output_closest_point = motion_utils::calcInterpolatedPoint(
+      prev_traj, current_pose, nearest_dist_deviation_threshold_, nearest_yaw_deviation_threshold_);
   }
 
   // when velocity tracking deviation is large
