@@ -132,10 +132,10 @@ void AutowareScreenCapturePanel::onClickVideoCapture()
         int fourcc = cv::VideoWriter::fourcc('h', '2', '6', '4');  // mp4
         QScreen * screen = QGuiApplication::primaryScreen();
         const auto q_size = screen->grabWindow(main_window_->winId())
-                             .toImage()
-                             .convertToFormat(QImage::Format_RGB888)
-                             .rgbSwapped()
-                             .size();
+                              .toImage()
+                              .convertToFormat(QImage::Format_RGB888)
+                              .rgbSwapped()
+                              .size();
         current_movie_size_ = cv::Size(q_size.width(), q_size.height());
         writer_.open(
           "capture/" + capture_file_name_ + ".mp4", fourcc, capture_hz_->value(),
@@ -160,12 +160,14 @@ void AutowareScreenCapturePanel::onTimer()
   // this is deprecated but only way to capture nicely
   QScreen * screen = QGuiApplication::primaryScreen();
   QPixmap original_pixmap = screen->grabWindow(main_window_->winId());
-  const auto q_image = original_pixmap.toImage().convertToFormat(QImage::Format_RGB888).rgbSwapped();
+  const auto q_image =
+    original_pixmap.toImage().convertToFormat(QImage::Format_RGB888).rgbSwapped();
   const int h = q_image.height();
   const int w = q_image.width();
   cv::Size size = cv::Size(w, h);
   cv::Mat image(
-    size, CV_8UC3, const_cast<uchar *>(q_image.bits()), static_cast<size_t>(q_image.bytesPerLine()));
+    size, CV_8UC3, const_cast<uchar *>(q_image.bits()),
+    static_cast<size_t>(q_image.bytesPerLine()));
   if (size != current_movie_size_) {
     cv::Mat new_image;
     cv::resize(image, new_image, current_movie_size_);
