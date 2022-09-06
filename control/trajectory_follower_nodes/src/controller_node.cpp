@@ -28,13 +28,7 @@
 #include <utility>
 #include <vector>
 
-namespace autoware
-{
-namespace motion
-{
-namespace control
-{
-namespace trajectory_follower_nodes
+namespace autoware::motion::control::trajectory_follower_nodes
 {
 Controller::Controller(const rclcpp::NodeOptions & node_options) : Node("controller", node_options)
 {
@@ -166,10 +160,7 @@ void Controller::callbackTimerControl()
   control_cmd_pub_->publish(out);
 }
 
-}  // namespace trajectory_follower_nodes
-}  // namespace control
-}  // namespace motion
-}  // namespace autoware
+}  // namespace autoware::motion::control::trajectory_follower_nodes
 
 #include "rclcpp_components/register_node_macro.hpp"
 RCLCPP_COMPONENTS_REGISTER_NODE(autoware::motion::control::trajectory_follower_nodes::Controller)

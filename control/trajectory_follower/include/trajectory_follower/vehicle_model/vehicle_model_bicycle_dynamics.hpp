@@ -53,13 +53,7 @@
 #include "trajectory_follower/vehicle_model/vehicle_model_interface.hpp"
 #include "trajectory_follower/visibility_control.hpp"
 
-namespace autoware
-{
-namespace motion
-{
-namespace control
-{
-namespace trajectory_follower
+namespace autoware::motion::control::trajectory_follower
 {
 using autoware::common::types::float64_t;
 /**
@@ -114,8 +108,5 @@ private:
   float64_t m_cf;    //!< @brief front cornering power [N/rad]
   float64_t m_cr;    //!< @brief rear cornering power [N/rad]
 };
-}  // namespace trajectory_follower
-}  // namespace control
-}  // namespace motion
-}  // namespace autoware
+}  // namespace autoware::motion::control::trajectory_follower
 #endif  // TRAJECTORY_FOLLOWER__VEHICLE_MODEL__VEHICLE_MODEL_BICYCLE_DYNAMICS_HPP_

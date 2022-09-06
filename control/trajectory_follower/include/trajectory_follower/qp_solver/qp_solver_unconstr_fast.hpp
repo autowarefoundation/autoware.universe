@@ -24,13 +24,7 @@
 
 #include <cmath>
 
-namespace autoware
-{
-namespace motion
-{
-namespace control
-{
-namespace trajectory_follower
+namespace autoware::motion::control::trajectory_follower
 {
 using autoware::common::types::bool8_t;
 /**
@@ -67,8 +61,5 @@ public:
     const Eigen::VectorXd & lb, const Eigen::VectorXd & ub, const Eigen::VectorXd & lb_a,
     const Eigen::VectorXd & ub_a, Eigen::VectorXd & u) override;
 };
-}  // namespace trajectory_follower
-}  // namespace control
-}  // namespace motion
-}  // namespace autoware
+}  // namespace autoware::motion::control::trajectory_follower
 #endif  // TRAJECTORY_FOLLOWER__QP_SOLVER__QP_SOLVER_UNCONSTR_FAST_HPP_

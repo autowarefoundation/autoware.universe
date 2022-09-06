@@ -19,13 +19,7 @@
 #include "autoware_auto_vehicle_msgs/msg/steering_report.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 
-namespace autoware
-{
-namespace motion
-{
-namespace control
-{
-namespace trajectory_follower
+namespace autoware::motion::control::trajectory_follower
 {
 struct InputData
 {
@@ -33,9 +27,6 @@ struct InputData
   nav_msgs::msg::Odometry::SharedPtr current_odometry_ptr;
   autoware_auto_vehicle_msgs::msg::SteeringReport::SharedPtr current_steering_ptr;
 };
-}  // namespace trajectory_follower
-}  // namespace control
-}  // namespace motion
-}  // namespace autoware
+}  // namespace autoware::motion::control::trajectory_follower
 
 #endif  // TRAJECTORY_FOLLOWER__INPUT_DATA_HPP_

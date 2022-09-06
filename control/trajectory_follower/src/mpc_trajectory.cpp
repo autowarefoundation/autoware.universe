@@ -14,13 +14,7 @@
 
 #include "trajectory_follower/mpc_trajectory.hpp"
 
-namespace autoware
-{
-namespace motion
-{
-namespace control
-{
-namespace trajectory_follower
+namespace autoware::motion::control::trajectory_follower
 {
 void MPCTrajectory::push_back(
   const float64_t & xp, const float64_t & yp, const float64_t & zp, const float64_t & yawp,
@@ -60,7 +54,4 @@ size_t MPCTrajectory::size() const
     return 0;
   }
 }
-}  // namespace trajectory_follower
-}  // namespace control
-}  // namespace motion
-}  // namespace autoware
+}  // namespace autoware::motion::control::trajectory_follower

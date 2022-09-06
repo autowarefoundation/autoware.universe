@@ -20,13 +20,7 @@
 
 #include <array>
 
-namespace autoware
-{
-namespace motion
-{
-namespace control
-{
-namespace trajectory_follower
+namespace autoware::motion::control::trajectory_follower
 {
 using autoware::common::types::float64_t;
 /// Debug Values used for debugging or controller tuning
@@ -97,9 +91,6 @@ public:
 private:
   std::array<float64_t, static_cast<size_t>(TYPE::SIZE)> m_values;
 };
-}  // namespace trajectory_follower
-}  // namespace control
-}  // namespace motion
-}  // namespace autoware
+}  // namespace autoware::motion::control::trajectory_follower
 
 #endif  // TRAJECTORY_FOLLOWER__DEBUG_VALUES_HPP_

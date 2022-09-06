@@ -14,13 +14,7 @@
 
 #include "trajectory_follower/vehicle_model/vehicle_model_interface.hpp"
 
-namespace autoware
-{
-namespace motion
-{
-namespace control
-{
-namespace trajectory_follower
+namespace autoware::motion::control::trajectory_follower
 {
 VehicleModelInterface::VehicleModelInterface(
   int64_t dim_x, int64_t dim_u, int64_t dim_y, float64_t wheelbase)
@@ -33,7 +27,4 @@ int64_t VehicleModelInterface::getDimY() { return m_dim_y; }
 float64_t VehicleModelInterface::getWheelbase() { return m_wheelbase; }
 void VehicleModelInterface::setVelocity(const float64_t velocity) { m_velocity = velocity; }
 void VehicleModelInterface::setCurvature(const float64_t curvature) { m_curvature = curvature; }
-}  // namespace trajectory_follower
-}  // namespace control
-}  // namespace motion
-}  // namespace autoware
+}  // namespace autoware::motion::control::trajectory_follower

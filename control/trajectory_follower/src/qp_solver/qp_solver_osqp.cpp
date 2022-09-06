@@ -17,13 +17,7 @@
 #include <string>
 #include <vector>
 
-namespace autoware
-{
-namespace motion
-{
-namespace control
-{
-namespace trajectory_follower
+namespace autoware::motion::control::trajectory_follower
 {
 QPSolverOSQP::QPSolverOSQP(const rclcpp::Logger & logger) : logger_{logger} {}
 bool8_t QPSolverOSQP::solve(
@@ -80,7 +74,4 @@ bool8_t QPSolverOSQP::solve(
   }
   return true;
 }
-}  // namespace trajectory_follower
-}  // namespace control
-}  // namespace motion
-}  // namespace autoware
+}  // namespace autoware::motion::control::trajectory_follower

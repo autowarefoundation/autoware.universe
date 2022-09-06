@@ -45,13 +45,7 @@
 #include <utility>
 #include <vector>
 
-namespace autoware
-{
-namespace motion
-{
-namespace control
-{
-namespace trajectory_follower
+namespace autoware::motion::control::trajectory_follower
 {
 using autoware::common::types::bool8_t;
 using autoware::common::types::float64_t;
@@ -369,9 +363,6 @@ private:
     const Motion & ctrl_cmd, const geometry_msgs::msg::Pose & current_pose,
     const ControlData & control_data);
 };
-}  // namespace trajectory_follower
-}  // namespace control
-}  // namespace motion
-}  // namespace autoware
+}  // namespace autoware::motion::control::trajectory_follower
 
 #endif  // TRAJECTORY_FOLLOWER__PID_LONGITUDINAL_CONTROLLER_HPP_

@@ -26,13 +26,7 @@
 #include <utility>
 #include <vector>
 
-namespace autoware
-{
-namespace motion
-{
-namespace control
-{
-namespace trajectory_follower
+namespace autoware::motion::control::trajectory_follower
 {
 PidLongitudinalController::PidLongitudinalController(rclcpp::Node & node) : node_{&node}
 {
@@ -945,7 +939,4 @@ void PidLongitudinalController::updateDebugVelAcc(
   m_debug_values.setValues(DebugValues::TYPE::ERROR_VEL, target_motion.vel - current_vel);
 }
 
-}  // namespace trajectory_follower
-}  // namespace control
-}  // namespace motion
-}  // namespace autoware
+}  // namespace autoware::motion::control::trajectory_follower

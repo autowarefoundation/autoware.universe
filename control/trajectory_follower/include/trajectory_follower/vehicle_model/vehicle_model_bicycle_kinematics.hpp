@@ -47,13 +47,7 @@
 #include "trajectory_follower/vehicle_model/vehicle_model_interface.hpp"
 #include "trajectory_follower/visibility_control.hpp"
 
-namespace autoware
-{
-namespace motion
-{
-namespace control
-{
-namespace trajectory_follower
+namespace autoware::motion::control::trajectory_follower
 {
 using autoware::common::types::float64_t;
 /**
@@ -99,8 +93,5 @@ private:
   float64_t m_steer_lim;  //!< @brief steering angle limit [rad]
   float64_t m_steer_tau;  //!< @brief steering time constant for 1d-model [s]
 };
-}  // namespace trajectory_follower
-}  // namespace control
-}  // namespace motion
-}  // namespace autoware
+}  // namespace autoware::motion::control::trajectory_follower
 #endif  // TRAJECTORY_FOLLOWER__VEHICLE_MODEL__VEHICLE_MODEL_BICYCLE_KINEMATICS_HPP_

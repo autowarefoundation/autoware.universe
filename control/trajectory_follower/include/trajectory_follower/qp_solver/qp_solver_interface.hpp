@@ -21,13 +21,7 @@
 #include "eigen3/Eigen/LU"
 #include "trajectory_follower/visibility_control.hpp"
 
-namespace autoware
-{
-namespace motion
-{
-namespace control
-{
-namespace trajectory_follower
+namespace autoware::motion::control::trajectory_follower
 {
 using autoware::common::types::bool8_t;
 /// Interface for solvers of Quadratic Programming (QP) problems
@@ -56,8 +50,5 @@ public:
     const Eigen::VectorXd & lb, const Eigen::VectorXd & ub, const Eigen::VectorXd & lb_a,
     const Eigen::VectorXd & ub_a, Eigen::VectorXd & u) = 0;
 };
-}  // namespace trajectory_follower
-}  // namespace control
-}  // namespace motion
-}  // namespace autoware
+}  // namespace autoware::motion::control::trajectory_follower
 #endif  // TRAJECTORY_FOLLOWER__QP_SOLVER__QP_SOLVER_INTERFACE_HPP_

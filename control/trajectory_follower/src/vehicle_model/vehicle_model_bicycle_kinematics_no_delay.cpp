@@ -16,13 +16,7 @@
 
 #include <cmath>
 
-namespace autoware
-{
-namespace motion
-{
-namespace control
-{
-namespace trajectory_follower
+namespace autoware::motion::control::trajectory_follower
 {
 KinematicsBicycleModelNoDelay::KinematicsBicycleModelNoDelay(
   const float64_t wheelbase, const float64_t steer_lim)
@@ -61,7 +55,4 @@ void KinematicsBicycleModelNoDelay::calculateReferenceInput(Eigen::MatrixXd & u_
 {
   u_ref(0, 0) = std::atan(m_wheelbase * m_curvature);
 }
-}  // namespace trajectory_follower
-}  // namespace control
-}  // namespace motion
-}  // namespace autoware
+}  // namespace autoware::motion::control::trajectory_follower

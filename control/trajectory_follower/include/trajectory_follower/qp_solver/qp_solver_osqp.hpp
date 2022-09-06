@@ -22,13 +22,7 @@
 #include "trajectory_follower/qp_solver/qp_solver_interface.hpp"
 #include "trajectory_follower/visibility_control.hpp"
 
-namespace autoware
-{
-namespace motion
-{
-namespace control
-{
-namespace trajectory_follower
+namespace autoware::motion::control::trajectory_follower
 {
 using autoware::common::types::bool8_t;
 using autoware::common::types::float64_t;
@@ -67,8 +61,5 @@ private:
   autoware::common::osqp::OSQPInterface osqpsolver_;
   rclcpp::Logger logger_;
 };
-}  // namespace trajectory_follower
-}  // namespace control
-}  // namespace motion
-}  // namespace autoware
+}  // namespace autoware::motion::control::trajectory_follower
 #endif  // TRAJECTORY_FOLLOWER__QP_SOLVER__QP_SOLVER_OSQP_HPP_

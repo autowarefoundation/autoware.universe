@@ -33,13 +33,7 @@
 #include <cmath>
 #include <limits>
 
-namespace autoware
-{
-namespace motion
-{
-namespace control
-{
-namespace trajectory_follower
+namespace autoware::motion::control::trajectory_follower
 {
 namespace longitudinal_utils
 {
@@ -166,9 +160,6 @@ TRAJECTORY_FOLLOWER_PUBLIC float64_t applyDiffLimitFilter(
   const float64_t input_val, const float64_t prev_val, const float64_t dt, const float64_t max_val,
   const float64_t min_val);
 }  // namespace longitudinal_utils
-}  // namespace trajectory_follower
-}  // namespace control
-}  // namespace motion
-}  // namespace autoware
+}  // namespace autoware::motion::control::trajectory_follower
 
 #endif  // TRAJECTORY_FOLLOWER__LONGITUDINAL_CONTROLLER_UTILS_HPP_

@@ -16,13 +16,7 @@
 
 #include <vector>
 
-namespace autoware
-{
-namespace motion
-{
-namespace control
-{
-namespace trajectory_follower
+namespace autoware::motion::control::trajectory_follower
 {
 Butterworth2dFilter::Butterworth2dFilter(float64_t dt, float64_t f_cutoff_hz)
 {
@@ -143,7 +137,4 @@ bool8_t filt_vector(const int64_t num, std::vector<float64_t> & u)
   return true;
 }
 }  // namespace MoveAverageFilter
-}  // namespace trajectory_follower
-}  // namespace control
-}  // namespace motion
-}  // namespace autoware
+}  // namespace autoware::motion::control::trajectory_follower

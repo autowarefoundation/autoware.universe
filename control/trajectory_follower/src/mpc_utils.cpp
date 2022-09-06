@@ -21,13 +21,7 @@
 #include <string>
 #include <vector>
 
-namespace autoware
-{
-namespace motion
-{
-namespace control
-{
-namespace trajectory_follower
+namespace autoware::motion::control::trajectory_follower
 {
 namespace MPCUtils
 {
@@ -409,7 +403,4 @@ float64_t calcStopDistance(
 }
 
 }  // namespace MPCUtils
-}  // namespace trajectory_follower
-}  // namespace control
-}  // namespace motion
-}  // namespace autoware
+}  // namespace autoware::motion::control::trajectory_follower

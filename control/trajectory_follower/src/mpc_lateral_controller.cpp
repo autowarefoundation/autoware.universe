@@ -25,13 +25,7 @@
 #include <utility>
 #include <vector>
 
-namespace autoware
-{
-namespace motion
-{
-namespace control
-{
-namespace trajectory_follower
+namespace autoware::motion::control::trajectory_follower
 {
 namespace
 {
@@ -546,7 +540,4 @@ bool8_t MpcLateralController::isValidTrajectory(
   return true;
 }
 
-}  // namespace trajectory_follower
-}  // namespace control
-}  // namespace motion
-}  // namespace autoware
+}  // namespace autoware::motion::control::trajectory_follower

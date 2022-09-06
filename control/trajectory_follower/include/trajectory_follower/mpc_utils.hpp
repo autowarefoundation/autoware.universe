@@ -44,13 +44,7 @@
 #include <string>
 #include <vector>
 
-namespace autoware
-{
-namespace motion
-{
-namespace control
-{
-namespace trajectory_follower
+namespace autoware::motion::control::trajectory_follower
 {
 namespace MPCUtils
 {
@@ -184,8 +178,5 @@ TRAJECTORY_FOLLOWER_PUBLIC bool8_t calcNearestPoseInterp(
 TRAJECTORY_FOLLOWER_PUBLIC float64_t calcStopDistance(
   const autoware_auto_planning_msgs::msg::Trajectory & current_trajectory, const int64_t origin);
 }  // namespace MPCUtils
-}  // namespace trajectory_follower
-}  // namespace control
-}  // namespace motion
-}  // namespace autoware
+}  // namespace autoware::motion::control::trajectory_follower
 #endif  // TRAJECTORY_FOLLOWER__MPC_UTILS_HPP_

@@ -16,13 +16,7 @@
 
 #include <algorithm>
 
-namespace autoware
-{
-namespace motion
-{
-namespace control
-{
-namespace trajectory_follower
+namespace autoware::motion::control::trajectory_follower
 {
 DynamicsBicycleModel::DynamicsBicycleModel(
   const float64_t wheelbase, const float64_t mass_fl, const float64_t mass_fr,
@@ -92,7 +86,4 @@ void DynamicsBicycleModel::calculateReferenceInput(Eigen::MatrixXd & u_ref)
     m_lr * m_mass / (2 * m_cf * m_wheelbase) - m_lf * m_mass / (2 * m_cr * m_wheelbase);
   u_ref(0, 0) = m_wheelbase * m_curvature + Kv * vel * vel * m_curvature;
 }
-}  // namespace trajectory_follower
-}  // namespace control
-}  // namespace motion
-}  // namespace autoware
+}  // namespace autoware::motion::control::trajectory_follower

@@ -27,13 +27,7 @@
 #include <utility>
 #include <vector>
 
-namespace autoware
-{
-namespace motion
-{
-namespace control
-{
-namespace trajectory_follower
+namespace autoware::motion::control::trajectory_follower
 {
 using autoware::common::types::bool8_t;
 using autoware::common::types::float64_t;
@@ -120,9 +114,6 @@ private:
   rclcpp::Time m_weak_acc_time;
   bool8_t m_is_set_params = false;
 };
-}  // namespace trajectory_follower
-}  // namespace control
-}  // namespace motion
-}  // namespace autoware
+}  // namespace autoware::motion::control::trajectory_follower
 
 #endif  // TRAJECTORY_FOLLOWER__SMOOTH_STOP_HPP_

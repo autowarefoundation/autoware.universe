@@ -20,13 +20,7 @@
 #include <utility>
 #include <vector>
 
-namespace autoware
-{
-namespace motion
-{
-namespace control
-{
-namespace trajectory_follower
+namespace autoware::motion::control::trajectory_follower
 {
 PIDController::PIDController()
 : m_error_integral(0.0),
@@ -109,7 +103,4 @@ void PIDController::reset()
   m_prev_error = 0.0;
   m_is_first_time = true;
 }
-}  // namespace trajectory_follower
-}  // namespace control
-}  // namespace motion
-}  // namespace autoware
+}  // namespace autoware::motion::control::trajectory_follower

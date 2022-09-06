@@ -19,13 +19,7 @@
 #include "eigen3/Eigen/Core"
 #include "trajectory_follower/visibility_control.hpp"
 
-namespace autoware
-{
-namespace motion
-{
-namespace control
-{
-namespace trajectory_follower
+namespace autoware::motion::control::trajectory_follower
 {
 using autoware::common::types::float64_t;
 /**
@@ -111,8 +105,5 @@ public:
    */
   virtual void calculateReferenceInput(Eigen::MatrixXd & u_ref) = 0;
 };
-}  // namespace trajectory_follower
-}  // namespace control
-}  // namespace motion
-}  // namespace autoware
+}  // namespace autoware::motion::control::trajectory_follower
 #endif  // TRAJECTORY_FOLLOWER__VEHICLE_MODEL__VEHICLE_MODEL_INTERFACE_HPP_

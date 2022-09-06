@@ -22,13 +22,7 @@
 #include <utility>
 #include <vector>
 
-namespace autoware
-{
-namespace motion
-{
-namespace control
-{
-namespace trajectory_follower
+namespace autoware::motion::control::trajectory_follower
 {
 void SmoothStop::init(const float64_t pred_vel_in_target, const float64_t pred_stop_dist)
 {
@@ -167,7 +161,4 @@ float64_t SmoothStop::calculate(
   // when the car is not running
   return m_params.strong_stop_acc;
 }
-}  // namespace trajectory_follower
-}  // namespace control
-}  // namespace motion
-}  // namespace autoware
+}  // namespace autoware::motion::control::trajectory_follower

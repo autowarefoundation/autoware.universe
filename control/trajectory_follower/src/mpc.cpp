@@ -25,13 +25,7 @@
 #include <utility>
 #include <vector>
 
-namespace autoware
-{
-namespace motion
-{
-namespace control
-{
-namespace trajectory_follower
+namespace autoware::motion::control::trajectory_follower
 {
 using namespace std::literals::chrono_literals;
 using ::motion::motion_common::to_angle;
@@ -832,7 +826,4 @@ bool8_t MPC::isValid(const MPCMatrix & m) const
 
   return true;
 }
-}  // namespace trajectory_follower
-}  // namespace control
-}  // namespace motion
-}  // namespace autoware
+}  // namespace autoware::motion::control::trajectory_follower

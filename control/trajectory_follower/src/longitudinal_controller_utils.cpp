@@ -29,13 +29,7 @@
 #include <algorithm>
 #include <limits>
 
-namespace autoware
-{
-namespace motion
-{
-namespace control
-{
-namespace trajectory_follower
+namespace autoware::motion::control::trajectory_follower
 {
 namespace longitudinal_utils
 {
@@ -187,7 +181,4 @@ float64_t applyDiffLimitFilter(
   return applyDiffLimitFilter(input_val, prev_val, dt, max_val, min_val);
 }
 }  // namespace longitudinal_utils
-}  // namespace trajectory_follower
-}  // namespace control
-}  // namespace motion
-}  // namespace autoware
+}  // namespace autoware::motion::control::trajectory_follower
