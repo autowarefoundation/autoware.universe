@@ -603,7 +603,7 @@ double calcLongitudinalDistanceFromEgoToObject(
     const double signed_distance_from_front =
       tier4_autoware_utils::calcLongitudinalDeviation(vehicle_front_pose, point);
     const double signed_distance_from_rear =
-      -tier4_autoware_utils::calcLongitudinalDeviation(vehicle_front_pose, point);
+      -tier4_autoware_utils::calcLongitudinalDeviation(vehicle_rear_pose, point);
 
     if (signed_distance_from_front < 0.0 && signed_distance_from_rear < 0.0) {
       // point is between front and rear
