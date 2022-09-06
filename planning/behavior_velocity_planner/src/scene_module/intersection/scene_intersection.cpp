@@ -344,10 +344,9 @@ bool IntersectionModule::checkCollision(
       const auto is_in_intersection_area = bg::within(obj_poly, intersection_area_2d);
       const auto is_in_adjacent_lanelets = checkAngleForTargetLanelets(
         object_direction, adjacent_lanelet_ids, planner_param_.detection_area_margin);
+      if (is_in_adjacent_lanelets) continue;
       if (is_in_intersection_area) {
-        if (!is_in_adjacent_lanelets) {
-          target_objects.objects.push_back(object);
-        }
+        target_objects.objects.push_back(object);
       } else if (checkAngleForTargetLanelets(
                    object_direction, detection_area_lanelet_ids,
                    planner_param_.detection_area_margin)) {
