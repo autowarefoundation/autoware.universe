@@ -27,7 +27,6 @@ using tier4_autoware_utils::createMarkerScale;
 
 namespace
 {
-using State = BlindSpotModule::State;
 
 visualization_msgs::msg::MarkerArray createPolygonMarkerArray(
   const lanelet::CompoundPolygon3d & polygon, const std::string & ns, const int64_t lane_id,
