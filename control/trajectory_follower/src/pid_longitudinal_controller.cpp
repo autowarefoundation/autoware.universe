@@ -217,7 +217,7 @@ void PidLongitudinalController::setCurrentVelocity(
   if (m_current_velocity_ptr) {
     m_prev_velocity_ptr = m_current_velocity_ptr;
   }
-  m_current_velocity_ptr = std::make_shared<nav_msgs::msg::Odometry>(*msg);
+  m_current_velocity_ptr = msg;
 }
 
 void PidLongitudinalController::setTrajectory(
@@ -237,7 +237,7 @@ void PidLongitudinalController::setTrajectory(
     return;
   }
 
-  m_trajectory_ptr = std::make_shared<autoware_auto_planning_msgs::msg::Trajectory>(*msg);
+  m_trajectory_ptr = msg;
 }
 
 rcl_interfaces::msg::SetParametersResult PidLongitudinalController::paramCallback(
