@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #include <gtest/gtest.h>
-#include <iostream>
 
 #include "ekf_localizer/measurement.hpp"
 
@@ -52,9 +51,6 @@ TEST(Measurement, PoseMeasurementCovariance)
     };
 
     const Eigen::Matrix3d M = poseMeasurementCovariance(covariance, 2.);
-
-    std::cerr << "M" << std::endl;
-    std::cerr << M << std::endl;
 
     Eigen::Matrix3d expected;
     expected <<
