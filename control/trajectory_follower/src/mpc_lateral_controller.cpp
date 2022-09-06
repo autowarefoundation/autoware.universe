@@ -251,31 +251,29 @@ bool MpcLateralController::isSteerConverged(
 bool8_t MpcLateralController::checkData() const
 {
   if (!m_mpc.hasVehicleModel()) {
-    RCLCPP_DEBUG(node_->get_logger(), "MPC does not have a vehicle model");
+    RCLCPP_ERROR(node_->get_logger(), "MPC does not have a vehicle model");
     return false;
   }
   if (!m_mpc.hasQPSolver()) {
-    RCLCPP_DEBUG(node_->get_logger(), "MPC does not have a QP solver");
+    RCLCPP_ERROR(node_->get_logger(), "MPC does not have a QP solver");
     return false;
   }
 
-  if (!m_current_kinematic_state_ptr) {
-    RCLCPP_DEBUG(
-      node_->get_logger(), "waiting data. kinematic_state = %d",
-      m_current_kinematic_state_ptr != nullptr);
+  const auto invalid = [this](const auto & msg) {
+    RCLCPP_DEBUG(node_->get_logger(), "%s", msg);
     return false;
+  };
+
+  if (!m_current_kinematic_state_ptr) {
+    return invalid("waiting kinematic_state");
   }
 
   if (!m_current_steering_ptr) {
-    RCLCPP_DEBUG(
-      node_->get_logger(), "waiting data. current_steering = %d",
-      m_current_steering_ptr != nullptr);
-    return false;
+    return invalid("waiting steering");
   }
 
-  if (m_mpc.m_ref_traj.size() == 0) {
-    RCLCPP_DEBUG(node_->get_logger(), "trajectory size is zero.");
-    return false;
+  if (m_mpc.m_ref_traj.empty()) {
+    return invalid("trajectory is empty");
   }
 
   return true;

@@ -15,6 +15,7 @@
 #include "trajectory_follower/mpc.hpp"
 
 #include "motion_utils/motion_utils.hpp"
+#include "tier4_autoware_utils/math/constants.hpp"
 
 #include <algorithm>
 #include <deque>
@@ -23,9 +24,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-
-#define DEG2RAD 3.1415926535 / 180.0
-#define RAD2DEG 180.0 / 3.1415926535
 
 namespace autoware
 {
@@ -204,15 +202,12 @@ void MPC::setReferenceTrajectory(
   mpc_traj_smoothed = mpc_traj_resampled;
   const int64_t mpc_traj_resampled_size = static_cast<int64_t>(mpc_traj_resampled.size());
   if (enable_path_smoothing && mpc_traj_resampled_size > 2 * path_filter_moving_ave_num) {
+    using trajectory_follower::MoveAverageFilter::filt_vector;
     if (
-      !trajectory_follower::MoveAverageFilter::filt_vector(
-        path_filter_moving_ave_num, mpc_traj_smoothed.x) ||
-      !trajectory_follower::MoveAverageFilter::filt_vector(
-        path_filter_moving_ave_num, mpc_traj_smoothed.y) ||
-      !trajectory_follower::MoveAverageFilter::filt_vector(
-        path_filter_moving_ave_num, mpc_traj_smoothed.yaw) ||
-      !trajectory_follower::MoveAverageFilter::filt_vector(
-        path_filter_moving_ave_num, mpc_traj_smoothed.vx)) {
+      !filt_vector(path_filter_moving_ave_num, mpc_traj_smoothed.x) ||
+      !filt_vector(path_filter_moving_ave_num, mpc_traj_smoothed.y) ||
+      !filt_vector(path_filter_moving_ave_num, mpc_traj_smoothed.yaw) ||
+      !filt_vector(path_filter_moving_ave_num, mpc_traj_smoothed.vx)) {
       RCLCPP_DEBUG(m_logger, "path callback: filtering error. stop filtering.");
       mpc_traj_smoothed = mpc_traj_resampled;
     }
@@ -303,7 +298,8 @@ bool8_t MPC::getData(
   if (std::fabs(data->yaw_err) > m_admissible_yaw_error_rad) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
       m_logger, *m_clock, duration, "yaw error is over limit. error = %f deg, limit %f deg",
-      RAD2DEG * data->yaw_err, RAD2DEG * m_admissible_yaw_error_rad);
+      tier4_autoware_utils::rad2deg(data->yaw_err),
+      tier4_autoware_utils::rad2deg(m_admissible_yaw_error_rad));
     return false;
   }
 
@@ -607,7 +603,7 @@ MPCMatrix MPC::generateMPCMatrix(
     /* get reference input (feed-forward) */
     m_vehicle_model_ptr->setCurvature(ref_smooth_k);
     m_vehicle_model_ptr->calculateReferenceInput(Uref);
-    if (std::fabs(Uref(0, 0)) < DEG2RAD * m_param.zero_ff_steer_deg) {
+    if (std::fabs(Uref(0, 0)) < tier4_autoware_utils::deg2rad(m_param.zero_ff_steer_deg)) {
       Uref(0, 0) = 0.0;  // ignore curvature noise
     }
     m.Uref_ex.block(i * DIM_U, 0, DIM_U, 1) = Uref;
