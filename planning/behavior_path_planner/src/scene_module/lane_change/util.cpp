@@ -367,11 +367,13 @@ bool isLaneChangePathSafe(
   const double current_lane_check_start_time =
     (!lane_change_parameters.enable_collision_check_at_prepare_phase) ? lane_change_prepare_duration
                                                                       : 0.0;
-  const double current_lane_check_end_time = lane_change_prepare_duration + lane_changing_duration;
+  const double current_lane_check_end_time =
+    lane_change_prepare_duration + lane_changing_duration / 2;
   double target_lane_check_start_time =
     (!lane_change_parameters.enable_collision_check_at_prepare_phase) ? lane_change_prepare_duration
                                                                       : 0.0;
-  const double target_lane_check_end_time = lane_change_prepare_duration + lane_changing_duration;
+  const double target_lane_check_end_time =
+    lane_change_prepare_duration + lane_changing_duration / 2;
   constexpr double ego_predicted_path_min_speed{1.0};
   const auto vehicle_predicted_path = util::convertToPredictedPath(
     path, current_twist, current_pose, current_seg_idx, target_lane_check_end_time, time_resolution,

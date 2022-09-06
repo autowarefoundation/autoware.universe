@@ -2266,10 +2266,13 @@ Pose projectCurrentPoseToTarget(const Pose & desired_object, const Pose & target
 bool isObjectFront(const Pose & ego_pose, const Pose & obj_pose)
 {
   const auto obj_from_ego = projectCurrentPoseToTarget(ego_pose, obj_pose);
-  return obj_from_ego.position.x > 1e-3;
+  return obj_from_ego.position.x > -1e-3;
 }
 
-bool isObjectFront(const Pose & projected_ego_pose) { return projected_ego_pose.position.x > 1e-3; }
+bool isObjectFront(const Pose & projected_ego_pose)
+{
+  return projected_ego_pose.position.x > -1e-3;
+}
 
 double stoppingDistance(const double & vehicle_velocity, const double & vehicle_accel)
 {
