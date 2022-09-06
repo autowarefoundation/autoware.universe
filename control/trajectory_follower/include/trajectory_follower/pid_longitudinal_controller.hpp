@@ -101,9 +101,9 @@ private:
     const std::vector<rclcpp::Parameter> & parameters);
 
   // pointers for ros topic
-  std::shared_ptr<nav_msgs::msg::Odometry> m_current_velocity_ptr{nullptr};
-  std::shared_ptr<nav_msgs::msg::Odometry> m_prev_velocity_ptr{nullptr};
-  std::shared_ptr<autoware_auto_planning_msgs::msg::Trajectory> m_trajectory_ptr{nullptr};
+  nav_msgs::msg::Odometry::ConstSharedPtr m_current_velocity_ptr{nullptr};
+  nav_msgs::msg::Odometry::ConstSharedPtr m_prev_velocity_ptr{nullptr};
+  autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr m_trajectory_ptr{nullptr};
 
   // vehicle info
   float64_t m_wheel_base;
