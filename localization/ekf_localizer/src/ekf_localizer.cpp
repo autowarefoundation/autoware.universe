@@ -585,8 +585,8 @@ void EKFLocalizer::measurementUpdateTwist(
   DEBUG_PRINT_MAT((y - y_ekf).transpose());
 
   const Eigen::Matrix<double, 2, 6> C = twistMeasurementMatrix();
-  const Eigen::Matrix2d R = twistMeasurementCovariance(
-    twist.twist.covariance, twist_smoothing_steps_);
+  const Eigen::Matrix2d R =
+    twistMeasurementCovariance(twist.twist.covariance, twist_smoothing_steps_);
 
   ekf_.updateWithDelay(y, C, R, delay_step);
 
