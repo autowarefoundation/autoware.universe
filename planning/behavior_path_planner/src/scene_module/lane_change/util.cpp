@@ -358,19 +358,16 @@ bool isLaneChangePathSafe(
 
   const double time_resolution = lane_change_parameters.prediction_time_resolution;
   const auto & lane_change_prepare_duration = lane_change_parameters.lane_change_prepare_duration;
+  const auto & enable_collision_check_at_prepare_phase =
+    lane_change_parameters.enable_collision_check_at_prepare_phase;
   const auto & lane_changing_duration = lane_change_parameters.lane_changing_duration;
-  const double current_lane_check_start_time =
-    (!lane_change_parameters.enable_collision_check_at_prepare_phase) ? lane_change_prepare_duration
-                                                                      : 0.0;
-  const double current_lane_check_end_time = lane_change_prepare_duration + lane_changing_duration;
-  double target_lane_check_start_time =
-    (!lane_change_parameters.enable_collision_check_at_prepare_phase) ? lane_change_prepare_duration
-                                                                      : 0.0;
-  const double target_lane_check_end_time = lane_change_prepare_duration + lane_changing_duration;
+  const double check_start_time =
+    (enable_collision_check_at_prepare_phase) ? 0.0 : lane_change_prepare_duration;
+  const double check_end_time = lane_change_prepare_duration + lane_changing_duration;
   constexpr double ego_predicted_path_min_speed{1.0};
   const auto vehicle_predicted_path = util::convertToPredictedPath(
-    path, current_twist, current_pose, static_cast<double>(current_seg_idx),
-    target_lane_check_end_time, time_resolution, acceleration, ego_predicted_path_min_speed);
+    path, current_twist, current_pose, static_cast<double>(current_seg_idx), check_end_time,
+    time_resolution, acceleration, ego_predicted_path_min_speed);
 
   const auto arc = lanelet::utils::getArcCoordinates(current_lanes, current_pose);
 
@@ -419,8 +416,8 @@ bool isLaneChangePathSafe(
     for (const auto & obj_path : predicted_paths) {
       if (!util::isSafeInLaneletCollisionCheck(
             current_pose, current_twist, vehicle_predicted_path, vehicle_length, vehicle_width,
-            current_lane_check_start_time, current_lane_check_end_time, time_resolution, obj,
-            obj_path, common_parameters, current_debug_data.second)) {
+            check_start_time, check_end_time, time_resolution, obj, obj_path, common_parameters,
+            current_debug_data.second)) {
         appendDebugInfo(current_debug_data, false);
         return false;
       }
@@ -450,8 +447,8 @@ bool isLaneChangePathSafe(
       for (const auto & obj_path : predicted_paths) {
         if (!util::isSafeInLaneletCollisionCheck(
               current_pose, current_twist, vehicle_predicted_path, vehicle_length, vehicle_width,
-              target_lane_check_start_time, target_lane_check_end_time, time_resolution, obj,
-              obj_path, common_parameters, current_debug_data.second)) {
+              check_start_time, check_end_time, time_resolution, obj, obj_path, common_parameters,
+              current_debug_data.second)) {
           appendDebugInfo(current_debug_data, false);
           return false;
         }
@@ -459,8 +456,8 @@ bool isLaneChangePathSafe(
     } else {
       if (!util::isSafeInFreeSpaceCollisionCheck(
             current_pose, current_twist, vehicle_predicted_path, vehicle_length, vehicle_width,
-            target_lane_check_start_time, target_lane_check_end_time, time_resolution, obj,
-            common_parameters, current_debug_data.second)) {
+            check_start_time, check_end_time, time_resolution, obj, common_parameters,
+            current_debug_data.second)) {
         appendDebugInfo(current_debug_data, false);
         return false;
       }

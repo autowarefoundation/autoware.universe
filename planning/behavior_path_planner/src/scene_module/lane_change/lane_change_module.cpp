@@ -147,6 +147,7 @@ BehaviorModuleOutput LaneChangeModule::plan()
   {
     const auto & common_parameters = planner_data_->parameters;
     lanelet::ConstLanelets lanes;
+    lanes.reserve(status_.current_lanes.size() + status_.lane_change_lanes.size());
     lanes.insert(lanes.end(), status_.current_lanes.begin(), status_.current_lanes.end());
     lanes.insert(lanes.end(), status_.lane_change_lanes.begin(), status_.lane_change_lanes.end());
 
