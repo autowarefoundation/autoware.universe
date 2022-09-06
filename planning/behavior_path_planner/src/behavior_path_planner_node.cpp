@@ -364,13 +364,13 @@ PullOverParameters BehaviorPathPlannerNode::getPullOverParam()
   };
 
   PullOverParameters p;
-  p.request_length = dp("request_length", 100.0);
+  p.request_length = dp("request_length", 200.0);
   p.th_stopped_velocity = dp("th_stopped_velocity", 0.01);
   p.th_arrived_distance = dp("th_arrived_distance", 0.3);
   p.th_stopped_time = dp("th_stopped_time", 2.0);
   p.margin_from_boundary = dp("margin_from_boundary", 0.3);
   p.decide_path_distance = dp("decide_path_distance", 10.0);
-  p.maximum_deceleration = dp("maximum_deceleration", 0.5);
+  p.maximum_deceleration = dp("maximum_deceleration", 1.0);
   // goal research
   p.enable_goal_research = dp("enable_goal_research", true);
   p.search_priority = dp("search_priority", "efficient_path");
@@ -379,9 +379,14 @@ PullOverParameters BehaviorPathPlannerNode::getPullOverParam()
   p.goal_search_interval = dp("goal_search_interval", 5.0);
   p.goal_to_obj_margin = dp("goal_to_obj_margin", 2.0);
   // occupancy grid map
-  p.collision_check_margin = dp("collision_check_margin", 0.5);
+  p.use_occupancy_grid = dp("use_occupancy_grid", true);
+  p.occupancy_grid_collision_check_margin = dp("occupancy_grid_collision_check_margin", 0.0);
   p.theta_size = dp("theta_size", 360);
   p.obstacle_threshold = dp("obstacle_threshold", 90);
+  // object recognition
+  p.use_object_recognition = dp("use_object_recognition", true);
+  p.object_recognition_collision_check_margin =
+    dp("object_recognition_collision_check_margin", 1.0);
   // shift path
   p.enable_shift_parking = dp("enable_shift_parking", true);
   p.pull_over_sampling_num = dp("pull_over_sampling_num", 4);
