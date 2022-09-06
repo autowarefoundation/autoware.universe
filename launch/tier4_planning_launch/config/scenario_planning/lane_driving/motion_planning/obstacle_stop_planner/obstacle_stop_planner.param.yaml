@@ -1,6 +1,9 @@
 /**:
   ros__parameters:
     hunting_threshold: 0.5                   # even if the obstacle disappears, the stop judgment continues for hunting_threshold [s]
+    lowpass_gain: 0.9                        # gain parameter for low pass filter [-]
+    max_velocity: 20.0                       # max velocity [m/s]
+    enable_slow_down: False                  # whether to use slow down planner [-]
 
     stop_planner:
       # params for stop position
@@ -13,7 +16,7 @@
       detection_area:
         lateral_margin: 0.0                  # margin of vehicle footprint [m]
         step_length: 1.0                     # step length for pointcloud search range [m]
-        extend_distance: 0.0                 # extend trajectory to consider after goal obstacle in the extend_distance
+        extend_distance: 0.0                 # extend trajectory to consider after goal obstacle in the extend_distance [m]
 
 
     slow_down_planner:
@@ -41,4 +44,6 @@
         jerk_start: -0.1                     # init jerk used for deceleration planning [m/sss]
 
       # others
-      consider_constraints: False            # set "True", if no decel plan found under jerk/dec constrains, relax target slow down vel
+      consider_constraints: False                 # set "True", if no decel plan found under jerk/dec constrains, relax target slow down vel [-]
+      velocity_threshold_decel_complete: 0.2      # use for judge whether the ego velocity converges the target slow down velocity [m/s]
+      acceleration_threshold_decel_complete: 0.1  # use for judge whether the ego velocity converges the target slow down velocity [m/ss]

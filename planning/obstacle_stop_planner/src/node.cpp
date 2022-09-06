@@ -455,9 +455,9 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
   {
     auto & p = node_param_;
     p.enable_slow_down = declare_parameter<bool>("enable_slow_down");
-    p.max_velocity = declare_parameter("max_velocity", 20.0);
+    p.max_velocity = declare_parameter<double>("max_velocity");
     p.hunting_threshold = declare_parameter<double>("hunting_threshold");
-    p.lowpass_gain = declare_parameter("lowpass_gain", 0.9);
+    p.lowpass_gain = declare_parameter<double>("lowpass_gain");
     lpf_acc_ = std::make_shared<LowpassFilter1d>(p.lowpass_gain);
     p.ego_nearest_dist_threshold = declare_parameter<double>("ego_nearest_dist_threshold");
     p.ego_nearest_yaw_threshold = declare_parameter<double>("ego_nearest_yaw_threshold");
@@ -525,9 +525,9 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
     p.jerk_span = declare_parameter<double>(ns + "constraints.jerk_span");
 
     p.velocity_threshold_decel_complete =
-      declare_parameter(ns + "velocity_threshold_decel_complete", 0.2);
+      declare_parameter<double>(ns + "velocity_threshold_decel_complete");
     p.acceleration_threshold_decel_complete =
-      declare_parameter(ns + "acceleration_threshold_decel_complete", 0.1);
+      declare_parameter<double>(ns + "acceleration_threshold_decel_complete");
 
     // apply offset
     p.longitudinal_forward_margin += i.max_longitudinal_offset_m;
