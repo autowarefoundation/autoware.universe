@@ -597,7 +597,6 @@ double calcLongitudinalDistanceFromEgoToObject(
   const auto vehicle_rear_pose =
     tier4_autoware_utils::calcOffsetPose(ego_pose, base_link2rear, 0, 0);
 
-
   for (const auto & p : obj_polygon.outer()) {
     const auto point = tier4_autoware_utils::createPoint(p.x(), p.y(), 0.0);
 

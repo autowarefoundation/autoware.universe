@@ -319,7 +319,7 @@ bool PullOverModule::checkCollisionWtihLongitudinalDistance(
   if (parameters_.use_occupancy_grid) {
     bool check_out_of_range = false;
     const double offset = std::max(
-      parameters_.goal_to_obj_margin - parameters_.occupancy_grid_collision_check_margin, 0.0);
+      parameters_.goal_to_obstacle_margin - parameters_.occupancy_grid_collision_check_margin, 0.0);
 
     // check forward collison
     const Pose ego_pose_moved_forward = calcOffsetPose(ego_pose, offset, 0, 0);
@@ -349,7 +349,7 @@ bool PullOverModule::checkCollisionWtihLongitudinalDistance(
       util::calcLongitudinalDistanceFromEgoToObjects(
         ego_pose, planner_data_->parameters.base_link2front,
         planner_data_->parameters.base_link2rear,
-        dynamic_objects) < parameters_.goal_to_obj_margin) {
+        dynamic_objects) < parameters_.goal_to_obstacle_margin) {
       return true;
     }
   }
