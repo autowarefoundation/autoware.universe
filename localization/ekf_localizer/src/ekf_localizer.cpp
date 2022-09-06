@@ -504,12 +504,9 @@ void EKFLocalizer::measurementUpdatePose(const geometry_msgs::msg::PoseWithCovar
   DEBUG_PRINT_MAT(y_ekf.transpose());
   DEBUG_PRINT_MAT((y - y_ekf).transpose());
 
-  /* Set measurement matrix */
   const Eigen::Matrix<double, 3, 6> C = poseMeasurementMatrix();
   const Eigen::Matrix3d R = poseMeasurementCovariance(pose.pose.covariance, pose_smoothing_steps_);
 
-  /* In order to avoid a large change at the time of updating,
-   * measurement update is performed by dividing at every step. */
   ekf_.updateWithDelay(y, C, R, delay_step);
 
   // debug
