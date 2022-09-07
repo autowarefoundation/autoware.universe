@@ -14,8 +14,7 @@
     use_delay_sim_model: true   # for DELAY_STEER planning simulator model. For debugging only.
     input_delay_time: 0.1 # 0.3    # input dead-time [s]
 
-    # -- Use time or arc-length as the interpolation coordinates for predictions --
-    use_acceleration_inputs: true                 # if false, traj speeds are used in the simulations
+    # -- the algorithm is initialized by a feedback initializer if it fails linear initialization  --
     use_linear_trajectory_initialization: false    # if false LPV feedback initialization is used.
 
     # -- State and Control Weights.
