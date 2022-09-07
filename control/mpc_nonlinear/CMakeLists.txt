@@ -138,7 +138,7 @@ ament_auto_add_library(${NMPC_CORE}
   ${VEHICLE_MODEL_SOURCE}
   include/external)
 
-target_link_libraries(mpc_nonlinear_lib_core
+target_link_libraries(${NMPC_CORE}
   osqp-cpp)
 
 # -------------- NMPC Node ---------------------------------------------
@@ -171,6 +171,15 @@ if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
   find_package(ament_cmake_gtest REQUIRED)
+  set(NMPC_TESTs nonlinear_mpc_tests)
+
+  ament_add_gtest(${NMPC_TESTs}
+    test/src/test_google_osqp.cpp
+    )
+  target_include_directories(${NMPC_TESTs} PRIVATE include test/include)
+  target_link_libraries(${NMPC_TESTs} ${NMPC_CORE}
+    osqp-cpp ${EIGEN3_LIBRARIES})
+
 endif()
 
 ament_auto_package(INSTALL_TO_SHARE
