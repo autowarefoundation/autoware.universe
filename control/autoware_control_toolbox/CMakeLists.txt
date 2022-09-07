@@ -26,6 +26,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     -Wall
     -Wextra
     -Wpedantic
+    -Wuseless-cast
     # -Wno-unused-parameter
     # -Wno-unused-variable
     # -Wno-narrowing
