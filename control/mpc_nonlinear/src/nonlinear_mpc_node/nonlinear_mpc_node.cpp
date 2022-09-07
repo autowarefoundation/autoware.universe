@@ -655,7 +655,6 @@ void NonlinearMPCNode::loadNodeParameters()
 
   // Input delay.
   params_node_.input_delay_time = declare_parameter("input_delay_time", 0.24);
-  params_node_.use_acceleration_inputs = declare_parameter<bool>("use_acceleration_inputs", true);
 
   // Stop state parameters.
   params_node_.stop_state_entry_ego_speed = declare_parameter<double>("stop_state_entry_ego_speed", 0.2);
