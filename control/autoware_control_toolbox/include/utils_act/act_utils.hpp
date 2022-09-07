@@ -223,7 +223,7 @@ void unWrap(std::vector<T> &vec)
 
   if (!vec.empty())
   {
-    for (auto k = 1; k < n; ++k)
+    for (size_t k = 1; k < n; ++k)
     {
       auto cp = vec[k] + po;
       auto dp = cp - pm;
@@ -281,7 +281,7 @@ inline std::array<double, 2> getNormalVector(double const &yaw_angle)
   return std::array<double, 2>{-sin(yaw_angle), cos(yaw_angle)};
 }
 
-// Normal vector in Counter Clockwise.
+// Normal vector in Counterclockwise.
 constexpr std::array<double, 2>
 
 getNormalVectorCC(double const &yaw_angle)
@@ -373,7 +373,7 @@ size_t constexpr binary_index_search(T const &ti, std::vector<T> const &tbase)
   size_t right_ind = tbase.size() - 1;  // last index of the coordinate - high number
 
   // Check if ti corresponds to the final value of tbase
-  if (double EPS = 1e-6;ti >= tbase[right_ind] && std::fabs(tbase[right_ind] - ti) <= EPS)
+  if (double const EPS = 1e-6;ti >= tbase[right_ind] && std::fabs(tbase[right_ind] - ti) <= EPS)
   {
     left_ind = right_ind - 1;
     return left_ind;
@@ -623,25 +623,6 @@ constexpr auto toUType(E e) noexcept
 {
   return static_cast<std::underlying_type_t<E>>(e);
 }
-
-/**
- * @brief Implements heuristic angle distance for the angles that are wrapped to pi
- * */
-// template<typename T>
-// constexpr T angleDistanceHeuristics(T const &target_angle, T const &reference_angle)
-//{
-//	auto th_t = target_angle;
-//	auto th_r = reference_angle;
-//
-//	auto sign_result = sgn(th_t * th_r);
-//
-//	if (sign_result < 0)
-//	{
-//		sgn(th_t) < 0 ? th_t : th_r += 2 * M_PI;
-//	}
-//
-//	return;
-// }
 
 }  // namespace ns_utils
 
