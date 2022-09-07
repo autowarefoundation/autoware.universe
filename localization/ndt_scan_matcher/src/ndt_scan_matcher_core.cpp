@@ -72,9 +72,12 @@ bool validate_local_optimal_solution_oscillation(
   int oscillation_cnt = 0;
 
   for (size_t i = 2; i < result_pose_msg_array.size(); ++i) {
-    const Eigen::Vector3f current_pose = from_ros_point_to_eigen_vector3f(result_pose_msg_array.at(i).position);
-    const Eigen::Vector3f prev_pose = from_ros_point_to_eigen_vector3f(result_pose_msg_array.at(i - 1).position);
-    const Eigen::Vector3f prev_prev_pose = from_ros_point_to_eigen_vector3f(result_pose_msg_array.at(i - 2).position);
+    const Eigen::Vector3f current_pose =
+      from_ros_point_to_eigen_vector3f(result_pose_msg_array.at(i).position);
+    const Eigen::Vector3f prev_pose =
+      from_ros_point_to_eigen_vector3f(result_pose_msg_array.at(i - 1).position);
+    const Eigen::Vector3f prev_prev_pose =
+      from_ros_point_to_eigen_vector3f(result_pose_msg_array.at(i - 2).position);
     const auto current_vec = current_pose - prev_pose;
     const auto prev_vec = (prev_pose - prev_prev_pose).normalized();
     const bool oscillation = prev_vec.dot(current_vec) < inversion_vector_threshold;
@@ -553,8 +556,10 @@ void NDTScanMatcher::transform_sensor_measurement(
 {
   auto TF_target_to_source_ptr = std::make_shared<geometry_msgs::msg::TransformStamped>();
   get_transform(target_frame, source_frame, TF_target_to_source_ptr);
-  const geometry_msgs::msg::PoseStamped target_to_source_pose_stamped = tier4_autoware_utils::transform2pose(*TF_target_to_source_ptr);
-  const Eigen::Matrix4f base_to_sensor_matrix = from_ros_pose_to_eigen_matrix4f(target_to_source_pose_stamped.pose);
+  const geometry_msgs::msg::PoseStamped target_to_source_pose_stamped =
+    tier4_autoware_utils::transform2pose(*TF_target_to_source_ptr);
+  const Eigen::Matrix4f base_to_sensor_matrix =
+    from_ros_pose_to_eigen_matrix4f(target_to_source_pose_stamped.pose);
   pcl::transformPointCloud(
     *sensor_points_input_ptr, *sensor_points_output_ptr, base_to_sensor_matrix);
 }
@@ -566,11 +571,10 @@ NdtResult NDTScanMatcher::align(const geometry_msgs::msg::Pose & initial_pose_ms
   auto output_cloud = std::make_shared<pcl::PointCloud<PointSource>>();
   ndt_ptr_->align(*output_cloud, initial_pose_matrix);
 
-  const std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>> 
+  const std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>>
     transformation_array_matrix = ndt_ptr_->getFinalTransformationArray();
   std::vector<geometry_msgs::msg::Pose> transformation_array_msg;
-  for (auto pose_matrix: transformation_array_matrix)
-  {
+  for (auto pose_matrix : transformation_array_matrix) {
     geometry_msgs::msg::Pose pose_ros = from_eigen_matrix4f_to_ros_pose(pose_matrix);
     transformation_array_msg.push_back(pose_ros);
   }
@@ -678,8 +682,7 @@ void NDTScanMatcher::publish_point_cloud(
 }
 
 void NDTScanMatcher::publish_marker(
-  const rclcpp::Time & sensor_ros_time,
-  const std::vector<geometry_msgs::msg::Pose> & pose_array)
+  const rclcpp::Time & sensor_ros_time, const std::vector<geometry_msgs::msg::Pose> & pose_array)
 {
   visualization_msgs::msg::MarkerArray marker_array;
   visualization_msgs::msg::Marker marker;
