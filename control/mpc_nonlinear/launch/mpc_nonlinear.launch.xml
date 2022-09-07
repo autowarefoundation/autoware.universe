@@ -1,6 +1,6 @@
 <launch>
 
-    <arg name="mpc_nonlinear_param_path" default="$(find-pkg-share mpc_nonlinear)/config/mpc_nonlinear.param.yaml"/>
+    <arg name="mpc_nonlinear_param_path" default="$(find-pkg-share mpc_nonlinear)/params/mpc_nonlinear.param.yaml"/>
 
     <!-- Nonlinear MPC combined control -->
     <!--launch-prefix="valgrind \-leak-check=full or xterm -e" -->
