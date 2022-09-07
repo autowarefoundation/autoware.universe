@@ -78,6 +78,6 @@ Now, `VLP-16.param.yaml` is used as default argument because it is lowest spec.
 ## Assumptions / Known limits
 
 This node uses the [http_client](https://github.com/microsoft/cpprestsdk) and request results by GET method.
-It takes a few minutes to get results, or generate a timeout exception if it does not succeed the GET request.
+It takes a few seconds to get results, or generate a timeout exception if it does not succeed the GET request.
 This occurs frequently and the diagnostics aggregator output STALE.
 Therefore I recommend to stop using this results to decide the lidar error, and only monitor it to confirm lidar status.
