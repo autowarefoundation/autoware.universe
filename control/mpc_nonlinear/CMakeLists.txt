@@ -1,8 +1,12 @@
 cmake_minimum_required(VERSION 3.14)
 project(mpc_nonlinear)
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_C_STANDARD 11)
+
 # require that dependencies from package.xml be available
 find_package(ament_cmake_auto REQUIRED)
+
 ament_auto_find_build_dependencies(REQUIRED
   ${${PROJECT_NAME}_BUILD_DEPENDS}
   ${${PROJECT_NAME}_BUILDTOOL_DEPENDS})
@@ -179,7 +183,7 @@ if(BUILD_TESTING)
     test/include/nmpc_test_utils.hpp
     test/src/nonlinear_mpc_test_node.cpp
     test/src/test_nmpc_node.cpp
-    test/src/test_google_osqp.cpp
+    # test/src/test_google_osqp.cpp
     )
   ament_target_dependencies(${NMPC_TESTs} fake_test_node)
   autoware_set_compile_options(${NMPC_TESTs})
