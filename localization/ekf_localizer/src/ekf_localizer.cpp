@@ -14,6 +14,10 @@
 
 #include "ekf_localizer/ekf_localizer.hpp"
 
+#include "ekf_localizer/matrix_types.hpp"
+#include "ekf_localizer/state_index.hpp"
+#include "ekf_localizer/state_transition.hpp"
+
 #include <rclcpp/logging.hpp>
 #include <tier4_autoware_utils/math/unit_conversion.hpp>
 
@@ -85,10 +89,9 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
   pub_twist_cov_ = create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>(
     "ekf_twist_with_covariance", 1);
   pub_yaw_bias_ = create_publisher<tier4_debug_msgs::msg::Float64Stamped>("estimated_yaw_bias", 1);
-  pub_pose_no_yawbias_ =
-    create_publisher<geometry_msgs::msg::PoseStamped>("ekf_pose_without_yawbias", 1);
-  pub_pose_cov_no_yawbias_ = create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
-    "ekf_pose_with_covariance_without_yawbias", 1);
+  pub_biased_pose_ = create_publisher<geometry_msgs::msg::PoseStamped>("ekf_biased_pose", 1);
+  pub_biased_pose_cov_ = create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
+    "ekf_biased_pose_with_covariance", 1);
   sub_initialpose_ = create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
     "initialpose", 1, std::bind(&EKFLocalizer::callbackInitialPose, this, _1));
   sub_pose_with_cov_ = create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
@@ -225,8 +228,8 @@ void EKFLocalizer::setCurrentResult()
   current_ekf_pose_.pose.orientation =
     tier4_autoware_utils::createQuaternionFromRPY(roll, pitch, yaw);
 
-  current_ekf_pose_no_yawbias_ = current_ekf_pose_;
-  current_ekf_pose_no_yawbias_.pose.orientation =
+  current_biased_ekf_pose_ = current_ekf_pose_;
+  current_biased_ekf_pose_.pose.orientation =
     tier4_autoware_utils::createQuaternionFromRPY(roll, pitch, ekf_.getXelement(IDX::YAW));
 
   current_ekf_twist_.header.frame_id = "base_link";
@@ -406,47 +409,17 @@ void EKFLocalizer::predictKinematicsModel()
    */
 
   Eigen::MatrixXd X_curr(dim_x_, 1);  // current state
-  Eigen::MatrixXd X_next(dim_x_, 1);  // predicted state
   ekf_.getLatestX(X_curr);
   DEBUG_PRINT_MAT(X_curr.transpose());
 
   Eigen::MatrixXd P_curr;
   ekf_.getLatestP(P_curr);
 
-  const double yaw = X_curr(IDX::YAW);
-  const double yaw_bias = X_curr(IDX::YAWB);
-  const double vx = X_curr(IDX::VX);
-  const double wz = X_curr(IDX::WZ);
   const double dt = ekf_dt_;
 
-  /* Update for latest state */
-  X_next(IDX::X) = X_curr(IDX::X) + vx * cos(yaw + yaw_bias) * dt;  // dx = v * cos(yaw)
-  X_next(IDX::Y) = X_curr(IDX::Y) + vx * sin(yaw + yaw_bias) * dt;  // dy = v * sin(yaw)
-  X_next(IDX::YAW) = X_curr(IDX::YAW) + (wz)*dt;                    // dyaw = omega + omega_bias
-  X_next(IDX::YAWB) = yaw_bias;
-  X_next(IDX::VX) = vx;
-  X_next(IDX::WZ) = wz;
-
-  X_next(IDX::YAW) = std::atan2(std::sin(X_next(IDX::YAW)), std::cos(X_next(IDX::YAW)));
-
-  /* Set A matrix for latest state */
-  Eigen::MatrixXd A = Eigen::MatrixXd::Identity(dim_x_, dim_x_);
-  A(IDX::X, IDX::YAW) = -vx * sin(yaw + yaw_bias) * dt;
-  A(IDX::X, IDX::YAWB) = -vx * sin(yaw + yaw_bias) * dt;
-  A(IDX::X, IDX::VX) = cos(yaw + yaw_bias) * dt;
-  A(IDX::Y, IDX::YAW) = vx * cos(yaw + yaw_bias) * dt;
-  A(IDX::Y, IDX::YAWB) = vx * cos(yaw + yaw_bias) * dt;
-  A(IDX::Y, IDX::VX) = sin(yaw + yaw_bias) * dt;
-  A(IDX::YAW, IDX::WZ) = dt;
-
-  Eigen::MatrixXd Q = Eigen::MatrixXd::Zero(dim_x_, dim_x_);
-
-  Q(IDX::X, IDX::X) = 0.0;
-  Q(IDX::Y, IDX::Y) = 0.0;
-  Q(IDX::YAW, IDX::YAW) = proc_cov_yaw_d_;  // for yaw
-  Q(IDX::YAWB, IDX::YAWB) = 0.0;
-  Q(IDX::VX, IDX::VX) = proc_cov_vx_d_;  // for vx
-  Q(IDX::WZ, IDX::WZ) = proc_cov_wz_d_;  // for wz
+  const Vector6d X_next = predictNextState(X_curr, dt);
+  const Matrix6d A = createStateTransitionMatrix(X_curr, dt);
+  const Matrix6d Q = processNoiseCovariance(proc_cov_yaw_d_, proc_cov_vx_d_, proc_cov_wz_d_);
 
   ekf_.predictWithDelay(X_next, A, Q);
 
@@ -687,7 +660,7 @@ void EKFLocalizer::publishEstimateResult()
 
   /* publish latest pose */
   pub_pose_->publish(current_ekf_pose_);
-  pub_pose_no_yawbias_->publish(current_ekf_pose_no_yawbias_);
+  pub_biased_pose_->publish(current_biased_ekf_pose_);
 
   /* publish latest pose with covariance */
   geometry_msgs::msg::PoseWithCovarianceStamped pose_cov;
@@ -705,9 +678,9 @@ void EKFLocalizer::publishEstimateResult()
   pose_cov.pose.covariance[35] = P(IDX::YAW, IDX::YAW);
   pub_pose_cov_->publish(pose_cov);
 
-  geometry_msgs::msg::PoseWithCovarianceStamped pose_cov_no_yawbias = pose_cov;
-  pose_cov_no_yawbias.pose.pose = current_ekf_pose_no_yawbias_.pose;
-  pub_pose_cov_no_yawbias_->publish(pose_cov_no_yawbias);
+  geometry_msgs::msg::PoseWithCovarianceStamped biased_pose_cov = pose_cov;
+  biased_pose_cov.pose.pose = current_biased_ekf_pose_.pose;
+  pub_biased_pose_cov_->publish(biased_pose_cov);
 
   /* publish latest twist */
   pub_twist_->publish(current_ekf_twist_);
@@ -758,11 +731,6 @@ void EKFLocalizer::publishEstimateResult()
   msg.data.push_back(tier4_autoware_utils::rad2deg(pose_yaw));      // [1] measurement yaw angle
   msg.data.push_back(tier4_autoware_utils::rad2deg(X(IDX::YAWB)));  // [2] yaw bias
   pub_debug_->publish(msg);
-}
-
-double EKFLocalizer::normalizeYaw(const double & yaw) const
-{
-  return std::atan2(std::sin(yaw), std::cos(yaw));
 }
 
 void EKFLocalizer::updateSimple1DFilters(const geometry_msgs::msg::PoseWithCovarianceStamped & pose)
