@@ -45,9 +45,12 @@ private:
   using MotionState = autoware_ad_api::motion::State::Message;
   MotionState state_;
 
-  double stopped_state_entry_duration_;
+  double stop_check_duration_;
   bool enable_starting_state_;
+  bool is_stopping;
+  bool is_starting;
 
+  bool call_set_pause(bool pause);
   void change_state(const MotionState::_state_type state);
   void on_timer();
   void on_is_paused(const control_interface::IsPaused::Message::ConstSharedPtr msg);

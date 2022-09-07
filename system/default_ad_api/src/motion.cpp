@@ -14,13 +14,15 @@
 
 #include "motion.hpp"
 
+#include <memory>
+
 namespace default_ad_api
 {
 
 MotionNode::MotionNode(const rclcpp::NodeOptions & options)
 : Node("motion", options), vehicle_stop_checker_(this)
 {
-  stopped_state_entry_duration_ = declare_parameter("stopped_state_entry_duration", 1.0);
+  stop_check_duration_ = declare_parameter("stop_check_duration", 1.0);
   enable_starting_state_ = declare_parameter("enable_starting_state", false);
 
   const auto adaptor = component_interface_utils::NodeAdaptor(this);
@@ -31,11 +33,25 @@ MotionNode::MotionNode(const rclcpp::NodeOptions & options)
   adaptor.init_sub(sub_is_paused_, this, &MotionNode::on_is_paused);
   adaptor.init_sub(sub_will_move_, this, &MotionNode::on_will_move);
 
-  rclcpp::Rate rate(10);
+  rclcpp::Rate rate(5);
   timer_ = rclcpp::create_timer(this, get_clock(), rate.period(), [this]() { on_timer(); });
 
+  is_stopping = false;
+  is_starting = false;
   state_.state = MotionState::UNKNOWN;
-  change_state(MotionState::STOPPED);
+  change_state(MotionState::MOVING);
+}
+
+bool MotionNode::call_set_pause(bool pause)
+{
+  try {
+    const auto req = std::make_shared<control_interface::SetPause::Service::Request>();
+    req->pause = pause;
+    const auto res = cli_set_pause_->call(req);
+    return res->status.success;
+  } catch (const component_interface_utils::ServiceException &) {
+    return false;
+  }
 }
 
 void MotionNode::change_state(const MotionState::_state_type state)
@@ -49,11 +65,29 @@ void MotionNode::change_state(const MotionState::_state_type state)
 
 void MotionNode::on_timer()
 {
+  timer_->cancel();
+
   if (state_.state == MotionState::MOVING) {
-    if (vehicle_stop_checker_.isVehicleStopped(stopped_state_entry_duration_)) {
+    if (vehicle_stop_checker_.isVehicleStopped(stop_check_duration_)) {
+      is_stopping = true;
+    }
+  }
+
+  if (is_stopping) {
+    if (call_set_pause(true)) {
+      is_stopping = false;
       change_state(MotionState::STOPPED);
     }
   }
+
+  if (is_starting) {
+    if (!vehicle_stop_checker_.isVehicleStopped(stop_check_duration_)) {
+      is_starting = false;
+      change_state(MotionState::MOVING);
+    }
+  }
+
+  timer_->reset();
 }
 
 void MotionNode::on_is_paused(const control_interface::IsPaused::Message::ConstSharedPtr msg)
@@ -78,9 +112,11 @@ void MotionNode::on_accept(
   const autoware_ad_api::motion::AcceptStart::Service::Request::SharedPtr,
   const autoware_ad_api::motion::AcceptStart::Service::Response::SharedPtr res)
 {
-  if (state_.state == MotionState::STARTING) {
-    change_state(MotionState::MOVING);
-    res->status.success = true;
+  if (state_.state == MotionState::STARTING && !is_starting) {
+    if (call_set_pause(false)) {
+      is_starting = true;
+      res->status.success = true;
+    }
   }
 }
 
