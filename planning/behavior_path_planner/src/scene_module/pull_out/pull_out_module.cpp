@@ -175,12 +175,11 @@ BehaviorModuleOutput PullOutModule::plan()
   output.turn_signal_info =
     calcTurnSignalInfo(status_.pull_out_path.start_pose, status_.pull_out_path.end_pose);
 
+  double start_distance = 0.0;
   if (status_.back_finished) {
-    const double start_distance = motion_utils::calcSignedArcLength(
+    start_distance = motion_utils::calcSignedArcLength(
       path.points, planner_data_->self_pose->pose.position,
       status_.pull_out_path.start_pose.position);
-  } else {
-    const double start_distance = 0.0
   }
 
   const double finish_distance = motion_utils::calcSignedArcLength(
@@ -198,7 +197,7 @@ BehaviorModuleOutput PullOutModule::plan()
   }
 
   planning_api_interface_ptr_->updateSteeringFactor(
-    {status_.pull_out_path.shift_point.start, status_.pull_out_path.shift_point.end},
+    {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose},
     {start_distance, finish_distance}, SteeringFactor::PULL_OUT, direction, SteeringFactor::TURNING,
     "");
 
@@ -261,12 +260,11 @@ BehaviorModuleOutput PullOutModule::planWaitingApproval()
   output.path_candidate = std::make_shared<PathWithLaneId>(candidate_path);
 
   waitApproval();
+  double start_distance = 0.0;
   if (status_.back_finished) {
-    const double start_distance = motion_utils::calcSignedArcLength(
+    start_distance = motion_utils::calcSignedArcLength(
       candidate_path.points, planner_data_->self_pose->pose.position,
       status_.pull_out_path.start_pose.position);
-  } else {
-    const double start_distance = 0.0;
   }
 
   const double finish_distance = motion_utils::calcSignedArcLength(
@@ -284,7 +282,7 @@ BehaviorModuleOutput PullOutModule::planWaitingApproval()
   }
 
   planning_api_interface_ptr_->updateSteeringFactor(
-    {status_.pull_out_path.shift_point.start, status_.pull_out_path.shift_point.end},
+    {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose},
     {start_distance, finish_distance}, SteeringFactor::PULL_OUT, direction,
     SteeringFactor::APPROACHING, "");
 
