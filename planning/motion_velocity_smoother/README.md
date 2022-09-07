@@ -34,10 +34,10 @@ It calculates the velocity limit from the curvature of the reference trajectory 
 The velocity limit is set as not to fall under `min_curve_velocity`.
 
 Note: velocity limit that requests larger than `nominal.jerk` is not applied. In other words, even if a sharp curve is planned just in front of the ego, no deceleration is performed.
+
 #### Apply steering rate limit
 
 It calculates the desired steering angles of trajectory points. and it applies the steering rate limit. If the (`steering_angle_rate` > `max_steering_angle_rate`), it decreases the velocity of the trajectory point to acceptable velocity.
-
 
 #### Resample trajectory
 
@@ -196,13 +196,12 @@ After the optimization, a resampling called `post resampling` is performed befor
 
 ### Limit steering angle rate parameters
 
-| Name                                 | Type     | Description                                                              | Default value |
-|:-------------------------------------| :------- |:-------------------------------------------------------------------------|:--------------|
-| `max_steering_angle_rate`            | `double` | Maximum steering angle rate [degree/s]                                   | 40.0          |
-| `resample_ds`                        | `double` | Distance between trajectory points [m]                                   | 0.1           |
-| `curvature_threshold`                | `double` | If curvature > curvature_threshold, steeringRateLimit is triggered [1/m] | 0.02          |
-| `curvature_calculation_distance`     | `double` | Distance of points while curvature is calculating [m]                    | 1.0           |
-
+| Name                             | Type     | Description                                                              | Default value |
+| :------------------------------- | :------- | :----------------------------------------------------------------------- | :------------ |
+| `max_steering_angle_rate`        | `double` | Maximum steering angle rate [degree/s]                                   | 40.0          |
+| `resample_ds`                    | `double` | Distance between trajectory points [m]                                   | 0.1           |
+| `curvature_threshold`            | `double` | If curvature > curvature_threshold, steeringRateLimit is triggered [1/m] | 0.02          |
+| `curvature_calculation_distance` | `double` | Distance of points while curvature is calculating [m]                    | 1.0           |
 
 ### Weights for optimization
 
