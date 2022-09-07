@@ -292,9 +292,12 @@ bool selectSafePath(
   std::unordered_map<std::string, CollisionCheckDebug> & debug_data)
 {
   for (const auto & path : paths) {
+    const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+      path.path.points, current_pose, common_parameters.ego_nearest_dist_threshold,
+      common_parameters.ego_nearest_yaw_threshold);
     if (isLaneChangePathSafe(
-          path.path, current_lanes, target_lanes, dynamic_objects, current_pose, current_twist,
-          common_parameters, ros_parameters, debug_data, true, path.acceleration)) {
+          path.path, current_lanes, target_lanes, dynamic_objects, current_pose, current_seg_idx,
+          current_twist, common_parameters, ros_parameters, debug_data, true, path.acceleration)) {
       *selected_path = path;
       return true;
     }
@@ -344,7 +347,8 @@ bool isLaneChangePathSafe(
   const PathWithLaneId & path, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & target_lanes,
   const PredictedObjects::ConstSharedPtr dynamic_objects, const Pose & current_pose,
-  const Twist & current_twist, const BehaviorPathPlannerParameters & common_parameters,
+  const size_t current_seg_idx, const Twist & current_twist,
+  const BehaviorPathPlannerParameters & common_parameters,
   const LaneChangeParameters & lane_change_parameters,
   std::unordered_map<std::string, CollisionCheckDebug> & debug_data, const bool use_buffer,
   const double acceleration)
@@ -370,25 +374,25 @@ bool isLaneChangePathSafe(
   const double target_lane_check_end_time = lane_change_prepare_duration + lane_changing_duration;
   constexpr double ego_predicted_path_min_speed{1.0};
   const auto vehicle_predicted_path = util::convertToPredictedPath(
-    path, current_twist, current_pose, target_lane_check_end_time, time_resolution, acceleration,
-    ego_predicted_path_min_speed);
+    path, current_twist, current_pose, current_seg_idx, target_lane_check_end_time, time_resolution,
+    acceleration, ego_predicted_path_min_speed);
 
   const auto arc = lanelet::utils::getArcCoordinates(current_lanes, current_pose);
 
   // find obstacle in lane change target lanes
   // retrieve lanes that are merging target lanes as well
   const auto target_lane_object_indices =
-    util::filterObjectsByLanelets(*dynamic_objects, target_lanes);
+    util::filterObjectIndicesByLanelets(*dynamic_objects, target_lanes);
 
   // find objects in current lane
   constexpr double check_distance = 100.0;
-  const auto current_lane_object_indices_lanelet = util::filterObjectsByLanelets(
+  const auto current_lane_object_indices_lanelet = util::filterObjectIndicesByLanelets(
     *dynamic_objects, current_lanes, arc.length, arc.length + check_distance);
 
   const double lateral_buffer = (use_buffer) ? 0.5 : 0.0;
   const auto & vehicle_width = common_parameters.vehicle_width;
   const auto & vehicle_length = common_parameters.vehicle_length;
-  const auto current_lane_object_indices = util::filterObjectsByPath(
+  const auto current_lane_object_indices = util::filterObjectsIndicesByPath(
     *dynamic_objects, current_lane_object_indices_lanelet, path,
     vehicle_width / 2 + lateral_buffer);
 

@@ -99,22 +99,37 @@ void getProjectedDistancePointFromPolygons(
 
 Path convertToPathFromPathWithLaneId(const PathWithLaneId & path_with_lane_id);
 
-std::vector<Point> convertToPointArray(const PathWithLaneId & path);
+std::vector<Pose> convertToPoseArray(const PathWithLaneId & path);
 
 std::vector<Point> convertToGeometryPointArray(const PathWithLaneId & path);
 
 PoseArray convertToGeometryPoseArray(const PathWithLaneId & path);
 
 PredictedPath convertToPredictedPath(
-  const PathWithLaneId & path, const Twist & vehicle_twist, const Pose & vehicle_pose,
-  const double duration, const double resolution, const double acceleration,
-  double min_speed = 1.0);
+  const PathWithLaneId & path, const Twist & vehicle_twist, const Pose & pose,
+  const double nearest_seg_idx, const double duration, const double resolution,
+  const double acceleration, const double min_speed = 1.0);
 
+template <class T>
 FrenetCoordinate3d convertToFrenetCoordinate3d(
-  const std::vector<Point> & linestring, const Point & search_point_geom);
+  const std::vector<T> & pose_array, const Point & search_point_geom, const size_t seg_idx)
+{
+  FrenetCoordinate3d frenet_coordinate;
 
-FrenetCoordinate3d convertToFrenetCoordinate3d(
-  const PathWithLaneId & path, const Point & search_point_geom);
+  const double longitudinal_length =
+    motion_utils::calcLongitudinalOffsetToSegment(pose_array, seg_idx, search_point_geom);
+  frenet_coordinate.length =
+    motion_utils::calcSignedArcLength(pose_array, 0, seg_idx) + longitudinal_length;
+  frenet_coordinate.distance = motion_utils::calcLateralOffset(pose_array, search_point_geom);
+
+  return frenet_coordinate;
+}
+
+inline FrenetCoordinate3d convertToFrenetCoordinate3d(
+  const PathWithLaneId & path, const Point & search_point_geom, const size_t seg_idx)
+{
+  return convertToFrenetCoordinate3d(path.points, search_point_geom, seg_idx);
+}
 
 std::vector<uint64_t> getIds(const lanelet::ConstLanelets & lanelets);
 
@@ -142,13 +157,44 @@ double getArcLengthToTargetLanelet(
 
 Pose lerpByPose(const Pose & p1, const Pose & p2, const double t);
 
-Point lerpByLength(const std::vector<Point> & array, const double length);
+inline Point lerpByPoint(const Point & p1, const Point & p2, const double t)
+{
+  tf2::Vector3 v1, v2;
+  v1.setValue(p1.x, p1.y, p1.z);
+  v2.setValue(p2.x, p2.y, p2.z);
+
+  const auto lerped_point = v1.lerp(v2, t);
+
+  Point point;
+  point.x = lerped_point.x();
+  point.y = lerped_point.y();
+  point.z = lerped_point.z();
+  return point;
+}
+
+template <class T>
+Point lerpByLength(const std::vector<T> & point_array, const double length)
+{
+  Point lerped_point;
+  if (point_array.empty()) {
+    return lerped_point;
+  }
+  Point prev_geom_pt = tier4_autoware_utils::getPoint(point_array.front());
+  double accumulated_length = 0;
+  for (const auto & pt : point_array) {
+    const auto & geom_pt = tier4_autoware_utils::getPoint(pt);
+    const double distance = tier4_autoware_utils::calcDistance3d(prev_geom_pt, geom_pt);
+    if (accumulated_length + distance > length) {
+      return lerpByPoint(prev_geom_pt, geom_pt, (length - accumulated_length) / distance);
+    }
+    accumulated_length += distance;
+    prev_geom_pt = geom_pt;
+  }
+
+  return tier4_autoware_utils::getPoint(point_array.back());
+}
 
 bool lerpByTimeStamp(const PredictedPath & path, const double t, Pose * lerped_pt);
-
-bool lerpByDistance(
-  const behavior_path_planner::PullOutPath & path, const double & s, Pose * lerped_pt,
-  const lanelet::ConstLanelets & road_lanes);
 
 bool calcObjectPolygon(const PredictedObject & object, Polygon2d * object_polygon);
 
@@ -163,16 +209,43 @@ double getDistanceBetweenPredictedPathAndObject(
   const PredictedObject & object, const PredictedPath & path, const double start_time,
   const double end_time, const double resolution);
 
-double getDistanceBetweenPredictedPathAndObjectPolygon(
-  const PredictedObject & object, const PullOutPath & ego_path,
-  const tier4_autoware_utils::LinearRing2d & vehicle_footprint, double distance_resolution,
-  const lanelet::ConstLanelets & road_lanes);
+/**
+ * @brief Check collision between ego path footprints and objects.
+ * @return Has collision or not
+ */
+bool checkCollisionBetweenPathFootprintsAndObjects(
+  const tier4_autoware_utils::LinearRing2d & vehicle_footprint, const PathWithLaneId & ego_path,
+  const PredictedObjects & dynamic_objects, const double margin);
+
+/**
+ * @brief Check collision between ego footprints and objects.
+ * @return Has collision or not
+ */
+bool checkCollisionBetweenFootprintAndObjects(
+  const tier4_autoware_utils::LinearRing2d & vehicle_footprint, const Pose & ego_pose,
+  const PredictedObjects & dynamic_objects, const double margin);
+
+/**
+ * @brief calculate longitudinal distance from ego pose to object
+ * @return distance from ego pose to object
+ */
+double calcLongitudinalDistanceFromEgoToObject(
+  const Pose & ego_pose, double base_link2front, double base_link2rear,
+  const PredictedObject & dynamic_object);
+
+/**
+ * @brief calculate minimum longitudinal distance from ego pose to objects
+ * @return minimum distance from ego pose to objects
+ */
+double calcLongitudinalDistanceFromEgoToObjects(
+  const Pose & ego_pose, double base_link2front, double base_link2rear,
+  const PredictedObjects & dynamic_objects);
 
 /**
  * @brief Get index of the obstacles inside the lanelets with start and end length
  * @return Indices corresponding to the obstacle inside the lanelets
  */
-std::vector<size_t> filterObjectsByLanelets(
+std::vector<size_t> filterObjectIndicesByLanelets(
   const PredictedObjects & objects, const lanelet::ConstLanelets & lanelets,
   const double start_arc_length, const double end_arc_length);
 
@@ -180,10 +253,13 @@ std::vector<size_t> filterObjectsByLanelets(
  * @brief Get index of the obstacles inside the lanelets
  * @return Indices corresponding to the obstacle inside the lanelets
  */
-std::vector<size_t> filterObjectsByLanelets(
+std::vector<size_t> filterObjectIndicesByLanelets(
   const PredictedObjects & objects, const lanelet::ConstLanelets & target_lanelets);
 
-std::vector<size_t> filterObjectsByPath(
+PredictedObjects filterObjectsByLanelets(
+  const PredictedObjects & objects, const lanelet::ConstLanelets & target_lanelets);
+
+std::vector<size_t> filterObjectsIndicesByPath(
   const PredictedObjects & objects, const std::vector<size_t> & object_indices,
   const PathWithLaneId & ego_path, const double vehicle_width);
 
