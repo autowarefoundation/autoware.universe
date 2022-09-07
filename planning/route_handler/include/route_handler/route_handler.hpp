@@ -16,6 +16,7 @@
 #define ROUTE_HANDLER__ROUTE_HANDLER_HPP_
 
 #include <lanelet2_extension/utility/query.hpp>
+#include <motion_utils/motion_utils.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
@@ -49,6 +50,7 @@ using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::PoseStamped;
 using std_msgs::msg::Header;
+using RouteSections = std::vector<autoware_auto_mapping_msgs::msg::HADMapSegment>;
 
 enum class LaneChangeDirection { NONE, LEFT, RIGHT };
 enum class PullOverDirection { NONE, LEFT, RIGHT };
@@ -86,6 +88,7 @@ public:
     const Pose & start_checkpoint, const Pose & goal_checkpoint,
     lanelet::ConstLanelets * path_lanelets) const;
   std::vector<HADMapSegment> createMapSegments(const lanelet::ConstLanelets & path_lanelets) const;
+  bool isRouteLooped(const RouteSections & route_sections) const;
 
   // for goal
   bool isInGoalRouteSection(const lanelet::ConstLanelet & lanelet) const;
@@ -249,9 +252,9 @@ public:
     const lanelet::ConstLanelets & lanelets, lanelet::ConstLanelet * target_lanelet) const;
   bool getPullOverTarget(
     const lanelet::ConstLanelets & lanelets, lanelet::ConstLanelet * target_lanelet) const;
-  bool getPullOutStart(
-    const lanelet::ConstLanelets & lanelets, lanelet::ConstLanelet * target_lanelet,
-    const Pose & pose, const double vehicle_width) const;
+  bool getPullOutStartLane(
+    const lanelet::ConstLanelets & lanelets, const Pose & pose, const double vehicle_width,
+    lanelet::ConstLanelet * target_lanelet) const;
   double getLaneChangeableDistance(
     const Pose & current_pose, const LaneChangeDirection & direction) const;
   lanelet::ConstPolygon3d getIntersectionAreaById(const lanelet::Id id) const;

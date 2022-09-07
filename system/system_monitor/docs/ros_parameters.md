@@ -57,6 +57,8 @@ net_monitor:
 | :----------------------------- | :----------: | :-----: | :-----: | :--------------------------------------------------------------------------------------------------------------------------------------------------- |
 | devices                        | list[string] |   n/a   |  none   | The name of network interface to monitor. (e.g. eth0, \* for all network interfaces)                                                                 |
 | usage_warn                     |    float     | %(1e-2) |  0.95   | Generates warning when network usage reaches a specified value or higher.                                                                            |
+| crc_error_check_duration       |     int      |   sec   |    1    | CRC error check duration.                                                                                                                            |
+| crc_error_count_threshold      |     int      |   n/a   |    1    | Generates warning when count of CRC errors during CRC error check duration reaches a specified value or higher.                                      |
 | ip_reasm_fails_check_duration  |     int      |   sec   |    1    | IP packet reassembles failed check duration.                                                                                                         |
 | ip_reasm_fails_count_threshold |     int      |   n/a   |    1    | Generates warning when count of IP packet reassembles failed during IP packet reassembles failed check duration reaches a specified value or higher. |
 

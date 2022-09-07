@@ -15,33 +15,30 @@
 #ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__AVOIDANCE__AVOIDANCE_MODULE_HPP_
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__AVOIDANCE__AVOIDANCE_MODULE_HPP_
 
-#include "behavior_path_planner/path_shifter/path_shifter.hpp"
 #include "behavior_path_planner/scene_module/avoidance/avoidance_module_data.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
+#include "behavior_path_planner/scene_module/utils/path_shifter.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
-#include <autoware_auto_planning_msgs/msg/path.hpp>
+#include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
-#include <tier4_planning_msgs/msg/avoidance_debug_factor.hpp>
 #include <tier4_planning_msgs/msg/avoidance_debug_msg.hpp>
-#include <tier4_planning_msgs/msg/avoidance_debug_msg_array.hpp>
 
 #include <memory>
 #include <string>
-#include <tuple>
 #include <utility>
 #include <vector>
 
 namespace behavior_path_planner
 {
+using tier4_planning_msgs::msg::AvoidanceDebugMsg;
 class AvoidanceModule : public SceneModuleInterface
 {
 public:
   AvoidanceModule(
-    const std::string & name, rclcpp::Node & node, const AvoidanceParameters & parameters);
+    const std::string & name, rclcpp::Node & node, std::shared_ptr<AvoidanceParameters> parameters);
 
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
@@ -59,7 +56,7 @@ public:
     rtc_interface_right_.publishCooperateStatus(clock_->now());
   }
 
-  bool isActivated() const override
+  bool isActivated() override
   {
     if (rtc_interface_left_.isRegistered(uuid_left_)) {
       return rtc_interface_left_.isActivated(uuid_left_);
@@ -70,10 +67,16 @@ public:
     return false;
   }
 
-  void setParameters(const AvoidanceParameters & parameters);
-
 private:
-  AvoidanceParameters parameters_;
+  struct RegisteredShiftPoint
+  {
+    UUID uuid;
+    Pose start_pose;
+    Pose finish_pose;
+  };
+  using RegisteredShiftPointArray = std::vector<RegisteredShiftPoint>;
+
+  std::shared_ptr<AvoidanceParameters> parameters_;
 
   AvoidancePlanningData avoidance_data_;
 
@@ -81,30 +84,85 @@ private:
 
   RTCInterface rtc_interface_left_;
   RTCInterface rtc_interface_right_;
+
+  RegisteredShiftPointArray left_shift_array_;
+  RegisteredShiftPointArray right_shift_array_;
+  UUID candidate_uuid_;
   UUID uuid_left_;
   UUID uuid_right_;
 
-  void updateRTCStatus(const CandidateOutput & candidate)
+  void updateCandidateRTCStatus(const CandidateOutput & candidate)
   {
     if (candidate.lateral_shift > 0.0) {
       rtc_interface_left_.updateCooperateStatus(
-        uuid_left_, isExecutionReady(), candidate.distance_to_path_change, clock_->now());
+        uuid_left_, isExecutionReady(), candidate.start_distance_to_path_change,
+        candidate.finish_distance_to_path_change, clock_->now());
+      candidate_uuid_ = uuid_left_;
       return;
     }
     if (candidate.lateral_shift < 0.0) {
       rtc_interface_right_.updateCooperateStatus(
-        uuid_right_, isExecutionReady(), candidate.distance_to_path_change, clock_->now());
+        uuid_right_, isExecutionReady(), candidate.start_distance_to_path_change,
+        candidate.finish_distance_to_path_change, clock_->now());
+      candidate_uuid_ = uuid_right_;
       return;
     }
 
     RCLCPP_WARN_STREAM(
-      getLogger(), "Direction is UNKNOWN, distance = " << candidate.distance_to_path_change);
+      getLogger(),
+      "Direction is UNKNOWN, start_distance = " << candidate.start_distance_to_path_change);
+  }
+
+  void updateRegisteredRTCStatus(const PathWithLaneId & path)
+  {
+    const Point ego_position = planner_data_->self_pose->pose.position;
+
+    for (const auto & left_shift : left_shift_array_) {
+      const double start_distance = motion_utils::calcSignedArcLength(
+        path.points, ego_position, left_shift.start_pose.position);
+      const double finish_distance = motion_utils::calcSignedArcLength(
+        path.points, ego_position, left_shift.finish_pose.position);
+      rtc_interface_left_.updateCooperateStatus(
+        left_shift.uuid, true, start_distance, finish_distance, clock_->now());
+    }
+
+    for (const auto & right_shift : right_shift_array_) {
+      const double start_distance = motion_utils::calcSignedArcLength(
+        path.points, ego_position, right_shift.start_pose.position);
+      const double finish_distance = motion_utils::calcSignedArcLength(
+        path.points, ego_position, right_shift.finish_pose.position);
+      rtc_interface_right_.updateCooperateStatus(
+        right_shift.uuid, true, start_distance, finish_distance, clock_->now());
+    }
   }
 
   void removeRTCStatus() override
   {
     rtc_interface_left_.clearCooperateStatus();
     rtc_interface_right_.clearCooperateStatus();
+  }
+
+  void removeCandidateRTCStatus()
+  {
+    if (rtc_interface_left_.isRegistered(candidate_uuid_)) {
+      rtc_interface_left_.removeCooperateStatus(candidate_uuid_);
+    } else if (rtc_interface_right_.isRegistered(candidate_uuid_)) {
+      rtc_interface_right_.removeCooperateStatus(candidate_uuid_);
+    }
+  }
+
+  void removePreviousRTCStatusLeft()
+  {
+    if (rtc_interface_left_.isRegistered(uuid_left_)) {
+      rtc_interface_left_.removeCooperateStatus(uuid_left_);
+    }
+  }
+
+  void removePreviousRTCStatusRight()
+  {
+    if (rtc_interface_right_.isRegistered(uuid_right_)) {
+      rtc_interface_right_.removeCooperateStatus(uuid_right_);
+    }
   }
 
   // data used in previous planning
@@ -171,7 +229,7 @@ private:
 
   // -- for shift point operations --
   void alignShiftPointsOrder(
-    AvoidPointArray & shift_points, const bool recalc_start_length = true) const;
+    AvoidPointArray & shift_points, const bool recalculate_start_length = true) const;
   AvoidPointArray fillAdditionalInfo(const AvoidPointArray & shift_points) const;
   AvoidPoint fillAdditionalInfo(const AvoidPoint & shift_point) const;
   void fillAdditionalInfoFromPoint(AvoidPointArray & shift_points) const;
@@ -188,7 +246,8 @@ private:
   void generateExtendedDrivableArea(ShiftedPath * shifted_path) const;
 
   // -- velocity planning --
-  void modifyPathVelocityToPreventAccelerationOnAvoidance(ShiftedPath & shifted_path) const;
+  std::shared_ptr<double> ego_velocity_starting_avoidance_ptr_;
+  void modifyPathVelocityToPreventAccelerationOnAvoidance(ShiftedPath & shifted_path);
 
   // clean up shifter
   void postProcess(PathShifter & shifter) const;
@@ -213,8 +272,6 @@ private:
 
   PathWithLaneId calcCenterLinePath(
     const std::shared_ptr<const PlannerData> & planner_data, const PoseStamped & pose) const;
-
-  void clipPathLength(PathWithLaneId & path) const;
 
   // TODO(Horibe): think later.
   // for unique ID

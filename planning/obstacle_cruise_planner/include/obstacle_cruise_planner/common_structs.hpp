@@ -21,6 +21,7 @@
 
 #include "autoware_auto_perception_msgs/msg/predicted_objects.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
+#include "geometry_msgs/msg/point_stamped.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
 
 #include <boost/optional.hpp>
@@ -49,7 +50,8 @@ struct TargetObstacle
 {
   TargetObstacle(
     const rclcpp::Time & arg_time_stamp, const PredictedObject & object,
-    const double aligned_velocity, const geometry_msgs::msg::Point & arg_collision_point)
+    const double aligned_velocity,
+    const std::vector<geometry_msgs::msg::PointStamped> & arg_collision_points)
   {
     time_stamp = arg_time_stamp;
     orientation_reliable = true;
@@ -58,7 +60,6 @@ struct TargetObstacle
     velocity = aligned_velocity;
     is_classified = true;
     classification = object.classification.at(0);
-    shape = object.shape;
     uuid = toHexString(object.object_id);
 
     predicted_paths.clear();
@@ -66,7 +67,7 @@ struct TargetObstacle
       predicted_paths.push_back(path);
     }
 
-    collision_point = arg_collision_point;
+    collision_points = arg_collision_points;
     has_stopped = false;
   }
 
@@ -77,10 +78,9 @@ struct TargetObstacle
   float velocity;
   bool is_classified;
   ObjectClassification classification;
-  Shape shape;
   std::string uuid;
   std::vector<PredictedPath> predicted_paths;
-  geometry_msgs::msg::Point collision_point;
+  std::vector<geometry_msgs::msg::PointStamped> collision_points;
   bool has_stopped;
 };
 
@@ -92,6 +92,7 @@ struct ObstacleCruisePlannerData
   double current_vel;
   double current_acc;
   std::vector<TargetObstacle> target_obstacles;
+  bool is_driving_forward;
 };
 
 struct LongitudinalInfo

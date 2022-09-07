@@ -30,20 +30,12 @@ void applySafeVelocityConsideringPossibleCollision(
   PathWithLaneId * inout_path, std::vector<PossibleCollisionInfo> & possible_collisions,
   const PlannerParam & param);
 
-int insertSafeVelocityToPath(
-  const geometry_msgs::msg::Pose & in_pose, const double safe_vel, const PlannerParam & param,
-  PathWithLaneId * inout_path);
-
 /**
  * @param: v: ego velocity config
- * @param: ttc: time to collision
+ * @param: ttv: time to vehicle
  * @return safe motion
  **/
-SafeMotion calculateSafeMotion(const Velocity & v, const double ttc);
-
-double calculateInsertVelocity(
-  const double min_allowed_vel, const double safe_vel, const double min_vel,
-  const double original_vel);
+SafeMotion calculateSafeMotion(const Velocity & v, const double ttv);
 
 }  // namespace occlusion_spot_utils
 }  // namespace behavior_velocity_planner

@@ -13,14 +13,15 @@ The document of core algorithm is [here](docs/algorithm.md)
 
 ### Parameters for sensor fusion
 
-| Name                     | Type   | Description                                                                                                                                                                | Default value |
-| :----------------------- | :----- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
-| bounding_box_margin      | double | The distance to extend the 2D bird's-eye view Bounding Box on each side. This distance is used as a threshold to find radar centroids falling inside the extended box. [m] | 2.0           |
-| split_threshold_velocity | double | The object's velocity threshold to decide to split for two objects from radar information (currently not implemented) [m/s]                                                | 5.0           |
+| Name                     | Type   | Description                                                                                                                                                                                                                                                                      | Default value |
+| :----------------------- | :----- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
+| bounding_box_margin      | double | The distance to extend the 2D bird's-eye view Bounding Box on each side. This distance is used as a threshold to find radar centroids falling inside the extended box. [m]                                                                                                       | 2.0           |
+| split_threshold_velocity | double | The object's velocity threshold to decide to split for two objects from radar information (currently not implemented) [m/s]                                                                                                                                                      | 5.0           |
+| threshold_yaw_diff       | double | The yaw orientation threshold. If $ \vert \theta _{ob} - \theta_ {ra} \vert < threshold*yaw_diff $ attached to radar information include estimated velocity, where $ \theta*{ob} $ is yaw angle from 3d detected object, $ \theta\_ {ra} $ is yaw angle from radar object. [rad] | 0.35          |
 
 ### Weight parameters for velocity estimation
 
-To tune these weight parameters, please see [docs/algorithm.md](document) in detail.
+To tune these weight parameters, please see [document](docs/algorithm.md) in detail.
 
 | Name                                 | Type   | Description                                                                                                                                                                             | Default value |
 | :----------------------------------- | :----- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
@@ -33,10 +34,10 @@ To tune these weight parameters, please see [docs/algorithm.md](document) in det
 
 ### Parameters for fixed object information
 
-| Name                     | Type  | Description                                                                                                                                             | Default value |
-| :----------------------- | :---- | :------------------------------------------------------------------------------------------------------------------------------------------------------ | :------------ |
-| convert_doppler_to_twist | bool  | Convert doppler velocity to twist using the yaw information of a detected object.                                                                       | false         |
-| threshold_probability    | float | If the probability of an output object is lower than this parameter, and the output object doesn not have radar points/objects, then delete the object. | 0.4           |
+| Name                     | Type  | Description                                                                                                                                            | Default value |
+| :----------------------- | :---- | :----------------------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
+| convert_doppler_to_twist | bool  | Convert doppler velocity to twist using the yaw information of a detected object.                                                                      | false         |
+| threshold_probability    | float | If the probability of an output object is lower than this parameter, and the output object does not have radar points/objects, then delete the object. | 0.4           |
 
 ## radar_object_fusion_to_detected_object
 

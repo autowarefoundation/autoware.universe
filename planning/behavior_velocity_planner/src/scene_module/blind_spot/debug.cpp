@@ -12,17 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <motion_utils/motion_utils.hpp>
 #include <scene_module/blind_spot/scene.hpp>
-#include <utilization/marker_helper.hpp>
 #include <utilization/util.hpp>
 
 #include <string>
 
 namespace behavior_velocity_planner
 {
+using tier4_autoware_utils::appendMarkerArray;
+using tier4_autoware_utils::createMarkerColor;
+using tier4_autoware_utils::createMarkerOrientation;
+using tier4_autoware_utils::createMarkerScale;
+
 namespace
 {
-using State = BlindSpotModule::State;
 
 visualization_msgs::msg::MarkerArray createPolygonMarkerArray(
   const lanelet::CompoundPolygon3d & polygon, const std::string & ns, const int64_t lane_id,
@@ -110,12 +114,12 @@ visualization_msgs::msg::MarkerArray createPathMarkerArray(
 }
 
 visualization_msgs::msg::MarkerArray createPoseMarkerArray(
-  const geometry_msgs::msg::Pose & pose, const State & state, const std::string & ns,
+  const geometry_msgs::msg::Pose & pose, const StateMachine::State & state, const std::string & ns,
   const int64_t id, const double r, const double g, const double b)
 {
   visualization_msgs::msg::MarkerArray msg;
 
-  if (state == State::STOP) {
+  if (state == StateMachine::State::STOP) {
     visualization_msgs::msg::Marker marker_line{};
     marker_line.header.frame_id = "map";
     marker_line.ns = ns + "_line";
@@ -156,11 +160,11 @@ visualization_msgs::msg::MarkerArray BlindSpotModule::createVirtualWallMarkerArr
 
   const auto now = this->clock_->now();
 
-  if (!isActivated()) {
+  if (!isActivated() && !is_over_pass_judge_line_) {
     appendMarkerArray(
-      tier4_autoware_utils::createStopVirtualWallMarker(
+      motion_utils::createStopVirtualWallMarker(
         debug_data_.virtual_wall_pose, "blind_spot", now, lane_id_),
-      now, &wall_marker);
+      &wall_marker, now);
   }
   return wall_marker;
 }
@@ -173,39 +177,39 @@ visualization_msgs::msg::MarkerArray BlindSpotModule::createDebugMarkerArray()
   const auto current_time = this->clock_->now();
 
   appendMarkerArray(
-    createPathMarkerArray(debug_data_.path_raw, "path_raw", lane_id_, 0.0, 1.0, 1.0), current_time,
-    &debug_marker_array);
+    createPathMarkerArray(debug_data_.path_raw, "path_raw", lane_id_, 0.0, 1.0, 1.0),
+    &debug_marker_array, current_time);
 
   appendMarkerArray(
     createPoseMarkerArray(
       debug_data_.stop_point_pose, state, "stop_point_pose", lane_id_, 1.0, 0.0, 0.0),
-    current_time, &debug_marker_array);
+    &debug_marker_array, current_time);
 
   appendMarkerArray(
     createPoseMarkerArray(
       debug_data_.judge_point_pose, state, "judge_point_pose", lane_id_, 1.0, 1.0, 0.5),
-    current_time, &debug_marker_array);
+    &debug_marker_array, current_time);
 
   appendMarkerArray(
     createPolygonMarkerArray(
       debug_data_.conflict_area_for_blind_spot, "conflict_area_for_blind_spot", lane_id_, 0.0, 0.5,
       0.5),
-    current_time, &debug_marker_array);
+    &debug_marker_array, current_time);
 
   appendMarkerArray(
     createPolygonMarkerArray(
       debug_data_.detection_area_for_blind_spot, "detection_area_for_blind_spot", lane_id_, 0.0,
       0.5, 0.5),
-    current_time, &debug_marker_array);
+    &debug_marker_array, current_time);
 
   appendMarkerArray(
     createObjectsMarkerArray(
       debug_data_.conflicting_targets, "conflicting_targets", lane_id_, 0.99, 0.4, 0.0),
-    current_time, &debug_marker_array);
+    &debug_marker_array, current_time);
 
   appendMarkerArray(
-    createPathMarkerArray(debug_data_.spline_path, "spline", lane_id_, 0.5, 0.5, 0.5), current_time,
-    &debug_marker_array);
+    createPathMarkerArray(debug_data_.spline_path, "spline", lane_id_, 0.5, 0.5, 0.5),
+    &debug_marker_array, current_time);
 
   return debug_marker_array;
 }

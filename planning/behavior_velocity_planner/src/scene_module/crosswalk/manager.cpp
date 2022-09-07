@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <scene_module/crosswalk/manager.hpp>
+#include <utilization/util.hpp>
 
 #include <memory>
 #include <set>
@@ -28,31 +29,19 @@ std::vector<lanelet::ConstLanelet> getCrosswalksOnPath(
   const std::shared_ptr<const lanelet::routing::RoutingGraphContainer> & overall_graphs)
 {
   std::vector<lanelet::ConstLanelet> crosswalks;
-  std::set<int64_t> unique_lane_ids;
-
-  auto nearest_segment_idx = tier4_autoware_utils::findNearestSegmentIndex(
-    path.points, current_pose, std::numeric_limits<double>::max(), M_PI_2);
 
   // Add current lane id
-  lanelet::ConstLanelets current_lanes;
-  if (
-    lanelet::utils::query::getCurrentLanelets(
-      lanelet::utils::query::laneletLayer(lanelet_map), current_pose, &current_lanes) &&
-    nearest_segment_idx) {
-    for (const auto & ll : current_lanes) {
-      if (
-        ll.id() == path.points.at(*nearest_segment_idx).lane_ids.at(0) ||
-        ll.id() == path.points.at(*nearest_segment_idx + 1).lane_ids.at(0)) {
-        unique_lane_ids.insert(ll.id());
-      }
-    }
-  }
+  const auto nearest_lane_id =
+    behavior_velocity_planner::planning_utils::getNearestLaneId(path, lanelet_map, current_pose);
 
-  // Add forward path lane_id
-  const size_t start_idx = *nearest_segment_idx ? *nearest_segment_idx + 1 : 0;
-  for (size_t i = start_idx; i < path.points.size(); i++) {
-    unique_lane_ids.insert(
-      path.points.at(i).lane_ids.at(0));  // should we iterate ids? keep as it was.
+  std::vector<int64_t> unique_lane_ids;
+  if (nearest_lane_id) {
+    // Add subsequent lane_ids from nearest lane_id
+    unique_lane_ids = behavior_velocity_planner::planning_utils::getSubsequentLaneIdsSetOnPath(
+      path, *nearest_lane_id);
+  } else {
+    // Add all lane_ids in path
+    unique_lane_ids = behavior_velocity_planner::planning_utils::getSortedLaneIdsFromPath(path);
   }
 
   for (const auto lane_id : unique_lane_ids) {
@@ -103,7 +92,7 @@ CrosswalkModuleManager::CrosswalkModuleManager(rclcpp::Node & node)
   cp.stop_position_threshold = node.declare_parameter(ns + ".stop_position_threshold", 1.0);
 
   // param for ego velocity
-  cp.slow_velocity = node.declare_parameter(ns + ".slow_velocity", 5.0 / 3.6);
+  cp.min_slow_down_velocity = node.declare_parameter(ns + ".min_slow_down_velocity", 5.0 / 3.6);
   cp.max_slow_down_jerk = node.declare_parameter(ns + ".max_slow_down_jerk", -0.7);
   cp.max_slow_down_accel = node.declare_parameter(ns + ".max_slow_down_accel", -2.5);
   cp.no_relax_velocity = node.declare_parameter(ns + ".no_relax_velocity", 2.78);

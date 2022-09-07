@@ -4,8 +4,10 @@
   <name>lane_departure_checker</name>
   <version>0.1.0</version>
   <description>The lane_departure_checker package</description>
-  <maintainer email="kenji.miyake@tier4.jp">Kenji Miyake</maintainer>
+  <maintainer email="kyoichi.sugahara@tier4.jp">Kyoichi Sugahara</maintainer>
   <license>Apache License 2.0</license>
+
+  <author email="kenji.miyake@tier4.jp">Kenji Miyake</author>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
@@ -18,6 +20,7 @@
   <depend>eigen</depend>
   <depend>geometry_msgs</depend>
   <depend>lanelet2_extension</depend>
+  <depend>motion_utils</depend>
   <depend>nav_msgs</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>

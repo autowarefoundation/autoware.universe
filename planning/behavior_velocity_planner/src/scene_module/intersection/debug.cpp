@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <motion_utils/motion_utils.hpp>
 #include <scene_module/intersection/scene_intersection.hpp>
 #include <scene_module/intersection/scene_merge_from_private_road.hpp>
-#include <utilization/marker_helper.hpp>
 #include <utilization/util.hpp>
 
 #include <string>
@@ -24,7 +24,10 @@ namespace behavior_velocity_planner
 {
 namespace
 {
-using State = IntersectionModule::State;
+using tier4_autoware_utils::appendMarkerArray;
+using tier4_autoware_utils::createMarkerColor;
+using tier4_autoware_utils::createMarkerOrientation;
+using tier4_autoware_utils::createMarkerScale;
 
 visualization_msgs::msg::MarkerArray createLaneletPolygonsMarkerArray(
   const std::vector<lanelet::CompoundPolygon3d> & polygons, const std::string & ns,
@@ -196,60 +199,65 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createDebugMarkerArray(
   const auto current_time = this->clock_->now();
 
   appendMarkerArray(
-    createPathMarkerArray(debug_data_.path_raw, "path_raw", lane_id_, 0.0, 1.0, 1.0), current_time,
-    &debug_marker_array);
+    createPathMarkerArray(debug_data_.path_raw, "path_raw", lane_id_, 0.0, 1.0, 1.0),
+    &debug_marker_array, current_time);
 
   appendMarkerArray(
     createLaneletPolygonsMarkerArray(debug_data_.detection_area, "detection_area", lane_id_),
-    current_time, &debug_marker_array);
+    &debug_marker_array, current_time);
 
   appendMarkerArray(
     createLaneletPolygonsMarkerArray(
       debug_data_.detection_area_with_margin, "detection_area_with_margin", lane_id_),
-    current_time, &debug_marker_array);
+    &debug_marker_array, current_time);
 
   appendMarkerArray(
     createPolygonMarkerArray(debug_data_.ego_lane_polygon, "ego_lane", lane_id_, 0.0, 0.3, 0.7),
-    current_time, &debug_marker_array);
+    &debug_marker_array, current_time);
 
   appendMarkerArray(
     createPolygonMarkerArray(
       debug_data_.stuck_vehicle_detect_area, "stuck_vehicle_detect_area", lane_id_, 0.0, 0.5, 0.5),
-    current_time, &debug_marker_array);
+    &debug_marker_array, current_time);
 
   appendMarkerArray(
     createPolygonMarkerArray(
       debug_data_.candidate_collision_ego_lane_polygon, "candidate_collision_ego_lane_polygon",
       lane_id_, 0.5, 0.0, 0.0),
-    current_time, &debug_marker_array);
+    &debug_marker_array, current_time);
 
   size_t i{0};
   for (const auto & p : debug_data_.candidate_collision_object_polygons) {
     appendMarkerArray(
       createPolygonMarkerArray(
         p, "candidate_collision_object_polygons", lane_id_ + i++, 0.0, 0.5, 0.5),
-      current_time, &debug_marker_array);
+      &debug_marker_array, current_time);
   }
 
   appendMarkerArray(
     createObjectsMarkerArray(
       debug_data_.conflicting_targets, "conflicting_targets", lane_id_, 0.99, 0.4, 0.0),
-    current_time, &debug_marker_array);
+    &debug_marker_array, current_time);
 
   appendMarkerArray(
     createObjectsMarkerArray(debug_data_.stuck_targets, "stuck_targets", lane_id_, 0.99, 0.99, 0.2),
-    current_time, &debug_marker_array);
+    &debug_marker_array, current_time);
 
-  if (state == IntersectionModule::State::STOP) {
+  appendMarkerArray(
+    createPoseMarkerArray(
+      debug_data_.predicted_obj_pose, "predicted_obj_pose", lane_id_, 0.7, 0.85, 0.9),
+    &debug_marker_array, current_time);
+
+  if (state == StateMachine::State::STOP) {
     appendMarkerArray(
       createPoseMarkerArray(
         debug_data_.stop_point_pose, "stop_point_pose", lane_id_, 1.0, 0.0, 0.0),
-      current_time, &debug_marker_array);
+      &debug_marker_array, current_time);
 
     appendMarkerArray(
       createPoseMarkerArray(
         debug_data_.judge_point_pose, "judge_point_pose", lane_id_, 1.0, 1.0, 0.5),
-      current_time, &debug_marker_array);
+      &debug_marker_array, current_time);
   }
 
   return debug_marker_array;
@@ -264,14 +272,14 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createVirtualWallMarker
 
   if (debug_data_.stop_required) {
     appendMarkerArray(
-      tier4_autoware_utils::createStopVirtualWallMarker(
+      motion_utils::createStopVirtualWallMarker(
         debug_data_.stop_wall_pose, "intersection", now, lane_id_),
-      now, &wall_marker);
-  } else if (state == IntersectionModule::State::STOP) {
+      &wall_marker, now);
+  } else if (state == StateMachine::State::STOP) {
     appendMarkerArray(
-      tier4_autoware_utils::createStopVirtualWallMarker(
+      motion_utils::createStopVirtualWallMarker(
         debug_data_.slow_wall_pose, "intersection", now, lane_id_),
-      now, &wall_marker);
+      &wall_marker, now);
   }
   return wall_marker;
 }
@@ -283,11 +291,11 @@ visualization_msgs::msg::MarkerArray MergeFromPrivateRoadModule::createDebugMark
   const auto state = state_machine_.getState();
 
   const auto now = this->clock_->now();
-  if (state == MergeFromPrivateRoadModule::State::STOP) {
+  if (state == StateMachine::State::STOP) {
     appendMarkerArray(
       createPoseMarkerArray(
         debug_data_.stop_point_pose, "stop_point_pose", lane_id_, 1.0, 0.0, 0.0),
-      now, &debug_marker_array);
+      &debug_marker_array, now);
   }
 
   return debug_marker_array;
@@ -300,11 +308,11 @@ visualization_msgs::msg::MarkerArray MergeFromPrivateRoadModule::createVirtualWa
   const auto state = state_machine_.getState();
 
   const auto now = this->clock_->now();
-  if (state == MergeFromPrivateRoadModule::State::STOP) {
+  if (state == StateMachine::State::STOP) {
     appendMarkerArray(
-      tier4_autoware_utils::createStopVirtualWallMarker(
+      motion_utils::createStopVirtualWallMarker(
         debug_data_.virtual_wall_pose, "merge_from_private_road", now, lane_id_),
-      now, &wall_marker);
+      &wall_marker, now);
   }
 
   return wall_marker;

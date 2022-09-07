@@ -15,6 +15,7 @@
 #ifndef OBSTACLE_CRUISE_PLANNER__PLANNER_INTERFACE_HPP_
 #define OBSTACLE_CRUISE_PLANNER__PLANNER_INTERFACE_HPP_
 
+#include "motion_utils/motion_utils.hpp"
 #include "obstacle_cruise_planner/common_structs.hpp"
 #include "obstacle_cruise_planner/utils.hpp"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
@@ -113,6 +114,10 @@ protected:
 
   // TODO(shimizu) remove these parameters
   Trajectory::ConstSharedPtr smoothed_trajectory_ptr_;
+
+  double calcDistanceToCollisionPoint(
+    const ObstacleCruisePlannerData & planner_data,
+    const geometry_msgs::msg::Point & collision_point);
 
   double calcRSSDistance(
     const double ego_vel, const double obj_vel, const double margin = 0.0) const

@@ -15,17 +15,15 @@
 #ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__AVOIDANCE__AVOIDANCE_MODULE_DATA_HPP_
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__AVOIDANCE__AVOIDANCE_MODULE_DATA_HPP_
 
-#include "behavior_path_planner/path_shifter/path_shifter.hpp"
+#include "behavior_path_planner/scene_module/utils/path_shifter.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
-#include <autoware_auto_planning_msgs/msg/path.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
-#include <geometry_msgs/msg/pose_stamped.hpp>
-#include <tier4_planning_msgs/msg/avoidance_debug_factor.hpp>
-#include <tier4_planning_msgs/msg/avoidance_debug_msg.hpp>
 #include <tier4_planning_msgs/msg/avoidance_debug_msg_array.hpp>
+
+#include <lanelet2_core/geometry/Lanelet.h>
 
 #include <memory>
 #include <string>
@@ -34,16 +32,12 @@
 namespace behavior_path_planner
 {
 using autoware_auto_perception_msgs::msg::PredictedObject;
-using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 
-using tier4_planning_msgs::msg::AvoidanceDebugFactor;
-using tier4_planning_msgs::msg::AvoidanceDebugMsg;
 using tier4_planning_msgs::msg::AvoidanceDebugMsgArray;
 
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
-using geometry_msgs::msg::PoseStamped;
 
 struct AvoidanceParameters
 {
@@ -134,7 +128,7 @@ struct AvoidanceParameters
   // For the compensation of the detection lost. Once an object is observed, it is registered and
   // will be used for planning from the next time. If the object is not observed, it counts up the
   // lost_count and the registered object will be removed when the count exceeds this max count.
-  int object_hold_max_count;
+  double object_last_seen_threshold;
 
   // For velocity planning to avoid acceleration during avoidance.
   // Speeds smaller than this are not inserted.
@@ -143,10 +137,6 @@ struct AvoidanceParameters
   // To prevent large acceleration while avoidance. The max velocity is limited with this
   // acceleration.
   double max_avoidance_acceleration;
-
-  // if distance between vehicle front and shift end point is larger than this length,
-  // turn signal is not turned on.
-  double avoidance_search_distance;
 
   // The avoidance path generation is performed when the shift distance of the
   // avoidance points is greater than this threshold.
@@ -194,7 +184,8 @@ struct ObjectData  // avoidance target
   double overhang_dist;
 
   // count up when object disappeared. Removed when it exceeds threshold.
-  int lost_count = 0;
+  rclcpp::Time last_seen;
+  double lost_time{0.0};
 
   // store the information of the lanelet which the object's overhang is currently occupying
   lanelet::ConstLanelet overhang_lanelet;

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "tier4_autoware_utils/trajectory/trajectory.hpp"
+#include "motion_utils/trajectory/trajectory.hpp"
 #include "utilization/path_utilization.hpp"
 #include "utils.hpp"
 
@@ -32,14 +32,6 @@
     }                                                                                 \
     std::cerr << ss.str() << std::endl;                                               \
   }
-
-TEST(to_footprint_polygon, nominal)
-{
-  using behavior_velocity_planner::planning_utils::toFootprintPolygon;
-  autoware_auto_perception_msgs::msg::PredictedObject obj = test::generatePredictedObject(0.0);
-  auto poly = toFootprintPolygon(obj);
-  EXPECT_TRUE(true);
-}
 
 TEST(is_ahead_of, nominal)
 {
@@ -93,8 +85,8 @@ TEST(specialInterpolation, specialInterpolation)
   using autoware_auto_planning_msgs::msg::Path;
   using autoware_auto_planning_msgs::msg::PathPoint;
   using behavior_velocity_planner::interpolatePath;
-  using tier4_autoware_utils::calcSignedArcLength;
-  using tier4_autoware_utils::searchZeroVelocityIndex;
+  using motion_utils::calcSignedArcLength;
+  using motion_utils::searchZeroVelocityIndex;
 
   const auto genPath = [](const auto p, const auto v) {
     if (p.size() != v.size()) throw std::invalid_argument("different size is not expected");

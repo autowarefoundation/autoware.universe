@@ -17,12 +17,9 @@
 #include "behavior_path_planner/scene_module/avoidance/avoidance_module_data.hpp"
 #include "behavior_path_planner/utilities.hpp"
 
-#include <lanelet2_extension/utility/message_conversion.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <algorithm>
-#include <iomanip>
 #include <limits>
 #include <memory>
 #include <set>
@@ -44,28 +41,6 @@ double calcShiftLength(
 bool isSameDirectionShift(const bool & is_object_on_right, const double & shift_length)
 {
   return (is_object_on_right == std::signbit(shift_length));
-}
-
-lanelet::ConstLanelets calcLaneAroundPose(
-  const std::shared_ptr<const PlannerData> & planner_data, const geometry_msgs::msg::Pose & pose,
-  const double backward_length)
-{
-  const auto & p = planner_data->parameters;
-  const auto & route_handler = planner_data->route_handler;
-
-  lanelet::ConstLanelet current_lane;
-  if (!route_handler->getClosestLaneletWithinRoute(pose, &current_lane)) {
-    RCLCPP_ERROR(
-      rclcpp::get_logger("behavior_path_planner").get_child("avoidance"),
-      "failed to find closest lanelet within route!!!");
-    return {};  // TODO(Horibe)
-  }
-
-  // For current_lanes with desired length
-  lanelet::ConstLanelets current_lanes =
-    route_handler->getLaneletSequence(current_lane, pose, backward_length, p.forward_path_length);
-
-  return current_lanes;
 }
 
 ShiftedPath toShiftedPath(const PathWithLaneId & path)
@@ -146,14 +121,13 @@ void fillLongitudinalAndLengthByClosestFootprint(
   tier4_autoware_utils::Polygon2d object_poly{};
   util::calcObjectPolygon(object, &object_poly);
 
-  const double distance = tier4_autoware_utils::calcSignedArcLength(
+  const double distance = motion_utils::calcSignedArcLength(
     path.points, ego_pos, object.kinematics.initial_pose_with_covariance.pose.position);
   double min_distance = distance;
   double max_distance = distance;
   for (const auto & p : object_poly.outer()) {
     const auto point = tier4_autoware_utils::createPoint(p.x(), p.y(), 0.0);
-    const double arc_length =
-      tier4_autoware_utils::calcSignedArcLength(path.points, ego_pos, point);
+    const double arc_length = motion_utils::calcSignedArcLength(path.points, ego_pos, point);
     min_distance = std::min(min_distance, arc_length);
     max_distance = std::max(max_distance, arc_length);
   }
