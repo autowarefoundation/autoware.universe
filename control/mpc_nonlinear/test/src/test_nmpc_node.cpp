@@ -22,40 +22,41 @@
 #include "nonlinear_mpc_test_node.hpp"
 #include "nmpc_test_utils.hpp"
 
-TEST_F(FakeNodeFixture, no_input)
+TEST_F(FakeNodeFixture, no_input_stop_control_cmd_is_published)
 {
   // Data to test
   ControlCmdMsg::SharedPtr cmd_msg;
-  bool received_lateral_command = false;
+  bool is_control_command_received = false;
 
   // Node
   std::shared_ptr<NonlinearMPCNode> node = makeNonlinearMPCNode();
 
   // Publishers
   rclcpp::Publisher<TrajectoryMsg>::SharedPtr traj_pub =
-    this->create_publisher<TrajectoryMsg>("/input/reference_trajectory");
+    this->create_publisher<TrajectoryMsg>("mpc_nonlinear/input/reference_trajectory");
 
   rclcpp::Publisher<VelocityMsg>::SharedPtr vel_pub =
-    this->create_publisher<VelocityMsg>("/input/current_velocity");
+    this->create_publisher<VelocityMsg>("mpc_nonlinear/input/current_velocity");
 
   rclcpp::Publisher<SteeringReport>::SharedPtr steer_pub =
-    this->create_publisher<SteeringReport>("/input/current_steering");
+    this->create_publisher<SteeringReport>("mpc_nonlinear/input/current_steering");
 
   // Subscribers
   rclcpp::Subscription<ControlCmdMsg>::SharedPtr cmd_sub = this->create_subscription<ControlCmdMsg>(
-    "/output/control_cmd", *this->get_fake_node(),
-    [&cmd_msg, &received_lateral_command](const ControlCmdMsg::SharedPtr msg)
+    "mpc_nonlinear/output/control_cmd", *this->get_fake_node(),
+    [&cmd_msg, &is_control_command_received](const ControlCmdMsg::SharedPtr msg)
     {
       cmd_msg = msg;
-      received_lateral_command = true;
+      is_control_command_received = true;
     });
 
   auto br = std::make_shared<tf2_ros::StaticTransformBroadcaster>(this->get_fake_node());
 
-  test_utils::spinWhile(node);
+  // test_utils::spinWhile(node);
+  ns_utils::print("Is command received ? ", is_control_command_received ? "True" : "False");
 
   // No published data: expect a stopped command
-  test_utils::waitForMessage(node, this, received_lateral_command, std::chrono::seconds{1LL}, false);
-  ASSERT_FALSE(received_lateral_command);
+  test_utils::waitForMessage(node, this, is_control_command_received, std::chrono::seconds{1LL}, false);
+  ASSERT_TRUE(is_control_command_received);
 
 }
