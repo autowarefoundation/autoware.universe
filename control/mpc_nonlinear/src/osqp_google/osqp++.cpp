@@ -322,7 +322,7 @@ Status VerifySameSparsity(
       return {"Sparsity of the new matrix differs from the previously defined matrix.", StatusCode::kInvalidArgument};
     }
   }
-  for (size_t i = 0; i < new_matrix.innerSize(); ++i)
+  for (size_t i = 0; i < static_cast<size_t>( new_matrix.innerSize()); ++i)
   {
     if (ref_matrix->i[i] != new_matrix.innerIndexPtr()[i])
     {
