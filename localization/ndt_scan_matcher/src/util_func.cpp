@@ -257,6 +257,8 @@ std::vector<geometry_msgs::msg::Pose> create_random_pose_array(
 
 double norm(const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2)
 {
-  return std::sqrt(
-    std::pow(p1.x - p2.x, 2.0) + std::pow(p1.y - p2.y, 2.0) + std::pow(p1.z - p2.z, 2.0));
+  const double dx = p1.x - p2.x;
+  const double dy = p1.y - p2.y;
+  const double dz = p1.z - p2.z;
+  return std::sqrt(dx * dx + dy * dy + dz * dz);
 }
