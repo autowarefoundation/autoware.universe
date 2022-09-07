@@ -214,7 +214,7 @@ void PidLongitudinalController::setKinematicState(const nav_msgs::msg::Odometry:
   if (!msg) return;
 
   if (m_current_kinematic_state_ptr) {
-    m_prev_velocity_ptr = m_current_kinematic_state_ptr;
+    m_prev_kienmatic_state_ptr = m_current_kinematic_state_ptr;
   }
   m_current_kinematic_state_ptr = msg;
 }
@@ -365,7 +365,7 @@ rcl_interfaces::msg::SetParametersResult PidLongitudinalController::paramCallbac
 boost::optional<LongitudinalOutput> PidLongitudinalController::run()
 {
   // wait for initial pointers
-  if (!m_current_kinematic_state_ptr || !m_prev_velocity_ptr || !m_trajectory_ptr) {
+  if (!m_current_kinematic_state_ptr || !m_prev_kienmatic_state_ptr || !m_trajectory_ptr) {
     return boost::none;
   }
 
@@ -701,11 +701,11 @@ float64_t PidLongitudinalController::getDt()
 
 PidLongitudinalController::Motion PidLongitudinalController::getCurrentMotion() const
 {
-  const float64_t dv =
-    m_current_kinematic_state_ptr->twist.twist.linear.x - m_prev_velocity_ptr->twist.twist.linear.x;
+  const float64_t dv = m_current_kinematic_state_ptr->twist.twist.linear.x -
+                       m_prev_kienmatic_state_ptr->twist.twist.linear.x;
   const float64_t dt = std::max(
     (rclcpp::Time(m_current_kinematic_state_ptr->header.stamp) -
-     rclcpp::Time(m_prev_velocity_ptr->header.stamp))
+     rclcpp::Time(m_prev_kienmatic_state_ptr->header.stamp))
       .seconds(),
     1e-03);
   const float64_t accel = dv / dt;

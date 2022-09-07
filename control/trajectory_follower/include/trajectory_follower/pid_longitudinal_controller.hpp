@@ -97,7 +97,7 @@ private:
 
   // pointers for ros topic
   nav_msgs::msg::Odometry::ConstSharedPtr m_current_kinematic_state_ptr{nullptr};
-  nav_msgs::msg::Odometry::ConstSharedPtr m_prev_velocity_ptr{nullptr};
+  nav_msgs::msg::Odometry::ConstSharedPtr m_prev_kienmatic_state_ptr{nullptr};
   autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr m_trajectory_ptr{nullptr};
 
   // vehicle info
