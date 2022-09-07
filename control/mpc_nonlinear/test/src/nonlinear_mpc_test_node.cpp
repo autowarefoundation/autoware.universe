@@ -14,11 +14,9 @@
 * limitations under the License.
 */
 
-#include <algorithm>
+
 #include <memory>
-#include <utility>
-#include <vector>
-#include "test_nonlinear_mpc_node.hpp"
+#include "nonlinear_mpc_test_node.hpp"
 
 std::shared_ptr<ns_mpc_nonlinear::NonlinearMPCNode> makeNonlinearMPCNode()
 {
@@ -30,7 +28,7 @@ std::shared_ptr<ns_mpc_nonlinear::NonlinearMPCNode> makeNonlinearMPCNode()
                           share_dir + "/params/mpc_nonlinear.param.yaml",
                           "--params-file", share_dir + "/params/test_vehicle_info.yaml"});
 
-  std::shared_ptr<NonlinearMPCNode> node = std::make_shared<NonlinearMPCNode>(node_options);
+  auto node = std::make_shared<NonlinearMPCNode>(node_options);
 
   // Enable all logging in the node
   auto ret = rcutils_logging_set_logger_level(node->get_logger().get_name(),

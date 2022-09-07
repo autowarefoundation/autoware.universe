@@ -38,7 +38,7 @@
 using VelocityMsg = nav_msgs::msg::Odometry;
 using TrajectoryMsg = autoware_auto_planning_msgs::msg::Trajectory;
 using ControlCmdMsg = autoware_auto_control_msgs::msg::AckermannControlCommand;
-using SteeringMeasuredMsg = autoware_auto_vehicle_msgs::msg::SteeringReport;
+using SteeringReport = autoware_auto_vehicle_msgs::msg::SteeringReport;
 using NonlinearMPCPerformanceMsg = autoware_auto_vehicle_msgs::msg::NonlinearMPCPerformanceReport;
 using TrajectoryPoint = autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using namespace std::chrono_literals;
@@ -48,6 +48,7 @@ using DelayCompensationRefs = autoware_auto_vehicle_msgs::msg::DelayCompensation
 using ErrorReportMsg = autoware_auto_vehicle_msgs::msg::ControllerErrorReport;
 auto constexpr EPS = std::numeric_limits<double>::epsilon();
 
+using FakeNodeFixture = autoware::tools::testing::FakeTestNode;
 using FakeNodeFixture = autoware::tools::testing::FakeTestNode;
 
 // Make shared node
