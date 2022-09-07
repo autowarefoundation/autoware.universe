@@ -5,7 +5,7 @@
     <version>0.1.0</version>
     <description>The Nonlinear MPC Package</description>
     <maintainer email="ali.boyali@tier4.jp">Ali Boyali</maintainer>
-    <author email="boyali@gmail.com">Ali Boyali</author>
+    <maintainer email="boyali@gmail.com">Ali Boyali</maintainer>
     <license>Apache License 2.0</license>
 
     <buildtool_depend>ament_cmake_auto</buildtool_depend>
@@ -20,7 +20,6 @@
     <depend>tf2</depend>
     <depend>tf2_eigen</depend>
     <depend>tf2_ros</depend>
-
 
     <depend>autoware_auto_common</depend>
     <depend>autoware_auto_control_msgs</depend>

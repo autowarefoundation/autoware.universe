@@ -148,7 +148,7 @@ NonlinearMPCNode::NonlinearMPCNode(const rclcpp::NodeOptions &node_options)
   /**
    * Initialize input buffer map.
    * */
-  for (auto k = 0; k < params_node_.input_delay_discrete_nsteps; ++k)
+  for (size_t k = 0; k < params_node_.input_delay_discrete_nsteps; ++k)
   {
     ControlCmdMsg cmd{};
     cmd.longitudinal.acceleration = 0.0;
@@ -691,10 +691,6 @@ void NonlinearMPCNode::loadNodeParameters()
   params_node_.use_cdob = declare_parameter<bool>("use_cdob");
   params_node_.use_dob = declare_parameter<bool>("use_dob");
 
-  //  if (params_node_.use_dob)
-  //  {
-  //    params_node_.use_cdob = true;  // DOB depends on the CDOB states, cannot be used alone.
-  //  }
 }
 
 void NonlinearMPCNode::loadVehicleParameters(ns_models::ParamsVehicle &params_vehicle)
@@ -830,14 +826,7 @@ void NonlinearMPCNode::loadNMPCoreParameters(ns_data::data_nmpc_core_type_t &dat
   auto labelX_tag = "Xn";  // No delay nodel for steering and longitudinal speed
   auto labelY_tag = "Yn";
 
-  //	// If we use the first order steering and vx models, LPV Lyap matrices are different.
-  //	if (params_node_.use_delay_sim_model)
-  //	{
-  //		labelX_tag = "Xd";  // delay Lyapunov matrices.
-  //		labelY_tag = "Yd";
-  //	}
-
-  for (auto k = 0; k < params_lpv.num_of_nonlinearities; k++)
+  for (size_t k = 0; k < params_lpv.num_of_nonlinearities; k++)
   {
     std::vector<double> tempX;
     tempX.reserve(nx * nx);
