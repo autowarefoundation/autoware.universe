@@ -434,8 +434,8 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
 
   // Insert R at (K-1).---------------------------------------------
 
-  row = static_cast<double>(col_startR + (K - 1) * INPUT_DIM);  // last R start position
-  col = static_cast<double>(col_startR + (K - 1) * INPUT_DIM);
+  row = col_startR + (K - 1) * INPUT_DIM;  // last R start position
+  col = col_startR + (K - 1) * INPUT_DIM;
 
   std::transform(triplets_R.cbegin(), triplets_R.cend(), std::back_inserter(triplets_P),
                  [&row, &col](auto const &titem)
@@ -554,23 +554,6 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
 
   osqp_instance_.lower_bounds.segment<INPUT_DIM>(row_inq_u + (K - 1) * INPUT_DIM) = params_optimization.ulower_scaled;
 
-  // DEBUG
-  //  ns_utils::print("State Inequality Bounds in SetupOSQP:");
-  //
-  //  auto xbounds = ns_eigen_utils::hstack<double>(
-  //    osqp_instance_.lower_bounds.middleRows(row_aineq, K * STATE_DIM),
-  //    osqp_instance_.upper_bounds.middleRows(row_aineq, K * STATE_DIM));
-  //
-  //  ns_utils::print("Control Inequality Bounds in SetupOSQP:");
-  //  ns_utils::print("Row start of input inequalities u : ", row_inq_u);
-  //  auto ubounds = ns_eigen_utils::hstack<double>(
-  //    osqp_instance_.lower_bounds.middleRows(row_inq_u, K * INPUT_DIM),
-  //    osqp_instance_.upper_bounds.middleRows(row_inq_u, K * INPUT_DIM));
-  //  ns_utils::print("\nBounds of controls in OSQP update:");
-  //  ns_eigen_utils::printEigenMat(ubounds);
-
-  // end of DEBUG
-
   // Set the Objective vector.
 
   osqp_instance_.objective_vector.resize(osqp_dims_.Pdim);
@@ -620,8 +603,8 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
   triplets_constants_ = ns_utils::join_vectors(triplets_Sx_, triplets_Aequality_jerk_, triplets_Aineq_);
 
   // DEBUG
-  ns_utils::print("\nOsqp Pdim cost matrix : ", osqp_dims_.Pdim);
-  ns_utils::print("Osqp Adim constraint matrix : ", osqp_dims_.Acol_dim);
+  // ns_utils::print("\nOsqp Pdim cost matrix : ", osqp_dims_.Pdim);
+  // ns_utils::print("Osqp Adim constraint matrix : ", osqp_dims_.Acol_dim);
 
   //  ns_utils::print("\nP - cost matrix : ");
   //  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(Pcost_.toDense()));
@@ -711,12 +694,6 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::updateOSQP(ns_data::data_
     auto const &ASx = Eigen::MatrixXd(discretization_data.A[k] * params_optimization.Sx);
     auto triplet_list_A = ns_eigen_utils::ToTriplets(ASx, EPS);
 
-    // ns_utils::print("\nASx\n");
-    // ns_eigen_utils::printEigenMat(ASx);
-    //
-    // ns_utils::print("\nA\n");
-    // ns_eigen_utils::printEigenMat(discretization_data.A[k]);
-
     std::transform(triplet_list_A.cbegin(), triplet_list_A.cend(), std::back_inserter(triplets_A),
                    [&rowA, &colA](auto const &titem)
                    {
@@ -774,15 +751,6 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::updateOSQP(ns_data::data_
     params_optimization.Sx_inv * (target_references.X[K - 1] - params_optimization.Cx);  // scale the targets in [-1, 1]
 
   new_objective_vector.template segment<STATE_DIM>((K - 1) * STATE_DIM) = -1 * QN * xref_hat;
-
-  // ns_utils::print("\nOptimization Vector q : \n");
-  // ns_eigen_utils::printEigenMat(new_objective_vector);
-
-  // Update triplet_A constant items by copying the constant triplets into the
-  // new constraint matrix.
-  // std::copy(triplets_Sx_.cbegin(), triplets_Sx_.cend(), std::back_inserter(triplets_A));
-  // std::copy(triplets_Aequality_jerk_.cbegin(), triplets_Aequality_jerk_.cend(), std::back_inserter(triplets_A));
-  // std::copy(triplets_Aineq_.cbegin(), triplets_Aineq_.cend(), std::back_inserter(triplets_A));
 
   // ---------------------- Set Equality Constraints RHS---------------------------------
   // Optimization operates on the scaled variables. The motion system matrices are scaled.
@@ -888,31 +856,6 @@ void OptimizationProblemOSQP<STATE_DIM,
     td.U[k] = Su * usolk + Cu;
   }
 
-  // // Put xsol0, usol0 to end. To avoid shifting operation again.
-  // auto &&xsolk = Model::state_vector_t(optimal_solution.template
-  // segment<STATE_DIM>(0 * STATE_DIM));
-  // trajectory_data.X[K - 1] = Sx * xsolk + Cx;
-  // completes with the last element in K-dim vector.
-  //
-  // auto &&usolk = Model::input_vector_t(optimal_solution.segment<INPUT_DIM>(0 * INPUT_DIM +
-  // row_cont_start));
-  // trajectory_data.U[K - 1] = Su * usolk + Cu;
-
-  // DEBUG
-  // ns_utils::print("In get solution: OSQP computed errors : ");
-  // Get trajectories as a matrix and print for debugging purpose.
-  // auto &&Xtemp = ns_eigen_utils::getTrajectory(trajectory_data.X);
-  // auto &&Utemp = ns_eigen_utils::getTrajectory(trajectory_data.U);
-  //
-  // ns_utils::print("\nSolved OSQP trajectories ey epsi : ");
-  // //ns_eigen_utils::printEigenMat(Xtemp.transpose().middleCols(4, 2));
-  // [x, y, psi, s, ey, epsi, v, delta]
-  // ns_eigen_utils::printEigenMat(Xtemp.transpose());
-  //
-  // ns_utils::print("\nSolved OSQP trajectories U : ");
-  // ns_eigen_utils::printEigenMat(Utemp.transpose());
-
-  // end of debug
 }
 }  // namespace ns_opt
 #endif  // NONLINEAR_MPC_CORE__NMPC_OPTIMIZATION_HPP_
