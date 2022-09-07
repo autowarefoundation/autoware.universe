@@ -531,11 +531,15 @@ void NDTScanMatcher::callback_sensor_points(
   iteration_num_pub_->publish(make_int32_stamped(sensor_ros_time, ndt_result.iteration_num));
   publish_tf(sensor_ros_time, ndt_result.pose);
   publish_pose(sensor_ros_time, ndt_result.pose, is_converged);
-  publish_point_cloud(sensor_ros_time, ndt_result.pose, sensor_points_baselinkTF_ptr);
   publish_marker(sensor_ros_time, ndt_result.transformation_array);
   publish_initial_to_result_distances(
     sensor_ros_time, ndt_result.pose, interpolator.get_current_pose(), interpolator.get_old_pose(),
     interpolator.get_new_pose());
+
+  auto sensor_points_mapTF_ptr = std::make_shared<pcl::PointCloud<PointSource>>();
+  pcl::transformPointCloud(
+    *sensor_points_baselinkTF_ptr, *sensor_points_mapTF_ptr, from_ros_pose_to_eigen_matrix4f(ndt_result.pose));
+  publish_point_cloud(sensor_ros_time, map_frame_, sensor_points_mapTF_ptr);
 
   key_value_stdmap_["transform_probability"] = std::to_string(ndt_result.transform_probability);
   key_value_stdmap_["nearest_voxel_transformation_likelihood"] =
@@ -616,8 +620,10 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_using_monte_
       this->now(), map_frame_, tier4_autoware_utils::createMarkerScale(0.3, 0.1, 0.1), particle, i);
     ndt_monte_carlo_initial_pose_marker_pub_->publish(marker_array);
 
-    publish_point_cloud(
-      initial_pose_with_cov.header.stamp, ndt_result.pose, ndt_ptr->getInputSource());
+    auto sensor_points_mapTF_ptr = std::make_shared<pcl::PointCloud<PointSource>>();
+    pcl::transformPointCloud(
+      *ndt_ptr->getInputSource(), *sensor_points_mapTF_ptr, from_ros_pose_to_eigen_matrix4f(ndt_result.pose));
+    publish_point_cloud(initial_pose_with_cov.header.stamp, map_frame_, sensor_points_mapTF_ptr);
   }
 
   auto best_particle_ptr = std::max_element(
@@ -666,18 +672,13 @@ void NDTScanMatcher::publish_pose(
 }
 
 void NDTScanMatcher::publish_point_cloud(
-  const rclcpp::Time & sensor_ros_time, const geometry_msgs::msg::Pose & result_pose,
-  const std::shared_ptr<const pcl::PointCloud<PointSource>> & sensor_points_baselinkTF_ptr)
+  const rclcpp::Time & sensor_ros_time, const std::string & frame_id, 
+  const std::shared_ptr<const pcl::PointCloud<PointSource>> & sensor_points_mapTF_ptr)
 {
-  const Eigen::Matrix4f result_pose_matrix = from_ros_pose_to_eigen_matrix4f(result_pose);
-
-  auto sensor_points_mapTF_ptr = std::make_shared<pcl::PointCloud<PointSource>>();
-  pcl::transformPointCloud(
-    *sensor_points_baselinkTF_ptr, *sensor_points_mapTF_ptr, result_pose_matrix);
   sensor_msgs::msg::PointCloud2 sensor_points_mapTF_msg;
   pcl::toROSMsg(*sensor_points_mapTF_ptr, sensor_points_mapTF_msg);
   sensor_points_mapTF_msg.header.stamp = sensor_ros_time;
-  sensor_points_mapTF_msg.header.frame_id = map_frame_;
+  sensor_points_mapTF_msg.header.frame_id = frame_id;
   sensor_aligned_pose_pub_->publish(sensor_points_mapTF_msg);
 }
 
