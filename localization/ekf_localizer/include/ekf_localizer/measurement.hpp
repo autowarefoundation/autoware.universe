@@ -20,8 +20,8 @@
 Eigen::Matrix<double, 3, 6> poseMeasurementMatrix();
 Eigen::Matrix<double, 2, 6> twistMeasurementMatrix();
 Eigen::Matrix3d poseMeasurementCovariance(
-  const std::array<double, 36ul> & covariance, const double smoothing_step);
+  const std::array<double, 36ul> & covariance, const size_t smoothing_step);
 Eigen::Matrix2d twistMeasurementCovariance(
-  const std::array<double, 36ul> & covariance, const double smoothing_step);
+  const std::array<double, 36ul> & covariance, const size_t smoothing_step);
 
 #endif  // EKF_LOCALIZER__MEASUREMENT_HPP_

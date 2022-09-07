@@ -39,7 +39,7 @@ TEST(Measurement, PoseMeasurementCovariance)
                                                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                                                0, 0, 0, 0, 0, 0, 7, 8, 0, 0, 0, 9};
 
-    const Eigen::Matrix3d M = poseMeasurementCovariance(covariance, 2.);
+    const Eigen::Matrix3d M = poseMeasurementCovariance(covariance, 2);
 
     Eigen::Matrix3d expected;
     expected << 2, 4, 6, 8, 10, 12, 14, 16, 18;
@@ -63,7 +63,7 @@ TEST(Measurement, TwistMeasurementCovariance)
                                                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                                                0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 4};
 
-    const Eigen::Matrix2d M = twistMeasurementCovariance(covariance, 2.);
+    const Eigen::Matrix2d M = twistMeasurementCovariance(covariance, 2);
 
     Eigen::Matrix2d expected;
     expected << 2, 4, 6, 8;

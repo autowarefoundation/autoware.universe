@@ -34,20 +34,20 @@ Eigen::Matrix<double, 2, 6> twistMeasurementMatrix()
 }
 
 Eigen::Matrix3d poseMeasurementCovariance(
-  const std::array<double, 36ul> & covariance, const double smoothing_step)
+  const std::array<double, 36ul> & covariance, const size_t smoothing_step)
 {
   Eigen::Matrix3d R;
   R << covariance.at(6 * 0 + 0), covariance.at(6 * 0 + 1), covariance.at(6 * 0 + 5),
     covariance.at(6 * 1 + 0), covariance.at(6 * 1 + 1), covariance.at(6 * 1 + 5),
     covariance.at(6 * 5 + 0), covariance.at(6 * 5 + 1), covariance.at(6 * 5 + 5);
-  return R * smoothing_step;
+  return R * static_cast<double>(smoothing_step);
 }
 
 Eigen::Matrix2d twistMeasurementCovariance(
-  const std::array<double, 36ul> & covariance, const double smoothing_step)
+  const std::array<double, 36ul> & covariance, const size_t smoothing_step)
 {
   Eigen::Matrix2d R;
   R << covariance.at(6 * 0 + 0), covariance.at(6 * 0 + 5), covariance.at(6 * 5 + 0),
     covariance.at(6 * 5 + 5);
-  return R * smoothing_step;
+  return R * static_cast<double>(smoothing_step);
 }
