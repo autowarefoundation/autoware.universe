@@ -31,8 +31,6 @@ namespace ns_mpc_nonlinear
 NonlinearMPCNode::NonlinearMPCNode(const rclcpp::NodeOptions &node_options)
   : Node("mpc_nonlinear", node_options)
 {
-  // Eigen::setNbThreads(4);
-  // Eigen::initParallel();
 
   using std::placeholders::_1;
 
@@ -121,14 +119,12 @@ NonlinearMPCNode::NonlinearMPCNode(const rclcpp::NodeOptions &node_options)
   computeScalingMatrices(params_optimization);
 
   // Create NMPC core object.
-  auto nonlinear_nmpc_core =
-    ns_nmpc_interface::NonlinearMPCController(vehicle_model_ptr, data_nmpc_core, params_lpv,
-                                              params_optimization);
+  auto nonlinear_nmpc_core = ns_nmpc_interface::NonlinearMPCController(vehicle_model_ptr, data_nmpc_core, params_lpv,
+                                                                       params_optimization);
 
   nonlinear_nmpc_core.setLoggerName(this->get_logger().get_name());
 
-  nonlinear_mpc_controller_ptr_ =
-    std::make_unique<ns_nmpc_interface::NonlinearMPCController>(nonlinear_nmpc_core);
+  nonlinear_mpc_controller_ptr_ = std::make_unique<ns_nmpc_interface::NonlinearMPCController>(nonlinear_nmpc_core);
 
   /**
    * @brief sets the BSpline interpolator. Choose the option compute_derivatives:true.
@@ -140,37 +136,11 @@ NonlinearMPCNode::NonlinearMPCNode(const rclcpp::NodeOptions &node_options)
   // bspline_interpolator_ptr_ =
   // std::make_unique<ns_splines::BSplineSmoother>(ns_nmpc_interface::MPC_MAP_SMOOTHER_IN, 0.3);
 
-  /**
-   *  @brief assigns a Kalman filter to estimate the initial states.
-   * */
-
-  ns_data::ParamsFilters params_filters;
-  loadFilterParameters(params_filters);
-
-  if (params_node_.use_sqrt_version)
-  {
-    kalman_filter_ptr_ =
-      std::make_unique<ns_filters::KalmanUnscentedSQRT>(vehicle_model_ptr, params_node_.control_period);
-  } else
-  {
-    kalman_filter_ptr_ = std::make_unique<ns_filters::KalmanUnscented>(vehicle_model_ptr,
-                                                                       params_node_.control_period);
-  }
-  kalman_filter_ptr_->updateParameters(params_filters);
-
-  /**
-   * @brief assigns an observer to predict disturbance input in the speed
-   * tracking.
-   */
-  // observer_speed_ = ns_filters::SimpleDisturbanceInputObserver(params_node_.observer_gain_speed);
-
   // Vehicle motion finite state machine.
   vehicle_motion_fsm_ = ns_states::VehicleMotionFSM(params_node_.stop_state_entry_ego_speed,
                                                     params_node_.stop_state_entry_target_speed,
                                                     params_node_.stop_state_keep_stopping_dist,
                                                     params_node_.will_stop_state_dist);
-
-
 
   // Initialize the timer.
   initTimer(params_node_.control_period);
@@ -188,78 +158,6 @@ NonlinearMPCNode::NonlinearMPCNode(const rclcpp::NodeOptions &node_options)
     inputs_buffer_.emplace_back(cmd);
   }
 
-  // DEBUG
-//  ns_utils::print("\n\nVehicle parameters is loaded");
-//  ns_utils::print("Wheelbase : ", params_vehicle.wheel_base);
-//  ns_utils::print("lr to cog : ", params_vehicle.lr);
-//
-//  ns_utils::print("Steering tau : ", params_vehicle.steering_tau);
-//  ns_utils::print("Speed tau : ", params_vehicle.speed_tau);
-//  ns_utils::print("Node input delay : ", params_node_.input_delay_time);
-//  ns_utils::print("Use delay model: ", params_vehicle.use_delay_model, "\n\n");
-//
-//  // Check if optimization parameters are read properly.
-//  ns_utils::print("\nOptimization parameters: ");
-//  ns_utils::print("'\nState weights Q ");
-//  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Q));
-//
-//  ns_utils::print("\nState weights QN ");
-//  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.QN));
-//
-//  ns_utils::print("\nControl weights R ");
-//  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.R));
-//
-//  ns_utils::print("\nJerk weights Rj ");
-//  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Rj));
-//
-//  ns_utils::print("\nxupper and lower ");
-//  ns_eigen_utils::printEigenMat(params_optimization.xlower);
-//  ns_eigen_utils::printEigenMat(params_optimization.xupper);
-//
-//  ns_utils::print("\nu_upper and lower ");
-//  ns_eigen_utils::printEigenMat(params_optimization.ulower);
-//  ns_eigen_utils::printEigenMat(params_optimization.uupper);
-//
-//  ns_utils::print("\nScaling and scaling range, x, u ");
-//  ns_eigen_utils::printEigenMat(params_optimization.xmin_for_scaling);
-//  ns_eigen_utils::printEigenMat(params_optimization.xmax_for_scaling);
-//
-//  ns_eigen_utils::printEigenMat(params_optimization.umin_for_scaling);
-//  ns_eigen_utils::printEigenMat(params_optimization.umax_for_scaling);
-//
-//  ns_utils::print_container(params_optimization.scaling_range);
-//  ns_utils::print("Number of nonlinear items : ", params_lpv.num_of_nonlinearities);
-//
-//  ns_utils::print("Lyapunov Matrices Xs");
-//  for (size_t k = 0; k < params_lpv.num_of_nonlinearities; ++k)
-//  {
-//    ns_eigen_utils::printEigenMat(params_lpv.lpvXcontainer[k]);
-//  }
-//
-//  ns_utils::print("Lyapunov Matrices Ys");
-//  for (size_t k = 0; k < params_lpv.num_of_nonlinearities; ++k)
-//  {
-//    ns_eigen_utils::printEigenMat(params_lpv.lpvYcontainer[k]);
-//  }
-//
-//  // Check the if the scaling parameters are computed.
-//  ns_utils::print("Scaling matrices and vectors Sx, Sx_inv, Su, Su_inv, Cx, Cu :");
-//  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Sx));
-//  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Sx_inv));
-//  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Su));
-//  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Su_inv));
-//  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Cx));
-//  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_optimization.Cu));
-//
-//  ns_utils::print("Kalman filter parameters V, W, P : ");
-//  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_filters.Vsqrt));
-//  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_filters.Wsqrt));
-//  ns_eigen_utils::printEigenMat(Eigen::MatrixXd(params_filters.Psqrt));
-//
-//  ns_utils::print("\nUnscented Kalman filter parameters alpha, beta, kappa : ", params_filters.ukf_alpha,
-//                  params_filters.ukf_beta, params_filters.ukf_kappa, "\n\n");
-
-  // end of debug.
 }
 
 // Destructor.
@@ -287,12 +185,7 @@ void NonlinearMPCNode::initTimer(double period_s)
 // Callbacks.
 void NonlinearMPCNode::onTimer()
 {
-//  RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), (1000ms).count(), "Control frequency %g",
-//                                 params_node_.control_frequency);
 
-  // ns_utils::print("Control Frequency : ", params_node_.control_frequency);
-  // ns_utils::print("Logger string : ", get_logger().get_name());
-  // end of debug
 
   // Update the current pose.
   updateCurrentPose();
@@ -370,8 +263,6 @@ void NonlinearMPCNode::onTimer()
     {
       control_cmd.longitudinal.acceleration = 0.0;
 
-      // Reset Kalman filter speed
-      kalman_filter_ptr_->resetStateEstimate(ns_utils::toUType(VehicleStateIds::vx), 0.0);
     }
 
     publishControlsAndUpdateVars(control_cmd);
@@ -444,28 +335,9 @@ void NonlinearMPCNode::onTimer()
 
       // Publish previous control command.
       publishControlsAndUpdateVars(control_cmd_prev_);
-      // publishPerformanceVariables(control_cmd_prev_);
       return;
     }
-
   }
-
-  //  if (vehicle_motion_fsm_.isReinitializationRequired())
-  //  {
-  //    auto const &&is_reinitialized =
-  //      nonlinear_mpc_controller_ptr_->reInitializeTrajectories(interpolator_curvature_pws);
-  //
-  //    RCLCPP_WARN_SKIPFIRST_THROTTLE(
-  //      get_logger(), *get_clock(), (1000ms).count(),
-  //      "[mpc_nonlinear] "
-  //      "Trajectories are re-initialized %s \n",
-  //      is_reinitialized ? "true" : "false");
-  //
-  //    if (is_reinitialized)
-  //    {
-  //      vehicle_motion_fsm_.setReinitializationFlag(false);
-  //    }
-  //  }
 
   /**
    * @brief
@@ -503,15 +375,12 @@ void NonlinearMPCNode::onTimer()
   if (!is_mpc_solved_)
   {
     // vehicle_motion_fsm_.setEmergencyFlag(true);
-
     RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), (1000ms).count(),
                                    "[nonlinear_mpc]: Could not solve the mpc problem ... %s \n",
                                    std::string(vehicle_motion_fsm_.getFSMTypeReport()).c_str());
 
-    // ROS_ERROR("[nonlinear_mpc]: Could not solve the mpc problem ... ");
 
     // Publish stopping command.
-
     ControlCmdMsg stop_cmd{};
     getStopControlCommand(stop_cmd);
     publishControlsAndUpdateVars(stop_cmd);
@@ -519,7 +388,7 @@ void NonlinearMPCNode::onTimer()
     return;
   }
 
-  //    ns_utils::print("the NMPC problem is solved ...");
+  // ns_utils::print("the NMPC problem is solved ...");
 
   // Get MPC controls [acc, steering rate]
   nonlinear_mpc_controller_ptr_->getControlSolutions(u_solution_);  // [acc, steering_rate]
@@ -528,7 +397,6 @@ void NonlinearMPCNode::onTimer()
   nonlinear_mpc_controller_ptr_->shiftControls();
 
   // Compute MPC model predicted longitudinal speed by Euler integration.
-  // auto const mpc_vx = current_velocity_ptr_->twist.twist.linear.x + u_solution_(0) * params_node_.control_period;
   auto const &mpc_vx = nonlinear_mpc_controller_ptr_->getPredictedVxControl();
 
   // Compute the steering rate by numerical differentiation.
@@ -589,38 +457,6 @@ void NonlinearMPCNode::onTimer()
   // Publish the closest point of the trajectory to the vehicle.
   publishClosestPointMarker("closest_point");
 
-  // DEBUG
-  // ns_utils::print("Current use cdob parameter : ", params_node_.use_cdob);
-
-  //  if (current_comm_delay_ptr_)
-  //  {
-  //    ns_utils::print("Current delay compensation steering ref : ",
-  //                    current_comm_delay_ptr_->steering_compensation_ref);
-  //
-  //    ns_utils::print("Current delay compensation ey ref : ",
-  //                    current_comm_delay_ptr_->lateral_deviation_error_compensation_ref);
-  //
-  //    ns_utils::print("Current delay compensation eyaw ref : ",
-  //                    current_comm_delay_ptr_->heading_angle_error_compensation_ref);
-  //  }
-
-
-  //  ns_utils::print("Wheelbase : ", wheel_base_);
-  //  ns_utils::print("\nCurrent Pose : ");
-  //  ns_utils::print("x, y, z : ", current_pose_ptr_->pose.position.x, current_pose_ptr_->pose.position.y,
-  //                  current_pose_ptr_->pose.position.z);
-
-  //  auto const &td = nonlinear_mpc_controller_ptr_->getCurrentTrajectoryData();
-  //  auto &&Xtemp = ns_eigen_utils::getTrajectory(td.X);
-  //  auto &&Utemp = ns_eigen_utils::getTrajectory(td.U);
-  //
-  //  ns_utils::print("\n[in timer] Initialized LPV trajectories :  [x, y, psi, s, ey, epsi, vx, delta, vy]");
-  //  ns_eigen_utils::printEigenMat(Xtemp.transpose());  //  [x, y, psi, s, ey, epsi, vx, delta, vy]
-  //
-  //  ns_utils::print("\n [in timer] Initialized LPV trajectories U : ");
-  //  ns_eigen_utils::printEigenMat(Utemp.transpose());
-
-  // end of DEBUG
 }
 
 // Node methods.
@@ -821,9 +657,6 @@ void NonlinearMPCNode::loadNodeParameters()
   params_node_.input_delay_time = declare_parameter("input_delay_time", 0.24);
   params_node_.use_acceleration_inputs = declare_parameter<bool>("use_acceleration_inputs", true);
 
-  params_node_.use_kalman = declare_parameter<bool>("kalman_filters.use_kalman", true);
-  params_node_.use_sqrt_version = declare_parameter<bool>("kalman_filters.use_sqrt_version", false);
-
   // Stop state parameters.
   params_node_.stop_state_entry_ego_speed = declare_parameter<double>("stop_state_entry_ego_speed", 0.2);
 
@@ -863,35 +696,6 @@ void NonlinearMPCNode::loadNodeParameters()
   //  {
   //    params_node_.use_cdob = true;  // DOB depends on the CDOB states, cannot be used alone.
   //  }
-}
-
-void NonlinearMPCNode::loadFilterParameters(ns_data::ParamsFilters &params_filters)
-{
-  // Kalman filter parameters.
-  params_filters.Vsqrt.setZero();
-  std::vector<double> temp(Model::state_dim);
-  std::vector<double> default_vec{0.2, 0.2, 0.05, 0.2, 0.05, 0.02, 0.15, 0.03, 0.05};
-  temp = declare_parameter<std::vector<double >>("kalman_filters.Vprocess", default_vec);
-  params_filters.Vsqrt.diagonal() = Model::state_vector_t::Map(temp.data());
-
-  params_filters.Wsqrt.setZero();
-  temp.clear();
-  temp.reserve(Model::state_dim);
-  default_vec = std::vector<double>{0.4, 0.4, 0.08, 0.3, 0.15, 0.07, 0.01, 0.05, 0.2};
-  temp = declare_parameter<std::vector<double >>("kalman_filters.Wmeasurement", default_vec);
-  params_filters.Wsqrt.diagonal() = Model::state_vector_t::Map(temp.data());
-
-  // Updated covariance matrix.
-  params_filters.Psqrt.setZero();
-  temp.clear();
-  temp.reserve(Model::state_dim);
-  default_vec = std::vector<double>{0.4, 0.4, 0.08, 0.3, 0.15, 0.07, 0.1, 0.07, 0.25};
-  temp = declare_parameter<std::vector<double >>("kalman_filters.Pkalman", default_vec);
-  params_filters.Psqrt.diagonal() = Model::state_vector_t::Map(temp.data());
-
-  // UKF specific parameters.
-  params_filters.ukf_alpha = declare_parameter("kalman_filters.alpha", 0.9);
-  params_filters.ukf_beta = declare_parameter("kalman_filters.beta", 2.0);
 }
 
 void NonlinearMPCNode::loadVehicleParameters(ns_models::ParamsVehicle &params_vehicle)
@@ -1889,58 +1693,15 @@ void NonlinearMPCNode::updateInitialStatesAndControls_fromMeasurements()
 
   double vx_target_0{};
   nonlinear_mpc_controller_ptr_->getSmoothVxAtDistance(current_s0_, vx_target_0);
-  current_model_params_(
-    toUType(VehicleParamIds::target_vx)) = vx_target_0;  // for modeling a virtual car tracking.
+  current_model_params_(toUType(VehicleParamIds::target_vx)) = vx_target_0;
 
-  // For Kalman filtering implementation.
-  if (params_node_.use_kalman)
-  {
-    if (!kalman_filter_ptr_->isInitialized())
-    {
-      kalman_filter_ptr_->Initialize_xest0(x0_initial_states_);
-    }
-
-    // Prepare Kalman estimate state.
-    x0_kalman_est_.setZero();
-
-    // Add applied previous disturbance to the previous computed control.
-    kalman_filter_ptr_->getStateEstimate(u0_kalman_,
-                                         current_model_params_,
-                                         x0_previous_initial_states_,
-                                         x0_kalman_est_);
-
-    // Set initial states of the NMPCcore trajectory container.
-    //-- ['xw', 'yw', 'psi', 's', 'e_y', 'e_yaw', 'Vx', 'delta', 'ay']
-
-    // Prevent negative speed Kalman estimate
-    x0_kalman_est_(ns_utils::toUType(VehicleStateIds::vx)) =
-      std::max(x0_kalman_est_(toUType(VehicleStateIds::vx)), 0.0);
-
-    nonlinear_mpc_controller_ptr_->updateInitialStates_x0(x0_kalman_est_);
-  }
-
-    // if Kalman filter is not used
-  else
-  {
-    nonlinear_mpc_controller_ptr_->updateInitialStates_x0(x0_initial_states_);
-  }
+  nonlinear_mpc_controller_ptr_->updateInitialStates_x0(x0_initial_states_);
 
   // Set the nonlinear mpc performance variables.
-  // Set the performance variable msg.
   nmpc_performance_vars_.nmpc_lateral_error = error_states[0]; //ey
   nmpc_performance_vars_.nmpc_yaw_error = error_states[1]; // eyaw
-  nmpc_performance_vars_.yaw_angle_ukf = x0_kalman_est_[toUType(VehicleStateIds::yaw)];
-
   nmpc_performance_vars_.long_velocity_measured = current_velocity_ptr_->twist.twist.linear.x;
-
-  nmpc_performance_vars_.lateral_error_ukf = x0_kalman_est_(toUType(VehicleStateIds::ey));
-  nmpc_performance_vars_.yaw_error_ukf = x0_kalman_est_(toUType(VehicleStateIds::eyaw));
-  nmpc_performance_vars_.long_velocity_ukf = x0_kalman_est_(toUType(VehicleStateIds::vx));
-  nmpc_performance_vars_.steering_angle_ukf = x0_kalman_est_(toUType(VehicleStateIds::steering));
   nmpc_performance_vars_.nmpc_curvature = current_curvature_k0_;
-
-  // vy, or ay
-  // nmpc_performance_vars_.lateral_velocity = x0_kalman_est_(toUType(VehicleStateIds::vy));
 
   // DEBUG
   // ns_utils::print("Initial states : ");
@@ -1967,7 +1728,7 @@ void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::s
    * */
 
   /**
-   * Update inputs for the Kalman model.
+   * Update the first control entering system just at that time.
    * */
   auto timestamp = this->now();
 
@@ -1975,18 +1736,8 @@ void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::s
       std::find_if(inputs_buffer_.cbegin(), inputs_buffer_.cend(), sCommandTimeStampFind(timestamp));
     it_first_cmd_to_appy != inputs_buffer_.end())
   {
-    control_cmd_kalman_ = *it_first_cmd_to_appy;
+    first_control_entering_system_ = *it_first_cmd_to_appy;
 
-    // ns_utils::print("First command steering : ", control_cmd_kalman_.lateral.steering_tire_angle);
-    u0_kalman_(ns_utils::toUType(VehicleControlIds::u_vx)) =
-      static_cast<double>(control_cmd_kalman_.longitudinal.acceleration);
-
-    u0_kalman_(ns_utils::toUType(VehicleControlIds::u_steering)) =
-      static_cast<double>(control_cmd_kalman_.lateral.steering_tire_angle);
-
-  } else
-  {
-    u0_kalman_.setZero();
   }
 
   /**

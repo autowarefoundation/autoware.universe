@@ -148,7 +148,6 @@ set(NONLINEAR_MPC_CORE_SOURCE
         src/nonlinear_mpc_core/nmpc_discretization.cpp
         src/nonlinear_mpc_core/nmpc_optimization.cpp
         src/nonlinear_mpc_core/nmpc_simulation.cpp
-        src/nonlinear_mpc_core/nmpc_kalman_filter.cpp
         src/nonlinear_mpc_core/initialization_lpv.cpp
         src/utils/nmpc_utils.cpp
         )
