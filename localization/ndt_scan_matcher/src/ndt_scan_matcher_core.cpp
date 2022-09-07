@@ -538,7 +538,8 @@ void NDTScanMatcher::callback_sensor_points(
 
   auto sensor_points_mapTF_ptr = std::make_shared<pcl::PointCloud<PointSource>>();
   pcl::transformPointCloud(
-    *sensor_points_baselinkTF_ptr, *sensor_points_mapTF_ptr, from_ros_pose_to_eigen_matrix4f(ndt_result.pose));
+    *sensor_points_baselinkTF_ptr, *sensor_points_mapTF_ptr,
+    from_ros_pose_to_eigen_matrix4f(ndt_result.pose));
   publish_point_cloud(sensor_ros_time, map_frame_, sensor_points_mapTF_ptr);
 
   key_value_stdmap_["transform_probability"] = std::to_string(ndt_result.transform_probability);
@@ -622,7 +623,8 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_using_monte_
 
     auto sensor_points_mapTF_ptr = std::make_shared<pcl::PointCloud<PointSource>>();
     pcl::transformPointCloud(
-      *ndt_ptr->getInputSource(), *sensor_points_mapTF_ptr, from_ros_pose_to_eigen_matrix4f(ndt_result.pose));
+      *ndt_ptr->getInputSource(), *sensor_points_mapTF_ptr,
+      from_ros_pose_to_eigen_matrix4f(ndt_result.pose));
     publish_point_cloud(initial_pose_with_cov.header.stamp, map_frame_, sensor_points_mapTF_ptr);
   }
 
@@ -672,7 +674,7 @@ void NDTScanMatcher::publish_pose(
 }
 
 void NDTScanMatcher::publish_point_cloud(
-  const rclcpp::Time & sensor_ros_time, const std::string & frame_id, 
+  const rclcpp::Time & sensor_ros_time, const std::string & frame_id,
   const std::shared_ptr<const pcl::PointCloud<PointSource>> & sensor_points_mapTF_ptr)
 {
   sensor_msgs::msg::PointCloud2 sensor_points_mapTF_msg;

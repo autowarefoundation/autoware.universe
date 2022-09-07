@@ -144,7 +144,7 @@ private:
     const rclcpp::Time & sensor_ros_time, const geometry_msgs::msg::Pose & result_pose_msg,
     const bool is_converged);
   void publish_point_cloud(
-    const rclcpp::Time & sensor_ros_time, const std::string & frame_id, 
+    const rclcpp::Time & sensor_ros_time, const std::string & frame_id,
     const std::shared_ptr<const pcl::PointCloud<PointSource>> & sensor_points_mapTF_ptr);
   void publish_marker(
     const rclcpp::Time & sensor_ros_time, const std::vector<geometry_msgs::msg::Pose> & pose_array);
