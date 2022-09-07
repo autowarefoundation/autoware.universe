@@ -75,7 +75,6 @@ struct NdtResult
   float nearest_voxel_transformation_likelihood;
   int iteration_num;
   std::vector<geometry_msgs::msg::Pose> transformation_array;
-  // std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>> transformation_array;
 };
 
 template <typename PointSource, typename PointTarget>
