@@ -26,13 +26,13 @@ if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
             -Wall
             -Wextra
             -Wpedantic
-            -Wno-unused-parameter
-            -Wno-unused-variable
-            -Wno-narrowing
-            -Wno-error=unused-but-set-variable
+            # -Wno-unused-parameter
+            # -Wno-unused-variable
+            # -Wno-narrowing
+            # -Wno-error=unused-but-set-variable
             # -Wno-conversion
             # -Wno-sign-conversion
-            -Wno-sign-compare
+            #            -Wno-sign-compare
             #  -Wdouble-promotion
             # -Wfloat-equal
             -Waddress
@@ -128,7 +128,6 @@ if (BUILD_TESTING)
     find_package(ament_lint_auto REQUIRED)
     ament_lint_auto_find_test_dependencies()
     find_package(ament_cmake_gtest REQUIRED)
-
 endif ()
 
 #ament package generation and installing
