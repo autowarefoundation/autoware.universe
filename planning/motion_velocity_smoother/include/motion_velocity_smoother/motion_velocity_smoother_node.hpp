@@ -86,10 +86,6 @@ private:
   double external_velocity_limit_dist_{0.0};       // distance to set external velocity limit
   double wheelbase_;                               // wheelbase
 
-  // maximum velocity with deceleration for external velocity limit
-  double max_velocity_with_deceleration_;
-  double external_velocity_limit_dist_{0.0};  // distance to set external velocity limit
-
   TrajectoryPoints prev_output_;  // previously published trajectory
 
   // previous trajectory point closest to ego vehicle

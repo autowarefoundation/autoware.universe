@@ -20,9 +20,9 @@
 #include "motion_velocity_smoother/trajectory_utils.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
+#include "vehicle_info_util/vehicle_info_util.hpp"
 
 #include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"
-#include "vehicle_info_util/vehicle_info_util.hpp"
 
 #include "boost/optional.hpp"
 
@@ -49,9 +49,14 @@ public:
     double min_curve_velocity;           // min velocity at curve [m/s]
     double decel_distance_before_curve;  // distance before slow down for lateral acc at a curve
     double decel_distance_after_curve;   // distance after slow down for lateral acc at a curve
-    double max_steering_angle_rate;       // max steering angle rate [degree/s]
+    double max_steering_angle_rate;      // max steering angle rate [degree/s]
     double wheel_base;                   // wheel base [m]
-      resampling::ResampleParam resample_param;
+    double sample_ds;                    // distance between trajectory points [m]
+    double curvature_threshold;  // look-up distance of Trajectory point for calculation of steering
+                                 // angle limit [m]
+    double curvature_calculation_distance;  // threshold steering degree limit to trigger
+                                            // steeringRateLimit [degree]
+    resampling::ResampleParam resample_param;
   };
 
   explicit SmootherBase(rclcpp::Node & node);
@@ -69,9 +74,7 @@ public:
     [[maybe_unused]] const double a0 = 0.0,
     [[maybe_unused]] const bool enable_smooth_limit = false) const;
 
-  boost::optional<TrajectoryPoints> applySteeringRateLimit(
-    const TrajectoryPoints & input) const;
-
+  boost::optional<TrajectoryPoints> applySteeringRateLimit(const TrajectoryPoints & input) const;
 
   double getMaxAccel() const;
   double getMinDecel() const;
@@ -83,10 +86,6 @@ public:
 
 protected:
   BaseParam base_param_;
-  const double points_interval = 0.1; // constant interval distance of trajectory
-                                      // for lateral acceleration calculation and
-                                      // limit steering rate. [m]
-
 };
 }  // namespace motion_velocity_smoother
 
