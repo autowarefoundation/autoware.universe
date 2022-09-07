@@ -112,11 +112,15 @@ std::pair<TurnIndicatorsCommand, double> TurnSignalDecider::getIntersectionTurnS
           turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
           distance = distance_from_vehicle_front;
         }
+        intersection_pose_point_ = path_point.point.pose;
       }
     }
   }
   if (turn_signal.command == TurnIndicatorsCommand::DISABLE) {
     distance = std::numeric_limits<double>::max();
+    intersection_turn_signal_ = false;
+  } else {
+    intersection_turn_signal_ = true;
   }
   return std::make_pair(turn_signal, distance);
 }
