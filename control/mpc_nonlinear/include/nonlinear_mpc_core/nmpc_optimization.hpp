@@ -270,8 +270,8 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
                    });
 
     // Insert Triplets of R
-    auto const &rowR = static_cast<double>(k * INPUT_DIM + col_startR);
-    auto const &colR = static_cast<double>(k * INPUT_DIM + col_startR);
+    auto const &rowR = k * INPUT_DIM + col_startR;
+    auto const &colR = k * INPUT_DIM + col_startR;
 
     std::transform(triplets_R.cbegin(), triplets_R.cend(), std::back_inserter(triplets_P),
                    [&rowR, &colR](auto const &titem)
@@ -284,8 +284,8 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
                    });
 
     // Insert Triplets of Rj ------------------------------
-    auto const &rowRj = static_cast<double>( k * INPUT_DIM + col_startRj);
-    auto const &colRj = static_cast<double>(k * INPUT_DIM + col_startRj);
+    auto const &rowRj = k * INPUT_DIM + col_startRj;
+    auto const &colRj = k * INPUT_DIM + col_startRj;
 
     std::transform(triplets_Rj.cbegin(), triplets_Rj.cend(), std::back_inserter(triplets_P),
                    [&rowRj, &colRj](auto const &titem)
