@@ -37,7 +37,7 @@ void ExpectElementsAre(
   EXPECT_EQ(vec.size(), expected.size());
   for (int i = 0; i < vec.size(); ++i)
   {
-    EXPECT_NEAR(vec[i], expected[i], tolerance);
+    EXPECT_NEAR(vec[i], expected[static_cast<unsigned long>(i)], tolerance);
   }
 }
 

@@ -42,9 +42,15 @@ using SteeringMeasuredMsg = autoware_auto_vehicle_msgs::msg::SteeringReport;
 using NonlinearMPCPerformanceMsg = autoware_auto_vehicle_msgs::msg::NonlinearMPCPerformanceReport;
 using TrajectoryPoint = autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using namespace std::chrono_literals;
+using NonlinearMPCNode = ns_mpc_nonlinear::NonlinearMPCNode;
 
 using DelayCompensationRefs = autoware_auto_vehicle_msgs::msg::DelayCompensationRefs;
 using ErrorReportMsg = autoware_auto_vehicle_msgs::msg::ControllerErrorReport;
 auto constexpr EPS = std::numeric_limits<double>::epsilon();
+
+using FakeNodeFixture = autoware::tools::testing::FakeTestNode;
+
+// Make shared node
+std::shared_ptr<NonlinearMPCNode> makeNonlinearMPCNode();
 
 #endif  // TEST_NONLINEAR_MPC_NODE_HPP_
