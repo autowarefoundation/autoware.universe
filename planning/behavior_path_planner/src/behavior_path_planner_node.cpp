@@ -101,6 +101,11 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     "~/input/route", qos_transient_local, std::bind(&BehaviorPathPlannerNode::onRoute, this, _1),
     createSubscriptionOptions(this));
 
+  avoidance_param_ptr = std::make_shared<AvoidanceParameters>(getAvoidanceParam());
+  lane_change_param_ptr = std::make_shared<LaneChangeParameters>(getLaneChangeParam());
+
+  m_set_param_res = this->add_on_set_parameters_callback(
+    std::bind(&BehaviorPathPlannerNode::onSetParam, this, std::placeholders::_1));
   // behavior tree manager
   {
     mutex_bt_.lock();
@@ -112,17 +117,15 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     bt_manager_->registerSceneModule(side_shift_module);
 
     auto avoidance_module =
-      std::make_shared<AvoidanceModule>("Avoidance", *this, getAvoidanceParam());
+      std::make_shared<AvoidanceModule>("Avoidance", *this, avoidance_param_ptr);
     bt_manager_->registerSceneModule(avoidance_module);
 
     auto lane_following_module =
       std::make_shared<LaneFollowingModule>("LaneFollowing", *this, getLaneFollowingParam());
     bt_manager_->registerSceneModule(lane_following_module);
 
-    const auto lane_change_param = getLaneChangeParam();
-
     auto lane_change_module =
-      std::make_shared<LaneChangeModule>("LaneChange", *this, lane_change_param);
+      std::make_shared<LaneChangeModule>("LaneChange", *this, lane_change_param_ptr);
     bt_manager_->registerSceneModule(lane_change_module);
 
     auto pull_over_module = std::make_shared<PullOverModule>("PullOver", *this, getPullOverParam());
@@ -205,6 +208,8 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   p.path_interval = declare_parameter<double>("path_interval");
   p.visualize_drivable_area_for_shared_linestrings_lanelet =
     declare_parameter("visualize_drivable_area_for_shared_linestrings_lanelet", true);
+  p.ego_nearest_dist_threshold = declare_parameter<double>("ego_nearest_dist_threshold");
+  p.ego_nearest_yaw_threshold = declare_parameter<double>("ego_nearest_yaw_threshold");
 
   p.lateral_distance_max_threshold = declare_parameter("lateral_distance_max_threshold", 3.0);
   p.longitudinal_distance_min_threshold =
@@ -361,43 +366,50 @@ PullOverParameters BehaviorPathPlannerNode::getPullOverParam()
   };
 
   PullOverParameters p;
-  p.request_length = dp("request_length", 100.0);
-  p.th_stopped_velocity_mps = dp("th_stopped_velocity_mps", 0.01);
-  p.th_arrived_distance_m = dp("th_arrived_distance_m", 0.3);
-  p.th_stopped_time_sec = dp("th_stopped_time_sec", 2.0);
+  p.request_length = dp("request_length", 200.0);
+  p.th_stopped_velocity = dp("th_stopped_velocity", 0.01);
+  p.th_arrived_distance = dp("th_arrived_distance", 0.3);
+  p.th_stopped_time = dp("th_stopped_time", 2.0);
   p.margin_from_boundary = dp("margin_from_boundary", 0.3);
   p.decide_path_distance = dp("decide_path_distance", 10.0);
-  p.min_acc = dp("min_acc", -0.5);
-  p.enable_shift_parking = dp("enable_shift_parking", true);
-  p.enable_arc_forward_parking = dp("enable_arc_forward_parking", true);
-  p.enable_arc_backward_parking = dp("enable_arc_backward_parking", true);
+  p.maximum_deceleration = dp("maximum_deceleration", 1.0);
   // goal research
-  p.search_priority = dp("search_priority", "efficient_path");
   p.enable_goal_research = dp("enable_goal_research", true);
+  p.search_priority = dp("search_priority", "efficient_path");
   p.forward_goal_search_length = dp("forward_goal_search_length", 20.0);
   p.backward_goal_search_length = dp("backward_goal_search_length", 20.0);
   p.goal_search_interval = dp("goal_search_interval", 5.0);
   p.goal_to_obj_margin = dp("goal_to_obj_margin", 2.0);
   // occupancy grid map
-  p.collision_check_margin = dp("collision_check_margin", 0.5);
+  p.use_occupancy_grid = dp("use_occupancy_grid", true);
+  p.occupancy_grid_collision_check_margin = dp("occupancy_grid_collision_check_margin", 0.0);
   p.theta_size = dp("theta_size", 360);
   p.obstacle_threshold = dp("obstacle_threshold", 90);
+  // object recognition
+  p.use_object_recognition = dp("use_object_recognition", true);
+  p.object_recognition_collision_check_margin =
+    dp("object_recognition_collision_check_margin", 1.0);
   // shift path
+  p.enable_shift_parking = dp("enable_shift_parking", true);
   p.pull_over_sampling_num = dp("pull_over_sampling_num", 4);
   p.maximum_lateral_jerk = dp("maximum_lateral_jerk", 3.0);
   p.minimum_lateral_jerk = dp("minimum_lateral_jerk", 1.0);
   p.deceleration_interval = dp("deceleration_interval", 10.0);
   p.pull_over_velocity = dp("pull_over_velocity", 8.3);
   p.pull_over_minimum_velocity = dp("pull_over_minimum_velocity", 0.3);
-  p.maximum_deceleration = dp("maximum_deceleration", 1.0);
   p.after_pull_over_straight_distance = dp("after_pull_over_straight_distance", 3.0);
   p.before_pull_over_straight_distance = dp("before_pull_over_straight_distance", 3.0);
   // parallel parking
+  p.enable_arc_forward_parking = dp("enable_arc_forward_parking", true);
+  p.enable_arc_backward_parking = dp("enable_arc_backward_parking", true);
   p.after_forward_parking_straight_distance = dp("after_forward_parking_straight_distance", 0.5);
   p.after_backward_parking_straight_distance = dp("after_backward_parking_straight_distance", 0.5);
   p.forward_parking_velocity = dp("forward_parking_velocity", 1.0);
   p.backward_parking_velocity = dp("backward_parking_velocity", -0.5);
+  p.forward_parking_lane_departure_margin = dp("forward_parking_lane_departure_margin", 0.0);
+  p.backward_parking_lane_departure_margin = dp("backward_parking_lane_departure_margin", 0.0);
   p.arc_path_interval = dp("arc_path_interval", 1.0);
+  p.pull_over_max_steer_angle = dp("pull_over_max_steer_angle", 0.35);  // 20deg
   // hazard
   p.hazard_on_threshold_dis = dp("hazard_on_threshold_dis", 1.0);
   p.hazard_on_threshold_vel = dp("hazard_on_threshold_vel", 0.5);
@@ -442,42 +454,40 @@ PullOutParameters BehaviorPathPlannerNode::getPullOutParam()
 
   PullOutParameters p;
 
-  p.min_stop_distance = dp("min_stop_distance", 5.0);
-  p.stop_time = dp("stop_time", 2.0);
-  p.hysteresis_buffer_distance = dp("hysteresis_buffer_distance", 2.0);
-  p.pull_out_prepare_duration = dp("pull_out_prepare_duration", 2.0);
-  p.pull_out_duration = dp("pull_out_duration", 4.0);
+  p.th_arrived_distance = dp("th_arrived_distance", 1.0);
+  p.th_stopped_velocity = dp("th_stopped_velocity", 0.01);
+  p.th_stopped_time = dp("th_stopped_time", 1.0);
+  p.collision_check_margin = dp("collision_check_margin", 1.0);
   p.pull_out_finish_judge_buffer = dp("pull_out_finish_judge_buffer", 1.0);
-  p.minimum_pull_out_velocity = dp("minimum_pull_out_velocity", 8.3);
-  p.prediction_duration = dp("prediction_duration", 8.0);
-  p.prediction_time_resolution = dp("prediction_time_resolution", 0.5);
-  p.static_obstacle_velocity_thresh = dp("static_obstacle_velocity_thresh", 0.1);
-  p.maximum_deceleration = dp("maximum_deceleration", 1.0);
+  // shift pull out
+  p.enable_shift_pull_out = dp("enable_shift_pull_out", true);
+  p.shift_pull_out_velocity = dp("shift_pull_out_velocity", 8.3);
   p.pull_out_sampling_num = dp("pull_out_sampling_num", 4);
-  p.enable_collision_check_at_prepare_phase = dp("enable_collision_check_at_prepare_phase", true);
-  p.use_predicted_path_outside_lanelet = dp("use_predicted_path_outside_lanelet", true);
-  p.use_all_predicted_path = dp("use_all_predicted_path", false);
-  p.use_dynamic_object = dp("use_dynamic_object", false);
-  p.enable_blocked_by_obstacle = dp("enable_blocked_by_obstacle", false);
-  p.pull_out_search_distance = dp("pull_out_search_distance", 30.0);
-  p.after_pull_out_straight_distance = dp("after_pull_out_straight_distance", 3.0);
   p.before_pull_out_straight_distance = dp("before_pull_out_straight_distance", 3.0);
+  p.minimum_shift_pull_out_distance = dp("minimum_shift_pull_out_distance", 20.0);
   p.maximum_lateral_jerk = dp("maximum_lateral_jerk", 3.0);
   p.minimum_lateral_jerk = dp("minimum_lateral_jerk", 1.0);
   p.deceleration_interval = dp("deceleration_interval", 10.0);
+  // geometric pull out
+  p.enable_geometric_pull_out = dp("enable_geometric_pull_out", true);
+  p.geometric_pull_out_velocity = dp("geometric_pull_out_velocity", 1.0);
+  p.arc_path_interval = dp("arc_path_interval", 1.0);
+  p.lane_departure_margin = dp("lane_departure_margin", 0.2);
+  p.backward_velocity = dp("backward_velocity", -0.3);
+  p.pull_out_max_steer_angle = dp("pull_out_max_steer_angle", 0.26);  // 15deg
+  // search start pose backward
+  p.search_priority =
+    dp("search_priority", "efficient_path");  // "efficient_path" or "short_back_distance"
+  p.enable_back = dp("enable_back", true);
+  p.max_back_distance = dp("max_back_distance", 15.0);
+  p.backward_search_resolution = dp("backward_search_resolution", 2.0);
+  p.backward_path_update_duration = dp("backward_path_update_duration", 3.0);
 
   // validation of parameters
   if (p.pull_out_sampling_num < 1) {
     RCLCPP_FATAL_STREAM(
       get_logger(), "pull_out_sampling_num must be positive integer. Given parameter: "
                       << p.pull_out_sampling_num << std::endl
-                      << "Terminating the program...");
-    exit(EXIT_FAILURE);
-  }
-  if (p.maximum_deceleration < 0.0) {
-    RCLCPP_FATAL_STREAM(
-      get_logger(), "maximum_deceleration cannot be negative value. Given parameter: "
-                      << p.maximum_deceleration << std::endl
                       << "Terminating the program...");
     exit(EXIT_FAILURE);
   }
@@ -568,7 +578,9 @@ void BehaviorPathPlannerNode::run()
     clipped_path = modifyPathForSmoothGoalConnection(*path);
   }
 
-  clipPathLength(clipped_path);
+  const size_t target_idx = findEgoIndex(clipped_path.points);
+  util::clipPathLength(clipped_path, target_idx, planner_data_->parameters);
+
   if (!clipped_path.points.empty()) {
     path_publisher_->publish(clipped_path);
   } else {
@@ -587,8 +599,9 @@ void BehaviorPathPlannerNode::run()
       turn_signal.command = TurnIndicatorsCommand::DISABLE;
       hazard_signal.command = output.turn_signal_info.hazard_signal.command;
     } else {
+      const size_t ego_seg_idx = findEgoSegmentIndex(path->points);
       turn_signal = turn_signal_decider_.getTurnSignal(
-        *path, planner_data->self_pose->pose, *(planner_data->route_handler),
+        *path, planner_data->self_pose->pose, ego_seg_idx, *(planner_data->route_handler),
         output.turn_signal_info.turn_signal, output.turn_signal_info.signal_distance);
       hazard_signal.command = HazardLightsCommand::DISABLE;
     }
@@ -756,13 +769,31 @@ void BehaviorPathPlannerNode::onRoute(const HADMapRoute::ConstSharedPtr msg)
   }
 }
 
-void BehaviorPathPlannerNode::clipPathLength(PathWithLaneId & path) const
+SetParametersResult BehaviorPathPlannerNode::onSetParam(
+  const std::vector<rclcpp::Parameter> & parameters)
 {
-  const auto ego_pose = planner_data_->self_pose->pose;
-  const double forward = planner_data_->parameters.forward_path_length;
-  const double backward = planner_data_->parameters.backward_path_length;
+  rcl_interfaces::msg::SetParametersResult result;
 
-  util::clipPathLength(path, ego_pose, forward, backward);
+  if (!lane_change_param_ptr && !avoidance_param_ptr) {
+    result.successful = false;
+    result.reason = "param not initialized";
+    return result;
+  }
+
+  result.successful = true;
+  result.reason = "success";
+
+  try {
+    update_param(
+      parameters, "avoidance.publish_debug_marker", avoidance_param_ptr->publish_debug_marker);
+    update_param(
+      parameters, "lane_change.publish_debug_marker", lane_change_param_ptr->publish_debug_marker);
+  } catch (const rclcpp::exceptions::InvalidParameterTypeException & e) {
+    result.successful = false;
+    result.reason = e.what();
+  }
+
+  return result;
 }
 
 PathWithLaneId BehaviorPathPlannerNode::modifyPathForSmoothGoalConnection(

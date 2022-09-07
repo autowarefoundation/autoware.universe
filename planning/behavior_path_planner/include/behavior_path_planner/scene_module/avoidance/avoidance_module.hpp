@@ -39,7 +39,7 @@ class AvoidanceModule : public SceneModuleInterface
 {
 public:
   AvoidanceModule(
-    const std::string & name, rclcpp::Node & node, const AvoidanceParameters & parameters);
+    const std::string & name, rclcpp::Node & node, std::shared_ptr<AvoidanceParameters> parameters);
 
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
@@ -68,8 +68,6 @@ public:
     return false;
   }
 
-  void setParameters(const AvoidanceParameters & parameters);
-
 private:
   struct RegisteredShiftPoint
   {
@@ -79,7 +77,7 @@ private:
   };
   using RegisteredShiftPointArray = std::vector<RegisteredShiftPoint>;
 
-  AvoidanceParameters parameters_;
+  std::shared_ptr<AvoidanceParameters> parameters_;
 
   AvoidancePlanningData avoidance_data_;
 
@@ -127,7 +125,6 @@ private:
         path.points, ego_position, left_shift.finish_pose.position);
       rtc_interface_left_.updateCooperateStatus(
         left_shift.uuid, true, start_distance, finish_distance, clock_->now());
-
       if (finish_distance > -1.0e-03) {
         planning_api_interface_ptr_->updateSteeringFactor(
           {left_shift.start_pose, left_shift.finish_pose}, {start_distance, finish_distance},
@@ -142,7 +139,6 @@ private:
         path.points, ego_position, right_shift.finish_pose.position);
       rtc_interface_right_.updateCooperateStatus(
         right_shift.uuid, true, start_distance, finish_distance, clock_->now());
-
       if (finish_distance > -1.0e-03) {
         planning_api_interface_ptr_->updateSteeringFactor(
           {right_shift.start_pose, right_shift.finish_pose}, {start_distance, finish_distance},
@@ -288,8 +284,6 @@ private:
 
   PathWithLaneId calcCenterLinePath(
     const std::shared_ptr<const PlannerData> & planner_data, const PoseStamped & pose) const;
-
-  void clipPathLength(PathWithLaneId & path) const;
 
   // TODO(Horibe): think later.
   // for unique ID
