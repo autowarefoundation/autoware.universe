@@ -71,7 +71,6 @@
 
 // NMPC package headers.
 #include "nonlinear_mpc_core/nmpc_core.hpp"
-#include "nonlinear_mpc_core/nmpc_kalman_filter.hpp"
 #include "nonlinear_mpc_node_visualization.hpp"
 #include "splines/bspline_interpolator_templated.hpp"
 #include "splines/bsplines_smoother.hpp"
@@ -213,11 +212,6 @@ class NonlinearMPCNode : public rclcpp::Node
   // std::unique_ptr<ns_splines::BSplineSmoother> bspline_interpolator_ptr_{nullptr};
 
   /**
-   * @brief Kalman filter to predict initial states.
-   * */
-  std::unique_ptr<ns_filters::KalmanUKFbase> kalman_filter_ptr_{};
-
-  /**
    * @brief Finite State Machine for tracking vehicle motion states.
    * */
   ns_states::VehicleMotionFSM vehicle_motion_fsm_{};
@@ -283,7 +277,7 @@ class NonlinearMPCNode : public rclcpp::Node
   ControlCmdMsg control_cmd_prev_{};  // !< @brief previous control command
 
   // !< @brief temporary variable that is used for the input buffer key
-  ControlCmdMsg control_cmd_kalman_{};
+  ControlCmdMsg first_control_entering_system_{};
 
   /**
   * @brief  nonlinear MPC performance variables messages to be published.
@@ -328,12 +322,6 @@ class NonlinearMPCNode : public rclcpp::Node
   // !<-@brief predicted initial state for the input delay.
   Model::state_vector_t x0_predicted_{Model::state_vector_t::Zero()};
 
-  // !<-@brief Kalman filter estimate of the initial states.
-  Model::state_vector_t x0_kalman_est_{Model::state_vector_t::Zero()};
-
-  // !<-@brief The first control vector in the queue.
-  Model::input_vector_t u0_kalman_{Model::input_vector_t::Zero()};
-
   // !<-@brief [curvature_0, target_speed_0]
   Model::param_vector_t current_model_params_{Model::param_vector_t::Zero()};
   Model::param_vector_t predicted_model_params_{Model::param_vector_t::Zero()};
@@ -360,8 +348,6 @@ class NonlinearMPCNode : public rclcpp::Node
   void loadNMPCoreParameters(ns_data::data_nmpc_core_type_t &data_nmpc_core,
                              ns_data::param_lpv_type_t &params_lpv,
                              ns_data::ParamsOptimization &params_optimization);
-
-  void loadFilterParameters(ns_data::ParamsFilters &params_filters);
 
   /**
    *   @brief We use state and control scaling for within the optimization algorithms.
