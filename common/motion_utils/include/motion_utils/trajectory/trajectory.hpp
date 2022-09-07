@@ -1247,6 +1247,26 @@ size_t findFirstNearestSegmentIndexWithSoftConstraints(
 
   return nearest_idx;
 }
+
+template <class T>
+boost::optional<size_t> searchZeroVelocityIndex(
+  const T & points_with_twist, const geometry_msgs::msg::Pose & src_pose,
+  const double max_dist = std::numeric_limits<double>::max(),
+  const double max_yaw = std::numeric_limits<double>::max())
+{
+  try {
+    validateNonEmpty(points_with_twist);
+  } catch (const std::exception & e) {
+    std::cerr << e.what() << std::endl;
+    return {};
+  }
+
+  const size_t nearest_segment_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+    points_with_twist, src_pose, max_dist, max_yaw);
+
+  return searchZeroVelocityIndex(
+    points_with_twist, nearest_segment_idx + 1, points_with_twist.size());
+}
 }  // namespace motion_utils
 
 #endif  // MOTION_UTILS__TRAJECTORY__TRAJECTORY_HPP_
