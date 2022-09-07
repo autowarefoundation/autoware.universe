@@ -1105,42 +1105,6 @@ bool NonlinearMPCNode::makeFixedSizeMat_sxyz(const ns_data::MPCdataTrajectoryVec
   fixed_map_ref_sxyz.col(2) = map_vector_in_t::Map(yinterp.data());                  // ynew
   fixed_map_ref_sxyz.col(3) = map_vector_in_t::Map(zinterp.data());                  // znew
 
-  // DEBUG
-  //
-  // ns_utils::print("mpc raw : s ");
-  // ns_utils::print_container(mpc_traj_raw.s);
-  // ns_utils::print("Fixed size s ");
-  // ns_utils::print_container(s_fixed_size_coordinate);
-  //
-  // ns_utils::print("mpc raw : t ");
-  // ns_utils::print_container(mpc_traj_raw.t);
-  //
-  // ns_utils::print("mpc raw : x ");
-  // ns_utils::print_container(mpc_traj_raw.x);
-  //
-  // ns_utils::print("Fixed size : x ");
-  // ns_utils::print_container(xinterp);
-  //
-  // ns_utils::print("mpc raw : y ");
-  // ns_utils::print_container(mpc_traj_raw.y);
-  //
-  // ns_utils::print("Fixed size : y ");
-  // ns_utils::print_container(yinterp);
-  //
-  // ns_utils::print("mpc raw : z ");
-  // ns_utils::print_container(mpc_traj_raw.z);
-  //
-  // ns_utils::print("Fixed size : z ");
-  // ns_utils::print_container(zinterp);
-  //
-  // ns_utils::print("mpc raw : yaw ");
-  // ns_utils::print_container(mpc_traj_raw.yaw);
-  //
-
-  // ns_utils::print("mpc raw .vx ");
-  // ns_utils::print_container(mpc_traj_raw.vx);
-
-  // end of DEBUG
 
   return is_interpolated_x && is_interpolated_y && is_interpolated_z;
 }
@@ -1178,19 +1142,6 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(ns_data::MPCdataTra
 
   /** @brief Compute the curvature column. */
   auto const &curvature = ns_eigen_utils::Curvature(rdot_interp, rddot_interp);
-
-  // Create smooth MPCtraj given, s, x, y, v and curvature.
-  //  std::vector<double> s_smooth_vect(interpolated_map.col(0).data(),
-  //                                    interpolated_map.col(0).data() + map_out_mpc_size);
-  //
-  //  std::vector<double> x_smooth_vect(interpolated_map.col(1).data(),
-  //                                    interpolated_map.col(1).data() + map_out_mpc_size);
-  //
-  //  std::vector<double> y_smooth_vect(interpolated_map.col(2).data(),
-  //                                    interpolated_map.col(2).data() + map_out_mpc_size);
-  //
-  //  std::vector<double> z_smooth_vect(interpolated_map.col(3).data(),
-  //                                    interpolated_map.col(3).data() + map_out_mpc_size);
 
   // std::vector<double> curvature_smooth_vect(curvature.col(0).data(), curvature.col(0).data() + map_out_mpc_size);
 
@@ -1252,17 +1203,6 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(ns_data::MPCdataTra
 
   // Convert smooth yaw to a monotonic series
   ns_utils::unWrap(yaw_smooth_vect);
-
-  // Create the rest of the smooth vectors; handled in MPCtraj class.
-//  mpc_traj_smoothed.setTrajectoryCoordinate('s', s_smooth_vect);
-//  mpc_traj_smoothed.setTrajectoryCoordinate('t', t_smooth_vect);
-//  mpc_traj_smoothed.setTrajectoryCoordinate('a', acc_smooth_vect);
-//  mpc_traj_smoothed.setTrajectoryCoordinate('x', x_smooth_vect);
-//  mpc_traj_smoothed.setTrajectoryCoordinate('y', y_smooth_vect);
-//  mpc_traj_smoothed.setTrajectoryCoordinate('z', z_smooth_vect);
-//  mpc_traj_smoothed.setTrajectoryCoordinate('v', v_smooth_vect);
-//  mpc_traj_smoothed.setTrajectoryCoordinate('w', yaw_smooth_vect);
-//  mpc_traj_smoothed.setTrajectoryCoordinate('c', curvature_smooth_vect);
 
   mpc_traj_smoothed.setTrajectoryVector(s_smooth_vect, trajVectorVariant{ns_data::s_tag()});
   mpc_traj_smoothed.setTrajectoryVector(t_smooth_vect, trajVectorVariant{ns_data::t_tag()});
@@ -1374,32 +1314,6 @@ void NonlinearMPCNode::findClosestPrevWayPointIdx()
   idx_prev_wp_ptr_ = std::make_unique<size_t>(nearest_idx_prev);
   idx_next_wp_ptr_ = std::make_unique<size_t>(nearest_idx_next);
 
-  // DEBUG
-  // ns_utils::print("\nPrevious and next index points idx : ", *idx_prev_wp_ptr_, *idx_next_wp_ptr_);
-  //  ns_utils::print("\nNearest idx : ", nearest_idx);
-  //  ns_utils::print("\nPrevious and next nearest idxs : ", nearest_idx_prev, nearest_idx_next);
-
-  //  ns_utils::print("Current trajectory size : ",  // current_trajectory_ptr_->points.size());
-  //    ns_utils::print("Projection distances : \n");
-  //    ns_utils::print_container(projection_distances_ds);
-
-  //    ns_utils::print("Positive distances : \n");
-  //    ns_utils::print_container(projections_distances_all_positive);
-
-  //    auto x0 = current_trajectory_ptr_->points.at(0).pose.position.x;
-  //    auto y0 = current_trajectory_ptr_->points.at(0).pose.position.y;
-  //
-  //    ns_utils::print("Current relative vehicle position x, y ",
-  //    current_COG_pose_ptr_->pose.position.x - x0,
-  //                    current_COG_pose_ptr_->pose.position.y - y0, "\n");
-
-  //    for (auto const &point: current_trajectory_ptr_->points)
-  //    {
-  //        ns_utils::print("Current trajectory points x, y ", point.pose.position.x - x0,
-  //        point.pose.position.y - y0);
-  //    }
-
-  // end of DEBUG
 }
 
 void NonlinearMPCNode::computeClosestPointOnTraj()
@@ -1474,23 +1388,6 @@ void NonlinearMPCNode::computeClosestPointOnTraj()
   nonlinear_mpc_controller_ptr_->setCurrent_s0(current_s0_);
 
   /**
-   *  We use the following linear interpolation;
-   *  pi = p0 + ratio_t * (p1 - p0)
-   * */
-
-  // clamp signature (val, lower, upper)
-  // double const &&ratio_t = ns_utils::clamp(ds_distance_p0_to_p_interp / magnitude_p0_to_p1, 0., 1.);
-
-  // InterpolateInCoordinates pose.position and pose.orientation
-  //  interpolated_traj_point.pose.position.x = current_trajectory_ptr_->points.at(*idx_prev_wp_ptr_).pose.position.x +
-  //                                            ratio_t * dx_prev_to_next;
-  //  interpolated_traj_point.pose.position.y = current_trajectory_ptr_->points.at(*idx_prev_wp_ptr_).pose.position.y +
-  //                                            ratio_t * dy_prev_to_next;
-  //  interpolated_traj_point.pose.position.z = current_trajectory_ptr_->points.at(*idx_prev_wp_ptr_).pose.position.z +
-  //                                            ratio_t * dz_prev_to_next;
-
-  // InterpolateInCoordinates the yaw angle of pi : interpolated waypoint
-  /**
    * Using the smooth variables.
    * */
   std::array<double, 3> xyz{};
@@ -1539,17 +1436,6 @@ void NonlinearMPCNode::computeClosestPointOnTraj()
   // Create the pointer to keep.
   current_interpolated_traj_point_ptr_ = std::make_unique<TrajectoryPoint>(interpolated_traj_point);
 
-  // DEBUG
-  // ns_utils::print("\nCurrent s0, current t0 : ", current_s0_, current_t0_);
-  // ns_utils::print("\nPrevious, current and next yaw_angles : ", prev_yaw, interp_yaw_angle,
-  // next_yaw);
-
-  // ns_utils::print("\nPrev, target, next trajectory speeds : ", vx_prev, vx_target, vx_next);
-  // ns_utils::print("ds, p0p1_mag, ratio_ : ", ds_distance_p0_to_p_interp, magnitude_p0_to_p1,
-  // ratio_t); ns_utils::print(" Current vehicle speed, target speed : ",
-  // current_velocity_ptr_->twist.twist.linear.x, vx_target);
-
-  // end of debug.
 }
 
 std::array<double, 2> NonlinearMPCNode::computeErrorStates()
@@ -1557,36 +1443,10 @@ std::array<double, 2> NonlinearMPCNode::computeErrorStates()
   /**
    * @brief current closest point on the trajectory
    * */
-  // std::array<double, 2> interpolated_smooth_traj_point_xy{
-  // current_interpolated_traj_point_ptr_->pose.position.x,
-  // current_interpolated_traj_point_ptr_->pose.position.y};
-
-  /** @brief current pose of the vehicle */
-  // std::array<double, 2> current_pose_xy{
-  // current_pose_ptr_->pose.position.x, current_pose_ptr_->pose.position.y};
-
   std::array<double, 2> const current_pose_xy{current_COG_pose_ptr_->pose.position.x,
                                               current_COG_pose_ptr_->pose.position.y};
 
   // Get Yaw angles of the reference waypoint and the vehicle
-  /**
-   * The stored yaw angles is unwrapped before storing them which removes [-pi, pi] interval constraints. This is
-   * necessary to be able to interpolate the angles given a trajectory.
-   * */
-
-  // std::array<double, 3> const target_xy_yaw = nonlinear_mpc_controller_ptr_->getSmooth_XYYawAtCurrentDistance();
-  // auto reference_yaw_angle = ns_utils::angleDistance(target_xy_yaw[2]);
-
-  /**
-   * Since the reference trajectory yaw angles are unwrapped during the construction, we need to wrap them back
-   * into [-pi, pi] interval as the vehicle yaw angle is in this range. The difference of angles will be taken
-   * care of by the angle distance methods.
-   */
-
-  // reference_yaw_angle = ns_utils::angleDistance(reference_yaw_angle); // overloaded angle distance also wraps.
-  // std::array<double, 2> interpolated_smooth_traj_point_xy{target_xy_yaw[0], target_xy_yaw[1]}; // [x, y]
-
-  // We can also use the interpolated pose which yields cleaner error states.
   std::array<double, 2> interpolated_smooth_traj_point_xy{current_interpolated_traj_point_ptr_->pose.position.x,
                                                           current_interpolated_traj_point_ptr_->pose.position.y};
 
@@ -1595,14 +1455,10 @@ std::array<double, 2> NonlinearMPCNode::computeErrorStates()
 
   double const &vehicle_yaw_angle = tf2::getYaw(current_COG_pose_ptr_->pose.orientation);
 
-  // computeLateralError(trajectory_ref_xy, vehicle_xy).
   /**
    *  We project the vector from the reference point to the car on the normal of reference point.
-   *
    * */
-  //  auto const &error_ey = ns_utils::computeLateralError(interpolated_smooth_traj_point_xy,
-  //                                                       current_pose_xy, /*current_pose_xy for rear axle*/
-  //                                                       reference_yaw_angle);
+
 
   auto &&normal_vector = ns_utils::getNormalVector(reference_yaw_angle);
 
@@ -1611,11 +1467,6 @@ std::array<double, 2> NonlinearMPCNode::computeErrorStates()
                                              current_pose_xy[1] - interpolated_smooth_traj_point_xy[1]};
 
   auto const &error_ey = normal_vector[0] * vector_to_path_point[0] + normal_vector[1] * vector_to_path_point[1];
-
-  // Compute yaw angle error.
-  // double const &heading_yaw_error = 1.0 * ns_utils::wrapToPi(vehicle_yaw_angle - reference_yaw_angle);
-  // auto const &heading_yaw_error =
-  // autoware::common::helper_functions::wrap_angle(vehicle_yaw_angle - reference_yaw_angle);
 
   double const &heading_yaw_error = 1.0 * ns_utils::angleDistance(vehicle_yaw_angle, reference_yaw_angle);
   // heading_yaw_error = autoware::common::helper_functions::wrap_angle(heading_yaw_error);
@@ -1626,11 +1477,6 @@ std::array<double, 2> NonlinearMPCNode::computeErrorStates()
   nmpc_performance_vars_.yaw_angle_traj = tf2::getYaw(current_interpolated_traj_point_ptr_->pose.orientation);
 
   std::array<double, 2> const error_states{error_ey, 1.0 * heading_yaw_error};
-
-//  current_error_report_.lateral_deviation_read = error_ey;
-//  current_error_report_.heading_angle_error_read = heading_yaw_error;
-//  current_error_report_.steering_read = current_steering_ptr_->steering_tire_angle;
-//  current_error_report_.curvature_read = current_curvature_k0_;
 
   return error_states;
 }
@@ -1671,8 +1517,6 @@ void NonlinearMPCNode::updateInitialStatesAndControls_fromMeasurements()
                  "method ...");
     return;
   }
-  // x(8) is the last state placeholder is reserved for lateral acceleration or acc control.
-  // x0_initial_states_(8) = current_curvature_k0_ * vx_meas * vx_meas;  // Vx**2 / R
 
   // Create the dynamic parameters
   Model::param_vector_t params(Model::param_vector_t::Zero());
@@ -1691,12 +1535,6 @@ void NonlinearMPCNode::updateInitialStatesAndControls_fromMeasurements()
   nmpc_performance_vars_.long_velocity_measured = current_velocity_ptr_->twist.twist.linear.x;
   nmpc_performance_vars_.nmpc_curvature = current_curvature_k0_;
 
-  // DEBUG
-  // ns_utils::print("Initial states : ");
-  // ns_eigen_utils::printEigenMat(x0_initial_states_);
-  // ns_utils::print("Kalman estimate: ");
-  // ns_eigen_utils::printEigenMat(x0_kalman_est_);
-  // end of DEBUG
 }
 
 void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::state_vector_t &x0_predicted)
@@ -1740,7 +1578,6 @@ void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::s
     {
       // Compute dt to the next command.
       auto dt_to_next = (rclcpp::Time(std::next(it)->stamp) - rclcpp::Time(it->stamp)).seconds();
-      // ns_utils::print("dt between control commands in the buffer : ", dt_to_next);
 
       // Extract the controls from the input buffer.
       uk(toUType(VehicleControlIds::u_vx)) = static_cast<double>(it->longitudinal.acceleration);
@@ -1748,7 +1585,7 @@ void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::s
 
       auto const &sd0 = x0_predicted(ns_utils::toUType(VehicleStateIds::s));  // d stands for  delayed states.
       double kappad0{};           // curvature placeholder
-      double vxk{};               // to interpolate the target speed (virtual car speed).
+      double vxk{};               // to interpolate the target speed.
 
       // Estimate the curvature.  The spline data is updated in the onTrajectory().
       if (auto const &&could_interpolate = interpolator_curvature_pws.Interpolate(sd0, kappad0);
@@ -1789,10 +1626,6 @@ void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::s
   // Set the predicted model params.
   predicted_model_params_ = params;  // [curvature, predicted longitudinal speed vxk]
 
-  // DEBUG
-  //  ns_utils::print("virtual car distance : ");
-  //  ns_utils::print_container(virtual_car_distance_state_vect);
-  // end of debug
 }
 
 void NonlinearMPCNode::getAverageMPCcomputeTime(double &avg_compute_time_in_sec) const
