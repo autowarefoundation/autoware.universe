@@ -25,7 +25,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     # -Wno-error=unused-but-set-variable
     # -Wno-conversion
     # -Wno-sign-conversion
-    # -Wno-sign-compare
+    -Wno-sign-compare
     -Wdouble-promotion
     -Wfloat-equal
     -Waddress
@@ -174,11 +174,20 @@ if(BUILD_TESTING)
   set(NMPC_TESTs nonlinear_mpc_tests)
 
   ament_add_gtest(${NMPC_TESTs}
+    test/include/test_nonlinear_mpc_node.hpp
+    test/src/nonlinear_mpc_test_node.cpp
+    test/src/test_nmpc_node.cpp
     test/src/test_google_osqp.cpp
     )
+  ament_target_dependencies(${NMPC_TESTs} fake_test_node)
+  autoware_set_compile_options(${NMPC_TESTs})
+
   target_include_directories(${NMPC_TESTs} PRIVATE include test/include)
-  target_link_libraries(${NMPC_TESTs} ${NMPC_CORE}
-    osqp-cpp ${EIGEN3_LIBRARIES})
+  target_link_libraries(${NMPC_TESTs}
+    ${NMPC_CORE}
+    ${NMPC_NODE}
+    osqp-cpp
+    ${EIGEN3_LIBRARIES})
 
 endif()
 
