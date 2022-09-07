@@ -19,3 +19,24 @@
 #include <utility>
 #include <vector>
 #include "test_nonlinear_mpc_node.hpp"
+
+std::shared_ptr<ns_mpc_nonlinear::NonlinearMPCNode> makeNonlinearMPCNode()
+{
+  // Pass default parameter file to the node
+  const auto share_dir = ament_index_cpp::get_package_share_directory("mpc_nonlinear");
+
+  rclcpp::NodeOptions node_options;
+  node_options.arguments({"--ros-args", "--params-file",
+                          share_dir + "/params/mpc_nonlinear.param.yaml",
+                          "--params-file", share_dir + "/params/test_vehicle_info.yaml"});
+
+  std::shared_ptr<NonlinearMPCNode> node = std::make_shared<NonlinearMPCNode>(node_options);
+
+  // Enable all logging in the node
+  auto ret = rcutils_logging_set_logger_level(node->get_logger().get_name(),
+                                              RCUTILS_LOG_SEVERITY_DEBUG);
+  if (ret != RCUTILS_RET_OK)
+  { std::cout << "Failed to set logging severity to DEBUG\n"; }
+
+  return node;
+}
