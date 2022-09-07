@@ -46,8 +46,6 @@ struct ParamsNMPCNode
 
   // For interpolator used in the prediction.
   bool use_acceleration_inputs{}; // parameters whether to use NMPC computed acc: Obsolete to be removed.
-  bool use_kalman{false};
-  bool use_sqrt_version{false};
 
   // For trajectory initialization. Linear or LPV feedback trajectory initialization.
   bool use_linear_trajectory_initialization{};
@@ -64,26 +62,6 @@ struct ParamsNMPCNode
   bool use_cdob{false};
   bool use_dob{false};
 
-};
-
-struct ParamsFilters
-{
-  ParamsFilters()
-  {
-    Vsqrt.setZero();
-    Wsqrt.setZero();
-    Psqrt.setZero();
-  }
-
-  // ~ParamsFilters() = default;
-  Model::state_diag_mat_t Vsqrt;  // !<@brief model process uncertainty covariance sqrt.
-  Model::state_diag_mat_t Wsqrt;  // !<@brief measurement uncertainty covariance sqrt.
-  Model::state_diag_mat_t Psqrt;  // !<@brief Kalman covariance matrix sqrt.
-
-  // UKF specific parameters.
-  double ukf_alpha{0.95};
-  double ukf_beta{2.0};
-  double ukf_kappa{0.5};
 };
 
 struct ParamsOptimization
