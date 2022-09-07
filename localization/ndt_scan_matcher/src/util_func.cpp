@@ -219,12 +219,12 @@ Eigen::Matrix4f from_ros_pose_to_eigen_matrix4f(const geometry_msgs::msg::Pose &
   return eigen_pose_matrix;
 }
 
-Eigen::Vector3f from_ros_point_to_eigen_vector3f(const geometry_msgs::msg::Point & ros_pos)
+Eigen::Vector3d from_ros_point_to_eigen_vector3d(const geometry_msgs::msg::Point & ros_pos)
 {
-  Eigen::Vector3f eigen_pos;
-  eigen_pos.x() = (float)ros_pos.x;
-  eigen_pos.y() = (float)ros_pos.y;
-  eigen_pos.z() = (float)ros_pos.z;
+  Eigen::Vector3d eigen_pos;
+  eigen_pos.x() = ros_pos.x;
+  eigen_pos.y() = ros_pos.y;
+  eigen_pos.z() = ros_pos.z;
   return eigen_pos;
 }
 

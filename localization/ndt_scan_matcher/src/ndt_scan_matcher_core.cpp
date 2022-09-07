@@ -72,12 +72,12 @@ bool validate_local_optimal_solution_oscillation(
   int oscillation_cnt = 0;
 
   for (size_t i = 2; i < result_pose_msg_array.size(); ++i) {
-    const Eigen::Vector3f current_pose =
-      from_ros_point_to_eigen_vector3f(result_pose_msg_array.at(i).position);
-    const Eigen::Vector3f prev_pose =
-      from_ros_point_to_eigen_vector3f(result_pose_msg_array.at(i - 1).position);
-    const Eigen::Vector3f prev_prev_pose =
-      from_ros_point_to_eigen_vector3f(result_pose_msg_array.at(i - 2).position);
+    const Eigen::Vector3d current_pose =
+      from_ros_point_to_eigen_vector3d(result_pose_msg_array.at(i).position);
+    const Eigen::Vector3d prev_pose =
+      from_ros_point_to_eigen_vector3d(result_pose_msg_array.at(i - 1).position);
+    const Eigen::Vector3d prev_prev_pose =
+      from_ros_point_to_eigen_vector3d(result_pose_msg_array.at(i - 2).position);
     const auto current_vec = current_pose - prev_pose;
     const auto prev_vec = (prev_pose - prev_prev_pose).normalized();
     const bool oscillation = prev_vec.dot(current_vec) < inversion_vector_threshold;

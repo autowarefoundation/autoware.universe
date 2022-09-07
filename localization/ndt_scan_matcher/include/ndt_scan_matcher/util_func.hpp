@@ -71,7 +71,7 @@ void pop_old_pose(
 Eigen::Affine3d from_ros_pose_to_eigen_affine3d(const geometry_msgs::msg::Pose & ros_pose);
 Eigen::Matrix4f from_ros_pose_to_eigen_matrix4f(const geometry_msgs::msg::Pose & ros_pose);
 geometry_msgs::msg::Pose from_eigen_matrix4f_to_ros_pose(const Eigen::Matrix4f & eigen_pose_matrix);
-Eigen::Vector3f from_ros_point_to_eigen_vector3f(const geometry_msgs::msg::Point & ros_pos);
+Eigen::Vector3d from_ros_point_to_eigen_vector3d(const geometry_msgs::msg::Point & ros_pos);
 
 std::vector<geometry_msgs::msg::Pose> create_random_pose_array(
   const geometry_msgs::msg::PoseWithCovarianceStamped & base_pose_with_cov, const int particle_num);
