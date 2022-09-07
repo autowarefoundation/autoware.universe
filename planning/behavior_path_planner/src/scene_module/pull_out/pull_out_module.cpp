@@ -285,8 +285,8 @@ BehaviorModuleOutput PullOutModule::planWaitingApproval()
 
   planning_api_interface_ptr_->updateSteeringFactor(
     {status_.pull_out_path.shift_point.start, status_.pull_out_path.shift_point.end},
-    {start_distance, finish_distance}, SteeringFactor::PULL_OUT, direction, SteeringFactor::APPROACHING,
-    "");
+    {start_distance, finish_distance}, SteeringFactor::PULL_OUT, direction,
+    SteeringFactor::APPROACHING, "");
 
   return output;
 }
