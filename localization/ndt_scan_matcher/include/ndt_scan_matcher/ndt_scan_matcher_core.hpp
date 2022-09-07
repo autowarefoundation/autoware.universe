@@ -74,7 +74,8 @@ struct NdtResult
   float transform_probability;
   float nearest_voxel_transformation_likelihood;
   int iteration_num;
-  std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>> transformation_array;
+  std::vector<geometry_msgs::msg::Pose> transformation_array;
+  // std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>> transformation_array;
 };
 
 template <typename PointSource, typename PointTarget>
@@ -127,7 +128,7 @@ private:
   void callback_regularization_pose(
     geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose_conv_msg_ptr);
 
-  NdtResult align(const geometry_msgs::msg::Pose & initial_pose_cov_msg);
+  NdtResult align(const geometry_msgs::msg::Pose & initial_pose_msg);
   geometry_msgs::msg::PoseWithCovarianceStamped align_using_monte_carlo(
     const std::shared_ptr<NormalDistributionsTransformBase<PointSource, PointTarget>> & ndt_ptr,
     const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_with_cov);
@@ -148,8 +149,7 @@ private:
     const std::shared_ptr<const pcl::PointCloud<pcl::PointXYZ>> & sensor_points_baselinkTF_ptr);
   void publish_marker(
     const rclcpp::Time & sensor_ros_time,
-    const std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>> &
-      result_pose_matrix_array);
+    const std::vector<geometry_msgs::msg::Pose> & pose_array);
   void publish_initial_to_result_distances(
     const rclcpp::Time & sensor_ros_msg, const geometry_msgs::msg::Pose & result_pose_msg,
     const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_cov_msg,

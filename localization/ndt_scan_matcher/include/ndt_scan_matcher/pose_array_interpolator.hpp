@@ -38,9 +38,6 @@ public:
     rclcpp::Node * node, const rclcpp::Time target_ros_time,
     const std::deque<PoseWithCovarianceStamped::ConstSharedPtr> & pose_msg_ptr_array);
 
-  void interpolate(
-    const std::deque<PoseWithCovarianceStamped::ConstSharedPtr> & pose_msg_ptr_array,
-    const rclcpp::Time target_ros_time);
   PoseWithCovarianceStamped get_current_pose();
   PoseWithCovarianceStamped get_old_pose();
   PoseWithCovarianceStamped get_new_pose();
@@ -54,6 +51,9 @@ private:
   rclcpp::Clock clock_;
   bool success_;
 
+  void interpolate(
+    const std::deque<PoseWithCovarianceStamped::ConstSharedPtr> & pose_msg_ptr_array,
+    const rclcpp::Time target_ros_time);
   void validate_time_stamp_difference(
     const rclcpp::Time & target_time, const rclcpp::Time & reference_time,
     const double time_tolerance_sec);
