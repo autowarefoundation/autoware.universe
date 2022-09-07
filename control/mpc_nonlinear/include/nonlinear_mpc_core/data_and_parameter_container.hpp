@@ -44,9 +44,6 @@ struct ParamsNMPCNode
   bool use_delay_sim_model{};
   bool predict_initial_states{};
 
-  // For interpolator used in the prediction.
-  bool use_acceleration_inputs{}; // parameters whether to use NMPC computed acc: Obsolete to be removed.
-
   // For trajectory initialization. Linear or LPV feedback trajectory initialization.
   bool use_linear_trajectory_initialization{};
 
