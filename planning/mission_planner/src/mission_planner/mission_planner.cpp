@@ -20,6 +20,35 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
 
+namespace
+{
+
+using autoware_auto_mapping_msgs::msg::HADMapSegment;
+using autoware_auto_mapping_msgs::msg::MapPrimitive;
+using autoware_planning_msgs::msg::VectorMapPrimitive;
+using autoware_planning_msgs::msg::VectorMapSegment;
+
+MapPrimitive convert(const VectorMapPrimitive & p)
+{
+  MapPrimitive primitive;
+  primitive.id = p.id;
+  primitive.primitive_type = p.primitive_type;
+  return primitive;
+}
+
+HADMapSegment convert(const VectorMapSegment & s)
+{
+  HADMapSegment segment;
+  segment.preferred_primitive_id = s.preferred_primitive.id;
+  segment.primitives.push_back(convert(s.preferred_primitive));
+  for (const auto & p : s.primitives) {
+    segment.primitives.push_back(convert(p));
+  }
+  return segment;
+}
+
+}  // namespace
+
 namespace mission_planner
 {
 
@@ -148,7 +177,9 @@ void MissionPlanner::on_set_route(
   route.header.frame_id = map_frame_;
   route.start_pose = get_ego_vehicle_pose().pose;
   route.goal_pose = transform_pose(pose).pose;
-  route.segments = req->segments;
+  for (const auto & segment : req->segments) {
+    route.segments.push_back(convert(segment));
+  }
 
   // Update route.
   change_route(route);
