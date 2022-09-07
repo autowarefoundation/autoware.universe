@@ -88,14 +88,14 @@ endif()
 #message("\n### Configuring CppAD ###")
 #file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/runtime_lib/CppAD)
 #execute_process(COMMAND cmake ${CMAKE_CURRENT_LIST_DIR}/runtime_lib/CppAD
-#	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/runtime_lib/CppAD)
+#WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/runtime_lib/CppAD)
 
 ## CppADCodeGen
 #message("\n### Configuring CppADCodeGen ###")
 #file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/runtime_lib/CppADCodeGen)
 #execute_process(COMMAND cmake -DCPPAD_HOME=${CMAKE_CURRENT_LIST_DIR}/lib/CppAD/include
-#	${CMAKE_CURRENT_LIST_DIR}/runtime_lib/CppADCodeGen
-#	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/runtime_lib/CppADCodeGen)
+#${CMAKE_CURRENT_LIST_DIR}/runtime_lib/CppADCodeGen
+#WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/runtime_lib/CppADCodeGen)
 
 # ------------ LIBRARIES --------------------------------
 message(STATUS "osqp-cpp: Adding osqp-cpp library...")
@@ -175,7 +175,8 @@ if(BUILD_TESTING)
   set(NMPC_TESTs nonlinear_mpc_tests)
 
   ament_add_gtest(${NMPC_TESTs}
-    test/include/test_nonlinear_mpc_node.hpp
+    test/include/nonlinear_mpc_test_node.hpp
+    test/include/nmpc_test_utils.hpp
     test/src/nonlinear_mpc_test_node.cpp
     test/src/test_nmpc_node.cpp
     test/src/test_google_osqp.cpp
