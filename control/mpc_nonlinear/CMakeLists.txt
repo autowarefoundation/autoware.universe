@@ -9,7 +9,6 @@ ament_auto_find_build_dependencies(REQUIRED
 
 find_package(Eigen3 CONFIG)
 
-# set(CMAKE_CXX_STANDARD 17)
 # Release, Debug, RelWithDebInfo, MinSizeRel
 #set(CMAKE_BUILD_TYPE "Release")
 #set(CMAKE_CXX_FLAGS_RELEASE "-O3")
@@ -20,13 +19,13 @@ if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
             -Wall
             -Wextra
             -Wpedantic
-            -Wno-unused-parameter
+            # -Wno-unused-parameter
             # -Wno-unused-variable
-            -Wno-narrowing
+            # -Wno-narrowing
             # -Wno-error=unused-but-set-variable
             # -Wno-conversion
             # -Wno-sign-conversion
-            -Wno-sign-compare
+            # -Wno-sign-compare
             -Wdouble-promotion
             -Wfloat-equal
             -Waddress
@@ -195,6 +194,15 @@ rclcpp_components_register_node(${NMPC_NODE}
 ament_auto_package(INSTALL_TO_SHARE
         launch
         config)
+
+
+## ----------------- Library Tests----------------------------------------------
+
+if (BUILD_TESTING)
+    find_package(ament_lint_auto REQUIRED)
+    ament_lint_auto_find_test_dependencies()
+    find_package(ament_cmake_gtest REQUIRED)
+endif ()
 
 
 # -------------  PROTOTYPES ---------------------------------------------------

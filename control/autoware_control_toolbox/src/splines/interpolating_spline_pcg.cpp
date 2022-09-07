@@ -219,7 +219,7 @@ bool InterpolatingSplinePCG::compute_coefficients(std::vector<double> const &yba
     std::vector<double> brhs(dimy, 0.0); // right hand side of Ax=b.
 
     // Compute rhs values;  b[2:N-1]_i = 3*(a(i) - 2*a_(i) + a(i+1)
-    for (size_t k = 1; k < dimy - 1; k++)
+    for (size_t k = 1; k < static_cast<size_t>(dimy - 1); k++)
     {
       brhs[k] = 3 * (ybase[k - 1] - 2 * ybase[k] + ybase[k + 1]);
     }
