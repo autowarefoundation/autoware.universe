@@ -36,14 +36,11 @@
 #include <regex>
 #include <string>
 #include <vector>
-#include <regex>
 
 namespace bp = boost::process;
 
-HardwareMonitor::HardwareMonitor(const rclcpp::NodeOptions & options) 
-: Node("hardware_monitor", options),
-  updater_(this),
-  hostname_()
+HardwareMonitor::HardwareMonitor(const rclcpp::NodeOptions & options)
+: Node("hardware_monitor", options), updater_(this), hostname_()
 {
   gethostname(hostname_, sizeof(hostname_));
 
@@ -55,7 +52,7 @@ HardwareMonitor::HardwareMonitor(const rclcpp::NodeOptions & options)
   voltage_string_ = declare_parameter<std::string>("cmos_battery_voltage", "");
   voltage_warn_ = declare_parameter<float>("cmos_battery_warn", 2.95);
   voltage_error_ = declare_parameter<float>("cmos_battery_error", 2.75);
-  if( voltage_string_ == "" ) {
+  if (voltage_string_ == "") {
     sensors_exists_ = false;
   } else {
     // Check if command exists
@@ -64,34 +61,35 @@ HardwareMonitor::HardwareMonitor(const rclcpp::NodeOptions & options)
   }
   gethostname(hostname_, sizeof(hostname_));
   auto callback = &HardwareMonitor::checkBatteryStatus;
-  if( sensors_exists_ ) {
+  if (sensors_exists_) {
     callback = &HardwareMonitor::checkVoltage;
   }
   updater_.add("CMOS Battery Status", this, callback);
 }
 
-static float getVoltage(std::string voltage_string) {
-    bp::ipstream is_out;
-    bp::ipstream is_err;
-    fs::path p = bp::search_path("sensors");
-    bp::child c(p.string(), bp::std_out > is_out, bp::std_err > is_err);
-    c.wait();
+static float getVoltage(std::string voltage_string)
+{
+  bp::ipstream is_out;
+  bp::ipstream is_err;
+  fs::path p = bp::search_path("sensors");
+  bp::child c(p.string(), bp::std_out > is_out, bp::std_err > is_err);
+  c.wait();
 
-    if(RCUTILS_UNLIKELY(c.exit_code() != 0)) {//failed to execute sensors 
-      return 0;
+  if (RCUTILS_UNLIKELY(c.exit_code() != 0)) {  // failed to execute sensors
+    return 0;
+  }
+  std::string line;
+  std::regex re(R"((\d+).(\d+))");  //    3.06 V  (min =  +0.00 V, max =  +4.08 V)
+  for (int i = 0; i < 200 && std::getline(is_out, line); i++) {
+    auto voltageStringPos = line.find(voltage_string.c_str());
+    if (voltageStringPos != std::string::npos) {
+      std::smatch match;
+      std::regex_search(line, match, re);
+      auto voltageString = match.str();
+      return std::stof(voltageString);
     }
-    std::string line;
-    std::regex re(R"((\d+).(\d+))"); //    3.06 V  (min =  +0.00 V, max =  +4.08 V)
-    for(int i = 0; i < 200 && std::getline(is_out, line); i++) {
-        auto voltageStringPos = line.find(voltage_string.c_str());
-        if( voltageStringPos != std::string::npos) {
-            std::smatch match;
-            std::regex_search(line, match, re);
-            auto voltageString = match.str(); 
-            return std::stof(voltageString);
-        }
-    }
-    return 0;//failed to read voltage
+  }
+  return 0;  // failed to read voltage
 }
 
 void HardwareMonitor::checkVoltage(diagnostic_updater::DiagnosticStatusWrapper & stat)
@@ -99,17 +97,19 @@ void HardwareMonitor::checkVoltage(diagnostic_updater::DiagnosticStatusWrapper &
   // Remember start time to measure elapsed time
   const auto t_start = SystemMonitorUtility::startMeasurement();
 
-  if ( RCUTILS_UNLIKELY(!sensors_exists_) ) {
+  if (RCUTILS_UNLIKELY(!sensors_exists_)) {
     stat.summary(DiagStatus::ERROR, "sensors error");
     stat.add(
-      "sensors", "Command 'sensors' not found, but can be installed with: 'sudo apt install lm-sensors' and 'sudo sensors-detect'");
+      "sensors",
+      "Command 'sensors' not found, but can be installed with: 'sudo apt install lm-sensors' and "
+      "'sudo sensors-detect'");
     return;
   }
 
   auto v = getVoltage(voltage_string_);
 
-  stat.add("CMOS battey voltage", fmt::format("{}",v));
-  if( RCUTILS_UNLIKELY(v < voltage_warn_) ) {
+  stat.add("CMOS battey voltage", fmt::format("{}", v));
+  if (RCUTILS_UNLIKELY(v < voltage_warn_)) {
     stat.summary(DiagStatus::WARN, "LOW BATTERY");
   } else {
     stat.summary(DiagStatus::OK, "OK");
@@ -140,11 +140,11 @@ void HardwareMonitor::checkBatteryStatus(diagnostic_updater::DiagnosticStatusWra
 
   std::string line;
   bool status = false;
-  for(int i = 0; i < 200 && std::getline(is_out, line); i++) {
+  for (int i = 0; i < 200 && std::getline(is_out, line); i++) {
     auto batStatusLine = line.find("batt_status");
-    if( batStatusLine != std::string::npos) {
+    if (batStatusLine != std::string::npos) {
       auto batStatus = line.find("okay");
-      if( batStatus != std::string::npos) {
+      if (batStatus != std::string::npos) {
         status = true;
         break;
       }
@@ -152,7 +152,7 @@ void HardwareMonitor::checkBatteryStatus(diagnostic_updater::DiagnosticStatusWra
   }
 
   stat.add("CMOS battey status", std::string(status ? "OK" : "LOW BATTERY"));
-  if( RCUTILS_LIKELY(status) ) {
+  if (RCUTILS_LIKELY(status)) {
     stat.summary(DiagStatus::OK, "OK");
   } else {
     stat.summary(DiagStatus::WARN, "LOW BATTERY");

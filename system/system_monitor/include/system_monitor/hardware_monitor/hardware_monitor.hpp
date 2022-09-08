@@ -17,8 +17,8 @@
  * @brief  hardware monitor class
  */
 
-#ifndef SYSTEM_MONITOR__HARDWARE_MONITOR__ADLINK_EHARDWARE_MONITOR_HPP_
-#define SYSTEM_MONITOR__HARDWARE_MONITOR__ADLINK_EHARDWARE_MONITOR_HPP_
+#ifndef SYSTEM_MONITOR__HARDWARE_MONITOR__HARDWARE_MONITOR_HPP_
+#define SYSTEM_MONITOR__HARDWARE_MONITOR__HARDWARE_MONITOR_HPP_
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
 
@@ -44,7 +44,7 @@ protected:
 
   diagnostic_updater::Updater updater_;  //!< @brief Updater class which advertises to /diagnostics
 
-  char hostname_[HOST_NAME_MAX + 1];        //!< @brief host name
+  char hostname_[HOST_NAME_MAX + 1];  //!< @brief host name
 
   /**
    * @brief check CMOS Battey
@@ -63,11 +63,10 @@ protected:
   void checkBatteryStatus(
     diagnostic_updater::DiagnosticStatusWrapper & stat);  // NOLINT(runtime/references)
 
-
-  bool sensors_exists_;                      //!< @brief flag if sensors exists
+  bool sensors_exists_;  //!< @brief flag if sensors exists
   float voltage_warn_;
   float voltage_error_;
   std::string voltage_string_;
 };
 
-#endif  // SYSTEM_MONITOR__HARDWARE_MONITOR__ADLINK_EHARDWARE_MONITOR_HPP_
+#endif  // SYSTEM_MONITOR__HARDWARE_MONITOR__HARDWARE_MONITOR_HPP_
