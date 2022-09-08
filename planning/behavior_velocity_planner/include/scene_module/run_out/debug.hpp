@@ -97,7 +97,6 @@ public:
   void pushCollisionPoints(const std::vector<geometry_msgs::msg::Point> & points);
   void pushNearestCollisionPoint(const geometry_msgs::msg::Point & point);
   void pushStopPose(const geometry_msgs::msg::Pose & pose);
-  void pushDebugLines(const std::vector<geometry_msgs::msg::Point> & debug_line);
   void pushPredictedVehiclePolygons(const std::vector<geometry_msgs::msg::Point> & polygon);
   void pushPredictedObstaclePolygons(const std::vector<geometry_msgs::msg::Point> & polygon);
   void pushCollisionObstaclePolygons(const std::vector<geometry_msgs::msg::Point> & polygon);
