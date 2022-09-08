@@ -1,6 +1,7 @@
 #include "camera_particle_corrector/camera_particle_corrector.hpp"
 
 #include <opencv4/opencv2/imgproc.hpp>
+#include <vml_common/color.hpp>
 #include <vml_common/pose_conversions.hpp>
 #include <vml_common/pub_sub.hpp>
 
@@ -83,7 +84,20 @@ void CameraParticleCorrector::lsdCallback(const sensor_msgs::msg::PointCloud2 & 
     Eigen::Affine3f transform = vml_common::pose2Affine(mean_pose);
     LineSegment transformed_lsd = transformCloud(lsd_cloud, transform);
     pcl::PointCloud<pcl::PointXYZI> cloud = evaluateCloud(transformed_lsd, transform.translation());
-    vml_common::publishCloud(*pub_scored_cloud_, cloud, lsd_msg.header.stamp);
+
+    pcl::PointCloud<pcl::PointXYZRGB> rgb_cloud;
+    float max_score = 0;
+    for (const auto p : cloud) {
+      max_score = std::max(max_score, std::abs(p.intensity));
+    }
+    for (const auto p : cloud) {
+      pcl::PointXYZRGB rgb;
+      rgb.getVector3fMap() = p.getVector3fMap();
+      rgb.rgba = vml_common::color_scale::blueRed(0.5 + p.intensity / max_score * 0.5);
+      rgb_cloud.push_back(rgb);
+    }
+
+    vml_common::publishCloud(*pub_scored_cloud_, rgb_cloud, lsd_msg.header.stamp);
   }
 }
 
@@ -100,16 +114,17 @@ void CameraParticleCorrector::ll2Callback(const PointCloud2 & ll2_msg)
   RCLCPP_INFO_STREAM(get_logger(), "Set LL2 cloud into Hierarchical cost map");
 }
 
+float absCos(const Eigen::Vector3f & t, float deg)
+{
+  Eigen::Vector2f x(t.x(), t.y());
+  Eigen::Vector2f y(std::cos(deg * M_PI / 180.0), std::sin(deg * M_PI / 180.0));
+  x.normalize();
+  return std::abs(x.dot(y));
+}
+
 float CameraParticleCorrector::computeScore(
   const LineSegment & lsd_cloud, const Eigen::Vector3f & self_position)
 {
-  auto absCos = [](const Eigen::Vector3f & t, float deg) -> float {
-    Eigen::Vector2f x(t.x(), t.y());
-    Eigen::Vector2f y(std::cos(deg * M_PI / 180.0), std::sin(deg * M_PI / 180.0));
-    x.normalize();
-    return std::abs(x.dot(y));
-  };
-
   float score = 0;
   for (const pcl::PointNormal & pn1 : lsd_cloud) {
     Eigen::Vector3f t1 = (pn1.getNormalVector3fMap() - pn1.getVector3fMap()).normalized();
@@ -132,13 +147,6 @@ float CameraParticleCorrector::computeScore(
 pcl::PointCloud<pcl::PointXYZI> CameraParticleCorrector::evaluateCloud(
   const LineSegment & lsd_cloud, const Eigen::Vector3f & self_position)
 {
-  auto absCos = [](const Eigen::Vector3f & t, float deg) -> float {
-    Eigen::Vector2f x(t.x(), t.y());
-    Eigen::Vector2f y(std::cos(deg * M_PI / 180.0), std::sin(deg * M_PI / 180.0));
-    x.normalize();
-    return std::abs(x.dot(y));
-  };
-
   pcl::PointCloud<pcl::PointXYZI> cloud;
   for (const pcl::PointNormal & pn1 : lsd_cloud) {
     Eigen::Vector3f t1 = (pn1.getNormalVector3fMap() - pn1.getVector3fMap()).normalized();
@@ -151,7 +159,6 @@ pcl::PointCloud<pcl::PointXYZI> CameraParticleCorrector::evaluateCloud(
       float squared_norm = (p - self_position).topRows(2).squaredNorm();
       float gain = std::exp(-far_weight_gain_ * squared_norm);
 
-      // TODO:
       cv::Vec2b v2 = cost_map_.at2(p.topRows(2));
       float score = gain * (absCos(t1, v2[1]) * v2[0] + score_offset_);
 

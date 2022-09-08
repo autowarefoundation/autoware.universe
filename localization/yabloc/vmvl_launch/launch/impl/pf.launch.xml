@@ -9,7 +9,7 @@
     <arg name="predict_twist" default="/eagleye/twist" if="$(var use_eagleye)"/>
     <arg name="predict_twist" default="/kalman/twist" unless="$(var use_eagleye)"/>
 
-    <arg name="static_linear_covariance" default="50.00"/>
+    <arg name="static_linear_covariance" default="12.00"/>
     <arg name="static_angular_covariance" default="0.005"/>
 
     <!-- ========================================= -->
@@ -40,11 +40,11 @@
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="image_size" value="800"/>
         <param name="max_range" value="40.0"/>
-        <param name="gamma" value="5.0"/>
+        <param name="gamma" value="10.0"/>
         <param name="score_offset" value="-128.0"/>
         <param name="max_raw_score" value="100000.0"/>
         <param name="min_prob" value="0.1"/>
-        <param name="far_weight_gain" value="0.001"/>
+        <param name="far_weight_gain" value="0.004"/>
 
         <remap from="/weighted_particles" to="/weighted_particles"/>
         <remap from="/lsd_cloud" to="/projected_lsd_cloud"/>
@@ -61,6 +61,7 @@
         <param name="rtk_enabled" value="$(var rtk_enabled)"/>
 
         <remap from="/input/navpvt" to="/bridge/navpvt"/>
+        <remap from="/input/height" to="/height"/>
         <remap from="/pose_with_covariance" to="/disabled/pose_with_covariance"/>
     </node>
     <node unless="$(var use_eagleye)" name="gnss_particle_corrector" pkg="gnss_particle_corrector" exec="gnss_particle_corrector" output="screen" args="--ros-args --log-level warn">
@@ -71,6 +72,7 @@
         <param name="rtk_enabled" value="$(var rtk_enabled)"/>
 
         <remap from="/input/navpvt" to="/sensing/gnss/ublox/navpvt"/>
+        <remap from="/input/height" to="/height"/>
         <remap from="/pose_with_covariance" to="/disabled/pose_with_covariance"/>
     </node>
 </launch>

@@ -113,7 +113,7 @@ HierarchicalCostMap::MarkerArray HierarchicalCostMap::showMapRange() const
     marker.header.frame_id = "map";
     marker.id = id++;
     marker.type = Marker::LINE_STRIP;
-    marker.color = vml_common::color(0, 0, 1.0f, 1.0f);
+    marker.color = vml_common::Color(0, 0, 1.0f, 1.0f);
     marker.scale.x = 0.1;
     Eigen::Vector2f xy = area.realScale();
     marker.points.push_back(gpoint(xy.x(), xy.y()));
