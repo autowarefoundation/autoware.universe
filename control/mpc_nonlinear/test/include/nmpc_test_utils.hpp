@@ -84,6 +84,16 @@ inline void spinWhile(T &node)
     std::this_thread::sleep_for(dt);
   }
 }
+
+/**
+ * @brief  Logistic map function, generates a curve using the logistic function.
+ * @param [in] max_y_value  value of the maximum y coordinate (asymtote )
+ * @param [in] center_x_value value at which the curve starts to bend
+ * @param [in] slope value defines how fast curve climb.
+ * @param [in] x_coord
+ * @param [out] ycurve_output = std::vector
+ */
+
 }  // namespace test_utils
 
 #endif  //NMPC_TEST_UTILS_HPP_
