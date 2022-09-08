@@ -207,12 +207,6 @@ protected:
   } crc_errors;
   std::map<std::string, crc_errors> crc_errors_;  //!< @brief list of CRC errors
 
-  std::string monitor_program_;             //!< @brief nethogs monitor program name
-  bool nethogs_all_;                        //!< @brief nethogs result all mode
-  int traffic_reader_port_;                 //!< @brief port number to connect to traffic_reader
-  unsigned int crc_error_check_duration_;   //!< @brief CRC error check duration
-  unsigned int crc_error_count_threshold_;  //!< @brief CRC error count threshold
-
   std::deque<unsigned int>
     reasm_fails_queue_;  //!< @brief queue that holds count of IP packet reassembles failed
   uint64_t
@@ -221,6 +215,8 @@ protected:
   std::string monitor_program_;              //!< @brief nethogs monitor program name
   bool nethogs_all_;                         //!< @brief nethogs result all mode
   int traffic_reader_port_;                  //!< @brief port number to connect to traffic_reader
+  unsigned int crc_error_check_duration_;    //!< @brief CRC error check duration
+  unsigned int crc_error_count_threshold_;   //!< @brief CRC error count threshold
   unsigned int reasm_fails_check_duration_;  //!< @brief IP packet reassembles failed check duration
   unsigned int
     reasm_fails_count_threshold_;  //!< @brief IP packet reassembles failed count threshold
