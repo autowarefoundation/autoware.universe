@@ -22,6 +22,7 @@
 
 #include <lanelet2_core/LaneletMap.h>
 
+#include <limits>
 #include <memory>
 #include <utility>
 
@@ -35,6 +36,7 @@ class TurnSignalDecider
 {
 public:
   mutable bool intersection_turn_signal_ = false;
+  mutable double intersection_distance_ = std::numeric_limits<double>::max();
   mutable Pose intersection_pose_point_ = Pose();
   TurnIndicatorsCommand getTurnSignal(
     const PathWithLaneId & path, const Pose & current_pose, const size_t current_seg_idx,

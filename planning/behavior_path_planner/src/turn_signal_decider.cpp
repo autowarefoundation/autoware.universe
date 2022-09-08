@@ -122,6 +122,7 @@ std::pair<TurnIndicatorsCommand, double> TurnSignalDecider::getIntersectionTurnS
   } else {
     intersection_turn_signal_ = true;
   }
+  intersection_distance_ = distance;
   return std::make_pair(turn_signal, distance);
 }
 }  // namespace behavior_path_planner

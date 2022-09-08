@@ -619,8 +619,9 @@ void BehaviorPathPlannerNode::run()
       }
 
       planning_api_interface_ptr_->updateSteeringFactor(
-        {turn_signal_decider_.intersection_pose_point_}, {output.turn_signal_info.signal_distance},
-        SteeringFactor::INTERSECTION, direction, SteeringFactor::TURNING, "");
+        {turn_signal_decider_.intersection_pose_point_},
+        {turn_signal_decider_.intersection_distance_}, SteeringFactor::INTERSECTION, direction,
+        SteeringFactor::TURNING, "");
     } else {
       planning_api_interface_ptr_->clearSteeringFactors();
     }
