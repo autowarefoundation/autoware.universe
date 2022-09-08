@@ -60,7 +60,7 @@ boost::optional<InfrastructureCommandArray> findCommand(
 
   if (use_command_state) {
     for (const auto & command : command_array.commands) {
-      if (command.state >= 1) {
+      if (command.state >= InfrastructureCommand::REQUESTING) {
         array.commands.push_back(command);
         found_flag = true;
       }
