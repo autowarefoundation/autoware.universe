@@ -124,6 +124,8 @@ TEST_F(FakeNodeFixture, automatic_differentiation_works)
   // Call the model methods.
   // Create vehicle parameters.
   ns_models::ParamsVehicle paramsVehicle{};
+  paramsVehicle.use_delay_model = false;
+
   Model vehicle_model{};
   vehicle_model.updateParameters(paramsVehicle);
   vehicle_model.InitializeModel();
@@ -148,11 +150,11 @@ TEST_F(FakeNodeFixture, automatic_differentiation_works)
 
   vehicle_model.computeFx(x, u, params, f_of_dx);
 
-  for (unsigned long k = 0; k < Model::state_dim; ++k)
+  for (size_t k = 0; k < Model::state_dim; ++k)
   {
-    ASSERT_DOUBLE_EQ(f_of_dx(k), analytical_fx_vec[k]);
+    ASSERT_DOUBLE_EQ(f_of_dx(static_cast<long>(k)), analytical_fx_vec[k]);
     ns_utils::print("Analytical comparison f(x,u, param): ",
-                    f_of_dx(k),
+                    f_of_dx(static_cast<long>(k)),
                     analytical_fx_vec[k]);
   }
 
@@ -180,12 +182,10 @@ TEST_F(FakeNodeFixture, automatic_differentiation_works)
     ns_utils::print("Analytical df/dv : ", A(k, 6), analytical_df_dv_vec[static_cast<unsigned long>(k)]);
   }
 
-  //  // Debug
-  //  ns_utils::print("System dynamical equations values : ");
-  //  ns_eigen_utils::printEigenMat(f_of_dx);
-  //
-  //  ns_utils::print("Jacobians A and B : ");
-  //  ns_eigen_utils::printEigenMat(A);
-  //  ns_eigen_utils::printEigenMat(B);
-  //  // end of debug
+  // Debug
+  ns_eigen_utils::printEigenMat(f_of_dx, "System dynamical equations values : ");
+  ns_utils::print("Jacobians A and B : ");
+  ns_eigen_utils::printEigenMat(A);
+  ns_eigen_utils::printEigenMat(B);
+  // end of debug
 }
