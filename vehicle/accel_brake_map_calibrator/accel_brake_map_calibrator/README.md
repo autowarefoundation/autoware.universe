@@ -143,7 +143,7 @@ You can also save accel and brake map in the default directory where Autoware re
 
 ### Constant accel/brake command test
 
-These scripts are useful to test for accel brake map calibration with constant commands.
+These scripts are useful to test for accel brake map calibration. These generate an `ActuationCmd` with a constant accel/brake value given interactively by a user through CLI.
 
 - accel_tester.py
 - brake_tester.py
