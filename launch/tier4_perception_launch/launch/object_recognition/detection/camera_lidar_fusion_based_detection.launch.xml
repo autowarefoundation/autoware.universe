@@ -155,7 +155,7 @@
     <include file="$(find-pkg-share lidar_centerpoint)/launch/lidar_centerpoint.launch.xml">
       <arg name="input/pointcloud" value="$(var input/pointcloud)"/>
       <arg name="output/objects" value="objects"/>
-        <arg name="score_threshold" value="$(var score_threshold)"/>
+      <arg name="score_threshold" value="$(var score_threshold)"/>
     </include>
   </group>
 
