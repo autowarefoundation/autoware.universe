@@ -147,7 +147,7 @@ public:
         std::string("~/debug/path_with_lane_id/") + module_name, 1);
     }
     pub_virtual_wall_ = node.create_publisher<visualization_msgs::msg::MarkerArray>(
-      std::string("~/virtual_wall/") + module_name, 1);
+      std::string("~/virtual_wall/") + module_name, 5);
     pub_stop_reason_ =
       node.create_publisher<tier4_planning_msgs::msg::StopReasonArray>("~/output/stop_reasons", 1);
     pub_infrastructure_commands_ =
