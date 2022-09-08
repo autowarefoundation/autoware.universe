@@ -42,4 +42,8 @@ template void publishCloud<pcl::PointXYZI>(
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2> &, const pcl::PointCloud<pcl::PointXYZI> &,
   const rclcpp::Time &);
 
+template void publishCloud<pcl::PointXYZRGB>(
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2> &, const pcl::PointCloud<pcl::PointXYZRGB> &,
+  const rclcpp::Time &);
+
 }  // namespace vml_common

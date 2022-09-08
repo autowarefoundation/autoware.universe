@@ -8,24 +8,47 @@ namespace vml_common
 
 struct Color
 {
-  Color(float r, float g, float b) : r(r), g(g), b(b) {}
-  Color(const std_msgs::msg::ColorRGBA & rgba) : r(rgba.r), g(rgba.g), b(rgba.b) {}
-  Color(const cv::Scalar & rgb) : r(rgb[2] / 255.f), g(rgb[1] / 255.f), b(rgb[0] / 255.f) {}
+  Color(float r, float g, float b, float a = 1.0f) : r(r), g(g), b(b), a(a) {}
 
+  Color(const std_msgs::msg::ColorRGBA & rgba) : r(rgba.r), g(rgba.g), b(rgba.b), a(rgba.a) {}
+
+  Color(const cv::Scalar & rgb, float a = 1.0f)
+  : r(rgb[2] / 255.f), g(rgb[1] / 255.f), b(rgb[0] / 255.f), a(a)
+  {
+  }
+
+  operator uint32_t() const
+  {
+    union uchar4_uint32 {
+      uint8_t rgba[4];
+      uint32_t u32;
+    };
+    uchar4_uint32 tmp;
+    tmp.rgba[0] = static_cast<uint8_t>(r * 255);
+    tmp.rgba[1] = static_cast<uint8_t>(g * 255);
+    tmp.rgba[2] = static_cast<uint8_t>(b * 255);
+    tmp.rgba[3] = static_cast<uint8_t>(a * 255);
+    return tmp.u32;
+  }
   operator const cv::Scalar() const { return cv::Scalar(255 * b, 255 * g, 255 * r); }
   operator const std_msgs::msg::ColorRGBA() const
   {
     std_msgs::msg::ColorRGBA rgba;
-    rgba.a = 1.0f;
+    rgba.a = a;
     rgba.r = r;
     rgba.g = g;
     rgba.b = b;
     return rgba;
   }
 
-  float r, g, b;
+  float r, g, b, a;
 };
 
-Color toJet(float value);
-std_msgs::msg::ColorRGBA color(float red, float green, float blue, float alpha = 1.0f);
+namespace color_scale
+{
+Color hsv2Rgb(float h, float s, float v);
+Color rainbow(float value);
+Color blueRed(float value);
+}  // namespace color_scale
+
 }  // namespace vml_common

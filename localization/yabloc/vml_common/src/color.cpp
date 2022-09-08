@@ -1,8 +1,8 @@
 #include "vml_common/color.hpp"
 
-namespace vml_common
+namespace vml_common::color_scale
 {
-Color toJet(float value)
+Color rainbow(float value)
 {
   // clang-format off
   float r = 1.0f, g = 1.0f, b = 1.0f;
@@ -20,13 +20,34 @@ Color toJet(float value)
   return {r, g, b};
 }
 
-std_msgs::msg::ColorRGBA color(float red, float green, float blue, float alpha)
+Color hsv2Rgb(float h_, float s_, float v_)
 {
-  std_msgs::msg::ColorRGBA rgba;
-  rgba.r = red;
-  rgba.g = green;
-  rgba.b = blue;
-  rgba.a = alpha;
-  return rgba;
+  const float h = std::clamp(h_, 0.f, 360.f);
+  const float max = v_;
+  const float min = max * (1.0f - s_);
+
+  if (h < 60)
+    return {max, h / 60 * (max - min) + min, min};
+  else if (h < 120)
+    return {(120 - h) / 60 * (max - min) + min, max, min};
+  else if (h < 180)
+    return {min, max, (h - 120) / 60 * (max - min) + min};
+  else if (h < 240)
+    return {min, (240 - h) / 60 * (max - min) + min, max};
+  else if (h < 300)
+    return {(h - 240) / 60 * (max - min) + min, min, max};
+  else
+    return {max, min, (360 - h) / 60 * (max - min) + min};
 }
-}  // namespace vml_common
+
+Color blueRed(float value)
+{
+  value = std::clamp(value, 0.0f, 1.0f);
+  float h = (value < 0.5f) ? 0.f : 240.f;
+  float s = std::abs(value - 0.5f) / 0.5f;
+  float v = 1.0f;
+  return hsv2Rgb(h, s, v);
+  // return {h, s, v};
+}
+
+}  // namespace vml_common::color_scale

@@ -31,6 +31,11 @@ struct GroundPlane
 
   float height() const { return xyz.z(); }
 
+  Eigen::Quaternionf alignWithSlope(const Eigen::Quaternionf & q) const
+  {
+    return Eigen::Quaternionf{alignWithSlope(q.toRotationMatrix())};
+  }
+
   Eigen::Matrix3f alignWithSlope(const Eigen::Matrix3f & R) const
   {
     Eigen::Matrix3f R_;

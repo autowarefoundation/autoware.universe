@@ -124,7 +124,7 @@ void GnssParticleCorrector::publishMarker(const Eigen::Vector3f & position, bool
     marker.pose.position.z = latest_height_.data;
 
     float prob = (1 - likelihood_min_weight_) * i / 4 + likelihood_min_weight_;
-    marker.color = vml_common::toJet(prob);
+    marker.color = vml_common::color_scale::rainbow(prob);
     marker.color.a = 0.3f;
     marker.scale.x = 0.1;
     drawCircle(marker.points, inverseNormalPdf(prob, is_rtk_fixed));
