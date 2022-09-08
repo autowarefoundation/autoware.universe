@@ -200,7 +200,7 @@ boost::optional<DynamicObstacle> RunOutModule::detectCollision(
 
     // debug
     {
-      debug_ptr_->pushDebugPolygons(vehicle_poly);
+      debug_ptr_->pushPredictedVehiclePolygons(vehicle_poly);
       std::stringstream sstream;
       sstream << std::setprecision(4) << travel_time << "s";
       debug_ptr_->pushDebugTexts(sstream.str(), p2.pose, /* lateral_offset */ 3.0);
@@ -447,18 +447,18 @@ bool RunOutModule::checkCollisionWithCylinder(
   const auto bg_bounding_box_for_points =
     run_out_utils::createBoostPolyFromMsg(bounding_box_for_points);
 
-  // debug
-  debug_ptr_->pushDebugPolygons(bounding_box_for_points);
-
   // check collision with 2d polygon
   std::vector<tier4_autoware_utils::Point2d> collision_points_bg;
   bg::intersection(vehicle_polygon, bg_bounding_box_for_points, collision_points_bg);
 
   // no collision detected
   if (collision_points_bg.empty()) {
+    debug_ptr_->pushPredictedObstaclePolygons(bounding_box_for_points);
     return false;
   }
 
+  // detected collision
+  debug_ptr_->pushCollisionObstaclePolygons(bounding_box_for_points);
   for (const auto & p : collision_points_bg) {
     const auto p_msg =
       tier4_autoware_utils::createPoint(p.x(), p.y(), pose_with_range.pose_min.position.z);
@@ -512,18 +512,18 @@ bool RunOutModule::checkCollisionWithBoundingBox(
     createBoundingBoxForRangedPoints(pose_with_range, dimension.x / 2.0, dimension.y / 2.0);
   const auto bg_bounding_box = run_out_utils::createBoostPolyFromMsg(bounding_box);
 
-  // debug
-  debug_ptr_->pushDebugPolygons(bounding_box);
-
   // check collision with 2d polygon
   std::vector<tier4_autoware_utils::Point2d> collision_points_bg;
   bg::intersection(vehicle_polygon, bg_bounding_box, collision_points_bg);
 
   // no collision detected
   if (collision_points_bg.empty()) {
+    debug_ptr_->pushPredictedObstaclePolygons(bounding_box);
     return false;
   }
 
+  // detected collision
+  debug_ptr_->pushCollisionObstaclePolygons(bounding_box);
   for (const auto & p : collision_points_bg) {
     const auto p_msg =
       tier4_autoware_utils::createPoint(p.x(), p.y(), pose_with_range.pose_min.position.z);

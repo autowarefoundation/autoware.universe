@@ -98,7 +98,9 @@ public:
   void pushNearestCollisionPoint(const geometry_msgs::msg::Point & point);
   void pushStopPose(const geometry_msgs::msg::Pose & pose);
   void pushDebugLines(const std::vector<geometry_msgs::msg::Point> & debug_line);
-  void pushDebugPolygons(const std::vector<geometry_msgs::msg::Point> & debug_polygon);
+  void pushPredictedVehiclePolygons(const std::vector<geometry_msgs::msg::Point> & polygon);
+  void pushPredictedObstaclePolygons(const std::vector<geometry_msgs::msg::Point> & polygon);
+  void pushCollisionObstaclePolygons(const std::vector<geometry_msgs::msg::Point> & polygon);
   void pushDetectionAreaPolygons(const Polygon2d & debug_polygon);
   void pushDebugTexts(const TextWithPosition & debug_text);
   void pushDebugTexts(
@@ -123,7 +125,9 @@ private:
   std::vector<geometry_msgs::msg::Point> nearest_collision_point_;
   std::vector<geometry_msgs::msg::Pose> stop_pose_;
   std::vector<std::vector<geometry_msgs::msg::Point>> debug_lines_;
-  std::vector<std::vector<geometry_msgs::msg::Point>> debug_polygons_;
+  std::vector<std::vector<geometry_msgs::msg::Point>> predicted_vehicle_polygons_;
+  std::vector<std::vector<geometry_msgs::msg::Point>> predicted_obstacle_polygons_;
+  std::vector<std::vector<geometry_msgs::msg::Point>> collision_obstacle_polygons_;
   std::vector<std::vector<geometry_msgs::msg::Point>> detection_area_polygons_;
   std::vector<TextWithPosition> debug_texts_;
   DebugValues debug_values_;

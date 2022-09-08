@@ -52,6 +52,28 @@ RunOutDebug::TextWithPosition createDebugText(
   return text_with_position;
 }
 
+visualization_msgs::msg::MarkerArray createPolygonMarkerArray(
+  const std::vector<std::vector<geometry_msgs::msg::Point>> & poly, const rclcpp::Time & time,
+  const std::string ns, const geometry_msgs::msg::Vector3 & scale,
+  const std_msgs::msg::ColorRGBA & color)
+{
+  visualization_msgs::msg::MarkerArray marker_array;
+  for (size_t i = 0; i < poly.size(); i++) {
+    auto marker = createDefaultMarker(
+      "map", time, ns, i, visualization_msgs::msg::Marker::LINE_STRIP, scale, color);
+
+    for (const auto & p : poly.at(i)) {
+      marker.points.push_back(p);
+    }
+    // close the polygon
+    marker.points.push_back(poly.at(i).front());
+
+    marker_array.markers.push_back(marker);
+  }
+
+  return marker_array;
+}
+
 }  // namespace
 
 RunOutDebug::RunOutDebug(rclcpp::Node & node) : node_(node)
@@ -89,9 +111,21 @@ void RunOutDebug::pushDebugLines(const std::vector<geometry_msgs::msg::Point> & 
   debug_lines_.push_back(debug_line);
 }
 
-void RunOutDebug::pushDebugPolygons(const std::vector<geometry_msgs::msg::Point> & debug_polygon)
+void RunOutDebug::pushPredictedVehiclePolygons(
+  const std::vector<geometry_msgs::msg::Point> & polygon)
 {
-  debug_polygons_.push_back(debug_polygon);
+  predicted_vehicle_polygons_.push_back(polygon);
+}
+
+void RunOutDebug::pushPredictedObstaclePolygons(
+  const std::vector<geometry_msgs::msg::Point> & polygon)
+{
+  predicted_obstacle_polygons_.push_back(polygon);
+}
+void RunOutDebug::pushCollisionObstaclePolygons(
+  const std::vector<geometry_msgs::msg::Point> & polygon)
+{
+  collision_obstacle_polygons_.push_back(polygon);
 }
 
 void RunOutDebug::pushDetectionAreaPolygons(const Polygon2d & debug_polygon)
@@ -125,8 +159,10 @@ void RunOutDebug::clearDebugMarker()
   collision_points_.clear();
   nearest_collision_point_.clear();
   debug_lines_.clear();
-  debug_polygons_.clear();
   detection_area_polygons_.clear();
+  predicted_vehicle_polygons_.clear();
+  predicted_obstacle_polygons_.clear();
+  collision_obstacle_polygons_.clear();
   debug_texts_.clear();
 }
 
@@ -199,38 +235,45 @@ visualization_msgs::msg::MarkerArray RunOutDebug::createVisualizationMarkerArray
     }
   }
 
-  if (!debug_polygons_.empty()) {
+  if (!predicted_vehicle_polygons_.empty()) {
     auto marker = createDefaultMarker(
-      "map", current_time, "debug_polygons", 0, visualization_msgs::msg::Marker::LINE_LIST,
-      createMarkerScale(0.05, 0.0, 0.0), createMarkerColor(1.0, 1.0, 0.0, 0.999));
+      "map", current_time, "predicted_vehicle_polygons", 0,
+      visualization_msgs::msg::Marker::LINE_STRIP, createMarkerScale(0.05, 0.0, 0.0),
+      createMarkerColor(0.0, 1.0, 0.0, 0.999));
 
-    for (const auto & poly : debug_polygons_) {
-      for (size_t i = 0; i < poly.size() - 1; i++) {
-        marker.points.push_back(poly.at(i));
-        marker.points.push_back(poly.at(i + 1));
+    for (const auto & poly : predicted_vehicle_polygons_) {
+      for (const auto & p : poly) {
+        marker.points.push_back(p);
       }
-      marker.points.push_back(poly.back());
+      // close the polygon
       marker.points.push_back(poly.front());
     }
 
     msg.markers.push_back(marker);
   }
 
+  if (!predicted_obstacle_polygons_.empty()) {
+    appendMarkerArray(
+      createPolygonMarkerArray(
+        predicted_obstacle_polygons_, current_time, "predicted_obstacle_polygons",
+        createMarkerScale(0.02, 0.0, 0.0), createMarkerColor(1.0, 1.0, 0.0, 0.999)),
+      &msg);
+  }
+
+  if (!collision_obstacle_polygons_.empty()) {
+    appendMarkerArray(
+      createPolygonMarkerArray(
+        collision_obstacle_polygons_, current_time, "collision_obstacle_polygons",
+        createMarkerScale(0.04, 0.0, 0.0), createMarkerColor(1.0, 0.0, 0.0, 0.999)),
+      &msg);
+  }
+
   if (!detection_area_polygons_.empty()) {
-    auto marker = createDefaultMarker(
-      "map", current_time, "detection_area_polygon", 0, visualization_msgs::msg::Marker::LINE_LIST,
-      createMarkerScale(0.05, 0.0, 0.0), createMarkerColor(0.0, 0.0, 1.0, 0.999));
-
-    for (const auto & poly : detection_area_polygons_) {
-      for (size_t i = 0; i < poly.size() - 1; i++) {
-        marker.points.push_back(poly.at(i));
-        marker.points.push_back(poly.at(i + 1));
-      }
-      marker.points.push_back(poly.back());
-      marker.points.push_back(poly.front());
-    }
-
-    msg.markers.push_back(marker);
+    appendMarkerArray(
+      createPolygonMarkerArray(
+        detection_area_polygons_, current_time, "detection_area_polygons",
+        createMarkerScale(0.04, 0.0, 0.0), createMarkerColor(0.0, 0.0, 1.0, 0.999)),
+      &msg);
   }
 
   if (!debug_texts_.empty()) {
