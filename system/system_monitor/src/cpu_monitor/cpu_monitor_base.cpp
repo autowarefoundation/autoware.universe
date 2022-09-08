@@ -134,8 +134,31 @@ void CPUMonitorBase::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & st
   }
 
   // Get CPU Usage
-  bp::ipstream is_out;
-  bp::ipstream is_err;
+
+  // boost::process create file descriptor without O_CLOEXEC required for multithreading.
+  // So create file descriptor with O_CLOEXEC and pass it to boost::process.
+  int out_fd[2];
+  if (pipe2(out_fd, O_CLOEXEC) != 0) {
+    stat.summary(DiagStatus::ERROR, "pipe2 error");
+    stat.add("pipe2", strerror(errno));
+    cpu_usage.all.status = CpuStatus::STALE;
+    publishCpuUsage(cpu_usage);
+    return;
+  }
+  bp::pipe out_pipe{out_fd[0], out_fd[1]};
+  bp::ipstream is_out{std::move(out_pipe)};
+
+  int err_fd[2];
+  if (pipe2(err_fd, O_CLOEXEC) != 0) {
+    stat.summary(DiagStatus::ERROR, "pipe2 error");
+    stat.add("pipe2", strerror(errno));
+    cpu_usage.all.status = CpuStatus::STALE;
+    publishCpuUsage(cpu_usage);
+    return;
+  }
+  bp::pipe err_pipe{err_fd[0], err_fd[1]};
+  bp::ipstream is_err{std::move(err_pipe)};
+
   bp::child c("mpstat -P ALL 1 1 -o JSON", bp::std_out > is_out, bp::std_err > is_err);
   c.wait();
 
@@ -275,7 +298,8 @@ int CPUMonitorBase::CpuUsageToLevel(const std::string & cpu_name, float usage)
   if (usage >= usage_warn_) {
     if (usage_warn_check_cnt_[idx] < usage_warn_count_) {
       usage_warn_check_cnt_[idx]++;
-    } else {
+    }
+    if (usage_warn_check_cnt_[idx] >= usage_warn_count_) {
       level = DiagStatus::WARN;
     }
   } else {
@@ -284,7 +308,8 @@ int CPUMonitorBase::CpuUsageToLevel(const std::string & cpu_name, float usage)
   if (usage >= usage_error_) {
     if (usage_error_check_cnt_[idx] < usage_error_count_) {
       usage_error_check_cnt_[idx]++;
-    } else {
+    }
+    if (usage_error_check_cnt_[idx] >= usage_error_count_) {
       level = DiagStatus::ERROR;
     }
   } else {

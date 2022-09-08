@@ -15,6 +15,7 @@
 #ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__LANE_CHANGE_MODULE_HPP_
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__LANE_CHANGE_MODULE_HPP_
 
+#include "behavior_path_planner/scene_module/lane_change/debug.hpp"
 #include "behavior_path_planner/scene_module/lane_change/lane_change_path.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 
@@ -24,26 +25,25 @@
 
 #include <tf2/utils.h>
 
+#include <memory>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
 namespace behavior_path_planner
 {
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
+using marker_utils::CollisionCheckDebug;
 
 struct LaneChangeParameters
 {
-  double min_stop_distance;
-  double stop_time;
-  double hysteresis_buffer_distance;
   double lane_change_prepare_duration;
   double lane_changing_duration;
+  double minimum_lane_change_prepare_distance;
   double lane_change_finish_judge_buffer;
   double minimum_lane_change_velocity;
-  double prediction_duration;
   double prediction_time_resolution;
-  double static_obstacle_velocity_thresh;
   double maximum_deceleration;
   int lane_change_sampling_num;
   double abort_lane_change_velocity_thresh;
@@ -53,7 +53,7 @@ struct LaneChangeParameters
   bool enable_collision_check_at_prepare_phase;
   bool use_predicted_path_outside_lanelet;
   bool use_all_predicted_path;
-  bool enable_blocked_by_obstacle;
+  bool publish_debug_marker;
 };
 
 struct LaneChangeStatus
@@ -72,7 +72,8 @@ class LaneChangeModule : public SceneModuleInterface
 {
 public:
   LaneChangeModule(
-    const std::string & name, rclcpp::Node & node, const LaneChangeParameters & parameters);
+    const std::string & name, rclcpp::Node & node,
+    std::shared_ptr<LaneChangeParameters> parameters);
 
   BehaviorModuleOutput run() override;
 
@@ -102,10 +103,8 @@ public:
     return false;
   }
 
-  void setParameters(const LaneChangeParameters & parameters);
-
 private:
-  LaneChangeParameters parameters_;
+  std::shared_ptr<LaneChangeParameters> parameters_;
   LaneChangeStatus status_;
   PathShifter path_shifter_;
 
@@ -119,17 +118,17 @@ private:
 
   bool is_activated_ = false;
 
-  void waitApprovalLeft(const double distance)
+  void waitApprovalLeft(const double start_distance, const double finish_distance)
   {
     rtc_interface_left_.updateCooperateStatus(
-      uuid_left_, isExecutionReady(), distance, clock_->now());
+      uuid_left_, isExecutionReady(), start_distance, finish_distance, clock_->now());
     is_waiting_approval_ = true;
   }
 
-  void waitApprovalRight(const double distance)
+  void waitApprovalRight(const double start_distance, const double finish_distance)
   {
     rtc_interface_right_.updateCooperateStatus(
-      uuid_right_, isExecutionReady(), distance, clock_->now());
+      uuid_right_, isExecutionReady(), start_distance, finish_distance, clock_->now());
     is_waiting_approval_ = true;
   }
 
@@ -137,17 +136,20 @@ private:
   {
     if (candidate.lateral_shift > 0.0) {
       rtc_interface_left_.updateCooperateStatus(
-        uuid_left_, isExecutionReady(), candidate.distance_to_path_change, clock_->now());
+        uuid_left_, isExecutionReady(), candidate.start_distance_to_path_change,
+        candidate.finish_distance_to_path_change, clock_->now());
       return;
     }
     if (candidate.lateral_shift < 0.0) {
       rtc_interface_right_.updateCooperateStatus(
-        uuid_right_, isExecutionReady(), candidate.distance_to_path_change, clock_->now());
+        uuid_right_, isExecutionReady(), candidate.start_distance_to_path_change,
+        candidate.finish_distance_to_path_change, clock_->now());
       return;
     }
 
     RCLCPP_WARN_STREAM(
-      getLogger(), "Direction is UNKNOWN, distance = " << candidate.distance_to_path_change);
+      getLogger(),
+      "Direction is UNKNOWN, start_distance = " << candidate.start_distance_to_path_change);
   }
 
   void removeRTCStatus() override
@@ -167,11 +169,14 @@ private:
   void updateLaneChangeStatus();
 
   bool isSafe() const;
-  bool isLaneBlocked(const lanelet::ConstLanelets & lanes) const;
   bool isNearEndOfLane() const;
   bool isCurrentSpeedLow() const;
   bool isAbortConditionSatisfied() const;
   bool hasFinishedLaneChange() const;
+
+  void setObjectDebugVisualization() const;
+  mutable std::unordered_map<std::string, CollisionCheckDebug> object_debug_;
+  mutable std::vector<LaneChangePath> debug_valid_path_;
 };
 }  // namespace behavior_path_planner
 

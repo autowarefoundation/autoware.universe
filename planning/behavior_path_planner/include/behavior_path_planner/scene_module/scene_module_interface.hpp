@@ -30,11 +30,13 @@
 
 #include <behaviortree_cpp_v3/basic_types.h>
 
+#include <algorithm>
 #include <limits>
 #include <memory>
 #include <random>
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace behavior_path_planner
 {
@@ -83,7 +85,8 @@ struct CandidateOutput
   explicit CandidateOutput(const PathWithLaneId & path) : path_candidate{path} {}
   PathWithLaneId path_candidate{};
   double lateral_shift{0.0};
-  double distance_to_path_change{std::numeric_limits<double>::lowest()};
+  double start_distance_to_path_change{std::numeric_limits<double>::lowest()};
+  double finish_distance_to_path_change{std::numeric_limits<double>::lowest()};
 };
 
 class SceneModuleInterface
@@ -97,6 +100,12 @@ public:
     is_waiting_approval_{false},
     current_state_{BT::NodeStatus::IDLE}
   {
+    std::string module_ns;
+    module_ns.resize(name.size());
+    std::transform(name.begin(), name.end(), module_ns.begin(), tolower);
+
+    const auto ns = std::string("~/debug/") + module_ns;
+    pub_debug_marker_ = node.create_publisher<MarkerArray>(ns, 20);
   }
 
   virtual ~SceneModuleInterface() = default;
@@ -212,13 +221,13 @@ public:
    */
   void setData(const std::shared_ptr<const PlannerData> & data) { planner_data_ = data; }
 
+  void publishDebugMarker() { pub_debug_marker_->publish(debug_marker_); }
+
   std::string name() const { return name_; }
 
   rclcpp::Logger getLogger() const { return logger_; }
 
   std::shared_ptr<const PlannerData> planner_data_;
-
-  MarkerArray getDebugMarker() { return debug_marker_; }
 
   AvoidanceDebugMsgArray::SharedPtr getAvoidanceDebugMsgArray()
   {
@@ -234,20 +243,22 @@ private:
   rclcpp::Logger logger_;
 
 protected:
-  MarkerArray debug_marker_;
   rclcpp::Clock::SharedPtr clock_;
+  rclcpp::Publisher<MarkerArray>::SharedPtr pub_debug_marker_;
   mutable AvoidanceDebugMsgArray::SharedPtr debug_avoidance_msg_array_ptr_{};
+  mutable MarkerArray debug_marker_;
 
   std::shared_ptr<RTCInterface> rtc_interface_ptr_;
   UUID uuid_;
   bool is_waiting_approval_;
 
-  void updateRTCStatus(const double distance)
+  void updateRTCStatus(const double start_distance, const double finish_distance)
   {
     if (!rtc_interface_ptr_) {
       return;
     }
-    rtc_interface_ptr_->updateCooperateStatus(uuid_, isExecutionReady(), distance, clock_->now());
+    rtc_interface_ptr_->updateCooperateStatus(
+      uuid_, isExecutionReady(), start_distance, finish_distance, clock_->now());
   }
 
   virtual void removeRTCStatus()
@@ -271,6 +282,24 @@ protected:
     std::generate(uuid.uuid.begin(), uuid.uuid.end(), bit_eng);
 
     return uuid;
+  }
+
+  template <class T>
+  size_t findEgoIndex(const std::vector<T> & points) const
+  {
+    const auto & p = planner_data_;
+    return motion_utils::findFirstNearestIndexWithSoftConstraints(
+      points, p->self_pose->pose, p->parameters.ego_nearest_dist_threshold,
+      p->parameters.ego_nearest_yaw_threshold);
+  }
+
+  template <class T>
+  size_t findEgoSegmentIndex(const std::vector<T> & points) const
+  {
+    const auto & p = planner_data_;
+    return motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+      points, p->self_pose->pose, p->parameters.ego_nearest_dist_threshold,
+      p->parameters.ego_nearest_yaw_threshold);
   }
 
 public:
