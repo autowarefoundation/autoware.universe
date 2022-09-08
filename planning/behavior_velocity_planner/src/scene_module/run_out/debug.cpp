@@ -79,19 +79,22 @@ RunOutDebug::RunOutDebug(rclcpp::Node & node) : node_(node)
 
 void RunOutDebug::pushCollisionPoints(const geometry_msgs::msg::Point & point)
 {
-  collision_points_.push_back(point);
+  const auto point_with_height = createPoint(point.x, point.y, height_);
+  collision_points_.push_back(point_with_height);
 }
 
 void RunOutDebug::pushCollisionPoints(const std::vector<geometry_msgs::msg::Point> & points)
 {
   for (const auto & p : points) {
-    collision_points_.push_back(p);
+    const auto point_with_height = createPoint(p.x, p.y, height_);
+    collision_points_.push_back(point_with_height);
   }
 }
 
 void RunOutDebug::pushNearestCollisionPoint(const geometry_msgs::msg::Point & point)
 {
-  nearest_collision_point_.push_back(point);
+  const auto point_with_height = createPoint(point.x, point.y, height_);
+  nearest_collision_point_.push_back(point_with_height);
 }
 
 void RunOutDebug::pushStopPose(const geometry_msgs::msg::Pose & pose)
