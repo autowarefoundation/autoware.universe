@@ -42,16 +42,6 @@ RunOutDebug::TextWithPosition createDebugText(
   return text_with_position;
 }
 
-RunOutDebug::TextWithPosition createDebugText(
-  const std::string text, const geometry_msgs::msg::Point position)
-{
-  RunOutDebug::TextWithPosition text_with_position;
-  text_with_position.text = text;
-  text_with_position.position = position;
-
-  return text_with_position;
-}
-
 visualization_msgs::msg::MarkerArray createPolygonMarkerArray(
   const std::vector<std::vector<geometry_msgs::msg::Point>> & poly, const rclcpp::Time & time,
   const std::string ns, const geometry_msgs::msg::Vector3 & scale,
@@ -136,20 +126,12 @@ void RunOutDebug::pushDetectionAreaPolygons(const Polygon2d & debug_polygon)
   detection_area_polygons_.push_back(ros_points);
 }
 
-void RunOutDebug::pushDebugTexts(const TextWithPosition & debug_text)
+void RunOutDebug::pushTravelTimeTexts(
+  const double travel_time, const geometry_msgs::msg::Pose pose, const float lateral_offset)
 {
-  debug_texts_.push_back(debug_text);
-}
-
-void RunOutDebug::pushDebugTexts(
-  const std::string text, const geometry_msgs::msg::Pose pose, const float lateral_offset)
-{
-  debug_texts_.push_back(createDebugText(text, pose, lateral_offset));
-}
-
-void RunOutDebug::pushDebugTexts(const std::string text, const geometry_msgs::msg::Point position)
-{
-  debug_texts_.push_back(createDebugText(text, position));
+  std::stringstream sstream;
+  sstream << std::setprecision(4) << travel_time << "s";
+  travel_time_texts_.push_back(createDebugText(sstream.str(), pose, lateral_offset));
 }
 
 void RunOutDebug::clearDebugMarker()
@@ -160,7 +142,7 @@ void RunOutDebug::clearDebugMarker()
   predicted_vehicle_polygons_.clear();
   predicted_obstacle_polygons_.clear();
   collision_obstacle_polygons_.clear();
-  debug_texts_.clear();
+  travel_time_texts_.clear();
 }
 
 visualization_msgs::msg::MarkerArray RunOutDebug::createVisualizationMarkerArray()
@@ -259,13 +241,14 @@ visualization_msgs::msg::MarkerArray RunOutDebug::createVisualizationMarkerArray
       &msg);
   }
 
-  if (!debug_texts_.empty()) {
+  if (!travel_time_texts_.empty()) {
     auto marker = createDefaultMarker(
-      "map", current_time, "debug_texts", 0, visualization_msgs::msg::Marker::TEXT_VIEW_FACING,
-      createMarkerScale(0.0, 0.0, 0.8), createMarkerColor(1.0, 1.0, 1.0, 0.999));
+      "map", current_time, "travel_time_texts", 0,
+      visualization_msgs::msg::Marker::TEXT_VIEW_FACING, createMarkerScale(0.0, 0.0, 0.8),
+      createMarkerColor(1.0, 1.0, 1.0, 0.999));
 
     constexpr float height_offset = 2.0;
-    for (const auto & text : debug_texts_) {
+    for (const auto & text : travel_time_texts_) {
       marker.pose.position = text.position;
       marker.pose.position.z += height_offset;
       marker.text = text.text;

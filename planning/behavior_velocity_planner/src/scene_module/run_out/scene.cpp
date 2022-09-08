@@ -201,13 +201,8 @@ boost::optional<DynamicObstacle> RunOutModule::detectCollision(
 
     const auto vehicle_poly = createVehiclePolygon(p2.pose);
 
-    // debug
-    {
-      debug_ptr_->pushPredictedVehiclePolygons(vehicle_poly);
-      std::stringstream sstream;
-      sstream << std::setprecision(4) << travel_time << "s";
-      debug_ptr_->pushDebugTexts(sstream.str(), p2.pose, /* lateral_offset */ 3.0);
-    }
+    debug_ptr_->pushPredictedVehiclePolygons(vehicle_poly);
+    debug_ptr_->pushTravelTimeTexts(travel_time, p2.pose, /* lateral_offset */ 3.0);
 
     auto obstacles_collision =
       checkCollisionWithObstacles(dynamic_obstacles, vehicle_poly, travel_time);
