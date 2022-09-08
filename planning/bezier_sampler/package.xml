@@ -9,6 +9,8 @@
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
+  <build_depend>autoware_cmake</build_depend>
+
   <depend>autoware_auto_planning_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>nav_msgs</depend>
@@ -18,7 +20,7 @@
   <depend>tf2_ros</depend>
   <depend>tier4_autoware_utils</depend>
 
-  <test_depend>ament_cmake_gtest</test_depend>
+  <test_depend>ament_cmake_ros</test_depend>
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>
 
