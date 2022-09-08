@@ -64,7 +64,8 @@
       <param name="use_iou" value="true"/>
       <param name="use_iou_x" value="false"/>
       <param name="use_iou_y" value="false"/>
-      <param name="iou_threshold" value="0.35"/>
+      <param name="iou_threshold" value="0.3"/>
+      <param name="score_threshold" value="0.35"/>
       <param name="rois_number" value="$(var input/rois_number)"/>
       <remap from="input" to="$(var input/objects)"/>
       <remap from="output" to="$(var output/objects)"/>

@@ -30,6 +30,8 @@ public:
   explicit RoiDetectedObjectFusionNode(const rclcpp::NodeOptions & options);
 
 protected:
+  void preprocess(DetectedObjects & output_msg) override;
+
   void fuseOnSingleImage(
     const DetectedObjects & input_object_msg, const std::size_t image_id,
     const DetectedObjectsWithFeature & input_roi_msg,
@@ -46,10 +48,21 @@ protected:
     const std::map<std::size_t, sensor_msgs::msg::RegionOfInterest> & object_roi_map,
     std::vector<DetectedObject> & output_objects);
 
+  void checkObjects(
+    const std::vector<DetectedObjectWithFeature> & image_rois,
+    const std::map<std::size_t, sensor_msgs::msg::RegionOfInterest> & object_roi_map);
+
+  void publish(const DetectedObjects & output_msg) override;
+
   bool use_iou_{false};
   bool use_iou_x_{false};
   bool use_iou_y_{false};
   float iou_threshold_{0.0f};
+  float score_threshold_{0.35f};
+  std::vector<bool> is_output_object_;
+
+  rclcpp::Publisher<DetectedObjects>::SharedPtr low_score_objects_pub_ptr_,
+    pos_low_score_objects_pub_ptr_;
 
   bool out_of_scope(const DetectedObject & obj);
 };

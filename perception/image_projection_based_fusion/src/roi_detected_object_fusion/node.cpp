@@ -27,12 +27,37 @@ RoiDetectedObjectFusionNode::RoiDetectedObjectFusionNode(const rclcpp::NodeOptio
   use_iou_y_ = declare_parameter("use_iou_y", false);
   use_iou_ = declare_parameter("use_iou", false);
   iou_threshold_ = declare_parameter("iou_threshold", 0.1);
+  score_threshold_ = declare_parameter("score_threshold", 0.35);
+
+  low_score_objects_pub_ptr_ = create_publisher<DetectedObjects>("~/debug/low_score_objects", 1);
+  pos_low_score_objects_pub_ptr_ =
+    create_publisher<DetectedObjects>("~/debug/pos_low_score_objects", 1);
+}
+
+void RoiDetectedObjectFusionNode::preprocess(DetectedObjects & output_msg)
+{
+  double min_score = 1.0f;
+  is_output_object_.clear();
+  is_output_object_.resize(output_msg.objects.size());
+  for (std::size_t i = 0; i < output_msg.objects.size(); ++i) {
+    if (output_msg.objects.at(i).existence_probability >= score_threshold_) {
+      is_output_object_.at(i) = true;
+    } else {
+      is_output_object_.at(i) = false;
+    }
+    if (output_msg.objects.at(i).existence_probability < min_score) {
+      min_score = output_msg.objects.at(i).existence_probability;
+    }
+  }
+
+  // std::cout << "min_score " << min_score << std::endl;
 }
 
 void RoiDetectedObjectFusionNode::fuseOnSingleImage(
   const DetectedObjects & input_object_msg, const std::size_t image_id,
   const DetectedObjectsWithFeature & input_roi_msg,
-  const sensor_msgs::msg::CameraInfo & camera_info, DetectedObjects & output_object_msg)
+  const sensor_msgs::msg::CameraInfo & camera_info,
+  DetectedObjects & output_object_msg __attribute__((unused)))
 {
   Eigen::Affine3d object2camera_affine;
   {
@@ -56,8 +81,9 @@ void RoiDetectedObjectFusionNode::fuseOnSingleImage(
     input_object_msg.objects, static_cast<double>(camera_info.width),
     static_cast<double>(camera_info.height), object2camera_affine, camera_projection,
     object_roi_map);
-  updateDetectedObjectClassification(
-    input_roi_msg.feature_objects, object_roi_map, output_object_msg.objects);
+  checkObjects(input_roi_msg.feature_objects, object_roi_map);
+  // updateDetectedObjectClassification(
+  //   input_roi_msg.feature_objects, object_roi_map, output_object_msg.objects);
 
   if (debugger_) {
     debugger_->image_rois_.reserve(input_roi_msg.feature_objects.size());
@@ -173,6 +199,42 @@ void RoiDetectedObjectFusionNode::updateDetectedObjectClassification(
       max_iou > iou_threshold_ &&
       output_objects.at(object_i).existence_probability <= image_roi.object.existence_probability) {
       output_objects.at(object_i).classification = image_roi.object.classification;
+      output_objects.at(object_i).classification.front().label = 4;
+    }
+  }
+}
+
+void RoiDetectedObjectFusionNode::checkObjects(
+  const std::vector<DetectedObjectWithFeature> & image_rois,
+  const std::map<std::size_t, sensor_msgs::msg::RegionOfInterest> & object_roi_map)
+{
+  for (const auto & object_pair : object_roi_map) {
+    const auto object_i = object_pair.first;
+    if (is_output_object_.at(object_i)) {
+      continue;
+    }
+
+    double max_iou = 0.0;
+    const auto & object_roi = object_pair.second;
+    for (const auto & image_roi : image_rois) {
+      double iou(0.0), iou_x(0.0), iou_y(0.0);
+      if (use_iou_) {
+        iou = calcIoU(object_roi, image_roi.feature.roi);
+      }
+      if (use_iou_x_) {
+        iou_x = calcIoUX(object_roi, image_roi.feature.roi);
+      }
+      if (use_iou_y_) {
+        iou_y = calcIoUY(object_roi, image_roi.feature.roi);
+      }
+
+      if (iou + iou_x + iou_y > max_iou) {
+        max_iou = iou + iou_x + iou_y;
+      }
+    }
+
+    if (max_iou >= iou_threshold_) {
+      is_output_object_.at(object_i) = true;
     }
   }
 }
@@ -198,6 +260,36 @@ bool RoiDetectedObjectFusionNode::out_of_scope(const DetectedObject & obj)
 
   is_out = false;
   return is_out;
+}
+
+void RoiDetectedObjectFusionNode::publish(const DetectedObjects & output_msg)
+{
+  // if (pub_ptr_->get_subscription_count() < 1) {
+  //   return;
+  // }
+
+  DetectedObjects target_objects_msg, positive_low_score_objects_msg, low_score_objects_msg;
+  target_objects_msg.header = output_msg.header;
+  positive_low_score_objects_msg.header = output_msg.header;
+  low_score_objects_msg.header = output_msg.header;
+
+  for (std::size_t i = 0; i < is_output_object_.size(); ++i) {
+    if (is_output_object_.at(i)) {
+      target_objects_msg.objects.emplace_back(output_msg.objects.at(i));
+      if (output_msg.objects.at(i).existence_probability < score_threshold_) {
+        positive_low_score_objects_msg.objects.emplace_back(output_msg.objects.at(i));
+      }
+    } else {
+      low_score_objects_msg.objects.emplace_back(output_msg.objects.at(i));
+    }
+  }
+
+  pub_ptr_->publish(target_objects_msg);
+  pos_low_score_objects_pub_ptr_->publish(positive_low_score_objects_msg);
+  low_score_objects_pub_ptr_->publish(low_score_objects_msg);
+  // std::cout << "positive_low_score_objects_msg " << positive_low_score_objects_msg.objects.size()
+  // << std::endl; std::cout << "low_score_objects_msg " << low_score_objects_msg.objects.size() <<
+  // std::endl;
 }
 
 }  // namespace image_projection_based_fusion

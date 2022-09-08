@@ -74,7 +74,7 @@ protected:
   // set args if you need
   virtual void postprocess(Msg & output_msg);
 
-  void publish(const Msg & output_msg);
+  virtual void publish(const Msg & output_msg);
 
   std::size_t rois_number_{1};
   tf2_ros::Buffer tf_buffer_;
