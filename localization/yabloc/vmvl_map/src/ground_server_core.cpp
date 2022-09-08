@@ -24,23 +24,22 @@ GroundServer::GroundServer()
   using std::placeholders::_2;
   const rclcpp::QoS map_qos = rclcpp::QoS(10).transient_local().reliable();
 
-  auto cb_pose = std::bind(&GroundServer::callbackPoseStamped, this, _1);
-  auto cb_map = std::bind(&GroundServer::callbackMap, this, _1);
-  auto cb_service = std::bind(&GroundServer::callbackService, this, _1, _2);
+  auto on_pose = std::bind(&GroundServer::onPoseStamped, this, _1);
+  auto on_map = std::bind(&GroundServer::onMap, this, _1);
+  auto on_service = std::bind(&GroundServer::onService, this, _1, _2);
 
-  sub_map_ = create_subscription<HADMapBin>("/map/vector_map", map_qos, cb_map);
-  sub_pose_stamped_ = create_subscription<PoseStamped>("/particle_pose", 10, cb_pose);
+  service_ = create_service<Ground>("ground", on_service);
+  sub_map_ = create_subscription<HADMapBin>("/map/vector_map", map_qos, on_map);
+  sub_pose_stamped_ = create_subscription<PoseStamped>("/particle_pose", 10, on_pose);
 
   pub_ground_height_ = create_publisher<Float32>("/height", 10);
   pub_ground_plane_ = create_publisher<Float32Array>("/ground", 10);
   pub_marker_ = create_publisher<Marker>("/ground_marker", 10);
   pub_string_ = create_publisher<String>("/ground_status", 10);
   pub_near_cloud_ = create_publisher<PointCloud2>("/near_cloud", 10);
-
-  service_ = create_service<Ground>("ground", cb_service);
 }
 
-void GroundServer::callbackPoseStamped(const PoseStamped & msg)
+void GroundServer::onPoseStamped(const PoseStamped & msg)
 {
   if (kdtree_ == nullptr) return;
   GroundPlane ground_plane = estimateGround(msg.pose.position);
@@ -75,7 +74,7 @@ void GroundServer::callbackPoseStamped(const PoseStamped & msg)
   }
 }
 
-void GroundServer::callbackMap(const HADMapBin & msg)
+void GroundServer::onMap(const HADMapBin & msg)
 {
   lanelet::LaneletMapPtr lanelet_map = fromBinMsg(msg);
 
@@ -170,20 +169,19 @@ GroundServer::GroundPlane GroundServer::estimateGround(const Point & point)
 {
   std::vector<int> k_indices, r_indices;
   std::vector<float> distances;
-  pcl::PointXYZ p;
-  p.x = point.x;
-  p.y = point.y;
-  p.z = estimateHeight(point);
-  kdtree_->nearestKSearch(p, K, k_indices, distances);
-  kdtree_->radiusSearch(p, R, r_indices, distances);
+  pcl::PointXYZ xyz;
+  xyz.x = point.x;
+  xyz.y = point.y;
+  xyz.z = estimateHeight(point);
+  kdtree_->nearestKSearch(xyz, K, k_indices, distances);
+  kdtree_->radiusSearch(xyz, R, r_indices, distances);
 
   std::vector<int> raw_indices = mergeIndices(k_indices, r_indices);
   std::vector<int> indices = ransacEstimation(raw_indices);
   if (indices.empty()) indices = raw_indices;
   last_near_point_indices_ = indices;
 
-  Eigen::Vector3f v = cloud_->at(k_indices.front()).getVector3fMap();
-  const float height = v.z();
+  const float height = cloud_->at(k_indices.front()).getVector3fMap().z();
 
   GroundPlane plane;
   plane.xyz.x() = point.x;
@@ -204,8 +202,11 @@ GroundServer::GroundPlane GroundServer::estimateGround(const Point & point)
 
   // Remove NaN
   if (normal.hasNaN()) normal = Eigen::Vector3f::UnitZ();
-  // Remove too large tilt
-  if ((normal.dot(Eigen::Vector3f::UnitZ())) < 0.707) normal = Eigen::Vector3f::UnitZ();
+  // NOTE: Remove too large tilt
+  if ((normal.dot(Eigen::Vector3f::UnitZ())) < 0.707) {
+    normal = Eigen::Vector3f::UnitZ();
+    RCLCPP_WARN_STREAM(get_logger(), "Reject too large tilt of ground");
+  }
 
   // Smoothing
   vector_buffer_.push_back(normal);
@@ -219,7 +220,7 @@ GroundServer::GroundPlane GroundServer::estimateGround(const Point & point)
   return plane;
 }
 
-void GroundServer::callbackService(
+void GroundServer::onService(
   const std::shared_ptr<Ground::Request> request, std::shared_ptr<Ground::Response> response)
 {
   if (kdtree_ == nullptr) return;
@@ -237,7 +238,7 @@ void GroundServer::publishMarker(const GroundPlane & plane)
   marker.header.stamp = get_clock()->now();
   marker.type = Marker::TRIANGLE_LIST;
   marker.id = 0;
-  marker.color = vml_common::color(0.0, 0.5, 0.0, 0.1);
+  marker.color = vml_common::Color(0.0, 0.5, 0.0, 0.1);
   marker.scale.x = 1.0;
   marker.scale.y = 1.0;
   marker.scale.z = 1.0;

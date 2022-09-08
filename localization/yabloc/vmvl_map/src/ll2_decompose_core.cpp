@@ -109,7 +109,7 @@ Ll2Decomposer::MarkerArray Ll2Decomposer::makeSignMarkerMsg(
     marker.header.frame_id = "map";
     marker.header.stamp = get_clock()->now();
     marker.type = Marker::LINE_STRIP;
-    marker.color = vml_common::color(0.6f, 0.6f, 0.6f, 0.999f);
+    marker.color = vml_common::Color(0.6f, 0.6f, 0.6f, 0.999f);
     marker.scale.x = 0.1;
     marker.ns = ns;
     marker.id = id++;

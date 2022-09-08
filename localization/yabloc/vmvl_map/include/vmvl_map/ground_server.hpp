@@ -58,15 +58,14 @@ private:
 
   std::vector<int> last_near_point_indices_;
 
-  void callbackMap(const HADMapBin & msg);
-  void callbackPoseStamped(const PoseStamped & msg);
+  void onMap(const HADMapBin & msg);
+  void onPoseStamped(const PoseStamped & msg);
+  void onService(
+    const std::shared_ptr<Ground::Request> request, std::shared_ptr<Ground::Response> response);
 
   GroundPlane estimateGround(const Point & point);
   float estimateHeight(const Point & point);
   void publishMarker(const GroundPlane & plane);
-
-  void callbackService(
-    const std::shared_ptr<Ground::Request> request, std::shared_ptr<Ground::Response> response);
 
   std::vector<int> ransacEstimation(const std::vector<int> & indices_raw);
 };
