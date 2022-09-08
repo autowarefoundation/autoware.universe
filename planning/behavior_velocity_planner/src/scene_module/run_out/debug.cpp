@@ -200,7 +200,7 @@ visualization_msgs::msg::MarkerArray RunOutDebug::createVisualizationMarkerArray
   if (!collision_points_.empty()) {
     auto marker = createDefaultMarker(
       "map", current_time, "collision_points", 0, visualization_msgs::msg::Marker::SPHERE_LIST,
-      createMarkerScale(0.5, 0.5, 0.5), createMarkerColor(0, 0.0, 1.0, 0.999));
+      createMarkerScale(0.3, 0.3, 0.3), createMarkerColor(0, 0.0, 1.0, 0.999));
     for (const auto & p : collision_points_) {
       marker.points.push_back(p);
     }
@@ -210,7 +210,7 @@ visualization_msgs::msg::MarkerArray RunOutDebug::createVisualizationMarkerArray
   if (!nearest_collision_point_.empty()) {
     auto marker = createDefaultMarker(
       "map", current_time, "nearest_collision_point", 0,
-      visualization_msgs::msg::Marker::SPHERE_LIST, createMarkerScale(1.0, 1.0, 1.0),
+      visualization_msgs::msg::Marker::SPHERE_LIST, createMarkerScale(0.6, 0.6, 0.6),
       createMarkerColor(1.0, 0, 0, 0.999));
     for (const auto & p : nearest_collision_point_) {
       marker.points.push_back(p);
