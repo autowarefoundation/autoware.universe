@@ -30,7 +30,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     # -Wno-error=unused-but-set-variable
     # -Wno-conversion
     # -Wno-sign-conversion
-    -Wno-sign-compare
+    # -Wno-sign-compare
     -Wdouble-promotion
     -Wfloat-equal
     -Waddress
@@ -88,12 +88,12 @@ endif()
 #endif (${AVX_FOUND})
 
 
-# CppAD
+## CppAD
 #message("\n### Configuring CppAD ###")
 #file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/runtime_lib/CppAD)
 #execute_process(COMMAND cmake ${CMAKE_CURRENT_LIST_DIR}/runtime_lib/CppAD
-#WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/runtime_lib/CppAD)
-
+#  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/runtime_lib/CppAD)
+#
 ## CppADCodeGen
 #message("\n### Configuring CppADCodeGen ###")
 #file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/runtime_lib/CppADCodeGen)
@@ -128,14 +128,12 @@ set(NONLINEAR_MPC_CORE_SOURCE
   src/nonlinear_mpc_core/nmpc_optimization.cpp
   src/nonlinear_mpc_core/nmpc_simulation.cpp
   src/nonlinear_mpc_core/initialization_lpv.cpp
-  src/utils/nmpc_utils.cpp
-  )
+  src/utils/nmpc_utils.cpp)
 
 set(NONLINEAR_MPC_CORE_INCLUDE_DIR
   include/nonlinear_mpc_core
   include/utils
-  include/vehicle_models
-  )
+  include/vehicle_models)
 
 
 ament_auto_add_library(${NMPC_CORE}
@@ -151,8 +149,7 @@ set(NMPC_NODE mpc_nonlinear_node)
 ament_auto_add_library(mpc_nonlinear_node SHARED
   src/nonlinear_mpc_node/nonlinear_mpc_node.cpp
   src/nonlinear_mpc_node/nonlinear_mpc_node_visualization.cpp
-  src/nonlinear_mpc_node/nonlinear_mpc_state_machine.cpp
-  )
+  src/nonlinear_mpc_node/nonlinear_mpc_state_machine.cpp)
 
 #--------------- NMPC Core ------------------------------------------------------
 set(NONLINEAR_MPC_CORE_SOURCE
@@ -167,8 +164,7 @@ set(NONLINEAR_MPC_CORE_INCLUDE_DIR
 # ------------- REGISTER and INSTALL ------------------------------------------
 rclcpp_components_register_node(${NMPC_NODE}
   PLUGIN "ns_mpc_nonlinear::NonlinearMPCNode"
-  EXECUTABLE ${NMPC_NODE}_exe
-  )
+  EXECUTABLE ${NMPC_NODE}_exe)
 
 ## ----------------- Library Tests----------------------------------------------
 
