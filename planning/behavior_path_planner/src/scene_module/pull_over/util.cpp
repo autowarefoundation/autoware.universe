@@ -371,7 +371,7 @@ bool isPullOverPathSafe(
   const PathWithLaneId & path, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & target_lanes,
   const PredictedObjects::ConstSharedPtr dynamic_objects, const Pose & current_pose,
-  const Twist & current_twist, const double vehicle_width,
+  const size_t current_seg_idx, const Twist & current_twist, const double vehicle_width,
   const PullOverParameters & ros_parameters, const bool use_buffer, const double acceleration)
 {
   if (path.points.empty()) {
@@ -414,17 +414,18 @@ bool isPullOverPathSafe(
   // find obstacle in pull_over target lanes
   // retrieve lanes that are merging target lanes as well
   const auto target_lane_object_indices =
-    util::filterObjectsByLanelets(*dynamic_objects, target_lanes);
+    util::filterObjectIndicesByLanelets(*dynamic_objects, target_lanes);
 
   // find objects in current lane
-  const auto current_lane_object_indices_lanelet = util::filterObjectsByLanelets(
+  const auto current_lane_object_indices_lanelet = util::filterObjectIndicesByLanelets(
     *dynamic_objects, current_lanes, arc.length, arc.length + check_distance);
-  const auto current_lane_object_indices = util::filterObjectsByPath(
+  const auto current_lane_object_indices = util::filterObjectsIndicesByPath(
     *dynamic_objects, current_lane_object_indices_lanelet, path,
     vehicle_width / 2 + lateral_buffer);
 
   const auto & vehicle_predicted_path = util::convertToPredictedPath(
-    path, current_twist, current_pose, target_lane_check_end_time, time_resolution, acceleration);
+    path, current_twist, current_pose, current_seg_idx, target_lane_check_end_time, time_resolution,
+    acceleration);
 
   // Collision check for objects in current lane
   for (const auto & i : current_lane_object_indices) {

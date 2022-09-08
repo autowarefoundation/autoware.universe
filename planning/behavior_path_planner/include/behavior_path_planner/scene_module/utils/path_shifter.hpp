@@ -96,7 +96,7 @@ public:
    * @details The previous offset information is stored in the base_offset_.
    *          This should be called after generate().
    */
-  void removeBehindShiftPointAndSetBaseOffset(const Point & base);
+  void removeBehindShiftPointAndSetBaseOffset(const Pose & pose, const size_t nearest_idx);
 
   ////////////////////////////////////////
   // Utility Functions
@@ -169,13 +169,6 @@ public:
    */
   std::vector<double> calcLateralJerk();
 
-  /**
-   * @brief  Calculate shift point from path arclength for start and end point.
-   */
-  static bool calcShiftPointFromArcLength(
-    const PathWithLaneId & path, const Point & origin, double dist_to_start, double dist_to_end,
-    double shift_length, ShiftPoint * shift_point);
-
 private:
   // The reference path along which the shift will be performed.
   PathWithLaneId reference_path_;
@@ -190,6 +183,7 @@ private:
   bool is_index_aligned_{false};
 
   rclcpp::Logger logger_{rclcpp::get_logger("behavior_path_planner").get_child("path_shifter")};
+  rclcpp::Clock clock_{RCL_ROS_TIME};
 
   /**
    * @brief Calculate path index for shift_points and set is_index_aligned_ to true.
