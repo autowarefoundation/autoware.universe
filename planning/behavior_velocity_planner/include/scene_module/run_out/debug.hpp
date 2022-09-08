@@ -110,6 +110,7 @@ public:
   void publishDebugValue();
   void publishDebugTrajectory(const Trajectory & trajectory);
   visualization_msgs::msg::MarkerArray createVisualizationMarkerArray();
+  void setHeight(const double height);
   visualization_msgs::msg::MarkerArray createVirtualWallMarkerArray();
 
 private:
@@ -131,6 +132,7 @@ private:
   std::vector<TextWithPosition> debug_texts_;
   DebugValues debug_values_;
   AccelReason accel_reason_;
+  double height_{0};
 };
 
 }  // namespace behavior_velocity_planner

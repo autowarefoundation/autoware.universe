@@ -55,7 +55,7 @@ RunOutDebug::TextWithPosition createDebugText(
 visualization_msgs::msg::MarkerArray createPolygonMarkerArray(
   const std::vector<std::vector<geometry_msgs::msg::Point>> & poly, const rclcpp::Time & time,
   const std::string ns, const geometry_msgs::msg::Vector3 & scale,
-  const std_msgs::msg::ColorRGBA & color)
+  const std_msgs::msg::ColorRGBA & color, const double height)
 {
   visualization_msgs::msg::MarkerArray marker_array;
   for (size_t i = 0; i < poly.size(); i++) {
@@ -63,10 +63,13 @@ visualization_msgs::msg::MarkerArray createPolygonMarkerArray(
       "map", time, ns, i, visualization_msgs::msg::Marker::LINE_STRIP, scale, color);
 
     for (const auto & p : poly.at(i)) {
-      marker.points.push_back(p);
+      const auto p_with_height = createPoint(p.x, p.y, height);
+      marker.points.push_back(p_with_height);
     }
     // close the polygon
-    marker.points.push_back(poly.at(i).front());
+    const auto & p = poly.at(i).front();
+    const auto p_with_height = createPoint(p.x, p.y, height);
+    marker.points.push_back(p_with_height);
 
     marker_array.markers.push_back(marker);
   }
@@ -236,7 +239,7 @@ visualization_msgs::msg::MarkerArray RunOutDebug::createVisualizationMarkerArray
     appendMarkerArray(
       createPolygonMarkerArray(
         predicted_obstacle_polygons_, current_time, "predicted_obstacle_polygons",
-        createMarkerScale(0.02, 0.0, 0.0), createMarkerColor(1.0, 1.0, 0.0, 0.999)),
+        createMarkerScale(0.02, 0.0, 0.0), createMarkerColor(1.0, 1.0, 0.0, 0.999), height_),
       &msg);
   }
 
@@ -244,7 +247,7 @@ visualization_msgs::msg::MarkerArray RunOutDebug::createVisualizationMarkerArray
     appendMarkerArray(
       createPolygonMarkerArray(
         collision_obstacle_polygons_, current_time, "collision_obstacle_polygons",
-        createMarkerScale(0.04, 0.0, 0.0), createMarkerColor(1.0, 0.0, 0.0, 0.999)),
+        createMarkerScale(0.04, 0.0, 0.0), createMarkerColor(1.0, 0.0, 0.0, 0.999), height_),
       &msg);
   }
 
@@ -252,7 +255,7 @@ visualization_msgs::msg::MarkerArray RunOutDebug::createVisualizationMarkerArray
     appendMarkerArray(
       createPolygonMarkerArray(
         detection_area_polygons_, current_time, "detection_area_polygons",
-        createMarkerScale(0.04, 0.0, 0.0), createMarkerColor(0.0, 0.0, 1.0, 0.999)),
+        createMarkerScale(0.04, 0.0, 0.0), createMarkerColor(0.0, 0.0, 1.0, 0.999), height_),
       &msg);
   }
 
@@ -296,6 +299,8 @@ void RunOutDebug::publishDebugTrajectory(const Trajectory & trajectory)
 {
   pub_debug_trajectory_->publish(trajectory);
 }
+
+void RunOutDebug::setHeight(const double height) { height_ = height; }
 
 // scene module
 visualization_msgs::msg::MarkerArray RunOutModule::createDebugMarkerArray()

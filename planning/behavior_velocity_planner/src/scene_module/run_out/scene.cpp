@@ -55,6 +55,9 @@ bool RunOutModule::modifyPathVelocity(
   const auto current_acc = planner_data_->current_accel.get();
   const auto & current_pose = planner_data_->current_pose.pose;
 
+  // set height of debug data
+  debug_ptr_->setHeight(current_pose.position.z);
+
   // smooth velocity of the path to calculate time to collision accurately
   PathWithLaneId smoothed_path;
   if (!smoothPath(*path, smoothed_path, planner_data_)) {
