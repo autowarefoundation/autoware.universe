@@ -106,11 +106,6 @@ void RunOutDebug::pushStopPose(const geometry_msgs::msg::Pose & pose)
   stop_pose_.push_back(pose);
 }
 
-void RunOutDebug::pushDebugLines(const std::vector<geometry_msgs::msg::Point> & debug_line)
-{
-  debug_lines_.push_back(debug_line);
-}
-
 void RunOutDebug::pushPredictedVehiclePolygons(
   const std::vector<geometry_msgs::msg::Point> & polygon)
 {
@@ -158,7 +153,6 @@ void RunOutDebug::clearDebugMarker()
 {
   collision_points_.clear();
   nearest_collision_point_.clear();
-  debug_lines_.clear();
   detection_area_polygons_.clear();
   predicted_vehicle_polygons_.clear();
   predicted_obstacle_polygons_.clear();
@@ -219,20 +213,6 @@ visualization_msgs::msg::MarkerArray RunOutDebug::createVisualizationMarkerArray
       marker.points.push_back(p);
     }
     msg.markers.push_back(marker);
-  }
-
-  if (!debug_lines_.empty()) {
-    int32_t marker_id = 0;
-    for (const auto & line : debug_lines_) {
-      auto marker = createDefaultMarker(
-        "map", current_time, "debug_lines", marker_id, visualization_msgs::msg::Marker::LINE_STRIP,
-        createMarkerScale(0.1, 0.0, 0.0), createMarkerColor(0, 0, 1.0, 0.999));
-      for (const auto & p : line) {
-        marker.points.push_back(p);
-      }
-      msg.markers.push_back(marker);
-      marker_id++;
-    }
   }
 
   if (!predicted_vehicle_polygons_.empty()) {
