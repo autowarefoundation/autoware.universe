@@ -203,6 +203,9 @@ struct TrajectoryParam
   double acceleration_for_non_deceleration_range;
   int num_fix_points_for_extending;
   double max_dist_for_extending_end_point;
+
+  double ego_nearest_dist_threshold;
+  double ego_nearest_yaw_threshold;
 };
 
 struct MPTParam
@@ -254,6 +257,7 @@ struct MPTParam
   bool l_inf_norm;
   bool two_step_soft_constraint;
   bool plan_from_ego;
+  double max_plan_from_ego_length;
 };
 
 #endif  // OBSTACLE_AVOIDANCE_PLANNER__COMMON_STRUCTS_HPP_

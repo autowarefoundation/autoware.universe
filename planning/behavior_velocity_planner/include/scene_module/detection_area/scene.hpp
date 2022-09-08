@@ -36,6 +36,7 @@ namespace behavior_velocity_planner
 using PathIndexWithPose = std::pair<size_t, geometry_msgs::msg::Pose>;  // front index, pose
 using PathIndexWithPoint2d = std::pair<size_t, Point2d>;                // front index, point2d
 using PathIndexWithOffset = std::pair<size_t, double>;                  // front index, offset
+using autoware_auto_planning_msgs::msg::PathWithLaneId;
 
 class DetectionAreaModule : public SceneModuleInterface
 {
@@ -58,18 +59,17 @@ public:
     double dead_line_margin;
     bool use_pass_judge_line;
     double state_clear_time;
+    double hold_stop_margin_distance;
   };
 
 public:
   DetectionAreaModule(
-    const int64_t module_id, const lanelet::autoware::DetectionArea & detection_area_reg_elem,
+    const int64_t module_id, const int64_t lane_id,
+    const lanelet::autoware::DetectionArea & detection_area_reg_elem,
     const PlannerParam & planner_param, const rclcpp::Logger logger,
     const rclcpp::Clock::SharedPtr clock);
 
-  bool modifyPathVelocity(
-    autoware_auto_planning_msgs::msg::PathWithLaneId * path,
-    tier4_planning_msgs::msg::StopReason * stop_reason,
-    autoware_ad_api_msgs::msg::MotionFactor * motion_factor) override;
+  bool modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason) override;
 
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
   visualization_msgs::msg::MarkerArray createVirtualWallMarkerArray() override;
@@ -81,20 +81,11 @@ private:
 
   bool canClearStopState() const;
 
-  bool isOverLine(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-    const geometry_msgs::msg::Pose & self_pose, const geometry_msgs::msg::Pose & line_pose) const;
-
   bool hasEnoughBrakingDistance(
     const geometry_msgs::msg::Pose & self_pose, const geometry_msgs::msg::Pose & line_pose) const;
 
-  autoware_auto_planning_msgs::msg::PathWithLaneId insertStopPoint(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-    const PathIndexWithPose & stop_point) const;
-
-  boost::optional<PathIndexWithPose> createTargetPoint(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const LineString2d & stop_line,
-    const double margin) const;
+  // Lane id
+  int64_t lane_id_;
 
   // Key Feature
   const lanelet::autoware::DetectionArea & detection_area_reg_elem_;

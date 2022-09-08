@@ -38,51 +38,33 @@ void applySafeVelocityConsideringPossibleCollision(
   const double v_min = param.v.min_allowed_velocity;
   for (auto & possible_collision : possible_collisions) {
     const double l_obs = possible_collision.arc_lane_dist_at_collision.length;
-    const double original_vel = possible_collision.collision_with_margin.longitudinal_velocity_mps;
+    const double v_org = possible_collision.collision_with_margin.longitudinal_velocity_mps;
 
-    // safe velocity : Consider ego emergency braking deceleration
+    // safe velocity : consider ego emergency braking deceleration
     const double v_safe = possible_collision.obstacle_info.safe_motion.safe_velocity;
 
-    // min allowed velocity : min allowed velocity consider maximum allowed braking
-    const double v_slow_down =
-      (l_obs < 0 && v0 <= v_safe)
-        ? v_safe
-        : planning_utils::calcDecelerationVelocityFromDistanceToTarget(j_min, a_min, a0, v0, l_obs);
+    // safe slow down: consider ego smooth brake
+    const double v_safe_slow_down =
+      planning_utils::calcDecelerationVelocityFromDistanceToTarget(j_min, a_min, a0, v0, l_obs);
+
+    // TODO(tanaka): consider edge case if ego passed safe margin
+    const double v_slow_down = (l_obs < 0 && v0 <= v_safe) ? v_safe : v_safe_slow_down;
+
     // skip non effective velocity insertion
-    if (original_vel < v_safe) continue;
-    // compare safe velocity consider EBS, minimum allowed velocity and original velocity
-    const double safe_velocity = calculateInsertVelocity(v_slow_down, v_safe, v_min, original_vel);
+    if (v_org < v_safe || v_org < v_slow_down) continue;
+
+    const double max_vel_noise = 0.05;
+    // ensure safe velocity doesn't exceed maximum allowed pbs deceleration
+    double safe_velocity = std::max(v_safe_slow_down + max_vel_noise, v_slow_down);
+    // set safe velocity is not to stop
+    safe_velocity = std::max(safe_velocity, v_min);
     possible_collision.obstacle_info.safe_motion.safe_velocity = safe_velocity;
     const auto & pose = possible_collision.collision_with_margin.pose;
-    insertSafeVelocityToPath(pose, safe_velocity, param, inout_path);
+    planning_utils::insertDecelPoint(pose.position, *inout_path, safe_velocity);
   }
 }
 
-int insertSafeVelocityToPath(
-  const geometry_msgs::msg::Pose & in_pose, const double safe_vel, const PlannerParam & param,
-  PathWithLaneId * inout_path)
-{
-  int closest_idx = -1;
-  if (!planning_utils::calcClosestIndex(
-        *inout_path, in_pose, closest_idx, param.dist_thr, param.angle_thr)) {
-    return -1;
-  }
-  PathPointWithLaneId inserted_point;
-  inserted_point = inout_path->points.at(closest_idx);
-  size_t insert_idx = closest_idx;
-  // insert velocity to path if distance is not too close else insert new collision point
-  // if original path has narrow points it's better to set higher distance threshold
-  if (planning_utils::isAheadOf(in_pose, inout_path->points.at(closest_idx).point.pose)) {
-    ++insert_idx;
-    if (insert_idx == static_cast<size_t>(inout_path->points.size())) return -1;
-  }
-  // return if index is after the last path point
-  inserted_point.point.pose = in_pose;
-  planning_utils::insertVelocity(*inout_path, inserted_point, safe_vel, insert_idx);
-  return 0;
-}
-
-SafeMotion calculateSafeMotion(const Velocity & v, const double ttc)
+SafeMotion calculateSafeMotion(const Velocity & v, const double ttv)
 {
   SafeMotion sm;
   const double j_max = v.safety_ratio * v.max_stop_jerk;
@@ -91,38 +73,25 @@ SafeMotion calculateSafeMotion(const Velocity & v, const double ttc)
   double t2 = a_max / j_max;
   double & v_safe = sm.safe_velocity;
   double & stop_dist = sm.stop_dist;
-  if (ttc <= t1) {
+  if (ttv <= t1) {
     // delay
     v_safe = 0;
     stop_dist = 0;
-  } else if (ttc <= t2 + t1) {
+  } else if (ttv <= t2 + t1) {
     // delay + const jerk
-    t2 = ttc - t1;
+    t2 = ttv - t1;
     v_safe = -0.5 * j_max * t2 * t2;
     stop_dist = v_safe * t1 - j_max * t2 * t2 * t2 / 6;
   } else {
-    const double t3 = ttc - t2 - t1;
+    const double t3 = ttv - t2 - t1;
     // delay + const jerk + const accel
     const double v2 = -0.5 * j_max * t2 * t2;
     v_safe = v2 - a_max * t3;
     stop_dist = v_safe * t1 - j_max * t2 * t2 * t2 / 6 + v2 * t3 - 0.5 * a_max * t3 * t3;
   }
+  // Note: safe_margin controls behavior insert point
   stop_dist += v.safe_margin;
   return sm;
-}
-
-double calculateInsertVelocity(
-  const double min_allowed_vel, const double safe_vel, const double min_vel,
-  const double original_vel)
-{
-  const double max_vel_noise = 0.05;
-  // ensure safe velocity doesn't exceed maximum allowed pbs deceleration
-  double cmp_safe_vel = std::max(min_allowed_vel + max_vel_noise, safe_vel);
-  // ensure safe path velocity is also above ego min velocity
-  cmp_safe_vel = std::max(cmp_safe_vel, min_vel);
-  // ensure we only lower the original velocity (and do not increase it)
-  cmp_safe_vel = std::min(cmp_safe_vel, original_vel);
-  return cmp_safe_vel;
 }
 }  // namespace occlusion_spot_utils
 }  // namespace behavior_velocity_planner

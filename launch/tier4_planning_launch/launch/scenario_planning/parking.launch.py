@@ -14,7 +14,6 @@
 
 import os
 
-from ament_index_python.packages import get_package_share_directory
 import launch
 from launch.actions import DeclareLaunchArgument
 from launch.actions import GroupAction
@@ -37,8 +36,7 @@ def launch_setup(context, *args, **kwargs):
         vehicle_info_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     freespace_planner_param_path = os.path.join(
-        get_package_share_directory("tier4_planning_launch"),
-        "config",
+        LaunchConfiguration("tier4_planning_launch_param_path").perform(context),
         "scenario_planning",
         "parking",
         "freespace_planner",
@@ -75,6 +73,7 @@ def launch_setup(context, *args, **kwargs):
                         "map_frame": "map",
                         "update_rate": 10.0,
                         "use_wayarea": True,
+                        "use_parkinglot": True,
                         "use_objects": True,
                         "use_points": True,
                         "grid_min_value": 0.0,

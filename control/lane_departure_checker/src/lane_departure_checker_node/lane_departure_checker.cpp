@@ -16,6 +16,7 @@
 
 #include "lane_departure_checker/util/create_vehicle_footprint.hpp"
 
+#include <motion_utils/trajectory/trajectory.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <tier4_autoware_utils/math/normalization.hpp>
 #include <tier4_autoware_utils/math/unit_conversion.hpp>
@@ -54,16 +55,6 @@ bool isInAnyLane(const lanelet::ConstLanelets & candidate_lanelets, const Point2
   }
 
   return false;
-}
-
-size_t findNearestIndexWithSoftYawConstraints(
-  const Trajectory & trajectory, const geometry_msgs::msg::Pose & pose, const double yaw_threshold)
-{
-  const auto nearest_idx_optional = tier4_autoware_utils::findNearestIndex(
-    trajectory.points, pose, std::numeric_limits<double>::max(), yaw_threshold);
-  return nearest_idx_optional
-           ? *nearest_idx_optional
-           : tier4_autoware_utils::findNearestIndex(trajectory.points, pose.position);
 }
 
 LinearRing2d createHullFromFootprints(const std::vector<LinearRing2d> & footprints)
@@ -109,8 +100,8 @@ Output LaneDepartureChecker::update(const Input & input)
   tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
 
   output.trajectory_deviation = calcTrajectoryDeviation(
-    *input.reference_trajectory, input.current_pose->pose,
-    param_.delta_yaw_threshold_for_closest_point);
+    *input.reference_trajectory, input.current_pose->pose, param_.ego_nearest_dist_threshold,
+    param_.ego_nearest_yaw_threshold);
   output.processing_time_map["calcTrajectoryDeviation"] = stop_watch.toc(true);
 
   {
@@ -144,10 +135,20 @@ Output LaneDepartureChecker::update(const Input & input)
   return output;
 }
 
-PoseDeviation LaneDepartureChecker::calcTrajectoryDeviation(
-  const Trajectory & trajectory, const geometry_msgs::msg::Pose & pose, const double yaw_threshold)
+bool LaneDepartureChecker::checkPathWillLeaveLane(
+  const lanelet::ConstLanelets & lanelets, const PathWithLaneId & path) const
 {
-  const auto nearest_idx = findNearestIndexWithSoftYawConstraints(trajectory, pose, yaw_threshold);
+  std::vector<LinearRing2d> vehicle_footprints = createVehicleFootprints(path);
+  lanelet::ConstLanelets candidate_lanelets = getCandidateLanelets(lanelets, vehicle_footprints);
+  return willLeaveLane(candidate_lanelets, vehicle_footprints);
+}
+
+PoseDeviation LaneDepartureChecker::calcTrajectoryDeviation(
+  const Trajectory & trajectory, const geometry_msgs::msg::Pose & pose, const double dist_threshold,
+  const double yaw_threshold)
+{
+  const auto nearest_idx = motion_utils::findFirstNearestIndexWithSoftConstraints(
+    trajectory.points, pose, dist_threshold, yaw_threshold);
   return tier4_autoware_utils::calcPoseDeviation(trajectory.points.at(nearest_idx).pose, pose);
 }
 
@@ -229,6 +230,22 @@ std::vector<LinearRing2d> LaneDepartureChecker::createVehicleFootprints(
   for (const auto & p : trajectory) {
     vehicle_footprints.push_back(
       transformVector(local_vehicle_footprint, tier4_autoware_utils::pose2transform(p.pose)));
+  }
+
+  return vehicle_footprints;
+}
+
+std::vector<LinearRing2d> LaneDepartureChecker::createVehicleFootprints(
+  const PathWithLaneId & path) const
+{
+  // Create vehicle footprint in base_link coordinate
+  const auto local_vehicle_footprint = createVehicleFootprint(*vehicle_info_ptr_);
+
+  // Create vehicle footprint on each Path point
+  std::vector<LinearRing2d> vehicle_footprints;
+  for (const auto & p : path.points) {
+    vehicle_footprints.push_back(
+      transformVector(local_vehicle_footprint, tier4_autoware_utils::pose2transform(p.point.pose)));
   }
 
   return vehicle_footprints;

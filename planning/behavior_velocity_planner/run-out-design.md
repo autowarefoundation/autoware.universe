@@ -158,21 +158,20 @@ You can choose whether to use this feature by parameter of `slow_down_limit.enab
 | `detection_span`        | double | [m] calculate collision with this span to reduce calculation time                                                        |
 | `min_vel_ego_kmph`      | double | [km/h] min velocity to calculate time to collision                                                                       |
 
-| Parameter /detection_area_size | Type   | Description                           |
-| ------------------------------ | ------ | ------------------------------------- |
-| `dist_ahead`                   | double | [m] ahead distance from ego position  |
-| `dist_behind`                  | double | [m] behind distance from ego position |
-| `dist_right`                   | double | [m] right distance from ego position  |
-| `dist_left`                    | double | [m] left distance from ego position   |
+| Parameter /detection_area | Type   | Description                                  |
+| ------------------------- | ------ | -------------------------------------------- |
+| `margin_ahead`            | double | [m] ahead margin for detection area polygon  |
+| `margin_behind`           | double | [m] behind margin for detection area polygon |
 
-| Parameter /dynamic_obstacle | Type   | Description                                                                                                 |
-| --------------------------- | ------ | ----------------------------------------------------------------------------------------------------------- |
-| `min_vel_kmph`              | double | [km/h] minimum velocity for dynamic obstacles                                                               |
-| `max_vel_kmph`              | double | [km/h] maximum velocity for dynamic obstacles                                                               |
-| `diameter`                  | double | [m] diameter of obstacles. used for creating dynamic obstacles from points                                  |
-| `height`                    | double | [m] height of obstacles. used for creating dynamic obstacles from points                                    |
-| `max_prediction_time`       | double | [sec] create predicted path until this time                                                                 |
-| `time_step`                 | double | [sec] time step for each path step. used for creating dynamic obstacles from points or objects without path |
+| Parameter /dynamic_obstacle | Type   | Description                                                                                                                   |
+| --------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| `min_vel_kmph`              | double | [km/h] minimum velocity for dynamic obstacles                                                                                 |
+| `max_vel_kmph`              | double | [km/h] maximum velocity for dynamic obstacles                                                                                 |
+| `diameter`                  | double | [m] diameter of obstacles. used for creating dynamic obstacles from points                                                    |
+| `height`                    | double | [m] height of obstacles. used for creating dynamic obstacles from points                                                      |
+| `max_prediction_time`       | double | [sec] create predicted path until this time                                                                                   |
+| `time_step`                 | double | [sec] time step for each path step. used for creating dynamic obstacles from points or objects without path                   |
+| `points_interval`           | double | [m] divide obstacle points into groups with this interval, and detect only lateral nearest point. used only for Points method |
 
 | Parameter /approaching | Type   | Description                                                                                        |
 | ---------------------- | ------ | -------------------------------------------------------------------------------------------------- |

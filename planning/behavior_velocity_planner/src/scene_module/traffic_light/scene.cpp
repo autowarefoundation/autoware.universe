@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <motion_utils/trajectory/trajectory.hpp>
 #include <scene_module/traffic_light/scene.hpp>
-#include <tier4_autoware_utils/trajectory/trajectory.hpp>
 #include <utilization/util.hpp>
 
 #include <boost/optional.hpp>  // To be replaced by std::optional in C++17
@@ -187,10 +187,12 @@ autoware_auto_perception_msgs::msg::LookingTrafficSignal initializeTrafficSignal
 }  // namespace
 
 TrafficLightModule::TrafficLightModule(
-  const int64_t module_id, const lanelet::TrafficLight & traffic_light_reg_elem,
-  lanelet::ConstLanelet lane, const PlannerParam & planner_param, const rclcpp::Logger logger,
+  const int64_t module_id, const int64_t lane_id,
+  const lanelet::TrafficLight & traffic_light_reg_elem, lanelet::ConstLanelet lane,
+  const PlannerParam & planner_param, const rclcpp::Logger logger,
   const rclcpp::Clock::SharedPtr clock)
 : SceneModuleInterface(module_id, logger, clock),
+  lane_id_(lane_id),
   traffic_light_reg_elem_(traffic_light_reg_elem),
   lane_(lane),
   state_(State::APPROACH),
@@ -200,10 +202,7 @@ TrafficLightModule::TrafficLightModule(
   planner_param_ = planner_param;
 }
 
-bool TrafficLightModule::modifyPathVelocity(
-  autoware_auto_planning_msgs::msg::PathWithLaneId * path,
-  tier4_planning_msgs::msg::StopReason * stop_reason,
-  autoware_ad_api_msgs::msg::MotionFactor * motion_factor)
+bool TrafficLightModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason)
 {
   looking_tl_state_ = initializeTrafficSignal(path->header.stamp);
   debug_data_ = DebugData();
@@ -212,8 +211,8 @@ bool TrafficLightModule::modifyPathVelocity(
   first_ref_stop_path_point_index_ = static_cast<int>(path->points.size()) - 1;
   *stop_reason =
     planning_utils::initializeStopReason(tier4_planning_msgs::msg::StopReason::TRAFFIC_LIGHT);
-  *motion_factor =
-    planning_utils::initializeMotionFactor(autoware_ad_api_msgs::msg::MotionFactor::TRAFFIC_LIGHT);
+  // *velocity_factor =
+  //  planning_utils::initializeVelocityFactor(autoware_ad_api_msgs::msg::VelocityFactor::TRAFFIC_LIGHT);
 
   const auto input_path = *path;
 
@@ -231,6 +230,8 @@ bool TrafficLightModule::modifyPathVelocity(
         planner_param_.stop_margin + planner_data_->vehicle_info_.max_longitudinal_offset_m,
         planner_data_->stop_line_extend_length, stop_line_point, stop_line_point_idx)) {
     RCLCPP_WARN_THROTTLE(logger_, *clock_, 5000, "Failed to calculate stop point and insert index");
+    setSafe(true);
+    setDistance(std::numeric_limits<double>::lowest());
     return false;
   }
 
@@ -238,8 +239,9 @@ bool TrafficLightModule::modifyPathVelocity(
   geometry_msgs::msg::Point stop_line_point_msg;
   stop_line_point_msg.x = stop_line_point.x();
   stop_line_point_msg.y = stop_line_point.y();
-  const double signed_arc_length_to_stop_point = tier4_autoware_utils::calcSignedArcLength(
+  const double signed_arc_length_to_stop_point = motion_utils::calcSignedArcLength(
     input_path.points, self_pose.pose.position, stop_line_point_msg);
+  setDistance(signed_arc_length_to_stop_point);
 
   // Check state
   if (state_ == State::APPROACH) {
@@ -254,15 +256,15 @@ bool TrafficLightModule::modifyPathVelocity(
     first_ref_stop_path_point_index_ = stop_line_point_idx;
 
     // Check if stop is coming.
-    if (!isStopSignal(traffic_lights)) {
+    setSafe(!isStopSignal(traffic_lights));
+    if (isActivated()) {
       is_prev_state_stop_ = false;
       return true;
     }
 
     // Decide whether to stop or pass even if a stop signal is received.
     if (!isPassthrough(signed_arc_length_to_stop_point)) {
-      *path = insertStopPose(
-        input_path, stop_line_point_idx, stop_line_point, stop_reason, motion_factor);
+      *path = insertStopPose(input_path, stop_line_point_idx, stop_line_point, stop_reason);
       is_prev_state_stop_ = true;
     }
     return true;
@@ -464,8 +466,7 @@ bool TrafficLightModule::getHighestConfidenceTrafficSignal(
 autoware_auto_planning_msgs::msg::PathWithLaneId TrafficLightModule::insertStopPose(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & input,
   const size_t & insert_target_point_idx, const Eigen::Vector2d & target_point,
-  tier4_planning_msgs::msg::StopReason * stop_reason,
-  autoware_ad_api_msgs::msg::MotionFactor * motion_factor)
+  tier4_planning_msgs::msg::StopReason * stop_reason)
 {
   autoware_auto_planning_msgs::msg::PathWithLaneId modified_path;
   modified_path = input;
@@ -493,9 +494,9 @@ autoware_auto_planning_msgs::msg::PathWithLaneId TrafficLightModule::insertStopP
     std::vector<geometry_msgs::msg::Point>{debug_data_.highest_confidence_traffic_light_point};
   planning_utils::appendStopReason(stop_factor, stop_reason);
 
-  motion_factor->status = autoware_ad_api_msgs::msg::MotionFactor::STOP_TRUE;
-  motion_factor->pose = debug_data_.first_stop_pose;
-  // motion_factor->stop_factor_points =
+  // velocity_factor->status = autoware_ad_api_msgs::msg::VelocityFactor::STOP_TRUE;
+  // velocity_factor->pose = debug_data_.first_stop_pose;
+  // velocity_factor->stop_factor_points =
   //   std::vector<geometry_msgs::msg::Point>{debug_data_.highest_confidence_traffic_light_point};
 
   return modified_path;

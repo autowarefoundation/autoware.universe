@@ -25,38 +25,8 @@
 
 namespace behavior_velocity_planner
 {
-namespace
-{
-std::vector<lanelet::ConstLanelet> getLaneletsOnPath(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  const lanelet::LaneletMapPtr lanelet_map)
-{
-  std::vector<lanelet::ConstLanelet> lanelets;
-
-  for (const auto & p : path.points) {
-    const auto lane_id = p.lane_ids.at(0);
-    lanelets.push_back(lanelet_map->laneletLayer.get(lane_id));
-  }
-
-  return lanelets;
-}
-
-std::set<int64_t> getLaneIdSetOnPath(const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
-{
-  std::set<int64_t> lane_id_set;
-
-  for (const auto & p : path.points) {
-    const auto lane_id = p.lane_ids.at(0);
-    lane_id_set.insert(lane_id);
-  }
-
-  return lane_id_set;
-}
-
-}  // namespace
-
 BlindSpotModuleManager::BlindSpotModuleManager(rclcpp::Node & node)
-: SceneModuleManagerInterface(node, getModuleName())
+: SceneModuleManagerInterfaceWithRTC(node, getModuleName())
 {
   const std::string ns(getModuleName());
   planner_param_.use_pass_judge_line = node.declare_parameter(ns + ".use_pass_judge_line", false);
@@ -71,8 +41,9 @@ BlindSpotModuleManager::BlindSpotModuleManager(rclcpp::Node & node)
 void BlindSpotModuleManager::launchNewModules(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
-  for (const auto & ll :
-       getLaneletsOnPath(path, planner_data_->route_handler_->getLaneletMapPtr())) {
+  for (const auto & ll : planning_utils::getLaneletsOnPath(
+         path, planner_data_->route_handler_->getLaneletMapPtr(),
+         planner_data_->current_pose.pose)) {
     const auto lane_id = ll.id();
     const auto module_id = lane_id;
 
@@ -89,6 +60,7 @@ void BlindSpotModuleManager::launchNewModules(
     registerModule(std::make_shared<BlindSpotModule>(
       module_id, lane_id, planner_data_, planner_param_, logger_.get_child("blind_spot_module"),
       clock_));
+    generateUUID(module_id);
   }
 }
 
@@ -96,10 +68,12 @@ std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
 BlindSpotModuleManager::getModuleExpiredFunction(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
-  const auto lane_id_set = getLaneIdSetOnPath(path);
+  const auto lane_id_set = planning_utils::getLaneIdSetOnPath(
+    path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_pose.pose);
 
   return [lane_id_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
     return lane_id_set.count(scene_module->getModuleId()) == 0;
   };
 }
+
 }  // namespace behavior_velocity_planner

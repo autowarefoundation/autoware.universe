@@ -18,8 +18,9 @@
 #include "eigen3/Eigen/Core"
 #include "interpolation/linear_interpolation.hpp"
 #include "interpolation/spline_interpolation.hpp"
+#include "interpolation/spline_interpolation_points_2d.hpp"
+#include "motion_utils/trajectory/trajectory.hpp"
 #include "obstacle_avoidance_planner/common_structs.hpp"
-#include "tier4_autoware_utils/trajectory/trajectory.hpp"
 
 #include "autoware_auto_planning_msgs/msg/path_point.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
@@ -29,6 +30,7 @@
 #include <algorithm>
 #include <limits>
 #include <memory>
+#include <string>
 #include <vector>
 
 struct ReferencePoint;
@@ -114,6 +116,9 @@ std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> interpolate2DTraj
   const std::vector<double> & base_x, const std::vector<double> & base_y,
   const std::vector<double> & base_yaw, const double resolution);
 
+std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> interpolate2DTrajectoryPoints(
+  const std::vector<double> & base_x, const std::vector<double> & base_y, const double resolution);
+
 template <typename T>
 std::vector<geometry_msgs::msg::Point> getInterpolatedPoints(
   const T & points, const double delta_arc_length, const double offset = 0)
@@ -196,12 +201,12 @@ T clipBackwardPoints(
     return T{};
   }
 
-  const auto target_idx_optional = tier4_autoware_utils::findNearestIndex(
-    points, pose, std::numeric_limits<double>::max(), delta_yaw);
+  const auto target_idx_optional =
+    motion_utils::findNearestIndex(points, pose, std::numeric_limits<double>::max(), delta_yaw);
 
   const size_t target_idx = target_idx_optional
                               ? *target_idx_optional
-                              : tier4_autoware_utils::findNearestIndex(points, pose.position);
+                              : motion_utils::findNearestIndex(points, pose.position);
 
   const int begin_idx =
     std::max(0, static_cast<int>(target_idx) - static_cast<int>(backward_length / delta_length));
@@ -336,7 +341,7 @@ bool isNearLastPathPoint(
 
 namespace utils
 {
-void logOSQPSolutionStatus(const int solution_status);
+void logOSQPSolutionStatus(const int solution_status, const std::string & msg);
 }  // namespace utils
 
 #endif  // OBSTACLE_AVOIDANCE_PLANNER__UTILS_HPP_

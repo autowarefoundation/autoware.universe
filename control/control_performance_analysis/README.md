@@ -48,6 +48,7 @@ Error acceleration calculations are made based on the velocity calculations abov
 | `longitudinal_jerk`          | float | [m / s^3]                                                |
 | `lateral_acceleration`       | float | [m / s^2]                                                |
 | `lateral_jerk`               | float | [m / s^3]                                                |
+| `desired_steering_angle`     | float | [rad]                                                    |
 | `controller_processing_time` | float | Timestamp between last two control command messages [ms] |
 
 #### control_performance_analysis::msg::ErrorStamped
@@ -72,12 +73,14 @@ Error acceleration calculations are made based on the velocity calculations abov
 
 ## Parameters
 
-| Name                               | Type             | Description                                                     |
-| ---------------------------------- | ---------------- | --------------------------------------------------------------- |
-| `curvature_interval_length`        | double           | Used for estimating current curvature                           |
-| `prevent_zero_division_value`      | double           | Value to avoid zero division. Default is `0.001`                |
-| `odom_interval`                    | unsigned integer | Interval between odom messages, increase it for smoother curve. |
-| `acceptable_min_waypoint_distance` | double           | How far the next waypoint can be ahead of the vehicle direction |
+| Name                                  | Type             | Description                                                       |
+| ------------------------------------- | ---------------- | ----------------------------------------------------------------- |
+| `curvature_interval_length`           | double           | Used for estimating current curvature                             |
+| `prevent_zero_division_value`         | double           | Value to avoid zero division. Default is `0.001`                  |
+| `odom_interval`                       | unsigned integer | Interval between odom messages, increase it for smoother curve.   |
+| `acceptable_max_distance_to_waypoint` | double           | Maximum distance between trajectory point and vehicle [m]         |
+| `acceptable_max_yaw_difference_rad`   | double           | Maximum yaw difference between trajectory point and vehicle [rad] |
+| `low_pass_filter_gain`                | double           | Low pass filter gain                                              |
 
 ## Usage
 
@@ -87,7 +90,12 @@ Error acceleration calculations are made based on the velocity calculations abov
 - After import the layout, please specify the topics that are listed below.
 
 > - /localization/kinematic_state
+> - /vehicle/status/steering_status
 > - /control_performance/driving_status
 > - /control_performance/performance_vars
 
 - In `Plotjuggler` you can export the statistic (max, min, average) values as csv file. Use that statistics to compare the control modules.
+
+## Future Improvements
+
+- Implement a LPF by cut-off frequency, differential equation and discrete state space update.

@@ -30,7 +30,6 @@ namespace bg = boost::geometry;
 using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
-using run_out_utils::DetectionAreaSize;
 using run_out_utils::PlannerParam;
 using run_out_utils::State;
 using tier4_debug_msgs::msg::Float32Stamped;
@@ -45,10 +44,7 @@ public:
     std::unique_ptr<DynamicObstacleCreator> dynamic_obstacle_creator,
     const std::shared_ptr<RunOutDebug> & debug_ptr, const rclcpp::Clock::SharedPtr clock);
 
-  bool modifyPathVelocity(
-    autoware_auto_planning_msgs::msg::PathWithLaneId * path,
-    tier4_planning_msgs::msg::StopReason * stop_reason,
-    autoware_ad_api_msgs::msg::MotionFactor * motion_factor) override;
+  bool modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason) override;
 
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
   visualization_msgs::msg::MarkerArray createVirtualWallMarkerArray() override;
@@ -67,15 +63,7 @@ private:
   std::shared_ptr<RunOutDebug> debug_ptr_;
 
   // Function
-  pcl::PointCloud<pcl::PointXYZ> extractObstaclePointsWithRectangle(
-    const pcl::PointCloud<pcl::PointXYZ> & input_points,
-    const geometry_msgs::msg::Pose & current_pose) const;
-
-  void visualizeDetectionArea(const PathWithLaneId & smoothed_path) const;
-
-  pcl::PointCloud<pcl::PointXYZ> pointsWithinPolygon(
-    const std::vector<geometry_msgs::msg::Point> & polygon,
-    const pcl::PointCloud<pcl::PointXYZ> & candidate_points) const;
+  Polygons2d createDetectionAreaPolygon(const PathWithLaneId & smoothed_path) const;
 
   boost::optional<DynamicObstacle> detectCollision(
     const std::vector<DynamicObstacle> & dynamic_obstacles,
@@ -100,15 +88,15 @@ private:
     const float velocity_mps) const;
 
   bool checkCollisionWithShape(
-    const tier4_autoware_utils::Polygon2d & vehicle_polygon, const PoseWithRange pose_with_range,
-    const Shape & shape, std::vector<geometry_msgs::msg::Point> & collision_points) const;
+    const Polygon2d & vehicle_polygon, const PoseWithRange pose_with_range, const Shape & shape,
+    std::vector<geometry_msgs::msg::Point> & collision_points) const;
 
   bool checkCollisionWithCylinder(
-    const tier4_autoware_utils::Polygon2d & vehicle_polygon, const PoseWithRange pose_with_range,
-    const float radius, std::vector<geometry_msgs::msg::Point> & collision_points) const;
+    const Polygon2d & vehicle_polygon, const PoseWithRange pose_with_range, const float radius,
+    std::vector<geometry_msgs::msg::Point> & collision_points) const;
 
   bool checkCollisionWithBoundingBox(
-    const tier4_autoware_utils::Polygon2d & vehicle_polygon, const PoseWithRange pose_with_range,
+    const Polygon2d & vehicle_polygon, const PoseWithRange pose_with_range,
     const geometry_msgs::msg::Vector3 & dimension,
     std::vector<geometry_msgs::msg::Point> & collision_points) const;
 
@@ -134,12 +122,11 @@ private:
   void insertStoppingVelocity(
     const boost::optional<DynamicObstacle> & dynamic_obstacle,
     const geometry_msgs::msg::Pose & current_pose, const float current_vel, const float current_acc,
-    const PathWithLaneId & smoothed_path, PathWithLaneId & output_path);
+    PathWithLaneId & output_path);
 
   void insertApproachingVelocity(
     const DynamicObstacle & dynamic_obstacle, const geometry_msgs::msg::Pose & current_pose,
-    const float approaching_vel, const float approach_margin, const PathWithLaneId & resampled_path,
-    PathWithLaneId & output_path);
+    const float approaching_vel, const float approach_margin, PathWithLaneId & output_path);
 
   void applyMaxJerkLimit(
     const geometry_msgs::msg::Pose & current_pose, const float current_vel, const float current_acc,
