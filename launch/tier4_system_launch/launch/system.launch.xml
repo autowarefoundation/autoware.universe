@@ -14,6 +14,7 @@
       <push-ros-namespace namespace="system_monitor"/>
       <include file="$(find-pkg-share system_monitor)/launch/system_monitor.launch.py">
         <arg name="cpu_monitor_config_file" value="$(var tier4_system_launch_param_path)/system_monitor/cpu_monitor.param.yaml"/>
+        <arg name="hardware_monitor_config_file" value="$(var tier4_system_launch_param_path)/system_monitor/hardware_monitor.param.yaml"/>
         <arg name="hdd_monitor_config_file" value="$(var tier4_system_launch_param_path)/system_monitor/hdd_monitor.param.yaml"/>
         <arg name="mem_monitor_config_file" value="$(var tier4_system_launch_param_path)/system_monitor/mem_monitor.param.yaml"/>
         <arg name="net_monitor_config_file" value="$(var tier4_system_launch_param_path)/system_monitor/net_monitor.param.yaml"/>
