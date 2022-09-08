@@ -181,6 +181,9 @@ private:
     // prediction resampling
     double prediction_resampling_time_interval;
     double prediction_resampling_time_horizon;
+    // goal extension
+    double goal_extension_length;
+    double goal_extension_interval;
   };
   ObstacleFilteringParam obstacle_filtering_param_;
 

@@ -291,6 +291,10 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
       declare_parameter<double>("obstacle_filtering.prediction_resampling_time_interval");
     obstacle_filtering_param_.prediction_resampling_time_horizon =
       declare_parameter<double>("obstacle_filtering.prediction_resampling_time_horizon");
+    obstacle_filtering_param_.goal_extension_length =
+      declare_parameter<double>("obstacle_filtering.goal_extension_length");
+    obstacle_filtering_param_.goal_extension_interval =
+      declare_parameter<double>("obstacle_filtering.goal_extension_interval");
 
     {
       if (declare_parameter<bool>("obstacle_filtering.ignored_outside_obstacle_type.unknown")) {
@@ -478,6 +482,12 @@ rcl_interfaces::msg::SetParametersResult ObstacleCruisePlannerNode::onParam(
   tier4_autoware_utils::updateParam<double>(
     parameters, "obstacle_filtering.prediction_resampling_time_horizon",
     obstacle_filtering_param_.prediction_resampling_time_horizon);
+  tier4_autoware_utils::updateParam<double>(
+    parameters, "obstacle_filtering.goal_extension_length",
+    obstacle_filtering_param_.goal_extension_length);
+  tier4_autoware_utils::updateParam<double>(
+    parameters, "obstacle_filtering.goal_extension_interval",
+    obstacle_filtering_param_.goal_extension_interval);
 
   rcl_interfaces::msg::SetParametersResult result;
   result.successful = true;
@@ -672,7 +682,9 @@ std::vector<TargetObstacle> ObstacleCruisePlannerNode::filterObstacles(
   if (decimated_traj.points.size() < 2) {
     return {};
   }
-  const auto extended_traj = extendTrajectory(decimated_traj, 5.0, 1.0);
+  const auto extended_traj = extendTrajectory(
+    decimated_traj, obstacle_filtering_param_.goal_extension_length,
+    obstacle_filtering_param_.goal_extension_interval);
 
   // calculate extended trajectory polygons
   const auto extended_traj_polygons = polygon_utils::createOneStepPolygons(
