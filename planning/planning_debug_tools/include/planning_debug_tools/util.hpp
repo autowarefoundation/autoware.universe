@@ -88,18 +88,13 @@ inline std::vector<double> getAccelerationArray(const T & points)
   for (size_t i = 0; i < points.size(); ++i) {
     if (i == 0) {
       point_wise_a_arr.push_back(segment_wise_a_arr.at(i));
-    } else if (i == points.size() - 1) {
-      // NOTE: ignore the last acceleration which is negative infinity since the path end velocity
-      // is always 0.
+    } else if (i == points.size() - 1 || i == points.size() - 2) {
+      // Ignore the last two acceleration values which are negative infinity since the path end
+      // velocity is always 0 by motion_velocity_smoother. NOTE: Path end velocity affects the last
+      // two acceleration values.
       point_wise_a_arr.push_back(0.0);
     } else {
-      if (i == points.size() - 2) {
-        // NOTE: ignore the last acceleration which is negative infinity since the path end velocity
-        // is always 0.
-        point_wise_a_arr.push_back(0.0);
-      } else {
-        point_wise_a_arr.push_back((segment_wise_a_arr.at(i - 1) + segment_wise_a_arr.at(i)) / 2.0);
-      }
+      point_wise_a_arr.push_back((segment_wise_a_arr.at(i - 1) + segment_wise_a_arr.at(i)) / 2.0);
     }
   }
 
