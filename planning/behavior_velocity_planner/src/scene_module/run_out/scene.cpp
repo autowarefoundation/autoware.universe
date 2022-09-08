@@ -217,14 +217,8 @@ boost::optional<DynamicObstacle> RunOutModule::detectCollision(
       continue;
     }
 
-    // debug
-    {
-      std::stringstream sstream;
-      sstream << std::setprecision(4) << "ttc: " << std::to_string(travel_time) << "s";
-      debug_ptr_->pushDebugTexts(sstream.str(), obstacle_selected->nearest_collision_point);
-      debug_ptr_->pushCollisionPoints(obstacle_selected->collision_points);
-      debug_ptr_->pushNearestCollisionPoint(obstacle_selected->nearest_collision_point);
-    }
+    debug_ptr_->pushCollisionPoints(obstacle_selected->collision_points);
+    debug_ptr_->pushNearestCollisionPoint(obstacle_selected->nearest_collision_point);
 
     return obstacle_selected;
   }
