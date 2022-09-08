@@ -71,6 +71,7 @@ BehaviorModuleOutput LaneChangeModule::run()
     waitApprovalRight(start_distance, finish_distance);
     direction = SteeringFactor::RIGHT;
   }
+  // TODO(tkhmy) add handle status TRYING
   planning_api_interface_ptr_->updateSteeringFactor(
     {status_.lane_change_path.shift_point.start, status_.lane_change_path.shift_point.end},
     {start_distance, finish_distance}, SteeringFactor::LANE_CHANGE, direction,

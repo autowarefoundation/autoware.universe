@@ -2088,7 +2088,6 @@ CandidateOutput AvoidanceModule::planCandidate() const
     output.start_distance_to_path_change = new_shift_points->front().start_longitudinal;
     output.finish_distance_to_path_change = new_shift_points->back().end_longitudinal;
 
-    // TODO(tkhmy): Find a way to not overlay with the approved avoidance module
     uint16_t direction;
     if (output.lateral_shift > 0.0) {
       direction = SteeringFactor::LEFT;

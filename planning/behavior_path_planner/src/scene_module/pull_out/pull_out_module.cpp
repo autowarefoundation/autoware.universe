@@ -196,6 +196,7 @@ BehaviorModuleOutput PullOutModule::plan()
     direction = SteeringFactor::RIGHT;
   }
 
+  // TODO(tkhmy) add handle status TRYING
   planning_api_interface_ptr_->updateSteeringFactor(
     {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose},
     {start_distance, finish_distance}, SteeringFactor::PULL_OUT, direction, SteeringFactor::TURNING,
