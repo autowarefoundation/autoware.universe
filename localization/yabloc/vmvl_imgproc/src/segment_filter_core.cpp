@@ -19,6 +19,7 @@ SegmentFilter::SegmentFilter()
   truncate_pixel_threshold_(declare_parameter<int>("truncate_pixel_threshold", -1)),
   min_segment_length_(declare_parameter<float>("min_segment_length", -1)),
   max_segment_distance_(declare_parameter<float>("max_segment_distance", -1)),
+  max_lateral_distance_(declare_parameter<float>("max_lateral_distance", -1)),
   subscriber_(this, "lsd_cloud", "graph_segmented"),
   tf_subscriber_(this->get_clock())
 {
@@ -210,6 +211,11 @@ pcl::PointCloud<pcl::PointNormal> SegmentFilter::projectLines(
     if (min_segment_length_ > 0) {
       float length = (opt1.value() - opt2.value()).norm();
       if (length < min_segment_length_) continue;
+    }
+    if (max_lateral_distance_ > 0) {
+      float abs_lateral1 = std::abs(opt1.value().y());
+      float abs_lateral2 = std::abs(opt2.value().y());
+      if (std::min(abs_lateral1, abs_lateral2) > max_lateral_distance_) continue;
     }
 
     pcl::PointNormal xyz;

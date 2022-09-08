@@ -29,6 +29,7 @@ private:
   const int truncate_pixel_threshold_;
   const float min_segment_length_;
   const float max_segment_distance_;
+  const float max_lateral_distance_;
 
   SynchroSubscriber<PointCloud2, PointCloud2> subscriber_;
   vml_common::StaticTfSubscriber tf_subscriber_;
