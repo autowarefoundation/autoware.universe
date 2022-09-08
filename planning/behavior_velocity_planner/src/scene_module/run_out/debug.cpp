@@ -62,47 +62,21 @@ RunOutDebug::RunOutDebug(rclcpp::Node & node) : node_(node)
   pub_debug_trajectory_ = node.create_publisher<Trajectory>("~/debug/run_out/trajectory", 1);
 }
 
-void RunOutDebug::pushDebugPoints(const pcl::PointXYZ & debug_point)
+void RunOutDebug::pushCollisionPoints(const geometry_msgs::msg::Point & point)
 {
-  geometry_msgs::msg::Point ros_point;
-  ros_point.x = debug_point.x;
-  ros_point.y = debug_point.y;
-  ros_point.z = debug_point.z;
-
-  debug_points_.push_back(ros_point);
+  collision_points_.push_back(point);
 }
 
-void RunOutDebug::pushDebugPoints(const geometry_msgs::msg::Point & debug_point)
+void RunOutDebug::pushCollisionPoints(const std::vector<geometry_msgs::msg::Point> & points)
 {
-  debug_points_.push_back(debug_point);
-}
-
-void RunOutDebug::pushDebugPoints(const std::vector<geometry_msgs::msg::Point> & debug_points)
-{
-  for (const auto & p : debug_points) {
-    debug_points_.push_back(p);
+  for (const auto & p : points) {
+    collision_points_.push_back(p);
   }
 }
 
-void RunOutDebug::pushDebugPoints(
-  const geometry_msgs::msg::Point & debug_point, const PointType point_type)
+void RunOutDebug::pushNearestCollisionPoint(const geometry_msgs::msg::Point & point)
 {
-  switch (point_type) {
-    case PointType::Blue:
-      debug_points_.push_back(debug_point);
-      break;
-
-    case PointType::Red:
-      debug_points_red_.push_back(debug_point);
-      break;
-
-    case PointType::Yellow:
-      debug_points_yellow_.push_back(debug_point);
-      break;
-
-    default:
-      break;
-  }
+  nearest_collision_point_.push_back(point);
 }
 
 void RunOutDebug::pushStopPose(const geometry_msgs::msg::Pose & pose)
@@ -148,9 +122,8 @@ void RunOutDebug::pushDebugTexts(const std::string text, const geometry_msgs::ms
 
 void RunOutDebug::clearDebugMarker()
 {
-  debug_points_.clear();
-  debug_points_red_.clear();
-  debug_points_yellow_.clear();
+  collision_points_.clear();
+  nearest_collision_point_.clear();
   debug_lines_.clear();
   debug_polygons_.clear();
   detection_area_polygons_.clear();
@@ -191,31 +164,22 @@ visualization_msgs::msg::MarkerArray RunOutDebug::createVisualizationMarkerArray
 {
   visualization_msgs::msg::MarkerArray msg;
 
-  if (!debug_points_.empty()) {
+  if (!collision_points_.empty()) {
     auto marker = createDefaultMarker(
-      "map", current_time, "debug_points", 0, visualization_msgs::msg::Marker::SPHERE_LIST,
+      "map", current_time, "collision_points", 0, visualization_msgs::msg::Marker::SPHERE_LIST,
       createMarkerScale(0.5, 0.5, 0.5), createMarkerColor(0, 0.0, 1.0, 0.999));
-    for (const auto & p : debug_points_) {
+    for (const auto & p : collision_points_) {
       marker.points.push_back(p);
     }
     msg.markers.push_back(marker);
   }
 
-  if (!debug_points_red_.empty()) {
+  if (!nearest_collision_point_.empty()) {
     auto marker = createDefaultMarker(
-      "map", current_time, "debug_points_red", 0, visualization_msgs::msg::Marker::SPHERE_LIST,
-      createMarkerScale(1.0, 1.0, 1.0), createMarkerColor(1.0, 0, 0, 0.999));
-    for (const auto & p : debug_points_red_) {
-      marker.points.push_back(p);
-    }
-    msg.markers.push_back(marker);
-  }
-
-  if (!debug_points_yellow_.empty()) {
-    auto marker = createDefaultMarker(
-      "map", current_time, "debug_points_yellow", 0, visualization_msgs::msg::Marker::SPHERE_LIST,
-      createMarkerScale(0.7, 0.7, 0.7), createMarkerColor(1.0, 1.0, 0, 0.999));
-    for (const auto & p : debug_points_yellow_) {
+      "map", current_time, "nearest_collision_point", 0,
+      visualization_msgs::msg::Marker::SPHERE_LIST, createMarkerScale(1.0, 1.0, 1.0),
+      createMarkerColor(1.0, 0, 0, 0.999));
+    for (const auto & p : nearest_collision_point_) {
       marker.points.push_back(p);
     }
     msg.markers.push_back(marker);

@@ -24,12 +24,6 @@ using autoware_auto_planning_msgs::msg::Trajectory;
 using tier4_debug_msgs::msg::Float32MultiArrayStamped;
 using tier4_debug_msgs::msg::Int32Stamped;
 
-enum class PointType : int8_t {
-  Blue = 0,
-  Red,
-  Yellow,
-};
-
 class DebugValues
 {
 public:
@@ -99,12 +93,9 @@ public:
     debug_values_.setValues(type, val);
   }
 
-  bool pushObstaclePoint(const geometry_msgs::msg::Point & obstacle_point, const PointType & type);
-  bool pushObstaclePoint(const pcl::PointXYZ & obstacle_point, const PointType & type);
-  void pushDebugPoints(const pcl::PointXYZ & debug_point);
-  void pushDebugPoints(const geometry_msgs::msg::Point & debug_point);
-  void pushDebugPoints(const std::vector<geometry_msgs::msg::Point> & debug_points);
-  void pushDebugPoints(const geometry_msgs::msg::Point & debug_point, const PointType point_type);
+  void pushCollisionPoints(const geometry_msgs::msg::Point & point);
+  void pushCollisionPoints(const std::vector<geometry_msgs::msg::Point> & points);
+  void pushNearestCollisionPoint(const geometry_msgs::msg::Point & point);
   void pushStopPose(const geometry_msgs::msg::Pose & pose);
   void pushDebugLines(const std::vector<geometry_msgs::msg::Point> & debug_line);
   void pushDebugPolygons(const std::vector<geometry_msgs::msg::Point> & debug_polygon);
@@ -128,9 +119,8 @@ private:
   rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr pub_debug_values_;
   rclcpp::Publisher<Int32Stamped>::SharedPtr pub_accel_reason_;
   rclcpp::Publisher<Trajectory>::SharedPtr pub_debug_trajectory_;
-  std::vector<geometry_msgs::msg::Point> debug_points_;
-  std::vector<geometry_msgs::msg::Point> debug_points_red_;
-  std::vector<geometry_msgs::msg::Point> debug_points_yellow_;
+  std::vector<geometry_msgs::msg::Point> collision_points_;
+  std::vector<geometry_msgs::msg::Point> nearest_collision_point_;
   std::vector<geometry_msgs::msg::Pose> stop_pose_;
   std::vector<std::vector<geometry_msgs::msg::Point>> debug_lines_;
   std::vector<std::vector<geometry_msgs::msg::Point>> debug_polygons_;

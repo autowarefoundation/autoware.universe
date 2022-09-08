@@ -222,8 +222,8 @@ boost::optional<DynamicObstacle> RunOutModule::detectCollision(
       std::stringstream sstream;
       sstream << std::setprecision(4) << "ttc: " << std::to_string(travel_time) << "s";
       debug_ptr_->pushDebugTexts(sstream.str(), obstacle_selected->nearest_collision_point);
-      debug_ptr_->pushDebugPoints(obstacle_selected->collision_points);
-      debug_ptr_->pushDebugPoints(obstacle_selected->nearest_collision_point, PointType::Red);
+      debug_ptr_->pushCollisionPoints(obstacle_selected->collision_points);
+      debug_ptr_->pushNearestCollisionPoint(obstacle_selected->nearest_collision_point);
     }
 
     return obstacle_selected;
@@ -737,10 +737,6 @@ void RunOutModule::insertApproachingVelocity(
     motion_utils::findNearestSegmentIndex(output_path.points, current_pose.position);
   run_out_utils::insertPathVelocityFromIndexLimited(
     nearest_seg_idx, approaching_vel, output_path.points);
-
-  // debug
-  debug_ptr_->pushDebugPoints(
-    output_path.points.at(nearest_seg_idx).point.pose.position, PointType::Yellow);
 
   // calculate stop point to insert 0 velocity
   const float base_to_collision_point =
