@@ -15,6 +15,7 @@
 #include "motion.hpp"
 
 #include <memory>
+#include <unordered_map>
 
 namespace default_ad_api
 {
@@ -24,6 +25,7 @@ MotionNode::MotionNode(const rclcpp::NodeOptions & options)
 {
   stop_check_duration_ = declare_parameter("stop_check_duration", 1.0);
   enable_starting_state_ = declare_parameter("enable_starting_state", false);
+  waiting_for_set_pause_ = false;
 
   const auto adaptor = component_interface_utils::NodeAdaptor(this);
   group_cli_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
@@ -35,75 +37,83 @@ MotionNode::MotionNode(const rclcpp::NodeOptions & options)
 
   rclcpp::Rate rate(5);
   timer_ = rclcpp::create_timer(this, get_clock(), rate.period(), [this]() { on_timer(); });
-
-  is_stopping = false;
-  is_starting = false;
-  state_.state = MotionState::UNKNOWN;
-  change_state(MotionState::MOVING);
+  change_state(State::kMoving, true);
 }
 
-bool MotionNode::call_set_pause(bool pause)
+void MotionNode::change_state(const State state, const bool init)
 {
-  try {
-    const auto req = std::make_shared<control_interface::SetPause::Service::Request>();
-    req->pause = pause;
-    const auto res = cli_set_pause_->call(req);
-    return res->status.success;
-  } catch (const component_interface_utils::ServiceException &) {
-    return false;
-  }
-}
+  using MotionState = autoware_ad_api::motion::State::Message;
+  static const auto mapping = std::unordered_map<State, MotionState::_state_type>(
+    {{State::kMoving, MotionState::MOVING},
+     {State::kStopping, MotionState::STOPPED},
+     {State::kStopped, MotionState::STOPPED},
+     {State::kStarting, MotionState::STARTING},
+     {State::kStarted, MotionState::STARTING}});
 
-void MotionNode::change_state(const MotionState::_state_type state)
-{
-  if (state_.state != state) {
-    state_.stamp = now();
-    state_.state = state;
-    pub_state_->publish(state_);
+  if (init || mapping.at(state_) != mapping.at(state)) {
+    MotionState msg;
+    msg.stamp = now();
+    msg.state = mapping.at(state);
+    pub_state_->publish(msg);
   }
+  state_ = state;
 }
 
 void MotionNode::on_timer()
 {
-  timer_->cancel();
-
-  if (state_.state == MotionState::MOVING) {
+  if (state_ == State::kMoving) {
     if (vehicle_stop_checker_.isVehicleStopped(stop_check_duration_)) {
-      is_stopping = true;
+      change_state(State::kStopping);
     }
   }
 
-  if (is_stopping) {
-    if (call_set_pause(true)) {
-      is_stopping = false;
-      change_state(MotionState::STOPPED);
-    }
-  }
-
-  if (is_starting) {
+  if (state_ == State::kStarting) {
     if (!vehicle_stop_checker_.isVehicleStopped(stop_check_duration_)) {
-      is_starting = false;
-      change_state(MotionState::MOVING);
+      change_state(State::kMoving);
     }
   }
 
-  timer_->reset();
+  if (state_ == State::kStopping) {
+    if (!waiting_for_set_pause_ && cli_set_pause_->get_rclcpp_client()->service_is_ready()) {
+      const auto req = std::make_shared<control_interface::SetPause::Service::Request>();
+      req->pause = true;
+      waiting_for_set_pause_ = true;
+      cli_set_pause_->async_send_request(req, [this](auto) { waiting_for_set_pause_ = false; });
+    }
+  }
 }
 
 void MotionNode::on_is_paused(const control_interface::IsPaused::Message::ConstSharedPtr msg)
 {
-  (void)msg;
+  switch (state_) {
+    case State::kMoving:
+    case State::kStopping:
+    case State::kStarted:
+      if (msg->data) {
+        change_state(State::kStopped);
+      }
+      break;
+    case State::kStopped:
+    case State::kStarting:
+      if (!msg->data) {
+        change_state(State::kStarted);
+      }
+      break;
+  }
 }
 
 void MotionNode::on_will_move(const control_interface::WillMove::Message::ConstSharedPtr msg)
 {
   if (msg->data) {
-    if (state_.state == MotionState::STOPPED) {
-      change_state(MotionState::STARTING);
+    if (state_ == State::kStopped) {
+      return change_state(State::kStarting);
     }
   } else {
-    if (state_.state == MotionState::STARTING) {
-      change_state(MotionState::STOPPED);
+    if (state_ == State::kStarting) {
+      return change_state(State::kStopped);
+    }
+    if (state_ == State::kStarted) {
+      return change_state(State::kStopping);
     }
   }
 }
@@ -112,12 +122,15 @@ void MotionNode::on_accept(
   const autoware_ad_api::motion::AcceptStart::Service::Request::SharedPtr,
   const autoware_ad_api::motion::AcceptStart::Service::Response::SharedPtr res)
 {
-  if (state_.state == MotionState::STARTING && !is_starting) {
-    if (call_set_pause(false)) {
-      is_starting = true;
-      res->status.success = true;
-    }
+  if (state_ != State::kStarting) {
+    using AcceptStartResponse = autoware_ad_api::motion::AcceptStart::Service::Response;
+    throw component_interface_utils::ServiceException(
+      AcceptStartResponse::ERROR_NOT_STARTING, "The motion state is not starting");
   }
+
+  const auto req = std::make_shared<control_interface::SetPause::Service::Request>();
+  req->pause = false;
+  res->status = cli_set_pause_->call(req)->status;
 }
 
 }  // namespace default_ad_api

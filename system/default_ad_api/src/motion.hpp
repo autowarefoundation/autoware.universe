@@ -42,16 +42,14 @@ private:
   Sub<control_interface::IsPaused> sub_is_paused_;
   Sub<control_interface::WillMove> sub_will_move_;
 
-  using MotionState = autoware_ad_api::motion::State::Message;
-  MotionState state_;
+  enum class State { kStopping, kStopped, kStarting, kStarted, kMoving };
+  State state_;
 
   double stop_check_duration_;
   bool enable_starting_state_;
-  bool is_stopping;
-  bool is_starting;
+  bool waiting_for_set_pause_;
 
-  bool call_set_pause(bool pause);
-  void change_state(const MotionState::_state_type state);
+  void change_state(const State state, const bool init = false);
   void on_timer();
   void on_is_paused(const control_interface::IsPaused::Message::ConstSharedPtr msg);
   void on_will_move(const control_interface::WillMove::Message::ConstSharedPtr msg);

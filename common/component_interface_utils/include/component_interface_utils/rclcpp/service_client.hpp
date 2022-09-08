@@ -91,6 +91,9 @@ public:
 #endif
   }
 
+  /// Get rclcpp interface.
+  typename WrapType::SharedPtr get_rclcpp_client() { return client_; }
+
 private:
   RCLCPP_DISABLE_COPY(Client)
   typename WrapType::SharedPtr client_;
