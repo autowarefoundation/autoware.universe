@@ -76,6 +76,9 @@ struct VehicleParam
   double width;
   double rear_overhang;
   double front_overhang;
+  double right_overhang;
+  double left_overhang;
+  double track_width;
   // double max_steer_rad;
 };
 
