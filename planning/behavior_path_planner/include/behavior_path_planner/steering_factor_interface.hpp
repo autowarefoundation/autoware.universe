@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BEHAVIOR_PATH_PLANNER__PLANNING_API_INTERFACE_HPP_
-#define BEHAVIOR_PATH_PLANNER__PLANNING_API_INTERFACE_HPP_
+#ifndef BEHAVIOR_PATH_PLANNER__STEERING_FACTOR_INTERFACE_HPP_
+#define BEHAVIOR_PATH_PLANNER__STEERING_FACTOR_INTERFACE_HPP_
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -25,16 +25,16 @@
 #include <string>
 #include <vector>
 
-namespace planning_api_interface
+namespace steering_factor_interface
 {
 using autoware_ad_api_msgs::msg::SteeringFactor;
 using autoware_ad_api_msgs::msg::SteeringFactorArray;
 using geometry_msgs::msg::Pose;
 
-class PlanningAPIInterface
+class SteeringFactorInterface
 {
 public:
-  PlanningAPIInterface(rclcpp::Node * node, const std::string & name);
+  SteeringFactorInterface(rclcpp::Node * node, const std::string & name);
   void publishSteeringFactor(const rclcpp::Time & stamp);
   void updateSteeringFactor(
     const std::vector<Pose> & pose, const std::vector<double> distance, const uint16_t type,
@@ -51,6 +51,6 @@ private:
   SteeringFactorArray registered_steering_factors_;
 };
 
-}  // namespace planning_api_interface
+}  // namespace steering_factor_interface
 
-#endif  // BEHAVIOR_PATH_PLANNER__PLANNING_API_INTERFACE_HPP_
+#endif  // BEHAVIOR_PATH_PLANNER__STEERING_FACTOR_INTERFACE_HPP_

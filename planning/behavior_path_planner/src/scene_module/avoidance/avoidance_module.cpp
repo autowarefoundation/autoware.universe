@@ -56,7 +56,7 @@ AvoidanceModule::AvoidanceModule(
   uuid_right_{generateUUID()}
 {
   using std::placeholders::_1;
-  planning_api_interface_ptr_ = std::make_shared<PlanningAPIInterface>(&node, "avoidance");
+  steering_factor_interface_ptr_ = std::make_shared<SteeringFactorInterface>(&node, "avoidance");
 }
 
 bool AvoidanceModule::isExecutionRequested() const
@@ -2094,7 +2094,7 @@ CandidateOutput AvoidanceModule::planCandidate() const
     } else {
       direction = SteeringFactor::RIGHT;
     }
-    planning_api_interface_ptr_->updateSteeringFactor(
+    steering_factor_interface_ptr_->updateSteeringFactor(
       {new_shift_points->front().start, new_shift_points->back().end},
       {output.start_distance_to_path_change, output.finish_distance_to_path_change},
       SteeringFactor::AVOIDANCE_PATH_CHANGE, direction, SteeringFactor::APPROACHING, "");
@@ -2499,7 +2499,7 @@ void AvoidanceModule::onExit()
   current_state_ = BT::NodeStatus::IDLE;
   clearWaitingApproval();
   removeRTCStatus();
-  planning_api_interface_ptr_->clearSteeringFactors();
+  steering_factor_interface_ptr_->clearSteeringFactors();
 }
 
 void AvoidanceModule::initVariables()

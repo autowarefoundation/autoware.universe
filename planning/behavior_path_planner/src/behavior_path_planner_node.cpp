@@ -146,7 +146,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
       planner_data_->parameters.base_link2front, intersection_search_distance);
   }
 
-  planning_api_interface_ptr_ = std::make_shared<PlanningAPIInterface>(this, "intersection");
+  steering_factor_interface_ptr_ = std::make_shared<SteeringFactorInterface>(this, "intersection");
 
   // Start timer
   {
@@ -621,20 +621,20 @@ void BehaviorPathPlannerNode::run()
       }
 
       if (turn_signal_decider_.intersection_turn_signal_) {
-        planning_api_interface_ptr_->updateSteeringFactor(
+        steering_factor_interface_ptr_->updateSteeringFactor(
           {turn_signal_decider_.intersection_pose_point_},
           {turn_signal_decider_.intersection_distance_}, SteeringFactor::INTERSECTION, direction,
           SteeringFactor::TURNING, "");
       } else {
-        planning_api_interface_ptr_->updateSteeringFactor(
+        steering_factor_interface_ptr_->updateSteeringFactor(
           {turn_signal_decider_.intersection_pose_point_},
           {turn_signal_decider_.intersection_distance_}, SteeringFactor::INTERSECTION, direction,
           SteeringFactor::TRYING, "");
       }
     } else {
-      planning_api_interface_ptr_->clearSteeringFactors();
+      steering_factor_interface_ptr_->clearSteeringFactors();
     }
-    planning_api_interface_ptr_->publishSteeringFactor(get_clock()->now());
+    steering_factor_interface_ptr_->publishSteeringFactor(get_clock()->now());
   }
 
   // for debug

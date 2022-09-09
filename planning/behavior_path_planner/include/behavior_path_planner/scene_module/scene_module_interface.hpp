@@ -18,7 +18,7 @@
 #include "behavior_path_planner/data_manager.hpp"
 #include "behavior_path_planner/utilities.hpp"
 
-#include <behavior_path_planner/planning_api_interface.hpp>
+#include <behavior_path_planner/steering_factor_interface.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <route_handler/route_handler.hpp>
 #include <rtc_interface/rtc_interface.hpp>
@@ -46,8 +46,8 @@ using autoware_ad_api_msgs::msg::SteeringFactor;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
 using autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand;
-using planning_api_interface::PlanningAPIInterface;
 using rtc_interface::RTCInterface;
+using steering_factor_interface::SteeringFactorInterface;
 using tier4_planning_msgs::msg::AvoidanceDebugMsgArray;
 using unique_identifier_msgs::msg::UUID;
 using visualization_msgs::msg::MarkerArray;
@@ -222,10 +222,10 @@ public:
 
   virtual void publishSteeringFactor()
   {
-    if (!planning_api_interface_ptr_) {
+    if (!steering_factor_interface_ptr_) {
       return;
     }
-    planning_api_interface_ptr_->publishSteeringFactor(clock_->now());
+    steering_factor_interface_ptr_->publishSteeringFactor(clock_->now());
   }
 
   /**
@@ -261,7 +261,7 @@ protected:
   mutable MarkerArray debug_marker_;
 
   std::shared_ptr<RTCInterface> rtc_interface_ptr_;
-  std::shared_ptr<PlanningAPIInterface> planning_api_interface_ptr_;
+  std::shared_ptr<SteeringFactorInterface> steering_factor_interface_ptr_;
   UUID uuid_;
   bool is_waiting_approval_;
 

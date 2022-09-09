@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "behavior_path_planner/planning_api_interface.hpp"
+#include "behavior_path_planner/steering_factor_interface.hpp"
 
-namespace planning_api_interface
+namespace steering_factor_interface
 {
-PlanningAPIInterface::PlanningAPIInterface(rclcpp::Node * node, const std::string & name)
+SteeringFactorInterface::SteeringFactorInterface(rclcpp::Node * node, const std::string & name)
 : logger_{node->get_logger().get_child("PlanningAPI[" + name + "]")}
 {
   // Publisher
@@ -24,14 +24,14 @@ PlanningAPIInterface::PlanningAPIInterface(rclcpp::Node * node, const std::strin
     node->create_publisher<SteeringFactorArray>("/planning/api/" + name + "/steering_factor", 1);
 }
 
-void PlanningAPIInterface::publishSteeringFactor(const rclcpp::Time & stamp)
+void SteeringFactorInterface::publishSteeringFactor(const rclcpp::Time & stamp)
 {
   std::lock_guard<std::mutex> lock(mutex_);
   registered_steering_factors_.header.stamp = stamp;
   pub_steering_factors_->publish(registered_steering_factors_);
 }
 
-void PlanningAPIInterface::updateSteeringFactor(
+void SteeringFactorInterface::updateSteeringFactor(
   const std::vector<Pose> & pose, const std::vector<double> distance, const uint16_t type,
   const uint16_t direction, const uint16_t status, const std::string detail)
 {
@@ -47,12 +47,12 @@ void PlanningAPIInterface::updateSteeringFactor(
   registered_steering_factors_.factors = {factor};
 }
 
-void PlanningAPIInterface::clearSteeringFactors()
+void SteeringFactorInterface::clearSteeringFactors()
 {
   std::lock_guard<std::mutex> lock(mutex_);
   registered_steering_factors_.factors.clear();
 }
 
-rclcpp::Logger PlanningAPIInterface::getLogger() const { return logger_; }
+rclcpp::Logger SteeringFactorInterface::getLogger() const { return logger_; }
 
-}  // namespace planning_api_interface
+}  // namespace steering_factor_interface

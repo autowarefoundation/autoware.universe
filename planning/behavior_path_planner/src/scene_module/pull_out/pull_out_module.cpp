@@ -40,7 +40,7 @@ PullOutModule::PullOutModule(
   vehicle_info_{vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo()}
 {
   rtc_interface_ptr_ = std::make_shared<RTCInterface>(&node, "pull_out");
-  planning_api_interface_ptr_ = std::make_shared<PlanningAPIInterface>(&node, "pull_out");
+  steering_factor_interface_ptr_ = std::make_shared<SteeringFactorInterface>(&node, "pull_out");
   lane_departure_checker_ = std::make_shared<LaneDepartureChecker>();
   lane_departure_checker_->setVehicleInfo(vehicle_info_);
 
@@ -100,7 +100,7 @@ void PullOutModule::onExit()
 {
   clearWaitingApproval();
   removeRTCStatus();
-  planning_api_interface_ptr_->clearSteeringFactors();
+  steering_factor_interface_ptr_->clearSteeringFactors();
   current_state_ = BT::NodeStatus::IDLE;
   RCLCPP_DEBUG(getLogger(), "PULL_OUT onExit");
 }
@@ -197,7 +197,7 @@ BehaviorModuleOutput PullOutModule::plan()
   }
 
   // TODO(tkhmy) add handle status TRYING
-  planning_api_interface_ptr_->updateSteeringFactor(
+  steering_factor_interface_ptr_->updateSteeringFactor(
     {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose},
     {start_distance, finish_distance}, SteeringFactor::PULL_OUT, direction, SteeringFactor::TURNING,
     "");
@@ -282,7 +282,7 @@ BehaviorModuleOutput PullOutModule::planWaitingApproval()
     direction = SteeringFactor::RIGHT;
   }
 
-  planning_api_interface_ptr_->updateSteeringFactor(
+  steering_factor_interface_ptr_->updateSteeringFactor(
     {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose},
     {start_distance, finish_distance}, SteeringFactor::PULL_OUT, direction,
     SteeringFactor::APPROACHING, "");

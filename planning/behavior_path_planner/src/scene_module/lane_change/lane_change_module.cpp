@@ -46,7 +46,7 @@ LaneChangeModule::LaneChangeModule(
   uuid_left_{generateUUID()},
   uuid_right_{generateUUID()}
 {
-  planning_api_interface_ptr_ = std::make_shared<PlanningAPIInterface>(&node, "lane_change");
+  steering_factor_interface_ptr_ = std::make_shared<SteeringFactorInterface>(&node, "lane_change");
 }
 
 BehaviorModuleOutput LaneChangeModule::run()
@@ -72,7 +72,7 @@ BehaviorModuleOutput LaneChangeModule::run()
     direction = SteeringFactor::RIGHT;
   }
   // TODO(tkhmy) add handle status TRYING
-  planning_api_interface_ptr_->updateSteeringFactor(
+  steering_factor_interface_ptr_->updateSteeringFactor(
     {status_.lane_change_path.shift_point.start, status_.lane_change_path.shift_point.end},
     {start_distance, finish_distance}, SteeringFactor::LANE_CHANGE, direction,
     SteeringFactor::TURNING, "");
@@ -95,7 +95,7 @@ void LaneChangeModule::onExit()
 {
   clearWaitingApproval();
   removeRTCStatus();
-  planning_api_interface_ptr_->clearSteeringFactors();
+  steering_factor_interface_ptr_->clearSteeringFactors();
   debug_marker_.markers.clear();
   current_state_ = BT::NodeStatus::IDLE;
   RCLCPP_DEBUG(getLogger(), "LANE_CHANGE onExit");
@@ -225,7 +225,7 @@ CandidateOutput LaneChangeModule::planCandidate() const
   } else {
     direction = SteeringFactor::RIGHT;
   }
-  planning_api_interface_ptr_->updateSteeringFactor(
+  steering_factor_interface_ptr_->updateSteeringFactor(
     {selected_path.shift_point.start, selected_path.shift_point.end},
     {output.start_distance_to_path_change, output.finish_distance_to_path_change},
     SteeringFactor::LANE_CHANGE, direction, SteeringFactor::APPROACHING, "");
