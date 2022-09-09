@@ -127,7 +127,7 @@ visualization_msgs::msg::MarkerArray BlindSpotModule::createDebugMarkerArray()
 
   appendMarkerArray(
     debug::createPathMarkerArray(
-      debug_data_.spline_path, "spline", lane_id_, now, 0.3, 0.0, 0.0, 0.5, 0.5, 0.5),
+      debug_data_.spline_path, "spline", lane_id_, now, 0.3, 0.1, 0.1, 0.5, 0.5, 0.5),
     &debug_marker_array, now);
 
   return debug_marker_array;
