@@ -4,7 +4,7 @@
 
   <arg name="input/pointcloud" description="input topic name"/>
   <arg name="output/pointcloud" default="downsample/pointcloud" description="final output topic name"/>
-  <arg name="container" description="container name which input topic belongs"/>
+  <arg name="container" default="/sensing/lidar/top/pointcloud_preprocessor/velodyne_node_container" description="container name"/>
   <arg name="use_intra_process" default="true" description="use ROS2 component container communication"/>
 
   <!-- pose_initializer -->
