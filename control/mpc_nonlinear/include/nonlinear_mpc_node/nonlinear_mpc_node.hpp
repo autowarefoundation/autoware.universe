@@ -78,7 +78,7 @@
 #include "utils/nmpc_utils.hpp"
 
 #include "nonlinear_mpc_node/nonlinear_mpc_state_machine.h"
-#include "mpc_nonlinear/msg/nonlinear_mpc_performance_report_temp.hpp"
+#include "mpc_nonlinear/msg/nonlinear_mpc_performance_report.hpp"
 
 namespace ns_mpc_nonlinear
 {
@@ -87,7 +87,7 @@ using TrajectoryMsg = autoware_auto_planning_msgs::msg::Trajectory;
 using ControlCmdMsg = autoware_auto_control_msgs::msg::AckermannControlCommand;
 using SteeringMeasuredMsg = autoware_auto_vehicle_msgs::msg::SteeringReport;
 //using NonlinearMPCPerformanceMsg = autoware_auto_vehicle_msgs::msg::NonlinearMPCPerformanceReport;
-using NonlinearMPCPerformanceMsg = mpc_nonlinear::msg::NonlinearMPCPerformanceReportTemp;
+using NonlinearMPCPerformanceMsg = mpc_nonlinear::msg::NonlinearMPCPerformanceReport;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using namespace std::chrono_literals;
 

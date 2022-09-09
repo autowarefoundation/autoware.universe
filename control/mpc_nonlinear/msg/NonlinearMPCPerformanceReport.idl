@@ -4,7 +4,7 @@ module mpc_nonlinear{
   module msg {
     @verbatim (language = "comment", text = "The Nonlinear MPC Debug Messages")
 
-    struct NonlinearMPCPerformanceReportTemp
+    struct NonlinearMPCPerformanceReport
     {
       builtin_interfaces::msg::Time stamp;
 
