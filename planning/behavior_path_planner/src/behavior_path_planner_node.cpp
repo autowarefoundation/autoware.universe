@@ -146,7 +146,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
       planner_data_->parameters.base_link2front, intersection_search_distance);
   }
 
-  steering_factor_interface_ptr_ = std::make_shared<SteeringFactorInterface>(this, "intersection");
+  steering_factor_interface_ptr_ = std::make_unique<SteeringFactorInterface>(this, "intersection");
 
   // Start timer
   {

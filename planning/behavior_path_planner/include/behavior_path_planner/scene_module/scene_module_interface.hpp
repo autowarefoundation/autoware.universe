@@ -261,7 +261,7 @@ protected:
   mutable MarkerArray debug_marker_;
 
   std::shared_ptr<RTCInterface> rtc_interface_ptr_;
-  std::shared_ptr<SteeringFactorInterface> steering_factor_interface_ptr_;
+  std::unique_ptr<SteeringFactorInterface> steering_factor_interface_ptr_;
   UUID uuid_;
   bool is_waiting_approval_;
 

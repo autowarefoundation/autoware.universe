@@ -40,7 +40,7 @@ PullOutModule::PullOutModule(
   vehicle_info_{vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo()}
 {
   rtc_interface_ptr_ = std::make_shared<RTCInterface>(&node, "pull_out");
-  steering_factor_interface_ptr_ = std::make_shared<SteeringFactorInterface>(&node, "pull_out");
+  steering_factor_interface_ptr_ = std::make_unique<SteeringFactorInterface>(&node, "pull_out");
   lane_departure_checker_ = std::make_shared<LaneDepartureChecker>();
   lane_departure_checker_->setVehicleInfo(vehicle_info_);
 

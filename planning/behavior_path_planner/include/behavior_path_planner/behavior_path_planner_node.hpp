@@ -99,7 +99,7 @@ private:
 
   std::shared_ptr<PlannerData> planner_data_;
   std::shared_ptr<BehaviorTreeManager> bt_manager_;
-  std::shared_ptr<SteeringFactorInterface> steering_factor_interface_ptr_;
+  std::unique_ptr<SteeringFactorInterface> steering_factor_interface_ptr_;
   tier4_autoware_utils::SelfPoseListener self_pose_listener_{this};
   Scenario::SharedPtr current_scenario_{nullptr};
 

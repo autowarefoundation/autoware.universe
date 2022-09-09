@@ -52,7 +52,7 @@ PullOverModule::PullOverModule(
   vehicle_info_{vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo()}
 {
   rtc_interface_ptr_ = std::make_shared<RTCInterface>(&node, "pull_over");
-  steering_factor_interface_ptr_ = std::make_shared<SteeringFactorInterface>(&node, "pull_over");
+  steering_factor_interface_ptr_ = std::make_unique<SteeringFactorInterface>(&node, "pull_over");
   goal_pose_pub_ =
     node.create_publisher<PoseStamped>("/planning/scenario_planning/modified_goal", 1);
   parking_area_pub_ = node.create_publisher<MarkerArray>("~/pull_over/debug/parking_area", 1);
