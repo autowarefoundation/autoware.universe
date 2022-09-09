@@ -161,7 +161,7 @@ void AbstractPlanningAlgorithm::computeCollisionIndexes(
 bool AbstractPlanningAlgorithm::detectCollision(const IndexXYT & base_index)
 {
   if (coll_indexes_table_.empty()) {
-    std::cerr << "[abstrac_algorithm] setMap has not yet been done." << std::endl;
+    std::cerr << "[abstract_algorithm] setMap has not yet been done." << std::endl;
     return false;
   }
   const auto & coll_indexes_2d = coll_indexes_table_[base_index.theta];
