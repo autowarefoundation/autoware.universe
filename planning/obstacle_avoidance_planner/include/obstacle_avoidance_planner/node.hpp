@@ -146,6 +146,7 @@ class ObstacleAvoidancePlanner : public rclcpp::Node
 public:
   struct PlannerData
   {
+    autoware_auto_planning_msgs::msg::Path path;
     geometry_msgs::msg::Pose ego_pose;
     double ego_vel;
     std::vector<autoware_auto_perception_msgs::msg::PredictedObject> objects;
@@ -154,7 +155,6 @@ public:
   explicit ObstacleAvoidancePlanner(const rclcpp::NodeOptions & node_options);
 
 private:
-  OnSetParametersCallbackHandle::SharedPtr set_param_res_;
   rclcpp::Clock logger_ros_clock_;
   int eb_solved_count_;
   bool is_driving_forward_{true};
@@ -181,7 +181,7 @@ private:
   double max_ego_moving_dist_for_replan_;
   double max_delta_time_sec_for_replan_;
 
-  // logic
+  // core algorithm
   std::unique_ptr<CostmapGenerator> costmap_generator_ptr_;
   std::unique_ptr<EBPathOptimizer> eb_path_optimizer_ptr_;
   std::unique_ptr<MPTOptimizer> mpt_optimizer_ptr_;
@@ -237,9 +237,10 @@ private:
     objects_sub_;
   rclcpp::Subscription<tier4_planning_msgs::msg::EnableAvoidance>::SharedPtr is_avoidance_sub_;
 
-  // param callback function
+  // callback function for dynamic parameters
   rcl_interfaces::msg::SetParametersResult onParam(
     const std::vector<rclcpp::Parameter> & parameters);
+  OnSetParametersCallbackHandle::SharedPtr set_param_res_;
 
   // subscriber callback functions
   void onOdometry(const nav_msgs::msg::Odometry::SharedPtr);
@@ -252,22 +253,17 @@ private:
   void resetPrevOptimization();
 
   std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> generateOptimizedTrajectory(
-    const autoware_auto_planning_msgs::msg::Path & input_path, const PlannerData & planner_data);
+    const PlannerData & planner_data);
 
   // functions for replan
-  bool checkReplan(
-    const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
-    const PlannerData & planner_data);
-  bool isPathShapeChanged(
-    const geometry_msgs::msg::Pose & ego_pose,
-    const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points);
+  bool checkReplan(const PlannerData & planner_data);
+  bool isPathShapeChanged(const PlannerData & planner_data);
   bool isPathGoalChanged(
     const double current_vel,
     const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points);
   bool isEgoNearToPrevTrajectory(const geometry_msgs::msg::Pose & ego_pose);
 
-  autoware_auto_planning_msgs::msg::Trajectory generateTrajectory(
-    const autoware_auto_planning_msgs::msg::Path & path, const PlannerData & planner_data);
+  autoware_auto_planning_msgs::msg::Trajectory generateTrajectory(const PlannerData & planner_data);
 
   Trajectories optimizeTrajectory(
     const autoware_auto_planning_msgs::msg::Path & path, const CVMaps & cv_maps,
@@ -286,7 +282,7 @@ private:
     const CVMaps & cv_maps);
 
   void publishDebugDataInOptimization(
-    const autoware_auto_planning_msgs::msg::Path & path,
+    const PlannerData & planner_data,
     const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & traj_points);
 
   Trajectories makePrevTrajectories(
