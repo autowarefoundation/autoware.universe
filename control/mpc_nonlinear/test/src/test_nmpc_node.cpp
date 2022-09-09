@@ -73,11 +73,6 @@ TEST_F(FakeNodeFixture, no_input_stop_control_cmd_is_published)
 
 }
 
-TEST_F(FakeNodeFixture, nmpc_is_initialized)
-{
-  ASSERT_TRUE(true);
-}
-
 /**
  * Automatic differentiation : Vehicle model equations test.
  * */
@@ -186,4 +181,16 @@ TEST_F(FakeNodeFixture, automatic_differentiation_works)
   ns_eigen_utils::printEigenMat(A);
   ns_eigen_utils::printEigenMat(B);
   // end of debug
+}
+
+/**
+ * @brief path tracking performance test - sigmoid function like xy trajectory.
+ * The trajectory starts at [x, y, yaw] = [0, 0, 0] and ends at [500, 50m    ]
+ * */
+TEST_F(FakeNodeFixture, nmpc_tracking)
+{
+  TrajectoryMsg sigmoid_traj_msg{};
+  createTrajectoryMessage(sigmoid_traj_msg);
+
+  ASSERT_TRUE(true);
 }

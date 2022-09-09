@@ -6,6 +6,7 @@ set(CMAKE_C_STANDARD 11)
 
 # require that dependencies from package.xml be available
 find_package(ament_cmake_auto REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
 
 ament_auto_find_build_dependencies(REQUIRED
   ${${PROJECT_NAME}_BUILD_DEPENDS}
@@ -23,7 +24,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     -Wall
     -Wextra
     -Wpedantic
-    -Wuseless-cast
+    -Wno-useless-cast
     # -Wno-unused-parameter
     # -Wno-unused-variable
     # -Wno-narrowing
@@ -160,12 +161,37 @@ set(NONLINEAR_MPC_CORE_INCLUDE_DIR
   include/utils
   include/vehicle_models)
 
+set(MSG_FILES
+  "msg/NonlinearMPCPerformanceReportTemp.idl")
+
+
+rosidl_generate_interfaces(${PROJECT_NAME}
+  ${MSG_FILES}
+  )
+
+ament_export_dependencies(rosidl_default_runtime)
+
+rosidl_target_interfaces(${NMPC_NODE}
+  ${PROJECT_NAME} "rosidl_typesupport_cpp")
+
+target_link_libraries(${NMPC_NODE} "${cpp_typesupport_target}")
 
 # ------------- REGISTER and INSTALL ------------------------------------------
 rclcpp_components_register_node(${NMPC_NODE}
   PLUGIN "ns_mpc_nonlinear::NonlinearMPCNode"
   EXECUTABLE ${NMPC_NODE}_exe)
 
+
+#if(${rosidl_cmake_VERSION} VERSION_LESS 2.5.0)
+#  rosidl_target_interfaces(${PROJECT_NAME}
+#    ${PROJECT_NAME} "rosidl_typesupport_cpp")
+#
+#else()
+#  rosidl_get_typesupport_target(
+#    cpp_typesupport_target ${PROJECT_NAME} "rosidl_typesupport_cpp")
+#  target_link_libraries(${PROJECT_NAME} "${cpp_typesupport_target}")
+#
+#endif()
 ## ----------------- Library Tests----------------------------------------------
 
 if(BUILD_TESTING)
