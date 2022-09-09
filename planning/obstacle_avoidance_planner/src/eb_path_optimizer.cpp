@@ -14,7 +14,7 @@
 
 #include "obstacle_avoidance_planner/eb_path_optimizer.hpp"
 
-#include "obstacle_avoidance_planner/utils.hpp"
+#include "obstacle_avoidance_planner/utils/utils.hpp"
 
 #include "geometry_msgs/msg/vector3.hpp"
 

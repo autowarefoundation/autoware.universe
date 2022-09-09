@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "obstacle_avoidance_planner/debug_visualization.hpp"
+#include "obstacle_avoidance_planner/utils/debug_utils.hpp"
 
-#include "obstacle_avoidance_planner/cv_utils.hpp"
 #include "obstacle_avoidance_planner/mpt_optimizer.hpp"
-#include "obstacle_avoidance_planner/utils.hpp"
+#include "obstacle_avoidance_planner/utils/cv_utils.hpp"
+#include "obstacle_avoidance_planner/utils/utils.hpp"
 #include "tf2/utils.h"
 
 #include "visualization_msgs/msg/marker.hpp"
@@ -713,7 +713,7 @@ visualization_msgs::msg::MarkerArray getVirtualWallTextMarkerArray(
 }
 }  // namespace
 
-namespace debug_visualization
+namespace debug_utils
 {
 visualization_msgs::msg::MarkerArray getDebugVisualizationMarker(
   DebugData & debug_data,
@@ -829,4 +829,4 @@ nav_msgs::msg::OccupancyGrid getDebugCostmap(
   });
   return clearance_map_in_og;
 }
-}  // namespace debug_visualization
+}  // namespace debug_utils

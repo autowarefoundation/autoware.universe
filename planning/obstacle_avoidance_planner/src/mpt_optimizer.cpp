@@ -15,7 +15,7 @@
 #include "obstacle_avoidance_planner/mpt_optimizer.hpp"
 
 #include "interpolation/spline_interpolation_points_2d.hpp"
-#include "obstacle_avoidance_planner/utils.hpp"
+#include "obstacle_avoidance_planner/utils/utils.hpp"
 #include "obstacle_avoidance_planner/vehicle_model/vehicle_model_bicycle_kinematics.hpp"
 #include "tf2/utils.h"
 

@@ -16,9 +16,9 @@
 
 #include "interpolation/spline_interpolation_points_2d.hpp"
 #include "motion_utils/motion_utils.hpp"
-#include "obstacle_avoidance_planner/cv_utils.hpp"
-#include "obstacle_avoidance_planner/debug_visualization.hpp"
-#include "obstacle_avoidance_planner/utils.hpp"
+#include "obstacle_avoidance_planner/utils/cv_utils.hpp"
+#include "obstacle_avoidance_planner/utils/debug_utils.hpp"
+#include "obstacle_avoidance_planner/utils/utils.hpp"
 #include "rclcpp/time.hpp"
 #include "tf2/utils.h"
 #include "tier4_autoware_utils/ros/update_param.hpp"
@@ -1252,8 +1252,8 @@ void ObstacleAvoidancePlanner::publishDebugDataInOptimization(
   {  // publish markers
     if (is_publishing_debug_visualization_marker_) {
       stop_watch_.tic("getDebugVisualizationMarker");
-      const auto & debug_marker = debug_visualization::getDebugVisualizationMarker(
-        debug_data_, traj_points, vehicle_param_, false);
+      const auto & debug_marker =
+        debug_utils::getDebugVisualizationMarker(debug_data_, traj_points, vehicle_param_, false);
       debug_data_.msg_stream << "      getDebugVisualizationMarker:= "
                              << stop_watch_.toc("getDebugVisualizationMarker") << " [ms]\n";
 
@@ -1264,7 +1264,7 @@ void ObstacleAvoidancePlanner::publishDebugDataInOptimization(
 
       stop_watch_.tic("getDebugVisualizationWallMarker");
       const auto & debug_wall_marker =
-        debug_visualization::getDebugVisualizationWallMarker(debug_data_, vehicle_param_);
+        debug_utils::getDebugVisualizationWallMarker(debug_data_, vehicle_param_);
       debug_data_.msg_stream << "      getDebugVisualizationWallMarker:= "
                              << stop_watch_.toc("getDebugVisualizationWallMarker") << " [ms]\n";
 
@@ -1565,16 +1565,16 @@ void ObstacleAvoidancePlanner::publishDebugDataInMain(const Path & path) const
     stop_watch_.tic("publishClearanceMap");
 
     if (is_publishing_area_with_objects_) {  // false
-      debug_area_with_objects_pub_->publish(debug_visualization::getDebugCostmap(
-        debug_data_.area_with_objects_map, path.drivable_area));
+      debug_area_with_objects_pub_->publish(
+        debug_utils::getDebugCostmap(debug_data_.area_with_objects_map, path.drivable_area));
     }
     if (is_publishing_object_clearance_map_) {  // false
-      debug_object_clearance_map_pub_->publish(debug_visualization::getDebugCostmap(
-        debug_data_.only_object_clearance_map, path.drivable_area));
+      debug_object_clearance_map_pub_->publish(
+        debug_utils::getDebugCostmap(debug_data_.only_object_clearance_map, path.drivable_area));
     }
     if (is_publishing_clearance_map_) {  // true
       debug_clearance_map_pub_->publish(
-        debug_visualization::getDebugCostmap(debug_data_.clearance_map, path.drivable_area));
+        debug_utils::getDebugCostmap(debug_data_.clearance_map, path.drivable_area));
     }
     debug_data_.msg_stream << "    getDebugCostMap * 3:= " << stop_watch_.toc("publishClearanceMap")
                            << " [ms]\n";

@@ -14,8 +14,8 @@
 
 #include "obstacle_avoidance_planner/costmap_generator.hpp"
 
-#include "obstacle_avoidance_planner/cv_utils.hpp"
-#include "obstacle_avoidance_planner/utils.hpp"
+#include "obstacle_avoidance_planner/utils/cv_utils.hpp"
+#include "obstacle_avoidance_planner/utils/utils.hpp"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
 namespace
