@@ -219,7 +219,8 @@ void EKFLocalizer::timerCallback()
     tier4_autoware_utils::createQuaternionFromRPY(roll, pitch, yaw);
 
   current_biased_ekf_pose_ = current_ekf_pose_;
-  current_biased_ekf_pose_.pose.orientation = tier4_autoware_utils::createQuaternionFromRPY(roll, pitch, biased_yaw);
+  current_biased_ekf_pose_.pose.orientation =
+    tier4_autoware_utils::createQuaternionFromRPY(roll, pitch, biased_yaw);
 
   current_ekf_twist_.header.frame_id = "base_link";
   current_ekf_twist_.header.stamp = this->now();
