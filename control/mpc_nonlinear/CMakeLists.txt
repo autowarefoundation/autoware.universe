@@ -164,7 +164,7 @@ set(NONLINEAR_MPC_CORE_INCLUDE_DIR
 
 #--------------- NMPC Messages -----------------------------------------------------
 set(MSG_FILES
-  "msg/NonlinearMPCPerformanceReportTemp.idl")
+  "msg/NonlinearMPCPerformanceReport.idl")
 
 
 rosidl_generate_interfaces(${PROJECT_NAME}
