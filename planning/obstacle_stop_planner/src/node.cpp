@@ -173,7 +173,7 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
 
   sub_trajectory_ = this->create_subscription<Trajectory>(
     "~/input/trajectory", 1,
-    std::bind(&ObstacleStopPlannerNode::onTriger, this, std::placeholders::_1),
+    std::bind(&ObstacleStopPlannerNode::onTrigger, this, std::placeholders::_1),
     createSubscriptionOptions(this));
 
   sub_odometry_ = this->create_subscription<Odometry>(
@@ -216,7 +216,7 @@ void ObstacleStopPlannerNode::onPointCloud(const PointCloud2::ConstSharedPtr inp
   obstacle_ros_pointcloud_ptr_->header = input_msg->header;
 }
 
-void ObstacleStopPlannerNode::onTriger(const Trajectory::ConstSharedPtr input_msg)
+void ObstacleStopPlannerNode::onTrigger(const Trajectory::ConstSharedPtr input_msg)
 {
   mutex_.lock();
   // NOTE: these variables must not be referenced for multithreading

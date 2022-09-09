@@ -187,7 +187,7 @@ private:
     const PlannerData & planner_data, const double current_acc, const double current_vel);
 
   // Callback
-  void onTriger(const Trajectory::ConstSharedPtr input_msg);
+  void onTrigger(const Trajectory::ConstSharedPtr input_msg);
 
   void onOdometry(const Odometry::ConstSharedPtr input_msg);
 
