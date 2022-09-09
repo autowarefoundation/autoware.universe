@@ -22,9 +22,9 @@ from tier4_debug_msgs.msg import Float32Stamped
 from tier4_vehicle_msgs.msg import ActuationCommandStamped
 
 
-class BrakePublisher(Node):
+class ActuationCmdPublisher(Node):
     def __init__(self):
-        super().__init__("vehicle_brake_publisher")
+        super().__init__("actuation_cmd_publisher")
         self.target_brake = 0.0
         self.target_accel = 0.0
 
@@ -71,11 +71,11 @@ class BrakePublisher(Node):
 def main(args=None):
     rclpy.init(args=args)
 
-    brake_publisher = BrakePublisher()
+    actuation_cmd_publisher = ActuationCmdPublisher()
 
-    rclpy.spin(brake_publisher)
+    rclpy.spin(actuation_cmd_publisher)
 
-    brake_publisher.destroy_node()
+    actuation_cmd_publisher.destroy_node()
     rclpy.shutdown()
 
 

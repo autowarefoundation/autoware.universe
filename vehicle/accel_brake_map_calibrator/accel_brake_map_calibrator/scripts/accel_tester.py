@@ -25,7 +25,7 @@ MIN_ACCEL = 0.0  # [-]
 
 class AccelTester(Node):
     def __init__(self):
-        super().__init__("accel_tester")
+        super().__init__("vehicle_accel_tester")
         self.pub = self.create_publisher(Float32Stamped, "/vehicle/tester/accel", 1)
 
     def run(self):
