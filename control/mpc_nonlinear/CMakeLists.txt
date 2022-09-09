@@ -33,7 +33,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     # -Wno-sign-conversion
     # -Wno-sign-compare
     -Wdouble-promotion
-    -Wfloat-equal
+    # -Wfloat-equal
     -Waddress
     -fvisibility=default
     -fPIC)
@@ -147,7 +147,7 @@ target_link_libraries(${NMPC_CORE}
 
 # -------------- NMPC Node ---------------------------------------------
 set(NMPC_NODE mpc_nonlinear_node)
-ament_auto_add_library(mpc_nonlinear_node SHARED
+ament_auto_add_library(${NMPC_NODE} SHARED
   src/nonlinear_mpc_node/nonlinear_mpc_node.cpp
   src/nonlinear_mpc_node/nonlinear_mpc_node_visualization.cpp
   src/nonlinear_mpc_node/nonlinear_mpc_state_machine.cpp)
@@ -161,37 +161,44 @@ set(NONLINEAR_MPC_CORE_INCLUDE_DIR
   include/utils
   include/vehicle_models)
 
+
+#--------------- NMPC Messages -----------------------------------------------------
 set(MSG_FILES
   "msg/NonlinearMPCPerformanceReportTemp.idl")
 
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   ${MSG_FILES}
-  )
+  ADD_LINTER_TESTS
+  DEPENDENCIES builtin_interfaces)
 
 ament_export_dependencies(rosidl_default_runtime)
 
-rosidl_target_interfaces(${NMPC_NODE}
-  ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
-target_link_libraries(${NMPC_NODE} "${cpp_typesupport_target}")
+if(${rosidl_cmake_VERSION} VERSION_LESS 2.5.0)
+
+  rosidl_target_interfaces(${NMPC_NODE}
+    ${PROJECT_NAME}
+    "rosidl_typesupport_cpp")
+
+  target_link_libraries(${NMPC_NODE} "${cpp_typesupport_target}")
+  target_link_libraries(${NMPC_CORE} "${cpp_typesupport_target}")
+
+else()
+  rosidl_get_typesupport_target(
+    cpp_typesupport_target ${PROJECT_NAME} "rosidl_typesupport_cpp")
+
+  target_link_libraries(${NMPC_NODE} "${cpp_typesupport_target}")
+  target_link_libraries(${NMPC_CORE} "${cpp_typesupport_target}")
+
+endif()
 
 # ------------- REGISTER and INSTALL ------------------------------------------
+
 rclcpp_components_register_node(${NMPC_NODE}
   PLUGIN "ns_mpc_nonlinear::NonlinearMPCNode"
   EXECUTABLE ${NMPC_NODE}_exe)
 
-
-#if(${rosidl_cmake_VERSION} VERSION_LESS 2.5.0)
-#  rosidl_target_interfaces(${PROJECT_NAME}
-#    ${PROJECT_NAME} "rosidl_typesupport_cpp")
-#
-#else()
-#  rosidl_get_typesupport_target(
-#    cpp_typesupport_target ${PROJECT_NAME} "rosidl_typesupport_cpp")
-#  target_link_libraries(${PROJECT_NAME} "${cpp_typesupport_target}")
-#
-#endif()
 ## ----------------- Library Tests----------------------------------------------
 
 if(BUILD_TESTING)
@@ -222,6 +229,7 @@ endif()
 ament_auto_package(INSTALL_TO_SHARE
   launch
   config
+  msg
   params)
 
 
