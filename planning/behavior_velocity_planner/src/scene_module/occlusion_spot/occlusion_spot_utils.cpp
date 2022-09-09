@@ -37,7 +37,7 @@ namespace occlusion_spot_utils
 {
 Polygon2d toFootprintPolygon(const PredictedObject & object, const double scale = 1.0)
 {
-   const Pose & obj_pose = object.kinematics.initial_pose_with_covariance.pose;
+  const Pose & obj_pose = object.kinematics.initial_pose_with_covariance.pose;
   Polygon2d obj_footprint = tier4_autoware_utils::toPolygon2d(object);
   // upscale foot print for noise
   obj_footprint = upScalePolygon(obj_pose.position, obj_footprint, scale);
