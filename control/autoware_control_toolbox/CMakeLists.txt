@@ -40,9 +40,9 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     -fvisibility=default
     -fPIC) # visibility hidden or default is set here.
 endif()
-## ----------------- Library headers and sources -------------------------------
+##----------------- Library headers and sources -------------------------------
 
-## ------------- CONTROL LIB  ----------------------------------
+##------------- CONTROL LIB  ----------------------------------
 
 set(CONTROL_LIB autoware_control_toolbox_lib)
 
@@ -67,8 +67,7 @@ set(CONTROL_LIB_SOURCE
   src/utils_act/act_utils.cpp
   src/utils_act/act_utils_eigen.cpp
   src/utils_act/timekeep.cpp
-  src/utils_act/writetopath.cpp
-  )
+  src/utils_act/writetopath.cpp)
 
 set(CONTROL_LIB_HEADERS
   #CONTROL
@@ -89,8 +88,7 @@ set(CONTROL_LIB_HEADERS
   include/utils_act/act_utils_eigen.hpp
   include/utils_act/act_utils.hpp
   include/utils_act/writetopath.hpp
-  include/utils_act/timekeep.hpp
-  )
+  include/utils_act/timekeep.hpp)
 
 set(CONTROL_LIB_INCLUDE_DIRS
   include
@@ -98,13 +96,11 @@ set(CONTROL_LIB_INCLUDE_DIRS
   include/splines
   include/utils_act)
 
-
-## ------------- Whole LIBRARY COMPILE --------------------
+##------------- Whole LIBRARY COMPILE --------------------
 
 ament_auto_add_library(${CONTROL_LIB} SHARED
   ${CONTROL_LIB_SOURCE}
-  ${CONTROL_LIB_HEADERS}
-  )
+  ${CONTROL_LIB_HEADERS})
 target_compile_options(${CONTROL_LIB} PRIVATE -Wno-error=old-style-cast)
 
 target_link_libraries(${CONTROL_LIB}
@@ -120,22 +116,36 @@ install(TARGETS ${CONTROL_LIB}
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
   RUNTIME DESTINATION
-  INCLUDES DESTINATION include
-  )
+  INCLUDES DESTINATION include)
 
-## ----------------- Library Tests----------------------------------------------
+##----------------- Library Tests----------------------------------------------
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
   find_package(ament_cmake_gtest REQUIRED)
+
+  set(ACT_TESTs autoware_control_toolbox_tests)
+
+  ament_add_gtest(${ACT_TESTs}
+    test/act_test_suite.hpp
+    test/tests_control_modules.cpp
+    test/tests_spline_modules.cpp
+    test/tests_util_modules.cpp)
+
+  #  ament_target_dependencies(${ACT_TESTs} ${CONTROL_LIB})
+  autoware_set_compile_options(${ACT_TESTs})
+
+  target_link_libraries(${ACT_TESTs}
+    ${CONTROL_LIB}
+    ${EIGEN3_LIBRARIES})
+
 endif()
 
 #ament package generation and installing
 ament_auto_package(INSTALL_TO_SHARE)
 
-# -------------------------  PROTOTYPES ____________________________
-
+#-------------------------  PROTOTYPES __________________________________________
 ## CONTROL
 ament_auto_add_executable(main_tf usage_examples/control/main_tf.cpp)
 ament_auto_add_executable(main_pade usage_examples/control/main_pade.cpp)
@@ -143,11 +153,8 @@ ament_auto_add_executable(main_tf2ss usage_examples/control/main_tf2ss.cpp)
 ament_auto_add_executable(main_tf_algebra usage_examples/control/main_tf_algebra.cpp)
 ament_auto_add_executable(main_balance usage_examples/control/main_balance.cpp)
 ament_auto_add_executable(main_signal_generator usage_examples/control/main_signal_generator.cpp)
-#target_link_libraries(main_tf fmt::fmt stdc++fs ${AUTOWARE_CONTROL_TOOLBOX_LIB})
-#target_link_directories(main_tf PUBLIC ${AUTOWARE_CONTROL_LIB_INCLUDE_DIR})
-#target_include_directories(main_tf PRIVATE include include/utils)
 
-## ---------------------- SPLINEs -----------------------------
+##---------------------- SPLINEs ------------------------------------------------
 
 add_executable(main_spline_pcg usage_examples/splines/main_spline_eigen_pcg.cpp)
 target_link_libraries(main_spline_pcg ${CONTROL_LIB} fmt::fmt stdc++fs)
