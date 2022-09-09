@@ -507,34 +507,39 @@ constexpr std::vector<T> crossProduct(std::vector<T> const &va, std::vector<T> c
 }
 
 // PRINT MESSAGES
-template<typename T>
-constexpr void print(T const &msg)
-{
-  std::cout << msg << std::endl;
-}
-
-template<typename T0, typename T1>
-constexpr void print(T0 const &msg0, T1 const &msg1)
-{
-  std::cout << "\n" << msg0 << "  " << msg1 << std::endl;
-}
-
-template<class T0, class ... Args>
-constexpr void print(T0 &first, Args const &... args)
-{
-  std::cout << first << " ";
-  print(args ...);
-}
-
-// Fold expression
-//template<typename... Args>
-//void print(Args &&... args)
+//template<typename T>
+//constexpr void print(T const &msg)
 //{
-//  ((std::cout << args << " "), ...);
+//  std::cout << msg << std::endl;
+//}
 //
+//template<typename T0, typename T1>
+//constexpr void print(T0 const &msg0, T1 const &msg1)
+//{
+//  std::cout << "\n" << msg0 << "  " << msg1 << std::endl;
+//}
+//
+//template<class T0, class ... Args>
+//constexpr void print(T0 &first, Args const &... args)
+//{
+//  std::cout << first << " ";
+//  print(args ...);
 //}
 
+// Fold expression
+template<typename T>
+const T &append_separator(const T &arg)
+{
+  std::cout << " ";
+  return arg;
+}
 
+template<typename... Args>
+void print(Args &&... args)
+{
+  (std::cout << ... << append_separator(args)) << "\n";
+
+}
 
 // ------------ TIME MODULES -----------------------
 double tic();
