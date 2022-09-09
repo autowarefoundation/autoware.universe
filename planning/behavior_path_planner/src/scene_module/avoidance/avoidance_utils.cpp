@@ -89,7 +89,8 @@ std::vector<size_t> concatParentIds(
   for (const auto id : ids2) {
     id_set.insert(id);
   }
-  return std::vector<size_t>{id_set.begin(), id_set.end()};
+  const auto v = std::vector<size_t>{id_set.begin(), id_set.end()};
+  return v;
 }
 
 double lerpShiftLengthOnArc(double arc, const AvoidPoint & ap)
