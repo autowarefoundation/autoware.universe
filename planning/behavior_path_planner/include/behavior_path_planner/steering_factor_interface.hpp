@@ -37,7 +37,7 @@ public:
   SteeringFactorInterface(rclcpp::Node * node, const std::string & name);
   void publishSteeringFactor(const rclcpp::Time & stamp);
   void updateSteeringFactor(
-    const std::vector<Pose> & pose, const std::vector<double> distance, const uint16_t type,
+    const std::array<Pose, 2> & pose, const std::array<double, 2> distance, const uint16_t type,
     const uint16_t direction, const uint16_t status, const std::string detail);
   void clearSteeringFactors();
 
