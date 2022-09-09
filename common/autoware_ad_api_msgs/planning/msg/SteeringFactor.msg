@@ -21,8 +21,8 @@ uint16 TRYING = 2
 uint16 TURNING = 3
 
 # variables
-geometry_msgs/Pose[] pose
-float32[] distance
+geometry_msgs/Pose[2] pose
+float32[2] distance
 uint16 type
 uint16 direction
 uint16 status

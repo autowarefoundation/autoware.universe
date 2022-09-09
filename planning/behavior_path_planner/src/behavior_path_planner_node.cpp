@@ -622,14 +622,18 @@ void BehaviorPathPlannerNode::run()
 
       if (turn_signal_decider_.intersection_turn_signal_) {
         steering_factor_interface_ptr_->updateSteeringFactor(
-          {turn_signal_decider_.intersection_pose_point_},
-          {turn_signal_decider_.intersection_distance_}, SteeringFactor::INTERSECTION, direction,
-          SteeringFactor::TURNING, "");
+          {turn_signal_decider_.intersection_pose_point_,
+           turn_signal_decider_.intersection_pose_point_},
+          {turn_signal_decider_.intersection_distance_,
+           turn_signal_decider_.intersection_distance_},
+          SteeringFactor::INTERSECTION, direction, SteeringFactor::TURNING, "");
       } else {
         steering_factor_interface_ptr_->updateSteeringFactor(
-          {turn_signal_decider_.intersection_pose_point_},
-          {turn_signal_decider_.intersection_distance_}, SteeringFactor::INTERSECTION, direction,
-          SteeringFactor::TRYING, "");
+          {turn_signal_decider_.intersection_pose_point_,
+           turn_signal_decider_.intersection_pose_point_},
+          {turn_signal_decider_.intersection_distance_,
+           turn_signal_decider_.intersection_distance_},
+          SteeringFactor::INTERSECTION, direction, SteeringFactor::TRYING, "");
       }
     } else {
       steering_factor_interface_ptr_->clearSteeringFactors();
