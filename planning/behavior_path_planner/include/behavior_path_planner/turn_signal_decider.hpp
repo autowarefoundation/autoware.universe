@@ -36,6 +36,7 @@ class TurnSignalDecider
 {
 public:
   mutable bool intersection_turn_signal_ = false;
+  mutable bool approaching_intersection_turn_signal_ = false;
   mutable double intersection_distance_ = std::numeric_limits<double>::max();
   mutable Pose intersection_pose_point_ = Pose();
   TurnIndicatorsCommand getTurnSignal(

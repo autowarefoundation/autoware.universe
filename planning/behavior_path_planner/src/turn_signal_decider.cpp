@@ -80,6 +80,10 @@ std::pair<TurnIndicatorsCommand, double> TurnSignalDecider::getIntersectionTurnS
     if (distance_from_vehicle_front > intersection_search_distance_) {
       if (turn_signal.command == TurnIndicatorsCommand::DISABLE) {
         distance = std::numeric_limits<double>::max();
+        approaching_intersection_turn_signal_ = false;
+      } else {
+        intersection_distance_ = distance;
+        approaching_intersection_turn_signal_ = true;
       }
       return std::make_pair(turn_signal, distance);
     }
@@ -119,6 +123,7 @@ std::pair<TurnIndicatorsCommand, double> TurnSignalDecider::getIntersectionTurnS
   if (turn_signal.command == TurnIndicatorsCommand::DISABLE) {
     distance = std::numeric_limits<double>::max();
     intersection_turn_signal_ = false;
+    approaching_intersection_turn_signal_ = false;
   } else {
     intersection_turn_signal_ = true;
   }

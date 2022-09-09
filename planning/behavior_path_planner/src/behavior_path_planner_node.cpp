@@ -610,7 +610,9 @@ void BehaviorPathPlannerNode::run()
     turn_signal_publisher_->publish(turn_signal);
     hazard_signal_publisher_->publish(hazard_signal);
 
-    if (turn_signal_decider_.intersection_turn_signal_) {
+    if (
+      turn_signal_decider_.intersection_turn_signal_ ||
+      turn_signal_decider_.approaching_intersection_turn_signal_) {
       uint16_t direction;
       if (turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {
         direction = SteeringFactor::LEFT;
@@ -618,10 +620,17 @@ void BehaviorPathPlannerNode::run()
         direction = SteeringFactor::RIGHT;
       }
 
-      planning_api_interface_ptr_->updateSteeringFactor(
-        {turn_signal_decider_.intersection_pose_point_},
-        {turn_signal_decider_.intersection_distance_}, SteeringFactor::INTERSECTION, direction,
-        SteeringFactor::TURNING, "");
+      if (turn_signal_decider_.intersection_turn_signal_) {
+        planning_api_interface_ptr_->updateSteeringFactor(
+          {turn_signal_decider_.intersection_pose_point_},
+          {turn_signal_decider_.intersection_distance_}, SteeringFactor::INTERSECTION, direction,
+          SteeringFactor::TURNING, "");
+      } else {
+        planning_api_interface_ptr_->updateSteeringFactor(
+          {turn_signal_decider_.intersection_pose_point_},
+          {turn_signal_decider_.intersection_distance_}, SteeringFactor::INTERSECTION, direction,
+          SteeringFactor::TRYING, "");
+      }
     } else {
       planning_api_interface_ptr_->clearSteeringFactors();
     }
