@@ -33,7 +33,10 @@
 
 namespace behavior_path_planner
 {
+
+using motion_utils::calcSignedArcLength;
 using tier4_planning_msgs::msg::AvoidanceDebugMsg;
+
 class AvoidanceModule : public SceneModuleInterface
 {
 public:
@@ -118,19 +121,19 @@ private:
     const Point ego_position = planner_data_->self_pose->pose.position;
 
     for (const auto & left_shift : left_shift_array_) {
-      const double start_distance = motion_utils::calcSignedArcLength(
-        path.points, ego_position, left_shift.start_pose.position);
-      const double finish_distance = motion_utils::calcSignedArcLength(
-        path.points, ego_position, left_shift.finish_pose.position);
+      const double start_distance =
+        calcSignedArcLength(path.points, ego_position, left_shift.start_pose.position);
+      const double finish_distance =
+        calcSignedArcLength(path.points, ego_position, left_shift.finish_pose.position);
       rtc_interface_left_.updateCooperateStatus(
         left_shift.uuid, true, start_distance, finish_distance, clock_->now());
     }
 
     for (const auto & right_shift : right_shift_array_) {
-      const double start_distance = motion_utils::calcSignedArcLength(
-        path.points, ego_position, right_shift.start_pose.position);
-      const double finish_distance = motion_utils::calcSignedArcLength(
-        path.points, ego_position, right_shift.finish_pose.position);
+      const double start_distance =
+        calcSignedArcLength(path.points, ego_position, right_shift.start_pose.position);
+      const double finish_distance =
+        calcSignedArcLength(path.points, ego_position, right_shift.finish_pose.position);
       rtc_interface_right_.updateCooperateStatus(
         right_shift.uuid, true, start_distance, finish_distance, clock_->now());
     }

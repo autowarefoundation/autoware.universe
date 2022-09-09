@@ -28,6 +28,12 @@
 
 namespace behavior_path_planner
 {
+
+using motion_utils::calcSignedArcLength;
+using tier4_autoware_utils::calcLateralDeviation;
+using tier4_autoware_utils::createPoint;
+using tier4_autoware_utils::Polygon2d;
+
 bool isOnRight(const ObjectData & obj) { return obj.lateral < 0.0; }
 
 double calcShiftLength(
@@ -118,16 +124,16 @@ void fillLongitudinalAndLengthByClosestFootprint(
   const PathWithLaneId & path, const PredictedObject & object, const Point & ego_pos,
   ObjectData & obj)
 {
-  tier4_autoware_utils::Polygon2d object_poly{};
+  Polygon2d object_poly{};
   util::calcObjectPolygon(object, &object_poly);
 
-  const double distance = motion_utils::calcSignedArcLength(
+  const double distance = calcSignedArcLength(
     path.points, ego_pos, object.kinematics.initial_pose_with_covariance.pose.position);
   double min_distance = distance;
   double max_distance = distance;
   for (const auto & p : object_poly.outer()) {
-    const auto point = tier4_autoware_utils::createPoint(p.x(), p.y(), 0.0);
-    const double arc_length = motion_utils::calcSignedArcLength(path.points, ego_pos, point);
+    const auto point = createPoint(p.x(), p.y(), 0.0);
+    const double arc_length = calcSignedArcLength(path.points, ego_pos, point);
     min_distance = std::min(min_distance, arc_length);
     max_distance = std::max(max_distance, arc_length);
   }
@@ -141,12 +147,12 @@ double calcOverhangDistance(
 {
   double largest_overhang = isOnRight(object_data) ? -100.0 : 100.0;  // large number
 
-  tier4_autoware_utils::Polygon2d object_poly{};
+  Polygon2d object_poly{};
   util::calcObjectPolygon(object_data.object, &object_poly);
 
   for (const auto & p : object_poly.outer()) {
-    const auto point = tier4_autoware_utils::createPoint(p.x(), p.y(), 0.0);
-    const auto lateral = tier4_autoware_utils::calcLateralDeviation(base_pose, point);
+    const auto point = createPoint(p.x(), p.y(), 0.0);
+    const auto lateral = calcLateralDeviation(base_pose, point);
 
     const auto & overhang_pose_on_right = [&overhang_pose, &largest_overhang, &point, &lateral]() {
       if (lateral > largest_overhang) {

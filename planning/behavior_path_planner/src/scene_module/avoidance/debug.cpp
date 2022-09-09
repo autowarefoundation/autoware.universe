@@ -28,6 +28,7 @@ using behavior_path_planner::AvoidPoint;
 using behavior_path_planner::util::shiftPose;
 using tier4_autoware_utils::createDefaultMarker;
 using tier4_autoware_utils::createMarkerColor;
+using tier4_autoware_utils::createMarkerOrientation;
 using tier4_autoware_utils::createMarkerScale;
 using tier4_autoware_utils::createPoint;
 using visualization_msgs::msg::Marker;
@@ -50,7 +51,7 @@ MarkerArray createAvoidPointMarkerArray(
     Marker basic_marker = createDefaultMarker(
       "map", current_time, ns, 0L, Marker::CUBE, createMarkerScale(0.5, 0.5, 0.5),
       createMarkerColor(r, g, b, 0.9));
-    basic_marker.pose.orientation = tier4_autoware_utils::createMarkerOrientation(0, 0, 0, 1.0);
+    basic_marker.pose.orientation = createMarkerOrientation(0, 0, 0, 1.0);
     {
       // start point
       auto marker_s = basic_marker;
@@ -71,7 +72,7 @@ MarkerArray createAvoidPointMarkerArray(
       auto marker_l = basic_marker;
       marker_l.id = id++;
       marker_l.type = Marker::LINE_STRIP;
-      marker_l.scale = tier4_autoware_utils::createMarkerScale(w, 0.0, 0.0);
+      marker_l.scale = createMarkerScale(w, 0.0, 0.0);
       marker_l.points.push_back(marker_s.pose.position);
       marker_l.points.push_back(marker_e.pose.position);
       msg.markers.push_back(marker_l);
@@ -85,8 +86,8 @@ MarkerArray createAvoidPointMarkerArray(
 MarkerArray createAvoidanceObjectsMarkerArray(
   const behavior_path_planner::ObjectDataArray & objects, std::string && ns)
 {
-  const auto normal_color = tier4_autoware_utils::createMarkerColor(0.9, 0.0, 0.0, 0.8);
-  const auto disappearing_color = tier4_autoware_utils::createMarkerColor(0.9, 0.5, 0.9, 0.6);
+  const auto normal_color = createMarkerColor(0.9, 0.0, 0.0, 0.8);
+  const auto disappearing_color = createMarkerColor(0.9, 0.5, 0.9, 0.6);
 
   Marker marker = createDefaultMarker(
     "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, 0L, Marker::CUBE,
@@ -96,7 +97,7 @@ MarkerArray createAvoidanceObjectsMarkerArray(
   for (const auto & object : objects) {
     marker.id = ++i;
     marker.pose = object.object.kinematics.initial_pose_with_covariance.pose;
-    marker.scale = tier4_autoware_utils::createMarkerScale(3.0, 1.5, 1.5);
+    marker.scale = createMarkerScale(3.0, 1.5, 1.5);
     marker.color = std::fabs(object.lost_time) < 1e-2 ? normal_color : disappearing_color;
     msg.markers.push_back(marker);
   }
@@ -138,7 +139,7 @@ MarkerArray createOverhangFurthestLineStringMarkerArray(
       "map", current_time, ns, id, Marker::LINE_STRIP, createMarkerScale(0.4, 0.0, 0.0),
       createMarkerColor(r, g, b, 0.999));
 
-    marker.pose.orientation = tier4_autoware_utils::createMarkerOrientation(0, 0, 0, 1.0);
+    marker.pose.orientation = createMarkerOrientation(0, 0, 0, 1.0);
     for (const auto & p : linestring.basicLineString()) {
       marker.points.push_back(createPoint(p.x(), p.y(), p.z()));
     }

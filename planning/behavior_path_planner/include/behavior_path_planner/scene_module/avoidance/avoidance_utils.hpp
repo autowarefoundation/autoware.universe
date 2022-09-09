@@ -18,13 +18,18 @@
 #include "behavior_path_planner/data_manager.hpp"
 #include "behavior_path_planner/scene_module/avoidance/avoidance_module_data.hpp"
 
+#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+
 #include <memory>
 #include <string>
 #include <vector>
 
 namespace behavior_path_planner
 {
+
 using behavior_path_planner::PlannerData;
+using tier4_autoware_utils::Polygon2d;
+
 bool isOnRight(const ObjectData & obj);
 
 double calcShiftLength(
