@@ -63,6 +63,7 @@
 #include "motion_common/trajectory_common.hpp"
 #include "autoware_auto_vehicle_msgs/msg/vehicle_odometry.hpp"
 #include "autoware_auto_vehicle_msgs/msg/nonlinear_mpc_performance_report.hpp"
+
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 #include "autoware_auto_vehicle_msgs/msg/steering_report.hpp"
 #include "autoware_auto_control_msgs/msg/ackermann_control_command.hpp"
@@ -77,6 +78,7 @@
 #include "utils/nmpc_utils.hpp"
 
 #include "nonlinear_mpc_node/nonlinear_mpc_state_machine.h"
+#include "mpc_nonlinear/msg/nonlinear_mpc_performance_report_temp.hpp"
 
 namespace ns_mpc_nonlinear
 {
@@ -84,7 +86,8 @@ using VelocityMsg = nav_msgs::msg::Odometry;
 using TrajectoryMsg = autoware_auto_planning_msgs::msg::Trajectory;
 using ControlCmdMsg = autoware_auto_control_msgs::msg::AckermannControlCommand;
 using SteeringMeasuredMsg = autoware_auto_vehicle_msgs::msg::SteeringReport;
-using NonlinearMPCPerformanceMsg = autoware_auto_vehicle_msgs::msg::NonlinearMPCPerformanceReport;
+//using NonlinearMPCPerformanceMsg = autoware_auto_vehicle_msgs::msg::NonlinearMPCPerformanceReport;
+using NonlinearMPCPerformanceMsg = mpc_nonlinear::msg::NonlinearMPCPerformanceReportTemp;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using namespace std::chrono_literals;
 
