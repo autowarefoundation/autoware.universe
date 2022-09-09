@@ -698,6 +698,7 @@ std::vector<size_t> filterObjectIndicesByLanelets(
     }
     // create lanelet polygon
     Polygon2d lanelet_polygon;
+    lanelet_polygon.outer().reserve(polygon2d.size() + 1);
     for (const auto & lanelet_point : polygon2d) {
       lanelet_polygon.outer().emplace_back(lanelet_point.x(), lanelet_point.y());
     }
@@ -806,6 +807,7 @@ std::vector<double> calcObjectsDistanceToPath(
       continue;
     }
     LineString2d ego_path_line;
+    ego_path_line.reserve(ego_path_point_array.size());
     for (const auto & ego_path_point : ego_path_point_array) {
       boost::geometry::append(ego_path_line, Point2d(ego_path_point.x, ego_path_point.y));
     }
@@ -827,6 +829,7 @@ std::vector<size_t> filterObjectsIndicesByPath(
       continue;
     }
     LineString2d ego_path_line;
+    ego_path_line.reserve(ego_path_point_array.size());
     for (const auto & ego_path_point : ego_path_point_array) {
       boost::geometry::append(ego_path_line, Point2d(ego_path_point.x, ego_path_point.y));
     }
@@ -957,6 +960,7 @@ bool setGoal(
     const size_t min_dist_out_of_circle_index = min_dist_out_of_circle_index_opt.get();
 
     // create output points
+    output_ptr->points.reserve(output_ptr->points.size() + min_dist_out_of_circle_index + 3);
     for (size_t i = 0; i <= min_dist_out_of_circle_index; ++i) {
       output_ptr->points.push_back(input.points.at(i));
     }
@@ -1171,6 +1175,7 @@ OccupancyGrid generateDrivableArea(
       // create drivable area using opencv
       std::vector<std::vector<cv::Point>> cv_polygons;
       std::vector<cv::Point> cv_polygon;
+      cv_polygon.reserve(lane_poly.size());
       for (const auto & p : lane_poly) {
         const double z = lane.polygon3d().basicPolygon().at(0).z();
         Point geom_pt = tier4_autoware_utils::createPoint(p.x(), p.y(), z);
@@ -1292,6 +1297,7 @@ double getDistanceToCrosswalk(
         // create centerline
         const lanelet::ConstLineString2d lanelet_centerline = llt.centerline2d();
         LineString2d centerline;
+        centerline.reserve(lanelet_centerline.size());
         for (const auto & point : lanelet_centerline) {
           boost::geometry::append(centerline, Point2d(point.x(), point.y()));
         }
@@ -1301,6 +1307,7 @@ double getDistanceToCrosswalk(
         for (const auto & crosswalk : conflicting_crosswalks) {
           lanelet::CompoundPolygon2d lanelet_crosswalk_polygon = crosswalk.polygon2d();
           Polygon2d polygon;
+          polygon.outer().reserve(lanelet_crosswalk_polygon.size() + 1);
           for (const auto & point : lanelet_crosswalk_polygon) {
             polygon.outer().emplace_back(point.x(), point.y());
           }
@@ -1346,6 +1353,7 @@ double getSignedDistance(
 std::vector<uint64_t> getIds(const lanelet::ConstLanelets & lanelets)
 {
   std::vector<uint64_t> ids;
+  ids.reserve(lanelets.size());
   for (const auto & llt : lanelets) {
     ids.push_back(llt.id());
   }
@@ -1357,6 +1365,7 @@ Path convertToPathFromPathWithLaneId(const PathWithLaneId & path_with_lane_id)
   Path path;
   path.header = path_with_lane_id.header;
   path.drivable_area = path_with_lane_id.drivable_area;
+  path.points.reserve(path_with_lane_id.points.size());
   for (const auto & pt_with_lane_id : path_with_lane_id.points) {
     path.points.push_back(pt_with_lane_id.point);
   }
@@ -1381,6 +1390,7 @@ lanelet::Polygon3d getVehiclePolygon(
 
   lanelet::Polygon3d llt_poly;
   auto toPoint3d = [](const tf2::Vector3 & v) { return lanelet::Point3d(0, v.x(), v.y(), v.z()); };
+  llt_poly.reserve(4);
   llt_poly.push_back(toPoint3d(front_left_transformed));
   llt_poly.push_back(toPoint3d(front_right_transformed));
   llt_poly.push_back(toPoint3d(rear_right_transformed));
@@ -1399,7 +1409,7 @@ PathPointWithLaneId insertStopPoint(double length, PathWithLaneId * path)
   }
 
   double accumulated_length = 0;
-  double insert_idx = 0;
+  size_t insert_idx = 0;
   Pose stop_pose;
   for (size_t i = 1; i < path->points.size(); i++) {
     const auto prev_pose = path->points.at(i - 1).point.pose;
@@ -1423,7 +1433,7 @@ PathPointWithLaneId insertStopPoint(double length, PathWithLaneId * path)
   PathPointWithLaneId stop_point;
   stop_point.lane_ids = path->points.at(insert_idx).lane_ids;
   stop_point.point.pose = stop_pose;
-  path->points.insert(path->points.begin() + insert_idx, stop_point);
+  path->points.insert(path->points.begin() + static_cast<int>(insert_idx), stop_point);
   for (size_t i = insert_idx; i < path->points.size(); i++) {
     path->points.at(i).point.longitudinal_velocity_mps = 0.0;
     path->points.at(i).point.lateral_velocity_mps = 0.0;
@@ -1523,6 +1533,7 @@ std::vector<Polygon2d> getTargetLaneletPolygons(
   }
 
   Polygon2d llt_polygon_bg;
+  llt_polygon_bg.outer().reserve(llt_polygon_2d.size() + 1);
   for (const auto & llt_pt : llt_polygon_2d) {
     llt_polygon_bg.outer().emplace_back(llt_pt.x(), llt_pt.y());
   }
@@ -1535,6 +1546,7 @@ std::vector<Polygon2d> getTargetLaneletPolygons(
     if (type == target_type && map_polygon.size() > 2) {
       // create map polygon
       Polygon2d map_polygon_bg;
+      map_polygon_bg.outer().reserve(map_polygon.size() + 1);
       for (const auto & pt : map_polygon) {
         map_polygon_bg.outer().emplace_back(pt.x(), pt.y());
       }
@@ -2030,6 +2042,8 @@ Polygon2d convertBoundingBoxObjectToGeometryPolygon(
   tf2::Vector3 p3_obj = tf_map2obj * p3_map;
   tf2::Vector3 p4_obj = tf_map2obj * p4_map;
 
+  object_polygon.outer().reserve(5);
+
   object_polygon.outer().emplace_back(p1_obj.x(), p1_obj.y());
   object_polygon.outer().emplace_back(p2_obj.x(), p2_obj.y());
   object_polygon.outer().emplace_back(p3_obj.x(), p3_obj.y());
@@ -2050,6 +2064,7 @@ Polygon2d convertCylindricalObjectToGeometryPolygon(
 
   constexpr int N = 20;
   const double r = obj_shape.dimensions.x / 2;
+  object_polygon.outer().reserve(N + 1);
   for (int i = 0; i < N; ++i) {
     object_polygon.outer().emplace_back(
       obj_x + r * std::cos(2.0 * M_PI / N * i), obj_y + r * std::sin(2.0 * M_PI / N * i));
@@ -2066,6 +2081,7 @@ Polygon2d convertPolygonObjectToGeometryPolygon(const Pose & current_pose, const
   tf2::Transform tf_map2obj;
   fromMsg(current_pose, tf_map2obj);
   const auto obj_points = obj_shape.footprint.points;
+  object_polygon.outer().reserve(obj_points.size() + 1);
   for (const auto & obj_point : obj_points) {
     tf2::Vector3 obj(obj_point.x, obj_point.y, obj_point.z);
     tf2::Vector3 tf_obj = tf_map2obj * obj;
