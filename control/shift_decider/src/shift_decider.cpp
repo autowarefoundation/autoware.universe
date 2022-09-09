@@ -53,7 +53,7 @@ void ShiftDecider::onAutowareState(autoware_auto_system_msgs::msg::AutowareState
 
 void ShiftDecider::onTimer()
 {
-  if (!control_cmd_) {
+  if (!autoware_state_ || !control_cmd_) {
     return;
   }
 
