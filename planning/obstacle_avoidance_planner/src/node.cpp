@@ -86,8 +86,7 @@ std::tuple<std::vector<double>, std::vector<double>> calcVehicleCirclesInfo(
   return {radiuses, longitudinal_offsets};
 }
 
-[[maybe_unused]] void fillYawInTrajectoryPoint(
-  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & traj_points)
+[[maybe_unused]] void fillYawInTrajectoryPoint(std::vector<TrajectoryPoint> & traj_points)
 {
   std::vector<geometry_msgs::msg::Point> points;
   for (const auto & traj_point : traj_points) {
@@ -157,9 +156,8 @@ size_t searchExtendedZeroVelocityIndex(
     yaw_threshold);
 }
 
-autoware_auto_planning_msgs::msg::Trajectory createTrajectory(
-  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & traj_points,
-  const std_msgs::msg::Header & header)
+Trajectory createTrajectory(
+  const std::vector<TrajectoryPoint> & traj_points, const std_msgs::msg::Header & header)
 {
   auto traj = motion_utils::convertToTrajectory(traj_points);
   traj.header = header;
@@ -167,15 +165,14 @@ autoware_auto_planning_msgs::msg::Trajectory createTrajectory(
   return traj;
 }
 
-std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> resampleTrajectoryPoints(
-  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & traj_points,
-  const double interval)
+std::vector<TrajectoryPoint> resampleTrajectoryPoints(
+  const std::vector<TrajectoryPoint> & traj_points, const double interval)
 {
   const auto traj = motion_utils::convertToTrajectory(traj_points);
   const auto resampled_traj = motion_utils::resampleTrajectory(traj, interval);
 
   // convert Trajectory to std::vector<TrajectoryPoint>
-  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> resampled_traj_points;
+  std::vector<TrajectoryPoint> resampled_traj_points;
   for (const auto & point : resampled_traj.points) {
     resampled_traj_points.push_back(point);
   }
@@ -196,43 +193,36 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
   durable_qos.transient_local();
 
   // publisher to other nodes
-  traj_pub_ = create_publisher<autoware_auto_planning_msgs::msg::Trajectory>("~/output/path", 1);
+  traj_pub_ = create_publisher<Trajectory>("~/output/path", 1);
 
   // debug publisher
-  debug_eb_traj_pub_ = create_publisher<autoware_auto_planning_msgs::msg::Trajectory>(
-    "~/debug/eb_trajectory", durable_qos);
-  debug_extended_fixed_traj_pub_ = create_publisher<autoware_auto_planning_msgs::msg::Trajectory>(
-    "~/debug/extended_fixed_traj", 1);
+  debug_eb_traj_pub_ = create_publisher<Trajectory>("~/debug/eb_trajectory", durable_qos);
+  debug_extended_fixed_traj_pub_ = create_publisher<Trajectory>("~/debug/extended_fixed_traj", 1);
   debug_extended_non_fixed_traj_pub_ =
-    create_publisher<autoware_auto_planning_msgs::msg::Trajectory>(
-      "~/debug/extended_non_fixed_traj", 1);
-  debug_mpt_fixed_traj_pub_ =
-    create_publisher<autoware_auto_planning_msgs::msg::Trajectory>("~/debug/mpt_fixed_traj", 1);
-  debug_mpt_ref_traj_pub_ =
-    create_publisher<autoware_auto_planning_msgs::msg::Trajectory>("~/debug/mpt_ref_traj", 1);
-  debug_mpt_traj_pub_ =
-    create_publisher<autoware_auto_planning_msgs::msg::Trajectory>("~/debug/mpt_traj", 1);
+    create_publisher<Trajectory>("~/debug/extended_non_fixed_traj", 1);
+  debug_mpt_fixed_traj_pub_ = create_publisher<Trajectory>("~/debug/mpt_fixed_traj", 1);
+  debug_mpt_ref_traj_pub_ = create_publisher<Trajectory>("~/debug/mpt_ref_traj", 1);
+  debug_mpt_traj_pub_ = create_publisher<Trajectory>("~/debug/mpt_traj", 1);
   debug_markers_pub_ =
     create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/marker", durable_qos);
   debug_wall_markers_pub_ =
     create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/wall_marker", durable_qos);
-  debug_clearance_map_pub_ =
-    create_publisher<nav_msgs::msg::OccupancyGrid>("~/debug/clearance_map", durable_qos);
+  debug_clearance_map_pub_ = create_publisher<OccupancyGrid>("~/debug/clearance_map", durable_qos);
   debug_object_clearance_map_pub_ =
-    create_publisher<nav_msgs::msg::OccupancyGrid>("~/debug/object_clearance_map", durable_qos);
+    create_publisher<OccupancyGrid>("~/debug/object_clearance_map", durable_qos);
   debug_area_with_objects_pub_ =
-    create_publisher<nav_msgs::msg::OccupancyGrid>("~/debug/area_with_objects", durable_qos);
+    create_publisher<OccupancyGrid>("~/debug/area_with_objects", durable_qos);
   debug_msg_pub_ =
     create_publisher<tier4_debug_msgs::msg::StringStamped>("~/debug/calculation_time", 1);
 
   // subscriber
-  path_sub_ = create_subscription<autoware_auto_planning_msgs::msg::Path>(
+  path_sub_ = create_subscription<Path>(
     "~/input/path", rclcpp::QoS{1},
     std::bind(&ObstacleAvoidancePlanner::onPath, this, std::placeholders::_1));
-  odom_sub_ = create_subscription<nav_msgs::msg::Odometry>(
+  odom_sub_ = create_subscription<Odometry>(
     "/localization/kinematic_state", rclcpp::QoS{1},
     std::bind(&ObstacleAvoidancePlanner::onOdometry, this, std::placeholders::_1));
-  objects_sub_ = create_subscription<autoware_auto_perception_msgs::msg::PredictedObjects>(
+  objects_sub_ = create_subscription<PredictedObjects>(
     "~/input/objects", rclcpp::QoS{10},
     std::bind(&ObstacleAvoidancePlanner::onObjects, this, std::placeholders::_1));
   is_avoidance_sub_ = create_subscription<tier4_planning_msgs::msg::EnableAvoidance>(
@@ -800,17 +790,16 @@ rcl_interfaces::msg::SetParametersResult ObstacleAvoidancePlanner::onParam(
   return result;
 }
 
-void ObstacleAvoidancePlanner::onOdometry(const nav_msgs::msg::Odometry::SharedPtr msg)
+void ObstacleAvoidancePlanner::onOdometry(const Odometry::SharedPtr msg)
 {
   current_twist_ptr_ = std::make_unique<geometry_msgs::msg::TwistStamped>();
   current_twist_ptr_->header = msg->header;
   current_twist_ptr_->twist = msg->twist.twist;
 }
 
-void ObstacleAvoidancePlanner::onObjects(
-  const autoware_auto_perception_msgs::msg::PredictedObjects::SharedPtr msg)
+void ObstacleAvoidancePlanner::onObjects(const PredictedObjects::SharedPtr msg)
 {
-  objects_ptr_ = std::make_unique<autoware_auto_perception_msgs::msg::PredictedObjects>(*msg);
+  objects_ptr_ = std::make_unique<PredictedObjects>(*msg);
 }
 
 void ObstacleAvoidancePlanner::onEnableAvoidance(
@@ -841,8 +830,7 @@ void ObstacleAvoidancePlanner::resetPrevOptimization()
   eb_solved_count_ = 0;
 }
 
-void ObstacleAvoidancePlanner::onPath(
-  const autoware_auto_planning_msgs::msg::Path::SharedPtr path_ptr)
+void ObstacleAvoidancePlanner::onPath(const Path::SharedPtr path_ptr)
 {
   stop_watch_.tic(__func__);
 
@@ -864,7 +852,7 @@ void ObstacleAvoidancePlanner::onPath(
     is_showing_calculation_time_, mpt_visualize_sampling_num_, planner_data.ego_pose,
     mpt_param_.vehicle_circle_radiuses, mpt_param_.vehicle_circle_longitudinal_offsets);
 
-  autoware_auto_planning_msgs::msg::Trajectory output_traj_msg = generateTrajectory(planner_data);
+  const auto output_traj_msg = generateTrajectory(planner_data);
 
   // publish debug data
   publishDebugDataInMain(*path_ptr);
@@ -879,15 +867,13 @@ void ObstacleAvoidancePlanner::onPath(
   }
 
   // make previous variables
-  prev_path_points_ptr_ =
-    std::make_unique<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(path_ptr->points);
+  prev_path_points_ptr_ = std::make_unique<std::vector<PathPoint>>(path_ptr->points);
   prev_ego_pose_ptr_ = std::make_unique<geometry_msgs::msg::Pose>(planner_data.ego_pose);
 
   traj_pub_->publish(output_traj_msg);
 }
 
-autoware_auto_planning_msgs::msg::Trajectory ObstacleAvoidancePlanner::generateTrajectory(
-  const PlannerData & planner_data)
+Trajectory ObstacleAvoidancePlanner::generateTrajectory(const PlannerData & planner_data)
 {
   const auto & p = planner_data;
 
@@ -914,8 +900,8 @@ autoware_auto_planning_msgs::msg::Trajectory ObstacleAvoidancePlanner::generateT
   return createTrajectory(post_processed_traj_points, p.path.header);
 }
 
-std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>
-ObstacleAvoidancePlanner::generateOptimizedTrajectory(const PlannerData & planner_data)
+std::vector<TrajectoryPoint> ObstacleAvoidancePlanner::generateOptimizedTrajectory(
+  const PlannerData & planner_data)
 {
   stop_watch_.tic(__func__);
 
@@ -1117,8 +1103,7 @@ Trajectories ObstacleAvoidancePlanner::optimizeTrajectory(
   }
 
   // EB: smooth trajectory if enable_pre_smoothing is true
-  const auto eb_traj =
-    [&]() -> boost::optional<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>> {
+  const auto eb_traj = [&]() -> boost::optional<std::vector<TrajectoryPoint>> {
     if (enable_pre_smoothing_) {
       return eb_path_optimizer_ptr_->getEBTrajectory(
         p.ego_pose, p.path, prev_optimal_trajs_ptr_, p.ego_vel, debug_data_);
@@ -1165,7 +1150,7 @@ Trajectories ObstacleAvoidancePlanner::optimizeTrajectory(
 }
 
 Trajectories ObstacleAvoidancePlanner::getPrevTrajs(
-  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points) const
+  const std::vector<PathPoint> & path_points) const
 {
   if (prev_optimal_trajs_ptr_) {
     return *prev_optimal_trajs_ptr_;
@@ -1179,8 +1164,7 @@ Trajectories ObstacleAvoidancePlanner::getPrevTrajs(
 }
 
 void ObstacleAvoidancePlanner::calcVelocity(
-  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
-  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & traj_points) const
+  const std::vector<PathPoint> & path_points, std::vector<TrajectoryPoint> & traj_points) const
 {
   for (size_t i = 0; i < traj_points.size(); i++) {
     const size_t nearest_seg_idx = findNearestSegmentIndexWithSoftYawConstraints(
@@ -1199,8 +1183,7 @@ void ObstacleAvoidancePlanner::calcVelocity(
 }
 
 void ObstacleAvoidancePlanner::insertZeroVelocityOutsideDrivableArea(
-  const PlannerData & planner_data,
-  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & traj_points,
+  const PlannerData & planner_data, std::vector<TrajectoryPoint> & traj_points,
   const CVMaps & cv_maps)
 {
   if (traj_points.empty()) {
@@ -1246,8 +1229,7 @@ void ObstacleAvoidancePlanner::insertZeroVelocityOutsideDrivableArea(
 }
 
 void ObstacleAvoidancePlanner::publishDebugDataInOptimization(
-  const PlannerData & planner_data,
-  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & traj_points)
+  const PlannerData & planner_data, const std::vector<TrajectoryPoint> & traj_points)
 {
   stop_watch_.tic(__func__);
 
@@ -1297,8 +1279,8 @@ void ObstacleAvoidancePlanner::publishDebugDataInOptimization(
 }
 
 Trajectories ObstacleAvoidancePlanner::makePrevTrajectories(
-  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
-  const Trajectories & trajs, const PlannerData & planner_data)
+  const std::vector<PathPoint> & path_points, const Trajectories & trajs,
+  const PlannerData & planner_data)
 {
   stop_watch_.tic(__func__);
 
@@ -1316,17 +1298,15 @@ Trajectories ObstacleAvoidancePlanner::makePrevTrajectories(
   return trajectories;
 }
 
-std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>
-ObstacleAvoidancePlanner::generatePostProcessedTrajectory(
-  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
-  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & optimized_traj_points,
-  const PlannerData & planner_data)
+std::vector<TrajectoryPoint> ObstacleAvoidancePlanner::generatePostProcessedTrajectory(
+  const std::vector<PathPoint> & path_points,
+  const std::vector<TrajectoryPoint> & optimized_traj_points, const PlannerData & planner_data)
 {
   stop_watch_.tic(__func__);
 
-  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> trajectory_points;
+  std::vector<TrajectoryPoint> trajectory_points;
   if (path_points.empty()) {
-    autoware_auto_planning_msgs::msg::TrajectoryPoint tmp_point;
+    TrajectoryPoint tmp_point;
     tmp_point.pose = planner_data.ego_pose;
     tmp_point.longitudinal_velocity_mps = 0.0;
     trajectory_points.push_back(tmp_point);
@@ -1354,10 +1334,8 @@ ObstacleAvoidancePlanner::generatePostProcessedTrajectory(
   return fine_traj_points_with_vel;
 }
 
-std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>
-ObstacleAvoidancePlanner::getExtendedTrajectory(
-  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
-  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & optimized_points)
+std::vector<TrajectoryPoint> ObstacleAvoidancePlanner::getExtendedTrajectory(
+  const std::vector<PathPoint> & path_points, const std::vector<TrajectoryPoint> & optimized_points)
 {
   stop_watch_.tic(__func__);
 
@@ -1368,7 +1346,7 @@ ObstacleAvoidancePlanner::getExtendedTrajectory(
     RCLCPP_INFO_THROTTLE(
       this->get_logger(), *this->get_clock(), std::chrono::milliseconds(10000).count(),
       "[Avoidance] Not extend trajectory");
-    return std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>{};
+    return std::vector<TrajectoryPoint>{};
   }
 
   // calculate end idx of optimized points on path points
@@ -1379,11 +1357,10 @@ ObstacleAvoidancePlanner::getExtendedTrajectory(
     RCLCPP_INFO_THROTTLE(
       this->get_logger(), *this->get_clock(), std::chrono::milliseconds(10000).count(),
       "[Avoidance] Not extend trajectory since could not find nearest idx from last opt point");
-    return std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>{};
+    return std::vector<TrajectoryPoint>{};
   }
 
-  auto extended_traj_points =
-    [&]() -> std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> {
+  auto extended_traj_points = [&]() -> std::vector<TrajectoryPoint> {
     constexpr double non_fixed_traj_length = 5.0;  // TODO(murooka) may be better to tune
     const size_t non_fixed_begin_path_idx = opt_end_path_idx.get();
     const size_t non_fixed_end_path_idx =
@@ -1395,23 +1372,22 @@ ObstacleAvoidancePlanner::getExtendedTrajectory(
       if (points_utils::isNearLastPathPoint(
             optimized_points.back(), path_points, traj_param_.max_dist_for_extending_end_point,
             traj_param_.delta_yaw_threshold_for_closest_point)) {
-        return std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>{};
+        return std::vector<TrajectoryPoint>{};
       }
       const auto last_traj_point = points_utils::convertToTrajectoryPoint(path_points.back());
-      return std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>{last_traj_point};
+      return std::vector<TrajectoryPoint>{last_traj_point};
     } else if (non_fixed_end_path_idx == path_points.size() - 1) {
       // no need to connect smoothly since extended trajectory length is short enough
       const auto last_traj_point = points_utils::convertToTrajectoryPoint(path_points.back());
-      return std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>{last_traj_point};
+      return std::vector<TrajectoryPoint>{last_traj_point};
     }
 
     // define non_fixed/fixed_traj_points
     const auto begin_point = optimized_points.back();
     const auto end_point =
       points_utils::convertToTrajectoryPoint(path_points.at(non_fixed_end_path_idx));
-    const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> non_fixed_traj_points{
-      begin_point, end_point};
-    const std::vector<autoware_auto_planning_msgs::msg::PathPoint> fixed_path_points{
+    const std::vector<TrajectoryPoint> non_fixed_traj_points{begin_point, end_point};
+    const std::vector<PathPoint> fixed_path_points{
       path_points.begin() + non_fixed_end_path_idx + 1, path_points.end()};
     const auto fixed_traj_points = points_utils::convertToTrajectoryPoints(fixed_path_points);
 
@@ -1445,10 +1421,9 @@ ObstacleAvoidancePlanner::getExtendedTrajectory(
   return extended_traj_points;
 }
 
-std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>
-ObstacleAvoidancePlanner::generateFineTrajectoryPoints(
-  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
-  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & traj_points) const
+std::vector<TrajectoryPoint> ObstacleAvoidancePlanner::generateFineTrajectoryPoints(
+  const std::vector<PathPoint> & path_points,
+  const std::vector<TrajectoryPoint> & traj_points) const
 {
   stop_watch_.tic(__func__);
 
@@ -1471,18 +1446,15 @@ ObstacleAvoidancePlanner::generateFineTrajectoryPoints(
   return interpolated_traj_points;
 }
 
-std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>
-ObstacleAvoidancePlanner::alignVelocity(
-  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & fine_traj_points,
-  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
-  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & traj_points) const
+std::vector<TrajectoryPoint> ObstacleAvoidancePlanner::alignVelocity(
+  const std::vector<TrajectoryPoint> & fine_traj_points, const std::vector<PathPoint> & path_points,
+  const std::vector<TrajectoryPoint> & traj_points) const
 {
   stop_watch_.tic(__func__);
 
   // insert zero velocity path index, and get optional zero_vel_path_idx
-  const auto path_zero_vel_info = [&]()
-    -> std::pair<
-      std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>, boost::optional<size_t>> {
+  const auto path_zero_vel_info =
+    [&]() -> std::pair<std::vector<TrajectoryPoint>, boost::optional<size_t>> {
     const auto opt_path_zero_vel_idx = motion_utils::searchZeroVelocityIndex(path_points);
     if (opt_path_zero_vel_idx) {
       const auto & zero_vel_path_point = path_points.at(opt_path_zero_vel_idx.get());
@@ -1493,7 +1465,7 @@ ObstacleAvoidancePlanner::alignVelocity(
         const auto interpolated_pose =
           lerpPose(fine_traj_points, zero_vel_path_point.pose.position, opt_traj_seg_idx.get());
         if (interpolated_pose) {
-          autoware_auto_planning_msgs::msg::TrajectoryPoint zero_vel_traj_point;
+          TrajectoryPoint zero_vel_traj_point;
           zero_vel_traj_point.pose = interpolated_pose.get();
           zero_vel_traj_point.longitudinal_velocity_mps =
             zero_vel_path_point.longitudinal_velocity_mps;
@@ -1544,7 +1516,7 @@ ObstacleAvoidancePlanner::alignVelocity(
     auto truncated_points = points_utils::clipForwardPoints(path_points, prev_begin_idx, 5.0);
     if (truncated_points.size() < 2) {
       // NOTE: At least, two points must be contained in truncated_points
-      truncated_points = std::vector<autoware_auto_planning_msgs::msg::PathPoint>(
+      truncated_points = std::vector<PathPoint>(
         path_points.begin() + prev_begin_idx,
         path_points.begin() + std::min(path_points.size(), prev_begin_idx + 2));
     }
@@ -1575,8 +1547,7 @@ ObstacleAvoidancePlanner::alignVelocity(
   return fine_traj_points_with_vel;
 }
 
-void ObstacleAvoidancePlanner::publishDebugDataInMain(
-  const autoware_auto_planning_msgs::msg::Path & path) const
+void ObstacleAvoidancePlanner::publishDebugDataInMain(const Path & path) const
 {
   stop_watch_.tic(__func__);
 
