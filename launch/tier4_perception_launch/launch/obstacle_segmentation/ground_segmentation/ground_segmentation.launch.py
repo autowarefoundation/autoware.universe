@@ -238,6 +238,8 @@ class GroundSegmentationPipeline:
                 parameters=[
                     self.ground_segmentation_param["common_ground_filter"]["parameters"],
                     self.vehicle_info,
+                    {"input_frame": "base_link"},
+                    {"output_frame": "base_link"},
                 ],
                 extra_arguments=[
                     {"use_intra_process_comms": LaunchConfiguration("use_intra_process")}
@@ -518,9 +520,7 @@ def generate_launch_description():
     add_launch_arg("use_intra_process", "True")
     add_launch_arg("use_pointcloud_container", "False")
     add_launch_arg("container_name", "perception_pipeline_container")
-    add_launch_arg(
-        "tier4_perception_launch_param_path", None, "tier4_perception_launch parameter path"
-    )
+    add_launch_arg("tier4_perception_launch_param_path", "tier4_perception_launch parameter path")
 
     set_container_executable = SetLaunchConfiguration(
         "container_executable",

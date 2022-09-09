@@ -14,7 +14,10 @@
 
 #include "behavior_path_planner/scene_module/lane_following/lane_following_module.hpp"
 
+#include "behavior_path_planner/path_utilities.hpp"
 #include "behavior_path_planner/utilities.hpp"
+
+#include <lanelet2_extension/utility/utilities.hpp>
 
 #include <memory>
 #include <string>
@@ -97,13 +100,25 @@ PathWithLaneId LaneFollowingModule::getReferencePath() const
     return reference_path;
   }
 
+  // calculate path with backward margin to avoid end points' instability by spline interpolation
+  constexpr double extra_margin = 10.0;
+  const double backward_length =
+    std::max(p.backward_path_length, p.backward_path_length + extra_margin);
+  const auto current_lanes_with_backward_margin =
+    util::calcLaneAroundPose(route_handler, current_pose, p.forward_path_length, backward_length);
   reference_path = util::getCenterLinePath(
-    *route_handler, current_lanes, current_pose, p.backward_path_length, p.forward_path_length, p);
+    *route_handler, current_lanes_with_backward_margin, current_pose, backward_length,
+    p.forward_path_length, p);
+
+  // clip backward length
+  const size_t current_seg_idx = findEgoSegmentIndex(reference_path.points);
+  util::clipPathLength(
+    reference_path, current_seg_idx, p.forward_path_length, p.backward_path_length);
 
   {
     double optional_lengths{0.0};
     const auto isInIntersection = util::checkLaneIsInIntersection(
-      *route_handler, reference_path, current_lanes, optional_lengths);
+      *route_handler, reference_path, current_lanes, p, optional_lengths);
 
     if (isInIntersection) {
       reference_path = util::getCenterLinePath(
@@ -142,9 +157,8 @@ PathWithLaneId LaneFollowingModule::getReferencePath() const
   }
 
   reference_path.drivable_area = util::generateDrivableArea(
-    current_lanes, p.drivable_area_resolution, p.vehicle_length, planner_data_);
+    reference_path, current_lanes, p.drivable_area_resolution, p.vehicle_length, planner_data_);
 
   return reference_path;
 }
-
 }  // namespace behavior_path_planner

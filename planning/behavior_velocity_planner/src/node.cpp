@@ -119,28 +119,28 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
     createSubscriptionOptions(this));
   sub_traffic_signals_ =
     this->create_subscription<autoware_auto_perception_msgs::msg::TrafficSignalArray>(
-      "~/input/traffic_signals", 10,
+      "~/input/traffic_signals", 1,
       std::bind(&BehaviorVelocityPlannerNode::onTrafficSignals, this, _1),
       createSubscriptionOptions(this));
   sub_external_crosswalk_states_ = this->create_subscription<tier4_api_msgs::msg::CrosswalkStatus>(
-    "~/input/external_crosswalk_states", 10,
+    "~/input/external_crosswalk_states", 1,
     std::bind(&BehaviorVelocityPlannerNode::onExternalCrosswalkStates, this, _1),
     createSubscriptionOptions(this));
   sub_external_intersection_states_ =
     this->create_subscription<tier4_api_msgs::msg::IntersectionStatus>(
-      "~/input/external_intersection_states", 10,
+      "~/input/external_intersection_states", 1,
       std::bind(&BehaviorVelocityPlannerNode::onExternalIntersectionStates, this, _1));
   sub_external_velocity_limit_ = this->create_subscription<VelocityLimit>(
     "~/input/external_velocity_limit_mps", rclcpp::QoS{1}.transient_local(),
     std::bind(&BehaviorVelocityPlannerNode::onExternalVelocityLimit, this, _1));
   sub_external_traffic_signals_ =
     this->create_subscription<autoware_auto_perception_msgs::msg::TrafficSignalArray>(
-      "~/input/external_traffic_signals", 10,
+      "~/input/external_traffic_signals", 1,
       std::bind(&BehaviorVelocityPlannerNode::onExternalTrafficSignals, this, _1),
       createSubscriptionOptions(this));
   sub_virtual_traffic_light_states_ =
     this->create_subscription<tier4_v2x_msgs::msg::VirtualTrafficLightStateArray>(
-      "~/input/virtual_traffic_light_states", 10,
+      "~/input/virtual_traffic_light_states", 1,
       std::bind(&BehaviorVelocityPlannerNode::onVirtualTrafficLightStates, this, _1),
       createSubscriptionOptions(this));
   sub_occupancy_grid_ = this->create_subscription<nav_msgs::msg::OccupancyGrid>(
@@ -162,6 +162,12 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   // TODO(yukkysaito): This will become unnecessary when acc output from localization is available.
   planner_data_.accel_lowpass_gain_ = this->declare_parameter("lowpass_gain", 0.5);
   planner_data_.stop_line_extend_length = this->declare_parameter("stop_line_extend_length", 5.0);
+
+  // nearest search
+  planner_data_.ego_nearest_dist_threshold =
+    this->declare_parameter<double>("ego_nearest_dist_threshold");
+  planner_data_.ego_nearest_yaw_threshold =
+    this->declare_parameter<double>("ego_nearest_yaw_threshold");
 
   // Initialize PlannerManager
   if (this->declare_parameter("launch_crosswalk", true)) {
@@ -203,35 +209,46 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
 }
 
 // NOTE: argument planner_data must not be referenced for multithreading
-bool BehaviorVelocityPlannerNode::isDataReady(const PlannerData planner_data) const
+bool BehaviorVelocityPlannerNode::isDataReady(
+  const PlannerData planner_data, rclcpp::Clock clock) const
 {
   const auto & d = planner_data;
 
   // from tf
   if (d.current_pose.header.frame_id == "") {
+    RCLCPP_INFO_THROTTLE(get_logger(), clock, 3000, "Frame id of current pose is missing");
     return false;
   }
 
   // from callbacks
   if (!d.current_velocity) {
+    RCLCPP_INFO_THROTTLE(get_logger(), clock, 3000, "Waiting for current velocity");
     return false;
   }
   if (!d.current_accel) {
+    RCLCPP_INFO_THROTTLE(get_logger(), clock, 3000, "Waiting for current acceleration");
     return false;
   }
   if (!d.predicted_objects) {
+    RCLCPP_INFO_THROTTLE(get_logger(), clock, 3000, "Waiting for predicted_objects");
     return false;
   }
   if (!d.no_ground_pointcloud) {
+    RCLCPP_INFO_THROTTLE(get_logger(), clock, 3000, "Waiting for pointcloud");
     return false;
   }
   if (!d.route_handler_) {
+    RCLCPP_INFO_THROTTLE(
+      get_logger(), clock, 3000, "Waiting for the initialization of route_handler");
     return false;
   }
   if (!d.route_handler_->isMapMsgReady()) {
+    RCLCPP_INFO_THROTTLE(get_logger(), clock, 3000, "Waiting for the initialization of map");
     return false;
   }
   if (!d.velocity_smoother_) {
+    RCLCPP_INFO_THROTTLE(
+      get_logger(), clock, 3000, "Waiting for the initialization of velocity smoother");
     return false;
   }
   return true;
@@ -381,6 +398,7 @@ void BehaviorVelocityPlannerNode::onTrigger(
   const autoware_auto_planning_msgs::msg::PathWithLaneId::ConstSharedPtr input_path_msg)
 {
   mutex_.lock();  // for planner_data_
+
   // Check ready
   try {
     planner_data_.current_pose =
@@ -391,7 +409,7 @@ void BehaviorVelocityPlannerNode::onTrigger(
     return;
   }
 
-  if (!isDataReady(planner_data_)) {
+  if (!isDataReady(planner_data_, *get_clock())) {
     mutex_.unlock();
     return;
   }
@@ -422,7 +440,9 @@ autoware_auto_planning_msgs::msg::Path BehaviorVelocityPlannerNode::generatePath
   autoware_auto_planning_msgs::msg::Path output_path_msg;
 
   // TODO(someone): support backward path
-  if (!motion_utils::isDrivingForward(input_path_msg->points)) {
+  const auto is_driving_forward = motion_utils::isDrivingForward(input_path_msg->points);
+  is_driving_forward_ = is_driving_forward ? is_driving_forward.get() : is_driving_forward_;
+  if (!is_driving_forward_) {
     RCLCPP_WARN_THROTTLE(
       get_logger(), *get_clock(), 3000,
       "Backward path is NOT supported. just converting path_with_lane_id to path");

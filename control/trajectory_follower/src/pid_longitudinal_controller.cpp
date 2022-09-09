@@ -178,6 +178,16 @@ PidLongitudinalController::PidLongitudinalController(rclcpp::Node & node) : node
   m_max_pitch_rad = node_->declare_parameter<float64_t>("max_pitch_rad");  // [rad]
   m_min_pitch_rad = node_->declare_parameter<float64_t>("min_pitch_rad");  // [rad]
 
+  // ego nearest index search
+  m_ego_nearest_dist_threshold =
+    node_->has_parameter("ego_nearest_dist_threshold")
+      ? node_->get_parameter("ego_nearest_dist_threshold").as_double()
+      : node_->declare_parameter<double>("ego_nearest_dist_threshold");  // [m]
+  m_ego_nearest_yaw_threshold =
+    node_->has_parameter("ego_nearest_yaw_threshold")
+      ? node_->get_parameter("ego_nearest_yaw_threshold").as_double()
+      : node_->declare_parameter<double>("ego_nearest_yaw_threshold");  // [rad]
+
   // subscriber, publisher
   m_pub_slope =
     node_->create_publisher<autoware_auto_system_msgs::msg::Float32MultiArrayDiagnostic>(
@@ -196,18 +206,17 @@ PidLongitudinalController::PidLongitudinalController(rclcpp::Node & node) : node
 void PidLongitudinalController::setInputData(InputData const & input_data)
 {
   setTrajectory(input_data.current_trajectory_ptr);
-  setCurrentVelocity(input_data.current_odometry_ptr);
+  setKinematicState(input_data.current_odometry_ptr);
 }
 
-void PidLongitudinalController::setCurrentVelocity(
-  const nav_msgs::msg::Odometry::ConstSharedPtr msg)
+void PidLongitudinalController::setKinematicState(const nav_msgs::msg::Odometry::ConstSharedPtr msg)
 {
   if (!msg) return;
 
-  if (m_current_velocity_ptr) {
-    m_prev_velocity_ptr = m_current_velocity_ptr;
+  if (m_current_kinematic_state_ptr) {
+    m_prev_kienmatic_state_ptr = m_current_kinematic_state_ptr;
   }
-  m_current_velocity_ptr = std::make_shared<nav_msgs::msg::Odometry>(*msg);
+  m_current_kinematic_state_ptr = msg;
 }
 
 void PidLongitudinalController::setTrajectory(
@@ -227,7 +236,7 @@ void PidLongitudinalController::setTrajectory(
     return;
   }
 
-  m_trajectory_ptr = std::make_shared<autoware_auto_planning_msgs::msg::Trajectory>(*msg);
+  m_trajectory_ptr = msg;
 }
 
 rcl_interfaces::msg::SetParametersResult PidLongitudinalController::paramCallback(
@@ -356,22 +365,12 @@ rcl_interfaces::msg::SetParametersResult PidLongitudinalController::paramCallbac
 boost::optional<LongitudinalOutput> PidLongitudinalController::run()
 {
   // wait for initial pointers
-  if (
-    !m_current_velocity_ptr || !m_prev_velocity_ptr || !m_trajectory_ptr ||
-    !m_tf_buffer.canTransform(m_trajectory_ptr->header.frame_id, "base_link", tf2::TimePointZero)) {
+  if (!m_current_kinematic_state_ptr || !m_prev_kienmatic_state_ptr || !m_trajectory_ptr) {
     return boost::none;
   }
 
-  // get current ego pose
-  geometry_msgs::msg::TransformStamped tf =
-    m_tf_buffer.lookupTransform(m_trajectory_ptr->header.frame_id, "base_link", tf2::TimePointZero);
-
   // calculate current pose and control data
-  geometry_msgs::msg::Pose current_pose;
-  current_pose.position.x = tf.transform.translation.x;
-  current_pose.position.y = tf.transform.translation.y;
-  current_pose.position.z = tf.transform.translation.z;
-  current_pose.orientation = tf.transform.rotation;
+  geometry_msgs::msg::Pose current_pose = m_current_kinematic_state_ptr->pose.pose;
 
   const auto control_data = getControlData(current_pose);
 
@@ -419,17 +418,25 @@ PidLongitudinalController::ControlData PidLongitudinalController::getControlData
   control_data.current_motion = getCurrentMotion();
 
   // nearest idx
-  const float64_t max_dist = m_state_transition_params.emergency_state_traj_trans_dev;
-  const float64_t max_yaw = m_state_transition_params.emergency_state_traj_rot_dev;
-  const auto nearest_idx_opt =
-    motion_common::findNearestIndex(m_trajectory_ptr->points, current_pose, max_dist, max_yaw);
+  const size_t nearest_idx = motion_utils::findFirstNearestIndexWithSoftConstraints(
+    m_trajectory_ptr->points, current_pose, m_ego_nearest_dist_threshold,
+    m_ego_nearest_yaw_threshold);
+  const auto & nearest_point = m_trajectory_ptr->points.at(nearest_idx).pose;
 
-  // return here if nearest index is not found
-  if (!nearest_idx_opt) {
+  // check if the deviation is worth emergency
+  const bool is_dist_deviation_large =
+    m_state_transition_params.emergency_state_traj_trans_dev <
+    tier4_autoware_utils::calcDistance2d(nearest_point, current_pose);
+  const bool is_yaw_deviation_large =
+    m_state_transition_params.emergency_state_traj_rot_dev <
+    std::abs(tier4_autoware_utils::normalizeRadian(
+      tf2::getYaw(nearest_point.orientation) - tf2::getYaw(current_pose.orientation)));
+  if (is_dist_deviation_large || is_yaw_deviation_large) {
+    // return here if nearest index is not found
     control_data.is_far_from_trajectory = true;
     return control_data;
   }
-  control_data.nearest_idx = *nearest_idx_opt;
+  control_data.nearest_idx = nearest_idx;
 
   // shift
   control_data.shift = getCurrentShift(control_data.nearest_idx);
@@ -440,7 +447,7 @@ PidLongitudinalController::ControlData PidLongitudinalController::getControlData
 
   // distance to stopline
   control_data.stop_dist = trajectory_follower::longitudinal_utils::calcStopDistance(
-    current_pose, *m_trajectory_ptr, max_dist, max_yaw);
+    current_pose, *m_trajectory_ptr, m_ego_nearest_dist_threshold, m_ego_nearest_yaw_threshold);
 
   // pitch
   const float64_t raw_pitch =
@@ -572,7 +579,7 @@ PidLongitudinalController::Motion PidLongitudinalController::calcCtrlCmd(
     const auto target_pose = trajectory_follower::longitudinal_utils::calcPoseAfterTimeDelay(
       current_pose, m_delay_compensation_time, current_vel);
     const auto target_interpolated_point =
-      calcInterpolatedTargetValue(*m_trajectory_ptr, target_pose, nearest_idx);
+      calcInterpolatedTargetValue(*m_trajectory_ptr, target_pose);
     target_motion = Motion{
       target_interpolated_point.longitudinal_velocity_mps,
       target_interpolated_point.acceleration_mps2};
@@ -694,16 +701,16 @@ float64_t PidLongitudinalController::getDt()
 
 PidLongitudinalController::Motion PidLongitudinalController::getCurrentMotion() const
 {
-  const float64_t dv =
-    m_current_velocity_ptr->twist.twist.linear.x - m_prev_velocity_ptr->twist.twist.linear.x;
+  const float64_t dv = m_current_kinematic_state_ptr->twist.twist.linear.x -
+                       m_prev_kienmatic_state_ptr->twist.twist.linear.x;
   const float64_t dt = std::max(
-    (rclcpp::Time(m_current_velocity_ptr->header.stamp) -
-     rclcpp::Time(m_prev_velocity_ptr->header.stamp))
+    (rclcpp::Time(m_current_kinematic_state_ptr->header.stamp) -
+     rclcpp::Time(m_prev_kienmatic_state_ptr->header.stamp))
       .seconds(),
     1e-03);
   const float64_t accel = dv / dt;
 
-  const float64_t current_vel = m_current_velocity_ptr->twist.twist.linear.x;
+  const float64_t current_vel = m_current_kinematic_state_ptr->twist.twist.linear.x;
   const float64_t current_acc = m_lpf_acc->filter(accel);
 
   return Motion{current_vel, current_acc};
@@ -821,31 +828,16 @@ PidLongitudinalController::Motion PidLongitudinalController::keepBrakeBeforeStop
 
 autoware_auto_planning_msgs::msg::TrajectoryPoint
 PidLongitudinalController::calcInterpolatedTargetValue(
-  const autoware_auto_planning_msgs::msg::Trajectory & traj, const geometry_msgs::msg::Pose & pose,
-  const size_t nearest_idx) const
+  const autoware_auto_planning_msgs::msg::Trajectory & traj,
+  const geometry_msgs::msg::Pose & pose) const
 {
   if (traj.points.size() == 1) {
     return traj.points.at(0);
   }
 
-  // If the current position is not within the reference trajectory, enable the edge value.
-  // Else, apply linear interpolation
-  if (nearest_idx == 0) {
-    if (motion_common::calcSignedArcLength(traj.points, pose.position, 0) > 0) {
-      return traj.points.at(0);
-    }
-  }
-  if (nearest_idx == traj.points.size() - 1) {
-    if (
-      motion_common::calcSignedArcLength(traj.points, pose.position, traj.points.size() - 1) < 0) {
-      return traj.points.at(traj.points.size() - 1);
-    }
-  }
-
   // apply linear interpolation
   return trajectory_follower::longitudinal_utils::lerpTrajectoryPoint(
-    traj.points, pose, m_state_transition_params.emergency_state_traj_trans_dev,
-    m_state_transition_params.emergency_state_traj_rot_dev);
+    traj.points, pose, m_ego_nearest_dist_threshold, m_ego_nearest_yaw_threshold);
 }
 
 float64_t PidLongitudinalController::predictedVelocityInTargetPoint(
@@ -941,10 +933,8 @@ void PidLongitudinalController::updateDebugVelAcc(
 {
   using trajectory_follower::DebugValues;
   const float64_t current_vel = control_data.current_motion.vel;
-  const size_t nearest_idx = control_data.nearest_idx;
 
-  const auto interpolated_point =
-    calcInterpolatedTargetValue(*m_trajectory_ptr, current_pose, nearest_idx);
+  const auto interpolated_point = calcInterpolatedTargetValue(*m_trajectory_ptr, current_pose);
 
   m_debug_values.setValues(DebugValues::TYPE::CURRENT_VEL, current_vel);
   m_debug_values.setValues(DebugValues::TYPE::TARGET_VEL, target_motion.vel);

@@ -21,6 +21,7 @@
 #include <boost/geometry/geometries/linestring.hpp>
 #include <boost/geometry/geometries/point_xy.hpp>
 
+#include <limits>
 #include <memory>
 #include <string>
 #include <vector>
@@ -36,6 +37,7 @@
 namespace behavior_velocity_planner
 {
 
+namespace bg = boost::geometry;
 using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 
@@ -44,8 +46,8 @@ enum class CollisionPointState { YIELD, EGO_PASS_FIRST, EGO_PASS_LATER, IGNORE }
 struct CollisionPoint
 {
   geometry_msgs::msg::Point collision_point{};
-  double time_to_collision;
-  double time_to_vehicle;
+  double time_to_collision{};
+  double time_to_vehicle{};
   CollisionPointState state{CollisionPointState::EGO_PASS_FIRST};
 };
 
@@ -71,40 +73,17 @@ struct DebugData
   std::vector<geometry_msgs::msg::Polygon> obj_polygons;
 };
 
-bool insertTargetVelocityPoint(
-  const PathWithLaneId & input,
-  const boost::geometry::model::polygon<boost::geometry::model::d2::point_xy<double>> & polygon,
-  const double & margin, const double & velocity, const PlannerData & planner_data,
-  PathWithLaneId & output, DebugData & debug_data,
-  boost::optional<int> & first_stop_path_point_index);
+std::vector<bg::model::d2::point_xy<double>> getPolygonIntersects(
+  const PathWithLaneId & ego_path, const lanelet::BasicPolygon2d & polygon,
+  const geometry_msgs::msg::Point & ego_pos, const size_t max_num);
+
+std::vector<bg::model::d2::point_xy<double>> getLinestringIntersects(
+  const PathWithLaneId & ego_path, const lanelet::BasicLineString2d & linestring,
+  const geometry_msgs::msg::Point & ego_pos, const size_t max_num);
 
 lanelet::Optional<lanelet::ConstLineString3d> getStopLineFromMap(
   const int lane_id, const std::shared_ptr<const PlannerData> & planner_data,
   const std::string & attribute_name);
-
-bool insertTargetVelocityPoint(
-  const PathWithLaneId & input, const lanelet::ConstLineString3d & stop_line, const double & margin,
-  const double & velocity, const PlannerData & planner_data, PathWithLaneId & output,
-  DebugData & debug_data, boost::optional<int> & first_stop_path_point_index);
-
-bool insertTargetVelocityPoint(
-  const PathWithLaneId & input,
-  const boost::geometry::model::linestring<boost::geometry::model::d2::point_xy<double>> &
-    stop_line,
-  const double & margin, const double & velocity, const PlannerData & planner_data,
-  PathWithLaneId & output, DebugData & debug_data,
-  boost::optional<int> & first_stop_path_point_index);
-
-bool insertTargetVelocityPoint(
-  const PathWithLaneId & input, const geometry_msgs::msg::Point & stop_point, const double & margin,
-  const double & velocity, const PlannerData & planner_data, PathWithLaneId & output,
-  DebugData & debug_data, boost::optional<int> & first_stop_path_point_index);
-
-bool isClockWise(
-  const boost::geometry::model::polygon<boost::geometry::model::d2::point_xy<double>> & polygon);
-
-boost::geometry::model::polygon<boost::geometry::model::d2::point_xy<double>> inverseClockWise(
-  const boost::geometry::model::polygon<boost::geometry::model::d2::point_xy<double>> & polygon);
 }  // namespace behavior_velocity_planner
 
 #endif  // SCENE_MODULE__CROSSWALK__UTIL_HPP_

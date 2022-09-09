@@ -63,7 +63,7 @@ void PathShifter::setShiftPoints(const std::vector<ShiftPoint> & points)
 bool PathShifter::generate(
   ShiftedPath * shifted_path, const bool offset_back, const SHIFT_TYPE type)
 {
-  RCLCPP_DEBUG_STREAM(logger_, "PathShifter::generate start!");
+  RCLCPP_DEBUG_STREAM_THROTTLE(logger_, clock_, 3000, "PathShifter::generate start!");
 
   // Guard
   if (reference_path_.points.empty()) {
@@ -75,7 +75,8 @@ bool PathShifter::generate(
   shifted_path->shift_length.resize(reference_path_.points.size(), 0.0);
 
   if (shift_points_.empty()) {
-    RCLCPP_DEBUG_STREAM(logger_, "shift_points_ is empty. Return reference with base offset.");
+    RCLCPP_DEBUG_STREAM_THROTTLE(
+      logger_, clock_, 3000, "shift_points_ is empty. Return reference with base offset.");
     shiftBaseLength(shifted_path, base_offset_);
     return true;
   }
@@ -85,8 +86,8 @@ bool PathShifter::generate(
     for (const auto & shift_point : shift_points_) {
       int idx_gap = shift_point.end_idx - shift_point.start_idx;
       if (idx_gap <= 1) {
-        RCLCPP_WARN_STREAM(
-          logger_,
+        RCLCPP_WARN_STREAM_THROTTLE(
+          logger_, clock_, 3000,
           "shift start point and end point can't be adjoining "
           "Maybe shift length is too short?");
         return false;
@@ -96,15 +97,15 @@ bool PathShifter::generate(
 
   // Sort shift points since applyShift function only supports sorted points
   if (!sortShiftPointsAlongPath(reference_path_)) {
-    RCLCPP_ERROR_STREAM(logger_, "has duplicated points. Failed!");
+    RCLCPP_ERROR_STREAM_THROTTLE(logger_, clock_, 3000, "has duplicated points. Failed!");
     return false;
   }
 
   if (shift_points_.front().start_idx == 0) {
     // if offset is applied on front side, shifting from first point is no problem
     if (offset_back) {
-      RCLCPP_WARN_STREAM(
-        logger_,
+      RCLCPP_WARN_STREAM_THROTTLE(
+        logger_, clock_, 3000,
         "shift start point is at the edge of path. It could cause undesired result."
         " Maybe path is too short for backward?");
     }
@@ -114,9 +115,13 @@ bool PathShifter::generate(
   type == SHIFT_TYPE::SPLINE ? applySplineShifter(shifted_path, offset_back)
                              : applyLinearShifter(shifted_path);
 
+  const bool is_driving_forward = true;
+  motion_utils::insertOrientation(shifted_path->path.points, is_driving_forward);
+
   // DEBUG
-  RCLCPP_DEBUG_STREAM(
-    logger_, "PathShifter::generate end. shift_points_.size = " << shift_points_.size());
+  RCLCPP_DEBUG_STREAM_THROTTLE(
+    logger_, clock_, 3000,
+    "PathShifter::generate end. shift_points_.size = " << shift_points_.size());
 
   return true;
 }
@@ -198,7 +203,7 @@ void PathShifter::applySplineShifter(ShiftedPath * shifted_path, const bool offs
       query_distance.push_back(dist_from_start);
     }
     if (!query_distance.empty()) {
-      query_length = interpolation::slerp(base_distance, base_length, query_distance);
+      query_length = interpolation::spline(base_distance, base_length, query_distance);
     }
 
     // Apply shifting.
@@ -245,74 +250,17 @@ std::vector<double> PathShifter::calcLateralJerk()
   return lateral_jerk;
 }
 
-bool PathShifter::calcShiftPointFromArcLength(
-  const PathWithLaneId & path, const Point & origin, double dist_to_start, double dist_to_end,
-  double shift_length, ShiftPoint * shift_point)
-{
-  if (dist_to_end < dist_to_start) {
-    RCLCPP_ERROR_STREAM(
-      rclcpp::get_logger("behavior_path_planner").get_child("path_shifter"),
-      "dist_to_end must be longer than dist_to_start. Failed to create shift point");
-    return false;
-  }
-
-  if (path.points.empty()) {
-    return false;
-  }
-
-  const auto origin_idx = motion_utils::findNearestIndex(path.points, origin);
-  const auto arclength_from_origin = util::calcPathArcLengthArray(path, origin_idx);
-
-  if (dist_to_end > arclength_from_origin.back()) {
-    RCLCPP_ERROR_STREAM(
-      rclcpp::get_logger("behavior_path_planner").get_child("path_shifter"),
-      "path is too short to calculate shift point: path length from origin = "
-        << arclength_from_origin.back() << ", desired dist_to_end = " << dist_to_end);
-  }
-
-  bool is_start_found = false;
-  bool is_end_found = false;
-  const auto getPathPointFromOrigin = [&](size_t idx_from_origin) {
-    return path.points.at(idx_from_origin + origin_idx).point.pose;
-  };
-  for (size_t i = 0; i < arclength_from_origin.size() - 1; ++i) {
-    if (!is_start_found && arclength_from_origin.at(i + 1) > dist_to_start) {
-      shift_point->start = getPathPointFromOrigin(i);
-      is_start_found = true;
-    }
-    if (!is_end_found && arclength_from_origin.at(i + 1) > dist_to_end) {
-      shift_point->end = getPathPointFromOrigin(i);
-      is_end_found = true;
-      break;
-    }
-  }
-
-  if (!is_start_found) {
-    RCLCPP_ERROR_STREAM(
-      rclcpp::get_logger("behavior_path_planner").get_child("path_shifter"),
-      "Even start point has not found. You should stop the shifting. Failed to create shift point");
-    return false;
-  }
-
-  if (is_start_found && !is_end_found) {
-    RCLCPP_ERROR_STREAM(
-      rclcpp::get_logger("behavior_path_planner").get_child("path_shifter"),
-      "failed to find end point. Set end point to path.back().");
-    shift_point->end = path.points.back().point.pose;
-  }
-
-  shift_point->length = shift_length;
-  RCLCPP_DEBUG(
-    rclcpp::get_logger("behavior_path_planner").get_child("path_shifter"),
-    "Shift Point is generated from arclength: shift_length = %f", shift_length);
-  return true;
-}
-
 void PathShifter::updateShiftPointIndices()
 {
   for (auto & p : shift_points_) {
-    p.start_idx = motion_utils::findNearestIndex(reference_path_.points, p.start.position);
-    p.end_idx = motion_utils::findNearestIndex(reference_path_.points, p.end.position);
+    p.start_idx = motion_utils::findNearestIndex(
+      reference_path_.points,
+      p.start.position);  // TODO(murooka) remove findNearestIndex for except
+                          // lane_following to support u-turn & crossing path
+    p.end_idx = motion_utils::findNearestIndex(
+      reference_path_.points,
+      p.end.position);  // TODO(murooka) remove findNearestIndex for except
+                        // lane_following to support u-turn & crossing path
   }
   is_index_aligned_ = true;
 }
@@ -336,7 +284,7 @@ bool PathShifter::checkShiftPointsAlignment(const ShiftPointArray & shift_points
 bool PathShifter::sortShiftPointsAlongPath([[maybe_unused]] const PathWithLaneId & path)
 {
   if (shift_points_.empty()) {
-    RCLCPP_DEBUG_STREAM(logger_, "shift_points_ is empty. do nothing.");
+    RCLCPP_DEBUG_STREAM_THROTTLE(logger_, clock_, 3000, "shift_points_ is empty. do nothing.");
     return true;
   }
 
@@ -366,29 +314,30 @@ bool PathShifter::sortShiftPointsAlongPath([[maybe_unused]] const PathWithLaneId
 
   // Debug
   for (const auto & p : unsorted_shift_points) {
-    RCLCPP_DEBUG_STREAM(logger_, "unsorted_shift_points: " << toStr(p));
+    RCLCPP_DEBUG_STREAM_THROTTLE(logger_, clock_, 3000, "unsorted_shift_points: " << toStr(p));
   }
   for (const auto & i : sorted_indices) {
-    RCLCPP_DEBUG_STREAM(logger_, "sorted_indices i = " << i);
+    RCLCPP_DEBUG_STREAM_THROTTLE(logger_, clock_, 3000, "sorted_indices i = " << i);
   }
   for (const auto & p : sorted_shift_points) {
-    RCLCPP_DEBUG_STREAM(logger_, "sorted_shift_points: in order: " << toStr(p));
+    RCLCPP_DEBUG_STREAM_THROTTLE(
+      logger_, clock_, 3000, "sorted_shift_points: in order: " << toStr(p));
   }
   RCLCPP_DEBUG(logger_, "PathShifter::sortShiftPointsAlongPath end.");
 
   return true;
 }
 
-void PathShifter::removeBehindShiftPointAndSetBaseOffset(const Point & base_point)
+void PathShifter::removeBehindShiftPointAndSetBaseOffset(
+  [[maybe_unused]] const Pose & pose, const size_t nearest_idx)
 {
-  const auto base_idx = motion_utils::findNearestIndex(reference_path_.points, base_point);
-
-  // If shift_point.end is behind the base_point, remove the shift_point and
+  // If shift_point.end is behind the ego_pose, remove the shift_point and
   // set its shift_length to the base_offset.
   ShiftPointArray new_shift_points;
   ShiftPointArray removed_shift_points;
   for (const auto & sp : shift_points_) {
-    (sp.end_idx > base_idx) ? new_shift_points.push_back(sp) : removed_shift_points.push_back(sp);
+    (sp.end_idx > nearest_idx) ? new_shift_points.push_back(sp)
+                               : removed_shift_points.push_back(sp);
   }
 
   double new_base_offset = base_offset_;
