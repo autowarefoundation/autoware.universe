@@ -83,7 +83,7 @@ void PullOverModule::resetStatus()
 // This function is needed for waiting for planner_data_
 void PullOverModule::updateOccupancyGrid()
 {
-  if (planner_data_->occupancy_grid == nullptr) {
+  if (!planner_data_->occupancy_grid) {
     RCLCPP_WARN_THROTTLE(getLogger(), *clock_, 5000, "occupancy_grid is not ready");
     return;
   }
