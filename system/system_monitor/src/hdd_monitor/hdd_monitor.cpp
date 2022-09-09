@@ -33,6 +33,7 @@
 #include <stdio.h>
 
 #include <algorithm>
+#include <filesystem>
 #include <string>
 #include <vector>
 
@@ -457,7 +458,7 @@ void HDDMonitor::checkConnection(diagnostic_updater::DiagnosticStatusWrapper & s
     int level = DiagStatus::OK;
 
     if (!hdd_connected_flags_[itr->first]) {
-      level = DiagStatus::ERROR;
+      level = DiagStatus::WARN;
     }
 
     stat.add(fmt::format("HDD {}: status", hdd_index), connection_dict_.at(level));
@@ -753,26 +754,69 @@ void HDDMonitor::updateHDDConnections()
     // Get device name from mount point
     hdd_param.second.part_device_ = getDeviceFromMountPoint(hdd_param.first);
     if (!hdd_param.second.part_device_.empty()) {
-      hdd_connected_flags_[hdd_param.first] = true;
+      // Check the existence of device file
+      std::error_code ec;
+      if (std::filesystem::exists(hdd_param.second.part_device_, ec)) {
+        hdd_connected_flags_[hdd_param.first] = true;
 
-      // Remove index number of partition for passing device name to hdd-reader
-      if (boost::starts_with(hdd_param.second.part_device_, "/dev/sd")) {
-        const std::regex pattern("\\d+$");
-        hdd_param.second.disk_device_ =
-          std::regex_replace(hdd_param.second.part_device_, pattern, "");
-      } else if (boost::starts_with(hdd_param.second.part_device_, "/dev/nvme")) {
-        const std::regex pattern("p\\d+$");
-        hdd_param.second.disk_device_ =
-          std::regex_replace(hdd_param.second.part_device_, pattern, "");
+        // Remove index number of partition for passing device name to hdd-reader
+        if (boost::starts_with(hdd_param.second.part_device_, "/dev/sd")) {
+          const std::regex pattern("\\d+$");
+          hdd_param.second.disk_device_ =
+            std::regex_replace(hdd_param.second.part_device_, pattern, "");
+        } else if (boost::starts_with(hdd_param.second.part_device_, "/dev/nvme")) {
+          const std::regex pattern("p\\d+$");
+          hdd_param.second.disk_device_ =
+            std::regex_replace(hdd_param.second.part_device_, pattern, "");
+        }
+
+        const std::regex raw_pattern(".*/");
+        hdd_stats_[hdd_param.first].device_ =
+          std::regex_replace(hdd_param.second.disk_device_, raw_pattern, "");
+
+        continue;
+      } else {
+        // Unmount to solve the state where the device is mounted without existing
+        if (unmountDeviceWithLazy(hdd_param.second.part_device_)) {
+          RCLCPP_ERROR(
+            get_logger(), "Failed to unmount. %s", hdd_param.second.part_device_.c_str());
+        }
       }
-
-      const std::regex raw_pattern(".*/");
-      hdd_stats_[hdd_param.first].device_ =
-        std::regex_replace(hdd_param.second.disk_device_, raw_pattern, "");
-    } else {
-      hdd_connected_flags_[hdd_param.first] = false;
     }
+    hdd_connected_flags_[hdd_param.first] = false;
   }
+}
+
+int HDDMonitor::unmountDeviceWithLazy(std::string & device)
+{
+  // boost::process create file descriptor without O_CLOEXEC required for multithreading.
+  // So create file descriptor with O_CLOEXEC and pass it to boost::process.
+  int out_fd[2];
+  if (pipe2(out_fd, O_CLOEXEC) != 0) {
+    RCLCPP_ERROR(get_logger(), "Failed to execute pipe2. %s", strerror(errno));
+    return -1;
+  }
+  bp::pipe out_pipe{out_fd[0], out_fd[1]};
+  bp::ipstream is_out{std::move(out_pipe)};
+
+  int err_fd[2];
+  if (pipe2(err_fd, O_CLOEXEC) != 0) {
+    RCLCPP_ERROR(get_logger(), "Failed to execute pipe2. %s", strerror(errno));
+    return -1;
+  }
+  bp::pipe err_pipe{err_fd[0], err_fd[1]};
+  bp::ipstream is_err{std::move(err_pipe)};
+
+  bp::child c(
+    "/bin/sh", "-c", fmt::format("umount -l {}", device.c_str()), bp::std_out > is_out,
+    bp::std_err > is_err);
+  c.wait();
+
+  if (c.exit_code() != 0) {
+    RCLCPP_ERROR(get_logger(), "Failed to execute umount command. %s", device.c_str());
+    return -1;
+  }
+  return 0;
 }
 
 #include <rclcpp_components/register_node_macro.hpp>

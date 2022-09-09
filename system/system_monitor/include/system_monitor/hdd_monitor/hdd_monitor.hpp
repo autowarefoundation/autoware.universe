@@ -313,6 +313,13 @@ protected:
    */
   void updateHDDConnections();
 
+  /**
+   * @brief unmount device with lazy option
+   * @param [in] device device name
+   * @return result of success or failure
+   */
+  int unmountDeviceWithLazy(std::string & device);
+
   diagnostic_updater::Updater updater_;  //!< @brief Updater class which advertises to /diagnostics
   rclcpp::TimerBase::SharedPtr timer_;   //!< @brief timer to get HDD information from HDDReader
 
@@ -380,7 +387,7 @@ protected:
    * @brief HDD connection status messages
    */
   const std::map<int, const char *> connection_dict_ = {
-    {DiagStatus::OK, "OK"}, {DiagStatus::WARN, "unused"}, {DiagStatus::ERROR, "not connected"}};
+    {DiagStatus::OK, "OK"}, {DiagStatus::WARN, "not connected"}, {DiagStatus::ERROR, "unused"}};
 };
 
 #endif  // SYSTEM_MONITOR__HDD_MONITOR__HDD_MONITOR_HPP_
