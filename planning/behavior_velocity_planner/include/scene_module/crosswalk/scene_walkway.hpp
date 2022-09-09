@@ -28,6 +28,9 @@
 #include <lanelet2_routing/RoutingGraph.h>
 #include <lanelet2_routing/RoutingGraphContainer.h>
 
+#include <utility>
+#include <vector>
+
 namespace behavior_velocity_planner
 {
 
@@ -37,7 +40,6 @@ using tier4_planning_msgs::msg::StopReason;
 class WalkwayModule : public SceneModuleInterface
 {
 public:
-public:
   struct PlannerParam
   {
     double stop_line_distance;
@@ -45,9 +47,8 @@ public:
     double external_input_timeout;
   };
   WalkwayModule(
-    const int64_t module_id, const lanelet::ConstLanelet & walkway,
-    const PlannerParam & planner_param, const rclcpp::Logger logger,
-    const rclcpp::Clock::SharedPtr clock);
+    const int64_t module_id, lanelet::ConstLanelet walkway, const PlannerParam & planner_param,
+    const rclcpp::Logger & logger, const rclcpp::Clock::SharedPtr clock);
 
   bool modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason) override;
 
@@ -57,9 +58,16 @@ public:
 private:
   int64_t module_id_;
 
+  [[nodiscard]] boost::optional<std::pair<double, geometry_msgs::msg::Point>> getStopLine(
+    const PathWithLaneId & ego_path) const;
+
   enum class State { APPROACH, STOP, SURPASSED };
 
   lanelet::ConstLanelet walkway_;
+
+  std::vector<geometry_msgs::msg::Point> path_intersects_;
+
+  // State machine
   State state_;
 
   // Parameter

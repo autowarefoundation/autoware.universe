@@ -19,6 +19,7 @@
 #include "multi_object_tracker/tracker/model/pedestrian_tracker.hpp"
 
 #include "multi_object_tracker/utils/utils.hpp"
+#include "perception_utils/perception_utils.hpp"
 
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
@@ -49,7 +50,6 @@ PedestrianTracker::PedestrianTracker(
   object_ = object;
 
   // initialize params
-  ekf_params_.use_measurement_covariance = false;
   float q_stddev_x = 0.4;                                     // [m/s]
   float q_stddev_y = 0.4;                                     // [m/s]
   float q_stddev_yaw = tier4_autoware_utils::deg2rad(20);     // [rad/s]
@@ -94,11 +94,7 @@ PedestrianTracker::PedestrianTracker(
 
   // initialize P matrix
   Eigen::MatrixXd P = Eigen::MatrixXd::Zero(ekf_params_.dim_x, ekf_params_.dim_x);
-  if (
-    !ekf_params_.use_measurement_covariance ||
-    object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_X] == 0.0 ||
-    object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_Y] == 0.0 ||
-    object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW] == 0.0) {
+  if (!object.kinematics.has_position_covariance) {
     const double cos_yaw = std::cos(X(IDX::YAW));
     const double sin_yaw = std::sin(X(IDX::YAW));
     const double sin_2yaw = std::sin(2.0f * X(IDX::YAW));
@@ -254,10 +250,7 @@ bool PedestrianTracker::measureWithPose(
 
   /* Set measurement noise covariance */
   Eigen::MatrixXd R = Eigen::MatrixXd::Zero(dim_y, dim_y);
-  if (
-    !ekf_params_.use_measurement_covariance ||
-    object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_X] == 0.0 ||
-    object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_Y] == 0.0) {
+  if (!object.kinematics.has_position_covariance) {
     R(0, 0) = ekf_params_.r_cov_x;  // x - x
     R(0, 1) = 0.0;                  // x - y
     R(1, 1) = ekf_params_.r_cov_y;  // y - y
@@ -324,7 +317,7 @@ bool PedestrianTracker::measure(
 {
   const auto & current_classification = getClassification();
   object_ = object;
-  if (utils::getHighestProbLabel(object.classification) == Label::UNKNOWN) {
+  if (perception_utils::getHighestProbLabel(object.classification) == Label::UNKNOWN) {
     setClassification(current_classification);
   }
 
@@ -343,7 +336,7 @@ bool PedestrianTracker::measure(
 bool PedestrianTracker::getTrackedObject(
   const rclcpp::Time & time, autoware_auto_perception_msgs::msg::TrackedObject & object) const
 {
-  object = utils::toTrackedObject(object_);
+  object = perception_utils::toTrackedObject(object_);
   object.object_id = getUUID();
   object.classification = getClassification();
 
@@ -423,7 +416,7 @@ bool PedestrianTracker::getTrackedObject(
     const auto origin_yaw = tf2::getYaw(object_.kinematics.pose_with_covariance.pose.orientation);
     const auto ekf_pose_yaw = tf2::getYaw(pose_with_cov.pose.orientation);
     object.shape.footprint =
-      utils::rotatePolygon(object.shape.footprint, origin_yaw - ekf_pose_yaw);
+      tier4_autoware_utils::rotatePolygon(object.shape.footprint, origin_yaw - ekf_pose_yaw);
   }
 
   return true;

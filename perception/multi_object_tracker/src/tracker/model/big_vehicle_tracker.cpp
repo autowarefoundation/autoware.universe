@@ -30,6 +30,7 @@
 #define EIGEN_MPL2_ONLY
 #include "multi_object_tracker/tracker/model/big_vehicle_tracker.hpp"
 #include "multi_object_tracker/utils/utils.hpp"
+#include "perception_utils/perception_utils.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -47,7 +48,6 @@ BigVehicleTracker::BigVehicleTracker(
   object_ = object;
 
   // initialize params
-  ekf_params_.use_measurement_covariance = false;
   float q_stddev_x = 1.5;                                     // [m/s]
   float q_stddev_y = 1.5;                                     // [m/s]
   float q_stddev_yaw = tier4_autoware_utils::deg2rad(20);     // [rad/s]
@@ -95,11 +95,7 @@ BigVehicleTracker::BigVehicleTracker(
 
   // initialize P matrix
   Eigen::MatrixXd P = Eigen::MatrixXd::Zero(ekf_params_.dim_x, ekf_params_.dim_x);
-  if (
-    !ekf_params_.use_measurement_covariance ||
-    object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_X] == 0.0 ||
-    object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_Y] == 0.0 ||
-    object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW] == 0.0) {
+  if (!object.kinematics.has_position_covariance) {
     const double cos_yaw = std::cos(X(IDX::YAW));
     const double sin_yaw = std::sin(X(IDX::YAW));
     const double sin_2yaw = std::sin(2.0f * X(IDX::YAW));
@@ -225,7 +221,7 @@ bool BigVehicleTracker::measureWithPose(
 
   float r_cov_x;
   float r_cov_y;
-  const uint8_t label = utils::getHighestProbLabel(object.classification);
+  const uint8_t label = perception_utils::getHighestProbLabel(object.classification);
 
   if (label == Label::CAR) {
     constexpr float r_stddev_x = 8.0;  // [m]
@@ -282,11 +278,7 @@ bool BigVehicleTracker::measureWithPose(
   C(2, IDX::YAW) = 1.0;  // for yaw
 
   /* Set measurement noise covariance */
-  if (
-    !ekf_params_.use_measurement_covariance ||
-    object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_X] == 0.0 ||
-    object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::Y_Y] == 0.0 ||
-    object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::YAW_YAW] == 0.0) {
+  if (!object.kinematics.has_position_covariance) {
     const double cos_yaw = std::cos(measurement_yaw);
     const double sin_yaw = std::sin(measurement_yaw);
     const double sin_2yaw = std::sin(2.0f * measurement_yaw);
@@ -311,9 +303,7 @@ bool BigVehicleTracker::measureWithPose(
     Y(IDX::VX, 0) = object.kinematics.twist_with_covariance.twist.linear.x;
     C(3, IDX::VX) = 1.0;  // for vx
 
-    if (
-      !ekf_params_.use_measurement_covariance ||
-      object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::X_X] == 0.0) {
+    if (!object.kinematics.has_twist_covariance) {
       R(3, 3) = ekf_params_.r_cov_vx;  // vx -vx
     } else {
       R(3, 3) = object.kinematics.twist_with_covariance.covariance[utils::MSG_COV_IDX::X_X];
@@ -367,7 +357,7 @@ bool BigVehicleTracker::measure(
 {
   const auto & current_classification = getClassification();
   object_ = object;
-  if (utils::getHighestProbLabel(object.classification) == Label::UNKNOWN) {
+  if (perception_utils::getHighestProbLabel(object.classification) == Label::UNKNOWN) {
     setClassification(current_classification);
   }
 
@@ -386,7 +376,7 @@ bool BigVehicleTracker::measure(
 bool BigVehicleTracker::getTrackedObject(
   const rclcpp::Time & time, autoware_auto_perception_msgs::msg::TrackedObject & object) const
 {
-  object = utils::toTrackedObject(object_);
+  object = perception_utils::toTrackedObject(object_);
   object.object_id = getUUID();
   object.classification = getClassification();
 
@@ -459,7 +449,8 @@ bool BigVehicleTracker::getTrackedObject(
   object.shape.dimensions.z = bounding_box_.height;
   const auto origin_yaw = tf2::getYaw(object_.kinematics.pose_with_covariance.pose.orientation);
   const auto ekf_pose_yaw = tf2::getYaw(pose_with_cov.pose.orientation);
-  object.shape.footprint = utils::rotatePolygon(object.shape.footprint, origin_yaw - ekf_pose_yaw);
+  object.shape.footprint =
+    tier4_autoware_utils::rotatePolygon(object.shape.footprint, origin_yaw - ekf_pose_yaw);
 
   return true;
 }

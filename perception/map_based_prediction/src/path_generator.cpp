@@ -15,6 +15,7 @@
 #include "map_based_prediction/path_generator.hpp"
 
 #include <interpolation/spline_interpolation.hpp>
+#include <motion_utils/motion_utils.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <algorithm>
@@ -170,7 +171,7 @@ PredictedPath PathGenerator::generatePolynomialPath(
   const TrackedObject & object, const PosePath & ref_path)
 {
   // Get current Frenet Point
-  const double ref_path_len = tier4_autoware_utils::calcArcLength(ref_path);
+  const double ref_path_len = motion_utils::calcArcLength(ref_path);
   const auto current_point = getFrenetPoint(object, ref_path);
 
   // Step1. Set Target Frenet Point
@@ -296,7 +297,7 @@ PosePath PathGenerator::interpolateReferencePath(
     base_path_x.push_back(base_path.at(i).position.x);
     base_path_y.push_back(base_path.at(i).position.y);
     base_path_z.push_back(base_path.at(i).position.z);
-    base_path_s.push_back(tier4_autoware_utils::calcSignedArcLength(base_path, 0, i));
+    base_path_s.push_back(motion_utils::calcSignedArcLength(base_path, 0, i));
   }
 
   std::vector<double> resampled_s(frenet_predicted_path.size());
@@ -308,28 +309,28 @@ PosePath PathGenerator::interpolateReferencePath(
   }
 
   // Spline Interpolation
-  std::vector<double> slerp_ref_path_x =
-    interpolation::slerp(base_path_s, base_path_x, resampled_s);
-  std::vector<double> slerp_ref_path_y =
-    interpolation::slerp(base_path_s, base_path_y, resampled_s);
-  std::vector<double> slerp_ref_path_z =
-    interpolation::slerp(base_path_s, base_path_z, resampled_s);
+  std::vector<double> spline_ref_path_x =
+    interpolation::spline(base_path_s, base_path_x, resampled_s);
+  std::vector<double> spline_ref_path_y =
+    interpolation::spline(base_path_s, base_path_y, resampled_s);
+  std::vector<double> spline_ref_path_z =
+    interpolation::spline(base_path_s, base_path_z, resampled_s);
 
   interpolated_path.resize(interpolate_num);
   for (size_t i = 0; i < interpolate_num - 1; ++i) {
     geometry_msgs::msg::Pose interpolated_pose;
     const auto current_point =
-      tier4_autoware_utils::createPoint(slerp_ref_path_x.at(i), slerp_ref_path_y.at(i), 0.0);
+      tier4_autoware_utils::createPoint(spline_ref_path_x.at(i), spline_ref_path_y.at(i), 0.0);
     const auto next_point = tier4_autoware_utils::createPoint(
-      slerp_ref_path_x.at(i + 1), slerp_ref_path_y.at(i + 1), 0.0);
+      spline_ref_path_x.at(i + 1), spline_ref_path_y.at(i + 1), 0.0);
     const double yaw = tier4_autoware_utils::calcAzimuthAngle(current_point, next_point);
     interpolated_pose.position = tier4_autoware_utils::createPoint(
-      slerp_ref_path_x.at(i), slerp_ref_path_y.at(i), slerp_ref_path_z.at(i));
+      spline_ref_path_x.at(i), spline_ref_path_y.at(i), spline_ref_path_z.at(i));
     interpolated_pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(yaw);
     interpolated_path.at(i) = interpolated_pose;
   }
   interpolated_path.back().position = tier4_autoware_utils::createPoint(
-    slerp_ref_path_x.back(), slerp_ref_path_y.back(), slerp_ref_path_z.back());
+    spline_ref_path_x.back(), spline_ref_path_y.back(), spline_ref_path_z.back());
   interpolated_path.back().orientation = interpolated_path.at(interpolate_num - 2).orientation;
 
   return interpolated_path;
@@ -369,10 +370,9 @@ FrenetPoint PathGenerator::getFrenetPoint(const TrackedObject & object, const Po
   FrenetPoint frenet_point;
   const auto obj_point = object.kinematics.pose_with_covariance.pose.position;
 
-  const size_t nearest_segment_idx =
-    tier4_autoware_utils::findNearestSegmentIndex(ref_path, obj_point);
+  const size_t nearest_segment_idx = motion_utils::findNearestSegmentIndex(ref_path, obj_point);
   const double l =
-    tier4_autoware_utils::calcLongitudinalOffsetToSegment(ref_path, nearest_segment_idx, obj_point);
+    motion_utils::calcLongitudinalOffsetToSegment(ref_path, nearest_segment_idx, obj_point);
   const float vx = static_cast<float>(object.kinematics.twist_with_covariance.twist.linear.x);
   const float vy = static_cast<float>(object.kinematics.twist_with_covariance.twist.linear.y);
   const float obj_yaw =
@@ -381,8 +381,8 @@ FrenetPoint PathGenerator::getFrenetPoint(const TrackedObject & object, const Po
     static_cast<float>(tf2::getYaw(ref_path.at(nearest_segment_idx).orientation));
   const float delta_yaw = obj_yaw - lane_yaw;
 
-  frenet_point.s = tier4_autoware_utils::calcSignedArcLength(ref_path, 0, nearest_segment_idx) + l;
-  frenet_point.d = tier4_autoware_utils::calcLateralOffset(ref_path, obj_point);
+  frenet_point.s = motion_utils::calcSignedArcLength(ref_path, 0, nearest_segment_idx) + l;
+  frenet_point.d = motion_utils::calcLateralOffset(ref_path, obj_point);
   frenet_point.s_vel = vx * std::cos(delta_yaw) - vy * std::sin(delta_yaw);
   frenet_point.d_vel = vx * std::sin(delta_yaw) + vy * std::cos(delta_yaw);
   frenet_point.s_acc = 0.0;

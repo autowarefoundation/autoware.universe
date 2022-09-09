@@ -19,6 +19,7 @@
 #include <scene_module/scene_module_interface.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 #include <utilization/boost_geometry_helper.hpp>
+#include <utilization/state_machine.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
@@ -42,43 +43,6 @@ using TimeDistanceArray = std::vector<std::pair<double, double>>;
 class IntersectionModule : public SceneModuleInterface
 {
 public:
-  enum class State {
-    STOP = 0,
-    GO,
-  };
-  std::string toString(const State & state)
-  {
-    if (state == State::STOP) {
-      return "STOP";
-    } else if (state == State::GO) {
-      return "GO";
-    } else {
-      return "UNKNOWN";
-    }
-  }
-
-  /**
-   * @brief Manage stop-go states with safety margin time.
-   */
-  class StateMachine
-  {
-  public:
-    StateMachine()
-    {
-      state_ = State::GO;
-      margin_time_ = 0.0;
-    }
-    void setStateWithMarginTime(State state, rclcpp::Logger logger, rclcpp::Clock & clock);
-    void setState(State state);
-    void setMarginTime(const double t);
-    State getState();
-
-  private:
-    State state_;                               //! current state
-    double margin_time_;                        //! margin time when transit to Go from Stop
-    std::shared_ptr<rclcpp::Time> start_time_;  //! first time received GO when STOP state
-  };
-
   struct DebugData
   {
     bool stop_required;
@@ -97,6 +61,7 @@ public:
     std::vector<lanelet::CompoundPolygon3d> detection_area;
     autoware_auto_perception_msgs::msg::PredictedObjects conflicting_targets;
     autoware_auto_perception_msgs::msg::PredictedObjects stuck_targets;
+    geometry_msgs::msg::Pose predicted_obj_pose;
   };
 
 public:
@@ -104,6 +69,10 @@ public:
   {
     double state_transit_margin_time;
     double stop_line_margin;  //! distance from auto-generated stopline to detection_area boundary
+    double keep_detection_line_margin;  //! distance (toward path end) from generated stop line.
+                                        //! keep detection if ego is before this line and ego.vel <
+                                        //! keep_detection_vel_thr
+    double keep_detection_vel_thr;
     double stuck_vehicle_detect_dist;  //! distance from end point to finish stuck vehicle check
     double
       stuck_vehicle_ignore_dist;   //! distance from intersection start to start stuck vehicle check
@@ -122,6 +91,10 @@ public:
     double external_input_timeout;       //! used to disable external input
     double collision_start_margin_time;  //! start margin time to check collision
     double collision_end_margin_time;    //! end margin time to check collision
+    bool use_stuck_stopline;  //! stopline generate before the intersection lanelet when is_stuck.
+    double
+      assumed_front_car_decel;  //! the expected deceleration of front car when front car as well
+    bool enable_front_car_decel_prediction;  //! flag for using above feature
   };
 
   IntersectionModule(
@@ -144,6 +117,7 @@ private:
   int64_t lane_id_;
   std::string turn_direction_;
   bool has_traffic_light_;
+  bool is_go_out_;
 
   // Parameter
   PlannerParam planner_param_;
@@ -164,7 +138,7 @@ private:
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
     const std::vector<int> & detection_area_lanelet_ids,
     const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
-    const int closest_idx);
+    const int closest_idx, const Polygon2d & stuck_vehicle_detect_area);
 
   /**
    * @brief Check if there is a stopped vehicle on the ego-lane.
@@ -175,10 +149,8 @@ private:
    * @return true if exists
    */
   bool checkStuckVehicleInIntersection(
-    lanelet::LaneletMapConstPtr lanelet_map_ptr,
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
-    const int stop_idx,
-    const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr) const;
+    const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
+    const Polygon2d & stuck_vehicle_detect_area) const;
 
   /**
    * @brief Calculate the polygon of the path from the ego-car position to the end of the
@@ -232,24 +204,6 @@ private:
     const autoware_auto_perception_msgs::msg::PredictedObject & object) const;
 
   /**
-   * @brief convert object to footprint polygon
-   * @param object detected object
-   * @return 2d polygon of the object footprint
-   */
-  Polygon2d toFootprintPolygon(
-    const autoware_auto_perception_msgs::msg::PredictedObject & object) const;
-
-  /**
-   * @brief convert predicted object to footprint polygon
-   * @param object detected object
-   * @param predicted_pose predicted object pose
-   * @return 2d polygon of the object footprint
-   */
-  Polygon2d toPredictedFootprintPolygon(
-    const autoware_auto_perception_msgs::msg::PredictedObject & object,
-    const geometry_msgs::msg::Pose & predicted_pose) const;
-
-  /**
    * @brief Whether target tier4_api_msgs::Intersection::status is valid or not
    * @param target_status target tier4_api_msgs::Intersection::status
    * @return rue if the object has a target type
@@ -287,6 +241,19 @@ private:
     lanelet::LaneletMapConstPtr lanelet_map_ptr,
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const size_t closest_idx) const;
 
+  /**
+   * @brief Check if the ego is expected to stop in the opposite lane if the front vehicle starts
+   * deceleration from current velocity and stop befor the crosswalk. If the stop position of front
+   * vehicle is in stuck area, and the position `ego_length` meter behind is in detection area,
+   * return true
+   * @param ego_poly Polygon of ego_with_next_lane
+   * @param closest_lanelet
+   * @return true if the ego is expected to stop in the opposite lane
+   */
+  bool checkFrontVehicleDeceleration(
+    lanelet::ConstLanelets & ego_lane_with_next_lane, lanelet::ConstLanelet & closest_lanelet,
+    const Polygon2d & stuck_vehicle_detect_area,
+    const autoware_auto_perception_msgs::msg::PredictedObject & object) const;
   StateMachine state_machine_;  //! for state
 
   // Debug

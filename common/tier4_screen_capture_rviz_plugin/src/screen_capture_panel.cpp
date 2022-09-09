@@ -26,7 +26,7 @@ using std::placeholders::_2;
 void setFormatDate(QLabel * line, double time)
 {
   char buffer[128];
-  time_t seconds = static_cast<time_t>(time);
+  auto seconds = static_cast<time_t>(time);
   strftime(buffer, sizeof(buffer), "%Y-%m-%d-%H-%M-%S", localtime(&seconds));
   line->setText(QString(buffer));
 }
@@ -44,6 +44,8 @@ AutowareScreenCapturePanel::AutowareScreenCapturePanel(QWidget * parent)
     connect(screen_capture_button_ptr_, SIGNAL(clicked()), this, SLOT(onClickScreenCapture()));
     cap_layout->addWidget(screen_capture_button_ptr_);
     cap_layout->addWidget(ros_time_label_);
+    // initialize file name system clock is better for identification.
+    setFormatDate(ros_time_label_, rclcpp::Clock().now().seconds());
     cap_layout->addWidget(new QLabel(" [.mp4] "));
   }
 
@@ -69,7 +71,7 @@ AutowareScreenCapturePanel::AutowareScreenCapturePanel(QWidget * parent)
     v_layout->addLayout(video_cap_layout);
     setLayout(v_layout);
   }
-  QTimer * timer = new QTimer(this);
+  auto * timer = new QTimer(this);
   connect(timer, &QTimer::timeout, this, &AutowareScreenCapturePanel::update);
   timer->start(1000);
   capture_timer_ = new QTimer(this);
@@ -78,8 +80,8 @@ AutowareScreenCapturePanel::AutowareScreenCapturePanel(QWidget * parent)
 }
 
 void AutowareScreenCapturePanel::onCaptureTrigger(
-  [[maybe_unused]] const std::shared_ptr<std_srvs::srv::Trigger::Request> req,
-  const std::shared_ptr<std_srvs::srv::Trigger::Response> res)
+  [[maybe_unused]] const std_srvs::srv::Trigger::Request::SharedPtr req,
+  const std_srvs::srv::Trigger::Response::SharedPtr res)
 {
   onClickVideoCapture();
   res->success = true;
@@ -101,33 +103,6 @@ void AutowareScreenCapturePanel::onClickScreenCapture()
   const std::string time_text = "capture/" + ros_time_label_->text().toStdString();
   getDisplayContext()->getViewManager()->getRenderPanel()->getRenderWindow()->captureScreenShot(
     time_text + ".png");
-  return;
-}
-
-void AutowareScreenCapturePanel::convertPNGImagesToMP4()
-{
-  cv::VideoCapture capture(root_folder_ + "/%06d.png", cv::CAP_IMAGES);
-  if (!capture.isOpened()) {
-    return;
-  }
-  int fourcc = cv::VideoWriter::fourcc('h', '2', '6', '4');  // mp4
-  cv::VideoWriter writer;
-  cv::Size size = cv::Size(width_, height_);
-  writer.open("capture/" + root_folder_ + ".mp4", fourcc, capture_hz_->value(), size);
-  cv::Mat image;
-  while (true) {
-    capture >> image;
-    if (image.empty()) {
-      break;
-    }
-    // need to resize for fixed frame video
-    writer << image;
-    cv::waitKey(0);
-  }
-  capture.release();
-  writer.release();
-  // remove temporary created folder
-  std::filesystem::remove_all(root_folder_);
 }
 
 void AutowareScreenCapturePanel::onClickVideoCapture()
@@ -136,7 +111,7 @@ void AutowareScreenCapturePanel::onClickVideoCapture()
   try {
     const QWidgetList top_level_widgets = QApplication::topLevelWidgets();
     for (QWidget * widget : top_level_widgets) {
-      QMainWindow * main_window_candidate = qobject_cast<QMainWindow *>(widget);
+      auto * main_window_candidate = qobject_cast<QMainWindow *>(widget);
       if (main_window_candidate) {
         main_window_ = main_window_candidate;
       }
@@ -149,72 +124,70 @@ void AutowareScreenCapturePanel::onClickVideoCapture()
     case State::WAITING_FOR_CAPTURE:
       // initialize setting
       {
-        counter_ = 0;
-        root_folder_ = ros_time_label_->text().toStdString();
-        std::filesystem::create_directory(root_folder_);
+        capture_file_name_ = ros_time_label_->text().toStdString();
       }
       capture_to_mp4_button_ptr_->setText("capturing rviz screen");
       capture_to_mp4_button_ptr_->setStyleSheet("background-color: #FF0000;");
+      {
+        int fourcc = cv::VideoWriter::fourcc('h', '2', '6', '4');  // mp4
+        QScreen * screen = QGuiApplication::primaryScreen();
+        const auto q_size = screen->grabWindow(main_window_->winId())
+                              .toImage()
+                              .convertToFormat(QImage::Format_RGB888)
+                              .rgbSwapped()
+                              .size();
+        current_movie_size_ = cv::Size(q_size.width(), q_size.height());
+        writer_.open(
+          "capture/" + capture_file_name_ + ".mp4", fourcc, capture_hz_->value(),
+          current_movie_size_);
+      }
       capture_timer_->start(clock);
       state_ = State::CAPTURING;
       break;
-    case State::CAPTURING: {
+    case State::CAPTURING:
+      writer_.release();
       capture_timer_->stop();
-    }
-      capture_to_mp4_button_ptr_->setText("writing to video");
-      capture_to_mp4_button_ptr_->setStyleSheet("background-color: #FFFF00;");
-      convertPNGImagesToMP4();
       capture_to_mp4_button_ptr_->setText("waiting for capture");
       capture_to_mp4_button_ptr_->setStyleSheet("background-color: #00FF00;");
       state_ = State::WAITING_FOR_CAPTURE;
       break;
   }
-  return;
 }
 
 void AutowareScreenCapturePanel::onTimer()
 {
-  std::stringstream count_text;
-  count_text << std::setw(6) << std::setfill('0') << counter_;
-  const std::string file = root_folder_ + "/" + count_text.str() + ".png";
   if (!main_window_) return;
-  try {
-    // this is deprecated but only way to capture nicely
-    QScreen * screen = QGuiApplication::primaryScreen();
-    QPixmap original_pixmap = screen->grabWindow(main_window_->winId());
-    QString format = "png";
-    QString file_name = QString::fromStdString(file);
-    if (!file_name.isEmpty())
-      original_pixmap.scaled(width_, height_).save(file_name, format.toLatin1().constData());
-  } catch (std::exception & e) {
-    std::cout << e.what() << std::endl;
+  // this is deprecated but only way to capture nicely
+  QScreen * screen = QGuiApplication::primaryScreen();
+  QPixmap original_pixmap = screen->grabWindow(main_window_->winId());
+  const auto q_image =
+    original_pixmap.toImage().convertToFormat(QImage::Format_RGB888).rgbSwapped();
+  const int h = q_image.height();
+  const int w = q_image.width();
+  cv::Size size = cv::Size(w, h);
+  cv::Mat image(
+    size, CV_8UC3, const_cast<uchar *>(q_image.bits()),
+    static_cast<size_t>(q_image.bytesPerLine()));
+  if (size != current_movie_size_) {
+    cv::Mat new_image;
+    cv::resize(image, new_image, current_movie_size_);
+    writer_.write(new_image);
+  } else {
+    writer_.write(image);
   }
-  counter_++;
+  cv::waitKey(0);
 }
 
 void AutowareScreenCapturePanel::update()
 {
-  setFormatDate(ros_time_label_, raw_node_->get_clock()->now().seconds());
+  setFormatDate(ros_time_label_, rclcpp::Clock().now().seconds());
 }
 
-void AutowareScreenCapturePanel::save(rviz_common::Config config) const
-{
-  Panel::save(config);
-  config.mapSetValue("width", width_);
-  config.mapSetValue("height", height_);
-}
+void AutowareScreenCapturePanel::save(rviz_common::Config config) const { Panel::save(config); }
 
-void AutowareScreenCapturePanel::load(const rviz_common::Config & config)
-{
-  Panel::load(config);
-  if (!config.mapGetFloat("width", &width_)) width_ = 1280;
-  if (!config.mapGetFloat("height", &height_)) height_ = 720;
-}
+void AutowareScreenCapturePanel::load(const rviz_common::Config & config) { Panel::load(config); }
 
-AutowareScreenCapturePanel::~AutowareScreenCapturePanel()
-{
-  std::filesystem::remove_all(root_folder_);
-}
+AutowareScreenCapturePanel::~AutowareScreenCapturePanel() = default;
 
 #include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(AutowareScreenCapturePanel, rviz_common::Panel)
