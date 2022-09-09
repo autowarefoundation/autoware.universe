@@ -129,6 +129,9 @@ struct PlannerParam
   // vehicle info
   double half_vehicle_width;  // [m]  half vehicle_width from vehicle info
   double baselink_to_front;   // [m]  wheel_base + front_overhang
+  double right_overhang;      // [m]  right_overhang from vehicle info
+  double left_overhang;       // [m]  left_overhang from vehicle info
+  double wheel_tread;         // [m]  wheel_tread from vehicle info
 
   Velocity v;
   DetectionArea detection_area;
