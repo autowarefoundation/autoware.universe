@@ -258,16 +258,12 @@ private:
   // functions for replan
   bool checkReplan(const PlannerData & planner_data);
   bool isPathShapeChanged(const PlannerData & planner_data);
-  bool isPathGoalChanged(
-    const double current_vel,
-    const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points);
+  bool isPathGoalChanged(const PlannerData & planner_data);
   bool isEgoNearToPrevTrajectory(const geometry_msgs::msg::Pose & ego_pose);
 
   autoware_auto_planning_msgs::msg::Trajectory generateTrajectory(const PlannerData & planner_data);
 
-  Trajectories optimizeTrajectory(
-    const autoware_auto_planning_msgs::msg::Path & path, const CVMaps & cv_maps,
-    const PlannerData & planner_data);
+  Trajectories optimizeTrajectory(const PlannerData & planner_data, const CVMaps & cv_maps);
 
   Trajectories getPrevTrajs(
     const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points) const;

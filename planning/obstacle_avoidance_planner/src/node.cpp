@@ -15,7 +15,7 @@
 #include "obstacle_avoidance_planner/node.hpp"
 
 #include "interpolation/spline_interpolation_points_2d.hpp"
-#include "motion_utils/trajectory/tmp_conversion.hpp"
+#include "motion_utils/motion_utils.hpp"
 #include "obstacle_avoidance_planner/cv_utils.hpp"
 #include "obstacle_avoidance_planner/debug_visualization.hpp"
 #include "obstacle_avoidance_planner/utils.hpp"
@@ -165,6 +165,22 @@ autoware_auto_planning_msgs::msg::Trajectory createTrajectory(
   traj.header = header;
 
   return traj;
+}
+
+std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> resampleTrajectoryPoints(
+  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & traj_points,
+  const double interval)
+{
+  const auto traj = motion_utils::convertToTrajectory(traj_points);
+  const auto resampled_traj = motion_utils::resampleTrajectory(traj, interval);
+
+  // convert Trajectory to std::vector<TrajectoryPoint>
+  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> resampled_traj_points;
+  for (const auto & point : resampled_traj.points) {
+    resampled_traj_points.push_back(point);
+  }
+
+  return resampled_traj_points;
 }
 }  // namespace
 
@@ -924,7 +940,7 @@ ObstacleAvoidancePlanner::generateOptimizedTrajectory(const PlannerData & planne
     enable_avoidance_, path, planner_data.objects, traj_param_, debug_data_);
 
   // calculate trajectory with EB and MPT
-  auto optimal_trajs = optimizeTrajectory(path, cv_maps, planner_data);
+  auto optimal_trajs = optimizeTrajectory(planner_data, cv_maps);
 
   // calculate velocity
   // NOTE: Velocity is not considered in optimization.
@@ -972,7 +988,7 @@ bool ObstacleAvoidancePlanner::checkReplan(const PlannerData & planner_data)
     return true;
   }
 
-  if (isPathGoalChanged(p.ego_vel, p.path.points)) {
+  if (isPathGoalChanged(planner_data)) {
     RCLCPP_INFO(get_logger(), "Replan with resetting optimization since path goal was changed.");
     resetPrevOptimization();
     return true;
@@ -1044,16 +1060,16 @@ bool ObstacleAvoidancePlanner::isPathShapeChanged(const PlannerData & planner_da
   return false;
 }
 
-bool ObstacleAvoidancePlanner::isPathGoalChanged(
-  const double current_vel,
-  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points)
+bool ObstacleAvoidancePlanner::isPathGoalChanged(const PlannerData & planner_data)
 {
+  const auto & p = planner_data;
+
   if (prev_path_points_ptr_) {
     return true;
   }
 
   constexpr double min_vel = 1e-3;
-  if (std::abs(current_vel) > min_vel) {
+  if (std::abs(p.ego_vel) > min_vel) {
     return false;
   }
 
@@ -1061,7 +1077,7 @@ bool ObstacleAvoidancePlanner::isPathGoalChanged(
   // Therefore we set a large value to distance threshold.
   constexpr double max_goal_moving_dist = 1.0;
   const double goal_moving_dist =
-    tier4_autoware_utils::calcDistance2d(path_points.back(), prev_path_points_ptr_->back());
+    tier4_autoware_utils::calcDistance2d(p.path.points.back(), prev_path_points_ptr_->back());
   if (goal_moving_dist < max_goal_moving_dist) {
     return false;
   }
@@ -1071,15 +1087,12 @@ bool ObstacleAvoidancePlanner::isPathGoalChanged(
 
 bool ObstacleAvoidancePlanner::isEgoNearToPrevTrajectory(const geometry_msgs::msg::Pose & ego_pose)
 {
-  const auto & traj = prev_optimal_trajs_ptr_->model_predictive_trajectory;
+  const auto & traj_points = prev_optimal_trajs_ptr_->model_predictive_trajectory;
 
-  const auto interpolated_points =
-    interpolation_utils::getInterpolatedPoints(traj, traj_param_.delta_arc_length_for_trajectory);
-
-  const auto interpolated_poses_with_yaw =
-    points_utils::convertToPosesWithYawEstimation(interpolated_points);
+  const auto resampled_traj_points =
+    resampleTrajectoryPoints(traj_points, traj_param_.delta_arc_length_for_trajectory);
   const auto opt_nearest_idx = motion_utils::findNearestIndex(
-    interpolated_poses_with_yaw, ego_pose, traj_param_.delta_dist_threshold_for_closest_point,
+    resampled_traj_points, ego_pose, traj_param_.delta_dist_threshold_for_closest_point,
     traj_param_.delta_yaw_threshold_for_closest_point);
 
   if (!opt_nearest_idx) {
@@ -1089,15 +1102,14 @@ bool ObstacleAvoidancePlanner::isEgoNearToPrevTrajectory(const geometry_msgs::ms
 }
 
 Trajectories ObstacleAvoidancePlanner::optimizeTrajectory(
-  const autoware_auto_planning_msgs::msg::Path & path, const CVMaps & cv_maps,
-  const PlannerData & planner_data)
+  const PlannerData & planner_data, const CVMaps & cv_maps)
 {
   stop_watch_.tic(__func__);
 
   const auto & p = planner_data;
 
   if (skip_optimization_) {
-    const auto traj = points_utils::convertToTrajectoryPoints(path.points);
+    const auto traj = points_utils::convertToTrajectoryPoints(p.path.points);
     Trajectories trajs;
     trajs.smoothed_trajectory = traj;
     trajs.model_predictive_trajectory = traj;
@@ -1109,12 +1121,12 @@ Trajectories ObstacleAvoidancePlanner::optimizeTrajectory(
     [&]() -> boost::optional<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>> {
     if (enable_pre_smoothing_) {
       return eb_path_optimizer_ptr_->getEBTrajectory(
-        p.ego_pose, path, prev_optimal_trajs_ptr_, p.ego_vel, debug_data_);
+        p.ego_pose, p.path, prev_optimal_trajs_ptr_, p.ego_vel, debug_data_);
     }
-    return points_utils::convertToTrajectoryPoints(path.points);
+    return points_utils::convertToTrajectoryPoints(p.path.points);
   }();
   if (!eb_traj) {
-    return getPrevTrajs(path.points);
+    return getPrevTrajs(p.path.points);
   }
 
   // EB has to be solved twice before solving MPT with fixed points
@@ -1131,10 +1143,10 @@ Trajectories ObstacleAvoidancePlanner::optimizeTrajectory(
 
   // MPT: optimize trajectory to be kinematically feasible and collision free
   const auto mpt_trajs = mpt_optimizer_ptr_->getModelPredictiveTrajectory(
-    enable_avoidance_, eb_traj.get(), path.points, prev_optimal_trajs_ptr_, cv_maps, p.ego_pose,
+    enable_avoidance_, eb_traj.get(), p.path.points, prev_optimal_trajs_ptr_, cv_maps, p.ego_pose,
     p.ego_vel, debug_data_);
   if (!mpt_trajs) {
-    return getPrevTrajs(path.points);
+    return getPrevTrajs(p.path.points);
   }
 
   // make trajectories, which has all optimized trajectories information
@@ -1251,7 +1263,7 @@ void ObstacleAvoidancePlanner::publishDebugDataInOptimization(
     const auto debug_mpt_ref_traj = createTrajectory(debug_data_.mpt_ref_traj, p.path.header);
     debug_mpt_ref_traj_pub_->publish(debug_mpt_ref_traj);
 
-    const auto debug_mpt_traj = createTrajectory(debug_data_.mpt_traj, p.path.header;);
+    const auto debug_mpt_traj = createTrajectory(debug_data_.mpt_traj, p.path.header);
     debug_mpt_traj_pub_->publish(debug_mpt_traj);
   }
 
