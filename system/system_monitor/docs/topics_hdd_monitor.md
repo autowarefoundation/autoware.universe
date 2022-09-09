@@ -194,7 +194,7 @@
 | level | message       |
 | ----- | ------------- |
 | OK    | OK            |
-| ERROR | not connected |
+| WARN  | not connected |
 
 <b>[values]</b>
 
