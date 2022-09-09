@@ -1,0 +1,18 @@
+#include "builtin_interfaces/msg/Time.idl"
+
+module mpc_nonlinear{
+  module msg {
+    @verbatim (language = "comment", text = "The Nonlinear MPC Debug Messages")
+
+    struct NonlinearMPCPerformanceReportTemp
+    {
+      builtin_interfaces::msg::Time stamp;
+
+      // Lateral deviation - error
+      @verbatim (language = "comment", text = "Steering angle computed by the NMPC")
+      @default (value = 0.0)
+      double steering_angle_input;
+    };
+  };
+
+};
