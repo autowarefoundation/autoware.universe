@@ -1319,7 +1319,7 @@ void NonlinearMPCNode::findClosestPrevWayPointIdx()
 void NonlinearMPCNode::computeClosestPointOnTraj()
 {
   // Create performance variables msg to track the performance of NMPC.
-  nmpc_performance_vars_ = NonlinearMPCPerformanceMsg();
+  nmpc_performance_vars_ = NonlinearMPCPerformanceMsg{};
 
   // Create a new pose to keep the interpolated trajectory point.
   TrajectoryPoint interpolated_traj_point{};

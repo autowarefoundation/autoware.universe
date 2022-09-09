@@ -12,6 +12,110 @@ module mpc_nonlinear{
       @verbatim (language = "comment", text = "Steering angle computed by the NMPC")
       @default (value = 0.0)
       double steering_angle_input;
+
+      @verbatim (language = "comment", text = "Steering angle rate computed by the NMPC")
+      @default (value = 0.0)
+      double steering_angle_rate_input;
+
+      @verbatim (language = "comment", text = "Measured steering angle")
+      @default (value = 0.0)
+      double steering_angle_measured;
+
+      @verbatim (language = "comment", text = "Next steering state by the NMPC")
+      @default (value = 0.0)
+      double mpc_steering_reference;
+
+      @verbatim (language = "comment", text = "Output of MPC controller")
+      @default (value = 0.0)
+      double mpc_steering_input_original;
+
+      @verbatim (language = "comment", text = "Extremum seeking parameter")
+      @default (value = 0.0)
+      double es_theta;
+
+      @verbatim (language = "comment", text = "Extremum seeking parameter")
+      @default (value = 0.0)
+      double es_error;
+
+      @verbatim (language = "comment", text = "Acceleration input computed by the NMPC")
+      @default (value = 0.0)
+      double acceleration_input;
+
+      @verbatim (language = "comment", text = "Lateral error computed by the NMPC")
+      @default (value = 0.0)
+      double nmpc_lateral_error;
+
+      @verbatim (language = "comment", text = "Yaw error computed by the NMPC")
+      @default (value = 0.0)
+      double nmpc_yaw_error;
+
+      @verbatim (language = "comment", text = "Curvature computed by the NMPC")
+      @default (value = 0.0)
+      double nmpc_curvature;
+
+      @verbatim (language = "comment", text = "Lateral error computed by the UKF")
+      @default (value = 0.0)
+      double lateral_error_ukf;
+
+      @verbatim (language = "comment", text = "Yaw error computed by the UKF")
+      @default (value = 0.0)
+      double yaw_error_ukf;
+
+      @verbatim (language = "comment", text = "Steering angle computed by the UKF")
+      @default (value = 0.0)
+      double steering_angle_ukf;
+
+      @verbatim (language = "comment", text = "Longitudinal velocity computed by the UKF")
+      @default (value = 0.0)
+      double long_velocity_ukf;
+
+      @verbatim (language = "comment", text = "Target velocity computed by the NMPC")
+      @default (value = 0.0)
+      double long_velocity_target;
+
+      @verbatim (language = "comment", text = "Longitudinal velocity input computed by the NMPC")
+      @default (value = 0.0)
+      double long_velocity_input;
+
+      @verbatim (language = "comment", text = "Longitudinal velocity measured by the NMPC")
+      @default (value = 0.0)
+      double long_velocity_measured;
+
+      @verbatim (language = "comment", text = "Average computation time")
+      @default (value = 0.0)
+      double avg_nmpc_computation_time;
+
+      @verbatim (language = "comment", text = "Yaw angle of the vehicle measured")
+      @default (value = 0.0)
+      double yaw_angle_measured;
+
+      @verbatim (language = "comment", text = "Target yaw angle computed by the NMPC")
+      @default (value = 0.0)
+      double yaw_angle_target;
+
+      @verbatim (language = "comment", text = "Target yaw angle computed by the NMPC")
+      @default (value = 0.0)
+      double yaw_angle_traj;
+
+      @verbatim (language = "comment", text = "Target yaw angle computed by the NMPC")
+      @default (value = 0.0)
+      double yaw_angle_ukf;
+
+      @verbatim (language = "comment", text = "Lateral acceleration computed by the NMPC")
+      @default (value = 0.0)
+      double lateral_velocity;
+
+      @verbatim (language = "comment", text = "Finite State Machine State Values")
+      @default (value = 0.0)
+      int8 fsm_state;
+
+      @verbatim (language = "comment", text = "Distance to stopping point")
+      @default (value = 0.0)
+      double distance_to_stop_point;
+
+      @verbatim (language = "comment", text = "The NMPC computed value - cost ")
+      @default (value = 0.0)
+      double nmpc_value;
     };
   };
 
