@@ -35,7 +35,7 @@ ShiftDecider::ShiftDecider(const rclcpp::NodeOptions & node_options)
   sub_control_cmd_ = create_subscription<autoware_auto_control_msgs::msg::AckermannControlCommand>(
     "input/control_cmd", queue_size, std::bind(&ShiftDecider::onControlCmd, this, _1));
   sub_autoware_state_ = create_subscription<autoware_auto_system_msgs::msg::AutowareState>(
-    "/autoware/state", queue_size, std::bind(&ShiftDecider::onAutowareState, this, _1));
+    "input/state", queue_size, std::bind(&ShiftDecider::onAutowareState, this, _1));
 
   initTimer(0.1);
 }
