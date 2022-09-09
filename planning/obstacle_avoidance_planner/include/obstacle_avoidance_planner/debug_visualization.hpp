@@ -36,12 +36,12 @@ using tier4_autoware_utils::createMarkerScale;
 namespace debug_visualization
 {
 visualization_msgs::msg::MarkerArray getDebugVisualizationMarker(
-  const std::shared_ptr<DebugData> debug_data_ptr,
+  DebugData & debug_data,
   const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & optimized_points,
   const VehicleParam & vehicle_param, const bool is_showing_debug_detail);
 
 visualization_msgs::msg::MarkerArray getDebugVisualizationWallMarker(
-  const std::shared_ptr<DebugData> debug_data_ptr, const VehicleParam & vehicle_param);
+  DebugData & debug_data, const VehicleParam & vehicle_param);
 
 nav_msgs::msg::OccupancyGrid getDebugCostmap(
   const cv::Mat & clearance_map, const nav_msgs::msg::OccupancyGrid & occupancy_grid);

@@ -143,6 +143,16 @@ double lerpPoseZ(
 
 class ObstacleAvoidancePlanner : public rclcpp::Node
 {
+public:
+  struct PlannerData
+  {
+    geometry_msgs::msg::Pose ego_pose;
+    double ego_vel;
+    std::vector<autoware_auto_perception_msgs::msg::PredictedObject> objects;
+  };
+
+  explicit ObstacleAvoidancePlanner(const rclcpp::NodeOptions & node_options);
+
 private:
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
   rclcpp::Clock logger_ros_clock_;
@@ -183,20 +193,22 @@ private:
   MPTParam mpt_param_;
   int mpt_visualize_sampling_num_;
 
-  // debug
-  mutable std::shared_ptr<DebugData> debug_data_ptr_;
+  // variables for debug
+  mutable DebugData debug_data_;
   mutable tier4_autoware_utils::StopWatch<
     std::chrono::milliseconds, std::chrono::microseconds, std::chrono::steady_clock>
     stop_watch_;
 
-  geometry_msgs::msg::Pose current_ego_pose_;
+  // variables for subscribers
   std::unique_ptr<geometry_msgs::msg::TwistStamped> current_twist_ptr_;
+  std::unique_ptr<autoware_auto_perception_msgs::msg::PredictedObjects> objects_ptr_;
+
+  // variables for previous information
   std::unique_ptr<geometry_msgs::msg::Pose> prev_ego_pose_ptr_;
   std::unique_ptr<Trajectories> prev_optimal_trajs_ptr_;
   std::unique_ptr<std::vector<autoware_auto_planning_msgs::msg::PathPoint>> prev_path_points_ptr_;
-  std::unique_ptr<autoware_auto_perception_msgs::msg::PredictedObjects> objects_ptr_;
+  std::unique_ptr<rclcpp::Time> prev_replanned_time_ptr_;
 
-  std::unique_ptr<rclcpp::Time> latest_replanned_time_ptr_;
   tier4_autoware_utils::SelfPoseListener self_pose_listener_{this};
 
   // ROS
@@ -226,29 +238,40 @@ private:
   rclcpp::Subscription<tier4_planning_msgs::msg::EnableAvoidance>::SharedPtr is_avoidance_sub_;
 
   // param callback function
-  rcl_interfaces::msg::SetParametersResult paramCallback(
+  rcl_interfaces::msg::SetParametersResult onParam(
     const std::vector<rclcpp::Parameter> & parameters);
 
   // subscriber callback functions
-  void odomCallback(const nav_msgs::msg::Odometry::SharedPtr);
-  void objectsCallback(const autoware_auto_perception_msgs::msg::PredictedObjects::SharedPtr);
-  void enableAvoidanceCallback(const tier4_planning_msgs::msg::EnableAvoidance::SharedPtr);
-  void pathCallback(const autoware_auto_planning_msgs::msg::Path::SharedPtr);
+  void onOdometry(const nav_msgs::msg::Odometry::SharedPtr);
+  void onObjects(const autoware_auto_perception_msgs::msg::PredictedObjects::SharedPtr);
+  void onEnableAvoidance(const tier4_planning_msgs::msg::EnableAvoidance::SharedPtr);
+  void onPath(const autoware_auto_planning_msgs::msg::Path::SharedPtr);
 
   // functions
   void resetPlanning();
   void resetPrevOptimization();
 
   std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> generateOptimizedTrajectory(
-    const autoware_auto_planning_msgs::msg::Path & input_path);
+    const autoware_auto_planning_msgs::msg::Path & input_path, const PlannerData & planner_data);
 
-  bool checkReplan(const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points);
+  // functions for replan
+  bool checkReplan(
+    const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
+    const PlannerData & planner_data);
+  bool isPathShapeChanged(
+    const geometry_msgs::msg::Pose & ego_pose,
+    const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points);
+  bool isPathGoalChanged(
+    const double current_vel,
+    const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points);
+  bool isEgoNearToPrevTrajectory(const geometry_msgs::msg::Pose & ego_pose);
 
   autoware_auto_planning_msgs::msg::Trajectory generateTrajectory(
-    const autoware_auto_planning_msgs::msg::Path & path);
+    const autoware_auto_planning_msgs::msg::Path & path, const PlannerData & planner_data);
 
   Trajectories optimizeTrajectory(
-    const autoware_auto_planning_msgs::msg::Path & path, const CVMaps & cv_maps);
+    const autoware_auto_planning_msgs::msg::Path & path, const CVMaps & cv_maps,
+    const PlannerData & planner_data);
 
   Trajectories getPrevTrajs(
     const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points) const;
@@ -258,6 +281,7 @@ private:
     std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & traj_points) const;
 
   void insertZeroVelocityOutsideDrivableArea(
+    const PlannerData & planner_data,
     std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & traj_points,
     const CVMaps & cv_maps);
 
@@ -267,11 +291,12 @@ private:
 
   Trajectories makePrevTrajectories(
     const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
-    const Trajectories & trajs);
+    const Trajectories & trajs, const PlannerData & planner_data);
 
   std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> generatePostProcessedTrajectory(
     const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
-    const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & merged_optimized_points);
+    const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & merged_optimized_points,
+    const PlannerData & planner_data);
 
   std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> getExtendedTrajectory(
     const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
@@ -288,8 +313,14 @@ private:
 
   void publishDebugDataInMain(const autoware_auto_planning_msgs::msg::Path & path) const;
 
-public:
-  explicit ObstacleAvoidancePlanner(const rclcpp::NodeOptions & node_options);
+  template <class T>
+  size_t findEgoNearestIndex(
+    const std::vector<T> & points, const geometry_msgs::msg::Pose & ego_pose)
+  {
+    return motion_utils::findFirstNearestIndexWithSoftConstraints(
+      points, ego_pose, traj_param_.ego_nearest_dist_threshold,
+      traj_param_.ego_nearest_yaw_threshold);
+  }
 };
 
 #endif  // OBSTACLE_AVOIDANCE_PLANNER__NODE_HPP_
