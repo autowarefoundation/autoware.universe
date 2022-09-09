@@ -89,8 +89,7 @@ std::vector<size_t> concatParentIds(
   for (const auto id : ids2) {
     id_set.insert(id);
   }
-  const auto v = std::vector<size_t>{id_set.begin(), id_set.end()};
-  return v;
+  return std::vector<size_t>{id_set.begin(), id_set.end()};
 }
 
 double lerpShiftLengthOnArc(double arc, const AvoidPoint & ap)
@@ -139,7 +138,6 @@ void fillLongitudinalAndLengthByClosestFootprint(
   }
   obj.longitudinal = min_distance;
   obj.length = max_distance - min_distance;
-  return;
 }
 
 double calcOverhangDistance(

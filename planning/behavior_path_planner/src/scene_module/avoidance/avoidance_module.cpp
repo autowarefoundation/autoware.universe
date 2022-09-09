@@ -70,7 +70,7 @@ bool AvoidanceModule::isExecutionRequested() const
   const auto avoid_data = calcAvoidancePlanningData(debug);
 
   const bool has_avoidance_target = !avoid_data.objects.empty();
-  return has_avoidance_target ? true : false;
+  return has_avoidance_target;
 }
 
 bool AvoidanceModule::isExecutionReady() const
@@ -541,7 +541,7 @@ AvoidPointArray AvoidanceModule::calcRawShiftPointsFromObjects(
       }
 
       // This is the case of exceeding the jerk limit. Use the sharp avoidance ego speed.
-      const auto required_jerk = path_shifter_.calcJerkFromLatLonDistance(
+      const auto required_jerk = PathShifter::calcJerkFromLatLonDistance(
         avoiding_shift, remaining_distance, getSharpAvoidanceEgoSpeed());
       avoidance_debug_msg.required_jerk = required_jerk;
       avoidance_debug_msg.maximum_jerk = parameters_->max_lateral_jerk;
@@ -681,7 +681,7 @@ void AvoidanceModule::fillAdditionalInfoFromLongitudinal(AvoidPointArray & shift
  * similar shape is already in B, it will not be added into B.
  */
 AvoidPointArray AvoidanceModule::combineRawShiftPointsWithUniqueCheck(
-  const AvoidPointArray & base_points, const AvoidPointArray & added_points) const
+  const AvoidPointArray & base_points, const AvoidPointArray & added_points)
 {
   // TODO(Horibe) parametrize
   const auto isSimilar = [](const AvoidPoint & a, const AvoidPoint & b) {
@@ -929,7 +929,7 @@ AvoidPointArray AvoidanceModule::mergeShiftPoints(
 }
 
 std::vector<size_t> AvoidanceModule::calcParentIds(
-  const AvoidPointArray & parent_candidates, const AvoidPoint & child) const
+  const AvoidPointArray & parent_candidates, const AvoidPoint & child)
 {
   // Get the ID of the original AP whose transition area overlaps with the given AP,
   // and set it to the parent id.
@@ -1097,19 +1097,19 @@ void AvoidanceModule::trimSmallShiftPoint(
 }
 
 void AvoidanceModule::trimSimilarGradShiftPoint(
-  AvoidPointArray & avoid_points, const double change_shift_dist_threshold) const
+  AvoidPointArray & shift_points, const double change_shift_dist_threshold) const
 {
-  AvoidPointArray avoid_points_orig = avoid_points;
-  avoid_points.clear();
+  AvoidPointArray avoid_points_orig = shift_points;
+  shift_points.clear();
 
-  avoid_points.push_back(avoid_points_orig.front());  // Take the first one anyway (think later)
+  shift_points.push_back(avoid_points_orig.front());  // Take the first one anyway (think later)
 
   // Save the points being merged. When merging consecutively, also check previously merged points.
   AvoidPointArray being_merged_points;
 
   for (size_t i = 1; i < avoid_points_orig.size(); ++i) {
     const auto ap_now = avoid_points_orig.at(i);
-    const auto ap_prev = avoid_points.back();
+    const auto ap_prev = shift_points.back();
 
     being_merged_points.push_back(ap_prev);  // This point is about to be merged.
 
@@ -1140,19 +1140,19 @@ void AvoidanceModule::trimSimilarGradShiftPoint(
     if (has_large_length_change) {
       // If this point is merged with the previous points, it makes a large changes.
       // Do not merge this.
-      avoid_points.push_back(ap_now);
+      shift_points.push_back(ap_now);
       being_merged_points.clear();
       DEBUG_PRINT("use this point. has_large_length_change = %d", has_large_length_change);
     } else {
-      avoid_points.back() = combined_ap;  // Update the last points by merging the current point
+      shift_points.back() = combined_ap;  // Update the last points by merging the current point
       being_merged_points.push_back(ap_prev);
       DEBUG_PRINT("trim! has_large_length_change = %d", has_large_length_change);
     }
   }
 
-  alignShiftPointsOrder(avoid_points);
+  alignShiftPointsOrder(shift_points);
 
-  DEBUG_PRINT("size %lu -> %lu", avoid_points_orig.size(), avoid_points.size());
+  DEBUG_PRINT("size %lu -> %lu", avoid_points_orig.size(), shift_points.size());
 }
 
 /**
@@ -1322,7 +1322,7 @@ void AvoidanceModule::trimSharpReturn(AvoidPointArray & shift_points) const
   };
 
   // combine two shift points. Be careful the order of "now" and "next".
-  const auto combineShiftPoint = [this](const auto & sp_next, const auto & sp_now) {
+  const auto combineShiftPoint = [](const auto & sp_next, const auto & sp_now) {
     auto sp_modified = sp_now;
     setEndData(sp_modified, sp_next.length, sp_next.end, sp_next.end_idx, sp_next.end_longitudinal);
     sp_modified.parent_ids = concatParentIds(sp_modified.parent_ids, sp_now.parent_ids);
@@ -1330,7 +1330,7 @@ void AvoidanceModule::trimSharpReturn(AvoidPointArray & shift_points) const
   };
 
   // Check if the merged shift has a conflict with the original shifts.
-  const auto hasViolation = [this](const auto & combined, const auto & combined_src) {
+  const auto hasViolation = [](const auto & combined, const auto & combined_src) {
     constexpr auto VIOLATION_SHIFT_THR = 0.3;
     for (const auto & sp : combined_src) {
       const auto combined_shift = lerpShiftLengthOnArc(sp.end_longitudinal, combined);
@@ -1439,17 +1439,17 @@ void AvoidanceModule::trimSharpReturn(AvoidPointArray & shift_points) const
   DEBUG_PRINT("trimSharpReturn: size %lu -> %lu", shift_points_orig.size(), shift_points.size());
 }
 
-void AvoidanceModule::trimTooSharpShift(AvoidPointArray & avoid_points) const
+void AvoidanceModule::trimTooSharpShift(AvoidPointArray & shift_points) const
 {
-  if (avoid_points.empty()) {
+  if (shift_points.empty()) {
     return;
   }
 
-  AvoidPointArray avoid_points_orig = avoid_points;
-  avoid_points.clear();
+  AvoidPointArray avoid_points_orig = shift_points;
+  shift_points.clear();
 
   const auto isInJerkLimit = [this](const auto & ap) {
-    const auto required_jerk = path_shifter_.calcJerkFromLatLonDistance(
+    const auto required_jerk = PathShifter::calcJerkFromLatLonDistance(
       ap.getRelativeLength(), ap.getRelativeLongitudinal(), getSharpAvoidanceEgoSpeed());
     return std::fabs(required_jerk) < parameters_->max_lateral_jerk;
   };
@@ -1458,7 +1458,7 @@ void AvoidanceModule::trimTooSharpShift(AvoidPointArray & avoid_points) const
     auto ap_now = avoid_points_orig.at(i);
 
     if (isInJerkLimit(ap_now)) {
-      avoid_points.push_back(ap_now);
+      shift_points.push_back(ap_now);
       continue;
     }
 
@@ -1470,7 +1470,7 @@ void AvoidanceModule::trimTooSharpShift(AvoidPointArray & avoid_points) const
       auto ap_next = avoid_points_orig.at(j);
       setEndData(ap_now, ap_next.length, ap_next.end, ap_next.end_idx, ap_next.end_longitudinal);
       if (isInJerkLimit(ap_now)) {
-        avoid_points.push_back(ap_now);
+        shift_points.push_back(ap_now);
         DEBUG_PRINT("merge finished. i = %lu, j = %lu", i, j);
         i = j;  // skip check until j index.
         break;
@@ -1478,9 +1478,9 @@ void AvoidanceModule::trimTooSharpShift(AvoidPointArray & avoid_points) const
     }
   }
 
-  alignShiftPointsOrder(avoid_points);
+  alignShiftPointsOrder(shift_points);
 
-  DEBUG_PRINT("size %lu -> %lu", avoid_points_orig.size(), avoid_points.size());
+  DEBUG_PRINT("size %lu -> %lu", avoid_points_orig.size(), shift_points.size());
 }
 
 /*
@@ -1991,9 +1991,9 @@ BehaviorModuleOutput AvoidanceModule::plan()
     for (; i > 0; i--) {
       if (fabs(new_shift_points->at(i).getRelativeLength()) < 0.01) {
         continue;
-      } else {
-        break;
       }
+
+      break;
     }
     if (new_shift_points->at(i).getRelativeLength() > 0.0) {
       removePreviousRTCStatusRight();
@@ -2075,9 +2075,9 @@ CandidateOutput AvoidanceModule::planCandidate() const
     for (; i > 0; i--) {
       if (fabs(new_shift_points->at(i).getRelativeLength()) < 0.01) {
         continue;
-      } else {
-        break;
       }
+
+      break;
     }
     output.lateral_shift = new_shift_points->at(i).getRelativeLength();
     output.start_distance_to_path_change = new_shift_points->front().start_longitudinal;
@@ -2123,9 +2123,9 @@ void AvoidanceModule::addShiftPointIfApproved(const AvoidPointArray & shift_poin
     for (; i > 0; i--) {
       if (fabs(shift_points.at(i).getRelativeLength()) < 0.01) {
         continue;
-      } else {
-        break;
       }
+
+      break;
     }
 
     if (shift_points.at(i).getRelativeLength() > 0.0) {
@@ -2215,7 +2215,7 @@ boost::optional<AvoidPointArray> AvoidanceModule::findNewShiftPoint(
   };
 
   const auto calcJerk = [this](const auto & ap) {
-    return path_shifter_.calcJerkFromLatLonDistance(
+    return PathShifter::calcJerkFromLatLonDistance(
       ap.getRelativeLength(), ap.getRelativeLongitudinal(), getSharpAvoidanceEgoSpeed());
   };
 
@@ -2301,7 +2301,7 @@ PoseStamped AvoidanceModule::getUnshiftedEgoPose(const ShiftedPath & prev_path) 
 double AvoidanceModule::getNominalAvoidanceDistance(const double shift_length) const
 {
   const auto & p = parameters_;
-  const auto distance_by_jerk = path_shifter_.calcLongitudinalDistFromJerk(
+  const auto distance_by_jerk = PathShifter::calcLongitudinalDistFromJerk(
     shift_length, parameters_->nominal_lateral_jerk, getNominalAvoidanceEgoSpeed());
 
   return std::max(p->min_avoidance_distance, distance_by_jerk);
@@ -2310,7 +2310,7 @@ double AvoidanceModule::getNominalAvoidanceDistance(const double shift_length) c
 double AvoidanceModule::getSharpAvoidanceDistance(const double shift_length) const
 {
   const auto & p = parameters_;
-  const auto distance_by_jerk = path_shifter_.calcLongitudinalDistFromJerk(
+  const auto distance_by_jerk = PathShifter::calcLongitudinalDistFromJerk(
     shift_length, parameters_->max_lateral_jerk, getSharpAvoidanceEgoSpeed());
 
   return std::max(p->min_avoidance_distance, distance_by_jerk);
@@ -2384,7 +2384,7 @@ void AvoidanceModule::updateData()
  */
 void AvoidanceModule::updateRegisteredObject(const ObjectDataArray & now_objects)
 {
-  const auto updateIfDetectedNow = [&now_objects, this](auto & registered_object) {
+  const auto updateIfDetectedNow = [&now_objects](auto & registered_object) {
     const auto & n = now_objects;
     const auto r_id = registered_object.object.object_id;
     const auto same_id_obj = std::find_if(

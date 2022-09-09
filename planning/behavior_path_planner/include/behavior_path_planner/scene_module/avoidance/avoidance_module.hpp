@@ -186,7 +186,7 @@ private:
   void initVariables();
   AvoidancePlanningData calcAvoidancePlanningData(DebugData & debug) const;
   ObjectDataArray calcAvoidanceTargetObjects(
-    const lanelet::ConstLanelets & lanelets, const PathWithLaneId & reference_path,
+    const lanelet::ConstLanelets & current_lanes, const PathWithLaneId & reference_path,
     DebugData & debug) const;
 
   ObjectDataArray registered_objects_;
@@ -205,8 +205,8 @@ private:
   double getLeftShiftBound() const;
 
   // shift point generation: combiner
-  AvoidPointArray combineRawShiftPointsWithUniqueCheck(
-    const AvoidPointArray & base_points, const AvoidPointArray & added_points) const;
+  static AvoidPointArray combineRawShiftPointsWithUniqueCheck(
+    const AvoidPointArray & base_points, const AvoidPointArray & added_points);
 
   // shift point generation: merger
   AvoidPointArray mergeShiftPoints(
@@ -214,8 +214,8 @@ private:
   void generateTotalShiftLine(
     const AvoidPointArray & avoid_points, ShiftLineData & shift_line_data) const;
   AvoidPointArray extractShiftPointsFromLine(ShiftLineData & shift_line_data) const;
-  std::vector<size_t> calcParentIds(
-    const AvoidPointArray & parent_candidates, const AvoidPoint & child) const;
+  static std::vector<size_t> calcParentIds(
+    const AvoidPointArray & parent_candidates, const AvoidPoint & child);
 
   // shift point generation: trimmers
   AvoidPointArray trimShiftPoint(const AvoidPointArray & shift_points, DebugData & debug) const;
@@ -240,8 +240,8 @@ private:
 
   // -- for new shift point approval --
   boost::optional<AvoidPointArray> findNewShiftPoint(
-    const AvoidPointArray & shift_points, const PathShifter & shifter) const;
-  void addShiftPointIfApproved(const AvoidPointArray & point);
+    const AvoidPointArray & candidates, const PathShifter & shifter) const;
+  void addShiftPointIfApproved(const AvoidPointArray & shift_points);
   void addNewShiftPoints(PathShifter & path_shifter, const AvoidPointArray & shift_points) const;
 
   // -- path generation --
