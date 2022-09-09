@@ -46,8 +46,8 @@ CPUMonitorBase::CPUMonitorBase(const std::string & node_name, const rclcpp::Node
   freqs_(),
   mpstat_exists_(false),
   usage_warn_(declare_parameter<float>("usage_warn", 0.96)),
-  usage_error_(declare_parameter<float>("usage_error", 1.00)),
-  usage_warn_count_(declare_parameter<int>("usage_warn_count", 2)),
+  usage_error_(declare_parameter<float>("usage_error", 0.96)),
+  usage_warn_count_(declare_parameter<int>("usage_warn_count", 1)),
   usage_error_count_(declare_parameter<int>("usage_error_count", 2)),
   usage_avg_(declare_parameter<bool>("usage_avg", true))
 {
@@ -298,7 +298,8 @@ int CPUMonitorBase::CpuUsageToLevel(const std::string & cpu_name, float usage)
   if (usage >= usage_warn_) {
     if (usage_warn_check_cnt_[idx] < usage_warn_count_) {
       usage_warn_check_cnt_[idx]++;
-    } else {
+    }
+    if (usage_warn_check_cnt_[idx] >= usage_warn_count_) {
       level = DiagStatus::WARN;
     }
   } else {
@@ -307,7 +308,8 @@ int CPUMonitorBase::CpuUsageToLevel(const std::string & cpu_name, float usage)
   if (usage >= usage_error_) {
     if (usage_error_check_cnt_[idx] < usage_error_count_) {
       usage_error_check_cnt_[idx]++;
-    } else {
+    }
+    if (usage_error_check_cnt_[idx] >= usage_error_count_) {
       level = DiagStatus::ERROR;
     }
   } else {

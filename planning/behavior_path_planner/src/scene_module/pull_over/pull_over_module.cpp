@@ -83,6 +83,10 @@ void PullOverModule::resetStatus()
 // This function is needed for waiting for planner_data_
 void PullOverModule::updateOccupancyGrid()
 {
+  if (!planner_data_->occupancy_grid) {
+    RCLCPP_WARN_THROTTLE(getLogger(), *clock_, 5000, "occupancy_grid is not ready");
+    return;
+  }
   occupancy_grid_map_.setMap(*(planner_data_->occupancy_grid));
 }
 
@@ -260,6 +264,12 @@ void PullOverModule::researchGoal()
       continue;
     }
 
+    const auto objects_in_shoulder_lane =
+      util::filterObjectsByLanelets(*(planner_data_->dynamic_object), status_.pull_over_lanes);
+    if (checkCollisionWtihLongitudinalDistance(search_pose, objects_in_shoulder_lane)) {
+      continue;
+    }
+
     GoalCandidate goal_candidate;
     goal_candidate.goal_pose = search_pose;
     goal_candidate.distance_from_original_goal =
@@ -305,6 +315,49 @@ bool PullOverModule::isLongEnoughToParkingStart(
   }
 
   return *dist_to_parking_start_pose > current_to_stop_distance;
+}
+
+bool PullOverModule::checkCollisionWtihLongitudinalDistance(
+  const Pose & ego_pose, const PredictedObjects & dynamic_objects) const
+{
+  if (parameters_.use_occupancy_grid) {
+    bool check_out_of_range = false;
+    const double offset = std::max(
+      parameters_.goal_to_obstacle_margin - parameters_.occupancy_grid_collision_check_margin, 0.0);
+
+    // check forward collison
+    const Pose ego_pose_moved_forward = calcOffsetPose(ego_pose, offset, 0, 0);
+    const Pose forward_pose_grid_coords =
+      global2local(occupancy_grid_map_.getMap(), ego_pose_moved_forward);
+    const auto forward_idx = pose2index(
+      occupancy_grid_map_.getMap(), forward_pose_grid_coords,
+      occupancy_grid_map_.getParam().theta_size);
+    if (occupancy_grid_map_.detectCollision(forward_idx, check_out_of_range)) {
+      return true;
+    }
+
+    // check backward collison
+    const Pose ego_pose_moved_backward = calcOffsetPose(ego_pose, -offset, 0, 0);
+    const Pose backward_pose_grid_coords =
+      global2local(occupancy_grid_map_.getMap(), ego_pose_moved_backward);
+    const auto backward_idx = pose2index(
+      occupancy_grid_map_.getMap(), backward_pose_grid_coords,
+      occupancy_grid_map_.getParam().theta_size);
+    if (occupancy_grid_map_.detectCollision(backward_idx, check_out_of_range)) {
+      return true;
+    }
+  }
+
+  if (parameters_.use_object_recognition) {
+    if (
+      util::calcLongitudinalDistanceFromEgoToObjects(
+        ego_pose, planner_data_->parameters.base_link2front,
+        planner_data_->parameters.base_link2rear,
+        dynamic_objects) < parameters_.goal_to_obstacle_margin) {
+      return true;
+    }
+  }
+  return false;
 }
 
 bool PullOverModule::checkCollisionWithPose(const Pose & pose) const
@@ -575,9 +628,14 @@ BehaviorModuleOutput PullOverModule::plan()
         -calcMinimumShiftPathDistance(), parameters_.deceleration_interval);
     }
   }
+  // generate drivable area
+  {
+    const auto p = planner_data_->parameters;
+    status_.path.drivable_area = util::generateDrivableArea(
+      status_.path, status_.lanes, p.drivable_area_resolution, p.vehicle_length, planner_data_);
+  }
 
   BehaviorModuleOutput output;
-
   // safe: use pull over path
   if (status_.is_safe) {
     output.path = std::make_shared<PathWithLaneId>(status_.path);
@@ -608,8 +666,8 @@ BehaviorModuleOutput PullOverModule::plan()
     }
   }
 
-  const double distance_to_path_change = calcDistanceToPathChange();
-  updateRTCStatus(distance_to_path_change);
+  const auto distance_to_path_change = calcDistanceToPathChange();
+  updateRTCStatus(distance_to_path_change.first, distance_to_path_change.second);
 
   publishDebugData();
 
@@ -637,22 +695,25 @@ BehaviorModuleOutput PullOverModule::planWaitingApproval()
     out.path_candidate = std::make_shared<PathWithLaneId>(parallel_parking_planner_.getFullPath());
   }
 
-  const double distance_to_path_change = calcDistanceToPathChange();
-  updateRTCStatus(distance_to_path_change);
+  const auto distance_to_path_change = calcDistanceToPathChange();
+  updateRTCStatus(distance_to_path_change.first, distance_to_path_change.second);
   waitApproval();
 
   return out;
 }
 
-double PullOverModule::calcDistanceToPathChange() const
+std::pair<double, double> PullOverModule::calcDistanceToPathChange() const
 {
   const Pose parking_start_pose = getParkingStartPose();
+  const Pose parking_end_pose = modified_goal_pose_;
   const auto dist_to_parking_start_pose = calcSignedArcLength(
     status_.path.points, planner_data_->self_pose->pose, parking_start_pose.position,
     std::numeric_limits<double>::max(), M_PI_2);
-  const double distance_to_path_change =
+  const double dist_to_parking_finish_pose = calcSignedArcLength(
+    status_.path.points, planner_data_->self_pose->pose.position, parking_end_pose.position);
+  const double start_distance_to_path_change =
     dist_to_parking_start_pose ? *dist_to_parking_start_pose : std::numeric_limits<double>::max();
-  return distance_to_path_change;
+  return {start_distance_to_path_change, dist_to_parking_finish_pose};
 }
 
 void PullOverModule::setParameters(const PullOverParameters & parameters)
@@ -681,10 +742,6 @@ bool PullOverModule::planShiftPath()
   if (!found_safe_path) {
     return found_safe_path;
   }
-
-  shift_parking_path_.path.drivable_area = util::generateDrivableArea(
-    shift_parking_path_.path, status_.lanes, common_parameters.drivable_area_resolution,
-    common_parameters.vehicle_length, planner_data_);
 
   shift_parking_path_.path.header = planner_data_->route_handler->getRouteHeader();
   return found_safe_path;
