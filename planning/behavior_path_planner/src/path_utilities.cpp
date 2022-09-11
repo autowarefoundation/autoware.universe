@@ -212,7 +212,7 @@ std::pair<TurnIndicatorsCommand, double> getPathTurnSignal(
   //  1. lateral offset is larger than tl_on_threshold_lat for left signal
   //                      smaller than tl_on_threshold_lat for right signal
   //  2. side point at shift start/end point cross the line
-  double distance_to_shift_start =
+  const double distance_to_shift_start =
     std::invoke([&current_lanes, &shift_point, &arc_position_current_pose]() {
       const auto arc_position_shift_start =
         lanelet::utils::getArcCoordinates(current_lanes, shift_point.start);
