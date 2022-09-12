@@ -96,7 +96,7 @@ install(TARGETS ${CDOB_LIB}
 
 ## -----------------  DELAY COMPENSATION NODE ----------------------------------------
 
-set(DELAY_COMPENSATION_NODE communication_delay_compensator_node)
+set(DELAY_COMPENSATION_NODE communication_delay_compensation_node)
 ament_auto_add_library(${DELAY_COMPENSATION_NODE} SHARED
   include/communication_delay_compensator_node.hpp
   src/communication_delay_compensator_node.cpp
