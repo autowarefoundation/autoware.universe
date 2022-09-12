@@ -17,7 +17,8 @@
 
 namespace tier4_autoware_utils
 {
-
+namespace xyz_covariance_index
+{
 /// Covariance for x-y-z.
 /// Used at
 /// - sensor_msgs/msg/Imu.msg: msg.linear_acceleration_covariance
@@ -32,7 +33,10 @@ enum class XYZ_COV_IDX {
   Z_Y = 7,
   Z_Z = 8,
 };
+}  // namespace xyz_covariance_index
 
+namespace rpy_covariance_index
+{
 /// Covariance for roll-pitch-yaw.
 /// Used at
 /// - sensor_msgs/msg/Imu.msg: msg.angular_velocity_covariance
@@ -48,7 +52,10 @@ enum class RPY_COV_IDX {
   YAW_PITCH = 7,
   YAW_YAW = 8
 };
+}  // namespace rpy_covariance_index
 
+namespace pose_covariance_index
+{
 /// Covariance for 6-DOF pose.
 /// Used at
 /// - geometry_msgs/msg/AccelWithCovariance.msg: msg.covariance
@@ -92,7 +99,10 @@ enum class POSE_COV_IDX {
   YAW_PITCH = 34,
   YAW_YAW = 35
 };
+}  // namespace pose_covariance_index
 
+namespace xyz_upper_covariance_index
+{
 /// Upper-triangle covariance about the x, y, z axes
 /// Used at
 /// - radar_msgs/msg/RadarTrack.msg: msg.{position, velocity, acceleration}_covariance
@@ -104,6 +114,7 @@ enum class XYZ_UPPER_COV_IDX {
   Y_Z = 4,
   Z_Z = 5,
 };
+}  // namespace xyz_upper_covariance_index
 }  // namespace tier4_autoware_utils
 
 #endif  // TIER4_AUTOWARE_UTILS__ROS__MSG_COVARIANCE_HPP_
