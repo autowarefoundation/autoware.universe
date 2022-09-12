@@ -191,11 +191,11 @@ observers::LateralCommunicationDelayCompensator::simulateOneStep(const state_vec
   estimateVehicleStatesQ(current_measurements, prev_steering_control_cmd, current_steering_cmd);
 
   // Final assignment steps.
-  msg_debug_results->lat_uf = static_cast<double>(static_cast<float>(current_qfiltered_control_cmd_));
-  msg_debug_results->lat_ey_hat = static_cast<double>(static_cast<float>(prev_yobs_(0)));
-  msg_debug_results->lat_eyaw_hat = static_cast<double>(static_cast<float>(prev_yobs_(1)));
-  msg_debug_results->lat_steering_hat = static_cast<double>(static_cast<float>(prev_yobs_(2)));
-  msg_debug_results->lat_duf = static_cast<double>(static_cast<float>(df_d0_));
+  msg_debug_results->lat_uf = current_qfiltered_control_cmd_;
+  msg_debug_results->lat_ey_hat = prev_yobs_(0);
+  msg_debug_results->lat_eyaw_hat = prev_yobs_(1);
+  msg_debug_results->lat_steering_hat = prev_yobs_(2);
+  msg_debug_results->lat_duf = df_d0_;
 
   msg_compensation_results->lateral_deviation_error_compensation_ref = yv_d0_(0);
   msg_compensation_results->heading_angle_error_compensation_ref = yv_d0_(1);
