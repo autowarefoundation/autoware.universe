@@ -195,12 +195,12 @@ std::pair<TurnIndicatorsCommand, double> getPathTurnSignal(
   if (path.shift_length.empty()) {
     return std::make_pair(turn_signal, max_distance);
   }
-  const auto & base_link2front = common_parameter.base_link2front;
-  const auto & vehicle_width = common_parameter.vehicle_width;
+  const auto base_link2front = common_parameter.base_link2front;
+  const auto vehicle_width = common_parameter.vehicle_width;
   const auto shift_to_outside = vehicle_width / 2;
-  const auto & tl_on_threshold_lat = common_parameter.turn_light_on_threshold_dis_lat;
-  const auto & tl_on_threshold_long = common_parameter.turn_light_on_threshold_dis_long;
-  const auto & prev_sec = common_parameter.turn_light_on_threshold_time;
+  const auto tl_on_threshold_lat = common_parameter.turn_light_on_threshold_dis_lat;
+  const auto tl_on_threshold_long = common_parameter.turn_light_on_threshold_dis_long;
+  const auto prev_sec = common_parameter.turn_light_on_threshold_time;
   constexpr double epsilon = 1e-6;
   const auto arc_position_current_pose = lanelet::utils::getArcCoordinates(current_lanes, pose);
 
