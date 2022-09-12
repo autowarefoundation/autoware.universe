@@ -29,14 +29,6 @@ module mpc_nonlinear{
       @default (value = 0.0)
       double mpc_steering_input_original;
 
-      @verbatim (language = "comment", text = "Extremum seeking parameter")
-      @default (value = 0.0)
-      double es_theta;
-
-      @verbatim (language = "comment", text = "Extremum seeking parameter")
-      @default (value = 0.0)
-      double es_error;
-
       @verbatim (language = "comment", text = "Acceleration input computed by the NMPC")
       @default (value = 0.0)
       double acceleration_input;
@@ -52,22 +44,6 @@ module mpc_nonlinear{
       @verbatim (language = "comment", text = "Curvature computed by the NMPC")
       @default (value = 0.0)
       double nmpc_curvature;
-
-      @verbatim (language = "comment", text = "Lateral error computed by the UKF")
-      @default (value = 0.0)
-      double lateral_error_ukf;
-
-      @verbatim (language = "comment", text = "Yaw error computed by the UKF")
-      @default (value = 0.0)
-      double yaw_error_ukf;
-
-      @verbatim (language = "comment", text = "Steering angle computed by the UKF")
-      @default (value = 0.0)
-      double steering_angle_ukf;
-
-      @verbatim (language = "comment", text = "Longitudinal velocity computed by the UKF")
-      @default (value = 0.0)
-      double long_velocity_ukf;
 
       @verbatim (language = "comment", text = "Target velocity computed by the NMPC")
       @default (value = 0.0)
@@ -96,10 +72,6 @@ module mpc_nonlinear{
       @verbatim (language = "comment", text = "Target yaw angle computed by the NMPC")
       @default (value = 0.0)
       double yaw_angle_traj;
-
-      @verbatim (language = "comment", text = "Target yaw angle computed by the NMPC")
-      @default (value = 0.0)
-      double yaw_angle_ukf;
 
       @verbatim (language = "comment", text = "Lateral acceleration computed by the NMPC")
       @default (value = 0.0)
