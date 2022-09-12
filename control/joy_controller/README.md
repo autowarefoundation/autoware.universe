@@ -42,23 +42,23 @@
 | `max_backward_velocity`   | double | absolute max velocity to go backward                                                                               |
 | `backward_accel_ratio`    | double | ratio to calculate deceleration (commanded acceleration is -ratio \* operation)                                    |
 
-## P65 Joystick Key Map
+## DS4 Joystick Key Map
 
-| Acceleration         | R2                    |
-| -------------------- | --------------------- |
-| Brake                | L2                    |
-| Steering             | Left Stick Left Right |
-| Shift up             | Cursor Up             |
-| Shift down           | Cursor Down           |
-| Shift Drive          | Cursor Left           |
-| Shift Reverse        | Cursor Right          |
-| Turn Signal Left     | L1                    |
-| Turn Signal Right    | R1                    |
-| Clear Turn Signal    | A                     |
-| Gate Mode            | B                     |
-| Emergency Stop       | Select                |
-| Clear Emergency Stop | Start                 |
-| Autoware Engage      | X                     |
-| Autoware Disengage   | Y                     |
-| Vehicle Engage       | PS                    |
-| Vehicle Disengage    | Right Trigger         |
+| Acceleration         | R2                                        |
+| -------------------- | ----------------------------------------- |
+| Brake                | □ or Right Stick Up Down or Left Trigger |
+| Steering             | Left Stick Left Right                     |
+| Shift up             | Cursor Up                                 |
+| Shift down           | Cursor Down                               |
+| Shift Drive          | Cursor Left                               |
+| Shift Reverse        | Cursor Right                              |
+| Turn Signal Left     | L1                                        |
+| Turn Signal Right    | R1                                        |
+| Clear Turn Signal    | SHARE                                     |
+| Gate Mode            | OPTIONS                                   |
+| Emergency Stop       | PS                                        |
+| Clear Emergency Stop | PS                                        |
+| Autoware Engage      | ○                                        |
+| Autoware Disengage   | ○                                        |
+| Vehicle Engage       | △                                        |
+| Vehicle Disengage    | △                                        |
