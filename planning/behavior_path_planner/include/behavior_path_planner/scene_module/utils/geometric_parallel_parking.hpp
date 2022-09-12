@@ -84,11 +84,10 @@ public:
   PathWithLaneId getCurrentPath() const;
   PathWithLaneId getFullPath() const;
   PathWithLaneId getArcPath() const;
-  PoseStamped getCr() const { return Cr_; }
-  PoseStamped getCl() const { return Cl_; }
-  PoseStamped getStartPose() const { return start_pose_; }
-  PoseStamped getArcEndPose() const { return arc_end_pose_; }
-  PoseArray getPathPoseArray() const { return path_pose_array_; }
+  Pose getCr() const { return Cr_; }
+  Pose getCl() const { return Cl_; }
+  Pose getStartPose() const { return start_pose_; }
+  Pose getArcEndPose() const { return arc_end_pose_; }
 
 private:
   std::shared_ptr<const PlannerData> planner_data_;
@@ -123,11 +122,11 @@ private:
   PathWithLaneId generateStraightPath(const Pose & start_pose);
   void setVelocityToArcPaths(std::vector<PathWithLaneId> & arc_paths, const double velocity);
 
-  PoseStamped Cr_;
-  PoseStamped Cl_;
-  PoseStamped start_pose_;
-  PoseStamped arc_end_pose_;
-  PoseArray path_pose_array_;
+  // debug
+  Pose Cr_;
+  Pose Cl_;
+  Pose start_pose_;
+  Pose arc_end_pose_;
 };
 }  // namespace behavior_path_planner
 
