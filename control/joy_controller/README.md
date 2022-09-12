@@ -44,20 +44,20 @@
 
 ## DS4 Joystick Key Map
 
-| Acceleration         | R2                                        |
-| -------------------- | ----------------------------------------- |
+| Acceleration         | R2                                       |
+| -------------------- | ---------------------------------------- |
 | Brake                | □ or Right Stick Up Down or Left Trigger |
-| Steering             | Left Stick Left Right                     |
-| Shift up             | Cursor Up                                 |
-| Shift down           | Cursor Down                               |
-| Shift Drive          | Cursor Left                               |
-| Shift Reverse        | Cursor Right                              |
-| Turn Signal Left     | L1                                        |
-| Turn Signal Right    | R1                                        |
-| Clear Turn Signal    | SHARE                                     |
-| Gate Mode            | OPTIONS                                   |
-| Emergency Stop       | PS                                        |
-| Clear Emergency Stop | PS                                        |
+| Steering             | Left Stick Left Right                    |
+| Shift up             | Cursor Up                                |
+| Shift down           | Cursor Down                              |
+| Shift Drive          | Cursor Left                              |
+| Shift Reverse        | Cursor Right                             |
+| Turn Signal Left     | L1                                       |
+| Turn Signal Right    | R1                                       |
+| Clear Turn Signal    | SHARE                                    |
+| Gate Mode            | OPTIONS                                  |
+| Emergency Stop       | PS                                       |
+| Clear Emergency Stop | PS                                       |
 | Autoware Engage      | ○                                        |
 | Autoware Disengage   | ○                                        |
 | Vehicle Engage       | △                                        |
