@@ -96,7 +96,7 @@ enum POSE_COV_IDX {
 /// Upper-triangle covariance about the x, y, z axes
 /// Used at
 /// - radar_msgs/msg/RadarTrack.msg: msg.{position, velocity, acceleration}_covariance
-enum RPY_COV_IDX {
+enum XYZ_UPPER_COV_IDX {
   X_X = 0,
   X_Y = 1,
   X_Z = 2,
