@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MOTION_FACTOR_AGGREGATOR__MOTION_FACTOR_AGGREGATOR_HPP_
-#define MOTION_FACTOR_AGGREGATOR__MOTION_FACTOR_AGGREGATOR_HPP_
+#ifndef MOTION_FACTOR_AGGREGATOR_HPP_
+#define MOTION_FACTOR_AGGREGATOR_HPP_
 
 #include "motion_factor_aggregator/awapi_autoware_util.hpp"
 
@@ -86,4 +86,4 @@ private:
 
 }  // namespace default_ad_api
 
-#endif  // MOTION_FACTOR_AGGREGATOR__MOTION_FACTOR_AGGREGATOR_HPP_
+#endif  // MOTION_FACTOR_AGGREGATOR_HPP_

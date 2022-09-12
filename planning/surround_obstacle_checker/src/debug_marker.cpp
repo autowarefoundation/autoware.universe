@@ -52,8 +52,8 @@ SurroundObstacleCheckerDebugNode::SurroundObstacleCheckerDebugNode(
   debug_viz_pub_ = node.create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/marker", 1);
   stop_reason_pub_ =
     node.create_publisher<tier4_planning_msgs::msg::StopReasonArray>("~/output/stop_reasons", 1);
-  motion_factor_pub_ = node.create_publisher<autoware_ad_api_msgs::msg::MotionFactorArray>(
-    "~/output/motion_factors", 1);
+  // velocity_factor_pub_ = node.create_publisher<autoware_ad_api_msgs::msg::VelocityFactorArray>(
+  //   "~/output/velocity_factors", 1);
   stop_reason_pub_ = node.create_publisher<StopReasonArray>("~/output/stop_reasons", 1);
   vehicle_footprint_pub_ = node.create_publisher<PolygonStamped>("~/debug/footprint", 1);
   vehicle_footprint_offset_pub_ =
@@ -122,8 +122,8 @@ void SurroundObstacleCheckerDebugNode::publish()
   stop_reason_pub_->publish(stop_reason_msg);
 
   /* publish stop reason for autoware api */
-  const auto motion_factor_msg = makeMotionFactorArray();
-  motion_factor_pub_->publish(motion_factor_msg);
+  // const auto velocity_factor_msg = makeVelocityFactorArray();
+  // velocity_factor_pub_->publish(velocity_factor_msg);
 
   /* reset variables */
   stop_pose_ptr_ = nullptr;

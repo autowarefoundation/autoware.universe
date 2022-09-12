@@ -20,8 +20,6 @@
 #include <geometry_msgs/msg/polygon_stamped.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <tier4_planning_msgs/msg/stop_reason_array.hpp>
-// #include <tier4_planning_msgs/msg/motion_factor_array.hpp>
-#include <autoware_ad_api_msgs/msg/motion_factor_array.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
@@ -65,7 +63,7 @@ private:
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_virtual_wall_pub_;
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_viz_pub_;
   rclcpp::Publisher<StopReasonArray>::SharedPtr stop_reason_pub_;
-  rclcpp::Publisher<MotionFactorArray>::SharedPtr motion_factor_pub_;
+  // rclcpp::Publisher<VelocityFactorArray>::SharedPtr velocity_factor_pub_;
 
   rclcpp::Publisher<PolygonStamped>::SharedPtr vehicle_footprint_pub_;
   rclcpp::Publisher<PolygonStamped>::SharedPtr vehicle_footprint_offset_pub_;
@@ -80,7 +78,7 @@ private:
   MarkerArray makeVirtualWallMarker();
   MarkerArray makeVisualizationMarker();
   StopReasonArray makeStopReasonArray();
-  MotionFactorArray makeMotionFactorArray();
+  // VelocityFactorArray makeVelocityFactorArray();
 
   Polygon2d createSelfPolygonWithOffset(const Polygon2d & base_polygon, const double & offset);
   PolygonStamped boostPolygonToPolygonStamped(const Polygon2d & boost_polygon, const double & z);

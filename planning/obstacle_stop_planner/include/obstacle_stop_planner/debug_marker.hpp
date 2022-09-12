@@ -19,7 +19,6 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_ad_api_msgs/msg/motion_factor_array.hpp>
 #include <geometry_msgs/msg/point.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <tier4_debug_msgs/msg/float32_multi_array_stamped.hpp>
@@ -104,7 +103,7 @@ public:
   visualization_msgs::msg::MarkerArray makeVirtualWallMarker();
   visualization_msgs::msg::MarkerArray makeVisualizationMarker();
   tier4_planning_msgs::msg::StopReasonArray makeStopReasonArray();
-  autoware_ad_api_msgs::msg::MotionFactorArray makeMotionFactorArray();
+  // autoware_ad_api_msgs::msg::VelocityFactorArray makeVelocityFactorArray();
 
   void setDebugValues(const DebugValues::TYPE type, const double val)
   {
@@ -116,7 +115,8 @@ private:
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr virtual_wall_pub_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_viz_pub_;
   rclcpp::Publisher<tier4_planning_msgs::msg::StopReasonArray>::SharedPtr stop_reason_pub_;
-  rclcpp::Publisher<autoware_ad_api_msgs::msg::MotionFactorArray>::SharedPtr motion_factor_pub_;
+  // rclcpp::Publisher<autoware_ad_api_msgs::msg::VelocityFactorArray>::SharedPtr
+  // velocity_factor_pub_;
   rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr pub_debug_values_;
   rclcpp::Node * node_;
   double base_link2front_;

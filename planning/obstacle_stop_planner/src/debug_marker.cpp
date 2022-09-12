@@ -50,8 +50,8 @@ ObstacleStopPlannerDebugNode::ObstacleStopPlannerDebugNode(
     node_->create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/marker", 1);
   stop_reason_pub_ =
     node_->create_publisher<tier4_planning_msgs::msg::StopReasonArray>("~/output/stop_reasons", 1);
-  motion_factor_pub_ = node_->create_publisher<autoware_ad_api_msgs::msg::MotionFactorArray>(
-    "~/output/motion_factors", 1);
+  // velocity_factor_pub_ = node_->create_publisher<autoware_ad_api_msgs::msg::VelocityFactorArray>(
+  //  "~/output/velocity_factors", 1);
   pub_debug_values_ =
     node_->create_publisher<Float32MultiArrayStamped>("~/obstacle_stop/debug_values", 1);
 }
@@ -158,8 +158,8 @@ void ObstacleStopPlannerDebugNode::publish()
   stop_reason_pub_->publish(stop_reason_msg);
 
   /* publish stop reason2 for autoware api */
-  const auto motion_factor_msg = makeMotionFactorArray();
-  motion_factor_pub_->publish(motion_factor_msg);
+  // const auto velocity_factor_msg = makeVelocityFactorArray();
+  // velocity_factor_pub_->publish(velocity_factor_msg);
 
   // publish debug values
   tier4_debug_msgs::msg::Float32MultiArrayStamped debug_msg{};
@@ -403,7 +403,9 @@ tier4_planning_msgs::msg::StopReasonArray ObstacleStopPlannerDebugNode::makeStop
   return stop_reason_array;
 }
 
-autoware_ad_api_msgs::msg::MotionFactorArray ObstacleStopPlannerDebugNode::makeMotionFactorArray()
+/*
+autoware_ad_api_msgs::msg::VelocityFactorArray
+ObstacleStopPlannerDebugNode::makeVelocityFactorArray()
 {
   // create header
   std_msgs::msg::Header header;
@@ -411,23 +413,24 @@ autoware_ad_api_msgs::msg::MotionFactorArray ObstacleStopPlannerDebugNode::makeM
   header.stamp = node_->now();
 
   // create stop reason stamped
-  autoware_ad_api_msgs::msg::MotionFactor motion_factor_msg;
-  motion_factor_msg.reason = autoware_ad_api_msgs::msg::MotionFactor::OBSTACLE_STOP;
-  motion_factor_msg.status = autoware_ad_api_msgs::msg::MotionFactor::STOP_FALSE;
+  autoware_ad_api_msgs::msg::VelocityFactor velocity_factor_msg;
+  velocity_factor_msg.reason = autoware_ad_api_msgs::msg::VelocityFactor::OBSTACLE_STOP;
+  velocity_factor_msg.status = autoware_ad_api_msgs::msg::VelocityFactor::STOP_FALSE;
 
   if (stop_pose_ptr_ != nullptr) {
-    motion_factor_msg.pose = *stop_pose_ptr_;
-    motion_factor_msg.status = autoware_ad_api_msgs::msg::MotionFactor::STOP_TRUE;
+    velocity_factor_msg.pose = *stop_pose_ptr_;
+    velocity_factor_msg.status = autoware_ad_api_msgs::msg::VelocityFactor::STOP_TRUE;
     // if (stop_obstacle_point_ptr_ != nullptr) {
-    //   motion_factor_msg.stop_factor_points.emplace_back(*stop_obstacle_point_ptr_);
+    //   velocity_factor_msg.stop_factor_points.emplace_back(*stop_obstacle_point_ptr_);
     // }
   }
 
   // create stop reason array
-  autoware_ad_api_msgs::msg::MotionFactorArray motion_factor_array;
-  motion_factor_array.header = header;
-  motion_factor_array.motion_factors.emplace_back(motion_factor_msg);
-  return motion_factor_array;
+  autoware_ad_api_msgs::msg::VelocityFactorArray velocity_factor_array;
+  velocity_factor_array.header = header;
+  velocity_factor_array.velocity_factors.emplace_back(velocity_factor_msg);
+  return velocity_factor_array;
 }
+*/
 
 }  // namespace motion_planning
