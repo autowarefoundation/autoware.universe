@@ -34,17 +34,17 @@ namespace behavior_path_planner::util
  * @brief calc path arclength on each points from start point to end point.
  */
 std::vector<double> calcPathArcLengthArray(
-  const PathWithLaneId & path, size_t start, size_t end, double offset)
+  const PathWithLaneId & path, const size_t start, const size_t end, const double offset)
 {
-  start = std::max(start + 1, size_t{1});
-  end = std::min(end, path.points.size());
+  const auto bounded_start = std::max(start, size_t{0});
+  const auto bounded_end = std::min(end, path.points.size());
   std::vector<double> out;
-  out.reserve(end - start + 1);
+  out.reserve(bounded_end - bounded_start);
 
   double sum = offset;
   out.push_back(sum);
 
-  for (size_t i = start; i < end; ++i) {
+  for (size_t i = bounded_start + 1; i < bounded_end; ++i) {
     sum +=
       tier4_autoware_utils::calcDistance2d(path.points.at(i).point, path.points.at(i - 1).point);
     out.push_back(sum);
