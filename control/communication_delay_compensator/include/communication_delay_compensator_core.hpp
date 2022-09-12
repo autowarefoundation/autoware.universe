@@ -28,21 +28,17 @@
 #include "vehicle_models/vehicle_kinematic_error_model.hpp"
 #include "vehicle_models/vehicle_definitions.hpp"
 
-#include "autoware_auto_vehicle_msgs/msg/delay_compensation_debug.hpp"
-#include "autoware_auto_vehicle_msgs/msg/delay_compensation_refs.hpp"
+#include "communication_delay_compensator/msg/delay_compensation_debug.hpp"
+#include "communication_delay_compensator/msg/delay_compensation_refs.hpp"
 
 namespace observers
 {
-using DelayCompensatatorMsg = autoware_auto_vehicle_msgs::msg::DelayCompensationRefs;
-using DelayCompensatorDebugMsg = autoware_auto_vehicle_msgs::msg::DelayCompensationDebug;
+using DelayCompensatatorMsg = communication_delay_compensator::msg::DelayCompensationRefs;
+using DelayCompensatorDebugMsg = communication_delay_compensator::msg::DelayCompensationDebug;
 
 struct sLyapMatrixVecs
 {
-  sLyapMatrixVecs()
-  {
-    vXs.reserve(cx_NUMBER_OF_LYAP_MATS);
-    vYs.reserve(cx_NUMBER_OF_LYAP_MATS);
-  }
+  sLyapMatrixVecs() = default;
 
   std::vector<state_matrix_observer_t> vXs;
   std::vector<measurement_matrix_observer_t> vYs;

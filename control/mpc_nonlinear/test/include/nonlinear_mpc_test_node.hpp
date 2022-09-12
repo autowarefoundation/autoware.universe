@@ -44,8 +44,8 @@ using TrajectoryPoint = autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using namespace std::chrono_literals;
 using NonlinearMPCNode = ns_mpc_nonlinear::NonlinearMPCNode;
 
-using DelayCompensationRefs = autoware_auto_vehicle_msgs::msg::DelayCompensationRefs;
-using ErrorReportMsg = autoware_auto_vehicle_msgs::msg::ControllerErrorReport;
+using DelayCompensationRefs = communication_delay_compensator::msg::DelayCompensationRefs;
+using ErrorReportMsg = communication_delay_compensator::msg::ControllerErrorReport;
 auto constexpr EPS = std::numeric_limits<double>::epsilon();
 
 using FakeNodeFixture = autoware::tools::testing::FakeTestNode;

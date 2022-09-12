@@ -28,15 +28,14 @@
 
 // Autoware Headers
 #include "common/types.hpp"
-#include "control_performance_analysis/msg/error_stamped.hpp"
 #include "vehicle_models/vehicle_kinematic_error_model.hpp"
 
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include "autoware_auto_control_msgs/msg/ackermann_control_command.hpp"
-#include "autoware_auto_vehicle_msgs/msg/controller_error_report.hpp"
-#include "autoware_auto_vehicle_msgs/msg/delay_compensation_debug.hpp"
-#include "autoware_auto_vehicle_msgs/msg/delay_compensation_refs.hpp"
+#include "communication_delay_compensator/msg/controller_error_report.hpp"
+#include "communication_delay_compensator/msg/delay_compensation_debug.hpp"
+#include "communication_delay_compensator/msg/delay_compensation_refs.hpp"
 #include "autoware_auto_vehicle_msgs/msg/steering_report.hpp"
 #include "autoware_auto_vehicle_msgs/msg/vehicle_odometry.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
@@ -45,9 +44,6 @@
 
 
 // LIBRARY HEADERS
-// #include "autoware_control_toolbox.hpp"
-// #include "utils_delay_observer/delay_compensation_utils.hpp"
-// #include "qfilters.hpp"
 #include "communication_delay_compensator_core.hpp"
 #include "node_denifitions/node_definitions.hpp"
 
@@ -65,9 +61,8 @@ using ControlCommand = autoware_auto_control_msgs::msg::AckermannControlCommand;
  * @brief longitudinal_controller reports vcurrent - vtarget.
  * lateral_controller reports current_yaw - target_yaw and current_lat_distance -
  * target_lat_distance
- *
  * */
-using ControllerErrorReportMsg = autoware_auto_vehicle_msgs::msg::ControllerErrorReport;
+using ControllerErrorReportMsg = communication_delay_compensator::msg::ControllerErrorReport;
 
 using VelocityMsg = nav_msgs::msg::Odometry;
 using autoware_auto_vehicle_msgs::msg::SteeringReport;
