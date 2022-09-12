@@ -20,9 +20,10 @@
 #include "ekf_localizer/state_transition.hpp"
 #include "ekf_localizer/warning.hpp"
 
-#include <fmt/core.h>
 #include <rclcpp/logging.hpp>
 #include <tier4_autoware_utils/math/unit_conversion.hpp>
+
+#include <fmt/core.h>
 
 #include <algorithm>
 #include <functional>
@@ -41,9 +42,7 @@
 using std::placeholders::_1;
 
 EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOptions & node_options)
-: rclcpp::Node(node_name, node_options),
-  warning_(this),
-  dim_x_(6 /* x, y, yaw, yaw_bias, vx, wz */)
+: rclcpp::Node(node_name, node_options), warning_(this), dim_x_(6 /* x, y, yaw, yaw_bias, vx, wz */)
 {
   show_debug_info_ = declare_parameter("show_debug_info", false);
   ekf_rate_ = declare_parameter("predict_frequency", 50.0);
@@ -468,7 +467,8 @@ void EKFLocalizer::measurementUpdatePose(const geometry_msgs::msg::PoseWithCovar
     warning_.warnThrottle(
       fmt::format(
         "Pose delay exceeds the compensation limit, ignored. delay: %f[s], limit = "
-        "extend_state_step * ekf_dt : %f [s]", delay_time, extend_state_step_ * ekf_dt_),
+        "extend_state_step * ekf_dt : %f [s]",
+        delay_time, extend_state_step_ * ekf_dt_),
       1000);
     return;
   }
@@ -485,7 +485,8 @@ void EKFLocalizer::measurementUpdatePose(const geometry_msgs::msg::PoseWithCovar
   y << pose.pose.pose.position.x, pose.pose.pose.position.y, yaw;
 
   if (isnan(y.array()).any() || isinf(y.array()).any()) {
-    warning_.warn("[EKF] pose measurement matrix includes NaN of Inf. ignore update. check pose message.");
+    warning_.warn(
+      "[EKF] pose measurement matrix includes NaN of Inf. ignore update. check pose message.");
     return;
   }
 
@@ -499,7 +500,8 @@ void EKFLocalizer::measurementUpdatePose(const geometry_msgs::msg::PoseWithCovar
   if (!mahalanobisGate(pose_gate_dist_, y_ekf, y, P_y)) {
     warning_.warnThrottle(
       "[EKF] Pose measurement update, mahalanobis distance is over limit. ignore "
-      "measurement data.", 2000);
+      "measurement data.",
+      2000);
     return;
   }
 
@@ -542,7 +544,8 @@ void EKFLocalizer::measurementUpdateTwist(
   double delay_time = (t_curr - twist.header.stamp).seconds() + twist_additional_delay_;
   if (delay_time < 0.0) {
     warning_.warnThrottle(
-      fmt::format("Twist time stamp is inappropriate (delay = %f [s]), set delay to 0[s].", delay_time),
+      fmt::format(
+        "Twist time stamp is inappropriate (delay = %f [s]), set delay to 0[s].", delay_time),
       1000);
     delay_time = 0.0;
   }
@@ -551,7 +554,8 @@ void EKFLocalizer::measurementUpdateTwist(
     warning_.warnThrottle(
       fmt::format(
         "Twist delay exceeds the compensation limit, ignored. delay: %f[s], limit = "
-        "extend_state_step * ekf_dt : %f [s]", delay_time, extend_state_step_ * ekf_dt_),
+        "extend_state_step * ekf_dt : %f [s]",
+        delay_time, extend_state_step_ * ekf_dt_),
       1000);
     return;
   }
@@ -577,7 +581,8 @@ void EKFLocalizer::measurementUpdateTwist(
   if (!mahalanobisGate(twist_gate_dist_, y_ekf, y, P_y)) {
     warning_.warnThrottle(
       "[EKF] Twist measurement update, mahalanobis distance is over limit. ignore "
-      "measurement data.", 2000);
+      "measurement data.",
+      2000);
     return;
   }
 

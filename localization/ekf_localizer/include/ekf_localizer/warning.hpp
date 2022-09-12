@@ -15,32 +15,25 @@
 #ifndef EKF_LOCALIZER__WARNING_HPP_
 #define EKF_LOCALIZER__WARNING_HPP_
 
-#include <string>
-
 #include <rclcpp/rclcpp.hpp>
 
+#include <string>
 
 class Warning
 {
 public:
-  explicit Warning(rclcpp::Node * node)
-  : node_(node)
-  {
-  }
+  explicit Warning(rclcpp::Node * node) : node_(node) {}
 
   void warn(const std::string & message) const
   {
     RCLCPP_WARN(node_->get_logger(), message.c_str());
   }
 
-  void warnThrottle(
-    const std::string & message,
-    const int duration_milliseconds) const
+  void warnThrottle(const std::string & message, const int duration_milliseconds) const
   {
     RCLCPP_WARN_THROTTLE(
       node_->get_logger(), *(node_->get_clock()),
-      std::chrono::milliseconds(duration_milliseconds).count(),
-      message.c_str());
+      std::chrono::milliseconds(duration_milliseconds).count(), message.c_str());
   }
 
 private:
