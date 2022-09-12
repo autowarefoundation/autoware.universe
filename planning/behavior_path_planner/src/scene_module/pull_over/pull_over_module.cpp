@@ -84,6 +84,10 @@ void PullOverModule::resetStatus()
 // This function is needed for waiting for planner_data_
 void PullOverModule::updateOccupancyGrid()
 {
+  if (!planner_data_->occupancy_grid) {
+    RCLCPP_WARN_THROTTLE(getLogger(), *clock_, 5000, "occupancy_grid is not ready");
+    return;
+  }
   occupancy_grid_map_.setMap(*(planner_data_->occupancy_grid));
 }
 
@@ -627,9 +631,14 @@ BehaviorModuleOutput PullOverModule::plan()
         -calcMinimumShiftPathDistance(), parameters_.deceleration_interval);
     }
   }
+  // generate drivable area
+  {
+    const auto p = planner_data_->parameters;
+    status_.path.drivable_area = util::generateDrivableArea(
+      status_.path, status_.lanes, p.drivable_area_resolution, p.vehicle_length, planner_data_);
+  }
 
   BehaviorModuleOutput output;
-
   // safe: use pull over path
   if (status_.is_safe) {
     output.path = std::make_shared<PathWithLaneId>(status_.path);
@@ -760,10 +769,6 @@ bool PullOverModule::planShiftPath()
   if (!found_safe_path) {
     return found_safe_path;
   }
-
-  shift_parking_path_.path.drivable_area = util::generateDrivableArea(
-    shift_parking_path_.path, status_.lanes, common_parameters.drivable_area_resolution,
-    common_parameters.vehicle_length, planner_data_);
 
   shift_parking_path_.path.header = planner_data_->route_handler->getRouteHeader();
   return found_safe_path;

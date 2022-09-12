@@ -15,6 +15,7 @@
 #include "ekf_localizer/ekf_localizer.hpp"
 
 #include "ekf_localizer/matrix_types.hpp"
+#include "ekf_localizer/measurement.hpp"
 #include "ekf_localizer/state_index.hpp"
 #include "ekf_localizer/state_transition.hpp"
 
@@ -196,8 +197,35 @@ void EKFLocalizer::timerCallback()
     DEBUG_INFO(get_logger(), "------------------------- end Twist -------------------------\n");
   }
 
-  /* set current pose, twist */
-  setCurrentResult();
+  const double x = ekf_.getXelement(IDX::X);
+  const double y = ekf_.getXelement(IDX::Y);
+  const double z = z_filter_.get_x();
+
+  const double biased_yaw = ekf_.getXelement(IDX::YAW);
+  const double yaw_bias = ekf_.getXelement(IDX::YAWB);
+
+  const double roll = roll_filter_.get_x();
+  const double pitch = pitch_filter_.get_x();
+  const double yaw = biased_yaw + yaw_bias;
+  const double vx = ekf_.getXelement(IDX::VX);
+  const double wz = ekf_.getXelement(IDX::WZ);
+
+  current_ekf_pose_.header.frame_id = pose_frame_id_;
+  current_ekf_pose_.header.stamp = this->now();
+  current_ekf_pose_.pose.position.x = x;
+  current_ekf_pose_.pose.position.y = y;
+  current_ekf_pose_.pose.position.z = z;
+  current_ekf_pose_.pose.orientation =
+    tier4_autoware_utils::createQuaternionFromRPY(roll, pitch, yaw);
+
+  current_biased_ekf_pose_ = current_ekf_pose_;
+  current_biased_ekf_pose_.pose.orientation =
+    tier4_autoware_utils::createQuaternionFromRPY(roll, pitch, biased_yaw);
+
+  current_ekf_twist_.header.frame_id = "base_link";
+  current_ekf_twist_.header.stamp = this->now();
+  current_ekf_twist_.twist.linear.x = vx;
+  current_ekf_twist_.twist.angular.z = wz;
 
   /* publish ekf result */
   publishEstimateResult();
@@ -210,32 +238,6 @@ void EKFLocalizer::showCurrentX()
     ekf_.getLatestX(X);
     DEBUG_PRINT_MAT(X.transpose());
   }
-}
-
-/*
- * setCurrentResult
- */
-void EKFLocalizer::setCurrentResult()
-{
-  current_ekf_pose_.header.frame_id = pose_frame_id_;
-  current_ekf_pose_.header.stamp = this->now();
-  current_ekf_pose_.pose.position.x = ekf_.getXelement(IDX::X);
-  current_ekf_pose_.pose.position.y = ekf_.getXelement(IDX::Y);
-  current_ekf_pose_.pose.position.z = z_filter_.get_x();
-  double roll = roll_filter_.get_x();
-  double pitch = pitch_filter_.get_x();
-  double yaw = ekf_.getXelement(IDX::YAW) + ekf_.getXelement(IDX::YAWB);
-  current_ekf_pose_.pose.orientation =
-    tier4_autoware_utils::createQuaternionFromRPY(roll, pitch, yaw);
-
-  current_biased_ekf_pose_ = current_ekf_pose_;
-  current_biased_ekf_pose_.pose.orientation =
-    tier4_autoware_utils::createQuaternionFromRPY(roll, pitch, ekf_.getXelement(IDX::YAW));
-
-  current_ekf_twist_.header.frame_id = "base_link";
-  current_ekf_twist_.header.stamp = this->now();
-  current_ekf_twist_.twist.linear.x = ekf_.getXelement(IDX::VX);
-  current_ekf_twist_.twist.angular.z = ekf_.getXelement(IDX::WZ);
 }
 
 /*
@@ -503,28 +505,8 @@ void EKFLocalizer::measurementUpdatePose(const geometry_msgs::msg::PoseWithCovar
   DEBUG_PRINT_MAT(y_ekf.transpose());
   DEBUG_PRINT_MAT((y - y_ekf).transpose());
 
-  /* Set measurement matrix */
-  Eigen::MatrixXd C = Eigen::MatrixXd::Zero(dim_y, dim_x_);
-  C(0, IDX::X) = 1.0;    // for pos x
-  C(1, IDX::Y) = 1.0;    // for pos y
-  C(2, IDX::YAW) = 1.0;  // for yaw
-
-  /* Set measurement noise covariance */
-  Eigen::MatrixXd R = Eigen::MatrixXd::Zero(dim_y, dim_y);
-  std::array<double, 36ul> current_pose_covariance = pose.pose.covariance;
-  R(0, 0) = current_pose_covariance.at(0);   // x - x
-  R(0, 1) = current_pose_covariance.at(1);   // x - y
-  R(0, 2) = current_pose_covariance.at(5);   // x - yaw
-  R(1, 0) = current_pose_covariance.at(6);   // y - x
-  R(1, 1) = current_pose_covariance.at(7);   // y - y
-  R(1, 2) = current_pose_covariance.at(11);  // y - yaw
-  R(2, 0) = current_pose_covariance.at(30);  // yaw - x
-  R(2, 1) = current_pose_covariance.at(31);  // yaw - y
-  R(2, 2) = current_pose_covariance.at(35);  // yaw - yaw
-
-  /* In order to avoid a large change at the time of updating,
-   * measurement update is performed by dividing at every step. */
-  R *= pose_smoothing_steps_;
+  const Eigen::Matrix<double, 3, 6> C = poseMeasurementMatrix();
+  const Eigen::Matrix3d R = poseMeasurementCovariance(pose.pose.covariance, pose_smoothing_steps_);
 
   ekf_.updateWithDelay(y, C, R, delay_step);
 
@@ -603,22 +585,9 @@ void EKFLocalizer::measurementUpdateTwist(
   DEBUG_PRINT_MAT(y_ekf.transpose());
   DEBUG_PRINT_MAT((y - y_ekf).transpose());
 
-  /* Set measurement matrix */
-  Eigen::MatrixXd C = Eigen::MatrixXd::Zero(dim_y, dim_x_);
-  C(0, IDX::VX) = 1.0;  // for vx
-  C(1, IDX::WZ) = 1.0;  // for wz
-
-  /* Set measurement noise covariance */
-  Eigen::MatrixXd R = Eigen::MatrixXd::Zero(dim_y, dim_y);
-  std::array<double, 36ul> current_twist_covariance = twist.twist.covariance;
-  R(0, 0) = current_twist_covariance.at(0);   // vx - vx
-  R(0, 1) = current_twist_covariance.at(5);   // vx - wz
-  R(1, 0) = current_twist_covariance.at(30);  // wz - vx
-  R(1, 1) = current_twist_covariance.at(35);  // wz - wz
-
-  /* In order to avoid a large change by update, measurement update is performed
-   * by dividing at every step. measurement update is performed by dividing at every step. */
-  R *= twist_smoothing_steps_;
+  const Eigen::Matrix<double, 2, 6> C = twistMeasurementMatrix();
+  const Eigen::Matrix2d R =
+    twistMeasurementCovariance(twist.twist.covariance, twist_smoothing_steps_);
 
   ekf_.updateWithDelay(y, C, R, delay_step);
 

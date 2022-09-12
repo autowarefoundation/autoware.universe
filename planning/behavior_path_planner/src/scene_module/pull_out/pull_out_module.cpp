@@ -170,6 +170,9 @@ BehaviorModuleOutput PullOutModule::plan()
   } else {
     path = status_.backward_path;
   }
+  path.drivable_area = util::generateDrivableArea(
+    path, status_.lanes, planner_data_->parameters.drivable_area_resolution,
+    planner_data_->parameters.vehicle_length, planner_data_);
 
   output.path = std::make_shared<PathWithLaneId>(path);
   output.turn_signal_info =
@@ -247,9 +250,14 @@ BehaviorModuleOutput PullOutModule::planWaitingApproval()
 {
   BehaviorModuleOutput output;
   const auto current_lanes = getCurrentLanes();
-  const auto shoulder_lanes = pull_out_utils::getPullOutLanes(current_lanes, planner_data_);
+  const auto pull_out_lanes = pull_out_utils::getPullOutLanes(current_lanes, planner_data_);
+  auto lanes = current_lanes;
+  lanes.insert(lanes.end(), pull_out_lanes.begin(), pull_out_lanes.end());
 
-  const auto candidate_path = status_.back_finished ? getCurrentPath() : status_.backward_path;
+  auto candidate_path = status_.back_finished ? getCurrentPath() : status_.backward_path;
+  candidate_path.drivable_area = util::generateDrivableArea(
+    candidate_path, lanes, planner_data_->parameters.drivable_area_resolution,
+    planner_data_->parameters.vehicle_length, planner_data_);
   auto stop_path = candidate_path;
   for (auto & p : stop_path.points) {
     p.point.longitudinal_velocity_mps = 0.0;
@@ -376,7 +384,6 @@ void PullOutModule::planWithPriorityOnShortBackDistance(
 void PullOutModule::updatePullOutStatus()
 {
   const auto & route_handler = planner_data_->route_handler;
-  const auto & common_parameters = planner_data_->parameters;
   const auto & current_pose = planner_data_->self_pose->pose;
   const auto & goal_pose = planner_data_->route_handler->getGoalPose();
 
@@ -386,6 +393,10 @@ void PullOutModule::updatePullOutStatus()
   // Get pull_out lanes
   const auto pull_out_lanes = pull_out_utils::getPullOutLanes(current_lanes, planner_data_);
   status_.pull_out_lanes = pull_out_lanes;
+
+  // combine road and shoulder lanes
+  status_.lanes = current_lanes;
+  status_.lanes.insert(status_.lanes.end(), pull_out_lanes.begin(), pull_out_lanes.end());
 
   // search pull out start candidates backward
   std::vector<Pose> start_pose_candidates;
@@ -421,9 +432,6 @@ void PullOutModule::updatePullOutStatus()
     status_.backward_path = pull_out_utils::getBackwardPath(
       *route_handler, pull_out_lanes, current_pose, status_.pull_out_start_pose,
       parameters_.backward_velocity);
-    status_.backward_path.drivable_area = util::generateDrivableArea(
-      status_.backward_path, pull_out_lanes, common_parameters.drivable_area_resolution,
-      common_parameters.vehicle_length, planner_data_);
   }
 
   // Update status
@@ -454,14 +462,13 @@ lanelet::ConstLanelets PullOutModule::getCurrentLanes() const
 std::vector<Pose> PullOutModule::searchBackedPoses()
 {
   const auto current_pose = planner_data_->self_pose->pose;
-  const auto current_lanes = getCurrentLanes();
-  const auto pull_out_lanes = pull_out_utils::getPullOutLanes(current_lanes, planner_data_);
 
   // get backward shoulder path
-  const auto arc_position_pose = lanelet::utils::getArcCoordinates(pull_out_lanes, current_pose);
+  const auto arc_position_pose =
+    lanelet::utils::getArcCoordinates(status_.pull_out_lanes, current_pose);
   const double check_distance = parameters_.max_back_distance + 30.0;  // buffer
   auto backward_shoulder_path = planner_data_->route_handler->getCenterLinePath(
-    pull_out_lanes, arc_position_pose.length - check_distance,
+    status_.pull_out_lanes, arc_position_pose.length - check_distance,
     arc_position_pose.length + check_distance);
 
   // lateral shift to current_pose
