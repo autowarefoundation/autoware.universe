@@ -610,9 +610,10 @@ void BehaviorPathPlannerNode::run()
     turn_signal_publisher_->publish(turn_signal);
     hazard_signal_publisher_->publish(hazard_signal);
 
-    if (
-      turn_signal_decider_.intersection_turn_signal_ ||
-      turn_signal_decider_.approaching_intersection_turn_signal_) {
+    const auto intersection_result = turn_signal_decider_.getIntersectionTurnSignalFlag();
+    const bool intersection_flag = intersection_result.first;
+    const bool approaching_intersection_flag = intersection_result.second;
+    if (intersection_flag || approaching_intersection_flag) {
       uint16_t direction;
       if (turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {
         direction = SteeringFactor::LEFT;
@@ -620,19 +621,17 @@ void BehaviorPathPlannerNode::run()
         direction = SteeringFactor::RIGHT;
       }
 
-      if (turn_signal_decider_.intersection_turn_signal_) {
+      const auto intersection_pose_distance = turn_signal_decider_.getIntersectionPoseAndDistance();
+
+      if (intersection_flag) {
         steering_factor_interface_ptr_->updateSteeringFactor(
-          {turn_signal_decider_.intersection_pose_point_,
-           turn_signal_decider_.intersection_pose_point_},
-          {turn_signal_decider_.intersection_distance_,
-           turn_signal_decider_.intersection_distance_},
+          {intersection_pose_distance.first, intersection_pose_distance.first},
+          {intersection_pose_distance.second, intersection_pose_distance.second},
           SteeringFactor::INTERSECTION, direction, SteeringFactor::TURNING, "");
       } else {
         steering_factor_interface_ptr_->updateSteeringFactor(
-          {turn_signal_decider_.intersection_pose_point_,
-           turn_signal_decider_.intersection_pose_point_},
-          {turn_signal_decider_.intersection_distance_,
-           turn_signal_decider_.intersection_distance_},
+          {intersection_pose_distance.first, intersection_pose_distance.first},
+          {intersection_pose_distance.second, intersection_pose_distance.second},
           SteeringFactor::INTERSECTION, direction, SteeringFactor::TRYING, "");
       }
     } else {

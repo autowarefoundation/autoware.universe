@@ -35,10 +35,6 @@ using route_handler::RouteHandler;
 class TurnSignalDecider
 {
 public:
-  mutable bool intersection_turn_signal_ = false;
-  mutable bool approaching_intersection_turn_signal_ = false;
-  mutable double intersection_distance_ = std::numeric_limits<double>::max();
-  mutable Pose intersection_pose_point_ = Pose();
   TurnIndicatorsCommand getTurnSignal(
     const PathWithLaneId & path, const Pose & current_pose, const size_t current_seg_idx,
     const RouteHandler & route_handler, const TurnIndicatorsCommand & turn_signal_plan,
@@ -49,6 +45,9 @@ public:
     base_link2front_ = base_link2front;
     intersection_search_distance_ = intersection_search_distance;
   }
+
+  std::pair<bool, bool> getIntersectionTurnSignalFlag();
+  std::pair<Pose, double> getIntersectionPoseAndDistance();
 
 private:
   std::pair<TurnIndicatorsCommand, double> getIntersectionTurnSignal(
@@ -61,6 +60,10 @@ private:
   // data
   double intersection_search_distance_{0.0};
   double base_link2front_{0.0};
+  mutable bool intersection_turn_signal_ = false;
+  mutable bool approaching_intersection_turn_signal_ = false;
+  mutable double intersection_distance_ = std::numeric_limits<double>::max();
+  mutable Pose intersection_pose_point_ = Pose();
 };
 }  // namespace behavior_path_planner
 

@@ -130,4 +130,15 @@ std::pair<TurnIndicatorsCommand, double> TurnSignalDecider::getIntersectionTurnS
   intersection_distance_ = distance;
   return std::make_pair(turn_signal, distance);
 }
+
+std::pair<bool, bool> TurnSignalDecider::getIntersectionTurnSignalFlag()
+{
+  return std::make_pair(intersection_turn_signal_, approaching_intersection_turn_signal_);
+}
+
+std::pair<Pose, double> TurnSignalDecider::getIntersectionPoseAndDistance()
+{
+  return std::make_pair(intersection_pose_point_, intersection_distance_);
+}
+
 }  // namespace behavior_path_planner
