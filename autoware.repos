@@ -84,10 +84,6 @@ repositories:
     type: git
     url: https://github.com/tier4/velodyne_vls.git
     version: tier4/universe
-  vendor/operational-design-domains:
-    type: git
-    url: https://gitlab.com/autowarefoundation/operational-design-domains
-    version: 42321f9a04fcaef9caf3694530e1c63d3e27c47a
   vendor/ndt_omp:
     type: git
     url: https://github.com/tier4/ndt_omp.git

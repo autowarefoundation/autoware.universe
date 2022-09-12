@@ -30,8 +30,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Update clang-format version
+      - name: Update Autoware version
+        id: update-autoware-version
         run: |
+          current_hash=$(yq '.collections[] | select(.name == "https://github.com/autowarefoundation/autoware.git#/ansible").version' ansible-galaxy-requirements.yaml)
+          echo ::set-output name=current-version::"$current_hash"
+
           sd -f ms \
             '(https://github.com/autowarefoundation/autoware.git#/ansible.*version): \w+' \
             '$1: ${{ steps.get-latest-autoware-version.outputs.version }}' \
@@ -46,7 +50,9 @@ jobs:
           branch: update-ansible-galaxy-requirements
           title: "chore: update ansible-galaxy-requirements.yaml"
           commit-message: "chore: update ansible-galaxy-requirements.yaml"
-          body: https://github.com/autowarefoundation/autoware/commit/${{ steps.get-latest-autoware-version.outputs.version }}
+          body: |
+            https://github.com/autowarefoundation/autoware/commits/main
+            https://github.com/autowarefoundation/autoware/compare/${{ steps.update-autoware-version.outputs.current-version }}..${{ steps.get-latest-autoware-version.outputs.version }}
           labels: |
             bot
             dependencies

@@ -1,7 +1,11 @@
 - repository: autowarefoundation/autoware
   files:
     # General
+    - source: .github/PULL_REQUEST_TEMPLATE.md
+    - source: .github/PULL_REQUEST_TEMPLATE/small-change.md
+    - source: .github/PULL_REQUEST_TEMPLATE/standard-change.md
     - source: .github/dependabot.yaml
+    - source: .github/workflows/cancel-previous-workflows.yaml
     - source: .github/workflows/github-release.yaml
     - source: .github/workflows/pre-commit.yaml
     - source: .github/workflows/pre-commit-ansible.yaml
@@ -10,6 +14,7 @@
     - source: .github/workflows/spell-check-differential.yaml
     - source: .github/workflows/sync-files.yaml
     - source: .clang-format
+    - source: .clang-tidy
     - source: .markdownlint.yaml
     - source: .pre-commit-config.yaml
     - source: .pre-commit-config-ansible.yaml
