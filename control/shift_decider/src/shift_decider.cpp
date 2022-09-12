@@ -30,6 +30,8 @@ ShiftDecider::ShiftDecider(const rclcpp::NodeOptions & node_options)
   rclcpp::QoS durable_qos(queue_size);
   durable_qos.transient_local();
 
+  park_on_goal_ = declare_parameter("park_on_goal", true);
+
   pub_shift_cmd_ =
     create_publisher<autoware_auto_vehicle_msgs::msg::GearCommand>("output/gear_cmd", durable_qos);
   sub_control_cmd_ = create_subscription<autoware_auto_control_msgs::msg::AckermannControlCommand>(
@@ -68,7 +70,7 @@ void ShiftDecider::updateCurrentShiftCmd()
 
   shift_cmd_.stamp = now();
   static constexpr double vel_threshold = 0.01;  // to prevent chattering
-  if (autoware_state_->state == AutowareState::ARRIVED_GOAL) {
+  if (autoware_state_->state == AutowareState::ARRIVED_GOAL && park_on_goal_) {
     shift_cmd_.command = GearCommand::PARK;
   } else if (control_cmd_->longitudinal.speed > vel_threshold) {
     shift_cmd_.command = GearCommand::DRIVE;

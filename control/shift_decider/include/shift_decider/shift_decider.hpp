@@ -45,6 +45,7 @@ private:
   autoware_auto_control_msgs::msg::AckermannControlCommand::SharedPtr control_cmd_;
   autoware_auto_system_msgs::msg::AutowareState::SharedPtr autoware_state_;
   autoware_auto_vehicle_msgs::msg::GearCommand shift_cmd_;
+  bool park_on_goal_;
 };
 
 #endif  // SHIFT_DECIDER__SHIFT_DECIDER_HPP_
