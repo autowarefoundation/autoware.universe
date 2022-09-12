@@ -202,7 +202,7 @@ private:
   void updateOccupancyGrid();
   void researchGoal();
   void resetStatus();
-  bool checkCollisionWtihLongitudinalDistance(
+  bool checkCollisionWithLongitudinalDistance(
     const Pose & ego_pose, const PredictedObjects & dynamic_objects) const;
   bool checkCollisionWithPose(const Pose & pose) const;
   bool checkCollisionWithPath(const PathWithLaneId & path) const;

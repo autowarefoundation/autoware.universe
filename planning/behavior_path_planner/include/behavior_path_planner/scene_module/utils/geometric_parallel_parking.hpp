@@ -69,7 +69,7 @@ public:
   bool isParking() const;
   bool planPullOver(
     const Pose & goal_pose, const lanelet::ConstLanelets & road_lanes,
-    const lanelet::ConstLanelets & shoulder_lanesconst, const bool is_forward);
+    const lanelet::ConstLanelets & shoulder_lanes, const bool is_forward);
   bool planPullOut(
     const Pose & start_pose, const Pose & goal_pose, const lanelet::ConstLanelets & road_lanes,
     const lanelet::ConstLanelets & shoulder_lanes);
@@ -104,7 +104,7 @@ private:
   bool isEnoughDistanceToStart(const Pose & start_pose) const;
   std::vector<PathWithLaneId> planOneTrial(
     const Pose & start_pose, const Pose & goal_pose, const double R_E_r,
-    const lanelet::ConstLanelets & road_lanes, const lanelet::ConstLanelets & shoulder_lanesconst,
+    const lanelet::ConstLanelets & road_lanes, const lanelet::ConstLanelets & shoulder_lanes,
     bool is_forward, const double end_pose_offset, const double lane_departure_margin);
   PathWithLaneId generateArcPath(
     const Pose & center, const double radius, const double start_yaw, double end_yaw,

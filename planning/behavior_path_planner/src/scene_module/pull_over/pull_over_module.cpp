@@ -260,7 +260,7 @@ void PullOverModule::researchGoal()
 
     const auto objects_in_shoulder_lane =
       util::filterObjectsByLanelets(*(planner_data_->dynamic_object), status_.pull_over_lanes);
-    if (checkCollisionWtihLongitudinalDistance(search_pose, objects_in_shoulder_lane)) {
+    if (checkCollisionWithLongitudinalDistance(search_pose, objects_in_shoulder_lane)) {
       continue;
     }
 
@@ -311,7 +311,7 @@ bool PullOverModule::isLongEnoughToParkingStart(
   return *dist_to_parking_start_pose > current_to_stop_distance;
 }
 
-bool PullOverModule::checkCollisionWtihLongitudinalDistance(
+bool PullOverModule::checkCollisionWithLongitudinalDistance(
   const Pose & ego_pose, const PredictedObjects & dynamic_objects) const
 {
   if (parameters_.use_occupancy_grid) {
@@ -319,7 +319,7 @@ bool PullOverModule::checkCollisionWtihLongitudinalDistance(
     const double offset = std::max(
       parameters_.goal_to_obstacle_margin - parameters_.occupancy_grid_collision_check_margin, 0.0);
 
-    // check forward collison
+    // check forward collision
     const Pose ego_pose_moved_forward = calcOffsetPose(ego_pose, offset, 0, 0);
     const Pose forward_pose_grid_coords =
       global2local(occupancy_grid_map_.getMap(), ego_pose_moved_forward);
@@ -330,7 +330,7 @@ bool PullOverModule::checkCollisionWtihLongitudinalDistance(
       return true;
     }
 
-    // check backward collison
+    // check backward collision
     const Pose ego_pose_moved_backward = calcOffsetPose(ego_pose, -offset, 0, 0);
     const Pose backward_pose_grid_coords =
       global2local(occupancy_grid_map_.getMap(), ego_pose_moved_backward);
