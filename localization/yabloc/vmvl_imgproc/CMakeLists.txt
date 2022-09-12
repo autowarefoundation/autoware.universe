@@ -56,4 +56,4 @@ ADD_EXE(TARGET lsd_node SRC src/lsd_*.cpp INC include LIB cv_lsd INC include)
 ADD_EXE(TARGET graph_segment_node SRC src/graph_segment_*.cpp INC include)
 
 # ===================================================
-ament_auto_package()
+ament_auto_package(INSTALL_TO_SHARE launch)

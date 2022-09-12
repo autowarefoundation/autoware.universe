@@ -11,6 +11,8 @@
 #include <sensor_msgs/msg/compressed_image.hpp>
 #include <sensor_msgs/msg/image.hpp>
 
+#include <cv_bridge/cv_bridge.h>
+
 #include <optional>
 
 class UndistortNode : public rclcpp::Node
@@ -52,7 +54,9 @@ private:
     cv::Mat D = cv::Mat(cv::Size(5, 1), CV_64FC1, (void *)(info_->d.data()));
     cv::Size size(info_->width, info_->height);
 
-    cv::Size new_size(WIDTH, 1.0f * WIDTH / size.width * size.height);
+    cv::Size new_size = size;
+    if (WIDTH > 0) new_size = cv::Size(WIDTH, 1.0f * WIDTH / size.width * size.height);
+
     cv::Mat new_K = cv::getOptimalNewCameraMatrix(K, D, size, 0, new_size);
 
     cv::initUndistortRectifyMap(
@@ -81,7 +85,14 @@ private:
 
     scaled_info_->header = info_->header;
     pub_info_->publish(scaled_info_.value());
-    vml_common::publishImage(*pub_image_, undistorted_image, msg.header.stamp);
+    {
+      cv_bridge::CvImage raw_image;
+      raw_image.header.stamp = msg.header.stamp;
+      raw_image.header.frame_id = msg.header.frame_id;
+      raw_image.encoding = "bgr8";
+      raw_image.image = undistorted_image;
+      pub_image_->publish(*raw_image.toImageMsg());
+    }
 
     RCLCPP_INFO_STREAM(get_logger(), "decompress: " << timer.microSeconds() / 1000.f << "[ms]");
   }
