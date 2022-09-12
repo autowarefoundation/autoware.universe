@@ -209,8 +209,7 @@ bool TrafficLightModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   debug_data_.base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
   first_stop_path_point_index_ = static_cast<int>(path->points.size()) - 1;
   first_ref_stop_path_point_index_ = static_cast<int>(path->points.size()) - 1;
-  *stop_reason =
-    planning_utils::initializeStopReason(tier4_planning_msgs::msg::StopReason::TRAFFIC_LIGHT);
+  *stop_reason = planning_utils::initializeStopReason(StopReason::TRAFFIC_LIGHT);
   // *velocity_factor =
   //  planning_utils::initializeVelocityFactor(autoware_ad_api_msgs::msg::VelocityFactor::TRAFFIC_LIGHT);
 

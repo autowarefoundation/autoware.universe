@@ -43,8 +43,7 @@ bool StopLineModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop
   const auto base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
   debug_data_.base_link2front = base_link2front;
   first_stop_path_point_index_ = static_cast<int>(path->points.size()) - 1;
-  *stop_reason =
-    planning_utils::initializeStopReason(tier4_planning_msgs::msg::StopReason::STOP_LINE);
+  *stop_reason = planning_utils::initializeStopReason(StopReason::STOP_LINE);
   // *velocity_factor =
   //  planning_utils::initializeVelocityFactor(autoware_ad_api_msgs::msg::VelocityFactor::STOP_LINE);
 

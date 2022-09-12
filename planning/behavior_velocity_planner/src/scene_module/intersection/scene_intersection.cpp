@@ -73,8 +73,7 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
     isTargetExternalInputStatus(tier4_api_msgs::msg::IntersectionStatus::STOP);
   RCLCPP_DEBUG(logger_, "===== plan start =====");
   debug_data_ = DebugData();
-  *stop_reason =
-    planning_utils::initializeStopReason(tier4_planning_msgs::msg::StopReason::INTERSECTION);
+  *stop_reason = planning_utils::initializeStopReason(StopReason::INTERSECTION);
   // *velocity_factor =
   //  planning_utils::initializeVelocityFactor(autoware_ad_api_msgs::msg::VelocityFactor::INTERSECTION);
 

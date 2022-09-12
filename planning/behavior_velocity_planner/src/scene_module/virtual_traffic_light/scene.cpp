@@ -249,8 +249,7 @@ bool VirtualTrafficLightModule::modifyPathVelocity(PathWithLaneId * path, StopRe
   // Initialize
   setInfrastructureCommand({});
 
-  *stop_reason = planning_utils::initializeStopReason(
-    tier4_planning_msgs::msg::StopReason::VIRTUAL_TRAFFIC_LIGHT);
+  *stop_reason = planning_utils::initializeStopReason(StopReason::VIRTUAL_TRAFFIC_LIGHT);
 
   // *velocity_factor = planning_utils::initializeVelocityFactor(
   //  autoware_ad_api_msgs::msg::VelocityFactor::VIRTUAL_TRAFFIC_LIGHT);

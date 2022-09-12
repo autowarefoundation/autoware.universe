@@ -46,8 +46,7 @@ MergeFromPrivateRoadModule::MergeFromPrivateRoadModule(
 bool MergeFromPrivateRoadModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason)
 {
   debug_data_ = DebugData();
-  *stop_reason = planning_utils::initializeStopReason(
-    tier4_planning_msgs::msg::StopReason::MERGE_FROM_PRIVATE_ROAD);
+  *stop_reason = planning_utils::initializeStopReason(StopReason::MERGE_FROM_PRIVATE_ROAD);
   // *velocity_factor = planning_utils::initializeVelocityFactor(
   //  autoware_ad_api_msgs::msg::VelocityFactor::MERGE_FROM_PRIVATE_ROAD);
 
