@@ -266,7 +266,6 @@ double calcSignedLateralDistanceWithOffset(
   const double lateral, const double right_overhang, const double left_overhang,
   const double wheel_tread)
 {
-  //
   const double offset_left = left_overhang + wheel_tread / 2;
   const double offset_right = right_overhang + wheel_tread / 2;
   if (lateral > 0) {

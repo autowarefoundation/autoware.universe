@@ -305,8 +305,6 @@ std::vector<geometry_msgs::msg::Point> RunOutModule::createVehiclePolygon(
   const double base_to_left =
     (planner_param_.vehicle_param.wheel_tread / 2.0) + planner_param_.vehicle_param.left_overhang;
 
-  //  const float half_width = planner_param_.vehicle_param.width / 2.0;
-
   const auto p1 = tier4_autoware_utils::calcOffsetPose(base_pose, base_to_front, base_to_left, 0.0);
   const auto p2 =
     tier4_autoware_utils::calcOffsetPose(base_pose, base_to_front, -base_to_right, 0.0);
