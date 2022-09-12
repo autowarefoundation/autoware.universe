@@ -551,39 +551,52 @@ bool NetMonitor::getReassemblesFailed(uint64_t & reassembles_failed)
     return false;
   }
 
+  // /proc/net/snmp
+  // Ip: Forwarding DefaultTTL InReceives ... ReasmTimeout ReasmReqds ReasmOKs ReasmFails ...
+  // Ip: 2          64         5636471397 ... 135          2303339    216166   270        ...
   std::string line;
-  while (std::getline(ifs, line)) {
-    std::vector<std::string> title_list;
-    boost::split(title_list, line, boost::is_space());
 
-    if (title_list.size() == 0) {
-      continue;
-    }
-
-    if (!std::getline(ifs, line)) {
-      return false;
-    }
-
-    std::vector<std::string> value_list;
-    boost::split(value_list, line, boost::is_space());
-
-    if (title_list[0] != "Ip:") {
-      continue;
-    }
-
-    if (title_list.size() != value_list.size()) {
-      return false;
-    }
-
-    for (std::size_t i = 1; i < title_list.size(); i++) {
-      if (title_list[i] == "ReasmFails") {
-        reassembles_failed = std::stoull(value_list[i]);
-        return true;
-      }
-    }
-    break;
+  // Find index of 'ReasmFails'
+  if (!std::getline(ifs, line)) {
+    return false;
   }
-  return false;
+
+  std::vector<std::string> title_list;
+  boost::split(title_list, line, boost::is_space());
+
+  if (title_list.empty()) {
+    return false;
+  }
+  if (title_list[0] != "Ip:") {
+    return false;
+  }
+
+  int index = 0;
+  for (auto itr = title_list.begin(); itr != title_list.end(); ++itr, ++index) {
+    if (*itr == "ReasmFails") {
+      break;
+    }
+  }
+
+  if (title_list.size() <= static_cast<std::size_t>(index)) {
+    return false;
+  }
+
+  // Find a value of 'ReasmFails'
+  if (!std::getline(ifs, line)) {
+    return false;
+  }
+
+  std::vector<std::string> value_list;
+  boost::split(value_list, line, boost::is_space());
+
+  if (title_list.size() != value_list.size()) {
+    return false;
+  }
+
+  reassembles_failed = std::stoull(value_list[index]);
+
+  return true;
 }
 
 #include <rclcpp_components/register_node_macro.hpp>
