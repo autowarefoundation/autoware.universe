@@ -29,6 +29,7 @@
     <depend>autoware_auto_planning_msgs</depend>
     <depend>autoware_auto_system_msgs</depend>
     <depend>autoware_auto_vehicle_msgs</depend>
+    <depend>communication_delay_compensator</depend>
     <depend>motion_utils</depend>
 
     <depend>autoware_control_toolbox</depend>

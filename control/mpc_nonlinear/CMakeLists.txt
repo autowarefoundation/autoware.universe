@@ -166,7 +166,6 @@ set(NONLINEAR_MPC_CORE_INCLUDE_DIR
 set(MSG_FILES
   "msg/NonlinearMPCPerformanceReport.idl")
 
-
 rosidl_generate_interfaces(${PROJECT_NAME}
   ${MSG_FILES}
   ADD_LINTER_TESTS

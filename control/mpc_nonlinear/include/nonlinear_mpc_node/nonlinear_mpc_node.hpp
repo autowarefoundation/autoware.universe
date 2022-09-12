@@ -29,15 +29,15 @@
 #include "motion_common/motion_common.hpp"
 #include "motion_common/trajectory_common.hpp"
 #include "autoware_auto_vehicle_msgs/msg/vehicle_odometry.hpp"
-#include "autoware_auto_vehicle_msgs/msg/nonlinear_mpc_performance_report.hpp"
+
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 #include "autoware_auto_vehicle_msgs/msg/steering_report.hpp"
 #include "autoware_auto_control_msgs/msg/ackermann_control_command.hpp"
 #include "nonlinear_mpc_node/nonlinear_mpc_node_visualization.hpp"
 #include <vehicle_info_util/vehicle_info_util.hpp>
 #include <visualization_msgs/msg/marker.hpp>
-#include "autoware_auto_vehicle_msgs/msg/delay_compensation_refs.hpp"
-#include "autoware_auto_vehicle_msgs/msg/controller_error_report.hpp"
+#include "communication_delay_compensator/msg/delay_compensation_refs.hpp"
+#include "communication_delay_compensator/msg/controller_error_report.hpp"
 #include "utils_act/act_utils.hpp"
 #include "utils_act/act_utils_eigen.hpp"
 
@@ -62,7 +62,6 @@
 #include "motion_common/motion_common.hpp"
 #include "motion_common/trajectory_common.hpp"
 #include "autoware_auto_vehicle_msgs/msg/vehicle_odometry.hpp"
-#include "autoware_auto_vehicle_msgs/msg/nonlinear_mpc_performance_report.hpp"
 
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 #include "autoware_auto_vehicle_msgs/msg/steering_report.hpp"
@@ -91,8 +90,8 @@ using NonlinearMPCPerformanceMsg = mpc_nonlinear::msg::NonlinearMPCPerformanceRe
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using namespace std::chrono_literals;
 
-using autoware_auto_vehicle_msgs::msg::DelayCompensationRefs;
-using ErrorReportMsg = autoware_auto_vehicle_msgs::msg::ControllerErrorReport;
+using communication_delay_compensator::msg::DelayCompensationRefs;
+using ErrorReportMsg = communication_delay_compensator::msg::ControllerErrorReport;
 auto constexpr EPS = std::numeric_limits<double>::epsilon();
 
 struct DebugData
