@@ -41,18 +41,6 @@ if(COMPILER_SUPPORTS_MARCH_NATIVE)
   message(STATUS "Enabling MARCH NATIVE ")
 endif()
 
-check_cxx_compiler_flag("-fopenmp" COMPILER_SUPPORT_OPENMP)
-if(COMPILER_SUPPORT_OPENMP)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
-  message(STATUS "Enabling OpenMP ")
-endif()
-
-if(${AVX_FOUND})
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${AVX_FLAGS}")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${AVX_FLAGS}")
-  message(STATUS "Enabling AVX ")
-endif(${AVX_FOUND})
-
 
 ## ----------------- Library headers and sources -------------------------------
 set(CDOB_LIB_INCLUDE_DIRS
@@ -70,8 +58,7 @@ set(CDOB_LIB_HEADERS
 
   #Integration
   include/external/eigen_integration_helper.hpp
-  include/integration/integrate_eigen_states.hpp
-  )
+  include/integration/integrate_eigen_states.hpp)
 
 
 set(CDOB_LIB_SOURCE
@@ -82,8 +69,7 @@ set(CDOB_LIB_SOURCE
   src/adaptive_parameter_estimators/adaptive_parameter_estimation.cpp
 
   # Integration
-  src/integration/integrate_eigen_states.cpp
-  )
+  src/integration/integrate_eigen_states.cpp)
 
 
 set(CDOB_LIB_INCLUDE_DIRS
@@ -91,8 +77,7 @@ set(CDOB_LIB_INCLUDE_DIRS
 
 ament_auto_add_library(${CDOB_LIB} SHARED
   ${CDOB_LIB_SOURCE}
-  ${CDOB_LIB_HEADERS}
-  )
+  ${CDOB_LIB_HEADERS})
 
 target_compile_options(${CDOB_LIB} PRIVATE -Wno-error=old-style-cast)
 
@@ -107,10 +92,11 @@ install(TARGETS ${CDOB_LIB}
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
   RUNTIME DESTINATION
-  INCLUDES DESTINATION include
-  )
+  INCLUDES DESTINATION include)
+
 ## -----------------  DELAY COMPENSATION NODE ----------------------------------------
-set(DELAY_COMPENSATION_NODE communication_delay_compensator)
+
+set(DELAY_COMPENSATION_NODE communication_delay_compensator_node)
 ament_auto_add_library(${DELAY_COMPENSATION_NODE} SHARED
   include/communication_delay_compensator_node.hpp
   src/communication_delay_compensator_node.cpp
@@ -119,10 +105,39 @@ ament_auto_add_library(${DELAY_COMPENSATION_NODE} SHARED
 target_link_libraries(${DELAY_COMPENSATION_NODE}
   ${CDOB})
 
+##------------ TYPE SUPPORT ----------------------------------------------------
+
+set(MSG_FILES
+  "msg/ControllerErrorReport.idl"
+  "msg/DelayCompensationDebug.idl"
+  "msg/DelayCompensationRefs.idl")
+
+rosidl_generate_interfaces(${PROJECT_NAME}
+  ${MSG_FILES}
+  ADD_LINTER_TESTS
+  DEPENDENCIES builtin_interfaces)
+
+if(${rosidl_cmake_VERSION} VERSION_LESS 2.5.0)
+  rosidl_target_interfaces(${DELAY_COMPENSATION_NODE}
+    ${PROJECT_NAME} "rosidl_typesupport_cpp")
+
+  rosidl_target_interfaces(${CDOB_LIB}
+    ${PROJECT_NAME} "rosidl_typesupport_cpp")
+
+else()
+  rosidl_get_typesupport_target(
+    cpp_typesupport_target ${PROJECT_NAME} "rosidl_typesupport_cpp")
+  target_link_libraries(${DELAY_COMPENSATION_NODE} "${cpp_typesupport_target}")
+  target_link_libraries(${CDOB_LIB} "${cpp_typesupport_target}")
+
+endif()
+
+##------------- REGiSTER NODE ---------------------------------------------------
+
 rclcpp_components_register_node(${DELAY_COMPENSATION_NODE}
   PLUGIN "observers::CommunicationDelayCompensatorNode"
-  EXECUTABLE ${DELAY_COMPENSATION_NODE}_exe
-  )
+  EXECUTABLE ${DELAY_COMPENSATION_NODE}_exe)
+
 ## ----------------- Library Tests----------------------------------------------
 
 if(BUILD_TESTING)
@@ -137,14 +152,5 @@ ament_auto_package(INSTALL_TO_SHARE
   param)
 
 
-##  Usage Examples
-## Type erasure example
-ament_auto_add_executable(main_type_erasure usage_examples/main_polymorphisim.cpp)
-target_link_libraries(main_type_erasure ${CDOB})
-
-
-## ODE integration
-ament_auto_add_executable(main_ode usage_examples/main_ode.cpp)
-target_link_libraries(main_ode ${CDOB})
 
  
