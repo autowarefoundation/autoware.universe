@@ -13,26 +13,26 @@
 // limitations under the License.
 
 /**
- * @file hardware_monitor.h
- * @brief  hardware monitor class
+ * @file voltage_monitor.h
+ * @brief  voltage monitor class
  */
 
-#ifndef SYSTEM_MONITOR__HARDWARE_MONITOR__HARDWARE_MONITOR_HPP_
-#define SYSTEM_MONITOR__HARDWARE_MONITOR__HARDWARE_MONITOR_HPP_
+#ifndef SYSTEM_MONITOR__VOLTAGE_MONITOR__VOLTAGE_MONITOR_HPP_
+#define SYSTEM_MONITOR__VOLTAGE_MONITOR__VOLTAGE_MONITOR_HPP_
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
 
 #include <climits>
 #include <string>
 
-class HardwareMonitor : public rclcpp::Node
+class VoltageMonitor : public rclcpp::Node
 {
 public:
   /**
    * @brief constructor
    * @param [in] options Options associated with this node.
    */
-  explicit HardwareMonitor(const rclcpp::NodeOptions & options);
+  explicit VoltageMonitor(const rclcpp::NodeOptions & options);
 
   /**
    * @brief Update the diagnostic state.
@@ -69,4 +69,4 @@ protected:
   std::string voltage_string_;
 };
 
-#endif  // SYSTEM_MONITOR__HARDWARE_MONITOR__HARDWARE_MONITOR_HPP_
+#endif  // SYSTEM_MONITOR__VOLTAGE_MONITOR__VOLTAGE_MONITOR_HPP_

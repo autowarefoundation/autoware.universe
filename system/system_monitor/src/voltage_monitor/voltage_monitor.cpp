@@ -13,11 +13,11 @@
 // limitations under the License.
 
 /**
- * @file _hardware_monitor.cpp
- * @brief  hardware monitor class
+ * @file _voltage_monitor.cpp
+ * @brief  voltage monitor class
  */
 
-#include "system_monitor/hardware_monitor/hardware_monitor.hpp"
+#include "system_monitor/voltage_monitor/voltage_monitor.hpp"
 
 #include "system_monitor/system_monitor_utility.hpp"
 
@@ -39,8 +39,8 @@
 
 namespace bp = boost::process;
 
-HardwareMonitor::HardwareMonitor(const rclcpp::NodeOptions & options)
-: Node("hardware_monitor", options), updater_(this), hostname_()
+VoltageMonitor::VoltageMonitor(const rclcpp::NodeOptions & options)
+: Node("voltage_monitor", options), updater_(this), hostname_()
 {
   gethostname(hostname_, sizeof(hostname_));
 
@@ -60,9 +60,9 @@ HardwareMonitor::HardwareMonitor(const rclcpp::NodeOptions & options)
     sensors_exists_ = (p.empty()) ? false : true;
   }
   gethostname(hostname_, sizeof(hostname_));
-  auto callback = &HardwareMonitor::checkBatteryStatus;
+  auto callback = &VoltageMonitor::checkBatteryStatus;
   if (sensors_exists_) {
-    callback = &HardwareMonitor::checkVoltage;
+    callback = &VoltageMonitor::checkVoltage;
   }
   updater_.add("CMOS Battery Status", this, callback);
 }
@@ -92,7 +92,7 @@ static float getVoltage(std::string voltage_string)
   return 0;  // failed to read voltage
 }
 
-void HardwareMonitor::checkVoltage(diagnostic_updater::DiagnosticStatusWrapper & stat)
+void VoltageMonitor::checkVoltage(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
   // Remember start time to measure elapsed time
   const auto t_start = SystemMonitorUtility::startMeasurement();
@@ -119,7 +119,7 @@ void HardwareMonitor::checkVoltage(diagnostic_updater::DiagnosticStatusWrapper &
   SystemMonitorUtility::stopMeasurement(t_start, stat);
 }
 
-void HardwareMonitor::checkBatteryStatus(diagnostic_updater::DiagnosticStatusWrapper & stat)
+void VoltageMonitor::checkBatteryStatus(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
   // Remember start time to measure elapsed time
   const auto t_start = SystemMonitorUtility::startMeasurement();
@@ -162,7 +162,7 @@ void HardwareMonitor::checkBatteryStatus(diagnostic_updater::DiagnosticStatusWra
   SystemMonitorUtility::stopMeasurement(t_start, stat);
 }
 
-void HardwareMonitor::update() { updater_.force_update(); }
+void VoltageMonitor::update() { updater_.force_update(); }
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(HardwareMonitor)
+RCLCPP_COMPONENTS_REGISTER_NODE(VoltageMonitor)
