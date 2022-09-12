@@ -411,6 +411,9 @@ bool isOutsideDrivableAreaFromRectangleFootprint(
   const VehicleParam & vehicle_param)
 {
   const double half_width = vehicle_param.width / 2.0;
+  const double base_to_right = (vehicle_param.tread_width / 2.0) + vehicle_param.right_overhang;
+  const double base_to_left = (vehicle_param.tread_width / 2.0) + vehicle_param.left_overhang;
+
   const double base_to_front = vehicle_param.length - vehicle_param.rear_overhang;
   const double base_to_rear = vehicle_param.rear_overhang;
 
