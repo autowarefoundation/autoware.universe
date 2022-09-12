@@ -133,6 +133,7 @@ RadarFusionToDetectedObject::Output RadarFusionToDetectedObject::update(
 bool RadarFusionToDetectedObject::hasTwistCovariance(
   const TwistWithCovariance & twist_with_covariance)
 {
+  using namespace tier4_autoware_utils::pose_covariance_index;
   auto covariance = twist_with_covariance.covariance;
   if (covariance[X_X] == 0.0 && covariance[Y_Y] == 0.0 && covariance[Z_Z] == 0.0) {
     return false;
