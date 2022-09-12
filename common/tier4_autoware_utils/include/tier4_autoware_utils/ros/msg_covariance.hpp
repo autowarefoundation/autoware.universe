@@ -21,7 +21,7 @@ namespace tier4_autoware_utils
 /// Covariance for x-y-z.
 /// Used at
 /// - sensor_msgs/msg/Imu.msg: msg.linear_acceleration_covariance
-enum XYZ_COV_IDX {
+enum class XYZ_COV_IDX {
   X_X = 0,
   X_Y = 1,
   X_Z = 2,
@@ -37,7 +37,7 @@ enum XYZ_COV_IDX {
 /// Used at
 /// - sensor_msgs/msg/Imu.msg: msg.angular_velocity_covariance
 /// - sensor_msgs/msg/Imu.msg: msg.orientation_covariance
-enum RPY_COV_IDX {
+enum class RPY_COV_IDX {
   ROLL_ROLL = 0,
   ROLL_PITCH = 1,
   ROLL_YAW = 2,
@@ -54,7 +54,7 @@ enum RPY_COV_IDX {
 /// - geometry_msgs/msg/AccelWithCovariance.msg: msg.covariance
 /// - geometry_msgs/msg/TwistWithCovariance.msg: msg.covariance
 /// - geometry_msgs/msg/PoseWithCovariance.msg: msg.covariance
-enum POSE_COV_IDX {
+enum class POSE_COV_IDX {
   X_X = 0,
   X_Y = 1,
   X_Z = 2,
@@ -96,7 +96,7 @@ enum POSE_COV_IDX {
 /// Upper-triangle covariance about the x, y, z axes
 /// Used at
 /// - radar_msgs/msg/RadarTrack.msg: msg.{position, velocity, acceleration}_covariance
-enum XYZ_UPPER_COV_IDX {
+enum class XYZ_UPPER_COV_IDX {
   X_X = 0,
   X_Y = 1,
   X_Z = 2,
