@@ -1,0 +1,4 @@
+/**:
+  ros__parameters:
+    cmos_battery_warn: 2.90
+    cmos_battery_error: 2.70
