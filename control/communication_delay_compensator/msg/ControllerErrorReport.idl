@@ -1,0 +1,42 @@
+#include "builtin_interfaces/msg/Time.idl"
+
+module communication_delay_compensator{
+  module msg {
+    @verbatim (language = "comment", text = "The error terms estimated by the controllers ")
+    struct ControllerErrorReport
+    {
+      builtin_interfaces::msg::Time stamp;
+
+      // Lateral deviation - error
+      @verbatim (language = "comment", text = "The lateral deviation error computed by the controller")
+      @default (value = 0.0)
+      double lateral_deviation_read;
+
+      // Heading deviation - error
+      @verbatim (language = "comment", text = "The heading deviation error computed by the controller")
+      @default (value = 0.0)
+      double heading_angle_error_read;
+
+      // Steering or its deviation - error
+      @verbatim (language = "comment", text = "The steering deviation error computed by the controller")
+      @default (value = 0.0)
+      double steering_read;
+
+      @verbatim (language = "comment", text = "The curvature computed by the controller")
+      @default (value = 0.0)
+      double curvature_read;
+
+      @verbatim (language = "comment", text = "The target velocity computed by the controller")
+      @default (value = 0.0)
+      double target_velocity_read;
+
+      @verbatim (language = "comment", text = "The velocity deviation error computed by the controller")
+      @default (value = 0.0)
+      double velocity_error_read;
+
+      @verbatim (language = "comment", text = "The acceleration deviation error computed by the controller")
+      @default (value = 0.0)
+      double acceleration_error_read;
+    };
+  };
+};
