@@ -269,20 +269,11 @@ double calcSignedLateralDistanceWithOffset(
   const double offset_left = left_overhang + wheel_tread / 2;
   const double offset_right = right_overhang + wheel_tread / 2;
   if (lateral > 0) {
-    if (std::abs(lateral) < offset_left) {
-      return 0;
-    }
-    return lateral - offset_left;
+    return std::max(lateral - offset_left, 0.0);
   }
-  if (std::abs(lateral) < offset_right) {
-    return 0;
-  }
-  return lateral + offset_right;
-
-  // error case
-  return -1.0;
+  // else
+  return std::min(lateral + offset_right, 0.0);
 }
-
 
 PossibleCollisionInfo calculateCollisionPathPointFromOcclusionSpot(
   const ArcCoordinates & arc_coord_occlusion,
@@ -452,9 +443,9 @@ boost::optional<PossibleCollisionInfo> generateOneNotableCollisionFromOcclusionS
       continue;
     }
     ArcCoordinates arc_coord_collision_point = {
-      length_to_col, calcSignedLateralDistanceWithOffset(
-                       arc_coord_occlusion_point.distance, right_overhang, left_overhang,
-                       wheel_tread)};
+      length_to_col,
+      calcSignedLateralDistanceWithOffset(
+        arc_coord_occlusion_point.distance, right_overhang, left_overhang, wheel_tread)};
     PossibleCollisionInfo pc = calculateCollisionPathPointFromOcclusionSpot(
       arc_coord_occlusion_point, arc_coord_collision_point, path_lanelet, param);
     const auto & ip = pc.intersection_pose.position;
