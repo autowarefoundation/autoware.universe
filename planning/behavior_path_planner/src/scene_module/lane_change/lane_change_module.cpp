@@ -63,18 +63,22 @@ BehaviorModuleOutput LaneChangeModule::run()
   const double finish_distance = motion_utils::calcSignedArcLength(
     output.path->points, current_pose.position, status_.lane_change_path.shift_point.end.position);
 
-  uint16_t direction = SteeringFactor::UNKNOWN;
-  if (turn_signal_info.turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {
-    waitApprovalLeft(start_distance, finish_distance);
-    direction = SteeringFactor::LEFT;
-  } else if (turn_signal_info.turn_signal.command == TurnIndicatorsCommand::ENABLE_RIGHT) {
-    waitApprovalRight(start_distance, finish_distance);
-    direction = SteeringFactor::RIGHT;
-  }
+  const uint16_t steering_factor_direction =
+    std::invoke([this, &start_distance, &finish_distance, &turn_signal_info]() {
+      if (turn_signal_info.turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {
+        waitApprovalLeft(start_distance, finish_distance);
+        return SteeringFactor::LEFT;
+      }
+      if (turn_signal_info.turn_signal.command == TurnIndicatorsCommand::ENABLE_RIGHT) {
+        waitApprovalRight(start_distance, finish_distance);
+        return SteeringFactor::RIGHT;
+      }
+      return SteeringFactor::UNKNOWN;
+    });
   // TODO(tkhmy) add handle status TRYING
   steering_factor_interface_ptr_->updateSteeringFactor(
     {status_.lane_change_path.shift_point.start, status_.lane_change_path.shift_point.end},
-    {start_distance, finish_distance}, SteeringFactor::LANE_CHANGE, direction,
+    {start_distance, finish_distance}, SteeringFactor::LANE_CHANGE, steering_factor_direction,
     SteeringFactor::TURNING, "");
   return output;
 }
