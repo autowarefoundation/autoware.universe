@@ -675,7 +675,7 @@ BehaviorModuleOutput PullOverModule::plan()
     goal_pose_stamped.pose = modified_goal_pose_;
     goal_pose_pub_->publish(goal_pose_stamped);
   }
-  
+
   uint16_t direction;
   if (getTurnInfo().first.command == TurnIndicatorsCommand::ENABLE_LEFT) {
     direction = SteeringFactor::LEFT;
