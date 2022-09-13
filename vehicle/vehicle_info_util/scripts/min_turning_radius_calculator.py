@@ -16,8 +16,8 @@
 
 import argparse
 import math
-import os
 
+from ament_index_python.packages import get_package_share_directory
 import yaml
 
 
@@ -29,12 +29,12 @@ def main(yaml_path):
     max_steer_angle = config["/**"]["ros__parameters"]["max_steer_angle"]
 
     print("yaml path is {}".format(yaml_path))
-    print("Turning radius is {} [rad]".format(wheel_base / math.sin(max_steer_angle)))
+    print("Minimum turning radius is {} [m]".format(wheel_base / math.sin(max_steer_angle)))
 
 
 if __name__ == "__main__":
-    default_yaml_path = os.path.abspath(
-        os.path.dirname(os.path.abspath(__file__)) + "/../config/vehicle_info.param.yaml"
+    default_yaml_path = (
+        get_package_share_directory("vehicle_info_util") + "/config/vehicle_info.param.yaml"
     )
 
     parser = argparse.ArgumentParser()
