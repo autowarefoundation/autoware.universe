@@ -173,7 +173,7 @@ void pointcloud_preprocessor::Filter::computePublish(
       this->get_logger(), "[computePublish] Transforming output dataset from %s to %s.",
       output.get().header.frame_id.c_str(), tf_output_frame_.c_str());
     // Convert the cloud into the different frame
-    auto cloud_transformed = PointCloud2{};
+    PointCloud2 cloud_transformed;
     if (!pcl_ros::transformPointCloud(
           tf_output_frame_, output.get(), cloud_transformed, *tf_buffer_)) {
       RCLCPP_ERROR(
@@ -189,7 +189,7 @@ void pointcloud_preprocessor::Filter::computePublish(
       this->get_logger(), "[computePublish] Transforming output dataset from %s back to %s.",
       output.get().header.frame_id.c_str(), tf_input_orig_frame_.c_str());
     // Convert the cloud into the different frame
-    auto cloud_transformed = PointCloud2{};
+    PointCloud2 cloud_transformed;
     if (!pcl_ros::transformPointCloud(
           tf_input_orig_frame_, output.get(), cloud_transformed, *tf_buffer_)) {
       RCLCPP_ERROR(
