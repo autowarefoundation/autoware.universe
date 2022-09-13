@@ -30,8 +30,5 @@
     <node pkg="system_monitor" exec="gpu_monitor" name="gpu_monitor" output="log" respawn="true">
       <param from="$(var gpu_monitor_config_file)"/>
     </node>
-    <node pkg="system_monitor" exec="voltage_monitor" name="voltage_monitor" output="log" respawn="true">
-      <param from="$(var voltage_monitor_config_file)"/>
-    </node>
   </group>
 </launch>
