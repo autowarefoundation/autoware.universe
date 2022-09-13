@@ -53,23 +53,13 @@ set(CDOB_LIB_HEADERS
   include/utils_delay_observer/delay_compensation_utils.hpp
   include/utils_delay_observer/delay_compensation_utils.hpp
   include/vehicle_models/vehicle_definitions.hpp
-  include/vehicle_models/vehicle_kinematic_error_model.hpp
-  include/adaptive_parameter_estimators/adaptive_parameter_estimation.hpp
-
-  #Integration
-  include/external/eigen_integration_helper.hpp
-  include/integration/integrate_eigen_states.hpp)
-
+  include/vehicle_models/vehicle_kinematic_error_model.hpp)
 
 set(CDOB_LIB_SOURCE
   src/communication_delay_compensator_core.cpp
   src/utils_delay_observer/delay_compensation_utils.cpp
   src/utils_delay_observer/delay_compensation_utils.cpp
-  src/vehicle_models/vehicle_kinematic_error_model.cpp
-  src/adaptive_parameter_estimators/adaptive_parameter_estimation.cpp
-
-  # Integration
-  src/integration/integrate_eigen_states.cpp)
+  src/vehicle_models/vehicle_kinematic_error_model.cpp)
 
 
 set(CDOB_LIB_INCLUDE_DIRS
@@ -99,8 +89,7 @@ install(TARGETS ${CDOB_LIB}
 set(DELAY_COMPENSATION_NODE communication_delay_compensation_node)
 ament_auto_add_library(${DELAY_COMPENSATION_NODE} SHARED
   include/communication_delay_compensator_node.hpp
-  src/communication_delay_compensator_node.cpp
-  )
+  src/communication_delay_compensator_node.cpp)
 
 target_link_libraries(${DELAY_COMPENSATION_NODE}
   ${CDOB})
@@ -150,7 +139,3 @@ endif()
 ament_auto_package(INSTALL_TO_SHARE
   launch
   param)
-
-
-
- 

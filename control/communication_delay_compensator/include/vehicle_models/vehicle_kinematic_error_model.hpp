@@ -240,7 +240,6 @@ void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::simulateOne
   // first update the output
   // y0 = x0 + dt_ * (A_ * x0 + B_ * steering_and_ideal_steering);
 
-
   y0 = Cd_ * x0.eval() + Dd_ * u;
   x0 = Ad_ * x0.eval() + Bd_ * u + Bwd_;
 
@@ -336,7 +335,6 @@ void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::discretisiz
 {
   /**
    * e^{[A, B; 0, 0]  = [Ad, Bd;0 1]}
-   *
    */
 
   Stype E(Stype::Zero());
@@ -365,15 +363,11 @@ void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::updateDistu
 {
   /**
    * @brief  Bw = [0, 1/tau, 0]^T
-   *
    * */
 
   auto const &L = wheelbase_;
 
-  Bw_(1, 0) = vr * tan(steer_r) / L - vr * curvature_ - vr * steer_r / (L * cos_sqr); // WORKING BETTER
-  //  Bw_(1, 0) = vr * tan(steer_r) / L - vr * curvature_ - steer_r / (L * cos_sqr);
-  //  Bw_(1, 0) = -steer_r * vr / (L * cos_sqr);
-
+  Bw_(1, 0) = vr * tan(steer_r) / L - vr * curvature_ - vr * steer_r / (L * cos_sqr);
 
 }
 template<int STATE_DIM, int INPUT_DIM, int MEASUREMENT_DIM>
@@ -424,24 +418,6 @@ void VehicleModelDisturbanceObserver<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::upd
    *          [ 0, 0,                  -1/tau]
    * */
 
-  //  auto const &x0_ = this->x0_;
-  //  auto curvature = this->curvature_;
-  //
-  //  auto const &ey = x0_(0);
-  //  auto const &eyaw = x0_(1);
-  //  auto const &delta = x0_(2);
-  //
-  //  auto kterm = curvature / (1. - ey * curvature);
-  //  auto ksqr = kterm * kterm;
-  //
-  //  this->A_(0, 1) = vr * cos(eyaw);
-  //  this->A_(1, 0) = -ksqr * vr * cos(eyaw);
-  //  this->A_(1, 1) = kterm * vr * sin(eyaw);
-  //  this->A_(1, 2) = vr / (L * cos_sqr);
-
-  /** Set -B */
-  //  auto col_size = this->A_.cols();
-  //  this->A_.col(col_size - 1) = -this->B_;
 
   /* IF small angle assumption */
   this->A_(0, 1) = vr;
@@ -496,9 +472,11 @@ class NonlinearVehicleKinematicModel
   // Constructors.
   NonlinearVehicleKinematicModel() = default;
 
-  NonlinearVehicleKinematicModel(
-    double const &wheelbase, double const &tau_vel, double const &tau_steer,
-    double const &deadtime_vel, double const &deadtime_steer, double const &dt);
+  NonlinearVehicleKinematicModel(double const &wheelbase,
+                                 double const &tau_vel,
+                                 double const &tau_steer,
+                                 double const &deadtime_vel,
+                                 double const &deadtime_steer, double const &dt);
 
   // Public methods.
   std::array<double, 4> simulateNonlinearOneStep(
@@ -533,7 +511,7 @@ class NonlinearVehicleKinematicModel
 
   // delayed input states.
   Eigen::MatrixXd xv0_{Eigen::MatrixXd::Zero(2, 1)};  // delayed speed input states
-  Eigen::MatrixXd xs0_{Eigen::MatrixXd::Zero(2, 1)};  // delayed steeering input states.
+  Eigen::MatrixXd xs0_{Eigen::MatrixXd::Zero(2, 1)};  // delayed steering input states.
 };
 
 #endif  // COMMUNICATION_DELAY_COMPENSATOR__VEHICLE_KINEMATIC_ERROR_MODEL_HPP
