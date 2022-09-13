@@ -90,6 +90,8 @@ CarInitialPoseTool::CarInitialPoseTool()
     "Z position", 0.0, "Z position for initial pose [m]", getPropertyContainer());
   velocity_ = new rviz_common::properties::FloatProperty(
     "Velocity", 0.0, "velocity [m/s]", getPropertyContainer());
+  accel_ = new rviz_common::properties::FloatProperty(
+    "Acceleration", 0.0, "acceleration [m/s^2]", getPropertyContainer());
   std_dev_x_->setMin(0);
   std_dev_y_->setMin(0);
   std_dev_z_->setMin(0);

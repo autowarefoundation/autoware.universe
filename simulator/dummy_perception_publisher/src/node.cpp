@@ -41,26 +41,40 @@ ObjectInfo::ObjectInfo(
   std_dev_z(std::sqrt(object.initial_state.pose_covariance.covariance[14])),
   std_dev_yaw(std::sqrt(object.initial_state.pose_covariance.covariance[35]))
 {
-  const double move_distance =
-    object.initial_state.twist_covariance.twist.linear.x *
-    (current_time.seconds() - rclcpp::Time(object.header.stamp).seconds());
-  tf2::Transform tf_object_origin2moved_object;
-  tf2::Transform tf_map2object_origin;
-  {
-    geometry_msgs::msg::Transform ros_object_origin2moved_object;
-    ros_object_origin2moved_object.translation.x = move_distance;
-    ros_object_origin2moved_object.rotation.x = 0;
-    ros_object_origin2moved_object.rotation.y = 0;
-    ros_object_origin2moved_object.rotation.z = 0;
-    ros_object_origin2moved_object.rotation.w = 1;
-    tf2::fromMsg(ros_object_origin2moved_object, tf_object_origin2moved_object);
+  // calculate current pose
+  const auto & initial_pose = object.initial_state.pose_covariance.pose;
+  const auto & initial_vel = object.initial_state.twist_covariance.twist.linear.x;
+  const double initial_acc = object.initial_state.accel_covariance.accel.linear.x;
+  // const double initial_acc = -1.0;
+
+  const double elapsed_time = current_time.seconds() - rclcpp::Time(object.header.stamp).seconds();
+
+  double move_distance;
+  if (initial_acc == 0.0) {
+    move_distance = initial_vel * elapsed_time;
+  } else {
+    const double current_vel = std::max(0.0, initial_vel + initial_acc * elapsed_time);
+
+    move_distance = (std::pow(current_vel, 2) - std::pow(initial_vel, 2)) * 0.5 / initial_acc;
   }
-  tf2::fromMsg(object.initial_state.pose_covariance.pose, tf_map2object_origin);
-  this->tf_map2moved_object = tf_map2object_origin * tf_object_origin2moved_object;
+
+  const auto current_pose =
+    tier4_autoware_utils::calcOffsetPose(initial_pose, move_distance, 0.0, 0.0);
+
+  // calculate tf from map to moved_object
+  geometry_msgs::msg::Transform ros_map2moved_object;
+  ros_map2moved_object.translation.x = current_pose.position.x;
+  ros_map2moved_object.translation.y = current_pose.position.y;
+  ros_map2moved_object.translation.z = current_pose.position.z;
+  ros_map2moved_object.rotation = current_pose.orientation;
+  tf2::fromMsg(ros_map2moved_object, tf_map2moved_object);
 }
 
 DummyPerceptionPublisherNode::DummyPerceptionPublisherNode()
-: Node("dummy_perception_publisher"), tf_buffer_(this->get_clock()), tf_listener_(tf_buffer_)
+: Node("dummy_perception_publisher"),
+  tf_buffer_(this->get_clock()),
+  tf_listener_(tf_buffer_),
+  self_pose_listener_(this)
 {
   visible_range_ = this->declare_parameter("visible_range", 100.0);
   detection_successful_rate_ = this->declare_parameter("detection_successful_rate", 0.8);
@@ -94,6 +108,9 @@ DummyPerceptionPublisherNode::DummyPerceptionPublisherNode()
     "input/object", 100,
     std::bind(&DummyPerceptionPublisherNode::objectCallback, this, std::placeholders::_1));
 
+  // wait for first self pose
+  self_pose_listener_.waitForFirstPose();
+
   using std::chrono_literals::operator""ms;
   timer_ = rclcpp::create_timer(
     this, get_clock(), 100ms, std::bind(&DummyPerceptionPublisherNode::timerCallback, this));
@@ -101,6 +118,8 @@ DummyPerceptionPublisherNode::DummyPerceptionPublisherNode()
 
 void DummyPerceptionPublisherNode::timerCallback()
 {
+  const auto ego_pose = self_pose_listener_.getCurrentPose()->pose;
+
   // output msgs
   tier4_perception_msgs::msg::DetectedObjectsWithFeature output_dynamic_object_msg;
   geometry_msgs::msg::PoseStamped output_moved_object_pose;
@@ -182,6 +201,7 @@ void DummyPerceptionPublisherNode::timerCallback()
       tf2::Transform tf_base_link2noised_moved_object;
       tf_base_link2noised_moved_object =
         tf_base_link2map * object_info.tf_map2moved_object * tf_moved_object2noised_moved_object;
+
       tier4_perception_msgs::msg::DetectedObjectWithFeature feature_object;
       feature_object.object.classification.push_back(object.classification);
       feature_object.object.kinematics.pose_with_covariance = object.initial_state.pose_covariance;

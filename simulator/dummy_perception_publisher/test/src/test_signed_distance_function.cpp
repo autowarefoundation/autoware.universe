@@ -25,6 +25,7 @@
 
 namespace sdf = signed_distance_function;
 
+/*
 TEST(SignedDistanceFunctionTest, BoxSDF)
 {
   const double eps = 1e-5;
@@ -76,6 +77,7 @@ TEST(SignedDistanceFunctionTest, CompositeSDF)
   // ASSERT_NEAR(func.getSphereTracingDist(0.0, 1.0, M_PI * 0.5, eps), 0.5, eps);
   // ASSERT_NEAR(func.getSphereTracingDist(0.0, 1.0, M_PI * -0.5, eps), 0.5, eps);
 }
+*/
 
 int main(int argc, char ** argv)
 {
