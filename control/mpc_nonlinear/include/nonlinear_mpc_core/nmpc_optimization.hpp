@@ -38,7 +38,7 @@ namespace ns_opt
 template<size_t STATE_DIM, size_t INPUT_DIM, size_t K>
 struct OsqpMatDims
 {
-  OsqpMatDims() // : nxK{STATE_DIM * K}, nuK{INPUT_DIM * K}, njK{INPUT_DIM * (K - 1)}
+  OsqpMatDims()  // : nxK{STATE_DIM * K}, nuK{INPUT_DIM * K}, njK{INPUT_DIM * (K - 1)}
   {
     dcs_xu = nxK + nuK + njK;  // !<@brief size of P and q.
     Pxdim = nxK;
@@ -613,7 +613,6 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
   // end of debug.
 
   return is_initialized_;
-
 }
 
 /**

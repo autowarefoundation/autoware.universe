@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <map>
+#include <string>
 #include "utils_act/act_utils.hpp"
 #include <variant>
 
@@ -78,7 +79,6 @@ overload(Ts...) -> overload<Ts...>;
 class VehicleMotionFSM
 {
  public:
-
   VehicleMotionFSM() = default;
 
   VehicleMotionFSM(double const &stop_entry_ego_speed,

@@ -14,7 +14,7 @@
 * limitations under the License.
 */
 
-#include <algorithm>
+#include <vector>
 #include <limits>
 #include <memory>
 #include <vector>
@@ -22,7 +22,7 @@
 #include "nonlinear_mpc_test_node.hpp"
 #include "nmpc_test_utils.hpp"
 
-TEST_F(FakeNodeFixture, no_input_stop_control_cmd_is_published)
+TEST_F(FakeNodeFixture, DISABLED_no_input_stop_control_cmd_is_published)
 {
   // Data to test
   ControlCmdMsg::SharedPtr cmd_msg;
@@ -65,11 +65,11 @@ TEST_F(FakeNodeFixture, no_input_stop_control_cmd_is_published)
   ASSERT_FLOAT_EQ(cmd_msg->longitudinal.acceleration, -1.5);
 
   // DEBUG
-//  ns_utils::print(" ctrl_cmd_msgs_  steering: ", cmd_msg->lateral.steering_tire_angle);
-//  ns_utils::print(" ctrl_cmd_msgs_  steering rate : ", cmd_msg->lateral.steering_tire_rotation_rate);
-//
-//  ns_utils::print(" ctrl_cmd_msgs_  steering rate : ", cmd_msg->longitudinal.speed);
-//  ns_utils::print(" ctrl_cmd_msgs_  steering: ", cmd_msg->longitudinal.acceleration, -1.5);
+  //  ns_utils::print(" ctrl_cmd_msgs_  steering: ", cmd_msg->lateral.steering_tire_angle);
+  //  ns_utils::print(" ctrl_cmd_msgs_  steering rate : ", cmd_msg->lateral.steering_tire_rotation_rate);
+  //
+  //  ns_utils::print(" ctrl_cmd_msgs_  steering rate : ", cmd_msg->longitudinal.speed);
+  //  ns_utils::print(" ctrl_cmd_msgs_  steering: ", cmd_msg->longitudinal.acceleration, -1.5);
 
 }
 
@@ -78,8 +78,6 @@ TEST_F(FakeNodeFixture, no_input_stop_control_cmd_is_published)
  * */
 TEST_F(FakeNodeFixture, automatic_differentiation_works)
 {
-
-
   // Compute f(x, u) by codegen from the model.
   Model::state_vector_t f_of_dx{Model::state_vector_t::Zero()};
 
@@ -114,7 +112,6 @@ TEST_F(FakeNodeFixture, automatic_differentiation_works)
   // Compute Jacobian --
   Model::state_matrix_t A{Model::state_matrix_t::Zero()};
   Model::control_matrix_t B{Model::control_matrix_t::Zero()};
-
 
   // Call the model methods.
   // Create vehicle parameters.
