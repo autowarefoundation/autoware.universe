@@ -28,8 +28,15 @@ def main(yaml_path):
     wheel_base = config["/**"]["ros__parameters"]["wheel_base"]
     max_steer_angle = config["/**"]["ros__parameters"]["max_steer_angle"]
 
+    rear_radius = wheel_base / math.tan(max_steer_angle)
+    front_radius = wheel_base / math.sin(max_steer_angle)
+
     print("yaml path is {}".format(yaml_path))
-    print("Minimum turning radius is {} [m]".format(wheel_base / math.sin(max_steer_angle)))
+    print(
+        "Minimum turning radius is {} [m] for rear, {} [m] for front.".format(
+            rear_radius, front_radius
+        )
+    )
 
 
 if __name__ == "__main__":
