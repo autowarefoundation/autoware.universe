@@ -18,7 +18,7 @@
 #define COMMUNICATION_DELAY_COMPENSATOR__COMMUNICATION_DELAY_COMPENSATOR_NODE_HPP
 
 // Base Headers
-
+#include <memory>
 #include "eigen3/Eigen/Core"
 
 #include <cmath>

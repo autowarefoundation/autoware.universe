@@ -16,6 +16,8 @@
 #include "communication_delay_compensator_core.hpp"
 
 #include <utility>
+#include <memory>
+#include <vector>
 
 // -- HELPER METHODS --
 observers::tf_t observers::get_nthOrderTF(
