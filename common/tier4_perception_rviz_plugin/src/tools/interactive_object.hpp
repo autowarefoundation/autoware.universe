@@ -102,6 +102,8 @@ private:
   Ogre::Vector3 point_;
   Ogre::Vector3 velocity_;
   Ogre::Vector3 accel_;
+  Ogre::Vector3 max_velocity_;
+  Ogre::Vector3 min_velocity_;
   double theta_{0.0};
 };
 
@@ -157,6 +159,8 @@ protected:  // NOLINT for Qt
   rviz_common::properties::FloatProperty * std_dev_theta_;
   rviz_common::properties::FloatProperty * position_z_;
   rviz_common::properties::FloatProperty * velocity_;
+  rviz_common::properties::FloatProperty * max_velocity_;
+  rviz_common::properties::FloatProperty * min_velocity_;
   rviz_common::properties::FloatProperty * accel_;
   rviz_common::properties::TfFrameProperty * property_frame_;
 
