@@ -159,8 +159,7 @@ class VehicleDynamicsBase
   void computeJacobians(const state_vector_t &x, const input_vector_t &u, param_vector_t const &params,
                         state_matrix_t &A, control_matrix_t &B);
 
-  //  virtual ~VehicleDynamicsBase()
-  //  {};
+  // virtual ~VehicleDynamicsBase() = default;
   //  {
   //    // CppAD::thread_alloc::inuse(0);
   //  }
