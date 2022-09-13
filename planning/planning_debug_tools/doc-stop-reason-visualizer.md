@@ -17,4 +17,5 @@ Add stop reason debug marker from rviz.
 ![image](image/add_marker.png)
 
 Note: ros2 process can be sometimes deleted only from `killall stop_reason_visualizer_exe`
-Reference: https://answers.ros.org/question/323329/how-to-kill-nodes-in-ros2/?answer=403184#post-id-403184
+
+[Reference](https://answers.ros.org/question/323329/how-to-kill-nodes-in-ros2/?answer=403184#post-id-403184)
