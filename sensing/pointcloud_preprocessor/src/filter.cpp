@@ -181,7 +181,7 @@ void pointcloud_preprocessor::Filter::computePublish(
         output.get().header.frame_id.c_str(), tf_output_frame_.c_str());
       return;
     }
-    output.get().data = std::move(cloud_transformed.data);
+    output.get() = std::move(cloud_transformed);
   }
   if (tf_output_frame_.empty() && output.get().header.frame_id != tf_input_orig_frame_) {
     // no tf_output_frame given, transform the dataset to its original frame
@@ -197,7 +197,7 @@ void pointcloud_preprocessor::Filter::computePublish(
         output.get().header.frame_id.c_str(), tf_input_orig_frame_.c_str());
       return;
     }
-    output.get().data = std::move(cloud_transformed.data);
+    output.get() = std::move(cloud_transformed);
   }
 
   // Copy timestamp to keep it
