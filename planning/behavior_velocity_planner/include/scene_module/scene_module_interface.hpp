@@ -16,6 +16,7 @@
 #define SCENE_MODULE__SCENE_MODULE_INTERFACE_HPP_
 
 #include "behavior_velocity_planner/planner_data.hpp"
+#include "velocity_factor_interface.hpp"
 
 #include <builtin_interfaces/msg/time.hpp>
 #include <rtc_interface/rtc_interface.hpp>
@@ -101,23 +102,24 @@ public:
   bool isActivated() const { return activated_; }
   bool isSafe() const { return safe_; }
   double getDistance() const { return distance_; }
-  geometry_msgs::msg::Pose getStopPose() const { return pose_; }
+
+  void resetVelocityFactor() { velocity_factor_.reset(); }
+  VelocityFactor getVelocityFactor() const { return velocity_factor_.get(); }
 
 protected:
   const int64_t module_id_;
   bool activated_;
   bool safe_;
   double distance_;
-  geometry_msgs::msg::Pose pose_;
   rclcpp::Logger logger_;
   rclcpp::Clock::SharedPtr clock_;
   std::shared_ptr<const PlannerData> planner_data_;
   boost::optional<tier4_v2x_msgs::msg::InfrastructureCommand> infrastructure_command_;
   boost::optional<int> first_stop_path_point_index_;
+  VelocityFactorInterface velocity_factor_;
 
   void setSafe(const bool safe) { safe_ = safe; }
   void setDistance(const double distance) { distance_ = distance; }
-  void setStopPose(const geometry_msgs::msg::Pose & pose) { pose_ = pose; }
 
   template <class T>
   size_t findEgoSegmentIndex(const std::vector<T> & points) const
@@ -155,10 +157,10 @@ public:
     }
     pub_virtual_wall_ = node.create_publisher<visualization_msgs::msg::MarkerArray>(
       std::string("~/virtual_wall/") + module_name, 5);
+    pub_velocity_factor_ = node.create_publisher<autoware_ad_api_msgs::msg::VelocityFactorArray>(
+      std::string("/planning/velocity_factors/") + module_name, 1);
     pub_stop_reason_ =
       node.create_publisher<tier4_planning_msgs::msg::StopReasonArray>("~/output/stop_reasons", 1);
-    pub_velocity_factor_ = node.create_publisher<autoware_ad_api_msgs::msg::VelocityFactorArray>(
-      "~/output/velocity_factors", 1);
     pub_infrastructure_commands_ =
       node.create_publisher<tier4_v2x_msgs::msg::InfrastructureCommandArray>(
         "~/output/infrastructure_commands", 1);
@@ -207,14 +209,17 @@ protected:
     first_stop_path_point_index_ = static_cast<int>(path->points.size()) - 1;
     for (const auto & scene_module : scene_modules_) {
       tier4_planning_msgs::msg::StopReason stop_reason;
-      autoware_ad_api_msgs::msg::VelocityFactor velocity_factor;
+      scene_module->resetVelocityFactor();
       scene_module->setPlannerData(planner_data_);
       scene_module->modifyPathVelocity(path, &stop_reason);
+
+      // The velocity factor must be called after modifyPathVelocity.
+      const auto velocity_factor = scene_module->getVelocityFactor();
+      if (velocity_factor.type != VelocityFactor::UNKNOWN) {
+        velocity_factor_array.factors.emplace_back(velocity_factor);
+      }
       if (stop_reason.reason != "") {
         stop_reason_array.stop_reasons.emplace_back(stop_reason);
-      }
-      if (velocity_factor.type != 0) {
-        velocity_factor_array.factors.emplace_back(velocity_factor);
       }
 
       if (const auto command = scene_module->getInfrastructureCommand()) {
@@ -237,9 +242,7 @@ protected:
     if (!stop_reason_array.stop_reasons.empty()) {
       pub_stop_reason_->publish(stop_reason_array);
     }
-    if (!velocity_factor_array.factors.empty()) {
-      pub_velocity_factor_->publish(velocity_factor_array);
-    }
+    pub_velocity_factor_->publish(velocity_factor_array);
     pub_infrastructure_commands_->publish(infrastructure_command_array);
     pub_debug_->publish(debug_marker_array);
     if (is_publish_debug_path_) {

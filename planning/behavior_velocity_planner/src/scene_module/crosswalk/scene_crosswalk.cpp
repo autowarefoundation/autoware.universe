@@ -222,7 +222,7 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
     insertDecelPointWithDebugInfo(rtc_stop_point.get(), 0.0, *path);
     planning_utils::appendStopReason(stop_factor_rtc, stop_reason);
   }
-  // TODO(Takagi, Isamu): WIP
+
   // velocity_factor->status = autoware_ad_api_msgs::msg::VelocityFactor::STOP_TRUE;
   // velocity_factor->pose = debug_data_.first_stop_pose;
   // velocity_factor->stop_factor_points.emplace_back(debug_data_.nearest_collision_point);

@@ -26,7 +26,7 @@
 #include <string>
 #include <vector>
 
-namespace planning_api_interface
+namespace behavior_velocity_planner
 {
 
 using autoware_ad_api_msgs::msg::VelocityFactor;
@@ -38,19 +38,26 @@ using VelocityFactorStatus = VelocityFactor::_status_type;
 class VelocityFactorInterface
 {
 public:
-  VelocityFactorInterface(rclcpp::Node * node, const std::string & name);
-  void publish(const rclcpp::Time & stamp);
-  void update(
-    const VelocityFactorType type, const VelocityFactorStatus status, const Pose & pose,
-    double distance, const std::string & detail);
-  void clear();
+  VelocityFactorInterface() { type_ = VelocityFactor::UNKNOWN; }
+
+  VelocityFactor get() const { return velocity_factor_; }
+  void init(const VelocityFactorType type) { type_ = type; }
+  void reset() { velocity_factor_.type = VelocityFactor::UNKNOWN; }
+
+  void set(const VelocityFactorStatus status, const Pose & pose, const std::string detail = "")
+  {
+    velocity_factor_.type = type_;
+    velocity_factor_.pose = pose;
+    velocity_factor_.distance = 0.0;
+    velocity_factor_.status = status;
+    velocity_factor_.detail = detail;
+  }
 
 private:
-  rclcpp::Publisher<VelocityFactorArray>::SharedPtr pub_velocity_factors_;
-  std::mutex mutex_;
-  VelocityFactorArray velocity_factors_;
+  VelocityFactorType type_;
+  VelocityFactor velocity_factor_;
 };
 
-}  // namespace planning_api_interface
+}  // namespace behavior_velocity_planner
 
 #endif  // SCENE_MODULE__VELOCITY_FACTOR_INTERFACE_HPP_

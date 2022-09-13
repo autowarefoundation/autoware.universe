@@ -34,6 +34,7 @@ StopLineModule::StopLineModule(
   state_(State::APPROACH)
 {
   planner_param_ = planner_param;
+  velocity_factor_.init(VelocityFactor::STOP_SIGN);
 }
 
 bool StopLineModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason)
@@ -44,8 +45,6 @@ bool StopLineModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop
   debug_data_.base_link2front = base_link2front;
   first_stop_path_point_index_ = static_cast<int>(path->points.size()) - 1;
   *stop_reason = planning_utils::initializeStopReason(StopReason::STOP_LINE);
-  // *velocity_factor =
-  //  planning_utils::initializeVelocityFactor(autoware_ad_api_msgs::msg::VelocityFactor::STOP_LINE);
 
   const LineString2d stop_line = planning_utils::extendLine(
     stop_line_[0], stop_line_[1], planner_data_->stop_line_extend_length);
@@ -92,6 +91,9 @@ bool StopLineModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop
         stop_factor.stop_pose = stop_pose;
         stop_factor.stop_factor_points.push_back(getCenterOfStopLine(stop_line_));
         planning_utils::appendStopReason(stop_factor, stop_reason);
+
+        // TODO(Takagi, Isamu): points = getCenterOfStopLine(stop_line_)
+        velocity_factor_.set(VelocityFactor::APPROACHING, stop_pose);
       }
 
       // Move to stopped state if stopped
@@ -136,6 +138,9 @@ bool StopLineModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop
         stop_factor.stop_pose = ego_pos_on_path.pose;
         stop_factor.stop_factor_points.push_back(getCenterOfStopLine(stop_line_));
         planning_utils::appendStopReason(stop_factor, stop_reason);
+
+        // TODO(Takagi, Isamu): points = getCenterOfStopLine(stop_line_)
+        velocity_factor_.set(VelocityFactor::STOPPED, stop_pose);
       }
 
       const auto elapsed_time = (clock_->now() - *stopped_time_).seconds();
