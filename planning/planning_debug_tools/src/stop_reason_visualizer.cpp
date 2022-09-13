@@ -101,6 +101,15 @@ private:
           stop_pose_marker.pose = stop_factor.stop_pose;
           marker_array.markers.emplace_back(stop_pose_marker);
         }
+        // add view distance text
+        {
+          auto distance_text_marker = createDefaultMarker(
+            "map", current_time, prefix, id, visualization_msgs::msg::Marker::TEXT_VIEW_FACING,
+            createMarkerScale(0.0, 0.0, 0.2), createMarkerColor(1.0, 1.0, 1.0, 0.999));
+          distance_text_marker.pose = stop_factor.stop_pose;
+          distance_text_marker.text = prefix;
+          marker_array.markers.emplace_back(distance_text_marker);
+        }
         tier4_autoware_utils::appendMarkerArray(marker_array, &all_marker_array, current_time);
         id++;
       }
