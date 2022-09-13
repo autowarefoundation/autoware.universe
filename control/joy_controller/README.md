@@ -44,8 +44,9 @@
 
 ## P65 Joystick Key Map
 
-| Acceleration         | R2                    |
+| Action               | Button                |
 | -------------------- | --------------------- |
+| Acceleration         | R2                    |
 | Brake                | L2                    |
 | Steering             | Left Stick Left Right |
 | Shift up             | Cursor Up             |
@@ -65,9 +66,10 @@
 
 ## DS4 Joystick Key Map
 
-| Acceleration         | R2                                       |
+| Action               | Button                                   |
 | -------------------- | ---------------------------------------- |
-| Brake                | □ or Right Stick Up Down or Left Trigger |
+| Acceleration         | R2, ×, or Right Stick Up                |
+| Brake                | L2, □, or Right Stick Down              |
 | Steering             | Left Stick Left Right                    |
 | Shift up             | Cursor Up                                |
 | Shift down           | Cursor Down                              |
