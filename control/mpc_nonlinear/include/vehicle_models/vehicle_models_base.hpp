@@ -37,10 +37,10 @@
 template<typename DERIVED, int STATE_DIM, int INPUT_DIM, int PARAM_DIM, int eSTATE_DIM>
 class VehicleModelsBase : public VehicleDynamicsBase<STATE_DIM, INPUT_DIM, PARAM_DIM, eSTATE_DIM>
 {
-public:
-  VehicleModelsBase() = default;
-
-  virtual ~VehicleModelsBase() = default;
+ public:
+  //  VehicleModelsBase() = default;
+  //
+  //  virtual ~VehicleModelsBase() = default;
 
   // Type Definitions
   using BASE = VehicleDynamicsBase<STATE_DIM, INPUT_DIM, PARAM_DIM, eSTATE_DIM>;
