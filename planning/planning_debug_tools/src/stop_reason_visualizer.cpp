@@ -63,7 +63,7 @@ private:
       for (auto stop_factor : stop_reason.stop_factors) {
         if (stop_factor.stop_factor_points.empty()) continue;
         MarkerArray marker_array;
-        std::string prefix = reason + " " +  std::to_string(id) + ":";
+        std::string prefix = reason + "[" +  std::to_string(id) + "]:";
         const auto stop_factor_point = stop_factor.stop_factor_points.front();
         // base stop pose marker
         {
@@ -88,7 +88,7 @@ private:
         {
           auto stop_to_pose_marker = createDefaultMarker(
             "map", current_time, prefix + "stop_to_pose", id, Marker::LINE_STRIP,
-            createMarkerScale(0.01, 0.0, 0.0), createMarkerColor(0.0, 1.0, 0.0, 0.999));
+            createMarkerScale(0.02, 0.0, 0.0), createMarkerColor(0.0, 1.0, 1.0, 0.999));
           stop_to_pose_marker.points.emplace_back(
             stop_factor.stop_factor_points.front());
           stop_to_pose_marker.points.emplace_back(
@@ -98,9 +98,9 @@ private:
         // point to pose
         {
           auto stop_pose_marker = createDefaultMarker(
-            "map", current_time, prefix + "stop_pose", id, Marker::CYLINDER,
-            createMarkerScale(0.4, 0.2, 0.2), createMarkerColor(0.0, 1.0, 0.0, 0.999));
-          stop_pose_marker.pose.position = stop_factor.stop_pose.position;
+            "map", current_time, prefix + "stop_pose", id, Marker::ARROW,
+            createMarkerScale(0.4, 0.2, 0.2), createMarkerColor(1.0, 0.0, 0.0, 0.999));
+          stop_pose_marker.pose = stop_factor.stop_pose;
           marker_array.markers.emplace_back(stop_pose_marker);
         }
         tier4_autoware_utils::appendMarkerArray(marker_array, &all_marker_array, current_time);
