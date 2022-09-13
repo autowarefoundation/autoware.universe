@@ -25,9 +25,10 @@ public:
   CameraParticleCorrector();
 
 private:
-  void lsdCallback(const PointCloud2 & msg);
-  void ll2Callback(const PointCloud2 & msg);
-  void poseCallback(const PoseStamped & msg);
+  void onLsd(const PointCloud2 & msg);
+  void onLl2(const PointCloud2 & msg);
+  void onPose(const PoseStamped & msg);
+  void onTimer();
 
   float computeScore(const LineSegment & lsd_cloud, const Eigen::Vector3f & self_position);
 
@@ -40,6 +41,7 @@ private:
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_lsd_;
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_ll2_;
   rclcpp::Subscription<PoseStamped>::SharedPtr sub_pose_;
+  rclcpp::TimerBase::SharedPtr timer_;
 
   rclcpp::Publisher<Image>::SharedPtr pub_image_;
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_marker_;
@@ -52,5 +54,6 @@ private:
   HierarchicalCostMap cost_map_;
 
   Eigen::Vector3f last_mean_position_;
+  std::optional<PoseStamped> latest_pose_{std::nullopt};
 };
 }  // namespace modularized_particle_filter

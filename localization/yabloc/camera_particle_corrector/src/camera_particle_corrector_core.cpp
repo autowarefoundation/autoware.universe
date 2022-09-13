@@ -20,21 +20,28 @@ CameraParticleCorrector::CameraParticleCorrector()
 {
   using std::placeholders::_1;
 
-  auto lsd_callback = std::bind(&CameraParticleCorrector::lsdCallback, this, _1);
+  auto lsd_callback = std::bind(&CameraParticleCorrector::onLsd, this, _1);
   sub_lsd_ = create_subscription<PointCloud2>("/lsd_cloud", 10, lsd_callback);
 
-  auto ll2_callback = std::bind(&CameraParticleCorrector::ll2Callback, this, _1);
+  auto ll2_callback = std::bind(&CameraParticleCorrector::onLl2, this, _1);
   sub_ll2_ = create_subscription<PointCloud2>("/ll2_road_marking", 10, ll2_callback);
 
-  auto pose_callback = std::bind(&CameraParticleCorrector::poseCallback, this, _1);
+  auto pose_callback = std::bind(&CameraParticleCorrector::onPose, this, _1);
   sub_pose_ = create_subscription<PoseStamped>("/particle_pose", 10, pose_callback);
 
   pub_image_ = create_publisher<Image>("/match_image", 10);
   pub_marker_ = create_publisher<MarkerArray>("/cost_map_range", 10);
   pub_scored_cloud_ = create_publisher<PointCloud2>("/scored_cloud", 10);
+
+  // Timer callback
+  auto cb_timer = std::bind(&CameraParticleCorrector::onTimer, this);
+  timer_ =
+    rclcpp::create_timer(this, this->get_clock(), rclcpp::Rate(5).period(), std::move(cb_timer));
 }
 
-void CameraParticleCorrector::lsdCallback(const sensor_msgs::msg::PointCloud2 & lsd_msg)
+void CameraParticleCorrector::onPose(const PoseStamped & msg) { latest_pose_ = msg; }
+
+void CameraParticleCorrector::onLsd(const sensor_msgs::msg::PointCloud2 & lsd_msg)
 {
   const rclcpp::Time stamp = lsd_msg.header.stamp;
   std::optional<ParticleArray> opt_array = this->getSynchronizedParticleArray(stamp);
@@ -73,7 +80,7 @@ void CameraParticleCorrector::lsdCallback(const sensor_msgs::msg::PointCloud2 & 
     this->setWeightedParticleArray(weighted_particles);
     last_mean_position_ = mean_position;
   } else {
-    RCLCPP_WARN_STREAM(get_logger(), "Skip weighting because almost same positon");
+    RCLCPP_INFO_STREAM(get_logger(), "Skip weighting because almost same positon");
   }
 
   pub_marker_->publish(cost_map_.showMapRange());
@@ -101,12 +108,14 @@ void CameraParticleCorrector::lsdCallback(const sensor_msgs::msg::PointCloud2 & 
   }
 }
 
-void CameraParticleCorrector::poseCallback(const PoseStamped & msg)
+void CameraParticleCorrector::onTimer()
 {
-  vml_common::publishImage(*pub_image_, cost_map_.getMapImage(msg.pose), msg.header.stamp);
+  if (latest_pose_.has_value())
+    vml_common::publishImage(
+      *pub_image_, cost_map_.getMapImage(latest_pose_->pose), latest_pose_->header.stamp);
 }
 
-void CameraParticleCorrector::ll2Callback(const PointCloud2 & ll2_msg)
+void CameraParticleCorrector::onLl2(const PointCloud2 & ll2_msg)
 {
   LineSegment ll2_cloud;
   pcl::fromROSMsg(ll2_msg, ll2_cloud);
