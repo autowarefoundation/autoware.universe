@@ -55,7 +55,7 @@ private:
 
     MarkerArray all_marker_array;
     const auto header = msg->header;
-    const double offset_z =1.0;
+    const double offset_z = 1.0;
     for (auto stop_reason : msg->stop_reasons) {
       std::string reason = stop_reason.reason;
       const auto current_time = this->now();
@@ -63,7 +63,7 @@ private:
       for (auto stop_factor : stop_reason.stop_factors) {
         if (stop_factor.stop_factor_points.empty()) continue;
         MarkerArray marker_array;
-        std::string prefix = reason + "[" +  std::to_string(id) + "]:";
+        std::string prefix = reason + "[" + std::to_string(id) + "]:";
         const auto stop_factor_point = stop_factor.stop_factor_points.front();
         // base stop pose marker
         {
@@ -89,10 +89,8 @@ private:
           auto stop_to_pose_marker = createDefaultMarker(
             "map", current_time, prefix + "stop_to_pose", id, Marker::LINE_STRIP,
             createMarkerScale(0.02, 0.0, 0.0), createMarkerColor(0.0, 1.0, 1.0, 0.999));
-          stop_to_pose_marker.points.emplace_back(
-            stop_factor.stop_factor_points.front());
-          stop_to_pose_marker.points.emplace_back(
-            stop_factor.stop_pose.position);
+          stop_to_pose_marker.points.emplace_back(stop_factor.stop_factor_points.front());
+          stop_to_pose_marker.points.emplace_back(stop_factor.stop_pose.position);
           marker_array.markers.emplace_back(stop_to_pose_marker);
         }
         // point to pose
