@@ -95,8 +95,7 @@ void GroundServer::onMap(const HADMapBin & msg)
   const std::set<std::string> visible_labels = {
     "zebra_marking", "virtual", "line_thin", "line_thick", "pedestrian_marking", "stop_line"};
 
-  pcl::PointCloud<pcl::PointXYZ>::Ptr upsampled_cloud =
-    boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
+  pcl::PointCloud<pcl::PointXYZ>::Ptr upsampled_cloud = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
 
   for (lanelet::LineString3d & line : lanelet_map->lineStringLayer) {
     if (!line.hasAttribute(lanelet::AttributeName::Type)) continue;
@@ -111,13 +110,13 @@ void GroundServer::onMap(const HADMapBin & msg)
     }
   }
 
-  cloud_ = boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
+  cloud_ = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
   pcl::VoxelGrid<pcl::PointXYZ> filter;
   filter.setInputCloud(upsampled_cloud);
   filter.setLeafSize(1.0f, 1.0f, 1.0f);
   filter.filter(*cloud_);
 
-  kdtree_ = boost::make_shared<pcl::KdTreeFLANN<pcl::PointXYZ>>();
+  kdtree_ = pcl::make_shared<pcl::KdTreeFLANN<pcl::PointXYZ>>();
   kdtree_->setInputCloud(cloud_);
 }
 
