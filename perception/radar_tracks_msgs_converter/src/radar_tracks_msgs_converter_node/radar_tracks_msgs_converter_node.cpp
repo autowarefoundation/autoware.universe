@@ -185,10 +185,10 @@ TrackedObjects RadarTracksMsgsConverterNode::convertRadarTrackToTrackedObjects()
     kinematics.pose_with_covariance.pose = transformed_pose_stamped.pose;
 
     {
-      auto & covariance = kinematics.pose_with_covariance.covariance;
       using P_IDX = tier4_autoware_utils::pose_covariance_index::POSE_COV_IDX;
       using R_IDX = tier4_autoware_utils::xyz_upper_covariance_index::XYZ_UPPER_COV_IDX;
 
+      auto & covariance = kinematics.pose_with_covariance.covariance;
       covariance[P_IDX::X_X] = radar_track.position_covariance[R_IDX::X_X];
       covariance[P_IDX::X_Y] = radar_track.position_covariance[R_IDX::X_Y];
       covariance[P_IDX::X_Z] = radar_track.position_covariance[R_IDX::X_Z];
