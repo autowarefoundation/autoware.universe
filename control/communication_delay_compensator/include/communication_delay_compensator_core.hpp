@@ -82,8 +82,8 @@ class LateralCommunicationDelayCompensator
   void resetInitialState();
 
  private:
-  obs_model_ptr_t observer_vehicle_model_ptr_{nullptr}; // state observer model
-  model_ptr_t vehicle_model_ptr_{nullptr}; // vehicle model
+  obs_model_ptr_t observer_vehicle_model_ptr_{nullptr};   // state observer model
+  model_ptr_t vehicle_model_ptr_{nullptr};                // vehicle model
 
   // transfer functions
   tf_t tf_qfilter_lat_;
@@ -95,9 +95,9 @@ class LateralCommunicationDelayCompensator
 
   // ------------ QFILTER VARIABLES ----------------------------------
   // state vectors for filtering inputs.
-  Eigen::MatrixXd xu0_;  // @brief state vector for the filtered input
-  Eigen::MatrixXd xd0_;  // @brief state vector for the filtered disturbance
-  float64_t df_d0_{}; // q-filtered disturbance response
+  Eigen::MatrixXd xu0_;   // @brief state vector for the filtered input
+  Eigen::MatrixXd xd0_;   // @brief state vector for the filtered disturbance
+  float64_t df_d0_{};     // q-filtered disturbance response
 
   // ---------------- 1-Q variables -------------------------------
   Eigen::MatrixXd xey0_;     // @brief state vector for the filtered input
@@ -111,7 +111,7 @@ class LateralCommunicationDelayCompensator
   // @brief state estimate at step [k-1]
   state_vector_observer_t xhat0_prev_{state_vector_observer_t::Zero()};
 
-  //@brief estimated vehicle states, disturbance row is zero (cannot observed)
+  // @brief estimated vehicle states, disturbance row is zero (cannot be observed)
   state_vector_vehicle_t prev_yobs_{state_vector_vehicle_t::Zero()};
   state_vector_vehicle_t current_yobs_{state_vector_vehicle_t::Zero()};
 
@@ -120,19 +120,19 @@ class LateralCommunicationDelayCompensator
   state_vector_vehicle_t ybar_temp_{state_vector_vehicle_t::Zero()};
 
   // -------------- VEHICLE MODEL VARIABLES ----------------------------
-  state_vector_vehicle_t xv_d0_{state_vector_vehicle_t::Zero()}; // states for disturbance input simulations
-  state_vector_vehicle_t yv_d0_{state_vector_vehicle_t::Zero()}; // response for disturbance input simulations
+  state_vector_vehicle_t xv_d0_{state_vector_vehicle_t::Zero()};  // states for disturbance input simulations
+  state_vector_vehicle_t yv_d0_{state_vector_vehicle_t::Zero()};  // response for disturbance input simulations
 
-  state_vector_vehicle_t xv_hat0_current_{state_vector_vehicle_t::Zero()}; // state of vehicle model
-  state_vector_vehicle_t yv_hat0_current_{state_vector_vehicle_t::Zero()}; // output of vehicle model
-  state_vector_vehicle_t y_one_minus_Q_{state_vector_vehicle_t::Zero()}; // output of 1-Q
+  state_vector_vehicle_t xv_hat0_current_{state_vector_vehicle_t::Zero()};  // state of vehicle model
+  state_vector_vehicle_t yv_hat0_current_{state_vector_vehicle_t::Zero()};  // output of vehicle model
+  state_vector_vehicle_t y_one_minus_Q_{state_vector_vehicle_t::Zero()};    // output of 1-Q
 
   // Lyapunov matrices to compute
   std::vector<state_matrix_observer_t> vXs_;
   std::vector<measurement_matrix_observer_t> vYs_;
 
   // placeholders
-  measurement_matrix_observer_t Lobs_;    //@brief state observer gain matrix.
+  measurement_matrix_observer_t Lobs_;    // @brief state observer gain matrix.
   state_vector_observer_t theta_params_;  //@brieff nonlinear terms in A of SS models of vehicle.
 
   // smaller size data class members.
@@ -222,7 +222,7 @@ class LateralDisturbanceCompensator
   // @brief state estimate at step [k-1]
   state_vector_observer_t xhat0_prev_{state_vector_observer_t::Zero()};
 
-  //@brief estimated vehicle states, disturbance row is zero (cannot observed)
+  //@brief estimated vehicle states, disturbance row is zero (cannot be observed)
   state_vector_vehicle_t current_yobs_{state_vector_vehicle_t::Zero()};
 
   // -------------- VEHICLE MODEL VARIABLES ----------------------------
@@ -240,7 +240,7 @@ class LateralDisturbanceCompensator
   // placeholders
   measurement_matrix_observer_t Lobs_{measurement_matrix_observer_t::Zero()};    //@brief state observer gain matrix.
 
-  //@brieff nonlinear terms in A of SS models of vehicle.
+  //@brief nonlinear terms in A of SS models of vehicle.
   state_vector_observer_t theta_params_{state_vector_observer_t::Zero()};
 
   // smaller size data class members.
