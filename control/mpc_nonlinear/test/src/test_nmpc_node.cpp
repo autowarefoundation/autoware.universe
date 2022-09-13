@@ -171,12 +171,12 @@ TEST_F(FakeNodeFixture, no_input_stop_control_cmd_is_published)
   ASSERT_FLOAT_EQ(cmd_msg->longitudinal.speed, 0.0);
   ASSERT_FLOAT_EQ(cmd_msg->longitudinal.acceleration, -1.5);
 
-  // DEBUG
-  //  ns_utils::print(" ctrl_cmd_msgs_  steering: ", cmd_msg->lateral.steering_tire_angle);
-  //  ns_utils::print(" ctrl_cmd_msgs_  steering rate : ", cmd_msg->lateral.steering_tire_rotation_rate);
-  //
-  //  ns_utils::print(" ctrl_cmd_msgs_  steering rate : ", cmd_msg->longitudinal.speed);
-  //  ns_utils::print(" ctrl_cmd_msgs_  steering: ", cmd_msg->longitudinal.acceleration, -1.5);
+  //DEBUG
+  ns_utils::print(" ctrl_cmd_msgs_  steering: ", cmd_msg->lateral.steering_tire_angle);
+  ns_utils::print(" ctrl_cmd_msgs_  steering rate : ", cmd_msg->lateral.steering_tire_rotation_rate);
+
+  ns_utils::print(" ctrl_cmd_msgs_  steering rate : ", cmd_msg->longitudinal.speed);
+  ns_utils::print(" ctrl_cmd_msgs_  steering: ", cmd_msg->longitudinal.acceleration, -1.5);
 
 }
 
@@ -239,6 +239,15 @@ TEST_F(FakeNodeFixture, empty_trajectory)
   steer_pub->publish(steer_msg);
 
   test_utils::waitForMessage(node, this, is_control_command_received, std::chrono::seconds{1LL}, false);
-  // ASSERT_FALSE(is_control_command_received);
-  ASSERT_TRUE(true);
+
+  // Expect true with stopping command.
+  ASSERT_TRUE(is_control_command_received);
+
+  // DEBUG
+  ns_utils::print(" ctrl_cmd_msgs_  steering: ", cmd_msg->lateral.steering_tire_angle);
+  ns_utils::print(" ctrl_cmd_msgs_  steering rate : ", cmd_msg->lateral.steering_tire_rotation_rate);
+
+  ns_utils::print(" ctrl_cmd_msgs_  steering rate : ", cmd_msg->longitudinal.speed);
+  ns_utils::print(" ctrl_cmd_msgs_  steering: ", cmd_msg->longitudinal.acceleration, -1.5);
+
 }
