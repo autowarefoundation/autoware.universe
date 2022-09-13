@@ -54,7 +54,6 @@ target_include_directories(
   ${GeographicLib_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
-  ${Sophus_INCLUDE_DIRS}
   include
 )
 

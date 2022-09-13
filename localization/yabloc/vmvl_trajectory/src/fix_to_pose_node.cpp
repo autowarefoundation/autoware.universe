@@ -6,8 +6,8 @@
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
 #include <vmvl_msgs/srv/ground.hpp>
 
-#include <pcl-1.10/pcl/kdtree/kdtree_flann.h>
-#include <pcl-1.10/pcl/point_cloud.h>
+#include <pcl/kdtree/kdtree_flann.h>
+#include <pcl/point_cloud.h>
 #include <tf2_ros/transform_broadcaster.h>
 
 class Fix2Pose : public rclcpp::Node

@@ -22,6 +22,9 @@ find_package(Eigen3 REQUIRED)
 # PCL
 find_package(PCL REQUIRED)
 
+# Sophus
+find_package(Sophus REQUIRED)
+
 # ===================================================
 # Executable
 macro(ADD_EXE)
@@ -37,7 +40,7 @@ macro(ADD_EXE)
   set(TARGET_NAME ${_ARG_TARGET})
   ament_auto_add_executable(${TARGET_NAME} ${SOURCE})
   target_include_directories(${TARGET_NAME} PUBLIC ${_ARG_INC})
-  target_link_libraries(${TARGET_NAME} ${_ARG_LIB})
+  target_link_libraries(${TARGET_NAME} ${_ARG_LIB}  Sophus::Sophus)
 endmacro()
 
 ADD_EXE(TARGET fix_to_pose_node SRC src/fix_to_pose_node.cpp LIB ${PCL_LIBRARIES})

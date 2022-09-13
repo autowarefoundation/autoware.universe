@@ -53,7 +53,7 @@ void ParticleInitializer::onMap(const HADMapBin & bin_map)
 {
   lanelet_map_ = map::fromBinMsg(bin_map);
 
-  cloud_ = boost::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
+  cloud_ = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
 
   auto toPointXYZ = [](const lanelet::ConstPoint3d & p) -> pcl::PointXYZ {
     pcl::PointXYZ xyz;
@@ -70,7 +70,7 @@ void ParticleInitializer::onMap(const HADMapBin & bin_map)
     }
   }
 
-  kdtree_ = boost::make_shared<pcl::KdTreeFLANN<pcl::PointXYZ>>();
+  kdtree_ = pcl::make_shared<pcl::KdTreeFLANN<pcl::PointXYZ>>();
   kdtree_->setInputCloud(cloud_);
 }
 

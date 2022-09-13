@@ -88,7 +88,7 @@ void SegmentFilter::execute(const PointCloud2 & lsd_msg, const PointCloud2 & seg
 
   // Publish point cloud
   pcl::ExtractIndices<pcl::PointNormal> extract;
-  pcl::PointIndicesPtr indices_ptr = boost::make_shared<pcl::PointIndices>(indices);
+  pcl::PointIndicesPtr indices_ptr = pcl::make_shared<pcl::PointIndices>(indices);
   extract.setIndices(indices_ptr);
   extract.setInputCloud(projected_lines);
   pcl::PointCloud<pcl::PointNormal> reliable_edges;

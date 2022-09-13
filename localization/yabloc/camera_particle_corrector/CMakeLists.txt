@@ -19,6 +19,9 @@ ament_auto_find_build_dependencies()
 # Eigen3
 find_package(Eigen3 REQUIRED)
 
+# Sophus
+find_package(Sophus REQUIRED)
+
 # ===================================================
 # Executable
 set(TARGET camera_particle_corrector)
@@ -29,6 +32,7 @@ ament_auto_add_executable(${TARGET}
   src/camera_particle_corrector_core.cpp)
 target_include_directories(${TARGET} PUBLIC include)
 target_include_directories(${TARGET} SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIRS})
+target_link_libraries(${TARGET} Sophus::Sophus)
 
 # ===================================================
 ament_auto_package()

@@ -19,6 +19,9 @@ ament_auto_find_build_dependencies()
 # Eigen3
 find_package(Eigen3 REQUIRED)
 
+# Sophus
+find_package(Sophus REQUIRED)
+
 # ===================================================
 # GeographicLib
 find_package(PkgConfig)
@@ -33,6 +36,7 @@ find_library(GeographicLib_LIBRARIES NAMES Geographic)
 ament_auto_add_executable(gnss_particle_corrector src/gnss_corrector_node.cpp src/gnss_corrector_core.cpp)
 target_include_directories(gnss_particle_corrector PUBLIC include)
 target_include_directories(gnss_particle_corrector PUBLIC SYSTEM ${GeographicLib_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS})
+target_link_libraries(gnss_particle_corrector Sophus::Sophus)
 
 # ===================================================
 ament_auto_package()

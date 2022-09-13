@@ -25,6 +25,9 @@ find_package(OpenCV REQUIRED)
 # PCL
 find_package(PCL REQUIRED)
 
+# SOphus
+find_package(Sophus REQUIRED)
+
 # ===================================================
 # Library
 file(GLOB REGULATORY_ELEMENT_SOURCE 3rd/regulatory_elements/lib/*cpp)
@@ -47,7 +50,7 @@ macro(ADD_EXE)
   set(TARGET_NAME ${_ARG_TARGET})
   ament_auto_add_executable(${TARGET_NAME} ${SOURCE})
   target_include_directories(${TARGET_NAME} PUBLIC ${_ARG_INC} ${EIGEN3_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})
-  target_link_libraries(${TARGET_NAME} ${_ARG_LIB} ${PCL_LIBRARIES})
+  target_link_libraries(${TARGET_NAME} ${_ARG_LIB} ${PCL_LIBRARIES} Sophus::Sophus ${OpenCV_LIBS})
 endmacro()
 
 ADD_EXE(TARGET undistort_node SRC src/undistort_node.cpp INC include)
