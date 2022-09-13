@@ -168,7 +168,6 @@ NonlinearMPCNode::~NonlinearMPCNode()
   ControlCmdMsg stop_cmd{};
   getStopControlCommand(stop_cmd);
   publishControlCommands(stop_cmd);
-  CppAD::thread_alloc::inuse(0);
 }
 
 void NonlinearMPCNode::initTimer(double period_s)
