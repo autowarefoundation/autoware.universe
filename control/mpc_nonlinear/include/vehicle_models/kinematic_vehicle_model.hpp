@@ -43,11 +43,11 @@ class KinematicModelSingleTrackModel
 
   // Destructor
   // ~KinematicModelSingleTrackModel() override = default;
-  ~KinematicModelSingleTrackModel() override
-  {
-    // CppAD::thread_alloc::free_all();
-    // CppAD::thread_alloc::inuse(0);
-  };
+  //  ~KinematicModelSingleTrackModel() override
+  //  {
+  //    // CppAD::thread_alloc::free_all();
+  //    // CppAD::thread_alloc::inuse(0);
+  //  };
 
   // Inherited methods.
   // Dynamical equations overridden from system dynamics.
