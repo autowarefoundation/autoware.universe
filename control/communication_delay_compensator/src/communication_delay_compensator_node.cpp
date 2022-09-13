@@ -133,24 +133,7 @@ void CommunicationDelayCompensatorNode::onTimer()
   updateVehicleModelsWithPreviousTargets();
   // updateVehicleModelsWithCurrentTargets();
 
-  // dist_td_obs_vehicle_model_ptr_->printDiscreteSystem();
-  // dist_td_obs_vehicle_model_ptr_->printContinuousSystem();
-  // vehicle_model_ptr_->printDiscreteSystem();
-  // cdob_lateral_ptr_->printdummy(current_lat_measurements_);
-
   is_vehicle_stopped_ = isVehicleStopping();
-
-  // Compute lateral CDOB references.
-//  if (!is_vehicle_stopped_)
-//  {
-//    computeLateralCDOB();
-//  } else
-//  {
-//    // DOB Reset
-//    // cdob_lateral_ptr_->resetInitialState();
-//    dob_lateral_ptr_->resetInitialState();
-//  }
-
   computeLateralCDOB();
 
   // Publish delay compensation reference.
@@ -203,12 +186,6 @@ void CommunicationDelayCompensatorNode::onCurrentLongitudinalError(ControllerErr
   }
 
   current_target_velocity_ = static_cast<float64_t>(current_long_errors_ptr_->target_velocity_read);
-  // Debug
-  // auto vel_error = static_cast<double>(current_long_errors_ptr_->velocity_error_read);
-  // ns_utils::print("Longitudinal velocity error :", vel_error);
-
-  // RCLCPP_INFO_THROTTLE(this->get_logger(), *get_clock(), 1000, "Longitudinal Error");
-  // end of debug
 }
 
 void CommunicationDelayCompensatorNode::onCurrentLateralErrors(ControllerErrorReportMsg::SharedPtr const msg)
@@ -231,29 +208,7 @@ void CommunicationDelayCompensatorNode::onCurrentLateralErrors(ControllerErrorRe
     prev_ideal_steering_ = std::atan(prev_curvature_ * params_node_.wheel_base);
   }
 
-  // Debug
-  // RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000 /*ms*/, "On Lateral Errors");
-
-  // 			if (current_lat_errors_ptr_)
-  // 			{
-  // 				auto lat_error =
-  // static_cast<double>(current_lat_errors_ptr_->lateral_deviation_read);
-  // auto heading_error =
-  // static_cast<double>(current_lat_errors_ptr_->heading_angle_error_read);
-  // 				ns_utils::print("Current lateral errors : ", lat_error,
-  // heading_error);
-  // 			}
-  // end of debug.
 }
-
-// void CommunicationDelayCompensatorNode::onControlPerfErrors(
-//   const ErrorStampedControlPerfMsg::SharedPtr msg)
-//{
-//   current_cont_perf_errors_ = std::make_shared<ErrorStampedControlPerfMsg>(*msg);
-//
-//   // Debug
-//   RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000 /*ms*/, "On Control Perf. Errors");
-// }
 
 void CommunicationDelayCompensatorNode::publishCompensationReferences()
 {
@@ -466,7 +421,6 @@ void CommunicationDelayCompensatorNode::updateVehicleModelsWithPreviousTargets()
     vehicle_model_ptr_->updateInitialStates(ey, eyaw, steering_angle, current_vx, current_curvature_);
   }
 
-  // ns_utils::print(" Previous target speed :", previous_target_velocity_);
 }
 
 /**
@@ -474,8 +428,6 @@ void CommunicationDelayCompensatorNode::updateVehicleModelsWithPreviousTargets()
  * */
 void CommunicationDelayCompensatorNode::updateVehicleModelsWithCurrentTargets()
 {
-  // auto vref = current_velocity_ptr_->twist.twist.linear.x;
-  // auto & u_prev = previous_control_cmd_ptr_->lateral.steering_tire_angle;
 
   // Update the matrices
   dist_td_obs_vehicle_model_ptr_->updateStateSpace(current_target_velocity_, current_steering_angle_);
@@ -494,7 +446,6 @@ void CommunicationDelayCompensatorNode::updateVehicleModelsWithCurrentTargets()
     vehicle_model_ptr_->updateInitialStates(ey, eyaw, current_steering_angle_, vx, current_curvature_);
   }
 
-  // ns_utils::print(" Previous target speed :", previous_target_velocity_);
 }
 
 void CommunicationDelayCompensatorNode::setLateralCDOB_DOBs(sLyapMatrixVecs const &lyap_matsXY)
@@ -572,8 +523,9 @@ void CommunicationDelayCompensatorNode::computeLateralCDOB()
   current_delay_ref_msg_ptr_->heading_angle_error_read = current_heading_error;
   current_delay_ref_msg_ptr_->steering_read = current_steering;
 
-  // get the previous inputs and parameter that are used and sent to the vehicle.
+
   /**
+   * get the previous inputs and parameter that are used and sent to the vehicle.
    * previous: ideal steering and target velocities to linearize the model, and previous
    * curvature as an input to the steering.
    * */
@@ -594,20 +546,6 @@ void CommunicationDelayCompensatorNode::computeLateralCDOB()
                                     prev_steering_control_cmd,
                                     current_steering_control_cmd,
                                     current_delay_ref_msg_ptr_);
-
-  // DEBUG
-
-  //    ns_utils::print("Current readings [ey, eyaw, delta, ideal steer, curvature] : ", current_lat_error,
-  //                    current_heading_error, current_steering,
-  //                    prev_ideal_steering_, prev_curvature_);
-
-  // ns_eigen_utils::printEigenMat(Eigen::MatrixXd(current_lat_measurements_));
-  //
-  //    ns_utils::print("Previous inputs to CDOB : ");
-  //    ns_eigen_utils::printEigenMat(previous_inputs_to_cdob_);
-
-  // get the vehicle model parameters on which the controllers compute the control signals.
-  // previous : curvature, previous_target velocity
 
 }
 

@@ -19,57 +19,58 @@
 #include "utils_delay_observer/delay_compensation_utils.hpp"
 #include "visibility_control.hpp"
 
-namespace observers {
+namespace observers
+{
 /**
  * @brief Kinematic Vehicle Lateral Error Model state and control definitions.
  * */
-    enum class KinematicErrorDims : int {
-        STATE_DIM = 3,
-        INPUT_DIM = 1,
-        MEASUREMENT_DIM = 3
-    };
+enum class KinematicErrorDims : int
+{
+  STATE_DIM = 3,
+  INPUT_DIM = 1,
+  MEASUREMENT_DIM = 3
+};
 
-    using state_vector_vehicle_t =
-            Eigen::Matrix<double, toUType(KinematicErrorDims::STATE_DIM), 1>;
+using state_vector_vehicle_t =
+  Eigen::Matrix<double, toUType(KinematicErrorDims::STATE_DIM), 1>;
+
+// Lyapunov matrix dimension definitions.
+constexpr size_t cx_NUMBER_OF_LYAP_MATS = 5;
+enum class StateObserverDims : int
+{
+  STATE_DIM = 4,
+  INPUT_DIM = 1,
+  MEASUREMENT_DIM = 3,
+};
+
+using state_vector_observer_t =
+  Eigen::Matrix<double, toUType(StateObserverDims::STATE_DIM), 1>;
+
+using input_vector_observer_t =
+  Eigen::Matrix<double, toUType(StateObserverDims::INPUT_DIM), 1>;
+
+using state_matrix_observer_t = Eigen::Matrix<
+  double, toUType(StateObserverDims::STATE_DIM),
+  toUType(StateObserverDims::STATE_DIM)>;
+
+using input_matrix_observer_t = Eigen::Matrix<
+  double, toUType(StateObserverDims::INPUT_DIM),
+  toUType(StateObserverDims::STATE_DIM)>;
+
+using measurement_matrix_observer_t = Eigen::Matrix<
+  double, toUType(StateObserverDims::MEASUREMENT_DIM),
+  toUType(StateObserverDims::STATE_DIM)>;
 
 
-    // Lyapunov matrix dimension definitions.
-    constexpr size_t cx_NUMBER_OF_LYAP_MATS = 5;
-    enum class StateObserverDims : int {
-        STATE_DIM = 4,
-        INPUT_DIM = 1,
-        MEASUREMENT_DIM = 3,
+// General Template for enum class types.
+template<int Nnum_of_states>
+using state_vector_qfilter = Eigen::Matrix<double, Nnum_of_states, 1>;
 
-    };
+template<typename T>
+using func_type = std::function<T(T)>;
 
-    using state_vector_observer_t =
-            Eigen::Matrix<double, toUType(StateObserverDims::STATE_DIM), 1>;
-
-    using input_vector_observer_t =
-            Eigen::Matrix<double, toUType(StateObserverDims::INPUT_DIM), 1>;
-
-    using state_matrix_observer_t = Eigen::Matrix<
-            double, toUType(StateObserverDims::STATE_DIM),
-            toUType(StateObserverDims::STATE_DIM)>;
-
-    using input_matrix_observer_t = Eigen::Matrix<
-            double, toUType(StateObserverDims::INPUT_DIM),
-            toUType(StateObserverDims::STATE_DIM)>;
-
-    using measurement_matrix_observer_t = Eigen::Matrix<
-            double, toUType(StateObserverDims::MEASUREMENT_DIM),
-            toUType(StateObserverDims::STATE_DIM)>;
-
-
-    // General Template for enum class types.
-    template<int Nnum_of_states>
-    using state_vector_qfilter = Eigen::Matrix<double, Nnum_of_states, 1>;
-
-    template<typename T>
-    using func_type = std::function<T(T)>;
-
-    template<int nx, int ny>
-    using mat_type_t = Eigen::Matrix<double, nx, ny>;
+template<int nx, int ny>
+using mat_type_t = Eigen::Matrix<double, nx, ny>;
 
 }  // namespace observers
 #endif  // COMMUNICATION_DELAY_COMPENSATOR__VEHICLE_DEFINITIONS_HPP
