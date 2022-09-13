@@ -56,8 +56,8 @@ class GroundSegmentationPipeline:
         p["max_longitudinal_offset"] = p["front_overhang"] + p["wheel_base"]
         p["min_lateral_offset"] = -(p["wheel_tread"] / 2.0 + p["right_overhang"])
         p["max_lateral_offset"] = p["wheel_tread"] / 2.0 + p["left_overhang"]
-        p["min_height_offset"] = 0.0
-        p["max_height_offset"] = p["vehicle_height"]
+        p["min_height_offset"] = -2.0
+        p["max_height_offset"] = 2.0 + p["vehicle_height"]
         return p
 
     def get_vehicle_mirror_info(self):
