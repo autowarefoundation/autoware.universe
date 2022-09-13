@@ -63,12 +63,12 @@ private:
       for (auto stop_factor : stop_reason.stop_factors) {
         if (stop_factor.stop_factor_points.empty()) continue;
         MarkerArray marker_array;
-        std::string prefix = reason + "[" + std::to_string(id) + "]:";
+        std::string prefix = reason + "[" + std::to_string(id) + "]";
         const auto stop_factor_point = stop_factor.stop_factor_points.front();
         // base stop pose marker
         {
           auto stop_point_marker = createDefaultMarker(
-            "map", current_time, prefix + "stop_factor_point", id, Marker::SPHERE,
+            "map", current_time, prefix + ":stop_factor_point", id, Marker::SPHERE,
             createMarkerScale(0.25, 0.25, 0.25), createMarkerColor(1.0, 0.0, 0.0, 0.999));
           stop_point_marker.pose.position = stop_factor_point;
           marker_array.markers.emplace_back(stop_point_marker);
@@ -76,7 +76,7 @@ private:
         // attention ! marker
         {
           auto attention_text_marker = createDefaultMarker(
-            "map", current_time, prefix + "attention text", id,
+            "map", current_time, prefix + ":attention text", id,
             visualization_msgs::msg::Marker::TEXT_VIEW_FACING, createMarkerScale(0.0, 0.0, 1.0),
             createMarkerColor(1.0, 1.0, 1.0, 0.999));
           attention_text_marker.pose.position = stop_factor_point;
@@ -87,7 +87,7 @@ private:
         // point to pose
         {
           auto stop_to_pose_marker = createDefaultMarker(
-            "map", current_time, prefix + "stop_to_pose", id, Marker::LINE_STRIP,
+            "map", current_time, prefix + ":stop_to_pose", id, Marker::LINE_STRIP,
             createMarkerScale(0.02, 0.0, 0.0), createMarkerColor(0.0, 1.0, 1.0, 0.999));
           stop_to_pose_marker.points.emplace_back(stop_factor.stop_factor_points.front());
           stop_to_pose_marker.points.emplace_back(stop_factor.stop_pose.position);
@@ -96,7 +96,7 @@ private:
         // point to pose
         {
           auto stop_pose_marker = createDefaultMarker(
-            "map", current_time, prefix + "stop_pose", id, Marker::ARROW,
+            "map", current_time, prefix + ":stop_pose", id, Marker::ARROW,
             createMarkerScale(0.4, 0.2, 0.2), createMarkerColor(1.0, 0.0, 0.0, 0.999));
           stop_pose_marker.pose = stop_factor.stop_pose;
           marker_array.markers.emplace_back(stop_pose_marker);
@@ -104,8 +104,9 @@ private:
         // add view distance text
         {
           auto distance_text_marker = createDefaultMarker(
-            "map", current_time, prefix, id, visualization_msgs::msg::Marker::TEXT_VIEW_FACING,
-            createMarkerScale(0.0, 0.0, 0.2), createMarkerColor(1.0, 1.0, 1.0, 0.999));
+            "map", current_time, prefix + ":reason", id,
+            visualization_msgs::msg::Marker::TEXT_VIEW_FACING, createMarkerScale(0.0, 0.0, 0.2),
+            createMarkerColor(1.0, 1.0, 1.0, 0.999));
           distance_text_marker.pose = stop_factor.stop_pose;
           distance_text_marker.text = prefix;
           marker_array.markers.emplace_back(distance_text_marker);
