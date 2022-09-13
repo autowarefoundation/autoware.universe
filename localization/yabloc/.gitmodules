@@ -4,3 +4,6 @@
 [submodule "src/rviz2_plugins/rosbag2_rviz_plugins"]
 	path = rviz2_plugins/rosbag2_rviz_plugins
 	url = https://github.com/Kettenhoax/rosbag2_rviz_plugins.git
+[submodule "Sophus"]
+	path = Sophus
+	url = https://github.com/strasdat/Sophus.git

@@ -25,6 +25,9 @@ find_package(OpenCV REQUIRED)
 # PCL
 find_package(PCL REQUIRED)
 
+# Sophus
+find_package(Sophus REQUIRED)
+
 # ===================================================
 # GeographicLib
 find_package(PkgConfig)
@@ -43,7 +46,7 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/cv_decompress.cpp
   src/pose_conversions.cpp
   src/color.cpp)
-target_link_libraries(${PROJECT_NAME} Geographic ${PCL_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} Geographic ${PCL_LIBRARIES} Sophus::Sophus)
 target_include_directories(
   ${PROJECT_NAME} PUBLIC
   SYSTEM
@@ -51,6 +54,7 @@ target_include_directories(
   ${GeographicLib_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
   ${OpenCV_INCLUDE_DIRS}
+  ${Sophus_INCLUDE_DIRS}
   include
 )
 
