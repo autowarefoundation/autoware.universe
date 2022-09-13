@@ -105,4 +105,4 @@ struct vector_space_norm_inf<Eigen::Matrix<double, S1, S2, O, M1, M2>>
 }  // namespace boost
 
 #endif
-#endif //COMMUNICATION_DELAY_COMPENSATOR__EIGEN_INTEGRATION_HELPER_HPP
+#endif // COMMUNICATION_DELAY_COMPENSATOR__EIGEN_INTEGRATION_HELPER_HPP

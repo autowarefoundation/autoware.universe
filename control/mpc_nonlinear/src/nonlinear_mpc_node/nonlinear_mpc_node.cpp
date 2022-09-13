@@ -98,6 +98,7 @@ NonlinearMPCNode::NonlinearMPCNode(const rclcpp::NodeOptions &node_options)
   if (!vehicle_model_ptr->IsInitialized())
   {
     vehicle_model_ptr->InitializeModel();
+    // vehicle_model_ptr->testModel();
   }
 
   /**

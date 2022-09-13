@@ -42,6 +42,7 @@ class KinematicModelSingleTrackModel
   KinematicModelSingleTrackModel() = default;
 
   // Destructor
+  // ~KinematicModelSingleTrackModel() override = default;
   ~KinematicModelSingleTrackModel() override = default;
 
   // Inherited methods.
