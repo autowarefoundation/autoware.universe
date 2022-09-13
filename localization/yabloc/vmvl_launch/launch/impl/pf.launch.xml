@@ -40,11 +40,11 @@
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="image_size" value="800"/>
         <param name="max_range" value="40.0"/>
-        <param name="gamma" value="10.0"/>
+        <param name="gamma" value="5.0"/>
         <param name="score_offset" value="-128.0"/>
         <param name="max_raw_score" value="100000.0"/>
         <param name="min_prob" value="0.1"/>
-        <param name="far_weight_gain" value="0.004"/>
+        <param name="far_weight_gain" value="0.001"/>
 
         <remap from="/weighted_particles" to="/weighted_particles"/>
         <remap from="/lsd_cloud" to="/projected_lsd_cloud"/>

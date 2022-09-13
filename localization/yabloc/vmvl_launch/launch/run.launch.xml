@@ -10,14 +10,15 @@
     <arg name="road_marking_labels" default="[zebra_marking, virtual, line_thin, line_thick, pedestrian_marking, stop_line]"/>
     <arg name="rtk_enabled" default="true"/>
     <arg name="min_segment_length" default="-1.0"/>
-    <arg name="max_segment_distance" default="40.0"/>
+    <arg name="max_segment_distance" default="50.0"/>
     <arg name="max_lateral_distance" default="10.0"/>
+    <arg name="initialpose_cov_xx_yy" default="[16.0,0.25]"/>
 
     <!-- ========================================= -->
     <!-- ============~~ INITIALIZER ============== -->
     <!-- ========================================= -->
     <node name="particle_initializer_node" pkg="particle_initializer" exec="particle_initializer_node" output="screen" args="--ros-args --log-level info">
-        <param name="cov_xx_yy" value="[16.0,0.25]" />
+        <param name="cov_xx_yy" value="$(var initialpose_cov_xx_yy)" />
     </node>
 
     <!-- ========================================= -->
