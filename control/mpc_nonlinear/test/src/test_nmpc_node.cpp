@@ -22,57 +22,6 @@
 #include "nonlinear_mpc_test_node.hpp"
 #include "nmpc_test_utils.hpp"
 
-TEST_F(FakeNodeFixture, no_input_stop_control_cmd_is_published)
-{
-  // Data to test
-  ControlCmdMsg::SharedPtr cmd_msg;
-  bool is_control_command_received = false;
-
-  // Node
-  std::shared_ptr<NonlinearMPCNode> node = makeNonlinearMPCNode();
-
-  // Publishers
-  rclcpp::Publisher<TrajectoryMsg>::SharedPtr traj_pub =
-    this->create_publisher<TrajectoryMsg>("mpc_nonlinear/input/reference_trajectory");
-
-  rclcpp::Publisher<VelocityMsg>::SharedPtr vel_pub =
-    this->create_publisher<VelocityMsg>("mpc_nonlinear/input/current_velocity");
-
-  rclcpp::Publisher<SteeringReport>::SharedPtr steer_pub =
-    this->create_publisher<SteeringReport>("mpc_nonlinear/input/current_steering");
-
-  // Subscribers
-  rclcpp::Subscription<ControlCmdMsg>::SharedPtr cmd_sub = this->create_subscription<ControlCmdMsg>(
-    "mpc_nonlinear/output/control_cmd", *this->get_fake_node(),
-    [&cmd_msg, &is_control_command_received](const ControlCmdMsg::SharedPtr msg)
-    {
-      cmd_msg = msg;
-      is_control_command_received = true;
-    });
-
-  auto br = std::make_shared<tf2_ros::StaticTransformBroadcaster>(this->get_fake_node());
-
-  // test_utils::spinWhile(node);
-
-  test_utils::waitForMessage(node, this, is_control_command_received, std::chrono::seconds{1LL}, false);
-  /**
-   * Expect stop command with acc = -1.5 and other controls are 0.
-   * */
-  ASSERT_TRUE(is_control_command_received);
-  ASSERT_FLOAT_EQ(cmd_msg->lateral.steering_tire_angle, 0.0);
-  ASSERT_FLOAT_EQ(cmd_msg->lateral.steering_tire_rotation_rate, 0.0);
-  ASSERT_FLOAT_EQ(cmd_msg->longitudinal.speed, 0.0);
-  ASSERT_FLOAT_EQ(cmd_msg->longitudinal.acceleration, -1.5);
-
-  // DEBUG
-  //  ns_utils::print(" ctrl_cmd_msgs_  steering: ", cmd_msg->lateral.steering_tire_angle);
-  //  ns_utils::print(" ctrl_cmd_msgs_  steering rate : ", cmd_msg->lateral.steering_tire_rotation_rate);
-  //
-  //  ns_utils::print(" ctrl_cmd_msgs_  steering rate : ", cmd_msg->longitudinal.speed);
-  //  ns_utils::print(" ctrl_cmd_msgs_  steering: ", cmd_msg->longitudinal.acceleration, -1.5);
-
-}
-
 /**
  * Automatic differentiation : Vehicle model equations test.
  * */
@@ -180,14 +129,116 @@ TEST_F(FakeNodeFixture, automatic_differentiation_works)
   // end of debug
 }
 
-/**
- * @brief path tracking performance test - sigmoid function like xy trajectory.
- * The trajectory starts at [x, y, yaw] = [0, 0, 0] and ends at [500, 50m    ]
- * */
-TEST_F(FakeNodeFixture, nmpc_tracking)
+TEST_F(FakeNodeFixture, no_input_stop_control_cmd_is_published)
 {
-  TrajectoryMsg sigmoid_traj_msg{};
-  createTrajectoryMessage(sigmoid_traj_msg);
+  // Data to test
+  ControlCmdMsg::SharedPtr cmd_msg;
+  bool is_control_command_received = false;
 
+  // Node
+  std::shared_ptr<NonlinearMPCNode> node = makeNonlinearMPCNode();
+
+  // Publishers
+  rclcpp::Publisher<TrajectoryMsg>::SharedPtr traj_pub =
+    this->create_publisher<TrajectoryMsg>("mpc_nonlinear/input/reference_trajectory");
+
+  rclcpp::Publisher<VelocityMsg>::SharedPtr vel_pub =
+    this->create_publisher<VelocityMsg>("mpc_nonlinear/input/current_velocity");
+
+  rclcpp::Publisher<SteeringReport>::SharedPtr steer_pub =
+    this->create_publisher<SteeringReport>("mpc_nonlinear/input/current_steering");
+
+  // Subscribers
+  rclcpp::Subscription<ControlCmdMsg>::SharedPtr cmd_sub = this->create_subscription<ControlCmdMsg>(
+    "mpc_nonlinear/output/control_cmd", *this->get_fake_node(),
+    [&cmd_msg, &is_control_command_received](const ControlCmdMsg::SharedPtr msg)
+    {
+      cmd_msg = msg;
+      is_control_command_received = true;
+    });
+
+  auto br = std::make_shared<tf2_ros::StaticTransformBroadcaster>(this->get_fake_node());
+
+  // test_utils::spinWhile(node);
+
+  test_utils::waitForMessage(node, this, is_control_command_received, std::chrono::seconds{1LL}, false);
+  /**
+   * Expect stop command with acc = -1.5 and other controls are 0.
+   * */
+  ASSERT_TRUE(is_control_command_received);
+  ASSERT_FLOAT_EQ(cmd_msg->lateral.steering_tire_angle, 0.0);
+  ASSERT_FLOAT_EQ(cmd_msg->lateral.steering_tire_rotation_rate, 0.0);
+  ASSERT_FLOAT_EQ(cmd_msg->longitudinal.speed, 0.0);
+  ASSERT_FLOAT_EQ(cmd_msg->longitudinal.acceleration, -1.5);
+
+  // DEBUG
+  //  ns_utils::print(" ctrl_cmd_msgs_  steering: ", cmd_msg->lateral.steering_tire_angle);
+  //  ns_utils::print(" ctrl_cmd_msgs_  steering rate : ", cmd_msg->lateral.steering_tire_rotation_rate);
+  //
+  //  ns_utils::print(" ctrl_cmd_msgs_  steering rate : ", cmd_msg->longitudinal.speed);
+  //  ns_utils::print(" ctrl_cmd_msgs_  steering: ", cmd_msg->longitudinal.acceleration, -1.5);
+
+}
+
+TEST_F(FakeNodeFixture, empty_trajectory)
+{
+  // Data to test
+  ControlCmdMsg::SharedPtr cmd_msg;
+  bool is_control_command_received = false;
+
+  // Node
+  std::shared_ptr<NonlinearMPCNode> node = makeNonlinearMPCNode();
+
+  // Publishers
+  rclcpp::Publisher<TrajectoryMsg>::SharedPtr traj_pub =
+    this->create_publisher<TrajectoryMsg>("mpc_nonlinear/input/reference_trajectory");
+
+  rclcpp::Publisher<VelocityMsg>::SharedPtr vel_pub =
+    this->create_publisher<VelocityMsg>("mpc_nonlinear/input/current_velocity");
+
+  rclcpp::Publisher<SteeringReport>::SharedPtr steer_pub =
+    this->create_publisher<SteeringReport>("mpc_nonlinear/input/current_steering");
+
+  // Subscribers
+  rclcpp::Subscription<ControlCmdMsg>::SharedPtr cmd_sub = this->create_subscription<ControlCmdMsg>(
+    "mpc_nonlinear/output/control_cmd", *this->get_fake_node(),
+    [&cmd_msg, &is_control_command_received](const ControlCmdMsg::SharedPtr msg)
+    {
+      cmd_msg = msg;
+      is_control_command_received = true;
+    });
+
+  auto br = std::make_shared<tf2_ros::StaticTransformBroadcaster>(this->get_fake_node());
+
+  // Dummy transform: ego is at (0.0, 0.0) in map frame
+  geometry_msgs::msg::TransformStamped transform = test_utils::getDummyTransform();
+  transform.header.stamp = node->now();
+  br->sendTransform(transform);
+
+  // Spin for transform to be published
+  test_utils::spinWhile(node);
+
+  // Empty trajectory: expect a stopped command
+  TrajectoryMsg traj_msg;
+  traj_msg.header.stamp = node->now();
+  traj_msg.header.frame_id = "map";
+
+  VelocityMsg odom_msg;
+  SteeringReport steer_msg;
+
+  traj_msg.header.stamp = node->now();
+  odom_msg.header.stamp = node->now();
+
+  odom_msg.twist.twist.linear.x = 0.0;
+  steer_msg.stamp = node->now();
+
+  steer_msg.steering_tire_angle = 0.0;
+  traj_pub->publish(traj_msg);
+
+  vel_pub->publish(odom_msg);
+  steer_pub->publish(steer_msg);
+
+  test_utils::waitForMessage(node, this, is_control_command_received, std::chrono::seconds{1LL}, false);
+  // ASSERT_FALSE(is_control_command_received);
   ASSERT_TRUE(true);
 }
