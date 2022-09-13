@@ -178,32 +178,38 @@ BehaviorModuleOutput PullOutModule::plan()
   output.turn_signal_info =
     calcTurnSignalInfo(status_.pull_out_path.start_pose, status_.pull_out_path.end_pose);
 
-  double start_distance = 0.0;
-  if (status_.back_finished) {
-    start_distance = motion_utils::calcSignedArcLength(
-      path.points, planner_data_->self_pose->pose.position,
-      status_.pull_out_path.start_pose.position);
-  }
-
-  const double finish_distance = motion_utils::calcSignedArcLength(
-    path.points, planner_data_->self_pose->pose.position,
-    status_.pull_out_path.start_pose.position);
-  updateRTCStatus(start_distance, finish_distance);
-
-  setDebugData();
-
-  uint16_t direction;
+  uint16_t direction = SteeringFactor::STRAIGHT;
   if (output.turn_signal_info.turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {
     direction = SteeringFactor::LEFT;
-  } else {
+  } else if (output.turn_signal_info.turn_signal.command == TurnIndicatorsCommand::ENABLE_RIGHT) {
     direction = SteeringFactor::RIGHT;
   }
 
-  // TODO(tkhmy) add handle status TRYING
-  steering_factor_interface_ptr_->updateSteeringFactor(
-    {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose},
-    {start_distance, finish_distance}, SteeringFactor::PULL_OUT, direction, SteeringFactor::TURNING,
-    "");
+  if (status_.back_finished) {
+    const double start_distance = motion_utils::calcSignedArcLength(
+      path.points, planner_data_->self_pose->pose.position,
+      status_.pull_out_path.start_pose.position);
+    const double finish_distance = motion_utils::calcSignedArcLength(
+      path.points, planner_data_->self_pose->pose.position,
+      status_.pull_out_path.end_pose.position);
+    updateRTCStatus(start_distance, finish_distance);
+    // TODO(tkhmy) add handle status TRYING
+    steering_factor_interface_ptr_->updateSteeringFactor(
+      {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose},
+      {start_distance, finish_distance}, SteeringFactor::PULL_OUT, direction,
+      SteeringFactor::TURNING, "");
+  } else {
+    const double distance = motion_utils::calcSignedArcLength(
+      path.points, planner_data_->self_pose->pose.position,
+      status_.pull_out_path.start_pose.position);
+    updateRTCStatus(0.0, distance);
+    // TODO(tkhmy) add handle status TRYING
+    steering_factor_interface_ptr_->updateSteeringFactor(
+      {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose}, {0.0, distance},
+      SteeringFactor::PULL_OUT, direction, SteeringFactor::TURNING, "");
+  }
+
+  setDebugData();
 
   return output;
 }
@@ -269,31 +275,37 @@ BehaviorModuleOutput PullOutModule::planWaitingApproval()
   output.path_candidate = std::make_shared<PathWithLaneId>(candidate_path);
 
   waitApproval();
-  double start_distance = 0.0;
-  if (status_.back_finished) {
-    start_distance = motion_utils::calcSignedArcLength(
-      candidate_path.points, planner_data_->self_pose->pose.position,
-      status_.pull_out_path.start_pose.position);
-  }
 
-  const double finish_distance = motion_utils::calcSignedArcLength(
-    candidate_path.points, planner_data_->self_pose->pose.position,
-    status_.pull_out_path.end_pose.position);
-  updateRTCStatus(start_distance, finish_distance);
-
-  setDebugData();
-
-  uint16_t direction;
+  uint16_t direction = SteeringFactor::STRAIGHT;
   if (output.turn_signal_info.turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {
     direction = SteeringFactor::LEFT;
-  } else {
+  } else if (output.turn_signal_info.turn_signal.command == TurnIndicatorsCommand::ENABLE_RIGHT) {
     direction = SteeringFactor::RIGHT;
   }
 
-  steering_factor_interface_ptr_->updateSteeringFactor(
-    {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose},
-    {start_distance, finish_distance}, SteeringFactor::PULL_OUT, direction,
-    SteeringFactor::APPROACHING, "");
+  if (status_.back_finished) {
+    const double start_distance = motion_utils::calcSignedArcLength(
+      candidate_path.points, planner_data_->self_pose->pose.position,
+      status_.pull_out_path.start_pose.position);
+    const double finish_distance = motion_utils::calcSignedArcLength(
+      candidate_path.points, planner_data_->self_pose->pose.position,
+      status_.pull_out_path.end_pose.position);
+    updateRTCStatus(start_distance, finish_distance);
+    steering_factor_interface_ptr_->updateSteeringFactor(
+      {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose},
+      {start_distance, finish_distance}, SteeringFactor::PULL_OUT, direction,
+      SteeringFactor::APPROACHING, "");
+  } else {
+    const double distance = motion_utils::calcSignedArcLength(
+      candidate_path.points, planner_data_->self_pose->pose.position,
+      status_.pull_out_path.start_pose.position);
+    updateRTCStatus(0.0, distance);
+    steering_factor_interface_ptr_->updateSteeringFactor(
+      {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose}, {0.0, distance},
+      SteeringFactor::PULL_OUT, direction, SteeringFactor::APPROACHING, "");
+  }
+
+  setDebugData();
 
   return output;
 }

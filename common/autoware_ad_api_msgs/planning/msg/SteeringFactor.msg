@@ -14,6 +14,7 @@ uint16 EMERGENCY_OPERATION = 8
 # constants for direction
 uint16 LEFT = 1
 uint16 RIGHT = 2
+uint16 STRAIGHT = 3
 
 # constants for status
 uint16 APPROACHING = 1

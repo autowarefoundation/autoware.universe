@@ -676,10 +676,10 @@ BehaviorModuleOutput PullOverModule::plan()
     goal_pose_pub_->publish(goal_pose_stamped);
   }
 
-  uint16_t direction;
+  uint16_t direction = SteeringFactor::STRAIGHT;
   if (getTurnInfo().first.command == TurnIndicatorsCommand::ENABLE_LEFT) {
     direction = SteeringFactor::LEFT;
-  } else {
+  } else if (getTurnInfo().first.command == TurnIndicatorsCommand::ENABLE_RIGHT) {
     direction = SteeringFactor::RIGHT;
   }
   // TODO(tkhmy) add handle status TRYING
@@ -715,10 +715,10 @@ BehaviorModuleOutput PullOverModule::planWaitingApproval()
   const auto distance_to_path_change = calcDistanceToPathChange();
   updateRTCStatus(distance_to_path_change.first, distance_to_path_change.second);
 
-  uint16_t direction;
+  uint16_t direction = SteeringFactor::STRAIGHT;
   if (out.turn_signal_info.turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {
     direction = SteeringFactor::LEFT;
-  } else {
+  } else if (out.turn_signal_info.turn_signal.command == TurnIndicatorsCommand::ENABLE_RIGHT) {
     direction = SteeringFactor::RIGHT;
   }
 
