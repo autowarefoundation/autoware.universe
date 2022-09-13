@@ -55,7 +55,8 @@ NetMonitor::NetMonitor(const rclcpp::NodeOptions & options)
   crc_error_count_threshold_(declare_parameter<int>("crc_error_count_threshold", 1)),
   reassembles_failed_check_duration_(
     declare_parameter<int>("reassembles_failed_check_duration", 1)),
-  reassembles_failed_check_count_(declare_parameter<int>("reassembles_failed_check_count", 1))
+  reassembles_failed_check_count_(declare_parameter<int>("reassembles_failed_check_count", 1)),
+  reassembles_failed_column_index_(-1)
 {
   using namespace std::literals::chrono_literals;
 
@@ -74,6 +75,8 @@ NetMonitor::NetMonitor(const rclcpp::NodeOptions & options)
   updater_.add("IP Packet Reassembles Failed", this, &NetMonitor::checkReassemblesFailed);
 
   nl80211_.init();
+
+  searchReassemblesFailedColumnIndex();
 
   // get Network information for the first time
   updateNetworkInfoList();
@@ -544,11 +547,11 @@ void NetMonitor::checkReassemblesFailed(diagnostic_updater::DiagnosticStatusWrap
   SystemMonitorUtility::stopMeasurement(t_start, stat);
 }
 
-bool NetMonitor::getReassemblesFailed(uint64_t & reassembles_failed)
+void NetMonitor::searchReassemblesFailedColumnIndex()
 {
   std::ifstream ifs("/proc/net/snmp");
   if (!ifs) {
-    return false;
+    return;
   }
 
   // /proc/net/snmp
@@ -556,29 +559,45 @@ bool NetMonitor::getReassemblesFailed(uint64_t & reassembles_failed)
   // Ip: 2          64         5636471397 ... 135          2303339    216166   270        ...
   std::string line;
 
-  // Find index of 'ReasmFails'
+  // Find column index of 'ReasmFails'
   if (!std::getline(ifs, line)) {
-    return false;
+    return;
   }
 
   std::vector<std::string> title_list;
   boost::split(title_list, line, boost::is_space());
 
   if (title_list.empty()) {
-    return false;
+    return;
   }
   if (title_list[0] != "Ip:") {
-    return false;
+    return;
   }
 
   int index = 0;
   for (auto itr = title_list.begin(); itr != title_list.end(); ++itr, ++index) {
     if (*itr == "ReasmFails") {
+      reassembles_failed_column_index_ = index;
       break;
     }
   }
+}
 
-  if (title_list.size() <= static_cast<std::size_t>(index)) {
+bool NetMonitor::getReassemblesFailed(uint64_t & reassembles_failed)
+{
+  if (reassembles_failed_column_index_ < 0) {
+    return false;
+  }
+
+  std::ifstream ifs("/proc/net/snmp");
+  if (!ifs) {
+    return false;
+  }
+
+  std::string line;
+
+  // Skip title row
+  if (!std::getline(ifs, line)) {
     return false;
   }
 
@@ -590,11 +609,11 @@ bool NetMonitor::getReassemblesFailed(uint64_t & reassembles_failed)
   std::vector<std::string> value_list;
   boost::split(value_list, line, boost::is_space());
 
-  if (title_list.size() != value_list.size()) {
+  if (value_list.size() <= static_cast<std::size_t>(reassembles_failed_column_index_)) {
     return false;
   }
 
-  reassembles_failed = std::stoull(value_list[index]);
+  reassembles_failed = std::stoull(value_list[reassembles_failed_column_index_]);
 
   return true;
 }
