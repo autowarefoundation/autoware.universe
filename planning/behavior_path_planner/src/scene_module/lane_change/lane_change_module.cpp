@@ -223,16 +223,18 @@ CandidateOutput LaneChangeModule::planCandidate() const
     selected_path.path.points, planner_data_->self_pose->pose.position,
     selected_path.shift_point.end.position);
 
-  uint16_t direction;
-  if (output.lateral_shift > 0.0) {
-    direction = SteeringFactor::LEFT;
-  } else {
-    direction = SteeringFactor::RIGHT;
-  }
+  const uint16_t steering_factor_direction = std::invoke([&output]() {
+    if (output.lateral_shift > 0.0) {
+      return SteeringFactor::LEFT;
+    }
+    return SteeringFactor::RIGHT;
+  });
+
   steering_factor_interface_ptr_->updateSteeringFactor(
     {selected_path.shift_point.start, selected_path.shift_point.end},
     {output.start_distance_to_path_change, output.finish_distance_to_path_change},
-    SteeringFactor::LANE_CHANGE, direction, SteeringFactor::APPROACHING, "");
+    SteeringFactor::LANE_CHANGE, steering_factor_direction, SteeringFactor::APPROACHING, "");
+
   return output;
 }
 
