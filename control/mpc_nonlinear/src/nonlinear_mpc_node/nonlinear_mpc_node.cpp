@@ -24,6 +24,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <limits>
 
 namespace ns_mpc_nonlinear
 {
@@ -691,7 +692,6 @@ void NonlinearMPCNode::loadNodeParameters()
   // CDOB - DOB options
   params_node_.use_cdob = declare_parameter<bool>("use_cdob");
   params_node_.use_dob = declare_parameter<bool>("use_dob");
-
 }
 
 void NonlinearMPCNode::loadVehicleParameters(ns_models::ParamsVehicle &params_vehicle)
@@ -1267,7 +1267,6 @@ void NonlinearMPCNode::findClosestPrevWayPointIdx()
 
   for (size_t k = 0; k < current_trajectory_size_; ++k)
   {
-
     auto const &point = current_trajectory_ptr_->points[k];
     auto const &pose_yaw = tf2::getYaw(point.pose.orientation);
 

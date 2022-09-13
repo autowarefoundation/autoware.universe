@@ -96,4 +96,4 @@ inline void spinWhile(T &node)
 
 }  // namespace test_utils
 
-#endif  //NMPC_TEST_UTILS_HPP_
+#endif  // NMPC_TEST_UTILS_HPP_

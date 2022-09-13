@@ -130,8 +130,8 @@ struct ParamsOptimization
   bool osqp_warm_start{};
   bool osqp_polishing{};
   bool osqp_scaling{};
-  long int osqp_max_iters{};
-  long int osqp_polish_iters{};
+  int32_t osqp_max_iters{};
+  int32_t osqp_polish_iters{};
   double osqp_time_limit{};
   double osqp_eps_abs{};
   double osqp_eps_rel{};
@@ -146,7 +146,6 @@ struct ParamsOptimization
 template<size_t numOfNonlinearTerms>
 struct ParamsLPVFeedback
 {
-
   ParamsLPVFeedback()
   {
     lpvXcontainer.reserve(numOfNonlinearTerms);  // !<@brief including X0, Y0
@@ -171,7 +170,6 @@ struct ParamsLPVFeedback
 template<size_t mpc_numPredictionStepsK>
 struct DataNMPCcore
 {
-
   DataNMPCcore() = default;
 
   explicit DataNMPCcore(double const &mpc_dt) : mpc_prediction_dt{mpc_dt}
