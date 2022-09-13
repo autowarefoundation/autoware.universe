@@ -49,6 +49,7 @@ public:
 private:
   void onStopReasonArray(const StopReasonArray::ConstSharedPtr msg)
   {
+    using tier4_autoware_utils::appendMarkerArray;
     using tier4_autoware_utils::createDefaultMarker;
     using tier4_autoware_utils::createMarkerColor;
     using tier4_autoware_utils::createMarkerScale;
@@ -58,11 +59,12 @@ private:
     const double offset_z = 1.0;
     for (auto stop_reason : msg->stop_reasons) {
       std::string reason = stop_reason.reason;
+      if (reason.empty()) continue;
       const auto current_time = this->now();
       int id = 0;
+      MarkerArray marker_array;
       for (auto stop_factor : stop_reason.stop_factors) {
         if (stop_factor.stop_factor_points.empty()) continue;
-        MarkerArray marker_array;
         std::string prefix = reason + "[" + std::to_string(id) + "]";
         const auto stop_factor_point = stop_factor.stop_factor_points.front();
         // base stop pose marker
@@ -103,17 +105,17 @@ private:
         }
         // add view distance text
         {
-          auto distance_text_marker = createDefaultMarker(
-            "map", current_time, prefix + ":reason", id,
-            visualization_msgs::msg::Marker::TEXT_VIEW_FACING, createMarkerScale(0.0, 0.0, 0.2),
-            createMarkerColor(1.0, 1.0, 1.0, 0.999));
-          distance_text_marker.pose = stop_factor.stop_pose;
-          distance_text_marker.text = prefix;
-          marker_array.markers.emplace_back(distance_text_marker);
+          auto reason_text_marker = createDefaultMarker(
+            "map", current_time, prefix + ":reason", id, Marker::TEXT_VIEW_FACING,
+            createMarkerScale(0.0, 0.0, 0.2), createMarkerColor(1.0, 1.0, 1.0, 0.999));
+          reason_text_marker.pose = stop_factor.stop_pose;
+          reason_text_marker.text = prefix;
+          marker_array.markers.emplace_back(reason_text_marker);
         }
-        tier4_autoware_utils::appendMarkerArray(marker_array, &all_marker_array, current_time);
         id++;
       }
+      if (!marker_array.markers.empty())
+        appendMarkerArray(marker_array, &all_marker_array, current_time);
     }
     pub_stop_reasons_marker_->publish(all_marker_array);
   }
