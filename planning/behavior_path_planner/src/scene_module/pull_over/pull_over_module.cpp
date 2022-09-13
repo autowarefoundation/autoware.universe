@@ -676,17 +676,20 @@ BehaviorModuleOutput PullOverModule::plan()
     goal_pose_pub_->publish(goal_pose_stamped);
   }
 
-  uint16_t direction = SteeringFactor::STRAIGHT;
-  if (getTurnInfo().first.command == TurnIndicatorsCommand::ENABLE_LEFT) {
-    direction = SteeringFactor::LEFT;
-  } else if (getTurnInfo().first.command == TurnIndicatorsCommand::ENABLE_RIGHT) {
-    direction = SteeringFactor::RIGHT;
-  }
+  const uint16_t steering_factor_direction = std::invoke([this]() {
+    if (getTurnInfo().first.command == TurnIndicatorsCommand::ENABLE_LEFT) {
+      return SteeringFactor::LEFT;
+    } else if (getTurnInfo().first.command == TurnIndicatorsCommand::ENABLE_RIGHT) {
+      return SteeringFactor::RIGHT;
+    }
+    return SteeringFactor::STRAIGHT;
+  });
+
   // TODO(tkhmy) add handle status TRYING
   steering_factor_interface_ptr_->updateSteeringFactor(
     {getParkingStartPose(), modified_goal_pose_},
     {distance_to_path_change.first, distance_to_path_change.second}, SteeringFactor::PULL_OVER,
-    direction, SteeringFactor::TURNING, "");
+    steering_factor_direction, SteeringFactor::TURNING, "");
 
   // For evaluations
   if (parameters_.print_debug_info) {
@@ -715,17 +718,19 @@ BehaviorModuleOutput PullOverModule::planWaitingApproval()
   const auto distance_to_path_change = calcDistanceToPathChange();
   updateRTCStatus(distance_to_path_change.first, distance_to_path_change.second);
 
-  uint16_t direction = SteeringFactor::STRAIGHT;
-  if (getTurnInfo().first.command == TurnIndicatorsCommand::ENABLE_LEFT) {
-    direction = SteeringFactor::LEFT;
-  } else if (getTurnInfo().first.command == TurnIndicatorsCommand::ENABLE_RIGHT) {
-    direction = SteeringFactor::RIGHT;
-  }
+  const uint16_t steering_factor_direction = std::invoke([this]() {
+    if (getTurnInfo().first.command == TurnIndicatorsCommand::ENABLE_LEFT) {
+      return SteeringFactor::LEFT;
+    } else if (getTurnInfo().first.command == TurnIndicatorsCommand::ENABLE_RIGHT) {
+      return SteeringFactor::RIGHT;
+    }
+    return SteeringFactor::STRAIGHT;
+  });
 
   steering_factor_interface_ptr_->updateSteeringFactor(
     {getParkingStartPose(), modified_goal_pose_},
     {distance_to_path_change.first, distance_to_path_change.second}, SteeringFactor::PULL_OVER,
-    direction, SteeringFactor::APPROACHING, "");
+    steering_factor_direction, SteeringFactor::APPROACHING, "");
   waitApproval();
 
   return out;

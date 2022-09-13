@@ -614,12 +614,12 @@ void BehaviorPathPlannerNode::run()
     const bool intersection_flag = intersection_result.first;
     const bool approaching_intersection_flag = intersection_result.second;
     if (intersection_flag || approaching_intersection_flag) {
-      uint16_t direction;
-      if (turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {
-        direction = SteeringFactor::LEFT;
-      } else {
-        direction = SteeringFactor::RIGHT;
-      }
+      const uint16_t steering_factor_direction = std::invoke([&turn_signal]() {
+        if (turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {
+          return SteeringFactor::LEFT;
+        }
+        return SteeringFactor::RIGHT;
+      });
 
       const auto intersection_pose_distance = turn_signal_decider_.getIntersectionPoseAndDistance();
 
@@ -627,12 +627,12 @@ void BehaviorPathPlannerNode::run()
         steering_factor_interface_ptr_->updateSteeringFactor(
           {intersection_pose_distance.first, intersection_pose_distance.first},
           {intersection_pose_distance.second, intersection_pose_distance.second},
-          SteeringFactor::INTERSECTION, direction, SteeringFactor::TURNING, "");
+          SteeringFactor::INTERSECTION, steering_factor_direction, SteeringFactor::TURNING, "");
       } else {
         steering_factor_interface_ptr_->updateSteeringFactor(
           {intersection_pose_distance.first, intersection_pose_distance.first},
           {intersection_pose_distance.second, intersection_pose_distance.second},
-          SteeringFactor::INTERSECTION, direction, SteeringFactor::TRYING, "");
+          SteeringFactor::INTERSECTION, steering_factor_direction, SteeringFactor::TRYING, "");
       }
     } else {
       steering_factor_interface_ptr_->clearSteeringFactors();

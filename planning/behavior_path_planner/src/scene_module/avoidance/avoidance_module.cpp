@@ -2084,16 +2084,17 @@ CandidateOutput AvoidanceModule::planCandidate() const
     output.start_distance_to_path_change = new_shift_points->front().start_longitudinal;
     output.finish_distance_to_path_change = new_shift_points->back().end_longitudinal;
 
-    uint16_t direction;
-    if (output.lateral_shift > 0.0) {
-      direction = SteeringFactor::LEFT;
-    } else {
-      direction = SteeringFactor::RIGHT;
-    }
+    const uint16_t steering_factor_direction = std::invoke([&output]() {
+      if (output.lateral_shift > 0.0) {
+        return SteeringFactor::LEFT;
+      }
+      return SteeringFactor::RIGHT;
+    });
     steering_factor_interface_ptr_->updateSteeringFactor(
       {new_shift_points->front().start, new_shift_points->back().end},
       {output.start_distance_to_path_change, output.finish_distance_to_path_change},
-      SteeringFactor::AVOIDANCE_PATH_CHANGE, direction, SteeringFactor::APPROACHING, "");
+      SteeringFactor::AVOIDANCE_PATH_CHANGE, steering_factor_direction, SteeringFactor::APPROACHING,
+      "");
   }
 
   const size_t ego_idx = findEgoIndex(shifted_path.path.points);

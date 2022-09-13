@@ -178,12 +178,14 @@ BehaviorModuleOutput PullOutModule::plan()
   output.turn_signal_info =
     calcTurnSignalInfo(status_.pull_out_path.start_pose, status_.pull_out_path.end_pose);
 
-  uint16_t direction = SteeringFactor::STRAIGHT;
-  if (output.turn_signal_info.turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {
-    direction = SteeringFactor::LEFT;
-  } else if (output.turn_signal_info.turn_signal.command == TurnIndicatorsCommand::ENABLE_RIGHT) {
-    direction = SteeringFactor::RIGHT;
-  }
+  const uint16_t steering_factor_direction = std::invoke([&output]() {
+    if (output.turn_signal_info.turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {
+      return SteeringFactor::LEFT;
+    } else if (output.turn_signal_info.turn_signal.command == TurnIndicatorsCommand::ENABLE_RIGHT) {
+      return SteeringFactor::RIGHT;
+    }
+    return SteeringFactor::STRAIGHT;
+  });
 
   if (status_.back_finished) {
     const double start_distance = motion_utils::calcSignedArcLength(
@@ -196,7 +198,7 @@ BehaviorModuleOutput PullOutModule::plan()
     // TODO(tkhmy) add handle status TRYING
     steering_factor_interface_ptr_->updateSteeringFactor(
       {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose},
-      {start_distance, finish_distance}, SteeringFactor::PULL_OUT, direction,
+      {start_distance, finish_distance}, SteeringFactor::PULL_OUT, steering_factor_direction,
       SteeringFactor::TURNING, "");
   } else {
     const double distance = motion_utils::calcSignedArcLength(
@@ -206,7 +208,7 @@ BehaviorModuleOutput PullOutModule::plan()
     // TODO(tkhmy) add handle status TRYING
     steering_factor_interface_ptr_->updateSteeringFactor(
       {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose}, {0.0, distance},
-      SteeringFactor::PULL_OUT, direction, SteeringFactor::TURNING, "");
+      SteeringFactor::PULL_OUT, steering_factor_direction, SteeringFactor::TURNING, "");
   }
 
   setDebugData();
@@ -276,12 +278,14 @@ BehaviorModuleOutput PullOutModule::planWaitingApproval()
 
   waitApproval();
 
-  uint16_t direction = SteeringFactor::STRAIGHT;
-  if (output.turn_signal_info.turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {
-    direction = SteeringFactor::LEFT;
-  } else if (output.turn_signal_info.turn_signal.command == TurnIndicatorsCommand::ENABLE_RIGHT) {
-    direction = SteeringFactor::RIGHT;
-  }
+  const uint16_t steering_factor_direction = std::invoke([&output]() {
+    if (output.turn_signal_info.turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {
+      return SteeringFactor::LEFT;
+    } else if (output.turn_signal_info.turn_signal.command == TurnIndicatorsCommand::ENABLE_RIGHT) {
+      return SteeringFactor::RIGHT;
+    }
+    return SteeringFactor::STRAIGHT;
+  });
 
   if (status_.back_finished) {
     const double start_distance = motion_utils::calcSignedArcLength(
@@ -293,7 +297,7 @@ BehaviorModuleOutput PullOutModule::planWaitingApproval()
     updateRTCStatus(start_distance, finish_distance);
     steering_factor_interface_ptr_->updateSteeringFactor(
       {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose},
-      {start_distance, finish_distance}, SteeringFactor::PULL_OUT, direction,
+      {start_distance, finish_distance}, SteeringFactor::PULL_OUT, steering_factor_direction,
       SteeringFactor::APPROACHING, "");
   } else {
     const double distance = motion_utils::calcSignedArcLength(
@@ -302,7 +306,7 @@ BehaviorModuleOutput PullOutModule::planWaitingApproval()
     updateRTCStatus(0.0, distance);
     steering_factor_interface_ptr_->updateSteeringFactor(
       {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose}, {0.0, distance},
-      SteeringFactor::PULL_OUT, direction, SteeringFactor::APPROACHING, "");
+      SteeringFactor::PULL_OUT, steering_factor_direction, SteeringFactor::APPROACHING, "");
   }
 
   setDebugData();
