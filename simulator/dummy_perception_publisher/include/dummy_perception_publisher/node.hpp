@@ -16,7 +16,6 @@
 #define DUMMY_PERCEPTION_PUBLISHER__NODE_HPP_
 
 #include "dummy_perception_publisher/msg/object.hpp"
-#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -120,8 +119,6 @@ private:
   std::unique_ptr<PointCloudCreator> pointcloud_creator_;
 
   double angle_increment_;
-
-  tier4_autoware_utils::SelfPoseListener self_pose_listener_;
 
   std::mt19937 random_generator_;
   void timerCallback();

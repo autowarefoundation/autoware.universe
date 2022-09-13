@@ -14,6 +14,8 @@
 
 #include "dummy_perception_publisher/node.hpp"
 
+#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
+
 #include <pcl/filters/voxel_grid_occlusion_estimation.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Transform.h>
@@ -45,7 +47,6 @@ ObjectInfo::ObjectInfo(
   const auto & initial_pose = object.initial_state.pose_covariance.pose;
   const auto & initial_vel = object.initial_state.twist_covariance.twist.linear.x;
   const double initial_acc = object.initial_state.accel_covariance.accel.linear.x;
-  // const double initial_acc = -1.0;
 
   const double elapsed_time = current_time.seconds() - rclcpp::Time(object.header.stamp).seconds();
 
@@ -71,10 +72,7 @@ ObjectInfo::ObjectInfo(
 }
 
 DummyPerceptionPublisherNode::DummyPerceptionPublisherNode()
-: Node("dummy_perception_publisher"),
-  tf_buffer_(this->get_clock()),
-  tf_listener_(tf_buffer_),
-  self_pose_listener_(this)
+: Node("dummy_perception_publisher"), tf_buffer_(this->get_clock()), tf_listener_(tf_buffer_)
 {
   visible_range_ = this->declare_parameter("visible_range", 100.0);
   detection_successful_rate_ = this->declare_parameter("detection_successful_rate", 0.8);
@@ -108,9 +106,6 @@ DummyPerceptionPublisherNode::DummyPerceptionPublisherNode()
     "input/object", 100,
     std::bind(&DummyPerceptionPublisherNode::objectCallback, this, std::placeholders::_1));
 
-  // wait for first self pose
-  self_pose_listener_.waitForFirstPose();
-
   using std::chrono_literals::operator""ms;
   timer_ = rclcpp::create_timer(
     this, get_clock(), 100ms, std::bind(&DummyPerceptionPublisherNode::timerCallback, this));
@@ -118,8 +113,6 @@ DummyPerceptionPublisherNode::DummyPerceptionPublisherNode()
 
 void DummyPerceptionPublisherNode::timerCallback()
 {
-  const auto ego_pose = self_pose_listener_.getCurrentPose()->pose;
-
   // output msgs
   tier4_perception_msgs::msg::DetectedObjectsWithFeature output_dynamic_object_msg;
   geometry_msgs::msg::PoseStamped output_moved_object_pose;
