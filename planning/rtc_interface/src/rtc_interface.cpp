@@ -118,6 +118,7 @@ void RTCInterface::onCooperateCommandService(
     if (itr != registered_status_.statuses.end()) {
       itr->command_status = command.command;
       itr->auto_mode = false;
+      is_auto_mode_ = false;
       response.success = true;
     } else {
       RCLCPP_WARN_STREAM(
