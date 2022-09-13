@@ -14,6 +14,8 @@
 // limitations under the License.
 
 #include "communication_delay_compensator_node.hpp"
+#include <memory>
+#include <vector>
 
 namespace observers
 {

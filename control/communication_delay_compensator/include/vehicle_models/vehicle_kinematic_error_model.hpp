@@ -43,7 +43,6 @@ template<int STATE_DIM, int INPUT_DIM, int MEASUREMENT_DIM>
 class LinearVehicleModelsBase
 {
  public:
-
   using Atype = mat_type_t<STATE_DIM, STATE_DIM>;
   using Btype = mat_type_t<STATE_DIM, INPUT_DIM>;
   using Ctype = mat_type_t<MEASUREMENT_DIM, STATE_DIM>;
@@ -150,7 +149,6 @@ void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::printContin
 template<int STATE_DIM, int INPUT_DIM, int MEASUREMENT_DIM>
 void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::printDiscreteSystem()
 {
-
   ns_utils::print("Matrix Ad: ");
   ns_eigen_utils::printEigenMat(Eigen::MatrixXd(Ad_));
 
