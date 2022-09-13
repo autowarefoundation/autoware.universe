@@ -66,22 +66,22 @@
 
 ## DS4 Joystick Key Map
 
-| Action               | Button                                   |
-| -------------------- | ---------------------------------------- |
-| Acceleration         | R2, ×, or Right Stick Up                |
-| Brake                | L2, □, or Right Stick Down              |
-| Steering             | Left Stick Left Right                    |
-| Shift up             | Cursor Up                                |
-| Shift down           | Cursor Down                              |
-| Shift Drive          | Cursor Left                              |
-| Shift Reverse        | Cursor Right                             |
-| Turn Signal Left     | L1                                       |
-| Turn Signal Right    | R1                                       |
-| Clear Turn Signal    | SHARE                                    |
-| Gate Mode            | OPTIONS                                  |
-| Emergency Stop       | PS                                       |
-| Clear Emergency Stop | PS                                       |
-| Autoware Engage      | ○                                        |
-| Autoware Disengage   | ○                                        |
-| Vehicle Engage       | △                                        |
-| Vehicle Disengage    | △                                        |
+| Action               | Button                     |
+| -------------------- | -------------------------- |
+| Acceleration         | R2, ×, or Right Stick Up   |
+| Brake                | L2, □, or Right Stick Down |
+| Steering             | Left Stick Left Right      |
+| Shift up             | Cursor Up                  |
+| Shift down           | Cursor Down                |
+| Shift Drive          | Cursor Left                |
+| Shift Reverse        | Cursor Right               |
+| Turn Signal Left     | L1                         |
+| Turn Signal Right    | R1                         |
+| Clear Turn Signal    | SHARE                      |
+| Gate Mode            | OPTIONS                    |
+| Emergency Stop       | PS                         |
+| Clear Emergency Stop | PS                         |
+| Autoware Engage      | ○                          |
+| Autoware Disengage   | ○                          |
+| Vehicle Engage       | △                          |
+| Vehicle Disengage    | △                          |
