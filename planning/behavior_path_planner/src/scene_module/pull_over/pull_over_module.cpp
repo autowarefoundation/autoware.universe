@@ -716,9 +716,9 @@ BehaviorModuleOutput PullOverModule::planWaitingApproval()
   updateRTCStatus(distance_to_path_change.first, distance_to_path_change.second);
 
   uint16_t direction = SteeringFactor::STRAIGHT;
-  if (out.turn_signal_info.turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {
+  if (getTurnInfo().first.command == TurnIndicatorsCommand::ENABLE_LEFT) {
     direction = SteeringFactor::LEFT;
-  } else if (out.turn_signal_info.turn_signal.command == TurnIndicatorsCommand::ENABLE_RIGHT) {
+  } else if (getTurnInfo().first.command == TurnIndicatorsCommand::ENABLE_RIGHT) {
     direction = SteeringFactor::RIGHT;
   }
 
