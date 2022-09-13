@@ -64,7 +64,6 @@ class KinematicModelSingleTrackModel
   double steering_tau_{0.3};
   double speed_tau_{0.6};
   bool use_delay_models_{true};
-
 };
 }  // namespace ns_models
 

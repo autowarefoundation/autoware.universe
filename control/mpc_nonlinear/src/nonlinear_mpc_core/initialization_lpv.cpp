@@ -183,38 +183,9 @@ bool LPVinitializer::simulateWithFeedback(Model::model_ptr_t const &model_ptr,
     nmpc_data.trajectory_data.X[k + 1] << xk.eval();
     nmpc_data.trajectory_data.U[k] << uk.eval();
 
-    // DEBUG
-    //		ns_utils::print("\nIn LPV initialization :");
-    //		ns_utils::print("\nTarget Vx : ", vtarget);
-    //
-    //		ns_utils::print("\nSystem Matrices in the LPVinit :");
-    //		ns_eigen_utils::printEigenMat(Ac);
-    //		ns_eigen_utils::printEigenMat(Bc);
-    //
-    //		ns_utils::print("Interpolated Lyapunov Matrices", ':', " X[k] and Y[k]");
-    //		ns_eigen_utils::printEigenMat(Xr);
-    //		ns_eigen_utils::printEigenMat(Yr);
-    //
-    //		ns_utils::print("\nFeedback matrix : ");
-    //		ns_eigen_utils::printEigenMat(Kfb);
-    //		ns_utils::print("Feedback controls : ", uk(0), ", ", uk(1));
-    // end of debug
   }
-
   // Copy the last input
   nmpc_data.trajectory_data.U.rbegin()[0] = nmpc_data.trajectory_data.U.rbegin()[1];
-
-  // DEBUG
-  // Get trajectories as a matrix and print for debugging purpose.
-  //  auto &&Xtemp = ns_eigen_utils::getTrajectory(nmpc_data.trajectory_data.X);
-  //  auto &&Utemp = ns_eigen_utils::getTrajectory(nmpc_data.trajectory_data.U);
-  //
-  //  ns_utils::print("\nComputed LPV trajectories :  [x, y, psi, s, ey, epsi, vx, delta, vy]");
-  //  ns_eigen_utils::printEigenMat(Xtemp.transpose());  //  [x, y, psi, s, ey, epsi, vx, delta, vy]
-  //
-  //  ns_utils::print("\nComputed LPV trajectories U : ");
-  //  ns_eigen_utils::printEigenMat(Utemp.transpose());
-  // end of DEBUG
 
   return true;
 }

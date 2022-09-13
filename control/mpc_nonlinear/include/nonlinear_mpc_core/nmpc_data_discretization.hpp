@@ -53,7 +53,6 @@ void DiscretizationData<Model>::initializeDiscretizationMatrices(size_t const &K
   C.resize(K - 1, Model::control_matrix_t::Zero());   // !<-@brief vector of Bs at the end of the section.
   z.resize(K - 1, Model::state_vector_t::Zero());     // !<-@brief f0 - Ax0 - Bu0 - Cu1
   dt = dt_step;
-
 }
 
 template<class Model>
