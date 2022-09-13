@@ -22,7 +22,7 @@
 #include "nonlinear_mpc_test_node.hpp"
 #include "nmpc_test_utils.hpp"
 
-TEST_F(FakeNodeFixture, DISABLED_no_input_stop_control_cmd_is_published)
+TEST_F(FakeNodeFixture, no_input_stop_control_cmd_is_published)
 {
   // Data to test
   ControlCmdMsg::SharedPtr cmd_msg;
