@@ -46,13 +46,10 @@ inline void waitForMessage(
     {
       if (fail_on_timeout)
       {
-        throw std::runtime_error(
-          std::string(
-            "Did not receive a message soon enough"));
-      } else
-      {
-        break;
+        throw std::runtime_error(std::string("Did not receive a message soon enough"));
       }
+      break;
+
     }
   }
 }
