@@ -65,11 +65,11 @@ TEST_F(FakeNodeFixture, no_input_stop_control_cmd_is_published)
   ASSERT_FLOAT_EQ(cmd_msg->longitudinal.acceleration, -1.5);
 
   // DEBUG
-  ns_utils::print(" ctrl_cmd_msgs_  steering: ", cmd_msg->lateral.steering_tire_angle);
-  ns_utils::print(" ctrl_cmd_msgs_  steering rate : ", cmd_msg->lateral.steering_tire_rotation_rate);
-
-  ns_utils::print(" ctrl_cmd_msgs_  steering rate : ", cmd_msg->longitudinal.speed);
-  ns_utils::print(" ctrl_cmd_msgs_  steering: ", cmd_msg->longitudinal.acceleration, -1.5);
+//  ns_utils::print(" ctrl_cmd_msgs_  steering: ", cmd_msg->lateral.steering_tire_angle);
+//  ns_utils::print(" ctrl_cmd_msgs_  steering rate : ", cmd_msg->lateral.steering_tire_rotation_rate);
+//
+//  ns_utils::print(" ctrl_cmd_msgs_  steering rate : ", cmd_msg->longitudinal.speed);
+//  ns_utils::print(" ctrl_cmd_msgs_  steering: ", cmd_msg->longitudinal.acceleration, -1.5);
 
 }
 
@@ -171,7 +171,7 @@ TEST_F(FakeNodeFixture, automatic_differentiation_works)
 
   for (Eigen::Index k = 0; k < Model::state_dim; ++k)
   {
-    //ASSERT_DOUBLE_EQ(A(k, 6), analytical_df_dv_vec[static_cast<unsigned long>(k)]);
+    ASSERT_DOUBLE_EQ(A(k, 6), analytical_df_dv_vec[static_cast<unsigned long>(k)]);
     ns_utils::print("k : ", k, ": A:", A(k, 6), ": df/dv: ", analytical_df_dv_vec[static_cast<unsigned long>(k)]);
   }
 

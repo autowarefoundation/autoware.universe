@@ -121,4 +121,4 @@ void writeToFile(const fs::path &outputPath, std::vector<T> var, std::string var
 
 }
 
-#endif //COMMUNICATION_DELAY_COMPENSATOR__DELAY_COMPENSATION_UTILS_HPP
+#endif // COMMUNICATION_DELAY_COMPENSATOR__DELAY_COMPENSATION_UTILS_HPP
