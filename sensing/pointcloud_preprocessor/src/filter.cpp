@@ -165,42 +165,43 @@ void pointcloud_preprocessor::Filter::computePublish(
   auto output = pub_output_->borrow_loaned_message();
 
   // Call the virtual method in the child
-  filter(input, indices, *output);
+  filter(input, indices, output.get());
 
   // Check whether the user has given a different output TF frame
-  if (!tf_output_frame_.empty() && output->header.frame_id != tf_output_frame_) {
+  if (!tf_output_frame_.empty() && output.get().header.frame_id != tf_output_frame_) {
     RCLCPP_DEBUG(
       this->get_logger(), "[computePublish] Transforming output dataset from %s to %s.",
-      output->header.frame_id.c_str(), tf_output_frame_.c_str());
+      output.get().header.frame_id.c_str(), tf_output_frame_.c_str());
     // Convert the cloud into the different frame
-    auto cloud_transformed = std::make_unique<PointCloud2>();
-    if (!pcl_ros::transformPointCloud(tf_output_frame_, *output, *cloud_transformed, *tf_buffer_)) {
+    auto cloud_transformed = PointCloud2{};
+    if (!pcl_ros::transformPointCloud(
+          tf_output_frame_, output.get(), cloud_transformed, *tf_buffer_)) {
       RCLCPP_ERROR(
         this->get_logger(), "[computePublish] Error converting output dataset from %s to %s.",
-        output->header.frame_id.c_str(), tf_output_frame_.c_str());
+        output.get().header.frame_id.c_str(), tf_output_frame_.c_str());
       return;
     }
-    output.get().data = cloud_transformed;
+    output.get().data = std::move(cloud_transformed.data);
   }
-  if (tf_output_frame_.empty() && output->header.frame_id != tf_input_orig_frame_) {
+  if (tf_output_frame_.empty() && output.get().header.frame_id != tf_input_orig_frame_) {
     // no tf_output_frame given, transform the dataset to its original frame
     RCLCPP_DEBUG(
       this->get_logger(), "[computePublish] Transforming output dataset from %s back to %s.",
-      output->header.frame_id.c_str(), tf_input_orig_frame_.c_str());
+      output.get().header.frame_id.c_str(), tf_input_orig_frame_.c_str());
     // Convert the cloud into the different frame
-    auto cloud_transformed = std::make_unique<PointCloud2>();
+    auto cloud_transformed = PointCloud2{};
     if (!pcl_ros::transformPointCloud(
-          tf_input_orig_frame_, *output, *cloud_transformed, *tf_buffer_)) {
+          tf_input_orig_frame_, output.get(), cloud_transformed, *tf_buffer_)) {
       RCLCPP_ERROR(
         this->get_logger(), "[computePublish] Error converting output dataset from %s back to %s.",
-        output->header.frame_id.c_str(), tf_input_orig_frame_.c_str());
+        output.get().header.frame_id.c_str(), tf_input_orig_frame_.c_str());
       return;
     }
-    output.get().data = cloud_transformed;
+    output.get().data = std::move(cloud_transformed.data);
   }
 
   // Copy timestamp to keep it
-  output->header.stamp = input->header.stamp;
+  output.get().header.stamp = input->header.stamp;
 
   // Publish a boost shared ptr
   pub_output_->publish(std::move(output));
