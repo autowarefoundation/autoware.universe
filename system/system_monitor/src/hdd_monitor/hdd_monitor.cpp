@@ -626,16 +626,22 @@ void HDDMonitor::updateHDDInfoList()
 
   std::vector<HDDDevice> hdd_devices;
   for (auto itr = hdd_params_.begin(); itr != hdd_params_.end(); ++itr) {
-    if (!hdd_connected_flags_[itr->first]) {
+    HDDDevice device;
+
+    if (hdd_connected_flags_[itr->first]) {
+      device.name_ = itr->second.disk_device_;
+      device.temp_attribute_id_ = itr->second.temp_attribute_id_;
+      device.power_on_hours_attribute_id_ = itr->second.power_on_hours_attribute_id_;
+      device.total_data_written_attribute_id_ = itr->second.total_data_written_attribute_id_;
+      device.recovered_error_attribute_id_ = itr->second.recovered_error_attribute_id_;
+      device.unmount_request_flag_ = 0;
+    } else if (device_unmount_request_flags_[itr->first]) {
+      device.part_device_ = itr->second.part_device_;
+      device.unmount_request_flag_ = 1;
+    } else {
       continue;
     }
 
-    HDDDevice device;
-    device.name_ = itr->second.disk_device_;
-    device.temp_attribute_id_ = itr->second.temp_attribute_id_;
-    device.power_on_hours_attribute_id_ = itr->second.power_on_hours_attribute_id_;
-    device.total_data_written_attribute_id_ = itr->second.total_data_written_attribute_id_;
-    device.recovered_error_attribute_id_ = itr->second.recovered_error_attribute_id_;
     hdd_devices.push_back(device);
   }
 
@@ -790,6 +796,9 @@ int HDDMonitor::readSysfsDeviceStat(const std::string & device, SysfsDevStat & s
 void HDDMonitor::updateHDDConnections()
 {
   for (auto & hdd_param : hdd_params_) {
+    hdd_connected_flags_[hdd_param.first] = false;
+    device_unmount_request_flags_[hdd_param.first] = false;
+
     // Get device name from mount point
     hdd_param.second.part_device_ = getDeviceFromMountPoint(hdd_param.first);
     if (!hdd_param.second.part_device_.empty()) {
@@ -812,50 +821,13 @@ void HDDMonitor::updateHDDConnections()
         const std::regex raw_pattern(".*/");
         hdd_stats_[hdd_param.first].device_ =
           std::regex_replace(hdd_param.second.disk_device_, raw_pattern, "");
-
-        continue;
       } else {
-        // Unmount to solve the state where the device is mounted without existing
-        if (unmountDeviceWithLazy(hdd_param.second.part_device_)) {
-          RCLCPP_ERROR(
-            get_logger(), "Failed to unmount. %s", hdd_param.second.part_device_.c_str());
-        }
+        // Deal with the issue that file system remains mounted when a drive is actually
+        // disconnected.
+        device_unmount_request_flags_[hdd_param.first] = true;
       }
     }
-    hdd_connected_flags_[hdd_param.first] = false;
   }
-}
-
-int HDDMonitor::unmountDeviceWithLazy(std::string & device)
-{
-  // boost::process create file descriptor without O_CLOEXEC required for multithreading.
-  // So create file descriptor with O_CLOEXEC and pass it to boost::process.
-  int out_fd[2];
-  if (pipe2(out_fd, O_CLOEXEC) != 0) {
-    RCLCPP_ERROR(get_logger(), "Failed to execute pipe2. %s", strerror(errno));
-    return -1;
-  }
-  bp::pipe out_pipe{out_fd[0], out_fd[1]};
-  bp::ipstream is_out{std::move(out_pipe)};
-
-  int err_fd[2];
-  if (pipe2(err_fd, O_CLOEXEC) != 0) {
-    RCLCPP_ERROR(get_logger(), "Failed to execute pipe2. %s", strerror(errno));
-    return -1;
-  }
-  bp::pipe err_pipe{err_fd[0], err_fd[1]};
-  bp::ipstream is_err{std::move(err_pipe)};
-
-  bp::child c(
-    "/bin/sh", "-c", fmt::format("umount -l {}", device.c_str()), bp::std_out > is_out,
-    bp::std_err > is_err);
-  c.wait();
-
-  if (c.exit_code() != 0) {
-    RCLCPP_ERROR(get_logger(), "Failed to execute umount command. %s", device.c_str());
-    return -1;
-  }
-  return 0;
 }
 
 #include <rclcpp_components/register_node_macro.hpp>

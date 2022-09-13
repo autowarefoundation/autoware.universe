@@ -313,13 +313,6 @@ protected:
    */
   void updateHDDConnections();
 
-  /**
-   * @brief unmount device with lazy option
-   * @param [in] device device name
-   * @return result of success or failure
-   */
-  int unmountDeviceWithLazy(std::string & device);
-
   diagnostic_updater::Updater updater_;  //!< @brief Updater class which advertises to /diagnostics
   rclcpp::TimerBase::SharedPtr timer_;   //!< @brief timer to get HDD information from HDDReader
 
@@ -329,6 +322,8 @@ protected:
   std::map<std::string, HDDParam> hdd_params_;  //!< @brief list of error and warning levels
   std::map<std::string, bool>
     hdd_connected_flags_;  //!< @brief list of flag whether HDD is connected
+  std::map<std::string, bool>
+    device_unmount_request_flags_;  //!< @brief list of flag requesting device unmount
   std::map<std::string, uint32_t>
     initial_recovered_errors_;                //!< @brief list of initial recovered error count
   std::map<std::string, HDDStat> hdd_stats_;  //!< @brief list of HDD statistics

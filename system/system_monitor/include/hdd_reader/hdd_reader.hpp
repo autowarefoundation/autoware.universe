@@ -40,6 +40,9 @@ struct HDDDevice
     total_data_written_attribute_id_;     //!< @brief S.M.A.R.T attribute ID of total data written
   uint8_t recovered_error_attribute_id_;  //!< @brief S.M.A.R.T attribute ID of recovered error
 
+  uint8_t unmount_request_flag_;  //!< @brief unmount request flag
+  std::string part_device_;       //!< @brief partition device
+
   /**
    * @brief Load or save data members.
    * @param [inout] ar archive reference to load or save the serialized data members
@@ -55,6 +58,8 @@ struct HDDDevice
     ar & power_on_hours_attribute_id_;
     ar & total_data_written_attribute_id_;
     ar & recovered_error_attribute_id_;
+    ar & unmount_request_flag_;
+    ar & part_device_;
   }
 };
 

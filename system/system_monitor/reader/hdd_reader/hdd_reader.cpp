@@ -24,9 +24,11 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/process.hpp>
 #include <boost/serialization/vector.hpp>
 
 #include <fcntl.h>
+#include <fmt/format.h>
 #include <getopt.h>
 #include <linux/nvme_ioctl.h>
 #include <netinet/in.h>
@@ -406,6 +408,25 @@ int get_nvme_SMARTData(int fd, HDDInfo * info)
 }
 
 /**
+ * @brief unmount device with lazy option
+ * @param [in] device device name
+ */
+void unmount_device_with_lazy(std::string & device)
+{
+  boost::process::ipstream is_out;
+  boost::process::ipstream is_err;
+
+  boost::process::child c(
+    "/bin/sh", "-c", fmt::format("umount -l {}", device.c_str()), boost::process::std_out > is_out,
+    boost::process::std_err > is_err);
+  c.wait();
+
+  if (c.exit_code() != 0) {
+    syslog(LOG_ERR, "Failed to execute umount command. %s\n", device.c_str());
+  }
+}
+
+/**
  * @brief check HDD temperature
  * @param [in] port port to listen
  */
@@ -499,6 +520,11 @@ void run(int port)
     boost::archive::text_oarchive oa(oss);
 
     for (auto & hdd_device : hdd_devices) {
+      if (hdd_device.unmount_request_flag_) {
+        unmount_device_with_lazy(hdd_device.part_device_);
+        continue;
+      }
+
       HDDInfo info{};
 
       // Open a file
