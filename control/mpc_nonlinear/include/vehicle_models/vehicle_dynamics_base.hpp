@@ -32,11 +32,11 @@
 #include "utils/nmpc_utils.hpp"
 
 #define CODEGEN true
-//#if CODEGEN
-//#include <cppad/cg.hpp>
-//#else
-//#include <cppad/cppad.hpp>
-//#endif
+// #if CODEGEN
+// #include <cppad/cg.hpp>
+// #else
+// #include <cppad/cppad.hpp>
+// #endif
 
 
 /**
@@ -230,8 +230,8 @@ void VehicleDynamicsBase<STATE_DIM, INPUT_DIM, PARAM_DIM, eSTATE_DIM>::Initializ
   dynamic_vector_ad_t x(STATE_DIM + INPUT_DIM + PARAM_DIM);
 
   // We Separate since kappa=1 and ey=1 coincides with the singularity.
-  //	x.segment<STATE_DIM + INPUT_DIM>(0).setOnes();  //
-  //	x.segment<PARAM_DIM>(STATE_DIM + INPUT_DIM).setConstant(0.05);    // Parameter is the curvature, 1 is singularity.
+  // x.segment<STATE_DIM + INPUT_DIM>(0).setOnes();  //
+  // x.segment<PARAM_DIM>(STATE_DIM + INPUT_DIM).setConstant(0.05);    // Parameter is the curvature, 1 is singularity.
   x.setRandom();
 
   // START RECORDING. We treat the parameter kappa as a part of independent variables.
@@ -297,10 +297,12 @@ void VehicleDynamicsBase<STATE_DIM,
  * @brief Implements Jacobian functions of the form xdot = f(x) = Adx + Bdu.
  * */
 template<int STATE_DIM, int INPUT_DIM, int PARAM_DIM, int eSTATE_DIM>
-void VehicleDynamicsBase<STATE_DIM, INPUT_DIM, PARAM_DIM, eSTATE_DIM>::computeJacobians(
-  const VehicleDynamicsBase::state_vector_t &x, const VehicleDynamicsBase::input_vector_t &u,
-  const VehicleDynamicsBase::param_vector_t &params, VehicleDynamicsBase::state_matrix_t &A,
-  VehicleDynamicsBase::control_matrix_t &B)
+void VehicleDynamicsBase<STATE_DIM, INPUT_DIM, PARAM_DIM, eSTATE_DIM>::
+computeJacobians(const VehicleDynamicsBase::state_vector_t &x,
+                 const VehicleDynamicsBase::input_vector_t &u,
+                 const VehicleDynamicsBase::param_vector_t &params,
+                 VehicleDynamicsBase::state_matrix_t &A,
+                 VehicleDynamicsBase::control_matrix_t &B)
 {
   assert(initialized_);
 

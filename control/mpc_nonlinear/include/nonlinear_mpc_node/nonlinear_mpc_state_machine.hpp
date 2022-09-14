@@ -27,11 +27,11 @@ namespace ns_states
 {
 enum class motionStateEnums : int
 {
-  isAtCompleteStop = 0, // there is no trajectory to follow
-  isStoppedWillMove = 1, // vehicle is in stopped state will start moving
-  willbeStopping = -1, // vehicle will be moving
-  isMoving = 2, // vehicle is moving.
-  isInEmergency = -2, // vehicle is in emergency state.
+  isAtCompleteStop = 0,   // there is no trajectory to follow
+  isStoppedWillMove = 1,  // vehicle is in stopped state will start moving
+  willbeStopping = -1,    // vehicle will be moving
+  isMoving = 2,           // vehicle is moving.
+  isInEmergency = -2,     // vehicle is in emergency state.
 };
 
 namespace state
@@ -60,7 +60,7 @@ struct isMoving
   motionStateEnums state_type{motionStateEnums::isMoving};
 };
 
-} // namespace state
+}   // namespace state
 
 using State = std::variant<state::isatCompleteStop, state::isMoving,
                            state::willbeStopping, state::isStoppedwillMove>;
@@ -106,10 +106,10 @@ class VehicleMotionFSM
 
   // State transition variables ; an array of [distance_to_stop, vcurrent, vnext]
   // Transition condition variables.
-  double stop_state_entry_ego_speed_{0.2}; // [m/s]
-  double stop_state_entry_target_speed_{0.5}; // [m]
-  double stop_state_keep_stopping_dist_{0.5}; // [m]
-  double will_stop_dist_{2.0}; // [m]
+  double stop_state_entry_ego_speed_{0.2};      // [m/s]
+  double stop_state_entry_target_speed_{0.5};   // [m]
+  double stop_state_keep_stopping_dist_{0.5};   // [m]
+  double will_stop_dist_{2.0};  // [m]
 
   std::array<double, 3> state_transition_vars_{};
 
@@ -120,5 +120,5 @@ class VehicleMotionFSM
     {motionStateEnums::isMoving, "Vehicle is moving."},
     {motionStateEnums::isInEmergency, "Vehicle is in EMERGENCY state."}};
 };
-} // namespace ns_states
-#endif // MPC_NONLINEAR_NONLINEAR_MPC_STATE_MACHINE_H
+}   // namespace ns_states
+#endif  // MPC_NONLINEAR_NONLINEAR_MPC_STATE_MACHINE_H

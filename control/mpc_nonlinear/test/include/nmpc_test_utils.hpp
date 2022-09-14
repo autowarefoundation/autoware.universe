@@ -28,11 +28,12 @@ namespace test_utils
 {
 using FakeNodeFixture = autoware::tools::testing::FakeTestNode;
 
-inline void waitForMessage(
-  const std::shared_ptr<rclcpp::Node> &node, FakeNodeFixture *fixture,
-  const bool &received_flag,
-  const std::chrono::duration<int64_t> max_wait_time = std::chrono::seconds{10LL},
-  const bool fail_on_timeout = true)
+inline void waitForMessage(const std::shared_ptr<rclcpp::Node> &node,
+                           FakeNodeFixture *fixture,
+                           const bool &received_flag,
+                           const std::chrono::duration<int64_t>
+                           max_wait_time = std::chrono::seconds{10LL},
+                           const bool fail_on_timeout = true)
 {
   const auto dt{std::chrono::milliseconds{100LL}};
   auto time_passed{std::chrono::milliseconds{0LL}};
@@ -49,7 +50,6 @@ inline void waitForMessage(
         throw std::runtime_error(std::string("Did not receive a message soon enough"));
       }
       break;
-
     }
   }
 }
@@ -57,15 +57,21 @@ inline void waitForMessage(
 inline geometry_msgs::msg::TransformStamped getDummyTransform()
 {
   geometry_msgs::msg::TransformStamped transform_stamped;
-  transform_stamped.transform.translation.x = 0.0;
-  transform_stamped.transform.translation.y = 0.0;
+  transform_stamped.transform.translation.x = 10.0;
+  transform_stamped.transform.translation.y = 0.5;
   transform_stamped.transform.translation.z = 0.0;
+
   tf2::Quaternion q;
-  q.setRPY(0.0, 0.0, 0.0);
+
+  double yaw_angle{-90};
+  ns_utils::deg2rad(yaw_angle);
+
+  q.setRPY(0.0, 0.0, yaw_angle);
   transform_stamped.transform.rotation.x = q.x();
   transform_stamped.transform.rotation.y = q.y();
   transform_stamped.transform.rotation.z = q.z();
   transform_stamped.transform.rotation.w = q.w();
+
   transform_stamped.header.frame_id = "map";
   transform_stamped.child_frame_id = "base_link";
   return transform_stamped;

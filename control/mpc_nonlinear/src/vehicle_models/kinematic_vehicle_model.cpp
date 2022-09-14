@@ -17,7 +17,8 @@
 #include "vehicle_models/kinematic_vehicle_model.hpp"
 #include <limits>
 
-void ns_models::KinematicModelSingleTrackModel::updateParameters(const ParamsVehicle &params_vehicle)
+void
+ns_models::KinematicModelSingleTrackModel::updateParameters(const ParamsVehicle &params_vehicle)
 {
   wheel_base_ = params_vehicle.wheel_base;
   lr_ = params_vehicle.lr;
@@ -26,10 +27,11 @@ void ns_models::KinematicModelSingleTrackModel::updateParameters(const ParamsVeh
   use_delay_models_ = params_vehicle.use_delay_model;
 }
 
-void ns_models::KinematicModelSingleTrackModel::systemEquations(const VehicleDynamicsBase::state_vector_ad_t &x,
-                                                                const VehicleDynamicsBase::input_vector_ad_t &u,
-                                                                const VehicleDynamicsBase::param_vector_ad_t &params,
-                                                                VehicleDynamicsBase::state_vector_ad_t &f_xdot)
+void
+ns_models::KinematicModelSingleTrackModel::systemEquations(const VehicleDynamicsBase::state_vector_ad_t &x,
+                                                           const VehicleDynamicsBase::input_vector_ad_t &u,
+                                                           const VehicleDynamicsBase::param_vector_ad_t &params,
+                                                           VehicleDynamicsBase::state_vector_ad_t &f_xdot)
 {
 
   // auto xw = x(0);  // Xw, Yw are the global coordinates.
@@ -69,7 +71,6 @@ void ns_models::KinematicModelSingleTrackModel::systemEquations(const VehicleDyn
     // f_xdot(6) = -(v - ax_acc_brk_input) / speed_tau_;
     f_xdot(6) = ax_acc_brk_input;  // !<@brief acceleration brake input
     f_xdot(7) = -(delta - steering_input) / steering_tau_;
-
   } else
   {
     f_xdot(6) = ax_acc_brk_input;  // !<@brief acceleration brake input

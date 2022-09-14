@@ -169,7 +169,8 @@ OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::OptimizationProblemOSQP()
 }
 
 template<size_t STATE_DIM, size_t INPUT_DIM, size_t K>
-OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::OptimizationProblemOSQP(const OptimizationProblemOSQP &other)
+OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::
+OptimizationProblemOSQP(const OptimizationProblemOSQP &other)
   : osqp_dims_(other.osqp_dims_),
     osqp_settings_{other.osqp_settings_},
     osqp_instance_{osqp::OsqpInstance()},
@@ -203,9 +204,10 @@ OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::operator=(const OptimizationPr
 }
 
 template<size_t STATE_DIM, size_t INPUT_DIM, size_t K>
-bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Model::state_vector_t const &x0,
-                                                                             ns_data::data_nmpc_core_type_t const &data_nmpc,
-                                                                             ns_data::ParamsOptimization const &param_opt)
+bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::
+setUPOSQP_useTriplets(Model::state_vector_t const &x0,
+                      ns_data::data_nmpc_core_type_t const &data_nmpc,
+                      ns_data::ParamsOptimization const &param_opt)
 {
   auto &&params_optimization = param_opt;
   auto &&discretization_data = data_nmpc.discretization_data;
@@ -234,13 +236,21 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
   // if item abs is greater than eps, the item  is assumed to be nonzero.
   double const &eps_triplet_zero = std::numeric_limits<double>::epsilon() / 2.;
 
-  auto const &triplets_Q = ns_eigen_utils::ToTriplets(Eigen::MatrixXd(params_optimization.Q), eps_triplet_zero);
+  auto const &triplets_Q = ns_eigen_utils::ToTriplets(
+    Eigen::MatrixXd(params_optimization.Q),
+    eps_triplet_zero);
 
-  auto const &triplets_QN = ns_eigen_utils::ToTriplets(Eigen::MatrixXd(params_optimization.QN), eps_triplet_zero);
+  auto const &triplets_QN = ns_eigen_utils::ToTriplets(
+    Eigen::MatrixXd(params_optimization.QN),
+    eps_triplet_zero);
 
-  auto const &triplets_R = ns_eigen_utils::ToTriplets(Eigen::MatrixXd(params_optimization.R), eps_triplet_zero);
+  auto const &triplets_R = ns_eigen_utils::ToTriplets(
+    Eigen::MatrixXd(params_optimization.R),
+    eps_triplet_zero);
 
-  auto const &triplets_Rj = ns_eigen_utils::ToTriplets(Eigen::MatrixXd(params_optimization.Rj), eps_triplet_zero);
+  auto const &triplets_Rj = ns_eigen_utils::ToTriplets(
+    Eigen::MatrixXd(params_optimization.Rj),
+    eps_triplet_zero);
 
   // Q, QN, R, Rj starts at the different cols.
   auto const &col_startR = static_cast<double>(K * STATE_DIM);  // !<@brief R columns start from in the cost matrix.
@@ -529,14 +539,18 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
   for (size_t k = 0; k < K - 1; ++k)
   {
     // Set state bounds.
-    osqp_instance_.upper_bounds.segment<STATE_DIM>(row_aineq + k * STATE_DIM) = params_optimization.xupper_scaled;
+    osqp_instance_.upper_bounds.segment<STATE_DIM>(row_aineq + k * STATE_DIM) =
+      params_optimization.xupper_scaled;
 
-    osqp_instance_.lower_bounds.segment<STATE_DIM>(row_aineq + k * STATE_DIM) = params_optimization.xlower_scaled;
+    osqp_instance_.lower_bounds.segment<STATE_DIM>(row_aineq + k * STATE_DIM) =
+      params_optimization.xlower_scaled;
 
     // Set control bounds.
-    osqp_instance_.upper_bounds.segment<INPUT_DIM>(row_inq_u + k * INPUT_DIM) = params_optimization.uupper_scaled;
+    osqp_instance_.upper_bounds.segment<INPUT_DIM>(row_inq_u + k * INPUT_DIM) =
+      params_optimization.uupper_scaled;
 
-    osqp_instance_.lower_bounds.segment<INPUT_DIM>(row_inq_u + k * INPUT_DIM) = params_optimization.ulower_scaled;
+    osqp_instance_.lower_bounds.segment<INPUT_DIM>(row_inq_u + k * INPUT_DIM) =
+      params_optimization.ulower_scaled;
 
     // Set jerk bounds.
     osqp_instance_.upper_bounds.segment<INPUT_DIM>(row_inq_j + k * INPUT_DIM) << kInfinity, kInfinity;

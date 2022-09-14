@@ -164,7 +164,6 @@ size_t ns_data::MPCdataTrajectoryVectors::size() const
 
   // std::cerr << "[MPC trajectory] trajectory size is inappropriate" << std::endl;
   return 0;
-
 }
 
 void ns_data::MPCdataTrajectoryVectors::setTrajectoryCoordinate(char const &coord_name,

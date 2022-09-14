@@ -49,7 +49,9 @@ void DiscretizationData<Model>::initializeDiscretizationMatrices(size_t const &K
 {
   A.resize(K - 1, Model::state_matrix_t::Zero());     // !<-@brief vector of As
   B.resize(K - 1, Model::control_matrix_t::Zero());   // !<-@brief vector of Bs
-  C.resize(K - 1, Model::control_matrix_t::Zero());   // !<-@brief vector of Bs at the end of the section.
+
+  // !<-@brief vector of Bs at the end of the section.
+  C.resize(K - 1, Model::control_matrix_t::Zero());
   z.resize(K - 1, Model::state_vector_t::Zero());     // !<-@brief f0 - Ax0 - Bu0 - Cu1
   dt = dt_step;
 }

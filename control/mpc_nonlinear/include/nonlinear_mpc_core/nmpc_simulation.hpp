@@ -118,8 +118,10 @@ class ODEvariableSpeed
 {
  public:
   ODEvariableSpeed() = default;
-  explicit ODEvariableSpeed(Model::model_ptr_t const &model, Model::input_vector_t const &u0,
-                            Model::param_vector_t const &params0, double const &v0, double const &v1, double dt);
+  explicit ODEvariableSpeed(Model::model_ptr_t const &model,
+                            Model::input_vector_t const &u0,
+                            Model::param_vector_t const &params0,
+                            double const &v0, double const &v1, double dt);
 
   ODEvariableSpeed(ODEvariableSpeed const &) = default;
 
