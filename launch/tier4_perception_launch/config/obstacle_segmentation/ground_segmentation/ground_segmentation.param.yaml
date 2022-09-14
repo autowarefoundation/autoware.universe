@@ -18,6 +18,6 @@
       parameters:
         global_slope_max_angle_deg: 10.0
         local_slope_max_angle_deg: 30.0
-        split_points_distance_tolerance: 0.2
-        split_height_distance: 0.3
+        split_points_distance_tolerance: 0.14
+        split_height_distance: 0.16
         use_virtual_ground_point: True
