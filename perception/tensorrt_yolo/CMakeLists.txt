@@ -181,6 +181,40 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     EXECUTABLE tensorrt_yolo_node
   )
 
+  ament_auto_add_library(tensorrt_yolo_nodelet_two_cameras SHARED
+    src/nodelet_two_cameras.cpp
+  )
+
+  target_link_libraries(tensorrt_yolo_nodelet_two_cameras
+    ${OpenCV_LIBS}
+    yolo
+    mish_plugin
+    yolo_layer_plugin
+    nms_plugin
+  )
+
+  rclcpp_components_register_node(tensorrt_yolo_nodelet_two_cameras
+    PLUGIN "object_recognition::TensorrtYoloNodeletTwoCameras"
+    EXECUTABLE tensorrt_yolo_two_cameras_node
+  )
+
+  ament_auto_add_library(tensorrt_yolo_nodelet_three_cameras SHARED
+    src/nodelet_three_cameras.cpp
+  )
+
+  target_link_libraries(tensorrt_yolo_nodelet_three_cameras
+    ${OpenCV_LIBS}
+    yolo
+    mish_plugin
+    yolo_layer_plugin
+    nms_plugin
+  )
+
+  rclcpp_components_register_node(tensorrt_yolo_nodelet_three_cameras
+    PLUGIN "object_recognition::TensorrtYoloNodeletThreeCameras"
+    EXECUTABLE tensorrt_yolo_three_cameras_node
+  )
+
   ament_auto_package(INSTALL_TO_SHARE
     config
     data

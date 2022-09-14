@@ -1,0 +1,49 @@
+<launch>
+  <arg name="image_raw0" default="/cam/front_top_far_30"/>
+  <arg name="image_raw1" default="/cam/front_top_close_120"/>
+  <arg name="image_number_image_raw_group0" default="2"/>
+  <arg name="gpu_id_image_raw_group0" default="0"/>
+
+  <arg name="image_raw2" default="/cam/front_top_far_30"/>
+  <arg name="image_raw3" default="/cam/left_back_60"/>
+  <arg name="image_raw4" default="/cam/left_front_60"/>
+  <arg name="image_number_image_raw_group1" default="3"/>
+  <arg name="gpu_id_image_raw_group1" default="0"/>
+
+  <arg name="image_raw5" default="/cam/right_back_60"/>
+  <arg name="image_raw6" default="/cam/right_front_60"/>
+  <arg name="image_raw7" default="/cam/back_top_120"/>
+  <arg name="image_number_image_raw_group2" default="3"/>
+  <arg name="gpu_id_image_raw_group2" default="0"/>
+
+  <include if="$(eval &quot;'$(var image_number_image_raw_group0)'=='2'&quot;)" file="$(find-pkg-share tensorrt_yolo)/launch/tensorrt_yolo_two_camera.launch.xml">
+    <arg name="input_topic0" value="$(var image_raw0)"/>
+    <arg name="output_topic0" value="rois0"/>
+    <arg name="input_topic1" value="$(var image_raw1)"/>
+    <arg name="output_topic1" value="rois1"/>
+    <arg name="image_number" value="$(var image_number_image_raw_group0)"/>
+    <arg name="gpu_id" value="$(var gpu_id_image_raw_group0)"/>
+  </include>
+
+  <include if="$(eval &quot;'$(var image_number_image_raw_group1)'=='3'&quot;)" file="$(find-pkg-share tensorrt_yolo)/launch/tensorrt_yolo_three_camera.launch.xml">
+    <arg name="input_topic0" value="$(var image_raw2)"/>
+    <arg name="output_topic0" value="rois2"/>
+    <arg name="input_topic1" value="$(var image_raw3)"/>
+    <arg name="output_topic1" value="rois3"/>
+    <arg name="input_topic2" value="$(var image_raw4)"/>
+    <arg name="output_topic2" value="rois4"/>
+    <arg name="image_number" value="$(var image_number_image_raw_group1)"/>
+    <arg name="gpu_id" value="$(var gpu_id_image_raw_group1)"/>
+  </include>
+
+  <include if="$(eval &quot;'$(var image_number_image_raw_group2)'=='3'&quot;)" file="$(find-pkg-share tensorrt_yolo)/launch/tensorrt_yolo_three_camera.launch.xml">
+    <arg name="input_topic0" value="$(var image_raw5)"/>
+    <arg name="output_topic0" value="rois5"/>
+    <arg name="input_topic1" value="$(var image_raw6)"/>
+    <arg name="output_topic1" value="rois6"/>
+    <arg name="input_topic2" value="$(var image_raw7)"/>
+    <arg name="output_topic2" value="rois7"/>
+    <arg name="image_number" value="$(var image_number_image_raw_group2)"/>
+    <arg name="gpu_id" value="$(var gpu_id_image_raw_group2)"/>
+  </include>
+</launch>

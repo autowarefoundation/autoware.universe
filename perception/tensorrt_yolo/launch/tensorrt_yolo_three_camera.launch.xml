@@ -1,0 +1,34 @@
+<launch>
+  <arg name="yolo_type" default="yolov3"/>
+  <arg name="image_number" default="3"/>
+  <arg name="label_file" default="coco.names"/>
+  <arg name="input_topic0" default="/image_raw0"/>
+  <arg name="input_topic1" default="/image_raw1"/>
+  <arg name="input_topic2" default="/image_raw2"/>
+  <arg name="output_topic0" default="rois0"/>
+  <arg name="output_topic1" default="rois1"/>
+  <arg name="output_topic2" default="rois2"/>
+  <arg name="engine_file" default="$(find-pkg-share tensorrt_yolo)/data/$(var yolo_type)_batch$(var image_number).engine"/>
+  <arg name="calib_image_directory" default="$(find-pkg-share tensorrt_yolo)/calib_image/"/>
+  <arg name="mode" default="FP32"/>
+  <arg name="gpu_id" default="0"/>
+  <node pkg="tensorrt_yolo" exec="tensorrt_yolo_three_cameras_node" name="$(anon tensorrt_yolo)" output="screen">
+    <remap from="in/image0" to="$(var input_topic0)"/>
+    <remap from="in/image1" to="$(var input_topic1)"/>
+    <remap from="in/image2" to="$(var input_topic2)"/>
+    <remap from="out/objects0" to="$(var output_topic0)"/>
+    <remap from="out/objects1" to="$(var output_topic1)"/>
+    <remap from="out/objects2" to="$(var output_topic2)"/>
+    <remap from="out/image0" to="$(var output_topic0)/debug/image"/>
+    <remap from="out/image1" to="$(var output_topic1)/debug/image"/>
+    <remap from="out/image2" to="$(var output_topic2)/debug/image"/>
+    <param name="onnx_file" type="str" value="$(find-pkg-share tensorrt_yolo)/data/$(var yolo_type)_batch$(var image_number).onnx"/>
+    <param name="engine_file" type="str" value="$(var engine_file)"/>
+    <param name="label_file" type="str" value="$(find-pkg-share tensorrt_yolo)/data/$(var label_file)"/>
+    <param name="calib_image_directory" type="str" value="$(var calib_image_directory)"/>
+    <param name="calib_cache_file" type="str" value="$(find-pkg-share tensorrt_yolo)/data/$(var yolo_type)_batch$(var image_number).cache"/>
+    <param name="mode" type="str" value="$(var mode)"/>
+    <param name="gpu_id" type="int" value="$(var gpu_id)"/>
+    <param from="$(find-pkg-share tensorrt_yolo)/config/$(var yolo_type).param.yaml"/>
+  </node>
+</launch>

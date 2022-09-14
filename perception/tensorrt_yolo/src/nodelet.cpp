@@ -135,19 +135,21 @@ void TensorrtYoloNodelet::callback(const sensor_msgs::msg::Image::ConstSharedPtr
   tier4_perception_msgs::msg::DetectedObjectsWithFeature out_objects;
 
   cv_bridge::CvImagePtr in_image_ptr;
+  std::vector<cv::Mat> images(1);
   try {
     in_image_ptr = cv_bridge::toCvCopy(in_image_msg, sensor_msgs::image_encodings::BGR8);
   } catch (cv_bridge::Exception & e) {
     RCLCPP_ERROR(this->get_logger(), "cv_bridge exception: %s", e.what());
     return;
   }
+  images[0] = in_image_ptr->image;
   if (!net_ptr_->detect(
-        in_image_ptr->image, out_scores_.get(), out_boxes_.get(), out_classes_.get())) {
+        images, out_scores_.get(), out_boxes_.get(), out_classes_.get())) {
     RCLCPP_WARN(this->get_logger(), "Fail to inference");
     return;
   }
-  const auto width = in_image_ptr->image.cols;
-  const auto height = in_image_ptr->image.rows;
+  const auto width = images[0].cols;
+  const auto height = images[0].rows;
   for (int i = 0; i < yolo_config_.detections_per_im; ++i) {
     if (out_scores_[i] < yolo_config_.ignore_thresh) {
       break;
@@ -184,7 +186,7 @@ void TensorrtYoloNodelet::callback(const sensor_msgs::msg::Image::ConstSharedPtr
     const auto bottom =
       std::min(static_cast<int>(object.feature.roi.y_offset + object.feature.roi.height), height);
     cv::rectangle(
-      in_image_ptr->image, cv::Point(left, top), cv::Point(right, bottom), cv::Scalar(0, 0, 255), 3,
+      images[0], cv::Point(left, top), cv::Point(right, bottom), cv::Scalar(0, 0, 255), 3,
       8, 0);
   }
   image_pub_.publish(in_image_ptr->toImageMsg());

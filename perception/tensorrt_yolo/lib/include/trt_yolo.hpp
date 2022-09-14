@@ -113,7 +113,7 @@ public:
   // Save model to path
   void save(const std::string & path) const;
 
-  bool detect(const cv::Mat & in_img, float * out_scores, float * out_boxes, float * out_classes);
+  bool detect(const std::vector<cv::Mat> & in_img, float * out_scores, float * out_boxes, float * out_classes);
 
   // Get (c, h, w) size of the fixed input
   std::vector<int> getInputDims() const;
