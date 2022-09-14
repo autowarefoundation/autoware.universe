@@ -35,6 +35,7 @@ common/tier4_localization_rviz_plugin/* isamu.takagi@tier4.jp
 common/autoware_point_types/* taichi.higashide@tier4.jp
 common/tier4_screen_capture_rviz_plugin/* taiki.tanaka@tier4.jp
 common/tier4_control_rviz_plugin/* taiki.tanaka@tier4.jp
+common/bag_time_manager_rviz_plugin/* taiki.tanaka@tier4.jp
 common/osqp_interface/* maxime.clement@tier4.jp
 common/tier4_simulated_clock_rviz_plugin/* maxime.clement@tier4.jp
 common/neural_networks_provider/* ambroise.vincent@arm.com
