@@ -47,24 +47,33 @@ void TrafficLightModuleManager::modifyPathVelocity(
   visualization_msgs::msg::MarkerArray virtual_wall_marker_array;
   tier4_planning_msgs::msg::StopReasonArray stop_reason_array;
   autoware_ad_api_msgs::msg::VelocityFactorArray velocity_factor_array;
-  autoware_auto_perception_msgs::msg::LookingTrafficSignal tl_state;
+  stop_reason_array.header.frame_id = "map";
+  stop_reason_array.header.stamp = path->header.stamp;
+  velocity_factor_array.header.frame_id = "map";
+  velocity_factor_array.header.stamp = clock_->now();
 
+  autoware_auto_perception_msgs::msg::LookingTrafficSignal tl_state;
   tl_state.header.stamp = path->header.stamp;
   tl_state.is_module_running = false;
 
-  stop_reason_array.header.frame_id = "map";
-  stop_reason_array.header.stamp = path->header.stamp;
   first_stop_path_point_index_ = static_cast<int>(path->points.size() - 1);
   first_ref_stop_path_point_index_ = static_cast<int>(path->points.size() - 1);
   for (const auto & scene_module : scene_modules_) {
     tier4_planning_msgs::msg::StopReason stop_reason;
-    autoware_ad_api_msgs::msg::VelocityFactor velocity_factor;
     std::shared_ptr<TrafficLightModule> traffic_light_scene_module(
       std::dynamic_pointer_cast<TrafficLightModule>(scene_module));
+    traffic_light_scene_module->resetVelocityFactor();
     traffic_light_scene_module->setPlannerData(planner_data_);
     traffic_light_scene_module->modifyPathVelocity(path, &stop_reason);
-    stop_reason_array.stop_reasons.emplace_back(stop_reason);
-    velocity_factor_array.factors.emplace_back(velocity_factor);
+
+    // The velocity factor must be called after modifyPathVelocity.
+    const auto velocity_factor = traffic_light_scene_module->getVelocityFactor();
+    if (velocity_factor.type != VelocityFactor::UNKNOWN) {
+      velocity_factor_array.factors.emplace_back(velocity_factor);
+    }
+    if (stop_reason.reason != "") {
+      stop_reason_array.stop_reasons.emplace_back(stop_reason);
+    }
 
     if (traffic_light_scene_module->getFirstStopPathPointIndex() < first_stop_path_point_index_) {
       first_stop_path_point_index_ = traffic_light_scene_module->getFirstStopPathPointIndex();
@@ -90,9 +99,7 @@ void TrafficLightModuleManager::modifyPathVelocity(
   if (!stop_reason_array.stop_reasons.empty()) {
     pub_stop_reason_->publish(stop_reason_array);
   }
-  if (!velocity_factor_array.factors.empty()) {
-    pub_velocity_factor_->publish(velocity_factor_array);
-  }
+  pub_velocity_factor_->publish(velocity_factor_array);
   pub_debug_->publish(debug_marker_array);
   pub_virtual_wall_->publish(virtual_wall_marker_array);
   pub_tl_state_->publish(tl_state);
