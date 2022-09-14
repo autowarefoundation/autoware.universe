@@ -36,7 +36,8 @@ struct ParamsVehicle
 };
 
 class KinematicModelSingleTrackModel
-  : public VehicleModelsBase<KinematicModelSingleTrackModel, STATE_DIM, INPUT_DIM, PARAM_DIM, eSTATE_DIM>
+  : public VehicleModelsBase<KinematicModelSingleTrackModel,
+                             STATE_DIM, INPUT_DIM, PARAM_DIM, eSTATE_DIM>
 {
  public:
   KinematicModelSingleTrackModel() = default;

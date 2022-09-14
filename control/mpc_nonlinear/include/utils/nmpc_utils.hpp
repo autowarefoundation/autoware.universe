@@ -62,6 +62,6 @@ inline geometry_msgs::msg::Quaternion getQuaternionFromYaw(const double &yaw)
   return tf2::toMsg(q);
 }
 
-} // namespace ns_nmpc_utils
+}  // namespace ns_nmpc_utils
 
 #endif  // UTILS__NMPC_UTILS_HPP_

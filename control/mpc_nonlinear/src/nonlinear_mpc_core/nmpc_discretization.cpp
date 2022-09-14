@@ -295,7 +295,8 @@ bool ns_discretization::multipleShootingTrajectory(Model::model_ptr_t const &mod
     double kappa0{};
 
     // InterpolateInCoordinates wit PCG setting reusing_param true.
-    if (auto const &&could_interpolate = piecewise_interpolator.Interpolate(s0, kappa0); !could_interpolate)
+    if (auto const &&could_interpolate =
+        piecewise_interpolator.Interpolate(s0, kappa0); !could_interpolate)
     {
       // ROS_ERROR("[nonlinear_mpc-discretization] Couldn't InterpolateInCoordinates
       // at time %zu of %zu ", k, K);
@@ -303,7 +304,8 @@ bool ns_discretization::multipleShootingTrajectory(Model::model_ptr_t const &mod
     }
 
     params(ns_utils::toUType(VehicleParamIds::curvature)) = kappa0;
-    params(ns_utils::toUType(VehicleParamIds::target_vx)) = target_state.X[k](ns_utils::toUType(VehicleStateIds::vx));
+    params(ns_utils::toUType(VehicleParamIds::target_vx)) =
+      target_state.X[k](ns_utils::toUType(VehicleStateIds::vx));
 
     model_ptr->computeJacobians(x_eq, u_eq, params, Ac, Bc);
     model_ptr->computeFx(x_eq, u_eq, params, f);
@@ -321,8 +323,10 @@ bool ns_discretization::multipleShootingTrajectory(Model::model_ptr_t const &mod
   return true;
 }
 
-bool multipleShootingSingleStep(Model::model_ptr_t const &model_ptr, Model::state_vector_t const &x0,
-                                Model::input_vector_t const &u0, double const &curvature_0, double const &dt,
+bool multipleShootingSingleStep(Model::model_ptr_t const &model_ptr,
+                                Model::state_vector_t const &x0,
+                                Model::input_vector_t const &u0,
+                                double const &curvature_0, double const &dt,
                                 Model::state_matrix_t &Ad, Model::control_matrix_t &Bd);
 
 // One-step discretization methods.

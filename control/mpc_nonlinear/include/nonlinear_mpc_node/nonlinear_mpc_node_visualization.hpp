@@ -75,13 +75,14 @@ inline std_msgs::msg::ColorRGBA createMarkerColor(float r, float g, float b, flo
   return color;
 }
 
-inline visualization_msgs::msg::Marker createDefaultMarker(const std::string_view &frame_id,
-                                                           const builtin_interfaces::msg::Time &stamp,
-                                                           const std::string_view &ns,
-                                                           const int32_t id,
-                                                           const int32_t type,
-                                                           const geometry_msgs::msg::Vector3 &scale,
-                                                           const std_msgs::msg::ColorRGBA &color)
+inline visualization_msgs::msg::Marker
+createDefaultMarker(const std::string_view &frame_id,
+                    const builtin_interfaces::msg::Time &stamp,
+                    const std::string_view &ns,
+                    const int32_t id,
+                    const int32_t type,
+                    const geometry_msgs::msg::Vector3 &scale,
+                    const std_msgs::msg::ColorRGBA &color)
 {
   visualization_msgs::msg::Marker marker;
 
@@ -116,7 +117,8 @@ visualization_msgs::msg::Marker createLocationMarker(geometry_msgs::msg::Pose co
  * @return true
  * @return false
  */
-bool createAutowarePlanningTrajectoryMsg(Model::trajectory_data_t const &td, std::array<double, 2> const &xy0,
+bool createAutowarePlanningTrajectoryMsg(Model::trajectory_data_t const &td,
+                                         std::array<double, 2> const &xy0,
                                          autoware_auto_planning_msgs::msg::Trajectory *autoware_traj);
 
 #endif  // NONLINEAR_MPC_NODE__NONLINEAR_MPC_NODE_VISUALIZATION_HPP_

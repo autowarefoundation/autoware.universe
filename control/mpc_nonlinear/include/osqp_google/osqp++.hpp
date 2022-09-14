@@ -229,12 +229,13 @@ class OsqpSolver
   // a good starting point given the new objective matrix. If that's the
   // case, one can call SetWarmStart with zero vectors to reset the state of the
   // solver.
-  Status UpdateObjectiveMatrix(const Eigen::SparseMatrix<double, Eigen::ColMajor, c_int> &objective_matrix);
+  Status UpdateObjectiveMatrix(const Eigen::SparseMatrix<double,
+                                                         Eigen::ColMajor, c_int> &objective_matrix);
 
   // Updates the elements of matrix the constraint matrix A.
   // The new matrix should have the same sparsity structure.
-  Status UpdateConstraintMatrix(
-    const Eigen::SparseMatrix<double, Eigen::ColMajor, c_int> &constraint_matrix);
+  Status UpdateConstraintMatrix(const Eigen::SparseMatrix<double,
+                                                          Eigen::ColMajor, c_int> &constraint_matrix);
 
   // Combines call of UpdateObjectiveMatrix and UpdateConstraintMatrix.
   Status UpdateObjectiveAndConstraintMatrices(const Eigen::SparseMatrix<double,

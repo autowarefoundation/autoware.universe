@@ -32,7 +32,6 @@ namespace ns_mpc_nonlinear
 NonlinearMPCNode::NonlinearMPCNode(const rclcpp::NodeOptions &node_options)
   : Node("mpc_nonlinear", node_options)
 {
-
   using std::placeholders::_1;
 
   // Initialize the publishers.
@@ -56,18 +55,22 @@ NonlinearMPCNode::NonlinearMPCNode(const rclcpp::NodeOptions &node_options)
     create_publisher<NonlinearMPCPerformanceMsg>("~/debug/nmpc_predicted_performance_vars", 1);
 
   // Initialize the subscribers.
-  sub_trajectory_ = create_subscription<TrajectoryMsg>("~/input/reference_trajectory", rclcpp::QoS{1},
+  sub_trajectory_ = create_subscription<TrajectoryMsg>("~/input/reference_trajectory",
+                                                       rclcpp::QoS{1},
                                                        std::bind(&NonlinearMPCNode::onTrajectory, this, _1));
 
   sub_velocity_ = create_subscription<VelocityMsg>(
-    "~/input/current_velocity", rclcpp::QoS{1}, std::bind(&NonlinearMPCNode::onVelocity, this, _1));
+    "~/input/current_velocity", rclcpp::QoS{1},
+    std::bind(&NonlinearMPCNode::onVelocity, this, _1));
 
-  sub_vehicle_steering_ = create_subscription<SteeringMeasuredMsg>("~/input/current_steering", rclcpp::QoS{1},
+  sub_vehicle_steering_ = create_subscription<SteeringMeasuredMsg>("~/input/current_steering",
+                                                                   rclcpp::QoS{1},
                                                                    std::bind(
                                                                      &NonlinearMPCNode::onSteeringMeasured,
                                                                      this, _1));
 
-  sub_com_delay_ = create_subscription<DelayCompensationRefs>("~/input/current_com_delay", rclcpp::QoS{1},
+  sub_com_delay_ = create_subscription<DelayCompensationRefs>("~/input/current_com_delay",
+                                                              rclcpp::QoS{1},
                                                               std::bind(
                                                                 &NonlinearMPCNode::onCommDelayCompensation,
                                                                 this, _1));
@@ -186,8 +189,6 @@ void NonlinearMPCNode::initTimer(double period_s)
 // Callbacks.
 void NonlinearMPCNode::onTimer()
 {
-
-
   // Update the current pose.
   updateCurrentPose();
 
@@ -510,7 +511,6 @@ double NonlinearMPCNode::calcStopDistance(const size_t &prev_waypoint_index) con
     if (it == current_trajectory_ptr_->points.cend())
     {
       stop_dist = scomputed.back() - scomputed[prev_waypoint_index];
-
     } else
     {
       auto const
@@ -641,7 +641,6 @@ void NonlinearMPCNode::getStopControlCommand(ControlCmdMsg &control_cmd)
   // Longitudinal control values.
   control_cmd.longitudinal.speed = 0.0;
   control_cmd.longitudinal.acceleration = -1.5;
-
 }
 
 void NonlinearMPCNode::loadNodeParameters()
@@ -668,7 +667,6 @@ void NonlinearMPCNode::loadNodeParameters()
   {
     params_node_.input_delay_discrete_nsteps = 1;
     params_node_.predict_initial_states = false;
-
   } else
   {
     params_node_.input_delay_discrete_nsteps =
@@ -908,15 +906,11 @@ void NonlinearMPCNode::computeScalingMatrices(ns_data::ParamsOptimization &param
     params.ulower_scaled(k) = val_low;
     params.uupper_scaled(k) = val_up;
   }
-
-  // DEBUG
-  // end of debug
 }
 
 // Callbacks.
 void NonlinearMPCNode::onTrajectory(const TrajectoryMsg::SharedPtr msg)
 {
-
   if (msg->points.size() < 3)
   {
     RCLCPP_DEBUG(get_logger(), "received path size is < 3, not enough.");
@@ -938,12 +932,6 @@ void NonlinearMPCNode::onTrajectory(const TrajectoryMsg::SharedPtr msg)
     RCLCPP_ERROR(get_logger(), "[nonlinear_mpc] Could not resample the trajectory ...");
     return;
   }
-
-  // DEBUG
-  // RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), (1000ms).count(), "In the node onTrajectory() ");
-
-  //  ns_utils::print("The current number of trajectory is : ", current_trajectory_size_);
-  // end of DEBUG
 }
 
 void NonlinearMPCNode::onVelocity(VelocityMsg::SharedPtr msg)
@@ -997,17 +985,9 @@ bool NonlinearMPCNode::resampleRawTrajectoriesToaFixedSize()
 
     return false;
   }
-
-  // Add extra points to the end of the trajectory for monotonicity.
-  //    if (will_stop_state_)
-  //    {
-  //        mpc_traj_raw.addExtraEndPoints(average_mpc_solve_time_);
-  //    }
-
   nonlinear_mpc_controller_ptr_->setMPCtrajectoryRawVectorsPtr(mpc_traj_raw);
 
   // --------------- Fill the Eigen reference_map_sxyz --------------------------
-
   // !<-@brief smooth map reference of [MPC_MAP_SMOOTHER_OUT x 4]
   // !<-@brief [s, x, y, z ] size [MPC_MAP_SMOOTHER_IN x 4]
   map_matrix_in_t reference_map_sxyz(map_matrix_in_t::Zero());
@@ -1024,13 +1004,6 @@ bool NonlinearMPCNode::resampleRawTrajectoriesToaFixedSize()
   // ------------------- Smooth Trajectories ---------------------------------------
   // Create MPCtraj smooth_ref_traj.
   bool const &&is_smoothed = createSmoothTrajectoriesWithCurvature(mpc_traj_raw, reference_map_sxyz);
-
-  // DEBUG
-  //  ns_utils::print("Eigen resampled map : ");
-  //  ns_eigen_utils::printEigenMat(reference_map_sxyz);
-  //  ns_utils::print("Raw trajectory time vector : ");
-  //  ns_utils::print_container(mpc_traj_raw.t);
-  // end of debug
 
   return is_smoothed;
 }
@@ -1077,13 +1050,16 @@ bool NonlinearMPCNode::makeFixedSizeMat_sxyz(const ns_data::MPCdataTrajectoryVec
 
   // Resample the varying size raw trajectory into a fixed size trajectory points.
   auto const &&is_interpolated_x =
-    interpolator_spline_pws.Interpolate(mpc_traj_raw.s, mpc_traj_raw.x, s_fixed_size_coordinate, xinterp);
+    interpolator_spline_pws.Interpolate(mpc_traj_raw.s,
+                                        mpc_traj_raw.x, s_fixed_size_coordinate, xinterp);
 
   auto const &&is_interpolated_y =
-    interpolator_spline_pws.Interpolate(mpc_traj_raw.s, mpc_traj_raw.y, s_fixed_size_coordinate, yinterp);
+    interpolator_spline_pws.Interpolate(mpc_traj_raw.s, mpc_traj_raw.y,
+                                        s_fixed_size_coordinate, yinterp);
 
   auto const &&is_interpolated_z =
-    interpolator_linear.Interpolate(mpc_traj_raw.s, mpc_traj_raw.z, s_fixed_size_coordinate, zinterp);
+    interpolator_linear.Interpolate(mpc_traj_raw.s, mpc_traj_raw.z,
+                                    s_fixed_size_coordinate, zinterp);
 
   // ns_utils::print("on trajectory vector sizes, zinterp vs map size", zinterp.size(), map_in_fixed_size);
 
@@ -1325,11 +1301,6 @@ void NonlinearMPCNode::computeClosestPointOnTraj()
    * vehicle position and find projection of vehicle vector on the the trajectory section
    * */
 
-  // Get yaw angles of all three poses
-  // double const &&prev_yaw = tf2::getYaw(current_trajectory_ptr_->points.at(*idx_prev_wp_ptr_).pose.orientation);
-  // double const &&next_yaw = tf2::getYaw(current_trajectory_ptr_->points.at(*idx_next_wp_ptr_).pose.orientation);
-  // double const &&dyaw_prev_to_next = ns_utils::angleDistance(next_yaw, prev_yaw);
-
   // Previous waypoint to next waypoint
   double const &&dx_prev_to_next = current_trajectory_ptr_->points.at(*idx_next_wp_ptr_).pose.position.x -
                                    current_trajectory_ptr_->points.at(*idx_prev_wp_ptr_).pose.position.x;
@@ -1424,7 +1395,6 @@ void NonlinearMPCNode::computeClosestPointOnTraj()
 
   // Create the pointer to keep.
   current_interpolated_traj_point_ptr_ = std::make_unique<TrajectoryPoint>(interpolated_traj_point);
-
 }
 
 std::array<double, 2> NonlinearMPCNode::computeErrorStates()
@@ -1447,8 +1417,6 @@ std::array<double, 2> NonlinearMPCNode::computeErrorStates()
   /**
    *  We project the vector from the reference point to the car on the normal of reference point.
    * */
-
-
   auto &&normal_vector = ns_utils::getNormalVector(reference_yaw_angle);
 
   // Vector to path point originating from the vehicle
@@ -1519,16 +1487,14 @@ void NonlinearMPCNode::updateInitialStatesAndControls_fromMeasurements()
   nonlinear_mpc_controller_ptr_->updateInitialStates_x0(x0_initial_states_);
 
   // Set the nonlinear mpc performance variables.
-  nmpc_performance_vars_.nmpc_lateral_error = error_states[0]; //ey
+  nmpc_performance_vars_.nmpc_lateral_error = error_states[0]; // ey
   nmpc_performance_vars_.nmpc_yaw_error = error_states[1]; // eyaw
   nmpc_performance_vars_.long_velocity_measured = current_velocity_ptr_->twist.twist.linear.x;
   nmpc_performance_vars_.nmpc_curvature = current_curvature_k0_;
-
 }
 
 void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::state_vector_t &x0_predicted)
 {
-
   if (inputs_buffer_.empty())
   {
     return;
@@ -1548,11 +1514,11 @@ void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::s
   auto timestamp = this->now();
 
   if (auto it_first_cmd_to_appy =
-      std::find_if(inputs_buffer_.cbegin(), inputs_buffer_.cend(), sCommandTimeStampFind(timestamp));
-    it_first_cmd_to_appy != inputs_buffer_.end())
+      std::find_if(inputs_buffer_.cbegin(),
+                   inputs_buffer_.cend(),
+                   sCommandTimeStampFind(timestamp));    it_first_cmd_to_appy != inputs_buffer_.end())
   {
     first_control_entering_system_ = *it_first_cmd_to_appy;
-
   }
 
   /**
@@ -1562,7 +1528,7 @@ void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::s
   {
     if (rclcpp::Time(it->stamp) < rclcpp::Time(timestamp))
     {
-      it = inputs_buffer_.erase(it); // erase return next iterator
+      it = inputs_buffer_.erase(it);  // erase return next iterator
     } else
     {
       // Compute dt to the next command.
@@ -1572,7 +1538,8 @@ void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::s
       uk(toUType(VehicleControlIds::u_vx)) = static_cast<double>(it->longitudinal.acceleration);
       uk(toUType(VehicleControlIds::u_steering)) = static_cast<double>(it->lateral.steering_tire_angle);
 
-      auto const &sd0 = x0_predicted(ns_utils::toUType(VehicleStateIds::s));  // d stands for  delayed states.
+      // d stands for  delayed states.
+      auto const &sd0 = x0_predicted(ns_utils::toUType(VehicleStateIds::s));
       double kappad0{};           // curvature placeholder
       double vxk{};               // to interpolate the target speed.
 
@@ -1614,7 +1581,6 @@ void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::s
 
   // Set the predicted model params.
   predicted_model_params_ = params;  // [curvature, predicted longitudinal speed vxk]
-
 }
 
 void NonlinearMPCNode::getAverageMPCcomputeTime(double &avg_compute_time_in_sec) const
@@ -1622,10 +1588,11 @@ void NonlinearMPCNode::getAverageMPCcomputeTime(double &avg_compute_time_in_sec)
   avg_compute_time_in_sec = average_mpc_solve_time_;
 }
 
-visualization_msgs::msg::MarkerArray NonlinearMPCNode::createPredictedTrajectoryMarkers(std::string const &ns,
-                                                                                        std::string const &frame_id,
-                                                                                        std::array<double, 2> xy0,
-                                                                                        Model::trajectory_data_t const &td) const
+visualization_msgs::msg::MarkerArray
+NonlinearMPCNode::createPredictedTrajectoryMarkers(std::string const &ns,
+                                                   std::string const &frame_id,
+                                                   std::array<double, 2> xy0,
+                                                   Model::trajectory_data_t const &td) const
 {
   visualization_msgs::msg::MarkerArray marker_array;
   size_t const &&nX = td.nX();
@@ -1635,8 +1602,10 @@ visualization_msgs::msg::MarkerArray NonlinearMPCNode::createPredictedTrajectory
     return marker_array;
   }
 
-  auto marker = createDefaultMarker("map", current_trajectory_ptr_->header.stamp, ns, 0,
-                                    visualization_msgs::msg::Marker::LINE_STRIP, createMarkerScale(0.3, 0.1, 0.1),
+  auto marker = createDefaultMarker("map",
+                                    current_trajectory_ptr_->header.stamp, ns, 0,
+                                    visualization_msgs::msg::Marker::LINE_STRIP,
+                                    createMarkerScale(0.3, 0.1, 0.1),
                                     createMarkerColor(1.0, 0.0, 0.0, static_cast<float>(1.0)));
 
   for (unsigned int k = 0; k < nX; ++k)
@@ -1665,7 +1634,9 @@ visualization_msgs::msg::MarkerArray NonlinearMPCNode::createPredictedTrajectory
   marker_poses.scale.z = 0.2;
   marker_poses.color.a = 1.0;  // Don't forget to set the alpha!
 
-  auto color = createMarkerColor(0.0, static_cast<float>(0.8), static_cast<float>(0.8), static_cast<float>(1.8));
+  auto color = createMarkerColor(0.0,
+                                 static_cast<float>(0.8),
+                                 static_cast<float>(0.8), static_cast<float>(1.8));
   marker_poses.color = color;
 
   for (unsigned int k = 0; k < nX; ++k)
@@ -1775,7 +1746,8 @@ std::array<double, 3> NonlinearMPCNode::getDistanceEgoTargetSpeeds() const
 {
   auto const &&distance_to_stopping_point = calcStopDistance(*idx_prev_wp_ptr_);
   auto const &current_vel = current_velocity_ptr_->twist.twist.linear.x;
-  auto const &target_vel = current_trajectory_ptr_->points.at(*idx_next_wp_ptr_).longitudinal_velocity_mps;
+  auto const &target_vel =
+    current_trajectory_ptr_->points.at(*idx_next_wp_ptr_).longitudinal_velocity_mps;
 
   // state machine toggle(argument -> [distance_to_stop, vx_current, vx_next])
   return std::array<double, 3>{distance_to_stopping_point, current_vel, static_cast<double>(target_vel)};
@@ -1826,7 +1798,6 @@ NonlinearMPCNode::onParameterUpdate(const std::vector<rclcpp::Parameter> &parame
 
   return result;
 }
-
 }  // namespace ns_mpc_nonlinear
 
 #include "rclcpp_components/register_node_macro.hpp"

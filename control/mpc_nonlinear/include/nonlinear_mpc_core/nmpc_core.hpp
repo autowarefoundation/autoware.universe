@@ -106,11 +106,13 @@ class NonlinearMPCController
   /**
    * @brief simulate a given control sequence successively and store the states in the data containers.
    * */
-  void simulateControlSequenceByPredictedInputs(Model::state_vector_t const &x0_predicted,
-                                                ns_splines::InterpolatingSplinePCG const &piecewise_interpolator);
+  void
+  simulateControlSequenceByPredictedInputs(Model::state_vector_t const &x0_predicted,
+                                           ns_splines::InterpolatingSplinePCG const &piecewise_interpolator);
 
-  void simulateControlSequenceUseVaryingSpeed(Model::state_vector_t const &x0_predicted,
-                                              ns_splines::InterpolatingSplinePCG const &piecewise_interpolator);
+  void
+  simulateControlSequenceUseVaryingSpeed(Model::state_vector_t const &x0_predicted,
+                                         ns_splines::InterpolatingSplinePCG const &piecewise_interpolator);
 
   /**
    * @brief Sets the reference states to be tracked. In this application, since lateral and heading error is
@@ -182,7 +184,8 @@ class NonlinearMPCController
   void getInitialState(Model::state_vector_t &x0) const;
 
   // Given a speed trajectory, predict the travelled distance depending on the speed.
-  void getPredictedArcLengthDistanceVector(std::vector<double> &s_predicted, double const &current_predicted_s0) const;
+  void getPredictedArcLengthDistanceVector(std::vector<double> &s_predicted,
+                                           double const &current_predicted_s0) const;
 
   // Gets the total cost (value function value from the OSQP object.)
   [[nodiscard]] double getObjectiveValue() const;

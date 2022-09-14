@@ -90,7 +90,8 @@ class ODEzoh
 {
  public:
   using ode_matrix_t = typename Eigen::Matrix<double,
-                                              Model::state_dim, 1 + Model::state_dim + Model::input_dim + 1>;
+                                              Model::state_dim, 1 +
+                                                                Model::state_dim + Model::input_dim + 1>;
 
   /**
    * @brief ODEzoh matrix for A, B0, B1, Residuals z * All the matrix and vectors have
@@ -134,9 +135,11 @@ class ODEzoh
  *  @param dt           : time step [seconds]
  *  @param dd           : discretization data vector that keeps the system matrices A, B, and residuals z.
  * */
-bool multipleShootingTrajectory(Model::model_ptr_t const &model_ptr, trajectory_data_t const &trajectory_data,
+bool multipleShootingTrajectory(Model::model_ptr_t const &model_ptr,
+                                trajectory_data_t const &trajectory_data,
                                 trajectory_data_t const &target_states,
-                                ns_splines::InterpolatingSplinePCG const &piecewise_interpolator, double const &dt,
+                                ns_splines::InterpolatingSplinePCG const &piecewise_interpolator,
+                                double const &dt,
                                 discretization_data_t &dd);
 
 bool bilinearTransformation(Model::model_ptr_t const &model_ptr,
