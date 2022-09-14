@@ -52,23 +52,33 @@ VoltageMonitor::VoltageMonitor(const rclcpp::NodeOptions & options)
   voltage_string_ = declare_parameter<std::string>("cmos_battery_voltage", "");
   voltage_warn_ = declare_parameter<float>("cmos_battery_warn", 2.95);
   voltage_error_ = declare_parameter<float>("cmos_battery_error", 2.75);
+  bool sensors_exists = false;
   if (voltage_string_ == "") {
-    sensors_exists_ = false;
+    sensors_exists = false;
   } else {
     // Check if command exists
     fs::path p = bp::search_path("sensors");
-    sensors_exists_ = (p.empty()) ? false : true;
+    sensors_exists = (p.empty()) ? false : true;
   }
   gethostname(hostname_, sizeof(hostname_));
   auto callback = &VoltageMonitor::checkBatteryStatus;
-  if (sensors_exists_) {
-    callback = &VoltageMonitor::checkVoltage;
+  if (sensors_exists) {
+    try{
+      std::regex re(R"((\d+).(\d+))"); 
+      voltage_regex_ = re; 
+      callback = &VoltageMonitor::checkVoltage;
+    } catch (std::regex_error& e) {
+      //never come here.
+    }
   }
   updater_.add("CMOS Battery Status", this, callback);
 }
 
-static float getVoltage(std::string voltage_string)
+void VoltageMonitor::checkVoltage(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
+  // Remember start time to measure elapsed time
+  const auto t_start = SystemMonitorUtility::startMeasurement();
+  float voltage = 0.0;
   bp::ipstream is_out;
   bp::ipstream is_err;
   fs::path p = bp::search_path("sensors");
@@ -76,45 +86,34 @@ static float getVoltage(std::string voltage_string)
   c.wait();
 
   if (RCUTILS_UNLIKELY(c.exit_code() != 0)) {  // failed to execute sensors
-    return 0;
-  }
-  std::string line;
-  std::regex re(R"((\d+).(\d+))");  //    3.06 V  (min =  +0.00 V, max =  +4.08 V)
-  for (int i = 0; i < 200 && std::getline(is_out, line); i++) {
-    auto voltageStringPos = line.find(voltage_string.c_str());
-    if (voltageStringPos != std::string::npos) {
-      std::smatch match;
-      std::regex_search(line, match, re);
-      auto voltageString = match.str();
-      return std::stof(voltageString);
-    }
-  }
-  return 0;  // failed to read voltage
-}
-
-void VoltageMonitor::checkVoltage(diagnostic_updater::DiagnosticStatusWrapper & stat)
-{
-  // Remember start time to measure elapsed time
-  const auto t_start = SystemMonitorUtility::startMeasurement();
-
-  if (RCUTILS_UNLIKELY(!sensors_exists_)) {
     stat.summary(DiagStatus::ERROR, "sensors error");
-    stat.add(
-      "sensors",
-      "Command 'sensors' not found, but can be installed with: 'sudo apt install lm-sensors' and "
-      "'sudo sensors-detect'");
+    stat.add("failed to execute sensors", fmt::format("{}", c.exit_code()));
+    // Measure elapsed time since start time and report
+    SystemMonitorUtility::stopMeasurement(t_start, stat);
     return;
   }
-
-  auto v = getVoltage(voltage_string_);
-
-  stat.add("CMOS battey voltage", fmt::format("{}", v));
-  if (RCUTILS_UNLIKELY(v < voltage_warn_)) {
-    stat.summary(DiagStatus::WARN, "LOW BATTERY");
-  } else {
-    stat.summary(DiagStatus::OK, "OK");
+  std::string line;
+  try {
+    for (int i = 0; i < 200 && std::getline(is_out, line); i++) {
+      auto voltageStringPos = line.find(voltage_string_.c_str());
+      if (voltageStringPos != std::string::npos) {
+          std::smatch match;
+          std::regex_search(line, match, voltage_regex_);
+          auto voltageString = match.str();
+          voltage = std::stof(voltageString);
+        break;
+      }
+    }
+    stat.add("CMOS battey voltage", fmt::format("{}", voltage));
+    if (RCUTILS_UNLIKELY(voltage < voltage_warn_)) {
+      stat.summary(DiagStatus::WARN, "LOW BATTERY");
+    } else {
+      stat.summary(DiagStatus::OK, "OK");
+    }
+  } catch (std::regex_error& e) {
+    stat.summary(DiagStatus::WARN, "format error");
+    stat.add("exception in std::regex_search ", fmt::format("{}",e.code()));
   }
-
   // Measure elapsed time since start time and report
   SystemMonitorUtility::stopMeasurement(t_start, stat);
 }
