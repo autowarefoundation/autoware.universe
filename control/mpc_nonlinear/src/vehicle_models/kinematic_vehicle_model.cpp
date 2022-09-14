@@ -76,7 +76,8 @@ void ns_models::KinematicModelSingleTrackModel::systemEquations(const VehicleDyn
     f_xdot(7) = steering_input;
   }
 
-  f_xdot(8) = f_xdot(2) * f_xdot(6) * CppAD::cos(beta + e_yaw); // ay_dot = psi_dot x Vx
+  // ay_dot = psi_dot x Vx
+  f_xdot(8) = f_xdot(2) * f_xdot(6) * CppAD::cos(beta + e_yaw);
 }
 
 void ns_models::KinematicModelSingleTrackModel::testModel()

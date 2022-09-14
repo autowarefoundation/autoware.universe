@@ -41,10 +41,11 @@ class LPVinitializer
    * @brief Computes X(k), U(k) by feedback control, using the model equations and the parameters.
    * @param model_ptr pointer to the vehicle model.
    * @param piecewise_interpolator piecewise interpolator for the curvature.
-      * */
+   * */
   bool simulateWithFeedback(Model::model_ptr_t const &model_ptr,
                             ns_splines::InterpolatingSplinePCG const &piecewise_interpolator,
-                            ns_data::param_lpv_type_t const &params_lpv, ns_data::ParamsOptimization const &param_opt,
+                            ns_data::param_lpv_type_t const &params_lpv,
+                            ns_data::ParamsOptimization const &param_opt,
                             ns_data::data_nmpc_core_type_t &nmpc_data);
 
  private:

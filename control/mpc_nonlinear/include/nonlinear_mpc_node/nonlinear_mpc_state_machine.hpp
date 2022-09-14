@@ -119,8 +119,6 @@ class VehicleMotionFSM
     {motionStateEnums::willbeStopping, "Vehicle will stop."},
     {motionStateEnums::isMoving, "Vehicle is moving."},
     {motionStateEnums::isInEmergency, "Vehicle is in EMERGENCY state."}};
-
 };
-
 } // namespace ns_states
-#endif //MPC_NONLINEAR_NONLINEAR_MPC_STATE_MACHINE_H
+#endif // MPC_NONLINEAR_NONLINEAR_MPC_STATE_MACHINE_H

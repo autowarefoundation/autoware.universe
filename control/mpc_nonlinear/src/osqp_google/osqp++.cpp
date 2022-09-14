@@ -180,9 +180,7 @@ Status CheckDimensions(const int left_value,
     return {msg, StatusCode::kInvalidArgument};
   }
   return Status::OkStatus();
-
 }
-
 }  // namespace
 
 #define OSQP_CHECK_DIMENSIONS(left_value, right_value) \
@@ -482,12 +480,11 @@ Status OsqpSolver::UpdateConstraintMatrix(const Eigen::SparseMatrix<double, Eige
   return {"Unable to update OSQP A matrix: unrecognized error code.", StatusCode::kUnknownError};
 }
 
-Status OsqpSolver::UpdateObjectiveAndConstraintMatrices(const Eigen::SparseMatrix<double,
-                                                                                  Eigen::ColMajor,
-                                                                                  c_int> &objective_matrix,
-                                                        const Eigen::SparseMatrix<double,
-                                                                                  Eigen::ColMajor,
-                                                                                  c_int> &constraint_matrix)
+Status OsqpSolver::
+UpdateObjectiveAndConstraintMatrices(const Eigen::SparseMatrix<double,
+                                                               Eigen::ColMajor, c_int> &objective_matrix,
+                                     const Eigen::SparseMatrix<double,
+                                                               Eigen::ColMajor, c_int> &constraint_matrix)
 {
   // If the objective matrix is already upper triangular, we can skip the
   // temporary.

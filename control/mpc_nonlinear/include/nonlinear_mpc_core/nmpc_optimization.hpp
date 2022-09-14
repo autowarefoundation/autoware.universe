@@ -152,7 +152,7 @@ class OptimizationProblemOSQP
 
   // Keep the following triplets which are constants and to be reused regularly.
   // There are the constant parts of the OSQP constraint matrix.
-  std::vector<Eigen::Triplet<double>> triplets_constants_; // [Sx, Jerk, Aineq]
+  std::vector<Eigen::Triplet<double>> triplets_constants_;  // [Sx, Jerk, Aineq]
 
   bool is_initialized_{false};  // !<-brief Initialization of optimization structure.
   bool is_updated_{false};      // !<-@brief whether the matrices are updated or not.
@@ -555,7 +555,6 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(Mod
   osqp_instance_.lower_bounds.segment<INPUT_DIM>(row_inq_u + (K - 1) * INPUT_DIM) = params_optimization.ulower_scaled;
 
   // Set the Objective vector.
-
   osqp_instance_.objective_vector.resize(osqp_dims_.Pdim);
   osqp_instance_.objective_vector.setZero();
   osqp_instance_.objective_matrix.setZero();
@@ -854,7 +853,6 @@ void OptimizationProblemOSQP<STATE_DIM,
 
     td.U[k] = Su * usolk + Cu;
   }
-
 }
 }  // namespace ns_opt
 #endif  // NONLINEAR_MPC_CORE__NMPC_OPTIMIZATION_HPP_

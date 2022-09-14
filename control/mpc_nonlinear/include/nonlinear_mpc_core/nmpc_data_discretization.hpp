@@ -25,7 +25,6 @@ namespace ns_data
 template<class Model>
 struct DiscretizationData
 {
-
   typename Model::state_matrix_v_t A;  // !<-@brief vector of state transition matrices A.
 
   // !<-@brief vector of control matrices at the beginning of time interval
@@ -45,9 +44,9 @@ struct DiscretizationData
 };
 
 template<class Model>
-void DiscretizationData<Model>::initializeDiscretizationMatrices(size_t const &K, double const &dt_step)
+void DiscretizationData<Model>::initializeDiscretizationMatrices(size_t const &K,
+                                                                 double const &dt_step)
 {
-
   A.resize(K - 1, Model::state_matrix_t::Zero());     // !<-@brief vector of As
   B.resize(K - 1, Model::control_matrix_t::Zero());   // !<-@brief vector of Bs
   C.resize(K - 1, Model::control_matrix_t::Zero());   // !<-@brief vector of Bs at the end of the section.

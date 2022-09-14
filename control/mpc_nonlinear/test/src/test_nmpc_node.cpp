@@ -17,7 +17,6 @@
 #include <vector>
 #include <limits>
 #include <memory>
-#include <vector>
 #include "gtest/gtest.h"
 #include "nonlinear_mpc_test_node.hpp"
 #include "nmpc_test_utils.hpp"
@@ -49,7 +48,7 @@ TEST_F(FakeNodeFixture, automatic_differentiation_works)
 
   // Create dummy controls and params.
   Model::input_vector_t u;
-  u.setRandom();
+  u.setConstant(0.1);
 
   Model::param_vector_t params{Model::param_vector_t::Zero()};
   params.setZero();
@@ -74,21 +73,23 @@ TEST_F(FakeNodeFixture, automatic_differentiation_works)
   ASSERT_TRUE(vehicle_model.IsInitialized());
 
   // Compute analytical f(x, u, params).
-  std::vector<double> analytical_fx_vec;  // {Model::state_dim};
-
   auto tan_delta = tan(steering);
   auto beta = atan(tan_delta * paramsVehicle.lr / paramsVehicle.wheel_base);
 
-  analytical_fx_vec.emplace_back(v_ego * cos(beta + yaw));
-  analytical_fx_vec.emplace_back(v_ego * sin(beta + yaw));
-  analytical_fx_vec.emplace_back(v_ego * sin(beta) / paramsVehicle.lr);
-  analytical_fx_vec.emplace_back(v_ego * cos(beta + eyaw) / (EPS + 1 - kappa * ey));
-  analytical_fx_vec.emplace_back(v_ego * sin(beta + eyaw));
-  analytical_fx_vec.emplace_back(analytical_fx_vec[2] - kappa * analytical_fx_vec[3]);
-  analytical_fx_vec.emplace_back(u(ns_utils::toUType(VehicleControlIds::u_vx)));
-  analytical_fx_vec.emplace_back(u(ns_utils::toUType(VehicleControlIds::u_steering)));
-  analytical_fx_vec.emplace_back(0.);
+  auto const &xdot = v_ego * cos(beta + yaw);
+  auto const &ydot = v_ego * sin(beta + yaw);
+  auto const &yawdot = v_ego * tan_delta;
+  auto const &sdot = v_ego * cos(beta + eyaw) / (EPS + 1 - kappa * ey);
+  auto const &eydot = v_ego * sin(beta + eyaw);
+  auto const &eyawdot = yawdot - kappa * sdot;
+  auto const &vdot = u(0);
+  auto const &deltadot = u(1);
+  auto const &vydot = yawdot * vdot * cos(beta + eyaw);
 
+  // Analytical fx.
+  std::vector<double> analytical_fx_vec{xdot, ydot, yawdot, sdot, eydot, eyawdot, vdot, deltadot, vydot};
+
+  // Autodiff fx
   vehicle_model.computeFx(x, u, params, f_of_dx);
 
   for (size_t k = 0; k < Model::state_dim; ++k)
@@ -108,7 +109,7 @@ TEST_F(FakeNodeFixture, automatic_differentiation_works)
   analytical_df_dv_vec.emplace_back(cos(beta + yaw)); // x
   analytical_df_dv_vec.emplace_back(sin(beta + yaw)); // y
   analytical_df_dv_vec.emplace_back(tan(steering) / paramsVehicle.wheel_base); // yaw
-  analytical_df_dv_vec.emplace_back(cos(beta + eyaw) / (1 - kappa * ey)); //s
+  analytical_df_dv_vec.emplace_back(cos(beta + eyaw) / (1 - kappa * ey)); // s
   analytical_df_dv_vec.emplace_back(sin(beta + eyaw)); //ey
   analytical_df_dv_vec.emplace_back(analytical_df_dv_vec[2] - kappa * analytical_df_dv_vec[3]); // eyaw
   analytical_df_dv_vec.emplace_back(0.); // ax
@@ -117,8 +118,8 @@ TEST_F(FakeNodeFixture, automatic_differentiation_works)
 
   for (Eigen::Index k = 0; k < Model::state_dim; ++k)
   {
-    ASSERT_DOUBLE_EQ(A(k, 6), analytical_df_dv_vec[static_cast<unsigned long>(k)]);
-    ns_utils::print("k : ", k, ": A:", A(k, 6), ": df/dv: ", analytical_df_dv_vec[static_cast<unsigned long>(k)]);
+    ASSERT_DOUBLE_EQ(A(k, 6), analytical_df_dv_vec[static_cast<size_t>(k)]);
+    ns_utils::print("k : ", k, ": A:", A(k, 6), ": df/dv: ", analytical_df_dv_vec[static_cast<size_t>(k)]);
   }
 
   // Debug
@@ -174,10 +175,8 @@ TEST_F(FakeNodeFixture, no_input_stop_control_cmd_is_published)
   //DEBUG
   ns_utils::print(" ctrl_cmd_msgs_  steering: ", cmd_msg->lateral.steering_tire_angle);
   ns_utils::print(" ctrl_cmd_msgs_  steering rate : ", cmd_msg->lateral.steering_tire_rotation_rate);
-
   ns_utils::print(" ctrl_cmd_msgs_  steering rate : ", cmd_msg->longitudinal.speed);
   ns_utils::print(" ctrl_cmd_msgs_  steering: ", cmd_msg->longitudinal.acceleration, -1.5);
-
 }
 
 TEST_F(FakeNodeFixture, empty_trajectory)
@@ -246,8 +245,6 @@ TEST_F(FakeNodeFixture, empty_trajectory)
   // DEBUG
   ns_utils::print(" ctrl_cmd_msgs_  steering: ", cmd_msg->lateral.steering_tire_angle);
   ns_utils::print(" ctrl_cmd_msgs_  steering rate : ", cmd_msg->lateral.steering_tire_rotation_rate);
-
   ns_utils::print(" ctrl_cmd_msgs_  steering rate : ", cmd_msg->longitudinal.speed);
   ns_utils::print(" ctrl_cmd_msgs_  steering: ", cmd_msg->longitudinal.acceleration, -1.5);
-
 }

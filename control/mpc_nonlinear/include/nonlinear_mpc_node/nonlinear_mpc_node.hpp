@@ -23,6 +23,8 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <limits>
+#include <vector>
 
 // Autoware Headers
 #include "common/types.hpp"
@@ -57,7 +59,6 @@
 #include "tf2_ros/transform_listener.h"
 
 // Autoware headers.
-#include "common/types.hpp"
 #include "helper_functions/angle_utils.hpp"
 #include "motion_common/motion_common.hpp"
 #include "motion_common/trajectory_common.hpp"
@@ -76,7 +77,7 @@
 #include "splines/bsplines_smoother.hpp"
 #include "utils/nmpc_utils.hpp"
 
-#include "nonlinear_mpc_node/nonlinear_mpc_state_machine.h"
+#include "nonlinear_mpc_node/nonlinear_mpc_state_machine.hpp"
 #include "mpc_nonlinear/msg/nonlinear_mpc_performance_report.hpp"
 
 namespace ns_mpc_nonlinear
@@ -97,7 +98,6 @@ auto constexpr EPS = std::numeric_limits<double>::epsilon();
 struct DebugData
 {
   geometry_msgs::msg::Pose current_closest_pose{};
-
 };
 
 template<typename T>
@@ -130,7 +130,6 @@ struct sCommandTimeStampFind
 class NonlinearMPCNode : public rclcpp::Node
 {
  public:
-
   /**
    * @brief Constructor
    */
@@ -157,12 +156,9 @@ class NonlinearMPCNode : public rclcpp::Node
   ns_splines::InterpolatingSplinePCG interpolator_curvature_pws;  // pws stands for point-wise
 
  private:
-  //!< @brief ROS clock
-  // rclcpp::Clock::SharedPtr ros_clock_ = std::make_shared<rclcpp::Clock>(RCL_STEADY_TIME);
-
   // Publishers and subscribers.
   // PUBLISHERS.
-  //<-@brief publishes control command.
+  // <-@brief publishes control command.
   rclcpp::Publisher<ControlCmdMsg>::SharedPtr pub_control_cmd_{nullptr};
 
   // Closest point marker publisher.

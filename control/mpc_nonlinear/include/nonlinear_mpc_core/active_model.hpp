@@ -17,6 +17,7 @@
 #ifndef NONLINEAR_MPC_CORE__ACTIVE_MODEL_HPP_
 #define NONLINEAR_MPC_CORE__ACTIVE_MODEL_HPP_
 
+#include <limits>
 #include "eigen3/Eigen/Core"
 #include "vehicle_models/kinematic_vehicle_model.hpp"
 
