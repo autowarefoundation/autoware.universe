@@ -56,7 +56,7 @@ NetMonitor::NetMonitor(const rclcpp::NodeOptions & options)
   reassembles_failed_check_duration_(
     declare_parameter<int>("reassembles_failed_check_duration", 1)),
   reassembles_failed_check_count_(declare_parameter<int>("reassembles_failed_check_count", 1)),
-  reassembles_failed_column_index_(-1)
+  reassembles_failed_column_index_(0)
 {
   using namespace std::literals::chrono_literals;
 
@@ -551,6 +551,7 @@ void NetMonitor::searchReassemblesFailedColumnIndex()
 {
   std::ifstream ifs("/proc/net/snmp");
   if (!ifs) {
+    RCLCPP_WARN(get_logger(), "Failed to open /proc/net/snmp.");
     return;
   }
 
@@ -561,6 +562,7 @@ void NetMonitor::searchReassemblesFailedColumnIndex()
 
   // Find column index of 'ReasmFails'
   if (!std::getline(ifs, line)) {
+    RCLCPP_WARN(get_logger(), "Failed to get /proc/net/snmp first line.");
     return;
   }
 
@@ -568,9 +570,12 @@ void NetMonitor::searchReassemblesFailedColumnIndex()
   boost::split(title_list, line, boost::is_space());
 
   if (title_list.empty()) {
+    RCLCPP_WARN(get_logger(), "/proc/net/snmp first line is empty.");
     return;
   }
   if (title_list[0] != "Ip:") {
+    RCLCPP_WARN(
+      get_logger(), "/proc/net/snmp line title column is invalid. : %s", title_list[0].c_str());
     return;
   }
 
@@ -585,12 +590,16 @@ void NetMonitor::searchReassemblesFailedColumnIndex()
 
 bool NetMonitor::getReassemblesFailed(uint64_t & reassembles_failed)
 {
-  if (reassembles_failed_column_index_ < 0) {
+  if (reassembles_failed_column_index_ == 0) {
+    RCLCPP_WARN(
+      get_logger(), "reassembles failed column index is invalid. : %d",
+      reassembles_failed_column_index_);
     return false;
   }
 
   std::ifstream ifs("/proc/net/snmp");
   if (!ifs) {
+    RCLCPP_WARN(get_logger(), "Failed to open /proc/net/snmp.");
     return false;
   }
 
@@ -598,18 +607,24 @@ bool NetMonitor::getReassemblesFailed(uint64_t & reassembles_failed)
 
   // Skip title row
   if (!std::getline(ifs, line)) {
+    RCLCPP_WARN(get_logger(), "Failed to get /proc/net/snmp first line.");
     return false;
   }
 
   // Find a value of 'ReasmFails'
   if (!std::getline(ifs, line)) {
+    RCLCPP_WARN(get_logger(), "Failed to get /proc/net/snmp second line.");
     return false;
   }
 
   std::vector<std::string> value_list;
   boost::split(value_list, line, boost::is_space());
 
-  if (value_list.size() <= static_cast<std::size_t>(reassembles_failed_column_index_)) {
+  if (static_cast<std::size_t>(reassembles_failed_column_index_) >= value_list.size()) {
+    RCLCPP_WARN(
+      get_logger(),
+      "There are not enough columns for reassembles failed column index. : columns=%d index=%d",
+      static_cast<int>(value_list.size()), reassembles_failed_column_index_);
     return false;
   }
 

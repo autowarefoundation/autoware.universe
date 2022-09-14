@@ -226,8 +226,8 @@ protected:
     reassembles_failed_check_duration_;  //!< @brief IP packet reassembles failed check duration
   unsigned int
     reassembles_failed_check_count_;  //!< @brief IP packet reassembles failed check count threshold
-  int reassembles_failed_column_index_;  //!< @brief column index of IP Reassembles failed in
-                                         //!< /proc/net/snmp
+  unsigned int reassembles_failed_column_index_;  //!< @brief column index of IP Reassembles failed
+                                                  //!< in /proc/net/snmp
 
   /**
    * @brief Network usage status messages
