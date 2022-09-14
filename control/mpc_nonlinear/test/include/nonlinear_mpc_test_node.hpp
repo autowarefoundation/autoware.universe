@@ -42,7 +42,6 @@ using ControlCmdMsg = autoware_auto_control_msgs::msg::AckermannControlCommand;
 using SteeringReport = autoware_auto_vehicle_msgs::msg::SteeringReport;
 using NonlinearMPCPerformanceMsg = mpc_nonlinear::msg::NonlinearMPCPerformanceReport;
 using TrajectoryPoint = autoware_auto_planning_msgs::msg::TrajectoryPoint;
-using namespace std::chrono_literals;
 using NonlinearMPCNode = ns_mpc_nonlinear::NonlinearMPCNode;
 
 using DelayCompensationRefs = communication_delay_compensator::msg::DelayCompensationRefs;

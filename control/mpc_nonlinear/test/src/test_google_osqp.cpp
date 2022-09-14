@@ -31,8 +31,9 @@ using ::Eigen::SparseMatrix;
 using ::Eigen::Triplet;
 using ::Eigen::VectorXd;
 
-void ExpectElementsAre(
-  const Eigen::Map<const Eigen::VectorXd> &vec, std::vector<double> expected, const double tolerance)
+void ExpectElementsAre(const Eigen::Map<const Eigen::VectorXd> &vec,
+                       std::vector<double> expected,
+                       const double tolerance)
 {
   EXPECT_EQ(static_cast<size_t>(vec.size()), expected.size());
   for (int i = 0; i < vec.size(); ++i)

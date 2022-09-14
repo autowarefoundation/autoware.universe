@@ -26,7 +26,8 @@ bool LPVinitializer::simulateWithFeedback(Model::model_ptr_t const &model_ptr,
   // ns_utils::print("in feedback initialization ...");
 
   // Get the size of the trajectory.
-  size_t const &K = nmpc_data.trajectory_data.nX();  // number of state vectors stored in the  std::vector.
+  // number of state vectors stored in the std::vector.
+  size_t const &K = nmpc_data.trajectory_data.nX();
   double const &dt = nmpc_data.mpc_prediction_dt;
 
   // Prepare an error state vector.
@@ -77,8 +78,9 @@ bool LPVinitializer::simulateWithFeedback(Model::model_ptr_t const &model_ptr,
     // Update the error model states. [ey, e_yaw, eV, delta]
     x_error << xk.middleRows(4, Model::estate_dim);
 
-    auto const &vtarget = nmpc_data.target_reference_states_and_controls.X[k](ns_utils::toUType
-                                                                                (VehicleStateIds::vx));
+    auto const &vtarget =
+      nmpc_data.target_reference_states_and_controls.X[k](ns_utils::toUType
+                                                            (VehicleStateIds::vx));
 
     // [ey, epsi, error_vx, delta]
     x_error(2) = xk(ns_utils::toUType(VehicleStateIds::vx)) - vtarget;
@@ -92,14 +94,15 @@ bool LPVinitializer::simulateWithFeedback(Model::model_ptr_t const &model_ptr,
     double kappa0{};
 
     // ns_utils::print("s vs curvature in LPV feedback : ", s0, kappa0);
-    if (auto const &&could_interpolate = piecewise_interpolator.Interpolate(s0, kappa0);!could_interpolate)
+    if (auto const &&could_interpolate =
+        piecewise_interpolator.Interpolate(s0, kappa0);!could_interpolate)
     {
       ns_utils::print("LPV spline interpolator failed to compute the spline coefficients");
       return false;
     }
 
-    //    ns_utils::print("x_error in feedback");
-    //    ns_eigen_utils::printEigenMat(Eigen::MatrixXd(x_error));
+    // ns_utils::print("x_error in feedback");
+    // ns_eigen_utils::printEigenMat(Eigen::MatrixXd(x_error));
 
     // Compute the state transition matrices to get the values of the nonlinear terms
     // in the state transition mat Ac.
@@ -107,15 +110,6 @@ bool LPVinitializer::simulateWithFeedback(Model::model_ptr_t const &model_ptr,
     params(ns_utils::toUType(VehicleParamIds::curvature)) = kappa0;
     params(ns_utils::toUType(VehicleParamIds::target_vx)) = vtarget;
     model_ptr->computeJacobians(xk, uk, params, Ac, Bc);
-
-    //    ns_utils::print("Ac   k =0 ");
-    //    ns_eigen_utils::printEigenMat(Ac);
-    //
-    //    ns_utils::print("Bc  k =0 ");
-    //    ns_eigen_utils::printEigenMat(Bc);
-    //
-    //    ns_utils::print("params k =0 ");
-    //    ns_eigen_utils::printEigenMat(params);
 
     // Compute the thetas - values of the nonlinearities in the state transition matrix Ac.
     // We use the only one-block Ac where the error states reside.
@@ -138,22 +132,11 @@ bool LPVinitializer::simulateWithFeedback(Model::model_ptr_t const &model_ptr,
     Xr = params_lpv.lpvXcontainer.back();  // We keep the first X0, Y0 at the end of the
     Yr = params_lpv.lpvYcontainer.back();
 
-    //    for (size_t j = 0; j < ntheta_; j++)
-    //    {
-    //      ns_utils::print("Xr at  k= ", j);
-    //      Xr = params_lpv.lpvXcontainer[j];
-    //      ns_eigen_utils::printEigenMat(Xr);
-    //    }
-
     for (size_t j = 0; j < ntheta_ - 1; j++)
     {
       Xr += thetas_[j] * params_lpv.lpvXcontainer[j];
       Yr += thetas_[j] * params_lpv.lpvYcontainer[j];
     }
-
-
-    //    ns_utils::print("Xr at k =0 after summing up before the inverse");
-    //    ns_eigen_utils::printEigenMat(Xr);
 
     // Compute Feedback coefficients.
     auto const &Pr = Xr.inverse();  // Cost matrix P.

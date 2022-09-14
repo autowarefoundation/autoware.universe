@@ -21,9 +21,10 @@ visualization_msgs::msg::Marker createLocationMarker(geometry_msgs::msg::Pose co
                                                      const builtin_interfaces::msg::Time &stamp,
                                                      std::string const &ns)
 {
-  auto marker =
-    createDefaultMarker("map", stamp, ns, 0, visualization_msgs::msg::Marker::SPHERE, createMarkerScale(1.2, 1.2, 1.2),
-                        createMarkerColor(0.0, 1.0, 0.0, 1.0));
+  auto marker = createDefaultMarker("map", stamp, ns, 0,
+                                    visualization_msgs::msg::Marker::SPHERE,
+                                    createMarkerScale(1.2, 1.2, 1.2),
+                                    createMarkerColor(0.0, 1.0, 0.0, 1.0));
 
   marker.pose.position.x = waypoint_pose.position.x;
   marker.pose.position.y = waypoint_pose.position.y;
@@ -32,7 +33,8 @@ visualization_msgs::msg::Marker createLocationMarker(geometry_msgs::msg::Pose co
   return marker;
 }
 
-bool createAutowarePlanningTrajectoryMsg(Model::trajectory_data_t const &td, std::array<double, 2> const &xy0,
+bool createAutowarePlanningTrajectoryMsg(Model::trajectory_data_t const &td,
+                                         std::array<double, 2> const &xy0,
                                          autoware_auto_planning_msgs::msg::Trajectory *autoware_traj)
 {
   if (!autoware_traj)
