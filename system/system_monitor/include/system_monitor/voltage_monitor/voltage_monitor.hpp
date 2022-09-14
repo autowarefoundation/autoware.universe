@@ -23,7 +23,7 @@
 #include <diagnostic_updater/diagnostic_updater.hpp>
 
 #include <climits>
-#include <map>
+#include <regex>
 #include <string>
 #include <regex>
 
