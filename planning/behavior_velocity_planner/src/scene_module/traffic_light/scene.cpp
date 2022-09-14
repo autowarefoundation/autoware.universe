@@ -491,11 +491,7 @@ autoware_auto_planning_msgs::msg::PathWithLaneId TrafficLightModule::insertStopP
   stop_factor.stop_factor_points =
     std::vector<geometry_msgs::msg::Point>{debug_data_.highest_confidence_traffic_light_point};
   planning_utils::appendStopReason(stop_factor, stop_reason);
-
-  // velocity_factor->status = autoware_ad_api_msgs::msg::VelocityFactor::STOP_TRUE;
-  // velocity_factor->pose = debug_data_.first_stop_pose;
-  // velocity_factor->stop_factor_points =
-  //   std::vector<geometry_msgs::msg::Point>{debug_data_.highest_confidence_traffic_light_point};
+  velocity_factor_.set(VelocityFactor::UNKNOWN, target_point_with_lane_id.point.pose);
 
   return modified_path;
 }

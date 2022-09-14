@@ -584,7 +584,7 @@ void VirtualTrafficLightModule::insertStopVelocityAtStopLine(
 
   // Set StopReason
   setStopReason(stop_pose, stop_reason);
-  // setVelocityFactor(stop_pose, velocity_factor);
+  velocity_factor_.set(VelocityFactor::UNKNOWN, stop_pose);
 
   // Set data for visualization
   module_data_.stop_head_pose_at_stop_line =
@@ -617,7 +617,7 @@ void VirtualTrafficLightModule::insertStopVelocityAtEndLine(
 
   // Set StopReason
   setStopReason(stop_pose, stop_reason);
-  // setVelocityFactor(stop_pose, velocity_factor);
+  velocity_factor_.set(VelocityFactor::UNKNOWN, stop_pose);
 
   // Set data for visualization
   module_data_.stop_head_pose_at_end_line =

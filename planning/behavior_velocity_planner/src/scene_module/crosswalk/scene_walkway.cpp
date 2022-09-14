@@ -119,9 +119,7 @@ bool WalkwayModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_
     stop_factor.stop_pose = stop_pose.get();
     stop_factor.stop_factor_points.push_back(path_intersects_.front());
     planning_utils::appendStopReason(stop_factor, stop_reason);
-    // velocity_factor->status = autoware_ad_api_msgs::msg::VelocityFactor::STOP_TRUE;
-    // velocity_factor->pose = debug_data_.first_stop_pose;
-    // velocity_factor->stop_factor_points.emplace_back(debug_data_.nearest_collision_point);
+    velocity_factor_.set(VelocityFactor::UNKNOWN, stop_pose.get());
 
     // use arc length to identify if ego vehicle is in front of walkway stop or not.
     const double signed_arc_dist_to_stop_point =

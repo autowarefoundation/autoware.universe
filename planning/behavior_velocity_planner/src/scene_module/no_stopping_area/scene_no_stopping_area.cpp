@@ -194,13 +194,7 @@ bool NoStoppingAreaModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
       stop_factor.stop_pose = stop_point->second;
       stop_factor.stop_factor_points = debug_data_.stuck_points;
       planning_utils::appendStopReason(stop_factor, stop_reason);
-    }
-
-    // Create VelocityFactor
-    {
-      // velocity_factor->status = autoware_ad_api_msgs::msg::VelocityFactor::STOP_TRUE;
-      // velocity_factor->pose = stop_point->second;
-      // velocity_factor->stop_factor_points = debug_data_.stuck_points;
+      velocity_factor_.set(VelocityFactor::UNKNOWN, stop_point->second);
     }
 
     // Create legacy StopReason

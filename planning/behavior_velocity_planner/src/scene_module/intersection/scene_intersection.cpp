@@ -236,13 +236,6 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
 
     // Get stop point and stop factor
     {
-      const auto stop_pose = path->points.at(stop_line_idx_stop).point.pose;
-      if (planner_data_->isVehicleStopped()) {
-        velocity_factor_.set(VelocityFactor::STOPPED, stop_pose);
-      } else {
-        velocity_factor_.set(VelocityFactor::APPROACHING, stop_pose);
-      }
-
       tier4_planning_msgs::msg::StopFactor stop_factor;
       stop_factor.stop_pose = debug_data_.stop_point_pose;
       const auto stop_factor_conflict =
@@ -251,6 +244,7 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
       stop_factor.stop_factor_points =
         planning_utils::concatVector(stop_factor_conflict, stop_factor_stuck);
       planning_utils::appendStopReason(stop_factor, stop_reason);
+      velocity_factor_.set(VelocityFactor::UNKNOWN, path->points.at(stop_line_idx_stop).point.pose);
     }
 
     RCLCPP_DEBUG(logger_, "not activated. stop at the line.");

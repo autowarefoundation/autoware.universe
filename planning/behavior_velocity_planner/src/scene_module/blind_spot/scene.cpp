@@ -185,10 +185,7 @@ bool BlindSpotModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
     stop_factor.stop_pose = debug_data_.stop_point_pose;
     stop_factor.stop_factor_points = planning_utils::toRosPoints(debug_data_.conflicting_targets);
     planning_utils::appendStopReason(stop_factor, stop_reason);
-    // velocity_factor->status = autoware_ad_api_msgs::msg::VelocityFactor::STOP_TRUE;
-    // velocity_factor->pose = debug_data_.stop_point_pose;
-    // velocity_factor->stop_factor_points =
-    //   planning_utils::toRosPoints(debug_data_.conflicting_targets);
+    velocity_factor_.set(VelocityFactor::UNKNOWN, stop_pose);
   } else {
     *path = input_path;  // reset path
   }

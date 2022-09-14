@@ -117,6 +117,7 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(PathWithLaneId * path, StopR
     stop_factor.stop_pose = debug_data_.stop_point_pose;
     stop_factor.stop_factor_points.emplace_back(debug_data_.first_collision_point);
     planning_utils::appendStopReason(stop_factor, stop_reason);
+    velocity_factor_.set(VelocityFactor::UNKNOWN, path->points.at(stop_line_idx).point.pose);
 
     const double signed_arc_dist_to_stop_point = motion_utils::calcSignedArcLength(
       path->points, current_pose.pose.position, path->points.at(stop_line_idx).point.pose.position);
