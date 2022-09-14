@@ -1011,7 +1011,7 @@ bool ObstacleAvoidancePlanner::checkReplan(const PlannerData & planner_data)
 bool ObstacleAvoidancePlanner::isPathShapeChanged(const PlannerData & planner_data)
 {
   if (!prev_path_points_ptr_) {
-    return true;
+    return false;
   }
 
   const auto & p = planner_data;
@@ -1051,7 +1051,7 @@ bool ObstacleAvoidancePlanner::isPathGoalChanged(const PlannerData & planner_dat
   const auto & p = planner_data;
 
   if (prev_path_points_ptr_) {
-    return true;
+    return false;
   }
 
   constexpr double min_vel = 1e-3;
