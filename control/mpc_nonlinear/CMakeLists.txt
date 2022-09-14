@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.14)
 project(mpc_nonlinear)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD 99)
 
 # require that dependencies from package.xml be available
 find_package(ament_cmake_auto REQUIRED)
@@ -24,7 +24,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     -Wall
     -Wextra
     -Wpedantic
-    -Wno-useless-cast
+    -Wuseless-cast
     # -Wno-unused-parameter
     # -Wno-unused-variable
     # -Wno-narrowing
@@ -211,8 +211,8 @@ if(BUILD_TESTING)
     test/include/nmpc_test_utils.hpp
     test/src/nonlinear_mpc_test_node.cpp
     test/src/test_nmpc_node.cpp
-    # test/src/test_google_osqp.cpp
-    )
+    test/src/test_google_osqp.cpp)
+
   ament_target_dependencies(${NMPC_TESTs} fake_test_node)
   autoware_set_compile_options(${NMPC_TESTs})
 
@@ -231,7 +231,3 @@ ament_auto_package(INSTALL_TO_SHARE
   msg
   params)
 
-
-# -------------  PROTOTYPES ---------------------------------------------------
-#add_executable(main_vehicle main_vehicle_test.cpp)
-#target_link_libraries(main_vehicle mpc_nonlinear_lib_core)

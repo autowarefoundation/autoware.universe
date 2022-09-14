@@ -37,9 +37,7 @@ ns_data::MPCdataTrajectoryVectors::MPCdataTrajectoryVectors(size_t const &traj_s
 void ns_data::MPCdataTrajectoryVectors::emplace_back(
   autoware_auto_planning_msgs::msg::Trajectory const &msg)
 {
-
   // [s, t, ax, x, y, z, yaw, vx, curvature ]  nine members
-
   // Insert the first elements.
   s.emplace_back(0.0);
   t.emplace_back(0.0);
@@ -69,7 +67,8 @@ void ns_data::MPCdataTrajectoryVectors::emplace_back(
     double const &mean_v =
       static_cast<double>((point0.longitudinal_velocity_mps + point1.longitudinal_velocity_mps) / 2);
 
-    double const &dt = ds / ns_utils::clamp(mean_v, 0.1, mean_v);  // !<@brief to prevent zero division.
+    // !<@brief to prevent zero division.
+    double const &dt = ds / ns_utils::clamp(mean_v, 0.1, mean_v);
 
     // !<@brief this acceleration is implied by x,y,z and vx in the planner.
     // double &&acc_computed = dv / (EPS + dt);

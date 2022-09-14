@@ -16,6 +16,8 @@
 
 
 #include <memory>
+#include <vector>
+#include <algorithm>
 #include "nonlinear_mpc_test_node.hpp"
 
 std::shared_ptr<ns_mpc_nonlinear::NonlinearMPCNode> makeNonlinearMPCNode()

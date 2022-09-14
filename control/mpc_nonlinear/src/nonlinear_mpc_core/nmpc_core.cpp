@@ -47,7 +47,6 @@ ns_nmpc_interface::NonlinearMPCController::NonlinearMPCController(Model::model_p
     target.X[k] = Model::state_vector_t::Zero();
     target.U[k] = Model::input_vector_t::Zero();
   }
-
 }
 
 // Copy constructors and assignments.
@@ -104,9 +103,7 @@ ns_nmpc_interface::NonlinearMPCController &ns_nmpc_interface::NonlinearMPCContro
     lpv_initializer_ = std::move(other.lpv_initializer_);
     osqp_interface_ = other.osqp_interface_;
   }
-
   return *this;
-
 }
 
 void ns_nmpc_interface::NonlinearMPCController::setMPCtrajectoryRawVectorsPtr(const ns_data::MPCdataTrajectoryVectors &MPCtrajs_raw)
@@ -136,7 +133,6 @@ void ns_nmpc_interface::NonlinearMPCController::getRawRelativeTimeAtIdx(const si
   if (idx < current_MPCtraj_raw_vects_ptr_->t.size())
   {
     t_time = current_MPCtraj_raw_vects_ptr_->t.at(idx);
-
   } else
   {
     RCLCPP_ERROR(rclcpp::get_logger(node_logger_name_), "[mpc_nonlinear - nmpc_core] Out of time index ... ");
@@ -146,11 +142,6 @@ void ns_nmpc_interface::NonlinearMPCController::getRawRelativeTimeAtIdx(const si
 void ns_nmpc_interface::NonlinearMPCController::updateInitialStates_x0(const Model::state_vector_t &x0)
 {
   data_nmpc_.trajectory_data.X[0] << x0;
-
-  // DEBUG
-  // ns_utils::print("After updating the initial states in NMPCCore");
-  // ns_eigen_utils::printEigenMat(data_nmpc_.trajectory_data.X[0]);
-  // end of DEBUG
 }
 
 void ns_nmpc_interface::NonlinearMPCController::getPlannerTravelledDistanceVector(std::vector<double> &s_distance_vector) const
@@ -929,9 +920,7 @@ double ns_nmpc_interface::NonlinearMPCController::getPredictedSteeringState()
 {
   // auto const &d0 = data_nmpc_.trajectory_data.X[0](ns_utils::toUType(VehicleStateIds::steering));
   auto const &d1 = data_nmpc_.trajectory_data.X[1](ns_utils::toUType(VehicleStateIds::steering));
-
   return d1;
-
 }
 
 void ns_nmpc_interface::NonlinearMPCController::getTimeSpeedVectsFromSmoothTraj(std::vector<std::vector<double>> &t_speed_vects) const
@@ -968,4 +957,3 @@ void ns_nmpc_interface::NonlinearMPCController::getSmoothXYZAtDistance(double co
   ns_utils::interp1d_linear(current_MPCtraj_smooth_vects_ptr_->s, current_MPCtraj_smooth_vects_ptr_->y, s, xyz[1]);
   ns_utils::interp1d_linear(current_MPCtraj_smooth_vects_ptr_->s, current_MPCtraj_smooth_vects_ptr_->z, s, xyz[2]);
 }
-

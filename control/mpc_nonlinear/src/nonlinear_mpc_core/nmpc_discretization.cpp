@@ -158,7 +158,6 @@ bool ns_discretization::multipleShootingTrajectory(Model::model_ptr_t const &mod
                                                    double const &dt,
                                                    discretization_data_t &dd)
 {
-
   size_t const &K = dd.nX();  // number of matrices in the state matrix container.
   double const num_of_tsteps{2};  // number of time steps for the RK integration. 1 for a single step.
 

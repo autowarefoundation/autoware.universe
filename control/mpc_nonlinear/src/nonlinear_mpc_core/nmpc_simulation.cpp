@@ -63,8 +63,6 @@ ODEfoh::ODEfoh(Model::model_ptr_t const &model,
 
 void ODEfoh::operator()(const Model::state_vector_t &x, Model::state_vector_t &dxdt, const double t)
 {
-
-
   // InterpolateInCoordinates the inputs and the parameters.
   Model::input_vector_t u = u0_ + t / dt_ * (u1_ - u0_);
   auto &&params = params0_ + t / dt_ * (params1_ - params0_);
@@ -198,7 +196,8 @@ void simulateNonlinearModel_variableSpeed(Model::model_ptr_t model,
 
   ODEvariableSpeed ode(model, u0, params0, v0, v1, dt);
 
-  double const &num_of_tsteps = 4;  // Number of time steps for the RK integration. 1 for a single step.
+  // Number of time steps for the RK integration. 1 for a single step.
+  double const &num_of_tsteps = 4;
   boost::numeric::odeint::integrate_adaptive(stepper, ode, x, 0., dt, dt / num_of_tsteps);
 }
 }  // namespace ns_sim
