@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <vector>
+#include <limits>
 #include "nonlinear_mpc_node/nonlinear_mpc_node.hpp"
 #include "ament_index_cpp/get_package_share_directory.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"

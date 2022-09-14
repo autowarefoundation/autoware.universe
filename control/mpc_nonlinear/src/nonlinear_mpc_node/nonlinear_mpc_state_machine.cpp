@@ -16,7 +16,7 @@
 
 
 #include <cmath>
-#include "nonlinear_mpc_node/nonlinear_mpc_state_machine.h"
+#include "nonlinear_mpc_node/nonlinear_mpc_state_machine.hpp"
 
 namespace ns_states
 {
@@ -29,9 +29,7 @@ VehicleMotionFSM::VehicleMotionFSM(const double &stop_entry_ego_speed,
     stop_state_entry_target_speed_{stop_entry_target_speed},
     stop_state_keep_stopping_dist_{keep_stopping_distance},
     will_stop_dist_{will_stop_distance}
-{
-
-}
+{}
 
 void VehicleMotionFSM::toggle(const std::array<double, 3> &dist2stop_egovx_nextvx)
 {

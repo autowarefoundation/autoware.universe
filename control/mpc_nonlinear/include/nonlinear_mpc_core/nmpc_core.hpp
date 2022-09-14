@@ -20,6 +20,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <limits>
 #include "active_model.hpp"
 #include "data_and_parameter_container.hpp"
 #include "initialization_lpv.hpp"
@@ -41,7 +42,6 @@ using optproblem_type = ns_opt::OptimizationProblemOSQP<Model::state_dim,
  * */
 class NonlinearMPCController
 {
-
  public:
   // User initialization.
   NonlinearMPCController(Model::model_ptr_t model_ptr,
@@ -82,7 +82,9 @@ class NonlinearMPCController
    * @param dt simulation time step,
    * @param xk the initial state to be propagated by the simulator.
    * */
-  void simulateOneStep(Model::input_vector_t const &u, Model::param_vector_t const &params, double const &dt,
+  void simulateOneStep(Model::input_vector_t const &u,
+                       Model::param_vector_t const &params,
+                       double const &dt,
                        Model::state_vector_t &xk) const;
 
   /**
@@ -193,7 +195,6 @@ class NonlinearMPCController
   [[nodiscard]] bool isInitialized() const;
 
  private:
-
   size_t K_mpc_steps{MPC_NUM_OF_PRED_STEPS};
 
   /**

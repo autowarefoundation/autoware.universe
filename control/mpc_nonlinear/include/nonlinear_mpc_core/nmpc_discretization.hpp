@@ -59,7 +59,9 @@ class ODEfoh
    *		 Model::input_dim + 1>;
    */
   // If ZOH. V = [x0, A, B0, z]
-  using ode_matrix_t = typename Eigen::Matrix<double, Model::state_dim, 1 + Model::state_dim + Model::input_dim + 1>;
+  using ode_matrix_t = typename Eigen::Matrix<double,
+                                              Model::state_dim,
+                                              1 + Model::state_dim + Model::input_dim + 1>;
 
   explicit ODEfoh(Model::model_ptr_t model,
                   const Model::input_vector_t &u0,
@@ -87,7 +89,8 @@ class ODEfoh
 class ODEzoh
 {
  public:
-  using ode_matrix_t = typename Eigen::Matrix<double, Model::state_dim, 1 + Model::state_dim + Model::input_dim + 1>;
+  using ode_matrix_t = typename Eigen::Matrix<double,
+                                              Model::state_dim, 1 + Model::state_dim + Model::input_dim + 1>;
 
   /**
    * @brief ODEzoh matrix for A, B0, B1, Residuals z * All the matrix and vectors have
@@ -146,9 +149,13 @@ bool bilinearTransformation(Model::model_ptr_t const &model_ptr,
 /**
  * @brief Discretisize one-step Ad, Bd system matrices.
  * */
-bool multipleShootingSingleStep(Model::model_ptr_t const &model_ptr, Model::state_vector_t const &x0,
-                                Model::input_vector_t const &u0, Model::param_vector_t const &params0, double const &dt,
-                                Model::state_matrix_t &Ad, Model::control_matrix_t &Bd);
+bool multipleShootingSingleStep(Model::model_ptr_t const &model_ptr,
+                                Model::state_vector_t const &x0,
+                                Model::input_vector_t const &u0,
+                                Model::param_vector_t const &params0,
+                                double const &dt,
+                                Model::state_matrix_t &Ad,
+                                Model::control_matrix_t &Bd);
 
 bool bilinearTransformationOneStep(Model::model_ptr_t const &model_ptr,
                                    Model::state_vector_t const &x0,
