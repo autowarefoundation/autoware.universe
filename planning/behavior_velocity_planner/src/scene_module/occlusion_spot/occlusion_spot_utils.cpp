@@ -35,6 +35,15 @@ namespace behavior_velocity_planner
 namespace bg = boost::geometry;
 namespace occlusion_spot_utils
 {
+Polygon2d toFootprintPolygon(const PredictedObject & object, const double scale = 1.0)
+{
+  const Pose & obj_pose = object.kinematics.initial_pose_with_covariance.pose;
+  Polygon2d obj_footprint = tier4_autoware_utils::toPolygon2d(object);
+  // upscale foot print for noise
+  obj_footprint = upScalePolygon(obj_pose.position, obj_footprint, scale);
+  return obj_footprint;
+}
+
 lanelet::ConstLanelet toPathLanelet(const PathWithLaneId & path)
 {
   lanelet::Points3d path_points;
@@ -61,8 +70,8 @@ PathWithLaneId applyVelocityToPath(const PathWithLaneId & path, const double v0)
 }
 
 bool buildDetectionAreaPolygon(
-  Polygons2d & slices, const PathWithLaneId & path, const geometry_msgs::msg::Pose & pose,
-  const PlannerParam & param)
+  Polygons2d & slices, const PathWithLaneId & path, const geometry_msgs::msg::Pose & target_pose,
+  const size_t target_seg_idx, const PlannerParam & param)
 {
   const auto & p = param;
   DetectionRange da_range;
@@ -76,7 +85,7 @@ bool buildDetectionAreaPolygon(
   da_range.max_lateral_distance = p.detection_area.max_lateral_distance;
   slices.clear();
   return planning_utils::createDetectionAreaPolygons(
-    slices, path, pose, da_range, p.pedestrian_vel);
+    slices, path, target_pose, target_seg_idx, da_range, p.pedestrian_vel);
 }
 
 void calcSlowDownPointsForPossibleCollision(
@@ -207,11 +216,18 @@ void categorizeVehicles(
 {
   moving_vehicle_foot_prints.clear();
   stuck_vehicle_foot_prints.clear();
+  /**
+   * Note: these parameters are use to reduce noise in occupancy grid
+   * up_scale: case predicted poly is larger than actual
+   * down_scale: case predicted poly is smaller than actual
+   */
+  const double up_scale = 1.5;
+  const double down_scale = 0.8;
   for (const auto & vehicle : vehicles) {
     if (isMovingVehicle(vehicle, stuck_vehicle_vel)) {
-      moving_vehicle_foot_prints.emplace_back(planning_utils::toFootprintPolygon(vehicle));
+      moving_vehicle_foot_prints.emplace_back(toFootprintPolygon(vehicle, up_scale));
     } else if (isStuckVehicle(vehicle, stuck_vehicle_vel)) {
-      stuck_vehicle_foot_prints.emplace_back(planning_utils::toFootprintPolygon(vehicle));
+      stuck_vehicle_foot_prints.emplace_back(toFootprintPolygon(vehicle, down_scale));
     }
   }
   return;
@@ -219,7 +235,7 @@ void categorizeVehicles(
 
 ArcCoordinates getOcclusionPoint(const PredictedObject & obj, const ConstLineString2d & ll_string)
 {
-  Polygon2d poly = planning_utils::toFootprintPolygon(obj);
+  const auto poly = tier4_autoware_utils::toPolygon2d(obj);
   std::deque<lanelet::ArcCoordinates> arcs;
   for (const auto & p : poly.outer()) {
     lanelet::BasicPoint2d obj_p = {p.x(), p.y()};
@@ -342,7 +358,7 @@ std::vector<PredictedObject> filterVehiclesByDetectionArea(
   // stuck points by predicted objects
   for (const auto & object : objs) {
     // check if the footprint is in the stuck detect area
-    const Polygon2d obj_footprint = planning_utils::toFootprintPolygon(object);
+    const auto obj_footprint = tier4_autoware_utils::toPolygon2d(object);
     for (const auto & p : polys) {
       if (!bg::disjoint(obj_footprint, p)) {
         filtered_obj.emplace_back(object);

@@ -90,15 +90,15 @@ private:
     const float velocity_mps) const;
 
   bool checkCollisionWithShape(
-    const tier4_autoware_utils::Polygon2d & vehicle_polygon, const PoseWithRange pose_with_range,
-    const Shape & shape, std::vector<geometry_msgs::msg::Point> & collision_points) const;
+    const Polygon2d & vehicle_polygon, const PoseWithRange pose_with_range, const Shape & shape,
+    std::vector<geometry_msgs::msg::Point> & collision_points) const;
 
   bool checkCollisionWithCylinder(
-    const tier4_autoware_utils::Polygon2d & vehicle_polygon, const PoseWithRange pose_with_range,
-    const float radius, std::vector<geometry_msgs::msg::Point> & collision_points) const;
+    const Polygon2d & vehicle_polygon, const PoseWithRange pose_with_range, const float radius,
+    std::vector<geometry_msgs::msg::Point> & collision_points) const;
 
   bool checkCollisionWithBoundingBox(
-    const tier4_autoware_utils::Polygon2d & vehicle_polygon, const PoseWithRange pose_with_range,
+    const Polygon2d & vehicle_polygon, const PoseWithRange pose_with_range,
     const geometry_msgs::msg::Vector3 & dimension,
     std::vector<geometry_msgs::msg::Point> & collision_points) const;
 
@@ -124,12 +124,11 @@ private:
   void insertStoppingVelocity(
     const boost::optional<DynamicObstacle> & dynamic_obstacle,
     const geometry_msgs::msg::Pose & current_pose, const float current_vel, const float current_acc,
-    const PathWithLaneId & smoothed_path, PathWithLaneId & output_path);
+    PathWithLaneId & output_path);
 
   void insertApproachingVelocity(
     const DynamicObstacle & dynamic_obstacle, const geometry_msgs::msg::Pose & current_pose,
-    const float approaching_vel, const float approach_margin, const PathWithLaneId & resampled_path,
-    PathWithLaneId & output_path);
+    const float approaching_vel, const float approach_margin, PathWithLaneId & output_path);
 
   void applyMaxJerkLimit(
     const geometry_msgs::msg::Pose & current_pose, const float current_vel, const float current_acc,

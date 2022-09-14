@@ -37,6 +37,7 @@
 #include <set>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 // Debug
 #include <rclcpp/rclcpp.hpp>
@@ -110,6 +111,22 @@ protected:
 
   void setSafe(const bool safe) { safe_ = safe; }
   void setDistance(const double distance) { distance_ = distance; }
+
+  template <class T>
+  size_t findEgoSegmentIndex(const std::vector<T> & points) const
+  {
+    const auto & p = planner_data_;
+    return motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+      points, p->current_pose.pose, p->ego_nearest_dist_threshold, p->ego_nearest_yaw_threshold);
+  }
+
+  template <class T>
+  size_t findEgoIndex(const std::vector<T> & points) const
+  {
+    const auto & p = planner_data_;
+    return motion_utils::findFirstNearestIndexWithSoftConstraints(
+      points, p->current_pose.pose, p->ego_nearest_dist_threshold, p->ego_nearest_yaw_threshold);
+  }
 };
 
 class SceneModuleManagerInterface
@@ -119,7 +136,7 @@ public:
   : clock_(node.get_clock()), logger_(node.get_logger())
   {
     const auto ns = std::string("~/debug/") + module_name;
-    pub_debug_ = node.create_publisher<visualization_msgs::msg::MarkerArray>(ns, 20);
+    pub_debug_ = node.create_publisher<visualization_msgs::msg::MarkerArray>(ns, 1);
     if (!node.has_parameter("is_publish_debug_path")) {
       is_publish_debug_path_ = node.declare_parameter("is_publish_debug_path", false);
     } else {
@@ -130,12 +147,12 @@ public:
         std::string("~/debug/path_with_lane_id/") + module_name, 1);
     }
     pub_virtual_wall_ = node.create_publisher<visualization_msgs::msg::MarkerArray>(
-      std::string("~/virtual_wall/") + module_name, 20);
+      std::string("~/virtual_wall/") + module_name, 5);
     pub_stop_reason_ =
-      node.create_publisher<tier4_planning_msgs::msg::StopReasonArray>("~/output/stop_reasons", 20);
+      node.create_publisher<tier4_planning_msgs::msg::StopReasonArray>("~/output/stop_reasons", 1);
     pub_infrastructure_commands_ =
       node.create_publisher<tier4_v2x_msgs::msg::InfrastructureCommandArray>(
-        "~/output/infrastructure_commands", 20);
+        "~/output/infrastructure_commands", 1);
 
     processing_time_publisher_ = std::make_shared<DebugPublisher>(&node, "~/debug");
   }
@@ -261,6 +278,23 @@ protected:
     scene_modules_.erase(scene_module);
   }
 
+  template <class T>
+  size_t findEgoSegmentIndex(const std::vector<T> & points) const
+  {
+    const auto & p = planner_data_;
+    return motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+      points, p->current_pose.pose, p->ego_nearest_dist_threshold, p->ego_nearest_yaw_threshold);
+  }
+
+  template <class T>
+  size_t findEgoIndex(
+    const std::vector<T> & points, const geometry_msgs::msg::Pose & ego_pose) const
+  {
+    const auto & p = planner_data_;
+    return motion_utils::findFirstNearestIndexWithSoftConstraints(
+      points, p->current_pose.pose, p->ego_nearest_dist_threshold, p->ego_nearest_yaw_threshold);
+  }
+
   std::set<std::shared_ptr<SceneModuleInterface>> scene_modules_;
   std::set<int64_t> registered_module_id_set_;
 
@@ -320,7 +354,7 @@ protected:
   void updateRTCStatus(
     const UUID & uuid, const bool safe, const double distance, const Time & stamp)
   {
-    rtc_interface_.updateCooperateStatus(uuid, safe, distance, stamp);
+    rtc_interface_.updateCooperateStatus(uuid, safe, distance, distance, stamp);
   }
 
   void removeRTCStatus(const UUID & uuid) { rtc_interface_.removeCooperateStatus(uuid); }

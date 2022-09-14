@@ -119,28 +119,28 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
     createSubscriptionOptions(this));
   sub_traffic_signals_ =
     this->create_subscription<autoware_auto_perception_msgs::msg::TrafficSignalArray>(
-      "~/input/traffic_signals", 10,
+      "~/input/traffic_signals", 1,
       std::bind(&BehaviorVelocityPlannerNode::onTrafficSignals, this, _1),
       createSubscriptionOptions(this));
   sub_external_crosswalk_states_ = this->create_subscription<tier4_api_msgs::msg::CrosswalkStatus>(
-    "~/input/external_crosswalk_states", 10,
+    "~/input/external_crosswalk_states", 1,
     std::bind(&BehaviorVelocityPlannerNode::onExternalCrosswalkStates, this, _1),
     createSubscriptionOptions(this));
   sub_external_intersection_states_ =
     this->create_subscription<tier4_api_msgs::msg::IntersectionStatus>(
-      "~/input/external_intersection_states", 10,
+      "~/input/external_intersection_states", 1,
       std::bind(&BehaviorVelocityPlannerNode::onExternalIntersectionStates, this, _1));
   sub_external_velocity_limit_ = this->create_subscription<VelocityLimit>(
     "~/input/external_velocity_limit_mps", rclcpp::QoS{1}.transient_local(),
     std::bind(&BehaviorVelocityPlannerNode::onExternalVelocityLimit, this, _1));
   sub_external_traffic_signals_ =
     this->create_subscription<autoware_auto_perception_msgs::msg::TrafficSignalArray>(
-      "~/input/external_traffic_signals", 10,
+      "~/input/external_traffic_signals", 1,
       std::bind(&BehaviorVelocityPlannerNode::onExternalTrafficSignals, this, _1),
       createSubscriptionOptions(this));
   sub_virtual_traffic_light_states_ =
     this->create_subscription<tier4_v2x_msgs::msg::VirtualTrafficLightStateArray>(
-      "~/input/virtual_traffic_light_states", 10,
+      "~/input/virtual_traffic_light_states", 1,
       std::bind(&BehaviorVelocityPlannerNode::onVirtualTrafficLightStates, this, _1),
       createSubscriptionOptions(this));
   sub_occupancy_grid_ = this->create_subscription<nav_msgs::msg::OccupancyGrid>(
@@ -162,6 +162,12 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   // TODO(yukkysaito): This will become unnecessary when acc output from localization is available.
   planner_data_.accel_lowpass_gain_ = this->declare_parameter("lowpass_gain", 0.5);
   planner_data_.stop_line_extend_length = this->declare_parameter("stop_line_extend_length", 5.0);
+
+  // nearest search
+  planner_data_.ego_nearest_dist_threshold =
+    this->declare_parameter<double>("ego_nearest_dist_threshold");
+  planner_data_.ego_nearest_yaw_threshold =
+    this->declare_parameter<double>("ego_nearest_yaw_threshold");
 
   // Initialize PlannerManager
   if (this->declare_parameter("launch_crosswalk", true)) {
@@ -303,10 +309,12 @@ void BehaviorVelocityPlannerNode::onVehicleVelocity(
 
   // Add velocity to buffer
   planner_data_.velocity_buffer.push_front(*current_velocity);
-  const auto now = this->now();
+  const rclcpp::Time now = this->now();
   while (true) {
     // Check oldest data time
-    const auto time_diff = now - planner_data_.velocity_buffer.back().header.stamp;
+    const auto & s = planner_data_.velocity_buffer.back().header.stamp;
+    const auto time_diff =
+      now >= s ? now - s : rclcpp::Duration(0, 0);  // Note: negative time throws an exception.
 
     // Finish when oldest data is newer than threshold
     if (time_diff.seconds() <= PlannerData::velocity_buffer_time_sec) {
