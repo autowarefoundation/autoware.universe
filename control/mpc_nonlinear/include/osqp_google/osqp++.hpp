@@ -17,17 +17,17 @@
 
 // A C++ wrapper for OSQP (https://osqp.org/). See README.md for an overview.
 
+#include "Eigen/Core"
+#include "Eigen/SparseCore"
+
 #include <iostream>
 #include <memory>
 #include <string>
 #include <utility>
-#include "Eigen/Core"
-#include "Eigen/SparseCore"
 
 namespace osqp
 {
-enum class StatusCode : int
-{
+enum class StatusCode : int {
   kOk = 0,
   kCancelled = 1,
   kFailedPrecondition = 2,
@@ -39,17 +39,16 @@ std::string StatusCodeToString(StatusCode code);
 
 class Status
 {
- public:
-  Status(std::string msg, StatusCode const &status_code)
-    : msg_(std::move(msg)), status_(status_code)
+public:
+  Status(std::string msg, StatusCode const & status_code)
+  : msg_(std::move(msg)), status_(status_code)
   {
     std::cout << msg_;
   }
 
-  Status(Status const &other)
+  Status(Status const & other)
   {
-    if (this != &other)
-    {
+    if (this != &other) {
       msg_ = other.msg_;
       status_ = other.status_;
 
@@ -57,10 +56,9 @@ class Status
     }
   }
 
-  Status &operator=(Status const &other)
+  Status & operator=(Status const & other)
   {
-    if (this != &other)
-    {
+    if (this != &other) {
       msg_ = other.msg_;
       status_ = other.status_;
 
@@ -70,10 +68,9 @@ class Status
     return *this;
   }
 
-  Status(Status &&other) noexcept
+  Status(Status && other) noexcept
   {
-    if (this != &other)
-    {
+    if (this != &other) {
       msg_ = std::move(other.msg_);
       status_ = other.status_;
 
@@ -81,10 +78,9 @@ class Status
     }
   }
 
-  Status &operator=(Status &&other) noexcept
+  Status & operator=(Status && other) noexcept
   {
-    if (this != &other)
-    {
+    if (this != &other) {
       msg_ = std::move(other.msg_);
       status_ = other.status_;
 
@@ -93,22 +89,17 @@ class Status
     return *this;
   }
 
-  bool operator==(Status const &other) const
-  { return status_ == other.status_; }
+  bool operator==(Status const & other) const { return status_ == other.status_; }
 
-  std::string operator()() const
-  { return StatusCodeToString(status_); }
+  std::string operator()() const { return StatusCodeToString(status_); }
 
-  [[nodiscard]] bool ok() const
-  { return status_ == StatusCode::kOk; }
+  [[nodiscard]] bool ok() const { return status_ == StatusCode::kOk; }
 
-  static Status OkStatus()
-  { return Status{" ", StatusCode::kOk}; }
+  static Status OkStatus() { return Status{" ", StatusCode::kOk}; }
 
-  [[nodiscard]] StatusCode code() const
-  { return status_; }
+  [[nodiscard]] StatusCode code() const { return status_; }
 
- private:
+private:
   std::string msg_;
   StatusCode status_;
 };
@@ -123,11 +114,9 @@ using c_int = long long;  // NOLINT
 // README.md. See also osqp++_test.cc for example usage.
 struct OsqpInstance
 {
-  [[nodiscard]] c_int num_variables() const
-  { return constraint_matrix.cols(); }
+  [[nodiscard]] c_int num_variables() const { return constraint_matrix.cols(); }
 
-  [[nodiscard]] c_int num_constraints() const
-  { return constraint_matrix.rows(); }
+  [[nodiscard]] c_int num_constraints() const { return constraint_matrix.rows(); }
 
   // Only the upper triangle of the objective matrix is read. The lower triangle
   // is ignored.
@@ -176,8 +165,7 @@ struct OsqpSettings
 
 // Type-safe wrapper for OSQP's status codes that are defined at
 // osqp/include/constants.h.
-enum class OsqpExitCode
-{
+enum class OsqpExitCode {
   kOptimal,                     // Optimal solution found.
   kPrimalInfeasible,            // Certificate of primal infeasibility found.
   kDualInfeasible,              // Certificate of dual infeasibility found.
@@ -206,21 +194,21 @@ struct OSQPWorkspaceHelper;
 // README.md.
 class OsqpSolver
 {
- public:
+public:
   OsqpSolver() = default;
 
   // Move-only.
-  OsqpSolver(OsqpSolver &&rhs) = default;
+  OsqpSolver(OsqpSolver && rhs) = default;
 
-  OsqpSolver &operator=(OsqpSolver &&rhs) = default;
+  OsqpSolver & operator=(OsqpSolver && rhs) = default;
 
   OsqpSolver(const OsqpSolver &) = delete;
 
-  OsqpSolver &operator=(const OsqpSolver &) = delete;
+  OsqpSolver & operator=(const OsqpSolver &) = delete;
 
   // Creates the internal OSQP workspace given the instance data and settings.
   // It is valid to call Init() multiple times.
-  Status Init(const OsqpInstance &instance, const OsqpSettings &settings);
+  Status Init(const OsqpInstance & instance, const OsqpSettings & settings);
 
   // Updates the elements of matrix the objective matrix P (upper triangular).
   // The new matrix should have the same sparsity structure.
@@ -229,25 +217,21 @@ class OsqpSolver
   // a good starting point given the new objective matrix. If that's the
   // case, one can call SetWarmStart with zero vectors to reset the state of the
   // solver.
-  Status UpdateObjectiveMatrix(const Eigen::SparseMatrix<double,
-                                                         Eigen::ColMajor, c_int> &objective_matrix);
+  Status UpdateObjectiveMatrix(
+    const Eigen::SparseMatrix<double, Eigen::ColMajor, c_int> & objective_matrix);
 
   // Updates the elements of matrix the constraint matrix A.
   // The new matrix should have the same sparsity structure.
-  Status UpdateConstraintMatrix(const Eigen::SparseMatrix<double,
-                                                          Eigen::ColMajor, c_int> &constraint_matrix);
+  Status UpdateConstraintMatrix(
+    const Eigen::SparseMatrix<double, Eigen::ColMajor, c_int> & constraint_matrix);
 
   // Combines call of UpdateObjectiveMatrix and UpdateConstraintMatrix.
-  Status UpdateObjectiveAndConstraintMatrices(const Eigen::SparseMatrix<double,
-                                                                        Eigen::ColMajor,
-                                                                        c_int> &objective_matrix,
-                                              const Eigen::SparseMatrix<double,
-                                                                        Eigen::ColMajor,
-                                                                        c_int> &constraint_matrix);
+  Status UpdateObjectiveAndConstraintMatrices(
+    const Eigen::SparseMatrix<double, Eigen::ColMajor, c_int> & objective_matrix,
+    const Eigen::SparseMatrix<double, Eigen::ColMajor, c_int> & constraint_matrix);
 
   // Returns true if Init() has been called successfully.
-  [[nodiscard]] bool IsInitialized() const
-  { return workspace_ != nullptr; }
+  [[nodiscard]] bool IsInitialized() const { return workspace_ != nullptr; }
 
   // Solves the instance by calling osqp_solve(). CHECK-fails if IsInitialized()
   // is false.
@@ -291,8 +275,9 @@ class OsqpSolver
   // - InvalidArgumentError if the vectors do not have expected dimensions
   // - UnknownError if the internal OSQP call fails
   // - OkStatus on success
-  [[nodiscard]] Status SetWarmStart(const Eigen::Ref<const Eigen::VectorXd> &primal_vector,
-                                    const Eigen::Ref<const Eigen::VectorXd> &dual_vector) const;
+  [[nodiscard]] Status SetWarmStart(
+    const Eigen::Ref<const Eigen::VectorXd> & primal_vector,
+    const Eigen::Ref<const Eigen::VectorXd> & dual_vector) const;
 
   // Sets a warm-start for the primal iterate for the next solve. Use a vector
   // of zeros to reset to the default initialization.
@@ -300,7 +285,8 @@ class OsqpSolver
   // - InvalidArgumentError if the vector does not have expected dimensions
   // - UnknownError if the internal OSQP call fails
   // - OkStatus on success
-  [[nodiscard]] Status SetPrimalWarmStart(const Eigen::Ref<const Eigen::VectorXd> &primal_vector) const;
+  [[nodiscard]] Status SetPrimalWarmStart(
+    const Eigen::Ref<const Eigen::VectorXd> & primal_vector) const;
 
   // Sets a warm-start for the dual iterate for the next solve. Use a vector
   // of zeros to reset to the default initialization.
@@ -308,14 +294,15 @@ class OsqpSolver
   // - InvalidArgumentError if the vector does not have expected dimensions
   // - UnknownError if the internal OSQP call fails
   // - OkStatus on success
-  [[nodiscard]] Status SetDualWarmStart(const Eigen::Ref<const Eigen::VectorXd> &dual_vector) const;
+  [[nodiscard]] Status SetDualWarmStart(
+    const Eigen::Ref<const Eigen::VectorXd> & dual_vector) const;
 
   // Sets the objective vector for the next solve. Returns:
   // - FailedPreconditionError if IsInitialized() is false
   // - InvalidArgumentError if the vectors do not have expected dimensions
   // - UnknownError if the internal OSQP call fails
   // - OkStatus on success
-  Status SetObjectiveVector(const Eigen::Ref<const Eigen::VectorXd> &objective_vector);
+  Status SetObjectiveVector(const Eigen::Ref<const Eigen::VectorXd> & objective_vector);
 
   // Sets the lower_bounds and upper_bounds vectors for the next solve. Returns:
   // - FailedPreconditionError if IsInitialized() is false
@@ -323,8 +310,9 @@ class OsqpSolver
   // - InvalidArgumentError if lower_bounds[i] > upper_bounds[i] for some i
   // - UnknownError if the internal OSQP call fails
   // - OkStatus on success
-  Status SetBounds(const Eigen::Ref<const Eigen::VectorXd> &lower_bounds,
-                   const Eigen::Ref<const Eigen::VectorXd> &upper_bounds);
+  Status SetBounds(
+    const Eigen::Ref<const Eigen::VectorXd> & lower_bounds,
+    const Eigen::Ref<const Eigen::VectorXd> & upper_bounds);
 
   // Updates the max_iter setting for this solver.  Returns:
   // - FailedPreconditionError if IsInitialized() is false
@@ -347,10 +335,10 @@ class OsqpSolver
   // - OkStatus on success
   Status UpdateTimeLimit(double time_limit_new);
 
- private:
+private:
   struct OsqpDeleter
   {
-    void operator()(OSQPWorkspaceHelper *workspace) const;
+    void operator()(OSQPWorkspaceHelper * workspace) const;
   };
 
   std::unique_ptr<OSQPWorkspaceHelper, OsqpDeleter> workspace_;

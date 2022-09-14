@@ -75,7 +75,7 @@ inline geometry_msgs::msg::TransformStamped getDummyTransform()
   return transform_stamped;
 }
 
-template <typename T>
+template<typename T>
 inline void spinWhile(T & node)
 {
   for (size_t i = 0; i < 10; i++) {

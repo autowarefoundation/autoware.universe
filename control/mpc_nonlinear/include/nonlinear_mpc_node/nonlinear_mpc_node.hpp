@@ -92,24 +92,27 @@ struct DebugData
 };
 
 template<typename T>
-void update_param(const std::vector<rclcpp::Parameter> &parameters, const std::string &name, T &value)
+void update_param(
+  const std::vector<rclcpp::Parameter> & parameters, const std::string & name,
+  T & value)
 {
-  auto it = std::find_if(parameters.cbegin(), parameters.cend(),
-                         [&name](const rclcpp::Parameter &parameter)
-                         { return parameter.get_name() == name; });
-  if (it != parameters.cend())
-  {
+  auto it = std::find_if(
+    parameters.cbegin(), parameters.cend(),
+    [&name](const rclcpp::Parameter & parameter)
+    {return parameter.get_name() == name;});
+  if (it != parameters.cend()) {
     value = static_cast<T>(it->template get_value<T>());
   }
 }
 
 struct sCommandTimeStampFind
 {
-  explicit sCommandTimeStampFind(rclcpp::Time const &timestamp) : time_stamp_(timestamp)
+  explicit sCommandTimeStampFind(rclcpp::Time const & timestamp)
+  : time_stamp_(timestamp)
   {}
 
-  bool operator()(ControlCmdMsg const &cmd) const
-  { return rclcpp::Time(cmd.stamp) < rclcpp::Time(time_stamp_); }
+  bool operator()(ControlCmdMsg const & cmd) const
+  {return rclcpp::Time(cmd.stamp) < rclcpp::Time(time_stamp_);}
 
   rclcpp::Time time_stamp_;
 };
@@ -120,11 +123,11 @@ struct sCommandTimeStampFind
 
 class NonlinearMPCNode : public rclcpp::Node
 {
- public:
+public:
   /**
    * @brief Constructor
    */
-  explicit NonlinearMPCNode(const rclcpp::NodeOptions &node_options);
+  explicit NonlinearMPCNode(const rclcpp::NodeOptions & node_options);
 
   /**
    * @brief Destructor
@@ -138,7 +141,7 @@ class NonlinearMPCNode : public rclcpp::Node
    *
    * */
   using bspline_type_t = ns_splines::BSplineInterpolatorTemplated<ns_splines::MPC_MAP_SMOOTHER_IN,
-                                                                  ns_splines::MPC_MAP_SMOOTHER_OUT>;
+      ns_splines::MPC_MAP_SMOOTHER_OUT>;
 
   /**
    *  @brief Public curvature interpolator, updated by the node, used all over the modules.
@@ -146,17 +149,19 @@ class NonlinearMPCNode : public rclcpp::Node
    * */
   ns_splines::InterpolatingSplinePCG interpolator_curvature_pws;  // pws stands for point-wise
 
- private:
+private:
   // Publishers and subscribers.
   // PUBLISHERS.
   // <-@brief publishes control command.
   rclcpp::Publisher<ControlCmdMsg>::SharedPtr pub_control_cmd_{nullptr};
 
   // Closest point marker publisher.
-  rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr pub_closest_point_debug_marker_{nullptr};
+  rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr pub_closest_point_debug_marker_{
+    nullptr};
 
   // Publish the predicted trajectory.
-  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_debug_predicted_traj_{nullptr};
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_debug_predicted_traj_{
+    nullptr};
 
   // <-@brief topic publisher for predicted trajectory
   rclcpp::Publisher<TrajectoryMsg>::SharedPtr pub_predicted_traj_{nullptr};
@@ -333,12 +338,13 @@ class NonlinearMPCNode : public rclcpp::Node
   void loadNodeParameters();  // load the parameters used in the node.
 
   // load vehicle model params.
-  void loadVehicleParameters(ns_models::ParamsVehicle &params_vehicle);
+  void loadVehicleParameters(ns_models::ParamsVehicle & params_vehicle);
 
   // Load NMPCCore, LPV parameters and OSQP class parameters.
-  void loadNMPCoreParameters(ns_data::data_nmpc_core_type_t &data_nmpc_core,
-                             ns_data::param_lpv_type_t &params_lpv,
-                             ns_data::ParamsOptimization &params_optimization);
+  void loadNMPCoreParameters(
+    ns_data::data_nmpc_core_type_t & data_nmpc_core,
+    ns_data::param_lpv_type_t & params_lpv,
+    ns_data::ParamsOptimization & params_optimization);
 
   /**
    *   @brief We use state and control scaling for within the optimization algorithms.
@@ -353,7 +359,7 @@ class NonlinearMPCNode : public rclcpp::Node
    *
    *  ax, au are put on the diagonals of the scaling matrices. bx, bu are the centering vector entries.
    * */
-  static void computeScalingMatrices(ns_data::ParamsOptimization &params);
+  static void computeScalingMatrices(ns_data::ParamsOptimization & params);
 
   /**
    * @brief set current_trajectory_ with received message
@@ -381,7 +387,7 @@ class NonlinearMPCNode : public rclcpp::Node
   OnSetParametersCallbackHandle::SharedPtr is_parameters_set_res_;
 
   rcl_interfaces::msg::SetParametersResult
-  onParameterUpdate(const std::vector<rclcpp::Parameter> &parameters);
+  onParameterUpdate(const std::vector<rclcpp::Parameter> & parameters);
 
   void updateCurrentPose();
 
@@ -394,18 +400,18 @@ class NonlinearMPCNode : public rclcpp::Node
 
   void computeClosestPointOnTraj();
 
-  void setCurrentCOGPose(geometry_msgs::msg::PoseStamped const &ps);
+  void setCurrentCOGPose(geometry_msgs::msg::PoseStamped const & ps);
 
   /**
    * @brief calculates the distance to the vehicle states in which the speed is less than a threshold.
    * */
-  double calcStopDistance(const size_t &prev_waypoint_index) const;
+  double calcStopDistance(const size_t & prev_waypoint_index) const;
 
   // Gets the distance to the stopping point, ego speed and the speed at the next traj. point.
   std::array<double, 3> getDistanceEgoTargetSpeeds() const;
 
   /** @brief Get average MPC computation time in seconds. */
-  void getAverageMPCcomputeTime(double &avg_compute_time_in_sec) const;
+  void getAverageMPCcomputeTime(double & avg_compute_time_in_sec) const;
 
   /**
    * @brief compute the initial error and set the initial states and controls.
@@ -428,14 +434,14 @@ class NonlinearMPCNode : public rclcpp::Node
    * @brief predict the initial states using the vx control input buffer.
    * @param [in-out] xd0 the integrated initial state iteratively.
    * */
-  void predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::state_vector_t &x0_predicted);
+  void predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::state_vector_t & x0_predicted);
 
   /**
    * @brief Set the timer object.
    **/
   void initTimer(double period_s);  //!< @brief Set the timer object.
 
-  static bool isValidTrajectory(const TrajectoryMsg &msg_traj);
+  static bool isValidTrajectory(const TrajectoryMsg & msg_traj);
 
   /**
    * f resamples the current trajectory with a varying size into a fixed-sized trajectories and store them in an associated raw trajectory data class.
@@ -449,43 +455,47 @@ class NonlinearMPCNode : public rclcpp::Node
    * @param mpc_traj_raw raw trajectory container created when a planning trajectory is received.
    * @param fixed_map_ref_sxyz Eigen matrix that stores the interpolated coordinates.
    * */
-  static bool makeFixedSizeMat_sxyz(ns_data::MPCdataTrajectoryVectors const &mpc_traj_raw,
-                                    map_matrix_in_t &fixed_map_ref_sxyz);
+  static bool makeFixedSizeMat_sxyz(
+    ns_data::MPCdataTrajectoryVectors const & mpc_traj_raw,
+    map_matrix_in_t & fixed_map_ref_sxyz);
 
   /**
    * @brief given a fixed size [s, x, y, z] trajectory, create the other references. InterpolateImplicitCoordinates [s, x, y] for down-sampling.
    * We do not use these references except the arc_length-curvature table.
    * */
-  bool createSmoothTrajectoriesWithCurvature(ns_data::MPCdataTrajectoryVectors const &mpc_traj_raw,
-                                             map_matrix_in_t const &fixed_map_ref_sxyz);
+  bool createSmoothTrajectoriesWithCurvature(
+    ns_data::MPCdataTrajectoryVectors const & mpc_traj_raw,
+    map_matrix_in_t const & fixed_map_ref_sxyz);
 
-  static ControlCmdMsg createControlCommand(double const &ax,
-                                            double const &vx,
-                                            double const &steering_rate,
-                                            double const &steering_val);
+  static ControlCmdMsg createControlCommand(
+    double const & ax,
+    double const & vx,
+    double const & steering_rate,
+    double const & steering_val);
 
   /**
    * @brief publish control command as autoware_msgs/ControlCommand type
    * @param [in] cmd published control command
    */
-  void publishControlCommands(ControlCmdMsg &control_cmd) const;
+  void publishControlCommands(ControlCmdMsg & control_cmd) const;
 
-  void publishControlsAndUpdateVars(ControlCmdMsg &control_cmd);
+  void publishControlsAndUpdateVars(ControlCmdMsg & control_cmd);
 
-  void publishPerformanceVariables(const ControlCmdMsg &control_cmd);
+  void publishPerformanceVariables(const ControlCmdMsg & control_cmd);
 
-  void publishPredictedTrajectories(std::string const &ns, std::string const &frame_id) const;
+  void publishPredictedTrajectories(std::string const & ns, std::string const & frame_id) const;
 
-  void publishClosestPointMarker(std::string const &ns) const;
+  void publishClosestPointMarker(std::string const & ns) const;
 
-  void setErrorReport(Model::state_vector_t const &x);
+  void setErrorReport(Model::state_vector_t const & x);
 
-  void publishErrorReport(ErrorReportMsg &error_rpt_msg) const;
+  void publishErrorReport(ErrorReportMsg & error_rpt_msg) const;
 
-  visualization_msgs::msg::MarkerArray createPredictedTrajectoryMarkers(std::string const &ns,
-                                                                        std::string const &frame_id,
-                                                                        std::array<double, 2> xy0,
-                                                                        Model::trajectory_data_t const &td) const;
+  visualization_msgs::msg::MarkerArray createPredictedTrajectoryMarkers(
+    std::string const & ns,
+    std::string const & frame_id,
+    std::array<double, 2> xy0,
+    Model::trajectory_data_t const & td) const;
 
   /**
    * @brief get initial command
@@ -495,7 +505,7 @@ class NonlinearMPCNode : public rclcpp::Node
   /**
    * @brief get stop command
    */
-  void getStopControlCommand(ControlCmdMsg &control_cmd);
+  void getStopControlCommand(ControlCmdMsg & control_cmd);
 
   // Debug Parameters
   mutable DebugData debug_data_{};

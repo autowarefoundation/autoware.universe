@@ -169,7 +169,8 @@ struct DataNMPCcore
 {
   DataNMPCcore() = default;
 
-  explicit DataNMPCcore(double const &mpc_dt) : mpc_prediction_dt{mpc_dt}
+  explicit DataNMPCcore(double const & mpc_dt)
+  : mpc_prediction_dt{mpc_dt}
   {
     trajectory_data.initializeTrajectory(mpc_numPredictionStepsK, mpc_dt);
     target_reference_states_and_controls.initializeTrajectory(mpc_numPredictionStepsK, mpc_dt);

@@ -53,7 +53,7 @@
 template<int STATE_DIM, int INPUT_DIM, int PARAM_DIM, int eSTATE_DIM>
 class VehicleDynamicsBase
 {
- public:
+public:
   using state_vector_t = Eigen::Matrix<double, STATE_DIM, 1>;  // x, weights wx, z for f_0(x,u)
   using state_matrix_t = Eigen::Matrix<double, STATE_DIM, STATE_DIM>;  // A, Q
 
@@ -138,7 +138,7 @@ class VehicleDynamicsBase
   void InitializeModel();
 
   [[nodiscard]] bool IsInitialized() const
-  { return initialized_; }
+  {return initialized_;}
 
   /**
    * @brief Vehicle dynamics base class that defines vehicle model nonlinear and linear equations for automatic
@@ -148,23 +148,26 @@ class VehicleDynamicsBase
    * @param kappa [in] scalar parameter - curvature,
    * @param xdot [out]  xdot =f(x, u)
    * */
-  virtual void systemEquations(const state_vector_ad_t &x, const input_vector_ad_t &u,
-                               const VehicleDynamicsBase::param_vector_ad_t &params,  // curvature, target vx
-                               state_vector_ad_t &xdot_f) = 0;
+  virtual void systemEquations(
+    const state_vector_ad_t & x, const input_vector_ad_t & u,
+    const VehicleDynamicsBase::param_vector_ad_t & params,                            // curvature, target vx
+    state_vector_ad_t & xdot_f) = 0;
 
-  void computeFx(const state_vector_t &x, const input_vector_t &u,
-                 const VehicleDynamicsBase::param_vector_t &params,  // curvature, target vx
-                 state_vector_t &f);
+  void computeFx(
+    const state_vector_t & x, const input_vector_t & u,
+    const VehicleDynamicsBase::param_vector_t & params,              // curvature, target vx
+    state_vector_t & f);
 
-  void computeJacobians(const state_vector_t &x, const input_vector_t &u, param_vector_t const &params,
-                        state_matrix_t &A, control_matrix_t &B);
+  void computeJacobians(
+    const state_vector_t & x, const input_vector_t & u, param_vector_t const & params,
+    state_matrix_t & A, control_matrix_t & B);
 
   // virtual ~VehicleDynamicsBase() = default;
   //  {
   //    // CppAD::thread_alloc::inuse(0);
   //  }
 
- private:
+private:
   // cppAd function for xdot = f(x, u).
   CppAD::ADFun<scalar_t> f_;
 
@@ -182,8 +185,7 @@ class VehicleDynamicsBase
 template<int STATE_DIM, int INPUT_DIM, int PARAM_DIM, int eSTATE_DIM>
 void VehicleDynamicsBase<STATE_DIM, INPUT_DIM, PARAM_DIM, eSTATE_DIM>::InitializeModel()
 {
-  if (initialized_)
-  {
+  if (initialized_) {
     return;
   }
 
@@ -241,9 +243,9 @@ void VehicleDynamicsBase<STATE_DIM, INPUT_DIM, PARAM_DIM, eSTATE_DIM>::Initializ
   CppAD::Independent(x, 0, false);
 
   // Get the addresses of state and input vectors from the concatenated vector created above
-  const state_vector_ad_t &state = x.template segment<STATE_DIM>(0);
-  const input_vector_ad_t &input = x.template segment<INPUT_DIM>(STATE_DIM);
-  const param_vector_ad_t &params = x.template segment<PARAM_DIM>(STATE_DIM + INPUT_DIM);
+  const state_vector_ad_t & state = x.template segment<STATE_DIM>(0);
+  const input_vector_ad_t & input = x.template segment<INPUT_DIM>(STATE_DIM);
+  const param_vector_ad_t & params = x.template segment<PARAM_DIM>(STATE_DIM + INPUT_DIM);
 
   state_vector_ad_t xdot;  // xdot = f(x)
 
@@ -265,12 +267,13 @@ void VehicleDynamicsBase<STATE_DIM, INPUT_DIM, PARAM_DIM, eSTATE_DIM>::Initializ
  * */
 template<int STATE_DIM, int INPUT_DIM, int PARAM_DIM, int eSTATE_DIM>
 void VehicleDynamicsBase<STATE_DIM,
-                         INPUT_DIM,
-                         PARAM_DIM,
-                         eSTATE_DIM>::computeFx(const VehicleDynamicsBase::state_vector_t &x,
-                                                const VehicleDynamicsBase::input_vector_t &u,
-                                                const VehicleDynamicsBase::param_vector_t &params,
-                                                VehicleDynamicsBase::state_vector_t &f)
+  INPUT_DIM,
+  PARAM_DIM,
+  eSTATE_DIM>::computeFx(
+  const VehicleDynamicsBase::state_vector_t & x,
+  const VehicleDynamicsBase::input_vector_t & u,
+  const VehicleDynamicsBase::param_vector_t & params,
+  VehicleDynamicsBase::state_vector_t & f)
 {
   assert(initialized_);
 
@@ -278,8 +281,9 @@ void VehicleDynamicsBase<STATE_DIM,
   dynamic_vector_t input(STATE_DIM + INPUT_DIM + PARAM_DIM);
   input << x, u, params;
 
-  CppAD::cg::ArrayView<const double> input_view(input.data(), static_cast<unsigned long >(input.size()));
-  CppAD::cg::ArrayView<double> f_view(f.data(), static_cast<unsigned long >(f.size()));
+  CppAD::cg::ArrayView<const double> input_view(input.data(),
+    static_cast<unsigned long>(input.size()));
+  CppAD::cg::ArrayView<double> f_view(f.data(), static_cast<unsigned long>(f.size()));
 
   model_->ForwardZero(input_view, f_view);
 
@@ -297,12 +301,12 @@ void VehicleDynamicsBase<STATE_DIM,
  * @brief Implements Jacobian functions of the form xdot = f(x) = Adx + Bdu.
  * */
 template<int STATE_DIM, int INPUT_DIM, int PARAM_DIM, int eSTATE_DIM>
-void VehicleDynamicsBase<STATE_DIM, INPUT_DIM, PARAM_DIM, eSTATE_DIM>::
-computeJacobians(const VehicleDynamicsBase::state_vector_t &x,
-                 const VehicleDynamicsBase::input_vector_t &u,
-                 const VehicleDynamicsBase::param_vector_t &params,
-                 VehicleDynamicsBase::state_matrix_t &A,
-                 VehicleDynamicsBase::control_matrix_t &B)
+void VehicleDynamicsBase<STATE_DIM, INPUT_DIM, PARAM_DIM, eSTATE_DIM>::computeJacobians(
+  const VehicleDynamicsBase::state_vector_t & x,
+  const VehicleDynamicsBase::input_vector_t & u,
+  const VehicleDynamicsBase::param_vector_t & params,
+  VehicleDynamicsBase::state_matrix_t & A,
+  VehicleDynamicsBase::control_matrix_t & B)
 {
   assert(initialized_);
 
@@ -314,8 +318,9 @@ computeJacobians(const VehicleDynamicsBase::state_vector_t &x,
     Eigen::Matrix<double, STATE_DIM, STATE_DIM + INPUT_DIM + PARAM_DIM, Eigen::RowMajor>;
   full_jacobian_t J;
 
-  CppAD::cg::ArrayView<const double> input_view(input.data(), static_cast<unsigned long>(input.size()));
-  CppAD::cg::ArrayView<double> J_view(J.data(), static_cast<unsigned long >(J.size()));
+  CppAD::cg::ArrayView<const double> input_view(input.data(),
+    static_cast<unsigned long>(input.size()));
+  CppAD::cg::ArrayView<double> J_view(J.data(), static_cast<unsigned long>(J.size()));
 
   model_->Jacobian(input_view, J_view);
 
