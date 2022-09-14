@@ -31,13 +31,13 @@ using ::Eigen::SparseMatrix;
 using ::Eigen::Triplet;
 using ::Eigen::VectorXd;
 
-void ExpectElementsAre(const Eigen::Map<const Eigen::VectorXd> &vec,
-                       std::vector<double> expected,
-                       const double tolerance)
+void ExpectElementsAre(
+  const Eigen::Map<const Eigen::VectorXd> & vec,
+  std::vector<double> expected,
+  const double tolerance)
 {
   EXPECT_EQ(static_cast<size_t>(vec.size()), expected.size());
-  for (int i = 0; i < vec.size(); ++i)
-  {
+  for (int i = 0; i < vec.size(); ++i) {
     EXPECT_NEAR(vec[i], expected[static_cast<size_t>(i)], tolerance);
   }
 }
@@ -294,7 +294,7 @@ TEST(OsqpTest, NewConstraintMatrixInTwoDimLP)
 
 class TwoDimensionalQpTest : public ::testing::Test
 {
- protected:
+protected:
   void SetUp() override
   {
     // Minimize x^2 + (1/2)xy + y^2 subject to x >= 1.
@@ -390,7 +390,7 @@ TEST_F(TwoDimensionalQpTest, SolvesWithNewBounds)
 // These tests are instantiated twice, once with a non-upper triangular
 // objective matrix, and once with an upper triangular objective matrix.
 class ParameterizedTwoDimensionalQpTest : public testing::WithParamInterface<bool>,
-                                          public TwoDimensionalQpTest
+  public TwoDimensionalQpTest
 {
 };
 
@@ -411,8 +411,7 @@ TEST_P(ParameterizedTwoDimensionalQpTest, SolvesWithNewObjectiveMatrix)
   SparseMatrix<double> new_objective_matrix(2, 2);
   const Triplet<double> kTripletsP[] = {{0, 0, 2.0}, {1, 0, 0.5}, {0, 1, 0.5}, {1, 1, 1}};
   new_objective_matrix.setFromTriplets(std::begin(kTripletsP), std::end(kTripletsP));
-  if (GetParam())
-  {
+  if (GetParam()) {
     new_objective_matrix = new_objective_matrix.triangularView<Eigen::Upper>();
   }
 
@@ -444,8 +443,7 @@ TEST_P(ParameterizedTwoDimensionalQpTest, SolvesWithNewObjectiveAndConstraintMat
   SparseMatrix<double> new_objective_matrix(2, 2);
   const Triplet<double> kTripletsP[] = {{0, 0, 2.0}, {1, 0, 0.5}, {0, 1, 0.5}, {1, 1, 1}};
   new_objective_matrix.setFromTriplets(std::begin(kTripletsP), std::end(kTripletsP));
-  if (GetParam())
-  {
+  if (GetParam()) {
     new_objective_matrix = new_objective_matrix.triangularView<Eigen::Upper>();
   }
 

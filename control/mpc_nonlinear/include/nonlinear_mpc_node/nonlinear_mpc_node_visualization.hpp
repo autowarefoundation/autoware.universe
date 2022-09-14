@@ -27,9 +27,10 @@
 #include "visualization_msgs/msg/marker.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
 
-inline geometry_msgs::msg::Quaternion createMarkerOrientation(double x,
-                                                              double y,
-                                                              double z, double w)
+inline geometry_msgs::msg::Quaternion createMarkerOrientation(
+  double x,
+  double y,
+  double z, double w)
 {
   geometry_msgs::msg::Quaternion quaternion;
 
@@ -76,13 +77,14 @@ inline std_msgs::msg::ColorRGBA createMarkerColor(float r, float g, float b, flo
 }
 
 inline visualization_msgs::msg::Marker
-createDefaultMarker(const std::string_view &frame_id,
-                    const builtin_interfaces::msg::Time &stamp,
-                    const std::string_view &ns,
-                    const int32_t id,
-                    const int32_t type,
-                    const geometry_msgs::msg::Vector3 &scale,
-                    const std_msgs::msg::ColorRGBA &color)
+createDefaultMarker(
+  const std::string_view & frame_id,
+  const builtin_interfaces::msg::Time & stamp,
+  const std::string_view & ns,
+  const int32_t id,
+  const int32_t type,
+  const geometry_msgs::msg::Vector3 & scale,
+  const std_msgs::msg::ColorRGBA & color)
 {
   visualization_msgs::msg::Marker marker;
 
@@ -103,9 +105,10 @@ createDefaultMarker(const std::string_view &frame_id,
   return marker;
 }
 
-visualization_msgs::msg::Marker createLocationMarker(geometry_msgs::msg::Pose const &waypoint_pose,
-                                                     const builtin_interfaces::msg::Time &stamp,
-                                                     std::string const &ns);
+visualization_msgs::msg::Marker createLocationMarker(
+  geometry_msgs::msg::Pose const & waypoint_pose,
+  const builtin_interfaces::msg::Time & stamp,
+  std::string const & ns);
 
 /**
  * @brief Create a Autoware Planning Trajectory Msg object
@@ -117,8 +120,9 @@ visualization_msgs::msg::Marker createLocationMarker(geometry_msgs::msg::Pose co
  * @return true
  * @return false
  */
-bool createAutowarePlanningTrajectoryMsg(Model::trajectory_data_t const &td,
-                                         std::array<double, 2> const &xy0,
-                                         autoware_auto_planning_msgs::msg::Trajectory *autoware_traj);
+bool createAutowarePlanningTrajectoryMsg(
+  Model::trajectory_data_t const & td,
+  std::array<double, 2> const & xy0,
+  autoware_auto_planning_msgs::msg::Trajectory * autoware_traj);
 
 #endif  // NONLINEAR_MPC_NODE__NONLINEAR_MPC_NODE_VISUALIZATION_HPP_

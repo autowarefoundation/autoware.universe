@@ -36,55 +36,60 @@ namespace ns_sim
 // }
 
 // Zero Order Hold ODE.
-ODEzoh::ODEzoh(Model::model_ptr_t const &model,
-               const Model::input_vector_t &u,
-               Model::param_vector_t const &params,
-               const double dt)
-  : model_(model), u_(u), params_(params), dt_(dt)
+ODEzoh::ODEzoh(
+  Model::model_ptr_t const & model,
+  const Model::input_vector_t & u,
+  Model::param_vector_t const & params,
+  const double dt)
+: model_(model), u_(u), params_(params), dt_(dt)
 {
 }
 
 // Boost integration library integration function signature. f(x, dxdt, t)
-void ODEzoh::operator()(const Model::state_vector_t &x, Model::state_vector_t &dxdt, double t)
+void ODEzoh::operator()(const Model::state_vector_t & x, Model::state_vector_t & dxdt, double t)
 {
   // model->Compute_fx(xk, uk, kappa0, &f);
   model_->computeFx(x, u_, params_, dxdt);
 }
 
 // First Order Hold ODE.
-ODEfoh::ODEfoh(Model::model_ptr_t const &model,
-               const Model::input_vector_t &u0,
-               const Model::input_vector_t &u1,
-               Model::param_vector_t const &params0,
-               Model::param_vector_t const &params1, double dt)
-  : model_(model), u0_(u0), u1_(u1), params0_(params0), params1_(params1), dt_(dt)
+ODEfoh::ODEfoh(
+  Model::model_ptr_t const & model,
+  const Model::input_vector_t & u0,
+  const Model::input_vector_t & u1,
+  Model::param_vector_t const & params0,
+  Model::param_vector_t const & params1, double dt)
+: model_(model), u0_(u0), u1_(u1), params0_(params0), params1_(params1), dt_(dt)
 {
 }
 
-void ODEfoh::operator()(const Model::state_vector_t &x, Model::state_vector_t &dxdt, const double t)
+void ODEfoh::operator()(
+  const Model::state_vector_t & x, Model::state_vector_t & dxdt,
+  const double t)
 {
   // InterpolateInCoordinates the inputs and the parameters.
   Model::input_vector_t u = u0_ + t / dt_ * (u1_ - u0_);
-  auto &&params = params0_ + t / dt_ * (params1_ - params0_);
+  auto && params = params0_ + t / dt_ * (params1_ - params0_);
 
   // Compute f
   model_->computeFx(x, u, params, dxdt);
 }
 
 // Variable speed ODE.
-ODEvariableSpeed::ODEvariableSpeed(const Model::model_ptr_t &model,
-                                   const Model::input_vector_t &u0,
-                                   Model::param_vector_t const &params0,
-                                   const double &v0, const double &v1, double dt)
-  : model_(model), u0_(u0), params0_(params0), v0_(v0), v1(v1), dt_(dt)
+ODEvariableSpeed::ODEvariableSpeed(
+  const Model::model_ptr_t & model,
+  const Model::input_vector_t & u0,
+  Model::param_vector_t const & params0,
+  const double & v0, const double & v1, double dt)
+: model_(model), u0_(u0), params0_(params0), v0_(v0), v1(v1), dt_(dt)
 {
   // Acceleration input is cancelled in this integration as we use varying speed.
   u0_(0) = 0.0;
 }
 
-void ODEvariableSpeed::operator()(Model::state_vector_t &x, Model::state_vector_t &dxdt, double t)
+void ODEvariableSpeed::operator()(Model::state_vector_t & x, Model::state_vector_t & dxdt, double t)
 {
-  auto &&v_interpolated = v0_ + t / dt_ * (v1 - v0_);
+  auto && v_interpolated = v0_ + t / dt_ * (v1 - v0_);
   x(6) = v_interpolated;
 
   // Compute f
@@ -92,11 +97,12 @@ void ODEvariableSpeed::operator()(Model::state_vector_t &x, Model::state_vector_
 }
 
 // Simulator methods.
-void simulateNonlinearModel_zoh(Model::model_ptr_t model,
-                                Model::input_vector_t const &u0,
-                                Model::param_vector_t const &params,
-                                const double &dt,
-                                Model::state_vector_t &x)
+void simulateNonlinearModel_zoh(
+  Model::model_ptr_t model,
+  Model::input_vector_t const & u0,
+  Model::param_vector_t const & params,
+  const double & dt,
+  Model::state_vector_t & x)
 {
   /**
    * class State ,
@@ -113,7 +119,7 @@ void simulateNonlinearModel_zoh(Model::model_ptr_t model,
    *                vector_space_algebra> stepper;
    **/
   boost::numeric::odeint::runge_kutta4<Model::state_vector_t, double, Model::state_vector_t, double,
-                                       boost::numeric::odeint::vector_space_algebra> stepper;
+    boost::numeric::odeint::vector_space_algebra> stepper;
 
   ODEzoh ode(model, u0, params, dt);
 
@@ -142,13 +148,14 @@ void simulateNonlinearModel_zoh(Model::model_ptr_t model,
   //  ns_eigen_utils::printEigenMat(x);
 }
 
-void SimulateNonlinearModel_foh(Model::model_ptr_t model,
-                                Model::input_vector_t const &u0,
-                                Model::input_vector_t const &u1,
-                                Model::param_vector_t const &params0,
-                                Model::param_vector_t const &params1,
-                                const double &dt,
-                                Model::state_vector_t &x)
+void SimulateNonlinearModel_foh(
+  Model::model_ptr_t model,
+  Model::input_vector_t const & u0,
+  Model::input_vector_t const & u1,
+  Model::param_vector_t const & params0,
+  Model::param_vector_t const & params1,
+  const double & dt,
+  Model::state_vector_t & x)
 {
   /**
    * class State ,
@@ -167,11 +174,11 @@ void SimulateNonlinearModel_foh(Model::model_ptr_t model,
   //  stepper;
 
   boost::numeric::odeint::runge_kutta4<Model::state_vector_t, double, Model::state_vector_t, double,
-                                       boost::numeric::odeint::vector_space_algebra> stepper;
+    boost::numeric::odeint::vector_space_algebra> stepper;
 
   ODEfoh ode(model, u0, u1, params0, params1, dt);
 
-  double &&num_of_tsteps = 5;  // Number of time steps for the RK integration. 1 for a single step.
+  double && num_of_tsteps = 5;  // Number of time steps for the RK integration. 1 for a single step.
   boost::numeric::odeint::integrate_adaptive(stepper, ode, x, 0., dt, dt / num_of_tsteps);
 }
 
@@ -179,17 +186,18 @@ void SimulateNonlinearModel_foh(Model::model_ptr_t model,
  *  u0  = [0.0, steering input]. The velocity input is set to zero and planned target speeds are used for the vx
  *  states in the equations.
  * */
-void simulateNonlinearModel_variableSpeed(Model::model_ptr_t model,
-                                          Model::input_vector_t const &u0,
-                                          Model::param_vector_t const &params0,
-                                          double const &v0,
-                                          double const &v1,
-                                          const double &dt,
-                                          Model::state_vector_t &x)
+void simulateNonlinearModel_variableSpeed(
+  Model::model_ptr_t model,
+  Model::input_vector_t const & u0,
+  Model::param_vector_t const & params0,
+  double const & v0,
+  double const & v1,
+  const double & dt,
+  Model::state_vector_t & x)
 {
   // state, value type, derivative, time value type.
   boost::numeric::odeint::runge_kutta4<Model::state_vector_t, double, Model::state_vector_t, double,
-                                       boost::numeric::odeint::vector_space_algebra> stepper;
+    boost::numeric::odeint::vector_space_algebra> stepper;
 
   // runge_kutta_fehlberg78<Model::state_vector_t, double,
   // Model::state_vector_t, double, vector_space_algebra> stepper;
@@ -197,7 +205,7 @@ void simulateNonlinearModel_variableSpeed(Model::model_ptr_t model,
   ODEvariableSpeed ode(model, u0, params0, v0, v1, dt);
 
   // Number of time steps for the RK integration. 1 for a single step.
-  double const &num_of_tsteps = 4;
+  double const & num_of_tsteps = 4;
   boost::numeric::odeint::integrate_adaptive(stepper, ode, x, 0., dt, dt / num_of_tsteps);
 }
 }  // namespace ns_sim
