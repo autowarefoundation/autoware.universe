@@ -63,28 +63,29 @@ struct isMoving
 }   // namespace state
 
 using State = std::variant<state::isatCompleteStop, state::isMoving,
-                           state::willbeStopping, state::isStoppedwillMove>;
+    state::willbeStopping, state::isStoppedwillMove>;
 
-template<class... Ts>
+template<class ... Ts>
 struct overload : Ts ...
 {
-  using Ts::operator()...;
+  using Ts::operator() ...;
 };
 
 /** creates overloaded  lambda functions state_type = []()(state_type as args ){}*/
-template<class... Ts>
-overload(Ts...) -> overload<Ts...>;
+template<class ... Ts>
+overload(Ts ...)->overload<Ts...>;
 
 /** MAIN VARIANT FSM */
 class VehicleMotionFSM
 {
- public:
+public:
   VehicleMotionFSM() = default;
 
-  VehicleMotionFSM(double const &stop_entry_ego_speed,
-                   double const &stop_entry_target_speed,
-                   double const &keep_stopping_distance,
-                   double const &will_stop_distance);
+  VehicleMotionFSM(
+    double const & stop_entry_ego_speed,
+    double const & stop_entry_target_speed,
+    double const & keep_stopping_distance,
+    double const & will_stop_distance);
 
   [[nodiscard]] State onEvent(state::isStoppedwillMove) const;
 
@@ -94,13 +95,13 @@ class VehicleMotionFSM
 
   [[nodiscard]] State onEvent(state::isatCompleteStop) const;
 
-  void toggle(std::array<double, 3> const &dist2stop_egovx_nextvx);
+  void toggle(std::array<double, 3> const & dist2stop_egovx_nextvx);
   void printCurrentStateMsg();
   [[nodiscard]] motionStateEnums getCurrentStateType() const;
 
   std::string_view getFSMTypeReport();
 
- private:
+private:
   State current_state_{state::isStoppedwillMove{}};
   motionStateEnums current_state_type_{motionStateEnums::isStoppedWillMove};
 

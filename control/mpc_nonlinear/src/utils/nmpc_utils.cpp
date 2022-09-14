@@ -15,6 +15,3 @@
  */
 
 #include "utils/nmpc_utils.hpp"
-
-
-

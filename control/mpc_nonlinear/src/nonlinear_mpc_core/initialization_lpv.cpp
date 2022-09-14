@@ -15,20 +15,21 @@
  */
 
 #include "nonlinear_mpc_core/initialization_lpv.hpp"
+
 #include <vector>
 
-bool LPVinitializer::simulateWithFeedback(Model::model_ptr_t const &model_ptr,
-                                          ns_splines::InterpolatingSplinePCG const &piecewise_interpolator,
-                                          ns_data::param_lpv_type_t const &params_lpv,
-                                          ns_data::ParamsOptimization const &params_opt,
-                                          ns_data::data_nmpc_core_type_t &nmpc_data)
+bool LPVinitializer::simulateWithFeedback(
+  Model::model_ptr_t const & model_ptr,
+  ns_splines::InterpolatingSplinePCG const & piecewise_interpolator,
+  ns_data::param_lpv_type_t const & params_lpv, ns_data::ParamsOptimization const & params_opt,
+  ns_data::data_nmpc_core_type_t & nmpc_data)
 {
   // ns_utils::print("in feedback initialization ...");
 
   // Get the size of the trajectory.
   // number of state vectors stored in the std::vector.
-  size_t const &K = nmpc_data.trajectory_data.nX();
-  double const &dt = nmpc_data.mpc_prediction_dt;
+  size_t const & K = nmpc_data.trajectory_data.nX();
+  double const & dt = nmpc_data.mpc_prediction_dt;
 
   // Prepare an error state vector.
   /**
@@ -69,8 +70,7 @@ bool LPVinitializer::simulateWithFeedback(Model::model_ptr_t const &model_ptr,
   // Prepare param vector placeholder.
   Model::param_vector_t params{Model::param_vector_t::Zero()};
 
-  for (size_t k = 0; k < K - 1; ++k)
-  {
+  for (size_t k = 0; k < K - 1; ++k) {
     // Compute feedback control using the Lyapunov matrices X[k] = sum(theta_i*X_i) and Y...
     // respectively. We need the nonlinear theta parameters that represent the nonlinear
     // terms in the xdot = A(theta)*x + B(theta)*u
@@ -78,25 +78,26 @@ bool LPVinitializer::simulateWithFeedback(Model::model_ptr_t const &model_ptr,
     // Update the error model states. [ey, e_yaw, eV, delta]
     x_error << xk.middleRows(4, Model::estate_dim);
 
-    auto const &vtarget =
-      nmpc_data.target_reference_states_and_controls.X[k](ns_utils::toUType
-                                                            (VehicleStateIds::vx));
+    auto const & vtarget =
+      nmpc_data.target_reference_states_and_controls.X[k](ns_utils::toUType(VehicleStateIds::vx));
 
     // [ey, epsi, error_vx, delta]
     x_error(2) = xk(ns_utils::toUType(VehicleStateIds::vx)) - vtarget;
 
     // ns_utils::print("Computed error states ");
     // ns_eigen_utils::printEigenMat(x_error);
-    // ns_utils::print("In feedback vx vs vtarget", xk(ns_utils::toUType(VehicleStateIds::vx)), vtarget);
+    // ns_utils::print("In feedback vx vs vtarget", xk(ns_utils::toUType(VehicleStateIds::vx)),
+    // vtarget);
 
-    // Get the s-state (distance travelled) and interpolate for the curvature value at this distance point.
-    auto const &s0 = xk(ns_utils::toUType(VehicleStateIds::s));
+    // Get the s-state (distance travelled) and interpolate for the curvature value at this distance
+    // point.
+
+    auto const & s0 = xk(ns_utils::toUType(VehicleStateIds::s));
     double kappa0{};
 
     // ns_utils::print("s vs curvature in LPV feedback : ", s0, kappa0);
-    if (auto const &&could_interpolate =
-        piecewise_interpolator.Interpolate(s0, kappa0);!could_interpolate)
-    {
+    if (auto const && could_interpolate = piecewise_interpolator.Interpolate(s0, kappa0);
+        !could_interpolate) {
       ns_utils::print("LPV spline interpolator failed to compute the spline coefficients");
       return false;
     }
@@ -114,12 +115,12 @@ bool LPVinitializer::simulateWithFeedback(Model::model_ptr_t const &model_ptr,
     // Compute the thetas - values of the nonlinearities in the state transition matrix Ac.
     // We use the only one-block Ac where the error states reside.
     // auto const & Ac_error_block = Ac.template block<estate_dim, estate_dim>(4, 4);
-    auto const &Ac_error_block = Ac.bottomRightCorner<5, 5>();
+    auto const & Ac_error_block = Ac.bottomRightCorner<5, 5>();
 
-    auto const &th1 = Ac_error_block(0, 1);
-    auto const &th2 = Ac_error_block(1, 0);
-    auto const &th3 = Ac_error_block(1, 1);
-    auto const &th4 = Ac_error_block(1, 2);
+    auto const & th1 = Ac_error_block(0, 1);
+    auto const & th2 = Ac_error_block(1, 0);
+    auto const & th3 = Ac_error_block(1, 1);
+    auto const & th4 = Ac_error_block(1, 2);
 
     // Compute parametric Lyapunov matrices.
     /**
@@ -132,35 +133,32 @@ bool LPVinitializer::simulateWithFeedback(Model::model_ptr_t const &model_ptr,
     Xr = params_lpv.lpvXcontainer.back();  // We keep the first X0, Y0 at the end of the
     Yr = params_lpv.lpvYcontainer.back();
 
-    for (size_t j = 0; j < ntheta_ - 1; j++)
-    {
+    for (size_t j = 0; j < ntheta_ - 1; j++) {
       Xr += thetas_[j] * params_lpv.lpvXcontainer[j];
       Yr += thetas_[j] * params_lpv.lpvYcontainer[j];
     }
 
     // Compute Feedback coefficients.
-    auto const &Pr = Xr.inverse();  // Cost matrix P.
-    auto const &Kfb = Yr * Pr;      // State feedback coefficients matrix.
-    uk << Kfb * x_error;              // Feedback control signal.
+    auto const & Pr = Xr.inverse();  // Cost matrix P.
+    auto const & Kfb = Yr * Pr;      // State feedback coefficients matrix.
+    uk << Kfb * x_error;             // Feedback control signal.
 
-    for (auto j = 0; j < uk.size(); ++j)
-    {
+    for (auto j = 0; j < uk.size(); ++j) {
       uk(j) = ns_utils::clamp(uk(j), params_opt.ulower(j), params_opt.uupper(j));
     }
 
     ns_sim::simulateNonlinearModel_zoh(model_ptr, uk, params, dt, xk);
 
     // Saturate all states
-    for (auto j = 0; j < xk.size(); ++j)
-    {
-      if (params_opt.xlower(j) > -kInfinity && params_opt.xupper(j) < kInfinity)
-      {
+    for (auto j = 0; j < xk.size(); ++j) {
+      if (params_opt.xlower(j) > -kInfinity && params_opt.xupper(j) < kInfinity) {
         xk(j) = ns_utils::clamp(xk(j), params_opt.xlower(j), params_opt.xupper(j));
       }
     }
 
     // Unwrap error and yaw angles.
-    xk(ns_utils::toUType(VehicleStateIds::yaw)) = ns_utils::angleDistance(xk(ns_utils::toUType(VehicleStateIds::yaw)));
+    xk(ns_utils::toUType(VehicleStateIds::yaw)) =
+      ns_utils::angleDistance(xk(ns_utils::toUType(VehicleStateIds::yaw)));
 
     // Update xk, uk
     nmpc_data.trajectory_data.X[k + 1] << xk.eval();
@@ -172,4 +170,3 @@ bool LPVinitializer::simulateWithFeedback(Model::model_ptr_t const &model_ptr,
 
   return true;
 }
-

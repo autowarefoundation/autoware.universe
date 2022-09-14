@@ -38,7 +38,7 @@
 namespace ns_nmpc_utils
 {
 // ---------------- ROS METHODS -------------------------
-inline geometry_msgs::msg::Quaternion createOrientationMsgfromYaw(double const &yaw_angle)
+inline geometry_msgs::msg::Quaternion createOrientationMsgfromYaw(double const & yaw_angle)
 {
   geometry_msgs::msg::Quaternion orientation_msg;
   double roll_angle = 0.0;
@@ -55,7 +55,7 @@ inline geometry_msgs::msg::Quaternion createOrientationMsgfromYaw(double const &
   return orientation_msg;
 }
 
-inline geometry_msgs::msg::Quaternion getQuaternionFromYaw(const double &yaw)
+inline geometry_msgs::msg::Quaternion getQuaternionFromYaw(const double & yaw)
 {
   tf2::Quaternion q;
   q.setRPY(0, 0, yaw);

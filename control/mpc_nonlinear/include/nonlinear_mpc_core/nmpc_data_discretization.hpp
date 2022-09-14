@@ -35,7 +35,7 @@ struct DiscretizationData
 
   typename Model::state_vector_v_t z;  // !<-@brief f0 - Ax0 - Bu0 - Cu1
 
-  void initializeDiscretizationMatrices(size_t const &K, double const &dt_step);
+  void initializeDiscretizationMatrices(size_t const & K, double const & dt_step);
   [[nodiscard]] std::size_t nX() const;
 
   [[nodiscard]] __attribute__((unused)) std::size_t nU() const;
@@ -44,8 +44,9 @@ struct DiscretizationData
 };
 
 template<class Model>
-void DiscretizationData<Model>::initializeDiscretizationMatrices(size_t const &K,
-                                                                 double const &dt_step)
+void DiscretizationData<Model>::initializeDiscretizationMatrices(
+  size_t const & K,
+  double const & dt_step)
 {
   A.resize(K - 1, Model::state_matrix_t::Zero());     // !<-@brief vector of As
   B.resize(K - 1, Model::control_matrix_t::Zero());   // !<-@brief vector of Bs
