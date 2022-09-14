@@ -22,6 +22,7 @@
 #include "system_monitor/system_monitor_utility.hpp"
 
 #include <msr_reader/msr_reader.hpp>
+
 #include <boost/algorithm/string.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/filesystem.hpp>
@@ -62,12 +63,12 @@ VoltageMonitor::VoltageMonitor(const rclcpp::NodeOptions & options)
   gethostname(hostname_, sizeof(hostname_));
   auto callback = &VoltageMonitor::checkBatteryStatus;
   if (sensors_exists) {
-    try{
-      std::regex re(R"((\d+).(\d+))"); 
-      voltage_regex_ = re; 
+    try {
+      std::regex re(R"((\d+).(\d+))");
+      voltage_regex_ = re;
       callback = &VoltageMonitor::checkVoltage;
-    } catch (std::regex_error& e) {
-      //never come here.
+    } catch (std::regex_error & e) {
+      // never come here.
     }
   }
   updater_.add("CMOS Battery Status", this, callback);
@@ -96,10 +97,10 @@ void VoltageMonitor::checkVoltage(diagnostic_updater::DiagnosticStatusWrapper & 
     for (int i = 0; i < 200 && std::getline(is_out, line); i++) {
       auto voltageStringPos = line.find(voltage_string_.c_str());
       if (voltageStringPos != std::string::npos) {
-          std::smatch match;
-          std::regex_search(line, match, voltage_regex_);
-          auto voltageString = match.str();
-          voltage = std::stof(voltageString);
+        std::smatch match;
+        std::regex_search(line, match, voltage_regex_);
+        auto voltageString = match.str();
+        voltage = std::stof(voltageString);
         break;
       }
     }
@@ -109,9 +110,9 @@ void VoltageMonitor::checkVoltage(diagnostic_updater::DiagnosticStatusWrapper & 
     } else {
       stat.summary(DiagStatus::OK, "OK");
     }
-  } catch (std::regex_error& e) {
+  } catch (std::regex_error & e) {
     stat.summary(DiagStatus::WARN, "format error");
-    stat.add("exception in std::regex_search ", fmt::format("{}",e.code()));
+    stat.add("exception in std::regex_search ", fmt::format("{}", e.code()));
   }
   // Measure elapsed time since start time and report
   SystemMonitorUtility::stopMeasurement(t_start, stat);
