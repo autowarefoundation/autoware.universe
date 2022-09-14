@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <iterator>
+
 #include <limits>
 #include <vector>
 #include "eigen3/Eigen/SparseCore"
@@ -34,10 +34,10 @@ using ::Eigen::VectorXd;
 void ExpectElementsAre(
   const Eigen::Map<const Eigen::VectorXd> &vec, std::vector<double> expected, const double tolerance)
 {
-  EXPECT_EQ(vec.size(), expected.size());
+  EXPECT_EQ(static_cast<size_t>(vec.size()), expected.size());
   for (int i = 0; i < vec.size(); ++i)
   {
-    EXPECT_NEAR(vec[i], expected[static_cast<unsigned long>(i)], tolerance);
+    EXPECT_NEAR(vec[i], expected[static_cast<size_t>(i)], tolerance);
   }
 }
 

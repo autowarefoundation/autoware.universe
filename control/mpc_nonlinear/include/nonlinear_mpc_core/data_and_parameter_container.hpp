@@ -58,14 +58,12 @@ struct ParamsNMPCNode
   // CDOB DOB parameters.
   bool use_cdob{false};
   bool use_dob{false};
-
 };
 
 struct ParamsOptimization
 {
   ParamsOptimization()
   {
-
     // Prepare the weight matrices.
     Q.setIdentity();
     QN.setIdentity();
@@ -81,8 +79,7 @@ struct ParamsOptimization
     Su_inv.setIdentity();
   }
 
-  //~ParamsOptimization() = default;
-
+  // ~ParamsOptimization() = default;
   /**
    * @brief State and control upper and lower bounds for the optimization algorithms.
    * Current states [xw, yw, psi, s, ey, e_yaw, v, delta] and controls [vx, steering]_inputs

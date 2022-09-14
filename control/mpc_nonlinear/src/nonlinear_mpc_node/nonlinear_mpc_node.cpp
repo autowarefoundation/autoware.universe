@@ -159,7 +159,6 @@ NonlinearMPCNode::NonlinearMPCNode(const rclcpp::NodeOptions &node_options)
 
     inputs_buffer_.emplace_back(cmd);
   }
-
 }
 
 // Destructor.
@@ -252,7 +251,6 @@ void NonlinearMPCNode::onTimer()
   //        current_fsm_state_ == ns_states::motionStateEnums::isInEmergency)
   if (current_fsm_state_ == ns_states::motionStateEnums::isAtCompleteStop)
   {
-
     // kalman_filter_ptr_->reset();
     RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), (1000ms).count(), "\n[mpc_nonlinear] %s",
                                    std::string(vehicle_motion_fsm_.getFSMTypeReport()).c_str());
@@ -951,25 +949,16 @@ void NonlinearMPCNode::onTrajectory(const TrajectoryMsg::SharedPtr msg)
 void NonlinearMPCNode::onVelocity(VelocityMsg::SharedPtr msg)
 {
   current_velocity_ptr_ = msg;
-
-  // DEBUG
-  // RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), (1000ms).count(), "In the node onVelocity() ");
-  // end of DEBUG
 }
 
 void NonlinearMPCNode::onCommDelayCompensation(const DelayCompensationRefs::SharedPtr msg)
 {
   current_comm_delay_ptr_ = msg;
-
 }
 
 void NonlinearMPCNode::onSteeringMeasured(SteeringMeasuredMsg::SharedPtr msg)
 {
   current_steering_ptr_ = msg;
-
-  // DEBUG
-  // RCLCPP_WARN_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), (1000ms).count(), "In the node onSteering() ");
-  // end of DEBUG
 }
 
 bool NonlinearMPCNode::isValidTrajectory(const TrajectoryMsg &msg_traj)
@@ -1656,7 +1645,6 @@ visualization_msgs::msg::MarkerArray NonlinearMPCNode::createPredictedTrajectory
     p.x = td.X.at(k)(0) + xy0[0];  // add back current position x.
     p.y = td.X.at(k)(1) + xy0[1];
     p.z = 0.0;
-
     marker.points.emplace_back(p);
   }
 

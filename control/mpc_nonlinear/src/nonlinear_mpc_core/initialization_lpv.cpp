@@ -182,8 +182,8 @@ bool LPVinitializer::simulateWithFeedback(Model::model_ptr_t const &model_ptr,
     // Update xk, uk
     nmpc_data.trajectory_data.X[k + 1] << xk.eval();
     nmpc_data.trajectory_data.U[k] << uk.eval();
-
   }
+
   // Copy the last input
   nmpc_data.trajectory_data.U.rbegin()[0] = nmpc_data.trajectory_data.U.rbegin()[1];
 

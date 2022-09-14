@@ -26,7 +26,7 @@
 #include "utils/nmpc_utils.hpp"
 #include "utils_act/act_utils.hpp"
 #include "utils_act/act_utils_eigen.hpp"
-#include "nonlinear_mpc_node/nonlinear_mpc_state_machine.h"
+#include "nonlinear_mpc_node/nonlinear_mpc_state_machine.hpp"
 #include <variant>
 #include <utility>
 
@@ -89,7 +89,6 @@ class MPCdataTrajectoryVectors
 
   void setTrajectoryVector(std::vector<double> &vect, trajVectorVariant const &vartag)
   {
-
     std::visit(overload{
       [this, &vect](s_tag const &)
       { this->s = std::move(vect); },
@@ -117,7 +116,6 @@ class MPCdataTrajectoryVectors
 
       [this, &vect](curv_tag const &)
       { this->curvature = std::move(vect); }
-
     }, vartag);
   }
 
@@ -222,11 +220,11 @@ void TrajectoryData<Model>::getControlMPCSolutionsAtTime(const double &t,
 {
   if (t > mpc_dt)
   {
-    ns_utils::print("[nonlinear_mpc] The control at time t greater than the MPC time is not implemented  "
-                    "...");
+    ns_utils::print("[nonlinear_mpc] The control at time t greater than"
+                    " the MPC time is not implemented ...");
 
-    ns_utils::print("[nonlinear_mpc] The requested time for the control interpolation must be less than "
-                    "the MPC  time step ");
+    ns_utils::print("[nonlinear_mpc] The requested time for the control interpolation "
+                    "must be less than the MPC  time step ");
     return;
   }
 
