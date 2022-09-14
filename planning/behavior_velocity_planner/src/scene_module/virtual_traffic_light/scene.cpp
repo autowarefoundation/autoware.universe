@@ -194,6 +194,8 @@ VirtualTrafficLightModule::VirtualTrafficLightModule(
   lane_(lane),
   planner_param_(planner_param)
 {
+  velocity_factor_.init(VelocityFactor::V2I_GATE_CONTROL_ENTER);
+
   // Get map data
   const auto instrument = reg_elem_.getVirtualTrafficLight();
   const auto instrument_bottom_line = toAutowarePoints(instrument);
@@ -248,11 +250,7 @@ bool VirtualTrafficLightModule::modifyPathVelocity(PathWithLaneId * path, StopRe
 {
   // Initialize
   setInfrastructureCommand({});
-
   *stop_reason = planning_utils::initializeStopReason(StopReason::VIRTUAL_TRAFFIC_LIGHT);
-
-  // *velocity_factor = planning_utils::initializeVelocityFactor(
-  //  autoware_ad_api_msgs::msg::VelocityFactor::VIRTUAL_TRAFFIC_LIGHT);
 
   // if (command_.type == "intersection_coordination") {
   //   velocity_factor->detail = "intersection_coordination";

@@ -199,6 +199,7 @@ TrafficLightModule::TrafficLightModule(
   input_(Input::PERCEPTION),
   is_prev_state_stop_(false)
 {
+  velocity_factor_.init(VelocityFactor::TRAFFIC_SIGNAL);
   planner_param_ = planner_param;
 }
 
@@ -210,8 +211,6 @@ bool TrafficLightModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   first_stop_path_point_index_ = static_cast<int>(path->points.size()) - 1;
   first_ref_stop_path_point_index_ = static_cast<int>(path->points.size()) - 1;
   *stop_reason = planning_utils::initializeStopReason(StopReason::TRAFFIC_LIGHT);
-  // *velocity_factor =
-  //  planning_utils::initializeVelocityFactor(autoware_ad_api_msgs::msg::VelocityFactor::TRAFFIC_LIGHT);
 
   const auto input_path = *path;
 

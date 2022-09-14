@@ -39,6 +39,7 @@ MergeFromPrivateRoadModule::MergeFromPrivateRoadModule(
   const rclcpp::Clock::SharedPtr clock)
 : SceneModuleInterface(module_id, logger, clock), lane_id_(lane_id)
 {
+  velocity_factor_.init(VelocityFactor::MERGE);
   planner_param_ = planner_param;
   state_machine_.setState(StateMachine::State::STOP);
 }
@@ -47,8 +48,6 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(PathWithLaneId * path, StopR
 {
   debug_data_ = DebugData();
   *stop_reason = planning_utils::initializeStopReason(StopReason::MERGE_FROM_PRIVATE_ROAD);
-  // *velocity_factor = planning_utils::initializeVelocityFactor(
-  //  autoware_ad_api_msgs::msg::VelocityFactor::MERGE_FROM_PRIVATE_ROAD);
 
   const auto input_path = *path;
   debug_data_.path_raw = input_path;

@@ -49,6 +49,7 @@ NoStoppingAreaModule::NoStoppingAreaModule(
   no_stopping_area_reg_elem_(no_stopping_area_reg_elem),
   planner_param_(planner_param)
 {
+  velocity_factor_.init(VelocityFactor::NO_STOPPING_AREA);
   state_machine_.setState(StateMachine::State::GO);
   state_machine_.setMarginTime(planner_param_.state_clear_time);
 }
@@ -120,8 +121,6 @@ bool NoStoppingAreaModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
   debug_data_ = DebugData();
   debug_data_.base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
   *stop_reason = planning_utils::initializeStopReason(StopReason::NO_STOPPING_AREA);
-  // *velocity_factor = planning_utils::initializeVelocityFactor(
-  //  autoware_ad_api_msgs::msg::VelocityFactor::NO_STOPPING_AREA);
 
   // Get stop line geometry
   const auto stop_line = getStopLineGeometry2d(original_path, planner_param_.stop_line_margin);

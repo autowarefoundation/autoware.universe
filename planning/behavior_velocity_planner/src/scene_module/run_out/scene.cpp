@@ -32,6 +32,8 @@ RunOutModule::RunOutModule(
   dynamic_obstacle_creator_(std::move(dynamic_obstacle_creator)),
   debug_ptr_(debug_ptr)
 {
+  velocity_factor_.init(VelocityFactor::UNKNOWN);
+
   if (planner_param.run_out.use_partition_lanelet) {
     const lanelet::LaneletMapConstPtr & ll = planner_data->route_handler_->getLaneletMapPtr();
     planning_utils::getAllPartitionLanelets(ll, partition_lanelets_);

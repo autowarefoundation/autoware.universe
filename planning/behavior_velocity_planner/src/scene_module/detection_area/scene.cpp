@@ -46,6 +46,7 @@ DetectionAreaModule::DetectionAreaModule(
   state_(State::GO),
   planner_param_(planner_param)
 {
+  velocity_factor_.init(VelocityFactor::USER_DEFINED_DETECTION_AREA);
 }
 
 LineString2d DetectionAreaModule::getStopLineGeometry2d() const
@@ -64,7 +65,6 @@ bool DetectionAreaModule::modifyPathVelocity(PathWithLaneId * path, StopReason *
   debug_data_ = DebugData();
   debug_data_.base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
   *stop_reason = planning_utils::initializeStopReason(StopReason::DETECTION_AREA);
-  // *velocity_factor = planning_utils::initializeVelocityFactor(VelocityFactor::DETECTION_AREA);
 
   // Find obstacles in detection area
   const auto obstacle_points = getObstaclePoints();

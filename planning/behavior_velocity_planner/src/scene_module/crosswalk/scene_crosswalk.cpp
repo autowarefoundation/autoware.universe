@@ -136,6 +136,7 @@ CrosswalkModule::CrosswalkModule(
   crosswalk_(std::move(crosswalk)),
   planner_param_(planner_param)
 {
+  velocity_factor_.init(VelocityFactor::CROSSWALK);
   passed_safety_slow_point_ = false;
 }
 
@@ -149,7 +150,6 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
   debug_data_ = DebugData();
   debug_data_.base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
   *stop_reason = planning_utils::initializeStopReason(StopReason::CROSSWALK);
-  // *velocity_factor = planning_utils::initializeVelocityFactor(VelocityFactor::CROSSWALK);
 
   auto ego_path = *path;
 
@@ -218,14 +218,12 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
   if (nearest_stop_point) {
     insertDecelPointWithDebugInfo(nearest_stop_point.get(), 0.0, *path);
     planning_utils::appendStopReason(stop_factor, stop_reason);
+    velocity_factor_.set(VelocityFactor::APPROACHING, stop_factor.stop_pose);
   } else if (rtc_stop_point) {
     insertDecelPointWithDebugInfo(rtc_stop_point.get(), 0.0, *path);
     planning_utils::appendStopReason(stop_factor_rtc, stop_reason);
+    velocity_factor_.set(VelocityFactor::APPROACHING, stop_factor_rtc.stop_pose);
   }
-
-  // velocity_factor->status = autoware_ad_api_msgs::msg::VelocityFactor::STOP_TRUE;
-  // velocity_factor->pose = debug_data_.first_stop_pose;
-  // velocity_factor->stop_factor_points.emplace_back(debug_data_.nearest_collision_point);
 
   RCLCPP_INFO_EXPRESSION(
     logger_, planner_param_.show_processing_time, "- step4: %f ms",

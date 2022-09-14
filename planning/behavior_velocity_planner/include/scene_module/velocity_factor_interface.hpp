@@ -48,7 +48,7 @@ public:
   {
     velocity_factor_.type = type_;
     velocity_factor_.pose = pose;
-    velocity_factor_.distance = 0.0;
+    velocity_factor_.distance = 0.0;  // TODO(Takagi, Isamu)
     velocity_factor_.status = status;
     velocity_factor_.detail = detail;
   }

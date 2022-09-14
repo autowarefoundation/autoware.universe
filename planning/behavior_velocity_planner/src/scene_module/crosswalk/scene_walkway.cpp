@@ -39,6 +39,7 @@ WalkwayModule::WalkwayModule(
   state_(State::APPROACH),
   planner_param_(planner_param)
 {
+  velocity_factor_.init(VelocityFactor::SIDEWALK);
 }
 
 boost::optional<std::pair<double, geometry_msgs::msg::Point>> WalkwayModule::getStopLine(
@@ -77,7 +78,6 @@ bool WalkwayModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_
   debug_data_ = DebugData();
   debug_data_.base_link2front = base_link2front;
   *stop_reason = planning_utils::initializeStopReason(StopReason::WALKWAY);
-  // *velocity_factor = planning_utils::initializeVelocityFactor(VelocityFactor::WALKWAY);
 
   const auto input = *path;
 
