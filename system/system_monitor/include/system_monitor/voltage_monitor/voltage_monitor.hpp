@@ -24,6 +24,7 @@
 
 #include <climits>
 #include <string>
+#include <regex>
 
 class VoltageMonitor : public rclcpp::Node
 {
@@ -63,10 +64,10 @@ protected:
   void checkBatteryStatus(
     diagnostic_updater::DiagnosticStatusWrapper & stat);  // NOLINT(runtime/references)
 
-  bool sensors_exists_;  //!< @brief flag if sensors exists
   float voltage_warn_;
   float voltage_error_;
   std::string voltage_string_;
+  std::regex voltage_regex_;
 };
 
 #endif  // SYSTEM_MONITOR__VOLTAGE_MONITOR__VOLTAGE_MONITOR_HPP_
