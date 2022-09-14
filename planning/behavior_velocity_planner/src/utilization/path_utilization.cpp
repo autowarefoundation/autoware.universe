@@ -15,6 +15,7 @@
 #include <interpolation/linear_interpolation.hpp>
 #include <interpolation/spline_interpolation.hpp>
 #include <interpolation/zero_order_hold.hpp>
+#include <motion_utils/constants.hpp>
 #include <motion_utils/resample/resample.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <utilization/path_utilization.hpp>
@@ -62,7 +63,6 @@ autoware_auto_planning_msgs::msg::Path interpolatePath(
 {
   const auto logger{rclcpp::get_logger("behavior_velocity_planner").get_child("path_utilization")};
 
-  const double epsilon = 0.01;
   std::vector<double> x;
   std::vector<double> y;
   std::vector<double> z;
@@ -101,7 +101,7 @@ autoware_auto_planning_msgs::msg::Path interpolatePath(
     path_len = std::min(path_len, s_in.back());
 
     // Check Terminal Points
-    if (std::fabs(s_in.back() - path_len) < epsilon) {
+    if (std::fabs(s_in.back() - path_len) < motion_utils::overlap_threshold) {
       s_in.back() = path_len;
     } else {
       s_in.push_back(path_len);
@@ -116,7 +116,9 @@ autoware_auto_planning_msgs::msg::Path interpolatePath(
 
   const auto has_almost_same_value = [&](const auto & vec, const auto x) {
     if (vec.empty()) return false;
-    const auto has_close = [&](const auto v) { return std::abs(v - x) < epsilon; };
+    const auto has_close = [&](const auto v) {
+      return std::abs(v - x) < motion_utils::overlap_threshold;
+    };
     return std::find_if(vec.begin(), vec.end(), has_close) != vec.end();
   };
   for (double s = 0.0; s < path_len; s += interval) {

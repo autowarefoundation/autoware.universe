@@ -18,6 +18,7 @@
 
 #include <interpolation/spline_interpolation.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
+#include <motion_utils/constants.hpp>
 #include <motion_utils/resample/resample.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
@@ -66,10 +67,11 @@ PathWithLaneId resamplePathWithSpline(const PathWithLaneId & path, double interv
     transformed_path.at(i) = path.points.at(i).point;
   }
 
-  constexpr double epsilon = 0.01;
   const auto has_almost_same_value = [&](const auto & vec, const auto x) {
     if (vec.empty()) return false;
-    const auto has_close = [&](const auto v) { return std::abs(v - x) < epsilon; };
+    const auto has_close = [&](const auto v) {
+      return std::abs(v - x) < motion_utils::overlap_threshold;
+    };
     return std::find_if(vec.begin(), vec.end(), has_close) != vec.end();
   };
 

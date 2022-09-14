@@ -14,6 +14,7 @@
 
 #include "motion_velocity_smoother/resample.hpp"
 
+#include "motion_utils/constants.hpp"
 #include "motion_utils/resample/resample.hpp"
 #include "motion_utils/trajectory/tmp_conversion.hpp"
 
@@ -53,7 +54,7 @@ boost::optional<TrajectoryPoints> resampleTrajectory(
   for (double ds = 0.0; ds <= front_arclength_value; ds += front_ds) {
     out_arclength.push_back(ds);
   }
-  if (std::fabs(out_arclength.back() - front_arclength_value) < 1e-3) {
+  if (std::fabs(out_arclength.back() - front_arclength_value) < motion_utils::overlap_threshold) {
     out_arclength.back() = front_arclength_value;
   } else {
     out_arclength.push_back(front_arclength_value);
@@ -88,7 +89,7 @@ boost::optional<TrajectoryPoints> resampleTrajectory(
     if (i > Nt && dist_i >= param.min_trajectory_length) {
       if (
         std::fabs(out_arclength.back() - (param.min_trajectory_length + front_arclength_value)) <
-        1e-3) {
+        motion_utils::overlap_threshold) {
         out_arclength.back() = param.min_trajectory_length + front_arclength_value;
       } else {
         out_arclength.push_back(param.min_trajectory_length + front_arclength_value);
@@ -100,12 +101,12 @@ boost::optional<TrajectoryPoints> resampleTrajectory(
     if (
       dist_to_closest_stop_point && dist_i > *dist_to_closest_stop_point &&
       !is_zero_point_included) {
-      if (std::fabs(dist_i - *dist_to_closest_stop_point) > 1e-3) {
+      if (std::fabs(dist_i - *dist_to_closest_stop_point) > motion_utils::overlap_threshold) {
         // dist_i is much bigger than zero_vel_arclength_value
         if (
           !out_arclength.empty() &&
           std::fabs(out_arclength.back() - (*dist_to_closest_stop_point + front_arclength_value)) <
-            1e-3) {
+            motion_utils::overlap_threshold) {
           out_arclength.back() = *dist_to_closest_stop_point + front_arclength_value;
         } else {
           out_arclength.push_back(*dist_to_closest_stop_point + front_arclength_value);
@@ -131,8 +132,9 @@ boost::optional<TrajectoryPoints> resampleTrajectory(
 
   // add end point directly to consider the endpoint velocity.
   if (is_endpoint_included) {
-    constexpr double ep_dist = 1.0E-3;
-    if (tier4_autoware_utils::calcDistance2d(output.back(), input.back()) < ep_dist) {
+    if (
+      tier4_autoware_utils::calcDistance2d(output.back(), input.back()) <
+      motion_utils::overlap_threshold) {
       output.back() = input.back();
     } else {
       output.push_back(input.back());
@@ -177,7 +179,7 @@ boost::optional<TrajectoryPoints> resampleTrajectory(
   for (double s = 0.0; s <= front_arclength_value; s += nominal_ds) {
     out_arclength.push_back(s);
   }
-  if (std::fabs(out_arclength.back() - front_arclength_value) < 1e-3) {
+  if (std::fabs(out_arclength.back() - front_arclength_value) < motion_utils::overlap_threshold) {
     out_arclength.back() = front_arclength_value;
   } else {
     out_arclength.push_back(front_arclength_value);
@@ -210,7 +212,7 @@ boost::optional<TrajectoryPoints> resampleTrajectory(
     if (dist_i >= param.min_trajectory_length) {
       if (
         std::fabs(out_arclength.back() - (param.min_trajectory_length + front_arclength_value)) <
-        1e-3) {
+        motion_utils::overlap_threshold) {
         out_arclength.back() = param.min_trajectory_length + front_arclength_value;
       } else {
         out_arclength.push_back(param.min_trajectory_length + front_arclength_value);
@@ -220,11 +222,12 @@ boost::optional<TrajectoryPoints> resampleTrajectory(
 
     // Handle Close Stop Point
     if (dist_i > stop_arclength_value && !is_zero_point_included) {
-      if (std::fabs(dist_i - stop_arclength_value) > 1e-3) {
+      if (std::fabs(dist_i - stop_arclength_value) > motion_utils::overlap_threshold) {
         // dist_i is much bigger than zero_vel_arclength_value
         if (
           !out_arclength.empty() &&
-          std::fabs(out_arclength.back() - (stop_arclength_value + front_arclength_value)) < 1e-3) {
+          std::fabs(out_arclength.back() - (stop_arclength_value + front_arclength_value)) <
+            motion_utils::overlap_threshold) {
           out_arclength.back() = stop_arclength_value + front_arclength_value;
         } else {
           out_arclength.push_back(stop_arclength_value + front_arclength_value);
@@ -250,8 +253,9 @@ boost::optional<TrajectoryPoints> resampleTrajectory(
 
   // add end point directly to consider the endpoint velocity.
   if (is_endpoint_included) {
-    constexpr double ep_dist = 1.0E-3;
-    if (tier4_autoware_utils::calcDistance2d(output.back(), input.back()) < ep_dist) {
+    if (
+      tier4_autoware_utils::calcDistance2d(output.back(), input.back()) <
+      motion_utils::overlap_threshold) {
       output.back() = input.back();
     } else {
       output.push_back(input.back());
