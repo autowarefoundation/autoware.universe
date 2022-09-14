@@ -45,7 +45,7 @@ namespace ns_discretization
  * */
 class ODEfoh
 {
- public:
+public:
   /**
    * @brief ODEzoh matrix for A, B0, B1, Residuals z
    *  All the matrix and vectors have the same size of rows.  V = ode_matrix_type, columns are reserved for (x0, A, B0, B1, z)
@@ -60,21 +60,22 @@ class ODEfoh
    */
   // If ZOH. V = [x0, A, B0, z]
   using ode_matrix_t = typename Eigen::Matrix<double,
-                                              Model::state_dim,
-                                              1 + Model::state_dim + Model::input_dim + 1>;
+      Model::state_dim,
+      1 + Model::state_dim + Model::input_dim + 1>;
 
-  explicit ODEfoh(Model::model_ptr_t model,
-                  const Model::input_vector_t &u0,
-                  const Model::input_vector_t &u1,
-                  Model::param_vector_t const &params0,
-                  Model::param_vector_t const &params1, double dt);
+  explicit ODEfoh(
+    Model::model_ptr_t model,
+    const Model::input_vector_t & u0,
+    const Model::input_vector_t & u1,
+    Model::param_vector_t const & params0,
+    Model::param_vector_t const & params1, double dt);
 
   /**
   * @brief operator () that boost integration library integration function signature f(x, dxdt, t) requires.
   * */
-  void operator()(const ode_matrix_t &V, ode_matrix_t &dVdt, double t) const;
+  void operator()(const ode_matrix_t & V, ode_matrix_t & dVdt, double t) const;
 
- private:
+private:
   Model::model_ptr_t model_;       // !<-@brief pointer to the vehicle model.
   Model::input_vector_t u0_;       // !<-@brief control input vector at the beginning of integation.
   Model::input_vector_t u1_;       // !<-@brief control input vector at the end of integration.
@@ -88,10 +89,10 @@ class ODEfoh
  * */
 class ODEzoh
 {
- public:
+public:
   using ode_matrix_t = typename Eigen::Matrix<double,
-                                              Model::state_dim, 1 +
-                                                                Model::state_dim + Model::input_dim + 1>;
+      Model::state_dim, 1 +
+      Model::state_dim + Model::input_dim + 1>;
 
   /**
    * @brief ODEzoh matrix for A, B0, B1, Residuals z * All the matrix and vectors have
@@ -107,16 +108,17 @@ class ODEzoh
 
   // If ZOH. V = [x0, A, B0, z] using ode_matrix_t = typename Eigen::Matrix<double,
   // Model::state_dim, 1 + Model::state_dim + Model::input_dim + 1>;
-  explicit ODEzoh(Model::model_ptr_t model, const Model::input_vector_t &u0,
-                  Model::param_vector_t const &params0, double dt);
+  explicit ODEzoh(
+    Model::model_ptr_t model, const Model::input_vector_t & u0,
+    Model::param_vector_t const & params0, double dt);
 
   /**
    * @brief operator () that boost integration library integration function signature
    * f(x, dxdt, t) requires.
    */
-  void operator()(const ode_matrix_t &V, ode_matrix_t &dVdt, double t) const;
+  void operator()(const ode_matrix_t & V, ode_matrix_t & dVdt, double t) const;
 
- private:
+private:
   Model::model_ptr_t model_;      // !<-@brief pointer to the vehicle model.
   Model::input_vector_t u0_;      // !<-@brief control input vector at the beginning of integration.
   Model::param_vector_t params0_;  //  !<-@brief path curvature at the beginning of integration.
@@ -135,38 +137,42 @@ class ODEzoh
  *  @param dt           : time step [seconds]
  *  @param dd           : discretization data vector that keeps the system matrices A, B, and residuals z.
  * */
-bool multipleShootingTrajectory(Model::model_ptr_t const &model_ptr,
-                                trajectory_data_t const &trajectory_data,
-                                trajectory_data_t const &target_states,
-                                ns_splines::InterpolatingSplinePCG const &piecewise_interpolator,
-                                double const &dt,
-                                discretization_data_t &dd);
+bool multipleShootingTrajectory(
+  Model::model_ptr_t const & model_ptr,
+  trajectory_data_t const & trajectory_data,
+  trajectory_data_t const & target_states,
+  ns_splines::InterpolatingSplinePCG const & piecewise_interpolator,
+  double const & dt,
+  discretization_data_t & dd);
 
-bool bilinearTransformation(Model::model_ptr_t const &model_ptr,
-                            trajectory_data_t const &trajectory_data,
-                            trajectory_data_t const &target_state,
-                            ns_splines::InterpolatingSplinePCG const &piecewise_interpolator,
-                            double const &ts,
-                            discretization_data_t &dd);
+bool bilinearTransformation(
+  Model::model_ptr_t const & model_ptr,
+  trajectory_data_t const & trajectory_data,
+  trajectory_data_t const & target_state,
+  ns_splines::InterpolatingSplinePCG const & piecewise_interpolator,
+  double const & ts,
+  discretization_data_t & dd);
 
 /**
  * @brief Discretisize one-step Ad, Bd system matrices.
  * */
-bool multipleShootingSingleStep(Model::model_ptr_t const &model_ptr,
-                                Model::state_vector_t const &x0,
-                                Model::input_vector_t const &u0,
-                                Model::param_vector_t const &params0,
-                                double const &dt,
-                                Model::state_matrix_t &Ad,
-                                Model::control_matrix_t &Bd);
+bool multipleShootingSingleStep(
+  Model::model_ptr_t const & model_ptr,
+  Model::state_vector_t const & x0,
+  Model::input_vector_t const & u0,
+  Model::param_vector_t const & params0,
+  double const & dt,
+  Model::state_matrix_t & Ad,
+  Model::control_matrix_t & Bd);
 
-bool bilinearTransformationOneStep(Model::model_ptr_t const &model_ptr,
-                                   Model::state_vector_t const &x0,
-                                   Model::input_vector_t const &u0,
-                                   Model::param_vector_t const &params0,
-                                   double const &dt,
-                                   Model::state_matrix_t &Ad,
-                                   Model::control_matrix_t &Bd);
+bool bilinearTransformationOneStep(
+  Model::model_ptr_t const & model_ptr,
+  Model::state_vector_t const & x0,
+  Model::input_vector_t const & u0,
+  Model::param_vector_t const & params0,
+  double const & dt,
+  Model::state_matrix_t & Ad,
+  Model::control_matrix_t & Bd);
 
 }  // namespace ns_discretization
 #endif  // NONLINEAR_MPC_CORE__NMPC_DISCRETIZATION_HPP_

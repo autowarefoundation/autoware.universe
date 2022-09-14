@@ -26,31 +26,33 @@ std::shared_ptr<ns_mpc_nonlinear::NonlinearMPCNode> makeNonlinearMPCNode()
   const auto share_dir = ament_index_cpp::get_package_share_directory("mpc_nonlinear");
 
   rclcpp::NodeOptions node_options;
-  node_options.arguments({"--ros-args", "--params-file",
-                          share_dir + "/params/mpc_nonlinear.param.yaml",
-                          "--params-file", share_dir + "/params/test_vehicle_info.yaml"});
+  node_options.arguments(
+    {"--ros-args", "--params-file",
+      share_dir + "/params/mpc_nonlinear.param.yaml",
+      "--params-file", share_dir + "/params/test_vehicle_info.yaml"});
 
   auto node = std::make_shared<NonlinearMPCNode>(node_options);
 
   // Enable all logging in the node
-  auto ret = rcutils_logging_set_logger_level(node->get_logger().get_name(),
-                                              RCUTILS_LOG_SEVERITY_DEBUG);
+  auto ret = rcutils_logging_set_logger_level(
+    node->get_logger().get_name(),
+    RCUTILS_LOG_SEVERITY_DEBUG);
   if (ret != RCUTILS_RET_OK)
-  { std::cout << "Failed to set logging severity to DEBUG\n"; }
+  {std::cout << "Failed to set logging severity to DEBUG\n";}
 
   return node;
 }
 
 // Helper methods.
-std::vector<double> logisticMap(double const &max_y_value,
-                                double const &center_x_value,
-                                double const &slope,
-                                std::vector<double> const &x_coord)
+std::vector<double> logisticMap(
+  double const & max_y_value,
+  double const & center_x_value,
+  double const & slope,
+  std::vector<double> const & x_coord)
 {
   std::vector<double> ycurve_output;
 
-  for (auto &x : x_coord)
-  {
+  for (auto & x : x_coord) {
     auto yval = max_y_value / (1. + std::exp(-slope * (x - center_x_value)));
     ycurve_output.emplace_back(yval);
   }
@@ -62,15 +64,15 @@ std::vector<double> logisticMap(double const &max_y_value,
   return ycurve_output;
 }
 
-std::vector<double> logisticMapDerivative(double const &max_y_value,
-                                          double const &center_x_value,
-                                          double const &slope,
-                                          std::vector<double> const &x_coord)
+std::vector<double> logisticMapDerivative(
+  double const & max_y_value,
+  double const & center_x_value,
+  double const & slope,
+  std::vector<double> const & x_coord)
 {
   std::vector<double> ycurve_output;
 
-  for (auto &x : x_coord)
-  {
+  for (auto & x : x_coord) {
     auto yval = max_y_value / (1. + std::exp(-slope * (x - center_x_value)));
     ycurve_output.emplace_back(yval * (1 - yval));
   }
@@ -82,7 +84,7 @@ std::vector<double> logisticMapDerivative(double const &max_y_value,
   return ycurve_output;
 }
 
-void createTrajectoryMessage(TrajectoryMsg &traj_msg)
+void createTrajectoryMessage(TrajectoryMsg & traj_msg)
 {
   // Generate constant speed logistic function.
   double trajectory_time_length = 50.;  // !<-@brief [seconds].
@@ -110,15 +112,15 @@ void createTrajectoryMessage(TrajectoryMsg &traj_msg)
   std::vector<double> yaw_vect;
 
   // Compute yaw angles of the trajectory.
-  std::transform(dy_vect.cbegin(), dy_vect.cend(),
-                 std::back_inserter(yaw_vect), [&dx](auto &dy)
-                 {
-                   return std::atan2(dy, dx);
-                 });
+  std::transform(
+    dy_vect.cbegin(), dy_vect.cend(),
+    std::back_inserter(yaw_vect), [&dx](auto & dy)
+    {
+      return std::atan2(dy, dx);
+    });
 
   // Create the trajectory points and put in the msg container.
-  for (size_t k = 0; k < x_vect.size(); ++k)
-  {
+  for (size_t k = 0; k < x_vect.size(); ++k) {
     TrajectoryPoint tpoint{};
     tpoint.pose.position.x = x_vect[k];
     tpoint.pose.position.y = y_vect[k];
@@ -142,12 +144,12 @@ void createTrajectoryMessage(TrajectoryMsg &traj_msg)
   //  ns_utils::print_container(y_vect);
 
   ns_utils::print("Created Trajectory Points : x, y, z, yaw and vx");
-  for (auto const &point : traj_msg.points)
-  {
+  for (auto const & point : traj_msg.points) {
     auto position = point.pose.position;
     auto yaw = tf2::getYaw(point.pose.orientation);
     auto vx = point.longitudinal_velocity_mps;
-    ns_utils::print("x: ", position.x, "y: ", position.y, "z: ", position.z,
-                    "yaw: ", yaw, "vx: ", vx);
+    ns_utils::print(
+      "x: ", position.x, "y: ", position.y, "z: ", position.z,
+      "yaw: ", yaw, "vx: ", vx);
   }
 }

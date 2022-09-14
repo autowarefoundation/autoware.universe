@@ -12,16 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <algorithm>
-#include <cassert>
-#include <string>
-#include <type_traits>
-
 #include "Eigen/Core"
 #include "Eigen/SparseCore"
 #include "osqp/ctrlc.h"
 #include "osqp/osqp.h"
 #include "osqp_google/osqp++.hpp"
+
+#include <algorithm>
+#include <cassert>
+#include <string>
+#include <type_traits>
 
 // Fails to compile if OSQP's typedefs change. This lets us avoid including
 // osqp.h in osqp++.h.
@@ -33,27 +33,33 @@
 // static_assert(std::is_same_v<c_float, double>,
 // "OSQP's c_float typedef is unexpectedly not the same as double");
 
-static_assert(sizeof(OSQPSettings) == 176,
-              "The size of OSQPSettings has changed unexpectedly. Make sure "
-              "that the map between ::OSQPSettings and osqp::OsqpSettings "
-              "remains up to date.");
+static_assert(
+  sizeof(OSQPSettings) == 176,
+  "The size of OSQPSettings has changed unexpectedly. Make sure "
+  "that the map between ::OSQPSettings and osqp::OsqpSettings "
+  "remains up to date.");
 
 namespace osqp
 {
 std::string StatusCodeToString(StatusCode code)
 {
-  switch (code)
-  {
-    case StatusCode::kOk:return "OK";
+  switch (code) {
+    case StatusCode::kOk:
+      return "OK";
 
-    case StatusCode::kCancelled:return "CANCELLED";
+    case StatusCode::kCancelled:
+      return "CANCELLED";
 
-    case StatusCode::kFailedPrecondition:return "FAILED_PRECONDITION";
+    case StatusCode::kFailedPrecondition:
+      return "FAILED_PRECONDITION";
 
-    case StatusCode::kInvalidArgument:return "INVALID_ARGUMENT";
+    case StatusCode::kInvalidArgument:
+      return "INVALID_ARGUMENT";
 
-    case StatusCode::kUnknownError:return "UNKNOWN_ERROR";
-    default:return "";
+    case StatusCode::kUnknownError:
+      return "UNKNOWN_ERROR";
+    default:
+      return "";
   }
 }
 
@@ -66,7 +72,7 @@ using ::Eigen::VectorXd;
 // The mapping between ::OSQPSettings and osqp::OsqpSettings is maintained
 // manually and may need to be updated for new releases of OSQP.
 
-void CopyFromInternalSettings(const ::OSQPSettings &osqp_settings, OsqpSettings *settings)
+void CopyFromInternalSettings(const ::OSQPSettings & osqp_settings, OsqpSettings * settings)
 {
   settings->rho = osqp_settings.rho;
   settings->sigma = osqp_settings.sigma;
@@ -92,7 +98,7 @@ void CopyFromInternalSettings(const ::OSQPSettings &osqp_settings, OsqpSettings 
   settings->solver_type = osqp_settings.linsys_solver;
 }
 
-::OSQPSettings ToInternalSettings(const OsqpSettings &settings)
+::OSQPSettings ToInternalSettings(const OsqpSettings & settings)
 {
   OSQPSettings osqp_settings;
   osqp_settings.rho = settings.rho;
@@ -135,7 +141,7 @@ struct OSQPWorkspaceHelper : public ::OSQPWorkspace
 {
 };
 
-void OsqpSolver::OsqpDeleter::operator()(OSQPWorkspaceHelper *workspace) const
+void OsqpSolver::OsqpDeleter::operator()(OSQPWorkspaceHelper * workspace) const
 {
   osqp_cleanup(workspace);
 }
@@ -148,8 +154,7 @@ void OsqpSolver::OsqpDeleter::operator()(OSQPWorkspaceHelper *workspace) const
 
 std::string ToString(OsqpExitCode exitcode)
 {
-  switch (exitcode)
-  {
+  switch (exitcode) {
     OSQP_HANDLE_EXITCODE(OsqpExitCode::kOptimal);
     OSQP_HANDLE_EXITCODE(OsqpExitCode::kPrimalInfeasible);
     OSQP_HANDLE_EXITCODE(OsqpExitCode::kDualInfeasible);
@@ -169,14 +174,13 @@ std::string ToString(OsqpExitCode exitcode)
 
 namespace
 {
-Status CheckDimensions(const int left_value,
-                       const int right_value, const char *left_name, const char *right_name)
+Status CheckDimensions(
+  const int left_value, const int right_value, const char * left_name, const char * right_name)
 {
-  if (left_value != right_value)
-  {
-    auto &&msg = "Dimension mismatch: " + std::string(left_name) +
-                 " (= " + std::to_string(left_value) + ") must equal " + std::string(right_name) +
-                 " (= " + std::to_string(right_value) + ").";
+  if (left_value != right_value) {
+    auto && msg = "Dimension mismatch: " + std::string(left_name) +
+                  " (= " + std::to_string(left_value) + ") must equal " + std::string(right_name) +
+                  " (= " + std::to_string(right_value) + ").";
     return {msg, StatusCode::kInvalidArgument};
   }
   return Status::OkStatus();
@@ -188,20 +192,18 @@ Status CheckDimensions(const int left_value,
 
 #define OSQP_RETURN_IF_ERROR(expr)   \
   {                                  \
-    Status result = expr;      \
+    Status result = expr;            \
     if (!result.ok()) return result; \
   }
 
 #define OSQP_CHECK(expr) assert(expr)
 
-Status OsqpSolver::Init(const OsqpInstance &instance, const OsqpSettings &settings)
+Status OsqpSolver::Init(const OsqpInstance & instance, const OsqpSettings & settings)
 {
-  if (!instance.objective_matrix.isCompressed())
-  {
+  if (!instance.objective_matrix.isCompressed()) {
     return {"Invalid Argument call makeCompressed()", StatusCode::kInvalidArgument};
   }
-  if (!instance.constraint_matrix.isCompressed())
-  {
+  if (!instance.constraint_matrix.isCompressed()) {
     return Status{"Invalid Argument call makeCompressed()", StatusCode::kInvalidArgument};
   }
   const c_int num_variables = instance.num_variables();
@@ -242,22 +244,24 @@ Status OsqpSolver::Init(const OsqpInstance &instance, const OsqpSettings &settin
   // https://eigen.tuxfamily.org/dox/group__TutorialSparse.html for the
   // description of CSC format in Eigen and osqp/include/types.h for the
   // definition of OSQP's csc struct.
-  ::csc objective_matrix = {objective_matrix_upper_triangle.outerIndexPtr()[num_variables],
-                            num_variables,
-                            num_variables,
-                            const_cast<c_int *>(objective_matrix_upper_triangle.outerIndexPtr()),
-                            const_cast<c_int *>(objective_matrix_upper_triangle.innerIndexPtr()),
-                            const_cast<double *>(objective_matrix_upper_triangle.valuePtr()),
-                            -1};
+  ::csc objective_matrix = {
+    objective_matrix_upper_triangle.outerIndexPtr()[num_variables],
+    num_variables,
+    num_variables,
+    const_cast<c_int *>(objective_matrix_upper_triangle.outerIndexPtr()),
+    const_cast<c_int *>(objective_matrix_upper_triangle.innerIndexPtr()),
+    const_cast<double *>(objective_matrix_upper_triangle.valuePtr()),
+    -1};
   data.P = &objective_matrix;
 
-  ::csc constraint_matrix = {instance.constraint_matrix.outerIndexPtr()[num_variables],
-                             num_constraints,
-                             num_variables,
-                             const_cast<c_int *>(instance.constraint_matrix.outerIndexPtr()),
-                             const_cast<c_int *>(instance.constraint_matrix.innerIndexPtr()),
-                             const_cast<double *>(instance.constraint_matrix.valuePtr()),
-                             -1};
+  ::csc constraint_matrix = {
+    instance.constraint_matrix.outerIndexPtr()[num_variables],
+    num_constraints,
+    num_variables,
+    const_cast<c_int *>(instance.constraint_matrix.outerIndexPtr()),
+    const_cast<c_int *>(instance.constraint_matrix.innerIndexPtr()),
+    const_cast<double *>(instance.constraint_matrix.valuePtr()),
+    -1};
   data.A = &constraint_matrix;
 
   data.q = const_cast<double *>(instance.objective_vector.data());
@@ -266,15 +270,13 @@ Status OsqpSolver::Init(const OsqpInstance &instance, const OsqpSettings &settin
 
   ::OSQPSettings osqp_settings = ToInternalSettings(settings);
 
-  OSQPWorkspace *workspace = nullptr;
+  OSQPWorkspace * workspace = nullptr;
   const int return_code = osqp_setup(&workspace, &data, &osqp_settings);
   workspace_.reset(static_cast<OSQPWorkspaceHelper *>(workspace));
-  if (return_code == 0)
-  {
+  if (return_code == 0) {
     return Status::OkStatus();
   }
-  switch (static_cast<osqp_error_type>(return_code))
-  {
+  switch (static_cast<osqp_error_type>(return_code)) {
     case OSQP_DATA_VALIDATION_ERROR:
       return {"Unable to initialize OSQP: data validation error.", StatusCode::kInvalidArgument};
 
@@ -283,55 +285,52 @@ Status OsqpSolver::Init(const OsqpInstance &instance, const OsqpSettings &settin
 
     case OSQP_LINSYS_SOLVER_LOAD_ERROR:
       // This should never happen because qdldl is statically linked in.
-      return {"Unable to initialize OSQP: unable to load linear solver.",
-              StatusCode::kUnknownError};
+      return {
+        "Unable to initialize OSQP: unable to load linear solver.", StatusCode::kUnknownError};
 
     case OSQP_LINSYS_SOLVER_INIT_ERROR:
-      return {"Unable to initialize OSQP: unable to initialize linear solver.",
-              StatusCode::kUnknownError};
+      return {
+        "Unable to initialize OSQP: unable to initialize linear solver.",
+        StatusCode::kUnknownError};
 
     case OSQP_NONCVX_ERROR:
-      return Status{"Unable to initialize OSQP: the problem appears non-convex.",
-                    StatusCode::kInvalidArgument};
+      return Status{
+        "Unable to initialize OSQP: the problem appears non-convex.", StatusCode::kInvalidArgument};
 
     case OSQP_MEM_ALLOC_ERROR:
-      return Status{"Unable to initialize OSQP: memory allocation error.",
-                    StatusCode::kUnknownError};
+      return Status{
+        "Unable to initialize OSQP: memory allocation error.", StatusCode::kUnknownError};
 
     case OSQP_WORKSPACE_NOT_INIT_ERROR:
-      return {"Unable to initialize OSQP:  workspace not initialized.",
-              StatusCode::kUnknownError};
+      return {"Unable to initialize OSQP:  workspace not initialized.", StatusCode::kUnknownError};
   }
-  return {"Unable to initialize OSQP:  workspace not initialized.",
-          StatusCode::kUnknownError};
+  return {"Unable to initialize OSQP:  workspace not initialized.", StatusCode::kUnknownError};
 }
 
 namespace
 {
 Status VerifySameSparsity(
-  const Eigen::SparseMatrix<double, Eigen::ColMajor, c_int> &new_matrix, const csc *ref_matrix,
+  const Eigen::SparseMatrix<double, Eigen::ColMajor, c_int> & new_matrix, const csc * ref_matrix,
   size_t num_variables)
 {
-  if (new_matrix.nonZeros() != ref_matrix->p[num_variables])
-  {
-    return {"The new new matrix should have the same number of non-zero elements. ",
-            StatusCode::kInvalidArgument};
+  if (new_matrix.nonZeros() != ref_matrix->p[num_variables]) {
+    return {
+      "The new new matrix should have the same number of non-zero elements. ",
+      StatusCode::kInvalidArgument};
   }
 
-  for (size_t i = 0; i < num_variables; ++i)
-  {
-    if (ref_matrix->p[i] != new_matrix.outerIndexPtr()[i])
-    {
-      return {"Sparsity of the new matrix differs from the previously defined matrix.",
-              StatusCode::kInvalidArgument};
+  for (size_t i = 0; i < num_variables; ++i) {
+    if (ref_matrix->p[i] != new_matrix.outerIndexPtr()[i]) {
+      return {
+        "Sparsity of the new matrix differs from the previously defined matrix.",
+        StatusCode::kInvalidArgument};
     }
   }
-  for (size_t i = 0; i < static_cast<size_t>( new_matrix.innerSize()); ++i)
-  {
-    if (ref_matrix->i[i] != new_matrix.innerIndexPtr()[i])
-    {
-      return Status{"Sparsity of the new matrix differs from the previously defined matrix.",
-                    StatusCode::kInvalidArgument};
+  for (size_t i = 0; i < static_cast<size_t>(new_matrix.innerSize()); ++i) {
+    if (ref_matrix->i[i] != new_matrix.innerIndexPtr()[i]) {
+      return Status{
+        "Sparsity of the new matrix differs from the previously defined matrix.",
+        StatusCode::kInvalidArgument};
     }
   }
 
@@ -340,17 +339,15 @@ Status VerifySameSparsity(
 
 // Helper function for calling osqp_update_P with an upper triangular objective
 // matrix. Assumes objective_matrix_upper_triangle is always upper triangular.
-Status UpdateUpperTriangularObjectiveMatrix(const Eigen::SparseMatrix<double,
-                                                                      Eigen::ColMajor,
-                                                                      c_int> &objective_matrix_upper_triangle,
-                                            OSQPWorkspaceHelper *workspace)
+Status UpdateUpperTriangularObjectiveMatrix(
+  const Eigen::SparseMatrix<double, Eigen::ColMajor, c_int> & objective_matrix_upper_triangle,
+  OSQPWorkspaceHelper * workspace)
 {
   const c_int num_variables = workspace->data->n;
 
   if (
     objective_matrix_upper_triangle.rows() != objective_matrix_upper_triangle.cols() ||
-    objective_matrix_upper_triangle.rows() != num_variables)
-  {
+    objective_matrix_upper_triangle.rows() != num_variables) {
     auto msg =
       "The new objective matrix should be square with dimension equal to the "
       "number of variables. Matrix dimensions: " +
@@ -361,15 +358,14 @@ Status UpdateUpperTriangularObjectiveMatrix(const Eigen::SparseMatrix<double,
     return {msg, StatusCode::kInvalidArgument};
   }
 
-  OSQP_RETURN_IF_ERROR(VerifySameSparsity(objective_matrix_upper_triangle, workspace->data->P, num_variables))
+  OSQP_RETURN_IF_ERROR(
+    VerifySameSparsity(objective_matrix_upper_triangle, workspace->data->P, num_variables))
 
   c_int nnzP = objective_matrix_upper_triangle.nonZeros();
 
-  if (const int return_code = osqp_update_P(workspace,
-                                            objective_matrix_upper_triangle.valuePtr(),
-                                            OSQP_NULL, nnzP);
-    return_code == 0)
-  {
+  if (const int return_code =
+        osqp_update_P(workspace, objective_matrix_upper_triangle.valuePtr(), OSQP_NULL, nnzP);
+      return_code == 0) {
     return Status::OkStatus();
   }
   return {"Unable to update OSQP P matrix: unrecognized error code.", StatusCode::kUnknownError};
@@ -379,16 +375,15 @@ Status UpdateUpperTriangularObjectiveMatrix(const Eigen::SparseMatrix<double,
 // objective matrix. Assumes objective_matrix_upper_triangle is always upper
 // triangular.
 Status UpdateUpperTriangularObjectiveMatrixAndConstraintMatrix(
-  const Eigen::SparseMatrix<double, Eigen::ColMajor, c_int> &objective_matrix_upper_triangle,
-  const Eigen::SparseMatrix<double, Eigen::ColMajor, c_int> &constraint_matrix,
-  OSQPWorkspaceHelper *workspace)
+  const Eigen::SparseMatrix<double, Eigen::ColMajor, c_int> & objective_matrix_upper_triangle,
+  const Eigen::SparseMatrix<double, Eigen::ColMajor, c_int> & constraint_matrix,
+  OSQPWorkspaceHelper * workspace)
 {
   const c_int num_variables = workspace->data->n;
 
   if (
     objective_matrix_upper_triangle.rows() != objective_matrix_upper_triangle.cols() ||
-    objective_matrix_upper_triangle.rows() != num_variables)
-  {
+    objective_matrix_upper_triangle.rows() != num_variables) {
     auto msg =
       "he new objective matrix should be square with dimension equal to the number of "
       "variables. Matrix dimensions: " +
@@ -398,8 +393,7 @@ Status UpdateUpperTriangularObjectiveMatrixAndConstraintMatrix(
 
     return {msg, StatusCode::kInvalidArgument};
   }
-  if (constraint_matrix.cols() != num_variables)
-  {
+  if (constraint_matrix.cols() != num_variables) {
     auto msg =
       "TThe new constraint matrix should column size equal to the "
       "number of variables. Matrix dimensions:" +
@@ -409,7 +403,8 @@ Status UpdateUpperTriangularObjectiveMatrixAndConstraintMatrix(
     return {msg, StatusCode::kInvalidArgument};
   }
 
-  OSQP_RETURN_IF_ERROR(VerifySameSparsity(objective_matrix_upper_triangle, workspace->data->P, num_variables))
+  OSQP_RETURN_IF_ERROR(
+    VerifySameSparsity(objective_matrix_upper_triangle, workspace->data->P, num_variables))
 
   c_int nnzP = objective_matrix_upper_triangle.nonZeros();
 
@@ -417,27 +412,26 @@ Status UpdateUpperTriangularObjectiveMatrixAndConstraintMatrix(
 
   c_int nnzA = constraint_matrix.nonZeros();
 
-  if (const int return_code = osqp_update_P_A(workspace, objective_matrix_upper_triangle.valuePtr(), OSQP_NULL, nnzP,
-                                              constraint_matrix.valuePtr(), OSQP_NULL, nnzA); return_code == 0)
-  {
+  if (const int return_code = osqp_update_P_A(
+        workspace, objective_matrix_upper_triangle.valuePtr(), OSQP_NULL, nnzP,
+        constraint_matrix.valuePtr(), OSQP_NULL, nnzA);
+      return_code == 0) {
     return Status::OkStatus();
   }
 
-  return {"Unable to update OSQP P and A matrix: unrecognized error code.", StatusCode::kUnknownError};
+  return {
+    "Unable to update OSQP P and A matrix: unrecognized error code.", StatusCode::kUnknownError};
 }
 
 // Returns true if the sparse matrix 'matrix' is upper triangular.
-bool IsUpperTriangular(const Eigen::SparseMatrix<double, Eigen::ColMajor, c_int> &matrix)
+bool IsUpperTriangular(const Eigen::SparseMatrix<double, Eigen::ColMajor, c_int> & matrix)
 {
   // Iterate through all non-zero elements, and ensure that their indices are
   // only on the upper-right triangle, including the diagonal.
-  for (int i = 0; i < matrix.outerSize(); ++i)
-  {
+  for (int i = 0; i < matrix.outerSize(); ++i) {
     for (Eigen::SparseMatrix<double, Eigen::ColMajor, c_int>::InnerIterator it(matrix, i); it;
-         ++it)
-    {
-      if (it.col() < it.row())
-      {
+         ++it) {
+      if (it.col() < it.row()) {
         return false;
       }
     }
@@ -447,12 +441,12 @@ bool IsUpperTriangular(const Eigen::SparseMatrix<double, Eigen::ColMajor, c_int>
 
 }  // namespace
 
-Status OsqpSolver::UpdateObjectiveMatrix(const Eigen::SparseMatrix<double, Eigen::ColMajor, c_int> &objective_matrix)
+Status OsqpSolver::UpdateObjectiveMatrix(
+  const Eigen::SparseMatrix<double, Eigen::ColMajor, c_int> & objective_matrix)
 {
   // If the objective matrix is already upper triangular, we can skip the
   // temporary.
-  if (IsUpperTriangular(objective_matrix))
-  {
+  if (IsUpperTriangular(objective_matrix)) {
     return UpdateUpperTriangularObjectiveMatrix(objective_matrix, workspace_.get());
   }
 
@@ -463,12 +457,12 @@ Status OsqpSolver::UpdateObjectiveMatrix(const Eigen::SparseMatrix<double, Eigen
   return UpdateUpperTriangularObjectiveMatrix(objective_matrix_upper_triangle, workspace_.get());
 }
 
-Status OsqpSolver::UpdateConstraintMatrix(const Eigen::SparseMatrix<double, Eigen::ColMajor, c_int> &constraint_matrix)
+Status OsqpSolver::UpdateConstraintMatrix(
+  const Eigen::SparseMatrix<double, Eigen::ColMajor, c_int> & constraint_matrix)
 {
   const c_int num_variables = workspace_->data->n;
 
-  if (constraint_matrix.cols() != num_variables)
-  {
+  if (constraint_matrix.cols() != num_variables) {
     auto msg =
       "The new constraint matrix should column size equal to the "
       "number of variables. Matrix dimensions:" +
@@ -481,66 +475,69 @@ Status OsqpSolver::UpdateConstraintMatrix(const Eigen::SparseMatrix<double, Eige
   c_int nnzA = constraint_matrix.nonZeros();
 
   if (const int return_code =
-      osqp_update_A(workspace_.get(),
-                    constraint_matrix.valuePtr(),
-                    OSQP_NULL, nnzA);return_code == 0)
-  {
+        osqp_update_A(workspace_.get(), constraint_matrix.valuePtr(), OSQP_NULL, nnzA);
+      return_code == 0) {
     return Status::OkStatus();
   }
   return {"Unable to update OSQP A matrix: unrecognized error code.", StatusCode::kUnknownError};
 }
 
-Status OsqpSolver::
-UpdateObjectiveAndConstraintMatrices(const
-                                     Eigen::SparseMatrix<double, Eigen::ColMajor, c_int> &objective_matrix,
-                                     const
-                                     Eigen::SparseMatrix<double, Eigen::ColMajor, c_int> &constraint_matrix)
+Status OsqpSolver::UpdateObjectiveAndConstraintMatrices(
+  const Eigen::SparseMatrix<double, Eigen::ColMajor, c_int> & objective_matrix,
+  const Eigen::SparseMatrix<double, Eigen::ColMajor, c_int> & constraint_matrix)
 {
   // If the objective matrix is already upper triangular, we can skip the
   // temporary.
-  if (IsUpperTriangular(objective_matrix))
-  {
-    return UpdateUpperTriangularObjectiveMatrixAndConstraintMatrix(objective_matrix,
-                                                                   constraint_matrix,
-                                                                   workspace_.get());
+  if (IsUpperTriangular(objective_matrix)) {
+    return UpdateUpperTriangularObjectiveMatrixAndConstraintMatrix(
+      objective_matrix, constraint_matrix, workspace_.get());
   }
 
   // If not upper triangular, make a temporary.
   Eigen::SparseMatrix<double, Eigen::ColMajor, c_int> objective_matrix_upper_triangle =
     objective_matrix.triangularView<Eigen::Upper>();
 
-  return UpdateUpperTriangularObjectiveMatrixAndConstraintMatrix(objective_matrix_upper_triangle,
-                                                                 constraint_matrix,
-                                                                 workspace_.get());
+  return UpdateUpperTriangularObjectiveMatrixAndConstraintMatrix(
+    objective_matrix_upper_triangle, constraint_matrix, workspace_.get());
 }
 
 namespace
 {
 OsqpExitCode StatusToExitCode(const c_int status_val)
 {
-  switch (status_val)
-  {
-    case OSQP_SOLVED:return OsqpExitCode::kOptimal;
+  switch (status_val) {
+    case OSQP_SOLVED:
+      return OsqpExitCode::kOptimal;
 
-    case OSQP_SOLVED_INACCURATE:return OsqpExitCode::kOptimalInaccurate;
+    case OSQP_SOLVED_INACCURATE:
+      return OsqpExitCode::kOptimalInaccurate;
 
-    case OSQP_PRIMAL_INFEASIBLE:return OsqpExitCode::kPrimalInfeasible;
+    case OSQP_PRIMAL_INFEASIBLE:
+      return OsqpExitCode::kPrimalInfeasible;
 
-    case OSQP_PRIMAL_INFEASIBLE_INACCURATE:return OsqpExitCode::kPrimalInfeasibleInaccurate;
+    case OSQP_PRIMAL_INFEASIBLE_INACCURATE:
+      return OsqpExitCode::kPrimalInfeasibleInaccurate;
 
-    case OSQP_DUAL_INFEASIBLE:return OsqpExitCode::kDualInfeasible;
+    case OSQP_DUAL_INFEASIBLE:
+      return OsqpExitCode::kDualInfeasible;
 
-    case OSQP_DUAL_INFEASIBLE_INACCURATE:return OsqpExitCode::kDualInfeasibleInaccurate;
+    case OSQP_DUAL_INFEASIBLE_INACCURATE:
+      return OsqpExitCode::kDualInfeasibleInaccurate;
 
-    case OSQP_MAX_ITER_REACHED:return OsqpExitCode::kMaxIterations;
+    case OSQP_MAX_ITER_REACHED:
+      return OsqpExitCode::kMaxIterations;
 
-    case OSQP_SIGINT:return OsqpExitCode::kInterrupted;
+    case OSQP_SIGINT:
+      return OsqpExitCode::kInterrupted;
 
-    case OSQP_TIME_LIMIT_REACHED:return OsqpExitCode::kTimeLimitReached;
+    case OSQP_TIME_LIMIT_REACHED:
+      return OsqpExitCode::kTimeLimitReached;
 
-    case OSQP_NON_CVX:return OsqpExitCode::kNonConvex;
+    case OSQP_NON_CVX:
+      return OsqpExitCode::kNonConvex;
 
-    default:return OsqpExitCode::kUnknown;
+    default:
+      return OsqpExitCode::kUnknown;
   }
 }
 
@@ -549,12 +546,10 @@ OsqpExitCode StatusToExitCode(const c_int status_val)
 OsqpExitCode OsqpSolver::Solve() const
 {
   OSQP_CHECK(IsInitialized());
-  if (osqp_solve(workspace_.get()) != 0)
-  {
+  if (osqp_solve(workspace_.get()) != 0) {
     // From looking at the code, this can happen if the solve is interrupted
     // with ctrl-c or if updating "rho" fails.
-    if (osqp_is_interrupted())
-    {
+    if (osqp_is_interrupted()) {
       return OsqpExitCode::kInterrupted;
     }
     return OsqpExitCode::kUnknown;
@@ -591,13 +586,15 @@ Map<const VectorXd> OsqpSolver::primal_infeasibility_certificate() const
   OSQP_CHECK(IsInitialized());
   const OsqpExitCode exit_code = StatusToExitCode(workspace_->info->status_val);
 
-  OSQP_CHECK(exit_code == OsqpExitCode::kPrimalInfeasible ||
-             exit_code == OsqpExitCode::kPrimalInfeasibleInaccurate);
+  OSQP_CHECK(
+    exit_code == OsqpExitCode::kPrimalInfeasible ||
+    exit_code == OsqpExitCode::kPrimalInfeasibleInaccurate);
 
   return {workspace_->delta_y, workspace_->data->m};
 }
 
-Status OsqpSolver::SetWarmStart(const Ref<const VectorXd> &primal_vector, const Ref<const VectorXd> &dual_vector) const
+Status OsqpSolver::SetWarmStart(
+  const Ref<const VectorXd> & primal_vector, const Ref<const VectorXd> & dual_vector) const
 {
   // This is identical to calling osqp_warm_start with both vectors at once.
   OSQP_RETURN_IF_ERROR(SetPrimalWarmStart(primal_vector))
@@ -605,51 +602,46 @@ Status OsqpSolver::SetWarmStart(const Ref<const VectorXd> &primal_vector, const 
   return Status::OkStatus();
 }
 
-Status OsqpSolver::SetPrimalWarmStart(const Ref<const VectorXd> &primal_vector) const
+Status OsqpSolver::SetPrimalWarmStart(const Ref<const VectorXd> & primal_vector) const
 {
-  if (!IsInitialized())
-  {
+  if (!IsInitialized()) {
     return {"OsqpSolver is not initialized.", StatusCode::kFailedPrecondition};
   }
   const c_int num_variables = workspace_->data->n;
   OSQP_RETURN_IF_ERROR(OSQP_CHECK_DIMENSIONS(primal_vector.size(), num_variables))
 
-  if (const int return_code = osqp_warm_start_x(workspace_.get(), primal_vector.data()); return_code != 0)
-  {
+  if (const int return_code = osqp_warm_start_x(workspace_.get(), primal_vector.data());
+      return_code != 0) {
     return {"osqp_warm_start_x unexpectedly failed.", StatusCode::kUnknownError};
   }
   return Status::OkStatus();
 }
 
-Status OsqpSolver::SetDualWarmStart(const Ref<const VectorXd> &dual_vector) const
+Status OsqpSolver::SetDualWarmStart(const Ref<const VectorXd> & dual_vector) const
 {
-  if (!IsInitialized())
-  {
+  if (!IsInitialized()) {
     return {"OsqpSolver is not initialized.", StatusCode::kFailedPrecondition};
   }
   const c_int num_constraints = workspace_->data->m;
   OSQP_RETURN_IF_ERROR(OSQP_CHECK_DIMENSIONS(dual_vector.size(), num_constraints))
 
-  if (const int return_code = osqp_warm_start_y(workspace_.get(),
-                                                dual_vector.data());return_code != 0)
-  {
+  if (const int return_code = osqp_warm_start_y(workspace_.get(), dual_vector.data());
+      return_code != 0) {
     return {"osqp_warm_start_y unexpectedly failed.", StatusCode::kUnknownError};
   }
   return Status::OkStatus();
 }
 
-Status OsqpSolver::SetObjectiveVector(const Ref<const VectorXd> &objective_vector)
+Status OsqpSolver::SetObjectiveVector(const Ref<const VectorXd> & objective_vector)
 {
-  if (!IsInitialized())
-  {
+  if (!IsInitialized()) {
     return {"OsqpSolver is not initialized.", StatusCode::kFailedPrecondition};
   }
   const c_int num_variables = workspace_->data->n;
   OSQP_RETURN_IF_ERROR(OSQP_CHECK_DIMENSIONS(objective_vector.size(), num_variables))
 
-  if (const int return_code = osqp_update_lin_cost(workspace_.get(),
-                                                   objective_vector.data());return_code != 0)
-  {
+  if (const int return_code = osqp_update_lin_cost(workspace_.get(), objective_vector.data());
+      return_code != 0) {
     return {"osqp_update_lin_cost unexpectedly failed.", StatusCode::kUnknownError};
   }
   return Status::OkStatus();
@@ -658,22 +650,18 @@ Status OsqpSolver::SetObjectiveVector(const Ref<const VectorXd> &objective_vecto
 // NOTE(ml): osqp_update_lower_bound and osqp_update_upper_bound are not
 // exposed because they have confusing semantics. Gives immediately error if a
 // new set of bounds is inconsistent with the existing bounds on the other side.
-Status OsqpSolver::SetBounds(const Ref<const VectorXd> &lower_bounds,
-                             const Ref<const VectorXd> &upper_bounds)
+Status OsqpSolver::SetBounds(
+  const Ref<const VectorXd> & lower_bounds, const Ref<const VectorXd> & upper_bounds)
 {
-  if (!IsInitialized())
-  {
-    return {"OsqpSolver is not initialized.",
-            StatusCode::kFailedPrecondition};
+  if (!IsInitialized()) {
+    return {"OsqpSolver is not initialized.", StatusCode::kFailedPrecondition};
   }
   const c_int num_constraints = workspace_->data->m;
   OSQP_RETURN_IF_ERROR(OSQP_CHECK_DIMENSIONS(lower_bounds.size(), num_constraints))
   OSQP_RETURN_IF_ERROR(OSQP_CHECK_DIMENSIONS(upper_bounds.size(), num_constraints))
   // OSQP does this check internally, but we can return a better error message.
-  for (int i = 0; i < num_constraints; i++)
-  {
-    if (lower_bounds[i] > upper_bounds[i])
-    {
+  for (int i = 0; i < num_constraints; i++) {
+    if (lower_bounds[i] > upper_bounds[i]) {
       auto msg = "Inconsistent bounds at index " + std::to_string(i) + ", " +
                  std::to_string(lower_bounds[i]) +
                  " must be <= " + std::to_string(upper_bounds[i]) + ".";
@@ -682,71 +670,53 @@ Status OsqpSolver::SetBounds(const Ref<const VectorXd> &lower_bounds,
   }
 
   if (const int return_code =
-      osqp_update_bounds(workspace_.get(),
-                         lower_bounds.data(),
-                         upper_bounds.data());return_code != 0)
-  {
-    return {"osqp_update_bounds unexpectedly failed.",
-            StatusCode::kUnknownError};
+        osqp_update_bounds(workspace_.get(), lower_bounds.data(), upper_bounds.data());
+      return_code != 0) {
+    return {"osqp_update_bounds unexpectedly failed.", StatusCode::kUnknownError};
   }
   return Status::OkStatus();
 }
 
 Status OsqpSolver::UpdateMaxIter(int max_iter_new)
 {
-  if (!IsInitialized())
-  {
-    return {"OsqpSolver is not initialized.",
-            StatusCode::kFailedPrecondition};
+  if (!IsInitialized()) {
+    return {"OsqpSolver is not initialized.", StatusCode::kFailedPrecondition};
   }
-  if (max_iter_new <= 0)
-  {
-    return {"Invalid max_iter value: " + std::to_string(max_iter_new),
-            StatusCode::kInvalidArgument};
+  if (max_iter_new <= 0) {
+    return {
+      "Invalid max_iter value: " + std::to_string(max_iter_new), StatusCode::kInvalidArgument};
   }
-  if (osqp_update_max_iter(workspace_.get(), max_iter_new) != 0)
-  {
-    return {"osqp_update_max_iter unexpectedly failed.",
-            StatusCode::kUnknownError};
+  if (osqp_update_max_iter(workspace_.get(), max_iter_new) != 0) {
+    return {"osqp_update_max_iter unexpectedly failed.", StatusCode::kUnknownError};
   }
   return Status::OkStatus();
 }
 
 Status OsqpSolver::UpdateEpsAbs(double eps_abs_new)
 {
-  if (!IsInitialized())
-  {
-    return {"OsqpSolver is not initialized.",
-            StatusCode::kFailedPrecondition};
+  if (!IsInitialized()) {
+    return {"OsqpSolver is not initialized.", StatusCode::kFailedPrecondition};
   }
-  if (eps_abs_new <= 0.0)
-  {
+  if (eps_abs_new <= 0.0) {
     return {"Invalid argument error.", StatusCode::kInvalidArgument};
   }
-  if (osqp_update_eps_abs(workspace_.get(), eps_abs_new) != 0)
-  {
-    return {"osqp_update_eps_abs unexpectedly failed.",
-            StatusCode::kUnknownError};
+  if (osqp_update_eps_abs(workspace_.get(), eps_abs_new) != 0) {
+    return {"osqp_update_eps_abs unexpectedly failed.", StatusCode::kUnknownError};
   }
   return Status::OkStatus();
 }
 
 Status OsqpSolver::UpdateTimeLimit(double time_limit_new)
 {
-  if (!IsInitialized())
-  {
-    return {"OsqpSolver is not initialized.",
-            StatusCode::kFailedPrecondition};
+  if (!IsInitialized()) {
+    return {"OsqpSolver is not initialized.", StatusCode::kFailedPrecondition};
   }
-  if (time_limit_new < 0.0)
-  {
-    return {"Invalid time_limit value: " + std::to_string(time_limit_new),
-            StatusCode::kInvalidArgument};
+  if (time_limit_new < 0.0) {
+    return {
+      "Invalid time_limit value: " + std::to_string(time_limit_new), StatusCode::kInvalidArgument};
   }
-  if (osqp_update_time_limit(workspace_.get(), time_limit_new) != 0)
-  {
-    return {"osqp_update_time_limit unexpectedly failed.",
-            StatusCode::kUnknownError};
+  if (osqp_update_time_limit(workspace_.get(), time_limit_new) != 0) {
+    return {"osqp_update_time_limit unexpectedly failed.", StatusCode::kUnknownError};
   }
   return Status::OkStatus();
 }

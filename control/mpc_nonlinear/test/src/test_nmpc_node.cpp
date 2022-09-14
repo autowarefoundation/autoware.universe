@@ -87,8 +87,8 @@ TEST_F(FakeNodeFixture, automatic_differentiation_works)
   auto const & vydot = yawdot * vdot * cos(beta + eyaw);
 
   // Analytical fx.
-  std::vector<double> analytical_fx_vec{xdot,    ydot, yawdot,   sdot, eydot,
-                                        eyawdot, vdot, deltadot, vydot};
+  std::vector<double> analytical_fx_vec{xdot, ydot, yawdot, sdot, eydot,
+    eyawdot, vdot, deltadot, vydot};
 
   // Autodiff fx
   vehicle_model.computeFx(x, u, params, f_of_dx);
@@ -287,8 +287,8 @@ TEST_F(FakeNodeFixture, straight_line_trajectory)
 
   rclcpp::Subscription<NonlinearMPCPerformanceMsg>::SharedPtr nmpc_perf_sub =
     this->create_subscription<NonlinearMPCPerformanceMsg>(
-      "mpc_nonlinear/debug/nmpc_predicted_performance_vars", *this->get_fake_node(),
-      [&nmpc_perf_msg](const NonlinearMPCPerformanceMsg::SharedPtr msg) { nmpc_perf_msg = msg; });
+    "mpc_nonlinear/debug/nmpc_predicted_performance_vars", *this->get_fake_node(),
+    [&nmpc_perf_msg](const NonlinearMPCPerformanceMsg::SharedPtr msg) {nmpc_perf_msg = msg;});
 
   // ASSERT_TRUE(is_control_command_received);
   auto br = std::make_shared<tf2_ros::StaticTransformBroadcaster>(this->get_fake_node());
@@ -346,16 +346,13 @@ TEST_F(FakeNodeFixture, straight_line_trajectory)
   vel_pub->publish(odom_msg);
   steer_pub->publish(steer_msg);
 
-  //  test_utils::waitForMessage(
-  //    node, this, is_control_command_received, std::chrono::seconds{100LL}, false);
-
-  test_utils::waitForMessage(node, this, is_control_command_received);
-
-  // Expect true with stopping command.
-  ASSERT_TRUE(is_control_command_received);
+  // test_utils::waitForMessage(node, this, false, std::chrono::seconds{100LL}, false);
+  // test_utils::waitForMessage(node, this, is_control_command_received);
+  rclcpp::spin_some(node);
+  rclcpp::spin_some(this->get_fake_node());
 
   // Spin the msg exchange
-  test_utils::spinWhile(node);
+  // test_utils::spinWhile(node);
 
   //  EXPECT_EQ(cmd_msg->lateral.steering_tire_angle, 0.0f);
   //  EXPECT_EQ(cmd_msg->lateral.steering_tire_rotation_rate, 0.0f);

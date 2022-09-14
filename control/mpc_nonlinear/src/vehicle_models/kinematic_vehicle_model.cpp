@@ -18,7 +18,7 @@
 #include <limits>
 
 void
-ns_models::KinematicModelSingleTrackModel::updateParameters(const ParamsVehicle &params_vehicle)
+ns_models::KinematicModelSingleTrackModel::updateParameters(const ParamsVehicle & params_vehicle)
 {
   wheel_base_ = params_vehicle.wheel_base;
   lr_ = params_vehicle.lr;
@@ -28,31 +28,32 @@ ns_models::KinematicModelSingleTrackModel::updateParameters(const ParamsVehicle 
 }
 
 void
-ns_models::KinematicModelSingleTrackModel::systemEquations(const VehicleDynamicsBase::state_vector_ad_t &x,
-                                                           const VehicleDynamicsBase::input_vector_ad_t &u,
-                                                           const VehicleDynamicsBase::param_vector_ad_t &params,
-                                                           VehicleDynamicsBase::state_vector_ad_t &f_xdot)
+ns_models::KinematicModelSingleTrackModel::systemEquations(
+  const VehicleDynamicsBase::state_vector_ad_t & x,
+  const VehicleDynamicsBase::input_vector_ad_t & u,
+  const VehicleDynamicsBase::param_vector_ad_t & params,
+  VehicleDynamicsBase::state_vector_ad_t & f_xdot)
 {
 
   // auto xw = x(0);  // Xw, Yw are the global coordinates.
   // auto yw = x(1);
-  auto const &yaw_angle = x(2);  // heading angle.
+  auto const & yaw_angle = x(2);  // heading angle.
   // auto s = x(3);              // distance travelled.
-  auto const &ey = x(4);         // lateral error.
-  auto const &e_yaw = x(5);      // heading error.
-  auto const &v = x(6);          // longitudinal speed.
-  auto const &delta = x(7);      // steering angle.
+  auto const & ey = x(4);         // lateral error.
+  auto const & e_yaw = x(5);      // heading error.
+  auto const & v = x(6);          // longitudinal speed.
+  auto const & delta = x(7);      // steering angle.
 
   // Set the reference curvature.
-  auto const &kappa = params(0);        // curvature
+  auto const & kappa = params(0);        // curvature
   // auto const &vtarget = params(1);   //  target velocity
 
-  auto const &tan_delta = CppAD::tan(delta);
-  auto const &beta = CppAD::atan(tan_delta * lr_ / wheel_base_);
+  auto const & tan_delta = CppAD::tan(delta);
+  auto const & beta = CppAD::atan(tan_delta * lr_ / wheel_base_);
 
   // Unpack each of the controls
-  auto const &ax_acc_brk_input = u(0);  // acceleration - brake input [m/s/s]
-  auto const &steering_input = u(1);    // steering input [rad]
+  auto const & ax_acc_brk_input = u(0);  // acceleration - brake input [m/s/s]
+  auto const & steering_input = u(1);    // steering input [rad]
 
   // Kinematic equations.
   f_xdot(0) = v * CppAD::cos(beta + yaw_angle);  // !<@brief xw_dot
@@ -66,13 +67,11 @@ ns_models::KinematicModelSingleTrackModel::systemEquations(const VehicleDynamics
   f_xdot(5) = f_xdot(2) - kappa * f_xdot(3);  // !<@brief e_yaw_dot
 
   // Control states.
-  if (use_delay_models_)
-  {
+  if (use_delay_models_) {
     // f_xdot(6) = -(v - ax_acc_brk_input) / speed_tau_;
     f_xdot(6) = ax_acc_brk_input;  // !<@brief acceleration brake input
     f_xdot(7) = -(delta - steering_input) / steering_tau_;
-  } else
-  {
+  } else {
     f_xdot(6) = ax_acc_brk_input;  // !<@brief acceleration brake input
     f_xdot(7) = steering_input;
   }
@@ -115,4 +114,3 @@ void ns_models::KinematicModelSingleTrackModel::testModel()
   ns_eigen_utils::printEigenMat(A);
   ns_eigen_utils::printEigenMat(B);
 }
-

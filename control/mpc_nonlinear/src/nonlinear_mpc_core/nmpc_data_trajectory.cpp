@@ -19,7 +19,7 @@
 #include <limits>
 #include <vector>
 
-ns_data::MPCdataTrajectoryVectors::MPCdataTrajectoryVectors(size_t const &traj_size)
+ns_data::MPCdataTrajectoryVectors::MPCdataTrajectoryVectors(size_t const & traj_size)
 {
   s.reserve(traj_size);
   t.reserve(traj_size);
@@ -35,7 +35,7 @@ ns_data::MPCdataTrajectoryVectors::MPCdataTrajectoryVectors(size_t const &traj_s
 }
 
 void ns_data::MPCdataTrajectoryVectors::emplace_back(
-  autoware_auto_planning_msgs::msg::Trajectory const &msg)
+  autoware_auto_planning_msgs::msg::Trajectory const & msg)
 {
   // [s, t, ax, x, y, z, yaw, vx, curvature ]  nine members
   // Insert the first elements.
@@ -51,24 +51,24 @@ void ns_data::MPCdataTrajectoryVectors::emplace_back(
   vx.emplace_back(msg.points.at(0).longitudinal_velocity_mps);
 
   // copy x,y, psi, vx of raw trajectory into their corresponding vectors.
-  for (size_t k = 1; k < msg.points.size(); ++k)
-  {
+  for (size_t k = 1; k < msg.points.size(); ++k) {
     // compute ds and dt.
-    auto const &point0 = msg.points.at(k - 1);
-    auto const &point1 = msg.points.at(k);
+    auto const & point0 = msg.points.at(k - 1);
+    auto const & point1 = msg.points.at(k);
 
-    double const &dx = point1.pose.position.x - point0.pose.position.x;
-    double const &dy = point1.pose.position.y - point0.pose.position.y;
-    double const &dz = point1.pose.position.z - point0.pose.position.z;
+    double const & dx = point1.pose.position.x - point0.pose.position.x;
+    double const & dy = point1.pose.position.y - point0.pose.position.y;
+    double const & dz = point1.pose.position.z - point0.pose.position.z;
 
-    double const &ds = std::sqrt(dx * dx + dy * dy + dz * dz);
+    double const & ds = std::sqrt(dx * dx + dy * dy + dz * dz);
 
     // used for trapezoidal integration
-    double const &mean_v =
-      static_cast<double>((point0.longitudinal_velocity_mps + point1.longitudinal_velocity_mps) / 2);
+    double const & mean_v =
+      static_cast<double>((point0.longitudinal_velocity_mps + point1.longitudinal_velocity_mps) /
+      2);
 
     // !<@brief to prevent zero division.
-    double const &dt = ds / ns_utils::clamp(mean_v, 0.1, mean_v);
+    double const & dt = ds / ns_utils::clamp(mean_v, 0.1, mean_v);
 
     // !<@brief this acceleration is implied by x,y,z and vx in the planner.
     // double &&acc_computed = dv / (EPS + dt);
@@ -107,7 +107,7 @@ void ns_data::MPCdataTrajectoryVectors::emplace_back(
   /**
    *  tan_vector = [cos(yaw), heading(yaw)]
    * */
-  auto const &tangent_vector = ns_utils::getTangentVector(yaw_temp);
+  auto const & tangent_vector = ns_utils::getTangentVector(yaw_temp);
   xtemp += ds * tangent_vector[0];
   ytemp += ds * tangent_vector[1];
 
@@ -146,8 +146,8 @@ void ns_data::MPCdataTrajectoryVectors::clear()
 size_t ns_data::MPCdataTrajectoryVectors::size() const
 {
   if (x.size() == y.size() && x.size() == z.size() && x.size() == yaw.size() &&
-      x.size() == vx.size() && x.size() == curvature.size() && x.size() == t.size() &&
-      x.size() == s.size() && x.size() == ax.size())
+    x.size() == vx.size() && x.size() == curvature.size() && x.size() == t.size() &&
+    x.size() == s.size() && x.size() == ax.size())
   {
     return x.size();
   }
@@ -166,49 +166,49 @@ size_t ns_data::MPCdataTrajectoryVectors::size() const
   return 0;
 }
 
-void ns_data::MPCdataTrajectoryVectors::setTrajectoryCoordinate(char const &coord_name,
-                                                                std::vector<double> const &data_vect)
+void ns_data::MPCdataTrajectoryVectors::setTrajectoryCoordinate(
+  char const & coord_name,
+  std::vector<double> const & data_vect)
 {
-  switch (coord_name)
-  {
-    case 's':s = data_vect;
+  switch (coord_name) {
+    case 's': s = data_vect;
       break;
 
-    case 't':t = data_vect;
+    case 't': t = data_vect;
       break;
 
-    case 'a':ax = data_vect;
+    case 'a': ax = data_vect;
       break;
 
-    case 'x':x = data_vect;
+    case 'x': x = data_vect;
       break;
 
-    case 'y':y = data_vect;
+    case 'y': y = data_vect;
       break;
 
-    case 'z':z = data_vect;
+    case 'z': z = data_vect;
       break;
 
-    case 'v':vx = data_vect;
+    case 'v': vx = data_vect;
       break;
 
-    case 'w':yaw = data_vect;
+    case 'w': yaw = data_vect;
       break;
 
-    case 'c':curvature = data_vect;
+    case 'c': curvature = data_vect;
       break;
 
-    default:break;
+    default: break;
   }
 }
 
-void ns_data::MPCdataTrajectoryVectors::addExtraEndPoints(double const &avg_mpc_compute_time)
+void ns_data::MPCdataTrajectoryVectors::addExtraEndPoints(double const & avg_mpc_compute_time)
 {
   //  Add end-points as an extra points.
   double const ds = 2.0e-1;          // for guaranteeing the monotonicity condition in s.
   s.emplace_back(s.back() + ds);  // zero velocity no motion.
 
-  double &&t_ext = 10.0 + avg_mpc_compute_time;
+  double && t_ext = 10.0 + avg_mpc_compute_time;
   t.emplace_back(t.back() + t_ext);
 
   // Add x, y points on the current direction line.
@@ -217,7 +217,7 @@ void ns_data::MPCdataTrajectoryVectors::addExtraEndPoints(double const &avg_mpc_
   auto yaw_temp = yaw.back();
   // auto dyaw = yaw.rbegin()[0] - yaw.rbegin()[1];
 
-  auto &&tangent_vector = ns_utils::getTangentVector(yaw_temp);
+  auto && tangent_vector = ns_utils::getTangentVector(yaw_temp);
   xtemp += ds * tangent_vector[0];
   ytemp += ds * tangent_vector[1];
 

@@ -62,21 +62,23 @@ std::shared_ptr<NonlinearMPCNode> makeNonlinearMPCNode();
  * @param [in] x_coord
  * @param [out] ycurve_output = std::vector
  */
-std::vector<double> logisticMap(double const &max_y_value,
-                                double const &center_x_value,
-                                double const &slope,
-                                std::vector<double> const &x_coord);
+std::vector<double> logisticMap(
+  double const & max_y_value,
+  double const & center_x_value,
+  double const & slope,
+  std::vector<double> const & x_coord);
 
 /**
  * @brief Returns the derivative of the logistic function df/dx = f(x)*(1-f(x))
  * where f(x) is the logistic function defined.
  */
 
-std::vector<double> logisticMapDerivative(double const &max_y_value,
-                                          double const &center_x_value,
-                                          double const &slope,
-                                          std::vector<double> const &x_coord);
+std::vector<double> logisticMapDerivative(
+  double const & max_y_value,
+  double const & center_x_value,
+  double const & slope,
+  std::vector<double> const & x_coord);
 
-void createTrajectoryMessage(TrajectoryMsg &traj_msg);
+void createTrajectoryMessage(TrajectoryMsg & traj_msg);
 
 #endif  // TEST_NONLINEAR_MPC_NODE_HPP_
