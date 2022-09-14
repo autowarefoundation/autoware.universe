@@ -52,12 +52,11 @@ std::vector<double> logisticMap(double const &max_y_value,
   for (auto &x : x_coord)
   {
     auto yval = max_y_value / (1. + std::exp(-slope * (x - center_x_value)));
-    // ns_utils::print("yval : ", yval);
     ycurve_output.emplace_back(yval);
   }
 
   // Debug
-  ns_utils::print_container(ycurve_output);
+  // ns_utils::print_container(ycurve_output);
   // end of debug.
 
   return ycurve_output;
@@ -73,13 +72,11 @@ std::vector<double> logisticMapDerivative(double const &max_y_value,
   for (auto &x : x_coord)
   {
     auto yval = max_y_value / (1. + std::exp(-slope * (x - center_x_value)));
-
-    // ns_utils::print("yval : ", yval);
     ycurve_output.emplace_back(yval * (1 - yval));
   }
 
   // Debug
-  ns_utils::print_container(ycurve_output);
+  // ns_utils::print_container(ycurve_output);
   // end of debug.
 
   return ycurve_output;
@@ -138,19 +135,19 @@ void createTrajectoryMessage(TrajectoryMsg &traj_msg)
   }
 
   // Debug
-  ns_utils::print("Generated speed trajectory : ");
-  ns_utils::print_container(vx_vect);
+  //  ns_utils::print("Generated speed trajectory : ");
+  //  ns_utils::print_container(vx_vect);
+  //
+  //  ns_utils::print("Generated y-vect : ");
+  //  ns_utils::print_container(y_vect);
 
-  ns_utils::print("Generated y-vect : ");
-  ns_utils::print_container(y_vect);
-
-  ns_utils::print("created trajectory points : ");
+  ns_utils::print("Created Trajectory Points : x, y, z, yaw and vx");
   for (auto const &point : traj_msg.points)
   {
     auto position = point.pose.position;
     auto yaw = tf2::getYaw(point.pose.orientation);
-    ns_utils::print(position.x, position.y, position.z, yaw);
+    auto vx = point.longitudinal_velocity_mps;
+    ns_utils::print("x: ", position.x, "y: ", position.y, "z: ", position.z,
+                    "yaw: ", yaw, "vx: ", vx);
   }
-
-  // end of debug
 }

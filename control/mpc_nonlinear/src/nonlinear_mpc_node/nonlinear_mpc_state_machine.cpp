@@ -41,16 +41,13 @@ void VehicleMotionFSM::toggle(const std::array<double, 3> &dist2stop_egovx_nextv
                                   {
                                     return onEvent(current_state);
                                   }
-
                                 }, current_state_);
 
   current_state_type_ = std::visit(overload
                                      {
                                        [](auto const &current_state)
                                        { return current_state.state_type; }
-
                                      }, current_state_);
-
 }
 
 void VehicleMotionFSM::printCurrentStateMsg()
@@ -60,17 +57,13 @@ void VehicleMotionFSM::printCurrentStateMsg()
 
 motionStateEnums VehicleMotionFSM::getCurrentStateType() const
 {
-
   return current_state_type_;
-
 }
 
 State VehicleMotionFSM::onEvent(state::isStoppedwillMove) const
 {
-
   auto const &dist_to_stop_point = state_transition_vars_[0];
   auto const &ego_speed = std::fabs(state_transition_vars_[1]);
-  // auto &&next_point_speed_ref = std::fabs(vecMotionFSM->state_transition_vars_[2]);
 
   if (dist_to_stop_point > stop_state_keep_stopping_dist_ &&
       ego_speed < stop_state_entry_ego_speed_)
@@ -109,11 +102,9 @@ State VehicleMotionFSM::onEvent(state::willbeStopping) const
   auto const &dist_to_stop_point = state_transition_vars_[0];
   auto const &ego_speed = std::fabs(state_transition_vars_[1]);
 
-  if (auto const &next_point_speed_ref = std::fabs(state_transition_vars_[2]); dist_to_stop_point < will_stop_dist_ &&
-                                                                               ego_speed < stop_state_entry_ego_speed_
-                                                                               &&
-                                                                               next_point_speed_ref
-                                                                               < stop_state_entry_target_speed_)
+  if (auto const &next_point_speed_ref = std::fabs(state_transition_vars_[2]);
+    dist_to_stop_point < will_stop_dist_ && ego_speed < stop_state_entry_ego_speed_
+    && next_point_speed_ref < stop_state_entry_target_speed_)
   {
     return state::isatCompleteStop{};
   }
@@ -146,5 +137,4 @@ std::string_view VehicleMotionFSM::getFSMTypeReport()
 {
   return enum_texts[current_state_type_];
 }
-
-} // namespace ns_states
+}  // namespace ns_states

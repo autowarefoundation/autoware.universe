@@ -95,8 +95,8 @@ struct ParamsOptimization
   Model::input_vector_t ulower_scaled{Model::input_vector_t::Zero()};
 
   /** @brief State and control scaling min, max values. */
-  std::vector<double>
-    scaling_range{std::vector<double>(2, 0.0)};  // the range the variables scaled into [-1, 1] or any.
+  // the range the variables scaled into [-1, 1] or any.
+  std::vector<double> scaling_range{std::vector<double>(2, 0.0)};
   Model::state_vector_t xmin_for_scaling{Model::state_vector_t::Zero()};
   Model::state_vector_t xmax_for_scaling{Model::state_vector_t::Zero()};
   Model::input_vector_t umin_for_scaling{Model::input_vector_t::Zero()};

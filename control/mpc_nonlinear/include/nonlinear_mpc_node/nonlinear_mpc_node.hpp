@@ -32,8 +32,6 @@
 #include "motion_common/trajectory_common.hpp"
 #include "autoware_auto_vehicle_msgs/msg/vehicle_odometry.hpp"
 
-#include "autoware_auto_planning_msgs/msg/trajectory.hpp"
-#include "autoware_auto_vehicle_msgs/msg/steering_report.hpp"
 #include "autoware_auto_control_msgs/msg/ackermann_control_command.hpp"
 #include "nonlinear_mpc_node/nonlinear_mpc_node_visualization.hpp"
 #include <vehicle_info_util/vehicle_info_util.hpp>
@@ -60,15 +58,8 @@
 
 // Autoware headers.
 #include "helper_functions/angle_utils.hpp"
-#include "motion_common/motion_common.hpp"
-#include "motion_common/trajectory_common.hpp"
-#include "autoware_auto_vehicle_msgs/msg/vehicle_odometry.hpp"
-
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 #include "autoware_auto_vehicle_msgs/msg/steering_report.hpp"
-#include "autoware_auto_control_msgs/msg/ackermann_control_command.hpp"
-#include "vehicle_info_util/vehicle_info_util.hpp"
-
 
 // NMPC package headers.
 #include "nonlinear_mpc_core/nmpc_core.hpp"
@@ -325,7 +316,8 @@ class NonlinearMPCNode : public rclcpp::Node
   Model::param_vector_t predicted_model_params_{Model::param_vector_t::Zero()};
 
   // Control signals are stored in the following placeholders.
-  // !<-@brief These signals are computed in the model space, vehicle previous controls are stored in the delay queue.
+  // !<-@brief These signals are computed in the model space,
+  // vehicle previous controls are stored in the delay queue.
 
   // !<-@brief [vx input, steering input] controller solution
   Model::input_vector_t u_solution_{Model::input_vector_t::Zero()};
@@ -340,7 +332,8 @@ class NonlinearMPCNode : public rclcpp::Node
   // Node methods.
   void loadNodeParameters();  // load the parameters used in the node.
 
-  void loadVehicleParameters(ns_models::ParamsVehicle &params_vehicle);  // load vehicle model params.
+  // load vehicle model params.
+  void loadVehicleParameters(ns_models::ParamsVehicle &params_vehicle);
 
   // Load NMPCCore, LPV parameters and OSQP class parameters.
   void loadNMPCoreParameters(ns_data::data_nmpc_core_type_t &data_nmpc_core,
@@ -387,7 +380,8 @@ class NonlinearMPCNode : public rclcpp::Node
    * */
   OnSetParametersCallbackHandle::SharedPtr is_parameters_set_res_;
 
-  rcl_interfaces::msg::SetParametersResult onParameterUpdate(const std::vector<rclcpp::Parameter> &parameters);
+  rcl_interfaces::msg::SetParametersResult
+  onParameterUpdate(const std::vector<rclcpp::Parameter> &parameters);
 
   void updateCurrentPose();
 
@@ -511,5 +505,5 @@ class NonlinearMPCNode : public rclcpp::Node
 
   bool is_testing_{false};  // !<-@brief only used for testing purpose in loading parameters.
 };
-} // namespace ns_mpc_nonlinear
+}  // namespace ns_mpc_nonlinear
 #endif  // NONLINEAR_MPC_NODE__NONLINEAR_MPC_NODE_HPP_
