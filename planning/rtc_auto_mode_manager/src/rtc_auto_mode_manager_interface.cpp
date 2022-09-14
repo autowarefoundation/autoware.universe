@@ -27,6 +27,15 @@ RTCAutoModeManagerInterface::RTCAutoModeManagerInterface(
   enable_cli_ = node->create_client<AutoMode>(
     enable_auto_mode_namespace_ + "/internal/" + module_name, rmw_qos_profile_services_default);
 
+  while (!enable_cli_->wait_for_service(1s)) {
+    if (!rclcpp::ok()) {
+      RCLCPP_ERROR(node->get_logger(), "Interrupted while waiting for service.");
+      rclcpp::shutdown();
+      return;
+    }
+    RCLCPP_INFO_STREAM(node->get_logger(), "Waiting for service... [" << module_name << "]");
+  }
+
   // Service
   enable_srv_ = node->create_service<AutoMode>(
     enable_auto_mode_namespace_ + "/" + module_name,
@@ -34,9 +43,6 @@ RTCAutoModeManagerInterface::RTCAutoModeManagerInterface(
 
   // Send enable auto mode request
   if (default_enable) {
-    while (!enable_cli_->wait_for_service(1s)) {
-      RCLCPP_INFO_STREAM(node->get_logger(), "Waiting for service... [" << module_name << "]");
-    }
     AutoMode::Request::SharedPtr request = std::make_shared<AutoMode::Request>();
     request->enable = true;
     enable_cli_->async_send_request(request);
