@@ -20,11 +20,6 @@
 namespace default_ad_api
 {
 
-bool starts_with(const std::string & s, const std::string & t)
-{
-  return t.size() <= s.size() && std::equal(t.begin(), t.end(), s.begin());
-}
-
 template <class T>
 void concat(std::vector<T> & v1, const std::vector<T> & v2)
 {
@@ -38,21 +33,33 @@ PlanningNode::PlanningNode(const rclcpp::NodeOptions & options) : Node("planning
   adaptor.init_pub(pub_steering_factors_);
 
   {
+    std::vector<std::string> velocity_factor_topics = {
+      "/planning/velocity_factors/blind_spot",
+      "/planning/velocity_factors/crosswalk",
+      "/planning/velocity_factors/detection_area",
+      "/planning/velocity_factors/intersection",
+      "/planning/velocity_factors/merge_from_private",
+      "/planning/velocity_factors/no_stopping_area",
+      "/planning/velocity_factors/obstacle_stop",
+      "/planning/velocity_factors/obstacle_cruise",
+      "/planning/velocity_factors/occlusion_spot",
+      "/planning/velocity_factors/stop_line",
+      "/planning/velocity_factors/surround_obstacle",
+      "/planning/velocity_factors/traffic_light",
+      "/planning/velocity_factors/virtual_traffic_light",
+      "/planning/velocity_factors/walkway"};
+
     const auto on_velocity_factors = [this](const int index) {
       return [this, index](const VelocityFactorArray::ConstSharedPtr msg) {
         velocity_factors_[index] = msg;
       };
     };
 
-    int index = 0;
-    for (const auto & topic : get_topic_names_and_types()) {
-      if (starts_with(topic.first, "/planning/velocity_factors")) {
-        RCLCPP_INFO_STREAM(get_logger(), index << " " << topic.first);
-        sub_velocity_factors_.push_back(create_subscription<VelocityFactorArray>(
-          topic.first, rclcpp::QoS(1), on_velocity_factors(index++)));
-      }
+    for (size_t index = 0; index < velocity_factor_topics.size(); ++index) {
+      sub_velocity_factors_.push_back(create_subscription<VelocityFactorArray>(
+        velocity_factor_topics[index], rclcpp::QoS(1), on_velocity_factors(index)));
     }
-    velocity_factors_.resize(index);
+    velocity_factors_.resize(velocity_factor_topics.size());
   }
 
   const auto rate = rclcpp::Rate(5);
@@ -60,12 +67,9 @@ PlanningNode::PlanningNode(const rclcpp::NodeOptions & options) : Node("planning
     VelocityFactorArray message;
     message.header.stamp = now();
     message.header.frame_id = "map";
-
-    int index = 0;
     for (const auto & factor : velocity_factors_) {
       if (factor) {
         concat(message.factors, factor->factors);
-        RCLCPP_INFO_STREAM(get_logger(), index++ << " " << factor->factors.size());
       }
     }
     pub_velocity_factors_->publish(message);

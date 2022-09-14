@@ -46,7 +46,6 @@ class PlanningFactorVisualizer(rclpy.node.Node):
     def on_velocity_factor(self, msg):
         markers = MarkerArray()
         for index, factor in enumerate(msg.factors):
-            print(index, factor.pose)
             markers.markers.append(self.create_wall_marker(index, msg.header, factor))
             markers.markers.append(self.create_text_marker(index, msg.header, factor))
         self.pub.publish(markers)
