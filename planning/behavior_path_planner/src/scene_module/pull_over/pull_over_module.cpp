@@ -54,12 +54,6 @@ PullOverModule::PullOverModule(
   rtc_interface_ptr_ = std::make_shared<RTCInterface>(&node, "pull_over");
   goal_pose_pub_ =
     node.create_publisher<PoseStamped>("/planning/scenario_planning/modified_goal", 1);
-  parking_area_pub_ = node.create_publisher<MarkerArray>("~/pull_over/debug/parking_area", 1);
-  // Only for arc paths
-  Cl_pub_ = node.create_publisher<PoseStamped>("~/pull_over/debug/Cl", 1);
-  Cr_pub_ = node.create_publisher<PoseStamped>("~/pull_over/debug/Cr", 1);
-  start_pose_pub_ = node.create_publisher<PoseStamped>("~/pull_over/debug/start_pose", 1);
-  path_pose_array_pub_ = node.create_publisher<PoseArray>("~/pull_over/debug/path_pose_array", 1);
 
   lane_departure_checker_ = std::make_unique<LaneDepartureChecker>();
   lane_departure_checker_->setVehicleInfo(
@@ -155,7 +149,7 @@ void PullOverModule::onEntry()
   if (!parameters_.enable_goal_research) {
     goal_candidates_.clear();
     GoalCandidate goal_candidate;
-    goal_candidate.goal_pose = getRefinedGoal();
+    goal_candidate.goal_pose = calcRefinedGoal();
     goal_candidate.distance_from_original_goal = 0.0;
     goal_candidates_.push_back(goal_candidate);
   }
@@ -230,7 +224,7 @@ bool PullOverModule::isExecutionRequested() const
 
 bool PullOverModule::isExecutionReady() const { return true; }
 
-Pose PullOverModule::getRefinedGoal() const
+Pose PullOverModule::calcRefinedGoal() const
 {
   lanelet::ConstLanelet goal_lane;
   Pose goal_pose = planner_data_->route_handler->getGoalPose();
@@ -256,7 +250,7 @@ void PullOverModule::researchGoal()
 {
   // Find goals in pull over areas.
   goal_candidates_.clear();
-  const Pose refined_goal_pose = getRefinedGoal();
+  const Pose refined_goal_pose = calcRefinedGoal();
   for (double dx = -parameters_.backward_goal_search_length;
        dx <= parameters_.forward_goal_search_length; dx += parameters_.goal_search_interval) {
     const Pose search_pose = calcOffsetPose(refined_goal_pose, dx, 0, 0);
@@ -266,7 +260,7 @@ void PullOverModule::researchGoal()
 
     const auto objects_in_shoulder_lane =
       util::filterObjectsByLanelets(*(planner_data_->dynamic_object), status_.pull_over_lanes);
-    if (checkCollisionWtihLongitudinalDistance(search_pose, objects_in_shoulder_lane)) {
+    if (checkCollisionWithLongitudinalDistance(search_pose, objects_in_shoulder_lane)) {
       continue;
     }
 
@@ -317,7 +311,7 @@ bool PullOverModule::isLongEnoughToParkingStart(
   return *dist_to_parking_start_pose > current_to_stop_distance;
 }
 
-bool PullOverModule::checkCollisionWtihLongitudinalDistance(
+bool PullOverModule::checkCollisionWithLongitudinalDistance(
   const Pose & ego_pose, const PredictedObjects & dynamic_objects) const
 {
   if (parameters_.use_occupancy_grid) {
@@ -325,7 +319,7 @@ bool PullOverModule::checkCollisionWtihLongitudinalDistance(
     const double offset = std::max(
       parameters_.goal_to_obstacle_margin - parameters_.occupancy_grid_collision_check_margin, 0.0);
 
-    // check forward collison
+    // check forward collision
     const Pose ego_pose_moved_forward = calcOffsetPose(ego_pose, offset, 0, 0);
     const Pose forward_pose_grid_coords =
       global2local(occupancy_grid_map_.getMap(), ego_pose_moved_forward);
@@ -336,7 +330,7 @@ bool PullOverModule::checkCollisionWtihLongitudinalDistance(
       return true;
     }
 
-    // check backward collison
+    // check backward collision
     const Pose ego_pose_moved_backward = calcOffsetPose(ego_pose, -offset, 0, 0);
     const Pose backward_pose_grid_coords =
       global2local(occupancy_grid_map_.getMap(), ego_pose_moved_backward);
@@ -406,12 +400,14 @@ bool PullOverModule::planWithEfficientPath()
   // shift parking path
   if (parameters_.enable_shift_parking) {
     for (const auto goal_candidate : goal_candidates_) {
-      modified_goal_pose_ = goal_candidate.goal_pose;
       if (
-        planShiftPath() && isLongEnoughToParkingStart(
-                             shift_parking_path_.path, shift_parking_path_.shift_point.start)) {
+        planShiftPath(goal_candidate.goal_pose) &&
+        isLongEnoughToParkingStart(
+          shift_parking_path_.path, shift_parking_path_.shift_point.start)) {
         // shift parking plan already confirms safety and no lane departure in it's own function.
+        modified_goal_pose_ = goal_candidate.goal_pose;
         status_.path = shift_parking_path_.path;
+        status_.full_path = shift_parking_path_.path;
         status_.path_type = PathType::SHIFT;
         status_.is_safe = true;
         return true;
@@ -422,18 +418,18 @@ bool PullOverModule::planWithEfficientPath()
   // forward arc path
   if (parameters_.enable_arc_forward_parking) {
     for (const auto goal_candidate : goal_candidates_) {
-      modified_goal_pose_ = goal_candidate.goal_pose;
       parallel_parking_planner_.setData(planner_data_, parallel_parking_parameters_);
       if (
         parallel_parking_planner_.planPullOver(
-          modified_goal_pose_, status_.current_lanes, status_.pull_over_lanes, true) &&
+          goal_candidate.goal_pose, status_.current_lanes, status_.pull_over_lanes, true) &&
         isLongEnoughToParkingStart(
-          parallel_parking_planner_.getCurrentPath(),
-          parallel_parking_planner_.getStartPose().pose) &&
+          parallel_parking_planner_.getCurrentPath(), parallel_parking_planner_.getStartPose()) &&
         !checkCollisionWithPath(parallel_parking_planner_.getArcPath()) &&
         !lane_departure_checker_->checkPathWillLeaveLane(
           status_.lanes, parallel_parking_planner_.getArcPath())) {
+        modified_goal_pose_ = goal_candidate.goal_pose;
         status_.path = parallel_parking_planner_.getCurrentPath();
+        status_.full_path = parallel_parking_planner_.getFullPath();
         status_.path_type = PathType::ARC_FORWARD;
         status_.is_safe = true;
         return true;
@@ -444,18 +440,18 @@ bool PullOverModule::planWithEfficientPath()
   // backward arc path
   if (parameters_.enable_arc_backward_parking) {
     for (const auto goal_candidate : goal_candidates_) {
-      modified_goal_pose_ = goal_candidate.goal_pose;
       parallel_parking_planner_.setData(planner_data_, parallel_parking_parameters_);
       if (
         parallel_parking_planner_.planPullOver(
-          modified_goal_pose_, status_.current_lanes, status_.pull_over_lanes, false) &&
+          goal_candidate.goal_pose, status_.current_lanes, status_.pull_over_lanes, false) &&
         isLongEnoughToParkingStart(
-          parallel_parking_planner_.getCurrentPath(),
-          parallel_parking_planner_.getStartPose().pose) &&
+          parallel_parking_planner_.getCurrentPath(), parallel_parking_planner_.getStartPose()) &&
         !checkCollisionWithPath(parallel_parking_planner_.getArcPath()) &&
         !lane_departure_checker_->checkPathWillLeaveLane(
           status_.lanes, parallel_parking_planner_.getArcPath())) {
+        modified_goal_pose_ = goal_candidate.goal_pose;
         status_.path = parallel_parking_planner_.getCurrentPath();
+        status_.full_path = parallel_parking_planner_.getFullPath();
         status_.path_type = PathType::ARC_BACKWARD;
         status_.is_safe = true;
         return true;
@@ -474,10 +470,12 @@ bool PullOverModule::planWithCloseGoal()
 
     // Generate arc shift path.
     if (
-      parameters_.enable_shift_parking && planShiftPath() &&
+      parameters_.enable_shift_parking && planShiftPath(goal_candidate.goal_pose) &&
       isLongEnoughToParkingStart(shift_parking_path_.path, shift_parking_path_.shift_point.start)) {
       // shift parking plan already confirms safety and no lane departure in it's own function.
+      modified_goal_pose_ = goal_candidate.goal_pose;
       status_.path = shift_parking_path_.path;
+      status_.full_path = shift_parking_path_.path;
       status_.path_type = PathType::SHIFT;
       status_.is_safe = true;
       return true;
@@ -488,14 +486,15 @@ bool PullOverModule::planWithCloseGoal()
     if (
       parameters_.enable_arc_forward_parking &&
       parallel_parking_planner_.planPullOver(
-        modified_goal_pose_, status_.current_lanes, status_.pull_over_lanes, true) &&
+        goal_candidate.goal_pose, status_.current_lanes, status_.pull_over_lanes, true) &&
       isLongEnoughToParkingStart(
-        parallel_parking_planner_.getCurrentPath(),
-        parallel_parking_planner_.getStartPose().pose) &&
+        parallel_parking_planner_.getCurrentPath(), parallel_parking_planner_.getStartPose()) &&
       !checkCollisionWithPath(parallel_parking_planner_.getArcPath()) &&
       !lane_departure_checker_->checkPathWillLeaveLane(
         status_.lanes, parallel_parking_planner_.getArcPath())) {
+      modified_goal_pose_ = goal_candidate.goal_pose;
       status_.path = parallel_parking_planner_.getCurrentPath();
+      status_.full_path = parallel_parking_planner_.getFullPath();
       status_.path_type = PathType::ARC_FORWARD;
       status_.is_safe = true;
       return true;
@@ -505,14 +504,15 @@ bool PullOverModule::planWithCloseGoal()
     if (
       parameters_.enable_arc_backward_parking &&
       parallel_parking_planner_.planPullOver(
-        modified_goal_pose_, status_.current_lanes, status_.pull_over_lanes, false) &&
+        goal_candidate.goal_pose, status_.current_lanes, status_.pull_over_lanes, false) &&
       isLongEnoughToParkingStart(
-        parallel_parking_planner_.getCurrentPath(),
-        parallel_parking_planner_.getStartPose().pose) &&
+        parallel_parking_planner_.getCurrentPath(), parallel_parking_planner_.getStartPose()) &&
       !checkCollisionWithPath(parallel_parking_planner_.getArcPath()) &&
       !lane_departure_checker_->checkPathWillLeaveLane(
         status_.lanes, parallel_parking_planner_.getArcPath())) {
+      modified_goal_pose_ = goal_candidate.goal_pose;
       status_.path = parallel_parking_planner_.getCurrentPath();
+      status_.full_path = parallel_parking_planner_.getFullPath();
       status_.path_type = PathType::ARC_BACKWARD;
       status_.is_safe = true;
       return true;
@@ -534,7 +534,7 @@ Pose PullOverModule::getParkingStartPose() const
       shift_parking_path_.path.points, shift_parking_path_.shift_point.start.position, -offset);
     parking_start_pose = offset_pose ? *offset_pose : shift_parking_path_.shift_point.start;
   } else if (isArcPath()) {
-    parking_start_pose = parallel_parking_planner_.getStartPose().pose;
+    parking_start_pose = parallel_parking_planner_.getStartPose();
   }
   return parking_start_pose;
 }
@@ -542,7 +542,7 @@ Pose PullOverModule::getParkingStartPose() const
 BehaviorModuleOutput PullOverModule::plan()
 {
   status_.current_lanes = util::getExtendedCurrentLanes(planner_data_);
-  status_.pull_over_lanes = getPullOverLanes();
+  status_.pull_over_lanes = pull_over_utils::getPullOverLanes(*(planner_data_->route_handler));
   status_.lanes = lanelet::ConstLanelets{};
   status_.lanes.insert(
     status_.lanes.end(), status_.current_lanes.begin(), status_.current_lanes.end());
@@ -639,6 +639,7 @@ BehaviorModuleOutput PullOverModule::plan()
   // safe: use pull over path
   if (status_.is_safe) {
     output.path = std::make_shared<PathWithLaneId>(status_.path);
+    output.path_candidate = std::make_shared<PathWithLaneId>(status_.full_path);
   } else {
     RCLCPP_WARN_THROTTLE(
       getLogger(), *clock_, 5000, "Not found safe pull_over path. Stop in road lane.");
@@ -669,7 +670,15 @@ BehaviorModuleOutput PullOverModule::plan()
   const auto distance_to_path_change = calcDistanceToPathChange();
   updateRTCStatus(distance_to_path_change.first, distance_to_path_change.second);
 
-  publishDebugData();
+  setDebugData();
+
+  // Publish the modified goal only when its path is safe.
+  if (status_.is_safe) {
+    PoseStamped goal_pose_stamped;
+    goal_pose_stamped.header = planner_data_->route_handler->getRouteHeader();
+    goal_pose_stamped.pose = modified_goal_pose_;
+    goal_pose_pub_->publish(goal_pose_stamped);
+  }
 
   // For evaluations
   if (parameters_.print_debug_info) {
@@ -721,39 +730,13 @@ void PullOverModule::setParameters(const PullOverParameters & parameters)
   parameters_ = parameters;
 }
 
-bool PullOverModule::planShiftPath()
-{
-  const auto & route_handler = planner_data_->route_handler;
-  const auto common_parameters = planner_data_->parameters;
-
-  lanelet::ConstLanelet target_shoulder_lane;
-
-  if (route_handler->getPullOverTarget(
-        route_handler->getShoulderLanelets(), &target_shoulder_lane)) {
-    route_handler->setPullOverGoalPose(
-      target_shoulder_lane, common_parameters.vehicle_width, parameters_.margin_from_boundary);
-  } else {
-    RCLCPP_ERROR_THROTTLE(getLogger(), *clock_, 5000, "failed to get shoulder lane!!!");
-  }
-
-  // Find pull_over path
-  bool found_valid_path, found_safe_path;
-  std::tie(found_valid_path, found_safe_path) = getSafePath(shift_parking_path_);
-  if (!found_safe_path) {
-    return found_safe_path;
-  }
-
-  shift_parking_path_.path.header = planner_data_->route_handler->getRouteHeader();
-  return found_safe_path;
-}
-
 PathWithLaneId PullOverModule::getReferencePath() const
 {
   const auto & route_handler = planner_data_->route_handler;
-  const auto current_pose = planner_data_->self_pose->pose;
-  const auto common_parameters = planner_data_->parameters;
+  const auto & current_pose = planner_data_->self_pose->pose;
+  const auto & common_parameters = planner_data_->parameters;
 
-  const Pose refined_goal_pose = getRefinedGoal();
+  const Pose refined_goal_pose = calcRefinedGoal();
   if (status_.current_lanes.empty()) {
     return PathWithLaneId{};
   }
@@ -803,8 +786,8 @@ PathWithLaneId PullOverModule::getReferencePath() const
 PathWithLaneId PullOverModule::generateStopPath() const
 {
   const auto & route_handler = planner_data_->route_handler;
-  const auto current_pose = planner_data_->self_pose->pose;
-  const auto common_parameters = planner_data_->parameters;
+  const auto & current_pose = planner_data_->self_pose->pose;
+  const auto & common_parameters = planner_data_->parameters;
 
   const double current_vel = planner_data_->self_odometry->twist.twist.linear.x;
   auto stop_path = util::getCenterLinePath(
@@ -839,86 +822,49 @@ PathWithLaneId PullOverModule::generateStopPath() const
   return stop_path;
 }
 
-lanelet::ConstLanelets PullOverModule::getPullOverLanes() const
-{
-  lanelet::ConstLanelets pull_over_lanes;
-  const auto & route_handler = planner_data_->route_handler;
-  const auto current_pose = planner_data_->self_pose->pose;
-  lanelet::ConstLanelet target_shoulder_lane;
-
-  if (status_.current_lanes.empty()) {
-    return pull_over_lanes;
-  }
-
-  // Get shoulder lanes
-  lanelet::ConstLanelet current_lane;
-  lanelet::utils::query::getClosestLanelet(
-    status_.current_lanes, planner_data_->self_pose->pose, &current_lane);
-
-  if (route_handler->getPullOverTarget(
-        route_handler->getShoulderLanelets(), &target_shoulder_lane)) {
-    pull_over_lanes = route_handler->getShoulderLaneletSequence(
-      target_shoulder_lane, current_pose, pull_over_lane_length_, pull_over_lane_length_);
-
-  } else {
-    pull_over_lanes.clear();
-  }
-
-  return pull_over_lanes;
-}
-
-std::pair<bool, bool> PullOverModule::getSafePath(ShiftParkingPath & safe_path) const
+bool PullOverModule::planShiftPath(const Pose goal_pose)
 {
   std::vector<ShiftParkingPath> valid_paths;
 
   const auto & route_handler = planner_data_->route_handler;
-  const auto current_pose = planner_data_->self_pose->pose;
-  const auto current_twist = planner_data_->self_odometry->twist.twist;
-  const auto common_parameters = planner_data_->parameters;
+  const auto & current_pose = planner_data_->self_pose->pose;
+  const auto & common_parameters = planner_data_->parameters;
 
-  if (!isLongEnough(status_.current_lanes, modified_goal_pose_)) {
-    return std::make_pair(false, false);
+  if (!isLongEnough(status_.current_lanes, goal_pose) || status_.pull_over_lanes.empty()) {
+    return false;
   }
-  if (!status_.pull_over_lanes.empty()) {
-    // find candidate paths
-    const auto pull_over_paths = pull_over_utils::getShiftParkingPaths(
-      *route_handler, status_.current_lanes, status_.pull_over_lanes, current_pose,
-      modified_goal_pose_, current_twist, common_parameters, parameters_);
 
-    // get lanes used for detection
-    lanelet::ConstLanelets check_lanes;
-    if (!pull_over_paths.empty()) {
-      const auto & longest_path = pull_over_paths.front();
-      // we want to see check_distance [m] behind vehicle so add lane changing length
-      const double check_distance_with_path =
-        check_distance_ + longest_path.preparation_length + longest_path.pull_over_length;
-      check_lanes = route_handler->getCheckTargetLanesFromPath(
-        longest_path.path, status_.pull_over_lanes, check_distance_with_path);
-    }
-
-    // select valid path
-    valid_paths = pull_over_utils::selectValidPaths(
-      pull_over_paths, status_.current_lanes, check_lanes, *route_handler->getOverallGraphPtr(),
-      current_pose, route_handler->isInGoalRouteSection(status_.current_lanes.back()),
-      modified_goal_pose_, *lane_departure_checker_);
-
-    if (valid_paths.empty()) {
-      return std::make_pair(false, false);
-    }
-    // select safe path
-    bool found_safe_path = false;
-    for (const auto & path : valid_paths) {
-      if (!checkCollisionWithPath(path.shifted_path.path)) {
-        safe_path = path;
-        found_safe_path = true;
-        break;
-      }
-    }
-
-    safe_path.is_safe = found_safe_path;
-    return std::make_pair(true, found_safe_path);
+  // find candidate paths
+  const auto pull_over_paths = pull_over_utils::generateShiftParkingPaths(
+    *route_handler, status_.current_lanes, status_.pull_over_lanes, current_pose, goal_pose,
+    common_parameters, parameters_);
+  if (pull_over_paths.empty()) {
+    return false;
   }
-  return std::make_pair(false, false);
+
+  // select valid path
+  valid_paths = pull_over_utils::selectValidPaths(
+    pull_over_paths, status_.current_lanes, status_.pull_over_lanes, current_pose,
+    route_handler->isInGoalRouteSection(status_.current_lanes.back()), goal_pose,
+    *lane_departure_checker_);
+  if (valid_paths.empty()) {
+    return false;
+  }
+
+  // select safe path
+  bool found_safe_path = false;
+  for (const auto & path : valid_paths) {
+    if (!checkCollisionWithPath(path.shifted_path.path)) {
+      shift_parking_path_ = path;
+      found_safe_path = true;
+      break;
+    }
+  }
+
+  shift_parking_path_.is_safe = found_safe_path;
+  shift_parking_path_.path.header = route_handler->getRouteHeader();
+
+  return found_safe_path;
 }
 
 double PullOverModule::calcMinimumShiftPathDistance() const
@@ -1041,7 +987,7 @@ std::pair<TurnIndicatorsCommand, double> PullOverModule::getTurnInfo() const
       if (status_.path_type == PathType::SHIFT) {
         parking_end_pose = shift_parking_path_.shift_point.end;
       } else if (isArcPath()) {
-        parking_end_pose = parallel_parking_planner_.getArcEndPose().pose;
+        parking_end_pose = parallel_parking_planner_.getArcEndPose();
       }
     }
 
@@ -1066,84 +1012,51 @@ bool PullOverModule::isArcPath() const
   return status_.path_type == PathType::ARC_FORWARD || status_.path_type == PathType::ARC_BACKWARD;
 }
 
-Marker PullOverModule::createParkingAreaMarker(
-  const Pose & start_pose, const Pose & end_pose, const int32_t id)
+void PullOverModule::setDebugData()
 {
-  const auto color = status_.has_decided_path ? createMarkerColor(1.0, 1.0, 0.0, 0.999)   // yellow
-                                              : createMarkerColor(0.0, 1.0, 0.0, 0.999);  // green
-  Marker marker = createDefaultMarker(
-    "map", planner_data_->route_handler->getRouteHeader().stamp, "collision_polygons", id,
-    visualization_msgs::msg::Marker::LINE_STRIP, createMarkerScale(0.1, 0.0, 0.0), color);
+  debug_marker_.markers.clear();
 
-  auto p_left_front = calcOffsetPose(
-                        end_pose, planner_data_->parameters.base_link2front,
-                        planner_data_->parameters.vehicle_width / 2, 0)
-                        .position;
-  marker.points.push_back(createPoint(p_left_front.x, p_left_front.y, p_left_front.z));
+  using marker_utils::createPathMarkerArray;
+  using marker_utils::createPolygonMarkerArray;
+  using marker_utils::createPoseMarkerArray;
 
-  auto p_right_front = calcOffsetPose(
-                         end_pose, planner_data_->parameters.base_link2front,
-                         -planner_data_->parameters.vehicle_width / 2, 0)
-                         .position;
-  marker.points.push_back(createPoint(p_right_front.x, p_right_front.y, p_right_front.z));
-
-  auto p_right_back = calcOffsetPose(
-                        start_pose, -planner_data_->parameters.base_link2rear,
-                        -planner_data_->parameters.vehicle_width / 2, 0)
-                        .position;
-  marker.points.push_back(createPoint(p_right_back.x, p_right_back.y, p_right_back.z));
-
-  auto p_left_back = calcOffsetPose(
-                       start_pose, -planner_data_->parameters.base_link2rear,
-                       planner_data_->parameters.vehicle_width / 2, 0)
-                       .position;
-  marker.points.push_back(createPoint(p_left_back.x, p_left_back.y, p_left_back.z));
-  marker.points.push_back(createPoint(p_left_front.x, p_left_front.y, p_left_front.z));
-
-  return marker;
-}
-
-void PullOverModule::publishDebugData()
-{
-  auto header = planner_data_->route_handler->getRouteHeader();
-  // Publish the modified goal only when it's path is safe.
-  PoseStamped goal_pose_stamped;
-  goal_pose_stamped.header = header;
-  if (status_.is_safe) goal_pose_stamped.pose = modified_goal_pose_;
-  goal_pose_pub_->publish(goal_pose_stamped);
+  const auto add = [this](const MarkerArray & added) {
+    tier4_autoware_utils::appendMarkerArray(added, &debug_marker_);
+  };
 
   // Visualize pull over areas
   if (parameters_.enable_goal_research) {
-    const Pose refined_goal_pose = getRefinedGoal();
+    const Pose refined_goal_pose = calcRefinedGoal();
     const Pose start_pose =
       calcOffsetPose(refined_goal_pose, -parameters_.backward_goal_search_length, 0, 0);
     const Pose end_pose =
       calcOffsetPose(refined_goal_pose, parameters_.forward_goal_search_length, 0, 0);
-    MarkerArray marker_array;
-    marker_array.markers.push_back(createParkingAreaMarker(start_pose, end_pose, 0));
-
-    parking_area_pub_->publish(marker_array);
+    // marker_array.markers.push_back(createParkingAreaMarker(start_pose, end_pose, 0));
+    const auto header = planner_data_->route_handler->getRouteHeader();
+    const auto color = status_.has_decided_path ? createMarkerColor(1.0, 1.0, 0.0, 0.999)  // yellow
+                                                : createMarkerColor(0.0, 1.0, 0.0, 0.999);  // green
+    const auto p = planner_data_->parameters;
+    debug_marker_.markers.push_back(pull_over_utils::createPullOverAreaMarker(
+      start_pose, end_pose, 0, header, p.base_link2front, p.base_link2rear, p.vehicle_width,
+      color));
   }
 
-  // Only for arc paths. Initialize data not to publish them when using other path.
-  PoseStamped Cl, Cr, start_pose;
-  PoseArray path_pose_array;
-  Cl.header = header;
-  Cr.header = header;
-  start_pose.header = header;
-  path_pose_array.header = header;
-  if (isArcPath() && status_.is_safe) {
-    Cl = parallel_parking_planner_.getCl();
-    Cr = parallel_parking_planner_.getCr();
-    start_pose = parallel_parking_planner_.getStartPose();
-    path_pose_array = parallel_parking_planner_.getPathPoseArray();
-  } else if (status_.is_safe) {
-    path_pose_array = util::convertToGeometryPoseArray(status_.path);
+  // Visualize path and related pose
+  if (!status_.is_safe) {
+    return;
   }
-  Cl_pub_->publish(Cl);
-  Cr_pub_->publish(Cr);
-  start_pose_pub_->publish(start_pose);
-  path_pose_array_pub_->publish(path_pose_array);
+  if (isArcPath()) {
+    add(createPoseMarkerArray(parallel_parking_planner_.getCl(), "Cl", 0, 0.9, 0.3, 0.3));
+    add(createPoseMarkerArray(parallel_parking_planner_.getCr(), "Cr", 0, 0.3, 0.9, 0.3));
+    add(createPoseMarkerArray(
+      parallel_parking_planner_.getStartPose(), "pull_over_start_pose", 0, 0.3, 0.3, 0.9));
+    add(createPoseMarkerArray(
+      parallel_parking_planner_.getArcEndPose(), "pull_over_arc_end_pose", 0, 0.9, 0.9, 0.3));
+    add(createPathMarkerArray(
+      parallel_parking_planner_.getFullPath(), "full_path", 0, 0.0, 0.5, 0.9));
+  } else {
+    add(createPathMarkerArray(status_.path, "full_path", 0, 0.0, 0.5, 0.9));
+  }
 }
 
 void PullOverModule::printParkingPositionError() const
