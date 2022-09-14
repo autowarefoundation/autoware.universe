@@ -24,7 +24,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     -Wall
     -Wextra
     -Wpedantic
-    -Wuseless-cast
+    # -Wuseless-cast
     # -Wno-unused-parameter
     # -Wno-unused-variable
     # -Wno-narrowing
@@ -210,8 +210,8 @@ if(BUILD_TESTING)
     test/include/nonlinear_mpc_test_node.hpp
     test/include/nmpc_test_utils.hpp
     test/src/nonlinear_mpc_test_node.cpp
-    test/src/test_nmpc_node.cpp
-    test/src/test_google_osqp.cpp)
+    test/src/test_nmpc_node.cpp)
+  #test/src/test_google_osqp.cpp)
 
   ament_target_dependencies(${NMPC_TESTs} fake_test_node)
   autoware_set_compile_options(${NMPC_TESTs})
