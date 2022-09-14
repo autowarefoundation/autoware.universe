@@ -224,7 +224,7 @@ autoware_auto_planning_msgs::msg::PathWithLaneId resamplePath(
   }
 
   // Insert terminal point
-  if (input_path_len - resampling_arclength.back() < 1e-3) {
+  if (input_path_len - resampling_arclength.back() < motion_utils::overlap_threshold) {
     resampling_arclength.back() = input_path_len;
   } else {
     resampling_arclength.push_back(input_path_len);
@@ -243,9 +243,9 @@ autoware_auto_planning_msgs::msg::PathWithLaneId resamplePath(
             std::fabs(*distance_to_stop_point - resampling_arclength.at(i - 1));
           const double dist_to_following_point =
             std::fabs(resampling_arclength.at(i) - *distance_to_stop_point);
-          if (dist_to_prev_point < 1e-3) {
+          if (dist_to_prev_point < motion_utils::overlap_threshold) {
             resampling_arclength.at(i - 1) = *distance_to_stop_point;
-          } else if (dist_to_following_point < 1e-3) {
+          } else if (dist_to_following_point < motion_utils::overlap_threshold) {
             resampling_arclength.at(i) = *distance_to_stop_point;
           } else {
             resampling_arclength.insert(resampling_arclength.begin() + i, *distance_to_stop_point);
@@ -457,7 +457,7 @@ autoware_auto_planning_msgs::msg::Trajectory resampleTrajectory(
   }
 
   // Insert terminal point
-  if (input_trajectory_len - resampling_arclength.back() < 1e-3) {
+  if (input_trajectory_len - resampling_arclength.back() < motion_utils::overlap_threshold) {
     resampling_arclength.back() = input_trajectory_len;
   } else {
     resampling_arclength.push_back(input_trajectory_len);
@@ -476,9 +476,9 @@ autoware_auto_planning_msgs::msg::Trajectory resampleTrajectory(
             std::fabs(*distance_to_stop_point - resampling_arclength.at(i - 1));
           const double dist_to_following_point =
             std::fabs(resampling_arclength.at(i) - *distance_to_stop_point);
-          if (dist_to_prev_point < 1e-3) {
+          if (dist_to_prev_point < motion_utils::overlap_threshold) {
             resampling_arclength.at(i - 1) = *distance_to_stop_point;
-          } else if (dist_to_following_point < 1e-3) {
+          } else if (dist_to_following_point < motion_utils::overlap_threshold) {
             resampling_arclength.at(i) = *distance_to_stop_point;
           } else {
             resampling_arclength.insert(resampling_arclength.begin() + i, *distance_to_stop_point);
