@@ -77,6 +77,9 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   velocity_subscriber_ = create_subscription<Odometry>(
     "~/input/odometry", 1, std::bind(&BehaviorPathPlannerNode::onVelocity, this, _1),
     createSubscriptionOptions(this));
+  acceleration_subscriber_ = create_subscription<AccelWithCovarianceStamped>(
+    "~/input/accel", 1, std::bind(&BehaviorPathPlannerNode::onAcceleration, this, _1),
+    createSubscriptionOptions(this));
   perception_subscriber_ = create_subscription<PredictedObjects>(
     "~/input/perception", 1, std::bind(&BehaviorPathPlannerNode::onPerception, this, _1),
     createSubscriptionOptions(this));
@@ -528,6 +531,10 @@ bool BehaviorPathPlannerNode::isDataReady()
     return missing("self_odometry");
   }
 
+  if (!planner_data_->self_acceleration) {
+    return missing("self_acceleration");
+  }
+
   planner_data_->self_pose = self_pose_listener_.getCurrentPose();
   if (!planner_data_->self_pose) {
     return missing("self_pose");
@@ -698,6 +705,11 @@ void BehaviorPathPlannerNode::onVelocity(const Odometry::ConstSharedPtr msg)
   std::lock_guard<std::mutex> lock(mutex_pd_);
   planner_data_->self_odometry = msg;
 }
+void BehaviorPathPlannerNode::onAcceleration(const AccelWithCovarianceStamped::ConstSharedPtr msg)
+{
+  std::lock_guard<std::mutex> lock(mutex_pd_);
+  planner_data_->self_acceleration = msg;
+}
 void BehaviorPathPlannerNode::onPerception(const PredictedObjects::ConstSharedPtr msg)
 {
   std::lock_guard<std::mutex> lock(mutex_pd_);
@@ -779,20 +791,12 @@ PathWithLaneId BehaviorPathPlannerNode::modifyPathForSmoothGoalConnection(
   const PathWithLaneId & path) const
 {
   const auto goal = planner_data_->route_handler->getGoalPose();
-  const auto is_approved = planner_data_->approval.is_approved.data;
-  auto goal_lane_id = planner_data_->route_handler->getGoalLaneId();
+  const auto goal_lane_id = planner_data_->route_handler->getGoalLaneId();
 
   Pose refined_goal{};
   {
     lanelet::ConstLanelet goal_lanelet;
-    lanelet::ConstLanelet pull_over_lane;
-    geometry_msgs::msg::Pose pull_over_goal;
-    if (
-      is_approved && planner_data_->route_handler->getPullOverTarget(
-                       planner_data_->route_handler->getShoulderLanelets(), &pull_over_lane)) {
-      refined_goal = planner_data_->route_handler->getPullOverGoalPose();
-      goal_lane_id = pull_over_lane.id();
-    } else if (planner_data_->route_handler->getGoalLanelet(&goal_lanelet)) {
+    if (planner_data_->route_handler->getGoalLanelet(&goal_lanelet)) {
       refined_goal = util::refineGoal(goal, goal_lanelet);
     } else {
       refined_goal = goal;
