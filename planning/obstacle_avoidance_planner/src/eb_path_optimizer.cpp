@@ -90,7 +90,7 @@ Eigen::MatrixXd EBPathOptimizer::makeAMatrix()
 boost::optional<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>
 EBPathOptimizer::getEBTrajectory(
   const geometry_msgs::msg::Pose & ego_pose, const autoware_auto_planning_msgs::msg::Path & path,
-  const std::unique_ptr<Trajectories> & prev_trajs, const double current_ego_vel,
+  const std::shared_ptr<std::vector<TrajectoryPoint>> prev_traj, const double current_ego_vel,
   DebugData & debug_data)
 {
   stop_watch_.tic(__func__);
@@ -100,7 +100,7 @@ EBPathOptimizer::getEBTrajectory(
   // get candidate points for optimization
   // decide fix or non fix, might not required only for smoothing purpose
   const CandidatePoints candidate_points =
-    getCandidatePoints(ego_pose, path.points, prev_trajs, debug_data);
+    getCandidatePoints(ego_pose, path.points, prev_traj, debug_data);
   if (candidate_points.fixed_points.empty() && candidate_points.non_fixed_points.empty()) {
     RCLCPP_INFO_EXPRESSION(
       rclcpp::get_logger("EBPathOptimizer"), is_showing_debug_info_,
@@ -224,17 +224,17 @@ std::pair<std::vector<double>, int64_t> EBPathOptimizer::solveQP()
 std::vector<geometry_msgs::msg::Pose> EBPathOptimizer::getFixedPoints(
   const geometry_msgs::msg::Pose & ego_pose,
   [[maybe_unused]] const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
-  const std::unique_ptr<Trajectories> & prev_trajs)
+  const std::shared_ptr<std::vector<TrajectoryPoint>> prev_traj)
 {
   /* use of prev_traj_points(fine resolution) instead of prev_opt_traj(coarse resolution)
      stabilize trajectory's yaw*/
-  if (prev_trajs) {
-    if (prev_trajs->smoothed_trajectory.empty()) {
+  if (prev_traj) {
+    if (prev_traj->empty()) {
       std::vector<geometry_msgs::msg::Pose> empty_points;
       return empty_points;
     }
     const size_t begin_idx = motion_utils::findFirstNearestIndexWithSoftConstraints(
-      prev_trajs->smoothed_trajectory, ego_pose, traj_param_.ego_nearest_dist_threshold,
+      *prev_traj, ego_pose, traj_param_.ego_nearest_dist_threshold,
       traj_param_.ego_nearest_yaw_threshold);
     const int backward_fixing_idx = std::max(
       static_cast<int>(
@@ -251,10 +251,10 @@ std::vector<geometry_msgs::msg::Pose> EBPathOptimizer::getFixedPoints(
     const int forward_fixing_idx = std::min(
       static_cast<int>(
         begin_idx + forward_fixed_length / traj_param_.delta_arc_length_for_trajectory),
-      static_cast<int>(prev_trajs->smoothed_trajectory.size() - 1));
+      static_cast<int>(prev_traj->size() - 1));
     std::vector<geometry_msgs::msg::Pose> fixed_points;
     for (int i = backward_fixing_idx; i <= forward_fixing_idx; i++) {
-      fixed_points.push_back(prev_trajs->smoothed_trajectory.at(i).pose);
+      fixed_points.push_back(prev_traj->at(i).pose);
     }
     return fixed_points;
   } else {
@@ -266,10 +266,10 @@ std::vector<geometry_msgs::msg::Pose> EBPathOptimizer::getFixedPoints(
 EBPathOptimizer::CandidatePoints EBPathOptimizer::getCandidatePoints(
   const geometry_msgs::msg::Pose & ego_pose,
   const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
-  const std::unique_ptr<Trajectories> & prev_trajs, DebugData & debug_data)
+  const std::shared_ptr<std::vector<TrajectoryPoint>> prev_traj, DebugData & debug_data)
 {
   const std::vector<geometry_msgs::msg::Pose> fixed_points =
-    getFixedPoints(ego_pose, path_points, prev_trajs);
+    getFixedPoints(ego_pose, path_points, prev_traj);
   if (fixed_points.empty()) {
     CandidatePoints candidate_points = getDefaultCandidatePoints(path_points);
     return candidate_points;

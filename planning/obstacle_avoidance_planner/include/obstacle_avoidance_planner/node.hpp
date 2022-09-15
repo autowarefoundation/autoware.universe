@@ -19,6 +19,7 @@
 #include "obstacle_avoidance_planner/costmap_generator.hpp"
 #include "obstacle_avoidance_planner/eb_path_optimizer.hpp"
 #include "obstacle_avoidance_planner/mpt_optimizer.hpp"
+#include "obstacle_avoidance_planner/replan_checker.hpp"
 #include "opencv2/core.hpp"
 #include "rclcpp/clock.hpp"
 #include "rclcpp/rclcpp.hpp"
@@ -185,15 +186,11 @@ private:
   int vehicle_circle_num_for_calculation_;
   std::vector<double> vehicle_circle_radius_ratios_;
 
-  // params for replan
-  double max_path_shape_change_dist_for_replan_;
-  double max_ego_moving_dist_for_replan_;
-  double max_delta_time_sec_for_replan_;
-
   // core algorithm
   std::unique_ptr<CostmapGenerator> costmap_generator_ptr_;
   std::unique_ptr<EBPathOptimizer> eb_path_optimizer_ptr_;
   std::unique_ptr<MPTOptimizer> mpt_optimizer_ptr_;
+  std::shared_ptr<ReplanChecker> replan_checker_;
 
   // params
   TrajectoryParam traj_param_;
@@ -213,10 +210,8 @@ private:
   std::unique_ptr<PredictedObjects> objects_ptr_;
 
   // variables for previous information
-  std::unique_ptr<geometry_msgs::msg::Pose> prev_ego_pose_ptr_;
-  std::unique_ptr<Trajectories> prev_optimal_trajs_ptr_;
-  std::unique_ptr<std::vector<PathPoint>> prev_path_points_ptr_;
-  std::unique_ptr<rclcpp::Time> prev_replanned_time_ptr_;
+  std::shared_ptr<MPTTrajs> prev_mpt_trajs_ptr_;
+  std::shared_ptr<std::vector<TrajectoryPoint>> prev_eb_traj_ptr_;
 
   tier4_autoware_utils::SelfPoseListener self_pose_listener_{this};
 
@@ -258,17 +253,13 @@ private:
 
   std::vector<TrajectoryPoint> generateOptimizedTrajectory(const PlannerData & planner_data);
 
-  // functions for replan
-  bool checkReplan(const PlannerData & planner_data);
-  bool isPathShapeChanged(const PlannerData & planner_data);
-  bool isPathGoalChanged(const PlannerData & planner_data);
-  bool isEgoNearToPrevTrajectory(const geometry_msgs::msg::Pose & ego_pose);
-
   Trajectory generateTrajectory(const PlannerData & planner_data);
 
-  Trajectories optimizeTrajectory(const PlannerData & planner_data, const CVMaps & cv_maps);
+  std::vector<TrajectoryPoint> optimizeTrajectory(
+    const PlannerData & planner_data, const CVMaps & cv_maps);
 
-  Trajectories getPrevTrajs(const std::vector<PathPoint> & path_points) const;
+  std::vector<TrajectoryPoint> getPrevOptimizedTrajectory(
+    const std::vector<PathPoint> & path_points) const;
 
   void calcVelocity(
     const std::vector<PathPoint> & path_points, std::vector<TrajectoryPoint> & traj_points) const;
@@ -279,10 +270,6 @@ private:
 
   void publishDebugDataInOptimization(
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & traj_points);
-
-  Trajectories makePrevTrajectories(
-    const std::vector<PathPoint> & path_points, const Trajectories & trajs,
-    const PlannerData & planner_data);
 
   std::vector<TrajectoryPoint> generatePostProcessedTrajectory(
     const std::vector<PathPoint> & path_points,
