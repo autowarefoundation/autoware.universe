@@ -39,14 +39,21 @@ if(NOT EXISTS TRTEXEC_DEFAULT_BIN)
   if(NOT tensorrt_POPULATED)
     fetchcontent_populate(tensorrt)
   endif()
-  cuda_add_executable(${PROJECT_NAME}
+  set(TRTEXEC_SOURCES
     ${tensorrt_SOURCE_DIR}/samples/trtexec/trtexec.cpp
     ${tensorrt_SOURCE_DIR}/samples/common/sampleEngines.cpp
     ${tensorrt_SOURCE_DIR}/samples/common/sampleInference.cpp
     ${tensorrt_SOURCE_DIR}/samples/common/sampleOptions.cpp
     ${tensorrt_SOURCE_DIR}/samples/common/sampleReporting.cpp
-    ${tensorrt_SOURCE_DIR}/samples/common/sampleUtils.cpp
     ${tensorrt_SOURCE_DIR}/samples/common/logger.cpp
+  )
+  if(${TENSORRT_VERSION} VERSION_GREATER_EQUAL 8.4)
+    list(APPEND TRTEXEC_SOURCES
+      ${tensorrt_SOURCE_DIR}/samples/common/sampleUtils.cpp
+    )
+  endif()
+  cuda_add_executable(${PROJECT_NAME}
+    ${TRTEXEC_SOURCES}
   )
   target_link_libraries(${PROJECT_NAME}
     ${TENSORRT_LIBRARIES}
