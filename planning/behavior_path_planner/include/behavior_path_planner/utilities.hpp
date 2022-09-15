@@ -97,8 +97,6 @@ void getProjectedDistancePointFromPolygons(
   Pose & point_on_object);
 // data conversions
 
-Path convertToPathFromPathWithLaneId(const PathWithLaneId & path_with_lane_id);
-
 std::vector<Pose> convertToPoseArray(const PathWithLaneId & path);
 
 std::vector<Point> convertToGeometryPointArray(const PathWithLaneId & path);
@@ -196,10 +194,6 @@ Point lerpByLength(const std::vector<T> & point_array, const double length)
 
 bool lerpByTimeStamp(const PredictedPath & path, const double t, Pose * lerped_pt);
 
-bool lerpByDistance(
-  const behavior_path_planner::PullOutPath & path, const double & s, Pose * lerped_pt,
-  const lanelet::ConstLanelets & road_lanes);
-
 bool calcObjectPolygon(const PredictedObject & object, Polygon2d * object_polygon);
 
 PredictedPath resamplePredictedPath(
@@ -213,16 +207,43 @@ double getDistanceBetweenPredictedPathAndObject(
   const PredictedObject & object, const PredictedPath & path, const double start_time,
   const double end_time, const double resolution);
 
-double getDistanceBetweenPredictedPathAndObjectPolygon(
-  const PredictedObject & object, const PullOutPath & ego_path,
-  const tier4_autoware_utils::LinearRing2d & vehicle_footprint, double distance_resolution,
-  const lanelet::ConstLanelets & road_lanes);
+/**
+ * @brief Check collision between ego path footprints and objects.
+ * @return Has collision or not
+ */
+bool checkCollisionBetweenPathFootprintsAndObjects(
+  const tier4_autoware_utils::LinearRing2d & vehicle_footprint, const PathWithLaneId & ego_path,
+  const PredictedObjects & dynamic_objects, const double margin);
+
+/**
+ * @brief Check collision between ego footprints and objects.
+ * @return Has collision or not
+ */
+bool checkCollisionBetweenFootprintAndObjects(
+  const tier4_autoware_utils::LinearRing2d & vehicle_footprint, const Pose & ego_pose,
+  const PredictedObjects & dynamic_objects, const double margin);
+
+/**
+ * @brief calculate longitudinal distance from ego pose to object
+ * @return distance from ego pose to object
+ */
+double calcLongitudinalDistanceFromEgoToObject(
+  const Pose & ego_pose, double base_link2front, double base_link2rear,
+  const PredictedObject & dynamic_object);
+
+/**
+ * @brief calculate minimum longitudinal distance from ego pose to objects
+ * @return minimum distance from ego pose to objects
+ */
+double calcLongitudinalDistanceFromEgoToObjects(
+  const Pose & ego_pose, double base_link2front, double base_link2rear,
+  const PredictedObjects & dynamic_objects);
 
 /**
  * @brief Get index of the obstacles inside the lanelets with start and end length
  * @return Indices corresponding to the obstacle inside the lanelets
  */
-std::vector<size_t> filterObjectsByLanelets(
+std::vector<size_t> filterObjectIndicesByLanelets(
   const PredictedObjects & objects, const lanelet::ConstLanelets & lanelets,
   const double start_arc_length, const double end_arc_length);
 
@@ -230,10 +251,13 @@ std::vector<size_t> filterObjectsByLanelets(
  * @brief Get index of the obstacles inside the lanelets
  * @return Indices corresponding to the obstacle inside the lanelets
  */
-std::vector<size_t> filterObjectsByLanelets(
+std::vector<size_t> filterObjectIndicesByLanelets(
   const PredictedObjects & objects, const lanelet::ConstLanelets & target_lanelets);
 
-std::vector<size_t> filterObjectsByPath(
+PredictedObjects filterObjectsByLanelets(
+  const PredictedObjects & objects, const lanelet::ConstLanelets & target_lanelets);
+
+std::vector<size_t> filterObjectsIndicesByPath(
   const PredictedObjects & objects, const std::vector<size_t> & object_indices,
   const PathWithLaneId & ego_path, const double vehicle_width);
 
@@ -321,7 +345,7 @@ void shiftPose(Pose * pose, double shift_length);
 PathWithLaneId getCenterLinePath(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & lanelet_sequence,
   const Pose & pose, const double backward_path_length, const double forward_path_length,
-  const BehaviorPathPlannerParameters & parameter, double optional_length = 0.0);
+  const BehaviorPathPlannerParameters & parameter, const double optional_length = 0.0);
 
 PathWithLaneId setDecelerationVelocity(
   const RouteHandler & route_handler, const PathWithLaneId & input,
@@ -337,7 +361,7 @@ PathWithLaneId setDecelerationVelocity(
 bool checkLaneIsInIntersection(
   const RouteHandler & route_handler, const PathWithLaneId & ref,
   const lanelet::ConstLanelets & lanelet_sequence, const BehaviorPathPlannerParameters & parameters,
-  double & additional_length_to_add);
+  const int num_lane_change, double & additional_length_to_add);
 
 PathWithLaneId setDecelerationVelocity(
   const PathWithLaneId & input, const double target_velocity, const Pose target_pose,
