@@ -23,8 +23,8 @@
 #include <diagnostic_updater/diagnostic_updater.hpp>
 
 #include <climits>
-#include <string>
 #include <regex>
+#include <string>
 
 class VoltageMonitor : public rclcpp::Node
 {
