@@ -154,8 +154,13 @@
     <push-ros-namespace namespace="centerpoint"/>
     <include file="$(find-pkg-share lidar_centerpoint)/launch/lidar_centerpoint.launch.xml">
       <arg name="input/pointcloud" value="$(var input/pointcloud)"/>
-      <arg name="output/objects" value="objects"/>
+      <arg name="output/objects" value="objects_raw"/>
       <arg name="score_threshold" value="$(var score_threshold)"/>
+    </include>
+
+    <include file="$(find-pkg-share detection_class_adapter)/launch/detection_class_adapter.launch.xml">
+      <arg name="input/objects" value="objects_raw"/>
+      <arg name="output/objects" value="objects"/>
     </include>
   </group>
 
