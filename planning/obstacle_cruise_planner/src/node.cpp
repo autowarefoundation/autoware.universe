@@ -616,6 +616,8 @@ bool ObstacleCruisePlannerNode::isFrontCollideObstacle(
   const size_t ego_idx = findExtendedNearestIndex(
     traj, current_pose, nearest_dist_deviation_threshold_, nearest_yaw_deviation_threshold_);
 
+  if (ego_idx >= first_collision_idx) return false;
+
   const std::vector<TrajectoryPoint> traj_to_collision_points{
     traj.points.begin(), traj.points.begin() + first_collision_idx};
 
