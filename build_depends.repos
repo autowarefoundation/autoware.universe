@@ -16,7 +16,7 @@ repositories:
   universe/external/tier4_autoware_msgs:
     type: git
     url: https://github.com/tier4/tier4_autoware_msgs.git
-    version: tier4/universe
+    version: e736d128191f6d2586e237ed7766447f93598223
   universe/external/grid_map:
     type: git
     url: https://github.com/ANYbotics/grid_map.git
