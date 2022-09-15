@@ -34,6 +34,7 @@ if(NOT EXISTS TRTEXEC_DEFAULT_BIN)
   fetchcontent_declare(tensorrt
     GIT_REPOSITORY https://github.com/NVIDIA/TensorRT
     GIT_TAG ${TENSORRT_VERSION}
+    GIT_SUBMODULES ""
   )
   fetchcontent_getproperties(tensorrt)
   if(NOT tensorrt_POPULATED)
