@@ -745,16 +745,13 @@ boost::optional<Eigen::VectorXd> MPTOptimizer::executeOptimization(
       const size_t seg_idx = findNearestIndexWithSoftYawConstraints(
         points_utils::convertToPoints(prev_trajs->ref_points), ref_front_point,
         traj_param_.ego_nearest_dist_threshold, traj_param_.ego_nearest_yaw_threshold);
-      double offset = motion_utils::calcLongitudinalOffsetToSegment(
-        prev_trajs->ref_points, seg_idx, ref_points.front().p);
 
       u0(0) = prev_trajs->ref_points.at(seg_idx).optimized_kinematic_state(0);
       u0(1) = prev_trajs->ref_points.at(seg_idx).optimized_kinematic_state(1);
 
       // set steer angle
       for (size_t i = 0; i + 1 < N_ref; ++i) {
-        const size_t prev_target_idx =
-          std::min(front_idx + i, prev_trajs->ref_points.size() - 1);
+        const size_t prev_target_idx = std::min(seg_idx + i, prev_trajs->ref_points.size() - 1);
         u0(D_x + i) = prev_trajs->ref_points.at(prev_target_idx).optimized_input;
       }
     }
