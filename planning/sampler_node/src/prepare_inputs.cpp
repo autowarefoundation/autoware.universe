@@ -21,13 +21,14 @@
 #include "sampler_node/calculate_sampling_parameters.hpp"
 #include "sampler_node/utils/occupancy_grid_to_polygons.hpp"
 
+#include <eigen3/unsupported/Eigen/Splines>
+
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path.hpp>
 
 #include <boost/geometry/algorithms/correct.hpp>
 #include <boost/geometry/algorithms/detail/intersects/interface.hpp>
 #include <boost/geometry/geometry.hpp>
-#include <eigen3/unsupported/Eigen/Splines>
 
 #include <algorithm>
 #include <list>
@@ -112,10 +113,7 @@ frenet_planner::SamplingParameters prepareSamplingParameters(
     const auto target_s =
       path_spline.frenet(initial_configuration.pose).s + std::max(0.0, target_length - base_length);
     // Prevent a target past the end of the reference path
-    if (target_s < max_s)
-      sampling_parameters.target_longitudinal_positions.push_back(target_s);
-    else
-      break;
+    if (target_s < max_s) sampling_parameters.target_longitudinal_positions.push_back(target_s);
   }
   // Stopping case
   if (sampling_parameters.target_longitudinal_positions.empty()) {

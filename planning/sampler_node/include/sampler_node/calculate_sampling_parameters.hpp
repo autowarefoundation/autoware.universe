@@ -72,6 +72,23 @@ inline double durationBetweenVelocities(
   return std::abs((to_velocity - from_velocity) / acceleration);
 }
 
+void gridSamplingParameters(
+  frenet_planner::SamplingParameters & sampling_parameters, const double min_velocity,
+  const double max_velocity, const double min_duration, const double max_duration,
+  const int velocity_samples, const int duration_samples)
+{
+  sampling_parameters.target_longitudinal_velocities.reserve(velocity_samples);
+  sampling_parameters.target_durations.reserve(duration_samples);
+  const auto vel_step = (max_velocity - min_velocity) / velocity_samples;
+  const auto dur_step = (max_duration - min_duration) / duration_samples;
+  for (auto vel = min_velocity; vel < max_velocity; vel += vel_step)
+    sampling_parameters.target_longitudinal_velocities.push_back(vel);
+  sampling_parameters.target_longitudinal_velocities.push_back(max_velocity);
+  for (auto duration = min_duration; duration < max_duration; duration += dur_step)
+    sampling_parameters.target_durations.push_back(duration);
+  sampling_parameters.target_durations.push_back(max_duration);
+}
+
 void calculateLongitudinalTargets(
   frenet_planner::SamplingParameters & sampling_parameters,
   const sampler_common::Configuration & initial_configuration,
@@ -100,17 +117,19 @@ void calculateLongitudinalTargets(
     initial_configuration.velocity * initial_configuration.velocity +
     2 * params.sampling.confortable_acceleration * distance);
   target_vel = std::min(target_vel, confortable_target_vel);
+  /*
   const auto duration = std::abs(initial_configuration.velocity - target_vel) /
                         params.sampling.confortable_acceleration;
-  /*
   const auto distance = target_s - start_s;
   const auto duration = (2 * distance) / (initial_configuration.velocity + target_vel);
-  */
-  std::cout << "target_vel = " << target_vel << " @ s=" << target_s << "\n\tdist = " << distance
-            << " | duration = " << duration << std::endl;
   sampling_parameters.target_longitudinal_velocities = {target_vel};
   sampling_parameters.target_longitudinal_positions.push_back(target_s);
   sampling_parameters.target_durations.push_back(duration);
+  */
+  const auto duration = (2 * distance) / (velocity_extremum.max - initial_configuration.velocity);
+  gridSamplingParameters(
+    sampling_parameters, velocity_extremum.min, velocity_extremum.max, duration, 4 * duration, 5,
+    5);
 }
 
 #endif  // SAMPLER_NODE__CALCULATE_SAMPLING_PARAMETERS_HPP_

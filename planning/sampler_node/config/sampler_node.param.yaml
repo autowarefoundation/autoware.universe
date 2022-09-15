@@ -4,13 +4,15 @@
     preprocessing:
       force_zero_initial_deviation: True  # if true, initial planning starts from the reference path
       force_zero_initial_heading: True # if true, initial planning starts with a heading aligned with the reference path
-      smooth_reference_trajectory: False # if true, the reference trajectory is smoothed before being used for planning
+      smooth_reference_trajectory: True # if true, the reference trajectory is smoothed before being used for planning
     postprocessing:
       desired_traj_behind_length: 5.0 # [m] desired trajectory length behind the current ego position
     constraints:
       hard:
         max_curvature: 0.2
         min_curvature: -0.2
+        max_acceleration: 2.0
+        min_acceleration: -2.0
       soft:
         lateral_deviation_weight: 0.1
         longitudinal_deviation_weight: 1.0
@@ -20,12 +22,12 @@
     sampling:
       enable_frenet: True
       enable_bezier: True
-      resolution: 0.1
+      resolution: 0.5
       minimum_committed_length: 5.0
-      reuse_max_length_max: 10.0
-      reuse_samples: 0
+      reuse_max_length_max: 5.0
+      reuse_samples: 1
       reuse_max_deviation: 1.0
-      target_lengths: [20.0]
+      target_lengths: [20.0, 40.0, 60.0]
       frenet:
         target_lateral_positions: [0.0]
         target_lateral_velocities: [0.0]

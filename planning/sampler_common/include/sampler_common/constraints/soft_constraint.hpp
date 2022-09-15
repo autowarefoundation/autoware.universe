@@ -30,6 +30,9 @@ void calculateLengthCost(Path & path, const Constraints & constraints);
 /// @brief calculate the overall cost of the given path
 void calculateCost(
   Path & path, const Constraints & constraints, const transform::Spline2D & reference);
+/// @brief calculate the overall cost of the given trajectory
+void calculateCost(
+  Trajectory & trajectory, const Constraints & constraints, const transform::Spline2D & reference);
 }  // namespace sampler_common::constraints
 
 #endif  // SAMPLER_COMMON__CONSTRAINTS__SOFT_CONSTRAINT_HPP_

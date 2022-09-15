@@ -103,12 +103,31 @@ NumberOfViolations checkHardConstraints(Path & path, const Constraints & constra
   return number_of_violations;
 }
 
+void checkVelocityConstraints(Trajectory & traj, const Constraints & constraints)
+{
+  for (const auto vel : traj.longitudinal_velocities) {
+    if (/*vel > constraints.hard.max_velocity ||*/ vel < 0) {
+      std::cout << "Negative velocity = " << vel << std::endl;
+      traj.valid = false;
+      return;
+    }
+  }
+  if (!satisfyMinMax(
+        traj.longitudinal_accelerations, constraints.hard.min_acceleration,
+        constraints.hard.max_acceleration)) {
+    std::cout << "acceleration out of min/max ";
+    for (const auto acc : traj.longitudinal_accelerations) std::cout << acc << " ";
+    std::cout << std::endl;
+    traj.valid = false;
+    return;
+  }
+}
+
 NumberOfViolations checkHardConstraints(Trajectory & traj, const Constraints & constraints)
 {
   Path & path = traj;
   auto number_of_violations = checkHardConstraints(path, constraints);
-  for (const auto & vel : traj.longitudinal_velocities)
-    if (vel < 0) path.valid = false;
+  checkVelocityConstraints(traj, constraints);
   return number_of_violations;
 }
 

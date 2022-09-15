@@ -89,7 +89,7 @@ TrajectorySamplerNode::TrajectorySamplerNode(const rclcpp::NodeOptions & node_op
   acc_sub_ = create_subscription<geometry_msgs::msg::AccelWithCovarianceStamped>(
     "~/input/acceleration", rclcpp::QoS{1},
     [&](geometry_msgs::msg::AccelWithCovarianceStamped::ConstSharedPtr msg) {
-      current_velocity_ = msg->accel.accel.linear.x;
+      current_acceleration_ = msg->accel.accel.linear.x;
     });
 
   in_objects_ptr_ = std::make_unique<autoware_auto_perception_msgs::msg::PredictedObjects>();
@@ -99,6 +99,10 @@ TrajectorySamplerNode::TrajectorySamplerNode(const rclcpp::NodeOptions & node_op
     declare_parameter<double>("constraints.hard.max_curvature");
   params_.constraints.hard.min_curvature =
     declare_parameter<double>("constraints.hard.min_curvature");
+  params_.constraints.hard.max_acceleration =
+    declare_parameter<double>("constraints.hard.max_acceleration");
+  params_.constraints.hard.min_acceleration =
+    declare_parameter<double>("constraints.hard.min_acceleration");
   params_.constraints.soft.lateral_deviation_weight =
     declare_parameter<double>("constraints.soft.lateral_deviation_weight");
   params_.constraints.soft.longitudinal_deviation_weight =
@@ -170,6 +174,10 @@ rcl_interfaces::msg::SetParametersResult TrajectorySamplerNode::onParameter(
       params_.constraints.hard.max_curvature = parameter.as_double();
     } else if (parameter.get_name() == "constraints.hard.min_curvature") {
       params_.constraints.hard.min_curvature = parameter.as_double();
+    } else if (parameter.get_name() == "constraints.hard.max_acceleration") {
+      params_.constraints.hard.max_acceleration = parameter.as_double();
+    } else if (parameter.get_name() == "constraints.hard.min_acceleration") {
+      params_.constraints.hard.min_acceleration = parameter.as_double();
     } else if (parameter.get_name() == "constraints.soft.lateral_deviation_weight") {
       params_.constraints.soft.lateral_deviation_weight = parameter.as_double();
     } else if (parameter.get_name() == "constraints.soft.longitudinal_deviation_weight") {

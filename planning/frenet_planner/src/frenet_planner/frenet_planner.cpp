@@ -35,6 +35,7 @@ std::vector<Trajectory> generateTrajectories(
   for (auto & candidate : candidates) {
     calculateCartesian(reference_spline, candidate);
   }
+  std::printf("[FrenetPlanner] Generated %lu trajectories\n", candidates.size());
   return candidates;
 }
 

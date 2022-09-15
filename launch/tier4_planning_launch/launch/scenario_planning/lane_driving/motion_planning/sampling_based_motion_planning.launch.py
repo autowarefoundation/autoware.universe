@@ -111,6 +111,8 @@ def launch_setup(context, *args, **kwargs):
             ("~/input/vector_map", LaunchConfiguration("input_map_topic")),
             ("~/input/route", LaunchConfiguration("input_route_topic")),
             ("~/input/fallback", "obstacle_avoidance_planner/trajectory"),
+            ("~/input/velocity", "/localization/kinematic_state"),
+            ("~/input/acceleration", "/localization/acceleration"),
         ],
         parameters=[
             common_param,
