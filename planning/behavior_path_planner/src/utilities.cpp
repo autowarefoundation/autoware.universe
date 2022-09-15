@@ -26,6 +26,29 @@
 #include <string>
 #include <vector>
 
+namespace tier4_autoware_utils
+{
+template <class T>
+double calcLateralOffset(
+  const T & points, const geometry_msgs::msg::Point & p_target, const size_t seg_idx)
+{
+  validateNonEmpty(points);
+
+  const auto p_front = getPoint(points.at(seg_idx));
+  const auto p_back = getPoint(points.at(seg_idx + 1));
+
+  const Eigen::Vector3d segment_vec{p_back.x - p_front.x, p_back.y - p_front.y, 0.0};
+  const Eigen::Vector3d target_vec{p_target.x - p_front.x, p_target.y - p_front.y, 0.0};
+
+  if (segment_vec.norm() == 0.0) {
+    throw std::runtime_error("Same points are given.");
+  }
+
+  const Eigen::Vector3d cross_vec = segment_vec.cross(target_vec);
+  return cross_vec(2) / segment_vec.norm();
+}
+}  // namespace tier4_autoware_utils
+
 namespace drivable_area_utils
 {
 double quantize(const double val, const double resolution)
@@ -231,27 +254,43 @@ double l2Norm(const Vector3 vector)
 }
 
 FrenetCoordinate3d convertToFrenetCoordinate3d(
-  const std::vector<Point> & linestring, const Point & search_point_geom)
+  const std::vector<Pose> & linestring, const Pose & search_point_geom)
 {
   FrenetCoordinate3d frenet_coordinate;
 
-  const size_t nearest_segment_idx =
-    tier4_autoware_utils::findNearestSegmentIndex(linestring, search_point_geom);
+  const size_t nearest_segment_idx = [&]() {
+    const auto opt_nearest =
+      tier4_autoware_utils::findNearestSegmentIndex(linestring, search_point_geom, 3.0, 1.57);
+    if (opt_nearest) {
+      return opt_nearest.get();
+    }
+    return tier4_autoware_utils::findNearestSegmentIndex(linestring, search_point_geom.position);
+  }();
   const double longitudinal_length = tier4_autoware_utils::calcLongitudinalOffsetToSegment(
-    linestring, nearest_segment_idx, search_point_geom);
+    linestring, nearest_segment_idx, search_point_geom.position);
   frenet_coordinate.length =
     tier4_autoware_utils::calcSignedArcLength(linestring, 0, nearest_segment_idx) +
     longitudinal_length;
-  frenet_coordinate.distance =
-    tier4_autoware_utils::calcLateralOffset(linestring, search_point_geom);
+  frenet_coordinate.distance = tier4_autoware_utils::calcLateralOffset(
+    linestring, search_point_geom.position, nearest_segment_idx);
 
   return frenet_coordinate;
 }
 
-FrenetCoordinate3d convertToFrenetCoordinate3d(
-  const PathWithLaneId & path, const Point & search_point_geom)
+std::vector<Pose> convertToGeometryPoseVector(const PathWithLaneId & path)
 {
-  const auto linestring = convertToPointArray(path);
+  std::vector<Pose> converted_path;
+  converted_path.reserve(path.points.size());
+  for (const auto & point_with_id : path.points) {
+    converted_path.push_back(point_with_id.point.pose);
+  }
+  return converted_path;
+}
+
+FrenetCoordinate3d convertToFrenetCoordinate3d(
+  const PathWithLaneId & path, const Pose & search_point_geom)
+{
+  const auto linestring = convertToGeometryPoseVector(path);
   return convertToFrenetCoordinate3d(linestring, search_point_geom);
 }
 
@@ -299,9 +338,10 @@ PredictedPath convertToPredictedPath(
     return predicted_path;
   }
 
+  const auto & geometry_pose_vec = convertToGeometryPoseVector(path);
   const auto & geometry_points = convertToGeometryPointArray(path);
   FrenetCoordinate3d vehicle_pose_frenet =
-    convertToFrenetCoordinate3d(geometry_points, vehicle_pose.position);
+    convertToFrenetCoordinate3d(geometry_pose_vec, vehicle_pose);
   auto clock{rclcpp::Clock{RCL_ROS_TIME}};
   rclcpp::Time start_time = clock.now();
   double vehicle_speed = std::abs(vehicle_twist.linear.x);

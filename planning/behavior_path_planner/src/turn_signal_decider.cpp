@@ -56,7 +56,7 @@ std::pair<TurnIndicatorsCommand, double> TurnSignalDecider::getIntersectionTurnS
   }
 
   // Get frenet coordinate of current_pose on path
-  const auto vehicle_pose_frenet = util::convertToFrenetCoordinate3d(path, current_pose.position);
+  const auto vehicle_pose_frenet = util::convertToFrenetCoordinate3d(path, current_pose);
 
   // Get nearest intersection and decide turn signal
   double accumulated_distance = 0;

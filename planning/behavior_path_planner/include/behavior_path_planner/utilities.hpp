@@ -146,6 +146,8 @@ Path convertToPathFromPathWithLaneId(const PathWithLaneId & path_with_lane_id);
 
 std::vector<Point> convertToPointArray(const PathWithLaneId & path);
 
+std::vector<Pose> convertToGeometryPoseVector(const PathWithLaneId & path);
+
 std::vector<Point> convertToGeometryPointArray(const PathWithLaneId & path);
 
 PoseArray convertToGeometryPoseArray(const PathWithLaneId & path);
@@ -155,10 +157,10 @@ PredictedPath convertToPredictedPath(
   const double duration, const double resolution, const double acceleration);
 
 FrenetCoordinate3d convertToFrenetCoordinate3d(
-  const std::vector<Point> & linestring, const Point & search_point_geom);
+  const std::vector<Pose> & linestring, const Pose & search_point_geom);
 
 FrenetCoordinate3d convertToFrenetCoordinate3d(
-  const PathWithLaneId & path, const Point & search_point_geom);
+  const PathWithLaneId & path, const Pose & search_point_geom);
 
 std::vector<uint64_t> getIds(const lanelet::ConstLanelets & lanelets);
 
