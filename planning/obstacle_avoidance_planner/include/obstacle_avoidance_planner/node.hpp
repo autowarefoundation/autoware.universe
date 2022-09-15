@@ -154,14 +154,6 @@ double lerpPoseZ(
 class ObstacleAvoidancePlanner : public rclcpp::Node
 {
 public:
-  struct PlannerData
-  {
-    Path path;
-    geometry_msgs::msg::Pose ego_pose;
-    double ego_vel;
-    std::vector<PredictedObject> objects;
-  };
-
   explicit ObstacleAvoidancePlanner(const rclcpp::NodeOptions & node_options);
 
 private:
