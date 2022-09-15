@@ -37,7 +37,7 @@ tier4_planning_msgs::msg::StopReasonArray makeStopReasonArray(
   // create stop factor
   tier4_planning_msgs::msg::StopFactor stop_factor;
   stop_factor.stop_pose = stop_pose;
-  geometry_msgs::msg::Point stop_factor_point = stop_obstacle.collision_points.front().point;
+  geometry_msgs::msg::Point stop_factor_point = stop_obstacle.collision_point;
   stop_factor_point.z = stop_pose.position.z;
   stop_factor.stop_factor_points.emplace_back(stop_factor_point);
 
