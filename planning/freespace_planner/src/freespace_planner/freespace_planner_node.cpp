@@ -193,14 +193,7 @@ Trajectory createStopTrajectory(const PoseStamped & current_pose)
 
 Trajectory createStopTrajectory(const Trajectory & trajectory)
 {
-  Trajectory stop_trajectory;
-  stop_trajectory.header = trajectory.header;
-  stop_trajectory.header.stamp = rclcpp::Clock().now();
-
-  stop_trajectory.points.reserve(trajectory.points.size());
-  for (size_t i = 0; i < trajectory.points.size(); ++i) {
-    stop_trajectory.points.push_back(trajectory.points.at(i));
-  }
+  Trajectory stop_trajectory = trajectory;
   for (size_t i = 0; i < trajectory.points.size(); ++i) {
     stop_trajectory.points.at(i).longitudinal_velocity_mps = 0.0;
   }
