@@ -620,7 +620,7 @@ bool NetMonitor::getReassemblesFailed(uint64_t & reassembles_failed)
   std::vector<std::string> value_list;
   boost::split(value_list, line, boost::is_space());
 
-  if (static_cast<std::size_t>(reassembles_failed_column_index_) >= value_list.size()) {
+  if (reassembles_failed_column_index_ >= value_list.size()) {
     RCLCPP_WARN(
       get_logger(),
       "There are not enough columns for reassembles failed column index. : columns=%d index=%d",
