@@ -68,12 +68,12 @@ TEST_F(RayGroundFilterComponentTestSuite, TestCase1)
   const auto pcd_path = share_dir + "/data/test.pcd";
   pcl::PointCloud<pcl::PointXYZ> cloud;
   pcl::io::loadPCDFile<pcl::PointXYZ>(pcd_path, cloud);
-  
+
   sensor_msgs::msg::PointCloud2::SharedPtr origin_input_msg_ptr(new sensor_msgs::msg::PointCloud2);
   pcl::toROSMsg(cloud, *origin_input_msg_ptr);
   origin_input_msg_ptr->header.frame_id = "velodyne_top";
 
-  //input cloud frame MUST be base_link
+  // input cloud frame MUST be base_link
   sensor_msgs::msg::PointCloud2::SharedPtr input_msg_ptr(new sensor_msgs::msg::PointCloud2);
 
   geometry_msgs::msg::TransformStamped t;
@@ -90,7 +90,7 @@ TEST_F(RayGroundFilterComponentTestSuite, TestCase1)
   t.transform.rotation.z = q.z();
   t.transform.rotation.w = q.w();
 
-  tf2::doTransform(*origin_input_msg_ptr, *input_msg_ptr,t);
+  tf2::doTransform(*origin_input_msg_ptr, *input_msg_ptr, t);
 
   rclcpp::NodeOptions node_options;
   std::vector<rclcpp::Parameter> parameters;
@@ -125,4 +125,3 @@ TEST_F(RayGroundFilterComponentTestSuite, TestCase1)
             << ",percentage:" << percent << std::endl;
   EXPECT_GE(percent, 0.9);
 }
-

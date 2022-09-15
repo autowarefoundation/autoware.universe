@@ -61,7 +61,8 @@ protected:
     scan_ground_filter_ = std::make_shared<ground_segmentation::ScanGroundFilterComponent>(options);
 
     // read pcd to pointcloud
-    sensor_msgs::msg::PointCloud2::SharedPtr origin_input_msg_ptr = std::make_shared<sensor_msgs::msg::PointCloud2>();
+    sensor_msgs::msg::PointCloud2::SharedPtr origin_input_msg_ptr =
+      std::make_shared<sensor_msgs::msg::PointCloud2>();
     const auto share_dir = ament_index_cpp::get_package_share_directory("ground_segmentation");
     const auto pcd_path = share_dir + "/data/test.pcd";
     pcl::PointCloud<pcl::PointXYZ> cloud;
@@ -69,7 +70,7 @@ protected:
     pcl::toROSMsg(cloud, *origin_input_msg_ptr);
     origin_input_msg_ptr->header.frame_id = "velodyne_top";
 
-    //input cloud frame MUST be base_link
+    // input cloud frame MUST be base_link
     input_msg_ptr_ = std::make_shared<sensor_msgs::msg::PointCloud2>();
     geometry_msgs::msg::TransformStamped t;
     t.header.frame_id = "base_link";
@@ -84,7 +85,7 @@ protected:
     t.transform.rotation.z = q.z();
     t.transform.rotation.w = q.w();
 
-    tf2::doTransform(*origin_input_msg_ptr, *input_msg_ptr_,t);
+    tf2::doTransform(*origin_input_msg_ptr, *input_msg_ptr_, t);
   }
 
   ScanGroundFilterTest() {}
@@ -139,5 +140,3 @@ TEST_F(ScanGroundFilterTest, TestCase1)
             << ",percentage:" << percent << std::endl;
   EXPECT_GE(percent, 0.9);
 }
-
-
