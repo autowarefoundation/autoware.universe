@@ -106,7 +106,8 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
     "in_twist_with_covariance", 1, std::bind(&EKFLocalizer::callbackTwistWithCovariance, this, _1));
   service_trigger_node_ = create_service<tier4_localization_msgs::srv::TriggerNode>(
     "trigger_node_srv",
-    std::bind(&EKFLocalizer::serviceTriggerNode, this, std::placeholders::_1, std::placeholders::_2),
+    std::bind(
+      &EKFLocalizer::serviceTriggerNode, this, std::placeholders::_1, std::placeholders::_2),
     rclcpp::ServicesQoS().get_rmw_qos_profile());
 
   dim_x_ex_ = dim_x_ * extend_state_step_;

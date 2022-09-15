@@ -16,9 +16,9 @@
 
 #include "copy_vector_to_array.hpp"
 #include "gnss_module.hpp"
+#include "localization_trigger_module.hpp"
 #include "ndt_module.hpp"
 #include "stop_check_module.hpp"
-#include "localization_trigger_module.hpp"
 
 #include <memory>
 #include <vector>

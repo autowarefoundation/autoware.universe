@@ -11,10 +11,12 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.S
-#include <memory>
 #include "localization_trigger_module.hpp"
 
-LocalizationTriggerModule::LocalizationTriggerModule(rclcpp::Node * node) : logger_(node->get_logger())
+#include <memory>
+
+LocalizationTriggerModule::LocalizationTriggerModule(rclcpp::Node * node)
+: logger_(node->get_logger())
 {
   client_ekf_trigger_ = node->create_client<RequestTriggerNode>("ekf_trigger_node");
   client_ndt_trigger_ = node->create_client<RequestTriggerNode>("ndt_trigger_node");

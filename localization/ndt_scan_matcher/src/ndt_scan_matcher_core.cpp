@@ -275,7 +275,8 @@ NDTScanMatcher::NDTScanMatcher()
     rclcpp::ServicesQoS().get_rmw_qos_profile(), main_callback_group);
   service_trigger_node_ = this->create_service<tier4_localization_msgs::srv::TriggerNode>(
     "trigger_node_srv",
-    std::bind(&NDTScanMatcher::serviceTriggerNode, this, std::placeholders::_1, std::placeholders::_2),
+    std::bind(
+      &NDTScanMatcher::serviceTriggerNode, this, std::placeholders::_1, std::placeholders::_2),
     rclcpp::ServicesQoS().get_rmw_qos_profile(), main_callback_group);
 
   diagnostic_thread_ = std::thread(&NDTScanMatcher::timerDiagnostic, this);
