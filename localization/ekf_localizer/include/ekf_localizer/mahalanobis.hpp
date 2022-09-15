@@ -12,18 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 #ifndef EKF_LOCALIZER__MAHALANOBIS_HPP_
 #define EKF_LOCALIZER__MAHALANOBIS_HPP_
 
 #include <Eigen/Core>
 #include <Eigen/Dense>
 
-
 double squaredMahalanobis(
-  const Eigen::VectorXd & x,
-  const Eigen::VectorXd & y,
-  const Eigen::MatrixXd & C);
+  const Eigen::VectorXd & x, const Eigen::VectorXd & y, const Eigen::MatrixXd & C);
 
 bool mahalanobisGate(
   const double & dist_max, const Eigen::MatrixXd & x, const Eigen::MatrixXd & obj_x,

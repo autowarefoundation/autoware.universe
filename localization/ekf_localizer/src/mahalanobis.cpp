@@ -12,14 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 #include "ekf_localizer/mahalanobis.hpp"
 
-
 double squaredMahalanobis(
-  const Eigen::VectorXd & x,
-  const Eigen::VectorXd & y,
-  const Eigen::MatrixXd & C)
+  const Eigen::VectorXd & x, const Eigen::VectorXd & y, const Eigen::MatrixXd & C)
 {
   const Eigen::VectorXd d = x - y;
   return d.dot(C.inverse() * d);

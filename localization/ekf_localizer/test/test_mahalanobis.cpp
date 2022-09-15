@@ -12,13 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <gtest/gtest.h>
-
 #include "ekf_localizer/mahalanobis.hpp"
 
+#include <gtest/gtest.h>
 
 constexpr double tolerance = 1e-8;
-
 
 TEST(MahalanobisGate, SquaredMahalanobis)
 {
@@ -26,9 +24,7 @@ TEST(MahalanobisGate, SquaredMahalanobis)
     Eigen::Vector2d x(0, 1);
     Eigen::Vector2d y(3, 2);
     Eigen::Matrix2d C;
-    C <<
-      10, 0,
-      0, 10;
+    C << 10, 0, 0, 10;
 
     EXPECT_NEAR(squaredMahalanobis(x, y, C), 1.0, tolerance);
   }
@@ -37,9 +33,7 @@ TEST(MahalanobisGate, SquaredMahalanobis)
     Eigen::Vector2d x(4, 1);
     Eigen::Vector2d y(1, 5);
     Eigen::Matrix2d C;
-    C <<
-      5, 0,
-      0, 5;
+    C << 5, 0, 0, 5;
 
     EXPECT_NEAR(squaredMahalanobis(x, y, C), 5.0, tolerance);
   }
@@ -50,9 +44,7 @@ TEST(MahalanobisGate, MahalanobisGate)
   Eigen::Vector2d x(0, 1);
   Eigen::Vector2d y(3, 2);
   Eigen::Matrix2d C;
-  C <<
-    10, 0,
-    0, 10;
+  C << 10, 0, 0, 10;
 
   EXPECT_FALSE(mahalanobisGate(0.99, x, y, C));
   EXPECT_FALSE(mahalanobisGate(1.00, x, y, C));
