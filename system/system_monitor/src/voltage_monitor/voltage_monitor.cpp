@@ -63,12 +63,12 @@ VoltageMonitor::VoltageMonitor(const rclcpp::NodeOptions & options)
   gethostname(hostname_, sizeof(hostname_));
   auto callback = &VoltageMonitor::checkBatteryStatus;
   if (sensors_exists) {
-    try{
+    try {
       std::regex re(R"((\d+).(\d+))");
       voltage_regex_ = re;
       callback = &VoltageMonitor::checkVoltage;
-    } catch (std::regex_error& e) {
-      //never comes here.
+    } catch (std::regex_error & e) {
+      // never comes here.
       RCLCPP_WARN(get_logger(), "std::regex_error %d", e.code());
       return;
     }
