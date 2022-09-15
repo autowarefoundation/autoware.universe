@@ -14,10 +14,9 @@
 
 #include "ekf_localizer/numeric.hpp"
 
-#include <gtest/gtest.h>
-
 #include <Eigen/Core>
 
+#include <gtest/gtest.h>
 
 TEST(Numeric, HasNan)
 {
