@@ -32,6 +32,7 @@
 #include <tier4_debug_msgs/msg/float32_stamped.hpp>
 #include <tier4_debug_msgs/msg/int32_stamped.hpp>
 #include <tier4_localization_msgs/srv/pose_with_covariance_stamped.hpp>
+#include <tier4_localization_msgs/srv/trigger_node.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <fmt/format.h>
@@ -110,6 +111,9 @@ private:
   void serviceNDTAlign(
     const tier4_localization_msgs::srv::PoseWithCovarianceStamped::Request::SharedPtr req,
     tier4_localization_msgs::srv::PoseWithCovarianceStamped::Response::SharedPtr res);
+  void serviceTriggerNode(
+    const tier4_localization_msgs::srv::TriggerNode::Request::SharedPtr req,
+    tier4_localization_msgs::srv::TriggerNode::Response::SharedPtr res);
 
   void callbackMapPoints(sensor_msgs::msg::PointCloud2::ConstSharedPtr pointcloud2_msg_ptr);
   void callbackSensorPoints(sensor_msgs::msg::PointCloud2::ConstSharedPtr pointcloud2_msg_ptr);
@@ -171,6 +175,7 @@ private:
   rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr diagnostics_pub_;
 
   rclcpp::Service<tier4_localization_msgs::srv::PoseWithCovarianceStamped>::SharedPtr service_;
+  rclcpp::Service<tier4_localization_msgs::srv::TriggerNode>::SharedPtr service_trigger_node_;
 
   tf2_ros::Buffer tf2_buffer_;
   tf2_ros::TransformListener tf2_listener_;
@@ -210,6 +215,8 @@ private:
   const float regularization_scale_factor_;
   std::deque<geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr>
     regularization_pose_msg_ptr_array_;
+
+  bool is_activated_;
 };
 
 #endif  // NDT_SCAN_MATCHER__NDT_SCAN_MATCHER_CORE_HPP_

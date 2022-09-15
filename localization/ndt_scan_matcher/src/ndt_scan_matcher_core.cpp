@@ -114,7 +114,8 @@ NDTScanMatcher::NDTScanMatcher()
   inversion_vector_threshold_(-0.9),
   oscillation_threshold_(10),
   regularization_enabled_(declare_parameter("regularization_enabled", false)),
-  regularization_scale_factor_(declare_parameter("regularization_scale_factor", 0.01))
+  regularization_scale_factor_(declare_parameter("regularization_scale_factor", 0.01)),
+  is_activated_(false)
 {
   key_value_stdmap_["state"] = "Initializing";
 
@@ -271,6 +272,10 @@ NDTScanMatcher::NDTScanMatcher()
   service_ = this->create_service<tier4_localization_msgs::srv::PoseWithCovarianceStamped>(
     "ndt_align_srv",
     std::bind(&NDTScanMatcher::serviceNDTAlign, this, std::placeholders::_1, std::placeholders::_2),
+    rclcpp::ServicesQoS().get_rmw_qos_profile(), main_callback_group);
+  service_trigger_node_ = this->create_service<tier4_localization_msgs::srv::TriggerNode>(
+    "trigger_node_srv",
+    std::bind(&NDTScanMatcher::serviceTriggerNode, this, std::placeholders::_1, std::placeholders::_2),
     rclcpp::ServicesQoS().get_rmw_qos_profile(), main_callback_group);
 
   diagnostic_thread_ = std::thread(&NDTScanMatcher::timerDiagnostic, this);
@@ -859,4 +864,18 @@ std::optional<Eigen::Matrix4f> NDTScanMatcher::interpolateRegularizationPose(
   Eigen::Affine3d regularization_pose_affine;
   tf2::fromMsg(regularization_pose_msg.pose, regularization_pose_affine);
   return regularization_pose_affine.matrix().cast<float>();
+}
+
+void NDTScanMatcher::serviceTriggerNode(
+  const tier4_localization_msgs::srv::TriggerNode::Request::SharedPtr req,
+  tier4_localization_msgs::srv::TriggerNode::Response::SharedPtr res)
+{
+  if (req->activate) {
+    initial_pose_msg_ptr_array_.clear();
+    is_activated_ = true;
+  } else {
+    is_activated_ = false;
+  }
+  res->success = true;
+  return;
 }

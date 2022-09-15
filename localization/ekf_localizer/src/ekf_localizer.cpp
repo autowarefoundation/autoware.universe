@@ -104,6 +104,10 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
     "in_pose_with_covariance", 1, std::bind(&EKFLocalizer::callbackPoseWithCovariance, this, _1));
   sub_twist_with_cov_ = create_subscription<geometry_msgs::msg::TwistWithCovarianceStamped>(
     "in_twist_with_covariance", 1, std::bind(&EKFLocalizer::callbackTwistWithCovariance, this, _1));
+  service_trigger_node_ = create_service<tier4_localization_msgs::srv::TriggerNode>(
+    "trigger_node_srv",
+    std::bind(&EKFLocalizer::serviceTriggerNode, this, std::placeholders::_1, std::placeholders::_2),
+    rclcpp::ServicesQoS().get_rmw_qos_profile());
 
   dim_x_ex_ = dim_x_ * extend_state_step_;
 
@@ -341,12 +345,7 @@ void EKFLocalizer::callbackInitialPose(
   P(IDX::WZ, IDX::WZ) = 0.01;
 
   ekf_.init(X, P, extend_state_step_);
-
   updateSimple1DFilters(*initialpose);
-
-  while (!current_pose_info_queue_.empty()) current_pose_info_queue_.pop();
-
-  is_initialized_ = true;
 }
 
 /*
@@ -707,4 +706,22 @@ void EKFLocalizer::updateSimple1DFilters(const geometry_msgs::msg::PoseWithCovar
   z_filter_.update(z, z_dev, pose.header.stamp);
   roll_filter_.update(roll, roll_dev, pose.header.stamp);
   pitch_filter_.update(pitch, pitch_dev, pose.header.stamp);
+}
+
+/**
+ * @brief trigger node
+ */
+void EKFLocalizer::serviceTriggerNode(
+  const tier4_localization_msgs::srv::TriggerNode::Request::SharedPtr req,
+  tier4_localization_msgs::srv::TriggerNode::Response::SharedPtr res)
+{
+  if (req->activate) {
+    while (!current_pose_info_queue_.empty()) current_pose_info_queue_.pop();
+    while (!current_twist_info_queue_.empty()) current_twist_info_queue_.pop();
+    is_initialized_ = true;
+  } else {
+    is_initialized_ = false;
+  }
+  res->success = true;
+  return;
 }

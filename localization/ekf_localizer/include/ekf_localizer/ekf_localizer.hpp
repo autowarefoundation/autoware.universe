@@ -32,6 +32,7 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <tier4_debug_msgs/msg/float64_multi_array_stamped.hpp>
 #include <tier4_debug_msgs/msg/float64_stamped.hpp>
+#include <tier4_localization_msgs/srv/trigger_node.hpp>
 
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/utils.h>
@@ -148,6 +149,8 @@ private:
   rclcpp::TimerBase::SharedPtr timer_control_;
   //!< @brief last predict time
   std::shared_ptr<const rclcpp::Time> last_predict_time_;
+  //!< @brief trigger_node service
+  rclcpp::Service<tier4_localization_msgs::srv::TriggerNode>::SharedPtr service_trigger_node_;
 
   //!< @brief timer to send transform
   rclcpp::TimerBase::SharedPtr timer_tf_;
@@ -288,7 +291,17 @@ private:
    */
   void showCurrentX();
 
+  /**
+   * @brief update simple1DFilter
+   */
   void updateSimple1DFilters(const geometry_msgs::msg::PoseWithCovarianceStamped & pose);
+
+  /**
+   * @brief trigger node
+   */
+  void serviceTriggerNode(
+    const tier4_localization_msgs::srv::TriggerNode::Request::SharedPtr req,
+    tier4_localization_msgs::srv::TriggerNode::Response::SharedPtr res);
 
   tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch_;
 
