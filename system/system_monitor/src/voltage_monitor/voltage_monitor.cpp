@@ -68,7 +68,9 @@ VoltageMonitor::VoltageMonitor(const rclcpp::NodeOptions & options)
       voltage_regex_ = re; 
       callback = &VoltageMonitor::checkVoltage;
     } catch (std::regex_error& e) {
-      //never come here.
+      //never comes here.
+      RCLCPP_WARN(get_logger(), "std::regex_error %d", e.code());
+      return;
     }
   }
   updater_.add("CMOS Battery Status", this, callback);
@@ -114,6 +116,7 @@ void VoltageMonitor::checkVoltage(diagnostic_updater::DiagnosticStatusWrapper & 
     stat.summary(DiagStatus::WARN, "format error");
     stat.add("exception in std::regex_search ", fmt::format("{}",e.code()));
   }
+
   // Measure elapsed time since start time and report
   SystemMonitorUtility::stopMeasurement(t_start, stat);
 }
