@@ -114,7 +114,6 @@ def launch_setup(context, *args, **kwargs):
         package="rclcpp_components",
         executable="component_container_mt",
         composable_node_descriptions=[
-            voltage_monitor,
             cpu_monitor,
             hdd_monitor,
             mem_monitor,
@@ -122,6 +121,7 @@ def launch_setup(context, *args, **kwargs):
             ntp_monitor,
             process_monitor,
             gpu_monitor,
+            voltage_monitor,
         ],
         output="screen",
     )

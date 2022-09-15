@@ -67,10 +67,6 @@ message(STATUS "SYSTEM_PROCESSOR: " ${CMAKE_SYSTEM_PROCESSOR})
 message(STATUS "CPU PLATFORM: " ${CMAKE_CPU_PLATFORM})
 message(STATUS "GPU PLATFORM: " ${CMAKE_GPU_PLATFORM})
 
-ament_auto_add_library(voltage_monitor_lib SHARED
-  src/voltage_monitor/voltage_monitor.cpp
-)
-
 set(CPU_MONITOR_SOURCE
   src/cpu_monitor/cpu_monitor_base.cpp
   src/cpu_monitor/${CMAKE_CPU_PLATFORM}_cpu_monitor.cpp
@@ -107,6 +103,10 @@ set(GPU_MONITOR_SOURCE
 )
 ament_auto_add_library(gpu_monitor_lib SHARED
   ${GPU_MONITOR_SOURCE}
+)
+
+ament_auto_add_library(voltage_monitor_lib SHARED
+  src/voltage_monitor/voltage_monitor.cpp
 )
 
 ament_auto_add_executable(msr_reader
