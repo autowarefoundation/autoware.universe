@@ -674,9 +674,6 @@ void RunOutModule::insertVelocityForState(
 
   // get updated state and target obstacle to decelerate
   const auto state = state_machine_->getCurrentState();
-  // const auto target_obstacle = state_machine_->getTargetObstacle();
-
-  RCLCPP_WARN_STREAM(logger_, "state: " << state_machine_->toString(state));
 
   // no obstacles to decelerate
   if (!dynamic_obstacle) {

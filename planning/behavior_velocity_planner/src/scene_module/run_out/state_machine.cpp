@@ -50,7 +50,6 @@ void StateMachine::updateState(
     case State::GO: {
       // if current velocity is less than the threshold, transit to STOP state
       if (state_input.current_velocity < state_param_.stop_thresh) {
-        RCLCPP_DEBUG_STREAM(logger, "transit to STOP state.");
         stop_time_ = clock.now();
         state_ = State::STOP;
         return;
@@ -83,7 +82,6 @@ void StateMachine::updateState(
       const bool enough_dist_from_obstacle =
         state_input.dist_to_collision > state_param_.disable_approach_dist;
       if (enough_dist_from_obstacle) {
-        RCLCPP_WARN_STREAM(logger, "enough distance from obstacle. transit to GO state.");
         state_ = State::GO;
         return;
       }
@@ -93,7 +91,6 @@ void StateMachine::updateState(
     }
 
     default: {
-      RCLCPP_WARN_STREAM(logger, "Invalid state");
       state_ = State::UNKNOWN;
       return;
     }
