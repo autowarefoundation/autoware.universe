@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "motion_utils/constants.hpp"
 #include "motion_utils/resample/resample.hpp"
 #include "tier4_autoware_utils/geometry/boost_geometry.hpp"
 #include "tier4_autoware_utils/math/constants.hpp"
@@ -1149,10 +1150,11 @@ TEST(resample_path_with_lane_id, resample_path_by_same_interval)
     path.points.at(0).point.longitudinal_velocity_mps = 5.0;
     path.points.back().point.is_final = true;
 
-    const auto resampled_path = resamplePath(path, 0.999);
+    const double ds = 1.0 - motion_utils::overlap_threshold;
+    const auto resampled_path = resamplePath(path, ds);
     for (size_t i = 0; i < resampled_path.points.size() - 1; ++i) {
       const auto p = resampled_path.points.at(i);
-      EXPECT_NEAR(p.point.pose.position.x, 0.999 * i, epsilon);
+      EXPECT_NEAR(p.point.pose.position.x, ds * i, epsilon);
       EXPECT_NEAR(p.point.pose.position.y, 0.0, epsilon);
       EXPECT_NEAR(p.point.pose.position.z, 0.0, epsilon);
       EXPECT_NEAR(p.point.pose.orientation.x, 0.0, epsilon);
@@ -1166,7 +1168,7 @@ TEST(resample_path_with_lane_id, resample_path_by_same_interval)
         epsilon);
       EXPECT_NEAR(
         p.point.lateral_velocity_mps, path.points.at(idx).point.lateral_velocity_mps, epsilon);
-      EXPECT_NEAR(p.point.heading_rate_rps, 0.0999 * i, epsilon);
+      EXPECT_NEAR(p.point.heading_rate_rps, ds / 10 * i, epsilon);
       EXPECT_EQ(p.point.is_final, path.points.at(idx).point.is_final);
       for (size_t j = 0; j < p.lane_ids.size(); ++j) {
         EXPECT_EQ(p.lane_ids.at(j), path.points.at(idx).lane_ids.at(j));
@@ -2742,10 +2744,11 @@ TEST(resample_trajectory, resample_trajectory_by_same_interval)
     }
     traj.points.at(0).longitudinal_velocity_mps = 5.0;
 
-    const auto resampled_traj = resampleTrajectory(traj, 0.999);
+    const double ds = 1.0 - motion_utils::overlap_threshold;
+    const auto resampled_traj = resampleTrajectory(traj, ds);
     for (size_t i = 0; i < resampled_traj.points.size() - 1; ++i) {
       const auto p = resampled_traj.points.at(i);
-      EXPECT_NEAR(p.pose.position.x, 0.999 * i, epsilon);
+      EXPECT_NEAR(p.pose.position.x, ds * i, epsilon);
       EXPECT_NEAR(p.pose.position.y, 0.0, epsilon);
       EXPECT_NEAR(p.pose.position.z, 0.0, epsilon);
       EXPECT_NEAR(p.pose.orientation.x, 0.0, epsilon);
@@ -2757,7 +2760,7 @@ TEST(resample_trajectory, resample_trajectory_by_same_interval)
       EXPECT_NEAR(
         p.longitudinal_velocity_mps, traj.points.at(idx).longitudinal_velocity_mps, epsilon);
       EXPECT_NEAR(p.lateral_velocity_mps, traj.points.at(idx).lateral_velocity_mps, epsilon);
-      EXPECT_NEAR(p.heading_rate_rps, 0.0999 * i, epsilon);
+      EXPECT_NEAR(p.heading_rate_rps, ds / 10.0 * i, epsilon);
       EXPECT_NEAR(p.acceleration_mps2, traj.points.at(idx).acceleration_mps2, epsilon);
     }
 
