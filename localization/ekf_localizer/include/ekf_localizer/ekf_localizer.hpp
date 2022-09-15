@@ -15,6 +15,8 @@
 #ifndef EKF_LOCALIZER__EKF_LOCALIZER_HPP_
 #define EKF_LOCALIZER__EKF_LOCALIZER_HPP_
 
+#include "ekf_localizer/warning.hpp"
+
 #include <kalman_filter/kalman_filter.hpp>
 #include <kalman_filter/time_delay_kalman_filter.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -113,6 +115,8 @@ public:
   EKFLocalizer(const std::string & node_name, const rclcpp::NodeOptions & options);
 
 private:
+  const Warning warning_;
+
   //!< @brief ekf estimated pose publisher
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_pose_;
   //!< @brief estimated ekf pose with covariance publisher
@@ -130,10 +134,9 @@ private:
   //!< @brief ekf estimated yaw bias publisher
   rclcpp::Publisher<tier4_debug_msgs::msg::Float64Stamped>::SharedPtr pub_yaw_bias_;
   //!< @brief ekf estimated yaw bias publisher
-  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_pose_no_yawbias_;
+  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_biased_pose_;
   //!< @brief ekf estimated yaw bias publisher
-  rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
-    pub_pose_cov_no_yawbias_;
+  rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pub_biased_pose_cov_;
   //!< @brief initial pose subscriber
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr sub_initialpose_;
   //!< @brief measurement pose with covariance subscriber
@@ -198,21 +201,12 @@ private:
 
   bool is_initialized_;
 
-  enum IDX {
-    X = 0,
-    Y = 1,
-    YAW = 2,
-    YAWB = 3,
-    VX = 4,
-    WZ = 5,
-  };
-
   /* for model prediction */
   std::queue<TwistInfo> current_twist_info_queue_;    //!< @brief current measured pose
   std::queue<PoseInfo> current_pose_info_queue_;      //!< @brief current measured pose
   geometry_msgs::msg::PoseStamped current_ekf_pose_;  //!< @brief current estimated pose
   geometry_msgs::msg::PoseStamped
-    current_ekf_pose_no_yawbias_;  //!< @brief current estimated pose w/o yaw bias
+    current_biased_ekf_pose_;  //!< @brief current estimated pose without yaw bias correction
   geometry_msgs::msg::TwistStamped current_ekf_twist_;  //!< @brief current estimated twist
   std::array<double, 36ul> current_pose_covariance_;
   std::array<double, 36ul> current_twist_covariance_;
@@ -290,13 +284,6 @@ private:
   bool getTransformFromTF(
     std::string parent_frame, std::string child_frame,
     geometry_msgs::msg::TransformStamped & transform);
-
-  /**
-   * @brief normalize yaw angle
-   * @param yaw yaw angle
-   * @return normalized yaw
-   */
-  double normalizeYaw(const double & yaw) const;
 
   /**
    * @brief set current EKF estimation result to current_ekf_pose_ & current_ekf_twist_

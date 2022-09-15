@@ -162,8 +162,8 @@ bool NoStoppingAreaModule::modifyPathVelocity(
     setSafe(true);
     return true;
   }
-  debug_data_.stuck_vehicle_detect_area = toGeomMsg(stuck_vehicle_detect_area);
-  debug_data_.stop_line_detect_area = toGeomMsg(stop_line_detect_area);
+  debug_data_.stuck_vehicle_detect_area = toGeomPoly(stuck_vehicle_detect_area);
+  debug_data_.stop_line_detect_area = toGeomPoly(stop_line_detect_area);
   // Find stuck vehicle in no stopping area
   const bool is_entry_prohibited_by_stuck_vehicle =
     checkStuckVehiclesInNoStoppingArea(stuck_vehicle_detect_area, predicted_obj_arr_ptr);
@@ -230,11 +230,11 @@ bool NoStoppingAreaModule::checkStuckVehiclesInNoStoppingArea(
       continue;  // not stop vehicle
     }
     // check if the footprint is in the stuck detect area
-    const Polygon2d obj_footprint = planning_utils::toFootprintPolygon(object);
+    const Polygon2d obj_footprint = tier4_autoware_utils::toPolygon2d(object);
     const bool is_in_stuck_area = !bg::disjoint(obj_footprint, poly);
     if (is_in_stuck_area) {
       RCLCPP_DEBUG(logger_, "stuck vehicle found.");
-      for (const auto p : obj_footprint.outer()) {
+      for (const auto & p : obj_footprint.outer()) {
         geometry_msgs::msg::Point point;
         point.x = p.x();
         point.y = p.y();
@@ -368,16 +368,10 @@ bool NoStoppingAreaModule::isStoppable(
 {
   // get vehicle info and compute pass_judge_line_distance
   const auto current_velocity = planner_data_->current_velocity->twist.linear.x;
-  const auto current_acceleration = planner_data_->current_accel.get();
+  const auto current_acceleration = planner_data_->current_acceleration->accel.accel.linear.x;
   const double max_acc = planner_data_->max_stop_acceleration_threshold;
   const double max_jerk = planner_data_->max_stop_jerk_threshold;
   const double delay_response_time = planner_data_->delay_response_time;
-  if (!planner_data_->current_accel) {
-    RCLCPP_WARN_THROTTLE(
-      logger_, *clock_, 1000,
-      "[no stopping area] empty current acc! check current vel has been received.");
-    return false;
-  }
   const double stoppable_distance = planning_utils::calcJudgeLineDistWithJerkLimit(
     current_velocity, current_acceleration, max_acc, max_jerk, delay_response_time);
   const double signed_arc_length =

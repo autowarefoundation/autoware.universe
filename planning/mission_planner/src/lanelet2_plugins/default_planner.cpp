@@ -49,22 +49,6 @@ RouteSections combine_consecutive_route_sections(
   return route_sections;
 }
 
-bool is_route_looped(const RouteSections & route_sections)
-{
-  for (std::size_t i = 0; i < route_sections.size(); i++) {
-    const auto & route_section = route_sections.at(i);
-    for (const auto & lane_id : route_section.primitives) {
-      for (std::size_t j = i + 1; j < route_sections.size(); j++) {
-        const auto & future_route_section = route_sections.at(j);
-        if (exists(future_route_section.primitives, lane_id)) {
-          return true;
-        }
-      }
-    }
-  }
-  return false;
-}
-
 bool is_in_lane(const lanelet::ConstLanelet & lanelet, const lanelet::ConstPoint3d & point)
 {
   // check if goal is on a lane at appropriate angle
@@ -282,10 +266,9 @@ PlannerPlugin::HADMapRoute DefaultPlanner::plan(const RoutePoints & points)
     route_sections = combine_consecutive_route_sections(route_sections, local_route_sections);
   }
 
-  if (is_route_looped(route_sections)) {
-    RCLCPP_WARN(
-      node_->get_logger(),
-      "Loop detected within route! Be aware that looped route is not debugged!");
+  if (route_handler_.isRouteLooped(route_sections)) {
+    RCLCPP_WARN(get_logger(), "Loop detected within route!");
+    return route_msg;
   }
 
   const auto goal = refine_goal_height(points.back(), route_sections);

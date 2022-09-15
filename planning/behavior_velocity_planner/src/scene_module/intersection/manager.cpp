@@ -67,6 +67,10 @@ MergeFromPrivateModuleManager::MergeFromPrivateModuleManager(rclcpp::Node & node
   mp.stop_duration_sec =
     node.declare_parameter(ns + ".merge_from_private_area.stop_duration_sec", 1.0);
   mp.detection_area_length = node.get_parameter("intersection.detection_area_length").as_double();
+  mp.detection_area_right_margin =
+    node.get_parameter("intersection.detection_area_right_margin").as_double();
+  mp.detection_area_left_margin =
+    node.get_parameter("intersection.detection_area_left_margin").as_double();
   mp.stop_line_margin = node.get_parameter("intersection.stop_line_margin").as_double();
 }
 
@@ -95,6 +99,8 @@ void IntersectionModuleManager::launchNewModules(
       module_id, lane_id, planner_data_, intersection_param_,
       logger_.get_child("intersection_module"), clock_));
     generateUUID(module_id);
+    updateRTCStatus(
+      getUUID(module_id), true, std::numeric_limits<double>::lowest(), path.header.stamp);
   }
 }
 

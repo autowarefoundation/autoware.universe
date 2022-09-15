@@ -212,7 +212,7 @@ void insertVelocity(
     std::min(static_cast<int>(insert_index + 1), static_cast<int>(path.points.size() - 1));
   for (int i = min_idx; i <= max_idx; i++) {
     if (calcDistance2d(path.points.at(static_cast<size_t>(i)), path_point) < min_distance) {
-      path.points.at(i).point.longitudinal_velocity_mps = 0;
+      path.points.at(i).point.longitudinal_velocity_mps = v;
       already_has_path_point = true;
       insert_index = static_cast<size_t>(i);
       // set velocity from is going to insert min velocity later
@@ -225,19 +225,6 @@ void insertVelocity(
   }
   // set zero velocity from insert index
   setVelocityFromIndex(insert_index, v, &path);
-}
-
-Polygon2d toFootprintPolygon(const PredictedObject & object)
-{
-  Polygon2d obj_footprint;
-  if (object.shape.type == Shape::POLYGON) {
-    obj_footprint = toBoostPoly(object.shape.footprint);
-  } else {
-    // cylinder type is treated as square-polygon
-    obj_footprint =
-      obj2polygon(object.kinematics.initial_pose_with_covariance.pose, object.shape.dimensions);
-  }
-  return obj_footprint;
 }
 
 bool isAheadOf(const geometry_msgs::msg::Pose & target, const geometry_msgs::msg::Pose & origin)
@@ -296,6 +283,8 @@ Polygon2d generatePathPolygon(
     const double y = path.points.at(i).point.pose.position.y + width * std::cos(yaw);
     ego_area.outer().push_back(Point2d(x, y));
   }
+
+  bg::correct(ego_area);
   return ego_area;
 }
 
