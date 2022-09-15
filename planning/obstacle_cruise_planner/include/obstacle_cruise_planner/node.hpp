@@ -26,6 +26,7 @@
 #include "autoware_auto_perception_msgs/msg/predicted_object.hpp"
 #include "autoware_auto_perception_msgs/msg/predicted_objects.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
+#include "geometry_msgs/msg/point_stamped.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "geometry_msgs/msg/twist_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
@@ -89,16 +90,10 @@ private:
   void checkConsistency(
     const rclcpp::Time & current_time, const PredictedObjects & predicted_objects,
     const Trajectory & traj, std::vector<TargetObstacle> & target_obstacles);
-  geometry_msgs::msg::Point calcNearestCollisionPoint(
-    const size_t & first_within_idx,
-    const std::vector<geometry_msgs::msg::Point> & collision_points,
-    const Trajectory & decimated_traj, const bool is_driving_forward);
   double calcCollisionTimeMargin(
     const geometry_msgs::msg::Pose & current_pose, const double current_vel,
-    const geometry_msgs::msg::Point & nearest_collision_point,
-    const PredictedObject & predicted_object, const size_t first_within_idx,
-    const Trajectory & decimated_traj,
-    const std::vector<tier4_autoware_utils::Polygon2d> & decimated_traj_polygons,
+    const std::vector<geometry_msgs::msg::PointStamped> & collision_points,
+    const PredictedObject & predicted_object, const Trajectory & traj,
     const bool is_driving_forward);
   void publishVelocityLimit(const boost::optional<VelocityLimit> & vel_limit);
   void publishDebugData(const DebugData & debug_data) const;
@@ -176,16 +171,25 @@ private:
     double collision_time_margin;
     // outside
     double outside_rough_detection_area_expand_width;
+    double outside_obstacle_min_velocity_threshold;
     double ego_obstacle_overlap_time_threshold;
     double max_prediction_time_for_collision_check;
     double crossing_obstacle_traj_angle_threshold;
     std::vector<int> ignored_outside_obstacle_types;
     // obstacle hold
     double stop_obstacle_hold_time_threshold;
+    // prediction resampling
+    double prediction_resampling_time_interval;
+    double prediction_resampling_time_horizon;
+    // goal extension
+    double goal_extension_length;
+    double goal_extension_interval;
   };
   ObstacleFilteringParam obstacle_filtering_param_;
 
   bool need_to_clear_vel_limit_{false};
+
+  bool is_driving_forward_{true};
 
   std::vector<TargetObstacle> prev_target_obstacles_;
 };

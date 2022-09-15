@@ -64,46 +64,46 @@ public:
   {
     initialized_ = false;
     x_ = 0;
-    stddev_ = 1e9;
-    proc_stddev_x_c_ = 0.0;
+    dev_ = 1e9;
+    proc_dev_x_c_ = 0.0;
     return;
   };
-  void init(const double init_obs, const double obs_stddev, const rclcpp::Time time)
+  void init(const double init_obs, const double obs_dev, const rclcpp::Time time)
   {
     x_ = init_obs;
-    stddev_ = obs_stddev;
+    dev_ = obs_dev;
     latest_time_ = time;
     initialized_ = true;
     return;
   };
-  void update(const double obs, const double obs_stddev, const rclcpp::Time time)
+  void update(const double obs, const double obs_dev, const rclcpp::Time time)
   {
     if (!initialized_) {
-      init(obs, obs_stddev, time);
+      init(obs, obs_dev, time);
       return;
     }
 
     // Prediction step (current stddev_)
     double dt = (time - latest_time_).seconds();
-    double proc_stddev_x_d = proc_stddev_x_c_ * dt;
-    stddev_ = std::sqrt(stddev_ * stddev_ + proc_stddev_x_d * proc_stddev_x_d);
+    double proc_dev_x_d = proc_dev_x_c_ * dt * dt;
+    dev_ = dev_ + proc_dev_x_d;
 
     // Update step
-    double kalman_gain = stddev_ * stddev_ / (stddev_ * stddev_ + obs_stddev * obs_stddev);
+    double kalman_gain = dev_ / (dev_ + obs_dev);
     x_ = x_ + kalman_gain * (obs - x_);
-    stddev_ = std::sqrt(1 - kalman_gain) * stddev_;
+    dev_ = (1 - kalman_gain) * dev_;
 
     latest_time_ = time;
     return;
   };
-  void set_proc_stddev(const double proc_stddev) { proc_stddev_x_c_ = proc_stddev; }
+  void set_proc_dev(const double proc_dev) { proc_dev_x_c_ = proc_dev; }
   double get_x() { return x_; }
 
 private:
   bool initialized_;
   double x_;
-  double stddev_;
-  double proc_stddev_x_c_;
+  double dev_;
+  double proc_dev_x_c_;
   rclcpp::Time latest_time_;
 };
 
@@ -130,10 +130,9 @@ private:
   //!< @brief ekf estimated yaw bias publisher
   rclcpp::Publisher<tier4_debug_msgs::msg::Float64Stamped>::SharedPtr pub_yaw_bias_;
   //!< @brief ekf estimated yaw bias publisher
-  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_pose_no_yawbias_;
+  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_biased_pose_;
   //!< @brief ekf estimated yaw bias publisher
-  rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
-    pub_pose_cov_no_yawbias_;
+  rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pub_biased_pose_cov_;
   //!< @brief initial pose subscriber
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr sub_initialpose_;
   //!< @brief measurement pose with covariance subscriber
@@ -196,21 +195,14 @@ private:
   double proc_cov_vx_d_;        //!< @brief  discrete process noise in d_vx=0
   double proc_cov_wz_d_;        //!< @brief  discrete process noise in d_wz=0
 
-  enum IDX {
-    X = 0,
-    Y = 1,
-    YAW = 2,
-    YAWB = 3,
-    VX = 4,
-    WZ = 5,
-  };
+  bool is_initialized_;
 
   /* for model prediction */
   std::queue<TwistInfo> current_twist_info_queue_;    //!< @brief current measured pose
   std::queue<PoseInfo> current_pose_info_queue_;      //!< @brief current measured pose
   geometry_msgs::msg::PoseStamped current_ekf_pose_;  //!< @brief current estimated pose
   geometry_msgs::msg::PoseStamped
-    current_ekf_pose_no_yawbias_;  //!< @brief current estimated pose w/o yaw bias
+    current_biased_ekf_pose_;  //!< @brief current estimated pose without yaw bias correction
   geometry_msgs::msg::TwistStamped current_ekf_twist_;  //!< @brief current estimated twist
   std::array<double, 36ul> current_pose_covariance_;
   std::array<double, 36ul> current_twist_covariance_;
@@ -288,13 +280,6 @@ private:
   bool getTransformFromTF(
     std::string parent_frame, std::string child_frame,
     geometry_msgs::msg::TransformStamped & transform);
-
-  /**
-   * @brief normalize yaw angle
-   * @param yaw yaw angle
-   * @return normalized yaw
-   */
-  double normalizeYaw(const double & yaw) const;
 
   /**
    * @brief set current EKF estimation result to current_ekf_pose_ & current_ekf_twist_

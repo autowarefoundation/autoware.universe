@@ -15,9 +15,6 @@ include_directories(
 
 set(MOTION_VELOCITY_SMOOTHER_SRC
   src/motion_velocity_smoother_node.cpp
-  src/trajectory_utils.cpp
-  src/linear_interpolation.cpp
-  src/resample.cpp
 )
 
 set(SMOOTHER_SRC
@@ -27,6 +24,8 @@ set(SMOOTHER_SRC
   src/smoother/jerk_filtered_smoother.cpp
   src/smoother/analytical_jerk_constrained_smoother/analytical_jerk_constrained_smoother.cpp
   src/smoother/analytical_jerk_constrained_smoother/velocity_planning_utils.cpp
+  src/trajectory_utils.cpp
+  src/resample.cpp
 )
 
 ament_auto_add_library(smoother SHARED
@@ -46,14 +45,18 @@ rclcpp_components_register_node(motion_velocity_smoother_node
   EXECUTABLE motion_velocity_smoother
 )
 
+if(BUILD_TESTING)
+  ament_add_ros_isolated_gmock(test_smoother_functions
+    test/test_smoother_functions.cpp
+  )
+  target_link_libraries(test_smoother_functions
+    smoother
+  )
+endif()
+
+
 ament_auto_package(
   INSTALL_TO_SHARE
     launch
     config
-)
-
-install(PROGRAMS
-  scripts/trajectory_visualizer.py
-  scripts/closest_velocity_checker.py
-  DESTINATION lib/${PROJECT_NAME}
 )

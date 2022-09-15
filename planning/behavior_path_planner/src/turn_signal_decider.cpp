@@ -25,18 +25,23 @@
 namespace behavior_path_planner
 {
 TurnIndicatorsCommand TurnSignalDecider::getTurnSignal(
-  const PathWithLaneId & path, const Pose & current_pose, const RouteHandler & route_handler,
-  const TurnIndicatorsCommand & turn_signal_plan, const double plan_distance) const
+  const PathWithLaneId & path, const Pose & current_pose, const size_t current_seg_idx,
+  const RouteHandler & route_handler, const TurnIndicatorsCommand & turn_signal_plan,
+  const double plan_distance) const
 {
   auto turn_signal = turn_signal_plan;
 
   // If the distance to intersection is nearer than path change point,
   // use turn signal for turning at the intersection
-  const auto intersection_result = getIntersectionTurnSignal(path, current_pose, route_handler);
+  const auto intersection_result =
+    getIntersectionTurnSignal(path, current_pose, current_seg_idx, route_handler);
   const auto intersection_turn_signal = intersection_result.first;
   const auto intersection_distance = intersection_result.second;
 
-  if (intersection_distance < plan_distance) {
+  if (
+    intersection_distance < plan_distance ||
+    turn_signal_plan.command == TurnIndicatorsCommand::NO_COMMAND ||
+    turn_signal_plan.command == TurnIndicatorsCommand::DISABLE) {
     turn_signal.command = intersection_turn_signal.command;
   }
 
@@ -44,7 +49,8 @@ TurnIndicatorsCommand TurnSignalDecider::getTurnSignal(
 }
 
 std::pair<TurnIndicatorsCommand, double> TurnSignalDecider::getIntersectionTurnSignal(
-  const PathWithLaneId & path, const Pose & current_pose, const RouteHandler & route_handler) const
+  const PathWithLaneId & path, const Pose & current_pose, const size_t current_seg_idx,
+  const RouteHandler & route_handler) const
 {
   TurnIndicatorsCommand turn_signal{};
   turn_signal.command = TurnIndicatorsCommand::DISABLE;
@@ -56,7 +62,8 @@ std::pair<TurnIndicatorsCommand, double> TurnSignalDecider::getIntersectionTurnS
   }
 
   // Get frenet coordinate of current_pose on path
-  const auto vehicle_pose_frenet = util::convertToFrenetCoordinate3d(path, current_pose.position);
+  const auto vehicle_pose_frenet =
+    util::convertToFrenetCoordinate3d(path, current_pose.position, current_seg_idx);
 
   // Get nearest intersection and decide turn signal
   double accumulated_distance = 0;
@@ -71,6 +78,9 @@ std::pair<TurnIndicatorsCommand, double> TurnSignalDecider::getIntersectionTurnS
     const double distance_from_vehicle_front =
       accumulated_distance - vehicle_pose_frenet.length - base_link2front_;
     if (distance_from_vehicle_front > intersection_search_distance_) {
+      if (turn_signal.command == TurnIndicatorsCommand::DISABLE) {
+        distance = std::numeric_limits<double>::max();
+      }
       return std::make_pair(turn_signal, distance);
     }
     // TODO(Horibe): Route Handler should be a library.
@@ -79,6 +89,7 @@ std::pair<TurnIndicatorsCommand, double> TurnSignalDecider::getIntersectionTurnS
       bool lighting_turn_signal = false;
       if (lane.attributeOr("turn_direction", std::string("none")) != lane_attribute) {
         if (
+          distance_from_vehicle_front >= 0.0 &&
           distance_from_vehicle_front <
             lane.attributeOr("turn_signal_distance", intersection_search_distance_) &&
           path_point_distance > 0.0) {
@@ -96,12 +107,16 @@ std::pair<TurnIndicatorsCommand, double> TurnSignalDecider::getIntersectionTurnS
       if (lighting_turn_signal) {
         if (lane_attribute == std::string("left")) {
           turn_signal.command = TurnIndicatorsCommand::ENABLE_LEFT;
+          distance = distance_from_vehicle_front;
         } else if (lane_attribute == std::string("right")) {
           turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
+          distance = distance_from_vehicle_front;
         }
-        distance = distance_from_vehicle_front;
       }
     }
+  }
+  if (turn_signal.command == TurnIndicatorsCommand::DISABLE) {
+    distance = std::numeric_limits<double>::max();
   }
   return std::make_pair(turn_signal, distance);
 }

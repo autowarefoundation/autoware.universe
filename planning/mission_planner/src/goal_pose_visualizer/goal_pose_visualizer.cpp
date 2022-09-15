@@ -12,21 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "mission_planner/goal_pose_visualizer.hpp"
+#include "goal_pose_visualizer.hpp"
 
 namespace mission_planner
 {
 GoalPoseVisualizer::GoalPoseVisualizer(const rclcpp::NodeOptions & node_options)
-: Node("goal_pose_visualizer_node", node_options)
+: Node("goal_pose_visualizer", node_options)
 {
   sub_route_ = create_subscription<autoware_auto_planning_msgs::msg::HADMapRoute>(
     "input/route", rclcpp::QoS{1}.transient_local(),
-    std::bind(&GoalPoseVisualizer::echoBackRouteCallback, this, std::placeholders::_1));
+    std::bind(&GoalPoseVisualizer::echo_back_route_callback, this, std::placeholders::_1));
   pub_goal_pose_ = create_publisher<geometry_msgs::msg::PoseStamped>(
     "output/goal_pose", rclcpp::QoS{1}.transient_local());
 }
 
-void GoalPoseVisualizer::echoBackRouteCallback(
+void GoalPoseVisualizer::echo_back_route_callback(
   const autoware_auto_planning_msgs::msg::HADMapRoute::ConstSharedPtr msg)
 {
   geometry_msgs::msg::PoseStamped goal_pose;

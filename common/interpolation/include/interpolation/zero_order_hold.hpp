@@ -21,9 +21,37 @@
 
 namespace interpolation
 {
-std::vector<double> zero_order_hold(
-  const std::vector<double> & base_keys, const std::vector<double> & base_values,
-  const std::vector<double> & query_keys, const double overlap_threshold = 1e-3);
+template <class T>
+std::vector<T> zero_order_hold(
+  const std::vector<double> & base_keys, const std::vector<T> & base_values,
+  const std::vector<double> & query_keys, const double overlap_threshold = 1e-3)
+{
+  // throw exception for invalid arguments
+  interpolation_utils::validateKeys(base_keys, query_keys);
+  interpolation_utils::validateKeysAndValues(base_keys, base_values);
+
+  std::vector<T> query_values;
+  size_t closest_segment_idx = 0;
+  for (size_t i = 0; i < query_keys.size(); ++i) {
+    // Check if query_key is closes to the terminal point of the base keys
+    if (base_keys.back() - overlap_threshold < query_keys.at(i)) {
+      closest_segment_idx = base_keys.size() - 1;
+    } else {
+      for (size_t j = closest_segment_idx; j < base_keys.size() - 1; ++j) {
+        if (
+          base_keys.at(j) - overlap_threshold < query_keys.at(i) &&
+          query_keys.at(i) < base_keys.at(j + 1)) {
+          // find closest segment in base keys
+          closest_segment_idx = j;
+        }
+      }
+    }
+
+    query_values.push_back(base_values.at(closest_segment_idx));
+  }
+
+  return query_values;
+}
 }  // namespace interpolation
 
 #endif  // INTERPOLATION__ZERO_ORDER_HOLD_HPP_

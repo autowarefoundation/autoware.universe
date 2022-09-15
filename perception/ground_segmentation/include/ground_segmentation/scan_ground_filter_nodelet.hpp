@@ -37,8 +37,6 @@
 #include <string>
 #include <vector>
 
-class ScanGroundFilterTest;
-
 namespace ground_segmentation
 {
 using vehicle_info_util::VehicleInfo;
@@ -133,9 +131,6 @@ private:
    * @retval true transform succeeded
    * @retval false transform failed
    */
-  bool transformPointCloud(
-    const std::string & in_target_frame, const PointCloud2ConstPtr & in_cloud_ptr,
-    const PointCloud2::SharedPtr & out_cloud_ptr);
 
   /*!
    * Convert pcl::PointCloud to sorted PointCloudRefVector
@@ -184,9 +179,6 @@ private:
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   explicit ScanGroundFilterComponent(const rclcpp::NodeOptions & options);
-
-  // for test
-  friend ScanGroundFilterTest;
 };
 }  // namespace ground_segmentation
 
