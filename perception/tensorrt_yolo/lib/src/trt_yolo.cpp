@@ -288,22 +288,25 @@ void Net::infer(std::vector<void *> & buffers, const int batch_size)
   cudaStreamSynchronize(stream_);
 }
 
-bool Net::detect(const std::vector<cv::Mat> & in_img, float * out_scores, float * out_boxes, float * out_classes)
+bool Net::detect(
+  const std::vector<cv::Mat> & in_img, float * out_scores, float * out_boxes, float * out_classes)
 {
   const auto input_dims = getInputDims();
   int batch_size = in_img.size();
   std::vector<float> preprocess_image;
-  std::vector<float> input_image(input_dims.at(0) * input_dims.at(2) * input_dims.at(1) * batch_size);
+  std::vector<float> input_image(
+    input_dims.at(0) * input_dims.at(2) * input_dims.at(1) * batch_size);
   auto data = input_image.data();
   int channel_length = input_dims.at(0) * input_dims.at(2) * input_dims.at(1);
-  for (int i = 0; i < batch_size; ++i)
-  {
+  for (int i = 0; i < batch_size; ++i) {
     preprocess_image = preprocess(in_img[i], input_dims.at(0), input_dims.at(2), input_dims.at(1));
     memcpy(data, preprocess_image.data(), channel_length * sizeof(float));
     data += channel_length;
   }
-  CHECK_CUDA_ERROR(
-    cudaMemcpy(input_d_.get(), input_image.data(), batch_size * input_dims.at(0) * input_dims.at(2) * input_dims.at(1) * sizeof(float), cudaMemcpyHostToDevice));
+  CHECK_CUDA_ERROR(cudaMemcpy(
+    input_d_.get(), input_image.data(),
+    batch_size * input_dims.at(0) * input_dims.at(2) * input_dims.at(1) * sizeof(float),
+    cudaMemcpyHostToDevice));
   std::vector<void *> buffers = {
     input_d_.get(), out_scores_d_.get(), out_boxes_d_.get(), out_classes_d_.get()};
   try {
@@ -312,14 +315,14 @@ bool Net::detect(const std::vector<cv::Mat> & in_img, float * out_scores, float 
     return false;
   }
   CHECK_CUDA_ERROR(cudaMemcpyAsync(
-    out_scores, out_scores_d_.get(), batch_size * sizeof(float) * getMaxDetections(), cudaMemcpyDeviceToHost,
-    stream_));
+    out_scores, out_scores_d_.get(), batch_size * sizeof(float) * getMaxDetections(),
+    cudaMemcpyDeviceToHost, stream_));
   CHECK_CUDA_ERROR(cudaMemcpyAsync(
-    out_boxes, out_boxes_d_.get(), batch_size * sizeof(float) * 4 * getMaxDetections(), cudaMemcpyDeviceToHost,
-    stream_));
+    out_boxes, out_boxes_d_.get(), batch_size * sizeof(float) * 4 * getMaxDetections(),
+    cudaMemcpyDeviceToHost, stream_));
   CHECK_CUDA_ERROR(cudaMemcpyAsync(
-    out_classes, out_classes_d_.get(), batch_size * sizeof(float) * getMaxDetections(), cudaMemcpyDeviceToHost,
-    stream_));
+    out_classes, out_classes_d_.get(), batch_size * sizeof(float) * getMaxDetections(),
+    cudaMemcpyDeviceToHost, stream_));
   cudaStreamSynchronize(stream_);
   return true;
 }

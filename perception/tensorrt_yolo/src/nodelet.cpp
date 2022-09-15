@@ -143,8 +143,7 @@ void TensorrtYoloNodelet::callback(const sensor_msgs::msg::Image::ConstSharedPtr
     return;
   }
   images[0] = in_image_ptr->image;
-  if (!net_ptr_->detect(
-        images, out_scores_.get(), out_boxes_.get(), out_classes_.get())) {
+  if (!net_ptr_->detect(images, out_scores_.get(), out_boxes_.get(), out_classes_.get())) {
     RCLCPP_WARN(this->get_logger(), "Fail to inference");
     return;
   }
@@ -186,8 +185,7 @@ void TensorrtYoloNodelet::callback(const sensor_msgs::msg::Image::ConstSharedPtr
     const auto bottom =
       std::min(static_cast<int>(object.feature.roi.y_offset + object.feature.roi.height), height);
     cv::rectangle(
-      images[0], cv::Point(left, top), cv::Point(right, bottom), cv::Scalar(0, 0, 255), 3,
-      8, 0);
+      images[0], cv::Point(left, top), cv::Point(right, bottom), cv::Scalar(0, 0, 255), 3, 8, 0);
   }
   image_pub_.publish(in_image_ptr->toImageMsg());
 

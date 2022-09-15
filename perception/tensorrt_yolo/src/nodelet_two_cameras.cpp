@@ -16,8 +16,10 @@
 
 #include <autoware_auto_perception_msgs/msg/object_classification.hpp>
 
-#include <glob.h>
 #include <boost/bind.hpp>
+
+#include <glob.h>
+
 #include <algorithm>
 #include <memory>
 #include <string>
@@ -83,16 +85,16 @@ TensorrtYoloNodeletTwoCameras::TensorrtYoloNodeletTwoCameras(const rclcpp::NodeO
       RCLCPP_INFO(
         this->get_logger(), "Max batch size %d should be 1. Rebuild engine from file",
         net_ptr_->getMaxBatchSize());
-      net_ptr_.reset(
-        new yolo::Net(onnx_file, mode, batch_size_, yolo_config_, calibration_images, calib_cache_file));
+      net_ptr_.reset(new yolo::Net(
+        onnx_file, mode, batch_size_, yolo_config_, calibration_images, calib_cache_file));
       net_ptr_->save(engine_file);
     }
   } else {
     RCLCPP_INFO(
       this->get_logger(), "Could not find %s, try making TensorRT engine from onnx",
       engine_file.c_str());
-    net_ptr_.reset(
-      new yolo::Net(onnx_file, mode, batch_size_, yolo_config_, calibration_images, calib_cache_file));
+    net_ptr_.reset(new yolo::Net(
+      onnx_file, mode, batch_size_, yolo_config_, calibration_images, calib_cache_file));
     net_ptr_->save(engine_file);
   }
   RCLCPP_INFO(this->get_logger(), "Inference engine prepared.");
@@ -100,20 +102,20 @@ TensorrtYoloNodeletTwoCameras::TensorrtYoloNodeletTwoCameras(const rclcpp::NodeO
   out_scores_length_ = net_ptr_->getMaxDetections();
   out_boxes_length_ = net_ptr_->getMaxDetections() * 4;
   out_classes_length_ = net_ptr_->getMaxDetections();
-  out_scores_ =
-    std::make_unique<float[]>(net_ptr_->getMaxBatchSize() * out_scores_length_);
-  out_boxes_ =
-    std::make_unique<float[]>(net_ptr_->getMaxBatchSize() * out_boxes_length_);
-  out_classes_ =
-    std::make_unique<float[]>(net_ptr_->getMaxBatchSize() * out_classes_length_);
+  out_scores_ = std::make_unique<float[]>(net_ptr_->getMaxBatchSize() * out_scores_length_);
+  out_boxes_ = std::make_unique<float[]>(net_ptr_->getMaxBatchSize() * out_boxes_length_);
+  out_classes_ = std::make_unique<float[]>(net_ptr_->getMaxBatchSize() * out_classes_length_);
 
   std::vector<std::string> output_image_topic = {"out/image0", "out/image1"};
   std::vector<std::string> output_object_topic = {"out/objects0", "out/objects1"};
-  objects_pubs_ = std::vector<rclcpp::Publisher<tier4_perception_msgs::msg::DetectedObjectsWithFeature>::SharedPtr>(batch_size_);
+  objects_pubs_ = std::vector<
+    rclcpp::Publisher<tier4_perception_msgs::msg::DetectedObjectsWithFeature>::SharedPtr>(
+    batch_size_);
   image_pubs_ = std::vector<image_transport::Publisher>(batch_size_);
-  for (int cam_id = 0; cam_id < batch_size_; ++cam_id){
-    objects_pubs_[cam_id] = this->create_publisher<tier4_perception_msgs::msg::DetectedObjectsWithFeature>(
-      output_object_topic[cam_id], 1);
+  for (int cam_id = 0; cam_id < batch_size_; ++cam_id) {
+    objects_pubs_[cam_id] =
+      this->create_publisher<tier4_perception_msgs::msg::DetectedObjectsWithFeature>(
+        output_object_topic[cam_id], 1);
     image_pubs_[cam_id] = image_transport::create_publisher(this, output_image_topic[cam_id]);
   }
 
@@ -121,14 +123,18 @@ TensorrtYoloNodeletTwoCameras::TensorrtYoloNodeletTwoCameras(const rclcpp::NodeO
   image_subs_[0].subscribe(this, "in/image0");
   image_subs_[1].subscribe(this, "in/image1");
   sync_ptr_ = std::make_shared<Sync>(SyncPolicy(10), image_subs_[0], image_subs_[1]);
-  sync_ptr_->registerCallback(std::bind(&TensorrtYoloNodeletTwoCameras::callback, this, std::placeholders::_1, std::placeholders::_2));
+  sync_ptr_->registerCallback(std::bind(
+    &TensorrtYoloNodeletTwoCameras::callback, this, std::placeholders::_1, std::placeholders::_2));
 }
 
-void TensorrtYoloNodeletTwoCameras::callback(const sensor_msgs::msg::Image::ConstSharedPtr in_image_msg0, const sensor_msgs::msg::Image::ConstSharedPtr in_image_msg1)
+void TensorrtYoloNodeletTwoCameras::callback(
+  const sensor_msgs::msg::Image::ConstSharedPtr in_image_msg0,
+  const sensor_msgs::msg::Image::ConstSharedPtr in_image_msg1)
 {
   using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
 
-  std::vector<sensor_msgs::msg::Image::ConstSharedPtr> in_image_msgs = {in_image_msg0, in_image_msg1};
+  std::vector<sensor_msgs::msg::Image::ConstSharedPtr> in_image_msgs = {
+    in_image_msg0, in_image_msg1};
   std::vector<cv_bridge::CvImagePtr> in_image_ptrs(batch_size_);
   std::vector<cv::Mat> images(batch_size_);
   try {
@@ -141,14 +147,13 @@ void TensorrtYoloNodeletTwoCameras::callback(const sensor_msgs::msg::Image::Cons
   images[0] = in_image_ptrs[0]->image;
   images[1] = in_image_ptrs[1]->image;
 
-  if (!net_ptr_->detect(
-        images, out_scores_.get(), out_boxes_.get(), out_classes_.get())) {
+  if (!net_ptr_->detect(images, out_scores_.get(), out_boxes_.get(), out_classes_.get())) {
     RCLCPP_WARN(this->get_logger(), "Fail to inference");
     return;
   }
   const auto width = images[0].cols;
   const auto height = images[0].rows;
-  for (int cam_id = 0; cam_id < batch_size_; ++cam_id){
+  for (int cam_id = 0; cam_id < batch_size_; ++cam_id) {
     tier4_perception_msgs::msg::DetectedObjectsWithFeature out_objects;
     for (int i = 0; i < yolo_config_.detections_per_im; ++i) {
       if (out_scores_[(cam_id * out_scores_length_) + i] < yolo_config_.ignore_thresh) {
@@ -159,9 +164,10 @@ void TensorrtYoloNodeletTwoCameras::callback(const sensor_msgs::msg::Image::Cons
       object.feature.roi.y_offset = out_boxes_[4 * i + (cam_id * out_boxes_length_) + 1] * height;
       object.feature.roi.width = out_boxes_[4 * i + (cam_id * out_boxes_length_) + 2] * width;
       object.feature.roi.height = out_boxes_[4 * i + (cam_id * out_boxes_length_) + 3] * height;
-      object.object.classification.emplace_back(autoware_auto_perception_msgs::build<Label>()
-                                                  .label(Label::UNKNOWN)
-                                                  .probability(out_scores_[(cam_id * out_scores_length_) + i]));
+      object.object.classification.emplace_back(
+        autoware_auto_perception_msgs::build<Label>()
+          .label(Label::UNKNOWN)
+          .probability(out_scores_[(cam_id * out_scores_length_) + i]));
       const auto class_id = static_cast<int>(out_classes_[(cam_id * out_classes_length_) + i]);
       if (labels_[class_id] == "car") {
         object.object.classification.front().label = Label::CAR;
@@ -186,8 +192,8 @@ void TensorrtYoloNodeletTwoCameras::callback(const sensor_msgs::msg::Image::Cons
       const auto bottom =
         std::min(static_cast<int>(object.feature.roi.y_offset + object.feature.roi.height), height);
       cv::rectangle(
-        images[cam_id], cv::Point(left, top), cv::Point(right, bottom), cv::Scalar(0, 0, 255), 3,
-        8, 0);
+        images[cam_id], cv::Point(left, top), cv::Point(right, bottom), cv::Scalar(0, 0, 255), 3, 8,
+        0);
     }
     image_pubs_[cam_id].publish(in_image_ptrs[cam_id]->toImageMsg());
 
