@@ -191,6 +191,22 @@ Trajectory createStopTrajectory(const PoseStamped & current_pose)
   return createTrajectory(current_pose, waypoints, 0.0);
 }
 
+Trajectory createStopTrajectory(const Trajectory & trajectory)
+{
+  Trajectory stop_trajectory;
+  stop_trajectory.header = trajectory.header;
+  stop_trajectory.header.stamp = rclcpp::Clock().now();
+
+  stop_trajectory.points.reserve(trajectory.points.size());
+  for (size_t i = 0; i < trajectory.points.size(); ++i) {
+    stop_trajectory.points.push_back(trajectory.points.at(i));
+  }
+  for (size_t i = 0; i < trajectory.points.size(); ++i) {
+    stop_trajectory.points.at(i).longitudinal_velocity_mps = 0.0;
+  }
+  return stop_trajectory;
+}
+
 bool isStopped(
   const std::deque<Odometry::ConstSharedPtr> & odom_buffer, const double th_stopped_velocity_mps)
 {
@@ -429,13 +445,21 @@ void FreespacePlannerNode::onTimer()
 
   initializePlanningAlgorithm();
   if (isPlanRequired()) {
-    reset();
-
     // Stop before planning new trajectory
-    const auto stop_trajectory = createStopTrajectory(current_pose_);
-    trajectory_pub_->publish(stop_trajectory);
-    debug_pose_array_pub_->publish(trajectory2PoseArray(stop_trajectory));
-    debug_partial_pose_array_pub_->publish(trajectory2PoseArray(stop_trajectory));
+    if(partial_trajectory_.points.size()>0){
+      const auto stop_trajectory = createStopTrajectory(partial_trajectory_);
+      trajectory_pub_->publish(stop_trajectory);
+      debug_pose_array_pub_->publish(trajectory2PoseArray(stop_trajectory));
+      debug_partial_pose_array_pub_->publish(trajectory2PoseArray(stop_trajectory));
+    }
+    else{
+      const auto stop_trajectory = createStopTrajectory(current_pose_);
+      trajectory_pub_->publish(stop_trajectory);
+      debug_pose_array_pub_->publish(trajectory2PoseArray(stop_trajectory));
+      debug_partial_pose_array_pub_->publish(trajectory2PoseArray(stop_trajectory));
+    }
+
+    reset();
 
     // Plan new trajectory
     planTrajectory();
