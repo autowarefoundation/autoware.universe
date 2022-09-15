@@ -86,6 +86,33 @@ std::tuple<std::vector<double>, std::vector<double>> calcVehicleCirclesInfo(
   return {radiuses, longitudinal_offsets};
 }
 
+std::tuple<std::vector<double>, std::vector<double>> calcVehicleCirclesInfoByBicycleModel(
+  const VehicleParam & vehicle_param, const size_t circle_num, const double rear_radius_ratio,
+  const double front_radius_ratio)
+{
+  std::vector<double> longitudinal_offsets;
+  std::vector<double> radiuses;
+
+  {  // 1st circle (rear wheel)
+    longitudinal_offsets.push_back(0.0);
+    radiuses.push_back(vehicle_param.width / 2.0 * rear_radius_ratio);
+  }
+
+  {  // 2nd circle (front wheel)
+    const double radius = std::hypot(
+      vehicle_param.length / static_cast<double>(circle_num) / 2.0, vehicle_param.width / 2.0);
+
+    const double unit_lon_length = vehicle_param.length / static_cast<double>(circle_num);
+    const double longitudinal_offset =
+      unit_lon_length / 2.0 + unit_lon_length * (circle_num - 1) - vehicle_param.rear_overhang;
+
+    longitudinal_offsets.push_back(longitudinal_offset);
+    radiuses.push_back(radius * front_radius_ratio);
+  }
+
+  return {radiuses, longitudinal_offsets};
+}
+
 [[maybe_unused]] void fillYawInTrajectoryPoint(std::vector<TrajectoryPoint> & traj_points)
 {
   std::vector<geometry_msgs::msg::Point> points;
