@@ -312,9 +312,8 @@ void NonlinearMPCNode::onTimer()
 
     // Compute the initial reference trajectories and discretisize the system.
     if (auto const && is_initialized = nonlinear_mpc_controller_ptr_->initializeTrajectories(
-        interpolator_curvature_pws, use_linear_initialization);
-      !is_initialized)
-    {
+          interpolator_curvature_pws, use_linear_initialization);
+        !is_initialized) {
       // vehicle_motion_fsm_.setEmergencyFlag(true);
 
       RCLCPP_WARN_SKIPFIRST_THROTTLE(
@@ -542,6 +541,13 @@ bool NonlinearMPCNode::isDataReady()
     return false;
   }
 
+  if (!interpolator_curvature_pws.isInitialized()) {
+    RCLCPP_WARN_SKIPFIRST_THROTTLE(
+      get_logger(), *get_clock(), (1000ms).count(),
+      "[mpc_nonlinear] Waiting for the curvature interpolator to be initialized ...");
+    return false;
+  }
+
   return true;
 }
 
@@ -730,7 +736,7 @@ void NonlinearMPCNode::loadNMPCoreParameters(
   temp.clear();
   temp.reserve(Model::state_dim);
   default_vec = std::vector<double>{-kInfinity, -kInfinity, -kInfinity, -kInfinity, -2.0,
-    -1.0, 0.0, -0.69, -kInfinity};
+                                    -1.0,       0.0,        -0.69,      -kInfinity};
 
   temp = declare_parameter<std::vector<double>>("xlower", default_vec);
   params_optimization.xlower = Model::state_vector_t::Map(temp.data());
@@ -739,7 +745,7 @@ void NonlinearMPCNode::loadNMPCoreParameters(
   temp.clear();
   temp.reserve(Model::state_dim);
   default_vec = std::vector<double>{kInfinity, kInfinity, kInfinity, kInfinity, 2.0,
-    1.0, 25.0, 0.69, kInfinity};
+                                    1.0,       25.0,      0.69,      kInfinity};
   temp = declare_parameter<std::vector<double>>("xupper", default_vec);
   params_optimization.xupper = Model::state_vector_t::Map(temp.data());
 
@@ -857,23 +863,23 @@ void NonlinearMPCNode::computeScalingMatrices(ns_data::ParamsOptimization & para
   params.Cu = params.umax_for_scaling - params.Su.diagonal() * xuhatmax;
 
   // Inverse scalers.
-  params.Sx_inv.diagonal() = params.Sx.diagonal().unaryExpr([](auto const & x) {return 1 / x;});
+  params.Sx_inv.diagonal() = params.Sx.diagonal().unaryExpr([](auto const & x) { return 1 / x; });
 
-  params.Su_inv.diagonal() = params.Su.diagonal().unaryExpr([](auto const & x) {return 1 / x;});
+  params.Su_inv.diagonal() = params.Su.diagonal().unaryExpr([](auto const & x) { return 1 / x; });
 
   // Using the scaling matrices compute the normalized bounds of the states and the inputs.
   // Set the scaled lower and upper bounds.
 
   for (Eigen::Index k = 0; k < Model::state_dim; ++k) {
     double const && val_low =
-      (params.xlower(k) >= kInfinity - EPS || params.xlower(k) <= -kInfinity + EPS) ?
-      params.xlower(k) :
-      (params.xlower(k) - params.Cx(k)) * params.Sx_inv.diagonal()(k);
+      (params.xlower(k) >= kInfinity - EPS || params.xlower(k) <= -kInfinity + EPS)
+        ? params.xlower(k)
+        : (params.xlower(k) - params.Cx(k)) * params.Sx_inv.diagonal()(k);
 
     double const && val_up =
-      (params.xupper(k) >= kInfinity - EPS || params.xupper(k) <= -kInfinity + EPS) ?
-      params.xupper(k) :
-      (params.xupper(k) - params.Cx(k)) * params.Sx_inv.diagonal()(k);
+      (params.xupper(k) >= kInfinity - EPS || params.xupper(k) <= -kInfinity + EPS)
+        ? params.xupper(k)
+        : (params.xupper(k) - params.Cx(k)) * params.Sx_inv.diagonal()(k);
 
     params.xlower_scaled(k) = val_low;
 
@@ -882,14 +888,14 @@ void NonlinearMPCNode::computeScalingMatrices(ns_data::ParamsOptimization & para
 
   for (Eigen::Index k = 0; k < Model::input_dim; ++k) {
     double const && val_low =
-      (params.ulower(k) >= kInfinity - EPS || params.ulower(k) <= -kInfinity + EPS) ?
-      params.ulower(k) :
-      (params.ulower(k) - params.Cu(k)) * params.Su_inv.diagonal()(k);
+      (params.ulower(k) >= kInfinity - EPS || params.ulower(k) <= -kInfinity + EPS)
+        ? params.ulower(k)
+        : (params.ulower(k) - params.Cu(k)) * params.Su_inv.diagonal()(k);
 
     double const && val_up =
-      (params.uupper(k) >= kInfinity - EPS || params.uupper(k) <= -kInfinity + EPS) ?
-      params.uupper(k) :
-      (params.uupper(k) - params.Cu(k)) * params.Su_inv.diagonal()(k);
+      (params.uupper(k) >= kInfinity - EPS || params.uupper(k) <= -kInfinity + EPS)
+        ? params.uupper(k)
+        : (params.uupper(k) - params.Cu(k)) * params.Su_inv.diagonal()(k);
 
     params.ulower_scaled(k) = val_low;
     params.uupper_scaled(k) = val_up;
@@ -919,7 +925,7 @@ void NonlinearMPCNode::onTrajectory(const TrajectoryMsg::SharedPtr msg)
   }
 }
 
-void NonlinearMPCNode::onVelocity(VelocityMsg::SharedPtr msg) {current_velocity_ptr_ = msg;}
+void NonlinearMPCNode::onVelocity(VelocityMsg::SharedPtr msg) { current_velocity_ptr_ = msg; }
 
 void NonlinearMPCNode::onCommDelayCompensation(const DelayCompensationRefs::SharedPtr msg)
 {
@@ -934,8 +940,7 @@ void NonlinearMPCNode::onSteeringMeasured(SteeringMeasuredMsg::SharedPtr msg)
 bool NonlinearMPCNode::isValidTrajectory(const TrajectoryMsg & msg_traj)
 {
   bool const && check_condition =
-    std::all_of(
-    std::cbegin(msg_traj.points), std::cend(msg_traj.points), [](auto point) {
+    std::all_of(std::cbegin(msg_traj.points), std::cend(msg_traj.points), [](auto point) {
       const auto & p = point.pose.position;
       const auto & o = point.pose.orientation;
       const auto & vx = point.longitudinal_velocity_mps;
@@ -973,8 +978,7 @@ bool NonlinearMPCNode::resampleRawTrajectoriesToaFixedSize()
   map_matrix_in_t reference_map_sxyz(map_matrix_in_t::Zero());
 
   if (bool const && is_resampled = makeFixedSizeMat_sxyz(mpc_traj_raw, reference_map_sxyz);
-    !is_resampled)
-  {
+      !is_resampled) {
     RCLCPP_ERROR(
       get_logger(),
       "[mpc_nonlinear - resampleRawTrajectoryToAFixedSize ] Could not interpolate the "
@@ -1181,9 +1185,8 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(
    * */
 
   if (auto const && is_updated =
-    interpolator_curvature_pws.Initialize(mpc_traj_smoothed.s, mpc_traj_smoothed.curvature);
-    !is_updated)
-  {
+        interpolator_curvature_pws.Initialize(mpc_traj_smoothed.s, mpc_traj_smoothed.curvature);
+      !is_updated) {
     RCLCPP_ERROR(
       get_logger(),
       "[mpc_nonlinear - resampling] Could not update the point-wise curvature "
@@ -1213,8 +1216,7 @@ void NonlinearMPCNode::findClosestPrevWayPointIdx()
     auto const & pose_yaw = tf2::getYaw(point.pose.orientation);
 
     if (auto const & yaw_diff = ns_utils::angleDistance(yawvec, pose_yaw);
-      std::fabs(yaw_diff) > (M_PI / 3.0))
-    {
+        std::fabs(yaw_diff) > (M_PI / 3.0)) {
       continue;
     }
 
@@ -1460,9 +1462,8 @@ void NonlinearMPCNode::updateInitialStatesAndControls_fromMeasurements()
 
   // compute the current curvature and store it.
   if (auto const && could_interpolate =
-    interpolator_curvature_pws.Interpolate(current_s0_, current_curvature_k0_);
-    !could_interpolate)
-  {
+        interpolator_curvature_pws.Interpolate(current_s0_, current_curvature_k0_);
+      !could_interpolate) {
     RCLCPP_ERROR(
       get_logger(),
       "[mpc_nonlinear] Could not interpolate the curvature in the initial state update "
@@ -1509,16 +1510,15 @@ void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(
   auto timestamp = this->now();
 
   if (auto it_first_cmd_to_appy = std::find_if(
-      inputs_buffer_.cbegin(), inputs_buffer_.cend(), sCommandTimeStampFind(timestamp));
-    it_first_cmd_to_appy != inputs_buffer_.end())
-  {
+        inputs_buffer_.cbegin(), inputs_buffer_.cend(), sCommandTimeStampFind(timestamp));
+      it_first_cmd_to_appy != inputs_buffer_.end()) {
     first_control_entering_system_ = *it_first_cmd_to_appy;
   }
 
   /**
    * Apply the controls in the input queue using the their time durations.
    * */
-  for (auto it = inputs_buffer_.begin(); it != std::prev(inputs_buffer_.end()); ) {
+  for (auto it = inputs_buffer_.begin(); it != std::prev(inputs_buffer_.end());) {
     if (rclcpp::Time(it->stamp) < rclcpp::Time(timestamp)) {
       it = inputs_buffer_.erase(it);  // erase return next iterator
     } else {
@@ -1537,8 +1537,7 @@ void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(
 
       // Estimate the curvature.  The spline data is updated in the onTrajectory().
       if (auto const && could_interpolate = interpolator_curvature_pws.Interpolate(sd0, kappad0);
-        !could_interpolate)
-      {
+          !could_interpolate) {
         RCLCPP_ERROR(
           get_logger(),
           "[nonlinear_mpc - predict initial state]: spline interpolator failed to compute  the  "
@@ -1656,9 +1655,8 @@ void NonlinearMPCNode::publishPredictedTrajectories(
 
   // Create visualization array for the predicted trajectory.
   if (auto visualization_prediction_markers =
-    createPredictedTrajectoryMarkers(ns, header_id, xy0, td);
-    !visualization_prediction_markers.markers.empty())
-  {
+        createPredictedTrajectoryMarkers(ns, header_id, xy0, td);
+      !visualization_prediction_markers.markers.empty()) {
     pub_debug_predicted_traj_->publish(visualization_prediction_markers);
   }
 
