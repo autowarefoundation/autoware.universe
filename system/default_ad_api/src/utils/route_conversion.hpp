@@ -25,14 +25,14 @@
 namespace default_ad_api::conversion
 {
 
-using ApiSetRoute = autoware_ad_api_msgs::srv::SetRoute::Request;
-using HadSetRoute = autoware_planning_msgs::srv::SetRoute::Request;
-using ApiRoute = autoware_ad_api_msgs::msg::Route;
-using HadRoute = autoware_auto_planning_msgs::msg::HADMapRoute;
+using ExternalSetRoute = autoware_ad_api_msgs::srv::SetRoute::Request;
+using InternalSetRoute = autoware_planning_msgs::srv::SetRoute::Request;
+using ExternalRoute = autoware_ad_api_msgs::msg::Route;
+using InternalRoute = autoware_auto_planning_msgs::msg::HADMapRoute;
 
-ApiRoute create_empty_route(const rclcpp::Time & stamp);
-ApiRoute convert_route(const HadRoute & had);
-HadSetRoute convert_set_route(const ApiSetRoute & api);
+ExternalRoute create_empty_route(const rclcpp::Time & stamp);
+ExternalRoute convert_route(const InternalRoute & internal);
+InternalSetRoute convert_set_route(const ExternalSetRoute & external);
 
 }  // namespace default_ad_api::conversion
 

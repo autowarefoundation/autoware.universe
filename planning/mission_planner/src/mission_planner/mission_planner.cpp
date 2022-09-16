@@ -14,6 +14,9 @@
 
 #include "mission_planner.hpp"
 
+#include <autoware_ad_api_msgs/srv/set_route.hpp>
+#include <autoware_ad_api_msgs/srv/set_route_points.hpp>
+
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #else
@@ -160,10 +163,12 @@ void MissionPlanner::on_clear_route(
 void MissionPlanner::on_set_route(
   const SetRoute::Service::Request::SharedPtr req, const SetRoute::Service::Response::SharedPtr res)
 {
+  using ResponseCode = autoware_ad_api_msgs::srv::SetRoute::Response;
+
   // NOTE: The route services should be mutually exclusive by callback group.
   if (state_.state != RouteState::Message::UNSET) {
     throw component_interface_utils::ServiceException(
-      SetRoute::Service::Response::ERROR_ROUTE_EXISTS, "The route is already set.");
+      ResponseCode::ERROR_ROUTE_EXISTS, "The route is already set.");
   }
 
   // Use temporary pose stapmed for transform.
@@ -191,14 +196,16 @@ void MissionPlanner::on_set_route_points(
   const SetRoutePoints::Service::Request::SharedPtr req,
   const SetRoutePoints::Service::Response::SharedPtr res)
 {
+  using ResponseCode = autoware_ad_api_msgs::srv::SetRoutePoints::Response;
+
   // NOTE: The route services should be mutually exclusive by callback group.
   if (state_.state != RouteState::Message::UNSET) {
     throw component_interface_utils::ServiceException(
-      SetRoutePoints::Service::Response::ERROR_ROUTE_EXISTS, "The route is already set.");
+      ResponseCode::ERROR_ROUTE_EXISTS, "The route is already set.");
   }
   if (!planner_->ready()) {
     throw component_interface_utils::ServiceException(
-      SetRoutePoints::Service::Response::ERROR_PLANNER_UNREADY, "The planner is not ready.");
+      ResponseCode::ERROR_PLANNER_UNREADY, "The planner is not ready.");
   }
 
   // Use temporary pose stapmed for transform.
@@ -219,7 +226,7 @@ void MissionPlanner::on_set_route_points(
   HADMapRoute route = planner_->plan(points);
   if (route.segments.empty()) {
     throw component_interface_utils::ServiceException(
-      SetRoutePoints::Service::Response::ERROR_PLANNER_FAILED, "The planned route is empty.");
+      ResponseCode::ERROR_PLANNER_FAILED, "The planned route is empty.");
   }
   route.header.stamp = req->header.stamp;
   route.header.frame_id = map_frame_;

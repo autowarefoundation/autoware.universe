@@ -234,21 +234,22 @@ bool DefaultPlanner::is_goal_valid(const geometry_msgs::msg::Pose & goal) const
 
 PlannerPlugin::HADMapRoute DefaultPlanner::plan(const RoutePoints & points)
 {
+  const auto logger = node_->get_logger();
+
   std::stringstream log_ss;
   for (const auto & point : points) {
     log_ss << "x: " << point.position.x << " "
            << "y: " << point.position.y << std::endl;
   }
   RCLCPP_INFO_STREAM(
-    node_->get_logger(), "start planning route with checkpoints: " << std::endl
-                                                                   << log_ss.str());
+    logger, "start planning route with checkpoints: " << std::endl
+                                                      << log_ss.str());
 
   autoware_auto_planning_msgs::msg::HADMapRoute route_msg;
   RouteSections route_sections;
 
   if (!is_goal_valid(points.back())) {
-    RCLCPP_WARN(
-      node_->get_logger(), "Goal is not valid! Please check position and angle of goal_pose");
+    RCLCPP_WARN(logger, "Goal is not valid! Please check position and angle of goal_pose");
     return route_msg;
   }
 
@@ -267,12 +268,12 @@ PlannerPlugin::HADMapRoute DefaultPlanner::plan(const RoutePoints & points)
   }
 
   if (route_handler_.isRouteLooped(route_sections)) {
-    RCLCPP_WARN(get_logger(), "Loop detected within route!");
+    RCLCPP_WARN(logger, "Loop detected within route!");
     return route_msg;
   }
 
   const auto goal = refine_goal_height(points.back(), route_sections);
-  RCLCPP_DEBUG(node_->get_logger(), "Goal Pose Z : %lf", goal.position.z);
+  RCLCPP_DEBUG(logger, "Goal Pose Z : %lf", goal.position.z);
 
   // The header is assigned by mission planner.
   route_msg.start_pose = points.front();

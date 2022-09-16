@@ -19,10 +19,12 @@
 namespace
 {
 
-using APIPrimitive = autoware_ad_api_msgs::msg::RoutePrimitive;
-using HADPrimitive = autoware_auto_mapping_msgs::msg::MapPrimitive;
-using APISegment = autoware_ad_api_msgs::msg::RouteSegment;
-using HADSegment = autoware_auto_mapping_msgs::msg::HADMapSegment;
+using ApiPrimitive = autoware_ad_api_msgs::msg::RoutePrimitive;
+using MapPrimitive = autoware_planning_msgs::msg::VectorMapPrimitive;
+using HadPrimitive = autoware_auto_mapping_msgs::msg::MapPrimitive;
+using ApiSegment = autoware_ad_api_msgs::msg::RouteSegment;
+using HadSegment = autoware_auto_mapping_msgs::msg::HADMapSegment;
+using MapSegment = autoware_planning_msgs::msg::VectorMapSegment;
 
 template <class RetT, class ArgT>
 RetT convert(const ArgT & arg);
@@ -39,28 +41,28 @@ std::vector<RetT> convert_vector(const std::vector<ArgT> & args)
 }
 
 template <>
-APIPrimitive convert(const HADPrimitive & had)
+ApiPrimitive convert(const HadPrimitive & had)
 {
-  APIPrimitive api;
+  ApiPrimitive api;
   api.id = had.id;
   api.type = had.primitive_type;
   return api;
 }
 
 template <>
-HADPrimitive convert(const APIPrimitive & api)
+MapPrimitive convert(const ApiPrimitive & api)
 {
-  HADPrimitive had;
-  had.id = api.id;
-  had.primitive_type = api.type;
-  return had;
+  MapPrimitive map;
+  map.id = api.id;
+  map.primitive_type = api.type;
+  return map;
 }
 
 template <>
-APISegment convert(const HADSegment & had)
+ApiSegment convert(const HadSegment & had)
 {
-  APISegment api;
-  api.alternatives = convert_vector<APIPrimitive>(had.primitives);
+  ApiSegment api;
+  api.alternatives = convert_vector<ApiPrimitive>(had.primitives);
   for (auto iter = api.alternatives.begin(); iter != api.alternatives.end(); ++iter) {
     if (iter->id == had.preferred_primitive_id) {
       api.preferred = *iter;
@@ -72,13 +74,12 @@ APISegment convert(const HADSegment & had)
 }
 
 template <>
-HADSegment convert(const APISegment & api)
+MapSegment convert(const ApiSegment & api)
 {
-  HADSegment had;
-  had.primitives = convert_vector<HADPrimitive>(api.alternatives);
-  had.primitives.push_back(convert<HADPrimitive>(api.preferred));
-  had.preferred_primitive_id = had.primitives.back().id;
-  return had;
+  MapSegment map;
+  map.preferred_primitive = convert<MapPrimitive>(api.preferred);
+  map.primitives = convert_vector<MapPrimitive>(api.alternatives);
+  return map;
 }
 
 }  // namespace
@@ -86,33 +87,33 @@ HADSegment convert(const APISegment & api)
 namespace default_ad_api::conversion
 {
 
-ApiRoute create_empty_route(const rclcpp::Time & stamp)
+ExternalRoute create_empty_route(const rclcpp::Time & stamp)
 {
-  ApiRoute api_route;
-  api_route.header.stamp = stamp;
-  return api_route;
+  ExternalRoute external;
+  external.header.stamp = stamp;
+  return external;
 }
 
-ApiRoute convert_route(const HadRoute & had)
+ExternalRoute convert_route(const InternalRoute & internal)
 {
   autoware_ad_api_msgs::msg::RouteData data;
-  data.start = had.start_pose;
-  data.goal = had.goal_pose;
-  data.segments = convert_vector<APISegment>(had.segments);
+  data.start = internal.start_pose;
+  data.goal = internal.goal_pose;
+  data.segments = convert_vector<ApiSegment>(internal.segments);
 
-  ApiRoute api;
-  api.header = had.header;
-  api.data.push_back(data);
-  return api;
+  ExternalRoute external;
+  external.header = internal.header;
+  external.data.push_back(data);
+  return external;
 }
 
-HadSetRoute convert_set_route(const ApiSetRoute & api)
+InternalSetRoute convert_set_route(const ExternalSetRoute & external)
 {
-  HadSetRoute had;
-  had.header = api.header;
-  had.goal = api.goal;
-  had.segments = convert_vector<HADSegment>(api.segments);
-  return had;
+  InternalSetRoute internal;
+  internal.header = external.header;
+  internal.goal = external.goal;
+  internal.segments = convert_vector<MapSegment>(external.segments);
+  return internal;
 }
 
 }  // namespace default_ad_api::conversion

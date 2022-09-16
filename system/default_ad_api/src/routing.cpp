@@ -58,7 +58,7 @@ void RoutingNode::on_set_route(
   *inner_req = conversion::convert_set_route(*req);
 
   const auto inner_res = cli_set_route_->call(inner_req);
-  res->status = inner_res->status;
+  component_interface_utils::status::copy(res, inner_res);
 }
 
 }  // namespace default_ad_api
