@@ -81,17 +81,33 @@ void VoltageMonitor::checkVoltage(diagnostic_updater::DiagnosticStatusWrapper & 
   // Remember start time to measure elapsed time
   const auto t_start = SystemMonitorUtility::startMeasurement();
   float voltage = 0.0;
-  bp::ipstream is_out;
-  bp::ipstream is_err;
-  fs::path p = bp::search_path("sensors");
-  bp::child c(p.string(), bp::std_out > is_out, bp::std_err > is_err);
+
+  int out_fd[2];
+  if (pipe2(out_fd, O_CLOEXEC) != 0) {
+    stat.summary(DiagStatus::ERROR, "pipe2 error");
+    stat.add("pipe2", strerror(errno));
+    return;
+  }
+  bp::pipe out_pipe{out_fd[0], out_fd[1]};
+  bp::ipstream is_out{std::move(out_pipe)};
+
+  int err_fd[2];
+  if (pipe2(err_fd, O_CLOEXEC) != 0) {
+    stat.summary(DiagStatus::ERROR, "pipe2 error");
+    stat.add("pipe2", strerror(errno));
+    return;
+  }
+  bp::pipe err_pipe{err_fd[0], err_fd[1]};
+  bp::ipstream is_err{std::move(err_pipe)};
+
+  bp::child c("sensors", bp::std_out > is_out, bp::std_err > is_err);
   c.wait();
 
   if (RCUTILS_UNLIKELY(c.exit_code() != 0)) {  // failed to execute sensors
+    std::ostringstream os;
+    is_err >> os.rdbuf();
     stat.summary(DiagStatus::ERROR, "sensors error");
-    stat.add("failed to execute sensors", fmt::format("{}", c.exit_code()));
-    // Measure elapsed time since start time and report
-    SystemMonitorUtility::stopMeasurement(t_start, stat);
+    stat.add("sensors", os.str().c_str());
     return;
   }
   std::string line;
