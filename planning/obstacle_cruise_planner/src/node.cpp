@@ -211,7 +211,7 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
   odom_sub_ = create_subscription<Odometry>(
     "~/input/odometry", rclcpp::QoS{1},
     std::bind(&ObstacleCruisePlannerNode::onOdometry, this, std::placeholders::_1));
-  acc_sub_ = create_subscription<AccelStamped>(
+  acc_sub_ = create_subscription<AccelWithCovarianceStamped>(
     "~/input/acceleration", rclcpp::QoS{1},
     std::bind(&ObstacleCruisePlannerNode::onAccel, this, std::placeholders::_1));
 
