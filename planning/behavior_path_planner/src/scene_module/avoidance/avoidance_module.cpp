@@ -2541,9 +2541,11 @@ TurnSignalInfo AvoidanceModule::calcTurnSignalInfo(const ShiftedPath & path) con
   }
 
   // calc distance from ego to latest_shift_point end point.
+  /*
   if (turn_info.second >= 0.0) {
     turn_signal.signal_distance = turn_info.second;
   }
+  */
 
   return turn_signal;
 }

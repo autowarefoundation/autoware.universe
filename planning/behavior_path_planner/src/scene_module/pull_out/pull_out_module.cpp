@@ -572,8 +572,12 @@ TurnSignalInfo PullOutModule::calcTurnSignalInfo(const Pose start_pose, const Po
   // turn hazard light when backward driving
   if (!status_.back_finished) {
     turn_signal.hazard_signal.command = HazardLightsCommand::ENABLE;
-    turn_signal.signal_distance =
-      tier4_autoware_utils::calcDistance2d(start_pose, planner_data_->self_pose->pose);
+    turn_signal.desired_start_point = start_pose.position;
+    turn_signal.required_start_point = start_pose.position;
+    turn_signal.required_end_point = end_pose.position;
+    turn_signal.desired_end_point = end_pose.position;
+    // turn_signal.signal_distance =
+    // tier4_autoware_utils::calcDistance2d(start_pose, planner_data_->self_pose->pose);
     return turn_signal;
   }
 
@@ -593,7 +597,7 @@ TurnSignalInfo PullOutModule::calcTurnSignalInfo(const Pose start_pose, const Po
     turn_signal.turn_signal.command = TurnIndicatorsCommand::DISABLE;
   }
 
-  turn_signal.signal_distance = -distance_from_pull_out_end + turn_signal_off_buffer;
+  // turn_signal.signal_distance = -distance_from_pull_out_end + turn_signal_off_buffer;
 
   return turn_signal;
 }

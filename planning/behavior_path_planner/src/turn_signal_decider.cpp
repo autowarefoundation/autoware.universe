@@ -41,6 +41,9 @@ TurnIndicatorsCommand TurnSignalDecider::getTurnSignal(
   const auto intersection_turn_signal_info =
     getIntersectionTurnSignalInfo(path, current_pose, current_vel, current_seg_idx, route_handler);
 
+  if (intersection_turn_signal_info) {
+    return intersection_turn_signal_info->turn_signal;
+  }
   /* Resolve the conflict between turn signal info using sections
   if (
     intersection_distance < plan_distance ||
@@ -61,9 +64,6 @@ boost::optional<TurnSignalInfo> TurnSignalDecider::getIntersectionTurnSignalInfo
     return {};
   }
 
-  TurnSignalInfo turn_signal_info{};
-  turn_signal_info.turn_signal.command = TurnIndicatorsCommand::DISABLE;
-
   // search distance
   const double search_distance = 3.0 * current_vel + intersection_search_distance_;
 
@@ -72,17 +72,15 @@ boost::optional<TurnSignalInfo> TurnSignalDecider::getIntersectionTurnSignalInfo
     tier4_autoware_utils::calcOffsetPose(current_pose, base_link2front_, 0.0, 0.0);
 
   // Get nearest intersection and decide turn signal
+  std::queue<TurnSignalInfo> signal_queue;
   auto lane_attribute = std::string("none");
   for (size_t i = 0; i < path.points.size(); ++i) {
     const double distance_from_vehicle_front =
       motion_utils::calcSignedArcLength(path.points, current_pose.position, current_seg_idx, i) -
       base_link2front_;
 
-    if (
-      search_distance < distance_from_vehicle_front &&
-      turn_signal_info.turn_signal.command == TurnIndicatorsCommand::DISABLE) {
-      // No intersection ahead of search_distance
-      return {};
+    if (search_distance < distance_from_vehicle_front) {
+      break;
     }
 
     // TODO(Horibe): Route Handler should be a library.
@@ -111,31 +109,55 @@ boost::optional<TurnSignalInfo> TurnSignalDecider::getIntersectionTurnSignalInfo
                                             path.points, current_pose.position, current_seg_idx,
                                             lane_front_point, nearest_seg_idx) -
                                           base_link2front_;
-
+        TurnSignalInfo turn_signal_info{};
         turn_signal_info.desired_start_point =
           dist_to_lane_front < 0.0 ? lane_front_point : vehicle_front_pose.position;
         turn_signal_info.required_start_point = lane_front_point;
         turn_signal_info.required_end_point = get_required_end_point(lane.centerline3d());
         turn_signal_info.desired_end_point = lane_back_point;
-
         turn_signal_info.turn_signal.command = signal_map.at(lane_attribute);
+        signal_queue.push(turn_signal_info);
       } else if (distance_from_vehicle_front > 0.0 && cond2) {
         // Vehicle is inside the turing lanelet
+        TurnSignalInfo turn_signal_info{};
         turn_signal_info.desired_start_point = lane_front_point;
         turn_signal_info.required_start_point = lane_front_point;
         turn_signal_info.required_end_point = get_required_end_point(lane.centerline3d());
         turn_signal_info.desired_end_point = lane_back_point;
-
         turn_signal_info.turn_signal.command = signal_map.at(lane_attribute);
+        signal_queue.push(turn_signal_info);
       }
     }
   }
 
-  if (turn_signal_info.turn_signal.command == TurnIndicatorsCommand::DISABLE) {
+  if (signal_queue.empty()) {
     return {};
   }
 
-  return turn_signal_info;
+  // Resolve the conflict between several turn signal requirements
+  while (!signal_queue.empty()) {
+    if (signal_queue.size() == 1) {
+      return signal_queue.front();
+    }
+
+    const auto & turn_signal_info = signal_queue.front();
+    const auto & required_end_point = turn_signal_info.required_end_point;
+    const size_t nearest_seg_idx =
+      motion_utils::findNearestSegmentIndex(path.points, required_end_point);
+    const double dist_to_end_point =
+      motion_utils::calcSignedArcLength(
+        path.points, current_pose.position, current_seg_idx, required_end_point, nearest_seg_idx) -
+      base_link2front_;
+
+    if (dist_to_end_point >= 0.0) {
+      // we haven't finished the current mandatory turn signal
+      return turn_signal_info;
+    }
+
+    signal_queue.pop();
+  }
+
+  return {};
 }
 
 geometry_msgs::msg::Point TurnSignalDecider::get_required_end_point(

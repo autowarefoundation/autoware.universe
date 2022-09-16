@@ -659,10 +659,10 @@ BehaviorModuleOutput PullOverModule::plan()
 
     if (hazard_info.first.command == HazardLightsCommand::ENABLE) {
       output.turn_signal_info.hazard_signal.command = hazard_info.first.command;
-      output.turn_signal_info.signal_distance = hazard_info.second;
+      // output.turn_signal_info.signal_distance = hazard_info.second;
     } else {
       output.turn_signal_info.turn_signal.command = turn_info.first.command;
-      output.turn_signal_info.signal_distance = turn_info.second;
+      // output.turn_signal_info.signal_distance = turn_info.second;
     }
   }
 
