@@ -1089,11 +1089,13 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(
   bspline_interpolator_ptr_->getFirstDerivative(xy_data, rdot_interp);
   bspline_interpolator_ptr_->getSecondDerivative(xy_data, rddot_interp);
 
+  // TODO : remove these lines
+  ns_eigen_utils::printEigenMat(xy_data, "x and y");
+  ns_eigen_utils::printEigenMat(rdot_interp, "rdot_interp");
+  ns_eigen_utils::printEigenMat(rddot_interp, "rddot interp");
+
   /** @brief Compute the curvature column. */
   auto const & curvature = ns_eigen_utils::Curvature(rdot_interp, rddot_interp);
-
-  // std::vector<double> curvature_smooth_vect(curvature.col(0).data(), curvature.col(0).data() +
-  // map_out_mpc_size);
 
   std::vector<double> s_smooth_vect(map_out_mpc_size);
   std::vector<double> x_smooth_vect(map_out_mpc_size);
@@ -1103,7 +1105,6 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(
   std::vector<double> curvature_smooth_vect(map_out_mpc_size);
 
   // These are not smoothed, but they belong to the smooth MPCtraj.
-
   std::vector<double> t_smooth_vect(map_out_mpc_size);
   std::vector<double> acc_smooth_vect(map_out_mpc_size);
 
@@ -1132,10 +1133,10 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(
     // Insert  t and acc,
     if (k > 0) {
       // until k-1
-      double const && ds = s_smooth_vect.at(k) - s_smooth_vect.at(k - 1);
+      double const & ds = s_smooth_vect.at(k) - s_smooth_vect.at(k - 1);
 
       // used for trapezoidal integration rule.
-      double const && mean_v = (v_smooth_vect.at(k) + v_smooth_vect.at(k - 1)) / 2;
+      double const & mean_v = (v_smooth_vect.at(k) + v_smooth_vect.at(k - 1)) / 2;
       double const & dv = v_smooth_vect.at(k) - v_smooth_vect.at(k - 1);  // dv = v[k]-v[k-1],
       double const & dt = ds / std::max(mean_v, 0.1);  // to prevent zero division.
 
@@ -1171,7 +1172,7 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(
   nonlinear_mpc_controller_ptr_->setMPCtrajectorySmoothVectorsPtr(mpc_traj_smoothed);
 
   // Verify size
-  if (auto const && size_of_mpc_smooth = mpc_traj_smoothed.size(); size_of_mpc_smooth == 0) {
+  if (auto const & size_of_mpc_smooth = mpc_traj_smoothed.size(); size_of_mpc_smooth == 0) {
     RCLCPP_ERROR(
       get_logger(),
       "[mpc_nonlinear - resampleRawTrajectoryToAFixedSize ] the smooth "
@@ -1184,7 +1185,7 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(
    * node modules.
    * */
 
-  if (auto const && is_updated =
+  if (auto const & is_updated =
         interpolator_curvature_pws.Initialize(mpc_traj_smoothed.s, mpc_traj_smoothed.curvature);
       !is_updated) {
     RCLCPP_ERROR(
@@ -1194,6 +1195,13 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(
     return false;
   }
   // DEBUG
+  // TODO {ali}: disable this debug
+  for (size_t k = 0; k < mpc_traj_smoothed.s.size(); ++k) {
+    ns_utils::print(
+      "s vs curvature of the interpolator : ", mpc_traj_smoothed.s[k],
+      mpc_traj_smoothed.curvature[k]);
+  }
+
   // end of DEBUG
   return true;
 }

@@ -31,6 +31,26 @@ namespace test_utils
 {
 using FakeNodeFixture = autoware::tools::testing::FakeTestNode;
 
+inline geometry_msgs::msg::TransformStamped getDummyTransform(double const & yaw_angle = 0.)
+{
+  geometry_msgs::msg::TransformStamped transform_stamped;
+  transform_stamped.transform.translation.x = 0.0;
+  transform_stamped.transform.translation.y = 0.0;
+  transform_stamped.transform.translation.z = 0.0;
+
+  tf2::Quaternion q;
+
+  q.setRPY(0.0, 0.0, yaw_angle);
+  transform_stamped.transform.rotation.x = q.x();
+  transform_stamped.transform.rotation.y = q.y();
+  transform_stamped.transform.rotation.z = q.z();
+  transform_stamped.transform.rotation.w = q.w();
+
+  transform_stamped.header.frame_id = "map";
+  transform_stamped.child_frame_id = "base_link";
+  return transform_stamped;
+}
+
 inline void waitForMessage(
   const std::shared_ptr<rclcpp::Node> & node, FakeNodeFixture * fixture, const bool & received_flag,
   const std::chrono::duration<int64_t> max_wait_time = std::chrono::seconds{10LL},
@@ -52,30 +72,7 @@ inline void waitForMessage(
   }
 }
 
-inline geometry_msgs::msg::TransformStamped getDummyTransform()
-{
-  geometry_msgs::msg::TransformStamped transform_stamped;
-  transform_stamped.transform.translation.x = 0.0;
-  transform_stamped.transform.translation.y = 0.0;
-  transform_stamped.transform.translation.z = 0.0;
-
-  tf2::Quaternion q;
-
-  double yaw_angle{90};
-  ns_utils::deg2rad(yaw_angle);
-
-  q.setRPY(0.0, 0.0, yaw_angle);
-  transform_stamped.transform.rotation.x = q.x();
-  transform_stamped.transform.rotation.y = q.y();
-  transform_stamped.transform.rotation.z = q.z();
-  transform_stamped.transform.rotation.w = q.w();
-
-  transform_stamped.header.frame_id = "map";
-  transform_stamped.child_frame_id = "base_link";
-  return transform_stamped;
-}
-
-template<typename T>
+template <typename T>
 inline void spinWhile(T & node)
 {
   for (size_t i = 0; i < 10; i++) {
