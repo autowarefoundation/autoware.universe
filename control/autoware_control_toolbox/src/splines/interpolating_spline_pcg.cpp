@@ -143,10 +143,21 @@ bool InterpolatingSplinePCG::compute_coefficients(std::vector<double> const & yb
   auto dimy(static_cast<int>(ybase.size()));
   Eigen::Index dimy_eig(dimy);
 
+  /**
+   * Check if ybase is a constant vector.
+   * To guarantee the existence of the solution Ax =b, and if the b=0, there is a trivial
+   * solution with x = 0. There is no solution when b=0 in the cubic case other than the trivial
+   * solution.
+   * */
+  auto const & y0 = ybase[0];
+
+  bool is_a_constant_vector = std::all_of(
+    ybase.cbegin() + 1, ybase.cend(), [&y0](auto const y) { return ns_utils::isEqual(y, y0); });
+
   // Jacobi Preconditioner Iteration.
   std::vector<double> cmat_diag;
 
-  if (interp_type_ == 1) {
+  if (interp_type_ == 1 || is_a_constant_vector) {
     // No need to solve equations. Equations is y = ax + b_coeff, te coeeficients are [a, b_coeff],
     // bi = (anext - aprev)
     std::vector<double> b_coeff;
@@ -306,6 +317,7 @@ bool InterpolatingSplinePCG::checkIfMonotonic(const std::vector<double> & tbase)
 bool InterpolatingSplinePCG::Initialize(
   std::vector<double> const & tbase, std::vector<double> const & ybase)
 {
+  initialized_ = false;
   double t0 = tbase[0];
   double y0{};
   bool couldInterpolate = Interpolate(tbase, ybase, t0, y0);
@@ -313,6 +325,7 @@ bool InterpolatingSplinePCG::Initialize(
   if (couldInterpolate) {
     tbase_ = tbase;
     ybase_ = ybase;
+    initialized_ = true;
   }
 
   return couldInterpolate;
