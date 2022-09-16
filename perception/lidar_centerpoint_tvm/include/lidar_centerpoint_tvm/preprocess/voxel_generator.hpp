@@ -15,11 +15,11 @@
 #ifndef LIDAR_CENTERPOINT_TVM__PREPROCESS__VOXEL_GENERATOR_HPP_
 #define LIDAR_CENTERPOINT_TVM__PREPROCESS__VOXEL_GENERATOR_HPP_
 
+#include <common/types.hpp>
 #include <lidar_centerpoint_tvm/centerpoint_config.hpp>
 #include <lidar_centerpoint_tvm/preprocess/pointcloud_densification.hpp>
 #include <lidar_centerpoint_tvm/visibility_control.hpp>
 
-#include <common/types.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
 #include <memory>

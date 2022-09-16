@@ -39,9 +39,10 @@ std::size_t circleNMS(
 
   // generate keep_mask
   std::size_t num_to_keep = 0;
-  std::vector<bool8_t> suppress(num_boxes3d); // suppress[i]=true mean i-th box should be suppressed
+  std::vector<bool8_t> suppress(
+    num_boxes3d);  // suppress[i]=true mean i-th box should be suppressed
 
-  Box3D * boxes_ptr = & boxes3d.front();
+  Box3D * boxes_ptr = &boxes3d.front();
   // std::uint64_t * suppress_ptr = & suppress.front();
   for (std::size_t i = 0; i < num_boxes3d; i++) {
     if (suppress[i]) {
@@ -49,14 +50,14 @@ std::size_t circleNMS(
     } else {
       keep_mask[i] = true;
       num_to_keep++;
-      for (std::size_t j = i+1; j < num_boxes3d; j++) {
+      for (std::size_t j = i + 1; j < num_boxes3d; j++) {
         // if the j-th box has been suppressed, continue
         if (suppress[j]) continue;
         // if the j-th box is in the circle of i-th, set j-th box to be suppressed
         if (dist2dPow(boxes_ptr + i, boxes_ptr + j) < dist2d_pow_thresh) suppress[j] = true;
       }
     }
-  } 
+  }
 
   return num_to_keep;
 }

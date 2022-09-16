@@ -52,17 +52,18 @@ std::size_t VoxelGenerator::pointsToVoxels(
   std::vector<float32_t> & voxels, std::vector<int32_t> & coordinates,
   std::vector<float32_t> & num_points_per_voxel)
 {
-  // voxels (float): (max_voxel_size * max_point_in_voxel_size * point_feature_size), point info in each voxel
-  // coordinates (int): (max_voxel_size * point_dim_size), the index from voxel to its 3D position
-  // num_points_per_voxel (float): (max_voxel_size), the number of points in each voxel
+  // voxels (float): (max_voxel_size * max_point_in_voxel_size * point_feature_size), point info in
+  // each voxel coordinates (int): (max_voxel_size * point_dim_size), the index from voxel to its 3D
+  // position num_points_per_voxel (float): (max_voxel_size), the number of points in each voxel
 
   const std::size_t grid_size = config_.grid_size_z_ * config_.grid_size_y_ * config_.grid_size_x_;
-  std::vector<int32_t> coord_to_voxel_idx(grid_size, -1);   // the index from 3D position to the voxel id
+  std::vector<int32_t> coord_to_voxel_idx(
+    grid_size, -1);  // the index from 3D position to the voxel id
 
   std::size_t voxel_cnt = 0;  // @return
   std::vector<float32_t> point;
   point.resize(config_.point_feature_size_);
-  std::vector<float32_t> coord_zyx; // record which grid the zyx coord of current point belong to
+  std::vector<float32_t> coord_zyx;  // record which grid the zyx coord of current point belong to
   coord_zyx.resize(config_.point_dim_size_);
   bool8_t out_of_range;
   std::size_t point_cnt;

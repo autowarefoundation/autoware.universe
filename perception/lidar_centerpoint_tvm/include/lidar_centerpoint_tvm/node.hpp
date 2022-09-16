@@ -15,9 +15,9 @@
 #ifndef LIDAR_CENTERPOINT_TVM__NODE_HPP_
 #define LIDAR_CENTERPOINT_TVM__NODE_HPP_
 
+#include <common/types.hpp>
 #include <lidar_centerpoint_tvm/centerpoint_tvm.hpp>
 #include <lidar_centerpoint_tvm/visibility_control.hpp>
-
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/ros/debug_publisher.hpp>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
@@ -27,7 +27,6 @@
 #include <autoware_auto_perception_msgs/msg/object_classification.hpp>
 #include <autoware_auto_perception_msgs/msg/shape.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
-#include <common/types.hpp>
 
 #include <memory>
 #include <string>

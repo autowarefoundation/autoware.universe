@@ -15,11 +15,10 @@
 #ifndef LIDAR_CENTERPOINT_TVM__CENTERPOINT_TVM_HPP_
 #define LIDAR_CENTERPOINT_TVM__CENTERPOINT_TVM_HPP_
 
+#include <common/types.hpp>
 #include <lidar_centerpoint_tvm/postprocess/generate_detected_boxes.hpp>
 #include <lidar_centerpoint_tvm/preprocess/voxel_generator.hpp>
 #include <lidar_centerpoint_tvm/visibility_control.hpp>
-
-#include <common/types.hpp>
 #include <tvm_utility/pipeline.hpp>
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
@@ -107,7 +106,6 @@ private:
   std::vector<float32_t> pillar_features;
 };
 
-
 class LIDAR_CENTERPOINT_TVM_LOCAL BackboneNeckHeadPreProcessor
 : public tvm_utility::pipeline::PreProcessor<MixedInputs>
 {
@@ -124,7 +122,7 @@ public:
   /// \return A TVM array containing the spatial_features.
   /// \throw std::runtime_error If the features are incorrectly configured.
   TVMArrayContainerVector schedule(const MixedInputs & pillar_inputs);
-  
+
 private:
   const int64_t input_channels;
   const int64_t input_height;
@@ -161,7 +159,6 @@ private:
   std::vector<float32_t> head_out_rot;
   std::vector<float32_t> head_out_vel;
 };
-
 
 class LIDAR_CENTERPOINT_TVM_PUBLIC CenterPointTVM
 {
