@@ -63,7 +63,7 @@ PointpaintingFusionNode::PointpaintingFusionNode(const rclcpp::NodeOptions & opt
   const auto min_area_matrix = this->declare_parameter<std::vector<double>>("min_area_matrix");
   const auto max_area_matrix = this->declare_parameter<std::vector<double>>("max_area_matrix");
 
-  detection_class_adapter_.setParameters(
+  detection_class_remapper_.setParameters(
     allow_remapping_by_area_matrix, min_area_matrix, max_area_matrix);
 
   centerpoint::NetworkParam encoder_param(encoder_onnx_path, encoder_engine_path, trt_precision);
@@ -250,7 +250,7 @@ void PointpaintingFusionNode::postprocess(sensor_msgs::msg::PointCloud2 & painte
     output_obj_msg.objects.emplace_back(obj);
   }
 
-  detection_class_adapter_.mapClasses(output_obj_msg);
+  detection_class_remapper_.mapClasses(output_obj_msg);
 
   obj_pub_ptr_->publish(output_obj_msg);
 }

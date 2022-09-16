@@ -68,7 +68,7 @@ LidarCenterPointNode::LidarCenterPointNode(const rclcpp::NodeOptions & node_opti
   const auto min_area_matrix = this->declare_parameter<std::vector<double>>("min_area_matrix");
   const auto max_area_matrix = this->declare_parameter<std::vector<double>>("max_area_matrix");
 
-  detection_class_adapter_.setParameters(
+  detection_class_remapper_.setParameters(
     allow_remapping_by_area_matrix, min_area_matrix, max_area_matrix);
 
   NetworkParam encoder_param(encoder_onnx_path, encoder_engine_path, trt_precision);
@@ -137,7 +137,7 @@ void LidarCenterPointNode::pointCloudCallback(
     output_msg.objects.emplace_back(obj);
   }
 
-  detection_class_adapter_.mapClasses(output_msg);
+  detection_class_remapper_.mapClasses(output_msg);
 
   if (objects_sub_count > 0) {
     objects_pub_->publish(output_msg);

@@ -21,7 +21,7 @@
 #include <image_projection_based_fusion/utils/geometry.hpp>
 #include <image_projection_based_fusion/utils/utils.hpp>
 #include <lidar_centerpoint/centerpoint_trt.hpp>
-#include <lidar_centerpoint/detection_class_adapter.hpp>
+#include <lidar_centerpoint/detection_class_remapper.hpp>
 
 #include <map>
 #include <memory>
@@ -55,7 +55,7 @@ protected:
   std::vector<double> pointcloud_range;
   bool has_twist_{false};
 
-  centerpoint::DetectionClassAdapter detection_class_adapter_;
+  centerpoint::DetectionClassRemapper detection_class_remapper_;
 
   std::unique_ptr<image_projection_based_fusion::PointPaintingTRT> detector_ptr_{nullptr};
 

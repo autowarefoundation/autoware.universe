@@ -16,7 +16,7 @@
 #define LIDAR_CENTERPOINT__NODE_HPP_
 
 #include <lidar_centerpoint/centerpoint_trt.hpp>
-#include <lidar_centerpoint/detection_class_adapter.hpp>
+#include <lidar_centerpoint/detection_class_remapper.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/ros/debug_publisher.hpp>
 #include <tier4_autoware_utils/system/stop_watch.hpp>
@@ -52,7 +52,7 @@ private:
   std::vector<std::string> class_names_;
   bool has_twist_{false};
 
-  DetectionClassAdapter detection_class_adapter_;
+  DetectionClassRemapper detection_class_remapper_;
 
   std::unique_ptr<CenterPointTRT> detector_ptr_{nullptr};
 
