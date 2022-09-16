@@ -6,13 +6,13 @@
       # row: original class. column: class to remap to
       #UNKNOWN, CAR, TRUCK, BUS,  TRAILER, MOTORBIKE, BICYCLE,PEDESTRIAN
       [0,       0,   0,     0,    0,       0,         0,      0,         #UNKNOWN
-       1,       0,   1,     1,    1,       0,         0,      0,         #CAR
-       1,       0,   0,     0,    1,       0,         0,      0,         #TRUCK
-       1,       0,   0,     0,    1,       0,         0,      0,         #BUS
-       1,       0,   0,     0,    0,       0,         0,      0,         #TRAILER
-       1,       0,   0,     0,    0,       0,         0,      0,         #MOTORBIKE
-       1,       0,   0,     0,    0,       0,         0,      0,         #BICYCLE
-       1,       0,   0,     0,    0,       0,         0,      0]         #PEDESTRIAN
+       0,       0,   1,     1,    1,       0,         0,      0,         #CAR
+       0,       0,   0,     0,    1,       0,         0,      0,         #TRUCK
+       0,       0,   0,     0,    1,       0,         0,      0,         #BUS
+       0,       0,   0,     0,    0,       0,         0,      0,         #TRAILER
+       0,       0,   0,     0,    0,       0,         0,      0,         #MOTORBIKE
+       0,       0,   0,     0,    0,       0,         0,      0,         #BICYCLE
+       0,       0,   0,     0,    0,       0,         0,      0]         #PEDESTRIAN
 
     min_area_matrix:
       #UNKNOWN, CAR,   TRUCK,   BUS,   TRAILER,  MOTORBIKE, BICYCLE, PEDESTRIAN
