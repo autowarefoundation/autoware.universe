@@ -34,9 +34,9 @@ namespace
 bool isUnknownObjectOverlapped(
   const autoware_auto_perception_msgs::msg::DetectedObject & unknown_object,
   const autoware_auto_perception_msgs::msg::DetectedObject & known_object,
-  const double precision_threshold, const double recall_threshold)
+  const double precision_threshold, const double recall_threshold, double distance_threshold)
 {
-  constexpr double sq_distance_threshold = std::pow(5.0, 2.0);
+  const double sq_distance_threshold = std::pow(distance_threshold, 2.0);
   const double sq_distance = tier4_autoware_utils::calcSquaredDistance2d(
     unknown_object.kinematics.pose_with_covariance.pose,
     known_object.kinematics.pose_with_covariance.pose);
@@ -69,9 +69,10 @@ ObjectAssociationMergerNode::ObjectAssociationMergerNode(const rclcpp::NodeOptio
   remove_overlapped_unknown_objects_ =
     declare_parameter<bool>("remove_overlapped_unknown_objects", true);
   overlapped_judge_param_.precision_threshold =
-    declare_parameter<double>("precision_threshold_to_judge_overlapped", 0.4);
+    declare_parameter<double>("precision_threshold_to_judge_overlapped", 0.3);
   overlapped_judge_param_.recall_threshold =
     declare_parameter<double>("recall_threshold_to_judge_overlapped", 0.5);
+  distance_threshold_ = declare_parameter<double>("distance_threshold", 9.0);
 
   const auto tmp = this->declare_parameter<std::vector<int64_t>>("can_assign_matrix");
   const std::vector<int> can_assign_matrix(tmp.begin(), tmp.end());
@@ -152,7 +153,7 @@ void ObjectAssociationMergerNode::objectsCallback(
       for (const auto & known_object : known_objects) {
         if (isUnknownObjectOverlapped(
               unknown_object, known_object, overlapped_judge_param_.precision_threshold,
-              overlapped_judge_param_.recall_threshold)) {
+              overlapped_judge_param_.recall_threshold, distance_threshold_)) {
           is_overlapped = true;
           break;
         }

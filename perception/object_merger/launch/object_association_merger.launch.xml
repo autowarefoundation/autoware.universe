@@ -10,5 +10,7 @@
     <remap from="input/object1" to="$(var input/object1)"/>
     <remap from="output/object" to="$(var output/object)"/>
     <param from="$(var data_association_matrix_path)"/>
+    <param name="precision_threshold_to_judge_overlapped" value="0.3"/>
+    <param name="distance_threshold" value="9.0"/>
   </node>
 </launch>
