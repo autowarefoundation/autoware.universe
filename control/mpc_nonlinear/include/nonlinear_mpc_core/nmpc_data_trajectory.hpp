@@ -17,44 +17,65 @@
 #ifndef NONLINEAR_MPC_CORE__NMPC_DATA_TRAJECTORY_HPP_
 #define NONLINEAR_MPC_CORE__NMPC_DATA_TRAJECTORY_HPP_
 
-#include <tf2/utils.h>
-#include <Eigen/Core>
-#include <Eigen/StdVector>  // must be before the vector but clang re-orders.
-#include <autoware_auto_planning_msgs/msg/trajectory.hpp>
-#include <vector>
+#include "nonlinear_mpc_node/nonlinear_mpc_state_machine.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "utils/nmpc_utils.hpp"
 #include "utils_act/act_utils.hpp"
 #include "utils_act/act_utils_eigen.hpp"
-#include "nonlinear_mpc_node/nonlinear_mpc_state_machine.hpp"
-#include <variant>
+
+#include <Eigen/Core>
+#include <Eigen/StdVector>  // must be before the vector but clang re-orders.
+
+#include <autoware_auto_planning_msgs/msg/trajectory.hpp>
+
+#include <tf2/utils.h>
+
 #include <utility>
+#include <variant>
+#include <vector>
 
 namespace ns_data
 {
-enum class controlSampling_order : size_t
-{
+enum class controlSampling_order : size_t {
   ZOH = 0,  // zero order hold.
   FOH = 1   // first order hold.
 };
 
 using ns_states::overload;
-struct s_tag {};
-struct t_tag {};
-struct a_tag {};
-struct x_tag {};
-struct y_tag {};
-struct z_tag {};
-struct yaw_tag {};
-struct vx_tag {};
-struct curv_tag {};
+struct s_tag
+{
+};
+struct t_tag
+{
+};
+struct a_tag
+{
+};
+struct x_tag
+{
+};
+struct y_tag
+{
+};
+struct z_tag
+{
+};
+struct yaw_tag
+{
+};
+struct vx_tag
+{
+};
+struct curv_tag
+{
+};
 
-using trajVectorVariant = std::variant<s_tag, t_tag, a_tag,
-    x_tag, y_tag, z_tag, yaw_tag,
-    vx_tag, curv_tag>;
+using trajVectorVariant =
+  std::variant<s_tag, t_tag, a_tag, x_tag, y_tag, z_tag, yaw_tag, vx_tag, curv_tag>;
 
 /**
- * @brief stores raw and smoothed trajectories in the std::vectors received from Autoware planning modules.
+ * @brief stores raw and smoothed trajectories in the std::vectors received from Autoware planning
+ * modules.
  * */
 class MPCdataTrajectoryVectors
 {
@@ -66,14 +87,13 @@ public:
   // ~MPCdataTrajectoryVectors() = default;
   std::vector<double> s;          //!< @brief arc-length [m]
   std::vector<double> t;          //!< @brief relative time [s]
-  std::vector<double> ax;        //!< @brief implied acceleration [m/s/s]
+  std::vector<double> ax;         //!< @brief implied acceleration [m/s/s]
   std::vector<double> x;          //!< @brief x position x vector
   std::vector<double> y;          //!< @brief y position y vector
   std::vector<double> z;          //!< @brief z position z vector
   std::vector<double> yaw;        //!< @brief yaw pose yaw vector   [rad]
   std::vector<double> vx;         //!< @brief vx velocity vx vector [m/s]
   std::vector<double> curvature;  //!< @brief path curvature [1/m]
-
 
   /**
    * @brief push_back for all values.
@@ -91,33 +111,24 @@ public:
   {
     std::visit(
       overload{
-        [this, &vect](s_tag const &)
-        {this->s = std::move(vect);},
+        [this, &vect](s_tag const &) { this->s = std::move(vect); },
 
-        [this, &vect](t_tag const &)
-        {this->t = std::move(vect);},
+        [this, &vect](t_tag const &) { this->t = std::move(vect); },
 
-        [this, &vect](a_tag const &)
-        {this->ax = std::move(vect);},
+        [this, &vect](a_tag const &) { this->ax = std::move(vect); },
 
-        [this, &vect](x_tag const &)
-        {this->x = std::move(vect);},
+        [this, &vect](x_tag const &) { this->x = std::move(vect); },
 
-        [this, &vect](y_tag const &)
-        {this->y = std::move(vect);},
+        [this, &vect](y_tag const &) { this->y = std::move(vect); },
 
-        [this, &vect](z_tag const &)
-        {this->z = std::move(vect);},
+        [this, &vect](z_tag const &) { this->z = std::move(vect); },
 
-        [this, &vect](yaw_tag const &)
-        {this->yaw = std::move(vect);},
+        [this, &vect](yaw_tag const &) { this->yaw = std::move(vect); },
 
-        [this, &vect](vx_tag const &)
-        {this->vx = std::move(vect);},
+        [this, &vect](vx_tag const &) { this->vx = std::move(vect); },
 
-        [this, &vect](curv_tag const &)
-        {this->curvature = std::move(vect);}
-      }, vartag);
+        [this, &vect](curv_tag const &) { this->curvature = std::move(vect); }},
+      vartag);
   }
 
   /**
@@ -128,14 +139,16 @@ public:
   void clear();
 
   [[nodiscard]] size_t size() const;
+
+  void print() const;
 };
 
 /**
-* @brief contains the trajectory of states and controls as an Eigen vector for each time points in the planning
-* horizon.
-* @tparam Model vehicle model to get dimensions of the states and controls.
-* */
-template<class Model>
+ * @brief contains the trajectory of states and controls as an Eigen vector for each time points in
+ * the planning horizon.
+ * @tparam Model vehicle model to get dimensions of the states and controls.
+ * */
+template <class Model>
 struct TrajectoryData
 {
   typename Model::state_vector_v_t X;  // !<@brief state vector container of Eigen vector.
@@ -180,12 +193,13 @@ struct TrajectoryData
 };
 
 /**
- * We keep an extra place for the number of control vectors. Depending on the discretization methods; ZOH or FOH
- * the size of control vector container change. In FOH (First Order Hold) the number of control vectors must be
- * equal to the number of state vectors as the controls are interpolated between the integration interval.
+ * We keep an extra place for the number of control vectors. Depending on the discretization
+ * methods; ZOH or FOH the size of control vector container change. In FOH (First Order Hold) the
+ * number of control vectors must be equal to the number of state vectors as the controls are
+ * interpolated between the integration interval.
  *
  * */
-template<class Model>
+template <class Model>
 void TrajectoryData<Model>::initializeTrajectory(size_t const & K, double const & dt_step)
 {
   // X.resize(K);
@@ -203,23 +217,21 @@ void TrajectoryData<Model>::initializeTrajectory(size_t const & K, double const 
   dt = dt_step;
 }
 
-template<class Model>
+template <class Model>
 size_t TrajectoryData<Model>::nX() const
 {
   return X.size();
 }
 
-template<class Model>
+template <class Model>
 size_t TrajectoryData<Model>::nU() const
 {
   return U.size();
 }
 
-template<class Model>
+template <class Model>
 void TrajectoryData<Model>::getControlMPCSolutionsAtTime(
-  const double & t,
-  const double & mpc_dt,
-  typename Model::input_vector_t & u_solutions_mpc) const
+  const double & t, const double & mpc_dt, typename Model::input_vector_t & u_solutions_mpc) const
 {
   if (t > mpc_dt) {
     ns_utils::print(
