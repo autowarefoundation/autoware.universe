@@ -22,7 +22,7 @@ namespace component_interface_utils::status
 {
 
 template <class T1, class T2>
-void copy(const T1 & src, T2 & dst)
+void copy(const T1 & src, T2 & dst)  // NOLINT cpplint false positive
 {
   dst->status.success = src->status.success;
   dst->status.code = src->status.code;
