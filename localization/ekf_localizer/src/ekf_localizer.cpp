@@ -154,7 +154,8 @@ void EKFLocalizer::updatePredictFrequency()
 void EKFLocalizer::timerCallback()
 {
   if (!is_activated_) {
-    warning_.warnThrottle("The node is not activated. Provide initial pose to pose_initializer", 2000);
+    warning_.warnThrottle(
+      "The node is not activated. Provide initial pose to pose_initializer", 2000);
     return;
   }
 
