@@ -18,7 +18,6 @@
 #include "euclidean_cluster/utils.hpp"
 
 #include <pcl/filters/voxel_grid.h>
-#include <pcl/point_types.h>
 
 #include <vector>
 
@@ -36,7 +35,6 @@ public:
     const pcl::PointCloud<pcl::PointXYZ>::ConstPtr & pointcloud,
     std::vector<pcl::PointCloud<pcl::PointXYZ>> & clusters) override;
   void setVoxelLeafSize(float voxel_leaf_size) { voxel_leaf_size_ = voxel_leaf_size; }
-  void setTolerance(float tolerance) { tolerance_ = tolerance; }
   void setMinPointsNumberPerVoxel(int min_points_number_per_voxel)
   {
     min_points_number_per_voxel_ = min_points_number_per_voxel;
@@ -44,9 +42,15 @@ public:
 
 private:
   pcl::VoxelGrid<pcl::PointXYZ> voxel_grid_;
-  float tolerance_;
   float voxel_leaf_size_;
   int min_points_number_per_voxel_;
+
+  void setPointcloud(
+    const pcl::PointCloud<pcl::PointXYZ>::ConstPtr & pointcloud,
+    pcl::PointCloud<pcl::PointXYZ>::ConstPtr & pointcloud_ptr) override;
+  void solveVoxelBasedClustering(
+    pcl::PointCloud<pcl::PointXYZ>::ConstPtr & pointcloud_ptr,
+    std::vector<pcl::PointCloud<pcl::PointXYZ>> & temporary_clusters);
 };
 
 }  // namespace euclidean_cluster

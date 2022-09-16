@@ -28,7 +28,7 @@ EuclideanCluster::EuclideanCluster(bool use_height, int min_cluster_size, int ma
 
 EuclideanCluster::EuclideanCluster(
   bool use_height, int min_cluster_size, int max_cluster_size, float tolerance)
-: EuclideanClusterInterface(use_height, min_cluster_size, max_cluster_size), tolerance_(tolerance)
+: EuclideanClusterInterface(use_height, min_cluster_size, max_cluster_size, tolerance)
 {
 }
 
@@ -38,48 +38,45 @@ bool EuclideanCluster::cluster(
 {
   // convert 2d pointcloud
   pcl::PointCloud<pcl::PointXYZ>::ConstPtr pointcloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
-  if (!use_height_) {
-    pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud_2d_ptr(new pcl::PointCloud<pcl::PointXYZ>);
-    for (const auto & point : pointcloud->points) {
-      pcl::PointXYZ point2d;
-      point2d.x = point.x;
-      point2d.y = point.y;
-      point2d.z = 0.0;
-      pointcloud_2d_ptr->push_back(point2d);
-    }
-    pointcloud_ptr = pointcloud_2d_ptr;
-  } else {
-    pointcloud_ptr = pointcloud;
-  }
+  setPointcloud(pointcloud, pointcloud_ptr);
 
-  // create tree
-  pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
-  tree->setInputCloud(pointcloud_ptr);
-
-  // clustering
-  std::vector<pcl::PointIndices> cluster_indices;
   pcl::EuclideanClusterExtraction<pcl::PointXYZ> pcl_euclidean_cluster;
-  pcl_euclidean_cluster.setClusterTolerance(tolerance_);
-  pcl_euclidean_cluster.setMinClusterSize(min_cluster_size_);
-  pcl_euclidean_cluster.setMaxClusterSize(max_cluster_size_);
-  pcl_euclidean_cluster.setSearchMethod(tree);
-  pcl_euclidean_cluster.setInputCloud(pointcloud_ptr);
-  pcl_euclidean_cluster.extract(cluster_indices);
+  std::vector<pcl::PointIndices> cluster_indices;
+  solveEuclideanClustering(pcl_euclidean_cluster, cluster_indices, pointcloud_ptr);
 
   // build output
   {
     for (const auto & cluster : cluster_indices) {
       pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_cluster(new pcl::PointCloud<pcl::PointXYZ>);
       for (const auto & point_idx : cluster.indices) {
-        cloud_cluster->points.push_back(pointcloud->points[point_idx]);
+        cloud_cluster->points.emplace_back(pointcloud->points[point_idx]);
       }
-      clusters.push_back(*cloud_cluster);
+      clusters.emplace_back(*cloud_cluster);
       clusters.back().width = cloud_cluster->points.size();
       clusters.back().height = 1;
       clusters.back().is_dense = false;
     }
   }
   return true;
+}
+
+void EuclideanCluster::setPointcloud(
+  const pcl::PointCloud<pcl::PointXYZ>::ConstPtr & pointcloud,
+  pcl::PointCloud<pcl::PointXYZ>::ConstPtr & pointcloud_ptr)
+{
+  if (!params_.use_height) {
+    pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud_2d_ptr(new pcl::PointCloud<pcl::PointXYZ>);
+    for (const auto & point : pointcloud->points) {
+      pcl::PointXYZ point2d;
+      point2d.x = point.x;
+      point2d.y = point.y;
+      point2d.z = 0.0;
+      pointcloud_2d_ptr->emplace_back(point2d);
+    }
+    pointcloud_ptr = pointcloud_2d_ptr;
+  } else {
+    pointcloud_ptr = pointcloud;
+  }
 }
 
 }  // namespace euclidean_cluster

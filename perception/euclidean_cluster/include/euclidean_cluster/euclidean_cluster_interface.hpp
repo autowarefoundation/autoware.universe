@@ -16,35 +16,54 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <pcl/kdtree/kdtree.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
+#include <pcl/segmentation/extract_clusters.h>
 
 #include <vector>
 
 namespace euclidean_cluster
 {
+struct ClusterParameters
+{
+  bool use_height;
+  int min_cluster_size;
+  int max_cluster_size;
+  float tolerance;
+};  // stuct ClusterParameters
+
 class EuclideanClusterInterface
 {
 public:
   EuclideanClusterInterface() = default;
   EuclideanClusterInterface(bool use_height, int min_cluster_size, int max_cluster_size)
-  : use_height_(use_height),
-    min_cluster_size_(min_cluster_size),
-    max_cluster_size_(max_cluster_size)
+  : params_{use_height, min_cluster_size, max_cluster_size, 0.7}
+  {
+  }
+  EuclideanClusterInterface(
+    bool use_height, int min_cluster_size, int max_cluster_size, float tolerance)
+  : params_{use_height, min_cluster_size, max_cluster_size, tolerance}
   {
   }
   virtual ~EuclideanClusterInterface() = default;
-  void setUseHeight(bool use_height) { use_height_ = use_height; }
-  void setMinClusterSize(int size) { min_cluster_size_ = size; }
-  void setMaxClusterSize(int size) { max_cluster_size_ = size; }
+  void setUseHeight(bool use_height) { params_.use_height = use_height; }
+  void setMinClusterSize(int size) { params_.min_cluster_size = size; }
+  void setMaxClusterSize(int size) { params_.max_cluster_size = size; }
+  void setTolerance(float tolerance) { params_.tolerance = tolerance; }
   virtual bool cluster(
     const pcl::PointCloud<pcl::PointXYZ>::ConstPtr & pointcloud,
     std::vector<pcl::PointCloud<pcl::PointXYZ>> & clusters) = 0;
+  void solveEuclideanClustering(
+    pcl::EuclideanClusterExtraction<pcl::PointXYZ> & pcl_euclidean_cluster,
+    std::vector<pcl::PointIndices> & cluster_indices,
+    pcl::PointCloud<pcl::PointXYZ>::ConstPtr & pointcloud_ptr);
 
 protected:
-  bool use_height_ = true;
-  int min_cluster_size_;
-  int max_cluster_size_;
-};
+  ClusterParameters params_;
+  virtual void setPointcloud(
+    const pcl::PointCloud<pcl::PointXYZ>::ConstPtr & pointcloud,
+    pcl::PointCloud<pcl::PointXYZ>::ConstPtr & pointcloud_ptr) = 0;
+};  // class EuclideanClusterInterface
 
 }  // namespace euclidean_cluster
