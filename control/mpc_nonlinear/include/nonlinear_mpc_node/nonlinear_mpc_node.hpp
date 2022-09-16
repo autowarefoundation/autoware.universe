@@ -19,27 +19,29 @@
 
 // Standard and other headers.
 #include <eigen3/Eigen/StdVector>
+
 #include <deque>
 #include <functional>
+#include <limits>
 #include <memory>
 #include <string>
-#include <limits>
 #include <vector>
 
 // Autoware Headers
 #include "common/types.hpp"
+#include "communication_delay_compensator/msg/controller_error_report.hpp"
+#include "communication_delay_compensator/msg/delay_compensation_refs.hpp"
 #include "motion_common/motion_common.hpp"
 #include "motion_common/trajectory_common.hpp"
-#include "autoware_auto_vehicle_msgs/msg/vehicle_odometry.hpp"
-
-#include "autoware_auto_control_msgs/msg/ackermann_control_command.hpp"
 #include "nonlinear_mpc_node/nonlinear_mpc_node_visualization.hpp"
-#include <vehicle_info_util/vehicle_info_util.hpp>
-#include <visualization_msgs/msg/marker.hpp>
-#include "communication_delay_compensator/msg/delay_compensation_refs.hpp"
-#include "communication_delay_compensator/msg/controller_error_report.hpp"
 #include "utils_act/act_utils.hpp"
 #include "utils_act/act_utils_eigen.hpp"
+
+#include <vehicle_info_util/vehicle_info_util.hpp>
+
+#include "autoware_auto_control_msgs/msg/ackermann_control_command.hpp"
+#include "autoware_auto_vehicle_msgs/msg/vehicle_odometry.hpp"
+#include <visualization_msgs/msg/marker.hpp>
 
 // ROS headers
 #include "rcl_interfaces/msg/set_parameters_result.hpp"
@@ -47,29 +49,29 @@
 #include "rclcpp_components/register_node_macro.hpp"
 
 // Transform related.
+#include "tf2/utils.h"
+#include "tf2_ros/buffer.h"
+#include "tf2_ros/transform_listener.h"
+
 #include "geometry_msgs/msg/pose.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "tf2_msgs/msg/tf_message.hpp"
 
-#include "tf2/utils.h"
-#include "tf2_ros/buffer.h"
-#include "tf2_ros/transform_listener.h"
-
 // Autoware headers.
 #include "helper_functions/angle_utils.hpp"
+
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 #include "autoware_auto_vehicle_msgs/msg/steering_report.hpp"
 
 // NMPC package headers.
+#include "mpc_nonlinear/msg/nonlinear_mpc_performance_report.hpp"
 #include "nonlinear_mpc_core/nmpc_core.hpp"
+#include "nonlinear_mpc_node/nonlinear_mpc_state_machine.hpp"
 #include "nonlinear_mpc_node_visualization.hpp"
 #include "splines/bspline_interpolator_templated.hpp"
 #include "splines/bsplines_smoother.hpp"
 #include "utils/nmpc_utils.hpp"
-
-#include "nonlinear_mpc_node/nonlinear_mpc_state_machine.hpp"
-#include "mpc_nonlinear/msg/nonlinear_mpc_performance_report.hpp"
 
 namespace ns_mpc_nonlinear
 {
@@ -91,15 +93,13 @@ struct DebugData
   geometry_msgs::msg::Pose current_closest_pose{};
 };
 
-template<typename T>
+template <typename T>
 void update_param(
-  const std::vector<rclcpp::Parameter> & parameters, const std::string & name,
-  T & value)
+  const std::vector<rclcpp::Parameter> & parameters, const std::string & name, T & value)
 {
   auto it = std::find_if(
     parameters.cbegin(), parameters.cend(),
-    [&name](const rclcpp::Parameter & parameter)
-    {return parameter.get_name() == name;});
+    [&name](const rclcpp::Parameter & parameter) { return parameter.get_name() == name; });
   if (it != parameters.cend()) {
     value = static_cast<T>(it->template get_value<T>());
   }
@@ -107,12 +107,12 @@ void update_param(
 
 struct sCommandTimeStampFind
 {
-  explicit sCommandTimeStampFind(rclcpp::Time const & timestamp)
-  : time_stamp_(timestamp)
-  {}
+  explicit sCommandTimeStampFind(rclcpp::Time const & timestamp) : time_stamp_(timestamp) {}
 
   bool operator()(ControlCmdMsg const & cmd) const
-  {return rclcpp::Time(cmd.stamp) < rclcpp::Time(time_stamp_);}
+  {
+    return rclcpp::Time(cmd.stamp) < rclcpp::Time(time_stamp_);
+  }
 
   rclcpp::Time time_stamp_;
 };
@@ -137,17 +137,20 @@ public:
   // Type definitions.
   // Smoother spline type definition.
   /**
-   * @brief Takes a fixed size (in rows) raw trajectory matrix --> smoothes out to fixed size reference trajectory.
+   * @brief Takes a fixed size (in rows) raw trajectory matrix --> smoothes out to fixed size
+   * reference trajectory.
    *
    * */
-  using bspline_type_t = ns_splines::BSplineInterpolatorTemplated<ns_splines::MPC_MAP_SMOOTHER_IN,
-      ns_splines::MPC_MAP_SMOOTHER_OUT>;
+  using bspline_type_t = ns_splines::BSplineInterpolatorTemplated<
+    ns_splines::MPC_MAP_SMOOTHER_IN, ns_splines::MPC_MAP_SMOOTHER_OUT>;
 
   /**
    *  @brief Public curvature interpolator, updated by the node, used all over the modules.
    *
    * */
-  ns_splines::InterpolatingSplinePCG interpolator_curvature_pws;  // pws stands for point-wise
+  // pws stands for point-wise
+  ns_splines::InterpolatingSplinePCG interpolator_curvature_pws =
+    ns_splines::InterpolatingSplinePCG(1);
 
 private:
   // Publishers and subscribers.
@@ -198,9 +201,10 @@ private:
   std::unique_ptr<ns_nmpc_interface::NonlinearMPCController> nonlinear_mpc_controller_ptr_{nullptr};
 
   /**
-   *  @brief Bspline interpolators, takes a fixed size trajectory EigenMatrix [x, y] and yields a interpolated smooth
-   *  [x, y] matrix. These smoothed coordinates are used to interpolate their first and second derivatives rdot(x, y),
-   *  rddot(x,y). We compute a curvature vector using these derivatives.
+   *  @brief Bspline interpolators, takes a fixed size trajectory EigenMatrix [x, y] and yields a
+   * interpolated smooth [x, y] matrix. These smoothed coordinates are used to interpolate their
+   * first and second derivatives rdot(x, y), rddot(x,y). We compute a curvature vector using these
+   * derivatives.
    * */
   std::unique_ptr<bspline_type_t> bspline_interpolator_ptr_{nullptr};  // smoothing interpolator.
   // std::unique_ptr<ns_splines::BSplineSmoother> bspline_interpolator_ptr_{nullptr};
@@ -262,7 +266,8 @@ private:
   std::deque<ControlCmdMsg> inputs_buffer_{};  // !< @brief an input buffer for state prediction.
 
   // Data members.
-  bool is_control_cmd_prev_initialized_{false};  // !< @brief flag of control_cmd_prev_ initialization
+  bool is_control_cmd_prev_initialized_{
+    false};  // !< @brief flag of control_cmd_prev_ initialization
 
   // MPC booleans
   bool is_mpc_solved_{false};
@@ -274,29 +279,29 @@ private:
   ControlCmdMsg first_control_entering_system_{};
 
   /**
-  * @brief  nonlinear MPC performance variables messages to be published.
-  *         float64 steering_angle_input
-  *         float64 steering_angle_velocity_input
-  *         float64 steering_angle_measured
-  *         float64 acceleration_input
-  *         float64 nmpc_lateral_error
-  *         float64 nmpc_yaw_error
-  *         float64 nmpc_curvature
-  *         float64 lateral_error_ukf
-  *         float64 yaw_error_ukf
-  *         float64 steering_angle_ukf
-  *         float64 long_velocity_ukf
-  *         float64 long_velocity_target
-  *         float64 long_velocity_input
-  *         float64 long_velocity_measured
-  *         float64 avg_nmpc_computation_time
-  *         float64 yaw_angle_measured
-  *         float64 yaw_angle_target
-  *         float64 yaw_angle_traj
-  *         float64 lateral_acceleration
-  *         int8 fsm_state
-  *         float64 distance_to_stop_point
-  */
+   * @brief  nonlinear MPC performance variables messages to be published.
+   *         float64 steering_angle_input
+   *         float64 steering_angle_velocity_input
+   *         float64 steering_angle_measured
+   *         float64 acceleration_input
+   *         float64 nmpc_lateral_error
+   *         float64 nmpc_yaw_error
+   *         float64 nmpc_curvature
+   *         float64 lateral_error_ukf
+   *         float64 yaw_error_ukf
+   *         float64 steering_angle_ukf
+   *         float64 long_velocity_ukf
+   *         float64 long_velocity_target
+   *         float64 long_velocity_input
+   *         float64 long_velocity_measured
+   *         float64 avg_nmpc_computation_time
+   *         float64 yaw_angle_measured
+   *         float64 yaw_angle_target
+   *         float64 yaw_angle_traj
+   *         float64 lateral_acceleration
+   *         int8 fsm_state
+   *         float64 distance_to_stop_point
+   */
   NonlinearMPCPerformanceMsg nmpc_performance_vars_{};
 
   // Vehicle motion finite state
@@ -342,8 +347,7 @@ private:
 
   // Load NMPCCore, LPV parameters and OSQP class parameters.
   void loadNMPCoreParameters(
-    ns_data::data_nmpc_core_type_t & data_nmpc_core,
-    ns_data::param_lpv_type_t & params_lpv,
+    ns_data::data_nmpc_core_type_t & data_nmpc_core, ns_data::param_lpv_type_t & params_lpv,
     ns_data::ParamsOptimization & params_optimization);
 
   /**
@@ -357,7 +361,8 @@ private:
    *   Simple algebraic equation solution gives ax, au, bx, bu
    *   a = (xmax-xmin) / (xmaxhat - xminhat) and b = (xmax, xmin) - a(xmaxhat, xminhat).
    *
-   *  ax, au are put on the diagonals of the scaling matrices. bx, bu are the centering vector entries.
+   *  ax, au are put on the diagonals of the scaling matrices. bx, bu are the centering vector
+   * entries.
    * */
   static void computeScalingMatrices(ns_data::ParamsOptimization & params);
 
@@ -377,8 +382,8 @@ private:
   void onCommDelayCompensation(const DelayCompensationRefs::SharedPtr msg);
 
   /**
-  * @brief set current measured steering with received message
-  */
+   * @brief set current measured steering with received message
+   */
   void onSteeringMeasured(SteeringMeasuredMsg::SharedPtr msg);
 
   /**
@@ -386,8 +391,8 @@ private:
    * */
   OnSetParametersCallbackHandle::SharedPtr is_parameters_set_res_;
 
-  rcl_interfaces::msg::SetParametersResult
-  onParameterUpdate(const std::vector<rclcpp::Parameter> & parameters);
+  rcl_interfaces::msg::SetParametersResult onParameterUpdate(
+    const std::vector<rclcpp::Parameter> & parameters);
 
   void updateCurrentPose();
 
@@ -403,7 +408,8 @@ private:
   void setCurrentCOGPose(geometry_msgs::msg::PoseStamped const & ps);
 
   /**
-   * @brief calculates the distance to the vehicle states in which the speed is less than a threshold.
+   * @brief calculates the distance to the vehicle states in which the speed is less than a
+   * threshold.
    * */
   double calcStopDistance(const size_t & prev_waypoint_index) const;
 
@@ -444,33 +450,33 @@ private:
   static bool isValidTrajectory(const TrajectoryMsg & msg_traj);
 
   /**
-   * f resamples the current trajectory with a varying size into a fixed-sized trajectories and store them in an associated raw trajectory data class.
+   * f resamples the current trajectory with a varying size into a fixed-sized trajectories and
+   * store them in an associated raw trajectory data class.
    * @return true
    * @return false
    */
   bool resampleRawTrajectoriesToaFixedSize();
 
   /**
-   * @brief creates a matrix of a fixed number of rows for [s, x, y, z] coordinates given the raw trajectories.
+   * @brief creates a matrix of a fixed number of rows for [s, x, y, z] coordinates given the raw
+   * trajectories.
    * @param mpc_traj_raw raw trajectory container created when a planning trajectory is received.
    * @param fixed_map_ref_sxyz Eigen matrix that stores the interpolated coordinates.
    * */
   static bool makeFixedSizeMat_sxyz(
-    ns_data::MPCdataTrajectoryVectors const & mpc_traj_raw,
-    map_matrix_in_t & fixed_map_ref_sxyz);
+    ns_data::MPCdataTrajectoryVectors const & mpc_traj_raw, map_matrix_in_t & fixed_map_ref_sxyz);
 
   /**
-   * @brief given a fixed size [s, x, y, z] trajectory, create the other references. InterpolateImplicitCoordinates [s, x, y] for down-sampling.
-   * We do not use these references except the arc_length-curvature table.
+   * @brief given a fixed size [s, x, y, z] trajectory, create the other references.
+   * InterpolateImplicitCoordinates [s, x, y] for down-sampling. We do not use these references
+   * except the arc_length-curvature table.
    * */
   bool createSmoothTrajectoriesWithCurvature(
     ns_data::MPCdataTrajectoryVectors const & mpc_traj_raw,
     map_matrix_in_t const & fixed_map_ref_sxyz);
 
   static ControlCmdMsg createControlCommand(
-    double const & ax,
-    double const & vx,
-    double const & steering_rate,
+    double const & ax, double const & vx, double const & steering_rate,
     double const & steering_val);
 
   /**
@@ -492,9 +498,7 @@ private:
   void publishErrorReport(ErrorReportMsg & error_rpt_msg) const;
 
   visualization_msgs::msg::MarkerArray createPredictedTrajectoryMarkers(
-    std::string const & ns,
-    std::string const & frame_id,
-    std::array<double, 2> xy0,
+    std::string const & ns, std::string const & frame_id, std::array<double, 2> xy0,
     Model::trajectory_data_t const & td) const;
 
   /**

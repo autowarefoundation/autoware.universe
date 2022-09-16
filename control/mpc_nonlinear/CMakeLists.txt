@@ -206,6 +206,7 @@ if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
   set(NMPC_TESTs nonlinear_mpc_tests)
 
+
   ament_add_gtest(${NMPC_TESTs}
     test/include/nonlinear_mpc_test_node.hpp
     test/include/nmpc_test_utils.hpp
