@@ -49,7 +49,6 @@ private:
 
   float score_threshold_{0.0};
   std::vector<std::string> class_names_;
-  bool rename_car_to_truck_and_bus_{false};
   bool has_twist_{false};
 
   std::unique_ptr<CenterPointTRT> detector_ptr_{nullptr};

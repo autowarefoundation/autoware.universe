@@ -52,7 +52,6 @@ protected:
   float score_threshold_{0.0};
   std::vector<std::string> class_names_;
   std::vector<double> pointcloud_range;
-  bool rename_car_to_truck_and_bus_{false};
   bool has_twist_{false};
 
   std::unique_ptr<image_projection_based_fusion::PointPaintingTRT> detector_ptr_{nullptr};

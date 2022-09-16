@@ -18,6 +18,7 @@
   <arg name="input/camera_info7" default="/camera_info7"/>
   <arg name="input/pointcloud" default="/sensing/lidar/top/rectified/pointcloud"/>
   <arg name="output/objects" default="objects"/>
+  <arg name="output/objects_raw" default="objects_raw"/>
   <arg name="model_name" default="pointpainting" description="options: `pointpainting`"/>
   <arg name="model_path" default="$(find-pkg-share image_projection_based_fusion)/data"/>
   <arg name="model_param_path" default="$(find-pkg-share image_projection_based_fusion)/config/$(var model_name).param.yaml"/>
@@ -64,7 +65,7 @@
 
     <node pkg="image_projection_based_fusion" exec="pointpainting_fusion_node" name="pointpainting" output="screen">
       <remap from="~/input/pointcloud" to="$(var input/pointcloud)"/>
-      <remap from="~/output/objects" to="$(var output/objects)"/>
+      <remap from="~/output/objects" to="$(var output/objects_raw)"/>
       <param name="score_threshold" value="0.45"/>
       <param name="densification_world_frame_id" value="map"/>
       <param name="densification_num_past_frames" value="0"/>
@@ -79,5 +80,10 @@
       <!-- debug -->
       <param name="debug_mode" value="$(var debug_mode)"/>
     </node>
+
+    <include file="$(find-pkg-share detection_class_adapter)/launch/detection_class_adapter.launch.xml">
+      <arg name="input/objects" value="$(var output/objects_raw)"/>
+      <arg name="output/objects" value="$(var output/objects)"/>
+    </include>
   </group>
 </launch>

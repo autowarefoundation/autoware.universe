@@ -52,7 +52,6 @@ LidarCenterPointNode::LidarCenterPointNode(const rclcpp::NodeOptions & node_opti
   const std::string head_onnx_path = this->declare_parameter<std::string>("head_onnx_path");
   const std::string head_engine_path = this->declare_parameter<std::string>("head_engine_path");
   class_names_ = this->declare_parameter<std::vector<std::string>>("class_names");
-  rename_car_to_truck_and_bus_ = this->declare_parameter("rename_car_to_truck_and_bus", false);
   has_twist_ = this->declare_parameter("has_twist", false);
   const std::size_t point_feature_size =
     static_cast<std::size_t>(this->declare_parameter<std::int64_t>("point_feature_size"));
@@ -127,7 +126,7 @@ void LidarCenterPointNode::pointCloudCallback(
   output_msg.header = input_pointcloud_msg->header;
   for (const auto & box3d : det_boxes3d) {
     autoware_auto_perception_msgs::msg::DetectedObject obj;
-    box3DToDetectedObject(box3d, class_names_, rename_car_to_truck_and_bus_, has_twist_, obj);
+    box3DToDetectedObject(box3d, class_names_, has_twist_, obj);
     output_msg.objects.emplace_back(obj);
   }
 
