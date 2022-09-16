@@ -15,6 +15,7 @@
  */
 
 #include "nonlinear_mpc_core/nmpc_data_trajectory.hpp"
+
 #include <algorithm>
 #include <limits>
 #include <vector>
@@ -63,9 +64,8 @@ void ns_data::MPCdataTrajectoryVectors::emplace_back(
     double const & ds = std::sqrt(dx * dx + dy * dy + dz * dz);
 
     // used for trapezoidal integration
-    double const & mean_v =
-      static_cast<double>((point0.longitudinal_velocity_mps + point1.longitudinal_velocity_mps) /
-      2);
+    double const & mean_v = static_cast<double>(
+      (point0.longitudinal_velocity_mps + point1.longitudinal_velocity_mps) / 2);
 
     // !<@brief to prevent zero division.
     double const & dt = ds / ns_utils::clamp(mean_v, 0.1, mean_v);
@@ -74,11 +74,11 @@ void ns_data::MPCdataTrajectoryVectors::emplace_back(
     // double &&acc_computed = dv / (EPS + dt);
 
     // Insert s, t and ax,
-    s.emplace_back(s[k - 1] + ds);  // s[k] = s[k-1] + ds
-    t.emplace_back(t[k - 1] + dt);  // t[k] = t[k-1] + dt
-    ax.emplace_back(msg.points.at(k).acceleration_mps2); // a[k] = traj.ax[k]
+    s.emplace_back(s[k - 1] + ds);                        // s[k] = s[k-1] + ds
+    t.emplace_back(t[k - 1] + dt);                        // t[k] = t[k-1] + dt
+    ax.emplace_back(msg.points.at(k).acceleration_mps2);  // a[k] = traj.ax[k]
 
-    x.emplace_back(point1.pose.position.x); // x[k] = traj.x[k]
+    x.emplace_back(point1.pose.position.x);  // x[k] = traj.x[k]
     y.emplace_back(point1.pose.position.y);
     z.emplace_back(point1.pose.position.z);
 
@@ -90,10 +90,10 @@ void ns_data::MPCdataTrajectoryVectors::emplace_back(
   curvature = std::vector<double>(s.size(), 0.0);
 
   // Add end-points as an extra points.
-  double const ds = 1.0e-1;     // !<@brief for guaranteeing the monotonicity condition in s.
-  s.emplace_back(s.back() + ds);   // !<@brief zero velocity no motion.
+  double const ds = 1.0e-2;       // !<@brief for guaranteeing the monotonicity condition in s.
+  s.emplace_back(s.back() + ds);  // !<@brief zero velocity no motion.
 
-  double const t_ext = 10.0;    // !<@brief extra time for MPC
+  double const t_ext = 10.0;  // !<@brief extra time for MPC
   t.emplace_back(t.back() + t_ext);
 
   auto atemp = ax.back();
@@ -145,10 +145,10 @@ void ns_data::MPCdataTrajectoryVectors::clear()
 
 size_t ns_data::MPCdataTrajectoryVectors::size() const
 {
-  if (x.size() == y.size() && x.size() == z.size() && x.size() == yaw.size() &&
+  if (
+    x.size() == y.size() && x.size() == z.size() && x.size() == yaw.size() &&
     x.size() == vx.size() && x.size() == curvature.size() && x.size() == t.size() &&
-    x.size() == s.size() && x.size() == ax.size())
-  {
+    x.size() == s.size() && x.size() == ax.size()) {
     return x.size();
   }
 
@@ -167,45 +167,54 @@ size_t ns_data::MPCdataTrajectoryVectors::size() const
 }
 
 void ns_data::MPCdataTrajectoryVectors::setTrajectoryCoordinate(
-  char const & coord_name,
-  std::vector<double> const & data_vect)
+  char const & coord_name, std::vector<double> const & data_vect)
 {
   switch (coord_name) {
-    case 's': s = data_vect;
+    case 's':
+      s = data_vect;
       break;
 
-    case 't': t = data_vect;
+    case 't':
+      t = data_vect;
       break;
 
-    case 'a': ax = data_vect;
+    case 'a':
+      ax = data_vect;
       break;
 
-    case 'x': x = data_vect;
+    case 'x':
+      x = data_vect;
       break;
 
-    case 'y': y = data_vect;
+    case 'y':
+      y = data_vect;
       break;
 
-    case 'z': z = data_vect;
+    case 'z':
+      z = data_vect;
       break;
 
-    case 'v': vx = data_vect;
+    case 'v':
+      vx = data_vect;
       break;
 
-    case 'w': yaw = data_vect;
+    case 'w':
+      yaw = data_vect;
       break;
 
-    case 'c': curvature = data_vect;
+    case 'c':
+      curvature = data_vect;
       break;
 
-    default: break;
+    default:
+      break;
   }
 }
 
 void ns_data::MPCdataTrajectoryVectors::addExtraEndPoints(double const & avg_mpc_compute_time)
 {
   //  Add end-points as an extra points.
-  double const ds = 2.0e-1;          // for guaranteeing the monotonicity condition in s.
+  double const ds = 1.0e-2;       // for guaranteeing the monotonicity condition in s.
   s.emplace_back(s.back() + ds);  // zero velocity no motion.
 
   double && t_ext = 10.0 + avg_mpc_compute_time;
@@ -229,4 +238,22 @@ void ns_data::MPCdataTrajectoryVectors::addExtraEndPoints(double const & avg_mpc
   vx.emplace_back(vx.back());  // vend = 0.0.
   ax.emplace_back(ax.back());
   curvature.emplace_back(0.0);
+}
+void ns_data::MPCdataTrajectoryVectors::print() const
+{
+  size_t n = s.size();
+
+  Eigen::MatrixXd temp_path(n, 5);
+
+  ns_utils::print("s x, y, z, yaw, vx and curvature");
+  for (size_t k = 0; k < n; ++k) {
+    auto p = static_cast<Eigen::Index>(k);
+    temp_path(p, 0) = s[k];
+    temp_path(p, 1) = x[k];
+    temp_path(p, 2) = y[k];
+    temp_path(p, 3) = z[k];
+    temp_path(p, 4) = yaw[k];
+  }
+
+  ns_eigen_utils::printEigenMat(temp_path);
 }

@@ -295,7 +295,7 @@ TEST_F(FakeNodeFixture, straight_line_trajectory)
   auto br = std::make_shared<tf2_ros::StaticTransformBroadcaster>(this->get_fake_node());
 
   // Dummy transform: ego is at (0.0, 0.0) in map frame
-  double yaw_vehicle_deg{90.};
+  double yaw_vehicle_deg{0.};
   ns_utils::deg2rad(yaw_vehicle_deg);
 
   geometry_msgs::msg::TransformStamped transform = test_utils::getDummyTransform(yaw_vehicle_deg);
@@ -309,43 +309,38 @@ TEST_F(FakeNodeFixture, straight_line_trajectory)
   is_control_nmpc_msg_received = false;
 
   TrajectoryMsg traj_msg;
-  traj_msg.header.stamp = node->now();
-  traj_msg.header.frame_id = "map";
+
+  size_t num_of_traj_points = 50;
+  auto xcoord = ns_utils::linspace(0., 50., num_of_traj_points);
+  auto ycoord = std::vector<double>(num_of_traj_points, 0.);
+  float vx = 1.;
+  double yaw_path = 90.;
+  ns_utils::deg2rad(yaw_path);
+
+  for (size_t k = 0; k < num_of_traj_points; ++k) {
+    TrajectoryPoint p;
+    p.pose.position.x = xcoord[k];
+    p.pose.position.y = ycoord[k];
+
+    p.longitudinal_velocity_mps = vx;
+    p.pose.orientation = ns_nmpc_utils::createOrientationMsgfromYaw(yaw_path);
+    traj_msg.points.emplace_back(p);
+  }
 
   VelocityMsg odom_msg;
-  SteeringReport steer_msg;
-
-  TrajectoryPoint p;
-
-  p.pose.position.x = 0.0;
-  p.pose.position.y = -1.0;
-  p.longitudinal_velocity_mps = 1.0f;
-  traj_msg.points.push_back(p);
-
-  p.pose.position.x = 0.0;
-  p.pose.position.y = 0.0;
-  p.longitudinal_velocity_mps = 1.0f;
-  traj_msg.points.push_back(p);
-
-  p.pose.position.x = 0.0;
-  p.pose.position.y = 1.0;
-  p.longitudinal_velocity_mps = 1.0f;
-  traj_msg.points.push_back(p);
-
-  p.pose.position.x = 0.0;
-  p.pose.position.y = 2.0;
-  p.longitudinal_velocity_mps = 1.0f;
-  traj_msg.points.push_back(p);
-  traj_pub->publish(traj_msg);
-
   odom_msg.header.stamp = node->now();
   odom_msg.twist.twist.linear.x = 1.0;
 
+  SteeringReport steer_msg;
   steer_msg.stamp = node->now();
   steer_msg.steering_tire_angle = 0.0;
 
   vel_pub->publish(odom_msg);
   steer_pub->publish(steer_msg);
+
+  traj_msg.header.stamp = node->now();
+  traj_msg.header.frame_id = "map";
+  traj_pub->publish(traj_msg);
 
   test_utils::waitForMessage(node, this, is_control_nmpc_msg_received);
   ASSERT_TRUE(is_control_nmpc_msg_received);
