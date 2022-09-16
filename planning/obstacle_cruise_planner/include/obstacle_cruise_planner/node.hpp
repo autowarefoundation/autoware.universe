@@ -102,8 +102,7 @@ private:
   bool isCruiseObstacle(const uint8_t label);
   bool isStopObstacle(const uint8_t label);
   bool isFrontCollideObstacle(
-    const Trajectory & traj, const geometry_msgs::msg::Pose current_pose,
-    const geometry_msgs::msg::Pose & object_pose, const size_t first_collision_idx);
+    const Trajectory & traj, const PredictedObject & object, const size_t first_collision_idx);
 
   bool is_showing_debug_info_;
   double min_behavior_stop_margin_;
