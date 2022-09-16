@@ -49,23 +49,6 @@ using unique_identifier_msgs::msg::UUID;
 using visualization_msgs::msg::MarkerArray;
 using PlanResult = PathWithLaneId::SharedPtr;
 
-struct TurnSignalInfo
-{
-  TurnSignalInfo()
-  {
-    turn_signal.command = TurnIndicatorsCommand::NO_COMMAND;
-    hazard_signal.command = HazardLightsCommand::NO_COMMAND;
-  }
-
-  // desired turn signal
-  TurnIndicatorsCommand turn_signal;
-  HazardLightsCommand hazard_signal;
-
-  // TODO(Horibe) replace with point. Distance should be calculates in turn_signal_decider.
-  // distance to the turn signal trigger point (to choose nearest signal for multiple requests)
-  double signal_distance{std::numeric_limits<double>::max()};
-};
-
 struct BehaviorModuleOutput
 {
   BehaviorModuleOutput() = default;

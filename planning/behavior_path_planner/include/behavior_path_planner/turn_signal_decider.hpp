@@ -22,6 +22,7 @@
 
 #include <lanelet2_core/LaneletMap.h>
 
+#include <map>
 #include <memory>
 #include <utility>
 
@@ -31,13 +32,35 @@ using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand;
 using geometry_msgs::msg::Pose;
 using route_handler::RouteHandler;
+
+struct TurnSignalInfo
+{
+  TurnSignalInfo()
+  {
+    turn_signal.command = TurnIndicatorsCommand::NO_COMMAND;
+    hazard_signal.command = HazardLightsCommand::NO_COMMAND;
+  }
+
+  // desired turn signal
+  TurnIndicatorsCommand turn_signal;
+  HazardLightsCommand hazard_signal;
+
+  geometry_msgs::msg::Point desired_start_point;
+  geometry_msgs::msg::Point desired_end_point;
+  geometry_msgs::msg::Point required_start_point;
+  geometry_msgs::msg::Point required_end_point;
+};
+
+const std::map<std::string, uint8_t> signal_map = {{"left", TurnIndicatorsCommand::ENABLE_LEFT},
+                                                   {"right", TurnIndicatorsCommand::ENABLE_RIGHT},
+                                                   {"none", TurnIndicatorsCommand::DISABLE}};
+
 class TurnSignalDecider
 {
 public:
   TurnIndicatorsCommand getTurnSignal(
-    const PathWithLaneId & path, const Pose & current_pose, const size_t current_seg_idx,
-    const RouteHandler & route_handler, const TurnIndicatorsCommand & turn_signal_plan,
-    const double plan_distance) const;
+    const PathWithLaneId & path, const Pose & current_pose, const double current_vel, const size_t current_seg_idx,
+    const RouteHandler & route_handler, const TurnSignalInfo& turn_signal_info) const;
 
   void setParameters(const double base_link2front, const double intersection_search_distance)
   {
@@ -46,9 +69,11 @@ public:
   }
 
 private:
-  std::pair<TurnIndicatorsCommand, double> getIntersectionTurnSignal(
-    const PathWithLaneId & path, const Pose & current_pose, const size_t current_seg_idx,
+  boost::optional<TurnSignalInfo> getIntersectionTurnSignalInfo(
+    const PathWithLaneId & path, const Pose & current_pose, const double current_vel, const size_t current_seg_idx,
     const RouteHandler & route_handler) const;
+
+  geometry_msgs::msg::Point get_required_end_point(const lanelet::ConstLineString3d& centerline) const;
 
   rclcpp::Logger logger_{
     rclcpp::get_logger("behavior_path_planner").get_child("turn_signal_decider")};
