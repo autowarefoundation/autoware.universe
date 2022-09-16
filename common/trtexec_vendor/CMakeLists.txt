@@ -22,7 +22,7 @@ if(NOT (${CUDA_FOUND} AND ${CUDNN_FOUND} AND ${TENSORRT_FOUND}))
   return()
 endif()
 
-if (${TENSORRT_VERSION} VERSION_LESS 8.2.1)
+if(${TENSORRT_VERSION} VERSION_LESS 8.2.1)
   message(WARNING "The tensorrt version less than 8.2.1 isn't supported.")
   return()
 endif()
