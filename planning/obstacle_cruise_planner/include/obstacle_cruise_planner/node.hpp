@@ -92,7 +92,7 @@ private:
   geometry_msgs::msg::Point calcNearestCollisionPoint(
     const size_t & first_within_idx,
     const std::vector<geometry_msgs::msg::Point> & collision_points,
-    const Trajectory & decimated_traj);
+    const Trajectory & decimated_traj, size_t & collision_index);
   double calcCollisionTimeMargin(
     const geometry_msgs::msg::Pose & current_pose, const double current_vel,
     const geometry_msgs::msg::Point & nearest_collision_point,
@@ -105,6 +105,8 @@ private:
 
   bool isCruiseObstacle(const uint8_t label);
   bool isStopObstacle(const uint8_t label);
+  bool isFrontCollideObstacle(
+    const Trajectory & traj, const PredictedObject & object, const size_t first_collision_idx);
 
   bool is_showing_debug_info_;
   double min_behavior_stop_margin_;
