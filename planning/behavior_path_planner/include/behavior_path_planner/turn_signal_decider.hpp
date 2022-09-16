@@ -24,6 +24,7 @@
 
 #include <map>
 #include <memory>
+#include <string>
 #include <utility>
 
 namespace behavior_path_planner
@@ -51,16 +52,18 @@ struct TurnSignalInfo
   geometry_msgs::msg::Point required_end_point;
 };
 
-const std::map<std::string, uint8_t> signal_map = {{"left", TurnIndicatorsCommand::ENABLE_LEFT},
-                                                   {"right", TurnIndicatorsCommand::ENABLE_RIGHT},
-                                                   {"none", TurnIndicatorsCommand::DISABLE}};
+const std::map<std::string, uint8_t> signal_map = {
+  {"left", TurnIndicatorsCommand::ENABLE_LEFT},
+  {"right", TurnIndicatorsCommand::ENABLE_RIGHT},
+  {"none", TurnIndicatorsCommand::DISABLE}};
 
 class TurnSignalDecider
 {
 public:
   TurnIndicatorsCommand getTurnSignal(
-    const PathWithLaneId & path, const Pose & current_pose, const double current_vel, const size_t current_seg_idx,
-    const RouteHandler & route_handler, const TurnSignalInfo& turn_signal_info) const;
+    const PathWithLaneId & path, const Pose & current_pose, const double current_vel,
+    const size_t current_seg_idx, const RouteHandler & route_handler,
+    const TurnSignalInfo & turn_signal_info) const;
 
   void setParameters(const double base_link2front, const double intersection_search_distance)
   {
@@ -70,10 +73,11 @@ public:
 
 private:
   boost::optional<TurnSignalInfo> getIntersectionTurnSignalInfo(
-    const PathWithLaneId & path, const Pose & current_pose, const double current_vel, const size_t current_seg_idx,
-    const RouteHandler & route_handler) const;
+    const PathWithLaneId & path, const Pose & current_pose, const double current_vel,
+    const size_t current_seg_idx, const RouteHandler & route_handler) const;
 
-  geometry_msgs::msg::Point get_required_end_point(const lanelet::ConstLineString3d& centerline) const;
+  geometry_msgs::msg::Point get_required_end_point(
+    const lanelet::ConstLineString3d & centerline) const;
 
   rclcpp::Logger logger_{
     rclcpp::get_logger("behavior_path_planner").get_child("turn_signal_decider")};
