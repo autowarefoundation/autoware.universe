@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV, Inc. All rights reserved.
+// Copyright 2022 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ GridScanGroundFilterComponent::GridScanGroundFilterComponent(const rclcpp::NodeO
     gnd_grid_buffer_size_ = static_cast<int>(declare_parameter("gnd_grid_buffer_size", 4));
     base_frame_ = declare_parameter("base_frame", "base_link");
     global_slope_max_angle_rad_ = deg2rad(declare_parameter("global_slope_max_angle_deg", 8.0));
-    local_slope_max_angle_rad_ = deg2rad(declare_parameter("local_slope_max_angle_rad", 10.0));
+    local_slope_max_angle_rad_ = deg2rad(declare_parameter("local_slope_max_angle_deg", 10.0));
     radial_divider_angle_rad_ = deg2rad(declare_parameter("radial_divider_angle_deg", 1.0));
     split_points_distance_tolerance_ = declare_parameter("split_points_distance_tolerance", 0.2);
     radial_dividers_num_ = std::ceil(2.0 * M_PI / radial_divider_angle_rad_);

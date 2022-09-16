@@ -30,9 +30,9 @@ This implementation inherits `pointcloud_preprocessor::Filter` class, please ref
 | Name                              | Type   | Default Value | Description                                                                             |
 | --------------------------------- | ------ | ------------- | --------------------------------------------------------------------------------------- |
 | `base_frame`                      | string | "base_link"   | base_link frame                                                                         |
-| `global_slope_max`                | double | 8.0           | The global angle to classify as the ground or object [deg]                              |
-| `local_max_slope`                 | double | 10.0          | The local angle to classify as the ground or object [deg]                               |
-| `radial_divider_angle`            | double | 1.0           | The angle which divide the whole pointcloud to sliced group [deg]                       |
+| `global_slope_max_angle_deg`      | double | 8.0           | The global angle to classify as the ground or object [deg]                              |
+| `local_slope_max_angle_deg`       | double | 10.0          | The local angle to classify as the ground or object [deg]                               |
+| `radial_divider_angle_deg`        | double | 1.0           | The angle which divide the whole pointcloud to sliced group [deg]                       |
 | `split_points_distance_tolerance` | double | 0.2           | The xy-distance threshold to to distinguishing far and near [m]                         |
 | `split_height_distance`           | double | 0.2           | The height threshold to distinguishing far and near [m]                                 |
 | `detection_range_z_max`           | float  | 2.5           | Maximum height of detection range [m]                                                   |
