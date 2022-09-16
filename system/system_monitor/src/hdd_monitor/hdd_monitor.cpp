@@ -624,29 +624,26 @@ void HDDMonitor::updateHDDInfoList()
     return;
   }
 
+  uint8_t request_id = HDDReaderRequestID::GetHDDInfo;
   std::vector<HDDDevice> hdd_devices;
   for (auto itr = hdd_params_.begin(); itr != hdd_params_.end(); ++itr) {
-    HDDDevice device;
-
-    if (hdd_connected_flags_[itr->first]) {
-      device.name_ = itr->second.disk_device_;
-      device.temp_attribute_id_ = itr->second.temp_attribute_id_;
-      device.power_on_hours_attribute_id_ = itr->second.power_on_hours_attribute_id_;
-      device.total_data_written_attribute_id_ = itr->second.total_data_written_attribute_id_;
-      device.recovered_error_attribute_id_ = itr->second.recovered_error_attribute_id_;
-      device.unmount_request_flag_ = 0;
-    } else if (device_unmount_request_flags_[itr->first]) {
-      device.part_device_ = itr->second.part_device_;
-      device.unmount_request_flag_ = 1;
-    } else {
+    if (!hdd_connected_flags_[itr->first]) {
       continue;
     }
+
+    HDDDevice device;
+    device.name_ = itr->second.disk_device_;
+    device.temp_attribute_id_ = itr->second.temp_attribute_id_;
+    device.power_on_hours_attribute_id_ = itr->second.power_on_hours_attribute_id_;
+    device.total_data_written_attribute_id_ = itr->second.total_data_written_attribute_id_;
+    device.recovered_error_attribute_id_ = itr->second.recovered_error_attribute_id_;
 
     hdd_devices.push_back(device);
   }
 
   std::ostringstream oss;
   boost::archive::text_oarchive oa(oss);
+  oa & request_id;
   oa & hdd_devices;
 
   // Write list of devices to FD
@@ -797,7 +794,6 @@ void HDDMonitor::updateHDDConnections()
 {
   for (auto & hdd_param : hdd_params_) {
     hdd_connected_flags_[hdd_param.first] = false;
-    device_unmount_request_flags_[hdd_param.first] = false;
 
     // Get device name from mount point
     hdd_param.second.part_device_ = getDeviceFromMountPoint(hdd_param.first);
@@ -824,10 +820,106 @@ void HDDMonitor::updateHDDConnections()
       } else {
         // Deal with the issue that file system remains mounted when a drive is actually
         // disconnected.
-        device_unmount_request_flags_[hdd_param.first] = true;
+        if (unmountDevice(hdd_param.second.part_device_)) {
+          RCLCPP_ERROR(
+            get_logger(), "Failed to unmount device : %s", hdd_param.second.part_device_.c_str());
+        }
       }
     }
   }
+}
+
+int HDDMonitor::unmountDevice(std::string & device)
+{
+  // Create a new socket
+  int sock = socket(AF_INET, SOCK_STREAM, 0);
+  if (sock < 0) {
+    RCLCPP_ERROR(get_logger(), "socket create error. %s", strerror(errno));
+    return -1;
+  }
+
+  // Specify the receiving timeouts until reporting an error
+  struct timeval tv;
+  tv.tv_sec = 10;
+  tv.tv_usec = 0;
+  int ret = setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+  if (ret < 0) {
+    RCLCPP_ERROR(get_logger(), "setsockopt error. %s", strerror(errno));
+    close(sock);
+    return -1;
+  }
+
+  // Connect the socket referred to by the file descriptor
+  sockaddr_in addr;
+  memset(&addr, 0, sizeof(sockaddr_in));
+  addr.sin_family = AF_INET;
+  addr.sin_port = htons(hdd_reader_port_);
+  addr.sin_addr.s_addr = htonl(INADDR_ANY);
+  ret = connect(sock, (struct sockaddr *)&addr, sizeof(addr));
+  if (ret < 0) {
+    RCLCPP_ERROR(get_logger(), "socket connect error. %s", strerror(errno));
+    close(sock);
+    return -1;
+  }
+
+  uint8_t request_id = HDDReaderRequestID::UnmountDevice;
+  std::vector<UnmountDeviceInfo> umount_dev_infos;
+  UnmountDeviceInfo dev_info;
+
+  dev_info.part_device_ = device;
+  umount_dev_infos.push_back(dev_info);
+
+  std::ostringstream oss;
+  boost::archive::text_oarchive oa(oss);
+  oa & request_id;
+  oa & umount_dev_infos;
+
+  // Write list of devices to FD
+  ret = write(sock, oss.str().c_str(), oss.str().length());
+  if (ret < 0) {
+    RCLCPP_ERROR(get_logger(), "socket write error. %s", strerror(errno));
+    close(sock);
+    return -1;
+  }
+
+  // Receive messages from a socket
+  char buf[1024] = "";
+  ret = recv(sock, buf, sizeof(buf) - 1, 0);
+  if (ret < 0) {
+    RCLCPP_ERROR(get_logger(), "socket recv error. %s", strerror(errno));
+    close(sock);
+    return -1;
+  }
+  // No data received
+  if (ret == 0) {
+    RCLCPP_ERROR(get_logger(), "no data received from hdd_reader.");
+    close(sock);
+    return -1;
+  }
+
+  // Close the file descriptor FD
+  ret = close(sock);
+  if (ret < 0) {
+    RCLCPP_ERROR(get_logger(), "socket close error. %s", strerror(errno));
+    return -1;
+  }
+
+  std::vector<int> responses;
+
+  // Restore responses
+  try {
+    std::istringstream iss(buf);
+    boost::archive::text_iarchive ia(iss);
+    ia >> responses;
+  } catch (const std::exception & e) {
+    RCLCPP_ERROR(get_logger(), "restore responses exception. %s", e.what());
+    return -1;
+  }
+  if (responses.empty()) {
+    RCLCPP_ERROR(get_logger(), "responses from hdd_reader is empty.");
+    return -1;
+  }
+  return responses[0];
 }
 
 #include <rclcpp_components/register_node_macro.hpp>

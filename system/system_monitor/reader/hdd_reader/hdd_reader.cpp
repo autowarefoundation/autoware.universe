@@ -408,26 +408,126 @@ int get_nvme_SMARTData(int fd, HDDInfo * info)
 }
 
 /**
- * @brief unmount device with lazy option
- * @param [in] device device name
+ * @brief get HDD information
+ * @param [in] boost::archive::text_iarchive object
+ * @param [out] boost::archive::text_oarchive object
+ * @return 0 on success, otherwise error
  */
-void unmount_device_with_lazy(std::string & device)
+int get_hdd_info(boost::archive::text_iarchive & ia, boost::archive::text_oarchive & oa)
 {
-  boost::process::ipstream is_out;
-  boost::process::ipstream is_err;
+  std::vector<HDDDevice> hdd_devices;
+  HDDInfoList list;
 
-  boost::process::child c(
-    "/bin/sh", "-c", fmt::format("umount -l {}", device.c_str()), boost::process::std_out > is_out,
-    boost::process::std_err > is_err);
-  c.wait();
-
-  if (c.exit_code() != 0) {
-    syslog(LOG_ERR, "Failed to execute umount command. %s\n", device.c_str());
+  try {
+    ia & hdd_devices;
+  } catch (const std::exception & e) {
+    syslog(LOG_ERR, "exception. %s\n", e.what());
+    return -1;
   }
+
+  for (auto & hdd_device : hdd_devices) {
+    HDDInfo info{};
+
+    // Open a file
+    int fd = open(hdd_device.name_.c_str(), O_RDONLY);
+    if (fd < 0) {
+      info.error_code_ = errno;
+      syslog(LOG_ERR, "Failed to open a file. %s\n", strerror(info.error_code_));
+      continue;
+    }
+
+    // AHCI device
+    if (boost::starts_with(hdd_device.name_.c_str(), "/dev/sd")) {
+      // Get IDENTIFY DEVICE for ATA drive
+      info.error_code_ = get_ata_identify(fd, &info);
+      if (info.error_code_ != 0) {
+        syslog(
+          LOG_ERR, "Failed to get IDENTIFY DEVICE for ATA drive. %s\n", strerror(info.error_code_));
+        close(fd);
+        continue;
+      }
+      // Get SMART DATA for ATA drive
+      info.error_code_ = get_ata_SMARTData(fd, &info, hdd_device);
+      if (info.error_code_ != 0) {
+        syslog(LOG_ERR, "Failed to get SMART LOG for ATA drive. %s\n", strerror(info.error_code_));
+        close(fd);
+        continue;
+      }
+    } else if (boost::starts_with(hdd_device.name_.c_str(), "/dev/nvme")) {  // NVMe device
+      // Get Identify for NVMe drive
+      info.error_code_ = get_nvme_identify(fd, &info);
+      if (info.error_code_ != 0) {
+        syslog(LOG_ERR, "Failed to get Identify for NVMe drive. %s\n", strerror(info.error_code_));
+        close(fd);
+        continue;
+      }
+      // Get SMART / Health Information for NVMe drive
+      info.error_code_ = get_nvme_SMARTData(fd, &info);
+      if (info.error_code_ != 0) {
+        syslog(
+          LOG_ERR, "Failed to get SMART / Health Information for NVMe drive. %s\n",
+          strerror(info.error_code_));
+        close(fd);
+        continue;
+      }
+    }
+
+    // Close the file descriptor FD
+    info.error_code_ = close(fd);
+    if (info.error_code_ < 0) {
+      info.error_code_ = errno;
+      syslog(LOG_ERR, "Failed to close the file descriptor FD. %s\n", strerror(info.error_code_));
+    }
+
+    list[hdd_device.name_] = info;
+  }
+
+  oa << list;
+  return 0;
 }
 
 /**
- * @brief check HDD temperature
+ * @brief unmount device with lazy option
+ * @param [in] boost::archive::text_iarchive object
+ * @param [out] boost::archive::text_oarchive object
+ * @return 0 on success, otherwise error
+ */
+int unmount_device_with_lazy(boost::archive::text_iarchive & ia, boost::archive::text_oarchive & oa)
+{
+  std::vector<UnmountDeviceInfo> unmount_devices;
+  std::vector<int> responses;
+
+  try {
+    ia & unmount_devices;
+  } catch (const std::exception & e) {
+    syslog(LOG_ERR, "exception. %s\n", e.what());
+    return -1;
+  }
+
+  for (auto & unmount_device : unmount_devices) {
+    int ret = 0;
+    boost::process::ipstream is_out;
+    boost::process::ipstream is_err;
+
+    boost::process::child c(
+      "/bin/sh", "-c", fmt::format("umount -l {}", unmount_device.part_device_.c_str()),
+      boost::process::std_out > is_out, boost::process::std_err > is_err);
+    c.wait();
+
+    if (c.exit_code() != 0) {
+      syslog(
+        LOG_ERR, "Failed to execute umount command. %s\n", unmount_device.part_device_.c_str());
+      ret = -1;
+    }
+    responses.push_back(ret);
+  }
+
+  oa << responses;
+  return 0;
+}
+
+/**
+ * @brief hdd_reader main procedure
  * @param [in] port port to listen
  */
 void run(int port)
@@ -500,14 +600,14 @@ void run(int port)
       return;
     }
 
-    // Restore list of devices
-    std::vector<HDDDevice> hdd_devices;
+    uint8_t request_id;
+
+    buf[sizeof(buf) - 1] = '\0';
+    std::istringstream iss(buf);
+    boost::archive::text_iarchive ia(iss);
 
     try {
-      buf[sizeof(buf) - 1] = '\0';
-      std::istringstream iss(buf);
-      boost::archive::text_iarchive oa(iss);
-      oa & hdd_devices;
+      ia & request_id;
     } catch (const std::exception & e) {
       syslog(LOG_ERR, "exception. %s\n", e.what());
       close(new_sock);
@@ -515,76 +615,26 @@ void run(int port)
       return;
     }
 
-    HDDInfoList list;
     std::ostringstream oss;
     boost::archive::text_oarchive oa(oss);
 
-    for (auto & hdd_device : hdd_devices) {
-      if (hdd_device.unmount_request_flag_) {
-        unmount_device_with_lazy(hdd_device.part_device_);
+    switch (request_id) {
+      case HDDReaderRequestID::GetHDDInfo:
+        ret = get_hdd_info(ia, oa);
+        break;
+      case HDDReaderRequestID::UnmountDevice:
+        ret = unmount_device_with_lazy(ia, oa);
+        break;
+      default:
+        syslog(LOG_ERR, "Request ID is invalid. %d\n", request_id);
         continue;
-      }
-
-      HDDInfo info{};
-
-      // Open a file
-      int fd = open(hdd_device.name_.c_str(), O_RDONLY);
-      if (fd < 0) {
-        info.error_code_ = errno;
-        syslog(LOG_ERR, "Failed to open a file. %s\n", strerror(info.error_code_));
-        continue;
-      }
-
-      // AHCI device
-      if (boost::starts_with(hdd_device.name_.c_str(), "/dev/sd")) {
-        // Get IDENTIFY DEVICE for ATA drive
-        info.error_code_ = get_ata_identify(fd, &info);
-        if (info.error_code_ != 0) {
-          syslog(
-            LOG_ERR, "Failed to get IDENTIFY DEVICE for ATA drive. %s\n",
-            strerror(info.error_code_));
-          close(fd);
-          continue;
-        }
-        // Get SMART DATA for ATA drive
-        info.error_code_ = get_ata_SMARTData(fd, &info, hdd_device);
-        if (info.error_code_ != 0) {
-          syslog(
-            LOG_ERR, "Failed to get SMART LOG for ATA drive. %s\n", strerror(info.error_code_));
-          close(fd);
-          continue;
-        }
-      } else if (boost::starts_with(hdd_device.name_.c_str(), "/dev/nvme")) {  // NVMe device
-        // Get Identify for NVMe drive
-        info.error_code_ = get_nvme_identify(fd, &info);
-        if (info.error_code_ != 0) {
-          syslog(
-            LOG_ERR, "Failed to get Identify for NVMe drive. %s\n", strerror(info.error_code_));
-          close(fd);
-          continue;
-        }
-        // Get SMART / Health Information for NVMe drive
-        info.error_code_ = get_nvme_SMARTData(fd, &info);
-        if (info.error_code_ != 0) {
-          syslog(
-            LOG_ERR, "Failed to get SMART / Health Information for NVMe drive. %s\n",
-            strerror(info.error_code_));
-          close(fd);
-          continue;
-        }
-      }
-
-      // Close the file descriptor FD
-      info.error_code_ = close(fd);
-      if (info.error_code_ < 0) {
-        info.error_code_ = errno;
-        syslog(LOG_ERR, "Failed to close the file descriptor FD. %s\n", strerror(info.error_code_));
-      }
-
-      list[hdd_device.name_] = info;
+    }
+    if (ret != 0) {
+      close(new_sock);
+      close(sock);
+      return;
     }
 
-    oa << list;
     // Write N bytes of BUF to FD
     ret = write(new_sock, oss.str().c_str(), oss.str().length());
     if (ret < 0) {

@@ -29,6 +29,14 @@
 #include <string>
 
 /**
+ * @brief Enumeration of Request ID to hdd_reader
+ */
+enum HDDReaderRequestID {
+  GetHDDInfo,
+  UnmountDevice,
+};
+
+/**
  * @brief HDD device
  */
 struct HDDDevice
@@ -39,9 +47,6 @@ struct HDDDevice
   uint8_t
     total_data_written_attribute_id_;     //!< @brief S.M.A.R.T attribute ID of total data written
   uint8_t recovered_error_attribute_id_;  //!< @brief S.M.A.R.T attribute ID of recovered error
-
-  uint8_t unmount_request_flag_;  //!< @brief unmount request flag
-  std::string part_device_;       //!< @brief partition device
 
   /**
    * @brief Load or save data members.
@@ -58,8 +63,6 @@ struct HDDDevice
     ar & power_on_hours_attribute_id_;
     ar & total_data_written_attribute_id_;
     ar & recovered_error_attribute_id_;
-    ar & unmount_request_flag_;
-    ar & part_device_;
   }
 };
 
@@ -103,6 +106,27 @@ struct HDDInfo
     ar & is_valid_power_on_hours_;
     ar & is_valid_total_data_written_;
     ar & is_valid_recovered_error_;
+  }
+};
+
+/**
+ * @brief unmount device information
+ */
+struct UnmountDeviceInfo
+{
+  std::string part_device_;  //!< @brief partition device
+
+  /**
+   * @brief Load or save data members.
+   * @param [inout] ar archive reference to load or save the serialized data members
+   * @param [in] version version for the archive
+   * @note NOLINT syntax is needed since this is an interface to serialization and
+   * used inside boost serialization.
+   */
+  template <typename archive>
+  void serialize(archive & ar, const unsigned /*version*/)  // NOLINT(runtime/references)
+  {
+    ar & part_device_;
   }
 };
 
