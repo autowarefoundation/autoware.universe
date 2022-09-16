@@ -226,20 +226,19 @@ void ObstacleStopPlannerNode::onTrigger(const Trajectory::ConstSharedPtr input_m
   const auto vehicle_info = vehicle_info_;
   const auto stop_param = stop_param_;
   const auto obstacle_ros_pointcloud_ptr = obstacle_ros_pointcloud_ptr_;
-  const auto current_vel = current_velocity_ptr_->twist.twist.linear.x;
-  const auto current_acc = current_acceleration_ptr_->accel.accel.linear.x;
+  const auto object_ptr = object_ptr_;
+  const auto current_velocity_ptr = current_velocity_ptr_;
+  const auto current_acceleration_ptr = current_acceleration_ptr_;
   mutex_.unlock();
 
   {
-    std::lock_guard<std::mutex> lock(mutex_);
-
     const auto waiting = [this](const auto & str) {
       RCLCPP_WARN_THROTTLE(
         get_logger(), *get_clock(), std::chrono::milliseconds(1000).count(), "waiting for %s ...",
         str);
     };
 
-    if (!object_ptr_) {
+    if (!object_ptr) {
       waiting("perception object");
       return;
     }
@@ -249,12 +248,12 @@ void ObstacleStopPlannerNode::onTrigger(const Trajectory::ConstSharedPtr input_m
       return;
     }
 
-    if (!current_velocity_ptr_ && node_param_.enable_slow_down) {
+    if (!current_velocity_ptr) {
       waiting("current velocity");
       return;
     }
 
-    if (!current_acceleration_ptr_) {
+    if (!current_acceleration_ptr) {
       waiting("current acceleration");
       return;
     }
@@ -263,6 +262,9 @@ void ObstacleStopPlannerNode::onTrigger(const Trajectory::ConstSharedPtr input_m
       return;
     }
   }
+
+  const auto current_vel = current_velocity_ptr->twist.twist.linear.x;
+  const auto current_acc = current_acceleration_ptr->accel.accel.linear.x;
 
   // TODO(someone): support backward path
   const auto is_driving_forward = motion_utils::isDrivingForwardWithTwist(input_msg->points);
