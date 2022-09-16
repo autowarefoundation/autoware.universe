@@ -84,8 +84,6 @@ bool LPVinitializer::simulateWithFeedback(
     // [ey, epsi, error_vx, delta]
     x_error(2) = xk(ns_utils::toUType(VehicleStateIds::vx)) - vtarget;
 
-    // ns_utils::print("Computed error states ");
-    // ns_eigen_utils::printEigenMat(x_error);
     // ns_utils::print("In feedback vx vs vtarget", xk(ns_utils::toUType(VehicleStateIds::vx)),
     // vtarget);
 
@@ -102,8 +100,8 @@ bool LPVinitializer::simulateWithFeedback(
       return false;
     }
 
-    // ns_utils::print("x_error in feedback");
-    // ns_eigen_utils::printEigenMat(Eigen::MatrixXd(x_error));
+    ns_utils::print("curvature and x_error in feedback", kappa0);
+    ns_eigen_utils::printEigenMat(Eigen::MatrixXd(x_error));
 
     // Compute the state transition matrices to get the values of the nonlinear terms
     // in the state transition mat Ac.
@@ -167,6 +165,18 @@ bool LPVinitializer::simulateWithFeedback(
 
   // Copy the last input
   nmpc_data.trajectory_data.U.rbegin()[0] = nmpc_data.trajectory_data.U.rbegin()[1];
+
+  // DEBUG
+  // Get trajectories as a matrix and print for debugging purpose.
+  // TODO {ali}: disable the debugs.
+  auto && Xtemp = ns_eigen_utils::getTrajectory(nmpc_data.trajectory_data.X);
+  auto && Utemp = ns_eigen_utils::getTrajectory(nmpc_data.trajectory_data.U);
+
+  ns_utils::print("\nComputed LPV trajectories : ");
+  ns_eigen_utils::printEigenMat(Xtemp.transpose());  //  [x, y, psi, s, ey, epsi, vx, delta, vy]
+
+  ns_utils::print("\nComputed LPV trajectories U : ");
+  ns_eigen_utils::printEigenMat(Utemp.transpose());
 
   return true;
 }

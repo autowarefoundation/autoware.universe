@@ -87,8 +87,8 @@ TEST_F(FakeNodeFixture, automatic_differentiation_works)
   auto const & vydot = yawdot * vdot * cos(beta + eyaw);
 
   // Analytical fx.
-  std::vector<double> analytical_fx_vec{xdot, ydot, yawdot, sdot, eydot,
-    eyawdot, vdot, deltadot, vydot};
+  std::vector<double> analytical_fx_vec{xdot,    ydot, yawdot,   sdot, eydot,
+                                        eyawdot, vdot, deltadot, vydot};
 
   // Autodiff fx
   vehicle_model.computeFx(x, u, params, f_of_dx);
@@ -261,6 +261,7 @@ TEST_F(FakeNodeFixture, straight_line_trajectory)
   // Data to test
   ControlCmdMsg::SharedPtr cmd_msg;
   bool is_control_command_received{false};
+  bool is_control_nmpc_msg_received{false};
 
   // Node
   std::shared_ptr<NonlinearMPCNode> node = makeNonlinearMPCNode();
@@ -287,56 +288,56 @@ TEST_F(FakeNodeFixture, straight_line_trajectory)
 
   rclcpp::Subscription<NonlinearMPCPerformanceMsg>::SharedPtr nmpc_perf_sub =
     this->create_subscription<NonlinearMPCPerformanceMsg>(
-    "mpc_nonlinear/debug/nmpc_predicted_performance_vars", *this->get_fake_node(),
-    [&nmpc_perf_msg](const NonlinearMPCPerformanceMsg::SharedPtr msg) {nmpc_perf_msg = msg;});
+      "mpc_nonlinear/debug/nmpc_predicted_performance_vars", *this->get_fake_node(),
+      [&nmpc_perf_msg](const NonlinearMPCPerformanceMsg::SharedPtr msg) { nmpc_perf_msg = msg; });
 
   // ASSERT_TRUE(is_control_command_received);
   auto br = std::make_shared<tf2_ros::StaticTransformBroadcaster>(this->get_fake_node());
 
   // Dummy transform: ego is at (0.0, 0.0) in map frame
-  geometry_msgs::msg::TransformStamped transform = test_utils::getDummyTransform();
+  double yaw_vehicle_deg{90.};
+  ns_utils::deg2rad(yaw_vehicle_deg);
+
+  geometry_msgs::msg::TransformStamped transform = test_utils::getDummyTransform(yaw_vehicle_deg);
   transform.header.stamp = node->now();
   br->sendTransform(transform);
 
   // Spin for transform to be published
   test_utils::spinWhile(node);
 
-  // Straight trajectory
+  // Straight trajectory: expect no steering
+  is_control_nmpc_msg_received = false;
+
   TrajectoryMsg traj_msg;
-  VelocityMsg odom_msg;
-  SteeringReport steer_msg;
-
-  size_t num_of_traj_points{100};
-
-  auto const & xcoord = ns_utils::linspace(-5., 5., num_of_traj_points);
-  auto const & ycoord = std::vector<double>(num_of_traj_points, 0.);
-  auto const & vxvec = std::vector<float>(num_of_traj_points, 1.);
-
-  for (size_t k = 0; k < num_of_traj_points; ++k) {
-    TrajectoryPoint p;
-    p.pose.position.x = ycoord[k];
-    p.pose.position.y = xcoord[k];
-    p.pose.position.z = 0.;
-
-    geometry_msgs::msg::Quaternion q;
-    double yaw_angle{90.};
-
-    ns_utils::deg2rad(yaw_angle);
-    geometry_msgs::msg::Quaternion orient_msg =
-      ns_nmpc_utils::createOrientationMsgfromYaw(yaw_angle);
-
-    p.pose.orientation = orient_msg;
-
-    p.acceleration_mps2 = 0.0;
-    p.longitudinal_velocity_mps = vxvec[k];
-
-    traj_msg.points.push_back(p);
-  }
-
   traj_msg.header.stamp = node->now();
   traj_msg.header.frame_id = "map";
 
+  VelocityMsg odom_msg;
+  SteeringReport steer_msg;
+
+  TrajectoryPoint p;
+
+  p.pose.position.x = 0.0;
+  p.pose.position.y = -1.0;
+  p.longitudinal_velocity_mps = 1.0f;
+  traj_msg.points.push_back(p);
+
+  p.pose.position.x = 0.0;
+  p.pose.position.y = 0.0;
+  p.longitudinal_velocity_mps = 1.0f;
+  traj_msg.points.push_back(p);
+
+  p.pose.position.x = 0.0;
+  p.pose.position.y = 1.0;
+  p.longitudinal_velocity_mps = 1.0f;
+  traj_msg.points.push_back(p);
+
+  p.pose.position.x = 0.0;
+  p.pose.position.y = 2.0;
+  p.longitudinal_velocity_mps = 1.0f;
+  traj_msg.points.push_back(p);
   traj_pub->publish(traj_msg);
+
   odom_msg.header.stamp = node->now();
   odom_msg.twist.twist.linear.x = 1.0;
 
@@ -346,26 +347,9 @@ TEST_F(FakeNodeFixture, straight_line_trajectory)
   vel_pub->publish(odom_msg);
   steer_pub->publish(steer_msg);
 
-  // test_utils::waitForMessage(node, this, false, std::chrono::seconds{100LL}, false);
-  // test_utils::waitForMessage(node, this, is_control_command_received);
-  rclcpp::spin_some(node);
-  rclcpp::spin_some(this->get_fake_node());
-
-  // Spin the msg exchange
-  // test_utils::spinWhile(node);
-
-  //  EXPECT_EQ(cmd_msg->lateral.steering_tire_angle, 0.0f);
-  //  EXPECT_EQ(cmd_msg->lateral.steering_tire_rotation_rate, 0.0f);
-  //  EXPECT_GT(rclcpp::Time(cmd_msg->stamp), rclcpp::Time(traj_msg.header.stamp));
-
-  ns_utils::print(" ctrl_cmd_msgs_  steering: ", cmd_msg->lateral.steering_tire_angle);
-  ns_utils::print(
-    " ctrl_cmd_msgs_  steering rate : ", cmd_msg->lateral.steering_tire_rotation_rate);
-  ns_utils::print(" ctrl_cmd_msgs_  steering rate : ", cmd_msg->longitudinal.speed);
-  ns_utils::print(" ctrl_cmd_msgs_  steering: ", cmd_msg->longitudinal.acceleration);
-
-  // NMPC performance msg.
-  ns_utils::print("nmpc lateral error ", nmpc_perf_msg->nmpc_lateral_error);
-  ns_utils::print("nmpc yaw error ", nmpc_perf_msg->nmpc_yaw_error);
-  ns_utils::print("nmpc long velocity input ", nmpc_perf_msg->long_velocity_input);
+  test_utils::waitForMessage(node, this, is_control_nmpc_msg_received);
+  ASSERT_TRUE(is_control_nmpc_msg_received);
+  EXPECT_EQ(cmd_msg->lateral.steering_tire_angle, 0.0f);
+  EXPECT_EQ(cmd_msg->lateral.steering_tire_rotation_rate, 0.0f);
+  EXPECT_GT(rclcpp::Time(cmd_msg->stamp), rclcpp::Time(traj_msg.header.stamp));
 }
