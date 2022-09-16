@@ -12,18 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <detection_class_adapter/detection_class_adapter.hpp>
+#include <lidar_centerpoint/detection_class_adapter.hpp>
 
-DetectionClassAdapter::DetectionClassAdapter(const rclcpp::NodeOptions & options)
-: Node("detection_class_adaptor", options)
+namespace centerpoint
 {
-  const auto allow_remapping_by_area_matrix =
-    this->declare_parameter<std::vector<int64_t>>("allow_remapping_by_area_matrix");
-  const auto min_area_matrix = this->declare_parameter<std::vector<double>>("min_area_matrix");
-  const auto max_area_matrix = this->declare_parameter<std::vector<double>>("max_area_matrix");
 
-  assert(allow_remapping_by_area_.size() == min_area_matrix.size());
-  assert(allow_remapping_by_area_.size() == max_area_matrix.size());
+void DetectionClassAdapter::setParameters(
+  const std::vector<int64_t> & allow_remapping_by_area_matrix,
+  const std::vector<double> & min_area_matrix, const std::vector<double> & max_area_matrix)
+{
+  assert(allow_remapping_by_area_matrix.size() == min_area_matrix.size());
+  assert(allow_remapping_by_area_matrix.size() == max_area_matrix.size());
   assert(std::pow(std::sqrt(min_area_matrix.size()), 2) == std::sqrt(min_area_matrix.size()));
 
   num_labels_ = static_cast<int>(std::sqrt(min_area_matrix.size()));
@@ -46,21 +45,11 @@ DetectionClassAdapter::DetectionClassAdapter(const rclcpp::NodeOptions & options
     [](double v) { return std::isfinite(v) ? v : std::numeric_limits<double>::max(); });
   max_area_matrix_ = max_area_matrix_.unaryExpr(
     [](double v) { return std::isfinite(v) ? v : std::numeric_limits<double>::max(); });
-
-  objects_sub_ = this->create_subscription<autoware_auto_perception_msgs::msg::DetectedObjects>(
-    "~/input/objects", rclcpp::QoS{1},
-    std::bind(&DetectionClassAdapter::detectionsCallback, this, std::placeholders::_1));
-
-  objects_pub_ = this->create_publisher<autoware_auto_perception_msgs::msg::DetectedObjects>(
-    "~/output/objects", rclcpp::QoS{1});
 }
 
-void DetectionClassAdapter::detectionsCallback(
-  const autoware_auto_perception_msgs::msg::DetectedObjects::SharedPtr msg)
+void DetectionClassAdapter::mapClasses(autoware_auto_perception_msgs::msg::DetectedObjects & msg)
 {
-  autoware_auto_perception_msgs::msg::DetectedObjects remapped_msg = *msg;
-
-  for (auto & object : remapped_msg.objects) {
+  for (auto & object : msg.objects) {
     const float bev_area = object.shape.dimensions.x * object.shape.dimensions.y;
 
     for (auto & classification : object.classification) {
@@ -76,9 +65,6 @@ void DetectionClassAdapter::detectionsCallback(
       }
     }
   }
-
-  objects_pub_->publish(remapped_msg);
 }
 
-#include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(DetectionClassAdapter)
+}  // namespace centerpoint

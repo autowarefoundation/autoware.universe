@@ -12,33 +12,36 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DETECTION_CLASS_ADAPTER__DETECTION_CLASS_ADAPTER_HPP_
-#define DETECTION_CLASS_ADAPTER__DETECTION_CLASS_ADAPTER_HPP_
+#ifndef LIDAR_CENTERPOINT__DETECTION_CLASS_ADAPTER_HPP_
+#define LIDAR_CENTERPOINT__DETECTION_CLASS_ADAPTER_HPP_
 
 #include <Eigen/Core>
-#include <rclcpp/logging.hpp>
-#include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_perception_msgs/msg/detected_object_kinematics.hpp>
 #include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
 #include <autoware_auto_perception_msgs/msg/object_classification.hpp>
 #include <autoware_auto_perception_msgs/msg/shape.hpp>
 
-class DetectionClassAdapter : public rclcpp::Node
+#include <vector>
+
+namespace centerpoint
+{
+
+class DetectionClassAdapter
 {
 public:
-  explicit DetectionClassAdapter(const rclcpp::NodeOptions & options);
+  void setParameters(
+    const std::vector<int64_t> & allow_remapping_by_area_matrix,
+    const std::vector<double> & min_area_matrix, const std::vector<double> & max_area_matrix);
+  void mapClasses(autoware_auto_perception_msgs::msg::DetectedObjects & msg);
 
 protected:
-  void detectionsCallback(const autoware_auto_perception_msgs::msg::DetectedObjects::SharedPtr msg);
-
-  rclcpp::Subscription<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr objects_sub_;
-  rclcpp::Publisher<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr objects_pub_;
-
   Eigen::Matrix<bool, Eigen::Dynamic, Eigen::Dynamic> allow_remapping_by_area_matrix_;
   Eigen::MatrixXd min_area_matrix_;
   Eigen::MatrixXd max_area_matrix_;
   int num_labels_;
 };
 
-#endif  // DETECTION_CLASS_ADAPTER__DETECTION_CLASS_ADAPTER_HPP_
+}  // namespace centerpoint
+
+#endif  // LIDAR_CENTERPOINT__DETECTION_CLASS_ADAPTER_HPP_

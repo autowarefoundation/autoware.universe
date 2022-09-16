@@ -63,6 +63,13 @@ LidarCenterPointNode::LidarCenterPointNode(const rclcpp::NodeOptions & node_opti
     static_cast<std::size_t>(this->declare_parameter<std::int64_t>("downsample_factor"));
   const std::size_t encoder_in_feature_size =
     static_cast<std::size_t>(this->declare_parameter<std::int64_t>("encoder_in_feature_size"));
+  const auto allow_remapping_by_area_matrix =
+    this->declare_parameter<std::vector<int64_t>>("allow_remapping_by_area_matrix");
+  const auto min_area_matrix = this->declare_parameter<std::vector<double>>("min_area_matrix");
+  const auto max_area_matrix = this->declare_parameter<std::vector<double>>("max_area_matrix");
+
+  detection_class_adapter_.setParameters(
+    allow_remapping_by_area_matrix, min_area_matrix, max_area_matrix);
 
   NetworkParam encoder_param(encoder_onnx_path, encoder_engine_path, trt_precision);
   NetworkParam head_param(head_onnx_path, head_engine_path, trt_precision);
@@ -129,6 +136,8 @@ void LidarCenterPointNode::pointCloudCallback(
     box3DToDetectedObject(box3d, class_names_, has_twist_, obj);
     output_msg.objects.emplace_back(obj);
   }
+
+  detection_class_adapter_.mapClasses(output_msg);
 
   if (objects_sub_count > 0) {
     objects_pub_->publish(output_msg);
