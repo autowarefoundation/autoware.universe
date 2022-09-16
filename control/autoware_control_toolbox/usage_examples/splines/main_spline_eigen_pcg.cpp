@@ -12,21 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "utils_act/writetopath.hpp"
+#include "splines/interpolating_spline_pcg.hpp"
 #include "utils_act/act_utils.hpp"
-#include <vector>
+#include "utils_act/timekeep.hpp"
+#include "utils_act/writetopath.hpp"
+
+#include <fmt/core.h>
+
 #include <algorithm>
+#include <cmath>
 #include <numeric>
 #include <random>
-#include <fmt/core.h>
-#include <cmath>
-#include "utils_act/timekeep.hpp"
-#include "splines/interpolating_spline_pcg.hpp"
+#include <vector>
 
 int main()
 {
   // Generate a noisy sinusoidal signal with arc-length parametrization. This is our test signal.
-  size_t const num_of_points = 100; // number of points in the signal.
+  size_t const num_of_points = 100;  // number of points in the signal.
 
   // Generate x.
   std::vector<double> xvec = ns_utils::linspace(0.0, 10.0, num_of_points);
@@ -34,36 +36,30 @@ int main()
   // Generate y = sin(x).
   std::vector<double> yvec;
 
-  std::transform(xvec.cbegin(), xvec.cend(), std::back_inserter(yvec), [](auto const &x)
-  {
-    return sin(x);
-  });
+  std::transform(
+    xvec.cbegin(), xvec.cend(), std::back_inserter(yvec), [](auto const & x) { return sin(x); });
 
   // Generate z = cos(x).
   std::vector<double> zvec;
-  std::transform(xvec.cbegin(), xvec.cend(), std::back_inserter(zvec), [](auto const &x)
-  {
-    return cos(x);
-  });
-
+  std::transform(
+    xvec.cbegin(), xvec.cend(), std::back_inserter(zvec), [](auto const & x) { return cos(x); });
 
   // Arc-length parametrization.
-  std::vector<double> dx; //{1, 0.0};
-  std::vector<double> dy; //{1, 0.0};
+  std::vector<double> dx;  //{1, 0.0};
+  std::vector<double> dy;  //{1, 0.0};
 
   std::adjacent_difference(xvec.begin(), xvec.end(), std::back_inserter(dx));
   std::adjacent_difference(yvec.begin(), yvec.end(), std::back_inserter(dy));
 
   // Define arc-length cumsum()
   std::vector<double> svec;
-  std::transform(dx.cbegin(), dx.cend(), dy.cbegin(), std::back_inserter(svec),
-                 [](auto dxi, auto dyi)
-                 {
-                   static double ds = 0.0;
-                   ds += std::hypot(dxi, dyi);
+  std::transform(
+    dx.cbegin(), dx.cend(), dy.cbegin(), std::back_inserter(svec), [](auto dxi, auto dyi) {
+      static double ds = 0.0;
+      ds += std::hypot(dxi, dyi);
 
-                   return ds;
-                 });
+      return ds;
+    });
 
   auto log_path = getOutputPath() / "spline_pcg";
 
@@ -108,7 +104,8 @@ int main()
   std::vector<double> zinterp;
 
   // Set reuse coeffs true so that we can use the same coefficients for the repeated interpolation.
-  // When creating the interpolator first time, we set reuse false so that it computes the coefficients.
+  // When creating the interpolator first time, we set reuse false so that it computes the
+  // coefficients.
 
   is_interpolated = interpolating_spline_aw.Interpolate(svec, zvec, se_new, zinterp);
   ns_utils::print("Is interpolated :", is_interpolated);
@@ -136,13 +133,12 @@ int main()
   std::cout << " Single interpolated value : " << single_interp_point_zval << std::endl;
 
   /**
-  * Two new interpolation is added, if the interpolator is initialized.
-  * */
+   * Two new interpolation is added, if the interpolator is initialized.
+   * */
   interpolating_spline_aw.Initialize(svec, zvec);
 
   std::vector<double> zinterp_itemwise;
-  for (auto const &s : se_new2)
-  {
+  for (auto const & s : se_new2) {
     double zint{};
     interpolating_spline_aw.Interpolate(s, zint);
     zinterp_itemwise.emplace_back(zint);
@@ -161,7 +157,6 @@ int main()
   writeToFile(log_path, se_new3, "snew3");
   writeToFile(log_path, zvectorwise, "zvectorwise");
 
-
   /**
    * LINEAR INTERPOLATION
    * */
@@ -172,5 +167,18 @@ int main()
 
   writeToFile(log_path, ylinear, "ylinear");
 
+  /**
+   * Constant vector interpolation.
+   * */
+
+  std::vector<double> yconst(svec.size(), 1.);
+  ns_splines::InterpolatingSplinePCG constant_interp(3);
+  constant_interp.Initialize(svec, yconst);
+
+  double yconst0{};
+  constant_interp.Interpolate(svec[2] + 0.01, yconst0);
+
+  assert(("Left must equal right : ", yconst[0] == yconst0));
+  ns_utils::print("Is equal : ", yconst[0], yconst0);
   return 0;
 }
