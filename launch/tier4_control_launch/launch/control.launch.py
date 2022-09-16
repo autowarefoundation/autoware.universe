@@ -82,6 +82,14 @@ def launch_setup(context, *args, **kwargs):
     with open(operation_mode_transition_manager_param_path, "r") as f:
         operation_mode_transition_manager_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
+    shift_decider_param_path = os.path.join(
+        LaunchConfiguration("tier4_control_launch_param_path").perform(context),
+        "shift_decider",
+        "shift_decider.param.yaml",
+    )
+    with open(shift_decider_param_path, "r") as f:
+        shift_decider_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+
     controller_component = ComposableNode(
         package="trajectory_follower_nodes",
         plugin="autoware::motion::control::trajectory_follower_nodes::Controller",
@@ -137,7 +145,11 @@ def launch_setup(context, *args, **kwargs):
         name="shift_decider",
         remappings=[
             ("input/control_cmd", "/control/trajectory_follower/control_cmd"),
+            ("input/state", "/autoware/state"),
             ("output/gear_cmd", "/control/shift_decider/gear_cmd"),
+        ],
+        parameters=[
+            shift_decider_param,
         ],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
