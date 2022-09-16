@@ -46,7 +46,6 @@ public:
    */
   void init(const Eigen::MatrixXd & x, const Eigen::MatrixXd & P, const int max_delay_step);
 
-
   /**
    * @brief get latest time estimated state
    */
