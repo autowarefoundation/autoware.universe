@@ -75,7 +75,7 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
   proc_cov_wz_d_ = std::pow(proc_stddev_wz_c_ * ekf_dt_, 2.0);
   proc_cov_yaw_d_ = std::pow(proc_stddev_yaw_c_ * ekf_dt_, 2.0);
 
-  is_initialized_ = false;
+  is_activated_ = false;
 
   /* initialize ros system */
   auto period_control_ns =
@@ -153,7 +153,8 @@ void EKFLocalizer::updatePredictFrequency()
  */
 void EKFLocalizer::timerCallback()
 {
-  if (!is_initialized_) {
+  if (!is_activated_) {
+    warning_.warnThrottle("The node is not activated. Provide initial pose to pose_initializer", 2000);
     return;
   }
 
@@ -255,7 +256,7 @@ void EKFLocalizer::showCurrentX()
  */
 void EKFLocalizer::timerTFCallback()
 {
-  if (!is_initialized_) {
+  if (!is_activated_) {
     return;
   }
 
@@ -719,9 +720,9 @@ void EKFLocalizer::serviceTriggerNode(
   if (req->activate) {
     while (!current_pose_info_queue_.empty()) current_pose_info_queue_.pop();
     while (!current_twist_info_queue_.empty()) current_twist_info_queue_.pop();
-    is_initialized_ = true;
+    is_activated_ = true;
   } else {
-    is_initialized_ = false;
+    is_activated_ = false;
   }
   res->success = true;
   return;

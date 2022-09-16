@@ -202,7 +202,7 @@ private:
   double proc_cov_vx_d_;        //!< @brief  discrete process noise in d_vx=0
   double proc_cov_wz_d_;        //!< @brief  discrete process noise in d_wz=0
 
-  bool is_initialized_;
+  bool is_activated_;
 
   /* for model prediction */
   std::queue<TwistInfo> current_twist_info_queue_;    //!< @brief current measured pose

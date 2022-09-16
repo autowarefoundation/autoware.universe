@@ -114,8 +114,7 @@ NDTScanMatcher::NDTScanMatcher()
   inversion_vector_threshold_(-0.9),
   oscillation_threshold_(10),
   regularization_enabled_(declare_parameter("regularization_enabled", false)),
-  regularization_scale_factor_(declare_parameter("regularization_scale_factor", 0.01)),
-  is_activated_(false)
+  regularization_scale_factor_(declare_parameter("regularization_scale_factor", 0.01))
 {
   key_value_stdmap_["state"] = "Initializing";
 
@@ -873,9 +872,6 @@ void NDTScanMatcher::serviceTriggerNode(
 {
   if (req->activate) {
     initial_pose_msg_ptr_array_.clear();
-    is_activated_ = true;
-  } else {
-    is_activated_ = false;
   }
   res->success = true;
   return;
