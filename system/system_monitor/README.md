@@ -54,7 +54,7 @@ Every topic is published in 1 minute interval.
 [Usage] ✓：Supported, -：Not supported
 
 | Node            | Message                | Intel | arm64(tegra) | arm64(raspi) | Notes                                                                                                                                                                                           |
-| --------------- | ---------------------- | :---: | :----------: | :----------: | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| --------------- | ---------------------- | :---: | :----------: | :----------: | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --- |
 | CPU Monitor     | CPU Temperature        |   ✓   |      ✓       |      ✓       |                                                                                                                                                                                                 |
 |                 | CPU Usage              |   ✓   |      ✓       |      ✓       |                                                                                                                                                                                                 |
 |                 | CPU Load Average       |   ✓   |      ✓       |      ✓       |                                                                                                                                                                                                 |
@@ -76,7 +76,7 @@ Every topic is published in 1 minute interval.
 |                 | GPU Memory Usage       |   ✓   |      -       |      -       |                                                                                                                                                                                                 |
 |                 | GPU Thermal Throttling |   ✓   |      -       |      -       |                                                                                                                                                                                                 |
 |                 | GPU Frequency          |   ✓   |      ✓       |      -       | For Intel platform, monitor whether current GPU clock is supported by the GPU.                                                                                                                  |
-| Voltage Monitor | CMOS Battery Staus |   ✓   |      -       |      -       | Battery Health for RTC and BIOS     -       |                                                                                                                                                                                                 |
+| Voltage Monitor | CMOS Battery Staus     |   ✓   |      -       |      -       | Battery Health for RTC and BIOS -                                                                                                                                                               |     |
 
 ## ROS parameters
 
@@ -185,11 +185,12 @@ However, the return value of sensors varies depending on the chipset, so it is n
 It is also necessary to set the voltage for warning and error.
 For example, if you want a warning when the voltage is less than 2.9V and an error when it is less than 2.7V.
 The execution result of sensors on the chipset nct6106 is as follows, and "in7:" is the voltage of the CMOS battery.
+
 ```
 $ sensors
 pch_cannonlake-virtual-0
 Adapter: Virtual device
-temp1:        +42.0°C  
+temp1:        +42.0°C
 
 nct6106-isa-0a10
 Adapter: ISA adapter
@@ -207,6 +208,7 @@ fan2:             0 RPM  (min =    0 RPM)
 ```
 
 The setting value of voltage_monitor.param.yaml is as follows.
+
 ```
 /**:
   ros__parameters:
@@ -214,6 +216,7 @@ The setting value of voltage_monitor.param.yaml is as follows.
     cmos_battery_error: 2.70
     cmos_battery_voltage: "in7:"
 ```
+
 ## UML diagrams
 
 See [Class diagrams](docs/class_diagrams.md).
