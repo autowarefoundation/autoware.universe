@@ -270,6 +270,10 @@ void NonlinearMPCNode::onTimer()
   x0_predicted_.setZero();
   nonlinear_mpc_controller_ptr_->getInitialState(x0_predicted_);
 
+  // TODO: debug
+  ns_utils::print("Initial states");
+  ns_eigen_utils::printEigenMat(x0_predicted_);
+
   // If there is no input delay in the system, predict_initial_states is set to false automatically
   // in the constructor.
 
@@ -971,6 +975,9 @@ bool NonlinearMPCNode::resampleRawTrajectoriesToaFixedSize()
     return false;
   }
   nonlinear_mpc_controller_ptr_->setMPCtrajectoryRawVectorsPtr(mpc_traj_raw);
+
+  // TODO : remove debug
+  mpc_traj_raw.print();
 
   // --------------- Fill the Eigen reference_map_sxyz --------------------------
   // !<-@brief smooth map reference of [MPC_MAP_SMOOTHER_OUT x 4]
