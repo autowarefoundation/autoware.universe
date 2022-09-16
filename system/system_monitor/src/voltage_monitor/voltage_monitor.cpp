@@ -123,7 +123,9 @@ void VoltageMonitor::checkVoltage(diagnostic_updater::DiagnosticStatusWrapper & 
       }
     }
     stat.add("CMOS battey voltage", fmt::format("{}", voltage));
-    if (RCUTILS_UNLIKELY(voltage < voltage_warn_)) {
+    if (RCUTILS_UNLIKELY(voltage < voltage_error_)) {
+      stat.summary(DiagStatus::ERROR, "LOW BATTERY");
+    } else if (RCUTILS_UNLIKELY(voltage < voltage_warn_)) {
       stat.summary(DiagStatus::WARN, "LOW BATTERY");
     } else {
       stat.summary(DiagStatus::OK, "OK");
