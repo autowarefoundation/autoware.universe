@@ -145,7 +145,15 @@ bool LPVinitializer::simulateWithFeedback(
       uk(j) = ns_utils::clamp(uk(j), params_opt.ulower(j), params_opt.uupper(j));
     }
 
+    auto stemp = xk(ns_utils::toUType(VehicleStateIds::s));
+    ns_utils::print("s in LPV before integrating ... ", stemp);
+
+    ns_eigen_utils::printEigenMat(uk, "Computed Feedback in LPV : ");
+
     ns_sim::simulateNonlinearModel_zoh(model_ptr, uk, params, dt, xk);
+
+    stemp = xk(ns_utils::toUType(VehicleStateIds::s));
+    ns_utils::print("s in LPV after integrating before saturating ... ", stemp);
 
     // Saturate all states
     for (auto j = 0; j < xk.size(); ++j) {
@@ -153,6 +161,9 @@ bool LPVinitializer::simulateWithFeedback(
         xk(j) = ns_utils::clamp(xk(j), params_opt.xlower(j), params_opt.xupper(j));
       }
     }
+
+    stemp = xk(ns_utils::toUType(VehicleStateIds::s));
+    ns_utils::print("s in LPV after saturating ... ", stemp);
 
     // Unwrap error and yaw angles.
     xk(ns_utils::toUType(VehicleStateIds::yaw)) =
@@ -168,15 +179,15 @@ bool LPVinitializer::simulateWithFeedback(
 
   // DEBUG
   // Get trajectories as a matrix and print for debugging purpose.
-  // TODO {ali}: disable the debugs.
-  auto && Xtemp = ns_eigen_utils::getTrajectory(nmpc_data.trajectory_data.X);
-  auto && Utemp = ns_eigen_utils::getTrajectory(nmpc_data.trajectory_data.U);
-
-  ns_utils::print("\nComputed LPV trajectories : ");
-  ns_eigen_utils::printEigenMat(Xtemp.transpose());  //  [x, y, psi, s, ey, epsi, vx, delta, vy]
-
-  ns_utils::print("\nComputed LPV trajectories U : ");
-  ns_eigen_utils::printEigenMat(Utemp.transpose());
+  // TO-DO {ali}: disable the debugs.
+  //  auto && Xtemp = ns_eigen_utils::getTrajectory(nmpc_data.trajectory_data.X);
+  //  auto && Utemp = ns_eigen_utils::getTrajectory(nmpc_data.trajectory_data.U);
+  //
+  //  ns_utils::print("\nComputed LPV trajectories : ");
+  //  ns_eigen_utils::printEigenMat(Xtemp.transpose());  // [x, y, psi, s, ey, epsi, vx, delta, vy]
+  //
+  //  ns_utils::print("\nComputed LPV trajectories U : ");
+  //  ns_eigen_utils::printEigenMat(Utemp.transpose());
 
   return true;
 }
