@@ -81,4 +81,8 @@ T transform(const T & input, const geometry_msgs::msg::TransformStamped & transf
   return output;
 }
 
+Eigen::Matrix4f fromRosPoseToEigenMatrix4f(const geometry_msgs::msg::Pose & ros_pose);
+Eigen::Vector3d fromRosPointToEigenVector3d(const geometry_msgs::msg::Point & ros_pos);
+geometry_msgs::msg::Pose fromEigenMatrix4fToRosPose(const Eigen::Matrix4f & eigen_pose_matrix);
+
 #endif  // NDT_SCAN_MATCHER__UTIL_FUNC_HPP_

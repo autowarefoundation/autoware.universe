@@ -70,17 +70,19 @@ double norm(const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Poin
 }
 
 bool isLocalOptimalSolutionOscillation(
-  const std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>> &
-    result_pose_matrix_array,
+  const std::vector<geometry_msgs::msg::Pose> & result_pose_msg_array,
   const float oscillation_threshold, const float inversion_vector_threshold)
 {
   bool prev_oscillation = false;
   int oscillation_cnt = 0;
-  for (size_t i = 2; i < result_pose_matrix_array.size(); ++i) {
-    const Eigen::Vector3f current_pose = result_pose_matrix_array.at(i).block(0, 3, 3, 1);
-    const Eigen::Vector3f prev_pose = result_pose_matrix_array.at(i - 1).block(0, 3, 3, 1);
-    const Eigen::Vector3f prev_prev_pose = result_pose_matrix_array.at(i - 2).block(0, 3, 3, 1);
-    const auto current_vec = (current_pose - prev_pose).normalized();
+  for (size_t i = 2; i < result_pose_msg_array.size(); ++i) {
+    const Eigen::Vector3d current_pose =
+      fromRosPointToEigenVector3d(result_pose_msg_array.at(i).position);
+    const Eigen::Vector3d prev_pose =
+      fromRosPointToEigenVector3d(result_pose_msg_array.at(i - 1).position);
+    const Eigen::Vector3d prev_prev_pose =
+      fromRosPointToEigenVector3d(result_pose_msg_array.at(i - 2).position);
+    const auto current_vec = current_pose - prev_pose;
     const auto prev_vec = (prev_pose - prev_prev_pose).normalized();
     const bool oscillation = prev_vec.dot(current_vec) < inversion_vector_threshold;
     if (prev_oscillation && oscillation) {
@@ -455,8 +457,10 @@ void NDTScanMatcher::callbackSensorPoints(
   // get TF base to sensor
   auto TF_base_to_sensor_ptr = std::make_shared<geometry_msgs::msg::TransformStamped>();
   getTransform(base_frame_, sensor_frame, TF_base_to_sensor_ptr);
-  const Eigen::Affine3d base_to_sensor_affine = tf2::transformToEigen(*TF_base_to_sensor_ptr);
-  const Eigen::Matrix4f base_to_sensor_matrix = base_to_sensor_affine.matrix().cast<float>();
+  const geometry_msgs::msg::PoseStamped target_to_source_pose_stamped =
+    tier4_autoware_utils::transform2pose(*TF_base_to_sensor_ptr);
+  const Eigen::Matrix4f base_to_sensor_matrix =
+    fromRosPoseToEigenMatrix4f(target_to_source_pose_stamped.pose);
   pcl::shared_ptr<pcl::PointCloud<PointSource>> sensor_points_baselinkTF_ptr(
     new pcl::PointCloud<PointSource>);
   pcl::transformPointCloud(
@@ -520,26 +524,18 @@ void NDTScanMatcher::callbackSensorPoints(
     return;
   }
   // align
-  const Eigen::Affine3d initial_pose_affine = fromRosPoseToEigen(initial_pose_cov_msg.pose.pose);
-  const Eigen::Matrix4f initial_pose_matrix = initial_pose_affine.matrix().cast<float>();
+  const Eigen::Matrix4f initial_pose_matrix = fromRosPoseToEigenMatrix4f(initial_pose_cov_msg.pose.pose);
 
   auto output_cloud = std::make_shared<pcl::PointCloud<PointSource>>();
   key_value_stdmap_["state"] = "Aligning";
   ndt_ptr_->align(*output_cloud, initial_pose_matrix);
   key_value_stdmap_["state"] = "Sleeping";
 
-  const Eigen::Matrix4f result_pose_matrix = ndt_ptr_->getFinalTransformation();
-  Eigen::Affine3d result_pose_affine;
-  result_pose_affine.matrix() = result_pose_matrix.cast<double>();
-  const geometry_msgs::msg::Pose result_pose_msg = tf2::toMsg(result_pose_affine);
+  const geometry_msgs::msg::Pose result_pose_msg = fromEigenMatrix4fToRosPose(ndt_ptr_->getFinalTransformation());
 
-  const std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>>
-    result_pose_matrix_array = ndt_ptr_->getFinalTransformationArray();
   std::vector<geometry_msgs::msg::Pose> result_pose_msg_array;
-  for (const auto & pose_matrix : result_pose_matrix_array) {
-    Eigen::Affine3d pose_affine;
-    pose_affine.matrix() = pose_matrix.cast<double>();
-    const geometry_msgs::msg::Pose pose_msg = tf2::toMsg(pose_affine);
+  for (const auto & pose_matrix : ndt_ptr_->getFinalTransformationArray()) {
+    const geometry_msgs::msg::Pose pose_msg = fromEigenMatrix4fToRosPose(pose_matrix);
     result_pose_msg_array.push_back(pose_msg);
   }
 
@@ -578,7 +574,7 @@ void NDTScanMatcher::callbackSensorPoints(
   bool is_local_optimal_solution_oscillation = false;
   if (!is_ok_iteration_num) {
     is_local_optimal_solution_oscillation = isLocalOptimalSolutionOscillation(
-      result_pose_matrix_array, oscillation_threshold_, inversion_vector_threshold_);
+      result_pose_msg_array, oscillation_threshold_, inversion_vector_threshold_);
   }
 
   bool is_ok_converged_param = false;
@@ -637,7 +633,7 @@ void NDTScanMatcher::callbackSensorPoints(
 
   auto sensor_points_mapTF_ptr = std::make_shared<pcl::PointCloud<PointSource>>();
   pcl::transformPointCloud(
-    *sensor_points_baselinkTF_ptr, *sensor_points_mapTF_ptr, result_pose_matrix);
+    *sensor_points_baselinkTF_ptr, *sensor_points_mapTF_ptr, fromRosPoseToEigenMatrix4f(result_pose_msg));
   sensor_msgs::msg::PointCloud2 sensor_points_mapTF_msg;
   pcl::toROSMsg(*sensor_points_mapTF_ptr, sensor_points_mapTF_msg);
   sensor_points_mapTF_msg.header.stamp = sensor_ros_time;
@@ -725,15 +721,11 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::alignUsingMonteCar
   for (unsigned int i = 0; i < initial_poses.size(); i++) {
     const auto & initial_pose = initial_poses[i];
 
-    const Eigen::Affine3d initial_pose_affine = fromRosPoseToEigen(initial_pose);
-    const Eigen::Matrix4f initial_pose_matrix = initial_pose_affine.matrix().cast<float>();
+    const Eigen::Matrix4f initial_pose_matrix = fromRosPoseToEigenMatrix4f(initial_pose);
 
     ndt_ptr->align(*output_cloud, initial_pose_matrix);
 
-    const Eigen::Matrix4f result_pose_matrix = ndt_ptr->getFinalTransformation();
-    Eigen::Affine3d result_pose_affine;
-    result_pose_affine.matrix() = result_pose_matrix.cast<double>();
-    const geometry_msgs::msg::Pose result_pose = tf2::toMsg(result_pose_affine);
+    const geometry_msgs::msg::Pose result_pose = fromEigenMatrix4fToRosPose(ndt_ptr->getFinalTransformation());
 
     const auto transform_probability = ndt_ptr->getTransformationProbability();
     const auto num_iteration = ndt_ptr->getFinalNumIteration();
@@ -747,7 +739,7 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::alignUsingMonteCar
     auto sensor_points_mapTF_ptr = std::make_shared<pcl::PointCloud<PointSource>>();
     const auto sensor_points_baselinkTF_ptr = ndt_ptr->getInputSource();
     pcl::transformPointCloud(
-      *sensor_points_baselinkTF_ptr, *sensor_points_mapTF_ptr, result_pose_matrix);
+      *sensor_points_baselinkTF_ptr, *sensor_points_mapTF_ptr, fromRosPoseToEigenMatrix4f(result_pose));
     sensor_msgs::msg::PointCloud2 sensor_points_mapTF_msg;
     pcl::toROSMsg(*sensor_points_mapTF_ptr, sensor_points_mapTF_msg);
     sensor_points_mapTF_msg.header.stamp = initial_pose_with_cov.header.stamp;
@@ -856,7 +848,5 @@ std::optional<Eigen::Matrix4f> NDTScanMatcher::interpolateRegularizationPose(
     return std::nullopt;
   }
 
-  Eigen::Affine3d regularization_pose_affine;
-  tf2::fromMsg(regularization_pose_msg.pose, regularization_pose_affine);
-  return regularization_pose_affine.matrix().cast<float>();
+  return fromRosPoseToEigenMatrix4f(regularization_pose_msg.pose);
 }
