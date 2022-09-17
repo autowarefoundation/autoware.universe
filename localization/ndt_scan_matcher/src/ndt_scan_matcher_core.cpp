@@ -524,14 +524,16 @@ void NDTScanMatcher::callbackSensorPoints(
     return;
   }
   // align
-  const Eigen::Matrix4f initial_pose_matrix = fromRosPoseToEigenMatrix4f(initial_pose_cov_msg.pose.pose);
+  const Eigen::Matrix4f initial_pose_matrix =
+    fromRosPoseToEigenMatrix4f(initial_pose_cov_msg.pose.pose);
 
   auto output_cloud = std::make_shared<pcl::PointCloud<PointSource>>();
   key_value_stdmap_["state"] = "Aligning";
   ndt_ptr_->align(*output_cloud, initial_pose_matrix);
   key_value_stdmap_["state"] = "Sleeping";
 
-  const geometry_msgs::msg::Pose result_pose_msg = fromEigenMatrix4fToRosPose(ndt_ptr_->getFinalTransformation());
+  const geometry_msgs::msg::Pose result_pose_msg =
+    fromEigenMatrix4fToRosPose(ndt_ptr_->getFinalTransformation());
 
   std::vector<geometry_msgs::msg::Pose> result_pose_msg_array;
   for (const auto & pose_matrix : ndt_ptr_->getFinalTransformationArray()) {
@@ -633,7 +635,8 @@ void NDTScanMatcher::callbackSensorPoints(
 
   auto sensor_points_mapTF_ptr = std::make_shared<pcl::PointCloud<PointSource>>();
   pcl::transformPointCloud(
-    *sensor_points_baselinkTF_ptr, *sensor_points_mapTF_ptr, fromRosPoseToEigenMatrix4f(result_pose_msg));
+    *sensor_points_baselinkTF_ptr, *sensor_points_mapTF_ptr,
+    fromRosPoseToEigenMatrix4f(result_pose_msg));
   sensor_msgs::msg::PointCloud2 sensor_points_mapTF_msg;
   pcl::toROSMsg(*sensor_points_mapTF_ptr, sensor_points_mapTF_msg);
   sensor_points_mapTF_msg.header.stamp = sensor_ros_time;
@@ -725,7 +728,8 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::alignUsingMonteCar
 
     ndt_ptr->align(*output_cloud, initial_pose_matrix);
 
-    const geometry_msgs::msg::Pose result_pose = fromEigenMatrix4fToRosPose(ndt_ptr->getFinalTransformation());
+    const geometry_msgs::msg::Pose result_pose =
+      fromEigenMatrix4fToRosPose(ndt_ptr->getFinalTransformation());
 
     const auto transform_probability = ndt_ptr->getTransformationProbability();
     const auto num_iteration = ndt_ptr->getFinalNumIteration();
@@ -739,7 +743,8 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::alignUsingMonteCar
     auto sensor_points_mapTF_ptr = std::make_shared<pcl::PointCloud<PointSource>>();
     const auto sensor_points_baselinkTF_ptr = ndt_ptr->getInputSource();
     pcl::transformPointCloud(
-      *sensor_points_baselinkTF_ptr, *sensor_points_mapTF_ptr, fromRosPoseToEigenMatrix4f(result_pose));
+      *sensor_points_baselinkTF_ptr, *sensor_points_mapTF_ptr,
+      fromRosPoseToEigenMatrix4f(result_pose));
     sensor_msgs::msg::PointCloud2 sensor_points_mapTF_msg;
     pcl::toROSMsg(*sensor_points_mapTF_ptr, sensor_points_mapTF_msg);
     sensor_points_mapTF_msg.header.stamp = initial_pose_with_cov.header.stamp;
