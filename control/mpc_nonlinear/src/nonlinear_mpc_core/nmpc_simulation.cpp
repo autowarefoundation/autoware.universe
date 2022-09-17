@@ -16,6 +16,8 @@
 
 #include "nonlinear_mpc_core/nmpc_simulation.hpp"
 
+#include <utility>
+
 namespace ns_sim
 {
 // an external observer for observing integration steps
@@ -37,11 +39,8 @@ namespace ns_sim
 
 // Zero Order Hold ODE.
 ODEzoh::ODEzoh(
-  Model::model_ptr_t const & model,
-  const Model::input_vector_t & u,
-  Model::param_vector_t const & params,
-  const double dt)
-: model_(model), u_(u), params_(params), dt_(dt)
+  Model::model_ptr_t model, Model::input_vector_t u, Model::param_vector_t params, const double dt)
+: model_(std::move(model)), u_(std::move(u)), params_(std::move(params)), dt_(dt)
 {
 }
 
@@ -54,18 +53,19 @@ void ODEzoh::operator()(const Model::state_vector_t & x, Model::state_vector_t &
 
 // First Order Hold ODE.
 ODEfoh::ODEfoh(
-  Model::model_ptr_t const & model,
-  const Model::input_vector_t & u0,
-  const Model::input_vector_t & u1,
-  Model::param_vector_t const & params0,
-  Model::param_vector_t const & params1, double dt)
-: model_(model), u0_(u0), u1_(u1), params0_(params0), params1_(params1), dt_(dt)
+  Model::model_ptr_t model, Model::input_vector_t u0, Model::input_vector_t u1,
+  Model::param_vector_t params0, Model::param_vector_t params1, double dt)
+: model_(std::move(model)),
+  u0_(std::move(u0)),
+  u1_(std::move(u1)),
+  params0_(std::move(params0)),
+  params1_(std::move(params1)),
+  dt_(dt)
 {
 }
 
 void ODEfoh::operator()(
-  const Model::state_vector_t & x, Model::state_vector_t & dxdt,
-  const double t)
+  const Model::state_vector_t & x, Model::state_vector_t & dxdt, const double t)
 {
   // InterpolateInCoordinates the inputs and the parameters.
   Model::input_vector_t u = u0_ + t / dt_ * (u1_ - u0_);
@@ -77,11 +77,14 @@ void ODEfoh::operator()(
 
 // Variable speed ODE.
 ODEvariableSpeed::ODEvariableSpeed(
-  const Model::model_ptr_t & model,
-  const Model::input_vector_t & u0,
-  Model::param_vector_t const & params0,
+  Model::model_ptr_t model, Model::input_vector_t u0, Model::param_vector_t params0,
   const double & v0, const double & v1, double dt)
-: model_(model), u0_(u0), params0_(params0), v0_(v0), v1(v1), dt_(dt)
+: model_(std::move(model)),
+  u0_(std::move(u0)),
+  params0_(std::move(params0)),
+  v0_(v0),
+  v1(v1),
+  dt_(dt)
 {
   // Acceleration input is cancelled in this integration as we use varying speed.
   u0_(0) = 0.0;
@@ -98,11 +101,8 @@ void ODEvariableSpeed::operator()(Model::state_vector_t & x, Model::state_vector
 
 // Simulator methods.
 void simulateNonlinearModel_zoh(
-  Model::model_ptr_t model,
-  Model::input_vector_t const & u0,
-  Model::param_vector_t const & params,
-  const double & dt,
-  Model::state_vector_t & x)
+  const Model::model_ptr_t & model, Model::input_vector_t const & u0,
+  Model::param_vector_t const & params, const double & dt, Model::state_vector_t & x)
 {
   /**
    * class State ,
@@ -118,8 +118,10 @@ void simulateNonlinearModel_zoh(
    *        runge_kutta_fehlberg78<Model::state_vector_t, double, Model::state_vector_t, double,
    *                vector_space_algebra> stepper;
    **/
-  boost::numeric::odeint::runge_kutta4<Model::state_vector_t, double, Model::state_vector_t, double,
-    boost::numeric::odeint::vector_space_algebra> stepper;
+  boost::numeric::odeint::runge_kutta4<
+    Model::state_vector_t, double, Model::state_vector_t, double,
+    boost::numeric::odeint::vector_space_algebra>
+    stepper;
 
   ODEzoh ode(model, u0, params, dt);
 
@@ -149,13 +151,9 @@ void simulateNonlinearModel_zoh(
 }
 
 void SimulateNonlinearModel_foh(
-  Model::model_ptr_t model,
-  Model::input_vector_t const & u0,
-  Model::input_vector_t const & u1,
-  Model::param_vector_t const & params0,
-  Model::param_vector_t const & params1,
-  const double & dt,
-  Model::state_vector_t & x)
+  const Model::model_ptr_t & model, Model::input_vector_t const & u0,
+  Model::input_vector_t const & u1, Model::param_vector_t const & params0,
+  Model::param_vector_t const & params1, const double & dt, Model::state_vector_t & x)
 {
   /**
    * class State ,
@@ -173,8 +171,10 @@ void SimulateNonlinearModel_foh(
   //    boost::numeric::odeint::vector_space_algebra>
   //  stepper;
 
-  boost::numeric::odeint::runge_kutta4<Model::state_vector_t, double, Model::state_vector_t, double,
-    boost::numeric::odeint::vector_space_algebra> stepper;
+  boost::numeric::odeint::runge_kutta4<
+    Model::state_vector_t, double, Model::state_vector_t, double,
+    boost::numeric::odeint::vector_space_algebra>
+    stepper;
 
   ODEfoh ode(model, u0, u1, params0, params1, dt);
 
@@ -183,21 +183,19 @@ void SimulateNonlinearModel_foh(
 }
 
 /**
- *  u0  = [0.0, steering input]. The velocity input is set to zero and planned target speeds are used for the vx
- *  states in the equations.
+ *  u0  = [0.0, steering input]. The velocity input is set to zero and planned target speeds are
+ * used for the vx states in the equations.
  * */
 void simulateNonlinearModel_variableSpeed(
-  Model::model_ptr_t model,
-  Model::input_vector_t const & u0,
-  Model::param_vector_t const & params0,
-  double const & v0,
-  double const & v1,
-  const double & dt,
+  const Model::model_ptr_t & model, Model::input_vector_t const & u0,
+  Model::param_vector_t const & params0, double const & v0, double const & v1, const double & dt,
   Model::state_vector_t & x)
 {
   // state, value type, derivative, time value type.
-  boost::numeric::odeint::runge_kutta4<Model::state_vector_t, double, Model::state_vector_t, double,
-    boost::numeric::odeint::vector_space_algebra> stepper;
+  boost::numeric::odeint::runge_kutta4<
+    Model::state_vector_t, double, Model::state_vector_t, double,
+    boost::numeric::odeint::vector_space_algebra>
+    stepper;
 
   // runge_kutta_fehlberg78<Model::state_vector_t, double,
   // Model::state_vector_t, double, vector_space_algebra> stepper;
