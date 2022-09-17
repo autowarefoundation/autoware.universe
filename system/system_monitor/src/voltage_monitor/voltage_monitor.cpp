@@ -112,7 +112,7 @@ void VoltageMonitor::checkVoltage(diagnostic_updater::DiagnosticStatusWrapper & 
   }
   std::string line;
   try {
-    for (int i = 0; i < 200 && std::getline(is_out, line); i++) {
+    while(std::getline(is_out, line)) {
       auto voltageStringPos = line.find(voltage_string_.c_str());
       if (voltageStringPos != std::string::npos) {
         std::smatch match;
