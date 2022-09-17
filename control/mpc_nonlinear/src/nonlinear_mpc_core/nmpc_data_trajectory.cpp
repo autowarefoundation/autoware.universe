@@ -243,17 +243,28 @@ void ns_data::MPCdataTrajectoryVectors::print() const
 {
   size_t n = s.size();
 
-  Eigen::MatrixXd temp_path(n, 5);
+  Eigen::MatrixXd temp_path(n, 8);
 
-  ns_utils::print("s x, y, z, yaw, vx and curvature");
+  std::vector<double> dx;
+  std::vector<double> dy;
+
+  std::adjacent_difference(x.cbegin(), x.cend(), std::back_inserter(dx));
+  dx.emplace_back(dx.back());
+
+  std::adjacent_difference(y.cbegin(), y.cend(), std::back_inserter(dy));
+  dy.emplace_back(dy.back());
+
+  ns_utils::print("s x, y, z, yaw, vx, curvature and yaw_dydx");
   for (size_t k = 0; k < n; ++k) {
     auto p = static_cast<Eigen::Index>(k);
     temp_path(p, 0) = s[k];
-    temp_path(p, 1) = x[k];
-    temp_path(p, 2) = y[k];
+    temp_path(p, 1) = x[k] - x[0];
+    temp_path(p, 2) = y[k] - y[0];
     temp_path(p, 3) = z[k];
-    temp_path(p, 4) = yaw[k];
+    temp_path(p, 4) = vx[k];
+    temp_path(p, 5) = yaw[k];
+    temp_path(p, 6) = atan2(dy[k], dx[k]);
+    temp_path(p, 7) = curvature[k];
   }
-
   ns_eigen_utils::printEigenMat(temp_path);
 }
