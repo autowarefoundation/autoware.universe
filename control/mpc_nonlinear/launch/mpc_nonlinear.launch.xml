@@ -20,7 +20,7 @@
         <!--  Items to test longitudinal control-->
         <remap from="~/output/control_cmd" to="/control/trajectory_follower/control_cmd"/>
         <remap from="~/output/predicted_trajectory" to="predicted_trajectory"/>
-        <remap from="~/debug/nmpc_predicted_performance_vars" to="nmpc_performance_vars"/>
+        <remap from="~/debug/nmpc_vars" to="nmpc_performance_vars"/>
 
     </node>
 </launch>
