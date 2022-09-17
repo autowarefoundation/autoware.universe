@@ -51,8 +51,7 @@ NonlinearMPCNode::NonlinearMPCNode(const rclcpp::NodeOptions & node_options)
   pub_nmpc_error_report_ = create_publisher<ErrorReportMsg>("/nmpc_error_report", 1);
 
   // NMPC performance variables for visualizing.
-  pub_nmpc_performance_ =
-    create_publisher<NonlinearMPCPerformanceMsg>("~/debug/nmpc_predicted_performance_vars", 1);
+  pub_nmpc_performance_ = create_publisher<NonlinearMPCPerformanceMsg>("~/debug/nmpc_vars", 1);
 
   // Initialize the subscribers.
   sub_trajectory_ = create_subscription<TrajectoryMsg>(
@@ -329,6 +328,18 @@ void NonlinearMPCNode::onTimer()
       publishControlsAndUpdateVars(control_cmd_prev_);
       return;
     }
+
+    // Get trajectories as a matrix and print for debugging purpose.
+    // TODO {ali}: disable the debugs.
+    auto const & traj_data = nonlinear_mpc_controller_ptr_->getCurrentTrajectoryData();
+    auto && Xtemp = ns_eigen_utils::getTrajectory(traj_data.X);
+    auto && Utemp = ns_eigen_utils::getTrajectory(traj_data.U);
+
+    ns_utils::print("\nComputed LPV trajectories : ");
+    ns_eigen_utils::printEigenMat(Xtemp.transpose());  // [x, y, psi, s, ey, epsi, vx, delta, vy]
+
+    ns_utils::print("\nComputed LPV trajectories U : ");
+    ns_eigen_utils::printEigenMat(Utemp.transpose());
   }
 
   /**
@@ -344,6 +355,18 @@ void NonlinearMPCNode::onTimer()
    * */
   nonlinear_mpc_controller_ptr_->simulateControlSequenceByPredictedInputs(
     x0_predicted_, interpolator_curvature_pws);
+
+  // Get trajectories as a matrix and print for debugging purpose.
+  // TODO {ali}: disable the debugs.
+  auto const & traj_data = nonlinear_mpc_controller_ptr_->getCurrentTrajectoryData();
+  auto && Xtemp = ns_eigen_utils::getTrajectory(traj_data.X);
+  auto && Utemp = ns_eigen_utils::getTrajectory(traj_data.U);
+
+  ns_utils::print("\nSimulated MPC trajectories : ");
+  ns_eigen_utils::printEigenMat(Xtemp.transpose());  // [x, y, psi, s, ey, epsi, vx, delta, vy]
+
+  ns_utils::print("\nSimulated MPC trajectories U : ");
+  ns_eigen_utils::printEigenMat(Utemp.transpose());
 
   // Model::input_vector_t u_model_solution_; // [velocity input - m/s, steering input - rad]
   // If we choose to use MPC. Get solution from OSQP into the traj_data_.
@@ -976,9 +999,9 @@ bool NonlinearMPCNode::resampleRawTrajectoriesToaFixedSize()
   }
   nonlinear_mpc_controller_ptr_->setMPCtrajectoryRawVectorsPtr(mpc_traj_raw);
 
-  // TODO : remove debug
-  ns_utils::print("Raw MPC traj ");
-  mpc_traj_raw.print();
+  // TO-DO : remove debug
+  // ns_utils::print("Raw MPC traj ");
+  // mpc_traj_raw.print();
 
   // --------------- Fill the Eigen reference_map_sxyz --------------------------
   // !<-@brief smooth map reference of [MPC_MAP_SMOOTHER_OUT x 4]
@@ -1097,8 +1120,8 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(
   bspline_interpolator_ptr_->getFirstDerivative(xy_data, rdot_interp);
   bspline_interpolator_ptr_->getSecondDerivative(xy_data, rddot_interp);
 
-  // TODO : remove these lines
-  ns_eigen_utils::printEigenMat(xy_data, "x and y");
+  // TO-DO : remove these lines
+  // ns_eigen_utils::printEigenMat(xy_data, "x and y");
   // ns_eigen_utils::printEigenMat(rdot_interp, "rdot_interp");
   // ns_eigen_utils::printEigenMat(rddot_interp, "rddot interp");
 
@@ -1179,9 +1202,9 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(
 
   nonlinear_mpc_controller_ptr_->setMPCtrajectorySmoothVectorsPtr(mpc_traj_smoothed);
 
-  // TODO: remove this debug
-  ns_utils::print("Smoothed MPC traj ");
-  mpc_traj_smoothed.print();
+  // TO-DO: remove this debug
+  //  ns_utils::print("Smoothed MPC traj ");
+  //  mpc_traj_smoothed.print();
 
   // Verify size
   if (auto const & size_of_mpc_smooth = mpc_traj_smoothed.size(); size_of_mpc_smooth == 0) {
@@ -1207,12 +1230,12 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(
     return false;
   }
   // DEBUG
-  // TODO {ali}: disable this debug
-  for (size_t k = 0; k < mpc_traj_smoothed.s.size(); ++k) {
-    ns_utils::print(
-      "s vs curvature of the interpolator : ", mpc_traj_smoothed.s[k],
-      mpc_traj_smoothed.curvature[k]);
-  }
+  //  // TO-DO {ali}: disable this debug
+  //  for (size_t k = 0; k < mpc_traj_smoothed.s.size(); ++k) {
+  //    ns_utils::print(
+  //      "s vs curvature of the interpolator : ", mpc_traj_smoothed.s[k],
+  //      mpc_traj_smoothed.curvature[k]);
+  //  }
 
   // end of DEBUG
   return true;
