@@ -17,16 +17,19 @@
 #ifndef NONLINEAR_MPC_CORE__NMPC_SIMULATION_HPP_
 #define NONLINEAR_MPC_CORE__NMPC_SIMULATION_HPP_
 
-#include <Eigen/Dense>
-#include <boost/numeric/odeint.hpp>
 #include "nonlinear_mpc_core/active_model.hpp"
 #include "utils/nmpc_utils.hpp"
+
+#include <Eigen/Dense>
+
+#include <boost/numeric/odeint.hpp>
 
 namespace ns_sim
 {
 
 /**
- *  @brief  ODEzoh class is a functor for using boost integration library for zero order hold control signals.
+ *  @brief  ODEzoh class is a functor for using boost integration library for zero order hold
+ * control signals.
  *  @param      Model::shared_ptr, differential equation for the model,
  *  @param      dt is time step,
  *  @param	u is the input,
@@ -38,8 +41,7 @@ public:
   ODEzoh() = default;
 
   explicit ODEzoh(
-    Model::model_ptr_t const & model, const Model::input_vector_t & u,
-    Model::param_vector_t const & params, double dt);
+    Model::model_ptr_t model, Model::input_vector_t u, Model::param_vector_t params, double dt);
 
   ODEzoh(ODEzoh const &) = default;
 
@@ -73,11 +75,8 @@ public:
   ODEfoh() = default;
 
   explicit ODEfoh(
-    Model::model_ptr_t const & model,
-    const Model::input_vector_t & u0,
-    const Model::input_vector_t & u1,
-    Model::param_vector_t const & params0,
-    Model::param_vector_t const & params1, double dt);
+    Model::model_ptr_t model, Model::input_vector_t u0, Model::input_vector_t u1,
+    Model::param_vector_t params0, Model::param_vector_t params1, double dt);
 
   ODEfoh(ODEfoh const &) = default;
 
@@ -108,22 +107,20 @@ private:
 
   // !<-@brief [curvature and vx_target]  at the end.
   Model::param_vector_t params1_{Model::param_vector_t::Zero()};
-  double dt_{};                      // !<-@brief time step.
+  double dt_{};  // !<-@brief time step.
 };
 
 /**
- *  @brief Ordinary differential equation class for variable speed integration. We use this class when the NMPC
- *  does not control the vehicle longitudinal motion. Instead of using the NMPC acceleration control in the simulations,
- *  we use trajectory speed.
+ *  @brief Ordinary differential equation class for variable speed integration. We use this class
+ * when the NMPC does not control the vehicle longitudinal motion. Instead of using the NMPC
+ * acceleration control in the simulations, we use trajectory speed.
  * */
 class ODEvariableSpeed
 {
 public:
   ODEvariableSpeed() = default;
   explicit ODEvariableSpeed(
-    Model::model_ptr_t const & model,
-    Model::input_vector_t const & u0,
-    Model::param_vector_t const & params0,
+    Model::model_ptr_t model, Model::input_vector_t u0, Model::param_vector_t params0,
     double const & v0, double const & v1, double dt);
 
   ODEvariableSpeed(ODEvariableSpeed const &) = default;
@@ -137,8 +134,8 @@ public:
   ~ODEvariableSpeed() = default;
 
   /**
-  * @brief Boost integration library integration function signature. f(x, dxdt, t)
-  * */
+   * @brief Boost integration library integration function signature. f(x, dxdt, t)
+   * */
   void operator()(Model::state_vector_t & x, Model::state_vector_t & dxdt, double t);
 
 private:
@@ -151,35 +148,25 @@ private:
 };
 
 /**
-*  @brief Given the initial conditions and the control to be applied, integrates the model one-step.
-*  @param model_ptr: Pointer to the vehicle model,
-*  @param u0; the control signal to be applied constant during the integration.
-*  @param dt; time step.
-*  @param x; initial state. The final state will be stored in it.
-* */
+ *  @brief Given the initial conditions and the control to be applied, integrates the model
+ * one-step.
+ *  @param model_ptr: Pointer to the vehicle model,
+ *  @param u0; the control signal to be applied constant during the integration.
+ *  @param dt; time step.
+ *  @param x; initial state. The final state will be stored in it.
+ * */
 void simulateNonlinearModel_zoh(
-  Model::model_ptr_t model,
-  Model::input_vector_t const & u0,
-  Model::param_vector_t const & params,
-  const double & dt,
-  Model::state_vector_t & x);
+  const Model::model_ptr_t & model, Model::input_vector_t const & u0,
+  Model::param_vector_t const & params, const double & dt, Model::state_vector_t & x);
 
 void simulateNonlinearModel_foh(
-  Model::model_ptr_t model,
-  Model::input_vector_t const & u0,
-  Model::input_vector_t const & u1,
-  Model::param_vector_t const & params0,
-  Model::param_vector_t const & params1,
-  const double & dt,
+  Model::model_ptr_t model, Model::input_vector_t const & u0, Model::input_vector_t const & u1,
+  Model::param_vector_t const & params0, Model::param_vector_t const & params1, const double & dt,
   Model::state_vector_t & x);
 
 void simulateNonlinearModel_variableSpeed(
-  Model::model_ptr_t model,
-  Model::input_vector_t const & u0,
-  Model::param_vector_t const & params0,
-  double const & v0,
-  double const & v1,
-  const double & dt,
+  const Model::model_ptr_t & model, Model::input_vector_t const & u0,
+  Model::param_vector_t const & params0, double const & v0, double const & v1, const double & dt,
   Model::state_vector_t & x);
 
 }  // namespace ns_sim
