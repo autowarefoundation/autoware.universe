@@ -977,6 +977,7 @@ bool NonlinearMPCNode::resampleRawTrajectoriesToaFixedSize()
   nonlinear_mpc_controller_ptr_->setMPCtrajectoryRawVectorsPtr(mpc_traj_raw);
 
   // TODO : remove debug
+  ns_utils::print("Raw MPC traj ");
   mpc_traj_raw.print();
 
   // --------------- Fill the Eigen reference_map_sxyz --------------------------
@@ -1098,8 +1099,8 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(
 
   // TODO : remove these lines
   ns_eigen_utils::printEigenMat(xy_data, "x and y");
-  ns_eigen_utils::printEigenMat(rdot_interp, "rdot_interp");
-  ns_eigen_utils::printEigenMat(rddot_interp, "rddot interp");
+  // ns_eigen_utils::printEigenMat(rdot_interp, "rdot_interp");
+  // ns_eigen_utils::printEigenMat(rddot_interp, "rddot interp");
 
   /** @brief Compute the curvature column. */
   auto const & curvature = ns_eigen_utils::Curvature(rdot_interp, rddot_interp);
@@ -1177,6 +1178,10 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(
   }
 
   nonlinear_mpc_controller_ptr_->setMPCtrajectorySmoothVectorsPtr(mpc_traj_smoothed);
+
+  // TODO: remove this debug
+  ns_utils::print("Smoothed MPC traj ");
+  mpc_traj_smoothed.print();
 
   // Verify size
   if (auto const & size_of_mpc_smooth = mpc_traj_smoothed.size(); size_of_mpc_smooth == 0) {
