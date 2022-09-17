@@ -82,7 +82,7 @@ bool isLocalOptimalSolutionOscillation(
       fromRosPointToEigenVector3d(result_pose_msg_array.at(i - 1).position);
     const Eigen::Vector3d prev_prev_pose =
       fromRosPointToEigenVector3d(result_pose_msg_array.at(i - 2).position);
-    const auto current_vec = current_pose - prev_pose;
+    const auto current_vec = (current_pose - prev_pose).normalized();
     const auto prev_vec = (prev_pose - prev_prev_pose).normalized();
     const bool oscillation = prev_vec.dot(current_vec) < inversion_vector_threshold;
     if (prev_oscillation && oscillation) {
