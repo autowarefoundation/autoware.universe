@@ -168,7 +168,7 @@ void ns_nmpc_interface::NonlinearMPCController::applyStateConstraints(
 void ns_nmpc_interface::NonlinearMPCController::applyStateConstraints(Model::state_vector_t & x)
 {
   for (Eigen::Index idx = 0; idx < x.size(); ++idx) {
-    if (params_opt_.xlower(idx) > kInfinity && params_opt_.xupper(idx) < kInfinity) {
+    if (params_opt_.xlower(idx) > -kInfinity && params_opt_.xupper(idx) < kInfinity) {
       x(idx) = ns_utils::clamp(x(idx), params_opt_.xlower(idx), params_opt_.xupper(idx));
     }
   }
@@ -358,6 +358,9 @@ void ns_nmpc_interface::NonlinearMPCController::updateRefTargetStatesByTimeInter
   for (size_t k = 0; k < nX; ++k) {
     // set speed of the target states.
     xk(ns_utils::toUType(VehicleStateIds::vx)) = vx_interpolated_vect[k];
+
+    // TODO : remove the debug print.
+    // ns_utils::print("Target velocity : ", xk(ns_utils::toUType(VehicleStateIds::vx)));
 
     // Scale the reference target velocity for simple feedforward-conditioning.
     data_nmpc_.target_reference_states_and_controls.X[k] << xk;
