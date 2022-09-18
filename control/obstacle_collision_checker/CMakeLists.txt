@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.14)
 project(obstacle_collision_checker)
 
 find_package(autoware_cmake REQUIRED)
+find_package(PCL REQUIRED)
 autoware_package()
 
 include_directories(
@@ -10,6 +11,8 @@ include_directories(
   ${Boost_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
 )
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
 
 ament_auto_add_library(obstacle_collision_checker SHARED
   src/obstacle_collision_checker_node/obstacle_collision_checker.cpp
