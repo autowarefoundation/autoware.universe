@@ -24,8 +24,6 @@ bool LPVinitializer::simulateWithFeedback(
   ns_data::param_lpv_type_t const & params_lpv, ns_data::ParamsOptimization const & params_opt,
   ns_data::data_nmpc_core_type_t & nmpc_data)
 {
-  // ns_utils::print("in feedback initialization ...");
-
   // Get the size of the trajectory.
   // number of state vectors stored in the std::vector.
   size_t const & K = nmpc_data.trajectory_data.nX();
@@ -110,7 +108,7 @@ bool LPVinitializer::simulateWithFeedback(
     params(ns_utils::toUType(VehicleParamIds::target_vx)) = vtarget;
     model_ptr->computeJacobians(xk, uk, params, Ac, Bc);
 
-    // Compute the thetas - values of the nonlinearities in the state transition matrix Ac.
+    // Compute the thetas - values of the non-linearities in the state transition matrix Ac.
     // We use the only one-block Ac where the error states reside.
     // auto const & Ac_error_block = Ac.template block<estate_dim, estate_dim>(4, 4);
     auto const & Ac_error_block = Ac.bottomRightCorner<5, 5>();
