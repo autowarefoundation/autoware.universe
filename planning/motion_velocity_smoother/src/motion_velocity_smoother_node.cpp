@@ -398,7 +398,6 @@ void MotionVelocitySmootherNode::onCurrentTrajectory(const Trajectory::ConstShar
     node_param_.ego_nearest_dist_threshold, node_param_.ego_nearest_yaw_threshold,
     node_param_.post_resample_param, false);
 
-
   // Set 0 at the end of the trajectory
   if (!output_resampled.empty()) {
     output_resampled.back().longitudinal_velocity_mps = 0.0;
@@ -542,8 +541,7 @@ bool MotionVelocitySmootherNode::smoothVelocity(
   overwriteStopPoint(clipped, traj_smoothed);
 
   traj_smoothed.insert(
-    traj_smoothed.begin(), traj_resampled.begin(),
-    traj_resampled.begin() + traj_resampled_closest);
+    traj_smoothed.begin(), traj_resampled.begin(), traj_resampled.begin() + traj_resampled_closest);
 
   // For the endpoint of the trajectory
   if (!traj_smoothed.empty()) {

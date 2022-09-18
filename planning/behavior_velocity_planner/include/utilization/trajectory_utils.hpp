@@ -121,8 +121,7 @@ inline bool smoothPath(
     return false;
   }
   traj_smoothed.insert(
-    traj_smoothed.begin(), traj_resampled.begin(),
-    traj_resampled.begin() + traj_resampled_closest);
+    traj_smoothed.begin(), traj_resampled.begin(), traj_resampled.begin() + traj_resampled_closest);
 
   out_path = convertTrajectoryPointsToPath(traj_smoothed);
   return true;

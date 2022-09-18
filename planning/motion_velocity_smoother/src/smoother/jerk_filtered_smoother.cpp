@@ -318,8 +318,7 @@ bool JerkFilteredSmoother::apply(
     RCLCPP_WARN(logger_, "osqp polish process failed : %s. The result may be inaccurate", msg);
   }
 
-  if (VERBOSE_TRAJECTORY_VELOCITY)
-  {
+  if (VERBOSE_TRAJECTORY_VELOCITY) {
     const auto s_output = trajectory_utils::calcArclengthArray(output);
 
     std::cerr << "\n\n" << std::endl;
