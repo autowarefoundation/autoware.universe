@@ -17,14 +17,16 @@
 #ifndef VEHICLE_MODELS__VEHICLE_MODELS_BASE_HPP_
 #define VEHICLE_MODELS__VEHICLE_MODELS_BASE_HPP_
 
-#include <eigen3/Eigen/StdVector>
-#include <memory>
-#include <vector>
 #include "Eigen/Dense"
 #include "kinematic_model_definitions.hpp"
 #include "nonlinear_mpc_core/nmpc_data_discretization.hpp"
 #include "nonlinear_mpc_core/nmpc_data_trajectory.hpp"
 #include "vehicle_models/vehicle_dynamics_base.hpp"
+
+#include <eigen3/Eigen/StdVector>
+
+#include <memory>
+#include <vector>
 
 /**
  * @brief Defines the data structure to be used for the vehicle models.
@@ -34,13 +36,12 @@
  * @tparam INPUT_DIM dimension of inputs.
  * @tparam PARAM_DIM dimension of parameters such as reference curvature.
  * */
-template<typename DERIVED, int STATE_DIM, int INPUT_DIM, int PARAM_DIM, int eSTATE_DIM>
+template <typename DERIVED, int STATE_DIM, int INPUT_DIM, int PARAM_DIM, int eSTATE_DIM>
 class VehicleModelsBase : public VehicleDynamicsBase<STATE_DIM, INPUT_DIM, PARAM_DIM, eSTATE_DIM>
 {
 public:
   //  VehicleModelsBase() = default;
-  //
-  //  virtual ~VehicleModelsBase() = default;
+  ~VehicleModelsBase() override = default;
 
   // Type Definitions
   using BASE = VehicleDynamicsBase<STATE_DIM, INPUT_DIM, PARAM_DIM, eSTATE_DIM>;
