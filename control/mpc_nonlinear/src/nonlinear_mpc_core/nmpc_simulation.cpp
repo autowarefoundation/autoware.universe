@@ -118,7 +118,12 @@ void simulateNonlinearModel_zoh(
    *        runge_kutta_fehlberg78<Model::state_vector_t, double, Model::state_vector_t, double,
    *                vector_space_algebra> stepper;
    **/
-  boost::numeric::odeint::runge_kutta4<
+  //  boost::numeric::odeint::runge_kutta4<
+  //    Model::state_vector_t, double, Model::state_vector_t, double,
+  //    boost::numeric::odeint::vector_space_algebra>
+  //    stepper;
+
+  boost::numeric::odeint::runge_kutta_cash_karp54<
     Model::state_vector_t, double, Model::state_vector_t, double,
     boost::numeric::odeint::vector_space_algebra>
     stepper;
