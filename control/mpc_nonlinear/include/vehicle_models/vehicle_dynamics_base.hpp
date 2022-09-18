@@ -1,35 +1,37 @@
 /*
-* Use of this source code is governed by an MIT-style license that can be found
-* in the LICENSE file or at https://opensource.org/licenses/MIT.
-*/
+ * Use of this source code is governed by an MIT-style license that can be found
+ * in the LICENSE file or at https://opensource.org/licenses/MIT.
+ */
 
 /*
-* Copyright 2021 - 2022 Autoware Foundation. All rights reserved.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*     http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * Copyright 2021 - 2022 Autoware Foundation. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 #ifndef VEHICLE_MODELS__VEHICLE_DYNAMICS_BASE_HPP_
 #define VEHICLE_MODELS__VEHICLE_DYNAMICS_BASE_HPP_
 
-#include <Eigen/StdVector>
-#include <cmath>
-#include <memory>
-#include <vector>
 #include "Eigen/Dense"
 #include "kinematic_model_definitions.hpp"
 #include "utils/codegen_eigen_support.hpp"
 #include "utils/nmpc_utils.hpp"
+
+#include <Eigen/StdVector>
+
+#include <cmath>
+#include <memory>
+#include <vector>
 
 #define CODEGEN true
 // #if CODEGEN
@@ -38,19 +40,18 @@
 // #include <cppad/cppad.hpp>
 // #endif
 
-
 /**
- * @brief Vehicle dynamics class that handles Automatic Differentiation tasks for the vehicle dynamics model classes.
- * The AD of dynamics is isolated from the vehicle model classes.
+ * @brief Vehicle dynamics class that handles Automatic Differentiation tasks for the vehicle
+ * dynamics model classes. The AD of dynamics is isolated from the vehicle model classes.
  * @tparam STATE_DIM number of states in the vehicle dynamics or kinematics,
  * @tparam eSTATE_DIM if error states are used in the equations, the number of error states,
  * @tparam INPUT_DIM number of inputs into the model,
- * @tparam PARAM_DIM number of parameters into the model, such as curvature in the Frenet frame models.
+ * @tparam PARAM_DIM number of parameters into the model, such as curvature in the Frenet frame
+ * models.
  * */
 // cppcheck-suppress unknownMacro
 
-
-template<int STATE_DIM, int INPUT_DIM, int PARAM_DIM, int eSTATE_DIM>
+template <int STATE_DIM, int INPUT_DIM, int PARAM_DIM, int eSTATE_DIM>
 class VehicleDynamicsBase
 {
 public:
@@ -105,8 +106,7 @@ public:
   using lpv_X_matrix_v_t = std::vector<state_matrix_X_t>;
   using lpv_Y_matrix_v_t = std::vector<input_matrix_Y_t>;
 
-  enum Dimensions : int
-  {
+  enum Dimensions : int {
     state_dim = STATE_DIM,
     estate_dim = eSTATE_DIM,  // error state dimension.
     input_dim = INPUT_DIM,
@@ -132,17 +132,16 @@ public:
   using param_vector_ad_t = Eigen::Matrix<scalar_ad_t, PARAM_DIM, 1>;
 
   /**
-  * @brief Initialize the model_ by compiling the dynamics functions.
-  */
+   * @brief Initialize the model_ by compiling the dynamics functions.
+   */
 
   void InitializeModel();
 
-  [[nodiscard]] bool IsInitialized() const
-  {return initialized_;}
+  [[nodiscard]] bool IsInitialized() const { return initialized_; }
 
   /**
-   * @brief Vehicle dynamics base class that defines vehicle model nonlinear and linear equations for automatic
-   * differentiation.
+   * @brief Vehicle dynamics base class that defines vehicle model nonlinear and linear equations
+   * for automatic differentiation.
    * @param x [in] Eigen 1D column matrix of states,
    * @param u [in] Eigen 1d column matrix of inputs,
    * @param kappa [in] scalar parameter - curvature,
@@ -150,22 +149,19 @@ public:
    * */
   virtual void systemEquations(
     const state_vector_ad_t & x, const input_vector_ad_t & u,
-    const VehicleDynamicsBase::param_vector_ad_t & params,                            // curvature, target vx
+    const VehicleDynamicsBase::param_vector_ad_t & params,  // curvature, target vx
     state_vector_ad_t & xdot_f) = 0;
 
   void computeFx(
     const state_vector_t & x, const input_vector_t & u,
-    const VehicleDynamicsBase::param_vector_t & params,              // curvature, target vx
+    const VehicleDynamicsBase::param_vector_t & params,  // curvature, target vx
     state_vector_t & f);
 
   void computeJacobians(
     const state_vector_t & x, const input_vector_t & u, param_vector_t const & params,
     state_matrix_t & A, control_matrix_t & B);
 
-  // virtual ~VehicleDynamicsBase() = default;
-  //  {
-  //    // CppAD::thread_alloc::inuse(0);
-  //  }
+  virtual ~VehicleDynamicsBase() = default;  //{ CppAD::thread_alloc::inuse(0); }
 
 private:
   // cppAd function for xdot = f(x, u).
@@ -182,7 +178,7 @@ private:
 /**
  * @brief run AD recordings to record the process steps and initialize the AD model.
  * */
-template<int STATE_DIM, int INPUT_DIM, int PARAM_DIM, int eSTATE_DIM>
+template <int STATE_DIM, int INPUT_DIM, int PARAM_DIM, int eSTATE_DIM>
 void VehicleDynamicsBase<STATE_DIM, INPUT_DIM, PARAM_DIM, eSTATE_DIM>::InitializeModel()
 {
   if (initialized_) {
@@ -233,7 +229,8 @@ void VehicleDynamicsBase<STATE_DIM, INPUT_DIM, PARAM_DIM, eSTATE_DIM>::Initializ
 
   // We Separate since kappa=1 and ey=1 coincides with the singularity.
   // x.segment<STATE_DIM + INPUT_DIM>(0).setOnes();  //
-  // x.segment<PARAM_DIM>(STATE_DIM + INPUT_DIM).setConstant(0.05);    // Parameter is the curvature, 1 is singularity.
+  // x.segment<PARAM_DIM>(STATE_DIM + INPUT_DIM).setConstant(0.05);    // Parameter is the
+  // curvature, 1 is singularity.
   x.setRandom();
 
   // START RECORDING. We treat the parameter kappa as a part of independent variables.
@@ -252,7 +249,6 @@ void VehicleDynamicsBase<STATE_DIM, INPUT_DIM, PARAM_DIM, eSTATE_DIM>::Initializ
   // All the variables in system flow map is cppAD variables.
   systemEquations(state, input, params, xdot);
 
-
   // store operation sequence in x' = f(x) and STOP RECORDING.
   f_ = CppAD::ADFun<scalar_t>(x, dynamic_vector_ad_t{xdot});
   f_.optimize();
@@ -265,15 +261,10 @@ void VehicleDynamicsBase<STATE_DIM, INPUT_DIM, PARAM_DIM, eSTATE_DIM>::Initializ
 /**
  * @brief Implements xdot=f(x) evaluation for Automatic Differentiation.
  * */
-template<int STATE_DIM, int INPUT_DIM, int PARAM_DIM, int eSTATE_DIM>
-void VehicleDynamicsBase<STATE_DIM,
-  INPUT_DIM,
-  PARAM_DIM,
-  eSTATE_DIM>::computeFx(
-  const VehicleDynamicsBase::state_vector_t & x,
-  const VehicleDynamicsBase::input_vector_t & u,
-  const VehicleDynamicsBase::param_vector_t & params,
-  VehicleDynamicsBase::state_vector_t & f)
+template <int STATE_DIM, int INPUT_DIM, int PARAM_DIM, int eSTATE_DIM>
+void VehicleDynamicsBase<STATE_DIM, INPUT_DIM, PARAM_DIM, eSTATE_DIM>::computeFx(
+  const VehicleDynamicsBase::state_vector_t & x, const VehicleDynamicsBase::input_vector_t & u,
+  const VehicleDynamicsBase::param_vector_t & params, VehicleDynamicsBase::state_vector_t & f)
 {
   assert(initialized_);
 
@@ -281,8 +272,8 @@ void VehicleDynamicsBase<STATE_DIM,
   dynamic_vector_t input(STATE_DIM + INPUT_DIM + PARAM_DIM);
   input << x, u, params;
 
-  CppAD::cg::ArrayView<const double> input_view(input.data(),
-    static_cast<unsigned long>(input.size()));
+  CppAD::cg::ArrayView<const double> input_view(
+    input.data(), static_cast<unsigned long>(input.size()));
   CppAD::cg::ArrayView<double> f_view(f.data(), static_cast<unsigned long>(f.size()));
 
   model_->ForwardZero(input_view, f_view);
@@ -300,12 +291,10 @@ void VehicleDynamicsBase<STATE_DIM,
 /**
  * @brief Implements Jacobian functions of the form xdot = f(x) = Adx + Bdu.
  * */
-template<int STATE_DIM, int INPUT_DIM, int PARAM_DIM, int eSTATE_DIM>
+template <int STATE_DIM, int INPUT_DIM, int PARAM_DIM, int eSTATE_DIM>
 void VehicleDynamicsBase<STATE_DIM, INPUT_DIM, PARAM_DIM, eSTATE_DIM>::computeJacobians(
-  const VehicleDynamicsBase::state_vector_t & x,
-  const VehicleDynamicsBase::input_vector_t & u,
-  const VehicleDynamicsBase::param_vector_t & params,
-  VehicleDynamicsBase::state_matrix_t & A,
+  const VehicleDynamicsBase::state_vector_t & x, const VehicleDynamicsBase::input_vector_t & u,
+  const VehicleDynamicsBase::param_vector_t & params, VehicleDynamicsBase::state_matrix_t & A,
   VehicleDynamicsBase::control_matrix_t & B)
 {
   assert(initialized_);
@@ -318,8 +307,8 @@ void VehicleDynamicsBase<STATE_DIM, INPUT_DIM, PARAM_DIM, eSTATE_DIM>::computeJa
     Eigen::Matrix<double, STATE_DIM, STATE_DIM + INPUT_DIM + PARAM_DIM, Eigen::RowMajor>;
   full_jacobian_t J;
 
-  CppAD::cg::ArrayView<const double> input_view(input.data(),
-    static_cast<unsigned long>(input.size()));
+  CppAD::cg::ArrayView<const double> input_view(
+    input.data(), static_cast<unsigned long>(input.size()));
   CppAD::cg::ArrayView<double> J_view(J.data(), static_cast<unsigned long>(J.size()));
 
   model_->Jacobian(input_view, J_view);
