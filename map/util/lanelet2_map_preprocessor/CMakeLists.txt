@@ -2,13 +2,16 @@ cmake_minimum_required(VERSION 3.14)
 project(lanelet2_map_preprocessor)
 
 find_package(autoware_cmake REQUIRED)
+find_package(PCL REQUIRED)
 autoware_package()
 
 include_directories(
   include
   SYSTEM
-    ${PCL_INCLUDE_DIRS}
+  ${PCL_INCLUDE_DIRS}
 )
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
 
 ament_auto_add_executable(fix_z_value_by_pcd src/fix_z_value_by_pcd.cpp)
 ament_auto_add_executable(transform_maps src/transform_maps.cpp)
