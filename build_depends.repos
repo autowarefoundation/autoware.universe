@@ -41,3 +41,19 @@ repositories:
     type: git
     url: https://github.com/MORAI-Autonomous/MORAI-ROS2_morai_msgs.git
     version: main
+  universe/external/tier4_ad_api_adaptor:
+    type: git
+    url: https://github.com/tier4/tier4_ad_api_adaptor.git
+    version: tier4/universe
+  universe/external/cudnn_cmake_module:
+    type: git
+    url: https://github.com/tier4/cudnn_cmake_module.git
+    version: 0.0.1
+  universe/external/point_cloud_msg_wrapper:
+    type: git
+    url: https://gitlab.com/ApexAI/point_cloud_msg_wrapper.git
+    version: galactic
+  universe/external/tensorrt_cmake_module:
+    type: git
+    url: https://github.com/tier4/tensorrt_cmake_module.git
+    version: 0.0.3
