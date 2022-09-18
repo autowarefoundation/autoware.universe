@@ -47,21 +47,21 @@ void ns_models::KinematicModelSingleTrackModel::systemEquations(
   auto const & kappa = params(0);  // curvature
   // auto const &vtarget = params(1);   //  target velocity
 
-  auto const & tan_delta = tan(delta);
-  auto const & beta = atan(tan_delta * lr_ / wheel_base_);
+  auto const & tan_delta = CppAD::tan(delta);
+  auto const & beta = CppAD::atan(tan_delta * lr_ / wheel_base_);
 
   // Unpack each of the controls
   auto const & ax_acc_brk_input = u(0);  // acceleration - brake input [m/s/s]
   auto const & steering_input = u(1);    // steering input [rad]
 
   // Kinematic equations.
-  f_xdot(0) = v * cos(beta + yaw_angle);  // !<@brief xw_dot
-  f_xdot(1) = v * sin(beta + yaw_angle);  // !<@brief yw_dot
+  f_xdot(0) = v * CppAD::cos(beta + yaw_angle);  // !<@brief xw_dot
+  f_xdot(1) = v * CppAD::sin(beta + yaw_angle);  // !<@brief yw_dot
 
   // f_xdot(2) = v * sin(beta) / lr_;                                     // !<@brief psi_dot
-  f_xdot(2) = v * tan(delta) / wheel_base_;               // !<@brief psi_dot
-  f_xdot(3) = v * cos(beta + e_yaw) / (1. - kappa * ey);  // !<@brief sdot
-  f_xdot(4) = v * sin(beta + e_yaw);                      // !<@brief ey_dot
+  f_xdot(2) = v * CppAD::tan(delta) / wheel_base_;               // !<@brief psi_dot
+  f_xdot(3) = v * CppAD::cos(beta + e_yaw) / (1. - kappa * ey);  // !<@brief sdot
+  f_xdot(4) = v * CppAD::sin(beta + e_yaw);                      // !<@brief ey_dot
 
   f_xdot(5) = f_xdot(2) - kappa * f_xdot(3);  // !<@brief e_yaw_dot
 
@@ -76,7 +76,7 @@ void ns_models::KinematicModelSingleTrackModel::systemEquations(
   }
 
   // ay_dot = psi_dot x Vx
-  f_xdot(8) = f_xdot(2) * f_xdot(6) * cos(beta + e_yaw);
+  f_xdot(8) = f_xdot(2) * f_xdot(6) * CppAD::cos(beta + e_yaw);
 }
 
 void ns_models::KinematicModelSingleTrackModel::testModel()

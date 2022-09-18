@@ -999,7 +999,7 @@ bool NonlinearMPCNode::resampleRawTrajectoriesToaFixedSize()
   }
   nonlinear_mpc_controller_ptr_->setMPCtrajectoryRawVectorsPtr(mpc_traj_raw);
 
-  // TO-DO : remove debug
+  // TODO : remove debug
   // ns_utils::print("Raw MPC traj ");
   // mpc_traj_raw.print();
 
@@ -1120,7 +1120,7 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(
   bspline_interpolator_ptr_->getFirstDerivative(xy_data, rdot_interp);
   bspline_interpolator_ptr_->getSecondDerivative(xy_data, rddot_interp);
 
-  // TO-DO : remove these lines
+  // TODO : remove these lines
   // ns_eigen_utils::printEigenMat(xy_data, "x and y");
   // ns_eigen_utils::printEigenMat(rdot_interp, "rdot_interp");
   // ns_eigen_utils::printEigenMat(rddot_interp, "rddot interp");
@@ -1202,7 +1202,7 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(
 
   nonlinear_mpc_controller_ptr_->setMPCtrajectorySmoothVectorsPtr(mpc_traj_smoothed);
 
-  // TO-DO: remove this debug
+  // TODO: remove this debug
   //  ns_utils::print("Smoothed MPC traj ");
   //  mpc_traj_smoothed.print();
 
@@ -1230,7 +1230,7 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(
     return false;
   }
   // DEBUG
-  //  // TO-DO {ali}: disable this debug
+  //  // TODO {ali}: disable this debug
   //  for (size_t k = 0; k < mpc_traj_smoothed.s.size(); ++k) {
   //    ns_utils::print(
   //      "s vs curvature of the interpolator : ", mpc_traj_smoothed.s[k],
