@@ -146,8 +146,10 @@ bool LPVinitializer::simulateWithFeedback(
     }
 
     auto stemp = xk(ns_utils::toUType(VehicleStateIds::s));
-    ns_utils::print("s in LPV before integrating ... ", stemp);
+    auto sintegrated = stemp + dt * xk(6) * cos(xk(5)) / (1. - kappa0 * xk(4));
+    ns_utils::print("s in LPV before integrating ...  and manual integration", stemp, sintegrated);
 
+    // TODO : comment out
     ns_eigen_utils::printEigenMat(uk, "Computed Feedback in LPV : ");
 
     ns_sim::simulateNonlinearModel_zoh(model_ptr, uk, params, dt, xk);
