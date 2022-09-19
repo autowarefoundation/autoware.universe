@@ -12,9 +12,6 @@
     <node pkg="system_monitor" exec="cpu_monitor" name="cpu_monitor" output="log" respawn="true">
       <param from="$(var cpu_monitor_config_file)"/>
     </node>
-    <node pkg="system_monitor" exec="voltage_monitor" name="voltage_monitor" output="log" respawn="true">
-      <param from="$(var voltage_monitor_config_file)"/>
-    </node>
     <node pkg="system_monitor" exec="hdd_monitor" name="hdd_monitor" output="log" respawn="true">
       <param from="$(var hdd_monitor_config_file)"/>
     </node>
@@ -32,6 +29,9 @@
     </node>
     <node pkg="system_monitor" exec="gpu_monitor" name="gpu_monitor" output="log" respawn="true">
       <param from="$(var gpu_monitor_config_file)"/>
+    </node>
+    <node pkg="system_monitor" exec="voltage_monitor" name="voltage_monitor" output="log" respawn="true">
+      <param from="$(var voltage_monitor_config_file)"/>
     </node>
   </group>
 </launch>
