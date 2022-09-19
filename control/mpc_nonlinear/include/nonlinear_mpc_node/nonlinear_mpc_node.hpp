@@ -150,7 +150,12 @@ public:
    * */
   // pws stands for point-wise
   ns_splines::InterpolatingSplinePCG interpolator_curvature_pws =
-    ns_splines::InterpolatingSplinePCG(1);
+    ns_splines::InterpolatingSplinePCG(3);
+
+  ns_nmpc_interface::NonlinearMPCController getNMPCcore() const
+  {
+    return *nonlinear_mpc_controller_ptr_;
+  }
 
 private:
   // Publishers and subscribers.
