@@ -14,7 +14,7 @@ delta_dot_max = np.deg2rad(40)
 delta_input_max = np.deg2rad(40)
 vmax = 20
 
-ey_max = 20  # degrees
+eyaw_max = 20  # degrees
 amax = 5
 kappa_max = 0.1
 
@@ -30,7 +30,7 @@ else:
 
 ## STATE GRIDS
 ey_grid = np.linspace(-1.0, 1.0, gey)
-eyaw_grid = np.linspace(-np.deg2rad(ey_max), np.deg2rad(ey_max), geyaw)
+eyaw_grid = np.linspace(-np.deg2rad(eyaw_max), np.deg2rad(eyaw_max), geyaw)
 
 v_grid = np.linspace(1., vmax, gv)
 delta_grid = np.linspace(-delta_max, delta_max, gdelta)
