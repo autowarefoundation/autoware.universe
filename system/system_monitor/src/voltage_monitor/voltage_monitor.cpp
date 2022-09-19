@@ -66,12 +66,12 @@ VoltageMonitor::VoltageMonitor(const rclcpp::NodeOptions & options)
     try {
       std::regex re(R"((\d+).(\d+))");
       voltage_regex_ = re;
-      callback = &VoltageMonitor::checkVoltage;
     } catch (std::regex_error & e) {
       // never comes here.
       RCLCPP_WARN(get_logger(), "std::regex_error %d", e.code());
       return;
     }
+    callback = &VoltageMonitor::checkVoltage;
   }
   updater_.add("CMOS Battery Status", this, callback);
 }
@@ -111,14 +111,19 @@ void VoltageMonitor::checkVoltage(diagnostic_updater::DiagnosticStatusWrapper & 
     return;
   }
   std::string line;
-  try {
     while(std::getline(is_out, line)) {
       auto voltageStringPos = line.find(voltage_string_.c_str());
       if (voltageStringPos != std::string::npos) {
-        std::smatch match;
-        std::regex_search(line, match, voltage_regex_);
-        auto voltageString = match.str();
-        voltage = std::stof(voltageString);
+        try {
+          std::smatch match;
+          std::regex_search(line, match, voltage_regex_);
+          auto voltageString = match.str();
+          voltage = std::stof(voltageString);
+        } catch (std::regex_error & e) {
+          stat.summary(DiagStatus::WARN, "format error");
+          stat.add("exception in std::regex_search ", fmt::format("{}", e.code()));
+          return;
+        }
         break;
       }
     }
@@ -130,10 +135,6 @@ void VoltageMonitor::checkVoltage(diagnostic_updater::DiagnosticStatusWrapper & 
     } else {
       stat.summary(DiagStatus::OK, "OK");
     }
-  } catch (std::regex_error & e) {
-    stat.summary(DiagStatus::WARN, "format error");
-    stat.add("exception in std::regex_search ", fmt::format("{}", e.code()));
-  }
 
   // Measure elapsed time since start time and report
   SystemMonitorUtility::stopMeasurement(t_start, stat);
