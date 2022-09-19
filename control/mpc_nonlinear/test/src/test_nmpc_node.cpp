@@ -76,24 +76,25 @@ TEST_F(FakeNodeFixture, automatic_differentiation_works)
   auto tan_delta = tan(steering);
   auto beta = atan(tan_delta * paramsVehicle.lr / paramsVehicle.wheel_base);
 
-  auto const & xdot = v_ego * cos(beta + yaw);
-  auto const & ydot = v_ego * sin(beta + yaw);
-  auto const & yawdot = v_ego * tan_delta;
-  auto const & sdot = v_ego * cos(beta + eyaw) / (EPS + 1 - kappa * ey);
-  auto const & eydot = v_ego * sin(beta + eyaw);
-  auto const & eyawdot = yawdot - kappa * sdot;
-  auto const & vdot = u(0);
-  auto const & deltadot = u(1);
-  auto const & vydot = yawdot * vdot * cos(beta + eyaw);
+  auto const &xdot = v_ego * cos(beta + yaw);
+  auto const &ydot = v_ego * sin(beta + yaw);
+  auto const &yawdot = v_ego * tan_delta;
+  auto const &sdot = v_ego * cos(beta + eyaw) / (EPS + 1 - kappa * ey);
+  auto const &eydot = v_ego * sin(beta + eyaw);
+  auto const &eyawdot = yawdot - kappa * sdot;
+  auto const &vdot = u(0);
+  auto const &deltadot = u(1);
+  auto const &vydot = yawdot * vdot * cos(beta + eyaw);
 
   // Analytical fx.
-  std::vector<double> analytical_fx_vec{xdot,    ydot, yawdot,   sdot, eydot,
+  std::vector<double> analytical_fx_vec{xdot, ydot, yawdot, sdot, eydot,
                                         eyawdot, vdot, deltadot, vydot};
 
   // Autodiff fx
   vehicle_model.computeFx(x, u, params, f_of_dx);
 
-  for (size_t k = 0; k < Model::state_dim; ++k) {
+  for (size_t k = 0; k < Model::state_dim; ++k)
+  {
     ASSERT_DOUBLE_EQ(f_of_dx(static_cast<int64_t>(k)), analytical_fx_vec[k]);
     ns_utils::print(
       "k : ", k, " ;  fx : ", f_of_dx(static_cast<int64_t>(k)),
@@ -121,7 +122,8 @@ TEST_F(FakeNodeFixture, automatic_differentiation_works)
   analytical_df_dv_vec.emplace_back(0.);                       // steering input
   analytical_df_dv_vec.emplace_back(analytical_df_dv_vec[2]);  // lateral acceleration
 
-  for (Eigen::Index k = 0; k < Model::state_dim; ++k) {
+  for (Eigen::Index k = 0; k < Model::state_dim; ++k)
+  {
     ASSERT_DOUBLE_EQ(A(k, 6), analytical_df_dv_vec[static_cast<size_t>(k)]);
     ns_utils::print(
       "k : ", k, ": A:", A(k, 6), ": df/dv: ", analytical_df_dv_vec[static_cast<size_t>(k)]);
@@ -157,7 +159,8 @@ TEST_F(FakeNodeFixture, no_input_stop_control_cmd_is_published)
   // Subscribers
   rclcpp::Subscription<ControlCmdMsg>::SharedPtr cmd_sub = this->create_subscription<ControlCmdMsg>(
     "mpc_nonlinear/output/control_cmd", *this->get_fake_node(),
-    [&cmd_msg, &is_control_command_received](const ControlCmdMsg::SharedPtr msg) {
+    [&cmd_msg, &is_control_command_received](const ControlCmdMsg::SharedPtr msg)
+    {
       cmd_msg = msg;
       is_control_command_received = true;
     });
@@ -207,7 +210,8 @@ TEST_F(FakeNodeFixture, empty_trajectory)
   // Subscribers
   rclcpp::Subscription<ControlCmdMsg>::SharedPtr cmd_sub = this->create_subscription<ControlCmdMsg>(
     "mpc_nonlinear/output/control_cmd", *this->get_fake_node(),
-    [&cmd_msg, &is_control_command_received](const ControlCmdMsg::SharedPtr msg) {
+    [&cmd_msg, &is_control_command_received](const ControlCmdMsg::SharedPtr msg)
+    {
       cmd_msg = msg;
       is_control_command_received = true;
     });
@@ -290,7 +294,8 @@ TEST(CPPADtests, integration_of_autodiffed)
   auto vehicle_model_ptr = std::make_shared<Model>();
   vehicle_model_ptr->updateParameters(params_vehicle);
 
-  if (!vehicle_model_ptr->IsInitialized()) {
+  if (!vehicle_model_ptr->IsInitialized())
+  {
     vehicle_model_ptr->InitializeModel();
     // vehicle_model_ptr->testModel();
   }
@@ -323,7 +328,7 @@ TEST(CPPADtests, integration_of_autodiffed)
   // end of debug
 }
 
-TEST_F(FakeNodeFixture, straight_line_trajectory)
+TEST_F(FakeNodeFixture, DISABLED_straight_line_trajectory)
 {
   // Data to test
   ControlCmdMsg::SharedPtr cmd_msg;
@@ -346,7 +351,8 @@ TEST_F(FakeNodeFixture, straight_line_trajectory)
   // Subscribers
   rclcpp::Subscription<ControlCmdMsg>::SharedPtr cmd_sub = this->create_subscription<ControlCmdMsg>(
     "mpc_nonlinear/output/control_cmd", *this->get_fake_node(),
-    [&cmd_msg, &is_control_command_received](const ControlCmdMsg::SharedPtr msg) {
+    [&cmd_msg, &is_control_command_received](const ControlCmdMsg::SharedPtr msg)
+    {
       cmd_msg = msg;
       is_control_command_received = true;
     });
@@ -356,7 +362,8 @@ TEST_F(FakeNodeFixture, straight_line_trajectory)
   rclcpp::Subscription<NonlinearMPCPerformanceMsg>::SharedPtr nmpc_perf_sub =
     this->create_subscription<NonlinearMPCPerformanceMsg>(
       "mpc_nonlinear/debug/nmpc_vars", *this->get_fake_node(),
-      [&nmpc_perf_msg](const NonlinearMPCPerformanceMsg::SharedPtr msg) { nmpc_perf_msg = msg; });
+      [&nmpc_perf_msg](const NonlinearMPCPerformanceMsg::SharedPtr msg)
+      { nmpc_perf_msg = msg; });
 
   // ASSERT_TRUE(is_control_command_received);
   auto br = std::make_shared<tf2_ros::StaticTransformBroadcaster>(this->get_fake_node());
@@ -376,10 +383,11 @@ TEST_F(FakeNodeFixture, straight_line_trajectory)
   double spath = 0.;
   double vpath = 1.;
 
-  for (size_t k = 1; k < num_of_traj_points; ++k) {
+  for (size_t k = 1; k < num_of_traj_points; ++k)
+  {
     spath += dt * vpath;
-    auto const & xnext = spath * cos(yawpath);
-    auto const & ynext = spath * sin(yawpath);
+    auto const &xnext = spath * cos(yawpath);
+    auto const &ynext = spath * sin(yawpath);
     xw.emplace_back(xnext);
     yw.emplace_back(ynext);
 
@@ -448,4 +456,156 @@ TEST_F(FakeNodeFixture, straight_line_trajectory)
   //  EXPECT_EQ(cmd_msg->lateral.steering_tire_angle, 0.0f);
   //  EXPECT_EQ(cmd_msg->lateral.steering_tire_rotation_rate, 0.0f);
   //  EXPECT_GT(rclcpp::Time(cmd_msg->stamp), rclcpp::Time(traj_msg.header.stamp));
+}
+
+TEST_F(FakeNodeFixture, nmpc_core_lpv_test)
+{
+  using ns_utils::toUType;
+
+  // Node
+  std::shared_ptr<NonlinearMPCNode> node = makeNonlinearMPCNode();
+
+  auto nmpc_core = node->getNMPCcore();
+  bool is_core_initialized = nmpc_core.isInitialized();
+
+  ns_utils::print("is nmpc core initialized ", is_core_initialized);
+  auto params_lpv = nmpc_core.getLPVparams();
+
+  /**
+   * Read the Lyapunov matrices.
+   * */
+  auto const &num_of_params = params_lpv.num_of_nonlinearities;
+  ns_utils::print("num of parameters in LPV container", num_of_params);
+
+  for (size_t k = 0; k < num_of_params; ++k)
+  {
+    auto Xl = params_lpv.lpvXcontainer[k];
+    auto Yl = params_lpv.lpvYcontainer[k];
+    ns_eigen_utils::printEigenMat(Xl, "Xl " + std::to_string(k));
+    ns_eigen_utils::printEigenMat(Yl, "Yl " + std::to_string(k));
+  }
+
+  /**
+   * Create a vehicle model
+   * */
+
+  // Create vehicle parameters.
+  ns_models::ParamsVehicle params_vehicle{};
+  params_vehicle.lr = 0.;  // rear-axle center reference
+
+  auto vehicle_model_ptr = std::make_shared<Model>();
+  vehicle_model_ptr->updateParameters(params_vehicle);
+
+  if (!vehicle_model_ptr->IsInitialized())
+  {
+    vehicle_model_ptr->InitializeModel();
+    // vehicle_model_ptr->testModel();
+  }
+
+
+  /**
+   * Check the stability of A + BK for a given grid points of the parameters.
+   * */
+  auto kappa_grid = ns_utils::linspace(-0.1, 0.1, 3);  // curvature
+
+  double eyaw_max{20};
+  ns_utils::deg2rad(eyaw_max);
+
+  auto eyaw_grid = ns_utils::linspace(-eyaw_max, eyaw_max, 5);
+  auto ey_grid = ns_utils::linspace(-1., 1., 5);
+
+  // Initialize states and inputs.
+  Model::state_vector_t x{Model::state_vector_t::Zero()};
+  Model::input_vector_t u{Model::input_vector_t::Zero()};
+  Model::param_vector_t params{Model::param_vector_t::Zero()};
+
+  // Define placeholders for the system matrices.
+  Model::state_matrix_t Ac{Model::state_matrix_t::Zero()};
+  Model::control_matrix_t Bc{Model::control_matrix_t::Zero()};
+
+  // Define Lyapunov matrices placeholders.
+  Model::state_matrix_X_t Xr{Model::state_matrix_X_t::Zero()};
+  Model::input_matrix_Y_t Yr{Model::input_matrix_Y_t::Zero()};
+
+  // starting speed
+  // Although, it is stable for a range of velocity, we use the LPV when starting only.
+  auto const &ntheta_ = params_lpv.num_of_nonlinearities;
+
+  double vx{10.};
+  auto const &Id = Eigen::MatrixXd::Identity(4, 4); //Model::state_matrix_t::Identity();
+  double dt_mpc = 0.1;
+
+  for (double const &ey : ey_grid)
+  {
+    for (double const &eyaw : eyaw_grid)
+    {
+      for (double k : kappa_grid)
+      {
+        // for computing the state and control matrices, set the states
+        x.setZero();
+        u.setZero();
+
+        x(toUType(VehicleStateIds::vx)) = vx;
+        x(toUType(VehicleStateIds::ey)) = ey;
+        x(toUType(VehicleStateIds::eyaw)) = eyaw;
+
+        u.setRandom();
+        params(toUType(VehicleParamIds::curvature)) = k;
+
+        Ac.setZero();
+        Bc.setZero();
+
+        vehicle_model_ptr->computeJacobians(x, u, params, Ac, Bc);
+
+        ns_eigen_utils::printEigenMat(Ac, "Ac");
+        ns_eigen_utils::printEigenMat(Bc, "Bc");
+
+        auto const &Ac_error_block = Ac.bottomRightCorner<5, 5>();
+
+        auto const &th1 = Ac_error_block(0, 1);
+        auto const &th2 = Ac_error_block(1, 0);
+        auto const &th3 = Ac_error_block(1, 1);
+        auto const &th4 = Ac_error_block(1, 2);
+
+        ns_utils::print("Nonlinearities in Error Block", th1, th2, th3, th4);
+
+        auto thetas_ = std::vector<double>{th1, th2, th3, th4};
+
+        // Extract the first X0, Y0, we save the first X0 and Y0 at the end.
+        Xr = params_lpv.lpvXcontainer.back();  // We keep the first X0, Y0 at the end of the
+        Yr = params_lpv.lpvYcontainer.back();
+
+        for (size_t j = 0; j < ntheta_ - 1; j++)
+        {
+          Xr += thetas_[j] * params_lpv.lpvXcontainer[j];
+          Yr += thetas_[j] * params_lpv.lpvYcontainer[j];
+        }
+
+        // Compute Feedback coefficients.
+        auto const &Pr = Xr.inverse();  // Cost matrix P.
+        auto const &Kfb = Yr * Pr;      // State feedback coefficients matrix.
+
+        ns_utils::print(Kfb.eval(), "\nComputed Feedback Gains");
+
+        /**
+         * Discretisize the system matrices
+         * */
+        auto const &I_At2_inv = (Id - Ac.block<4, 4>(4, 4) * dt_mpc / 2).inverse();
+
+        auto const &Ad = I_At2_inv * (Id + Ac.block<4, 4>(4, 4) * dt_mpc / 2);
+        auto const &Bd = I_At2_inv * Bc.block<4, 2>(4, 0) * dt_mpc;
+
+        // Closed loop transfer matrix
+        // ['xw', 'yw', 'psi', 's', 'e_y', 'e_yaw', 'Vx', 'delta', 'ay']
+        auto Aclosed_loop = Ad + Bd * Kfb;
+        auto eig_vals = Aclosed_loop.eigenvalues();
+
+        ns_utils::print("Operating states, vx, ey, eyaw :", vx, ey, eyaw);
+        ns_eigen_utils::printEigenMat(eig_vals, "\nEigen values of the closed loop system matrix :");
+
+      }
+    }
+  }
+
+  ASSERT_TRUE(true);
 }
