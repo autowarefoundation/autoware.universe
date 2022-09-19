@@ -106,13 +106,10 @@ boost::optional<TurnSignalInfo> TurnSignalDecider::getIntersectionTurnSignalInfo
       break;
     }
 
-    // If lane with turn direction is within the search distance
     const std::string lane_attribute = lane.attributeOr("turn_direction", std::string("none"));
-    const bool cond =
+    if (
       (lane_attribute == "right" || lane_attribute == "left") &&
-      dist_to_front_point < lane.attributeOr("turn_signal_distance", search_distance);
-
-    if (cond) {
+      dist_to_front_point < lane.attributeOr("turn_signal_distance", search_distance)) {
       TurnSignalInfo turn_signal_info{};
       turn_signal_info.desired_start_point =
         dist_to_front_point > 0.0 ? current_pose.position : lane_front_point;
