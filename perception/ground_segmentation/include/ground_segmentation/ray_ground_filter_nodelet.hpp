@@ -52,7 +52,7 @@
 #include <pcl_conversions/pcl_conversions.h>
 #include <tf2/transform_datatypes.h>
 
-#ifdef USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
+#ifdef ROS_DISTRO_GALACTIC
 #include <tf2_eigen/tf2_eigen.h>
 #else
 #include <tf2_eigen/tf2_eigen.hpp>
@@ -110,7 +110,6 @@ protected:
     const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output) override;
 
 private:
-  std::string base_frame_ = "base_link";
   double general_max_slope_;            // degrees
   double local_max_slope_;              // degrees
   double initial_max_slope_;            // degrees
@@ -150,9 +149,6 @@ private:
    * @retval true transform succeeded
    * @retval false transform failed
    */
-  bool TransformPointCloud(
-    const std::string & in_target_frame, const PointCloud2ConstPtr & in_cloud_ptr,
-    const PointCloud2::SharedPtr & out_cloud_ptr);
 
   /*!
    *

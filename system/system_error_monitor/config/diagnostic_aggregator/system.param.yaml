@@ -96,6 +96,12 @@
                   contains: [": GPU Thermal Throttling"]
                   timeout: 3.0
 
+                frequency:
+                  type: diagnostic_aggregator/GenericAnalyzer
+                  path: frequency
+                  contains: [": GPU Frequency"]
+                  timeout: 3.0
+
             memory:
               type: diagnostic_aggregator/AnalyzerGroup
               path: memory
@@ -122,6 +128,12 @@
                   contains: [": Network Traffic"]
                   timeout: 3.0
 
+                netowork_crc_error:
+                  type: diagnostic_aggregator/GenericAnalyzer
+                  path: network_crc_error
+                  contains: [": Network CRC Error"]
+                  timeout: 3.0
+
             storage:
               type: diagnostic_aggregator/AnalyzerGroup
               path: storage
@@ -140,13 +152,13 @@
 
                 power_on_hours:
                   type: diagnostic_aggregator/GenericAnalyzer
-                  path: usage
+                  path: power_on_hours
                   contains: [": HDD PowerOnHours"]
                   timeout: 3.0
 
                 total_data_written:
                   type: diagnostic_aggregator/GenericAnalyzer
-                  path: usage
+                  path: total_data_written
                   contains: [": HDD TotalDataWritten"]
                   timeout: 3.0
 

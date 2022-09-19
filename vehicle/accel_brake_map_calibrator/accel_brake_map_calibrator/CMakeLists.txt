@@ -1,17 +1,8 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.14)
 project(accel_brake_map_calibrator)
 
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
-  set(CMAKE_CXX_STANDARD_REQUIRED ON)
-  set(CMAKE_CXX_EXTENSIONS OFF)
-endif()
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic -Werror)
-endif()
-
-find_package(ament_cmake_auto REQUIRED)
-ament_auto_find_build_dependencies()
+find_package(autoware_cmake REQUIRED)
+autoware_package()
 
 ament_auto_add_executable(accel_brake_map_calibrator
   src/accel_brake_map_calibrator_node.cpp
@@ -19,21 +10,12 @@ ament_auto_add_executable(accel_brake_map_calibrator
 )
 ament_target_dependencies(accel_brake_map_calibrator)
 
-# workaround to allow deprecated header to build on both galactic and rolling
-if(${tf2_geometry_msgs_VERSION} VERSION_LESS 0.18.0)
-  target_compile_definitions(accel_brake_map_calibrator PRIVATE
-    USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
-  )
-endif()
-
-if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
-endif()
-
 install(
   PROGRAMS
   scripts/__init__.py
+  scripts/actuation_cmd_publisher.py
+  scripts/accel_tester.py
+  scripts/brake_tester.py
   scripts/config.py
   scripts/delay_estimator.py
   scripts/plotter.py
@@ -42,6 +24,9 @@ install(
   scripts/csv_reader.py
   scripts/log_analyzer.py
   scripts/view_plot.py
+  scripts/new_accel_brake_map_server.py
+  test/plot_csv_client_node.py
+  test/sim_actuation_status_publisher.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

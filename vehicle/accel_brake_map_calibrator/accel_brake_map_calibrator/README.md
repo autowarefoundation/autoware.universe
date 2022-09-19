@@ -17,7 +17,7 @@ ros2 launch accel_brake_map_calibrator accel_brake_map_calibrator.launch.xml rvi
 Or if you want to use rosbag files, run the following commands.
 
 ```sh
-ros2 param set /use_sim_time true
+ros2 launch accel_brake_map_calibrator accel_brake_map_calibrator.launch.xml rviz:=true use_sim_time:=true
 ros2 bag play <rosbag_file> --clock
 ```
 
@@ -110,7 +110,7 @@ ros2 run accel_brake_map_calibrator view_statistics.py
 You can save accel and brake map anytime with the following command.
 
 ```sh
-ros2 service call /accel_brake_map_calibrator/update_map_dir "path: '<accel/brake map directory>'"
+ros2 service call /accel_brake_map_calibrator/update_map_dir tier4_vehicle_msgs/srv/UpdateAccelBrakeMap "path: '<accel/brake map directory>'"
 ```
 
 You can also save accel and brake map in the default directory where Autoware reads accel_map.csv/brake_map.csv using the RViz plugin (AccelBrakeMapCalibratorButtonPanel) as following.
@@ -138,3 +138,23 @@ You can also save accel and brake map in the default directory where Autoware re
 | progress_file_output     | bool   | if true, it will output a log and csv file of the update process.                                                                                                                 | false                                                    |
 | default_map_dir          | str    | directory of default map                                                                                                                                                          | [directory of *raw_vehicle_cmd_converter*]/data/default/ |
 | calibrated_map_dir       | str    | directory of calibrated map                                                                                                                                                       | [directory of *accel_brake_map_calibrator*]/config/      |
+
+## Test utility scripts
+
+### Constant accel/brake command test
+
+These scripts are useful to test for accel brake map calibration. These generate an `ActuationCmd` with a constant accel/brake value given interactively by a user through CLI.
+
+- accel_tester.py
+- brake_tester.py
+- actuation_cmd_publisher.py
+
+The `accel/brake_tester.py` receives a target accel/brake command from CLI. It sends a target value to `actuation_cmd_publisher.py` which generates the `ActuationCmd`. You can run these scripts by the following commands in the different terminals, and it will be as in the screenshot below.
+
+```bash
+ros2 run accel_brake_map_calibrator accel_tester.py
+ros2 run accel_brake_map_calibrator brake_tester.py
+ros2 run accel_brake_map_calibrator actuation_cmd_publisher.py
+```
+
+![actuation_cmd_publisher_util](./media/actuation_cmd_publisher_util.png)

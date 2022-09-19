@@ -77,6 +77,10 @@
 #include <tf2_ros/create_timer_ros.h>
 #include <tf2_ros/transform_listener.h>
 
+// Include tier4 autoware utils
+#include <tier4_autoware_utils/ros/debug_publisher.hpp>
+#include <tier4_autoware_utils/system/stop_watch.hpp>
+
 namespace pointcloud_preprocessor
 {
 namespace sync_policies = message_filters::sync_policies;
@@ -167,7 +171,11 @@ protected:
   std::string tf_output_frame_;
 
   /** \brief Internal mutex. */
-  boost::mutex mutex_;
+  std::mutex mutex_;
+
+  /** \brief processing time publisher. **/
+  std::unique_ptr<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;
+  std::unique_ptr<tier4_autoware_utils::DebugPublisher> debug_publisher_;
 
   /** \brief Virtual abstract filter method. To be implemented by every child.
    * \param input the input point cloud dataset.

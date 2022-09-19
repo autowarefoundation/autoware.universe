@@ -1,19 +1,10 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.14)
 project(tensorrt_yolo)
 
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 17)
-  set(CMAKE_CXX_STANDARD_REQUIRED ON)
-  set(CMAKE_CXX_EXTENSIONS OFF)
-endif()
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic -Wno-deprecated-declarations -Werror)
-endif()
+find_package(autoware_cmake REQUIRED)
+autoware_package()
 
 option(CUDA_VERBOSE "Verbose output of CUDA modules" OFF)
-
-find_package(ament_cmake_auto REQUIRED)
-ament_auto_find_build_dependencies()
 
 find_package(OpenCV REQUIRED)
 
@@ -77,100 +68,50 @@ else()
 endif()
 
 # Download onnx
-find_program(GDOWN_AVAIL "gdown")
-if(NOT GDOWN_AVAIL)
-  message("gdown: command not found. External files could not be downloaded.")
+set(DATA_PATH "${CMAKE_CURRENT_SOURCE_DIR}/data")
+if(NOT EXISTS "${DATA_PATH}")
+  execute_process(COMMAND mkdir -p ${DATA_PATH})
 endif()
-set(PATH "${CMAKE_CURRENT_SOURCE_DIR}/data")
-if(NOT EXISTS "${PATH}")
-  execute_process(COMMAND mkdir -p ${PATH})
-endif()
-# yolov3
-set(FILE "${PATH}/yolov3.onnx")
-message(STATUS "Checking and downloading yolov3.onnx")
-if(NOT EXISTS "${FILE}")
-  message(STATUS "... file does not exist. Downloading now ...")
-  execute_process(
-    COMMAND gdown "https://drive.google.com/uc?id=1ZYoBqVynmO5kKntyN56GEbELRpuXG8Ym" -O ${PATH}/yolov3.onnx
-    ERROR_QUIET
-  )
-endif()
+function(download FILE_NAME FILE_HASH)
+  message(STATUS "Checking and downloading ${FILE_NAME}")
+  set(FILE_PATH ${DATA_PATH}/${FILE_NAME})
+  set(STATUS_CODE 0)
+  message(STATUS "start ${FILE_NAME}")
+  if(EXISTS ${FILE_PATH})
+    message(STATUS "found ${FILE_NAME}")
+    file(MD5 ${FILE_PATH} EXISTING_FILE_HASH)
+    if(${FILE_HASH} STREQUAL ${EXISTING_FILE_HASH})
+      message(STATUS "same ${FILE_NAME}")
+      message(STATUS "File already exists.")
+    else()
+      message(STATUS "diff ${FILE_NAME}")
+      message(STATUS "File hash changes. Downloading now ...")
+      file(DOWNLOAD https://awf.ml.dev.web.auto/perception/models/${FILE_NAME} ${FILE_PATH} STATUS DOWNLOAD_STATUS TIMEOUT 3600)
+      list(GET DOWNLOAD_STATUS 0 STATUS_CODE)
+      list(GET DOWNLOAD_STATUS 1 ERROR_MESSAGE)
+    endif()
+  else()
+    message(STATUS "not found ${FILE_NAME}")
+    message(STATUS "File doesn't exists. Downloading now ...")
+    file(DOWNLOAD https://awf.ml.dev.web.auto/perception/models/${FILE_NAME} ${FILE_PATH} STATUS DOWNLOAD_STATUS TIMEOUT 3600)
+    list(GET DOWNLOAD_STATUS 0 STATUS_CODE)
+    list(GET DOWNLOAD_STATUS 1 ERROR_MESSAGE)
+  endif()
+  if(${STATUS_CODE} EQUAL 0)
+    message(STATUS "Download completed successfully!")
+  else()
+    message(FATAL_ERROR "Error occurred during download: ${ERROR_MESSAGE}")
+  endif()
+endfunction()
 
-# yolov4
-set(FILE "${PATH}/yolov4.onnx")
-message(STATUS "Checking and downloading yolov4.onnx")
-if(NOT EXISTS "${FILE}")
-  message(STATUS "... file does not exist. Downloading now ...")
-  execute_process(
-    COMMAND gdown "https://drive.google.com//uc?id=1vkNmSwcIpTkJ_-BrKhxtit0PBJeJYTVX" -O ${PATH}/yolov4.onnx
-    ERROR_QUIET
-  )
-endif()
-
-# yolov4-tiny
-set(FILE "${PATH}/yolov4-tiny.onnx")
-message(STATUS "Checking and downloading yolov4.onnx")
-if(NOT EXISTS "${FILE}")
-  message(STATUS "... file does not exist. Downloading now ...")
-  execute_process(
-    COMMAND gdown "https://drive.google.com/uc?id=1rUHjV_JfkmlVFgb20XXrOMWo_HZAjrFh" -O ${PATH}/yolov4-tiny.onnx
-    ERROR_QUIET
-  )
-endif()
-
-# yolov5s
-set(FILE "${PATH}/yolov5s.onnx")
-message(STATUS "Checking and downloading yolov5s.onnx")
-if(NOT EXISTS "${FILE}")
-  message(STATUS "... file does not exist. Downloading now ...")
-  execute_process(
-    COMMAND gdown "https://drive.google.com//uc?id=1CF21nQWigwCPTr5psQZXg6cBQIOYKbad" -O ${PATH}/yolov5s.onnx
-    ERROR_QUIET
-  )
-endif()
-
-# yolov5m
-set(FILE "${PATH}/yolov5m.onnx")
-message(STATUS "Checking and downloading yolov5m.onnx")
-if(NOT EXISTS "${FILE}")
-  message(STATUS "... file does not exist. Downloading now ...")
-  execute_process(
-    COMMAND gdown "https://drive.google.com//uc?id=1a1h50KJH6slwmjKZpPlS-errukF-BrgG" -O ${PATH}/yolov5m.onnx
-    ERROR_QUIET
-  )
-endif()
-
-# yolov5l
-set(FILE "${PATH}/yolov5l.onnx")
-message(STATUS "Checking and downloading yolov5l.onnx")
-if(NOT EXISTS "${FILE}")
-  message(STATUS "... file does not exist. Downloading now ...")
-  execute_process(
-    COMMAND gdown "https://drive.google.com/uc?id=1xO8S92Cq7qrmx93UHHyA7Cd7-dJsBDP8" -O ${PATH}/yolov5l.onnx
-    ERROR_QUIET
-  )
-endif()
-
-# yolov5x
-set(FILE "${PATH}/yolov5x.onnx")
-message(STATUS "Checking and downloading yolov5x.onnx")
-if(NOT EXISTS "${FILE}")
-  message(STATUS "... file does not exist. Downloading now ...")
-  execute_process(
-    COMMAND gdown "https://drive.google.com/uc?id=1kAHuNJUCxpD-yWrS6t95H3zbAPfClLxI" -O ${PATH}/yolov5x.onnx
-    ERROR_QUIET
-  )
-endif()
-
-set(FILE "${PATH}/coco.names")
-message(STATUS "Checking and downloading coco.names")
-if(NOT EXISTS "${FILE}")
-  message(STATUS "... file does not exist. Downloading now ...")
-  execute_process(
-    COMMAND gdown "https://drive.google.com/uc?id=19wXD23PE16kJDkZ7j2W3Ijvx5I1kO9kJ" -O ${PATH}/coco.names
-    ERROR_QUIET
-  )
-endif()
+download(yolov3.onnx bde3b120f51db251d9a89cd25205e062)
+download(yolov4.onnx 99ed8c5d18acad2ebb5ee80860d9cbaf)
+download(yolov4-tiny.onnx d16dfd56dddfce75f25d5aaf4c8f4c40)
+download(yolov5s.onnx 646b295db6089597e79163446d6eedca)
+download(yolov5m.onnx 8fc91d70599ac59ae92c6490001fd84b)
+download(yolov5l.onnx 99ff1fc966bda8efbc45c3b8bf00eea2)
+download(yolov5x.onnx c51beebed276735cb16a18ca32959e9f)
+download(coco.names 8fc50561361f8bcf96b0177086e7616c)
 
 # create calib image directory for int8 calibration
 set(CALIB_IMAGE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/calib_image")
@@ -239,11 +180,6 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     PLUGIN "object_recognition::TensorrtYoloNodelet"
     EXECUTABLE tensorrt_yolo_node
   )
-
-  if(BUILD_TESTING)
-    find_package(ament_lint_auto REQUIRED)
-    ament_lint_auto_find_test_dependencies()
-  endif()
 
   ament_auto_package(INSTALL_TO_SHARE
     config

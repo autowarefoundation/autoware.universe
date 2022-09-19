@@ -18,22 +18,33 @@
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <rviz_common/uniform_string_stream.hpp>
 
+#include <X11/Xlib.h>
+
 namespace rviz_plugins
 {
 TurnSignalDisplay::TurnSignalDisplay()
 {
+  const Screen * screen_info = DefaultScreenOfDisplay(XOpenDisplay(NULL));
+
+  constexpr float hight_4k = 2160.0;
+  const float scale = static_cast<float>(screen_info->height) / hight_4k;
+  const auto left = static_cast<int>(std::round(196 * scale));
+  const auto top = static_cast<int>(std::round(350 * scale));
+  const auto width = static_cast<int>(std::round(512 * scale));
+  const auto height = static_cast<int>(std::round(256 * scale));
+
   property_left_ = new rviz_common::properties::IntProperty(
-    "Left", 128, "Left of the plotter window", this, SLOT(updateVisualization()), this);
+    "Left", left, "Left of the plotter window", this, SLOT(updateVisualization()), this);
   property_left_->setMin(0);
   property_top_ = new rviz_common::properties::IntProperty(
-    "Top", 128, "Top of the plotter window", this, SLOT(updateVisualization()));
+    "Top", top, "Top of the plotter window", this, SLOT(updateVisualization()));
   property_top_->setMin(0);
 
   property_width_ = new rviz_common::properties::IntProperty(
-    "Width", 256, "Width of the plotter window", this, SLOT(updateVisualization()), this);
+    "Width", width, "Width of the plotter window", this, SLOT(updateVisualization()), this);
   property_width_->setMin(10);
   property_height_ = new rviz_common::properties::IntProperty(
-    "Height", 256, "Height of the plotter window", this, SLOT(updateVisualization()), this);
+    "Height", height, "Height of the plotter window", this, SLOT(updateVisualization()), this);
   property_height_->setMin(10);
 }
 
@@ -92,13 +103,12 @@ void TurnSignalDisplay::update(float wall_dt, float ros_dt)
   (void)wall_dt;
   (void)ros_dt;
 
-  unsigned int signal_type;
+  unsigned int signal_type = 0;
   {
     std::lock_guard<std::mutex> message_lock(mutex_);
-    if (!last_msg_ptr_) {
-      return;
+    if (last_msg_ptr_) {
+      signal_type = last_msg_ptr_->report;
     }
-    signal_type = last_msg_ptr_->report;
   }
 
   QColor background_color;

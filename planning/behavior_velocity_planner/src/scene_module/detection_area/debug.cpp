@@ -12,11 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <motion_utils/motion_utils.hpp>
 #include <scene_module/detection_area/scene.hpp>
-#include <utilization/marker_helper.hpp>
+#include <utilization/debug.hpp>
 #include <utilization/util.hpp>
 
-#ifdef USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
+#ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #else
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
@@ -26,6 +27,11 @@
 
 namespace behavior_velocity_planner
 {
+using tier4_autoware_utils::appendMarkerArray;
+using tier4_autoware_utils::createDefaultMarker;
+using tier4_autoware_utils::createMarkerColor;
+using tier4_autoware_utils::createMarkerScale;
+
 namespace
 {
 using DebugData = DetectionAreaModule::DebugData;
@@ -48,88 +54,6 @@ geometry_msgs::msg::Point toMsg(const lanelet::BasicPoint3d & point)
   return msg;
 }
 
-visualization_msgs::msg::MarkerArray createMarkerArray(
-  const DebugData & debug_data, const int64_t module_id)
-{
-  visualization_msgs::msg::MarkerArray msg;
-  const tf2::Transform tf_base_link2front(
-    tf2::Quaternion(0.0, 0.0, 0.0, 1.0), tf2::Vector3(debug_data.base_link2front, 0.0, 0.0));
-
-  // Stop VirtualWall
-  const int32_t uid = planning_utils::bitShift(module_id);
-  for (size_t j = 0; j < debug_data.stop_poses.size(); ++j) {
-    visualization_msgs::msg::Marker marker;
-    marker.header.frame_id = "map";
-    marker.ns = "stop_virtual_wall";
-    marker.id = uid + j;
-    marker.lifetime = rclcpp::Duration::from_seconds(0.5);
-    marker.type = visualization_msgs::msg::Marker::CUBE;
-    marker.action = visualization_msgs::msg::Marker::ADD;
-    tf2::Transform tf_map2base_link;
-    tf2::fromMsg(debug_data.stop_poses.at(j), tf_map2base_link);
-    tf2::Transform tf_map2front = tf_map2base_link * tf_base_link2front;
-    tf2::toMsg(tf_map2front, marker.pose);
-    marker.pose.position.z += 1.0;
-    marker.scale.x = 0.1;
-    marker.scale.y = 5.0;
-    marker.scale.z = 2.0;
-    marker.color.a = 0.5;  // Don't forget to set the alpha!
-    marker.color.r = 1.0;
-    marker.color.g = 0.0;
-    marker.color.b = 0.0;
-    msg.markers.push_back(marker);
-  }
-  // DeadLine VirtualWall
-  for (size_t j = 0; j < debug_data.dead_line_poses.size(); ++j) {
-    visualization_msgs::msg::Marker marker;
-    marker.header.frame_id = "map";
-    marker.ns = "dead_line_virtual_wall";
-    marker.id = uid + j;
-    marker.lifetime = rclcpp::Duration::from_seconds(0.5);
-    marker.type = visualization_msgs::msg::Marker::CUBE;
-    marker.action = visualization_msgs::msg::Marker::ADD;
-    tf2::Transform tf_map2base_link;
-    tf2::fromMsg(debug_data.dead_line_poses.at(j), tf_map2base_link);
-    tf2::Transform tf_map2front = tf_map2base_link * tf_base_link2front;
-    tf2::toMsg(tf_map2front, marker.pose);
-    marker.pose.position.z += 1.0;
-    marker.scale.x = 0.1;
-    marker.scale.y = 5.0;
-    marker.scale.z = 2.0;
-    marker.color.a = 0.5;  // Don't forget to set the alpha!
-    marker.color.r = 0.0;
-    marker.color.g = 1.0;
-    marker.color.b = 0.0;
-    msg.markers.push_back(marker);
-  }
-  // Facto Text
-  for (size_t j = 0; j < debug_data.stop_poses.size(); ++j) {
-    visualization_msgs::msg::Marker marker;
-    marker.header.frame_id = "map";
-    marker.ns = "factor_text";
-    marker.id = uid + j;
-    marker.lifetime = rclcpp::Duration::from_seconds(0.5);
-    marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
-    marker.action = visualization_msgs::msg::Marker::ADD;
-    tf2::Transform tf_map2base_link;
-    tf2::fromMsg(debug_data.stop_poses.at(j), tf_map2base_link);
-    tf2::Transform tf_map2front = tf_map2base_link * tf_base_link2front;
-    tf2::toMsg(tf_map2front, marker.pose);
-    marker.pose.position.z += 2.0;
-    marker.scale.x = 0.0;
-    marker.scale.y = 0.0;
-    marker.scale.z = 1.0;
-    marker.color.a = 0.999;  // Don't forget to set the alpha!
-    marker.color.r = 1.0;
-    marker.color.g = 1.0;
-    marker.color.b = 1.0;
-    marker.text = "detection area";
-    msg.markers.push_back(marker);
-  }
-
-  return msg;
-}
-
 visualization_msgs::msg::MarkerArray createCorrespondenceMarkerArray(
   const lanelet::autoware::DetectionArea & detection_area_reg_elem, const rclcpp::Time & now)
 {
@@ -143,8 +67,8 @@ visualization_msgs::msg::MarkerArray createCorrespondenceMarkerArray(
   {
     auto marker = createDefaultMarker(
       "map", now, "detection_area_id", detection_area_reg_elem.id(),
-      visualization_msgs::msg::Marker::TEXT_VIEW_FACING, createMarkerColor(1.0, 1.0, 1.0, 0.999));
-    marker.scale = createMarkerScale(0.0, 0.0, 1.0);
+      visualization_msgs::msg::Marker::TEXT_VIEW_FACING, createMarkerScale(0.0, 0.0, 1.0),
+      createMarkerColor(1.0, 1.0, 1.0, 0.999));
     marker.lifetime = rclcpp::Duration::from_seconds(0.5);
 
     for (const auto & detection_area : detection_area_reg_elem.detectionAreas()) {
@@ -162,8 +86,8 @@ visualization_msgs::msg::MarkerArray createCorrespondenceMarkerArray(
   {
     auto marker = createDefaultMarker(
       "map", now, "detection_area_polygon", detection_area_reg_elem.id(),
-      visualization_msgs::msg::Marker::LINE_LIST, createMarkerColor(0.1, 0.1, 1.0, 0.500));
-    marker.scale = createMarkerScale(0.1, 0.0, 0.0);
+      visualization_msgs::msg::Marker::LINE_LIST, createMarkerScale(0.1, 0.0, 0.0),
+      createMarkerColor(0.1, 0.1, 1.0, 0.500));
     marker.lifetime = rclcpp::Duration::from_seconds(0.5);
 
     for (const auto & detection_area : detection_area_reg_elem.detectionAreas()) {
@@ -188,8 +112,8 @@ visualization_msgs::msg::MarkerArray createCorrespondenceMarkerArray(
   {
     auto marker = createDefaultMarker(
       "map", now, "detection_area_correspondence", detection_area_reg_elem.id(),
-      visualization_msgs::msg::Marker::LINE_LIST, createMarkerColor(0.1, 0.1, 1.0, 0.500));
-    marker.scale = createMarkerScale(0.1, 0.0, 0.0);
+      visualization_msgs::msg::Marker::LINE_LIST, createMarkerScale(0.1, 0.0, 0.0),
+      createMarkerColor(0.1, 0.1, 1.0, 0.500));
     marker.lifetime = rclcpp::Duration::from_seconds(0.5);
 
     for (const auto & detection_area : detection_area_reg_elem.detectionAreas()) {
@@ -206,49 +130,50 @@ visualization_msgs::msg::MarkerArray createCorrespondenceMarkerArray(
 
   return msg;
 }
-
-visualization_msgs::msg::MarkerArray createObstacleMarkerArray(
-  const std::vector<geometry_msgs::msg::Point> & obstacle_points, const rclcpp::Time & now)
-{
-  visualization_msgs::msg::MarkerArray msg;
-
-  {
-    auto marker = createDefaultMarker(
-      "map", now, "obstacles", 0, visualization_msgs::msg::Marker::SPHERE,
-      createMarkerColor(1.0, 0.0, 0.0, 0.999));
-    marker.scale = createMarkerScale(0.6, 0.6, 0.6);
-    marker.lifetime = rclcpp::Duration::from_seconds(0.5);
-
-    for (size_t i = 0; i < obstacle_points.size(); ++i) {
-      marker.id = i;
-      marker.pose.position = obstacle_points.at(i);
-
-      msg.markers.push_back(marker);
-    }
-  }
-
-  return msg;
-}
-
 }  // namespace
 
 visualization_msgs::msg::MarkerArray DetectionAreaModule::createDebugMarkerArray()
 {
-  visualization_msgs::msg::MarkerArray debug_marker_array;
-  const rclcpp::Time current_time = clock_->now();
-  appendMarkerArray(
-    createMarkerArray(debug_data_, getModuleId()), current_time, &debug_marker_array);
+  visualization_msgs::msg::MarkerArray wall_marker;
+  const rclcpp::Time now = clock_->now();
 
   if (!debug_data_.stop_poses.empty()) {
     appendMarkerArray(
-      createCorrespondenceMarkerArray(detection_area_reg_elem_, current_time), current_time,
-      &debug_marker_array);
+      createCorrespondenceMarkerArray(detection_area_reg_elem_, now), &wall_marker, now);
 
     appendMarkerArray(
-      createObstacleMarkerArray(debug_data_.obstacle_points, current_time), current_time,
-      &debug_marker_array);
+      debug::createPointsMarkerArray(
+        debug_data_.obstacle_points, "obstalces", module_id_, now, 0.6, 0.6, 0.6, 1.0, 0.0, 0.0),
+      &wall_marker, now);
   }
 
-  return debug_marker_array;
+  return wall_marker;
 }
+
+visualization_msgs::msg::MarkerArray DetectionAreaModule::createVirtualWallMarkerArray()
+{
+  visualization_msgs::msg::MarkerArray wall_marker;
+
+  const rclcpp::Time now = clock_->now();
+
+  auto id = getModuleId();
+  for (const auto & p : debug_data_.stop_poses) {
+    const auto p_front =
+      tier4_autoware_utils::calcOffsetPose(p, debug_data_.base_link2front, 0.0, 0.0);
+    appendMarkerArray(
+      motion_utils::createStopVirtualWallMarker(p_front, "detection_area", now, id++), &wall_marker,
+      now);
+  }
+
+  for (const auto & p : debug_data_.dead_line_poses) {
+    const auto p_front =
+      tier4_autoware_utils::calcOffsetPose(p, debug_data_.base_link2front, 0.0, 0.0);
+    appendMarkerArray(
+      motion_utils::createDeadLineVirtualWallMarker(p_front, "detection_area", now, id++),
+      &wall_marker, now);
+  }
+
+  return wall_marker;
+}
+
 }  // namespace behavior_velocity_planner

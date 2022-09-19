@@ -91,23 +91,22 @@ bool OcclusionSpotModule::modifyPathVelocity(
     param_.v.max_stop_jerk = planner_data_->max_stop_jerk_threshold;
     param_.v.max_stop_accel = planner_data_->max_stop_acceleration_threshold;
     param_.v.v_ego = planner_data_->current_velocity->twist.linear.x;
-    param_.v.a_ego = planner_data_->current_accel.get();
+    param_.v.a_ego = planner_data_->current_acceleration->accel.accel.linear.x;
     param_.v.delay_time = planner_data_->system_delay;
-    const double detection_area_offset = 5.0;  // for visualization and stability
     param_.detection_area_max_length =
       planning_utils::calcJudgeLineDistWithJerkLimit(
         param_.v.v_ego, param_.v.a_ego, param_.v.non_effective_accel, param_.v.non_effective_jerk,
         planner_data_->delay_response_time) +
-      detection_area_offset;
+      param_.detection_area_offset;  // To fill difference between planned and measured acc
   }
   const geometry_msgs::msg::Pose ego_pose = planner_data_->current_pose.pose;
   PathWithLaneId clipped_path;
   utils::clipPathByLength(*path, clipped_path, param_.detection_area_length);
   PathWithLaneId path_interpolated;
   //! never change this interpolation interval(will affect module accuracy)
-  splineInterpolate(clipped_path, 1.0, &path_interpolated, logger_);
+  splineInterpolate(clipped_path, 1.0, path_interpolated, logger_);
   const geometry_msgs::msg::Point start_point = path_interpolated.points.at(0).point.pose.position;
-  const auto offset = tier4_autoware_utils::calcSignedArcLength(
+  const auto offset = motion_utils::calcSignedArcLength(
     path_interpolated.points, ego_pose, start_point, param_.dist_thr, param_.angle_thr);
   if (offset == boost::none) return true;
   const double offset_from_start_to_ego = -offset.get();
@@ -123,8 +122,9 @@ bool OcclusionSpotModule::modifyPathVelocity(
     }
   }
   DEBUG_PRINT(show_time, "apply velocity [ms]: ", stop_watch_.toc("processing_time", true));
+  const size_t ego_seg_idx = findEgoSegmentIndex(predicted_path.points);
   if (!utils::buildDetectionAreaPolygon(
-        debug_data_.detection_area_polygons, predicted_path, ego_pose, param_)) {
+        debug_data_.detection_area_polygons, predicted_path, ego_pose, ego_seg_idx, param_)) {
     return true;  // path point is not enough
   }
   DEBUG_PRINT(show_time, "generate poly[ms]: ", stop_watch_.toc("processing_time", true));
@@ -151,9 +151,12 @@ bool OcclusionSpotModule::modifyPathVelocity(
       filtered_vehicles, stuck_vehicle_foot_prints, moving_vehicle_foot_prints,
       param_.stuck_vehicle_vel);
     // occ -> image
+    // find out occlusion from erode occlusion candidate num iter is strength of filter
+    const int num_iter = static_cast<int>(
+      (param_.detection_area.min_occlusion_spot_size / occ_grid_ptr->info.resolution) - 1);
     grid_utils::denoiseOccupancyGridCV(
       occ_grid_ptr, stuck_vehicle_foot_prints, moving_vehicle_foot_prints, grid_map, param_.grid,
-      param_.is_show_cv_window, param_.filter_occupancy_grid, param_.use_object_info,
+      param_.is_show_cv_window, num_iter, param_.use_object_info,
       param_.use_moving_object_ray_cast);
     DEBUG_PRINT(show_time, "grid [ms]: ", stop_watch_.toc("processing_time", true));
     // Note: Don't consider offset from path start to ego here
@@ -183,8 +186,10 @@ bool OcclusionSpotModule::modifyPathVelocity(
   // these debug topics needs computation resource
   debug_data_.z = path->points.front().point.pose.position.z;
   debug_data_.possible_collisions = possible_collisions;
-  debug_data_.path_interpolated = path_interpolated;
-  debug_data_.path_raw = clipped_path;
+  if (param_.is_show_occlusion) {
+    debug_data_.path_interpolated = path_interpolated;
+    debug_data_.path_raw.points = clipped_path.points;
+  }
   DEBUG_PRINT(show_time, "total [ms]: ", stop_watch_.toc("total_processing_time", true));
   return true;
 }

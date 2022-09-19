@@ -1,4 +1,4 @@
-// Copyright 2021 TIER IV, Inc.
+// Copyright 2022 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 
 #include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
 #include <sensor_msgs/msg/camera_info.hpp>
+#include <sensor_msgs/point_cloud2_iterator.hpp>
 #include <tier4_perception_msgs/msg/detected_objects_with_feature.hpp>
 
 #include <message_filters/pass_through.h>
@@ -41,7 +42,7 @@ using autoware_auto_perception_msgs::msg::DetectedObjects;
 using tier4_perception_msgs::msg::DetectedObjectsWithFeature;
 using tier4_perception_msgs::msg::DetectedObjectWithFeature;
 
-template <class Msg>
+template <class Msg, class ObjType>
 class FusionNode : public rclcpp::Node
 {
 public:
@@ -71,7 +72,7 @@ protected:
     const sensor_msgs::msg::CameraInfo & camera_info, Msg & output_msg) = 0;
 
   // set args if you need
-  virtual void postprocess();
+  virtual void postprocess(Msg & output_msg);
 
   void publish(const Msg & output_msg);
 
@@ -103,6 +104,13 @@ protected:
 
   // debugger
   std::shared_ptr<Debugger> debugger_;
+  virtual bool out_of_scope(const ObjType & obj) = 0;
+  float filter_scope_minx_;
+  float filter_scope_maxx_;
+  float filter_scope_miny_;
+  float filter_scope_maxy_;
+  float filter_scope_minz_;
+  float filter_scope_maxz_;
 };
 
 }  // namespace image_projection_based_fusion

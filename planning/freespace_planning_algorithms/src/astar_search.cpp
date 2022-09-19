@@ -18,7 +18,7 @@
 
 #include <tf2/utils.h>
 
-#ifdef USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
+#ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #else
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
@@ -135,15 +135,16 @@ void AstarSearch::setMap(const nav_msgs::msg::OccupancyGrid & costmap)
 {
   AbstractPlanningAlgorithm::setMap(costmap);
 
+  clearNodes();
+
   const auto height = costmap_.info.height;
   const auto width = costmap_.info.width;
 
   // Initialize nodes
-  nodes_.clear();
   nodes_.resize(height);
-  for (uint32_t i = 0; i < height; i++) {
+  for (size_t i = 0; i < height; i++) {
     nodes_[i].resize(width);
-    for (uint32_t j = 0; j < width; j++) {
+    for (size_t j = 0; j < width; j++) {
       nodes_[i][j].resize(planner_common_param_.theta_size);
     }
   }
@@ -164,6 +165,14 @@ bool AstarSearch::makePlan(
   }
 
   return search();
+}
+
+void AstarSearch::clearNodes()
+{
+  // clearing openlist is necessary because otherwise remaining elements of openlist
+  // point to deleted node.
+  nodes_.clear();
+  openlist_ = std::priority_queue<AstarNode *, std::vector<AstarNode *>, NodeComparison>();
 }
 
 bool AstarSearch::setStartNode()
@@ -265,13 +274,12 @@ bool AstarSearch::search()
 
       // Compare cost
       AstarNode * next_node = getNodeRef(next_index);
-      const double next_gc = current_node->gc + move_cost;
-      if (next_node->status == NodeStatus::None || next_gc < next_node->gc) {
+      if (next_node->status == NodeStatus::None) {
         next_node->status = NodeStatus::Open;
         next_node->x = next_pose.position.x;
         next_node->y = next_pose.position.y;
         next_node->theta = tf2::getYaw(next_pose.orientation);
-        next_node->gc = next_gc;
+        next_node->gc = current_node->gc + move_cost;
         next_node->hc = estimateCost(next_pose);
         next_node->is_back = transition.is_back;
         next_node->parent = current_node;

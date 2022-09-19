@@ -38,7 +38,7 @@ LidarApolloInstanceSegmentation::LidarApolloInstanceSegmentation(rclcpp::Node * 
   use_intensity_feature = node_->declare_parameter("use_intensity_feature", true);
   use_constant_feature = node_->declare_parameter("use_constant_feature", true);
   target_frame_ = node_->declare_parameter("target_frame", "base_link");
-  z_offset_ = node_->declare_parameter("z_offset", 2);
+  z_offset_ = node_->declare_parameter<float>("z_offset", -2.0);
 
   // load weight file
   std::ifstream fs(engine_file);
@@ -60,20 +60,32 @@ LidarApolloInstanceSegmentation::LidarApolloInstanceSegmentation(rclcpp::Node * 
       RCLCPP_ERROR(node_->get_logger(), "can not find output named %s", output_node.c_str());
     }
     network->markOutput(*output);
-    const int batch_size = 1;
-    builder->setMaxBatchSize(batch_size);
+#if (NV_TENSORRT_MAJOR * 1000) + (NV_TENSORRT_MINOR * 100) + NV_TENSOR_PATCH >= 8400
+    config->setMemoryPoolLimit(nvinfer1::MemoryPoolType::kWORKSPACE, 1 << 30);
+#else
     config->setMaxWorkspaceSize(1 << 30);
-    nvinfer1::ICudaEngine * engine = builder->buildEngineWithConfig(*network, *config);
-    nvinfer1::IHostMemory * trt_model_stream = engine->serialize();
-    assert(trt_model_stream != nullptr);
+#endif
+    nvinfer1::IHostMemory * plan = builder->buildSerializedNetwork(*network, *config);
+    assert(plan != nullptr);
     std::ofstream outfile(engine_file, std::ofstream::binary);
     assert(!outfile.fail());
-    outfile.write(reinterpret_cast<char *>(trt_model_stream->data()), trt_model_stream->size());
+    outfile.write(reinterpret_cast<char *>(plan->data()), plan->size());
     outfile.close();
-    network->destroy();
-    parser->destroy();
-    builder->destroy();
-    config->destroy();
+    if (network) {
+      delete network;
+    }
+    if (parser) {
+      delete parser;
+    }
+    if (builder) {
+      delete builder;
+    }
+    if (config) {
+      delete config;
+    }
+    if (plan) {
+      delete plan;
+    }
   }
   net_ptr_.reset(new Tn::trtNet(engine_file));
 

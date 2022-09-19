@@ -15,10 +15,10 @@
 #ifndef MOTION_VELOCITY_SMOOTHER__SMOOTHER__LINF_PSEUDO_JERK_SMOOTHER_HPP_
 #define MOTION_VELOCITY_SMOOTHER__SMOOTHER__LINF_PSEUDO_JERK_SMOOTHER_HPP_
 
+#include "motion_utils/trajectory/trajectory.hpp"
 #include "motion_velocity_smoother/smoother/smoother_base.hpp"
 #include "osqp_interface/osqp_interface.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
-#include "tier4_autoware_utils/trajectory/trajectory.hpp"
 
 #include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"
 
@@ -45,7 +45,8 @@ public:
     TrajectoryPoints & output, std::vector<TrajectoryPoints> & debug_trajectories) override;
 
   boost::optional<TrajectoryPoints> resampleTrajectory(
-    const TrajectoryPoints & input, const double v_current, const int closest_id) const override;
+    const TrajectoryPoints & input, const double v0, const geometry_msgs::msg::Pose & current_pose,
+    const double nearest_dist_threshold, const double nearest_yaw_threshold) const override;
 
   void setParam(const Param & smoother_param);
   Param getParam() const;

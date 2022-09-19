@@ -25,10 +25,12 @@
 
 #include <functional>
 #include <memory>
+#include <set>
+#include <vector>
 
 namespace behavior_velocity_planner
 {
-class CrosswalkModuleManager : public SceneModuleManagerInterface
+class CrosswalkModuleManager : public SceneModuleManagerInterfaceWithRTC
 {
 public:
   explicit CrosswalkModuleManager(rclcpp::Node & node);
@@ -36,8 +38,24 @@ public:
   const char * getModuleName() override { return "crosswalk"; }
 
 private:
-  CrosswalkModule::PlannerParam crosswalk_planner_param_;
-  WalkwayModule::PlannerParam walkway_planner_param_;
+  CrosswalkModule::PlannerParam crosswalk_planner_param_{};
+
+  void launchNewModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
+
+  std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
+    const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
+};
+
+class WalkwayModuleManager : public SceneModuleManagerInterface
+{
+public:
+  explicit WalkwayModuleManager(rclcpp::Node & node);
+
+  const char * getModuleName() override { return "walkway"; }
+
+private:
+  WalkwayModule::PlannerParam walkway_planner_param_{};
+
   void launchNewModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) override;
 
   std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(

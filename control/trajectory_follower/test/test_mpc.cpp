@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//     http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -26,7 +26,7 @@
 #include "autoware_auto_vehicle_msgs/msg/steering_report.hpp"
 #include "geometry_msgs/msg/pose.hpp"
 
-#ifdef USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
+#ifdef ROS_DISTRO_GALACTIC
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 #else
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
@@ -95,6 +95,7 @@ protected:
     param.input_delay = 0.0;
     param.acceleration_limit = 2.0;
     param.velocity_time_constant = 0.3;
+    param.min_prediction_length = 5.0;
     param.steer_tau = 0.1;
     param.weight_lat_error = 1.0;
     param.weight_heading_error = 1.0;
@@ -176,8 +177,7 @@ protected:
     // Init trajectory
     mpc.setReferenceTrajectory(
       dummy_straight_trajectory, traj_resample_dist, enable_path_smoothing,
-      path_filter_moving_ave_num, curvature_smoothing_num_traj, curvature_smoothing_num_ref_steer,
-      pose_zero_ptr);
+      path_filter_moving_ave_num, curvature_smoothing_num_traj, curvature_smoothing_num_ref_steer);
   }
 };  // class MPCTest
 
@@ -235,8 +235,7 @@ TEST_F(MPCTest, InitializeAndCalculateRightTurn)
   initializeMPC(mpc);
   mpc.setReferenceTrajectory(
     dummy_right_turn_trajectory, traj_resample_dist, enable_path_smoothing,
-    path_filter_moving_ave_num, curvature_smoothing_num_traj, curvature_smoothing_num_ref_steer,
-    pose_zero_ptr);
+    path_filter_moving_ave_num, curvature_smoothing_num_traj, curvature_smoothing_num_ref_steer);
 
   // Calculate MPC
   AckermannLateralCommand ctrl_cmd;
@@ -254,8 +253,7 @@ TEST_F(MPCTest, OsqpCalculate)
   initializeMPC(mpc);
   mpc.setReferenceTrajectory(
     dummy_straight_trajectory, traj_resample_dist, enable_path_smoothing,
-    path_filter_moving_ave_num, curvature_smoothing_num_traj, curvature_smoothing_num_ref_steer,
-    pose_zero_ptr);
+    path_filter_moving_ave_num, curvature_smoothing_num_traj, curvature_smoothing_num_ref_steer);
 
   const std::string vehicle_model_type = "kinematics";
   std::shared_ptr<trajectory_follower::VehicleModelInterface> vehicle_model_ptr =
@@ -286,8 +284,7 @@ TEST_F(MPCTest, OsqpCalculateRightTurn)
   initializeMPC(mpc);
   mpc.setReferenceTrajectory(
     dummy_right_turn_trajectory, traj_resample_dist, enable_path_smoothing,
-    path_filter_moving_ave_num, curvature_smoothing_num_traj, curvature_smoothing_num_ref_steer,
-    pose_zero_ptr);
+    path_filter_moving_ave_num, curvature_smoothing_num_traj, curvature_smoothing_num_ref_steer);
 
   const std::string vehicle_model_type = "kinematics";
   std::shared_ptr<trajectory_follower::VehicleModelInterface> vehicle_model_ptr =
@@ -332,8 +329,7 @@ TEST_F(MPCTest, KinematicsNoDelayCalculate)
   // Init trajectory
   mpc.setReferenceTrajectory(
     dummy_straight_trajectory, traj_resample_dist, enable_path_smoothing,
-    path_filter_moving_ave_num, curvature_smoothing_num_traj, curvature_smoothing_num_ref_steer,
-    pose_zero_ptr);
+    path_filter_moving_ave_num, curvature_smoothing_num_traj, curvature_smoothing_num_ref_steer);
   // Calculate MPC
   AckermannLateralCommand ctrl_cmd;
   Trajectory pred_traj;
@@ -350,8 +346,7 @@ TEST_F(MPCTest, KinematicsNoDelayCalculateRightTurn)
   initializeMPC(mpc);
   mpc.setReferenceTrajectory(
     dummy_right_turn_trajectory, traj_resample_dist, enable_path_smoothing,
-    path_filter_moving_ave_num, curvature_smoothing_num_traj, curvature_smoothing_num_ref_steer,
-    pose_zero_ptr);
+    path_filter_moving_ave_num, curvature_smoothing_num_traj, curvature_smoothing_num_ref_steer);
 
   const std::string vehicle_model_type = "kinematics_no_delay";
   std::shared_ptr<trajectory_follower::VehicleModelInterface> vehicle_model_ptr =

@@ -18,8 +18,8 @@
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <lanelet2_extension/visualization/visualization.hpp>
+#include <motion_utils/trajectory/trajectory.hpp>
 #include <scene_module/occlusion_spot/grid_utils.hpp>
-#include <tier4_autoware_utils/trajectory/trajectory.hpp>
 #include <utilization/util.hpp>
 
 #include <autoware_auto_perception_msgs/msg/object_classification.hpp>
@@ -35,7 +35,7 @@
 #include <lanelet2_core/geometry/LaneletMap.h>
 #include <tf2/utils.h>
 
-#ifdef USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
+#ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #else
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
@@ -46,16 +46,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-
-namespace tier4_autoware_utils
-{
-template <>
-inline geometry_msgs::msg::Pose getPose(
-  const autoware_auto_planning_msgs::msg::PathPointWithLaneId & p)
-{
-  return p.point.pose;
-}
-}  // namespace tier4_autoware_utils
 
 namespace behavior_velocity_planner
 {
@@ -121,11 +111,11 @@ struct PlannerParam
   bool is_show_occlusion;           // [-]
   bool is_show_cv_window;           // [-]
   bool is_show_processing_time;     // [-]
-  bool filter_occupancy_grid;       // [-]
   bool use_object_info;             // [-]
   bool use_moving_object_ray_cast;  // [-]
   bool use_partition_lanelet;       // [-]
   // parameters in yaml
+  double detection_area_offset;      // [m]
   double detection_area_length;      // [m]
   double detection_area_max_length;  // [m]
   double stuck_vehicle_vel;          // [m/s]
@@ -156,7 +146,7 @@ struct ObstacleInfo
   SafeMotion safe_motion;  // safe motion of velocity and stop point
   geometry_msgs::msg::Point position;
   double max_velocity;  // [m/s] Maximum velocity of the possible obstacle
-  double ttc;           // [s] time to collision with ego
+  double ttv;           // [s] time to vehicle for pedestrian
 };
 
 /**
@@ -213,8 +203,8 @@ struct DebugData
 PathWithLaneId applyVelocityToPath(const PathWithLaneId & path, const double v0);
 //!< @brief wrapper for detection area polygon generation
 bool buildDetectionAreaPolygon(
-  Polygons2d & slices, const PathWithLaneId & path, const geometry_msgs::msg::Pose & pose,
-  const PlannerParam & param);
+  Polygons2d & slices, const PathWithLaneId & path, const geometry_msgs::msg::Pose & target_pose,
+  const size_t target_seg_idx, const PlannerParam & param);
 lanelet::ConstLanelet toPathLanelet(const PathWithLaneId & path);
 // Note : consider offset_from_start_to_ego and safety margin for collision here
 void handleCollisionOffset(std::vector<PossibleCollisionInfo> & possible_collisions, double offset);
@@ -236,8 +226,6 @@ bool generatePossibleCollisionsFromObjects(
   std::vector<PossibleCollisionInfo> & possible_collisions, const PathWithLaneId & path,
   const PlannerParam & param, const double offset_from_start_to_ego,
   const std::vector<PredictedObject> & dyn_objects);
-ROAD_TYPE getCurrentRoadType(
-  const lanelet::ConstLanelet & current_lanelet, const LaneletMapPtr & lanelet_map_ptr);
 //!< @brief calculate intersection and collision point from occlusion spot
 void calculateCollisionPathPointFromOcclusionSpot(
   PossibleCollisionInfo & pc, const lanelet::BasicPoint2d & obstacle_point,

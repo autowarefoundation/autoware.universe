@@ -61,8 +61,16 @@ class CarInitialPoseTool : public InteractiveObjectTool
 {
 public:
   CarInitialPoseTool();
-  void onInitialize();
-  Object createObjectMsg() const override;
+  void onInitialize() override;
+  [[nodiscard]] Object createObjectMsg() const override;
+};
+
+class BusInitialPoseTool : public InteractiveObjectTool
+{
+public:
+  BusInitialPoseTool();
+  void onInitialize() override;
+  [[nodiscard]] Object createObjectMsg() const override;
 };
 
 }  // namespace rviz_plugins

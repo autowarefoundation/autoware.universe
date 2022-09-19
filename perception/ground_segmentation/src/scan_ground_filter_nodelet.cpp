@@ -14,7 +14,6 @@
 
 #include "ground_segmentation/scan_ground_filter_nodelet.hpp"
 
-#include <pcl_ros/transforms.hpp>
 #include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <tier4_autoware_utils/math/normalization.hpp>
 #include <tier4_autoware_utils/math/unit_conversion.hpp>
@@ -29,6 +28,7 @@ namespace ground_segmentation
 using pointcloud_preprocessor::get_param;
 using tier4_autoware_utils::calcDistance3d;
 using tier4_autoware_utils::deg2rad;
+using tier4_autoware_utils::normalizeDegree;
 using tier4_autoware_utils::normalizeRadian;
 using vehicle_info_util::VehicleInfoUtil;
 
@@ -37,7 +37,6 @@ ScanGroundFilterComponent::ScanGroundFilterComponent(const rclcpp::NodeOptions &
 {
   // set initial parameters
   {
-    base_frame_ = declare_parameter("base_frame", "base_link");
     global_slope_max_angle_rad_ = deg2rad(declare_parameter("global_slope_max_angle_deg", 8.0));
     local_slope_max_angle_rad_ = deg2rad(declare_parameter("local_slope_max_angle_deg", 6.0));
     radial_divider_angle_rad_ = deg2rad(declare_parameter("radial_divider_angle_deg", 1.0));
@@ -53,30 +52,6 @@ ScanGroundFilterComponent::ScanGroundFilterComponent(const rclcpp::NodeOptions &
     std::bind(&ScanGroundFilterComponent::onParameter, this, _1));
 }
 
-bool ScanGroundFilterComponent::transformPointCloud(
-  const std::string & in_target_frame, const PointCloud2ConstPtr & in_cloud_ptr,
-  const PointCloud2::SharedPtr & out_cloud_ptr)
-{
-  if (in_target_frame == in_cloud_ptr->header.frame_id) {
-    *out_cloud_ptr = *in_cloud_ptr;
-    return true;
-  }
-
-  geometry_msgs::msg::TransformStamped transform_stamped;
-  try {
-    transform_stamped = tf_buffer_.lookupTransform(
-      in_target_frame, in_cloud_ptr->header.frame_id, in_cloud_ptr->header.stamp,
-      rclcpp::Duration::from_seconds(1.0));
-  } catch (tf2::TransformException & ex) {
-    RCLCPP_WARN_STREAM(get_logger(), ex.what());
-    return false;
-  }
-  Eigen::Matrix4f mat = tf2::transformToEigen(transform_stamped.transform).matrix().cast<float>();
-  pcl_ros::transformPointCloud(mat, *in_cloud_ptr, *out_cloud_ptr);
-  out_cloud_ptr->header.frame_id = in_target_frame;
-  return true;
-}
-
 void ScanGroundFilterComponent::convertPointcloud(
   const pcl::PointCloud<pcl::PointXYZ>::Ptr in_cloud,
   std::vector<PointCloudRefVector> & out_radial_ordered_points)
@@ -87,7 +62,8 @@ void ScanGroundFilterComponent::convertPointcloud(
   for (size_t i = 0; i < in_cloud->points.size(); ++i) {
     auto radius{static_cast<float>(std::hypot(in_cloud->points[i].x, in_cloud->points[i].y))};
     auto theta{normalizeRadian(std::atan2(in_cloud->points[i].x, in_cloud->points[i].y), 0.0)};
-    auto radial_div{static_cast<size_t>(std::floor(theta / radial_divider_angle_rad_))};
+    auto radial_div{
+      static_cast<size_t>(std::floor(normalizeDegree(theta / radial_divider_angle_rad_, 0.0)))};
 
     current_point.radius = radius;
     current_point.theta = theta;
@@ -166,8 +142,12 @@ void ScanGroundFilterComponent::classifyPointCloud(
         (points_distance <
          (p->radius * radial_divider_angle_rad_ + split_points_distance_tolerance_));
 
+      float global_slope = std::atan2(p->orig_point->z, p->radius);
       // check points which is far enough from previous point
-      if (
+      if (global_slope > global_slope_max_angle) {
+        p->point_state = PointLabel::NON_GROUND;
+        calculate_slope = false;
+      } else if (
         (prev_point_label == PointLabel::NON_GROUND) &&
         (std::abs(height_from_obj) >= split_height_distance_)) {
         calculate_slope = true;
@@ -184,14 +164,8 @@ void ScanGroundFilterComponent::classifyPointCloud(
       }
       if (calculate_slope) {
         // far from the previous point
-
-        float global_slope = std::atan2(p->orig_point->z, p->radius);
         local_slope = std::atan2(height_from_gnd, radius_distance_from_gnd);
-
-        if (global_slope > global_slope_max_angle) {
-          // the point is outside of the global slope threshold
-          p->point_state = PointLabel::NON_GROUND;
-        } else if (local_slope - prev_gnd_slope > local_slope_max_angle) {
+        if (local_slope - prev_gnd_slope > local_slope_max_angle) {
           // the point is outside of the local slope threshold
           p->point_state = PointLabel::NON_GROUND;
         } else {
@@ -245,18 +219,8 @@ void ScanGroundFilterComponent::filter(
   const PointCloud2ConstPtr & input, [[maybe_unused]] const IndicesPtr & indices,
   PointCloud2 & output)
 {
-  auto input_transformed_ptr = std::make_shared<PointCloud2>();
-  bool succeeded = transformPointCloud(base_frame_, input, input_transformed_ptr);
-  sensor_frame_ = input->header.frame_id;
-  if (!succeeded) {
-    RCLCPP_ERROR_STREAM_THROTTLE(
-      get_logger(), *get_clock(), 10000,
-      "Failed transform from " << base_frame_ << " to " << input->header.frame_id);
-    return;
-  }
-
   pcl::PointCloud<pcl::PointXYZ>::Ptr current_sensor_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::fromROSMsg(*input_transformed_ptr, *current_sensor_cloud_ptr);
+  pcl::fromROSMsg(*input, *current_sensor_cloud_ptr);
 
   std::vector<PointCloudRefVector> radial_ordered_points;
 
@@ -273,17 +237,13 @@ void ScanGroundFilterComponent::filter(
   auto no_ground_cloud_msg_ptr = std::make_shared<PointCloud2>();
   pcl::toROSMsg(*no_ground_cloud_ptr, *no_ground_cloud_msg_ptr);
 
-  no_ground_cloud_msg_ptr->header.stamp = input->header.stamp;
-  no_ground_cloud_msg_ptr->header.frame_id = base_frame_;
+  no_ground_cloud_msg_ptr->header = input->header;
   output = *no_ground_cloud_msg_ptr;
 }
 
 rcl_interfaces::msg::SetParametersResult ScanGroundFilterComponent::onParameter(
   const std::vector<rclcpp::Parameter> & p)
 {
-  if (get_param(p, "base_frame", base_frame_)) {
-    RCLCPP_DEBUG_STREAM(get_logger(), "Setting base_frame to: " << base_frame_);
-  }
   double global_slope_max_angle_deg{get_parameter("global_slope_max_angle_deg").as_double()};
   if (get_param(p, "global_slope_max_angle_deg", global_slope_max_angle_deg)) {
     global_slope_max_angle_rad_ = deg2rad(global_slope_max_angle_deg);

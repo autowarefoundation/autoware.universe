@@ -34,7 +34,7 @@
 #include <tf2/convert.h>
 #include <tf2/transform_datatypes.h>
 
-#ifdef USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
+#ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #else
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
@@ -78,6 +78,8 @@ private:
   std::shared_ptr<ShapeEstimator> shape_estimator_;
   std::shared_ptr<euclidean_cluster::EuclideanClusterInterface> cluster_;
   std::shared_ptr<Debugger> debugger_;
+
+  bool ignore_unknown_tracker_;
 
   void onObjects(
     const tier4_perception_msgs::msg::DetectedObjectsWithFeature::ConstSharedPtr input_msg);

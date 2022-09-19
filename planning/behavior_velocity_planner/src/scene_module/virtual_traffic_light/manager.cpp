@@ -23,43 +23,7 @@
 
 namespace behavior_velocity_planner
 {
-namespace
-{
 using lanelet::autoware::VirtualTrafficLight;
-
-template <class T>
-std::unordered_map<typename T::ConstPtr, lanelet::ConstLanelet> getRegElemMapOnPath(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  const lanelet::LaneletMapPtr lanelet_map)
-{
-  std::unordered_map<typename T::ConstPtr, lanelet::ConstLanelet> reg_elem_map_on_path;
-
-  for (const auto & p : path.points) {
-    const auto lane_id = p.lane_ids.at(0);
-    const auto ll = lanelet_map->laneletLayer.get(lane_id);
-
-    for (const auto & reg_elem : ll.regulatoryElementsAs<const T>()) {
-      reg_elem_map_on_path.insert(std::make_pair(reg_elem, ll));
-    }
-  }
-
-  return reg_elem_map_on_path;
-}
-
-std::set<int64_t> getLaneletIdSetOnPath(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  const lanelet::LaneletMapPtr lanelet_map)
-{
-  std::set<int64_t> id_set;
-
-  for (const auto & m : getRegElemMapOnPath<VirtualTrafficLight>(path, lanelet_map)) {
-    id_set.insert(m.second.id());
-  }
-
-  return id_set;
-}
-
-}  // namespace
 
 VirtualTrafficLightModuleManager::VirtualTrafficLightModuleManager(rclcpp::Node & node)
 : SceneModuleManagerInterface(node, getModuleName())
@@ -71,6 +35,7 @@ VirtualTrafficLightModuleManager::VirtualTrafficLightModuleManager(rclcpp::Node 
     p.max_delay_sec = node.declare_parameter(ns + ".max_delay_sec", 3.0);
     p.near_line_distance = node.declare_parameter(ns + ".near_line_distance", 1.0);
     p.dead_line_margin = node.declare_parameter(ns + ".dead_line_margin", 1.0);
+    p.hold_stop_margin_distance = node.declare_parameter(ns + ".hold_stop_margin_distance", 0.0);
     p.max_yaw_deviation_rad =
       tier4_autoware_utils::deg2rad(node.declare_parameter(ns + ".max_yaw_deviation_deg", 90.0));
     p.check_timeout_after_stop_line =
@@ -81,13 +46,15 @@ VirtualTrafficLightModuleManager::VirtualTrafficLightModuleManager(rclcpp::Node 
 void VirtualTrafficLightModuleManager::launchNewModules(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
-  for (const auto & m : getRegElemMapOnPath<VirtualTrafficLight>(
-         path, planner_data_->route_handler_->getLaneletMapPtr())) {
+  for (const auto & m : planning_utils::getRegElemMapOnPath<VirtualTrafficLight>(
+         path, planner_data_->route_handler_->getLaneletMapPtr(),
+         planner_data_->current_pose.pose)) {
     // Use lanelet_id to unregister module when the route is changed
-    const auto module_id = m.second.id();
+    const auto lane_id = m.second.id();
+    const auto module_id = lane_id;
     if (!isModuleRegistered(module_id)) {
       registerModule(std::make_shared<VirtualTrafficLightModule>(
-        module_id, *m.first, m.second, planner_param_,
+        module_id, lane_id, *m.first, m.second, planner_param_,
         logger_.get_child("virtual_traffic_light_module"), clock_));
     }
   }
@@ -97,8 +64,8 @@ std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
 VirtualTrafficLightModuleManager::getModuleExpiredFunction(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
 {
-  const auto id_set =
-    getLaneletIdSetOnPath(path, planner_data_->route_handler_->getLaneletMapPtr());
+  const auto id_set = planning_utils::getLaneletIdSetOnPath<VirtualTrafficLight>(
+    path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_pose.pose);
 
   return [id_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
     return id_set.count(scene_module->getModuleId()) == 0;

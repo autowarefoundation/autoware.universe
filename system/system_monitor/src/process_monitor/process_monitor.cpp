@@ -21,6 +21,8 @@
 
 #include "system_monitor/system_monitor_utility.hpp"
 
+#include <tier4_autoware_utils/system/stop_watch.hpp>
+
 #include <fmt/format.h>
 
 #include <memory>
@@ -31,8 +33,12 @@
 ProcessMonitor::ProcessMonitor(const rclcpp::NodeOptions & options)
 : Node("process_monitor", options),
   updater_(this),
-  num_of_procs_(declare_parameter<int>("num_of_procs", 5))
+  num_of_procs_(declare_parameter<int>("num_of_procs", 5)),
+  is_top_error_(false),
+  is_pipe2_error_(false)
 {
+  using namespace std::literals::chrono_literals;
+
   int index;
 
   gethostname(hostname_, sizeof(hostname_));
@@ -50,33 +56,49 @@ ProcessMonitor::ProcessMonitor(const rclcpp::NodeOptions & options)
     memory_tasks_.push_back(task);
     updater_.add(*task);
   }
-}
 
-void ProcessMonitor::update() { updater_.force_update(); }
+  // Start timer to execute top command
+  timer_callback_group_ = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+  timer_ = rclcpp::create_timer(
+    this, get_clock(), 1s, std::bind(&ProcessMonitor::onTimer, this), timer_callback_group_);
+}
 
 void ProcessMonitor::monitorProcesses(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
-  // Remember start time to measure elapsed time
-  const auto t_start = SystemMonitorUtility::startMeasurement();
+  // thread-safe read
+  std::string str;
+  bool is_top_error;
+  bool is_pipe2_error;
+  double elapsed_ms;
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    str = top_output_;
+    is_top_error = is_top_error_;
+    is_pipe2_error = is_pipe2_error_;
+    elapsed_ms = elapsed_ms_;
+  }
 
-  bp::ipstream is_err;
-  bp::ipstream is_out;
-  std::ostringstream os;
-
-  // Get processes
-  bp::child c("top -bn1 -o %CPU -w 128", bp::std_out > is_out, bp::std_err > is_err);
-  c.wait();
-  if (c.exit_code() != 0) {
-    is_err >> os.rdbuf();
+  if (is_pipe2_error) {
+    stat.summary(DiagStatus::ERROR, "pipe2 error");
+    stat.add("pipe2", str);
+    setErrorContent(&load_tasks_, "pipe2 error", "pipe2", str);
+    setErrorContent(&memory_tasks_, "pipe2 error", "pipe2", str);
+    return;
+  }
+  if (is_top_error) {
     stat.summary(DiagStatus::ERROR, "top error");
-    stat.add("top", os.str().c_str());
-    setErrorContent(&load_tasks_, "top error", "top", os.str().c_str());
-    setErrorContent(&memory_tasks_, "top error", "top", os.str().c_str());
+    stat.add("top", str);
+    setErrorContent(&load_tasks_, "top error", "top", str);
+    setErrorContent(&memory_tasks_, "top error", "top", str);
     return;
   }
 
-  is_out >> os.rdbuf();
-  std::string str = os.str();
+  // If top still not running
+  if (str.empty()) {
+    // Send OK tentatively
+    stat.summary(DiagStatus::OK, "starting up");
+    return;
+  }
 
   // Get task summary
   getTasksSummary(stat, str);
@@ -89,20 +111,44 @@ void ProcessMonitor::monitorProcesses(diagnostic_updater::DiagnosticStatusWrappe
   // Get high memory processes
   getHighMemoryProcesses(str);
 
-  // Measure elapsed time since start time and report
-  SystemMonitorUtility::stopMeasurement(t_start, stat);
+  stat.addf("execution time", "%f ms", elapsed_ms);
 }
 
 void ProcessMonitor::getTasksSummary(
   diagnostic_updater::DiagnosticStatusWrapper & stat, const std::string & output)
 {
-  bp::pipe p;
+  // boost::process create file descriptor without O_CLOEXEC required for multithreading.
+  // So create file descriptor with O_CLOEXEC and pass it to boost::process.
+  int p_fd[2];
+  if (pipe2(p_fd, O_CLOEXEC) != 0) {
+    stat.summary(DiagStatus::ERROR, "pipe2 error");
+    stat.add("pipe2", strerror(errno));
+    return;
+  }
+  bp::pipe p{p_fd[0], p_fd[1]};
+
   std::string line;
 
   // Echo output for grep
   {
-    bp::ipstream is_out;
-    bp::ipstream is_err;
+    int out_fd[2];
+    if (pipe2(out_fd, O_CLOEXEC) != 0) {
+      stat.summary(DiagStatus::ERROR, "pipe2 error");
+      stat.add("pipe2", strerror(errno));
+      return;
+    }
+    bp::pipe out_pipe{out_fd[0], out_fd[1]};
+    bp::ipstream is_out{std::move(out_pipe)};
+
+    int err_fd[2];
+    if (pipe2(err_fd, O_CLOEXEC) != 0) {
+      stat.summary(DiagStatus::ERROR, "pipe2 error");
+      stat.add("pipe2", strerror(errno));
+      return;
+    }
+    bp::pipe err_pipe{err_fd[0], err_fd[1]};
+    bp::ipstream is_err{std::move(err_pipe)};
+
     bp::child c(fmt::format("echo {}", output), bp::std_out > p, bp::std_err > is_err);
     c.wait();
     if (c.exit_code() != 0) {
@@ -115,7 +161,15 @@ void ProcessMonitor::getTasksSummary(
   }
   // Find matching pattern of summary
   {
-    bp::ipstream is_out;
+    int out_fd[2];
+    if (pipe2(out_fd, O_CLOEXEC) != 0) {
+      stat.summary(DiagStatus::ERROR, "pipe2 error");
+      stat.add("pipe2", strerror(errno));
+      return;
+    }
+    bp::pipe out_pipe{out_fd[0], out_fd[1]};
+    bp::ipstream is_out{std::move(out_pipe)};
+
     bp::child c("grep Tasks:", bp::std_out > is_out, bp::std_in < p);
     c.wait();
     // no matching line
@@ -147,13 +201,37 @@ void ProcessMonitor::getTasksSummary(
 void ProcessMonitor::removeHeader(
   diagnostic_updater::DiagnosticStatusWrapper & stat, std::string & output)
 {
-  bp::pipe p1;
-  bp::pipe p2;
+  // boost::process create file descriptor without O_CLOEXEC required for multithreading.
+  // So create file descriptor with O_CLOEXEC and pass it to boost::process.
+  int p1_fd[2];
+  if (pipe2(p1_fd, O_CLOEXEC) != 0) {
+    stat.summary(DiagStatus::ERROR, "pipe2 error");
+    stat.add("pipe2", strerror(errno));
+    return;
+  }
+  bp::pipe p1{p1_fd[0], p1_fd[1]};
+
+  int p2_fd[2];
+  if (pipe2(p2_fd, O_CLOEXEC) != 0) {
+    stat.summary(DiagStatus::ERROR, "pipe2 error");
+    stat.add("pipe2", strerror(errno));
+    return;
+  }
+  bp::pipe p2{p2_fd[0], p2_fd[1]};
+
   std::ostringstream os;
 
   // Echo output for sed
   {
-    bp::ipstream is_err;
+    int err_fd[2];
+    if (pipe2(err_fd, O_CLOEXEC) != 0) {
+      stat.summary(DiagStatus::ERROR, "pipe2 error");
+      stat.add("pipe2", strerror(errno));
+      return;
+    }
+    bp::pipe err_pipe{err_fd[0], err_fd[1]};
+    bp::ipstream is_err{std::move(err_pipe)};
+
     bp::child c(fmt::format("echo {}", output), bp::std_out > p1, bp::std_err > is_err);
     c.wait();
     if (c.exit_code() != 0) {
@@ -165,7 +243,15 @@ void ProcessMonitor::removeHeader(
   }
   // Remove %Cpu section
   {
-    bp::ipstream is_err;
+    int err_fd[2];
+    if (pipe2(err_fd, O_CLOEXEC) != 0) {
+      stat.summary(DiagStatus::ERROR, "pipe2 error");
+      stat.add("pipe2", strerror(errno));
+      return;
+    }
+    bp::pipe err_pipe{err_fd[0], err_fd[1]};
+    bp::ipstream is_err{std::move(err_pipe)};
+
     bp::child c("sed \"/^%Cpu/d\"", bp::std_out > p2, bp::std_err > is_err, bp::std_in < p1);
     c.wait();
     // no matching line
@@ -177,8 +263,24 @@ void ProcessMonitor::removeHeader(
   }
   // Remove header
   {
-    bp::ipstream is_out;
-    bp::ipstream is_err;
+    int out_fd[2];
+    if (pipe2(out_fd, O_CLOEXEC) != 0) {
+      stat.summary(DiagStatus::ERROR, "pipe2 error");
+      stat.add("pipe2", strerror(errno));
+      return;
+    }
+    bp::pipe out_pipe{out_fd[0], out_fd[1]};
+    bp::ipstream is_out{std::move(out_pipe)};
+
+    int err_fd[2];
+    if (pipe2(err_fd, O_CLOEXEC) != 0) {
+      stat.summary(DiagStatus::ERROR, "pipe2 error");
+      stat.add("pipe2", strerror(errno));
+      return;
+    }
+    bp::pipe err_pipe{err_fd[0], err_fd[1]};
+    bp::ipstream is_err{std::move(err_pipe)};
+
     bp::child c("sed \"1,6d\"", bp::std_out > is_out, bp::std_err > is_err, bp::std_in < p2);
     c.wait();
     // no matching line
@@ -195,12 +297,34 @@ void ProcessMonitor::removeHeader(
 
 void ProcessMonitor::getHighLoadProcesses(const std::string & output)
 {
-  bp::pipe p;
+  // boost::process create file descriptor without O_CLOEXEC required for multithreading.
+  // So create file descriptor with O_CLOEXEC and pass it to boost::process.
+  int p_fd[2];
+  if (pipe2(p_fd, O_CLOEXEC) != 0) {
+    setErrorContent(&load_tasks_, "pipe2 error", "pipe2", strerror(errno));
+    return;
+  }
+  bp::pipe p{p_fd[0], p_fd[1]};
+
   std::ostringstream os;
 
   // Echo output for sed
-  bp::ipstream is_out;
-  bp::ipstream is_err;
+  int out_fd[2];
+  if (pipe2(out_fd, O_CLOEXEC) != 0) {
+    setErrorContent(&load_tasks_, "pipe2 error", "pipe2", strerror(errno));
+    return;
+  }
+  bp::pipe out_pipe{out_fd[0], out_fd[1]};
+  bp::ipstream is_out{std::move(out_pipe)};
+
+  int err_fd[2];
+  if (pipe2(err_fd, O_CLOEXEC) != 0) {
+    setErrorContent(&load_tasks_, "pipe2 error", "pipe2", strerror(errno));
+    return;
+  }
+  bp::pipe err_pipe{err_fd[0], err_fd[1]};
+  bp::ipstream is_err{std::move(err_pipe)};
+
   bp::child c(fmt::format("echo {}", output), bp::std_out > p, bp::std_err > is_err);
   c.wait();
   if (c.exit_code() != 0) {
@@ -215,14 +339,42 @@ void ProcessMonitor::getHighLoadProcesses(const std::string & output)
 
 void ProcessMonitor::getHighMemoryProcesses(const std::string & output)
 {
-  bp::pipe p1;
-  bp::pipe p2;
+  // boost::process create file descriptor without O_CLOEXEC required for multithreading.
+  // So create file descriptor with O_CLOEXEC and pass it to boost::process.
+  int p1_fd[2];
+  if (pipe2(p1_fd, O_CLOEXEC) != 0) {
+    setErrorContent(&memory_tasks_, "pipe2 error", "pipe2", strerror(errno));
+    return;
+  }
+  bp::pipe p1{p1_fd[0], p1_fd[1]};
+
+  int p2_fd[2];
+  if (pipe2(p2_fd, O_CLOEXEC) != 0) {
+    setErrorContent(&memory_tasks_, "pipe2 error", "pipe2", strerror(errno));
+    return;
+  }
+  bp::pipe p2{p2_fd[0], p2_fd[1]};
+
   std::ostringstream os;
 
   // Echo output for sed
   {
-    bp::ipstream is_out;
-    bp::ipstream is_err;
+    int out_fd[2];
+    if (pipe2(out_fd, O_CLOEXEC) != 0) {
+      setErrorContent(&memory_tasks_, "pipe2 error", "pipe2", strerror(errno));
+      return;
+    }
+    bp::pipe out_pipe{out_fd[0], out_fd[1]};
+    bp::ipstream is_out{std::move(out_pipe)};
+
+    int err_fd[2];
+    if (pipe2(err_fd, O_CLOEXEC) != 0) {
+      setErrorContent(&memory_tasks_, "pipe2 error", "pipe2", strerror(errno));
+      return;
+    }
+    bp::pipe err_pipe{err_fd[0], err_fd[1]};
+    bp::ipstream is_err{std::move(err_pipe)};
+
     bp::child c(fmt::format("echo {}", output), bp::std_out > p1, bp::std_err > is_err);
     c.wait();
     if (c.exit_code() != 0) {
@@ -233,8 +385,22 @@ void ProcessMonitor::getHighMemoryProcesses(const std::string & output)
   }
   // Sort by memory usage
   {
-    bp::ipstream is_out;
-    bp::ipstream is_err;
+    int out_fd[2];
+    if (pipe2(out_fd, O_CLOEXEC) != 0) {
+      setErrorContent(&memory_tasks_, "pipe2 error", "pipe2", strerror(errno));
+      return;
+    }
+    bp::pipe out_pipe{out_fd[0], out_fd[1]};
+    bp::ipstream is_out{std::move(out_pipe)};
+
+    int err_fd[2];
+    if (pipe2(err_fd, O_CLOEXEC) != 0) {
+      setErrorContent(&memory_tasks_, "pipe2 error", "pipe2", strerror(errno));
+      return;
+    }
+    bp::pipe err_pipe{err_fd[0], err_fd[1]};
+    bp::ipstream is_err{std::move(err_pipe)};
+
     bp::child c("sort -r -k 10", bp::std_out > p2, bp::std_err > is_err, bp::std_in < p1);
     c.wait();
     if (c.exit_code() != 0) {
@@ -255,8 +421,22 @@ void ProcessMonitor::getTopratedProcesses(
     return;
   }
 
-  bp::ipstream is_out;
-  bp::ipstream is_err;
+  int out_fd[2];
+  if (pipe2(out_fd, O_CLOEXEC) != 0) {
+    setErrorContent(tasks, "pipe2 error", "pipe2", strerror(errno));
+    return;
+  }
+  bp::pipe out_pipe{out_fd[0], out_fd[1]};
+  bp::ipstream is_out{std::move(out_pipe)};
+
+  int err_fd[2];
+  if (pipe2(err_fd, O_CLOEXEC) != 0) {
+    setErrorContent(tasks, "pipe2 error", "pipe2", strerror(errno));
+    return;
+  }
+  bp::pipe err_pipe{err_fd[0], err_fd[1]};
+  bp::ipstream is_err{std::move(err_pipe)};
+
   std::ostringstream os;
 
   bp::child c(
@@ -307,6 +487,59 @@ void ProcessMonitor::setErrorContent(
   for (auto itr = tasks->begin(); itr != tasks->end(); ++itr) {
     (*itr)->setDiagnosticsStatus(DiagStatus::ERROR, message);
     (*itr)->setErrorContent(error_command, content);
+  }
+}
+
+void ProcessMonitor::onTimer()
+{
+  bool is_top_error = false;
+
+  // Start to measure elapsed time
+  tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
+  stop_watch.tic("execution_time");
+
+  int out_fd[2];
+  if (pipe2(out_fd, O_CLOEXEC) != 0) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    top_output_ = std::string(strerror(errno));
+    is_pipe2_error_ = true;
+    return;
+  }
+  bp::pipe out_pipe{out_fd[0], out_fd[1]};
+  bp::ipstream is_out{std::move(out_pipe)};
+
+  int err_fd[2];
+  if (pipe2(err_fd, O_CLOEXEC) != 0) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    top_output_ = std::string(strerror(errno));
+    is_pipe2_error_ = true;
+    return;
+  }
+  bp::pipe err_pipe{err_fd[0], err_fd[1]};
+  bp::ipstream is_err{std::move(err_pipe)};
+
+  std::ostringstream os;
+
+  // Get processes
+  bp::child c("top -bn1 -o %CPU -w 128", bp::std_out > is_out, bp::std_err > is_err);
+  c.wait();
+
+  if (c.exit_code() != 0) {
+    is_top_error = true;
+    is_err >> os.rdbuf();
+  } else {
+    is_out >> os.rdbuf();
+  }
+
+  const double elapsed_ms = stop_watch.toc("execution_time");
+
+  // thread-safe copy
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    top_output_ = os.str();
+    is_top_error_ = is_top_error;
+    is_pipe2_error_ = false;
+    elapsed_ms_ = elapsed_ms;
   }
 }
 

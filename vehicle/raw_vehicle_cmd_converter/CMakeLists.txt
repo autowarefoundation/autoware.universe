@@ -1,19 +1,8 @@
-cmake_minimum_required(VERSION 3.5)
-
+cmake_minimum_required(VERSION 3.14)
 project(raw_vehicle_cmd_converter)
 
-### Compile options
-if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
-  set(CMAKE_CXX_STANDARD_REQUIRED ON)
-  set(CMAKE_CXX_EXTENSIONS OFF)
-endif()
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
-endif()
-
-find_package(ament_cmake_auto REQUIRED)
-ament_auto_find_build_dependencies()
+find_package(autoware_cmake REQUIRED)
+autoware_package()
 
 ament_auto_add_library(actuation_map_converter SHARED
   src/accel_map.cpp
@@ -35,15 +24,11 @@ rclcpp_components_register_node(raw_vehicle_cmd_converter_node_component
 )
 
 if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
-
-  # Unit tests
   set(TEST_SOURCES
     test/test_raw_vehicle_cmd_converter.cpp
   )
   set(TEST_RAW_VEHICLE_CMD_CONVERTER_EXE test_raw_vehicle_cmd_converter)
-  ament_add_gtest(${TEST_RAW_VEHICLE_CMD_CONVERTER_EXE} ${TEST_SOURCES})
+  ament_add_ros_isolated_gtest(${TEST_RAW_VEHICLE_CMD_CONVERTER_EXE} ${TEST_SOURCES})
   target_link_libraries(${TEST_RAW_VEHICLE_CMD_CONVERTER_EXE} actuation_map_converter raw_vehicle_cmd_converter_node_component)
 endif()
 

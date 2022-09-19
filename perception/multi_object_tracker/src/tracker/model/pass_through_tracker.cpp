@@ -21,7 +21,7 @@
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/utils.h>
 
-#ifdef USE_TF2_GEOMETRY_MSGS_DEPRECATED_HEADER
+#ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #else
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
@@ -30,6 +30,7 @@
 #define EIGEN_MPL2_ONLY
 #include "multi_object_tracker/tracker/model/pass_through_tracker.hpp"
 #include "multi_object_tracker/utils/utils.hpp"
+#include "perception_utils/perception_utils.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -79,7 +80,7 @@ bool PassThroughTracker::measure(
 bool PassThroughTracker::getTrackedObject(
   const rclcpp::Time & time, autoware_auto_perception_msgs::msg::TrackedObject & object) const
 {
-  object = utils::toTrackedObject(object_);
+  object = perception_utils::toTrackedObject(object_);
   object.object_id = getUUID();
   object.classification = getClassification();
   object.kinematics.pose_with_covariance.covariance[utils::MSG_COV_IDX::X_X] = 0.0;

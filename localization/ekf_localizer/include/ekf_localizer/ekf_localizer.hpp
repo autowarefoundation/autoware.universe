@@ -15,6 +15,8 @@
 #ifndef EKF_LOCALIZER__EKF_LOCALIZER_HPP_
 #define EKF_LOCALIZER__EKF_LOCALIZER_HPP_
 
+#include "ekf_localizer/warning.hpp"
+
 #include <kalman_filter/kalman_filter.hpp>
 #include <kalman_filter/time_delay_kalman_filter.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -39,8 +41,73 @@
 #include <chrono>
 #include <iostream>
 #include <memory>
+#include <queue>
 #include <string>
 #include <vector>
+
+struct PoseInfo
+{
+  geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr pose;
+  int counter;
+  int smoothing_steps;
+};
+
+struct TwistInfo
+{
+  geometry_msgs::msg::TwistWithCovarianceStamped::SharedPtr twist;
+  int counter;
+  int smoothing_steps;
+};
+
+class Simple1DFilter
+{
+public:
+  Simple1DFilter()
+  {
+    initialized_ = false;
+    x_ = 0;
+    dev_ = 1e9;
+    proc_dev_x_c_ = 0.0;
+    return;
+  };
+  void init(const double init_obs, const double obs_dev, const rclcpp::Time time)
+  {
+    x_ = init_obs;
+    dev_ = obs_dev;
+    latest_time_ = time;
+    initialized_ = true;
+    return;
+  };
+  void update(const double obs, const double obs_dev, const rclcpp::Time time)
+  {
+    if (!initialized_) {
+      init(obs, obs_dev, time);
+      return;
+    }
+
+    // Prediction step (current stddev_)
+    double dt = (time - latest_time_).seconds();
+    double proc_dev_x_d = proc_dev_x_c_ * dt * dt;
+    dev_ = dev_ + proc_dev_x_d;
+
+    // Update step
+    double kalman_gain = dev_ / (dev_ + obs_dev);
+    x_ = x_ + kalman_gain * (obs - x_);
+    dev_ = (1 - kalman_gain) * dev_;
+
+    latest_time_ = time;
+    return;
+  };
+  void set_proc_dev(const double proc_dev) { proc_dev_x_c_ = proc_dev; }
+  double get_x() { return x_; }
+
+private:
+  bool initialized_;
+  double x_;
+  double dev_;
+  double proc_dev_x_c_;
+  rclcpp::Time latest_time_;
+};
 
 class EKFLocalizer : public rclcpp::Node
 {
@@ -48,6 +115,8 @@ public:
   EKFLocalizer(const std::string & node_name, const rclcpp::NodeOptions & options);
 
 private:
+  const Warning warning_;
+
   //!< @brief ekf estimated pose publisher
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_pose_;
   //!< @brief estimated ekf pose with covariance publisher
@@ -65,10 +134,9 @@ private:
   //!< @brief ekf estimated yaw bias publisher
   rclcpp::Publisher<tier4_debug_msgs::msg::Float64Stamped>::SharedPtr pub_yaw_bias_;
   //!< @brief ekf estimated yaw bias publisher
-  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_pose_no_yawbias_;
+  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_biased_pose_;
   //!< @brief ekf estimated yaw bias publisher
-  rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
-    pub_pose_cov_no_yawbias_;
+  rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pub_biased_pose_cov_;
   //!< @brief initial pose subscriber
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr sub_initialpose_;
   //!< @brief measurement pose with covariance subscriber
@@ -87,6 +155,9 @@ private:
   std::shared_ptr<tf2_ros::TransformBroadcaster> tf_br_;
   //!< @brief  extended kalman filter instance.
   TimeDelayKalmanFilter ekf_;
+  Simple1DFilter z_filter_;
+  Simple1DFilter roll_filter_;
+  Simple1DFilter pitch_filter_;
 
   /* parameters */
   bool show_debug_info_;
@@ -128,25 +199,20 @@ private:
   double proc_cov_vx_d_;        //!< @brief  discrete process noise in d_vx=0
   double proc_cov_wz_d_;        //!< @brief  discrete process noise in d_wz=0
 
-  enum IDX {
-    X = 0,
-    Y = 1,
-    YAW = 2,
-    YAWB = 3,
-    VX = 4,
-    WZ = 5,
-  };
+  bool is_initialized_;
 
   /* for model prediction */
-  geometry_msgs::msg::TwistStamped::SharedPtr
-    current_twist_ptr_;                                          //!< @brief current measured twist
-  geometry_msgs::msg::PoseStamped::SharedPtr current_pose_ptr_;  //!< @brief current measured pose
-  geometry_msgs::msg::PoseStamped current_ekf_pose_;             //!< @brief current estimated pose
+  std::queue<TwistInfo> current_twist_info_queue_;    //!< @brief current measured pose
+  std::queue<PoseInfo> current_pose_info_queue_;      //!< @brief current measured pose
+  geometry_msgs::msg::PoseStamped current_ekf_pose_;  //!< @brief current estimated pose
   geometry_msgs::msg::PoseStamped
-    current_ekf_pose_no_yawbias_;  //!< @brief current estimated pose w/o yaw bias
+    current_biased_ekf_pose_;  //!< @brief current estimated pose without yaw bias correction
   geometry_msgs::msg::TwistStamped current_ekf_twist_;  //!< @brief current estimated twist
   std::array<double, 36ul> current_pose_covariance_;
   std::array<double, 36ul> current_twist_covariance_;
+
+  int pose_smoothing_steps_;
+  int twist_smoothing_steps_;
 
   /**
    * @brief computes update & prediction of EKF for each ekf_dt_[s] time
@@ -192,25 +258,13 @@ private:
    * @brief compute EKF update with pose measurement
    * @param pose measurement value
    */
-  void measurementUpdatePose(const geometry_msgs::msg::PoseStamped & pose);
+  void measurementUpdatePose(const geometry_msgs::msg::PoseWithCovarianceStamped & pose);
 
   /**
    * @brief compute EKF update with pose measurement
    * @param twist measurement value
    */
-  void measurementUpdateTwist(const geometry_msgs::msg::TwistStamped & twist);
-
-  /**
-   * @brief check whether a measurement value falls within the mahalanobis distance threshold
-   * @param dist_max mahalanobis distance threshold
-   * @param estimated current estimated state
-   * @param measured measured state
-   * @param estimated_cov current estimation covariance
-   * @return whether it falls within the mahalanobis distance threshold
-   */
-  bool mahalanobisGate(
-    const double & dist_max, const Eigen::MatrixXd & estimated, const Eigen::MatrixXd & measured,
-    const Eigen::MatrixXd & estimated_cov) const;
+  void measurementUpdateTwist(const geometry_msgs::msg::TwistWithCovarianceStamped & twist);
 
   /**
    * @brief get transform from frame_id
@@ -218,13 +272,6 @@ private:
   bool getTransformFromTF(
     std::string parent_frame, std::string child_frame,
     geometry_msgs::msg::TransformStamped & transform);
-
-  /**
-   * @brief normalize yaw angle
-   * @param yaw yaw angle
-   * @return normalized yaw
-   */
-  double normalizeYaw(const double & yaw) const;
 
   /**
    * @brief set current EKF estimation result to current_ekf_pose_ & current_ekf_twist_
@@ -240,6 +287,8 @@ private:
    * @brief for debug
    */
   void showCurrentX();
+
+  void updateSimple1DFilters(const geometry_msgs::msg::PoseWithCovarianceStamped & pose);
 
   tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch_;
 

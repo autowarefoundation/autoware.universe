@@ -15,13 +15,13 @@
 #include "obstacle_avoidance_planner/node.hpp"
 
 #include "interpolation/spline_interpolation_points_2d.hpp"
-#include "obstacle_avoidance_planner/cv_utils.hpp"
-#include "obstacle_avoidance_planner/debug_visualization.hpp"
-#include "obstacle_avoidance_planner/utils.hpp"
+#include "motion_utils/motion_utils.hpp"
+#include "obstacle_avoidance_planner/utils/cv_utils.hpp"
+#include "obstacle_avoidance_planner/utils/debug_utils.hpp"
+#include "obstacle_avoidance_planner/utils/utils.hpp"
 #include "rclcpp/time.hpp"
 #include "tf2/utils.h"
 #include "tier4_autoware_utils/ros/update_param.hpp"
-#include "tier4_autoware_utils/trajectory/tmp_conversion.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
 
 #include "geometry_msgs/msg/transform_stamped.hpp"
@@ -38,136 +38,88 @@
 
 namespace
 {
-template <typename T1, typename T2>
-size_t searchExtendedZeroVelocityIndex(
-  const std::vector<T1> & fine_points, const std::vector<T2> & vel_points)
+std::tuple<std::vector<double>, std::vector<double>> calcVehicleCirclesInfo(
+  const VehicleParam & vehicle_param, const size_t circle_num, const double rear_radius_ratio,
+  const double front_radius_ratio)
 {
-  const auto opt_zero_vel_idx = tier4_autoware_utils::searchZeroVelocityIndex(vel_points);
-  const size_t zero_vel_idx = opt_zero_vel_idx ? opt_zero_vel_idx.get() : vel_points.size() - 1;
-  return tier4_autoware_utils::findNearestIndex(
-    fine_points, vel_points.at(zero_vel_idx).pose.position);
-}
-
-bool isPathShapeChanged(
-  const geometry_msgs::msg::Pose & ego_pose,
-  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
-  const std::unique_ptr<std::vector<autoware_auto_planning_msgs::msg::PathPoint>> &
-    prev_path_points,
-  const double max_mpt_length, const double max_path_shape_change_dist,
-  const double delta_yaw_threshold)
-{
-  if (!prev_path_points) {
-    return false;
-  }
-
-  // truncate prev points from ego pose to fixed end points
-  const auto opt_prev_begin_idx = tier4_autoware_utils::findNearestIndex(
-    *prev_path_points, ego_pose, std::numeric_limits<double>::max(), delta_yaw_threshold);
-  const size_t prev_begin_idx = opt_prev_begin_idx ? *opt_prev_begin_idx : 0;
-  const auto truncated_prev_points =
-    points_utils::clipForwardPoints(*prev_path_points, prev_begin_idx, max_mpt_length);
-
-  // truncate points from ego pose to fixed end points
-  const auto opt_begin_idx = tier4_autoware_utils::findNearestIndex(
-    path_points, ego_pose, std::numeric_limits<double>::max(), delta_yaw_threshold);
-  const size_t begin_idx = opt_begin_idx ? *opt_begin_idx : 0;
-  const auto truncated_points =
-    points_utils::clipForwardPoints(path_points, begin_idx, max_mpt_length);
-
-  // guard for lateral offset
-  if (truncated_prev_points.size() < 2 || truncated_points.size() < 2) {
-    return false;
-  }
-
-  // calculate lateral deviations between truncated path_points and prev_path_points
-  for (const auto & prev_point : truncated_prev_points) {
-    const double dist =
-      tier4_autoware_utils::calcLateralOffset(truncated_points, prev_point.pose.position);
-    if (dist > max_path_shape_change_dist) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-bool isPathGoalChanged(
-  const double current_vel,
-  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
-  const std::unique_ptr<std::vector<autoware_auto_planning_msgs::msg::PathPoint>> &
-    prev_path_points)
-{
-  if (!prev_path_points) {
-    return false;
-  }
-
-  constexpr double min_vel = 1e-3;
-  if (std::abs(current_vel) > min_vel) {
-    return false;
-  }
-
-  // NOTE: Path may be cropped and does not contain the goal.
-  // Therefore we set a large value to distance threshold.
-  constexpr double max_goal_moving_dist = 1.0;
-  const double goal_moving_dist =
-    tier4_autoware_utils::calcDistance2d(path_points.back(), prev_path_points->back());
-  if (goal_moving_dist < max_goal_moving_dist) {
-    return false;
-  }
-
-  return true;
-}
-
-bool hasValidNearestPointFromEgo(
-  const geometry_msgs::msg::Pose & ego_pose, const Trajectories & trajs,
-  const TrajectoryParam & traj_param)
-{
-  const auto traj = trajs.model_predictive_trajectory;
-  const auto interpolated_points =
-    interpolation_utils::getInterpolatedPoints(traj, traj_param.delta_arc_length_for_trajectory);
-
-  const auto interpolated_poses_with_yaw =
-    points_utils::convertToPosesWithYawEstimation(interpolated_points);
-  const auto opt_nearest_idx = tier4_autoware_utils::findNearestIndex(
-    interpolated_poses_with_yaw, ego_pose, traj_param.delta_dist_threshold_for_closest_point,
-    traj_param.delta_yaw_threshold_for_closest_point);
-
-  if (!opt_nearest_idx) {
-    return false;
-  }
-  return true;
-}
-
-std::tuple<double, std::vector<double>> calcVehicleCirclesInfo(
-  const VehicleParam & vehicle_param, const size_t circle_num_for_constraints,
-  const size_t circle_num_for_radius, const double radius_ratio)
-{
-  const double radius = std::hypot(
-                          vehicle_param.length / static_cast<double>(circle_num_for_radius) / 2.0,
-                          vehicle_param.width / 2.0) *
-                        radius_ratio;
-
   std::vector<double> longitudinal_offsets;
-  const double unit_lon_length = vehicle_param.length / static_cast<double>(circle_num_for_radius);
-  for (size_t i = 0; i < circle_num_for_constraints; ++i) {
-    longitudinal_offsets.push_back(
-      unit_lon_length / 2.0 +
-      (unit_lon_length * (circle_num_for_radius - 1)) /
-        static_cast<double>(circle_num_for_constraints - 1) * i -
-      vehicle_param.rear_overhang);
+  std::vector<double> radiuses;
+
+  {  // 1st circle (rear)
+    longitudinal_offsets.push_back(-vehicle_param.rear_overhang);
+    radiuses.push_back(vehicle_param.width / 2.0 * rear_radius_ratio);
   }
 
-  return {radius, longitudinal_offsets};
+  {  // 2nd circle (front)
+    const double radius = std::hypot(
+      vehicle_param.length / static_cast<double>(circle_num) / 2.0, vehicle_param.width / 2.0);
+
+    const double unit_lon_length = vehicle_param.length / static_cast<double>(circle_num);
+    const double longitudinal_offset =
+      unit_lon_length / 2.0 + unit_lon_length * (circle_num - 1) - vehicle_param.rear_overhang;
+
+    longitudinal_offsets.push_back(longitudinal_offset);
+    radiuses.push_back(radius * front_radius_ratio);
+  }
+
+  return {radiuses, longitudinal_offsets};
 }
 
-[[maybe_unused]] void fillYawInTrajectoryPoint(
-  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & traj_points)
+std::tuple<std::vector<double>, std::vector<double>> calcVehicleCirclesInfo(
+  const VehicleParam & vehicle_param, const size_t circle_num, const double radius_ratio)
+{
+  std::vector<double> longitudinal_offsets;
+  std::vector<double> radiuses;
+
+  const double radius =
+    std::hypot(
+      vehicle_param.length / static_cast<double>(circle_num) / 2.0, vehicle_param.width / 2.0) *
+    radius_ratio;
+  const double unit_lon_length = vehicle_param.length / static_cast<double>(circle_num);
+
+  for (size_t i = 0; i < circle_num; ++i) {
+    longitudinal_offsets.push_back(
+      unit_lon_length / 2.0 + unit_lon_length * i - vehicle_param.rear_overhang);
+    radiuses.push_back(radius);
+  }
+
+  return {radiuses, longitudinal_offsets};
+}
+
+std::tuple<std::vector<double>, std::vector<double>> calcVehicleCirclesInfoByBicycleModel(
+  const VehicleParam & vehicle_param, const size_t circle_num, const double rear_radius_ratio,
+  const double front_radius_ratio)
+{
+  std::vector<double> longitudinal_offsets;
+  std::vector<double> radiuses;
+
+  {  // 1st circle (rear wheel)
+    longitudinal_offsets.push_back(0.0);
+    radiuses.push_back(vehicle_param.width / 2.0 * rear_radius_ratio);
+  }
+
+  {  // 2nd circle (front wheel)
+    const double radius = std::hypot(
+      vehicle_param.length / static_cast<double>(circle_num) / 2.0, vehicle_param.width / 2.0);
+
+    const double unit_lon_length = vehicle_param.length / static_cast<double>(circle_num);
+    const double longitudinal_offset =
+      unit_lon_length / 2.0 + unit_lon_length * (circle_num - 1) - vehicle_param.rear_overhang;
+
+    longitudinal_offsets.push_back(longitudinal_offset);
+    radiuses.push_back(radius * front_radius_ratio);
+  }
+
+  return {radiuses, longitudinal_offsets};
+}
+
+[[maybe_unused]] void fillYawInTrajectoryPoint(std::vector<TrajectoryPoint> & traj_points)
 {
   std::vector<geometry_msgs::msg::Point> points;
   for (const auto & traj_point : traj_points) {
     points.push_back(traj_point.pose.position);
   }
-  const auto yaw_vec = interpolation::slerpYawFromPoints(points);
+  const auto yaw_vec = interpolation::splineYawFromPoints(points);
 
   for (size_t i = 0; i < traj_points.size(); ++i) {
     traj_points.at(i).pose.orientation =
@@ -175,6 +127,85 @@ std::tuple<double, std::vector<double>> calcVehicleCirclesInfo(
   }
 }
 
+template <class T>
+[[maybe_unused]] size_t findNearestIndexWithSoftYawConstraints(
+  const std::vector<T> & points, const geometry_msgs::msg::Pose & pose, const double dist_threshold,
+  const double yaw_threshold)
+{
+  const auto nearest_idx_optional =
+    motion_utils::findNearestIndex(points, pose, dist_threshold, yaw_threshold);
+  return nearest_idx_optional ? *nearest_idx_optional
+                              : motion_utils::findNearestIndex(points, pose.position);
+}
+
+template <>
+[[maybe_unused]] size_t findNearestIndexWithSoftYawConstraints(
+  const std::vector<geometry_msgs::msg::Point> & points, const geometry_msgs::msg::Pose & pose,
+  const double dist_threshold, const double yaw_threshold)
+{
+  const auto points_with_yaw = points_utils::convertToPosesWithYawEstimation(points);
+
+  return findNearestIndexWithSoftYawConstraints(
+    points_with_yaw, pose, dist_threshold, yaw_threshold);
+}
+
+template <class T>
+[[maybe_unused]] size_t findNearestSegmentIndexWithSoftYawConstraints(
+  const std::vector<T> & points, const geometry_msgs::msg::Pose & pose, const double dist_threshold,
+  const double yaw_threshold)
+{
+  const auto nearest_idx_optional =
+    motion_utils::findNearestSegmentIndex(points, pose, dist_threshold, yaw_threshold);
+  return nearest_idx_optional ? *nearest_idx_optional
+                              : motion_utils::findNearestSegmentIndex(points, pose.position);
+}
+
+template <>
+[[maybe_unused]] size_t findNearestSegmentIndexWithSoftYawConstraints(
+  const std::vector<geometry_msgs::msg::Point> & points, const geometry_msgs::msg::Pose & pose,
+  const double dist_threshold, const double yaw_threshold)
+{
+  const auto points_with_yaw = points_utils::convertToPosesWithYawEstimation(points);
+
+  return findNearestSegmentIndexWithSoftYawConstraints(
+    points_with_yaw, pose, dist_threshold, yaw_threshold);
+}
+
+template <typename T1, typename T2>
+size_t searchExtendedZeroVelocityIndex(
+  const std::vector<T1> & fine_points, const std::vector<T2> & vel_points,
+  const double yaw_threshold)
+{
+  const auto opt_zero_vel_idx = motion_utils::searchZeroVelocityIndex(vel_points);
+  const size_t zero_vel_idx = opt_zero_vel_idx ? opt_zero_vel_idx.get() : vel_points.size() - 1;
+  return findNearestIndexWithSoftYawConstraints(
+    fine_points, vel_points.at(zero_vel_idx).pose, std::numeric_limits<double>::max(),
+    yaw_threshold);
+}
+
+Trajectory createTrajectory(
+  const std::vector<TrajectoryPoint> & traj_points, const std_msgs::msg::Header & header)
+{
+  auto traj = motion_utils::convertToTrajectory(traj_points);
+  traj.header = header;
+
+  return traj;
+}
+
+std::vector<TrajectoryPoint> resampleTrajectoryPoints(
+  const std::vector<TrajectoryPoint> & traj_points, const double interval)
+{
+  const auto traj = motion_utils::convertToTrajectory(traj_points);
+  const auto resampled_traj = motion_utils::resampleTrajectory(traj, interval);
+
+  // convert Trajectory to std::vector<TrajectoryPoint>
+  std::vector<TrajectoryPoint> resampled_traj_points;
+  for (const auto & point : resampled_traj.points) {
+    resampled_traj_points.push_back(point);
+  }
+
+  return resampled_traj_points;
+}
 }  // namespace
 
 ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & node_options)
@@ -189,52 +220,45 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
   durable_qos.transient_local();
 
   // publisher to other nodes
-  traj_pub_ = create_publisher<autoware_auto_planning_msgs::msg::Trajectory>("~/output/path", 1);
+  traj_pub_ = create_publisher<Trajectory>("~/output/path", 1);
 
   // debug publisher
-  debug_eb_traj_pub_ = create_publisher<autoware_auto_planning_msgs::msg::Trajectory>(
-    "~/debug/eb_trajectory", durable_qos);
-  debug_extended_fixed_traj_pub_ = create_publisher<autoware_auto_planning_msgs::msg::Trajectory>(
-    "~/debug/extended_fixed_traj", 1);
+  debug_eb_traj_pub_ = create_publisher<Trajectory>("~/debug/eb_trajectory", durable_qos);
+  debug_extended_fixed_traj_pub_ = create_publisher<Trajectory>("~/debug/extended_fixed_traj", 1);
   debug_extended_non_fixed_traj_pub_ =
-    create_publisher<autoware_auto_planning_msgs::msg::Trajectory>(
-      "~/debug/extended_non_fixed_traj", 1);
-  debug_mpt_fixed_traj_pub_ =
-    create_publisher<autoware_auto_planning_msgs::msg::Trajectory>("~/debug/mpt_fixed_traj", 1);
-  debug_mpt_ref_traj_pub_ =
-    create_publisher<autoware_auto_planning_msgs::msg::Trajectory>("~/debug/mpt_ref_traj", 1);
-  debug_mpt_traj_pub_ =
-    create_publisher<autoware_auto_planning_msgs::msg::Trajectory>("~/debug/mpt_traj", 1);
+    create_publisher<Trajectory>("~/debug/extended_non_fixed_traj", 1);
+  debug_mpt_fixed_traj_pub_ = create_publisher<Trajectory>("~/debug/mpt_fixed_traj", 1);
+  debug_mpt_ref_traj_pub_ = create_publisher<Trajectory>("~/debug/mpt_ref_traj", 1);
+  debug_mpt_traj_pub_ = create_publisher<Trajectory>("~/debug/mpt_traj", 1);
   debug_markers_pub_ =
     create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/marker", durable_qos);
   debug_wall_markers_pub_ =
     create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/wall_marker", durable_qos);
-  debug_clearance_map_pub_ =
-    create_publisher<nav_msgs::msg::OccupancyGrid>("~/debug/clearance_map", durable_qos);
+  debug_clearance_map_pub_ = create_publisher<OccupancyGrid>("~/debug/clearance_map", durable_qos);
   debug_object_clearance_map_pub_ =
-    create_publisher<nav_msgs::msg::OccupancyGrid>("~/debug/object_clearance_map", durable_qos);
+    create_publisher<OccupancyGrid>("~/debug/object_clearance_map", durable_qos);
   debug_area_with_objects_pub_ =
-    create_publisher<nav_msgs::msg::OccupancyGrid>("~/debug/area_with_objects", durable_qos);
+    create_publisher<OccupancyGrid>("~/debug/area_with_objects", durable_qos);
   debug_msg_pub_ =
     create_publisher<tier4_debug_msgs::msg::StringStamped>("~/debug/calculation_time", 1);
 
   // subscriber
-  path_sub_ = create_subscription<autoware_auto_planning_msgs::msg::Path>(
+  path_sub_ = create_subscription<Path>(
     "~/input/path", rclcpp::QoS{1},
-    std::bind(&ObstacleAvoidancePlanner::pathCallback, this, std::placeholders::_1));
-  odom_sub_ = create_subscription<nav_msgs::msg::Odometry>(
+    std::bind(&ObstacleAvoidancePlanner::onPath, this, std::placeholders::_1));
+  odom_sub_ = create_subscription<Odometry>(
     "/localization/kinematic_state", rclcpp::QoS{1},
-    std::bind(&ObstacleAvoidancePlanner::odomCallback, this, std::placeholders::_1));
-  objects_sub_ = create_subscription<autoware_auto_perception_msgs::msg::PredictedObjects>(
+    std::bind(&ObstacleAvoidancePlanner::onOdometry, this, std::placeholders::_1));
+  objects_sub_ = create_subscription<PredictedObjects>(
     "~/input/objects", rclcpp::QoS{10},
-    std::bind(&ObstacleAvoidancePlanner::objectsCallback, this, std::placeholders::_1));
+    std::bind(&ObstacleAvoidancePlanner::onObjects, this, std::placeholders::_1));
   is_avoidance_sub_ = create_subscription<tier4_planning_msgs::msg::EnableAvoidance>(
     "/planning/scenario_planning/lane_driving/obstacle_avoidance_approval", rclcpp::QoS{10},
-    std::bind(&ObstacleAvoidancePlanner::enableAvoidanceCallback, this, std::placeholders::_1));
+    std::bind(&ObstacleAvoidancePlanner::onEnableAvoidance, this, std::placeholders::_1));
 
+  const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
   {  // vehicle param
     vehicle_param_ = VehicleParam{};
-    const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
     vehicle_param_.width = vehicle_info.vehicle_width_m;
     vehicle_param_.length = vehicle_info.vehicle_length_m;
     vehicle_param_.wheelbase = vehicle_info.wheel_base_m;
@@ -255,41 +279,6 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
     is_showing_calculation_time_ = declare_parameter<bool>("option.is_showing_calculation_time");
     is_stopping_if_outside_drivable_area_ =
       declare_parameter<bool>("option.is_stopping_if_outside_drivable_area");
-
-    // drivability check
-    use_vehicle_circles_for_drivability_ =
-      declare_parameter<bool>("advanced.option.drivability_check.use_vehicle_circles");
-    if (use_vehicle_circles_for_drivability_) {
-      // vehicle_circles
-      // NOTE: Vehicle shape for drivability check is considered as a set of circles
-      use_manual_vehicle_circles_for_drivability_ = declare_parameter<bool>(
-        "advanced.option.drivability_check.vehicle_circles.use_manual_vehicle_circles");
-      vehicle_circle_constraints_num_for_drivability_ = declare_parameter<int>(
-        "advanced.option.drivability_check.vehicle_circles.num_for_constraints");
-      if (use_manual_vehicle_circles_for_drivability_) {  // vehicle circles are designated manually
-        vehicle_circle_longitudinal_offsets_for_drivability_ =
-          declare_parameter<std::vector<double>>(
-            "advanced.option.drivability_check.vehicle_circles.longitudinal_offsets");
-        vehicle_circle_radius_for_drivability_ =
-          declare_parameter<double>("advanced.option.drivability_check.vehicle_circles.radius");
-      } else {  // vehicle circles are calculated automatically with designated ratio
-        const int default_radius_num =
-          std::round(vehicle_param_.length / vehicle_param_.width * 1.5);
-
-        vehicle_circle_radius_num_for_drivability_ = declare_parameter<int>(
-          "advanced.option.drivability_check.vehicle_circles.num_for_radius", default_radius_num);
-        vehicle_circle_radius_ratio_for_drivability_ = declare_parameter<double>(
-          "advanced.option.drivability_check.vehicle_circles.radius_ratio");
-
-        std::tie(
-          vehicle_circle_radius_for_drivability_,
-          vehicle_circle_longitudinal_offsets_for_drivability_) =
-          calcVehicleCirclesInfo(
-            vehicle_param_, vehicle_circle_constraints_num_for_drivability_,
-            vehicle_circle_radius_num_for_drivability_,
-            vehicle_circle_radius_ratio_for_drivability_);
-      }
-    }
 
     enable_avoidance_ = declare_parameter<bool>("option.enable_avoidance");
     enable_pre_smoothing_ = declare_parameter<bool>("option.enable_pre_smoothing");
@@ -343,6 +332,11 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
       declare_parameter<bool>("object.avoiding_object_type.pedestrian", true);
     traj_param_.is_avoiding_animal =
       declare_parameter<bool>("object.avoiding_object_type.animal", true);
+
+    // ego nearest search
+    traj_param_.ego_nearest_dist_threshold =
+      declare_parameter<double>("ego_nearest_dist_threshold");
+    traj_param_.ego_nearest_yaw_threshold = declare_parameter<double>("ego_nearest_yaw_threshold");
   }
 
   {  // elastic band parameter
@@ -380,8 +374,9 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
 
     // option
     // TODO(murooka) implement plan_from_ego
-    mpt_param_.plan_from_ego = false;
-    // mpt_param_.plan_from_ego = declare_parameter<bool>("mpt.option.plan_from_ego");
+    mpt_param_.plan_from_ego = declare_parameter<bool>("mpt.option.plan_from_ego");
+    mpt_param_.max_plan_from_ego_length =
+      declare_parameter<double>("mpt.option.max_plan_from_ego_length");
     mpt_param_.steer_limit_constraint =
       declare_parameter<bool>("mpt.option.steer_limit_constraint");
     mpt_param_.fix_points_around_ego = declare_parameter<bool>("mpt.option.fix_points_around_ego");
@@ -389,6 +384,7 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
     mpt_param_.enable_manual_warm_start =
       declare_parameter<bool>("mpt.option.enable_manual_warm_start");
     mpt_visualize_sampling_num_ = declare_parameter<int>("mpt.option.visualize_sampling_num");
+    mpt_param_.is_fixed_point_single = declare_parameter<bool>("mpt.option.is_fixed_point_single");
 
     // common
     mpt_param_.num_curvature_sampling_points =
@@ -398,8 +394,7 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
       declare_parameter<double>("mpt.common.delta_arc_length_for_mpt_points");
 
     // kinematics
-    mpt_param_.max_steer_rad =
-      declare_parameter<double>("mpt.kinematics.max_steer_deg") * M_PI / 180.0;
+    mpt_param_.max_steer_rad = vehicle_info.max_steer_angle_rad;
 
     // By default, optimization_center_offset will be vehicle_info.wheel_base * 0.8
     // The 0.8 scale is adopted as it performed the best.
@@ -419,35 +414,63 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
       declare_parameter<bool>("advanced.mpt.collision_free_constraints.option.soft_constraint");
     mpt_param_.hard_constraint =
       declare_parameter<bool>("advanced.mpt.collision_free_constraints.option.hard_constraint");
+
     // TODO(murooka) implement two-step soft constraint
     mpt_param_.two_step_soft_constraint = false;
     // mpt_param_.two_step_soft_constraint =
     // declare_parameter<bool>("advanced.mpt.collision_free_constraints.option.two_step_soft_constraint");
 
-    // vehicle_circles
-    // NOTE: Vehicle shape for collision free constraints is considered as a set of circles
-    use_manual_vehicle_circles_for_mpt_ = declare_parameter<bool>(
-      "advanced.mpt.collision_free_constraints.vehicle_circles.use_manual_vehicle_circles");
-    vehicle_circle_constraints_num_for_mpt_ = declare_parameter<int>(
-      "advanced.mpt.collision_free_constraints.vehicle_circles.num_for_constraints");
-    if (use_manual_vehicle_circles_for_mpt_) {  // vehicle circles are designated manually
-      mpt_param_.vehicle_circle_longitudinal_offsets = declare_parameter<std::vector<double>>(
-        "advanced.mpt.collision_free_constraints.vehicle_circles.longitudinal_offsets");
-      mpt_param_.vehicle_circle_radius =
-        declare_parameter<double>("advanced.mpt.collision_free_constraints.vehicle_circles.radius");
-    } else {  // vehicle circles are calculated automatically with designated ratio
-      const int default_radius_num = std::round(vehicle_param_.length / vehicle_param_.width * 1.5);
+    {  // vehicle_circles
+       // NOTE: Vehicle shape for collision free constraints is considered as a set of circles
+      vehicle_circle_method_ = declare_parameter<std::string>(
+        "advanced.mpt.collision_free_constraints.vehicle_circles.method");
 
-      vehicle_circle_radius_num_for_mpt_ = declare_parameter<int>(
-        "advanced.mpt.collision_free_constraints.vehicle_circles.num_for_radius",
-        default_radius_num);
-      vehicle_circle_radius_ratio_for_mpt_ = declare_parameter<double>(
-        "advanced.mpt.collision_free_constraints.vehicle_circles.radius_ratio");
+      if (vehicle_circle_method_ == "uniform_circle") {
+        vehicle_circle_num_for_calculation_ = declare_parameter<int>(
+          "advanced.mpt.collision_free_constraints.vehicle_circles.uniform_circle.num");
+        vehicle_circle_radius_ratios_.push_back(declare_parameter<double>(
+          "advanced.mpt.collision_free_constraints.vehicle_circles.uniform_circle.radius_ratio"));
 
-      std::tie(mpt_param_.vehicle_circle_radius, mpt_param_.vehicle_circle_longitudinal_offsets) =
-        calcVehicleCirclesInfo(
-          vehicle_param_, vehicle_circle_constraints_num_for_mpt_,
-          vehicle_circle_radius_num_for_mpt_, vehicle_circle_radius_ratio_for_mpt_);
+        std::tie(
+          mpt_param_.vehicle_circle_radiuses, mpt_param_.vehicle_circle_longitudinal_offsets) =
+          calcVehicleCirclesInfo(
+            vehicle_param_, vehicle_circle_num_for_calculation_,
+            vehicle_circle_radius_ratios_.front());
+      } else if (vehicle_circle_method_ == "rear_drive") {
+        vehicle_circle_num_for_calculation_ = declare_parameter<int>(
+          "advanced.mpt.collision_free_constraints.vehicle_circles.rear_drive.num_for_calculation");
+
+        vehicle_circle_radius_ratios_.push_back(declare_parameter<double>(
+          "advanced.mpt.collision_free_constraints.vehicle_circles.rear_drive.rear_radius_ratio"));
+        vehicle_circle_radius_ratios_.push_back(declare_parameter<double>(
+          "advanced.mpt.collision_free_constraints.vehicle_circles.rear_drive.front_radius_ratio"));
+
+        std::tie(
+          mpt_param_.vehicle_circle_radiuses, mpt_param_.vehicle_circle_longitudinal_offsets) =
+          calcVehicleCirclesInfo(
+            vehicle_param_, vehicle_circle_num_for_calculation_,
+            vehicle_circle_radius_ratios_.front(), vehicle_circle_radius_ratios_.back());
+      } else if (vehicle_circle_method_ == "bicycle_model") {
+        vehicle_circle_num_for_calculation_ = declare_parameter<int>(
+          "advanced.mpt.collision_free_constraints.vehicle_circles.bicycle_model.num_for_"
+          "calculation");
+
+        vehicle_circle_radius_ratios_.push_back(
+          declare_parameter<double>("advanced.mpt.collision_free_constraints.vehicle_circles."
+                                    "bicycle_model.rear_radius_ratio"));
+        vehicle_circle_radius_ratios_.push_back(
+          declare_parameter<double>("advanced.mpt.collision_free_constraints.vehicle_circles."
+                                    "bicycle_model.front_radius_ratio"));
+
+        std::tie(
+          mpt_param_.vehicle_circle_radiuses, mpt_param_.vehicle_circle_longitudinal_offsets) =
+          calcVehicleCirclesInfoByBicycleModel(
+            vehicle_param_, vehicle_circle_num_for_calculation_,
+            vehicle_circle_radius_ratios_.front(), vehicle_circle_radius_ratios_.back());
+      } else {
+        throw std::invalid_argument(
+          "advanced.mpt.collision_free_constraints.vehicle_circles.num parameter is invalid.");
+      }
     }
 
     // clearance
@@ -508,18 +531,16 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
   // TODO(murooka) tune this param when avoiding with obstacle_avoidance_planner
   traj_param_.center_line_width = vehicle_param_.width;
 
-  objects_ptr_ = std::make_unique<autoware_auto_perception_msgs::msg::PredictedObjects>();
-
   // set parameter callback
   set_param_res_ = this->add_on_set_parameters_callback(
-    std::bind(&ObstacleAvoidancePlanner::paramCallback, this, std::placeholders::_1));
+    std::bind(&ObstacleAvoidancePlanner::onParam, this, std::placeholders::_1));
 
   resetPlanning();
 
   self_pose_listener_.waitForFirstPose();
 }
 
-rcl_interfaces::msg::SetParametersResult ObstacleAvoidancePlanner::paramCallback(
+rcl_interfaces::msg::SetParametersResult ObstacleAvoidancePlanner::onParam(
   const std::vector<rclcpp::Parameter> & parameters)
 {
   using tier4_autoware_utils::updateParam;
@@ -541,42 +562,6 @@ rcl_interfaces::msg::SetParametersResult ObstacleAvoidancePlanner::paramCallback
     updateParam<bool>(
       parameters, "option.is_stopping_if_outside_drivable_area",
       is_stopping_if_outside_drivable_area_);
-
-    // drivability check
-    updateParam<bool>(
-      parameters, "advanced.option.drivability_check.use_vehicle_circles",
-      use_vehicle_circles_for_drivability_);
-    if (use_vehicle_circles_for_drivability_) {
-      updateParam<bool>(
-        parameters, "advanced.option.drivability_check.vehicle_circles.use_manual_vehicle_circles",
-        use_manual_vehicle_circles_for_drivability_);
-      updateParam<int>(
-        parameters, "advanced.option.drivability_check.vehicle_circles.num_for_constraints",
-        vehicle_circle_constraints_num_for_drivability_);
-      if (use_manual_vehicle_circles_for_drivability_) {
-        updateParam<std::vector<double>>(
-          parameters, "advanced.option.drivability_check.vehicle_circles.longitudinal_offsets",
-          vehicle_circle_longitudinal_offsets_for_drivability_);
-        updateParam<double>(
-          parameters, "advanced.option.drivability_check.vehicle_circles.radius",
-          vehicle_circle_radius_for_drivability_);
-      } else {
-        updateParam<int>(
-          parameters, "advanced.option.drivability_check.vehicle_circles.num_for_radius",
-          vehicle_circle_radius_num_for_drivability_);
-        updateParam<double>(
-          parameters, "advanced.option.drivability_check.vehicle_circles.radius_ratio",
-          vehicle_circle_radius_ratio_for_drivability_);
-
-        std::tie(
-          vehicle_circle_radius_for_drivability_,
-          vehicle_circle_longitudinal_offsets_for_drivability_) =
-          calcVehicleCirclesInfo(
-            vehicle_param_, vehicle_circle_constraints_num_for_drivability_,
-            vehicle_circle_radius_num_for_drivability_,
-            vehicle_circle_radius_ratio_for_drivability_);
-      }
-    }
 
     updateParam<bool>(parameters, "option.enable_avoidance", enable_avoidance_);
     updateParam<bool>(parameters, "option.enable_pre_smoothing", enable_pre_smoothing_);
@@ -666,7 +651,9 @@ rcl_interfaces::msg::SetParametersResult ObstacleAvoidancePlanner::paramCallback
 
   {  // mpt param
     // option
-    // updateParam<bool>(parameters, "mpt.option.plan_from_ego", mpt_param_.plan_from_ego);
+    updateParam<bool>(parameters, "mpt.option.plan_from_ego", mpt_param_.plan_from_ego);
+    updateParam<double>(
+      parameters, "mpt.option.max_plan_from_ego_length", mpt_param_.max_plan_from_ego_length);
     updateParam<bool>(
       parameters, "mpt.option.steer_limit_constraint", mpt_param_.steer_limit_constraint);
     updateParam<bool>(
@@ -675,6 +662,8 @@ rcl_interfaces::msg::SetParametersResult ObstacleAvoidancePlanner::paramCallback
     updateParam<bool>(
       parameters, "mpt.option.enable_manual_warm_start", mpt_param_.enable_manual_warm_start);
     updateParam<int>(parameters, "mpt.option.visualize_sampling_num", mpt_visualize_sampling_num_);
+    updateParam<bool>(
+      parameters, "mpt.option.option.is_fixed_point_single", mpt_param_.is_fixed_point_single);
 
     // common
     updateParam<int>(
@@ -686,9 +675,6 @@ rcl_interfaces::msg::SetParametersResult ObstacleAvoidancePlanner::paramCallback
       mpt_param_.delta_arc_length_for_mpt_points);
 
     // kinematics
-    double max_steer_deg = mpt_param_.max_steer_rad * 180.0 / M_PI;
-    updateParam<double>(parameters, "mpt.kinematics.max_steer_deg", max_steer_deg);
-    mpt_param_.max_steer_rad = max_steer_deg * M_PI / 180.0;
     updateParam<double>(
       parameters, "mpt.kinematics.optimization_center_offset",
       mpt_param_.optimization_center_offset);
@@ -707,33 +693,51 @@ rcl_interfaces::msg::SetParametersResult ObstacleAvoidancePlanner::paramCallback
       parameters, "advanced.mpt.collision_free_constraints.option.hard_constraint",
       mpt_param_.hard_constraint);
 
-    // vehicle_circles
-    updateParam<bool>(
-      parameters,
-      "advanced.mpt.collision_free_constraints.vehicle_circles.use_manual_vehicle_circles",
-      use_manual_vehicle_circles_for_mpt_);
-    updateParam<int>(
-      parameters, "advanced.mpt.collision_free_constraints.vehicle_circles.num_for_constraints",
-      vehicle_circle_constraints_num_for_mpt_);
-    if (use_manual_vehicle_circles_for_mpt_) {
-      updateParam<std::vector<double>>(
-        parameters, "advanced.mpt.collision_free_constraints.vehicle_circles.longitudinal_offsets",
-        mpt_param_.vehicle_circle_longitudinal_offsets);
-      updateParam<double>(
-        parameters, "advanced.mpt.collision_free_constraints.vehicle_circles.radius",
-        mpt_param_.vehicle_circle_radius);
-    } else {  // vehicle circles are calculated automatically with designated ratio
-      updateParam<int>(
-        parameters, "advanced.mpt.collision_free_constraints.vehicle_circles.num_for_radius",
-        vehicle_circle_radius_num_for_mpt_);
-      updateParam<double>(
-        parameters, "advanced.mpt.collision_free_constraints.vehicle_circles.radius_ratio",
-        vehicle_circle_radius_ratio_for_mpt_);
+    {  // vehicle_circles
+      // NOTE: Changing method is not supported
+      // updateParam<std::string>(
+      //   parameters, "advanced.mpt.collision_free_constraints.vehicle_circles.method",
+      //   vehicle_circle_method_);
 
-      std::tie(mpt_param_.vehicle_circle_radius, mpt_param_.vehicle_circle_longitudinal_offsets) =
-        calcVehicleCirclesInfo(
-          vehicle_param_, vehicle_circle_constraints_num_for_mpt_,
-          vehicle_circle_radius_num_for_mpt_, vehicle_circle_radius_ratio_for_mpt_);
+      if (vehicle_circle_method_ == "uniform_circle") {
+        updateParam<int>(
+          parameters, "advanced.mpt.collision_free_constraints.vehicle_circles.uniform_circle.num",
+          vehicle_circle_num_for_calculation_);
+        updateParam<double>(
+          parameters,
+          "advanced.mpt.collision_free_constraints.vehicle_circles.uniform_circle.radius_ratio",
+          vehicle_circle_radius_ratios_.front());
+
+        std::tie(
+          mpt_param_.vehicle_circle_radiuses, mpt_param_.vehicle_circle_longitudinal_offsets) =
+          calcVehicleCirclesInfo(
+            vehicle_param_, vehicle_circle_num_for_calculation_,
+            vehicle_circle_radius_ratios_.front());
+      } else if (vehicle_circle_method_ == "rear_drive") {
+        updateParam<int>(
+          parameters,
+          "advanced.mpt.collision_free_constraints.vehicle_circles.rear_drive.num_for_calculation",
+          vehicle_circle_num_for_calculation_);
+
+        updateParam<double>(
+          parameters,
+          "advanced.mpt.collision_free_constraints.vehicle_circles.rear_drive.rear_radius_ratio",
+          vehicle_circle_radius_ratios_.front());
+
+        updateParam<double>(
+          parameters,
+          "advanced.mpt.collision_free_constraints.vehicle_circles.rear_drive.front_radius_ratio",
+          vehicle_circle_radius_ratios_.back());
+
+        std::tie(
+          mpt_param_.vehicle_circle_radiuses, mpt_param_.vehicle_circle_longitudinal_offsets) =
+          calcVehicleCirclesInfo(
+            vehicle_param_, vehicle_circle_num_for_calculation_,
+            vehicle_circle_radius_ratios_.front(), vehicle_circle_radius_ratios_.back());
+      } else {
+        throw std::invalid_argument(
+          "advanced.mpt.collision_free_constraints.vehicle_circles.num parameter is invalid.");
+      }
     }
 
     // clearance
@@ -813,20 +817,19 @@ rcl_interfaces::msg::SetParametersResult ObstacleAvoidancePlanner::paramCallback
   return result;
 }
 
-void ObstacleAvoidancePlanner::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg)
+void ObstacleAvoidancePlanner::onOdometry(const Odometry::SharedPtr msg)
 {
   current_twist_ptr_ = std::make_unique<geometry_msgs::msg::TwistStamped>();
   current_twist_ptr_->header = msg->header;
   current_twist_ptr_->twist = msg->twist.twist;
 }
 
-void ObstacleAvoidancePlanner::objectsCallback(
-  const autoware_auto_perception_msgs::msg::PredictedObjects::SharedPtr msg)
+void ObstacleAvoidancePlanner::onObjects(const PredictedObjects::SharedPtr msg)
 {
-  objects_ptr_ = std::make_unique<autoware_auto_perception_msgs::msg::PredictedObjects>(*msg);
+  objects_ptr_ = std::make_unique<PredictedObjects>(*msg);
 }
 
-void ObstacleAvoidancePlanner::enableAvoidanceCallback(
+void ObstacleAvoidancePlanner::onEnableAvoidance(
   const tier4_planning_msgs::msg::EnableAvoidance::SharedPtr msg)
 {
   enable_avoidance_ = msg->enable_avoidance;
@@ -854,55 +857,78 @@ void ObstacleAvoidancePlanner::resetPrevOptimization()
   eb_solved_count_ = 0;
 }
 
-void ObstacleAvoidancePlanner::pathCallback(
-  const autoware_auto_planning_msgs::msg::Path::SharedPtr path_ptr)
+void ObstacleAvoidancePlanner::onPath(const Path::SharedPtr path_ptr)
 {
   stop_watch_.tic(__func__);
 
-  if (path_ptr->points.empty() || path_ptr->drivable_area.data.empty() || !current_twist_ptr_) {
+  if (
+    path_ptr->points.empty() || path_ptr->drivable_area.data.empty() || !current_twist_ptr_ ||
+    !objects_ptr_) {
     return;
   }
 
-  current_ego_pose_ = self_pose_listener_.getCurrentPose()->pose;
-  debug_data_ptr_ = std::make_shared<DebugData>();
-  debug_data_ptr_->init(
-    is_showing_calculation_time_, mpt_visualize_sampling_num_, current_ego_pose_,
-    mpt_param_.vehicle_circle_radius, mpt_param_.vehicle_circle_longitudinal_offsets);
+  // create planner data
+  PlannerData planner_data;
+  planner_data.path = *path_ptr;
+  planner_data.ego_pose = self_pose_listener_.getCurrentPose()->pose;
+  planner_data.ego_vel = current_twist_ptr_->twist.linear.x;
+  planner_data.objects = objects_ptr_->objects;
 
-  // generate optimized trajectory
-  const auto optimized_traj_points = generateOptimizedTrajectory(*path_ptr);
+  debug_data_ = DebugData();
+  debug_data_.init(
+    is_showing_calculation_time_, mpt_visualize_sampling_num_, planner_data.ego_pose,
+    mpt_param_.vehicle_circle_radiuses, mpt_param_.vehicle_circle_longitudinal_offsets);
 
-  // generate post processed trajectory
-  const auto post_processed_traj_points =
-    generatePostProcessedTrajectory(path_ptr->points, optimized_traj_points);
-
-  // convert to output msg type
-  auto output_traj_msg = tier4_autoware_utils::convertToTrajectory(post_processed_traj_points);
-  output_traj_msg.header = path_ptr->header;
+  const auto output_traj_msg = generateTrajectory(planner_data);
 
   // publish debug data
   publishDebugDataInMain(*path_ptr);
 
   {  // print and publish debug msg
-    debug_data_ptr_->msg_stream << __func__ << ":= " << stop_watch_.toc(__func__) << " [ms]\n"
-                                << "========================================";
+    debug_data_.msg_stream << __func__ << ":= " << stop_watch_.toc(__func__) << " [ms]\n"
+                           << "========================================";
     tier4_debug_msgs::msg::StringStamped debug_msg_msg;
     debug_msg_msg.stamp = get_clock()->now();
-    debug_msg_msg.data = debug_data_ptr_->msg_stream.getString();
+    debug_msg_msg.data = debug_data_.msg_stream.getString();
     debug_msg_pub_->publish(debug_msg_msg);
   }
 
   // make previous variables
-  prev_path_points_ptr_ =
-    std::make_unique<std::vector<autoware_auto_planning_msgs::msg::PathPoint>>(path_ptr->points);
-  prev_ego_pose_ptr_ = std::make_unique<geometry_msgs::msg::Pose>(current_ego_pose_);
+  prev_path_points_ptr_ = std::make_unique<std::vector<PathPoint>>(path_ptr->points);
+  prev_ego_pose_ptr_ = std::make_unique<geometry_msgs::msg::Pose>(planner_data.ego_pose);
 
   traj_pub_->publish(output_traj_msg);
 }
 
-std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>
-ObstacleAvoidancePlanner::generateOptimizedTrajectory(
-  const autoware_auto_planning_msgs::msg::Path & path)
+Trajectory ObstacleAvoidancePlanner::generateTrajectory(const PlannerData & planner_data)
+{
+  const auto & p = planner_data;
+
+  // TODO(someone): support backward path
+  const auto is_driving_forward = motion_utils::isDrivingForward(p.path.points);
+  is_driving_forward_ = is_driving_forward ? is_driving_forward.get() : is_driving_forward_;
+  if (!is_driving_forward_) {
+    RCLCPP_WARN_THROTTLE(
+      get_logger(), *get_clock(), 3000,
+      "[ObstacleAvoidancePlanner] Backward path is NOT supported. Just converting path to "
+      "trajectory");
+
+    const auto traj_points = points_utils::convertToTrajectoryPoints(p.path.points);
+    return createTrajectory(traj_points, p.path.header);
+  }
+
+  // generate optimized trajectory
+  const auto optimized_traj_points = generateOptimizedTrajectory(planner_data);
+  // generate post processed trajectory
+  const auto post_processed_traj_points =
+    generatePostProcessedTrajectory(p.path.points, optimized_traj_points, planner_data);
+
+  // convert to output msg type
+  return createTrajectory(post_processed_traj_points, p.path.header);
+}
+
+std::vector<TrajectoryPoint> ObstacleAvoidancePlanner::generateOptimizedTrajectory(
+  const PlannerData & planner_data)
 {
   stop_watch_.tic(__func__);
 
@@ -910,61 +936,72 @@ ObstacleAvoidancePlanner::generateOptimizedTrajectory(
     resetPrevOptimization();
   }
 
+  const auto & path = planner_data.path;
+
   // return prev trajectory if replan is not required
-  if (!checkReplan(path.points)) {
+  if (!checkReplan(planner_data)) {
     if (prev_optimal_trajs_ptr_) {
       return prev_optimal_trajs_ptr_->model_predictive_trajectory;
     }
 
     return points_utils::convertToTrajectoryPoints(path.points);
   }
-  latest_replanned_time_ptr_ = std::make_unique<rclcpp::Time>(this->now());
+  prev_replanned_time_ptr_ = std::make_unique<rclcpp::Time>(this->now());
 
   // create clearance maps
   const CVMaps cv_maps = costmap_generator_ptr_->getMaps(
-    enable_avoidance_, path, objects_ptr_->objects, traj_param_, debug_data_ptr_);
+    enable_avoidance_, path, planner_data.objects, traj_param_, debug_data_);
 
   // calculate trajectory with EB and MPT
-  auto optimal_trajs = optimizeTrajectory(path, cv_maps);
+  auto optimal_trajs = optimizeTrajectory(planner_data, cv_maps);
+
+  // calculate velocity
+  // NOTE: Velocity is not considered in optimization.
+  calcVelocity(path.points, optimal_trajs.model_predictive_trajectory);
 
   // insert 0 velocity when trajectory is over drivable area
   if (is_stopping_if_outside_drivable_area_) {
-    insertZeroVelocityOutsideDrivableArea(optimal_trajs.model_predictive_trajectory, cv_maps);
+    insertZeroVelocityOutsideDrivableArea(
+      planner_data, optimal_trajs.model_predictive_trajectory, cv_maps);
   }
 
-  publishDebugDataInOptimization(path, optimal_trajs.model_predictive_trajectory);
+  publishDebugDataInOptimization(planner_data, optimal_trajs.model_predictive_trajectory);
 
   // make previous trajectories
   prev_optimal_trajs_ptr_ =
-    std::make_unique<Trajectories>(makePrevTrajectories(path.points, optimal_trajs));
+    std::make_unique<Trajectories>(makePrevTrajectories(path.points, optimal_trajs, planner_data));
 
-  debug_data_ptr_->msg_stream << "  " << __func__ << ":= " << stop_watch_.toc(__func__)
-                              << " [ms]\n";
+  debug_data_.msg_stream << "  " << __func__ << ":= " << stop_watch_.toc(__func__) << " [ms]\n";
   return optimal_trajs.model_predictive_trajectory;
 }
 
 // check if optimization is required or not.
 // NOTE: previous trajectories information will be reset as well in some cases.
-bool ObstacleAvoidancePlanner::checkReplan(
-  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points)
+bool ObstacleAvoidancePlanner::checkReplan(const PlannerData & planner_data)
 {
+  const auto & p = planner_data;
+
   if (
-    !prev_ego_pose_ptr_ || !latest_replanned_time_ptr_ || !prev_path_points_ptr_ ||
+    !prev_ego_pose_ptr_ || !prev_replanned_time_ptr_ || !prev_path_points_ptr_ ||
     !prev_optimal_trajs_ptr_) {
     return true;
   }
 
-  const double max_mpt_length =
-    traj_param_.num_sampling_points * mpt_param_.delta_arc_length_for_mpt_points;
-  if (isPathShapeChanged(
-        current_ego_pose_, path_points, prev_path_points_ptr_, max_mpt_length,
-        max_path_shape_change_dist_for_replan_,
-        traj_param_.delta_yaw_threshold_for_closest_point)) {
-    RCLCPP_INFO(get_logger(), "Replan since path shape was changed.");
+  if (prev_optimal_trajs_ptr_->model_predictive_trajectory.empty()) {
+    RCLCPP_INFO(
+      get_logger(),
+      "Replan with resetting optimization since previous optimized trajectory is empty.");
+    resetPrevOptimization();
     return true;
   }
 
-  if (isPathGoalChanged(current_twist_ptr_->twist.linear.x, path_points, prev_path_points_ptr_)) {
+  if (isPathShapeChanged(p)) {
+    RCLCPP_INFO(get_logger(), "Replan with resetting optimization since path shape was changed.");
+    resetPrevOptimization();
+    return true;
+  }
+
+  if (isPathGoalChanged(planner_data)) {
     RCLCPP_INFO(get_logger(), "Replan with resetting optimization since path goal was changed.");
     resetPrevOptimization();
     return true;
@@ -972,7 +1009,7 @@ bool ObstacleAvoidancePlanner::checkReplan(
 
   // For when ego pose is lost or new ego pose is designated in simulation
   const double delta_dist =
-    tier4_autoware_utils::calcDistance2d(current_ego_pose_.position, prev_ego_pose_ptr_->position);
+    tier4_autoware_utils::calcDistance2d(p.ego_pose, prev_ego_pose_ptr_->position);
   if (delta_dist > max_ego_moving_dist_for_replan_) {
     RCLCPP_INFO(
       get_logger(),
@@ -982,7 +1019,7 @@ bool ObstacleAvoidancePlanner::checkReplan(
   }
 
   // For when ego pose moves far from trajectory
-  if (!hasValidNearestPointFromEgo(current_ego_pose_, *prev_optimal_trajs_ptr_, traj_param_)) {
+  if (!isEgoNearToPrevTrajectory(p.ego_pose)) {
     RCLCPP_INFO(
       get_logger(),
       "Replan with resetting optimization since valid nearest trajectory point from ego was not "
@@ -991,20 +1028,101 @@ bool ObstacleAvoidancePlanner::checkReplan(
     return true;
   }
 
-  const double delta_time_sec = (this->now() - *latest_replanned_time_ptr_).seconds();
+  const double delta_time_sec = (this->now() - *prev_replanned_time_ptr_).seconds();
   if (delta_time_sec > max_delta_time_sec_for_replan_) {
     return true;
   }
   return false;
 }
 
+bool ObstacleAvoidancePlanner::isPathShapeChanged(const PlannerData & planner_data)
+{
+  if (!prev_path_points_ptr_) {
+    return false;
+  }
+
+  const auto & p = planner_data;
+
+  const double max_mpt_length =
+    traj_param_.num_sampling_points * mpt_param_.delta_arc_length_for_mpt_points;
+
+  // truncate prev points from ego pose to fixed end points
+  const auto prev_begin_idx = findEgoNearestIndex(*prev_path_points_ptr_, p.ego_pose);
+  const auto truncated_prev_points =
+    points_utils::clipForwardPoints(*prev_path_points_ptr_, prev_begin_idx, max_mpt_length);
+
+  // truncate points from ego pose to fixed end points
+  const auto begin_idx = findEgoNearestIndex(p.path.points, p.ego_pose);
+  const auto truncated_points =
+    points_utils::clipForwardPoints(p.path.points, begin_idx, max_mpt_length);
+
+  // guard for lateral offset
+  if (truncated_prev_points.size() < 2 || truncated_points.size() < 2) {
+    return false;
+  }
+
+  // calculate lateral deviations between truncated path_points and prev_path_points
+  for (const auto & prev_point : truncated_prev_points) {
+    const double dist =
+      std::abs(motion_utils::calcLateralOffset(truncated_points, prev_point.pose.position));
+    if (dist > max_path_shape_change_dist_for_replan_) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool ObstacleAvoidancePlanner::isPathGoalChanged(const PlannerData & planner_data)
+{
+  const auto & p = planner_data;
+
+  if (prev_path_points_ptr_) {
+    return false;
+  }
+
+  constexpr double min_vel = 1e-3;
+  if (std::abs(p.ego_vel) > min_vel) {
+    return false;
+  }
+
+  // NOTE: Path may be cropped and does not contain the goal.
+  // Therefore we set a large value to distance threshold.
+  constexpr double max_goal_moving_dist = 1.0;
+  const double goal_moving_dist =
+    tier4_autoware_utils::calcDistance2d(p.path.points.back(), prev_path_points_ptr_->back());
+  if (goal_moving_dist < max_goal_moving_dist) {
+    return false;
+  }
+
+  return true;
+}
+
+bool ObstacleAvoidancePlanner::isEgoNearToPrevTrajectory(const geometry_msgs::msg::Pose & ego_pose)
+{
+  const auto & traj_points = prev_optimal_trajs_ptr_->model_predictive_trajectory;
+
+  const auto resampled_traj_points =
+    resampleTrajectoryPoints(traj_points, traj_param_.delta_arc_length_for_trajectory);
+  const auto opt_nearest_idx = motion_utils::findNearestIndex(
+    resampled_traj_points, ego_pose, traj_param_.delta_dist_threshold_for_closest_point,
+    traj_param_.delta_yaw_threshold_for_closest_point);
+
+  if (!opt_nearest_idx) {
+    return false;
+  }
+  return true;
+}
+
 Trajectories ObstacleAvoidancePlanner::optimizeTrajectory(
-  const autoware_auto_planning_msgs::msg::Path & path, const CVMaps & cv_maps)
+  const PlannerData & planner_data, const CVMaps & cv_maps)
 {
   stop_watch_.tic(__func__);
 
+  const auto & p = planner_data;
+
   if (skip_optimization_) {
-    const auto traj = points_utils::convertToTrajectoryPoints(path.points);
+    const auto traj = points_utils::convertToTrajectoryPoints(p.path.points);
     Trajectories trajs;
     trajs.smoothed_trajectory = traj;
     trajs.model_predictive_trajectory = traj;
@@ -1012,17 +1130,15 @@ Trajectories ObstacleAvoidancePlanner::optimizeTrajectory(
   }
 
   // EB: smooth trajectory if enable_pre_smoothing is true
-  const auto eb_traj =
-    [&]() -> boost::optional<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>> {
+  const auto eb_traj = [&]() -> boost::optional<std::vector<TrajectoryPoint>> {
     if (enable_pre_smoothing_) {
       return eb_path_optimizer_ptr_->getEBTrajectory(
-        current_ego_pose_, path, prev_optimal_trajs_ptr_, current_twist_ptr_->twist.linear.x,
-        debug_data_ptr_);
+        p.ego_pose, p.path, prev_optimal_trajs_ptr_, p.ego_vel, debug_data_);
     }
-    return points_utils::convertToTrajectoryPoints(path.points);
+    return points_utils::convertToTrajectoryPoints(p.path.points);
   }();
   if (!eb_traj) {
-    return getPrevTrajs(path.points);
+    return getPrevTrajs(p.path.points);
   }
 
   // EB has to be solved twice before solving MPT with fixed points
@@ -1039,10 +1155,10 @@ Trajectories ObstacleAvoidancePlanner::optimizeTrajectory(
 
   // MPT: optimize trajectory to be kinematically feasible and collision free
   const auto mpt_trajs = mpt_optimizer_ptr_->getModelPredictiveTrajectory(
-    enable_avoidance_, eb_traj.get(), path.points, prev_optimal_trajs_ptr_, cv_maps,
-    current_ego_pose_, current_twist_ptr_->twist.linear.x, debug_data_ptr_);
+    enable_avoidance_, eb_traj.get(), p.path.points, prev_optimal_trajs_ptr_, cv_maps, p.ego_pose,
+    p.ego_vel, debug_data_);
   if (!mpt_trajs) {
-    return getPrevTrajs(path.points);
+    return getPrevTrajs(p.path.points);
   }
 
   // make trajectories, which has all optimized trajectories information
@@ -1052,18 +1168,16 @@ Trajectories ObstacleAvoidancePlanner::optimizeTrajectory(
   trajs.model_predictive_trajectory = mpt_trajs.get().mpt;
 
   // debug data
-  debug_data_ptr_->mpt_traj = mpt_trajs.get().mpt;
-  debug_data_ptr_->mpt_ref_traj =
-    points_utils::convertToTrajectoryPoints(mpt_trajs.get().ref_points);
-  debug_data_ptr_->eb_traj = eb_traj.get();
+  debug_data_.mpt_traj = mpt_trajs.get().mpt;
+  debug_data_.mpt_ref_traj = points_utils::convertToTrajectoryPoints(mpt_trajs.get().ref_points);
+  debug_data_.eb_traj = eb_traj.get();
 
-  debug_data_ptr_->msg_stream << "    " << __func__ << ":= " << stop_watch_.toc(__func__)
-                              << " [ms]\n";
+  debug_data_.msg_stream << "    " << __func__ << ":= " << stop_watch_.toc(__func__) << " [ms]\n";
   return trajs;
 }
 
 Trajectories ObstacleAvoidancePlanner::getPrevTrajs(
-  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points) const
+  const std::vector<PathPoint> & path_points) const
 {
   if (prev_optimal_trajs_ptr_) {
     return *prev_optimal_trajs_ptr_;
@@ -1076,17 +1190,39 @@ Trajectories ObstacleAvoidancePlanner::getPrevTrajs(
   return trajs;
 }
 
+void ObstacleAvoidancePlanner::calcVelocity(
+  const std::vector<PathPoint> & path_points, std::vector<TrajectoryPoint> & traj_points) const
+{
+  for (size_t i = 0; i < traj_points.size(); i++) {
+    const size_t nearest_seg_idx = findNearestSegmentIndexWithSoftYawConstraints(
+      path_points, traj_points.at(i).pose, traj_param_.delta_dist_threshold_for_closest_point,
+      traj_param_.delta_yaw_threshold_for_closest_point);
+
+    // add this line not to exceed max index size
+    const size_t max_idx = std::min(nearest_seg_idx + 1, path_points.size() - 1);
+    // NOTE: std::max, not std::min, is used here since traj_points' sampling width may be longer
+    // than path_points' sampling width. A zero velocity point is guaranteed to be inserted in an
+    // output trajectory in the alignVelocity function
+    traj_points.at(i).longitudinal_velocity_mps = std::max(
+      path_points.at(nearest_seg_idx).longitudinal_velocity_mps,
+      path_points.at(max_idx).longitudinal_velocity_mps);
+  }
+}
+
 void ObstacleAvoidancePlanner::insertZeroVelocityOutsideDrivableArea(
-  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & traj_points,
+  const PlannerData & planner_data, std::vector<TrajectoryPoint> & traj_points,
   const CVMaps & cv_maps)
 {
+  if (traj_points.empty()) {
+    return;
+  }
+
   stop_watch_.tic(__func__);
 
   const auto & map_info = cv_maps.map_info;
   const auto & road_clearance_map = cv_maps.clearance_map;
 
-  const size_t nearest_idx =
-    tier4_autoware_utils::findNearestIndex(traj_points, current_ego_pose_.position);
+  const size_t nearest_idx = findEgoNearestIndex(traj_points, planner_data.ego_pose);
 
   // NOTE: Some end trajectory points will be ignored to check if outside the drivable area
   //       since these points might be outside drivable area if only end reference points have high
@@ -1105,96 +1241,78 @@ void ObstacleAvoidancePlanner::insertZeroVelocityOutsideDrivableArea(
     const auto & traj_point = traj_points.at(i);
 
     // calculate the first point being outside drivable area
-    const bool is_outside = [&]() {
-      if (use_vehicle_circles_for_drivability_) {
-        return cv_drivable_area_utils::isOutsideDrivableAreaFromCirclesFootprint(
-          traj_point, road_clearance_map, map_info,
-          vehicle_circle_longitudinal_offsets_for_drivability_,
-          vehicle_circle_radius_for_drivability_);
-      }
-      return cv_drivable_area_utils::isOutsideDrivableAreaFromRectangleFootprint(
-        traj_point, road_clearance_map, map_info, vehicle_param_);
-    }();
+    const bool is_outside = cv_drivable_area_utils::isOutsideDrivableAreaFromRectangleFootprint(
+      traj_point, road_clearance_map, map_info, vehicle_param_);
 
     // only insert zero velocity to the first point outside drivable area
     if (is_outside) {
       traj_points[i].longitudinal_velocity_mps = 0.0;
-      debug_data_ptr_->stop_pose_by_drivable_area = traj_points[i].pose;
+      debug_data_.stop_pose_by_drivable_area = traj_points[i].pose;
       break;
     }
   }
 
-  debug_data_ptr_->msg_stream << "    " << __func__ << ":= " << stop_watch_.toc(__func__)
-                              << " [ms]\n";
+  debug_data_.msg_stream << "    " << __func__ << ":= " << stop_watch_.toc(__func__) << " [ms]\n";
 }
 
 void ObstacleAvoidancePlanner::publishDebugDataInOptimization(
-  const autoware_auto_planning_msgs::msg::Path & path,
-  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & traj_points)
+  const PlannerData & planner_data, const std::vector<TrajectoryPoint> & traj_points)
 {
   stop_watch_.tic(__func__);
 
+  const auto & p = planner_data;
+
   {  // publish trajectories
-    auto debug_eb_traj = tier4_autoware_utils::convertToTrajectory(debug_data_ptr_->eb_traj);
-    debug_eb_traj.header = path.header;
+    const auto debug_eb_traj = createTrajectory(debug_data_.eb_traj, p.path.header);
     debug_eb_traj_pub_->publish(debug_eb_traj);
 
-    auto debug_mpt_fixed_traj =
-      tier4_autoware_utils::convertToTrajectory(debug_data_ptr_->mpt_fixed_traj);
-    debug_mpt_fixed_traj.header = path.header;
+    const auto debug_mpt_fixed_traj = createTrajectory(debug_data_.mpt_fixed_traj, p.path.header);
     debug_mpt_fixed_traj_pub_->publish(debug_mpt_fixed_traj);
 
-    auto debug_mpt_ref_traj =
-      tier4_autoware_utils::convertToTrajectory(debug_data_ptr_->mpt_ref_traj);
-    debug_mpt_ref_traj.header = path.header;
+    const auto debug_mpt_ref_traj = createTrajectory(debug_data_.mpt_ref_traj, p.path.header);
     debug_mpt_ref_traj_pub_->publish(debug_mpt_ref_traj);
 
-    auto debug_mpt_traj = tier4_autoware_utils::convertToTrajectory(debug_data_ptr_->mpt_traj);
-    debug_mpt_traj.header = path.header;
+    const auto debug_mpt_traj = createTrajectory(debug_data_.mpt_traj, p.path.header);
     debug_mpt_traj_pub_->publish(debug_mpt_traj);
   }
 
   {  // publish markers
     if (is_publishing_debug_visualization_marker_) {
       stop_watch_.tic("getDebugVisualizationMarker");
-      const auto & debug_marker = debug_visualization::getDebugVisualizationMarker(
-        debug_data_ptr_, traj_points, vehicle_param_, false);
-      debug_data_ptr_->msg_stream << "      getDebugVisualizationMarker:= "
-                                  << stop_watch_.toc("getDebugVisualizationMarker") << " [ms]\n";
+      const auto & debug_marker =
+        debug_utils::getDebugVisualizationMarker(debug_data_, traj_points, vehicle_param_, false);
+      debug_data_.msg_stream << "      getDebugVisualizationMarker:= "
+                             << stop_watch_.toc("getDebugVisualizationMarker") << " [ms]\n";
 
       stop_watch_.tic("publishDebugVisualizationMarker");
       debug_markers_pub_->publish(debug_marker);
-      debug_data_ptr_->msg_stream << "      publishDebugVisualizationMarker:= "
-                                  << stop_watch_.toc("publishDebugVisualizationMarker")
-                                  << " [ms]\n";
+      debug_data_.msg_stream << "      publishDebugVisualizationMarker:= "
+                             << stop_watch_.toc("publishDebugVisualizationMarker") << " [ms]\n";
 
       stop_watch_.tic("getDebugVisualizationWallMarker");
       const auto & debug_wall_marker =
-        debug_visualization::getDebugVisualizationWallMarker(debug_data_ptr_, vehicle_param_);
-      debug_data_ptr_->msg_stream << "      getDebugVisualizationWallMarker:= "
-                                  << stop_watch_.toc("getDebugVisualizationWallMarker")
-                                  << " [ms]\n";
+        debug_utils::getDebugVisualizationWallMarker(debug_data_, vehicle_param_);
+      debug_data_.msg_stream << "      getDebugVisualizationWallMarker:= "
+                             << stop_watch_.toc("getDebugVisualizationWallMarker") << " [ms]\n";
 
       stop_watch_.tic("publishDebugVisualizationWallMarker");
       debug_wall_markers_pub_->publish(debug_wall_marker);
-      debug_data_ptr_->msg_stream << "      publishDebugVisualizationWallMarker:= "
-                                  << stop_watch_.toc("publishDebugVisualizationWallMarker")
-                                  << " [ms]\n";
+      debug_data_.msg_stream << "      publishDebugVisualizationWallMarker:= "
+                             << stop_watch_.toc("publishDebugVisualizationWallMarker") << " [ms]\n";
     }
   }
 
-  debug_data_ptr_->msg_stream << "    " << __func__ << ":= " << stop_watch_.toc(__func__)
-                              << " [ms]\n";
+  debug_data_.msg_stream << "    " << __func__ << ":= " << stop_watch_.toc(__func__) << " [ms]\n";
 }
 
 Trajectories ObstacleAvoidancePlanner::makePrevTrajectories(
-  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
-  const Trajectories & trajs)
+  const std::vector<PathPoint> & path_points, const Trajectories & trajs,
+  const PlannerData & planner_data)
 {
   stop_watch_.tic(__func__);
 
   const auto post_processed_smoothed_traj =
-    generatePostProcessedTrajectory(path_points, trajs.smoothed_trajectory);
+    generatePostProcessedTrajectory(path_points, trajs.smoothed_trajectory, planner_data);
 
   // TODO(murooka) generatePoseProcessedTrajectory may be too large
   Trajectories trajectories;
@@ -1202,23 +1320,21 @@ Trajectories ObstacleAvoidancePlanner::makePrevTrajectories(
   trajectories.mpt_ref_points = trajs.mpt_ref_points;
   trajectories.model_predictive_trajectory = trajs.model_predictive_trajectory;
 
-  debug_data_ptr_->msg_stream << "    " << __func__ << ":= " << stop_watch_.toc(__func__)
-                              << " [ms]\n";
+  debug_data_.msg_stream << "    " << __func__ << ":= " << stop_watch_.toc(__func__) << " [ms]\n";
 
   return trajectories;
 }
 
-std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>
-ObstacleAvoidancePlanner::generatePostProcessedTrajectory(
-  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
-  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & optimized_traj_points)
+std::vector<TrajectoryPoint> ObstacleAvoidancePlanner::generatePostProcessedTrajectory(
+  const std::vector<PathPoint> & path_points,
+  const std::vector<TrajectoryPoint> & optimized_traj_points, const PlannerData & planner_data)
 {
   stop_watch_.tic(__func__);
 
-  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> trajectory_points;
+  std::vector<TrajectoryPoint> trajectory_points;
   if (path_points.empty()) {
-    autoware_auto_planning_msgs::msg::TrajectoryPoint tmp_point;
-    tmp_point.pose = current_ego_pose_;
+    TrajectoryPoint tmp_point;
+    tmp_point.pose = planner_data.ego_pose;
     tmp_point.longitudinal_velocity_mps = 0.0;
     trajectory_points.push_back(tmp_point);
     return trajectory_points;
@@ -1241,41 +1357,37 @@ ObstacleAvoidancePlanner::generatePostProcessedTrajectory(
   const auto fine_traj_points_with_vel =
     alignVelocity(fine_traj_points, path_points, full_traj_points);
 
-  debug_data_ptr_->msg_stream << "  " << __func__ << ":= " << stop_watch_.toc(__func__)
-                              << " [ms]\n";
+  debug_data_.msg_stream << "  " << __func__ << ":= " << stop_watch_.toc(__func__) << " [ms]\n";
   return fine_traj_points_with_vel;
 }
 
-std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>
-ObstacleAvoidancePlanner::getExtendedTrajectory(
-  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
-  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & optimized_points)
+std::vector<TrajectoryPoint> ObstacleAvoidancePlanner::getExtendedTrajectory(
+  const std::vector<PathPoint> & path_points, const std::vector<TrajectoryPoint> & optimized_points)
 {
   stop_watch_.tic(__func__);
 
   assert(!path_points.empty());
 
-  const double accum_arc_length = tier4_autoware_utils::calcArcLength(optimized_points);
+  const double accum_arc_length = motion_utils::calcArcLength(optimized_points);
   if (accum_arc_length > traj_param_.trajectory_length) {
     RCLCPP_INFO_THROTTLE(
       this->get_logger(), *this->get_clock(), std::chrono::milliseconds(10000).count(),
       "[Avoidance] Not extend trajectory");
-    return std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>{};
+    return std::vector<TrajectoryPoint>{};
   }
 
   // calculate end idx of optimized points on path points
-  const auto opt_end_path_idx = tier4_autoware_utils::findNearestIndex(
+  const auto opt_end_path_idx = motion_utils::findNearestIndex(
     path_points, optimized_points.back().pose, std::numeric_limits<double>::max(),
     traj_param_.delta_yaw_threshold_for_closest_point);
   if (!opt_end_path_idx) {
     RCLCPP_INFO_THROTTLE(
       this->get_logger(), *this->get_clock(), std::chrono::milliseconds(10000).count(),
       "[Avoidance] Not extend trajectory since could not find nearest idx from last opt point");
-    return std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>{};
+    return std::vector<TrajectoryPoint>{};
   }
 
-  auto extended_traj_points =
-    [&]() -> std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> {
+  auto extended_traj_points = [&]() -> std::vector<TrajectoryPoint> {
     constexpr double non_fixed_traj_length = 5.0;  // TODO(murooka) may be better to tune
     const size_t non_fixed_begin_path_idx = opt_end_path_idx.get();
     const size_t non_fixed_end_path_idx =
@@ -1287,23 +1399,22 @@ ObstacleAvoidancePlanner::getExtendedTrajectory(
       if (points_utils::isNearLastPathPoint(
             optimized_points.back(), path_points, traj_param_.max_dist_for_extending_end_point,
             traj_param_.delta_yaw_threshold_for_closest_point)) {
-        return std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>{};
+        return std::vector<TrajectoryPoint>{};
       }
       const auto last_traj_point = points_utils::convertToTrajectoryPoint(path_points.back());
-      return std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>{last_traj_point};
+      return std::vector<TrajectoryPoint>{last_traj_point};
     } else if (non_fixed_end_path_idx == path_points.size() - 1) {
       // no need to connect smoothly since extended trajectory length is short enough
       const auto last_traj_point = points_utils::convertToTrajectoryPoint(path_points.back());
-      return std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>{last_traj_point};
+      return std::vector<TrajectoryPoint>{last_traj_point};
     }
 
     // define non_fixed/fixed_traj_points
     const auto begin_point = optimized_points.back();
     const auto end_point =
       points_utils::convertToTrajectoryPoint(path_points.at(non_fixed_end_path_idx));
-    const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> non_fixed_traj_points{
-      begin_point, end_point};
-    const std::vector<autoware_auto_planning_msgs::msg::PathPoint> fixed_path_points{
+    const std::vector<TrajectoryPoint> non_fixed_traj_points{begin_point, end_point};
+    const std::vector<PathPoint> fixed_path_points{
       path_points.begin() + non_fixed_end_path_idx + 1, path_points.end()};
     const auto fixed_traj_points = points_utils::convertToTrajectoryPoints(fixed_path_points);
 
@@ -1319,8 +1430,8 @@ ObstacleAvoidancePlanner::getExtendedTrajectory(
     extended_points.insert(
       extended_points.end(), fixed_traj_points.begin(), fixed_traj_points.end());
 
-    debug_data_ptr_->extended_non_fixed_traj = interpolated_non_fixed_traj_points;
-    debug_data_ptr_->extended_fixed_traj = fixed_traj_points;
+    debug_data_.extended_non_fixed_traj = interpolated_non_fixed_traj_points;
+    debug_data_.extended_fixed_traj = fixed_traj_points;
 
     return extended_points;
   }();
@@ -1333,15 +1444,13 @@ ObstacleAvoidancePlanner::getExtendedTrajectory(
     point.longitudinal_velocity_mps = large_velocity;
   }
 
-  debug_data_ptr_->msg_stream << "    " << __func__ << ":= " << stop_watch_.toc(__func__)
-                              << " [ms]\n";
+  debug_data_.msg_stream << "    " << __func__ << ":= " << stop_watch_.toc(__func__) << " [ms]\n";
   return extended_traj_points;
 }
 
-std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>
-ObstacleAvoidancePlanner::generateFineTrajectoryPoints(
-  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
-  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & traj_points) const
+std::vector<TrajectoryPoint> ObstacleAvoidancePlanner::generateFineTrajectoryPoints(
+  const std::vector<PathPoint> & path_points,
+  const std::vector<TrajectoryPoint> & traj_points) const
 {
   stop_watch_.tic(__func__);
 
@@ -1359,50 +1468,100 @@ ObstacleAvoidancePlanner::generateFineTrajectoryPoints(
     path_points.back(), interpolated_traj_points, traj_param_.max_dist_for_extending_end_point,
     traj_param_.delta_yaw_threshold_for_closest_point);
 
-  debug_data_ptr_->msg_stream << "    " << __func__ << ":= " << stop_watch_.toc(__func__)
-                              << " [ms]\n";
+  debug_data_.msg_stream << "    " << __func__ << ":= " << stop_watch_.toc(__func__) << " [ms]\n";
 
   return interpolated_traj_points;
 }
 
-std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>
-ObstacleAvoidancePlanner::alignVelocity(
-  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & fine_traj_points,
-  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
-  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & traj_points) const
+std::vector<TrajectoryPoint> ObstacleAvoidancePlanner::alignVelocity(
+  const std::vector<TrajectoryPoint> & fine_traj_points, const std::vector<PathPoint> & path_points,
+  const std::vector<TrajectoryPoint> & traj_points) const
 {
   stop_watch_.tic(__func__);
 
+  // insert zero velocity path index, and get optional zero_vel_path_idx
+  const auto path_zero_vel_info =
+    [&]() -> std::pair<std::vector<TrajectoryPoint>, boost::optional<size_t>> {
+    const auto opt_path_zero_vel_idx = motion_utils::searchZeroVelocityIndex(path_points);
+    if (opt_path_zero_vel_idx) {
+      const auto & zero_vel_path_point = path_points.at(opt_path_zero_vel_idx.get());
+      const auto opt_traj_seg_idx = motion_utils::findNearestSegmentIndex(
+        fine_traj_points, zero_vel_path_point.pose, std::numeric_limits<double>::max(),
+        traj_param_.delta_yaw_threshold_for_closest_point);
+      if (opt_traj_seg_idx) {
+        const auto interpolated_pose =
+          lerpPose(fine_traj_points, zero_vel_path_point.pose.position, opt_traj_seg_idx.get());
+        if (interpolated_pose) {
+          TrajectoryPoint zero_vel_traj_point;
+          zero_vel_traj_point.pose = interpolated_pose.get();
+          zero_vel_traj_point.longitudinal_velocity_mps =
+            zero_vel_path_point.longitudinal_velocity_mps;
+
+          if (
+            tier4_autoware_utils::calcDistance2d(
+              fine_traj_points.at(opt_traj_seg_idx.get()).pose, zero_vel_traj_point.pose) < 1e-3) {
+            return {fine_traj_points, opt_traj_seg_idx.get()};
+          } else if (
+            tier4_autoware_utils::calcDistance2d(
+              fine_traj_points.at(opt_traj_seg_idx.get() + 1).pose, zero_vel_traj_point.pose) <
+            1e-3) {
+            return {fine_traj_points, opt_traj_seg_idx.get() + 1};
+          }
+
+          auto fine_traj_points_with_zero_vel = fine_traj_points;
+          fine_traj_points_with_zero_vel.insert(
+            fine_traj_points_with_zero_vel.begin() + opt_traj_seg_idx.get() + 1,
+            zero_vel_traj_point);
+          return {fine_traj_points_with_zero_vel, opt_traj_seg_idx.get() + 1};
+        }
+      }
+    }
+
+    return {fine_traj_points, {}};
+  }();
+  const auto fine_traj_points_with_path_zero_vel = path_zero_vel_info.first;
+  const auto opt_zero_vel_path_idx = path_zero_vel_info.second;
+
   // search zero velocity index of fine_traj_points
   const size_t zero_vel_fine_traj_idx = [&]() {
-    const size_t zero_vel_path_idx = searchExtendedZeroVelocityIndex(fine_traj_points, path_points);
-    const size_t zero_vel_traj_idx =
-      searchExtendedZeroVelocityIndex(fine_traj_points, traj_points);  // for outside drivable area
+    // zero velocity for being outside drivable area
+    const size_t zero_vel_traj_idx = searchExtendedZeroVelocityIndex(
+      fine_traj_points_with_path_zero_vel, traj_points,
+      traj_param_.delta_yaw_threshold_for_closest_point);
 
-    return std::min(zero_vel_path_idx, zero_vel_traj_idx);
+    // zero velocity in path points
+    if (opt_zero_vel_path_idx) {
+      return std::min(opt_zero_vel_path_idx.get(), zero_vel_traj_idx);
+    }
+    return zero_vel_traj_idx;
   }();
 
-  auto fine_traj_points_with_vel = fine_traj_points;
+  // interpolate z and velocity
+  auto fine_traj_points_with_vel = fine_traj_points_with_path_zero_vel;
   size_t prev_begin_idx = 0;
   for (size_t i = 0; i < fine_traj_points_with_vel.size(); ++i) {
-    const auto truncated_points = points_utils::clipForwardPoints(path_points, prev_begin_idx, 5.0);
+    auto truncated_points = points_utils::clipForwardPoints(path_points, prev_begin_idx, 5.0);
+    if (truncated_points.size() < 2) {
+      // NOTE: At least, two points must be contained in truncated_points
+      truncated_points = std::vector<PathPoint>(
+        path_points.begin() + prev_begin_idx,
+        path_points.begin() + std::min(path_points.size(), prev_begin_idx + 2));
+    }
 
-    const auto & target_pos = fine_traj_points_with_vel[i].pose.position;
-    const size_t closest_seg_idx =
-      tier4_autoware_utils::findNearestSegmentIndex(truncated_points, target_pos);
+    const auto & target_pose = fine_traj_points_with_vel[i].pose;
+    const size_t closest_seg_idx = findNearestSegmentIndexWithSoftYawConstraints(
+      truncated_points, target_pose, traj_param_.delta_dist_threshold_for_closest_point,
+      traj_param_.delta_yaw_threshold_for_closest_point);
 
     // lerp z
     fine_traj_points_with_vel[i].pose.position.z =
-      lerpPoseZ(truncated_points, target_pos, closest_seg_idx);
+      lerpPoseZ(truncated_points, target_pose.position, closest_seg_idx);
 
     // lerp vx
-    const double target_vel = lerpTwistX(truncated_points, target_pos, closest_seg_idx);
+    const double target_vel = lerpTwistX(truncated_points, target_pose.position, closest_seg_idx);
+
     if (i >= zero_vel_fine_traj_idx) {
       fine_traj_points_with_vel[i].longitudinal_velocity_mps = 0.0;
-    } else if (target_vel < 1e-6) {  // NOTE: velocity may be negative due to linear interpolation
-      const auto prev_idx = std::max(static_cast<int>(i) - 1, 0);
-      fine_traj_points_with_vel[i].longitudinal_velocity_mps =
-        fine_traj_points_with_vel[prev_idx].longitudinal_velocity_mps;
     } else {
       fine_traj_points_with_vel[i].longitudinal_velocity_mps = target_vel;
     }
@@ -1411,25 +1570,21 @@ ObstacleAvoidancePlanner::alignVelocity(
     prev_begin_idx += closest_seg_idx;
   }
 
-  debug_data_ptr_->msg_stream << "    " << __func__ << ":= " << stop_watch_.toc(__func__)
-                              << " [ms]\n";
+  debug_data_.msg_stream << "    " << __func__ << ":= " << stop_watch_.toc(__func__) << " [ms]\n";
   return fine_traj_points_with_vel;
 }
 
-void ObstacleAvoidancePlanner::publishDebugDataInMain(
-  const autoware_auto_planning_msgs::msg::Path & path) const
+void ObstacleAvoidancePlanner::publishDebugDataInMain(const Path & path) const
 {
   stop_watch_.tic(__func__);
 
   {  // publish trajectories
-    auto debug_extended_fixed_traj =
-      tier4_autoware_utils::convertToTrajectory(debug_data_ptr_->extended_fixed_traj);
-    debug_extended_fixed_traj.header = path.header;
+    const auto debug_extended_fixed_traj =
+      createTrajectory(debug_data_.extended_fixed_traj, path.header);
     debug_extended_fixed_traj_pub_->publish(debug_extended_fixed_traj);
 
-    auto debug_extended_non_fixed_traj =
-      tier4_autoware_utils::convertToTrajectory(debug_data_ptr_->extended_non_fixed_traj);
-    debug_extended_non_fixed_traj.header = path.header;
+    const auto debug_extended_non_fixed_traj =
+      createTrajectory(debug_data_.extended_non_fixed_traj, path.header);
     debug_extended_non_fixed_traj_pub_->publish(debug_extended_non_fixed_traj);
   }
 
@@ -1437,23 +1592,22 @@ void ObstacleAvoidancePlanner::publishDebugDataInMain(
     stop_watch_.tic("publishClearanceMap");
 
     if (is_publishing_area_with_objects_) {  // false
-      debug_area_with_objects_pub_->publish(debug_visualization::getDebugCostmap(
-        debug_data_ptr_->area_with_objects_map, path.drivable_area));
+      debug_area_with_objects_pub_->publish(
+        debug_utils::getDebugCostmap(debug_data_.area_with_objects_map, path.drivable_area));
     }
     if (is_publishing_object_clearance_map_) {  // false
-      debug_object_clearance_map_pub_->publish(debug_visualization::getDebugCostmap(
-        debug_data_ptr_->only_object_clearance_map, path.drivable_area));
+      debug_object_clearance_map_pub_->publish(
+        debug_utils::getDebugCostmap(debug_data_.only_object_clearance_map, path.drivable_area));
     }
     if (is_publishing_clearance_map_) {  // true
       debug_clearance_map_pub_->publish(
-        debug_visualization::getDebugCostmap(debug_data_ptr_->clearance_map, path.drivable_area));
+        debug_utils::getDebugCostmap(debug_data_.clearance_map, path.drivable_area));
     }
-    debug_data_ptr_->msg_stream << "    getDebugCostMap * 3:= "
-                                << stop_watch_.toc("publishClearanceMap") << " [ms]\n";
+    debug_data_.msg_stream << "    getDebugCostMap * 3:= " << stop_watch_.toc("publishClearanceMap")
+                           << " [ms]\n";
   }
 
-  debug_data_ptr_->msg_stream << "  " << __func__ << ":= " << stop_watch_.toc(__func__)
-                              << " [ms]\n";
+  debug_data_.msg_stream << "  " << __func__ << ":= " << stop_watch_.toc(__func__) << " [ms]\n";
 }
 
 #include "rclcpp_components/register_node_macro.hpp"

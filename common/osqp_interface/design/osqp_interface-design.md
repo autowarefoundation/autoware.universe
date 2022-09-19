@@ -1,4 +1,4 @@
-# Interface for the OSQP library {#osqp_interface-package-design}
+# Interface for the OSQP library
 
 This is the design document for the `osqp_interface` package.
 
@@ -68,5 +68,3 @@ The interface can be used in several ways:
 ## Related issues
 
 <!-- Required -->
-
-- This package was introduced as a dependency of the MPC-based lateral controller: <https://gitlab.com/autowarefoundation/autoware.auto/AutowareAuto/-/issues/1057>

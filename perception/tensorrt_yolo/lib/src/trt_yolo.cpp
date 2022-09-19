@@ -65,8 +65,7 @@ void Net::load(const std::string & path)
   file.read(buffer, size);
   file.close();
   if (runtime_) {
-    engine_ =
-      unique_ptr<nvinfer1::ICudaEngine>(runtime_->deserializeCudaEngine(buffer, size, nullptr));
+    engine_ = unique_ptr<nvinfer1::ICudaEngine>(runtime_->deserializeCudaEngine(buffer, size));
   }
   delete[] buffer;
 }
@@ -162,7 +161,11 @@ Net::Net(
   if (fp16 || int8) {
     config->setFlag(nvinfer1::BuilderFlag::kFP16);
   }
+#if (NV_TENSORRT_MAJOR * 1000) + (NV_TENSORRT_MINOR * 100) + NV_TENSOR_PATCH >= 8400
+  config->setMemoryPoolLimit(nvinfer1::MemoryPoolType::kWORKSPACE, workspace_size);
+#else
   config->setMaxWorkspaceSize(workspace_size);
+#endif
 
   // Parse ONNX FCN
   std::cout << "Building " << precision << " core model..." << std::endl;
@@ -253,9 +256,15 @@ Net::Net(
 
   // Build engine
   std::cout << "Applying optimizations and building TRT CUDA engine..." << std::endl;
-  engine_ = unique_ptr<nvinfer1::ICudaEngine>(builder->buildEngineWithConfig(*network, *config));
+  plan_ = unique_ptr<nvinfer1::IHostMemory>(builder->buildSerializedNetwork(*network, *config));
+  if (!plan_) {
+    std::cout << "Fail to create serialized network" << std::endl;
+    return;
+  }
+  engine_ = unique_ptr<nvinfer1::ICudaEngine>(
+    runtime_->deserializeCudaEngine(plan_->data(), plan_->size()));
   if (!prepare()) {
-    std::cout << "Fail to prepare engine" << std::endl;
+    std::cout << "Fail to create engine" << std::endl;
     return;
   }
 }
@@ -263,9 +272,8 @@ Net::Net(
 void Net::save(const std::string & path) const
 {
   std::cout << "Writing to " << path << "..." << std::endl;
-  auto serialized = unique_ptr<nvinfer1::IHostMemory>(engine_->serialize());
   std::ofstream file(path, std::ios::out | std::ios::binary);
-  file.write(reinterpret_cast<const char *>(serialized->data()), serialized->size());
+  file.write(reinterpret_cast<const char *>(plan_->data()), plan_->size());
 }
 
 void Net::infer(std::vector<void *> & buffers, const int batch_size)
