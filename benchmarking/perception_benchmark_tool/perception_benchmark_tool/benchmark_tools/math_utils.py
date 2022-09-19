@@ -70,13 +70,6 @@ def cart_to_homo(mat):
 def build_affine(
     rotation: Optional[Iterable] = None, translation: Optional[Iterable] = None
 ) -> np.ndarray:
-    """
-    Build an affine matrix from a quaternion and a translation.
-
-    :param rotation: The quaternion as [w, x, y, z]
-    :param translation: The translation as [x, y, z]
-    :returns: The quaternion and the translation array
-    """
     affine = np.eye(4)
     if rotation is not None:
         affine[:3, :3] = get_mat_from_quat(np.asarray(rotation))
@@ -86,12 +79,6 @@ def build_affine(
 
 
 def transform_to_affine(transform: TransformStamped) -> np.ndarray:
-    """
-    Convert a `TransformStamped` to a affine matrix.
-
-    :param transform: The transform that should be converted
-    :returns: The affine transform
-    """
     transform = transform.transform
     transform_rotation_matrix = [
         transform.rotation.w,
@@ -108,12 +95,6 @@ def transform_to_affine(transform: TransformStamped) -> np.ndarray:
 
 
 def get_mat_from_quat(quaternion: np.ndarray) -> np.ndarray:
-    """
-    Convert a quaternion to a rotation matrix.This method is based on quat2mat from https://github.com  f185e866ecccb66c545559bc9f2e19cb5025e0ab/transforms3d/quaternions.py#L101 , since that library is not available via rosdep.
-
-    :param quaternion: A numpy array containing the w, x, y, and z components of the quaternion
-    :returns: The rotation matrix
-    """
     Nq = np.sum(np.square(quaternion))
     if Nq < np.finfo(np.float64).eps:
         return np.eye(3)
@@ -134,12 +115,6 @@ def get_mat_from_quat(quaternion: np.ndarray) -> np.ndarray:
 
 
 def get_quat_from_mat(rot_mat: np.ndarray) -> np.ndarray:
-    """
-    Convert a rotation matrix to a quaternion. This method is a copy of mat2quat from https://github.com f185e866ecccb66c545559bc9f2e19cb5025e0ab/transforms3d/quaternions.py#L150 , since that library is not available via rosdep.Method from Bar-Itzhack, Itzhack Y. (2000), "New method for extracting the quaternion from a rotation matrix", AIAA Journal of Guidance, Control and Dynamics 23(6):1085-1087 (Engineering Note), ISSN 0731-5090.
-
-    :param rot_mat: A roatation matrix
-    :returns: An quaternion
-    """
     # Decompose rotation matrix
     Qxx, Qyx, Qzx, Qxy, Qyy, Qzy, Qxz, Qyz, Qzz = rot_mat.flat
     # Create matrix
@@ -164,10 +139,4 @@ def get_quat_from_mat(rot_mat: np.ndarray) -> np.ndarray:
 
 
 def decompose_affine(affine: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
-    """
-    Decompose an affine transformation into a quaternion and the translation.
-
-    :param affine: The affine transformation matrix
-    :returns: The quaternion and the translation array
-    """
     return get_quat_from_mat(affine[:3, :3]), affine[:3, 3]

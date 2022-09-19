@@ -78,13 +78,6 @@ def make_transform_stamped(header_frame_id, child_frame_id, lidar_transform, ros
 
 
 def do_transform_pose(pose: Pose, transform: TransformStamped) -> Pose:
-    """
-    Transform a `Pose` using a given `TransformStamped`. This method is used to share the tranformation done in `do_transform_pose_stamped()` and `do_transform_pose_with_covariance_stamped()`.
-
-    :param pose: The pose
-    :param transform: The transform
-    :returns: The transformed pose
-    """
     quaternion, point = decompose_affine(
         np.matmul(
             transform_to_affine(transform),
@@ -110,15 +103,7 @@ def do_transform_pose(pose: Pose, transform: TransformStamped) -> Pose:
     return res
 
 
-# PoseStamped
 def do_transform_pose_stamped(pose: PoseStamped, transform: TransformStamped) -> PoseStamped:
-    """
-    Transform a `PoseStamped` using a given `TransformStamped`.
-
-    :param pose: The stamped pose
-    :param transform: The transform
-    :returns: The transformed pose stamped
-    """
     res = PoseStamped()
     res.pose = do_transform_pose(pose.pose, transform)
     res.header = transform.header

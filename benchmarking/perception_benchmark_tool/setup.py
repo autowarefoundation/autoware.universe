@@ -12,20 +12,21 @@ setup(
     data_files=[
         ("share/ament_index/resource_index/packages", ["resource/" + package_name]),
         ("share/" + package_name, ["package.xml"]),
-        (os.path.join("share", package_name), glob("launch/*.launch.py")),
-        (os.path.join("share", package_name, "config"), glob("config/*.param.yaml")),
+        (os.path.join("share", package_name, "launch"), glob("launch/*.launch.*")),
+        (os.path.join("share", package_name, "rviz"), glob("rviz/*.rviz")),
     ],
     install_requires=["setuptools"],
     zip_safe=True,
     maintainer="Kaan Colak",
     maintainer_email="kcolak@leodrive.ai",
-    description="TODO: Package description",
+    description="This package benchmark Autoware perception stack on Waymo dataset",
     license="TODO: License declaration",
     tests_require=["pytest"],
     entry_points={
         "console_scripts": [
-            "perception_benchmark_node = perception_benchmark_tool.perception_benchmark_node:main",
-            "tracking_evaluation_node = perception_benchmark_tool.tracking_evaluator_node:main",
+            "benchmark_node = perception_benchmark_tool.benchmark_node:main",
+            "waymo_player_node = perception_benchmark_tool.waymo_player_node:main",
+            "autoware_workflow_runner_node = perception_benchmark_tool.autoware_workflow_runner_node:main",
         ],
     },
 )

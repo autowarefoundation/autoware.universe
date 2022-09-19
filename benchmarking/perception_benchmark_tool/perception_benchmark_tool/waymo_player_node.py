@@ -1,18 +1,17 @@
-from autoware_auto_perception_msgs.msg import DetectedObject
-from autoware_auto_perception_msgs.msg import DetectedObjects
+from glob import glob
+
 from autoware_auto_perception_msgs.msg import ObjectClassification
 from autoware_auto_perception_msgs.msg import Shape
+from autoware_auto_perception_msgs.msg import TrackedObject
 from autoware_auto_perception_msgs.msg import TrackedObjects
-from geometry_msgs.msg import PoseStamped
 from geometry_msgs.msg import TransformStamped
 from perception_benchmark_tool.benchmark_tools.datasets.waymo_dataset import WaymoDataset
-from perception_benchmark_tool.benchmark_tools.math_utils import euler_from_quaternion
 from perception_benchmark_tool.benchmark_tools.math_utils import rotation_matrix_to_euler_angles
 from perception_benchmark_tool.benchmark_tools.ros_utils import create_camera_info
 from perception_benchmark_tool.benchmark_tools.ros_utils import create_image_msgs
 from perception_benchmark_tool.benchmark_tools.ros_utils import create_point_cloud_mgs
-from perception_benchmark_tool.benchmark_tools.ros_utils import do_transform_pose_stamped
 from perception_benchmark_tool.benchmark_tools.ros_utils import make_transform_stamped
+import rclpy
 from rclpy.clock import ClockType
 from rclpy.node import Node
 from rclpy.time import Time
@@ -20,49 +19,47 @@ from sensor_msgs.msg import CameraInfo
 from sensor_msgs.msg import Image
 from sensor_msgs.msg import PointCloud2
 from sensor_msgs.msg import PointField
+from std_msgs.msg import Bool
+from std_srvs.srv import Trigger
 from tf2_ros import TransformBroadcaster
-from tf2_ros import TransformException
-from tf2_ros.buffer import Buffer
 from tf2_ros.static_transform_broadcaster import StaticTransformBroadcaster
-from tf2_ros.transform_listener import TransformListener
 import tf_transformations
+from unique_identifier_msgs.msg import UUID
 from waymo_open_dataset import label_pb2
 from waymo_open_dataset.protos import metrics_pb2
 
 
-class WaymoRosNode(Node):
-    def __init__(self, waymo_scene_path):
-        super().__init__("perception_benchmark_node")
+def get_tfrecord_paths(path):
+    tf_record_list = glob(path + "/*.tfrecord")
+    if len(tf_record_list) > 0:
+        return tf_record_list
+    else:
+        return None
 
-        # self.declare_parameter("file_path")
-        # self.param_path = self.get_parameter("file_path").get_parameter_value().string_value
-        self.declare_parameter("prediction_path", "")
-        self.prediction_path = (
-            self.get_parameter("prediction_path").get_parameter_value().string_value
+
+class PlayerNode(Node):
+    def __init__(self):
+        super().__init__("waymo_player_node")
+
+        self.declare_parameter("dataset_path", "")
+        dataset_path = self.get_parameter("dataset_path").get_parameter_value().string_value
+        self.tf_list = get_tfrecord_paths(dataset_path)
+
+        self.declare_parameter("use_camera", False)
+        self.use_camera = self.get_parameter("use_camera").get_parameter_value().bool_value
+
+        self.tf_segment_idx = 0
+
+        self.srv_read_scene_data = self.create_service(
+            Trigger, "read_current_segment", self.read_dataset_segment
         )
+        self.srv_read_scene_data = self.create_service(
+            Trigger, "send_frame", self.frame_processed_callback
+        )
+        self.pub_segment_finished = self.create_publisher(Bool, "segment_finished", 1)
 
-        self.declare_parameter("ground_truth_path", "")
-        self.gt_path = self.get_parameter("ground_truth_path").get_parameter_value().string_value
-
-        self.param_path = waymo_scene_path
-
-        self.context_waymo = {}
-        self.scene_timestamp = {}
+        self.dataset = None
         self.current_scene_processed = False
-
-        self.pub_camera_front = self.create_publisher(Image, "/front_camera", 10)
-        self.pub_camera_front_left = self.create_publisher(Image, "/front_left_camera", 10)
-        self.pub_camera_front_right = self.create_publisher(Image, "/front_right_camera", 10)
-        self.pub_camera_side_left = self.create_publisher(Image, "/side_left_camera", 10)
-        self.pub_camera_side_right = self.create_publisher(Image, "/side_right_camera", 10)
-
-        self.pub_cam_info_front = self.create_publisher(CameraInfo, "/front_cam_info", 10)
-        self.pub_cam_info_front_left = self.create_publisher(CameraInfo, "/front_left_cam_info", 10)
-        self.pub_cam_info_front_right = self.create_publisher(
-            CameraInfo, "/front_right_cam_info", 10
-        )
-        self.pub_cam_info_side_left = self.create_publisher(CameraInfo, "/side_left_cam_info", 10)
-        self.pub_cam_info_side_right = self.create_publisher(CameraInfo, "/side_right_cam_info", 10)
 
         self.pub_lidar_front = self.create_publisher(PointCloud2, "/point_cloud/front_lidar", 10)
         self.pub_lidar_rear = self.create_publisher(PointCloud2, "/point_cloud/rear_lidar", 10)
@@ -74,7 +71,28 @@ class WaymoRosNode(Node):
         )
         self.pub_lidar_top = self.create_publisher(PointCloud2, "/point_cloud/top_lidar", 10)
 
-        self.pub_gt_objects = self.create_publisher(DetectedObjects, "/gt_objects", 10)
+        self.pub_gt_objects = self.create_publisher(TrackedObjects, "/gt_objects", 10)
+
+        if self.use_camera:
+            self.pub_camera_front = self.create_publisher(Image, "/front_camera", 10)
+            self.pub_camera_front_left = self.create_publisher(Image, "/front_left_camera", 10)
+            self.pub_camera_front_right = self.create_publisher(Image, "/front_right_camera", 10)
+            self.pub_camera_side_left = self.create_publisher(Image, "/side_left_camera", 10)
+            self.pub_camera_side_right = self.create_publisher(Image, "/side_right_camera", 10)
+
+            self.pub_cam_info_front = self.create_publisher(CameraInfo, "/front_cam_info", 10)
+            self.pub_cam_info_front_left = self.create_publisher(
+                CameraInfo, "/front_left_cam_info", 10
+            )
+            self.pub_cam_info_front_right = self.create_publisher(
+                CameraInfo, "/front_right_cam_info", 10
+            )
+            self.pub_cam_info_side_left = self.create_publisher(
+                CameraInfo, "/side_left_cam_info", 10
+            )
+            self.pub_cam_info_side_right = self.create_publisher(
+                CameraInfo, "/side_right_cam_info", 10
+            )
 
         self.point_fields = [
             PointField(name="x", offset=0, datatype=PointField.FLOAT32, count=1),
@@ -82,107 +100,46 @@ class WaymoRosNode(Node):
             PointField(name="z", offset=8, datatype=PointField.FLOAT32, count=1),
         ]
 
-        self.dataset = WaymoDataset(self.param_path)
         self.pose_broadcaster = TransformBroadcaster(self)
         self.static_tf_publisher = StaticTransformBroadcaster(self)
-        self.sub_tracking = self.create_subscription(
-            TrackedObjects,
-            "/perception/object_recognition/tracking/objects",
-            self.tracked_objects_callback,
-            10,
-        )
 
         self.waymo_evaluation_frame = "base_link"
-
-        self.tf_buffer = Buffer()
-        self.tf_listener = TransformListener(self.tf_buffer, self)
 
         self.prediction_proto_objects = metrics_pb2.Objects()
         self.gt_proto_objects = metrics_pb2.Objects()
 
-    def tracked_objects_callback(self, tracked_objects):
+    def read_dataset_segment(self, request, response):
 
-        for tracked_object in tracked_objects.objects:
-            if tracked_objects.header.frame_id != self.waymo_evaluation_frame:
-                tracked_object = self.transform_tracked_object(
-                    tracked_object, tracked_objects.header
-                )
+        if self.tf_segment_idx >= len(self.tf_list):
+            self.get_logger().info("All Waymo segments in the given path have been processed.")
+            exit()
 
-            tracked_object_waymo = metrics_pb2.Object()
-            tracked_object_waymo.context_name = self.context_waymo
-            tracked_object_waymo.frame_timestamp_micros = self.scene_timestamp
-            bbox_waymo = label_pb2.Label.Box()
-            bbox_waymo.center_x = tracked_object.kinematics.pose_with_covariance.pose.position.x
-            bbox_waymo.center_y = tracked_object.kinematics.pose_with_covariance.pose.position.y
-            bbox_waymo.center_z = tracked_object.kinematics.pose_with_covariance.pose.position.z
-            bbox_waymo.length = tracked_object.shape.dimensions.x
-            bbox_waymo.width = tracked_object.shape.dimensions.y
-            bbox_waymo.height = tracked_object.shape.dimensions.z
+        self.get_logger().info("Waymo segment decoding from dataset...")
+        self.dataset = WaymoDataset(self.tf_list[self.tf_segment_idx])
+        self.tf_segment_idx += 1
+        response.success = True
+        response.message = "Segment readed."
+        return response
 
-            roll, pitch, yaw = euler_from_quaternion(
-                tracked_object.kinematics.pose_with_covariance.pose.orientation.x,
-                tracked_object.kinematics.pose_with_covariance.pose.orientation.y,
-                tracked_object.kinematics.pose_with_covariance.pose.orientation.z,
-                tracked_object.kinematics.pose_with_covariance.pose.orientation.w,
-            )
+    def frame_processed_callback(self, request, response):
 
-            bbox_waymo.heading = yaw
-            tracked_object_waymo.object.box.CopyFrom(bbox_waymo)
-            tracked_object_waymo.score = 0.5
-            if tracked_object.classification[0].label == ObjectClassification.CAR:
-                tracked_object_waymo.object.type = label_pb2.Label.TYPE_VEHICLE
-            elif tracked_object.classification[0].label == ObjectClassification.PEDESTRIAN:
-                tracked_object_waymo.object.type = label_pb2.Label.TYPE_PEDESTRIAN
-            elif tracked_object.classification[0].label == ObjectClassification.BICYCLE:
-                tracked_object_waymo.object.type = label_pb2.Label.TYPE_CYCLIST
-            else:
-                continue
+        if not self.is_dataset_finished():
+            self.publish_scene()
+            response.success = True
+            response.message = "Frame published."
+            return response
 
-            object_track_id = "".join(
-                str(tracked_object.object_id.uuid[e])
-                for e in range(0, len(tracked_object.object_id.uuid))
-            )
-            tracked_object_waymo.object.id = str(object_track_id)
+        else:
+            self.get_logger().info("Waymo segment finished.")
+            msg = Bool()
+            msg.data = True
+            self.pub_segment_finished.publish(msg)
 
-            self.prediction_proto_objects.objects.append(tracked_object_waymo)
+            response.success = False
+            response.message = "Dataset finished."
+            return response
 
-        if self.is_dataset_finished():
-            with open(self.prediction_path, "ab+") as prediction_file:
-                prediction_file.write(self.prediction_proto_objects.SerializeToString())
-
-        self.set_scene_processed(False)
-
-    def transform_tracked_object(self, tracked_object, object_header):
-
-        tracked_objected_map_pose = PoseStamped()
-        tracked_objected_map_pose.header.stamp = object_header.stamp
-        tracked_objected_map_pose.header.frame_id = object_header.frame_id
-        tracked_objected_map_pose.pose.position = (
-            tracked_object.kinematics.pose_with_covariance.pose.position
-        )
-        tracked_objected_map_pose.pose.orientation = (
-            tracked_object.kinematics.pose_with_covariance.pose.orientation
-        )
-
-        try:
-            trans = self.tf_buffer.lookup_transform("base_link", "map", object_header.stamp)
-        except TransformException as ex:
-            self.get_logger().info("Could not find transform:" + str(ex))
-            return
-
-        object_transformed = do_transform_pose_stamped(tracked_objected_map_pose, trans)
-        # object_transformed = tf2_geometry_msgs.do_transform_pose_stamped(tracked_objected_map_pose, trans)
-
-        tracked_object_trans = tracked_object
-        tracked_object_trans.kinematics.pose_with_covariance.pose.orientation = (
-            object_transformed.pose.orientation
-        )
-        tracked_object_trans.kinematics.pose_with_covariance.pose.position = (
-            object_transformed.pose.position
-        )
-
-        return tracked_object_trans
-
+    # Below part copied
     def publish_scene(self):
         self.set_scene_processed(True)
 
@@ -190,38 +147,15 @@ class WaymoRosNode(Node):
         scene_time_as_ros_time = Time(
             nanoseconds=int(current_scene["TIMESTAMP_MICRO"]) * 1000, clock_type=ClockType.ROS_TIME
         )
-        self.scene_timestamp = current_scene["TIMESTAMP_MICRO"]
-        self.context_waymo = current_scene["FRAME_CONTEXT_NAME"]
 
         self.publish_static_tf(scene_time_as_ros_time)
         self.publish_pose(current_scene["VEHICLE_POSE"], scene_time_as_ros_time)
-        self.publish_camera_images(current_scene, scene_time_as_ros_time)
-        self.publish_camera_info(current_scene, scene_time_as_ros_time)
         self.publish_lidar_data(current_scene, scene_time_as_ros_time)
         self.publish_gt_objects(current_scene, scene_time_as_ros_time)
 
-    def check_subscriber_ready(self):
-
-        lidar_subscribers_ready = (
-            self.pub_lidar_front.get_subscription_count()
-            and self.pub_lidar_rear.get_subscription_count()
-            and self.pub_lidar_side_left.get_subscription_count()
-            and self.pub_lidar_side_right.get_subscription_count()
-            and self.pub_lidar_top.get_subscription_count()
-            and self.count_subscribers("/sensing/lidar/concatenated/pointcloud") >= 3
-        )
-
-        centerpoint_ready = self.count_publishers(
-            "/perception/object_recognition/detection/centerpoint/objects"
-        )
-        apollo_ready = self.count_publishers(
-            "/perception/object_recognition/detection/apollo/labeled_clusters"
-        )
-        # vision_detection_ready = self.count_publishers(
-        #     "/perception/object_recognition/detection/rois0"
-        # )
-
-        return lidar_subscribers_ready and (centerpoint_ready or apollo_ready)
+        if self.use_camera:
+            self.publish_camera_images(current_scene, scene_time_as_ros_time)
+            self.publish_camera_info(current_scene, scene_time_as_ros_time)
 
     def is_dataset_finished(self):
         return self.dataset.is_finished()
@@ -376,7 +310,7 @@ class WaymoRosNode(Node):
 
     def publish_gt_objects(self, current_scene, ros_time):
 
-        ground_truth_objects = DetectedObjects()
+        ground_truth_objects = TrackedObjects()
         ground_truth_objects.header.frame_id = "base_link"
         ground_truth_objects.header.stamp = ros_time.to_msg()
 
@@ -385,7 +319,7 @@ class WaymoRosNode(Node):
             if gt_object.num_lidar_points_in_box <= 0:
                 continue
 
-            gt_detected_object = DetectedObject()
+            gt_detected_object = TrackedObject()
             object_classification = ObjectClassification()
             gt_detected_object.existence_probability = 1.0
 
@@ -402,9 +336,16 @@ class WaymoRosNode(Node):
                 continue
 
             gt_detected_object.classification.append(object_classification)
-            gt_detected_object.shape.dimensions.x = gt_object.box.length
-            gt_detected_object.shape.dimensions.y = gt_object.box.width
-            gt_detected_object.shape.dimensions.z = gt_object.box.height
+
+            # Pedestrian bounding boxes x and y fixed in Autoware
+            if gt_object.type == label_pb2.Label.TYPE_PEDESTRIAN:
+                gt_detected_object.shape.dimensions.x = 1.0
+                gt_detected_object.shape.dimensions.y = 1.0
+                gt_detected_object.shape.dimensions.z = gt_object.box.height
+            else:
+                gt_detected_object.shape.dimensions.x = gt_object.box.length
+                gt_detected_object.shape.dimensions.y = gt_object.box.width
+                gt_detected_object.shape.dimensions.z = gt_object.box.height
 
             gt_detected_object.kinematics.pose_with_covariance.pose.position.x = (
                 gt_object.box.center_x
@@ -423,31 +364,14 @@ class WaymoRosNode(Node):
             gt_detected_object.kinematics.pose_with_covariance.pose.orientation.z = q[2]
             gt_detected_object.kinematics.pose_with_covariance.pose.orientation.w = q[3]
 
+            str_1_encoded = gt_object.id.encode(encoding="UTF-8")
+            uuid_msg = UUID()
+
+            for i in range(16):
+                uuid_msg.uuid[i] = str_1_encoded[i]
+
+            gt_detected_object.object_id = uuid_msg
             ground_truth_objects.objects.append(gt_detected_object)
-
-            o = metrics_pb2.Object()
-            o.context_name = self.context_waymo
-            o.frame_timestamp_micros = self.scene_timestamp
-
-            box = label_pb2.Label.Box()
-            box.center_x = gt_object.box.center_x
-            box.center_y = gt_object.box.center_y
-            box.center_z = gt_object.box.center_z
-            box.length = gt_object.box.length
-            box.width = gt_object.box.width
-            box.height = gt_object.box.height
-            box.heading = gt_object.box.heading
-            o.object.box.CopyFrom(box)
-
-            o.score = 1
-            o.object.id = gt_object.id
-            o.object.type = gt_object.type
-
-            self.gt_proto_objects.objects.append(o)
-
-        if self.is_dataset_finished():
-            with open(self.gt_path, "ab+") as gt_file:
-                gt_file.write(self.gt_proto_objects.SerializeToString())
 
         self.pub_gt_objects.publish(ground_truth_objects)
 
@@ -456,3 +380,11 @@ class WaymoRosNode(Node):
 
     def set_scene_processed(self, value):
         self.current_scene_processed = value
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    perception_benchmark = PlayerNode()
+    rclpy.spin(perception_benchmark)
+    perception_benchmark.destroy_node()
+    rclpy.shutdown()

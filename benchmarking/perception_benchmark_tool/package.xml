@@ -3,7 +3,7 @@
 <package format="3">
   <name>perception_benchmark_tool</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>This package benchmark Autoware perception stack on Waymo dataset</description>
   <maintainer email="kcolak@leodrive.ai">Kaan Colak</maintainer>
   <license>TODO: License declaration</license>
 
@@ -13,10 +13,13 @@
   <test_depend>python3-pytest</test_depend>
 
   <exec_depend>autoware_auto_perception_msgs</exec_depend>
+  <exec_depend>global_parameter_loader</exec_depend>
   <exec_depend>ros2launch</exec_depend>
+  <exec_depend>rviz2</exec_depend>
   <exec_depend>tier4_perception_msgs</exec_depend>
   <depend>cv_bridge</depend>
   <depend>geometry_msgs</depend>
+  <depend>std_srvs</depend>
   <depend>tf2</depend>
   <depend>tf2_geometry_msgs</depend>
   <depend>tf2_ros</depend>
