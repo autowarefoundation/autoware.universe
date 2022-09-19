@@ -60,76 +60,71 @@ boost::optional<TurnSignalInfo> TurnSignalDecider::getIntersectionTurnSignalInfo
   const PathWithLaneId & path, const Pose & current_pose, const double current_vel,
   const size_t current_seg_idx, const RouteHandler & route_handler) const
 {
-  if (path.points.size() < 2) {
-    return {};
-  }
-
   // search distance
   const double search_distance = 3.0 * current_vel + intersection_search_distance_;
 
-  // front pose
-  const auto vehicle_front_pose =
-    tier4_autoware_utils::calcOffsetPose(current_pose, base_link2front_, 0.0, 0.0);
-
-  // Get nearest intersection and decide turn signal
-  std::queue<TurnSignalInfo> signal_queue;
-  auto lane_attribute = std::string("none");
+  // unique lane ids
+  std::vector<int64_t> unique_lane_ids;
   for (size_t i = 0; i < path.points.size(); ++i) {
-    const double distance_from_vehicle_front =
-      motion_utils::calcSignedArcLength(path.points, current_pose.position, current_seg_idx, i) -
-      base_link2front_;
-
-    if (search_distance < distance_from_vehicle_front) {
-      break;
-    }
-
-    // TODO(Horibe): Route Handler should be a library.
-    const auto lanelets = route_handler.getLaneletsFromIds(path.points.at(i).lane_ids);
-    for (const auto & lane : lanelets) {
-      // judgement of lighting of turn_signal
-      const bool cond1 =
-        lane.attributeOr("turn_direction", std::string("none")) != lane_attribute &&
-        distance_from_vehicle_front < lane.attributeOr("turn_signal_distance", search_distance);
-      const bool cond2 = lane.hasAttribute("turn_direction") && i == current_seg_idx + 1;
-
-      // update lane attribute
-      lane_attribute = lane.attributeOr("turn_direction", std::string("none"));
-
-      // lane front and back point
-      const geometry_msgs::msg::Point lane_front_point =
-        lanelet::utils::conversion::toGeomMsgPt(lane.centerline3d().front());
-      const geometry_msgs::msg::Point lane_back_point =
-        lanelet::utils::conversion::toGeomMsgPt(lane.centerline3d().back());
-
-      if (distance_from_vehicle_front > 0.0 && cond1) {
-        // lanelet with turn direction is within the search distance
-        const size_t nearest_seg_idx =
-          motion_utils::findNearestSegmentIndex(path.points, lane_front_point);
-        const double dist_to_lane_front = motion_utils::calcSignedArcLength(
-                                            path.points, current_pose.position, current_seg_idx,
-                                            lane_front_point, nearest_seg_idx) -
-                                          base_link2front_;
-        TurnSignalInfo turn_signal_info{};
-        turn_signal_info.desired_start_point =
-          dist_to_lane_front < 0.0 ? lane_front_point : vehicle_front_pose.position;
-        turn_signal_info.required_start_point = lane_front_point;
-        turn_signal_info.required_end_point = get_required_end_point(lane.centerline3d());
-        turn_signal_info.desired_end_point = lane_back_point;
-        turn_signal_info.turn_signal.command = signal_map.at(lane_attribute);
-        signal_queue.push(turn_signal_info);
-      } else if (distance_from_vehicle_front > 0.0 && cond2) {
-        // Vehicle is inside the turing lanelet
-        TurnSignalInfo turn_signal_info{};
-        turn_signal_info.desired_start_point = lane_front_point;
-        turn_signal_info.required_start_point = lane_front_point;
-        turn_signal_info.required_end_point = get_required_end_point(lane.centerline3d());
-        turn_signal_info.desired_end_point = lane_back_point;
-        turn_signal_info.turn_signal.command = signal_map.at(lane_attribute);
-        signal_queue.push(turn_signal_info);
+    for (const auto & lane_id : path.points.at(i).lane_ids) {
+      if (
+        std::find(unique_lane_ids.begin(), unique_lane_ids.end(), lane_id) ==
+        unique_lane_ids.end()) {
+        unique_lane_ids.push_back(lane_id);
       }
     }
   }
 
+  std::queue<TurnSignalInfo> signal_queue;
+  for (const auto & lane_id : unique_lane_ids) {
+    const auto lane = route_handler.getLaneletsFromId(lane_id);
+
+    // lane front and back point
+    const geometry_msgs::msg::Point lane_front_point =
+      lanelet::utils::conversion::toGeomMsgPt(lane.centerline3d().front());
+    const geometry_msgs::msg::Point lane_back_point =
+      lanelet::utils::conversion::toGeomMsgPt(lane.centerline3d().back());
+
+    const size_t front_nearest_seg_idx =
+      motion_utils::findNearestSegmentIndex(path.points, lane_front_point);
+    const size_t back_nearest_seg_idx =
+      motion_utils::findNearestSegmentIndex(path.points, lane_back_point);
+
+    const double dist_to_front_point = motion_utils::calcSignedArcLength(
+                                         path.points, current_pose.position, current_seg_idx,
+                                         lane_front_point, front_nearest_seg_idx) -
+                                       base_link2front_;
+    const double dist_to_back_point = motion_utils::calcSignedArcLength(
+                                        path.points, current_pose.position, current_seg_idx,
+                                        lane_back_point, back_nearest_seg_idx) -
+                                      base_link2front_;
+
+    if (dist_to_back_point < 0.0) {
+      // Vehicle is already passed this lane
+      continue;
+    } else if (search_distance < dist_to_front_point) {
+      break;
+    }
+
+    // If lane with turn direction is within the search distance
+    const std::string lane_attribute = lane.attributeOr("turn_direction", std::string("none"));
+    const bool cond =
+      (lane_attribute == "right" || lane_attribute == "left") &&
+      dist_to_front_point < lane.attributeOr("turn_signal_distance", search_distance);
+
+    if (cond) {
+      TurnSignalInfo turn_signal_info{};
+      turn_signal_info.desired_start_point =
+        dist_to_front_point > 0.0 ? current_pose.position : lane_front_point;
+      turn_signal_info.required_start_point = lane_front_point;
+      turn_signal_info.required_end_point = get_required_end_point(lane.centerline3d());
+      turn_signal_info.desired_end_point = lane_back_point;
+      turn_signal_info.turn_signal.command = signal_map.at(lane_attribute);
+      signal_queue.push(turn_signal_info);
+    }
+  }
+
+  // Get nearest intersection and decide turn signal
   if (signal_queue.empty()) {
     return {};
   }
@@ -144,10 +139,10 @@ boost::optional<TurnSignalInfo> TurnSignalDecider::getIntersectionTurnSignalInfo
     const auto & required_end_point = turn_signal_info.required_end_point;
     const size_t nearest_seg_idx =
       motion_utils::findNearestSegmentIndex(path.points, required_end_point);
-    const double dist_to_end_point =
-      motion_utils::calcSignedArcLength(
-        path.points, current_pose.position, current_seg_idx, required_end_point, nearest_seg_idx) -
-      base_link2front_;
+    const double dist_to_end_point = motion_utils::calcSignedArcLength(
+      path.points, current_pose.position, current_seg_idx, required_end_point,
+      nearest_seg_idx);  //-
+    // base_link2front_;
 
     if (dist_to_end_point >= 0.0) {
       // we haven't finished the current mandatory turn signal

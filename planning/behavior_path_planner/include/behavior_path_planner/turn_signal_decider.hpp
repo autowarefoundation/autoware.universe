@@ -57,6 +57,7 @@ struct TurnSignalInfo
 const std::map<std::string, uint8_t> signal_map = {
   {"left", TurnIndicatorsCommand::ENABLE_LEFT},
   {"right", TurnIndicatorsCommand::ENABLE_RIGHT},
+  {"straight", TurnIndicatorsCommand::DISABLE},
   {"none", TurnIndicatorsCommand::DISABLE}};
 
 class TurnSignalDecider
