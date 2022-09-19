@@ -111,30 +111,30 @@ void VoltageMonitor::checkVoltage(diagnostic_updater::DiagnosticStatusWrapper & 
     return;
   }
   std::string line;
-    while(std::getline(is_out, line)) {
-      auto voltageStringPos = line.find(voltage_string_.c_str());
-      if (voltageStringPos != std::string::npos) {
-        try {
-          std::smatch match;
-          std::regex_search(line, match, voltage_regex_);
-          auto voltageString = match.str();
-          voltage = std::stof(voltageString);
-        } catch (std::regex_error & e) {
-          stat.summary(DiagStatus::WARN, "format error");
-          stat.add("exception in std::regex_search ", fmt::format("{}", e.code()));
-          return;
-        }
-        break;
+  while (std::getline(is_out, line)) {
+    auto voltageStringPos = line.find(voltage_string_.c_str());
+    if (voltageStringPos != std::string::npos) {
+      try {
+        std::smatch match;
+        std::regex_search(line, match, voltage_regex_);
+        auto voltageString = match.str();
+        voltage = std::stof(voltageString);
+      } catch (std::regex_error & e) {
+        stat.summary(DiagStatus::WARN, "format error");
+        stat.add("exception in std::regex_search ", fmt::format("{}", e.code()));
+        return;
       }
+      break;
     }
-    stat.add("CMOS battey voltage", fmt::format("{}", voltage));
-    if (RCUTILS_UNLIKELY(voltage < voltage_error_)) {
-      stat.summary(DiagStatus::ERROR, "LOW BATTERY");
-    } else if (RCUTILS_UNLIKELY(voltage < voltage_warn_)) {
-      stat.summary(DiagStatus::WARN, "LOW BATTERY");
-    } else {
-      stat.summary(DiagStatus::OK, "OK");
-    }
+  }
+  stat.add("CMOS battey voltage", fmt::format("{}", voltage));
+  if (RCUTILS_UNLIKELY(voltage < voltage_error_)) {
+    stat.summary(DiagStatus::ERROR, "LOW BATTERY");
+  } else if (RCUTILS_UNLIKELY(voltage < voltage_warn_)) {
+    stat.summary(DiagStatus::WARN, "LOW BATTERY");
+  } else {
+    stat.summary(DiagStatus::OK, "OK");
+  }
 
   // Measure elapsed time since start time and report
   SystemMonitorUtility::stopMeasurement(t_start, stat);
