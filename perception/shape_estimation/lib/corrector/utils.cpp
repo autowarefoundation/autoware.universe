@@ -325,15 +325,17 @@ bool correctVehicleBoundingBoxWithReferenceShape(
   /*
   c1 is nearest point and other points are arranged like below
   c is center of bounding box
-  width
-  4---2
-  |   |
-  | c |length
-  |   |
-  3---1
+         width
+         4---2
+         |   |
+  length | c | → ey
+         |   |
+         3---1
+           ↓
+           ex
  */
 
-  Eigen::Vector3d c1, c2, c3, c4;
+  Eigen::Vector3d c1;
 
   Eigen::Affine3d base2obj_transform;
   tf2::fromMsg(pose, base2obj_transform);
@@ -353,14 +355,9 @@ bool correctVehicleBoundingBoxWithReferenceShape(
     return a.norm() < b.norm();
   }));
 
-  Eigen::Vector3d c = Eigen::Vector3d::Zero();
   Eigen::Vector3d local_c1 = base2obj_transform.inverse() * c1;
-  Eigen::Vector3d radiation_vec = c - local_c1;
-
-  double ex = radiation_vec.x();
-  double ey = radiation_vec.y();
-  Eigen::Vector3d e1 = (Eigen::Vector3d(0, -ey, 0) - local_c1).normalized();
-  Eigen::Vector3d e2 = (Eigen::Vector3d(-ex, 0, 0) - local_c1).normalized();
+  Eigen::Vector3d ex = (Eigen::Vector3d(local_c1.x(), 0, 0)).normalized();
+  Eigen::Vector3d ey = (Eigen::Vector3d(0, local_c1.y(), 0)).normalized();
 
   double length;
   if (
@@ -380,13 +377,10 @@ bool correctVehicleBoundingBoxWithReferenceShape(
     width = ref_shape_size_info.shape.dimensions.y;
   }
 
-  c2 = c1 + base2obj_transform.rotation() * (e1 * length);
-  c3 = c1 + base2obj_transform.rotation() * (e2 * width);
-  c4 = c1 + (c2 - c1) + (c3 - c1);
+  shape.dimensions.x = length;
+  shape.dimensions.y = width;
 
-  shape.dimensions.x = (c2 - c1).norm();
-  shape.dimensions.y = (c3 - c1).norm();
-  Eigen::Vector3d new_centroid = c1 + ((c4 - c1) * 0.5);
+  Eigen::Vector3d new_centroid = c1 - base2obj_transform.rotation() * (ex * length * 0.5 + ey * width * 0.5);
   pose.position.x = new_centroid.x();
   pose.position.y = new_centroid.y();
   pose.position.z = new_centroid.z();
