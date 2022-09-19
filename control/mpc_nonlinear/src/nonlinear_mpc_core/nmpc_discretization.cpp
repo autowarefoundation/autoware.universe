@@ -20,28 +20,28 @@
 
 ns_discretization::ODEfoh::ODEfoh(
   Model::model_ptr_t model,
-  const Model::input_vector_t & u0,
-  const Model::input_vector_t & u1,
-  Model::param_vector_t const & params0,
-  Model::param_vector_t const & params1,
+  const Model::input_vector_t &u0,
+  const Model::input_vector_t &u1,
+  Model::param_vector_t const &params0,
+  Model::param_vector_t const &params1,
   double dt)
-: model_(model), u0_(u0), u1_(u1), params0_(params0), params1_(params1), dt_(dt)
+  : model_(model), u0_(u0), u1_(u1), params0_(params0), params1_(params1), dt_(dt)
 {
 }
 
 ns_discretization::ODEzoh::ODEzoh(
   Model::model_ptr_t model,
-  const Model::input_vector_t & u0,
-  Model::param_vector_t const & params0,
+  const Model::input_vector_t &u0,
+  Model::param_vector_t const &params0,
   double dt)
-: model_(model), u0_(u0), params0_(params0), dt_(dt)
+  : model_(model), u0_(u0), params0_(params0), dt_(dt)
 {
 }
 
 // --------- Integration Operator -------------------
 
 void ns_discretization::ODEfoh::operator()(
-  const ode_matrix_t & V, ode_matrix_t & dVdt,
+  const ode_matrix_t &V, ode_matrix_t &dVdt,
   const double t) const
 {
   const Model::state_vector_t x{V.col(0)};
@@ -49,7 +49,7 @@ void ns_discretization::ODEfoh::operator()(
 
   // InterpolateInCoordinates the inputs and the parameters.
   u = u0_ + t / dt_ * (u1_ - u0_);
-  auto const & params = params0_ + t / dt_ * (params1_ - params0_);
+  auto const &params = params0_ + t / dt_ * (params1_ - params0_);
 
   /** @brief  Declare A, B, f */
   Model::state_matrix_t A(Model::state_matrix_t::Zero());
@@ -79,9 +79,9 @@ void ns_discretization::ODEfoh::operator()(
   Eigen::Index cols{0};
 
   // Phi in Fundamental matrix.
-  const Model::state_matrix_t & Phi_A_xi =
+  const Model::state_matrix_t &Phi_A_xi =
     V.template block<Model::state_dim, Model::state_dim>(0, 1);
-  const Model::state_matrix_t & Phi_A_xi_inverse = Phi_A_xi.inverse();
+  const Model::state_matrix_t &Phi_A_xi_inverse = Phi_A_xi.inverse();
 
   // x[k+1]
   dVdt.template block<Model::state_dim, 1>(0, cols) = f;
@@ -113,7 +113,7 @@ void ns_discretization::ODEfoh::operator()(
 }
 
 void ns_discretization::ODEzoh::operator()(
-  const ode_matrix_t & V, ode_matrix_t & dVdt,
+  const ode_matrix_t &V, ode_matrix_t &dVdt,
   const double t) const
 {
   const Model::state_vector_t x{V.col(0)};
@@ -135,9 +135,9 @@ void ns_discretization::ODEzoh::operator()(
   Eigen::Index cols{0};
 
   // Phi in Fundamental matrix.
-  const Model::state_matrix_t & Phi_A_xi =
+  const Model::state_matrix_t &Phi_A_xi =
     V.template block<Model::state_dim, Model::state_dim>(0, 1);
-  const Model::state_matrix_t & Phi_A_xi_inverse = Phi_A_xi.inverse();
+  const Model::state_matrix_t &Phi_A_xi_inverse = Phi_A_xi.inverse();
 
   // x[k+1]
   dVdt.template block<Model::state_dim, 1>(0, cols) = f;
@@ -160,14 +160,14 @@ void ns_discretization::ODEzoh::operator()(
 }
 
 bool ns_discretization::multipleShootingTrajectory(
-  Model::model_ptr_t const & model_ptr,
-  trajectory_data_t const & trajectory_data,
-  trajectory_data_t const & target_states,
-  ns_splines::InterpolatingSplinePCG const & piecewise_interpolator,
-  double const & dt,
-  discretization_data_t & dd)
+  Model::model_ptr_t const &model_ptr,
+  trajectory_data_t const &trajectory_data,
+  trajectory_data_t const &target_states,
+  ns_splines::InterpolatingSplinePCG const &piecewise_interpolator,
+  double const &dt,
+  discretization_data_t &dd)
 {
-  size_t const & K = dd.nX();  // number of matrices in the state matrix container.
+  size_t const &K = dd.nX();  // number of matrices in the state matrix container.
   double const num_of_tsteps{2};  // number of time steps for the RK integration. 1 for a single step.
 
   // Start computing Ak, B0k, B1k and zk where zk is the residual in the Taylor
@@ -182,10 +182,10 @@ bool ns_discretization::multipleShootingTrajectory(
   //  double, vector_space_algebra> stepper;
 
   boost::numeric::odeint::runge_kutta4<ode_matrix_t,
-    double,
-    ode_matrix_t,
-    double,
-    boost::numeric::odeint::vector_space_algebra> stepper;
+                                       double,
+                                       ode_matrix_t,
+                                       double,
+                                       boost::numeric::odeint::vector_space_algebra> stepper;
 
   //  boost::numeric::odeint::runge_kutta_fehlberg78<
   //    ode_matrix_t, double, ode_matrix_t, double, boost::numeric::odeint::vector_space_algebra>
@@ -198,23 +198,24 @@ bool ns_discretization::multipleShootingTrajectory(
   Model::param_vector_t params0(Model::param_vector_t::Zero());
   Model::param_vector_t params1(Model::param_vector_t::Zero());
 
-  for (size_t k = 0; k < K; ++k) {
+  for (size_t k = 0; k < K; ++k)
+  {
     // Compute kappa0, kappa1.
-    auto const & x0 = trajectory_data.X[k];
-    auto const & x1 = trajectory_data.X[k + 1];
+    auto const &x0 = trajectory_data.X[k];
+    auto const &x1 = trajectory_data.X[k + 1];
 
-    auto const & u0 = trajectory_data.U[k];
-    auto const & u1 = trajectory_data.U[k + 1];
+    auto const &u0 = trajectory_data.U[k];
+    auto const &u1 = trajectory_data.U[k + 1];
 
-    auto const & s0 = x0(3);  //  ['xw', 'yw', 'psi', 's', 'ey', 'epsi', 'Vx', 'delta']
-    auto const & s1 = x1(3);
+    auto const &s0 = x0(3);  //  ['xw', 'yw', 'psi', 's', 'ey', 'epsi', 'Vx', 'delta']
+    auto const &s1 = x1(3);
     std::vector<double> s0s1{s0, s1};  // we interpolate at two coordinates
     std::vector<double> kappa0_kappa1;
     kappa0_kappa1.reserve(2);
 
     // InterpolateInCoordinates wit PCG setting reusing_param true.
-    if (auto const && could_interpolate =
-      piecewise_interpolator.Interpolate(s0s1, kappa0_kappa1);!could_interpolate)
+    if (auto const &&could_interpolate =
+        piecewise_interpolator.Interpolate(s0s1, kappa0_kappa1);!could_interpolate)
     {
       // ROS_ERROR("[nonlinear_mpc-discretization]
       // Couldn't InterpolateInCoordinates at time %zu of %zu ", k, K);
@@ -274,14 +275,14 @@ bool ns_discretization::multipleShootingTrajectory(
 
 // We can also use the Bi-linear transformation method for discretization.
 [[maybe_unused]] bool ns_discretization::bilinearTransformation(
-  Model::model_ptr_t const & model_ptr,
-  trajectory_data_t const & trajectory_data,
-  trajectory_data_t const & target_state,
-  ns_splines::InterpolatingSplinePCG const & piecewise_interpolator,
-  double const & ts,
-  discretization_data_t & dd)
+  Model::model_ptr_t const &model_ptr,
+  trajectory_data_t const &trajectory_data,
+  trajectory_data_t const &target_state,
+  ns_splines::InterpolatingSplinePCG const &piecewise_interpolator,
+  double const &ts,
+  discretization_data_t &dd)
 {
-  size_t const & K = dd.nX();  // number of matrices in the state matrix container.
+  size_t const &K = dd.nX();  // number of matrices in the state matrix container.
 
   // Start computing Ak, B0k, B1k and zk where zk is the residual in the Taylor
   // expansion; x[k+1]  = Ax + Bu + f(xk, uk) - Axk - Buk and zk = f(xk, uk) -
@@ -290,7 +291,7 @@ bool ns_discretization::multipleShootingTrajectory(
   //  auto scol = ref_map.col(0);
   //  auto kappa_col = ref_map.col(4);
 
-  auto const && Id = Model::state_matrix_t::Identity();
+  auto const &&Id = Model::state_matrix_t::Identity();
 
   // A, B, f placeholders.
   Model::state_matrix_t Ac(Model::state_matrix_t::Zero());
@@ -299,16 +300,17 @@ bool ns_discretization::multipleShootingTrajectory(
 
   Model::param_vector_t params(Model::param_vector_t::Zero());
 
-  for (size_t k = 0; k < K; ++k) {
+  for (size_t k = 0; k < K; ++k)
+  {
     auto const x_eq = trajectory_data.X.at(k);
     auto const u_eq = trajectory_data.U.at(k);
 
-    auto const & s0 = x_eq(3);
+    auto const &s0 = x_eq(3);
     double kappa0{};
 
     // InterpolateInCoordinates wit PCG setting reusing_param true.
-    if (auto const && could_interpolate =
-      piecewise_interpolator.Interpolate(s0, kappa0); !could_interpolate)
+    if (auto const &&could_interpolate =
+        piecewise_interpolator.Interpolate(s0, kappa0); !could_interpolate)
     {
       // ROS_ERROR("[nonlinear_mpc-discretization] Couldn't InterpolateInCoordinates
       // at time %zu of %zu ", k, K);
@@ -325,7 +327,7 @@ bool ns_discretization::multipleShootingTrajectory(
     Model::state_vector_t z = f - Ac * x_eq - Bc * u_eq;
 
     // Bi-linear Transformation.
-    Model::state_matrix_t const & I_At2_inv = (Id - Ac * ts / 2).inverse();
+    Model::state_matrix_t const &I_At2_inv = (Id - Ac * ts / 2).inverse();
 
     dd.A[k] = I_At2_inv * (Id + Ac * ts / 2);
     dd.B[k] = I_At2_inv * Bc * ts;
@@ -336,21 +338,21 @@ bool ns_discretization::multipleShootingTrajectory(
 }
 
 bool multipleShootingSingleStep(
-  Model::model_ptr_t const & model_ptr,
-  Model::state_vector_t const & x0,
-  Model::input_vector_t const & u0,
-  double const & curvature_0, double const & dt,
-  Model::state_matrix_t & Ad, Model::control_matrix_t & Bd);
+  Model::model_ptr_t const &model_ptr,
+  Model::state_vector_t const &x0,
+  Model::input_vector_t const &u0,
+  double const &curvature_0, double const &dt,
+  Model::state_matrix_t &Ad, Model::control_matrix_t &Bd);
 
 // One-step discretization methods.
 bool ns_discretization::multipleShootingSingleStep(
-  Model::model_ptr_t const & model_ptr,
-  Model::state_vector_t const & x0,
-  Model::input_vector_t const & u0,
-  Model::param_vector_t const & params0,
-  double const & dt,
-  Model::state_matrix_t & Ad,
-  Model::control_matrix_t & Bd)
+  Model::model_ptr_t const &model_ptr,
+  Model::state_vector_t const &x0,
+  Model::input_vector_t const &u0,
+  Model::param_vector_t const &params0,
+  double const &dt,
+  Model::state_matrix_t &Ad,
+  Model::control_matrix_t &Bd)
 {
   double const num_of_tsteps{4};  // Number of time steps for the RK integration. 1 for a single step.
 
@@ -366,10 +368,10 @@ bool ns_discretization::multipleShootingSingleStep(
   //  double, vector_space_algebra> stepper;
 
   boost::numeric::odeint::runge_kutta4<ode_matrix_t,
-    double,
-    ode_matrix_t,
-    double,
-    boost::numeric::odeint::vector_space_algebra> stepper;
+                                       double,
+                                       ode_matrix_t,
+                                       double,
+                                       boost::numeric::odeint::vector_space_algebra> stepper;
 
   // runge_kutta_fehlberg78<ode_matrix_t, double, ode_matrix_t,
   // double, vector_space_algebra> stepper;
@@ -419,19 +421,19 @@ bool ns_discretization::multipleShootingSingleStep(
 
 // We can also use the Bi-linear transformation method for discretization.
 bool ns_discretization::bilinearTransformationOneStep(
-  Model::model_ptr_t const & model_ptr,
-  Model::state_vector_t const & x0,
-  Model::input_vector_t const & u0,
-  Model::param_vector_t const & params0,
-  double const & dt,
-  Model::state_matrix_t & Ad,
-  Model::control_matrix_t & Bd)
+  Model::model_ptr_t const &model_ptr,
+  Model::state_vector_t const &x0,
+  Model::input_vector_t const &u0,
+  Model::param_vector_t const &params0,
+  double const &dt,
+  Model::state_matrix_t &Ad,
+  Model::control_matrix_t &Bd)
 {
   // Start computing Ak, B0k, B1k and zk where zk is the residual in the Taylor
   // expansion; x[k+1]  = Ax + Bu + f(xk, uk) - Axk - Buk and zk = f(xk, uk) -
   // Axk - Buk. States are ['xw', 'yw', 'psi', 's', 'ey', 'epsi', 'Vx', 'delta']
 
-  auto const && Id = Model::state_matrix_t::Identity();
+  auto const &Id = Model::state_matrix_t::Identity();
 
   // Ac, Bc, fc placeholders. Continuous matrix variables.
   Model::state_matrix_t Ac(Model::state_matrix_t::Zero());
@@ -444,7 +446,7 @@ bool ns_discretization::bilinearTransformationOneStep(
   // Model::state_vector_t z = f - Ac * x0 - Bc * u0;
 
   // Bi-linear Transformation.
-  Model::state_matrix_t && I_At2_inv = (Id - Ac * dt / 2).inverse();
+  Model::state_matrix_t const &I_At2_inv = (Id - Ac * dt / 2).inverse();
 
   Ad = I_At2_inv * (Id + Ac * dt / 2);
   Bd = I_At2_inv * Bc * dt;
