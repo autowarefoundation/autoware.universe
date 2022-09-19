@@ -380,7 +380,8 @@ bool correctVehicleBoundingBoxWithReferenceShape(
   shape.dimensions.x = length;
   shape.dimensions.y = width;
 
-  Eigen::Vector3d new_centroid = c1 - base2obj_transform.rotation() * (ex * length * 0.5 + ey * width * 0.5);
+  Eigen::Vector3d new_centroid =
+    c1 - base2obj_transform.rotation() * (ex * length * 0.5 + ey * width * 0.5);
   pose.position.x = new_centroid.x();
   pose.position.y = new_centroid.y();
   pose.position.z = new_centroid.z();
