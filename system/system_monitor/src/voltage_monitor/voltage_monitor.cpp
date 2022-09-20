@@ -49,7 +49,7 @@ VoltageMonitor::VoltageMonitor(const rclcpp::NodeOptions & options)
   rclcpp::QoS durable_qos{1};
   durable_qos.transient_local();
 
-  voltage_string_ = declare_parameter<std::string>("cmos_battery_voltage", "");
+  voltage_string_ = declare_parameter<std::string>("cmos_battery_label", "");
   voltage_warn_ = declare_parameter<float>("cmos_battery_warn", 2.95);
   voltage_error_ = declare_parameter<float>("cmos_battery_error", 2.75);
   bool sensors_exists = false;
