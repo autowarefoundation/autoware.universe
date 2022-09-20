@@ -53,7 +53,7 @@ Every topic is published in 1 minute interval.
 
 [Usage] ✓：Supported, -：Not supported
 
- Node            | Message                      | Intel | arm64(tegra) | arm64(raspi) | Notes                                                                                                                                                                                           |
+| Node            | Message                      | Intel | arm64(tegra) | arm64(raspi) | Notes                                                                                                                                                                                           |
 | --------------- | ---------------------------- | :---: | :----------: | :----------: | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | CPU Monitor     | CPU Temperature              |   ✓   |      ✓       |      ✓       |                                                                                                                                                                                                 |
 |                 | CPU Usage                    |   ✓   |      ✓       |      ✓       |                                                                                                                                                                                                 |
@@ -77,7 +77,8 @@ Every topic is published in 1 minute interval.
 |                 | GPU Memory Usage             |   ✓   |      -       |      -       |                                                                                                                                                                                                 |
 |                 | GPU Thermal Throttling       |   ✓   |      -       |      -       |                                                                                                                                                                                                 |
 |                 | GPU Frequency                |   ✓   |      ✓       |      -       | For Intel platform, monitor whether current GPU clock is supported by the GPU.                                                                                                                  |
-| Voltage Monitor | CMOS Battery Staus     |   ✓   |      -       |      -       | Battery Health for RTC and BIOS -                                                                                                                                                               |     |
+| Voltage Monitor | CMOS Battery Staus           |   ✓   |      -       |      -       | Battery Health for RTC and BIOS -                                                                                                                                                               |
+
 
 ## ROS parameters
 
