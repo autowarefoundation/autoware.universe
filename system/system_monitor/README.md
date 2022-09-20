@@ -186,7 +186,7 @@ It is also necessary to set the voltage for warning and error.
 For example, if you want a warning when the voltage is less than 2.9V and an error when it is less than 2.7V.
 The execution result of sensors on the chipset nct6106 is as follows, and "in7:" is the voltage of the CMOS battery.
 
-```
+```txt
 $ sensors
 pch_cannonlake-virtual-0
 Adapter: Virtual device
@@ -209,7 +209,7 @@ fan2:             0 RPM  (min =    0 RPM)
 
 The setting value of voltage_monitor.param.yaml is as follows.
 
-```
+```yaml
 /**:
   ros__parameters:
     cmos_battery_warn: 2.90
