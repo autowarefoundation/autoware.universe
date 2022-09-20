@@ -31,6 +31,14 @@ bool isVehicle(const uint8_t object_classification)
          object_classification == ObjectClassification::TRUCK;
 }
 
+bool isCarLikeVehicle(const uint8_t object_classification)
+{
+  return object_classification == ObjectClassification::BUS ||
+         object_classification == ObjectClassification::CAR ||
+         object_classification == ObjectClassification::TRAILER ||
+         object_classification == ObjectClassification::TRUCK;
+}
+
 bool isLargeVehicle(const uint8_t object_classification)
 {
   return object_classification == ObjectClassification::BUS ||
