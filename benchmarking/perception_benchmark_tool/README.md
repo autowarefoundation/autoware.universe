@@ -1,6 +1,6 @@
 # perception_benchmark_tool
 
-This package contains benchmark tool for testing  perception stack of Autoware.Universe with the Waymo dataset. 
+This package contains benchmark tool for testing perception stack of Autoware.Universe with the Waymo dataset.
 
 ## Installation
 
