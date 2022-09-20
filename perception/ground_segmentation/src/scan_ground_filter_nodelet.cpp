@@ -73,7 +73,7 @@ void ScanGroundFilterComponent::convertPointcloud(
 {
   out_radial_ordered_points.resize(radial_dividers_num_);
   PointRef current_point;
-  if (elevation_grid_mode_){
+  if (elevation_grid_mode_) {
     uint16_t back_steps_num = 1;
 
     grid_size_rad_ =
