@@ -79,7 +79,6 @@ Every topic is published in 1 minute interval.
 |                 | GPU Frequency                |   ✓   |      ✓       |      -       | For Intel platform, monitor whether current GPU clock is supported by the GPU.                                                                                                                  |
 | Voltage Monitor | CMOS Battery Staus           |   ✓   |      -       |      -       | Battery Health for RTC and BIOS -                                                                                                                                                               |
 
-
 ## ROS parameters
 
 See [ROS parameters](docs/ros_parameters.md).
