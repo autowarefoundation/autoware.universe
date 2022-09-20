@@ -187,6 +187,7 @@ void ScanGroundFilterComponent::gridScan_classifyPointCloud(
         non_ground_height_threshold_adap =
           non_ground_height_threshold_ * (p->radius / less_interest_dist_);
       }
+      // classify first grid's point cloud
       if ((init_flg == false) && (p->radius <= first_ring_distance_)) {
         if (
           (global_slope_p >= global_slope_max_angle_rad_) &&
@@ -201,6 +202,7 @@ void ScanGroundFilterComponent::gridScan_classifyPointCloud(
           }
         }
       } else {
+        // initialize lists of previous gnd grids
         if (prev_list_init == false) {
           if (init_flg) {
             for (int ind_grid = p->grid_id - 1 - gnd_grid_buffer_size_; ind_grid < p->grid_id - 1;
@@ -229,6 +231,7 @@ void ScanGroundFilterComponent::gridScan_classifyPointCloud(
           }
           prev_list_init = true;
         }
+        // move to new grid
         if (p->grid_id > prev_p->grid_id) {
           // check if the prev grid have ground point cloud
           if (ground_cluster.getAverageRadius() > 0.0) {
@@ -239,6 +242,7 @@ void ScanGroundFilterComponent::gridScan_classifyPointCloud(
             ground_cluster.initialize();
           }
         }
+        // classify
         if (p->orig_point->z - gnd_mean_z_list.back() > detection_range_z_max_) {
           p->point_state = PointLabel::OUT_OF_RANGE;
         } else if (
@@ -251,7 +255,7 @@ void ScanGroundFilterComponent::gridScan_classifyPointCloud(
           out_no_ground_indices.indices.push_back(p->orig_index);
         } else {
           float next_gnd_z = 0.0f;
-          float curr_gnd_slope = 0.0f;
+          float curr_gnd_slope_rad = 0.0f;
           float gnd_buffer_z_mean = 0.0f;
           float gnd_buffer_radius = 0.0f;
           float gnd_buffer_z_max = 0.0f;
@@ -263,18 +267,18 @@ void ScanGroundFilterComponent::gridScan_classifyPointCloud(
           gnd_buffer_z_mean /= static_cast<float>(gnd_grid_buffer_size_ - 1);
           gnd_buffer_radius /= static_cast<float>(gnd_grid_buffer_size_ - 1);
           gnd_buffer_z_max /= static_cast<float>(gnd_grid_buffer_size_ - 1);
-          curr_gnd_slope = std::atan(
+          curr_gnd_slope_rad = std::atan(
             (gnd_mean_z_list.back() - gnd_buffer_z_mean) /
             (gnd_radius_list.back() - gnd_buffer_radius));
-          curr_gnd_slope = curr_gnd_slope < -global_slope_max_angle_rad_
-                             ? -global_slope_max_angle_rad_
-                             : curr_gnd_slope;
-          curr_gnd_slope = curr_gnd_slope > global_slope_max_angle_rad_
-                             ? global_slope_max_angle_rad_
-                             : curr_gnd_slope;
+          curr_gnd_slope_rad = curr_gnd_slope_rad < -global_slope_max_angle_rad_
+                                 ? -global_slope_max_angle_rad_
+                                 : curr_gnd_slope_rad;
+          curr_gnd_slope_rad = curr_gnd_slope_rad > global_slope_max_angle_rad_
+                                 ? global_slope_max_angle_rad_
+                                 : curr_gnd_slope_rad;
 
           next_gnd_z =
-            std::tan(curr_gnd_slope) * (p->radius - gnd_buffer_radius) + gnd_buffer_z_mean;
+            std::tan(curr_gnd_slope_rad) * (p->radius - gnd_buffer_radius) + gnd_buffer_z_mean;
           float gnd_z_threshold = std::tan(DEG2RAD(5.0f)) * (p->radius - gnd_radius_list.back());
           float local_slope_p = std::atan(
             (p->orig_point->z - *(gnd_mean_z_list.end() - 2)) /
@@ -283,10 +287,11 @@ void ScanGroundFilterComponent::gridScan_classifyPointCloud(
           if (global_slope_p > global_slope_max_angle_rad_) {
             out_no_ground_indices.indices.push_back(p->orig_index);
           } else {
+            // gnd grid is continuous, the last gnd grid is close
             if (
-              (p->grid_id <
-               *(gnd_grid_id_list.end() - gnd_grid_buffer_size_) + gnd_grid_buffer_size_ + 3) &&
-              (p->radius - gnd_radius_list.back() < 3 * p->grid_size)) {
+              (p->grid_id < *(gnd_grid_id_list.end() - gnd_grid_buffer_size_) +
+                              gnd_grid_buffer_size_ + gnd_grid_continual_thresh_) &&
+              (p->radius - gnd_radius_list.back() < gnd_grid_continual_thresh_ * p->grid_size)) {
               if (((abs(p->orig_point->z - next_gnd_z) <=
                     non_ground_height_threshold_adap + gnd_z_threshold) ||
                    (abs(local_slope_p) < local_slope_max_angle_rad_))) {
@@ -297,16 +302,11 @@ void ScanGroundFilterComponent::gridScan_classifyPointCloud(
                 non_ground_height_threshold_adap + gnd_z_threshold) {
                 out_no_ground_indices.indices.push_back(p->orig_index);
                 p->point_state = PointLabel::NON_GROUND;
-              } else if (
-                p->orig_point->z - next_gnd_z <
-                -(non_ground_height_threshold_adap + gnd_z_threshold)) {
-                p->point_state = PointLabel::OUT_OF_RANGE;
               } else {
-                p->point_state = PointLabel::UNKNOWN;
               }
-
+              // gnd grids are discontinuous, the last gnd grid is close
             } else if (
-              (p->radius - gnd_radius_list.back() < 3 * p->grid_size) ||
+              (p->radius - gnd_radius_list.back() < gnd_grid_continual_thresh_ * p->grid_size) ||
               (p->radius < grid_mode_switch_radius_ * 2.0f)) {
               local_slope_p = std::atan(
                 (p->orig_point->z - gnd_mean_z_list.back()) / (p->radius - gnd_radius_list.back()));
@@ -322,13 +322,10 @@ void ScanGroundFilterComponent::gridScan_classifyPointCloud(
               } else if (local_slope_p > global_slope_max_angle_rad_) {
                 out_no_ground_indices.indices.push_back(p->orig_index);
                 p->point_state = PointLabel::NON_GROUND;
-              } else if (local_slope_p < -global_slope_max_angle_rad_) {
-                p->point_state = PointLabel::OUT_OF_RANGE;
               } else {
-                p->point_state = PointLabel::UNKNOWN;
               }
             } else {
-              // checking by reference only the last gnd grid
+              // the last gnd grid is far
               local_slope_p = std::atan(
                 (p->orig_point->z - gnd_mean_z_list.back()) / (p->radius - gnd_radius_list.back()));
 
@@ -338,10 +335,7 @@ void ScanGroundFilterComponent::gridScan_classifyPointCloud(
               } else if (local_slope_p > global_slope_max_angle_rad_) {
                 out_no_ground_indices.indices.push_back(p->orig_index);
                 p->point_state = PointLabel::NON_GROUND;
-              } else if (local_slope_p < -global_slope_max_angle_rad_) {
-                p->point_state = PointLabel::OUT_OF_RANGE;
               } else {
-                p->point_state = PointLabel::UNKNOWN;
               }
             }
           }

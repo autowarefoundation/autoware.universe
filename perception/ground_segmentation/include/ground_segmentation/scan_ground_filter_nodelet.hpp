@@ -120,24 +120,20 @@ private:
   tf2_ros::Buffer tf_buffer_{get_clock()};
   tf2_ros::TransformListener tf_listener_{tf_buffer_};
 
-  std::string base_frame_;
-  std::string sensor_frame_;
   bool elevation_grid_mode_ = true;
   float non_ground_height_threshold_;
   float grid_size_rad_;
   float grid_size_m_;
   float less_interest_dist_ = 20.0f;
-  uint16_t gnd_grid_buffer_size_ = 10;
-  uint16_t num_prev_grid_height_refer_ = 2;
+  uint16_t gnd_grid_buffer_size_;
+  uint16_t gnd_grid_continual_thresh_ = 3;
   float grid_mode_switch_grid_id_ = 0.0f;
   float grid_mode_switch_angle_rad_ = 0.0f;
   float virtual_lidar_z_ = 2.5f;
   float detection_range_z_max_ = 2.5f;
-  float center_pcl_shift_ = 0.0f;
-  float grid_mode_switch_radius_ =
-    5.0f;  // threshold distance for changing the mode of grid division
-  float first_ring_distance_ = 20.0f;
-  // float center_to_wheel_distance = 0.0f;
+  float center_pcl_shift_ = 0.0f;           // virtual center of pcl to center mass
+  float grid_mode_switch_radius_;           // non linear grid size switching distance
+  float first_ring_distance_ = 20.0f;       // maximum radius of first ring
   double global_slope_max_angle_rad_;       // radians
   double local_slope_max_angle_rad_;        // radians
   double radial_divider_angle_rad_;         // distance in rads between dividers
