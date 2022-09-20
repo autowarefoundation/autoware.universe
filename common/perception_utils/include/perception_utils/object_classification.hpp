@@ -13,8 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PERCEPTION_UTILS__PREDICTED_PATH_UTILS_HPP_
-#define PERCEPTION_UTILS__PREDICTED_PATH_UTILS_HPP_
+#ifndef PERCEPTION_UTILS__OBJECT_CLASSIFICATION_HPP_
+#define PERCEPTION_UTILS__OBJECT_CLASSIFICATION_HPP_
 
 #include "autoware_auto_perception_msgs/msg/object_classification.hpp"
 
@@ -38,4 +38,4 @@ bool isLargeVehicle(const uint8_t object_classification)
 }
 }  // namespace perception_utils
 
-#endif  // PERCEPTION_UTILS__GEOMETRY_HPP_
+#endif  // PERCEPTION_UTILS__OBJECT_CLASSIFICATION_HPP_
