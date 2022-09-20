@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "kalman_filter/kalman_filter.hpp"
+#include "kalman_filter/matrix_size.hpp"
 
 KalmanFilter::KalmanFilter() {}
 KalmanFilter::KalmanFilter(
@@ -29,9 +30,9 @@ bool KalmanFilter::init(
   const Eigen::MatrixXd & P)
 {
   if (
-    x.cols() == 0 || x.rows() == 0 || A.cols() == 0 || A.rows() == 0 || B.cols() == 0 ||
-    B.rows() == 0 || C.cols() == 0 || C.rows() == 0 || Q.cols() == 0 || Q.rows() == 0 ||
-    R.cols() == 0 || R.rows() == 0 || P.cols() == 0 || P.rows() == 0) {
+    hasZeroElements(x) || hasZeroElements(A) || hasZeroElements(B) ||
+    hasZeroElements(C) || hasZeroElements(Q) || hasZeroElements(R) ||
+    hasZeroElements(P)) {
     return false;
   }
   x_ = x;
@@ -45,7 +46,7 @@ bool KalmanFilter::init(
 }
 bool KalmanFilter::init(const Eigen::MatrixXd & x, const Eigen::MatrixXd & P0)
 {
-  if (x.cols() == 0 || x.rows() == 0 || P0.cols() == 0 || P0.rows() == 0) {
+  if (hasZeroElements(x) || hasZeroElements(P0)) {
     return false;
   }
   x_ = x;
