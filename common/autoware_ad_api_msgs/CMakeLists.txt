@@ -17,8 +17,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   routing/srv/ClearRoute.srv
   routing/srv/SetRoute.srv
   routing/srv/SetRoutePoints.srv
-  motion/msg/MotionState.msg
-  motion/srv/AcceptStart.srv
   DEPENDENCIES
     builtin_interfaces
     std_msgs
