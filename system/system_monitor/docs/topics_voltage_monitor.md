@@ -13,13 +13,13 @@ Which one is generated depends on the value of cmos_battery_label.
 | level | message     |
 | ----- | ----------- |
 | OK    | OK          |
-| ERROR | LOW BATTERY |
+| WARN  | Battery Dead |
 
 <b>[values]</b>
 
 | key (example)      | value (example)  |
 | ------------------ | ---------------- |
-| CMOS battey status | OK / LOW BATTERY |
+| CMOS battey status | OK / Battery Dead |
 
 \*key: thermal_zone[0-9] for ARM architecture.
 
@@ -32,8 +32,8 @@ Which one is generated depends on the value of cmos_battery_label.
 | level | message     |
 | ----- | ----------- |
 | OK    | OK          |
-| WARN  | LOW BATTERY |
-| ERROR | LOW BATTERY |
+| WARN  | Low Battery |
+| WARN  | Battery Died |
 
 <b>[values]</b>
 
