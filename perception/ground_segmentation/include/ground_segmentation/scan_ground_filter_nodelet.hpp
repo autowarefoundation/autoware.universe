@@ -114,9 +114,6 @@ private:
     float getMaxheight() { return height_max; }
   };
 
-  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr ground_pcl_pub_;
-  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr unknown_pcl_pub_;
-  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr under_ground_pcl_pub_;
   void filter(
     const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output) override;
 

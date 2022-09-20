@@ -25,7 +25,6 @@ ament_auto_add_library(ground_segmentation SHARED
   src/ray_ground_filter_nodelet.cpp
   src/ransac_ground_filter_nodelet.cpp
   src/scan_ground_filter_nodelet.cpp
-  src/grid_scan_ground_filter_nodelet.cpp
 )
 
 target_link_libraries(ground_segmentation

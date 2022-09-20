@@ -60,12 +60,7 @@ ScanGroundFilterComponent::ScanGroundFilterComponent(const rclcpp::NodeOptions &
     grid_size_rad_ = std::atan2(grid_mode_switch_radius_, virtual_lidar_z_) -
                      std::atan2(grid_mode_switch_radius_ - grid_size_m_, virtual_lidar_z_);
   }
-  ground_pcl_pub_ = create_publisher<sensor_msgs::msg::PointCloud2>(
-    "debug/ground_pointcloud", rclcpp::SensorDataQoS());
-  unknown_pcl_pub_ = create_publisher<sensor_msgs::msg::PointCloud2>(
-    "debug/unknown_pointcloud", rclcpp::SensorDataQoS());
-  under_ground_pcl_pub_ = create_publisher<sensor_msgs::msg::PointCloud2>(
-    "debug/underground_pointcloud", rclcpp::SensorDataQoS());
+  
   using std::placeholders::_1;
   set_param_res_ = this->add_on_set_parameters_callback(
     std::bind(&ScanGroundFilterComponent::onParameter, this, _1));
@@ -357,9 +352,6 @@ void ScanGroundFilterComponent::classifyPointCloud(
       }
       prev_p = p;
     }
-    // estimate the height from predicted current ground and compare with threshold
-
-    // estimate the local slope to previous virtual gnd and compare with
   }
 }
 
@@ -520,24 +512,7 @@ void ScanGroundFilterComponent::filter(
     underground_indices);
 
   extractObjectPoints(current_sensor_cloud_ptr, no_ground_indices, no_ground_cloud_ptr);
-  extractObjectPoints(current_sensor_cloud_ptr, ground_pcl_indices, ground_cloud_ptr);
-  extractObjectPoints(current_sensor_cloud_ptr, unknown_indices, unknown_cloud_ptr);
-  extractObjectPoints(current_sensor_cloud_ptr, underground_indices, underground_cloud_ptr);
 
-  sensor_msgs::msg::PointCloud2 ground_pcl_msg;
-  pcl::toROSMsg(*ground_cloud_ptr, ground_pcl_msg);
-  ground_pcl_msg.header = input->header;
-  ground_pcl_pub_->publish(ground_pcl_msg);
-
-  sensor_msgs::msg::PointCloud2 unknown_pcl_msg;
-  pcl::toROSMsg(*unknown_cloud_ptr, unknown_pcl_msg);
-  unknown_pcl_msg.header = input->header;
-  unknown_pcl_pub_->publish(unknown_pcl_msg);
-
-  sensor_msgs::msg::PointCloud2 underground_msg;
-  pcl::toROSMsg(*underground_cloud_ptr, underground_msg);
-  underground_msg.header = input->header;
-  under_ground_pcl_pub_->publish(underground_msg);
 
   auto no_ground_cloud_msg_ptr = std::make_shared<PointCloud2>();
   pcl::toROSMsg(*no_ground_cloud_ptr, *no_ground_cloud_msg_ptr);
