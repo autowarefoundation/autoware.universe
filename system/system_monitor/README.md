@@ -51,7 +51,7 @@ Every topic is published in 1 minute interval.
 - [NTP Monitor](docs/topics_ntp_monitor.md)
 - [Process Monitor](docs/topics_process_monitor.md)
 - [GPU Monitor](docs/topics_gpu_monitor.md)
-- [Voltage Monitor](doc/topics_voltage_monitor.md)
+- [Voltage Monitor](docs/topics_voltage_monitor.md)
 
 [Usage] ✓：Supported, -：Not supported
 
