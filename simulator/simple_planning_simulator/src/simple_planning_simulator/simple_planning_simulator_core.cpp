@@ -86,7 +86,7 @@ SimplePlanningSimulator::SimplePlanningSimulator(const rclcpp::NodeOptions & opt
   using std::placeholders::_2;
 
   sub_init_pose_ = create_subscription<PoseWithCovarianceStamped>(
-    "/initialpose", QoS{1}, std::bind(&SimplePlanningSimulator::on_initialpose, this, _1));
+    "input/initialpose", QoS{1}, std::bind(&SimplePlanningSimulator::on_initialpose, this, _1));
   sub_ackermann_cmd_ = create_subscription<AckermannControlCommand>(
     "input/ackermann_control_command", QoS{1},
     [this](const AckermannControlCommand::SharedPtr msg) { current_ackermann_cmd_ = *msg; });
@@ -135,8 +135,8 @@ SimplePlanningSimulator::SimplePlanningSimulator(const rclcpp::NodeOptions & opt
     std::bind(&SimplePlanningSimulator::on_parameter, this, _1));
 
   timer_sampling_time_ms_ = static_cast<uint32_t>(declare_parameter("timer_sampling_time_ms", 25));
-  on_timer_ = create_wall_timer(
-    std::chrono::milliseconds(timer_sampling_time_ms_),
+  on_timer_ = rclcpp::create_timer(
+    this, get_clock(), std::chrono::milliseconds(timer_sampling_time_ms_),
     std::bind(&SimplePlanningSimulator::on_timer, this));
 
   tier4_api_utils::ServiceProxyNodeInterface proxy(this);

@@ -11,8 +11,6 @@
       min_object_accel_for_rss: -1.0 # front obstacle's acceleration to calculate RSS distance [m/ss]
       safe_distance_margin : 6.0 # This is also used as a stop margin [m]
 
-      lpf_gain_for_accel: 0.2 # gain of low pass filter for ego acceleration [-]
-
       nearest_dist_deviation_threshold: 3.0 # [m] for finding nearest index
       nearest_yaw_deviation_threshold: 1.57 # [rad] for finding nearest index
       min_behavior_stop_margin: 3.0 # [m]
@@ -50,11 +48,15 @@
       collision_time_margin : 8.0 # time threshold of collision between obstacle adn ego for cruise or stop [s]
 
       outside_rough_detection_area_expand_width : 0.5 # rough lateral margin for rough detection area expansion for obstacles outside the trajectory [m]
+      outside_obstacle_min_velocity_threshold : 3.0 # minimum velocity threshold of obstacles outside the trajectory to cruise or stop [m/s]
       ego_obstacle_overlap_time_threshold : 1.0 #  time threshold to decide cut-in obstacle for cruise or stop [s]
       max_prediction_time_for_collision_check : 20.0 # prediction time to check collision between obstacle and ego
 
       prediction_resampling_time_interval: 0.1
       prediction_resampling_time_horizon: 10.0
+
+      goal_extension_length: 5.0 # extension length for collision check around the goal
+      goal_extension_interval: 1.0 # extension interval for collision check around the goal
 
       stop_obstacle_hold_time_threshold : 1.0 # maximum time for holding closest stop obstacle
 
@@ -86,13 +88,11 @@
       lpf_cruise_gain: 0.2
 
     optimization_based_planner:
-      resampling_s_interval: 2.0
-      dense_resampling_time_interval: 0.1
-      sparse_resampling_time_interval: 1.0
+      dense_resampling_time_interval: 0.2
+      sparse_resampling_time_interval: 2.0
       dense_time_horizon: 5.0
       max_time_horizon: 25.0
-      max_trajectory_length: 200.0
-      velocity_margin: 0.1 #[m/s]
+      velocity_margin: 0.2 #[m/s]
 
       # Parameters for safe distance
       t_dangerous: 0.5

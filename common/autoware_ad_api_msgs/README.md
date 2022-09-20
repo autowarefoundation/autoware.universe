@@ -21,6 +21,19 @@ Considering the product life cycle, there may be multiple vehicles using differe
 In that situation, the AD API users such as developers of a web service have to switch the application behavior based on the version that each vehicle uses.
 The version of AD API follows [Semantic Versioning][semver] in order to provide an intuitive understanding of the changes between versions.
 
+## Routing
+
+The routing service support two formats. One uses pose and the other uses map dependent data directly.
+The body part of the route message is optional, since the route does not exist when it is cleared by the service.
+[See also routing API][api-routing].
+
+## Localization
+
+The initialization state does not reflect localization errors. Use diagnostics for that purpose.
+[See also localization API][api-localization].
+
 <!-- link -->
 
 [semver]: https://semver.org/
+[api-localization]: https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-interfaces/ad-api/list/api/localization/
+[api-routing]: https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-interfaces/ad-api/list/api/routing/

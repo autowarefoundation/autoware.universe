@@ -90,6 +90,12 @@ CarInitialPoseTool::CarInitialPoseTool()
     "Z position", 0.0, "Z position for initial pose [m]", getPropertyContainer());
   velocity_ = new rviz_common::properties::FloatProperty(
     "Velocity", 0.0, "velocity [m/s]", getPropertyContainer());
+  accel_ = new rviz_common::properties::FloatProperty(
+    "Acceleration", 0.0, "acceleration [m/s^2]", getPropertyContainer());
+  max_velocity_ = new rviz_common::properties::FloatProperty(
+    "Max velocity", 33.3, "Max velocity [m/s]", getPropertyContainer());
+  min_velocity_ = new rviz_common::properties::FloatProperty(
+    "Min velocity", -33.3, "Min velocity [m/s]", getPropertyContainer());
   std_dev_x_->setMin(0);
   std_dev_y_->setMin(0);
   std_dev_z_->setMin(0);
@@ -99,7 +105,7 @@ CarInitialPoseTool::CarInitialPoseTool()
 
 void CarInitialPoseTool::onInitialize()
 {
-  PoseTool::onInitialize();
+  rviz_plugins::InteractiveObjectTool::onInitialize();
   setName("2D Dummy Car");
   updateTopic();
 }
@@ -175,6 +181,12 @@ BusInitialPoseTool::BusInitialPoseTool()
     "Z position", 0.0, "Z position for initial pose [m]", getPropertyContainer());
   velocity_ = new rviz_common::properties::FloatProperty(
     "Velocity", 0.0, "velocity [m/s]", getPropertyContainer());
+  accel_ = new rviz_common::properties::FloatProperty(
+    "Acceleration", 0.0, "acceleration [m/s^2]", getPropertyContainer());
+  max_velocity_ = new rviz_common::properties::FloatProperty(
+    "Max velocity", 33.3, "Max velocity [m/s]", getPropertyContainer());
+  min_velocity_ = new rviz_common::properties::FloatProperty(
+    "Min velocity", -33.3, "Min velocity [m/s]", getPropertyContainer());
   std_dev_x_->setMin(0);
   std_dev_y_->setMin(0);
   std_dev_z_->setMin(0);
@@ -184,7 +196,7 @@ BusInitialPoseTool::BusInitialPoseTool()
 
 void BusInitialPoseTool::onInitialize()
 {
-  PoseTool::onInitialize();
+  rviz_plugins::InteractiveObjectTool::onInitialize();
   setName("2D Dummy Bus");
   updateTopic();
 }

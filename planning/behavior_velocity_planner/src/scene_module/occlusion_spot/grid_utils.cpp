@@ -36,6 +36,8 @@ Polygon2d pointsToPoly(const Point2d p0, const Point2d p1, const double radius)
   line_poly.outer().emplace_back(p0.x() - r * sin(angle), p0.y() + r * cos(angle));
   // std::cout << boost::geometry::wkt(line_poly) << std::endl;
   // std::cout << boost::geometry::wkt(line) << std::endl;
+
+  bg::correct(line_poly);
   return line_poly;
 }
 
@@ -54,30 +56,6 @@ std::vector<std::pair<grid_map::Position, grid_map::Position>> pointsToRays(
     Position(p1.x() - r * sin(angle), p1.y() + r * cos(angle)),
     Position(p0.x() - r * sin(angle), p0.y() + r * cos(angle))));
   return lines;
-}
-
-void addObjectsToGridMap(const std::vector<PredictedObject> & objs, grid_map::GridMap & grid)
-{
-  auto & grid_data = grid["layer"];
-  for (const auto & obj : objs) {
-    Polygon2d foot_print_polygon = planning_utils::toFootprintPolygon(obj);
-    grid_map::Polygon grid_polygon;
-    const auto & pos = obj.kinematics.initial_pose_with_covariance.pose.position;
-    if (grid.isInside(grid_map::Position(pos.x, pos.y))) continue;
-    try {
-      for (const auto & point : foot_print_polygon.outer()) {
-        grid_polygon.addVertex({point.x(), point.y()});
-      }
-      for (grid_map_utils::PolygonIterator iterator(grid, grid_polygon); !iterator.isPastEnd();
-           ++iterator) {
-        const grid_map::Index & index = *iterator;
-        if (!grid.isValid(index)) continue;
-        grid_data(index.x(), index.y()) = grid_utils::occlusion_cost_value::OCCUPIED;
-      }
-    } catch (const std::invalid_argument & e) {
-      std::cerr << e.what() << std::endl;
-    }
-  }
 }
 
 void findOcclusionSpots(
@@ -150,14 +128,10 @@ boost::optional<Polygon2d> generateOcclusionPolygon(
   using tier4_autoware_utils::normalizeRadian;
   const double origin_x = origin.x();
   const double origin_y = origin.y();
-  // TODO(tanaka): consider this later
-  const double delay_angle = M_PI / 6.0;
   const double min_theta =
-    normalizeRadian(std::atan2(min_theta_pos.y() - origin_y, min_theta_pos.x() - origin_x), 0.0) -
-    delay_angle;
+    normalizeRadian(std::atan2(min_theta_pos.y() - origin_y, min_theta_pos.x() - origin_x), 0.0);
   const double max_theta =
-    normalizeRadian(std::atan2(max_theta_pos.y() - origin_y, max_theta_pos.x() - origin_x), 0.0) +
-    delay_angle;
+    normalizeRadian(std::atan2(max_theta_pos.y() - origin_y, max_theta_pos.x() - origin_x), 0.0);
   LineString2d theta_min_ray = {
     origin,
     {origin_x + ray_max_length * std::cos(min_theta),
@@ -197,6 +171,8 @@ Polygon2d generateOccupancyPolygon(const nav_msgs::msg::MapMetaData & info, cons
   poly.outer().emplace_back(to_bg2d(calcOffsetPose(info.origin, r, 0, 0).position));
   poly.outer().emplace_back(to_bg2d(calcOffsetPose(info.origin, r, r, 0).position));
   poly.outer().emplace_back(to_bg2d(calcOffsetPose(info.origin, 0, r, 0).position));
+
+  bg::correct(poly);
   return poly;
 }
 
