@@ -214,7 +214,7 @@ The setting value of voltage_monitor.param.yaml is as follows.
   ros__parameters:
     cmos_battery_warn: 2.90
     cmos_battery_error: 2.70
-    cmos_battery_voltage: "in7:"
+    cmos_battery_label: "in7:"
 ```
 
 ## UML diagrams
