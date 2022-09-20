@@ -187,7 +187,7 @@ protected:
    * @param [out] reassembles_failed IP packet reassembles failed
    * @return execution result
    */
-  bool getReassemblesFailed(uint64_t & reassembiles_failed);
+  bool getReassemblesFailed(uint64_t & reassembles_failed);
 
   diagnostic_updater::Updater updater_;  //!< @brief Updater class which advertises to /diagnostics
   rclcpp::TimerBase::SharedPtr timer_;   //!< @brief timer to get Network information
