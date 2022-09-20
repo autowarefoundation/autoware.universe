@@ -11,6 +11,8 @@
         max_x: 100.0
         min_y: -50.0
         max_y: 50.0
+        max_z: 19.6  # recommended 2.5 for non elevation_grid_mode
+        min_z: -17.6 # recommended 0.0 for non elevation_grid_mode
         negative: False
 
     common_ground_filter:
@@ -25,3 +27,4 @@
         grid_mode_switch_radius: 20.0
         gnd_grid_buffer_size: 4
         detection_range_z_max: 2.5
+        elevation_grid_mode: true

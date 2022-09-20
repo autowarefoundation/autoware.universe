@@ -43,6 +43,7 @@ This implementation inherits `pointcloud_preprocessor::Filter` class, please ref
 | `grid_mode_switch_radius`         | float  | 20.0          | The distance where grid division mode change from by distance to by vertical angle [m]  |
 | `grid_size_m`                     | float  | 0.5           | The first grid size [m]                                                                 |
 | `gnd_grid_buffer_size`            | uint16 | 4             | Number of grids using to estimate local ground slope                                    |
+| `elevation_grid_mode`             | bool   | true          | Wherether to launch grid elevation scan mode                                            |
 
 ## Assumptions / Known limits
 

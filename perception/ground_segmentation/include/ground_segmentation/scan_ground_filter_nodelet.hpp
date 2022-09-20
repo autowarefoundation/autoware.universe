@@ -122,8 +122,8 @@ private:
 
   std::string base_frame_;
   std::string sensor_frame_;
+  bool elevation_grid_mode_ = true;
   float non_ground_height_threshold_;
-  float min_height_detection_range_;
   float grid_size_rad_;
   float grid_size_m_;
   float less_interest_dist_ = 20.0f;
@@ -183,10 +183,9 @@ private:
   void classifyPointCloud(
     std::vector<PointCloudRefVector> & in_radial_ordered_clouds,
     pcl::PointIndices & out_no_ground_indices);
-  void classifyPointCloud(
+  void gridScan_classifyPointCloud(
     std::vector<PointCloudRefVector> & in_radial_ordered_clouds,
-    pcl::PointIndices & out_no_ground_indices, pcl::PointIndices & out_ground_indices,
-    pcl::PointIndices & out_unknown_indices, pcl::PointIndices & out_underground_indices);
+    pcl::PointIndices & out_no_ground_indices);
   /*!
    * Returns the resulting complementary PointCloud, one with the points kept
    * and the other removed as indicated in the indices
