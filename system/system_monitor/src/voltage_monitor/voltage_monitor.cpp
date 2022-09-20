@@ -128,10 +128,10 @@ void VoltageMonitor::checkVoltage(diagnostic_updater::DiagnosticStatusWrapper & 
     }
   }
   stat.add("CMOS battey voltage", fmt::format("{}", voltage));
-  if (RCUTILS_UNLIKELY(voltage < voltage_error_)) {
-    stat.summary(DiagStatus::ERROR, "LOW BATTERY");
-  } else if (RCUTILS_UNLIKELY(voltage < voltage_warn_)) {
-    stat.summary(DiagStatus::WARN, "LOW BATTERY");
+  if (voltage < voltage_error_) {
+    stat.summary(DiagStatus::WARN, "Battery Died");
+  } else if (voltage < voltage_warn_) {
+    stat.summary(DiagStatus::WARN, "Low Battery");
   } else {
     stat.summary(DiagStatus::OK, "OK");
   }
@@ -151,7 +151,7 @@ void VoltageMonitor::checkBatteryStatus(diagnostic_updater::DiagnosticStatusWrap
   bp::child c("cat /proc/driver/rtc", bp::std_out > is_out, bp::std_err > is_err);
   c.wait();
 
-  if (c.exit_code() != 0) {
+  if (RCUTILS_UNLIKELY(c.exit_code() != 0)) {
     std::ostringstream os;
     is_err >> os.rdbuf();
     stat.summary(DiagStatus::ERROR, "rtc error");
@@ -161,7 +161,7 @@ void VoltageMonitor::checkBatteryStatus(diagnostic_updater::DiagnosticStatusWrap
 
   std::string line;
   bool status = false;
-  for (int i = 0; i < 200 && std::getline(is_out, line); i++) {
+  while(std::getline(is_out, line)) {
     auto batStatusLine = line.find("batt_status");
     if (batStatusLine != std::string::npos) {
       auto batStatus = line.find("okay");
@@ -172,11 +172,12 @@ void VoltageMonitor::checkBatteryStatus(diagnostic_updater::DiagnosticStatusWrap
     }
   }
 
-  stat.add("CMOS battey status", std::string(status ? "OK" : "LOW BATTERY"));
-  if (RCUTILS_LIKELY(status)) {
+  if (status) {
+    stat.add("CMOS battey status", std::string("OK"));
     stat.summary(DiagStatus::OK, "OK");
   } else {
-    stat.summary(DiagStatus::WARN, "LOW BATTERY");
+    stat.add("CMOS battey status", std::string("Battery Dead"));
+    stat.summary(DiagStatus::WARN, "Battery Dead");
   }
 
   // Measure elapsed time since start time and report
