@@ -114,7 +114,6 @@ private:
     float getMaxheight() { return height_max; }
   };
 
-
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr ground_pcl_pub_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr unknown_pcl_pub_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr under_ground_pcl_pub_;
@@ -188,9 +187,9 @@ private:
     std::vector<PointCloudRefVector> & in_radial_ordered_clouds,
     pcl::PointIndices & out_no_ground_indices);
   void classifyPointCloud(
-  std::vector<PointCloudRefVector> & in_radial_ordered_clouds,
-  pcl::PointIndices & out_no_ground_indices, pcl::PointIndices & out_ground_indices,
-  pcl::PointIndices & out_unknown_indices, pcl::PointIndices & out_underground_indices);
+    std::vector<PointCloudRefVector> & in_radial_ordered_clouds,
+    pcl::PointIndices & out_no_ground_indices, pcl::PointIndices & out_ground_indices,
+    pcl::PointIndices & out_unknown_indices, pcl::PointIndices & out_underground_indices);
   /*!
    * Returns the resulting complementary PointCloud, one with the points kept
    * and the other removed as indicated in the indices
