@@ -68,7 +68,9 @@ void popOldPose(
     pose_cov_msg_ptr_array,
   const rclcpp::Time & time_stamp);
 
-Eigen::Affine3d fromRosPoseToEigen(const geometry_msgs::msg::Pose & ros_pose);
+Eigen::Matrix4f fromRosPoseToEigenMatrix4f(const geometry_msgs::msg::Pose & ros_pose);
+Eigen::Vector3d fromRosPointToEigenVector3d(const geometry_msgs::msg::Point & ros_pos);
+geometry_msgs::msg::Pose fromEigenMatrix4fToRosPose(const Eigen::Matrix4f & eigen_pose_matrix);
 
 std::vector<geometry_msgs::msg::Pose> createRandomPoseArray(
   const geometry_msgs::msg::PoseWithCovarianceStamped & base_pose_with_cov, const int particle_num);
@@ -80,9 +82,5 @@ T transform(const T & input, const geometry_msgs::msg::TransformStamped & transf
   tf2::doTransform<T>(input, output, transform);
   return output;
 }
-
-Eigen::Matrix4f fromRosPoseToEigenMatrix4f(const geometry_msgs::msg::Pose & ros_pose);
-Eigen::Vector3d fromRosPointToEigenVector3d(const geometry_msgs::msg::Point & ros_pos);
-geometry_msgs::msg::Pose fromEigenMatrix4fToRosPose(const Eigen::Matrix4f & eigen_pose_matrix);
 
 #endif  // NDT_SCAN_MATCHER__UTIL_FUNC_HPP_
