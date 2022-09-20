@@ -73,53 +73,66 @@ void ScanGroundFilterComponent::convertPointcloud(
 {
   out_radial_ordered_points.resize(radial_dividers_num_);
   PointRef current_point;
-  uint16_t back_steps_num = 1;
+  if (elevation_grid_mode_){
+    uint16_t back_steps_num = 1;
 
-  grid_size_rad_ =
-    normalizeRadian(std::atan2(grid_mode_switch_radius_ + grid_size_m_, virtual_lidar_z_)) -
-    normalizeRadian(std::atan2(grid_mode_switch_radius_, virtual_lidar_z_));
-  float theta;
-  float radius;
-  for (size_t i = 0; i < in_cloud->points.size(); ++i) {
-    if (elevation_grid_mode_) {
+    grid_size_rad_ =
+      normalizeRadian(std::atan2(grid_mode_switch_radius_ + grid_size_m_, virtual_lidar_z_)) -
+      normalizeRadian(std::atan2(grid_mode_switch_radius_, virtual_lidar_z_));
+    for (size_t i = 0; i < in_cloud->points.size(); ++i) {
       auto x{
         in_cloud->points[i].x - vehicle_info_.wheel_base_m / 2.0f -
         center_pcl_shift_};  // base on front wheel center
-      radius = static_cast<float>(std::hypot(x, in_cloud->points[i].y));
-      theta = normalizeRadian(std::atan2(x, in_cloud->points[i].y), 0.0);
-    } else {
-      radius = static_cast<float>(std::hypot(in_cloud->points[i].x, in_cloud->points[i].y));
-      theta = normalizeRadian(std::atan2(in_cloud->points[i].x, in_cloud->points[i].y), 0.0);
-    }
+      // auto y{in_cloud->points[i].y};
+      auto radius{static_cast<float>(std::hypot(x, in_cloud->points[i].y))};
+      auto theta{normalizeRadian(std::atan2(x, in_cloud->points[i].y), 0.0)};
 
-    // divide by angle
-    auto gama{normalizeRadian(std::atan2(radius, virtual_lidar_z_), 0.0f)};
-    auto radial_div{
-      static_cast<size_t>(std::floor(normalizeDegree(theta / radial_divider_angle_rad_, 0.0)))};
-    uint16_t grid_id = 0;
-    float curr_grid_size = 0.0f;
-    if (radius <= grid_mode_switch_radius_) {
-      grid_id = static_cast<uint16_t>(radius / grid_size_m_);
-      curr_grid_size = grid_size_m_;
-    } else {
-      grid_id = grid_mode_switch_grid_id_ + (gama - grid_mode_switch_angle_rad_) / grid_size_rad_;
-      if (grid_id <= grid_mode_switch_grid_id_ + back_steps_num) {
+      // divide by angle
+      auto gama{normalizeRadian(std::atan2(radius, virtual_lidar_z_), 0.0f)};
+      auto radial_div{
+        static_cast<size_t>(std::floor(normalizeDegree(theta / radial_divider_angle_rad_, 0.0)))};
+      uint16_t grid_id = 0;
+      float curr_grid_size = 0.0f;
+      if (radius <= grid_mode_switch_radius_) {
+        grid_id = static_cast<uint16_t>(radius / grid_size_m_);
         curr_grid_size = grid_size_m_;
       } else {
-        curr_grid_size = (std::tan(gama) - std::tan(gama - grid_size_rad_)) * virtual_lidar_z_;
+        grid_id = grid_mode_switch_grid_id_ + (gama - grid_mode_switch_angle_rad_) / grid_size_rad_;
+        if (grid_id <= grid_mode_switch_grid_id_ + back_steps_num) {
+          curr_grid_size = grid_size_m_;
+        } else {
+          curr_grid_size = (std::tan(gama) - std::tan(gama - grid_size_rad_)) * virtual_lidar_z_;
+        }
       }
-    }
-    current_point.grid_id = grid_id;
-    current_point.grid_size = curr_grid_size;
-    current_point.radius = radius;
-    current_point.theta = theta;
-    current_point.radial_div = radial_div;
-    current_point.point_state = PointLabel::INIT;
-    current_point.orig_index = i;
-    current_point.orig_point = &in_cloud->points[i];
+      current_point.grid_id = grid_id;
+      current_point.grid_size = curr_grid_size;
+      current_point.radius = radius;
+      current_point.theta = theta;
+      current_point.radial_div = radial_div;
+      current_point.point_state = PointLabel::INIT;
+      current_point.orig_index = i;
+      current_point.orig_point = &in_cloud->points[i];
 
-    // radial divisions
-    out_radial_ordered_points[radial_div].emplace_back(current_point);
+      // radial divisions
+      out_radial_ordered_points[radial_div].emplace_back(current_point);
+    }
+  } else {
+    for (size_t i = 0; i < in_cloud->points.size(); ++i) {
+      auto radius{static_cast<float>(std::hypot(in_cloud->points[i].x, in_cloud->points[i].y))};
+      auto theta{normalizeRadian(std::atan2(in_cloud->points[i].x, in_cloud->points[i].y), 0.0)};
+      auto radial_div{
+        static_cast<size_t>(std::floor(normalizeDegree(theta / radial_divider_angle_rad_, 0.0)))};
+
+      current_point.radius = radius;
+      current_point.theta = theta;
+      current_point.radial_div = radial_div;
+      current_point.point_state = PointLabel::INIT;
+      current_point.orig_index = i;
+      current_point.orig_point = &in_cloud->points[i];
+
+      // radial divisions
+      out_radial_ordered_points[radial_div].emplace_back(current_point);
+    }
   }
 
   // sort by distance
