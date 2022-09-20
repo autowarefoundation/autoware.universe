@@ -205,13 +205,6 @@ void popOldPose(
   }
 }
 
-Eigen::Affine3d fromRosPoseToEigen(const geometry_msgs::msg::Pose & ros_pose)
-{
-  Eigen::Affine3d eigen_pose;
-  tf2::fromMsg(ros_pose, eigen_pose);
-  return eigen_pose;
-}
-
 std::vector<geometry_msgs::msg::Pose> createRandomPoseArray(
   const geometry_msgs::msg::PoseWithCovarianceStamped & base_pose_with_cov, const int particle_num)
 {
