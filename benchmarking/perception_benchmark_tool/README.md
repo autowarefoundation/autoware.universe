@@ -1,7 +1,6 @@
 # perception_benchmark_tool
 
-This package contains various tools for testing the Waymo dataset and perception stack of Autoware.Universe. This tool
-is written in a way that it can be extended with other datasets.
+This package contains benchmark tool for testing  perception stack of Autoware.Universe with the Waymo dataset. 
 
 ## Installation
 
@@ -30,16 +29,11 @@ Lidar point clouds and camera images are encoded in the .tfrecord file. It may t
 the data back.
 
 ```bash
-ros2 run perception_benchmark_tool perception_benchmark_node \
-$HOME/Downloads/validation_validation_0000 \
-$YOUR_AUTOWARE_PATH/src/universe/autoware/benchmarking/benchmarking_launch/launch/waymo.launch.xml \
---ros-args \
--p prediction_path:=$YOUR_AUTOWARE_PATH/src/universe/autoware/benchmarking/perception_benchmark_tool/benchmarking_result/predictions.bin \
--p ground_truth_path:=$YOUR_AUTOWARE_PATH/src/universe/autoware/benchmarking/perception_benchmark_tool/benchmarking_result/gt.bin
+ros2 launch perception_benchmark_tool benchmark_runner.launch.py
 ```
 
 This command will run the perception stack with the Waymo Dataset. We will get the ground truth and prediction files in the file
-paths we give as arguments to the node.
+paths we give as arguments to the launch file.
 
 Lidar point clouds and camera images are encoded in the .tfrecord file. It may take about ~60-90 seconds to decode
 the data back for each segment file.
@@ -73,12 +67,6 @@ bazel-bin/waymo_open_dataset/metrics/tools/compute_tracking_metrics_main \
 ## Result
 
 The evaluation result of the Perception pipeline on the Waymo Dataset is presented below.
-
-In our perception pipeline, we assumed the width and length of pedestrians to be 1 meter.
-Waymo Dataset has so strict tracking evaluation IoU scores. (Vehicle: 0.7 , Pedestrian and Cyclist: 0.5).
-For this reason with given default values, pedestrians and cyclists do not match our perception pipeline.
-
-For more realistic pedestrian results, we need to change the bounding box description of pedestrians.
 
 ### lidar_centerpoint
 
