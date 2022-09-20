@@ -82,6 +82,22 @@ float64_t calcStopDistance(
   return signed_length_on_traj;
 }
 
+float64_t calcOvershootStopDistance(
+  const Point & current_pos, const Trajectory & traj, const int nearest_idx,
+  const float64_t vel_epsilon)
+{
+  const bool is_stopped_current =
+    (std::fabs(traj.points.at(nearest_idx).longitudinal_velocity_mps) <= vel_epsilon);
+  if (!is_stopped_current) return 0.0;
+  int last_stop_ind = nearest_idx;
+  // the last point which is not stopped
+  for (int i = static_cast<int>(last_stop_ind); i >= 0; --i) {
+    if (std::fabs(traj.points.at(i).longitudinal_velocity_mps) > vel_epsilon) break;
+    last_stop_ind = i;
+  }
+  return motion_utils::calcSignedArcLength(traj.points, current_pos, last_stop_ind);
+}
+
 float64_t getPitchByPose(const Quaternion & quaternion_msg)
 {
   float64_t roll, pitch, yaw;

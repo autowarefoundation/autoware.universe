@@ -448,8 +448,8 @@ PidLongitudinalController::ControlData PidLongitudinalController::getControlData
   m_prev_shift = control_data.shift;
 
   // distance to stopline
-  control_data.stop_dist = trajectory_follower::longitudinal_utils::calcStopDistance(
-    current_pose, *m_trajectory_ptr, m_ego_nearest_dist_threshold, m_ego_nearest_yaw_threshold);
+  control_data.stop_dist = trajectory_follower::longitudinal_utils::calcOvershootStopDistance(
+    current_pose.position, *m_trajectory_ptr, control_data.nearest_idx);
 
   // pitch
   const float64_t raw_pitch =
