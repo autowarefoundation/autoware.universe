@@ -76,7 +76,6 @@ Every topic is published in 1 minute interval.
 |                 | GPU Memory Usage       |   ✓   |      -       |      -       |                                                                                                                                                                                                 |
 |                 | GPU Thermal Throttling |   ✓   |      -       |      -       |                                                                                                                                                                                                 |
 |                 | GPU Frequency          |   ✓   |      ✓       |      -       | For Intel platform, monitor whether current GPU clock is supported by the GPU.                                                                                                                  |
-| Voltage Monitor | CMOS Battery Staus     |   ✓   |      -       |      -       | Battery Health for RTC and BIOS -                                                                                                                                                               |     |
 
 ## ROS parameters
 
@@ -176,46 +175,6 @@ Currently GPU monitor for intel platform only supports NVIDIA GPU whose informat
 
 Also you need to install CUDA libraries.
 For installation instructions for CUDA 10.0, see [NVIDIA CUDA Installation Guide for Linux](https://docs.nvidia.com/cuda/archive/10.0/cuda-installation-guide-linux/index.html).
-
-## <u>Voltage monitor for CMOS Battery</u>
-
-Some platforms have built-in batteries for the RTC and CMOS. This node determines the battery status from the result of executing cat /proc/driver/rtc.
-Also, if lm-sensors is installed, it is possible to use the results.
-However, the return value of sensors varies depending on the chipset, so it is necessary to set a string to extract the corresponding voltage.
-It is also necessary to set the voltage for warning and error.
-For example, if you want a warning when the voltage is less than 2.9V and an error when it is less than 2.7V.
-The execution result of sensors on the chipset nct6106 is as follows, and "in7:" is the voltage of the CMOS battery.
-
-```txt
-$ sensors
-pch_cannonlake-virtual-0
-Adapter: Virtual device
-temp1:        +42.0°C
-
-nct6106-isa-0a10
-Adapter: ISA adapter
-in0:           728.00 mV (min =  +0.00 V, max =  +1.74 V)
-in1:             1.01 V  (min =  +0.00 V, max =  +2.04 V)
-in2:             3.34 V  (min =  +0.00 V, max =  +4.08 V)
-in3:             3.34 V  (min =  +0.00 V, max =  +4.08 V)
-in4:             1.07 V  (min =  +0.00 V, max =  +2.04 V)
-in5:             1.05 V  (min =  +0.00 V, max =  +2.04 V)
-in6:             1.67 V  (min =  +0.00 V, max =  +2.04 V)
-in7:             3.06 V  (min =  +0.00 V, max =  +4.08 V)
-in8:             2.10 V  (min =  +0.00 V, max =  +4.08 V)
-fan1:          2789 RPM  (min =    0 RPM)
-fan2:             0 RPM  (min =    0 RPM)
-```
-
-The setting value of voltage_monitor.param.yaml is as follows.
-
-```yaml
-/**:
-  ros__parameters:
-    cmos_battery_warn: 2.90
-    cmos_battery_error: 2.70
-    cmos_battery_label: "in7:"
-```
 
 ## UML diagrams
 
