@@ -82,24 +82,26 @@ boost::optional<TurnSignalInfo> TurnSignalDecider::getIntersectionTurnSignalInfo
     // lane front and back point
     const geometry_msgs::msg::Point lane_front_point =
       lanelet::utils::conversion::toGeomMsgPt(lane.centerline3d().front());
-    const geometry_msgs::msg::Point lane_back_point =
+    const geometry_msgs::msg::Point lane_terminal_point =
       lanelet::utils::conversion::toGeomMsgPt(lane.centerline3d().back());
 
     const size_t front_nearest_seg_idx =
       motion_utils::findNearestSegmentIndex(path.points, lane_front_point);
-    const size_t back_nearest_seg_idx =
-      motion_utils::findNearestSegmentIndex(path.points, lane_back_point);
+    const size_t terminal_nearest_seg_idx =
+      motion_utils::findNearestSegmentIndex(path.points, lane_terminal_point);
 
+    // Distance from ego vehicle front pose to front point of the lane
     const double dist_to_front_point = motion_utils::calcSignedArcLength(
                                          path.points, current_pose.position, current_seg_idx,
                                          lane_front_point, front_nearest_seg_idx) -
                                        base_link2front_;
-    const double dist_to_back_point = motion_utils::calcSignedArcLength(
-                                        path.points, current_pose.position, current_seg_idx,
-                                        lane_back_point, back_nearest_seg_idx) -
-                                      base_link2front_;
 
-    if (dist_to_back_point < 0.0) {
+    // Distance from ego vehicle base line to the terminal point of the lane
+    const double dist_to_terminal_point = motion_utils::calcSignedArcLength(
+      path.points, current_pose.position, current_seg_idx, lane_terminal_point,
+      terminal_nearest_seg_idx);
+
+    if (dist_to_terminal_point < 0.0) {
       // Vehicle is already passed this lane
       continue;
     } else if (search_distance < dist_to_front_point) {
@@ -115,15 +117,10 @@ boost::optional<TurnSignalInfo> TurnSignalDecider::getIntersectionTurnSignalInfo
         dist_to_front_point > 0.0 ? current_pose.position : lane_front_point;
       turn_signal_info.required_start_point = lane_front_point;
       turn_signal_info.required_end_point = get_required_end_point(lane.centerline3d());
-      turn_signal_info.desired_end_point = lane_back_point;
+      turn_signal_info.desired_end_point = lane_terminal_point;
       turn_signal_info.turn_signal.command = signal_map.at(lane_attribute);
       signal_queue.push(turn_signal_info);
     }
-  }
-
-  // Get nearest intersection and decide turn signal
-  if (signal_queue.empty()) {
-    return {};
   }
 
   // Resolve the conflict between several turn signal requirements
