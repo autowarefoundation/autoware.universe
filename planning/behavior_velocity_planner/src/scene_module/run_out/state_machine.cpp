@@ -37,8 +37,7 @@ std::string StateMachine::toString(const State & state) const
   }
 }
 
-void StateMachine::updateState(
-  const StateInput & state_input, rclcpp::Logger & logger, rclcpp::Clock & clock)
+void StateMachine::updateState(const StateInput & state_input, rclcpp::Clock & clock)
 {
   // no obstacles
   if (!state_input.current_obstacle) {

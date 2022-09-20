@@ -45,7 +45,7 @@ public:
   explicit StateMachine(const StateParam & state_param) { state_param_ = state_param; }
   State getCurrentState() const { return state_; }
   std::string toString(const State & state) const;
-  void updateState(const StateInput & state_input, rclcpp::Logger & logger, rclcpp::Clock & clock);
+  void updateState(const StateInput & state_input, rclcpp::Clock & clock);
 
 private:
   StateParam state_param_;

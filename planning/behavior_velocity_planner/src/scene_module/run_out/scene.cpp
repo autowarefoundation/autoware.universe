@@ -670,7 +670,7 @@ void RunOutModule::insertVelocityForState(
     planner_param.vehicle_param.base_to_front;
 
   // update state
-  state_machine_->updateState(state_input, logger_, *clock_);
+  state_machine_->updateState(state_input, *clock_);
 
   // get updated state and target obstacle to decelerate
   const auto state = state_machine_->getCurrentState();
