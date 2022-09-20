@@ -60,8 +60,6 @@ ScanGroundFilterComponent::ScanGroundFilterComponent(const rclcpp::NodeOptions &
       grid_mode_switch_radius_ / grid_size_m_;  // changing the mode of grid division
     virtual_lidar_z_ = vehicle_info_.vehicle_height_m;
     grid_mode_switch_angle_rad_ = std::atan2(grid_mode_switch_radius_, virtual_lidar_z_);
-    grid_size_rad_ = std::atan2(grid_mode_switch_radius_, virtual_lidar_z_) -
-                     std::atan2(grid_mode_switch_radius_ - grid_size_m_, virtual_lidar_z_);
   }
 
   using std::placeholders::_1;
@@ -80,13 +78,19 @@ void ScanGroundFilterComponent::convertPointcloud(
   grid_size_rad_ =
     normalizeRadian(std::atan2(grid_mode_switch_radius_ + grid_size_m_, virtual_lidar_z_)) -
     normalizeRadian(std::atan2(grid_mode_switch_radius_, virtual_lidar_z_));
+  float theta;
+  float radius;
   for (size_t i = 0; i < in_cloud->points.size(); ++i) {
-    auto x{
-      in_cloud->points[i].x - vehicle_info_.wheel_base_m / 2.0f -
-      center_pcl_shift_};  // base on front wheel center
-    // auto y{in_cloud->points[i].y};
-    auto radius{static_cast<float>(std::hypot(x, in_cloud->points[i].y))};
-    auto theta{normalizeRadian(std::atan2(x, in_cloud->points[i].y), 0.0)};
+    if (elevation_grid_mode_) {
+      auto x{
+        in_cloud->points[i].x - vehicle_info_.wheel_base_m / 2.0f -
+        center_pcl_shift_};  // base on front wheel center
+      radius = static_cast<float>(std::hypot(x, in_cloud->points[i].y));
+      theta = normalizeRadian(std::atan2(x, in_cloud->points[i].y), 0.0);
+    } else {
+      radius = static_cast<float>(std::hypot(in_cloud->points[i].x, in_cloud->points[i].y));
+      theta = normalizeRadian(std::atan2(in_cloud->points[i].x, in_cloud->points[i].y), 0.0);
+    }
 
     // divide by angle
     auto gama{normalizeRadian(std::atan2(radius, virtual_lidar_z_), 0.0f)};
@@ -147,7 +151,7 @@ void ScanGroundFilterComponent::gridScan_classifyPointCloud(
     std::vector<uint16_t> gnd_grid_id_list;
     std::vector<float> gnd_max_z_list;
 
-    // check empty ray:
+    // check empty ray
     if (in_radial_ordered_clouds[i].size() == 0) {
       continue;
     }
@@ -157,23 +161,20 @@ void ScanGroundFilterComponent::gridScan_classifyPointCloud(
     PointRef * prev_p;
     prev_p = &in_radial_ordered_clouds[i][0];  // for checking the distance to prev point
 
-    bool initilized_flg = false;
-    bool prev_list_initilize = false;
+    bool init_flg = false;
+    bool prev_list_init = false;
 
     for (size_t j = 0; j < in_radial_ordered_clouds[i].size(); j++) {
       p = &in_radial_ordered_clouds[i][j];
 
       float global_slope_p = 0.0f;
-      // float local_slope_curr_p = 0.0f;
       global_slope_p = std::atan(p->orig_point->z / p->radius);
-      // chec if the current point cloud is new grid
       float non_ground_height_threshold_adap = non_ground_height_threshold_;
       if (p->orig_point->x < -less_interest_dist_) {
         non_ground_height_threshold_adap =
           non_ground_height_threshold_ * (p->radius / less_interest_dist_);
       }
-      if ((initilized_flg == false) && (p->radius <= first_ring_distance_)) {
-        // add condition for suddent slope, but it lose ability to detect 20cm object near by
+      if ((init_flg == false) && (p->radius <= first_ring_distance_)) {
         if (
           (global_slope_p >= global_slope_max_angle_rad_) &&
           p->orig_point->z > non_ground_height_threshold_adap) {
@@ -183,14 +184,12 @@ void ScanGroundFilterComponent::gridScan_classifyPointCloud(
           abs(p->orig_point->z) < non_ground_height_threshold_adap) {
           ground_cluster.addPoint(p->radius, p->orig_point->z);
           if (p->grid_id > prev_p->grid_id) {
-            initilized_flg = true;
+            init_flg = true;
           }
         }
       } else {
-        if (prev_list_initilize == false) {
-          if (initilized_flg) {
-            // first grid is gnd:
-            // initilize prev list by first gnd grid:
+        if (prev_list_init == false) {
+          if (init_flg) {
             for (int ind_grid = p->grid_id - 1 - gnd_grid_buffer_size_; ind_grid < p->grid_id - 1;
                  ind_grid++) {
               gnd_mean_z_list.push_back(
@@ -215,10 +214,10 @@ void ScanGroundFilterComponent::gridScan_classifyPointCloud(
               gnd_max_z_list.push_back(0.0f);
             }
           }
-          prev_list_initilize = true;
+          prev_list_init = true;
         }
         if (p->grid_id > prev_p->grid_id) {
-          // check if the prev grid have ground point cloud:
+          // check if the prev grid have ground point cloud
           if (ground_cluster.getAverageRadius() > 0.0) {
             gnd_mean_z_list.push_back(ground_cluster.getAverageHeight());
             gnd_max_z_list.push_back(ground_cluster.getMaxheight());
@@ -278,10 +277,8 @@ void ScanGroundFilterComponent::gridScan_classifyPointCloud(
               if (((abs(p->orig_point->z - next_gnd_z) <=
                     non_ground_height_threshold_adap + gnd_z_threshold) ||
                    (abs(local_slope_p) < local_slope_max_angle_rad_))) {
-                // if (abs(p->orig_point->z - next_gnd_z) < gnd_z_threshold) {
                 ground_cluster.addPoint(p->radius, p->orig_point->z);
                 p->point_state = PointLabel::GROUND;
-                // }
               } else if (
                 p->orig_point->z - next_gnd_z >
                 non_ground_height_threshold_adap + gnd_z_threshold) {
@@ -335,7 +332,6 @@ void ScanGroundFilterComponent::gridScan_classifyPointCloud(
               }
             }
           }
-          // }
         }
       }
       prev_p = p;
