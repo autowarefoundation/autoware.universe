@@ -658,7 +658,7 @@ void RunOutModule::insertVelocityForState(
 
   const auto & current_pose = planner_data.current_pose.pose;
   const auto & current_vel = planner_data.current_velocity->twist.linear.x;
-  const auto & current_acc = planner_data.current_accel.get();
+  const auto & current_acc = planner_data.current_acceleration->accel.accel.linear.x;
 
   // set data to judge the state
   run_out_utils::StateMachine::StateInput state_input;
