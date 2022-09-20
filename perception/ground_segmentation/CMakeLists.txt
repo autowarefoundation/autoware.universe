@@ -57,11 +57,6 @@ rclcpp_components_register_node(ground_segmentation
   PLUGIN "ground_segmentation::ScanGroundFilterComponent"
   EXECUTABLE scan_ground_filter_node)
 
-# -- Grid Scan Ground Filter --
-rclcpp_components_register_node(ground_segmentation
-  PLUGIN "ground_segmentation::GridScanGroundFilterComponent"
-  EXECUTABLE grid_scan_ground_filter_node)
-
 
 ament_auto_package(INSTALL_TO_SHARE
   launch
