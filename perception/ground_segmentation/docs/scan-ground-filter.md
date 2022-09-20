@@ -10,7 +10,7 @@ This algorithm works by following steps,
 
 1. Divide whole pointclouds into groups by horizontal angle and sort by xy-distance.
 2. Divide sorted pointclouds of each ray into grids
-3. Check the xy distance to previous pointcloud, if the disance is large and previous pointcloud is "no ground" and the height level of current point greater than previous point, the current pointcloud is classified as no ground.
+3. Check the xy distance to previous pointcloud, if the distance is large and previous pointcloud is "no ground" and the height level of current point greater than previous point, the current pointcloud is classified as no ground.
 4. Check vertical angle of the point compared with previous ground grid
 5. Check the height of the point compared with predicted ground level
 6. If vertical angle is greater than local_slope_max and related height to predicted ground level is greater than "non ground height threshold", the point is classified as "non ground"
@@ -43,7 +43,7 @@ This implementation inherits `pointcloud_preprocessor::Filter` class, please ref
 | `grid_mode_switch_radius`         | float  | 20.0          | The distance where grid division mode change from by distance to by vertical angle [m]  |
 | `grid_size_m`                     | float  | 0.5           | The first grid size [m]                                                                 |
 | `gnd_grid_buffer_size`            | uint16 | 4             | Number of grids using to estimate local ground slope                                    |
-| `elevation_grid_mode`             | bool   | true          | Wherether to launch grid elevation scan mode                                            |
+| `elevation_grid_mode`             | bool   | true          | Elevation grid scan mode option                                                         |
 
 ## Assumptions / Known limits
 

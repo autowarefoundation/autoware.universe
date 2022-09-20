@@ -182,20 +182,20 @@ void ScanGroundFilterComponent::gridScan_classifyPointCloud(
 
       float global_slope_p = 0.0f;
       global_slope_p = std::atan(p->orig_point->z / p->radius);
-      float non_ground_height_threshold_adap = non_ground_height_threshold_;
+      float non_ground_height_threshold_local = non_ground_height_threshold_;
       if (p->orig_point->x < -less_interest_dist_) {
-        non_ground_height_threshold_adap =
+        non_ground_height_threshold_local =
           non_ground_height_threshold_ * (p->radius / less_interest_dist_);
       }
       // classify first grid's point cloud
       if ((init_flg == false) && (p->radius <= first_ring_distance_)) {
         if (
           (global_slope_p >= global_slope_max_angle_rad_) &&
-          p->orig_point->z > non_ground_height_threshold_adap) {
+          p->orig_point->z > non_ground_height_threshold_local) {
           out_no_ground_indices.indices.push_back(p->orig_index);
         } else if (
           (abs(global_slope_p) < global_slope_max_angle_rad_) &&
-          abs(p->orig_point->z) < non_ground_height_threshold_adap) {
+          abs(p->orig_point->z) < non_ground_height_threshold_local) {
           ground_cluster.addPoint(p->radius, p->orig_point->z);
           if (p->grid_id > prev_p->grid_id) {
             init_flg = true;
@@ -293,13 +293,13 @@ void ScanGroundFilterComponent::gridScan_classifyPointCloud(
                               gnd_grid_buffer_size_ + gnd_grid_continual_thresh_) &&
               (p->radius - gnd_radius_list.back() < gnd_grid_continual_thresh_ * p->grid_size)) {
               if (((abs(p->orig_point->z - next_gnd_z) <=
-                    non_ground_height_threshold_adap + gnd_z_threshold) ||
+                    non_ground_height_threshold_local + gnd_z_threshold) ||
                    (abs(local_slope_p) < local_slope_max_angle_rad_))) {
                 ground_cluster.addPoint(p->radius, p->orig_point->z);
                 p->point_state = PointLabel::GROUND;
               } else if (
                 p->orig_point->z - next_gnd_z >
-                non_ground_height_threshold_adap + gnd_z_threshold) {
+                non_ground_height_threshold_local + gnd_z_threshold) {
                 out_no_ground_indices.indices.push_back(p->orig_index);
                 p->point_state = PointLabel::NON_GROUND;
               } else {
@@ -314,9 +314,9 @@ void ScanGroundFilterComponent::gridScan_classifyPointCloud(
               if (
                 (abs(local_slope_p) < local_slope_max_angle_rad_) ||
                 (abs(p->orig_point->z - gnd_mean_z_list.back()) <
-                 non_ground_height_threshold_adap) ||
+                 non_ground_height_threshold_local) ||
                 (abs(p->orig_point->z - gnd_max_z_list.back()) <
-                 non_ground_height_threshold_adap)) {
+                 non_ground_height_threshold_local)) {
                 ground_cluster.addPoint(p->radius, p->orig_point->z);
                 p->point_state = PointLabel::GROUND;
               } else if (local_slope_p > global_slope_max_angle_rad_) {
