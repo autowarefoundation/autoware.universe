@@ -23,17 +23,19 @@ using autoware_auto_perception_msgs::msg::ObjectClassification;
 
 bool isVehicle(const uint8_t object_classification)
 {
-  return object_classification == ObjectClassification::CAR ||
-         object_classification == ObjectClassification::TRUCK ||
+  return object_classification == ObjectClassification::BICYCLE ||
          object_classification == ObjectClassification::BUS ||
-         object_classification == ObjectClassification::TRAILER;
+         object_classification == ObjectClassification::CAR ||
+         object_classification == ObjectClassification::MOTORCYCLE ||
+         object_classification == ObjectClassification::TRAILER ||
+         object_classification == ObjectClassification::TRUCK;
 }
 
 bool isLargeVehicle(const uint8_t object_classification)
 {
-  return object_classification == ObjectClassification::TRUCK ||
-         object_classification == ObjectClassification::BUS ||
-         object_classification == ObjectClassification::TRAILER;
+  return object_classification == ObjectClassification::BUS ||
+         object_classification == ObjectClassification::TRAILER ||
+         object_classification == ObjectClassification::TRUCK;
 }
 }  // namespace perception_utils
 
