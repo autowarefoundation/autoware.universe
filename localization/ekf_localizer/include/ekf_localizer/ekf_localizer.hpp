@@ -15,6 +15,8 @@
 #ifndef EKF_LOCALIZER__EKF_LOCALIZER_HPP_
 #define EKF_LOCALIZER__EKF_LOCALIZER_HPP_
 
+#include "ekf_localizer/warning.hpp"
+
 #include <kalman_filter/kalman_filter.hpp>
 #include <kalman_filter/time_delay_kalman_filter.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -113,6 +115,8 @@ public:
   EKFLocalizer(const std::string & node_name, const rclcpp::NodeOptions & options);
 
 private:
+  const Warning warning_;
+
   //!< @brief ekf estimated pose publisher
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_pose_;
   //!< @brief estimated ekf pose with covariance publisher
@@ -261,18 +265,6 @@ private:
    * @param twist measurement value
    */
   void measurementUpdateTwist(const geometry_msgs::msg::TwistWithCovarianceStamped & twist);
-
-  /**
-   * @brief check whether a measurement value falls within the mahalanobis distance threshold
-   * @param dist_max mahalanobis distance threshold
-   * @param estimated current estimated state
-   * @param measured measured state
-   * @param estimated_cov current estimation covariance
-   * @return whether it falls within the mahalanobis distance threshold
-   */
-  bool mahalanobisGate(
-    const double & dist_max, const Eigen::MatrixXd & estimated, const Eigen::MatrixXd & measured,
-    const Eigen::MatrixXd & estimated_cov) const;
 
   /**
    * @brief get transform from frame_id
