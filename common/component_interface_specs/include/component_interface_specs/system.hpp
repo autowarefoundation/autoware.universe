@@ -17,7 +17,7 @@
 
 #include <rclcpp/qos.hpp>
 
-#include <autoware_ad_api_msgs/msg/operation_mode_state.hpp>
+#include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
 #include <tier4_system_msgs/srv/change_autoware_control.hpp>
 #include <tier4_system_msgs/srv/change_operation_mode.hpp>
 
@@ -38,7 +38,7 @@ struct ChangeOperationMode
 
 struct OperationModeState
 {
-  using Message = autoware_ad_api_msgs::msg::OperationModeState;
+  using Message = autoware_adapi_v1_msgs::msg::OperationModeState;
   static constexpr char name[] = "/system/operation_mode/state";
   static constexpr size_t depth = 1;
   static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;
