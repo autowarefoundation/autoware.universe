@@ -21,7 +21,7 @@ SteeringFactorInterface::SteeringFactorInterface(rclcpp::Node * node, const std:
 {
   // Publisher
   pub_steering_factors_ =
-    node->create_publisher<SteeringFactorArray>("/planning/api/" + name + "/steering_factor", 1);
+    node->create_publisher<SteeringFactorArray>("/planning/steering_factor/" + name, 1);
 }
 
 void SteeringFactorInterface::publishSteeringFactor(const rclcpp::Time & stamp)
