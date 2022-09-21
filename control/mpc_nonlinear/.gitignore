@@ -5,5 +5,5 @@ cmake-build-debug-coverage
 cmake-build-debug
 *.json
 /.cache/
-runtime_lib/CppAD/*
-runtime_lib/CppADCodeGen/*
+external_libs/CppAD/*
+external_libs/CppADCodeGen/*
