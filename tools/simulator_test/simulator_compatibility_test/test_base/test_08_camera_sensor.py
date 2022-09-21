@@ -3,6 +3,10 @@ import time
 import pytest
 import rclpy
 from rclpy.executors import SingleThreadedExecutor
+from rclpy.qos import QoSDurabilityPolicy
+from rclpy.qos import QoSHistoryPolicy
+from rclpy.qos import QoSProfile
+from rclpy.qos import QoSReliabilityPolicy
 from sensor_msgs.msg import CameraInfo
 from sensor_msgs.msg import Image
 
@@ -17,19 +21,25 @@ class Test08CameraSensorBase:
 
     @classmethod
     def setup_class(cls) -> None:
+        QOS_BEKL10V = QoSProfile(
+            reliability=QoSReliabilityPolicy.BEST_EFFORT,
+            history=QoSHistoryPolicy.KEEP_LAST,
+            depth=10,
+            durability=QoSDurabilityPolicy.VOLATILE,
+        )
         rclpy.init()
         cls.node = rclpy.create_node("test_08_camera_sensor_base")
         cls.sub_sensor = cls.node.create_subscription(
             Image,
             "/sensing/camera/traffic_light/image_raw",
             lambda msg: cls.sensor_msgs_rx.append(msg),
-            10,
+            QOS_BEKL10V,
         )
         cls.sub_sensor_info = cls.node.create_subscription(
             CameraInfo,
             "/sensing/camera/traffic_light/camera_info",
             lambda msg: cls.sensor_info_msgs_rx.append(msg),
-            10,
+            QOS_BEKL10V,
         )
         cls.executor = SingleThreadedExecutor()
         cls.executor.add_node(cls.node)

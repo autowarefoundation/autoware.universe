@@ -3,6 +3,10 @@ import time
 import pytest
 import rclpy
 from rclpy.executors import SingleThreadedExecutor
+from rclpy.qos import QoSDurabilityPolicy
+from rclpy.qos import QoSHistoryPolicy
+from rclpy.qos import QoSProfile
+from rclpy.qos import QoSReliabilityPolicy
 from sensor_msgs.msg import Imu
 
 
@@ -14,13 +18,19 @@ class Test10ImuSensorBase:
 
     @classmethod
     def setup_class(cls) -> None:
+        QOS_BEKL10V = QoSProfile(
+            reliability=QoSReliabilityPolicy.BEST_EFFORT,
+            history=QoSHistoryPolicy.KEEP_LAST,
+            depth=10,
+            durability=QoSDurabilityPolicy.VOLATILE,
+        )
         rclpy.init()
         cls.node = rclpy.create_node("test_10_imu_sensor_base")
         cls.sub_pose_stamped = cls.node.create_subscription(
             Imu,
             "/sensing/imu/tamagawa/imu_raw",
             lambda msg: cls.sensor_msgs_rx.append(msg),
-            10,
+            QOS_BEKL10V,
         )
         cls.executor = SingleThreadedExecutor()
         cls.executor.add_node(cls.node)

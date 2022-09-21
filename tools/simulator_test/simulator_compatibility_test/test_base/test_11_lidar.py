@@ -2,6 +2,10 @@ import time
 
 import rclpy
 from rclpy.executors import MultiThreadedExecutor
+from rclpy.qos import QoSDurabilityPolicy
+from rclpy.qos import QoSHistoryPolicy
+from rclpy.qos import QoSProfile
+from rclpy.qos import QoSReliabilityPolicy
 from sensor_msgs.msg import PointCloud2
 
 
@@ -19,36 +23,52 @@ class Test11LidarBase:
 
     @classmethod
     def setup_class(cls) -> None:
+        QOS_BEKL10V = QoSProfile(
+            reliability=QoSReliabilityPolicy.BEST_EFFORT,
+            history=QoSHistoryPolicy.KEEP_LAST,
+            depth=10,
+            durability=QoSDurabilityPolicy.VOLATILE,
+        )
         rclpy.init()
         cls.node = rclpy.create_node("test_11_lidar_base")
         cls.node.create_subscription(
             PointCloud2,
+            "/sensing/lidar/left/pointcloud_raw",
+            lambda msg: cls.msgs_rx["right_left_rx"].append(msg),
+            QOS_BEKL10V,
+        )
+        cls.node.create_subscription(
+            PointCloud2,
+            "/sensing/lidar/left/pointcloud_raw_ex",
+            lambda msg: cls.msgs_rx["right_left_ex_rx"].append(msg),
+            QOS_BEKL10V,
+        )
+        cls.node.create_subscription(
+            PointCloud2,
             "/sensing/lidar/right/pointcloud_raw",
             lambda msg: cls.msgs_rx["right_raw_rx"].append(msg),
-            10,
+            QOS_BEKL10V,
         )
         cls.node.create_subscription(
             PointCloud2,
             "/sensing/lidar/right/pointcloud_raw_ex",
-            lambda msg: cls.msgs_rx["right_raw_rx_ex"].append(msg),
-            10,
+            lambda msg: cls.msgs_rx["right_raw_ex_rx"].append(msg),
+            QOS_BEKL10V,
         )
         cls.node.create_subscription(
             PointCloud2,
             "/sensing/lidar/top/pointcloud_raw",
             lambda msg: cls.msgs_rx["top_raw_rx"].append(msg),
-            10,
+            QOS_BEKL10V,
         )
         cls.node.create_subscription(
             PointCloud2,
             "/sensing/lidar/top/pointcloud_raw_ex",
-            lambda msg: cls.msgs_rx["top_raw_rx_ex"].append(msg),
-            10,
+            lambda msg: cls.msgs_rx["top_raw_ex_rx"].append(msg),
+            QOS_BEKL10V,
         )
         cls.executor = MultiThreadedExecutor()
         cls.executor.add_node(cls.node)
-
-        cls.update_pointcloud_data()
 
     @classmethod
     def teardown_class(cls) -> None:
@@ -64,6 +84,7 @@ class Test11LidarBase:
                 while cnt < 2:
                     self.executor.spin_once()
                     time.sleep(1)
+                    cnt+=1
         except BaseException as e:
             print(e)
         finally:
