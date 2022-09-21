@@ -186,23 +186,32 @@ std::vector<double> calcTrajectoryCurvatureFrom3Points(
   }
 
   // calculate curvature by circle fitting from three points
-  std::vector<double> k_arr;
-  for (size_t i = idx_dist; i < trajectory.size() - idx_dist; ++i) {
-    try {
-      const auto p0 = getPoint(trajectory.at(i - idx_dist));
-      const auto p1 = getPoint(trajectory.at(i));
-      const auto p2 = getPoint(trajectory.at(i + idx_dist));
-      k_arr.push_back(calcCurvature(p0, p1, p2));
-    } catch (...) {
-      k_arr.push_back(0.0);  // points are too close. No curvature.
-    }
-  }
+  std::vector<double> k_arr(trajectory.size(), 0.0);
 
-  // first and last curvature is copied from next value
-  for (size_t i = 0; i < idx_dist; ++i) {
-    k_arr.insert(k_arr.begin(), k_arr.front());
-    k_arr.push_back(k_arr.back());
+  for (size_t i = 1; i + 1 < trajectory.size(); i++) {
+    double curvature = 0.0;
+    const auto p0 = getPoint(trajectory.at(i - std::min(idx_dist, i)));
+    const auto p1 = getPoint(trajectory.at(i));
+    const auto p2 = getPoint(trajectory.at(i + std::min(idx_dist, trajectory.size() - 1 - i)));
+    try {
+      curvature = calcCurvature(p0, p1, p2);
+    } catch (std::exception const & e) {
+      // ...code that handles the error...
+      RCLCPP_WARN(
+        rclcpp::get_logger("motion_velocity_smoother").get_child("trajectory_utils"), "%s",
+        e.what());
+      if (i > 1) {
+        curvature = k_arr.at(i - 1);  // previous curvature
+      } else {
+        curvature = 0.0;
+      }
+    }
+    k_arr.at(i) = curvature;
   }
+  // copy curvatures for the last and first points;
+  k_arr.at(0) = k_arr.at(1);
+  k_arr.back() = k_arr.at((trajectory.size() - 2));
+
   return k_arr;
 }
 
@@ -494,6 +503,18 @@ boost::optional<TrajectoryPoints> applyDecelFilterWithJerkConstraint(
   const auto it_end = std::find_if(
     distance_all.begin(), distance_all.end(), [&xs](double x) { return x > xs.back(); });
   const std::vector<double> distance{distance_all.begin() + start_index, it_end};
+
+  if (
+    !interpolation_utils::isIncreasing(xs) || !interpolation_utils::isIncreasing(distance) ||
+    !interpolation_utils::isNotDecreasing(xs) || !interpolation_utils::isNotDecreasing(distance)) {
+    return {};
+  }
+
+  if (
+    xs.size() < 2 || vs.size() < 2 || as.size() < 2 || distance.empty() ||
+    distance.front() < xs.front() || xs.back() < distance.back()) {
+    return {};
+  }
 
   const auto vel_at_wp = interpolation::lerp(xs, vs, distance);
   const auto acc_at_wp = interpolation::lerp(xs, as, distance);

@@ -199,25 +199,25 @@ PidLongitudinalController::PidLongitudinalController(rclcpp::Node & node) : node
   // set parameter callback
   m_set_param_res = node_->add_on_set_parameters_callback(
     std::bind(&PidLongitudinalController::paramCallback, this, _1));
-
-  // set lowpass filter for acc
-  m_lpf_acc = std::make_shared<trajectory_follower::LowpassFilter1d>(0.0, 0.2);
 }
 void PidLongitudinalController::setInputData(InputData const & input_data)
 {
   setTrajectory(input_data.current_trajectory_ptr);
-  setCurrentVelocity(input_data.current_odometry_ptr);
+  setKinematicState(input_data.current_odometry_ptr);
+  setCurrentAcceleration(input_data.current_accel_ptr);
 }
 
-void PidLongitudinalController::setCurrentVelocity(
-  const nav_msgs::msg::Odometry::ConstSharedPtr msg)
+void PidLongitudinalController::setKinematicState(const nav_msgs::msg::Odometry::ConstSharedPtr msg)
 {
   if (!msg) return;
+  m_current_kinematic_state_ptr = msg;
+}
 
-  if (m_current_velocity_ptr) {
-    m_prev_velocity_ptr = m_current_velocity_ptr;
-  }
-  m_current_velocity_ptr = std::make_shared<nav_msgs::msg::Odometry>(*msg);
+void PidLongitudinalController::setCurrentAcceleration(
+  const geometry_msgs::msg::AccelWithCovarianceStamped::ConstSharedPtr msg)
+{
+  if (!msg) return;
+  m_current_accel_ptr = msg;
 }
 
 void PidLongitudinalController::setTrajectory(
@@ -237,7 +237,7 @@ void PidLongitudinalController::setTrajectory(
     return;
   }
 
-  m_trajectory_ptr = std::make_shared<autoware_auto_planning_msgs::msg::Trajectory>(*msg);
+  m_trajectory_ptr = msg;
 }
 
 rcl_interfaces::msg::SetParametersResult PidLongitudinalController::paramCallback(
@@ -366,22 +366,12 @@ rcl_interfaces::msg::SetParametersResult PidLongitudinalController::paramCallbac
 boost::optional<LongitudinalOutput> PidLongitudinalController::run()
 {
   // wait for initial pointers
-  if (
-    !m_current_velocity_ptr || !m_prev_velocity_ptr || !m_trajectory_ptr ||
-    !m_tf_buffer.canTransform(m_trajectory_ptr->header.frame_id, "base_link", tf2::TimePointZero)) {
+  if (!m_current_kinematic_state_ptr || !m_trajectory_ptr || !m_current_accel_ptr) {
     return boost::none;
   }
 
-  // get current ego pose
-  geometry_msgs::msg::TransformStamped tf =
-    m_tf_buffer.lookupTransform(m_trajectory_ptr->header.frame_id, "base_link", tf2::TimePointZero);
-
   // calculate current pose and control data
-  geometry_msgs::msg::Pose current_pose;
-  current_pose.position.x = tf.transform.translation.x;
-  current_pose.position.y = tf.transform.translation.y;
-  current_pose.position.z = tf.transform.translation.z;
-  current_pose.orientation = tf.transform.rotation;
+  geometry_msgs::msg::Pose current_pose = m_current_kinematic_state_ptr->pose.pose;
 
   const auto control_data = getControlData(current_pose);
 
@@ -426,7 +416,8 @@ PidLongitudinalController::ControlData PidLongitudinalController::getControlData
   control_data.dt = getDt();
 
   // current velocity and acceleration
-  control_data.current_motion = getCurrentMotion();
+  control_data.current_motion.vel = m_current_kinematic_state_ptr->twist.twist.linear.x;
+  control_data.current_motion.acc = m_current_accel_ptr->accel.accel.linear.x;
 
   // nearest idx
   const size_t nearest_idx = motion_utils::findFirstNearestIndexWithSoftConstraints(
@@ -708,23 +699,6 @@ float64_t PidLongitudinalController::getDt()
   const float64_t max_dt = m_longitudinal_ctrl_period * 2.0;
   const float64_t min_dt = m_longitudinal_ctrl_period * 0.5;
   return std::max(std::min(dt, max_dt), min_dt);
-}
-
-PidLongitudinalController::Motion PidLongitudinalController::getCurrentMotion() const
-{
-  const float64_t dv =
-    m_current_velocity_ptr->twist.twist.linear.x - m_prev_velocity_ptr->twist.twist.linear.x;
-  const float64_t dt = std::max(
-    (rclcpp::Time(m_current_velocity_ptr->header.stamp) -
-     rclcpp::Time(m_prev_velocity_ptr->header.stamp))
-      .seconds(),
-    1e-03);
-  const float64_t accel = dv / dt;
-
-  const float64_t current_vel = m_current_velocity_ptr->twist.twist.linear.x;
-  const float64_t current_acc = m_lpf_acc->filter(accel);
-
-  return Motion{current_vel, current_acc};
 }
 
 enum PidLongitudinalController::Shift PidLongitudinalController::getCurrentShift(

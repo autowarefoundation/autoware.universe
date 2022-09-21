@@ -340,14 +340,12 @@ void NDTScanMatcher::service_ndt_align(
 
   if (ndt_ptr_->getInputTarget() == nullptr) {
     res->success = false;
-    res->seq = req->seq;
     RCLCPP_WARN(get_logger(), "No InputTarget");
     return;
   }
 
   if (ndt_ptr_->getInputSource() == nullptr) {
     res->success = false;
-    res->seq = req->seq;
     RCLCPP_WARN(get_logger(), "No InputSource");
     return;
   }
@@ -359,7 +357,6 @@ void NDTScanMatcher::service_ndt_align(
   res->pose_with_covariance = align_using_monte_carlo(ndt_ptr_, mapTF_initial_pose_msg);
   key_value_stdmap_["state"] = "Sleeping";
   res->success = true;
-  res->seq = req->seq;
   res->pose_with_covariance.pose.covariance = req->pose_with_covariance.pose.covariance;
 }
 

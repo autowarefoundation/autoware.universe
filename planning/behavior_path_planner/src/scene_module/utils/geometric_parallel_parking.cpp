@@ -174,7 +174,6 @@ void GeometricParallelParking::clearPaths()
 {
   current_path_idx_ = 0;
   arc_paths_.clear();
-  path_pose_array_.poses.clear();
   paths_.clear();
 }
 
@@ -347,11 +346,6 @@ PathWithLaneId GeometricParallelParking::generateStraightPath(const Pose & start
   auto path = planner_data_->route_handler->getCenterLinePath(
     current_lanes, current_arc_position.length, start_arc_position.length, true);
   path.header = planner_data_->route_handler->getRouteHeader();
-
-  path.drivable_area = util::generateDrivableArea(
-    path, current_lanes, planner_data_->parameters.drivable_area_resolution,
-    planner_data_->parameters.vehicle_length, planner_data_);
-
   path.points.back().point.longitudinal_velocity_mps = 0;
 
   return path;
@@ -429,9 +423,6 @@ std::vector<PathWithLaneId> GeometricParallelParking::planOneTrial(
     p.lane_ids.push_back(closest_shoulder_lanelet.id());
   }
   path_turn_left.header = planner_data_->route_handler->getRouteHeader();
-  path_turn_left.drivable_area = util::generateDrivableArea(
-    path_turn_left, lanes, common_params.drivable_area_resolution, common_params.vehicle_length,
-    planner_data_);
 
   PathWithLaneId path_turn_right = generateArcPath(
     Cr, R_E_r, normalizeRadian(psi + M_PI_2 + theta_l), M_PI_2, !is_forward, is_forward);
@@ -440,9 +431,6 @@ std::vector<PathWithLaneId> GeometricParallelParking::planOneTrial(
     p.lane_ids.push_back(closest_shoulder_lanelet.id());
   }
   path_turn_right.header = planner_data_->route_handler->getRouteHeader();
-  path_turn_right.drivable_area = util::generateDrivableArea(
-    path_turn_right, lanes, common_params.drivable_area_resolution, common_params.vehicle_length,
-    planner_data_);
 
   // Need to add straight path to last right_turning for parking in parallel
   if (std::abs(end_pose_offset) > 0) {
@@ -459,16 +447,10 @@ std::vector<PathWithLaneId> GeometricParallelParking::planOneTrial(
   paths_.push_back(path_turn_right);
 
   // debug
-  Cr_.pose = Cr;
-  Cr_.header = planner_data_->route_handler->getRouteHeader();
-  Cl_.pose = Cl;
-  Cl_.header = planner_data_->route_handler->getRouteHeader();
-  start_pose_.pose = start_pose;
-  start_pose_.header = planner_data_->route_handler->getRouteHeader();
-  arc_end_pose_.pose = arc_end_pose;
-  arc_end_pose_.header = planner_data_->route_handler->getRouteHeader();
-  path_pose_array_ = convertToGeometryPoseArray(getFullPath());
-  path_pose_array_.header = planner_data_->route_handler->getRouteHeader();
+  Cr_ = Cr;
+  Cl_ = Cl;
+  start_pose_ = start_pose;
+  arc_end_pose_ = arc_end_pose;
 
   return paths_;
 }
