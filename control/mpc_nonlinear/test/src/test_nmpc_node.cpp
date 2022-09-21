@@ -562,16 +562,19 @@ TEST_F(FakeNodeFixture, nmpc_core_lpv_test)
         ns_eigen_utils::printEigenMat(Bc, "Bc");
         ns_eigen_utils::printEigenMat(Bc.block<4, 2>(4, 0), "Bce");
 
-        auto const &Ac_error_block = Ac.bottomRightCorner<5, 5>();
+        auto const &Ac_error_block = Ac.block<4, 4>(4, 4);
 
         auto const &th1 = Ac_error_block(0, 1);
-        auto const &th2 = Ac_error_block(1, 0);
-        auto const &th3 = Ac_error_block(1, 1);
-        auto const &th4 = Ac_error_block(1, 2);
+        auto const &th2 = Ac_error_block(0, 2);
+
+        auto const &th3 = Ac_error_block(1, 0);
+        auto const &th4 = Ac_error_block(1, 1);
+        auto const &th5 = Ac_error_block(1, 2);
+        auto const &th6 = Ac_error_block(1, 3);
 
         ns_utils::print("Nonlinearities in Error Block", th1, th2, th3, th4);
 
-        auto thetas_ = std::vector<double>{th1, th2, th3, th4};
+        auto thetas_ = std::vector<double>{th1, th2, th3, th4, th5, th6};
 
         // Extract the first X0, Y0, we save the first X0 and Y0 at the end.
         Xr = params_lpv.lpvXcontainer.back();  // We keep the first X0, Y0 at the end of the
@@ -605,10 +608,10 @@ TEST_F(FakeNodeFixture, nmpc_core_lpv_test)
         ns_utils::print("Operating states, vx, ey, eyaw :", vx, ey, eyaw);
         ns_eigen_utils::printEigenMat(eig_vals, "\nEigen values of the closed loop system matrix :");
 
-        ns_utils::print("Magnitute of Eigenvalues ");
+        ns_utils::print("Magnitude of Eigenvalues ");
         for (auto ke = 0; ke < eig_vals.size(); ++ke)
         {
-          // ASSERT_TRUE(std::abs())
+          ASSERT_LE(std::abs(eig_vals(ke)), 1.);
           ns_utils::print(std::abs(eig_vals(ke)));
         }
       }
