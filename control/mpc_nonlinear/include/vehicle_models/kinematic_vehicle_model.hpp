@@ -45,7 +45,6 @@ class KinematicModelSingleTrackModel final
   // Destructor
   ~KinematicModelSingleTrackModel() final /** = default; */
   {
-
     CppAD::thread_alloc::inuse(0);
   };
 

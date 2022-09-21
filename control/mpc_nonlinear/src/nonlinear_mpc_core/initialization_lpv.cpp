@@ -115,6 +115,9 @@ bool LPVinitializer::simulateWithFeedback(
     // auto const & Ac_error_block = Ac.template block<estate_dim, estate_dim>(4, 4);
     auto const &Ac_error_block = Ac.block<4, 4>(4, 4);
 
+    ns_eigen_utils::printEigenMat(Ac, "Ac in LPV");
+    ns_eigen_utils::printEigenMat(Bc, "Bc in LPV");
+
     auto const &th1 = Ac_error_block(0, 1);
     auto const &th2 = Ac_error_block(0, 2);
 
@@ -150,17 +153,7 @@ bool LPVinitializer::simulateWithFeedback(
       uk(j) = ns_utils::clamp(uk(j), params_opt.ulower(j), params_opt.uupper(j));
     }
 
-    auto stemp = xk(ns_utils::toUType(VehicleStateIds::s));
-    auto sintegrated = stemp + dt * xk(6) * cos(xk(5)) / (1. - kappa0 * xk(4));
-    ns_utils::print("s in LPV before integrating ...  and manual integration", stemp, sintegrated);
-
-    // TODO : comment out
-    ns_eigen_utils::printEigenMat(uk, "Computed Feedback in LPV : ");
-
     ns_sim::simulateNonlinearModel_zoh(model_ptr, uk, params, dt, xk);
-
-    stemp = xk(ns_utils::toUType(VehicleStateIds::s));
-    ns_utils::print("s in LPV after integrating before saturating ... ", stemp);
 
     // Saturate all states
     for (auto j = 0; j < xk.size(); ++j)
@@ -170,9 +163,6 @@ bool LPVinitializer::simulateWithFeedback(
         xk(j) = ns_utils::clamp(xk(j), params_opt.xlower(j), params_opt.xupper(j));
       }
     }
-
-    stemp = xk(ns_utils::toUType(VehicleStateIds::s));
-    ns_utils::print("s in LPV after saturating ... ", stemp);
 
     // Unwrap error and yaw angles.
     xk(ns_utils::toUType(VehicleStateIds::yaw)) =
