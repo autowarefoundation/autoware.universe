@@ -82,6 +82,17 @@ private:
   geometry_msgs::msg::Point get_required_end_point(
     const lanelet::ConstLineString3d & centerline) const;
 
+  TurnIndicatorsCommand resolve_turn_signal(
+    const PathWithLaneId & path, const Pose & current_pose, const size_t current_seg_idx,
+    const TurnSignalInfo & intersection_signal_info,
+    const TurnSignalInfo & behavior_signal_info) const;
+
+  TurnIndicatorsCommand resolve_turn_signal(
+    const TurnIndicatorsCommand & prior_turn_signal,
+    const TurnIndicatorsCommand & subsequent_turn_signal, const double dist_to_prior_required_start,
+    const double dist_to_prior_required_end, const double dist_to_subsequent_required_start,
+    const double dist_to_subsequent_required_end) const;
+
   rclcpp::Logger logger_{
     rclcpp::get_logger("behavior_path_planner").get_child("turn_signal_decider")};
 
