@@ -108,6 +108,9 @@ RadarFusionToDetectedObject::Output RadarFusionToDetectedObject::update(
         if (isYawCorrect(split_object, twist_with_covariance, param_.threshold_yaw_diff)) {
           split_object.kinematics.twist_with_covariance = twist_with_covariance;
           split_object.kinematics.has_twist = true;
+          if (hasTwistCovariance(twist_with_covariance)) {
+            split_object.kinematics.has_twist_covariance = true;
+          }
         }
       }
 
@@ -124,6 +127,19 @@ RadarFusionToDetectedObject::Output RadarFusionToDetectedObject::update(
     }
   }
   return output;
+}
+
+// Judge whether twist covariance is available.
+bool RadarFusionToDetectedObject::hasTwistCovariance(
+  const TwistWithCovariance & twist_with_covariance)
+{
+  using IDX = tier4_autoware_utils::pose_covariance_index::POSE_COV_IDX;
+  auto covariance = twist_with_covariance.covariance;
+  if (covariance[IDX::X_X] == 0.0 && covariance[IDX::Y_Y] == 0.0 && covariance[IDX::Z_Z] == 0.0) {
+    return false;
+  } else {
+    return true;
+  }
 }
 
 // Judge whether object's yaw is same direction with twist's yaw.
