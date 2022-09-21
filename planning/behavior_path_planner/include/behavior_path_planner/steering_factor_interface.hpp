@@ -17,7 +17,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 
-#include "autoware_ad_api_msgs/msg/steering_factor_array.hpp"
+#include "autoware_adapi_v1_msgs/msg/steering_factor_array.hpp"
 #include "geometry_msgs/msg/pose.hpp"
 #include "unique_identifier_msgs/msg/uuid.hpp"
 
@@ -27,8 +27,8 @@
 
 namespace steering_factor_interface
 {
-using autoware_ad_api_msgs::msg::SteeringFactor;
-using autoware_ad_api_msgs::msg::SteeringFactorArray;
+using autoware_adapi_v1_msgs::msg::SteeringFactor;
+using autoware_adapi_v1_msgs::msg::SteeringFactorArray;
 using geometry_msgs::msg::Pose;
 
 class SteeringFactorInterface
