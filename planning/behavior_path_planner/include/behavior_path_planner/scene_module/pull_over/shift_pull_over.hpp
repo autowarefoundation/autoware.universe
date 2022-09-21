@@ -35,7 +35,7 @@ class ShiftPullOver : public PullOverPlannerBase
 public:
   ShiftPullOver(
     rclcpp::Node & node, const PullOverParameters & parameters,
-    const std::shared_ptr<LaneDepartureChecker> lane_departure_checker,
+    const LaneDepartureChecker & lane_departure_checker,
     const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map);
 
   PullOverPlannerType getPlannerType() const override { return PullOverPlannerType::SHIFT; };
@@ -53,8 +53,8 @@ public:
     const bool is_in_goal_route_section, const Pose & goal_pose) const;
 
 protected:
-  std::shared_ptr<LaneDepartureChecker> lane_departure_checker_;
-  std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map_;
+  LaneDepartureChecker lane_departure_checker_{};
+  std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map_{};
 };
 }  // namespace behavior_path_planner
 

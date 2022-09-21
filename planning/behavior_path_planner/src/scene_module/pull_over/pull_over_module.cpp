@@ -52,9 +52,8 @@ PullOverModule::PullOverModule(
   goal_pose_pub_ =
     node.create_publisher<PoseStamped>("/planning/scenario_planning/modified_goal", 1);
 
-  lane_departure_checker_ = std::make_shared<LaneDepartureChecker>();
-  lane_departure_checker_->setVehicleInfo(
-    vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo());
+  LaneDepartureChecker lane_departure_checker_{};
+  lane_departure_checker_.setVehicleInfo(vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo());
 
   occupancy_grid_map_ = std::make_shared<OccupancyGridBasedCollisionDetector>();
 

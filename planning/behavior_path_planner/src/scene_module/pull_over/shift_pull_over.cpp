@@ -28,7 +28,7 @@ namespace behavior_path_planner
 {
 ShiftPullOver::ShiftPullOver(
   rclcpp::Node & node, const PullOverParameters & parameters,
-  const std::shared_ptr<LaneDepartureChecker> lane_departure_checker,
+  const LaneDepartureChecker & lane_departure_checker,
   const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map)
 : PullOverPlannerBase{node, parameters},
   lane_departure_checker_{lane_departure_checker},
@@ -315,7 +315,7 @@ std::vector<PullOverPath> ShiftPullOver::selectValidPaths(
       continue;
     }
 
-    if (lane_departure_checker_->checkPathWillLeaveLane(lanes, path.shifted_path.path)) {
+    if (lane_departure_checker_.checkPathWillLeaveLane(lanes, path.shifted_path.path)) {
       continue;
     }
 
