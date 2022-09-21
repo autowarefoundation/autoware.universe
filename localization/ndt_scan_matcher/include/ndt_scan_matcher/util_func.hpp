@@ -68,10 +68,10 @@ void pop_old_pose(
     pose_cov_msg_ptr_array,
   const rclcpp::Time & time_stamp);
 
-Eigen::Affine3d ros_pose_to_eigen_affine3d(const geometry_msgs::msg::Pose & ros_pose);
-Eigen::Matrix4f ros_pose_to_eigen_matrix4f(const geometry_msgs::msg::Pose & ros_pose);
-geometry_msgs::msg::Pose eigen_matrix4f_to_ros_pose(const Eigen::Matrix4f & eigen_pose_matrix);
-Eigen::Vector3d ros_point_to_eigen_vector3d(const geometry_msgs::msg::Point & ros_pos);
+Eigen::Affine3d pose_to_affine3d(const geometry_msgs::msg::Pose & ros_pose);
+Eigen::Matrix4f pose_to_matrix4f(const geometry_msgs::msg::Pose & ros_pose);
+geometry_msgs::msg::Pose matrix4f_to_pose(const Eigen::Matrix4f & eigen_pose_matrix);
+Eigen::Vector3d point_to_vector3d(const geometry_msgs::msg::Point & ros_pos);
 
 std::vector<geometry_msgs::msg::Pose> create_random_pose_array(
   const geometry_msgs::msg::PoseWithCovarianceStamped & base_pose_with_cov, const int particle_num);
