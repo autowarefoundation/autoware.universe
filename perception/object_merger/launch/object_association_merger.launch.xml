@@ -11,6 +11,6 @@
     <remap from="output/object" to="$(var output/object)"/>
     <param from="$(var data_association_matrix_path)"/>
     <param name="precision_threshold_to_judge_overlapped" value="0.4"/>
-    <param name="distance_threshold" value="9.0"/>
+    <param name="distance_threshold_list" value="9.0, 9.0, 9.0, 9.0, 9.0, 9.0, 9.0, 9.0" value-sep=", "/>
   </node>
 </launch>
