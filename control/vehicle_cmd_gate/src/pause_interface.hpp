@@ -31,7 +31,7 @@ private:
   using AckermannControlCommand = autoware_auto_control_msgs::msg::AckermannControlCommand;
   using SetPause = control_interface::SetPause;
   using IsPaused = control_interface::IsPaused;
-  using WillMove = control_interface::WillMove;
+  using IsStartRequested = control_interface::IsStartRequested;
 
 public:
   explicit PauseInterface(rclcpp::Node * node);
@@ -41,14 +41,14 @@ public:
 
 private:
   bool is_paused_;
-  bool will_move_;
+  bool is_start_requested_;
   std::optional<bool> prev_is_paused_;
-  std::optional<bool> prev_will_move_;
+  std::optional<bool> prev_is_start_requested_;
 
   rclcpp::Node * node_;
   component_interface_utils::Service<SetPause>::SharedPtr srv_set_pause_;
   component_interface_utils::Publisher<IsPaused>::SharedPtr pub_is_paused_;
-  component_interface_utils::Publisher<WillMove>::SharedPtr pub_will_move_;
+  component_interface_utils::Publisher<IsStartRequested>::SharedPtr pub_is_start_requested_;
 
   void on_pause(
     const SetPause::Service::Request::SharedPtr req,

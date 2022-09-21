@@ -22,10 +22,10 @@ PauseInterface::PauseInterface(rclcpp::Node * node) : node_(node)
   const auto adaptor = component_interface_utils::NodeAdaptor(node);
   adaptor.init_srv(srv_set_pause_, this, &PauseInterface::on_pause);
   adaptor.init_pub(pub_is_paused_);
-  adaptor.init_pub(pub_will_move_);
+  adaptor.init_pub(pub_is_start_requested_);
 
   is_paused_ = false;
-  will_move_ = false;
+  is_start_requested_ = false;
   publish();
 }
 
@@ -41,18 +41,18 @@ void PauseInterface::publish()
     prev_is_paused_ = is_paused_;
   }
 
-  if (prev_will_move_ != will_move_) {
-    WillMove::Message msg;
+  if (prev_is_start_requested_ != is_start_requested_) {
+    IsStartRequested::Message msg;
     msg.stamp = node_->now();
-    msg.data = will_move_;
-    pub_will_move_->publish(msg);
-    prev_will_move_ = will_move_;
+    msg.data = is_start_requested_;
+    pub_is_start_requested_->publish(msg);
+    prev_is_start_requested_ = is_start_requested_;
   }
 }
 
 void PauseInterface::update(const AckermannControlCommand & control)
 {
-  will_move_ = eps < std::abs(control.longitudinal.speed);
+  is_start_requested_ = eps < std::abs(control.longitudinal.speed);
 }
 
 void PauseInterface::on_pause(
