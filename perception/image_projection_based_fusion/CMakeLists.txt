@@ -177,7 +177,7 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     EXECUTABLE pointpainting_fusion_node
   )
 
-  INSTALL(
+  install(
     TARGETS pointpainting_cuda_lib
     DESTINATION lib
   )
