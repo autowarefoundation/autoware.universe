@@ -179,7 +179,7 @@ private:
   void classifyPointCloud(
     std::vector<PointCloudRefVector> & in_radial_ordered_clouds,
     pcl::PointIndices & out_no_ground_indices);
-  void gridScan_classifyPointCloud(
+  void gridScanClassifyPointCloud(
     std::vector<PointCloudRefVector> & in_radial_ordered_clouds,
     pcl::PointIndices & out_no_ground_indices);
   /*!
