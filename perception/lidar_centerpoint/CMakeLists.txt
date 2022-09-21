@@ -183,6 +183,11 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
       data
       config
   )
+
+  INSTALL(
+    TARGETS centerpoint_cuda_lib
+    DESTINATION lib
+  )
 else()
   find_package(ament_cmake_auto REQUIRED)
   ament_auto_find_build_dependencies()
