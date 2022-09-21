@@ -14,8 +14,10 @@
 
 #include "ekf_localizer/ekf_localizer.hpp"
 
+#include "ekf_localizer/mahalanobis.hpp"
 #include "ekf_localizer/matrix_types.hpp"
 #include "ekf_localizer/measurement.hpp"
+#include "ekf_localizer/numeric.hpp"
 #include "ekf_localizer/state_index.hpp"
 #include "ekf_localizer/state_transition.hpp"
 #include "ekf_localizer/warning.hpp"
@@ -484,7 +486,7 @@ void EKFLocalizer::measurementUpdatePose(const geometry_msgs::msg::PoseWithCovar
   Eigen::MatrixXd y(dim_y, 1);
   y << pose.pose.pose.position.x, pose.pose.pose.position.y, yaw;
 
-  if (isnan(y.array()).any() || isinf(y.array()).any()) {
+  if (hasNan(y) || hasInf(y)) {
     warning_.warn(
       "[EKF] pose measurement matrix includes NaN of Inf. ignore update. check pose message.");
     return;
@@ -565,7 +567,7 @@ void EKFLocalizer::measurementUpdateTwist(
   Eigen::MatrixXd y(dim_y, 1);
   y << twist.twist.twist.linear.x, twist.twist.twist.angular.z;
 
-  if (isnan(y.array()).any() || isinf(y.array()).any()) {
+  if (hasNan(y) || hasInf(y)) {
     warning_.warn(
       "[EKF] twist measurement matrix includes NaN of Inf. ignore update. check twist message.");
     return;
@@ -601,24 +603,6 @@ void EKFLocalizer::measurementUpdateTwist(
   ekf_.getLatestX(X_result);
   DEBUG_PRINT_MAT(X_result.transpose());
   DEBUG_PRINT_MAT((X_result - X_curr).transpose());
-}
-
-/*
- * mahalanobisGate
- */
-bool EKFLocalizer::mahalanobisGate(
-  const double & dist_max, const Eigen::MatrixXd & x, const Eigen::MatrixXd & obj_x,
-  const Eigen::MatrixXd & cov) const
-{
-  Eigen::MatrixXd mahalanobis_squared = (x - obj_x).transpose() * cov.inverse() * (x - obj_x);
-  DEBUG_INFO(
-    get_logger(), "measurement update: mahalanobis = %f, gate limit = %f",
-    std::sqrt(mahalanobis_squared(0)), dist_max);
-  if (mahalanobis_squared(0) > dist_max * dist_max) {
-    return false;
-  }
-
-  return true;
 }
 
 /*
