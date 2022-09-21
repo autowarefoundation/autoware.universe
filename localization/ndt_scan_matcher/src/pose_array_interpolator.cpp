@@ -40,12 +40,12 @@ PoseArrayInterpolator::PoseArrayInterpolator(
 {
   // check the time stamp
   success_ =
-    validate_time_stamp_difference(old_pose_ptr_->header.stamp, target_ros_time, pose_timeout_sec);
+    success_ & validate_time_stamp_difference(old_pose_ptr_->header.stamp, target_ros_time, pose_timeout_sec);
   success_ =
-    validate_time_stamp_difference(new_pose_ptr_->header.stamp, target_ros_time, pose_timeout_sec);
+    success_ & validate_time_stamp_difference(new_pose_ptr_->header.stamp, target_ros_time, pose_timeout_sec);
 
   // check the position jumping (ex. immediately after the initial pose estimation)
-  success_ = validate_position_difference(
+  success_ = success_ & validate_position_difference(
     old_pose_ptr_->pose.pose.position, new_pose_ptr_->pose.pose.position,
     pose_distance_tolerance_meters);
 
