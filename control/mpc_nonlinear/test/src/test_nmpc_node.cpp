@@ -436,15 +436,14 @@ TEST_F(FakeNodeFixture, straight_line_trajectory)
   ns_utils::print("is nmpc perf msg received ?", is_nmpc_msg_received);
 
   // DEBUG
-  //  ns_utils::print(" ctrl_cmd_msgs_  steering: ", cmd_msg->lateral.steering_tire_angle);
-  //  ns_utils::print(
-  //    " ctrl_cmd_msgs_  steering rate : ", cmd_msg->lateral.steering_tire_rotation_rate);
-  //  ns_utils::print(" ctrl_cmd_msgs_  steering rate : ", cmd_msg->longitudinal.speed);
-  //  ns_utils::print(" ctrl_cmd_msgs_  steering: ", cmd_msg->longitudinal.acceleration);
-  //
-  //  ns_utils::print(" ctrl_cmd_msgs_  steering rate : ", cmd_msg->longitudinal.speed);
-  //  ns_utils::print(" ctrl_cmd_msgs_  steering: ", cmd_msg->longitudinal.acceleration);
-  //
+  ns_utils::print("ctrl_cmd_msgs_  steering: ", cmd_msg->lateral.steering_tire_angle);
+  ns_utils::print("ctrl_cmd_msgs_  steering rate : ", cmd_msg->lateral.steering_tire_rotation_rate);
+  ns_utils::print("ctrl_cmd_msgs_  steering rate : ", cmd_msg->longitudinal.speed);
+  ns_utils::print("ctrl_cmd_msgs_  steering: ", cmd_msg->longitudinal.acceleration);
+
+  ns_utils::print(" ctrl_cmd_msgs_  steering rate : ", cmd_msg->longitudinal.speed);
+  ns_utils::print(" ctrl_cmd_msgs_  steering: ", cmd_msg->longitudinal.acceleration);
+
   //  ns_utils::print("nonlinear mpc lateral error: ", nmpc_perf_msg->nmpc_lateral_error);
   //  ns_utils::print("nonlinear mpc yaw error", nmpc_perf_msg->nmpc_yaw_error);
   //  ns_utils::print("nonlinear mpc yaw measured", nmpc_perf_msg->yaw_angle_measured);
