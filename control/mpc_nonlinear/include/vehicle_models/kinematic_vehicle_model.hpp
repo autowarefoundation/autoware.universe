@@ -28,41 +28,40 @@ struct ParamsVehicle
 
   // ~ParamsVehicle() = default;
   // Global vehicle parameters
-  double wheel_base{2.7};
+  double wheel_base{2.75};
   double lr{1.4};
-  double steering_tau{0.27};   // !<@brief First order steering system model time constant.
+  double steering_tau{0.24};   // !<@brief First order steering system model time constant.
   double speed_tau{0.1};       // !<@brief Speed time constant.
   bool use_delay_model{true};  // !<@brief use time constant in the steering and long dynamics.
 };
 
 class KinematicModelSingleTrackModel final
-: public VehicleModelsBase<
+  : public VehicleModelsBase<
     KinematicModelSingleTrackModel, STATE_DIM, INPUT_DIM, PARAM_DIM, eSTATE_DIM>
 {
-public:
+ public:
   KinematicModelSingleTrackModel() = default;
 
   // Destructor
-  ~KinematicModelSingleTrackModel() final = default;
+  ~KinematicModelSingleTrackModel() final /** = default; */
+  {
 
-  //  {
-  //    // CppAD::thread_alloc::free_all();
-  //    // CppAD::thread_alloc::inuse(0);
-  //  };
+    CppAD::thread_alloc::inuse(0);
+  };
 
   // Inherited methods.
   // Dynamical equations overridden from system dynamics.
   void systemEquations(
-    const state_vector_ad_t & x, const input_vector_ad_t & u, const param_vector_ad_t & params,
-    state_vector_ad_t & f_xdot) override;
+    const state_vector_ad_t &x, const input_vector_ad_t &u, const param_vector_ad_t &params,
+    state_vector_ad_t &f_xdot) override;
 
   // Model methods.
-  void updateParameters(ParamsVehicle const & params_vehicle);
+  void updateParameters(ParamsVehicle const &params_vehicle);
 
   // Test Vehicle Model
   void testModel();
 
-private:
+ private:
   double wheel_base_{2.7};
   double lr_{1.4};
   double steering_tau_{0.3};
