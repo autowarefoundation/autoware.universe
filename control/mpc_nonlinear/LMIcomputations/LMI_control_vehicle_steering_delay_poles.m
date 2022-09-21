@@ -19,7 +19,7 @@ dt = 1/10;
 n = 4; % state dim with an additional disturbance states
 m = 2; % control dim  - number of observable states
  
-for i=1:5
+for i=1:7
     Xrr{i} = sdpvar(n); 
     Yrr{i} = sdpvar(m, n) ;
 end
@@ -27,10 +27,10 @@ end
 Xmin=sdpvar(n);
 
 %% Quadratic cost 
-Q=eye(n)*0.1; %diag([0.01,0.01,1,0.01]);%eye(n);
+Q=eye(n)*5; %diag([0.01,0.01,1,0.01]);%eye(n);
 Q =sqrt(Q); 
  
-R= eye(m)*10; %0.5
+R= eye(m)*5;
 R = sqrt(R);
 
 epsilon=0.001;
@@ -42,7 +42,7 @@ constraints = [];
 %% Eigen value location constraints.
 rho_r = 0.05;  % constraints the magnitude of imag value.
 rho_p1 = 0.05; % positivity constraint, eigen values should be > 
-rho_p2 = 0.5; % eigenvalues <
+rho_p2 = 0.9; % eigenvalues <
 rho_s  = 0.2; % stability constraint z*z' = r < 1-rho_s 
  
 [grow, gcol] = size(xugrid);
@@ -68,20 +68,22 @@ for i=1:grow
     u =[usteeri; uai;udi];
 
     %calculate Y and X for every point depending on the parameters at that point
-    [t1, t2, t3, t4] = GetThetas(x, kappai, L);
+    [t1, t2, t3, t4, t5, t6] = GetThetas_control(x, kappai, L);
 
     % Get Time Derivatives of Thetas
-    [td1, td2, td3, td4] = GetThetasDot(x, u, kappai,tau_steering, L);   
+    [td1, td2, td3, td4, td5, td6] = GetThetasDot_control(x, u, kappai,tau_steering, L);   
 
     % Next thetas 
     tn1 = t1 + dt*td1;
     tn2 = t2 + dt*td2;
     tn3 = t3 + dt*td3;
     tn4 = t4 + dt*td4;
+    tn5 = t5 + dt*td5;
+    tn6 = t6 + dt*td6;
 
-    Y  = Yrr{5}+t1*Yrr{1} + t2*Yrr{2} + t3*Yrr{3} + t4*Yrr{4};
-    X  = Xrr{5}+t1*Xrr{1} + t2*Xrr{2} + t3*Xrr{3} + t4*Xrr{4};
-    Xn = Xrr{5}+tn1*Xrr{1} + tn2*Xrr{2} + tn3*Xrr{3} + tn4*Xrr{4};
+    Y  = Yrr{7}+t1*Yrr{1} + t2*Yrr{2} + t3*Yrr{3} + t4*Yrr{4} + t5*Yrr{5} + t6*Yrr{6};
+    X  = Xrr{7}+t1*Xrr{1} + t2*Xrr{2} + t3*Xrr{3} + t4*Xrr{4}+ t5*Xrr{5} + t6*Xrr{6};
+    Xn = Xrr{7}+tn1*Xrr{1} + tn2*Xrr{2} + tn3*Xrr{3} + tn4*Xrr{4}+ tn5*Xrr{5} + tn6*Xrr{6};
 
     constraints=[constraints; Xmin<=X];
 
@@ -97,7 +99,7 @@ for i=1:grow
     B = sys_disc.B;
  
 
-    dotX =td1*Xrr{1} + td2*Xrr{2} + td3*Xrr{3} + td4*Xrr{4};
+    dotX =td1*Xrr{1} + td2*Xrr{2} + td3*Xrr{3} + td4*Xrr{4}+ td5*Xrr{5} + td6*Xrr{6};
 
     ineq=[X, X*A'+Y'*B', Q_eps*X, (R*Y)';...
     (X*A'+Y'*B')', Xn, zeros(n, n), zeros(n,m); ...
@@ -115,10 +117,10 @@ for i=1:grow
     %}
 
 %     Z = X*A'+Y'*B'; 
-% 
-%     % stability radius (1-rho_s)
-%     stab1_ineq = (1-rho_s)*X +  X*A'+Y'*B' ;
-%     stab2_ineq = (1-rho_s)*X'+ ( X*A'+Y'*B')';
+  
+    % stability radius (1-rho_s)
+%     stab1_ineq = (1-rho_s)*X +  Z ;
+%     stab2_ineq = (1-rho_s)*X'+  Z';
 %     constraints = [constraints; stab1_ineq>=0;stab2_ineq>=0];
 %  
 %     % Real line, small imag
@@ -126,11 +128,10 @@ for i=1:grow
 %     real_ima_ineq2 = 2*rho_r*X(1:3, 1:3)-Z + Z';
 %     constraints = [constraints; real_ima_ineq1>=0;real_ima_ineq2>=0];
 %  
-%     %Positivitiy constraints
+    %Positivitiy constraints
 %     positivity_ineq1 = 2*rho_p1*X + Z + Z';
 %     constraints = [constraints; positivity_ineq1>=0];
-
-    a = 1;
+ 
 end
 
 %% Objective and problem setup
@@ -142,7 +143,7 @@ solution = optimize(constraints, objective, options);
 
 %% Save results 
 
-for i=1:5
+for i=1:7
     XXrrval{i}=value(Xrr{i}) ;   
     YYrrval{i}=value(Yrr{i}) ;
 end
