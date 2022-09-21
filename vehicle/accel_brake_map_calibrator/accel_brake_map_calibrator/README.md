@@ -31,11 +31,13 @@ The `rviz:=true` option displays the RViz with a calibration plugin as below.
 <img src="./media/calib_rviz_image_sample.png" width="600">
 </p>
 
-The current status (velocity and pedal) is shown in the plugin. The color on the current cell varies green/red depending on the current data is valid/invalid. The data that doesn't satisfy the following conditions are considered invalid and will not be used for estimation.
+The current status (velocity and pedal) is shown in the plugin. The color on the current cell varies green/red depending on the current data is valid/invalid. The data that doesn't satisfy the following conditions are considered invalid and will not be used for estimation since aggressive data (e.g. when the pedal is moving fast) causes bad calibration accuracy.
 
 - The velocity and pedal conditions are within certain ranges from the index values.
 - The steer value, pedal speed, pitch value, etc. are less than corresponding thresholds.
 - The velocity is higher than a threshold.
+
+The detailed parameters are described in the parameter section.
 
 Note: You don't need to worry about whether the current state is red or green during calibration. Just keep getting data until all the cells turn red.
 
