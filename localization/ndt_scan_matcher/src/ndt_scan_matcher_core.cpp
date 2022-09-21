@@ -72,10 +72,8 @@ bool validate_local_optimal_solution_oscillation(
   int oscillation_cnt = 0;
 
   for (size_t i = 2; i < result_pose_msg_array.size(); ++i) {
-    const Eigen::Vector3d current_pose =
-      point_to_vector3d(result_pose_msg_array.at(i).position);
-    const Eigen::Vector3d prev_pose =
-      point_to_vector3d(result_pose_msg_array.at(i - 1).position);
+    const Eigen::Vector3d current_pose = point_to_vector3d(result_pose_msg_array.at(i).position);
+    const Eigen::Vector3d prev_pose = point_to_vector3d(result_pose_msg_array.at(i - 1).position);
     const Eigen::Vector3d prev_prev_pose =
       point_to_vector3d(result_pose_msg_array.at(i - 2).position);
     const auto current_vec = current_pose - prev_pose;
@@ -539,8 +537,7 @@ void NDTScanMatcher::callback_sensor_points(
 
   auto sensor_points_mapTF_ptr = std::make_shared<pcl::PointCloud<PointSource>>();
   pcl::transformPointCloud(
-    *sensor_points_baselinkTF_ptr, *sensor_points_mapTF_ptr,
-    pose_to_matrix4f(ndt_result.pose));
+    *sensor_points_baselinkTF_ptr, *sensor_points_mapTF_ptr, pose_to_matrix4f(ndt_result.pose));
   publish_point_cloud(sensor_ros_time, map_frame_, sensor_points_mapTF_ptr);
 
   key_value_stdmap_["transform_probability"] = std::to_string(ndt_result.transform_probability);
@@ -624,8 +621,7 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_using_monte_
 
     auto sensor_points_mapTF_ptr = std::make_shared<pcl::PointCloud<PointSource>>();
     pcl::transformPointCloud(
-      *ndt_ptr->getInputSource(), *sensor_points_mapTF_ptr,
-      pose_to_matrix4f(ndt_result.pose));
+      *ndt_ptr->getInputSource(), *sensor_points_mapTF_ptr, pose_to_matrix4f(ndt_result.pose));
     publish_point_cloud(initial_pose_with_cov.header.stamp, map_frame_, sensor_points_mapTF_ptr);
   }
 
