@@ -12,9 +12,9 @@ low_or_high_grid = ['low', 'high'][ind]
 delta_max = np.deg2rad(40)  # maximum steering angle
 delta_dot_max = np.deg2rad(40)
 delta_input_max = np.deg2rad(40)
-vmax = 20
+vmax = 10
 
-eyaw_max = 20  # degrees
+eyaw_max = 30  # degrees
 amax = 5
 kappa_max = 0.1
 
