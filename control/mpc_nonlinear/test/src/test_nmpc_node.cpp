@@ -328,7 +328,7 @@ TEST(CPPADtests, DISABLED_integration_of_autodiffed)
   // end of debug
 }
 
-TEST_F(FakeNodeFixture, DISABLED_straight_line_trajectory)
+TEST_F(FakeNodeFixture, straight_line_trajectory)
 {
   // Data to test
   ControlCmdMsg::SharedPtr cmd_msg;
