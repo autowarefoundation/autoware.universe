@@ -205,21 +205,21 @@ void pop_old_pose(
   }
 }
 
-Eigen::Affine3d from_ros_pose_to_eigen_affine3d(const geometry_msgs::msg::Pose & ros_pose)
+Eigen::Affine3d ros_pose_to_eigen_affine3d(const geometry_msgs::msg::Pose & ros_pose)
 {
   Eigen::Affine3d eigen_pose;
   tf2::fromMsg(ros_pose, eigen_pose);
   return eigen_pose;
 }
 
-Eigen::Matrix4f from_ros_pose_to_eigen_matrix4f(const geometry_msgs::msg::Pose & ros_pose)
+Eigen::Matrix4f ros_pose_to_eigen_matrix4f(const geometry_msgs::msg::Pose & ros_pose)
 {
-  Eigen::Affine3d eigen_pose_affine = from_ros_pose_to_eigen_affine3d(ros_pose);
+  Eigen::Affine3d eigen_pose_affine = ros_pose_to_eigen_affine3d(ros_pose);
   Eigen::Matrix4f eigen_pose_matrix = eigen_pose_affine.matrix().cast<float>();
   return eigen_pose_matrix;
 }
 
-Eigen::Vector3d from_ros_point_to_eigen_vector3d(const geometry_msgs::msg::Point & ros_pos)
+Eigen::Vector3d ros_point_to_eigen_vector3d(const geometry_msgs::msg::Point & ros_pos)
 {
   Eigen::Vector3d eigen_pos;
   eigen_pos.x() = ros_pos.x;
@@ -228,7 +228,7 @@ Eigen::Vector3d from_ros_point_to_eigen_vector3d(const geometry_msgs::msg::Point
   return eigen_pos;
 }
 
-geometry_msgs::msg::Pose from_eigen_matrix4f_to_ros_pose(const Eigen::Matrix4f & eigen_pose_matrix)
+geometry_msgs::msg::Pose eigen_matrix4f_to_ros_pose(const Eigen::Matrix4f & eigen_pose_matrix)
 {
   Eigen::Affine3d eigen_pose_affine;
   eigen_pose_affine.matrix() = eigen_pose_matrix.cast<double>();
