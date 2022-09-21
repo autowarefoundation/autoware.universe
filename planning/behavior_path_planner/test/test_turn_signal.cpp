@@ -175,4 +175,105 @@ TEST(BehaviorPathPlanningTurnSignal, Condition1)
       path, current_pose, current_seg_idx, intersection_signal_info, behavior_signal_info);
     EXPECT_EQ(result_signal.command, TurnIndicatorsCommand::ENABLE_RIGHT);
   }
+
+  // current pose is right right after the intersection desired end
+  {
+    Pose current_pose = generateEgoSamplePose(65.1f, 0.0f, 0.0);
+    const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+      path.points, current_pose, 3.0, 1.0);
+    const auto result_signal = turn_signal_decider.resolve_turn_signal(
+      path, current_pose, current_seg_idx, intersection_signal_info, behavior_signal_info);
+    EXPECT_EQ(result_signal.command, TurnIndicatorsCommand::ENABLE_RIGHT);
+  }
+}
+
+TEST(BehaviorPathPlanningTurnSignal, Condition2)
+{
+  PathWithLaneId path = generateStraightSamplePathWithLaneId(0.0f, 1.0f, 70u);
+  TurnSignalDecider turn_signal_decider;
+  turn_signal_decider.setParameters(1.0, 30.0);
+
+  TurnSignalInfo intersection_signal_info;
+  intersection_signal_info.turn_signal.command = TurnIndicatorsCommand::ENABLE_LEFT;
+  intersection_signal_info.desired_start_point = createPoint(0.0, 0.0, 0.0);
+  intersection_signal_info.desired_end_point = createPoint(65.0, 0.0, 0.0);
+  intersection_signal_info.required_start_point = createPoint(35.0, 0.0, 0.0);
+  intersection_signal_info.required_end_point = createPoint(50.0, 0.0, 0.0);
+
+  TurnSignalInfo behavior_signal_info;
+  behavior_signal_info.turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
+  behavior_signal_info.desired_start_point = createPoint(5.0, 0.0, 0.0);
+  behavior_signal_info.desired_end_point = createPoint(70.0, 0.0, 0.0);
+  behavior_signal_info.required_start_point = createPoint(40.0, 0.0, 0.0);
+  behavior_signal_info.required_end_point = createPoint(45.0, 0.0, 0.0);
+
+  // current pose on the behavior desired start
+  {
+    Pose current_pose = generateEgoSamplePose(5.0f, 0.0f, 0.0);
+    const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+      path.points, current_pose, 3.0, 1.0);
+    const auto result_signal = turn_signal_decider.resolve_turn_signal(
+      path, current_pose, current_seg_idx, intersection_signal_info, behavior_signal_info);
+    EXPECT_EQ(result_signal.command, TurnIndicatorsCommand::ENABLE_LEFT);
+  }
+
+  // current pose is right before the intersection required start
+  {
+    Pose current_pose = generateEgoSamplePose(34.99f, 0.0f, 0.0);
+    const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+      path.points, current_pose, 3.0, 1.0);
+    const auto result_signal = turn_signal_decider.resolve_turn_signal(
+      path, current_pose, current_seg_idx, intersection_signal_info, behavior_signal_info);
+    EXPECT_EQ(result_signal.command, TurnIndicatorsCommand::ENABLE_LEFT);
+  }
+
+  // current pose is on the behavior required start
+  {
+    Pose current_pose = generateEgoSamplePose(40.0f, 0.0f, 0.0);
+    const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+      path.points, current_pose, 3.0, 1.0);
+    const auto result_signal = turn_signal_decider.resolve_turn_signal(
+      path, current_pose, current_seg_idx, intersection_signal_info, behavior_signal_info);
+    EXPECT_EQ(result_signal.command, TurnIndicatorsCommand::ENABLE_LEFT);
+  }
+
+  // current pose is on the behavior required end
+  {
+    Pose current_pose = generateEgoSamplePose(45.0f, 0.0f, 0.0);
+    const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+      path.points, current_pose, 3.0, 1.0);
+    const auto result_signal = turn_signal_decider.resolve_turn_signal(
+      path, current_pose, current_seg_idx, intersection_signal_info, behavior_signal_info);
+    EXPECT_EQ(result_signal.command, TurnIndicatorsCommand::ENABLE_LEFT);
+  }
+
+  // current pose is on the intersection required end
+  {
+    Pose current_pose = generateEgoSamplePose(50.0f, 0.0f, 0.0);
+    const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+      path.points, current_pose, 3.0, 1.0);
+    const auto result_signal = turn_signal_decider.resolve_turn_signal(
+      path, current_pose, current_seg_idx, intersection_signal_info, behavior_signal_info);
+    EXPECT_EQ(result_signal.command, TurnIndicatorsCommand::ENABLE_LEFT);
+  }
+
+  // current pose is right after the intersection required end
+  {
+    Pose current_pose = generateEgoSamplePose(50.1f, 0.0f, 0.0);
+    const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+      path.points, current_pose, 3.0, 1.0);
+    const auto result_signal = turn_signal_decider.resolve_turn_signal(
+      path, current_pose, current_seg_idx, intersection_signal_info, behavior_signal_info);
+    EXPECT_EQ(result_signal.command, TurnIndicatorsCommand::ENABLE_LEFT);
+  }
+
+  // current pose is on the intersection desired end
+  {
+    Pose current_pose = generateEgoSamplePose(65.0f, 0.0f, 0.0);
+    const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+      path.points, current_pose, 3.0, 1.0);
+    const auto result_signal = turn_signal_decider.resolve_turn_signal(
+      path, current_pose, current_seg_idx, intersection_signal_info, behavior_signal_info);
+    EXPECT_EQ(result_signal.command, TurnIndicatorsCommand::ENABLE_LEFT);
+  }
 }
