@@ -64,7 +64,9 @@ private:
     const std::shared_ptr<Ground::Request> request, std::shared_ptr<Ground::Response> response);
 
   GroundPlane estimateGround(const Point & point);
-  float estimateHeight(const Point & point);
+
+  float estimateHeightSimply(const Point & point) const;
+
   void publishMarker(const GroundPlane & plane);
 
   std::vector<int> ransacEstimation(const std::vector<int> & indices_raw);
