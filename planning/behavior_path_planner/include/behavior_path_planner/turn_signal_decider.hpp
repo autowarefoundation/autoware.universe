@@ -68,6 +68,11 @@ public:
     const size_t current_seg_idx, const RouteHandler & route_handler,
     const TurnSignalInfo & turn_signal_info) const;
 
+  TurnIndicatorsCommand resolve_turn_signal(
+    const PathWithLaneId & path, const Pose & current_pose, const size_t current_seg_idx,
+    const TurnSignalInfo & intersection_signal_info,
+    const TurnSignalInfo & behavior_signal_info) const;
+
   void setParameters(const double base_link2front, const double intersection_search_distance)
   {
     base_link2front_ = base_link2front;
@@ -81,11 +86,6 @@ private:
 
   geometry_msgs::msg::Point get_required_end_point(
     const lanelet::ConstLineString3d & centerline) const;
-
-  TurnIndicatorsCommand resolve_turn_signal(
-    const PathWithLaneId & path, const Pose & current_pose, const size_t current_seg_idx,
-    const TurnSignalInfo & intersection_signal_info,
-    const TurnSignalInfo & behavior_signal_info) const;
 
   TurnIndicatorsCommand resolve_turn_signal(
     const TurnIndicatorsCommand & prior_turn_signal,
