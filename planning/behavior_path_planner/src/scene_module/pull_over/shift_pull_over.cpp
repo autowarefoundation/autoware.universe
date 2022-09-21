@@ -184,15 +184,15 @@ std::vector<PullOverPath> ShiftPullOver::generatePullOverPaths(
       const double s_end = arc_position_goal.length;
       target_lane_reference_path = route_handler->getCenterLinePath(shoulder_lanes, s_start, s_end);
       // distance between shoulder lane's left boundary and shoulder lane center
-      double distance_shoulder_to_left_bound =
+      const double distance_shoulder_to_left_bound =
         util::getDistanceToShoulderBoundary(shoulder_lanes, shift_end_point.point.pose);
 
       // distance between shoulder lane center and target line
-      double distance_shoulder_to_target =
+      const double distance_shoulder_to_target =
         distance_shoulder_to_left_bound + common_parameters.vehicle_width / 2 + margin;
 
       // Apply shifting shoulder lane to adjust to target line
-      double offset = -distance_shoulder_to_target;
+      const double offset = -distance_shoulder_to_target;
       for (size_t i = 0; i < target_lane_reference_path.points.size(); ++i) {
         {
           if (fabs(offset) < 1.0e-8) {
@@ -202,9 +202,7 @@ std::vector<PullOverPath> ShiftPullOver::generatePullOverPaths(
           }
 
           auto & p = target_lane_reference_path.points.at(i).point.pose;
-          double yaw = tf2::getYaw(p.orientation);
-          p.position.x -= std::sin(yaw) * offset;
-          p.position.y += std::cos(yaw) * offset;
+          p = tier4_autoware_utils::calcOffsetPose(p, 0, offset, 0);
         }
         path_shifter.setPath(util::resamplePathWithSpline(target_lane_reference_path, 1.0));
       }
@@ -215,10 +213,10 @@ std::vector<PullOverPath> ShiftPullOver::generatePullOverPaths(
       shift_point.end = shift_end_point.point.pose;
 
       // distance between shoulder lane's left boundary and current lane center
-      double distance_road_to_left_boundary = util::getDistanceToShoulderBoundary(
+      const double distance_road_to_left_boundary = util::getDistanceToShoulderBoundary(
         shoulder_lanes, road_lane_reference_path.points.back().point.pose);
       // distance between shoulder lane's left boundary and current lane center
-      double distance_road_to_target =
+      const double distance_road_to_target =
         distance_road_to_left_boundary + common_parameters.vehicle_width / 2 + margin;
 
       shift_point.length = distance_road_to_target;
@@ -226,7 +224,7 @@ std::vector<PullOverPath> ShiftPullOver::generatePullOverPaths(
     }
 
     // offset front side from reference path
-    bool offset_back = false;
+    const bool offset_back = false;
     if (!path_shifter.generate(&shifted_path, offset_back)) {
       continue;
     }
