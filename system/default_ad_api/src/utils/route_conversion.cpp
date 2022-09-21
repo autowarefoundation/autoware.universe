@@ -19,10 +19,10 @@
 namespace
 {
 
-using ApiPrimitive = autoware_ad_api_msgs::msg::RoutePrimitive;
+using ApiPrimitive = autoware_adapi_v1_msgs::msg::RoutePrimitive;
 using MapPrimitive = autoware_planning_msgs::msg::VectorMapPrimitive;
 using HadPrimitive = autoware_auto_mapping_msgs::msg::MapPrimitive;
-using ApiSegment = autoware_ad_api_msgs::msg::RouteSegment;
+using ApiSegment = autoware_adapi_v1_msgs::msg::RouteSegment;
 using HadSegment = autoware_auto_mapping_msgs::msg::HADMapSegment;
 using MapSegment = autoware_planning_msgs::msg::VectorMapSegment;
 
@@ -96,7 +96,7 @@ ExternalRoute create_empty_route(const rclcpp::Time & stamp)
 
 ExternalRoute convert_route(const InternalRoute & internal)
 {
-  autoware_ad_api_msgs::msg::RouteData data;
+  autoware_adapi_v1_msgs::msg::RouteData data;
   data.start = internal.start_pose;
   data.goal = internal.goal_pose;
   data.segments = convert_vector<ApiSegment>(internal.segments);

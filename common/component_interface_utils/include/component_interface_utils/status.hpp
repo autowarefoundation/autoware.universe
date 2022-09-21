@@ -15,9 +15,6 @@
 #ifndef COMPONENT_INTERFACE_UTILS__STATUS_HPP_
 #define COMPONENT_INTERFACE_UTILS__STATUS_HPP_
 
-#include <autoware_ad_api_msgs/msg/response_status.hpp>
-#include <autoware_common_msgs/msg/response_status.hpp>
-
 namespace component_interface_utils::status
 {
 

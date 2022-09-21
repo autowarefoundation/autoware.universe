@@ -14,8 +14,8 @@
 
 #include "mission_planner.hpp"
 
-#include <autoware_ad_api_msgs/srv/set_route.hpp>
-#include <autoware_ad_api_msgs/srv/set_route_points.hpp>
+#include <autoware_adapi_v1_msgs/srv/set_route.hpp>
+#include <autoware_adapi_v1_msgs/srv/set_route_points.hpp>
 
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
@@ -163,7 +163,7 @@ void MissionPlanner::on_clear_route(
 void MissionPlanner::on_set_route(
   const SetRoute::Service::Request::SharedPtr req, const SetRoute::Service::Response::SharedPtr res)
 {
-  using ResponseCode = autoware_ad_api_msgs::srv::SetRoute::Response;
+  using ResponseCode = autoware_adapi_v1_msgs::srv::SetRoute::Response;
 
   // NOTE: The route services should be mutually exclusive by callback group.
   if (state_.state != RouteState::Message::UNSET) {
@@ -196,7 +196,7 @@ void MissionPlanner::on_set_route_points(
   const SetRoutePoints::Service::Request::SharedPtr req,
   const SetRoutePoints::Service::Response::SharedPtr res)
 {
-  using ResponseCode = autoware_ad_api_msgs::srv::SetRoutePoints::Response;
+  using ResponseCode = autoware_adapi_v1_msgs::srv::SetRoutePoints::Response;
 
   // NOTE: The route services should be mutually exclusive by callback group.
   if (state_.state != RouteState::Message::UNSET) {

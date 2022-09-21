@@ -17,17 +17,17 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_ad_api_msgs/msg/route.hpp>
-#include <autoware_ad_api_msgs/srv/set_route.hpp>
+#include <autoware_adapi_v1_msgs/msg/route.hpp>
+#include <autoware_adapi_v1_msgs/srv/set_route.hpp>
 #include <autoware_auto_planning_msgs/msg/had_map_route.hpp>
 #include <autoware_planning_msgs/srv/set_route.hpp>
 
 namespace default_ad_api::conversion
 {
 
-using ExternalSetRoute = autoware_ad_api_msgs::srv::SetRoute::Request;
+using ExternalSetRoute = autoware_adapi_v1_msgs::srv::SetRoute::Request;
 using InternalSetRoute = autoware_planning_msgs::srv::SetRoute::Request;
-using ExternalRoute = autoware_ad_api_msgs::msg::Route;
+using ExternalRoute = autoware_adapi_v1_msgs::msg::Route;
 using InternalRoute = autoware_auto_planning_msgs::msg::HADMapRoute;
 
 ExternalRoute create_empty_route(const rclcpp::Time & stamp);
