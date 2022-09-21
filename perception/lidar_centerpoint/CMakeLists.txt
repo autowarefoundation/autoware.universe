@@ -185,7 +185,7 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
       config
   )
 
-  INSTALL(
+  install(
     TARGETS centerpoint_cuda_lib
     DESTINATION lib
   )
