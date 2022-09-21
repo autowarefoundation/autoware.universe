@@ -35,8 +35,8 @@ class ShiftPullOver : public PullOverPlannerBase
 public:
   ShiftPullOver(
     rclcpp::Node & node, const PullOverParameters & parameters,
-    std::shared_ptr<LaneDepartureChecker> lane_departure_checker,
-    std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map);
+    const std::shared_ptr<LaneDepartureChecker> lane_departure_checker,
+    const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map);
 
   PullOverPlannerType getPlannerType() const override { return PullOverPlannerType::SHIFT; };
   boost::optional<PullOverPath> plan(const Pose & goal_pose) override;
