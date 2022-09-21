@@ -56,7 +56,6 @@ RunOutModuleManager::RunOutModuleManager(rclcpp::Node & node)
     p.stop_margin = node.declare_parameter(ns + ".stop_margin", 2.5);
     p.passing_margin = node.declare_parameter(ns + ".passing_margin", 1.0);
     p.deceleration_jerk = node.declare_parameter(ns + ".deceleration_jerk", -0.3);
-    p.obstacle_velocity_kph = node.declare_parameter(ns + ".obstacle_velocity_kph", 5.0);
     p.detection_distance = node.declare_parameter(ns + ".detection_distance", 45.0);
     p.detection_span = node.declare_parameter(ns + ".detection_span", 1.0);
     p.min_vel_ego_kmph = node.declare_parameter(ns + ".min_vel_ego_kmph", 5.0);
@@ -78,6 +77,7 @@ RunOutModuleManager::RunOutModuleManager(rclcpp::Node & node)
     p.height = node.declare_parameter(ns_do + ".height", 2.0);
     p.max_prediction_time = node.declare_parameter(ns_do + ".max_prediction_time", 10.0);
     p.time_step = node.declare_parameter(ns_do + ".time_step", 0.5);
+    p.points_interval = node.declare_parameter(ns_do + ".points_interval", 0.1);
   }
 
   {

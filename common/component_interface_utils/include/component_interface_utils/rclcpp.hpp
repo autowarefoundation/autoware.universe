@@ -91,11 +91,19 @@ public:
   void relay_service(
     C & cli, S & srv, CallbackGroup group, std::optional<double> timeout = std::nullopt) const
   {
-    using ReqT = typename C::element_type::SpecType::Service::Request::SharedPtr;
-    using ResT = typename C::element_type::SpecType::Service::Response::SharedPtr;
     init_cli(cli);
     init_srv(
-      srv, [cli, timeout](ReqT req, ResT res) { *res = *cli->call(req, timeout); }, group);
+      srv, [cli, timeout](auto req, auto res) { *res = *cli->call(req, timeout); }, group);
+  }
+
+  /// Create a subscription wrapper.
+  template <class SharedPtrT, class InstanceT>
+  void init_sub(
+    SharedPtrT & sub, InstanceT * instance,
+    MessageCallback<SharedPtrT, InstanceT> && callback) const
+  {
+    using std::placeholders::_1;
+    init_sub(sub, std::bind(callback, instance, _1));
   }
 
   /// Create a subscription wrapper.

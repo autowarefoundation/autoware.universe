@@ -66,7 +66,8 @@ public:
 
 public:
   DetectionAreaModule(
-    const int64_t module_id, const lanelet::autoware::DetectionArea & detection_area_reg_elem,
+    const int64_t module_id, const int64_t lane_id,
+    const lanelet::autoware::DetectionArea & detection_area_reg_elem,
     const PlannerParam & planner_param, const rclcpp::Logger logger,
     const rclcpp::Clock::SharedPtr clock);
 
@@ -82,17 +83,11 @@ private:
 
   bool canClearStopState() const;
 
-  bool isOverLine(
-    const PathWithLaneId & path, const geometry_msgs::msg::Pose & self_pose,
-    const geometry_msgs::msg::Pose & line_pose) const;
-
   bool hasEnoughBrakingDistance(
     const geometry_msgs::msg::Pose & self_pose, const geometry_msgs::msg::Pose & line_pose) const;
 
-  void insertStopPoint(const geometry_msgs::msg::Pose & stop_pose, PathWithLaneId & path) const;
-
-  boost::optional<PathIndexWithPose> createTargetPoint(
-    const PathWithLaneId & path, const LineString2d & stop_line, const double margin) const;
+  // Lane id
+  int64_t lane_id_;
 
   // Key Feature
   const lanelet::autoware::DetectionArea & detection_area_reg_elem_;

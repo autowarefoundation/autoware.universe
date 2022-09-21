@@ -23,7 +23,6 @@
 
 namespace behavior_velocity_planner
 {
-
 namespace bg = boost::geometry;
 using Point = bg::model::d2::point_xy<double>;
 using Polygon = bg::model::polygon<Point>;
@@ -32,12 +31,9 @@ using motion_utils::calcArcLength;
 using motion_utils::calcLateralOffset;
 using motion_utils::calcLongitudinalOffsetPoint;
 using motion_utils::calcLongitudinalOffsetPose;
-using motion_utils::calcLongitudinalOffsetToSegment;
 using motion_utils::calcSignedArcLength;
-using motion_utils::findNearestIndex;
 using motion_utils::findNearestSegmentIndex;
 using motion_utils::insertTargetPoint;
-using tier4_autoware_utils::calcDistance2d;
 using tier4_autoware_utils::createPoint;
 using tier4_autoware_utils::getPoint;
 using tier4_autoware_utils::getPose;
@@ -133,12 +129,14 @@ void sortCrosswalksByDistance(
 }  // namespace
 
 CrosswalkModule::CrosswalkModule(
-  const int64_t module_id, const lanelet::ConstLanelet & crosswalk,
-  const PlannerParam & planner_param, const rclcpp::Logger logger,
-  const rclcpp::Clock::SharedPtr clock)
-: SceneModuleInterface(module_id, logger, clock), module_id_(module_id), crosswalk_(crosswalk)
+  const int64_t module_id, lanelet::ConstLanelet crosswalk, const PlannerParam & planner_param,
+  const rclcpp::Logger & logger, const rclcpp::Clock::SharedPtr clock)
+: SceneModuleInterface(module_id, logger, clock),
+  module_id_(module_id),
+  crosswalk_(std::move(crosswalk)),
+  planner_param_(planner_param)
 {
-  planner_param_ = planner_param;
+  passed_safety_slow_point_ = false;
 }
 
 bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason)
@@ -152,7 +150,7 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
   debug_data_.base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
   *stop_reason = planning_utils::initializeStopReason(StopReason::CROSSWALK);
 
-  const auto ego_path = *path;
+  auto ego_path = *path;
 
   RCLCPP_INFO_EXPRESSION(
     logger_, planner_param_.show_processing_time, "- step1: %f ms",
@@ -170,6 +168,13 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
 
   for (const auto & p : crosswalk_.polygon2d().basicPolygon()) {
     debug_data_.crosswalk_polygon.push_back(createPoint(p.x(), p.y(), ego_pos.z));
+  }
+
+  if (crosswalk_.hasAttribute("safety_slow_down_speed")) {
+    // Safety slow down is on
+    if (applySafetySlowDownSpeed(*path)) {
+      ego_path = *path;
+    }
   }
 
   RCLCPP_INFO_EXPRESSION(
@@ -202,7 +207,7 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
     }
 
     const auto target_velocity = calcTargetVelocity(nearest_stop_point.get(), ego_path);
-    insertDecelPoint(
+    insertDecelPointWithDebugInfo(
       nearest_stop_point.get(), std::max(planner_param_.min_slow_down_velocity, target_velocity),
       *path);
 
@@ -210,10 +215,10 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
   }
 
   if (nearest_stop_point) {
-    insertDecelPoint(nearest_stop_point.get(), 0.0, *path);
+    insertDecelPointWithDebugInfo(nearest_stop_point.get(), 0.0, *path);
     planning_utils::appendStopReason(stop_factor, stop_reason);
   } else if (rtc_stop_point) {
-    insertDecelPoint(rtc_stop_point.get(), 0.0, *path);
+    insertDecelPointWithDebugInfo(rtc_stop_point.get(), 0.0, *path);
     planning_utils::appendStopReason(stop_factor_rtc, stop_reason);
   }
 
@@ -432,32 +437,24 @@ std::pair<double, double> CrosswalkModule::getAttentionRange(const PathWithLaneI
   return std::make_pair(std::max(0.0, near_attention_range), std::max(0.0, far_attention_range));
 }
 
-void CrosswalkModule::insertDecelPoint(
+void CrosswalkModule::insertDecelPointWithDebugInfo(
   const geometry_msgs::msg::Point & stop_point, const float target_velocity,
   PathWithLaneId & output)
 {
-  const auto & ego_pos = planner_data_->current_pose.pose.position;
-  const size_t base_idx = findNearestSegmentIndex(output.points, stop_point);
-  const auto insert_idx = insertTargetPoint(base_idx, stop_point, output.points);
-
-  if (!insert_idx) {
+  const auto stop_pose = planning_utils::insertDecelPoint(stop_point, output, target_velocity);
+  if (!stop_pose) {
     return;
   }
+  const auto & ego_pos = planner_data_->current_pose.pose.position;
 
-  for (size_t i = insert_idx.get(); i < output.points.size(); ++i) {
-    const auto & original_velocity = output.points.at(i).point.longitudinal_velocity_mps;
-    output.points.at(i).point.longitudinal_velocity_mps =
-      std::min(original_velocity, target_velocity);
-  }
+  setDistance(calcSignedArcLength(output.points, ego_pos, stop_pose->position));
 
-  setDistance(calcSignedArcLength(output.points, ego_pos, stop_point));
-
-  debug_data_.first_stop_pose = getPose(output.points.at(insert_idx.get()));
+  debug_data_.first_stop_pose = getPose(*stop_pose);
 
   if (std::abs(target_velocity) < 1e-3) {
-    debug_data_.stop_poses.push_back(getPose(output.points.at(insert_idx.get())));
+    debug_data_.stop_poses.push_back(*stop_pose);
   } else {
-    debug_data_.slow_poses.push_back(getPose(output.points.at(insert_idx.get())));
+    debug_data_.slow_poses.push_back(*stop_pose);
   }
 }
 
@@ -473,7 +470,7 @@ float CrosswalkModule::calcTargetVelocity(
     return 0.0;
   }
 
-  const auto ego_acc = planner_data_->current_accel.get();
+  const auto ego_acc = planner_data_->current_acceleration->accel.accel.linear.x;
   const auto dist_deceleration = calcSignedArcLength(ego_path.points, ego_pos, stop_point);
   const auto feasible_velocity = planning_utils::calcDecelerationVelocityFromDistanceToTarget(
     max_jerk, max_accel, ego_acc, ego_vel, dist_deceleration);
@@ -726,13 +723,61 @@ CollisionPointState CrosswalkModule::getCollisionPointState(
 {
   if (ttc + planner_param_.ego_pass_first_margin < ttv) {
     return CollisionPointState::EGO_PASS_FIRST;
-  } else if (ttv + planner_param_.ego_pass_later_margin < ttc) {
-    return CollisionPointState::EGO_PASS_LATER;
-  } else {
-    return CollisionPointState::YIELD;
   }
 
-  return CollisionPointState::IGNORE;
+  if (ttv + planner_param_.ego_pass_later_margin < ttc) {
+    return CollisionPointState::EGO_PASS_LATER;
+  }
+
+  return CollisionPointState::YIELD;
+}
+
+bool CrosswalkModule::applySafetySlowDownSpeed(PathWithLaneId & output)
+{
+  if (path_intersects_.empty()) {
+    return false;
+  }
+
+  const auto & ego_pos = planner_data_->current_pose.pose.position;
+  const auto ego_path = output;
+
+  // Safety slow down speed in [m/s]
+  const auto & safety_slow_down_speed =
+    static_cast<float>(crosswalk_.attribute("safety_slow_down_speed").asDouble().get());
+
+  if (!passed_safety_slow_point_) {
+    // Safety slow down distance [m]
+    double safety_slow_down_distance = crosswalk_.attributeOr("safety_slow_down_distance", 2.0);
+
+    // the range until to the point where ego will have a const safety slow down speed
+    auto safety_slow_point_range =
+      calcSignedArcLength(ego_path.points, ego_pos, path_intersects_.front());
+    const auto & safety_slow_margin =
+      planner_data_->vehicle_info_.max_longitudinal_offset_m + safety_slow_down_distance;
+    safety_slow_point_range -= safety_slow_margin;
+
+    const auto & p_safety_slow =
+      calcLongitudinalOffsetPoint(ego_path.points, ego_pos, safety_slow_point_range);
+
+    insertDecelPointWithDebugInfo(p_safety_slow.get(), safety_slow_down_speed, output);
+
+    if (safety_slow_point_range < 0.0) {
+      passed_safety_slow_point_ = true;
+    }
+  } else {
+    // the range until to the point where ego will start accelerate
+    auto safety_slow_end_point_range =
+      calcSignedArcLength(ego_path.points, ego_pos, path_intersects_.back());
+
+    if (safety_slow_end_point_range > 0) {
+      // insert constant ego speed until the end of the crosswalk
+      for (auto & p : output.points) {
+        const auto & original_velocity = p.point.longitudinal_velocity_mps;
+        p.point.longitudinal_velocity_mps = std::min(original_velocity, safety_slow_down_speed);
+      }
+    }
+  }
+  return true;
 }
 
 bool CrosswalkModule::isStuckVehicle(
@@ -801,7 +846,7 @@ bool CrosswalkModule::isRedSignalForPedestrians() const
   return false;
 }
 
-bool CrosswalkModule::isVehicle(const PredictedObject & object) const
+bool CrosswalkModule::isVehicle(const PredictedObject & object)
 {
   if (object.classification.empty()) {
     return false;
@@ -875,7 +920,7 @@ bool CrosswalkModule::isTargetExternalInputStatus(const int target_status) const
 }
 
 geometry_msgs::msg::Polygon CrosswalkModule::createObjectPolygon(
-  const double width_m, const double length_m) const
+  const double width_m, const double length_m)
 {
   geometry_msgs::msg::Polygon polygon{};
 
@@ -888,7 +933,7 @@ geometry_msgs::msg::Polygon CrosswalkModule::createObjectPolygon(
 }
 
 geometry_msgs::msg::Polygon CrosswalkModule::createVehiclePolygon(
-  const vehicle_info_util::VehicleInfo & vehicle_info) const
+  const vehicle_info_util::VehicleInfo & vehicle_info)
 {
   const auto & i = vehicle_info;
   const auto & front_m = i.max_longitudinal_offset_m;

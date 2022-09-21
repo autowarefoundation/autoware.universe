@@ -27,20 +27,18 @@ using Line = bg::model::linestring<Point>;
 using motion_utils::calcLongitudinalOffsetPose;
 using motion_utils::calcSignedArcLength;
 using motion_utils::findNearestSegmentIndex;
-using motion_utils::insertTargetPoint;
 using tier4_autoware_utils::createPoint;
 using tier4_autoware_utils::getPose;
 
 WalkwayModule::WalkwayModule(
-  const int64_t module_id, const lanelet::ConstLanelet & walkway,
-  const PlannerParam & planner_param, const rclcpp::Logger logger,
-  const rclcpp::Clock::SharedPtr clock)
+  const int64_t module_id, lanelet::ConstLanelet walkway, const PlannerParam & planner_param,
+  const rclcpp::Logger & logger, const rclcpp::Clock::SharedPtr clock)
 : SceneModuleInterface(module_id, logger, clock),
   module_id_(module_id),
-  walkway_(walkway),
-  state_(State::APPROACH)
+  walkway_(std::move(walkway)),
+  state_(State::APPROACH),
+  planner_param_(planner_param)
 {
-  planner_param_ = planner_param;
 }
 
 boost::optional<std::pair<double, geometry_msgs::msg::Point>> WalkwayModule::getStopLine(
@@ -110,7 +108,10 @@ bool WalkwayModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_
       return false;
     }
 
-    insertStopPoint(stop_pose.get().position, *path);
+    const auto inserted_pose = planning_utils::insertStopPoint(stop_pose.get().position, *path);
+    if (inserted_pose) {
+      debug_data_.stop_poses.push_back(inserted_pose.get());
+    }
 
     /* get stop point and stop factor */
     StopFactor stop_factor;
@@ -139,8 +140,9 @@ bool WalkwayModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_
     }
 
     return true;
+  }
 
-  } else if (state_ == State::STOP) {
+  if (state_ == State::STOP) {
     if (planner_data_->isVehicleStopped()) {
       state_ = State::SURPASSED;
     }
@@ -148,22 +150,5 @@ bool WalkwayModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_
   }
 
   return true;
-}
-
-void WalkwayModule::insertStopPoint(
-  const geometry_msgs::msg::Point & stop_point, PathWithLaneId & output)
-{
-  const size_t base_idx = findNearestSegmentIndex(output.points, stop_point);
-  const auto insert_idx = insertTargetPoint(base_idx, stop_point, output.points);
-
-  if (!insert_idx) {
-    return;
-  }
-
-  for (size_t i = insert_idx.get(); i < output.points.size(); ++i) {
-    output.points.at(i).point.longitudinal_velocity_mps = 0.0;
-  }
-
-  debug_data_.stop_poses.push_back(getPose(output.points.at(insert_idx.get())));
 }
 }  // namespace behavior_velocity_planner

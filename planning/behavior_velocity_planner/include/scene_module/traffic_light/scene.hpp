@@ -16,6 +16,7 @@
 #define SCENE_MODULE__TRAFFIC_LIGHT__SCENE_HPP_
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -52,7 +53,8 @@ public:
     geometry_msgs::msg::Pose first_stop_pose;
     std::vector<geometry_msgs::msg::Pose> dead_line_poses;
     std::vector<geometry_msgs::msg::Point> traffic_light_points;
-    geometry_msgs::msg::Point highest_confidence_traffic_light_point;
+    std::optional<geometry_msgs::msg::Point> highest_confidence_traffic_light_point = {
+      std::nullopt};
   };
 
   struct PlannerParam
@@ -66,8 +68,9 @@ public:
 
 public:
   TrafficLightModule(
-    const int64_t module_id, const lanelet::TrafficLight & traffic_light_reg_elem,
-    lanelet::ConstLanelet lane, const PlannerParam & planner_param, const rclcpp::Logger logger,
+    const int64_t module_id, const int64_t lane_id,
+    const lanelet::TrafficLight & traffic_light_reg_elem, lanelet::ConstLanelet lane,
+    const PlannerParam & planner_param, const rclcpp::Logger logger,
     const rclcpp::Clock::SharedPtr clock);
 
   bool modifyPathVelocity(
@@ -122,6 +125,9 @@ private:
 
   autoware_auto_perception_msgs::msg::TrafficSignalWithJudge generateTlStateWithJudgeFromTlState(
     const autoware_auto_perception_msgs::msg::TrafficSignal tl_state) const;
+
+  // Lane id
+  const int64_t lane_id_;
 
   // Key Feature
   const lanelet::TrafficLight & traffic_light_reg_elem_;

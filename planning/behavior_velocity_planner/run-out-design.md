@@ -153,7 +153,6 @@ You can choose whether to use this feature by parameter of `slow_down_limit.enab
 | `stop_margin`           | double | [m] the vehicle decelerates to be able to stop with this margin                                                          |
 | `passing_margin`        | double | [m] the vehicle begins to accelerate if the vehicle's front in predicted position is ahead of the obstacle + this margin |
 | `deceleration_jerk`     | double | [m/s^3] ego decelerates with this jerk when stopping for obstacles                                                       |
-| `obstacle_velocity_kph` | double | [km/h] assumption for obstacle velocity                                                                                  |
 | `detection_distance`    | double | [m] ahead distance from ego to detect the obstacles                                                                      |
 | `detection_span`        | double | [m] calculate collision with this span to reduce calculation time                                                        |
 | `min_vel_ego_kmph`      | double | [km/h] min velocity to calculate time to collision                                                                       |
@@ -163,14 +162,15 @@ You can choose whether to use this feature by parameter of `slow_down_limit.enab
 | `margin_ahead`            | double | [m] ahead margin for detection area polygon  |
 | `margin_behind`           | double | [m] behind margin for detection area polygon |
 
-| Parameter /dynamic_obstacle | Type   | Description                                                                                                 |
-| --------------------------- | ------ | ----------------------------------------------------------------------------------------------------------- |
-| `min_vel_kmph`              | double | [km/h] minimum velocity for dynamic obstacles                                                               |
-| `max_vel_kmph`              | double | [km/h] maximum velocity for dynamic obstacles                                                               |
-| `diameter`                  | double | [m] diameter of obstacles. used for creating dynamic obstacles from points                                  |
-| `height`                    | double | [m] height of obstacles. used for creating dynamic obstacles from points                                    |
-| `max_prediction_time`       | double | [sec] create predicted path until this time                                                                 |
-| `time_step`                 | double | [sec] time step for each path step. used for creating dynamic obstacles from points or objects without path |
+| Parameter /dynamic_obstacle | Type   | Description                                                                                                                   |
+| --------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| `min_vel_kmph`              | double | [km/h] minimum velocity for dynamic obstacles                                                                                 |
+| `max_vel_kmph`              | double | [km/h] maximum velocity for dynamic obstacles                                                                                 |
+| `diameter`                  | double | [m] diameter of obstacles. used for creating dynamic obstacles from points                                                    |
+| `height`                    | double | [m] height of obstacles. used for creating dynamic obstacles from points                                                      |
+| `max_prediction_time`       | double | [sec] create predicted path until this time                                                                                   |
+| `time_step`                 | double | [sec] time step for each path step. used for creating dynamic obstacles from points or objects without path                   |
+| `points_interval`           | double | [m] divide obstacle points into groups with this interval, and detect only lateral nearest point. used only for Points method |
 
 | Parameter /approaching | Type   | Description                                                                                        |
 | ---------------------- | ------ | -------------------------------------------------------------------------------------------------- |

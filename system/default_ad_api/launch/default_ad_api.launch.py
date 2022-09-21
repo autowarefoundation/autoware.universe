@@ -68,7 +68,9 @@ def launch_setup(context, *args, **kwargs):
     # create api components
     components = [
         create_api_node("interface", "InterfaceNode"),
+        create_api_node("localization", "LocalizationNode"),
         create_api_node("operation_mode", "OperationModeNode", parameters=param_operation_mode),
+        create_api_node("routing", "RoutingNode"),
     ]
     container = ComposableNodeContainer(
         namespace="default_ad_api",

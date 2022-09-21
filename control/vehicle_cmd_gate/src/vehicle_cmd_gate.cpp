@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "vehicle_cmd_gate/vehicle_cmd_gate.hpp"
+#include "vehicle_cmd_gate.hpp"
 
 #include <rclcpp/logging.hpp>
 #include <tier4_api_utils/tier4_api_utils.hpp>
@@ -370,7 +370,6 @@ void VehicleCmdGate::onTimer()
   }
 
   // Publish topics
-  gate_mode_pub_->publish(current_gate_mode_);
   turn_indicator_cmd_pub_->publish(turn_indicator);
   hazard_light_cmd_pub_->publish(hazard_light);
   gear_cmd_pub_->publish(gear);

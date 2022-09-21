@@ -17,30 +17,19 @@
 
 #include <behavior_path_planner/parameters.hpp>
 #include <behavior_path_planner/scene_module/utils/path_shifter.hpp>
-#include <opencv2/opencv.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
 #include <geometry_msgs/msg/point.hpp>
 
-#include <boost/geometry/geometries/box.hpp>
-#include <boost/geometry/geometries/point_xy.hpp>
-#include <boost/geometry/geometries/polygon.hpp>
-#include <boost/geometry/geometry.hpp>
-
 #include <lanelet2_core/geometry/Lanelet.h>
-#include <lanelet2_routing/Route.h>
-#include <lanelet2_routing/RoutingGraph.h>
-#include <lanelet2_routing/RoutingGraphContainer.h>
 
 #include <limits>
 #include <utility>
 #include <vector>
 
-namespace behavior_path_planner
-{
-namespace util
+namespace behavior_path_planner::util
 {
 using autoware_auto_planning_msgs::msg::Path;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
@@ -49,27 +38,27 @@ using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 
 std::vector<double> calcPathArcLengthArray(
-  const PathWithLaneId & path, size_t start = 0, size_t end = std::numeric_limits<size_t>::max(),
-  double offset = 0.0);
-
-double calcPathArcLength(
-  const PathWithLaneId & path, size_t start = 0, size_t end = std::numeric_limits<size_t>::max());
+  const PathWithLaneId & path, const size_t start = 0,
+  const size_t end = std::numeric_limits<size_t>::max(), const double offset = 0.0);
 
 PathWithLaneId resamplePathWithSpline(const PathWithLaneId & path, double interval);
 
 Path toPath(const PathWithLaneId & input);
 
-size_t getIdxByArclength(const PathWithLaneId & path, const Pose & origin, const double signed_arc);
+size_t getIdxByArclength(
+  const PathWithLaneId & path, const size_t target_idx, const double signed_arc);
 
 void clipPathLength(
-  PathWithLaneId & path, const Pose base_pose, const double forward, const double backward);
+  PathWithLaneId & path, const size_t target_idx, const double forward, const double backward);
+
+void clipPathLength(
+  PathWithLaneId & path, const size_t target_idx, const BehaviorPathPlannerParameters & params);
 
 std::pair<TurnIndicatorsCommand, double> getPathTurnSignal(
   const lanelet::ConstLanelets & current_lanes, const ShiftedPath & path,
   const ShiftPoint & shift_point, const Pose & pose, const double & velocity,
   const BehaviorPathPlannerParameters & common_parameter);
 
-}  // namespace util
-}  // namespace behavior_path_planner
+}  // namespace behavior_path_planner::util
 
 #endif  // BEHAVIOR_PATH_PLANNER__PATH_UTILITIES_HPP_
