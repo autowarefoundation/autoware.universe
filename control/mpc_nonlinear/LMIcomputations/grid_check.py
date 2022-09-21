@@ -19,7 +19,6 @@ amax = 5
 kappa_max = 0.1
 
 if low_or_high_grid == "high":
-
     gey, geyaw, gv, gdelta, ga, gdeltadot, gdelta_input = 4, 4, 8, 4, 4, 4, 4  # states and controls
     gkappa = 2
     save_name = 'xugrid_check.mat'

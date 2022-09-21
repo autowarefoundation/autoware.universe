@@ -32,6 +32,7 @@
 #include "nav_msgs/msg/odometry.hpp"
 #include "gtest/gtest.h"
 #include "fake_test_node/fake_test_node.hpp"
+#include "utils/codegen_eigen_support.hpp"
 
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp/time.hpp"
@@ -49,36 +50,8 @@ using ErrorReportMsg = communication_delay_compensator::msg::ControllerErrorRepo
 auto constexpr EPS = std::numeric_limits<double>::epsilon();
 
 using FakeNodeFixture = autoware::tools::testing::FakeTestNode;
-using FakeNodeFixture = autoware::tools::testing::FakeTestNode;
 
 // Make shared node
 std::shared_ptr<NonlinearMPCNode> makeNonlinearMPCNode();
-
-/**
- * @brief  Logistic map function, generates a curve using the logistic function.
- * @param [in] max_y_value  value of the maximum y coordinate (asymtote )
- * @param [in] center_x_value value at which the curve starts to bend
- * @param [in] slope value defines how fast curve climb.
- * @param [in] x_coord
- * @param [out] ycurve_output = std::vector
- */
-std::vector<double> logisticMap(
-  double const & max_y_value,
-  double const & center_x_value,
-  double const & slope,
-  std::vector<double> const & x_coord);
-
-/**
- * @brief Returns the derivative of the logistic function df/dx = f(x)*(1-f(x))
- * where f(x) is the logistic function defined.
- */
-
-std::vector<double> logisticMapDerivative(
-  double const & max_y_value,
-  double const & center_x_value,
-  double const & slope,
-  std::vector<double> const & x_coord);
-
-void createTrajectoryMessage(TrajectoryMsg & traj_msg);
 
 #endif  // TEST_NONLINEAR_MPC_NODE_HPP_
