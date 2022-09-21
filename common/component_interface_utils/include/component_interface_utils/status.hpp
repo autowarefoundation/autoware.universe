@@ -12,20 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_AD_API_SPECS__INTERFACE_HPP_
-#define AUTOWARE_AD_API_SPECS__INTERFACE_HPP_
+#ifndef COMPONENT_INTERFACE_UTILS__STATUS_HPP_
+#define COMPONENT_INTERFACE_UTILS__STATUS_HPP_
 
-#include <autoware_adapi_version_msgs/srv/interface_version.hpp>
-
-namespace autoware_ad_api::interface
+namespace component_interface_utils::status
 {
 
-struct Version
+template <class T1, class T2>
+void copy(const T1 & src, T2 & dst)  // NOLINT(build/include_what_you_use): cpplint false positive
 {
-  using Service = autoware_adapi_version_msgs::srv::InterfaceVersion;
-  static constexpr char name[] = "/api/interface/version";
-};
+  dst->status.success = src->status.success;
+  dst->status.code = src->status.code;
+  dst->status.message = src->status.message;
+}
 
-}  // namespace autoware_ad_api::interface
+}  // namespace component_interface_utils::status
 
-#endif  // AUTOWARE_AD_API_SPECS__INTERFACE_HPP_
+#endif  // COMPONENT_INTERFACE_UTILS__STATUS_HPP_
