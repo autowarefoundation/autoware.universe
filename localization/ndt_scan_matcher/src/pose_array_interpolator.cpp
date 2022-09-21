@@ -17,7 +17,8 @@
 PoseArrayInterpolator::PoseArrayInterpolator(
   rclcpp::Node * node, const rclcpp::Time target_ros_time,
   const std::deque<PoseWithCovarianceStamped::ConstSharedPtr> & pose_msg_ptr_array)
-: logger_(node->get_logger()), clock_(*node->get_clock()), 
+: logger_(node->get_logger()),
+  clock_(*node->get_clock()),
   current_pose_ptr_(new PoseWithCovarianceStamped),
   old_pose_ptr_(new PoseWithCovarianceStamped),
   new_pose_ptr_(new PoseWithCovarianceStamped),
