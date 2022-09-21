@@ -18,7 +18,7 @@
 #include <rclcpp/qos.hpp>
 
 #include <tier4_control_msgs/msg/is_paused.hpp>
-#include <tier4_control_msgs/msg/will_move.hpp>
+#include <tier4_control_msgs/msg/is_start_requested.hpp>
 #include <tier4_control_msgs/srv/set_pause.hpp>
 
 namespace control_interface
@@ -39,10 +39,10 @@ struct IsPaused
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL;
 };
 
-struct WillMove
+struct IsStartRequested
 {
-  using Message = tier4_control_msgs::msg::WillMove;
-  static constexpr char name[] = "/control/vehicle_cmd_gate/will_move";
+  using Message = tier4_control_msgs::msg::IsStartRequested;
+  static constexpr char name[] = "/control/vehicle_cmd_gate/is_start_requested";
   static constexpr size_t depth = 1;
   static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL;
