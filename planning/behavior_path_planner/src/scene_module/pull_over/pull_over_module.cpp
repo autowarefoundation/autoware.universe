@@ -873,10 +873,10 @@ std::pair<HazardLightsCommand, double> PullOverModule::getHazardInfo() const
     lanelet::utils::getArcCoordinates(status_.pull_over_lanes, planner_data_->self_pose->pose);
   const double distance_to_goal = arc_position_goal_pose.length - arc_position_current_pose.length;
 
-  const auto velocity = planner_data_->self_odometry->twist.twist.linear.x;
+  const double velocity = fabs(planner_data_->self_odometry->twist.twist.linear.x);
   if (
     (distance_to_goal < parameters_.hazard_on_threshold_dis &&
-     abs(velocity) < parameters_.hazard_on_threshold_vel) ||
+     velocity < parameters_.hazard_on_threshold_vel) ||
     status_.planner->getPlannerType() == PullOverPlannerType::ARC_BACKWARD) {
     hazard_signal.command = HazardLightsCommand::ENABLE;
     const double distance_from_front_to_goal =
