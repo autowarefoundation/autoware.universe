@@ -41,7 +41,7 @@ private:
   Pub<autoware_ad_api::motion::State> pub_state_;
   Cli<control_interface::SetPause> cli_set_pause_;
   Sub<control_interface::IsPaused> sub_is_paused_;
-  Sub<control_interface::WillMove> sub_will_move_;
+  Sub<control_interface::IsStartRequested> sub_is_start_requested_;
 
   enum class State { kStopping, kStopped, kStarting, kStarted, kMoving };
   State state_;
@@ -53,7 +53,8 @@ private:
   void change_state(const State state, const bool init = false);
   void on_timer();
   void on_is_paused(const control_interface::IsPaused::Message::ConstSharedPtr msg);
-  void on_will_move(const control_interface::WillMove::Message::ConstSharedPtr msg);
+  void on_is_start_requested(
+    const control_interface::IsStartRequested::Message::ConstSharedPtr msg);
   void on_accept(
     const autoware_ad_api::motion::AcceptStart::Service::Request::SharedPtr req,
     const autoware_ad_api::motion::AcceptStart::Service::Response::SharedPtr res);

@@ -33,7 +33,7 @@ MotionNode::MotionNode(const rclcpp::NodeOptions & options)
   adaptor.init_pub(pub_state_);
   adaptor.init_cli(cli_set_pause_, group_cli_);
   adaptor.init_sub(sub_is_paused_, this, &MotionNode::on_is_paused);
-  adaptor.init_sub(sub_will_move_, this, &MotionNode::on_will_move);
+  adaptor.init_sub(sub_is_start_requested_, this, &MotionNode::on_is_start_requested);
 
   rclcpp::Rate rate(5);
   timer_ = rclcpp::create_timer(this, get_clock(), rate.period(), [this]() { on_timer(); });
@@ -102,7 +102,8 @@ void MotionNode::on_is_paused(const control_interface::IsPaused::Message::ConstS
   }
 }
 
-void MotionNode::on_will_move(const control_interface::WillMove::Message::ConstSharedPtr msg)
+void MotionNode::on_is_start_requested(
+  const control_interface::IsStartRequested::Message::ConstSharedPtr msg)
 {
   if (msg->data) {
     if (state_ == State::kStopped) {
