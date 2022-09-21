@@ -262,7 +262,7 @@ TEST_F(FakeNodeFixture, empty_trajectory)
 /**
  * Integration with autodiff : Boost integration test
  * */
-TEST(CPPADtests, integration_of_autodiffed)
+TEST(CPPADtests, DISABLED_integration_of_autodiffed)
 {
   // Compute f(x, u) by codegen from the model.
   Model::state_vector_t f_of_dx{Model::state_vector_t::Zero()};
@@ -502,17 +502,16 @@ TEST_F(FakeNodeFixture, nmpc_core_lpv_test)
     // vehicle_model_ptr->testModel();
   }
 
-
   /**
    * Check the stability of A + BK for a given grid points of the parameters.
    * */
-  auto kappa_grid = ns_utils::linspace(-0.1, 0.1, 3);  // curvature
+  auto kappa_grid = ns_utils::linspace(-0.08, 0.08, 3);  // curvature
 
   double eyaw_max{20};
   ns_utils::deg2rad(eyaw_max);
 
   auto eyaw_grid = ns_utils::linspace(-eyaw_max, eyaw_max, 5);
-  auto ey_grid = ns_utils::linspace(-1., 1., 5);
+  auto ey_grid = ns_utils::linspace(-0.8, 0.8, 5);
 
   // Initialize states and inputs.
   Model::state_vector_t x{Model::state_vector_t::Zero()};
@@ -531,7 +530,7 @@ TEST_F(FakeNodeFixture, nmpc_core_lpv_test)
   // Although, it is stable for a range of velocity, we use the LPV when starting only.
   auto const &ntheta_ = params_lpv.num_of_nonlinearities;
 
-  double vx{10.};
+  double vx{2.};
   auto const &Id = Eigen::MatrixXd::Identity(4, 4); //Model::state_matrix_t::Identity();
   double dt_mpc = 0.1;
 
@@ -539,7 +538,7 @@ TEST_F(FakeNodeFixture, nmpc_core_lpv_test)
   {
     for (double const &eyaw : eyaw_grid)
     {
-      for (double k : kappa_grid)
+      for (double const &k : kappa_grid)
       {
         // for computing the state and control matrices, set the states
         x.setZero();
@@ -558,7 +557,10 @@ TEST_F(FakeNodeFixture, nmpc_core_lpv_test)
         vehicle_model_ptr->computeJacobians(x, u, params, Ac, Bc);
 
         ns_eigen_utils::printEigenMat(Ac, "Ac");
+        ns_eigen_utils::printEigenMat(Ac.block<4, 4>(4, 4), "Ace");
+
         ns_eigen_utils::printEigenMat(Bc, "Bc");
+        ns_eigen_utils::printEigenMat(Bc.block<4, 2>(4, 0), "Bce");
 
         auto const &Ac_error_block = Ac.bottomRightCorner<5, 5>();
 
@@ -585,7 +587,7 @@ TEST_F(FakeNodeFixture, nmpc_core_lpv_test)
         auto const &Pr = Xr.inverse();  // Cost matrix P.
         auto const &Kfb = Yr * Pr;      // State feedback coefficients matrix.
 
-        ns_utils::print(Kfb.eval(), "\nComputed Feedback Gains");
+        ns_eigen_utils::printEigenMat(Kfb.eval(), "\nComputed Feedback Gains");
 
         /**
          * Discretisize the system matrices
@@ -598,11 +600,17 @@ TEST_F(FakeNodeFixture, nmpc_core_lpv_test)
         // Closed loop transfer matrix
         // ['xw', 'yw', 'psi', 's', 'e_y', 'e_yaw', 'Vx', 'delta', 'ay']
         auto Aclosed_loop = Ad + Bd * Kfb;
-        auto eig_vals = Aclosed_loop.eigenvalues();
+        auto const &eig_vals = Aclosed_loop.eigenvalues();
 
         ns_utils::print("Operating states, vx, ey, eyaw :", vx, ey, eyaw);
         ns_eigen_utils::printEigenMat(eig_vals, "\nEigen values of the closed loop system matrix :");
 
+        ns_utils::print("Magnitute of Eigenvalues ");
+        for (auto ke = 0; ke < eig_vals.size(); ++ke)
+        {
+          // ASSERT_TRUE(std::abs())
+          ns_utils::print(std::abs(eig_vals(ke)));
+        }
       }
     }
   }
