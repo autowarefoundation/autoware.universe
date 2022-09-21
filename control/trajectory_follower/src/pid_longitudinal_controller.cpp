@@ -448,8 +448,8 @@ PidLongitudinalController::ControlData PidLongitudinalController::getControlData
   m_prev_shift = control_data.shift;
 
   // distance to stopline
-  control_data.stop_dist = trajectory_follower::longitudinal_utils::calcOvershootStopDistance(
-    current_pose.position, *m_trajectory_ptr, control_data.nearest_idx);
+  control_data.stop_dist = trajectory_follower::longitudinal_utils::calcStopDistance(
+    current_pose, *m_trajectory_ptr, m_ego_nearest_dist_threshold, m_ego_nearest_yaw_threshold);
 
   // pitch
   const float64_t raw_pitch =
@@ -485,6 +485,10 @@ PidLongitudinalController::ControlState PidLongitudinalController::updateControl
   const float64_t current_vel = control_data.current_motion.vel;
   const float64_t current_acc = control_data.current_motion.acc;
   const float64_t stop_dist = control_data.stop_dist;
+  const geometry_msgs::msg::Pose current_pose = m_current_kinematic_state_ptr->pose.pose;
+  const float64_t overshoot_stop_dist =
+    trajectory_follower::longitudinal_utils::calcOvershootStopDistance(
+      current_pose.position, *m_trajectory_ptr, control_data.nearest_idx);
 
   // flags for state transition
   const auto & p = m_state_transition_params;
@@ -508,7 +512,7 @@ PidLongitudinalController::ControlState PidLongitudinalController::updateControl
       : false;
 
   const bool8_t emergency_condition =
-    m_enable_overshoot_emergency && stop_dist < -p.emergency_state_overshoot_stop_dist;
+    m_enable_overshoot_emergency && overshoot_stop_dist < -p.emergency_state_overshoot_stop_dist;
 
   // transit state
   if (current_control_state == ControlState::DRIVE) {
