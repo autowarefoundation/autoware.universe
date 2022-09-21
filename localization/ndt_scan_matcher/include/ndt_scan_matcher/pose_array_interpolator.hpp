@@ -54,12 +54,12 @@ private:
   void interpolate(
     const std::deque<PoseWithCovarianceStamped::ConstSharedPtr> & pose_msg_ptr_array,
     const rclcpp::Time target_ros_time);
-  void validate_time_stamp_difference(
+  bool validate_time_stamp_difference(
     const rclcpp::Time & target_time, const rclcpp::Time & reference_time,
-    const double time_tolerance_sec);
-  void validate_position_difference(
+    const double time_tolerance_sec) const;
+  bool validate_position_difference(
     const geometry_msgs::msg::Point & target_point,
-    const geometry_msgs::msg::Point & reference_point, const double distance_tolerance_m_);
+    const geometry_msgs::msg::Point & reference_point, const double distance_tolerance_m_) const;
 };
 
 #endif  // NDT_SCAN_MATCHER__POSE_ARRAY_INTERPOLATOR_HPP_

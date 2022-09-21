@@ -28,11 +28,11 @@ PoseArrayInterpolator::PoseArrayInterpolator(
   interpolate(pose_msg_ptr_array, target_ros_time);
 
   // check the time stamp
-  validate_time_stamp_difference(old_pose_ptr_->header.stamp, target_ros_time, pose_timeout_sec);
-  validate_time_stamp_difference(new_pose_ptr_->header.stamp, target_ros_time, pose_timeout_sec);
+  success_ = validate_time_stamp_difference(old_pose_ptr_->header.stamp, target_ros_time, pose_timeout_sec);
+  success_ = validate_time_stamp_difference(new_pose_ptr_->header.stamp, target_ros_time, pose_timeout_sec);
 
   // check the position jumping (ex. immediately after the initial pose estimation)
-  validate_position_difference(
+  success_ = validate_position_difference(
     old_pose_ptr_->pose.pose.position, new_pose_ptr_->pose.pose.position,
     pose_distance_tolerance_meters);
 
@@ -89,32 +89,34 @@ geometry_msgs::msg::PoseWithCovarianceStamped PoseArrayInterpolator::get_new_pos
 
 bool PoseArrayInterpolator::is_success() { return success_; }
 
-void PoseArrayInterpolator::validate_time_stamp_difference(
+bool PoseArrayInterpolator::validate_time_stamp_difference(
   const rclcpp::Time & target_time, const rclcpp::Time & reference_time,
-  const double time_tolerance_sec)
+  const double time_tolerance_sec) const
 {
   const double dt = std::abs((target_time - reference_time).seconds());
-  if (dt > time_tolerance_sec) {
+  bool success = dt < time_tolerance_sec;
+  if (!success) {
     RCLCPP_WARN(
       logger_,
       "Validation error. The reference time is %lf[sec], but the target time is %lf[sec]. The "
       "difference is %lf[sec] (the tolerance is %lf[sec]).",
       reference_time.seconds(), target_time.seconds(), dt, time_tolerance_sec);
-    success_ = false;
   }
+  return success;
 }
 
-void PoseArrayInterpolator::validate_position_difference(
+bool PoseArrayInterpolator::validate_position_difference(
   const geometry_msgs::msg::Point & target_point, const geometry_msgs::msg::Point & reference_point,
-  const double distance_tolerance_m_)
+  const double distance_tolerance_m_) const
 {
   double distance = norm(target_point, reference_point);
-  if (distance > distance_tolerance_m_) {
+  bool success = distance < distance_tolerance_m_;
+  if (!success) {
     RCLCPP_WARN(
       logger_,
       "Validation error. The distance from reference position to target position is %lf[m] (the "
       "tolerance is %lf[m]).",
       distance, distance_tolerance_m_);
-    success_ = false;
   }
+  return success;
 }
