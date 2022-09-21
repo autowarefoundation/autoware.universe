@@ -27,6 +27,7 @@
  * */
 TEST_F(FakeNodeFixture, automatic_differentiation_works)
 {
+
   // Compute f(x, u) by codegen from the model.
   Model::state_vector_t f_of_dx{Model::state_vector_t::Zero()};
 
@@ -262,7 +263,7 @@ TEST_F(FakeNodeFixture, empty_trajectory)
 /**
  * Integration with autodiff : Boost integration test
  * */
-TEST(CPPADtests, DISABLED_integration_of_autodiffed)
+TEST(CPPADtests, integration_of_autodiffed)
 {
   // Compute f(x, u) by codegen from the model.
   Model::state_vector_t f_of_dx{Model::state_vector_t::Zero()};
@@ -372,7 +373,7 @@ TEST_F(FakeNodeFixture, straight_line_trajectory)
   TrajectoryMsg traj_msg{};
 
   size_t num_of_traj_points = 20;
-  double dt{1. / 30};
+  double dt{1. / 10};
 
   std::vector<double> xw{0.};
   std::vector<double> yw{0.};
@@ -426,8 +427,8 @@ TEST_F(FakeNodeFixture, straight_line_trajectory)
 
   // Spin for transform to be published
   test_utils::spinWhile(node);
-  //  test_utils::waitForMessage(
-  //    node, this, is_control_command_received, std::chrono::seconds{1LL}, false);
+  test_utils::waitForMessage(
+    node, this, is_control_command_received, std::chrono::seconds{1LL}, false);
 
   test_utils::waitForMessage(node, this, is_nmpc_msg_received, std::chrono::seconds{1LL}, false);
 
@@ -530,7 +531,7 @@ TEST_F(FakeNodeFixture, nmpc_core_lpv_test)
   auto const &ntheta_ = params_lpv.num_of_nonlinearities;
 
   double vx{2.};
-  auto const &Id = Eigen::MatrixXd::Identity(4, 4); //Model::state_matrix_t::Identity();
+  auto const &Id = Eigen::MatrixXd::Identity(4, 4);  // Model::state_matrix_t::Identity();
   double dt_mpc = 0.1;
 
   for (double const &ey : ey_grid)
@@ -605,7 +606,8 @@ TEST_F(FakeNodeFixture, nmpc_core_lpv_test)
         auto const &eig_vals = Aclosed_loop.eigenvalues();
 
         ns_utils::print("Operating states, vx, ey, eyaw :", vx, ey, eyaw);
-        ns_eigen_utils::printEigenMat(eig_vals, "\nEigen values of the closed loop system matrix :");
+        ns_eigen_utils::printEigenMat(
+          eig_vals, "\nEigen values of the closed loop system matrix :");
 
         ns_utils::print("Magnitude of Eigenvalues ");
         for (auto ke = 0; ke < eig_vals.size(); ++ke)
