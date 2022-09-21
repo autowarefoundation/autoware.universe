@@ -55,7 +55,7 @@ struct PullOverParameters
   double forward_goal_search_length;
   double backward_goal_search_length;
   double goal_search_interval;
-  double goal_to_obj_margin;
+  double goal_to_obstacle_margin;
   // occupancy grid map
   bool use_occupancy_grid;
   double occupancy_grid_collision_check_margin;
@@ -112,6 +112,7 @@ enum PathType {
 struct PUllOverStatus
 {
   PathWithLaneId path{};
+  PathWithLaneId full_path{};
   std::shared_ptr<PathWithLaneId> prev_stop_path = nullptr;
   lanelet::ConstLanelets current_lanes{};
   lanelet::ConstLanelets pull_over_lanes{};
@@ -167,12 +168,7 @@ private:
   const double check_distance_ = 100.0;
 
   rclcpp::Subscription<OccupancyGrid>::SharedPtr occupancy_grid_sub_;
-  rclcpp::Publisher<PoseStamped>::SharedPtr Cr_pub_;
-  rclcpp::Publisher<PoseStamped>::SharedPtr Cl_pub_;
-  rclcpp::Publisher<PoseStamped>::SharedPtr start_pose_pub_;
   rclcpp::Publisher<PoseStamped>::SharedPtr goal_pose_pub_;
-  rclcpp::Publisher<PoseArray>::SharedPtr path_pose_array_pub_;
-  rclcpp::Publisher<MarkerArray>::SharedPtr parking_area_pub_;
 
   PUllOverStatus status_;
   OccupancyGridBasedCollisionDetector occupancy_grid_map_;
@@ -189,9 +185,7 @@ private:
 
   PathWithLaneId getReferencePath() const;
   PathWithLaneId generateStopPath() const;
-  lanelet::ConstLanelets getPullOverLanes() const;
-  std::pair<bool, bool> getSafePath(ShiftParkingPath & safe_path) const;
-  Pose getRefinedGoal() const;
+  Pose calcRefinedGoal() const;
   Pose getParkingStartPose() const;
   ParallelParkingParameters getGeometricPullOverParameters() const;
   bool isLongEnoughToParkingStart(
@@ -202,13 +196,15 @@ private:
   double calcMinimumShiftPathDistance() const;
   std::pair<double, double> calcDistanceToPathChange() const;
 
-  bool planShiftPath();
+  bool planShiftPath(const Pose goal_pose);
   bool isStopped();
   bool hasFinishedCurrentPath();
   bool hasFinishedPullOver();
   void updateOccupancyGrid();
   void researchGoal();
   void resetStatus();
+  bool checkCollisionWithLongitudinalDistance(
+    const Pose & ego_pose, const PredictedObjects & dynamic_objects) const;
   bool checkCollisionWithPose(const Pose & pose) const;
   bool checkCollisionWithPath(const PathWithLaneId & path) const;
 
@@ -217,8 +213,7 @@ private:
   std::pair<TurnIndicatorsCommand, double> getTurnInfo() const;
 
   // debug
-  Marker createParkingAreaMarker(const Pose & back_pose, const Pose & front_pose, const int32_t id);
-  void publishDebugData();
+  void setDebugData();
   void printParkingPositionError() const;
 };
 }  // namespace behavior_path_planner
