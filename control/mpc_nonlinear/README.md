@@ -2,7 +2,8 @@
 
 - Use installation script to install [CppAD](https://github.com/coin-or/CppAD)
   and [CppAD-Codegen](https://github.com/joaoleal/CppADCodeGen),
-- (or git clone --recursive [URL to Git repo])
+- (copy into the local folder git clone --recursive [URL to Git repo])
+    - For CppAD-Codegen Wiki pages : [see](https://github.com/joaoleal/CppADCodeGen/wiki/LibGeneration)
 - Install [OSQP](https://osqp.org/docs/installation/cc++),
 
 CppAD-Codegen requires following packages. Before CppAD-Codegen these packages must be installed.
