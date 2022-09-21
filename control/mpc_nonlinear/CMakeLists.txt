@@ -75,17 +75,17 @@ endif()
 
 
 ## CppAD
-# message("\n### Configuring CppAD ###")
-#file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/runtime_lib/CppAD)
-#execute_process(COMMAND cmake ${CMAKE_CURRENT_LIST_DIR}/runtime_lib/CppAD
-#  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/runtime_lib/CppAD)
-#
-## CppADCodeGen
-#message("\n### Configuring CppADCodeGen ###")
-#file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/runtime_lib/CppADCodeGen)
-#execute_process(COMMAND cmake -DCPPAD_HOME=${CMAKE_CURRENT_LIST_DIR}/lib/CppAD/include
-#${CMAKE_CURRENT_LIST_DIR}/runtime_lib/CppADCodeGen
-#WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/runtime_lib/CppADCodeGen)
+message("\n### Configuring CppAD ###")
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/external_libs/CppAD)
+execute_process(COMMAND cmake ${CMAKE_CURRENT_LIST_DIR}/external_libs/CppAD
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/external_libs/CppAD)
+
+# CppADCodeGen
+message("\n### Configuring CppADCodeGen ###")
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/external_libs/CppADCodeGen)
+execute_process(COMMAND cmake -DCPPAD_HOME=${CMAKE_CURRENT_LIST_DIR}/external_libs/CppAD/include
+  ${CMAKE_CURRENT_LIST_DIR}/external_libs/CppADCodeGen
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/external_libs/CppADCodeGen)
 
 # ------------ LIBRARIES --------------------------------
 message(STATUS "osqp-cpp: Adding osqp-cpp library...")
