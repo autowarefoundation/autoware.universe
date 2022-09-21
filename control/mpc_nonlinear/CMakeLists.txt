@@ -207,9 +207,10 @@ if(BUILD_TESTING)
     ${NMPC_CORE}
     ${NMPC_NODE}
     osqp-cpp
-    ${EIGEN3_LIBRARIES})
+    ${EIGEN3_LIBRARIES} pthread)
 
 endif()
+
 
 ament_auto_package(INSTALL_TO_SHARE
   launch
