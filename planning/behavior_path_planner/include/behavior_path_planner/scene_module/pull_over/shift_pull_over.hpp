@@ -33,10 +33,10 @@ using lane_departure_checker::LaneDepartureChecker;
 class ShiftPullOver : public PullOverPlannerBase
 {
 public:
-  explicit ShiftPullOver(
+  ShiftPullOver(
     rclcpp::Node & node, const PullOverParameters & parameters,
-    std::shared_ptr<LaneDepartureChecker> & lane_departure_checker,
-    std::shared_ptr<OccupancyGridBasedCollisionDetector> & occupancy_grid_map);
+    std::shared_ptr<LaneDepartureChecker> lane_departure_checker,
+    std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map);
 
   PullOverPlannerType getPlannerType() const override { return PullOverPlannerType::SHIFT; };
   boost::optional<PullOverPath> plan(const Pose & goal_pose) override;

@@ -28,7 +28,8 @@ namespace behavior_path_planner
 GeometricPullOver::GeometricPullOver(
   rclcpp::Node & node, const PullOverParameters & parameters,
   const ParallelParkingParameters & parallel_parking_parameters,
-  std::shared_ptr<OccupancyGridBasedCollisionDetector> & occupancy_grid_map, bool is_forward)
+  const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map,
+  const bool is_forward)
 : PullOverPlannerBase{node, parameters},
   parallel_parking_parameters_{parallel_parking_parameters},
   occupancy_grid_map_{occupancy_grid_map},

@@ -30,17 +30,18 @@ namespace behavior_path_planner
 class GeometricPullOver : public PullOverPlannerBase
 {
 public:
-  explicit GeometricPullOver(
+  GeometricPullOver(
     rclcpp::Node & node, const PullOverParameters & parameters,
     const ParallelParkingParameters & parallel_parking_parameters,
-    std::shared_ptr<OccupancyGridBasedCollisionDetector> & occupancy_grid_map, bool is_forward);
+    const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map,
+    const bool is_forward);
 
   PullOverPlannerType getPlannerType() const override
   {
     return is_forward_ ? PullOverPlannerType::ARC_FORWARD : PullOverPlannerType::ARC_BACKWARD;
-  };
-  Pose getCr() const { return planner_.getCr(); };
-  Pose getCl() const { return planner_.getCl(); };
+  }
+  Pose getCr() const { return planner_.getCr(); }
+  Pose getCl() const { return planner_.getCl(); }
 
   boost::optional<PullOverPath> plan(const Pose & goal_pose) override;
 

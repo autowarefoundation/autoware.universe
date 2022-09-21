@@ -70,26 +70,30 @@ lanelet::ConstLanelets getPullOverLanes(const RouteHandler & route_handler)
 
 bool hasEnoughDistanceToParkingStart(
   const PathWithLaneId & path, const Pose & current_pose, const Pose & start_pose,
-  const double current_vel, const double maximum_deceleration, const double decide_path_distance)
+  const double current_vel, const double maximum_deceleration, const double decide_path_distance,
+  const double ego_nearest_dist_threshold, const double ego_nearest_yaw_threshold)
 {
-  const auto dist_to_start_pose = calcSignedArcLength(
-    path.points, current_pose, start_pose.position, std::numeric_limits<double>::max(), M_PI_2);
-  if (!dist_to_start_pose) return false;
+  const size_t ego_segment_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+    path.points, current_pose, ego_nearest_dist_threshold, ego_nearest_yaw_threshold);
+  const size_t start_segment_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+    path.points, start_pose, ego_nearest_dist_threshold, ego_nearest_yaw_threshold);
+  const double dist_to_start_pose = calcSignedArcLength(
+    path.points, current_pose.position, ego_segment_idx, start_pose.position, start_segment_idx);
 
   // const double current_vel = planner_data_->self_odometry->twist.twist.linear.x;
   const double current_to_stop_distance = std::pow(current_vel, 2) / maximum_deceleration / 2;
 
   // once stopped, it cannot start again if start_pose is close.
   // so need enough distance to restart
-  const double eps_vel = 0.01;
+  constexpr double eps_vel = 0.01;
   // dist to restart should be less than decide_path_distance.
   // otherwise, the goal would change immediately after departure.
   const double dist_to_restart = decide_path_distance / 2;
-  if (std::abs(current_vel) < eps_vel && *dist_to_start_pose < dist_to_restart) {
+  if (std::abs(current_vel) < eps_vel && dist_to_start_pose < dist_to_restart) {
     return false;
   }
 
-  return *dist_to_start_pose > current_to_stop_distance;
+  return dist_to_start_pose > current_to_stop_distance;
 }
 
 Marker createPullOverAreaMarker(

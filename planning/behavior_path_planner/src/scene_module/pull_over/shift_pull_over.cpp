@@ -24,11 +24,12 @@
 #include <vector>
 
 namespace behavior_path_planner
+
 {
 ShiftPullOver::ShiftPullOver(
   rclcpp::Node & node, const PullOverParameters & parameters,
-  std::shared_ptr<LaneDepartureChecker> & lane_departure_checker,
-  std::shared_ptr<OccupancyGridBasedCollisionDetector> & occupancy_grid_map)
+  std::shared_ptr<LaneDepartureChecker> lane_departure_checker,
+  std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map)
 : PullOverPlannerBase{node, parameters},
   lane_departure_checker_{lane_departure_checker},
   occupancy_grid_map_{occupancy_grid_map}
@@ -335,7 +336,8 @@ bool ShiftPullOver::hasEnoughDistance(
 
   if (!pull_over_utils::hasEnoughDistanceToParkingStart(
         path.path, current_pose, path.start_pose, current_vel, parameters_.maximum_deceleration,
-        parameters_.decide_path_distance)) {
+        parameters_.decide_path_distance, planner_data_->parameters.ego_nearest_dist_threshold,
+        planner_data_->parameters.ego_nearest_yaw_threshold)) {
     return false;
   }
 

@@ -15,10 +15,10 @@
 #ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__PULL_OVER__PULL_OVER_MODULE_HPP_
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__PULL_OVER__PULL_OVER_MODULE_HPP_
 
+#include "behavior_path_planner/scene_module/pull_over/geometric_pull_over.hpp"
 #include "behavior_path_planner/scene_module/pull_over/pull_over_parameters.hpp"
 #include "behavior_path_planner/scene_module/pull_over/pull_over_path.hpp"
 #include "behavior_path_planner/scene_module/pull_over/shift_pull_over.hpp"
-#include "behavior_path_planner/scene_module/pull_over/geometric_pull_over.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 #include "behavior_path_planner/scene_module/utils/geometric_parallel_parking.hpp"
 #include "behavior_path_planner/scene_module/utils/occupancy_grid_based_collision_detector.hpp"
@@ -55,23 +55,23 @@ struct PUllOverStatus
   std::shared_ptr<PullOverPlannerBase> planner{};
   PathWithLaneId path{};
   PullOverPath pull_over_path{};
-  size_t current_path_idx = 0;
+  size_t current_path_idx{0};
   PathWithLaneId full_path{};
-  std::shared_ptr<PathWithLaneId> prev_stop_path = nullptr;
+  std::shared_ptr<PathWithLaneId> prev_stop_path{nullptr};
   lanelet::ConstLanelets current_lanes{};
   lanelet::ConstLanelets pull_over_lanes{};
   lanelet::ConstLanelets lanes{};  // current + pull_over
-  bool has_decided_path = false;
-  bool is_safe = false;
-  bool prev_is_safe = false;
-  bool has_decided_velocity = false;
-  bool has_requested_approval_ = false;
+  bool has_decided_path{false};
+  bool is_safe{false};
+  bool prev_is_safe{false};
+  bool has_decided_velocity{false};
+  bool has_requested_approval{false};
 };
 
 struct GoalCandidate
 {
   Pose goal_pose{};
-  double distance_from_original_goal = 0.0;
+  double distance_from_original_goal{0.0};
 
   bool operator<(const GoalCandidate & other) const noexcept
   {
@@ -109,8 +109,8 @@ private:
   PullOverPath shift_parking_path_;
   vehicle_info_util::VehicleInfo vehicle_info_;
 
-  const double pull_over_lane_length_ = 200.0;
-  const double check_distance_ = 100.0;
+  const double pull_over_lane_length_{200.0};
+  const double check_distance_{100.0};
 
   rclcpp::Subscription<OccupancyGrid>::SharedPtr occupancy_grid_sub_;
   rclcpp::Publisher<PoseStamped>::SharedPtr goal_pose_pub_;
@@ -142,7 +142,6 @@ private:
   double calcMinimumShiftPathDistance() const;
   std::pair<double, double> calcDistanceToPathChange() const;
 
-  bool planShiftPath(const Pose goal_pose);
   bool isStopped();
   bool hasFinishedCurrentPath();
   bool hasFinishedPullOver();

@@ -66,8 +66,8 @@ struct PullOverParameters
   double arc_path_interval;
   double pull_over_max_steer_angle;
   // hazard
-  double hazard_on_threshold_dis;
-  double hazard_on_threshold_vel;
+  double hazard_on_threshold_distance;
+  double hazard_on_threshold_velocity;
   // check safety with dynamic objects. Not used now.
   double pull_over_duration;
   double pull_over_prepare_duration;

@@ -453,14 +453,14 @@ BehaviorModuleOutput PullOverModule::plan()
 
   // Use decided path
   if (status_.has_decided_path) {
-    if (!status_.has_requested_approval_) {
+    if (!status_.has_requested_approval) {
       // request approval again one the final path is decided
       waitApproval();
       removeRTCStatus();
       steering_factor_interface_ptr_->clearSteeringFactors();
       uuid_ = generateUUID();
       current_state_ = BT::NodeStatus::SUCCESS;  // for breaking loop
-      status_.has_requested_approval_ = true;
+      status_.has_requested_approval = true;
     } else if (isActivated() && isWaitingApproval()) {
       // When it is approved again after path is decided
       clearWaitingApproval();
@@ -761,29 +761,9 @@ PathWithLaneId PullOverModule::getFullPath() const
         path.points.end(), next(paths.at(i).points.begin()), paths.at(i).points.end());
     }
   }
+  path.points = motion_utils::removeOverlapPoints(path.points);
 
-  return util::removeOverlappingPoints(path);
-}
-
-bool PullOverModule::planShiftPath(const Pose goal_pose)
-{
-  const auto & route_handler = planner_data_->route_handler;
-  // tmp
-
-  const auto planner = pull_over_planners_.front();
-  planner->setPlannerData(planner_data_);
-  const auto pull_over_path = planner->plan(goal_pose);
-
-  if (!pull_over_path) {
-    return false;
-  }
-
-  shift_parking_path_ = *pull_over_path;
-
-  shift_parking_path_.is_safe = true;
-  shift_parking_path_.path.header = route_handler->getRouteHeader();
-
-  return true;
+  return path;
 }
 
 double PullOverModule::calcMinimumShiftPathDistance() const
@@ -845,8 +825,8 @@ bool PullOverModule::isStopped()
 
 bool PullOverModule::hasFinishedCurrentPath()
 {
-  const auto current_path_end = getCurrentPath().points.back();
-  const auto self_pose = planner_data_->self_pose->pose;
+  const auto & current_path_end = getCurrentPath().points.back();
+  const auto & self_pose = planner_data_->self_pose->pose;
   const bool is_near_target = tier4_autoware_utils::calcDistance2d(current_path_end, self_pose) <
                               parameters_.th_arrived_distance;
 
@@ -873,10 +853,10 @@ std::pair<HazardLightsCommand, double> PullOverModule::getHazardInfo() const
     lanelet::utils::getArcCoordinates(status_.pull_over_lanes, planner_data_->self_pose->pose);
   const double distance_to_goal = arc_position_goal_pose.length - arc_position_current_pose.length;
 
-  const double velocity = fabs(planner_data_->self_odometry->twist.twist.linear.x);
+  const double velocity = std::abs(planner_data_->self_odometry->twist.twist.linear.x);
   if (
-    (distance_to_goal < parameters_.hazard_on_threshold_dis &&
-     velocity < parameters_.hazard_on_threshold_vel) ||
+    (distance_to_goal < parameters_.hazard_on_threshold_distance &&
+     velocity < parameters_.hazard_on_threshold_velocity) ||
     status_.planner->getPlannerType() == PullOverPlannerType::ARC_BACKWARD) {
     hazard_signal.command = HazardLightsCommand::ENABLE;
     const double distance_from_front_to_goal =

@@ -45,7 +45,7 @@ enum class PullOverPlannerType {
 class PullOverPlannerBase
 {
 public:
-  explicit PullOverPlannerBase(rclcpp::Node & node, const PullOverParameters & parameters)
+  PullOverPlannerBase(rclcpp::Node & node, const PullOverParameters & parameters)
   {
     vehicle_info_ = vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo();
     vehicle_footprint_ = createVehicleFootprint(vehicle_info_);
