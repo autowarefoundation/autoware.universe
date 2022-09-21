@@ -18,6 +18,7 @@
 #include <autoware_ad_api_specs/motion.hpp>
 #include <component_interface_specs/control.hpp>
 #include <component_interface_utils/rclcpp.hpp>
+#include <component_interface_utils/status.hpp>
 #include <motion_utils/vehicle/vehicle_state_checker.hpp>
 #include <rclcpp/rclcpp.hpp>
 

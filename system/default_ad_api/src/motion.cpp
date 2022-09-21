@@ -128,9 +128,11 @@ void MotionNode::on_accept(
       AcceptStartResponse::ERROR_NOT_STARTING, "The motion state is not starting");
   }
 
-  const auto req = std::make_shared<control_interface::SetPause::Service::Request>();
-  req->pause = false;
-  res->status = cli_set_pause_->call(req)->status;
+  const auto inner_req = std::make_shared<control_interface::SetPause::Service::Request>();
+  inner_req->pause = false;
+
+  const auto inner_res = cli_set_pause_->call(inner_req);
+  component_interface_utils::status::copy(inner_res, res);  // NOLINT cpplint false positive
 }
 
 }  // namespace default_ad_api
