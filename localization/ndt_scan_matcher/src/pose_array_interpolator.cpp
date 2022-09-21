@@ -16,17 +16,27 @@
 
 PoseArrayInterpolator::PoseArrayInterpolator(
   rclcpp::Node * node, const rclcpp::Time target_ros_time,
+  const std::deque<PoseWithCovarianceStamped::ConstSharedPtr> & pose_msg_ptr_array)
+: logger_(node->get_logger()), clock_(*node->get_clock()), 
+  current_pose_ptr_(new PoseWithCovarianceStamped),
+  old_pose_ptr_(new PoseWithCovarianceStamped),
+  new_pose_ptr_(new PoseWithCovarianceStamped),
+  success_(true)
+{
+  get_nearest_timestamp_pose(pose_msg_ptr_array, target_ros_time, old_pose_ptr_, new_pose_ptr_);
+  const geometry_msgs::msg::PoseStamped interpolated_pose_msg =
+    interpolate_pose(*old_pose_ptr_, *new_pose_ptr_, target_ros_time);
+  current_pose_ptr_->header = interpolated_pose_msg.header;
+  current_pose_ptr_->pose.pose = interpolated_pose_msg.pose;
+  current_pose_ptr_->pose.covariance = old_pose_ptr_->pose.covariance;
+}
+
+PoseArrayInterpolator::PoseArrayInterpolator(
+  rclcpp::Node * node, const rclcpp::Time target_ros_time,
   const std::deque<PoseWithCovarianceStamped::ConstSharedPtr> & pose_msg_ptr_array,
   const double & pose_timeout_sec, const double & pose_distance_tolerance_meters)
-: logger_(node->get_logger()), clock_(*node->get_clock())
+: PoseArrayInterpolator(node, target_ros_time, pose_msg_ptr_array)
 {
-  success_ = true;
-  current_pose_ptr_ = std::make_shared<PoseWithCovarianceStamped>();
-  old_pose_ptr_ = std::make_shared<PoseWithCovarianceStamped>();
-  new_pose_ptr_ = std::make_shared<PoseWithCovarianceStamped>();
-
-  interpolate(pose_msg_ptr_array, target_ros_time);
-
   // check the time stamp
   success_ = validate_time_stamp_difference(old_pose_ptr_->header.stamp, target_ros_time, pose_timeout_sec);
   success_ = validate_time_stamp_difference(new_pose_ptr_->header.stamp, target_ros_time, pose_timeout_sec);
@@ -40,36 +50,6 @@ PoseArrayInterpolator::PoseArrayInterpolator(
   if (!success_) {
     RCLCPP_WARN(logger_, "Validation error.");
   }
-}
-
-PoseArrayInterpolator::PoseArrayInterpolator(
-  rclcpp::Node * node, const rclcpp::Time target_ros_time,
-  const std::deque<PoseWithCovarianceStamped::ConstSharedPtr> & pose_msg_ptr_array)
-: logger_(node->get_logger()), clock_(*node->get_clock())
-{
-  success_ = true;
-  current_pose_ptr_ = std::make_shared<PoseWithCovarianceStamped>();
-  old_pose_ptr_ = std::make_shared<PoseWithCovarianceStamped>();
-  new_pose_ptr_ = std::make_shared<PoseWithCovarianceStamped>();
-
-  interpolate(pose_msg_ptr_array, target_ros_time);
-}
-
-void PoseArrayInterpolator::interpolate(
-  const std::deque<PoseWithCovarianceStamped::ConstSharedPtr> & pose_msg_ptr_array,
-  const rclcpp::Time target_ros_time)
-{
-  if (pose_msg_ptr_array.size() <= 1) {
-    RCLCPP_WARN_STREAM_THROTTLE(logger_, clock_, 1, "No Pose!");
-    success_ = false;
-    return;
-  }
-  get_nearest_timestamp_pose(pose_msg_ptr_array, target_ros_time, old_pose_ptr_, new_pose_ptr_);
-  const geometry_msgs::msg::PoseStamped interpolated_pose_msg =
-    interpolate_pose(*old_pose_ptr_, *new_pose_ptr_, target_ros_time);
-  current_pose_ptr_->header = interpolated_pose_msg.header;
-  current_pose_ptr_->pose.pose = interpolated_pose_msg.pose;
-  current_pose_ptr_->pose.covariance = old_pose_ptr_->pose.covariance;
 }
 
 geometry_msgs::msg::PoseWithCovarianceStamped PoseArrayInterpolator::get_current_pose()

@@ -44,16 +44,13 @@ public:
   bool is_success();
 
 private:
-  PoseWithCovarianceStamped::SharedPtr current_pose_ptr_;
-  PoseWithCovarianceStamped::SharedPtr old_pose_ptr_;
-  PoseWithCovarianceStamped::SharedPtr new_pose_ptr_;
   rclcpp::Logger logger_;
   rclcpp::Clock clock_;
+  const PoseWithCovarianceStamped::SharedPtr current_pose_ptr_;
+  PoseWithCovarianceStamped::SharedPtr old_pose_ptr_;
+  PoseWithCovarianceStamped::SharedPtr new_pose_ptr_;
   bool success_;
 
-  void interpolate(
-    const std::deque<PoseWithCovarianceStamped::ConstSharedPtr> & pose_msg_ptr_array,
-    const rclcpp::Time target_ros_time);
   bool validate_time_stamp_difference(
     const rclcpp::Time & target_time, const rclcpp::Time & reference_time,
     const double time_tolerance_sec) const;
