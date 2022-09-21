@@ -55,10 +55,16 @@ BehaviorModuleOutput LaneChangeModule::run()
   is_activated_ = isActivated();
   const auto output = plan();
   const auto turn_signal_info = output.turn_signal_info;
+  const auto current_pose = planner_data_->self_pose->pose;
+  const double start_distance = motion_utils::calcSignedArcLength(
+    output.path->points, current_pose.position,
+    status_.lane_change_path.shift_point.start.position);
+  const double finish_distance = motion_utils::calcSignedArcLength(
+    output.path->points, current_pose.position, status_.lane_change_path.shift_point.end.position);
   if (turn_signal_info.turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {
-    waitApprovalLeft(turn_signal_info.signal_distance);
+    waitApprovalLeft(start_distance, finish_distance);
   } else if (turn_signal_info.turn_signal.command == TurnIndicatorsCommand::ENABLE_RIGHT) {
-    waitApprovalRight(turn_signal_info.signal_distance);
+    waitApprovalRight(start_distance, finish_distance);
   }
   return output;
 }
@@ -195,9 +201,12 @@ CandidateOutput LaneChangeModule::planCandidate() const
   output.path_candidate = selected_path.path;
   output.lateral_shift = selected_path.shifted_path.shift_length.at(end_idx) -
                          selected_path.shifted_path.shift_length.at(start_idx);
-  output.distance_to_path_change = motion_utils::calcSignedArcLength(
+  output.start_distance_to_path_change = motion_utils::calcSignedArcLength(
     selected_path.path.points, planner_data_->self_pose->pose.position,
     selected_path.shift_point.start.position);
+  output.finish_distance_to_path_change = motion_utils::calcSignedArcLength(
+    selected_path.path.points, planner_data_->self_pose->pose.position,
+    selected_path.shift_point.end.position);
 
   return output;
 }
@@ -264,9 +273,12 @@ PathWithLaneId LaneChangeModule::getReferencePath() const
       common_parameters.forward_path_length, common_parameters);
   }
 
+  const int num_lane_change =
+    std::abs(route_handler->getNumLaneToPreferredLane(current_lanes.back()));
   double optional_lengths{0.0};
   const auto isInIntersection = util::checkLaneIsInIntersection(
-    *route_handler, reference_path, current_lanes, common_parameters, optional_lengths);
+    *route_handler, reference_path, current_lanes, common_parameters, num_lane_change,
+    optional_lengths);
   if (isInIntersection) {
     reference_path = util::getCenterLinePath(
       *route_handler, current_lanes, current_pose, common_parameters.backward_path_length,
@@ -274,10 +286,8 @@ PathWithLaneId LaneChangeModule::getReferencePath() const
   }
   const double buffer =
     common_parameters.backward_length_buffer_for_end_of_lane;  // buffer for min_lane_change_length
-  const int num_lane_change =
-    std::abs(route_handler->getNumLaneToPreferredLane(current_lanes.back()));
   const double lane_change_buffer =
-    num_lane_change * (common_parameters.minimum_lane_change_length + buffer);
+    num_lane_change * (common_parameters.minimum_lane_change_length + buffer) + optional_lengths;
 
   reference_path = util::setDecelerationVelocity(
     *route_handler, reference_path, current_lanes, parameters_->lane_change_prepare_duration,
