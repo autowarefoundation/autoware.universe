@@ -71,7 +71,7 @@ TRAJECTORY_FOLLOWER_PUBLIC float64_t calcStopDistance(
  */
 TRAJECTORY_FOLLOWER_PUBLIC float64_t calcOvershootStopDistance(
   const Point & current_pos, const Trajectory & traj, const int nearest_idx,
-  const float64_t vel_epsilon = 1e-3);
+  const float64_t vel_epsilon);
 
 /**
  * @brief calculate pitch angle from estimated current pose

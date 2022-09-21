@@ -77,6 +77,8 @@ PidLongitudinalController::PidLongitudinalController(rclcpp::Node & node) : node
     // emergency
     p.emergency_state_overshoot_stop_dist =
       node_->declare_parameter<float64_t>("emergency_state_overshoot_stop_dist");  // [m]
+    p.emergency_state_overshoot_judge_vel =
+      node_->declare_parameter<float64_t>("emergency_state_overshoot_judge_vel");  // [m/s]
     p.emergency_state_traj_trans_dev =
       node_->declare_parameter<float64_t>("emergency_state_traj_trans_dev");  // [m]
     p.emergency_state_traj_rot_dev =
@@ -482,16 +484,18 @@ PidLongitudinalController::Motion PidLongitudinalController::calcEmergencyCtrlCm
 PidLongitudinalController::ControlState PidLongitudinalController::updateControlState(
   const ControlState current_control_state, const ControlData & control_data)
 {
+  const auto & p = m_state_transition_params;
+
   const float64_t current_vel = control_data.current_motion.vel;
   const float64_t current_acc = control_data.current_motion.acc;
   const float64_t stop_dist = control_data.stop_dist;
   const geometry_msgs::msg::Pose current_pose = m_current_kinematic_state_ptr->pose.pose;
   const float64_t overshoot_stop_dist =
     trajectory_follower::longitudinal_utils::calcOvershootStopDistance(
-      current_pose.position, *m_trajectory_ptr, control_data.nearest_idx);
+      current_pose.position, *m_trajectory_ptr, control_data.nearest_idx,
+      p.emergency_state_overshoot_judge_vel);
 
   // flags for state transition
-  const auto & p = m_state_transition_params;
 
   const bool8_t departure_condition_from_stopping =
     stop_dist > p.drive_state_stop_dist + p.drive_state_offset_stop_dist;
