@@ -18,7 +18,8 @@
 #include <pcl/io/pcd_io.h>
 #include <pcl_conversions/pcl_conversions.h>
 
-sensor_msgs::msg::PointCloud2 downsample(const sensor_msgs::msg::PointCloud2 & msg_input, const float leaf_size)
+sensor_msgs::msg::PointCloud2 downsample(
+  const sensor_msgs::msg::PointCloud2 & msg_input, const float leaf_size)
 {
   pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_input(new pcl::PointCloud<pcl::PointXYZ>);
   pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_output(new pcl::PointCloud<pcl::PointXYZ>);
@@ -34,16 +35,15 @@ sensor_msgs::msg::PointCloud2 downsample(const sensor_msgs::msg::PointCloud2 & m
   return msg_output;
 }
 
-
 PointcloudMapPublisherModule::PointcloudMapPublisherModule(
-  rclcpp::Node * node, const std::vector<std::string> & pcd_paths,
-  const std::string publisher_name, const boost::optional<float> leaf_size)
+  rclcpp::Node * node, const std::vector<std::string> & pcd_paths, const std::string publisher_name,
+  const boost::optional<float> leaf_size)
 : logger_(node->get_logger())
 {
   rclcpp::QoS durable_qos{1};
   durable_qos.transient_local();
-  pub_pointcloud_map_ = node->create_publisher<sensor_msgs::msg::PointCloud2>(
-    publisher_name, durable_qos);
+  pub_pointcloud_map_ =
+    node->create_publisher<sensor_msgs::msg::PointCloud2>(publisher_name, durable_qos);
   sensor_msgs::msg::PointCloud2 pcd = loadPCDFiles(pcd_paths, leaf_size);
 
   if (pcd.width == 0) {
@@ -65,8 +65,7 @@ sensor_msgs::msg::PointCloud2 PointcloudMapPublisherModule::loadPCDFiles(
     auto & path = pcd_paths[i];
     if (i % 50 == 0) {
       RCLCPP_INFO_STREAM(
-        logger_,
-        "Load " << path << " (" << i + 1 << " out of " << int(pcd_paths.size()) << ")");
+        logger_, "Load " << path << " (" << i + 1 << " out of " << int(pcd_paths.size()) << ")");
     }
 
     if (pcl::io::loadPCDFile(path, partial_pcd) == -1) {

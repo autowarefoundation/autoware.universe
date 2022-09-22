@@ -15,9 +15,7 @@
 #include "differential_map_loading_module.hpp"
 
 bool sphereAndBoxOverlapExists(
-  const geometry_msgs::msg::Point position,
-  const double radius,
-  const pcl::PointXYZ position_min,
+  const geometry_msgs::msg::Point position, const double radius, const pcl::PointXYZ position_min,
   const pcl::PointXYZ position_max)
 {
   if (
@@ -49,8 +47,7 @@ bool sphereAndBoxOverlapExists(
 }
 
 bool isGridWithinQueriedArea(
-  const autoware_map_msgs::msg::AreaInfo area,
-  const PCDFileMetadata metadata)
+  const autoware_map_msgs::msg::AreaInfo area, const PCDFileMetadata metadata)
 {
   // Currently, the area load only supports spherical area
   geometry_msgs::msg::Point position = area.center;
@@ -66,13 +63,12 @@ DifferentialMapLoadingModule::DifferentialMapLoadingModule(
   all_pcd_file_metadata_dict_ = generatePCDMetadata(pcd_paths);
   load_pcd_maps_general_service_ = node->create_service<autoware_map_msgs::srv::LoadPCDMapsGeneral>(
     "load_pcd_maps_general", std::bind(
-                            &DifferentialMapLoadingModule::loadPCDMapsGeneralCallback, this,
-                            std::placeholders::_1, std::placeholders::_2));
+                               &DifferentialMapLoadingModule::loadPCDMapsGeneralCallback, this,
+                               std::placeholders::_1, std::placeholders::_2));
 }
 
 void DifferentialMapLoadingModule::differentialAreaLoad(
-  const autoware_map_msgs::msg::AreaInfo area,
-  const std::vector<std::string> already_loaded_ids,
+  const autoware_map_msgs::msg::AreaInfo area, const std::vector<std::string> already_loaded_ids,
   autoware_map_msgs::srv::LoadPCDMapsGeneral::Response::SharedPtr & response) const
 {
   // iterate over all the available pcd map grids
@@ -86,7 +82,9 @@ void DifferentialMapLoadingModule::differentialAreaLoad(
     // skip if the pcd file is not within the queried area
     if (!isGridWithinQueriedArea(area, metadata)) continue;
 
-    bool is_already_loaded = std::find(already_loaded_ids.begin(), already_loaded_ids.end(), map_id) != already_loaded_ids.end();
+    bool is_already_loaded =
+      std::find(already_loaded_ids.begin(), already_loaded_ids.end(), map_id) !=
+      already_loaded_ids.end();
     if (is_already_loaded) {
       response->already_loaded_ids.push_back(map_id);
     } else {

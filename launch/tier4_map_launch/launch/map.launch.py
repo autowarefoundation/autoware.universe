@@ -32,9 +32,9 @@ def launch_setup(context, *args, **kwargs):
     lanelet2_map_loader_param_path = LaunchConfiguration("lanelet2_map_loader_param_path").perform(
         context
     )
-    pointcloud_map_loader_param_path = LaunchConfiguration("pointcloud_map_loader_param_path").perform(
-        context
-    )
+    pointcloud_map_loader_param_path = LaunchConfiguration(
+        "pointcloud_map_loader_param_path"
+    ).perform(context)
 
     with open(lanelet2_map_loader_param_path, "r") as f:
         lanelet2_map_loader_param = yaml.safe_load(f)["/**"]["ros__parameters"]
@@ -87,9 +87,7 @@ def launch_setup(context, *args, **kwargs):
             ("output/debug/downsampled_pointcloud_map", "debug/downsampled_pointcloud_map"),
         ],
         parameters=[
-            {
-                "pcd_paths_or_directory": ["[", LaunchConfiguration("pointcloud_map_path"), "]"]
-            },
+            {"pcd_paths_or_directory": ["[", LaunchConfiguration("pointcloud_map_path"), "]"]},
             pointcloud_map_loader_param,
         ],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],

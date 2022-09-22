@@ -12,12 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef POINTCLOUD_MAP_PUBLISHER_MODULE_MODULE_HPP_
-#define POINTCLOUD_MAP_PUBLISHER_MODULE_MODULE_HPP_
+#ifndef POINTCLOUD_MAP_LOADER__POINTCLOUD_MAP_PUBLISHER_MODULE_HPP_
+#define POINTCLOUD_MAP_LOADER__POINTCLOUD_MAP_PUBLISHER_MODULE_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
+
 #include <boost/optional.hpp>
 
 class PointcloudMapPublisherModule
@@ -31,7 +32,8 @@ private:
   rclcpp::Logger logger_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_pointcloud_map_;
 
-  sensor_msgs::msg::PointCloud2 loadPCDFiles(const std::vector<std::string> & pcd_paths, const boost::optional<float> leaf_size) const;
+  sensor_msgs::msg::PointCloud2 loadPCDFiles(
+    const std::vector<std::string> & pcd_paths, const boost::optional<float> leaf_size) const;
 };
 
-#endif  // POINTCLOUD_MAP_PUBLISHER_MODULE_MODULE_HPP_
+#endif  // POINTCLOUD_MAP_LOADER__POINTCLOUD_MAP_PUBLISHER_MODULE_HPP_
