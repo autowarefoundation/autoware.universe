@@ -4,13 +4,14 @@
   <arg name="input/object1" default="object1"/>
   <arg name="output/object" default="merged_object"/>
   <arg name="data_association_matrix_path" default="$(find-pkg-share object_merger)/config/data_association_matrix.param.yaml"/>
+  <arg name="distance_threshold_list_path" default="$(find-pkg-share object_merger)/config/overlapped_judge.param.yaml"/>
 
   <node pkg="object_merger" exec="object_association_merger_node" name="$(anon object_association_merger)" output="screen">
     <remap from="input/object0" to="$(var input/object0)"/>
     <remap from="input/object1" to="$(var input/object1)"/>
     <remap from="output/object" to="$(var output/object)"/>
     <param from="$(var data_association_matrix_path)"/>
+    <param from="$(var distance_threshold_list_path)"/>
     <param name="precision_threshold_to_judge_overlapped" value="0.4"/>
-    <param name="distance_threshold_list" value="9.0, 9.0, 9.0, 9.0, 9.0, 9.0, 9.0, 9.0" value-sep=", "/>
   </node>
 </launch>
