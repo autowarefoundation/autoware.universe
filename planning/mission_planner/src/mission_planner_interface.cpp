@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "mission_planner.hpp"
+#include "mission_planner/mission_planner_interface.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
@@ -31,7 +31,7 @@
 
 namespace mission_planner
 {
-MissionPlanner::MissionPlanner(
+MissionPlannerInterface::MissionPlannerInterface(
   const std::string & node_name, const rclcpp::NodeOptions & node_options)
 : Node(node_name, node_options), tf_buffer_(get_clock()), tf_listener_(tf_buffer_)
 {
@@ -42,11 +42,11 @@ MissionPlanner::MissionPlanner(
 
   odometry_subscriber_ = create_subscription<nav_msgs::msg::Odometry>(
     "/localization/kinematic_state", rclcpp::QoS{1},
-    std::bind(&MissionPlanner::odometry_callback, this, _1));
+    std::bind(&MissionPlannerInterface::odometry_callback, this, _1));
   goal_subscriber_ = create_subscription<geometry_msgs::msg::PoseStamped>(
-    "input/goal_pose", 10, std::bind(&MissionPlanner::goal_pose_callback, this, _1));
+    "input/goal_pose", 10, std::bind(&MissionPlannerInterface::goal_pose_callback, this, _1));
   check_point_subscriber_ = create_subscription<geometry_msgs::msg::PoseStamped>(
-    "input/check_point", 10, std::bind(&MissionPlanner::check_point_callback, this, _1));
+    "input/check_point", 10, std::bind(&MissionPlannerInterface::check_point_callback, this, _1));
 
   rclcpp::QoS durable_qos{1};
   durable_qos.transient_local();
@@ -56,12 +56,12 @@ MissionPlanner::MissionPlanner(
     create_publisher<visualization_msgs::msg::MarkerArray>("debug/route_marker", durable_qos);
 }
 
-void MissionPlanner::odometry_callback(const nav_msgs::msg::Odometry::ConstSharedPtr msg)
+void MissionPlannerInterface::odometry_callback(const nav_msgs::msg::Odometry::ConstSharedPtr msg)
 {
   ego_pose_ = std::make_shared<const geometry_msgs::msg::Pose>(msg->pose.pose);
 }
 
-boost::optional<geometry_msgs::msg::PoseStamped> MissionPlanner::transform_pose(
+boost::optional<geometry_msgs::msg::PoseStamped> MissionPlannerInterface::transform_pose(
   const geometry_msgs::msg::PoseStamped & input_pose, const std::string & target_frame)
 {
   geometry_msgs::msg::TransformStamped transform;
@@ -78,7 +78,7 @@ boost::optional<geometry_msgs::msg::PoseStamped> MissionPlanner::transform_pose(
   return {};
 }
 
-void MissionPlanner::goal_pose_callback(
+void MissionPlannerInterface::goal_pose_callback(
   const geometry_msgs::msg::PoseStamped::ConstSharedPtr goal_msg_ptr)
 {
   // set start pose
@@ -109,7 +109,7 @@ void MissionPlanner::goal_pose_callback(
   publish_route(route);
 }  // namespace mission_planner
 
-void MissionPlanner::check_point_callback(
+void MissionPlannerInterface::check_point_callback(
   const geometry_msgs::msg::PoseStamped::ConstSharedPtr check_point_msg_ptr)
 {
   if (check_points_.size() < 2) {
@@ -134,7 +134,7 @@ void MissionPlanner::check_point_callback(
   publish_route(route);
 }
 
-void MissionPlanner::publish_route(
+void MissionPlannerInterface::publish_route(
   const autoware_auto_planning_msgs::msg::HADMapRoute & route) const
 {
   if (!route.segments.empty()) {

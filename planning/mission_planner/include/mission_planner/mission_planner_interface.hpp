@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MISSION_PLANNER__MISSION_PLANNER_HPP_
-#define MISSION_PLANNER__MISSION_PLANNER_HPP_
+#ifndef MISSION_PLANNER__MISSION_PLANNER_INTERFACE_HPP_
+#define MISSION_PLANNER__MISSION_PLANNER_INTERFACE_HPP_
 
 #include <boost/optional.hpp>
 
@@ -36,10 +36,10 @@
 
 namespace mission_planner
 {
-class MissionPlanner : public rclcpp::Node
+class MissionPlannerInterface : public rclcpp::Node
 {
 protected:
-  MissionPlanner(const std::string & node_name, const rclcpp::NodeOptions & node_options);
+  MissionPlannerInterface(const std::string & node_name, const rclcpp::NodeOptions & node_options);
 
   geometry_msgs::msg::Pose::ConstSharedPtr ego_pose_;
   std::vector<geometry_msgs::msg::Pose> check_points_;
@@ -74,4 +74,4 @@ private:
 };
 
 }  // namespace mission_planner
-#endif  // MISSION_PLANNER__MISSION_PLANNER_HPP_
+#endif  // MISSION_PLANNER__MISSION_PLANNER_INTERFACE_HPP_
