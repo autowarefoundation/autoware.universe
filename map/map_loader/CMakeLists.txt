@@ -8,6 +8,8 @@ find_package(PCL REQUIRED COMPONENTS io)
 
 ament_auto_add_library(pointcloud_map_loader_node SHARED
   src/pointcloud_map_loader/pointcloud_map_loader_node.cpp
+  src/pointcloud_map_loader/differential_map_loading_module.cpp
+  src/pointcloud_map_loader/pointcloud_map_publisher_module.cpp
 )
 target_link_libraries(pointcloud_map_loader_node ${PCL_LIBRARIES})
 

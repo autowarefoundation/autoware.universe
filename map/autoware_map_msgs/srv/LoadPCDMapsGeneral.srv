@@ -1,0 +1,7 @@
+int32 mode # 0: Area load, 1: Differential area load
+AreaInfo area
+string[] already_loaded_ids # only used when mode = 1
+
+---
+autoware_map_msgs/PCDMapWithID[] loaded_pcds
+string[] already_loaded_ids # only used when mode = 1
