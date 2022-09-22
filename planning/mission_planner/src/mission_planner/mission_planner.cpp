@@ -26,6 +26,7 @@
 #endif
 #include <visualization_msgs/msg/marker_array.h>
 
+#include <memory>
 #include <string>
 
 namespace mission_planner
@@ -39,10 +40,13 @@ MissionPlanner::MissionPlanner(
 
   using std::placeholders::_1;
 
+  odometry_subscriber_ = create_subscription<nav_msgs::msg::Odometry>(
+    "/localization/kinematic_state", rclcpp::QoS{1},
+    std::bind(&MissionPlanner::odometry_callback, this, _1));
   goal_subscriber_ = create_subscription<geometry_msgs::msg::PoseStamped>(
     "input/goal_pose", 10, std::bind(&MissionPlanner::goal_pose_callback, this, _1));
-  checkpoint_subscriber_ = create_subscription<geometry_msgs::msg::PoseStamped>(
-    "input/checkpoint", 10, std::bind(&MissionPlanner::checkpoint_callback, this, _1));
+  check_point_subscriber_ = create_subscription<geometry_msgs::msg::PoseStamped>(
+    "input/check_point", 10, std::bind(&MissionPlanner::check_point_callback, this, _1));
 
   rclcpp::QoS durable_qos{1};
   durable_qos.transient_local();
@@ -52,88 +56,81 @@ MissionPlanner::MissionPlanner(
     create_publisher<visualization_msgs::msg::MarkerArray>("debug/route_marker", durable_qos);
 }
 
-bool MissionPlanner::get_ego_vehicle_pose(geometry_msgs::msg::PoseStamped * ego_vehicle_pose)
+void MissionPlanner::odometry_callback(const nav_msgs::msg::Odometry::ConstSharedPtr msg)
 {
-  geometry_msgs::msg::PoseStamped base_link_origin;
-  base_link_origin.header.frame_id = base_link_frame_;
-  base_link_origin.pose.position.x = 0;
-  base_link_origin.pose.position.y = 0;
-  base_link_origin.pose.position.z = 0;
-  base_link_origin.pose.orientation.x = 0;
-  base_link_origin.pose.orientation.y = 0;
-  base_link_origin.pose.orientation.z = 0;
-  base_link_origin.pose.orientation.w = 1;
-
-  //  transform base_link frame origin to map_frame to get vehicle positions
-  return transform_pose(base_link_origin, ego_vehicle_pose, map_frame_);
+  ego_pose_ = std::make_shared<const geometry_msgs::msg::Pose>(msg->pose.pose);
 }
 
-bool MissionPlanner::transform_pose(
-  const geometry_msgs::msg::PoseStamped & input_pose, geometry_msgs::msg::PoseStamped * output_pose,
-  const std::string & target_frame)
+boost::optional<geometry_msgs::msg::PoseStamped> MissionPlanner::transform_pose(
+  const geometry_msgs::msg::PoseStamped & input_pose, const std::string & target_frame)
 {
   geometry_msgs::msg::TransformStamped transform;
   try {
+    geometry_msgs::msg::PoseStamped output_pose;
     transform =
       tf_buffer_.lookupTransform(target_frame, input_pose.header.frame_id, tf2::TimePointZero);
-    tf2::doTransform(input_pose, *output_pose, transform);
-    return true;
+    tf2::doTransform(input_pose, output_pose, transform);
+    return output_pose;
   } catch (tf2::TransformException & ex) {
     RCLCPP_WARN(get_logger(), "%s", ex.what());
-    return false;
   }
+
+  return {};
 }
 
 void MissionPlanner::goal_pose_callback(
   const geometry_msgs::msg::PoseStamped::ConstSharedPtr goal_msg_ptr)
 {
   // set start pose
-  if (!get_ego_vehicle_pose(&start_pose_)) {
-    RCLCPP_ERROR(
-      get_logger(), "Failed to get ego vehicle pose in map frame. Aborting mission planning");
-    return;
-  }
-  // set goal pose
-  if (!transform_pose(*goal_msg_ptr, &goal_pose_, map_frame_)) {
-    RCLCPP_ERROR(get_logger(), "Failed to get goal pose in map frame. Aborting mission planning");
+  if (!ego_pose_) {
+    RCLCPP_ERROR(get_logger(), "Ego pose has not been subscribed. Aborting mission planning");
     return;
   }
 
-  RCLCPP_INFO(get_logger(), "New goal pose is set. Reset checkpoints.");
-  checkpoints_.clear();
-  checkpoints_.push_back(start_pose_);
-  checkpoints_.push_back(goal_pose_);
+  // set goal pose
+  const auto opt_transformed_goal_pose = transform_pose(*goal_msg_ptr, map_frame_);
+  if (!opt_transformed_goal_pose) {
+    RCLCPP_ERROR(get_logger(), "Failed to get goal pose in map frame. Aborting mission planning");
+    return;
+  }
+  const auto transformed_goal_pose = opt_transformed_goal_pose.get();
+
+  RCLCPP_INFO(get_logger(), "New goal pose is set. Reset check_points.");
+  check_points_.clear();
+  check_points_.push_back(*ego_pose_);
+  check_points_.push_back(transformed_goal_pose.pose);
 
   if (!is_routing_graph_ready()) {
     RCLCPP_ERROR(get_logger(), "RoutingGraph is not ready. Aborting mission planning");
     return;
   }
 
-  autoware_auto_planning_msgs::msg::HADMapRoute route = plan_route();
+  autoware_auto_planning_msgs::msg::HADMapRoute route = plan_route(check_points_);
   publish_route(route);
 }  // namespace mission_planner
 
-void MissionPlanner::checkpoint_callback(
-  const geometry_msgs::msg::PoseStamped::ConstSharedPtr checkpoint_msg_ptr)
+void MissionPlanner::check_point_callback(
+  const geometry_msgs::msg::PoseStamped::ConstSharedPtr check_point_msg_ptr)
 {
-  if (checkpoints_.size() < 2) {
+  if (check_points_.size() < 2) {
     RCLCPP_ERROR(
       get_logger(),
-      "You must set start and goal before setting checkpoints. Aborting mission planning");
+      "You must set start and goal before setting check_points. Aborting mission planning");
     return;
   }
 
-  geometry_msgs::msg::PoseStamped transformed_checkpoint;
-  if (!transform_pose(*checkpoint_msg_ptr, &transformed_checkpoint, map_frame_)) {
+  const auto opt_transformed_check_point = transform_pose(*check_point_msg_ptr, map_frame_);
+  if (!opt_transformed_check_point) {
     RCLCPP_ERROR(
-      get_logger(), "Failed to get checkpoint pose in map frame. Aborting mission planning");
+      get_logger(), "Failed to get check_point pose in map frame. Aborting mission planning");
     return;
   }
+  const auto transformed_check_point = opt_transformed_check_point.get();
 
-  // insert checkpoint before goal
-  checkpoints_.insert(checkpoints_.end() - 1, transformed_checkpoint);
+  // insert check_point before goal
+  check_points_.insert(check_points_.end() - 1, transformed_check_point.pose);
 
-  autoware_auto_planning_msgs::msg::HADMapRoute route = plan_route();
+  autoware_auto_planning_msgs::msg::HADMapRoute route = plan_route(check_points_);
   publish_route(route);
 }
 
