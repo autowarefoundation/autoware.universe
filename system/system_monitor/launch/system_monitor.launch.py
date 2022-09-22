@@ -96,14 +96,14 @@ def launch_setup(context, *args, **kwargs):
             gpu_monitor_config,
         ],
     )
-    with open(LaunchConfiguration("hardware_monitor_config_file").perform(context), "r") as f:
-        hardware_monitor_config = yaml.safe_load(f)["/**"]["ros__parameters"]
-    hardware_monitor = ComposableNode(
+    with open(LaunchConfiguration("voltage_monitor_config_file").perform(context), "r") as f:
+        voltage_monitor_config = yaml.safe_load(f)["/**"]["ros__parameters"]
+    voltage_monitor = ComposableNode(
         package="system_monitor",
-        plugin="HardwareMonitor",
-        name="hardware_monitor",
+        plugin="VoltageMonitor",
+        name="voltage_monitor",
         parameters=[
-            hardware_monitor_config,
+            voltage_monitor_config,
         ],
     )
 
@@ -114,7 +114,6 @@ def launch_setup(context, *args, **kwargs):
         package="rclcpp_components",
         executable="component_container_mt",
         composable_node_descriptions=[
-            hardware_monitor,
             cpu_monitor,
             hdd_monitor,
             mem_monitor,
@@ -122,6 +121,7 @@ def launch_setup(context, *args, **kwargs):
             ntp_monitor,
             process_monitor,
             gpu_monitor,
+            voltage_monitor,
         ],
         output="screen",
     )
@@ -163,8 +163,8 @@ def generate_launch_description():
                 default_value=os.path.join(system_monitor_path, "gpu_monitor.param.yaml"),
             ),
             DeclareLaunchArgument(
-                "hardware_monitor_config_file",
-                default_value=os.path.join(system_monitor_path, "hardware_monitor.param.yaml"),
+                "voltage_monitor_config_file",
+                default_value=os.path.join(system_monitor_path, "voltage_monitor.param.yaml"),
             ),
             OpaqueFunction(function=launch_setup),
         ]

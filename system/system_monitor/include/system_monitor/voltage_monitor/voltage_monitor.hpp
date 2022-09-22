@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2022 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,26 +13,27 @@
 // limitations under the License.
 
 /**
- * @file hardware_monitor.h
- * @brief  hardware monitor class
+ * @file voltage_monitor.h
+ * @brief  voltage monitor class
  */
 
-#ifndef SYSTEM_MONITOR__HARDWARE_MONITOR__HARDWARE_MONITOR_HPP_
-#define SYSTEM_MONITOR__HARDWARE_MONITOR__HARDWARE_MONITOR_HPP_
+#ifndef SYSTEM_MONITOR__VOLTAGE_MONITOR__VOLTAGE_MONITOR_HPP_
+#define SYSTEM_MONITOR__VOLTAGE_MONITOR__VOLTAGE_MONITOR_HPP_
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
 
 #include <climits>
+#include <regex>
 #include <string>
 
-class HardwareMonitor : public rclcpp::Node
+class VoltageMonitor : public rclcpp::Node
 {
 public:
   /**
    * @brief constructor
    * @param [in] options Options associated with this node.
    */
-  explicit HardwareMonitor(const rclcpp::NodeOptions & options);
+  explicit VoltageMonitor(const rclcpp::NodeOptions & options);
 
   /**
    * @brief Update the diagnostic state.
@@ -63,10 +64,10 @@ protected:
   void checkBatteryStatus(
     diagnostic_updater::DiagnosticStatusWrapper & stat);  // NOLINT(runtime/references)
 
-  bool sensors_exists_;  //!< @brief flag if sensors exists
   float voltage_warn_;
   float voltage_error_;
   std::string voltage_string_;
+  std::regex voltage_regex_;
 };
 
-#endif  // SYSTEM_MONITOR__HARDWARE_MONITOR__HARDWARE_MONITOR_HPP_
+#endif  // SYSTEM_MONITOR__VOLTAGE_MONITOR__VOLTAGE_MONITOR_HPP_
