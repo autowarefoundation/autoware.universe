@@ -2559,7 +2559,12 @@ TurnSignalInfo AvoidanceModule::calcTurnSignalInfo(const ShiftedPath & path) con
     turn_signal_info.turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
   }
 
-  turn_signal_info.desired_start_point = getEgoPosition();
+  if (ego_to_shift_start > 0.0) {
+    turn_signal_info.desired_start_point = getEgoPosition();
+  } else {
+    turn_signal_info.desired_start_point = front_shift_point.start.position;
+  }
+
   turn_signal_info.desired_end_point = front_shift_point.end.position;
   turn_signal_info.required_start_point = front_shift_point.start.position;
   turn_signal_info.required_end_point = front_shift_point.end.position;
