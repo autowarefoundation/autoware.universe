@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MISSION_PLANNER_LANELET2__MISSION_PLANNER_LANELET2_HPP_
-#define MISSION_PLANNER_LANELET2__MISSION_PLANNER_LANELET2_HPP_
+#ifndef MISSION_PLANNER__MISSION_PLANNER_LANELET2_HPP_
+#define MISSION_PLANNER__MISSION_PLANNER_LANELET2_HPP_
 
 #include <string>
 #include <vector>
@@ -25,7 +25,7 @@
 #include <tf2_ros/transform_listener.h>
 
 // Autoware
-#include "../mission_planner/mission_planner.hpp"
+#include "mission_planner/mission_planner_interface.hpp"
 
 #include <route_handler/route_handler.hpp>
 
@@ -40,7 +40,7 @@
 namespace mission_planner
 {
 using RouteSections = std::vector<autoware_auto_mapping_msgs::msg::HADMapSegment>;
-class MissionPlannerLanelet2 : public MissionPlanner
+class MissionPlannerLanelet2 : public MissionPlannerInterface
 {
 public:
   explicit MissionPlannerLanelet2(const rclcpp::NodeOptions & node_options);
@@ -69,4 +69,4 @@ private:
 };
 }  // namespace mission_planner
 
-#endif  // MISSION_PLANNER_LANELET2__MISSION_PLANNER_LANELET2_HPP_
+#endif  // MISSION_PLANNER__MISSION_PLANNER_LANELET2_HPP_
