@@ -104,7 +104,7 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
     "in_pose_with_covariance", 1, std::bind(&EKFLocalizer::callbackPoseWithCovariance, this, _1));
   sub_twist_with_cov_ = create_subscription<geometry_msgs::msg::TwistWithCovarianceStamped>(
     "in_twist_with_covariance", 1, std::bind(&EKFLocalizer::callbackTwistWithCovariance, this, _1));
-  service_trigger_node_ = create_service<tier4_localization_msgs::srv::TriggerNode>(
+  service_trigger_node_ = create_service<std_srvs::srv::SetBool>(
     "trigger_node_srv",
     std::bind(
       &EKFLocalizer::serviceTriggerNode, this, std::placeholders::_1, std::placeholders::_2),
@@ -715,10 +715,10 @@ void EKFLocalizer::updateSimple1DFilters(const geometry_msgs::msg::PoseWithCovar
  * @brief trigger node
  */
 void EKFLocalizer::serviceTriggerNode(
-  const tier4_localization_msgs::srv::TriggerNode::Request::SharedPtr req,
-  tier4_localization_msgs::srv::TriggerNode::Response::SharedPtr res)
+  const std_srvs::srv::SetBool::Request::SharedPtr req,
+  std_srvs::srv::SetBool::Response::SharedPtr res)
 {
-  if (req->activate) {
+  if (req->data) {
     while (!current_pose_info_queue_.empty()) current_pose_info_queue_.pop();
     while (!current_twist_info_queue_.empty()) current_twist_info_queue_.pop();
     is_activated_ = true;

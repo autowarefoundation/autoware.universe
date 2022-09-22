@@ -32,7 +32,7 @@
 #include <tier4_debug_msgs/msg/float32_stamped.hpp>
 #include <tier4_debug_msgs/msg/int32_stamped.hpp>
 #include <tier4_localization_msgs/srv/pose_with_covariance_stamped.hpp>
-#include <tier4_localization_msgs/srv/trigger_node.hpp>
+#include <std_srvs/srv/set_bool.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <fmt/format.h>
@@ -112,8 +112,8 @@ private:
     const tier4_localization_msgs::srv::PoseWithCovarianceStamped::Request::SharedPtr req,
     tier4_localization_msgs::srv::PoseWithCovarianceStamped::Response::SharedPtr res);
   void serviceTriggerNode(
-    const tier4_localization_msgs::srv::TriggerNode::Request::SharedPtr req,
-    tier4_localization_msgs::srv::TriggerNode::Response::SharedPtr res);
+    const std_srvs::srv::SetBool::Request::SharedPtr req,
+    std_srvs::srv::SetBool::Response::SharedPtr res);
 
   void callbackMapPoints(sensor_msgs::msg::PointCloud2::ConstSharedPtr pointcloud2_msg_ptr);
   void callbackSensorPoints(sensor_msgs::msg::PointCloud2::ConstSharedPtr pointcloud2_msg_ptr);
@@ -175,7 +175,7 @@ private:
   rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr diagnostics_pub_;
 
   rclcpp::Service<tier4_localization_msgs::srv::PoseWithCovarianceStamped>::SharedPtr service_;
-  rclcpp::Service<tier4_localization_msgs::srv::TriggerNode>::SharedPtr service_trigger_node_;
+  rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr service_trigger_node_;
 
   tf2_ros::Buffer tf2_buffer_;
   tf2_ros::TransformListener tf2_listener_;

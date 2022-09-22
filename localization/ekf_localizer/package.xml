@@ -28,6 +28,7 @@
   <depend>tier4_autoware_utils</depend>
   <depend>tier4_debug_msgs</depend>
   <depend>tier4_localization_msgs</depend>
+  <depend>std_srvs</depend>
 
   <test_depend>ament_cmake_ros</test_depend>
   <test_depend>ament_lint_auto</test_depend>

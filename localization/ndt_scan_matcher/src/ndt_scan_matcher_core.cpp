@@ -272,7 +272,7 @@ NDTScanMatcher::NDTScanMatcher()
     "ndt_align_srv",
     std::bind(&NDTScanMatcher::serviceNDTAlign, this, std::placeholders::_1, std::placeholders::_2),
     rclcpp::ServicesQoS().get_rmw_qos_profile(), main_callback_group);
-  service_trigger_node_ = this->create_service<tier4_localization_msgs::srv::TriggerNode>(
+  service_trigger_node_ = this->create_service<std_srvs::srv::SetBool>(
     "trigger_node_srv",
     std::bind(
       &NDTScanMatcher::serviceTriggerNode, this, std::placeholders::_1, std::placeholders::_2),
@@ -867,10 +867,10 @@ std::optional<Eigen::Matrix4f> NDTScanMatcher::interpolateRegularizationPose(
 }
 
 void NDTScanMatcher::serviceTriggerNode(
-  const tier4_localization_msgs::srv::TriggerNode::Request::SharedPtr req,
-  tier4_localization_msgs::srv::TriggerNode::Response::SharedPtr res)
+  const std_srvs::srv::SetBool::Request::SharedPtr req,
+  std_srvs::srv::SetBool::Response::SharedPtr res)
 {
-  if (req->activate) {
+  if (req->data) {
     initial_pose_msg_ptr_array_.clear();
   }
   res->success = true;

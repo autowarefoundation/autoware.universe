@@ -32,7 +32,7 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <tier4_debug_msgs/msg/float64_multi_array_stamped.hpp>
 #include <tier4_debug_msgs/msg/float64_stamped.hpp>
-#include <tier4_localization_msgs/srv/trigger_node.hpp>
+#include <std_srvs/srv/set_bool.hpp>
 
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/utils.h>
@@ -150,7 +150,7 @@ private:
   //!< @brief last predict time
   std::shared_ptr<const rclcpp::Time> last_predict_time_;
   //!< @brief trigger_node service
-  rclcpp::Service<tier4_localization_msgs::srv::TriggerNode>::SharedPtr service_trigger_node_;
+  rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr service_trigger_node_;
 
   //!< @brief timer to send transform
   rclcpp::TimerBase::SharedPtr timer_tf_;
@@ -300,8 +300,8 @@ private:
    * @brief trigger node
    */
   void serviceTriggerNode(
-    const tier4_localization_msgs::srv::TriggerNode::Request::SharedPtr req,
-    tier4_localization_msgs::srv::TriggerNode::Response::SharedPtr res);
+    const std_srvs::srv::SetBool::Request::SharedPtr req,
+    std_srvs::srv::SetBool::Response::SharedPtr res);
 
   tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch_;
 
