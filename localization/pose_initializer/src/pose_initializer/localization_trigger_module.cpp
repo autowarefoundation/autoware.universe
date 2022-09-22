@@ -24,14 +24,14 @@ using Initialize = localization_interface::Initialize;
 LocalizationTriggerModule::LocalizationTriggerModule(rclcpp::Node * node)
 : logger_(node->get_logger())
 {
-  client_ekf_trigger_ = node->create_client<RequestTriggerNode>("ekf_trigger_node");
-  client_ndt_trigger_ = node->create_client<RequestTriggerNode>("ndt_trigger_node");
+  client_ekf_trigger_ = node->create_client<SetBool>("ekf_trigger_node");
+  client_ndt_trigger_ = node->create_client<SetBool>("ndt_trigger_node");
 }
 
 void LocalizationTriggerModule::deactivate() const
 {
-  const auto req = std::make_shared<RequestTriggerNode::Request>();
-  req->activate = false;
+  const auto req = std::make_shared<SetBool::Request>();
+  req->data = false;
 
   if (!client_ekf_trigger_->service_is_ready()) {
     throw component_interface_utils::ServiceUnready("EKF triggering service is not ready");
@@ -55,8 +55,8 @@ void LocalizationTriggerModule::deactivate() const
 
 void LocalizationTriggerModule::activate() const
 {
-  const auto req = std::make_shared<RequestTriggerNode::Request>();
-  req->activate = true;
+  const auto req = std::make_shared<SetBool::Request>();
+  req->data = true;
 
   if (!client_ekf_trigger_->service_is_ready()) {
     throw component_interface_utils::ServiceUnready("EKF triggering service is not ready");

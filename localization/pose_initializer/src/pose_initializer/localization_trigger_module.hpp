@@ -17,12 +17,12 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <tier4_localization_msgs/srv/trigger_node.hpp>
+#include <std_srvs/srv/set_bool.hpp>
 
 class LocalizationTriggerModule
 {
 private:
-  using RequestTriggerNode = tier4_localization_msgs::srv::TriggerNode;
+  using SetBool = std_srvs::srv::SetBool;
 
 public:
   explicit LocalizationTriggerModule(rclcpp::Node * node);
@@ -31,8 +31,8 @@ public:
 
 private:
   rclcpp::Logger logger_;
-  rclcpp::Client<RequestTriggerNode>::SharedPtr client_ekf_trigger_;
-  rclcpp::Client<RequestTriggerNode>::SharedPtr client_ndt_trigger_;
+  rclcpp::Client<SetBool>::SharedPtr client_ekf_trigger_;
+  rclcpp::Client<SetBool>::SharedPtr client_ndt_trigger_;
 };
 
 #endif  // POSE_INITIALIZER__LOCALIZATION_TRIGGER_MODULE_HPP_
