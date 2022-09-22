@@ -13,7 +13,12 @@
 // limitations under the License.S
 #include "localization_trigger_module.hpp"
 
+#include <component_interface_utils/rclcpp/exceptions.hpp>
+#include <component_interface_specs/localization.hpp>
 #include <memory>
+
+using ServiceException = component_interface_utils::ServiceException;
+using Initialize = localization_interface::Initialize;
 
 LocalizationTriggerModule::LocalizationTriggerModule(rclcpp::Node * node)
 : logger_(node->get_logger())
@@ -26,14 +31,48 @@ void LocalizationTriggerModule::deactivate() const
 {
   const auto req = std::make_shared<RequestTriggerNode::Request>();
   req->activate = false;
-  const auto res_ekf = client_ekf_trigger_->async_send_request(req).get();
-  const auto res_ndt = client_ndt_trigger_->async_send_request(req).get();
+
+  if (!client_ekf_trigger_->service_is_ready()) {
+    throw component_interface_utils::ServiceUnready("EKF triggering service is not ready");
+  }
+  if (!client_ndt_trigger_->service_is_ready()) {
+    throw component_interface_utils::ServiceUnready("NDT triggering service is not ready");
+  }
+
+  const auto future_ekf = client_ekf_trigger_->async_send_request(req);
+  const auto future_ndt = client_ndt_trigger_->async_send_request(req);
+  future_ekf.wait();
+  future_ndt.wait();
+
+  if (future_ekf.get()->success & future_ndt.get()->success) {
+    RCLCPP_INFO(logger_, "Deactivation succeeded");
+  } else {
+    RCLCPP_INFO(logger_, "Deactivation failed");
+    throw ServiceException(Initialize::Service::Response::ERROR_ESTIMATION, "Deactivation failed");
+  }
 }
 
 void LocalizationTriggerModule::activate() const
 {
   const auto req = std::make_shared<RequestTriggerNode::Request>();
   req->activate = true;
-  const auto res_ekf = client_ekf_trigger_->async_send_request(req).get();
-  const auto res_ndt = client_ndt_trigger_->async_send_request(req).get();
+
+  if (!client_ekf_trigger_->service_is_ready()) {
+    throw component_interface_utils::ServiceUnready("EKF triggering service is not ready");
+  }
+  if (!client_ndt_trigger_->service_is_ready()) {
+    throw component_interface_utils::ServiceUnready("NDT triggering service is not ready");
+  }
+
+  const auto future_ekf = client_ekf_trigger_->async_send_request(req);
+  const auto future_ndt = client_ndt_trigger_->async_send_request(req);
+  future_ekf.wait();
+  future_ndt.wait();
+
+  if (future_ekf.get()->success & future_ndt.get()->success) {
+    RCLCPP_INFO(logger_, "Activation succeeded");
+  } else {
+    RCLCPP_INFO(logger_, "Activation failed");
+    throw ServiceException(Initialize::Service::Response::ERROR_ESTIMATION, "Activation failed");
+  }
 }
