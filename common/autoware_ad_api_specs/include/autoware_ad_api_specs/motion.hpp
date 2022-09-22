@@ -12,32 +12,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COMPONENT_INTERFACE_SPECS__LOCALIZATION_HPP_
-#define COMPONENT_INTERFACE_SPECS__LOCALIZATION_HPP_
+#ifndef AUTOWARE_AD_API_SPECS__MOTION_HPP_
+#define AUTOWARE_AD_API_SPECS__MOTION_HPP_
 
 #include <rclcpp/qos.hpp>
 
-#include <autoware_adapi_v1_msgs/msg/localization_initialization_state.hpp>
-#include <autoware_adapi_v1_msgs/srv/initialize_localization.hpp>
+#include <autoware_ad_api_msgs/msg/motion_state.hpp>
+#include <autoware_ad_api_msgs/srv/accept_start.hpp>
 
-namespace localization_interface
+namespace autoware_ad_api::motion
 {
 
-struct Initialize
+struct AcceptStart
 {
-  using Service = autoware_adapi_v1_msgs::srv::InitializeLocalization;
-  static constexpr char name[] = "/localization/initialize";
+  using Service = autoware_ad_api_msgs::srv::AcceptStart;
+  static constexpr char name[] = "/api/motion/accept_start";
 };
 
-struct InitializationState
+struct State
 {
-  using Message = autoware_adapi_v1_msgs::msg::LocalizationInitializationState;
-  static constexpr char name[] = "/localization/initialization_state";
-  static constexpr size_t depth = 3;
+  using Message = autoware_ad_api_msgs::msg::MotionState;
+  static constexpr char name[] = "/api/motion/state";
+  static constexpr size_t depth = 1;
   static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL;
 };
 
-}  // namespace localization_interface
+}  // namespace autoware_ad_api::motion
 
-#endif  // COMPONENT_INTERFACE_SPECS__LOCALIZATION_HPP_
+#endif  // AUTOWARE_AD_API_SPECS__MOTION_HPP_
