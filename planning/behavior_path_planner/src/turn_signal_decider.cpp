@@ -30,7 +30,7 @@ namespace behavior_path_planner
 TurnIndicatorsCommand TurnSignalDecider::getTurnSignal(
   const PathWithLaneId & path, const Pose & current_pose, const double current_vel,
   const size_t current_seg_idx, const RouteHandler & route_handler,
-  const TurnSignalInfo & turn_signal_info) const
+  const TurnSignalInfo & turn_signal_info)
 {
   // Guard
   if (path.points.empty()) {
@@ -55,13 +55,13 @@ TurnIndicatorsCommand TurnSignalDecider::getTurnSignal(
 
 boost::optional<TurnSignalInfo> TurnSignalDecider::getIntersectionTurnSignalInfo(
   const PathWithLaneId & path, const Pose & current_pose, const double current_vel,
-  const size_t current_seg_idx, const RouteHandler & route_handler) const
+  const size_t current_seg_idx, const RouteHandler & route_handler)
 {
   // search distance
   const double search_distance = 3.0 * current_vel + intersection_search_distance_;
 
   // unique lane ids
-  std::vector<int64_t> unique_lane_ids;
+  std::vector<lanelet::Id> unique_lane_ids;
   for (size_t i = 0; i < path.points.size(); ++i) {
     for (const auto & lane_id : path.points.at(i).lane_ids) {
       if (
@@ -93,13 +93,16 @@ boost::optional<TurnSignalInfo> TurnSignalDecider::getIntersectionTurnSignalInfo
                                          lane_front_point, front_nearest_seg_idx) -
                                        base_link2front_;
 
-    // Distance from ego vehicle base line to the terminal point of the lane
+    // Distance from ego vehicle base link to the terminal point of the lane
     const double dist_to_terminal_point = motion_utils::calcSignedArcLength(
       path.points, current_pose.position, current_seg_idx, lane_terminal_point,
       terminal_nearest_seg_idx);
 
     if (dist_to_terminal_point < 0.0) {
       // Vehicle is already passed this lane
+      if (desired_start_point_map_.find(lane_id) != desired_start_point_map_.end()) {
+        desired_start_point_map_.erase(lane_id);
+      }
       continue;
     } else if (search_distance < dist_to_front_point) {
       break;
@@ -109,9 +112,13 @@ boost::optional<TurnSignalInfo> TurnSignalDecider::getIntersectionTurnSignalInfo
     if (
       (lane_attribute == "right" || lane_attribute == "left") &&
       dist_to_front_point < lane.attributeOr("turn_signal_distance", search_distance)) {
+      // update map if necessary
+      if (desired_start_point_map_.find(lane_id) == desired_start_point_map_.end()) {
+        desired_start_point_map_.emplace(lane_id, current_pose.position);
+      }
+
       TurnSignalInfo turn_signal_info{};
-      turn_signal_info.desired_start_point =
-        dist_to_front_point > 0.0 ? current_pose.position : lane_front_point;
+      turn_signal_info.desired_start_point = desired_start_point_map_.at(lane_id);
       turn_signal_info.required_start_point = lane_front_point;
       turn_signal_info.required_end_point = get_required_end_point(lane.centerline3d());
       turn_signal_info.desired_end_point = lane_terminal_point;
@@ -131,9 +138,7 @@ boost::optional<TurnSignalInfo> TurnSignalDecider::getIntersectionTurnSignalInfo
     const size_t nearest_seg_idx =
       motion_utils::findNearestSegmentIndex(path.points, required_end_point);
     const double dist_to_end_point = motion_utils::calcSignedArcLength(
-      path.points, current_pose.position, current_seg_idx, required_end_point,
-      nearest_seg_idx);  //-
-    // base_link2front_;
+      path.points, current_pose.position, current_seg_idx, required_end_point, nearest_seg_idx);
 
     if (dist_to_end_point >= 0.0) {
       // we haven't finished the current mandatory turn signal
@@ -148,8 +153,7 @@ boost::optional<TurnSignalInfo> TurnSignalDecider::getIntersectionTurnSignalInfo
 
 TurnIndicatorsCommand TurnSignalDecider::resolve_turn_signal(
   const PathWithLaneId & path, const Pose & current_pose, const size_t current_seg_idx,
-  const TurnSignalInfo & intersection_signal_info,
-  const TurnSignalInfo & behavior_signal_info) const
+  const TurnSignalInfo & intersection_signal_info, const TurnSignalInfo & behavior_signal_info)
 {
   const auto get_distance = [&](const auto & input_point) {
     const size_t nearest_seg_idx = motion_utils::findNearestSegmentIndex(path.points, input_point);
@@ -179,15 +183,34 @@ TurnIndicatorsCommand TurnSignalDecider::resolve_turn_signal(
     get_distance(behavior_required_start_point) - base_link2front_;
   const double dist_to_behavior_required_end = get_distance(behavior_required_end_point);
 
+  // If we still do not reach the desired front point we ignore it
+  if (dist_to_intersection_desired_start > 0.0 && dist_to_behavior_desired_start > 0.0) {
+    TurnIndicatorsCommand empty_signal_command;
+    empty_signal_command.command = TurnIndicatorsCommand::DISABLE;
+    return empty_signal_command;
+  } else if (dist_to_intersection_desired_start > 0.0) {
+    return behavior_signal_info.turn_signal;
+  } else if (dist_to_behavior_desired_start > 0.0) {
+    return intersection_signal_info.turn_signal;
+  }
+
   // If we already passed the desired end point, return the other signal
-  if (dist_to_intersection_desired_end < 0.0) {
+  if (dist_to_intersection_desired_end < 0.0 && dist_to_behavior_desired_end < 0.0) {
+    TurnIndicatorsCommand empty_signal_command;
+    empty_signal_command.command = TurnIndicatorsCommand::DISABLE;
+    return empty_signal_command;
+  } else if (dist_to_intersection_desired_end < 0.0) {
     return behavior_signal_info.turn_signal;
   } else if (dist_to_behavior_desired_end < 0.0) {
     return intersection_signal_info.turn_signal;
   }
 
-  if (dist_to_intersection_desired_start < dist_to_behavior_desired_start) {
+  std::cerr << "-----------------" << std::endl;
+  std::cerr << "intersection_dist: " << dist_to_intersection_desired_start << std::endl;
+  std::cerr << "behavior_dist: " << dist_to_behavior_desired_start << std::endl;
+  if (dist_to_intersection_desired_start <= dist_to_behavior_desired_start) {
     // intersection signal is prior than behavior signal
+    std::cerr << "Here" << std::endl;
     return resolve_turn_signal(
       intersection_signal_info.turn_signal, behavior_signal_info.turn_signal,
       dist_to_intersection_required_start, dist_to_intersection_required_end,
@@ -205,15 +228,18 @@ TurnIndicatorsCommand TurnSignalDecider::resolve_turn_signal(
   const TurnIndicatorsCommand & prior_turn_signal,
   const TurnIndicatorsCommand & subsequent_turn_signal, const double dist_to_prior_required_start,
   const double dist_to_prior_required_end, const double dist_to_subsequent_required_start,
-  const double dist_to_subsequent_required_end) const
+  const double dist_to_subsequent_required_end)
 {
   const bool before_prior_required = dist_to_prior_required_start > 0.0;
   const bool before_subsequent_required = dist_to_subsequent_required_start > 0.0;
   const bool inside_prior_required =
     dist_to_prior_required_start < 0.0 && 0.0 <= dist_to_prior_required_end;
 
+  std::cerr << "intersection_required_dist: " << dist_to_prior_required_start << std::endl;
+  std::cerr << "behavior_required_dist: " << dist_to_subsequent_required_start << std::endl;
   if (dist_to_prior_required_start < dist_to_subsequent_required_start) {
     // subsequent signal required section is completely overlapped the prior signal required section
+    std::cerr << "Hello2" << std::endl;
     if (dist_to_subsequent_required_end < dist_to_prior_required_end) {
       return prior_turn_signal;
     }
@@ -236,14 +262,17 @@ TurnIndicatorsCommand TurnSignalDecider::resolve_turn_signal(
 
   // In front of the prior required section
   if (before_prior_required) {
+    std::cerr << "Before" << std::endl;
     return subsequent_turn_signal;
   }
 
   // If the prior section is inside of the subsequent required section
   if (dist_to_prior_required_end < dist_to_subsequent_required_end) {
     if (inside_prior_required) {
+      std::cerr << "Inside" << std::endl;
       return prior_turn_signal;
     }
+    std::cerr << "Not Inside" << std::endl;
     return subsequent_turn_signal;
   }
 
@@ -252,7 +281,7 @@ TurnIndicatorsCommand TurnSignalDecider::resolve_turn_signal(
 }
 
 geometry_msgs::msg::Point TurnSignalDecider::get_required_end_point(
-  const lanelet::ConstLineString3d & centerline) const
+  const lanelet::ConstLineString3d & centerline)
 {
   std::vector<geometry_msgs::msg::Pose> converted_centerline(centerline.size());
   for (size_t i = 0; i < centerline.size(); ++i) {

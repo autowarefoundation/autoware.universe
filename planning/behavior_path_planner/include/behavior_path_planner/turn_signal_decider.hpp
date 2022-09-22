@@ -66,12 +66,11 @@ public:
   TurnIndicatorsCommand getTurnSignal(
     const PathWithLaneId & path, const Pose & current_pose, const double current_vel,
     const size_t current_seg_idx, const RouteHandler & route_handler,
-    const TurnSignalInfo & turn_signal_info) const;
+    const TurnSignalInfo & turn_signal_info);
 
   TurnIndicatorsCommand resolve_turn_signal(
     const PathWithLaneId & path, const Pose & current_pose, const size_t current_seg_idx,
-    const TurnSignalInfo & intersection_signal_info,
-    const TurnSignalInfo & behavior_signal_info) const;
+    const TurnSignalInfo & intersection_signal_info, const TurnSignalInfo & behavior_signal_info);
 
   void setParameters(const double base_link2front, const double intersection_search_distance)
   {
@@ -82,16 +81,15 @@ public:
 private:
   boost::optional<TurnSignalInfo> getIntersectionTurnSignalInfo(
     const PathWithLaneId & path, const Pose & current_pose, const double current_vel,
-    const size_t current_seg_idx, const RouteHandler & route_handler) const;
+    const size_t current_seg_idx, const RouteHandler & route_handler);
 
-  geometry_msgs::msg::Point get_required_end_point(
-    const lanelet::ConstLineString3d & centerline) const;
+  geometry_msgs::msg::Point get_required_end_point(const lanelet::ConstLineString3d & centerline);
 
   TurnIndicatorsCommand resolve_turn_signal(
     const TurnIndicatorsCommand & prior_turn_signal,
     const TurnIndicatorsCommand & subsequent_turn_signal, const double dist_to_prior_required_start,
     const double dist_to_prior_required_end, const double dist_to_subsequent_required_start,
-    const double dist_to_subsequent_required_end) const;
+    const double dist_to_subsequent_required_end);
 
   rclcpp::Logger logger_{
     rclcpp::get_logger("behavior_path_planner").get_child("turn_signal_decider")};
@@ -99,6 +97,7 @@ private:
   // data
   double intersection_search_distance_{0.0};
   double base_link2front_{0.0};
+  std::map<lanelet::Id, geometry_msgs::msg::Point> desired_start_point_map_;
 };
 }  // namespace behavior_path_planner
 
