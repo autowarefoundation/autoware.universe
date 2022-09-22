@@ -372,7 +372,7 @@ TEST_F(FakeNodeFixture, straight_line_trajectory)
   // Straight trajectory: expect no steering
   TrajectoryMsg traj_msg{};
 
-  size_t num_of_traj_points = 20;
+  size_t num_of_traj_points = 50;
   double dt{1. / 10};
 
   std::vector<double> xw{0.};
@@ -382,7 +382,7 @@ TEST_F(FakeNodeFixture, straight_line_trajectory)
   ns_utils::deg2rad(yawpath);
 
   double spath = 0.;
-  double vpath = 1.;
+  double vpath = 10.;
 
   for (size_t k = 1; k < num_of_traj_points; ++k)
   {

@@ -18,6 +18,9 @@ find_package(Eigen3 CONFIG)
 #set(CMAKE_BUILD_TYPE "Release")
 #set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -std=c++17 -Wall -Wfatal-errors")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pthread -std=c++17 -Wall -Wfatal-errors")
+
 # -------------  FLAGS ---------------------------------------------------
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(
@@ -89,6 +92,27 @@ endif()
 #  ${CMAKE_CURRENT_LIST_DIR}/external_libs/CppADCodeGen
 #  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/external_libs/CppADCodeGen)
 
+find_package(CppAD QUIET)
+if(CPPAD_FOUND)
+  set(CPPAD ON)
+  list(APPEND nmpc_node_COMPILE_DEFINITIONS CPPAD)
+  list(APPEND nmpc_node_target_include_dirs ${CPPAD_INCLUDE_DIRS})
+  msg(STATUS "CppAD is found ...")
+else()
+  message(STATUS "Could not find CppAD, auto-diff will not be available")
+endif()
+
+find_package(CppADCG QUIET)
+if(CPPADCG_FOUND)
+  set(CPPADCG ON)
+  list(APPEND nmpc_core_COMPILE_DEFINITIONS CPPADCG)
+  list(APPEND nmpc_core_target_include_dirs ${CPPADCG_INCLUDE_DIRS})
+  msg(STATUS "CppADCodeGen is found ...")
+else()
+  message(STATUS "Could not find CppADCodeGen, derivative code generation will not be available")
+endif()
+
+
 # ------------ LIBRARIES --------------------------------
 message(STATUS "osqp-cpp: Adding osqp-cpp library...")
 ament_auto_add_library(osqp-cpp src/osqp_google/osqp++.cpp)
@@ -130,7 +154,11 @@ ament_auto_add_library(${NMPC_CORE}
   include/external)
 
 target_link_libraries(${NMPC_CORE}
-  osqp-cpp)
+  osqp-cpp
+  pthread)
+
+target_compile_definitions(${NMPC_CORE} PUBLIC ${nmpc_core_COMPILE_DEFINITIONS})
+target_include_directories(${NMPC_CORE} PUBLIC ${nmpc_node_target_include_dirs})
 
 # -------------- NMPC Node ---------------------------------------------
 set(NMPC_NODE mpc_nonlinear_node)
@@ -209,7 +237,7 @@ if(BUILD_TESTING)
     ${NMPC_CORE}
     ${NMPC_NODE}
     osqp-cpp
-    ${EIGEN3_LIBRARIES} pthread)
+    ${EIGEN3_LIBRARIES})
 
 endif()
 
