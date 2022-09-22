@@ -130,6 +130,7 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     lib/ros_utils.cpp
     lib/network/network_trt.cpp
     lib/network/tensorrt_wrapper.cpp
+    lib/postprocess/non_maximum_suppression.cpp
     lib/preprocess/pointcloud_densification.cpp
     lib/preprocess/voxel_generator.cpp
   )
