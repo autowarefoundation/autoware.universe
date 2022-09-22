@@ -13,8 +13,9 @@
 // limitations under the License.S
 #include "localization_trigger_module.hpp"
 
-#include <component_interface_utils/rclcpp/exceptions.hpp>
 #include <component_interface_specs/localization.hpp>
+#include <component_interface_utils/rclcpp/exceptions.hpp>
+
 #include <memory>
 
 using ServiceException = component_interface_utils::ServiceException;
