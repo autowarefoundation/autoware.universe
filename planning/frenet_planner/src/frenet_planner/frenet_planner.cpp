@@ -32,10 +32,7 @@ std::vector<Trajectory> generateTrajectories(
   const SamplingParameters & sampling_parameters)
 {
   auto candidates = generateCandidates(initial_state, sampling_parameters);
-  for (auto & candidate : candidates) {
-    calculateCartesian(reference_spline, candidate);
-  }
-  std::printf("[FrenetPlanner] Generated %lu trajectories\n", candidates.size());
+  for (auto & candidate : candidates) calculateCartesian(reference_spline, candidate);
   return candidates;
 }
 
@@ -139,7 +136,7 @@ void calculateCartesian(const sampler_common::transform::Spline2D & reference, P
     path.points.reserve(path.frenet_points.size());
     path.yaws.reserve(path.frenet_points.size() - 1);
     path.intervals.reserve(path.frenet_points.size() - 1);
-    path.curvatures.reserve(path.frenet_points.size() - 1);
+    path.curvatures.reserve(path.frenet_points.size() - 2);
     // Calculate cartesian positions
     for (const auto & fp : path.frenet_points) {
       path.points.push_back(reference.cartesian(fp));
@@ -186,15 +183,13 @@ void calculateCartesian(
       const auto dyaw = trajectory.yaws[i] - trajectory.yaws[i - 1];
       trajectory.curvatures.push_back(dyaw / trajectory.intervals[i - 1]);
     }
-    for (size_t i = 0; i < trajectory.times.size(); ++i) {
+    for (const auto time : trajectory.times) {
       trajectory.longitudinal_velocities.push_back(
-        trajectory.longitudinal_polynomial->velocity(trajectory.times[i]));
+        trajectory.longitudinal_polynomial->velocity(time));
       trajectory.longitudinal_accelerations.push_back(
-        trajectory.longitudinal_polynomial->acceleration(trajectory.times[i]));
-      trajectory.lateral_velocities.push_back(
-        trajectory.lateral_polynomial->velocity(trajectory.times[i]));
-      trajectory.lateral_accelerations.push_back(
-        trajectory.lateral_polynomial->acceleration(trajectory.times[i]));
+        trajectory.longitudinal_polynomial->acceleration(time));
+      trajectory.lateral_velocities.push_back(trajectory.lateral_polynomial->velocity(time));
+      trajectory.lateral_accelerations.push_back(trajectory.lateral_polynomial->acceleration(time));
     }
   }
 }

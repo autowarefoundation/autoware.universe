@@ -265,11 +265,8 @@ void TrajectorySamplerNode::pathCallback(
   auto trajectories = generateCandidateTrajectories(
     planning_configuration, prev_traj_, path_spline, *msg, *w_.plotter_, params_);
   for (auto & trajectory : trajectories) {
-    const auto nb_violations =
+    debug.violations +=
       sampler_common::constraints::checkHardConstraints(trajectory, params_.constraints);
-    debug.violations.outside += nb_violations.outside;
-    debug.violations.collision += nb_violations.collision;
-    debug.violations.curvature += nb_violations.curvature;
     sampler_common::constraints::calculateCost(trajectory, params_.constraints, path_spline);
   }
   auto selected_trajectory = selectBestTrajectory(trajectories);
@@ -278,9 +275,10 @@ void TrajectorySamplerNode::pathCallback(
     publishTrajectory(final_trajectory, msg->header.frame_id);
     prev_traj_ = *selected_trajectory;
   } else {
-    RCLCPP_WARN(
-      get_logger(), "All candidates rejected: out=%d coll=%d curv=%d", debug.violations.outside,
-      debug.violations.collision, debug.violations.curvature);
+    RCLCPP_DEBUG(
+      get_logger(), "All candidates rejected: out=%d coll=%d curv=%d vel=%d acc=%d",
+      debug.violations.outside, debug.violations.collision, debug.violations.curvature,
+      debug.violations.velocity, debug.violations.acceleration);
     if (
       fallback_traj_ptr_ &&
       (now() - fallback_traj_ptr_->header.stamp).seconds() < fallback_timeout_) {
@@ -375,8 +373,8 @@ void TrajectorySamplerNode::publishTrajectory(
   autoware_auto_planning_msgs::msg::Trajectory traj_msg;
   traj_msg.header.frame_id = frame_id;
   traj_msg.header.stamp = now();
+  autoware_auto_planning_msgs::msg::TrajectoryPoint point;
   for (size_t i = 0; i + 2 < trajectory.points.size(); ++i) {
-    autoware_auto_planning_msgs::msg::TrajectoryPoint point;
     point.pose.position.x = trajectory.points[i].x();
     point.pose.position.y = trajectory.points[i].y();
     q.setRPY(0, 0, trajectory.yaws[i]);

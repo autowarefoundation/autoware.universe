@@ -189,7 +189,8 @@ struct Trajectory : Path
       extended_traj.lateral_accelerations.end(), traj.lateral_accelerations.begin(),
       traj.lateral_accelerations.end());
     extended_traj.times.insert(extended_traj.times.end(), times.begin(), times.end());
-    extended_traj.times.insert(extended_traj.times.end(), traj.times.begin(), traj.times.end());
+    const auto last_base_time = times.empty() ? 0.0 : times.back();
+    for (const auto t : traj.times) extended_traj.times.push_back(last_base_time + t);
     extended_traj.duration = duration + traj.duration;
     return extended_traj;
   }

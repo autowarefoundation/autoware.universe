@@ -27,11 +27,32 @@ struct NumberOfViolations
   uint32_t collision = 0;
   uint32_t curvature = 0;
   uint32_t outside = 0;
+  uint32_t velocity = 0;
+  uint32_t acceleration = 0;
+
+  NumberOfViolations & operator+=(const NumberOfViolations & o)
+  {
+    collision += o.collision;
+    curvature += o.curvature;
+    outside += o.outside;
+    velocity += o.velocity;
+    acceleration += o.acceleration;
+    return *this;
+  }
+
+  NumberOfViolations operator+(const NumberOfViolations & o) const
+  {
+    NumberOfViolations v = *this;
+    v += o;
+    return v;
+  }
 };
 /// @brief Check if the path satisfies the hard constraints
 NumberOfViolations checkHardConstraints(Path & path, const Constraints & constraints);
 /// @brief Check if the trajectory satisfies the hard constraints
 NumberOfViolations checkHardConstraints(Trajectory & traj, const Constraints & constraints);
+/// @brief Check if the trajectory satisfies the velocity hard constraints
+NumberOfViolations checkVelocityConstraints(Trajectory & traj, const Constraints & constraints);
 }  // namespace sampler_common::constraints
 
 #endif  // SAMPLER_COMMON__CONSTRAINTS__HARD_CONSTRAINT_HPP_

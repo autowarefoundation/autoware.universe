@@ -103,32 +103,30 @@ NumberOfViolations checkHardConstraints(Path & path, const Constraints & constra
   return number_of_violations;
 }
 
-void checkVelocityConstraints(Trajectory & traj, const Constraints & constraints)
+NumberOfViolations checkHardConstraints(Trajectory & traj, const Constraints & constraints)
 {
+  Path & path = traj;
+  auto number_of_violations = checkHardConstraints(path, constraints);
+  number_of_violations += checkVelocityConstraints(traj, constraints);
+  return number_of_violations;
+}
+
+NumberOfViolations checkVelocityConstraints(Trajectory & traj, const Constraints & constraints)
+{
+  NumberOfViolations violations;
   for (const auto vel : traj.longitudinal_velocities) {
     if (/*vel > constraints.hard.max_velocity ||*/ vel < 0) {
-      std::cout << "Negative velocity = " << vel << std::endl;
       traj.valid = false;
-      return;
+      violations.velocity++;
+      break;
     }
   }
   if (!satisfyMinMax(
         traj.longitudinal_accelerations, constraints.hard.min_acceleration,
         constraints.hard.max_acceleration)) {
-    std::cout << "acceleration out of min/max ";
-    for (const auto acc : traj.longitudinal_accelerations) std::cout << acc << " ";
-    std::cout << std::endl;
     traj.valid = false;
-    return;
+    violations.acceleration++;
   }
+  return violations;
 }
-
-NumberOfViolations checkHardConstraints(Trajectory & traj, const Constraints & constraints)
-{
-  Path & path = traj;
-  auto number_of_violations = checkHardConstraints(path, constraints);
-  checkVelocityConstraints(traj, constraints);
-  return number_of_violations;
-}
-
 }  // namespace sampler_common::constraints

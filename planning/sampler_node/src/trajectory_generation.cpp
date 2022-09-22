@@ -19,7 +19,7 @@
 
 #include <bezier_sampler/bezier_sampling.hpp>
 #include <frenet_planner/frenet_planner.hpp>
-#include <sampler_common/path_reuse.hpp>
+#include <sampler_common/trajectory_reuse.hpp>
 #include <sampler_node/prepare_inputs.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path.hpp>
@@ -28,6 +28,7 @@
 
 #include <algorithm>
 #include <iterator>
+#include <limits>
 #include <numeric>
 #include <vector>
 
@@ -69,9 +70,10 @@ std::vector<sampler_common::Trajectory> generateCandidateTrajectories(
        reuse_max_length += reuse_length_step) {
     // TODO(Maxime CLEMENT): change to a clearer flow: 1-generate base_traj 2-check valid base traj
     // 3-calc initial config
-    if (sampler_common::tryToReusePath(
-          previous_trajectory, initial_configuration.pose, reuse_max_length,
-          params.sampling.reuse_max_deviation, params.constraints, base_trajectory)) {
+    if (sampler_common::tryToReuseTrajectory(
+          previous_trajectory, initial_configuration.pose, std::numeric_limits<double>::max(),
+          reuse_max_length, params.sampling.reuse_max_deviation, params.constraints,
+          base_trajectory)) {
       plotter.plotCommittedPath(base_trajectory);
       const auto cost_mult = 1.0 - 0.3 * reuse_length_step / params.sampling.reuse_max_length_max;
       sampler_common::Configuration end_of_reused_trajectory;
