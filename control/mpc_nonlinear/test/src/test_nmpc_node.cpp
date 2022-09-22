@@ -25,7 +25,7 @@
 /**
  * Automatic differentiation : Vehicle model equations test.
  * */
-TEST_F(FakeNodeFixture, automatic_differentiation_works)
+TEST_F(FakeNodeFixture, automaticDifferentition)
 {
 
   // Compute f(x, u) by codegen from the model.
@@ -138,7 +138,7 @@ TEST_F(FakeNodeFixture, automatic_differentiation_works)
   // end of debug
 }
 
-TEST_F(FakeNodeFixture, no_input_stop_control_cmd_is_published)
+TEST_F(FakeNodeFixture, stopControlPublishedWithNoInput)
 {
   // Data to test
   ControlCmdMsg::SharedPtr cmd_msg;
@@ -189,7 +189,7 @@ TEST_F(FakeNodeFixture, no_input_stop_control_cmd_is_published)
   ns_utils::print(" ctrl_cmd_msgs_  steering: ", cmd_msg->longitudinal.acceleration, -1.5);
 }
 
-TEST_F(FakeNodeFixture, empty_trajectory)
+TEST_F(FakeNodeFixture, emptyTrajectory)
 {
   // Data to test
   ControlCmdMsg::SharedPtr cmd_msg;
@@ -263,7 +263,7 @@ TEST_F(FakeNodeFixture, empty_trajectory)
 /**
  * Integration with autodiff : Boost integration test
  * */
-TEST(CPPADtests, integration_of_autodiffed)
+TEST(CPPADtests, integrationOfAutoDiff)
 {
   // Compute f(x, u) by codegen from the model.
   Model::state_vector_t f_of_dx{Model::state_vector_t::Zero()};
@@ -329,136 +329,14 @@ TEST(CPPADtests, integration_of_autodiffed)
   // end of debug
 }
 
-TEST_F(FakeNodeFixture, straight_line_trajectory)
-{
-  // Data to test
-  ControlCmdMsg::SharedPtr cmd_msg;
-  bool is_control_command_received{false};
-  bool is_nmpc_msg_received{false};
+/**
+ * The trajectory initialization depends on the LPV feedback initializer class in the NMPC and it makes use of the
+ * Lyapunov matrices which are used to compute state feedback coefficients. This tests checks whether the feedback
+ * controllers are stable.
+ *
+ * */
 
-  // Node
-  std::shared_ptr<NonlinearMPCNode> node = makeNonlinearMPCNode();
-
-  // Publishers
-  rclcpp::Publisher<TrajectoryMsg>::SharedPtr traj_pub =
-    this->create_publisher<TrajectoryMsg>("mpc_nonlinear/input/reference_trajectory");
-
-  rclcpp::Publisher<VelocityMsg>::SharedPtr vel_pub =
-    this->create_publisher<VelocityMsg>("mpc_nonlinear/input/current_velocity");
-
-  rclcpp::Publisher<SteeringReport>::SharedPtr steer_pub =
-    this->create_publisher<SteeringReport>("mpc_nonlinear/input/current_steering");
-
-  // Subscribers
-  rclcpp::Subscription<ControlCmdMsg>::SharedPtr cmd_sub = this->create_subscription<ControlCmdMsg>(
-    "mpc_nonlinear/output/control_cmd", *this->get_fake_node(),
-    [&cmd_msg, &is_control_command_received](const ControlCmdMsg::SharedPtr msg)
-    {
-      cmd_msg = msg;
-      is_control_command_received = true;
-    });
-
-  NonlinearMPCPerformanceMsg::SharedPtr nmpc_perf_msg;
-
-  rclcpp::Subscription<NonlinearMPCPerformanceMsg>::SharedPtr nmpc_perf_sub =
-    this->create_subscription<NonlinearMPCPerformanceMsg>(
-      "mpc_nonlinear/debug/nmpc_vars", *this->get_fake_node(),
-      [&nmpc_perf_msg](const NonlinearMPCPerformanceMsg::SharedPtr msg)
-      { nmpc_perf_msg = msg; });
-
-  // ASSERT_TRUE(is_control_command_received);
-  auto br = std::make_shared<tf2_ros::StaticTransformBroadcaster>(this->get_fake_node());
-
-  // Straight trajectory: expect no steering
-  TrajectoryMsg traj_msg{};
-
-  size_t num_of_traj_points = 50;
-  double dt{1. / 10};
-
-  std::vector<double> xw{0.};
-  std::vector<double> yw{0.};
-
-  double yawpath{15};
-  ns_utils::deg2rad(yawpath);
-
-  double spath = 0.;
-  double vpath = 10.;
-
-  for (size_t k = 1; k < num_of_traj_points; ++k)
-  {
-    spath += dt * vpath;
-    auto const &xnext = spath * cos(yawpath);
-    auto const &ynext = spath * sin(yawpath);
-    xw.emplace_back(xnext);
-    yw.emplace_back(ynext);
-
-    TrajectoryPoint p;
-    p.pose.position.x = xw[k - 1];
-    p.pose.position.y = yw[k - 1];
-
-    p.longitudinal_velocity_mps = static_cast<float>(vpath);
-    p.pose.orientation = ns_nmpc_utils::createOrientationMsgfromYaw(yawpath);
-    traj_msg.points.emplace_back(p);
-  }
-
-  // Dummy transform: ego is at (0.0, 0.0) in map frame
-  double yaw_vehicle = yawpath;
-  geometry_msgs::msg::TransformStamped transform = test_utils::getDummyTransform(yaw_vehicle);
-  transform.transform.translation.x = xw[20];
-  transform.transform.translation.y = yw[20];
-
-  transform.header.stamp = node->now();
-  br->sendTransform(transform);
-
-  VelocityMsg vel_msg;
-  vel_msg.header.stamp = node->now();
-  vel_msg.twist.twist.linear.x = vpath;
-
-  SteeringReport steer_msg;
-  steer_msg.stamp = node->now();
-  steer_msg.steering_tire_angle = 0.0;
-
-  vel_pub->publish(vel_msg);
-  steer_pub->publish(steer_msg);
-
-  traj_msg.header.stamp = node->now();
-  traj_msg.header.frame_id = "map";
-  traj_pub->publish(traj_msg);
-
-  // Spin for transform to be published
-  test_utils::spinWhile(node);
-  test_utils::waitForMessage(
-    node, this, is_control_command_received, std::chrono::seconds{1LL}, false);
-
-  test_utils::waitForMessage(node, this, is_nmpc_msg_received, std::chrono::seconds{1LL}, false);
-
-  ASSERT_TRUE(true);
-
-  ns_utils::print("is nmpc perf msg received ?", is_nmpc_msg_received);
-
-  // DEBUG
-  ns_utils::print("ctrl_cmd_msgs_  steering: ", cmd_msg->lateral.steering_tire_angle);
-  ns_utils::print("ctrl_cmd_msgs_  steering rate : ", cmd_msg->lateral.steering_tire_rotation_rate);
-  ns_utils::print("ctrl_cmd_msgs_  steering rate : ", cmd_msg->longitudinal.speed);
-  ns_utils::print("ctrl_cmd_msgs_  steering: ", cmd_msg->longitudinal.acceleration);
-
-  ns_utils::print(" ctrl_cmd_msgs_  steering rate : ", cmd_msg->longitudinal.speed);
-  ns_utils::print(" ctrl_cmd_msgs_  steering: ", cmd_msg->longitudinal.acceleration);
-
-  //  ns_utils::print("nonlinear mpc lateral error: ", nmpc_perf_msg->nmpc_lateral_error);
-  //  ns_utils::print("nonlinear mpc yaw error", nmpc_perf_msg->nmpc_yaw_error);
-  //  ns_utils::print("nonlinear mpc yaw measured", nmpc_perf_msg->yaw_angle_measured);
-  //  ns_utils::print("nonlinear mpc yaw target", nmpc_perf_msg->yaw_angle_target);
-  //  ns_utils::print("nonlinear mpc yaw traj", nmpc_perf_msg->yaw_angle_traj);
-  //  ns_utils::print("nonlinear long vel measured", nmpc_perf_msg->long_velocity_measured);
-
-  //  ASSERT_TRUE(is_control_nmpc_msg_received);
-  //  EXPECT_EQ(cmd_msg->lateral.steering_tire_angle, 0.0f);
-  //  EXPECT_EQ(cmd_msg->lateral.steering_tire_rotation_rate, 0.0f);
-  //  EXPECT_GT(rclcpp::Time(cmd_msg->stamp), rclcpp::Time(traj_msg.header.stamp));
-}
-
-TEST_F(FakeNodeFixture, nmpc_core_lpv_test)
+TEST_F(FakeNodeFixture, nmpcLPVTrajInitializationStability)
 {
   using ns_utils::toUType;
 
@@ -556,11 +434,11 @@ TEST_F(FakeNodeFixture, nmpc_core_lpv_test)
 
         vehicle_model_ptr->computeJacobians(x, u, params, Ac, Bc);
 
-        ns_eigen_utils::printEigenMat(Ac, "Ac");
-        ns_eigen_utils::printEigenMat(Ac.block<4, 4>(4, 4), "Ace");
+        // ns_eigen_utils::printEigenMat(Ac, "Ac");
+        // ns_eigen_utils::printEigenMat(Ac.block<4, 4>(4, 4), "Ace");
 
-        ns_eigen_utils::printEigenMat(Bc, "Bc");
-        ns_eigen_utils::printEigenMat(Bc.block<4, 2>(4, 0), "Bce");
+        // ns_eigen_utils::printEigenMat(Bc, "Bc");
+        // ns_eigen_utils::printEigenMat(Bc.block<4, 2>(4, 0), "Bce");
 
         auto const &Ac_error_block = Ac.block<4, 4>(4, 4);
 
@@ -572,7 +450,7 @@ TEST_F(FakeNodeFixture, nmpc_core_lpv_test)
         auto const &th5 = Ac_error_block(1, 2);
         auto const &th6 = Ac_error_block(1, 3);
 
-        ns_utils::print("Nonlinearities in Error Block", th1, th2, th3, th4);
+        // ns_utils::print("Nonlinearities in Error Block", th1, th2, th3, th4);
 
         auto thetas_ = std::vector<double>{th1, th2, th3, th4, th5, th6};
 
@@ -590,7 +468,7 @@ TEST_F(FakeNodeFixture, nmpc_core_lpv_test)
         auto const &Pr = Xr.inverse();  // Cost matrix P.
         auto const &Kfb = Yr * Pr;      // State feedback coefficients matrix.
 
-        ns_eigen_utils::printEigenMat(Kfb.eval(), "\nComputed Feedback Gains");
+        // ns_eigen_utils::printEigenMat(Kfb.eval(), "\nComputed Feedback Gains");
 
         /**
          * Discretisize the system matrices
@@ -606,18 +484,290 @@ TEST_F(FakeNodeFixture, nmpc_core_lpv_test)
         auto const &eig_vals = Aclosed_loop.eigenvalues();
 
         ns_utils::print("Operating states, vx, ey, eyaw :", vx, ey, eyaw);
-        ns_eigen_utils::printEigenMat(
-          eig_vals, "\nEigen values of the closed loop system matrix :");
+        // ns_eigen_utils::printEigenMat(eig_vals, "\nEigen values of the closed loop system matrix :");
 
-        ns_utils::print("Magnitude of Eigenvalues ");
-        for (auto ke = 0; ke < eig_vals.size(); ++ke)
-        {
-          ASSERT_LE(std::abs(eig_vals(ke)), 1.);
-          ns_utils::print(std::abs(eig_vals(ke)));
-        }
+        // ns_utils::print("Magnitude of Eigenvalues ");
+        // for (auto ke = 0; ke < eig_vals.size(); ++ke)
+        // {
+        //  ASSERT_LE(std::abs(eig_vals(ke)), 1.);
+        //  ns_utils::print(std::abs(eig_vals(ke)));
+        // }
+
       }
     }
   }
 
   ASSERT_TRUE(true);
+}
+
+/**
+ * A straight trajectory path is give to the NMPC and it is expected to produce zero-steering angle control command.
+ * */
+
+TEST_F(FakeNodeFixture, straightTrajectoryTest)
+{
+  // Data to test
+  ControlCmdMsg::SharedPtr cmd_msg;
+  bool is_control_command_received{false};
+  bool is_nmpc_msg_received{false};
+
+  // Node
+  std::shared_ptr<NonlinearMPCNode> node = makeNonlinearMPCNode();
+
+  // Publishers
+  rclcpp::Publisher<TrajectoryMsg>::SharedPtr traj_pub =
+    this->create_publisher<TrajectoryMsg>("mpc_nonlinear/input/reference_trajectory");
+
+  rclcpp::Publisher<VelocityMsg>::SharedPtr vel_pub =
+    this->create_publisher<VelocityMsg>("mpc_nonlinear/input/current_velocity");
+
+  rclcpp::Publisher<SteeringReport>::SharedPtr steer_pub =
+    this->create_publisher<SteeringReport>("mpc_nonlinear/input/current_steering");
+
+  // Subscribers
+  rclcpp::Subscription<ControlCmdMsg>::SharedPtr cmd_sub = this->create_subscription<ControlCmdMsg>(
+    "mpc_nonlinear/output/control_cmd", *this->get_fake_node(),
+    [&cmd_msg, &is_control_command_received](const ControlCmdMsg::SharedPtr msg)
+    {
+      cmd_msg = msg;
+      is_control_command_received = true;
+    });
+
+  NonlinearMPCPerformanceMsg::SharedPtr nmpcperf_msg;
+
+  rclcpp::Subscription<NonlinearMPCPerformanceMsg>::SharedPtr nmpc_perfsub =
+    this->create_subscription<NonlinearMPCPerformanceMsg>(
+      "mpc_nonlinear/debug/nmpc_vars", *this->get_fake_node(),
+      [&nmpcperf_msg, &is_nmpc_msg_received](const NonlinearMPCPerformanceMsg::SharedPtr msg)
+      {
+        nmpcperf_msg = msg;
+        is_nmpc_msg_received = true;
+      });
+
+  // ASSERT_TRUE(is_control_command_received);
+  auto br = std::make_shared<tf2_ros::StaticTransformBroadcaster>(this->get_fake_node());
+
+  // Straight trajectory: expect no steering
+  TrajectoryMsg traj_msg{};
+
+  size_t num_of_traj_points = 50;
+  double dt{1. / 10};
+
+  std::vector<double> xw{0.};
+  std::vector<double> yw{0.};
+
+  double yawpath{15};
+  ns_utils::deg2rad(yawpath);
+
+  double spath = 0.;
+  double vpath = 10.;
+
+  for (size_t k = 1; k < num_of_traj_points; ++k)
+  {
+    spath += dt * vpath;
+    auto const &xnext = spath * cos(yawpath);
+    auto const &ynext = spath * sin(yawpath);
+    xw.emplace_back(xnext);
+    yw.emplace_back(ynext);
+
+    TrajectoryPoint p;
+    p.pose.position.x = xw[k - 1];
+    p.pose.position.y = yw[k - 1];
+
+    p.longitudinal_velocity_mps = static_cast<float>(vpath);
+    p.pose.orientation = ns_nmpc_utils::createOrientationMsgfromYaw(yawpath);
+    traj_msg.points.emplace_back(p);
+  }
+
+  // Dummy transform: ego is at (0.0, 0.0) in map frame
+  double yaw_vehicle = yawpath;
+  geometry_msgs::msg::TransformStamped transform = test_utils::getDummyTransform(yaw_vehicle);
+  transform.transform.translation.x = xw[20];
+  transform.transform.translation.y = yw[20];
+
+  transform.header.stamp = node->now();
+  br->sendTransform(transform);
+
+  VelocityMsg vel_msg;
+  vel_msg.header.stamp = node->now();
+  vel_msg.twist.twist.linear.x = vpath;
+
+  SteeringReport steer_msg;
+  steer_msg.stamp = node->now();
+  steer_msg.steering_tire_angle = 0.0;
+
+  vel_pub->publish(vel_msg);
+  steer_pub->publish(steer_msg);
+
+  traj_msg.header.stamp = node->now();
+  traj_msg.header.frame_id = "map";
+  traj_pub->publish(traj_msg);
+
+  // Spin for transform to be published
+  test_utils::spinWhile(node);
+  test_utils::waitForMessage(
+    node, this, is_control_command_received, std::chrono::seconds{1LL}, false);
+
+  test_utils::waitForMessage(node, this, is_nmpc_msg_received, std::chrono::seconds{1LL}, false);
+
+  // DEBUG
+  ns_utils::print("is nmpc perf msg received ?", is_nmpc_msg_received);
+  ns_utils::print("ctrl_cmd_msgs_ steering: ", cmd_msg->lateral.steering_tire_angle);
+  ns_utils::print("ctrl_cmd_msgs_ steering rate : ", cmd_msg->lateral.steering_tire_rotation_rate);
+
+  ns_utils::print("ctrl_cmd_msgs_ longitudinal speed: ", cmd_msg->longitudinal.speed);
+  ns_utils::print("ctrl_cmd_msgs_ longitudinal acceleration: ", cmd_msg->longitudinal.acceleration);
+
+  ns_utils::print("nonlinear mpc lateral error: ", nmpcperf_msg->nmpc_lateral_error);
+  ns_utils::print("nonlinear mpc yaw error", nmpcperf_msg->nmpc_yaw_error);
+  ns_utils::print("nonlinear mpc yaw measured", nmpcperf_msg->yaw_angle_measured);
+  ns_utils::print("nonlinear mpc yaw target", nmpcperf_msg->yaw_angle_target);
+  ns_utils::print("nonlinear mpc yaw traj", nmpcperf_msg->yaw_angle_traj);
+  ns_utils::print("nonlinear long vel target", nmpcperf_msg->long_velocity_target);
+
+  ASSERT_TRUE(is_control_command_received);
+  ASSERT_TRUE(is_nmpc_msg_received);
+
+  EXPECT_LE(cmd_msg->lateral.steering_tire_angle, 1e-6f);
+  EXPECT_LE(cmd_msg->lateral.steering_tire_rotation_rate, 1e-6f);
+  EXPECT_LE(cmd_msg->longitudinal.acceleration, 1e-6f);
+  // EXPECT_DOUBLE_EQ(nmpcperf_msg->long_velocity_target, vpath);
+
+  EXPECT_GT(rclcpp::Time(cmd_msg->stamp), rclcpp::Time(traj_msg.header.stamp));
+}
+
+
+/**
+ * The NMPC controller should produce a steering signal that move the vehicle to the right.
+ * */
+TEST_F(FakeNodeFixture, turnRight)
+{
+  // Data to test
+  ControlCmdMsg::SharedPtr cmd_msg;
+  bool is_control_command_received{false};
+  bool is_nmpc_msg_received{false};
+
+  // Node
+  std::shared_ptr<NonlinearMPCNode> node = makeNonlinearMPCNode();
+
+  // Publishers
+  rclcpp::Publisher<TrajectoryMsg>::SharedPtr traj_pub =
+    this->create_publisher<TrajectoryMsg>("mpc_nonlinear/input/reference_trajectory");
+
+  rclcpp::Publisher<VelocityMsg>::SharedPtr vel_pub =
+    this->create_publisher<VelocityMsg>("mpc_nonlinear/input/current_velocity");
+
+  rclcpp::Publisher<SteeringReport>::SharedPtr steer_pub =
+    this->create_publisher<SteeringReport>("mpc_nonlinear/input/current_steering");
+
+  // Subscribers
+  rclcpp::Subscription<ControlCmdMsg>::SharedPtr cmd_sub = this->create_subscription<ControlCmdMsg>(
+    "mpc_nonlinear/output/control_cmd", *this->get_fake_node(),
+    [&cmd_msg, &is_control_command_received](const ControlCmdMsg::SharedPtr msg)
+    {
+      cmd_msg = msg;
+      is_control_command_received = true;
+    });
+
+  NonlinearMPCPerformanceMsg::SharedPtr nmpcperf_msg;
+
+  rclcpp::Subscription<NonlinearMPCPerformanceMsg>::SharedPtr nmpc_perfsub =
+    this->create_subscription<NonlinearMPCPerformanceMsg>(
+      "mpc_nonlinear/debug/nmpc_vars", *this->get_fake_node(),
+      [&nmpcperf_msg, &is_nmpc_msg_received](const NonlinearMPCPerformanceMsg::SharedPtr msg)
+      {
+        nmpcperf_msg = msg;
+        is_nmpc_msg_received = true;
+      });
+
+  // ASSERT_TRUE(is_control_command_received);
+  auto br = std::make_shared<tf2_ros::StaticTransformBroadcaster>(this->get_fake_node());
+
+  // Straight trajectory: expect no steering
+  TrajectoryMsg traj_msg{};
+
+  size_t num_of_traj_points = 50;
+  double dt{1. / 10};
+
+  std::vector<double> xw{0.};
+  std::vector<double> yw{0.};
+
+  double yawpath{15};
+  ns_utils::deg2rad(yawpath);
+
+  double spath = 0.;
+  double vpath = 10.;
+
+  for (size_t k = 1; k < num_of_traj_points; ++k)
+  {
+    spath += dt * vpath;
+    auto const &xnext = spath * cos(yawpath);
+    auto const &ynext = spath * sin(yawpath);
+    xw.emplace_back(xnext);
+    yw.emplace_back(ynext);
+
+    TrajectoryPoint p;
+    p.pose.position.x = xw[k - 1];
+    p.pose.position.y = yw[k - 1];
+
+    p.longitudinal_velocity_mps = static_cast<float>(vpath);
+    p.pose.orientation = ns_nmpc_utils::createOrientationMsgfromYaw(yawpath);
+    traj_msg.points.emplace_back(p);
+  }
+
+  // Dummy transform: ego is at (0.0, 0.0) in map frame
+  double yaw_vehicle = yawpath;
+  geometry_msgs::msg::TransformStamped transform = test_utils::getDummyTransform(yaw_vehicle);
+  transform.transform.translation.x = xw[20];
+  transform.transform.translation.y = yw[20];
+
+  transform.header.stamp = node->now();
+  br->sendTransform(transform);
+
+  VelocityMsg vel_msg;
+  vel_msg.header.stamp = node->now();
+  vel_msg.twist.twist.linear.x = vpath;
+
+  SteeringReport steer_msg;
+  steer_msg.stamp = node->now();
+  steer_msg.steering_tire_angle = 0.0;
+
+  vel_pub->publish(vel_msg);
+  steer_pub->publish(steer_msg);
+
+  traj_msg.header.stamp = node->now();
+  traj_msg.header.frame_id = "map";
+  traj_pub->publish(traj_msg);
+
+  // Spin for transform to be published
+  test_utils::spinWhile(node);
+  test_utils::waitForMessage(
+    node, this, is_control_command_received, std::chrono::seconds{1LL}, false);
+
+  test_utils::waitForMessage(node, this, is_nmpc_msg_received, std::chrono::seconds{1LL}, false);
+
+  // DEBUG
+  ns_utils::print("is nmpc perf msg received ?", is_nmpc_msg_received);
+  ns_utils::print("ctrl_cmd_msgs_ steering: ", cmd_msg->lateral.steering_tire_angle);
+  ns_utils::print("ctrl_cmd_msgs_ steering rate : ", cmd_msg->lateral.steering_tire_rotation_rate);
+
+  ns_utils::print("ctrl_cmd_msgs_ longitudinal speed: ", cmd_msg->longitudinal.speed);
+  ns_utils::print("ctrl_cmd_msgs_ longitudinal acceleration: ", cmd_msg->longitudinal.acceleration);
+
+  ns_utils::print("nonlinear mpc lateral error: ", nmpcperf_msg->nmpc_lateral_error);
+  ns_utils::print("nonlinear mpc yaw error", nmpcperf_msg->nmpc_yaw_error);
+  ns_utils::print("nonlinear mpc yaw measured", nmpcperf_msg->yaw_angle_measured);
+  ns_utils::print("nonlinear mpc yaw target", nmpcperf_msg->yaw_angle_target);
+  ns_utils::print("nonlinear mpc yaw traj", nmpcperf_msg->yaw_angle_traj);
+  ns_utils::print("nonlinear long vel target", nmpcperf_msg->long_velocity_target);
+
+  ASSERT_TRUE(is_control_command_received);
+  ASSERT_TRUE(is_nmpc_msg_received);
+
+  EXPECT_LE(cmd_msg->lateral.steering_tire_angle, 1e-6f);
+  EXPECT_LE(cmd_msg->lateral.steering_tire_rotation_rate, 1e-6f);
+  EXPECT_LE(cmd_msg->longitudinal.acceleration, 1e-6f);
+  // EXPECT_DOUBLE_EQ(nmpcperf_msg->long_velocity_target, vpath);
+
+  EXPECT_GT(rclcpp::Time(cmd_msg->stamp), rclcpp::Time(traj_msg.header.stamp));
 }
