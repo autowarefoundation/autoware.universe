@@ -13,12 +13,14 @@
 # limitations under the License.
 
 import os
+import re
 
 from ament_index_python.packages import get_package_share_directory
 import launch
 from launch.actions import DeclareLaunchArgument
 from launch.actions import OpaqueFunction
 from launch.substitutions import LaunchConfiguration
+from launch.substitutions import SubstitutionFailure
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
 import yaml
@@ -26,12 +28,20 @@ import yaml
 
 def launch_setup(context, *args, **kwargs):
 
+    node_name_suffix = ""
+    try:
+        node_name_suffix = re.sub(
+            "_$", "", "_" + LaunchConfiguration("node_name_suffix").perform(context)
+        )
+    except SubstitutionFailure as e:
+        print(e)
+
     with open(LaunchConfiguration("cpu_monitor_config_file").perform(context), "r") as f:
         cpu_monitor_config = yaml.safe_load(f)["/**"]["ros__parameters"]
     cpu_monitor = ComposableNode(
         package="system_monitor",
         plugin="CPUMonitor",
-        name="cpu_monitor",
+        name="cpu_monitor" + node_name_suffix,
         parameters=[
             cpu_monitor_config,
         ],
@@ -41,7 +51,7 @@ def launch_setup(context, *args, **kwargs):
     hdd_monitor = ComposableNode(
         package="system_monitor",
         plugin="HDDMonitor",
-        name="hdd_monitor",
+        name="hdd_monitor" + node_name_suffix,
         parameters=[
             hdd_monitor_config,
         ],
@@ -51,7 +61,7 @@ def launch_setup(context, *args, **kwargs):
     mem_monitor = ComposableNode(
         package="system_monitor",
         plugin="MemMonitor",
-        name="mem_monitor",
+        name="mem_monitor" + node_name_suffix,
         parameters=[
             mem_monitor_config,
         ],
@@ -61,7 +71,7 @@ def launch_setup(context, *args, **kwargs):
     net_monitor = ComposableNode(
         package="system_monitor",
         plugin="NetMonitor",
-        name="net_monitor",
+        name="net_monitor" + node_name_suffix,
         parameters=[
             net_monitor_config,
         ],
@@ -71,7 +81,7 @@ def launch_setup(context, *args, **kwargs):
     ntp_monitor = ComposableNode(
         package="system_monitor",
         plugin="NTPMonitor",
-        name="ntp_monitor",
+        name="ntp_monitor" + node_name_suffix,
         parameters=[
             ntp_monitor_config,
         ],
@@ -81,7 +91,7 @@ def launch_setup(context, *args, **kwargs):
     process_monitor = ComposableNode(
         package="system_monitor",
         plugin="ProcessMonitor",
-        name="process_monitor",
+        name="process_monitor" + node_name_suffix,
         parameters=[
             process_monitor_config,
         ],
@@ -91,7 +101,7 @@ def launch_setup(context, *args, **kwargs):
     gpu_monitor = ComposableNode(
         package="system_monitor",
         plugin="GPUMonitor",
-        name="gpu_monitor",
+        name="gpu_monitor" + node_name_suffix,
         parameters=[
             gpu_monitor_config,
         ],
