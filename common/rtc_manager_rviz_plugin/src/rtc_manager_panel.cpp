@@ -119,56 +119,55 @@ RTCManagerPanel::RTCManagerPanel(QWidget * parent) : rviz_common::Panel(parent)
   auto_modes_.reserve(module_size);
   auto * v_layout = new QVBoxLayout;
   auto * auto_mode_table_layout = new QHBoxLayout;
-  {
-    auto vertical_header = new QHeaderView(Qt::Vertical);
-    vertical_header->hide();
-    auto horizontal_header = new QHeaderView(Qt::Horizontal);
-    horizontal_header->setSectionResizeMode(QHeaderView::Stretch);
-    auto_mode_table_ = new QTableWidget();
-    auto_mode_table_->setColumnCount(4);
-    auto_mode_table_->setHorizontalHeaderLabels(
-      {"Module", "ToAutoMode", "ToManualMode", "ApprovalMode"});
-    auto_mode_table_->setVerticalHeader(vertical_header);
-    auto_mode_table_->setHorizontalHeader(horizontal_header);
-    const size_t num_modules = module_size;
-    auto_mode_table_->setRowCount(num_modules);
-    for (size_t i = 0; i < num_modules; i++) {
-      auto * rtc_auto_mode = new RTCAutoMode();
-      rtc_auto_mode->setParent(this);
-      // module
-      {
-        rtc_auto_mode->module_name = getModuleName(static_cast<uint8_t>(i));
-        std::string module_name = rtc_auto_mode->module_name;
-        auto label = new QLabel(QString::fromStdString(module_name));
-        label->setAlignment(Qt::AlignCenter);
-        label->setText(QString::fromStdString(module_name));
-        auto_mode_table_->setCellWidget(i, 0, label);
-      }
-      // mode button
-      {
-        rtc_auto_mode->auto_module_button_ptr = new QPushButton("auto mode");
-        connect(
-          rtc_auto_mode->auto_module_button_ptr, &QPushButton::clicked, rtc_auto_mode,
-          &RTCAutoMode::onChangeToAutoMode);
-        auto_mode_table_->setCellWidget(i, 1, rtc_auto_mode->auto_module_button_ptr);
-        rtc_auto_mode->manual_module_button_ptr = new QPushButton("manual mode");
-        connect(
-          rtc_auto_mode->manual_module_button_ptr, &QPushButton::clicked, rtc_auto_mode,
-          &RTCAutoMode::onChangeToManualMode);
-        auto_mode_table_->setCellWidget(i, 2, rtc_auto_mode->manual_module_button_ptr);
-      }
-      // current mode
-      {
-        QString mode = QString::fromStdString("INIT");
-        rtc_auto_mode->auto_manual_mode_label = new QLabel(mode);
-        rtc_auto_mode->auto_manual_mode_label->setAlignment(Qt::AlignCenter);
-        rtc_auto_mode->auto_manual_mode_label->setText(mode);
-        auto_mode_table_->setCellWidget(i, 3, rtc_auto_mode->auto_manual_mode_label);
-      }
-      auto_modes_.emplace_back(rtc_auto_mode);
+  auto vertical_header = new QHeaderView(Qt::Vertical);
+  vertical_header->hide();
+  auto horizontal_header = new QHeaderView(Qt::Horizontal);
+  horizontal_header->setSectionResizeMode(QHeaderView::Stretch);
+  auto_mode_table_ = new QTableWidget();
+  auto_mode_table_->setColumnCount(4);
+  auto_mode_table_->setHorizontalHeaderLabels(
+    {"Module", "ToAutoMode", "ToManualMode", "ApprovalMode"});
+  auto_mode_table_->setVerticalHeader(vertical_header);
+  auto_mode_table_->setHorizontalHeader(horizontal_header);
+  const size_t num_modules = module_size;
+  auto_mode_table_->setRowCount(num_modules);
+  for (size_t i = 0; i < num_modules; i++) {
+    auto * rtc_auto_mode = new RTCAutoMode();
+    rtc_auto_mode->setParent(this);
+    // module
+    {
+      rtc_auto_mode->module_name = getModuleName(static_cast<uint8_t>(i));
+      std::string module_name = rtc_auto_mode->module_name;
+      auto label = new QLabel(QString::fromStdString(module_name));
+      label->setAlignment(Qt::AlignCenter);
+      label->setText(QString::fromStdString(module_name));
+      auto_mode_table_->setCellWidget(i, 0, label);
     }
-    auto_mode_table_layout->addWidget(auto_mode_table_);
+    // mode button
+    {
+      rtc_auto_mode->auto_module_button_ptr = new QPushButton("auto mode");
+      connect(
+        rtc_auto_mode->auto_module_button_ptr, &QPushButton::clicked, rtc_auto_mode,
+        &RTCAutoMode::onChangeToAutoMode);
+      auto_mode_table_->setCellWidget(i, 1, rtc_auto_mode->auto_module_button_ptr);
+      rtc_auto_mode->manual_module_button_ptr = new QPushButton("manual mode");
+      connect(
+        rtc_auto_mode->manual_module_button_ptr, &QPushButton::clicked, rtc_auto_mode,
+        &RTCAutoMode::onChangeToManualMode);
+      auto_mode_table_->setCellWidget(i, 2, rtc_auto_mode->manual_module_button_ptr);
+    }
+    // current mode
+    {
+      QString mode = QString::fromStdString("INIT");
+      rtc_auto_mode->auto_manual_mode_label = new QLabel(mode);
+      rtc_auto_mode->auto_manual_mode_label->setAlignment(Qt::AlignCenter);
+      rtc_auto_mode->auto_manual_mode_label->setText(mode);
+      auto_mode_table_->setCellWidget(i, 3, rtc_auto_mode->auto_manual_mode_label);
+    }
+    auto_modes_.emplace_back(rtc_auto_mode);
   }
+  auto_mode_table_layout->addWidget(auto_mode_table_);
+
   v_layout->addLayout(auto_mode_table_layout);
 
   // statuses

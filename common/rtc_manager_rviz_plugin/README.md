@@ -19,4 +19,3 @@ tbd.
 
 1. Start rviz and select panels/Add new panel.
    ![select_panel](./images/select_panels.png)
-
