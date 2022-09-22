@@ -51,10 +51,10 @@
  * */
 // cppcheck-suppress unknownMacro
 
-template <int STATE_DIM, int INPUT_DIM, int PARAM_DIM, int eSTATE_DIM>
+template<int STATE_DIM, int INPUT_DIM, int PARAM_DIM, int eSTATE_DIM>
 class VehicleDynamicsBase
 {
-public:
+ public:
   using state_vector_t = Eigen::Matrix<double, STATE_DIM, 1>;  // x, weights wx, z for f_0(x,u)
   using state_matrix_t = Eigen::Matrix<double, STATE_DIM, STATE_DIM>;  // A, Q
 
@@ -106,7 +106,8 @@ public:
   using lpv_X_matrix_v_t = std::vector<state_matrix_X_t>;
   using lpv_Y_matrix_v_t = std::vector<input_matrix_Y_t>;
 
-  enum Dimensions : int {
+  enum Dimensions : int
+  {
     state_dim = STATE_DIM,
     estate_dim = eSTATE_DIM,  // error state dimension.
     input_dim = INPUT_DIM,
@@ -137,7 +138,8 @@ public:
 
   void InitializeModel();
 
-  [[nodiscard]] bool IsInitialized() const { return initialized_; }
+  [[nodiscard]] bool IsInitialized() const
+  { return initialized_; }
 
   /**
    * @brief Vehicle dynamics base class that defines vehicle model nonlinear and linear equations
@@ -148,22 +150,22 @@ public:
    * @param xdot [out]  xdot =f(x, u)
    * */
   virtual void systemEquations(
-    const state_vector_ad_t & x, const input_vector_ad_t & u,
-    const VehicleDynamicsBase::param_vector_ad_t & params,  // curvature, target vx
-    state_vector_ad_t & xdot_f) = 0;
+    const state_vector_ad_t &x, const input_vector_ad_t &u,
+    const VehicleDynamicsBase::param_vector_ad_t &params,  // curvature, target vx
+    state_vector_ad_t &xdot_f) = 0;
 
   void computeFx(
-    const state_vector_t & x, const input_vector_t & u,
-    const VehicleDynamicsBase::param_vector_t & params,  // curvature, target vx
-    state_vector_t & f);
+    const state_vector_t &x, const input_vector_t &u,
+    const VehicleDynamicsBase::param_vector_t &params,  // curvature, target vx
+    state_vector_t &f);
 
   void computeJacobians(
-    const state_vector_t & x, const input_vector_t & u, param_vector_t const & params,
-    state_matrix_t & A, control_matrix_t & B);
+    const state_vector_t &x, const input_vector_t &u, param_vector_t const &params,
+    state_matrix_t &A, control_matrix_t &B);
 
   virtual ~VehicleDynamicsBase() = default;  //{ CppAD::thread_alloc::inuse(0); }
 
-private:
+ private:
   // cppAd function for xdot = f(x, u).
   CppAD::ADFun<scalar_t> f_;
 
@@ -178,10 +180,11 @@ private:
 /**
  * @brief run AD recordings to record the process steps and initialize the AD model.
  * */
-template <int STATE_DIM, int INPUT_DIM, int PARAM_DIM, int eSTATE_DIM>
+template<int STATE_DIM, int INPUT_DIM, int PARAM_DIM, int eSTATE_DIM>
 void VehicleDynamicsBase<STATE_DIM, INPUT_DIM, PARAM_DIM, eSTATE_DIM>::InitializeModel()
 {
-  if (initialized_) {
+  if (initialized_)
+  {
     return;
   }
 
@@ -199,13 +202,22 @@ void VehicleDynamicsBase<STATE_DIM, INPUT_DIM, PARAM_DIM, eSTATE_DIM>::Initializ
   const param_vector_ad_t params = x.segment<PARAM_DIM>(STATE_DIM + INPUT_DIM);
 
   // Prepare dx differential.
-  state_vector_ad_t dx;
+  state_vector_ad_t dx{state_vector_ad_t::Zero()};
 
   // All the variables in system flow map is cppAD variables.
+  /***************************************************************************
+   *                               the model
+   **************************************************************************/
   systemEquations(state, input, params, dx);
 
   f_ = CppAD::ADFun<scalar_t>(x, dynamic_vector_ad_t(dx));
   f_.optimize();
+
+  /***************************************************************************
+   *                       Create the dynamic library
+   *                  (generates and compiles source code)
+   **************************************************************************/
+  // generates source code
 
   CppAD::cg::ModelCSourceGen cgen(f_, "model_");
   cgen.setCreateForwardZero(true);
@@ -217,8 +229,11 @@ void VehicleDynamicsBase<STATE_DIM, INPUT_DIM, PARAM_DIM, eSTATE_DIM>::Initializ
 
   CppAD::cg::GccCompiler<double> compiler;
   compiler.addCompileFlag("-O3");
-  dynamicLib = p.createDynamicLibrary(compiler);
 
+  /***************************************************************************
+   *                       Use the dynamic library
+   **************************************************************************/
+  dynamicLib = p.createDynamicLibrary(compiler);
   model_ = dynamicLib->model("model_");
 
 #else
@@ -261,10 +276,10 @@ void VehicleDynamicsBase<STATE_DIM, INPUT_DIM, PARAM_DIM, eSTATE_DIM>::Initializ
 /**
  * @brief Implements xdot=f(x) evaluation for Automatic Differentiation.
  * */
-template <int STATE_DIM, int INPUT_DIM, int PARAM_DIM, int eSTATE_DIM>
+template<int STATE_DIM, int INPUT_DIM, int PARAM_DIM, int eSTATE_DIM>
 void VehicleDynamicsBase<STATE_DIM, INPUT_DIM, PARAM_DIM, eSTATE_DIM>::computeFx(
-  const VehicleDynamicsBase::state_vector_t & x, const VehicleDynamicsBase::input_vector_t & u,
-  const VehicleDynamicsBase::param_vector_t & params, VehicleDynamicsBase::state_vector_t & f)
+  const VehicleDynamicsBase::state_vector_t &x, const VehicleDynamicsBase::input_vector_t &u,
+  const VehicleDynamicsBase::param_vector_t &params, VehicleDynamicsBase::state_vector_t &f)
 {
   assert(initialized_);
 
@@ -291,11 +306,11 @@ void VehicleDynamicsBase<STATE_DIM, INPUT_DIM, PARAM_DIM, eSTATE_DIM>::computeFx
 /**
  * @brief Implements Jacobian functions of the form xdot = f(x) = Adx + Bdu.
  * */
-template <int STATE_DIM, int INPUT_DIM, int PARAM_DIM, int eSTATE_DIM>
+template<int STATE_DIM, int INPUT_DIM, int PARAM_DIM, int eSTATE_DIM>
 void VehicleDynamicsBase<STATE_DIM, INPUT_DIM, PARAM_DIM, eSTATE_DIM>::computeJacobians(
-  const VehicleDynamicsBase::state_vector_t & x, const VehicleDynamicsBase::input_vector_t & u,
-  const VehicleDynamicsBase::param_vector_t & params, VehicleDynamicsBase::state_matrix_t & A,
-  VehicleDynamicsBase::control_matrix_t & B)
+  const VehicleDynamicsBase::state_vector_t &x, const VehicleDynamicsBase::input_vector_t &u,
+  const VehicleDynamicsBase::param_vector_t &params, VehicleDynamicsBase::state_matrix_t &A,
+  VehicleDynamicsBase::control_matrix_t &B)
 {
   assert(initialized_);
 
