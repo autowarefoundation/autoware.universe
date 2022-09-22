@@ -36,7 +36,6 @@ MissionPlannerInterface::MissionPlannerInterface(
 : Node(node_name, node_options), tf_buffer_(get_clock()), tf_listener_(tf_buffer_)
 {
   map_frame_ = declare_parameter("map_frame", "map");
-  base_link_frame_ = declare_parameter("base_link_frame", "base_link");
 
   using std::placeholders::_1;
 
@@ -46,7 +45,7 @@ MissionPlannerInterface::MissionPlannerInterface(
   goal_subscriber_ = create_subscription<geometry_msgs::msg::PoseStamped>(
     "input/goal_pose", 10, std::bind(&MissionPlannerInterface::goal_pose_callback, this, _1));
   check_point_subscriber_ = create_subscription<geometry_msgs::msg::PoseStamped>(
-    "input/check_point", 10, std::bind(&MissionPlannerInterface::check_point_callback, this, _1));
+    "input/checkpoint", 10, std::bind(&MissionPlannerInterface::check_point_callback, this, _1));
 
   rclcpp::QoS durable_qos{1};
   durable_qos.transient_local();
@@ -64,10 +63,9 @@ void MissionPlannerInterface::odometry_callback(const nav_msgs::msg::Odometry::C
 boost::optional<geometry_msgs::msg::PoseStamped> MissionPlannerInterface::transform_pose(
   const geometry_msgs::msg::PoseStamped & input_pose, const std::string & target_frame)
 {
-  geometry_msgs::msg::TransformStamped transform;
   try {
     geometry_msgs::msg::PoseStamped output_pose;
-    transform =
+    const auto transform =
       tf_buffer_.lookupTransform(target_frame, input_pose.header.frame_id, tf2::TimePointZero);
     tf2::doTransform(input_pose, output_pose, transform);
     return output_pose;
@@ -105,7 +103,7 @@ void MissionPlannerInterface::goal_pose_callback(
     return;
   }
 
-  autoware_auto_planning_msgs::msg::HADMapRoute route = plan_route(check_points_);
+  const auto route = plan_route(check_points_);
   publish_route(route);
 }  // namespace mission_planner
 
@@ -130,20 +128,21 @@ void MissionPlannerInterface::check_point_callback(
   // insert check_point before goal
   check_points_.insert(check_points_.end() - 1, transformed_check_point.pose);
 
-  autoware_auto_planning_msgs::msg::HADMapRoute route = plan_route(check_points_);
+  const auto route = plan_route(check_points_);
   publish_route(route);
 }
 
 void MissionPlannerInterface::publish_route(
   const autoware_auto_planning_msgs::msg::HADMapRoute & route) const
 {
-  if (!route.segments.empty()) {
-    RCLCPP_INFO(get_logger(), "Route successfully planned. Publishing...");
-    route_publisher_->publish(route);
-    visualize_route(route);
-  } else {
+  if (route.segments.empty()) {
     RCLCPP_ERROR(get_logger(), "Calculated route is empty!");
+    return;
   }
+
+  RCLCPP_INFO(get_logger(), "Route successfully planned. Publishing...");
+  route_publisher_->publish(route);
+  visualize_route(route);
 }
 
 }  // namespace mission_planner

@@ -44,7 +44,6 @@ protected:
   geometry_msgs::msg::Pose::ConstSharedPtr ego_pose_;
   std::vector<geometry_msgs::msg::Pose> check_points_;
 
-  std::string base_link_frame_;
   std::string map_frame_;
 
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr marker_publisher_;
