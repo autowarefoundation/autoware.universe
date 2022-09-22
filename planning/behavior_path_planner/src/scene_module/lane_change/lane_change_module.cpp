@@ -17,6 +17,7 @@
 #include "behavior_path_planner/path_utilities.hpp"
 #include "behavior_path_planner/scene_module/lane_change/util.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
+#include "behavior_path_planner/turn_signal_decider.hpp"
 #include "behavior_path_planner/utilities.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
@@ -190,6 +191,8 @@ BehaviorModuleOutput LaneChangeModule::plan()
     status_.lane_change_path.shift_point, planner_data_->self_pose->pose,
     planner_data_->self_odometry->twist.twist.linear.x, planner_data_->parameters);
   output.turn_signal_info.turn_signal.command = turn_signal_info.first.command;
+
+  calc_turn_signal_info(status_.lane_change_path, &output.turn_signal_info);
   // output.turn_signal_info.signal_distance = turn_signal_info.second;
   return output;
 }
@@ -276,6 +279,20 @@ void LaneChangeModule::updateLaneChangeStatus()
   status_.start_distance = arclength_start.length;
 
   status_.lane_change_path.path.header = planner_data_->route_handler->getRouteHeader();
+}
+
+void LaneChangeModule::calc_turn_signal_info(
+  const LaneChangePath & lane_change_path, TurnSignalInfo * turn_signal_info) const
+{
+  const auto & current_point = planner_data_->self_pose->pose.position;
+  turn_signal_info->desired_start_point = current_point;
+  turn_signal_info->required_start_point = lane_change_path.shift_point.start.position;
+  turn_signal_info->required_end_point = std::invoke([&lane_change_path]() {
+    const auto & shifted_path = lane_change_path.shifted_path.path.points;
+    const auto mid_path = shifted_path.size() / 2;
+    return shifted_path.at(mid_path).point.pose.position;
+  });
+  turn_signal_info->desired_end_point = lane_change_path.shift_point.end.position;
 }
 
 PathWithLaneId LaneChangeModule::getReferencePath() const
