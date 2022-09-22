@@ -17,7 +17,12 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
+#include <geometry_msgs/msg/pose.hpp>
+
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
 
 #include <map>
 
@@ -25,6 +30,9 @@ namespace motion_planning
 {
 
 using diagnostic_msgs::msg::DiagnosticStatus;
+using geometry_msgs::msg::Pose;
+
+using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 
 struct StopPoint
 {
@@ -53,9 +61,6 @@ struct NodeParam
 
   // max velocity [m/s]
   double max_velocity;
-
-  // smoothing calculated current acceleration [-]
-  double lowpass_gain;
 
   // keep slow down or stop state if obstacle vanished [s]
   double hunting_threshold;
@@ -210,7 +215,7 @@ struct PlannerData
 {
   DiagnosticStatus stop_reason_diag{};
 
-  geometry_msgs::msg::Pose current_pose{};
+  Pose current_pose{};
 
   pcl::PointXYZ nearest_collision_point;
 

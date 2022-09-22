@@ -82,6 +82,14 @@ def launch_setup(context, *args, **kwargs):
     with open(operation_mode_transition_manager_param_path, "r") as f:
         operation_mode_transition_manager_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
+    shift_decider_param_path = os.path.join(
+        LaunchConfiguration("tier4_control_launch_param_path").perform(context),
+        "shift_decider",
+        "shift_decider.param.yaml",
+    )
+    with open(shift_decider_param_path, "r") as f:
+        shift_decider_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+
     controller_component = ComposableNode(
         package="trajectory_follower_nodes",
         plugin="autoware::motion::control::trajectory_follower_nodes::Controller",
@@ -91,6 +99,7 @@ def launch_setup(context, *args, **kwargs):
             ("~/input/reference_trajectory", "/planning/scenario_planning/trajectory"),
             ("~/input/current_odometry", "/localization/kinematic_state"),
             ("~/input/current_steering", "/vehicle/status/steering_status"),
+            ("~/input/current_accel", "/localization/acceleration"),
             ("~/output/predicted_trajectory", "lateral/predicted_trajectory"),
             ("~/output/lateral_diagnostic", "lateral/diagnostic"),
             ("~/output/slope_angle", "longitudinal/slope_angle"),
@@ -141,9 +150,7 @@ def launch_setup(context, *args, **kwargs):
             ("output/gear_cmd", "/control/shift_decider/gear_cmd"),
         ],
         parameters=[
-            {
-                "park_on_goal": True,
-            }
+            shift_decider_param,
         ],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
