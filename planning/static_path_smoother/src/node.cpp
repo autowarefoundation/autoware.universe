@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "path_smoother/node.hpp"
+#include "static_path_smoother/node.hpp"
 
 #include "interpolation/spline_interpolation_points_2d.hpp"
 #include "motion_utils/motion_utils.hpp"
@@ -107,8 +107,8 @@ std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> convertToTrajecto
 }
 }  // namespace
 
-PathSmoother::PathSmoother(const rclcpp::NodeOptions & node_options)
-: Node("path_smoother", node_options), logger_ros_clock_(RCL_ROS_TIME)
+StaticPathSmoother::StaticPathSmoother(const rclcpp::NodeOptions & node_options)
+: Node("static_path_smoother", node_options), logger_ros_clock_(RCL_ROS_TIME)
 {
   rclcpp::Clock::SharedPtr clock = std::make_shared<rclcpp::Clock>(RCL_ROS_TIME);
 
@@ -149,13 +149,13 @@ PathSmoother::PathSmoother(const rclcpp::NodeOptions & node_options)
   // subscriber
   path_sub_ = create_subscription<autoware_auto_planning_msgs::msg::Path>(
     "~/input/path", rclcpp::QoS{1},
-    std::bind(&PathSmoother::pathCallback, this, std::placeholders::_1));
+    std::bind(&StaticPathSmoother::pathCallback, this, std::placeholders::_1));
   odom_sub_ = create_subscription<nav_msgs::msg::Odometry>(
     "/localization/kinematic_state", rclcpp::QoS{1},
-    std::bind(&PathSmoother::odomCallback, this, std::placeholders::_1));
+    std::bind(&StaticPathSmoother::odomCallback, this, std::placeholders::_1));
   objects_sub_ = create_subscription<autoware_auto_perception_msgs::msg::PredictedObjects>(
     "~/input/objects", rclcpp::QoS{10},
-    std::bind(&PathSmoother::objectsCallback, this, std::placeholders::_1));
+    std::bind(&StaticPathSmoother::objectsCallback, this, std::placeholders::_1));
 
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
   {  // vehicle param
@@ -410,19 +410,19 @@ PathSmoother::PathSmoother(const rclcpp::NodeOptions & node_options)
       declare_parameter<double>("replan.max_delta_time_sec_for_replan");
   }
 
-  // TODO(murooka) tune this param when avoiding with path_smoother
+  // TODO(murooka) tune this param when avoiding with static_path_smoother
   traj_param_.center_line_width = vehicle_param_.width;
 
   // set parameter callback
   set_param_res_ = this->add_on_set_parameters_callback(
-    std::bind(&PathSmoother::paramCallback, this, std::placeholders::_1));
+    std::bind(&StaticPathSmoother::paramCallback, this, std::placeholders::_1));
 
   resetPlanning();
 
   self_pose_listener_.waitForFirstPose();
 }
 
-void PathSmoother::resetPlanning()
+void StaticPathSmoother::resetPlanning()
 {
   RCLCPP_WARN(get_logger(), "[ObstacleAvoidancePlanner] Reset planning");
 
@@ -438,13 +438,13 @@ void PathSmoother::resetPlanning()
   resetPrevOptimization();
 }
 
-void PathSmoother::resetPrevOptimization()
+void StaticPathSmoother::resetPrevOptimization()
 {
   prev_optimal_trajs_ptr_ = nullptr;
   eb_solved_count_ = 0;
 }
 
-rcl_interfaces::msg::SetParametersResult PathSmoother::paramCallback(
+rcl_interfaces::msg::SetParametersResult StaticPathSmoother::paramCallback(
   const std::vector<rclcpp::Parameter> & parameters)
 {
   using tier4_autoware_utils::updateParam;
@@ -719,20 +719,21 @@ rcl_interfaces::msg::SetParametersResult PathSmoother::paramCallback(
   return result;
 }
 
-void PathSmoother::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg)
+void StaticPathSmoother::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg)
 {
   current_twist_ptr_ = std::make_unique<geometry_msgs::msg::TwistStamped>();
   current_twist_ptr_->header = msg->header;
   current_twist_ptr_->twist = msg->twist.twist;
 }
 
-void PathSmoother::objectsCallback(
+void StaticPathSmoother::objectsCallback(
   const autoware_auto_perception_msgs::msg::PredictedObjects::SharedPtr msg)
 {
   objects_ptr_ = std::make_unique<autoware_auto_perception_msgs::msg::PredictedObjects>(*msg);
 }
 
-void PathSmoother::pathCallback(const autoware_auto_planning_msgs::msg::Path::SharedPtr path_ptr)
+void StaticPathSmoother::pathCallback(
+  const autoware_auto_planning_msgs::msg::Path::SharedPtr path_ptr)
 {
   if (
     path_ptr->points.empty() || path_ptr->drivable_area.data.empty() || !current_twist_ptr_ ||
@@ -741,7 +742,7 @@ void PathSmoother::pathCallback(const autoware_auto_planning_msgs::msg::Path::Sh
   }
 
   // initialize
-  debug_data_ptr_ = std::make_shared<DebugData>();
+  debug_data_ = DebugData();
   resetPlanning();
 
   // variables
@@ -756,7 +757,7 @@ void PathSmoother::pathCallback(const autoware_auto_planning_msgs::msg::Path::Sh
 
   // cv_maps
   const CVMaps cv_maps = costmap_generator_ptr_->getMaps(
-    false, *path_ptr, objects_ptr_->objects, traj_param_, debug_data_ptr_);
+    false, *path_ptr, objects_ptr_->objects, traj_param_, debug_data_);
 
   const size_t initial_target_index = 3;
   auto target_pose = resampled_path.points.at(initial_target_index).pose;  // TODO(murooka)
@@ -771,7 +772,7 @@ void PathSmoother::pathCallback(const autoware_auto_planning_msgs::msg::Path::Sh
 
     const auto mpt_trajs = mpt_optimizer_ptr_->getModelPredictiveTrajectory(
       false, resampled_traj_points, resampled_path.points, prev_optimal_trajs_ptr_, cv_maps,
-      target_pose, 0.0, debug_data_ptr_);
+      target_pose, 0.0, debug_data_);
     if (!mpt_trajs) {
       break;
     }
@@ -803,4 +804,4 @@ void PathSmoother::pathCallback(const autoware_auto_planning_msgs::msg::Path::Sh
 }
 
 #include "rclcpp_components/register_node_macro.hpp"
-RCLCPP_COMPONENTS_REGISTER_NODE(PathSmoother)
+RCLCPP_COMPONENTS_REGISTER_NODE(StaticPathSmoother)

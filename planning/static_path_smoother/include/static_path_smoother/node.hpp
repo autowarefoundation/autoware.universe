@@ -11,8 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef PATH_SMOOTHER__NODE_HPP_
-#define PATH_SMOOTHER__NODE_HPP_
+#ifndef STATIC_PATH_SMOOTHER__NODE_HPP_
+#define STATIC_PATH_SMOOTHER__NODE_HPP_
 
 #include "motion_utils/trajectory/trajectory.hpp"
 #include "obstacle_avoidance_planner/common_structs.hpp"
@@ -47,7 +47,7 @@
 #include <string>
 #include <vector>
 
-class PathSmoother : public rclcpp::Node
+class StaticPathSmoother : public rclcpp::Node
 {
 private:
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
@@ -90,7 +90,7 @@ private:
   int mpt_visualize_sampling_num_;
 
   // debug
-  mutable std::shared_ptr<DebugData> debug_data_ptr_;
+  mutable DebugData debug_data_;
 
   geometry_msgs::msg::Pose current_ego_pose_;
   std::unique_ptr<geometry_msgs::msg::TwistStamped> current_twist_ptr_;
@@ -186,7 +186,7 @@ private:
   void publishDebugDataInMain(const autoware_auto_planning_msgs::msg::Path & path) const;
 
 public:
-  explicit PathSmoother(const rclcpp::NodeOptions & node_options);
+  explicit StaticPathSmoother(const rclcpp::NodeOptions & node_options);
 };
 
-#endif  // PATH_SMOOTHER__NODE_HPP_
+#endif  // STATIC_PATH_SMOOTHER__NODE_HPP_

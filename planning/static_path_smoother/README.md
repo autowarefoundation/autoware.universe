@@ -783,7 +783,7 @@ $N_{circle}$ is the number of circles to check collision.
 ## Limitation
 
 - When turning right or left in the intersection, the output trajectory is close to the outside road boundary.
-- Roles of planning for behavior_path_planner and path_smoother are not decided clearly.
+- Roles of planning for behavior_path_planner and static_path_smoother are not decided clearly.
 - High computation cost
 
 ## Comparison to other methods
@@ -819,7 +819,7 @@ Topics for debugging will be explained in this section.
 ![drivable_area](./media/drivable_area.png)
 
 - **Path from behavior**
-  - The input path of path_smoother. Whether this path is continuous and the curvature is not so high can be checked.
+  - The input path of static_path_smoother. Whether this path is continuous and the curvature is not so high can be checked.
   - `Path` or `PathFootprint` rviz plugin.
 
 ![behavior_path](./media/behavior_path.png)
@@ -845,7 +845,7 @@ Topics for debugging will be explained in this section.
 - **bounds**
   - Lateral Distance to the road or object boundaries to check collision in model predictive trajectory.
   - Whether these lines' ends align the road or obstacle boundaries can be checked.
-  - `bounds*` of `/planning/scenario_planning/lane_driving/motion_planning/path_smoother/debug/marker` whose type is `visualization_msgs/msg/MarkerArray`
+  - `bounds*` of `/planning/scenario_planning/lane_driving/motion_planning/static_path_smoother/debug/marker` whose type is `visualization_msgs/msg/MarkerArray`
 
 ![bounds](./media/bounds.png)
 
@@ -856,7 +856,7 @@ Topics for debugging will be explained in this section.
 ![mpt_traj](./media/mpt_traj.png)
 
 - **Output trajectory**
-  - The output of path_smoother. Whether this trajectory is smooth enough can be checked.
+  - The output of static_path_smoother. Whether this trajectory is smooth enough can be checked.
   - `Trajectory` or `TrajectoryFootprint` rviz plugin.
 
 ![output_traj](./media/output_traj.png)
