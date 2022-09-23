@@ -91,7 +91,6 @@ private:
   mutable DebugData debug_data_;
 
   geometry_msgs::msg::Pose current_ego_pose_;
-  std::unique_ptr<geometry_msgs::msg::Pose> prev_ego_pose_ptr_;
   std::unique_ptr<Trajectories> prev_optimal_trajs_ptr_;
   std::unique_ptr<std::vector<autoware_auto_planning_msgs::msg::PathPoint>> prev_path_points_ptr_;
 
@@ -99,80 +98,21 @@ private:
 
   // ROS
   rclcpp::Publisher<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr traj_pub_;
-  rclcpp::Publisher<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr
-    debug_extended_fixed_traj_pub_;
-  rclcpp::Publisher<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr
-    debug_extended_non_fixed_traj_pub_;
-  rclcpp::Publisher<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr debug_eb_traj_pub_;
-  rclcpp::Publisher<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr
-    debug_mpt_fixed_traj_pub_;
-  rclcpp::Publisher<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr
-    debug_mpt_ref_traj_pub_;
-  rclcpp::Publisher<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr debug_mpt_traj_pub_;
-
-  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_markers_pub_;
-  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_wall_markers_pub_;
-  rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr debug_clearance_map_pub_;
-  rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr debug_object_clearance_map_pub_;
-  rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr debug_area_with_objects_pub_;
-  rclcpp::Publisher<tier4_debug_msgs::msg::StringStamped>::SharedPtr debug_msg_pub_;
-
   rclcpp::Subscription<autoware_auto_planning_msgs::msg::Path>::SharedPtr path_sub_;
-
-  // subscriber callback functions
-  void pathCallback(const autoware_auto_planning_msgs::msg::Path::SharedPtr);
 
   // functions
   void resetPlanning();
   void resetPrevOptimization();
 
-  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> generateOptimizedTrajectory(
-    const autoware_auto_planning_msgs::msg::Path & input_path);
-
-  bool checkReplan(const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points);
-
-  autoware_auto_planning_msgs::msg::Trajectory generateTrajectory(
-    const autoware_auto_planning_msgs::msg::Path & path);
-
-  Trajectories optimizeTrajectory(
-    const autoware_auto_planning_msgs::msg::Path & path, const CVMaps & cv_maps);
-
-  Trajectories getPrevTrajs(
-    const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points) const;
-
-  void calcVelocity(
-    const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
-    std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & traj_points) const;
-
-  void insertZeroVelocityOutsideDrivableArea(
-    std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & traj_points,
-    const CVMaps & cv_maps);
-
-  void publishDebugDataInOptimization(
-    const autoware_auto_planning_msgs::msg::Path & path,
-    const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & traj_points);
-
-  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> generatePostProcessedTrajectory(
-    const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
-    const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & merged_optimized_points);
-
-  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> getExtendedTrajectory(
-    const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
-    const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & optimized_points);
-
-  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> generateFineTrajectoryPoints(
-    const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
-    const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & traj_points) const;
-
-  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> alignVelocity(
-    const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & fine_traj_points,
-    const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
-    const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & traj_points) const;
-
-  void publishDebugDataInMain(const autoware_auto_planning_msgs::msg::Path & path) const;
+  // void insertZeroVelocityOutsideDrivableArea(
+  //   std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & traj_points,
+  //   const CVMaps & cv_maps);
 
 public:
   explicit StaticPathSmoother(const rclcpp::NodeOptions & node_options);
+
+  // subscriber callback functions
+  void pathCallback(const autoware_auto_planning_msgs::msg::Path::SharedPtr);
 };
 
 #endif  // STATIC_PATH_SMOOTHER__NODE_HPP_

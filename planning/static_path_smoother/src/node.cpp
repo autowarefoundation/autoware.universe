@@ -122,33 +122,6 @@ StaticPathSmoother::StaticPathSmoother(const rclcpp::NodeOptions & node_options)
   traj_pub_ = create_publisher<autoware_auto_planning_msgs::msg::Trajectory>(
     "~/output/path", rclcpp::QoS{1}.transient_local());
 
-  // debug publisher
-  debug_eb_traj_pub_ = create_publisher<autoware_auto_planning_msgs::msg::Trajectory>(
-    "~/debug/eb_trajectory", durable_qos);
-  debug_extended_fixed_traj_pub_ = create_publisher<autoware_auto_planning_msgs::msg::Trajectory>(
-    "~/debug/extended_fixed_traj", 1);
-  debug_extended_non_fixed_traj_pub_ =
-    create_publisher<autoware_auto_planning_msgs::msg::Trajectory>(
-      "~/debug/extended_non_fixed_traj", 1);
-  debug_mpt_fixed_traj_pub_ =
-    create_publisher<autoware_auto_planning_msgs::msg::Trajectory>("~/debug/mpt_fixed_traj", 1);
-  debug_mpt_ref_traj_pub_ =
-    create_publisher<autoware_auto_planning_msgs::msg::Trajectory>("~/debug/mpt_ref_traj", 1);
-  debug_mpt_traj_pub_ =
-    create_publisher<autoware_auto_planning_msgs::msg::Trajectory>("~/debug/mpt_traj", 1);
-  debug_markers_pub_ =
-    create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/marker", durable_qos);
-  debug_wall_markers_pub_ =
-    create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/wall_marker", durable_qos);
-  debug_clearance_map_pub_ =
-    create_publisher<nav_msgs::msg::OccupancyGrid>("~/debug/clearance_map", durable_qos);
-  debug_object_clearance_map_pub_ =
-    create_publisher<nav_msgs::msg::OccupancyGrid>("~/debug/object_clearance_map", durable_qos);
-  debug_area_with_objects_pub_ =
-    create_publisher<nav_msgs::msg::OccupancyGrid>("~/debug/area_with_objects", durable_qos);
-  debug_msg_pub_ =
-    create_publisher<tier4_debug_msgs::msg::StringStamped>("~/debug/calculation_time", 1);
-
   // subscriber
   path_sub_ = create_subscription<autoware_auto_planning_msgs::msg::Path>(
     "~/input/path", rclcpp::QoS{1}.transient_local(),

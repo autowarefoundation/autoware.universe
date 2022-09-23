@@ -1621,7 +1621,7 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /output/path
+        Value: /output/trajectory
       Value: true
       View Trajectory Footprint:
         Alpha: 1
@@ -1726,7 +1726,7 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: 0.4800000786781311
+      Angle: 0.4750000834465027
       Class: rviz_default_plugins/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549

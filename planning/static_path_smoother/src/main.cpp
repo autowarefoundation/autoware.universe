@@ -22,6 +22,7 @@
 #include "motion_utils/motion_utils.hpp"
 #include "rclcpp/time.hpp"
 #include "route_handler/route_handler.hpp"
+#include "static_path_smoother/node.hpp"
 #include "tf2/utils.h"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
@@ -175,6 +176,11 @@ int main(int argc, char * argv[])
   pub_raw_path->publish(raw_path);
 
   // optimize path
+  std::cout << "PO1" << std::endl;
+  rclcpp::NodeOptions node_options;
+  StaticPathSmoother successive_path_optimizer(node_options);
+  successive_path_optimizer.pathCallback(std::make_shared<Path>(raw_path));
+  std::cout << "PO2" << std::endl;
 
   rclcpp::spin(main_node);
 

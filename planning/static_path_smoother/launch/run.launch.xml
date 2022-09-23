@@ -27,12 +27,18 @@
   <!-- optimize path -->
   <node pkg="static_path_smoother" exec="main" name="static_path_smoother">
     <remap from="lanelet2_map_topic" to="$(var lanelet2_map_topic)"/>
+    <remap from="~/input/path" to="raw_path"/>
+    <remap from="~/output/path" to="output/trajectory"/>
 
     <param name="lanelet2_file_name" value="$(var lanelet2_file_name)"/>
+    <param name="is_showing_debug_info" value="false"/>
+    <param from="$(find-pkg-share planning_launch)/config/scenario_planning/lane_driving/motion_planning/obstacle_avoidance_planner/obstacle_avoidance_planner.param.yaml"/>
+    <param from="$(find-pkg-share planning_launch)/config/scenario_planning/common/common.param.yaml"/>
+    <param from="$(find-pkg-share planning_launch)/config/scenario_planning/common/nearest_search.param.yaml"/>
   </node>
 
   <!-- temporary: optimization -->
-  <include file="$(find-pkg-share static_path_smoother)/launch/path_smoother.launch.xml"/>
+  <!-- <include file="$(find-pkg-share static_path_smoother)/launch/path_smoother.launch.xml"/> -->
 
   <!-- rviz -->
   <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen" args="-d $(find-pkg-share static_path_smoother)/rviz/static_path_smoother.rviz"/>
