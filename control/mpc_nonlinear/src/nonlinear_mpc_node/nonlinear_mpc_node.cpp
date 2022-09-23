@@ -349,7 +349,8 @@ void NonlinearMPCNode::onTimer()
     //    auto && Utemp = ns_eigen_utils::getTrajectory(traj_data.U);
     //
     //    ns_utils::print("\nComputed LPV trajectories : ");
-    //    ns_eigen_utils::printEigenMat(Xtemp.transpose());  // [x, y, psi, s, ey, epsi, vx, delta, vy]
+    //    [x, y, psi, s, ey, epsi, vx, delta, vy]
+    //    ns_eigen_utils::printEigenMat(Xtemp.transpose());
     //
     //    ns_utils::print("\nComputed LPV trajectories U : ");
     //    ns_eigen_utils::printEigenMat(Utemp.transpose());
@@ -1044,9 +1045,6 @@ bool NonlinearMPCNode::resampleRawTrajectoriesToaFixedSize()
   nonlinear_mpc_controller_ptr_->setMPCtrajectoryRawVectorsPtr(mpc_traj_raw);
 
   // DEBUG
-  // TODO : remove debug
-  // ns_utils::print("Raw MPC traj ");
-  // mpc_traj_raw.print();
   // end of DEBUG
 
   // --------------- Fill the Eigen reference_map_sxyz --------------------------
@@ -1166,11 +1164,6 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(
   auto const &xy_data = fixed_map_ref_sxyz.middleCols(1, 2);  // start from x and gets xy
   bspline_interpolator_ptr_->getFirstDerivative(xy_data, rdot_interp);
   bspline_interpolator_ptr_->getSecondDerivative(xy_data, rddot_interp);
-
-  // TODO : remove these lines
-  // ns_eigen_utils::printEigenMat(xy_data, "x and y");
-  // ns_eigen_utils::printEigenMat(rdot_interp, "rdot_interp");
-  // ns_eigen_utils::printEigenMat(rddot_interp, "rddot interp");
 
   /** @brief Compute the curvature column. */
   auto const &curvature = ns_eigen_utils::Curvature(rdot_interp, rddot_interp);

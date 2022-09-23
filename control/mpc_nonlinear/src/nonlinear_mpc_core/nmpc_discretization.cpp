@@ -168,7 +168,9 @@ bool ns_discretization::multipleShootingTrajectory(
   discretization_data_t &dd)
 {
   size_t const &K = dd.nX();  // number of matrices in the state matrix container.
-  double const num_of_tsteps{2};  // number of time steps for the RK integration. 1 for a single step.
+
+  // number of time steps for the RK integration. 1 for a single step.
+  double const num_of_tsteps{2};
 
   // Start computing Ak, B0k, B1k and zk where zk is the residual in the Taylor
   // expansion; x[k+1]  = Ax + Bu + f(xk, uk) - Axk - Buk and zk = f(xk, uk) -
