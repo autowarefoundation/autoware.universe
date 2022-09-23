@@ -25,9 +25,8 @@
 /**
  * Automatic differentiation : Vehicle model equations test.
  * */
-TEST_F(FakeNodeFixture, automaticDifferentition)
+TEST_F(FakeNodeFixture, DISABLED_automaticDifferentition)
 {
-
   // Compute f(x, u) by codegen from the model.
   Model::state_vector_t f_of_dx{Model::state_vector_t::Zero()};
 
@@ -135,6 +134,75 @@ TEST_F(FakeNodeFixture, automaticDifferentition)
   ns_utils::print("Jacobians A and B : ");
   ns_eigen_utils::printEigenMat(A);
   ns_eigen_utils::printEigenMat(B);
+  // end of debug
+}
+
+/**
+ * Integration with autodiff : Boost integration test
+ * */
+TEST(CPPADtests, DISABLED_integrationOfAutoDiff)
+{
+  // Compute f(x, u) by codegen from the model.
+  Model::state_vector_t f_of_dx{Model::state_vector_t::Zero()};
+
+  // [x, y, yaw, s, ey, e_yaw, v, steering, lateral velocity]
+  Model::state_vector_t x{Model::state_vector_t::Zero()};
+
+  // Set speed
+  double v_ego = 10.;
+  x(6) = v_ego;
+
+  // Create dummy controls and params.
+  Model::input_vector_t u{Model::input_vector_t::Zero()};
+  u(0) = 1.;  // acceleration input to the vehicle with no steering.
+
+  Model::param_vector_t params{Model::param_vector_t::Zero()};
+  params.setZero();
+
+  double kappa{0.0};  // without curvature - straight motion.
+  params(ns_utils::toUType(VehicleParamIds::curvature)) = kappa;  // curvature
+  params(ns_utils::toUType(VehicleParamIds::target_vx)) = v_ego;  // target velocity
+
+  // Call the model methods.
+  // Create vehicle parameters.
+  ns_models::ParamsVehicle params_vehicle{};
+  params_vehicle.use_delay_model = false;
+  params_vehicle.lr = 0.;
+
+  auto vehicle_model_ptr = std::make_shared<Model>();
+  vehicle_model_ptr->updateParameters(params_vehicle);
+
+  if (!vehicle_model_ptr->IsInitialized())
+  {
+    vehicle_model_ptr->InitializeModel();
+    // vehicle_model_ptr->testModel();
+  }
+
+  // One-step Zero-Order-Hold integration.
+  double dt{0.1};
+
+  ns_eigen_utils::printEigenMat(x, "Before one step integration : ");
+  auto xw0 = x(0);
+  auto v0 = x(6);
+  auto s0 = x(3);
+
+  // Integrate ZOH.
+  ns_sim::simulateNonlinearModel_zoh(vehicle_model_ptr, u, params, dt, x);
+
+  ns_eigen_utils::printEigenMat(x, "After one step integration : ");
+  auto xw1 = x(0);
+  auto v1 = x(6);
+  auto s1 = x(3);
+
+  /*
+   * Assertions
+   * */
+
+  EXPECT_DOUBLE_EQ(v1, v0 + u(0) * dt);               // speed gain.
+  EXPECT_DOUBLE_EQ(xw1, xw0 + 0.5 * (v0 + v1) * dt);  // motion in x direction.
+  EXPECT_DOUBLE_EQ(s1, s0 + 0.5 * (v0 + v1) * dt);    // motion in x direction.
+
+  // Debug
   // end of debug
 }
 
@@ -260,74 +328,6 @@ TEST_F(FakeNodeFixture, emptyTrajectory)
   ns_utils::print(" ctrl_cmd_msgs_  steering rate : ", cmd_msg->longitudinal.speed);
   ns_utils::print(" ctrl_cmd_msgs_  steering: ", cmd_msg->longitudinal.acceleration, -1.5);
 }
-/**
- * Integration with autodiff : Boost integration test
- * */
-TEST(CPPADtests, integrationOfAutoDiff)
-{
-  // Compute f(x, u) by codegen from the model.
-  Model::state_vector_t f_of_dx{Model::state_vector_t::Zero()};
-
-  // [x, y, yaw, s, ey, e_yaw, v, steering, lateral velocity]
-  Model::state_vector_t x{Model::state_vector_t::Zero()};
-
-  // Set speed
-  double v_ego = 10.;
-  x(6) = v_ego;
-
-  // Create dummy controls and params.
-  Model::input_vector_t u{Model::input_vector_t::Zero()};
-  u(0) = 1.;  // acceleration input to the vehicle with no steering.
-
-  Model::param_vector_t params{Model::param_vector_t::Zero()};
-  params.setZero();
-
-  double kappa{0.0};  // without curvature - straight motion.
-  params(ns_utils::toUType(VehicleParamIds::curvature)) = kappa;  // curvature
-  params(ns_utils::toUType(VehicleParamIds::target_vx)) = v_ego;  // target velocity
-
-  // Call the model methods.
-  // Create vehicle parameters.
-  ns_models::ParamsVehicle params_vehicle{};
-  params_vehicle.use_delay_model = false;
-  params_vehicle.lr = 0.;
-
-  auto vehicle_model_ptr = std::make_shared<Model>();
-  vehicle_model_ptr->updateParameters(params_vehicle);
-
-  if (!vehicle_model_ptr->IsInitialized())
-  {
-    vehicle_model_ptr->InitializeModel();
-    // vehicle_model_ptr->testModel();
-  }
-
-  // One-step Zero-Order-Hold integration.
-  double dt{0.1};
-
-  ns_eigen_utils::printEigenMat(x, "Before one step integration : ");
-  auto xw0 = x(0);
-  auto v0 = x(6);
-  auto s0 = x(3);
-
-  // Integrate ZOH.
-  ns_sim::simulateNonlinearModel_zoh(vehicle_model_ptr, u, params, dt, x);
-
-  ns_eigen_utils::printEigenMat(x, "After one step integration : ");
-  auto xw1 = x(0);
-  auto v1 = x(6);
-  auto s1 = x(3);
-
-  /*
-   * Assertions
-   * */
-
-  EXPECT_DOUBLE_EQ(v1, v0 + u(0) * dt);               // speed gain.
-  EXPECT_DOUBLE_EQ(xw1, xw0 + 0.5 * (v0 + v1) * dt);  // motion in x direction.
-  EXPECT_DOUBLE_EQ(s1, s0 + 0.5 * (v0 + v1) * dt);    // motion in x direction.
-
-  // Debug
-  // end of debug
-}
 
 /**
  * The trajectory initialization depends on the LPV feedback initializer class in the NMPC and it makes use of the
@@ -385,8 +385,7 @@ TEST_F(FakeNodeFixture, nmpcLPVTrajInitializationStability)
    * */
   auto kappa_grid = ns_utils::linspace(-0.08, 0.08, 3);  // curvature
 
-  double eyaw_max{20};
-  ns_utils::deg2rad(eyaw_max);
+  double eyaw_max = ns_utils::deg2rad(20.);
 
   auto eyaw_grid = ns_utils::linspace(-eyaw_max, eyaw_max, 5);
   auto ey_grid = ns_utils::linspace(-0.8, 0.8, 5);
@@ -492,7 +491,6 @@ TEST_F(FakeNodeFixture, nmpcLPVTrajInitializationStability)
         //  ASSERT_LE(std::abs(eig_vals(ke)), 1.);
         //  ns_utils::print(std::abs(eig_vals(ke)));
         // }
-
       }
     }
   }
@@ -556,8 +554,7 @@ TEST_F(FakeNodeFixture, straightTrajectoryTest)
   std::vector<double> xw{0.};
   std::vector<double> yw{0.};
 
-  double yawpath{15};
-  ns_utils::deg2rad(yawpath);
+  double yawpath = ns_utils::deg2rad(15.);
 
   double spath = 0.;
   double vpath = 10.;
@@ -692,8 +689,9 @@ TEST_F(FakeNodeFixture, turnRight)
   std::vector<double> xw{0.};
   std::vector<double> yw{0.};
 
-  double yawpath{15};
-  ns_utils::deg2rad(yawpath);
+  double yawpath = ns_utils::deg2rad(15.);
+  double yawerror = ns_utils::deg2rad(1.);
+  double ey = 0.2; // lateral error of the vehicle w.r.t path
 
   double spath = 0.;
   double vpath = 10.;
@@ -716,10 +714,10 @@ TEST_F(FakeNodeFixture, turnRight)
   }
 
   // Dummy transform: ego is at (0.0, 0.0) in map frame
-  double yaw_vehicle = yawpath;
+  double yaw_vehicle = yawpath + yawerror;
   geometry_msgs::msg::TransformStamped transform = test_utils::getDummyTransform(yaw_vehicle);
-  transform.transform.translation.x = xw[20];
-  transform.transform.translation.y = yw[20];
+  transform.transform.translation.x = xw[0.];
+  transform.transform.translation.y = yw[0.] + ey;
 
   transform.header.stamp = node->now();
   br->sendTransform(transform);
@@ -744,7 +742,8 @@ TEST_F(FakeNodeFixture, turnRight)
   test_utils::waitForMessage(
     node, this, is_control_command_received, std::chrono::seconds{1LL}, false);
 
-  test_utils::waitForMessage(node, this, is_nmpc_msg_received, std::chrono::seconds{1LL}, false);
+  test_utils::waitForMessage(node, this, false, std::chrono::seconds{1LL}, false);
+  test_utils::spinWhile(node);
 
   // DEBUG
   ns_utils::print("is nmpc perf msg received ?", is_nmpc_msg_received);
