@@ -295,8 +295,8 @@ TEST(ACTspline, linePCGextrapolation)
                    if ((y0 - bc) / ac < tbase[0] || (y0 - bc) / ac > tbase.back())
                    {
                      return (y1 - y0) * (y1 - y0);
-                   } else
-                   { return 0.; }
+                   }
+                   return 0.;
                  });
 
   ns_utils::print_container(interpolation_error);
