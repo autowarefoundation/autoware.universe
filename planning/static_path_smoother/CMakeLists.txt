@@ -28,7 +28,9 @@ rclcpp_components_register_node(static_path_smoother
 )
 
 # main
-ament_auto_add_executable(main src/main.cpp)
+ament_auto_add_executable(main
+  src/main.cpp
+  src/functions.cpp)
 
 # target_include_directories(main PUBLIC include/static_path_smoother)
 

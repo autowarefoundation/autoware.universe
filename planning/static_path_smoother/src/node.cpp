@@ -114,10 +114,6 @@ StaticPathSmoother::StaticPathSmoother(const rclcpp::NodeOptions & node_options)
 {
   rclcpp::Clock::SharedPtr clock = std::make_shared<rclcpp::Clock>(RCL_ROS_TIME);
 
-  // qos
-  rclcpp::QoS durable_qos{1};
-  durable_qos.transient_local();
-
   // publisher to other nodes
   traj_pub_ = create_publisher<autoware_auto_planning_msgs::msg::Trajectory>(
     "~/output/path", rclcpp::QoS{1}.transient_local());

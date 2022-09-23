@@ -15,11 +15,8 @@ Panels:
         - /Planning1/ScenarioPlanning1/LaneDriving1/BehaviorPlanning1/DebugMarker1
         - /Planning1/ScenarioPlanning1/LaneDriving1/MotionPlanning1
         - /Planning1/ScenarioPlanning1/LaneDriving1/MotionPlanning1/DebugMarker1
-        - /PathWithLaneIdFootprint1
         - /PathWithLaneIdFootprint1/Topic1
-        - /PathFootprint1
         - /PathFootprint1/Topic1
-        - /TrajectoryFootprint1
         - /TrajectoryFootprint1/Topic1
       Splitter Ratio: 0.550000011920929
     Tree Height: 334
@@ -1636,6 +1633,27 @@ Visualization Manager:
         Offset: 0
         Radius: 0.10000000149011612
         Value: false
+    - Alpha: 0.20000000298023224
+      Class: rviz_plugins/DrivableArea
+      Color Scheme: map
+      Draw Behind: true
+      Enabled: true
+      Name: DrivableArea
+      Topic:
+        Depth: 5
+        Durability Policy: Transient Local
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /raw_path
+      Update Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /raw_path_updates
+      Use Timestamp: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 10; 10; 10

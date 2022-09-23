@@ -1,6 +1,8 @@
 <launch>
   <arg name="lanelet2_map_topic" default="/map/vector_map"/>
   <arg name="lanelet2_map_marker_topic" default="/map/vector_map_marker"/>
+  <arg name="start_lanelet_id" default="125"/>
+  <arg name="end_lanelet_id" default="132"/>
   <arg name="lanelet2_file_name"/>
   <arg name="vehicle_model"/>
 
@@ -31,6 +33,8 @@
     <remap from="~/output/path" to="output/trajectory"/>
 
     <param name="lanelet2_file_name" value="$(var lanelet2_file_name)"/>
+    <param name="start_lanelet_id" value="$(var start_lanelet_id)"/>
+    <param name="end_lanelet_id" value="$(var end_lanelet_id)"/>
     <param name="is_showing_debug_info" value="false"/>
     <param from="$(find-pkg-share planning_launch)/config/scenario_planning/lane_driving/motion_planning/obstacle_avoidance_planner/obstacle_avoidance_planner.param.yaml"/>
     <param from="$(find-pkg-share planning_launch)/config/scenario_planning/common/common.param.yaml"/>
