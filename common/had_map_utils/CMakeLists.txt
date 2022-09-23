@@ -25,13 +25,9 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/had_map_query.cpp
   src/had_map_visualization.cpp)
 
-# Disable warnings due to external dependencies
-get_target_property(lanelet2_core_INCLUDE_DIR
-  lanelet2_core::lanelet2_core INTERFACE_INCLUDE_DIRECTORIES
-)
+# Disable warnings due to external dependencies (Eigen)
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
   ${EIGEN3_INCLUDE_DIR}
-  ${lanelet2_core_INCLUDE_DIR}
   ${rclcpp_INCLUDE_DIRS}
 )
 
