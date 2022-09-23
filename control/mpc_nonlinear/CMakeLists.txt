@@ -99,7 +99,7 @@ if(CPPAD_FOUND)
   list(APPEND nmpc_node_target_include_dirs ${CPPAD_INCLUDE_DIRS})
   msg(STATUS "CppAD is found ...")
 else()
-  message(STATUS "Could not find CppAD, auto-diff will not be available")
+  message(STATUS "Could not find CppAD")
 endif()
 
 find_package(CppADCG QUIET)
@@ -109,7 +109,7 @@ if(CPPADCG_FOUND)
   list(APPEND nmpc_core_target_include_dirs ${CPPADCG_INCLUDE_DIRS})
   msg(STATUS "CppADCodeGen is found ...")
 else()
-  message(STATUS "Could not find CppADCodeGen, derivative code generation will not be available")
+  message(STATUS "Could not find CppADCodeGen ")
 endif()
 
 
@@ -216,11 +216,20 @@ rclcpp_components_register_node(${NMPC_NODE}
 ## ----------------- Library Tests----------------------------------------------
 
 if(BUILD_TESTING)
+  #  include(FetchContent)
+  #  FetchContent_Declare(
+  #    googletest
+  #    # Specify the commit you depend on and update it regularly.
+  #    URL https://github.com/google/googletest/archive/5376968f6948923e2411081fd9372e71a59d8e77.zip
+  #  )
+  #  # For Windows: Prevent overriding the parent project's compiler/linker settings
+  #  set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+  #  FetchContent_MakeAvailable(googletest)
+
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
   find_package(ament_cmake_gtest REQUIRED)
   set(NMPC_TESTs nonlinear_mpc_tests)
-
 
   ament_add_gtest(${NMPC_TESTs}
     test/include/nonlinear_mpc_test_node.hpp
@@ -241,7 +250,7 @@ if(BUILD_TESTING)
 
 endif()
 
-
+# Install to share.
 ament_auto_package(INSTALL_TO_SHARE
   launch
   config
