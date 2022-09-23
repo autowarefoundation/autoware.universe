@@ -17,8 +17,10 @@ Panels:
         - /Planning1/ScenarioPlanning1/LaneDriving1/MotionPlanning1/DebugMarker1
         - /PathWithLaneIdFootprint1
         - /PathWithLaneIdFootprint1/Topic1
-        - /PathWithLaneIdFootprint2
-        - /PathWithLaneIdFootprint2/Topic1
+        - /PathFootprint1
+        - /PathFootprint1/Topic1
+        - /TrajectoryFootprint1
+        - /TrajectoryFootprint1/Topic1
       Splitter Ratio: 0.550000011920929
     Tree Height: 334
   - Class: rviz_common/Selection
@@ -1572,28 +1574,7 @@ Visualization Manager:
       Enabled: false
       Name: Control
     - Class: rviz_plugins/PathWithLaneIdFootprint
-      Enabled: true
-      Name: PathWithLaneIdFootprint
-      Topic:
-        Depth: 5
-        Durability Policy: Transient Local
-        Filter size: 10
-        History Policy: Keep All
-        Reliability Policy: Reliable
-        Value: /raw_path
-      Value: true
-      View LaneId:
-        Scale: 0.10000000149011612
-        Value: true
-      View PathWithLaneId Footprint:
-        Alpha: 1
-        Color: 230; 230; 50
-        Rear Overhang: 1.0299999713897705
-        Value: true
-        Vehicle Length: 4.769999980926514
-        Vehicle Width: 1.8300000429153442
-    - Class: rviz_plugins/PathWithLaneIdFootprint
-      Enabled: true
+      Enabled: false
       Name: PathWithLaneIdFootprint
       Topic:
         Depth: 5
@@ -1601,8 +1582,8 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /raw_path
-      Value: true
+        Value: /raw_path_with_lane_id
+      Value: false
       View LaneId:
         Scale: 0.10000000149011612
         Value: true
@@ -1613,6 +1594,48 @@ Visualization Manager:
         Value: true
         Vehicle Length: 4.769999980926514
         Vehicle Width: 1.8300000429153442
+    - Class: rviz_plugins/PathFootprint
+      Enabled: false
+      Name: PathFootprint
+      Topic:
+        Depth: 5
+        Durability Policy: Transient Local
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /raw_path
+      Value: false
+      View Path Footprint:
+        Alpha: 1
+        Color: 230; 230; 50
+        Rear Overhang: 1.0299999713897705
+        Value: true
+        Vehicle Length: 4.769999980926514
+        Vehicle Width: 1.8300000429153442
+    - Class: rviz_plugins/TrajectoryFootprint
+      Enabled: true
+      Name: TrajectoryFootprint
+      Topic:
+        Depth: 5
+        Durability Policy: Transient Local
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /output/path
+      Value: true
+      View Trajectory Footprint:
+        Alpha: 1
+        Color: 230; 230; 50
+        Rear Overhang: 1.0299999713897705
+        Value: true
+        Vehicle Length: 4.769999980926514
+        Vehicle Width: 1.8300000429153442
+      View Trajectory Point:
+        Alpha: 1
+        Color: 0; 60; 255
+        Offset: 0
+        Radius: 0.10000000149011612
+        Value: false
   Enabled: true
   Global Options:
     Background Color: 10; 10; 10
@@ -1703,7 +1726,7 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: 0.4850000739097595
+      Angle: 0.4800000786781311
       Class: rviz_default_plugins/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549

@@ -2,6 +2,13 @@
   <arg name="lanelet2_map_topic" default="/map/vector_map"/>
   <arg name="lanelet2_map_marker_topic" default="/map/vector_map_marker"/>
   <arg name="lanelet2_file_name"/>
+  <arg name="vehicle_model"/>
+
+  <!-- Global parameters (for PathFootprint in tier4_planning_rviz_plugin) -->
+  <!-- Do not add "group" in order to propagate global parameters -->
+  <include file="$(find-pkg-share global_parameter_loader)/launch/global_params.launch.py">
+    <arg name="vehicle_model" value="$(var vehicle_model)"/>
+  </include>
 
   <!-- generate tf from "viewer" to "map" -->
   <node pkg="map_tf_generator" exec="vector_map_tf_generator" name="vector_map_tf_generator">
@@ -23,6 +30,9 @@
 
     <param name="lanelet2_file_name" value="$(var lanelet2_file_name)"/>
   </node>
+
+  <!-- temporary: optimization -->
+  <include file="$(find-pkg-share static_path_smoother)/launch/path_smoother.launch.xml"/>
 
   <!-- rviz -->
   <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen" args="-d $(find-pkg-share static_path_smoother)/rviz/static_path_smoother.rviz"/>

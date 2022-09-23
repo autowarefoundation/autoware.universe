@@ -379,7 +379,7 @@ autoware_auto_planning_msgs::msg::Path resamplePath(
     const auto & curr_pt = input_path.points.at(i);
     const double ds =
       tier4_autoware_utils::calcDistance2d(prev_pt.pose.position, curr_pt.pose.position);
-    if (ds < CLOSE_S_THRESHOLD) {
+    if (ds < resample_utils::CLOSE_S_THRESHOLD) {
       continue;
     }
     input_arclength.push_back(ds + input_arclength.at(i - 1));

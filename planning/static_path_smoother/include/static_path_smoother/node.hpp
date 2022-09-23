@@ -21,7 +21,6 @@
 #include "obstacle_avoidance_planner/mpt_optimizer.hpp"
 #include "rclcpp/clock.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "tier4_autoware_utils/ros/self_pose_listener.hpp"
 #include "tier4_autoware_utils/system/stop_watch.hpp"
 
 #include "autoware_auto_perception_msgs/msg/predicted_objects.hpp"
@@ -50,7 +49,6 @@
 class StaticPathSmoother : public rclcpp::Node
 {
 private:
-  OnSetParametersCallbackHandle::SharedPtr set_param_res_;
   rclcpp::Clock logger_ros_clock_;
   int eb_solved_count_;
   bool is_driving_forward_{true};
@@ -93,14 +91,11 @@ private:
   mutable DebugData debug_data_;
 
   geometry_msgs::msg::Pose current_ego_pose_;
-  std::unique_ptr<geometry_msgs::msg::TwistStamped> current_twist_ptr_;
   std::unique_ptr<geometry_msgs::msg::Pose> prev_ego_pose_ptr_;
   std::unique_ptr<Trajectories> prev_optimal_trajs_ptr_;
   std::unique_ptr<std::vector<autoware_auto_planning_msgs::msg::PathPoint>> prev_path_points_ptr_;
-  std::unique_ptr<autoware_auto_perception_msgs::msg::PredictedObjects> objects_ptr_;
 
   std::unique_ptr<rclcpp::Time> latest_replanned_time_ptr_;
-  tier4_autoware_utils::SelfPoseListener self_pose_listener_{this};
 
   // ROS
   rclcpp::Publisher<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr traj_pub_;
@@ -123,17 +118,8 @@ private:
   rclcpp::Publisher<tier4_debug_msgs::msg::StringStamped>::SharedPtr debug_msg_pub_;
 
   rclcpp::Subscription<autoware_auto_planning_msgs::msg::Path>::SharedPtr path_sub_;
-  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
-  rclcpp::Subscription<autoware_auto_perception_msgs::msg::PredictedObjects>::SharedPtr
-    objects_sub_;
-
-  // param callback function
-  rcl_interfaces::msg::SetParametersResult paramCallback(
-    const std::vector<rclcpp::Parameter> & parameters);
 
   // subscriber callback functions
-  void odomCallback(const nav_msgs::msg::Odometry::SharedPtr);
-  void objectsCallback(const autoware_auto_perception_msgs::msg::PredictedObjects::SharedPtr);
   void pathCallback(const autoware_auto_planning_msgs::msg::Path::SharedPtr);
 
   // functions

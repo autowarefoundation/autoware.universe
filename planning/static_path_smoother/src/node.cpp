@@ -33,6 +33,8 @@
 #include <string>
 #include <vector>
 
+using autoware_auto_perception_msgs::msg::PredictedObjects;
+
 namespace
 {
 std::tuple<std::vector<double>, std::vector<double>> calcVehicleCirclesInfo(
@@ -117,7 +119,8 @@ StaticPathSmoother::StaticPathSmoother(const rclcpp::NodeOptions & node_options)
   durable_qos.transient_local();
 
   // publisher to other nodes
-  traj_pub_ = create_publisher<autoware_auto_planning_msgs::msg::Trajectory>("~/output/path", 1);
+  traj_pub_ = create_publisher<autoware_auto_planning_msgs::msg::Trajectory>(
+    "~/output/path", rclcpp::QoS{1}.transient_local());
 
   // debug publisher
   debug_eb_traj_pub_ = create_publisher<autoware_auto_planning_msgs::msg::Trajectory>(
@@ -148,14 +151,8 @@ StaticPathSmoother::StaticPathSmoother(const rclcpp::NodeOptions & node_options)
 
   // subscriber
   path_sub_ = create_subscription<autoware_auto_planning_msgs::msg::Path>(
-    "~/input/path", rclcpp::QoS{1},
+    "~/input/path", rclcpp::QoS{1}.transient_local(),
     std::bind(&StaticPathSmoother::pathCallback, this, std::placeholders::_1));
-  odom_sub_ = create_subscription<nav_msgs::msg::Odometry>(
-    "/localization/kinematic_state", rclcpp::QoS{1},
-    std::bind(&StaticPathSmoother::odomCallback, this, std::placeholders::_1));
-  objects_sub_ = create_subscription<autoware_auto_perception_msgs::msg::PredictedObjects>(
-    "~/input/objects", rclcpp::QoS{10},
-    std::bind(&StaticPathSmoother::objectsCallback, this, std::placeholders::_1));
 
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
   {  // vehicle param
@@ -401,25 +398,10 @@ StaticPathSmoother::StaticPathSmoother(const rclcpp::NodeOptions & node_options)
       declare_parameter<double>("advanced.mpt.weight.terminal_path_yaw_error_weight");
   }
 
-  {  // replan
-    max_path_shape_change_dist_for_replan_ =
-      declare_parameter<double>("replan.max_path_shape_change_dist");
-    max_ego_moving_dist_for_replan_ =
-      declare_parameter<double>("replan.max_ego_moving_dist_for_replan");
-    max_delta_time_sec_for_replan_ =
-      declare_parameter<double>("replan.max_delta_time_sec_for_replan");
-  }
-
   // TODO(murooka) tune this param when avoiding with static_path_smoother
   traj_param_.center_line_width = vehicle_param_.width;
 
-  // set parameter callback
-  set_param_res_ = this->add_on_set_parameters_callback(
-    std::bind(&StaticPathSmoother::paramCallback, this, std::placeholders::_1));
-
   resetPlanning();
-
-  self_pose_listener_.waitForFirstPose();
 }
 
 void StaticPathSmoother::resetPlanning()
@@ -444,302 +426,14 @@ void StaticPathSmoother::resetPrevOptimization()
   eb_solved_count_ = 0;
 }
 
-rcl_interfaces::msg::SetParametersResult StaticPathSmoother::paramCallback(
-  const std::vector<rclcpp::Parameter> & parameters)
-{
-  using tier4_autoware_utils::updateParam;
-
-  {  // option parameter
-    updateParam<bool>(
-      parameters, "option.is_publishing_debug_visualization_marker",
-      is_publishing_debug_visualization_marker_);
-    updateParam<bool>(
-      parameters, "option.is_publishing_clearance_map", is_publishing_clearance_map_);
-    updateParam<bool>(
-      parameters, "option.is_publishing_object_clearance_map", is_publishing_object_clearance_map_);
-    updateParam<bool>(
-      parameters, "option.is_publishing_area_with_objects", is_publishing_area_with_objects_);
-
-    updateParam<bool>(parameters, "option.is_showing_debug_info", is_showing_debug_info_);
-    updateParam<bool>(
-      parameters, "option.is_showing_calculation_time", is_showing_calculation_time_);
-    updateParam<bool>(
-      parameters, "option.is_stopping_if_outside_drivable_area",
-      is_stopping_if_outside_drivable_area_);
-
-    updateParam<bool>(parameters, "option.enable_avoidance", enable_avoidance_);
-    updateParam<bool>(parameters, "option.enable_pre_smoothing", enable_pre_smoothing_);
-    updateParam<bool>(parameters, "option.skip_optimization", skip_optimization_);
-    updateParam<bool>(parameters, "option.reset_prev_optimization", reset_prev_optimization_);
-  }
-
-  {  // trajectory parameter
-    // common
-    updateParam<int>(parameters, "common.num_sampling_points", traj_param_.num_sampling_points);
-    updateParam<double>(parameters, "common.trajectory_length", traj_param_.trajectory_length);
-    updateParam<double>(
-      parameters, "common.forward_fixing_min_distance", traj_param_.forward_fixing_min_distance);
-    updateParam<double>(
-      parameters, "common.forward_fixing_min_time", traj_param_.forward_fixing_min_time);
-    updateParam<double>(
-      parameters, "common.backward_fixing_distance", traj_param_.backward_fixing_distance);
-    updateParam<double>(
-      parameters, "common.delta_arc_length_for_trajectory",
-      traj_param_.delta_arc_length_for_trajectory);
-
-    updateParam<double>(
-      parameters, "common.delta_dist_threshold_for_closest_point",
-      traj_param_.delta_dist_threshold_for_closest_point);
-    updateParam<double>(
-      parameters, "common.delta_yaw_threshold_for_closest_point",
-      traj_param_.delta_yaw_threshold_for_closest_point);
-    updateParam<double>(
-      parameters, "common.delta_yaw_threshold_for_straight",
-      traj_param_.delta_yaw_threshold_for_straight);
-    updateParam<int>(
-      parameters, "common.num_fix_points_for_extending", traj_param_.num_fix_points_for_extending);
-    updateParam<double>(
-      parameters, "common.max_dist_for_extending_end_point",
-      traj_param_.max_dist_for_extending_end_point);
-
-    // object
-    updateParam<double>(
-      parameters, "object.max_avoiding_ego_velocity_ms", traj_param_.max_avoiding_ego_velocity_ms);
-    updateParam<double>(
-      parameters, "object.max_avoiding_objects_velocity_ms",
-      traj_param_.max_avoiding_objects_velocity_ms);
-    updateParam<bool>(
-      parameters, "object.avoiding_object_type.unknown", traj_param_.is_avoiding_unknown);
-    updateParam<bool>(parameters, "object.avoiding_object_type.car", traj_param_.is_avoiding_car);
-    updateParam<bool>(
-      parameters, "object.avoiding_object_type.truck", traj_param_.is_avoiding_truck);
-    updateParam<bool>(parameters, "object.avoiding_object_type.bus", traj_param_.is_avoiding_bus);
-    updateParam<bool>(
-      parameters, "object.avoiding_object_type.bicycle", traj_param_.is_avoiding_bicycle);
-    updateParam<bool>(
-      parameters, "object.avoiding_object_type.motorbike", traj_param_.is_avoiding_motorbike);
-    updateParam<bool>(
-      parameters, "object.avoiding_object_type.pedestrian", traj_param_.is_avoiding_pedestrian);
-    updateParam<bool>(
-      parameters, "object.avoiding_object_type.animal", traj_param_.is_avoiding_animal);
-  }
-
-  {  // elastic band parameter
-    // common
-    updateParam<int>(
-      parameters, "advanced.eb.common.num_joint_buffer_points", eb_param_.num_joint_buffer_points);
-    updateParam<int>(
-      parameters, "advanced.eb.common.num_offset_for_begin_idx",
-      eb_param_.num_offset_for_begin_idx);
-    updateParam<double>(
-      parameters, "advanced.eb.common.delta_arc_length_for_eb", eb_param_.delta_arc_length_for_eb);
-    updateParam<int>(
-      parameters, "advanced.eb.common.num_sampling_points_for_eb",
-      eb_param_.num_sampling_points_for_eb);
-
-    // clearance
-    updateParam<double>(
-      parameters, "advanced.eb.clearance.clearance_for_straight_line",
-      eb_param_.clearance_for_straight_line);
-    updateParam<double>(
-      parameters, "advanced.eb.clearance.clearance_for_joint", eb_param_.clearance_for_joint);
-    updateParam<double>(
-      parameters, "advanced.eb.clearance.clearance_for_only_smoothing",
-      eb_param_.clearance_for_only_smoothing);
-
-    // qp
-    updateParam<int>(parameters, "advanced.eb.qp.max_iteration", eb_param_.qp_param.max_iteration);
-    updateParam<double>(parameters, "advanced.eb.qp.eps_abs", eb_param_.qp_param.eps_abs);
-    updateParam<double>(parameters, "advanced.eb.qp.eps_rel", eb_param_.qp_param.eps_rel);
-  }
-
-  {  // mpt param
-    // option
-    updateParam<bool>(parameters, "mpt.option.plan_from_ego", mpt_param_.plan_from_ego);
-    updateParam<double>(
-      parameters, "mpt.option.max_plan_from_ego_length", mpt_param_.max_plan_from_ego_length);
-    updateParam<bool>(
-      parameters, "mpt.option.steer_limit_constraint", mpt_param_.steer_limit_constraint);
-    updateParam<bool>(
-      parameters, "mpt.option.fix_points_around_ego", mpt_param_.fix_points_around_ego);
-    updateParam<bool>(parameters, "mpt.option.enable_warm_start", mpt_param_.enable_warm_start);
-    updateParam<bool>(
-      parameters, "mpt.option.enable_manual_warm_start", mpt_param_.enable_manual_warm_start);
-    updateParam<int>(parameters, "mpt.option.visualize_sampling_num", mpt_visualize_sampling_num_);
-
-    // common
-    updateParam<int>(
-      parameters, "mpt.common.num_curvature_sampling_points",
-      mpt_param_.num_curvature_sampling_points);
-
-    updateParam<double>(
-      parameters, "mpt.common.delta_arc_length_for_mpt_points",
-      mpt_param_.delta_arc_length_for_mpt_points);
-
-    // kinematics
-    updateParam<double>(
-      parameters, "mpt.kinematics.optimization_center_offset",
-      mpt_param_.optimization_center_offset);
-
-    // collision_free_constraints
-    updateParam<bool>(
-      parameters, "advanced.mpt.collision_free_constraints.option.l_inf_norm",
-      mpt_param_.l_inf_norm);
-    // updateParam<bool>(
-    //   parameters, "advanced.mpt.collision_free_constraints.option.two_step_soft_constraint",
-    //   mpt_param_.two_step_soft_constraint);
-    updateParam<bool>(
-      parameters, "advanced.mpt.collision_free_constraints.option.soft_constraint",
-      mpt_param_.soft_constraint);
-    updateParam<bool>(
-      parameters, "advanced.mpt.collision_free_constraints.option.hard_constraint",
-      mpt_param_.hard_constraint);
-
-    {  // vehicle_circles
-      // NOTE: Changing method is not supported
-      // updateParam<std::string>(
-      //   parameters, "advanced.mpt.collision_free_constraints.vehicle_circles.method",
-      //   vehicle_circle_method_);
-
-      if (vehicle_circle_method_ == "uniform_circle") {
-        updateParam<int>(
-          parameters, "advanced.mpt.collision_free_constraints.vehicle_circles.uniform_circle.num",
-          vehicle_circle_num_for_calculation_);
-        updateParam<double>(
-          parameters,
-          "advanced.mpt.collision_free_constraints.vehicle_circles.uniform_circle.radius_ratio",
-          vehicle_circle_radius_ratios_.front());
-
-        std::tie(
-          mpt_param_.vehicle_circle_radiuses, mpt_param_.vehicle_circle_longitudinal_offsets) =
-          calcVehicleCirclesInfo(
-            vehicle_param_, vehicle_circle_num_for_calculation_,
-            vehicle_circle_radius_ratios_.front());
-      } else if (vehicle_circle_method_ == "rear_drive") {
-        updateParam<int>(
-          parameters,
-          "advanced.mpt.collision_free_constraints.vehicle_circles.rear_drive.num_for_calculation",
-          vehicle_circle_num_for_calculation_);
-
-        updateParam<double>(
-          parameters,
-          "advanced.mpt.collision_free_constraints.vehicle_circles.rear_drive.rear_radius_ratio",
-          vehicle_circle_radius_ratios_.front());
-
-        updateParam<double>(
-          parameters,
-          "advanced.mpt.collision_free_constraints.vehicle_circles.rear_drive.front_radius_ratio",
-          vehicle_circle_radius_ratios_.back());
-
-        std::tie(
-          mpt_param_.vehicle_circle_radiuses, mpt_param_.vehicle_circle_longitudinal_offsets) =
-          calcVehicleCirclesInfo(
-            vehicle_param_, vehicle_circle_num_for_calculation_,
-            vehicle_circle_radius_ratios_.front(), vehicle_circle_radius_ratios_.back());
-      } else {
-        throw std::invalid_argument(
-          "advanced.mpt.collision_free_constraints.vehicle_circles.num parameter is invalid.");
-      }
-    }
-
-    // clearance
-    updateParam<double>(
-      parameters, "advanced.mpt.clearance.hard_clearance_from_road",
-      mpt_param_.hard_clearance_from_road);
-    updateParam<double>(
-      parameters, "advanced.mpt.clearance.soft_clearance_from_road",
-      mpt_param_.soft_clearance_from_road);
-    updateParam<double>(
-      parameters, "advanced.mpt.clearance.soft_second_clearance_from_road",
-      mpt_param_.soft_second_clearance_from_road);
-    updateParam<double>(
-      parameters, "advanced.mpt.clearance.extra_desired_clearance_from_road",
-      mpt_param_.extra_desired_clearance_from_road);
-    updateParam<double>(
-      parameters, "advanced.mpt.clearance.clearance_from_object", mpt_param_.clearance_from_object);
-
-    // weight
-    updateParam<double>(
-      parameters, "advanced.mpt.weight.soft_avoidance_weight", mpt_param_.soft_avoidance_weight);
-    updateParam<double>(
-      parameters, "advanced.mpt.weight.soft_second_avoidance_weight",
-      mpt_param_.soft_second_avoidance_weight);
-
-    updateParam<double>(
-      parameters, "advanced.mpt.weight.lat_error_weight", mpt_param_.lat_error_weight);
-    updateParam<double>(
-      parameters, "advanced.mpt.weight.yaw_error_weight", mpt_param_.yaw_error_weight);
-    updateParam<double>(
-      parameters, "advanced.mpt.weight.yaw_error_rate_weight", mpt_param_.yaw_error_rate_weight);
-    updateParam<double>(
-      parameters, "advanced.mpt.weight.steer_input_weight", mpt_param_.steer_input_weight);
-    updateParam<double>(
-      parameters, "advanced.mpt.weight.steer_rate_weight", mpt_param_.steer_rate_weight);
-
-    updateParam<double>(
-      parameters, "advanced.mpt.weight.obstacle_avoid_lat_error_weight",
-      mpt_param_.obstacle_avoid_lat_error_weight);
-    updateParam<double>(
-      parameters, "advanced.mpt.weight.obstacle_avoid_yaw_error_weight",
-      mpt_param_.obstacle_avoid_yaw_error_weight);
-    updateParam<double>(
-      parameters, "advanced.mpt.weight.obstacle_avoid_steer_input_weight",
-      mpt_param_.obstacle_avoid_steer_input_weight);
-    updateParam<double>(
-      parameters, "advanced.mpt.weight.near_objects_length", mpt_param_.near_objects_length);
-
-    updateParam<double>(
-      parameters, "advanced.mpt.weight.terminal_lat_error_weight",
-      mpt_param_.terminal_lat_error_weight);
-    updateParam<double>(
-      parameters, "advanced.mpt.weight.terminal_yaw_error_weight",
-      mpt_param_.terminal_yaw_error_weight);
-    updateParam<double>(
-      parameters, "advanced.mpt.weight.terminal_path_lat_error_weight",
-      mpt_param_.terminal_path_lat_error_weight);
-    updateParam<double>(
-      parameters, "advanced.mpt.weight.terminal_path_yaw_error_weight",
-      mpt_param_.terminal_path_yaw_error_weight);
-  }
-
-  {  // replan
-    updateParam<double>(
-      parameters, "replan.max_path_shape_change_dist", max_path_shape_change_dist_for_replan_);
-    updateParam<double>(
-      parameters, "replan.max_ego_moving_dist_for_replan", max_ego_moving_dist_for_replan_);
-    updateParam<double>(
-      parameters, "replan.max_delta_time_sec_for_replan", max_delta_time_sec_for_replan_);
-  }
-
-  resetPlanning();
-
-  rcl_interfaces::msg::SetParametersResult result;
-  result.successful = true;
-  result.reason = "success";
-  return result;
-}
-
-void StaticPathSmoother::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg)
-{
-  current_twist_ptr_ = std::make_unique<geometry_msgs::msg::TwistStamped>();
-  current_twist_ptr_->header = msg->header;
-  current_twist_ptr_->twist = msg->twist.twist;
-}
-
-void StaticPathSmoother::objectsCallback(
-  const autoware_auto_perception_msgs::msg::PredictedObjects::SharedPtr msg)
-{
-  objects_ptr_ = std::make_unique<autoware_auto_perception_msgs::msg::PredictedObjects>(*msg);
-}
-
 void StaticPathSmoother::pathCallback(
   const autoware_auto_planning_msgs::msg::Path::SharedPtr path_ptr)
 {
-  if (
-    path_ptr->points.empty() || path_ptr->drivable_area.data.empty() || !current_twist_ptr_ ||
-    !objects_ptr_) {
+  std::cerr << "PO1" << std::endl;
+  if (path_ptr->points.empty() || path_ptr->drivable_area.data.empty()) {
     return;
   }
+  std::cerr << "PO2" << std::endl;
 
   // initialize
   debug_data_ = DebugData();
@@ -756,8 +450,9 @@ void StaticPathSmoother::pathCallback(
   const auto resampled_traj_points = convertToTrajectoryPoints(resampled_path.points);
 
   // cv_maps
-  const CVMaps cv_maps = costmap_generator_ptr_->getMaps(
-    false, *path_ptr, objects_ptr_->objects, traj_param_, debug_data_);
+  const auto predicted_objects = PredictedObjects{}.objects;
+  const CVMaps cv_maps =
+    costmap_generator_ptr_->getMaps(false, *path_ptr, predicted_objects, traj_param_, debug_data_);
 
   const size_t initial_target_index = 3;
   auto target_pose = resampled_path.points.at(initial_target_index).pose;  // TODO(murooka)

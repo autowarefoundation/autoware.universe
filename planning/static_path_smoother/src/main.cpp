@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "behavior_path_planner/data_manager.hpp"
+#include "behavior_path_planner/utilities.hpp"
 #include "lanelet2_extension/utility/message_conversion.hpp"
 #include "lanelet2_extension/utility/query.hpp"
 #include "lanelet2_extension/utility/utilities.hpp"
@@ -24,6 +26,7 @@
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
 
+#include "autoware_auto_planning_msgs/msg/path.hpp"
 #include "autoware_auto_planning_msgs/msg/path_with_lane_id.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
@@ -39,6 +42,7 @@
 #include <vector>
 
 using autoware_auto_mapping_msgs::msg::HADMapBin;
+using autoware_auto_planning_msgs::msg::Path;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using autoware_auto_planning_msgs::msg::Trajectory;
 
@@ -77,8 +81,10 @@ int main(int argc, char * argv[])
   // create publisher
   const auto pub_map_bin =
     main_node->create_publisher<HADMapBin>("lanelet2_map_topic", rclcpp::QoS{1}.transient_local());
+  const auto pub_raw_path_with_lane_id = main_node->create_publisher<PathWithLaneId>(
+    "raw_path_with_lane_id", rclcpp::QoS{1}.transient_local());
   const auto pub_raw_path =
-    main_node->create_publisher<PathWithLaneId>("raw_path", rclcpp::QoS{1}.transient_local());
+    main_node->create_publisher<Path>("raw_path", rclcpp::QoS{1}.transient_local());
 
   const auto lanelet2_file_name = main_node->declare_parameter<std::string>("lanelet2_file_name");
   const size_t start_lanelet_id = 125;
@@ -91,6 +97,7 @@ int main(int argc, char * argv[])
   const auto map = Lanelet2MapLoaderNode::load_map(lanelet2_file_name, "MGRS");
   if (!map) {
     std::cerr << "error" << std::endl;  // TODO(murooka)
+    return 0;
   }
 
   // create map bin msg
@@ -135,13 +142,39 @@ int main(int argc, char * argv[])
     const auto target_lanelet = lanelet_map_ptr->laneletLayer.get(target_lanelet_id);
     lanelet_sequence.push_back(target_lanelet);
   }
-  auto raw_path =
+  auto raw_path_with_lane_id =
     route_handler.getCenterLinePath(lanelet_sequence, 0, std::numeric_limits<double>::max());
-  raw_path.header.frame_id = "map";
-  pub_raw_path->publish(raw_path);
-  pub_raw_path->publish(raw_path);
-  pub_raw_path->publish(raw_path);
+  raw_path_with_lane_id.header.frame_id = "map";
+
+  // generate drivable area
+  auto start_pose_ptr = std::make_shared<geometry_msgs::msg::PoseStamped>();
+  start_pose_ptr->pose = start_pose;
+
+  auto planner_data = std::make_shared<behavior_path_planner::PlannerData>();
+  planner_data->route_handler = std::make_shared<route_handler::RouteHandler>(route_handler);
+  planner_data->self_pose = start_pose_ptr;
+  planner_data->parameters.drivable_lane_forward_length = 300.0;
+  planner_data->parameters.drivable_lane_backward_length = -5.0;
+  planner_data->parameters.drivable_lane_margin = 5.0;
+  planner_data->parameters.ego_nearest_dist_threshold = 3.0;
+  planner_data->parameters.ego_nearest_yaw_threshold = 1.57;
+  raw_path_with_lane_id.drivable_area = behavior_path_planner::util::generateDrivableArea(
+    raw_path_with_lane_id, lanelet_sequence, 0.1, 1.0, planner_data);
+
+  // publish raw path with lane id
+  pub_raw_path_with_lane_id->publish(raw_path_with_lane_id);
   std::cerr << "[INFO] Calculated center line." << std::endl;
+
+  // convert path with lane id to path
+  Path raw_path;
+  raw_path.header = raw_path_with_lane_id.header;
+  raw_path.drivable_area = raw_path_with_lane_id.drivable_area;
+  for (const auto & point : raw_path_with_lane_id.points) {
+    raw_path.points.push_back(point.point);
+  }
+  pub_raw_path->publish(raw_path);
+
+  // optimize path
 
   rclcpp::spin(main_node);
 
