@@ -46,11 +46,6 @@ target_include_directories(ndt
     $<INSTALL_INTERFACE:include>
 )
 
-target_include_directories(ndt
-  SYSTEM PUBLIC
-    ${PCL_INCLUDE_DIRS}
-)
-
 ament_target_dependencies(ndt PUBLIC ndt_omp ndt_pcl_modified)
 # Can't use ament_target_dependencies() here because it doesn't link PCL
 # properly, see ndt_omp for more information.
