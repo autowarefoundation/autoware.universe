@@ -84,7 +84,7 @@ class Test11LidarBase:
                 while cnt < 2:
                     self.executor.spin_once()
                     time.sleep(1)
-                    cnt+=1
+                    cnt += 1
         except BaseException as e:
             print(e)
         finally:
