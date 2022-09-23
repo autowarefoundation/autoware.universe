@@ -27,7 +27,7 @@
 
 int main()
 {
-  // Generate a noisy sinusoidal signal with arc-length parametrization. This is our test signal.
+  // Generate a sinusoidal signal with arc-length parametrization. This is our test signal.
   size_t const num_of_points = 100;  // number of points in the signal.
 
   // Generate x.
@@ -37,12 +37,14 @@ int main()
   std::vector<double> yvec;
 
   std::transform(
-    xvec.cbegin(), xvec.cend(), std::back_inserter(yvec), [](auto const & x) { return sin(x); });
+    xvec.cbegin(), xvec.cend(), std::back_inserter(yvec), [](auto const &x)
+    { return sin(x); });
 
   // Generate z = cos(x).
   std::vector<double> zvec;
   std::transform(
-    xvec.cbegin(), xvec.cend(), std::back_inserter(zvec), [](auto const & x) { return cos(x); });
+    xvec.cbegin(), xvec.cend(), std::back_inserter(zvec), [](auto const &x)
+    { return cos(x); });
 
   // Arc-length parametrization.
   std::vector<double> dx;  //{1, 0.0};
@@ -54,7 +56,8 @@ int main()
   // Define arc-length cumsum()
   std::vector<double> svec;
   std::transform(
-    dx.cbegin(), dx.cend(), dy.cbegin(), std::back_inserter(svec), [](auto dxi, auto dyi) {
+    dx.cbegin(), dx.cend(), dy.cbegin(), std::back_inserter(svec), [](auto dxi, auto dyi)
+    {
       static double ds = 0.0;
       ds += std::hypot(dxi, dyi);
 
@@ -138,7 +141,8 @@ int main()
   interpolating_spline_aw.Initialize(svec, zvec);
 
   std::vector<double> zinterp_itemwise;
-  for (auto const & s : se_new2) {
+  for (auto const &s : se_new2)
+  {
     double zint{};
     interpolating_spline_aw.Interpolate(s, zint);
     zinterp_itemwise.emplace_back(zint);
