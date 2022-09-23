@@ -13,3 +13,4 @@
 // limitations under the License.
 
 #include "gtest/gtest.h"
+#include "act_test_suite.hpp"
