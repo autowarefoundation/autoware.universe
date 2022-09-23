@@ -33,6 +33,6 @@ cd /tmp/CppADCodeGen
 git checkout v2.4.3
 mkdir -p build
 cd build
-cmake ..
+cmake -DGOOGLETEST_GIT=ON ..
 make
 sudo make install
