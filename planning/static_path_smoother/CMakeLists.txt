@@ -7,10 +7,10 @@ autoware_package()
 find_package(Eigen3 REQUIRED)
 find_package(OpenCV REQUIRED)
 
-# node
-ament_auto_add_library(static_path_smoother SHARED
-  src/node.cpp
-)
+ament_auto_add_executable(static_path_smoother
+  src/main.cpp
+  src/functions.cpp
+  src/optimization_node.cpp)
 
 target_include_directories(static_path_smoother
   SYSTEM PUBLIC
@@ -22,25 +22,6 @@ target_link_libraries(static_path_smoother
   ${OpenCV_LIBRARIES}
 )
 
-rclcpp_components_register_node(static_path_smoother
-  PLUGIN "StaticPathSmoother"
-  EXECUTABLE static_path_smoother_node
-)
-
-# main
-ament_auto_add_executable(main
-  src/main.cpp
-  src/functions.cpp)
-
-# target_include_directories(main PUBLIC include/static_path_smoother)
-
-target_include_directories(main
-  SYSTEM PUBLIC
-    ${OpenCV_INCLUDE_DIRS}
-    ${EIGEN3_INCLUDE_DIR}
-)
-
-
 ament_auto_package(
   INSTALL_TO_SHARE
     launch
@@ -48,8 +29,7 @@ ament_auto_package(
     rviz
 )
 
-
 install(PROGRAMS
-  scripts/plan.sh
+  scripts/path_planning.sh
   DESTINATION lib/${PROJECT_NAME}
 )

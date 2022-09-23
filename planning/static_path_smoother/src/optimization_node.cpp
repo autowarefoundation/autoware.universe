@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "static_path_smoother/node.hpp"
+#include "static_path_smoother/optimization_node.hpp"
 
 #include "interpolation/spline_interpolation_points_2d.hpp"
 #include "motion_utils/motion_utils.hpp"
@@ -33,7 +33,7 @@
 #include <string>
 #include <vector>
 
-using autoware_auto_perception_msgs::msg::PredictedObjects;
+// TODO(murooka) refactor
 
 namespace
 {
@@ -395,14 +395,12 @@ void StaticPathSmoother::resetPrevOptimization()
   eb_solved_count_ = 0;
 }
 
-void StaticPathSmoother::pathCallback(
+std::vector<TrajectoryPoint> StaticPathSmoother::pathCallback(
   const autoware_auto_planning_msgs::msg::Path::SharedPtr path_ptr)
 {
-  std::cerr << "PO1" << std::endl;
   if (path_ptr->points.empty() || path_ptr->drivable_area.data.empty()) {
-    return;
+    return std::vector<TrajectoryPoint>{};
   }
-  std::cerr << "PO2" << std::endl;
 
   // initialize
   debug_data_ = DebugData();
@@ -465,6 +463,8 @@ void StaticPathSmoother::pathCallback(
   auto output_traj_msg = motion_utils::convertToTrajectory(whole_optimized_traj_points);
   output_traj_msg.header = path_ptr->header;
   traj_pub_->publish(output_traj_msg);
+
+  return whole_optimized_traj_points;
 }
 
 #include "rclcpp_components/register_node_macro.hpp"

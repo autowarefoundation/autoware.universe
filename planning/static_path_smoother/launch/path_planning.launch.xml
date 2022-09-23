@@ -1,9 +1,10 @@
 <launch>
+  <arg name="lanelet2_file_name"/>
+  <arg name="start_lanelet_id"/>
+  <arg name="end_lanelet_id"/>
+
   <arg name="lanelet2_map_topic" default="/map/vector_map"/>
   <arg name="lanelet2_map_marker_topic" default="/map/vector_map_marker"/>
-  <arg name="start_lanelet_id" default="125"/>
-  <arg name="end_lanelet_id" default="132"/>
-  <arg name="lanelet2_file_name"/>
   <arg name="vehicle_model"/>
 
   <!-- Global parameters (for PathFootprint in tier4_planning_rviz_plugin) -->
@@ -27,7 +28,7 @@
   </node>
 
   <!-- optimize path -->
-  <node pkg="static_path_smoother" exec="main" name="static_path_smoother">
+  <node pkg="static_path_smoother" exec="static_path_smoother" name="static_path_smoother">
     <remap from="lanelet2_map_topic" to="$(var lanelet2_map_topic)"/>
     <remap from="~/input/path" to="raw_path"/>
     <remap from="~/output/path" to="output/trajectory"/>
@@ -40,9 +41,6 @@
     <param from="$(find-pkg-share planning_launch)/config/scenario_planning/common/common.param.yaml"/>
     <param from="$(find-pkg-share planning_launch)/config/scenario_planning/common/nearest_search.param.yaml"/>
   </node>
-
-  <!-- temporary: optimization -->
-  <!-- <include file="$(find-pkg-share static_path_smoother)/launch/path_smoother.launch.xml"/> -->
 
   <!-- rviz -->
   <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen" args="-d $(find-pkg-share static_path_smoother)/rviz/static_path_smoother.rviz"/>

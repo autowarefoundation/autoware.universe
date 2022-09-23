@@ -11,8 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef STATIC_PATH_SMOOTHER__NODE_HPP_
-#define STATIC_PATH_SMOOTHER__NODE_HPP_
+#ifndef STATIC_PATH_SMOOTHER__OPTIMIZATION_NODE_HPP_
+#define STATIC_PATH_SMOOTHER__OPTIMIZATION_NODE_HPP_
 
 #include "motion_utils/trajectory/trajectory.hpp"
 #include "obstacle_avoidance_planner/common_structs.hpp"
@@ -45,6 +45,9 @@
 #include <memory>
 #include <string>
 #include <vector>
+
+using autoware_auto_perception_msgs::msg::PredictedObjects;
+using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 
 class StaticPathSmoother : public rclcpp::Node
 {
@@ -112,7 +115,8 @@ public:
   explicit StaticPathSmoother(const rclcpp::NodeOptions & node_options);
 
   // subscriber callback functions
-  void pathCallback(const autoware_auto_planning_msgs::msg::Path::SharedPtr);
+  std::vector<TrajectoryPoint> pathCallback(
+    const autoware_auto_planning_msgs::msg::Path::SharedPtr);
 };
 
-#endif  // STATIC_PATH_SMOOTHER__NODE_HPP_
+#endif  // STATIC_PATH_SMOOTHER__OPTIMIZATION_NODE_HPP_

@@ -79,14 +79,19 @@ lanelet::LaneletMapPtr Lanelet2MapLoaderNode::load_map(
 {
   lanelet::ErrorMessages errors{};
   if (lanelet2_map_projector_type == "MGRS") {
-    lanelet::projection::MGRSProjector projector{};
+    const double map_origin_lat = 40.8;  // declare_parameter("latitude", 0.0);
+    const double map_origin_lon = 29.3;  // declare_parameter("longitude", 0.0);
+    lanelet::GPSPoint position{map_origin_lat, map_origin_lon};
+    lanelet::Origin origin{position};
+
+    lanelet::projection::MGRSProjector projector{origin};
     const lanelet::LaneletMapPtr map = lanelet::load(lanelet2_filename, projector, &errors);
     if (errors.empty()) {
       return map;
     }
   } else if (lanelet2_map_projector_type == "UTM") {
-    const double map_origin_lat = 0.0;  // declare_parameter("latitude", 0.0);
-    const double map_origin_lon = 0.0;  // declare_parameter("longitude", 0.0);
+    const double map_origin_lat = 40.8;  // declare_parameter("latitude", 0.0);
+    const double map_origin_lon = 29.3;  // declare_parameter("longitude", 0.0);
     lanelet::GPSPoint position{map_origin_lat, map_origin_lon};
     lanelet::Origin origin{position};
     lanelet::projection::UtmProjector projector{origin};
@@ -96,12 +101,12 @@ lanelet::LaneletMapPtr Lanelet2MapLoaderNode::load_map(
       return map;
     }
   } else {
-    // RCLCPP_ERROR(get_logger(), "lanelet2_map_projector_type is not supported");
+    RCLCPP_ERROR(rclcpp::get_logger("map_loader"), "lanelet2_map_projector_type is not supported");
     return nullptr;
   }
 
   for (const auto & error : errors) {
-    // RCLCPP_ERROR_STREAM(get_logger(), error);
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("map_loader"), error);
   }
   return nullptr;
 }

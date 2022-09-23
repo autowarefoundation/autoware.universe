@@ -34,7 +34,8 @@ using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using autoware_auto_planning_msgs::msg::Trajectory;
 
 HADMapBin::ConstSharedPtr create_map(
-  const std::string & lanelet2_file_name, const rclcpp::Time & current_time);
+  lanelet::LaneletMapPtr map_ptr, const std::string & lanelet2_file_name,
+  const rclcpp::Time & current_time);
 std::vector<geometry_msgs::msg::Pose> create_check_points(
   const route_handler::RouteHandler & route_handler, const size_t start_lanelet_id,
   const size_t end_lanelet_id);
@@ -42,7 +43,8 @@ HADMapRoute plan_route(
   const HADMapBin::ConstSharedPtr map_bin_msg_ptr,
   const std::vector<geometry_msgs::msg::Pose> & check_points);
 PathWithLaneId get_path_with_lane_id(
-  const route_handler::RouteHandler & route_handler, const HADMapRoute & route,
-  const geometry_msgs::msg::Pose & start_pose);
+  const route_handler::RouteHandler & route_handler, const lanelet::ConstLanelets lanelets,
+  const geometry_msgs::msg::Pose & start_pose, const double nearset_ego_dist_threshold,
+  const double nearest_ego_yaw_threshold);
 
 #endif  // STATIC_PATH_SMOOTHER__FUNCTIONS_HPP_

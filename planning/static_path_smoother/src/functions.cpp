@@ -32,19 +32,6 @@ geometry_msgs::msg::PoseStamped::ConstPtr convert_to_pose_stamped(
   return pose_stamped_ptr;
 }
 
-lanelet::ConstLanelets get_lanelets(
-  const route_handler::RouteHandler & route_handler, const HADMapRoute & route)
-{
-  lanelet::ConstLanelets lanelets;
-  for (const auto & segment : route.segments) {
-    const auto & target_lanelet_id = segment.preferred_primitive_id;
-    const auto target_lanelet = route_handler.getLaneletsFromId(target_lanelet_id);
-    lanelets.push_back(target_lanelet);
-  }
-
-  return lanelets;
-}
-
 geometry_msgs::msg::Pose get_center_pose(
   const route_handler::RouteHandler & route_handler, const size_t lanelet_id)
 {
@@ -74,17 +61,18 @@ geometry_msgs::msg::Pose get_center_pose(
 }  // namespace
 
 HADMapBin::ConstSharedPtr create_map(
-  const std::string & lanelet2_file_name, const rclcpp::Time & current_time)
+  lanelet::LaneletMapPtr map_ptr, const std::string & lanelet2_file_name,
+  const rclcpp::Time & current_time)
 {
   // load map
-  const auto map = Lanelet2MapLoaderNode::load_map(lanelet2_file_name, "MGRS");
-  if (!map) {
+  map_ptr = Lanelet2MapLoaderNode::load_map(lanelet2_file_name, "MGRS");
+  if (!map_ptr) {
     return nullptr;
   }
 
   // create map bin msg
   const auto map_bin_msg =
-    Lanelet2MapLoaderNode::create_map_bin_msg(map, lanelet2_file_name, current_time);
+    Lanelet2MapLoaderNode::create_map_bin_msg(map_ptr, lanelet2_file_name, current_time);
 
   return std::make_shared<HADMapBin>(map_bin_msg);
 }
@@ -112,31 +100,31 @@ HADMapRoute plan_route(
 };
 
 PathWithLaneId get_path_with_lane_id(
-  const route_handler::RouteHandler & route_handler, const HADMapRoute & route,
-  const geometry_msgs::msg::Pose & start_pose)
+  const route_handler::RouteHandler & route_handler, const lanelet::ConstLanelets lanelets,
+  const geometry_msgs::msg::Pose & start_pose, const double ego_nearest_dist_threshold,
+  const double ego_nearest_yaw_threshold)
 {
-  // get lanelets
-  const auto lanelets = get_lanelets(route_handler, route);
-
   // get center line
-  auto path_with_lane_id =
-    route_handler.getCenterLinePath(lanelets, 0, std::numeric_limits<double>::max());
+  constexpr double s_start = 0.0;
+  constexpr double s_end = std::numeric_limits<double>::max();
+  auto path_with_lane_id = route_handler.getCenterLinePath(lanelets, s_start, s_end);
   path_with_lane_id.header.frame_id = "map";
 
   // create planner data
-  auto planner_data =
-    std::make_shared<behavior_path_planner::PlannerData>();  // TODO(murooka) use params
+  auto planner_data = std::make_shared<behavior_path_planner::PlannerData>();
   planner_data->route_handler = std::make_shared<route_handler::RouteHandler>(route_handler);
   planner_data->self_pose = convert_to_pose_stamped(start_pose);
-  planner_data->parameters.drivable_lane_forward_length = 300.0;
-  planner_data->parameters.drivable_lane_backward_length = -5.0;
+  planner_data->parameters.drivable_lane_forward_length = std::numeric_limits<double>::max();
+  planner_data->parameters.drivable_lane_backward_length = std::numeric_limits<double>::min();
   planner_data->parameters.drivable_lane_margin = 5.0;
-  planner_data->parameters.ego_nearest_dist_threshold = 3.0;
-  planner_data->parameters.ego_nearest_yaw_threshold = 1.57;
+  planner_data->parameters.ego_nearest_dist_threshold = ego_nearest_dist_threshold;
+  planner_data->parameters.ego_nearest_yaw_threshold = ego_nearest_yaw_threshold;
 
   // generate drivable area and store it in path with lane id
+  constexpr double drivable_area_resolution = 0.1;
+  constexpr double vehicle_length = 0.0;
   path_with_lane_id.drivable_area = behavior_path_planner::util::generateDrivableArea(
-    path_with_lane_id, lanelets, 0.1, 1.0, planner_data);
+    path_with_lane_id, lanelets, drivable_area_resolution, vehicle_length, planner_data);
 
   return path_with_lane_id;
 }
