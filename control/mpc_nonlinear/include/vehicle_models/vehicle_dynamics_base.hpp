@@ -25,6 +25,7 @@
 #include "Eigen/Dense"
 #include "kinematic_model_definitions.hpp"
 #include "utils/codegen_eigen_support.hpp"
+#include <cppad/example/cppad_eigen.hpp>
 #include "utils/nmpc_utils.hpp"
 
 #include <Eigen/StdVector>
@@ -163,7 +164,11 @@ class VehicleDynamicsBase
     const state_vector_t &x, const input_vector_t &u, param_vector_t const &params,
     state_matrix_t &A, control_matrix_t &B);
 
-  virtual ~VehicleDynamicsBase() = default;  //{ CppAD::thread_alloc::inuse(0); }
+  virtual ~VehicleDynamicsBase()
+  {
+    model_.reset(); // CppADCodeGen/test/cppad/cg/CppADCGDynamicTest.hpp
+    CppAD::thread_alloc::inuse(0);
+  }
 
  private:
   // cppAd function for xdot = f(x, u).
@@ -219,6 +224,7 @@ void VehicleDynamicsBase<STATE_DIM, INPUT_DIM, PARAM_DIM, eSTATE_DIM>::Initializ
    **************************************************************************/
   // generates source code
 
+  // Forward function handle.
   CppAD::cg::ModelCSourceGen cgen(f_, "model_");
   cgen.setCreateForwardZero(true);
   cgen.setCreateJacobian(true);
@@ -235,6 +241,11 @@ void VehicleDynamicsBase<STATE_DIM, INPUT_DIM, PARAM_DIM, eSTATE_DIM>::Initializ
    **************************************************************************/
   dynamicLib = p.createDynamicLibrary(compiler);
   model_ = dynamicLib->model("model_");
+
+  // save to files (not really required)
+  // save to files (not really required)
+  CppAD::cg::SaveFilesModelLibraryProcessor<double> p2(libcgen);
+  p2.saveSources();
 
 #else
   CppAD::thread_alloc::hold_memory(true);
