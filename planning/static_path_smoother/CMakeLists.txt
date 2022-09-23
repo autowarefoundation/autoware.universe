@@ -28,9 +28,9 @@ rclcpp_components_register_node(static_path_smoother
 )
 
 # main
-ament_auto_add_library(main SHARED
-  src/main.cpp
-)
+ament_auto_add_executable(main src/main.cpp)
+
+# target_include_directories(main PUBLIC include/static_path_smoother)
 
 target_include_directories(main
   SYSTEM PUBLIC
@@ -38,16 +38,16 @@ target_include_directories(main
     ${EIGEN3_INCLUDE_DIR}
 )
 
-target_link_libraries(main
-  ${OpenCV_LIBRARIES}
-)
 
-rclcpp_components_register_node(main
-  PLUGIN "StaticPathSmoother"
-  EXECUTABLE main
-)
 ament_auto_package(
   INSTALL_TO_SHARE
     launch
     config
+    rviz
+)
+
+
+install(PROGRAMS
+  scripts/plan.sh
+  DESTINATION lib/${PROJECT_NAME}
 )

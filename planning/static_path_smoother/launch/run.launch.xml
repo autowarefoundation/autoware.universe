@@ -1,0 +1,29 @@
+<launch>
+  <arg name="lanelet2_map_topic" default="/map/vector_map"/>
+  <arg name="lanelet2_map_marker_topic" default="/map/vector_map_marker"/>
+  <arg name="lanelet2_file_name"/>
+
+  <!-- generate tf from "viewer" to "map" -->
+  <node pkg="map_tf_generator" exec="vector_map_tf_generator" name="vector_map_tf_generator">
+    <remap from="vector_map" to="$(var lanelet2_map_topic)"/>
+
+    <param name="map_frame" value="map"/>
+    <param name="viewer_frame" value="viewer"/>
+  </node>
+
+  <!-- visualize map -->
+  <node pkg="map_loader" exec="lanelet2_map_visualization" name="lanelet2_map_visualization">
+    <remap from="input/lanelet2_map" to="$(var lanelet2_map_topic)"/>
+    <remap from="output/lanelet2_map_marker" to="$(var lanelet2_map_marker_topic)"/>
+  </node>
+
+  <!-- optimize path -->
+  <node pkg="static_path_smoother" exec="main" name="static_path_smoother">
+    <remap from="lanelet2_map_topic" to="$(var lanelet2_map_topic)"/>
+
+    <param name="lanelet2_file_name" value="$(var lanelet2_file_name)"/>
+  </node>
+
+  <!-- rviz -->
+  <node pkg="rviz2" exec="rviz2" name="rviz2" output="screen" args="-d $(find-pkg-share static_path_smoother)/rviz/static_path_smoother.rviz"/>
+</launch>

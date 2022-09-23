@@ -45,6 +45,10 @@ class MissionPlannerLanelet2 : public MissionPlannerInterface
 public:
   explicit MissionPlannerLanelet2(const rclcpp::NodeOptions & node_options);
 
+  autoware_auto_planning_msgs::msg::HADMapRoute plan_route(
+    const std::vector<geometry_msgs::msg::Pose> & check_points) override;
+  void map_callback(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg);
+
 private:
   bool is_graph_ready_;
   lanelet::LaneletMapPtr lanelet_map_ptr_;
@@ -56,15 +60,12 @@ private:
 
   rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr map_subscriber_;
 
-  void map_callback(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg);
   bool is_goal_valid(const geometry_msgs::msg::Pose & goal_pose) const;
   geometry_msgs::msg::Pose refine_goal_height(
     const RouteSections & route_sections, const geometry_msgs::msg::Pose & goal_pose) const;
 
   // virtual functions
   bool is_routing_graph_ready() const override;
-  autoware_auto_planning_msgs::msg::HADMapRoute plan_route(
-    const std::vector<geometry_msgs::msg::Pose> & check_points) override;
   void visualize_route(const autoware_auto_planning_msgs::msg::HADMapRoute & route) const override;
 };
 }  // namespace mission_planner
