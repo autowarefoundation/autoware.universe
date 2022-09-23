@@ -18,6 +18,8 @@
 #include "behavior_path_planner/scene_module/pull_over/pull_over_module.hpp"
 #include "behavior_path_planner/utilities.hpp"
 
+#include <lane_departure_checker/lane_departure_checker.hpp>
+
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_path.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
@@ -41,36 +43,31 @@ using geometry_msgs::msg::Twist;
 
 // TODO(sugahara) move to util
 PathWithLaneId combineReferencePath(const PathWithLaneId path1, const PathWithLaneId path2);
-bool isPathInLanelets(
-  const PathWithLaneId & path, const lanelet::ConstLanelets & original_lanelets,
-  const lanelet::ConstLanelets & target_lanelets);
-std::vector<ShiftParkingPath> getShiftParkingPaths(
+
+std::vector<ShiftParkingPath> generateShiftParkingPaths(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & original_lanelets,
   const lanelet::ConstLanelets & target_lanelets, const Pose & pose, const Pose & goal_pose,
-  const Twist & twist, const BehaviorPathPlannerParameters & common_parameter,
+  const BehaviorPathPlannerParameters & common_parameter,
   const behavior_path_planner::PullOverParameters & parameter);
 
 std::vector<ShiftParkingPath> selectValidPaths(
   const std::vector<ShiftParkingPath> & paths, const lanelet::ConstLanelets & current_lanes,
-  const lanelet::ConstLanelets & target_lanes,
-  const lanelet::routing::RoutingGraphContainer & overall_graphs, const Pose & current_pose,
-  const bool isInGoalRouteSection, const Pose & goal_pose);
+  const lanelet::ConstLanelets & target_lanes, const Pose & current_pose,
+  const bool is_in_goal_route_section, const Pose & goal_pose,
+  const lane_departure_checker::LaneDepartureChecker & lane_departure_checker);
 bool selectSafePath(
   const std::vector<ShiftParkingPath> & paths,
   const OccupancyGridBasedCollisionDetector & occupancy_grid_map, ShiftParkingPath & selected_path);
-bool isPullOverPathSafe(
-  const PathWithLaneId & path, const lanelet::ConstLanelets & current_lanes,
-  const lanelet::ConstLanelets & target_lanes,
-  const PredictedObjects::ConstSharedPtr dynamic_objects, const Pose & current_pose,
-  const Twist & current_twist, const double vehicle_width,
-  const behavior_path_planner::PullOverParameters & ros_parameters, const bool use_buffer = true,
-  const double acceleration = 0.0);
 bool hasEnoughDistance(
   const ShiftParkingPath & path, const lanelet::ConstLanelets & current_lanes,
-  const lanelet::ConstLanelets & target_lanes, const Pose & current_pose,
-  const bool isInGoalRouteSection, const Pose & goal_pose,
-  const lanelet::routing::RoutingGraphContainer & overall_graphs);
-bool isObjectFront(const Pose & ego_pose, const Pose & obj_pose);
+  const Pose & current_pose, const bool is_in_goal_route_section, const Pose & goal_pose);
+lanelet::ConstLanelets getPullOverLanes(const RouteHandler & route_handler);
+
+// debug
+Marker createPullOverAreaMarker(
+  const Pose & start_pose, const Pose & end_pose, const int32_t id,
+  const std_msgs::msg::Header & header, const double base_link2front, const double base_link2rear,
+  const double vehicle_width, const std_msgs::msg::ColorRGBA & color);
 }  // namespace pull_over_utils
 }  // namespace behavior_path_planner
 

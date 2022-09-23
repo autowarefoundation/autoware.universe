@@ -62,7 +62,6 @@ InteractiveObject::InteractiveObject(const Ogre::Vector3 & point)
 {
   velocity_ = Ogre::Vector3::ZERO;
   point_ = point;
-  theta_ = 0.0;
 
   std::mt19937 gen(std::random_device{}());
   std::independent_bits_engine<std::mt19937, 8, uint8_t> bit_eng(gen);
@@ -264,6 +263,11 @@ void InteractiveObjectTool::onPoseSet(double x, double y, double theta)
   output_msg.initial_state.twist_covariance.twist.linear.x = velocity_->getFloat();
   output_msg.initial_state.twist_covariance.twist.linear.y = 0.0;
   output_msg.initial_state.twist_covariance.twist.linear.z = 0.0;
+  output_msg.initial_state.accel_covariance.accel.linear.x = accel_->getFloat();
+  output_msg.initial_state.accel_covariance.accel.linear.y = 0.0;
+  output_msg.initial_state.accel_covariance.accel.linear.z = 0.0;
+  output_msg.max_velocity = max_velocity_->getFloat();
+  output_msg.min_velocity = min_velocity_->getFloat();
   output_msg.action = Object::ADD;
 
   dummy_object_info_pub_->publish(output_msg);

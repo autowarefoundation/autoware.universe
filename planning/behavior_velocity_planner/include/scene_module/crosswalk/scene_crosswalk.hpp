@@ -45,7 +45,6 @@
 
 namespace behavior_velocity_planner
 {
-
 using autoware_auto_perception_msgs::msg::ObjectClassification;
 using autoware_auto_perception_msgs::msg::PredictedObject;
 using autoware_auto_perception_msgs::msg::PredictedObjects;
@@ -120,7 +119,7 @@ private:
 
   std::pair<double, double> getAttentionRange(const PathWithLaneId & ego_path);
 
-  void insertDecelPoint(
+  void insertDecelPointWithDebugInfo(
     const geometry_msgs::msg::Point & stop_point, const float target_velocity,
     PathWithLaneId & output);
 
@@ -133,6 +132,8 @@ private:
     const geometry_msgs::msg::Vector3 & obj_vel) const;
 
   CollisionPointState getCollisionPointState(const double ttc, const double ttv) const;
+
+  bool applySafetySlowDownSpeed(PathWithLaneId & output);
 
   float calcTargetVelocity(
     const geometry_msgs::msg::Point & stop_point, const PathWithLaneId & ego_path) const;
@@ -169,6 +170,9 @@ private:
 
   // Stop watch
   StopWatch<std::chrono::milliseconds> stop_watch_;
+
+  // whether ego passed safety_slow_point
+  bool passed_safety_slow_point_;
 };
 }  // namespace behavior_velocity_planner
 

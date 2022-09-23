@@ -35,6 +35,15 @@ namespace behavior_velocity_planner
 namespace bg = boost::geometry;
 namespace occlusion_spot_utils
 {
+Polygon2d toFootprintPolygon(const PredictedObject & object, const double scale = 1.0)
+{
+  const Pose & obj_pose = object.kinematics.initial_pose_with_covariance.pose;
+  Polygon2d obj_footprint = tier4_autoware_utils::toPolygon2d(object);
+  // upscale foot print for noise
+  obj_footprint = upScalePolygon(obj_pose.position, obj_footprint, scale);
+  return obj_footprint;
+}
+
 lanelet::ConstLanelet toPathLanelet(const PathWithLaneId & path)
 {
   lanelet::Points3d path_points;
@@ -61,8 +70,8 @@ PathWithLaneId applyVelocityToPath(const PathWithLaneId & path, const double v0)
 }
 
 bool buildDetectionAreaPolygon(
-  Polygons2d & slices, const PathWithLaneId & path, const geometry_msgs::msg::Pose & pose,
-  const PlannerParam & param)
+  Polygons2d & slices, const PathWithLaneId & path, const geometry_msgs::msg::Pose & target_pose,
+  const size_t target_seg_idx, const PlannerParam & param)
 {
   const auto & p = param;
   DetectionRange da_range;
@@ -76,40 +85,7 @@ bool buildDetectionAreaPolygon(
   da_range.max_lateral_distance = p.detection_area.max_lateral_distance;
   slices.clear();
   return planning_utils::createDetectionAreaPolygons(
-    slices, path, pose, da_range, p.pedestrian_vel);
-}
-
-ROAD_TYPE getCurrentRoadType(
-  const lanelet::ConstLanelet & current_lanelet,
-  [[maybe_unused]] const lanelet::LaneletMapPtr & lanelet_map_ptr)
-{
-  const auto logger{rclcpp::get_logger("behavior_velocity_planner").get_child("occlusion_spot")};
-  rclcpp::Clock clock{RCL_ROS_TIME};
-  occlusion_spot_utils::ROAD_TYPE road_type;
-  std::string location;
-  if (
-    current_lanelet.hasAttribute(lanelet::AttributeNamesString::Subtype) &&
-    current_lanelet.attribute(lanelet::AttributeNamesString::Subtype) ==
-      lanelet::AttributeValueString::Highway) {
-    location = "highway";
-  } else {
-    location = current_lanelet.attributeOr("location", "else");
-  }
-  RCLCPP_DEBUG_STREAM_THROTTLE(logger, clock, 3000, "location: " << location);
-  if (location == "urban" || location == "public") {
-    road_type = occlusion_spot_utils::ROAD_TYPE::PUBLIC;
-    RCLCPP_DEBUG_STREAM_THROTTLE(logger, clock, 3000, "public road: " << location);
-  } else if (location == "private") {
-    road_type = occlusion_spot_utils::ROAD_TYPE::PRIVATE;
-    RCLCPP_DEBUG_STREAM_THROTTLE(logger, clock, 3000, "private road");
-  } else if (location == "highway") {
-    road_type = occlusion_spot_utils::ROAD_TYPE::HIGHWAY;
-    RCLCPP_DEBUG_STREAM_THROTTLE(logger, clock, 3000, "highway road");
-  } else {
-    road_type = occlusion_spot_utils::ROAD_TYPE::UNKNOWN;
-    RCLCPP_DEBUG_STREAM_THROTTLE(logger, clock, 3000, "unknown road");
-  }
-  return road_type;
+    slices, path, target_pose, target_seg_idx, da_range, p.pedestrian_vel);
 }
 
 void calcSlowDownPointsForPossibleCollision(
@@ -150,9 +126,10 @@ void calcSlowDownPointsForPossibleCollision(
         const double d1 = dist_along_next_path_point;
         const auto p0 = p_prev.pose.position;
         const auto p1 = p_next.pose.position;
+        const double dist_to_next = std::abs(d1 - dist_to_col);
         const double v0 = p_prev.longitudinal_velocity_mps;
         const double v1 = p_next.longitudinal_velocity_mps;
-        const double v = getInterpolatedValue(d0, v0, dist_to_col, d1, v1);
+        const double v = (dist_to_next < 1e-6) ? v1 : v0;
         const double z = getInterpolatedValue(d0, p0.z, dist_to_col, d1, p1.z);
         // height is used to visualize marker correctly
         auto & col = possible_collisions.at(collision_index);
@@ -239,11 +216,18 @@ void categorizeVehicles(
 {
   moving_vehicle_foot_prints.clear();
   stuck_vehicle_foot_prints.clear();
+  /**
+   * Note: these parameters are use to reduce noise in occupancy grid
+   * up_scale: case predicted poly is larger than actual
+   * down_scale: case predicted poly is smaller than actual
+   */
+  const double up_scale = 1.5;
+  const double down_scale = 0.8;
   for (const auto & vehicle : vehicles) {
     if (isMovingVehicle(vehicle, stuck_vehicle_vel)) {
-      moving_vehicle_foot_prints.emplace_back(planning_utils::toFootprintPolygon(vehicle));
+      moving_vehicle_foot_prints.emplace_back(toFootprintPolygon(vehicle, up_scale));
     } else if (isStuckVehicle(vehicle, stuck_vehicle_vel)) {
-      stuck_vehicle_foot_prints.emplace_back(planning_utils::toFootprintPolygon(vehicle));
+      stuck_vehicle_foot_prints.emplace_back(toFootprintPolygon(vehicle, down_scale));
     }
   }
   return;
@@ -251,7 +235,7 @@ void categorizeVehicles(
 
 ArcCoordinates getOcclusionPoint(const PredictedObject & obj, const ConstLineString2d & ll_string)
 {
-  Polygon2d poly = planning_utils::toFootprintPolygon(obj);
+  const auto poly = tier4_autoware_utils::toPolygon2d(obj);
   std::deque<lanelet::ArcCoordinates> arcs;
   for (const auto & p : poly.outer()) {
     lanelet::BasicPoint2d obj_p = {p.x(), p.y()};
@@ -320,15 +304,17 @@ PossibleCollisionInfo calculateCollisionPathPointFromOcclusionSpot(
    *             ------------------
    */
   PossibleCollisionInfo pc;
-  const double ttc = std::abs(arc_coord_occlusion_with_offset.distance / param.pedestrian_vel);
-  SafeMotion sm = calculateSafeMotion(param.v, ttc);
+  // ttv: time to vehicle for pedestrian
+  // ttc: time to collision for ego vehicle
+  const double ttv = std::abs(arc_coord_occlusion_with_offset.distance / param.pedestrian_vel);
+  SafeMotion sm = calculateSafeMotion(param.v, ttv);
   double distance_to_stop = arc_coord_occlusion_with_offset.length - sm.stop_dist;
   const double eps = 0.1;
   // avoid inserting path point behind original path
   if (distance_to_stop < eps) distance_to_stop = eps;
   pc.arc_lane_dist_at_collision = {distance_to_stop, arc_coord_occlusion_with_offset.distance};
   pc.obstacle_info.safe_motion = sm;
-  pc.obstacle_info.ttc = ttc;
+  pc.obstacle_info.ttv = ttv;
   pc.obstacle_info.position = calcPose(path_lanelet, arc_coord_occlusion).position;
   pc.obstacle_info.max_velocity = param.pedestrian_vel;
   pc.collision_pose = calcPose(path_lanelet, {arc_coord_occlusion_with_offset.length, 0.0});
@@ -372,7 +358,7 @@ std::vector<PredictedObject> filterVehiclesByDetectionArea(
   // stuck points by predicted objects
   for (const auto & object : objs) {
     // check if the footprint is in the stuck detect area
-    const Polygon2d obj_footprint = planning_utils::toFootprintPolygon(object);
+    const auto obj_footprint = tier4_autoware_utils::toPolygon2d(object);
     for (const auto & p : polys) {
       if (!bg::disjoint(obj_footprint, p)) {
         filtered_obj.emplace_back(object);

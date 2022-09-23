@@ -125,6 +125,7 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
   ### centerpoint ###
   ament_auto_add_library(centerpoint_lib SHARED
     lib/centerpoint_trt.cpp
+    lib/detection_class_remapper.cpp
     lib/utils.cpp
     lib/ros_utils.cpp
     lib/network/network_trt.cpp
@@ -182,6 +183,11 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
       launch
       data
       config
+  )
+
+  install(
+    TARGETS centerpoint_cuda_lib
+    DESTINATION lib
   )
 else()
   find_package(ament_cmake_auto REQUIRED)

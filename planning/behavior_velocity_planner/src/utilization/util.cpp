@@ -19,25 +19,6 @@
 #include <string>
 #include <vector>
 
-namespace
-{
-inline geometry_msgs::msg::Pose getPose(
-  const autoware_auto_planning_msgs::msg::Path & path, int idx)
-{
-  return path.points.at(idx).pose;
-}
-inline geometry_msgs::msg::Pose getPose(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, int idx)
-{
-  return path.points.at(idx).point.pose;
-}
-inline geometry_msgs::msg::Pose getPose(
-  const autoware_auto_planning_msgs::msg::Trajectory & traj, int idx)
-{
-  return traj.points.at(idx).pose;
-}
-}  // namespace
-
 namespace behavior_velocity_planner
 {
 namespace planning_utils
@@ -66,8 +47,9 @@ PathPoint getLerpPathPointWithLaneId(const PathPoint p0, const PathPoint p1, con
 }
 
 bool createDetectionAreaPolygons(
-  Polygons2d & da_polys, const PathWithLaneId & path, const geometry_msgs::msg::Pose & pose,
-  const DetectionRange & da_range, const double obstacle_vel_mps, const double min_velocity)
+  Polygons2d & da_polys, const PathWithLaneId & path, const geometry_msgs::msg::Pose & target_pose,
+  const size_t target_seg_idx, const DetectionRange & da_range, const double obstacle_vel_mps,
+  const double min_velocity)
 {
   /**
    * @brief relationships for interpolated polygon
@@ -86,28 +68,27 @@ bool createDetectionAreaPolygons(
   const size_t max_index = static_cast<size_t>(path.points.size() - 1);
   //! avoid bug with same point polygon
   const double eps = 1e-3;
-  auto nearest_idx = findNearestIndex(path.points, pose.position);
+  auto nearest_idx =
+    calcPointIndexFromSegmentIndex(path.points, target_pose.position, target_seg_idx);
   if (max_index == nearest_idx) return false;  // case of path point is not enough size
   auto p0 = path.points.at(nearest_idx).point;
   auto first_idx = nearest_idx + 1;
 
   // use ego point as start point if same point as ego is not in the path
   const auto dist_to_nearest =
-    std::fabs(calcSignedArcLength(path.points, pose.position, nearest_idx));
+    std::fabs(calcSignedArcLength(path.points, target_pose.position, target_seg_idx, nearest_idx));
   if (dist_to_nearest > eps) {
-    const auto nearest_seg_idx = motion_utils::findNearestSegmentIndex(path.points, pose.position);
-
     // interpolate ego point
     const auto & pp = path.points;
-    const double ds = calcDistance2d(pp.at(nearest_seg_idx), pp.at(nearest_seg_idx + 1));
-    const double dist_to_nearest_seg =
-      calcSignedArcLength(path.points, nearest_seg_idx, pose.position);
-    const double ratio = dist_to_nearest_seg / ds;
+    const double ds = calcDistance2d(pp.at(target_seg_idx), pp.at(target_seg_idx + 1));
+    const double dist_to_target_seg =
+      calcSignedArcLength(path.points, target_seg_idx, target_pose.position, target_seg_idx);
+    const double ratio = dist_to_target_seg / ds;
     p0 = getLerpPathPointWithLaneId(
-      pp.at(nearest_seg_idx).point, pp.at(nearest_seg_idx + 1).point, ratio);
+      pp.at(target_seg_idx).point, pp.at(target_seg_idx + 1).point, ratio);
 
     // new first index should be ahead of p0
-    first_idx = nearest_seg_idx + 1;
+    first_idx = target_seg_idx + 1;
   }
 
   double ttc = 0.0;
@@ -181,7 +162,7 @@ void getAllPartitionLanelets(const lanelet::LaneletMapConstPtr ll, BasicPolygons
     for (const auto & p : partition) {
       line.emplace_back(lanelet::BasicPoint2d{p.x(), p.y()});
     }
-    // corect line to calculate distance accuratry
+    // correct line to calculate distance in accurate
     boost::geometry::correct(line);
     polys.emplace_back(lanelet::BasicPolygon2d(line));
   }
@@ -231,7 +212,7 @@ void insertVelocity(
     std::min(static_cast<int>(insert_index + 1), static_cast<int>(path.points.size() - 1));
   for (int i = min_idx; i <= max_idx; i++) {
     if (calcDistance2d(path.points.at(static_cast<size_t>(i)), path_point) < min_distance) {
-      path.points.at(i).point.longitudinal_velocity_mps = 0;
+      path.points.at(i).point.longitudinal_velocity_mps = v;
       already_has_path_point = true;
       insert_index = static_cast<size_t>(i);
       // set velocity from is going to insert min velocity later
@@ -246,24 +227,44 @@ void insertVelocity(
   setVelocityFromIndex(insert_index, v, &path);
 }
 
-Polygon2d toFootprintPolygon(const PredictedObject & object)
-{
-  Polygon2d obj_footprint;
-  if (object.shape.type == Shape::POLYGON) {
-    obj_footprint = toBoostPoly(object.shape.footprint);
-  } else {
-    // cylinder type is treated as square-polygon
-    obj_footprint =
-      obj2polygon(object.kinematics.initial_pose_with_covariance.pose, object.shape.dimensions);
-  }
-  return obj_footprint;
-}
-
 bool isAheadOf(const geometry_msgs::msg::Pose & target, const geometry_msgs::msg::Pose & origin)
 {
   geometry_msgs::msg::Pose p = planning_utils::transformRelCoordinate2D(target, origin);
   const bool is_target_ahead = (p.position.x > 0.0);
   return is_target_ahead;
+}
+
+geometry_msgs::msg::Pose getAheadPose(
+  const size_t start_idx, const double ahead_dist,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
+{
+  if (path.points.size() == 0) {
+    return geometry_msgs::msg::Pose{};
+  }
+
+  double curr_dist = 0.0;
+  double prev_dist = 0.0;
+  for (size_t i = start_idx; i < path.points.size() - 1; ++i) {
+    const geometry_msgs::msg::Pose p0 = path.points.at(i).point.pose;
+    const geometry_msgs::msg::Pose p1 = path.points.at(i + 1).point.pose;
+    curr_dist += tier4_autoware_utils::calcDistance2d(p0, p1);
+    if (curr_dist > ahead_dist) {
+      const double dl = std::max(curr_dist - prev_dist, 0.0001 /* avoid 0 divide */);
+      const double w_p0 = (curr_dist - ahead_dist) / dl;
+      const double w_p1 = (ahead_dist - prev_dist) / dl;
+      geometry_msgs::msg::Pose p;
+      p.position.x = w_p0 * p0.position.x + w_p1 * p1.position.x;
+      p.position.y = w_p0 * p0.position.y + w_p1 * p1.position.y;
+      p.position.z = w_p0 * p0.position.z + w_p1 * p1.position.z;
+      tf2::Quaternion q0_tf, q1_tf;
+      tf2::fromMsg(p0.orientation, q0_tf);
+      tf2::fromMsg(p1.orientation, q1_tf);
+      p.orientation = tf2::toMsg(q0_tf.slerp(q1_tf, w_p1));
+      return p;
+    }
+    prev_dist = curr_dist;
+  }
+  return path.points.back().point.pose;
 }
 
 Polygon2d generatePathPolygon(
@@ -282,6 +283,8 @@ Polygon2d generatePathPolygon(
     const double y = path.points.at(i).point.pose.position.y + width * std::cos(yaw);
     ego_area.outer().push_back(Point2d(x, y));
   }
+
+  bg::correct(ego_area);
   return ego_area;
 }
 
@@ -509,38 +512,17 @@ LineString2d extendLine(
 
 boost::optional<int64_t> getNearestLaneId(
   const PathWithLaneId & path, const lanelet::LaneletMapPtr lanelet_map,
-  const geometry_msgs::msg::Pose & current_pose, boost::optional<size_t> & nearest_segment_idx)
+  const geometry_msgs::msg::Pose & current_pose)
 {
-  boost::optional<int64_t> nearest_lane_id;
-
-  nearest_segment_idx = motion_utils::findNearestSegmentIndex(
-    path.points, current_pose, std::numeric_limits<double>::max(), M_PI_2);
-
-  if (!nearest_segment_idx) {
-    return boost::none;
+  lanelet::ConstLanelets lanes;
+  const auto lane_ids = getSortedLaneIdsFromPath(path);
+  for (const auto & lane_id : lane_ids) {
+    lanes.push_back(lanelet_map->laneletLayer.get(lane_id));
   }
 
-  lanelet::ConstLanelets current_lanes;
-  if (
-    lanelet::utils::query::getCurrentLanelets(
-      lanelet::utils::query::laneletLayer(lanelet_map), current_pose, &current_lanes) &&
-    nearest_segment_idx) {
-    for (const auto & ll : current_lanes) {
-      if (ll.id() == path.points.at(*nearest_segment_idx).lane_ids.at(0)) {
-        nearest_lane_id = ll.id();
-        return nearest_lane_id;
-      }
-    }
-
-    // if the lane_id of nearest_segment_idx does not involved in current_lanes,
-    // search the lane_id of nearest_segment_idx + 1
-    *nearest_segment_idx += 1;
-    for (const auto & ll : current_lanes) {
-      if (ll.id() == path.points.at(*nearest_segment_idx).lane_ids.at(0)) {
-        nearest_lane_id = ll.id();
-        return nearest_lane_id;
-      }
-    }
+  lanelet::Lanelet closest_lane;
+  if (lanelet::utils::query::getClosestLanelet(lanes, current_pose, &closest_lane)) {
+    return closest_lane.id();
   }
   return boost::none;
 }
@@ -549,25 +531,16 @@ std::vector<lanelet::ConstLanelet> getLaneletsOnPath(
   const PathWithLaneId & path, const lanelet::LaneletMapPtr lanelet_map,
   const geometry_msgs::msg::Pose & current_pose)
 {
-  boost::optional<size_t> nearest_segment_idx;
-  const auto nearest_lane_id =
-    getNearestLaneId(path, lanelet_map, current_pose, nearest_segment_idx);
+  const auto nearest_lane_id = getNearestLaneId(path, lanelet_map, current_pose);
 
   std::vector<int64_t> unique_lane_ids;
   if (nearest_lane_id) {
-    unique_lane_ids.emplace_back(*nearest_lane_id);
-  }
-
-  // Add forward path lane_id
-  const size_t start_idx = nearest_segment_idx ? *nearest_segment_idx : 0;
-  for (size_t i = start_idx; i < path.points.size(); i++) {
-    for (const int64_t lane_id : path.points.at(i).lane_ids) {
-      if (
-        std::find(unique_lane_ids.begin(), unique_lane_ids.end(), lane_id) ==
-        unique_lane_ids.end()) {
-        unique_lane_ids.emplace_back(lane_id);
-      }
-    }
+    // Add subsequent lane_ids from nearest lane_id
+    unique_lane_ids = behavior_velocity_planner::planning_utils::getSubsequentLaneIdsSetOnPath(
+      path, *nearest_lane_id);
+  } else {
+    // Add all lane_ids in path
+    unique_lane_ids = behavior_velocity_planner::planning_utils::getSortedLaneIdsFromPath(path);
   }
 
   std::vector<lanelet::ConstLanelet> lanelets;
@@ -588,6 +561,105 @@ std::set<int64_t> getLaneIdSetOnPath(
   }
 
   return lane_id_set;
+}
+
+std::vector<int64_t> getSortedLaneIdsFromPath(const PathWithLaneId & path)
+{
+  std::vector<int64_t> sorted_lane_ids;
+  for (const auto & path_points : path.points) {
+    for (const auto lane_id : path_points.lane_ids)
+      if (
+        std::find(sorted_lane_ids.begin(), sorted_lane_ids.end(), lane_id) ==
+        sorted_lane_ids.end()) {
+        sorted_lane_ids.emplace_back(lane_id);
+      }
+  }
+  return sorted_lane_ids;
+}
+
+std::vector<int64_t> getSubsequentLaneIdsSetOnPath(
+  const PathWithLaneId & path, int64_t base_lane_id)
+{
+  const auto all_lane_ids = getSortedLaneIdsFromPath(path);
+  const auto base_index = std::find(all_lane_ids.begin(), all_lane_ids.end(), base_lane_id);
+
+  // cannot find base_index in all_lane_ids
+  if (base_index == all_lane_ids.end()) {
+    return std::vector<int64_t>();
+  }
+
+  std::vector<int64_t> subsequent_lane_ids;
+
+  std::copy(base_index, all_lane_ids.end(), std::back_inserter(subsequent_lane_ids));
+  return subsequent_lane_ids;
+}
+
+// TODO(murooka) remove calcSignedArcLength using findNearestSegmentIndex
+bool isOverLine(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  const geometry_msgs::msg::Pose & self_pose, const geometry_msgs::msg::Pose & line_pose,
+  const double offset)
+{
+  return motion_utils::calcSignedArcLength(path.points, self_pose.position, line_pose.position) +
+           offset <
+         0.0;
+}
+
+boost::optional<geometry_msgs::msg::Pose> insertDecelPoint(
+  const geometry_msgs::msg::Point & stop_point, PathWithLaneId & output,
+  const float target_velocity)
+{
+  // TODO(tanaka): consider proper overlap threshold for inserting decel point
+  const double overlap_threshold = 5e-2;
+  // TODO(murooka): remove this function for u-turn and crossing-path
+  const size_t base_idx = motion_utils::findNearestSegmentIndex(output.points, stop_point);
+  const auto insert_idx =
+    motion_utils::insertTargetPoint(base_idx, stop_point, output.points, overlap_threshold);
+
+  if (!insert_idx) {
+    return {};
+  }
+
+  for (size_t i = insert_idx.get(); i < output.points.size(); ++i) {
+    const auto & original_velocity = output.points.at(i).point.longitudinal_velocity_mps;
+    output.points.at(i).point.longitudinal_velocity_mps =
+      std::min(original_velocity, target_velocity);
+  }
+  return tier4_autoware_utils::getPose(output.points.at(insert_idx.get()));
+}
+
+// TODO(murooka): remove this function for u-turn and crossing-path
+boost::optional<geometry_msgs::msg::Pose> insertStopPoint(
+  const geometry_msgs::msg::Point & stop_point, PathWithLaneId & output)
+{
+  const size_t base_idx = motion_utils::findNearestSegmentIndex(output.points, stop_point);
+  const auto insert_idx = motion_utils::insertTargetPoint(base_idx, stop_point, output.points);
+
+  if (!insert_idx) {
+    return {};
+  }
+
+  for (size_t i = insert_idx.get(); i < output.points.size(); ++i) {
+    output.points.at(i).point.longitudinal_velocity_mps = 0.0;
+  }
+
+  return tier4_autoware_utils::getPose(output.points.at(insert_idx.get()));
+}
+
+boost::optional<geometry_msgs::msg::Pose> insertStopPoint(
+  const geometry_msgs::msg::Point & stop_point, const size_t stop_seg_idx, PathWithLaneId & output)
+{
+  const auto insert_idx = motion_utils::insertTargetPoint(stop_seg_idx, stop_point, output.points);
+
+  if (!insert_idx) {
+    return {};
+  }
+
+  for (size_t i = insert_idx.get(); i < output.points.size(); ++i) {
+    output.points.at(i).point.longitudinal_velocity_mps = 0.0;
+  }
+
+  return tier4_autoware_utils::getPose(output.points.at(insert_idx.get()));
 }
 }  // namespace planning_utils
 }  // namespace behavior_velocity_planner

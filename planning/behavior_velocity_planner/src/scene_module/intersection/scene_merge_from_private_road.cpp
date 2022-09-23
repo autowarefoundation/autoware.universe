@@ -40,7 +40,7 @@ MergeFromPrivateRoadModule::MergeFromPrivateRoadModule(
 : SceneModuleInterface(module_id, logger, clock), lane_id_(lane_id)
 {
   planner_param_ = planner_param;
-  state_machine_.setState(State::STOP);
+  state_machine_.setState(StateMachine::State::STOP);
 }
 
 bool MergeFromPrivateRoadModule::modifyPathVelocity(
@@ -54,8 +54,9 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(
   const auto input_path = *path;
   debug_data_.path_raw = input_path;
 
-  State current_state = state_machine_.getState();
-  RCLCPP_DEBUG(logger_, "lane_id = %ld, state = %s", lane_id_, toString(current_state).c_str());
+  StateMachine::State current_state = state_machine_.getState();
+  RCLCPP_DEBUG(
+    logger_, "lane_id = %ld, state = %s", lane_id_, StateMachine::toString(current_state).c_str());
 
   /* get current pose */
   geometry_msgs::msg::PoseStamped current_pose = planner_data_->current_pose;
@@ -67,13 +68,10 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(
   /* get detection area */
   lanelet::ConstLanelets detection_area_lanelets;
   std::vector<lanelet::ConstLanelets> conflicting_area_lanelets;
-  std::vector<lanelet::ConstLanelets> detection_area_lanelets_with_margin;
 
   util::getObjectiveLanelets(
     lanelet_map_ptr, routing_graph_ptr, lane_id_, planner_param_.detection_area_length,
-    planner_param_.detection_area_right_margin, planner_param_.detection_area_left_margin,
-    &conflicting_area_lanelets, &detection_area_lanelets, &detection_area_lanelets_with_margin,
-    logger_);
+    &conflicting_area_lanelets, &detection_area_lanelets, logger_);
   std::vector<lanelet::CompoundPolygon3d> conflicting_areas = util::getPolygon3dFromLaneletsVec(
     conflicting_area_lanelets, planner_param_.detection_area_length);
   if (conflicting_areas.empty()) {
@@ -83,35 +81,35 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(
   debug_data_.detection_area = conflicting_areas;
 
   /* set stop-line and stop-judgement-line for base_link */
-  int stop_line_idx = -1;
-  int judge_line_idx = -1;
-  int first_idx_inside_lane = -1;
+  util::StopLineIdx stop_line_idxs;
   const auto private_path =
     extractPathNearExitOfPrivateRoad(*path, planner_data_->vehicle_info_.vehicle_length_m);
   if (!util::generateStopLine(
-        lane_id_, conflicting_areas, planner_data_, planner_param_.stop_line_margin, path,
-        private_path, &stop_line_idx, &judge_line_idx, &first_idx_inside_lane,
+        lane_id_, conflicting_areas, planner_data_, planner_param_.stop_line_margin,
+        0.0 /* unnecessary in merge_from_private */, path, private_path, &stop_line_idxs,
         logger_.get_child("util"))) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(logger_, *clock_, 1000 /* ms */, "setStopLineIdx fail");
     return false;
   }
 
-  if (stop_line_idx <= 0 || judge_line_idx <= 0) {
-    RCLCPP_DEBUG(logger_, "stop line or judge line is at path[0], ignore planning.");
+  const int stop_line_idx = stop_line_idxs.stop_line_idx;
+  if (stop_line_idx <= 0) {
+    RCLCPP_DEBUG(logger_, "stop line is at path[0], ignore planning.");
     return true;
   }
 
-  debug_data_.virtual_wall_pose = util::getAheadPose(
+  debug_data_.virtual_wall_pose = planning_utils::getAheadPose(
     stop_line_idx, planner_data_->vehicle_info_.max_longitudinal_offset_m, *path);
   debug_data_.stop_point_pose = path->points.at(stop_line_idx).point.pose;
+  const int first_idx_inside_lane = stop_line_idxs.first_idx_inside_lane;
   if (first_idx_inside_lane != -1) {
     debug_data_.first_collision_point = path->points.at(first_idx_inside_lane).point.pose.position;
   }
 
   /* set stop speed */
-  if (state_machine_.getState() == State::STOP) {
+  if (state_machine_.getState() == StateMachine::State::STOP) {
     constexpr double v = 0.0;
-    util::setVelocityFrom(stop_line_idx, v, path);
+    planning_utils::setVelocityFromIndex(stop_line_idx, v, path);
 
     /* get stop point and stop factor */
     tier4_planning_msgs::msg::StopFactor stop_factor;
@@ -126,7 +124,7 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(
     if (
       signed_arc_dist_to_stop_point < distance_threshold &&
       planner_data_->isVehicleStopped(planner_param_.stop_duration_sec)) {
-      state_machine_.setState(State::GO);
+      state_machine_.setState(StateMachine::State::GO);
       if (signed_arc_dist_to_stop_point < -distance_threshold) {
         RCLCPP_ERROR(logger_, "Failed to stop near stop line but ego stopped. Change state to GO");
       }
@@ -178,14 +176,5 @@ MergeFromPrivateRoadModule::extractPathNearExitOfPrivateRoad(
 
   std::reverse(private_path.points.begin(), private_path.points.end());
   return private_path;
-}
-
-void MergeFromPrivateRoadModule::StateMachine::setState(State state) { state_ = state; }
-
-void MergeFromPrivateRoadModule::StateMachine::setMarginTime(const double t) { margin_time_ = t; }
-
-MergeFromPrivateRoadModule::State MergeFromPrivateRoadModule::StateMachine::getState()
-{
-  return state_;
 }
 }  // namespace behavior_velocity_planner

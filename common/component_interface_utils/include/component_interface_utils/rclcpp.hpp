@@ -33,6 +33,10 @@ private:
   using CallbackGroup = rclcpp::CallbackGroup::SharedPtr;
 
   template <class SharedPtrT, class InstanceT>
+  using MessageCallback =
+    void (InstanceT::*)(const typename SharedPtrT::element_type::SpecType::Message::ConstSharedPtr);
+
+  template <class SharedPtrT, class InstanceT>
   using ServiceCallback = void (InstanceT::*)(
     const typename SharedPtrT::element_type::SpecType::Service::Request::SharedPtr,
     const typename SharedPtrT::element_type::SpecType::Service::Response::SharedPtr);
@@ -87,21 +91,30 @@ public:
   void relay_service(
     C & cli, S & srv, CallbackGroup group, std::optional<double> timeout = std::nullopt) const
   {
-    using ReqT = typename C::element_type::SpecType::Service::Request::SharedPtr;
-    using ResT = typename C::element_type::SpecType::Service::Response::SharedPtr;
     init_cli(cli);
     init_srv(
-      srv, [cli, timeout](ReqT req, ResT res) { *res = *cli->call(req, timeout); }, group);
+      srv, [cli, timeout](auto req, auto res) { *res = *cli->call(req, timeout); }, group);
+  }
+
+  /// Create a subscription wrapper.
+  template <class SharedPtrT, class InstanceT>
+  void init_sub(
+    SharedPtrT & sub, InstanceT * instance,
+    MessageCallback<SharedPtrT, InstanceT> && callback) const
+  {
+    using std::placeholders::_1;
+    init_sub(sub, std::bind(callback, instance, _1));
   }
 
   /// Create a service wrapper for logging.
   template <class SharedPtrT, class InstanceT>
   void init_srv(
-    SharedPtrT & srv, InstanceT * instance, ServiceCallback<SharedPtrT, InstanceT> callback,
+    SharedPtrT & srv, InstanceT * instance, ServiceCallback<SharedPtrT, InstanceT> && callback,
     CallbackGroup group = nullptr) const
   {
-    init_srv(
-      srv, [instance, callback](auto req, auto res) { (instance->*callback)(req, res); }, group);
+    using std::placeholders::_1;
+    using std::placeholders::_2;
+    init_srv(srv, std::bind(callback, instance, _1, _2), group);
   }
 
 private:
