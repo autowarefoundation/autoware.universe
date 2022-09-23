@@ -695,7 +695,7 @@ TEST_F(FakeNodeFixture, turnRight)
 
   double yawpath = ns_utils::deg2rad(15.);
   double yawerror = ns_utils::deg2rad(1.);
-  double ey = 0.2; // lateral error of the vehicle w.r.t path
+  double ey = 0.2;  // lateral error of the vehicle w.r.t path
 
   double spath = 0.;
   double vpath = 10.;
@@ -779,7 +779,6 @@ TEST_F(FakeNodeFixture, turnRight)
   EXPECT_DOUBLE_EQ(nmpcperf_msg->long_velocity_target, vpath);
 
   EXPECT_GT(rclcpp::Time(cmd_msg->stamp), rclcpp::Time(traj_msg.header.stamp));
-
 }
 
 TEST_F(FakeNodeFixture, turnLeft)
@@ -836,7 +835,7 @@ TEST_F(FakeNodeFixture, turnLeft)
 
   double yawpath = ns_utils::deg2rad(15.);
   double yawerror = ns_utils::deg2rad(-1.);
-  double ey = 0.2; // lateral error of the vehicle w.r.t path
+  double ey = 0.2;  // lateral error of the vehicle w.r.t path
 
   double spath = 0.;
   double vpath = 10.;
@@ -920,5 +919,4 @@ TEST_F(FakeNodeFixture, turnLeft)
   EXPECT_DOUBLE_EQ(nmpcperf_msg->long_velocity_target, vpath);
 
   EXPECT_GT(rclcpp::Time(cmd_msg->stamp), rclcpp::Time(traj_msg.header.stamp));
-
 }
