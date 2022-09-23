@@ -587,7 +587,7 @@ TEST_F(FakeNodeFixture, straightTrajectoryTest)
 
   VelocityMsg vel_msg;
   vel_msg.header.stamp = node->now();
-  vel_msg.twist.twist.linear.x = vpath - 1.;
+  vel_msg.twist.twist.linear.x = vpath;
 
   SteeringReport steer_msg;
   steer_msg.stamp = node->now();
@@ -728,7 +728,7 @@ TEST_F(FakeNodeFixture, turnRight)
 
   VelocityMsg vel_msg;
   vel_msg.header.stamp = node->now();
-  vel_msg.twist.twist.linear.x = vpath;
+  vel_msg.twist.twist.linear.x = vpath +2.;
 
   SteeringReport steer_msg;
   steer_msg.stamp = node->now();
