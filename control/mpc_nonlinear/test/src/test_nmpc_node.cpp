@@ -579,15 +579,15 @@ TEST_F(FakeNodeFixture, straightTrajectoryTest)
   // Dummy transform: ego is at (0.0, 0.0) in map frame
   double yaw_vehicle = yawpath;
   geometry_msgs::msg::TransformStamped transform = test_utils::getDummyTransform(yaw_vehicle);
-  transform.transform.translation.x = xw[20];
-  transform.transform.translation.y = yw[20];
+  transform.transform.translation.x = xw[0];
+  transform.transform.translation.y = yw[0];
 
   transform.header.stamp = node->now();
   br->sendTransform(transform);
 
   VelocityMsg vel_msg;
   vel_msg.header.stamp = node->now();
-  vel_msg.twist.twist.linear.x = vpath;
+  vel_msg.twist.twist.linear.x = vpath - 1.;
 
   SteeringReport steer_msg;
   steer_msg.stamp = node->now();
@@ -606,6 +606,7 @@ TEST_F(FakeNodeFixture, straightTrajectoryTest)
     node, this, is_control_command_received, std::chrono::seconds{1LL}, false);
 
   test_utils::waitForMessage(node, this, is_nmpc_msg_received, std::chrono::seconds{1LL}, false);
+  test_utils::spinWhile(node);
 
   // DEBUG
   ns_utils::print("is nmpc perf msg received ?", is_nmpc_msg_received);
@@ -625,10 +626,13 @@ TEST_F(FakeNodeFixture, straightTrajectoryTest)
   ASSERT_TRUE(is_control_command_received);
   ASSERT_TRUE(is_nmpc_msg_received);
 
-  EXPECT_LE(cmd_msg->lateral.steering_tire_angle, 1e-6f);
-  EXPECT_LE(cmd_msg->lateral.steering_tire_rotation_rate, 1e-6f);
-  EXPECT_LE(cmd_msg->longitudinal.acceleration, 1e-6f);
-  // EXPECT_DOUBLE_EQ(nmpcperf_msg->long_velocity_target, vpath);
+  EXPECT_LE(std::fabs(cmd_msg->lateral.steering_tire_angle), 1e-6f);
+  EXPECT_GE(cmd_msg->longitudinal.acceleration,
+            static_cast<decltype(cmd_msg->longitudinal.acceleration)>(0));
+
+  EXPECT_LE(std::fabs(nmpcperf_msg->nmpc_lateral_error), 1e-4);
+  EXPECT_LE(std::fabs(nmpcperf_msg->nmpc_yaw_error), 1e-4);
+  EXPECT_DOUBLE_EQ(nmpcperf_msg->long_velocity_target, vpath);
 
   EXPECT_GT(rclcpp::Time(cmd_msg->stamp), rclcpp::Time(traj_msg.header.stamp));
 }
@@ -763,10 +767,17 @@ TEST_F(FakeNodeFixture, turnRight)
   ASSERT_TRUE(is_control_command_received);
   ASSERT_TRUE(is_nmpc_msg_received);
 
-  EXPECT_LE(cmd_msg->lateral.steering_tire_angle, 1e-6f);
-  EXPECT_LE(cmd_msg->lateral.steering_tire_rotation_rate, 1e-6f);
-  EXPECT_LE(cmd_msg->longitudinal.acceleration, 1e-6f);
+
   // EXPECT_DOUBLE_EQ(nmpcperf_msg->long_velocity_target, vpath);
 
+  EXPECT_LE(cmd_msg->lateral.steering_tire_angle,
+            static_cast<decltype(cmd_msg->lateral.steering_tire_angle)>(0));
+
+  EXPECT_GE(cmd_msg->longitudinal.acceleration,
+            static_cast<decltype(cmd_msg->lateral.steering_tire_angle)>(0));
+
+  EXPECT_DOUBLE_EQ(nmpcperf_msg->long_velocity_target, vpath);
+
   EXPECT_GT(rclcpp::Time(cmd_msg->stamp), rclcpp::Time(traj_msg.header.stamp));
+
 }
