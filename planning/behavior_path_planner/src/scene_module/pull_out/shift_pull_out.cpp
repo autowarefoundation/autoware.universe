@@ -167,6 +167,7 @@ std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
       double s_end = arc_position_goal.length;
       road_lane_reference_path = route_handler.getCenterLinePath(road_lanes, s_start, s_end);
     }
+    path_shifter.setPath(road_lane_reference_path);
 
     // get shift point start/end
     const auto shift_point_start = shoulder_reference_path.points.back();
@@ -186,7 +187,6 @@ std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
       shift_point.length = distance_to_road_center;
     }
     path_shifter.addShiftPoint(shift_point);
-    path_shifter.setPath(road_lane_reference_path);
 
     // offset front side
     ShiftedPath shifted_path;
