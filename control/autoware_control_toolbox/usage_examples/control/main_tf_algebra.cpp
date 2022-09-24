@@ -14,9 +14,10 @@
 
 #include "autoware_control_toolbox.hpp"
 
-void print(std::vector<double> const & x)
+void print(std::vector<double> const &x)
 {
-  for (auto y : x) {
+  for (auto y : x)
+  {
     std::cout << y << " \t";
   }
 
@@ -28,16 +29,19 @@ int main()
   std::vector<double> a{1, 4};
   std::vector<double> b{3, 8, 7, 1.2};
 
-  // Create two tfs
+  // Create two TF-factors.
   ns_control_toolbox::tf_factor tf1(a);
   ns_control_toolbox::tf_factor tf2(b);
 
-  // Add two tf factors.
+  // Add two TF-factors.
   auto tf3 = tf1 + tf2;
+
+  ns_utils::print("TF factors summation : ");
   print(tf3());
 
   // Subtract two factors
   auto tf4 = tf1 - tf2;
+  ns_utils::print("TF factors subtraction : ");
   print(tf4());
 
   // BOOST POLYNOMIAL stores  1, x, x^2 ... x^n
@@ -46,12 +50,15 @@ int main()
   ns_control_toolbox::boost_polynomial const b1{{10, -6, -4, 3}};
   ns_control_toolbox::boost_polynomial const b2{{-2, 1}};
 
+  // Boost polynomial storage.
   auto c1 = b1 * b2;
 
   ns_utils::print("\nBoost Storage : \n");
-  for (size_t i = 0; i < c1.size(); ++i) {
+  for (size_t i = 0; i < c1.size(); ++i)
+  {
     std::cout << c1[i] << '\t';
   }
+
   std::cout << std::endl;
 
   // formula_format() converts from Boost storage to human notation.
@@ -66,10 +73,12 @@ int main()
   ns_utils::print("Matlab Results  : 3 s^4 + 20 s^3 + 39 s^2 + 29.2 s + 4.8 \n");
 
   auto tf5 = tf1 * tf2;
-  // auto tf6 = tf5 * tf2;
+
+  ns_utils::print("\n Multiplication of tf1, tf2 \n");
+
   print(tf5());
 
-  // Power of tf
+  // Power of a TF-factor.
   ns_control_toolbox::tf_factor tf7({0.2, 1.1});
   tf7.power(3);
 
@@ -91,7 +100,7 @@ int main()
 
   // Test tf factor default constructor.
   ns_control_toolbox::tf_factor aa{};
-  ns_utils::print("tfactor default constructor : ", aa()[0]);
+  ns_utils::print("Tfactor default constructor : ", aa()[0]);
 
   return 0;
 }
