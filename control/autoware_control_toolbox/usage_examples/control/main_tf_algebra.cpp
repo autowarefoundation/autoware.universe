@@ -75,7 +75,6 @@ int main()
   auto tf5 = tf1 * tf2;
 
   ns_utils::print("\n Multiplication of tf1, tf2 \n");
-
   print(tf5());
 
   // Power of a TF-factor.

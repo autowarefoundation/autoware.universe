@@ -50,9 +50,14 @@ int main()
   tf_from_tf_factors.print();
 
   // Transfer function multiplication.
+  // Construct by defining the constant multipliers sys(s) = tf(num, den, a, b)
   ns_control_toolbox::tf tf1{{5}, {1, 0}, 2., 7.};
   ns_control_toolbox::tf tf2{{2}, {1, 1}, 3., 3.};
 
+  ns_utils::print("tf2(s) = tf(num, den, a, b) : ");
+  tf2.print();
+
+  // Multiplication
   auto tf3 = tf1 * tf2;
 
   ns_utils::print("TF TF multiplication with num den constants ");
