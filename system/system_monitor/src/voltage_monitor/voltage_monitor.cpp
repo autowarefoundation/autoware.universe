@@ -83,7 +83,7 @@ void VoltageMonitor::checkVoltage(diagnostic_updater::DiagnosticStatusWrapper & 
   float voltage = 0.0;
 
   int out_fd[2];
-  if (pipe2(out_fd, O_CLOEXEC) != 0) {
+  if (RCUTILS_UNLIKELY(pipe2(out_fd, O_CLOEXEC) != 0)) {
     stat.summary(DiagStatus::ERROR, "pipe2 error");
     stat.add("pipe2", strerror(errno));
     return;
@@ -92,7 +92,7 @@ void VoltageMonitor::checkVoltage(diagnostic_updater::DiagnosticStatusWrapper & 
   bp::ipstream is_out{std::move(out_pipe)};
 
   int err_fd[2];
-  if (pipe2(err_fd, O_CLOEXEC) != 0) {
+  if (RCUTILS_UNLIKELY(pipe2(err_fd, O_CLOEXEC) != 0)) {
     stat.summary(DiagStatus::ERROR, "pipe2 error");
     stat.add("pipe2", strerror(errno));
     return;
@@ -146,8 +146,25 @@ void VoltageMonitor::checkBatteryStatus(diagnostic_updater::DiagnosticStatusWrap
   const auto t_start = SystemMonitorUtility::startMeasurement();
 
   // Get status of RTC
-  bp::ipstream is_out;
-  bp::ipstream is_err;
+  int out_fd[2];
+  if (RCUTILS_UNLIKELY(pipe2(out_fd, O_CLOEXEC) != 0)) {
+    stat.summary(DiagStatus::ERROR, "pipe2 error");
+    stat.add("pipe2", strerror(errno));
+    return;
+  }
+  bp::pipe 
+  {out_fd[0], out_fd[1]};
+  bp::ipstream is_out{std::move(out_pipe)};
+
+  int err_fd[2];
+  if (RCUTILS_UNLIKELY(pipe2(err_fd, O_CLOEXEC) != 0)) {
+    stat.summary(DiagStatus::ERROR, "pipe2 error");
+    stat.add("pipe2", strerror(errno));
+    return;
+  }
+  bp::pipe err_pipe{err_fd[0], err_fd[1]};
+  bp::ipstream is_err{std::move(err_pipe)};
+
   bp::child c("cat /proc/driver/rtc", bp::std_out > is_out, bp::std_err > is_err);
   c.wait();
 

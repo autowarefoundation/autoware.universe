@@ -211,6 +211,8 @@ fan2:             0 RPM  (min =    0 RPM)
 ```
 
 The setting value of voltage_monitor.param.yaml is as follows.
+If the battery voltage drops below voltage_error or voltage_warn,It will be a warning.
+If the CMOS battery runs out, the RTC will stop working when the power is turned off. However, since the vehicle can run, it is not an error. The vehicle will stop when an error occurs, but there is no need to stop immediately.
 
 ```yaml
 /**:
