@@ -605,37 +605,31 @@ bool PullOutModule::hasFinishedCurrentPath()
 
 TurnSignalInfo PullOutModule::calcTurnSignalInfo(const Pose start_pose, const Pose end_pose) const
 {
-  TurnSignalInfo turn_signal;
+  TurnSignalInfo turn_signal{};  // output
 
-  // turn hazard light when backward driving
+  const Pose & current_pose = planner_data_->self_pose->pose;
+
+  // turn on hazard light when backward driving
   if (!status_.back_finished) {
     turn_signal.hazard_signal.command = HazardLightsCommand::ENABLE;
-    turn_signal.desired_start_point = start_pose.position;
-    turn_signal.required_start_point = start_pose.position;
-    turn_signal.required_end_point = end_pose.position;
-    turn_signal.desired_end_point = end_pose.position;
-    // turn_signal.signal_distance =
-    // tier4_autoware_utils::calcDistance2d(start_pose, planner_data_->self_pose->pose);
+    turn_signal.desired_start_point = current_pose.position;
+    turn_signal.required_start_point = current_pose.position;
+    // pull_out start_pose is same to backward driving end_pose
+    turn_signal.required_end_point = start_pose.position;
+    turn_signal.desired_end_point = start_pose.position;
     return turn_signal;
   }
 
-  // calculate distance to pull_out end on target lanes
-  const auto current_lanes = getCurrentLanes();
-  const auto arc_position_current_pose =
-    lanelet::utils::getArcCoordinates(current_lanes, planner_data_->self_pose->pose);
-  const auto arc_position_pull_out_end = lanelet::utils::getArcCoordinates(current_lanes, end_pose);
-  const double distance_from_pull_out_end =
-    arc_position_current_pose.length - arc_position_pull_out_end.length;
-
   // turn on right signal until passing pull_out end point
-  const double turn_signal_off_buffer = std::min(parameters_.pull_out_finish_judge_buffer, 3.0);
-  if (distance_from_pull_out_end < turn_signal_off_buffer) {
+  const auto path = getFullPath();
+  // pull out path does not overlap
+  const double distance_from_end =
+    motion_utils::calcSignedArcLength(path.points, end_pose.position, current_pose.position);
+  if (distance_from_end < parameters_.pull_out_finish_judge_buffer) {
     turn_signal.turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
   } else {
     turn_signal.turn_signal.command = TurnIndicatorsCommand::DISABLE;
   }
-
-  // turn_signal.signal_distance = -distance_from_pull_out_end + turn_signal_off_buffer;
 
   return turn_signal;
 }
