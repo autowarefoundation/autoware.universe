@@ -439,17 +439,12 @@ void FreespacePlannerNode::onTimer()
   initializePlanningAlgorithm();
   if (isPlanRequired()) {
     // Stop before planning new trajectory
-    if (partial_trajectory_.points.size() > 0) {
-      const auto stop_trajectory = createStopTrajectory(partial_trajectory_);
-      trajectory_pub_->publish(stop_trajectory);
-      debug_pose_array_pub_->publish(trajectory2PoseArray(stop_trajectory));
-      debug_partial_pose_array_pub_->publish(trajectory2PoseArray(stop_trajectory));
-    } else {
-      const auto stop_trajectory = createStopTrajectory(current_pose_);
-      trajectory_pub_->publish(stop_trajectory);
-      debug_pose_array_pub_->publish(trajectory2PoseArray(stop_trajectory));
-      debug_partial_pose_array_pub_->publish(trajectory2PoseArray(stop_trajectory));
-    }
+    const auto stop_trajectory  = partial_trajectory_.points.size() > 0 ?
+                                  createStopTrajectory(partial_trajectory_):
+                                  createStopTrajectory(current_pose_);
+    trajectory_pub_->publish(stop_trajectory);
+    debug_pose_array_pub_->publish(trajectory2PoseArray(stop_trajectory));
+    debug_partial_pose_array_pub_->publish(trajectory2PoseArray(stop_trajectory));
 
     reset();
 
