@@ -398,8 +398,6 @@ bool PullOverModule::planWithEfficientPath()
       }
       modified_goal_pose_ = goal_candidate.goal_pose;
       status_.pull_over_path = *pull_over_path;
-      status_.full_path = pull_over_path->path;
-      status_.path = getCurrentPath();
       status_.planner = planner;
       return true;  // found safe path
     }
@@ -419,8 +417,6 @@ bool PullOverModule::planWithCloseGoal()
       }
       modified_goal_pose_ = goal_candidate.goal_pose;
       status_.pull_over_path = *pull_over_path;
-      status_.full_path = pull_over_path->path;
-      status_.path = getCurrentPath();
       status_.planner = planner;
       return true;  // found safe path
     }
@@ -442,7 +438,7 @@ BehaviorModuleOutput PullOverModule::plan()
   // Check if it needs to decide path
   if (status_.is_safe) {
     const auto dist_to_parking_start_pose = calcSignedArcLength(
-      status_.path.points, planner_data_->self_pose->pose,
+      getCurrentPath().points, planner_data_->self_pose->pose,
       status_.pull_over_path.start_pose.position, std::numeric_limits<double>::max(), M_PI_2);
 
     if (*dist_to_parking_start_pose < parameters_.decide_path_distance) {
@@ -467,10 +463,11 @@ BehaviorModuleOutput PullOverModule::plan()
 
       // decide velocity to guarantee turn signal lighting time
       if (!status_.has_decided_velocity) {
+        auto & first_path = status_.pull_over_path.partial_paths.front();
         const auto vel = static_cast<float>(std::max(
           planner_data_->self_odometry->twist.twist.linear.x,
           parameters_.pull_over_minimum_velocity));
-        for (auto & p : status_.path.points) {
+        for (auto & p : first_path.points) {
           p.point.longitudinal_velocity_mps = std::min(p.point.longitudinal_velocity_mps, vel);
         }
       }
@@ -485,7 +482,6 @@ BehaviorModuleOutput PullOverModule::plan()
 
       if (hasFinishedCurrentPath() && has_passed_enough_time) {
         incrementPathIndex();
-        status_.path = getCurrentPath();
       }
     }
 
@@ -507,12 +503,13 @@ BehaviorModuleOutput PullOverModule::plan()
 
     // Decelerate before the minimum shift distance from the goal search area.
     if (status_.is_safe) {
+      auto & first_path = status_.pull_over_path.partial_paths.front();
       const auto arc_coordinates =
         lanelet::utils::getArcCoordinates(status_.current_lanes, refined_goal_pose_);
       const Pose search_start_pose = calcOffsetPose(
         refined_goal_pose_, -parameters_.backward_goal_search_length, -arc_coordinates.distance, 0);
-      status_.path = util::setDecelerationVelocity(
-        status_.path, parameters_.pull_over_velocity, search_start_pose,
+      first_path = util::setDecelerationVelocity(
+        first_path, parameters_.pull_over_velocity, search_start_pose,
         -calcMinimumShiftPathDistance(), parameters_.deceleration_interval);
     }
   }
@@ -630,11 +627,12 @@ BehaviorModuleOutput PullOverModule::planWaitingApproval()
 
 std::pair<double, double> PullOverModule::calcDistanceToPathChange() const
 {
+  const auto & full_path = getFullPath();
   const auto dist_to_parking_start_pose = calcSignedArcLength(
-    status_.path.points, planner_data_->self_pose->pose, status_.pull_over_path.start_pose.position,
+    full_path.points, planner_data_->self_pose->pose, status_.pull_over_path.start_pose.position,
     std::numeric_limits<double>::max(), M_PI_2);
   const double dist_to_parking_finish_pose = calcSignedArcLength(
-    status_.path.points, planner_data_->self_pose->pose.position, modified_goal_pose_.position);
+    full_path.points, planner_data_->self_pose->pose.position, modified_goal_pose_.position);
   const double start_distance_to_path_change =
     dist_to_parking_start_pose ? *dist_to_parking_start_pose : std::numeric_limits<double>::max();
   return {start_distance_to_path_change, dist_to_parking_finish_pose};
