@@ -39,15 +39,15 @@ PoseArrayInterpolator::PoseArrayInterpolator(
 : PoseArrayInterpolator(node, target_ros_time, pose_msg_ptr_array)
 {
   // check the time stamp
-  bool is_old_pose_valid = validate_time_stamp_difference(
-                          old_pose_ptr_->header.stamp, target_ros_time, pose_timeout_sec);
-  bool is_new_pose_valid = validate_time_stamp_difference(
-                          new_pose_ptr_->header.stamp, target_ros_time, pose_timeout_sec);
+  bool is_old_pose_valid =
+    validate_time_stamp_difference(old_pose_ptr_->header.stamp, target_ros_time, pose_timeout_sec);
+  bool is_new_pose_valid =
+    validate_time_stamp_difference(new_pose_ptr_->header.stamp, target_ros_time, pose_timeout_sec);
 
   // check the position jumping (ex. immediately after the initial pose estimation)
   bool is_pose_diff_valid = validate_position_difference(
-                          old_pose_ptr_->pose.pose.position, new_pose_ptr_->pose.pose.position,
-                          pose_distance_tolerance_meters);
+    old_pose_ptr_->pose.pose.position, new_pose_ptr_->pose.pose.position,
+    pose_distance_tolerance_meters);
 
   // all validations must be true
   if (!(is_old_pose_valid & is_new_pose_valid & is_pose_diff_valid)) {
