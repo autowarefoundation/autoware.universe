@@ -150,9 +150,7 @@ private:
     const Pose & ego_pose, const PredictedObjects & dynamic_objects) const;
   bool checkCollisionWithPose(const Pose & pose) const;
 
-  // turn signal
-  std::pair<HazardLightsCommand, double> getHazardInfo() const;
-  std::pair<TurnIndicatorsCommand, double> getTurnInfo() const;
+  TurnSignalInfo calcTurnSignalInfo() const;
 
   // debug
   void setDebugData();
