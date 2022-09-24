@@ -30,12 +30,11 @@ int main()
   ss_sys.print();
 
   // Test discretization and compare with Matlab.
-  double Ts = 0.1;
+  double Ts = 0.1; // sampling time.
 
-  // ss_sys.discretisize(Ts);
+  // Print discrete state-space representation
   ss_sys.print_discrete_system();
 
-  //
   ns_utils::print("Discretization with a given Ts when constructing");
   Ts = 0.15;
   auto sys_ss2 = ns_control_toolbox::tf2ss(tf_delay, Ts);
