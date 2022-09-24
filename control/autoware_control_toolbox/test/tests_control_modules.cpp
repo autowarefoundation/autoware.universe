@@ -238,7 +238,6 @@ TEST(ACTcontrol, multiplyTFfactors)
   ASSERT_TRUE(true);
 }
 
-
 /**
  * Power of a Tf-factor.
  * */
