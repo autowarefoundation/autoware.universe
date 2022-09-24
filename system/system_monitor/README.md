@@ -217,9 +217,6 @@ fan2:             0 RPM  (min =    0 RPM)
 ```
 
 The setting value of voltage_monitor.param.yaml is as follows.
-If the battery voltage drops below voltage_error or voltage_warn,It will be a warning.
-If the CMOS battery runs out, the RTC will stop working when the power is turned off. However, since the vehicle can run, it is not an error. The vehicle will stop when an error occurs, but there is no need to stop immediately.
-
 ```yaml
 /**:
   ros__parameters:
@@ -227,6 +224,41 @@ If the CMOS battery runs out, the RTC will stop working when the power is turned
     cmos_battery_error: 2.70
     cmos_battery_label: "in7:"
 ```
+In the above example, the message output to the topic /diagnostics is as follows.
+If the voltage < 2.9V then:
+```txt
+  name: /autoware/system/resource_monitoring/voltage/cmos_battery
+  message: Warning
+  hardware_id: ''
+  values:
+  - key: 'voltage_monitor: CMOS Battery Status'
+    value: Low Battery
+```
+
+If the voltage < 2.7V then:
+```txt
+  name: /autoware/system/resource_monitoring/voltage/cmos_battery
+  message: Warning
+  hardware_id: ''
+  values:
+  - key: 'voltage_monitor: CMOS Battery Status'
+    value: Battery Died
+```
+
+If neither, then:
+```txt
+  name: /autoware/system/resource_monitoring/voltage/cmos_battery
+  message: OK
+  hardware_id: ''
+  values:
+  - key: 'voltage_monitor: CMOS Battery Status'
+    value: OK
+```
+
+
+If the battery voltage drops below voltage_error or voltage_warn,It will be a warning.
+If the CMOS battery runs out, the RTC will stop working when the power is turned off. However, since the vehicle can run, it is not an error. The vehicle will stop when an error occurs, but there is no need to stop immediately.
+It can be determined by the value of "Low Battery" or "Battery Died".
 
 ## UML diagrams
 
