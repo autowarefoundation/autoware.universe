@@ -4,11 +4,13 @@ The ACT contains some essential control components in designing Autoware control
 system-related packages and algorithms. The current release incorporates transfer function, state-space, and spline
 modules.
 
-## Transfer Function Represesntation
+## Transfer Function Representation
 
 It is sometimes easier to design and analyze the control or filtering system model by their Transfer Function
 representation.
-The ACT-TF module consists of simple transfer function objects equipped with algebraic operations by which one can add,
+The ACT-TF module consists of simple transfer function objects (TF factors) equipped with algebraic operations by which
+one can
+add,
 subtract or multiply transfer functions.
 
  ```
@@ -34,3 +36,6 @@ subtract or multiply transfer functions.
    **/
   
 ```
+
+The TF-factor operations are based on the Boost Polynomial Library and provide the addition, subtraction and
+multiplication of the transfer functions. 

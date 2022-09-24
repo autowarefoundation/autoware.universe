@@ -82,6 +82,7 @@ TEST(ACTcontrol, transferFunctionMultiplication)
 
 }
 
+
 /**
  * Test transfer function inversion.
  * */
@@ -138,6 +139,124 @@ TEST(ACTcontrol, vectorScalarMultiplicationOverloading)
   {
     ASSERT_DOUBLE_EQ(ov2[k], scalar_right * ov1[k]);
     ASSERT_DOUBLE_EQ(ov3[k], scalar_left * ov1[k]);
+  }
+
+  ASSERT_TRUE(true);
+}
+
+/**
+ * ------------------ TF-factor operations ------------------------------------
+ * */
+
+/**
+ * Adding two Tf-factors.
+ * */
+TEST(ACTcontrol, sumTFfactor)
+{
+  std::vector<double> a{1, 4};
+  std::vector<double> b{3, 8, 7, 1.2};
+
+  std::vector<double> summation_result{3., 8., 8., 5.2};
+
+  // Create two TF-factors.
+  ns_control_toolbox::tf_factor tf1(a);
+  ns_control_toolbox::tf_factor tf2(b);
+
+  // Add two TF-factors.
+  auto tf3 = tf1 + tf2;
+
+  ns_utils::print("Summation operation :");
+  ns_utils::print_container(tf3());
+
+  auto const &tf3_vector = tf3();
+
+  for (size_t k = 0; k < tf3_vector.size(); ++k)
+  {
+    ASSERT_DOUBLE_EQ(tf3_vector[k], summation_result[k]);
+  }
+
+  ASSERT_TRUE(true);
+}
+
+/**
+ * Adding two Tf-factors.
+ * */
+TEST(ACTcontrol, subtractTFfactor)
+{
+  std::vector<double> a{1, 4};
+  std::vector<double> b{3, 8, 7, 1.2};
+
+  std::vector<double> subtraction_result{-3., -8., -6., 2.8};
+
+  // Create two TF-factors.
+  ns_control_toolbox::tf_factor tf1(a);
+  ns_control_toolbox::tf_factor tf2(b);
+
+  // Add two TF-factors.
+  auto tf3 = tf1 - tf2;
+
+  ns_utils::print("Subtraction operation :");
+  ns_utils::print_container(tf3());
+
+  auto const &tf3_vector = tf3();
+
+  for (size_t k = 0; k < tf3_vector.size(); ++k)
+  {
+    ASSERT_DOUBLE_EQ(tf3_vector[k], subtraction_result[k]);
+  }
+
+  ASSERT_TRUE(true);
+}
+
+/**
+ * Multiplying two Tf-factors.
+ * */
+TEST(ACTcontrol, multiplyTFfactors)
+{
+  std::vector<double> a{1, 4};
+  std::vector<double> b{3, 8, 7, 1.2};
+
+  std::vector<double> multiplication_result{3, 20, 39, 29.2, 4.8};
+
+  // Create two TF-factors.
+  ns_control_toolbox::tf_factor tf1(a);
+  ns_control_toolbox::tf_factor tf2(b);
+
+  // Add two TF-factors.
+  auto tf3 = tf1 * tf2;
+
+  ns_utils::print("Multiplication operation :");
+  ns_utils::print_container(tf3());
+
+  auto const &tf3_vector = tf3();
+
+  for (size_t k = 0; k < tf3_vector.size(); ++k)
+  {
+    ASSERT_DOUBLE_EQ(tf3_vector[k], multiplication_result[k]);
+  }
+
+  ASSERT_TRUE(true);
+}
+
+
+/**
+ * Power of a Tf-factor.
+ * */
+TEST(ACTcontrol, powerTFfactors)
+{
+  ns_control_toolbox::tf_factor tf1({0.2, 1.1});
+  std::vector<double> power_result{0.008, 0.132, 0.726, 1.331};
+
+  tf1.power(3);
+
+  ns_utils::print("\n Power of a TF  \n");
+  ns_utils::print_container(tf1());
+
+  auto const &tf1_vector = tf1();
+
+  for (size_t k = 0; k < tf1_vector.size(); ++k)
+  {
+    ASSERT_DOUBLE_EQ(tf1_vector[k], power_result[k]);
   }
 
   ASSERT_TRUE(true);
