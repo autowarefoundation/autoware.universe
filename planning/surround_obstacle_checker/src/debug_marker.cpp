@@ -116,11 +116,8 @@ void SurroundObstacleCheckerDebugNode::publish()
   stop_obstacle_point_ptr_ = nullptr;
 }
 
-<<<<<<< HEAD
-MarkerArray SurroundObstacleCheckerDebugNode::makeVirtualWallMarker()
-=======
+
 MarkerArray SurroundObstacleCheckerDebugNode::makeVisualizationMarker()
->>>>>>> feat(surround_obstacle_checker): separate surround_obstacle_checker from hierarchical planning flow (#830)
 {
   MarkerArray msg;
   rclcpp::Time current_time = this->clock_->now();
@@ -131,18 +128,6 @@ MarkerArray SurroundObstacleCheckerDebugNode::makeVisualizationMarker()
     const auto markers = createStopVirtualWallMarker(p, "surround obstacle", current_time, 0);
     appendMarkerArray(markers, &msg);
   }
-<<<<<<< HEAD
-
-  return msg;
-}
-
-MarkerArray SurroundObstacleCheckerDebugNode::makeVisualizationMarker()
-{
-  MarkerArray msg;
-  rclcpp::Time current_time = this->clock_->now();
-=======
->>>>>>> feat(surround_obstacle_checker): separate surround_obstacle_checker from hierarchical planning flow (#830)
-
   // visualize surround object
   if (stop_obstacle_point_ptr_ != nullptr) {
     auto marker = createDefaultMarker(
@@ -184,45 +169,4 @@ StopReasonArray SurroundObstacleCheckerDebugNode::makeStopReasonArray()
   return stop_reason_array;
 }
 
-<<<<<<< HEAD
-Polygon2d SurroundObstacleCheckerDebugNode::createSelfPolygonWithOffset(
-  const Polygon2d & base_polygon, const double & offset)
-{
-  typedef double coordinate_type;
-  const double buffer_distance = offset;
-  const int points_per_circle = 36;
-  boost::geometry::strategy::buffer::distance_symmetric<coordinate_type> distance_strategy(
-    buffer_distance);
-  boost::geometry::strategy::buffer::join_round join_strategy(points_per_circle);
-  boost::geometry::strategy::buffer::end_round end_strategy(points_per_circle);
-  boost::geometry::strategy::buffer::point_circle circle_strategy(points_per_circle);
-  boost::geometry::strategy::buffer::side_straight side_strategy;
-  boost::geometry::model::multi_polygon<Polygon2d> result;
-  // Create the buffer of a multi polygon
-  boost::geometry::buffer(
-    base_polygon, result, distance_strategy, side_strategy, join_strategy, end_strategy,
-    circle_strategy);
-  return result.front();
-}
-
-PolygonStamped SurroundObstacleCheckerDebugNode::boostPolygonToPolygonStamped(
-  const Polygon2d & boost_polygon, const double & z)
-{
-  PolygonStamped polygon_stamped;
-  polygon_stamped.header.frame_id = "base_link";
-  polygon_stamped.header.stamp = this->clock_->now();
-
-  for (auto const & p : boost_polygon.outer()) {
-    geometry_msgs::msg::Point32 gp;
-    gp.x = p.x();
-    gp.y = p.y();
-    gp.z = z;
-    polygon_stamped.polygon.points.push_back(gp);
-  }
-
-  return polygon_stamped;
-}
-
-=======
->>>>>>> feat(surround_obstacle_checker): separate surround_obstacle_checker from hierarchical planning flow (#830)
 }  // namespace surround_obstacle_checker

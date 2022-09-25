@@ -141,30 +141,10 @@ void AutowareStatePanel::onInitialize()
     "/api/autoware/get/engage", 10, std::bind(&AutowareStatePanel::onEngageStatus, this, _1));
 
   client_engage_ = raw_node_->create_client<tier4_external_api_msgs::srv::Engage>(
-<<<<<<< HEAD
-    "/api/external/set/engage", rmw_qos_profile_services_default);
-
-  client_emergency_stop_ = raw_node_->create_client<tier4_external_api_msgs::srv::SetEmergency>(
-    "/api/autoware/set/emergency", rmw_qos_profile_services_default);
-
-  pub_velocity_limit_ = raw_node_->create_publisher<tier4_planning_msgs::msg::VelocityLimit>(
-    "/planning/scenario_planning/max_velocity_default", rclcpp::QoS{1}.transient_local());
-
-  pub_gate_mode_ = raw_node_->create_publisher<tier4_control_msgs::msg::GateMode>(
-    "/control/gate_mode_cmd", rclcpp::QoS{1}.transient_local());
-
-  pub_path_change_approval_ = raw_node_->create_publisher<tier4_planning_msgs::msg::Approval>(
-    "/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/"
-    "path_change_approval",
-    rclcpp::QoS{1}.transient_local());
-=======
     "/api/autoware/set/engage", rmw_qos_profile_services_default);
 
   pub_velocity_limit_ = raw_node_->create_publisher<tier4_planning_msgs::msg::VelocityLimit>(
     "/planning/scenario_planning/max_velocity_default", rclcpp::QoS(1));
-<<<<<<< HEAD
->>>>>>> feat(rviz_plugins): add velocity limit to autoware state panel (#879)
-=======
 
   pub_gate_mode_ = raw_node_->create_publisher<tier4_control_msgs::msg::GateMode>(
     "/control/gate_mode_cmd", rclcpp::QoS(1));

@@ -220,7 +220,6 @@ void SurroundObstacleCheckerNode::onTimer()
       if (!isStopRequired(is_obstacle_found, is_vehicle_stopped)) {
         break;
       }
-<<<<<<< HEAD
 
       state_ = State::STOP;
 
@@ -248,35 +247,6 @@ void SurroundObstacleCheckerNode::onTimer()
         break;
       }
 
-=======
-
-      state_ = State::STOP;
-
-      auto velocity_limit = std::make_shared<VelocityLimit>();
-      velocity_limit->stamp = this->now();
-      velocity_limit->max_velocity = 0.0;
-      velocity_limit->use_constraints = false;
-      velocity_limit->sender = "surround_obstacle_checker";
-
-      pub_velocity_limit_->publish(*velocity_limit);
-
-      // do not start when there is a obstacle near the ego vehicle.
-      RCLCPP_WARN(get_logger(), "do not start because there is obstacle near the ego vehicle.");
-
-      break;
-    }
-
-    case State::STOP: {
-      const auto is_obstacle_found =
-        !nearest_obstacle
-          ? false
-          : nearest_obstacle.get().first < node_param_.surround_check_recover_distance;
-
-      if (isStopRequired(is_obstacle_found, is_vehicle_stopped)) {
-        break;
-      }
-
->>>>>>> feat(surround_obstacle_checker): separate surround_obstacle_checker from hierarchical planning flow (#830)
       state_ = State::PASS;
 
       if (isStopRequired(is_obstacle_found, is_vehicle_stopped)) {
