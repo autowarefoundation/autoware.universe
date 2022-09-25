@@ -56,7 +56,8 @@ public:
 
 private:
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_viz_pub_;
-  rclcpp::Publisher<StopReasonArray>::SharedPtr stop_reason_pub_;  double base_link2front_;
+  rclcpp::Publisher<StopReasonArray>::SharedPtr stop_reason_pub_;
+  double base_link2front_;
   double surround_check_distance_;
   double surround_check_recover_distance_;
   geometry_msgs::msg::Pose self_pose_;
