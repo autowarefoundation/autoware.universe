@@ -142,9 +142,6 @@ inline bool smoothPath(
       0, trajectory.size(), external_v_limit->max_velocity, trajectory);
   }
   const auto traj_lateral_acc_filtered = smoother->applyLateralAccelerationFilter(trajectory);
-<<<<<<< HEAD
-
-=======
   auto nearest_idx =
     tier4_autoware_utils::findNearestIndex(*traj_lateral_acc_filtered, current_pose.position);
   const auto dist_to_nearest = tier4_autoware_utils::calcSignedArcLength(
@@ -167,7 +164,6 @@ inline bool smoothPath(
     // ego point inserted is new nearest point
     nearest_idx = nearest_seg_idx + 1;
   }
->>>>>>> fix(behavior_velocity): avoid insert same point on trajectory utils (#834)
   // Resample trajectory with ego-velocity based interval distances
   auto traj_resampled = smoother->resampleTrajectory(
     *traj_lateral_acc_filtered, v0, current_pose, planner_data->ego_nearest_dist_threshold,
@@ -187,11 +183,7 @@ inline bool smoothPath(
   }
   traj_smoothed.insert(
     traj_smoothed.begin(), traj_resampled->begin(),
-<<<<<<< HEAD
-    traj_resampled->begin() + traj_resampled_closest);
-=======
     traj_resampled->begin() + *traj_resampled_closest);
->>>>>>> fix(behavior_velocity): avoid insert same point on trajectory utils (#834)
 
   out_path = convertTrajectoryPointsToPath(traj_smoothed);
   return true;

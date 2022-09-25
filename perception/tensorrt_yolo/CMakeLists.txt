@@ -68,11 +68,6 @@ else()
 endif()
 
 # Download onnx
-<<<<<<< HEAD
-set(DATA_PATH "${CMAKE_CURRENT_SOURCE_DIR}/data")
-if(NOT EXISTS "${DATA_PATH}")
-  execute_process(COMMAND mkdir -p ${DATA_PATH})
-=======
 find_program(GDOWN_AVAIL "gdown")
 if(NOT GDOWN_AVAIL)
   message("gdown: command not found. External files could not be downloaded.")
@@ -166,7 +161,6 @@ if(NOT EXISTS "${FILE}")
     COMMAND gdown "https://drive.google.com/uc?id=19wXD23PE16kJDkZ7j2W3Ijvx5I1kO9kJ" -O ${PATH}/coco.names
     ERROR_QUIET
   )
->>>>>>> fix(lidar_centerpoint): fix google drive url to avoid 404 (#889)
 endif()
 set(PATH "${CMAKE_CURRENT_SOURCE_DIR}/data")
 if(NOT EXISTS "${PATH}")
