@@ -109,7 +109,7 @@ int main()
     Eigen::Index new_ssize = num_of_points;
     auto se_new = Eigen::VectorXd::LinSpaced(new_ssize, 0.0, se(se.rows() - 1));
 
-//  ns_eigen_utils::printEigenMat(se_new.bottomRows(se_new.rows() - 1));
+    //  ns_eigen_utils::printEigenMat(se_new.bottomRows(se_new.rows() - 1));
 
     writeToFile(log_path, xe, "xe");
     writeToFile(log_path, ye, "ye");
@@ -208,14 +208,14 @@ int main()
 
     // First derivative
     dxdt.setConstant(kx); // dxdt = k*x and kx is k of x
-//  std::cout << " dxdt " << std::endl;
-//  ns_eigen_utils::printEigenMat(dxdt);
+    //  std::cout << " dxdt " << std::endl;
+    //  ns_eigen_utils::printEigenMat(dxdt);
 
     Eigen::MatrixXd dydt(xe.unaryExpr([&](auto x)
                                       { return cy * kx * cos(x); }));
 
-//  std::cout << "dydt " << std::endl;
-//  ns_eigen_utils::printEigenMat(dydt);
+    //  std::cout << "dydt " << std::endl;
+    //  ns_eigen_utils::printEigenMat(dydt);
 
     // Second derivative
     Eigen::MatrixXd dxdt2(xe.rows(), 1);
@@ -235,7 +235,7 @@ int main()
     // Curvature example.
     Eigen::MatrixXd curvature_orginal; //(xe.rows(), 1);
     curvature_orginal = ns_eigen_utils::Curvature(rdt, rdt2);
-//  ns_eigen_utils::printEigenMat(curvature_orginal);
+    //  ns_eigen_utils::printEigenMat(curvature_orginal);
     writeToFile(log_path, curvature_orginal, "curvature_original");
 
     // Create a new smoothing spline.
@@ -245,7 +245,7 @@ int main()
     Eigen::MatrixXd rdot_interp(num_of_points, 2); // [xdot, ydot]
 
     // Get xddot, yddot
-    Eigen::MatrixXd rddot_interp(num_of_points, 2); // [xdot, ydot]
+    Eigen::MatrixXd rddot_interp(num_of_points, 2); // [xddot, yddot]
 
     auto xy_data = ns_eigen_utils::hstack<double>(xe, ye);
     smoothing_spline.getFirstDerivative(xy_data, rdot_interp);
