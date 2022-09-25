@@ -116,7 +116,6 @@ void SurroundObstacleCheckerDebugNode::publish()
   stop_obstacle_point_ptr_ = nullptr;
 }
 
-
 MarkerArray SurroundObstacleCheckerDebugNode::makeVisualizationMarker()
 {
   MarkerArray msg;
