@@ -3,10 +3,9 @@
 The Autoware Control Toolbox provides spline, line fitting and B-spline curve smoothers which can be used to compute
 curve functions that require second order differentiation.
 
-\begin{equation}
-\operatorname{RSS}(f, \lambda)=\sum_{i=1}^N\left\{y_i-f\left(x_i\right)\right\}^2+\lambda \int\left\{f^{\prime \prime}(
-t)\right\}^2 d t
-\end{equation}
+$$
+RSS(x) = \sum{(y_i - f(x_i))^2} + \lambda \int f^{\prime\prime}(t) dt
+$$
 
 ### References
 
