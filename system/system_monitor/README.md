@@ -13,6 +13,7 @@ This package provides the following nodes for monitoring system:
 - NTP Monitor
 - Process Monitor
 - GPU Monitor
+- Voltage Monitor
 
 ### Supported architecture
 
