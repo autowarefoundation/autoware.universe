@@ -202,6 +202,10 @@ private:
    * @param out_no_ground_indices Returns the indices of the points
    *     classified as not ground in the original PointCloud
    */
+
+  void initFirstGndGrids(
+    const float h, const float r, const uint16_t id, std::vector<GridCenter> & gnd_grids);
+
   void continousGndGridCheck(
     PointRef & p, const std::vector<GridCenter> & gnd_grids_list, PointsCentroid & gnd_cluster);
   void discontinousGndGridCheck(

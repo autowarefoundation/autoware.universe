@@ -163,6 +163,25 @@ void ScanGroundFilterComponent::calcVirtualGroundOrigin(pcl::PointXYZ & point)
   point.z = 0;
 }
 
+void ScanGroundFilterComponent::initFirstGndGrids(
+  const float h, const float r, const uint16_t id, std::vector<GridCenter> & gnd_grids)
+{
+  GridCenter curr_gnd_grid;
+  for (int ind_grid = id - 1 - gnd_grid_buffer_size_; ind_grid < id - 1; ind_grid++) {
+    float ind_gnd_z = ind_grid - id + 1 + gnd_grid_buffer_size_;
+    ind_gnd_z *= h / static_cast<float>(gnd_grid_buffer_size_);
+
+    float ind_gnd_radius = ind_grid - id + 1 + gnd_grid_buffer_size_;
+    ind_gnd_radius *= r / static_cast<float>(gnd_grid_buffer_size_);
+
+    curr_gnd_grid.radius = ind_gnd_radius;
+    curr_gnd_grid.avg_height = ind_gnd_z;
+    curr_gnd_grid.max_height = ind_gnd_z;
+    curr_gnd_grid.grid_id = ind_grid;
+    gnd_grids.push_back(curr_gnd_grid);
+  }
+}
+
 void ScanGroundFilterComponent::continousGndGridCheck(
   PointRef & p, const std::vector<GridCenter> & gnd_grids_list, PointsCentroid & gnd_cluster)
 {
@@ -306,38 +325,15 @@ void ScanGroundFilterComponent::gridScanClassifyPointCloud(
 
       // initialize lists of previous gnd grids
       if (prev_list_init == false && init_flg == true) {
-        for (int ind_grid = p->grid_id - 1 - gnd_grid_buffer_size_; ind_grid < p->grid_id - 1;
-             ind_grid++) {
-          float ind_gnd_mean_z = ind_grid - p->grid_id + 1 + gnd_grid_buffer_size_;
-          ind_gnd_mean_z *=
-            ground_cluster.getAverageHeight() / static_cast<float>(gnd_grid_buffer_size_);
-
-          float ind_gnd_radius = ind_grid - p->grid_id + 1 + gnd_grid_buffer_size_;
-          ind_gnd_radius *=
-            ground_cluster.getAverageRadius() / static_cast<float>(gnd_grid_buffer_size_);
-
-          float ind_gnd_max_z = static_cast<float>(ind_grid);
-          ind_gnd_max_z *=
-            ground_cluster.getMaxHeight() / static_cast<float>(gnd_grid_buffer_size_);
-          curr_gnd_grid.radius = ind_gnd_radius;
-          curr_gnd_grid.avg_height = ind_gnd_mean_z;
-          curr_gnd_grid.max_height = ind_gnd_max_z;
-          curr_gnd_grid.grid_id = ind_grid;
-          gnd_grids.push_back(curr_gnd_grid);
-        }
+        float h = ground_cluster.getAverageHeight();
+        float r = ground_cluster.getAverageRadius();
+        initFirstGndGrids(h, r, p->grid_id, gnd_grids);
         prev_list_init = true;
       }
 
       if (prev_list_init == false && init_flg == false) {
         // assume first gnd grid is zero
-        for (auto ind_grid = p->grid_id - 1 - gnd_grid_buffer_size_; ind_grid < p->grid_id;
-             ind_grid++) {
-          curr_gnd_grid.radius = p->radius - ind_grid * grid_size_m_;
-          curr_gnd_grid.avg_height = 0.0f;
-          curr_gnd_grid.max_height = 0.0f;
-          curr_gnd_grid.grid_id = ind_grid;
-          gnd_grids.push_back(curr_gnd_grid);
-        }
+        initFirstGndGrids(0.0f, p->radius, p->grid_id, gnd_grids);
         prev_list_init = true;
       }
 
