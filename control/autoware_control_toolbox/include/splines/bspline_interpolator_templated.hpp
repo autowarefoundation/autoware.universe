@@ -182,7 +182,7 @@ BSplineInterpolatorTemplated<Nin, Nout>::BSplineInterpolatorTemplated(double num
   n_base_points_ = Nin;
   new_npoints_ = Nout;
 
-  // Create knot points.
+  // Create the knot points.
   knots_vec_ = ns_utils::linspace<double>(0, 1, nknots_);
 
   // Initialize the Eigen matrix data members.
@@ -198,20 +198,18 @@ BSplineInterpolatorTemplated<Nin, Nout>::BSplineInterpolatorTemplated(double num
   // new coordinates.
   eigen_new_base_vector_t tvec_new = eigen_new_base_vector_t::LinSpaced(Nout, 0.0, 1.0);
 
-  // DEBUG
-  //  auto size_base = tvec_base.size();
-  //  auto size_new = tvec_new.size();
-  // end of debug.
 
-  // Create the basis matrix from tvec_base to compute basis matrices for the base data.
-  // Number of polynomials items of  four + knots [1, t, t**2, t**3, (t-ki)**3, ....]
-  // if the derivatives are not requested.
+  /** Create the basis matrix from tvec_base to compute basis matrices for the base data.
+   * Number of polynomials items of  four + knots [1, t, t**2, t**3, (t-ki)**3, ....]
+   * if the derivatives are not requested.
+   * */
+
   if (!compute_derivatives_)
   {
     Eigen::MatrixXd basis_mat(Nin, nknots_ + 4);
     basis_mat.setZero();
 
-    // for Tikhonov regulatization D which can be identity or second derivative matrix for smooth
+    // for Tikhonov regularization D can be identity or second derivative matrix for smooth
     // curvature.
     Eigen::MatrixXd penalized_weights_D(Nin, nknots_ + 4);
 
@@ -236,11 +234,13 @@ BSplineInterpolatorTemplated<Nin, Nout>::BSplineInterpolatorTemplated(double num
     // Solve the matrix equations. This computes and sets the projection_mat_base_
     solveByDemmlerReisch(basis_mat, penalized_weights_D);
 
-    // Once the following matrix is computed, we multiply it with the given ybase which yields
-    // ynew_in_new coordinates.
-    // This new matrix; projection_mat_w_new_base_ can be used to interpolate ybase --> ynew with
-    // a new length.
-    // ynew_length = projection_mat_w_new_base_ @ ybase_length
+    /**
+     * Once the following matrix is computed, we multiply it with the given ybase which yields
+     * ynew_in_new  coordinates.
+     * This new matrix; projection_mat_w_new_base_ can be used to interpolate ybase --> ynew with
+     * a new length.
+     * ynew_length = projection_mat_w_new_base_ @ ybase_length
+     **/
     projection_mat_w_new_base_ =
       new_basis_mat * projection_mat_base_;  // ynew = A{A^T@A + lambda diag(s)}−1@A^T .
 
@@ -257,16 +257,20 @@ BSplineInterpolatorTemplated<Nin, Nout>::BSplineInterpolatorTemplated(double num
     basis_mat.setZero();
     basis_mat_dd.setIdentity();
 
-    // Using the second derivative as a regularizer is problematic,
-    // we need to solve singularity when taking the inverse.
-    // createBasesMatrix(tvec_base, basis_mat, basis_mat_dd);
-    // If we use the second derivative as a
-    // regularizer.
+    /**
+     * Using the second derivative as a regularizer is problematic, we need to solve singularity when taking the
+     * inverse.
+     * createBasesMatrix(tvec_base, basis_mat, basis_mat_dd);
+     * If we use the second derivative as a regularizer.
+     * */
+
     createBasesMatrix(tvec_base, basis_mat);
 
-    // Compute the new interpolation base matrices.
-    // We the coefficients computed for the ybase and new bases.
-    // y, y', y" = B, B', B" @ coeff_base.
+    /** Compute the new interpolation base matrices.
+     * We the coefficients computed for the ybase and new bases.
+     * y, y', y" = B, B', B" @ coeff_base.
+     **/
+
     Eigen::MatrixXd new_basis_mat(new_npoints_, nknots_ + 4);
     Eigen::MatrixXd new_basis_d_mat(new_npoints_, nknots_ + 4);
     Eigen::MatrixXd new_basis_dd_mat(new_npoints_, nknots_ + 4);
@@ -342,11 +346,6 @@ void BSplineInterpolatorTemplated<Nin, Nout>::createBasesMatrix(
    *     bspline_primitive = lambda t, knots: [1., t, t ** 2, t ** 3] + \
    *                                    [((t - kn) ** 3 if (t - kn) > 0 else 0.) for kn in knots]
    */
-
-  // DEBUG
-  //  auto nbasis_row = basis_mat.rows();
-  //  auto ntvec = tvec.size();
-  // end of debug.
 
   basis_mat.col(0).setConstant(1.);
   basis_mat.col(1) = tvec;
