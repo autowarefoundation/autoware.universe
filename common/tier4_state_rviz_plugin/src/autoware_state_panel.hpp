@@ -54,12 +54,7 @@ protected:
     const tier4_control_msgs::msg::ExternalCommandSelectorMode::ConstSharedPtr msg);
   void onAutowareState(const autoware_auto_system_msgs::msg::AutowareState::ConstSharedPtr msg);
   void onShift(const autoware_auto_vehicle_msgs::msg::GearReport::ConstSharedPtr msg);
-<<<<<<< HEAD
-  void onEmergencyStatus(const tier4_external_api_msgs::msg::Emergency::ConstSharedPtr msg);
-  void onEngageStatus(const tier4_external_api_msgs::msg::EngageStatus::ConstSharedPtr msg);
-=======
   void onEngageStatus(const autoware_auto_vehicle_msgs::msg::Engage::ConstSharedPtr msg);
->>>>>>> fix(autoware_state_panel): fix message type for /api/autoware/get/engage (#666)
 
   rclcpp::Node::SharedPtr raw_node_;
   rclcpp::Subscription<tier4_control_msgs::msg::GateMode>::SharedPtr sub_gate_mode_;

@@ -55,35 +55,14 @@ public:
   void publishFootprints();
 
 private:
-<<<<<<< HEAD
-  rclcpp::Publisher<MarkerArray>::SharedPtr debug_virtual_wall_pub_;
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_viz_pub_;
-  rclcpp::Publisher<StopReasonArray>::SharedPtr stop_reason_pub_;
-  rclcpp::Publisher<PolygonStamped>::SharedPtr vehicle_footprint_pub_;
-  rclcpp::Publisher<PolygonStamped>::SharedPtr vehicle_footprint_offset_pub_;
-  rclcpp::Publisher<PolygonStamped>::SharedPtr vehicle_footprint_recover_offset_pub_;
-
-  Polygon2d ego_polygon_;
-=======
-  rclcpp::Publisher<MarkerArray>::SharedPtr debug_viz_pub_;
-  rclcpp::Publisher<StopReasonArray>::SharedPtr stop_reason_pub_;
->>>>>>> feat(surround_obstacle_checker): separate surround_obstacle_checker from hierarchical planning flow (#830)
-  double base_link2front_;
+  rclcpp::Publisher<StopReasonArray>::SharedPtr stop_reason_pub_;  double base_link2front_;
   double surround_check_distance_;
   double surround_check_recover_distance_;
   geometry_msgs::msg::Pose self_pose_;
 
-<<<<<<< HEAD
-  MarkerArray makeVirtualWallMarker();
   MarkerArray makeVisualizationMarker();
   StopReasonArray makeStopReasonArray();
-
-  Polygon2d createSelfPolygonWithOffset(const Polygon2d & base_polygon, const double & offset);
-  PolygonStamped boostPolygonToPolygonStamped(const Polygon2d & boost_polygon, const double & z);
-=======
-  MarkerArray makeVisualizationMarker();
-  StopReasonArray makeStopReasonArray();
->>>>>>> feat(surround_obstacle_checker): separate surround_obstacle_checker from hierarchical planning flow (#830)
 
   std::shared_ptr<geometry_msgs::msg::Point> stop_obstacle_point_ptr_;
   std::shared_ptr<geometry_msgs::msg::Pose> stop_pose_ptr_;

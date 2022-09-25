@@ -28,10 +28,6 @@ set(scene_modules
 ament_auto_add_library(scene_module_lib SHARED
   src/utilization/path_utilization.cpp
   src/utilization/util.cpp
-<<<<<<< HEAD
-  src/utilization/debug.cpp
-=======
->>>>>>> refactor(behavior_velocity_planner): simplify CMakeLists.txt (#855)
   ${scene_modules_src}
 )
 
@@ -49,11 +45,6 @@ ament_target_dependencies(behavior_velocity_planner
   PCL
 )
 
-<<<<<<< HEAD
-target_link_libraries(behavior_velocity_planner ${PCL_LIBRARIES})
-
-=======
->>>>>>> refactor(behavior_velocity_planner): simplify CMakeLists.txt (#855)
 rclcpp_components_register_node(behavior_velocity_planner
   PLUGIN "behavior_velocity_planner::BehaviorVelocityPlannerNode"
   EXECUTABLE behavior_velocity_planner_node
