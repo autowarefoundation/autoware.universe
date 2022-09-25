@@ -484,19 +484,12 @@ PidLongitudinalController::Motion PidLongitudinalController::calcEmergencyCtrlCm
 PidLongitudinalController::ControlState PidLongitudinalController::updateControlState(
   const ControlState current_control_state, const ControlData & control_data)
 {
-  const auto & p = m_state_transition_params;
-
   const float64_t current_vel = control_data.current_motion.vel;
   const float64_t current_acc = control_data.current_motion.acc;
   const float64_t stop_dist = control_data.stop_dist;
-  const geometry_msgs::msg::Pose current_pose = m_current_kinematic_state_ptr->pose.pose;
-  const float64_t overshoot_stop_dist =
-    trajectory_follower::longitudinal_utils::calcOvershootStopDistance(
-      current_pose.position, *m_trajectory_ptr, control_data.nearest_idx,
-      p.emergency_state_overshoot_judge_vel);
 
   // flags for state transition
-
+  const auto & p = m_state_transition_params;
   const bool8_t departure_condition_from_stopping =
     stop_dist > p.drive_state_stop_dist + p.drive_state_offset_stop_dist;
   const bool8_t departure_condition_from_stopped = stop_dist > p.drive_state_stop_dist;
@@ -515,8 +508,13 @@ PidLongitudinalController::ControlState PidLongitudinalController::updateControl
       ? (node_->now() - *m_last_running_time).seconds() > p.stopped_state_entry_duration_time
       : false;
 
-  const bool8_t emergency_condition =
-    m_enable_overshoot_emergency && overshoot_stop_dist < -p.emergency_state_overshoot_stop_dist;
+  static constexpr double vel_epsilon =
+    1e-3;  // NOTE: the same velocity threshold as motion_utils::searchZeroVelocity
+  const float64_t current_vel_cmd =
+    std::fabs(m_trajectory_ptr->points.at(control_data.nearest_idx).longitudinal_velocity_mps);
+  const bool8_t emergency_condition = m_enable_overshoot_emergency &&
+                                      stop_dist < -p.emergency_state_overshoot_stop_dist &&
+                                      current_vel_cmd < vel_epsilon;
 
   // transit state
   if (current_control_state == ControlState::DRIVE) {

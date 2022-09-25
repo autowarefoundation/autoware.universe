@@ -66,14 +66,6 @@ TRAJECTORY_FOLLOWER_PUBLIC float64_t calcStopDistance(
   const float64_t max_yaw);
 
 /**
- * @brief calculate distance to stopline from current vehicle which the ego passed over with
- * stopping velocity (lower than vel_epsilon)
- */
-TRAJECTORY_FOLLOWER_PUBLIC float64_t calcOvershootStopDistance(
-  const Point & current_pos, const Trajectory & traj, const int nearest_idx,
-  const float64_t vel_epsilon);
-
-/**
  * @brief calculate pitch angle from estimated current pose
  */
 TRAJECTORY_FOLLOWER_PUBLIC float64_t getPitchByPose(const Quaternion & quaternion);
