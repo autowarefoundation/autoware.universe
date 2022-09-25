@@ -39,8 +39,9 @@ class Debugger
 {
 public:
   explicit Debugger(
-    
-    rclcpp::Node * node_ptr, const std::size_t image_num, const std::size_t image_buffer_size, const std::size_t image_buffer_size);
+
+    rclcpp::Node * node_ptr, const std::size_t image_num, const std::size_t image_buffer_size,
+    const std::size_t image_buffer_size);
 
   void publishImage(const std::size_t image_id, const rclcpp::Time & stamp);
 

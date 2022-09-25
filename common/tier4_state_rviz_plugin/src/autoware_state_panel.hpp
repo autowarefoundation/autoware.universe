@@ -20,7 +20,6 @@
 #include <QLabel>
 #include <QPushButton>
 #include <QSpinBox>
-#include <QSpinBox>
 #include <rclcpp/rclcpp.hpp>
 #include <rviz_common/panel.hpp>
 
