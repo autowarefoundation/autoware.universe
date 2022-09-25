@@ -96,16 +96,6 @@ def launch_setup(context, *args, **kwargs):
             gpu_monitor_config,
         ],
     )
-    with open(LaunchConfiguration("hardware_monitor_config_file").perform(context), "r") as f:
-        hardware_monitor_config = yaml.safe_load(f)["/**"]["ros__parameters"]
-    hardware_monitor = ComposableNode(
-        package="system_monitor",
-        plugin="HardwareMonitor",
-        name="hardware_monitor",
-        parameters=[
-            hardware_monitor_config,
-        ],
-    )
 
     # set container to run all required components in the same process
     container = ComposableNodeContainer(
@@ -114,7 +104,6 @@ def launch_setup(context, *args, **kwargs):
         package="rclcpp_components",
         executable="component_container_mt",
         composable_node_descriptions=[
-            hardware_monitor,
             cpu_monitor,
             hdd_monitor,
             mem_monitor,
@@ -161,10 +150,6 @@ def generate_launch_description():
             DeclareLaunchArgument(
                 "gpu_monitor_config_file",
                 default_value=os.path.join(system_monitor_path, "gpu_monitor.param.yaml"),
-            ),
-            DeclareLaunchArgument(
-                "hardware_monitor_config_file",
-                default_value=os.path.join(system_monitor_path, "hardware_monitor.param.yaml"),
             ),
             OpaqueFunction(function=launch_setup),
         ]

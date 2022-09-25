@@ -66,11 +66,6 @@ message(STATUS "HOST_SYSTEM_VERSION: " ${CMAKE_HOST_SYSTEM_VERSION})
 message(STATUS "SYSTEM_PROCESSOR: " ${CMAKE_SYSTEM_PROCESSOR})
 message(STATUS "CPU PLATFORM: " ${CMAKE_CPU_PLATFORM})
 message(STATUS "GPU PLATFORM: " ${CMAKE_GPU_PLATFORM})
-message(STATUS "HARDWARE PLATFORM: " ${CMAKE_HARDWARE_PLATFORM})
-
-ament_auto_add_library(hardware_monitor_lib SHARED
-  src/hardware_monitor/hardware_monitor.cpp
-)
 
 set(CPU_MONITOR_SOURCE
   src/cpu_monitor/cpu_monitor_base.cpp
@@ -134,7 +129,6 @@ find_package(Boost REQUIRED COMPONENTS
 )
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(hardware_monitor_lib ${Boost_LIBRARIES} ${LIBRARIES})
 target_link_libraries(cpu_monitor_lib ${Boost_LIBRARIES} ${LIBRARIES})
 target_link_libraries(hdd_monitor_lib ${Boost_LIBRARIES} ${LIBRARIES})
 target_link_libraries(mem_monitor_lib ${LIBRARIES})
@@ -179,11 +173,6 @@ rclcpp_components_register_node(process_monitor_lib
 rclcpp_components_register_node(gpu_monitor_lib
   PLUGIN "GPUMonitor"
   EXECUTABLE gpu_monitor
-)
-
-rclcpp_components_register_node(hardware_monitor_lib
-  PLUGIN "HardwareMonitor"
-  EXECUTABLE hardware_monitor
 )
 
 # TODO(yunus.caliskan): Port the tests to ROS2, robustify the tests.
@@ -303,10 +292,6 @@ if(BUILD_TESTING)
   # target_link_libraries(test_gpu_monitor ${GPU_LIBRARY} ${LIBRARIES})
 
 endif()
-
-#############
-## Install ##
-#############
 
 ament_auto_package(INSTALL_TO_SHARE
   launch
