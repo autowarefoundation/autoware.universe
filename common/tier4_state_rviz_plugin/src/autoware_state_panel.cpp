@@ -17,7 +17,6 @@
 #include "autoware_state_panel.hpp"
 
 #include <QHBoxLayout>
-#include <QHBoxLayout>
 #include <QString>
 #include <QVBoxLayout>
 #include <rviz_common/display_context.hpp>
