@@ -1,11 +1,17 @@
 # SPLINE MODULES
 
-The Autoware Control Toolbox provides spline, line fitting and B-spline curve smoothers which can be used to compute
-curve functions that require second order differentiation.
+The Autoware Control Toolbox includes spline, line fitting, and B-spline curve smoothers for computing curve functions
+requiring second-order differentiation.
+
+Smoothing splines are calculated by minimizing the Residual Sum of Squares (RSS), which consists of two terms: fidelity
+and penalty terms in the form of;
 
 $$
-RSS(x) = \sum{(y_i - f(x_i))^2} + \lambda \int f^{\prime\prime}(t) dt
+RSS(x) = \sum_{i=1}^N{(y_i - f(x_i))^2} + \lambda \int f^{\prime\prime}(t) dt
 $$
+
+where the first term formulates the fidelity part of the optimization whereas the second one with a smoothing factor
+$\lambda$ penalizes the curve fit [2].
 
 ### References
 
