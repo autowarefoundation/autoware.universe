@@ -243,21 +243,8 @@ def launch_setup(context, *args, **kwargs):
         condition=LaunchConfigurationEquals("cruise_planner", "obstacle_stop_planner"),
     )
 
-<<<<<<< HEAD
-    obstacle_cruise_planner_loader = LoadComposableNodes(
-        composable_node_descriptions=[obstacle_cruise_planner_component],
-        target_container=container,
-        condition=LaunchConfigurationEquals("cruise_planner", "obstacle_cruise_planner"),
-    )
 
-    obstacle_cruise_planner_relay_loader = LoadComposableNodes(
-        composable_node_descriptions=[obstacle_cruise_planner_relay_component],
-        target_container=container,
-        condition=LaunchConfigurationEquals("cruise_planner", "none"),
-    )
-=======
     group = GroupAction([container, surround_obstacle_checker_loader])
->>>>>>> feat(surround_obstacle_checker): separate surround_obstacle_checker from hierarchical planning flow (#830)
 
     surround_obstacle_checker_loader = LoadComposableNodes(
         composable_node_descriptions=[surround_obstacle_checker_component],
