@@ -182,6 +182,10 @@ ss_sys.print_discrete_system();
 **/
 ```
 
+### Curve Fitting and Interpolation Modules
+
+[See ...](documentation/SplineModules.md)
+
 References :
 
 1. Golub and Van Loan, Matrix Computations, 4rd edition, Chapter 9., Section 9.3.1 pp 530
