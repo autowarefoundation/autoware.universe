@@ -85,10 +85,10 @@ All models are downloaded automatically when building. When launching the node w
 
 [YOLOv4-tiny](https://awf.ml.dev.web.auto/perception/models/yolov4-tiny.onnx "YOLOv4-tiny"): Converted from darknet [weight file](https://github.com/AlexeyAB/darknet/releases/download/darknet_yolo_v4_pre/yolov4-tiny.weights "weight file") and [conf file](https://github.com/AlexeyAB/darknet/blob/master/cfg/yolov4-tiny.cfg "conf file").
 
-- [This code](https://github.com/wep21/yolo_onnx_converter) is used for converting darknet weight file and conf file to onnx.
-=======
-[YOLOv4](https://drive.google.com/uc?id=1vkNmSwcIpTkJ_-BrKhxtit0PBJeJYTVX "YOLOv4"): Converted from darknet [weight file](https://github.com/AlexeyAB/darknet/releases/download/darknet_yolo_v3_optimal/yolov4.weights "weight file") and [conf file](https://github.com/AlexeyAB/darknet/blob/master/cfg/yolov4.cfg "conf file").
->>>>>>> docs: fix 404 error caused by typo in url (#871)
+- # [This code](https://github.com/wep21/yolo_onnx_converter) is used for converting darknet weight file and conf file to onnx.
+  [YOLOv4](https://drive.google.com/uc?id=1vkNmSwcIpTkJ_-BrKhxtit0PBJeJYTVX "YOLOv4"): Converted from darknet [weight file](https://github.com/AlexeyAB/darknet/releases/download/darknet_yolo_v3_optimal/yolov4.weights "weight file") and [conf file](https://github.com/AlexeyAB/darknet/blob/master/cfg/yolov4.cfg "conf file").
+
+> > > > > > > docs: fix 404 error caused by typo in url (#871)
 
 ### YOLOv5
 
