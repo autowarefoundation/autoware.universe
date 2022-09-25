@@ -56,7 +56,7 @@ enum RPY_COV_IDX {
 
 namespace xyzrpy_covariance_index
 {
-/// Covariance for 6-DOF pose.
+/// Covariance for 6-DOF.
 /// Used at
 /// - geometry_msgs/msg/AccelWithCovariance.msg: msg.covariance
 /// - geometry_msgs/msg/TwistWithCovariance.msg: msg.covariance
