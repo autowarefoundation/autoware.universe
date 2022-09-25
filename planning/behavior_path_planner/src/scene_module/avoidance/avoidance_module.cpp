@@ -2640,10 +2640,7 @@ void AvoidanceModule::setDebugData(const PathShifter & shifter, const DebugData 
 {
   using marker_utils::createLaneletsAreaMarkerArray;
   using marker_utils::createObjectsMarkerArray;
-<<<<<<< HEAD
-=======
   using marker_utils::createOverhangFurthestLineStringMarkerArray;
->>>>>>> chore(avoidance_module): fix spell check (#732)
   using marker_utils::createPathMarkerArray;
   using marker_utils::createPoseMarkerArray;
   using marker_utils::createShiftLengthMarkerArray;
@@ -2678,11 +2675,7 @@ void AvoidanceModule::setDebugData(const PathShifter & shifter, const DebugData 
   add(createLaneletsAreaMarkerArray(*debug.current_lanelets, "current_lanelet", 0.0, 1.0, 0.0));
   add(createLaneletsAreaMarkerArray(*debug.expanded_lanelets, "expanded_lanelet", 0.8, 0.8, 0.0));
   add(createAvoidanceObjectsMarkerArray(avoidance_data_.objects, "avoidance_object"));
-<<<<<<< HEAD
-  add(makeOverhangToRoadShoulderMarkerArray(avoidance_data_.objects, "overhang"));
-=======
   add(makeOverhangToRoadShoulderMarkerArray(avoidance_data_.objects));
->>>>>>> chore(avoidance_module): fix spell check (#732)
   add(createOverhangFurthestLineStringMarkerArray(
     *debug.farthest_linestring_from_overhang, "farthest_linestring_from_overhang", 1.0, 0.0, 1.0));
 
