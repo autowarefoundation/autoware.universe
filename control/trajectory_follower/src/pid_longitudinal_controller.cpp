@@ -77,8 +77,6 @@ PidLongitudinalController::PidLongitudinalController(rclcpp::Node & node) : node
     // emergency
     p.emergency_state_overshoot_stop_dist =
       node_->declare_parameter<float64_t>("emergency_state_overshoot_stop_dist");  // [m]
-    p.emergency_state_overshoot_judge_vel =
-      node_->declare_parameter<float64_t>("emergency_state_overshoot_judge_vel");  // [m/s]
     p.emergency_state_traj_trans_dev =
       node_->declare_parameter<float64_t>("emergency_state_traj_trans_dev");  // [m]
     p.emergency_state_traj_rot_dev =
@@ -490,6 +488,7 @@ PidLongitudinalController::ControlState PidLongitudinalController::updateControl
 
   // flags for state transition
   const auto & p = m_state_transition_params;
+
   const bool8_t departure_condition_from_stopping =
     stop_dist > p.drive_state_stop_dist + p.drive_state_offset_stop_dist;
   const bool8_t departure_condition_from_stopped = stop_dist > p.drive_state_stop_dist;

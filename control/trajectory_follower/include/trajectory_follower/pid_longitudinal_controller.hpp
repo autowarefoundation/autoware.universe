@@ -134,7 +134,6 @@ private:
     float64_t stopped_state_entry_acc;
     // emergency
     float64_t emergency_state_overshoot_stop_dist;
-    float64_t emergency_state_overshoot_judge_vel;
     float64_t emergency_state_traj_trans_dev;
     float64_t emergency_state_traj_rot_dev;
   };
