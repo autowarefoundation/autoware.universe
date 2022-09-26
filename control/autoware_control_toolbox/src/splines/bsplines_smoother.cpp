@@ -23,7 +23,7 @@ ns_splines::BSplineSmoother::BSplineSmoother(size_t base_signal_length, double n
   // We keep te same dimension for smoothed and base signals.
   auto tvec = ns_utils::linspace<double>(0, 1, npoints_);
 
-  // Create knot points.
+  // Create theknot points.
   nknots_ = static_cast<Eigen::Index>(base_signal_length * knots_ratio_);
   knots_vec_ = ns_utils::linspace<double>(0, 1, nknots_);
 
@@ -44,9 +44,7 @@ ns_splines::BSplineSmoother::BSplineSmoother(size_t base_signal_length, double n
      *   coeffs = projection_mat * ydata_original
      *
      *   y = Basis* projection_mat * (any data of original length) - (Basis* projection_mat can be reused).
-     *
      *   Same applies for the derivatives.
-     *
      * */
 
   // Call solver to obtain the projection matrix.
@@ -63,7 +61,7 @@ void ns_splines::BSplineSmoother::createBasesMatrix(const std::vector<double> &t
 {
   for (size_t k = 0; k < npoints_; k++)
   {
-    auto ti = tvec[k];
+    auto const &ti = tvec[k];
 
     // first row is polynomial row, the rest are first and second derivatives.
     auto &&kk = basisRowsWithDerivatives(ti);
@@ -72,8 +70,7 @@ void ns_splines::BSplineSmoother::createBasesMatrix(const std::vector<double> &t
     basis_dmat.row(k) = Eigen::Map<Eigen::MatrixXd>(kk[1].data(), 1, static_cast<int32_t>(kk[1].size()));
     basis_ddmat.row(k) = Eigen::Map<Eigen::MatrixXd>(kk[2].data(), 1, static_cast<int32_t>(kk[2].size()));
   }
-  //  ns_eigen_utils::printEigenMat(basis_mat);
-  //  ns_eigen_utils::printEigenMat(basis_ddmat);
+
 }
 
 void ns_splines::BSplineSmoother::createBasesMatrix(
@@ -83,15 +80,17 @@ void ns_splines::BSplineSmoother::createBasesMatrix(
   auto new_size = tvec.rows();
   for (auto k = 0; k < new_size; k++)
   {
-    auto ti = tvec(k);
+    auto const &ti = tvec(k);
 
-    // first row is polynomail row, the rest are first and second derivatives.
+    // first row is polynomial row, the rest are first and second derivatives.
     auto &&kk = basisRowsWithDerivatives(ti);
 
     basis_mat.row(k) =
       Eigen::Map<Eigen::MatrixXd>(kk[0].data(), 1, static_cast<int32_t>(kk[0].size()));
+
     basis_dmat.row(k) =
       Eigen::Map<Eigen::MatrixXd>(kk[1].data(), 1, static_cast<int32_t>(kk[1].size()));
+
     basis_ddmat.row(k) =
       Eigen::Map<Eigen::MatrixXd>(kk[2].data(), 1, static_cast<int32_t>(kk[2].size()));
   }
@@ -103,7 +102,7 @@ std::vector<std::vector<double>> ns_splines::BSplineSmoother::basisRowsWithDeriv
 
   for (size_t k = 0; k < nknots_ - 2; k++)
   {
-    double ki = knots_vec_[k];
+    double const &ki = knots_vec_[k];
     std::vector<double> p_d1_d2 = fPlusCube(ti, ki);  // polynomial value with first and second derivatives.
 
     row_vectors[0].emplace_back(p_d1_d2[0]);
@@ -122,27 +121,27 @@ std::vector<double> ns_splines::BSplineSmoother::fPlusCube(double const &ti, dou
   // b-spline polynomial
   double &&dk0 =
     (std::pow(std::max(0.0, ti - ki), 3) - std::pow(std::max(0.0, ti - *it_final), 3)) /
-      (*it_final - ki);
+    (*it_final - ki);
 
   double &&dK0 =
     (std::pow(std::max(0.0, ti - *it_prev_final), 3) - std::pow(std::max(0.0, ti - *it_final), 3)) /
-      (*it_final - *it_prev_final);
+    (*it_final - *it_prev_final);
 
   // first derivative
   double &&dk1 =
     (3 * std::pow(std::max(0.0, ti - ki), 2) - 3 * std::pow(std::max(0.0, ti - *it_final), 2)) /
-      (*it_final - ki);
+    (*it_final - ki);
 
   double &&dK1 = (3 * std::pow(std::max(0.0, ti - *it_prev_final), 2) -
-    3 * std::pow(std::max(0.0, ti - *it_final), 2)) /
-    (*it_final - *it_prev_final);
+                  3 * std::pow(std::max(0.0, ti - *it_final), 2)) /
+                 (*it_final - *it_prev_final);
 
   // second derivative
   double &&dk2 =
     (6 * std::max(0.0, ti - ki) - 6 * std::max(0.0, ti - *it_final)) / (*it_final - ki);
 
   double &&dK2 = (6 * std::max(0.0, ti - *it_prev_final) - 6 * std::max(0.0, ti - *it_final)) /
-    (*it_final - *it_prev_final);
+                 (*it_final - *it_prev_final);
 
   return std::vector<double>{dk0 - dK0, dk1 - dK1, dk2 - dK2};
 }
@@ -152,18 +151,14 @@ void ns_splines::BSplineSmoother::solveByDemmlerReisch(Eigen::MatrixXd &basis_ma
                                                        Eigen::MatrixXd &basis_ddmat)
 {
   // Using the polynomial basis, obtain the projection matrix.
-  auto Dc =
-    basis_ddmat.transpose() * basis_ddmat;  // for minimum curvature smoothing penalization matrix.
+  // for minimum curvature smoothing penalization matrix.
+  auto Dc = basis_ddmat.transpose() * basis_ddmat;
   auto Bc = basis_mat.transpose() * basis_mat;
 
   // Compute Cholesky.
   Eigen::LLT<Eigen::MatrixXd> cholRRT(Bc + 1e-8 * Dc);
   Eigen::MatrixXd &&R = cholRRT.matrixL();
   Eigen::MatrixXd Rinv = R.inverse();
-
-  //  ns_eigen_utils::printEigenMat(Dc);
-  //  ns_eigen_utils::printEigenMat(Bc);
-  //  ns_eigen_utils::printEigenMat(Rinv);
 
   // Compute SVD
   Eigen::JacobiSVD<Eigen::MatrixXd> svd(
@@ -173,15 +168,7 @@ void ns_splines::BSplineSmoother::solveByDemmlerReisch(Eigen::MatrixXd &basis_ma
   Sdiag.setZero();
 
   Sdiag.diagonal() = svd.singularValues();
-  auto A = basis_mat * Rinv * svd.matrixU();
-
-  //  std::cout << "Diagonal Matrix \n";
-  //  ns_eigen_utils::printEigenMat(Dc);
-  //  ns_eigen_utils::printEigenMat(Sdiag);
-  //  ns_eigen_utils::printEigenMat(A);
-  //  ns_eigen_utils::printEigenMat(Rinv);
-  //  ns_eigen_utils::printEigenMat(svd.matrixU());
-  //  ns_eigen_utils::printEigenMat(svd.matrixV());
+  auto const &A = basis_mat * Rinv * svd.matrixU();
 
   // To be computed in the constructor.
   /**
@@ -236,9 +223,6 @@ void ns_splines::BSplineSmoother::solveByQR(Eigen::MatrixXd &basis_mat,
   projection_mat_dot_wb_ = basis_dmat * RinvQ1T;
   projection_mat_ddot_wb_ = basis_ddmat * RinvQ1T;
 
-  //  std::cout << "Q1 size " << Q1.rows() << " " << Q1.cols() << std::endl;
-  //  std::cout << "R size " << R.rows() << " " << R.cols() << std::endl;
-  //  std::cout << "Rinv size " << R.rows() << " " << R.cols() << std::endl;
 }
 
 void ns_splines::BSplineSmoother::getFirstDerivative(const Eigen::MatrixXd &ybase, Eigen::MatrixXd &ybase_dot) const
