@@ -5,7 +5,7 @@
   <version>0.0.0</version>
   <description>This package benchmark Autoware perception stack on Waymo dataset</description>
   <maintainer email="kcolak@leodrive.ai">Kaan Colak</maintainer>
-  <license>TODO: License declaration</license>
+  <license>Apache License 2.0</license>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>

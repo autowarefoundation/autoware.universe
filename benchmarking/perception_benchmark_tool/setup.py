@@ -20,7 +20,7 @@ setup(
     maintainer="Kaan Colak",
     maintainer_email="kcolak@leodrive.ai",
     description="This package benchmark Autoware perception stack on Waymo dataset",
-    license="TODO: License declaration",
+    license="Apache License 2.0",
     tests_require=["pytest"],
     entry_points={
         "console_scripts": [

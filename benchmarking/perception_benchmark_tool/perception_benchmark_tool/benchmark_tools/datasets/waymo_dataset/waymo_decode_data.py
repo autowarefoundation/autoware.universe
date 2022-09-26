@@ -1,6 +1,19 @@
+# Copyright 2018 Autoware Foundation. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import numpy as np
 import tensorflow as tf
-from waymo_open_dataset import dataset_pb2
 from waymo_open_dataset import dataset_pb2 as open_dataset
 from waymo_open_dataset.utils import range_image_utils
 from waymo_open_dataset.utils import transform_utils
@@ -10,7 +23,7 @@ def decode_camera_calibration(frame):
     camera_calibrations = []
 
     for camera_calibration in frame.context.camera_calibrations:
-        camera_name = dataset_pb2.CameraName.Name.Name(camera_calibration.name)
+        camera_name = open_dataset.CameraName.Name.Name(camera_calibration.name)
         extrinsic = np.array(camera_calibration.extrinsic.transform).reshape(4, 4)
         cam_intrinsic = np.array([[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]])
         cam_intrinsic[0, 0] = camera_calibration.intrinsic[0]
@@ -142,7 +155,7 @@ def get_decoded_point_cloud(frame):
         range_image_cartesian = tf.squeeze(range_image_cartesian, axis=0)
         points_tensor = tf.gather_nd(range_image_cartesian, tf.where(range_image_mask))
 
-        laser = [dataset_pb2.LaserName.Name.Name(c.name), points_tensor.numpy()]
+        laser = [open_dataset.LaserName.Name.Name(c.name), points_tensor.numpy()]
         points.append(laser)
 
     return points
@@ -153,11 +166,11 @@ def decode_static_tf(frame):
     cameras_transforms = {}
 
     for laser_calibration in frame.context.laser_calibrations:
-        laser_name = dataset_pb2.LaserName.Name.Name(laser_calibration.name)
+        laser_name = open_dataset.LaserName.Name.Name(laser_calibration.name)
         extrinsic = np.array(laser_calibration.extrinsic.transform).reshape((4, 4))
         lidars_transforms[f"{laser_name}_LASER_EXTRINSIC"] = extrinsic
     for camera_calibration in frame.context.camera_calibrations:
-        camera_name = dataset_pb2.CameraName.Name.Name(camera_calibration.name)
+        camera_name = open_dataset.CameraName.Name.Name(camera_calibration.name)
         extrinsic = (np.array(camera_calibration.extrinsic.transform)).reshape((4, 4))
         cameras_transforms[f"{camera_name}_CAM_EXTRINSIC"] = extrinsic
 
@@ -225,7 +238,7 @@ def extract_dataset_from_tfrecord(path):
             lidars_transforms, cameras_transforms = decode_static_tf(frame)
 
         for image in frame.images:
-            cam_name_str = dataset_pb2.CameraName.Name.Name(image.name)
+            cam_name_str = open_dataset.CameraName.Name.Name(image.name)
             data_dict[f"{cam_name_str}_IMAGE"] = tf.io.decode_jpeg(image.image).numpy()
 
         for laser_name, point in get_decoded_point_cloud(frame):
