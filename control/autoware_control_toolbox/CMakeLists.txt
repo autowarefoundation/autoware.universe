@@ -31,7 +31,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     # -Wno-unused-variable
     # -Wno-narrowing
     # -Wno-error=unused-but-set-variable
-    # -Wno-conversion
+    -Wno-conversion
     -Wno-error=sign-conversion
     -Wno-sign-compare
     # -Wdouble-promotion
