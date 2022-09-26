@@ -75,7 +75,7 @@ class BSplineInterpolatorTemplated
    * Smoothing factor used in normal form of LS; B*B + (lambda**2)*D*D, D is f''(x) in the
    *  smoother version.
    **/
-  double lambda_{0.001};
+  double lambda_{1e-3}; // 1e-3
 
   double knots_ratio_{};        // !<-@brief ratio of the number of knots to the coord points.
   bool compute_derivatives_{};  // !<-@brief flag to compute the derivatives.
@@ -199,7 +199,8 @@ BSplineInterpolatorTemplated<Nin, Nout>::BSplineInterpolatorTemplated(double num
   eigen_new_base_vector_t tvec_new = eigen_new_base_vector_t::LinSpaced(Nout, 0.0, 1.0);
 
 
-  /** Create the basis matrix from tvec_base to compute basis matrices for the base data.
+  /**
+   * Create the basis matrix from tvec_base to compute basis matrices for the base data.
    * Number of polynomials items of  four + knots [1, t, t**2, t**3, (t-ki)**3, ....]
    * if the derivatives are not requested.
    * */
@@ -211,10 +212,8 @@ BSplineInterpolatorTemplated<Nin, Nout>::BSplineInterpolatorTemplated(double num
 
     // for Tikhonov regularization D can be identity or second derivative matrix for smooth
     // curvature.
-    Eigen::MatrixXd penalized_weights_D(Nin, nknots_ + 4);
-
-    // If we don't use the first and second derivative, it can be an identity mat.
-    penalized_weights_D.setIdentity();
+    // Eigen::MatrixXd penalized_weights_D(Nin, nknots_ + 4);
+    auto penalized_weights_D = ns_eigen_utils::difference_matrix_bspline<double>(Nin, static_cast<int>(nknots_), 0);
 
     // Create interpolating base matrix for the base data.
     // This basis is used to compute the coefficients from the given ybase data.
@@ -241,28 +240,21 @@ BSplineInterpolatorTemplated<Nin, Nout>::BSplineInterpolatorTemplated(double num
      * a new length.
      * ynew_length = projection_mat_w_new_base_ @ ybase_length
      **/
-    projection_mat_w_new_base_ =
-      new_basis_mat * projection_mat_base_;  // ynew = A{A^T@A + lambda diag(s)}−1@A^T .
+
+    // ynew = A{A^T@A + lambda diag(s)}−1@A^T .
+    projection_mat_w_new_base_ = new_basis_mat * projection_mat_base_;
 
   } else
   {
-    // Derivatives are requested.
-    // We don't need to create an additional penalized_weights_D, we have a second derivative
-    // matrix here to be used as a regularization matrix.
+
     // Base matrix to compute the coefficients from the data ybase.
     Eigen::MatrixXd basis_mat(n_base_points_, nknots_ + 4);
 
-    // For optimal curvature, we need the second derivative of the basis matrix for the base data.
-    Eigen::MatrixXd basis_mat_dd(n_base_points_, nknots_ + 4);
-    basis_mat.setZero();
-    basis_mat_dd.setIdentity();
+    //  For optimal curvature, we need the second derivative of the basis matrix for the base data.
+    //  Eigen::MatrixXd penalizing_matrix_D(n_base_points_, nknots_ + 4);
+    //  penalizing_matrix_D.setIdentity();
 
-    /**
-     * Using the second derivative as a regularizer is problematic, we need to solve singularity when taking the
-     * inverse.
-     * createBasesMatrix(tvec_base, basis_mat, basis_mat_dd);
-     * If we use the second derivative as a regularizer.
-     * */
+    auto penalizing_matrix_D = ns_eigen_utils::difference_matrix_bspline<double>(Nin, static_cast<int>(nknots_), 0);
 
     createBasesMatrix(tvec_base, basis_mat);
 
@@ -281,7 +273,7 @@ BSplineInterpolatorTemplated<Nin, Nout>::BSplineInterpolatorTemplated(double num
 
     createBasesMatrix(tvec_new, new_basis_mat, new_basis_d_mat, new_basis_dd_mat);
 
-    solveByDemmlerReisch(basis_mat, basis_mat_dd);
+    solveByDemmlerReisch(basis_mat, penalizing_matrix_D);
 
     // Set Interpolating projection matrices
     projection_mat_w_new_base_ = new_basis_mat * projection_mat_base_;
