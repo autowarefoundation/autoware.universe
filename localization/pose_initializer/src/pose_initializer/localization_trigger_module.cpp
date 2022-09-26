@@ -40,10 +40,8 @@ void LocalizationTriggerModule::deactivate() const
     throw component_interface_utils::ServiceUnready("NDT triggering service is not ready");
   }
 
-  const auto future_ekf = client_ekf_trigger_->async_send_request(req);
-  const auto future_ndt = client_ndt_trigger_->async_send_request(req);
-  future_ekf.wait();
-  future_ndt.wait();
+  auto future_ekf = client_ekf_trigger_->async_send_request(req);
+  auto future_ndt = client_ndt_trigger_->async_send_request(req);
 
   if (future_ekf.get()->success & future_ndt.get()->success) {
     RCLCPP_INFO(logger_, "Deactivation succeeded");
@@ -65,10 +63,8 @@ void LocalizationTriggerModule::activate() const
     throw component_interface_utils::ServiceUnready("NDT triggering service is not ready");
   }
 
-  const auto future_ekf = client_ekf_trigger_->async_send_request(req);
-  const auto future_ndt = client_ndt_trigger_->async_send_request(req);
-  future_ekf.wait();
-  future_ndt.wait();
+  auto future_ekf = client_ekf_trigger_->async_send_request(req);
+  auto future_ndt = client_ndt_trigger_->async_send_request(req);
 
   if (future_ekf.get()->success & future_ndt.get()->success) {
     RCLCPP_INFO(logger_, "Activation succeeded");
