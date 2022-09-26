@@ -185,7 +185,7 @@ T abs_diff(T a, T b)
 template<typename T, typename std::enable_if_t<std::is_floating_point_v<T>> * = nullptr>
 constexpr T angleDistance(T const &theta)
 {
-  auto mod_theta_2pi = std::fmod(theta + M_PI, 2 * M_PI) - M_PI;
+  T mod_theta_2pi = std::fmod(theta + M_PI, 2 * M_PI) - M_PI;
 
   return mod_theta_2pi < -M_PI ? mod_theta_2pi + 2 * M_PI : mod_theta_2pi;
 }
@@ -193,8 +193,8 @@ constexpr T angleDistance(T const &theta)
 template<typename T, typename std::enable_if_t<std::is_floating_point_v<T>> * = nullptr>
 constexpr T angleDistance(T const &theta, T const &theta_ref)
 {
-  auto const &&angle_diff = theta - theta_ref;
-  auto mod_theta_2pi = std::fmod(angle_diff + M_PI, 2 * M_PI) - M_PI;
+  T const &&angle_diff = theta - theta_ref;
+  T mod_theta_2pi = std::fmod(angle_diff + M_PI, 2 * M_PI) - M_PI;
 
   return mod_theta_2pi < -M_PI ? mod_theta_2pi + 2 * M_PI : mod_theta_2pi;
 }
