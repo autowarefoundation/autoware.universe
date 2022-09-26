@@ -255,5 +255,46 @@ int main()
 
   }
 
+  // < ------------------- Given X, Y compute curvature by smoothing Bsplines CIRCLE example ----------- >
+  {
+    // Generate a noisy sinusoidal signal with arc-length parametrization. This is our test signal.
+    // Generate x.
+
+    std::vector<double> theta = ns_utils::linspace<double>(-M_PI / 2, M_PI / 2, Nin);
+
+    Eigen::MatrixXd theta_eg;
+    theta_eg = Eigen::Map<Eigen::Matrix<double, Nin, 1 >>(theta.data());
+
+    // Define a curve radius
+    double R = 100;
+
+    // EIGEN IMPLEMENTATION.
+    Eigen::MatrixXd xe(theta_eg.unaryExpr([&R](auto x)
+                                          { return R * cos(x); }));
+
+    Eigen::MatrixXd ye(theta_eg.unaryExpr([&R](auto x)
+                                          { return R * sin(x); }));
+
+    // Create a new smoothing spline.
+    double know_number_ratio = 0.3;
+    ns_splines::BSplineInterpolatorTemplated<Nin, Nout> interpolating_bspline(know_number_ratio, true);
+
+    // Get xdot, ydot
+    Eigen::MatrixXd rdot_interp(Nout, 2); // [xdot, ydot]
+
+    // Get xddot, yddot
+    Eigen::MatrixXd rddot_interp(Nout, 2); // [xddot, yddot]
+
+    auto xy_data = ns_eigen_utils::hstack<double>(xe, ye);
+    interpolating_bspline.getFirstDerivative(xy_data, rdot_interp);
+    interpolating_bspline.getSecondDerivative(xy_data, rddot_interp);
+
+    // Curvature from the B-spline
+    Eigen::MatrixXd curvature_bspline_smoother;
+    curvature_bspline_smoother = ns_eigen_utils::Curvature(rdot_interp, rddot_interp);
+    writeToFile(log_path, curvature_bspline_smoother, "curvature_circle");
+
+  }
+
   return 0;
 }

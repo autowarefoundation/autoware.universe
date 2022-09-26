@@ -344,7 +344,7 @@ void BSplineInterpolatorTemplated<Nin, Nout>::createBasesMatrix(
 
   for (auto k = 4; k < basis_mat.cols(); ++k)
   {
-    auto ki = knots_vec_[k - 4];
+    auto ki = knots_vec_[static_cast<size_t>(k - 4)];
     basis_mat.col(k) = Eigen::VectorXd(tvec.unaryExpr([&ki](auto const &x)
                                                       {
                                                         auto val_pos = std::max(0.0, (x - ki));
@@ -397,7 +397,7 @@ void BSplineInterpolatorTemplated<Nin, Nout>::createBasesMatrix(
 
   for (auto k = 4; k < basis_mat.cols(); ++k)
   {
-    auto const &ki = knots_vec_[k - 4];
+    auto const &ki = knots_vec_[static_cast<size_t>(k - 4)];
 
     // (t-k)**3
     basis_mat.col(k) = Eigen::VectorXd(tvec.unaryExpr([&ki](auto const &x)
