@@ -145,12 +145,16 @@ RTCManagerPanel::RTCManagerPanel(QWidget * parent) : rviz_common::Panel(parent)
     }
     // mode button
     {
+      // auto mode button
       rtc_auto_mode->auto_module_button_ptr = new QPushButton("auto mode");
+      rtc_auto_mode->auto_module_button_ptr->setCheckable(true);
       connect(
         rtc_auto_mode->auto_module_button_ptr, &QPushButton::clicked, rtc_auto_mode,
         &RTCAutoMode::onChangeToAutoMode);
       auto_mode_table_->setCellWidget(i, 1, rtc_auto_mode->auto_module_button_ptr);
+      // manual mode button
       rtc_auto_mode->manual_module_button_ptr = new QPushButton("manual mode");
+      rtc_auto_mode->manual_module_button_ptr->setCheckable(true);
       connect(
         rtc_auto_mode->manual_module_button_ptr, &QPushButton::clicked, rtc_auto_mode,
         &RTCAutoMode::onChangeToManualMode);
@@ -178,7 +182,7 @@ RTCManagerPanel::RTCManagerPanel(QWidget * parent) : rviz_common::Panel(parent)
     auto horizontal_header = new QHeaderView(Qt::Horizontal);
     horizontal_header->setSectionResizeMode(QHeaderView::Stretch);
     rtc_table_ = new QTableWidget();
-    rtc_table_->setColumnCount(7);
+    rtc_table_->setColumnCount(column_size_);
     rtc_table_->setHorizontalHeaderLabels(
       {"ID", "Module", "AW Safe", "OP Safe", "AutMode", "StartDistance", "FinishDistance"});
     rtc_table_->setVerticalHeader(vertical_header);
@@ -261,8 +265,9 @@ void RTCManagerPanel::onRTCStatus(const CooperateStatusArray::ConstSharedPtr msg
     }
 
     // is aw safe
+    bool is_aw_safe = status.safe;
     {
-      std::string is_safe = Bool2String(status.safe);
+      std::string is_safe = Bool2String(is_aw_safe);
       auto label = new QLabel(QString::fromStdString(is_safe));
       label->setAlignment(Qt::AlignCenter);
       label->setText(QString::fromStdString(is_safe));
@@ -270,8 +275,9 @@ void RTCManagerPanel::onRTCStatus(const CooperateStatusArray::ConstSharedPtr msg
     }
 
     // is operator safe
+    const bool is_op_safe = status.command_status.type;
     {
-      std::string is_safe = Bool2String(status.command_status.type);
+      std::string is_safe = Bool2String(is_op_safe);
       if (status.auto_mode) is_safe = "NONE";
       auto label = new QLabel(QString::fromStdString(is_safe));
       label->setAlignment(Qt::AlignCenter);
@@ -280,8 +286,9 @@ void RTCManagerPanel::onRTCStatus(const CooperateStatusArray::ConstSharedPtr msg
     }
 
     // is auto mode
+    const bool is_rtc_auto_mode = status.auto_mode;
     {
-      std::string is_auto_mode = Bool2String(status.auto_mode);
+      std::string is_auto_mode = Bool2String(is_rtc_auto_mode);
       auto label = new QLabel(QString::fromStdString(is_auto_mode));
       label->setAlignment(Qt::AlignCenter);
       label->setText(QString::fromStdString(is_auto_mode));
@@ -305,6 +312,16 @@ void RTCManagerPanel::onRTCStatus(const CooperateStatusArray::ConstSharedPtr msg
       label->setText(QString::fromStdString(finish_distance));
       rtc_table_->setCellWidget(cnt, 6, label);
     }
+    for (size_t i = 0; i < column_size_; i++) {
+      if (is_rtc_auto_mode || (is_aw_safe && is_op_safe)) {
+        rtc_table_->cellWidget(cnt, i)->setStyleSheet("background-color: #00FF00;");
+      } else if (is_aw_safe || is_op_safe) {
+        rtc_table_->cellWidget(cnt, i)->setStyleSheet("background-color: #FFFF00;");
+      } else {
+        rtc_table_->cellWidget(cnt, i)->setStyleSheet("background-color: #FF0000;");
+      }
+    }
+
     cnt++;
   }
 }

@@ -92,6 +92,7 @@ protected:
   std::string enable_auto_mode_namespace_ = "/planning/enable_auto_mode";
   QTableWidget * rtc_table_;
   QTableWidget * auto_mode_table_;
+  size_t column_size_ = {7};
 };
 
 }  // namespace rviz_plugins
