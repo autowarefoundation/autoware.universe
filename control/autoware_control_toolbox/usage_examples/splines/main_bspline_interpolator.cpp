@@ -73,10 +73,10 @@ int main()
     Eigen::MatrixXd
       xe = Eigen::Map<Eigen::Matrix<double, base_size, 1 >>(xvec.data());
 
-    Eigen::MatrixXd ye(xe.unaryExpr([&](auto x)
+    Eigen::MatrixXd ye(xe.unaryExpr([&cy](auto x)
                                     { return cy * sin(x); }));
 
-    Eigen::MatrixXd ze(xe.unaryExpr([&](auto x)
+    Eigen::MatrixXd ze(xe.unaryExpr([](auto x)
                                     { return 2 * cos(x) - 3 * sin(x); }));
 
     Eigen::MatrixXd se;
@@ -87,7 +87,7 @@ int main()
     Eigen::MatrixXd yz_interp_newsize;
     writeToFile(log_path, yze, "yze");
 
-    // Create a new smoothing spline.
+    // Create a new interpolating spline.
     ns_splines::BSplineInterpolator interpolating_bspline(base_size, new_size, 0.3);
 
     // Different size multi-column interpolation. Expanding the data points.
@@ -283,8 +283,8 @@ int main()
   // POSSIBLE IMPLEMENTATION in ROS
   {
     // Generate a noisy sinusoidal signal with arc-length parametrization. This is our test signal.
-    size_t const base_size = 122; // number of points in the signal.
-    size_t const new_size = 60; // data will be downsampled into this size.
+    size_t const base_size = 122;   // number of points in the signal.
+    size_t const new_size = 60;     // data will be down-sampled into this size.
 
     // Generate x.
     double kx = 8;
