@@ -28,22 +28,21 @@
  * limitations under the License.
  */
 
-#ifndef MAP_LOADER__POINTCLOUD_MAP_LOADER_NODE_HPP_
-#define MAP_LOADER__POINTCLOUD_MAP_LOADER_NODE_HPP_
+#ifndef POINTCLOUD_MAP_LOADER__POINTCLOUD_MAP_LOADER_NODE_HPP_
+#define POINTCLOUD_MAP_LOADER__POINTCLOUD_MAP_LOADER_NODE_HPP_
 
 // #include "autoware_map_msgs/srv/load_pcd_partially.hpp"
 // #include "autoware_map_msgs/srv/load_pcd_partially_for_publish.hpp"
-#include "autoware_map_msgs/srv/load_pcd_maps_general.hpp"
-#include "autoware_map_msgs/msg/area_info.hpp"
-#include "autoware_map_msgs/msg/pcd_map_with_id.hpp"
-
 #include "differential_map_loader_module.hpp"
 #include "pointcloud_map_loader_module.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <std_msgs/msg/string.hpp>
+#include "autoware_map_msgs/msg/area_info.hpp"
+#include "autoware_map_msgs/msg/pcd_map_with_id.hpp"
+#include "autoware_map_msgs/srv/load_pcd_maps_general.hpp"
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include <std_msgs/msg/string.hpp>
 
 #include <pcl/common/common.h>
 #include <pcl/point_cloud.h>
@@ -71,4 +70,4 @@ private:
     const std::vector<std::string> & pcd_paths_or_directory) const;
 };
 
-#endif  // MAP_LOADER__POINTCLOUD_MAP_LOADER_NODE_HPP_
+#endif  // POINTCLOUD_MAP_LOADER__POINTCLOUD_MAP_LOADER_NODE_HPP_
