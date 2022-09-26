@@ -131,8 +131,9 @@ class BSplineInterpolator
 
  private:
   // Pre-settings. Increasing lambda yield more smooth and flattened curve.
-  double lambda_ =
-    0.001;  // smoothing factor used in normal form of LS; B*B + (lambda**2)*D*D, D is f''(x).
+
+  // smoothing factor used in normal form of LS; B*B + (lambda**2)*D*D, D is f''(x).
+  double lambda_ = 0.001;
 
   // Initialized during instantiation.
   size_t n_base_points_{};  // number of points in the base,
