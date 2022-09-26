@@ -117,14 +117,14 @@ std::vector<PullOverPath> ShiftPullOver::generatePullOverPaths(
     distance_to_shoulder_lane_boundary + common_parameters.vehicle_width / 2 + margin;
 
   // shift end point in shoulder lane
-  PathPointWithLaneId shift_end_point;
-  {
+  const auto shift_end_point = std::invoke([&]() {
     const auto arc_position_goal = lanelet::utils::getArcCoordinates(shoulder_lanes, goal_pose);
     const double s_start = arc_position_goal.length - after_pull_over_straight_distance;
     const double s_end = s_start + std::numeric_limits<double>::epsilon();
     const auto path = route_handler->getCenterLinePath(shoulder_lanes, s_start, s_end, true);
-    shift_end_point = path.points.front();
-  }
+    return path.points.front();
+  });
+
 
   std::vector<PullOverPath> candidate_paths;
   for (double lateral_jerk = minimum_lateral_jerk; lateral_jerk <= maximum_lateral_jerk;
