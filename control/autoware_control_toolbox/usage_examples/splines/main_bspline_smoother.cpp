@@ -208,14 +208,9 @@ int main()
 
     // First derivative
     dxdt.setConstant(kx); // dxdt = k*x and kx is k of x
-    //  std::cout << " dxdt " << std::endl;
-    //  ns_eigen_utils::printEigenMat(dxdt);
 
     Eigen::MatrixXd dydt(xe.unaryExpr([&](auto x)
                                       { return cy * kx * cos(x); }));
-
-    //  std::cout << "dydt " << std::endl;
-    //  ns_eigen_utils::printEigenMat(dydt);
 
     // Second derivative
     Eigen::MatrixXd dxdt2(xe.rows(), 1);
@@ -228,14 +223,10 @@ int main()
     auto rdt = ns_eigen_utils::hstack<double>(dxdt, dydt);
     auto rdt2 = ns_eigen_utils::hstack<double>(dxdt2, dydt2);
 
-    // Cross product example.
-    //  Eigen::MatrixXd cross_product(xe.rows(), 1);
-    //    auto cross_product = ns_eigen_utils::crossProduct<double>(rdt, rdt2);
-
     // Curvature example.
     Eigen::MatrixXd curvature_orginal; //(xe.rows(), 1);
     curvature_orginal = ns_eigen_utils::Curvature(rdt, rdt2);
-    //  ns_eigen_utils::printEigenMat(curvature_orginal);
+
     writeToFile(log_path, curvature_orginal, "curvature_original");
 
     // Create a new smoothing spline.

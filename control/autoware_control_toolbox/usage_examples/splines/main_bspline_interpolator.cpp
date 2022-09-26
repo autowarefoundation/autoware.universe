@@ -247,14 +247,10 @@ int main()
 
     // First derivative
     dxdt.setConstant(kx); // dxdt = k*x and kx is k of x
-//  std::cout << " dxdt " << std::endl;
-//  ns_eigen_utils::printEigenMat(dxdt);
+
 
     Eigen::MatrixXd dydt(xe.unaryExpr([&](auto x)
                                       { return cy * kx * cos(x); }));
-
-//  std::cout << "dydt " << std::endl;
-//  ns_eigen_utils::printEigenMat(dydt);
 
     // Second derivative
     Eigen::MatrixXd dxdt2(xe.rows(), 1);
@@ -266,10 +262,6 @@ int main()
     // compute r0, r1 as r0 = [dxdt, dydt] and r1[dxdt2, dydt2]
     auto rdt = ns_eigen_utils::hstack<double>(dxdt, dydt);
     auto rdt2 = ns_eigen_utils::hstack<double>(dxdt2, dydt2);
-
-    // Cross product example.
-    //  Eigen::MatrixXd cross_product(xe.rows(), 1);
-    //    auto cross_product = ns_eigen_utils::crossProduct<double>(rdt, rdt2);
 
     // Curvature example.
     Eigen::MatrixXd curvature_orginal; //(xe.rows(), 1);
@@ -343,7 +335,7 @@ int main()
     fmt::print("{:<{}}{:.2f}ms\n", "Time: Bspline ROS interpolator with its derivatives construction time :", 50, toc
       (timer_interpolation));
 
-    // The downsampled and smoothed map is obtained by;
+    // The down-sampled and smoothed map is obtained by;
     Eigen::MatrixXd smoothed_map_ROS;
     interpolating_bspline_ROS.InterpolateInCoordinates(sxyze_ref, smoothed_map_ROS);
 
@@ -351,8 +343,8 @@ int main()
 
 
     // CURVATURE ROS example.
-    Eigen::MatrixXd rdot_interp(new_size, 2); // [xdot, ydot]
-    Eigen::MatrixXd rddot_interp(new_size, 2); // [xdot, ydot]
+    Eigen::MatrixXd rdot_interp(new_size, 2);   // [xdot, ydot]
+    Eigen::MatrixXd rddot_interp(new_size, 2);  // [xdot, ydot]
     auto xy_data = ns_eigen_utils::hstack<double>(xe, ye);
 
     interpolating_bspline_ROS.getFirstDerivative(xy_data, rdot_interp);
@@ -377,14 +369,10 @@ int main()
 
     // First derivative
     dxdt.setConstant(kx); // dxdt = k*x and kx is k of x
-//  std::cout << " dxdt " << std::endl;
-//  ns_eigen_utils::printEigenMat(dxdt);
+
 
     Eigen::MatrixXd dydt(xe.unaryExpr([&](auto x)
                                       { return cy * kx * cos(x); }));
-
-//  std::cout << "dydt " << std::endl;
-//  ns_eigen_utils::printEigenMat(dydt);
 
     // Second derivative
     Eigen::MatrixXd dxdt2(xe.rows(), 1);
@@ -397,15 +385,10 @@ int main()
     auto rdt = ns_eigen_utils::hstack<double>(dxdt, dydt);
     auto rdt2 = ns_eigen_utils::hstack<double>(dxdt2, dydt2);
 
-    // Cross product example.
-    //  Eigen::MatrixXd cross_product(xe.rows(), 1);
-    //    auto cross_product = ns_eigen_utils::crossProduct<double>(rdt, rdt2);
-
     // Curvature example.
     Eigen::MatrixXd curvature_orginal_ROS; //(xe.rows(), 1);
     curvature_orginal_ROS = ns_eigen_utils::Curvature(rdt, rdt2);
 
-    //  ns_eigen_utils::printEigenMat(curvature_orginal);
     writeToFile(log_path, curvature_orginal_ROS, "curvature_original_ROS");
 
   }
