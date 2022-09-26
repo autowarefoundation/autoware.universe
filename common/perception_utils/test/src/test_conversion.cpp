@@ -40,7 +40,7 @@ autoware_auto_perception_msgs::msg::ObjectClassification createObjectClassificat
 }  // namespace
 
 // NOTE: covariance is not checked
-TEST(perception_utils, test_toDetectedObject)
+TEST(conversion, test_toDetectedObject)
 {
   using autoware_auto_perception_msgs::msg::ObjectClassification;
   using perception_utils::toDetectedObject;
@@ -158,7 +158,7 @@ TEST(perception_utils, test_toDetectedObject)
 }
 
 // NOTE: covariance is not checked
-TEST(perception_utils, test_toTrackedObject)
+TEST(conversion, test_toTrackedObject)
 {
   using autoware_auto_perception_msgs::msg::ObjectClassification;
   using perception_utils::toTrackedObject;

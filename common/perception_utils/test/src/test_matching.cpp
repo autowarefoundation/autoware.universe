@@ -38,7 +38,7 @@ geometry_msgs::msg::Pose createPose(const double x, const double y, const double
 }
 }  // namespace
 
-TEST(perception_utils, test_get2dIoU)
+TEST(matching, test_get2dIoU)
 {
   using autoware_auto_perception_msgs::msg::DetectedObject;
   using perception_utils::get2dIoU;
@@ -94,7 +94,7 @@ TEST(perception_utils, test_get2dIoU)
   }
 }
 
-TEST(perception_utils, test_get2dPrecision)
+TEST(matching, test_get2dPrecision)
 {
   using autoware_auto_perception_msgs::msg::DetectedObject;
   using perception_utils::get2dPrecision;
@@ -161,7 +161,7 @@ TEST(perception_utils, test_get2dPrecision)
   }
 }
 
-TEST(perception_utils, test_get2dRecall)
+TEST(matching, test_get2dRecall)
 {
   using autoware_auto_perception_msgs::msg::DetectedObject;
   using perception_utils::get2dRecall;

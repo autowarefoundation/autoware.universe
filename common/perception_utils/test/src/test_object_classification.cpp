@@ -30,7 +30,7 @@ autoware_auto_perception_msgs::msg::ObjectClassification createObjectClassificat
 
 }  // namespace
 
-TEST(perception_utils, test_getHighestProbLabel)
+TEST(object_classification, test_getHighestProbLabel)
 {
   using autoware_auto_perception_msgs::msg::ObjectClassification;
   using perception_utils::getHighestProbLabel;
