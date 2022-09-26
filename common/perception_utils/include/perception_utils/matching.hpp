@@ -16,11 +16,13 @@
 #ifndef PERCEPTION_UTILS__MATCHING_HPP_
 #define PERCEPTION_UTILS__MATCHING_HPP_
 
+#include "perception_utils/geometry.hpp"
 #include "tier4_autoware_utils/geometry/boost_geometry.hpp"
 #include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
 
-#include <vector>
 #include <boost/geometry.hpp>
+
+#include <vector>
 
 namespace perception_utils
 {

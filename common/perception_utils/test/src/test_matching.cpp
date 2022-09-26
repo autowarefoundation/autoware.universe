@@ -15,6 +15,8 @@
 #include "perception_utils/matching.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 
+#include <autoware_auto_perception_msgs/msg/detected_object.hpp>
+
 #include <gtest/gtest.h>
 
 using tier4_autoware_utils::Point2d;
@@ -38,17 +40,19 @@ geometry_msgs::msg::Pose createPose(const double x, const double y, const double
 
 TEST(perception_utils, test_get2dIoU)
 {
+  using autoware_auto_perception_msgs::msg::DetectedObject;
   using perception_utils::get2dIoU;
+
   const double quart_circle = 0.16237976320958225;
 
   {  // non overlapped
-    autoware_auto_perception_msgs::msg::DetectedObject source_obj;
+    DetectedObject source_obj;
     source_obj.kinematics.pose_with_covariance.pose = createPose(1.5, 1.5, M_PI);
     source_obj.shape.type = autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX;
     source_obj.shape.dimensions.x = 1.0;
     source_obj.shape.dimensions.y = 1.0;
 
-    autoware_auto_perception_msgs::msg::DetectedObject target_obj;
+    DetectedObject target_obj;
     target_obj.kinematics.pose_with_covariance.pose = createPose(0.0, 0.0, M_PI_2);
     target_obj.shape.type = autoware_auto_perception_msgs::msg::Shape::CYLINDER;
     target_obj.shape.dimensions.x = 1.0;
@@ -58,13 +62,13 @@ TEST(perception_utils, test_get2dIoU)
   }
 
   {  // partially overlapped
-    autoware_auto_perception_msgs::msg::DetectedObject source_obj;
+    DetectedObject source_obj;
     source_obj.kinematics.pose_with_covariance.pose = createPose(0.5, 0.5, M_PI);
     source_obj.shape.type = autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX;
     source_obj.shape.dimensions.x = 1.0;
     source_obj.shape.dimensions.y = 1.0;
 
-    autoware_auto_perception_msgs::msg::DetectedObject target_obj;
+    DetectedObject target_obj;
     target_obj.kinematics.pose_with_covariance.pose = createPose(0.0, 0.0, M_PI_2);
     target_obj.shape.type = autoware_auto_perception_msgs::msg::Shape::CYLINDER;
     target_obj.shape.dimensions.x = 1.0;
@@ -74,13 +78,13 @@ TEST(perception_utils, test_get2dIoU)
   }
 
   {  // fully overlapped
-    autoware_auto_perception_msgs::msg::DetectedObject source_obj;
+    DetectedObject source_obj;
     source_obj.kinematics.pose_with_covariance.pose = createPose(0.0, 0.0, M_PI);
     source_obj.shape.type = autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX;
     source_obj.shape.dimensions.x = 1.0;
     source_obj.shape.dimensions.y = 1.0;
 
-    autoware_auto_perception_msgs::msg::DetectedObject target_obj;
+    DetectedObject target_obj;
     target_obj.kinematics.pose_with_covariance.pose = createPose(0.0, 0.0, M_PI_2);
     target_obj.shape.type = autoware_auto_perception_msgs::msg::Shape::CYLINDER;
     target_obj.shape.dimensions.x = 1.0;
@@ -92,17 +96,18 @@ TEST(perception_utils, test_get2dIoU)
 
 TEST(perception_utils, test_get2dPrecision)
 {
+  using autoware_auto_perception_msgs::msg::DetectedObject;
   using perception_utils::get2dPrecision;
   const double quart_circle = 0.16237976320958225;
 
   {  // non overlapped
-    autoware_auto_perception_msgs::msg::DetectedObject source_obj;
+    DetectedObject source_obj;
     source_obj.kinematics.pose_with_covariance.pose = createPose(1.5, 1.5, M_PI);
     source_obj.shape.type = autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX;
     source_obj.shape.dimensions.x = 1.0;
     source_obj.shape.dimensions.y = 1.0;
 
-    autoware_auto_perception_msgs::msg::DetectedObject target_obj;
+    DetectedObject target_obj;
     target_obj.kinematics.pose_with_covariance.pose = createPose(0.0, 0.0, M_PI_2);
     target_obj.shape.type = autoware_auto_perception_msgs::msg::Shape::CYLINDER;
     target_obj.shape.dimensions.x = 1.0;
@@ -116,13 +121,13 @@ TEST(perception_utils, test_get2dPrecision)
   }
 
   {  // partially overlapped
-    autoware_auto_perception_msgs::msg::DetectedObject source_obj;
+    DetectedObject source_obj;
     source_obj.kinematics.pose_with_covariance.pose = createPose(0.5, 0.5, M_PI);
     source_obj.shape.type = autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX;
     source_obj.shape.dimensions.x = 1.0;
     source_obj.shape.dimensions.y = 1.0;
 
-    autoware_auto_perception_msgs::msg::DetectedObject target_obj;
+    DetectedObject target_obj;
     target_obj.kinematics.pose_with_covariance.pose = createPose(0.0, 0.0, M_PI_2);
     target_obj.shape.type = autoware_auto_perception_msgs::msg::Shape::CYLINDER;
     target_obj.shape.dimensions.x = 1.0;
@@ -136,13 +141,13 @@ TEST(perception_utils, test_get2dPrecision)
   }
 
   {  // fully overlapped
-    autoware_auto_perception_msgs::msg::DetectedObject source_obj;
+    DetectedObject source_obj;
     source_obj.kinematics.pose_with_covariance.pose = createPose(0.0, 0.0, M_PI);
     source_obj.shape.type = autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX;
     source_obj.shape.dimensions.x = 1.0;
     source_obj.shape.dimensions.y = 1.0;
 
-    autoware_auto_perception_msgs::msg::DetectedObject target_obj;
+    DetectedObject target_obj;
     target_obj.kinematics.pose_with_covariance.pose = createPose(0.0, 0.0, M_PI_2);
     target_obj.shape.type = autoware_auto_perception_msgs::msg::Shape::CYLINDER;
     target_obj.shape.dimensions.x = 1.0;
@@ -158,17 +163,18 @@ TEST(perception_utils, test_get2dPrecision)
 
 TEST(perception_utils, test_get2dRecall)
 {
+  using autoware_auto_perception_msgs::msg::DetectedObject;
   using perception_utils::get2dRecall;
   const double quart_circle = 0.16237976320958225;
 
   {  // non overlapped
-    autoware_auto_perception_msgs::msg::DetectedObject source_obj;
+    DetectedObject source_obj;
     source_obj.kinematics.pose_with_covariance.pose = createPose(1.5, 1.5, M_PI);
     source_obj.shape.type = autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX;
     source_obj.shape.dimensions.x = 1.0;
     source_obj.shape.dimensions.y = 1.0;
 
-    autoware_auto_perception_msgs::msg::DetectedObject target_obj;
+    DetectedObject target_obj;
     target_obj.kinematics.pose_with_covariance.pose = createPose(0.0, 0.0, M_PI_2);
     target_obj.shape.type = autoware_auto_perception_msgs::msg::Shape::CYLINDER;
     target_obj.shape.dimensions.x = 1.0;
@@ -182,13 +188,13 @@ TEST(perception_utils, test_get2dRecall)
   }
 
   {  // partially overlapped
-    autoware_auto_perception_msgs::msg::DetectedObject source_obj;
+    DetectedObject source_obj;
     source_obj.kinematics.pose_with_covariance.pose = createPose(0.5, 0.5, M_PI);
     source_obj.shape.type = autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX;
     source_obj.shape.dimensions.x = 1.0;
     source_obj.shape.dimensions.y = 1.0;
 
-    autoware_auto_perception_msgs::msg::DetectedObject target_obj;
+    DetectedObject target_obj;
     target_obj.kinematics.pose_with_covariance.pose = createPose(0.0, 0.0, M_PI_2);
     target_obj.shape.type = autoware_auto_perception_msgs::msg::Shape::CYLINDER;
     target_obj.shape.dimensions.x = 1.0;
@@ -202,13 +208,13 @@ TEST(perception_utils, test_get2dRecall)
   }
 
   {  // fully overlapped
-    autoware_auto_perception_msgs::msg::DetectedObject source_obj;
+    DetectedObject source_obj;
     source_obj.kinematics.pose_with_covariance.pose = createPose(0.0, 0.0, M_PI);
     source_obj.shape.type = autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX;
     source_obj.shape.dimensions.x = 1.0;
     source_obj.shape.dimensions.y = 1.0;
 
-    autoware_auto_perception_msgs::msg::DetectedObject target_obj;
+    DetectedObject target_obj;
     target_obj.kinematics.pose_with_covariance.pose = createPose(0.0, 0.0, M_PI_2);
     target_obj.shape.type = autoware_auto_perception_msgs::msg::Shape::CYLINDER;
     target_obj.shape.dimensions.x = 1.0;
