@@ -21,6 +21,7 @@
 
 #include <boost/geometry.hpp>
 
+#include <algorithm>
 #include <vector>
 
 namespace perception_utils

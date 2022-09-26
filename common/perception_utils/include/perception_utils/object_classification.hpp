@@ -17,6 +17,8 @@
 
 #include "autoware_auto_perception_msgs/msg/object_classification.hpp"
 
+#include <vector>
+
 namespace perception_utils
 {
 using autoware_auto_perception_msgs::msg::ObjectClassification;
