@@ -388,5 +388,4 @@ TEST(ACTcontrol, SSandDiscretization)
 
   auto const &Dd = SSsys.Dd();
   ASSERT_DOUBLE_EQ(Dd(0, 0), 0.04);
-
 }
