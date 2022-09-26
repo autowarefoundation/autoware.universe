@@ -25,6 +25,7 @@ tnew = np.linspace(0, 1, snew.shape[0])
 ## Load Curvature
 curvature_original = np.loadtxt(path + 'curvature_original.txt')
 curvature_spline = np.loadtxt(path + 'curvature_bspline_interpolator.txt')
+curvature_circle = np.loadtxt(path + 'curvature_circle.txt')
 
 if __name__ == "__main__":
     plt.plot(tbase, ye, label='original data')
@@ -48,3 +49,14 @@ if __name__ == "__main__":
     plt.grid()
     plt.show()
     a = 1
+
+    ## TEST CURVATURE CIRCLE
+    plt.plot(tnew, curvature_circle, 'k-.', label='BSpline Interpolator')
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+    R = 100
+    error = np.array(curvature_circle) - 1 / R
+
+    print("Total curvature error : ", np.sqrt(error * error / error.shape[0]).sum())
