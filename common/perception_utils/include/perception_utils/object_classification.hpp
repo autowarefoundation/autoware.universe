@@ -21,7 +21,7 @@ namespace perception_utils
 {
 using autoware_auto_perception_msgs::msg::ObjectClassification;
 
-bool isVehicle(const uint8_t object_classification)
+inline bool isVehicle(const uint8_t object_classification)
 {
   return object_classification == ObjectClassification::BICYCLE ||
          object_classification == ObjectClassification::BUS ||
@@ -31,7 +31,7 @@ bool isVehicle(const uint8_t object_classification)
          object_classification == ObjectClassification::TRUCK;
 }
 
-bool isCarLikeVehicle(const uint8_t object_classification)
+inline bool isCarLikeVehicle(const uint8_t object_classification)
 {
   return object_classification == ObjectClassification::BUS ||
          object_classification == ObjectClassification::CAR ||
@@ -39,7 +39,7 @@ bool isCarLikeVehicle(const uint8_t object_classification)
          object_classification == ObjectClassification::TRUCK;
 }
 
-bool isLargeVehicle(const uint8_t object_classification)
+inline bool isLargeVehicle(const uint8_t object_classification)
 {
   return object_classification == ObjectClassification::BUS ||
          object_classification == ObjectClassification::TRAILER ||
