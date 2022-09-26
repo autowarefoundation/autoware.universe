@@ -1,6 +1,5 @@
 /**:
   ros__parameters:
-    vehicle:
       cg_to_front_m: 1.228
       cg_to_rear_m: 1.5618
       front_corner_stiffness: 17000.0

@@ -20,7 +20,6 @@
         <arg name="ntp_monitor_config_file" value="$(var tier4_system_launch_param_path)/system_monitor/ntp_monitor.param.yaml"/>
         <arg name="process_monitor_config_file" value="$(var tier4_system_launch_param_path)/system_monitor/process_monitor.param.yaml"/>
         <arg name="gpu_monitor_config_file" value="$(var tier4_system_launch_param_path)/system_monitor/gpu_monitor.param.yaml"/>
-        <arg name="voltage_monitor_config_file" value="$(var tier4_system_launch_param_path)/system_monitor/voltage_monitor.param.yaml"/>
       </include>
     </group>
 
