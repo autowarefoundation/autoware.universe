@@ -14,7 +14,6 @@
 
 #include "splines/bsplines_interpolator.hpp"
 
-#include <algorithm>
 #include <functional>
 
 #include <vector>
@@ -35,7 +34,7 @@ ns_splines::BSplineInterpolator::BSplineInterpolator(
   auto tvec_base = Eigen::VectorXd::LinSpaced(static_cast<int32_t>(base_signal_length), 0.0, 1.);
   auto tvec_new = Eigen::VectorXd::LinSpaced(static_cast<int32_t>(new_length), 0.0, 1.0);
 
-  // Create knot points.
+  // Create the knot points.
   nknots_ =
     static_cast<Eigen::size_t>(static_cast<double>(base_signal_length) * num_of_knots_ratio);
   knots_vec_ = ns_utils::linspace<double>(0, 1, nknots_);
@@ -177,8 +176,6 @@ ns_splines::BSplineInterpolator::BSplineInterpolator(
     basis_mat.setZero();
     penalized_weights_D.setIdentity();
 
-    //  std::cout << "basis mat " << basis_mat.rows() << " " << basis_mat.cols() << std::endl;
-    //  std::cout << "tvecbase mat " << tvec_base.rows() << " " << tvec_base.cols() << std::endl;
     // Create the bases matrices for b-spline, its first and second derivatives.
 
     // Create the bases matrices for b-spline using the base data size.
@@ -204,11 +201,8 @@ ns_splines::BSplineInterpolator::BSplineInterpolator(
     projection_mat_w_new_base_ = interpolating_base_mat * projection_mat_base_;
   } else
   {
-    // We don't need to create an additional penalized_weights_D, we have
-    // a second derivative matrix here to be used
-    // as a regularization matrix.
-    // Base matrix to compute the coefficients from the data ybase.
 
+    // Base matrix to compute the coefficients from the data ybase.
     Eigen::MatrixXd basis_mat(n_base_points_, nknots_ + 4);
 
     // For optimal curvature, we need the second derivative of the basis matrix for the base data.
@@ -382,7 +376,7 @@ void ns_splines::BSplineInterpolator::createBasesMatrix(
 
   // First derivative of the basis matrix.
   /**
-   *     bspline_primitive_dot = lambda t, knots: [0., 1, 2*t, 3*t ** 2] + \
+   * bspline_primitive_dot = lambda t, knots: [0., 1, 2*t, 3*t ** 2] + \
    *                                    [(3*(t - kn) ** 2 if (t - kn) > 0 else 0.) for kn in knots]
    **/
 
@@ -398,9 +392,6 @@ void ns_splines::BSplineInterpolator::createBasesMatrix(
    *                                        [(6*(t - kn)  if (t - kn) > 0 else 0.) for kn in knots]
    *
    * */
-
-  //  ns_eigen_utils::printEigenMat(tvec);
-  //  ns_eigen_utils::printEigenMat(basis_dmat);
 
   basis_ddmat.leftCols(2).setZero();    // [0, 0]
   basis_ddmat.col(2).setConstant(2.0);  // [0, 0, 2]
@@ -489,8 +480,6 @@ void ns_splines::BSplineInterpolator::solveByDemmlerReisch(
 void ns_splines::BSplineInterpolator::InterpolateInCoordinates(
   const Eigen::MatrixXd &ybase, Eigen::MatrixXd &data_tobe_interpolated)
 {
-  //  std::cout << "ybase passed " << std::endl;
-  //  ns_eigen_utils::printEigenMat(ybase);
 
   // Standardize or normalize the data and restore back.
   auto numcols = static_cast<size_t>(ybase.cols());
@@ -519,7 +508,6 @@ void ns_splines::BSplineInterpolator::InterpolateInCoordinates(
   data_tobe_interpolated.resize(
     normalized_interpolated_data.rows(), normalized_interpolated_data.cols());
 
-  //  ns_eigen_utils::printEigenMat(normalized_interpolated_data);
   for (size_t k = 0; k < numcols; k++)
   {
     auto const &p = static_cast<Eigen::Index>(k);
@@ -531,7 +519,7 @@ void ns_splines::BSplineInterpolator::InterpolateInCoordinates(
 
   // If we want to skip normalization procedures above, just use the
   // line below and comment out all the previous lines.
-  //  data_tobe_interpolated = projection_mat_w_new_base_ * ybase;
+  // data_tobe_interpolated = projection_mat_w_new_base_ * ybase;
 }
 
 void ns_splines::BSplineInterpolator::solveByQR(
@@ -571,8 +559,8 @@ void ns_splines::BSplineInterpolator::getFirstDerivative(
   }
 
   // Standardize or normalize the data and restore back.
-  auto numcols = ybase.cols();
-  auto numrows = ybase.rows();
+  auto const &numcols = ybase.cols();
+  auto const &numrows = ybase.rows();
 
   if (numrows <= 1)
   {
@@ -656,5 +644,5 @@ void ns_splines::BSplineInterpolator::getSecondDerivative(
 
   // If we want to skip normalization procedures above, just use the line below and
   // comment out all the previous lines.
-  //  data_dot_dot_tobe_interpolated = projection_mat_w_new_base_dot_dot_ * ybase;
+  // data_dot_dot_tobe_interpolated = projection_mat_w_new_base_dot_dot_ * ybase;
 }
