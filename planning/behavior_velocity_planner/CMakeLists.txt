@@ -21,13 +21,20 @@ set(scene_modules
   no_stopping_area
   virtual_traffic_light
   occlusion_spot
+  run_out
 )
 
+foreach(scene_module IN LISTS scene_modules)
+  file(GLOB_RECURSE scene_module_src "src/scene_module/${scene_module}/*")
+  list(APPEND scene_modules_src ${scene_module_src})
+endforeach()
 
-# Common
-ament_auto_add_library(scene_module_lib SHARED
+ament_auto_add_library(behavior_velocity_planner SHARED
+  src/node.cpp
+  src/planner_manager.cpp
   src/utilization/path_utilization.cpp
   src/utilization/util.cpp
+  src/utilization/debug.cpp
   ${scene_modules_src}
 )
 
@@ -44,6 +51,8 @@ ament_target_dependencies(behavior_velocity_planner
   Eigen3
   PCL
 )
+
+target_link_libraries(behavior_velocity_planner ${PCL_LIBRARIES})
 
 rclcpp_components_register_node(behavior_velocity_planner
   PLUGIN "behavior_velocity_planner::BehaviorVelocityPlannerNode"
