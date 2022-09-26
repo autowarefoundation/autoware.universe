@@ -259,23 +259,19 @@ TurnIndicatorsCommand TurnSignalDecider::resolve_turn_signal(
 
   // Subsequent required section starts faster than prior required starts section
 
-  // In front of the prior required section
-  if (before_prior_required) {
-    std::cerr << "Before" << std::endl;
-    return subsequent_turn_signal;
-  }
-
   // If the prior section is inside of the subsequent required section
   if (dist_to_prior_required_end < dist_to_subsequent_required_end) {
-    if (inside_prior_required) {
-      std::cerr << "Inside" << std::endl;
+    if (before_prior_required || inside_prior_required) {
       return prior_turn_signal;
     }
-    std::cerr << "Not Inside" << std::endl;
     return subsequent_turn_signal;
   }
 
   // inside or passed the intersection required
+  if (before_prior_required) {
+    return subsequent_turn_signal;
+  }
+
   return prior_turn_signal;
 }
 
