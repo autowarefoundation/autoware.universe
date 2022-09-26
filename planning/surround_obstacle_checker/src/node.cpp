@@ -44,7 +44,6 @@
 
 namespace surround_obstacle_checker
 {
-
 namespace bg = boost::geometry;
 using Point2d = bg::model::d2::point_xy<double>;
 using Polygon2d = bg::model::polygon<Point2d>;
@@ -124,15 +123,16 @@ Polygon2d createObjPolygon(
 Polygon2d createSelfPolygon(const VehicleInfo & vehicle_info)
 {
   const double & front_m = vehicle_info.max_longitudinal_offset_m;
-  const double & width_m = vehicle_info.min_lateral_offset_m;
+  const double & width_left_m = vehicle_info.max_lateral_offset_m;
+  const double & width_right_m = vehicle_info.min_lateral_offset_m;
   const double & rear_m = vehicle_info.min_longitudinal_offset_m;
 
   Polygon2d ego_polygon;
 
-  ego_polygon.outer().push_back(Point2d(front_m, -width_m));
-  ego_polygon.outer().push_back(Point2d(front_m, width_m));
-  ego_polygon.outer().push_back(Point2d(rear_m, width_m));
-  ego_polygon.outer().push_back(Point2d(rear_m, -width_m));
+  ego_polygon.outer().push_back(Point2d(front_m, width_left_m));
+  ego_polygon.outer().push_back(Point2d(front_m, width_right_m));
+  ego_polygon.outer().push_back(Point2d(rear_m, width_right_m));
+  ego_polygon.outer().push_back(Point2d(rear_m, width_left_m));
 
   bg::correct(ego_polygon);
 
@@ -152,9 +152,7 @@ SurroundObstacleCheckerNode::SurroundObstacleCheckerNode(const rclcpp::NodeOptio
     p.surround_check_recover_distance =
       this->declare_parameter("surround_check_recover_distance", 2.5);
     p.state_clear_time = this->declare_parameter("state_clear_time", 2.0);
-    p.stop_state_ego_speed = this->declare_parameter("stop_state_ego_speed", 0.1);
-    p.stop_state_entry_duration_time =
-      this->declare_parameter("stop_state_entry_duration_time", 0.1);
+    p.publish_debug_footprints = this->declare_parameter("publish_debug_footprints", true);
   }
 
   vehicle_info_ = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
@@ -162,9 +160,10 @@ SurroundObstacleCheckerNode::SurroundObstacleCheckerNode(const rclcpp::NodeOptio
   // Publishers
   pub_stop_reason_ =
     this->create_publisher<diagnostic_msgs::msg::DiagnosticStatus>("~/output/no_start_reason", 1);
-  pub_clear_velocity_limit_ =
-    this->create_publisher<VelocityLimitClearCommand>("~/output/velocity_limit_clear_command", 1);
-  pub_velocity_limit_ = this->create_publisher<VelocityLimit>("~/output/max_velocity", 1);
+  pub_clear_velocity_limit_ = this->create_publisher<VelocityLimitClearCommand>(
+    "~/output/velocity_limit_clear_command", rclcpp::QoS{1}.transient_local());
+  pub_velocity_limit_ = this->create_publisher<VelocityLimit>(
+    "~/output/max_velocity", rclcpp::QoS{1}.transient_local());
 
   // Subscribers
   sub_pointcloud_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
@@ -181,35 +180,45 @@ SurroundObstacleCheckerNode::SurroundObstacleCheckerNode(const rclcpp::NodeOptio
   timer_ = rclcpp::create_timer(
     this, get_clock(), 100ms, std::bind(&SurroundObstacleCheckerNode::onTimer, this));
 
-  last_running_time_ = std::make_shared<rclcpp::Time>(this->now());
+  // Stop Checker
+  vehicle_stop_checker_ = std::make_unique<VehicleStopChecker>(this);
 
   // Debug
+  auto const self_polygon = createSelfPolygon(vehicle_info_);
+  odometry_ptr_ = std::make_shared<nav_msgs::msg::Odometry>();
+
   debug_ptr_ = std::make_shared<SurroundObstacleCheckerDebugNode>(
-    vehicle_info_.max_longitudinal_offset_m, this->get_clock(), *this);
+    self_polygon, vehicle_info_.max_longitudinal_offset_m, node_param_.surround_check_distance,
+    node_param_.surround_check_recover_distance, odometry_ptr_->pose.pose, this->get_clock(),
+    *this);
 }
 
 void SurroundObstacleCheckerNode::onTimer()
 {
-  if (node_param_.use_pointcloud && !pointcloud_ptr_) {
+  if (!odometry_ptr_) {
     RCLCPP_WARN_THROTTLE(
       this->get_logger(), *this->get_clock(), 1000 /* ms */, "waiting for current velocity...");
     return;
   }
 
-  if (node_param_.use_dynamic_object && !object_ptr_) {
+  if (node_param_.publish_debug_footprints) {
+    debug_ptr_->publishFootprints();
+  }
+
+  if (node_param_.use_pointcloud && !pointcloud_ptr_) {
     RCLCPP_WARN_THROTTLE(
       this->get_logger(), *this->get_clock(), 1000 /* ms */, "waiting for pointcloud info...");
     return;
   }
 
-  if (!odometry_ptr_) {
+  if (node_param_.use_dynamic_object && !object_ptr_) {
     RCLCPP_WARN_THROTTLE(
       this->get_logger(), *this->get_clock(), 1000 /* ms */, "waiting for dynamic object info...");
     return;
   }
 
   const auto nearest_obstacle = getNearestObstacle();
-  const auto is_vehicle_stopped = isVehicleStopped();
+  const auto is_vehicle_stopped = vehicle_stop_checker_->isVehicleStopped();
 
   switch (state_) {
     case State::PASS: {
@@ -242,12 +251,6 @@ void SurroundObstacleCheckerNode::onTimer()
         !nearest_obstacle
           ? false
           : nearest_obstacle.get().first < node_param_.surround_check_recover_distance;
-
-      if (isStopRequired(is_obstacle_found, is_vehicle_stopped)) {
-        break;
-      }
-
-      state_ = State::PASS;
 
       if (isStopRequired(is_obstacle_found, is_vehicle_stopped)) {
         break;
@@ -296,36 +299,16 @@ void SurroundObstacleCheckerNode::onDynamicObjects(const PredictedObjects::Const
 
 void SurroundObstacleCheckerNode::onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg)
 {
-  try {
-    // get transform from source to target
-    geometry_msgs::msg::TransformStamped ros_src2tgt =
-      tf_buffer_.lookupTransform(source, target, tf2::TimePointZero);
-    // convert geometry_msgs::msg::Transform to geometry_msgs::msg::Pose
-    tf2::Transform transform;
-    tf2::fromMsg(ros_src2tgt.transform, transform);
-    tf2::toMsg(transform, pose);
-  } catch (tf2::TransformException & ex) {
-    RCLCPP_WARN_STREAM_THROTTLE(
-      get_logger(), *this->get_clock(), 500 /* ms */,
-      "cannot get tf from " << source << " to " << target);
-    return false;
-  }
-  return true;
+  odometry_ptr_ = msg;
 }
 
 boost::optional<Obstacle> SurroundObstacleCheckerNode::getNearestObstacle() const
 {
-  tf2::Transform src2tgt;
-  try {
-    // get transform from source to target
-    geometry_msgs::msg::TransformStamped ros_src2tgt =
-      tf_buffer_.lookupTransform(source, target, time, tf2::durationFromSec(0.1));
-    tf2::fromMsg(ros_src2tgt.transform, src2tgt);
-  } catch (tf2::TransformException & ex) {
-    RCLCPP_WARN_STREAM_THROTTLE(
-      get_logger(), *this->get_clock(), 500 /* ms */,
-      "cannot get tf from " << source << " to " << target);
-    return false;
+  boost::optional<Obstacle> nearest_pointcloud{boost::none};
+  boost::optional<Obstacle> nearest_object{boost::none};
+
+  if (node_param_.use_pointcloud) {
+    nearest_pointcloud = getNearestObstacleByPointCloud();
   }
 
   if (node_param_.use_dynamic_object) {
@@ -350,17 +333,14 @@ boost::optional<Obstacle> SurroundObstacleCheckerNode::getNearestObstacle() cons
 
 boost::optional<Obstacle> SurroundObstacleCheckerNode::getNearestObstacleByPointCloud() const
 {
-  // wait to transform pointcloud
-  geometry_msgs::msg::TransformStamped transform_stamped;
-  try {
-    transform_stamped = tf_buffer_.lookupTransform(
-      "base_link", pointcloud_ptr_->header.frame_id, pointcloud_ptr_->header.stamp,
-      tf2::durationFromSec(0.5));
-  } catch (tf2::TransformException & ex) {
-    RCLCPP_WARN_STREAM_THROTTLE(
-      get_logger(), *this->get_clock(), 500 /* ms */,
-      "failed to get base_link to " << pointcloud_ptr_->header.frame_id << " transform.");
-    return;
+  const auto transform_stamped =
+    getTransform("base_link", pointcloud_ptr_->header.frame_id, pointcloud_ptr_->header.stamp, 0.5);
+
+  geometry_msgs::msg::Point nearest_point;
+  auto minimum_distance = std::numeric_limits<double>::max();
+
+  if (!transform_stamped) {
+    return {};
   }
 
   Eigen::Affine3f isometry = tf2::transformToEigen(transform_stamped.get().transform).cast<float>();
@@ -468,17 +448,6 @@ bool SurroundObstacleCheckerNode::isStopRequired(
 
   last_obstacle_found_time_ = {};
   return false;
-}
-
-bool SurroundObstacleCheckerNode::isVehicleStopped()
-{
-  const auto current_velocity = std::abs(odometry_ptr_->twist.twist.linear.x);
-
-  if (node_param_.stop_state_ego_speed < current_velocity) {
-    last_running_time_ = std::make_shared<rclcpp::Time>(this->now());
-  }
-
-  return node_param_.stop_state_entry_duration_time < (this->now() - *last_running_time_).seconds();
 }
 
 }  // namespace surround_obstacle_checker

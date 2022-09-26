@@ -11,22 +11,7 @@
 - Adaptive Cruise Controller (ACC)
   - embeds target velocity in trajectory when there is a dynamic point cloud on the trajectory.
 
-In order to stop with a `stop margin` from the obstacle exists, the stop point (`v=0`) is inserted at a distance of `baselink to front` + `stop margin` from the obstacle. The `baselink to front` means the distance between `base_link`(center of rear-wheel axis) and front of the car.
-
-If a stop point has already been inserted by other nodes between the obstacle and a position which is `stop margin` meters away from the obstacle, the stop point is inserted at a distance of `baselink to front` + `min behavior stop margin` from the obstacle.
-
-<div align="center">
-  <img src="./docs/insert_velocity1.drawio.svg" width=45%>
-  <img src="./docs/insert_velocity2.drawio.svg" width=45%>
-</div>
-
-When the deceleration section is inserted, the start point of the section is inserted in front of the target point cloud by the distance of `baselink to front` + `slow down forward margin`. the end point of the section is inserted behind the target point cloud by the distance of `slow down backward margin` + `baselink to rear`. The `baselink to rear` means the distance between `base_link` and rear of the car. The velocities of points in the deceleration section are modified to the deceleration velocity. `slow down backward margin` and `slow down forward margin` are determined by the parameters described below.
-
-<div align="center">
-  <img src="./docs/insert_decel_velocity.drawio.svg" width=45%>
-</div>
-
-## Input topics
+### Input topics
 
 | Name                        | Type                                            | Description         |
 | --------------------------- | ----------------------------------------------- | ------------------- |

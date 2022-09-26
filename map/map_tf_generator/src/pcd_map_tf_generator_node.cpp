@@ -29,7 +29,7 @@
 
 constexpr size_t N_SAMPLES = 20;
 
-class MapTFGeneratorNode : public rclcpp::Node
+class PcdMapTFGeneratorNode : public rclcpp::Node
 {
 public:
   using PointCloud = pcl::PointCloud<pcl::PointXYZ>;

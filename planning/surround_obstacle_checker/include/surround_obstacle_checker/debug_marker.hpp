@@ -31,11 +31,16 @@
 namespace surround_obstacle_checker
 {
 
+using geometry_msgs::msg::PolygonStamped;
 using tier4_planning_msgs::msg::StopFactor;
 using tier4_planning_msgs::msg::StopReason;
 using tier4_planning_msgs::msg::StopReasonArray;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
+
+namespace bg = boost::geometry;
+using Point2d = bg::model::d2::point_xy<double>;
+using Polygon2d = bg::model::polygon<Point2d>;
 
 enum class PoseType : int8_t { NoStart = 0 };
 enum class PointType : int8_t { NoStart = 0 };
@@ -55,15 +60,25 @@ public:
   void publishFootprints();
 
 private:
+  rclcpp::Publisher<MarkerArray>::SharedPtr debug_virtual_wall_pub_;
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_viz_pub_;
   rclcpp::Publisher<StopReasonArray>::SharedPtr stop_reason_pub_;
+  rclcpp::Publisher<PolygonStamped>::SharedPtr vehicle_footprint_pub_;
+  rclcpp::Publisher<PolygonStamped>::SharedPtr vehicle_footprint_offset_pub_;
+  rclcpp::Publisher<PolygonStamped>::SharedPtr vehicle_footprint_recover_offset_pub_;
+
+  Polygon2d ego_polygon_;
   double base_link2front_;
   double surround_check_distance_;
   double surround_check_recover_distance_;
   geometry_msgs::msg::Pose self_pose_;
 
+  MarkerArray makeVirtualWallMarker();
   MarkerArray makeVisualizationMarker();
   StopReasonArray makeStopReasonArray();
+
+  Polygon2d createSelfPolygonWithOffset(const Polygon2d & base_polygon, const double & offset);
+  PolygonStamped boostPolygonToPolygonStamped(const Polygon2d & boost_polygon, const double & z);
 
   std::shared_ptr<geometry_msgs::msg::Point> stop_obstacle_point_ptr_;
   std::shared_ptr<geometry_msgs::msg::Pose> stop_pose_ptr_;

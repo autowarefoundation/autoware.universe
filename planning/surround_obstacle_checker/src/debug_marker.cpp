@@ -14,6 +14,7 @@
 
 #include "surround_obstacle_checker/debug_marker.hpp"
 
+#include <motion_utils/motion_utils.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
@@ -26,13 +27,13 @@
 namespace surround_obstacle_checker
 {
 
+using motion_utils::createStopVirtualWallMarker;
 using tier4_autoware_utils::appendMarkerArray;
 using tier4_autoware_utils::calcOffsetPose;
 using tier4_autoware_utils::createDefaultMarker;
 using tier4_autoware_utils::createMarkerColor;
 using tier4_autoware_utils::createMarkerScale;
 using tier4_autoware_utils::createPoint;
-using tier4_autoware_utils::createStopVirtualWallMarker;
 
 SurroundObstacleCheckerDebugNode::SurroundObstacleCheckerDebugNode(
   const Polygon2d & ego_polygon, const double base_link2front,
@@ -50,6 +51,11 @@ SurroundObstacleCheckerDebugNode::SurroundObstacleCheckerDebugNode(
     node.create_publisher<visualization_msgs::msg::MarkerArray>("~/virtual_wall", 1);
   debug_viz_pub_ = node.create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/marker", 1);
   stop_reason_pub_ = node.create_publisher<StopReasonArray>("~/output/stop_reasons", 1);
+  vehicle_footprint_pub_ = node.create_publisher<PolygonStamped>("~/debug/footprint", 1);
+  vehicle_footprint_offset_pub_ =
+    node.create_publisher<PolygonStamped>("~/debug/footprint_offset", 1);
+  vehicle_footprint_recover_offset_pub_ =
+    node.create_publisher<PolygonStamped>("~/debug/footprint_recover_offset", 1);
 }
 
 bool SurroundObstacleCheckerDebugNode::pushPose(
@@ -116,7 +122,7 @@ void SurroundObstacleCheckerDebugNode::publish()
   stop_obstacle_point_ptr_ = nullptr;
 }
 
-MarkerArray SurroundObstacleCheckerDebugNode::makeVisualizationMarker()
+MarkerArray SurroundObstacleCheckerDebugNode::makeVirtualWallMarker()
 {
   MarkerArray msg;
   rclcpp::Time current_time = this->clock_->now();
@@ -127,6 +133,15 @@ MarkerArray SurroundObstacleCheckerDebugNode::makeVisualizationMarker()
     const auto markers = createStopVirtualWallMarker(p, "surround obstacle", current_time, 0);
     appendMarkerArray(markers, &msg);
   }
+
+  return msg;
+}
+
+MarkerArray SurroundObstacleCheckerDebugNode::makeVisualizationMarker()
+{
+  MarkerArray msg;
+  rclcpp::Time current_time = this->clock_->now();
+
   // visualize surround object
   if (stop_obstacle_point_ptr_ != nullptr) {
     auto marker = createDefaultMarker(
@@ -166,6 +181,44 @@ StopReasonArray SurroundObstacleCheckerDebugNode::makeStopReasonArray()
   stop_reason_array.header = header;
   stop_reason_array.stop_reasons.emplace_back(stop_reason_msg);
   return stop_reason_array;
+}
+
+Polygon2d SurroundObstacleCheckerDebugNode::createSelfPolygonWithOffset(
+  const Polygon2d & base_polygon, const double & offset)
+{
+  typedef double coordinate_type;
+  const double buffer_distance = offset;
+  const int points_per_circle = 36;
+  boost::geometry::strategy::buffer::distance_symmetric<coordinate_type> distance_strategy(
+    buffer_distance);
+  boost::geometry::strategy::buffer::join_round join_strategy(points_per_circle);
+  boost::geometry::strategy::buffer::end_round end_strategy(points_per_circle);
+  boost::geometry::strategy::buffer::point_circle circle_strategy(points_per_circle);
+  boost::geometry::strategy::buffer::side_straight side_strategy;
+  boost::geometry::model::multi_polygon<Polygon2d> result;
+  // Create the buffer of a multi polygon
+  boost::geometry::buffer(
+    base_polygon, result, distance_strategy, side_strategy, join_strategy, end_strategy,
+    circle_strategy);
+  return result.front();
+}
+
+PolygonStamped SurroundObstacleCheckerDebugNode::boostPolygonToPolygonStamped(
+  const Polygon2d & boost_polygon, const double & z)
+{
+  PolygonStamped polygon_stamped;
+  polygon_stamped.header.frame_id = "base_link";
+  polygon_stamped.header.stamp = this->clock_->now();
+
+  for (auto const & p : boost_polygon.outer()) {
+    geometry_msgs::msg::Point32 gp;
+    gp.x = p.x();
+    gp.y = p.y();
+    gp.z = z;
+    polygon_stamped.polygon.points.push_back(gp);
+  }
+
+  return polygon_stamped;
 }
 
 }  // namespace surround_obstacle_checker

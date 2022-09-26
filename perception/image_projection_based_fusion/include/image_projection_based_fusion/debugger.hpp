@@ -39,9 +39,7 @@ class Debugger
 {
 public:
   explicit Debugger(
-
-    rclcpp::Node * node_ptr, const std::size_t image_num, const std::size_t image_buffer_size,
-    const std::size_t image_buffer_size);
+    rclcpp::Node * node_ptr, const std::size_t image_num, const std::size_t image_buffer_size);
 
   void publishImage(const std::size_t image_id, const rclcpp::Time & stamp);
 
@@ -60,6 +58,7 @@ private:
   std::vector<image_transport::Subscriber> image_subs_;
   std::vector<image_transport::Publisher> image_pubs_;
   std::vector<boost::circular_buffer<sensor_msgs::msg::Image::ConstSharedPtr>> image_buffers_;
+
   std::size_t image_buffer_size_;
 };
 

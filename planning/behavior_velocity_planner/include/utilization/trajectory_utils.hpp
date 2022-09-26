@@ -85,46 +85,6 @@ inline Quaternion lerpOrientation(
   return tf2::toMsg(q_interpolated);
 }
 
-/**
- * @brief apply linear interpolation to trajectory point that is nearest to a certain point
- * @param [in] points trajectory points
- * @param [in] point Interpolated point is nearest to this point.
- */
-template <class T>
-boost::optional<TrajectoryPointWithIdx> getLerpTrajectoryPointWithIdx(
-  const T & points, const geometry_msgs::msg::Point & point)
-{
-  TrajectoryPoint interpolated_point;
-  const size_t nearest_seg_idx = tier4_autoware_utils::findNearestSegmentIndex(points, point);
-  const double len_to_interpolated =
-    tier4_autoware_utils::calcLongitudinalOffsetToSegment(points, nearest_seg_idx, point);
-  const double len_segment =
-    tier4_autoware_utils::calcSignedArcLength(points, nearest_seg_idx, nearest_seg_idx + 1);
-  const double ratio = len_to_interpolated / len_segment;
-  if (ratio <= 0.0 || 1.0 <= ratio) return boost::none;
-  const double interpolate_ratio = std::clamp(ratio, 0.0, 1.0);
-  {
-    const size_t i = nearest_seg_idx;
-    const auto & pos0 = points.at(i).pose.position;
-    const auto & pos1 = points.at(i + 1).pose.position;
-    interpolated_point.pose.position.x = interpolation::lerp(pos0.x, pos1.x, interpolate_ratio);
-    interpolated_point.pose.position.y = interpolation::lerp(pos0.y, pos1.y, interpolate_ratio);
-    interpolated_point.pose.position.z = interpolation::lerp(pos0.z, pos1.z, interpolate_ratio);
-    interpolated_point.pose.orientation = lerpOrientation(
-      points.at(i).pose.orientation, points.at(i + 1).pose.orientation, interpolate_ratio);
-    interpolated_point.longitudinal_velocity_mps = interpolation::lerp(
-      points.at(i).longitudinal_velocity_mps, points.at(i + 1).longitudinal_velocity_mps,
-      interpolate_ratio);
-    interpolated_point.lateral_velocity_mps = interpolation::lerp(
-      points.at(i).lateral_velocity_mps, points.at(i + 1).lateral_velocity_mps, interpolate_ratio);
-    interpolated_point.acceleration_mps2 = interpolation::lerp(
-      points.at(i).acceleration_mps2, points.at(i + 1).acceleration_mps2, interpolate_ratio);
-    interpolated_point.heading_rate_rps = interpolation::lerp(
-      points.at(i).heading_rate_rps, points.at(i + 1).heading_rate_rps, interpolate_ratio);
-  }
-  return std::make_pair(interpolated_point, nearest_seg_idx);
-}
-
 //! smooth path point with lane id starts from ego position on path to the path end
 inline bool smoothPath(
   const PathWithLaneId & in_path, PathWithLaneId & out_path,
@@ -142,28 +102,7 @@ inline bool smoothPath(
       0, trajectory.size(), external_v_limit->max_velocity, trajectory);
   }
   const auto traj_lateral_acc_filtered = smoother->applyLateralAccelerationFilter(trajectory);
-  auto nearest_idx =
-    tier4_autoware_utils::findNearestIndex(*traj_lateral_acc_filtered, current_pose.position);
-  const auto dist_to_nearest = tier4_autoware_utils::calcSignedArcLength(
-    *traj_lateral_acc_filtered, current_pose.position, nearest_idx);
 
-  // if trajectory has the almost same point as ego, don't insert the ego point
-  constexpr double epsilon = 1e-2;
-  TrajectoryPoints traj_with_ego_point_on_path = *traj_lateral_acc_filtered;
-  if (std::fabs(dist_to_nearest) > epsilon) {
-    // calc ego internal division point on path
-    const auto traj_with_ego_point_with_idx =
-      getLerpTrajectoryPointWithIdx(*traj_lateral_acc_filtered, current_pose.position);
-    if (traj_with_ego_point_with_idx == boost::none) return false;
-    TrajectoryPoint ego_point_on_path = traj_with_ego_point_with_idx->first;
-    const size_t nearest_seg_idx = traj_with_ego_point_with_idx->second;
-    //! insert ego projected pose on path so new nearest segment will be nearest_seg_idx + 1
-    traj_with_ego_point_on_path.insert(
-      traj_with_ego_point_on_path.begin() + nearest_seg_idx, ego_point_on_path);
-
-    // ego point inserted is new nearest point
-    nearest_idx = nearest_seg_idx + 1;
-  }
   // Resample trajectory with ego-velocity based interval distances
   auto traj_resampled = smoother->resampleTrajectory(
     *traj_lateral_acc_filtered, v0, current_pose, planner_data->ego_nearest_dist_threshold,
@@ -183,7 +122,7 @@ inline bool smoothPath(
   }
   traj_smoothed.insert(
     traj_smoothed.begin(), traj_resampled->begin(),
-    traj_resampled->begin() + *traj_resampled_closest);
+    traj_resampled->begin() + traj_resampled_closest);
 
   out_path = convertTrajectoryPointsToPath(traj_smoothed);
   return true;

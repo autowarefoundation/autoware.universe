@@ -13,19 +13,18 @@
 
   <build_depend>autoware_cmake</build_depend>
 
-  <test_depend>ament_cmake_ros</test_depend>
   <test_depend>ament_lint_auto</test_depend>
-  <test_depend>ament_lint_auto</test_depend>
-  <test_depend>autoware_lint_common</test_depend>
   <test_depend>autoware_lint_common</test_depend>
 
   <depend>autoware_auto_mapping_msgs</depend>
   <depend>autoware_auto_planning_msgs</depend>
   <depend>geometry_msgs</depend>
-  <depend>lanelet2</depend>
-  <depend>lanelet2_core</depend>
-  <depend>lanelet2_io</depend>
-  <depend>visualization_msgs</depend>
+  <depend>lanelet2_extension</depend>
+  <depend>motion_utils</depend>
+  <depend>rclcpp</depend>
+  <depend>rclcpp_components</depend>
+  <depend>tf2_ros</depend>
+  <depend>tier4_autoware_utils</depend>
 
   <export>
     <build_type>ament_cmake</build_type>
