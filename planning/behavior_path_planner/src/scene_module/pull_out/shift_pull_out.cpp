@@ -69,7 +69,7 @@ boost::optional<PullOutPath> ShiftPullOut::plan(Pose start_pose, Pose goal_pose)
     auto & shift_path =
       pull_out_path.partial_paths.front();  // shift path is not separate but only one.
 
-    // check lane_depature and collsion with path between current to pull_out_end
+    // check lane_departure and collision with path between current to pull_out_end
     PathWithLaneId path_current_to_shift_end;
     {
       const auto current_idx = findNearestIndex(shift_path.points, current_pose);
