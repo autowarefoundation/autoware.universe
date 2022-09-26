@@ -29,11 +29,13 @@ int main()
   // <--------------- Dimension Expansion -------------------------------->
   // Generate a noisy sinusoidal signal with arc-length parametrization. This is our test signal.
   const size_t Nin = 120;
-  const size_t Nout = 50;
+  const size_t Nout = 80;
+
+  double const &add_noise = 1;
 
   std::random_device rd;
   std::default_random_engine generator{rd()};
-  std::normal_distribution<double> distribution(0.0, 0.03);
+  std::normal_distribution<double> distribution(0.0, 0.3);
 
   {
     // Generate x.
@@ -45,13 +47,13 @@ int main()
     std::vector<double> yvec;
     std::transform(xvec.cbegin(), xvec.cend(), std::back_inserter(yvec), [&](auto const &x)
     {
-      return cy * sin(x) + distribution(generator) * 0;
+      return cy * sin(x) + distribution(generator) * add_noise;
     });
 
     std::vector<double> zvec;
     std::transform(xvec.cbegin(), xvec.cend(), std::back_inserter(zvec), [&](auto const &x)
     {
-      return 2 * cos(x) - 3 * sin(x);
+      return 2 * cos(x) - 3 * sin(x) + distribution(generator) * add_noise;
     });
 
 
@@ -100,15 +102,15 @@ int main()
     xe = Eigen::Map<Eigen::Matrix<double, Nin, 1 >>(xvec.data());
 
     Eigen::MatrixXd ye(xe.unaryExpr([&](auto x)
-                                    { return cy * sin(x) + distribution(generator) * 0; }));
+                                    { return cy * sin(x) + distribution(generator) * add_noise; }));
 
     Eigen::MatrixXd ze(xe.unaryExpr([&](auto x)
-                                    { return 2 * cos(x) - 3 * sin(x) + distribution(generator) * 0; }));
+                                    { return 2 * cos(x) - 3 * sin(x) + distribution(generator) * add_noise; }));
 
     Eigen::MatrixXd se;
     se = Eigen::Map<Eigen::Matrix<double, Nin, 1 >>(svec.data());
 
-    Eigen::Index input_size = Nin;
+    // Eigen::Index input_size = Nin;
     auto senew = Eigen::VectorXd::LinSpaced(Nout, 0.0, se(se.rows() - 1));
 
     //  ns_eigen_utils::printEigenMat(se_new.bottomRows(se_new.rows() - 1));

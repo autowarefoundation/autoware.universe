@@ -519,5 +519,79 @@ void cholesky_update(Eigen::MatrixBase<Derived1> &R, Eigen::MatrixBase<Derived2>
   //        printEigenMat(Rsqrt.eval());
 }
 
+/**
+ * @brief returns a difference matrix for the curve modules.
+ * @param n number of data points
+ * @param d degree of differentiation 1 or 2
+ * */
+
+template<typename T>
+eigen_dynamic_type<T> difference_matrix(size_t const &n, size_t const &d = 0)
+{
+
+  eigen_dynamic_type<T> D(n - d, n);
+  D.setZero();
+
+  if (d == 0)
+  {
+    D.setIdentity();
+  }
+
+  if (d == 1)
+  {
+    D.template diagonal<0>().setConstant(-1);
+    D.template diagonal<1>().setConstant(1);
+  }
+
+  if (d == 2)
+  {
+    D.template diagonal<0>().setConstant(1);
+    D.template diagonal<1>().setConstant(-2);
+    D.template diagonal<2>().setConstant(1);
+  }
+
+  return D;
+
+}
+
+/**
+ * @brief returns a difference matrix for the curve modules.
+ * @param n number of data points
+ * @param k number of knots
+ * @param d degree of differentiation 1 or 2
+ * */
+template<typename T>
+eigen_dynamic_type<T> difference_matrix_bspline(int const &n, int const &k,
+                                                int const &d = 0)
+{
+
+  eigen_dynamic_type<T> D(n, k + 4);
+  D.setZero();
+
+  eigen_dynamic_type<T> K(k - d, k);  // knot matrix to be penalized
+
+  if (d == 0)
+  {
+    K.setIdentity();
+  }
+
+  if (d == 1)
+  {
+    K.template diagonal<0>().setConstant(-1);
+    K.template diagonal<1>().setConstant(1);
+  }
+
+  if (d == 2)
+  {
+    K.template diagonal<0>().setConstant(1);
+    K.template diagonal<1>().setConstant(-2);
+    K.template diagonal<2>().setConstant(1);
+  }
+
+  D.block(4, 4, k - d, k) = K;
+
+  return D;
+}
+
 }  // namespace ns_eigen_utils
 #endif  // UTILS__ACT_UTILS_EIGEN_HPP_
