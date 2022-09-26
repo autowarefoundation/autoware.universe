@@ -179,6 +179,9 @@ public:
    */
   std::vector<double> calcLateralJerk() const;
 
+  int zerolength_startidx=-1;
+  int zerolength_endidx=-1;
+
 private:
   // The reference path along which the shift will be performed.
   PathWithLaneId reference_path_;
