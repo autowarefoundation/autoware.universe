@@ -205,6 +205,8 @@ BSplineInterpolatorTemplated<Nin, Nout>::BSplineInterpolatorTemplated(double num
    * if the derivatives are not requested.
    * */
 
+  auto penalizing_matrix_D = ns_eigen_utils::difference_matrix_bspline<double>(Nin, static_cast<int>(nknots_), 0);
+
   if (!compute_derivatives_)
   {
     Eigen::MatrixXd basis_mat(Nin, nknots_ + 4);
@@ -213,7 +215,7 @@ BSplineInterpolatorTemplated<Nin, Nout>::BSplineInterpolatorTemplated(double num
     // for Tikhonov regularization D can be identity or second derivative matrix for smooth
     // curvature.
     // Eigen::MatrixXd penalized_weights_D(Nin, nknots_ + 4);
-    auto penalized_weights_D = ns_eigen_utils::difference_matrix_bspline<double>(Nin, static_cast<int>(nknots_), 0);
+
 
     // Create interpolating base matrix for the base data.
     // This basis is used to compute the coefficients from the given ybase data.
@@ -231,7 +233,7 @@ BSplineInterpolatorTemplated<Nin, Nout>::BSplineInterpolatorTemplated(double num
     createBasesMatrix(tvec_new, new_basis_mat);
 
     // Solve the matrix equations. This computes and sets the projection_mat_base_
-    solveByDemmlerReisch(basis_mat, penalized_weights_D);
+    solveByDemmlerReisch(basis_mat, penalizing_matrix_D);
 
     /**
      * Once the following matrix is computed, we multiply it with the given ybase which yields
@@ -249,12 +251,6 @@ BSplineInterpolatorTemplated<Nin, Nout>::BSplineInterpolatorTemplated(double num
 
     // Base matrix to compute the coefficients from the data ybase.
     Eigen::MatrixXd basis_mat(n_base_points_, nknots_ + 4);
-
-    //  For optimal curvature, we need the second derivative of the basis matrix for the base data.
-    //  Eigen::MatrixXd penalizing_matrix_D(n_base_points_, nknots_ + 4);
-    //  penalizing_matrix_D.setIdentity();
-
-    auto penalizing_matrix_D = ns_eigen_utils::difference_matrix_bspline<double>(Nin, static_cast<int>(nknots_), 0);
 
     createBasesMatrix(tvec_base, basis_mat);
 
