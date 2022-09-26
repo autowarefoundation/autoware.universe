@@ -16,8 +16,6 @@
 
 #include <fmt/core.h>
 
-#include <cassert>
-
 int main()
 {
   double Td = 0.01;  // time delay in seconds.

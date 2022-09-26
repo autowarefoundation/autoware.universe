@@ -31,17 +31,20 @@ if __name__ == "__main__":
     plt.plot(tnew, yinterp, label='interpolated')
     # plt.plot(xe, yinterp, 'go', alpha=0.5, label='interpolated')
     plt.legend()
+    plt.grid()
     plt.show()
 
     plt.plot(tbase, ze, label='original data')
     plt.plot(tnew, zinterp, label='interpolated')
 
     plt.legend()
+    plt.grid()
     plt.show()
 
     ## TEST CURVATURE
     plt.plot(tbase, curvature_original, 'r', lw=3, alpha=0.3, label='Original Curvature')
     plt.plot(tnew, curvature_spline, 'k-.', label='BSpline Interpolator')
     plt.legend()
+    plt.grid()
     plt.show()
     a = 1
