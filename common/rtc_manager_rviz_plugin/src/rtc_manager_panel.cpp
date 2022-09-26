@@ -118,7 +118,6 @@ RTCManagerPanel::RTCManagerPanel(QWidget * parent) : rviz_common::Panel(parent)
   const size_t module_size = 14;
   auto_modes_.reserve(module_size);
   auto * v_layout = new QVBoxLayout;
-  auto * auto_mode_table_layout = new QHBoxLayout;
   auto vertical_header = new QHeaderView(Qt::Vertical);
   vertical_header->hide();
   auto horizontal_header = new QHeaderView(Qt::Horizontal);
@@ -170,9 +169,7 @@ RTCManagerPanel::RTCManagerPanel(QWidget * parent) : rviz_common::Panel(parent)
     }
     auto_modes_.emplace_back(rtc_auto_mode);
   }
-  auto_mode_table_layout->addWidget(auto_mode_table_);
-
-  v_layout->addLayout(auto_mode_table_layout);
+  v_layout->addWidget(auto_mode_table_);
 
   // statuses
   auto * rtc_table_layout = new QHBoxLayout;
