@@ -107,7 +107,6 @@ boost::optional<TurnSignalInfo> TurnSignalDecider::getIntersectionTurnSignalInfo
     } else if (search_distance < dist_to_front_point) {
       break;
     }
-
     const std::string lane_attribute = lane.attributeOr("turn_direction", std::string("none"));
     if (
       (lane_attribute == "right" || lane_attribute == "left") &&

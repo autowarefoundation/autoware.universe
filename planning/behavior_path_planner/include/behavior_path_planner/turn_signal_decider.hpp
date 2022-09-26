@@ -23,6 +23,7 @@
 
 #include <lanelet2_core/LaneletMap.h>
 
+#include <limits>
 #include <map>
 #include <memory>
 #include <string>
