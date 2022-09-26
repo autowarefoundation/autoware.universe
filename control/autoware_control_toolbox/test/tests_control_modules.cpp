@@ -327,3 +327,66 @@ TEST(ACTcontrol, takingSquareOfTFandSS)
   ASSERT_DOUBLE_EQ(C(1) * B(0), 122.0703125); // due to the special algorithm of matrix balancing.
   ASSERT_DOUBLE_EQ(D(0), 0.);
 }
+
+/**
+ * Test state-space methods and discretization.
+ * */
+TEST(ACTcontrol, SSandDiscretization)
+{
+
+  // Second-order low-pass filter and its discrete time state space.
+  double tau = 0.1;
+
+  ns_control_toolbox::tf_factor num({1.});
+  ns_control_toolbox::tf_factor den({tau, 1});
+  den.power(2);
+
+  auto TFsys = ns_control_toolbox::tf(num, den);
+
+  ns_utils::print("First order transfer function : ");
+  TFsys.print();
+
+  double Ts = 0.05;
+  auto SSsys = ns_control_toolbox::tf2ss(TFsys, Ts);
+
+  ns_utils::print("Continuous-time state-space : ");
+  SSsys.print();
+
+  ns_utils::print("Discrete-time state-space : ");
+  SSsys.print_discrete_system();
+
+  // Matlab results - Continuous time SS.
+  auto const &A = SSsys.A();
+  ASSERT_DOUBLE_EQ(A(0, 0), -20);
+  ASSERT_DOUBLE_EQ(A(0, 1), -12.5);
+  ASSERT_DOUBLE_EQ(A(1, 0), 8.);
+  ASSERT_DOUBLE_EQ(A(1, 1), 0.);
+
+  auto const &B = SSsys.B();
+
+  auto const &C = SSsys.C();
+
+  ASSERT_DOUBLE_EQ(C(0, 1) * B(0, 0), 12.5);
+
+  auto const &D = SSsys.D();
+  ASSERT_DOUBLE_EQ(D(0, 0), 0.);
+
+  // Discretization results
+  auto const &Ad = SSsys.Ad();
+  ASSERT_DOUBLE_EQ(Ad(0, 0), 0.28);
+  ASSERT_DOUBLE_EQ(Ad(0, 1), -0.4);
+  ASSERT_DOUBLE_EQ(Ad(1, 0), 0.256);
+  ASSERT_DOUBLE_EQ(Ad(1, 1), 0.92);
+
+  auto const &Bd = SSsys.Bd();
+  ASSERT_DOUBLE_EQ(Bd(0, 0), 0.256);
+  ASSERT_DOUBLE_EQ(Bd(1, 0), 0.0512);
+
+  auto const &Cd = SSsys.Cd();
+  ASSERT_DOUBLE_EQ(Cd(0, 0), 0.2);
+  ASSERT_DOUBLE_EQ(Cd(0, 1), 1.5);
+
+  auto const &Dd = SSsys.Dd();
+  ASSERT_DOUBLE_EQ(Dd(0, 0), 0.04);
+
+}
