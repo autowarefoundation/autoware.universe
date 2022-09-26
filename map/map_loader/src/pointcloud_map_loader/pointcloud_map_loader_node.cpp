@@ -64,23 +64,21 @@ PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & opt
 {
   leaf_size_ = declare_parameter("leaf_size", 3.0);
 
-  const auto pcd_paths =
-    getPcdPaths(declare_parameter("pcd_paths_or_directory", std::vector<std::string>({})));
+  const auto pcd_paths = getPcdPaths(
+    declare_parameter("pcd_paths_or_directory", std::vector<std::string>({})));
 
   if (declare_parameter("enable_whole_load", false)) {
     std::string publisher_name = "output/pointcloud_map";
-    pcd_map_publisher_ =
-      std::make_unique<PointcloudMapPublisherModule>(this, pcd_paths, publisher_name, boost::none);
+    pcd_map_loader_ = std::make_unique<PointcloudMapLoaderModule>(this, pcd_paths, publisher_name, boost::none);
   }
 
   if (declare_parameter("enable_downsampled_whole_load", true)) {
     std::string publisher_name = "output/debug/downsampled_pointcloud_map";
-    downsampled_pcd_map_publisher_ =
-      std::make_unique<PointcloudMapPublisherModule>(this, pcd_paths, publisher_name, leaf_size_);
+    downsampled_pcd_map_loader_ = std::make_unique<PointcloudMapLoaderModule>(this, pcd_paths, publisher_name, leaf_size_);
   }
 
   if (declare_parameter("enable_partial_load", true)) {
-    differential_map_loading_ = std::make_unique<DifferentialMapLoadingModule>(this, pcd_paths);
+    differential_map_loader_ = std::make_unique<DifferentialMapLoaderModule>(this, pcd_paths);
   }
 }
 
@@ -109,6 +107,7 @@ std::vector<std::string> PointCloudMapLoaderNode::getPcdPaths(
   }
   return pcd_paths;
 }
+
 
 #include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(PointCloudMapLoaderNode)

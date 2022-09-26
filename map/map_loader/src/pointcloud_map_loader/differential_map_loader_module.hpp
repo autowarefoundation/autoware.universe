@@ -12,23 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef POINTCLOUD_MAP_LOADER__DIFFERENTIAL_MAP_LOADING_MODULE_HPP_
-#define POINTCLOUD_MAP_LOADER__DIFFERENTIAL_MAP_LOADING_MODULE_HPP_
+#ifndef DIFFERENTIAL_MAP_LOADING_MODULE_HPP_
+#define DIFFERENTIAL_MAP_LOADING_MODULE_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
-#include "autoware_map_msgs/srv/load_pcd_maps_general.hpp"
-
 #include <pcl/common/common.h>
-#include <pcl/filters/voxel_grid.h>
-#include <pcl/io/pcd_io.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
+#include <pcl/io/pcd_io.h>
+#include <pcl/filters/voxel_grid.h>
 #include <pcl_conversions/pcl_conversions.h>
 
-#include <map>
+#include "autoware_map_msgs/srv/load_pcd_maps_general.hpp"
+
 #include <string>
 #include <vector>
+#include <map>
 
 struct PCDFileMetadata
 {
@@ -36,12 +36,13 @@ struct PCDFileMetadata
   pcl::PointXYZ max;
 };
 
-class DifferentialMapLoadingModule
+class DifferentialMapLoaderModule
 {
-public:
-  explicit DifferentialMapLoadingModule(
-    rclcpp::Node * node, const std::vector<std::string> pcd_paths);
 
+public:
+  explicit DifferentialMapLoaderModule(
+    rclcpp::Node * node, const std::vector<std::string> pcd_paths);
+  
 private:
   rclcpp::Logger logger_;
 
@@ -52,11 +53,9 @@ private:
   bool loadPCDMapsGeneralCallback(
     autoware_map_msgs::srv::LoadPCDMapsGeneral::Request::SharedPtr req,
     autoware_map_msgs::srv::LoadPCDMapsGeneral::Response::SharedPtr res);
-  void partialAreaLoad(
-    const autoware_map_msgs::msg::AreaInfo area,
+  void partialAreaLoad(const autoware_map_msgs::msg::AreaInfo area,
     autoware_map_msgs::srv::LoadPCDMapsGeneral::Response::SharedPtr & response) const;
-  void differentialAreaLoad(
-    const autoware_map_msgs::msg::AreaInfo area_info,
+  void differentialAreaLoad(const autoware_map_msgs::msg::AreaInfo area_info,
     const std::vector<std::string> already_loaded_ids,
     autoware_map_msgs::srv::LoadPCDMapsGeneral::Response::SharedPtr & response) const;
   void loadPCDMapWithID(
@@ -66,4 +65,4 @@ private:
     const std::vector<std::string> & pcd_paths) const;
 };
 
-#endif  // POINTCLOUD_MAP_LOADER__DIFFERENTIAL_MAP_LOADING_MODULE_HPP_
+#endif  // DIFFERENTIAL_MAP_LOADING_MODULE_HPP_

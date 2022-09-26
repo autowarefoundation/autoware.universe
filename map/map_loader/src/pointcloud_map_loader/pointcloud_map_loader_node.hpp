@@ -28,21 +28,22 @@
  * limitations under the License.
  */
 
-#ifndef POINTCLOUD_MAP_LOADER__POINTCLOUD_MAP_LOADER_NODE_HPP_
-#define POINTCLOUD_MAP_LOADER__POINTCLOUD_MAP_LOADER_NODE_HPP_
+#ifndef MAP_LOADER__POINTCLOUD_MAP_LOADER_NODE_HPP_
+#define MAP_LOADER__POINTCLOUD_MAP_LOADER_NODE_HPP_
 
 // #include "autoware_map_msgs/srv/load_pcd_partially.hpp"
 // #include "autoware_map_msgs/srv/load_pcd_partially_for_publish.hpp"
-#include "differential_map_loading_module.hpp"
-#include "pointcloud_map_publisher_module.hpp"
+#include "autoware_map_msgs/srv/load_pcd_maps_general.hpp"
+#include "autoware_map_msgs/msg/area_info.hpp"
+#include "autoware_map_msgs/msg/pcd_map_with_id.hpp"
+
+#include "differential_map_loader_module.hpp"
+#include "pointcloud_map_loader_module.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
-#include "autoware_map_msgs/msg/area_info.hpp"
-#include "autoware_map_msgs/msg/pcd_map_with_id.hpp"
-#include "autoware_map_msgs/srv/load_pcd_maps_general.hpp"
-#include <sensor_msgs/msg/point_cloud2.hpp>
 #include <std_msgs/msg/string.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
 
 #include <pcl/common/common.h>
 #include <pcl/point_cloud.h>
@@ -62,12 +63,12 @@ private:
   // ros param
   float leaf_size_;
 
-  std::unique_ptr<DifferentialMapLoadingModule> differential_map_loading_;
-  std::unique_ptr<PointcloudMapPublisherModule> pcd_map_publisher_;
-  std::unique_ptr<PointcloudMapPublisherModule> downsampled_pcd_map_publisher_;
+  std::unique_ptr<DifferentialMapLoaderModule> differential_map_loader_;
+  std::unique_ptr<PointcloudMapLoaderModule> pcd_map_loader_;
+  std::unique_ptr<PointcloudMapLoaderModule> downsampled_pcd_map_loader_;
 
   std::vector<std::string> getPcdPaths(
     const std::vector<std::string> & pcd_paths_or_directory) const;
 };
 
-#endif  // POINTCLOUD_MAP_LOADER__POINTCLOUD_MAP_LOADER_NODE_HPP_
+#endif  // MAP_LOADER__POINTCLOUD_MAP_LOADER_NODE_HPP_

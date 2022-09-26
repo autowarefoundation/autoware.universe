@@ -12,10 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "differential_map_loading_module.hpp"
+#include "differential_map_loader_module.hpp"
 
 bool sphereAndBoxOverlapExists(
-  const geometry_msgs::msg::Point position, const double radius, const pcl::PointXYZ position_min,
+  const geometry_msgs::msg::Point position,
+  const double radius,
+  const pcl::PointXYZ position_min,
   const pcl::PointXYZ position_max)
 {
   if (
@@ -47,7 +49,8 @@ bool sphereAndBoxOverlapExists(
 }
 
 bool isGridWithinQueriedArea(
-  const autoware_map_msgs::msg::AreaInfo area, const PCDFileMetadata metadata)
+  const autoware_map_msgs::msg::AreaInfo area,
+  const PCDFileMetadata metadata)
 {
   // Currently, the area load only supports spherical area
   geometry_msgs::msg::Point position = area.center;
@@ -56,19 +59,20 @@ bool isGridWithinQueriedArea(
   return res;
 }
 
-DifferentialMapLoadingModule::DifferentialMapLoadingModule(
+DifferentialMapLoaderModule::DifferentialMapLoaderModule(
   rclcpp::Node * node, const std::vector<std::string> pcd_paths)
 : logger_(node->get_logger())
 {
   all_pcd_file_metadata_dict_ = generatePCDMetadata(pcd_paths);
   load_pcd_maps_general_service_ = node->create_service<autoware_map_msgs::srv::LoadPCDMapsGeneral>(
     "load_pcd_maps_general", std::bind(
-                               &DifferentialMapLoadingModule::loadPCDMapsGeneralCallback, this,
-                               std::placeholders::_1, std::placeholders::_2));
+                            &DifferentialMapLoaderModule::loadPCDMapsGeneralCallback, this,
+                            std::placeholders::_1, std::placeholders::_2));
 }
 
-void DifferentialMapLoadingModule::differentialAreaLoad(
-  const autoware_map_msgs::msg::AreaInfo area, const std::vector<std::string> already_loaded_ids,
+void DifferentialMapLoaderModule::differentialAreaLoad(
+  const autoware_map_msgs::msg::AreaInfo area,
+  const std::vector<std::string> already_loaded_ids,
   autoware_map_msgs::srv::LoadPCDMapsGeneral::Response::SharedPtr & response) const
 {
   // iterate over all the available pcd map grids
@@ -82,9 +86,7 @@ void DifferentialMapLoadingModule::differentialAreaLoad(
     // skip if the pcd file is not within the queried area
     if (!isGridWithinQueriedArea(area, metadata)) continue;
 
-    bool is_already_loaded =
-      std::find(already_loaded_ids.begin(), already_loaded_ids.end(), map_id) !=
-      already_loaded_ids.end();
+    bool is_already_loaded = std::find(already_loaded_ids.begin(), already_loaded_ids.end(), map_id) != already_loaded_ids.end();
     if (is_already_loaded) {
       response->already_loaded_ids.push_back(map_id);
     } else {
@@ -96,7 +98,7 @@ void DifferentialMapLoadingModule::differentialAreaLoad(
   RCLCPP_INFO_STREAM(logger_, "Finished diff area loading");
 }
 
-void DifferentialMapLoadingModule::partialAreaLoad(
+void DifferentialMapLoaderModule::partialAreaLoad(
   const autoware_map_msgs::msg::AreaInfo area,
   autoware_map_msgs::srv::LoadPCDMapsGeneral::Response::SharedPtr & response) const
 {
@@ -118,7 +120,7 @@ void DifferentialMapLoadingModule::partialAreaLoad(
   }
 }
 
-bool DifferentialMapLoadingModule::loadPCDMapsGeneralCallback(
+bool DifferentialMapLoaderModule::loadPCDMapsGeneralCallback(
   autoware_map_msgs::srv::LoadPCDMapsGeneral::Request::SharedPtr req,
   autoware_map_msgs::srv::LoadPCDMapsGeneral::Response::SharedPtr res)
 {
@@ -134,7 +136,7 @@ bool DifferentialMapLoadingModule::loadPCDMapsGeneralCallback(
   return true;
 }
 
-void DifferentialMapLoadingModule::loadPCDMapWithID(
+void DifferentialMapLoaderModule::loadPCDMapWithID(
   const std::string path, const std::string map_id,
   autoware_map_msgs::msg::PCDMapWithID & pcd_map_with_id) const
 {
@@ -146,7 +148,7 @@ void DifferentialMapLoadingModule::loadPCDMapWithID(
   pcd_map_with_id.id = map_id;
 }
 
-std::map<std::string, PCDFileMetadata> DifferentialMapLoadingModule::generatePCDMetadata(
+std::map<std::string, PCDFileMetadata> DifferentialMapLoaderModule::generatePCDMetadata(
   const std::vector<std::string> & pcd_paths) const
 {
   pcl::PointCloud<pcl::PointXYZ> partial_pcd;
