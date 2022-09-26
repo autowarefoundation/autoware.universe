@@ -14,6 +14,8 @@
 
 #include "perception_utils/predicted_path_utils.hpp"
 
+#include <algorithm>
+
 namespace perception_utils
 {
 boost::optional<geometry_msgs::msg::Pose> calcInterpolatedPose(
