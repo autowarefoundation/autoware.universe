@@ -12,25 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "perception_utils/perception_utils.hpp"
+#ifndef PERCEPTION_UTILS__CONVERSION_HPP_
+#define PERCEPTION_UTILS__CONVERSION_HPP_
+
+#include "autoware_auto_perception_msgs/msg/detected_objects.hpp"
+#include "autoware_auto_perception_msgs/msg/tracked_objects.hpp"
 
 namespace perception_utils
 {
-std::uint8_t getHighestProbLabel(
-  const std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> & classification)
-{
-  std::uint8_t label = autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN;
-  float highest_prob = 0.0;
-  for (const auto & _class : classification) {
-    if (highest_prob < _class.probability) {
-      highest_prob = _class.probability;
-      label = _class.label;
-    }
-  }
-  return label;
-}
-
-autoware_auto_perception_msgs::msg::DetectedObject toDetectedObject(
+inline autoware_auto_perception_msgs::msg::DetectedObject toDetectedObject(
   const autoware_auto_perception_msgs::msg::TrackedObject & tracked_object)
 {
   autoware_auto_perception_msgs::msg::DetectedObject detected_object;
@@ -51,7 +41,7 @@ autoware_auto_perception_msgs::msg::DetectedObject toDetectedObject(
   return detected_object;
 }
 
-autoware_auto_perception_msgs::msg::DetectedObjects toDetectedObjects(
+inline autoware_auto_perception_msgs::msg::DetectedObjects toDetectedObjects(
   const autoware_auto_perception_msgs::msg::TrackedObjects & tracked_objects)
 {
   autoware_auto_perception_msgs::msg::DetectedObjects detected_objects;
@@ -63,7 +53,7 @@ autoware_auto_perception_msgs::msg::DetectedObjects toDetectedObjects(
   return detected_objects;
 }
 
-autoware_auto_perception_msgs::msg::TrackedObject toTrackedObject(
+inline autoware_auto_perception_msgs::msg::TrackedObject toTrackedObject(
   const autoware_auto_perception_msgs::msg::DetectedObject & detected_object)
 {
   autoware_auto_perception_msgs::msg::TrackedObject tracked_object;
@@ -81,7 +71,7 @@ autoware_auto_perception_msgs::msg::TrackedObject toTrackedObject(
   return tracked_object;
 }
 
-autoware_auto_perception_msgs::msg::TrackedObjects toTrackedObjects(
+inline autoware_auto_perception_msgs::msg::TrackedObjects toTrackedObjects(
   const autoware_auto_perception_msgs::msg::DetectedObjects & detected_objects)
 {
   autoware_auto_perception_msgs::msg::TrackedObjects tracked_objects;
@@ -93,3 +83,5 @@ autoware_auto_perception_msgs::msg::TrackedObjects toTrackedObjects(
   return tracked_objects;
 }
 }  // namespace perception_utils
+
+#endif  // PERCEPTION_UTILS__CONVERSION_HPP_

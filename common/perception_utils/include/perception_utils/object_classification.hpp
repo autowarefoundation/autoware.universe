@@ -45,6 +45,19 @@ inline bool isLargeVehicle(const uint8_t object_classification)
          object_classification == ObjectClassification::TRAILER ||
          object_classification == ObjectClassification::TRUCK;
 }
+
+inline std::uint8_t getHighestProbLabel(const std::vector<ObjectClassification> & classification)
+{
+  std::uint8_t label = autoware_auto_perception_msgs::msg::ObjectClassification::UNKNOWN;
+  float highest_prob = 0.0;
+  for (const auto & _class : classification) {
+    if (highest_prob < _class.probability) {
+      highest_prob = _class.probability;
+      label = _class.label;
+    }
+  }
+  return label;
+}
 }  // namespace perception_utils
 
 #endif  // PERCEPTION_UTILS__OBJECT_CLASSIFICATION_HPP_

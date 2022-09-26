@@ -19,8 +19,6 @@
 #include "tier4_autoware_utils/geometry/boost_geometry.hpp"
 #include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
 
-#include "autoware_auto_perception_msgs/msg/detected_objects.hpp"
-#include "autoware_auto_perception_msgs/msg/tracked_objects.hpp"
 #include "geometry_msgs/msg/transform.hpp"
 
 #include <boost/geometry.hpp>
@@ -60,18 +58,6 @@ namespace perception_utils
 {
 std::uint8_t getHighestProbLabel(
   const std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> & classification);
-
-autoware_auto_perception_msgs::msg::DetectedObject toDetectedObject(
-  const autoware_auto_perception_msgs::msg::TrackedObject & tracked_object);
-
-autoware_auto_perception_msgs::msg::DetectedObjects toDetectedObjects(
-  const autoware_auto_perception_msgs::msg::TrackedObjects & tracked_objects);
-
-autoware_auto_perception_msgs::msg::TrackedObject toTrackedObject(
-  const autoware_auto_perception_msgs::msg::DetectedObject & detected_object);
-
-autoware_auto_perception_msgs::msg::TrackedObjects toTrackedObjects(
-  const autoware_auto_perception_msgs::msg::DetectedObjects & detected_objects);
 
 template <class T1, class T2>
 inline double get2dIoU(const T1 source_object, const T2 target_object)
