@@ -7,7 +7,6 @@ autoware_package()
 find_package(Boost REQUIRED)
 
 ament_auto_add_library(perception_utils SHARED
-  src/perception_utils.cpp
   src/predicted_path_utils.cpp
 )
 
