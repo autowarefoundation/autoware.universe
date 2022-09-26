@@ -88,16 +88,21 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
       else()
         message(STATUS "diff ${FILE_NAME}")
         message(STATUS "File hash changes. Downloading now ...")
-        execute_process(COMMAND gdown --quiet https://drive.google.com/uc?id=${GFILE_ID} -O ${FILE_PATH})
-        # file(MD5 ${FILE_PATH} DOWNLOADED_FILE_HASH)  # disable to pass ci
-        message(STATUS "Downloaded file hash: ${DOWNLOADED_FILE_HASH}")
+        file(DOWNLOAD ${DOWNLOAD_URL} ${FILE_PATH} STATUS DOWNLOAD_STATUS TIMEOUT 300)
+        list(GET DOWNLOAD_STATUS 0 STATUS_CODE)
+        list(GET DOWNLOAD_STATUS 1 ERROR_MESSAGE)
       endif()
     else()
       message(STATUS "not found ${FILE_NAME}")
       message(STATUS "File doesn't exists. Downloading now ...")
-      execute_process(COMMAND gdown --quiet https://drive.google.com/uc?id=${GFILE_ID} -O ${FILE_PATH})
-      # file(MD5 ${FILE_PATH} DOWNLOADED_FILE_HASH)  # disable to pass ci
-      message(STATUS "Downloaded file hash: ${DOWNLOADED_FILE_HASH}")
+      file(DOWNLOAD ${DOWNLOAD_URL} ${FILE_PATH} STATUS DOWNLOAD_STATUS TIMEOUT 300)
+      list(GET DOWNLOAD_STATUS 0 STATUS_CODE)
+      list(GET DOWNLOAD_STATUS 1 ERROR_MESSAGE)
+    endif()
+    if(${STATUS_CODE} EQUAL 0)
+      message(STATUS "Download completed successfully!")
+    else()
+      message(FATAL_ERROR "Error occurred during download: ${ERROR_MESSAGE} ${DOWNLOAD_URL}")
     endif()
   endfunction()
 
@@ -156,13 +161,6 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
   # To suppress unknown-pragmas error. The root-cause is CUB library in CUDA 11.6.
   # This issue was fixed by https://github.com/NVIDIA/cub/commit/7d608bf1dc14553e2fb219eabeed80b76621b6fe
   target_include_directories(centerpoint_lib
-    SYSTEM PUBLIC
-      ${CUDA_INCLUDE_DIRS}
-  )
-
-  # To suppress unknown-pragmas error. The root-cause is CUB library in CUDA 11.6.
-  # This issue was fixed by https://github.com/NVIDIA/cub/commit/7d608bf1dc14553e2fb219eabeed80b76621b6fe
-  target_include_directories(centerpoint
     SYSTEM PUBLIC
       ${CUDA_INCLUDE_DIRS}
   )
