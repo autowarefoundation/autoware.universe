@@ -21,6 +21,16 @@ namespace perception_utils
 {
 using autoware_auto_perception_msgs::msg::ObjectClassification;
 
+inline bool isVehicle(const uint8_t object_classification)
+{
+  return object_classification == ObjectClassification::BICYCLE ||
+         object_classification == ObjectClassification::BUS ||
+         object_classification == ObjectClassification::CAR ||
+         object_classification == ObjectClassification::MOTORCYCLE ||
+         object_classification == ObjectClassification::TRAILER ||
+         object_classification == ObjectClassification::TRUCK;
+}
+
 inline bool isVehicle(const std::vector<ObjectClassification> & object_classifications)
 {
   auto highest_prob_classification = getHighestProbLabel(object_classifications);
@@ -32,6 +42,14 @@ inline bool isVehicle(const std::vector<ObjectClassification> & object_classific
          highest_prob_classification == ObjectClassification::TRUCK;
 }
 
+inline bool isCarLikeVehicle(const uint8_t object_classification)
+{
+  return object_classification == ObjectClassification::BUS ||
+         object_classification == ObjectClassification::CAR ||
+         object_classification == ObjectClassification::TRAILER ||
+         object_classification == ObjectClassification::TRUCK;
+}
+
 inline bool isCarLikeVehicle(const std::vector<ObjectClassification> & object_classifications)
 {
   auto highest_prob_classification = getHighestProbLabel(object_classifications);
@@ -39,6 +57,13 @@ inline bool isCarLikeVehicle(const std::vector<ObjectClassification> & object_cl
          highest_prob_classification == ObjectClassification::CAR ||
          highest_prob_classification == ObjectClassification::TRAILER ||
          highest_prob_classification == ObjectClassification::TRUCK;
+}
+
+inline bool isLargeVehicle(const uint8_t object_classification)
+{
+  return object_classification == ObjectClassification::BUS ||
+         object_classification == ObjectClassification::TRAILER ||
+         object_classification == ObjectClassification::TRUCK;
 }
 
 inline bool isLargeVehicle(const std::vector<ObjectClassification> & object_classifications)
