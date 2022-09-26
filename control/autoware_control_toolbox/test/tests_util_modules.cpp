@@ -46,12 +46,12 @@ TEST(ACTutils, linearInterpolateExtrapolate)
 TEST(ACTutils, angleDistance)
 {
   auto theta_ref = ns_utils::deg2rad(0.);
-  auto theta_1 = 0.0872665; // ns_utils::deg2rad(5.);
-  auto theta_2 = -0.0872665; // ns_utils::deg2rad(-5.);
+  auto theta_1 = ns_utils::deg2rad(5.);
+  auto theta_2 = ns_utils::deg2rad(-5.);
 
-  auto theta_3 = 3.12414; // ns_utils::deg2rad(179.);
-  auto theta_4 = 3.15905; //ns_utils::deg2rad(181.);
-  auto theta_5 = 3.15905; //ns_utils::deg2rad(-179.);
+  auto theta_3 = ns_utils::deg2rad(179.);
+  auto theta_4 = ns_utils::deg2rad(181.);
+  auto theta_5 = 3.15905; // ns_utils::deg2rad(-179.);
 
   ns_utils::print(theta_ref, theta_1, theta_2, theta_3, theta_4, theta_5);
   ASSERT_TRUE(true);
@@ -66,10 +66,13 @@ TEST(ACTutils, angleDistance)
   }
 
   ns_utils::print_container(distances);
-//  ASSERT_LE(std::fabs(distances[0] - theta_1), 1e-8);
-//  ASSERT_LE(std::fabs(distances[1] - theta_2), 1e-8);
-//  ASSERT_LE(std::fabs(distances[2] - theta_3), 1e-8);
-//  ASSERT_LE(std::fabs(distances[3] - theta_5), 1e-8);
-//  ASSERT_LE(std::fabs(distances[4] - theta_5), 1e-8);
+  ns_utils::print_container(thetas);
+
+  // ASSERT_DOUBLE_EQ(distances[0], theta_1);
+  ASSERT_LE(std::fabs(distances[0] - theta_1), 1e-12);
+  ASSERT_LE(std::fabs(distances[1] - theta_2), 1e-12);
+  ASSERT_LE(std::fabs(distances[2] - theta_3), 1e-12);
+  ASSERT_LE(std::fabs(distances[3] + theta_3), 1e-12);
+  ASSERT_LE(std::fabs(distances[4] + theta_3), 1e-12);
 
 }
