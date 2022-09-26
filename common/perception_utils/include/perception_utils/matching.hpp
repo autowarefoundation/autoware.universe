@@ -27,7 +27,7 @@
 namespace perception_utils
 {
 template <class T1, class T2>
-inline double get2dIoU(const T1 source_object, const T2 target_object)
+double get2dIoU(const T1 source_object, const T2 target_object)
 {
   const auto & source_pose = getPose(source_object);
   const auto & target_pose = getPose(target_object);
@@ -56,7 +56,7 @@ inline double get2dIoU(const T1 source_object, const T2 target_object)
 }
 
 template <class T1, class T2>
-inline double get2dPrecision(const T1 source_object, const T2 target_object)
+double get2dPrecision(const T1 source_object, const T2 target_object)
 {
   const auto & source_pose = getPose(source_object);
   const auto & target_pose = getPose(target_object);
@@ -81,7 +81,7 @@ inline double get2dPrecision(const T1 source_object, const T2 target_object)
 }
 
 template <class T1, class T2>
-inline double get2dRecall(const T1 source_object, const T2 target_object)
+double get2dRecall(const T1 source_object, const T2 target_object)
 {
   const auto & source_pose = getPose(source_object);
   const auto & target_pose = getPose(target_object);
