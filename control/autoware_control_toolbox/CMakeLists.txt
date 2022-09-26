@@ -32,9 +32,9 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     # -Wno-narrowing
     # -Wno-error=unused-but-set-variable
     # -Wno-conversion
-    # -Wno-sign-conversion
-    #            -Wno-sign-compare
-    #  -Wdouble-promotion
+    -Wno-error=sign-conversion
+    -Wno-sign-compare
+    # -Wdouble-promotion
     # -Wfloat-equal
     -Waddress
     -fvisibility=default

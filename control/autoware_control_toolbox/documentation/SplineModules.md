@@ -1,5 +1,7 @@
 # SPLINE MODULES
 
+## BSpline Smoothers
+
 The Autoware Control Toolbox includes spline, line fitting, and B-spline curve fitting and smoothers for computing curve
 functions requiring second-order differentiation.
 
@@ -100,7 +102,7 @@ curvature_bspline_smoother = ns_eigen_utils::Curvature(rdot_interp, rddot_interp
 
 ```
 
-# Natural Cubic Spline (Piecewise) by Preconditioned Conjugate Gradients.
+## Natural Cubic Spline (Piecewise) by Preconditioned Conjugate Gradients.
 
 The spline modules provide a piecewise cubic (and with a linear option) class which can be used to fit a curve or
 line to the given data piecewise. The implementation depends on the Eigen library, the matrix version of
