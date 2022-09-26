@@ -88,7 +88,6 @@ int main()
       std::normal_distribution<double> distribution(0.0, 0.3);
      */
 
-
     // Create new interpolating coordinates
     auto snew = ns_utils::linspace(svec[0], svec.back(), 101);
 
