@@ -14,6 +14,10 @@
 
 #include "perception_utils/predicted_path_utils.hpp"
 
+#include "interpolation/linear_interpolation.hpp"
+#include "interpolation/spherical_linear_interpolation.hpp"
+#include "interpolation/spline_interpolation.hpp"
+
 #include <algorithm>
 
 namespace perception_utils
