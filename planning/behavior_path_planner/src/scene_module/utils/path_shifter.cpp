@@ -261,8 +261,7 @@ void PathShifter::updateShiftPointIndices(ShiftPointArray & shift_points) const
 {
   if (reference_path_.points.empty()) {
     RCLCPP_ERROR(
-      logger_,
-      "reference path is empty, setPath is needed before addShiftPoint/setShiftPoints.");
+      logger_, "reference path is empty, setPath is needed before addShiftPoint/setShiftPoints.");
   }
 
   for (auto & p : shift_points) {
