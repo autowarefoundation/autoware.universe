@@ -39,9 +39,6 @@ ShiftPullOver::ShiftPullOver(
 boost::optional<PullOverPath> ShiftPullOver::plan(const Pose & goal_pose)
 {
   const auto & route_handler = planner_data_->route_handler;
-  const auto & common_parameters = planner_data_->parameters;
-  const auto & dynamic_objects = planner_data_->dynamic_object;
-  const auto & current_pose = planner_data_->self_pose->pose;
 
   const auto road_lanes = util::getCurrentLanes(planner_data_);
   const auto shoulder_lanes = pull_over_utils::getPullOverLanes(*route_handler);
@@ -124,7 +121,6 @@ std::vector<PullOverPath> ShiftPullOver::generatePullOverPaths(
     const auto path = route_handler->getCenterLinePath(shoulder_lanes, s_start, s_end, true);
     return path.points.front();
   });
-
 
   std::vector<PullOverPath> candidate_paths;
   for (double lateral_jerk = minimum_lateral_jerk; lateral_jerk <= maximum_lateral_jerk;
@@ -303,8 +299,6 @@ std::vector<PullOverPath> ShiftPullOver::selectValidPaths(
   const lanelet::ConstLanelets & shoulder_lanes, const bool is_in_goal_route_section,
   const Pose & goal_pose) const
 {
-  const auto & current_pose = planner_data_->self_pose->pose;
-
   // combine road and shoulder lanes
   lanelet::ConstLanelets lanes = road_lanes;
   lanes.insert(lanes.end(), shoulder_lanes.begin(), shoulder_lanes.end());

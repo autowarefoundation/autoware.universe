@@ -40,9 +40,6 @@ GeometricPullOver::GeometricPullOver(
 boost::optional<PullOverPath> GeometricPullOver::plan(const Pose & goal_pose)
 {
   const auto & route_handler = planner_data_->route_handler;
-  const auto & common_parameters = planner_data_->parameters;
-  const auto & dynamic_objects = planner_data_->dynamic_object;
-  const auto & current_pose = planner_data_->self_pose->pose;
 
   const auto road_lanes = util::getCurrentLanes(planner_data_);
   const auto shoulder_lanes = pull_over_utils::getPullOverLanes(*route_handler);

@@ -57,8 +57,8 @@ public:
     const bool is_in_goal_route_section, const Pose & goal_pose) const;
 
 protected:
-  std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map_;
   ParallelParkingParameters parallel_parking_parameters_;
+  std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map_;
   bool is_forward_{true};
 
   GeometricParallelParking planner_;
