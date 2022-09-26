@@ -21,6 +21,20 @@ namespace perception_utils
 {
 using autoware_auto_perception_msgs::msg::ObjectClassification;
 
+inline std::uint8_t getHighestProbLabel(
+  const std::vector<ObjectClassification> & object_classifications)
+{
+  std::uint8_t label = ObjectClassification::UNKNOWN;
+  float highest_prob = 0.0;
+  for (const auto & object_classification : object_classifications) {
+    if (highest_prob < object_classification.probability) {
+      highest_prob = object_classification.probability;
+      label = object_classification.label;
+    }
+  }
+  return label;
+}
+
 inline bool isVehicle(const uint8_t object_classification)
 {
   return object_classification == ObjectClassification::BICYCLE ||
@@ -72,20 +86,6 @@ inline bool isLargeVehicle(const std::vector<ObjectClassification> & object_clas
   return highest_prob_classification == ObjectClassification::BUS ||
          highest_prob_classification == ObjectClassification::TRAILER ||
          highest_prob_classification == ObjectClassification::TRUCK;
-}
-
-inline std::uint8_t getHighestProbLabel(
-  const std::vector<ObjectClassification> & object_classifications)
-{
-  std::uint8_t label = ObjectClassification::UNKNOWN;
-  float highest_prob = 0.0;
-  for (const auto & object_classification : object_classifications) {
-    if (highest_prob < object_classification.probability) {
-      highest_prob = object_classification.probability;
-      label = object_classification.label;
-    }
-  }
-  return label;
 }
 }  // namespace perception_utils
 
