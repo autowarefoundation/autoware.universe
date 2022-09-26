@@ -467,13 +467,6 @@ void backSubstitution(eigen_dynamic_type<T> const &R,
 template<typename T, class Derived1, class Derived2>
 void cholesky_update(Eigen::MatrixBase<Derived1> &R, Eigen::MatrixBase<Derived2> const &U, T const &weight)
 {
-  //        Eigen::MatrixXd R{Rsqrt};
-  //        std::cout << "Printing input R ... in cholesky update ";
-  //        printEigenMat(R);
-  //
-  //        std::cout << "Printing input U ... in cholesky update ";
-  //        printEigenMat(U);
-
   double rowsum{};
 
   // Check if R is upper triangular.
@@ -511,12 +504,6 @@ void cholesky_update(Eigen::MatrixBase<Derived1> &R, Eigen::MatrixBase<Derived2>
         c * x.bottomRows(nrows - k - 1) - s * R.row(k).rightCols(nrows - 1 - k).transpose();
     }
   }
-
-  //        std::cout << "Printing output R ... in cholesky update ";
-  //        printEigenMat(R.eval());
-  //
-  //        std::cout << "Printing output Rsqrt ... in cholesky update ";
-  //        printEigenMat(Rsqrt.eval());
 }
 
 /**

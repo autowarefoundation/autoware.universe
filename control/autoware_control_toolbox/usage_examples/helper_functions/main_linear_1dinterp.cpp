@@ -59,7 +59,7 @@ int main()
   writeToFile(log_path, ypw, "ypw");
 
   /**
-   * Vectorwise
+   * Vector-wise
    * */
   std::vector<double> yvw;
   ns_utils::interp1d_linear(xvec, yvec, xnew, yvw);
