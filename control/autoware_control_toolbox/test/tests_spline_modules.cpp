@@ -24,7 +24,7 @@ TEST(ACTspline, splinePCapproximationVectorwise)
   // Generate a sinusoidal signal with time parametrization.
   size_t const num_of_points = 100;  // number of points in the signal.
 
-  double const &omega = 0.3;  // sin wave speed.
+  double const &omega = 0.3;  // sin-wave speed.
 
   // Generate x.
   std::vector<double> tbase = ns_utils::linspace(0.0, 10.0, num_of_points);
@@ -34,8 +34,6 @@ TEST(ACTspline, splinePCapproximationVectorwise)
   std::transform(
     tbase.cbegin(), tbase.cend(), std::back_inserter(ybase), [&omega](auto const &t)
     { return sin(omega * t); });
-
-
 
   // Create new interpolating coordinates
   size_t const &new_num_of_points = 50;
@@ -313,3 +311,8 @@ TEST(ACTspline, linePCGextrapolation)
 
   ASSERT_LE(mean_error, error_tol);
 }
+
+/**
+ * Test BSpline Interpolator and Smoothers.
+ * */
+
