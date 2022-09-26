@@ -184,7 +184,7 @@ RTCManagerPanel::RTCManagerPanel(QWidget * parent) : rviz_common::Panel(parent)
     rtc_table_ = new QTableWidget();
     rtc_table_->setColumnCount(column_size_);
     rtc_table_->setHorizontalHeaderLabels(
-      {"ID", "Module", "AW Safe", "OP Safe", "AutMode", "StartDistance", "FinishDistance"});
+      {"ID", "Module", "AW Safe", "OP Safe", "AutoMode", "StartDistance", "FinishDistance"});
     rtc_table_->setVerticalHeader(vertical_header);
     rtc_table_->setHorizontalHeader(horizontal_header);
     rtc_table_layout->addWidget(rtc_table_);
