@@ -23,7 +23,6 @@
 #include "sampler_common/trajectory_reuse.hpp"
 #include "sampler_common/transform/spline_transform.hpp"
 #include "sampler_node/debug.hpp"
-#include "sampler_node/plot/debug_window.hpp"
 #include "sampler_node/prepare_inputs.hpp"
 #include "sampler_node/utils/occupancy_grid_to_polygons.hpp"
 
@@ -54,12 +53,10 @@ namespace sampler_node
 {
 PathSamplerNode::PathSamplerNode(const rclcpp::NodeOptions & node_options)
 : Node("path_sampler_node", node_options),
-  qapplication_(argc_, argv_.data()),
   tf_buffer_(this->get_clock()),
   tf_listener_(tf_buffer_),
   vehicle_info_(vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo())
 {
-  w_.show();
   trajectory_pub_ =
     create_publisher<autoware_auto_planning_msgs::msg::Trajectory>("~/output/trajectory", 1);
 
@@ -145,7 +142,7 @@ PathSamplerNode::PathSamplerNode(const rclcpp::NodeOptions & node_options)
     add_on_set_parameters_callback([this](const auto & params) { return onParameter(params); });
   // This is necessary to interact with the GUI even when we are not generating trajectories
   gui_process_timer_ =
-    create_wall_timer(std::chrono::milliseconds(100), []() { QCoreApplication::processEvents(); });
+    create_wall_timer(std::chrono::milliseconds(100), [this]() { gui_.update(); });
 }
 
 rcl_interfaces::msg::SetParametersResult PathSamplerNode::onParameter(
@@ -223,7 +220,6 @@ rcl_interfaces::msg::SetParametersResult PathSamplerNode::onParameter(
 // ROS callback functions
 void PathSamplerNode::pathCallback(const autoware_auto_planning_msgs::msg::Path::ConstSharedPtr msg)
 {
-  w_.plotter_->clear();
   sampler_node::debug::Debug debug;
   const auto current_state = getCurrentEgoState();
   // TODO(Maxime CLEMENT): move to "validInputs(current_state, msg)"
@@ -235,7 +231,7 @@ void PathSamplerNode::pathCallback(const autoware_auto_planning_msgs::msg::Path:
     return;
   }
 
-  const auto calc_begin = std::chrono::steady_clock::now();
+  // const auto calc_begin = std::chrono::steady_clock::now();
 
   const auto path_spline = preparePathSpline(*msg, params_.preprocessing.smooth_reference);
   const auto planning_state = getPlanningState(*current_state, path_spline);
@@ -243,8 +239,7 @@ void PathSamplerNode::pathCallback(const autoware_auto_planning_msgs::msg::Path:
     params_.constraints, *in_objects_ptr_, *lanelet_map_ptr_, drivable_ids_, prefered_ids_,
     msg->drivable_area);
 
-  auto paths =
-    generateCandidatePaths(planning_state, prev_path_, path_spline, *msg, *w_.plotter_, params_);
+  auto paths = generateCandidatePaths(planning_state, prev_path_, path_spline, *msg, gui_, params_);
   for (auto & path : paths) {
     const auto nb_violations =
       sampler_common::constraints::checkHardConstraints(path, params_.constraints);
@@ -273,39 +268,7 @@ void PathSamplerNode::pathCallback(const autoware_auto_planning_msgs::msg::Path:
       publishPath(prev_path_, msg);
     }
   }
-  std::chrono::steady_clock::time_point calc_end = std::chrono::steady_clock::now();
-
-  // Plot //
-  const auto plot_begin = calc_end;
-  w_.plotter_->plotPolygons(params_.constraints.obstacle_polygons);
-  w_.plotter_->plotPolygons(params_.constraints.drivable_polygons);
-  std::vector<double> x;
-  std::vector<double> y;
-  x.reserve(msg->points.size());
-  y.reserve(msg->points.size());
-  for (const auto & p : msg->points) {
-    x.push_back(p.pose.position.x);
-    y.push_back(p.pose.position.y);
-  }
-  w_.plotter_->plotReferencePath(x, y);
-  w_.plotter_->plotPaths(paths);
-  if (selected_path) {
-    w_.plotter_->plotSelectedPath(*selected_path);
-    w_.plotter_->plotPolygons(
-      {sampler_common::constraints::buildFootprintPolygon(*selected_path, params_.constraints)});
-  }
-
-  w_.plotter_->plotCurrentPose(path_spline.frenet(current_state->pose), current_state->pose);
-  w_.replot();
-  QCoreApplication::processEvents();
-  w_.update();
-  std::chrono::steady_clock::time_point plot_end = std::chrono::steady_clock::now();
-  w_.setStatus(
-    paths.size(),
-    static_cast<double>(
-      std::chrono::duration_cast<std::chrono::milliseconds>(calc_end - calc_begin).count()),
-    static_cast<double>(
-      std::chrono::duration_cast<std::chrono::milliseconds>(plot_end - plot_begin).count()));
+  // std::chrono::steady_clock::time_point calc_end = std::chrono::steady_clock::now();
 }
 
 std::optional<sampler_common::Path> PathSamplerNode::selectBestPath(

@@ -23,7 +23,6 @@
 #include "sampler_common/trajectory_reuse.hpp"
 #include "sampler_common/transform/spline_transform.hpp"
 #include "sampler_node/debug.hpp"
-#include "sampler_node/plot/debug_window.hpp"
 #include "sampler_node/prepare_inputs.hpp"
 #include "sampler_node/trajectory_generation.hpp"
 #include "sampler_node/utils/occupancy_grid_to_polygons.hpp"
@@ -48,6 +47,7 @@
 #include <cstdio>
 #include <limits>
 #include <memory>
+#include <numeric>
 #include <string>
 #include <vector>
 
@@ -55,12 +55,10 @@ namespace sampler_node
 {
 TrajectorySamplerNode::TrajectorySamplerNode(const rclcpp::NodeOptions & node_options)
 : Node("trajectory_sampler_node", node_options),
-  qapplication_(argc_, argv_.data()),
   tf_buffer_(this->get_clock()),
   tf_listener_(tf_buffer_),
   vehicle_info_(vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo())
 {
-  w_.show();
   trajectory_pub_ =
     create_publisher<autoware_auto_planning_msgs::msg::Trajectory>("~/output/trajectory", 1);
 
@@ -84,12 +82,12 @@ TrajectorySamplerNode::TrajectorySamplerNode(const rclcpp::NodeOptions & node_op
     std::bind(&TrajectorySamplerNode::fallbackCallback, this, std::placeholders::_1));
   vel_sub_ = create_subscription<nav_msgs::msg::Odometry>(
     "~/input/velocity", rclcpp::QoS{1}, [&](nav_msgs::msg::Odometry::ConstSharedPtr msg) {
-      current_velocity_ = msg->twist.twist.linear.x;
+      velocities_.push_back(msg->twist.twist.linear.x);
     });
   acc_sub_ = create_subscription<geometry_msgs::msg::AccelWithCovarianceStamped>(
     "~/input/acceleration", rclcpp::QoS{1},
     [&](geometry_msgs::msg::AccelWithCovarianceStamped::ConstSharedPtr msg) {
-      current_acceleration_ = msg->accel.accel.linear.x;
+      accelerations_.push_back(msg->accel.accel.linear.x);
     });
 
   in_objects_ptr_ = std::make_unique<autoware_auto_perception_msgs::msg::PredictedObjects>();
@@ -159,7 +157,7 @@ TrajectorySamplerNode::TrajectorySamplerNode(const rclcpp::NodeOptions & node_op
     add_on_set_parameters_callback([this](const auto & params) { return onParameter(params); });
   // This is necessary to interact with the GUI even when we are not generating trajectories
   gui_process_timer_ =
-    create_wall_timer(std::chrono::milliseconds(100), []() { QCoreApplication::processEvents(); });
+    create_wall_timer(std::chrono::milliseconds(20), [this]() { gui_.update(); });
 }
 
 rcl_interfaces::msg::SetParametersResult TrajectorySamplerNode::onParameter(
@@ -242,7 +240,6 @@ rcl_interfaces::msg::SetParametersResult TrajectorySamplerNode::onParameter(
 void TrajectorySamplerNode::pathCallback(
   const autoware_auto_planning_msgs::msg::Path::ConstSharedPtr msg)
 {
-  w_.plotter_->clear();
   sampler_node::debug::Debug debug;
   const auto current_state = getCurrentEgoConfiguration();
   // TODO(Maxime CLEMENT): move to "validInputs(current_state, msg)"
@@ -253,7 +250,6 @@ void TrajectorySamplerNode::pathCallback(
       current_state.has_value(), !msg->drivable_area.data.empty(), msg->points.size());
     return;
   }
-
   const auto calc_begin = std::chrono::steady_clock::now();
 
   const auto path_spline = preparePathSpline(*msg, params_.preprocessing.smooth_reference);
@@ -263,19 +259,20 @@ void TrajectorySamplerNode::pathCallback(
     msg->drivable_area);
 
   auto trajectories = generateCandidateTrajectories(
-    planning_configuration, prev_traj_, path_spline, *msg, *w_.plotter_, params_);
+    planning_configuration, prev_traj_, path_spline, *msg, gui_, params_);
   for (auto & trajectory : trajectories) {
     debug.violations +=
       sampler_common::constraints::checkHardConstraints(trajectory, params_.constraints);
     sampler_common::constraints::calculateCost(trajectory, params_.constraints, path_spline);
   }
-  auto selected_trajectory = selectBestTrajectory(trajectories);
-  if (selected_trajectory) {
-    auto final_trajectory = prependTrajectory(*selected_trajectory, path_spline);
+  const auto selected_trajectory_idx = selectBestTrajectory(trajectories);
+  if (selected_trajectory_idx) {
+    const auto & selected_trajectory = trajectories[*selected_trajectory_idx];
+    auto final_trajectory = prependTrajectory(selected_trajectory, path_spline);
     publishTrajectory(final_trajectory, msg->header.frame_id);
-    prev_traj_ = *selected_trajectory;
+    prev_traj_ = selected_trajectory;
   } else {
-    RCLCPP_DEBUG(
+    RCLCPP_WARN(
       get_logger(), "All candidates rejected: out=%d coll=%d curv=%d vel=%d acc=%d",
       debug.violations.outside, debug.violations.collision, debug.violations.curvature,
       debug.violations.velocity, debug.violations.acceleration);
@@ -289,55 +286,29 @@ void TrajectorySamplerNode::pathCallback(
       publishTrajectory(prev_traj_, msg->header.frame_id);
     }
   }
-  std::chrono::steady_clock::time_point calc_end = std::chrono::steady_clock::now();
-
-  // Plot //
-  const auto plot_begin = calc_end;
-  w_.plotter_->plotPolygons(params_.constraints.obstacle_polygons);
-  w_.plotter_->plotPolygons(params_.constraints.drivable_polygons);
-  std::vector<double> x;
-  std::vector<double> y;
-  x.reserve(msg->points.size());
-  y.reserve(msg->points.size());
-  for (const auto & p : msg->points) {
-    x.push_back(p.pose.position.x);
-    y.push_back(p.pose.position.y);
-  }
-  w_.plotter_->plotReferencePath(x, y);
-  /*
-  w_.plotter_->plotPaths(paths);
-  if (selected_trajectory) {
-    w_.plotter_->plotSelectedPath(*selected_trajectory);
-    w_.plotter_->plotPolygons(
-      {sampler_common::constraints::buildFootprintPolygon(*selected_trajectory,
-  params_.constraints)});
-  }
-  */
-  w_.plotter_->plotCurrentPose(path_spline.frenet(current_state->pose), current_state->pose);
-  w_.replot();
-  QCoreApplication::processEvents();
-  w_.update();
-  std::chrono::steady_clock::time_point plot_end = std::chrono::steady_clock::now();
-  w_.setStatus(
-    trajectories.size(),
-    static_cast<double>(
-      std::chrono::duration_cast<std::chrono::milliseconds>(calc_end - calc_begin).count()),
-    static_cast<double>(
-      std::chrono::duration_cast<std::chrono::milliseconds>(plot_end - plot_begin).count()));
+  const auto calc_end = std::chrono::steady_clock::now();
+  const auto gui_begin = std::chrono::steady_clock::now();
+  gui_.setInputs(*msg, path_spline, *current_state);
+  gui_.setOutputs(trajectories, selected_trajectory_idx, prev_traj_);
+  const auto gui_end = std::chrono::steady_clock::now();
+  const auto calc_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(calc_end - calc_begin).count();
+  const auto gui_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(gui_end - gui_begin).count();
+  gui_.setPerformances(trajectories.size(), calc_time_ms, gui_time_ms);
 }
 
-std::optional<sampler_common::Trajectory> TrajectorySamplerNode::selectBestTrajectory(
+std::optional<size_t> TrajectorySamplerNode::selectBestTrajectory(
   const std::vector<sampler_common::Trajectory> & trajectories)
 {
   auto min_cost = std::numeric_limits<double>::max();
-  std::optional<sampler_common::Trajectory> best_trajectory;
-  for (const auto & traj : trajectories) {
+  std::optional<size_t> best_trajectory_idx;
+  for (size_t i = 0; i < trajectories.size(); ++i) {
+    const auto & traj = trajectories[i];
     if (traj.valid && traj.cost < min_cost) {
       min_cost = traj.cost;
-      best_trajectory = traj;
+      best_trajectory_idx = i;
     }
   }
-  return best_trajectory;
+  return best_trajectory_idx;
 }
 
 std::optional<sampler_common::Configuration> TrajectorySamplerNode::getCurrentEgoConfiguration()
@@ -355,8 +326,8 @@ std::optional<sampler_common::Configuration> TrajectorySamplerNode::getCurrentEg
   auto config = sampler_common::Configuration();
   config.pose = {tf_current_pose.transform.translation.x, tf_current_pose.transform.translation.y};
   config.heading = tf2::getYaw(tf_current_pose.transform.rotation);
-  config.velocity = current_velocity_;
-  config.acceleration = current_acceleration_;
+  config.velocity = std::accumulate(velocities_.begin(), velocities_.end(), 0.0) / velocities_.size();
+  config.acceleration = std::accumulate(accelerations_.begin(), accelerations_.end(), 0.0) / accelerations_.size();
   return config;
 }
 

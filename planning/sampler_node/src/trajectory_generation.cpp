@@ -14,23 +14,14 @@
 
 #include "sampler_node/trajectory_generation.hpp"
 
-#include "sampler_common/structures.hpp"
-#include "sampler_node/plot/plotter.hpp"
-
-#include <bezier_sampler/bezier_sampling.hpp>
-#include <frenet_planner/frenet_planner.hpp>
-#include <sampler_common/trajectory_reuse.hpp>
-#include <sampler_node/prepare_inputs.hpp>
-
-#include <autoware_auto_planning_msgs/msg/path.hpp>
-#include <geometry_msgs/msg/transform_stamped.hpp>
-#include <geometry_msgs/msg/twist.hpp>
+#include "frenet_planner/frenet_planner.hpp"
+#include "sampler_common/trajectory_reuse.hpp"
+#include "sampler_node/prepare_inputs.hpp"
 
 #include <algorithm>
 #include <iterator>
 #include <limits>
 #include <numeric>
-#include <vector>
 
 namespace sampler_node
 {
@@ -38,7 +29,7 @@ std::vector<sampler_common::Trajectory> generateCandidateTrajectories(
   const sampler_common::Configuration & initial_configuration,
   const sampler_common::Trajectory & previous_trajectory,
   const sampler_common::transform::Spline2D & path_spline,
-  const autoware_auto_planning_msgs::msg::Path & path_msg, plot::Plotter & plotter,
+  const autoware_auto_planning_msgs::msg::Path & path_msg, gui::GUI & gui,
   const Parameters & params)
 {
   const auto reuse_length_step =
@@ -55,7 +46,7 @@ std::vector<sampler_common::Trajectory> generateCandidateTrajectories(
   if (params.sampling.enable_frenet) {
     auto frenet_trajs = generateFrenetTrajectories(
       initial_configuration, base_trajectory, path_msg, path_spline, params);
-    plotter.plotFrenetTrajectories(frenet_trajs);
+    gui.setFrenetTrajectories(frenet_trajs);
     move_to_trajectories(frenet_trajs);
   }
   if (params.sampling.enable_bezier) {
@@ -74,7 +65,6 @@ std::vector<sampler_common::Trajectory> generateCandidateTrajectories(
           previous_trajectory, initial_configuration.pose, std::numeric_limits<double>::max(),
           reuse_max_length, params.sampling.reuse_max_deviation, params.constraints,
           base_trajectory)) {
-      plotter.plotCommittedPath(base_trajectory);
       const auto cost_mult = 1.0 - 0.3 * reuse_length_step / params.sampling.reuse_max_length_max;
       sampler_common::Configuration end_of_reused_trajectory;
       end_of_reused_trajectory.pose = base_trajectory.points.back();
@@ -85,7 +75,7 @@ std::vector<sampler_common::Trajectory> generateCandidateTrajectories(
       if (params.sampling.enable_frenet) {
         const auto trajectories_from_prev_trajectory = generateFrenetTrajectories(
           end_of_reused_trajectory, base_trajectory, path_msg, path_spline, params);
-        plotter.plotFrenetTrajectories(trajectories_from_prev_trajectory);
+        gui.setFrenetTrajectories(trajectories_from_prev_trajectory, base_trajectory);
         for (const auto & trajectory : trajectories_from_prev_trajectory) {
           trajectories.push_back(base_trajectory.extend(trajectory));
           trajectories.back().cost *= cost_mult;

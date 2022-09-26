@@ -7,35 +7,10 @@ autoware_package()
 find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED)
 
-### Dependency for debug visualization executable
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
-set(CMAKE_AUTOUIC ON)
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)
-
-find_package(Qt5 COMPONENTS Widgets REQUIRED)
-find_package(QCustomPlot REQUIRED)
-
 ament_auto_add_library(frenet_planner SHARED
   DIRECTORY
   src/
 )
-
-target_link_libraries(frenet_planner
-  Qt5::Widgets
-  ${QCustomPlot_LIBRARIES}
-)
-
-# Debug exec
-# add_executable(plot
-#   src/frenet_planner/plot/plot_frenet.cpp
-# )
-# target_link_libraries(plot
-#   frenet_planner
-#   Qt5::Widgets
-#   ${QCustomPlot_LIBRARIES}
-# )
-
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

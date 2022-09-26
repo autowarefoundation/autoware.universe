@@ -5,17 +5,10 @@ find_package(autoware_cmake REQUIRED)
 autoware_package()
 
 find_package(Qt5 COMPONENTS Widgets REQUIRED)
+find_package(QCustomPlot REQUIRED)
 find_package(OpenCV REQUIRED)  # used for drivable area
 
-### Dependency for debug visualization executable
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
-set(CMAKE_AUTOUIC ON)
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)
-
-find_package(Qt5 COMPONENTS Widgets REQUIRED)
-find_package(QCustomPlot REQUIRED)
-
+### Sampler node
 ament_auto_add_library(sampler_node SHARED
   DIRECTORY src
 )
@@ -41,8 +34,6 @@ add_executable(acc_velocity_demo
   demos/acc_velocity_profile.cpp
 )
 target_link_libraries(acc_velocity_demo
-  Qt5::Widgets
-  ${QCustomPlot_LIBRARIES}
   sampler_node
 )
 
@@ -50,8 +41,6 @@ add_executable(eigen_smoothing
   demos/eigen_smoothing.cpp
 )
 target_link_libraries(eigen_smoothing
-  Qt5::Widgets
-  ${QCustomPlot_LIBRARIES}
   sampler_node
 )
 

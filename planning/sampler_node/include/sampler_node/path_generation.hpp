@@ -20,8 +20,8 @@
 #include "sampler_common/constraints/hard_constraint.hpp"
 #include "sampler_common/structures.hpp"
 #include "sampler_common/transform/spline_transform.hpp"
+#include "sampler_node/gui/gui.hpp"
 #include "sampler_node/parameters.hpp"
-#include "sampler_node/plot/plotter.hpp"
 
 #include <autoware_auto_planning_msgs/msg/path.hpp>
 
@@ -41,7 +41,7 @@ namespace sampler_node
 std::vector<sampler_common::Path> generateCandidatePaths(
   const sampler_common::State & initial_state, const sampler_common::Path & previous_path,
   const sampler_common::transform::Spline2D & path_spline,
-  const autoware_auto_planning_msgs::msg::Path & path_msg, plot::Plotter & plotter,
+  const autoware_auto_planning_msgs::msg::Path & path_msg, gui::GUI & gui,
   const Parameters & params);
 
 std::vector<sampler_common::Path> generateBezierPaths(

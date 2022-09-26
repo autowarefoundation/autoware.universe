@@ -19,12 +19,11 @@
 #include "sampler_common/constraints/hard_constraint.hpp"
 #include "sampler_common/structures.hpp"
 #include "sampler_common/transform/spline_transform.hpp"
+#include "sampler_node/gui/gui.hpp"
 #include "sampler_node/parameters.hpp"
-#include "sampler_node/plot/debug_window.hpp"
 #include "sampler_node/trajectory_generation.hpp"
 #include "vehicle_info_util/vehicle_info.hpp"
 
-#include <QApplication>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/timer.hpp>
 #include <rclcpp/utilities.hpp>
@@ -44,9 +43,10 @@
 #include <nav_msgs/msg/odometry.hpp>
 
 #include <lanelet2_core/Forward.h>
-#include <qapplication.h>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
+#include <boost/circular_buffer.hpp>
+#include <boost/circular_buffer/base.hpp>
 
 #include <memory>
 #include <string>
@@ -58,14 +58,7 @@ namespace sampler_node
 class TrajectorySamplerNode : public rclcpp::Node
 {
 private:
-  // Debug visualization
-  int argc_ = 1;
-  std::vector<char *> argv_ = {std::string("Debug Visualization").data()};
-  QApplication qapplication_;
-  std::unique_ptr<QApplication> qt_app_;
-  std::unique_ptr<plot::MainWindow> qt_window_;
-  plot::MainWindow w_;
-
+  gui::GUI gui_;
   // Parameters
   double fallback_timeout_{};
   Parameters params_;
@@ -86,8 +79,8 @@ private:
   lanelet::LaneletMapPtr lanelet_map_ptr_;
   lanelet::Ids drivable_ids_;
   lanelet::Ids prefered_ids_;
-  double current_velocity_{};
-  double current_acceleration_{};
+  boost::circular_buffer<double> velocities_{5};
+  boost::circular_buffer<double> accelerations_{5};
 
   // ROS pub / sub
   rclcpp::Publisher<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr trajectory_pub_;
@@ -117,7 +110,7 @@ private:
   void publishTrajectory(
     const sampler_common::Trajectory & trajectory, const std::string & frame_id);
   std::optional<sampler_common::Configuration> getCurrentEgoConfiguration();
-  static std::optional<sampler_common::Trajectory> selectBestTrajectory(
+  static std::optional<size_t> selectBestTrajectory(
     const std::vector<sampler_common::Trajectory> & trajectories);
   sampler_common::Configuration getPlanningConfiguration(
     sampler_common::Configuration configuration,

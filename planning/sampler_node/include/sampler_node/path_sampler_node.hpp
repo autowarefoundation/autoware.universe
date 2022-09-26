@@ -19,12 +19,11 @@
 #include "sampler_common/constraints/hard_constraint.hpp"
 #include "sampler_common/structures.hpp"
 #include "sampler_common/transform/spline_transform.hpp"
+#include "sampler_node/gui/gui.hpp"
 #include "sampler_node/parameters.hpp"
 #include "sampler_node/path_generation.hpp"
-#include "sampler_node/plot/debug_window.hpp"
 #include "vehicle_info_util/vehicle_info.hpp"
 
-#include <QApplication>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/timer.hpp>
 #include <rclcpp/utilities.hpp>
@@ -43,7 +42,6 @@
 #include <nav_msgs/msg/occupancy_grid.hpp>
 
 #include <lanelet2_core/Forward.h>
-#include <qapplication.h>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
@@ -57,14 +55,7 @@ namespace sampler_node
 class PathSamplerNode : public rclcpp::Node
 {
 private:
-  // Debug visualization
-  int argc_ = 1;
-  std::vector<char *> argv_ = {std::string("Frenet Debug Visualization").data()};
-  QApplication qapplication_;
-  std::unique_ptr<QApplication> qt_app_;
-  std::unique_ptr<plot::MainWindow> qt_window_;
-  plot::MainWindow w_;
-
+  gui::GUI gui_;
   // Parameters
   double fallback_timeout_{};
   Parameters params_;

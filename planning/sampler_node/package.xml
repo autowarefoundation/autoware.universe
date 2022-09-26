@@ -28,6 +28,7 @@
   <depend>rclcpp_components</depend>
   <depend>sampler_common</depend>
   <depend>std_msgs</depend>
+  <depend>signal_processing</depend>
   <depend>tf2_ros</depend>
   <depend>vehicle_info_util</depend>
   <depend>visualization_msgs</depend>

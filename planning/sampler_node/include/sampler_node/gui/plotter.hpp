@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SAMPLER_NODE__PLOT__PLOTTER_HPP_
-#define SAMPLER_NODE__PLOT__PLOTTER_HPP_
+#ifndef SAMPLER_NODE__GUI__PLOTTER_HPP_
+#define SAMPLER_NODE__GUI__PLOTTER_HPP_
 
 #include "frenet_planner/structures.hpp"
 #include "sampler_common/structures.hpp"
@@ -23,7 +23,7 @@
 
 #include <vector>
 
-namespace sampler_node::plot
+namespace sampler_node::gui
 {
 using sampler_common::FrenetPoint;
 using sampler_common::Point;
@@ -77,6 +77,6 @@ private:
   static QCPCurve * toCartesianCurve(const sampler_common::Path & path, QCPAxisRect * axis_rect);
 };
 
-}  // namespace sampler_node::plot
+}  // namespace sampler_node::gui
 
-#endif  // SAMPLER_NODE__PLOT__PLOTTER_HPP_
+#endif  // SAMPLER_NODE__GUI__PLOTTER_HPP_

@@ -64,6 +64,7 @@ struct Path
   double cost{};
 
   Path() = default;
+  virtual ~Path() = default;
 
   virtual void clear()
   {
@@ -139,6 +140,7 @@ struct Trajectory : Path
   double duration = 0.0;
 
   Trajectory() = default;
+  ~Trajectory() override = default;
   explicit Trajectory(const Path & path) : Path(path) {}
 
   void clear() override

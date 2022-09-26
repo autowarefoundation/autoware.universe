@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-#include "sampler_node/plot/plotter.hpp"
+#include "sampler_node/gui/plotter.hpp"
 
 #include "frenet_planner/structures.hpp"
 #include "sampler_common/structures.hpp"
 #include "sampler_common/transform/spline_transform.hpp"
 
-#include <qcustomplot.h>
 #include <qnamespace.h>
 
-namespace sampler_node::plot
+namespace sampler_node::gui
 {
 Plotter::Plotter(QCustomPlot * fcplot, QCustomPlot * polyplot)
 : fcplot_(fcplot), polyplot_(polyplot)
@@ -326,4 +325,4 @@ void Plotter::clear()
   polyplot_->clearGraphs();
 }
 
-}  // namespace sampler_node::plot
+}  // namespace sampler_node::gui

@@ -15,7 +15,7 @@
 #include "sampler_node/path_generation.hpp"
 
 #include "sampler_common/structures.hpp"
-#include "sampler_node/plot/plotter.hpp"
+#include "sampler_node/gui/gui.hpp"
 
 #include <bezier_sampler/bezier_sampling.hpp>
 #include <frenet_planner/frenet_planner.hpp>
@@ -36,7 +36,7 @@ namespace sampler_node
 std::vector<sampler_common::Path> generateCandidatePaths(
   const sampler_common::State & initial_state, const sampler_common::Path & previous_path,
   const sampler_common::transform::Spline2D & path_spline,
-  const autoware_auto_planning_msgs::msg::Path & path_msg, plot::Plotter & plotter,
+  const autoware_auto_planning_msgs::msg::Path & path_msg, gui::GUI & /*gui*/,
   const Parameters & params)
 {
   const auto reuse_length_step =
@@ -53,7 +53,7 @@ std::vector<sampler_common::Path> generateCandidatePaths(
   if (params.sampling.enable_frenet) {
     auto frenet_paths =
       generateFrenetPaths(initial_state, base_path, path_msg, path_spline, params);
-    plotter.plotFrenetPaths(frenet_paths);
+    // gui.setFrenetPaths(frenet_paths);
     move_to_paths(frenet_paths);
   }
   if (params.sampling.enable_bezier) {
@@ -68,7 +68,6 @@ std::vector<sampler_common::Path> generateCandidatePaths(
     if (sampler_common::tryToReusePath(
           previous_path, initial_state.pose, reuse_max_length, params.sampling.reuse_max_deviation,
           params.constraints, base_path)) {
-      plotter.plotCommittedPath(base_path);
       const auto cost_mult = 1.0 - 0.3 * reuse_length_step / params.sampling.reuse_max_length_max;
       sampler_common::State end_of_reused_path;
       end_of_reused_path.pose = base_path.points.back();
@@ -77,7 +76,7 @@ std::vector<sampler_common::Path> generateCandidatePaths(
       if (params.sampling.enable_frenet) {
         const auto paths_from_prev_path =
           generateFrenetPaths(end_of_reused_path, base_path, path_msg, path_spline, params);
-        plotter.plotFrenetPaths(paths_from_prev_path);
+        // gui.setFrenetPaths(paths_from_prev_path, base_path);
         for (const auto & path : paths_from_prev_path) {
           paths.push_back(base_path.extend(path));
           paths.back().cost *= cost_mult;
