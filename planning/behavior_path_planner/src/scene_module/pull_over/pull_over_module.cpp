@@ -578,7 +578,7 @@ BehaviorModuleOutput PullOverModule::plan()
 
   // TODO(tkhmy) add handle status TRYING
   steering_factor_interface_ptr_->updateSteeringFactor(
-    {getParkingStartPose(), modified_goal_pose_},
+    {status_.pull_over_path.start_pose, modified_goal_pose_},
     {distance_to_path_change.first, distance_to_path_change.second}, SteeringFactor::PULL_OVER,
     steering_factor_direction, SteeringFactor::TURNING, "");
 
@@ -617,7 +617,7 @@ BehaviorModuleOutput PullOverModule::planWaitingApproval()
   });
 
   steering_factor_interface_ptr_->updateSteeringFactor(
-    {getParkingStartPose(), modified_goal_pose_},
+    {status_.pull_over_path.start_pose, modified_goal_pose_},
     {distance_to_path_change.first, distance_to_path_change.second}, SteeringFactor::PULL_OVER,
     steering_factor_direction, SteeringFactor::APPROACHING, "");
   waitApproval();
