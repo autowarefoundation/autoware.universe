@@ -137,9 +137,6 @@ private:
 
   void updateLaneChangeStatus();
 
-  void calc_turn_signal_info(
-    const LaneChangePath & lane_change_path, TurnSignalInfo * turn_signal_info) const;
-
   bool isSafe() const;
   bool isNearEndOfLane() const;
   bool isCurrentSpeedLow() const;
