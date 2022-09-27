@@ -94,15 +94,15 @@ struct Parameters
 };
 
 template<typename T>
-void update_param(const std::vector<rclcpp::Parameter> &parameters,
-                  const std::string &name, T &value)
+void update_param(
+  const std::vector<rclcpp::Parameter> & parameters,
+  const std::string & name, T & value)
 {
   auto it = std::find_if(
     parameters.cbegin(), parameters.cend(),
-    [&name](const rclcpp::Parameter &parameter)
-    { return parameter.get_name() == name; });
-  if (it != parameters.cend())
-  {
+    [&name](const rclcpp::Parameter & parameter)
+    {return parameter.get_name() == name;});
+  if (it != parameters.cend()) {
     value = static_cast<T>(it->template get_value<T>());
   }
 }
@@ -110,18 +110,18 @@ void update_param(const std::vector<rclcpp::Parameter> &parameters,
 // The node class.
 class CommunicationDelayCompensatorNode : public rclcpp::Node
 {
- public:
+public:
   /**
    * @brief constructor
    */
-  explicit CommunicationDelayCompensatorNode(const rclcpp::NodeOptions &node_options);
+  explicit CommunicationDelayCompensatorNode(const rclcpp::NodeOptions & node_options);
 
   /**
    * @brief destructor
    */
   ~CommunicationDelayCompensatorNode() override = default;
 
- private:
+private:
   // Data Members
   Parameters params_node_{};
 
@@ -265,7 +265,7 @@ class CommunicationDelayCompensatorNode : public rclcpp::Node
    * @brief Default parameters of the parameters.
    * */
 
-  void readAndLoadParameters(observers::sLyapMatrixVecs &lyap_mats);
+  void readAndLoadParameters(observers::sLyapMatrixVecs & lyap_mats);
 
   /**
    * @brief Dynamic update of the parameters.
@@ -273,7 +273,7 @@ class CommunicationDelayCompensatorNode : public rclcpp::Node
   OnSetParametersCallbackHandle::SharedPtr is_parameters_set_res_;
 
   rcl_interfaces::msg::SetParametersResult
-  onParameterUpdate(const std::vector<rclcpp::Parameter> &parameters);
+  onParameterUpdate(const std::vector<rclcpp::Parameter> & parameters);
 
   /**
    * @brief checks if vehicle is stopping.
@@ -293,7 +293,7 @@ class CommunicationDelayCompensatorNode : public rclcpp::Node
   /**
    * @brief Sets the lateral delay compensator.
    * */
-  void setLateralCDOB_DOBs(sLyapMatrixVecs const &lyap_matsXY);
+  void setLateralCDOB_DOBs(sLyapMatrixVecs const & lyap_matsXY);
 
   void computeLateralCDOB();
 };
