@@ -14,9 +14,6 @@
 
 #include "lidar_centerpoint/node.hpp"
 
-#include "perception_utils/perception_utils.hpp"
-#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
-
 #include <lidar_centerpoint/centerpoint_config.hpp>
 #include <lidar_centerpoint/preprocess/pointcloud_densification.hpp>
 #include <lidar_centerpoint/ros_utils.hpp>
