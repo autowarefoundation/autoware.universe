@@ -56,17 +56,18 @@ struct sLyapMatrixVecs
  * */
 class LateralCommunicationDelayCompensator
 {
- public:
+public:
   using obs_model_ptr_t = std::shared_ptr<linear_state_observer_model_t>;
   using model_ptr_t = std::shared_ptr<linear_vehicle_model_t>;
 
   LateralCommunicationDelayCompensator() = default;
 
-  LateralCommunicationDelayCompensator(obs_model_ptr_t observer_vehicle_model,
-                                       model_ptr_t vehicle_model,
-                                       tf_t const &qfilter_lateral,
-                                       sLyapMatrixVecs const &lyap_matsXY,
-                                       float64_t const &dt);
+  LateralCommunicationDelayCompensator(
+    obs_model_ptr_t observer_vehicle_model,
+    model_ptr_t vehicle_model,
+    tf_t const & qfilter_lateral,
+    sLyapMatrixVecs const & lyap_matsXY,
+    float64_t const & dt);
 
   void printQfilterTFs() const;
 
@@ -74,16 +75,17 @@ class LateralCommunicationDelayCompensator
 
   void printLyapMatrices() const;
 
-  void simulateOneStep(state_vector_vehicle_t const &current_measurements,
-                       float64_t const &prev_steering_control_cmd,
-                       float64_t const &current_steering_cmd,
-                       std::shared_ptr<DelayCompensatatorMsg> const &msg_compensation_results,
-                       std::shared_ptr<DelayCompensatorDebugMsg> const &msg_debug_results);
+  void simulateOneStep(
+    state_vector_vehicle_t const & current_measurements,
+    float64_t const & prev_steering_control_cmd,
+    float64_t const & current_steering_cmd,
+    std::shared_ptr<DelayCompensatatorMsg> const & msg_compensation_results,
+    std::shared_ptr<DelayCompensatorDebugMsg> const & msg_debug_results);
 
   void setInitialStates();
   void resetInitialState();
 
- private:
+private:
   obs_model_ptr_t observer_vehicle_model_ptr_{nullptr};   // state observer model
   model_ptr_t vehicle_model_ptr_{nullptr};                // vehicle model
 
@@ -155,23 +157,25 @@ class LateralCommunicationDelayCompensator
   /**
    * @brief computes the observer gain matrix given the operating conditions.
    * */
-  void computeObserverGains(const state_vector_vehicle_t &current_measurements);
+  void computeObserverGains(const state_vector_vehicle_t & current_measurements);
 
   /**
    * @brief filters the control input and store it as previous_filtered_cmd.
    * */
-  void qfilterControlCommand(float64_t const &current_control_cmd);
+  void qfilterControlCommand(float64_t const & current_control_cmd);
 
   /**
    * @brief estimates the vehicle states by the state observer.
    * */
-  void estimateVehicleStates(const state_vector_vehicle_t &current_measurements,
-                             float64_t const &prev_steering_control_cmd,
-                             float64_t const &current_steering_cmd);
+  void estimateVehicleStates(
+    const state_vector_vehicle_t & current_measurements,
+    float64_t const & prev_steering_control_cmd,
+    float64_t const & current_steering_cmd);
 
-  void estimateVehicleStatesQ(const state_vector_vehicle_t &current_measurements,
-                              float64_t const &prev_steering_control_cmd,
-                              float64_t const &current_steering_cmd);
+  void estimateVehicleStatesQ(
+    const state_vector_vehicle_t & current_measurements,
+    float64_t const & prev_steering_control_cmd,
+    float64_t const & current_steering_cmd);
 };
 
 /**
@@ -184,15 +188,16 @@ class LateralCommunicationDelayCompensator
  * */
 class LateralDisturbanceCompensator
 {
- public:
+public:
   using obs_model_ptr_t = std::shared_ptr<linear_state_observer_model_t>;
 
   LateralDisturbanceCompensator() = default;
 
-  LateralDisturbanceCompensator(obs_model_ptr_t observer_vehicle_model,
-                                tf_t const &qfilter_lateral,
-                                sLyapMatrixVecs const &lyap_matsXY,
-                                float64_t const &dt);
+  LateralDisturbanceCompensator(
+    obs_model_ptr_t observer_vehicle_model,
+    tf_t const & qfilter_lateral,
+    sLyapMatrixVecs const & lyap_matsXY,
+    float64_t const & dt);
 
   void printQfilterTFs() const;
 
@@ -200,16 +205,17 @@ class LateralDisturbanceCompensator
 
   void printLyapMatrices() const;
 
-  void simulateOneStep(state_vector_vehicle_t const &current_measurements,
-                       float64_t const &prev_steering_control_cmd,
-                       float64_t const &current_steering_cmd,
-                       std::shared_ptr<DelayCompensatatorMsg> const &msg_compensation_results);
+  void simulateOneStep(
+    state_vector_vehicle_t const & current_measurements,
+    float64_t const & prev_steering_control_cmd,
+    float64_t const & current_steering_cmd,
+    std::shared_ptr<DelayCompensatatorMsg> const & msg_compensation_results);
 
   void setInitialStates();
 
   void resetInitialState();
 
- private:
+private:
   obs_model_ptr_t observer_vehicle_model_ptr_{};  // state observer model
 
   // transfer functions
@@ -263,26 +269,27 @@ class LateralDisturbanceCompensator
   /**
    * @brief computes the observer gain matrix given the operating conditions.
    * */
-  void computeObserverGains(const state_vector_vehicle_t &current_measurements);
+  void computeObserverGains(const state_vector_vehicle_t & current_measurements);
 
   /**
    * @brief filters the control input and store it as previous_filtered_cmd.
    * */
-  void qfilterControlCommand(float64_t const &current_control_cmd);
+  void qfilterControlCommand(float64_t const & current_control_cmd);
 
   /**
    * @brief estimates the vehicle states by the state observer.
    * */
-  void estimateVehicleStates(const state_vector_vehicle_t &current_measurements,
-                             float64_t const &prev_steering_control_cmd,
-                             float64_t const &current_steering_cmd);
+  void estimateVehicleStates(
+    const state_vector_vehicle_t & current_measurements,
+    float64_t const & prev_steering_control_cmd,
+    float64_t const & current_steering_cmd);
 };
 
 /**
  * @brief returns a transfer function in the form 1./(tau*s + 1)
  * @param w_cut_off_hz : cut-off frequency in Hertz.
  * */
-tf_t get_nthOrderTF(float64_t const &w_cut_off_hz, int const &n);
+tf_t get_nthOrderTF(float64_t const & w_cut_off_hz, int const & n);
 
 /**
  * @brief returns a transfer function in the form 1./(tau*s + 1)^n_remaining * (damped tf)
@@ -291,7 +298,7 @@ tf_t get_nthOrderTF(float64_t const &w_cut_off_hz, int const &n);
  * @param damping_val: damping value of the roots.
  * */
 tf_t get_nthOrderTFwithDampedPoles(
-  float64_t const &w_cut_off_hz, int const &remaining_order, float64_t const &damping_val);
+  float64_t const & w_cut_off_hz, int const & remaining_order, float64_t const & damping_val);
 
 }  // namespace observers
 
