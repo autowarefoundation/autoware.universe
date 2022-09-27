@@ -427,6 +427,8 @@ bool PullOverModule::planWithCloseGoal()
 
 BehaviorModuleOutput PullOverModule::plan()
 {
+  const auto & current_pose = planner_data_->self_pose->pose;
+
   status_.current_lanes = util::getExtendedCurrentLanes(planner_data_);
   status_.pull_over_lanes = pull_over_utils::getPullOverLanes(*(planner_data_->route_handler));
   status_.lanes = lanelet::ConstLanelets{};
@@ -438,8 +440,8 @@ BehaviorModuleOutput PullOverModule::plan()
   // Check if it needs to decide path
   if (status_.is_safe) {
     const auto dist_to_parking_start_pose = calcSignedArcLength(
-      getCurrentPath().points, planner_data_->self_pose->pose,
-      status_.pull_over_path.start_pose.position, std::numeric_limits<double>::max(), M_PI_2);
+      getCurrentPath().points, current_pose, status_.pull_over_path.start_pose.position,
+      std::numeric_limits<double>::max(), M_PI_2);
 
     if (*dist_to_parking_start_pose < parameters_.decide_path_distance) {
       status_.has_decided_path = true;
@@ -460,6 +462,7 @@ BehaviorModuleOutput PullOverModule::plan()
       // When it is approved again after path is decided
       clearWaitingApproval();
       last_approved_time_ = std::make_unique<rclcpp::Time>(clock_->now());
+      last_approved_pose_ = std::make_unique<Pose>(current_pose);
 
       // decide velocity to guarantee turn signal lighting time
       if (!status_.has_decided_velocity) {
@@ -855,11 +858,9 @@ TurnSignalInfo PullOverModule::calcTurnSignalInfo() const
   {
     // ego decelerates so that current pose is the point `turn_light_on_threshold_time` seconds
     // before starting pull_over
-    const double distance_to_start =
-      calcSignedArcLength(full_path.points, current_pose.position, start_pose.position);
-    const bool is_before_start_pose = distance_to_start >= 0.0;
-    turn_signal.desired_start_point =
-      is_before_start_pose ? current_pose.position : start_pose.position;
+    turn_signal.desired_start_point = last_approved_pose_ && status_.has_decided_path
+                                        ? last_approved_pose_->position
+                                        : current_pose.position;
     turn_signal.desired_end_point = end_pose.position;
     turn_signal.required_start_point = start_pose.position;
     turn_signal.required_end_point = end_pose.position;
