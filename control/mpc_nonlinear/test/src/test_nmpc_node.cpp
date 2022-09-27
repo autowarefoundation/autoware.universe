@@ -18,7 +18,6 @@
 #include "nmpc_test_utils.hpp"
 #include "nonlinear_mpc_test_node.hpp"
 
-#include <limits>
 #include <memory>
 #include <vector>
 
