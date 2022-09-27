@@ -20,9 +20,9 @@
 
 // -- HELPER METHODS --
 observers::tf_t observers::get_nthOrderTF(
-  const autoware::common::types::float64_t &w_cut_off_hz, const int &n)
+  const autoware::common::types::float64_t & w_cut_off_hz, const int & n)
 {
-  auto &&wc_rad_sec = 2.0 * M_PI * w_cut_off_hz;  // in [rad/sec]
+  auto && wc_rad_sec = 2.0 * M_PI * w_cut_off_hz;  // in [rad/sec]
 
   // float64_t time_constant_of_qfilter{};
   auto tau = 1.0 / wc_rad_sec;
@@ -36,17 +36,17 @@ observers::tf_t observers::get_nthOrderTF(
   denominator.power(static_cast<unsigned int>(n));
 
   // Create the transfer function from a numerator an denominator.
-  auto const &&q_tf = ns_control_toolbox::tf{std::vector<double>{1.}, denominator()};
+  auto const && q_tf = ns_control_toolbox::tf{std::vector<double>{1.}, denominator()};
 
   return q_tf;
 }
 
 observers::tf_t observers::get_nthOrderTFwithDampedPoles(
-  const autoware::common::types::float64_t &w_cut_off_hz,
-  const int &remaining_order,
-  const autoware::common::types::float64_t &damping_val)
+  const autoware::common::types::float64_t & w_cut_off_hz,
+  const int & remaining_order,
+  const autoware::common::types::float64_t & damping_val)
 {
-  auto &&wc_rad_sec = 2.0 * M_PI * w_cut_off_hz;  // in [rad/sec]
+  auto && wc_rad_sec = 2.0 * M_PI * w_cut_off_hz;  // in [rad/sec]
 
   // float64_t time_constant_of_qfilter{};
   auto tau = 1.0 / wc_rad_sec;
@@ -54,8 +54,7 @@ observers::tf_t observers::get_nthOrderTFwithDampedPoles(
   // A second order damped transfer function.
   auto q_tf_damped = tf_t({1.}, {tau * tau, 2 * damping_val * tau, 1.});
 
-  if (remaining_order > 0)
-  {
+  if (remaining_order > 0) {
     auto q_remaining_tf = get_nthOrderTF(w_cut_off_hz, remaining_order);
     q_tf_damped = q_tf_damped * q_remaining_tf;
   }
@@ -68,16 +67,16 @@ observers::tf_t observers::get_nthOrderTFwithDampedPoles(
 observers::LateralCommunicationDelayCompensator::LateralCommunicationDelayCompensator(
   obs_model_ptr_t observer_vehicle_model,
   model_ptr_t vehicle_model,
-  const observers::tf_t &qfilter_lateral,
-  sLyapMatrixVecs const &lyap_matsXY,
-  const float64_t &dt)
-  : observer_vehicle_model_ptr_(std::move(observer_vehicle_model)),
-    vehicle_model_ptr_(std::move(vehicle_model)),
-    tf_qfilter_lat_{qfilter_lateral},
-    vXs_{lyap_matsXY.vXs},
-    vYs_{lyap_matsXY.vYs},
-    dt_{dt},
-    qfilter_order_{qfilter_lateral.order()}
+  const observers::tf_t & qfilter_lateral,
+  sLyapMatrixVecs const & lyap_matsXY,
+  const float64_t & dt)
+: observer_vehicle_model_ptr_(std::move(observer_vehicle_model)),
+  vehicle_model_ptr_(std::move(vehicle_model)),
+  tf_qfilter_lat_{qfilter_lateral},
+  vXs_{lyap_matsXY.vXs},
+  vYs_{lyap_matsXY.vYs},
+  dt_{dt},
+  qfilter_order_{qfilter_lateral.order()}
 {
   // Compute the state-space model of QGinv(s)
   ss_qfilter_lat_ = ss_t(tf_qfilter_lat_, dt_);  // Do not forget to enter the time step dt.
@@ -133,19 +132,15 @@ void observers::LateralCommunicationDelayCompensator::printQfilterSSs() const
 void observers::LateralCommunicationDelayCompensator::printLyapMatrices() const
 {
   ns_utils::print("Lyapunov X matrices : ");
-  if (!vXs_.empty())
-  {
-    for (auto const &item : vXs_)
-    {
+  if (!vXs_.empty()) {
+    for (auto const & item : vXs_) {
       ns_eigen_utils::printEigenMat(Eigen::MatrixXd(item));
     }
   }
 
   ns_utils::print("Lyapunov Y matrices : ");
-  if (!vYs_.empty())
-  {
-    for (auto const &item : vYs_)
-    {
+  if (!vYs_.empty()) {
+    for (auto const & item : vYs_) {
       ns_eigen_utils::printEigenMat(Eigen::MatrixXd(item));
     }
   }
@@ -154,7 +149,7 @@ void observers::LateralCommunicationDelayCompensator::printLyapMatrices() const
 void observers::LateralCommunicationDelayCompensator::setInitialStates()
 {
   if (!is_observer_model_initial_states_set_ &&
-      observer_vehicle_model_ptr_->areInitialStatesSet())
+    observer_vehicle_model_ptr_->areInitialStatesSet())
   {
     auto const vehicle_states = observer_vehicle_model_ptr_->getInitialStates();
 
@@ -171,13 +166,13 @@ void observers::LateralCommunicationDelayCompensator::resetInitialState()
 
 void
 observers::LateralCommunicationDelayCompensator::simulateOneStep(
-  const state_vector_vehicle_t &current_measurements,
-  float64_t const &prev_steering_control_cmd,
-  float64_t const &current_steering_cmd,
+  const state_vector_vehicle_t & current_measurements,
+  float64_t const & prev_steering_control_cmd,
+  float64_t const & current_steering_cmd,
   std::shared_ptr<DelayCompensatatorMsg> const
-  &msg_compensation_results,
+  & msg_compensation_results,
   std::shared_ptr<DelayCompensatorDebugMsg>
-  const &msg_debug_results)
+  const & msg_debug_results)
 {
   // If the initial states of the state observer are not set, sets it.
   setInitialStates();
@@ -207,7 +202,7 @@ observers::LateralCommunicationDelayCompensator::simulateOneStep(
 }
 
 void observers::LateralCommunicationDelayCompensator::computeObserverGains(
-  const state_vector_vehicle_t &current_measurements)
+  const state_vector_vehicle_t & current_measurements)
 {
   // Get the current nonlinear Lyapunov parameters.
   theta_params_.setZero();
@@ -218,8 +213,7 @@ void observers::LateralCommunicationDelayCompensator::computeObserverGains(
   auto Yc = vYs_.back();
 
   // P(th) = P0 + th1*P1 + ...
-  for (size_t k = 0; k < vXs_.size() - 1; ++k)
-  {
+  for (size_t k = 0; k < vXs_.size() - 1; ++k) {
     Xc += theta_params_(static_cast<Eigen::Index>(k)) * vXs_[k];
     Yc += theta_params_(static_cast<Eigen::Index>(k)) * vYs_[k];
   }
@@ -227,7 +221,7 @@ void observers::LateralCommunicationDelayCompensator::computeObserverGains(
 }
 
 void observers::LateralCommunicationDelayCompensator::qfilterControlCommand(
-  const autoware::common::types::float64_t &current_control_cmd)
+  const autoware::common::types::float64_t & current_control_cmd)
 {
   // First give the output, then update the states.
   prev_qfiltered_control_cmd_ = current_qfiltered_control_cmd_;
@@ -240,7 +234,7 @@ void observers::LateralCommunicationDelayCompensator::qfilterControlCommand(
  * predict the next states and broadcast it.
  * */
 void observers::LateralCommunicationDelayCompensator::estimateVehicleStates(
-  state_vector_vehicle_t const &current_measurements,
+  state_vector_vehicle_t const & current_measurements,
   float64_t const &, /*prev_steering_control_cmd,*/
   float64_t const & /*current_steering_cmd*/)
 {
@@ -277,9 +271,9 @@ void observers::LateralCommunicationDelayCompensator::estimateVehicleStates(
 }
 
 void observers::LateralCommunicationDelayCompensator::estimateVehicleStatesQ(
-  state_vector_vehicle_t const &current_measurements,
-  float64_t const &prev_steering_control_cmd,
-  float64_t const &current_steering_cmd)
+  state_vector_vehicle_t const & current_measurements,
+  float64_t const & prev_steering_control_cmd,
+  float64_t const & current_steering_cmd)
 {
   /**
   * xbar = A @ x0_hat + B * u_prev + Bwd
@@ -322,15 +316,15 @@ void observers::LateralCommunicationDelayCompensator::estimateVehicleStatesQ(
 
 observers::LateralDisturbanceCompensator::LateralDisturbanceCompensator(
   observers::LateralDisturbanceCompensator::obs_model_ptr_t observer_vehicle_model,
-  const observers::tf_t &qfilter_lateral,
-  const observers::sLyapMatrixVecs &lyap_matsXY,
-  const autoware::common::types::float64_t &dt)
-  : observer_vehicle_model_ptr_(std::move(observer_vehicle_model)),
-    tf_qfilter_lat_{qfilter_lateral},
-    vXs_{lyap_matsXY.vXs},
-    vYs_{lyap_matsXY.vYs},
-    dt_{dt},
-    qfilter_order_{qfilter_lateral.order()}
+  const observers::tf_t & qfilter_lateral,
+  const observers::sLyapMatrixVecs & lyap_matsXY,
+  const autoware::common::types::float64_t & dt)
+: observer_vehicle_model_ptr_(std::move(observer_vehicle_model)),
+  tf_qfilter_lat_{qfilter_lateral},
+  vXs_{lyap_matsXY.vXs},
+  vYs_{lyap_matsXY.vYs},
+  dt_{dt},
+  qfilter_order_{qfilter_lateral.order()}
 {
   // Compute the state-space model of QGinv(s)
   ss_qfilter_lat_ = ss_t(tf_qfilter_lat_, dt_);  // Do not forget to enter the time step dt.
@@ -362,19 +356,15 @@ void observers::LateralDisturbanceCompensator::printQfilterSSs() const
 void observers::LateralDisturbanceCompensator::printLyapMatrices() const
 {
   ns_utils::print("Lyapunov X matrices : ");
-  if (!vXs_.empty())
-  {
-    for (auto const &item : vXs_)
-    {
+  if (!vXs_.empty()) {
+    for (auto const & item : vXs_) {
       ns_eigen_utils::printEigenMat(Eigen::MatrixXd(item));
     }
   }
 
   ns_utils::print("Lyapunov Y matrices : ");
-  if (!vYs_.empty())
-  {
-    for (auto const &item : vYs_)
-    {
+  if (!vYs_.empty()) {
+    for (auto const & item : vYs_) {
       ns_eigen_utils::printEigenMat(Eigen::MatrixXd(item));
     }
   }
@@ -383,8 +373,7 @@ void observers::LateralDisturbanceCompensator::printLyapMatrices() const
 
 void observers::LateralDisturbanceCompensator::setInitialStates()
 {
-  if (!is_vehicle_initial_states_set_ && observer_vehicle_model_ptr_->areInitialStatesSet())
-  {
+  if (!is_vehicle_initial_states_set_ && observer_vehicle_model_ptr_->areInitialStatesSet()) {
     auto const vehicle_states = observer_vehicle_model_ptr_->getInitialStates();
 
     xhat0_prev_ << vehicle_states(0), vehicle_states(1), vehicle_states(2), 0.;
@@ -393,7 +382,7 @@ void observers::LateralDisturbanceCompensator::setInitialStates()
 }
 
 void observers::LateralDisturbanceCompensator::computeObserverGains(
-  const observers::state_vector_vehicle_t &current_measurements)
+  const observers::state_vector_vehicle_t & current_measurements)
 {
   // Get the current nonlinear Lyapunov parameters.
   theta_params_.setZero();
@@ -404,8 +393,7 @@ void observers::LateralDisturbanceCompensator::computeObserverGains(
   auto Yc = vYs_.back();
 
   // P(th) = P0 + th1*P1 + ...
-  for (size_t k = 0; k < vXs_.size() - 1; ++k)
-  {
+  for (size_t k = 0; k < vXs_.size() - 1; ++k) {
     Xc += theta_params_(static_cast<Eigen::Index>(k)) * vXs_[k];
     Yc += theta_params_(static_cast<Eigen::Index>(k)) * vYs_[k];
   }
@@ -415,10 +403,10 @@ void observers::LateralDisturbanceCompensator::computeObserverGains(
 
 void
 observers::LateralDisturbanceCompensator::simulateOneStep(
-  const observers::state_vector_vehicle_t &current_measurements,
-  const autoware::common::types::float64_t &prev_steering_control_cmd,
-  const autoware::common::types::float64_t &current_steering_cmd,
-  std::shared_ptr<DelayCompensatatorMsg> const &msg_compensation_results)
+  const observers::state_vector_vehicle_t & current_measurements,
+  const autoware::common::types::float64_t & prev_steering_control_cmd,
+  const autoware::common::types::float64_t & current_steering_cmd,
+  std::shared_ptr<DelayCompensatatorMsg> const & msg_compensation_results)
 {
   setInitialStates();
 
@@ -436,16 +424,16 @@ observers::LateralDisturbanceCompensator::simulateOneStep(
 }
 
 void observers::LateralDisturbanceCompensator::qfilterControlCommand(
-  const float64_t &current_control_cmd)
+  const float64_t & current_control_cmd)
 {
   // First give the output, then update the states.
   current_qfiltered_control_cmd_ = ss_qfilter_lat_.simulateOneStep(xu0_, current_control_cmd);
 }
 
 void observers::LateralDisturbanceCompensator::estimateVehicleStates(
-  const observers::state_vector_vehicle_t &current_measurements,
-  const float64_t &prev_steering_control_cmd,
-  const float64_t &current_steering_cmd)
+  const observers::state_vector_vehicle_t & current_measurements,
+  const float64_t & prev_steering_control_cmd,
+  const float64_t & current_steering_cmd)
 {
   /**
   *   xbar = A @ x0_hat + B * u_prev + Bwd + Lobs*(yhat - ytime_delay_compensator)
