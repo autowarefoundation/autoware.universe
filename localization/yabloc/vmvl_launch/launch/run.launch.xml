@@ -28,7 +28,7 @@
 
         <!-- particle filter -->
         <group>
-            <push-ros-namespace namespace="particle_filter"/>
+            <push-ros-namespace namespace="pf"/>
             <include file="$(find-pkg-share vmvl_launch)/launch/impl/pf.launch.xml">
                 <arg name="use_sim_time" value="$(var use_sim_time)" />
                 <arg name="log_level" value="$(var log_level)"/>

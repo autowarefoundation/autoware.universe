@@ -12,11 +12,11 @@ CovarianceMonitor::CovarianceMonitor() : Node("covariance_monitor")
   using std::placeholders::_1, std::placeholders::_2;
   auto cb_synchro = std::bind(&CovarianceMonitor::particleAndPose, this, _1, _2);
   synchro_subscriber_ = std::make_shared<SynchroSubscriber<ParticleArray, PoseStamped>>(
-    this, "/predicted_particles", "/particle_pose");
+    this, "particles", "particle_pose");
   synchro_subscriber_->setCallback(cb_synchro);
 
-  pub_diagnostic_ = create_publisher<String>("/covariance_diag", 10);
-  pub_pose_cov_stamped_ = create_publisher<PoseCovStamped>("/pose_with_covariance", 10);
+  pub_diagnostic_ = create_publisher<String>("cov_diag", 10);
+  pub_pose_cov_stamped_ = create_publisher<PoseCovStamped>("pose_with_cov", 10);
 }
 
 void CovarianceMonitor::particleAndPose(const ParticleArray & particles, const PoseStamped & pose)

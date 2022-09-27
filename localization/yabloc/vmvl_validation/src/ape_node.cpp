@@ -15,8 +15,8 @@ AbsolutePoseError::AbsolutePoseError() : Node("ape_node")
   namespace fs = std::filesystem;
 
   auto cb_pose = std::bind(&AbsolutePoseError::poseCallback, this, _1);
-  sub_pose_cov_stamped_ = create_subscription<PoseCovStamped>("/pose_with_covariance", 1, cb_pose);
-  pub_string_ = create_publisher<String>("/ape_diag", 10);
+  sub_pose_cov_stamped_ = create_subscription<PoseCovStamped>("pose_with_cov", 1, cb_pose);
+  pub_string_ = create_publisher<String>("ape_diag", 10);
 
   const std::string reference_bags_path = declare_parameter<std::string>("reference_bags_path", "");
   RCLCPP_INFO_STREAM(get_logger(), "reference bag path: " << reference_bags_path);

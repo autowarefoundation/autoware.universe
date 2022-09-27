@@ -12,6 +12,9 @@
     <arg name="static_linear_covariance" default="12.00"/>
     <arg name="static_angular_covariance" default="0.005"/>
 
+    <arg name="inout_weighted_particles" default="weighted_particles">
+    <arg name="output_particles_marker_array" default="weighted_partiles_marker">
+
     <!-- predict update -->
     <node pkg="modularized_particle_filter" exec="predictor_node" name="predictor_node" output="screen" args="--ros-args --log-level warn">
         <remap from="twist" to="$(var predict_twist)" />
@@ -28,10 +31,11 @@
         <param name="static_angular_covariance" value="$(var static_angular_covariance)" />
 
         <param name="visualize" value="true"/>
-        <remap from="/marker_array_particles" to="/weighted_particles/marker_array"/>
+        <remap from="particles_marker_array" to="/weighted_particles/marker_array"/>
     </node>
 
     <!-- camera  correction -->
+    <arg name="input_projected_lsd_cloud" default="projected_lsd_cloud">
     <node name="camera_corrector" pkg="camera_particle_corrector" exec="camera_particle_corrector" output="screen" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="image_size" value="800"/>
@@ -42,13 +46,11 @@
         <param name="min_prob" value="0.1"/>
         <param name="far_weight_gain" value="0.001"/>
 
-        <remap from="/weighted_particles" to="/weighted_particles"/>
-        <remap from="/lsd_cloud" to="/projected_lsd_cloud"/>
+        <remap from="weighted_particles" to="$(var inout_weighted_particles)"/>
+        <remap from="lsd_cloud" to="$(var input_projected_lsd_cloud)"/>
     </node>
 
-    <!-- ========================================= -->
-    <!-- ============= gnss correction =========== -->
-    <!-- ========================================= -->
+    <!-- gnss correction -->
     <node if="$(var use_eagleye)" name="gnss_particle_corrector" pkg="gnss_particle_corrector" exec="gnss_particle_corrector" output="screen" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="likelihood_min_weight" value="0.1"/>
@@ -56,9 +58,10 @@
         <param name="likelihood_stddev" value="4.0"/>
         <param name="rtk_enabled" value="$(var rtk_enabled)"/>
 
-        <remap from="/input/navpvt" to="/bridge/navpvt"/>
-        <remap from="/input/height" to="/height"/>
-        <remap from="/pose_with_covariance" to="/disabled/pose_with_covariance"/>
+        <remap from="weighted_particles" to="$(var inout_weighted_particles)"/>
+        <remap from="input/navpvt" to="/localization/eagleye/bridge/navpvt"/>
+        <remap from="input/height" to="/localization//height"/>
+        <remap from="pose_with_covariance" to="/localization/pf/disabled/pose_with_covariance"/>
     </node>
     <node unless="$(var use_eagleye)" name="gnss_particle_corrector" pkg="gnss_particle_corrector" exec="gnss_particle_corrector" output="screen" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
@@ -67,8 +70,9 @@
         <param name="likelihood_stddev" value="4.0"/>
         <param name="rtk_enabled" value="$(var rtk_enabled)"/>
 
-        <remap from="/input/navpvt" to="/sensing/gnss/ublox/navpvt"/>
-        <remap from="/input/height" to="/height"/>
-        <remap from="/pose_with_covariance" to="/disabled/pose_with_covariance"/>
+        <remap from="input/navpvt" to="/sensing/gnss/ublox/navpvt"/>
+        <remap from="input/height" to="/height"/>
+        <remap from="weighted_particles" to="$(var inout_weighted_particles)"/>
+        <remap from="pose_with_covariance" to="/localization/pf/disabled/pose_with_covariance"/>
     </node>
 </launch>

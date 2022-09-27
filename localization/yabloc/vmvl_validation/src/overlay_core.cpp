@@ -25,21 +25,21 @@ Overlay::Overlay() : Node("overlay"), tf_subscriber_(get_clock()), pose_buffer_{
   auto cb_pose = [this](const PoseStamped & msg) -> void { pose_buffer_.push_back(msg); };
   auto cb_ground = [this](const Float32Array & msg) -> void { ground_plane_.set(msg); };
 
-  sub_ground_plane_ = create_subscription<Float32Array>("/ground", 10, cb_ground);
-  sub_image_ = create_subscription<Image>("/src_image", 10, cb_image);
-  sub_pose_ = create_subscription<PoseStamped>("/particle_pose", 10, cb_pose);
-  sub_lsd_ = create_subscription<PointCloud2>("/projected_lsd_cloud", 10, cb_lsd);
-  sub_info_ = create_subscription<CameraInfo>("/src_info", 10, cb_info);
+  sub_ground_plane_ = create_subscription<Float32Array>("ground", 10, cb_ground);
+  sub_image_ = create_subscription<Image>("src_image", 10, cb_image);
+  sub_pose_ = create_subscription<PoseStamped>("particle_pose", 10, cb_pose);
+  sub_lsd_ = create_subscription<PointCloud2>("projected_lsd_cloud", 10, cb_lsd);
+  sub_info_ = create_subscription<CameraInfo>("src_info", 10, cb_info);
   sub_sign_board_ = create_subscription<PointCloud2>(
-    "/ll2_sign_board", 10,
+    "ll2_sign_board", 10,
     [this](const PointCloud2 & msg) -> void { pcl::fromROSMsg(msg, sign_board_); });
   sub_ll2_ = create_subscription<PointCloud2>(
-    "/ll2_road_marking", 10,
+    "ll2_road_marking", 10,
     [this](const PointCloud2 & msg) -> void { pcl::fromROSMsg(msg, ll2_cloud_); });
 
   // Publisher
-  pub_vis_ = create_publisher<Marker>("/marker", 10);
-  pub_image_ = create_publisher<sensor_msgs::msg::Image>("/overlay_image", 10);
+  pub_vis_ = create_publisher<Marker>("projected_marker", 10);
+  pub_image_ = create_publisher<sensor_msgs::msg::Image>("overlay_image", 10);
 }
 
 void Overlay::infoCallback(const CameraInfo & msg)

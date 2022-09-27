@@ -15,9 +15,9 @@ Ll2Decomposer::Ll2Decomposer() : Node("ll2_to_image")
   const rclcpp::QoS map_qos = rclcpp::QoS(10).transient_local().reliable();
 
   // Publisher
-  pub_cloud_ = create_publisher<Cloud2>("/ll2_road_marking", latch_qos);
-  pub_sign_board_ = create_publisher<Cloud2>("/ll2_sign_board", latch_qos);
-  pub_marker_ = create_publisher<MarkerArray>("/sign_board_marker", latch_qos);
+  pub_cloud_ = create_publisher<Cloud2>("ll2_road_marking", latch_qos);
+  pub_sign_board_ = create_publisher<Cloud2>("ll2_sign_board", latch_qos);
+  pub_marker_ = create_publisher<MarkerArray>("sign_board_marker", latch_qos);
 
   // Subscriber
   auto cb_map = std::bind(&Ll2Decomposer::mapCallback, this, _1);

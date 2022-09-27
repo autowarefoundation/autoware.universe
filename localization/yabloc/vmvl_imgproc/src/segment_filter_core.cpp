@@ -28,8 +28,8 @@ SegmentFilter::SegmentFilter()
   auto cb = std::bind(&SegmentFilter::execute, this, _1, _2);
   subscriber_.setCallback(cb);
 
-  pub_cloud_ = create_publisher<PointCloud2>("/projected_lsd_cloud", 10);
-  pub_image_ = create_publisher<Image>("/projected_image", 10);
+  pub_cloud_ = create_publisher<PointCloud2>("projected_lsd_cloud", 10);
+  pub_image_ = create_publisher<Image>("projected_image", 10);
 }
 
 cv::Point2i SegmentFilter::toCvPoint(const Eigen::Vector3f & v) const
@@ -42,7 +42,6 @@ cv::Point2i SegmentFilter::toCvPoint(const Eigen::Vector3f & v) const
 
 void SegmentFilter::execute(const PointCloud2 & lsd_msg, const PointCloud2 & segment_msg)
 {
-  if (isCameraInfoNullOpt()) return;
   const rclcpp::Time stamp = lsd_msg.header.stamp;
   pcl::PointCloud<pcl::PointXYZ>::Ptr mask{new pcl::PointCloud<pcl::PointXYZ>()};
   pcl::PointCloud<pcl::PointNormal>::Ptr lsd{new pcl::PointCloud<pcl::PointNormal>()};

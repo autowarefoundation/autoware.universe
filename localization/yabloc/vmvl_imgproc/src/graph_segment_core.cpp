@@ -18,8 +18,8 @@ GraphSegment::GraphSegment()
     "/sensing/camera/traffic_light/image_raw/compressed", 10,
     std::bind(&GraphSegment::callbackImage, this, _1));
 
-  pub_cloud_ = create_publisher<PointCloud2>("/graph_segmented", 10);
-  pub_image_ = create_publisher<Image>("/segmented_image", 10);
+  pub_cloud_ = create_publisher<PointCloud2>("graph_segmented", 10);
+  pub_image_ = create_publisher<Image>("segmented_image", 10);
 
   segmentation_ = cv::ximgproc::segmentation::createGraphSegmentation();
 }

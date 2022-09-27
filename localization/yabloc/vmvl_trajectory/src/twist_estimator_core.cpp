@@ -25,12 +25,11 @@ TwistEstimator::TwistEstimator()
   sub_twist_stamped_ = create_subscription<TwistStamped>("/vehicle/status/twist", 10, cb_twist);
   sub_navpvt_ = create_subscription<NavPVT>("/sensing/gnss/ublox/navpvt", 10, cb_pvt);
 
-  pub_twist_ = create_publisher<TwistStamped>("/kalman/twist", 10);
-  pub_pose_ = create_publisher<PoseStamped>("/kalman/doppler", 10);
-  pub_string_ = create_publisher<String>("/kalman/status", 10);
-  pub_doppler_vel_ = create_publisher<Float>("/kalman/doppler_vel", 10);
-  pub_twist_with_covariance_ =
-    create_publisher<TwistCovStamped>("/kalman/twist_with_covariance", 10);
+  pub_twist_ = create_publisher<TwistStamped>("twist", 10);
+  pub_pose_ = create_publisher<PoseStamped>("doppler", 10);
+  pub_string_ = create_publisher<String>("status", 10);
+  pub_doppler_vel_ = create_publisher<Float>("doppler_vel", 10);
+  pub_twist_with_covariance_ = create_publisher<TwistCovStamped>("twist_with_cov", 10);
 
   // rotation, velocity, bias, scale
   state_ = Eigen::Vector4f(0, 20, 0, 1);

@@ -30,13 +30,13 @@ GroundServer::GroundServer()
 
   service_ = create_service<Ground>("ground", on_service);
   sub_map_ = create_subscription<HADMapBin>("/map/vector_map", map_qos, on_map);
-  sub_pose_stamped_ = create_subscription<PoseStamped>("/particle_pose", 10, on_pose);
+  sub_pose_stamped_ = create_subscription<PoseStamped>("particle_pose", 10, on_pose);
 
-  pub_ground_height_ = create_publisher<Float32>("/height", 10);
-  pub_ground_plane_ = create_publisher<Float32Array>("/ground", 10);
-  pub_marker_ = create_publisher<Marker>("/ground_marker", 10);
-  pub_string_ = create_publisher<String>("/ground_status", 10);
-  pub_near_cloud_ = create_publisher<PointCloud2>("/near_cloud", 10);
+  pub_ground_height_ = create_publisher<Float32>("height", 10);
+  pub_ground_plane_ = create_publisher<Float32Array>("ground", 10);
+  pub_marker_ = create_publisher<Marker>("ground_marker", 10);
+  pub_string_ = create_publisher<String>("ground_status", 10);
+  pub_near_cloud_ = create_publisher<PointCloud2>("near_cloud", 10);
 }
 
 void GroundServer::onPoseStamped(const PoseStamped & msg)

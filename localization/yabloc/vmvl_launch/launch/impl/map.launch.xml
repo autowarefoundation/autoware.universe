@@ -2,18 +2,38 @@
     <arg name="use_sim_time" default="true"/>
     <arg name="force_zero_tilt" default="false"/>
 
+    <arg name="input_particle_pose" default="/localization/pf/particle_pose"/>
+    <arg name="output_height" default="height"/>
+    <arg name="output_ground" default="ground"/>
+    <arg name="output_ground_markers" default="ground_markers"/>
+    <arg name="output_ground_status" default="ground_status"/>
+    <arg name="output_near_cloud" default="near_cloud"/>
+
     <!-- ground server -->
     <node name="ground_server" pkg="vmvl_map" exec="ground_server_node" output="screen" args="--ros-args --log-level info">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="force_zero_tilt" value="$(var force_zero_tilt)"/>
         <param name="K" value="50"/>
         <param name="R" value="10"/>
+
+        <remap from="particle_pose" to="$(var input_particle_pose)"/>
+        <remap from="height" to="$(var output_height)"/>
+        <remap from="ground" to="$(var output_ground)"/>
+        <remap from="ground_markers" to="$(var output_ground_markers)"/>
+        <remap from="ground_status" to="$(var output_ground_status)"/>
+        <remap from="near_cloud" to="$(var output_near_cloud)"/>
     </node>
+
+    <arg name="output_ll2_road_marking" default="ll2_road_marking"/>
+    <arg name="output_ll2_sign_board" default="ll2_sign_board"/>
 
     <!-- lanelet2 -->
     <node name="ll2_decompose" pkg="vmvl_map" exec="ll2_decompose_node" output="log" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="road_marking_labels" value="$(var road_marking_labels)"/>
+
+        <remap from="ll2_road_marking" to="$(var output_ll2_road_marking)"/>
+        <remap from="ll2_sign_board" to="$(var output_ll2_sign_board)"/>
     </node>
 </launch>
 

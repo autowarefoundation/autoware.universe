@@ -20,8 +20,8 @@ LineSegmentDetector::LineSegmentDetector()
     create_subscription<Image>("/sensing/camera/traffic_light/image_raw/compressed", 10, cb_image);
 
   // Publisher
-  pub_image_lsd_ = create_publisher<Image>("/lsd_image", 10);
-  pub_cloud_ = create_publisher<PointCloud2>("/lsd_cloud", 10);
+  pub_image_lsd_ = create_publisher<Image>("lsd_image", 10);
+  pub_cloud_ = create_publisher<PointCloud2>("lsd_cloud", 10);
 
   lsd_ =
     cv::lsd::createLineSegmentDetector(cv::lsd::LSD_REFINE_STD, 0.8, 0.6, 2.0, 22.5, 0, 0.7, 1024);

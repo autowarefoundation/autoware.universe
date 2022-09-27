@@ -1,19 +1,46 @@
 <launch>
     <arg name="reference_bags_path" default="$(env HOME)/Reference/05-20-wangansen/"/>
 
+
     <!-- image overlay -->
+    <arg name="input_particle_pose" default="/localization/pf/particle_pose"/>
+    <arg name="input_ground" default="/localization/map/ground"/>
+    <arg name="input_projected_lsd_cloud" default="/localization/imgproc/projected_lsd_cloud"/>
+    <arg name="input_ll2_sign_board" default="/localization/map/ll2_sign_board"/>
+    <arg name="input_ll2_road_marking" default="/localization/map/ll2_road_marking"/>
+    <arg name="output_projectedmarker" default="projected_marker"/>
+    <arg name="output_overlay_image" default="overlay_image"/>
+
     <node name="overlay" pkg="vmvl_validation" exec="overlay_node" output="screen" args="--ros-args --log-level warn">
-        <remap from="/src_image" to="$(var resized_image)"/>
-        <remap from="/src_info" to="$(var resized_info)"/>
-        <remap from="/particle_pose" to="/particle_pose"/>
+        <remap from="src_image" to="$(var resized_image)"/>
+        <remap from="src_info" to="$(var resized_info)"/>
+        <remap from="particle_pose" to="$(var input_particle_pose)"/>
+
+        <remap from="ground" to="$(var input_ground)"/>
+        <remap from="projected_lsd_cloud" to="$(var input_projected_lsd_cloud)"/>
+        <remap from="ll2_sign_board" to="$(var input_ll2_sign_board)"/>
+        <remap from="ll2_road_marking" to="$(var input_ll2_road_marking)"/>
     </node>
 
     <!-- covariance visualizer -->
+    <arg name="input_particles" default="/localization/pf/predicted_particles"/>
+    <arg name="output_cov_diag" default="cov_diag"/>
+    <arg name="output_pose_with_cov" default="pose_with_cov"/>
+
     <node name="covariance" pkg="vmvl_validation" exec="covariance_node" output="screen" args="--ros-args --log-level warn">
+        <remap from="particles" to="$(var input_particles)"/>
+        <remap from="particle_pose" to="$(var input_particle_pose)"/>
+        <remap from="cov_diag" to="$(var output_cov_diag)"/>
+        <remap from="pose_with_cov" to="$(var output_pose_with_cov)"/>
     </node>
 
     <!-- ape checker -->
+    <arg name="input_pose_with_cov" default="pose_with_cov"/>
+    <arg name="output_ape_diag" default="ape_diag"/>
+
     <node name="ape" pkg="vmvl_validation" exec="ape_node" output="screen" args="--ros-args --log-level warn">
         <param name="reference_bags_path" value="$(var reference_bags_path)"/>
+        <remap from="pose_with_cov" to="$(var input_pose_with_cov)"/>
+        <remap from="ape_diag" to="$(var output_ape_diag)"/>
     </node>
 </launch>

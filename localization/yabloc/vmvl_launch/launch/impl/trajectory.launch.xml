@@ -17,16 +17,32 @@
     <!-- pose to path -->
     <node name="pose_to_path" pkg="vmvl_trajectory" exec="pose_to_path_node" output="log" args="--ros-args --log-level info">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
-        <param name="sub_topics" value="[/sensing/gnss/ublox/pose, /localization/pose_estimator/pose, /particle_pose, /eagleye/pose, /refine_pose]"/>
-        <param name="pub_topics" value="[/sensing/gnss/ublox/path, /localization/pose_estimator/path, /particle_path, /eagleye/path, /refine_path]"/>
+        <param name="sub_topics" value="[/sensing/gnss/ublox/pose, /localization/pose_estimator/pose, /localization/particle_pose]"/>
+        <param name="pub_topics" value="[/sensing/gnss/ublox/path, /localization/pose_estimator/path, /localization/particle_path]"/>
     </node>
 
     <!-- twist estimator -->
-    <node name="twist_estimator" pkg="vmvl_trajectory" exec="twist_node" output="screen" args="--ros-args --log-level warn">
-        <param name="use_sim_time" value="$(var use_sim_time)"/>
-        <param name="rtk_enabled" value="$(var rtk_enabled)"/>
-        <param name="static_scale_factor" value="$(var static_scale_factor)"/>
-    </node>
+    <group>
+        <push-ros-namespace namespace="kalman"/>
+
+        <arg name="output_twist" default="twist"/>
+        <arg name="output_doppler" default="doppler"/>
+        <arg name="output_status" default="status"/>
+        <arg name="output_doppler_vel" default="doppler_vel"/>
+        <arg name="output_twist_with_cov" default="twist_with_cov"/>
+
+        <node name="twist_estimator" pkg="vmvl_trajectory" exec="twist_node" output="screen" args="--ros-args --log-level warn">
+            <param name="use_sim_time" value="$(var use_sim_time)"/>
+            <param name="rtk_enabled" value="$(var rtk_enabled)"/>
+            <param name="static_scale_factor" value="$(var static_scale_factor)"/>
+
+            <remap from="twist" to="$(var output_twist)"/>
+            <remap from="doppler" to="$(var output_doppler)"/>
+            <remap from="status" to="$(var output_status)"/>
+            <remap from="doppler_vel" to="$(var output_doppler_vel)"/>
+            <remap from="twist_with_cov" to="$(var output_twist_with_cov)"/>
+        </node>
+    </group>
 
     <!-- velocity report converter -->
     <node name="velocity_report_node" pkg="vmvl_trajectory" exec="velocity_report_node" output="screen" args="--ros-args --log-level warn">
