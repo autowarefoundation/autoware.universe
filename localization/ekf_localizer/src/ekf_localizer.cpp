@@ -332,7 +332,7 @@ void EKFLocalizer::callbackInitialPose(
   X(IDX::VX) = 0.0;
   X(IDX::WZ) = 0.0;
 
-  using COV_IDX = tier4_autoware_utils::pose_covariance_index::POSE_COV_IDX;
+  using COV_IDX = tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
   P(IDX::X, IDX::X) = initialpose->pose.covariance[COV_IDX::X_X];
   P(IDX::Y, IDX::Y) = initialpose->pose.covariance[COV_IDX::Y_Y];
   P(IDX::YAW, IDX::YAW) = initialpose->pose.covariance[COV_IDX::YAW_YAW];
@@ -624,7 +624,7 @@ void EKFLocalizer::publishEstimateResult()
   pub_biased_pose_->publish(current_biased_ekf_pose_);
 
   /* publish latest pose with covariance */
-  using COV_IDX = tier4_autoware_utils::pose_covariance_index::POSE_COV_IDX;
+  using COV_IDX = tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
   geometry_msgs::msg::PoseWithCovarianceStamped pose_cov;
   pose_cov.header.stamp = current_time;
   pose_cov.header.frame_id = current_ekf_pose_.header.frame_id;
@@ -704,7 +704,7 @@ void EKFLocalizer::updateSimple1DFilters(const geometry_msgs::msg::PoseWithCovar
   tf2::fromMsg(pose.pose.pose.orientation, q_tf);
   tf2::Matrix3x3(q_tf).getRPY(roll, pitch, yaw_tmp);
 
-  using COV_IDX = tier4_autoware_utils::pose_covariance_index::POSE_COV_IDX;
+  using COV_IDX = tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
   double z_dev = pose.pose.covariance[COV_IDX::Z_Z];
   double roll_dev = pose.pose.covariance[COV_IDX::ROLL_ROLL];
   double pitch_dev = pose.pose.covariance[COV_IDX::PITCH_PITCH];
