@@ -12,14 +12,14 @@ int main()
   auto log_path = getOutputPath() / "helper_funcs";
 
   double Nx = 512;
-  std::vector<double> xvec = ns_utils::linspace<double>(0.0, Nx, Nx);
+  std::vector<double> xvec = ns_utils::linspace<double>(0.0, Nx, static_cast<size_t>(Nx));
 
   // Generate y = 6*sin(2*pi*n/N).
 
   std::vector<double> yvec;
   std::transform(xvec.cbegin(), xvec.cend(), std::back_inserter(yvec), [&](auto const &x)
   {
-      return 6 * sin(2 * M_PI * x / Nx);
+    return 6 * sin(2 * M_PI * x / Nx);
   });
 
   writeToFile(log_path, yvec, "xc");
@@ -31,7 +31,7 @@ int main()
   std::vector<double> xw;
   std::transform(yvec.cbegin(), yvec.cend(), std::back_inserter(xw), [&](auto const &x)
   {
-      return std::atan2(sin(x), cos(x));
+    return std::atan2(sin(x), cos(x));
   });
 
   writeToFile(log_path, xw, "xw");
