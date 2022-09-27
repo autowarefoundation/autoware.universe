@@ -215,6 +215,8 @@ void RTCAutoMode::onChangeToAutoMode()
   enable_auto_mode_cli->async_send_request(request);
   auto_manual_mode_label->setText("AutoMode");
   auto_manual_mode_label->setStyleSheet("background-color: #00FFFF;");
+  auto_module_button_ptr->setChecked(true);
+  manual_module_button_ptr->setChecked(false);
 }
 
 void RTCAutoMode::onChangeToManualMode()
@@ -224,6 +226,8 @@ void RTCAutoMode::onChangeToManualMode()
   enable_auto_mode_cli->async_send_request(request);
   auto_manual_mode_label->setText("ManualMode");
   auto_manual_mode_label->setStyleSheet("background-color: #FFFF00;");
+  manual_module_button_ptr->setChecked(true);
+  auto_module_button_ptr->setChecked(false);
 }
 
 void RTCManagerPanel::onRTCStatus(const CooperateStatusArray::ConstSharedPtr msg)
