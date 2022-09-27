@@ -12,6 +12,8 @@ namespace vmvl_validation
 AbsolutePoseError::AbsolutePoseError() : Node("ape_node")
 {
   using std::placeholders::_1;
+  namespace fs = std::filesystem;
+
   auto cb_pose = std::bind(&AbsolutePoseError::poseCallback, this, _1);
   sub_pose_cov_stamped_ = create_subscription<PoseCovStamped>("/pose_with_covariance", 1, cb_pose);
   pub_string_ = create_publisher<String>("/ape_diag", 10);
@@ -19,7 +21,12 @@ AbsolutePoseError::AbsolutePoseError() : Node("ape_node")
   const std::string reference_bags_path = declare_parameter<std::string>("reference_bags_path", "");
   RCLCPP_INFO_STREAM(get_logger(), "reference bag path: " << reference_bags_path);
 
-  namespace fs = std::filesystem;
+  if (!fs::exists(reference_bags_path)) {
+    RCLCPP_INFO_STREAM(
+      get_logger(), "ape_node is disabled due to not existance of reference paths");
+    return;
+  }
+
   for (const fs::directory_entry & x : fs::directory_iterator(reference_bags_path)) {
     loadReferenceRosbag(x.path());
   }

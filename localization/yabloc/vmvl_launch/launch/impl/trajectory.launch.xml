@@ -2,67 +2,41 @@
     <arg name="use_sim_time" default="true"/>
     <arg name="log_level" default="warn"/>
     <arg name="rtk_enabled" default="true"/>
-    <arg name="use_eagleye" default="false"/>
     <arg name="static_scale_factor" default="-1.0"/>
 
-    <!-- ========================================= -->
-    <!-- =============== STATIC TF =============== -->
-    <!-- ========================================= -->
+    <!-- static tf -->
     <node name="base_link_tf" pkg="tf2_ros" exec="static_transform_publisher" args="0 0 0 0 0 0 /particle_filter /base_link"/>
 
-    <!-- ========================================= -->
-    <!-- =============== FIX TO POSE ============= -->
-    <!-- ========================================= -->
+    <!-- fix to pose -->
     <node name="fix_to_pose" pkg="vmvl_trajectory" exec="fix_to_pose_node" output="log" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <remap from="pose" to="/sensing/gnss/ublox/pose"/>
         <remap from="fix_topic" to="/sensing/gnss/ublox/nav_sat_fix"/>
     </node>
-    <node name="fix_to_pose2" pkg="vmvl_trajectory" exec="fix_to_pose_node" output="log" args="--ros-args --log-level warn">
-        <param name="use_sim_time" value="$(var use_sim_time)"/>
-        <remap from="pose" to="/eagleye/pose"/>
-        <remap from="fix_topic" to="/eagleye/fix"/>
-    </node>
 
-    <!-- ========================================= -->
-    <!-- ============== POSE TO PATH ============= -->
-    <!-- ========================================= -->
+    <!-- pose to path -->
     <node name="pose_to_path" pkg="vmvl_trajectory" exec="pose_to_path_node" output="log" args="--ros-args --log-level info">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="sub_topics" value="[/sensing/gnss/ublox/pose, /localization/pose_estimator/pose, /particle_pose, /eagleye/pose, /refine_pose]"/>
         <param name="pub_topics" value="[/sensing/gnss/ublox/path, /localization/pose_estimator/path, /particle_path, /eagleye/path, /refine_path]"/>
     </node>
 
-    <!-- ========================================= -->
-    <!-- ============= TWIST ESTIMATOR =========== -->
-    <!-- ========================================= -->
+    <!-- twist estimator -->
     <node name="twist_estimator" pkg="vmvl_trajectory" exec="twist_node" output="screen" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="rtk_enabled" value="$(var rtk_enabled)"/>
         <param name="static_scale_factor" value="$(var static_scale_factor)"/>
     </node>
 
-    <!-- ========================================= -->
-    <!-- ====== VELOCITY REPORT CONVERTER ======== -->
-    <!-- ========================================= -->
+    <!-- velocity report converter -->
     <node name="velocity_report_node" pkg="vmvl_trajectory" exec="velocity_report_node" output="screen" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
     </node>
 
-    <!-- ========================================= -->
-    <!-- ============ POSE INITIALIZER =========== -->
-    <!-- ========================================= -->
-    <node name="pose_initializer" pkg="vmvl_trajectory" exec="pose_init_node" output="log" args="--ros-args --log-level warn">
+    <!-- gnss pose initializer -->
+    <node name="gnss_pose_initializer" pkg="vmvl_trajectory" exec="pose_init_node" output="log" args="--ros-args --log-level warn">
         <remap from="ublox_topic" to="/sensing/gnss/ublox/navpvt"/>
         <remap from="pose" to="/init/pose"/>
-        <param name="rtk_enabled" value="$(var rtk_enabled)"/>
     </node>
 
-    <!-- ========================================= -->
-    <!-- ============= EAGLEYE BRIDGE ============ -->
-    <!-- ========================================= -->
-    <node if="$(var use_eagleye)" name="eagleye_bridge" pkg="vmvl_trajectory" exec="eagleye_bridge_node" output="log" args="--ros-args --log-level warn">
-        <remap from="/in/fix" to="/eagleye/fix"/>
-        <remap from="/out/navpvt" to="/bridge/navpvt"/>
-    </node>
 </launch>

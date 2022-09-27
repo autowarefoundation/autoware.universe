@@ -1,24 +1,18 @@
 <launch>
-    <!-- ========================================= -->
-    <!-- ============= IMAGE OVERLAY ============= -->
-    <!-- ========================================= -->
+    <arg name="reference_bags_path" default="$(env HOME)/Reference/05-20-wangansen/"/>
+
+    <!-- image overlay -->
     <node name="overlay" pkg="vmvl_validation" exec="overlay_node" output="screen" args="--ros-args --log-level warn">
         <remap from="/src_image" to="$(var resized_image)"/>
         <remap from="/src_info" to="$(var resized_info)"/>
         <remap from="/particle_pose" to="/particle_pose"/>
     </node>
 
-    <!-- ========================================= -->
-    <!-- ========= COVARIANCE VISUALIZER ========= -->
-    <!-- ========================================= -->
+    <!-- covariance visualizer -->
     <node name="covariance" pkg="vmvl_validation" exec="covariance_node" output="screen" args="--ros-args --log-level warn">
     </node>
 
-    <arg name="reference_bags_path" default="$(env HOME)/Reference/05-20-wangansen/"/>
-
-    <!-- ========================================= -->
-    <!-- =============== APE CHECKER ============= -->
-    <!-- ========================================= -->
+    <!-- ape checker -->
     <node name="ape" pkg="vmvl_validation" exec="ape_node" output="screen" args="--ros-args --log-level warn">
         <param name="reference_bags_path" value="$(var reference_bags_path)"/>
     </node>

@@ -13,37 +13,27 @@
 
     <arg name="truncate_pixel_threshold" default="-1" description="For robustness verification, if positive value is given, line segments are truncated."/>
 
-    <!-- ========================================= -->
-    <!-- ============ undistort & resize ========= -->
-    <!-- ========================================= -->
+    <!-- undistort & resize -->
     <node name="undistort" pkg="vmvl_imgproc" exec="undistort_node" output="screen" args="--ros-args --log-level $(var log_level)">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="width" value="800"/>
     </node>
 
-    <!-- ========================================= -->
-    <!-- ========== line segment detector ======== -->
-    <!-- ========================================= -->
+    <!-- line segment detector -->
     <node name="lsd" pkg="vmvl_imgproc" exec="lsd_node" output="screen" args="--ros-args --log-level $(var log_level)">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <remap from="$(var src_image)" to="$(var resized_image)"/>
         <remap from="$(var src_info)" to="$(var resized_info)"/>
     </node>
 
-    <!-- ========================================= -->
-    <!-- ======== graph based segmentation ======= -->
-    <!-- ========================================= -->
+    <!-- graph based segmentation -->
     <node name="graph_segment" pkg="vmvl_imgproc" exec="graph_segment_node" output="screen" args="--ros-args --log-level info">
         <remap from="$(var src_image)" to="$(var resized_image)"/>
         <remap from="$(var src_info)" to="$(var resized_info)"/>
     </node>
 
-    <!-- ========================================= -->
-    <!-- ============= segment fitler ============ -->
-    <!-- ========================================= -->
+    <!-- segment fitler -->
     <node name="segment_filter" pkg="vmvl_imgproc" exec="segment_filter_node" output="screen" args="--ros-args --log-level info">
-        <remap from="$(var src_image)" to="$(var resized_image)"/>
-        <remap from="/input/camera_info" to="$(var resized_info)"/>
         <param name="truncate_pixel_threshold" value="$(var truncate_pixel_threshold)" />
         <param name="min_segment_length" value="$(var min_segment_length)"/>
         <param name="max_segment_distance" value="$(var max_segment_distance)"/>

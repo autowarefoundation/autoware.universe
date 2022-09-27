@@ -11,8 +11,6 @@
     <arg name="static_scale_factor" default="1.009"/>
 
     <arg name="refiner" default="false"/>
-    <arg name="reference_bags_path" default="$(env HOME)/Reference/odaiba_weather/"/>
-
     <arg name="initialpose_cov_xx_yy" default="[1.0,0.25]"/>
 
 

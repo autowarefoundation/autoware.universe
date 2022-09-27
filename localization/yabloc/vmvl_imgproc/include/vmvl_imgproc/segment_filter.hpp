@@ -18,7 +18,6 @@ class SegmentFilter : public vml_common::BaseCameraInfoNode
 {
 public:
   using PointCloud2 = sensor_msgs::msg::PointCloud2;
-  using CameraInfo = sensor_msgs::msg::CameraInfo;
   using Image = sensor_msgs::msg::Image;
   SegmentFilter();
 

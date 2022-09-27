@@ -8,61 +8,72 @@
     <arg name="resized_info" default="/sensing/camera/undistorted/camera_info"/>
 
     <arg name="road_marking_labels" default="[zebra_marking, virtual, line_thin, line_thick, pedestrian_marking, stop_line]"/>
-    <arg name="rtk_enabled" default="true"/>
     <arg name="min_segment_length" default="-1.0"/>
     <arg name="max_segment_distance" default="50.0"/>
     <arg name="max_lateral_distance" default="10.0"/>
     <arg name="initialpose_cov_xx_yy" default="[16.0,0.25]"/>
+    <arg name="use_eagleye" default="false"/>
+    <arg name="rtk_enabled" default="true"/>
 
-    <!-- ========================================= -->
-    <!-- ============~~ INITIALIZER ============== -->
-    <!-- ========================================= -->
-    <node name="particle_initializer_node" pkg="particle_initializer" exec="particle_initializer_node" output="screen" args="--ros-args --log-level info">
-        <param name="cov_xx_yy" value="$(var initialpose_cov_xx_yy)" />
-    </node>
-
-    <!-- ========================================= -->
-    <!-- ============ PARTICLE FILTER ============ -->
-    <!-- ========================================= -->
-    <include file="$(find-pkg-share vmvl_launch)/launch/impl/pf.launch.xml">
-        <arg name="use_sim_time" value="$(var use_sim_time)" />
-        <arg name="log_level" value="$(var log_level)"/>
-    </include>
-
-    <!-- ========================================= -->
-    <!-- ============ IMAGE PROCESSING =========== -->
-    <!-- ========================================= -->
-    <include file="$(find-pkg-share vmvl_launch)/launch/impl/imgproc.launch.xml">
-        <arg name="use_sim_time" value="$(var use_sim_time)" />
-        <arg name="log_level" value="$(var log_level)"/>
-        <arg name="src_image" value="$(var src_image)"/>
-        <arg name="src_info" value="$(var src_info)"/>
-        <arg name="resized_image" value="$(var resized_image)"/>
-        <arg name="resized_info" value="$(var resized_info)"/>
-    </include>
-
-    <!-- ========================================= -->
-    <!-- =============== TRAJECTORY ============== -->
-    <!-- ========================================= -->
-    <include file="$(find-pkg-share vmvl_launch)/launch/impl/trajectory.launch.xml">
-        <arg name="use_sim_time" value="$(var use_sim_time)" />
-        <arg name="log_level" value="$(var log_level)"/>
-    </include>
-
-    <!-- ========================================= -->
-    <!-- =============== VALIDATION ============== -->
-    <!-- ========================================= -->
     <group>
-        <push-ros-namespace namespace="validation"/>
-        <include file="$(find-pkg-share vmvl_launch)/launch/impl/validation.launch.xml"/>
-    </group>
+        <push-ros-namespace namespace="localization"/>
 
-    <!-- ========================================= -->
-    <!-- ================== MAP ================== -->
-    <!-- ========================================= -->
-    <group>
-        <push-ros-namespace namespace="map"/>
-        <include file="$(find-pkg-share vmvl_launch)/launch/impl/map.launch.xml"/>
-    </group>
+        <!-- initializer -->
+        <group>
+            <push-ros-namespace namespace="initializer"/>
+            <node name="particle_initializer_node" pkg="particle_initializer" exec="particle_initializer_node" output="screen" args="--ros-args --log-level info">
+                <param name="cov_xx_yy" value="$(var initialpose_cov_xx_yy)" />
+            </node>
+        </group>
 
+        <!-- particle filter -->
+        <group>
+            <push-ros-namespace namespace="particle_filter"/>
+            <include file="$(find-pkg-share vmvl_launch)/launch/impl/pf.launch.xml">
+                <arg name="use_sim_time" value="$(var use_sim_time)" />
+                <arg name="log_level" value="$(var log_level)"/>
+            </include>
+        </group>
+
+        <!-- image processing -->
+        <group>
+            <push-ros-namespace namespace="imgproc"/>
+            <include file="$(find-pkg-share vmvl_launch)/launch/impl/imgproc.launch.xml">
+                <arg name="use_sim_time" value="$(var use_sim_time)" />
+                <arg name="log_level" value="$(var log_level)"/>
+                <arg name="src_image" value="$(var src_image)"/>
+                <arg name="src_info" value="$(var src_info)"/>
+                <arg name="resized_image" value="$(var resized_image)"/>
+                <arg name="resized_info" value="$(var resized_info)"/>
+            </include>
+        </group>
+
+        <!-- trajectory -->
+        <group>
+            <push-ros-namespace namespace="trajectory"/>
+            <include file="$(find-pkg-share vmvl_launch)/launch/impl/trajectory.launch.xml">
+                <arg name="use_sim_time" value="$(var use_sim_time)" />
+                <arg name="log_level" value="$(var log_level)"/>
+            </include>
+        </group>
+
+        <!-- validation -->
+        <group>
+            <push-ros-namespace namespace="validation"/>
+            <include file="$(find-pkg-share vmvl_launch)/launch/impl/validation.launch.xml"/>
+        </group>
+
+        <!-- map -->
+        <group>
+            <push-ros-namespace namespace="map"/>
+            <include file="$(find-pkg-share vmvl_launch)/launch/impl/map.launch.xml"/>
+        </group>
+
+        <!-- eagleye -->
+        <group if="$(var use_eagleye)">
+            <push-ros-namespace namespace="eagleye"/>
+            <include file="$(find-pkg-share vmvl_launch)/launch/impl/eagleye.launch.xml"/>
+        </group>
+
+    </group>
 </launch>
