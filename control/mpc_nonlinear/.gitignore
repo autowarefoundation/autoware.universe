@@ -7,3 +7,4 @@ cmake-build-debug
 /.cache/
 external_libs/CppAD/*
 external_libs/CppADCodeGen/*
+**/*/*.txt
