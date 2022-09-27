@@ -9,9 +9,9 @@ AbstCorrector::AbstCorrector(const std::string & node_name)
   logger_(rclcpp::get_logger("abst_corrector"))
 {
   using std::placeholders::_1;
-  particle_pub_ = create_publisher<ParticleArray>("/weighted_particles", 10);
+  particle_pub_ = create_publisher<ParticleArray>("weighted_particles", 10);
   particle_sub_ = create_subscription<ParticleArray>(
-    "/predicted_particles", 10, std::bind(&AbstCorrector::particleArrayCallback, this, _1));
+    "predicted_particles", 10, std::bind(&AbstCorrector::particleArrayCallback, this, _1));
 
   if (visualize_) visualizer_ = std::make_shared<ParticleVisualizer>(*this);
 }

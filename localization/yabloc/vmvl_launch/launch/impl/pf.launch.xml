@@ -6,14 +6,14 @@
     <arg name="resized_info" default="/sensing/camera/undistorted/camera_info"/>
     <arg name="use_eagleye" default="false"/>
 
-    <arg name="predict_twist" default="/eagleye/twist" if="$(var use_eagleye)"/>
-    <arg name="predict_twist" default="/kalman/twist" unless="$(var use_eagleye)"/>
+    <arg name="predict_twist" default="/localization/eagleye/twist" if="$(var use_eagleye)"/>
+    <arg name="predict_twist" default="/localization/trajectory/kalman/twist" unless="$(var use_eagleye)"/>
 
     <arg name="static_linear_covariance" default="12.00"/>
     <arg name="static_angular_covariance" default="0.005"/>
 
-    <arg name="inout_weighted_particles" default="weighted_particles">
-    <arg name="output_particles_marker_array" default="weighted_partiles_marker">
+    <arg name="inout_weighted_particles" default="weighted_particles"/>
+    <arg name="output_particles_marker_array" default="weighted_partiles_marker"/>
 
     <!-- predict update -->
     <node pkg="modularized_particle_filter" exec="predictor_node" name="predictor_node" output="screen" args="--ros-args --log-level warn">
@@ -31,11 +31,16 @@
         <param name="static_angular_covariance" value="$(var static_angular_covariance)" />
 
         <param name="visualize" value="true"/>
-        <remap from="particles_marker_array" to="/weighted_particles/marker_array"/>
+
+        <remap from="particles_marker_array" to="$(var output_particles_marker_array)"/>
+        <remap from="height" to="/localization/map/height"/>
+        <remap from="twist_cov" to="/localization/trajectory/kalman/twist_with_cov"/>
     </node>
 
     <!-- camera  correction -->
-    <arg name="input_projected_lsd_cloud" default="projected_lsd_cloud">
+    <arg name="input_projected_lsd_cloud" default="projected_lsd_cloud"/>
+    <arg name="output_scored_cloud" default="scored_cloud"/>
+    <arg name="output_cost_map_range" default="cost_map_range"/>
     <node name="camera_corrector" pkg="camera_particle_corrector" exec="camera_particle_corrector" output="screen" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="image_size" value="800"/>
@@ -48,6 +53,8 @@
 
         <remap from="weighted_particles" to="$(var inout_weighted_particles)"/>
         <remap from="lsd_cloud" to="$(var input_projected_lsd_cloud)"/>
+        <remap from="scored_cloud" to="$(var output_scored_cloud)"/>
+        <remap from="cost_map_range" to="$(var output_cost_map_range)"/>
     </node>
 
     <!-- gnss correction -->
@@ -60,8 +67,9 @@
 
         <remap from="weighted_particles" to="$(var inout_weighted_particles)"/>
         <remap from="input/navpvt" to="/localization/eagleye/bridge/navpvt"/>
-        <remap from="input/height" to="/localization//height"/>
+        <remap from="input/height" to="/localization/map/height"/>
         <remap from="pose_with_covariance" to="/localization/pf/disabled/pose_with_covariance"/>
+        <remap from="gnss_range_marker" to="/localization/pf/gnss_range_marker"/>
     </node>
     <node unless="$(var use_eagleye)" name="gnss_particle_corrector" pkg="gnss_particle_corrector" exec="gnss_particle_corrector" output="screen" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
@@ -71,8 +79,9 @@
         <param name="rtk_enabled" value="$(var rtk_enabled)"/>
 
         <remap from="input/navpvt" to="/sensing/gnss/ublox/navpvt"/>
-        <remap from="input/height" to="/height"/>
+        <remap from="input/height" to="/localization/map/height"/>
         <remap from="weighted_particles" to="$(var inout_weighted_particles)"/>
         <remap from="pose_with_covariance" to="/localization/pf/disabled/pose_with_covariance"/>
+        <remap from="gnss_range_marker" to="/localization/pf/gnss_range_marker"/>
     </node>
 </launch>

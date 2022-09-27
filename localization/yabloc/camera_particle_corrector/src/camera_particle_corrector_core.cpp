@@ -21,17 +21,17 @@ CameraParticleCorrector::CameraParticleCorrector()
   using std::placeholders::_1;
 
   auto lsd_callback = std::bind(&CameraParticleCorrector::onLsd, this, _1);
-  sub_lsd_ = create_subscription<PointCloud2>("/lsd_cloud", 10, lsd_callback);
+  sub_lsd_ = create_subscription<PointCloud2>("lsd_cloud", 10, lsd_callback);
 
   auto ll2_callback = std::bind(&CameraParticleCorrector::onLl2, this, _1);
-  sub_ll2_ = create_subscription<PointCloud2>("/ll2_road_marking", 10, ll2_callback);
+  sub_ll2_ = create_subscription<PointCloud2>("ll2_road_marking", 10, ll2_callback);
 
   auto pose_callback = std::bind(&CameraParticleCorrector::onPose, this, _1);
-  sub_pose_ = create_subscription<PoseStamped>("/particle_pose", 10, pose_callback);
+  sub_pose_ = create_subscription<PoseStamped>("particle_pose", 10, pose_callback);
 
-  pub_image_ = create_publisher<Image>("/match_image", 10);
-  pub_marker_ = create_publisher<MarkerArray>("/cost_map_range", 10);
-  pub_scored_cloud_ = create_publisher<PointCloud2>("/scored_cloud", 10);
+  pub_image_ = create_publisher<Image>("match_image", 10);
+  pub_marker_ = create_publisher<MarkerArray>("cost_map_range", 10);
+  pub_scored_cloud_ = create_publisher<PointCloud2>("scored_cloud", 10);
 
   // Timer callback
   auto cb_timer = std::bind(&CameraParticleCorrector::onTimer, this);
