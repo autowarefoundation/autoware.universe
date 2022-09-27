@@ -1,8 +1,0 @@
-1. Generate grid points for the kinematic vehicle model using gridcheck.py.
-Two options available in the given Python script: low and high resolution grid generation. We compute LMIs using a low
-resolution grid and verify the stability for the finer grids.
-
-2. Run the LMI_control_vehicle_steering_delay_poles.m to generate the Lyapunov matrices.
-3. Check stability using z0_feasibility_check.m file.
-4. Export parameters into the YAML format for the NMPC Lyap parameters.
-
