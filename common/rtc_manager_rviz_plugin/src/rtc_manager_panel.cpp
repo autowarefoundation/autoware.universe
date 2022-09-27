@@ -181,7 +181,7 @@ RTCManagerPanel::RTCManagerPanel(QWidget * parent) : rviz_common::Panel(parent)
     rtc_table_ = new QTableWidget();
     rtc_table_->setColumnCount(column_size_);
     rtc_table_->setHorizontalHeaderLabels(
-      {"ID", "Module", "AW Safe", "OP Safe", "AutoMode", "StartDistance", "FinishDistance"});
+      {"ID", "Module", "AW Safe", "Received Cmd", "AutoMode", "StartDistance", "FinishDistance"});
     rtc_table_->setVerticalHeader(vertical_header);
     rtc_table_->setHorizontalHeader(horizontal_header);
     rtc_table_layout->addWidget(rtc_table_);
@@ -272,13 +272,13 @@ void RTCManagerPanel::onRTCStatus(const CooperateStatusArray::ConstSharedPtr msg
     }
 
     // is operator safe
-    const bool is_op_safe = status.command_status.type;
+    const bool is_execute = status.command_status.type;
     {
-      std::string is_safe = Bool2String(is_op_safe);
-      if (status.auto_mode) is_safe = "NONE";
-      auto label = new QLabel(QString::fromStdString(is_safe));
+      std::string text = is_execute ? "EXECUTE" : "WAIT";
+      if (status.auto_mode) text = "NONE";
+      auto label = new QLabel(QString::fromStdString(text));
       label->setAlignment(Qt::AlignCenter);
-      label->setText(QString::fromStdString(is_safe));
+      label->setText(QString::fromStdString(text));
       rtc_table_->setCellWidget(cnt, 3, label);
     }
 
@@ -310,9 +310,9 @@ void RTCManagerPanel::onRTCStatus(const CooperateStatusArray::ConstSharedPtr msg
       rtc_table_->setCellWidget(cnt, 6, label);
     }
     for (size_t i = 0; i < column_size_; i++) {
-      if (is_rtc_auto_mode || (is_aw_safe && is_op_safe)) {
+      if (is_rtc_auto_mode || (is_aw_safe && is_execute)) {
         rtc_table_->cellWidget(cnt, i)->setStyleSheet("background-color: #00FF00;");
-      } else if (is_aw_safe || is_op_safe) {
+      } else if (is_aw_safe || is_execute) {
         rtc_table_->cellWidget(cnt, i)->setStyleSheet("background-color: #FFFF00;");
       } else {
         rtc_table_->cellWidget(cnt, i)->setStyleSheet("background-color: #FF0000;");
