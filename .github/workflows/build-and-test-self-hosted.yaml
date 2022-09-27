@@ -15,6 +15,9 @@ jobs:
         rosdistro:
           - galactic
           - humble
+        cmake-build-type:
+          - Debug
+          - Release
         container-suffix:
           - ""
           - -cuda
@@ -43,6 +46,7 @@ jobs:
           rosdistro: ${{ matrix.rosdistro }}
           target-packages: ${{ steps.get-self-packages.outputs.self-packages }}
           build-depends-repos: ${{ matrix.build-depends-repos }}
+          cmake-build-type: ${{ matrix.cmake-build-type }}
 
       - name: Test
         if: ${{ steps.get-self-packages.outputs.self-packages != '' }}
