@@ -51,12 +51,13 @@ TEST(ACTutils, angleDistance)
 
   auto theta_3 = ns_utils::deg2rad(179.);
   auto theta_4 = ns_utils::deg2rad(181.);
-  auto theta_5 = 3.15905; // ns_utils::deg2rad(-179.);
+  auto theta_5 = ns_utils::deg2rad(-179.);
+  auto theta_6 = ns_utils::deg2rad(365.);
 
-  ns_utils::print(theta_ref, theta_1, theta_2, theta_3, theta_4, theta_5);
+  ns_utils::print(theta_ref, theta_1, theta_2, theta_3, theta_4, theta_5, theta_6);
   ASSERT_TRUE(true);
 
-  std::vector<double> thetas{theta_1, theta_2, theta_3, theta_4, theta_5};
+  std::vector<double> thetas{theta_1, theta_2, theta_3, theta_4, theta_5, theta_6};
   std::vector<double> distances;
 
   for (auto const &th : thetas)
@@ -68,11 +69,47 @@ TEST(ACTutils, angleDistance)
   ns_utils::print_container(distances);
   ns_utils::print_container(thetas);
 
-  // ASSERT_DOUBLE_EQ(distances[0], theta_1);
   ASSERT_LE(std::fabs(distances[0] - theta_1), 1e-12);
   ASSERT_LE(std::fabs(distances[1] - theta_2), 1e-12);
   ASSERT_LE(std::fabs(distances[2] - theta_3), 1e-12);
-  ASSERT_LE(std::fabs(distances[3] + theta_3), 1e-12);
-  ASSERT_LE(std::fabs(distances[4] + theta_3), 1e-12);
+  ASSERT_LE(std::fabs(distances[3] + theta_3), 1e-12); // theta_3 = -theta_4
+  ASSERT_LE(std::fabs(distances[4] + theta_3), 1e-12); // the same.
+  ASSERT_LE(std::fabs(distances[5] - theta_1), 1e-12); // theta_1 == theta_6
 
+  // Test the single arg angle_distance.
+  auto theta_6_dist = ns_utils::angleDistance(theta_6);
+  ASSERT_LE(std::fabs(theta_6_dist - theta_1), 1e-12); // theta_1 == theta_6
+}
+
+TEST(ACTutils, unwrap)
+{
+
+  double Nx = 512;
+  std::vector<double> xvec = ns_utils::linspace<double>(0.0, Nx, static_cast<size_t>(Nx));
+
+  // Generate y = 6*sin(2*pi*n/N).
+  std::vector<double> yvec;
+  std::transform(xvec.cbegin(), xvec.cend(), std::back_inserter(yvec), [&](auto const &x)
+  {
+    return 6 * sin(2 * M_PI * x / Nx);
+  });
+
+  /**
+   * Wrap the signal into [-pi, pi]
+   * */
+  std::vector<double> xw;
+  std::transform(yvec.cbegin(), yvec.cend(), std::back_inserter(xw), [&](auto const &x)
+  {
+    return std::atan2(sin(x), cos(x));
+  });
+
+  /**
+   * unWrap the wrapped signal xw.
+   * */
+  ns_utils::unWrap(xw);
+
+  for (size_t k = 0; k < xw.size(); ++k)
+  {
+    ASSERT_DOUBLE_EQ(yvec[k], xw[k]);
+  }
 }
