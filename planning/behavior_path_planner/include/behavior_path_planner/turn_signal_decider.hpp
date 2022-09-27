@@ -79,6 +79,9 @@ public:
     intersection_search_distance_ = intersection_search_distance;
   }
 
+  std::pair<bool, bool> getIntersectionTurnSignalFlag();
+  std::pair<Pose, double> getIntersectionPoseAndDistance();
+
 private:
   boost::optional<TurnSignalInfo> getIntersectionTurnSignalInfo(
     const PathWithLaneId & path, const Pose & current_pose, const double current_vel,
@@ -86,11 +89,14 @@ private:
 
   geometry_msgs::msg::Point get_required_end_point(const lanelet::ConstLineString3d & centerline);
 
-  TurnIndicatorsCommand resolve_turn_signal(
-    const TurnIndicatorsCommand & prior_turn_signal,
-    const TurnIndicatorsCommand & subsequent_turn_signal, const double dist_to_prior_required_start,
-    const double dist_to_prior_required_end, const double dist_to_subsequent_required_start,
-    const double dist_to_subsequent_required_end);
+  bool use_prior_turn_signal(
+    const double dist_to_prior_required_start, const double dist_to_prior_required_end,
+    const double dist_to_subsequent_required_start, const double dist_to_subsequent_required_end);
+
+  void set_intersection_info(
+    const PathWithLaneId & path, const Pose & current_pose, const size_t current_seg_idx,
+    const TurnSignalInfo & intersection_turn_signal_info);
+  void initialize_intersection_info();
 
   rclcpp::Logger logger_{
     rclcpp::get_logger("behavior_path_planner").get_child("turn_signal_decider")};
@@ -99,6 +105,10 @@ private:
   double intersection_search_distance_{0.0};
   double base_link2front_{0.0};
   std::map<lanelet::Id, geometry_msgs::msg::Point> desired_start_point_map_;
+  mutable bool intersection_turn_signal_ = false;
+  mutable bool approaching_intersection_turn_signal_ = false;
+  mutable double intersection_distance_ = std::numeric_limits<double>::max();
+  mutable Pose intersection_pose_point_ = Pose();
 };
 }  // namespace behavior_path_planner
 
