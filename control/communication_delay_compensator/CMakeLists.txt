@@ -69,7 +69,7 @@ ament_auto_add_library(${CDOB_LIB} SHARED
   ${CDOB_LIB_SOURCE}
   ${CDOB_LIB_HEADERS})
 
-target_compile_options(${CDOB_LIB} PRIVATE -Wno-error=old-style-cast)
+target_compile_options(${CDOB_LIB} PUBLIC -Wno-error=old-style-cast)
 
 target_link_libraries(${CDOB_LIB}
   ${EIGEN3_LIBRARIES})
@@ -133,6 +133,20 @@ if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
   find_package(ament_cmake_gtest REQUIRED)
+
+  set(DCTESTs communication_delay_compensation_tests)
+
+  ament_add_gtest(${DCTESTs}
+    test/src/cdc_test_utils.hpp
+    test/src/comdelaycom_test_node.hpp
+    test/test_communication_delay_node.cpp)
+
+  #  ament_target_dependencies(${DCTESTs} ${CDOB_LIB})
+  autoware_set_compile_options(${DCTESTs})
+
+  target_link_libraries(${DCTESTs}
+    ${CDOB_LIB}
+    ${DELAY_COMPENSATION_NODE})
 endif()
 
 # -------------  PROTOTYPES ____________________________
