@@ -85,7 +85,6 @@ inline void spinWhile(T &node)
     std::this_thread::sleep_for(dt);
   }
 }
-
 }  // namespace test_utils
 
 #endif  // NMPC_TEST_UTILS_HPP_

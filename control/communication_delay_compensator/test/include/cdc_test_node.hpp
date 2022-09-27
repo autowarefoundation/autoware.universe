@@ -21,7 +21,7 @@
 #include <vector>
 #include <limits>
 
-#include "nonlinear_mpc_node/nonlinear_mpc_node.hpp"
+#include "communication_delay_compensator_node.hpp"
 #include "ament_index_cpp/get_package_share_directory.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 #include "autoware_auto_control_msgs/msg/ackermann_lateral_command.hpp"
@@ -34,26 +34,24 @@
 
 #include "gtest/gtest.h"
 #include "fake_test_node/fake_test_node.hpp"
-#include "utils/codegen_eigen_support.hpp"
 
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp/time.hpp"
 
 using VelocityMsg = nav_msgs::msg::Odometry;
 using TrajectoryMsg = autoware_auto_planning_msgs::msg::Trajectory;
-using ControlCmdMsg = autoware_auto_control_msgs::msg::AckermannControlCommand;
+
 using SteeringReport = autoware_auto_vehicle_msgs::msg::SteeringReport;
-using NonlinearMPCPerformanceMsg = mpc_nonlinear::msg::NonlinearMPCPerformanceReport;
+
 using TrajectoryPoint = autoware_auto_planning_msgs::msg::TrajectoryPoint;
-using NonlinearMPCNode = ns_mpc_nonlinear::NonlinearMPCNode;
+using CommDelayNode = observers::CommunicationDelayCompensatorNode;
 
 using DelayCompensationRefs = communication_delay_compensator::msg::DelayCompensationRefs;
 using ErrorReportMsg = communication_delay_compensator::msg::ControllerErrorReport;
-auto constexpr EPS = std::numeric_limits<double>::epsilon();
 
 using FakeNodeFixture = autoware::tools::testing::FakeTestNode;
 
 // Make shared node
-std::shared_ptr<NonlinearMPCNode> makeNonlinearMPCNode();
+std::shared_ptr<CommDelayNode> makeComDelayComNode();
 
 #endif  // TEST_NONLINEAR_MPC_NODE_HPP_
