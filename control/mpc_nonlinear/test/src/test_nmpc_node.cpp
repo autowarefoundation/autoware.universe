@@ -75,25 +75,24 @@ TEST_F(FakeNodeFixture, DISABLED_automaticDifferentition)
   auto tan_delta = tan(steering);
   auto beta = atan(tan_delta * paramsVehicle.lr / paramsVehicle.wheel_base);
 
-  auto const &xdot = v_ego * cos(beta + yaw);
-  auto const &ydot = v_ego * sin(beta + yaw);
-  auto const &yawdot = v_ego * tan_delta;
-  auto const &sdot = v_ego * cos(beta + eyaw) / (EPS + 1 - kappa * ey);
-  auto const &eydot = v_ego * sin(beta + eyaw);
-  auto const &eyawdot = yawdot - kappa * sdot;
-  auto const &vdot = u(0);
-  auto const &deltadot = u(1);
-  auto const &vydot = yawdot * vdot * cos(beta + eyaw);
+  auto const & xdot = v_ego * cos(beta + yaw);
+  auto const & ydot = v_ego * sin(beta + yaw);
+  auto const & yawdot = v_ego * tan_delta;
+  auto const & sdot = v_ego * cos(beta + eyaw) / (EPS + 1 - kappa * ey);
+  auto const & eydot = v_ego * sin(beta + eyaw);
+  auto const & eyawdot = yawdot - kappa * sdot;
+  auto const & vdot = u(0);
+  auto const & deltadot = u(1);
+  auto const & vydot = yawdot * vdot * cos(beta + eyaw);
 
   // Analytical fx.
   std::vector<double> analytical_fx_vec{xdot, ydot, yawdot, sdot, eydot,
-                                        eyawdot, vdot, deltadot, vydot};
+    eyawdot, vdot, deltadot, vydot};
 
   // Autodiff fx
   vehicle_model.computeFx(x, u, params, f_of_dx);
 
-  for (size_t k = 0; k < Model::state_dim; ++k)
-  {
+  for (size_t k = 0; k < Model::state_dim; ++k) {
     ASSERT_DOUBLE_EQ(f_of_dx(static_cast<int64_t>(k)), analytical_fx_vec[k]);
     ns_utils::print(
       "k : ", k, " ;  fx : ", f_of_dx(static_cast<int64_t>(k)),
@@ -121,8 +120,7 @@ TEST_F(FakeNodeFixture, DISABLED_automaticDifferentition)
   analytical_df_dv_vec.emplace_back(0.);                       // steering input
   analytical_df_dv_vec.emplace_back(analytical_df_dv_vec[2]);  // lateral acceleration
 
-  for (Eigen::Index k = 0; k < Model::state_dim; ++k)
-  {
+  for (Eigen::Index k = 0; k < Model::state_dim; ++k) {
     ASSERT_DOUBLE_EQ(A(k, 6), analytical_df_dv_vec[static_cast<size_t>(k)]);
     ns_utils::print(
       "k : ", k, ": A:", A(k, 6), ": df/dv: ", analytical_df_dv_vec[static_cast<size_t>(k)]);
@@ -171,8 +169,7 @@ TEST(CPPADtests, DISABLED_integrationOfAutoDiff)
   auto vehicle_model_ptr = std::make_shared<Model>();
   vehicle_model_ptr->updateParameters(params_vehicle);
 
-  if (!vehicle_model_ptr->IsInitialized())
-  {
+  if (!vehicle_model_ptr->IsInitialized()) {
     vehicle_model_ptr->InitializeModel();
     // vehicle_model_ptr->testModel();
   }
@@ -351,11 +348,10 @@ TEST_F(FakeNodeFixture, nmpcLPVTrajInitializationStability)
   /**
    * Read the Lyapunov matrices.
    * */
-  auto const &num_of_params = params_lpv.num_of_nonlinearities;
+  auto const & num_of_params = params_lpv.num_of_nonlinearities;
   ns_utils::print("num of parameters in LPV container", num_of_params);
 
-  for (size_t k = 0; k < num_of_params; ++k)
-  {
+  for (size_t k = 0; k < num_of_params; ++k) {
     auto Xl = params_lpv.lpvXcontainer[k];
     auto Yl = params_lpv.lpvYcontainer[k];
     ns_eigen_utils::printEigenMat(Xl, "Xl " + std::to_string(k));
@@ -373,8 +369,7 @@ TEST_F(FakeNodeFixture, nmpcLPVTrajInitializationStability)
   auto vehicle_model_ptr = std::make_shared<Model>();
   vehicle_model_ptr->updateParameters(params_vehicle);
 
-  if (!vehicle_model_ptr->IsInitialized())
-  {
+  if (!vehicle_model_ptr->IsInitialized()) {
     vehicle_model_ptr->InitializeModel();
     // vehicle_model_ptr->testModel();
   }
@@ -404,18 +399,15 @@ TEST_F(FakeNodeFixture, nmpcLPVTrajInitializationStability)
 
   // starting speed
   // Although, it is stable for a range of velocity, we use the LPV when starting only.
-  auto const &ntheta_ = params_lpv.num_of_nonlinearities;
+  auto const & ntheta_ = params_lpv.num_of_nonlinearities;
 
   double vx{2.};
-  auto const &Id = Eigen::MatrixXd::Identity(4, 4);  // Model::state_matrix_t::Identity();
+  auto const & Id = Eigen::MatrixXd::Identity(4, 4);  // Model::state_matrix_t::Identity();
   double dt_mpc = 0.1;
 
-  for (double const &ey : ey_grid)
-  {
-    for (double const &eyaw : eyaw_grid)
-    {
-      for (double const &k : kappa_grid)
-      {
+  for (double const & ey : ey_grid) {
+    for (double const & eyaw : eyaw_grid) {
+      for (double const & k : kappa_grid) {
         // for computing the state and control matrices, set the states
         x.setZero();
         u.setZero();
@@ -438,15 +430,15 @@ TEST_F(FakeNodeFixture, nmpcLPVTrajInitializationStability)
         // ns_eigen_utils::printEigenMat(Bc, "Bc");
         // ns_eigen_utils::printEigenMat(Bc.block<4, 2>(4, 0), "Bce");
 
-        auto const &Ac_error_block = Ac.block<4, 4>(4, 4);
+        auto const & Ac_error_block = Ac.block<4, 4>(4, 4);
 
-        auto const &th1 = Ac_error_block(0, 1);
-        auto const &th2 = Ac_error_block(0, 2);
+        auto const & th1 = Ac_error_block(0, 1);
+        auto const & th2 = Ac_error_block(0, 2);
 
-        auto const &th3 = Ac_error_block(1, 0);
-        auto const &th4 = Ac_error_block(1, 1);
-        auto const &th5 = Ac_error_block(1, 2);
-        auto const &th6 = Ac_error_block(1, 3);
+        auto const & th3 = Ac_error_block(1, 0);
+        auto const & th4 = Ac_error_block(1, 1);
+        auto const & th5 = Ac_error_block(1, 2);
+        auto const & th6 = Ac_error_block(1, 3);
 
         // ns_utils::print("Nonlinearities in Error Block", th1, th2, th3, th4);
 
@@ -456,30 +448,29 @@ TEST_F(FakeNodeFixture, nmpcLPVTrajInitializationStability)
         Xr = params_lpv.lpvXcontainer.back();  // We keep the first X0, Y0 at the end of the
         Yr = params_lpv.lpvYcontainer.back();
 
-        for (size_t j = 0; j < ntheta_ - 1; j++)
-        {
+        for (size_t j = 0; j < ntheta_ - 1; j++) {
           Xr += thetas_[j] * params_lpv.lpvXcontainer[j];
           Yr += thetas_[j] * params_lpv.lpvYcontainer[j];
         }
 
         // Compute Feedback coefficients.
-        auto const &Pr = Xr.inverse();  // Cost matrix P.
-        auto const &Kfb = Yr * Pr;      // State feedback coefficients matrix.
+        auto const & Pr = Xr.inverse();  // Cost matrix P.
+        auto const & Kfb = Yr * Pr;      // State feedback coefficients matrix.
 
         // ns_eigen_utils::printEigenMat(Kfb.eval(), "\nComputed Feedback Gains");
 
         /**
          * Discretisize the system matrices
          * */
-        auto const &I_At2_inv = (Id - Ac.block<4, 4>(4, 4) * dt_mpc / 2).inverse();
+        auto const & I_At2_inv = (Id - Ac.block<4, 4>(4, 4) * dt_mpc / 2).inverse();
 
-        auto const &Ad = I_At2_inv * (Id + Ac.block<4, 4>(4, 4) * dt_mpc / 2);
-        auto const &Bd = I_At2_inv * Bc.block<4, 2>(4, 0) * dt_mpc;
+        auto const & Ad = I_At2_inv * (Id + Ac.block<4, 4>(4, 4) * dt_mpc / 2);
+        auto const & Bd = I_At2_inv * Bc.block<4, 2>(4, 0) * dt_mpc;
 
         // Closed loop transfer matrix
         // ['xw', 'yw', 'psi', 's', 'e_y', 'e_yaw', 'Vx', 'delta', 'ay']
         auto Aclosed_loop = Ad + Bd * Kfb;
-        auto const &eig_vals = Aclosed_loop.eigenvalues();
+        auto const & eig_vals = Aclosed_loop.eigenvalues();
 
         ns_utils::print("Operating states, vx, ey, eyaw :", vx, ey, eyaw);
         // ns_eigen_utils::printEigenMat(eig_vals, "\nEigen values of the closed loop system matrix :");
@@ -534,12 +525,12 @@ TEST_F(FakeNodeFixture, straightTrajectoryTest)
 
   rclcpp::Subscription<NonlinearMPCPerformanceMsg>::SharedPtr nmpc_perfsub =
     this->create_subscription<NonlinearMPCPerformanceMsg>(
-      "mpc_nonlinear/debug/nmpc_vars", *this->get_fake_node(),
-      [&nmpcperf_msg, &is_nmpc_msg_received](const NonlinearMPCPerformanceMsg::SharedPtr msg)
-      {
-        nmpcperf_msg = msg;
-        is_nmpc_msg_received = true;
-      });
+    "mpc_nonlinear/debug/nmpc_vars", *this->get_fake_node(),
+    [&nmpcperf_msg, &is_nmpc_msg_received](const NonlinearMPCPerformanceMsg::SharedPtr msg)
+    {
+      nmpcperf_msg = msg;
+      is_nmpc_msg_received = true;
+    });
 
   // ASSERT_TRUE(is_control_command_received);
   auto br = std::make_shared<tf2_ros::StaticTransformBroadcaster>(this->get_fake_node());
@@ -558,11 +549,10 @@ TEST_F(FakeNodeFixture, straightTrajectoryTest)
   double spath = 0.;
   double vpath = 10.;
 
-  for (size_t k = 1; k < num_of_traj_points; ++k)
-  {
+  for (size_t k = 1; k < num_of_traj_points; ++k) {
     spath += dt * vpath;
-    auto const &xnext = spath * cos(yawpath);
-    auto const &ynext = spath * sin(yawpath);
+    auto const & xnext = spath * cos(yawpath);
+    auto const & ynext = spath * sin(yawpath);
     xw.emplace_back(xnext);
     yw.emplace_back(ynext);
 
@@ -626,8 +616,9 @@ TEST_F(FakeNodeFixture, straightTrajectoryTest)
   ASSERT_TRUE(is_nmpc_msg_received);
 
   EXPECT_LE(std::fabs(cmd_msg->lateral.steering_tire_angle), 1e-6f);
-  EXPECT_GE(cmd_msg->longitudinal.acceleration,
-            static_cast<decltype(cmd_msg->longitudinal.acceleration)>(0));
+  EXPECT_GE(
+    cmd_msg->longitudinal.acceleration,
+    static_cast<decltype(cmd_msg->longitudinal.acceleration)>(0));
 
   EXPECT_LE(std::fabs(nmpcperf_msg->nmpc_lateral_error), 1e-4);
   EXPECT_LE(std::fabs(nmpcperf_msg->nmpc_yaw_error), 1e-4);
@@ -635,7 +626,6 @@ TEST_F(FakeNodeFixture, straightTrajectoryTest)
 
   EXPECT_GT(rclcpp::Time(cmd_msg->stamp), rclcpp::Time(traj_msg.header.stamp));
 }
-
 
 /**
  * The NMPC controller should produce a steering signal that move the vehicle to the right.
@@ -673,12 +663,12 @@ TEST_F(FakeNodeFixture, turnRight)
 
   rclcpp::Subscription<NonlinearMPCPerformanceMsg>::SharedPtr nmpc_perfsub =
     this->create_subscription<NonlinearMPCPerformanceMsg>(
-      "mpc_nonlinear/debug/nmpc_vars", *this->get_fake_node(),
-      [&nmpcperf_msg, &is_nmpc_msg_received](const NonlinearMPCPerformanceMsg::SharedPtr msg)
-      {
-        nmpcperf_msg = msg;
-        is_nmpc_msg_received = true;
-      });
+    "mpc_nonlinear/debug/nmpc_vars", *this->get_fake_node(),
+    [&nmpcperf_msg, &is_nmpc_msg_received](const NonlinearMPCPerformanceMsg::SharedPtr msg)
+    {
+      nmpcperf_msg = msg;
+      is_nmpc_msg_received = true;
+    });
 
   // ASSERT_TRUE(is_control_command_received);
   auto br = std::make_shared<tf2_ros::StaticTransformBroadcaster>(this->get_fake_node());
@@ -699,11 +689,10 @@ TEST_F(FakeNodeFixture, turnRight)
   double spath = 0.;
   double vpath = 10.;
 
-  for (size_t k = 1; k < num_of_traj_points; ++k)
-  {
+  for (size_t k = 1; k < num_of_traj_points; ++k) {
     spath += dt * vpath;
-    auto const &xnext = spath * cos(yawpath);
-    auto const &ynext = spath * sin(yawpath);
+    auto const & xnext = spath * cos(yawpath);
+    auto const & ynext = spath * sin(yawpath);
     xw.emplace_back(xnext);
     yw.emplace_back(ynext);
 
@@ -769,11 +758,13 @@ TEST_F(FakeNodeFixture, turnRight)
 
   // EXPECT_DOUBLE_EQ(nmpcperf_msg->long_velocity_target, vpath);
 
-  EXPECT_LE(cmd_msg->lateral.steering_tire_angle,
-            static_cast<decltype(cmd_msg->lateral.steering_tire_angle)>(0));
+  EXPECT_LE(
+    cmd_msg->lateral.steering_tire_angle,
+    static_cast<decltype(cmd_msg->lateral.steering_tire_angle)>(0));
 
-  EXPECT_LE(cmd_msg->longitudinal.acceleration,
-            static_cast<decltype(cmd_msg->lateral.steering_tire_angle)>(0));
+  EXPECT_LE(
+    cmd_msg->longitudinal.acceleration,
+    static_cast<decltype(cmd_msg->lateral.steering_tire_angle)>(0));
 
   EXPECT_DOUBLE_EQ(nmpcperf_msg->long_velocity_target, vpath);
 
@@ -813,12 +804,12 @@ TEST_F(FakeNodeFixture, turnLeft)
 
   rclcpp::Subscription<NonlinearMPCPerformanceMsg>::SharedPtr nmpc_perfsub =
     this->create_subscription<NonlinearMPCPerformanceMsg>(
-      "mpc_nonlinear/debug/nmpc_vars", *this->get_fake_node(),
-      [&nmpcperf_msg, &is_nmpc_msg_received](const NonlinearMPCPerformanceMsg::SharedPtr msg)
-      {
-        nmpcperf_msg = msg;
-        is_nmpc_msg_received = true;
-      });
+    "mpc_nonlinear/debug/nmpc_vars", *this->get_fake_node(),
+    [&nmpcperf_msg, &is_nmpc_msg_received](const NonlinearMPCPerformanceMsg::SharedPtr msg)
+    {
+      nmpcperf_msg = msg;
+      is_nmpc_msg_received = true;
+    });
 
   // ASSERT_TRUE(is_control_command_received);
   auto br = std::make_shared<tf2_ros::StaticTransformBroadcaster>(this->get_fake_node());
@@ -839,11 +830,10 @@ TEST_F(FakeNodeFixture, turnLeft)
   double spath = 0.;
   double vpath = 10.;
 
-  for (size_t k = 1; k < num_of_traj_points; ++k)
-  {
+  for (size_t k = 1; k < num_of_traj_points; ++k) {
     spath += dt * vpath;
-    auto const &xnext = spath * cos(yawpath);
-    auto const &ynext = spath * sin(yawpath);
+    auto const & xnext = spath * cos(yawpath);
+    auto const & ynext = spath * sin(yawpath);
     xw.emplace_back(xnext);
     yw.emplace_back(ynext);
 
@@ -909,11 +899,13 @@ TEST_F(FakeNodeFixture, turnLeft)
 
   // EXPECT_DOUBLE_EQ(nmpcperf_msg->long_velocity_target, vpath);
 
-  EXPECT_GE(cmd_msg->lateral.steering_tire_angle,
-            static_cast<decltype(cmd_msg->lateral.steering_tire_angle)>(0));
+  EXPECT_GE(
+    cmd_msg->lateral.steering_tire_angle,
+    static_cast<decltype(cmd_msg->lateral.steering_tire_angle)>(0));
 
-  EXPECT_GE(cmd_msg->longitudinal.acceleration,
-            static_cast<decltype(cmd_msg->lateral.steering_tire_angle)>(0));
+  EXPECT_GE(
+    cmd_msg->longitudinal.acceleration,
+    static_cast<decltype(cmd_msg->lateral.steering_tire_angle)>(0));
 
   EXPECT_DOUBLE_EQ(nmpcperf_msg->long_velocity_target, vpath);
 

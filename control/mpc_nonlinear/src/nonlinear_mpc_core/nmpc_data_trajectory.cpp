@@ -148,7 +148,8 @@ size_t ns_data::MPCdataTrajectoryVectors::size() const
   if (
     x.size() == y.size() && x.size() == z.size() && x.size() == yaw.size() &&
     x.size() == vx.size() && x.size() == curvature.size() && x.size() == t.size() &&
-    x.size() == s.size() && x.size() == ax.size()) {
+    x.size() == s.size() && x.size() == ax.size())
+  {
     return x.size();
   }
 
