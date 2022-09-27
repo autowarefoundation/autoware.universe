@@ -39,7 +39,7 @@ class KinematicModelSingleTrackModel final
   : public VehicleModelsBase<
     KinematicModelSingleTrackModel, STATE_DIM, INPUT_DIM, PARAM_DIM, eSTATE_DIM>
 {
- public:
+public:
   KinematicModelSingleTrackModel() = default;
 
   // Destructor
@@ -47,21 +47,21 @@ class KinematicModelSingleTrackModel final
   {
 
     CppAD::thread_alloc::inuse(0);
-  };
+  }
 
   // Inherited methods.
   // Dynamical equations overridden from system dynamics.
   void systemEquations(
-    const state_vector_ad_t &x, const input_vector_ad_t &u, const param_vector_ad_t &params,
-    state_vector_ad_t &f_xdot) override;
+    const state_vector_ad_t & x, const input_vector_ad_t & u, const param_vector_ad_t & params,
+    state_vector_ad_t & f_xdot) override;
 
   // Model methods.
-  void updateParameters(ParamsVehicle const &params_vehicle);
+  void updateParameters(ParamsVehicle const & params_vehicle);
 
   // Test Vehicle Model
   void testModel();
 
- private:
+private:
   double wheel_base_{2.7};
   double lr_{1.4};
   double steering_tau_{0.3};
