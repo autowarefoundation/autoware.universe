@@ -1,4 +1,3 @@
-
 // Copyright 2022 The Autoware Foundation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,3 +11,13 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+
+#include "gtest/gtest.h"
+#include "cdc_test_node.hpp"
+#include "cdc_test_utils.hpp"
+
+TEST_F(FakeNodeFixture, aaa)
+{
+  ASSERT_TRUE(true);
+}
