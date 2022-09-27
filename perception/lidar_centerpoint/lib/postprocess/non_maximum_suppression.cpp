@@ -50,9 +50,9 @@ bool NonMaximumSuppression::isTargetPairObject(
   }
 
   const auto search_sqr_dist_2d = params_.search_distance_2d_ * params_.search_distance_2d_;
-  const auto sqrt_dist_2d = tier4_autoware_utils::calcSquaredDistance2d(
+  const auto sqr_dist_2d = tier4_autoware_utils::calcSquaredDistance2d(
     perception_utils::getPose(object1), perception_utils::getPose(object2));
-  return sqrt_dist_2d <= search_sqr_dist_2d;
+  return sqr_dist_2d <= search_sqr_dist_2d;
 }
 
 Eigen::MatrixXd NonMaximumSuppression::generateIoUMatrix(
