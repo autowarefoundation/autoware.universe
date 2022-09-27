@@ -227,24 +227,17 @@ void unWrap(std::vector<T> &vec)
     {
       auto cp = vec[k] + po;
       auto dp = cp - pm;
-      pm = cp;
 
-      if (dp > thr)
+      while (dp > thr)
       {
-        while (dp > thr)
-        {
-          po -= 2 * M_PI;
-          dp -= 2 * M_PI;
-        }
+        po -= 2 * M_PI;
+        dp -= 2 * M_PI;
       }
 
-      if (dp < -thr)
+      while (dp < -thr)
       {
-        while (dp < -thr)
-        {
-          po += 2 * M_PI;
-          dp += 2 * M_PI;
-        }
+        po += 2 * M_PI;
+        dp += 2 * M_PI;
       }
 
       cp = vec[k] + po;
