@@ -53,7 +53,7 @@
         <param name="max_segment_distance" value="$(var max_segment_distance)"/>
         <param name="max_lateral_distance" value="$(var max_lateral_distance)"/>
 
-        <remap from="/input/camera_info" to="$(var resized_info)"/>
+        <remap from="camera_info" to="$(var resized_info)"/>
         <remap from="graph_segmented" to="$(var input_graph_segmented)"/>
         <remap from="lsd_cloud" to="$(var input_lsd_cloud)"/>
         <remap from="projected_lsd_cloud" to="$(var output_projected_lsd_cloud)"/>

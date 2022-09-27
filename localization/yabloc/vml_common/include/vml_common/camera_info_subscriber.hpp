@@ -1,5 +1,5 @@
 #pragma once
-#include <eigen3/Eigen/StdVector>
+#include <Eigen/Core>
 #include <rclcpp/rclcpp.hpp>
 
 #include <sensor_msgs/msg/camera_info.hpp>
@@ -7,16 +7,15 @@
 #include <optional>
 namespace vml_common
 {
-class BaseCameraInfoNode : public rclcpp::Node
+class CameraInfoSubscriber
 {
 public:
   using CameraInfo = sensor_msgs::msg::CameraInfo;
 
-  BaseCameraInfoNode(
-    const std::string node_name, const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
+  CameraInfoSubscriber(rclcpp::Node * node);
 
-protected:
   bool isCameraInfoReady() const;
+
   bool isCameraInfoNullOpt() const;
 
   Eigen::Matrix3f intrinsic() const;

@@ -42,7 +42,7 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/ublox_stamp.cpp
   src/pub_sub.cpp
   src/fix2mgrs.cpp
-  src/base_camera_info_node.cpp
+  src/camera_info_subscriber.cpp
   src/cv_decompress.cpp
   src/pose_conversions.cpp
   src/color.cpp)

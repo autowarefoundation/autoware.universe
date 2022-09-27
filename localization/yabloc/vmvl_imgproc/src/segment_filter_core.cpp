@@ -13,20 +13,21 @@
 namespace vmvl_imgproc
 {
 SegmentFilter::SegmentFilter()
-: BaseCameraInfoNode("segment_filter"),
+: Node("segment_filter"),
   image_size_(declare_parameter<int>("image_size", 800)),
   max_range_(declare_parameter<float>("max_range", 20.f)),
   truncate_pixel_threshold_(declare_parameter<int>("truncate_pixel_threshold", -1)),
   min_segment_length_(declare_parameter<float>("min_segment_length", -1)),
   max_segment_distance_(declare_parameter<float>("max_segment_distance", -1)),
   max_lateral_distance_(declare_parameter<float>("max_lateral_distance", -1)),
-  subscriber_(this, "lsd_cloud", "graph_segmented"),
+  info_(this),
+  synchro_subscriber_(this, "lsd_cloud", "graph_segmented"),
   tf_subscriber_(this->get_clock())
 {
   using std::placeholders::_1;
   using std::placeholders::_2;
   auto cb = std::bind(&SegmentFilter::execute, this, _1, _2);
-  subscriber_.setCallback(cb);
+  synchro_subscriber_.setCallback(std::move(cb));
 
   pub_cloud_ = create_publisher<PointCloud2>("projected_lsd_cloud", 10);
   pub_image_ = create_publisher<Image>("projected_image", 10);
@@ -48,7 +49,9 @@ void SegmentFilter::execute(const PointCloud2 & lsd_msg, const PointCloud2 & seg
   pcl::fromROSMsg(segment_msg, *mask);
   pcl::fromROSMsg(lsd_msg, *lsd);
 
-  Eigen::Matrix3f K = intrinsic();
+  if (info_.isCameraInfoNullOpt()) return;
+
+  Eigen::Matrix3f K = info_.intrinsic();
   Eigen::Matrix3f Kinv = K.inverse();
 
   auto camera_extrinsic =

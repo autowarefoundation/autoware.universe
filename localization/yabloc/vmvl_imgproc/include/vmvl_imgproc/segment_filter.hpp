@@ -1,7 +1,7 @@
 #pragma once
 #include <opencv4/opencv2/core.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <vml_common/base_camera_info_node.hpp>
+#include <vml_common/camera_info_subscriber.hpp>
 #include <vml_common/static_tf_subscriber.hpp>
 #include <vml_common/synchro_subscriber.hpp>
 
@@ -14,7 +14,7 @@
 
 namespace vmvl_imgproc
 {
-class SegmentFilter : public vml_common::BaseCameraInfoNode
+class SegmentFilter : public rclcpp::Node
 {
 public:
   using PointCloud2 = sensor_msgs::msg::PointCloud2;
@@ -30,7 +30,9 @@ private:
   const float max_segment_distance_;
   const float max_lateral_distance_;
 
-  SynchroSubscriber<PointCloud2, PointCloud2> subscriber_;
+  vml_common::CameraInfoSubscriber info_;
+
+  SynchroSubscriber<PointCloud2, PointCloud2> synchro_subscriber_;
   vml_common::StaticTfSubscriber tf_subscriber_;
   rclcpp::Publisher<PointCloud2>::SharedPtr pub_cloud_;
   rclcpp::Publisher<Image>::SharedPtr pub_image_;
