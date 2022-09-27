@@ -130,23 +130,36 @@ rclcpp_components_register_node(${DELAY_COMPENSATION_NODE}
 ## ----------------- Library Tests----------------------------------------------
 
 if(BUILD_TESTING)
+  #  include(FetchContent)
+  #  FetchContent_Declare(
+  #    googletest
+  #    # Specify the commit you depend on and update it regularly.
+  #    URL https://github.com/google/googletest/archive/5376968f6948923e2411081fd9372e71a59d8e77.zip
+  #  )
+  #  # For Windows: Prevent overriding the parent project's compiler/linker settings
+  #  set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+  #  FetchContent_MakeAvailable(googletest)
+
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
   find_package(ament_cmake_gtest REQUIRED)
+  set(CDC_TESTs communication_delay_compensator_tests)
 
-  set(DCTESTs communication_delay_compensation_tests)
+  ament_add_gtest(${CDC_TESTs}
+    test/include/cdc_test_node.hpp
+    test/include/cdc_test_utils.hpp
+    test/src/cdc_test_node.cpp
+    test/cdc_node_tests.cpp)
 
-  ament_add_gtest(${DCTESTs}
-    test/src/cdc_test_utils.hpp
-    test/src/comdelaycom_test_node.hpp
-    test/test_communication_delay_node.cpp)
+  ament_target_dependencies(${CDC_TESTs} fake_test_node)
+  autoware_set_compile_options(${CDC_TESTs})
 
-  #  ament_target_dependencies(${DCTESTs} ${CDOB_LIB})
-  autoware_set_compile_options(${DCTESTs})
-
-  target_link_libraries(${DCTESTs}
+  target_include_directories(${CDC_TESTs} PRIVATE include test/include)
+  target_link_libraries(${CDC_TESTs}
     ${CDOB_LIB}
-    ${DELAY_COMPENSATION_NODE})
+    ${DELAY_COMPENSATION_NODE}
+    ${EIGEN3_LIBRARIES})
+
 endif()
 
 # -------------  PROTOTYPES ____________________________
