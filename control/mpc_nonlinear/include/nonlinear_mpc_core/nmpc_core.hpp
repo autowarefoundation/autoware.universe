@@ -198,7 +198,7 @@ public:
 
   [[nodiscard]] bool isInitialized() const;
 
-  [[nodiscard]] auto getLPVparams() const { return params_lpv_; }
+  [[nodiscard]] auto getLPVparams() const {return params_lpv_;}
 
 private:
   size_t K_mpc_steps{MPC_NUM_OF_PRED_STEPS};

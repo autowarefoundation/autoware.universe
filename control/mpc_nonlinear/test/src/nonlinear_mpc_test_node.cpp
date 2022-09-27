@@ -28,8 +28,8 @@ std::shared_ptr<ns_mpc_nonlinear::NonlinearMPCNode> makeNonlinearMPCNode()
   rclcpp::NodeOptions node_options;
   node_options.arguments(
     {"--ros-args", "--params-file",
-     share_dir + "/params/mpc_nonlinear.param.yaml",
-     "--params-file", share_dir + "/params/test_vehicle_info.yaml"});
+      share_dir + "/params/mpc_nonlinear.param.yaml",
+      "--params-file", share_dir + "/params/test_vehicle_info.yaml"});
 
   auto node = std::make_shared<NonlinearMPCNode>(node_options);
 
@@ -38,11 +38,7 @@ std::shared_ptr<ns_mpc_nonlinear::NonlinearMPCNode> makeNonlinearMPCNode()
     node->get_logger().get_name(),
     RCUTILS_LOG_SEVERITY_DEBUG);
   if (ret != RCUTILS_RET_OK)
-  { std::cout << "Failed to set logging severity to DEBUG\n"; }
+  {std::cout << "Failed to set logging severity to DEBUG\n";}
 
   return node;
 }
-
-
-
-

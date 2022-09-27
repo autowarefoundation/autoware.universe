@@ -36,7 +36,8 @@
 
 namespace ns_data
 {
-enum class controlSampling_order : size_t {
+enum class controlSampling_order : size_t
+{
   ZOH = 0,  // zero order hold.
   FOH = 1   // first order hold.
 };
@@ -111,23 +112,23 @@ public:
   {
     std::visit(
       overload{
-        [this, &vect](s_tag const &) { this->s = std::move(vect); },
+        [this, &vect](s_tag const &) {this->s = std::move(vect);},
 
-        [this, &vect](t_tag const &) { this->t = std::move(vect); },
+        [this, &vect](t_tag const &) {this->t = std::move(vect);},
 
-        [this, &vect](a_tag const &) { this->ax = std::move(vect); },
+        [this, &vect](a_tag const &) {this->ax = std::move(vect);},
 
-        [this, &vect](x_tag const &) { this->x = std::move(vect); },
+        [this, &vect](x_tag const &) {this->x = std::move(vect);},
 
-        [this, &vect](y_tag const &) { this->y = std::move(vect); },
+        [this, &vect](y_tag const &) {this->y = std::move(vect);},
 
-        [this, &vect](z_tag const &) { this->z = std::move(vect); },
+        [this, &vect](z_tag const &) {this->z = std::move(vect);},
 
-        [this, &vect](yaw_tag const &) { this->yaw = std::move(vect); },
+        [this, &vect](yaw_tag const &) {this->yaw = std::move(vect);},
 
-        [this, &vect](vx_tag const &) { this->vx = std::move(vect); },
+        [this, &vect](vx_tag const &) {this->vx = std::move(vect);},
 
-        [this, &vect](curv_tag const &) { this->curvature = std::move(vect); }},
+        [this, &vect](curv_tag const &) {this->curvature = std::move(vect);}},
       vartag);
   }
 
@@ -148,7 +149,7 @@ public:
  * the planning horizon.
  * @tparam Model vehicle model to get dimensions of the states and controls.
  * */
-template <class Model>
+template<class Model>
 struct TrajectoryData
 {
   typename Model::state_vector_v_t X;  // !<@brief state vector container of Eigen vector.
@@ -199,7 +200,7 @@ struct TrajectoryData
  * interpolated between the integration interval.
  *
  * */
-template <class Model>
+template<class Model>
 void TrajectoryData<Model>::initializeTrajectory(size_t const & K, double const & dt_step)
 {
   // X.resize(K);
@@ -217,19 +218,19 @@ void TrajectoryData<Model>::initializeTrajectory(size_t const & K, double const 
   dt = dt_step;
 }
 
-template <class Model>
+template<class Model>
 size_t TrajectoryData<Model>::nX() const
 {
   return X.size();
 }
 
-template <class Model>
+template<class Model>
 size_t TrajectoryData<Model>::nU() const
 {
   return U.size();
 }
 
-template <class Model>
+template<class Model>
 void TrajectoryData<Model>::getControlMPCSolutionsAtTime(
   const double & t, const double & mpc_dt, typename Model::input_vector_t & u_solutions_mpc) const
 {
