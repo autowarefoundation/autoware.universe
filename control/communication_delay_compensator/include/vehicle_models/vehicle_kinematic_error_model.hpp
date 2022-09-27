@@ -55,7 +55,8 @@ class LinearVehicleModelsBase
   // Constructors
   LinearVehicleModelsBase() = default;
 
-  LinearVehicleModelsBase(float64_t const &wheelbase, float64_t const &tau_steering, float64_t const &dt);
+  LinearVehicleModelsBase(float64_t const &wheelbase,
+                          float64_t const &tau_steering, float64_t const &dt);
 
   LinearVehicleModelsBase(LinearVehicleModelsBase const &other) = default;
   LinearVehicleModelsBase &operator=(LinearVehicleModelsBase const &other) = default;
@@ -74,7 +75,8 @@ class LinearVehicleModelsBase
 
   void simulateOneStepZeroState(measurement_vector_t &y0, state_vector_t &x0, float64_t const &u);
 
-  void updateInitialStates(float64_t const &ey, float64_t const &eyaw, float64_t const &steering, float64_t const &vx,
+  void updateInitialStates(float64_t const &ey, float64_t const &eyaw,
+                           float64_t const &steering, float64_t const &vx,
                            float64_t const &curvature);
 
   void discretisizeBilinear();
@@ -122,7 +124,7 @@ class LinearVehicleModelsBase
   float64_t long_velocity_{};
   float64_t curvature_{};
 
-  measurement_vector_t yobs_{measurement_vector_t::Zero()}; // to keep last observed value
+  measurement_vector_t yobs_{measurement_vector_t::Zero()};  // to keep last observed value
 
 };
 
@@ -143,7 +145,6 @@ void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::printContin
 
   ns_utils::print("Matrix D: ");
   ns_eigen_utils::printEigenMat(Eigen::MatrixXd(D_));
-
 }
 
 template<int STATE_DIM, int INPUT_DIM, int MEASUREMENT_DIM>
@@ -163,28 +164,25 @@ void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::printDiscre
 
   ns_utils::print("Matrix Dd: ");
   ns_eigen_utils::printEigenMat(Eigen::MatrixXd(Dd_));
-
 }
 
 template<int STATE_DIM, int INPUT_DIM, int MEASUREMENT_DIM>
-LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::LinearVehicleModelsBase(const float64_t &wheelbase,
-                                                                                        const float64_t &tau_steering,
-                                                                                        const float64_t &dt)
+LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>
+::LinearVehicleModelsBase(const float64_t &wheelbase,
+                          const float64_t &tau_steering,
+                          const float64_t &dt)
   : wheelbase_{wheelbase}, tau_steering_{tau_steering}, dt_{dt}
 {
-
-
   // Assuming tau does not change.
   A_(2, 2) = -1. / tau_steering_;  // constant terms
   B_(2, 0) = 1. / tau_steering_;
-
 }
 
 template<int STATE_DIM, int INPUT_DIM, int MEASUREMENT_DIM>
-void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::updateStateSpace(const float64_t &vr,
-                                                                                      const float64_t &steer_r)
+void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>
+::updateStateSpace(const float64_t &vr,
+                   const float64_t &steer_r)
 {
-
   auto const &cos_sqr = std::cos(steer_r) * std::cos(steer_r);
   // auto &&L = wheelbase_;
   /**
@@ -198,17 +196,17 @@ void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::updateState
   /**
    * Full nonlinear
    * */
-//  auto const &ey = x0_(0);
-//  auto const &eyaw = x0_(1);
-//  auto const &delta = x0_(2);
-//
-//  auto kterm = curvature_ / (1. - ey * curvature_);
-//  auto ksqr = kterm * kterm;
-//
-//  A_(0, 1) = vr * cos(eyaw);
-//  A_(1, 0) = -ksqr * vr * cos(eyaw);
-//  A_(1, 1) = kterm * vr * sin(eyaw);
-//  A_(1, 2) = vr / (L * cos_sqr);
+  //  auto const &ey = x0_(0);
+  //  auto const &eyaw = x0_(1);
+  //  auto const &delta = x0_(2);
+  //
+  //  auto kterm = curvature_ / (1. - ey * curvature_);
+  //  auto ksqr = kterm * kterm;
+  //
+  //  A_(0, 1) = vr * cos(eyaw);
+  //  A_(1, 0) = -ksqr * vr * cos(eyaw);
+  //  A_(1, 1) = kterm * vr * sin(eyaw);
+  //  A_(1, 2) = vr / (L * cos_sqr);
 
   /** IF small angle assumption */
   A_(0, 1) = vr;
@@ -218,7 +216,6 @@ void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::updateState
   /** Discretisize. */
   discretisizeBilinear();
   // discretisizeExact();
-
 }
 
 /**
@@ -230,43 +227,37 @@ void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::updateState
 *
 * */
 template<int STATE_DIM, int INPUT_DIM, int MEASUREMENT_DIM>
-void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::simulateOneStep(measurement_vector_t &y0,
-                                                                                     state_vector_t &x0,
-                                                                                     const float64_t &u)
+void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::
+simulateOneStep(measurement_vector_t &y0,
+                state_vector_t &x0,
+                const float64_t &u)
 {
-
   // first update the output
   // y0 = x0 + dt_ * (A_ * x0 + B_ * steering_and_ideal_steering);
 
   y0 = Cd_ * x0.eval() + Dd_ * u;
   x0 = Ad_ * x0.eval() + Bd_ * u + Bwd_;
-
-  //  ns_utils::print("in linear vehicle base, current input ", u);
-  //  ns_eigen_utils::printEigenMat(x0, "Current state in vehicle ");
-  //  ns_eigen_utils::printEigenMat(x0, "Current state in vehicle ");
-  //  ns_eigen_utils::printEigenMat(y0, "Current updated y0 ");
-
 }
 
 template<int STATE_DIM, int INPUT_DIM, int MEASUREMENT_DIM>
-void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::simulateOneStepZeroState(measurement_vector_t &y0,
-                                                                                              state_vector_t &x0,
-                                                                                              const float64_t &u)
+void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::
+simulateOneStepZeroState(measurement_vector_t &y0,
+                         state_vector_t &x0,
+                         const float64_t &u)
 {
-
   // first update the output
   // y0 = x0 + dt_ * (A_ * x0 + B_ * steering_and_ideal_steering);
   x0 = Ad_ * x0.eval() + Bd_ * u + Bwd_;
   y0 = Cd_ * x0.eval() + Dd_ * u;
-
 }
 
 template<int STATE_DIM, int INPUT_DIM, int MEASUREMENT_DIM>
-void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::updateInitialStates(const float64_t &ey,
-                                                                                         const float64_t &eyaw,
-                                                                                         const float64_t &steering,
-                                                                                         const float64_t &vx,
-                                                                                         const float64_t &curvature)
+void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::
+updateInitialStates(const float64_t &ey,
+                    const float64_t &eyaw,
+                    const float64_t &steering,
+                    const float64_t &vx,
+                    const float64_t &curvature)
 {
   /**
    * @brief The CDOBs use the linear vehicle model to access to its state space. The states of
@@ -277,7 +268,6 @@ void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::updateIniti
   long_velocity_ = vx;
   curvature_ = curvature;
   are_initial_states_set_ = true;
-
 }
 
 template<int STATE_DIM, int INPUT_DIM, int MEASUREMENT_DIM>
@@ -288,11 +278,10 @@ LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::getInitialStates
 }
 
 template<int STATE_DIM, int INPUT_DIM, int MEASUREMENT_DIM>
-void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::evaluateNonlinearTermsForLyap(
-  state_vector_observer_t &thetas,
-  measurement_vector_t const &y0) const
+void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::
+evaluateNonlinearTermsForLyap(state_vector_observer_t &thetas,
+                              measurement_vector_t const &y0) const
 {
-
   // Extract values.
   auto const &ey = y0(0);
   auto const &eyaw = y0(1);
@@ -313,10 +302,6 @@ void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::evaluateNon
 template<int STATE_DIM, int INPUT_DIM, int MEASUREMENT_DIM>
 void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::discretisizeBilinear()
 {
-  /**
-   *
-   * */
-
   auto const &I = Atype::Identity();
   I_At2_ = (I - A_ * dt_ / 2).inverse();
 
@@ -352,12 +337,13 @@ void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::discretisiz
   Bw_ = expE.template topRightCorner<STATE_DIM, INPUT_DIM>();
   Cd_ = C_;
   Dd_ = D_;
-
 }
+
 template<int STATE_DIM, int INPUT_DIM, int MEASUREMENT_DIM>
-void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::updateDisturbanceBw(float64_t const &vr,
-                                                                                         float64_t const &steer_r,
-                                                                                         float64_t const &cos_sqr)
+void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::
+updateDisturbanceBw(float64_t const &vr,
+                    float64_t const &steer_r,
+                    float64_t const &cos_sqr)
 {
   /**
    * @brief  Bw = [0, 1/tau, 0]^T
@@ -366,21 +352,21 @@ void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::updateDistu
   auto const &L = wheelbase_;
 
   Bw_(1, 0) = vr * tan(steer_r) / L - vr * curvature_ - vr * steer_r / (L * cos_sqr);
-
 }
+
 template<int STATE_DIM, int INPUT_DIM, int MEASUREMENT_DIM>
 void LinearVehicleModelsBase<STATE_DIM,
                              INPUT_DIM,
                              MEASUREMENT_DIM>::getObservedValues_y(state_vector_vehicle_t &y)
 {
-
   y(0) = yobs_(0);
   y(1) = yobs_(1);
   y(2) = yobs_(2);
-
 }
+
 template<int STATE_DIM, int INPUT_DIM, int MEASUREMENT_DIM>
-void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::getIdealRefSteering(float64_t &ref_steering) const
+void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::
+getIdealRefSteering(float64_t &ref_steering) const
 {
   ref_steering = atan(curvature_ * wheelbase_);
 }
@@ -389,9 +375,9 @@ void LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::getIdealRef
  * @brief Linear vehicle model for state observers
  * */
 template<int STATE_DIM, int INPUT_DIM, int MEASUREMENT_DIM>
-class VehicleModelDisturbanceObserver : public LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>
+class VehicleModelDisturbanceObserver :
+  public LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>
 {
-
   using BASE = LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>;
 
  public:
@@ -400,11 +386,12 @@ class VehicleModelDisturbanceObserver : public LinearVehicleModelsBase<STATE_DIM
   // Constructors.
   using BASE::LinearVehicleModelsBase::LinearVehicleModelsBase;
   void updateStateSpace(float64_t const &vr, float64_t const &steer_r) override;
-
 };
+
 template<int STATE_DIM, int INPUT_DIM, int MEASUREMENT_DIM>
-void VehicleModelDisturbanceObserver<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::updateStateSpace(const float64_t &vr,
-                                                                                              const float64_t &steer_r)
+void VehicleModelDisturbanceObserver<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::
+updateStateSpace(const float64_t &vr,
+                 const float64_t &steer_r)
 {
   auto const &cos_sqr = std::cos(steer_r) * std::cos(steer_r);
   auto &&L = this->wheelbase_;
@@ -415,7 +402,6 @@ void VehicleModelDisturbanceObserver<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::upd
    *          [ 0, 0, V/(L*cos(steering)^2)]
    *          [ 0, 0,                  -1/tau]
    * */
-
 
   /* IF small angle assumption */
   this->A_(0, 1) = vr;
@@ -429,7 +415,6 @@ void VehicleModelDisturbanceObserver<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>::upd
   /** Discretisize. */
   this->discretisizeBilinear();
   // this->discretisizeExact();
-
 }
 
 /**
@@ -439,27 +424,26 @@ template<int STATE_DIM, int INPUT_DIM, int MEASUREMENT_DIM>
 class LinearKinematicErrorModel : public LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>
 {
   using BASE = LinearVehicleModelsBase<STATE_DIM, INPUT_DIM, MEASUREMENT_DIM>;
-
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using BASE::LinearVehicleModelsBase::LinearVehicleModelsBase;
   using BASE::LinearVehicleModelsBase::updateStateSpace;
-
 };
 
 using ::toUType;
 
 // Observer model types.
-using linear_vehicle_model_t = LinearKinematicErrorModel<toUType(KinematicErrorDims::STATE_DIM),
-                                                         toUType(KinematicErrorDims::INPUT_DIM),
-                                                         toUType(KinematicErrorDims::MEASUREMENT_DIM)>;
+using linear_vehicle_model_t =
+  LinearKinematicErrorModel<toUType(KinematicErrorDims::STATE_DIM),
+                            toUType(KinematicErrorDims::INPUT_DIM),
+                            toUType(KinematicErrorDims::MEASUREMENT_DIM)>;
 
-using linear_state_observer_model_t = VehicleModelDisturbanceObserver<toUType(
-  StateObserverDims::STATE_DIM), toUType(StateObserverDims::INPUT_DIM),
-                                                                      toUType(StateObserverDims::MEASUREMENT_DIM)>;
+using linear_state_observer_model_t =
+  VehicleModelDisturbanceObserver<toUType(StateObserverDims::STATE_DIM),
+                                  toUType(StateObserverDims::INPUT_DIM),
+                                  toUType(StateObserverDims::MEASUREMENT_DIM)>;
 
 } // namespace observers
-
 
 /**
  * @brief Implemented to test the current packages and inverted model performance.

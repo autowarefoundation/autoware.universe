@@ -92,7 +92,6 @@ void writeToFile(const fs::path &outputPath, T var, std::string varname)
   std::ofstream f(outputPath / varname);
 
   f << var;
-
 }
 
 template<typename T>
@@ -118,7 +117,6 @@ void writeToFile(const fs::path &outputPath, std::vector<T> var, std::string var
   {
     f << x << " ";
   }
-
 }
 
-#endif // COMMUNICATION_DELAY_COMPENSATOR__DELAY_COMPENSATION_UTILS_HPP
+#endif  // COMMUNICATION_DELAY_COMPENSATOR__DELAY_COMPENSATION_UTILS_HPP
