@@ -126,7 +126,7 @@ void simulateNonlinearModel_zoh(
   boost::numeric::odeint::runge_kutta_cash_karp54<
     Model::state_vector_t, double, Model::state_vector_t, double,
     boost::numeric::odeint::vector_space_algebra>
-    stepper;
+  stepper;
 
   ODEzoh ode(model, u0, params, dt);
 
@@ -179,7 +179,7 @@ void SimulateNonlinearModel_foh(
   boost::numeric::odeint::runge_kutta4<
     Model::state_vector_t, double, Model::state_vector_t, double,
     boost::numeric::odeint::vector_space_algebra>
-    stepper;
+  stepper;
 
   ODEfoh ode(model, u0, u1, params0, params1, dt);
 
@@ -200,7 +200,7 @@ void simulateNonlinearModel_variableSpeed(
   boost::numeric::odeint::runge_kutta4<
     Model::state_vector_t, double, Model::state_vector_t, double,
     boost::numeric::odeint::vector_space_algebra>
-    stepper;
+  stepper;
 
   // runge_kutta_fehlberg78<Model::state_vector_t, double,
   // Model::state_vector_t, double, vector_space_algebra> stepper;

@@ -55,7 +55,7 @@
 template<int STATE_DIM, int INPUT_DIM, int PARAM_DIM, int eSTATE_DIM>
 class VehicleDynamicsBase
 {
- public:
+public:
   using state_vector_t = Eigen::Matrix<double, STATE_DIM, 1>;  // x, weights wx, z for f_0(x,u)
   using state_matrix_t = Eigen::Matrix<double, STATE_DIM, STATE_DIM>;  // A, Q
 
@@ -140,7 +140,7 @@ class VehicleDynamicsBase
   void InitializeModel();
 
   [[nodiscard]] bool IsInitialized() const
-  { return initialized_; }
+  {return initialized_;}
 
   /**
    * @brief Vehicle dynamics base class that defines vehicle model nonlinear and linear equations
@@ -151,18 +151,18 @@ class VehicleDynamicsBase
    * @param xdot [out]  xdot =f(x, u)
    * */
   virtual void systemEquations(
-    const state_vector_ad_t &x, const input_vector_ad_t &u,
-    const VehicleDynamicsBase::param_vector_ad_t &params,  // curvature, target vx
-    state_vector_ad_t &xdot_f) = 0;
+    const state_vector_ad_t & x, const input_vector_ad_t & u,
+    const VehicleDynamicsBase::param_vector_ad_t & params,  // curvature, target vx
+    state_vector_ad_t & xdot_f) = 0;
 
   void computeFx(
-    const state_vector_t &x, const input_vector_t &u,
-    const VehicleDynamicsBase::param_vector_t &params,  // curvature, target vx
-    state_vector_t &f);
+    const state_vector_t & x, const input_vector_t & u,
+    const VehicleDynamicsBase::param_vector_t & params,  // curvature, target vx
+    state_vector_t & f);
 
   void computeJacobians(
-    const state_vector_t &x, const input_vector_t &u, param_vector_t const &params,
-    state_matrix_t &A, control_matrix_t &B);
+    const state_vector_t & x, const input_vector_t & u, param_vector_t const & params,
+    state_matrix_t & A, control_matrix_t & B);
 
   virtual ~VehicleDynamicsBase()
   {
@@ -170,7 +170,7 @@ class VehicleDynamicsBase
     CppAD::thread_alloc::inuse(0);
   }
 
- private:
+private:
   // cppAd function for xdot = f(x, u).
   CppAD::ADFun<scalar_t> f_;
 
@@ -188,8 +188,7 @@ class VehicleDynamicsBase
 template<int STATE_DIM, int INPUT_DIM, int PARAM_DIM, int eSTATE_DIM>
 void VehicleDynamicsBase<STATE_DIM, INPUT_DIM, PARAM_DIM, eSTATE_DIM>::InitializeModel()
 {
-  if (initialized_)
-  {
+  if (initialized_) {
     return;
   }
 
@@ -289,8 +288,8 @@ void VehicleDynamicsBase<STATE_DIM, INPUT_DIM, PARAM_DIM, eSTATE_DIM>::Initializ
  * */
 template<int STATE_DIM, int INPUT_DIM, int PARAM_DIM, int eSTATE_DIM>
 void VehicleDynamicsBase<STATE_DIM, INPUT_DIM, PARAM_DIM, eSTATE_DIM>::computeFx(
-  const VehicleDynamicsBase::state_vector_t &x, const VehicleDynamicsBase::input_vector_t &u,
-  const VehicleDynamicsBase::param_vector_t &params, VehicleDynamicsBase::state_vector_t &f)
+  const VehicleDynamicsBase::state_vector_t & x, const VehicleDynamicsBase::input_vector_t & u,
+  const VehicleDynamicsBase::param_vector_t & params, VehicleDynamicsBase::state_vector_t & f)
 {
   assert(initialized_);
 
@@ -319,9 +318,9 @@ void VehicleDynamicsBase<STATE_DIM, INPUT_DIM, PARAM_DIM, eSTATE_DIM>::computeFx
  * */
 template<int STATE_DIM, int INPUT_DIM, int PARAM_DIM, int eSTATE_DIM>
 void VehicleDynamicsBase<STATE_DIM, INPUT_DIM, PARAM_DIM, eSTATE_DIM>::computeJacobians(
-  const VehicleDynamicsBase::state_vector_t &x, const VehicleDynamicsBase::input_vector_t &u,
-  const VehicleDynamicsBase::param_vector_t &params, VehicleDynamicsBase::state_matrix_t &A,
-  VehicleDynamicsBase::control_matrix_t &B)
+  const VehicleDynamicsBase::state_vector_t & x, const VehicleDynamicsBase::input_vector_t & u,
+  const VehicleDynamicsBase::param_vector_t & params, VehicleDynamicsBase::state_matrix_t & A,
+  VehicleDynamicsBase::control_matrix_t & B)
 {
   assert(initialized_);
 

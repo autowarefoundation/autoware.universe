@@ -37,7 +37,7 @@
  * */
 namespace ns_opt
 {
-template <size_t STATE_DIM, size_t INPUT_DIM, size_t K>
+template<size_t STATE_DIM, size_t INPUT_DIM, size_t K>
 struct OsqpMatDims
 {
   OsqpMatDims()  // : nxK{STATE_DIM * K}, nuK{INPUT_DIM * K}, njK{INPUT_DIM * (K - 1)}
@@ -97,7 +97,7 @@ struct OsqpMatDims
   size_t Aineq_start_col{};
 };
 
-template <size_t STATE_DIM, size_t INPUT_DIM, size_t K>
+template<size_t STATE_DIM, size_t INPUT_DIM, size_t K>
 class OptimizationProblemOSQP
 {
 public:
@@ -115,9 +115,9 @@ public:
   ~OptimizationProblemOSQP() = default;
 
   // Getters.
-  [[nodiscard]] bool isInitialized() const { return is_initialized_; }
+  [[nodiscard]] bool isInitialized() const {return is_initialized_;}
 
-  [[nodiscard]] bool isUpdated() const { return is_updated_; }
+  [[nodiscard]] bool isUpdated() const {return is_updated_;}
 
   [[nodiscard]] osqp::OsqpExitCode testSolver() const;
 
@@ -136,7 +136,7 @@ public:
   // Solve
   [[nodiscard]] osqp::OsqpExitCode solve() const;
 
-  [[nodiscard]] double getObjectiveValue() const { return osqp_solver_.objective_value(); }
+  [[nodiscard]] double getObjectiveValue() const {return osqp_solver_.objective_value();}
 
 private:
   // Cost and Constraint matrix dimensions.
@@ -159,7 +159,7 @@ private:
   bool is_updated_{false};      // !<-@brief whether the matrices are updated or not.
 };
 
-template <size_t STATE_DIM, size_t INPUT_DIM, size_t K>
+template<size_t STATE_DIM, size_t INPUT_DIM, size_t K>
 OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::OptimizationProblemOSQP()
 : osqp_dims_{OsqpMatDims<STATE_DIM, INPUT_DIM, K>()}
 {
@@ -171,7 +171,7 @@ OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::OptimizationProblemOSQP()
   Aconst_ = Eigen::SparseMatrix<double>(osqp_dims_.Arow_dim, osqp_dims_.Acol_dim);
 }
 
-template <size_t STATE_DIM, size_t INPUT_DIM, size_t K>
+template<size_t STATE_DIM, size_t INPUT_DIM, size_t K>
 OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::OptimizationProblemOSQP(
   const OptimizationProblemOSQP & other)
 : osqp_dims_(other.osqp_dims_),
@@ -184,7 +184,7 @@ OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::OptimizationProblemOSQP(
 {
 }
 
-template <size_t STATE_DIM, size_t INPUT_DIM, size_t K>
+template<size_t STATE_DIM, size_t INPUT_DIM, size_t K>
 OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K> &
 OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::operator=(const OptimizationProblemOSQP & other)
 {
@@ -205,7 +205,7 @@ OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::operator=(const OptimizationPr
   return *this;
 }
 
-template <size_t STATE_DIM, size_t INPUT_DIM, size_t K>
+template<size_t STATE_DIM, size_t INPUT_DIM, size_t K>
 bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(
   Model::state_vector_t const & x0, ns_data::data_nmpc_core_type_t const & data_nmpc,
   ns_data::ParamsOptimization const & param_opt)
@@ -524,7 +524,7 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(
 
   for (size_t k = 1; k < K; ++k) {
     auto const & zk = discretization_data.z.at(k - 1) + discretization_data.A.at(k - 1) * Cx +
-                      discretization_data.B.at(k - 1) * Cu - Cx;
+      discretization_data.B.at(k - 1) * Cu - Cx;
 
     osqp_instance_.lower_bounds.template segment<STATE_DIM>(k * STATE_DIM) = -zk;
     osqp_instance_.upper_bounds.template segment<STATE_DIM>(k * STATE_DIM) = -zk;
@@ -648,7 +648,7 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::setUPOSQP_useTriplets(
  *  @tparam K number of NMPC prediction steps.
  * */
 
-template <size_t STATE_DIM, size_t INPUT_DIM, size_t K>
+template<size_t STATE_DIM, size_t INPUT_DIM, size_t K>
 osqp::OsqpExitCode OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::testSolver() const
 {
   osqp::OsqpExitCode exit_code = osqp_solver_.Solve();
@@ -680,7 +680,7 @@ osqp::OsqpExitCode OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::testSolver(
  *  @params target_references   target states (currently target Vx -- scaled).
  *
  * */
-template <size_t STATE_DIM, size_t INPUT_DIM, size_t K>
+template<size_t STATE_DIM, size_t INPUT_DIM, size_t K>
 bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::updateOSQP(
   ns_data::data_nmpc_core_type_t const & data_nmpc, ns_data::ParamsOptimization const & param_opt)
 {
@@ -786,7 +786,7 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::updateOSQP(
 
   for (size_t k = 1; k < K; ++k) {
     auto const & zk = discretization_data.z[k - 1] + discretization_data.A[k - 1] * Cx +
-                      discretization_data.B[k - 1] * Cu - Cx;
+      discretization_data.B[k - 1] * Cu - Cx;
 
     osqp_instance_.lower_bounds.template segment<STATE_DIM>(k * STATE_DIM) = -zk;
     osqp_instance_.upper_bounds.template segment<STATE_DIM>(k * STATE_DIM) = -zk;
@@ -828,7 +828,7 @@ bool OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::updateOSQP(
   return is_updated_;
 }
 
-template <size_t STATE_DIM, size_t INPUT_DIM, size_t K>
+template<size_t STATE_DIM, size_t INPUT_DIM, size_t K>
 osqp::OsqpExitCode OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::solve() const
 {
   osqp::OsqpExitCode exit_code = osqp_solver_.Solve();
@@ -842,7 +842,7 @@ osqp::OsqpExitCode OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::solve() con
  * the solutions for each of the variable using the their corresponding indices.
  *
  * */
-template <size_t STATE_DIM, size_t INPUT_DIM, size_t K>
+template<size_t STATE_DIM, size_t INPUT_DIM, size_t K>
 void OptimizationProblemOSQP<STATE_DIM, INPUT_DIM, K>::getSolution(
   ns_data::ParamsOptimization const & params_optimization, trajectory_data_t & td)
 {
