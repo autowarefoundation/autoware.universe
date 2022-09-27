@@ -151,8 +151,6 @@ ss_sys.print();
     [-1] 
  * */
  
-
-
 // Test discretization and compare with Matlab.
 double Ts = 0.1; // sampling time.
 
