@@ -139,7 +139,6 @@ if(BUILD_TESTING)
   target_link_libraries(${ACT_TESTs}
     ${CONTROL_LIB}
     ${EIGEN3_LIBRARIES})
-
 endif()
 
 #ament package generation and installing

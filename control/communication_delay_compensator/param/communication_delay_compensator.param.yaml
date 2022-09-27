@@ -8,7 +8,7 @@
     qfilter_lateral_error_cdob_freq: 5.  #qfilter frequency in Hz for lateral error
     qfilter_lateral_cdob_damping: 5.
 
-    qfilter_lateral_dob_order: 2     # disturbance observer qfilter order.
+    qfilter_lateral_dob_order: 2    # disturbance observer qfilter order.
     qfilter_lateral_dob_freq: 2.    # qfilter frequency in Hz for lateral error
     qfilter_lateral_dob_damping: 5. # damping for the dob filter.
 
@@ -16,7 +16,7 @@
     qfilter_longitudinal_error_freq: 5.  #qfilter frequency in Hz for heading error
 
     # -- Vehicle Model Selection -- Currently we have only one.
-    steering_time_constant_: 0.24 # first order steering model time-constant  delta_dot = -1/tau *delta + 1/tau * u
+    steering_time_constant_: 0.1 # first order steering model time-constant  delta_dot = -1/tau *delta + 1/tau * u
     velocity_time_constant_: 0.1 # first order velocity model time-constant
     acc_time_constant_: 0.1 # first order velocity model time-constant
 

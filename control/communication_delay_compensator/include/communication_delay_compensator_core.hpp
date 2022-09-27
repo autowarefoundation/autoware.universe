@@ -22,6 +22,8 @@
 #include <iostream>
 #include <unordered_map>
 #include <utility>
+#include <vector>
+#include <memory>
 
 // Autoware libs
 #include "node_denifitions/node_definitions.hpp"
@@ -120,12 +122,20 @@ class LateralCommunicationDelayCompensator
   state_vector_vehicle_t ybar_temp_{state_vector_vehicle_t::Zero()};
 
   // -------------- VEHICLE MODEL VARIABLES ----------------------------
-  state_vector_vehicle_t xv_d0_{state_vector_vehicle_t::Zero()};  // states for disturbance input simulations
-  state_vector_vehicle_t yv_d0_{state_vector_vehicle_t::Zero()};  // response for disturbance input simulations
+  // states for disturbance input simulations
+  state_vector_vehicle_t xv_d0_{state_vector_vehicle_t::Zero()};
 
-  state_vector_vehicle_t xv_hat0_current_{state_vector_vehicle_t::Zero()};  // state of vehicle model
-  state_vector_vehicle_t yv_hat0_current_{state_vector_vehicle_t::Zero()};  // output of vehicle model
-  state_vector_vehicle_t y_one_minus_Q_{state_vector_vehicle_t::Zero()};    // output of 1-Q
+  // response for disturbance input simulations
+  state_vector_vehicle_t yv_d0_{state_vector_vehicle_t::Zero()};
+
+  // state of vehicle model
+  state_vector_vehicle_t xv_hat0_current_{state_vector_vehicle_t::Zero()};
+
+  // output of vehicle model
+  state_vector_vehicle_t yv_hat0_current_{state_vector_vehicle_t::Zero()};
+
+  // output of 1-Q
+  state_vector_vehicle_t y_one_minus_Q_{state_vector_vehicle_t::Zero()};
 
   // Lyapunov matrices to compute
   std::vector<state_matrix_observer_t> vXs_;
@@ -133,7 +143,7 @@ class LateralCommunicationDelayCompensator
 
   // placeholders
   measurement_matrix_observer_t Lobs_;    // @brief state observer gain matrix.
-  state_vector_observer_t theta_params_;  //@brieff nonlinear terms in A of SS models of vehicle.
+  state_vector_observer_t theta_params_;  // @brieff nonlinear terms in A of SS models of vehicle.
 
   // smaller size data class members.
   float64_t dt_{};
@@ -162,7 +172,6 @@ class LateralCommunicationDelayCompensator
   void estimateVehicleStatesQ(const state_vector_vehicle_t &current_measurements,
                               float64_t const &prev_steering_control_cmd,
                               float64_t const &current_steering_cmd);
-
 };
 
 /**
@@ -201,7 +210,7 @@ class LateralDisturbanceCompensator
   void resetInitialState();
 
  private:
-  obs_model_ptr_t observer_vehicle_model_ptr_{}; // state observer model
+  obs_model_ptr_t observer_vehicle_model_ptr_{};  // state observer model
 
   // transfer functions
   tf_t tf_qfilter_lat_;
@@ -222,12 +231,12 @@ class LateralDisturbanceCompensator
   // @brief state estimate at step [k-1]
   state_vector_observer_t xhat0_prev_{state_vector_observer_t::Zero()};
 
-  //@brief estimated vehicle states, disturbance row is zero (cannot be observed)
+  // @brief estimated vehicle states, disturbance row is zero (cannot be observed)
   state_vector_vehicle_t current_yobs_{state_vector_vehicle_t::Zero()};
 
   // -------------- VEHICLE MODEL VARIABLES ----------------------------
-  state_vector_vehicle_t yv_td0_{state_vector_vehicle_t::Zero()}; // time-delay obs outputs:y
-  state_vector_vehicle_t yv_f0_{state_vector_vehicle_t::Zero()}; // filtered outputs.
+  state_vector_vehicle_t yv_td0_{state_vector_vehicle_t::Zero()};  // time-delay obs outputs:y
+  state_vector_vehicle_t yv_f0_{state_vector_vehicle_t::Zero()};   // filtered outputs.
 
   // @brief temporary variables
   state_vector_observer_t xbar_temp_{state_vector_observer_t::Zero()};
@@ -238,9 +247,10 @@ class LateralDisturbanceCompensator
   std::vector<measurement_matrix_observer_t> vYs_;
 
   // placeholders
-  measurement_matrix_observer_t Lobs_{measurement_matrix_observer_t::Zero()};    //@brief state observer gain matrix.
+  // @brief state observer gain matrix.
+  measurement_matrix_observer_t Lobs_{measurement_matrix_observer_t::Zero()};
 
-  //@brief nonlinear terms in A of SS models of vehicle.
+  // @brief nonlinear terms in A of SS models of vehicle.
   state_vector_observer_t theta_params_{state_vector_observer_t::Zero()};
 
   // smaller size data class members.
@@ -266,7 +276,6 @@ class LateralDisturbanceCompensator
   void estimateVehicleStates(const state_vector_vehicle_t &current_measurements,
                              float64_t const &prev_steering_control_cmd,
                              float64_t const &current_steering_cmd);
-
 };
 
 /**

@@ -96,7 +96,8 @@ struct Parameters
 };
 
 template<typename T>
-void update_param(const std::vector<rclcpp::Parameter> &parameters, const std::string &name, T &value)
+void update_param(const std::vector<rclcpp::Parameter> &parameters,
+                  const std::string &name, T &value)
 {
   auto it = std::find_if(
     parameters.cbegin(), parameters.cend(),
@@ -273,7 +274,8 @@ class CommunicationDelayCompensatorNode : public rclcpp::Node
    * */
   OnSetParametersCallbackHandle::SharedPtr is_parameters_set_res_;
 
-  rcl_interfaces::msg::SetParametersResult onParameterUpdate(const std::vector<rclcpp::Parameter> &parameters);
+  rcl_interfaces::msg::SetParametersResult
+  onParameterUpdate(const std::vector<rclcpp::Parameter> &parameters);
 
   /**
    * @brief checks if vehicle is stopping.
