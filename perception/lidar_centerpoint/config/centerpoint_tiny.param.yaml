@@ -7,3 +7,4 @@
     voxel_size: [0.32, 0.32, 8.0]
     downsample_factor: 2
     encoder_in_feature_size: 9
+    yaw_norm_thresholds: [0.5, 0.0, 0.5]
