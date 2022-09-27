@@ -47,10 +47,7 @@ developments, such as;
     - Adding terminal cost-term. The terminal cost-term enables using shorter MPC prediction horizons, and increase the
       stability of the MPC computations.
     - Adding tube-state in the model differential equations to be able to compute the evaluation of the noise states and
-      add constraint tightening property to guarantee the recursive feasibility of the NMPC algorithm :
-      $$
-      \dot{s_t(t)} = \rho s_t(t) + \omega(x(t), u(t))
-      $$
+      add constraint tightening property to guarantee the recursive feasibility of the NMPC algorithm.
     - Adding Control Lyapunov and Control Barrier constraints.
 - #### **Using different Solver**
     - Different solver option can be incorporated in to the current version such as;
