@@ -147,7 +147,6 @@ set(NONLINEAR_MPC_CORE_INCLUDE_DIR
   include/utils
   include/vehicle_models)
 
-
 ament_auto_add_library(${NMPC_CORE}
   ${NONLINEAR_MPC_CORE_SOURCE}
   ${VEHICLE_MODEL_SOURCE}
@@ -235,8 +234,8 @@ if(BUILD_TESTING)
     test/include/nonlinear_mpc_test_node.hpp
     test/include/nmpc_test_utils.hpp
     test/src/nonlinear_mpc_test_node.cpp
-    test/src/test_nmpc_node.cpp)
-  #test/src/test_google_osqp.cpp)
+    test/src/test_nmpc_node.cpp
+    test/src/test_google_osqp.cpp)
 
   ament_target_dependencies(${NMPC_TESTs} fake_test_node)
   autoware_set_compile_options(${NMPC_TESTs})
