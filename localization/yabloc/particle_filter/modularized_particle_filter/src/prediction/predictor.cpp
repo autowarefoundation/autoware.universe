@@ -44,7 +44,7 @@ Predictor::Predictor()
   auto particle_cb = std::bind(&Predictor::onWeightedParticles, this, _1);
   auto height_cb = [this](std_msgs::msg::Float32 m) -> void { this->ground_height_ = m.data; };
 
-  gnss_sub_ = create_subscription<PoseStamped>("pose", 1, gnss_cb);
+  gnss_sub_ = create_subscription<PoseStamped>("initial_gnss_pose", 1, gnss_cb);
   initialpose_sub_ = create_subscription<PoseCovStamped>("initialpose", 1, initial_cb);
   twist_sub_ = create_subscription<TwistStamped>("twist", 10, twist_cb);
   twist_cov_sub_ = create_subscription<TwistCovStamped>("twist_cov", 10, twist_cov_cb);

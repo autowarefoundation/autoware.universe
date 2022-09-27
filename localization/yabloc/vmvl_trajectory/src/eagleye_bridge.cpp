@@ -21,10 +21,10 @@ public:
 
     // Subscriber
     auto fix_cb = std::bind(&EagleyeBridge::fixCallback, this, _1);
-    sub_fix_ = create_subscription<NavSatFix>("/in/fix", 10, fix_cb);
+    sub_fix_ = create_subscription<NavSatFix>("in/fix", 10, fix_cb);
 
     // Publisher
-    pub_navpvt_ = create_publisher<NavPVT>("/out/navpvt", 10);
+    pub_navpvt_ = create_publisher<NavPVT>("out/navpvt", 10);
   }
 
 private:

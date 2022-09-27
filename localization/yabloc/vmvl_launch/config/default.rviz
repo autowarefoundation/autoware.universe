@@ -4,10 +4,9 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
-        - /Global Options1
         - /VectorMap1/Namespaces1
         - /TF1/Frames1
-      Splitter Ratio: 0.6005586385726929
+      Splitter Ratio: 0.46451613306999207
     Tree Height: 736
   - Class: rviz_common/Selection
     Name: Selection
@@ -26,16 +25,16 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: ""
+    SyncSource: NearLL2Point
   - Class: rosbag2_rviz_plugins/PlayerPanel
     Name: PlayerPanel
   - Class: initialpose_plugins/InitialPosePanel
     Name: InitialPosePanel
-    last_initial_pose.t: 1661481290062841276
-    last_initial_pose.w: 0.9989710680965919
-    last_initial_pose.x: 61425.9140625
-    last_initial_pose.y: 56227.8515625
-    last_initial_pose.z: -0.045352013251390745
+    last_initial_pose.t: 1661481290476952326
+    last_initial_pose.w: 0.9978679580588007
+    last_initial_pose.x: 61429.77734375
+    last_initial_pose.y: 56227.68359375
+    last_initial_pose.z: -0.06526513831717286
 Visualization Manager:
   Class: ""
   Displays:
@@ -103,7 +102,7 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /particle_path
+        Value: /localization/particle_path
       Value: true
     - Alpha: 1
       Buffer Length: 1
@@ -278,7 +277,7 @@ Visualization Manager:
           Left: 0
           Name: Overlay
           Top: 0
-          Topic: /overlay_image
+          Topic: /localization/validation/overlay_image
           Value: true
           Width: 800
         - Alpha: 0.30000001192092896
@@ -289,7 +288,7 @@ Visualization Manager:
           Left: 300
           Name: ProjectedLSD
           Top: 500
-          Topic: /projected_image
+          Topic: /localization/imgproc/projected_image
           Value: true
           Width: 300
         - Alpha: 0.30000001192092896
@@ -300,7 +299,7 @@ Visualization Manager:
           Left: 0
           Name: LSD
           Top: 500
-          Topic: /lsd_image
+          Topic: /localization/imgproc/lsd_image
           Value: true
           Width: 300
         - Alpha: 0.10000000149011612
@@ -311,7 +310,7 @@ Visualization Manager:
           Left: 600
           Name: CostMap
           Top: 500
-          Topic: /match_image
+          Topic: /localization/pf/match_image
           Value: true
           Width: 200
         - Alpha: 0.10000000149011612
@@ -322,7 +321,7 @@ Visualization Manager:
           Left: 0
           Name: Segment
           Top: 800
-          Topic: /segmented_image
+          Topic: /localization/imgproc/segmented_image
           Value: true
           Width: 300
       Enabled: true
@@ -337,7 +336,7 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /weighted_particles/marker_array
+        Value: /localization/pf/marker_array_particles
       Value: true
     - Class: rviz_default_plugins/Marker
       Enabled: true
@@ -350,7 +349,7 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /marker
+        Value: /localization/validation/projected_marker
       Value: true
     - Class: rviz_default_plugins/MarkerArray
       Enabled: true
@@ -362,7 +361,7 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /gnss/effect_marker
+        Value: /localization/pf/gnss/range_marker
       Value: true
     - Class: rviz_default_plugins/MarkerArray
       Enabled: false
@@ -374,7 +373,7 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /cost_map_range
+        Value: /localization/pf/cost_map_range
       Value: false
     - Class: rviz_common/Group
       Displays:
@@ -389,7 +388,7 @@ Visualization Manager:
           Left: 800
           Name: KalmanStatus
           Top: 0
-          Topic: /kalman/status
+          Topic: /localization/trajectory/kalman/status
           Value: true
           Width: 400
         - Background Alpha: 0
@@ -403,7 +402,7 @@ Visualization Manager:
           Left: 1200
           Name: GroundStatus
           Top: 0
-          Topic: /ground_status
+          Topic: /localization/map/ground_status
           Value: true
           Width: 400
         - Background Alpha: 0
@@ -417,7 +416,7 @@ Visualization Manager:
           Left: 1200
           Name: CovarianceStatus
           Top: 150
-          Topic: /covariance_diag
+          Topic: /localization/validation/cov_diag
           Value: true
           Width: 400
         - Background Alpha: 0
@@ -431,7 +430,7 @@ Visualization Manager:
           Left: 800
           Name: ApeStatus
           Top: 250
-          Topic: /ape_diag
+          Topic: /localization/validation/ape_diag
           Value: true
           Width: 400
       Enabled: true
@@ -446,7 +445,7 @@ Visualization Manager:
         Durability Policy: Transient Local
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /sign_board_marker
+        Value: /localization/map/sign_board_marker
       Value: true
     - Alpha: 1
       Autocompute Intensity Bounds: true
@@ -478,7 +477,7 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /near_cloud
+        Value: /localization/map/near_cloud
       Use Fixed Frame: true
       Use rainbow: true
       Value: false
@@ -527,7 +526,7 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: -0.05000000074505806
+      Angle: -0.10500002652406693
       Class: rviz_default_plugins/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
@@ -537,11 +536,11 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 10
-      Target Frame: base_link
+      Scale: 9.511303901672363
+      Target Frame: viewer
       Value: TopDownOrtho (rviz_default_plugins)
-      X: 0
-      Y: 0
+      X: -276.2677917480469
+      Y: -9.802109718322754
     Saved:
       - Angle: -0.07999999076128006
         Class: rviz_default_plugins/TopDownOrtho
@@ -575,15 +574,15 @@ Visualization Manager:
         Y: 0
 Window Geometry:
   Displays:
-    collapsed: true
+    collapsed: false
   Height: 1043
-  Hide Left Dock: true
+  Hide Left Dock: false
   Hide Right Dock: true
   InitialPosePanel:
     collapsed: false
   PlayerPanel:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd0000000400000000000001680000036bfc020000000bfb000000100044006900730070006c006100790073000000003d0000036b000000c900fffffffb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000c00430061006d006500720061000000033e000002610000000000000000fb0000000a0049006d00610067006500000001f8000001ba0000000000000000fb0000000a0049006d00610067006501000003ae000001f1000000000000000000000001000002d10000036bfc0200000003fb0000000a00560069006500770073000000003d0000036b000000a400fffffffb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000078000000048fc0100000004fb000000160050006c006100790065007200500061006e0065006c01000000000000008f0000008500fffffffb0000000800540069006d00650100000095000004a5000002eb00fffffffb000000200049006e0069007400690061006c0050006f0073006500500061006e0065006c0100000540000002400000019500fffffffb0000000800540069006d00650100000000000004500000000000000000000007800000036b00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000400000000000001d30000036bfc020000000bfb000000100044006900730070006c006100790073010000003d0000036b000000c900fffffffb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000c00430061006d006500720061000000033e000002610000000000000000fb0000000a0049006d00610067006500000001f8000001ba0000000000000000fb0000000a0049006d00610067006501000003ae000001f1000000000000000000000001000002d10000036bfc0200000003fb0000000a00560069006500770073000000003d0000036b000000a400fffffffb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000078000000048fc0100000004fb000000160050006c006100790065007200500061006e0065006c0100000000000000850000008500fffffffb0000000800540069006d0065010000008b000004af000002eb00fffffffb000000200049006e0069007400690061006c0050006f0073006500500061006e0065006c0100000540000002400000018c00fffffffb0000000800540069006d00650100000000000004500000000000000000000005a70000036b00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:

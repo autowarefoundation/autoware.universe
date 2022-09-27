@@ -13,13 +13,15 @@
     <arg name="static_angular_covariance" default="0.005"/>
 
     <arg name="inout_weighted_particles" default="weighted_particles"/>
-    <arg name="output_particles_marker_array" default="weighted_partiles_marker"/>
+    <arg name="output_particles_marker_array" default="weighted_particles_marker"/>
 
     <!-- predict update -->
+    <arg name="input_initialpose" default="/localization/initializer/rectified/initialpose"/>
+
     <node pkg="modularized_particle_filter" exec="predictor_node" name="predictor_node" output="screen" args="--ros-args --log-level warn">
         <remap from="twist" to="$(var predict_twist)" />
-        <remap from="initialpose" to="/rectified/initialpose" />
-        <remap from="pose" to="/init/pose"/> 
+        <remap from="initialpose" to="$(var input_initialpose)" />
+        <remap from="initial_gnss_pose" to="/localization/pf/disabled/init_gnss_pose"/> 
 
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="use_dynamic_noise" value="true"/>
@@ -34,14 +36,19 @@
 
         <remap from="particles_marker_array" to="$(var output_particles_marker_array)"/>
         <remap from="height" to="/localization/map/height"/>
-        <remap from="twist_cov" to="/localization/trajectory/kalman/twist_with_cov"/>
+        <remap from="twist_cov" to="/localization/trajectory/disabled/twist_with_cov"/>
     </node>
 
     <!-- camera  correction -->
-    <arg name="input_projected_lsd_cloud" default="projected_lsd_cloud"/>
+    <arg name="input_projected_lsd_cloud" default="/localization/imgproc/projected_lsd_cloud"/>
+    <arg name="input_ll2_road_marking" default="/localization/map/ll2_road_marking"/>
+
     <arg name="output_scored_cloud" default="scored_cloud"/>
     <arg name="output_cost_map_range" default="cost_map_range"/>
     <node name="camera_corrector" pkg="camera_particle_corrector" exec="camera_particle_corrector" output="screen" args="--ros-args --log-level warn">
+        <param name="visualize" value="true"/>
+        <remap from="particles_marker_array" to="camera_debug_marker"/>
+
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="image_size" value="800"/>
         <param name="max_range" value="40.0"/>
@@ -53,6 +60,7 @@
 
         <remap from="weighted_particles" to="$(var inout_weighted_particles)"/>
         <remap from="lsd_cloud" to="$(var input_projected_lsd_cloud)"/>
+        <remap from="ll2_road_marking" to="$(var input_ll2_road_marking)"/>
         <remap from="scored_cloud" to="$(var output_scored_cloud)"/>
         <remap from="cost_map_range" to="$(var output_cost_map_range)"/>
     </node>

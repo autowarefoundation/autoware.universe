@@ -18,10 +18,10 @@ public:
 
     // Subscriber
     auto navpvt_cb = std::bind(&PoseInitializer::navpvtCallback, this, _1);
-    sub_navpvt_ = create_subscription<NavPVT>("/ublox_topic", 10, navpvt_cb);
+    sub_navpvt_ = create_subscription<NavPVT>("ublox_topic", 10, navpvt_cb);
 
     // Publisher
-    pub_pose_stamped_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("/pose", 10);
+    pub_pose_stamped_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("pose", 10);
   }
 
 private:

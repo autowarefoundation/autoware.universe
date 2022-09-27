@@ -21,7 +21,7 @@ Ll2Decomposer::Ll2Decomposer() : Node("ll2_to_image")
 
   // Subscriber
   auto cb_map = std::bind(&Ll2Decomposer::mapCallback, this, _1);
-  sub_map_ = create_subscription<HADMapBin>("/map/vector_map", map_qos, cb_map);
+  sub_map_ = create_subscription<HADMapBin>("map/vector_map", map_qos, cb_map);
 
   {
     // Load road marking labels from ros params

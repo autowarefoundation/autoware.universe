@@ -50,9 +50,10 @@
     </node>
 
     <!-- gnss pose initializer -->
+    <arg name="output_pose" default="/localization/init/pose"/>
     <node name="gnss_pose_initializer" pkg="vmvl_trajectory" exec="pose_init_node" output="log" args="--ros-args --log-level warn">
         <remap from="ublox_topic" to="/sensing/gnss/ublox/navpvt"/>
-        <remap from="pose" to="/init/pose"/>
+        <remap from="pose" to="$(var output_pose)"/>
     </node>
 
 </launch>

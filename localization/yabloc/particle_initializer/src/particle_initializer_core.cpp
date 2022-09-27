@@ -22,7 +22,7 @@ ParticleInitializer::ParticleInitializer()
   auto on_map = std::bind(&ParticleInitializer::onMap, this, _1);
   sub_initialpose_ =
     create_subscription<PoseCovStamped>("initialpose", 10, std::move(on_initialpose));
-  sub_map_ = create_subscription<HADMapBin>("/map/vector_map", map_qos, std::move(on_map));
+  sub_map_ = create_subscription<HADMapBin>("map/vector_map", map_qos, std::move(on_map));
 }
 
 void ParticleInitializer::onInitialpose(const PoseCovStamped & initialpose)

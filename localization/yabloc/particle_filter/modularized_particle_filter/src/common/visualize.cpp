@@ -4,7 +4,7 @@ namespace modularized_particle_filter
 {
 ParticleVisualizer::ParticleVisualizer(rclcpp::Node & node)
 {
-  pub_marker_array_ = node.create_publisher<MarkerArray>("marker_array_particles", 10);
+  pub_marker_array_ = node.create_publisher<MarkerArray>("particles_marker_array", 10);
 }
 
 void ParticleVisualizer::publish(const ParticleArray & msg)

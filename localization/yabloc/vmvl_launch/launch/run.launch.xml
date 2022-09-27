@@ -23,6 +23,8 @@
             <push-ros-namespace namespace="initializer"/>
             <node name="particle_initializer_node" pkg="particle_initializer" exec="particle_initializer_node" output="screen" args="--ros-args --log-level info">
                 <param name="cov_xx_yy" value="$(var initialpose_cov_xx_yy)" />
+                <remap from="initialpose" to="/initialpose" />
+                <remap from="map/vector_map" to="/map/vector_map" />
             </node>
         </group>
 
