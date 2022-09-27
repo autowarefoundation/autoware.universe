@@ -53,10 +53,6 @@ NonlinearVehicleKinematicModel::NonlinearVehicleKinematicModel(
 
   xv0_ = Eigen::MatrixXd::Zero(order_pade, 1);
   xs0_ = Eigen::MatrixXd::Zero(order_pade, 1);
-
-  //	ns_utils::print("delay internal state of vel");
-  //	ns_eigen_utils::printEigenMat(xv0_);
-  //	int a = 1;
 }
 
 void NonlinearVehicleKinematicModel::getInitialStates(std::array<double, 4> &x0)
@@ -73,9 +69,6 @@ std::array<double, 4> NonlinearVehicleKinematicModel::simulateNonlinearOneStep(
 
   if (use_delay_vel)
   {
-    // ns_utils::print("deadtime vel model");
-    // deadtime_velocity_model_.print_discrete_system();
-
     auto &&Ad = deadtime_velocity_model_.Ad();
     auto &&Bd = deadtime_velocity_model_.Bd();
     auto &&Cd = deadtime_velocity_model_.Cd();
@@ -84,22 +77,16 @@ std::array<double, 4> NonlinearVehicleKinematicModel::simulateNonlinearOneStep(
     ns_utils::print("in sim vel delay");
     ns_eigen_utils::printEigenMat(Cd * xv0_);
     ns_eigen_utils::printEigenMat(Bd * desired_velocity);
-    //		ns_eigen_utils::printEigenMat((Cd * xv0_ + Dd * desired_velocity));
 
     // Yield y first
     Vd = (Cd * xv0_ + Dd * desired_velocity)(0);
 
     // Update x0v
     xv0_ = Ad * xv0_ + Bd * desired_velocity;
-
-    // int a = 1;
   }
 
   if (use_delay_steer)
   {
-    // ns_utils::print("deadtime steer model");
-    // deadtime_steering_model_.print_discrete_system();
-
     auto Ad = deadtime_steering_model_.Ad();
     auto Bd = deadtime_steering_model_.Bd();
     auto Cd = deadtime_steering_model_.Cd();
@@ -110,12 +97,9 @@ std::array<double, 4> NonlinearVehicleKinematicModel::simulateNonlinearOneStep(
 
     ns_utils::print("in sim steering delay");
     ns_eigen_utils::printEigenMat(Cd);
-    //	ns_eigen_utils::printEigenMat((Cd * xv0_ + Bd * desired_steering));
 
     // Update x0v
     xv0_ = Ad * xv0_ + Bd * desired_steering;
-
-    // int a = 1;
   }
 
   // Get the previous states.
@@ -143,9 +127,6 @@ std::array<double, 4> NonlinearVehicleKinematicModel::simulateLinearOneStep(
 
   if (use_delay_vel)
   {
-    // ns_utils::print("deadtime vel model");
-    // deadtime_velocity_model_.print_discrete_system();
-
     auto &&Ad = deadtime_velocity_model_.Ad();
     auto &&Bd = deadtime_velocity_model_.Bd();
     auto &&Cd = deadtime_velocity_model_.Cd();
@@ -164,7 +145,6 @@ std::array<double, 4> NonlinearVehicleKinematicModel::simulateLinearOneStep(
 
   if (use_delay_steer)
   {
-
     auto Ad = deadtime_steering_model_.Ad();
     auto Bd = deadtime_steering_model_.Bd();
     auto Cd = deadtime_steering_model_.Cd();
@@ -175,7 +155,6 @@ std::array<double, 4> NonlinearVehicleKinematicModel::simulateLinearOneStep(
 
     // Update x0v
     xv0_ = Ad * xv0_ + Bd * desired_steering;
-
   }
 
   // Get the previous states.
