@@ -167,7 +167,7 @@ std::vector<PullOverPath> ShiftPullOver::generatePullOverPaths(
             pull_over_velocity));
       }
     }
-    // reesample road straight path and shift source path respectively
+    // resample road straight path and shift source path respectively
     constexpr double resample_interval{1.0};
     road_lane_reference_path =
       util::resamplePathWithSpline(road_lane_reference_path, resample_interval);
