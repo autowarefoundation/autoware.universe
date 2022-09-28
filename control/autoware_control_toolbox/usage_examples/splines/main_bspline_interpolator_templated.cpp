@@ -31,7 +31,7 @@ int main()
   const size_t Nin = 120;
   const size_t Nout = 80;
 
-  double const &add_noise = 1;
+  double const & add_noise = 1;
 
   std::random_device rd;
   std::default_random_engine generator{rd()};
@@ -45,16 +45,18 @@ int main()
     // Generate y = sin(x).
     double cy = 10;
     std::vector<double> yvec;
-    std::transform(xvec.cbegin(), xvec.cend(), std::back_inserter(yvec), [&](auto const &x)
-    {
-      return cy * sin(x) + distribution(generator) * add_noise;
-    });
+    std::transform(
+      xvec.cbegin(), xvec.cend(), std::back_inserter(yvec), [&](auto const & x)
+      {
+        return cy * sin(x) + distribution(generator) * add_noise;
+      });
 
     std::vector<double> zvec;
-    std::transform(xvec.cbegin(), xvec.cend(), std::back_inserter(zvec), [&](auto const &x)
-    {
-      return 2 * cos(x) - 3 * sin(x) + distribution(generator) * add_noise;
-    });
+    std::transform(
+      xvec.cbegin(), xvec.cend(), std::back_inserter(zvec), [&](auto const & x)
+      {
+        return 2 * cos(x) - 3 * sin(x) + distribution(generator) * add_noise;
+      });
 
 
     // Arc-length parametrization.
@@ -66,14 +68,15 @@ int main()
 
     // Define arc-length cumsum()
     std::vector<double> svec;
-    std::transform(dx.cbegin(), dx.cend(), dy.cbegin(), std::back_inserter(svec),
-                   [](auto dxi, auto dyi)
-                   {
-                     static double ds = 0.0;
-                     ds += std::hypot(dxi, dyi);
+    std::transform(
+      dx.cbegin(), dx.cend(), dy.cbegin(), std::back_inserter(svec),
+      [](auto dxi, auto dyi)
+      {
+        static double ds = 0.0;
+        ds += std::hypot(dxi, dyi);
 
-                     return ds;
-                   });
+        return ds;
+      });
 
     writeToFile(log_path, xvec, "xvec");
     writeToFile(log_path, yvec, "yvec");
@@ -98,16 +101,18 @@ int main()
     // < -------------------------- FULL EIGEN IMPLEMENTATION --------------------------------->
 
     Eigen::MatrixXd xe;
-    xe = Eigen::Map<Eigen::Matrix<double, Nin, 1 >>(xvec.data());
+    xe = Eigen::Map<Eigen::Matrix<double, Nin, 1>>(xvec.data());
 
-    Eigen::MatrixXd ye(xe.unaryExpr([&](auto x)
-                                    { return cy * sin(x) + distribution(generator) * add_noise; }));
+    Eigen::MatrixXd ye(xe.unaryExpr(
+        [&](auto x)
+        {return cy * sin(x) + distribution(generator) * add_noise;}));
 
-    Eigen::MatrixXd ze(xe.unaryExpr([&](auto x)
-                                    { return 2 * cos(x) - 3 * sin(x) + distribution(generator) * add_noise; }));
+    Eigen::MatrixXd ze(xe.unaryExpr(
+        [&](auto x)
+        {return 2 * cos(x) - 3 * sin(x) + distribution(generator) * add_noise;}));
 
     Eigen::MatrixXd se;
-    se = Eigen::Map<Eigen::Matrix<double, Nin, 1 >>(svec.data());
+    se = Eigen::Map<Eigen::Matrix<double, Nin, 1>>(svec.data());
 
     // Eigen::Index input_size = Nin;
     auto senew = Eigen::VectorXd::LinSpaced(Nout, 0.0, se(se.rows() - 1));
@@ -125,7 +130,8 @@ int main()
 
     // Create a new smoothing spline.
     double know_number_ratio = 0.3;
-    ns_splines::BSplineInterpolatorTemplated<Nin, Nout> interpolating_bspline(know_number_ratio, true);
+    ns_splines::BSplineInterpolatorTemplated<Nin, Nout> interpolating_bspline(know_number_ratio,
+      true);
 
     // Different size multi-column interpolation. Expanding the data points.
     interpolating_bspline.InterpolateImplicitCoordinates(ye, yinterp);
@@ -160,10 +166,11 @@ int main()
     // Generate y = sin(x).
     double cy = 10;
     std::vector<double> yvec;
-    std::transform(xvec.cbegin(), xvec.cend(), std::back_inserter(yvec), [&](auto const &x)
-    {
-      return cy * sin(x) + distribution(generator) * 0;
-    });
+    std::transform(
+      xvec.cbegin(), xvec.cend(), std::back_inserter(yvec), [&](auto const & x)
+      {
+        return cy * sin(x) + distribution(generator) * 0;
+      });
 
     // Arc-length parametrization.
     std::vector<double> dx; //{1, 0.0};
@@ -174,27 +181,30 @@ int main()
 
     // Define arc-length cumsum()
     std::vector<double> svec;
-    std::transform(dx.cbegin(), dx.cend(), dy.cbegin(), std::back_inserter(svec),
-                   [](auto dxi, auto dyi)
-                   {
-                     static double ds = 0.0;
-                     ds += std::hypot(dxi, dyi);
+    std::transform(
+      dx.cbegin(), dx.cend(), dy.cbegin(), std::back_inserter(svec),
+      [](auto dxi, auto dyi)
+      {
+        static double ds = 0.0;
+        ds += std::hypot(dxi, dyi);
 
-                     return ds;
-                   });
+        return ds;
+      });
 
     // EIGEN IMPLEMENTATION.
     Eigen::MatrixXd xe;
-    xe = Eigen::Map<Eigen::Matrix<double, Nin, 1 >>(xvec.data());
+    xe = Eigen::Map<Eigen::Matrix<double, Nin, 1>>(xvec.data());
 
-    Eigen::MatrixXd ye(xe.unaryExpr([&](auto x)
-                                    { return cy * sin(x) + distribution(generator); }));
+    Eigen::MatrixXd ye(xe.unaryExpr(
+        [&](auto x)
+        {return cy * sin(x) + distribution(generator);}));
 
-    Eigen::MatrixXd ze(xe.unaryExpr([&](auto x)
-                                    { return 2 * cos(x) - 3 * sin(x) + distribution(generator); }));
+    Eigen::MatrixXd ze(xe.unaryExpr(
+        [&](auto x)
+        {return 2 * cos(x) - 3 * sin(x) + distribution(generator);}));
     // Generate arc length
     Eigen::MatrixXd se;
-    se = Eigen::Map<Eigen::Matrix<double, Nin, 1 >>(svec.data());
+    se = Eigen::Map<Eigen::Matrix<double, Nin, 1>>(svec.data());
 
     // Compute original curvature.
     Eigen::MatrixXd dxdt(xe.rows(), 1);
@@ -204,8 +214,9 @@ int main()
     //  std::cout << " dxdt " << std::endl;
     //  ns_eigen_utils::printEigenMat(dxdt);
 
-    Eigen::MatrixXd dydt(xe.unaryExpr([&](auto x)
-                                      { return cy * kx * cos(x); }));
+    Eigen::MatrixXd dydt(xe.unaryExpr(
+        [&](auto x)
+        {return cy * kx * cos(x);}));
 
     //  std::cout << "dydt " << std::endl;
     //  ns_eigen_utils::printEigenMat(dydt);
@@ -214,8 +225,9 @@ int main()
     Eigen::MatrixXd dxdt2(xe.rows(), 1);
     dxdt2.setZero();
 
-    Eigen::MatrixXd dydt2(xe.unaryExpr([&](auto x)
-                                       { return -cy * kx * kx * sin(x); }));
+    Eigen::MatrixXd dydt2(xe.unaryExpr(
+        [&](auto x)
+        {return -cy * kx * kx * sin(x);}));
 
     // compute r0, r1 as r0 = [dxdt, dydt] and r1[dxdt2, dydt2]
     auto rdt = ns_eigen_utils::hstack<double>(dxdt, dydt);
@@ -233,7 +245,8 @@ int main()
 
     // Create a new smoothing spline.
     double know_number_ratio = 0.3;
-    ns_splines::BSplineInterpolatorTemplated<Nin, Nout> interpolating_bspline(know_number_ratio, true);
+    ns_splines::BSplineInterpolatorTemplated<Nin, Nout> interpolating_bspline(know_number_ratio,
+      true);
 
     // Get xdot, ydot
     Eigen::MatrixXd rdot_interp(Nout, 2); // [xdot, ydot]
@@ -263,21 +276,24 @@ int main()
     std::vector<double> theta = ns_utils::linspace<double>(-M_PI / 2, M_PI / 2, Nin);
 
     Eigen::MatrixXd theta_eg;
-    theta_eg = Eigen::Map<Eigen::Matrix<double, Nin, 1 >>(theta.data());
+    theta_eg = Eigen::Map<Eigen::Matrix<double, Nin, 1>>(theta.data());
 
     // Define a curve radius
     double R = 100;
 
     // EIGEN IMPLEMENTATION.
-    Eigen::MatrixXd xe(theta_eg.unaryExpr([&R](auto x)
-                                          { return R * cos(x); }));
+    Eigen::MatrixXd xe(theta_eg.unaryExpr(
+        [&R](auto x)
+        {return R * cos(x);}));
 
-    Eigen::MatrixXd ye(theta_eg.unaryExpr([&R](auto x)
-                                          { return R * sin(x); }));
+    Eigen::MatrixXd ye(theta_eg.unaryExpr(
+        [&R](auto x)
+        {return R * sin(x);}));
 
     // Create a new smoothing spline.
     double know_number_ratio = 0.3;
-    ns_splines::BSplineInterpolatorTemplated<Nin, Nout> interpolating_bspline(know_number_ratio, true);
+    ns_splines::BSplineInterpolatorTemplated<Nin, Nout> interpolating_bspline(know_number_ratio,
+      true);
 
     // Get xdot, ydot
     Eigen::MatrixXd rdot_interp(Nout, 2); // [xdot, ydot]

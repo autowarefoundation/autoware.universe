@@ -32,44 +32,47 @@ namespace ns_splines
 {
 class BSplineInterpolator
 {
- public:
-  BSplineInterpolator() : n_base_points_{2},
-                          new_npoints_{2},
-                          knots_ratio_{0.3}, compute_derivatives_{true}, nknots_{1}
+public:
+  BSplineInterpolator()
+  : n_base_points_{2},
+    new_npoints_{2},
+    knots_ratio_{0.3}, compute_derivatives_{true}, nknots_{1}
   {
 
   }
 
-  explicit BSplineInterpolator(size_t base_signal_length,
-                               size_t new_length,
-                               double num_of_knots_ratio = 0.3,
-                               bool compute_derivatives = false);
+  explicit BSplineInterpolator(
+    size_t base_signal_length,
+    size_t new_length,
+    double num_of_knots_ratio = 0.3,
+    bool compute_derivatives = false);
 
-  explicit BSplineInterpolator(Eigen::MatrixXd const &tvec_base,
-                               Eigen::MatrixXd const &tvec_new,
-                               double num_of_knots_ratio = 0.3,
-                               bool compute_derivatives = false);
+  explicit BSplineInterpolator(
+    Eigen::MatrixXd const & tvec_base,
+    Eigen::MatrixXd const & tvec_new,
+    double num_of_knots_ratio = 0.3,
+    bool compute_derivatives = false);
 
   // Copy Constructors
-  BSplineInterpolator(BSplineInterpolator const &other) : n_base_points_{other.n_base_points_},
-                                                          new_npoints_{other.new_npoints_},
-                                                          knots_ratio_{other.knots_ratio_},
-                                                          compute_derivatives_{other.compute_derivatives_},
-                                                          nknots_{other.nknots_},
-                                                          projection_mat_base_{other.projection_mat_base_},
-                                                          projection_mat_w_new_base_{other.projection_mat_w_new_base_},
-                                                          projection_mat_w_new_base_dot_{
-                                                            other.projection_mat_w_new_base_dot_},
-                                                          projection_mat_w_new_base_dot_dot_{
-                                                            other.projection_mat_w_new_base_dot_dot_}
+  BSplineInterpolator(BSplineInterpolator const & other)
+  : n_base_points_{other.n_base_points_},
+    new_npoints_{other.new_npoints_},
+    knots_ratio_{other.knots_ratio_},
+    compute_derivatives_{other.compute_derivatives_},
+    nknots_{other.nknots_},
+    projection_mat_base_{other.projection_mat_base_},
+    projection_mat_w_new_base_{other.projection_mat_w_new_base_},
+    projection_mat_w_new_base_dot_{
+      other.projection_mat_w_new_base_dot_},
+    projection_mat_w_new_base_dot_dot_{
+      other.projection_mat_w_new_base_dot_dot_}
   {
 
   }
 
-  BSplineInterpolator &operator=(BSplineInterpolator const &other)
+  BSplineInterpolator & operator=(BSplineInterpolator const & other)
   {
-    if (&other != this)
-    {
+    if (&other != this) {
       n_base_points_ = other.n_base_points_;
       new_npoints_ = other.new_npoints_;
       knots_ratio_ = other.knots_ratio_;
@@ -86,24 +89,23 @@ class BSplineInterpolator
   }
 
   // Move constructors.
-  BSplineInterpolator(BSplineInterpolator &&other) noexcept
-    : n_base_points_{other.n_base_points_},
-      new_npoints_{other.new_npoints_},
-      knots_ratio_{other.knots_ratio_},
-      compute_derivatives_{other.compute_derivatives_},
-      nknots_{other.nknots_},
-      projection_mat_base_{std::move(other.projection_mat_base_)},
-      projection_mat_w_new_base_{std::move(other.projection_mat_w_new_base_)},
-      projection_mat_w_new_base_dot_{std::move(other.projection_mat_w_new_base_dot_)},
-      projection_mat_w_new_base_dot_dot_{std::move(other.projection_mat_w_new_base_dot_dot_)}
+  BSplineInterpolator(BSplineInterpolator && other) noexcept
+  : n_base_points_{other.n_base_points_},
+    new_npoints_{other.new_npoints_},
+    knots_ratio_{other.knots_ratio_},
+    compute_derivatives_{other.compute_derivatives_},
+    nknots_{other.nknots_},
+    projection_mat_base_{std::move(other.projection_mat_base_)},
+    projection_mat_w_new_base_{std::move(other.projection_mat_w_new_base_)},
+    projection_mat_w_new_base_dot_{std::move(other.projection_mat_w_new_base_dot_)},
+    projection_mat_w_new_base_dot_dot_{std::move(other.projection_mat_w_new_base_dot_dot_)}
   {
 
   }
 
-  BSplineInterpolator &operator=(BSplineInterpolator &&other) noexcept
+  BSplineInterpolator & operator=(BSplineInterpolator && other) noexcept
   {
-    if (&other != this)
-    {
+    if (&other != this) {
       n_base_points_ = other.n_base_points_;
       new_npoints_ = other.new_npoints_;
       knots_ratio_ = other.knots_ratio_;
@@ -121,15 +123,15 @@ class BSplineInterpolator
   // Each column of base matrix is used to find new interpolated matrix column with
   // a different size.
   void InterpolateInCoordinates(
-    Eigen::MatrixXd const &ybase, Eigen::MatrixXd &data_tobe_interpolated);
+    Eigen::MatrixXd const & ybase, Eigen::MatrixXd & data_tobe_interpolated);
 
   // If the derivatives are requested, one can call these two following methods.
   // Base data is provided, first and second derivatives are returned back as the second terms.
-  void getFirstDerivative(Eigen::MatrixXd const &ybase, Eigen::MatrixXd &ybase_dot);
+  void getFirstDerivative(Eigen::MatrixXd const & ybase, Eigen::MatrixXd & ybase_dot);
 
-  void getSecondDerivative(Eigen::MatrixXd const &ybase, Eigen::MatrixXd &ybase_dot_dot);
+  void getSecondDerivative(Eigen::MatrixXd const & ybase, Eigen::MatrixXd & ybase_dot_dot);
 
- private:
+private:
   // Pre-settings. Increasing lambda yield more smooth and flattened curve.
 
   // smoothing factor used in normal form of LS; B*B + (lambda**2)*D*D, D is f''(x).
@@ -166,20 +168,23 @@ class BSplineInterpolator
 
   // Inner Methods.
   // If the derivatives are not requested.
-  void createBasesMatrix(Eigen::VectorXd const &tvec, Eigen::MatrixXd &basis_mat);
+  void createBasesMatrix(Eigen::VectorXd const & tvec, Eigen::MatrixXd & basis_mat);
 
   // If the derivatives of the new interpolated data are requested.
-  void createBasesMatrix(Eigen::VectorXd const &tvec, Eigen::MatrixXd &basis_mat,
-                         Eigen::MatrixXd &regularization_mat_dd);
+  void createBasesMatrix(
+    Eigen::VectorXd const & tvec, Eigen::MatrixXd & basis_mat,
+    Eigen::MatrixXd & regularization_mat_dd);
 
   // Used to compute new interpolated data and its derivatives.
-  void createBasesMatrix(Eigen::VectorXd const &tvec, Eigen::MatrixXd &basis_mat, Eigen::MatrixXd &basis_dmat,
-                         Eigen::MatrixXd &basis_ddmat);
+  void createBasesMatrix(
+    Eigen::VectorXd const & tvec, Eigen::MatrixXd & basis_mat, Eigen::MatrixXd & basis_dmat,
+    Eigen::MatrixXd & basis_ddmat);
 
-  void solveByDemmlerReisch(Eigen::MatrixXd const &basis_mat,
-                            Eigen::MatrixXd const &penalizing_mat_D);  // set projection mat for the base data.
+  void solveByDemmlerReisch(
+    Eigen::MatrixXd const & basis_mat,
+    Eigen::MatrixXd const & penalizing_mat_D);                         // set projection mat for the base data.
 
-  void solveByQR(Eigen::MatrixXd const &basis_mat, Eigen::MatrixXd const &penalizing_mat_D);
+  void solveByQR(Eigen::MatrixXd const & basis_mat, Eigen::MatrixXd const & penalizing_mat_D);
 };
 }  // namespace ns_splines
 

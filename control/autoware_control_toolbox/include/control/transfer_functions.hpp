@@ -34,7 +34,7 @@ namespace ns_control_toolbox
 template<typename T>
 struct TF_multiplication
 {
-  friend T operator*(T const &tf1, T const &tf2)
+  friend T operator*(T const & tf1, T const & tf2)
   {
     // Compute numerator multiplication.
     tf_factor num1{{tf1.num_vector_only()}};
@@ -55,9 +55,9 @@ struct TF_multiplication
     auto den_constant_mult = tf1.den_constant() * tf2.den_constant();
 
     return T{num_mult(), den_mult(), num_constant_mult, den_constant_mult};
-  };
+  }
 
-  friend T operator*=(T const &tf1, T const &tf2)
+  friend T operator*=(T const & tf1, T const & tf2)
   {
     // Compute numerator multiplication.
     tf_factor num1{{tf1.num_vector_only()}};
@@ -78,7 +78,7 @@ struct TF_multiplication
     auto den_constant_mult = tf1.den_constant() * tf2.den_constant();
 
     return T{num_mult(), den_mult(), num_constant_mult, den_constant_mult};
-  };
+  }
 };
 
 // All algebraic operations.
@@ -100,12 +100,14 @@ struct TF_algebra : public TF_multiplication<T>
 struct tf : TF_algebra<tf>
 {
   // Constructors.
-  tf() : num_{1.}, den_{1.}
+  tf()
+  : num_{1.}, den_{1.}
   {
   }
 
   // Constructor from non-empty numerator and denominator std::vectors.
-  tf(std::vector<double> num, std::vector<double> den) : num_{std::move(num)}, den_{std::move(den)}
+  tf(std::vector<double> num, std::vector<double> den)
+  : num_{std::move(num)}, den_{std::move(den)}
   {
     ns_utils::stripVectorZerosFromLeft(num_);  // remove zeros from the left.
     ns_utils::stripVectorZerosFromLeft(den_);
@@ -113,24 +115,24 @@ struct tf : TF_algebra<tf>
 
   // Required for TF*TF multiplication.
   tf(std::vector<double> num, std::vector<double> den, double num_constant, double den_constant)
-    : num_{std::move(num)},
-      den_{std::move(den)},
-      num_constant_{num_constant},
-      den_constant_{den_constant}
+  : num_{std::move(num)},
+    den_{std::move(den)},
+    num_constant_{num_constant},
+    den_constant_{den_constant}
   {
     ns_utils::stripVectorZerosFromLeft(num_);  // remove zeros from the left.
     ns_utils::stripVectorZerosFromLeft(den_);
   }
 
   // Constructor from tf_factors
-  tf(tf_factor const &num, tf_factor const &den);
+  tf(tf_factor const & num, tf_factor const & den);
 
   // Member functions.
   /**
    * @brief : Creates a string stream object of polynomial representation of given the vector,
    * */
   static size_t getPolynomialStringAndSize(
-    std::vector<double> const &num_or_den, std::ostringstream &string_stream);
+    std::vector<double> const & num_or_den, std::ostringstream & string_stream);
 
   void print() const;
 
@@ -151,28 +153,28 @@ struct tf : TF_algebra<tf>
   void inv();
 
   // Update num and den
-  void update_num(std::vector<double> const &num);
+  void update_num(std::vector<double> const & num);
 
-  void update_num(tf_factor const &num);
+  void update_num(tf_factor const & num);
 
-  void update_den(std::vector<double> const &den);
+  void update_den(std::vector<double> const & den);
 
-  void update_den(tf_factor const &den);
+  void update_den(tf_factor const & den);
 
   // In some cases, the TF might have variable multiplier of the form a*[num], b*den where a, b
   // vary.
-  void update_num_den_coef(double const &num_constant, double const &den_constant);
+  void update_num_den_coef(double const & num_constant, double const & den_constant);
 
-  void update_num_coef(double const &num_constant);
+  void update_num_coef(double const & num_constant);
 
-  void update_den_coef(double const &den_constant);
+  void update_den_coef(double const & den_constant);
 
   [[nodiscard]] int order() const
   {
     return static_cast<int>(std::max(num_.size(), den_.size())) - 1;
   }
 
- private:
+private:
   // Data members
   std::vector<double> num_{1.};  // <-@brief numerator
   std::vector<double> den_{1.};  // <-@brief denominator
@@ -185,13 +187,13 @@ struct tf : TF_algebra<tf>
  * @param Td	: time delay value in seconds.
  * @param N		: Order of Pade approximation.
  * */
-tf pade(double const &Td, size_t const &order);
+tf pade(double const & Td, size_t const & order);
 
 /**
  * @bried see pade()
  * @refitem Golub and Van Loan, Matrix Computations, 4rd edition, Chapter 9., Section 9.3.1 pp 530
  * */
-tf padecoeff(double const &Td, size_t const &order);
+tf padecoeff(double const & Td, size_t const & order);
 
 }  // namespace ns_control_toolbox
 

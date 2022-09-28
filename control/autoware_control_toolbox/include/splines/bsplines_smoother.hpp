@@ -46,20 +46,22 @@ namespace ns_splines
  * */
 class BSplineSmoother
 {
- public:
+public:
   BSplineSmoother() = default;
 
   explicit BSplineSmoother(size_t base_signal_length, double num_of_knots_ratio = 0.3);
 
   // Multicolumn matrix can also be interpolated. MatrixBase and Interpolated matrix must have
   // the same size.
-  void InterpolateInCoordinates(Eigen::MatrixXd const &ybase, Eigen::MatrixXd &data_tobe_interpolated);
+  void InterpolateInCoordinates(
+    Eigen::MatrixXd const & ybase,
+    Eigen::MatrixXd & data_tobe_interpolated);
 
-  void getFirstDerivative(Eigen::MatrixXd const &ybase, Eigen::MatrixXd &ybase_dot) const;
+  void getFirstDerivative(Eigen::MatrixXd const & ybase, Eigen::MatrixXd & ybase_dot) const;
 
-  void getSecondDerivative(Eigen::MatrixXd const &ybase, Eigen::MatrixXd &ybase_dot_dot) const;
+  void getSecondDerivative(Eigen::MatrixXd const & ybase, Eigen::MatrixXd & ybase_dot_dot) const;
 
- private:
+private:
   // Pre-settings. Increasing lambda yield more smooth and flattened curve.
   // smoothing factor used in normal form of LS; B*B + (lambda**2)*D*D, D is f''(x).
   double lambda_ = 0.001;
@@ -89,27 +91,31 @@ class BSplineSmoother
   Eigen::MatrixXd projection_mat_ddot_wb_;
 
   // Inner Methods.
-  void createBasesMatrix(std::vector<double> const &tvec,
-                         Eigen::MatrixXd &basis_mat,
-                         Eigen::MatrixXd &basis_dmat,
-                         Eigen::MatrixXd &basis_ddmat);
+  void createBasesMatrix(
+    std::vector<double> const & tvec,
+    Eigen::MatrixXd & basis_mat,
+    Eigen::MatrixXd & basis_dmat,
+    Eigen::MatrixXd & basis_ddmat);
 
-  std::vector<std::vector<double>> basisRowsWithDerivatives(double const &ti);
+  std::vector<std::vector<double>> basisRowsWithDerivatives(double const & ti);
 
-  std::vector<double> fPlusCube(double const &ti, double const &ki) const;  // returns max(0, t);
+  std::vector<double> fPlusCube(double const & ti, double const & ki) const;  // returns max(0, t);
 
-  void solveByDemmlerReisch(Eigen::MatrixXd &basis_mat,
-                            Eigen::MatrixXd &basis_dmat,
-                            Eigen::MatrixXd &basis_ddmat);  // set projection mat.
+  void solveByDemmlerReisch(
+    Eigen::MatrixXd & basis_mat,
+    Eigen::MatrixXd & basis_dmat,
+    Eigen::MatrixXd & basis_ddmat);                         // set projection mat.
 
-  void solveByQR(Eigen::MatrixXd &basis_mat,
-                 Eigen::MatrixXd &basis_dmat,
-                 Eigen::MatrixXd &basis_ddmat);
+  void solveByQR(
+    Eigen::MatrixXd & basis_mat,
+    Eigen::MatrixXd & basis_dmat,
+    Eigen::MatrixXd & basis_ddmat);
 
-  void createBasesMatrix(const Eigen::MatrixXd &tvec,
-                         Eigen::MatrixXd &basis_mat,
-                         Eigen::MatrixXd &basis_dmat,
-                         Eigen::MatrixXd &basis_ddmat);
+  void createBasesMatrix(
+    const Eigen::MatrixXd & tvec,
+    Eigen::MatrixXd & basis_mat,
+    Eigen::MatrixXd & basis_dmat,
+    Eigen::MatrixXd & basis_ddmat);
 };
 }  // namespace ns_splines
 
