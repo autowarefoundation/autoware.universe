@@ -20,7 +20,7 @@
         <remap from="~/input/steering_state" to="/vehicle/status/steering_status"/>
         <remap from="~/input/current_odometry" to="/localization/kinematic_state"/>
 
-        <remap from="~/input/long_errors" to="/nmpc_error_report"/>
+        <!--        <remap from="~/input/long_errors" to="/nmpc_error_report"/>-->
         <remap from="~/input/lat_errors" to="/nmpc_error_report"/>
 
         <!--        <remap from="~/input/cp_errors" to="/control_performance/performance_vars"/>-->

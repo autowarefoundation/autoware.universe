@@ -52,6 +52,9 @@ TEST_F(FakeNodeFixture, nodeTestTemplate)
       is_comp_msg_received = true;
     });
 
+  // Broadcast transform
+  auto br = std::make_shared<tf2_ros::StaticTransformBroadcaster>(this->get_fake_node());
+
   /**
    * Publish dummy msgs
    * */
@@ -71,7 +74,16 @@ TEST_F(FakeNodeFixture, nodeTestTemplate)
   control_msg.stamp = node->now();
 
   error_msg.lateral_deviation_read = 0.0;
+  error_msg.steering_read = 0.0;
+  error_msg.heading_angle_error_read = 0.0;
+  error_msg.curvature_read = 0.0;
   error_msg.stamp = node->now();
+
+  // Broadcast transform
+  geometry_msgs::msg::TransformStamped transform = test_utils::getDummyTransform();
+
+  transform.header.stamp = node->now();
+  br->sendTransform(transform);
 
   vel_pub->publish(odom_msg);
   steer_pub->publish(steer_msg);
@@ -79,9 +91,22 @@ TEST_F(FakeNodeFixture, nodeTestTemplate)
   lat_error_pub_->publish(error_msg);
 
   test_utils::spinWhile(node);
-  test_utils::waitForMessage(node, this, is_comp_msg_received, std::chrono::seconds{2LL}, true);
-  ns_utils::print("is compensation_msg received ? ", is_comp_msg_received);
-  test_utils::spinWhile(node);
+  // test_utils::waitForMessage(node, this, false, std::chrono::seconds{2LL}, false);
+
+  auto time_passed{std::chrono::milliseconds{0LL}};
+  const auto dt{std::chrono::milliseconds{30LL}};
+
+  while (time_passed < std::chrono::seconds{2LL})
+  {
+    rclcpp::spin_some(node);
+    rclcpp::spin_some(this->get_fake_node());
+    std::this_thread::sleep_for(dt);
+    time_passed += dt;
+  }
+
+
+//  ns_utils::print("is compensation_msg received ? ", is_comp_msg_received);
+//  test_utils::spinWhile(node);
 
   ASSERT_TRUE(true);
 }

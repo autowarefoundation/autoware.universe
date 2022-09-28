@@ -120,7 +120,7 @@ class CommunicationDelayCompensatorNode : public rclcpp::Node
   /**
    * @brief destructor
    */
-  ~CommunicationDelayCompensatorNode() override;
+  ~CommunicationDelayCompensatorNode() override = default;
 
  private:
   // Data Members
@@ -144,9 +144,6 @@ class CommunicationDelayCompensatorNode : public rclcpp::Node
   //!< @brief subscription for current lateral and heading errors.
   rclcpp::Subscription<ControllerErrorReportMsg>::SharedPtr sub_current_lat_errors_ptr_;
 
-  //!< @brief subscription for current lateral and heading errors.
-  // rclcpp::Subscription<ErrorStampedControlPerfMsg>::SharedPtr sub_control_perf_errors_ptr_;
-
   // Publishers
   rclcpp::Publisher<DelayCompensatatorMsg>::SharedPtr pub_delay_compensator_;
   rclcpp::Publisher<DelayCompensatorDebugMsg>::SharedPtr pub_delay_compensator_debug_;
@@ -161,17 +158,16 @@ class CommunicationDelayCompensatorNode : public rclcpp::Node
   std::shared_ptr<observers::linear_vehicle_model_t> vehicle_model_ptr_{nullptr};
 
   /**
-  * @brief observer vehicle model for state estimation.
-  * */
+   * @brief observer vehicle model for state estimation.
+   * */
   std::shared_ptr<observers::linear_state_observer_model_t> dist_td_obs_vehicle_model_ptr_{nullptr};
 
   /**
-  * @brief observer vehicle model for input disturbance estimation estimation.
-  * */
+   * @brief observer vehicle model for input disturbance estimation estimation.
+   * */
   std::shared_ptr<observers::LateralDisturbanceCompensator> dob_lateral_ptr_{nullptr};
 
   // Pointers to the ROS topics.
-  // Pointers for ros topic
   // Pointers to the model state variables inputs
   std::shared_ptr<nav_msgs::msg::Odometry> current_velocity_ptr_{nullptr};
 
@@ -230,11 +226,6 @@ class CommunicationDelayCompensatorNode : public rclcpp::Node
    * @brief Subscription callbacks
    */
   void onCurrentSteering(const SteeringReport::SharedPtr msg);
-
-  /**
-   * @brief Subscription to computed velocity error
-   */
-  void onCurrentLongitudinalError(const ControllerErrorReportMsg::SharedPtr msg);
 
   /**
    * @brief Subscription to lateral reference errors ey, eyaw.

@@ -99,15 +99,15 @@ CommunicationDelayCompensatorNode::CommunicationDelayCompensatorNode(
   setLateralCDOB_DOBs(lyap_mat_vec);
 }
 
-CommunicationDelayCompensatorNode::~CommunicationDelayCompensatorNode()
-{
-  DelayCompensatatorMsg delay_compensatator_msg{};
-  DelayCompensatorDebugMsg delay_compensator_debug_msg{};
-
-  current_delay_ref_msg_ptr_ = std::make_shared<DelayCompensatatorMsg>(delay_compensatator_msg);
-  current_delay_debug_msg_ = std::make_shared<DelayCompensatorDebugMsg>(delay_compensator_debug_msg);
-  publishCompensationReferences();
-}
+//CommunicationDelayCompensatorNode::~CommunicationDelayCompensatorNode()
+//{
+//  DelayCompensatatorMsg delay_compensatator_msg{};
+//  DelayCompensatorDebugMsg delay_compensator_debug_msg{};
+//
+//  current_delay_ref_msg_ptr_ = std::make_shared<DelayCompensatatorMsg>(delay_compensatator_msg);
+//  current_delay_debug_msg_ = std::make_shared<DelayCompensatorDebugMsg>(delay_compensator_debug_msg);
+//  publishCompensationReferences();
+//}
 
 void CommunicationDelayCompensatorNode::initTimer(float64_t period_s)
 {
@@ -131,6 +131,16 @@ void CommunicationDelayCompensatorNode::onTimer()
 
   current_delay_ref_msg_ptr_ = std::make_shared<DelayCompensatatorMsg>(delay_compensatator_msg);
   current_delay_debug_msg_ = std::make_shared<DelayCompensatorDebugMsg>(delay_compensator_debug_msg);
+
+//  if (true)
+//  {
+//
+//    RCLCPP_WARN_THROTTLE(
+//      get_logger(),
+//      *get_clock(), 1000, "On timer");
+//    //  publishCompensationReferences();
+//    return;
+//  }
 
   if (!isDataReady())
   {
@@ -189,23 +199,6 @@ void CommunicationDelayCompensatorNode::onCurrentVelocity(const VelocityMsg::Sha
     get_logger(),
     *get_clock(), 1000, "Velocity msg is received");
 
-}
-
-void CommunicationDelayCompensatorNode::onCurrentLongitudinalError(
-  ControllerErrorReportMsg::SharedPtr const msg)
-{
-
-  if (current_long_errors_ptr_)
-  {
-    prev_long_errors_ptr_ = current_long_errors_ptr_;
-  }
-
-  current_long_errors_ptr_ = std::make_shared<ControllerErrorReportMsg>(*msg);
-  current_target_velocity_ = static_cast<float64_t>(current_long_errors_ptr_->target_velocity_read);
-
-  RCLCPP_WARN_THROTTLE(
-    get_logger(),
-    *get_clock(), 1000, "Long error  msg is received");
 }
 
 void CommunicationDelayCompensatorNode::onCurrentLateralErrors(
@@ -287,7 +280,7 @@ bool8_t CommunicationDelayCompensatorNode::isDataReady()
       get_logger(),
       *get_clock(),
       (1000ms).count(),
-      "[communication_delay] Waiting for the control command ...");
+      "[communication_delay] Waiting for the current control command ...");
     return false;
   }
 
@@ -297,7 +290,7 @@ bool8_t CommunicationDelayCompensatorNode::isDataReady()
       get_logger(),
       *get_clock(),
       (1000ms).count(),
-      "[communication_delay] Waiting for the control command ...");
+      "[communication_delay] Waiting for the previous control command to be set ...");
     return false;
   }
 
@@ -310,16 +303,6 @@ bool8_t CommunicationDelayCompensatorNode::isDataReady()
       "[communication_delay] Waiting for the current lateral error report ...");
     return false;
   }
-
-//  if (!current_long_errors_ptr_)
-//  {
-//    RCLCPP_WARN_SKIPFIRST_THROTTLE(
-//      get_logger(),
-//      *get_clock(),
-//      (1000ms).count(),
-//      "[communication_delay] Waiting for the current longitudinal error report ...");
-//    return false;
-//  }
 
   return true;
 }
