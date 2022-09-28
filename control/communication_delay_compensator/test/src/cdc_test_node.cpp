@@ -24,10 +24,9 @@ std::shared_ptr<CommDelayNode> makeComDelayComNode()
   const auto share_dir = ament_index_cpp::get_package_share_directory("communication_delay_compensator");
 
   rclcpp::NodeOptions node_options;
-  node_options.arguments(
-    {"--ros-args", "--params-file",
-     share_dir + "/param/communication_delay_compensator.param.yaml",
-     "--params-file", share_dir + "/param/test_vehicle_info.yaml"});
+  node_options.arguments({"--ros-args", "--params-file",
+                          share_dir + "/param/communication_delay_compensator.param.yaml",
+                          "--params-file", share_dir + "/param/test_vehicle_info.yaml"});
 
   auto node = std::make_shared<CommDelayNode>(node_options);
 

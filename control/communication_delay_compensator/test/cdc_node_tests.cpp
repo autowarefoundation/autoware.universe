@@ -73,6 +73,7 @@ TEST_F(FakeNodeFixture, nodeTestTemplate)
   steer_pub->publish(steer_msg);
   control_pub_->publish(control_msg);
 
+  test_utils::spinWhile(node);
   test_utils::waitForMessage(node, this, is_comp_msg_received, std::chrono::seconds{1LL}, false);
   ns_utils::print("is compensation_msg received ? ", is_comp_msg_received);
 
