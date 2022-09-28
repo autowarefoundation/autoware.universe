@@ -25,6 +25,7 @@
 #include "ament_index_cpp/get_package_share_directory.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 #include "autoware_auto_control_msgs/msg/ackermann_lateral_command.hpp"
+
 #include "autoware_auto_vehicle_msgs/msg/vehicle_odometry.hpp"
 #include "autoware_auto_vehicle_msgs/msg/steering_report.hpp"
 #include "geometry_msgs/msg/pose.hpp"
@@ -46,6 +47,7 @@ using SteeringReport = autoware_auto_vehicle_msgs::msg::SteeringReport;
 using TrajectoryPoint = autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using CommDelayNode = observers::CommunicationDelayCompensatorNode;
 
+using ControlCmdMsg = autoware_auto_control_msgs::msg::AckermannControlCommand;
 using DelayCompensationRefs = communication_delay_compensator::msg::DelayCompensationRefs;
 using ErrorReportMsg = communication_delay_compensator::msg::ControllerErrorReport;
 

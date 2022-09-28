@@ -17,7 +17,64 @@
 #include "cdc_test_node.hpp"
 #include "cdc_test_utils.hpp"
 
-TEST_F(FakeNodeFixture, aaa)
+TEST_F(FakeNodeFixture, nodeTestTemplate)
 {
+  // Data to test
+  DelayCompensationRefs::SharedPtr compensation_msg;
+  bool is_comp_msg_received = false;
+
+  // Node
+  std::shared_ptr<CommDelayNode> node = makeComDelayComNode();
+
+  // Publishers
+  rclcpp::Publisher<VelocityMsg>::SharedPtr vel_pub =
+    this->create_publisher<VelocityMsg>("communication_delay_compensator/input/current_odometry");
+
+  rclcpp::Publisher<SteeringReport>::SharedPtr steer_pub =
+    this->create_publisher<SteeringReport>("communication_delay_compensator/input/steering_state");
+
+  rclcpp::Publisher<ErrorReportMsg>::SharedPtr long_error_pub_ =
+    this->create_publisher<ErrorReportMsg>("communication_delay_compensator/input/long_errors");
+
+  rclcpp::Publisher<ErrorReportMsg>::SharedPtr lat_error_pub_ =
+    this->create_publisher<ErrorReportMsg>("communication_delay_compensator/input/lat_errors");
+
+  rclcpp::Publisher<ControlCmdMsg>::SharedPtr control_pub_ =
+    this->create_publisher<ControlCmdMsg>("communication_delay_compensator/input/control_cmd");
+
+  // Subscribers
+  rclcpp::Subscription<DelayCompensationRefs>::SharedPtr
+    comm_ref_sub_ = this->create_subscription<DelayCompensationRefs>(
+    "communication_delay_compensator/output/communication_delay_compensation_refs", *this->get_fake_node(),
+    [&compensation_msg, &is_comp_msg_received](const DelayCompensationRefs::SharedPtr msg)
+    {
+      compensation_msg = msg;
+      is_comp_msg_received = true;
+    });
+
+  /**
+   * Publish dummy msgs
+   * */
+
+  VelocityMsg odom_msg;
+  SteeringReport steer_msg;
+  ControlCmdMsg control_msg;
+
+  odom_msg.header.stamp = node->now();
+  odom_msg.twist.twist.linear.x = 0.0;
+
+  steer_msg.steering_tire_angle = 0.0;
+  steer_msg.stamp = node->now();
+
+  control_msg.lateral.steering_tire_angle = 0.0;
+  control_msg.stamp = node->now();
+
+  vel_pub->publish(odom_msg);
+  steer_pub->publish(steer_msg);
+  control_pub_->publish(control_msg);
+
+  test_utils::waitForMessage(node, this, is_comp_msg_received, std::chrono::seconds{1LL}, false);
+  ns_utils::print("is compensation_msg received ? ", is_comp_msg_received);
+
   ASSERT_TRUE(true);
 }
