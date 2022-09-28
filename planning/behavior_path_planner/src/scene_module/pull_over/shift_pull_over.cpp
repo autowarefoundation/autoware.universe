@@ -24,7 +24,6 @@
 #include <vector>
 
 namespace behavior_path_planner
-
 {
 ShiftPullOver::ShiftPullOver(
   rclcpp::Node & node, const PullOverParameters & parameters,
@@ -108,15 +107,21 @@ std::vector<PullOverPath> ShiftPullOver::generatePullOverPaths(
   const double jerk_resolution =
     std::abs(maximum_lateral_jerk - minimum_lateral_jerk) / pull_over_sampling_num;
 
-  const double distance_to_shoulder_lane_boundary =
-    util::getDistanceToShoulderBoundary(shoulder_lanes, current_pose);
-  const double offset_from_current_pose =
-    distance_to_shoulder_lane_boundary + common_parameters.vehicle_width / 2 + margin;
+  // calc lateral offset from road lane center line to shoulder target line.
+  lanelet::ConstLanelet goal_closest_road_lane;
+  lanelet::utils::query::getClosestLanelet(road_lanes, goal_pose, &goal_closest_road_lane);
+  const auto closest_center_pose =
+    lanelet::utils::getClosestCenterPose(goal_closest_road_lane, goal_pose.position);
+  const double distance_from_shoulder_left_bound =
+    util::getDistanceToShoulderBoundary(shoulder_lanes, closest_center_pose);
+  const double offset_from_road_line_center =
+    distance_from_shoulder_left_bound + common_parameters.vehicle_width / 2 + margin;
 
   // shift end point in shoulder lane
   const auto shift_end_point = std::invoke([&]() {
     const auto arc_position_goal = lanelet::utils::getArcCoordinates(shoulder_lanes, goal_pose);
-    const double s_start = arc_position_goal.length - after_pull_over_straight_distance;
+    const double s_start =
+      std::max(arc_position_goal.length - after_pull_over_straight_distance, 0.0);
     const double s_end = s_start + std::numeric_limits<double>::epsilon();
     const auto path = route_handler->getCenterLinePath(shoulder_lanes, s_start, s_end, true);
     return path.points.front();
@@ -130,7 +135,7 @@ std::vector<PullOverPath> ShiftPullOver::generatePullOverPaths(
     PullOverPath candidate_path;
 
     const double pull_over_distance = path_shifter.calcLongitudinalDistFromJerk(
-      abs(offset_from_current_pose), lateral_jerk, pull_over_velocity);
+      std::abs(offset_from_road_line_center), lateral_jerk, pull_over_velocity);
 
     // calculate straight distance before pull over
     const double straight_distance = std::invoke([&]() {
@@ -162,6 +167,10 @@ std::vector<PullOverPath> ShiftPullOver::generatePullOverPaths(
             pull_over_velocity));
       }
     }
+    // resample road straight path and shift source path respectively
+    constexpr double resample_interval{1.0};
+    road_lane_reference_path =
+      util::resamplePathWithSpline(road_lane_reference_path, resample_interval);
 
     if (road_lane_reference_path.points.empty()) {
       RCLCPP_ERROR_STREAM(
@@ -191,18 +200,14 @@ std::vector<PullOverPath> ShiftPullOver::generatePullOverPaths(
       const double offset = -distance_shoulder_to_target;
       for (size_t i = 0; i < target_lane_reference_path.points.size(); ++i) {
         {
-          if (fabs(offset) < 1.0e-8) {
-            RCLCPP_WARN_STREAM(
-              rclcpp::get_logger("behavior_path_planner").get_child("pull_over").get_child("util"),
-              "no offset from current lane center.");
-          }
-
           auto & p = target_lane_reference_path.points.at(i).point.pose;
           p = tier4_autoware_utils::calcOffsetPose(p, 0, offset, 0);
         }
-        path_shifter.setPath(util::resamplePathWithSpline(target_lane_reference_path, 1.0));
       }
     }
+    path_shifter.setPath(
+      util::resamplePathWithSpline(target_lane_reference_path, resample_interval));
+
     ShiftPoint shift_point;
     {
       shift_point.start = road_lane_reference_path.points.back().point.pose;
