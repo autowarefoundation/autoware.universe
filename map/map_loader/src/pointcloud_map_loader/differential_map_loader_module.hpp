@@ -17,7 +17,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include "autoware_map_msgs/srv/load_pcd_maps_general.hpp"
+#include "autoware_map_msgs/srv/load_pcd_maps.hpp"
 
 #include <pcl/common/common.h>
 #include <pcl/filters/voxel_grid.h>
@@ -38,6 +38,8 @@ struct PCDFileMetadata
 
 class DifferentialMapLoaderModule
 {
+  using LoadPCDMaps = autoware_map_msgs::srv::LoadPCDMaps;
+
 public:
   explicit DifferentialMapLoaderModule(
     rclcpp::Node * node, const std::vector<std::string> pcd_paths);
@@ -46,19 +48,18 @@ private:
   rclcpp::Logger logger_;
 
   std::map<std::string, PCDFileMetadata> all_pcd_file_metadata_dict_;
-  rclcpp::Service<autoware_map_msgs::srv::LoadPCDMapsGeneral>::SharedPtr
-    load_pcd_maps_general_service_;
+  rclcpp::Service<LoadPCDMaps>::SharedPtr load_pcd_maps_service_;
 
-  bool loadPCDMapsGeneralCallback(
-    autoware_map_msgs::srv::LoadPCDMapsGeneral::Request::SharedPtr req,
-    autoware_map_msgs::srv::LoadPCDMapsGeneral::Response::SharedPtr res);
+  bool onServiceLoadPCDMaps(
+    LoadPCDMaps::Request::SharedPtr req,
+    LoadPCDMaps::Response::SharedPtr res);
   void partialAreaLoad(
     const autoware_map_msgs::msg::AreaInfo area,
-    autoware_map_msgs::srv::LoadPCDMapsGeneral::Response::SharedPtr & response) const;
+    LoadPCDMaps::Response::SharedPtr & response) const;
   void differentialAreaLoad(
     const autoware_map_msgs::msg::AreaInfo area_info,
     const std::vector<std::string> already_loaded_ids,
-    autoware_map_msgs::srv::LoadPCDMapsGeneral::Response::SharedPtr & response) const;
+    LoadPCDMaps::Response::SharedPtr & response) const;
   void loadPCDMapWithID(
     const std::string path, const std::string map_id,
     autoware_map_msgs::msg::PCDMapWithID & pcd_map_with_id) const;

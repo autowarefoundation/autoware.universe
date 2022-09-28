@@ -61,15 +61,15 @@ DifferentialMapLoaderModule::DifferentialMapLoaderModule(
 : logger_(node->get_logger())
 {
   all_pcd_file_metadata_dict_ = generatePCDMetadata(pcd_paths);
-  load_pcd_maps_general_service_ = node->create_service<autoware_map_msgs::srv::LoadPCDMapsGeneral>(
+  load_pcd_maps_service_ = node->create_service<LoadPCDMaps>(
     "load_pcd_maps_general", std::bind(
-                               &DifferentialMapLoaderModule::loadPCDMapsGeneralCallback, this,
+                               &DifferentialMapLoaderModule::onServiceLoadPCDMaps, this,
                                std::placeholders::_1, std::placeholders::_2));
 }
 
 void DifferentialMapLoaderModule::differentialAreaLoad(
   const autoware_map_msgs::msg::AreaInfo area, const std::vector<std::string> already_loaded_ids,
-  autoware_map_msgs::srv::LoadPCDMapsGeneral::Response::SharedPtr & response) const
+  LoadPCDMaps::Response::SharedPtr & response) const
 {
   // iterate over all the available pcd map grids
   for (const auto & ele : all_pcd_file_metadata_dict_) {
@@ -98,7 +98,7 @@ void DifferentialMapLoaderModule::differentialAreaLoad(
 
 void DifferentialMapLoaderModule::partialAreaLoad(
   const autoware_map_msgs::msg::AreaInfo area,
-  autoware_map_msgs::srv::LoadPCDMapsGeneral::Response::SharedPtr & response) const
+  LoadPCDMaps::Response::SharedPtr & response) const
 {
   // iterate over all the available pcd map grids
 
@@ -118,15 +118,14 @@ void DifferentialMapLoaderModule::partialAreaLoad(
   }
 }
 
-bool DifferentialMapLoaderModule::loadPCDMapsGeneralCallback(
-  autoware_map_msgs::srv::LoadPCDMapsGeneral::Request::SharedPtr req,
-  autoware_map_msgs::srv::LoadPCDMapsGeneral::Response::SharedPtr res)
+bool DifferentialMapLoaderModule::onServiceLoadPCDMaps(
+  LoadPCDMaps::Request::SharedPtr req,
+  LoadPCDMaps::Response::SharedPtr res)
 {
-  int mode = req->mode;
-  if (mode == 0) {
+  if (req->mode == LoadPCDMaps::Request::MODE_PARTIAL_AREA_LOAD) {
     auto area = req->area;
     partialAreaLoad(area, res);
-  } else if (mode == 1) {
+  } else if (req->mode == LoadPCDMaps::Request::MODE_DIFFERENTIAL_AREA_LOAD) {
     auto area = req->area;
     std::vector<std::string> already_loaded_ids = req->already_loaded_ids;
     differentialAreaLoad(area, already_loaded_ids, res);
