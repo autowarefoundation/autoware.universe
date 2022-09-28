@@ -6,9 +6,9 @@ find_package(fmt)
 
 # require that dependencies from package.xml be available
 find_package(ament_cmake_auto REQUIRED)
-ament_auto_find_build_dependencies(REQUIRED
-  ${${PROJECT_NAME}_BUILD_DEPENDS}
-  ${${PROJECT_NAME}_BUILDTOOL_DEPENDS})
+#ament_auto_find_build_dependencies(REQUIRED
+#  ${${PROJECT_NAME}_BUILD_DEPENDS}
+#  ${${PROJECT_NAME}_BUILDTOOL_DEPENDS})
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -133,8 +133,8 @@ if(BUILD_TESTING)
     test/tests_spline_modules.cpp
     test/tests_util_modules.cpp)
 
-  #  ament_target_dependencies(${ACT_TESTs} ${CONTROL_LIB})
-  autoware_set_compile_options(${ACT_TESTs})
+  # ament_target_dependencies(${ACT_TESTs} ${CONTROL_LIB})
+  # autoware_set_compile_options(${ACT_TESTs})
 
   target_link_libraries(${ACT_TESTs}
     ${CONTROL_LIB}
