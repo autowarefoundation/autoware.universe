@@ -2559,7 +2559,7 @@ TurnSignalInfo AvoidanceModule::calcTurnSignalInfo(const ShiftedPath & path) con
     return turn_signal_info;
   }
 
-  const auto signal_prepair_distance = std::max(getEgoSpeed() * 3.0, 10.0);
+  const auto signal_prepare_distance = std::max(getEgoSpeed() * 3.0, 10.0);
   const auto ego_to_shift_start =
     calcSignedArcLength(path.path.points, getEgoPosition(), front_shift_point.start.position);
 
