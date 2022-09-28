@@ -58,7 +58,6 @@ private:
   };
   struct PointRef
   {
-    float gama;         // angle in vertical
     float grid_size;    // radius of grid
     uint16_t grid_id;   // id of grid in vertical
     float radius;       // cylindrical coords on XY Plane

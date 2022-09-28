@@ -86,8 +86,8 @@ void ScanGroundFilterComponent::gridScanConvertPointcloud(
     auto radius{static_cast<float>(std::hypot(x, in_cloud->points[i].y))};
     auto theta{normalizeRadian(std::atan2(x, in_cloud->points[i].y), 0.0)};
 
-    // divide by angle
-    auto gama{normalizeRadian(std::atan2(radius, virtual_lidar_z_), 0.0f)};
+    // divide by verticall angle
+    auto gamma{normalizeRadian(std::atan2(radius, virtual_lidar_z_), 0.0f)};
     auto radial_div{
       static_cast<size_t>(std::floor(normalizeDegree(theta / radial_divider_angle_rad_, 0.0)))};
     uint16_t grid_id = 0;
@@ -96,11 +96,11 @@ void ScanGroundFilterComponent::gridScanConvertPointcloud(
       grid_id = static_cast<uint16_t>(radius / grid_size_m_);
       curr_grid_size = grid_size_m_;
     } else {
-      grid_id = grid_mode_switch_grid_id_ + (gama - grid_mode_switch_angle_rad_) / grid_size_rad_;
+      grid_id = grid_mode_switch_grid_id_ + (gamma - grid_mode_switch_angle_rad_) / grid_size_rad_;
       if (grid_id <= grid_mode_switch_grid_id_ + back_steps_num) {
         curr_grid_size = grid_size_m_;
       } else {
-        curr_grid_size = std::tan(gama) - std::tan(gama - grid_size_rad_);
+        curr_grid_size = std::tan(gamma) - std::tan(gamma - grid_size_rad_);
         curr_grid_size *= virtual_lidar_z_;
       }
     }
