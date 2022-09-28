@@ -74,7 +74,6 @@ set(CONTROL_LIB_HEADERS
   include/control/act_definitions.hpp
   include/autoware_control_toolbox.hpp
   include/control/balance.hpp
-  include/visibility_control.hpp
   include/control/tf_algebra.hpp
   include/control/state_space.hpp
   include/control/transfer_functions.hpp
