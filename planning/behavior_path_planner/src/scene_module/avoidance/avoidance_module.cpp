@@ -2563,7 +2563,7 @@ TurnSignalInfo AvoidanceModule::calcTurnSignalInfo(const ShiftedPath & path) con
   const auto ego_to_shift_start =
     calcSignedArcLength(path.path.points, getEgoPosition(), front_shift_point.start.position);
 
-  if (signal_prepair_distance < ego_to_shift_start) {
+  if (signal_prepare_distance < ego_to_shift_start) {
     return turn_signal_info;
   }
 
