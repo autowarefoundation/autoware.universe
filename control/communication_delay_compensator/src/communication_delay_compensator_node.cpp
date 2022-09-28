@@ -62,13 +62,13 @@ CommunicationDelayCompensatorNode::CommunicationDelayCompensatorNode(
         &observers::CommunicationDelayCompensatorNode::onCurrentSteering,
         this, std::placeholders::_1));
 
-  sub_current_long_error_ptr_ =
-    create_subscription<ControllerErrorReportMsg>(
-      "~/input/long_errors", rclcpp::QoS{1},
-      std::bind(
-        &observers::CommunicationDelayCompensatorNode::onCurrentLongitudinalError,
-        this,
-        std::placeholders::_1));
+  //  sub_current_long_error_ptr_ =
+  //    create_subscription<ControllerErrorReportMsg>(
+  //      "~/input/long_errors", rclcpp::QoS{1},
+  //      std::bind(
+  //        &observers::CommunicationDelayCompensatorNode::onCurrentLongitudinalError,
+  //        this,
+  //        std::placeholders::_1));
 
   sub_current_lat_errors_ptr_ =
     create_subscription<ControllerErrorReportMsg>(
@@ -97,6 +97,16 @@ CommunicationDelayCompensatorNode::CommunicationDelayCompensatorNode(
    * @brief read the Lyapunov matrices and pass them to the delay compensator.
    * */
   setLateralCDOB_DOBs(lyap_mat_vec);
+}
+
+CommunicationDelayCompensatorNode::~CommunicationDelayCompensatorNode()
+{
+  DelayCompensatatorMsg delay_compensatator_msg{};
+  DelayCompensatorDebugMsg delay_compensator_debug_msg{};
+
+  current_delay_ref_msg_ptr_ = std::make_shared<DelayCompensatatorMsg>(delay_compensatator_msg);
+  current_delay_debug_msg_ = std::make_shared<DelayCompensatorDebugMsg>(delay_compensator_debug_msg);
+  publishCompensationReferences();
 }
 
 void CommunicationDelayCompensatorNode::initTimer(float64_t period_s)
@@ -243,6 +253,10 @@ void CommunicationDelayCompensatorNode::onCurrentSteering(const SteeringReport::
   }
 
   current_steering_angle_ = static_cast<float64_t>(current_steering_ptr_->steering_tire_angle);
+
+  RCLCPP_WARN_THROTTLE(
+    get_logger(),
+    *get_clock(), 1000, "Steering msg is received ");
 }
 
 bool8_t CommunicationDelayCompensatorNode::isDataReady()
@@ -297,15 +311,15 @@ bool8_t CommunicationDelayCompensatorNode::isDataReady()
     return false;
   }
 
-  if (!current_long_errors_ptr_)
-  {
-    RCLCPP_WARN_SKIPFIRST_THROTTLE(
-      get_logger(),
-      *get_clock(),
-      (1000ms).count(),
-      "[communication_delay] Waiting for the current longitudinal error report ...");
-    return false;
-  }
+//  if (!current_long_errors_ptr_)
+//  {
+//    RCLCPP_WARN_SKIPFIRST_THROTTLE(
+//      get_logger(),
+//      *get_clock(),
+//      (1000ms).count(),
+//      "[communication_delay] Waiting for the current longitudinal error report ...");
+//    return false;
+//  }
 
   return true;
 }
@@ -337,6 +351,7 @@ void CommunicationDelayCompensatorNode::readAndLoadParameters(
   // Damping
   params_node_.qfilter_lateral_cdob_damping = declare_parameter<float64_t>(
     "qfilter_lateral_cdob_damping");
+
   params_node_.qfilter_lateral_dob_damping = declare_parameter<float64_t>(
     "qfilter_lateral_dob_damping");
 

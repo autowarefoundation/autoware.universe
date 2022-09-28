@@ -33,8 +33,8 @@ TEST_F(FakeNodeFixture, nodeTestTemplate)
   rclcpp::Publisher<SteeringReport>::SharedPtr steer_pub =
     this->create_publisher<SteeringReport>("communication_delay_compensator/input/steering_state");
 
-  rclcpp::Publisher<ErrorReportMsg>::SharedPtr long_error_pub_ =
-    this->create_publisher<ErrorReportMsg>("communication_delay_compensator/input/long_errors");
+//  rclcpp::Publisher<ErrorReportMsg>::SharedPtr long_error_pub_ =
+//    this->create_publisher<ErrorReportMsg>("communication_delay_compensator/input/long_errors");
 
   rclcpp::Publisher<ErrorReportMsg>::SharedPtr lat_error_pub_ =
     this->create_publisher<ErrorReportMsg>("communication_delay_compensator/input/lat_errors");
@@ -59,6 +59,7 @@ TEST_F(FakeNodeFixture, nodeTestTemplate)
   VelocityMsg odom_msg;
   SteeringReport steer_msg;
   ControlCmdMsg control_msg;
+  ErrorReportMsg error_msg;
 
   odom_msg.header.stamp = node->now();
   odom_msg.twist.twist.linear.x = 0.0;
@@ -69,13 +70,18 @@ TEST_F(FakeNodeFixture, nodeTestTemplate)
   control_msg.lateral.steering_tire_angle = 0.0;
   control_msg.stamp = node->now();
 
+  error_msg.lateral_deviation_read = 0.0;
+  error_msg.stamp = node->now();
+
   vel_pub->publish(odom_msg);
   steer_pub->publish(steer_msg);
   control_pub_->publish(control_msg);
+  lat_error_pub_->publish(error_msg);
 
   test_utils::spinWhile(node);
-  test_utils::waitForMessage(node, this, is_comp_msg_received, std::chrono::seconds{1LL}, false);
+  test_utils::waitForMessage(node, this, is_comp_msg_received, std::chrono::seconds{2LL}, true);
   ns_utils::print("is compensation_msg received ? ", is_comp_msg_received);
+  test_utils::spinWhile(node);
 
   ASSERT_TRUE(true);
 }

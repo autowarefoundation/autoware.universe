@@ -120,7 +120,7 @@ class CommunicationDelayCompensatorNode : public rclcpp::Node
   /**
    * @brief destructor
    */
-  ~CommunicationDelayCompensatorNode() override = default;
+  ~CommunicationDelayCompensatorNode() override;
 
  private:
   // Data Members
@@ -139,7 +139,7 @@ class CommunicationDelayCompensatorNode : public rclcpp::Node
   rclcpp::Subscription<SteeringReport>::SharedPtr sub_current_steering_ptr_;
 
   //!< @brief subscription for current velocity error.
-  rclcpp::Subscription<ControllerErrorReportMsg>::SharedPtr sub_current_long_error_ptr_;
+  // rclcpp::Subscription<ControllerErrorReportMsg>::SharedPtr sub_current_long_error_ptr_;
 
   //!< @brief subscription for current lateral and heading errors.
   rclcpp::Subscription<ControllerErrorReportMsg>::SharedPtr sub_current_lat_errors_ptr_;
