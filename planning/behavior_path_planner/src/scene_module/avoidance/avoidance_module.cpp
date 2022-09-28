@@ -2692,7 +2692,7 @@ bool AvoidanceModule::shiftedpathcheck(
   }
   check_lanelets.insert(
     check_lanelets.end(), current_lanelets.begin(), current_lanelets.end());
-  auto ignore_opposite = parameters_.enable_avoidance_over_opposite_direction;
+  auto ignore_opposite = parameters_->enable_avoidance_over_opposite_direction;
   for(auto & lane: current_lanelets)
   {
     auto lanes = route_handler->getAllSharedLineStringLanelets(lane, true, true, ignore_opposite);

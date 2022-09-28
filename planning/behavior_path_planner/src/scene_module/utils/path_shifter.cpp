@@ -358,7 +358,7 @@ void PathShifter::removeBehindShiftPointAndSetBaseOffset(const size_t nearest_id
         start_idx = shift_points_.at(zerolength_startidx).start_idx;
       }
       auto end_idx = shift_points_.at(zerolength_endidx).end_idx;
-      if(base_idx>=start_idx && base_idx<=end_idx)new_base_offset=0.0;
+      if(nearest_idx>=start_idx && nearest_idx<=end_idx)new_base_offset=0.0;
     }
   }
   // remove accumulated floating noise
