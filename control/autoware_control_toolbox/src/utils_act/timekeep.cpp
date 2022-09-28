@@ -25,3 +25,4 @@ double toc(double start)
 {
   return tic() - start;
 }
+
