@@ -92,7 +92,7 @@ public:
 
   // Initialize to eliminate settings frequently reusing var.
   bool Initialize(std::vector<double> const & tbase, std::vector<double> const & ybase);
-  [[nodiscard]] bool isInitialized() const { return initialized_; }
+  [[nodiscard]] bool isInitialized() const {return initialized_;}
 
 private:
   size_t interp_type_{3};  // 1 or 3 for linear and spline interpolation, respectively.

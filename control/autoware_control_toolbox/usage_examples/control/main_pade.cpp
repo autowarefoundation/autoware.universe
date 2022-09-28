@@ -46,8 +46,7 @@ int main()
   tf_delay = ns_control_toolbox::pade(Td, order);
   tf_delay.print();
 
-  if (ns_utils::isEqual(Td, 0.0))
-  {
+  if (ns_utils::isEqual(Td, 0.0)) {
     ns_utils::print("Must throw an error STATIC GAIN .........");
     ss_sys = ns_control_toolbox::tf2ss(tf_delay);
     ss_sys.print();
