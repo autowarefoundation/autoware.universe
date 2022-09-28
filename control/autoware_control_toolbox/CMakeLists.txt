@@ -6,9 +6,9 @@ find_package(fmt)
 
 # require that dependencies from package.xml be available
 find_package(ament_cmake_auto REQUIRED)
-ament_auto_find_build_dependencies(REQUIRED
-  ${${PROJECT_NAME}_BUILD_DEPENDS}
-  ${${PROJECT_NAME}_BUILDTOOL_DEPENDS})
+#ament_auto_find_build_dependencies(REQUIRED
+#  ${${PROJECT_NAME}_BUILD_DEPENDS}
+#  ${${PROJECT_NAME}_BUILDTOOL_DEPENDS})
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -18,7 +18,6 @@ set(CMAKE_CXX_STANDARD 17)
 #    set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 #    message("In release mode ...")
 #endif ()
-
 
 # -------------  FLAGS ---------------------------------------------------
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -42,7 +41,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 ##----------------- Library headers and sources -------------------------------
 
-##------------- CONTROL LIB  ----------------------------------
+##----------------------- CONTROL LIB -----------------------------------------
 
 set(CONTROL_LIB autoware_control_toolbox_lib)
 
@@ -96,7 +95,7 @@ set(CONTROL_LIB_INCLUDE_DIRS
   include/splines
   include/utils_act)
 
-##------------- Whole LIBRARY COMPILE --------------------
+##------------------------- Whole LIBRARY COMPILE -----------------------------
 
 ament_auto_add_library(${CONTROL_LIB} SHARED
   ${CONTROL_LIB_SOURCE}
@@ -134,7 +133,7 @@ if(BUILD_TESTING)
     test/tests_util_modules.cpp)
 
   #  ament_target_dependencies(${ACT_TESTs} ${CONTROL_LIB})
-  autoware_set_compile_options(${ACT_TESTs})
+  # autoware_set_compile_options(${ACT_TESTs})
 
   target_link_libraries(${ACT_TESTs}
     ${CONTROL_LIB}
@@ -144,7 +143,7 @@ endif()
 #ament package generation and installing
 ament_auto_package(INSTALL_TO_SHARE)
 
-#-------------------------  PROTOTYPES __________________________________________
+#-------------------------  PROTOTYPES _____________________________________
 ## CONTROL
 ament_auto_add_executable(main_tf usage_examples/control/main_tf.cpp)
 ament_auto_add_executable(main_pade usage_examples/control/main_pade.cpp)
