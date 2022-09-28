@@ -518,6 +518,7 @@ Turn on signal when the planned path crosses lanes or when a right or left turn 
 When multiple turn signal conditions are met, the turn signal with the smaller distance is selected.
 
 #### Limitation
+
 Currently, the algorithm of turn signal has been chagned, and the document of the turn signal will be available soon.
 
 ## References / External links
