@@ -283,6 +283,10 @@ OccupancyGrid generateDrivableArea(
 
 lanelet::ConstLineStrings3d getDrivableAreaForAllSharedLinestringLanelets(
   const std::shared_ptr<const PlannerData> & planner_data);
+
+lanelet::ConstLanelets expandLanelets(
+  const lanelet::ConstLanelets & lanelets, const double right_bound_offset,
+  const double left_bound_offset);
 // goal management
 
 /**

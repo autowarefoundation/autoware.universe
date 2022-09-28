@@ -1657,6 +1657,28 @@ lanelet::ConstLineStrings3d getDrivableAreaForAllSharedLinestringLanelets(
   return linestring_shared;
 }
 
+lanelet::ConstLanelets expandLanelets(
+  const lanelet::ConstLanelets & lanelets, const double right_bound_offset,
+  const double left_bound_offset)
+{
+  if (right_bound_offset == 0.0 && left_bound_offset == 0.0) return lanelets;
+
+  lanelet::ConstLanelets expanded_lanelets{};
+  expanded_lanelets.reserve(lanelets.size());
+  for (const auto & lanelet : lanelets) {
+    const std::string r_type =
+      lanelet.rightBound().attributeOr(lanelet::AttributeName::Type, "none");
+    const std::string l_type =
+      lanelet.leftBound().attributeOr(lanelet::AttributeName::Type, "none");
+
+    const double r_offset = r_type != "road_border" ? -right_bound_offset : 0.0;
+    const double l_offset = l_type != "road_border" ? left_bound_offset : 0.0;
+
+    expanded_lanelets.push_back(lanelet::utils::getExpandedLanelet(lanelet, l_offset, r_offset));
+  }
+  return expanded_lanelets;
+}
+
 PredictedObjects filterObjectsByVelocity(const PredictedObjects & objects, double lim_v)
 {
   return filterObjectsByVelocity(objects, -lim_v, lim_v);
