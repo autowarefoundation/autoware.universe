@@ -167,6 +167,10 @@ std::vector<PullOverPath> ShiftPullOver::generatePullOverPaths(
             pull_over_velocity));
       }
     }
+    // reesample road straight path and shift source path respectively
+    constexpr double resample_interval{1.0};
+    road_lane_reference_path =
+      util::resamplePathWithSpline(road_lane_reference_path, resample_interval);
 
     if (road_lane_reference_path.points.empty()) {
       RCLCPP_ERROR_STREAM(
@@ -205,7 +209,8 @@ std::vector<PullOverPath> ShiftPullOver::generatePullOverPaths(
           auto & p = target_lane_reference_path.points.at(i).point.pose;
           p = tier4_autoware_utils::calcOffsetPose(p, 0, offset, 0);
         }
-        path_shifter.setPath(util::resamplePathWithSpline(target_lane_reference_path, 1.0));
+        path_shifter.setPath(
+          util::resamplePathWithSpline(target_lane_reference_path, resample_interval));
       }
     }
     ShiftPoint shift_point;
