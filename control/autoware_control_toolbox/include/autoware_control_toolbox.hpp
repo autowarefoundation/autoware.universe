@@ -34,7 +34,6 @@
 #include "control/state_space.hpp"
 #include "control/tf_algebra.hpp"
 #include "control/transfer_functions.hpp"
-#include "visibility_control.hpp"
 #include "splines/bsplines_smoother.hpp"
 #include "splines/bspline_interpolator_templated.hpp"
 #include "splines/bsplines_interpolator.hpp"
