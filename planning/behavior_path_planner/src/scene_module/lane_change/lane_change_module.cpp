@@ -173,8 +173,8 @@ BehaviorModuleOutput LaneChangeModule::plan()
     lanes.insert(lanes.end(), status_.current_lanes.begin(), status_.current_lanes.end());
     lanes.insert(lanes.end(), status_.lane_change_lanes.begin(), status_.lane_change_lanes.end());
     lanes = util::expandLanelets(
-      lanes, parameters_->drivable_area_right_bound_offset,
-      parameters_->drivable_area_left_bound_offset);
+      lanes, parameters_->drivable_area_left_bound_offset,
+      parameters_->drivable_area_right_bound_offset);
 
     const double & resolution = common_parameters.drivable_area_resolution;
     path.drivable_area = util::generateDrivableArea(
@@ -328,8 +328,8 @@ PathWithLaneId LaneChangeModule::getReferencePath() const
     lane_change_buffer);
 
   const auto current_extended_lanes = util::expandLanelets(
-    current_lanes, parameters_->drivable_area_right_bound_offset,
-    parameters_->drivable_area_left_bound_offset);
+    current_lanes, parameters_->drivable_area_left_bound_offset,
+    parameters_->drivable_area_right_bound_offset);
 
   reference_path.drivable_area = util::generateDrivableArea(
     reference_path, current_extended_lanes, common_parameters.drivable_area_resolution,

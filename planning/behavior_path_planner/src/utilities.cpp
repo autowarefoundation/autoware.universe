@@ -1658,21 +1658,25 @@ lanelet::ConstLineStrings3d getDrivableAreaForAllSharedLinestringLanelets(
 }
 
 lanelet::ConstLanelets expandLanelets(
-  const lanelet::ConstLanelets & lanelets, const double right_bound_offset,
-  const double left_bound_offset)
+  const lanelet::ConstLanelets & lanelets, const double left_bound_offset,
+  const double right_bound_offset, const std::vector<std::string> & types_to_skip)
 {
-  if (right_bound_offset == 0.0 && left_bound_offset == 0.0) return lanelets;
+  if (left_bound_offset == 0.0 && right_bound_offset == 0.0) return lanelets;
 
   lanelet::ConstLanelets expanded_lanelets{};
   expanded_lanelets.reserve(lanelets.size());
   for (const auto & lanelet : lanelets) {
-    const std::string r_type =
-      lanelet.rightBound().attributeOr(lanelet::AttributeName::Type, "none");
     const std::string l_type =
       lanelet.leftBound().attributeOr(lanelet::AttributeName::Type, "none");
+    const std::string r_type =
+      lanelet.rightBound().attributeOr(lanelet::AttributeName::Type, "none");
 
-    const double r_offset = r_type != "road_border" ? -right_bound_offset : 0.0;
-    const double l_offset = l_type != "road_border" ? left_bound_offset : 0.0;
+    const bool l_skip =
+      std::find(types_to_skip.begin(), types_to_skip.end(), l_type) != types_to_skip.end();
+    const bool r_skip =
+      std::find(types_to_skip.begin(), types_to_skip.end(), r_type) != types_to_skip.end();
+    const double l_offset = l_skip ? 0.0 : left_bound_offset;
+    const double r_offset = r_skip ? 0.0 : -right_bound_offset;
 
     expanded_lanelets.push_back(lanelet::utils::getExpandedLanelet(lanelet, l_offset, r_offset));
   }
