@@ -20,7 +20,7 @@
 
 int main()
 {
-  double Td = 0.11;           // time delay in seconds.
+  double Td = 0.11;        // time delay in seconds.
   size_t order = 3;        // order of the Pade approximation.
 
   auto tf_delay = ns_control_toolbox::pade(Td, order);
@@ -39,7 +39,7 @@ int main()
   ns_control_toolbox::tf_factor m_den2{{tau_steer, 1}};             // (tau*s + 1)
   auto den_tf_factor = m_den1 * m_den2;
 
-  ns_control_toolbox::tf Gey({1.}, den_tf_factor(), 100., 1.);          // num, den, num constant, den constant
+  ns_control_toolbox::tf Gey({1.}, den_tf_factor(), 100., 1.);     // num, den, num constant, den constant
   Gey.print();
 
   // Qfilter
@@ -72,8 +72,6 @@ int main()
   auto Gey_ss = ns_control_toolbox::tf2ss(Gey, dt);
 
   Gey_ss.print();
-
-  // PERMUTATION TEST
 
   return 0;
 }
