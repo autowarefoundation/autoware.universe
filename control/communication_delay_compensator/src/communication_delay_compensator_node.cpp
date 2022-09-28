@@ -156,6 +156,7 @@ void CommunicationDelayCompensatorNode::onControlCommands(const ControlCommand::
   {
     previous_control_cmd_ptr_ = current_control_cmd_ptr_;
   }
+
   current_control_cmd_ptr_ = std::make_shared<ControlCommand>(*msg);
 
   RCLCPP_WARN_THROTTLE(
@@ -190,19 +191,11 @@ void CommunicationDelayCompensatorNode::onCurrentLongitudinalError(
   }
 
   current_long_errors_ptr_ = std::make_shared<ControllerErrorReportMsg>(*msg);
-
-  if (prev_long_errors_ptr_)
-  {
-    // Compute current steering error.
-    previous_target_velocity_ = static_cast<float64_t>(prev_long_errors_ptr_->target_velocity_read);
-  }
-
   current_target_velocity_ = static_cast<float64_t>(current_long_errors_ptr_->target_velocity_read);
 
   RCLCPP_WARN_THROTTLE(
     get_logger(),
     *get_clock(), 1000, "Long error  msg is received");
-
 }
 
 void CommunicationDelayCompensatorNode::onCurrentLateralErrors(
@@ -218,18 +211,6 @@ void CommunicationDelayCompensatorNode::onCurrentLateralErrors(
 
   // Compute current steering error.
   current_curvature_ = static_cast<float64_t>(current_lat_errors_ptr_->curvature_read);
-
-  // Ackerman Ideal Steering
-  current_ideal_steering_ = std::atan(current_curvature_ * params_node_.wheel_base);
-
-  if (prev_lat_errors_ptr_)
-  {
-    // Compute current steering error.
-    prev_curvature_ = static_cast<float64_t>(prev_lat_errors_ptr_->curvature_read);
-
-    // Ackerman Ideal Steering
-    prev_ideal_steering_ = std::atan(prev_curvature_ * params_node_.wheel_base);
-  }
 
   RCLCPP_WARN_THROTTLE(
     get_logger(),
@@ -248,7 +229,12 @@ void CommunicationDelayCompensatorNode::publishCompensationReferences()
 
 void CommunicationDelayCompensatorNode::onCurrentSteering(const SteeringReport::SharedPtr msg)
 {
-  prev_steering_ptr_ = current_steering_ptr_;
+
+  if (current_steering_ptr_)
+  {
+    prev_steering_ptr_ = current_steering_ptr_;
+  }
+
   current_steering_ptr_ = std::make_shared<SteeringReport>(*msg);
 
   if (prev_steering_ptr_)
