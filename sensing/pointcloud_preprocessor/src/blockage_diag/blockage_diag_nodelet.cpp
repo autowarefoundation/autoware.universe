@@ -219,17 +219,21 @@ void BlockageDiagComponent::filter(
   }
 
   /////////sobel
-  cv::Mat distance_img(
+  cv::Mat sobeled_img(
     cv::Size(lidar_depth_map_8u.rows, lidar_depth_map_8u.cols), CV_8UC1, cv::Scalar(0));
-  cv::Mat dist;
-  distance_img = lidar_depth_map_8u.clone();
-  cv::threshold(distance_img, distance_img, 1, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
-  cv::distanceTransform(distance_img, dist, cv::DIST_L2, 3);
-  cv::normalize(dist, dist, 0, 1.0, cv::NORM_MINMAX);
-  distance_img = dist;
-  cv::Mat result_mono_img;
-  distance_img.convertTo(result_mono_img, CV_8UC1, 255, 0);
-
+  sobeled_img = lidar_depth_map_8u.clone();
+  cv::inRange(lidar_depth_map_8u, 0, 1, sobeled_img);
+  Sobel(sobeled_img, sobeled_img, CV_8UC1, 1, 0, 3);
+  Sobel(sobeled_img, sobeled_img, CV_8UC1, 0, 1, 3);
+  cv::Mat morpho_img;
+  uint erode_kernel = 3;
+  cv::Mat sobel_element = getStructuringElement(
+    cv::MORPH_RECT, cv::Size(erode_kernel + 1, 2 * erode_kernel + 1),
+    cv::Point(erode_kernel, erode_kernel));
+  cv::dilate(sobeled_img, morpho_img, sobel_element);
+  cv::erode(morpho_img, morpho_img, sobel_element);
+  cv::Mat result_mono_img = morpho_img.clone();
+  morpho_img.convertTo(result_mono_img, CV_8UC1, 255, 0);
   sensor_msgs::msg::Image::SharedPtr result_img_msg =
     cv_bridge::CvImage(std_msgs::msg::Header(), "mono8", result_mono_img).toImageMsg();
   result_img_msg->header = input->header;
