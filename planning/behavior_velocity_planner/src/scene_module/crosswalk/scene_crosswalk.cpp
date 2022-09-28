@@ -405,11 +405,12 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
 }
 
 boost::optional<std::pair<double, geometry_msgs::msg::Point>> CrosswalkModule::getStopLine(
-  const PathWithLaneId & ego_path) const
+  const PathWithLaneId & ego_path, bool & exist_stopline_in_map) const
 {
   const auto & ego_pos = planner_data_->current_pose.pose.position;
 
   const auto stop_line = getStopLineFromMap(module_id_, planner_data_, "crosswalk_id");
+  exist_stopline_in_map = static_cast<bool>(stop_line);
   if (stop_line) {
     const auto intersects = getLinestringIntersects(
       ego_path, lanelet::utils::to2D(stop_line.get()).basicLineString(), ego_pos, 2);
@@ -438,13 +439,14 @@ boost::optional<std::pair<size_t, PathPointWithLaneId>> CrosswalkModule::findRTC
 {
   const auto & base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
 
-  const auto p_stop_line = getStopLine(ego_path);
+  bool exist_stopline_in_map;
+  const auto p_stop_line = getStopLine(ego_path, exist_stopline_in_map);
   if (!p_stop_line) {
     return {};
   }
 
   const auto & p_stop = p_stop_line.get().second;
-  const auto & margin = planner_param_.stop_line_distance;
+  const auto margin = exist_stopline_in_map ? 0.0 : planner_param_.stop_line_distance;
 
   const size_t base_idx = findNearestSegmentIndex(ego_path.points, p_stop);
   const auto residual_length = calcLongitudinalOffsetToSegment(ego_path.points, base_idx, p_stop);
@@ -467,7 +469,8 @@ boost::optional<std::pair<size_t, PathPointWithLaneId>> CrosswalkModule::findNea
   const auto & objects_ptr = planner_data_->predicted_objects;
   const auto & base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
 
-  const auto p_stop_line = getStopLine(ego_path);
+  bool exist_stopline_in_map;
+  const auto p_stop_line = getStopLine(ego_path, exist_stopline_in_map);
   if (!p_stop_line) {
     return {};
   }
@@ -572,8 +575,8 @@ boost::optional<std::pair<size_t, PathPointWithLaneId>> CrosswalkModule::findNea
   const auto stop_at_stop_line = !found_pedestrians || within_stop_line_margin;
 
   const auto & p_stop = stop_at_stop_line ? p_stop_line.get().second : first_stop_point;
-  const auto & margin =
-    stop_at_stop_line ? planner_param_.stop_line_distance : planner_param_.stop_margin;
+  const auto stop_line_distance = exist_stopline_in_map ? 0.0 : planner_param_.stop_line_distance;
+  const auto margin = stop_at_stop_line ? stop_line_distance : planner_param_.stop_margin;
 
   const size_t base_idx = findNearestSegmentIndex(ego_path.points, p_stop);
   const auto residual_length = calcLongitudinalOffsetToSegment(ego_path.points, base_idx, p_stop);
