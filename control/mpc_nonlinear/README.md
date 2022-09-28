@@ -7,7 +7,7 @@
 
 We used the [google-OSQP](https://github.com/google/osqp-cpp) version which depends on
 the [abseil-cpp](https://github.com/abseil/abseil-cpp) library. These libraries are written in C++17 and require higher
-versions of CMake (>=11). We removed the abseil-cpp dependency in **google-OSQP** to make it compatible with the ROS1
+versions of CMake (>=11). We removed the abseil-cpp dependency in **google-OSQP** to make it compatible with the ROS
 systems and CMake versions.
 
 ### **External Headers and Licences**
