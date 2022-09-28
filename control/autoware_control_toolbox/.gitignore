@@ -1,5 +1,0 @@
-**/.idea
-.vscode
-*.json
-cmake-build-debug
-**/logs/*/*.txt
