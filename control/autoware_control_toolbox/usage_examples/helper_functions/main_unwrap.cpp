@@ -17,10 +17,11 @@ int main()
   // Generate y = 6*sin(2*pi*n/N).
 
   std::vector<double> yvec;
-  std::transform(xvec.cbegin(), xvec.cend(), std::back_inserter(yvec), [&](auto const &x)
-  {
-    return 6 * sin(2 * M_PI * x / Nx);
-  });
+  std::transform(
+    xvec.cbegin(), xvec.cend(), std::back_inserter(yvec), [&](auto const & x)
+    {
+      return 6 * sin(2 * M_PI * x / Nx);
+    });
 
   writeToFile(log_path, yvec, "xc");
 
@@ -29,10 +30,11 @@ int main()
    * */
 
   std::vector<double> xw;
-  std::transform(yvec.cbegin(), yvec.cend(), std::back_inserter(xw), [&](auto const &x)
-  {
-    return std::atan2(sin(x), cos(x));
-  });
+  std::transform(
+    yvec.cbegin(), yvec.cend(), std::back_inserter(xw), [&](auto const & x)
+    {
+      return std::atan2(sin(x), cos(x));
+    });
 
   writeToFile(log_path, xw, "xw");
 
