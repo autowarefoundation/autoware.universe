@@ -14,10 +14,9 @@
 
 #include "autoware_control_toolbox.hpp"
 
-void print(std::vector<double> const &x)
+void print(std::vector<double> const & x)
 {
-  for (auto y : x)
-  {
+  for (auto y : x) {
     std::cout << y << " \t";
   }
 
@@ -54,8 +53,7 @@ int main()
   auto c1 = b1 * b2;
 
   ns_utils::print("\nBoost Storage : \n");
-  for (size_t i = 0; i < c1.size(); ++i)
-  {
+  for (size_t i = 0; i < c1.size(); ++i) {
     std::cout << c1[i] << '\t';
   }
 

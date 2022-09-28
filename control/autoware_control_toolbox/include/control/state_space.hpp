@@ -37,22 +37,22 @@ namespace ns_control_toolbox
 
 class tf2ss
 {
- public:
+public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   // Constructors
   tf2ss() = default;
 
-  explicit tf2ss(tf const &sys_tf, const double &Ts = 0.1);
+  explicit tf2ss(tf const & sys_tf, const double & Ts = 0.1);
 
-  tf2ss(std::vector<double> const &num, std::vector<double> const &den, const double &Ts = 0.1);
+  tf2ss(std::vector<double> const & num, std::vector<double> const & den, const double & Ts = 0.1);
 
   // Public methods
   // Currently only Tustin - Bilinear discretization is implemented.
-  void discretisize(double const &Ts);
+  void discretisize(double const & Ts);
 
   // Update state-space once constructed and in case of a parameter change.
-  void updateStateSpace(tf const &sys_tf);
+  void updateStateSpace(tf const & sys_tf);
 
   // Getters for the system matrices.
   // Discrete time state-space matrices.
@@ -81,18 +81,18 @@ class tf2ss
    * xy = [A B;C D]xu.
    * */
 
-  double simulateOneStep(Eigen::MatrixXd &x0, double const &u) const;
+  double simulateOneStep(Eigen::MatrixXd & x0, double const & u) const;
 
   /**
    * @brief Compute the system continuous time system matrices
    * */
-  void computeSystemMatrices(std::vector<double> const &num, std::vector<double> const &den);
+  void computeSystemMatrices(std::vector<double> const & num, std::vector<double> const & den);
 
   void print() const;
 
   void print_discrete_system() const;
 
- private:
+private:
   double Ts_{};
   Eigen::Index N_{};  // system size (A.rows+1).
 
@@ -122,15 +122,15 @@ class tf2ss
 
 class scalarFilters_ss
 {
- public:
+public:
   scalarFilters_ss() = default;
-  scalarFilters_ss(tf const &sys_tf, const double &Ts);
+  scalarFilters_ss(tf const & sys_tf, const double & Ts);
 
-  double simulateOneStep(double const &u);
+  double simulateOneStep(double const & u);
 
   void print() const;
 
- private:
+private:
   double ad_{};
   double bd_{};
   double cd_{};

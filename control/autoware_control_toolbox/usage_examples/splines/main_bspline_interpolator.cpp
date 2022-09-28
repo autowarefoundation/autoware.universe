@@ -46,10 +46,11 @@ int main()
     // Generate y = sin(x).
     double cy = 10;
     std::vector<double> yvec;
-    std::transform(xvec.cbegin(), xvec.cend(), std::back_inserter(yvec), [&](auto const &x)
-    {
-      return cy * sin(x);
-    });
+    std::transform(
+      xvec.cbegin(), xvec.cend(), std::back_inserter(yvec), [&](auto const & x)
+      {
+        return cy * sin(x);
+      });
 
     // Arc-length parametrization.
     std::vector<double> dx; //{1, 0.0};
@@ -60,27 +61,30 @@ int main()
 
     // Define arc-length cumsum()
     std::vector<double> svec;
-    std::transform(dx.cbegin(), dx.cend(), dy.cbegin(), std::back_inserter(svec),
-                   [](auto dxi, auto dyi)
-                   {
-                     static double ds = 0.0;
-                     ds += std::hypot(dxi, dyi);
+    std::transform(
+      dx.cbegin(), dx.cend(), dy.cbegin(), std::back_inserter(svec),
+      [](auto dxi, auto dyi)
+      {
+        static double ds = 0.0;
+        ds += std::hypot(dxi, dyi);
 
-                     return ds;
-                   });
+        return ds;
+      });
 
     // EIGEN IMPLEMENTATION.
     Eigen::MatrixXd
-      xe = Eigen::Map<Eigen::Matrix<double, base_size, 1 >>(xvec.data());
+      xe = Eigen::Map<Eigen::Matrix<double, base_size, 1>>(xvec.data());
 
-    Eigen::MatrixXd ye(xe.unaryExpr([&cy](auto x)
-                                    { return cy * sin(x); }));
+    Eigen::MatrixXd ye(xe.unaryExpr(
+        [&cy](auto x)
+        {return cy * sin(x);}));
 
-    Eigen::MatrixXd ze(xe.unaryExpr([](auto x)
-                                    { return 2 * cos(x) - 3 * sin(x); }));
+    Eigen::MatrixXd ze(xe.unaryExpr(
+        [](auto x)
+        {return 2 * cos(x) - 3 * sin(x);}));
 
     Eigen::MatrixXd se;
-    se = Eigen::Map<Eigen::Matrix<double, base_size, 1 >>(svec.data());
+    se = Eigen::Map<Eigen::Matrix<double, base_size, 1>>(svec.data());
 
     // Create a matrix to be interpolated into a new size.
     auto yze = ns_eigen_utils::hstack<double>(ye, ze);
@@ -110,7 +114,7 @@ int main()
     auto tvec_new_1 = Eigen::VectorXd::LinSpaced(new_size_1, 8.0, 2.0);
 
     ns_splines::BSplineInterpolator interpolating_bspline_1(tvec_base_1, tvec_new_1,
-                                                            0.3);
+      0.3);
 
     Eigen::MatrixXd yz_interp_new_coord;
     interpolating_bspline_1.InterpolateInCoordinates(yze, yz_interp_new_coord);
@@ -137,10 +141,11 @@ int main()
     // Generate y = sin(x).
     double cy = 10;
     std::vector<double> yvec;
-    std::transform(xvec.cbegin(), xvec.cend(), std::back_inserter(yvec), [&](auto const &x)
-    {
-      return cy * sin(x);
-    });
+    std::transform(
+      xvec.cbegin(), xvec.cend(), std::back_inserter(yvec), [&](auto const & x)
+      {
+        return cy * sin(x);
+      });
 
     // Arc-length parametrization.
     std::vector<double> dx; //{1, 0.0};
@@ -151,27 +156,30 @@ int main()
 
     // Define arc-length cumsum()
     std::vector<double> svec;
-    std::transform(dx.cbegin(), dx.cend(), dy.cbegin(), std::back_inserter(svec),
-                   [](auto dxi, auto dyi)
-                   {
-                     static double ds = 0.0;
-                     ds += std::hypot(dxi, dyi);
+    std::transform(
+      dx.cbegin(), dx.cend(), dy.cbegin(), std::back_inserter(svec),
+      [](auto dxi, auto dyi)
+      {
+        static double ds = 0.0;
+        ds += std::hypot(dxi, dyi);
 
-                     return ds;
-                   });
+        return ds;
+      });
 
     // EIGEN IMPLEMENTATION.
     Eigen::MatrixXd
-      xe = Eigen::Map<Eigen::Matrix<double, base_size, 1 >>(xvec.data());
+      xe = Eigen::Map<Eigen::Matrix<double, base_size, 1>>(xvec.data());
 
-    Eigen::MatrixXd ye(xe.unaryExpr([&](auto x)
-                                    { return cy * sin(x); }));
+    Eigen::MatrixXd ye(xe.unaryExpr(
+        [&](auto x)
+        {return cy * sin(x);}));
 
-    Eigen::MatrixXd ze(xe.unaryExpr([&](auto x)
-                                    { return 2 * cos(x) - 3 * sin(x); }));
+    Eigen::MatrixXd ze(xe.unaryExpr(
+        [&](auto x)
+        {return 2 * cos(x) - 3 * sin(x);}));
 
     Eigen::MatrixXd se;
-    se = Eigen::Map<Eigen::Matrix<double, base_size, 1 >>(svec.data());
+    se = Eigen::Map<Eigen::Matrix<double, base_size, 1>>(svec.data());
 
     // Create a matrix to be interpolated into a new size.
     auto yze = ns_eigen_utils::hstack<double>(ye, ze);
@@ -181,8 +189,9 @@ int main()
     // Create a new smoothing spline with compute derivatives option set true. Giving only the lengths.
     const double timer_interpolation = tic();
     ns_splines::BSplineInterpolator interpolating_bspline(base_size, new_size, 0.3, true);
-    fmt::print("{:<{}}{:.2f}ms\n", "Time: Bspline interpolator with its derivatives construction time :", 50, toc
-      (timer_interpolation));
+    fmt::print(
+      "{:<{}}{:.2f}ms\n", "Time: Bspline interpolator with its derivatives construction time :", 50, toc(
+        timer_interpolation));
 
     // Different size multi-column interpolation. Expanding the data points.
     interpolating_bspline.InterpolateInCoordinates(yze, yz_interp_newsize);
@@ -205,10 +214,11 @@ int main()
 
     const double timer_interpolation2 = tic();
     ns_splines::BSplineInterpolator interpolating_bspline_1(tvec_base_1, tvec_new_1,
-                                                            0.3, true);
+      0.3, true);
 
-    fmt::print("{:<{}}{:.2f}ms\n", "Time: Bspline interpolator with its derivatives construction time :", 50, toc
-      (timer_interpolation2));
+    fmt::print(
+      "{:<{}}{:.2f}ms\n", "Time: Bspline interpolator with its derivatives construction time :", 50, toc(
+        timer_interpolation2));
 
     Eigen::MatrixXd yz_interp_new_coord;
     interpolating_bspline_1.InterpolateInCoordinates(yze, yz_interp_new_coord);
@@ -249,15 +259,17 @@ int main()
     dxdt.setConstant(kx); // dxdt = k*x and kx is k of x
 
 
-    Eigen::MatrixXd dydt(xe.unaryExpr([&](auto x)
-                                      { return cy * kx * cos(x); }));
+    Eigen::MatrixXd dydt(xe.unaryExpr(
+        [&](auto x)
+        {return cy * kx * cos(x);}));
 
     // Second derivative
     Eigen::MatrixXd dxdt2(xe.rows(), 1);
     dxdt2.setZero();
 
-    Eigen::MatrixXd dydt2(xe.unaryExpr([&](auto x)
-                                       { return -cy * kx * kx * sin(x); }));
+    Eigen::MatrixXd dydt2(xe.unaryExpr(
+        [&](auto x)
+        {return -cy * kx * kx * sin(x);}));
 
     // compute r0, r1 as r0 = [dxdt, dydt] and r1[dxdt2, dydt2]
     auto rdt = ns_eigen_utils::hstack<double>(dxdt, dydt);
@@ -285,10 +297,11 @@ int main()
     // Generate y = sin(x).
     double cy = 10;
     std::vector<double> yvec;
-    std::transform(xvec.cbegin(), xvec.cend(), std::back_inserter(yvec), [&](auto const &x)
-    {
-      return cy * sin(x);
-    });
+    std::transform(
+      xvec.cbegin(), xvec.cend(), std::back_inserter(yvec), [&](auto const & x)
+      {
+        return cy * sin(x);
+      });
 
     // Arc-length parametrization.
     std::vector<double> dx; //{1, 0.0};
@@ -299,27 +312,30 @@ int main()
 
     // Define arc-length cumsum()
     std::vector<double> svec;
-    std::transform(dx.cbegin(), dx.cend(), dy.cbegin(), std::back_inserter(svec),
-                   [](auto dxi, auto dyi)
-                   {
-                     static double ds = 0.0;
-                     ds += std::hypot(dxi, dyi);
+    std::transform(
+      dx.cbegin(), dx.cend(), dy.cbegin(), std::back_inserter(svec),
+      [](auto dxi, auto dyi)
+      {
+        static double ds = 0.0;
+        ds += std::hypot(dxi, dyi);
 
-                     return ds;
-                   });
+        return ds;
+      });
 
     // EIGEN IMPLEMENTATION.
     Eigen::MatrixXd
-      xe = Eigen::Map<Eigen::Matrix<double, base_size, 1 >>(xvec.data());
+      xe = Eigen::Map<Eigen::Matrix<double, base_size, 1>>(xvec.data());
 
-    Eigen::MatrixXd ye(xe.unaryExpr([&cy](auto x)
-                                    { return cy * sin(x); }));
+    Eigen::MatrixXd ye(xe.unaryExpr(
+        [&cy](auto x)
+        {return cy * sin(x);}));
 
-    Eigen::MatrixXd ze(xe.unaryExpr([](auto x)
-                                    { return 2 * cos(x) - 3 * sin(x); }));
+    Eigen::MatrixXd ze(xe.unaryExpr(
+        [](auto x)
+        {return 2 * cos(x) - 3 * sin(x);}));
 
     Eigen::MatrixXd se;
-    se = Eigen::Map<Eigen::Matrix<double, base_size, 1 >>(svec.data());
+    se = Eigen::Map<Eigen::Matrix<double, base_size, 1>>(svec.data());
 
 
     // Combine se, xe, ye, ze --> these are assumed to be given or taken from the trajectory.
@@ -332,8 +348,9 @@ int main()
 
     ns_splines::BSplineInterpolator interpolating_bspline_ROS(base_size, new_size, 0.3, true);
 
-    fmt::print("{:<{}}{:.2f}ms\n", "Time: Bspline ROS interpolator with its derivatives construction time :", 50, toc
-      (timer_interpolation));
+    fmt::print(
+      "{:<{}}{:.2f}ms\n", "Time: Bspline ROS interpolator with its derivatives construction time :",
+      50, toc(timer_interpolation));
 
     // The down-sampled and smoothed map is obtained by;
     Eigen::MatrixXd smoothed_map_ROS;
@@ -371,15 +388,17 @@ int main()
     dxdt.setConstant(kx); // dxdt = k*x and kx is k of x
 
 
-    Eigen::MatrixXd dydt(xe.unaryExpr([&](auto x)
-                                      { return cy * kx * cos(x); }));
+    Eigen::MatrixXd dydt(xe.unaryExpr(
+        [&](auto x)
+        {return cy * kx * cos(x);}));
 
     // Second derivative
     Eigen::MatrixXd dxdt2(xe.rows(), 1);
     dxdt2.setZero();
 
-    Eigen::MatrixXd dydt2(xe.unaryExpr([&](auto x)
-                                       { return -cy * kx * kx * sin(x); }));
+    Eigen::MatrixXd dydt2(xe.unaryExpr(
+        [&](auto x)
+        {return -cy * kx * kx * sin(x);}));
 
     // compute r0, r1 as r0 = [dxdt, dydt] and r1[dxdt2, dydt2]
     auto rdt = ns_eigen_utils::hstack<double>(dxdt, dydt);

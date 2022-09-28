@@ -41,16 +41,18 @@ int main()
     // Generate y = sin(x).
     double cy = 10;
     std::vector<double> yvec;
-    std::transform(xvec.cbegin(), xvec.cend(), std::back_inserter(yvec), [&](auto const &x)
-    {
-      return cy * sin(x) + distribution(generator) * 0;
-    });
+    std::transform(
+      xvec.cbegin(), xvec.cend(), std::back_inserter(yvec), [&](auto const & x)
+      {
+        return cy * sin(x) + distribution(generator) * 0;
+      });
 
     std::vector<double> zvec;
-    std::transform(xvec.cbegin(), xvec.cend(), std::back_inserter(zvec), [&](auto const &x)
-    {
-      return 2 * cos(x) - 3 * sin(x);
-    });
+    std::transform(
+      xvec.cbegin(), xvec.cend(), std::back_inserter(zvec), [&](auto const & x)
+      {
+        return 2 * cos(x) - 3 * sin(x);
+      });
 
 
     // Arc-length parametrization.
@@ -62,14 +64,15 @@ int main()
 
     // Define arc-length cumsum()
     std::vector<double> svec;
-    std::transform(dx.cbegin(), dx.cend(), dy.cbegin(), std::back_inserter(svec),
-                   [](auto dxi, auto dyi)
-                   {
-                     static double ds = 0.0;
-                     ds += std::hypot(dxi, dyi);
+    std::transform(
+      dx.cbegin(), dx.cend(), dy.cbegin(), std::back_inserter(svec),
+      [](auto dxi, auto dyi)
+      {
+        static double ds = 0.0;
+        ds += std::hypot(dxi, dyi);
 
-                     return ds;
-                   });
+        return ds;
+      });
 
     writeToFile(log_path, xvec, "xvec");
     writeToFile(log_path, yvec, "yvec");
@@ -95,16 +98,18 @@ int main()
     // < -------------------------- FULL EIGEN IMPLEMENTATION --------------------------------->
 
     Eigen::MatrixXd xe;
-    xe = Eigen::Map<Eigen::Matrix<double, num_of_points, 1 >>(xvec.data());
+    xe = Eigen::Map<Eigen::Matrix<double, num_of_points, 1>>(xvec.data());
 
-    Eigen::MatrixXd ye(xe.unaryExpr([&](auto x)
-                                    { return cy * sin(x) + distribution(generator); }));
+    Eigen::MatrixXd ye(xe.unaryExpr(
+        [&](auto x)
+        {return cy * sin(x) + distribution(generator);}));
 
-    Eigen::MatrixXd ze(xe.unaryExpr([&](auto x)
-                                    { return 2 * cos(x) - 3 * sin(x) + distribution(generator); }));
+    Eigen::MatrixXd ze(xe.unaryExpr(
+        [&](auto x)
+        {return 2 * cos(x) - 3 * sin(x) + distribution(generator);}));
 
     Eigen::MatrixXd se;
-    se = Eigen::Map<Eigen::Matrix<double, num_of_points, 1 >>(svec.data());
+    se = Eigen::Map<Eigen::Matrix<double, num_of_points, 1>>(svec.data());
 
     Eigen::Index new_ssize = num_of_points;
     auto se_new = Eigen::VectorXd::LinSpaced(new_ssize, 0.0, se(se.rows() - 1));
@@ -167,10 +172,11 @@ int main()
     // Generate y = sin(x).
     double cy = 10;
     std::vector<double> yvec;
-    std::transform(xvec.cbegin(), xvec.cend(), std::back_inserter(yvec), [&](auto const &x)
-    {
-      return cy * sin(x) + distribution(generator) * 0;
-    });
+    std::transform(
+      xvec.cbegin(), xvec.cend(), std::back_inserter(yvec), [&](auto const & x)
+      {
+        return cy * sin(x) + distribution(generator) * 0;
+      });
 
     // Arc-length parametrization.
     std::vector<double> dx; //{1, 0.0};
@@ -181,27 +187,30 @@ int main()
 
     // Define arc-length cumsum()
     std::vector<double> svec;
-    std::transform(dx.cbegin(), dx.cend(), dy.cbegin(), std::back_inserter(svec),
-                   [](auto dxi, auto dyi)
-                   {
-                     static double ds = 0.0;
-                     ds += std::hypot(dxi, dyi);
+    std::transform(
+      dx.cbegin(), dx.cend(), dy.cbegin(), std::back_inserter(svec),
+      [](auto dxi, auto dyi)
+      {
+        static double ds = 0.0;
+        ds += std::hypot(dxi, dyi);
 
-                     return ds;
-                   });
+        return ds;
+      });
 
     // EIGEN IMPLEMENTATION.
     Eigen::MatrixXd xe;
-    xe = Eigen::Map<Eigen::Matrix<double, num_of_points, 1 >>(xvec.data());
+    xe = Eigen::Map<Eigen::Matrix<double, num_of_points, 1>>(xvec.data());
 
-    Eigen::MatrixXd ye(xe.unaryExpr([&](auto x)
-                                    { return cy * sin(x) + distribution(generator); }));
+    Eigen::MatrixXd ye(xe.unaryExpr(
+        [&](auto x)
+        {return cy * sin(x) + distribution(generator);}));
 
-    Eigen::MatrixXd ze(xe.unaryExpr([&](auto x)
-                                    { return 2 * cos(x) - 3 * sin(x) + distribution(generator); }));
+    Eigen::MatrixXd ze(xe.unaryExpr(
+        [&](auto x)
+        {return 2 * cos(x) - 3 * sin(x) + distribution(generator);}));
     // Generate arc length
     Eigen::MatrixXd se;
-    se = Eigen::Map<Eigen::Matrix<double, num_of_points, 1 >>(svec.data());
+    se = Eigen::Map<Eigen::Matrix<double, num_of_points, 1>>(svec.data());
 
     // Compute original curvature.
     Eigen::MatrixXd dxdt(xe.rows(), 1);
@@ -209,15 +218,17 @@ int main()
     // First derivative
     dxdt.setConstant(kx); // dxdt = k*x and kx is k of x
 
-    Eigen::MatrixXd dydt(xe.unaryExpr([&](auto x)
-                                      { return cy * kx * cos(x); }));
+    Eigen::MatrixXd dydt(xe.unaryExpr(
+        [&](auto x)
+        {return cy * kx * cos(x);}));
 
     // Second derivative
     Eigen::MatrixXd dxdt2(xe.rows(), 1);
     dxdt2.setZero();
 
-    Eigen::MatrixXd dydt2(xe.unaryExpr([&](auto x)
-                                       { return -cy * kx * kx * sin(x); }));
+    Eigen::MatrixXd dydt2(xe.unaryExpr(
+        [&](auto x)
+        {return -cy * kx * kx * sin(x);}));
 
     // compute r0, r1 as r0 = [dxdt, dydt] and r1[dxdt2, dydt2]
     auto rdt = ns_eigen_utils::hstack<double>(dxdt, dydt);

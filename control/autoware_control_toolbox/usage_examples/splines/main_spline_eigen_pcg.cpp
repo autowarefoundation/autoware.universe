@@ -37,14 +37,14 @@ int main()
   std::vector<double> yvec;
 
   std::transform(
-    xvec.cbegin(), xvec.cend(), std::back_inserter(yvec), [](auto const &x)
-    { return sin(x); });
+    xvec.cbegin(), xvec.cend(), std::back_inserter(yvec), [](auto const & x)
+    {return sin(x);});
 
   // Generate z = cos(x).
   std::vector<double> zvec;
   std::transform(
-    xvec.cbegin(), xvec.cend(), std::back_inserter(zvec), [](auto const &x)
-    { return cos(x); });
+    xvec.cbegin(), xvec.cend(), std::back_inserter(zvec), [](auto const & x)
+    {return cos(x);});
 
   // Arc-length parametrization.
   std::vector<double> dx;  //{1, 0.0};
@@ -141,8 +141,7 @@ int main()
   interpolating_spline_aw.Initialize(svec, zvec);
 
   std::vector<double> zinterp_itemwise;
-  for (auto const &s : se_new2)
-  {
+  for (auto const & s : se_new2) {
     double zint{};
     interpolating_spline_aw.Interpolate(s, zint);
     zinterp_itemwise.emplace_back(zint);

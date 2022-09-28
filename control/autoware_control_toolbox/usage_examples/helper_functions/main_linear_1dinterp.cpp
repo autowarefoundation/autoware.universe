@@ -30,10 +30,11 @@ int main()
   // Generate y = sin(x).
   std::vector<double> yvec;
 
-  std::transform(xvec.cbegin(), xvec.cend(), std::back_inserter(yvec), [](auto const &x)
-  {
-    return sin(x);
-  });
+  std::transform(
+    xvec.cbegin(), xvec.cend(), std::back_inserter(yvec), [](auto const & x)
+    {
+      return sin(x);
+    });
 
   writeToFile(log_path, xvec, "xvec");
   writeToFile(log_path, yvec, "yvec");
@@ -46,8 +47,7 @@ int main()
 
   std::vector<double> ypw;
 
-  for (auto const &x : xnew)
-  {
+  for (auto const & x : xnew) {
     double ynew{};
     auto is_interpolated = ns_utils::interp1d_linear(xvec, yvec, x, ynew);
 
