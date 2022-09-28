@@ -77,7 +77,8 @@ void ObjectLaneletFilterNode::objectCallback(
     return;
   }
   autoware_auto_perception_msgs::msg::DetectedObjects transformed_objects;
-  if (!perception_utils::transformObjects(*input_msg, "map", tf_buffer_, transformed_objects)) {
+  if (!perception_utils::transformObjects(
+        *input_msg, "map", tf_buffer_, transformed_objects, true)) {
     RCLCPP_ERROR(get_logger(), "Failed transform to map.");
     return;
   }
