@@ -389,8 +389,8 @@ TEST(ACTspline, bSplineCurvature)
                                         { return R * sin(x); }));
 
   // Create a new smoothing spline.
-  double know_number_ratio = 0.3;
-  ns_splines::BSplineInterpolatorTemplated<Nin, Nout> interpolating_bspline(know_number_ratio, true);
+  double knot_number_ratio = 0.3;
+  ns_splines::BSplineInterpolatorTemplated<Nin, Nout> interpolating_bspline(knot_number_ratio, true);
 
   // Get xdot, ydot
   Eigen::MatrixXd rdot_interp(Nout, 2); // [xdot, ydot]
