@@ -17,6 +17,7 @@
 #include <lidar_centerpoint/postprocess/postprocess_kernel.hpp>
 
 #include <thrust/count.h>
+#include <thrust/device_vector.h>
 #include <thrust/sort.h>
 
 namespace
@@ -116,6 +117,9 @@ cudaError_t PostProcessCUDA::generateDetectedBoxes3D_launch(
   const float * out_rot, const float * out_vel, std::vector<Box3D> & det_boxes3d,
   cudaStream_t stream)
 {
+  thrust::device_vector<float> yaw_norm_thresholds(
+    config_.yaw_norm_thresholds_.begin(), config_.yaw_norm_thresholds_.end());
+
   dim3 blocks(
     divup(config_.down_grid_size_y_, THREADS_PER_BLOCK),
     divup(config_.down_grid_size_x_, THREADS_PER_BLOCK));
@@ -124,7 +128,8 @@ cudaError_t PostProcessCUDA::generateDetectedBoxes3D_launch(
     out_heatmap, out_offset, out_z, out_dim, out_rot, out_vel, config_.voxel_size_x_,
     config_.voxel_size_y_, config_.range_min_x_, config_.range_min_y_, config_.down_grid_size_x_,
     config_.down_grid_size_y_, config_.downsample_factor_, config_.class_size_,
-    config_.yaw_norm_thresholds_.data(), thrust::raw_pointer_cast(boxes3d_d_.data()));
+    thrust::raw_pointer_cast(yaw_norm_thresholds.data()),
+    thrust::raw_pointer_cast(boxes3d_d_.data()));
 
   // suppress by socre
   const auto num_det_boxes3d = thrust::count_if(
