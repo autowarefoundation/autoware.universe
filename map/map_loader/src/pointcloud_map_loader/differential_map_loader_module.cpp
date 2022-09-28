@@ -97,8 +97,7 @@ void DifferentialMapLoaderModule::differentialAreaLoad(
 }
 
 void DifferentialMapLoaderModule::partialAreaLoad(
-  const autoware_map_msgs::msg::AreaInfo area,
-  LoadPCDMaps::Response::SharedPtr & response) const
+  const autoware_map_msgs::msg::AreaInfo area, LoadPCDMaps::Response::SharedPtr & response) const
 {
   // iterate over all the available pcd map grids
 
@@ -119,8 +118,7 @@ void DifferentialMapLoaderModule::partialAreaLoad(
 }
 
 bool DifferentialMapLoaderModule::onServiceLoadPCDMaps(
-  LoadPCDMaps::Request::SharedPtr req,
-  LoadPCDMaps::Response::SharedPtr res)
+  LoadPCDMaps::Request::SharedPtr req, LoadPCDMaps::Response::SharedPtr res)
 {
   if (req->mode == LoadPCDMaps::Request::MODE_PARTIAL_AREA_LOAD) {
     auto area = req->area;

@@ -51,11 +51,9 @@ private:
   rclcpp::Service<LoadPCDMaps>::SharedPtr load_pcd_maps_service_;
 
   bool onServiceLoadPCDMaps(
-    LoadPCDMaps::Request::SharedPtr req,
-    LoadPCDMaps::Response::SharedPtr res);
+    LoadPCDMaps::Request::SharedPtr req, LoadPCDMaps::Response::SharedPtr res);
   void partialAreaLoad(
-    const autoware_map_msgs::msg::AreaInfo area,
-    LoadPCDMaps::Response::SharedPtr & response) const;
+    const autoware_map_msgs::msg::AreaInfo area, LoadPCDMaps::Response::SharedPtr & response) const;
   void differentialAreaLoad(
     const autoware_map_msgs::msg::AreaInfo area_info,
     const std::vector<std::string> already_loaded_ids,
