@@ -44,6 +44,7 @@ using std_msgs::msg::Header;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
 
+using autoware_adapi_v1_msgs::msg::VelocityFactor;
 using autoware_adapi_v1_msgs::msg::VelocityFactorArray;
 using tier4_debug_msgs::msg::Float32MultiArrayStamped;
 using tier4_planning_msgs::msg::StopFactor;
