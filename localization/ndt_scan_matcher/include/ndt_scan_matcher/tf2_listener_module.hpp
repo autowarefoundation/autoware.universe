@@ -17,19 +17,20 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <tf2_ros/transform_listener.h>
-#include <tf2_ros/buffer.h>
 #include <tf2/transform_datatypes.h>
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
 
 class Tf2ListenerModule
 {
   using TransformStamped = geometry_msgs::msg::TransformStamped;
+
 public:
   Tf2ListenerModule(rclcpp::Node * node);
-bool get_transform(
-  const builtin_interfaces::msg::Time & timestamp,
-  const std::string & target_frame, const std::string & source_frame,
-  const geometry_msgs::msg::TransformStamped::SharedPtr & transform_stamped_ptr) const;
+  bool get_transform(
+    const builtin_interfaces::msg::Time & timestamp, const std::string & target_frame,
+    const std::string & source_frame,
+    const geometry_msgs::msg::TransformStamped::SharedPtr & transform_stamped_ptr) const;
 
 private:
   rclcpp::Logger logger_;
@@ -37,4 +38,4 @@ private:
   tf2_ros::TransformListener tf2_listener_;
 };
 
-#endif  // NDT_SCAN_MATCHER__TF2_LISTEN_MODULE_HPP_
+#endif  // NDT_SCAN_MATCHER__TF2_LISTENER_MODULE_HPP_

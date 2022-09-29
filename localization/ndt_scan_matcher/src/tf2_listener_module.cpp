@@ -30,15 +30,13 @@ geometry_msgs::msg::TransformStamped identity_transform_stamped(
 }
 
 Tf2ListenerModule::Tf2ListenerModule(rclcpp::Node * node)
-: logger_(node->get_logger()),
-  tf2_buffer_(node->get_clock()),
-  tf2_listener_(tf2_buffer_)
-{}
+: logger_(node->get_logger()), tf2_buffer_(node->get_clock()), tf2_listener_(tf2_buffer_)
+{
+}
 
 bool Tf2ListenerModule::get_transform(
-  const builtin_interfaces::msg::Time & timestamp,
-  const std::string & target_frame, const std::string & source_frame,
-  const TransformStamped::SharedPtr & transform_stamped_ptr) const
+  const builtin_interfaces::msg::Time & timestamp, const std::string & target_frame,
+  const std::string & source_frame, const TransformStamped::SharedPtr & transform_stamped_ptr) const
 {
   const TransformStamped identity =
     identity_transform_stamped(timestamp, target_frame, source_frame);
@@ -53,8 +51,7 @@ bool Tf2ListenerModule::get_transform(
       tf2_buffer_.lookupTransform(target_frame, source_frame, tf2::TimePointZero);
   } catch (tf2::TransformException & ex) {
     RCLCPP_WARN(logger_, "%s", ex.what());
-    RCLCPP_ERROR(
-      logger_, "Please publish TF %s to %s", target_frame.c_str(), source_frame.c_str());
+    RCLCPP_ERROR(logger_, "Please publish TF %s to %s", target_frame.c_str(), source_frame.c_str());
 
     *transform_stamped_ptr = identity;
     return false;
