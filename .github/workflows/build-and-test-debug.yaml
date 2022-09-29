@@ -1,6 +1,7 @@
 name: build-and-test-debug
 
 on:
+  pull_request: # tmp
   schedule:
     - cron: 0 0 * * *
   workflow_dispatch:
