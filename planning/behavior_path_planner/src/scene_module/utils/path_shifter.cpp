@@ -347,18 +347,15 @@ void PathShifter::removeBehindShiftPointAndSetBaseOffset(const size_t nearest_id
     new_base_offset = last_removed_sp->length;
   }
 
-  if(zerolength_endidx>=0)
-  {
+  if (zerolength_endidx >= 0) {
     int size = shift_points_.size();
-    if(size>zerolength_endidx)
-    {
+    if (size > zerolength_endidx) {
       auto start_idx = shift_points_.at(zerolength_startidx).end_idx;
-      if(shift_points_.size()==1)
-      {
+      if (shift_points_.size() == 1) {
         start_idx = shift_points_.at(zerolength_startidx).start_idx;
       }
       auto end_idx = shift_points_.at(zerolength_endidx).end_idx;
-      if(nearest_idx>=start_idx && nearest_idx<=end_idx)new_base_offset=0.0;
+      if (nearest_idx >= start_idx && nearest_idx <= end_idx) new_base_offset = 0.0;
     }
   }
   // remove accumulated floating noise
