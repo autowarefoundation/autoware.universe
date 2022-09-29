@@ -200,6 +200,7 @@ void EmergencyHandler::publishControlCommands()
 
 void EmergencyHandler::publishMRMState()
 {
+  mrm_state_.stamp = this->now();
   pub_mrm_state_->publish(mrm_state_);
 }
 
