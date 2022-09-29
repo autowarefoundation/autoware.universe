@@ -94,7 +94,6 @@ private:
   rclcpp::Publisher<GateMode>::SharedPtr gate_mode_pub_;
   rclcpp::Publisher<EngageMsg>::SharedPtr engage_pub_;
   rclcpp::Publisher<OperationMode>::SharedPtr operation_mode_pub_;
-  rclcpp::Publisher<MRMBehaviorStatus>::SharedPtr mrm_sudden_stop_status_pub_;
 
   // Subscription
   rclcpp::Subscription<Heartbeat>::SharedPtr external_emergency_stop_heartbeat_sub_;

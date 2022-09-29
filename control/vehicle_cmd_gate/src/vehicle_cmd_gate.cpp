@@ -67,8 +67,6 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
   pub_external_emergency_ =
     this->create_publisher<Emergency>("output/external_emergency", durable_qos);
   operation_mode_pub_ = this->create_publisher<OperationMode>("output/operation_mode", durable_qos);
-  mrm_sudden_stop_status_pub_ = this->create_publisher<MRMBehaviorStatus>(
-    "output/mrm/sudden_stop/status", durable_qos);
 
   // Subscriber
   external_emergency_stop_heartbeat_sub_ = this->create_subscription<Heartbeat>(
