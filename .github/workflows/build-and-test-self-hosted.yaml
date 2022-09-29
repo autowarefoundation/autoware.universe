@@ -16,7 +16,6 @@ jobs:
           - galactic
           - humble
         cmake-build-type:
-          - Debug
           - Release
         container-suffix:
           - ""
