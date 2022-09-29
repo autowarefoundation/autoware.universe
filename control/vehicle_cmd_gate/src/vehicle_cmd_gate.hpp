@@ -22,9 +22,9 @@
 #include <std_srvs/srv/trigger.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
-#include <autoware_ad_api_msgs/srv/mrm_operation.hpp>
-#include <autoware_ad_api_msgs/msg/mrm_state.hpp>
-#include <autoware_ad_api_msgs/msg/mrm_behavior_status.hpp>
+#include <autoware_adapi_v1_msgs/srv/operate_mrm.hpp>
+#include <autoware_adapi_v1_msgs/msg/mrm_state.hpp>
+#include <autoware_adapi_v1_msgs/msg/mrm_behavior_status.hpp>
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
 #include <autoware_auto_system_msgs/msg/emergency_state.hpp>
 #include <autoware_auto_vehicle_msgs/msg/engage.hpp>
@@ -47,9 +47,9 @@
 namespace vehicle_cmd_gate
 {
 
-using autoware_ad_api_msgs::srv::MRMOperation;
-using autoware_ad_api_msgs::msg::MRMState;
-using autoware_ad_api_msgs::msg::MRMBehaviorStatus;
+using autoware_adapi_v1_msgs::srv::OperateMRM;
+using autoware_adapi_v1_msgs::msg::MRMState;
+using autoware_adapi_v1_msgs::msg::MRMBehaviorStatus;
 using autoware_auto_control_msgs::msg::AckermannControlCommand;
 using autoware_auto_system_msgs::msg::EmergencyState;
 using autoware_auto_vehicle_msgs::msg::GearCommand;
@@ -185,10 +185,10 @@ private:
     const std::shared_ptr<tier4_external_api_msgs::srv::SetEmergency::Response> response);
 
   // Service for MRM
-  rclcpp::Service<MRMOperation>::SharedPtr mrm_sudden_stop_operation_service_;
+  rclcpp::Service<OperateMRM>::SharedPtr mrm_sudden_stop_operation_service_;
   void onOperateSuddenStopService(
-    const MRMOperation::Request::SharedPtr request,
-    const MRMOperation::Response::SharedPtr response);
+    const OperateMRM::Request::SharedPtr request,
+    const OperateMRM::Response::SharedPtr response);
 
   MRMBehaviorStatus mrm_sudden_stop_status_;
 

@@ -31,7 +31,7 @@ MRMSuddenStopOperator::MRMSuddenStopOperator(const rclcpp::NodeOptions & node_op
     std::bind(&MRMSuddenStopOperator::onControlCommand, this, std::placeholders::_1));
 
   // Server
-  service_operation_ = create_service<MRMOperation>(
+  service_operation_ = create_service<OperateMRM>(
     "~/input/mrm/sudden_stop/operate",
     std::bind(&MRMSuddenStopOperator::operateSuddenStop, this,
     std::placeholders::_1, std::placeholders::_2));
@@ -64,8 +64,8 @@ void MRMSuddenStopOperator::onControlCommand(
 }
 
 void MRMSuddenStopOperator::operateSuddenStop(
-    const MRMOperation::Request::SharedPtr request,
-    const MRMOperation::Response::SharedPtr response)
+    const OperateMRM::Request::SharedPtr request,
+    const OperateMRM::Response::SharedPtr response)
 {
   if (request->operate == true) {
     status_.is_operating = true;

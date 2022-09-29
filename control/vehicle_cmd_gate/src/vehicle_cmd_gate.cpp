@@ -185,7 +185,7 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
     std::bind(&VehicleCmdGate::onClearExternalEmergencyStopService, this, _1, _2, _3));
 
   // Service for MRM
-  mrm_sudden_stop_operation_service_ = this->create_service<MRMOperation>(
+  mrm_sudden_stop_operation_service_ = this->create_service<OperateMRM>(
     "input/mrm/sudden_stop/operate",
     std::bind(&VehicleCmdGate::onOperateSuddenStopService, this, _1, _2));
 
@@ -614,7 +614,7 @@ void VehicleCmdGate::onMRMState(MRMState::ConstSharedPtr msg)
   // TODO(Makoto Kurihara): Use MRM state
   is_system_emergency_ = (current_mrm_state_.state == EmergencyState::MRM_OPERATING ||
                           current_mrm_state_.state == EmergencyState::MRM_SUCCEEDED) &&
-                         (current_mrm_state_.behavior == MRMState::SUDDEN_STOP);
+                         (current_mrm_state_.behavior == MRMState::EMERGENCY_STOP);
 }
 
 double VehicleCmdGate::getDt()
@@ -686,8 +686,8 @@ bool VehicleCmdGate::onClearExternalEmergencyStopService(
 }
 
 void VehicleCmdGate::onOperateSuddenStopService(
-  const MRMOperation::Request::SharedPtr request,
-  const MRMOperation::Response::SharedPtr response)
+  const OperateMRM::Request::SharedPtr request,
+  const OperateMRM::Response::SharedPtr response)
 {
   if (request->operate == true) {
     is_system_emergency_ = true;

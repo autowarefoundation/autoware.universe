@@ -20,8 +20,8 @@
 #include <memory>
 
 // Autoware
-#include <autoware_ad_api_msgs/srv/mrm_operation.hpp>
-#include <autoware_ad_api_msgs/msg/mrm_behavior_status.hpp>
+#include <autoware_adapi_v1_msgs/srv/operate_mrm.hpp>
+#include <autoware_adapi_v1_msgs/msg/mrm_behavior_status.hpp>
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
 
 // ROS2 core
@@ -29,8 +29,8 @@
 
 namespace mrm_sudden_stop_operator
 {
-  using autoware_ad_api_msgs::srv::MRMOperation;
-  using autoware_ad_api_msgs::msg::MRMBehaviorStatus;
+  using autoware_adapi_v1_msgs::srv::OperateMRM;
+  using autoware_adapi_v1_msgs::msg::MRMBehaviorStatus;
   using autoware_auto_control_msgs::msg::AckermannControlCommand;
 
 struct Parameters
@@ -55,11 +55,11 @@ private:
   void onControlCommand(AckermannControlCommand::ConstSharedPtr msg);
 
   // Server
-  rclcpp::Service<MRMOperation>::SharedPtr service_operation_;
+  rclcpp::Service<OperateMRM>::SharedPtr service_operation_;
 
   void operateSuddenStop(
-    const MRMOperation::Request::SharedPtr request,
-    const MRMOperation::Response::SharedPtr response);
+    const OperateMRM::Request::SharedPtr request,
+    const OperateMRM::Response::SharedPtr response);
 
   // Publisher
   rclcpp::Publisher<MRMBehaviorStatus>::SharedPtr pub_status_;

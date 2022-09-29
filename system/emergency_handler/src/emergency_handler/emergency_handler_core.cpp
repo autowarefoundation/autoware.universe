@@ -44,10 +44,10 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
   // subscribe control mode
   sub_control_mode_ = create_subscription<autoware_auto_vehicle_msgs::msg::ControlModeReport>(
     "~/input/control_mode", rclcpp::QoS{1}, std::bind(&EmergencyHandler::onControlMode, this, _1));
-  sub_mrm_comfortable_stop_status_ = create_subscription<autoware_ad_api_msgs::msg::MRMBehaviorStatus>(
+  sub_mrm_comfortable_stop_status_ = create_subscription<autoware_adapi_v1_msgs::msg::MRMBehaviorStatus>(
     "~/input/mrm/comfortable_stop/status", rclcpp::QoS{1},
     std::bind(&EmergencyHandler::onMRMComfortableStopStatus, this, _1));
-  sub_mrm_sudden_stop_status_ = create_subscription<autoware_ad_api_msgs::msg::MRMBehaviorStatus>(
+  sub_mrm_sudden_stop_status_ = create_subscription<autoware_adapi_v1_msgs::msg::MRMBehaviorStatus>(
     "~/input/mrm/sudden_stop/status", rclcpp::QoS{1},
     std::bind(&EmergencyHandler::onMRMSuddenStopStatus, this, _1));
 
@@ -65,19 +65,19 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
     create_publisher<autoware_auto_vehicle_msgs::msg::GearCommand>("~/output/gear", rclcpp::QoS{1});
   pub_emergency_state_ = create_publisher<autoware_auto_system_msgs::msg::EmergencyState>(
     "~/output/emergency_state", rclcpp::QoS{1});
-  pub_mrm_state_ = create_publisher<autoware_ad_api_msgs::msg::MRMState>(
+  pub_mrm_state_ = create_publisher<autoware_adapi_v1_msgs::msg::MRMState>(
     "~/output/mrm/state", rclcpp::QoS{1});
 
   // Clients
   client_mrm_comfortable_stop_group_ =
     create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   client_mrm_comfortable_stop_ =
-    create_client<autoware_ad_api_msgs::srv::MRMOperation>(
+    create_client<autoware_adapi_v1_msgs::srv::OperateMRM>(
       "~/output/mrm/comfortable_stop/operate", rmw_qos_profile_services_default, client_mrm_comfortable_stop_group_);
   client_mrm_sudden_stop_group_ =
     create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   client_mrm_sudden_stop_ =
-    create_client<autoware_ad_api_msgs::srv::MRMOperation>(
+    create_client<autoware_adapi_v1_msgs::srv::OperateMRM>(
       "~/output/mrm/sudden_stop/operate", rmw_qos_profile_services_default, client_mrm_sudden_stop_group_);
 
   // Initialize
@@ -85,11 +85,11 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
   control_mode_ = std::make_shared<const autoware_auto_vehicle_msgs::msg::ControlModeReport>();
   prev_control_command_ = autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr(
     new autoware_auto_control_msgs::msg::AckermannControlCommand);
-  mrm_comfortable_stop_status_ = std::make_shared<const autoware_ad_api_msgs::msg::MRMBehaviorStatus>();
-  mrm_sudden_stop_status_ = std::make_shared<const autoware_ad_api_msgs::msg::MRMBehaviorStatus>();
+  mrm_comfortable_stop_status_ = std::make_shared<const autoware_adapi_v1_msgs::msg::MRMBehaviorStatus>();
+  mrm_sudden_stop_status_ = std::make_shared<const autoware_adapi_v1_msgs::msg::MRMBehaviorStatus>();
   mrm_state_.stamp = this->now();
-  mrm_state_.state = autoware_ad_api_msgs::msg::MRMState::NORMAL;
-  mrm_state_.behavior = autoware_ad_api_msgs::msg::MRMState::NONE;
+  mrm_state_.state = autoware_adapi_v1_msgs::msg::MRMState::NORMAL;
+  mrm_state_.behavior = autoware_adapi_v1_msgs::msg::MRMState::NONE;
 
   // Timer
   const auto update_period_ns = rclcpp::Rate(param_.update_rate).period();
@@ -124,13 +124,13 @@ void EmergencyHandler::onControlMode(
 }
 
 void EmergencyHandler::onMRMComfortableStopStatus(
-  const autoware_ad_api_msgs::msg::MRMBehaviorStatus::ConstSharedPtr msg)
+  const autoware_adapi_v1_msgs::msg::MRMBehaviorStatus::ConstSharedPtr msg)
 {
   mrm_comfortable_stop_status_ = msg;
 }
 
 void EmergencyHandler::onMRMSuddenStopStatus(
-  const autoware_ad_api_msgs::msg::MRMBehaviorStatus::ConstSharedPtr msg)
+  const autoware_adapi_v1_msgs::msg::MRMBehaviorStatus::ConstSharedPtr msg)
 {
   mrm_sudden_stop_status_ = msg;
 }
@@ -206,7 +206,7 @@ void EmergencyHandler::publishMRMState()
 void EmergencyHandler::operateMRM()
 {
   using autoware_auto_system_msgs::msg::EmergencyState;
-  using autoware_ad_api_msgs::msg::MRMState;
+  using autoware_adapi_v1_msgs::msg::MRMState;
 
   if (emergency_state_ == EmergencyState::NORMAL) {
     // Cancel MRM behavior when returning to NORMAL state
@@ -245,11 +245,11 @@ void EmergencyHandler::operateMRM()
 }
 
 void EmergencyHandler::callMRMBehavior(
-    const autoware_ad_api_msgs::msg::MRMState::_behavior_type & mrm_behavior) const
+    const autoware_adapi_v1_msgs::msg::MRMState::_behavior_type & mrm_behavior) const
 {
-  using autoware_ad_api_msgs::msg::MRMState;
+  using autoware_adapi_v1_msgs::msg::MRMState;
 
-  auto request = std::make_shared<autoware_ad_api_msgs::srv::MRMOperation::Request>();
+  auto request = std::make_shared<autoware_adapi_v1_msgs::srv::OperateMRM::Request>();
   request->operate = true;
 
   if (mrm_behavior == MRMState::COMFORTABLE_STOP) {
@@ -261,7 +261,7 @@ void EmergencyHandler::callMRMBehavior(
     }
     return;
   }
-  if (mrm_behavior == MRMState::SUDDEN_STOP) {
+  if (mrm_behavior == MRMState::EMERGENCY_STOP) {
     auto result = client_mrm_sudden_stop_->async_send_request(request).get();
     if (result->response.success == true) {
       RCLCPP_WARN(this->get_logger(), "Sudden stop is operated");
@@ -274,11 +274,11 @@ void EmergencyHandler::callMRMBehavior(
 }
 
 void EmergencyHandler::cancelMRMBehavior(
-  const autoware_ad_api_msgs::msg::MRMState::_behavior_type & mrm_behavior) const
+  const autoware_adapi_v1_msgs::msg::MRMState::_behavior_type & mrm_behavior) const
 {
-  using autoware_ad_api_msgs::msg::MRMState;
+  using autoware_adapi_v1_msgs::msg::MRMState;
 
-  auto request = std::make_shared<autoware_ad_api_msgs::srv::MRMOperation::Request>();
+  auto request = std::make_shared<autoware_adapi_v1_msgs::srv::OperateMRM::Request>();
   request->operate = false;
 
   if (mrm_behavior == MRMState::COMFORTABLE_STOP) {
@@ -290,7 +290,7 @@ void EmergencyHandler::cancelMRMBehavior(
     }
     return;
   }
-  if (mrm_behavior == MRMState::SUDDEN_STOP) {
+  if (mrm_behavior == MRMState::EMERGENCY_STOP) {
     auto result = client_mrm_sudden_stop_->async_send_request(request).get();
     if (result->response.success == true) {
       RCLCPP_WARN(this->get_logger(), "Sudden stop is canceled");
@@ -432,10 +432,10 @@ void EmergencyHandler::updateEmergencyState()
   }
 }
 
-autoware_ad_api_msgs::msg::MRMState::_behavior_type EmergencyHandler::updateMRMBehavior()
+autoware_adapi_v1_msgs::msg::MRMState::_behavior_type EmergencyHandler::updateMRMBehavior()
 {
   using autoware_auto_system_msgs::msg::HazardStatus;
-  using autoware_ad_api_msgs::msg::MRMState;
+  using autoware_adapi_v1_msgs::msg::MRMState;
 
   // Get hazard level
   const auto level = hazard_status_stamped_->status.level;
@@ -446,12 +446,12 @@ autoware_ad_api_msgs::msg::MRMState::_behavior_type EmergencyHandler::updateMRMB
       return MRMState::COMFORTABLE_STOP;
     }
     if (level == HazardStatus::SINGLE_POINT_FAULT) {
-      return MRMState::SUDDEN_STOP;
+      return MRMState::EMERGENCY_STOP;
     }
   }
   if (mrm_behavior_ == MRMState::COMFORTABLE_STOP) {
     if (level == HazardStatus::SINGLE_POINT_FAULT) {
-      return MRMState::SUDDEN_STOP;
+      return MRMState::EMERGENCY_STOP;
     }
   }
 
