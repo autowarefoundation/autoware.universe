@@ -54,6 +54,7 @@ ADD_EXE(TARGET twist_node SRC src/twist_estimator_*.cpp INC include)
 ADD_EXE(TARGET pose_init_node SRC src/pose_initializer.cpp)
 ADD_EXE(TARGET eagleye_bridge_node SRC src/eagleye_bridge.cpp)
 ADD_EXE(TARGET velocity_report_node SRC src/velocity_report_node.cpp)
+ADD_EXE(TARGET pose_twist_fuse_node SRC src/pose_twist_fuse_node.cpp)
 
 # ===================================================
 ament_auto_package()

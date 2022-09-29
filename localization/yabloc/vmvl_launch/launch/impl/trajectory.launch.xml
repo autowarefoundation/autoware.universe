@@ -56,4 +56,11 @@
         <remap from="pose" to="$(var output_pose)"/>
     </node>
 
+    <!-- pose twist fuser-->
+    <node name="pose_twist_fuser" pkg="vmvl_trajectory" exec="pose_twist_fuse_node" output="log" args="--ros-args --log-level warn">
+        <remap from="twist" to="/localization/trajectory/kalman/twist"/>
+        <remap from="pose" to="/localization/pf/particle_pose"/>
+        <remap from="odometry" to="/localization/kinematic_state"/>
+    </node>
+
 </launch>

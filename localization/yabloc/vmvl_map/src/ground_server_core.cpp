@@ -29,7 +29,7 @@ GroundServer::GroundServer()
   auto on_service = std::bind(&GroundServer::onService, this, _1, _2);
 
   service_ = create_service<Ground>("ground", on_service);
-  sub_map_ = create_subscription<HADMapBin>("map/vector_map", map_qos, on_map);
+  sub_map_ = create_subscription<HADMapBin>("/map/vector_map", map_qos, on_map);
   sub_pose_stamped_ = create_subscription<PoseStamped>("particle_pose", 10, on_pose);
 
   pub_ground_height_ = create_publisher<Float32>("height", 10);

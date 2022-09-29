@@ -21,7 +21,7 @@ Ll2Decomposer::Ll2Decomposer() : Node("ll2_to_image")
 
   // Subscriber
   auto cb_map = std::bind(&Ll2Decomposer::mapCallback, this, _1);
-  sub_map_ = create_subscription<HADMapBin>("map/vector_map", map_qos, cb_map);
+  sub_map_ = create_subscription<HADMapBin>("/map/vector_map", map_qos, cb_map);
 
   {
     // Load road marking labels from ros params
@@ -37,6 +37,7 @@ Ll2Decomposer::Ll2Decomposer() : Node("ll2_to_image")
 
 void Ll2Decomposer::mapCallback(const HADMapBin & msg)
 {
+  RCLCPP_INFO_STREAM(get_logger(), "subscribed binary vector map");
   lanelet::LaneletMapPtr lanelet_map = fromBinMsg(msg);
 
   const rclcpp::Time stamp = msg.header.stamp;
@@ -51,6 +52,8 @@ void Ll2Decomposer::mapCallback(const HADMapBin & msg)
   publishSignMarker(lanelet_map->lineStringLayer);
   vml_common::publishCloud(*pub_sign_board_, ll2_sign_board, stamp);
   vml_common::publishCloud(*pub_cloud_, ll2_road_marking, stamp);
+
+  RCLCPP_INFO_STREAM(get_logger(), "successed map decomposing");
 }
 
 pcl::PointCloud<pcl::PointNormal> Ll2Decomposer::splitLineStrings(

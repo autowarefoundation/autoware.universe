@@ -13,7 +13,7 @@
     <arg name="static_angular_covariance" default="0.005"/>
 
     <arg name="inout_weighted_particles" default="weighted_particles"/>
-    <arg name="output_particles_marker_array" default="weighted_particles_marker"/>
+    <arg name="output_particles_marker_array" default="predicted_particles_marker"/>
 
     <!-- predict update -->
     <arg name="input_initialpose" default="/localization/initializer/rectified/initialpose"/>
