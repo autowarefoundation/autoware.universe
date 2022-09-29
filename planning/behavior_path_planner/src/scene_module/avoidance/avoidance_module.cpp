@@ -2674,50 +2674,38 @@ void AvoidanceModule::updateAvoidanceDebugData(
   }
 }
 
-bool AvoidanceModule::shiftedpathcheck(
-  PathShifter & path_shifter,ShiftedPath shifted_path) const
+bool AvoidanceModule::shiftedpathcheck(PathShifter & path_shifter, ShiftedPath shifted_path) const
 {
   const auto & route_handler = planner_data_->route_handler;
-  PathWithLaneId path_refence = shifted_path.path;//
+  PathWithLaneId path_refence = shifted_path.path;  //
   auto shift_length = shifted_path.shift_length;
   lanelet::ConstLanelets current_lanelets;
   lanelet::ConstLanelets check_lanelets;
-  current_lanelets=avoidance_data_.current_lanelets;
-  static bool is_outside_prv=false;
+  current_lanelets = avoidance_data_.current_lanelets;
+  static bool is_outside_prv = false;
   static ShiftPointArray shift_points_prv;
   static size_t over_flag = 0;
-  if(current_lanelets.size()==0)
-  {
+  if (current_lanelets.size() == 0) {
     return false;
   }
-  check_lanelets.insert(
-    check_lanelets.end(), current_lanelets.begin(), current_lanelets.end());
+  check_lanelets.insert(check_lanelets.end(), current_lanelets.begin(), current_lanelets.end());
   auto ignore_opposite = parameters_->enable_avoidance_over_opposite_direction;
-  for(auto & lane: current_lanelets)
-  {
+  for (auto & lane : current_lanelets) {
     auto lanes = route_handler->getAllSharedLineStringLanelets(lane, true, true, ignore_opposite);
-    check_lanelets.insert(
-      check_lanelets.end(), lanes.begin(), lanes.end());
+    check_lanelets.insert(check_lanelets.end(), lanes.begin(), lanes.end());
   }
   auto shift_points = path_shifter.getShiftPoints();
-  if(shift_points.size()>1)
-  {
-     if(std::abs(shift_points.at(shift_points.size()-1).length)>0.01)
-     {
-      if(is_outside_prv)
-      {
+  if (shift_points.size() > 1) {
+    if (std::abs(shift_points.at(shift_points.size() - 1).length) > 0.01) {
+      if (is_outside_prv) {
         path_shifter.setShiftPoints(shift_points_prv);
         return true;
       }
       return false;
-     }
-  }
-  else
-  {
-    if(over_flag<shift_points.size())
-    {
-      if(is_outside_prv)
-      {
+    }
+  } else {
+    if (over_flag < shift_points.size()) {
+      if (is_outside_prv) {
         path_shifter.setShiftPoints(shift_points_prv);
         return true;
       }
@@ -2725,100 +2713,80 @@ bool AvoidanceModule::shiftedpathcheck(
     }
   }
   over_flag = shift_points.size();
-   
-  bool is_outside=false;
-  size_t i=0;
-  auto with = planner_data_->parameters.vehicle_width*0.5;
-  auto idx= motion_utils::findNearestSegmentIndex(path_refence.points, getEgoPosition());
-  for(i=idx+1;i<path_refence.points.size();i++)
-  {
+
+  bool is_outside = false;
+  size_t i = 0;
+  auto with = planner_data_->parameters.vehicle_width * 0.5;
+  auto idx = motion_utils::findNearestSegmentIndex(path_refence.points, getEgoPosition());
+  for (i = idx + 1; i < path_refence.points.size(); i++) {
     auto pt = path_refence.points.at(i);
-    if(std::abs(shift_length.at(i))>1.0e-2)
-    {
+    if (std::abs(shift_length.at(i)) > 1.0e-2) {
       double yaw = tf2::getYaw(pt.point.pose.orientation);
-      if(shift_length.at(i)>1.0e-2)
-      {
-        with=1.0*with;
+      if (shift_length.at(i) > 1.0e-2) {
+        with = 1.0 * with;
+        pt.point.pose.position.x -= std::sin(yaw) * with;
+        pt.point.pose.position.y += std::cos(yaw) * with;
+      } else {
+        with = -1.0 * with;
         pt.point.pose.position.x -= std::sin(yaw) * with;
         pt.point.pose.position.y += std::cos(yaw) * with;
       }
-      else
-      {
-        with=-1.0*with;
-        pt.point.pose.position.x -= std::sin(yaw) * with;
-        pt.point.pose.position.y += std::cos(yaw) * with;
-      }
-      for (const auto & clt : check_lanelets) 
-      {
-        if(lanelet::utils::isInLanelet(pt.point.pose, clt, 0.01))
-        {          
-            is_outside=false;
-            break;
+      for (const auto & clt : check_lanelets) {
+        if (lanelet::utils::isInLanelet(pt.point.pose, clt, 0.01)) {
+          is_outside = false;
+          break;
         }
         is_outside = true;
       }
-      if(is_outside==true)
-      {
+      if (is_outside == true) {
         break;
       }
     }
   }
 
-  if(is_outside==true)
-  {
-    size_t j=0;
-    for(auto & sp : shift_points)
-    {
-      if((sp.start_idx <=i) && (sp.end_idx>=i))
-      {
+  if (is_outside == true) {
+    size_t j = 0;
+    for (auto & sp : shift_points) {
+      if ((sp.start_idx <= i) && (sp.end_idx >= i)) {
         break;
       }
       j++;
     }
-    size_t zerolength_startidx=0;
+    size_t zerolength_startidx = 0;
     int k = j;
-    if(j==shift_points.size())
-    {
-      k=k-1;
+    if (j == shift_points.size()) {
+      k = k - 1;
     }
-    if(k>0)
-    {
-      k=k-1;
+    if (k > 0) {
+      k = k - 1;
     }
-    for(;k >= 0;k--)
-    {
-      if(std::abs(shift_points.at(k).length)<0.001)
-      {
-        zerolength_startidx=k;
+    for (; k >= 0; k--) {
+      if (std::abs(shift_points.at(k).length) < 0.001) {
+        zerolength_startidx = k;
         break;
       }
     }
-    size_t zerolength_endidx=0;     
-    for(size_t n=zerolength_startidx+1 ;n<shift_points.size();n++)
-    {
-      if(std::abs(shift_points.at(n).length)<0.01)
-      {
+    size_t zerolength_endidx = 0;
+    for (size_t n = zerolength_startidx + 1; n < shift_points.size(); n++) {
+      if (std::abs(shift_points.at(n).length) < 0.01) {
         zerolength_endidx = n;
         break;
       }
     }
-    path_shifter.zerolength_startidx=zerolength_startidx;
-    path_shifter.zerolength_endidx=zerolength_endidx;
+    path_shifter.zerolength_startidx = zerolength_startidx;
+    path_shifter.zerolength_endidx = zerolength_endidx;
 
-    for(size_t n=zerolength_startidx ;n<shift_points.size();n++)
-    {
-        shift_points.at(n).length=0.0;
+    for (size_t n = zerolength_startidx; n < shift_points.size(); n++) {
+      shift_points.at(n).length = 0.0;
     }
     path_shifter.setShiftPoints(shift_points);
     is_outside_prv = true;
     shift_points_prv = shift_points;
-  }
-  else
-  {
-     is_outside_prv = false;
-     shift_points_prv = shift_points;
-     path_shifter.zerolength_startidx=-1;
-     path_shifter.zerolength_endidx=-1;
+  } else {
+    is_outside_prv = false;
+    shift_points_prv = shift_points;
+    path_shifter.zerolength_startidx = -1;
+    path_shifter.zerolength_endidx = -1;
   }
   return is_outside;
 }
