@@ -47,11 +47,9 @@
 namespace vehicle_cmd_gate
 {
 
-using autoware_adapi_v1_msgs::srv::OperateMRM;
 using autoware_adapi_v1_msgs::msg::MRMState;
 using autoware_adapi_v1_msgs::msg::MRMBehaviorStatus;
 using autoware_auto_control_msgs::msg::AckermannControlCommand;
-using autoware_auto_system_msgs::msg::EmergencyState;
 using autoware_auto_vehicle_msgs::msg::GearCommand;
 using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
 using autoware_auto_vehicle_msgs::msg::SteeringReport;
@@ -99,7 +97,6 @@ private:
   rclcpp::Publisher<MRMBehaviorStatus>::SharedPtr mrm_sudden_stop_status_pub_;
 
   // Subscription
-  rclcpp::Subscription<EmergencyState>::SharedPtr emergency_state_sub_;
   rclcpp::Subscription<Heartbeat>::SharedPtr external_emergency_stop_heartbeat_sub_;
   rclcpp::Subscription<GateMode>::SharedPtr gate_mode_sub_;
   rclcpp::Subscription<SteeringReport>::SharedPtr steer_sub_;
@@ -108,7 +105,6 @@ private:
 
 
   void onGateMode(GateMode::ConstSharedPtr msg);
-  void onEmergencyState(EmergencyState::ConstSharedPtr msg);
   void onExternalEmergencyStopHeartbeat(Heartbeat::ConstSharedPtr msg);
   void onSteering(SteeringReport::ConstSharedPtr msg);
   void onMRMState(MRMState::ConstSharedPtr msg);
@@ -183,14 +179,6 @@ private:
     const std::shared_ptr<rmw_request_id_t> request_header,
     const std::shared_ptr<tier4_external_api_msgs::srv::SetEmergency::Request> request,
     const std::shared_ptr<tier4_external_api_msgs::srv::SetEmergency::Response> response);
-
-  // Service for MRM
-  rclcpp::Service<OperateMRM>::SharedPtr mrm_sudden_stop_operation_service_;
-  void onOperateSuddenStopService(
-    const OperateMRM::Request::SharedPtr request,
-    const OperateMRM::Response::SharedPtr response);
-
-  MRMBehaviorStatus mrm_sudden_stop_status_;
 
   // TODO(Takagi, Isamu): deprecated
   rclcpp::Subscription<EngageMsg>::SharedPtr engage_sub_;

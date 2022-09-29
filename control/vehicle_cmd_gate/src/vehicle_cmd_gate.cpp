@@ -71,8 +71,6 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
     "output/mrm/sudden_stop/status", durable_qos);
 
   // Subscriber
-  emergency_state_sub_ = this->create_subscription<EmergencyState>(
-    "input/emergency_state", 1, std::bind(&VehicleCmdGate::onEmergencyState, this, _1));
   external_emergency_stop_heartbeat_sub_ = this->create_subscription<Heartbeat>(
     "input/external_emergency_stop_heartbeat", 1,
     std::bind(&VehicleCmdGate::onExternalEmergencyStopHeartbeat, this, _1));
@@ -183,11 +181,6 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
   srv_clear_external_emergency_stop_ = this->create_service<std_srvs::srv::Trigger>(
     "~/service/clear_external_emergency_stop",
     std::bind(&VehicleCmdGate::onClearExternalEmergencyStopService, this, _1, _2, _3));
-
-  // Service for MRM
-  mrm_sudden_stop_operation_service_ = this->create_service<OperateMRM>(
-    "input/mrm/sudden_stop/operate",
-    std::bind(&VehicleCmdGate::onOperateSuddenStopService, this, _1, _2));
 
   // Diagnostics Updater
   updater_.setHardwareID("vehicle_cmd_gate");
@@ -567,14 +560,6 @@ AckermannControlCommand VehicleCmdGate::createEmergencyStopControlCmd() const
   return cmd;
 }
 
-void VehicleCmdGate::onEmergencyState(EmergencyState::ConstSharedPtr  /*msg*/)
-{
-  // is_system_emergency_ = (msg->state == EmergencyState::MRM_OPERATING) ||
-  //                       (msg->state == EmergencyState::MRM_SUCCEEDED) ||
-  //                       (msg->state == EmergencyState::MRM_FAILED);
-  emergency_state_heartbeat_received_time_ = std::make_shared<rclcpp::Time>(this->now());
-}
-
 void VehicleCmdGate::onExternalEmergencyStopHeartbeat(
   [[maybe_unused]] Heartbeat::ConstSharedPtr msg)
 {
@@ -683,21 +668,6 @@ bool VehicleCmdGate::onClearExternalEmergencyStopService(
   }
 
   return true;
-}
-
-void VehicleCmdGate::onOperateSuddenStopService(
-  const OperateMRM::Request::SharedPtr request,
-  const OperateMRM::Response::SharedPtr response)
-{
-  if (request->operate == true) {
-    is_system_emergency_ = true;
-    mrm_sudden_stop_status_.is_operating = true;
-    response->response.success = true;
-  } else {
-    is_system_emergency_ = false;
-    mrm_sudden_stop_status_.is_operating = false;
-    response->response.success = true;
-  }
 }
 
 void VehicleCmdGate::checkExternalEmergencyStop(diagnostic_updater::DiagnosticStatusWrapper & stat)
