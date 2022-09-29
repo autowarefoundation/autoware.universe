@@ -113,7 +113,7 @@ NDTScanMatcher::NDTScanMatcher()
   regularization_scale_factor_(declare_parameter("regularization_scale_factor", 0.01))
 {
   key_value_stdmap_["state"] = "Initializing";
-  bool is_activated_ = false;
+  is_activated_ = false;
 
   int ndt_implement_type_tmp = this->declare_parameter("ndt_implement_type", 0);
   ndt_implement_type_ = static_cast<NDTImplementType>(ndt_implement_type_tmp);
@@ -367,6 +367,8 @@ void NDTScanMatcher::service_ndt_align(
 void NDTScanMatcher::callback_initial_pose(
   const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr initial_pose_msg_ptr)
 {
+  if (!is_activated_) return;
+
   // lock mutex for initial pose
   std::lock_guard<std::mutex> initial_pose_array_lock(initial_pose_array_mtx_);
   // if rosbag restart, clear buffer
