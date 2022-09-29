@@ -272,7 +272,7 @@ NDTScanMatcher::NDTScanMatcher()
   service_trigger_node_ = this->create_service<std_srvs::srv::SetBool>(
     "trigger_node_srv",
     std::bind(
-      &NDTScanMatcher::serviceTriggerNode, this, std::placeholders::_1, std::placeholders::_2),
+      &NDTScanMatcher::service_trigger_node, this, std::placeholders::_1, std::placeholders::_2),
     rclcpp::ServicesQoS().get_rmw_qos_profile(), main_callback_group);
 
   diagnostic_thread_ = std::thread(&NDTScanMatcher::timer_diagnostic, this);
@@ -839,7 +839,7 @@ void NDTScanMatcher::add_regularization_pose(const rclcpp::Time & sensor_ros_tim
   }
 }
 
-void NDTScanMatcher::serviceTriggerNode(
+void NDTScanMatcher::service_trigger_node(
   const std_srvs::srv::SetBool::Request::SharedPtr req,
   std_srvs::srv::SetBool::Response::SharedPtr res)
 {
