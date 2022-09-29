@@ -27,10 +27,30 @@ NormalDistributionsTransformPCLModified<
 }
 
 template <class PointSource, class PointTarget>
-void NormalDistributionsTransformPCLModified<PointSource, PointTarget>::align(
-  pcl::PointCloud<PointSource> & output, const Eigen::Matrix4f & guess)
+NdtResult NormalDistributionsTransformPCLModified<PointSource, PointTarget>::align(
+  const geometry_msgs::msg::Pose & initial_pose_msg)
 {
-  ndt_ptr_->align(output, guess);
+  const Eigen::Matrix4f initial_pose_matrix = tier4_autoware_utils::poseToMatrix4f(initial_pose_msg);
+
+  auto output_cloud = std::make_shared<pcl::PointCloud<PointSource>>();
+  ndt_ptr_->align(*output_cloud, initial_pose_matrix);
+
+  const std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>>
+    transformation_array_matrix = getFinalTransformationArray();
+  std::vector<geometry_msgs::msg::Pose> transformation_array_msg;
+  for (auto pose_matrix : transformation_array_matrix) {
+    geometry_msgs::msg::Pose pose_ros = tier4_autoware_utils::matrix4fToPose(pose_matrix);
+    transformation_array_msg.push_back(pose_ros);
+  }
+
+  NdtResult ndt_result;
+  ndt_result.pose = tier4_autoware_utils::matrix4fToPose(getFinalTransformation());
+  ndt_result.transformation_array = transformation_array_msg;
+  ndt_result.transform_probability = getTransformationProbability();
+  ndt_result.nearest_voxel_transformation_likelihood =
+    getNearestVoxelTransformationLikelihood();
+  ndt_result.iteration_num = getFinalNumIteration();
+  return ndt_result;
 }
 
 template <class PointSource, class PointTarget>

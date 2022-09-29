@@ -68,15 +68,6 @@ enum class ConvergedParamType {
   NEAREST_VOXEL_TRANSFORMATION_LIKELIHOOD = 1
 };
 
-struct NdtResult
-{
-  geometry_msgs::msg::Pose pose;
-  float transform_probability;
-  float nearest_voxel_transformation_likelihood;
-  int iteration_num;
-  std::vector<geometry_msgs::msg::Pose> transformation_array;
-};
-
 template <typename PointSource, typename PointTarget>
 std::shared_ptr<NormalDistributionsTransformBase<PointSource, PointTarget>> get_ndt(
   const NDTImplementType & ndt_mode)
@@ -127,7 +118,6 @@ private:
   void callback_regularization_pose(
     geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose_conv_msg_ptr);
 
-  NdtResult align(const geometry_msgs::msg::Pose & initial_pose_msg);
   geometry_msgs::msg::PoseWithCovarianceStamped align_using_monte_carlo(
     const std::shared_ptr<NormalDistributionsTransformBase<PointSource, PointTarget>> & ndt_ptr,
     const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_with_cov);

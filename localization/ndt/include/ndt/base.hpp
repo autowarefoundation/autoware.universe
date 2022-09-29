@@ -19,8 +19,18 @@
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
 #include <pcl/search/kdtree.h>
-
+#include <geometry_msgs/msg/pose.hpp>
+#include <tier4_autoware_utils/geometry/geometry.hpp>
 #include <vector>
+
+struct NdtResult
+{
+  geometry_msgs::msg::Pose pose;
+  float transform_probability;
+  float nearest_voxel_transformation_likelihood;
+  int iteration_num;
+  std::vector<geometry_msgs::msg::Pose> transformation_array;
+};
 
 template <class PointSource, class PointTarget>
 class NormalDistributionsTransformBase
@@ -29,7 +39,8 @@ public:
   NormalDistributionsTransformBase();
   virtual ~NormalDistributionsTransformBase() = default;
 
-  virtual void align(pcl::PointCloud<PointSource> & output, const Eigen::Matrix4f & guess) = 0;
+  // virtual void align(pcl::PointCloud<PointSource> & output, const Eigen::Matrix4f & guess) = 0;
+  virtual NdtResult align(const geometry_msgs::msg::Pose & initial_pose_msg) = 0;
   virtual void setInputTarget(const pcl::shared_ptr<pcl::PointCloud<PointTarget>> & map_ptr) = 0;
   virtual void setInputSource(const pcl::shared_ptr<pcl::PointCloud<PointSource>> & scan_ptr) = 0;
 

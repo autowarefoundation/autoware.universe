@@ -205,36 +205,36 @@ void pop_old_pose(
   }
 }
 
-Eigen::Affine3d pose_to_affine3d(const geometry_msgs::msg::Pose & ros_pose)
-{
-  Eigen::Affine3d eigen_pose;
-  tf2::fromMsg(ros_pose, eigen_pose);
-  return eigen_pose;
-}
+// Eigen::Affine3d pose_to_affine3d(const geometry_msgs::msg::Pose & ros_pose)
+// {
+//   Eigen::Affine3d eigen_pose;
+//   tf2::fromMsg(ros_pose, eigen_pose);
+//   return eigen_pose;
+// }
 
-Eigen::Matrix4f pose_to_matrix4f(const geometry_msgs::msg::Pose & ros_pose)
-{
-  Eigen::Affine3d eigen_pose_affine = pose_to_affine3d(ros_pose);
-  Eigen::Matrix4f eigen_pose_matrix = eigen_pose_affine.matrix().cast<float>();
-  return eigen_pose_matrix;
-}
+// Eigen::Matrix4f pose_to_matrix4f(const geometry_msgs::msg::Pose & ros_pose)
+// {
+//   Eigen::Affine3d eigen_pose_affine = pose_to_affine3d(ros_pose);
+//   Eigen::Matrix4f eigen_pose_matrix = eigen_pose_affine.matrix().cast<float>();
+//   return eigen_pose_matrix;
+// }
 
-Eigen::Vector3d point_to_vector3d(const geometry_msgs::msg::Point & ros_pos)
-{
-  Eigen::Vector3d eigen_pos;
-  eigen_pos.x() = ros_pos.x;
-  eigen_pos.y() = ros_pos.y;
-  eigen_pos.z() = ros_pos.z;
-  return eigen_pos;
-}
+// Eigen::Vector3d point_to_vector3d(const geometry_msgs::msg::Point & ros_pos)
+// {
+//   Eigen::Vector3d eigen_pos;
+//   eigen_pos.x() = ros_pos.x;
+//   eigen_pos.y() = ros_pos.y;
+//   eigen_pos.z() = ros_pos.z;
+//   return eigen_pos;
+// }
 
-geometry_msgs::msg::Pose matrix4f_to_pose(const Eigen::Matrix4f & eigen_pose_matrix)
-{
-  Eigen::Affine3d eigen_pose_affine;
-  eigen_pose_affine.matrix() = eigen_pose_matrix.cast<double>();
-  geometry_msgs::msg::Pose ros_pose = tf2::toMsg(eigen_pose_affine);
-  return ros_pose;
-}
+// geometry_msgs::msg::Pose matrix4f_to_pose(const Eigen::Matrix4f & eigen_pose_matrix)
+// {
+//   Eigen::Affine3d eigen_pose_affine;
+//   eigen_pose_affine.matrix() = eigen_pose_matrix.cast<double>();
+//   geometry_msgs::msg::Pose ros_pose = tf2::toMsg(eigen_pose_affine);
+//   return ros_pose;
+// }
 
 std::vector<geometry_msgs::msg::Pose> create_random_pose_array(
   const geometry_msgs::msg::PoseWithCovarianceStamped & base_pose_with_cov, const int particle_num)

@@ -42,7 +42,7 @@ target_include_directories(ndt
     ${PCL_INCLUDE_DIRS}
 )
 
-ament_target_dependencies(ndt PUBLIC ndt_omp ndt_pcl_modified)
+ament_target_dependencies(ndt PUBLIC ndt_omp ndt_pcl_modified geometry_msgs tier4_autoware_utils)
 # Can't use ament_target_dependencies() here because it doesn't link PCL
 # properly, see ndt_omp for more information.
 target_compile_definitions(ndt PUBLIC ${PCL_DEFINITIONS})

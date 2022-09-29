@@ -32,7 +32,7 @@ public:
   NormalDistributionsTransformPCLGeneric();
   ~NormalDistributionsTransformPCLGeneric() = default;
 
-  void align(pcl::PointCloud<PointSource> & output, const Eigen::Matrix4f & guess) override;
+  NdtResult align(const geometry_msgs::msg::Pose & initial_pose_msg) override;
   void setInputTarget(const pcl::shared_ptr<pcl::PointCloud<PointTarget>> & map_ptr) override;
   void setInputSource(const pcl::shared_ptr<pcl::PointCloud<PointSource>> & scan_ptr) override;
 

@@ -37,8 +37,10 @@
 #include <tf2/utils.h>
 
 #ifdef ROS_DISTRO_GALACTIC
+#include <tf2_eigen/tf2_eigen.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #else
+#include <tf2_eigen/tf2_eigen.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
 
@@ -718,6 +720,32 @@ geometry_msgs::msg::Pose calcInterpolatedPose(
 
   return output_pose;
 }
+
+inline Eigen::Matrix4f poseToMatrix4f(const geometry_msgs::msg::Pose & ros_pose)
+{
+  Eigen::Affine3d eigen_pose_affine;
+  tf2::fromMsg(ros_pose, eigen_pose_affine);
+  Eigen::Matrix4f eigen_pose_matrix = eigen_pose_affine.matrix().cast<float>();
+  return eigen_pose_matrix;
+}
+
+inline Eigen::Vector3d pointToVector3d(const geometry_msgs::msg::Point & ros_pos)
+{
+  Eigen::Vector3d eigen_pos;
+  eigen_pos.x() = ros_pos.x;
+  eigen_pos.y() = ros_pos.y;
+  eigen_pos.z() = ros_pos.z;
+  return eigen_pos;
+}
+
+inline geometry_msgs::msg::Pose matrix4fToPose(const Eigen::Matrix4f & eigen_pose_matrix)
+{
+  Eigen::Affine3d eigen_pose_affine;
+  eigen_pose_affine.matrix() = eigen_pose_matrix.cast<double>();
+  geometry_msgs::msg::Pose ros_pose = tf2::toMsg(eigen_pose_affine);
+  return ros_pose;
+}
+
 }  // namespace tier4_autoware_utils
 
 #endif  // TIER4_AUTOWARE_UTILS__GEOMETRY__GEOMETRY_HPP_
