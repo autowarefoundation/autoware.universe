@@ -243,6 +243,8 @@ private:
   const float regularization_scale_factor_;
   std::deque<geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr>
     regularization_pose_msg_ptr_array_;
+
+  bool is_activated_;
 };
 
 #endif  // NDT_SCAN_MATCHER__NDT_SCAN_MATCHER_CORE_HPP_

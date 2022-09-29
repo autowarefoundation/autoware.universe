@@ -113,6 +113,7 @@ NDTScanMatcher::NDTScanMatcher()
   regularization_scale_factor_(declare_parameter("regularization_scale_factor", 0.01))
 {
   key_value_stdmap_["state"] = "Initializing";
+  bool is_activated_ = false;
 
   int ndt_implement_type_tmp = this->declare_parameter("ndt_implement_type", 0);
   ndt_implement_type_ = static_cast<NDTImplementType>(ndt_implement_type_tmp);
@@ -461,6 +462,7 @@ void NDTScanMatcher::callback_sensor_points(
   transform_sensor_measurement(
     sensor_frame, base_frame_, sensor_points_sensorTF_ptr, sensor_points_baselinkTF_ptr);
   ndt_ptr_->setInputSource(sensor_points_baselinkTF_ptr);
+  if (!is_activated_) return;
 
   // calculate initial pose
   std::unique_lock<std::mutex> initial_pose_array_lock(initial_pose_array_mtx_);
@@ -843,7 +845,8 @@ void NDTScanMatcher::service_trigger_node(
   const std_srvs::srv::SetBool::Request::SharedPtr req,
   std_srvs::srv::SetBool::Response::SharedPtr res)
 {
-  if (req->data) {
+  is_activated_ = req->data;
+  if (is_activated_) {
     std::lock_guard<std::mutex> initial_pose_array_lock(initial_pose_array_mtx_);
     initial_pose_msg_ptr_array_.clear();
   }
