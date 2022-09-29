@@ -2,8 +2,7 @@
 
 ## Purpose
 
-This plugin displays the current status of autoware.  
-This plugin also can engage from the panel.
+This plugin displays each content of RTC status and switches each module of RTC auto mode.
 
 ## Inputs / Outputs
 
