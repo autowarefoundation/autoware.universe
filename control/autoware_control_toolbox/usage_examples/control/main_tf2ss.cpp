@@ -42,6 +42,11 @@ int main()
   ns_control_toolbox::tf2ss sys_ss2(num, den, Ts);
   sys_ss2.print();
 
+  // Test copy
+  ns_control_toolbox::tf2ss sys_ss3;
+  sys_ss3 = ns_control_toolbox::tf2ss(sys_tf, Ts);
+  sys_ss3.print_discrete_system();
+
   ns_utils::print("SS.A \n");
   ns_eigen_utils::printEigenMat(sys_ss2.A());
 
@@ -54,8 +59,8 @@ int main()
 
   // Test defaulted.
   ns_utils::print("Discretization with a given Ts when constructing");
-  auto sys_ss3 = ns_control_toolbox::tf2ss(sys_tf, Ts);
-  sys_ss3.print_discrete_system();
+  auto sys_ss3_cp = ns_control_toolbox::tf2ss(sys_tf, Ts);
+  sys_ss3_cp.print_discrete_system();
 
   // Testing qfilter example
   double dt = 1. / 40;

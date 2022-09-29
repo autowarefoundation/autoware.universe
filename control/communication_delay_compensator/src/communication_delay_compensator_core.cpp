@@ -80,7 +80,8 @@ observers::LateralCommunicationDelayCompensator::LateralCommunicationDelayCompen
     qfilter_order_{qfilter_lateral.order()}
 {
   // Compute the state-space model of QGinv(s)
-  ss_qfilter_lat_ = ss_t(tf_qfilter_lat_, dt_);  // Do not forget to enter the time step dt.
+  // Do not forget to enter the time step dt.
+  ss_qfilter_lat_ = ss_t(tf_qfilter_lat_, dt_);
 
   /**
    * Compute 1-Q transfer function and the ss representation
