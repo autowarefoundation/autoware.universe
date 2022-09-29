@@ -1,13 +1,23 @@
 cmake_minimum_required(VERSION 3.10)
 project(communication_delay_compensator)
 
+set(CMAKE_CXX_STANDARD 17)
+
 # require that dependencies from package.xml be available
 find_package(ament_cmake_auto REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
+
 ament_auto_find_build_dependencies(REQUIRED
   ${${PROJECT_NAME}_BUILD_DEPENDS}
   ${${PROJECT_NAME}_BUILDTOOL_DEPENDS})
 
+find_package(Eigen3 CONFIG)
 
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -std=c++17 -Wall -Wfatal-errors")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pthread -std=c++17 -Wall -Wfatal-errors")
+
+# -------------  FLAGS ---------------------------------------------------
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(
     -Wall

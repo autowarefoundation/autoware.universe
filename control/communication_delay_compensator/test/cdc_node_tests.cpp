@@ -104,7 +104,6 @@ TEST_F(FakeNodeFixture, nodeTestTemplate)
     time_passed += dt;
   }
 
-
 //  ns_utils::print("is compensation_msg received ? ", is_comp_msg_received);
 //  test_utils::spinWhile(node);
 

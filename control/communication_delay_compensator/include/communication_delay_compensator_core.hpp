@@ -89,12 +89,12 @@ class LateralCommunicationDelayCompensator
   model_ptr_t vehicle_model_ptr_{nullptr};                // vehicle model
 
   // transfer functions
-  tf_t tf_qfilter_lat_;
-  tf_t tf_one_minus_qfilter_lat_;
+  tf_t tf_qfilter_lat_{};
+  tf_t tf_one_minus_qfilter_lat_{};
 
   // state-space models.
-  ss_t ss_qfilter_lat_;
-  ss_t ss_one_min_qfilter_lat_;
+  ss_t ss_qfilter_lat_{};
+  ss_t ss_one_min_qfilter_lat_{};
 
   // ------------ QFILTER VARIABLES ----------------------------------
   // state vectors for filtering inputs.

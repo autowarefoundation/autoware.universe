@@ -132,15 +132,11 @@ void CommunicationDelayCompensatorNode::onTimer()
   current_delay_ref_msg_ptr_ = std::make_shared<DelayCompensatatorMsg>(delay_compensatator_msg);
   current_delay_debug_msg_ = std::make_shared<DelayCompensatorDebugMsg>(delay_compensator_debug_msg);
 
-//  if (true)
-//  {
-//
-//    RCLCPP_WARN_THROTTLE(
-//      get_logger(),
-//      *get_clock(), 1000, "On timer");
-//    //  publishCompensationReferences();
-//    return;
-//  }
+  if (!previous_control_cmd_ptr_)
+  {
+    previous_control_cmd_ptr_ = std::make_shared<ControlCommand>();
+    publishCompensationReferences();
+  }
 
   if (!isDataReady())
   {
@@ -152,11 +148,6 @@ void CommunicationDelayCompensatorNode::onTimer()
     return;
   }
 
-  if (!previous_control_cmd_ptr_)
-  {
-    previous_control_cmd_ptr_ = std::make_shared<ControlCommand>();
-    publishCompensationReferences();
-  }
 
   // Update vehicle model.
   updateVehicleModelsWithPreviousTargets();
