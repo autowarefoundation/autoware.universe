@@ -595,11 +595,11 @@ void VehicleCmdGate::onSteering(SteeringReport::ConstSharedPtr msg)
 
 void VehicleCmdGate::onMRMState(MRMState::ConstSharedPtr msg)
 {
-  current_mrm_state_ = *msg;
-  // TODO(Makoto Kurihara): Use MRM state
-  is_system_emergency_ = (current_mrm_state_.state == EmergencyState::MRM_OPERATING ||
-                          current_mrm_state_.state == EmergencyState::MRM_SUCCEEDED) &&
-                         (current_mrm_state_.behavior == MRMState::EMERGENCY_STOP);
+  is_system_emergency_ = (msg->state == MRMState::MRM_OPERATING ||
+                          msg->state == MRMState::MRM_SUCCEEDED ||
+                          msg->state == MRMState::MRM_FAILED) &&
+                         (msg->behavior == MRMState::EMERGENCY_STOP);
+  emergency_state_heartbeat_received_time_ = std::make_shared<rclcpp::Time>(this->now());
 }
 
 double VehicleCmdGate::getDt()
