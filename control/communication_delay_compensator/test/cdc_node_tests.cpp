@@ -91,21 +91,21 @@ TEST_F(FakeNodeFixture, nodeTestTemplate)
   lat_error_pub_->publish(error_msg);
 
   test_utils::spinWhile(node);
-  // test_utils::waitForMessage(node, this, false, std::chrono::seconds{2LL}, false);
+  test_utils::waitForMessage(node, this, is_comp_msg_received, std::chrono::seconds{2LL}, false);
 
-  auto time_passed{std::chrono::milliseconds{0LL}};
-  const auto dt{std::chrono::milliseconds{30LL}};
+//  auto time_passed{std::chrono::milliseconds{0LL}};
+//  const auto dt{std::chrono::milliseconds{30LL}};
+//
+//  while (time_passed < std::chrono::seconds{2LL})
+//  {
+//    rclcpp::spin_some(node);
+//    rclcpp::spin_some(this->get_fake_node());
+//    std::this_thread::sleep_for(dt);
+//    time_passed += dt;
+//  }
 
-  while (time_passed < std::chrono::seconds{2LL})
-  {
-    rclcpp::spin_some(node);
-    rclcpp::spin_some(this->get_fake_node());
-    std::this_thread::sleep_for(dt);
-    time_passed += dt;
-  }
+  ns_utils::print("is compensation_msg received ? ", is_comp_msg_received);
+  int a = 1;
+  ns_utils::print(a);
 
-//  ns_utils::print("is compensation_msg received ? ", is_comp_msg_received);
-//  test_utils::spinWhile(node);
-
-  ASSERT_TRUE(true);
 }

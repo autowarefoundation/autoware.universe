@@ -25,7 +25,7 @@ CommunicationDelayCompensatorNode::CommunicationDelayCompensatorNode(
   using std::placeholders::_1;
 
   /* get parameter updates */
-  observers::sLyapMatrixVecs lyap_mat_vec;  // for state observer Lyapunov mats.
+  sLyapMatrixVecs lyap_mat_vec;  // for state observer Lyapunov mats.
   readAndLoadParameters(lyap_mat_vec);
 
   params_node_.wheel_base = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo().wheel_base_m;
@@ -45,28 +45,28 @@ CommunicationDelayCompensatorNode::CommunicationDelayCompensatorNode(
     create_subscription<ControlCommand>(
       "~/input/control_cmd", rclcpp::QoS{1},
       std::bind(
-        &observers::CommunicationDelayCompensatorNode::onControlCommands,
+        &CommunicationDelayCompensatorNode::onControlCommands,
         this, std::placeholders::_1));
 
   sub_current_velocity_ptr_ =
     create_subscription<VelocityMsg>(
       "~/input/current_odometry", rclcpp::QoS{1},
       std::bind(
-        &observers::CommunicationDelayCompensatorNode::onCurrentVelocity,
+        &CommunicationDelayCompensatorNode::onCurrentVelocity,
         this, std::placeholders::_1));
 
   sub_current_steering_ptr_ =
     create_subscription<SteeringReport>(
       "~/input/steering_state", rclcpp::QoS{1},
       std::bind(
-        &observers::CommunicationDelayCompensatorNode::onCurrentSteering,
+        &CommunicationDelayCompensatorNode::onCurrentSteering,
         this, std::placeholders::_1));
 
   //  sub_current_long_error_ptr_ =
   //    create_subscription<ControllerErrorReportMsg>(
   //      "~/input/long_errors", rclcpp::QoS{1},
   //      std::bind(
-  //        &observers::CommunicationDelayCompensatorNode::onCurrentLongitudinalError,
+  //        &CommunicationDelayCompensatorNode::onCurrentLongitudinalError,
   //        this,
   //        std::placeholders::_1));
 
@@ -74,7 +74,7 @@ CommunicationDelayCompensatorNode::CommunicationDelayCompensatorNode(
     create_subscription<ControllerErrorReportMsg>(
       "~/input/lat_errors", rclcpp::QoS{1},
       std::bind(
-        &observers::CommunicationDelayCompensatorNode::onCurrentLateralErrors,
+        &CommunicationDelayCompensatorNode::onCurrentLateralErrors,
         this,
         std::placeholders::_1));
 
@@ -83,12 +83,12 @@ CommunicationDelayCompensatorNode::CommunicationDelayCompensatorNode(
     std::bind(&CommunicationDelayCompensatorNode::onParameterUpdate, this, _1));
 
   // set the vehicle models.
-  vehicle_model_ptr_ = std::make_shared<observers::linear_vehicle_model_t>(
+  vehicle_model_ptr_ = std::make_shared<linear_vehicle_model_t>(
     params_node_.wheel_base,
     params_node_.steering_tau,
     params_node_.cdob_ctrl_period);
 
-  dist_td_obs_vehicle_model_ptr_ = std::make_shared<observers::linear_state_observer_model_t>(
+  dist_td_obs_vehicle_model_ptr_ = std::make_shared<linear_state_observer_model_t>(
     params_node_.wheel_base,
     params_node_.steering_tau,
     params_node_.cdob_ctrl_period);
@@ -299,7 +299,7 @@ bool8_t CommunicationDelayCompensatorNode::isDataReady()
 }
 
 void CommunicationDelayCompensatorNode::readAndLoadParameters(
-  observers::sLyapMatrixVecs &lyap_mats)
+  sLyapMatrixVecs &lyap_mats)
 {
 
   // Read the filter orders.
@@ -338,7 +338,7 @@ void CommunicationDelayCompensatorNode::readAndLoadParameters(
   auto labelX_tag = "Xn";  // No delay nodel for steering and longitudinal speed
   auto labelY_tag = "Yn";
 
-  for (size_t k = 0; k < observers::cx_NUMBER_OF_LYAP_MATS; k++)
+  for (size_t k = 0; k < cx_NUMBER_OF_LYAP_MATS; k++)
   {
     auto labelX = labelX_tag + std::to_string(k + 1);
     auto tempvX = declare_parameter<std::vector<float64_t>>(labelX);
@@ -459,6 +459,7 @@ void CommunicationDelayCompensatorNode::updateVehicleModelsWithCurrentTargets()
     dist_td_obs_vehicle_model_ptr_->updateInitialStates(
       ey, eyaw, current_steering_angle_, vx,
       current_curvature_);
+
     vehicle_model_ptr_->updateInitialStates(
       ey, eyaw, current_steering_angle_, vx,
       current_curvature_);

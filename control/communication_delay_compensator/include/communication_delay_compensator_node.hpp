@@ -155,17 +155,17 @@ class CommunicationDelayCompensatorNode : public rclcpp::Node
   /**
    * @brief observer vehicle model for input disturbance estimation estimation.
    * */
-  observers::LateralDisturbanceCompensator dob_lateral;
+  LateralDisturbanceCompensator dob_lateral;
 
   /**
    * @brief observer vehicle model for state estimation.
    * */
-  std::shared_ptr<observers::linear_state_observer_model_t> dist_td_obs_vehicle_model_ptr_{nullptr};
+  std::shared_ptr<linear_state_observer_model_t> dist_td_obs_vehicle_model_ptr_{nullptr};
 
   /**
    * @brief vehicle model that simulates the physical input.
    * */
-  std::shared_ptr<observers::linear_vehicle_model_t> vehicle_model_ptr_{nullptr};
+  std::shared_ptr<linear_vehicle_model_t> vehicle_model_ptr_{nullptr};
 
   // Pointers to the ROS topics.
   // Pointers to the model state variables inputs
