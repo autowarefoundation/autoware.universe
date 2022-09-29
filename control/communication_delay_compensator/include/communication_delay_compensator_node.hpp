@@ -181,9 +181,7 @@ class CommunicationDelayCompensatorNode : public rclcpp::Node
   // Pointers to messages.
   std::shared_ptr<DelayCompensatatorMsg> current_delay_ref_msg_ptr_{nullptr};
   std::shared_ptr<ControllerErrorReportMsg> current_lat_errors_ptr_{nullptr};
-  std::shared_ptr<ControllerErrorReportMsg> current_long_errors_ptr_{nullptr};
   std::shared_ptr<ControllerErrorReportMsg> prev_lat_errors_ptr_{nullptr};
-  std::shared_ptr<ControllerErrorReportMsg> prev_long_errors_ptr_{nullptr};
 
   // Steering related.
   float64_t current_curvature_{};

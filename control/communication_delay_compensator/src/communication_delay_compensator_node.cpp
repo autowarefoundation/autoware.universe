@@ -204,7 +204,7 @@ void CommunicationDelayCompensatorNode::onCurrentLateralErrors(
   current_lat_errors_ptr_ = std::make_shared<ControllerErrorReportMsg>(*msg);
 
   // Compute current steering error.
-  current_curvature_ = static_cast<float64_t>(current_lat_errors_ptr_->curvature_read);
+  current_curvature_ = current_lat_errors_ptr_->curvature_read;
 
   RCLCPP_WARN_THROTTLE(
     get_logger(),
@@ -421,11 +421,11 @@ void CommunicationDelayCompensatorNode::updateVehicleModelsWithPreviousTargets()
 
   // Update the initial state.
 
-  if (prev_lat_errors_ptr_ && prev_steering_ptr_ && prev_long_errors_ptr_)
+  if (prev_lat_errors_ptr_ && prev_steering_ptr_)
   {
-    float64_t ey{static_cast<float64_t>(current_lat_errors_ptr_->lateral_deviation_read)};
-    float64_t eyaw{static_cast<float64_t>(current_lat_errors_ptr_->heading_angle_error_read)};
-    float64_t steering_angle{static_cast<float64_t>(current_lat_errors_ptr_->steering_read)};
+    float64_t ey{current_lat_errors_ptr_->lateral_deviation_read};
+    float64_t eyaw{current_lat_errors_ptr_->heading_angle_error_read};
+    float64_t steering_angle{current_lat_errors_ptr_->steering_read};
     float64_t current_vx{current_velocity_};
 
     dist_td_obs_vehicle_model_ptr_->updateInitialStates(
@@ -450,10 +450,10 @@ void CommunicationDelayCompensatorNode::updateVehicleModelsWithCurrentTargets()
 
   // Update the initial state.
 
-  if (prev_lat_errors_ptr_ && prev_steering_ptr_ && prev_long_errors_ptr_)
+  if (prev_lat_errors_ptr_ && prev_steering_ptr_)
   {
-    float64_t ey{static_cast<float64_t>(current_lat_errors_ptr_->lateral_deviation_read)};
-    float64_t eyaw{static_cast<float64_t>(current_lat_errors_ptr_->heading_angle_error_read)};
+    float64_t ey{current_lat_errors_ptr_->lateral_deviation_read};
+    float64_t eyaw{current_lat_errors_ptr_->heading_angle_error_read};
     float64_t vx{current_velocity_};
 
     dist_td_obs_vehicle_model_ptr_->updateInitialStates(

@@ -20,7 +20,7 @@
 TEST_F(FakeNodeFixture, nodeTestTemplate)
 {
   // Data to test
-  DelayCompensationRefs::SharedPtr compensation_msg;
+  DelayCompensationRefs::SharedPtr compensation_msg{nullptr};
   bool is_comp_msg_received = false;
 
   // Node
