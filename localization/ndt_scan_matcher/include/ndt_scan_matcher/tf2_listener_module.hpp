@@ -26,7 +26,7 @@ class Tf2ListenerModule
   using TransformStamped = geometry_msgs::msg::TransformStamped;
 
 public:
-  Tf2ListenerModule(rclcpp::Node * node);
+  explicit Tf2ListenerModule(rclcpp::Node * node);
   bool get_transform(
     const builtin_interfaces::msg::Time & timestamp, const std::string & target_frame,
     const std::string & source_frame,
