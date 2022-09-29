@@ -5,7 +5,7 @@
   <arg name="input_odometry" default="/localization/kinematic_state"/>
   <arg name="input_control_mode" default="/vehicle/status/control_mode"/>
   <arg name="input_mrm_comfortable_stop_state" default="/system/api/mrm/comfortable_stop/status"/>
-  <arg name="input_mrm_sudden_stop_state" default="/system/api/mrm/sudden_stop/status"/>
+  <arg name="input_mrm_emergency_stop_state" default="/system/api/mrm/emergency_stop/status"/>
 
   <arg name="output_control_command" default="/system/emergency/control_cmd"/>
   <arg name="output_gear" default="/system/emergency/gear_cmd"/>
@@ -13,7 +13,7 @@
   <arg name="output_emergency_state" default="/system/emergency/emergency_state"/>
   <arg name="output_mrm_state" default="/api/fail_safe/mrm_state"/>
   <arg name="output_mrm_comfortable_stop_operate" default="/system/api/mrm/comfortable_stop/operate"/>
-  <arg name="output_mrm_sudden_stop_operate" default="/system/api/mrm/sudden_stop/operate"/>
+  <arg name="output_mrm_emergency_stop_operate" default="/system/api/mrm/emergency_stop/operate"/>
 
   <arg name="config_file" default="$(find-pkg-share emergency_handler)/config/emergency_handler.param.yaml"/>
 
@@ -24,7 +24,7 @@
     <remap from="~/input/odometry" to="$(var input_odometry)"/>
     <remap from="~/input/control_mode" to="$(var input_control_mode)"/>
     <remap from="~/input/mrm/comfortable_stop/status" to="$(var input_mrm_comfortable_stop_state)"/>
-    <remap from="~/input/mrm/sudden_stop/status" to="$(var input_mrm_sudden_stop_state)"/>
+    <remap from="~/input/mrm/emergency_stop/status" to="$(var input_mrm_emergency_stop_state)"/>
 
     <remap from="~/output/control_command" to="$(var output_control_command)"/>
     <remap from="~/output/gear" to="$(var output_gear)"/>
@@ -32,7 +32,7 @@
     <remap from="~/output/emergency_state" to="$(var output_emergency_state)"/>
     <remap from="~/output/mrm/state" to="$(var output_mrm_state)"/>
     <remap from="~/output/mrm/comfortable_stop/operate" to="$(var output_mrm_comfortable_stop_operate)"/>
-    <remap from="~/output/mrm/sudden_stop/operate" to="$(var output_mrm_sudden_stop_operate)"/>
+    <remap from="~/output/mrm/emergency_stop/operate" to="$(var output_mrm_emergency_stop_operate)"/>
 
     <param from="$(var config_file)"/>
   </node>

@@ -68,14 +68,14 @@ private:
   rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::ControlModeReport>::SharedPtr
     sub_control_mode_;
   rclcpp::Subscription<autoware_adapi_v1_msgs::msg::MRMBehaviorStatus>::SharedPtr sub_mrm_comfortable_stop_status_;
-  rclcpp::Subscription<autoware_adapi_v1_msgs::msg::MRMBehaviorStatus>::SharedPtr sub_mrm_sudden_stop_status_;
+  rclcpp::Subscription<autoware_adapi_v1_msgs::msg::MRMBehaviorStatus>::SharedPtr sub_mrm_emergency_stop_status_;
 
   autoware_auto_system_msgs::msg::HazardStatusStamped::ConstSharedPtr hazard_status_stamped_;
   autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr prev_control_command_;
   nav_msgs::msg::Odometry::ConstSharedPtr odom_;
   autoware_auto_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr control_mode_;
   autoware_adapi_v1_msgs::msg::MRMBehaviorStatus::ConstSharedPtr mrm_comfortable_stop_status_;
-  autoware_adapi_v1_msgs::msg::MRMBehaviorStatus::ConstSharedPtr mrm_sudden_stop_status_;
+  autoware_adapi_v1_msgs::msg::MRMBehaviorStatus::ConstSharedPtr mrm_emergency_stop_status_;
 
   void onHazardStatusStamped(
     const autoware_auto_system_msgs::msg::HazardStatusStamped::ConstSharedPtr msg);
@@ -84,7 +84,7 @@ private:
   void onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg);
   void onControlMode(const autoware_auto_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr msg);
   void onMRMComfortableStopStatus(const autoware_adapi_v1_msgs::msg::MRMBehaviorStatus::ConstSharedPtr msg);
-  void onMRMSuddenStopStatus(const autoware_adapi_v1_msgs::msg::MRMBehaviorStatus::ConstSharedPtr msg);
+  void onMRMEmergencyStopStatus(const autoware_adapi_v1_msgs::msg::MRMBehaviorStatus::ConstSharedPtr msg);
 
   // Publisher
   rclcpp::Publisher<autoware_auto_control_msgs::msg::AckermannControlCommand>::SharedPtr
@@ -109,8 +109,8 @@ private:
   // Clients
   rclcpp::CallbackGroup::SharedPtr client_mrm_comfortable_stop_group_;
   rclcpp::Client<autoware_adapi_v1_msgs::srv::OperateMRM>::SharedPtr client_mrm_comfortable_stop_;
-  rclcpp::CallbackGroup::SharedPtr client_mrm_sudden_stop_group_;
-  rclcpp::Client<autoware_adapi_v1_msgs::srv::OperateMRM>::SharedPtr client_mrm_sudden_stop_;
+  rclcpp::CallbackGroup::SharedPtr client_mrm_emergency_stop_group_;
+  rclcpp::Client<autoware_adapi_v1_msgs::srv::OperateMRM>::SharedPtr client_mrm_emergency_stop_;
 
   void callMRMBehavior(const autoware_adapi_v1_msgs::msg::MRMState::_behavior_type & mrm_behavior) const;
   void cancelMRMBehavior(const autoware_adapi_v1_msgs::msg::MRMState::_behavior_type & mrm_behavior) const;

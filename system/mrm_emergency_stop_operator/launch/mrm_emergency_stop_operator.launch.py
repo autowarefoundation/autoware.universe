@@ -23,31 +23,31 @@ import yaml
 
 def generate_launch_description():
     param_path = os.path.join(
-        get_package_share_directory("mrm_sudden_stop_operator"),
-        "config/mrm_sudden_stop_operator.config.yaml"
+        get_package_share_directory("mrm_emergency_stop_operator"),
+        "config/mrm_emergency_stop_operator.config.yaml"
     )
 
     with open(param_path, "r") as f:
         param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     component = ComposableNode(
-        package="mrm_sudden_stop_operator",
-        plugin="mrm_sudden_stop_operator::MRMSuddenStopOperator",
-        name="mrm_sudden_stop_operator",
+        package="mrm_emergency_stop_operator",
+        plugin="mrm_emergency_stop_operator::MRMEmergencyStopOperator",
+        name="mrm_emergency_stop_operator",
         parameters=[
             param,
         ],
         remappings=[
-            ("~/input/mrm/sudden_stop/operate", "/system/api/mrm/sudden_stop/operate"),
+            ("~/input/mrm/emergency_stop/operate", "/system/api/mrm/emergency_stop/operate"),
             ("~/input/control/control_cmd", "/control/command/control_cmd"),
-            ("~/output/mrm/sudden_stop/status", "/system/api/mrm/sudden_stop/status"),
-            ("~/output/mrm/sudden_stop/control_cmd", "/system/emergency/control_cmd"),
+            ("~/output/mrm/emergency_stop/status", "/system/api/mrm/emergency_stop/status"),
+            ("~/output/mrm/emergency_stop/control_cmd", "/system/emergency/control_cmd"),
         ],
     )
 
     container = ComposableNodeContainer(
-        name="mrm_sudden_stop_operator_container",
-        namespace="mrm_sudden_stop_operator",
+        name="mrm_emergency_stop_operator_container",
+        namespace="mrm_emergency_stop_operator",
         package="rclcpp_components",
         executable="component_container",
         composable_node_descriptions=[

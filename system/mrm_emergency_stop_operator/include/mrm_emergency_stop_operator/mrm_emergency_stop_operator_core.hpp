@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MRM_COMFORTABLE_STOP_OPERATOR__MRM_COMFORTABLE_STOP_OPERATOR_CORE_HPP_
-#define MRM_COMFORTABLE_STOP_OPERATOR__MRM_COMFORTABLE_STOP_OPERATOR_CORE_HPP_
+#ifndef MRM_EMERGENCY_STOP_OPERATOR__MRM_EMERGENCY_STOP_OPERATOR_CORE_HPP_
+#define MRM_EMERGENCY_STOP_OPERATOR__MRM_EMERGENCY_STOP_OPERATOR_CORE_HPP_
 
 // Core
 #include <functional>
@@ -27,7 +27,7 @@
 // ROS2 core
 #include <rclcpp/rclcpp.hpp>
 
-namespace mrm_sudden_stop_operator
+namespace mrm_emergency_stop_operator
 {
   using autoware_adapi_v1_msgs::srv::OperateMRM;
   using autoware_adapi_v1_msgs::msg::MRMBehaviorStatus;
@@ -40,10 +40,10 @@ struct Parameters
   double target_jerk;  // [m/s^3]
 };
 
-class MRMSuddenStopOperator : public rclcpp::Node
+class MRMEmergencyStopOperator : public rclcpp::Node
 {
 public:
-  explicit MRMSuddenStopOperator(const rclcpp::NodeOptions & node_options);
+  explicit MRMEmergencyStopOperator(const rclcpp::NodeOptions & node_options);
 
 private:
   // Parameters
@@ -57,7 +57,7 @@ private:
   // Server
   rclcpp::Service<OperateMRM>::SharedPtr service_operation_;
 
-  void operateSuddenStop(
+  void operateEmergencyStop(
     const OperateMRM::Request::SharedPtr request,
     const OperateMRM::Response::SharedPtr response);
 
@@ -83,6 +83,6 @@ private:
 
 };
 
-}  // namespace mrm_sudden_stop_operator
+}  // namespace mrm_emergency_stop_operator
 
-#endif  // MRM_COMFORTABLE_STOP_OPERATOR__MRM_COMFORTABLE_STOP_OPERATOR_CORE_HPP_
+#endif  // MRM_EMERGENCY_STOP_OPERATOR__MRM_EMERGENCY_STOP_OPERATOR_CORE_HPP_

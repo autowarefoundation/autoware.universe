@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "mrm_sudden_stop_operator/mrm_sudden_stop_operator_core.hpp"
+#include "mrm_emergency_stop_operator/mrm_emergency_stop_operator_core.hpp"
 
-namespace mrm_sudden_stop_operator
+namespace mrm_emergency_stop_operator
 {
 
-MRMSuddenStopOperator::MRMSuddenStopOperator(const rclcpp::NodeOptions & node_options)
-: Node("mrm_sudden_stop_operator", node_options)
+MRMEmergencyStopOperator::MRMEmergencyStopOperator(const rclcpp::NodeOptions & node_options)
+: Node("mrm_emergency_stop_operator", node_options)
 {
   // Parameter
   params_.update_rate = static_cast<int>(declare_parameter<int>("update_rate", 30));
@@ -28,24 +28,24 @@ MRMSuddenStopOperator::MRMSuddenStopOperator(const rclcpp::NodeOptions & node_op
   // Subscriber
   sub_control_cmd_ = create_subscription<AckermannControlCommand>(
     "~/input/control/control_cmd", 1,
-    std::bind(&MRMSuddenStopOperator::onControlCommand, this, std::placeholders::_1));
+    std::bind(&MRMEmergencyStopOperator::onControlCommand, this, std::placeholders::_1));
 
   // Server
   service_operation_ = create_service<OperateMRM>(
-    "~/input/mrm/sudden_stop/operate",
-    std::bind(&MRMSuddenStopOperator::operateSuddenStop, this,
+    "~/input/mrm/emergency_stop/operate",
+    std::bind(&MRMEmergencyStopOperator::operateEmergencyStop, this,
     std::placeholders::_1, std::placeholders::_2));
 
   // Publisher
   pub_status_ = create_publisher<MRMBehaviorStatus>(
-    "~/output/mrm/sudden_stop/status", 1);
+    "~/output/mrm/emergency_stop/status", 1);
   pub_control_cmd_ = create_publisher<AckermannControlCommand>(
-    "~/output/mrm/sudden_stop/control_cmd", 1);
+    "~/output/mrm/emergency_stop/control_cmd", 1);
 
   // Timer
   const auto update_period_ns = rclcpp::Rate(params_.update_rate).period();
   timer_ = rclcpp::create_timer(
-    this, get_clock(), update_period_ns, std::bind(&MRMSuddenStopOperator::onTimer, this));
+    this, get_clock(), update_period_ns, std::bind(&MRMEmergencyStopOperator::onTimer, this));
 
   // Initialize
   status_.is_available = true;
@@ -54,7 +54,7 @@ MRMSuddenStopOperator::MRMSuddenStopOperator(const rclcpp::NodeOptions & node_op
 }
 
 
-void MRMSuddenStopOperator::onControlCommand(
+void MRMEmergencyStopOperator::onControlCommand(
     AckermannControlCommand::ConstSharedPtr msg)
 {
   if (status_.is_operating == false) {
@@ -63,7 +63,7 @@ void MRMSuddenStopOperator::onControlCommand(
   }
 }
 
-void MRMSuddenStopOperator::operateSuddenStop(
+void MRMEmergencyStopOperator::operateEmergencyStop(
     const OperateMRM::Request::SharedPtr request,
     const OperateMRM::Response::SharedPtr response)
 {
@@ -76,19 +76,19 @@ void MRMSuddenStopOperator::operateSuddenStop(
   }
 }
 
-void MRMSuddenStopOperator::publishStatus() const
+void MRMEmergencyStopOperator::publishStatus() const
 {
   auto status = status_;
   status.stamp = this->now();
   pub_status_->publish(status);
 }
 
-void MRMSuddenStopOperator::publishControlCommand(const AckermannControlCommand & command) const
+void MRMEmergencyStopOperator::publishControlCommand(const AckermannControlCommand & command) const
 {
   pub_control_cmd_->publish(command);
 }
 
-void MRMSuddenStopOperator::onTimer()
+void MRMEmergencyStopOperator::onTimer()
 {
   if (status_.is_operating) {
     auto control_cmd = calcTargetAcceleration(prev_control_cmd_);
@@ -100,7 +100,7 @@ void MRMSuddenStopOperator::onTimer()
   publishStatus();
 }
 
-AckermannControlCommand MRMSuddenStopOperator::calcTargetAcceleration(
+AckermannControlCommand MRMEmergencyStopOperator::calcTargetAcceleration(
   const AckermannControlCommand & prev_control_cmd) const
 {
   auto control_cmd = AckermannControlCommand();
@@ -137,7 +137,7 @@ AckermannControlCommand MRMSuddenStopOperator::calcTargetAcceleration(
   return control_cmd;
 }
 
-}  // namespace mrm_sudden_stop_operator
+}  // namespace mrm_emergency_stop_operator
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(mrm_sudden_stop_operator::MRMSuddenStopOperator)
+RCLCPP_COMPONENTS_REGISTER_NODE(mrm_emergency_stop_operator::MRMEmergencyStopOperator)

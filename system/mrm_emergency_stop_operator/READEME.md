@@ -1,4 +1,4 @@
-# mrm_sudden_stop_operator
+# mrm_emergency_stop_operator
 
 ## Purpose
 

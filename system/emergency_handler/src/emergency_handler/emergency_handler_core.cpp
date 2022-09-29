@@ -47,9 +47,9 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
   sub_mrm_comfortable_stop_status_ = create_subscription<autoware_adapi_v1_msgs::msg::MRMBehaviorStatus>(
     "~/input/mrm/comfortable_stop/status", rclcpp::QoS{1},
     std::bind(&EmergencyHandler::onMRMComfortableStopStatus, this, _1));
-  sub_mrm_sudden_stop_status_ = create_subscription<autoware_adapi_v1_msgs::msg::MRMBehaviorStatus>(
-    "~/input/mrm/sudden_stop/status", rclcpp::QoS{1},
-    std::bind(&EmergencyHandler::onMRMSuddenStopStatus, this, _1));
+  sub_mrm_emergency_stop_status_ = create_subscription<autoware_adapi_v1_msgs::msg::MRMBehaviorStatus>(
+    "~/input/mrm/emergency_stop/status", rclcpp::QoS{1},
+    std::bind(&EmergencyHandler::onMRMEmergencyStopStatus, this, _1));
 
   // Heartbeat
   heartbeat_hazard_status_ = std::make_shared<
@@ -74,11 +74,11 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
   client_mrm_comfortable_stop_ =
     create_client<autoware_adapi_v1_msgs::srv::OperateMRM>(
       "~/output/mrm/comfortable_stop/operate", rmw_qos_profile_services_default, client_mrm_comfortable_stop_group_);
-  client_mrm_sudden_stop_group_ =
+  client_mrm_emergency_stop_group_ =
     create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-  client_mrm_sudden_stop_ =
+  client_mrm_emergency_stop_ =
     create_client<autoware_adapi_v1_msgs::srv::OperateMRM>(
-      "~/output/mrm/sudden_stop/operate", rmw_qos_profile_services_default, client_mrm_sudden_stop_group_);
+      "~/output/mrm/emergency_stop/operate", rmw_qos_profile_services_default, client_mrm_emergency_stop_group_);
 
   // Initialize
   odom_ = std::make_shared<const nav_msgs::msg::Odometry>();
@@ -86,7 +86,7 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
   prev_control_command_ = autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr(
     new autoware_auto_control_msgs::msg::AckermannControlCommand);
   mrm_comfortable_stop_status_ = std::make_shared<const autoware_adapi_v1_msgs::msg::MRMBehaviorStatus>();
-  mrm_sudden_stop_status_ = std::make_shared<const autoware_adapi_v1_msgs::msg::MRMBehaviorStatus>();
+  mrm_emergency_stop_status_ = std::make_shared<const autoware_adapi_v1_msgs::msg::MRMBehaviorStatus>();
   mrm_state_.stamp = this->now();
   mrm_state_.state = autoware_adapi_v1_msgs::msg::MRMState::NORMAL;
   mrm_state_.behavior = autoware_adapi_v1_msgs::msg::MRMState::NONE;
@@ -129,10 +129,10 @@ void EmergencyHandler::onMRMComfortableStopStatus(
   mrm_comfortable_stop_status_ = msg;
 }
 
-void EmergencyHandler::onMRMSuddenStopStatus(
+void EmergencyHandler::onMRMEmergencyStopStatus(
   const autoware_adapi_v1_msgs::msg::MRMBehaviorStatus::ConstSharedPtr msg)
 {
-  mrm_sudden_stop_status_ = msg;
+  mrm_emergency_stop_status_ = msg;
 }
 
 autoware_auto_vehicle_msgs::msg::HazardLightsCommand EmergencyHandler::createHazardCmdMsg()
@@ -263,11 +263,11 @@ void EmergencyHandler::callMRMBehavior(
     return;
   }
   if (mrm_behavior == MRMState::EMERGENCY_STOP) {
-    auto result = client_mrm_sudden_stop_->async_send_request(request).get();
+    auto result = client_mrm_emergency_stop_->async_send_request(request).get();
     if (result->response.success == true) {
-      RCLCPP_WARN(this->get_logger(), "Sudden stop is operated");
+      RCLCPP_WARN(this->get_logger(), "Emergency stop is operated");
     } else {
-      RCLCPP_ERROR(this->get_logger(), "Sudden stop is failed to operate");
+      RCLCPP_ERROR(this->get_logger(), "Emergency stop is failed to operate");
     }
     return;
   }
@@ -292,11 +292,11 @@ void EmergencyHandler::cancelMRMBehavior(
     return;
   }
   if (mrm_behavior == MRMState::EMERGENCY_STOP) {
-    auto result = client_mrm_sudden_stop_->async_send_request(request).get();
+    auto result = client_mrm_emergency_stop_->async_send_request(request).get();
     if (result->response.success == true) {
-      RCLCPP_WARN(this->get_logger(), "Sudden stop is canceled");
+      RCLCPP_WARN(this->get_logger(), "Emergency stop is canceled");
     } else {
-      RCLCPP_ERROR(this->get_logger(), "Sudden stop is failed to cancel");
+      RCLCPP_ERROR(this->get_logger(), "Emergency stop is failed to cancel");
     }
     return;
   }
