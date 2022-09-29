@@ -150,12 +150,12 @@ class CommunicationDelayCompensatorNode : public rclcpp::Node
 
   // Data Members for the delay-compensation
   // CDOB: Communication Disturbance Observer-based.
-  std::unique_ptr<LateralCommunicationDelayCompensator> cdob_lateral_ptr_{nullptr};
+  LateralCommunicationDelayCompensator cdob_lateral;
 
   /**
-   * @brief vehicle model that simulates the physical input.
+   * @brief observer vehicle model for input disturbance estimation estimation.
    * */
-  std::shared_ptr<observers::linear_vehicle_model_t> vehicle_model_ptr_{nullptr};
+  observers::LateralDisturbanceCompensator dob_lateral;
 
   /**
    * @brief observer vehicle model for state estimation.
@@ -163,9 +163,9 @@ class CommunicationDelayCompensatorNode : public rclcpp::Node
   std::shared_ptr<observers::linear_state_observer_model_t> dist_td_obs_vehicle_model_ptr_{nullptr};
 
   /**
-   * @brief observer vehicle model for input disturbance estimation estimation.
+   * @brief vehicle model that simulates the physical input.
    * */
-  std::shared_ptr<observers::LateralDisturbanceCompensator> dob_lateral_ptr_{nullptr};
+  std::shared_ptr<observers::linear_vehicle_model_t> vehicle_model_ptr_{nullptr};
 
   // Pointers to the ROS topics.
   // Pointers to the model state variables inputs
