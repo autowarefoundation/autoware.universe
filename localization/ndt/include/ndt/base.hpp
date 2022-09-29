@@ -42,7 +42,6 @@ public:
   NormalDistributionsTransformBase();
   virtual ~NormalDistributionsTransformBase() = default;
 
-  // virtual void align(pcl::PointCloud<PointSource> & output, const Eigen::Matrix4f & guess) = 0;
   virtual NdtResult align(const geometry_msgs::msg::Pose & initial_pose_msg) = 0;
   virtual void setInputTarget(const pcl::shared_ptr<pcl::PointCloud<PointTarget>> & map_ptr) = 0;
   virtual void setInputSource(const pcl::shared_ptr<pcl::PointCloud<PointSource>> & scan_ptr) = 0;
