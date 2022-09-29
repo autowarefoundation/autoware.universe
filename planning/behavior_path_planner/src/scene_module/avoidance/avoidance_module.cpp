@@ -2685,6 +2685,8 @@ bool AvoidanceModule::shiftedpathcheck(
   lanelet::ConstLanelets current_lanelets;
   lanelet::ConstLanelets check_lanelets;
   current_lanelets=avoidance_data_.current_lanelets;
+  static bool is_outside_prv=false;
+  static ShiftPointArray shift_points_prv;
   static size_t over_flag = 0;
   if(current_lanelets.size()==0)
   {
@@ -2704,6 +2706,11 @@ bool AvoidanceModule::shiftedpathcheck(
   {
      if(fabs(shift_points.at(shift_points.size()-1).length)>0.01)
      {
+      if(is_outside_prv)
+      {
+        path_shifter.setShiftPoints(shift_points_prv);
+        return true;
+      }
       return false;
      }
   }
@@ -2711,6 +2718,11 @@ bool AvoidanceModule::shiftedpathcheck(
   {
     if(over_flag<shift_points.size())
     {
+      if(is_outside_prv)
+      {
+        path_shifter.setShiftPoints(shift_points_prv);
+        return true;
+      }
       return false;
     }
   }
@@ -2791,7 +2803,20 @@ bool AvoidanceModule::shiftedpathcheck(
     {
         shift_points.at(n).length=0.0;
     }
+    if(zerolength_endidx!=(shift_points.size()-1))
+    {
+
+    }
     path_shifter.setShiftPoints(shift_points);
+    is_outside_prv = true;
+    shift_points_prv = shift_points;
+  }
+  else
+  {
+     is_outside_prv = false;
+     shift_points_prv = shift_points;
+     path_shifter.zerolength_startidx=-1;
+     path_shifter.zerolength_endidx=-1;
   }
   return is_outside;
 }
