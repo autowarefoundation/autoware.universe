@@ -871,6 +871,7 @@ void NDTScanMatcher::serviceTriggerNode(
   std_srvs::srv::SetBool::Response::SharedPtr res)
 {
   if (req->data) {
+    std::lock_guard<std::mutex> initial_pose_array_lock(initial_pose_array_mtx_);
     initial_pose_msg_ptr_array_.clear();
   }
   res->success = true;
