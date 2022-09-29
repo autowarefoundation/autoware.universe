@@ -15,12 +15,15 @@
 #ifndef NDT__BASE_HPP_
 #define NDT__BASE_HPP_
 
+#include <tier4_autoware_utils/geometry/geometry.hpp>
+
+#include <geometry_msgs/msg/pose.hpp>
+
 #include <pcl/common/io.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
 #include <pcl/search/kdtree.h>
-#include <geometry_msgs/msg/pose.hpp>
-#include <tier4_autoware_utils/geometry/geometry.hpp>
+
 #include <vector>
 
 struct NdtResult

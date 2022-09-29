@@ -30,7 +30,8 @@ template <class PointSource, class PointTarget>
 NdtResult NormalDistributionsTransformPCLGeneric<PointSource, PointTarget>::align(
   const geometry_msgs::msg::Pose & initial_pose_msg)
 {
-  const Eigen::Matrix4f initial_pose_matrix = tier4_autoware_utils::poseToMatrix4f(initial_pose_msg);
+  const Eigen::Matrix4f initial_pose_matrix =
+    tier4_autoware_utils::poseToMatrix4f(initial_pose_msg);
 
   auto output_cloud = std::make_shared<pcl::PointCloud<PointSource>>();
   ndt_ptr_->align(*output_cloud, initial_pose_matrix);
@@ -47,8 +48,7 @@ NdtResult NormalDistributionsTransformPCLGeneric<PointSource, PointTarget>::alig
   ndt_result.pose = tier4_autoware_utils::matrix4fToPose(getFinalTransformation());
   ndt_result.transformation_array = transformation_array_msg;
   ndt_result.transform_probability = getTransformationProbability();
-  ndt_result.nearest_voxel_transformation_likelihood =
-    getNearestVoxelTransformationLikelihood();
+  ndt_result.nearest_voxel_transformation_likelihood = getNearestVoxelTransformationLikelihood();
   ndt_result.iteration_num = getFinalNumIteration();
   return ndt_result;
 }
