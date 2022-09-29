@@ -18,8 +18,8 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_ad_api_msgs/msg/velocity_factor.hpp>
-#include <autoware_ad_api_msgs/msg/velocity_factor_array.hpp>
+#include <autoware_adapi_v1_msgs/msg/velocity_factor.hpp>
+#include <autoware_adapi_v1_msgs/msg/velocity_factor_array.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 
 #include <mutex>
@@ -29,8 +29,8 @@
 namespace behavior_velocity_planner
 {
 
-using autoware_ad_api_msgs::msg::VelocityFactor;
-using autoware_ad_api_msgs::msg::VelocityFactorArray;
+using autoware_adapi_v1_msgs::msg::VelocityFactor;
+using autoware_adapi_v1_msgs::msg::VelocityFactorArray;
 using geometry_msgs::msg::Pose;
 using VelocityFactorType = VelocityFactor::_type_type;
 using VelocityFactorStatus = VelocityFactor::_status_type;

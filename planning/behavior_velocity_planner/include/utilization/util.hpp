@@ -20,7 +20,6 @@
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 #include <utilization/boost_geometry_helper.hpp>
 
-#include <autoware_ad_api_msgs/msg/velocity_factor.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path.hpp>
@@ -99,9 +98,6 @@ using tier4_autoware_utils::createQuaternionFromYaw;
 using tier4_autoware_utils::getPoint;
 using tier4_planning_msgs::msg::StopFactor;
 using tier4_planning_msgs::msg::StopReason;
-
-// TODO(Takagi, Isamu)
-using autoware_ad_api_msgs::msg::VelocityFactor;
 
 namespace planning_utils
 {
@@ -188,7 +184,6 @@ double findReachTime(
   const double t_min, const double t_max);
 
 StopReason initializeStopReason(const std::string & stop_reason);
-VelocityFactor initializeVelocityFactor(const uint16_t stop_reason);
 
 void appendStopReason(const StopFactor stop_factor, StopReason * stop_reason);
 

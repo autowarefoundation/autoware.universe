@@ -102,7 +102,7 @@ private:
 
   void setVelocityFactor(
     const geometry_msgs::msg::Pose & stop_pose,
-    autoware_ad_api_msgs::msg::VelocityFactor * velocity_factor);
+    autoware_adapi_v1_msgs::msg::VelocityFactor * velocity_factor);
 
   boost::optional<size_t> getPathIndexOfFirstEndLine();
 

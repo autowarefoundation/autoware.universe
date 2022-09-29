@@ -17,7 +17,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_ad_api_msgs/msg/velocity_factor_array.hpp>
+#include <autoware_adapi_v1_msgs/msg/velocity_factor_array.hpp>
 #include <geometry_msgs/msg/polygon_stamped.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <tier4_planning_msgs/msg/stop_reason_array.hpp>
@@ -32,8 +32,8 @@
 namespace surround_obstacle_checker
 {
 
-using autoware_ad_api_msgs::msg::VelocityFactor;
-using autoware_ad_api_msgs::msg::VelocityFactorArray;
+using autoware_adapi_v1_msgs::msg::VelocityFactor;
+using autoware_adapi_v1_msgs::msg::VelocityFactorArray;
 using geometry_msgs::msg::PolygonStamped;
 using tier4_planning_msgs::msg::StopFactor;
 using tier4_planning_msgs::msg::StopReason;

@@ -393,11 +393,11 @@ StopReasonArray ObstacleStopPlannerDebugNode::makeStopReasonArray()
   return stop_reason_array;
 }
 
-autoware_ad_api_msgs::msg::VelocityFactorArray
+autoware_adapi_v1_msgs::msg::VelocityFactorArray
 ObstacleStopPlannerDebugNode::makeVelocityFactorArray()
 {
-  using autoware_ad_api_msgs::msg::VelocityFactor;
-  using autoware_ad_api_msgs::msg::VelocityFactorArray;
+  using autoware_adapi_v1_msgs::msg::VelocityFactor;
+  using autoware_adapi_v1_msgs::msg::VelocityFactorArray;
 
   VelocityFactorArray velocity_factor_array;
   velocity_factor_array.header.frame_id = "map";

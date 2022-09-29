@@ -21,7 +21,7 @@
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
 
-#include "autoware_ad_api_msgs/msg/velocity_factor_array.hpp"
+#include "autoware_adapi_v1_msgs/msg/velocity_factor_array.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 #include "tier4_planning_msgs/msg/stop_reason_array.hpp"
 #include "tier4_planning_msgs/msg/stop_speed_exceeded.hpp"
@@ -33,8 +33,8 @@
 #include <memory>
 #include <vector>
 
-using autoware_ad_api_msgs::msg::VelocityFactor;
-using autoware_ad_api_msgs::msg::VelocityFactorArray;
+using autoware_adapi_v1_msgs::msg::VelocityFactor;
+using autoware_adapi_v1_msgs::msg::VelocityFactorArray;
 using autoware_auto_perception_msgs::msg::ObjectClassification;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using tier4_planning_msgs::msg::StopSpeedExceeded;

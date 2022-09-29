@@ -19,7 +19,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_ad_api_msgs/msg/velocity_factor_array.hpp>
+#include <autoware_adapi_v1_msgs/msg/velocity_factor_array.hpp>
 #include <geometry_msgs/msg/point.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <tier4_debug_msgs/msg/float32_multi_array_stamped.hpp>
@@ -44,6 +44,7 @@ using std_msgs::msg::Header;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
 
+using autoware_adapi_v1_msgs::msg::VelocityFactorArray;
 using tier4_debug_msgs::msg::Float32MultiArrayStamped;
 using tier4_planning_msgs::msg::StopFactor;
 using tier4_planning_msgs::msg::StopReason;

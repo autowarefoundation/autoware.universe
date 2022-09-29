@@ -467,14 +467,6 @@ StopReason initializeStopReason(const std::string & stop_reason)
   return stop_reason_msg;
 }
 
-autoware_ad_api_msgs::msg::VelocityFactor initializeVelocityFactor(const uint16_t type)
-{
-  autoware_ad_api_msgs::msg::VelocityFactor velocity_factor_msg;
-  velocity_factor_msg.type = type;
-  // velocity_factor_msg.status = autoware_ad_api_msgs::msg::VelocityFactor::STOP_FALSE;
-  return velocity_factor_msg;
-}
-
 void appendStopReason(const StopFactor stop_factor, StopReason * stop_reason)
 {
   stop_reason->stop_factors.emplace_back(stop_factor);

@@ -46,7 +46,7 @@ void TrafficLightModuleManager::modifyPathVelocity(
   visualization_msgs::msg::MarkerArray debug_marker_array;
   visualization_msgs::msg::MarkerArray virtual_wall_marker_array;
   tier4_planning_msgs::msg::StopReasonArray stop_reason_array;
-  autoware_ad_api_msgs::msg::VelocityFactorArray velocity_factor_array;
+  autoware_adapi_v1_msgs::msg::VelocityFactorArray velocity_factor_array;
   stop_reason_array.header.frame_id = "map";
   stop_reason_array.header.stamp = path->header.stamp;
   velocity_factor_array.header.frame_id = "map";

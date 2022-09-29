@@ -23,8 +23,8 @@
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 #include <utilization/util.hpp>
 
-#include <autoware_ad_api_msgs/msg/velocity_factor.hpp>
-#include <autoware_ad_api_msgs/msg/velocity_factor_array.hpp>
+#include <autoware_adapi_v1_msgs/msg/velocity_factor.hpp>
+#include <autoware_adapi_v1_msgs/msg/velocity_factor_array.hpp>
 #include <autoware_auto_planning_msgs/msg/path.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <tier4_debug_msgs/msg/float64_stamped.hpp>
@@ -157,7 +157,7 @@ public:
     }
     pub_virtual_wall_ = node.create_publisher<visualization_msgs::msg::MarkerArray>(
       std::string("~/virtual_wall/") + module_name, 5);
-    pub_velocity_factor_ = node.create_publisher<autoware_ad_api_msgs::msg::VelocityFactorArray>(
+    pub_velocity_factor_ = node.create_publisher<autoware_adapi_v1_msgs::msg::VelocityFactorArray>(
       std::string("/planning/velocity_factors/") + module_name, 1);
     pub_stop_reason_ =
       node.create_publisher<tier4_planning_msgs::msg::StopReasonArray>("~/output/stop_reasons", 1);
@@ -197,7 +197,7 @@ protected:
     visualization_msgs::msg::MarkerArray debug_marker_array;
     visualization_msgs::msg::MarkerArray virtual_wall_marker_array;
     tier4_planning_msgs::msg::StopReasonArray stop_reason_array;
-    autoware_ad_api_msgs::msg::VelocityFactorArray velocity_factor_array;
+    autoware_adapi_v1_msgs::msg::VelocityFactorArray velocity_factor_array;
     stop_reason_array.header.frame_id = "map";
     stop_reason_array.header.stamp = clock_->now();
     velocity_factor_array.header.frame_id = "map";
@@ -330,7 +330,8 @@ protected:
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_debug_;
   rclcpp::Publisher<autoware_auto_planning_msgs::msg::PathWithLaneId>::SharedPtr pub_debug_path_;
   rclcpp::Publisher<tier4_planning_msgs::msg::StopReasonArray>::SharedPtr pub_stop_reason_;
-  rclcpp::Publisher<autoware_ad_api_msgs::msg::VelocityFactorArray>::SharedPtr pub_velocity_factor_;
+  rclcpp::Publisher<autoware_adapi_v1_msgs::msg::VelocityFactorArray>::SharedPtr
+    pub_velocity_factor_;
   rclcpp::Publisher<tier4_v2x_msgs::msg::InfrastructureCommandArray>::SharedPtr
     pub_infrastructure_commands_;
 
