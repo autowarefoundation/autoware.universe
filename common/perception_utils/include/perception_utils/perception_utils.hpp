@@ -19,8 +19,6 @@
 #include "tier4_autoware_utils/geometry/boost_geometry.hpp"
 #include "tier4_autoware_utils/geometry/boost_polygon_utils.hpp"
 
-#include <autoware_auto_tf2/tf2_autoware_auto_msgs.hpp>
-
 #include "autoware_auto_perception_msgs/msg/detected_objects.hpp"
 #include "autoware_auto_perception_msgs/msg/tracked_objects.hpp"
 #include "geometry_msgs/msg/transform.hpp"
@@ -157,7 +155,7 @@ inline double get2dRecall(const T1 source_object, const T2 target_object)
 template <class T>
 bool transformObjects(
   const T & input_msg, const std::string & target_frame_id, const tf2_ros::Buffer & tf_buffer,
-  T & output_msg, const bool transform_shape_footprint = false)
+  T & output_msg)
 {
   output_msg = input_msg;
 
@@ -180,25 +178,6 @@ bool transformObjects(
       tf_target2objects = tf_target2objects_world * tf_objects_world2objects;
       tf2::toMsg(tf_target2objects, object.kinematics.pose_with_covariance.pose);
       // TODO(yukkysaito) transform covariance
-
-      if (transform_shape_footprint) {
-        // convert point from object coordinate(origin is
-        // object.kinematics.pose_with_covariance.pose) to target_frame_id
-        geometry_msgs::msg::TransformStamped tf_target2objects_stamped;
-        tf_target2objects_stamped.transform = tf2::toMsg(tf_target2objects);
-        for (auto & point : object.shape.footprint.points) {
-          // input_msg.header.frame_id to target_frame_id
-          geometry_msgs::msg::Point32 point_transformed;
-          tf2::doTransform<geometry_msgs::msg::Point32>(
-            point, point_transformed, tf_target2objects_stamped);
-
-          // target_frame_id to rotated object coordinate(origin is
-          // object.kinematics.pose_with_covariance.pose)
-          point.x = point_transformed.x - object.kinematics.pose_with_covariance.pose.position.x;
-          point.y = point_transformed.y - object.kinematics.pose_with_covariance.pose.position.y;
-          point.z = point_transformed.z - object.kinematics.pose_with_covariance.pose.position.z;
-        }
-      }
     }
   }
   return true;
