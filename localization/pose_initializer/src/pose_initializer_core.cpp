@@ -235,12 +235,7 @@ bool PoseInitializer::callAlignServiceAndPublishResult(
   response_id_ = result->seq;
   // NOTE temporary cov
   geometry_msgs::msg::PoseWithCovarianceStamped & pose_with_cov = result->pose_with_covariance;
-  pose_with_cov.pose.covariance[0] = 1.0;
-  pose_with_cov.pose.covariance[1 * 6 + 1] = 1.0;
-  pose_with_cov.pose.covariance[2 * 6 + 2] = 0.01;
-  pose_with_cov.pose.covariance[3 * 6 + 3] = 0.01;
-  pose_with_cov.pose.covariance[4 * 6 + 4] = 0.01;
-  pose_with_cov.pose.covariance[5 * 6 + 5] = 0.2;
+  pose_with_cov.pose.covariance = output_pose_covariance_;
   initial_pose_pub_->publish(pose_with_cov);
   enable_gnss_callback_ = false;
 
