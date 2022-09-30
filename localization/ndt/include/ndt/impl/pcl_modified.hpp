@@ -48,6 +48,12 @@ void NormalDistributionsTransformPCLModified<PointSource, PointTarget>::setInput
 }
 
 template <class PointSource, class PointTarget>
+NDTImplementType NormalDistributionsTransformPCLModified<PointSource, PointTarget>::getImplementationType()
+{
+  return NDTImplementType::PCL_MODIFIED;
+}
+
+template <class PointSource, class PointTarget>
 void NormalDistributionsTransformPCLModified<PointSource, PointTarget>::setMaximumIterations(
   int max_iter)
 {

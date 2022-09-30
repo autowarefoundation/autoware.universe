@@ -22,7 +22,7 @@ else()
   endif()
 endif()
 
-find_package(PCL REQUIRED COMPONENTS common io registration)
+find_package(PCL REQUIRED COMPONENTS common io registration fmt)
 
 add_library(ndt
   src/base.cpp

@@ -97,7 +97,6 @@ NDTScanMatcher::NDTScanMatcher()
   tf2_buffer_(this->get_clock()),
   tf2_listener_(tf2_buffer_),
   tf2_broadcaster_(*this),
-  ndt_implement_type_(NDTImplementType::PCL_GENERIC),
   base_frame_("base_link"),
   ndt_base_frame_("ndt_base_link"),
   map_frame_("map"),
@@ -115,17 +114,17 @@ NDTScanMatcher::NDTScanMatcher()
   key_value_stdmap_["state"] = "Initializing";
 
   int ndt_implement_type_tmp = this->declare_parameter("ndt_implement_type", 0);
-  ndt_implement_type_ = static_cast<NDTImplementType>(ndt_implement_type_tmp);
+  NDTImplementType ndt_implement_type = static_cast<NDTImplementType>(ndt_implement_type_tmp);
 
   RCLCPP_INFO(get_logger(), "NDT Implement Type is %d", ndt_implement_type_tmp);
   try {
-    ndt_ptr_ = get_ndt<PointSource, PointTarget>(ndt_implement_type_);
+    ndt_ptr_ = get_ndt<PointSource, PointTarget>(ndt_implement_type);
   } catch (std::exception & e) {
     RCLCPP_ERROR(get_logger(), "%s", e.what());
     return;
   }
 
-  if (ndt_implement_type_ == NDTImplementType::OMP) {
+  if (ndt_ptr_->getImplementationType() == NDTImplementType::OMP) {
     using T = NormalDistributionsTransformOMP<PointSource, PointTarget>;
 
     // FIXME(IshitaTakeshi) Not sure if this is safe
@@ -173,7 +172,7 @@ NDTScanMatcher::NDTScanMatcher()
   int converged_param_type_tmp = this->declare_parameter("converged_param_type", 0);
   converged_param_type_ = static_cast<ConvergedParamType>(converged_param_type_tmp);
   if (
-    ndt_implement_type_ != NDTImplementType::OMP &&
+    ndt_ptr_->getImplementationType() != NDTImplementType::OMP &&
     converged_param_type_ == ConvergedParamType::NEAREST_VOXEL_TRANSFORMATION_LIKELIHOOD) {
     RCLCPP_ERROR(
       get_logger(),
@@ -404,9 +403,9 @@ void NDTScanMatcher::callback_map_points(
   const auto max_iterations = ndt_ptr_->getMaximumIterations();
 
   using NDTBase = NormalDistributionsTransformBase<PointSource, PointTarget>;
-  std::shared_ptr<NDTBase> new_ndt_ptr = get_ndt<PointSource, PointTarget>(ndt_implement_type_);
+  std::shared_ptr<NDTBase> new_ndt_ptr = get_ndt<PointSource, PointTarget>(ndt_ptr_->getImplementationType());
 
-  if (ndt_implement_type_ == NDTImplementType::OMP) {
+  if (ndt_ptr_->getImplementationType() == NDTImplementType::OMP) {
     using T = NormalDistributionsTransformOMP<PointSource, PointTarget>;
 
     // FIXME(IshitaTakeshi) Not sure if this is safe
@@ -471,7 +470,7 @@ void NDTScanMatcher::callback_sensor_points(
   initial_pose_array_lock.unlock();
 
   // if regularization is enabled and available, set pose to NDT for regularization
-  if (regularization_enabled_ && (ndt_implement_type_ == NDTImplementType::OMP))
+  if (regularization_enabled_ && (ndt_ptr_->getImplementationType() == NDTImplementType::OMP))
     add_regularization_pose(sensor_ros_time);
 
   if (ndt_ptr_->getInputTarget() == nullptr) {

@@ -47,6 +47,12 @@ void NormalDistributionsTransformOMP<PointSource, PointTarget>::setInputSource(
 }
 
 template <class PointSource, class PointTarget>
+NDTImplementType NormalDistributionsTransformOMP<PointSource, PointTarget>::getImplementationType()
+{
+  return NDTImplementType::OMP;
+}
+
+template <class PointSource, class PointTarget>
 void NormalDistributionsTransformOMP<PointSource, PointTarget>::setMaximumIterations(int max_iter)
 {
   ndt_ptr_->setMaximumIterations(max_iter);

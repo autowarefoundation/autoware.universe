@@ -22,6 +22,7 @@
 #include <ndt/omp.hpp>
 #include <ndt/pcl_generic.hpp>
 #include <ndt/pcl_modified.hpp>
+#include <ndt/utils.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
@@ -62,7 +63,6 @@
 #include <thread>
 #include <vector>
 
-enum class NDTImplementType { PCL_GENERIC = 0, PCL_MODIFIED = 1, OMP = 2 };
 enum class ConvergedParamType {
   TRANSFORM_PROBABILITY = 0,
   NEAREST_VOXEL_TRANSFORMATION_LIKELIHOOD = 1
@@ -76,28 +76,6 @@ struct NdtResult
   int iteration_num;
   std::vector<geometry_msgs::msg::Pose> transformation_array;
 };
-
-template <typename PointSource, typename PointTarget>
-std::shared_ptr<NormalDistributionsTransformBase<PointSource, PointTarget>> get_ndt(
-  const NDTImplementType & ndt_mode)
-{
-  std::shared_ptr<NormalDistributionsTransformBase<PointSource, PointTarget>> ndt_ptr;
-  if (ndt_mode == NDTImplementType::PCL_GENERIC) {
-    ndt_ptr.reset(new NormalDistributionsTransformPCLGeneric<PointSource, PointTarget>);
-    return ndt_ptr;
-  }
-  if (ndt_mode == NDTImplementType::PCL_MODIFIED) {
-    ndt_ptr.reset(new NormalDistributionsTransformPCLModified<PointSource, PointTarget>);
-    return ndt_ptr;
-  }
-  if (ndt_mode == NDTImplementType::OMP) {
-    ndt_ptr.reset(new NormalDistributionsTransformOMP<PointSource, PointTarget>);
-    return ndt_ptr;
-  }
-
-  const std::string s = fmt::format("Unknown NDT type {}", static_cast<int>(ndt_mode));
-  throw std::runtime_error(s);
-}
 
 class NDTScanMatcher : public rclcpp::Node
 {
@@ -204,7 +182,6 @@ private:
   tf2_ros::TransformListener tf2_listener_;
   tf2_ros::TransformBroadcaster tf2_broadcaster_;
 
-  NDTImplementType ndt_implement_type_;
   std::shared_ptr<NormalDistributionsTransformBase<PointSource, PointTarget>> ndt_ptr_;
 
   Eigen::Matrix4f base_to_sensor_matrix_;
