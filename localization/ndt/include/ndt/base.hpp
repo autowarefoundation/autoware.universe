@@ -26,6 +26,15 @@ template <class PointSource, class PointTarget>
 class NormalDistributionsTransformBase
 {
 public:
+  struct BaseParam
+  {
+    double trans_epsilon;
+    double step_size;
+    double resolution;
+    int max_iterations;
+    double regularization_scale_factor;
+  };
+
   NormalDistributionsTransformBase();
   virtual ~NormalDistributionsTransformBase() = default;
 
@@ -55,6 +64,7 @@ public:
   virtual void setRegularizationPose(const Eigen::Matrix4f &) = 0;
   virtual void unsetRegularizationPose() = 0;
   virtual void setRegularizationScaleFactor(const float) = 0;
+  virtual float getRegularizationScaleFactor() = 0;
 
   virtual Eigen::Matrix<double, 6, 6> getHessian() const = 0;
 
@@ -64,6 +74,9 @@ public:
     const pcl::PointCloud<PointSource> & trans_cloud) const = 0;
   virtual double calculateNearestVoxelTransformationLikelihood(
     const pcl::PointCloud<PointSource> & trans_cloud) const = 0;
+
+  void setParam(const BaseParam & base_param);
+  BaseParam getParam();
 };
 
 #include "ndt/impl/base.hpp"

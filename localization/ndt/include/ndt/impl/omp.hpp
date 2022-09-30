@@ -226,4 +226,22 @@ NormalDistributionsTransformOMP<PointSource, PointTarget>::getNeighborhoodSearch
   return ndt_ptr_->getNeighborhoodSearchMethod();
 }
 
+template <class PointSource, class PointTarget>
+void NormalDistributionsTransformOMP<PointSource, PointTarget>::setOMPParam(
+  const OMPParam & omp_param)
+{
+  setNumThreads(omp_param.num_threads);
+  setNeighborhoodSearchMethod(omp_param.search_method);
+}
+
+template <class PointSource, class PointTarget>
+typename NormalDistributionsTransformOMP<PointSource, PointTarget>::OMPParam
+  NormalDistributionsTransformOMP<PointSource, PointTarget>::getOMPParam()
+{
+  OMPParam omp_param;
+  omp_param.num_threads = getNumThreads();
+  omp_param.search_method = getNeighborhoodSearchMethod();
+  return omp_param;
+}
+
 #endif  // NDT__IMPL__OMP_HPP_

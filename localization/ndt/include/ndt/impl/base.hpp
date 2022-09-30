@@ -22,4 +22,27 @@ NormalDistributionsTransformBase<PointSource, PointTarget>::NormalDistributionsT
 {
 }
 
+template <class PointSource, class PointTarget>
+void NormalDistributionsTransformBase<PointSource, PointTarget>::setParam(const BaseParam & base_param)
+{
+  setTransformationEpsilon(base_param.trans_epsilon);
+  setStepSize(base_param.step_size);
+  setResolution(base_param.resolution);
+  setMaximumIterations(base_param.max_iterations);
+  setRegularizationScaleFactor(base_param.regularization_scale_factor);
+}
+
+template <class PointSource, class PointTarget>
+typename NormalDistributionsTransformBase<PointSource, PointTarget>::BaseParam
+  NormalDistributionsTransformBase<PointSource, PointTarget>::getParam()
+{
+  BaseParam param;
+  param.trans_epsilon = getTransformationEpsilon();
+  param.step_size = getStepSize();
+  param.resolution = getResolution();
+  param.max_iterations = getMaximumIterations();
+  param.regularization_scale_factor = getRegularizationScaleFactor();
+  return param;
+}
+
 #endif  // NDT__IMPL__BASE_HPP_

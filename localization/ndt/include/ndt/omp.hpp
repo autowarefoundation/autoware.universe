@@ -29,6 +29,12 @@ class NormalDistributionsTransformOMP
 : public NormalDistributionsTransformBase<PointSource, PointTarget>
 {
 public:
+  struct OMPParam
+  {
+    int num_threads;
+    pclomp::NeighborSearchMethod search_method;
+  };
+
   NormalDistributionsTransformOMP();
   ~NormalDistributionsTransformOMP() = default;
 
@@ -57,6 +63,7 @@ public:
 
   Eigen::Matrix<double, 6, 6> getHessian() const override;
   void setRegularizationScaleFactor(const float regularization_scale_factor) override;
+  float getRegularizationScaleFactor() override;
   void setRegularizationPose(const Eigen::Matrix4f & regularization_pose) override;
   void unsetRegularizationPose() override;
 
@@ -73,6 +80,9 @@ public:
 
   int getNumThreads() const;
   pclomp::NeighborSearchMethod getNeighborhoodSearchMethod() const;
+
+  void setOMPParam(const OMPParam & omp_param);
+  OMPParam getOMPParam();
 
 private:
   pcl::shared_ptr<pclomp::NormalDistributionsTransform<PointSource, PointTarget>> ndt_ptr_;
