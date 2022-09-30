@@ -375,6 +375,62 @@ TEST(perception_utils, test_get2dIoU)
   }
 }
 
+TEST(perception_utils, test_get2dGeneralizedIoU)
+{
+  using perception_utils::get2dGeneralizedIoU;
+  const double quart_circle = 0.16237976320958225;
+
+  {  // non overlapped
+    autoware_auto_perception_msgs::msg::DetectedObject source_obj;
+    source_obj.kinematics.pose_with_covariance.pose = createPose(1.5, 1.5, M_PI);
+    source_obj.shape.type = autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX;
+    source_obj.shape.dimensions.x = 1.0;
+    source_obj.shape.dimensions.y = 1.0;
+
+    autoware_auto_perception_msgs::msg::DetectedObject target_obj;
+    target_obj.kinematics.pose_with_covariance.pose = createPose(0.0, 0.0, M_PI_2);
+    target_obj.shape.type = autoware_auto_perception_msgs::msg::Shape::CYLINDER;
+    target_obj.shape.dimensions.x = 1.0;
+
+    const double giou = get2dGeneralizedIoU(source_obj, target_obj);
+    EXPECT_DOUBLE_EQ(giou, 1 + (1 + 4 * quart_circle) / (2.5 * 2.5), epsilon);  // not 0
+  }
+
+  {  // partially overlapped
+    autoware_auto_perception_msgs::msg::DetectedObject source_obj;
+    source_obj.kinematics.pose_with_covariance.pose = createPose(0.5, 0.5, M_PI);
+    source_obj.shape.type = autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX;
+    source_obj.shape.dimensions.x = 1.0;
+    source_obj.shape.dimensions.y = 1.0;
+
+    autoware_auto_perception_msgs::msg::DetectedObject target_obj;
+    target_obj.kinematics.pose_with_covariance.pose = createPose(0.0, 0.0, M_PI_2);
+    target_obj.shape.type = autoware_auto_perception_msgs::msg::Shape::CYLINDER;
+    target_obj.shape.dimensions.x = 1.0;
+
+    const double giou = get2dGeneralizedIoU(source_obj, target_obj);
+    EXPECT_NEAR(
+      giou, quart_circle / (1.0 + quart_circle * 3) - 1 + (1 + 3 * quart_circle) / (1.5 * 1.5),
+      epsilon);
+  }
+
+  {  // fully overlapped
+    autoware_auto_perception_msgs::msg::DetectedObject source_obj;
+    source_obj.kinematics.pose_with_covariance.pose = createPose(0.0, 0.0, M_PI);
+    source_obj.shape.type = autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX;
+    source_obj.shape.dimensions.x = 1.0;
+    source_obj.shape.dimensions.y = 1.0;
+
+    autoware_auto_perception_msgs::msg::DetectedObject target_obj;
+    target_obj.kinematics.pose_with_covariance.pose = createPose(0.0, 0.0, M_PI_2);
+    target_obj.shape.type = autoware_auto_perception_msgs::msg::Shape::CYLINDER;
+    target_obj.shape.dimensions.x = 1.0;
+
+    const double giou = get2dGeneralizedIoU(source_obj, target_obj);
+    EXPECT_DOUBLE_EQ(giou, quart_circle * 4, epsilon);  // giou equals iou
+  }
+}
+
 TEST(perception_utils, test_get2dPrecision)
 {
   using perception_utils::get2dPrecision;
