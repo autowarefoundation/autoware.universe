@@ -185,7 +185,8 @@ bool BlindSpotModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
     stop_factor.stop_pose = debug_data_.stop_point_pose;
     stop_factor.stop_factor_points = planning_utils::toRosPoints(debug_data_.conflicting_targets);
     planning_utils::appendStopReason(stop_factor, stop_reason);
-    velocity_factor_.set(VelocityFactor::UNKNOWN, stop_pose);
+    velocity_factor_.set(
+      path->points, planner_data_->current_pose.pose, stop_pose, VelocityFactor::UNKNOWN);
   } else {
     *path = input_path;  // reset path
   }

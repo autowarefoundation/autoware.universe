@@ -44,11 +44,15 @@ public:
   void init(const VelocityFactorType type) { type_ = type; }
   void reset() { velocity_factor_.type = VelocityFactor::UNKNOWN; }
 
-  void set(const VelocityFactorStatus status, const Pose & pose, const std::string detail = "")
+  template <class T>
+  void set(
+    const T & points, const Pose & curr_pose, const Pose & stop_pose,
+    const VelocityFactorStatus status, const std::string detail = "")
   {
     velocity_factor_.type = type_;
-    velocity_factor_.pose = pose;
-    velocity_factor_.distance = 0.0;  // TODO(Takagi, Isamu)
+    velocity_factor_.pose = stop_pose;
+    velocity_factor_.distance =
+      motion_utils::calcSignedArcLength(points, curr_pose.position, stop_pose.position);
     velocity_factor_.status = status;
     velocity_factor_.detail = detail;
   }

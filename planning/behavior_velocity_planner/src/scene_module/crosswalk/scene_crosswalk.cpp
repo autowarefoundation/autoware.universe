@@ -218,11 +218,15 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
   if (nearest_stop_point) {
     insertDecelPointWithDebugInfo(nearest_stop_point.get(), 0.0, *path);
     planning_utils::appendStopReason(stop_factor, stop_reason);
-    velocity_factor_.set(VelocityFactor::UNKNOWN, stop_factor.stop_pose);
+    velocity_factor_.set(
+      path->points, planner_data_->current_pose.pose, stop_factor.stop_pose,
+      VelocityFactor::UNKNOWN);
   } else if (rtc_stop_point) {
     insertDecelPointWithDebugInfo(rtc_stop_point.get(), 0.0, *path);
     planning_utils::appendStopReason(stop_factor_rtc, stop_reason);
-    velocity_factor_.set(VelocityFactor::UNKNOWN, stop_factor_rtc.stop_pose);
+    velocity_factor_.set(
+      path->points, planner_data_->current_pose.pose, stop_factor_rtc.stop_pose,
+      VelocityFactor::UNKNOWN);
   }
 
   RCLCPP_INFO_EXPRESSION(

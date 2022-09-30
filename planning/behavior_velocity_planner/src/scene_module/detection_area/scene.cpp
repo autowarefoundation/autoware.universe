@@ -183,7 +183,8 @@ bool DetectionAreaModule::modifyPathVelocity(PathWithLaneId * path, StopReason *
     stop_factor.stop_pose = stop_point->second;
     stop_factor.stop_factor_points = obstacle_points;
     planning_utils::appendStopReason(stop_factor, stop_reason);
-    velocity_factor_.set(VelocityFactor::UNKNOWN, stop_point->second);
+    velocity_factor_.set(
+      path->points, planner_data_->current_pose.pose, stop_point->second, VelocityFactor::UNKNOWN);
   }
 
   // Create legacy StopReason

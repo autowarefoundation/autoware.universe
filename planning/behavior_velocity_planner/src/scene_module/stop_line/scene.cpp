@@ -91,7 +91,8 @@ bool StopLineModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop
         stop_factor.stop_pose = stop_pose;
         stop_factor.stop_factor_points.push_back(getCenterOfStopLine(stop_line_));
         planning_utils::appendStopReason(stop_factor, stop_reason);
-        velocity_factor_.set(VelocityFactor::APPROACHING, stop_pose);
+        velocity_factor_.set(
+          path->points, planner_data_->current_pose.pose, stop_pose, VelocityFactor::APPROACHING);
       }
 
       // Move to stopped state if stopped
@@ -136,7 +137,8 @@ bool StopLineModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop
         stop_factor.stop_pose = ego_pos_on_path.pose;
         stop_factor.stop_factor_points.push_back(getCenterOfStopLine(stop_line_));
         planning_utils::appendStopReason(stop_factor, stop_reason);
-        velocity_factor_.set(VelocityFactor::STOPPED, stop_pose);
+        velocity_factor_.set(
+          path->points, planner_data_->current_pose.pose, stop_pose, VelocityFactor::STOPPED);
       }
 
       const auto elapsed_time = (clock_->now() - *stopped_time_).seconds();
