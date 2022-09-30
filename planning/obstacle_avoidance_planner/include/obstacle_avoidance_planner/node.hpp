@@ -274,8 +274,7 @@ private:
     const std::vector<PathPoint> & path_points, std::vector<TrajectoryPoint> & traj_points) const;
 
   void insertZeroVelocityOutsideDrivableArea(
-    const PlannerData & planner_data, std::vector<TrajectoryPoint> & traj_points,
-    const CVMaps & cv_maps);
+    const PlannerData & planner_data, std::vector<TrajectoryPoint> & traj_points);
 
   void publishDebugDataInOptimization(
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & traj_points);

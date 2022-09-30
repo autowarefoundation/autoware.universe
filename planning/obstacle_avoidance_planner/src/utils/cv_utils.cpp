@@ -22,10 +22,21 @@
 #include "nav_msgs/msg/occupancy_grid.hpp"
 
 #include "boost/optional.hpp"
+#include <deque>
 
+#include <boost/geometry.hpp>
+#include <boost/geometry/geometries/point_xy.hpp>
+#include <boost/geometry/geometries/polygon.hpp>
 #include <algorithm>
 #include <limits>
 #include <vector>
+
+#include <grid_map_cv/GridMapCvConverter.hpp>
+#include <grid_map_ros/GridMapRosConverter.hpp>
+
+namespace bg = boost::geometry;
+using point = bg::model::d2::point_xy<double>;
+using polygon = bg::model::polygon<point>;
 
 namespace
 {
@@ -407,10 +418,10 @@ boost::optional<Edges> getEdges(
 
 namespace cv_drivable_area_utils
 {
+
 bool isOutsideDrivableAreaFromRectangleFootprint(
   const autoware_auto_planning_msgs::msg::TrajectoryPoint & traj_point,
-  const cv::Mat & road_clearance_map, const nav_msgs::msg::MapMetaData & map_info,
-  const VehicleParam & vehicle_param)
+  const VehicleParam & vehicle_param, const nav_msgs::msg::OccupancyGrid & drivable_area)
 {
   point fp;
   polygon footprint;
@@ -458,7 +469,7 @@ bool isOutsideDrivableAreaFromRectangleFootprint(
 
    if (result.size == 1) {
      return true;
-  }
+   }
 
   return false;
 }
