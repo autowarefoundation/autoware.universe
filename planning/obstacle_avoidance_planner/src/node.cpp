@@ -961,8 +961,7 @@ std::vector<TrajectoryPoint> ObstacleAvoidancePlanner::generateOptimizedTrajecto
 
   // insert 0 velocity when trajectory is over drivable area
   if (is_stopping_if_outside_drivable_area_) {
-    insertZeroVelocityOutsideDrivableArea(
-      planner_data, optimal_trajs.model_predictive_trajectory);
+    insertZeroVelocityOutsideDrivableArea(planner_data, optimal_trajs.model_predictive_trajectory);
   }
 
   publishDebugDataInOptimization(planner_data, optimal_trajs.model_predictive_trajectory);

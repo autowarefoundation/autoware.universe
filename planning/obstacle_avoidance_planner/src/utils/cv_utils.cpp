@@ -18,21 +18,21 @@
 #include "tf2/utils.h"
 #include "tier4_autoware_utils/system/stop_watch.hpp"
 
+#include <grid_map_cv/GridMapCvConverter.hpp>
+#include <grid_map_ros/GridMapRosConverter.hpp>
+
 #include "autoware_auto_perception_msgs/msg/predicted_object.hpp"
 #include "nav_msgs/msg/occupancy_grid.hpp"
 
 #include "boost/optional.hpp"
-#include <deque>
-
 #include <boost/geometry.hpp>
 #include <boost/geometry/geometries/point_xy.hpp>
 #include <boost/geometry/geometries/polygon.hpp>
+
 #include <algorithm>
+#include <deque>
 #include <limits>
 #include <vector>
-
-#include <grid_map_cv/GridMapCvConverter.hpp>
-#include <grid_map_ros/GridMapRosConverter.hpp>
 
 namespace bg = boost::geometry;
 using point = bg::model::d2::point_xy<double>;
@@ -436,40 +436,43 @@ bool isOutsideDrivableAreaFromRectangleFootprint(
   footprint.outer().push_back(fp);
   const auto top_right_pos =
     tier4_autoware_utils::calcOffsetPose(traj_point.pose, base_to_front, half_width, 0.0).position;
-   fp = {top_right_pos.x, top_right_pos.y};
-   footprint.outer().push_back(fp);
+  fp = {top_right_pos.x, top_right_pos.y};
+  footprint.outer().push_back(fp);
   const auto bottom_right_pos =
     tier4_autoware_utils::calcOffsetPose(traj_point.pose, -base_to_rear, half_width, 0.0).position;
-   fp = {bottom_right_pos.x, bottom_right_pos.y};
-   footprint.outer().push_back(fp);
+  fp = {bottom_right_pos.x, bottom_right_pos.y};
+  footprint.outer().push_back(fp);
   const auto bottom_left_pos =
     tier4_autoware_utils::calcOffsetPose(traj_point.pose, -base_to_rear, -half_width, 0.0).position;
-   fp = {bottom_left_pos.x, bottom_left_pos.y};
+  fp = {bottom_left_pos.x, bottom_left_pos.y};
 
-   footprint.outer().push_back(fp);
+  footprint.outer().push_back(fp);
 
-   std::vector<point> result;
-   cv::Mat cv_image;
-   grid_map::GridMap grid_map;
-   grid_map::GridMapRosConverter::fromOccupancyGrid(drivable_area, "layer", grid_map);
-   grid_map::GridMapCvConverter::toImage<unsigned char, 1>(grid_map, "layer", CV_8UC1, 0, 100, cv_image);
-   cv::dilate(cv_image, cv_image, cv::Mat(), cv::Point(-1, -1), 2);
-   cv::erode(cv_image, cv_image, cv::Mat(), cv::Point(-1, -1), 2);
-   std::vector<std::vector<cv::Point>> contours;
-   cv::findContours(cv_image, contours, CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE);
-   const auto & info = drivable_area.info;
-   for (const auto & contour : contours) {
-     point p;
-     for (const auto & point : contour) {
-        p = {(info.width - 1.0 - point.y) * info.resolution + info.origin.position.x, (info.height - 1.0 - point.x) * info.resolution + info.origin.position.y};
-     }
-     drivable_area_polygon.outer().push_back(p);
-   }
-   bg::intersection(footprint, drivable_area_polygon, result);
+  std::vector<point> result;
+  cv::Mat cv_image;
+  grid_map::GridMap grid_map;
+  grid_map::GridMapRosConverter::fromOccupancyGrid(drivable_area, "layer", grid_map);
+  grid_map::GridMapCvConverter::toImage<unsigned char, 1>(
+    grid_map, "layer", CV_8UC1, 0, 100, cv_image);
+  cv::dilate(cv_image, cv_image, cv::Mat(), cv::Point(-1, -1), 2);
+  cv::erode(cv_image, cv_image, cv::Mat(), cv::Point(-1, -1), 2);
+  std::vector<std::vector<cv::Point>> contours;
+  cv::findContours(cv_image, contours, CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE);
+  const auto & info = drivable_area.info;
+  for (const auto & contour : contours) {
+    point p;
+    for (const auto & point : contour) {
+      p = {
+        (info.width - 1.0 - point.y) * info.resolution + info.origin.position.x,
+        (info.height - 1.0 - point.x) * info.resolution + info.origin.position.y};
+    }
+    drivable_area_polygon.outer().push_back(p);
+  }
+  bg::intersection(footprint, drivable_area_polygon, result);
 
-   if (result.size == 1) {
-     return true;
-   }
+  if (result.size == 1) {
+    return true;
+  }
 
   return false;
 }
