@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SHAPE_ESTIMATION__CORRECTOR__REFERENCE_SHAPE_BASED_VEHICLE_CORRECTOR_HPP_
-#define SHAPE_ESTIMATION__CORRECTOR__REFERENCE_SHAPE_BASED_VEHICLE_CORRECTOR_HPP_
+#ifndef SHAPE_ESTIMATION__CORRECTOR__REFERENCE_SHAPE_SIZE_CORRECTOR_HPP_
+#define SHAPE_ESTIMATION__CORRECTOR__REFERENCE_SHAPE_SIZE_CORRECTOR_HPP_
 
 #include "shape_estimation/corrector/corrector_interface.hpp"
 #include "shape_estimation/shape_estimator.hpp"
@@ -38,4 +38,4 @@ public:
   }
 };
 
-#endif  // SHAPE_ESTIMATION__CORRECTOR__REFERENCE_SHAPE_BASED_VEHICLE_CORRECTOR_HPP_
+#endif  // SHAPE_ESTIMATION__CORRECTOR__REFERENCE_SHAPE_SIZE_CORRECTOR_HPP_
