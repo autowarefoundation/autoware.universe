@@ -43,14 +43,13 @@ endif()
 
 ## ------------------ External Library Dependencies ------------------------
 # For Eigen vectorization.
-include(CheckCXXCompilerFlag)
 
-check_cxx_compiler_flag("-march=native" COMPILER_SUPPORTS_MARCH_NATIVE)
-if(COMPILER_SUPPORTS_MARCH_NATIVE)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
-  message(STATUS "Enabling MARCH NATIVE ")
-endif()
-
+#include(CheckCXXCompilerFlag)
+#check_cxx_compiler_flag("-march=native" COMPILER_SUPPORTS_MARCH_NATIVE)
+#if(COMPILER_SUPPORTS_MARCH_NATIVE)
+#  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
+#  message(STATUS "Enabling MARCH NATIVE ")
+#endif()
 
 ## ----------------- Library headers and sources -------------------------------
 set(CDOB_LIB_INCLUDE_DIRS
