@@ -28,20 +28,24 @@ struct CorrectionBBParameters
 {
   double min_width;
   double max_width;
-  double avg_width;
+  double default_width;
   double min_length;
   double max_length;
-  double avg_length;
+  double default_length;
 };
-bool correctVehicleBoundingBox(
+
+bool correctWithDefaultValue(
   const CorrectionBBParameters & param, autoware_auto_perception_msgs::msg::Shape & shape_output,
   geometry_msgs::msg::Pose & pose_output);
-bool correctVehicleBoundingBoxWithReferenceShape(
+
+bool correctWithReferenceYawAndShapeSize(
   const ReferenceShapeSizeInfo & ref_shape_size_info,
   autoware_auto_perception_msgs::msg::Shape & shape_output, geometry_msgs::msg::Pose & pose_output);
-bool correctVehicleBoundingBoxWithReferenceYaw(
+
+bool correctWithReferenceYaw(
   const CorrectionBBParameters & param, autoware_auto_perception_msgs::msg::Shape & shape_output,
   geometry_msgs::msg::Pose & pose_output);
+
 }  // namespace corrector_utils
 
 #endif  // SHAPE_ESTIMATION__CORRECTOR__UTILS_HPP_

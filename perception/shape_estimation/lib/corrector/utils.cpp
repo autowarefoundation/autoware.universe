@@ -36,7 +36,7 @@
 
 namespace corrector_utils
 {
-bool correctVehicleBoundingBox(
+bool correctWithDefaultValue(
   const CorrectionBBParameters & param, autoware_auto_perception_msgs::msg::Shape & shape,
   geometry_msgs::msg::Pose & pose)
 {
@@ -116,12 +116,12 @@ bool correctVehicleBoundingBox(
         correction_vector = v_point.at(third_most_distant_index);
         if (correction_vector.x() == 0.0) {
           correction_vector.y() =
-            std::max(std::abs(correction_vector.y()), param.avg_length / 2.0) *
+            std::max(std::abs(correction_vector.y()), param.default_length / 2.0) *
               (correction_vector.y() < 0.0 ? -1.0 : 1.0) -
             correction_vector.y();
         } else if (correction_vector.y() == 0.0) {
           correction_vector.x() =
-            std::max(std::abs(correction_vector.x()), param.avg_length / 2.0) *
+            std::max(std::abs(correction_vector.x()), param.default_length / 2.0) *
               (correction_vector.x() < 0.0 ? -1.0 : 1.0) -
             correction_vector.x();
         }
@@ -134,13 +134,15 @@ bool correctVehicleBoundingBox(
       if ((v_point.at(third_most_distant_index) * 2.0).norm() < param.max_width) {
         correction_vector = v_point.at(third_most_distant_index);
         if (correction_vector.x() == 0.0) {
-          correction_vector.y() = std::max(std::abs(correction_vector.y()), param.avg_width / 2.0) *
-                                    (correction_vector.y() < 0.0 ? -1.0 : 1.0) -
-                                  correction_vector.y();
+          correction_vector.y() =
+            std::max(std::abs(correction_vector.y()), param.default_width / 2.0) *
+              (correction_vector.y() < 0.0 ? -1.0 : 1.0) -
+            correction_vector.y();
         } else if (correction_vector.y() == 0.0) {
-          correction_vector.x() = std::max(std::abs(correction_vector.x()), param.avg_width / 2.0) *
-                                    (correction_vector.x() < 0.0 ? -1.0 : 1.0) -
-                                  correction_vector.x();
+          correction_vector.x() =
+            std::max(std::abs(correction_vector.x()), param.default_width / 2.0) *
+              (correction_vector.x() < 0.0 ? -1.0 : 1.0) -
+            correction_vector.x();
         }
       } else {
         return false;
@@ -159,26 +161,30 @@ bool correctVehicleBoundingBox(
   {
     correction_vector = v_point.at(first_most_distant_index);
     if (correction_vector.x() == 0.0) {
-      correction_vector.y() = std::max(std::abs(correction_vector.y()), param.avg_length / 2.0) *
-                                (correction_vector.y() < 0.0 ? -1.0 : 1.0) -
-                              correction_vector.y();
+      correction_vector.y() =
+        std::max(std::abs(correction_vector.y()), param.default_length / 2.0) *
+          (correction_vector.y() < 0.0 ? -1.0 : 1.0) -
+        correction_vector.y();
     } else if (correction_vector.y() == 0.0) {
-      correction_vector.x() = std::max(std::abs(correction_vector.x()), param.avg_length / 2.0) *
-                                (correction_vector.x() < 0.0 ? -1.0 : 1.0) -
-                              correction_vector.x();
+      correction_vector.x() =
+        std::max(std::abs(correction_vector.x()), param.default_length / 2.0) *
+          (correction_vector.x() < 0.0 ? -1.0 : 1.0) -
+        correction_vector.x();
     }
   } else if (  // NOLINT
     param.min_width < (v_point.at(first_most_distant_index) * 2.0).norm() &&
     (v_point.at(first_most_distant_index) * 2.0).norm() < param.max_width) {
     correction_vector = v_point.at(second_most_distant_index);
     if (correction_vector.x() == 0.0) {
-      correction_vector.y() = std::max(std::abs(correction_vector.y()), param.avg_length / 2.0) *
-                                (correction_vector.y() < 0.0 ? -1.0 : 1.0) -
-                              correction_vector.y();
+      correction_vector.y() =
+        std::max(std::abs(correction_vector.y()), param.default_length / 2.0) *
+          (correction_vector.y() < 0.0 ? -1.0 : 1.0) -
+        correction_vector.y();
     } else if (correction_vector.y() == 0.0) {
-      correction_vector.x() = std::max(std::abs(correction_vector.x()), param.avg_length / 2.0) *
-                                (correction_vector.x() < 0.0 ? -1.0 : 1.0) -
-                              correction_vector.x();
+      correction_vector.x() =
+        std::max(std::abs(correction_vector.x()), param.default_length / 2.0) *
+          (correction_vector.x() < 0.0 ? -1.0 : 1.0) -
+        correction_vector.x();
     }
   } else if (  // NOLINT
     param.min_width < (v_point.at(second_most_distant_index) * 2.0).norm() &&
@@ -186,13 +192,15 @@ bool correctVehicleBoundingBox(
     correction_vector = v_point.at(first_most_distant_index);
 
     if (correction_vector.x() == 0.0) {
-      correction_vector.y() = std::max(std::abs(correction_vector.y()), param.avg_length / 2.0) *
-                                (correction_vector.y() < 0.0 ? -1.0 : 1.0) -
-                              correction_vector.y();
+      correction_vector.y() =
+        std::max(std::abs(correction_vector.y()), param.default_length / 2.0) *
+          (correction_vector.y() < 0.0 ? -1.0 : 1.0) -
+        correction_vector.y();
     } else if (correction_vector.y() == 0.0) {
-      correction_vector.x() = std::max(std::abs(correction_vector.x()), param.avg_length / 2.0) *
-                                (correction_vector.x() < 0.0 ? -1.0 : 1.0) -
-                              correction_vector.x();
+      correction_vector.x() =
+        std::max(std::abs(correction_vector.x()), param.default_length / 2.0) *
+          (correction_vector.x() < 0.0 ? -1.0 : 1.0) -
+        correction_vector.x();
     }
   }
   // fit length
@@ -203,11 +211,11 @@ bool correctVehicleBoundingBox(
     correction_vector = v_point.at(second_most_distant_index);
 
     if (correction_vector.x() == 0.0) {
-      correction_vector.y() = std::max(std::abs(correction_vector.y()), param.avg_width / 2.0) *
+      correction_vector.y() = std::max(std::abs(correction_vector.y()), param.default_width / 2.0) *
                                 (correction_vector.y() < 0.0 ? -1.0 : 1.0) -
                               correction_vector.y();
     } else if (correction_vector.y() == 0.0) {
-      correction_vector.x() = std::max(std::abs(correction_vector.x()), param.avg_width / 2.0) *
+      correction_vector.x() = std::max(std::abs(correction_vector.x()), param.default_width / 2.0) *
                                 (correction_vector.x() < 0.0 ? -1.0 : 1.0) -
                               correction_vector.x();
     }
@@ -218,11 +226,11 @@ bool correctVehicleBoundingBox(
     correction_vector = v_point.at(first_most_distant_index);
 
     if (correction_vector.x() == 0.0) {
-      correction_vector.y() = std::max(std::abs(correction_vector.y()), param.avg_width / 2.0) *
+      correction_vector.y() = std::max(std::abs(correction_vector.y()), param.default_width / 2.0) *
                                 (correction_vector.y() < 0.0 ? -1.0 : 1.0) -
                               correction_vector.y();
     } else if (correction_vector.y() == 0.0) {
-      correction_vector.x() = std::max(std::abs(correction_vector.x()), param.avg_width / 2.0) *
+      correction_vector.x() = std::max(std::abs(correction_vector.x()), param.default_width / 2.0) *
                                 (correction_vector.x() < 0.0 ? -1.0 : 1.0) -
                               correction_vector.x();
     }
@@ -248,10 +256,11 @@ bool correctVehicleBoundingBox(
   return true;
 }
 
-bool correctVehicleBoundingBoxWithReferenceYaw(
+bool correctWithReferenceYaw(
   const CorrectionBBParameters & param, autoware_auto_perception_msgs::msg::Shape & shape,
   geometry_msgs::msg::Pose & pose)
 {
+  // TODO(Taichi Higashide): refactor following code
   /*
     c1 is nearest point and other points are arranged like below
     c is center of bounding box
@@ -295,13 +304,13 @@ bool correctVehicleBoundingBoxWithReferenceYaw(
   if (param.min_length < shape.dimensions.x && shape.dimensions.x < param.max_length) {
     length = shape.dimensions.x;
   } else {
-    length = param.avg_length;
+    length = param.default_length;
   }
   double width = 0;
   if (param.min_width < shape.dimensions.y && shape.dimensions.y < param.max_width) {
     width = shape.dimensions.y;
   } else {
-    width = param.avg_width;
+    width = param.default_width;
   }
 
   c2 = c1 + base2obj_transform.rotation() * (e1 * length);
@@ -318,7 +327,7 @@ bool correctVehicleBoundingBoxWithReferenceYaw(
   return true;
 }
 
-bool correctVehicleBoundingBoxWithReferenceShape(
+bool correctWithReferenceYawAndShapeSize(
   const ReferenceShapeSizeInfo & ref_shape_size_info,
   autoware_auto_perception_msgs::msg::Shape & shape, geometry_msgs::msg::Pose & pose)
 {

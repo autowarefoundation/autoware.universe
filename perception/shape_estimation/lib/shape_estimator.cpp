@@ -107,12 +107,15 @@ bool ShapeEstimator::applyCorrector(
   autoware_auto_perception_msgs::msg::Shape & shape, geometry_msgs::msg::Pose & pose)
 {
   std::unique_ptr<ShapeEstimationCorrectorInterface> corrector_ptr;
-  if (label == Label::CAR) {
-    corrector_ptr.reset(new CarCorrector(use_reference_yaw, ref_shape_size_info));
+
+  if (ref_shape_size_info && use_reference_yaw) {
+    corrector_ptr.reset(new ReferenceShapeBasedVehicleCorrector(ref_shape_size_info.get()));
+  } else if (label == Label::CAR) {
+    corrector_ptr.reset(new CarCorrector(use_reference_yaw));
   } else if (label == Label::BUS) {
-    corrector_ptr.reset(new BusCorrector(use_reference_yaw, ref_shape_size_info));
+    corrector_ptr.reset(new BusCorrector(use_reference_yaw));
   } else if (label == Label::TRUCK || label == Label::TRAILER) {
-    corrector_ptr.reset(new TruckCorrector(use_reference_yaw, ref_shape_size_info));
+    corrector_ptr.reset(new TruckCorrector(use_reference_yaw));
   } else {
     corrector_ptr.reset(new NoCorrector);
   }
