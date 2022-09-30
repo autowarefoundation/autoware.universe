@@ -32,12 +32,12 @@ RTCReplayerNode::RTCReplayerNode(const rclcpp::NodeOptions & node_options)
 : Node("rtc_replayer_node", node_options)
 {
   sub_statuses_ = create_subscription<CooperateStatusArray>(
-    "/debug/rtc_status", 1, std::bind(&RTCReplayerNode::onCoorperateStatus, this, _1));
+    "/debug/rtc_status", 1, std::bind(&RTCReplayerNode::onCooperateStatus, this, _1));
   client_rtc_commands_ = create_client<CooperateCommands>(
     "/api/external/set/rtc_commands", rmw_qos_profile_services_default);
 }
 
-void RTCReplayerNode::onCoorperateStatus(const CooperateStatusArray::ConstSharedPtr msg)
+void RTCReplayerNode::onCooperateStatus(const CooperateStatusArray::ConstSharedPtr msg)
 {
   if (msg->statuses.empty()) return;
   CooperateCommands::Request::SharedPtr request = std::make_shared<CooperateCommands::Request>();
@@ -45,7 +45,9 @@ void RTCReplayerNode::onCoorperateStatus(const CooperateStatusArray::ConstShared
     const auto cmd_status = status.command_status.type;
     const auto uuid_string = to_string(status.uuid);
     // add command which has change from previous status and command is already registered
-    if (prev_cmd_status_.find(uuid_string) != prev_cmd_status_.end() && cmd_status != prev_cmd_status_[uuid_string]) {
+    if (
+      prev_cmd_status_.find(uuid_string) != prev_cmd_status_.end() &&
+      cmd_status != prev_cmd_status_[uuid_string]) {
       CooperateCommand cc;
       // send previous command status
       cc.command.type = cmd_status;

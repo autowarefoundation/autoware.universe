@@ -17,32 +17,25 @@
 
 #include "rclcpp/rclcpp.hpp"
 
-#include "tier4_rtc_msgs/msg/command.hpp"
 #include "tier4_rtc_msgs/msg/cooperate_command.hpp"
 #include "tier4_rtc_msgs/msg/cooperate_response.hpp"
 #include "tier4_rtc_msgs/msg/cooperate_status.hpp"
 #include "tier4_rtc_msgs/msg/cooperate_status_array.hpp"
-#include "tier4_rtc_msgs/msg/module.hpp"
-#include "tier4_rtc_msgs/srv/auto_mode.hpp"
 #include "tier4_rtc_msgs/srv/cooperate_commands.hpp"
 #include <unique_identifier_msgs/msg/uuid.hpp>
 
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
-#include <map>
 
 namespace rtc_replayer
 {
 using std::placeholders::_1;
 using std::placeholders::_2;
-using tier4_rtc_msgs::msg::Command;
 using tier4_rtc_msgs::msg::CooperateCommand;
-using tier4_rtc_msgs::msg::CooperateResponse;
 using tier4_rtc_msgs::msg::CooperateStatus;
 using tier4_rtc_msgs::msg::CooperateStatusArray;
-using tier4_rtc_msgs::msg::Module;
-using tier4_rtc_msgs::srv::AutoMode;
 using tier4_rtc_msgs::srv::CooperateCommands;
 using unique_identifier_msgs::msg::UUID;
 class RTCReplayerNode : public rclcpp::Node
@@ -51,7 +44,7 @@ public:
   explicit RTCReplayerNode(const rclcpp::NodeOptions & node_options);
 
 private:
-  void onCoorperateStatus(const CooperateStatusArray::ConstSharedPtr msg);
+  void onCooperateStatus(const CooperateStatusArray::ConstSharedPtr msg);
 
   std::vector<CooperateCommand> cooperate_commands_;
   rclcpp::Subscription<CooperateStatusArray>::SharedPtr sub_statuses_;
