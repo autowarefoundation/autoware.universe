@@ -454,9 +454,10 @@ bool isOutsideDrivableAreaFromRectangleFootprint(
      }
      drivable_area_polygon.outer().push_back(p);
    }
+   bg::intersection(footprint, drivable_area_polygon, result);
 
    if (result.size == 1) {
-    return true;
+     return true;
   }
 
   return false;
