@@ -1061,7 +1061,7 @@ bool RouteHandler::getLaneChangeTarget(
   const lanelet::ConstLanelets & lanelets, lanelet::ConstLanelet * target_lanelet) const
 {
   for (const auto & lanelet : lanelets) {
-    int num = getNumLaneToPreferredLane(lanelet);
+    const int num = getNumLaneToPreferredLane(lanelet);
     if (num == 0) {
       continue;
     }
