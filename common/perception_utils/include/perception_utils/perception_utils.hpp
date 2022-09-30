@@ -102,11 +102,12 @@ inline double get2dIoU(const T1 source_object, const T2 target_object)
   return iou;
 }
 
-std::map<char, double> getMaxMin2d(const tier4_autoware_utils::Polygon2d polygon){
+std::map<char, double> getMaxMin2d(const tier4_autoware_utils::Polygon2d polygon)
+{
   double max_x = 0.0;
   double min_x = 0.0;
   double max_y = 0.0;
-  double min_y = 0.0; 
+  double min_y = 0.0;
   for (const auto & point : olygon.points) {
     if (point.x > max_x) max_x = point.x;
     if (min_x > point.x) min_x = point.x;
@@ -122,7 +123,9 @@ std::map<char, double> getMaxMin2d(const tier4_autoware_utils::Polygon2d polygon
   return max_min_map;
 }
 
-double getConvexShape(const tier4_autoware_utils::Polygon2d source_polygon, const tier4_autoware_utils::Polygon2d target_polygon)
+double getConvexShape(
+  const tier4_autoware_utils::Polygon2d source_polygon,
+  const tier4_autoware_utils::Polygon2d target_polygon)
 {
   const auto source_max_min = getMaxMin2d(source_polygon);
   const auto target_max_min = getMaxMin2d(target_polygon);
