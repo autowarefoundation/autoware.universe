@@ -435,17 +435,27 @@ bool isOutsideDrivableAreaFromRectangleFootprint(
     tier4_autoware_utils::calcOffsetPose(traj_point.pose, -base_to_rear, -half_width, 0.0).position;
    fp = {bottom_left_pos.x, bottom_left_pos.y};
 
-  constexpr double epsilon = 1e-8;
-  const bool out_top_left =
-    isOutsideDrivableArea(top_left_pos, road_clearance_map, map_info, epsilon);
-  const bool out_top_right =
+   footprint.outer().push_back(fp);
+
+   std::vector<point> result;
+   cv::Mat cv_image;
    grid_map::GridMap grid_map;
    grid_map::GridMapRosConverter::fromOccupancyGrid(drivable_area, "layer", grid_map);
    grid_map::GridMapCvConverter::toImage<unsigned char, 1>(grid_map, "layer", CV_8UC1, 0, 100, cv_image);
-  const bool out_bottom_right =
-    isOutsideDrivableArea(bottom_right_pos, road_clearance_map, map_info, epsilon);
+   cv::dilate(cv_image, cv_image, cv::Mat(), cv::Point(-1, -1), 2);
+   cv::erode(cv_image, cv_image, cv::Mat(), cv::Point(-1, -1), 2);
+   std::vector<std::vector<cv::Point>> contours;
+   cv::findContours(cv_image, contours, CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE);
+   const auto & info = drivable_area.info;
+   for (const auto & contour : contours) {
+     point p;
+     for (const auto & point : contour) {
+        p = {(info.width - 1.0 - point.y) * info.resolution + info.origin.position.x, (info.height - 1.0 - point.x) * info.resolution + info.origin.position.y};
+     }
+     drivable_area_polygon.outer().push_back(p);
+   }
 
-  if (out_top_left || out_top_right || out_bottom_left || out_bottom_right) {
+   if (result.size == 1) {
     return true;
   }
 
