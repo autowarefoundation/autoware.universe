@@ -439,8 +439,8 @@ bool isOutsideDrivableAreaFromRectangleFootprint(
   const bool out_top_left =
     isOutsideDrivableArea(top_left_pos, road_clearance_map, map_info, epsilon);
   const bool out_top_right =
-    isOutsideDrivableArea(top_right_pos, road_clearance_map, map_info, epsilon);
-  const bool out_bottom_left =
+   grid_map::GridMap grid_map;
+   grid_map::GridMapRosConverter::fromOccupancyGrid(drivable_area, "layer", grid_map);
     isOutsideDrivableArea(bottom_left_pos, road_clearance_map, map_info, epsilon);
   const bool out_bottom_right =
     isOutsideDrivableArea(bottom_right_pos, road_clearance_map, map_info, epsilon);
