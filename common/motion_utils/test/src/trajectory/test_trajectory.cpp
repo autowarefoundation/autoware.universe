@@ -242,6 +242,69 @@ TEST(trajectory, searchZeroVelocityIndex)
   }
 }
 
+TEST(trajectory, searchZeroVelocityIndex_from_pose)
+{
+  using motion_utils::searchZeroVelocityIndex;
+
+  // No zero velocity point
+  {
+    const auto traj = generateTestTrajectory<Trajectory>(10, 1.0, 1.0);
+    EXPECT_FALSE(searchZeroVelocityIndex(traj.points, 0));
+  }
+
+  // Only start point is zero
+  {
+    const size_t idx_ans = 0;
+
+    auto traj = generateTestTrajectory<Trajectory>(10, 1.0, 1.0);
+    updateTrajectoryVelocityAt(traj.points, idx_ans, 0.0);
+
+    EXPECT_EQ(*searchZeroVelocityIndex(traj.points, 0), idx_ans);
+  }
+
+  // Only end point is zero
+  {
+    const size_t idx_ans = 9;
+
+    auto traj = generateTestTrajectory<Trajectory>(10, 1.0, 1.0);
+    updateTrajectoryVelocityAt(traj.points, idx_ans, 0.0);
+
+    EXPECT_EQ(*searchZeroVelocityIndex(traj.points, 0), idx_ans);
+  }
+
+  // Only middle point is zero
+  {
+    const size_t idx_ans = 5;
+
+    auto traj = generateTestTrajectory<Trajectory>(10, 1.0, 1.0);
+    updateTrajectoryVelocityAt(traj.points, idx_ans, 0.0);
+
+    EXPECT_EQ(*searchZeroVelocityIndex(traj.points, 0), idx_ans);
+  }
+
+  // Two points are zero
+  {
+    const size_t idx_ans = 3;
+
+    auto traj = generateTestTrajectory<Trajectory>(10, 1.0, 1.0);
+    updateTrajectoryVelocityAt(traj.points, idx_ans, 0.0);
+    updateTrajectoryVelocityAt(traj.points, 6, 0.0);
+
+    EXPECT_EQ(*searchZeroVelocityIndex(traj.points, 0), idx_ans);
+  }
+
+  // Negative velocity point is before zero velocity point
+  {
+    const size_t idx_ans = 3;
+
+    auto traj = generateTestTrajectory<Trajectory>(10, 1.0, 1.0);
+    updateTrajectoryVelocityAt(traj.points, 2, -1.0);
+    updateTrajectoryVelocityAt(traj.points, idx_ans, 0.0);
+
+    EXPECT_EQ(*searchZeroVelocityIndex(traj.points, 0), idx_ans);
+  }
+}
+
 TEST(trajectory, findNearestIndex_Pos_StraightTrajectory)
 {
   using motion_utils::findNearestIndex;
@@ -499,6 +562,67 @@ TEST(trajectory, calcLateralOffset)
   // Random cases
   EXPECT_NEAR(calcLateralOffset(traj.points, createPoint(4.3, 7.0, 0.0)), 7.0, epsilon);
   EXPECT_NEAR(calcLateralOffset(traj.points, createPoint(1.0, -3.0, 0.0)), -3.0, epsilon);
+}
+
+TEST(trajectory, calcLateralOffset_without_segment_idx)
+{
+  using motion_utils::calcLateralOffset;
+
+  const auto traj = generateTestTrajectory<Trajectory>(10, 1.0);
+  const bool throw_exception = true;
+
+  // Empty
+  EXPECT_THROW(
+    calcLateralOffset(Trajectory{}.points, geometry_msgs::msg::Point{}, throw_exception),
+    std::invalid_argument);
+
+  // Trajectory size is 1
+  {
+    const auto one_point_traj = generateTestTrajectory<Trajectory>(1, 1.0);
+    EXPECT_THROW(
+      calcLateralOffset(
+        one_point_traj.points, geometry_msgs::msg::Point{}, static_cast<size_t>(0),
+        throw_exception),
+      std::runtime_error);
+  }
+
+  // Same close points in trajectory
+  {
+    const auto invalid_traj = generateTestTrajectory<Trajectory>(10, 0.0);
+    const auto p = createPoint(3.0, 0.0, 0.0);
+    EXPECT_THROW(
+      calcLateralOffset(invalid_traj.points, p, static_cast<size_t>(2), throw_exception),
+      std::runtime_error);
+    EXPECT_THROW(
+      calcLateralOffset(invalid_traj.points, p, static_cast<size_t>(3), throw_exception),
+      std::runtime_error);
+  }
+
+  // Point on trajectory
+  EXPECT_NEAR(
+    calcLateralOffset(traj.points, createPoint(3.1, 0.0, 0.0), static_cast<size_t>(3)), 0.0,
+    epsilon);
+
+  // Point before start point
+  EXPECT_NEAR(
+    calcLateralOffset(traj.points, createPoint(-3.9, 3.0, 0.0), static_cast<size_t>(0)), 3.0,
+    epsilon);
+
+  // Point after start point
+  EXPECT_NEAR(
+    calcLateralOffset(traj.points, createPoint(13.3, -10.0, 0.0), static_cast<size_t>(8)), -10.0,
+    epsilon);
+
+  // Random cases
+  EXPECT_NEAR(
+    calcLateralOffset(traj.points, createPoint(4.3, 7.0, 0.0), static_cast<size_t>(4)), 7.0,
+    epsilon);
+  EXPECT_NEAR(
+    calcLateralOffset(traj.points, createPoint(1.0, -3.0, 0.0), static_cast<size_t>(0)), -3.0,
+    epsilon);
+  EXPECT_NEAR(
+    calcLateralOffset(traj.points, createPoint(1.0, -3.0, 0.0), static_cast<size_t>(1)), -3.0,
+    epsilon);
 }
 
 TEST(trajectory, calcLateralOffset_CurveTrajectory)
@@ -4332,5 +4456,132 @@ TEST(trajectory, calcSignedArcLengthFromPointAndSegmentIndexToPointIndex)
     EXPECT_NEAR(calcSignedArcLength(traj.points, p1, 4, 2), -2.3, epsilon);
     EXPECT_NEAR(calcSignedArcLength(traj.points, 4, p2, 2), -1.7, epsilon);
     EXPECT_NEAR(calcSignedArcLength(traj.points, 4, p2, 1), -1.7, epsilon);
+  }
+}
+
+TEST(trajectory, removeOverlapPoints)
+{
+  using motion_utils::removeOverlapPoints;
+
+  const auto traj = generateTestTrajectory<Trajectory>(10, 1.0, 1.0);
+  const auto removed_traj = removeOverlapPoints(traj.points, 0);
+  EXPECT_EQ(traj.points.size(), removed_traj.size());
+  for (size_t i = 0; i < traj.points.size(); ++i) {
+    EXPECT_NEAR(traj.points.at(i).pose.position.x, removed_traj.at(i).pose.position.x, epsilon);
+    EXPECT_NEAR(traj.points.at(i).pose.position.y, removed_traj.at(i).pose.position.y, epsilon);
+    EXPECT_NEAR(traj.points.at(i).pose.position.z, removed_traj.at(i).pose.position.z, epsilon);
+    EXPECT_NEAR(
+      traj.points.at(i).pose.orientation.x, removed_traj.at(i).pose.orientation.x, epsilon);
+    EXPECT_NEAR(
+      traj.points.at(i).pose.orientation.y, removed_traj.at(i).pose.orientation.y, epsilon);
+    EXPECT_NEAR(
+      traj.points.at(i).pose.orientation.z, removed_traj.at(i).pose.orientation.z, epsilon);
+    EXPECT_NEAR(
+      traj.points.at(i).pose.orientation.w, removed_traj.at(i).pose.orientation.w, epsilon);
+    EXPECT_NEAR(
+      traj.points.at(i).longitudinal_velocity_mps, removed_traj.at(i).longitudinal_velocity_mps,
+      epsilon);
+  }
+
+  // No overlap points
+  {
+    const auto traj = generateTestTrajectory<Trajectory>(10, 1.0, 1.0);
+    for (size_t start_idx = 0; start_idx < 10; ++start_idx) {
+      const auto removed_traj = removeOverlapPoints(traj.points, start_idx);
+      EXPECT_EQ(traj.points.size(), removed_traj.size());
+      for (size_t i = 0; i < traj.points.size(); ++i) {
+        EXPECT_NEAR(traj.points.at(i).pose.position.x, removed_traj.at(i).pose.position.x, epsilon);
+        EXPECT_NEAR(traj.points.at(i).pose.position.y, removed_traj.at(i).pose.position.y, epsilon);
+        EXPECT_NEAR(traj.points.at(i).pose.position.z, removed_traj.at(i).pose.position.z, epsilon);
+        EXPECT_NEAR(
+          traj.points.at(i).pose.orientation.x, removed_traj.at(i).pose.orientation.x, epsilon);
+        EXPECT_NEAR(
+          traj.points.at(i).pose.orientation.y, removed_traj.at(i).pose.orientation.y, epsilon);
+        EXPECT_NEAR(
+          traj.points.at(i).pose.orientation.z, removed_traj.at(i).pose.orientation.z, epsilon);
+        EXPECT_NEAR(
+          traj.points.at(i).pose.orientation.w, removed_traj.at(i).pose.orientation.w, epsilon);
+        EXPECT_NEAR(
+          traj.points.at(i).longitudinal_velocity_mps, removed_traj.at(i).longitudinal_velocity_mps,
+          epsilon);
+      }
+    }
+  }
+
+  // Overlap points from certain point
+  {
+    auto traj = generateTestTrajectory<Trajectory>(10, 1.0, 1.0);
+    traj.points.at(5) = traj.points.at(6);
+    const auto removed_traj = removeOverlapPoints(traj.points);
+
+    EXPECT_EQ(traj.points.size() - 1, removed_traj.size());
+    for (size_t i = 0; i < 6; ++i) {
+      EXPECT_NEAR(traj.points.at(i).pose.position.x, removed_traj.at(i).pose.position.x, epsilon);
+      EXPECT_NEAR(traj.points.at(i).pose.position.y, removed_traj.at(i).pose.position.y, epsilon);
+      EXPECT_NEAR(traj.points.at(i).pose.position.z, removed_traj.at(i).pose.position.z, epsilon);
+      EXPECT_NEAR(
+        traj.points.at(i).pose.orientation.x, removed_traj.at(i).pose.orientation.x, epsilon);
+      EXPECT_NEAR(
+        traj.points.at(i).pose.orientation.y, removed_traj.at(i).pose.orientation.y, epsilon);
+      EXPECT_NEAR(
+        traj.points.at(i).pose.orientation.z, removed_traj.at(i).pose.orientation.z, epsilon);
+      EXPECT_NEAR(
+        traj.points.at(i).pose.orientation.w, removed_traj.at(i).pose.orientation.w, epsilon);
+      EXPECT_NEAR(
+        traj.points.at(i).longitudinal_velocity_mps, removed_traj.at(i).longitudinal_velocity_mps,
+        epsilon);
+    }
+
+    for (size_t i = 6; i < 9; ++i) {
+      EXPECT_NEAR(
+        traj.points.at(i + 1).pose.position.x, removed_traj.at(i).pose.position.x, epsilon);
+      EXPECT_NEAR(
+        traj.points.at(i + 1).pose.position.y, removed_traj.at(i).pose.position.y, epsilon);
+      EXPECT_NEAR(
+        traj.points.at(i + 1).pose.position.z, removed_traj.at(i).pose.position.z, epsilon);
+      EXPECT_NEAR(
+        traj.points.at(i + 1).pose.orientation.x, removed_traj.at(i).pose.orientation.x, epsilon);
+      EXPECT_NEAR(
+        traj.points.at(i + 1).pose.orientation.y, removed_traj.at(i).pose.orientation.y, epsilon);
+      EXPECT_NEAR(
+        traj.points.at(i + 1).pose.orientation.z, removed_traj.at(i).pose.orientation.z, epsilon);
+      EXPECT_NEAR(
+        traj.points.at(i + 1).pose.orientation.w, removed_traj.at(i).pose.orientation.w, epsilon);
+      EXPECT_NEAR(
+        traj.points.at(i + 1).longitudinal_velocity_mps,
+        removed_traj.at(i).longitudinal_velocity_mps, epsilon);
+    }
+  }
+
+  // Overlap points from certain point
+  {
+    auto traj = generateTestTrajectory<Trajectory>(10, 1.0, 1.0);
+    traj.points.at(5) = traj.points.at(6);
+    const auto removed_traj = removeOverlapPoints(traj.points, 6);
+
+    EXPECT_EQ(traj.points.size(), removed_traj.size());
+    for (size_t i = 0; i < traj.points.size(); ++i) {
+      EXPECT_NEAR(traj.points.at(i).pose.position.x, removed_traj.at(i).pose.position.x, epsilon);
+      EXPECT_NEAR(traj.points.at(i).pose.position.y, removed_traj.at(i).pose.position.y, epsilon);
+      EXPECT_NEAR(traj.points.at(i).pose.position.z, removed_traj.at(i).pose.position.z, epsilon);
+      EXPECT_NEAR(
+        traj.points.at(i).pose.orientation.x, removed_traj.at(i).pose.orientation.x, epsilon);
+      EXPECT_NEAR(
+        traj.points.at(i).pose.orientation.y, removed_traj.at(i).pose.orientation.y, epsilon);
+      EXPECT_NEAR(
+        traj.points.at(i).pose.orientation.z, removed_traj.at(i).pose.orientation.z, epsilon);
+      EXPECT_NEAR(
+        traj.points.at(i).pose.orientation.w, removed_traj.at(i).pose.orientation.w, epsilon);
+      EXPECT_NEAR(
+        traj.points.at(i).longitudinal_velocity_mps, removed_traj.at(i).longitudinal_velocity_mps,
+        epsilon);
+    }
+  }
+
+  // Empty Points
+  {
+    const Trajectory traj;
+    const auto removed_traj = removeOverlapPoints(traj.points);
+    EXPECT_TRUE(removed_traj.empty());
   }
 }

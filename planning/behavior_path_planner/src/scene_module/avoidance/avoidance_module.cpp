@@ -56,6 +56,7 @@ AvoidanceModule::AvoidanceModule(
   uuid_right_{generateUUID()}
 {
   using std::placeholders::_1;
+  steering_factor_interface_ptr_ = std::make_unique<SteeringFactorInterface>(&node, "avoidance");
 }
 
 bool AvoidanceModule::isExecutionRequested() const
@@ -1706,18 +1707,14 @@ void AvoidanceModule::generateExtendedDrivableArea(ShiftedPath * shifted_path) c
   lanelet::ConstLanelets extended_lanelets = current_lanes;
 
   for (const auto & current_lane : current_lanes) {
-    if (!parameters_->enable_avoidance_over_opposite_direction) {
+    if (!parameters_->enable_avoidance_over_same_direction) {
       break;
     }
 
     const auto extend_from_current_lane = std::invoke(
       [this, &route_handler](const lanelet::ConstLanelet & lane) {
-        const auto ignore_opposite = !parameters_->enable_avoidance_over_opposite_direction;
-        if (ignore_opposite) {
-          return route_handler->getAllSharedLineStringLanelets(lane, true, true, ignore_opposite);
-        }
-
-        return route_handler->getAllSharedLineStringLanelets(lane);
+        const auto enable_opposite = parameters_->enable_avoidance_over_opposite_direction;
+        return route_handler->getAllSharedLineStringLanelets(lane, true, true, enable_opposite);
       },
       current_lane);
     extended_lanelets.reserve(extended_lanelets.size() + extend_from_current_lane.size());
@@ -2084,7 +2081,20 @@ CandidateOutput AvoidanceModule::planCandidate() const
       }
     }
     output.lateral_shift = new_shift_points->at(i).getRelativeLength();
-    output.distance_to_path_change = new_shift_points->front().start_longitudinal;
+    output.start_distance_to_path_change = new_shift_points->front().start_longitudinal;
+    output.finish_distance_to_path_change = new_shift_points->back().end_longitudinal;
+
+    const uint16_t steering_factor_direction = std::invoke([&output]() {
+      if (output.lateral_shift > 0.0) {
+        return SteeringFactor::LEFT;
+      }
+      return SteeringFactor::RIGHT;
+    });
+    steering_factor_interface_ptr_->updateSteeringFactor(
+      {new_shift_points->front().start, new_shift_points->back().end},
+      {output.start_distance_to_path_change, output.finish_distance_to_path_change},
+      SteeringFactor::AVOIDANCE_PATH_CHANGE, steering_factor_direction, SteeringFactor::APPROACHING,
+      "");
   }
 
   const size_t ego_idx = findEgoIndex(shifted_path.path.points);
@@ -2101,7 +2111,7 @@ BehaviorModuleOutput AvoidanceModule::planWaitingApproval()
   BehaviorModuleOutput out = plan();
   const auto candidate = planCandidate();
   constexpr double threshold_to_update_status = -1.0e-03;
-  if (candidate.distance_to_path_change > threshold_to_update_status) {
+  if (candidate.start_distance_to_path_change > threshold_to_update_status) {
     updateCandidateRTCStatus(candidate);
     waitApproval();
   } else {
@@ -2132,9 +2142,11 @@ void AvoidanceModule::addShiftPointIfApproved(const AvoidPointArray & shift_poin
     }
 
     if (shift_points.at(i).getRelativeLength() > 0.0) {
-      left_shift_array_.push_back({uuid_left_, shift_points.front().start});
+      left_shift_array_.push_back(
+        {uuid_left_, shift_points.front().start, shift_points.back().end});
     } else if (shift_points.at(i).getRelativeLength() < 0.0) {
-      right_shift_array_.push_back({uuid_right_, shift_points.front().start});
+      right_shift_array_.push_back(
+        {uuid_right_, shift_points.front().start, shift_points.back().end});
     }
 
     uuid_left_ = generateUUID();
@@ -2228,6 +2240,11 @@ boost::optional<AvoidPointArray> AvoidanceModule::findNewShiftPoint(
 
     if (prev_reference_.points.size() != prev_linear_shift_path_.path.points.size()) {
       throw std::logic_error("prev_reference_ and prev_linear_shift_path_ must have same size.");
+    }
+
+    // new shift points must exist in front of Ego
+    if (candidate.start_longitudinal < 0.0) {
+      continue;
     }
 
     // TODO(Horibe): this code prohibits the changes on ego pose. Think later.
@@ -2342,7 +2359,7 @@ ShiftedPath AvoidanceModule::generateAvoidancePath(PathShifter & path_shifter) c
 void AvoidanceModule::postProcess(PathShifter & path_shifter) const
 {
   const size_t nearest_idx = findEgoIndex(path_shifter.getReferencePath().points);
-  path_shifter.removeBehindShiftPointAndSetBaseOffset(getEgoPose().pose, nearest_idx);
+  path_shifter.removeBehindShiftPointAndSetBaseOffset(nearest_idx);
 }
 
 void AvoidanceModule::updateData()
@@ -2484,6 +2501,7 @@ void AvoidanceModule::onExit()
   current_state_ = BT::NodeStatus::IDLE;
   clearWaitingApproval();
   removeRTCStatus();
+  steering_factor_interface_ptr_->clearSteeringFactors();
 }
 
 void AvoidanceModule::initVariables()
@@ -2528,25 +2546,44 @@ TurnSignalInfo AvoidanceModule::calcTurnSignalInfo(const ShiftedPath & path) con
     return {};
   }
 
-  const auto latest_shift_point = shift_points.front();  // assuming it is sorted.
+  const auto getRelativeLength = [this](const ShiftPoint & sp) {
+    const auto current_shift = getCurrentShift();
+    return sp.length - current_shift;
+  };
 
-  const auto turn_info = util::getPathTurnSignal(
-    avoidance_data_.current_lanelets, path, latest_shift_point, planner_data_->self_pose->pose,
-    planner_data_->self_odometry->twist.twist.linear.x, planner_data_->parameters);
+  const auto front_shift_point = shift_points.front();
 
-  // Set turn signal if the vehicle across the lane.
-  if (!path.shift_length.empty()) {
-    if (isAvoidancePlanRunning()) {
-      turn_signal.turn_signal.command = turn_info.first.command;
-    }
+  TurnSignalInfo turn_signal_info{};
+
+  if (std::abs(getRelativeLength(front_shift_point)) < 0.1) {
+    return turn_signal_info;
   }
 
-  // calc distance from ego to latest_shift_point end point.
-  if (turn_info.second >= 0.0) {
-    turn_signal.signal_distance = turn_info.second;
+  const auto signal_prepare_distance = std::max(getEgoSpeed() * 3.0, 10.0);
+  const auto ego_to_shift_start =
+    calcSignedArcLength(path.path.points, getEgoPosition(), front_shift_point.start.position);
+
+  if (signal_prepare_distance < ego_to_shift_start) {
+    return turn_signal_info;
   }
 
-  return turn_signal;
+  if (getRelativeLength(front_shift_point) > 0.0) {
+    turn_signal_info.turn_signal.command = TurnIndicatorsCommand::ENABLE_LEFT;
+  } else {
+    turn_signal_info.turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
+  }
+
+  if (ego_to_shift_start > 0.0) {
+    turn_signal_info.desired_start_point = getEgoPosition();
+  } else {
+    turn_signal_info.desired_start_point = front_shift_point.start.position;
+  }
+
+  turn_signal_info.desired_end_point = front_shift_point.end.position;
+  turn_signal_info.required_start_point = front_shift_point.start.position;
+  turn_signal_info.required_end_point = front_shift_point.end.position;
+
+  return turn_signal_info;
 }
 
 double AvoidanceModule::getCurrentShift() const
