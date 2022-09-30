@@ -851,6 +851,8 @@ void NDTScanMatcher::service_trigger_node(
   if (is_activated_) {
     std::lock_guard<std::mutex> initial_pose_array_lock(initial_pose_array_mtx_);
     initial_pose_msg_ptr_array_.clear();
+  } else {
+    key_value_stdmap_["state"] = "Initializing";
   }
   res->success = true;
   return;
