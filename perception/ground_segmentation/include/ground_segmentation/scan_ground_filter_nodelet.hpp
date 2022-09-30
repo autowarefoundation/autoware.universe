@@ -114,18 +114,6 @@ private:
       height_max = height_max < height ? height : height_max;
     }
 
-    void setCenter(const float radius, const float aver_z, const float max_z, uint16_t id)
-    {
-      radius_sum = 0.0f;
-      height_sum = 0.0f;
-      point_num = 0;
-
-      radius_avg = radius;
-      height_avg = aver_z;
-      height_max = max_z;
-      grid_id = id;
-    }
-
     float getAverageSlope() { return std::atan2(height_avg, radius_avg); }
 
     float getAverageHeight() { return height_avg; }
@@ -185,7 +173,7 @@ private:
   void convertPointcloud(
     const pcl::PointCloud<pcl::PointXYZ>::Ptr in_cloud,
     std::vector<PointCloudRefVector> & out_radial_ordered_points_manager);
-  void gridScanConvertPointcloud(
+  void convertPointcloudGridScan(
     const pcl::PointCloud<pcl::PointXYZ>::Ptr in_cloud,
     std::vector<PointCloudRefVector> & out_radial_ordered_points_manager);
   /*!
@@ -202,19 +190,19 @@ private:
    *     classified as not ground in the original PointCloud
    */
 
-  void initFirstGndGrids(
+  void initializeFirstGndGrids(
     const float h, const float r, const uint16_t id, std::vector<GridCenter> & gnd_grids);
 
-  void continousGndGridCheck(
+  void checkContinuousGndGrid(
     PointRef & p, const std::vector<GridCenter> & gnd_grids_list, PointsCentroid & gnd_cluster);
-  void discontinousGndGridCheck(
+  void checkDiscontinuousGndGrid(
     PointRef & p, const std::vector<GridCenter> & gnd_grids_list, PointsCentroid & gnd_cluster);
-  void breakGndGridCheck(
+  void checkBreakGndGrid(
     PointRef & p, const std::vector<GridCenter> & gnd_grids_list, PointsCentroid & gnd_cluster);
   void classifyPointCloud(
     std::vector<PointCloudRefVector> & in_radial_ordered_clouds,
     pcl::PointIndices & out_no_ground_indices);
-  void gridScanClassifyPointCloud(
+  void classifyPointCloudGridScan(
     std::vector<PointCloudRefVector> & in_radial_ordered_clouds,
     pcl::PointIndices & out_no_ground_indices);
   /*!

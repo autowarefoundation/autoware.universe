@@ -67,7 +67,7 @@ ScanGroundFilterComponent::ScanGroundFilterComponent(const rclcpp::NodeOptions &
     std::bind(&ScanGroundFilterComponent::onParameter, this, _1));
 }
 
-void ScanGroundFilterComponent::gridScanConvertPointcloud(
+void ScanGroundFilterComponent::convertPointcloudGridScan(
   const pcl::PointCloud<pcl::PointXYZ>::Ptr in_cloud,
   std::vector<PointCloudRefVector> & out_radial_ordered_points)
 {
@@ -86,7 +86,7 @@ void ScanGroundFilterComponent::gridScanConvertPointcloud(
     auto radius{static_cast<float>(std::hypot(x, in_cloud->points[i].y))};
     auto theta{normalizeRadian(std::atan2(x, in_cloud->points[i].y), 0.0)};
 
-    // divide by verticall angle
+    // divide by vertical angle
     auto gamma{normalizeRadian(std::atan2(radius, virtual_lidar_z_), 0.0f)};
     auto radial_div{
       static_cast<size_t>(std::floor(normalizeDegree(theta / radial_divider_angle_rad_, 0.0)))};
@@ -163,7 +163,7 @@ void ScanGroundFilterComponent::calcVirtualGroundOrigin(pcl::PointXYZ & point)
   point.z = 0;
 }
 
-void ScanGroundFilterComponent::initFirstGndGrids(
+void ScanGroundFilterComponent::initializeFirstGndGrids(
   const float h, const float r, const uint16_t id, std::vector<GridCenter> & gnd_grids)
 {
   GridCenter curr_gnd_grid;
@@ -182,7 +182,7 @@ void ScanGroundFilterComponent::initFirstGndGrids(
   }
 }
 
-void ScanGroundFilterComponent::continousGndGridCheck(
+void ScanGroundFilterComponent::checkContinuousGndGrid(
   PointRef & p, const std::vector<GridCenter> & gnd_grids_list, PointsCentroid & gnd_cluster)
 {
   float next_gnd_z = 0.0f;
@@ -229,7 +229,7 @@ void ScanGroundFilterComponent::continousGndGridCheck(
     p.point_state = PointLabel::NON_GROUND;
   }
 }
-void ScanGroundFilterComponent::discontinousGndGridCheck(
+void ScanGroundFilterComponent::checkDiscontinuousGndGrid(
   PointRef & p, const std::vector<GridCenter> & gnd_grids_list, PointsCentroid & gnd_cluster)
 {
   float tmp_delta_max_z = p.orig_point->z - gnd_grids_list.back().max_height;
@@ -248,7 +248,7 @@ void ScanGroundFilterComponent::discontinousGndGridCheck(
   }
 }
 
-void ScanGroundFilterComponent::breakGndGridCheck(
+void ScanGroundFilterComponent::checkBreakGndGrid(
   PointRef & p, const std::vector<GridCenter> & gnd_grids_list, PointsCentroid & gnd_cluster)
 {
   float tmp_delta_avg_z = p.orig_point->z - gnd_grids_list.back().avg_height;
@@ -261,7 +261,7 @@ void ScanGroundFilterComponent::breakGndGridCheck(
     p.point_state = PointLabel::NON_GROUND;
   }
 }
-void ScanGroundFilterComponent::gridScanClassifyPointCloud(
+void ScanGroundFilterComponent::classifyPointCloudGridScan(
   std::vector<PointCloudRefVector> & in_radial_ordered_clouds,
   pcl::PointIndices & out_no_ground_indices)
 {
@@ -327,13 +327,13 @@ void ScanGroundFilterComponent::gridScanClassifyPointCloud(
       if (prev_list_init == false && init_flg == true) {
         float h = ground_cluster.getAverageHeight();
         float r = ground_cluster.getAverageRadius();
-        initFirstGndGrids(h, r, p->grid_id, gnd_grids);
+        initializeFirstGndGrids(h, r, p->grid_id, gnd_grids);
         prev_list_init = true;
       }
 
       if (prev_list_init == false && init_flg == false) {
         // assume first gnd grid is zero
-        initFirstGndGrids(0.0f, p->radius, p->grid_id, gnd_grids);
+        initializeFirstGndGrids(0.0f, p->radius, p->grid_id, gnd_grids);
         prev_list_init = true;
       }
 
@@ -376,14 +376,14 @@ void ScanGroundFilterComponent::gridScanClassifyPointCloud(
       if (
         p->grid_id < next_gnd_grid_id_thresh &&
         p->radius - gnd_grids.back().radius < gnd_grid_continual_thresh_ * p->grid_size) {
-        continousGndGridCheck(*p, gnd_grids, ground_cluster);
+        checkContinuousGndGrid(*p, gnd_grids, ground_cluster);
 
       } else if (
         p->radius - gnd_grids.back().radius < gnd_grid_continual_thresh_ * p->grid_size ||
         p->radius < grid_mode_switch_radius_ * 2.0f) {
-        discontinousGndGridCheck(*p, gnd_grids, ground_cluster);
+        checkDiscontinuousGndGrid(*p, gnd_grids, ground_cluster);
       } else {
-        breakGndGridCheck(*p, gnd_grids, ground_cluster);
+        checkBreakGndGrid(*p, gnd_grids, ground_cluster);
       }
       if (p->point_state == PointLabel::NON_GROUND) {
         out_no_ground_indices.indices.push_back(p->orig_index);
@@ -531,8 +531,8 @@ void ScanGroundFilterComponent::filter(
   no_ground_cloud_ptr->points.reserve(current_sensor_cloud_ptr->points.size());
 
   if (elevation_grid_mode_) {
-    gridScanConvertPointcloud(current_sensor_cloud_ptr, radial_ordered_points);
-    gridScanClassifyPointCloud(radial_ordered_points, no_ground_indices);
+    convertPointcloudGridScan(current_sensor_cloud_ptr, radial_ordered_points);
+    classifyPointCloudGridScan(radial_ordered_points, no_ground_indices);
   } else {
     convertPointcloud(current_sensor_cloud_ptr, radial_ordered_points);
     classifyPointCloud(radial_ordered_points, no_ground_indices);
