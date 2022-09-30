@@ -1264,7 +1264,7 @@ lanelet::ConstLanelets RouteHandler::getLaneChangeTargetLanes(const Pose & pose)
     return target_lanelets;
   }
 
-  int num = getNumLaneToPreferredLane(lanelet);
+  const int num = getNumLaneToPreferredLane(lanelet);
   if (num < 0) {
     auto right_lanelet = (!!routing_graph_ptr_->right(lanelet))
                            ? routing_graph_ptr_->right(lanelet)
