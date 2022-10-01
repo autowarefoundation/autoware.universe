@@ -117,6 +117,11 @@ class CommunicationDelayCompensatorNode : public rclcpp::Node
    */
   explicit CommunicationDelayCompensatorNode(const rclcpp::NodeOptions &node_options);
 
+  sLyapMatrixVecs getLyapMatrices() const
+  {
+    return dob_lateral.getLyapMatrices();
+  }
+
   /**
    * @brief destructor
    */

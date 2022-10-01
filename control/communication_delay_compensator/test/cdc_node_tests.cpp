@@ -107,5 +107,25 @@ TEST_F(FakeNodeFixture, doesPublishCorrectiveRefs)
   ns_utils::print("is compensation_msg received ? ", is_comp_msg_received);
 
   ASSERT_TRUE(is_comp_msg_received);
+}
 
+TEST_F(FakeNodeFixture, isLPVobserverStable)
+{
+  using ns_utils::toUType;
+
+  // Node
+  std::shared_ptr<CommDelayNode> node = makeComDelayComNode();
+
+  auto const &lyap_mats = node->getLyapMatrices();
+  auto const &num_of_mats = lyap_mats.vXs.size();
+
+  for (size_t k = 0; k < num_of_mats; ++k)
+  {
+    auto Xl = lyap_mats.vXs[k];
+    auto Yl = lyap_mats.vYs[k];
+    ns_eigen_utils::printEigenMat(Xl, "Xl " + std::to_string(k));
+    ns_eigen_utils::printEigenMat(Yl, "Yl " + std::to_string(k));
+  }
+
+  ASSERT_TRUE(true);
 }

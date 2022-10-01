@@ -214,6 +214,15 @@ class LateralDisturbanceCompensator
 
   void resetInitialState();
 
+  sLyapMatrixVecs getLyapMatrices() const
+  {
+    sLyapMatrixVecs lyap_mats;
+    lyap_mats.vXs = vXs_;
+    lyap_mats.vYs = vYs_;
+
+    return lyap_mats;
+  }
+
  private:
   obs_model_ptr_t observer_vehicle_model_ptr_{};  // state observer model
 
