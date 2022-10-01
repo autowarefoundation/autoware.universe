@@ -17,7 +17,7 @@
 #include "cdc_test_node.hpp"
 #include "cdc_test_utils.hpp"
 
-TEST_F(FakeNodeFixture, nodeTestTemplate)
+TEST_F(FakeNodeFixture, doesPublishCorrectiveRefs)
 {
   // Data to test
   DelayCompensationRefs::SharedPtr compensation_msg{nullptr};
@@ -105,7 +105,7 @@ TEST_F(FakeNodeFixture, nodeTestTemplate)
 //  }
 
   ns_utils::print("is compensation_msg received ? ", is_comp_msg_received);
-  int a = 1;
-  ns_utils::print(a);
+
+  ASSERT_TRUE(is_comp_msg_received);
 
 }
