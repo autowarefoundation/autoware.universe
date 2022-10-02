@@ -414,8 +414,8 @@ PullOverParameters BehaviorPathPlannerNode::getPullOverParam()
   p.arc_path_interval = dp("arc_path_interval", 1.0);
   p.pull_over_max_steer_angle = dp("pull_over_max_steer_angle", 0.35);  // 20deg
   // hazard
-  p.hazard_on_threshold_dis = dp("hazard_on_threshold_dis", 1.0);
-  p.hazard_on_threshold_vel = dp("hazard_on_threshold_vel", 0.5);
+  p.hazard_on_threshold_distance = dp("hazard_on_threshold_distance", 1.0);
+  p.hazard_on_threshold_velocity = dp("hazard_on_threshold_velocity", 0.5);
   // safety with dynamic objects. Not used now.
   p.pull_over_duration = dp("pull_over_duration", 4.0);
   p.pull_over_prepare_duration = dp("pull_over_prepare_duration", 2.0);
@@ -606,10 +606,13 @@ void BehaviorPathPlannerNode::run()
       turn_signal.command = TurnIndicatorsCommand::DISABLE;
       hazard_signal.command = output.turn_signal_info.hazard_signal.command;
     } else {
+      const auto & current_pose = planner_data->self_pose->pose;
+      const double & current_vel = planner_data->self_odometry->twist.twist.linear.x;
       const size_t ego_seg_idx = findEgoSegmentIndex(path->points);
+
       turn_signal = turn_signal_decider_.getTurnSignal(
-        *path, planner_data->self_pose->pose, ego_seg_idx, *(planner_data->route_handler),
-        output.turn_signal_info.turn_signal, output.turn_signal_info.signal_distance);
+        *path, current_pose, current_vel, ego_seg_idx, *(planner_data->route_handler),
+        output.turn_signal_info);
       hazard_signal.command = HazardLightsCommand::DISABLE;
     }
     turn_signal.stamp = get_clock()->now();
