@@ -134,6 +134,18 @@ Trajectory createTrajectory(
 
   return resampled_traj_points;
 }
+
+std::vector<TrajectoryPoint> concatTrajectory(
+  const std::vector<TrajectoryPoint> & prev_traj_points,
+  const std::vector<TrajectoryPoint> & next_traj_points)
+{
+  std::vector<TrajectoryPoint> concatenated_traj_points;
+  concatenated_traj_points.insert(
+    concatenated_traj_points.end(), prev_traj_points.begin(), prev_traj_points.end());
+  concatenated_traj_points.insert(
+    concatenated_traj_points.end(), next_traj_points.begin(), next_traj_points.end());
+  return concatenated_traj_points;
+}
 }  // namespace
 
 CollisionFreePathPlanner::CollisionFreePathPlanner(const rclcpp::NodeOptions & node_options)
@@ -155,9 +167,6 @@ CollisionFreePathPlanner::CollisionFreePathPlanner(const rclcpp::NodeOptions & n
   debug_extended_fixed_traj_pub_ = create_publisher<Trajectory>("~/debug/extended_fixed_traj", 1);
   debug_extended_non_fixed_traj_pub_ =
     create_publisher<Trajectory>("~/debug/extended_non_fixed_traj", 1);
-  debug_mpt_fixed_traj_pub_ = create_publisher<Trajectory>("~/debug/mpt_fixed_traj", 1);
-  debug_mpt_ref_traj_pub_ = create_publisher<Trajectory>("~/debug/mpt_ref_traj", 1);
-  debug_mpt_traj_pub_ = create_publisher<Trajectory>("~/debug/mpt_traj", 1);
   debug_markers_pub_ =
     create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/marker", durable_qos);
   debug_wall_markers_pub_ =
@@ -633,8 +642,6 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::optimizeTrajectory(
   prev_mpt_trajs_ptr_ = std::make_shared<MPTTrajs>(mpt_trajs.get());
 
   // debug data
-  debug_data_.mpt_traj = mpt_trajs.get().mpt;
-  debug_data_.mpt_ref_traj = points_utils::convertToTrajectoryPoints(mpt_trajs.get().ref_points);
   debug_data_.eb_traj = eb_traj.get();
 
   debug_data_.msg_stream << "    " << __func__ << ":= " << stop_watch_.toc(__func__) << " [ms]\n";
@@ -726,15 +733,6 @@ void CollisionFreePathPlanner::publishDebugDataInOptimization(
   {  // publish trajectories
     const auto debug_eb_traj = createTrajectory(debug_data_.eb_traj, p.path.header);
     debug_eb_traj_pub_->publish(debug_eb_traj);
-
-    const auto debug_mpt_fixed_traj = createTrajectory(debug_data_.mpt_fixed_traj, p.path.header);
-    debug_mpt_fixed_traj_pub_->publish(debug_mpt_fixed_traj);
-
-    const auto debug_mpt_ref_traj = createTrajectory(debug_data_.mpt_ref_traj, p.path.header);
-    debug_mpt_ref_traj_pub_->publish(debug_mpt_ref_traj);
-
-    const auto debug_mpt_traj = createTrajectory(debug_data_.mpt_traj, p.path.header);
-    debug_mpt_traj_pub_->publish(debug_mpt_traj);
   }
 
   {  // publish markers
@@ -789,8 +787,7 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::generatePostProcessedTraj
   const auto extended_traj_points = getExtendedTrajectory(path_points, optimized_traj_points);
 
   // concat trajectories
-  const auto full_traj_points =
-    points_utils::concatTrajectory(optimized_traj_points, extended_traj_points);
+  const auto full_traj_points = concatTrajectory(optimized_traj_points, extended_traj_points);
 
   // NOTE: fine_traj_points has no velocity information
   const auto fine_traj_points = generateFineTrajectoryPoints(path_points, full_traj_points);

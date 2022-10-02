@@ -199,9 +199,6 @@ private:
   rclcpp::Publisher<Trajectory>::SharedPtr debug_extended_fixed_traj_pub_;
   rclcpp::Publisher<Trajectory>::SharedPtr debug_extended_non_fixed_traj_pub_;
   rclcpp::Publisher<Trajectory>::SharedPtr debug_eb_traj_pub_;
-  rclcpp::Publisher<Trajectory>::SharedPtr debug_mpt_fixed_traj_pub_;
-  rclcpp::Publisher<Trajectory>::SharedPtr debug_mpt_ref_traj_pub_;
-  rclcpp::Publisher<Trajectory>::SharedPtr debug_mpt_traj_pub_;
 
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_markers_pub_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_wall_markers_pub_;

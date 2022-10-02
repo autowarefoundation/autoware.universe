@@ -123,7 +123,8 @@ struct ReferencePoint
   double k = 0;
   double v = 0;
   double yaw = 0;
-  double s = 0;
+  // double s = 0;
+  double delta_arc_length{0.0};
   double alpha = 0.0;
   Bounds bounds;
   bool near_objects;
@@ -146,8 +147,8 @@ struct ReferencePoint
 
 struct MPTTrajs
 {
-  std::vector<ReferencePoint> ref_points;
-  std::vector<TrajectoryPoint> mpt;
+  std::vector<ReferencePoint> ref_points{};
+  std::vector<TrajectoryPoint> mpt{};
 };
 
 class MPTOptimizer
@@ -168,15 +169,8 @@ public:
 private:
   struct MPTMatrix
   {
-    // Eigen::MatrixXd Aex;
     Eigen::MatrixXd Bex;
     Eigen::VectorXd Wex;
-    // Eigen::SparseMatrix<double> Cex;
-    // Eigen::SparseMatrix<double> Qex;
-    // Eigen::SparseMatrix<double> Rex;
-    // Eigen::MatrixXd R1ex;
-    // Eigen::MatrixXd R2ex;
-    // Eigen::MatrixXd Uref_ex;
   };
 
   struct ValueMatrix
@@ -251,6 +245,19 @@ private:
     double max_plan_from_ego_length;
   };
 
+  // publisher
+  rclcpp::Publisher<Trajectory>::SharedPtr debug_mpt_fixed_traj_pub_;
+  rclcpp::Publisher<Trajectory>::SharedPtr debug_mpt_ref_traj_pub_;
+  rclcpp::Publisher<Trajectory>::SharedPtr debug_mpt_traj_pub_;
+
+  // parameter
+  bool is_showing_debug_info_;
+  TrajectoryParam traj_param_;
+  VehicleParam vehicle_param_;
+  MPTParam mpt_param_;
+
+  autoware::common::osqp::OSQPInterface osqp_solver_;
+
   const double osqp_epsilon_ = 1.0e-3;
   std::string vehicle_circle_method_;
   int mpt_visualize_sampling_num_;
@@ -259,15 +266,7 @@ private:
   int vehicle_circle_num_for_calculation_;
   std::vector<double> vehicle_circle_radius_ratios_;
 
-  bool is_showing_debug_info_;
-  TrajectoryParam traj_param_;
-  VehicleParam vehicle_param_;
-  MPTParam mpt_param_;
   std::unique_ptr<VehicleModelInterface> vehicle_model_ptr_;
-  autoware::common::osqp::OSQPInterface osqp_solver_;
-
-  geometry_msgs::msg::Pose current_ego_pose_;
-  double current_ego_vel_;
 
   int prev_mat_n = 0;
   int prev_mat_m = 0;
@@ -282,7 +281,9 @@ private:
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & smoothed_points,
     const std::shared_ptr<MPTTrajs> prev_trajs, const CVMaps & maps, DebugData & debug_data) const;
 
-  void calcPlanningFromEgo(std::vector<ReferencePoint> & ref_points) const;
+  void calcPlanningFromEgo(
+    const geometry_msgs::msg::Pose & ego_pose, const double ego_vel,
+    std::vector<ReferencePoint> & ref_points) const;
 
   /*
   std::vector<ReferencePoint> convertToReferencePoints(
@@ -292,11 +293,13 @@ private:
   */
 
   std::vector<ReferencePoint> getFixedReferencePoints(
+    const geometry_msgs::msg::Pose & ego_pose, const double ego_vel,
     const std::vector<TrajectoryPoint> & smoothed_points,
     const std::shared_ptr<MPTTrajs> prev_trajs) const;
 
   void calcBounds(
-    std::vector<ReferencePoint> & ref_points, const bool enable_avoidance, const CVMaps & maps,
+    std::vector<ReferencePoint> & ref_points, const bool enable_avoidance,
+    const geometry_msgs::msg::Pose & ego_pose, const CVMaps & maps,
     const std::shared_ptr<MPTTrajs> prev_trajs, DebugData & debug_data) const;
 
   void calcVehicleBounds(
@@ -365,6 +368,11 @@ private:
   ConstraintMatrix getConstraintMatrix(
     const bool enable_avoidance, const MPTMatrix & mpt_mat,
     const std::vector<ReferencePoint> & ref_points, DebugData & debug_data) const;
+
+  void publishDebugData(
+    const std_msgs::msg::Header & header, const std::vector<ReferencePoint> & ref_points,
+    const std::vector<TrajectoryPoint> & mpt_fixed_traj_points,
+    const std::vector<TrajectoryPoint> & mpt_traj_points);
 };
 }  // namespace collision_free_path_planner
 #endif  // COLLISION_FREE_PATH_PLANNER__MPT_OPTIMIZER_HPP_

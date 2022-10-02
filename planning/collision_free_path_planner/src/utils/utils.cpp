@@ -70,7 +70,7 @@ std::vector<double> calcEuclidDist(const std::vector<double> & x, const std::vec
 }
 
 std::array<std::vector<double>, 3> validateTrajectoryPoints(
-  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points)
+  const std::vector<TrajectoryPoint> & points)
 {
   constexpr double epsilon = 1e-6;
 
@@ -92,8 +92,7 @@ std::array<std::vector<double>, 3> validateTrajectoryPoints(
   return {x, y, yaw};
 }
 
-std::array<std::vector<double>, 2> validatePoints(
-  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points)
+std::array<std::vector<double>, 2> validatePoints(const std::vector<TrajectoryPoint> & points)
 {
   std::vector<double> x;
   std::vector<double> y;
@@ -135,6 +134,7 @@ std::vector<double> splineTwoPoints(
 
 namespace geometry_utils
 {
+// TODO(murooka) check if this can be replaced with calcOffsetPose considering calculation time
 geometry_msgs::msg::Point transformToAbsoluteCoordinate2D(
   const geometry_msgs::msg::Point & point, const geometry_msgs::msg::Pose & origin)
 {
@@ -262,16 +262,16 @@ std::vector<geometry_msgs::msg::Point> interpolate2DPoints(
   return interpolated_points;
 }
 
-std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> interpolateConnected2DPoints(
+std::vector<TrajectoryPoint> interpolateConnected2DPoints(
   const std::vector<double> & base_x, const std::vector<double> & base_y, const double resolution,
   const double begin_yaw, const double end_yaw)
 {
   if (base_x.empty() || base_y.empty()) {
-    return std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>{};
+    return std::vector<TrajectoryPoint>{};
   }
   std::vector<double> base_s = calcEuclidDist(base_x, base_y);
   if (base_s.empty() || base_s.size() == 1) {
-    return std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>{};
+    return std::vector<TrajectoryPoint>{};
   }
   std::vector<double> new_s;
   for (double i = 0.0; i < base_s.back() - 1e-6; i += resolution) {
@@ -286,13 +286,13 @@ std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> interpolateConnec
 
   for (size_t i = 0; i < interpolated_x.size(); i++) {
     if (std::isnan(interpolated_x[i]) || std::isnan(interpolated_y[i])) {
-      return std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>{};
+      return std::vector<TrajectoryPoint>{};
     }
   }
 
-  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> interpolated_points;
+  std::vector<TrajectoryPoint> interpolated_points;
   for (size_t i = 0; i < interpolated_x.size(); i++) {
-    autoware_auto_planning_msgs::msg::TrajectoryPoint point;
+    TrajectoryPoint point;
     point.pose.position.x = interpolated_x[i];
     point.pose.position.y = interpolated_y[i];
 
@@ -308,16 +308,16 @@ std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> interpolateConnec
   return interpolated_points;
 }
 
-std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> interpolate2DTrajectoryPoints(
+std::vector<TrajectoryPoint> interpolate2DTrajectoryPoints(
   const std::vector<double> & base_x, const std::vector<double> & base_y,
   const std::vector<double> & base_yaw, const double resolution)
 {
   if (base_x.empty() || base_y.empty() || base_yaw.empty()) {
-    return std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>{};
+    return std::vector<TrajectoryPoint>{};
   }
   std::vector<double> base_s = calcEuclidDist(base_x, base_y);
   if (base_s.empty() || base_s.size() == 1) {
-    return std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>{};
+    return std::vector<TrajectoryPoint>{};
   }
   std::vector<double> new_s;
   for (double i = 0.0; i < base_s.back() - 1e-6; i += resolution) {
@@ -333,13 +333,13 @@ std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> interpolate2DTraj
 
   for (size_t i = 0; i < interpolated_x.size(); i++) {
     if (std::isnan(interpolated_x[i]) || std::isnan(interpolated_y[i])) {
-      return std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>{};
+      return std::vector<TrajectoryPoint>{};
     }
   }
 
-  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> interpolated_points;
+  std::vector<TrajectoryPoint> interpolated_points;
   for (size_t i = 0; i < interpolated_x.size(); i++) {
-    autoware_auto_planning_msgs::msg::TrajectoryPoint point;
+    TrajectoryPoint point;
     point.pose.position.x = interpolated_x[i];
     point.pose.position.y = interpolated_y[i];
     point.pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(
@@ -350,15 +350,15 @@ std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> interpolate2DTraj
   return interpolated_points;
 }
 
-std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> interpolate2DTrajectoryPoints(
+std::vector<TrajectoryPoint> interpolate2DTrajectoryPoints(
   const std::vector<double> & base_x, const std::vector<double> & base_y, const double resolution)
 {
   if (base_x.empty() || base_y.empty()) {
-    return std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>{};
+    return std::vector<TrajectoryPoint>{};
   }
   std::vector<double> base_s = calcEuclidDist(base_x, base_y);
   if (base_s.empty() || base_s.size() == 1) {
-    return std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>{};
+    return std::vector<TrajectoryPoint>{};
   }
   std::vector<double> new_s;
   for (double i = 0.0; i < base_s.back() - 1e-6; i += resolution) {
@@ -375,13 +375,13 @@ std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> interpolate2DTraj
 
   for (size_t i = 0; i < interpolated_x.size(); i++) {
     if (std::isnan(interpolated_x[i]) || std::isnan(interpolated_y[i])) {
-      return std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>{};
+      return std::vector<TrajectoryPoint>{};
     }
   }
 
-  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> interpolated_points;
+  std::vector<TrajectoryPoint> interpolated_points;
   for (size_t i = 0; i < interpolated_x.size(); i++) {
-    autoware_auto_planning_msgs::msg::TrajectoryPoint point;
+    TrajectoryPoint point;
     point.pose.position.x = interpolated_x[i];
     point.pose.position.y = interpolated_y[i];
     point.pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(
@@ -392,18 +392,17 @@ std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> interpolate2DTraj
   return interpolated_points;
 }
 
-std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> getInterpolatedTrajectoryPoints(
-  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points,
-  const double delta_arc_length)
+std::vector<TrajectoryPoint> getInterpolatedTrajectoryPoints(
+  const std::vector<TrajectoryPoint> & points, const double delta_arc_length)
 {
   std::array<std::vector<double>, 3> validated_pose = validateTrajectoryPoints(points);
   return interpolation_utils::interpolate2DTrajectoryPoints(
     validated_pose.at(0), validated_pose.at(1), delta_arc_length);
 }
 
-std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> getConnectedInterpolatedPoints(
-  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points,
-  const double delta_arc_length, const double begin_yaw, const double end_yaw)
+std::vector<TrajectoryPoint> getConnectedInterpolatedPoints(
+  const std::vector<TrajectoryPoint> & points, const double delta_arc_length,
+  const double begin_yaw, const double end_yaw)
 {
   std::array<std::vector<double>, 2> validated_pose = validatePoints(points);
   return interpolation_utils::interpolateConnected2DPoints(
@@ -453,8 +452,7 @@ ReferencePoint convertToReferencePoint(const T & point)
   return ref_point;
 }
 
-template ReferencePoint convertToReferencePoint<autoware_auto_planning_msgs::msg::TrajectoryPoint>(
-  const autoware_auto_planning_msgs::msg::TrajectoryPoint & point);
+template ReferencePoint convertToReferencePoint<TrajectoryPoint>(const TrajectoryPoint & point);
 template ReferencePoint convertToReferencePoint<geometry_msgs::msg::Pose>(
   const geometry_msgs::msg::Pose & point);
 template <>
@@ -467,19 +465,8 @@ ReferencePoint convertToReferencePoint(const geometry_msgs::msg::Point & point)
   return ref_point;
 }
 
-std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> concatTrajectory(
-  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & traj_points,
-  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & extended_traj_points)
-{
-  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> trajectory;
-  trajectory.insert(trajectory.end(), traj_points.begin(), traj_points.end());
-  trajectory.insert(trajectory.end(), extended_traj_points.begin(), extended_traj_points.end());
-  return trajectory;
-}
-
 void compensateLastPose(
-  const autoware_auto_planning_msgs::msg::PathPoint & last_path_point,
-  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & traj_points,
+  const PathPoint & last_path_point, std::vector<TrajectoryPoint> & traj_points,
   const double delta_dist_threshold, const double delta_yaw_threshold)
 {
   if (traj_points.empty()) {
@@ -501,19 +488,19 @@ void compensateLastPose(
   }
 }
 
-int getNearestIdx(
-  const std::vector<ReferencePoint> & points, const double target_s, const int begin_idx)
+geometry_msgs::msg::Point getNearestPosition(
+  const std::vector<ReferencePoint> & points, const int target_idx, const double offset)
 {
-  double nearest_delta_s = std::numeric_limits<double>::max();
-  int nearest_idx = begin_idx;
-  for (size_t i = begin_idx; i < points.size(); i++) {
-    double diff = std::fabs(target_s - points[i].s);
-    if (diff < nearest_delta_s) {
-      nearest_delta_s = diff;
-      nearest_idx = i;
+  double sum_arc_length = 0.0;
+  for (size_t i = target_idx; i < points.size(); ++i) {
+    sum_arc_length += points.at(target_idx).delta_arc_length;
+
+    if (offset < sum_arc_length) {
+      return points.at(target_idx).p;
     }
   }
-  return nearest_idx;
+
+  return points.back().p;
 }
 }  // namespace points_utils
 

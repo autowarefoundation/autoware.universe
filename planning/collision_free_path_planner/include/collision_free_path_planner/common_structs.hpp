@@ -166,9 +166,9 @@ struct DebugData
   std::vector<double> lateral_errors;
 
   std::vector<TrajectoryPoint> eb_traj;
-  std::vector<TrajectoryPoint> mpt_fixed_traj;
-  std::vector<TrajectoryPoint> mpt_ref_traj;
-  std::vector<TrajectoryPoint> mpt_traj;
+  // std::vector<TrajectoryPoint> mpt_fixed_traj;
+  // std::vector<TrajectoryPoint> mpt_ref_traj;
+  // std::vector<TrajectoryPoint> mpt_traj;
   std::vector<TrajectoryPoint> extended_fixed_traj;
   std::vector<TrajectoryPoint> extended_non_fixed_traj;
 

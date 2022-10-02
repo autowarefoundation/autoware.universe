@@ -16,6 +16,7 @@
 #define COLLISION_FREE_PATH_PLANNER__UTILS__UTILS_HPP_
 
 #include "collision_free_path_planner/common_structs.hpp"
+#include "collision_free_path_planner/type_rename.hpp"
 #include "eigen3/Eigen/Core"
 #include "interpolation/linear_interpolation.hpp"
 #include "interpolation/spline_interpolation.hpp"
@@ -101,15 +102,15 @@ std::vector<geometry_msgs::msg::Point> interpolate2DPoints(
   const std::vector<double> & base_x, const std::vector<double> & base_y, const double resolution,
   const double offset);
 
-std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> interpolateConnected2DPoints(
+std::vector<TrajectoryPoint> interpolateConnected2DPoints(
   const std::vector<double> & base_x, const std::vector<double> & base_y, const double resolution,
   const double begin_yaw, const double end_yaw);
 
-std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> interpolate2DTrajectoryPoints(
+std::vector<TrajectoryPoint> interpolate2DTrajectoryPoints(
   const std::vector<double> & base_x, const std::vector<double> & base_y,
   const std::vector<double> & base_yaw, const double resolution);
 
-std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> interpolate2DTrajectoryPoints(
+std::vector<TrajectoryPoint> interpolate2DTrajectoryPoints(
   const std::vector<double> & base_x, const std::vector<double> & base_y, const double resolution);
 
 template <typename T>
@@ -136,13 +137,12 @@ std::vector<geometry_msgs::msg::Point> getInterpolatedPoints(
   return interpolation_utils::interpolate2DPoints(tmp_x, tmp_y, delta_arc_length, offset);
 }
 
-std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> getInterpolatedTrajectoryPoints(
-  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points,
-  const double delta_arc_length);
+std::vector<TrajectoryPoint> getInterpolatedTrajectoryPoints(
+  const std::vector<TrajectoryPoint> & points, const double delta_arc_length);
 
-std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> getConnectedInterpolatedPoints(
-  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points,
-  const double delta_arc_length, const double begin_yaw, const double end_yaw);
+std::vector<TrajectoryPoint> getConnectedInterpolatedPoints(
+  const std::vector<TrajectoryPoint> & points, const double delta_arc_length,
+  const double begin_yaw, const double end_yaw);
 }  // namespace interpolation_utils
 
 namespace points_utils
@@ -228,9 +228,9 @@ std::vector<geometry_msgs::msg::Pose> convertToPoses(const std::vector<T> & poin
 }
 
 template <typename T>
-autoware_auto_planning_msgs::msg::TrajectoryPoint convertToTrajectoryPoint(const T & point)
+TrajectoryPoint convertToTrajectoryPoint(const T & point)
 {
-  autoware_auto_planning_msgs::msg::TrajectoryPoint traj_point;
+  TrajectoryPoint traj_point;
   traj_point.pose = tier4_autoware_utils::getPose(point);
   traj_point.longitudinal_velocity_mps = point.longitudinal_velocity_mps;
   traj_point.lateral_velocity_mps = point.lateral_velocity_mps;
@@ -239,20 +239,18 @@ autoware_auto_planning_msgs::msg::TrajectoryPoint convertToTrajectoryPoint(const
 }
 
 template <>
-inline autoware_auto_planning_msgs::msg::TrajectoryPoint convertToTrajectoryPoint(
-  const ReferencePoint & point)
+inline TrajectoryPoint convertToTrajectoryPoint(const ReferencePoint & point)
 {
-  autoware_auto_planning_msgs::msg::TrajectoryPoint traj_point;
+  TrajectoryPoint traj_point;
   traj_point.pose = tier4_autoware_utils::getPose(point);
   return traj_point;
 }
 
 // functions to convert to another type of points
 template <typename T>
-std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> convertToTrajectoryPoints(
-  const std::vector<T> & points)
+std::vector<TrajectoryPoint> convertToTrajectoryPoints(const std::vector<T> & points)
 {
-  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> traj_points;
+  std::vector<TrajectoryPoint> traj_points;
   for (const auto & point : points) {
     const auto traj_point = convertToTrajectoryPoint(point);
     traj_points.push_back(traj_point);
@@ -277,13 +275,8 @@ std::vector<ReferencePoint> convertToReferencePoints(const std::vector<T> & poin
 std::vector<geometry_msgs::msg::Pose> convertToPosesWithYawEstimation(
   const std::vector<geometry_msgs::msg::Point> points);
 
-std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> concatTrajectory(
-  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & traj_points,
-  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & extended_traj_points);
-
 void compensateLastPose(
-  const autoware_auto_planning_msgs::msg::PathPoint & last_path_point,
-  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & traj_points,
+  const PathPoint & last_path_point, std::vector<TrajectoryPoint> & traj_points,
   const double delta_dist_threshold, const double delta_yaw_threshold);
 
 template <typename T>
@@ -318,12 +311,12 @@ std::vector<double> calcCurvature(const T & points, const size_t num_sampling_po
   return res;
 }
 
-int getNearestIdx(
-  const std::vector<ReferencePoint> & points, const double target_s, const int begin_idx);
+geometry_msgs::msg::Point getNearestPosition(
+  const std::vector<ReferencePoint> & points, const int target_idx, const double offset);
 
 template <typename T>
 bool isNearLastPathPoint(
-  const T & ref_point, const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
+  const T & ref_point, const std::vector<PathPoint> & path_points,
   const double delta_dist_threshold, const double delta_yaw_threshold)
 {
   const geometry_msgs::msg::Pose last_ref_pose = tier4_autoware_utils::getPose(ref_point);

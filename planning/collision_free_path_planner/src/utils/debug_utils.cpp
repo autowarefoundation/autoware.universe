@@ -737,7 +737,7 @@ visualization_msgs::msg::MarkerArray getDebugVisualizationMarker(
 
     appendMarkerArray(
       getRectanglesNumMarkerArray(
-        debug_data.mpt_traj, vehicle_param, "num_vehicle_footprint", 0.99, 0.99, 0.2),
+        optimized_points, vehicle_param, "num_vehicle_footprint", 0.99, 0.99, 0.2),
       &vis_marker_array);
 
     appendMarkerArray(
@@ -752,7 +752,7 @@ visualization_msgs::msg::MarkerArray getDebugVisualizationMarker(
   // mpt footprints
   appendMarkerArray(
     getRectanglesMarkerArray(
-      debug_data.mpt_traj, vehicle_param, "mpt_footprints", 0.99, 0.99, 0.2,
+      optimized_points, vehicle_param, "mpt_footprints", 0.99, 0.99, 0.2,
       debug_data.mpt_visualize_sampling_num),
     &vis_marker_array);
   // bounds
@@ -793,7 +793,7 @@ visualization_msgs::msg::MarkerArray getDebugVisualizationMarker(
   // vehicle circles
   appendMarkerArray(
     getVehicleCirclesMarkerArray(
-      debug_data.mpt_traj, debug_data.vehicle_circle_longitudinal_offsets,
+      optimized_points, debug_data.vehicle_circle_longitudinal_offsets,
       debug_data.vehicle_circle_radiuses, debug_data.mpt_visualize_sampling_num, "vehicle_circles",
       1.0, 0.3, 0.3),
     &vis_marker_array);
