@@ -41,6 +41,7 @@
 #define COLLISION_FREE_PATH_PLANNER__MPT_OPTIMIZER_HPP_
 
 #include "collision_free_path_planner/common_structs.hpp"
+#include "collision_free_path_planner/type_rename.hpp"
 #include "collision_free_path_planner/vehicle_model/vehicle_model_interface.hpp"
 #include "eigen3/Eigen/Core"
 #include "eigen3/Eigen/Sparse"
@@ -60,11 +61,8 @@
 #include <string>
 #include <vector>
 
-using autoware_auto_planning_msgs::msg::Path;
-using autoware_auto_planning_msgs::msg::PathPoint;
-using autoware_auto_planning_msgs::msg::Trajectory;
-using autoware_auto_planning_msgs::msg::TrajectoryPoint;
-
+namespace collision_free_path_planner
+{
 enum class CollisionType { NO_COLLISION = 0, OUT_OF_SIGHT = 1, OUT_OF_ROAD = 2, OBJECT = 3 };
 
 struct Bounds
@@ -149,7 +147,7 @@ struct ReferencePoint
 struct MPTTrajs
 {
   std::vector<ReferencePoint> ref_points;
-  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> mpt;
+  std::vector<TrajectoryPoint> mpt;
 };
 
 class MPTOptimizer
@@ -161,8 +159,7 @@ public:
     const VehicleParam & vehicle_param);
 
   boost::optional<MPTTrajs> getModelPredictiveTrajectory(
-    const PlannerData & planner_data,
-    const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & smoothed_points,
+    const PlannerData & planner_data, const std::vector<TrajectoryPoint> & smoothed_points,
     const std::shared_ptr<MPTTrajs> prev_trajs, const CVMaps & maps, DebugData & debug_data);
 
   void reset(const bool is_showing_debug_info, const TrajectoryParam & traj_param);
@@ -201,6 +198,59 @@ private:
     Eigen::VectorXd upper_bound;
   };
 
+  struct MPTParam
+  {
+    bool enable_warm_start;
+    bool enable_manual_warm_start;
+    bool steer_limit_constraint;
+    bool fix_points_around_ego;
+    int num_curvature_sampling_points;
+    bool is_fixed_point_single;
+
+    std::vector<double> vehicle_circle_longitudinal_offsets;  // from base_link
+    std::vector<double> vehicle_circle_radiuses;
+
+    double delta_arc_length_for_mpt_points;
+
+    double hard_clearance_from_road;
+    double soft_clearance_from_road;
+    double soft_second_clearance_from_road;
+    double extra_desired_clearance_from_road;
+    double clearance_from_object;
+    double soft_avoidance_weight;
+    double soft_second_avoidance_weight;
+
+    double lat_error_weight;
+    double yaw_error_weight;
+    double yaw_error_rate_weight;
+
+    double near_objects_length;
+
+    double terminal_lat_error_weight;
+    double terminal_yaw_error_weight;
+    double terminal_path_lat_error_weight;
+    double terminal_path_yaw_error_weight;
+
+    double steer_input_weight;
+    double steer_rate_weight;
+
+    double obstacle_avoid_lat_error_weight;
+    double obstacle_avoid_yaw_error_weight;
+    double obstacle_avoid_steer_input_weight;
+
+    double optimization_center_offset;
+    double max_steer_rad;
+
+    std::vector<double> bounds_search_widths;
+
+    bool soft_constraint;
+    bool hard_constraint;
+    bool l_inf_norm;
+    bool two_step_soft_constraint;
+    bool plan_from_ego;
+    double max_plan_from_ego_length;
+  };
+
   const double osqp_epsilon_ = 1.0e-3;
   std::string vehicle_circle_method_;
   int mpt_visualize_sampling_num_;
@@ -214,7 +264,7 @@ private:
   VehicleParam vehicle_param_;
   MPTParam mpt_param_;
   std::unique_ptr<VehicleModelInterface> vehicle_model_ptr_;
-  std::unique_ptr<autoware::common::osqp::OSQPInterface> osqp_solver_ptr_;
+  autoware::common::osqp::OSQPInterface osqp_solver_;
 
   geometry_msgs::msg::Pose current_ego_pose_;
   double current_ego_vel_;
@@ -229,21 +279,20 @@ private:
   void initializeMPTParam(rclcpp::Node * node, const vehicle_info_util::VehicleInfo & vehicle_info);
 
   std::vector<ReferencePoint> getReferencePoints(
-    const PlannerData & planner_data,
-    const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & smoothed_points,
+    const PlannerData & planner_data, const std::vector<TrajectoryPoint> & smoothed_points,
     const std::shared_ptr<MPTTrajs> prev_trajs, const CVMaps & maps, DebugData & debug_data) const;
 
   void calcPlanningFromEgo(std::vector<ReferencePoint> & ref_points) const;
 
   /*
   std::vector<ReferencePoint> convertToReferencePoints(
-    const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points,
+    const std::vector<TrajectoryPoint> & points,
     const std::unique_ptr<Trajectories> & prev_mpt_points, const bool enable_avoidance,
     const CVMaps & maps, DebugData & debug_data) const;
   */
 
   std::vector<ReferencePoint> getFixedReferencePoints(
-    const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points,
+    const std::vector<TrajectoryPoint> & smoothed_points,
     const std::shared_ptr<MPTTrajs> prev_trajs) const;
 
   void calcBounds(
@@ -277,8 +326,7 @@ private:
 
   ValueMatrix generateValueMatrix(
     const std::vector<ReferencePoint> & reference_points,
-    const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
-    DebugData & debug_data) const;
+    const std::vector<PathPoint> & path_points, DebugData & debug_data) const;
 
   void addSteerWeightR(
     std::vector<Eigen::Triplet<double>> & Rex_triplet_vec,
@@ -289,12 +337,12 @@ private:
     const MPTMatrix & mpt_mat, const ValueMatrix & obj_mat,
     const std::vector<ReferencePoint> & ref_points, DebugData & debug_data);
 
-  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> getMPTPoints(
+  std::vector<TrajectoryPoint> getMPTPoints(
     std::vector<ReferencePoint> & fixed_ref_points,
     std::vector<ReferencePoint> & non_fixed_ref_points, const Eigen::VectorXd & Uex,
     const MPTMatrix & mpt_matrix, DebugData & debug_data);
 
-  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> getMPTFixedPoints(
+  std::vector<TrajectoryPoint> getMPTFixedPoints(
     const std::vector<ReferencePoint> & ref_points) const;
 
   BoundsCandidates getBoundsCandidates(
@@ -318,5 +366,5 @@ private:
     const bool enable_avoidance, const MPTMatrix & mpt_mat,
     const std::vector<ReferencePoint> & ref_points, DebugData & debug_data) const;
 };
-
+}  // namespace collision_free_path_planner
 #endif  // COLLISION_FREE_PATH_PLANNER__MPT_OPTIMIZER_HPP_

@@ -31,6 +31,8 @@
 #include <tuple>
 #include <vector>
 
+namespace collision_free_path_planner
+{
 namespace
 {
 std::tuple<std::vector<double>, std::vector<double>> calcVehicleCirclesInfo(
@@ -278,6 +280,13 @@ size_t findNearestIndexWithSoftYawConstraints(
   return nearest_idx_optional ? *nearest_idx_optional
                               : motion_utils::findNearestIndex(points_with_yaw, pose.position);
 }
+
+template <class T>
+T calcLongitudinalOffsetPoint(
+  const std::vector<T> & points, const size_t target_seg_idx, const double offset)
+{
+  return T{};
+}
 }  // namespace
 
 MPTOptimizer::MPTOptimizer(
@@ -287,7 +296,7 @@ MPTOptimizer::MPTOptimizer(
 : is_showing_debug_info_(is_showing_debug_info),
   traj_param_(traj_param),
   vehicle_param_(vehicle_param),
-  osqp_solver_ptr_(std::make_unique<autoware::common::osqp::OSQPInterface>(osqp_epsilon_))
+  osqp_solver_(autoware::common::osqp::OSQPInterface(osqp_epsilon_))
 {
   initializeMPTParam(node, vehicle_info);
   vehicle_model_ptr_ =
@@ -615,8 +624,7 @@ void MPTOptimizer::onParam(const std::vector<rclcpp::Parameter> & parameters)
 }
 
 boost::optional<MPTTrajs> MPTOptimizer::getModelPredictiveTrajectory(
-  const PlannerData & planner_data,
-  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & smoothed_points,
+  const PlannerData & planner_data, const std::vector<TrajectoryPoint> & smoothed_points,
   const std::shared_ptr<MPTTrajs> prev_trajs, const CVMaps & maps, DebugData & debug_data)
 {
   stop_watch_.tic(__func__);
@@ -712,8 +720,7 @@ boost::optional<MPTTrajs> MPTOptimizer::getModelPredictiveTrajectory(
 }
 
 std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
-  const PlannerData & planner_data,
-  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & smoothed_points,
+  const PlannerData & planner_data, const std::vector<TrajectoryPoint> & smoothed_points,
   const std::shared_ptr<MPTTrajs> prev_trajs, const CVMaps & maps, DebugData & debug_data) const
 {
   stop_watch_.tic(__func__);
@@ -758,8 +765,7 @@ std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
       }
       const auto seg_idx = *seg_idx_optional;
       const auto non_fixed_traj_points =
-        std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>{
-          smoothed_points.begin() + seg_idx, smoothed_points.end()};
+        std::vector<TrajectoryPoint>{smoothed_points.begin() + seg_idx, smoothed_points.end()};
 
       const double offset = motion_utils::calcLongitudinalOffsetToSegment(
                               non_fixed_traj_points, 0, fixed_ref_points.back().p) +
@@ -875,8 +881,7 @@ void MPTOptimizer::calcPlanningFromEgo(std::vector<ReferencePoint> & ref_points)
 }
 
 std::vector<ReferencePoint> MPTOptimizer::getFixedReferencePoints(
-  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points,
-  const std::shared_ptr<MPTTrajs> prev_trajs) const
+  const std::vector<TrajectoryPoint> & points, const std::shared_ptr<MPTTrajs> prev_trajs) const
 {
   if (
     !prev_trajs || prev_trajs->mpt.empty() || prev_trajs->ref_points.empty() ||
@@ -940,10 +945,34 @@ std::vector<ReferencePoint> MPTOptimizer::getFixedReferencePoints(
   return fixed_ref_points;
 }
 
-std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> MPTOptimizer::getMPTFixedPoints(
+/*
+std::vector<ReferencePoint> MPTOptimizer::getFixedReferencePoints(
+  const std::vector<TrajectoryPoint> & smoothed_points,
+  const std::shared_ptr<MPTTrajs> prev_trajs) const
+{
+  if (
+    !prev_trajs || prev_trajs->mpt.empty() || prev_trajs->ref_points.empty() ||
+    prev_trajs->mpt.size() != prev_trajs->ref_points.size()) {
+    return std::vector<ReferencePoint>();
+  }
+
+  if (!mpt_param_.fix_points_around_ego) {
+    return std::vector<ReferencePoint>();
+  }
+
+  const size_t nearest_prev_ref_idx =
+    static_cast<size_t>(motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+      points_utils::convertToPoints(prev_ref_points),
+      current_ego_pose_, traj_param_.ego_nearest_dist_threshold,
+      traj_param_.ego_nearest_yaw_threshold));
+  return calcLongitudinalOffsetPoint(prev_ref_points, traj_param_.backward_fixing_distance);
+}
+*/
+
+std::vector<TrajectoryPoint> MPTOptimizer::getMPTFixedPoints(
   const std::vector<ReferencePoint> & ref_points) const
 {
-  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> mpt_fixed_traj;
+  std::vector<TrajectoryPoint> mpt_fixed_traj;
   for (size_t i = 0; i < ref_points.size(); ++i) {
     const auto & ref_point = ref_points.at(i);
 
@@ -951,7 +980,7 @@ std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> MPTOptimizer::get
       const double lat_error = ref_point.fix_kinematic_state.get()(0);
       const double yaw_error = ref_point.fix_kinematic_state.get()(1);
 
-      autoware_auto_planning_msgs::msg::TrajectoryPoint fixed_traj_point;
+      TrajectoryPoint fixed_traj_point;
       fixed_traj_point.pose = calcVehiclePose(ref_point, lat_error, yaw_error, 0.0);
       mpt_fixed_traj.push_back(fixed_traj_point);
     }
@@ -1032,8 +1061,7 @@ MPTOptimizer::MPTMatrix MPTOptimizer::generateMPTMatrix(
 }
 
 MPTOptimizer::ValueMatrix MPTOptimizer::generateValueMatrix(
-  const std::vector<ReferencePoint> & ref_points,
-  const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
+  const std::vector<ReferencePoint> & ref_points, const std::vector<PathPoint> & path_points,
   DebugData & debug_data) const
 {
   if (ref_points.empty()) {
@@ -1187,16 +1215,16 @@ boost::optional<Eigen::VectorXd> MPTOptimizer::executeOptimization(
     RCLCPP_INFO_EXPRESSION(
       rclcpp::get_logger("mpt_optimizer"), is_showing_debug_info_, "warm start");
 
-    osqp_solver_ptr_->updateCscP(P_csc);
-    osqp_solver_ptr_->updateQ(f);
-    osqp_solver_ptr_->updateCscA(A_csc);
-    osqp_solver_ptr_->updateL(lower_bound);
-    osqp_solver_ptr_->updateU(upper_bound);
+    osqp_solver_.updateCscP(P_csc);
+    osqp_solver_.updateQ(f);
+    osqp_solver_.updateCscA(A_csc);
+    osqp_solver_.updateL(lower_bound);
+    osqp_solver_.updateU(upper_bound);
   } else {
     RCLCPP_INFO_EXPRESSION(
       rclcpp::get_logger("mpt_optimizer"), is_showing_debug_info_, "no warm start");
 
-    osqp_solver_ptr_ = std::make_unique<autoware::common::osqp::OSQPInterface>(
+    osqp_solver_ = autoware::common::osqp::OSQPInterface(
       // obj_m.hessian, const_m.linear, obj_m.gradient, const_m.lower_bound, const_m.upper_bound,
       P_csc, A_csc, f, lower_bound, upper_bound, osqp_epsilon_);
   }
@@ -1209,7 +1237,7 @@ boost::optional<Eigen::VectorXd> MPTOptimizer::executeOptimization(
 
   // solve
   stop_watch_.tic("solveOsqp");
-  const auto result = osqp_solver_ptr_->optimize();
+  const auto result = osqp_solver_.optimize();
   debug_data.msg_stream << "          "
                         << "solveOsqp"
                         << ":= " << stop_watch_.toc("solveOsqp") << " [ms]\n";
@@ -1536,7 +1564,7 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::getConstraintMatrix(
   return constraint_matrix;
 }
 
-std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> MPTOptimizer::getMPTPoints(
+std::vector<TrajectoryPoint> MPTOptimizer::getMPTPoints(
   std::vector<ReferencePoint> & fixed_ref_points,
   std::vector<ReferencePoint> & non_fixed_ref_points, const Eigen::VectorXd & Uex,
   const MPTMatrix & mpt_mat, DebugData & debug_data)
@@ -1565,7 +1593,7 @@ std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> MPTOptimizer::get
   }
 
   // calculate trajectory from optimization result
-  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> traj_points;
+  std::vector<TrajectoryPoint> traj_points;
   debug_data.vehicle_circles_pose.resize(lat_error_vec.size());
   for (size_t i = 0; i < lat_error_vec.size(); ++i) {
     auto & ref_point = (i < fixed_ref_points.size())
@@ -1590,7 +1618,7 @@ std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> MPTOptimizer::get
       }
     }
 
-    autoware_auto_planning_msgs::msg::TrajectoryPoint traj_point;
+    TrajectoryPoint traj_point;
     traj_point.pose = calcVehiclePose(ref_point, lat_error, yaw_error, 0.0);
 
     traj_points.push_back(traj_point);
@@ -2113,3 +2141,4 @@ boost::optional<double> MPTOptimizer::getClearance(
                           map_info.resolution;
   return clearance;
 }
+}  // namespace collision_free_path_planner

@@ -17,6 +17,7 @@
 
 #include "collision_free_path_planner/common_structs.hpp"
 #include "collision_free_path_planner/mpt_optimizer.hpp"
+#include "collision_free_path_planner/type_rename.hpp"
 #include "collision_free_path_planner/utils/utils.hpp"
 
 #include <rclcpp/rclcpp.hpp>
@@ -27,10 +28,8 @@
 #include <memory>
 #include <vector>
 
-using autoware_auto_planning_msgs::msg::PathPoint;
-using autoware_auto_planning_msgs::msg::Trajectory;
-using autoware_auto_planning_msgs::msg::TrajectoryPoint;
-
+namespace collision_free_path_planner
+{
 class ReplanChecker
 {
 public:
@@ -71,5 +70,6 @@ private:
   double ego_nearest_dist_threshold_;
   double ego_nearest_yaw_threshold_;
 };
+}  // namespace collision_free_path_planner
 
 #endif  // COLLISION_FREE_PATH_PLANNER__REPLAN_CHECKER_HPP_

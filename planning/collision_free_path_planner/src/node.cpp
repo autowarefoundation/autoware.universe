@@ -36,6 +36,8 @@
 #include <string>
 #include <vector>
 
+namespace collision_free_path_planner
+{
 // TODO(murooka) check if velocity is updated while optimization is skipped.
 namespace
 {
@@ -1048,6 +1050,6 @@ void CollisionFreePathPlanner::publishDebugDataInMain(const Path & path) const
 
   debug_data_.msg_stream << "  " << __func__ << ":= " << stop_watch_.toc(__func__) << " [ms]\n";
 }
-
+}  // namespace collision_free_path_planner
 #include "rclcpp_components/register_node_macro.hpp"
-RCLCPP_COMPONENTS_REGISTER_NODE(CollisionFreePathPlanner)
+RCLCPP_COMPONENTS_REGISTER_NODE(collision_free_path_planner::CollisionFreePathPlanner)

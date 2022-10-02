@@ -27,6 +27,8 @@
 #include <limits>
 #include <vector>
 
+namespace collision_free_path_planner
+{
 namespace
 {
 boost::optional<double> getDistance(
@@ -460,5 +462,5 @@ bool isOutsideDrivableAreaFromRectangleFootprint(
 
   return false;
 }
-
 }  // namespace cv_drivable_area_utils
+}  // namespace collision_free_path_planner

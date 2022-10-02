@@ -31,7 +31,7 @@ target_link_libraries(collision_free_path_planner
 )
 
 rclcpp_components_register_node(collision_free_path_planner
-  PLUGIN "CollisionFreePathPlanner"
+  PLUGIN "collision_free_path_planner::CollisionFreePathPlanner"
   EXECUTABLE collision_free_path_planner_node
 )
 

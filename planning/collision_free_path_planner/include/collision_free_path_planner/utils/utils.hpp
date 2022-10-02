@@ -33,16 +33,9 @@
 #include <string>
 #include <vector>
 
-struct ReferencePoint;
-
-namespace tier4_autoware_utils
+namespace collision_free_path_planner
 {
-template <>
-geometry_msgs::msg::Point getPoint(const ReferencePoint & p);
-
-template <>
-geometry_msgs::msg::Pose getPose(const ReferencePoint & p);
-}  // namespace tier4_autoware_utils
+struct ReferencePoint;
 
 namespace geometry_utils
 {
@@ -353,5 +346,5 @@ namespace utils
 {
 void logOSQPSolutionStatus(const int solution_status, const std::string & msg);
 }  // namespace utils
-
+}  // namespace collision_free_path_planner
 #endif  // COLLISION_FREE_PATH_PLANNER__UTILS__UTILS_HPP_

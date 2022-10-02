@@ -30,6 +30,8 @@ using tier4_autoware_utils::createDefaultMarker;
 using tier4_autoware_utils::createMarkerColor;
 using tier4_autoware_utils::createMarkerScale;
 
+namespace collision_free_path_planner
+{
 namespace
 {
 template <typename T>
@@ -830,3 +832,4 @@ nav_msgs::msg::OccupancyGrid getDebugCostmap(
   return clearance_map_in_og;
 }
 }  // namespace debug_utils
+}  // namespace collision_free_path_planner

@@ -18,6 +18,7 @@
 #include "opencv2/core.hpp"
 #include "opencv2/opencv.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
 #include "autoware_auto_perception_msgs/msg/predicted_object.hpp"
 #include "autoware_auto_planning_msgs/msg/path.hpp"
@@ -30,6 +31,8 @@
 #include <string>
 #include <vector>
 
+namespace collision_free_path_planner
+{
 struct ReferencePoint;
 
 struct Bounds;
@@ -209,59 +212,6 @@ struct TrajectoryParam
   double ego_nearest_yaw_threshold;
 };
 
-struct MPTParam
-{
-  bool enable_warm_start;
-  bool enable_manual_warm_start;
-  bool steer_limit_constraint;
-  bool fix_points_around_ego;
-  int num_curvature_sampling_points;
-  bool is_fixed_point_single;
-
-  std::vector<double> vehicle_circle_longitudinal_offsets;  // from base_link
-  std::vector<double> vehicle_circle_radiuses;
-
-  double delta_arc_length_for_mpt_points;
-
-  double hard_clearance_from_road;
-  double soft_clearance_from_road;
-  double soft_second_clearance_from_road;
-  double extra_desired_clearance_from_road;
-  double clearance_from_object;
-  double soft_avoidance_weight;
-  double soft_second_avoidance_weight;
-
-  double lat_error_weight;
-  double yaw_error_weight;
-  double yaw_error_rate_weight;
-
-  double near_objects_length;
-
-  double terminal_lat_error_weight;
-  double terminal_yaw_error_weight;
-  double terminal_path_lat_error_weight;
-  double terminal_path_yaw_error_weight;
-
-  double steer_input_weight;
-  double steer_rate_weight;
-
-  double obstacle_avoid_lat_error_weight;
-  double obstacle_avoid_yaw_error_weight;
-  double obstacle_avoid_steer_input_weight;
-
-  double optimization_center_offset;
-  double max_steer_rad;
-
-  std::vector<double> bounds_search_widths;
-
-  bool soft_constraint;
-  bool hard_constraint;
-  bool l_inf_norm;
-  bool two_step_soft_constraint;
-  bool plan_from_ego;
-  double max_plan_from_ego_length;
-};
-
 struct PlannerData
 {
   Path path;
@@ -270,5 +220,15 @@ struct PlannerData
   std::vector<PredictedObject> objects{};
   bool enable_avoidance{false};
 };
+}  // namespace collision_free_path_planner
+
+namespace tier4_autoware_utils
+{
+template <>
+geometry_msgs::msg::Point getPoint(const collision_free_path_planner::ReferencePoint & p);
+
+template <>
+geometry_msgs::msg::Pose getPose(const collision_free_path_planner::ReferencePoint & p);
+}  // namespace tier4_autoware_utils
 
 #endif  // COLLISION_FREE_PATH_PLANNER__COMMON_STRUCTS_HPP_

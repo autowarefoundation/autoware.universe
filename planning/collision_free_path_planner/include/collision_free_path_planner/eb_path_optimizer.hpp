@@ -33,6 +33,8 @@
 #include <utility>
 #include <vector>
 
+namespace collision_free_path_planner
+{
 using autoware_auto_planning_msgs::msg::Path;
 using autoware_auto_planning_msgs::msg::PathPoint;
 using autoware_auto_planning_msgs::msg::Trajectory;
@@ -188,5 +190,5 @@ public:
     const std::shared_ptr<std::vector<TrajectoryPoint>> prev_traj, const double current_ego_vel,
     DebugData & debug_data);
 };
-
+}  // namespace collision_free_path_planner
 #endif  // COLLISION_FREE_PATH_PLANNER__EB_PATH_OPTIMIZER_HPP_

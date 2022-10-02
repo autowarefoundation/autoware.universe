@@ -18,6 +18,21 @@
 #include "collision_free_path_planner/utils/utils.hpp"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
+namespace tier4_autoware_utils
+{
+template <>
+geometry_msgs::msg::Point getPoint(const cv::Point & p)
+{
+  geometry_msgs::msg::Point geom_p;
+  geom_p.x = p.x;
+  geom_p.y = p.y;
+
+  return geom_p;
+}
+}  // namespace tier4_autoware_utils
+
+namespace collision_free_path_planner
+{
 namespace
 {
 cv::Point toCVPoint(const geometry_msgs::msg::Point & p)
@@ -129,19 +144,6 @@ bool isAvoidingObject(
   return true;
 }
 }  // namespace
-
-namespace tier4_autoware_utils
-{
-template <>
-geometry_msgs::msg::Point getPoint(const cv::Point & p)
-{
-  geometry_msgs::msg::Point geom_p;
-  geom_p.x = p.x;
-  geom_p.y = p.y;
-
-  return geom_p;
-}
-}  // namespace tier4_autoware_utils
 
 CVMaps CostmapGenerator::getMaps(
   const bool enable_avoidance, const autoware_auto_planning_msgs::msg::Path & path,
@@ -335,3 +337,4 @@ cv::Mat CostmapGenerator::getAreaWithObjects(
   debug_data.msg_stream << "      " << __func__ << ":= " << stop_watch_.toc(__func__) << " [ms]\n";
   return area_with_objects;
 }
+}  // namespace collision_free_path_planner

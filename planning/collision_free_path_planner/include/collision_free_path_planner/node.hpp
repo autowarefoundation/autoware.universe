@@ -19,6 +19,7 @@
 #include "collision_free_path_planner/eb_path_optimizer.hpp"
 #include "collision_free_path_planner/mpt_optimizer.hpp"
 #include "collision_free_path_planner/replan_checker.hpp"
+#include "collision_free_path_planner/type_rename.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
 #include "opencv2/core.hpp"
 #include "rclcpp/clock.hpp"
@@ -49,15 +50,8 @@
 #include <string>
 #include <vector>
 
-using autoware_auto_perception_msgs::msg::PredictedObject;
-using autoware_auto_perception_msgs::msg::PredictedObjects;
-using autoware_auto_planning_msgs::msg::Path;
-using autoware_auto_planning_msgs::msg::PathPoint;
-using autoware_auto_planning_msgs::msg::Trajectory;
-using autoware_auto_planning_msgs::msg::TrajectoryPoint;
-using nav_msgs::msg::OccupancyGrid;
-using nav_msgs::msg::Odometry;
-
+namespace collision_free_path_planner
+{
 namespace
 {
 template <typename T>
@@ -284,5 +278,6 @@ private:
       traj_param_.ego_nearest_yaw_threshold);
   }
 };
+}  // namespace collision_free_path_planner
 
 #endif  // COLLISION_FREE_PATH_PLANNER__NODE_HPP_

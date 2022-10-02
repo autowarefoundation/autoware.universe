@@ -19,6 +19,8 @@
 
 #include <vector>
 
+namespace collision_free_path_planner
+{
 namespace
 {
 [[maybe_unused]] std::vector<TrajectoryPoint> resampleTrajectoryPoints(
@@ -177,3 +179,4 @@ bool ReplanChecker::isPathGoalChanged(const PlannerData & planner_data)
 
   return true;
 }
+}  // namespace collision_free_path_planner

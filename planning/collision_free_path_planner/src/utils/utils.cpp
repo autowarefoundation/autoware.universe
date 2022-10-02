@@ -32,6 +32,8 @@
 #include <stack>
 #include <vector>
 
+namespace collision_free_path_planner
+{
 namespace
 {
 std::vector<double> convertEulerAngleToMonotonic(const std::vector<double> & angle)
@@ -130,24 +132,6 @@ std::vector<double> splineTwoPoints(
   return res;
 }
 }  // namespace
-
-namespace tier4_autoware_utils
-{
-template <>
-geometry_msgs::msg::Point getPoint(const ReferencePoint & p)
-{
-  return p.p;
-}
-
-template <>
-geometry_msgs::msg::Pose getPose(const ReferencePoint & p)
-{
-  geometry_msgs::msg::Pose pose;
-  pose.position = p.p;
-  pose.orientation = createQuaternionFromYaw(p.yaw);
-  return pose;
-}
-}  // namespace tier4_autoware_utils
 
 namespace geometry_utils
 {
@@ -601,3 +585,4 @@ void logOSQPSolutionStatus(const int solution_status, const std::string & msg)
   }
 }
 }  // namespace utils
+}  // namespace collision_free_path_planner

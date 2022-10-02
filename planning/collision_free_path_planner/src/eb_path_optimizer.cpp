@@ -24,6 +24,8 @@
 #include <memory>
 #include <vector>
 
+namespace collision_free_path_planner
+{
 EBPathOptimizer::EBPathOptimizer(
   const bool is_showing_debug_info, const TrajectoryParam & traj_param, const EBParam & eb_param,
   const VehicleParam & vehicle_param)
@@ -614,3 +616,4 @@ ConstrainRectangle EBPathOptimizer::getConstrainRectangle(
   rect.bottom_right = tier4_autoware_utils::calcOffsetPose(anchor.pose, min_x, min_y, 0.0).position;
   return rect;
 }
+}  // namespace collision_free_path_planner

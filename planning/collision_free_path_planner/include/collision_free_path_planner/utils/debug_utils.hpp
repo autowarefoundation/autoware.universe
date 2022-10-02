@@ -30,6 +30,8 @@
 #include <string>
 #include <vector>
 
+namespace collision_free_path_planner
+{
 using tier4_autoware_utils::createMarkerColor;
 using tier4_autoware_utils::createMarkerScale;
 
@@ -46,5 +48,5 @@ visualization_msgs::msg::MarkerArray getDebugVisualizationWallMarker(
 nav_msgs::msg::OccupancyGrid getDebugCostmap(
   const cv::Mat & clearance_map, const nav_msgs::msg::OccupancyGrid & occupancy_grid);
 }  // namespace debug_utils
-
+}  // namespace collision_free_path_planner
 #endif  // COLLISION_FREE_PATH_PLANNER__UTILS__DEBUG_UTILS_HPP_

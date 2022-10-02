@@ -30,6 +30,8 @@
 #include <memory>
 #include <vector>
 
+namespace collision_free_path_planner
+{
 class CostmapGenerator
 {
 public:
@@ -60,4 +62,5 @@ private:
   cv::Mat getDrivableAreaInCV(
     const nav_msgs::msg::OccupancyGrid & occupancy_grid, DebugData & debug_data) const;
 };
+}  // namespace collision_free_path_planner
 #endif  // COLLISION_FREE_PATH_PLANNER__COSTMAP_GENERATOR_HPP_
