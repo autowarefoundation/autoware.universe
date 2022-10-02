@@ -58,11 +58,6 @@
 #include <memory>
 #include <vector>
 
-using autoware_auto_planning_msgs::msg::Path;
-using autoware_auto_planning_msgs::msg::PathPoint;
-using autoware_auto_planning_msgs::msg::Trajectory;
-using autoware_auto_planning_msgs::msg::TrajectoryPoint;
-
 enum class CollisionType { NO_COLLISION = 0, OUT_OF_SIGHT = 1, OUT_OF_ROAD = 2, OBJECT = 3 };
 
 struct Bounds
@@ -144,12 +139,6 @@ struct ReferencePoint
   std::vector<geometry_msgs::msg::Pose> vehicle_bounds_poses;  // for debug visualization
 };
 
-struct MPTTrajs
-{
-  std::vector<ReferencePoint> ref_points;
-  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> mpt;
-};
-
 class MPTOptimizer
 {
 private:
@@ -185,6 +174,12 @@ private:
     Eigen::VectorXd upper_bound;
   };
 
+  struct MPTTrajs
+  {
+    std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> mpt;
+    std::vector<ReferencePoint> ref_points;
+  };
+
   const double osqp_epsilon_ = 1.0e-3;
 
   bool is_showing_debug_info_;
@@ -206,8 +201,8 @@ private:
 
   std::vector<ReferencePoint> getReferencePoints(
     const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points,
-    const std::shared_ptr<MPTTrajs> prev_trajs, const bool enable_avoidance, const CVMaps & maps,
-    DebugData & debug_data) const;
+    const std::unique_ptr<Trajectories> & prev_mpt_points, const bool enable_avoidance,
+    const CVMaps & maps, DebugData & debug_data) const;
 
   void calcPlanningFromEgo(std::vector<ReferencePoint> & ref_points) const;
 
@@ -220,11 +215,11 @@ private:
 
   std::vector<ReferencePoint> getFixedReferencePoints(
     const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & points,
-    const std::shared_ptr<MPTTrajs> prev_trajs) const;
+    const std::unique_ptr<Trajectories> & prev_trajs) const;
 
   void calcBounds(
     std::vector<ReferencePoint> & ref_points, const bool enable_avoidance, const CVMaps & maps,
-    const std::shared_ptr<MPTTrajs> prev_trajs, DebugData & debug_data) const;
+    const std::unique_ptr<Trajectories> & prev_trajs, DebugData & debug_data) const;
 
   void calcVehicleBounds(
     std::vector<ReferencePoint> & ref_points, const CVMaps & maps, DebugData & debug_data,
@@ -232,7 +227,7 @@ private:
 
   // void calcFixState(
   // std::vector<ReferencePoint> & ref_points,
-  // const std::shared_ptr<MPTTrajs> prev_trajs) const;
+  // const std::unique_ptr<Trajectories> & prev_trajs) const;
 
   void calcOrientation(std::vector<ReferencePoint> & ref_points) const;
 
@@ -241,7 +236,8 @@ private:
   void calcArcLength(std::vector<ReferencePoint> & ref_points) const;
 
   void calcExtraPoints(
-    std::vector<ReferencePoint> & ref_points, const std::shared_ptr<MPTTrajs> prev_trajs) const;
+    std::vector<ReferencePoint> & ref_points,
+    const std::unique_ptr<Trajectories> & prev_trajs) const;
 
   /*
    * predict equation: Xec = Aex * x0 + Bex * Uex + Wex
@@ -261,7 +257,7 @@ private:
     const std::vector<ReferencePoint> & ref_points) const;
 
   boost::optional<Eigen::VectorXd> executeOptimization(
-    const std::shared_ptr<MPTTrajs> prev_trajs, const bool enable_avoidance,
+    const std::unique_ptr<Trajectories> & prev_trajs, const bool enable_avoidance,
     const MPTMatrix & mpt_mat, const ValueMatrix & obj_mat,
     const std::vector<ReferencePoint> & ref_points, DebugData & debug_data);
 
@@ -303,7 +299,7 @@ public:
     const bool enable_avoidance,
     const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & smoothed_points,
     const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
-    const std::shared_ptr<MPTTrajs> prev_trajs, const CVMaps & maps,
+    const std::unique_ptr<Trajectories> & prev_trajs, const CVMaps & maps,
     const geometry_msgs::msg::Pose & current_ego_pose, const double current_ego_vel,
     DebugData & debug_data);
 };

@@ -33,11 +33,6 @@
 #include <utility>
 #include <vector>
 
-using autoware_auto_planning_msgs::msg::Path;
-using autoware_auto_planning_msgs::msg::PathPoint;
-using autoware_auto_planning_msgs::msg::Trajectory;
-using autoware_auto_planning_msgs::msg::TrajectoryPoint;
-
 class EBPathOptimizer
 {
 private:
@@ -160,12 +155,12 @@ private:
   std::vector<geometry_msgs::msg::Pose> getFixedPoints(
     const geometry_msgs::msg::Pose & ego_pose,
     const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
-    const std::shared_ptr<std::vector<TrajectoryPoint>> prev_traj);
+    const std::unique_ptr<Trajectories> & prev_optimized_points);
 
   CandidatePoints getCandidatePoints(
     const geometry_msgs::msg::Pose & ego_pose,
     const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
-    const std::shared_ptr<std::vector<TrajectoryPoint>> prev_traj, DebugData & debug_data);
+    const std::unique_ptr<Trajectories> & prev_trajs, DebugData & debug_data);
 
   CandidatePoints getDefaultCandidatePoints(
     const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points);
@@ -185,7 +180,7 @@ public:
 
   boost::optional<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>> getEBTrajectory(
     const geometry_msgs::msg::Pose & ego_pose, const autoware_auto_planning_msgs::msg::Path & path,
-    const std::shared_ptr<std::vector<TrajectoryPoint>> prev_traj, const double current_ego_vel,
+    const std::unique_ptr<Trajectories> & prev_trajs, const double current_ego_vel,
     DebugData & debug_data);
 };
 

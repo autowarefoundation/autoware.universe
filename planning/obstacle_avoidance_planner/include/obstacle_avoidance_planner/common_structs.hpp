@@ -20,7 +20,6 @@
 #include "rclcpp/rclcpp.hpp"
 
 #include "autoware_auto_perception_msgs/msg/predicted_object.hpp"
-#include "autoware_auto_planning_msgs/msg/path.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"
 #include "nav_msgs/msg/map_meta_data.hpp"
 
@@ -38,11 +37,6 @@ using SequentialBounds = std::vector<Bounds>;
 
 using BoundsCandidates = std::vector<Bounds>;
 using SequentialBoundsCandidates = std::vector<BoundsCandidates>;
-
-// message type
-using autoware_auto_perception_msgs::msg::PredictedObject;
-using autoware_auto_planning_msgs::msg::Path;
-using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 
 struct CVMaps
 {
@@ -154,8 +148,8 @@ struct DebugData
   std::vector<geometry_msgs::msg::Pose> fixed_points;
   std::vector<geometry_msgs::msg::Pose> non_fixed_points;
   std::vector<ConstrainRectangle> constrain_rectangles;
-  std::vector<TrajectoryPoint> avoiding_traj_points;
-  std::vector<PredictedObject> avoiding_objects;
+  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> avoiding_traj_points;
+  std::vector<autoware_auto_perception_msgs::msg::PredictedObject> avoiding_objects;
 
   cv::Mat clearance_map;
   cv::Mat only_object_clearance_map;
@@ -167,21 +161,21 @@ struct DebugData
   std::vector<geometry_msgs::msg::Pose> mpt_ref_poses;
   std::vector<double> lateral_errors;
 
-  std::vector<TrajectoryPoint> eb_traj;
-  std::vector<TrajectoryPoint> mpt_fixed_traj;
-  std::vector<TrajectoryPoint> mpt_ref_traj;
-  std::vector<TrajectoryPoint> mpt_traj;
-  std::vector<TrajectoryPoint> extended_fixed_traj;
-  std::vector<TrajectoryPoint> extended_non_fixed_traj;
+  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> eb_traj;
+  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> mpt_fixed_traj;
+  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> mpt_ref_traj;
+  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> mpt_traj;
+  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> extended_fixed_traj;
+  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> extended_non_fixed_traj;
 
   SequentialBoundsCandidates sequential_bounds_candidates;
 };
 
 struct Trajectories
 {
-  std::vector<TrajectoryPoint> smoothed_trajectory;
+  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> smoothed_trajectory;
   std::vector<ReferencePoint> mpt_ref_points;
-  std::vector<TrajectoryPoint> model_predictive_trajectory;
+  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> model_predictive_trajectory;
 };
 
 struct TrajectoryParam
@@ -265,14 +259,6 @@ struct MPTParam
   bool two_step_soft_constraint;
   bool plan_from_ego;
   double max_plan_from_ego_length;
-};
-
-struct PlannerData
-{
-  Path path;
-  geometry_msgs::msg::Pose ego_pose;
-  double ego_vel;
-  std::vector<PredictedObject> objects;
 };
 
 #endif  // OBSTACLE_AVOIDANCE_PLANNER__COMMON_STRUCTS_HPP_
