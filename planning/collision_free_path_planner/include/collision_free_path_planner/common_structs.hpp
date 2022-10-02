@@ -212,6 +212,12 @@ struct TrajectoryParam
   double ego_nearest_yaw_threshold;
 };
 
+struct EgoNearestParam
+{
+  double dist_threshold{0.0};
+  double yaw_threshold{0.0};
+};
+
 struct PlannerData
 {
   Path path;
@@ -220,6 +226,7 @@ struct PlannerData
   std::vector<PredictedObject> objects{};
   bool enable_avoidance{false};
 };
+
 }  // namespace collision_free_path_planner
 
 namespace tier4_autoware_utils

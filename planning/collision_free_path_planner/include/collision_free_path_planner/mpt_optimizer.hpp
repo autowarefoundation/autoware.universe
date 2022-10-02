@@ -119,30 +119,31 @@ struct Bounds
 
 struct ReferencePoint
 {
-  geometry_msgs::msg::Point p;
-  double k = 0;
-  double v = 0;
-  double yaw = 0;
-  // double s = 0;
+  // these should be calcualted when initialization
+  geometry_msgs::msg::Point p{};
+  double yaw{0.0};
+  double v{0.0};
+
+  double k{0.0};
   double delta_arc_length{0.0};
-  double alpha = 0.0;
-  Bounds bounds;
-  bool near_objects;
+  double alpha{0.0};
+  Bounds bounds{};
+  bool near_objects{false};
 
   // NOTE: fix_kinematic_state is used for two purposes
   //       one is fixing points around ego for stability
   //       second is fixing current ego pose when no velocity for planning from ego pose
-  boost::optional<Eigen::Vector2d> fix_kinematic_state = boost::none;
-  bool plan_from_ego = true;
-  Eigen::Vector2d optimized_kinematic_state;
-  double optimized_input;
+  boost::optional<Eigen::Vector2d> fix_kinematic_state{boost::none};
+  bool plan_from_ego{false};  // TODO(murooka) previously why true by default?
+  Eigen::Vector2d optimized_kinematic_state{};
+  double optimized_input{};
 
   //
-  std::vector<boost::optional<double>> beta;
-  VehicleBounds vehicle_bounds;
+  std::vector<boost::optional<double>> beta{};
+  VehicleBounds vehicle_bounds{};
 
   // SequentialBoundsCandidates sequential_bounds_candidates;
-  std::vector<geometry_msgs::msg::Pose> vehicle_bounds_poses;  // for debug visualization
+  std::vector<geometry_msgs::msg::Pose> vehicle_bounds_poses{};  // for debug visualization
 };
 
 struct MPTTrajs
@@ -155,7 +156,7 @@ class MPTOptimizer
 {
 public:
   MPTOptimizer(
-    rclcpp::Node * node, const bool is_showing_debug_info,
+    rclcpp::Node * node, const bool is_showing_debug_info, const EgoNearestParam ego_nearest_param,
     const vehicle_info_util::VehicleInfo & vehicle_info, const TrajectoryParam & traj_param,
     const VehicleParam & vehicle_param);
 
@@ -252,6 +253,7 @@ private:
 
   // parameter
   bool is_showing_debug_info_;
+  EgoNearestParam ego_nearest_param_;
   TrajectoryParam traj_param_;
   VehicleParam vehicle_param_;
   MPTParam mpt_param_;
@@ -270,6 +272,7 @@ private:
 
   int prev_mat_n = 0;
   int prev_mat_m = 0;
+  std::shared_ptr<std::vector<ReferencePoint>> prev_valid_mpt_ref_points_{nullptr};
 
   mutable tier4_autoware_utils::StopWatch<
     std::chrono::milliseconds, std::chrono::microseconds, std::chrono::steady_clock>
@@ -281,9 +284,9 @@ private:
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & smoothed_points,
     const std::shared_ptr<MPTTrajs> prev_trajs, const CVMaps & maps, DebugData & debug_data) const;
 
-  void calcPlanningFromEgo(
-    const geometry_msgs::msg::Pose & ego_pose, const double ego_vel,
-    std::vector<ReferencePoint> & ref_points) const;
+  // void calcPlanningFromEgo(
+  //   const geometry_msgs::msg::Pose & ego_pose, const double ego_vel,
+  //   std::vector<ReferencePoint> & ref_points) const;
 
   /*
   std::vector<ReferencePoint> convertToReferencePoints(

@@ -223,6 +223,13 @@ CollisionFreePathPlanner::CollisionFreePathPlanner(const rclcpp::NodeOptions & n
     reset_prev_optimization_ = declare_parameter<bool>("option.reset_prev_optimization");
   }
 
+  {  // ego nearest search param
+    const double ego_nearest_dist_threshold =
+      declare_parameter<double>("ego_nearest_dist_threshold");
+    const double ego_nearest_yaw_threshold = declare_parameter<double>("ego_nearest_yaw_threshold");
+    ego_nearest_param_ = EgoNearestParam{ego_nearest_dist_threshold, ego_nearest_yaw_threshold};
+  }
+
   {  // trajectory parameter
     traj_param_ = TrajectoryParam{};
 
@@ -270,10 +277,9 @@ CollisionFreePathPlanner::CollisionFreePathPlanner(const rclcpp::NodeOptions & n
     traj_param_.is_avoiding_animal =
       declare_parameter<bool>("object.avoiding_object_type.animal", true);
 
-    // ego nearest search
-    traj_param_.ego_nearest_dist_threshold =
-      declare_parameter<double>("ego_nearest_dist_threshold");
-    traj_param_.ego_nearest_yaw_threshold = declare_parameter<double>("ego_nearest_yaw_threshold");
+    // TODO(murooka) remove this after refactoring EB
+    traj_param_.ego_nearest_dist_threshold = ego_nearest_param_.dist_threshold;
+    traj_param_.ego_nearest_yaw_threshold = ego_nearest_param_.yaw_threshold;
   }
 
   {  // elastic band parameter
@@ -314,11 +320,10 @@ CollisionFreePathPlanner::CollisionFreePathPlanner(const rclcpp::NodeOptions & n
     std::bind(&CollisionFreePathPlanner::onParam, this, std::placeholders::_1));
 
   mpt_optimizer_ptr_ = std::make_unique<MPTOptimizer>(
-    this, is_showing_debug_info_, vehicle_info, traj_param_, vehicle_param_);
+    this, is_showing_debug_info_, ego_nearest_param_, vehicle_info, traj_param_, vehicle_param_);
   resetPlanning();
 
-  replan_checker_ = std::make_shared<ReplanChecker>(
-    *this, traj_param_.ego_nearest_dist_threshold, traj_param_.ego_nearest_yaw_threshold);
+  replan_checker_ = std::make_shared<ReplanChecker>(*this, ego_nearest_param_);
 
   self_pose_listener_.waitForFirstPose();
 }
@@ -690,7 +695,8 @@ void CollisionFreePathPlanner::insertZeroVelocityOutsideDrivableArea(
   const auto & map_info = cv_maps.map_info;
   const auto & road_clearance_map = cv_maps.clearance_map;
 
-  const size_t nearest_idx = findEgoNearestIndex(traj_points, planner_data.ego_pose);
+  const size_t nearest_idx =
+    points_utils::findEgoIndex(traj_points, planner_data.ego_pose, ego_nearest_param_);
 
   // NOTE: Some end trajectory points will be ignored to check if outside the drivable area
   //       since these points might be outside drivable area if only end reference points have high

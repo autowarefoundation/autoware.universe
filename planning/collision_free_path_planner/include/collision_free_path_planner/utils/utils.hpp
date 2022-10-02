@@ -161,6 +161,68 @@ size_t findForwardIndex(const T & points, const size_t begin_idx, const double f
 }
 
 template <typename T>
+T cropForwardPoints(
+  const T & points, const geometry_msgs::msg::Point & target_pos, const size_t target_seg_idx,
+  const double forward_length)
+{
+  if (points.empty()) {
+    return T{};
+  }
+
+  double sum_length =
+    -tier4_autoware_utils::calcLongitudinalOffsetToSegment(points, target_seg_idx, target_pos);
+  for (size_t i = target_seg_idx + 1; i < points.size(); + ; i) {
+    sum_length += tier4_autoware_utils::calcDistance2d(points.at(i), points.at(i - 1));
+    if (forward_length < sum_length) {
+      const size_t end_idx = i;
+      return T{points.begin(), points.begin() + end_idx};
+    }
+  }
+
+  return points;
+}
+
+template <typename T>
+T cropBackwardPoints(
+  const T & points, const geometry_msgs::msg::Point & target_pos, const size_t target_seg_idx,
+  const double backward_length)
+{
+  if (points.empty()) {
+    return T{};
+  }
+
+  double sum_length =
+    -tier4_autoware_utils::calcLongitudinalOffsetToSegment(points, target_seg_idx, target_pos);
+  for (size_t i = target_seg_idx; 0 < i;
+       --i) {  // NOTE: use size_t since i is always positive value
+    sum_length -= tier4_autoware_utils::calcDistance2d(points.at(i), points.at(i - 1));
+    if (sum_length < backward_length) {
+      const size_t begin_idx = i - 1;
+      return T{points.begin() + begin_idx, points.end()};
+    }
+  }
+
+  return points;
+}
+
+template <typename T>
+T cropPoints(
+  const T & points, const geometry_msgs::msg::Point & target_pos, const size_t target_seg_idx,
+  cons double forward_length, const double backward_length)
+{
+  if (points.empty()) {
+    return T{};
+  }
+
+  // NOTE: Cropping forward must be done first in order to keep target_seg_idx.
+  const cropped_forward_points =
+    cropForwardPoints(points, target_pos, target_seg_idx, forward_length);
+  const cropped_points = cropBackwardPoints(cropped_forward_points, target_pos, backward_length);
+
+  return cropped_points;
+}
+
+template <typename T>
 T clipForwardPoints(const T & points, const size_t begin_idx, const double forward_length)
 {
   if (points.empty()) {
@@ -258,6 +320,11 @@ std::vector<TrajectoryPoint> convertToTrajectoryPoints(const std::vector<T> & po
   return traj_points;
 }
 
+ReferencePoint convertToReferencePoint(const TrajectoryPoint & traj_point);
+std::vector<ReferencePoint> convertToReferencePoints(
+  const std::vector<TrajectoryPoint> & traj_points);
+
+/*
 template <typename T>
 ReferencePoint convertToReferencePoint(const T & point);
 
@@ -271,6 +338,7 @@ std::vector<ReferencePoint> convertToReferencePoints(const std::vector<T> & poin
   }
   return ref_points;
 }
+*/
 
 std::vector<geometry_msgs::msg::Pose> convertToPosesWithYawEstimation(
   const std::vector<geometry_msgs::msg::Point> points);
@@ -332,6 +400,24 @@ bool isNearLastPathPoint(
     return false;
   }
   return true;
+}
+
+template <class T>
+size_t findEgoIndex(
+  const std::vector<T> & points, const geometry_msgs::msg::Pose & ego_pose,
+  const EgoNearestParam & ego_nearest_param)
+{
+  return motion_utils::findFirstNearestIndexWithSoftConstraints(
+    points, ego_pose, ego_nearest_param.dist_threshold, ego_nearest_param.yaw_threshold);
+}
+
+template <class T>
+size_t findEgoSegmentIndex(
+  const std::vector<T> & points, const geometry_msgs::msg::Pose & ego_pose,
+  const EgoNearestParam & ego_nearest_param)
+{
+  return motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+    points, ego_pose, ego_nearest_param.dist_threshold, ego_nearest_param.yaw_threshold);
 }
 }  // namespace points_utils
 

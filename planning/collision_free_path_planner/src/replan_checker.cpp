@@ -39,13 +39,9 @@ namespace
 }
 }  // namespace
 
-ReplanChecker::ReplanChecker(
-  rclcpp::Node & node, const double ego_nearest_dist_threshold,
-  const double ego_nearest_yaw_threshold)
+ReplanChecker::ReplanChecker(rclcpp::Node & node, const EgoNearestParam & ego_nearest_param)
+: ego_nearest_param_(ego_nearest_param)
 {
-  ego_nearest_dist_threshold_ = ego_nearest_dist_threshold;
-  ego_nearest_yaw_threshold_ = ego_nearest_yaw_threshold;
-
   max_path_shape_change_dist_ = node.declare_parameter<double>("replan.max_path_shape_change_dist");
   max_ego_moving_dist_ = node.declare_parameter<double>("replan.max_ego_moving_dist_for_replan");
   max_delta_time_sec_ = node.declare_parameter<double>("replan.max_delta_time_sec_for_replan");
@@ -129,12 +125,13 @@ bool ReplanChecker::isPathShapeChanged(const PlannerData & planner_data)
   const double max_path_length = 50.0;
 
   // truncate prev points from ego pose to fixed end points
-  const auto prev_begin_idx = findEgoNearestIndex(*prev_path_points_ptr_, p.ego_pose);
+  const auto prev_begin_idx =
+    points_utils::findEgoIndex(*prev_path_points_ptr_, p.ego_pose, ego_nearest_param_);
   const auto truncated_prev_points =
     points_utils::clipForwardPoints(*prev_path_points_ptr_, prev_begin_idx, max_path_length);
 
   // truncate points from ego pose to fixed end points
-  const auto begin_idx = findEgoNearestIndex(p.path.points, p.ego_pose);
+  const auto begin_idx = points_utils::findEgoIndex(p.path.points, p.ego_pose, ego_nearest_param_);
   const auto truncated_points =
     points_utils::clipForwardPoints(p.path.points, begin_idx, max_path_length);
 

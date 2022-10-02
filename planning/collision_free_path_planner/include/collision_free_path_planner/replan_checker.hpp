@@ -33,9 +33,7 @@ namespace collision_free_path_planner
 class ReplanChecker
 {
 public:
-  explicit ReplanChecker(
-    rclcpp::Node & node, const double ego_nearest_dist_threshold,
-    const double ego_nearest_yaw_threshold);
+  explicit ReplanChecker(rclcpp::Node & node, const EgoNearestParam & ego_nearest_param);
   void onParam(const std::vector<rclcpp::Parameter> & parameters);
   bool isReplanRequired(
     const PlannerData & planner_data, const rclcpp::Time & current_time,
@@ -47,18 +45,12 @@ private:
   bool isPathShapeChanged(const PlannerData & planner_data);
   bool isPathGoalChanged(const PlannerData & planner_data);
 
-  template <class T>
-  size_t findEgoNearestIndex(
-    const std::vector<T> & points, const geometry_msgs::msg::Pose & ego_pose)
-  {
-    return motion_utils::findFirstNearestIndexWithSoftConstraints(
-      points, ego_pose, ego_nearest_dist_threshold_, ego_nearest_yaw_threshold_);
-  }
-
   // previous variables
   std::shared_ptr<std::vector<PathPoint>> prev_path_points_ptr_{nullptr};
   std::shared_ptr<rclcpp::Time> prev_replanned_time_ptr_{nullptr};
   std::shared_ptr<geometry_msgs::msg::Pose> prev_ego_pose_ptr_{nullptr};
+
+  EgoNearestParam ego_nearest_param_;
 
   bool reset_optimization_{false};
 
@@ -66,9 +58,6 @@ private:
   double max_path_shape_change_dist_;
   double max_ego_moving_dist_;
   double max_delta_time_sec_;
-
-  double ego_nearest_dist_threshold_;
-  double ego_nearest_yaw_threshold_;
 };
 }  // namespace collision_free_path_planner
 

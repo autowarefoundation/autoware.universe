@@ -111,7 +111,7 @@ std::tuple<std::vector<double>, std::vector<double>> calcVehicleCirclesInfoByBic
   return {radiuses, longitudinal_offsets};
 }
 
-geometry_msgs::msg::Pose convertRefPointsToPose(const ReferencePoint & ref_point)
+geometry_msgs::msg::Pose convertRefPointToPose(const ReferencePoint & ref_point)
 {
   geometry_msgs::msg::Pose pose;
   pose.position = ref_point.p;
@@ -281,13 +281,6 @@ size_t findSoftNearestIndex(
                          : motion_utils::findNearestIndex(points, pose.position);
 }
 
-template <class T>
-T calcLongitudinalOffsetPoint(
-  const std::vector<T> & points, const size_t target_seg_idx, const double offset)
-{
-  return T{};
-}
-
 Trajectory createTrajectory(
   const std::vector<TrajectoryPoint> & traj_points, const std_msgs::msg::Header & header)
 {
@@ -296,13 +289,30 @@ Trajectory createTrajectory(
 
   return traj;
 }
+
+std::vector<TrajectoryPoint> resampleTrajectoryPoints(
+  const std::vector<TrajectoryPoint> traj_points, const double interval)
+{
+  const auto traj = motion_utils::convertToTrajectory(traj_points);
+  const auto resampled_traj = motion_utils::resampleTrajectory(traj, interval);
+  return motion_utils::convertToTrajectoryPointArray(resampled_traj);
+}
+
+template <class T>
+std::vector<T> createVector(const T & value, const std::vector<T> & vector)
+{
+  std::vector<T> result_vector(value);
+  result_vector.insert(result_vector.end(), vector.begin(), vector.end());
+  return result_vector;
+}
 }  // namespace
 
 MPTOptimizer::MPTOptimizer(
-  rclcpp::Node * node, const bool is_showing_debug_info,
+  rclcpp::Node * node, const bool is_showing_debug_info, const EgoNearestParam ego_nearest_param,
   const vehicle_info_util::VehicleInfo & vehicle_info, const TrajectoryParam & traj_param,
   const VehicleParam & vehicle_param)
 : is_showing_debug_info_(is_showing_debug_info),
+  ego_nearest_param_(ego_nearest_param),
   traj_param_(traj_param),
   vehicle_param_(vehicle_param)
 {
@@ -484,6 +494,7 @@ void MPTOptimizer::reset(const bool is_showing_debug_info, const TrajectoryParam
 {
   is_showing_debug_info_ = is_showing_debug_info;
   traj_param_ = traj_param;
+  prev_valid_mpt_ref_points_ = nullptr;
 }
 
 void MPTOptimizer::onParam(const std::vector<rclcpp::Parameter> & parameters)
@@ -733,6 +744,9 @@ boost::optional<MPTTrajs> MPTOptimizer::getModelPredictiveTrajectory(
   debug_data.msg_stream << "      " << __func__ << ":= " << stop_watch_.toc(__func__) << " [ms]\n";
 
   const auto mpt_trajs = MPTTrajs{full_optimized_ref_points, mpt_points};
+  prev_valid_mpt_ref_points_ =
+    std::make_shared<std::vector<ReferencePoint>>(full_optimized_ref_points);
+
   return mpt_trajs;
 }
 
@@ -744,102 +758,97 @@ std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
 
   const auto & p = planner_data;
 
-  const auto ref_points = [&]() {
-    auto ref_points = [&]() {
-      // TODO(murooka) consider better algorithm to calculate fixed/non-fixed reference points
-      const auto fixed_ref_points =
-        getFixedReferencePoints(p.ego_pose, p.ego_vel, smoothed_points, prev_trajs);
+  const double forward_distance =
+    traj_param_.num_sampling_points * mpt_param_.delta_arc_length_for_mpt_points;
+  const double backward_distance = -traj_param_.backward_fixing_distance;
 
-      // if no fixed_ref_points
-      if (fixed_ref_points.empty()) {
-        // interpolate and crop backward
-        const auto interpolated_points = interpolation_utils::getInterpolatedPoints(
-          smoothed_points, mpt_param_.delta_arc_length_for_mpt_points);
-        const auto interpolated_points_with_yaw =
-          points_utils::convertToPosesWithYawEstimation(interpolated_points);
-        const auto cropped_interpolated_points_with_yaw = points_utils::clipBackwardPoints(
-          interpolated_points_with_yaw, p.ego_pose, traj_param_.backward_fixing_distance,
-          mpt_param_.delta_arc_length_for_mpt_points,
-          traj_param_.delta_yaw_threshold_for_closest_point);
-        const auto cropped_interpolated_points =
-          points_utils::convertToPoints(cropped_interpolated_points_with_yaw);
+  // convert smoothed points to reference points
+  const auto resampled_smoothed_points =
+    resampleTrajectoryPoints(smoothed_points, mpt_param_.delta_arc_length_for_mpt_points);
+  auto ref_points = points_utils::convertToReferencePoints(resampled_smoothed_points);
 
-        return points_utils::convertToReferencePoints(cropped_interpolated_points);
-      }
+  // crop reference points with margin first to reduce calculation cost
+  const double tmp_margin = 10.0;
+  const size_t ego_seg_idx = findEgoSegmentIndex(ref_points, p.ego_pose, ego_nearest_param_);
+  ref_points = points_utils::cropPoints(
+    ref_points, p.ego_pose.position, ego_seg_idx, forward_distance + tmp_margin,
+    backward_distance - tmp_margin);
 
-      // calc non fixed traj points
-      // const auto fixed_ref_points_with_yaw = points_utils::convertToPosesWithYawEstimation(
-      // points_utils::convertToPoints(fixed_ref_points));
-      const auto fixed_ref_points_with_yaw = points_utils::convertToPoses(fixed_ref_points);
-      const auto seg_idx_optional = motion_utils::findNearestSegmentIndex(
-        smoothed_points, fixed_ref_points_with_yaw.back(), std::numeric_limits<double>::max(),
-        traj_param_.delta_yaw_threshold_for_closest_point);
+  // calculate curvature // must be after interpolation since curvatre's resampling is not
+  // length-based but index-based. NOTE: Calculating curvature and orientation required points
+  // around the target points to be smooth.
+  //       Therefore, crop margin is required.
+  calcCurvature(ref_points);
+  calcOrientation(ref_points);
 
-      if (!seg_idx_optional) {
-        RCLCPP_INFO_EXPRESSION(
-          rclcpp::get_logger("mpt_optimizer"), is_showing_debug_info_,
-          "cannot find nearest segment index in getReferencePoints");
-        return std::vector<ReferencePoint>{};
-      }
-      const auto seg_idx = *seg_idx_optional;
-      const auto non_fixed_traj_points =
-        std::vector<TrajectoryPoint>{smoothed_points.begin() + seg_idx, smoothed_points.end()};
+  //
+  calcFixedPoints();
 
-      const double offset = motion_utils::calcLongitudinalOffsetToSegment(
-                              non_fixed_traj_points, 0, fixed_ref_points.back().p) +
-                            mpt_param_.delta_arc_length_for_mpt_points;
-      const auto non_fixed_interpolated_traj_points = interpolation_utils::getInterpolatedPoints(
-        non_fixed_traj_points, mpt_param_.delta_arc_length_for_mpt_points, offset);
-      const auto non_fixed_ref_points =
-        points_utils::convertToReferencePoints(non_fixed_interpolated_traj_points);
+  // crop with margin
 
-      // make ref points
-      auto ref_points = fixed_ref_points;
-      ref_points.insert(ref_points.end(), non_fixed_ref_points.begin(), non_fixed_ref_points.end());
+  // set fixed points
 
-      return ref_points;
+  // crop with margin
+  calcBounds(ref_points, p.enable_avoidance, p.ego_pose, maps, prev_trajs, debug_data);
+  calcVehicleBounds(ref_points, maps, debug_data, p.enable_avoidance);
+
+  // set extra information (alpha and has_object_collision)
+  // NOTE: This must be after bounds calculation.
+  calcExtraPoints(ref_points, prev_trajs);
+
+  // crop
+  calcArcLength(ref_points);
+
+  // crop
+
+  /*
+  const auto cropped_smoothed_points =
+    [&]() -> std::vector<TrajectoryPoint> {
+      const auto resampled_smoothed_points = resampleTrajectoryPoints(smoothed_points,
+  mpt_param_.delta_arc_length_for_mpt_points); const size_t ego_seg_idx =
+  findEgoSegmentIndex(resampled_smoothed_points, p.ego_pose, ego_nearest_param_); return
+  points_utils::cropBackwardPoints(resampled_smoothed_points, p.ego_pose.position, ego_seg_idx,
+  traj_param_.backward_fixing_distance);
     }();
 
-    if (ref_points.empty()) {
-      return std::vector<ReferencePoint>{};
-    }
+  const auto ref_points = createReferencePoints(cropped_smoothed_points, fixed_ref_points);
+  if (ref_points.empty()) {
+    return std::vector<ReferencePoint>{};
+  }
+  */
 
-    // set some information to reference points considering fix kinematics
-    trimPoints(ref_points);
-    calcOrientation(ref_points);
-    calcCurvature(ref_points);
-    calcArcLength(ref_points);
-    calcPlanningFromEgo(
-      p.ego_pose, p.ego_vel,
-      ref_points);  // NOTE: fix_kinematic_state will be updated when planning from ego
+  // set some information to reference points considering fix kinematics
+  // trimPoints(ref_points);
+  // calcPlanningFromEgo(
+  // p.ego_pose, p.ego_vel,
+  // ref_points);  // NOTE: fix_kinematic_state will be updated when planning from ego
 
-    // crop trajectory with margin to calculate vehicle bounds at the end point
-    constexpr double tmp_ref_points_margin = 20.0;
-    const double ref_length_with_margin =
-      traj_param_.num_sampling_points * mpt_param_.delta_arc_length_for_mpt_points +
-      tmp_ref_points_margin;
-    ref_points = points_utils::clipForwardPoints(ref_points, 0, ref_length_with_margin);
-    if (ref_points.empty()) {
-      return std::vector<ReferencePoint>{};
-    }
+  // crop trajectory with margin to calculate vehicle bounds at the end point
+  constexpr double tmp_ref_points_margin = 20.0;
+  const double ref_length_with_margin =
+    traj_param_.num_sampling_points * mpt_param_.delta_arc_length_for_mpt_points +
+    tmp_ref_points_margin;
+  ref_points = points_utils::clipForwardPoints(ref_points, 0, ref_length_with_margin);
+  if (ref_points.empty()) {
+    return std::vector<ReferencePoint>{};
+  }
 
-    // set bounds information
-    calcBounds(ref_points, p.enable_avoidance, p.ego_pose, maps, prev_trajs, debug_data);
-    calcVehicleBounds(ref_points, maps, debug_data, p.enable_avoidance);
+  // set bounds information
+  calcBounds(ref_points, p.enable_avoidance, p.ego_pose, maps, prev_trajs, debug_data);
+  calcVehicleBounds(ref_points, maps, debug_data, p.enable_avoidance);
 
-    // set extra information (alpha and has_object_collision)
-    // NOTE: This must be after bounds calculation.
-    calcExtraPoints(ref_points, prev_trajs);
+  // set extra information (alpha and has_object_collision)
+  // NOTE: This must be after bounds calculation.
+  calcExtraPoints(ref_points, prev_trajs);
 
-    const double ref_length =
-      traj_param_.num_sampling_points * mpt_param_.delta_arc_length_for_mpt_points;
-    ref_points = points_utils::clipForwardPoints(ref_points, 0, ref_length);
+  const double ref_length =
+    traj_param_.num_sampling_points * mpt_param_.delta_arc_length_for_mpt_points;
+  ref_points = points_utils::clipForwardPoints(ref_points, 0, ref_length);
 
-    // bounds information is assigned to debug data after truncating reference points
-    debug_data.ref_points = ref_points;
+  // bounds information is assigned to debug data after truncating reference points
+  debug_data.ref_points = ref_points;
 
-    return ref_points;
-  }();
+  return ref_points;
   if (ref_points.empty()) {
     return std::vector<ReferencePoint>{};
   }
@@ -849,38 +858,64 @@ std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
   return ref_points;
 }
 
+std::vector<ReferencePoint> MPTOptimizer::createReferencePoints(
+  const std::vector<TrajectoryPoint> & cropped_smoothed_points)
+{
+  /*
+  // check if planning from ego pose is required
+  const bool plan_from_ego = mpt_param_.plan_from_ego && std::abs(ego_vel) < epsilon &&
+                             ref_points.size() > 1;
+  if (plan_from_ego) {
+    return;
+  }
+  */
+
+  if (prev_valid_mpt_ref_points_) {
+    const size_t prev_ref_front_seg_idx = findEgoSegmentIndex(
+      *prev_valid_mpt_ref_points, cropped_smoothed_points.front(), ego_nearest_param_);
+    const size_t prev_ref_front_point_idx = prev_ref_front_seg_idx;
+
+    // TODO(murooka) check deviation
+
+    const auto front_ref_point =
+      prev_valid_mpt_ref_points_->at(prev_ref_front_point_idx);  // velocity is old
+
+    // TODO(murooka) check smoothed_points fron is too close to front_ref_point
+
+    const auto ref_points_from_smoothed_points =
+      points_utils::convertToReferencePoints(cropped_smoothed_points);
+
+    const auto ref_points = createVector(front_ref_point, ref_points_from_smoothed_points);
+    return ref_points;
+  }
+
+  // No fixed points
+  return points_utils::convertToReferencePoints(cropped_smoothedpoints);
+}
+
+/*
 void MPTOptimizer::calcPlanningFromEgo(
   const geometry_msgs::msg::Pose & ego_pose, const double ego_vel,
   std::vector<ReferencePoint> & ref_points) const
 {
-  // if plan from ego
-  constexpr double epsilon = 1e-04;
-  const double trajectory_length = motion_utils::calcArcLength(ref_points);
-
-  const bool plan_from_ego = mpt_param_.plan_from_ego && std::abs(ego_vel) < epsilon &&
-                             ref_points.size() > 1 &&
-                             trajectory_length < mpt_param_.max_plan_from_ego_length;
-  if (plan_from_ego) {
     for (auto & ref_point : ref_points) {
       ref_point.fix_kinematic_state = boost::none;
     }
 
-    /*
-    // interpolate and crop backward
-    const auto interpolated_points = interpolation_utils::getInterpolatedPoints(
-                                                                                points,
-    mpt_param_.delta_arc_length_for_mpt_points); const auto cropped_interpolated_points =
-    points_utils::clipBackwardPoints( interpolated_points, current_pose_.position,
-    traj_param_.backward_fixing_distance, mpt_param_.delta_arc_length_for_mpt_points);
-
-    auto cropped_ref_points =
-      points_utils::convertToReferencePoints(cropped_interpolated_points);
-    */
+    // // interpolate and crop backward
+    // const auto interpolated_points = interpolation_utils::getInterpolatedPoints(
+    //                                                                             points,
+    // mpt_param_.delta_arc_length_for_mpt_points); const auto cropped_interpolated_points =
+    // points_utils::clipBackwardPoints( interpolated_points, current_pose_.position,
+    // traj_param_.backward_fixing_distance, mpt_param_.delta_arc_length_for_mpt_points);
+    //
+    // auto cropped_ref_points =
+    //   points_utils::convertToReferencePoints(cropped_interpolated_points);
 
     // assign fix kinematics
     const size_t nearest_ref_idx = motion_utils::findFirstNearestIndexWithSoftConstraints(
       points_utils::convertToPosesWithYawEstimation(points_utils::convertToPoints(ref_points)),
-      ego_pose, traj_param_.ego_nearest_dist_threshold, traj_param_.ego_nearest_yaw_threshold);
+      ego_pose, ego_nearest_param_.dist_threshold, ego_nearest_param_.yaw_threshold);
 
     // calculate cropped_ref_points.at(nearest_ref_idx) with yaw
     const geometry_msgs::msg::Pose nearest_ref_pose = [&]() -> geometry_msgs::msg::Pose {
@@ -898,7 +933,9 @@ void MPTOptimizer::calcPlanningFromEgo(
     ref_points.at(nearest_ref_idx).plan_from_ego = true;
   }
 }
+*/
 
+/*
 std::vector<ReferencePoint> MPTOptimizer::getFixedReferencePoints(
   const geometry_msgs::msg::Pose & ego_pose, const double ego_vel,
   const std::vector<TrajectoryPoint> & points, const std::shared_ptr<MPTTrajs> prev_trajs) const
@@ -917,7 +954,7 @@ std::vector<ReferencePoint> MPTOptimizer::getFixedReferencePoints(
   const int nearest_prev_ref_idx =
     static_cast<int>(motion_utils::findFirstNearestIndexWithSoftConstraints(
       points_utils::convertToPosesWithYawEstimation(points_utils::convertToPoints(prev_ref_points)),
-      ego_pose, traj_param_.ego_nearest_dist_threshold, traj_param_.ego_nearest_yaw_threshold));
+      ego_pose, ego_nearest_param_.dist_threshold, ego_nearest_param_.yaw_threshold));
 
   // calculate begin_prev_ref_idx
   const int begin_prev_ref_idx = [&]() {
@@ -961,29 +998,6 @@ std::vector<ReferencePoint> MPTOptimizer::getFixedReferencePoints(
   }
 
   return fixed_ref_points;
-}
-
-/*
-std::vector<ReferencePoint> MPTOptimizer::getFixedReferencePoints(
-  const std::vector<TrajectoryPoint> & smoothed_points,
-  const std::shared_ptr<MPTTrajs> prev_trajs) const
-{
-  if (
-    !prev_trajs || prev_trajs->mpt.empty() || prev_trajs->ref_points.empty() ||
-    prev_trajs->mpt.size() != prev_trajs->ref_points.size()) {
-    return std::vector<ReferencePoint>();
-  }
-
-  if (!mpt_param_.fix_points_around_ego) {
-    return std::vector<ReferencePoint>();
-  }
-
-  const size_t nearest_prev_ref_idx =
-    static_cast<size_t>(motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      points_utils::convertToPoints(prev_ref_points),
-      current_ego_pose_, traj_param_.ego_nearest_dist_threshold,
-      traj_param_.ego_nearest_yaw_threshold));
-  return calcLongitudinalOffsetPoint(prev_ref_points, traj_param_.backward_fixing_distance);
 }
 */
 
@@ -1186,8 +1200,8 @@ boost::optional<Eigen::VectorXd> MPTOptimizer::executeOptimization(
         tier4_autoware_utils::createQuaternionFromYaw(ref_points.front().yaw);
 
       const size_t seg_idx = findSoftNearestIndex(
-        prev_trajs->ref_points, ref_front_point, traj_param_.ego_nearest_dist_threshold,
-        traj_param_.ego_nearest_yaw_threshold);
+        prev_trajs->ref_points, ref_front_point, ego_nearest_param_.dist_threshold,
+        ego_nearest_param_.yaw_threshold);
 
       u0(0) = prev_trajs->ref_points.at(seg_idx).optimized_kinematic_state(0);
       u0(1) = prev_trajs->ref_points.at(seg_idx).optimized_kinematic_state(1);
@@ -1688,6 +1702,7 @@ void MPTOptimizer::calcOrientation(std::vector<ReferencePoint> & ref_points) con
   }
 }
 
+// TODO(murooka) replace with spline-based curvature calculation
 void MPTOptimizer::calcCurvature(std::vector<ReferencePoint> & ref_points) const
 {
   const size_t num_points = static_cast<int>(ref_points.size());
@@ -1807,7 +1822,7 @@ void MPTOptimizer::calcBounds(
   SequentialBoundsCandidates sequential_bounds_candidates;
   for (const auto & ref_point : ref_points) {
     const auto bounds_candidates =
-      getBoundsCandidates(enable_avoidance, convertRefPointsToPose(ref_point), maps, debug_data);
+      getBoundsCandidates(enable_avoidance, convertRefPointToPose(ref_point), maps, debug_data);
     sequential_bounds_candidates.push_back(bounds_candidates);
   }
   debug_data.sequential_bounds_candidates = sequential_bounds_candidates;

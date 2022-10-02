@@ -175,6 +175,7 @@ private:
 
   // params
   TrajectoryParam traj_param_;
+  EgoNearestParam ego_nearest_param_;
   EBParam eb_param_;
   VehicleParam vehicle_param_;
 
@@ -265,15 +266,6 @@ private:
     const std::vector<TrajectoryPoint> & traj_points) const;
 
   void publishDebugDataInMain(const Path & path) const;
-
-  template <class T>
-  size_t findEgoNearestIndex(
-    const std::vector<T> & points, const geometry_msgs::msg::Pose & ego_pose)
-  {
-    return motion_utils::findFirstNearestIndexWithSoftConstraints(
-      points, ego_pose, traj_param_.ego_nearest_dist_threshold,
-      traj_param_.ego_nearest_yaw_threshold);
-  }
 };
 }  // namespace collision_free_path_planner
 

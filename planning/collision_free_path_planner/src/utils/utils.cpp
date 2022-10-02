@@ -440,6 +440,30 @@ std::vector<geometry_msgs::msg::Pose> convertToPosesWithYawEstimation(
   return poses;
 }
 
+ReferencePoint convertToReferencePoint(const TrajectoryPoint & traj_point)
+{
+  ReferencePoint ref_point;
+
+  ref_point.p = traj_point.pose.position;
+  ref_point.yaw = tf2::getYaw(traj_point.pose.orientation);
+  ref_point.v = traj_point.longitudinal_velocity_mps;
+
+  return ref_point;
+}
+
+std::vector<ReferencePoint> convertToReferencePoints(
+  const std::vector<TrajectoryPoint> & traj_points);
+{
+  std::vector<ReferencePoint> ref_points;
+  for (const auto & traj_point : traj_points) {
+    const auto ref_point = convertToReferencePoint(traj_point);
+    ref_points.push_back(ref_point);
+  }
+
+  return ref_points;
+}
+
+/*
 template <typename T>
 ReferencePoint convertToReferencePoint(const T & point)
 {
@@ -464,6 +488,7 @@ ReferencePoint convertToReferencePoint(const geometry_msgs::msg::Point & point)
 
   return ref_point;
 }
+*/
 
 void compensateLastPose(
   const PathPoint & last_path_point, std::vector<TrajectoryPoint> & traj_points,
