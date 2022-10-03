@@ -292,8 +292,14 @@ void RouteHandler::setLaneletsFromRouteMsg()
   if (!is_route_valid) {
     return;
   }
+
+  size_t primitive_size{0};
   for (const auto & route_section : route_msg_.segments) {
-    route_lanelets_.reserve(route_lanelets_.size() + route_section.primitives.size());
+    primitive_size += route_section.primitives.size();
+  }
+  route_lanelets_.reserve(primitive_size);
+
+  for (const auto & route_section : route_msg_.segments) {
     for (const auto & primitive : route_section.primitives) {
       const auto id = primitive.id;
       const auto & llt = lanelet_map_ptr_->laneletLayer.get(id);
