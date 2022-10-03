@@ -33,7 +33,7 @@ namespace collision_free_path_planner
 class ReplanChecker
 {
 public:
-  explicit ReplanChecker(rclcpp::Node & node, const EgoNearestParam & ego_nearest_param);
+  explicit ReplanChecker(rclcpp::Node * node, const EgoNearestParam & ego_nearest_param);
   void onParam(const std::vector<rclcpp::Parameter> & parameters);
 
   bool isResetRequired(const PlannerData & planner_data);

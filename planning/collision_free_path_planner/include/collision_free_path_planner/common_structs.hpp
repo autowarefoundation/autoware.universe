@@ -47,15 +47,15 @@ struct CVMaps
   nav_msgs::msg::MapMetaData map_info;
 };
 
-struct QPParam
-{
-  int max_iteration;
-  double eps_abs;
-  double eps_rel;
-};
-
 struct EBParam
 {
+  struct QPParam
+  {
+    int max_iteration;
+    double eps_abs;
+    double eps_rel;
+  };
+
   double clearance_for_fixing;
   double clearance_for_straight_line;
   double clearance_for_joint;
@@ -136,10 +136,6 @@ struct DebugData
   std::vector<TrajectoryPoint> avoiding_traj_points;
   std::vector<PredictedObject> avoiding_objects;
 
-  cv::Mat clearance_map;
-  cv::Mat only_object_clearance_map;
-  cv::Mat area_with_objects_map;
-
   std::vector<std::vector<geometry_msgs::msg::Pose>> vehicle_circles_pose;
   std::vector<ReferencePoint> ref_points;
 
@@ -163,15 +159,6 @@ struct TrajectoryParam
   double output_delta_arc_length;
   double output_backward_traj_length;
 
-  bool is_avoiding_unknown;
-  bool is_avoiding_car;
-  bool is_avoiding_truck;
-  bool is_avoiding_bus;
-  bool is_avoiding_bicycle;
-  bool is_avoiding_motorbike;
-  bool is_avoiding_pedestrian;
-  bool is_avoiding_animal;
-
   int num_sampling_points;
 
   double delta_dist_threshold_for_closest_point;
@@ -180,10 +167,7 @@ struct TrajectoryParam
 
   double forward_fixing_min_distance;
   double forward_fixing_min_time;
-  double max_avoiding_ego_velocity_ms;
-  double max_avoiding_objects_velocity_ms;
   double center_line_width;
-  double acceleration_for_non_deceleration_range;
 };
 
 struct EgoNearestParam

@@ -21,12 +21,13 @@
 
 namespace collision_free_path_planner
 {
-ReplanChecker::ReplanChecker(rclcpp::Node & node, const EgoNearestParam & ego_nearest_param)
+ReplanChecker::ReplanChecker(rclcpp::Node * node, const EgoNearestParam & ego_nearest_param)
 : ego_nearest_param_(ego_nearest_param)
 {
-  max_path_shape_change_dist_ = node.declare_parameter<double>("replan.max_path_shape_change_dist");
-  max_ego_moving_dist_ = node.declare_parameter<double>("replan.max_ego_moving_dist");
-  max_delta_time_sec_ = node.declare_parameter<double>("replan.max_delta_time_sec");
+  max_path_shape_change_dist_ =
+    node->declare_parameter<double>("replan.max_path_shape_change_dist");
+  max_ego_moving_dist_ = node->declare_parameter<double>("replan.max_ego_moving_dist");
+  max_delta_time_sec_ = node->declare_parameter<double>("replan.max_delta_time_sec");
 }
 
 void ReplanChecker::onParam(const std::vector<rclcpp::Parameter> & parameters)

@@ -14,6 +14,7 @@
 
 #include "collision_free_path_planner/costmap_generator.hpp"
 
+#include "collision_free_path_planner/debug_marker.hpp"
 #include "collision_free_path_planner/utils/cv_utils.hpp"
 #include "collision_free_path_planner/utils/utils.hpp"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
@@ -45,23 +46,23 @@ cv::Point toCVPoint(const geometry_msgs::msg::Point & p)
 
 bool isAvoidingObjectType(
   const autoware_auto_perception_msgs::msg::PredictedObject & object,
-  const TrajectoryParam & traj_param)
+  const CostmapGenerator::AvoidanceObjectParam & avoidance_object_param)
 {
   if (
     (object.classification.at(0).label == object.classification.at(0).UNKNOWN &&
-     traj_param.is_avoiding_unknown) ||
+     avoidance_object_param.is_avoiding_unknown) ||
     (object.classification.at(0).label == object.classification.at(0).CAR &&
-     traj_param.is_avoiding_car) ||
+     avoidance_object_param.is_avoiding_car) ||
     (object.classification.at(0).label == object.classification.at(0).TRUCK &&
-     traj_param.is_avoiding_truck) ||
+     avoidance_object_param.is_avoiding_truck) ||
     (object.classification.at(0).label == object.classification.at(0).BUS &&
-     traj_param.is_avoiding_bus) ||
+     avoidance_object_param.is_avoiding_bus) ||
     (object.classification.at(0).label == object.classification.at(0).BICYCLE &&
-     traj_param.is_avoiding_bicycle) ||
+     avoidance_object_param.is_avoiding_bicycle) ||
     (object.classification.at(0).label == object.classification.at(0).MOTORCYCLE &&
-     traj_param.is_avoiding_motorbike) ||
+     avoidance_object_param.is_avoiding_motorbike) ||
     (object.classification.at(0).label == object.classification.at(0).PEDESTRIAN &&
-     traj_param.is_avoiding_pedestrian)) {
+     avoidance_object_param.is_avoiding_pedestrian)) {
     return true;
   }
   return false;
@@ -86,12 +87,13 @@ bool isAvoidingObject(
   const autoware_auto_perception_msgs::msg::PredictedObject & object, const cv::Mat & clearance_map,
   const nav_msgs::msg::MapMetaData & map_info,
   const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
-  const TrajectoryParam & traj_param)
+  const TrajectoryParam & traj_param,
+  const CostmapGenerator::AvoidanceObjectParam & avoidance_object_param)
 {
   if (path_points.empty()) {
     return false;
   }
-  if (!isAvoidingObjectType(object, traj_param)) {
+  if (!isAvoidingObjectType(object, avoidance_object_param)) {
     return false;
   }
   const auto image_point = geometry_utils::transformMapToOptionalImage(
@@ -137,13 +139,104 @@ bool isAvoidingObject(
     // nearest_path_point_clearance - traj_param.center_line_width * 0.5 <
     // object_clearance_from_road ||
     std::abs(lateral_offset_to_path) < traj_param.center_line_width * 0.5 ||
-    vel > traj_param.max_avoiding_objects_velocity_ms ||
+    vel > avoidance_object_param.max_avoiding_objects_velocity_ms ||
     !arePointsInsideDriveableArea(polygon_points.points_in_image, clearance_map)) {
     return false;
   }
   return true;
 }
 }  // namespace
+
+CostmapGenerator::CostmapGenerator(rclcpp::Node * node)
+{
+  initializeParam(node);
+
+  // publisher
+  debug_clearance_map_pub_ = node->create_publisher<OccupancyGrid>("~/debug/clearance_map", 1);
+  debug_object_clearance_map_pub_ =
+    node->create_publisher<OccupancyGrid>("~/debug/object_clearance_map", 1);
+  debug_area_with_objects_pub_ =
+    node->create_publisher<OccupancyGrid>("~/debug/area_with_objects", 1);
+}
+
+void CostmapGenerator::initializeParam(rclcpp::Node * node)
+{
+  {
+    enable_pub_clearance_map =
+      node->declare_parameter<bool>("costmap.debug.enable_pub_clearance_map");
+    enable_pub_object_clearance_map =
+      node->declare_parameter<bool>("costmap.debug.enable_pub_object_clearance_map");
+    enable_pub_area_with_objects =
+      node->declare_parameter<bool>("costmap.debug.enable_pub_area_with_objects");
+  }
+
+  {  // object
+    avoidance_object_param_.max_avoiding_ego_velocity_ms =
+      node->declare_parameter<double>("object.max_avoiding_ego_velocity_ms");
+    avoidance_object_param_.max_avoiding_objects_velocity_ms =
+      node->declare_parameter<double>("object.max_avoiding_objects_velocity_ms");
+    avoidance_object_param_.is_avoiding_unknown =
+      node->declare_parameter<bool>("object.avoiding_object_type.unknown", true);
+    avoidance_object_param_.is_avoiding_car =
+      node->declare_parameter<bool>("object.avoiding_object_type.car", true);
+    avoidance_object_param_.is_avoiding_truck =
+      node->declare_parameter<bool>("object.avoiding_object_type.truck", true);
+    avoidance_object_param_.is_avoiding_bus =
+      node->declare_parameter<bool>("object.avoiding_object_type.bus", true);
+    avoidance_object_param_.is_avoiding_bicycle =
+      node->declare_parameter<bool>("object.avoiding_object_type.bicycle", true);
+    avoidance_object_param_.is_avoiding_motorbike =
+      node->declare_parameter<bool>("object.avoiding_object_type.motorbike", true);
+    avoidance_object_param_.is_avoiding_pedestrian =
+      node->declare_parameter<bool>("object.avoiding_object_type.pedestrian", true);
+    avoidance_object_param_.is_avoiding_animal =
+      node->declare_parameter<bool>("object.avoiding_object_type.animal", true);
+  }
+}
+
+void CostmapGenerator::onParam(const std::vector<rclcpp::Parameter> & parameters)
+{
+  using tier4_autoware_utils::updateParam;
+
+  {
+    updateParam<bool>(
+      parameters, "costmap.debug.enable_clearance_map_pub", enable_pub_clearance_map);
+    updateParam<bool>(
+      parameters, "costmap.debug.enable_object_clearance_map_pub", enable_pub_object_clearance_map);
+    updateParam<bool>(
+      parameters, "costmap.debug.enable_area_with_objects_pub", enable_pub_area_with_objects);
+  }
+
+  {
+    // object
+    updateParam<double>(
+      parameters, "object.max_avoiding_ego_velocity_ms",
+      avoidance_object_param_.max_avoiding_ego_velocity_ms);
+    updateParam<double>(
+      parameters, "object.max_avoiding_objects_velocity_ms",
+      avoidance_object_param_.max_avoiding_objects_velocity_ms);
+    updateParam<bool>(
+      parameters, "object.avoiding_object_type.unknown",
+      avoidance_object_param_.is_avoiding_unknown);
+    updateParam<bool>(
+      parameters, "object.avoiding_object_type.car", avoidance_object_param_.is_avoiding_car);
+    updateParam<bool>(
+      parameters, "object.avoiding_object_type.truck", avoidance_object_param_.is_avoiding_truck);
+    updateParam<bool>(
+      parameters, "object.avoiding_object_type.bus", avoidance_object_param_.is_avoiding_bus);
+    updateParam<bool>(
+      parameters, "object.avoiding_object_type.bicycle",
+      avoidance_object_param_.is_avoiding_bicycle);
+    updateParam<bool>(
+      parameters, "object.avoiding_object_type.motorbike",
+      avoidance_object_param_.is_avoiding_motorbike);
+    updateParam<bool>(
+      parameters, "object.avoiding_object_type.pedestrian",
+      avoidance_object_param_.is_avoiding_pedestrian);
+    updateParam<bool>(
+      parameters, "object.avoiding_object_type.animal", avoidance_object_param_.is_avoiding_animal);
+  }
+}
 
 CVMaps CostmapGenerator::getMaps(
   const PlannerData & planner_data, const TrajectoryParam & traj_param,
@@ -171,10 +264,9 @@ CVMaps CostmapGenerator::getMaps(
   cv_maps.only_objects_clearance_map = getClearanceMap(objects_image, debug_data);
   cv_maps.map_info = path.drivable_area.info;
 
-  // debug data
-  debug_data.clearance_map = cv_maps.clearance_map;
-  debug_data.only_object_clearance_map = cv_maps.only_objects_clearance_map;
-  debug_data.area_with_objects_map = cv_maps.area_with_objects_map;
+  // publish maps
+  publishDebugMaps(path, cv_maps, debug_data);
+
   debug_data.avoiding_objects = debug_avoiding_objects;
   debug_data.msg_stream << "    " << __func__ << ":= " << stop_watch_.toc(__func__) << " [ms]\n";
   return cv_maps;
@@ -255,7 +347,8 @@ cv::Mat CostmapGenerator::drawObstaclesOnImage(
   for (const auto & object : objects) {
     const PolygonPoints polygon_points = cv_polygon_utils::getPolygonPoints(object, map_info);
     if (isAvoidingObject(
-          polygon_points, object, clearance_map, map_info, path_points_inside_area, traj_param)) {
+          polygon_points, object, clearance_map, map_info, path_points_inside_area, traj_param,
+          avoidance_object_param_)) {
       const double lon_dist_to_path = motion_utils::calcSignedArcLength(
         path_points, 0, object.kinematics.initial_pose_with_covariance.pose.position);
       const double lat_dist_to_path = motion_utils::calcLateralOffset(
@@ -339,5 +432,27 @@ cv::Mat CostmapGenerator::getAreaWithObjects(
 
   debug_data.msg_stream << "      " << __func__ << ":= " << stop_watch_.toc(__func__) << " [ms]\n";
   return area_with_objects;
+}
+
+void CostmapGenerator::publishDebugMaps(
+  const Path & path, const CVMaps & cv_maps, DebugData & debug_data) const
+{
+  stop_watch_.tic(__func__);
+
+  if (enable_pub_area_with_objects) {  // false by default
+    debug_area_with_objects_pub_->publish(
+      getDebugCostmap(cv_maps.area_with_objects_map, path.drivable_area));
+  }
+
+  if (enable_pub_object_clearance_map) {  // false by default
+    debug_object_clearance_map_pub_->publish(
+      getDebugCostmap(cv_maps.only_objects_clearance_map, path.drivable_area));
+  }
+
+  if (enable_pub_clearance_map) {  // false by default
+    debug_clearance_map_pub_->publish(getDebugCostmap(cv_maps.clearance_map, path.drivable_area));
+  }
+
+  debug_data.msg_stream << "    getDebugCostMap * 3:= " << stop_watch_.toc(__func__) << " [ms]\n";
 }
 }  // namespace collision_free_path_planner

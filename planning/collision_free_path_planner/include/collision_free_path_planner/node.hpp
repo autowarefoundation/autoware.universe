@@ -159,10 +159,7 @@ private:
   rclcpp::Clock logger_ros_clock_;
   int eb_solved_count_;
 
-  bool enable_debug_marker_pub_;
-  bool enable_area_with_objects_pub_;
-  bool enable_object_clearance_map_pub_;
-  bool enable_clearance_map_pub_;
+  bool enable_pub_debug_marker_;
   bool enable_debug_info_;
   bool enable_calculation_time_info_;
   bool enable_outside_drivable_area_stop_;
@@ -175,7 +172,7 @@ private:
   std::shared_ptr<CostmapGenerator> costmap_generator_ptr_;
   std::shared_ptr<EBPathOptimizer> eb_path_optimizer_ptr_;
   std::shared_ptr<MPTOptimizer> mpt_optimizer_ptr_;
-  std::shared_ptr<ReplanChecker> replan_checker_;
+  std::shared_ptr<ReplanChecker> replan_checker_ptr_;
 
   // params
   TrajectoryParam traj_param_;
@@ -206,9 +203,6 @@ private:
 
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_markers_pub_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_wall_markers_pub_;
-  rclcpp::Publisher<OccupancyGrid>::SharedPtr debug_clearance_map_pub_;
-  rclcpp::Publisher<OccupancyGrid>::SharedPtr debug_object_clearance_map_pub_;
-  rclcpp::Publisher<OccupancyGrid>::SharedPtr debug_area_with_objects_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::StringStamped>::SharedPtr debug_msg_pub_;
 
   rclcpp::Subscription<Path>::SharedPtr path_sub_;
