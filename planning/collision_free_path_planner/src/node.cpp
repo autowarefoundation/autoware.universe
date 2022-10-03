@@ -632,9 +632,12 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::optimizeTrajectory(
 
   // EB: smooth trajectory if enable_pre_smoothing is true
   const auto eb_traj = [&]() -> boost::optional<std::vector<TrajectoryPoint>> {
-    if (enable_pre_smoothing_) {
-      return eb_path_optimizer_ptr_->getEBTrajectory(planner_data, prev_eb_traj_ptr_, debug_data_);
-    }
+    // TODO(murooka) enable EB
+    /*
+if (enable_pre_smoothing_) {
+return eb_path_optimizer_ptr_->getEBTrajectory(planner_data, prev_eb_traj_ptr_, debug_data_);
+}
+    */
     return points_utils::convertToTrajectoryPoints(p.path.points);
   }();
   if (!eb_traj) {

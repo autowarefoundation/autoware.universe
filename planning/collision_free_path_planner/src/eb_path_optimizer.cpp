@@ -118,9 +118,9 @@ EBPathOptimizer::getEBTrajectory(
   stop_watch_.tic(__func__);
 
   const auto & p = planner_data;
+  const auto & path = p.path;
   const auto & ego_pose = p.ego_pose;
   const double ego_vel = p.ego_vel;
-  const auto path = p.path;
 
   // current_ego_vel_ = ego_vel;
 
@@ -156,11 +156,13 @@ EBPathOptimizer::getOptimizedTrajectory(
 {
   stop_watch_.tic(__func__);
 
-  const double forward_distance = 50;
-  // TODO(murooka)    traj_param_.num_sampling_points * mpt_param_.delta_arc_length_for_mpt_points;
-  const double backward_distance = traj_param_.backward_fixing_distance;
+  // make function: trimPathPoints
 
-  const double tmp_margin = 20.0;
+  const double forward_distance = 10;  // 50;
+  // TODO(murooka)    traj_param_.num_sampling_points * mpt_param_.delta_arc_length_for_mpt_points;
+  const double backward_distance = 10;  // traj_param_.backward_fixing_distance;
+
+  const double tmp_margin = 0;  // 20.0;
 
   // crop path
   const size_t ego_seg_idx =
@@ -261,6 +263,7 @@ void EBPathOptimizer::updateConstrain(
               << constrain.y.lower_bound << "," << constrain.x.upper_bound << "]" << std::endl;
   }
 
+  std::cerr << A << std::endl;
   osqp_solver_ptr_->updateBounds(lower_bound, upper_bound);
   osqp_solver_ptr_->updateA(A);
 }
@@ -313,9 +316,10 @@ boost::optional<std::vector<double>> EBPathOptimizer::optimizeTrajectory(
 
   // solve QP
   const auto result = osqp_solver_ptr_->optimize();
+  const auto optimized_points = std::get<0>(result);
+  const auto status = std::get<3>(result);
 
   // check status
-  const auto status = std::get<3>(result);
   utils::logOSQPSolutionStatus(std::get<3>(result), "EB: ");
   if (status != 1) {
     utils::logOSQPSolutionStatus(status, "EB: ");
@@ -325,7 +329,6 @@ boost::optional<std::vector<double>> EBPathOptimizer::optimizeTrajectory(
   debug_data.msg_stream << "          " << __func__ << ":= " << stop_watch_.toc(__func__)
                         << " [ms]\n";
 
-  const auto optimized_points = std::get<0>(result);
   return optimized_points;
 }
 
@@ -342,7 +345,12 @@ std::vector<TrajectoryPoint> EBPathOptimizer::convertOptimizedPointsToTrajectory
     tmp_point.pose.position.y = optimized_points.at(i + eb_param_.num_sampling_points_for_eb);
     traj_points.push_back(tmp_point);
 
-    std::cerr << tmp_point.pose.position.x << " " << tmp_point.pose.position.y << std::endl;
+    // std::cerr << tmp_point.pose.position.x << " " << tmp_point.pose.position.y << std::endl;
+  }
+  // std::cerr << optimized_points.size() << " " << pad_start_idx << std::endl;
+
+  for (const auto & d : optimized_points) {
+    std::cerr << d << std::endl;
   }
 
   // update orientationn
