@@ -21,6 +21,7 @@
 #include "tier4_rtc_msgs/msg/cooperate_command.hpp"
 #include "tier4_rtc_msgs/msg/cooperate_status.hpp"
 #include "tier4_rtc_msgs/msg/cooperate_status_array.hpp"
+#include "tier4_rtc_msgs/msg/module.hpp"
 #include "tier4_rtc_msgs/srv/cooperate_commands.hpp"
 #include <unique_identifier_msgs/msg/uuid.hpp>
 
@@ -37,6 +38,7 @@ using tier4_rtc_msgs::msg::Command;
 using tier4_rtc_msgs::msg::CooperateCommand;
 using tier4_rtc_msgs::msg::CooperateStatus;
 using tier4_rtc_msgs::msg::CooperateStatusArray;
+using tier4_rtc_msgs::msg::Module;
 using tier4_rtc_msgs::srv::CooperateCommands;
 using unique_identifier_msgs::msg::UUID;
 class RTCReplayerNode : public rclcpp::Node
