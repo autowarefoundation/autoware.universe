@@ -32,6 +32,24 @@
 #include <stack>
 #include <vector>
 
+namespace tier4_autoware_utils
+{
+template <>
+geometry_msgs::msg::Point getPoint(const collision_free_path_planner::ReferencePoint & p)
+{
+  return p.p;
+}
+
+template <>
+geometry_msgs::msg::Pose getPose(const collision_free_path_planner::ReferencePoint & p)
+{
+  geometry_msgs::msg::Pose pose;
+  pose.position = p.p;
+  pose.orientation = createQuaternionFromYaw(p.yaw);
+  return pose;
+}
+}  // namespace tier4_autoware_utils
+
 namespace collision_free_path_planner
 {
 namespace

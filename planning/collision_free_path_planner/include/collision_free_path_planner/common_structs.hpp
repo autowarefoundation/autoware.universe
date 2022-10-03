@@ -229,13 +229,4 @@ struct PlannerData
 
 }  // namespace collision_free_path_planner
 
-namespace tier4_autoware_utils
-{
-template <>
-geometry_msgs::msg::Point getPoint(const collision_free_path_planner::ReferencePoint & p);
-
-template <>
-geometry_msgs::msg::Pose getPose(const collision_free_path_planner::ReferencePoint & p);
-}  // namespace tier4_autoware_utils
-
 #endif  // COLLISION_FREE_PATH_PLANNER__COMMON_STRUCTS_HPP_

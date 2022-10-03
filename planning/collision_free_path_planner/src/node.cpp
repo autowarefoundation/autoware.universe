@@ -315,15 +315,16 @@ CollisionFreePathPlanner::CollisionFreePathPlanner(const rclcpp::NodeOptions & n
   // TODO(murooka) tune this param when avoiding with collision_free_path_planner
   traj_param_.center_line_width = vehicle_param_.width;
 
-  // set parameter callback
-  set_param_res_ = this->add_on_set_parameters_callback(
-    std::bind(&CollisionFreePathPlanner::onParam, this, std::placeholders::_1));
-
   mpt_optimizer_ptr_ = std::make_unique<MPTOptimizer>(
     this, is_showing_debug_info_, ego_nearest_param_, vehicle_info, traj_param_, vehicle_param_);
   resetPlanning();
 
   replan_checker_ = std::make_shared<ReplanChecker>(*this, ego_nearest_param_);
+
+  // set parameter callback
+  //! NOTE: This function must be called after algorithms (e.g. mpt_optimizer) are initialized.
+  set_param_res_ = this->add_on_set_parameters_callback(
+    std::bind(&CollisionFreePathPlanner::onParam, this, std::placeholders::_1));
 
   self_pose_listener_.waitForFirstPose();
 }

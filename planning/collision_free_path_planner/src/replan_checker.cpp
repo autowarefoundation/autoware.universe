@@ -43,8 +43,8 @@ ReplanChecker::ReplanChecker(rclcpp::Node & node, const EgoNearestParam & ego_ne
 : ego_nearest_param_(ego_nearest_param)
 {
   max_path_shape_change_dist_ = node.declare_parameter<double>("replan.max_path_shape_change_dist");
-  max_ego_moving_dist_ = node.declare_parameter<double>("replan.max_ego_moving_dist_for_replan");
-  max_delta_time_sec_ = node.declare_parameter<double>("replan.max_delta_time_sec_for_replan");
+  max_ego_moving_dist_ = node.declare_parameter<double>("replan.max_ego_moving_dist");
+  max_delta_time_sec_ = node.declare_parameter<double>("replan.max_delta_time_sec");
 }
 
 void ReplanChecker::onParam(const std::vector<rclcpp::Parameter> & parameters)

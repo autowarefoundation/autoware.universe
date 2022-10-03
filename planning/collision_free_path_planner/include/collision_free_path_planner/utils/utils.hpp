@@ -34,10 +34,19 @@
 #include <string>
 #include <vector>
 
+struct collision_free_path_planner::ReferencePoint;
+
+namespace tier4_autoware_utils
+{
+template <>
+geometry_msgs::msg::Point getPoint(const collision_free_path_planner::ReferencePoint & p);
+
+template <>
+geometry_msgs::msg::Pose getPose(const collision_free_path_planner::ReferencePoint & p);
+}  // namespace tier4_autoware_utils
+
 namespace collision_free_path_planner
 {
-struct ReferencePoint;
-
 namespace geometry_utils
 {
 template <typename T>
