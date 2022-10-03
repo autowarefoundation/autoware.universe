@@ -1,4 +1,0 @@
-<launch>
-    <test test-name="autoware_control_toolbox-test" pkg="autoware_control_toolbox" type="autoware_control_toolbox-test"
-          name="test"/>
-</launch>
