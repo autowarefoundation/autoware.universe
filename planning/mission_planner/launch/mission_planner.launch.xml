@@ -5,7 +5,6 @@
 
   <node pkg="mission_planner" exec="mission_planner" name="mission_planner" output="screen">
     <param name="map_frame" value="map"/>
-    <param name="base_link_frame" value="base_link"/>
     <param name="arrival_check_angle_deg" value="45.0"/>
     <param name="arrival_check_distance" value="1.0"/>
     <param name="arrival_check_duration" value="1.0"/>

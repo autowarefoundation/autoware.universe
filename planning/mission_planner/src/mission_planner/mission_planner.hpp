@@ -45,6 +45,7 @@ using SetRoute = planning_interface::SetRoute;
 using ClearRoute = planning_interface::ClearRoute;
 using Route = planning_interface::Route;
 using RouteState = planning_interface::RouteState;
+using Odometry = nav_msgs::msg::Odometry;
 
 class MissionPlanner : public rclcpp::Node
 {
@@ -55,15 +56,14 @@ private:
   ArrivalChecker arrival_checker_;
   pluginlib::ClassLoader<PlannerPlugin> plugin_loader_;
   std::shared_ptr<PlannerPlugin> planner_;
-  std::string base_link_frame_;
   std::string map_frame_;
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
-  PoseStamped get_ego_vehicle_pose();
   PoseStamped transform_pose(const PoseStamped & input);
 
-  rclcpp::TimerBase::SharedPtr timer_;
-  void on_arrival_check();
+  rclcpp::Subscription<Odometry>::SharedPtr sub_odometry_;
+  Odometry::ConstSharedPtr odometry_;
+  void on_odometry(const Odometry::ConstSharedPtr msg);
 
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_marker_;
   void change_route();

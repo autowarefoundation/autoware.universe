@@ -63,16 +63,17 @@ MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
   tf_listener_(tf_buffer_)
 {
   map_frame_ = declare_parameter<std::string>("map_frame");
-  base_link_frame_ = declare_parameter<std::string>("base_link_frame");
 
   planner_ = plugin_loader_.createSharedInstance("mission_planner::lanelet2::DefaultPlanner");
   planner_->initialize(this);
 
+  odometry_ = nullptr;
+  sub_odometry_ = create_subscription<Odometry>(
+    "/localization/kinematic_state", rclcpp::QoS(1),
+    std::bind(&MissionPlanner::on_odometry, this, std::placeholders::_1));
+
   const auto durable_qos = rclcpp::QoS(1).transient_local();
   pub_marker_ = create_publisher<MarkerArray>("debug/route_marker", durable_qos);
-
-  const auto period = rclcpp::Duration::from_seconds(1.0);
-  timer_ = rclcpp::create_timer(this, get_clock(), period, [this]() { on_arrival_check(); });
 
   const auto adaptor = component_interface_utils::NodeAdaptor(this);
   adaptor.init_pub(pub_state_);
@@ -84,20 +85,19 @@ MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
   change_state(RouteState::Message::UNSET);
 }
 
-PoseStamped MissionPlanner::get_ego_vehicle_pose()
+void MissionPlanner::on_odometry(const Odometry::ConstSharedPtr msg)
 {
-  PoseStamped base_link_origin;
-  base_link_origin.header.frame_id = base_link_frame_;
-  base_link_origin.pose.position.x = 0;
-  base_link_origin.pose.position.y = 0;
-  base_link_origin.pose.position.z = 0;
-  base_link_origin.pose.orientation.x = 0;
-  base_link_origin.pose.orientation.y = 0;
-  base_link_origin.pose.orientation.z = 0;
-  base_link_origin.pose.orientation.w = 1;
+  odometry_ = msg;
 
-  //  transform base_link frame origin to map_frame to get vehicle positions
-  return transform_pose(base_link_origin);
+  // NOTE: Do not check in the changing state as goal may change.
+  if (state_.state == RouteState::Message::SET) {
+    PoseStamped pose;
+    pose.header = odometry_->header;
+    pose.pose = odometry_->pose.pose;
+    if (arrival_checker_.is_arrived(pose)) {
+      change_state(RouteState::Message::ARRIVED);
+    }
+  }
 }
 
 PoseStamped MissionPlanner::transform_pose(const PoseStamped & input)
@@ -110,16 +110,6 @@ PoseStamped MissionPlanner::transform_pose(const PoseStamped & input)
     return output;
   } catch (tf2::TransformException & error) {
     throw component_interface_utils::TransformError(error.what());
-  }
-}
-
-void MissionPlanner::on_arrival_check()
-{
-  // NOTE: Do not check in the changing state as goal may change.
-  if (state_.state == RouteState::Message::SET) {
-    if (arrival_checker_.is_arrived(get_ego_vehicle_pose())) {
-      change_state(RouteState::Message::ARRIVED);
-    }
   }
 }
 
@@ -170,6 +160,10 @@ void MissionPlanner::on_set_route(
     throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_ROUTE_EXISTS, "The route is already set.");
   }
+  if (!odometry_) {
+    throw component_interface_utils::ServiceException(
+      ResponseCode::ERROR_PLANNER_UNREADY, "The vehicle pose is not received.");
+  }
 
   // Use temporary pose stapmed for transform.
   PoseStamped pose;
@@ -180,7 +174,7 @@ void MissionPlanner::on_set_route(
   HADMapRoute route;
   route.header.stamp = req->header.stamp;
   route.header.frame_id = map_frame_;
-  route.start_pose = get_ego_vehicle_pose().pose;
+  route.start_pose = odometry_->pose.pose;
   route.goal_pose = transform_pose(pose).pose;
   for (const auto & segment : req->segments) {
     route.segments.push_back(convert(segment));
@@ -207,6 +201,10 @@ void MissionPlanner::on_set_route_points(
     throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_PLANNER_UNREADY, "The planner is not ready.");
   }
+  if (!odometry_) {
+    throw component_interface_utils::ServiceException(
+      ResponseCode::ERROR_PLANNER_UNREADY, "The vehicle pose is not received.");
+  }
 
   // Use temporary pose stapmed for transform.
   PoseStamped pose;
@@ -214,7 +212,7 @@ void MissionPlanner::on_set_route_points(
 
   // Convert route points.
   PlannerPlugin::RoutePoints points;
-  points.push_back(get_ego_vehicle_pose().pose);
+  points.push_back(odometry_->pose.pose);
   for (const auto & waypoint : req->waypoints) {
     pose.pose = waypoint;
     points.push_back(transform_pose(pose).pose);

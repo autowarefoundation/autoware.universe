@@ -17,7 +17,6 @@ In current Autoware.universe, only Lanelet2 map format is supported.
 | Name                      | Type   | Description                       |
 | ------------------------- | ------ | --------------------------------- |
 | `map_frame`               | string | The frame name for map            |
-| `base_link_frame`         | string | The frame name for base link      |
 | `arrival_check_angle_deg` | double | Angle threshold for goal check    |
 | `arrival_check_distance`  | double | Distance threshold for goal check |
 | `arrival_check_duration`  | double | Duration threshold for goal check |
