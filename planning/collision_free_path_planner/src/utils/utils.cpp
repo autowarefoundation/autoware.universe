@@ -16,6 +16,7 @@
 
 #include "collision_free_path_planner/eb_path_optimizer.hpp"
 #include "collision_free_path_planner/mpt_optimizer.hpp"
+#include "motion_utils/motion_utils.hpp"
 #include "tf2/utils.h"
 
 #include "autoware_auto_planning_msgs/msg/path_point.hpp"
@@ -544,6 +545,15 @@ geometry_msgs::msg::Point getNearestPosition(
   }
 
   return points.back().p;
+}
+
+Trajectory createTrajectory(
+  const std_msgs::msg::Header & header, const std::vector<TrajectoryPoint> & traj_points)
+{
+  auto traj = motion_utils::convertToTrajectory(traj_points);
+  traj.header = header;
+
+  return traj;
 }
 }  // namespace points_utils
 

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COLLISION_FREE_PATH_PLANNER__TYPE_RENAME_HPP_
-#define COLLISION_FREE_PATH_PLANNER__TYPE_RENAME_HPP_
+#ifndef COLLISION_FREE_PATH_PLANNER__TYPE_ALIAS_HPP_
+#define COLLISION_FREE_PATH_PLANNER__TYPE_ALIAS_HPP_
 
 #include "autoware_auto_perception_msgs/msg/predicted_objects.hpp"
 #include "autoware_auto_planning_msgs/msg/path.hpp"
@@ -43,4 +43,4 @@ using nav_msgs::msg::OccupancyGrid;
 using nav_msgs::msg::Odometry;
 }  // namespace collision_free_path_planner
 
-#endif  // COLLISION_FREE_PATH_PLANNER__TYPE_RENAME_HPP_
+#endif  // COLLISION_FREE_PATH_PLANNER__TYPE_ALIAS_HPP_

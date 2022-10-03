@@ -19,6 +19,7 @@
 #include "opencv2/core.hpp"
 #include "opencv2/imgproc/imgproc_c.h"
 #include "opencv2/opencv.hpp"
+#include "vehicle_info_util/vehicle_info_util.hpp"
 
 #include "autoware_auto_perception_msgs/msg/predicted_object.hpp"
 #include "autoware_auto_planning_msgs/msg/path.hpp"
@@ -111,7 +112,7 @@ namespace cv_drivable_area_utils
 bool isOutsideDrivableAreaFromRectangleFootprint(
   const autoware_auto_planning_msgs::msg::TrajectoryPoint & traj_point,
   const cv::Mat & road_clearance_map, const nav_msgs::msg::MapMetaData & map_info,
-  const VehicleParam & vehicle_param);
+  const vehicle_info_util::VehicleInfo & vehicle_info);
 
 bool isOutsideDrivableAreaFromCirclesFootprint(
   const autoware_auto_planning_msgs::msg::TrajectoryPoint & traj_point,

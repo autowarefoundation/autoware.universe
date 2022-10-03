@@ -17,7 +17,7 @@
 
 #include "collision_free_path_planner/common_structs.hpp"
 #include "collision_free_path_planner/mpt_optimizer.hpp"
-#include "collision_free_path_planner/type_rename.hpp"
+#include "collision_free_path_planner/type_alias.hpp"
 #include "collision_free_path_planner/utils/utils.hpp"
 
 #include <rclcpp/rclcpp.hpp>

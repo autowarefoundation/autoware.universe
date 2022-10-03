@@ -16,7 +16,7 @@
 #define COLLISION_FREE_PATH_PLANNER__UTILS__UTILS_HPP_
 
 #include "collision_free_path_planner/common_structs.hpp"
-#include "collision_free_path_planner/type_rename.hpp"
+#include "collision_free_path_planner/type_alias.hpp"
 #include "eigen3/Eigen/Core"
 #include "interpolation/linear_interpolation.hpp"
 #include "interpolation/spline_interpolation.hpp"
@@ -432,6 +432,9 @@ size_t findEgoSegmentIndex(
   return motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
     points, ego_pose, ego_nearest_param.dist_threshold, ego_nearest_param.yaw_threshold);
 }
+
+Trajectory createTrajectory(
+  const std_msgs::msg::Header & header, const std::vector<TrajectoryPoint> & traj_points);
 }  // namespace points_utils
 
 namespace utils

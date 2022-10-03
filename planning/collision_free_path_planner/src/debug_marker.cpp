@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "collision_free_path_planner/utils/debug_utils.hpp"
+#include "collision_free_path_planner/debug_marker.hpp"
 
 #include "collision_free_path_planner/mpt_optimizer.hpp"
 #include "collision_free_path_planner/utils/cv_utils.hpp"
@@ -84,9 +84,9 @@ visualization_msgs::msg::MarkerArray getPointsTextMarkerArray(
 }
 
 geometry_msgs::msg::Pose getVirtualWallPose(
-  const geometry_msgs::msg::Pose & target_pose, const VehicleParam & vehicle_param)
+  const geometry_msgs::msg::Pose & target_pose, const vehicle_info_util::VehicleInfo & vehicle_info)
 {
-  const double base_link2front = vehicle_param.wheelbase + vehicle_param.front_overhang;
+  const double base_link2front = vehicle_info.wheel_base_m + vehicle_info.front_overhang_m;
   tf2::Transform tf_base_link2front(
     tf2::Quaternion(0.0, 0.0, 0.0, 1.0), tf2::Vector3(base_link2front, 0.0, 0.0));
   tf2::Transform tf_map2base_link;
@@ -367,8 +367,8 @@ visualization_msgs::msg::MarkerArray getObjectsMarkerArray(
 
 visualization_msgs::msg::MarkerArray getRectanglesMarkerArray(
   const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> mpt_traj,
-  const VehicleParam & vehicle_param, const std::string & ns, const double r, const double g,
-  const double b, const size_t sampling_num)
+  const vehicle_info_util::VehicleInfo & vehicle_info, const std::string & ns, const double r,
+  const double g, const double b, const size_t sampling_num)
 {
   visualization_msgs::msg::MarkerArray msg;
   for (size_t i = 0; i < mpt_traj.size(); ++i) {
@@ -382,9 +382,9 @@ visualization_msgs::msg::MarkerArray getRectanglesMarkerArray(
       createMarkerScale(0.05, 0.0, 0.0), createMarkerColor(r, g, b, 1.0));
     marker.lifetime = rclcpp::Duration::from_seconds(1.5);
 
-    const double half_width = vehicle_param.width / 2.0;
-    const double base_to_front = vehicle_param.length - vehicle_param.rear_overhang;
-    const double base_to_rear = vehicle_param.rear_overhang;
+    const double half_width = vehicle_info.vehicle_width_m / 2.0;
+    const double base_to_front = vehicle_info.vehicle_length_m - vehicle_info.rear_overhang_m;
+    const double base_to_rear = vehicle_info.rear_overhang_m;
 
     marker.points.push_back(
       tier4_autoware_utils::calcOffsetPose(traj_point.pose, base_to_front, -half_width, 0.0)
@@ -407,8 +407,8 @@ visualization_msgs::msg::MarkerArray getRectanglesMarkerArray(
 
 visualization_msgs::msg::MarkerArray getRectanglesNumMarkerArray(
   const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> mpt_traj,
-  const VehicleParam & vehicle_param, const std::string & ns, const double r, const double g,
-  const double b)
+  const vehicle_info_util::VehicleInfo & vehicle_info, const std::string & ns, const double r,
+  const double g, const double b)
 {
   auto marker = createDefaultMarker(
     "map", rclcpp::Clock().now(), ns, 0, visualization_msgs::msg::Marker::TEXT_VIEW_FACING,
@@ -421,8 +421,8 @@ visualization_msgs::msg::MarkerArray getRectanglesNumMarkerArray(
 
     marker.text = std::to_string(i);
 
-    const double half_width = vehicle_param.width / 2.0;
-    const double base_to_front = vehicle_param.length - vehicle_param.rear_overhang;
+    const double half_width = vehicle_info.vehicle_width_m / 2.0;
+    const double base_to_front = vehicle_info.vehicle_length_m - vehicle_info.rear_overhang_m;
 
     const auto top_right_pos =
       tier4_autoware_utils::calcOffsetPose(traj_point.pose, base_to_front, half_width, 0.0)
@@ -715,12 +715,10 @@ visualization_msgs::msg::MarkerArray getVirtualWallTextMarkerArray(
 }
 }  // namespace
 
-namespace debug_utils
-{
 visualization_msgs::msg::MarkerArray getDebugVisualizationMarker(
   DebugData & debug_data,
   const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & optimized_points,
-  const VehicleParam & vehicle_param, const bool is_showing_debug_detail)
+  const vehicle_info_util::VehicleInfo & vehicle_info, const bool is_showing_debug_detail)
 {
   visualization_msgs::msg::MarkerArray vis_marker_array;
 
@@ -737,7 +735,7 @@ visualization_msgs::msg::MarkerArray getDebugVisualizationMarker(
 
     appendMarkerArray(
       getRectanglesNumMarkerArray(
-        optimized_points, vehicle_param, "num_vehicle_footprint", 0.99, 0.99, 0.2),
+        optimized_points, vehicle_info, "num_vehicle_footprint", 0.99, 0.99, 0.2),
       &vis_marker_array);
 
     appendMarkerArray(
@@ -752,13 +750,13 @@ visualization_msgs::msg::MarkerArray getDebugVisualizationMarker(
   // mpt footprints
   appendMarkerArray(
     getRectanglesMarkerArray(
-      optimized_points, vehicle_param, "mpt_footprints", 0.99, 0.99, 0.2,
+      optimized_points, vehicle_info, "mpt_footprints", 0.99, 0.99, 0.2,
       debug_data.mpt_visualize_sampling_num),
     &vis_marker_array);
   // bounds
   appendMarkerArray(
     getBoundsLineMarkerArray(
-      debug_data.ref_points, 0.99, 0.99, 0.2, vehicle_param.width,
+      debug_data.ref_points, 0.99, 0.99, 0.2, vehicle_info.vehicle_width_m,
       debug_data.mpt_visualize_sampling_num),
     &vis_marker_array);
 
@@ -766,14 +764,14 @@ visualization_msgs::msg::MarkerArray getDebugVisualizationMarker(
   appendMarkerArray(
     getBoundsCandidatesLineMarkerArray(
       debug_data.ref_points, debug_data.sequential_bounds_candidates, 0.2, 0.99, 0.99,
-      vehicle_param.width, debug_data.mpt_visualize_sampling_num),
+      vehicle_info.vehicle_width_m, debug_data.mpt_visualize_sampling_num),
     &vis_marker_array);
 
   // vehicle circle line
   appendMarkerArray(
     getVehicleCircleLineMarkerArray(
-      debug_data.vehicle_circles_pose, vehicle_param.width, debug_data.mpt_visualize_sampling_num,
-      "vehicle_circle_lines", 0.99, 0.99, 0.2),
+      debug_data.vehicle_circles_pose, vehicle_info.vehicle_width_m,
+      debug_data.mpt_visualize_sampling_num, "vehicle_circle_lines", 0.99, 0.99, 0.2),
     &vis_marker_array);
 
   // lateral error line
@@ -802,12 +800,12 @@ visualization_msgs::msg::MarkerArray getDebugVisualizationMarker(
 }
 
 visualization_msgs::msg::MarkerArray getDebugVisualizationWallMarker(
-  DebugData & debug_data, const VehicleParam & vehicle_param)
+  DebugData & debug_data, const vehicle_info_util::VehicleInfo & vehicle_info)
 {
   visualization_msgs::msg::MarkerArray vis_marker_array;
   if (debug_data.stop_pose_by_drivable_area) {
     const auto virtual_wall_pose =
-      getVirtualWallPose(debug_data.stop_pose_by_drivable_area.get(), vehicle_param);
+      getVirtualWallPose(debug_data.stop_pose_by_drivable_area.get(), vehicle_info);
     appendMarkerArray(
       getVirtualWallMarkerArray(virtual_wall_pose, "virtual_wall", 1.0, 0, 0), &vis_marker_array);
     appendMarkerArray(
@@ -831,5 +829,4 @@ nav_msgs::msg::OccupancyGrid getDebugCostmap(
   });
   return clearance_map_in_og;
 }
-}  // namespace debug_utils
 }  // namespace collision_free_path_planner

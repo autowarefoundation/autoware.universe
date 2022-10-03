@@ -15,6 +15,7 @@
 #ifndef COLLISION_FREE_PATH_PLANNER__COMMON_STRUCTS_HPP_
 #define COLLISION_FREE_PATH_PLANNER__COMMON_STRUCTS_HPP_
 
+#include "collision_free_path_planner/type_alias.hpp"
 #include "opencv2/core.hpp"
 #include "opencv2/opencv.hpp"
 #include "rclcpp/rclcpp.hpp"
@@ -41,11 +42,6 @@ using SequentialBounds = std::vector<Bounds>;
 
 using BoundsCandidates = std::vector<Bounds>;
 using SequentialBoundsCandidates = std::vector<BoundsCandidates>;
-
-// message type
-using autoware_auto_perception_msgs::msg::PredictedObject;
-using autoware_auto_planning_msgs::msg::Path;
-using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 
 struct CVMaps
 {
@@ -76,16 +72,6 @@ struct EBParam
 
   double delta_arc_length_for_eb;
   int num_sampling_points_for_eb;
-};
-
-struct VehicleParam
-{
-  double wheelbase;
-  double length;
-  double width;
-  double rear_overhang;
-  double front_overhang;
-  // double max_steer_rad;
 };
 
 struct ConstrainRectangle

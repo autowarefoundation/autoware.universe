@@ -412,11 +412,11 @@ namespace cv_drivable_area_utils
 bool isOutsideDrivableAreaFromRectangleFootprint(
   const autoware_auto_planning_msgs::msg::TrajectoryPoint & traj_point,
   const cv::Mat & road_clearance_map, const nav_msgs::msg::MapMetaData & map_info,
-  const VehicleParam & vehicle_param)
+  const vehicle_info_util::VehicleInfo & vehicle_info)
 {
-  const double half_width = vehicle_param.width / 2.0;
-  const double base_to_front = vehicle_param.length - vehicle_param.rear_overhang;
-  const double base_to_rear = vehicle_param.rear_overhang;
+  const double half_width = vehicle_info.vehicle_width_m / 2.0;
+  const double base_to_front = vehicle_info.vehicle_length_m - vehicle_info.rear_overhang_m;
+  const double base_to_rear = vehicle_info.rear_overhang_m;
 
   const auto top_left_pos =
     tier4_autoware_utils::calcOffsetPose(traj_point.pose, base_to_front, -half_width, 0.0).position;

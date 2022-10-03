@@ -43,11 +43,10 @@ bool ReplanChecker::isResetRequired(const PlannerData & planner_data)
   const auto & p = planner_data;
 
   const bool reset_required = [&]() {
-    // guard
+    // guard for invalid variables
     if (!prev_path_points_ptr_ || !prev_ego_pose_ptr_) {
       return true;
     }
-
     const auto & prev_path_points = *prev_path_points_ptr_;
 
     // path shape changes
@@ -88,6 +87,7 @@ bool ReplanChecker::isReplanRequired(
   const auto & p = planner_data;
 
   const bool replan_required = [&]() {
+    // guard for invalid variables
     if (!prev_replanned_time_ptr_ || !prev_path_points_ptr_ /*|| !prev_mpt_traj_ptr*/) {
       return true;
     }
@@ -100,6 +100,7 @@ bool ReplanChecker::isReplanRequired(
     }
     */
 
+    // time elapses
     const double delta_time_sec = (current_time - *prev_replanned_time_ptr_).seconds();
     if (max_delta_time_sec_ < delta_time_sec) {
       return true;

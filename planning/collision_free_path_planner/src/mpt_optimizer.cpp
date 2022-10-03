@@ -255,15 +255,6 @@ size_t findSoftNearestIndex(
                          : motion_utils::findNearestIndex(points, pose.position);
 }
 
-Trajectory createTrajectory(
-  const std::vector<TrajectoryPoint> & traj_points, const std_msgs::msg::Header & header)
-{
-  auto traj = motion_utils::convertToTrajectory(traj_points);
-  traj.header = header;
-
-  return traj;
-}
-
 std::vector<TrajectoryPoint> resampleTrajectoryPoints(
   const std::vector<TrajectoryPoint> traj_points, const double interval)
 {
@@ -2127,14 +2118,14 @@ void MPTOptimizer::publishDebugTrajectories(
   const std::vector<TrajectoryPoint> & mpt_traj_points) const
 {
   const auto mpt_fixed_traj_points = extractMPTFixedPoints(ref_points);
-  const auto mpt_fixed_traj = createTrajectory(mpt_fixed_traj_points, header);
+  const auto mpt_fixed_traj = points_utils::createTrajectory(header, mpt_fixed_traj_points);
   debug_mpt_fixed_traj_pub_->publish(mpt_fixed_traj);
 
   const auto ref_traj =
-    createTrajectory(points_utils::convertToTrajectoryPoints(ref_points), header);
+    points_utils::createTrajectory(header, points_utils::convertToTrajectoryPoints(ref_points));
   debug_mpt_ref_traj_pub_->publish(ref_traj);
 
-  const auto mpt_traj = createTrajectory(mpt_traj_points, header);
+  const auto mpt_traj = points_utils::createTrajectory(header, mpt_traj_points);
   debug_mpt_traj_pub_->publish(mpt_traj);
 }
 

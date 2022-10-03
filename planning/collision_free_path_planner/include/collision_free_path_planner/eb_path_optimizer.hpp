@@ -16,7 +16,7 @@
 #define COLLISION_FREE_PATH_PLANNER__EB_PATH_OPTIMIZER_HPP_
 
 #include "collision_free_path_planner/common_structs.hpp"
-#include "collision_free_path_planner/type_rename.hpp"
+#include "collision_free_path_planner/type_alias.hpp"
 #include "eigen3/Eigen/Core"
 #include "osqp_interface/osqp_interface.hpp"
 #include "tier4_autoware_utils/system/stop_watch.hpp"
@@ -54,7 +54,7 @@ public:
   };
 
   EBPathOptimizer(
-    const bool enable_debug_info, const EgoNearestParam ego_nearest_param,
+    rclcpp::Node * node, const bool enable_debug_info, const EgoNearestParam ego_nearest_param,
     const TrajectoryParam & traj_param, const EBParam & eb_param);
 
   boost::optional<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>> getEBTrajectory(
@@ -77,6 +77,8 @@ private:
   const EBParam eb_param_;
 
   std::unique_ptr<autoware::common::osqp::OSQPInterface> osqp_solver_ptr_;
+
+  rclcpp::Publisher<Trajectory>::SharedPtr debug_eb_traj_pub_;
 
   // double current_ego_vel_;
 

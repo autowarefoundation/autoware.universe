@@ -19,13 +19,14 @@
 #include "collision_free_path_planner/eb_path_optimizer.hpp"
 #include "collision_free_path_planner/mpt_optimizer.hpp"
 #include "collision_free_path_planner/replan_checker.hpp"
-#include "collision_free_path_planner/type_rename.hpp"
+#include "collision_free_path_planner/type_alias.hpp"
 #include "motion_utils/trajectory/trajectory.hpp"
 #include "opencv2/core.hpp"
 #include "rclcpp/clock.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tier4_autoware_utils/ros/self_pose_listener.hpp"
 #include "tier4_autoware_utils/system/stop_watch.hpp"
+#include "vehicle_info_util/vehicle_info_util.hpp"
 
 #include "autoware_auto_perception_msgs/msg/predicted_objects.hpp"
 #include "autoware_auto_planning_msgs/msg/path.hpp"
@@ -153,9 +154,24 @@ public:
   explicit CollisionFreePathPlanner(const rclcpp::NodeOptions & node_options);
 
 private:
+  // TODO(murooka) move this node to common
+  class DrivingDirectionChecker
+  {
+  public:
+    bool isDrivingForward(const std::vector<PathPoint> & path_points)
+    {
+      const auto is_driving_forward = motion_utils::isDrivingForward(path_points);
+      is_driving_forward_ = is_driving_forward ? is_driving_forward.get() : is_driving_forward_;
+      return is_driving_forward_;
+    }
+
+  private:
+    bool is_driving_forward_{true};
+  };
+  DrivingDirectionChecker driving_direction_checker_{};
+
   rclcpp::Clock logger_ros_clock_;
   int eb_solved_count_;
-  bool is_driving_forward_{true};
 
   bool enable_debug_marker_pub_;
   bool enable_area_with_objects_pub_;
@@ -179,7 +195,7 @@ private:
   TrajectoryParam traj_param_;
   EgoNearestParam ego_nearest_param_;
   EBParam eb_param_;
-  VehicleParam vehicle_param_;
+  vehicle_info_util::VehicleInfo vehicle_info_;
 
   // variables for debug
   mutable DebugData debug_data_;
@@ -201,7 +217,6 @@ private:
   rclcpp::Publisher<Trajectory>::SharedPtr traj_pub_;
   rclcpp::Publisher<Trajectory>::SharedPtr debug_extended_fixed_traj_pub_;
   rclcpp::Publisher<Trajectory>::SharedPtr debug_extended_non_fixed_traj_pub_;
-  rclcpp::Publisher<Trajectory>::SharedPtr debug_eb_traj_pub_;
 
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_markers_pub_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_wall_markers_pub_;
@@ -247,7 +262,7 @@ private:
     const PlannerData & planner_data, std::vector<TrajectoryPoint> & traj_points,
     const CVMaps & cv_maps);
 
-  void publishDebugDataInOptimization(
+  void publishDebugMarkerInOptimization(
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & traj_points);
 
   std::vector<TrajectoryPoint> generatePostProcessedTrajectory(
@@ -269,6 +284,11 @@ private:
   */
 
   void publishDebugDataInMain(const Path & path) const;
+
+  void logWarnThrottle(const int duration_sec, const char * msg)
+  {
+    RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), duration_sec, msg);
+  }
 };
 }  // namespace collision_free_path_planner
 

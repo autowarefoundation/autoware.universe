@@ -11,14 +11,15 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef COLLISION_FREE_PATH_PLANNER__UTILS__DEBUG_UTILS_HPP_
-#define COLLISION_FREE_PATH_PLANNER__UTILS__DEBUG_UTILS_HPP_
+#ifndef COLLISION_FREE_PATH_PLANNER__DEBUG_MARKER_HPP_
+#define COLLISION_FREE_PATH_PLANNER__DEBUG_MARKER_HPP_
 
 #include "collision_free_path_planner/common_structs.hpp"
 #include "opencv2/core.hpp"
 #include "rclcpp/clock.hpp"
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 #include "tier4_autoware_utils/ros/marker_helper.hpp"
+#include "vehicle_info_util/vehicle_info_util.hpp"
 
 #include "autoware_auto_perception_msgs/msg/predicted_object.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"
@@ -35,18 +36,15 @@ namespace collision_free_path_planner
 using tier4_autoware_utils::createMarkerColor;
 using tier4_autoware_utils::createMarkerScale;
 
-namespace debug_utils
-{
 visualization_msgs::msg::MarkerArray getDebugVisualizationMarker(
   DebugData & debug_data,
   const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & optimized_points,
-  const VehicleParam & vehicle_param, const bool is_showing_debug_detail);
+  const vehicle_info_util::VehicleInfo & vehicle_info, const bool is_showing_debug_detail);
 
 visualization_msgs::msg::MarkerArray getDebugVisualizationWallMarker(
-  DebugData & debug_data, const VehicleParam & vehicle_param);
+  DebugData & debug_data, const vehicle_info_util::VehicleInfo & vehicle_info);
 
 nav_msgs::msg::OccupancyGrid getDebugCostmap(
   const cv::Mat & clearance_map, const nav_msgs::msg::OccupancyGrid & occupancy_grid);
-}  // namespace debug_utils
 }  // namespace collision_free_path_planner
-#endif  // COLLISION_FREE_PATH_PLANNER__UTILS__DEBUG_UTILS_HPP_
+#endif  // COLLISION_FREE_PATH_PLANNER__DEBUG_MARKER_HPP_

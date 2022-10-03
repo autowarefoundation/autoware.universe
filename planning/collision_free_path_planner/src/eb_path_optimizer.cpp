@@ -14,7 +14,7 @@
 
 #include "collision_free_path_planner/eb_path_optimizer.hpp"
 
-#include "collision_free_path_planner/type_rename.hpp"
+#include "collision_free_path_planner/type_alias.hpp"
 #include "collision_free_path_planner/utils/utils.hpp"
 #include "motion_utils/motion_utils.hpp"
 
@@ -87,7 +87,7 @@ Eigen::MatrixXd makeAMatrix(const int num_points)
 namespace collision_free_path_planner
 {
 EBPathOptimizer::EBPathOptimizer(
-  const bool enable_debug_info, const EgoNearestParam ego_nearest_param,
+  rclcpp::Node * node, const bool enable_debug_info, const EgoNearestParam ego_nearest_param,
   const TrajectoryParam & traj_param, const EBParam & eb_param)
 : enable_debug_info_(enable_debug_info),
   ego_nearest_param_(ego_nearest_param),
@@ -107,6 +107,9 @@ EBPathOptimizer::EBPathOptimizer(
     p, a, q, lower_bound, upper_bound, qp_param_.eps_abs);
   osqp_solver_ptr_->updateEpsRel(qp_param_.eps_rel);
   osqp_solver_ptr_->updateMaxIter(qp_param_.max_iteration);
+
+  // publisher
+  debug_eb_traj_pub_ = node->create_publisher<Trajectory>("~/debug/eb_trajectory", 1);
 }
 
 boost::optional<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>
@@ -147,6 +150,11 @@ EBPathOptimizer::getEBTrajectory(
   const auto eb_traj_points = eb_traj_points_opt.get();
 
   debug_data.eb_traj = eb_traj_points;
+
+  {  // publish eb trajectory
+    const auto eb_traj = points_utils::createTrajectory(p.path.header, eb_traj_points);
+    debug_eb_traj_pub_->publish(eb_traj);
+  }
 
   debug_data.msg_stream << "      " << __func__ << ":= " << stop_watch_.toc(__func__) << " [ms]\n";
   return eb_traj_points;

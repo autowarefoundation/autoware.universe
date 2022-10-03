@@ -41,7 +41,7 @@
 #define COLLISION_FREE_PATH_PLANNER__MPT_OPTIMIZER_HPP_
 
 #include "collision_free_path_planner/common_structs.hpp"
-#include "collision_free_path_planner/type_rename.hpp"
+#include "collision_free_path_planner/type_alias.hpp"
 #include "collision_free_path_planner/vehicle_model/vehicle_model_interface.hpp"
 #include "eigen3/Eigen/Core"
 #include "eigen3/Eigen/Sparse"
