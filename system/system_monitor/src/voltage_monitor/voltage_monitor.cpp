@@ -161,7 +161,7 @@ void VoltageMonitor::checkBatteryStatus(diagnostic_updater::DiagnosticStatusWrap
 
   std::string line;
   bool status = false;
-  while(std::getline(is_out, line)) {
+  while (std::getline(is_out, line)) {
     auto batStatusLine = line.find("batt_status");
     if (batStatusLine != std::string::npos) {
       auto batStatus = line.find("okay");
