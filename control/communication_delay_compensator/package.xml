@@ -8,12 +8,17 @@
     <author email="boyali@gmail.com">Ali Boyali</author>
     <license>Apache License 2.0</license>
 
+
     <buildtool_depend>ament_cmake_auto</buildtool_depend>
-    <buildtool_depend>autoware_auto_cmake</buildtool_depend>
+    <buildtool_depend>rosidl_default_generators</buildtool_depend>
+
+    <build_depend>autoware_cmake</build_depend>
+    <build_depend>builtin_interfaces</build_depend>
+
     <buildtool_depend>eigen</buildtool_depend>
 
     <depend>rclcpp</depend>
-    <depend>builtin_interfaces</depend>
+    <depend>rclcpp_components</depend>
 
     <depend>autoware_auto_common</depend>
     <depend>autoware_auto_control_msgs</depend>
@@ -24,10 +29,11 @@
     <depend>vehicle_info_util</depend>
     <depend>autoware_control_toolbox</depend>
     <depend>control_performance_analysis</depend>
-    <depend>rclcpp_components</depend>
+
 
     <exec_depend>ros2launch</exec_depend>
     <exec_depend>rosidl_default_runtime</exec_depend>
+    <exec_depend>global_parameter_loader</exec_depend>
 
     <test_depend>ament_cmake_ros</test_depend>
     <test_depend>ament_lint_auto</test_depend>

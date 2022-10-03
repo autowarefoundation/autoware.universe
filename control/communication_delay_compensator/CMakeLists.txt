@@ -4,12 +4,12 @@ project(communication_delay_compensator)
 set(CMAKE_CXX_STANDARD 17)
 
 # require that dependencies from package.xml be available
-find_package(ament_cmake_auto REQUIRED)
-find_package(rosidl_default_generators REQUIRED)
+find_package(autoware_cmake REQUIRED)
+autoware_package()
 
-ament_auto_find_build_dependencies(REQUIRED
-  ${${PROJECT_NAME}_BUILD_DEPENDS}
-  ${${PROJECT_NAME}_BUILDTOOL_DEPENDS})
+find_package(builtin_interfaces REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
+find_package(std_msgs REQUIRED)
 
 find_package(Eigen3 CONFIG)
 
@@ -161,7 +161,7 @@ if(BUILD_TESTING)
     test/cdc_node_tests.cpp)
 
   ament_target_dependencies(${CDC_TESTs} fake_test_node)
-  autoware_set_compile_options(${CDC_TESTs})
+  #  autoware_set_compile_options(${CDC_TESTs})
 
   target_include_directories(${CDC_TESTs} PRIVATE include test/include)
   target_link_libraries(${CDC_TESTs}

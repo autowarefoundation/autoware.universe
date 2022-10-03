@@ -17,7 +17,6 @@
 
 #include "eigen3/Eigen/Core"
 #include "utils_delay_observer/delay_compensation_utils.hpp"
-#include "visibility_control.hpp"
 
 namespace observers
 {
@@ -35,7 +34,8 @@ using state_vector_vehicle_t =
   Eigen::Matrix<double, toUType(KinematicErrorDims::STATE_DIM), 1>;
 
 // Lyapunov matrix dimension definitions.
-constexpr size_t cx_NUMBER_OF_LYAP_MATS = 5;
+constexpr size_t
+cx_NUMBER_OF_LYAP_MATS = 5;
 enum class StateObserverDims : int
 {
   STATE_DIM = 4,
