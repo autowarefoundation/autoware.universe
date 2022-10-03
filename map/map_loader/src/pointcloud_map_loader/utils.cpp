@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <utils.hpp>
+#include "utils.hpp"
 
 #include <fmt/format.h>
 
@@ -57,5 +57,3 @@ bool isGridWithinQueriedArea(
   bool res = sphereAndBoxOverlapExists(position, radius, metadata.min, metadata.max);
   return res;
 }
-
-#endif  // POINTCLOUD_MAP_LOADER__UTILS_HPP_
