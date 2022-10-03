@@ -79,7 +79,7 @@ inline MinMaxPosition getMinMax2d(const tier4_autoware_utils::Polygon2d & polygo
     if (min_y > point.y()) min_y = point.y();
   }
   MinMaxPosition min_max_position = {max_x, min_x, max_y, min_y};
-  
+
   return min_max_position;
 }
 
