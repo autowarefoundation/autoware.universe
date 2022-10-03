@@ -226,8 +226,11 @@ T cropPoints(
   // NOTE: Cropping forward must be done first in order to keep target_seg_idx.
   const auto cropped_forward_points =
     cropForwardPoints(points, target_pos, target_seg_idx, forward_length);
-  const auto cropped_points =
-    cropBackwardPoints(cropped_forward_points, target_pos, target_seg_idx, backward_length);
+
+  const size_t modified_target_seg_idx =
+    std::min(target_seg_idx, cropped_forward_points.size() - 2);
+  const auto cropped_points = cropBackwardPoints(
+    cropped_forward_points, target_pos, modified_target_seg_idx, backward_length);
 
   return cropped_points;
 }

@@ -32,26 +32,6 @@
 #include <tuple>
 #include <vector>
 
-/*
-namespace tier4_autoware_utils
-{
-template <>
-geometry_msgs::msg::Point getPoint(const collision_free_path_planner::ReferencePoint & p)
-{
-  return p.p;
-}
-
-template <>
-geometry_msgs::msg::Pose getPose(const collision_free_path_planner::ReferencePoint & p)
-{
-  geometry_msgs::msg::Pose pose;
-  pose.position = p.p;
-  pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(p.yaw);
-  return pose;
-}
-}  // namespace tier4_autoware_utils
-*/
-
 namespace collision_free_path_planner
 {
 namespace
@@ -325,6 +305,14 @@ std::vector<T> createVector(const T & value, const std::vector<T> & vector)
   result_vector.push_back(value);
   result_vector.insert(result_vector.end(), vector.begin(), vector.end());
   return result_vector;
+}
+
+std::vector<ReferencePoint> resampleReferencePoints(
+  const std::vector<ReferencePoint> & ref_points, const double interval)
+{
+  const auto traj_points = points_utils::convertToTrajectoryPoints(ref_points);
+  const auto resampled_traj_points = resampleTrajectoryPoints(traj_points, interval);
+  return points_utils::convertToReferencePoints(resampled_traj_points);
 }
 }  // namespace
 
@@ -902,14 +890,18 @@ void MPTOptimizer::calcFixedPoints(std::vector<ReferencePoint> & ref_points) con
 
     // TODO(murooka) check deviation
 
-    const auto front_ref_point =
+    const auto front_prev_ref_point =
       prev_valid_mpt_ref_points_->at(prev_ref_front_point_idx);  // velocity is old
 
     // TODO(murooka) check smoothed_points fron is too close to front_ref_point
 
-    ref_points = createVector(front_ref_point, ref_points);
+    // ref_points = createVector(front_ref_point, ref_points);
+    ref_points.front() = front_prev_ref_point;
+    ref_points.front().fix_kinematic_state = front_prev_ref_point.optimized_kinematic_state;
 
     // TODO(murooka) resample reference points since fixed points is not
+    // const auto resmapled_ref_points = resampleReferencePoints(ref_points,
+    // mpt_param_.delta_arc_length_for_mpt_points); ref_points
 
     return;
   }
