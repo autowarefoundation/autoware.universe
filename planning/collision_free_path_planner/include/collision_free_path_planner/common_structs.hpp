@@ -110,7 +110,7 @@ struct DebugData
         std::string tmp_str = sstream.str();
         debug_str += tmp_str;
 
-        if (is_showing_calculation_time) {
+        if (enable_calculation_time_info) {
           tmp_str.pop_back();  // NOTE* remove '\n' which is unnecessary for RCLCPP_INFO_STREAM
           RCLCPP_INFO_STREAM(rclcpp::get_logger("collision_free_path_planner.time"), tmp_str);
         }
@@ -127,16 +127,16 @@ struct DebugData
 
     std::string getString() const { return debug_str; }
 
-    bool is_showing_calculation_time;
+    bool enable_calculation_time_info;
     std::string debug_str = "\n";
     std::stringstream sstream;
   };
 
   void init(
-    const bool local_is_showing_calculation_time,
+    const bool local_enable_calculation_time_info,
     const geometry_msgs::msg::Pose & local_current_ego_pose)
   {
-    msg_stream.is_showing_calculation_time = local_is_showing_calculation_time;
+    msg_stream.enable_calculation_time_info = local_enable_calculation_time_info;
     current_ego_pose = local_current_ego_pose;
   }
 

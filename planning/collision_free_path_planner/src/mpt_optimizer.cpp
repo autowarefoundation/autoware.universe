@@ -37,24 +37,25 @@ namespace collision_free_path_planner
 namespace
 {
 std::tuple<std::vector<double>, std::vector<double>> calcVehicleCirclesInfo(
-  const VehicleParam & vehicle_param, const size_t circle_num, const double rear_radius_ratio,
-  const double front_radius_ratio)
+  const vehicle_info_util::VehicleInfo & vehicle_info, const size_t circle_num,
+  const double rear_radius_ratio, const double front_radius_ratio)
 {
   std::vector<double> longitudinal_offsets;
   std::vector<double> radiuses;
 
   {  // 1st circle (rear)
-    longitudinal_offsets.push_back(-vehicle_param.rear_overhang);
-    radiuses.push_back(vehicle_param.width / 2.0 * rear_radius_ratio);
+    longitudinal_offsets.push_back(-vehicle_info.rear_overhang_m);
+    radiuses.push_back(vehicle_info.vehicle_width_m / 2.0 * rear_radius_ratio);
   }
 
   {  // 2nd circle (front)
     const double radius = std::hypot(
-      vehicle_param.length / static_cast<double>(circle_num) / 2.0, vehicle_param.width / 2.0);
+      vehicle_info.vehicle_length_m / static_cast<double>(circle_num) / 2.0,
+      vehicle_info.vehicle_width_m / 2.0);
 
-    const double unit_lon_length = vehicle_param.length / static_cast<double>(circle_num);
+    const double unit_lon_length = vehicle_info.vehicle_length_m / static_cast<double>(circle_num);
     const double longitudinal_offset =
-      unit_lon_length / 2.0 + unit_lon_length * (circle_num - 1) - vehicle_param.rear_overhang;
+      unit_lon_length / 2.0 + unit_lon_length * (circle_num - 1) - vehicle_info.rear_overhang_m;
 
     longitudinal_offsets.push_back(longitudinal_offset);
     radiuses.push_back(radius * front_radius_ratio);
@@ -64,20 +65,21 @@ std::tuple<std::vector<double>, std::vector<double>> calcVehicleCirclesInfo(
 }
 
 std::tuple<std::vector<double>, std::vector<double>> calcVehicleCirclesInfo(
-  const VehicleParam & vehicle_param, const size_t circle_num, const double radius_ratio)
+  const vehicle_info_util::VehicleInfo & vehicle_info, const size_t circle_num,
+  const double radius_ratio)
 {
   std::vector<double> longitudinal_offsets;
   std::vector<double> radiuses;
 
-  const double radius =
-    std::hypot(
-      vehicle_param.length / static_cast<double>(circle_num) / 2.0, vehicle_param.width / 2.0) *
-    radius_ratio;
-  const double unit_lon_length = vehicle_param.length / static_cast<double>(circle_num);
+  const double radius = std::hypot(
+                          vehicle_info.vehicle_length_m / static_cast<double>(circle_num) / 2.0,
+                          vehicle_info.vehicle_width_m / 2.0) *
+                        radius_ratio;
+  const double unit_lon_length = vehicle_info.vehicle_length_m / static_cast<double>(circle_num);
 
   for (size_t i = 0; i < circle_num; ++i) {
     longitudinal_offsets.push_back(
-      unit_lon_length / 2.0 + unit_lon_length * i - vehicle_param.rear_overhang);
+      unit_lon_length / 2.0 + unit_lon_length * i - vehicle_info.rear_overhang_m);
     radiuses.push_back(radius);
   }
 
@@ -85,38 +87,31 @@ std::tuple<std::vector<double>, std::vector<double>> calcVehicleCirclesInfo(
 }
 
 std::tuple<std::vector<double>, std::vector<double>> calcVehicleCirclesInfoByBicycleModel(
-  const VehicleParam & vehicle_param, const size_t circle_num, const double rear_radius_ratio,
-  const double front_radius_ratio)
+  const vehicle_info_util::VehicleInfo & vehicle_info, const size_t circle_num,
+  const double rear_radius_ratio, const double front_radius_ratio)
 {
   std::vector<double> longitudinal_offsets;
   std::vector<double> radiuses;
 
   {  // 1st circle (rear wheel)
     longitudinal_offsets.push_back(0.0);
-    radiuses.push_back(vehicle_param.width / 2.0 * rear_radius_ratio);
+    radiuses.push_back(vehicle_info.vehicle_width_m / 2.0 * rear_radius_ratio);
   }
 
   {  // 2nd circle (front wheel)
     const double radius = std::hypot(
-      vehicle_param.length / static_cast<double>(circle_num) / 2.0, vehicle_param.width / 2.0);
+      vehicle_info.vehicle_length_m / static_cast<double>(circle_num) / 2.0,
+      vehicle_info.vehicle_width_m / 2.0);
 
-    const double unit_lon_length = vehicle_param.length / static_cast<double>(circle_num);
+    const double unit_lon_length = vehicle_info.vehicle_length_m / static_cast<double>(circle_num);
     const double longitudinal_offset =
-      unit_lon_length / 2.0 + unit_lon_length * (circle_num - 1) - vehicle_param.rear_overhang;
+      unit_lon_length / 2.0 + unit_lon_length * (circle_num - 1) - vehicle_info.rear_overhang_m;
 
     longitudinal_offsets.push_back(longitudinal_offset);
     radiuses.push_back(radius * front_radius_ratio);
   }
 
   return {radiuses, longitudinal_offsets};
-}
-
-geometry_msgs::msg::Pose convertRefPointToPose(const ReferencePoint & ref_point)
-{
-  geometry_msgs::msg::Pose pose;
-  pose.position = ref_point.p;
-  pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(ref_point.yaw);
-  return pose;
 }
 
 std::tuple<Eigen::VectorXd, Eigen::VectorXd> extractBounds(
@@ -130,27 +125,6 @@ std::tuple<Eigen::VectorXd, Eigen::VectorXd> extractBounds(
   }
   return {ub_vec, lb_vec};
 }
-
-/*
-Bounds findWidestBounds(const BoundsCandidates & front_bounds_candidates)
-{
-  double max_width = std::numeric_limits<double>::min();
-  size_t max_width_index = 0;
-  if (front_bounds_candidates.size() != 1) {
-    for (size_t candidate_idx = 0; candidate_idx < front_bounds_candidates.size();
-         ++candidate_idx) {
-      const auto & front_bounds_candidate = front_bounds_candidates.at(candidate_idx);
-      const double bound_width =
-        front_bounds_candidate.upper_bound - front_bounds_candidate.lower_bound;
-      if (max_width < bound_width) {
-        max_width_index = candidate_idx;
-        max_width = bound_width;
-      }
-    }
-  }
-  return front_bounds_candidates.at(max_width_index);
-}
-*/
 
 Bounds findNearestBounds(
   const geometry_msgs::msg::Pose & bounds_pose, const BoundsCandidates & front_bounds_candidates,
@@ -317,20 +291,19 @@ std::vector<ReferencePoint> resampleReferencePoints(
 }  // namespace
 
 MPTOptimizer::MPTOptimizer(
-  rclcpp::Node * node, const bool is_showing_debug_info, const EgoNearestParam ego_nearest_param,
-  const vehicle_info_util::VehicleInfo & vehicle_info, const TrajectoryParam & traj_param,
-  const VehicleParam & vehicle_param)
-: is_showing_debug_info_(is_showing_debug_info),
+  rclcpp::Node * node, const bool enable_debug_info, const EgoNearestParam ego_nearest_param,
+  const vehicle_info_util::VehicleInfo & vehicle_info, const TrajectoryParam & traj_param)
+: enable_debug_info_(enable_debug_info),
   ego_nearest_param_(ego_nearest_param),
   traj_param_(traj_param),
-  vehicle_param_(vehicle_param)
+  vehicle_info_(vehicle_info)
 {
   // mpt param
   initializeMPTParam(node, vehicle_info);
 
   // vehicle model
   vehicle_model_ptr_ =
-    std::make_unique<KinematicsBicycleModel>(vehicle_param_.wheelbase, mpt_param_.max_steer_rad);
+    std::make_unique<KinematicsBicycleModel>(vehicle_info_.wheel_base_m, mpt_param_.max_steer_rad);
 
   // osqp solver
   osqp_solver_ = autoware::common::osqp::OSQPInterface(osqp_epsilon_);
@@ -346,8 +319,7 @@ void MPTOptimizer::initializeMPTParam(
 {
   mpt_param_ = MPTParam{};
 
-  {  // mpt param
-    // option
+  {  // option
     // TODO(murooka) implement plan_from_ego
     mpt_param_.plan_from_ego = node->declare_parameter<bool>("mpt.option.plan_from_ego");
     mpt_param_.max_plan_from_ego_length =
@@ -362,95 +334,93 @@ void MPTOptimizer::initializeMPTParam(
     mpt_visualize_sampling_num_ = node->declare_parameter<int>("mpt.option.visualize_sampling_num");
     mpt_param_.is_fixed_point_single =
       node->declare_parameter<bool>("mpt.option.is_fixed_point_single");
+  }
 
-    // common
+  {  // common
     mpt_param_.num_curvature_sampling_points =
       node->declare_parameter<int>("mpt.common.num_curvature_sampling_points");
 
-    mpt_param_.delta_arc_length_for_mpt_points =
-      node->declare_parameter<double>("mpt.common.delta_arc_length_for_mpt_points");
+    mpt_param_.delta_arc_length = node->declare_parameter<double>("mpt.common.delta_arc_length");
+  }
 
-    // kinematics
-    mpt_param_.max_steer_rad = vehicle_info.max_steer_angle_rad;
+  // kinematics
+  mpt_param_.max_steer_rad = vehicle_info.max_steer_angle_rad;
 
-    // By default, optimization_center_offset will be vehicle_info.wheel_base * 0.8
-    // The 0.8 scale is adopted as it performed the best.
-    constexpr double default_wheelbase_ratio = 0.8;
-    mpt_param_.optimization_center_offset = node->declare_parameter<double>(
-      "mpt.kinematics.optimization_center_offset",
-      vehicle_param_.wheelbase * default_wheelbase_ratio);
+  // By default, optimization_center_offset will be vehicle_info.wheel_base * 0.8
+  // The 0.8 scale is adopted as it performed the best.
+  constexpr double default_wheelbase_ratio = 0.8;
+  mpt_param_.optimization_center_offset = node->declare_parameter<double>(
+    "mpt.kinematics.optimization_center_offset",
+    vehicle_info_.wheel_base_m * default_wheelbase_ratio);
 
-    // bounds search
-    mpt_param_.bounds_search_widths =
-      node->declare_parameter<std::vector<double>>("advanced.mpt.bounds_search_widths");
+  // bounds search
+  mpt_param_.bounds_search_widths =
+    node->declare_parameter<std::vector<double>>("advanced.mpt.bounds_search_widths");
 
-    // collision free constraints
-    mpt_param_.l_inf_norm =
-      node->declare_parameter<bool>("advanced.mpt.collision_free_constraints.option.l_inf_norm");
-    mpt_param_.soft_constraint = node->declare_parameter<bool>(
-      "advanced.mpt.collision_free_constraints.option.soft_constraint");
-    mpt_param_.hard_constraint = node->declare_parameter<bool>(
-      "advanced.mpt.collision_free_constraints.option.hard_constraint");
+  // collision free constraints
+  mpt_param_.l_inf_norm =
+    node->declare_parameter<bool>("advanced.mpt.collision_free_constraints.option.l_inf_norm");
+  mpt_param_.soft_constraint =
+    node->declare_parameter<bool>("advanced.mpt.collision_free_constraints.option.soft_constraint");
+  mpt_param_.hard_constraint =
+    node->declare_parameter<bool>("advanced.mpt.collision_free_constraints.option.hard_constraint");
 
-    // TODO(murooka) implement two-step soft constraint
-    mpt_param_.two_step_soft_constraint = false;
-    // mpt_param_.two_step_soft_constraint =
-    // node->declare_parameter<bool>("advanced.mpt.collision_free_constraints.option.two_step_soft_constraint");
+  // TODO(murooka) implement two-step soft constraint
+  mpt_param_.two_step_soft_constraint = false;
+  // mpt_param_.two_step_soft_constraint =
+  // node->declare_parameter<bool>("advanced.mpt.collision_free_constraints.option.two_step_soft_constraint");
 
-    {  // vehicle_circles
-       // NOTE: Vehicle shape for collision free constraints is considered as a set of circles
-      vehicle_circle_method_ = node->declare_parameter<std::string>(
-        "advanced.mpt.collision_free_constraints.vehicle_circles.method");
+  {  // vehicle_circles
+     // NOTE: Vehicle shape for collision free constraints is considered as a set of circles
+    vehicle_circle_method_ = node->declare_parameter<std::string>(
+      "advanced.mpt.collision_free_constraints.vehicle_circles.method");
 
-      if (vehicle_circle_method_ == "uniform_circle") {
-        vehicle_circle_num_for_calculation_ = node->declare_parameter<int>(
-          "advanced.mpt.collision_free_constraints.vehicle_circles.uniform_circle.num");
-        vehicle_circle_radius_ratios_.push_back(node->declare_parameter<double>(
-          "advanced.mpt.collision_free_constraints.vehicle_circles.uniform_circle.radius_ratio"));
+    if (vehicle_circle_method_ == "uniform_circle") {
+      vehicle_circle_num_for_calculation_ = node->declare_parameter<int>(
+        "advanced.mpt.collision_free_constraints.vehicle_circles.uniform_circle.num");
+      vehicle_circle_radius_ratios_.push_back(node->declare_parameter<double>(
+        "advanced.mpt.collision_free_constraints.vehicle_circles.uniform_circle.radius_ratio"));
 
-        std::tie(
-          mpt_param_.vehicle_circle_radiuses, mpt_param_.vehicle_circle_longitudinal_offsets) =
-          calcVehicleCirclesInfo(
-            vehicle_param_, vehicle_circle_num_for_calculation_,
-            vehicle_circle_radius_ratios_.front());
-      } else if (vehicle_circle_method_ == "rear_drive") {
-        vehicle_circle_num_for_calculation_ = node->declare_parameter<int>(
-          "advanced.mpt.collision_free_constraints.vehicle_circles.rear_drive.num_for_calculation");
+      std::tie(mpt_param_.vehicle_circle_radiuses, mpt_param_.vehicle_circle_longitudinal_offsets) =
+        calcVehicleCirclesInfo(
+          vehicle_info_, vehicle_circle_num_for_calculation_,
+          vehicle_circle_radius_ratios_.front());
+    } else if (vehicle_circle_method_ == "rear_drive") {
+      vehicle_circle_num_for_calculation_ = node->declare_parameter<int>(
+        "advanced.mpt.collision_free_constraints.vehicle_circles.rear_drive.num_for_calculation");
 
-        vehicle_circle_radius_ratios_.push_back(node->declare_parameter<double>(
-          "advanced.mpt.collision_free_constraints.vehicle_circles.rear_drive.rear_radius_ratio"));
-        vehicle_circle_radius_ratios_.push_back(node->declare_parameter<double>(
-          "advanced.mpt.collision_free_constraints.vehicle_circles.rear_drive.front_radius_ratio"));
+      vehicle_circle_radius_ratios_.push_back(node->declare_parameter<double>(
+        "advanced.mpt.collision_free_constraints.vehicle_circles.rear_drive.rear_radius_ratio"));
+      vehicle_circle_radius_ratios_.push_back(node->declare_parameter<double>(
+        "advanced.mpt.collision_free_constraints.vehicle_circles.rear_drive.front_radius_ratio"));
 
-        std::tie(
-          mpt_param_.vehicle_circle_radiuses, mpt_param_.vehicle_circle_longitudinal_offsets) =
-          calcVehicleCirclesInfo(
-            vehicle_param_, vehicle_circle_num_for_calculation_,
-            vehicle_circle_radius_ratios_.front(), vehicle_circle_radius_ratios_.back());
-      } else if (vehicle_circle_method_ == "bicycle_model") {
-        vehicle_circle_num_for_calculation_ = node->declare_parameter<int>(
-          "advanced.mpt.collision_free_constraints.vehicle_circles.bicycle_model.num_for_"
-          "calculation");
+      std::tie(mpt_param_.vehicle_circle_radiuses, mpt_param_.vehicle_circle_longitudinal_offsets) =
+        calcVehicleCirclesInfo(
+          vehicle_info_, vehicle_circle_num_for_calculation_, vehicle_circle_radius_ratios_.front(),
+          vehicle_circle_radius_ratios_.back());
+    } else if (vehicle_circle_method_ == "bicycle_model") {
+      vehicle_circle_num_for_calculation_ = node->declare_parameter<int>(
+        "advanced.mpt.collision_free_constraints.vehicle_circles.bicycle_model.num_for_"
+        "calculation");
 
-        vehicle_circle_radius_ratios_.push_back(
-          node->declare_parameter<double>("advanced.mpt.collision_free_constraints.vehicle_circles."
-                                          "bicycle_model.rear_radius_ratio"));
-        vehicle_circle_radius_ratios_.push_back(
-          node->declare_parameter<double>("advanced.mpt.collision_free_constraints.vehicle_circles."
-                                          "bicycle_model.front_radius_ratio"));
+      vehicle_circle_radius_ratios_.push_back(
+        node->declare_parameter<double>("advanced.mpt.collision_free_constraints.vehicle_circles."
+                                        "bicycle_model.rear_radius_ratio"));
+      vehicle_circle_radius_ratios_.push_back(
+        node->declare_parameter<double>("advanced.mpt.collision_free_constraints.vehicle_circles."
+                                        "bicycle_model.front_radius_ratio"));
 
-        std::tie(
-          mpt_param_.vehicle_circle_radiuses, mpt_param_.vehicle_circle_longitudinal_offsets) =
-          calcVehicleCirclesInfoByBicycleModel(
-            vehicle_param_, vehicle_circle_num_for_calculation_,
-            vehicle_circle_radius_ratios_.front(), vehicle_circle_radius_ratios_.back());
-      } else {
-        throw std::invalid_argument(
-          "advanced.mpt.collision_free_constraints.vehicle_circles.num parameter is invalid.");
-      }
+      std::tie(mpt_param_.vehicle_circle_radiuses, mpt_param_.vehicle_circle_longitudinal_offsets) =
+        calcVehicleCirclesInfoByBicycleModel(
+          vehicle_info_, vehicle_circle_num_for_calculation_, vehicle_circle_radius_ratios_.front(),
+          vehicle_circle_radius_ratios_.back());
+    } else {
+      throw std::invalid_argument(
+        "advanced.mpt.collision_free_constraints.vehicle_circles.num parameter is invalid.");
     }
+  }
 
-    // clearance
+  {  // clearance
     mpt_param_.hard_clearance_from_road =
       node->declare_parameter<double>("advanced.mpt.clearance.hard_clearance_from_road");
     mpt_param_.soft_clearance_from_road =
@@ -461,8 +431,9 @@ void MPTOptimizer::initializeMPTParam(
       node->declare_parameter<double>("advanced.mpt.clearance.extra_desired_clearance_from_road");
     mpt_param_.clearance_from_object =
       node->declare_parameter<double>("advanced.mpt.clearance.clearance_from_object");
+  }
 
-    // weight
+  {  // weight
     mpt_param_.soft_avoidance_weight =
       node->declare_parameter<double>("advanced.mpt.weight.soft_avoidance_weight");
     mpt_param_.soft_second_avoidance_weight =
@@ -499,9 +470,9 @@ void MPTOptimizer::initializeMPTParam(
   }
 }
 
-void MPTOptimizer::reset(const bool is_showing_debug_info, const TrajectoryParam & traj_param)
+void MPTOptimizer::reset(const bool enable_debug_info, const TrajectoryParam & traj_param)
 {
-  is_showing_debug_info_ = is_showing_debug_info;
+  enable_debug_info_ = enable_debug_info;
   traj_param_ = traj_param;
   prev_valid_mpt_ref_points_ = nullptr;
 }
@@ -531,9 +502,7 @@ void MPTOptimizer::onParam(const std::vector<rclcpp::Parameter> & parameters)
       parameters, "mpt.common.num_curvature_sampling_points",
       mpt_param_.num_curvature_sampling_points);
 
-    updateParam<double>(
-      parameters, "mpt.common.delta_arc_length_for_mpt_points",
-      mpt_param_.delta_arc_length_for_mpt_points);
+    updateParam<double>(parameters, "mpt.common.delta_arc_length", mpt_param_.delta_arc_length);
 
     // kinematics
     updateParam<double>(
@@ -572,7 +541,7 @@ void MPTOptimizer::onParam(const std::vector<rclcpp::Parameter> & parameters)
         std::tie(
           mpt_param_.vehicle_circle_radiuses, mpt_param_.vehicle_circle_longitudinal_offsets) =
           calcVehicleCirclesInfo(
-            vehicle_param_, vehicle_circle_num_for_calculation_,
+            vehicle_info_, vehicle_circle_num_for_calculation_,
             vehicle_circle_radius_ratios_.front());
       } else if (vehicle_circle_method_ == "rear_drive") {
         updateParam<int>(
@@ -593,7 +562,7 @@ void MPTOptimizer::onParam(const std::vector<rclcpp::Parameter> & parameters)
         std::tie(
           mpt_param_.vehicle_circle_radiuses, mpt_param_.vehicle_circle_longitudinal_offsets) =
           calcVehicleCirclesInfo(
-            vehicle_param_, vehicle_circle_num_for_calculation_,
+            vehicle_info_, vehicle_circle_num_for_calculation_,
             vehicle_circle_radius_ratios_.front(), vehicle_circle_radius_ratios_.back());
       } else {
         throw std::invalid_argument(
@@ -671,30 +640,29 @@ boost::optional<MPTTrajs> MPTOptimizer::getModelPredictiveTrajectory(
   const auto & p = planner_data;
   const auto & path_points = p.path.points;
 
+  // check if arguments are valid
+  if (smoothed_points.empty()) {
+    printInfo("return boost::none since smoothed_points is empty");
+    return boost::none;
+  }
+  if (path_points.empty()) {
+    printInfo("return boost::none since path_points is empty");
+    return boost::none;
+  }
+
   // update debug data
   debug_data.vehicle_circle_radiuses = mpt_param_.vehicle_circle_radiuses;
   debug_data.vehicle_circle_longitudinal_offsets = mpt_param_.vehicle_circle_longitudinal_offsets;
   debug_data.mpt_visualize_sampling_num = mpt_visualize_sampling_num_;
 
-  if (smoothed_points.empty()) {
-    RCLCPP_INFO_EXPRESSION(
-      rclcpp::get_logger("mpt_optimizer"), is_showing_debug_info_,
-      "return boost::none since smoothed_points is empty");
-    return boost::none;
-  }
-
   // calculate reference points
   std::vector<ReferencePoint> full_ref_points =
     getReferencePoints(planner_data, smoothed_points, prev_trajs, maps, debug_data);
   if (full_ref_points.empty()) {
-    RCLCPP_INFO_EXPRESSION(
-      rclcpp::get_logger("mpt_optimizer"), is_showing_debug_info_,
-      "return boost::none since ref_points is empty");
+    printInfo("return boost::none since ref_points is empty");
     return boost::none;
   } else if (full_ref_points.size() == 1) {
-    RCLCPP_INFO_EXPRESSION(
-      rclcpp::get_logger("mpt_optimizer"), is_showing_debug_info_,
-      "return boost::none since ref_points.size() == 1");
+    printInfo("return boost::none since ref_points.size() == 1");
     return boost::none;
   }
 
@@ -722,18 +690,16 @@ boost::optional<MPTTrajs> MPTOptimizer::getModelPredictiveTrajectory(
     }
   }
 
-  // calculate B and W matrices
+  // calculate B and W matrices where x = Bu + W
   const auto mpt_matrix = generateMPTMatrix(non_fixed_ref_points, debug_data);
 
-  // calculate Q and R matrices
+  // calculate Q and R matrices where J(x, u) = x^t Q x + u^t R u
   const auto val_matrix = generateValueMatrix(non_fixed_ref_points, path_points, debug_data);
 
   const auto optimized_control_variables = executeOptimization(
     prev_trajs, p.enable_avoidance, mpt_matrix, val_matrix, non_fixed_ref_points, debug_data);
   if (!optimized_control_variables) {
-    RCLCPP_INFO_EXPRESSION(
-      rclcpp::get_logger("mpt_optimizer"), is_showing_debug_info_,
-      "return boost::none since could not solve qp");
+    printInfo("return boost::none since could not solve qp");
     return boost::none;
   }
 
@@ -745,8 +711,8 @@ boost::optional<MPTTrajs> MPTOptimizer::getModelPredictiveTrajectory(
   full_optimized_ref_points.insert(
     full_optimized_ref_points.end(), non_fixed_ref_points.begin(), non_fixed_ref_points.end());
 
-  {  // publish debug data
-    const auto mpt_fixed_traj = getMPTFixedPoints(full_ref_points);
+  {  // extract only fixed points and publish
+    const auto mpt_fixed_traj = extractMPTFixedPoints(full_ref_points);
     publishDebugData(p.path.header, full_optimized_ref_points, mpt_fixed_traj, mpt_points);
   }
 
@@ -767,13 +733,12 @@ std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
 
   const auto & p = planner_data;
 
-  const double forward_distance =
-    traj_param_.num_sampling_points * mpt_param_.delta_arc_length_for_mpt_points;
+  const double forward_distance = traj_param_.num_sampling_points * mpt_param_.delta_arc_length;
   const double backward_distance = traj_param_.output_backward_traj_length;
 
   // convert smoothed points to reference points
   const auto resampled_smoothed_points =
-    resampleTrajectoryPoints(smoothed_points, mpt_param_.delta_arc_length_for_mpt_points);
+    resampleTrajectoryPoints(smoothed_points, mpt_param_.delta_arc_length);
   auto ref_points = points_utils::convertToReferencePoints(resampled_smoothed_points);
 
   // crop reference points with margin first to reduce calculation cost
@@ -809,16 +774,19 @@ std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
   // NOTE: This must be after bounds calculation.
   calcExtraPoints(ref_points, prev_trajs);
 
-  // crop
   calcArcLength(ref_points);
 
-  // crop
+  /*
+  // crop forward
+  ref_points = points_utils::cropForwardPoints(
+    ref_points, p.ego_pose.position, ego_seg_idx, forward_distance);
+  */
 
   /*
   const auto cropped_smoothed_points =
     [&]() -> std::vector<TrajectoryPoint> {
       const auto resampled_smoothed_points = resampleTrajectoryPoints(smoothed_points,
-  mpt_param_.delta_arc_length_for_mpt_points); const size_t ego_seg_idx =
+  mpt_param_.delta_arc_length); const size_t ego_seg_idx =
   findEgoSegmentIndex(resampled_smoothed_points, p.ego_pose, ego_nearest_param_); return
   points_utils::cropBackwardPoints(resampled_smoothed_points, p.ego_pose.position, ego_seg_idx,
   traj_param_.output_backward_traj_length);
@@ -839,8 +807,7 @@ std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
   // crop trajectory with margin to calculate vehicle bounds at the end point
   constexpr double tmp_ref_points_margin = 20.0;
   const double ref_length_with_margin =
-    traj_param_.num_sampling_points * mpt_param_.delta_arc_length_for_mpt_points +
-    tmp_ref_points_margin;
+    traj_param_.num_sampling_points * mpt_param_.delta_arc_length + tmp_ref_points_margin;
   ref_points = points_utils::clipForwardPoints(ref_points, 0, ref_length_with_margin);
   if (ref_points.empty()) {
     return std::vector<ReferencePoint>{};
@@ -854,8 +821,7 @@ std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
   // NOTE: This must be after bounds calculation.
   calcExtraPoints(ref_points, prev_trajs);
 
-  const double ref_length =
-    traj_param_.num_sampling_points * mpt_param_.delta_arc_length_for_mpt_points;
+  const double ref_length = traj_param_.num_sampling_points * mpt_param_.delta_arc_length;
   ref_points = points_utils::clipForwardPoints(ref_points, 0, ref_length);
 
   // bounds information is assigned to debug data after truncating reference points
@@ -901,7 +867,7 @@ void MPTOptimizer::calcFixedPoints(std::vector<ReferencePoint> & ref_points) con
 
     // TODO(murooka) resample reference points since fixed points is not
     // const auto resmapled_ref_points = resampleReferencePoints(ref_points,
-    // mpt_param_.delta_arc_length_for_mpt_points); ref_points
+    // mpt_param_.delta_arc_length); ref_points
 
     return;
   }
@@ -922,9 +888,9 @@ void MPTOptimizer::calcPlanningFromEgo(
     // // interpolate and crop backward
     // const auto interpolated_points = interpolation_utils::getInterpolatedPoints(
     //                                                                             points,
-    // mpt_param_.delta_arc_length_for_mpt_points); const auto cropped_interpolated_points =
+    // mpt_param_.delta_arc_length); const auto cropped_interpolated_points =
     // points_utils::clipBackwardPoints( interpolated_points, current_pose_.position,
-    // traj_param_.output_backward_traj_length, mpt_param_.delta_arc_length_for_mpt_points);
+    // traj_param_.output_backward_traj_length, mpt_param_.delta_arc_length);
     //
     // auto cropped_ref_points =
     //   points_utils::convertToReferencePoints(cropped_interpolated_points);
@@ -976,7 +942,7 @@ std::vector<ReferencePoint> MPTOptimizer::getFixedReferencePoints(
   // calculate begin_prev_ref_idx
   const int begin_prev_ref_idx = [&]() {
     const int backward_fixing_num =
-      traj_param_.output_backward_traj_length / mpt_param_.delta_arc_length_for_mpt_points;
+      traj_param_.output_backward_traj_length / mpt_param_.delta_arc_length;
 
     return std::max(0, nearest_prev_ref_idx - backward_fixing_num);
   }();
@@ -987,7 +953,7 @@ std::vector<ReferencePoint> MPTOptimizer::getFixedReferencePoints(
       ego_vel * traj_param_.forward_fixing_min_time, traj_param_.forward_fixing_min_distance);
 
     const int forward_fixing_num =
-      forward_fixed_length / mpt_param_.delta_arc_length_for_mpt_points;
+      forward_fixed_length / mpt_param_.delta_arc_length;
     return std::min(
       static_cast<int>(prev_ref_points.size()) - 1, nearest_prev_ref_idx + forward_fixing_num);
   }();
@@ -1018,7 +984,7 @@ std::vector<ReferencePoint> MPTOptimizer::getFixedReferencePoints(
 }
 */
 
-std::vector<TrajectoryPoint> MPTOptimizer::getMPTFixedPoints(
+std::vector<TrajectoryPoint> MPTOptimizer::extractMPTFixedPoints(
   const std::vector<ReferencePoint> & ref_points) const
 {
   std::vector<TrajectoryPoint> mpt_fixed_traj;
@@ -1046,9 +1012,10 @@ MPTOptimizer::MPTMatrix MPTOptimizer::generateMPTMatrix(
 {
   stop_watch_.tic(__func__);
 
-  if (ref_points.empty()) {
-    return MPTMatrix{};
-  }
+  // It can be removed.
+  // if (ref_points.empty()) {
+  //   return MPTMatrix{};
+  // }
 
   // NOTE: center offset of vehicle is always 0 in this algorithm.
   // vehicle_model_ptr_->updateCenterOffset(0.0);
@@ -1094,20 +1061,23 @@ MPTOptimizer::MPTMatrix MPTOptimizer::generateMPTMatrix(
     Wex.segment(idx_x_i, D_x) = Ad * Wex.block(idx_x_i_prev, 0, D_x, 1) + Wd;
   }
 
-  MPTMatrix m{Bex, Wex};
+  MPTMatrix mpt_mat;
+  mpt_mat.Bex = Bex;
+  mpt_mat.Wex = Wex;
 
   debug_data.msg_stream << "        " << __func__ << ":= " << stop_watch_.toc(__func__)
                         << " [ms]\n";
-  return m;
+  return mpt_mat;
 }
 
 MPTOptimizer::ValueMatrix MPTOptimizer::generateValueMatrix(
   const std::vector<ReferencePoint> & ref_points, const std::vector<PathPoint> & path_points,
   DebugData & debug_data) const
 {
-  if (ref_points.empty()) {
-    return ValueMatrix{};
-  }
+  // It can be removed
+  // if (ref_points.empty()) {
+  //   return ValueMatrix{};
+  // }
 
   stop_watch_.tic(__func__);
 
@@ -1252,8 +1222,7 @@ boost::optional<Eigen::VectorXd> MPTOptimizer::executeOptimization(
   autoware::common::osqp::CSC_Matrix P_csc = autoware::common::osqp::calCSCMatrixTrapezoidal(H);
   autoware::common::osqp::CSC_Matrix A_csc = autoware::common::osqp::calCSCMatrix(A);
   if (mpt_param_.enable_warm_start && prev_mat_n == H.rows() && prev_mat_m == A.rows()) {
-    RCLCPP_INFO_EXPRESSION(
-      rclcpp::get_logger("mpt_optimizer"), is_showing_debug_info_, "warm start");
+    RCLCPP_INFO_EXPRESSION(rclcpp::get_logger("mpt_optimizer"), enable_debug_info_, "warm start");
 
     osqp_solver_.updateCscP(P_csc);
     osqp_solver_.updateQ(f);
@@ -1262,7 +1231,7 @@ boost::optional<Eigen::VectorXd> MPTOptimizer::executeOptimization(
     osqp_solver_.updateU(upper_bound);
   } else {
     RCLCPP_INFO_EXPRESSION(
-      rclcpp::get_logger("mpt_optimizer"), is_showing_debug_info_, "no warm start");
+      rclcpp::get_logger("mpt_optimizer"), enable_debug_info_, "no warm start");
 
     osqp_solver_ = autoware::common::osqp::OSQPInterface(
       // obj_m.hessian, const_m.linear, obj_m.gradient, const_m.lower_bound, const_m.upper_bound,
@@ -1292,7 +1261,7 @@ boost::optional<Eigen::VectorXd> MPTOptimizer::executeOptimization(
   // print iteration
   const int iteration_status = std::get<4>(result);
   RCLCPP_INFO_EXPRESSION(
-    rclcpp::get_logger("mpt_optimizer"), is_showing_debug_info_, "iteration: %d", iteration_status);
+    rclcpp::get_logger("mpt_optimizer"), enable_debug_info_, "iteration: %d", iteration_status);
 
   // get result
   std::vector<double> result_vec = std::get<0>(result);
@@ -1505,7 +1474,7 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::getConstraintMatrix(
 
     // calculate bounds
     const double bounds_offset =
-      vehicle_param_.width / 2.0 - mpt_param_.vehicle_circle_radiuses.at(l_idx);
+      vehicle_info_.vehicle_width_m / 2.0 - mpt_param_.vehicle_circle_radiuses.at(l_idx);
     const auto & [part_ub, part_lb] = extractBounds(ref_points, l_idx, bounds_offset);
 
     // soft constraints
@@ -1765,7 +1734,7 @@ void MPTOptimizer::calcExtraPoints(
   for (size_t i = 0; i < ref_points.size(); ++i) {
     // alpha
     const auto front_wheel_pos =
-      points_utils::getNearestPosition(ref_points, i, vehicle_param_.wheelbase);
+      points_utils::getNearestPosition(ref_points, i, vehicle_info_.wheel_base_m);
 
     const bool are_too_close_points =
       tier4_autoware_utils::calcDistance2d(front_wheel_pos, ref_points.at(i).p) < 1e-03;
@@ -1778,7 +1747,7 @@ void MPTOptimizer::calcExtraPoints(
     // near objects
     ref_points.at(i).near_objects = [&]() {
       const int avoidance_check_steps =
-        mpt_param_.near_objects_length / mpt_param_.delta_arc_length_for_mpt_points;
+        mpt_param_.near_objects_length / mpt_param_.delta_arc_length;
 
       const int avoidance_check_begin_idx =
         std::max(0, static_cast<int>(i) - avoidance_check_steps);
@@ -1843,7 +1812,7 @@ void MPTOptimizer::calcBounds(
   SequentialBoundsCandidates sequential_bounds_candidates;
   for (const auto & ref_point : ref_points) {
     const auto bounds_candidates =
-      getBoundsCandidates(enable_avoidance, convertRefPointToPose(ref_point), maps, debug_data);
+      getBoundsCandidates(enable_avoidance, ref_point.getPose(), maps, debug_data);
     sequential_bounds_candidates.push_back(bounds_candidates);
   }
   debug_data.sequential_bounds_candidates = sequential_bounds_candidates;
@@ -1881,10 +1850,10 @@ void MPTOptimizer::calcBounds(
           calcOverlappedBoundsSignedLength(prev_continuous_bounds, bounds_candidate);
         if (overlapped_signed_length < 0) {
           RCLCPP_INFO_EXPRESSION(
-            rclcpp::get_logger("mpt_optimizer"), is_showing_debug_info_,
+            rclcpp::get_logger("mpt_optimizer"), enable_debug_info_,
             "non-overlapped length bounds is ignored.");
           RCLCPP_INFO_EXPRESSION(
-            rclcpp::get_logger("mpt_optimizer"), is_showing_debug_info_,
+            rclcpp::get_logger("mpt_optimizer"), enable_debug_info_,
             "In detail, prev: lower=%f, upper=%f, candidate: lower=%f, upper=%f",
             prev_continuous_bounds.lower_bound, prev_continuous_bounds.upper_bound,
             bounds_candidate.lower_bound, bounds_candidate.upper_bound);
@@ -1896,7 +1865,7 @@ void MPTOptimizer::calcBounds(
         const double bounds_length = bounds_candidate.upper_bound - bounds_candidate.lower_bound;
         if (bounds_length < 0) {
           RCLCPP_INFO_EXPRESSION(
-            rclcpp::get_logger("mpt_optimizer"), is_showing_debug_info_,
+            rclcpp::get_logger("mpt_optimizer"), enable_debug_info_,
             "negative length bounds is ignored.");
           continue;
         }
@@ -1922,7 +1891,7 @@ void MPTOptimizer::calcBounds(
 
       // invalid bounds
       RCLCPP_WARN_EXPRESSION(
-        rclcpp::get_logger("getBounds: not front"), is_showing_debug_info_, "invalid bounds");
+        rclcpp::get_logger("getBounds: not front"), enable_debug_info_, "invalid bounds");
       const auto invalid_bounds =
         Bounds{-5.0, 5.0, CollisionType::OUT_OF_ROAD, CollisionType::OUT_OF_ROAD};
       ref_points.at(i).bounds = invalid_bounds;
@@ -2117,7 +2086,7 @@ BoundsCandidates MPTOptimizer::getBoundsCandidates(
   // TODO(murooka) sometimes this condition realizes
   if (bounds_candidate.empty()) {
     RCLCPP_WARN_EXPRESSION(
-      rclcpp::get_logger("getBoundsCandidate"), is_showing_debug_info_, "empty bounds candidate");
+      rclcpp::get_logger("getBoundsCandidate"), enable_debug_info_, "empty bounds candidate");
     // NOTE: set invalid bounds so that MPT won't be solved
     const auto invalid_bounds =
       Bounds{-5.0, 5.0, CollisionType::OUT_OF_ROAD, CollisionType::OUT_OF_ROAD};
@@ -2133,10 +2102,11 @@ CollisionType MPTOptimizer::getCollisionType(
   const double traversed_dist, const double bound_angle) const
 {
   // calculate clearance
-  const double min_soft_road_clearance = vehicle_param_.width / 2.0 +
+  const double min_soft_road_clearance = vehicle_info_.vehicle_width_m / 2.0 +
                                          mpt_param_.soft_clearance_from_road +
                                          mpt_param_.extra_desired_clearance_from_road;
-  const double min_obj_clearance = vehicle_param_.width / 2.0 + mpt_param_.clearance_from_object +
+  const double min_obj_clearance = vehicle_info_.vehicle_width_m / 2.0 +
+                                   mpt_param_.clearance_from_object +
                                    mpt_param_.soft_clearance_from_road;
 
   // calculate target position

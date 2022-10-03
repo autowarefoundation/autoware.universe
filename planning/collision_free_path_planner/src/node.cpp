@@ -189,23 +189,26 @@ CollisionFreePathPlanner::CollisionFreePathPlanner(const rclcpp::NodeOptions & n
   }
 
   {  // option parameter
-    is_publishing_debug_visualization_marker_ =
-      declare_parameter<bool>("option.is_publishing_debug_visualization_marker");
-    is_publishing_clearance_map_ = declare_parameter<bool>("option.is_publishing_clearance_map");
-    is_publishing_object_clearance_map_ =
-      declare_parameter<bool>("option.is_publishing_object_clearance_map");
-    is_publishing_area_with_objects_ =
-      declare_parameter<bool>("option.is_publishing_area_with_objects");
-
-    is_showing_debug_info_ = declare_parameter<bool>("option.is_showing_debug_info");
-    is_showing_calculation_time_ = declare_parameter<bool>("option.is_showing_calculation_time");
-    is_stopping_if_outside_drivable_area_ =
-      declare_parameter<bool>("option.is_stopping_if_outside_drivable_area");
-
+    enable_outside_drivable_area_stop_ =
+      declare_parameter<bool>("option.enable_outside_drivable_area_stop");
     enable_avoidance_ = declare_parameter<bool>("option.enable_avoidance");
-    enable_pre_smoothing_ = declare_parameter<bool>("option.enable_pre_smoothing");
-    skip_optimization_ = declare_parameter<bool>("option.skip_optimization");
-    reset_prev_optimization_ = declare_parameter<bool>("option.reset_prev_optimization");
+    enable_smoothing_ = declare_parameter<bool>("option.enable_smoothing");
+    enable_skip_optimization_ = declare_parameter<bool>("option.enable_skip_optimization");
+    enable_reset_prev_optimization_ =
+      declare_parameter<bool>("option.enable_reset_prev_optimization");
+
+    // debug marker
+    enable_debug_marker_pub_ = declare_parameter<bool>("option.debug.enable_debug_marker_pub");
+    enable_clearance_map_pub_ = declare_parameter<bool>("option.debug.enable_clearance_map_pub");
+    enable_object_clearance_map_pub_ =
+      declare_parameter<bool>("option.debug.enable_object_clearance_map_pub");
+    enable_area_with_objects_pub_ =
+      declare_parameter<bool>("option.debug.enable_area_with_objects_pub");
+
+    // debug info
+    enable_debug_info_ = declare_parameter<bool>("option.debug.enable_debug_info");
+    enable_calculation_time_info_ =
+      declare_parameter<bool>("option.debug.enable_calculation_time_info");
   }
 
   {  // ego nearest search param
@@ -296,7 +299,7 @@ CollisionFreePathPlanner::CollisionFreePathPlanner(const rclcpp::NodeOptions & n
   traj_param_.center_line_width = vehicle_param_.width;
 
   mpt_optimizer_ptr_ = std::make_unique<MPTOptimizer>(
-    this, is_showing_debug_info_, ego_nearest_param_, vehicle_info, traj_param_, vehicle_param_);
+    this, enable_debug_info_, ego_nearest_param_, vehicle_info, traj_param_);
   resetPlanning();
 
   replan_checker_ = std::make_shared<ReplanChecker>(*this, ego_nearest_param_);
@@ -316,26 +319,26 @@ rcl_interfaces::msg::SetParametersResult CollisionFreePathPlanner::onParam(
 
   {  // option parameter
     updateParam<bool>(
-      parameters, "option.is_publishing_debug_visualization_marker",
-      is_publishing_debug_visualization_marker_);
-    updateParam<bool>(
-      parameters, "option.is_publishing_clearance_map", is_publishing_clearance_map_);
-    updateParam<bool>(
-      parameters, "option.is_publishing_object_clearance_map", is_publishing_object_clearance_map_);
-    updateParam<bool>(
-      parameters, "option.is_publishing_area_with_objects", is_publishing_area_with_objects_);
-
-    updateParam<bool>(parameters, "option.is_showing_debug_info", is_showing_debug_info_);
-    updateParam<bool>(
-      parameters, "option.is_showing_calculation_time", is_showing_calculation_time_);
-    updateParam<bool>(
-      parameters, "option.is_stopping_if_outside_drivable_area",
-      is_stopping_if_outside_drivable_area_);
-
+      parameters, "option.enable_outside_drivable_area_stop", enable_outside_drivable_area_stop_);
     updateParam<bool>(parameters, "option.enable_avoidance", enable_avoidance_);
-    updateParam<bool>(parameters, "option.enable_pre_smoothing", enable_pre_smoothing_);
-    updateParam<bool>(parameters, "option.skip_optimization", skip_optimization_);
-    updateParam<bool>(parameters, "option.reset_prev_optimization", reset_prev_optimization_);
+    updateParam<bool>(parameters, "option.enable_smoothing", enable_smoothing_);
+    updateParam<bool>(parameters, "option.enable_skip_optimization", enable_skip_optimization_);
+    updateParam<bool>(
+      parameters, "option.enable_reset_prev_optimization", enable_reset_prev_optimization_);
+
+    // debug marker
+    updateParam<bool>(parameters, "option.debug.enable_debug_marker_pub", enable_debug_marker_pub_);
+    updateParam<bool>(
+      parameters, "option.debug.enable_clearance_map_pub", enable_clearance_map_pub_);
+    updateParam<bool>(
+      parameters, "option.debug.enable_object_clearance_map_pub", enable_object_clearance_map_pub_);
+    updateParam<bool>(
+      parameters, "option.debug.enable_area_with_objects_pub", enable_area_with_objects_pub_);
+
+    // debug info
+    updateParam<bool>(parameters, "option.debug.enable_debug_info", enable_debug_info_);
+    updateParam<bool>(
+      parameters, "option.debug.enable_calculation_time_info", enable_calculation_time_info_);
   }
 
   {  // trajectory parameter
@@ -446,9 +449,9 @@ void CollisionFreePathPlanner::resetPlanning()
   costmap_generator_ptr_ = std::make_unique<CostmapGenerator>();
 
   eb_path_optimizer_ptr_ = std::make_unique<EBPathOptimizer>(
-    is_showing_debug_info_, ego_nearest_param_, traj_param_, eb_param_, vehicle_param_);
+    enable_debug_info_, ego_nearest_param_, traj_param_, eb_param_);
 
-  mpt_optimizer_ptr_->reset(is_showing_debug_info_, traj_param_);
+  mpt_optimizer_ptr_->reset(enable_debug_info_, traj_param_);
 
   resetPrevOptimization();
 }
@@ -484,7 +487,7 @@ void CollisionFreePathPlanner::onPath(const Path::SharedPtr path_ptr)
 
   // create debug data
   debug_data_ = DebugData();
-  debug_data_.init(is_showing_calculation_time_, planner_data.ego_pose);
+  debug_data_.init(enable_calculation_time_info_, planner_data.ego_pose);
 
   // generate trajectory
   const auto output_traj_msg = generateTrajectory(planner_data);
@@ -571,7 +574,7 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::generateOptimizedTrajecto
   }
 
   const bool reset_prev_optimization_required = replan_checker_->isResetOptimizationRequired();
-  if (reset_prev_optimization_ || reset_prev_optimization_required) {
+  if (enable_reset_prev_optimization_ || reset_prev_optimization_required) {
     resetPrevOptimization();
   }
 
@@ -587,7 +590,7 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::generateOptimizedTrajecto
   calcVelocity(path.points, mpt_traj);
 
   // insert 0 velocity when trajectory is over drivable area
-  if (is_stopping_if_outside_drivable_area_) {
+  if (enable_outside_drivable_area_stop_) {
     insertZeroVelocityOutsideDrivableArea(planner_data, mpt_traj, cv_maps);
   }
 
@@ -604,15 +607,15 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::optimizeTrajectory(
 
   const auto & p = planner_data;
 
-  if (skip_optimization_) {
+  if (enable_skip_optimization_) {
     return points_utils::convertToTrajectoryPoints(p.path.points);
   }
 
-  // EB: smooth trajectory if enable_pre_smoothing is true
+  // EB: smooth trajectory if enable_smoothing is true
   const auto eb_traj = [&]() -> boost::optional<std::vector<TrajectoryPoint>> {
     // TODO(murooka) enable EB
     /*
-if (enable_pre_smoothing_) {
+if (enable_smoothing_) {
 return eb_path_optimizer_ptr_->getEBTrajectory(planner_data, prev_eb_traj_ptr_, debug_data_);
 }
     */
@@ -741,7 +744,7 @@ void CollisionFreePathPlanner::publishDebugDataInOptimization(
   }
 
   {  // publish markers
-    if (is_publishing_debug_visualization_marker_) {
+    if (enable_debug_marker_pub_) {
       stop_watch_.tic("getDebugVisualizationMarker");
       const auto & debug_marker =
         debug_utils::getDebugVisualizationMarker(debug_data_, traj_points, vehicle_param_, false);
@@ -976,15 +979,15 @@ void CollisionFreePathPlanner::publishDebugDataInMain(const Path & path) const
   {  // publish clearance map
     stop_watch_.tic("publishClearanceMap");
 
-    if (is_publishing_area_with_objects_) {  // false by default
+    if (enable_area_with_objects_pub_) {  // false by default
       debug_area_with_objects_pub_->publish(
         debug_utils::getDebugCostmap(debug_data_.area_with_objects_map, path.drivable_area));
     }
-    if (is_publishing_object_clearance_map_) {  // false by default
+    if (enable_object_clearance_map_pub_) {  // false by default
       debug_object_clearance_map_pub_->publish(
         debug_utils::getDebugCostmap(debug_data_.only_object_clearance_map, path.drivable_area));
     }
-    if (is_publishing_clearance_map_) {  // true by default
+    if (enable_clearance_map_pub_) {  // true by default
       debug_clearance_map_pub_->publish(
         debug_utils::getDebugCostmap(debug_data_.clearance_map, path.drivable_area));
     }

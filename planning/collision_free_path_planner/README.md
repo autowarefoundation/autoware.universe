@@ -770,11 +770,11 @@ $N_{circle}$ is the number of circles to check collision.
 
 ### Other options
 
-- `option.skip_optimization` skips EB and MPT optimization.
-- `option.enable_pre_smoothing` enables EB which is smoothing the trajectory for MPT.
+- `option.enable_skip_optimization` skips EB and MPT optimization.
+- `option.enable_smoothing` enables EB which is smoothing the trajectory for MPT.
   - EB is not required if the reference path for MPT is smooth enough and does not change its shape suddenly
-- `option.is_showing_calculation_time` enables showing each calculation time for functions and total calculation time on the terminal.
-- `option.is_stopping_if_outside_drivable_area` enables stopping just before the generated trajectory point will be outside the drivable area.
+- `option.enable_calculation_time_info` enables showing each calculation time for functions and total calculation time on the terminal.
+- `option.enable_outside_drivable_area_stop` enables stopping just before the generated trajectory point will be outside the drivable area.
 - `mpt.option.plan_from_ego` enables planning from the ego pose when the ego's velocity is zero.
 - `mpt.option.max_plan_from_ego_length` maximum length threshold to plan from ego. it is enabled when the length of trajectory is shorter than this value.
 - `mpt.option.two_step_soft_constraint` enables two step of soft constraints for collision free

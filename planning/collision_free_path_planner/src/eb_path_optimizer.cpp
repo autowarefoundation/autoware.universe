@@ -87,14 +87,13 @@ Eigen::MatrixXd makeAMatrix(const int num_points)
 namespace collision_free_path_planner
 {
 EBPathOptimizer::EBPathOptimizer(
-  const bool is_showing_debug_info, const EgoNearestParam ego_nearest_param,
-  const TrajectoryParam & traj_param, const EBParam & eb_param, const VehicleParam & vehicle_param)
-: is_showing_debug_info_(is_showing_debug_info),
+  const bool enable_debug_info, const EgoNearestParam ego_nearest_param,
+  const TrajectoryParam & traj_param, const EBParam & eb_param)
+: enable_debug_info_(enable_debug_info),
   ego_nearest_param_(ego_nearest_param),
   qp_param_(eb_param.qp_param),
   traj_param_(traj_param),
-  eb_param_(eb_param),
-  vehicle_param_(vehicle_param)
+  eb_param_(eb_param)
 {
   const Eigen::MatrixXd p = makePMatrix(eb_param_.num_sampling_points_for_eb);
   const Eigen::MatrixXd a = makeAMatrix(eb_param_.num_sampling_points_for_eb);
@@ -131,7 +130,7 @@ EBPathOptimizer::getEBTrajectory(
     getCandidatePoints(ego_pose, path.points, prev_eb_traj, debug_data);
   if (candidate_points.fixed_points.empty() && candidate_points.non_fixed_points.empty()) {
     RCLCPP_INFO_EXPRESSION(
-      rclcpp::get_logger("EBPathOptimizer"), is_showing_debug_info_,
+      rclcpp::get_logger("EBPathOptimizer"), enable_debug_info_,
       "return boost::none since empty candidate points");
     return boost::none;
   }
@@ -141,7 +140,7 @@ EBPathOptimizer::getEBTrajectory(
   const auto eb_traj_points = getOptimizedTrajectory(ego_pose, path, debug_data);
   if (!eb_traj_points) {
     RCLCPP_INFO_EXPRESSION(
-      rclcpp::get_logger("EBPathOptimizer"), is_showing_debug_info_,
+      rclcpp::get_logger("EBPathOptimizer"), enable_debug_info_,
       "return boost::none since smoothing failed");
     return boost::none;
   }
@@ -159,7 +158,7 @@ EBPathOptimizer::getOptimizedTrajectory(
   // make function: trimPathPoints
 
   const double forward_distance = 10;  // 50;
-  // TODO(murooka)    traj_param_.num_sampling_points * mpt_param_.delta_arc_length_for_mpt_points;
+  // TODO(murooka)    traj_param_.num_sampling_points * mpt_param_.delta_arc_length;
   const double backward_distance = 10;  // traj_param_.output_backward_traj_length;
 
   const double tmp_margin = 0;  // 20.0;

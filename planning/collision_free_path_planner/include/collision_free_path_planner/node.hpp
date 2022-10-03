@@ -157,17 +157,17 @@ private:
   int eb_solved_count_;
   bool is_driving_forward_{true};
 
-  bool is_publishing_debug_visualization_marker_;
-  bool is_publishing_area_with_objects_;
-  bool is_publishing_object_clearance_map_;
-  bool is_publishing_clearance_map_;
-  bool is_showing_debug_info_;
-  bool is_showing_calculation_time_;
-  bool is_stopping_if_outside_drivable_area_;
+  bool enable_debug_marker_pub_;
+  bool enable_area_with_objects_pub_;
+  bool enable_object_clearance_map_pub_;
+  bool enable_clearance_map_pub_;
+  bool enable_debug_info_;
+  bool enable_calculation_time_info_;
+  bool enable_outside_drivable_area_stop_;
   bool enable_avoidance_;
-  bool enable_pre_smoothing_;
-  bool skip_optimization_;
-  bool reset_prev_optimization_;
+  bool enable_smoothing_;
+  bool enable_skip_optimization_;
+  bool enable_reset_prev_optimization_;
 
   // core algorithm
   std::unique_ptr<CostmapGenerator> costmap_generator_ptr_;

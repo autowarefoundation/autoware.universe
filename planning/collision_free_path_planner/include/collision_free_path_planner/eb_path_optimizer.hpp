@@ -54,9 +54,8 @@ public:
   };
 
   EBPathOptimizer(
-    const bool is_showing_debug_info, const EgoNearestParam ego_nearest_param,
-    const TrajectoryParam & traj_param, const EBParam & eb_param,
-    const VehicleParam & vehicle_param);
+    const bool enable_debug_info, const EgoNearestParam ego_nearest_param,
+    const TrajectoryParam & traj_param, const EBParam & eb_param);
 
   boost::optional<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>> getEBTrajectory(
     const PlannerData & planner_data,
@@ -71,12 +70,11 @@ private:
     int end_path_idx;
   };
 
-  const bool is_showing_debug_info_;
+  const bool enable_debug_info_;
   EgoNearestParam ego_nearest_param_;
   const QPParam qp_param_;
   const TrajectoryParam traj_param_;
   const EBParam eb_param_;
-  const VehicleParam vehicle_param_;
 
   std::unique_ptr<autoware::common::osqp::OSQPInterface> osqp_solver_ptr_;
 

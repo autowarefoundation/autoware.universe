@@ -8,16 +8,23 @@ find_package(Eigen3 REQUIRED)
 find_package(OpenCV REQUIRED)
 
 ament_auto_add_library(collision_free_path_planner SHARED
+  # node
+  src/node.cpp
+  # replan checker
+  src/replan_checker.cpp
+  # costmap generator
+  src/costmap_generator.cpp
+  # elastic band
+  src/eb_path_optimizer.cpp
+  # model predictive trajectory
+  src/mpt_optimizer.cpp
+  # vehicle model
   src/vehicle_model/vehicle_model_interface.cpp
   src/vehicle_model/vehicle_model_bicycle_kinematics.cpp
-  src/costmap_generator.cpp
-  src/eb_path_optimizer.cpp
-  src/mpt_optimizer.cpp
-  src/replan_checker.cpp
+  # utils
   src/utils/utils.cpp
   src/utils/debug_utils.cpp
   src/utils/cv_utils.cpp
-  src/node.cpp
 )
 
 target_include_directories(collision_free_path_planner
@@ -54,7 +61,6 @@ endif()
 ament_auto_package(
   INSTALL_TO_SHARE
     launch
-    config
     scripts
     param
 )

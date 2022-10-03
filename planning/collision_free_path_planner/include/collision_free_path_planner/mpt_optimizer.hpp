@@ -145,6 +145,14 @@ struct ReferencePoint
 
   // SequentialBoundsCandidates sequential_bounds_candidates;
   std::vector<geometry_msgs::msg::Pose> vehicle_bounds_poses{};  // for debug visualization
+
+  geometry_msgs::msg::Pose getPose() const
+  {
+    geometry_msgs::msg::Pose pose;
+    pose.position = p;
+    pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(yaw);
+    return pose;
+  }
 };
 
 struct MPTTrajs
@@ -159,15 +167,14 @@ class MPTOptimizer
 
 public:
   MPTOptimizer(
-    rclcpp::Node * node, const bool is_showing_debug_info, const EgoNearestParam ego_nearest_param,
-    const vehicle_info_util::VehicleInfo & vehicle_info, const TrajectoryParam & traj_param,
-    const VehicleParam & vehicle_param);
+    rclcpp::Node * node, const bool enable_debug_info, const EgoNearestParam ego_nearest_param,
+    const vehicle_info_util::VehicleInfo & vehicle_info, const TrajectoryParam & traj_param);
 
   boost::optional<MPTTrajs> getModelPredictiveTrajectory(
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & smoothed_points,
     const std::shared_ptr<MPTTrajs> prev_trajs, const CVMaps & maps, DebugData & debug_data);
 
-  void reset(const bool is_showing_debug_info, const TrajectoryParam & traj_param);
+  void reset(const bool enable_debug_info, const TrajectoryParam & traj_param);
   void onParam(const std::vector<rclcpp::Parameter> & parameters);
 
 private:
@@ -208,7 +215,7 @@ private:
     std::vector<double> vehicle_circle_longitudinal_offsets;  // from base_link
     std::vector<double> vehicle_circle_radiuses;
 
-    double delta_arc_length_for_mpt_points;
+    double delta_arc_length;
 
     double hard_clearance_from_road;
     double soft_clearance_from_road;
@@ -255,10 +262,10 @@ private:
   rclcpp::Publisher<Trajectory>::SharedPtr debug_mpt_traj_pub_;
 
   // parameter
-  bool is_showing_debug_info_;
+  bool enable_debug_info_;
   EgoNearestParam ego_nearest_param_;
+  vehicle_info_util::VehicleInfo vehicle_info_;
   TrajectoryParam traj_param_;
-  VehicleParam vehicle_param_;
   MPTParam mpt_param_;
 
   autoware::common::osqp::OSQPInterface osqp_solver_;
@@ -317,12 +324,9 @@ private:
   // const std::shared_ptr<MPTTrajs> prev_trajs) const;
 
   void calcOrientation(std::vector<ReferencePoint> & ref_points) const;
-
   void calcCurvature(std::vector<ReferencePoint> & ref_points) const;
   void calcFixedPoints(std::vector<ReferencePoint> & ref_points) const;
-
   void calcArcLength(std::vector<ReferencePoint> & ref_points) const;
-
   void calcExtraPoints(
     std::vector<ReferencePoint> & ref_points, const std::shared_ptr<MPTTrajs> prev_trajs) const;
 
@@ -352,7 +356,7 @@ private:
     std::vector<ReferencePoint> & non_fixed_ref_points, const Eigen::VectorXd & Uex,
     const MPTMatrix & mpt_matrix, DebugData & debug_data);
 
-  std::vector<TrajectoryPoint> getMPTFixedPoints(
+  std::vector<TrajectoryPoint> extractMPTFixedPoints(
     const std::vector<ReferencePoint> & ref_points) const;
 
   BoundsCandidates getBoundsCandidates(
@@ -380,6 +384,11 @@ private:
     const std_msgs::msg::Header & header, const std::vector<ReferencePoint> & ref_points,
     const std::vector<TrajectoryPoint> & mpt_fixed_traj_points,
     const std::vector<TrajectoryPoint> & mpt_traj_points);
+
+  void printInfo(const char * msg) const
+  {
+    RCLCPP_INFO_EXPRESSION(rclcpp::get_logger("mpt_optimizer"), enable_debug_info_, msg);
+  }
 };
 }  // namespace collision_free_path_planner
 #endif  // COLLISION_FREE_PATH_PLANNER__MPT_OPTIMIZER_HPP_

@@ -21,24 +21,6 @@
 
 namespace collision_free_path_planner
 {
-namespace
-{
-[[maybe_unused]] std::vector<TrajectoryPoint> resampleTrajectoryPoints(
-  const std::vector<TrajectoryPoint> & traj_points, const double interval)
-{
-  const auto traj = motion_utils::convertToTrajectory(traj_points);
-  const auto resampled_traj = motion_utils::resampleTrajectory(traj, interval);
-
-  // convert Trajectory to std::vector<TrajectoryPoint>
-  std::vector<TrajectoryPoint> resampled_traj_points;
-  for (const auto & point : resampled_traj.points) {
-    resampled_traj_points.push_back(point);
-  }
-
-  return resampled_traj_points;
-}
-}  // namespace
-
 ReplanChecker::ReplanChecker(rclcpp::Node & node, const EgoNearestParam & ego_nearest_param)
 : ego_nearest_param_(ego_nearest_param)
 {
