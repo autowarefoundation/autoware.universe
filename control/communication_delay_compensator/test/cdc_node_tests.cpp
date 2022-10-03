@@ -129,16 +129,16 @@ TEST_F(FakeNodeFixture, isLPVobserverStable)
   }
 
   // Generate grids for ey, eyaw and steering angle.
-  auto ey_grid = ns_utils::linspace(-0.8, 0.8, 5);
+  auto const &ey_grid = ns_utils::linspace(-0.8, 0.8, 5);
 
-  double eyaw_max = ns_utils::deg2rad(30.);
-  auto eyaw_grid = ns_utils::linspace(-eyaw_max, eyaw_max, 5);
+  double const eyaw_max = ns_utils::deg2rad(30.);
+  auto const &eyaw_grid = ns_utils::linspace(-eyaw_max, eyaw_max, 5);
 
-  auto kappa_grid = ns_utils::linspace(-0.08, 0.08, 3);  // curvature
-  double steering = 0.;
+  auto const &kappa_grid = ns_utils::linspace(-0.08, 0.08, 3);  // curvature
+  double const steering{};
 
-  double vmax = 20.; // m/s
-  auto vx_grid = ns_utils::linspace(1., 20., 4);  // curvature
+  double const vmax{20.}; // m/s
+  auto vx_grid = ns_utils::linspace(1., vmax., 4);  // curvature
 
   for (double const &ey : ey_grid)
   {
@@ -188,6 +188,20 @@ TEST_F(FakeNodeFixture, isLPVobserverStable)
 
           ns_eigen_utils::printEigenMat(Ad, "Ad matrix : ");
           ns_eigen_utils::printEigenMat(Cd, "Cd matrix : ");
+
+          // Compute the closed loop system matrix
+          auto Aclp = Ad + Lobs_.transpose() * Cd;
+
+          // Get the eigenvalues
+          auto const &eig_vals = Aclp.eigenvalues();
+          ns_eigen_utils::printEigenMat(eig_vals, "\nEigen values of the closed loop system matrix :");
+
+          ns_utils::print("Magnitude of Eigenvalues ");
+          for (auto ke = 0; ke < eig_vals.size(); ++ke)
+          {
+            ASSERT_LE(std::abs(eig_vals(ke)), 1.);
+            ns_utils::print(std::abs(eig_vals(ke)));
+          }
 
         }
       }
