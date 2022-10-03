@@ -12,7 +12,7 @@
     <remap from="output/object" to="$(var output/object)"/>
     <param from="$(var data_association_matrix_path)"/>
     <param from="$(var distance_threshold_list_path)"/>
-    <param name="extended_scale" value="1.1"/>
+    <param name="generalized_iou_threshold" value="-0.6"/>
     <param name="precision_threshold_to_judge_overlapped" value="0.4"/>
   </node>
 </launch>

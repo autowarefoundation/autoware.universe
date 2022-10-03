@@ -31,29 +31,11 @@ using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
 
 namespace
 {
-autoware_auto_perception_msgs::msg::Shape extendShape(
-  const autoware_auto_perception_msgs::msg::Shape & shape, const float scale)
-{
-  autoware_auto_perception_msgs::msg::Shape output = shape;
-  output.dimensions.x *= scale;
-  output.dimensions.y *= scale;
-  output.dimensions.z *= scale;
-  for (auto & point : output.footprint.points) {
-    point.x *= scale;
-    point.y *= scale;
-    point.z *= scale;
-  }
-  return output;
-}
-}  // namespace
-
-namespace
-{
 bool isUnknownObjectOverlapped(
   const autoware_auto_perception_msgs::msg::DetectedObject & unknown_object,
   const autoware_auto_perception_msgs::msg::DetectedObject & known_object,
   const double precision_threshold, const double recall_threshold,
-  std::map<int, double> distance_threshold_map, const double extended_scale)
+  std::map<int, double> distance_threshold_map, const double generalized_iou_threshold)
 {
   const double distance_threshold =
     distance_threshold_map.at(perception_utils::getHighestProbLabel(known_object.classification));
@@ -62,16 +44,11 @@ bool isUnknownObjectOverlapped(
     unknown_object.kinematics.pose_with_covariance.pose,
     known_object.kinematics.pose_with_covariance.pose);
   if (sq_distance_threshold < sq_distance) return false;
+  const auto precision = perception_utils::get2dPrecision(unknown_object, known_object);
   const auto recall = perception_utils::get2dRecall(unknown_object, known_object);
-  if (extended_scale > 1) {
-    autoware_auto_perception_msgs::msg::DetectedObject extended_known_object = known_object;
-    extended_known_object.shape = extendShape(known_object.shape, /*scale*/ extended_scale);
-    const auto precision = perception_utils::get2dPrecision(unknown_object, extended_known_object);
-    return precision > precision_threshold || recall > recall_threshold;
-  } else {
-    const auto precision = perception_utils::get2dPrecision(unknown_object, known_object);
-    return precision > precision_threshold || recall > recall_threshold;
-  }
+  const auto generalized_iou = perception_utils::get2dGeneralizedIoU(unknown_object, known_object);
+  return precision > precision_threshold || recall > recall_threshold ||
+         generalized_iou > generalized_iou_threshold;
 }
 }  // namespace
 
@@ -114,7 +91,8 @@ ObjectAssociationMergerNode::ObjectAssociationMergerNode(const rclcpp::NodeOptio
     declare_parameter<double>("precision_threshold_to_judge_overlapped");
   overlapped_judge_param_.recall_threshold =
     declare_parameter<double>("recall_threshold_to_judge_overlapped", 0.5);
-  overlapped_judge_param_.extended_scale = declare_parameter<double>("extended_scale");
+  overlapped_judge_param_.generalized_iou_threshold =
+    declare_parameter<double>("generalized_iou_threshold");
 
   // get distance_threshold_map from distance_threshold_list
   /** TODO(Shin-kyoto):
@@ -205,7 +183,7 @@ void ObjectAssociationMergerNode::objectsCallback(
               unknown_object, known_object, overlapped_judge_param_.precision_threshold,
               overlapped_judge_param_.recall_threshold,
               overlapped_judge_param_.distance_threshold_map,
-              overlapped_judge_param_.extended_scale)) {
+              overlapped_judge_param_.generalized_iou_threshold)) {
           is_overlapped = true;
           break;
         }

@@ -73,7 +73,7 @@ private:
   {
     double precision_threshold;
     double recall_threshold;
-    double extended_scale;
+    double generalized_iou_threshold;
     std::map<int /*class label*/, double /*distance_threshold*/> distance_threshold_map;
   } overlapped_judge_param_;
 };
