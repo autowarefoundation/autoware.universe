@@ -160,7 +160,7 @@ EBPathOptimizer::getOptimizedTrajectory(
 
   const double forward_distance = 10;  // 50;
   // TODO(murooka)    traj_param_.num_sampling_points * mpt_param_.delta_arc_length_for_mpt_points;
-  const double backward_distance = 10;  // traj_param_.backward_fixing_distance;
+  const double backward_distance = 10;  // traj_param_.output_backward_traj_length;
 
   const double tmp_margin = 0;  // 20.0;
 
@@ -385,7 +385,7 @@ std::vector<TrajectoryPoint> EBPathOptimizer::convertOptimizedPointsToTrajectory
 //     const int backward_fixing_idx = std::max(
 //       static_cast<int>(
 //         begin_idx -
-//         traj_param_.backward_fixing_distance / traj_param_.delta_arc_length_for_trajectory),
+//         traj_param_.output_backward_traj_length / traj_param_.output_delta_arc_length),
 //       0);
 //
 //     // NOTE: Fixed length of EB has to be longer than that of MPT.
@@ -396,7 +396,7 @@ std::vector<TrajectoryPoint> EBPathOptimizer::convertOptimizedPointsToTrajectory
 //
 //     const int forward_fixing_idx = std::min(
 //       static_cast<int>(
-//         begin_idx + forward_fixed_length / traj_param_.delta_arc_length_for_trajectory),
+//         begin_idx + forward_fixed_length / traj_param_.output_delta_arc_length),
 //       static_cast<int>(prev_eb_traj->size() - 1));
 //     std::vector<geometry_msgs::msg::Pose> fixed_points;
 //     for (int i = backward_fixing_idx; i <= forward_fixing_idx; i++) {

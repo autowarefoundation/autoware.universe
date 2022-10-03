@@ -184,6 +184,10 @@ struct Trajectories
 
 struct TrajectoryParam
 {
+  // output
+  double output_delta_arc_length;
+  double output_traj_length;
+
   bool is_avoiding_unknown;
   bool is_avoiding_car;
   bool is_avoiding_truck;
@@ -192,21 +196,20 @@ struct TrajectoryParam
   bool is_avoiding_motorbike;
   bool is_avoiding_pedestrian;
   bool is_avoiding_animal;
+
   int num_sampling_points;
-  double delta_arc_length_for_trajectory;
+
   double delta_dist_threshold_for_closest_point;
   double delta_yaw_threshold_for_closest_point;
   double delta_yaw_threshold_for_straight;
-  double trajectory_length;
+
   double forward_fixing_min_distance;
   double forward_fixing_min_time;
-  double backward_fixing_distance;
+  double output_backward_traj_length;
   double max_avoiding_ego_velocity_ms;
   double max_avoiding_objects_velocity_ms;
   double center_line_width;
   double acceleration_for_non_deceleration_range;
-  int num_fix_points_for_extending;
-  double max_dist_for_extending_end_point;
 
   double ego_nearest_dist_threshold;
   double ego_nearest_yaw_threshold;

@@ -769,7 +769,7 @@ std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
 
   const double forward_distance =
     traj_param_.num_sampling_points * mpt_param_.delta_arc_length_for_mpt_points;
-  const double backward_distance = traj_param_.backward_fixing_distance;
+  const double backward_distance = traj_param_.output_backward_traj_length;
 
   // convert smoothed points to reference points
   const auto resampled_smoothed_points =
@@ -821,7 +821,7 @@ std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
   mpt_param_.delta_arc_length_for_mpt_points); const size_t ego_seg_idx =
   findEgoSegmentIndex(resampled_smoothed_points, p.ego_pose, ego_nearest_param_); return
   points_utils::cropBackwardPoints(resampled_smoothed_points, p.ego_pose.position, ego_seg_idx,
-  traj_param_.backward_fixing_distance);
+  traj_param_.output_backward_traj_length);
     }();
 
   const auto ref_points = createReferencePoints(cropped_smoothed_points, fixed_ref_points);
@@ -924,7 +924,7 @@ void MPTOptimizer::calcPlanningFromEgo(
     //                                                                             points,
     // mpt_param_.delta_arc_length_for_mpt_points); const auto cropped_interpolated_points =
     // points_utils::clipBackwardPoints( interpolated_points, current_pose_.position,
-    // traj_param_.backward_fixing_distance, mpt_param_.delta_arc_length_for_mpt_points);
+    // traj_param_.output_backward_traj_length, mpt_param_.delta_arc_length_for_mpt_points);
     //
     // auto cropped_ref_points =
     //   points_utils::convertToReferencePoints(cropped_interpolated_points);
@@ -976,7 +976,7 @@ std::vector<ReferencePoint> MPTOptimizer::getFixedReferencePoints(
   // calculate begin_prev_ref_idx
   const int begin_prev_ref_idx = [&]() {
     const int backward_fixing_num =
-      traj_param_.backward_fixing_distance / mpt_param_.delta_arc_length_for_mpt_points;
+      traj_param_.output_backward_traj_length / mpt_param_.delta_arc_length_for_mpt_points;
 
     return std::max(0, nearest_prev_ref_idx - backward_fixing_num);
   }();
@@ -1118,8 +1118,7 @@ MPTOptimizer::ValueMatrix MPTOptimizer::generateValueMatrix(
   const size_t D_v = D_x + (N_ref - 1) * D_u;
 
   const bool is_containing_path_terminal_point = points_utils::isNearLastPathPoint(
-    ref_points.back(), path_points, traj_param_.max_dist_for_extending_end_point,
-    traj_param_.delta_yaw_threshold_for_closest_point);
+    ref_points.back(), path_points, 0.0001, traj_param_.delta_yaw_threshold_for_closest_point);
 
   // update Q
   Eigen::SparseMatrix<double> Qex_sparse_mat(D_x * N_ref, D_x * N_ref);

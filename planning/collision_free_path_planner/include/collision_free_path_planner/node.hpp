@@ -251,13 +251,13 @@ private:
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & traj_points);
 
   std::vector<TrajectoryPoint> generatePostProcessedTrajectory(
-    const std::vector<PathPoint> & path_points,
-    const std::vector<TrajectoryPoint> & merged_optimized_points, const PlannerData & planner_data);
+    const PlannerData & planner_data, const std::vector<TrajectoryPoint> & merged_optimized_points);
 
-  std::vector<TrajectoryPoint> getExtendedTrajectory(
+  std::vector<TrajectoryPoint> extendTrajectory(
     const std::vector<PathPoint> & path_points,
     const std::vector<TrajectoryPoint> & optimized_points);
 
+  /*
   std::vector<TrajectoryPoint> generateFineTrajectoryPoints(
     const std::vector<PathPoint> & path_points,
     const std::vector<TrajectoryPoint> & traj_points) const;
@@ -266,6 +266,7 @@ private:
     const std::vector<TrajectoryPoint> & fine_traj_points,
     const std::vector<PathPoint> & path_points,
     const std::vector<TrajectoryPoint> & traj_points) const;
+  */
 
   void publishDebugDataInMain(const Path & path) const;
 };

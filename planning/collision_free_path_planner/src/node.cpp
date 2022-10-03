@@ -99,20 +99,8 @@ template <>
     points_with_yaw, pose, dist_threshold, yaw_threshold);
 }
 
-template <typename T1, typename T2>
-size_t searchExtendedZeroVelocityIndex(
-  const std::vector<T1> & fine_points, const std::vector<T2> & vel_points,
-  const double yaw_threshold)
-{
-  const auto opt_zero_vel_idx = motion_utils::searchZeroVelocityIndex(vel_points);
-  const size_t zero_vel_idx = opt_zero_vel_idx ? opt_zero_vel_idx.get() : vel_points.size() - 1;
-  return findNearestIndexWithSoftYawConstraints(
-    fine_points, vel_points.at(zero_vel_idx).pose, std::numeric_limits<double>::max(),
-    yaw_threshold);
-}
-
 Trajectory createTrajectory(
-  const std::vector<TrajectoryPoint> & traj_points, const std_msgs::msg::Header & header)
+  const std_msgs::msg::Header & header, const std::vector<TrajectoryPoint> & traj_points)
 {
   auto traj = motion_utils::convertToTrajectory(traj_points);
   traj.header = header;
@@ -232,15 +220,15 @@ CollisionFreePathPlanner::CollisionFreePathPlanner(const rclcpp::NodeOptions & n
 
     // common
     traj_param_.num_sampling_points = declare_parameter<int>("common.num_sampling_points");
-    traj_param_.trajectory_length = declare_parameter<double>("common.trajectory_length");
+    traj_param_.output_traj_length = declare_parameter<double>("common.output_traj_length");
     traj_param_.forward_fixing_min_distance =
       declare_parameter<double>("common.forward_fixing_min_distance");
     traj_param_.forward_fixing_min_time =
       declare_parameter<double>("common.forward_fixing_min_time");
-    traj_param_.backward_fixing_distance =
-      declare_parameter<double>("common.backward_fixing_distance");
-    traj_param_.delta_arc_length_for_trajectory =
-      declare_parameter<double>("common.delta_arc_length_for_trajectory");
+    traj_param_.output_backward_traj_length =
+      declare_parameter<double>("common.output_backward_traj_length");
+    traj_param_.output_delta_arc_length =
+      declare_parameter<double>("common.output_delta_arc_length");
 
     traj_param_.delta_dist_threshold_for_closest_point =
       declare_parameter<double>("common.delta_dist_threshold_for_closest_point");
@@ -248,11 +236,6 @@ CollisionFreePathPlanner::CollisionFreePathPlanner(const rclcpp::NodeOptions & n
       declare_parameter<double>("common.delta_yaw_threshold_for_closest_point");
     traj_param_.delta_yaw_threshold_for_straight =
       declare_parameter<double>("common.delta_yaw_threshold_for_straight");
-
-    traj_param_.num_fix_points_for_extending =
-      declare_parameter<int>("common.num_fix_points_for_extending");
-    traj_param_.max_dist_for_extending_end_point =
-      declare_parameter<double>("common.max_dist_for_extending_end_point");
 
     // object
     traj_param_.max_avoiding_ego_velocity_ms =
@@ -358,16 +341,15 @@ rcl_interfaces::msg::SetParametersResult CollisionFreePathPlanner::onParam(
   {  // trajectory parameter
     // common
     updateParam<int>(parameters, "common.num_sampling_points", traj_param_.num_sampling_points);
-    updateParam<double>(parameters, "common.trajectory_length", traj_param_.trajectory_length);
+    updateParam<double>(parameters, "common.output_traj_length", traj_param_.output_traj_length);
     updateParam<double>(
       parameters, "common.forward_fixing_min_distance", traj_param_.forward_fixing_min_distance);
     updateParam<double>(
       parameters, "common.forward_fixing_min_time", traj_param_.forward_fixing_min_time);
     updateParam<double>(
-      parameters, "common.backward_fixing_distance", traj_param_.backward_fixing_distance);
+      parameters, "common.output_backward_traj_length", traj_param_.output_backward_traj_length);
     updateParam<double>(
-      parameters, "common.delta_arc_length_for_trajectory",
-      traj_param_.delta_arc_length_for_trajectory);
+      parameters, "common.output_delta_arc_length", traj_param_.output_delta_arc_length);
 
     updateParam<double>(
       parameters, "common.delta_dist_threshold_for_closest_point",
@@ -378,11 +360,6 @@ rcl_interfaces::msg::SetParametersResult CollisionFreePathPlanner::onParam(
     updateParam<double>(
       parameters, "common.delta_yaw_threshold_for_straight",
       traj_param_.delta_yaw_threshold_for_straight);
-    updateParam<int>(
-      parameters, "common.num_fix_points_for_extending", traj_param_.num_fix_points_for_extending);
-    updateParam<double>(
-      parameters, "common.max_dist_for_extending_end_point",
-      traj_param_.max_dist_for_extending_end_point);
 
     // object
     updateParam<double>(
@@ -564,17 +541,18 @@ Trajectory CollisionFreePathPlanner::generateTrajectory(const PlannerData & plan
       "trajectory");
 
     const auto traj_points = points_utils::convertToTrajectoryPoints(p.path.points);
-    return createTrajectory(traj_points, p.path.header);
+    return createTrajectory(p.path.header, traj_points);
   }
 
   // generate optimized trajectory
   const auto optimized_traj_points = generateOptimizedTrajectory(planner_data);
+
   // generate post processed trajectory
   const auto post_processed_traj_points =
-    generatePostProcessedTrajectory(p.path.points, optimized_traj_points, planner_data);
+    generatePostProcessedTrajectory(planner_data, optimized_traj_points);
 
   // convert to output msg type
-  return createTrajectory(post_processed_traj_points, p.path.header);
+  return createTrajectory(p.path.header, post_processed_traj_points);
 }
 
 std::vector<TrajectoryPoint> CollisionFreePathPlanner::generateOptimizedTrajectory(
@@ -758,7 +736,7 @@ void CollisionFreePathPlanner::publishDebugDataInOptimization(
   const auto & p = planner_data;
 
   {  // publish trajectories
-    const auto debug_eb_traj = createTrajectory(debug_data_.eb_traj, p.path.header);
+    const auto debug_eb_traj = createTrajectory(p.path.header, debug_data_.eb_traj);
     debug_eb_traj_pub_->publish(debug_eb_traj);
   }
 
@@ -792,27 +770,32 @@ void CollisionFreePathPlanner::publishDebugDataInOptimization(
 }
 
 std::vector<TrajectoryPoint> CollisionFreePathPlanner::generatePostProcessedTrajectory(
-  const std::vector<PathPoint> & path_points,
-  const std::vector<TrajectoryPoint> & optimized_traj_points, const PlannerData & planner_data)
+  const PlannerData & planner_data, const std::vector<TrajectoryPoint> & optimized_traj_points)
 {
   stop_watch_.tic(__func__);
 
-  std::vector<TrajectoryPoint> trajectory_points;
-  if (path_points.empty()) {
-    TrajectoryPoint tmp_point;
-    tmp_point.pose = planner_data.ego_pose;
-    tmp_point.longitudinal_velocity_mps = 0.0;
-    trajectory_points.push_back(tmp_point);
-    return trajectory_points;
+  const auto & p = planner_data;
+
+  if (p.path.points.empty()) {
+    return std::vector<TrajectoryPoint>{};
   }
   if (optimized_traj_points.empty()) {
-    trajectory_points = points_utils::convertToTrajectoryPoints(path_points);
-    return trajectory_points;
+    return points_utils::convertToTrajectoryPoints(p.path.points);
   }
 
   // calculate extended trajectory that connects to optimized trajectory smoothly
-  const auto extended_traj_points = getExtendedTrajectory(path_points, optimized_traj_points);
+  auto full_traj_points = extendTrajectory(p.path.points, optimized_traj_points);
 
+  // insert zero velocity after stop point
+  // NOTE: This implementation is required for stopping due to going outside the drivable area.
+  const auto opt_zero_vel_idx = motion_utils::searchZeroVelocityIndex(full_traj_points);
+  if (opt_zero_vel_idx) {
+    for (size_t i = opt_zero_vel_idx.get(); i < full_traj_points.size(); ++i) {
+      full_traj_points.at(i).longitudinal_velocity_mps = 0.0;
+    }
+  }
+
+  /*
   // concat trajectories
   const auto full_traj_points = concatTrajectory(optimized_traj_points, extended_traj_points);
 
@@ -821,123 +804,59 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::generatePostProcessedTraj
 
   const auto fine_traj_points_with_vel =
     alignVelocity(fine_traj_points, path_points, full_traj_points);
+  */
 
   debug_data_.msg_stream << "  " << __func__ << ":= " << stop_watch_.toc(__func__) << " [ms]\n";
-  return fine_traj_points_with_vel;
+  return full_traj_points;
 }
 
-std::vector<TrajectoryPoint> CollisionFreePathPlanner::getExtendedTrajectory(
+std::vector<TrajectoryPoint> CollisionFreePathPlanner::extendTrajectory(
   const std::vector<PathPoint> & path_points, const std::vector<TrajectoryPoint> & optimized_points)
 {
   stop_watch_.tic(__func__);
 
   assert(!path_points.empty());
 
+  /*
   const double accum_arc_length = motion_utils::calcArcLength(optimized_points);
-  if (accum_arc_length > traj_param_.trajectory_length) {
+  if (accum_arc_length > traj_param_.output_traj_length) {
     RCLCPP_INFO_THROTTLE(
-      this->get_logger(), *this->get_clock(), std::chrono::milliseconds(10000).count(),
+      get_logger(), *this->get_clock(), std::chrono::milliseconds(10000).count(),
       "[Avoidance] Not extend trajectory");
     return std::vector<TrajectoryPoint>{};
   }
+  */
 
   // calculate end idx of optimized points on path points
-  const auto opt_end_path_idx = motion_utils::findNearestIndex(
+  const auto opt_end_path_seg_idx = motion_utils::findNearestSegmentIndex(
     path_points, optimized_points.back().pose, std::numeric_limits<double>::max(),
     traj_param_.delta_yaw_threshold_for_closest_point);
-  if (!opt_end_path_idx) {
+  if (!opt_end_path_seg_idx) {
     RCLCPP_INFO_THROTTLE(
-      this->get_logger(), *this->get_clock(), std::chrono::milliseconds(10000).count(),
+      get_logger(), *get_clock(), std::chrono::seconds(5).count(),
       "[Avoidance] Not extend trajectory since could not find nearest idx from last opt point");
     return std::vector<TrajectoryPoint>{};
   }
+  const size_t end_path_seg_idx = opt_end_path_seg_idx.get();
 
-  auto extended_traj_points = [&]() -> std::vector<TrajectoryPoint> {
-    constexpr double non_fixed_traj_length = 5.0;  // TODO(murooka) may be better to tune
-    const size_t non_fixed_begin_path_idx = opt_end_path_idx.get();
-    const size_t non_fixed_end_path_idx =
-      points_utils::findForwardIndex(path_points, non_fixed_begin_path_idx, non_fixed_traj_length);
-
-    if (
-      non_fixed_begin_path_idx == path_points.size() - 1 ||
-      non_fixed_begin_path_idx == non_fixed_end_path_idx) {
-      if (points_utils::isNearLastPathPoint(
-            optimized_points.back(), path_points, traj_param_.max_dist_for_extending_end_point,
-            traj_param_.delta_yaw_threshold_for_closest_point)) {
-        return std::vector<TrajectoryPoint>{};
-      }
-      const auto last_traj_point = points_utils::convertToTrajectoryPoint(path_points.back());
-      return std::vector<TrajectoryPoint>{last_traj_point};
-    } else if (non_fixed_end_path_idx == path_points.size() - 1) {
-      // no need to connect smoothly since extended trajectory length is short enough
-      const auto last_traj_point = points_utils::convertToTrajectoryPoint(path_points.back());
-      return std::vector<TrajectoryPoint>{last_traj_point};
-    }
-
-    // define non_fixed/fixed_traj_points
-    const auto begin_point = optimized_points.back();
-    const auto end_point =
-      points_utils::convertToTrajectoryPoint(path_points.at(non_fixed_end_path_idx));
-    const std::vector<TrajectoryPoint> non_fixed_traj_points{begin_point, end_point};
-    const std::vector<PathPoint> fixed_path_points{
-      path_points.begin() + non_fixed_end_path_idx + 1, path_points.end()};
-    const auto fixed_traj_points = points_utils::convertToTrajectoryPoints(fixed_path_points);
-
-    // spline interpolation to two traj points with end diff constraints
-    const double begin_yaw = tf2::getYaw(begin_point.pose.orientation);
-    const double end_yaw = tf2::getYaw(end_point.pose.orientation);
-    const auto interpolated_non_fixed_traj_points =
-      interpolation_utils::getConnectedInterpolatedPoints(
-        non_fixed_traj_points, eb_param_.delta_arc_length_for_eb, begin_yaw, end_yaw);
-
-    // concat interpolated_non_fixed and fixed traj points
-    auto extended_points = interpolated_non_fixed_traj_points;
-    extended_points.insert(
-      extended_points.end(), fixed_traj_points.begin(), fixed_traj_points.end());
-
-    debug_data_.extended_non_fixed_traj = interpolated_non_fixed_traj_points;
-    debug_data_.extended_fixed_traj = fixed_traj_points;
-
-    return extended_points;
-  }();
-
-  // NOTE: Extended points will be concatenated with optimized points.
-  //       Then, minimum velocity of each point is chosen from concatenated points or path points
-  //       since optimized points has zero velocity outside drivable area
-  constexpr double large_velocity = 1e4;
-  for (auto & point : extended_traj_points) {
-    point.longitudinal_velocity_mps = large_velocity;
+  auto extended_traj_points = optimized_points;
+  const size_t extended_start_point_idx = end_path_seg_idx + 1;
+  for (size_t i = extended_start_point_idx; i < path_points.size(); ++i) {
+    const auto extended_traj_point = points_utils::convertToTrajectoryPoint(path_points.at(i));
+    extended_traj_points.push_back(extended_traj_point);
   }
+
+  // TODO(murooka) resample
+
+  // TODO(murooka) update vleocity on joint
+
+  // TODO(murooka) compensate goal pose
 
   debug_data_.msg_stream << "    " << __func__ << ":= " << stop_watch_.toc(__func__) << " [ms]\n";
   return extended_traj_points;
 }
 
-std::vector<TrajectoryPoint> CollisionFreePathPlanner::generateFineTrajectoryPoints(
-  const std::vector<PathPoint> & path_points,
-  const std::vector<TrajectoryPoint> & traj_points) const
-{
-  stop_watch_.tic(__func__);
-
-  // interpolate x and y
-  auto interpolated_traj_points = interpolation_utils::getInterpolatedTrajectoryPoints(
-    traj_points, traj_param_.delta_arc_length_for_trajectory);
-
-  // calculate yaw from x and y
-  // NOTE: We do not use spline interpolation to yaw in behavior path since the yaw is unstable.
-  //       Currently this implementation is removed since this calculation is heavy (~20ms)
-  // fillYawInTrajectoryPoint(interpolated_traj_points);
-
-  // compensate last pose
-  points_utils::compensateLastPose(
-    path_points.back(), interpolated_traj_points, traj_param_.max_dist_for_extending_end_point,
-    traj_param_.delta_yaw_threshold_for_closest_point);
-
-  debug_data_.msg_stream << "    " << __func__ << ":= " << stop_watch_.toc(__func__) << " [ms]\n";
-
-  return interpolated_traj_points;
-}
-
+/*
 std::vector<TrajectoryPoint> CollisionFreePathPlanner::alignVelocity(
   const std::vector<TrajectoryPoint> & fine_traj_points, const std::vector<PathPoint> & path_points,
   const std::vector<TrajectoryPoint> & traj_points) const
@@ -1038,6 +957,7 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::alignVelocity(
   debug_data_.msg_stream << "    " << __func__ << ":= " << stop_watch_.toc(__func__) << " [ms]\n";
   return fine_traj_points_with_vel;
 }
+*/
 
 void CollisionFreePathPlanner::publishDebugDataInMain(const Path & path) const
 {
@@ -1045,11 +965,11 @@ void CollisionFreePathPlanner::publishDebugDataInMain(const Path & path) const
 
   {  // publish trajectories
     const auto debug_extended_fixed_traj =
-      createTrajectory(debug_data_.extended_fixed_traj, path.header);
+      createTrajectory(path.header, debug_data_.extended_fixed_traj);
     debug_extended_fixed_traj_pub_->publish(debug_extended_fixed_traj);
 
     const auto debug_extended_non_fixed_traj =
-      createTrajectory(debug_data_.extended_non_fixed_traj, path.header);
+      createTrajectory(path.header, debug_data_.extended_non_fixed_traj);
     debug_extended_non_fixed_traj_pub_->publish(debug_extended_non_fixed_traj);
   }
 
