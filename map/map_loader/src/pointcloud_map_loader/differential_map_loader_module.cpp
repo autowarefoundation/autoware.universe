@@ -16,13 +16,13 @@
 
 DifferentialMapLoaderModule::DifferentialMapLoaderModule(
   rclcpp::Node * node, const std::map<std::string, PCDFileMetadata> & pcd_file_metadata_dict)
-: logger_(node->get_logger()),
-  all_pcd_file_metadata_dict_(pcd_file_metadata_dict)
+: logger_(node->get_logger()), all_pcd_file_metadata_dict_(pcd_file_metadata_dict)
 {
   load_differential_pcd_maps_service_ = node->create_service<LoadDifferentialPointCloudMap>(
-    "service/load_differential_pcd_map", std::bind(
-                               &DifferentialMapLoaderModule::onServiceLoadDifferentialPointCloudMap, this,
-                               std::placeholders::_1, std::placeholders::_2));
+    "service/load_differential_pcd_map",
+    std::bind(
+      &DifferentialMapLoaderModule::onServiceLoadDifferentialPointCloudMap, this,
+      std::placeholders::_1, std::placeholders::_2));
 }
 
 void DifferentialMapLoaderModule::differentialAreaLoad(
@@ -52,7 +52,7 @@ void DifferentialMapLoaderModule::differentialAreaLoad(
       response->loaded_pcds.push_back(pcd_map_with_id);
     }
   }
-  
+
   for (int i = 0; i < int(already_loaded_ids.size()); ++i) {
     if (should_remove[i]) {
       response->ids_to_remove.push_back(already_loaded_ids[i]);
@@ -63,7 +63,8 @@ void DifferentialMapLoaderModule::differentialAreaLoad(
 }
 
 bool DifferentialMapLoaderModule::onServiceLoadDifferentialPointCloudMap(
-  LoadDifferentialPointCloudMap::Request::SharedPtr req, LoadDifferentialPointCloudMap::Response::SharedPtr res)
+  LoadDifferentialPointCloudMap::Request::SharedPtr req,
+  LoadDifferentialPointCloudMap::Response::SharedPtr res)
 {
   auto area = req->area;
   std::vector<std::string> already_loaded_ids = req->already_loaded_ids;

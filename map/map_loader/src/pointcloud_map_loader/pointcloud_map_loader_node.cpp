@@ -90,7 +90,8 @@ PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & opt
   }
 
   if (enable_differential_load) {
-    differential_map_loader_ = std::make_unique<DifferentialMapLoaderModule>(this, pcd_metadata_dict_);
+    differential_map_loader_ =
+      std::make_unique<DifferentialMapLoaderModule>(this, pcd_metadata_dict_);
   }
 }
 
@@ -134,7 +135,6 @@ std::map<std::string, PCDFileMetadata> PointCloudMapLoaderNode::generatePCDMetad
   }
   return all_pcd_file_metadata_dict;
 }
-
 
 #include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(PointCloudMapLoaderNode)

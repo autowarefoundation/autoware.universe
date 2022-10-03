@@ -15,9 +15,9 @@
 #ifndef POINTCLOUD_MAP_LOADER__UTILS_HPP_
 #define POINTCLOUD_MAP_LOADER__UTILS_HPP_
 
-#include <geometry_msgs/msg/point.hpp>
 #include <autoware_map_msgs/msg/area_info.hpp>
 #include <autoware_map_msgs/msg/pcd_map_with_id.hpp>
+#include <geometry_msgs/msg/point.hpp>
 
 #include <pcl/common/common.h>
 
