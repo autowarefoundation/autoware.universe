@@ -19,7 +19,6 @@
 #include "motion_common/motion_common.hpp"
 #include "rclcpp_components/register_node_macro.hpp"
 #include "simple_planning_simulator/vehicle_model/sim_model.hpp"
-#include "tier4_autoware_utils/ros/msg_covariance.hpp"
 #include "tier4_autoware_utils/ros/update_param.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
 
@@ -287,9 +286,8 @@ void SimplePlanningSimulator::on_timer()
 
   // add estimate covariance
   {
-    using COV_IDX = tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
-    current_odometry_.pose.covariance[COV_IDX::X_X] = x_stddev_;
-    current_odometry_.pose.covariance[COV_IDX::Y_Y] = y_stddev_;
+    current_odometry_.pose.covariance[0 * 6 + 0] = x_stddev_;
+    current_odometry_.pose.covariance[1 * 6 + 1] = y_stddev_;
   }
 
   // publish vehicle state
@@ -529,14 +527,13 @@ void SimplePlanningSimulator::publish_acceleration()
   msg.header.stamp = get_clock()->now();
   msg.accel.accel.linear.x = vehicle_model_ptr_->getAx();
 
-  using COV_IDX = tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
   constexpr auto COV = 0.001;
-  msg.accel.covariance.at(COV_IDX::X_X) = COV;          // linear x
-  msg.accel.covariance.at(COV_IDX::Y_Y) = COV;          // linear y
-  msg.accel.covariance.at(COV_IDX::Z_Z) = COV;          // linear z
-  msg.accel.covariance.at(COV_IDX::ROLL_ROLL) = COV;    // angular x
-  msg.accel.covariance.at(COV_IDX::PITCH_PITCH) = COV;  // angular y
-  msg.accel.covariance.at(COV_IDX::YAW_YAW) = COV;      // angular z
+  msg.accel.covariance.at(6 * 0 + 0) = COV;  // linear x
+  msg.accel.covariance.at(6 * 1 + 1) = COV;  // linear y
+  msg.accel.covariance.at(6 * 2 + 2) = COV;  // linear z
+  msg.accel.covariance.at(6 * 3 + 3) = COV;  // angular x
+  msg.accel.covariance.at(6 * 4 + 4) = COV;  // angular y
+  msg.accel.covariance.at(6 * 5 + 5) = COV;  // angular z
   pub_acc_->publish(msg);
 }
 

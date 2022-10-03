@@ -33,7 +33,7 @@ protected:
 public:
   explicit LowpassFilterInterface(const double gain) : gain_(gain) {}
 
-  void reset() { x_ = {}; }
+  void reset() { x_ = T{}; }
   void reset(const T & x) { x_ = x; }
 
   boost::optional<T> getValue() const { return x_; }

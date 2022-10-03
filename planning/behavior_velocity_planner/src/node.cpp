@@ -309,7 +309,7 @@ void BehaviorVelocityPlannerNode::onVehicleVelocity(
   // Add velocity to buffer
   planner_data_.velocity_buffer.push_front(*current_velocity);
   const rclcpp::Time now = this->now();
-  while (!planner_data_.velocity_buffer.empty()) {
+  while (true) {
     // Check oldest data time
     const auto & s = planner_data_.velocity_buffer.back().header.stamp;
     const auto time_diff =
@@ -320,6 +320,9 @@ void BehaviorVelocityPlannerNode::onVehicleVelocity(
       break;
     }
 
+    if (planner_data_.velocity_buffer.empty()) {
+      break;
+    }
     // Remove old data
     planner_data_.velocity_buffer.pop_back();
   }

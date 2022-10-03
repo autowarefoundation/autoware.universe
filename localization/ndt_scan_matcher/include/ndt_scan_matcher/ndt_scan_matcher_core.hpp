@@ -68,17 +68,8 @@ enum class ConvergedParamType {
   NEAREST_VOXEL_TRANSFORMATION_LIKELIHOOD = 1
 };
 
-struct NdtResult
-{
-  geometry_msgs::msg::Pose pose;
-  float transform_probability;
-  float nearest_voxel_transformation_likelihood;
-  int iteration_num;
-  std::vector<geometry_msgs::msg::Pose> transformation_array;
-};
-
 template <typename PointSource, typename PointTarget>
-std::shared_ptr<NormalDistributionsTransformBase<PointSource, PointTarget>> get_ndt(
+std::shared_ptr<NormalDistributionsTransformBase<PointSource, PointTarget>> getNDT(
   const NDTImplementType & ndt_mode)
 {
   std::shared_ptr<NormalDistributionsTransformBase<PointSource, PointTarget>> ndt_ptr;
@@ -116,59 +107,40 @@ public:
   NDTScanMatcher();
 
 private:
-  void service_ndt_align(
+  void serviceNDTAlign(
     const tier4_localization_msgs::srv::PoseWithCovarianceStamped::Request::SharedPtr req,
     tier4_localization_msgs::srv::PoseWithCovarianceStamped::Response::SharedPtr res);
 
-  void callback_map_points(sensor_msgs::msg::PointCloud2::ConstSharedPtr pointcloud2_msg_ptr);
-  void callback_sensor_points(sensor_msgs::msg::PointCloud2::ConstSharedPtr pointcloud2_msg_ptr);
-  void callback_initial_pose(
+  void callbackMapPoints(sensor_msgs::msg::PointCloud2::ConstSharedPtr pointcloud2_msg_ptr);
+  void callbackSensorPoints(sensor_msgs::msg::PointCloud2::ConstSharedPtr pointcloud2_msg_ptr);
+  void callbackInitialPose(
     geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose_conv_msg_ptr);
-  void callback_regularization_pose(
+  void callbackRegularizationPose(
     geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose_conv_msg_ptr);
 
-  NdtResult align(const geometry_msgs::msg::Pose & initial_pose_msg);
-  geometry_msgs::msg::PoseWithCovarianceStamped align_using_monte_carlo(
+  geometry_msgs::msg::PoseWithCovarianceStamped alignUsingMonteCarlo(
     const std::shared_ptr<NormalDistributionsTransformBase<PointSource, PointTarget>> & ndt_ptr,
     const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_with_cov);
 
-  void transform_sensor_measurement(
-    const std::string source_frame, const std::string target_frame,
-    const pcl::shared_ptr<pcl::PointCloud<PointSource>> sensor_points_input_ptr,
-    pcl::shared_ptr<pcl::PointCloud<PointSource>> sensor_points_output_ptr);
-  void update_transforms();
+  void updateTransforms();
 
-  void publish_tf(
-    const rclcpp::Time & sensor_ros_time, const geometry_msgs::msg::Pose & result_pose_msg);
-  void publish_pose(
-    const rclcpp::Time & sensor_ros_time, const geometry_msgs::msg::Pose & result_pose_msg,
-    const bool is_converged);
-  void publish_point_cloud(
-    const rclcpp::Time & sensor_ros_time, const std::string & frame_id,
-    const std::shared_ptr<const pcl::PointCloud<PointSource>> & sensor_points_mapTF_ptr);
-  void publish_marker(
-    const rclcpp::Time & sensor_ros_time, const std::vector<geometry_msgs::msg::Pose> & pose_array);
-  void publish_initial_to_result_distances(
-    const rclcpp::Time & sensor_ros_msg, const geometry_msgs::msg::Pose & result_pose_msg,
-    const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_cov_msg,
-    const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_old_msg,
-    const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_new_msg);
-
-  bool get_transform(
+  void publishTF(
+    const std::string & child_frame_id, const geometry_msgs::msg::PoseStamped & pose_msg);
+  bool getTransform(
     const std::string & target_frame, const std::string & source_frame,
     const geometry_msgs::msg::TransformStamped::SharedPtr & transform_stamped_ptr);
 
-  bool validate_num_iteration(const int iter_num, const int max_iter_num);
-  bool validate_score(
-    const double score, const double score_threshold, const std::string score_name);
-  bool validate_converged_param(
-    const double & transform_probability, const double & nearest_voxel_transformation_likelihood);
+  bool validateTimeStampDifference(
+    const rclcpp::Time & target_time, const rclcpp::Time & reference_time,
+    const double time_tolerance_sec);
+  bool validatePositionDifference(
+    const geometry_msgs::msg::Point & target_point,
+    const geometry_msgs::msg::Point & reference_point, const double distance_tolerance_m_);
 
-  std::optional<Eigen::Matrix4f> interpolate_regularization_pose(
+  std::optional<Eigen::Matrix4f> interpolateRegularizationPose(
     const rclcpp::Time & sensor_ros_time);
-  void add_regularization_pose(const rclcpp::Time & sensor_ros_time);
 
-  void timer_diagnostic();
+  void timerDiagnostic();
 
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr initial_pose_sub_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr map_points_sub_;
@@ -225,7 +197,7 @@ private:
 
   std::deque<geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr>
     initial_pose_msg_ptr_array_;
-  std::mutex ndt_ptr_mtx_;
+  std::mutex ndt_map_mtx_;
   std::mutex initial_pose_array_mtx_;
 
   OMPParams omp_params_;

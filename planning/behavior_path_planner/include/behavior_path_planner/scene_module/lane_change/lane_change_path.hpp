@@ -16,7 +16,6 @@
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__LANE_CHANGE_PATH_HPP_
 
 #include "behavior_path_planner/scene_module/utils/path_shifter.hpp"
-#include "behavior_path_planner/turn_signal_decider.hpp"
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 
@@ -25,7 +24,6 @@
 namespace behavior_path_planner
 {
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
-using behavior_path_planner::TurnSignalInfo;
 struct LaneChangePath
 {
   PathWithLaneId path;
@@ -34,7 +32,6 @@ struct LaneChangePath
   double acceleration{0.0};
   double preparation_length{0.0};
   double lane_change_length{0.0};
-  TurnSignalInfo turn_signal_info;
 };
 using LaneChangePaths = std::vector<LaneChangePath>;
 

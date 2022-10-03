@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "mission_planner/mission_planner_lanelet2.hpp"
+#include "mission_planner_lanelet2.hpp"
 
-#include "mission_planner/utility_functions.hpp"
+#include "utility_functions.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
@@ -119,7 +119,7 @@ double project_goal_to_map(
 namespace mission_planner
 {
 MissionPlannerLanelet2::MissionPlannerLanelet2(const rclcpp::NodeOptions & node_options)
-: MissionPlannerInterface("mission_planner", node_options), is_graph_ready_(false)
+: MissionPlanner("mission_planner", node_options), is_graph_ready_(false)
 {
   using std::placeholders::_1;
   map_subscriber_ = create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
@@ -192,17 +192,19 @@ void MissionPlannerLanelet2::visualize_route(
   marker_publisher_->publish(route_marker_array);
 }
 
-bool MissionPlannerLanelet2::is_goal_valid(const geometry_msgs::msg::Pose & goal_pose) const
+bool MissionPlannerLanelet2::is_goal_valid() const
 {
   lanelet::Lanelet closest_lanelet;
-  if (!lanelet::utils::query::getClosestLanelet(road_lanelets_, goal_pose, &closest_lanelet)) {
+  if (!lanelet::utils::query::getClosestLanelet(
+        road_lanelets_, goal_pose_.pose, &closest_lanelet)) {
     return false;
   }
-  const auto goal_lanelet_pt = lanelet::utils::conversion::toLaneletPoint(goal_pose.position);
+  const auto goal_lanelet_pt = lanelet::utils::conversion::toLaneletPoint(goal_pose_.pose.position);
 
   if (is_in_lane(closest_lanelet, goal_lanelet_pt)) {
-    const auto lane_yaw = lanelet::utils::getLaneletAngle(closest_lanelet, goal_pose.position);
-    const auto goal_yaw = tf2::getYaw(goal_pose.orientation);
+    const auto lane_yaw =
+      lanelet::utils::getLaneletAngle(closest_lanelet, goal_pose_.pose.position);
+    const auto goal_yaw = tf2::getYaw(goal_pose_.pose.orientation);
     const auto angle_diff = normalize_radian(lane_yaw - goal_yaw);
 
     constexpr double th_angle = M_PI / 4;
@@ -227,14 +229,14 @@ bool MissionPlannerLanelet2::is_goal_valid(const geometry_msgs::msg::Pose & goal
   // check if goal is in shoulder lanelet
   lanelet::Lanelet closest_shoulder_lanelet;
   if (!lanelet::utils::query::getClosestLanelet(
-        shoulder_lanelets_, goal_pose, &closest_shoulder_lanelet)) {
+        shoulder_lanelets_, goal_pose_.pose, &closest_shoulder_lanelet)) {
     return false;
   }
   // check if goal pose is in shoulder lane
   if (is_in_lane(closest_shoulder_lanelet, goal_lanelet_pt)) {
     const auto lane_yaw =
-      lanelet::utils::getLaneletAngle(closest_shoulder_lanelet, goal_pose.position);
-    const auto goal_yaw = tf2::getYaw(goal_pose.orientation);
+      lanelet::utils::getLaneletAngle(closest_shoulder_lanelet, goal_pose_.pose.position);
+    const auto goal_yaw = tf2::getYaw(goal_pose_.pose.orientation);
     const auto angle_diff = normalize_radian(lane_yaw - goal_yaw);
 
     constexpr double th_angle = M_PI / 4;
@@ -246,34 +248,31 @@ bool MissionPlannerLanelet2::is_goal_valid(const geometry_msgs::msg::Pose & goal
   return false;
 }
 
-autoware_auto_planning_msgs::msg::HADMapRoute MissionPlannerLanelet2::plan_route(
-  const std::vector<geometry_msgs::msg::Pose> & check_points)
+autoware_auto_planning_msgs::msg::HADMapRoute MissionPlannerLanelet2::plan_route()
 {
-  const auto & goal_pose = check_points.back();
-
   std::stringstream log_ss;
-  for (const auto & check_point : check_points) {
-    log_ss << "x: " << check_point.position.x << " "
-           << "y: " << check_point.position.y << std::endl;
+  for (const auto & checkpoint : checkpoints_) {
+    log_ss << "x: " << checkpoint.pose.position.x << " "
+           << "y: " << checkpoint.pose.position.y << std::endl;
   }
   RCLCPP_INFO_STREAM(
-    get_logger(), "start planning route with check_points: " << std::endl
-                                                             << log_ss.str());
+    get_logger(), "start planning route with checkpoints: " << std::endl
+                                                            << log_ss.str());
 
   autoware_auto_planning_msgs::msg::HADMapRoute route_msg;
   RouteSections route_sections;
 
-  if (!is_goal_valid(goal_pose)) {
+  if (!is_goal_valid()) {
     RCLCPP_WARN(get_logger(), "Goal is not valid! Please check position and angle of goal_pose");
     return route_msg;
   }
 
-  for (std::size_t i = 1; i < check_points.size(); i++) {
-    const auto start_check_point = check_points.at(i - 1);
-    const auto goal_check_point = check_points.at(i);
+  for (std::size_t i = 1; i < checkpoints_.size(); i++) {
+    const auto start_checkpoint = checkpoints_.at(i - 1);
+    const auto goal_checkpoint = checkpoints_.at(i);
     lanelet::ConstLanelets path_lanelets;
     if (!route_handler_.planPathLaneletsBetweenCheckpoints(
-          start_check_point, goal_check_point, &path_lanelets)) {
+          start_checkpoint.pose, goal_checkpoint.pose, &path_lanelets)) {
       return route_msg;
     }
     // create local route sections
@@ -287,30 +286,25 @@ autoware_auto_planning_msgs::msg::HADMapRoute MissionPlannerLanelet2::plan_route
     return route_msg;
   }
 
-  const auto refined_goal_pose = refine_goal_height(route_sections, goal_pose);
+  refine_goal_height(route_sections);
 
   route_msg.header.stamp = this->now();
   route_msg.header.frame_id = map_frame_;
   route_msg.segments = route_sections;
-  route_msg.goal_pose = refined_goal_pose;
+  route_msg.goal_pose = goal_pose_.pose;
 
-  RCLCPP_DEBUG(get_logger(), "Goal Pose Z : %lf", refined_goal_pose.position.z);
+  RCLCPP_DEBUG(get_logger(), "Goal Pose Z : %lf", goal_pose_.pose.position.z);
   return route_msg;
 }
 
-geometry_msgs::msg::Pose MissionPlannerLanelet2::refine_goal_height(
-  const RouteSections & route_sections, const geometry_msgs::msg::Pose & goal_pose) const
+void MissionPlannerLanelet2::refine_goal_height(const RouteSections & route_sections)
 {
   const auto goal_lane_id = route_sections.back().preferred_primitive_id;
-  const lanelet::Lanelet goal_lanelet = lanelet_map_ptr_->laneletLayer.get(goal_lane_id);
-  const auto goal_lanelet_pt = lanelet::utils::conversion::toLaneletPoint(goal_pose.position);
-
-  const double goal_height = project_goal_to_map(goal_lanelet, goal_lanelet_pt);
-
-  geometry_msgs::msg::Pose refined_goal_pose = goal_pose;
-  refined_goal_pose.position.z = goal_height;
-
-  return refined_goal_pose;
+  lanelet::Lanelet goal_lanelet = lanelet_map_ptr_->laneletLayer.get(goal_lane_id);
+  const auto goal_lanelet_pt = lanelet::utils::conversion::toLaneletPoint(goal_pose_.pose.position);
+  double goal_height = project_goal_to_map(goal_lanelet, goal_lanelet_pt);
+  goal_pose_.pose.position.z = goal_height;
+  checkpoints_.back().pose.position.z = goal_height;
 }
 
 }  // namespace mission_planner

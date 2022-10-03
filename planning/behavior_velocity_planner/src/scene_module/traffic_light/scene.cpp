@@ -370,7 +370,8 @@ bool TrafficLightModule::isPassthrough(const double & signed_arc_length) const
 bool TrafficLightModule::isTrafficSignalStop(
   const autoware_auto_perception_msgs::msg::TrafficSignal & tl_state) const
 {
-  if (hasTrafficLightColor(tl_state, autoware_auto_perception_msgs::msg::TrafficLight::GREEN)) {
+  if (hasTrafficLightCircleColor(
+        tl_state, autoware_auto_perception_msgs::msg::TrafficLight::GREEN)) {
     return false;
   }
 
@@ -467,15 +468,16 @@ autoware_auto_planning_msgs::msg::PathWithLaneId TrafficLightModule::insertStopP
   modified_path = input;
 
   // Create stop pose
-  size_t target_velocity_point_idx = std::max(static_cast<int>(insert_target_point_idx - 1), 0);
+  const int target_velocity_point_idx = std::max(static_cast<int>(insert_target_point_idx - 1), 0);
   auto target_point_with_lane_id = modified_path.points.at(target_velocity_point_idx);
   target_point_with_lane_id.point.pose.position.x = target_point.x();
   target_point_with_lane_id.point.pose.position.y = target_point.y();
   target_point_with_lane_id.point.longitudinal_velocity_mps = 0.0;
+  debug_data_.stop_poses.push_back(target_point_with_lane_id.point.pose);
 
   // Insert stop pose into path or replace with zero velocity
-  planning_utils::insertVelocity(
-    modified_path, target_point_with_lane_id, 0.0, target_velocity_point_idx);
+  size_t insert_index = insert_target_point_idx;
+  planning_utils::insertVelocity(modified_path, target_point_with_lane_id, 0.0, insert_index);
   if (static_cast<int>(target_velocity_point_idx) < first_stop_path_point_index_) {
     first_stop_path_point_index_ = static_cast<int>(target_velocity_point_idx);
     debug_data_.first_stop_pose = target_point_with_lane_id.point.pose;
@@ -492,13 +494,16 @@ autoware_auto_planning_msgs::msg::PathWithLaneId TrafficLightModule::insertStopP
   return modified_path;
 }
 
-bool TrafficLightModule::hasTrafficLightColor(
+bool TrafficLightModule::hasTrafficLightCircleColor(
   const autoware_auto_perception_msgs::msg::TrafficSignal & tl_state,
   const uint8_t & lamp_color) const
 {
-  const auto it_lamp = std::find_if(
-    tl_state.lights.begin(), tl_state.lights.end(),
-    [&lamp_color](const auto & x) { return x.color == lamp_color; });
+  using autoware_auto_perception_msgs::msg::TrafficLight;
+
+  const auto it_lamp =
+    std::find_if(tl_state.lights.begin(), tl_state.lights.end(), [&lamp_color](const auto & x) {
+      return x.shape == TrafficLight::CIRCLE && x.color == lamp_color;
+    });
 
   return it_lamp != tl_state.lights.end();
 }
