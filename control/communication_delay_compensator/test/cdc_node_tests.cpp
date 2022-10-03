@@ -91,7 +91,7 @@ TEST_F(FakeNodeFixture, doesPublishCorrectiveRefs)
 
   test_utils::spinWhile(node);
   test_utils::waitForMessage(node, this, is_comp_msg_received, std::chrono::seconds{2LL}, false);
-
+  test_utils::spinWhile(node);
   //  auto time_passed{std::chrono::milliseconds{0LL}};
   //  const auto dt{std::chrono::milliseconds{30LL}};
   //
@@ -198,6 +198,4 @@ TEST_F(FakeNodeFixture, isLPVobserverStable)
       }
     }
   }
-
-  ASSERT_TRUE(true);
 }
