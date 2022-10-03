@@ -19,6 +19,65 @@
 namespace rtc_replayer
 {
 
+std::string getModuleStatus(const uint8_t module_staus)
+{
+  switch (module_staus) {
+    case Command::ACTIVATE: {
+      return "execute";
+    }
+    case Command::DEACTIVATE: {
+      return "wait";
+    }
+  }
+  return "none";
+}
+
+std::string getModuleName(const uint8_t module_type)
+{
+  switch (module_type) {
+    case Module::LANE_CHANGE_LEFT: {
+      return "lane_change_left";
+    }
+    case Module::LANE_CHANGE_RIGHT: {
+      return "lane_change_right";
+    }
+    case Module::AVOIDANCE_LEFT: {
+      return "avoidance_left";
+    }
+    case Module::AVOIDANCE_RIGHT: {
+      return "avoidance_right";
+    }
+    case Module::PULL_OVER: {
+      return "pull_over";
+    }
+    case Module::PULL_OUT: {
+      return "pull_out";
+    }
+    case Module::TRAFFIC_LIGHT: {
+      return "traffic_light";
+    }
+    case Module::INTERSECTION: {
+      return "intersection";
+    }
+    case Module::CROSSWALK: {
+      return "crosswalk";
+    }
+    case Module::BLIND_SPOT: {
+      return "blind_spot";
+    }
+    case Module::DETECTION_AREA: {
+      return "detection_area";
+    }
+    case Module::NO_STOPPING_AREA: {
+      return "no_stopping_area";
+    }
+    case Module::OCCLUSION_SPOT: {
+      return "occlusion_spot";
+    }
+  }
+  return "NONE";
+}
+
 std::string to_string(const unique_identifier_msgs::msg::UUID & uuid)
 {
   std::stringstream ss;
@@ -55,6 +114,8 @@ void RTCReplayerNode::onCooperateStatus(const CooperateStatusArray::ConstSharedP
       cc.module = status.module;
       request->stamp = status.stamp;
       request->commands.emplace_back(cc);
+      std::cerr << "uuid: " << uuid_string << " module: " << getModuleName(cc.module)
+                << " status: " << getModuleStatus(cmd_status) << std::endl;
     }
     // post process
     prev_cmd_status_[uuid_string] = cmd_status;

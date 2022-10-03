@@ -17,8 +17,8 @@
 
 #include "rclcpp/rclcpp.hpp"
 
+#include "tier4_rtc_msgs/msg/command.hpp"
 #include "tier4_rtc_msgs/msg/cooperate_command.hpp"
-#include "tier4_rtc_msgs/msg/cooperate_response.hpp"
 #include "tier4_rtc_msgs/msg/cooperate_status.hpp"
 #include "tier4_rtc_msgs/msg/cooperate_status_array.hpp"
 #include "tier4_rtc_msgs/srv/cooperate_commands.hpp"
@@ -33,6 +33,7 @@ namespace rtc_replayer
 {
 using std::placeholders::_1;
 using std::placeholders::_2;
+using tier4_rtc_msgs::msg::Command;
 using tier4_rtc_msgs::msg::CooperateCommand;
 using tier4_rtc_msgs::msg::CooperateStatus;
 using tier4_rtc_msgs::msg::CooperateStatusArray;
@@ -46,10 +47,8 @@ public:
 private:
   void onCooperateStatus(const CooperateStatusArray::ConstSharedPtr msg);
 
-  std::vector<CooperateCommand> cooperate_commands_;
   rclcpp::Subscription<CooperateStatusArray>::SharedPtr sub_statuses_;
   rclcpp::Client<CooperateCommands>::SharedPtr client_rtc_commands_;
-  std::string module_name_;
   std::map<std::string, uint8_t> prev_cmd_status_;
 };
 
