@@ -114,7 +114,7 @@ void RTCReplayerNode::onCooperateStatus(const CooperateStatusArray::ConstSharedP
       cc.module = status.module;
       request->stamp = status.stamp;
       request->commands.emplace_back(cc);
-      std::cerr << "uuid: " << uuid_string << " module: " << getModuleName(cc.module)
+      std::cerr << "uuid: " << uuid_string << " module: " << getModuleName(cc.module.type)
                 << " status: " << getModuleStatus(cmd_status) << std::endl;
     }
     // post process
