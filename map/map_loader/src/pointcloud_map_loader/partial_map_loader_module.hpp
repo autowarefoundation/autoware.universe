@@ -32,7 +32,6 @@
 #include <string>
 #include <vector>
 
-
 class PartialMapLoaderModule
 {
   using LoadPartialPointCloudMap = autoware_map_msgs::srv::LoadPartialPointCloudMap;
@@ -48,9 +47,11 @@ private:
   rclcpp::Service<LoadPartialPointCloudMap>::SharedPtr load_partial_pcd_maps_service_;
 
   bool onServiceLoadPartialPointCloudMap(
-    LoadPartialPointCloudMap::Request::SharedPtr req, LoadPartialPointCloudMap::Response::SharedPtr res);
+    LoadPartialPointCloudMap::Request::SharedPtr req,
+    LoadPartialPointCloudMap::Response::SharedPtr res);
   void partialAreaLoad(
-    const autoware_map_msgs::msg::AreaInfo area, LoadPartialPointCloudMap::Response::SharedPtr & response) const;
+    const autoware_map_msgs::msg::AreaInfo area,
+    LoadPartialPointCloudMap::Response::SharedPtr & response) const;
   void loadPointCloudMapWithID(
     const std::string path, const std::string map_id,
     autoware_map_msgs::msg::PointCloudMapWithID & pcd_map_with_id) const;

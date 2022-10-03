@@ -47,7 +47,8 @@ private:
   rclcpp::Service<LoadDifferentialPointCloudMap>::SharedPtr load_differential_pcd_maps_service_;
 
   bool onServiceLoadDifferentialPointCloudMap(
-    LoadDifferentialPointCloudMap::Request::SharedPtr req, LoadDifferentialPointCloudMap::Response::SharedPtr res);
+    LoadDifferentialPointCloudMap::Request::SharedPtr req,
+    LoadDifferentialPointCloudMap::Response::SharedPtr res);
   void differentialAreaLoad(
     const autoware_map_msgs::msg::AreaInfo area_info,
     const std::vector<std::string> already_loaded_ids,
