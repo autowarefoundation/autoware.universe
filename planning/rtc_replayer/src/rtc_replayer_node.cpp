@@ -19,9 +19,9 @@
 namespace rtc_replayer
 {
 
-std::string getModuleStatus(const uint8_t module_staus)
+std::string getModuleStatus(const uint8_t module_status)
 {
-  switch (module_staus) {
+  switch (module_status) {
     case Command::ACTIVATE: {
       return "execute";
     }
