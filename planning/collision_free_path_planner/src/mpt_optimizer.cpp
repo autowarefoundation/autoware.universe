@@ -165,15 +165,15 @@ double calcOverlappedBoundsSignedLength(
 }
 
 geometry_msgs::msg::Pose calcVehiclePose(
-  const ReferencePoint & ref_point, const double lat_error, const double yaw_error,
-  const double offset)
+  const ReferencePoint & ref_point, const KinematicState deviation, const double offset)
 {
   geometry_msgs::msg::Pose pose;
-  pose.position.x = ref_point.p.x - std::sin(ref_point.yaw) * lat_error -
-                    std::cos(ref_point.yaw + yaw_error) * offset;
-  pose.position.y = ref_point.p.y + std::cos(ref_point.yaw) * lat_error -
-                    std::sin(ref_point.yaw + yaw_error) * offset;
-  pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(ref_point.yaw + yaw_error);
+  pose.position.x = ref_point.p.x - std::sin(ref_point.yaw) * deviation.lat -
+                    std::cos(ref_point.yaw + deviation.yaw) * offset;
+  pose.position.y = ref_point.p.y + std::cos(ref_point.yaw) * deviation.lat -
+                    std::sin(ref_point.yaw + deviation.yaw) * offset;
+
+  pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(ref_point.yaw + deviation.yaw);
 
   return pose;
 }
@@ -988,15 +988,10 @@ std::vector<TrajectoryPoint> MPTOptimizer::extractMPTFixedPoints(
   const std::vector<ReferencePoint> & ref_points) const
 {
   std::vector<TrajectoryPoint> mpt_fixed_traj;
-  for (size_t i = 0; i < ref_points.size(); ++i) {
-    const auto & ref_point = ref_points.at(i);
-
+  for (const auto & ref_point : ref_points) {
     if (ref_point.fix_kinematic_state) {
-      const double lat_error = ref_point.fix_kinematic_state.get()(0);
-      const double yaw_error = ref_point.fix_kinematic_state.get()(1);
-
       TrajectoryPoint fixed_traj_point;
-      fixed_traj_point.pose = calcVehiclePose(ref_point, lat_error, yaw_error, 0.0);
+      fixed_traj_point.pose = calcVehiclePose(ref_point, ref_point.fix_kinematic_state.get(), 0.0);
       mpt_fixed_traj.push_back(fixed_traj_point);
     }
   }
@@ -1189,8 +1184,8 @@ boost::optional<Eigen::VectorXd> MPTOptimizer::executeOptimization(
         prev_trajs->ref_points, ref_front_point, ego_nearest_param_.dist_threshold,
         ego_nearest_param_.yaw_threshold);
 
-      u0(0) = prev_trajs->ref_points.at(seg_idx).optimized_kinematic_state(0);
-      u0(1) = prev_trajs->ref_points.at(seg_idx).optimized_kinematic_state(1);
+      u0(0) = prev_trajs->ref_points.at(seg_idx).optimized_kinematic_state.lat;
+      u0(1) = prev_trajs->ref_points.at(seg_idx).optimized_kinematic_state.yaw;
 
       // set steer angle
       for (size_t i = 0; i + 1 < N_ref; ++i) {
@@ -1546,9 +1541,9 @@ MPTOptimizer::ConstraintMatrix MPTOptimizer::getConstraintMatrix(
       A.block(A_rows_end, 0, D_x, D_v) = mpt_mat.Bex.block(i * D_x, 0, D_x, D_v);
 
       lb.segment(A_rows_end, D_x) =
-        ref_points[i].fix_kinematic_state.get() - mpt_mat.Wex.segment(i * D_x, D_x);
+        ref_points[i].fix_kinematic_state->toEigenVector() - mpt_mat.Wex.segment(i * D_x, D_x);
       ub.segment(A_rows_end, D_x) =
-        ref_points[i].fix_kinematic_state.get() - mpt_mat.Wex.segment(i * D_x, D_x);
+        ref_points[i].fix_kinematic_state->toEigenVector() - mpt_mat.Wex.segment(i * D_x, D_x);
 
       A_rows_end += D_x;
     }
@@ -1584,32 +1579,30 @@ std::vector<TrajectoryPoint> MPTOptimizer::getMPTPoints(
 
   stop_watch_.tic(__func__);
 
-  std::vector<double> lat_error_vec;
-  std::vector<double> yaw_error_vec;
-  for (size_t i = 0; i < fixed_ref_points.size(); ++i) {
-    const auto & ref_point = fixed_ref_points.at(i);
-
-    lat_error_vec.push_back(ref_point.fix_kinematic_state.get()(0));
-    yaw_error_vec.push_back(ref_point.fix_kinematic_state.get()(1));
+  std::vector<KinematicState> deviation_vec;
+  for (const auto & ref_point : fixed_ref_points) {
+    deviation_vec.push_back(ref_point.fix_kinematic_state.get());
   }
 
   const size_t N_kinematic_state = vehicle_model_ptr_->getDimX();
   const Eigen::VectorXd Xex = mpt_mat.Bex * Uex + mpt_mat.Wex;
 
   for (size_t i = 0; i < non_fixed_ref_points.size(); ++i) {
-    lat_error_vec.push_back(Xex(i * N_kinematic_state));
-    yaw_error_vec.push_back(Xex(i * N_kinematic_state + 1));
+    const double lat = Xex(i * N_kinematic_state);
+    const double yaw = Xex(i * N_kinematic_state + 1);
+    deviation_vec.push_back(KinematicState{lat, yaw});
   }
 
   // calculate trajectory from optimization result
   std::vector<TrajectoryPoint> traj_points;
-  debug_data.vehicle_circles_pose.resize(lat_error_vec.size());
-  for (size_t i = 0; i < lat_error_vec.size(); ++i) {
+  debug_data.vehicle_circles_pose.resize(deviation_vec.size());
+  for (size_t i = 0; i < deviation_vec.size(); ++i) {
     auto & ref_point = (i < fixed_ref_points.size())
                          ? fixed_ref_points.at(i)
                          : non_fixed_ref_points.at(i - fixed_ref_points.size());
-    const double lat_error = lat_error_vec.at(i);
-    const double yaw_error = yaw_error_vec.at(i);
+    const auto & deviation = deviation_vec.at(i);
+    const double lat_error = deviation.lat;
+    const double yaw_error = deviation.yaw;
 
     geometry_msgs::msg::Pose ref_pose;
     ref_pose.position = ref_point.p;
@@ -1617,8 +1610,8 @@ std::vector<TrajectoryPoint> MPTOptimizer::getMPTPoints(
     debug_data.mpt_ref_poses.push_back(ref_pose);
     debug_data.lateral_errors.push_back(lat_error);
 
-    ref_point.optimized_kinematic_state << lat_error_vec.at(i), yaw_error_vec.at(i);
-    if (i >= fixed_ref_points.size()) {
+    ref_point.optimized_kinematic_state = KinematicState{lat_error, yaw_error};
+    if (fixed_ref_points.size() <= i) {
       const size_t j = i - fixed_ref_points.size();
       if (j == N_ref - 1) {
         ref_point.optimized_input = 0.0;
@@ -1628,7 +1621,7 @@ std::vector<TrajectoryPoint> MPTOptimizer::getMPTPoints(
     }
 
     TrajectoryPoint traj_point;
-    traj_point.pose = calcVehiclePose(ref_point, lat_error, yaw_error, 0.0);
+    traj_point.pose = calcVehiclePose(ref_point, deviation, 0.0);
 
     traj_points.push_back(traj_point);
 

@@ -118,6 +118,14 @@ struct Bounds
   }
 };
 
+struct KinematicState
+{
+  double lat{0.0};
+  double yaw{0.0};
+
+  Eigen::Vector2d toEigenVector() const { return Eigen::Vector2d{lat, yaw}; }
+};
+
 struct ReferencePoint
 {
   // these should be calcualted when initialization
@@ -134,9 +142,12 @@ struct ReferencePoint
   // NOTE: fix_kinematic_state is used for two purposes
   //       one is fixing points around ego for stability
   //       second is fixing current ego pose when no velocity for planning from ego pose
-  boost::optional<Eigen::Vector2d> fix_kinematic_state{boost::none};
+  boost::optional<KinematicState> fix_kinematic_state{boost::none};
+  // boost::optional<Eigen::Vector2d> fix_kinematic_state{boost::none};
+
   bool plan_from_ego{false};  // TODO(murooka) previously why true by default?
-  Eigen::Vector2d optimized_kinematic_state{};
+  // Eigen::Vector2d optimized_kinematic_state{};
+  KinematicState optimized_kinematic_state{};
   double optimized_input{};
 
   //
