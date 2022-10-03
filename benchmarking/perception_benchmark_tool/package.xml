@@ -19,12 +19,12 @@
 
   <depend>cv_bridge</depend>
   <depend>geometry_msgs</depend>
+  <depend>python3-waymo-open-dataset-tf-2-6-0-pip</depend>
   <depend>std_srvs</depend>
   <depend>tf2</depend>
   <depend>tf2_geometry_msgs</depend>
   <depend>tf2_ros</depend>
   <depend>tf_transformations</depend>
-  <depend>python3-waymo-open-dataset-tf-2-6-0-pip</depend>
 
   <export>
     <build_type>ament_python</build_type>
