@@ -115,6 +115,7 @@ TEST_F(FakeNodeFixture, isLPVobserverStable)
 
   // Node
   std::shared_ptr<CommDelayNode> node = makeComDelayComNode();
+  auto dob_observer_model_ptr = node->getDOBmodel();
 
   auto const &lyap_mats = node->getLyapMatrices();
   auto const &num_of_mats = lyap_mats.vXs.size();
@@ -125,6 +126,72 @@ TEST_F(FakeNodeFixture, isLPVobserverStable)
     auto Yl = lyap_mats.vYs[k];
     ns_eigen_utils::printEigenMat(Xl, "Xl " + std::to_string(k));
     ns_eigen_utils::printEigenMat(Yl, "Yl " + std::to_string(k));
+  }
+
+  // Generate grids for ey, eyaw and steering angle.
+  auto ey_grid = ns_utils::linspace(-0.8, 0.8, 5);
+
+  double eyaw_max = ns_utils::deg2rad(30.);
+  auto eyaw_grid = ns_utils::linspace(-eyaw_max, eyaw_max, 5);
+
+  auto kappa_grid = ns_utils::linspace(-0.08, 0.08, 3);  // curvature
+  double steering = 0.;
+
+  double vmax = 20.; // m/s
+  auto vx_grid = ns_utils::linspace(1., 20., 4);  // curvature
+
+  for (double const &ey : ey_grid)
+  {
+    for (double const &eyaw : eyaw_grid)
+    {
+      for (double const &k : kappa_grid)
+      {
+        for (double const &vx : vx_grid)
+        {
+
+          observers::state_vector_vehicle_t y_current_measurements;
+          y_current_measurements << ey, eyaw, steering;
+
+          // Update the observer model.
+          dob_observer_model_ptr->updateStateSpace(vx, steering);
+
+          // Update the initial states
+          dob_observer_model_ptr->updateInitialStates(ey, eyaw, steering, vx, k);
+
+          // Evaluate the LPV parameters.
+          observers::state_vector_observer_t thetas{observers::state_vector_observer_t::Zero()};
+          dob_observer_model_ptr->evaluateNonlinearTermsForLyap(thetas, y_current_measurements);
+
+          ns_eigen_utils::printEigenMat(thetas, "Nonlinear terms of the LPV model : ");
+
+          // Compute the observer gains.
+          // Compute the parametric lyapunov matrices.
+          auto Xc = lyap_mats.vXs.back();  // X0, Y0 are stored at the end.
+          auto Yc = lyap_mats.vYs.back();
+
+          observers::measurement_matrix_observer_t Lobs_; // observer gain matrix
+
+          // P(th) = P0 + th1*P1 + ...
+          for (size_t j = 0; j < lyap_mats.vXs.size() - 1; ++j)
+          {
+            Xc += thetas(static_cast<Eigen::Index>(j)) * lyap_mats.vXs[j];
+            Yc += thetas(static_cast<Eigen::Index>(j)) * lyap_mats.vYs[j];
+          }
+
+          // Compute the observer  gain matrix.
+          Lobs_ = Yc * Xc.inverse();
+          ns_eigen_utils::printEigenMat(Lobs_, "Observer gain matrix : ");
+
+          // Get Ad and Cd to compute a closed loop system matrix.
+          auto Ad = dob_observer_model_ptr->Ad();
+          auto Cd = dob_observer_model_ptr->Cd();
+
+          ns_eigen_utils::printEigenMat(Ad, "Ad matrix : ");
+          ns_eigen_utils::printEigenMat(Cd, "Cd matrix : ");
+
+        }
+      }
+    }
   }
 
   ASSERT_TRUE(true);

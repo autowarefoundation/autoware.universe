@@ -122,6 +122,11 @@ class CommunicationDelayCompensatorNode : public rclcpp::Node
     return dob_lateral.getLyapMatrices();
   }
 
+  auto getDOBmodel()
+  {
+    return dist_td_obs_vehicle_model_ptr_;
+  }
+
   /**
    * @brief destructor
    */

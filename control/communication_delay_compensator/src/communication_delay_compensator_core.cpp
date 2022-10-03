@@ -451,7 +451,7 @@ void LateralDisturbanceCompensator::estimateVehicleStates(
   const float64_t &current_steering_cmd)
 {
   /**
-  *   xbar = A @ x0_hat + B * u_prev + Bwd + Lobs*(yhat - ytime_delay_compensator)
+  *   xbar = A @ x0_hat + B * u_prev + Bwd + Lobs*(yhat - ymeasured)
   *   ybar = C @ xbar + D * uk_qf
   *
   * x and y belong to the VEHICLE state observer.

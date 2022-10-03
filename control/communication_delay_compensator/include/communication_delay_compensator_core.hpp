@@ -214,7 +214,7 @@ class LateralDisturbanceCompensator
 
   void resetInitialState();
 
-  sLyapMatrixVecs getLyapMatrices() const
+  [[nodiscard]] sLyapMatrixVecs getLyapMatrices() const
   {
     sLyapMatrixVecs lyap_mats;
     lyap_mats.vXs = vXs_;

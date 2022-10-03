@@ -106,6 +106,16 @@ class LinearVehicleModelsBase
    * */
   void getObservedValues_y(state_vector_vehicle_t &y);
 
+  Atype Ad() const
+  {
+    return Ad_;
+  }
+
+  Ctype Cd() const
+  {
+    return Cd_;
+  }
+
  protected:
   bool are_initial_states_set_{false};
   float64_t wheelbase_{2.74};
