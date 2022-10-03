@@ -18,11 +18,6 @@
 #include "collision_free_path_planner/common_structs.hpp"
 #include "tier4_autoware_utils/system/stop_watch.hpp"
 
-#include "autoware_auto_perception_msgs/msg/predicted_object.hpp"
-#include "autoware_auto_planning_msgs/msg/path.hpp"
-#include "autoware_auto_planning_msgs/msg/path_point.hpp"
-#include "nav_msgs/msg/occupancy_grid.hpp"
-
 #include "boost/optional.hpp"
 
 #include <algorithm>
@@ -36,9 +31,8 @@ class CostmapGenerator
 {
 public:
   CVMaps getMaps(
-    const bool enable_avoidance, const autoware_auto_planning_msgs::msg::Path & path,
-    const std::vector<autoware_auto_perception_msgs::msg::PredictedObject> & objects,
-    const TrajectoryParam & traj_param, DebugData & debug_data);
+    const PlannerData & planner_data, const TrajectoryParam & traj_param,
+    DebugData & debug_data) const;
 
 private:
   mutable tier4_autoware_utils::StopWatch<

@@ -21,13 +21,6 @@
 #include "osqp_interface/osqp_interface.hpp"
 #include "tier4_autoware_utils/system/stop_watch.hpp"
 
-#include "autoware_auto_planning_msgs/msg/path.hpp"
-#include "autoware_auto_planning_msgs/msg/path_point.hpp"
-#include "autoware_auto_planning_msgs/msg/trajectory.hpp"
-#include "geometry_msgs/msg/point.hpp"
-#include "geometry_msgs/msg/pose.hpp"
-#include "nav_msgs/msg/map_meta_data.hpp"
-
 #include "boost/optional.hpp"
 
 #include <memory>
@@ -55,11 +48,14 @@ public:
 
   EBPathOptimizer(
     rclcpp::Node * node, const bool enable_debug_info, const EgoNearestParam ego_nearest_param,
-    const TrajectoryParam & traj_param, const EBParam & eb_param);
+    const TrajectoryParam & traj_param);
 
   boost::optional<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>> getEBTrajectory(
     const PlannerData & planner_data,
     const std::shared_ptr<std::vector<TrajectoryPoint>> prev_eb_traj, DebugData & debug_data);
+
+  void reset(const bool enable_debug_info, const TrajectoryParam & traj_param);
+  void onParam(const std::vector<rclcpp::Parameter> & parameters);
 
 private:
   struct CandidatePoints
@@ -70,11 +66,10 @@ private:
     int end_path_idx;
   };
 
-  const bool enable_debug_info_;
+  bool enable_debug_info_;
   EgoNearestParam ego_nearest_param_;
-  const QPParam qp_param_;
-  const TrajectoryParam traj_param_;
-  const EBParam eb_param_;
+  TrajectoryParam traj_param_;
+  EBParam eb_param_;
 
   std::unique_ptr<autoware::common::osqp::OSQPInterface> osqp_solver_ptr_;
 
@@ -85,6 +80,8 @@ private:
   mutable tier4_autoware_utils::StopWatch<
     std::chrono::milliseconds, std::chrono::microseconds, std::chrono::steady_clock>
     stop_watch_;
+
+  void initializeEBParam(rclcpp::Node * node);
 
   std::tuple<std::vector<PathPoint>, size_t> getPaddedPathPoints(
     const std::vector<PathPoint> & path_points);

@@ -146,11 +146,14 @@ bool isAvoidingObject(
 }  // namespace
 
 CVMaps CostmapGenerator::getMaps(
-  const bool enable_avoidance, const autoware_auto_planning_msgs::msg::Path & path,
-  const std::vector<autoware_auto_perception_msgs::msg::PredictedObject> & objects,
-  const TrajectoryParam & traj_param, DebugData & debug_data)
+  const PlannerData & planner_data, const TrajectoryParam & traj_param,
+  DebugData & debug_data) const
 {
   stop_watch_.tic(__func__);
+
+  const bool enable_avoidance = planner_data.enable_avoidance;
+  const auto & path = planner_data.path;
+  const auto & objects = planner_data.objects;
 
   // make cv_maps
   CVMaps cv_maps;

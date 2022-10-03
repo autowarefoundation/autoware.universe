@@ -21,11 +21,6 @@
 #include "rclcpp/rclcpp.hpp"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
-#include "autoware_auto_perception_msgs/msg/predicted_object.hpp"
-#include "autoware_auto_planning_msgs/msg/path.hpp"
-#include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"
-#include "nav_msgs/msg/map_meta_data.hpp"
-
 #include <boost/optional.hpp>
 
 #include <memory>
@@ -161,18 +156,12 @@ struct DebugData
   SequentialBoundsCandidates sequential_bounds_candidates;
 };
 
-struct Trajectories
-{
-  std::vector<TrajectoryPoint> smoothed_trajectory;
-  std::vector<ReferencePoint> mpt_ref_points;
-  std::vector<TrajectoryPoint> model_predictive_trajectory;
-};
-
 struct TrajectoryParam
 {
   // output
-  double output_delta_arc_length;
   double output_traj_length;
+  double output_delta_arc_length;
+  double output_backward_traj_length;
 
   bool is_avoiding_unknown;
   bool is_avoiding_car;
@@ -191,14 +180,10 @@ struct TrajectoryParam
 
   double forward_fixing_min_distance;
   double forward_fixing_min_time;
-  double output_backward_traj_length;
   double max_avoiding_ego_velocity_ms;
   double max_avoiding_objects_velocity_ms;
   double center_line_width;
   double acceleration_for_non_deceleration_range;
-
-  double ego_nearest_dist_threshold;
-  double ego_nearest_yaw_threshold;
 };
 
 struct EgoNearestParam

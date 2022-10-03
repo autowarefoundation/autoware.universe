@@ -20,28 +20,14 @@
 #include "collision_free_path_planner/mpt_optimizer.hpp"
 #include "collision_free_path_planner/replan_checker.hpp"
 #include "collision_free_path_planner/type_alias.hpp"
-#include "motion_utils/trajectory/trajectory.hpp"
+#include "motion_utils/motion_utils.hpp"
 #include "opencv2/core.hpp"
 #include "rclcpp/clock.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "tier4_autoware_utils/ros/self_pose_listener.hpp"
-#include "tier4_autoware_utils/system/stop_watch.hpp"
+#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
 
-#include "autoware_auto_perception_msgs/msg/predicted_objects.hpp"
-#include "autoware_auto_planning_msgs/msg/path.hpp"
-#include "autoware_auto_planning_msgs/msg/path_point.hpp"
-#include "autoware_auto_planning_msgs/msg/trajectory.hpp"
-#include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"
-#include "geometry_msgs/msg/point.hpp"
-#include "geometry_msgs/msg/pose.hpp"
-#include "geometry_msgs/msg/twist.hpp"
-#include "geometry_msgs/msg/twist_stamped.hpp"
-#include "nav_msgs/msg/map_meta_data.hpp"
-#include "nav_msgs/msg/occupancy_grid.hpp"
-#include "nav_msgs/msg/odometry.hpp"
 #include "tier4_debug_msgs/msg/string_stamped.hpp"
-#include "tier4_planning_msgs/msg/enable_avoidance.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
 
 #include "boost/optional.hpp"
@@ -186,9 +172,9 @@ private:
   bool enable_reset_prev_optimization_;
 
   // core algorithm
-  std::unique_ptr<CostmapGenerator> costmap_generator_ptr_;
-  std::unique_ptr<EBPathOptimizer> eb_path_optimizer_ptr_;
-  std::unique_ptr<MPTOptimizer> mpt_optimizer_ptr_;
+  std::shared_ptr<CostmapGenerator> costmap_generator_ptr_;
+  std::shared_ptr<EBPathOptimizer> eb_path_optimizer_ptr_;
+  std::shared_ptr<MPTOptimizer> mpt_optimizer_ptr_;
   std::shared_ptr<ReplanChecker> replan_checker_;
 
   // params
@@ -204,8 +190,8 @@ private:
     stop_watch_;
 
   // variables for subscribers
-  std::unique_ptr<geometry_msgs::msg::TwistStamped> current_twist_ptr_;
-  std::unique_ptr<PredictedObjects> objects_ptr_;
+  std::shared_ptr<geometry_msgs::msg::TwistStamped> current_twist_ptr_;
+  std::shared_ptr<PredictedObjects> objects_ptr_;
 
   // variables for previous information
   std::shared_ptr<std::vector<TrajectoryPoint>> prev_mpt_traj_ptr_;
@@ -285,10 +271,8 @@ private:
 
   void publishDebugDataInMain(const Path & path) const;
 
-  void logWarnThrottle(const int duration_sec, const char * msg)
-  {
-    RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), duration_sec, msg);
-  }
+  void logInfo(const int duration_sec, const char * msg);
+  void logWarnThrottle(const int duration_sec, const char * msg);
 };
 }  // namespace collision_free_path_planner
 

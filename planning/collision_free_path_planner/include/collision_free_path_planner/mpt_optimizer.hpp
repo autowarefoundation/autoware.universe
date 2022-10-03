@@ -48,13 +48,8 @@
 #include "gtest/gtest.h"
 #include "interpolation/linear_interpolation.hpp"
 #include "osqp_interface/osqp_interface.hpp"
-#include "tier4_autoware_utils/system/stop_watch.hpp"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
-
-#include "autoware_auto_planning_msgs/msg/path_point.hpp"
-#include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"
-#include "nav_msgs/msg/map_meta_data.hpp"
 
 #include "boost/optional.hpp"
 

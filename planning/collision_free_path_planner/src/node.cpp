@@ -18,22 +18,10 @@
 #include "collision_free_path_planner/utils/cv_utils.hpp"
 #include "collision_free_path_planner/utils/utils.hpp"
 #include "interpolation/spline_interpolation_points_2d.hpp"
-#include "motion_utils/motion_utils.hpp"
 #include "rclcpp/time.hpp"
-#include "tf2/utils.h"
-#include "tier4_autoware_utils/ros/update_param.hpp"
 
-#include "geometry_msgs/msg/transform_stamped.hpp"
-#include "geometry_msgs/msg/twist_stamped.hpp"
-#include "std_msgs/msg/bool.hpp"
-#include "visualization_msgs/msg/marker_array.hpp"
-
-#include <algorithm>
 #include <chrono>
 #include <limits>
-#include <memory>
-#include <string>
-#include <vector>
 
 namespace collision_free_path_planner
 {
@@ -91,16 +79,13 @@ template <>
   return resampled_traj_points;
 }
 
-std::vector<TrajectoryPoint> concatTrajectory(
-  const std::vector<TrajectoryPoint> & prev_traj_points,
-  const std::vector<TrajectoryPoint> & next_traj_points)
+template <class T>
+std::vector<T> concatVectors(const std::vector<T> & prev_vector, const std::vector<T> & next_vector)
 {
-  std::vector<TrajectoryPoint> concatenated_traj_points;
-  concatenated_traj_points.insert(
-    concatenated_traj_points.end(), prev_traj_points.begin(), prev_traj_points.end());
-  concatenated_traj_points.insert(
-    concatenated_traj_points.end(), next_traj_points.begin(), next_traj_points.end());
-  return concatenated_traj_points;
+  std::vector<T> concatenated_vector;
+  concatenated_vector.insert(concatenated_vector.end(), prev_vector.begin(), prev_vector.end());
+  concatenated_vector.insert(concatenated_vector.end(), next_vector.begin(), next_vector.end());
+  return concatenated_vector;
 }
 }  // namespace
 
@@ -218,50 +203,20 @@ CollisionFreePathPlanner::CollisionFreePathPlanner(const rclcpp::NodeOptions & n
       declare_parameter<bool>("object.avoiding_object_type.pedestrian", true);
     traj_param_.is_avoiding_animal =
       declare_parameter<bool>("object.avoiding_object_type.animal", true);
-
-    // TODO(murooka) remove this after refactoring EB
-    traj_param_.ego_nearest_dist_threshold = ego_nearest_param_.dist_threshold;
-    traj_param_.ego_nearest_yaw_threshold = ego_nearest_param_.yaw_threshold;
-  }
-
-  {  // elastic band parameter
-    eb_param_ = EBParam{};
-
-    // common
-    eb_param_.num_joint_buffer_points =
-      declare_parameter<int>("advanced.eb.common.num_joint_buffer_points");
-    eb_param_.num_offset_for_begin_idx =
-      declare_parameter<int>("advanced.eb.common.num_offset_for_begin_idx");
-    eb_param_.delta_arc_length_for_eb =
-      declare_parameter<double>("advanced.eb.common.delta_arc_length_for_eb");
-    eb_param_.num_sampling_points_for_eb =
-      declare_parameter<int>("advanced.eb.common.num_sampling_points_for_eb");
-
-    // clearance
-    eb_param_.clearance_for_straight_line =
-      declare_parameter<double>("advanced.eb.clearance.clearance_for_straight_line");
-    eb_param_.clearance_for_joint =
-      declare_parameter<double>("advanced.eb.clearance.clearance_for_joint");
-    eb_param_.clearance_for_only_smoothing =
-      declare_parameter<double>("advanced.eb.clearance.clearance_for_only_smoothing");
-
-    // qp
-    eb_param_.qp_param.max_iteration = declare_parameter<int>("advanced.eb.qp.max_iteration");
-    eb_param_.qp_param.eps_abs = declare_parameter<double>("advanced.eb.qp.eps_abs");
-    eb_param_.qp_param.eps_rel = declare_parameter<double>("advanced.eb.qp.eps_rel");
-
-    // other
-    eb_param_.clearance_for_fixing = 0.0;
   }
 
   // TODO(murooka) tune this param when avoiding with collision_free_path_planner
   traj_param_.center_line_width = vehicle_info_.vehicle_width_m;
 
-  mpt_optimizer_ptr_ = std::make_unique<MPTOptimizer>(
-    this, enable_debug_info_, ego_nearest_param_, vehicle_info_, traj_param_);
-  resetPlanning();
-
+  // create core algorithms
   replan_checker_ = std::make_shared<ReplanChecker>(*this, ego_nearest_param_);
+  costmap_generator_ptr_ = std::make_shared<CostmapGenerator>();
+  eb_path_optimizer_ptr_ =
+    std::make_shared<EBPathOptimizer>(this, enable_debug_info_, ego_nearest_param_, traj_param_);
+  mpt_optimizer_ptr_ = std::make_shared<MPTOptimizer>(
+    this, enable_debug_info_, ego_nearest_param_, vehicle_info_, traj_param_);
+
+  resetPlanning();
 
   // set parameter callback
   //! NOTE: This function must be called after algorithms (e.g. mpt_optimizer) are initialized.
@@ -345,44 +300,15 @@ rcl_interfaces::msg::SetParametersResult CollisionFreePathPlanner::onParam(
       parameters, "object.avoiding_object_type.animal", traj_param_.is_avoiding_animal);
   }
 
-  {  // elastic band parameter
-    // common
-    updateParam<int>(
-      parameters, "advanced.eb.common.num_joint_buffer_points", eb_param_.num_joint_buffer_points);
-    updateParam<int>(
-      parameters, "advanced.eb.common.num_offset_for_begin_idx",
-      eb_param_.num_offset_for_begin_idx);
-    updateParam<double>(
-      parameters, "advanced.eb.common.delta_arc_length_for_eb", eb_param_.delta_arc_length_for_eb);
-    updateParam<int>(
-      parameters, "advanced.eb.common.num_sampling_points_for_eb",
-      eb_param_.num_sampling_points_for_eb);
-
-    // clearance
-    updateParam<double>(
-      parameters, "advanced.eb.clearance.clearance_for_straight_line",
-      eb_param_.clearance_for_straight_line);
-    updateParam<double>(
-      parameters, "advanced.eb.clearance.clearance_for_joint", eb_param_.clearance_for_joint);
-    updateParam<double>(
-      parameters, "advanced.eb.clearance.clearance_for_only_smoothing",
-      eb_param_.clearance_for_only_smoothing);
-
-    // qp
-    updateParam<int>(parameters, "advanced.eb.qp.max_iteration", eb_param_.qp_param.max_iteration);
-    updateParam<double>(parameters, "advanced.eb.qp.eps_abs", eb_param_.qp_param.eps_abs);
-    updateParam<double>(parameters, "advanced.eb.qp.eps_rel", eb_param_.qp_param.eps_rel);
-  }
-
-  // mpt
+  // core algorithms
+  replan_checker_->onParam(parameters);
+  eb_path_optimizer_ptr_->onParam(parameters);
   mpt_optimizer_ptr_->onParam(parameters);
 
   // initialize planners
   resetPlanning();
 
   // update parameters for replan checker
-  replan_checker_->onParam(parameters);
-
   rcl_interfaces::msg::SetParametersResult result;
   result.successful = true;
   result.reason = "success";
@@ -391,25 +317,22 @@ rcl_interfaces::msg::SetParametersResult CollisionFreePathPlanner::onParam(
 
 void CollisionFreePathPlanner::onOdometry(const Odometry::SharedPtr msg)
 {
-  current_twist_ptr_ = std::make_unique<geometry_msgs::msg::TwistStamped>();
+  current_twist_ptr_ = std::make_shared<geometry_msgs::msg::TwistStamped>();
   current_twist_ptr_->header = msg->header;
   current_twist_ptr_->twist = msg->twist.twist;
 }
 
 void CollisionFreePathPlanner::onObjects(const PredictedObjects::SharedPtr msg)
 {
-  objects_ptr_ = std::make_unique<PredictedObjects>(*msg);
+  objects_ptr_ = std::make_shared<PredictedObjects>(*msg);
 }
 
 void CollisionFreePathPlanner::resetPlanning()
 {
   RCLCPP_WARN(get_logger(), "[CollisionFreePathPlanner] Reset planning");
 
-  costmap_generator_ptr_ = std::make_unique<CostmapGenerator>();
-
-  eb_path_optimizer_ptr_ = std::make_unique<EBPathOptimizer>(
-    this, enable_debug_info_, ego_nearest_param_, traj_param_, eb_param_);
-
+  // NOTE: no need to update costmap_generator_ptr_ and replan_checker_
+  eb_path_optimizer_ptr_->reset(enable_debug_info_, traj_param_);
   mpt_optimizer_ptr_->reset(enable_debug_info_, traj_param_);
 
   resetPrevOptimization();
@@ -535,8 +458,7 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::generateOptimizedTrajecto
   }
 
   // create clearance maps
-  const CVMaps cv_maps = costmap_generator_ptr_->getMaps(
-    enable_avoidance_, path, planner_data.objects, traj_param_, debug_data_);
+  const CVMaps cv_maps = costmap_generator_ptr_->getMaps(planner_data, traj_param_, debug_data_);
 
   // calculate trajectory with EB and MPT
   auto mpt_traj = optimizeTrajectory(planner_data, cv_maps);
@@ -752,7 +674,7 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::generatePostProcessedTraj
 
   /*
   // concat trajectories
-  const auto full_traj_points = concatTrajectory(optimized_traj_points, extended_traj_points);
+  const auto full_traj_points = concatVectors(optimized_traj_points, extended_traj_points);
 
   // NOTE: fine_traj_points has no velocity information
   const auto fine_traj_points = generateFineTrajectoryPoints(path_points, full_traj_points);
@@ -948,6 +870,16 @@ void CollisionFreePathPlanner::publishDebugDataInMain(const Path & path) const
   }
 
   debug_data_.msg_stream << "  " << __func__ << ":= " << stop_watch_.toc(__func__) << " [ms]\n";
+}
+
+void CollisionFreePathPlanner::logInfo(const int duration_sec, const char * msg)
+{
+  RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), duration_sec, msg);
+}
+
+void CollisionFreePathPlanner::logWarnThrottle(const int duration_sec, const char * msg)
+{
+  RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), duration_sec, msg);
 }
 }  // namespace collision_free_path_planner
 

@@ -21,16 +21,12 @@
 #include "tf2/utils.h"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
-#include "nav_msgs/msg/map_meta_data.hpp"
-
 #include "boost/optional.hpp"
 
 #include <algorithm>
 #include <chrono>
 #include <limits>
-#include <memory>
 #include <tuple>
-#include <vector>
 
 namespace collision_free_path_planner
 {

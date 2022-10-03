@@ -18,13 +18,9 @@
 #include "collision_free_path_planner/utils/utils.hpp"
 #include "motion_utils/motion_utils.hpp"
 
-#include "geometry_msgs/msg/vector3.hpp"
-
 #include <algorithm>
 #include <chrono>
 #include <limits>
-#include <memory>
-#include <vector>
 
 namespace
 {
@@ -88,28 +84,109 @@ namespace collision_free_path_planner
 {
 EBPathOptimizer::EBPathOptimizer(
   rclcpp::Node * node, const bool enable_debug_info, const EgoNearestParam ego_nearest_param,
-  const TrajectoryParam & traj_param, const EBParam & eb_param)
+  const TrajectoryParam & traj_param)
 : enable_debug_info_(enable_debug_info),
   ego_nearest_param_(ego_nearest_param),
-  qp_param_(eb_param.qp_param),
-  traj_param_(traj_param),
-  eb_param_(eb_param)
+  traj_param_(traj_param)
 {
-  const Eigen::MatrixXd p = makePMatrix(eb_param_.num_sampling_points_for_eb);
-  const Eigen::MatrixXd a = makeAMatrix(eb_param_.num_sampling_points_for_eb);
+  // eb param
+  initializeEBParam(node);
 
-  const int num_points = eb_param_.num_sampling_points_for_eb;
-  const std::vector<double> q(num_points * 2, 0.0);
-  const std::vector<double> lower_bound(num_points * 2, 0.0);
-  const std::vector<double> upper_bound(num_points * 2, 0.0);
+  {  // osqp_solver_ptr_
+    const auto & qp_param = eb_param_.qp_param;
 
-  osqp_solver_ptr_ = std::make_unique<autoware::common::osqp::OSQPInterface>(
-    p, a, q, lower_bound, upper_bound, qp_param_.eps_abs);
-  osqp_solver_ptr_->updateEpsRel(qp_param_.eps_rel);
-  osqp_solver_ptr_->updateMaxIter(qp_param_.max_iteration);
+    const Eigen::MatrixXd p = makePMatrix(eb_param_.num_sampling_points_for_eb);
+    const Eigen::MatrixXd a = makeAMatrix(eb_param_.num_sampling_points_for_eb);
+
+    const int num_points = eb_param_.num_sampling_points_for_eb;
+    const std::vector<double> q(num_points * 2, 0.0);
+    const std::vector<double> lower_bound(num_points * 2, 0.0);
+    const std::vector<double> upper_bound(num_points * 2, 0.0);
+
+    osqp_solver_ptr_ = std::make_unique<autoware::common::osqp::OSQPInterface>(
+      p, a, q, lower_bound, upper_bound, qp_param.eps_abs);
+    osqp_solver_ptr_->updateEpsRel(qp_param.eps_rel);
+    osqp_solver_ptr_->updateMaxIter(qp_param.max_iteration);
+  }
 
   // publisher
   debug_eb_traj_pub_ = node->create_publisher<Trajectory>("~/debug/eb_trajectory", 1);
+}
+
+void EBPathOptimizer::initializeEBParam(rclcpp::Node * node)
+{
+  eb_param_ = EBParam{};
+
+  {  // common
+    eb_param_.num_joint_buffer_points =
+      node->declare_parameter<int>("advanced.eb.common.num_joint_buffer_points");
+    eb_param_.num_offset_for_begin_idx =
+      node->declare_parameter<int>("advanced.eb.common.num_offset_for_begin_idx");
+    eb_param_.delta_arc_length_for_eb =
+      node->declare_parameter<double>("advanced.eb.common.delta_arc_length_for_eb");
+    eb_param_.num_sampling_points_for_eb =
+      node->declare_parameter<int>("advanced.eb.common.num_sampling_points_for_eb");
+  }
+
+  {  // clearance
+    eb_param_.clearance_for_straight_line =
+      node->declare_parameter<double>("advanced.eb.clearance.clearance_for_straight_line");
+    eb_param_.clearance_for_joint =
+      node->declare_parameter<double>("advanced.eb.clearance.clearance_for_joint");
+    eb_param_.clearance_for_only_smoothing =
+      node->declare_parameter<double>("advanced.eb.clearance.clearance_for_only_smoothing");
+  }
+
+  {  // qp
+    eb_param_.qp_param.max_iteration = node->declare_parameter<int>("advanced.eb.qp.max_iteration");
+    eb_param_.qp_param.eps_abs = node->declare_parameter<double>("advanced.eb.qp.eps_abs");
+    eb_param_.qp_param.eps_rel = node->declare_parameter<double>("advanced.eb.qp.eps_rel");
+  }
+
+  {  // other
+    eb_param_.clearance_for_fixing = 0.0;
+  }
+}
+
+void EBPathOptimizer::reset(const bool enable_debug_info, const TrajectoryParam & traj_param)
+{
+  enable_debug_info_ = enable_debug_info;
+  traj_param_ = traj_param;
+}
+
+void EBPathOptimizer::onParam(const std::vector<rclcpp::Parameter> & parameters)
+{
+  using tier4_autoware_utils::updateParam;
+
+  {  // common
+    updateParam<int>(
+      parameters, "advanced.eb.common.num_joint_buffer_points", eb_param_.num_joint_buffer_points);
+    updateParam<int>(
+      parameters, "advanced.eb.common.num_offset_for_begin_idx",
+      eb_param_.num_offset_for_begin_idx);
+    updateParam<double>(
+      parameters, "advanced.eb.common.delta_arc_length_for_eb", eb_param_.delta_arc_length_for_eb);
+    updateParam<int>(
+      parameters, "advanced.eb.common.num_sampling_points_for_eb",
+      eb_param_.num_sampling_points_for_eb);
+  }
+
+  {  // clearance
+    updateParam<double>(
+      parameters, "advanced.eb.clearance.clearance_for_straight_line",
+      eb_param_.clearance_for_straight_line);
+    updateParam<double>(
+      parameters, "advanced.eb.clearance.clearance_for_joint", eb_param_.clearance_for_joint);
+    updateParam<double>(
+      parameters, "advanced.eb.clearance.clearance_for_only_smoothing",
+      eb_param_.clearance_for_only_smoothing);
+  }
+
+  {  // qp
+    updateParam<int>(parameters, "advanced.eb.qp.max_iteration", eb_param_.qp_param.max_iteration);
+    updateParam<double>(parameters, "advanced.eb.qp.eps_abs", eb_param_.qp_param.eps_abs);
+    updateParam<double>(parameters, "advanced.eb.qp.eps_rel", eb_param_.qp_param.eps_rel);
+  }
 }
 
 boost::optional<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>
@@ -321,8 +398,9 @@ boost::optional<std::vector<double>> EBPathOptimizer::optimizeTrajectory(
   stop_watch_.tic(__func__);
 
   // update QP param
-  osqp_solver_ptr_->updateEpsRel(qp_param_.eps_rel);
-  osqp_solver_ptr_->updateEpsAbs(qp_param_.eps_abs);
+  const auto & qp_param = eb_param_.qp_param;
+  osqp_solver_ptr_->updateEpsRel(qp_param.eps_rel);
+  osqp_solver_ptr_->updateEpsAbs(qp_param.eps_abs);
 
   // solve QP
   const auto result = osqp_solver_ptr_->optimize();

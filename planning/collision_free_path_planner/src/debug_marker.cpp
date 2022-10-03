@@ -19,7 +19,6 @@
 #include "collision_free_path_planner/utils/utils.hpp"
 #include "tf2/utils.h"
 
-#include "visualization_msgs/msg/marker.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
 
 #include <string>
