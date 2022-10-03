@@ -474,7 +474,7 @@ void MPTOptimizer::reset(const bool enable_debug_info, const TrajectoryParam & t
 {
   enable_debug_info_ = enable_debug_info;
   traj_param_ = traj_param;
-  prev_valid_mpt_ref_points_ = nullptr;
+  prev_ref_points_ptr_ = nullptr;
 }
 
 void MPTOptimizer::onParam(const std::vector<rclcpp::Parameter> & parameters)
@@ -633,7 +633,7 @@ void MPTOptimizer::onParam(const std::vector<rclcpp::Parameter> & parameters)
 
 boost::optional<MPTTrajs> MPTOptimizer::getModelPredictiveTrajectory(
   const PlannerData & planner_data, const std::vector<TrajectoryPoint> & smoothed_points,
-  const std::shared_ptr<MPTTrajs> prev_trajs, const CVMaps & maps, DebugData & debug_data)
+  const CVMaps & maps, DebugData & debug_data)
 {
   stop_watch_.tic(__func__);
 
@@ -657,7 +657,7 @@ boost::optional<MPTTrajs> MPTOptimizer::getModelPredictiveTrajectory(
 
   // calculate reference points
   std::vector<ReferencePoint> full_ref_points =
-    getReferencePoints(planner_data, smoothed_points, prev_trajs, maps, debug_data);
+    getReferencePoints(planner_data, smoothed_points, maps, debug_data);
   if (full_ref_points.empty()) {
     printInfo("return boost::none since ref_points is empty");
     return boost::none;
@@ -697,7 +697,7 @@ boost::optional<MPTTrajs> MPTOptimizer::getModelPredictiveTrajectory(
   const auto val_matrix = generateValueMatrix(non_fixed_ref_points, path_points, debug_data);
 
   const auto optimized_control_variables = executeOptimization(
-    prev_trajs, p.enable_avoidance, mpt_matrix, val_matrix, non_fixed_ref_points, debug_data);
+    p.enable_avoidance, mpt_matrix, val_matrix, non_fixed_ref_points, debug_data);
   if (!optimized_control_variables) {
     printInfo("return boost::none since could not solve qp");
     return boost::none;
@@ -711,23 +711,20 @@ boost::optional<MPTTrajs> MPTOptimizer::getModelPredictiveTrajectory(
   full_optimized_ref_points.insert(
     full_optimized_ref_points.end(), non_fixed_ref_points.begin(), non_fixed_ref_points.end());
 
-  {  // extract only fixed points and publish
-    const auto mpt_fixed_traj = extractMPTFixedPoints(full_ref_points);
-    publishDebugData(p.path.header, full_optimized_ref_points, mpt_fixed_traj, mpt_points);
-  }
+  // publish
+  publishDebugTrajectories(p.path.header, full_optimized_ref_points, mpt_points);
 
   debug_data.msg_stream << "      " << __func__ << ":= " << stop_watch_.toc(__func__) << " [ms]\n";
 
   const auto mpt_trajs = MPTTrajs{full_optimized_ref_points, mpt_points};
-  prev_valid_mpt_ref_points_ =
-    std::make_shared<std::vector<ReferencePoint>>(full_optimized_ref_points);
+  prev_ref_points_ptr_ = std::make_shared<std::vector<ReferencePoint>>(full_optimized_ref_points);
 
   return mpt_trajs;
 }
 
 std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
   const PlannerData & planner_data, const std::vector<TrajectoryPoint> & smoothed_points,
-  const std::shared_ptr<MPTTrajs> prev_trajs, const CVMaps & maps, DebugData & debug_data) const
+  const CVMaps & maps, DebugData & debug_data) const
 {
   stop_watch_.tic(__func__);
 
@@ -767,12 +764,12 @@ std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
   calcFixedPoints(ref_points);
 
   // crop with margin
-  calcBounds(ref_points, p.enable_avoidance, p.ego_pose, maps, prev_trajs, debug_data);
+  calcBounds(ref_points, p.enable_avoidance, p.ego_pose, maps, debug_data);
   calcVehicleBounds(ref_points, maps, debug_data, p.enable_avoidance);
 
   // set extra information (alpha and has_object_collision)
   // NOTE: This must be after bounds calculation.
-  calcExtraPoints(ref_points, prev_trajs);
+  calcExtraPoints(ref_points);
 
   calcArcLength(ref_points);
 
@@ -814,12 +811,12 @@ std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
   }
 
   // set bounds information
-  calcBounds(ref_points, p.enable_avoidance, p.ego_pose, maps, prev_trajs, debug_data);
+  calcBounds(ref_points, p.enable_avoidance, p.ego_pose, maps, debug_data);
   calcVehicleBounds(ref_points, maps, debug_data, p.enable_avoidance);
 
   // set extra information (alpha and has_object_collision)
   // NOTE: This must be after bounds calculation.
-  calcExtraPoints(ref_points, prev_trajs);
+  calcExtraPoints(ref_points);
 
   const double ref_length = traj_param_.num_sampling_points * mpt_param_.delta_arc_length;
   ref_points = points_utils::clipForwardPoints(ref_points, 0, ref_length);
@@ -848,16 +845,15 @@ void MPTOptimizer::calcFixedPoints(std::vector<ReferencePoint> & ref_points) con
   }
   */
 
-  if (prev_valid_mpt_ref_points_) {
+  if (prev_ref_points_ptr_) {
     const size_t prev_ref_front_seg_idx = points_utils::findEgoSegmentIndex(
-      *prev_valid_mpt_ref_points_, tier4_autoware_utils::getPose(ref_points.front()),
-      ego_nearest_param_);
+      *prev_ref_points_ptr_, tier4_autoware_utils::getPose(ref_points.front()), ego_nearest_param_);
     const size_t prev_ref_front_point_idx = prev_ref_front_seg_idx;
 
     // TODO(murooka) check deviation
 
     const auto front_prev_ref_point =
-      prev_valid_mpt_ref_points_->at(prev_ref_front_point_idx);  // velocity is old
+      prev_ref_points_ptr_->at(prev_ref_front_point_idx);  // velocity is old
 
     // TODO(murooka) check smoothed_points fron is too close to front_ref_point
 
@@ -983,21 +979,6 @@ std::vector<ReferencePoint> MPTOptimizer::getFixedReferencePoints(
   return fixed_ref_points;
 }
 */
-
-std::vector<TrajectoryPoint> MPTOptimizer::extractMPTFixedPoints(
-  const std::vector<ReferencePoint> & ref_points) const
-{
-  std::vector<TrajectoryPoint> mpt_fixed_traj;
-  for (const auto & ref_point : ref_points) {
-    if (ref_point.fix_kinematic_state) {
-      TrajectoryPoint fixed_traj_point;
-      fixed_traj_point.pose = calcVehiclePose(ref_point, ref_point.fix_kinematic_state.get(), 0.0);
-      mpt_fixed_traj.push_back(fixed_traj_point);
-    }
-  }
-
-  return mpt_fixed_traj;
-}
 
 // predict equation: x = Bex u + Wex (u includes x_0)
 //                   NOTE: Originaly, x = A x_0 + B u + W.
@@ -1152,8 +1133,7 @@ MPTOptimizer::ValueMatrix MPTOptimizer::generateValueMatrix(
 }
 
 boost::optional<Eigen::VectorXd> MPTOptimizer::executeOptimization(
-  const std::shared_ptr<MPTTrajs> prev_trajs, const bool enable_avoidance,
-  const MPTMatrix & mpt_mat, const ValueMatrix & val_mat,
+  const bool enable_avoidance, const MPTMatrix & mpt_mat, const ValueMatrix & val_mat,
   const std::vector<ReferencePoint> & ref_points, DebugData & debug_data)
 {
   if (ref_points.empty()) {
@@ -1174,23 +1154,23 @@ boost::optional<Eigen::VectorXd> MPTOptimizer::executeOptimization(
   if (mpt_param_.enable_manual_warm_start) {
     const size_t D_x = vehicle_model_ptr_->getDimX();
 
-    if (prev_trajs && prev_trajs->ref_points.size() > 1) {
+    if (prev_ref_points_ptr_ && 1 < prev_ref_points_ptr_->size()) {
       geometry_msgs::msg::Pose ref_front_point;
       ref_front_point.position = ref_points.front().p;
       ref_front_point.orientation =
         tier4_autoware_utils::createQuaternionFromYaw(ref_points.front().yaw);
 
       const size_t seg_idx = findSoftNearestIndex(
-        prev_trajs->ref_points, ref_front_point, ego_nearest_param_.dist_threshold,
+        *prev_ref_points_ptr_, ref_front_point, ego_nearest_param_.dist_threshold,
         ego_nearest_param_.yaw_threshold);
 
-      u0(0) = prev_trajs->ref_points.at(seg_idx).optimized_kinematic_state.lat;
-      u0(1) = prev_trajs->ref_points.at(seg_idx).optimized_kinematic_state.yaw;
+      u0(0) = prev_ref_points_ptr_->at(seg_idx).optimized_kinematic_state.lat;
+      u0(1) = prev_ref_points_ptr_->at(seg_idx).optimized_kinematic_state.yaw;
 
       // set steer angle
       for (size_t i = 0; i + 1 < N_ref; ++i) {
-        const size_t prev_target_idx = std::min(seg_idx + i, prev_trajs->ref_points.size() - 1);
-        u0(D_x + i) = prev_trajs->ref_points.at(prev_target_idx).optimized_input;
+        const size_t prev_target_idx = std::min(seg_idx + i, prev_ref_points_ptr_->size() - 1);
+        u0(D_x + i) = prev_ref_points_ptr_->at(prev_target_idx).optimized_input;
       }
     }
   }
@@ -1721,8 +1701,7 @@ void MPTOptimizer::calcArcLength(std::vector<ReferencePoint> & ref_points) const
   }
 }
 
-void MPTOptimizer::calcExtraPoints(
-  std::vector<ReferencePoint> & ref_points, const std::shared_ptr<MPTTrajs> prev_trajs) const
+void MPTOptimizer::calcExtraPoints(std::vector<ReferencePoint> & ref_points) const
 {
   for (size_t i = 0; i < ref_points.size(); ++i) {
     // alpha
@@ -1757,18 +1736,16 @@ void MPTOptimizer::calcExtraPoints(
 
     // The point are considered to be near the object if nearest previous ref point is near the
     // object.
-    if (prev_trajs && !prev_trajs->ref_points.empty()) {
-      const auto & prev_ref_points = prev_trajs->ref_points;
-
+    if (prev_ref_points_ptr_ && prev_ref_points_ptr_->empty()) {
       const auto ref_points_with_yaw =
         points_utils::convertToPosesWithYawEstimation(points_utils::convertToPoints(ref_points));
       const size_t prev_idx = findSoftNearestIndex(
-        prev_ref_points, ref_points_with_yaw.at(i),
+        *prev_ref_points_ptr_, ref_points_with_yaw.at(i),
         traj_param_.delta_dist_threshold_for_closest_point,
         traj_param_.delta_yaw_threshold_for_closest_point);
       const double dist_to_nearest_prev_ref =
-        tier4_autoware_utils::calcDistance2d(prev_ref_points.at(prev_idx), ref_points.at(i));
-      if (dist_to_nearest_prev_ref < 1.0 && prev_ref_points.at(prev_idx).near_objects) {
+        tier4_autoware_utils::calcDistance2d(prev_ref_points_ptr_->at(prev_idx), ref_points.at(i));
+      if (dist_to_nearest_prev_ref < 1.0 && prev_ref_points_ptr_->at(prev_idx).near_objects) {
         ref_points.at(i).near_objects = true;
       }
     }
@@ -1796,8 +1773,7 @@ void MPTOptimizer::addSteerWeightR(
 
 void MPTOptimizer::calcBounds(
   std::vector<ReferencePoint> & ref_points, const bool enable_avoidance,
-  const geometry_msgs::msg::Pose & ego_pose, const CVMaps & maps,
-  const std::shared_ptr<MPTTrajs> prev_trajs, DebugData & debug_data) const
+  const geometry_msgs::msg::Pose & ego_pose, const CVMaps & maps, DebugData & debug_data) const
 {
   stop_watch_.tic(__func__);
 
@@ -1818,8 +1794,8 @@ void MPTOptimizer::calcBounds(
     // extract only continuous bounds;
     if (i == 0) {  // TODO(murooka) use previous bounds, not widest bounds
       const auto target_pos = [&]() {
-        if (prev_trajs && !prev_trajs->ref_points.empty()) {
-          return prev_trajs->ref_points.front().p;
+        if (prev_ref_points_ptr_ && !prev_ref_points_ptr_->empty()) {
+          return prev_ref_points_ptr_->front().p;
         }
         return ego_pose.position;
       }();
@@ -2145,11 +2121,12 @@ boost::optional<double> MPTOptimizer::getClearance(
   return clearance;
 }
 
-void MPTOptimizer::publishDebugData(
+// functions for debug publish
+void MPTOptimizer::publishDebugTrajectories(
   const std_msgs::msg::Header & header, const std::vector<ReferencePoint> & ref_points,
-  const std::vector<TrajectoryPoint> & mpt_fixed_traj_points,
-  const std::vector<TrajectoryPoint> & mpt_traj_points)
+  const std::vector<TrajectoryPoint> & mpt_traj_points) const
 {
+  const auto mpt_fixed_traj_points = extractMPTFixedPoints(ref_points);
   const auto mpt_fixed_traj = createTrajectory(mpt_fixed_traj_points, header);
   debug_mpt_fixed_traj_pub_->publish(mpt_fixed_traj);
 
@@ -2159,5 +2136,20 @@ void MPTOptimizer::publishDebugData(
 
   const auto mpt_traj = createTrajectory(mpt_traj_points, header);
   debug_mpt_traj_pub_->publish(mpt_traj);
+}
+
+std::vector<TrajectoryPoint> MPTOptimizer::extractMPTFixedPoints(
+  const std::vector<ReferencePoint> & ref_points) const
+{
+  std::vector<TrajectoryPoint> mpt_fixed_traj;
+  for (const auto & ref_point : ref_points) {
+    if (ref_point.fix_kinematic_state) {
+      TrajectoryPoint fixed_traj_point;
+      fixed_traj_point.pose = calcVehiclePose(ref_point, ref_point.fix_kinematic_state.get(), 0.0);
+      mpt_fixed_traj.push_back(fixed_traj_point);
+    }
+  }
+
+  return mpt_fixed_traj;
 }
 }  // namespace collision_free_path_planner

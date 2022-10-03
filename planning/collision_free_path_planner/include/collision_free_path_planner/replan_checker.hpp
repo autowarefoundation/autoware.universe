@@ -37,7 +37,7 @@ public:
   void onParam(const std::vector<rclcpp::Parameter> & parameters);
   bool isReplanRequired(
     const PlannerData & planner_data, const rclcpp::Time & current_time,
-    const std::shared_ptr<MPTTrajs> prev_mpt_trajs_ptr);
+    const std::shared_ptr<std::vector<TrajectoryPoint>> prev_mpt_traj_ptr);
   bool isResetOptimizationRequired();
 
 private:

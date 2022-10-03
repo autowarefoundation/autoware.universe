@@ -459,7 +459,7 @@ void CollisionFreePathPlanner::resetPlanning()
 void CollisionFreePathPlanner::resetPrevOptimization()
 {
   prev_eb_traj_ptr_ = nullptr;
-  prev_mpt_trajs_ptr_ = nullptr;
+  prev_mpt_traj_ptr_ = nullptr;
   eb_solved_count_ = 0;
 }
 
@@ -568,7 +568,7 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::generateOptimizedTrajecto
   // check if optimization is required or not.
   // NOTE: previous trajectories information will be reset in some cases.
   const bool is_replan_required =
-    replan_checker_->isReplanRequired(planner_data, now(), prev_mpt_trajs_ptr_);
+    replan_checker_->isReplanRequired(planner_data, now(), prev_mpt_traj_ptr_);
   if (!is_replan_required) {
     return getPrevOptimizedTrajectory(path.points);
   }
@@ -631,25 +631,21 @@ return eb_path_optimizer_ptr_->getEBTrajectory(planner_data, prev_eb_traj_ptr_, 
   if (eb_solved_count_ < 2) {
     eb_solved_count_++;
 
-    if (prev_mpt_trajs_ptr_) {
-      prev_mpt_trajs_ptr_->mpt.clear();
-      prev_mpt_trajs_ptr_->ref_points.clear();
+    if (prev_mpt_traj_ptr_) {
+      prev_mpt_traj_ptr_->clear();
     }
   }
 
   // MPT: optimize trajectory to be kinematically feasible and collision free
   const auto mpt_trajs = mpt_optimizer_ptr_->getModelPredictiveTrajectory(
-    planner_data, eb_traj.get(), prev_mpt_trajs_ptr_, cv_maps, debug_data_);
+    planner_data, eb_traj.get(), cv_maps, debug_data_);
   if (!mpt_trajs) {
     return getPrevOptimizedTrajectory(p.path.points);
   }
 
   // make prev trajectories
   prev_eb_traj_ptr_ = std::make_shared<std::vector<TrajectoryPoint>>(eb_traj.get());
-  prev_mpt_trajs_ptr_ = std::make_shared<MPTTrajs>(mpt_trajs.get());
-
-  // debug data
-  debug_data_.eb_traj = eb_traj.get();
+  prev_mpt_traj_ptr_ = std::make_shared<std::vector<TrajectoryPoint>>(mpt_trajs->mpt);
 
   debug_data_.msg_stream << "    " << __func__ << ":= " << stop_watch_.toc(__func__) << " [ms]\n";
 
@@ -659,8 +655,8 @@ return eb_path_optimizer_ptr_->getEBTrajectory(planner_data, prev_eb_traj_ptr_, 
 std::vector<TrajectoryPoint> CollisionFreePathPlanner::getPrevOptimizedTrajectory(
   const std::vector<PathPoint> & path_points) const
 {
-  if (prev_mpt_trajs_ptr_) {
-    return prev_mpt_trajs_ptr_->mpt;
+  if (prev_mpt_traj_ptr_) {
+    return *prev_mpt_traj_ptr_;
   }
   return points_utils::convertToTrajectoryPoints(path_points);
 }

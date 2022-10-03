@@ -133,20 +133,18 @@ struct ReferencePoint
   double yaw{0.0};
   double v{0.0};
 
+  // additional information
   double k{0.0};
   double delta_arc_length{0.0};
   double alpha{0.0};
   Bounds bounds{};
   bool near_objects{false};
+  bool plan_from_ego{false};  // TODO(murooka) previously why true by default?
 
   // NOTE: fix_kinematic_state is used for two purposes
   //       one is fixing points around ego for stability
   //       second is fixing current ego pose when no velocity for planning from ego pose
   boost::optional<KinematicState> fix_kinematic_state{boost::none};
-  // boost::optional<Eigen::Vector2d> fix_kinematic_state{boost::none};
-
-  bool plan_from_ego{false};  // TODO(murooka) previously why true by default?
-  // Eigen::Vector2d optimized_kinematic_state{};
   KinematicState optimized_kinematic_state{};
   double optimized_input{};
 
@@ -154,8 +152,8 @@ struct ReferencePoint
   std::vector<boost::optional<double>> beta{};
   VehicleBounds vehicle_bounds{};
 
-  // SequentialBoundsCandidates sequential_bounds_candidates;
-  std::vector<geometry_msgs::msg::Pose> vehicle_bounds_poses{};  // for debug visualization
+  // for debug visualization
+  std::vector<geometry_msgs::msg::Pose> vehicle_bounds_poses{};
 
   geometry_msgs::msg::Pose getPose() const
   {
@@ -183,7 +181,7 @@ public:
 
   boost::optional<MPTTrajs> getModelPredictiveTrajectory(
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & smoothed_points,
-    const std::shared_ptr<MPTTrajs> prev_trajs, const CVMaps & maps, DebugData & debug_data);
+    const CVMaps & maps, DebugData & debug_data);
 
   void reset(const bool enable_debug_info, const TrajectoryParam & traj_param);
   void onParam(const std::vector<rclcpp::Parameter> & parameters);
@@ -272,7 +270,7 @@ private:
   rclcpp::Publisher<Trajectory>::SharedPtr debug_mpt_ref_traj_pub_;
   rclcpp::Publisher<Trajectory>::SharedPtr debug_mpt_traj_pub_;
 
-  // parameter
+  // argument parameter
   bool enable_debug_info_;
   EgoNearestParam ego_nearest_param_;
   vehicle_info_util::VehicleInfo vehicle_info_;
@@ -280,20 +278,20 @@ private:
   MPTParam mpt_param_;
 
   autoware::common::osqp::OSQPInterface osqp_solver_;
+  std::unique_ptr<VehicleModelInterface> vehicle_model_ptr_;
 
   const double osqp_epsilon_ = 1.0e-3;
-  std::string vehicle_circle_method_;
   int mpt_visualize_sampling_num_;
 
   // vehicle circles info for for mpt constraints
+  std::string vehicle_circle_method_;
   int vehicle_circle_num_for_calculation_;
   std::vector<double> vehicle_circle_radius_ratios_;
 
-  std::unique_ptr<VehicleModelInterface> vehicle_model_ptr_;
-
+  // previous information
   int prev_mat_n = 0;
   int prev_mat_m = 0;
-  std::shared_ptr<std::vector<ReferencePoint>> prev_valid_mpt_ref_points_{nullptr};
+  std::shared_ptr<std::vector<ReferencePoint>> prev_ref_points_ptr_{nullptr};
 
   mutable tier4_autoware_utils::StopWatch<
     std::chrono::milliseconds, std::chrono::microseconds, std::chrono::steady_clock>
@@ -303,48 +301,33 @@ private:
 
   std::vector<ReferencePoint> getReferencePoints(
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & smoothed_points,
-    const std::shared_ptr<MPTTrajs> prev_trajs, const CVMaps & maps, DebugData & debug_data) const;
+    const CVMaps & maps, DebugData & debug_data) const;
 
   // void calcPlanningFromEgo(
   //   const geometry_msgs::msg::Pose & ego_pose, const double ego_vel,
   //   std::vector<ReferencePoint> & ref_points) const;
 
-  /*
-  std::vector<ReferencePoint> convertToReferencePoints(
-    const std::vector<TrajectoryPoint> & points,
-    const std::unique_ptr<Trajectories> & prev_mpt_points, const bool enable_avoidance,
-    const CVMaps & maps, DebugData & debug_data) const;
-  */
+  // pstd::vector<ReferencePoint> getFixedReferencePoints(
+  //   const geometry_msgs::msg::Pose & ego_pose, const double ego_vel,
+  //   const std::vector<TrajectoryPoint> & smoothed_points,
+  //   const std::shared_ptr<MPTTrajs> prev_trajs) const;
 
-  std::vector<ReferencePoint> getFixedReferencePoints(
-    const geometry_msgs::msg::Pose & ego_pose, const double ego_vel,
-    const std::vector<TrajectoryPoint> & smoothed_points,
-    const std::shared_ptr<MPTTrajs> prev_trajs) const;
-
+  // functions to update reference points
   void calcBounds(
     std::vector<ReferencePoint> & ref_points, const bool enable_avoidance,
-    const geometry_msgs::msg::Pose & ego_pose, const CVMaps & maps,
-    const std::shared_ptr<MPTTrajs> prev_trajs, DebugData & debug_data) const;
-
+    const geometry_msgs::msg::Pose & ego_pose, const CVMaps & maps, DebugData & debug_data) const;
   void calcVehicleBounds(
     std::vector<ReferencePoint> & ref_points, const CVMaps & maps, DebugData & debug_data,
     const bool enable_avoidance) const;
-
-  // void calcFixState(
-  // std::vector<ReferencePoint> & ref_points,
-  // const std::shared_ptr<MPTTrajs> prev_trajs) const;
-
   void calcOrientation(std::vector<ReferencePoint> & ref_points) const;
   void calcCurvature(std::vector<ReferencePoint> & ref_points) const;
   void calcFixedPoints(std::vector<ReferencePoint> & ref_points) const;
   void calcArcLength(std::vector<ReferencePoint> & ref_points) const;
-  void calcExtraPoints(
-    std::vector<ReferencePoint> & ref_points, const std::shared_ptr<MPTTrajs> prev_trajs) const;
+  void calcExtraPoints(std::vector<ReferencePoint> & ref_points) const;
 
   /*
-   * predict equation: Xec = Aex * x0 + Bex * Uex + Wex
-   * cost function: J = Xex' * Qex * Xex + (Uex - Uref)' * R1ex * (Uex - Uref_ex) + Uex' * R2ex *
-   * Uex Qex = diag([Q,Q,...]), R1ex = diag([R,R,...])
+   * state equation: X = A x0 + B * U + W = Bex U' + Wex
+   * cost function: J = X^t Q X + (U' - U'_ref)^t R (U' - U'_ref)
    */
   MPTMatrix generateMPTMatrix(
     const std::vector<ReferencePoint> & reference_points, DebugData & debug_data) const;
@@ -358,17 +341,13 @@ private:
     const std::vector<ReferencePoint> & ref_points) const;
 
   boost::optional<Eigen::VectorXd> executeOptimization(
-    const std::shared_ptr<MPTTrajs> prev_trajs, const bool enable_avoidance,
-    const MPTMatrix & mpt_mat, const ValueMatrix & obj_mat,
+    const bool enable_avoidance, const MPTMatrix & mpt_mat, const ValueMatrix & obj_mat,
     const std::vector<ReferencePoint> & ref_points, DebugData & debug_data);
 
   std::vector<TrajectoryPoint> getMPTPoints(
     std::vector<ReferencePoint> & fixed_ref_points,
     std::vector<ReferencePoint> & non_fixed_ref_points, const Eigen::VectorXd & Uex,
     const MPTMatrix & mpt_matrix, DebugData & debug_data);
-
-  std::vector<TrajectoryPoint> extractMPTFixedPoints(
-    const std::vector<ReferencePoint> & ref_points) const;
 
   BoundsCandidates getBoundsCandidates(
     const bool enable_avoidance, const geometry_msgs::msg::Pose & avoiding_point,
@@ -391,10 +370,13 @@ private:
     const bool enable_avoidance, const MPTMatrix & mpt_mat,
     const std::vector<ReferencePoint> & ref_points, DebugData & debug_data) const;
 
-  void publishDebugData(
+  // functions for debug publish
+  void publishDebugTrajectories(
     const std_msgs::msg::Header & header, const std::vector<ReferencePoint> & ref_points,
-    const std::vector<TrajectoryPoint> & mpt_fixed_traj_points,
-    const std::vector<TrajectoryPoint> & mpt_traj_points);
+    const std::vector<TrajectoryPoint> & mpt_traj_points) const;
+
+  std::vector<TrajectoryPoint> extractMPTFixedPoints(
+    const std::vector<ReferencePoint> & ref_points) const;
 
   void printInfo(const char * msg) const
   {

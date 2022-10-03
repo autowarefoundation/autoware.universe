@@ -192,7 +192,7 @@ private:
   std::unique_ptr<PredictedObjects> objects_ptr_;
 
   // variables for previous information
-  std::shared_ptr<MPTTrajs> prev_mpt_trajs_ptr_;
+  std::shared_ptr<std::vector<TrajectoryPoint>> prev_mpt_traj_ptr_;
   std::shared_ptr<std::vector<TrajectoryPoint>> prev_eb_traj_ptr_;
 
   tier4_autoware_utils::SelfPoseListener self_pose_listener_{this};

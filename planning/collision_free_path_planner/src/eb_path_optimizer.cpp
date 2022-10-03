@@ -137,13 +137,16 @@ EBPathOptimizer::getEBTrajectory(
   */
 
   // get optimized smooth points with elastic band
-  const auto eb_traj_points = getOptimizedTrajectory(ego_pose, path, debug_data);
-  if (!eb_traj_points) {
+  const auto eb_traj_points_opt = getOptimizedTrajectory(ego_pose, path, debug_data);
+  if (!eb_traj_points_opt) {
     RCLCPP_INFO_EXPRESSION(
       rclcpp::get_logger("EBPathOptimizer"), enable_debug_info_,
       "return boost::none since smoothing failed");
     return boost::none;
   }
+  const auto eb_traj_points = eb_traj_points_opt.get();
+
+  debug_data.eb_traj = eb_traj_points;
 
   debug_data.msg_stream << "      " << __func__ << ":= " << stop_watch_.toc(__func__) << " [ms]\n";
   return eb_traj_points;

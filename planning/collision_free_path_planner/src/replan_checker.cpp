@@ -40,18 +40,18 @@ void ReplanChecker::onParam(const std::vector<rclcpp::Parameter> & parameters)
 
 bool ReplanChecker::isReplanRequired(
   const PlannerData & planner_data, const rclcpp::Time & current_time,
-  const std::shared_ptr<MPTTrajs> prev_mpt_trajs_ptr)
+  const std::shared_ptr<std::vector<TrajectoryPoint>> prev_mpt_traj_ptr)
 {
   reset_optimization_ = false;
   const auto & p = planner_data;
 
   if (
     !prev_ego_pose_ptr_ || !prev_replanned_time_ptr_ || !prev_path_points_ptr_ ||
-    !prev_mpt_trajs_ptr) {
+    !prev_mpt_traj_ptr) {
     return true;
   }
 
-  if (prev_mpt_trajs_ptr->mpt.empty()) {
+  if (prev_mpt_traj_ptr->empty()) {
     RCLCPP_INFO(
       rclcpp::get_logger("ReplanChecker"),
       "Replan with resetting optimization since previous optimized trajectory is empty.");
