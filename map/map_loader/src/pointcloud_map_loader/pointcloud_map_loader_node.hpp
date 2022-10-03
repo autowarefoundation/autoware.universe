@@ -37,9 +37,6 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <sensor_msgs/msg/point_cloud2.hpp>
-#include <std_msgs/msg/string.hpp>
-
 #include <pcl/common/common.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
