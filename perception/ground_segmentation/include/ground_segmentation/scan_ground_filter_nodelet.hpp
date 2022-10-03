@@ -131,20 +131,19 @@ private:
   tf2_ros::Buffer tf_buffer_{get_clock()};
   tf2_ros::TransformListener tf_listener_{tf_buffer_};
 
-  bool elevation_grid_mode_ = true;
+  const uint16_t gnd_grid_continual_thresh_ = 3;
+  bool elevation_grid_mode_;
   float non_ground_height_threshold_;
   float grid_size_rad_;
   float grid_size_m_;
-  float less_interest_dist_ = 20.0f;
+  float low_priority_region_x_;
   uint16_t gnd_grid_buffer_size_;
-  uint16_t gnd_grid_continual_thresh_ = 3;
-  float grid_mode_switch_grid_id_ = 0.0f;
-  float grid_mode_switch_angle_rad_ = 0.0f;
-  float virtual_lidar_z_ = 2.5f;
-  float detection_range_z_max_ = 2.5f;
-  float center_pcl_shift_ = 0.0f;           // virtual center of pcl to center mass
+  float grid_mode_switch_grid_id_;
+  float grid_mode_switch_angle_rad_;
+  float virtual_lidar_z_;
+  float detection_range_z_max_;
+  float center_pcl_shift_;                  // virtual center of pcl to center mass
   float grid_mode_switch_radius_;           // non linear grid size switching distance
-  float first_ring_distance_ = 20.0f;       // maximum radius of first ring
   double global_slope_max_angle_rad_;       // radians
   double local_slope_max_angle_rad_;        // radians
   double radial_divider_angle_rad_;         // distance in rads between dividers

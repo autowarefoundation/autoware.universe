@@ -37,6 +37,7 @@ ScanGroundFilterComponent::ScanGroundFilterComponent(const rclcpp::NodeOptions &
 {
   // set initial parameters
   {
+    low_priority_region_x_ = static_cast<float>(declare_parameter("low_priority_region_x", -20.0f));
     detection_range_z_max_ = static_cast<float>(declare_parameter("detection_range_z_max", 2.5f));
     center_pcl_shift_ = static_cast<float>(declare_parameter("center_pcl_shift", 0.0));
     non_ground_height_threshold_ =
@@ -282,21 +283,20 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
     PointRef * prev_p;
     prev_p = &in_radial_ordered_clouds[i][0];  // for checking the distance to prev point
 
-    bool init_flg = false;
+    bool initialized_first_gnd_grid = false;
     bool prev_list_init = false;
 
     for (size_t j = 0; j < in_radial_ordered_clouds[i].size(); j++) {
       p = &in_radial_ordered_clouds[i][j];
       float global_slope_p = std::atan(p->orig_point->z / p->radius);
       float non_ground_height_threshold_local = non_ground_height_threshold_;
-      if (p->orig_point->x < -less_interest_dist_) {
+      if (p->orig_point->x < low_priority_region_x_) {
         non_ground_height_threshold_local =
-          non_ground_height_threshold_ * (p->radius / less_interest_dist_);
+          non_ground_height_threshold_ * abs(p->orig_point->x / low_priority_region_x_);
       }
       // classify first grid's point cloud
       if (
-        !init_flg && p->radius <= first_ring_distance_ &&
-        global_slope_p >= global_slope_max_angle_rad_ &&
+        !initialized_first_gnd_grid && global_slope_p >= global_slope_max_angle_rad_ &&
         p->orig_point->z > non_ground_height_threshold_local) {
         out_no_ground_indices.indices.push_back(p->orig_index);
         p->point_state = PointLabel::NON_GROUND;
@@ -305,33 +305,31 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
       }
 
       if (
-        !init_flg && p->radius <= first_ring_distance_ &&
-        abs(global_slope_p) < global_slope_max_angle_rad_ &&
+        !initialized_first_gnd_grid && abs(global_slope_p) < global_slope_max_angle_rad_ &&
         abs(p->orig_point->z) < non_ground_height_threshold_local) {
         ground_cluster.addPoint(p->radius, p->orig_point->z);
         p->point_state = PointLabel::GROUND;
-        init_flg = static_cast<bool>(p->grid_id - prev_p->grid_id);
+        initialized_first_gnd_grid = static_cast<bool>(p->grid_id - prev_p->grid_id);
         prev_p = p;
         continue;
       }
 
       if (
-        !init_flg && p->radius <= first_ring_distance_ &&
-        global_slope_p < -global_slope_max_angle_rad_ &&
+        !initialized_first_gnd_grid && global_slope_p < -global_slope_max_angle_rad_ &&
         p->orig_point->z < -non_ground_height_threshold_local) {
         prev_p = p;
         continue;
       }
 
       // initialize lists of previous gnd grids
-      if (prev_list_init == false && init_flg == true) {
+      if (prev_list_init == false && initialized_first_gnd_grid == true) {
         float h = ground_cluster.getAverageHeight();
         float r = ground_cluster.getAverageRadius();
         initializeFirstGndGrids(h, r, p->grid_id, gnd_grids);
         prev_list_init = true;
       }
 
-      if (prev_list_init == false && init_flg == false) {
+      if (prev_list_init == false && initialized_first_gnd_grid == false) {
         // assume first gnd grid is zero
         initializeFirstGndGrids(0.0f, p->radius, p->grid_id, gnd_grids);
         prev_list_init = true;
