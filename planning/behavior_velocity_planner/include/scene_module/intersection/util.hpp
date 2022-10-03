@@ -47,11 +47,10 @@ bool getDuplicatedPointIdx(
 /**
  * @brief get objective polygons for detection area
  */
-bool getObjectiveLanelets(
+bool getDetectionLanelets(
   lanelet::LaneletMapConstPtr lanelet_map_ptr, lanelet::routing::RoutingGraphPtr routing_graph_ptr,
   const int lane_id, const double detection_area_length,
-  std::vector<lanelet::ConstLanelets> * conflicting_lanelets_result,
-  lanelet::ConstLanelets * objective_lanelets_result, const rclcpp::Logger logger);
+  lanelet::ConstLanelets * detection_lanelets_result);
 
 struct StopLineIdx
 {

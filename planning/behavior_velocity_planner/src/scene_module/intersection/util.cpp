@@ -309,13 +309,22 @@ bool getStopPoseIndexFromMap(
   return true;
 }
 
-bool getObjectiveLanelets(
+bool getDetectionLanelets(
   lanelet::LaneletMapConstPtr lanelet_map_ptr, lanelet::routing::RoutingGraphPtr routing_graph_ptr,
   const int lane_id, const double detection_area_length,
-  std::vector<lanelet::ConstLanelets> * conflicting_lanelets_result,
-  lanelet::ConstLanelets * objective_lanelets_result, const rclcpp::Logger logger)
+  lanelet::ConstLanelets * detection_lanelets_result)
 {
   const auto & assigned_lanelet = lanelet_map_ptr->laneletLayer.get(lane_id);
+
+  const auto tl_regelems = assigned_lanelet.regulatoryElementsAs<lanelet::TrafficLight>();
+  bool has_tl_right = false;
+  if (tl_regelems.size() != 0) {
+    const auto tl_regelem = tl_regelems.front();
+    const auto stop_line_opt = tl_regelem->stopLine();
+    if (!!stop_line_opt) has_tl_right = true;
+  }
+
+  const auto turn_direction = assigned_lanelet.attributeOr("turn_direction", "else");
 
   lanelet::ConstLanelets yield_lanelets;
 
@@ -351,72 +360,42 @@ bool getObjectiveLanelets(
   const auto & conflicting_lanelets =
     lanelet::utils::getConflictingLanelets(routing_graph_ptr, assigned_lanelet);
 
-  std::vector<lanelet::ConstLanelets>                      // conflicting lanes with "lane_id"
-    conflicting_lanelets_ex_yield_ego;                     // excluding ego lanes and yield lanes
-  std::vector<lanelet::ConstLanelets> objective_lanelets;  // final objective lanelets
+  lanelet::ConstLanelets detection_lanelets;  // final objective lanelets
 
-  // exclude yield lanelets and ego lanelets from objective_lanelets
-  for (const auto & conflicting_lanelet : conflicting_lanelets) {
-    if (lanelet::utils::contains(yield_lanelets, conflicting_lanelet)) {
-      continue;
+  // exclude yield lanelets and ego lanelets from detection_lanelets
+  // if assigned lanelet is "straight" with traffic light, detection area is not necessary
+  if (turn_direction != std::string("straight") || !has_tl_right) {
+    for (const auto & conflicting_lanelet : conflicting_lanelets) {
+      if (lanelet::utils::contains(yield_lanelets, conflicting_lanelet)) {
+        continue;
+      }
+      if (lanelet::utils::contains(ego_lanelets, conflicting_lanelet)) {
+        continue;
+      }
+      detection_lanelets.push_back(conflicting_lanelet);
     }
-    if (lanelet::utils::contains(ego_lanelets, conflicting_lanelet)) {
-      continue;
-    }
-    conflicting_lanelets_ex_yield_ego.push_back({conflicting_lanelet});
-    objective_lanelets.push_back({conflicting_lanelet});
   }
-
   // get possible lanelet path that reaches conflicting_lane longer than given length
   const double length = detection_area_length;
-  lanelet::ConstLanelets objective_and_preceding_lanelets;
-  std::set<lanelet::Id> objective_ids;
-  for (const auto & ll : objective_lanelets) {
-    // Preceding lanes does not include objective_lane so add them at the end
-    for (const auto & l : ll) {
-      const auto & inserted = objective_ids.insert(l.id());
-      if (inserted.second) objective_and_preceding_lanelets.push_back(l);
-    }
+  lanelet::ConstLanelets detection_and_preceding_lanelets;
+  std::set<lanelet::Id> detection_ids;
+  for (const auto & ll : detection_lanelets) {
+    // Preceding lanes does not include detection_lane so add them at the end
+    const auto & inserted = detection_ids.insert(ll.id());
+    if (inserted.second) detection_and_preceding_lanelets.push_back(ll);
     // get preceding lanelets without ego_lanelets
     // to prevent the detection area from including the ego lanes and its' preceding lanes.
     const auto lanelet_sequences = lanelet::utils::query::getPrecedingLaneletSequences(
-      routing_graph_ptr, ll.front(), length, ego_lanelets);
+      routing_graph_ptr, ll, length, ego_lanelets);
     for (const auto & ls : lanelet_sequences) {
       for (const auto & l : ls) {
-        const auto & inserted = objective_ids.insert(l.id());
-        if (inserted.second) objective_and_preceding_lanelets.push_back(l);
+        const auto & inserted = detection_ids.insert(l.id());
+        if (inserted.second) detection_and_preceding_lanelets.push_back(l);
       }
     }
   }
 
-  *conflicting_lanelets_result = conflicting_lanelets_ex_yield_ego;
-  *objective_lanelets_result = objective_and_preceding_lanelets;
-
-  // set this flag true when debugging
-  const bool is_debug = false;
-  if (!is_debug) return true;
-  std::stringstream ss_c, ss_y, ss_e, ss_o, ss_os;
-  for (const auto & l : conflicting_lanelets) {
-    ss_c << l.id() << ", ";
-  }
-  for (const auto & l : yield_lanelets) {
-    ss_y << l.id() << ", ";
-  }
-  for (const auto & l : ego_lanelets) {
-    ss_e << l.id() << ", ";
-  }
-  for (const auto & l : objective_lanelets) {
-    ss_o << l.front().id() << ", ";
-  }
-  for (const auto & l : objective_and_preceding_lanelets) {
-    ss_os << l.id() << ", ";
-  }
-  RCLCPP_INFO(
-    logger, "getObjectiveLanelets() conflict = %s yield = %s ego = %s", ss_c.str().c_str(),
-    ss_y.str().c_str(), ss_e.str().c_str());
-  RCLCPP_INFO(
-    logger, "getObjectiveLanelets() object = %s object_sequences = %s", ss_o.str().c_str(),
-    ss_os.str().c_str());
+  *detection_lanelets_result = detection_and_preceding_lanelets;
   return true;
 }
 
