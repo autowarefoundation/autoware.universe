@@ -55,7 +55,7 @@ private:
     {
       nav_msgs::msg::Path msg;
       msg.header = header;
-      for (const auto p : buffer_) msg.poses.push_back(p);
+      for (const auto & p : buffer_) msg.poses.push_back(p);
       pub_->publish(msg);
     }
   };

@@ -80,7 +80,7 @@ void GraphSegment::callbackImage(const Image & msg)
   }
   auto & hull = contours.front();
   pcl::PointCloud<pcl::PointXYZ> cloud;
-  for (const cv::Point2i p : hull) {
+  for (const cv::Point2i & p : hull) {
     pcl::PointXYZ xyz(p.x, p.y, 0);
     cloud.push_back(xyz);
   }
