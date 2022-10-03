@@ -261,6 +261,92 @@ autoware_auto_planning_msgs::msg::PathWithLaneId resamplePath(
 }
 
 autoware_auto_planning_msgs::msg::Path resamplePath(
+  const autoware_auto_planning_msgs::msg::Path & input_path, const double resample_interval,
+  const bool use_lerp_for_xy, const bool use_lerp_for_z, const bool use_zero_order_hold_for_v)
+{
+  // validate arguments
+  if (!resample_utils::validate_arguments(input_path.points, resample_interval)) {
+    return input_path;
+  }
+
+  // compute path length
+  const double input_path_len = motion_utils::calcArcLength(input_path.points);
+
+  std::vector<double> resampled_arclength;
+  for (double s = 0.0; s < input_path_len; s += resample_interval) {
+    resampled_arclength.push_back(s);
+  }
+  if (resampled_arclength.empty()) {
+    std::cerr << "[motion_utils]: resampled arclength is empty" << std::endl;
+    return input_path;
+  }
+
+  // Input Path Information
+  std::vector<double> input_arclength;
+  std::vector<geometry_msgs::msg::Pose> input_pose;
+  std::vector<double> v_lon;
+  std::vector<double> v_lat;
+  std::vector<double> heading_rate;
+  input_arclength.reserve(input_path.points.size());
+  input_pose.reserve(input_path.points.size());
+  v_lon.reserve(input_path.points.size());
+  v_lat.reserve(input_path.points.size());
+  heading_rate.reserve(input_path.points.size());
+
+  input_arclength.push_back(0.0);
+  input_pose.push_back(input_path.points.front().pose);
+  v_lon.push_back(input_path.points.front().longitudinal_velocity_mps);
+  v_lat.push_back(input_path.points.front().lateral_velocity_mps);
+  heading_rate.push_back(input_path.points.front().heading_rate_rps);
+  for (size_t i = 1; i < input_path.points.size(); ++i) {
+    const auto & prev_pt = input_path.points.at(i - 1);
+    const auto & curr_pt = input_path.points.at(i);
+    const double ds =
+      tier4_autoware_utils::calcDistance2d(prev_pt.pose.position, curr_pt.pose.position);
+    input_arclength.push_back(ds + input_arclength.back());
+    input_pose.push_back(curr_pt.pose);
+    v_lon.push_back(curr_pt.longitudinal_velocity_mps);
+    v_lat.push_back(curr_pt.lateral_velocity_mps);
+    heading_rate.push_back(curr_pt.heading_rate_rps);
+  }
+
+  // Interpolate
+  const auto lerp = [&](const auto & input) {
+    return interpolation::lerp(input_arclength, input, resampled_arclength);
+  };
+  const auto zoh = [&](const auto & input) {
+    return interpolation::zero_order_hold(input_arclength, input, resampled_arclength);
+  };
+
+  const auto interpolated_pose =
+    resamplePath(input_pose, resampled_arclength, use_lerp_for_xy, use_lerp_for_z);
+  const auto interpolated_v_lon = use_zero_order_hold_for_v ? zoh(v_lon) : lerp(v_lon);
+  const auto interpolated_v_lat = use_zero_order_hold_for_v ? zoh(v_lat) : lerp(v_lat);
+  const auto interpolated_heading_rate = lerp(heading_rate);
+
+  if (interpolated_pose.size() != resampled_arclength.size()) {
+    std::cerr << "[motion_utils]: Resampled pose size is different from resampled arclength"
+              << std::endl;
+    return input_path;
+  }
+
+  autoware_auto_planning_msgs::msg::Path resampled_path;
+  resampled_path.header = input_path.header;
+  resampled_path.drivable_area = input_path.drivable_area;
+  resampled_path.points.resize(interpolated_pose.size());
+  for (size_t i = 0; i < resampled_path.points.size(); ++i) {
+    autoware_auto_planning_msgs::msg::PathPoint path_point;
+    path_point.pose = interpolated_pose.at(i);
+    path_point.longitudinal_velocity_mps = interpolated_v_lon.at(i);
+    path_point.lateral_velocity_mps = interpolated_v_lat.at(i);
+    path_point.heading_rate_rps = interpolated_heading_rate.at(i);
+    resampled_path.points.at(i) = path_point;
+  }
+
+  return resampled_path;
+}
+
+autoware_auto_planning_msgs::msg::Path resamplePath(
   const autoware_auto_planning_msgs::msg::Path & input_path,
   const std::vector<double> & resampled_arclength, const bool use_lerp_for_xy,
   const bool use_lerp_for_z, const bool use_zero_order_hold_for_v)

@@ -41,12 +41,17 @@ TEST(CollisionFreePathPlanner, MPTOptimizer)
   // std::make_shared<CollisionFreePathPlanner>(node_options);
   auto node = CollisionFreePathPlanner(node_options);
 
-  std::vector<ReferencePoint> empty_ref_points{};
-  std::vector<ReferencePoint> single_ref_points{ReferencePoint{}};
-  std::vector<ReferencePoint> two_identical_ref_points{ReferencePoint{}, ReferencePoint{}};
+  {  // test points arguments
+    std::vector<ReferencePoint> empty_ref_points{};
+    std::vector<ReferencePoint> single_ref_points{ReferencePoint{}};
+    std::vector<ReferencePoint> two_identical_ref_points{ReferencePoint{}, ReferencePoint{}};
 
-  EXPECT_NO_THROW(node.mpt_optimizer_ptr_->calcOrientation(empty_ref_points));
-  EXPECT_NO_THROW(node.mpt_optimizer_ptr_->calcOrientation(single_ref_points));
+    EXPECT_NO_THROW(node.mpt_optimizer_ptr_->calcOrientation(empty_ref_points));
+    EXPECT_NO_THROW(node.mpt_optimizer_ptr_->calcOrientation(single_ref_points));
+  }
+
+  {  // test nullptr arguments
+  }
 
   // MPTOptimizer(node, is_showing_debug_info_, ego_nearest_param_, vehicle_info, traj_param_,
   // vehicle_param_);

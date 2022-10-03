@@ -469,7 +469,7 @@ void CollisionFreePathPlanner::resetPlanning()
   costmap_generator_ptr_ = std::make_unique<CostmapGenerator>();
 
   eb_path_optimizer_ptr_ = std::make_unique<EBPathOptimizer>(
-    is_showing_debug_info_, traj_param_, eb_param_, vehicle_param_);
+    is_showing_debug_info_, ego_nearest_param_, traj_param_, eb_param_, vehicle_param_);
 
   mpt_optimizer_ptr_->reset(is_showing_debug_info_, traj_param_);
 
@@ -633,8 +633,7 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::optimizeTrajectory(
   // EB: smooth trajectory if enable_pre_smoothing is true
   const auto eb_traj = [&]() -> boost::optional<std::vector<TrajectoryPoint>> {
     if (enable_pre_smoothing_) {
-      return eb_path_optimizer_ptr_->getEBTrajectory(
-        p.ego_pose, p.path, prev_eb_traj_ptr_, p.ego_vel, debug_data_);
+      return eb_path_optimizer_ptr_->getEBTrajectory(planner_data, prev_eb_traj_ptr_, debug_data_);
     }
     return points_utils::convertToTrajectoryPoints(p.path.points);
   }();

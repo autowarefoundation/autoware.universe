@@ -125,6 +125,11 @@ autoware_auto_planning_msgs::msg::Path resamplePath(
   const std::vector<double> & resampled_arclength, const bool use_lerp_for_xy = false,
   const bool use_lerp_for_z = true, const bool use_zero_order_hold_for_v = true);
 
+autoware_auto_planning_msgs::msg::Path resamplePath(
+  const autoware_auto_planning_msgs::msg::Path & input_path, const double resample_interval,
+  const bool use_lerp_for_xy = false, const bool use_lerp_for_z = true,
+  const bool use_zero_order_hold_for_v = true);
+
 /**
  * @brief A resampling function for a path. Note that in a default setting, position xy
  *        are resampled by spline interpolation, position z are resampled by linear interpolation,
