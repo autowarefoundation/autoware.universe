@@ -62,25 +62,35 @@ bool isPcdFile(const std::string & p)
 PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & options)
 : Node("pointcloud_map_loader", options)
 {
-  leaf_size_ = declare_parameter("leaf_size", 3.0);
-
   const auto pcd_paths =
-    getPcdPaths(declare_parameter("pcd_paths_or_directory", std::vector<std::string>({})));
+    getPcdPaths(declare_parameter<std::vector<std::string>>("pcd_paths_or_directory"));
+  bool enable_whole_load = declare_parameter<bool>("enable_whole_load");
+  bool enable_downsample_whole_load = declare_parameter<bool>("enable_downsampled_whole_load");
+  bool enable_partial_load = declare_parameter<bool>("enable_partial_load");
+  bool enable_differential_load = declare_parameter<bool>("enable_differential_load");
 
-  if (declare_parameter("enable_whole_load", false)) {
+  if (enable_whole_load) {
     std::string publisher_name = "output/pointcloud_map";
     pcd_map_loader_ =
-      std::make_unique<PointcloudMapLoaderModule>(this, pcd_paths, publisher_name, boost::none);
+      std::make_unique<PointcloudMapLoaderModule>(this, pcd_paths, publisher_name, false);
   }
 
-  if (declare_parameter("enable_downsampled_whole_load", true)) {
+  if (enable_downsample_whole_load) {
     std::string publisher_name = "output/debug/downsampled_pointcloud_map";
     downsampled_pcd_map_loader_ =
-      std::make_unique<PointcloudMapLoaderModule>(this, pcd_paths, publisher_name, leaf_size_);
+      std::make_unique<PointcloudMapLoaderModule>(this, pcd_paths, publisher_name, true);
   }
 
-  if (declare_parameter("enable_partial_load", true)) {
-    differential_map_loader_ = std::make_unique<DifferentialMapLoaderModule>(this, pcd_paths);
+  if (enable_partial_load | enable_differential_load) {
+    pcd_metadata_dict_ = generatePCDMetadata(pcd_paths);
+  }
+
+  if (enable_partial_load) {
+    partial_map_loader_ = std::make_unique<PartialMapLoaderModule>(this, pcd_metadata_dict_);
+  }
+
+  if (enable_differential_load) {
+    differential_map_loader_ = std::make_unique<DifferentialMapLoaderModule>(this, pcd_metadata_dict_);
   }
 }
 
@@ -89,7 +99,6 @@ std::vector<std::string> PointCloudMapLoaderNode::getPcdPaths(
 {
   std::vector<std::string> pcd_paths;
   for (const auto & p : pcd_paths_or_directory) {
-    (void)p;
     if (!fs::exists(p)) {
       RCLCPP_ERROR_STREAM(get_logger(), "invalid path: " << p);
     }
@@ -109,6 +118,23 @@ std::vector<std::string> PointCloudMapLoaderNode::getPcdPaths(
   }
   return pcd_paths;
 }
+
+std::map<std::string, PCDFileMetadata> PointCloudMapLoaderNode::generatePCDMetadata(
+  const std::vector<std::string> & pcd_paths) const
+{
+  pcl::PointCloud<pcl::PointXYZ> partial_pcd;
+  std::map<std::string, PCDFileMetadata> all_pcd_file_metadata_dict;
+  for (const auto & path : pcd_paths) {
+    if (pcl::io::loadPCDFile(path, partial_pcd) == -1) {
+      RCLCPP_ERROR_STREAM(get_logger(), "PCD load failed: " << path);
+    }
+    PCDFileMetadata metadata = {};
+    pcl::getMinMax3D(partial_pcd, metadata.min, metadata.max);
+    all_pcd_file_metadata_dict[path] = metadata;
+  }
+  return all_pcd_file_metadata_dict;
+}
+
 
 #include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(PointCloudMapLoaderNode)

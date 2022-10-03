@@ -37,14 +37,21 @@ sensor_msgs::msg::PointCloud2 downsample(
 
 PointcloudMapLoaderModule::PointcloudMapLoaderModule(
   rclcpp::Node * node, const std::vector<std::string> & pcd_paths, const std::string publisher_name,
-  const boost::optional<float> leaf_size)
+  const bool use_downsample)
 : logger_(node->get_logger())
 {
   rclcpp::QoS durable_qos{1};
   durable_qos.transient_local();
   pub_pointcloud_map_ =
     node->create_publisher<sensor_msgs::msg::PointCloud2>(publisher_name, durable_qos);
-  sensor_msgs::msg::PointCloud2 pcd = loadPCDFiles(pcd_paths, leaf_size);
+
+  sensor_msgs::msg::PointCloud2 pcd;
+  if (use_downsample) {
+    float leaf_size = node->declare_parameter<float>("leaf_size");
+    pcd = loadPCDFiles(pcd_paths, leaf_size);
+  } else {
+    pcd = loadPCDFiles(pcd_paths, boost::none);
+  }
 
   if (pcd.width == 0) {
     RCLCPP_ERROR(logger_, "No PCD was loaded: pcd_paths.size() = %zu", pcd_paths.size());

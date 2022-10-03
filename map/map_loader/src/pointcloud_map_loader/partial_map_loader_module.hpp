@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef POINTCLOUD_MAP_LOADER__DIFFERENTIAL_MAP_LOADER_MODULE_HPP_
-#define POINTCLOUD_MAP_LOADER__DIFFERENTIAL_MAP_LOADER_MODULE_HPP_
+#ifndef POINTCLOUD_MAP_LOADER__PARTIAL_MAP_LOADER_MODULE_HPP_
+#define POINTCLOUD_MAP_LOADER__PARTIAL_MAP_LOADER_MODULE_HPP_
 
 #include "utils.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
-#include "autoware_map_msgs/srv/load_differential_point_cloud_map.hpp"
+#include "autoware_map_msgs/srv/load_partial_point_cloud_map.hpp"
 
 #include <pcl/common/common.h>
 #include <pcl/filters/voxel_grid.h>
@@ -32,29 +32,28 @@
 #include <string>
 #include <vector>
 
-class DifferentialMapLoaderModule
+
+class PartialMapLoaderModule
 {
-  using LoadDifferentialPointCloudMap = autoware_map_msgs::srv::LoadDifferentialPointCloudMap;
+  using LoadPartialPointCloudMap = autoware_map_msgs::srv::LoadPartialPointCloudMap;
 
 public:
-  explicit DifferentialMapLoaderModule(
+  explicit PartialMapLoaderModule(
     rclcpp::Node * node, const std::map<std::string, PCDFileMetadata> & pcd_file_metadata_dict);
 
 private:
   rclcpp::Logger logger_;
 
   std::map<std::string, PCDFileMetadata> all_pcd_file_metadata_dict_;
-  rclcpp::Service<LoadDifferentialPointCloudMap>::SharedPtr load_differential_pcd_maps_service_;
+  rclcpp::Service<LoadPartialPointCloudMap>::SharedPtr load_partial_pcd_maps_service_;
 
-  bool onServiceLoadDifferentialPointCloudMap(
-    LoadDifferentialPointCloudMap::Request::SharedPtr req, LoadDifferentialPointCloudMap::Response::SharedPtr res);
-  void differentialAreaLoad(
-    const autoware_map_msgs::msg::AreaInfo area_info,
-    const std::vector<std::string> already_loaded_ids,
-    LoadDifferentialPointCloudMap::Response::SharedPtr & response) const;
+  bool onServiceLoadPartialPointCloudMap(
+    LoadPartialPointCloudMap::Request::SharedPtr req, LoadPartialPointCloudMap::Response::SharedPtr res);
+  void partialAreaLoad(
+    const autoware_map_msgs::msg::AreaInfo area, LoadPartialPointCloudMap::Response::SharedPtr & response) const;
   void loadPointCloudMapWithID(
     const std::string path, const std::string map_id,
     autoware_map_msgs::msg::PointCloudMapWithID & pcd_map_with_id) const;
 };
 
-#endif  // POINTCLOUD_MAP_LOADER__DIFFERENTIAL_MAP_LOADER_MODULE_HPP_
+#endif  // POINTCLOUD_MAP_LOADER__PARTIAL_MAP_LOADER_MODULE_HPP_

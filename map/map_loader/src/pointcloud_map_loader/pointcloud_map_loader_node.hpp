@@ -32,6 +32,7 @@
 #define POINTCLOUD_MAP_LOADER__POINTCLOUD_MAP_LOADER_NODE_HPP_
 
 #include "differential_map_loader_module.hpp"
+#include "partial_map_loader_module.hpp"
 #include "pointcloud_map_loader_module.hpp"
 
 #include <rclcpp/rclcpp.hpp>
@@ -55,14 +56,17 @@ public:
 
 private:
   // ros param
-  float leaf_size_;
+  std::map<std::string, PCDFileMetadata> pcd_metadata_dict_;
 
-  std::unique_ptr<DifferentialMapLoaderModule> differential_map_loader_;
   std::unique_ptr<PointcloudMapLoaderModule> pcd_map_loader_;
   std::unique_ptr<PointcloudMapLoaderModule> downsampled_pcd_map_loader_;
+  std::unique_ptr<PartialMapLoaderModule> partial_map_loader_;
+  std::unique_ptr<DifferentialMapLoaderModule> differential_map_loader_;
 
   std::vector<std::string> getPcdPaths(
     const std::vector<std::string> & pcd_paths_or_directory) const;
+  std::map<std::string, PCDFileMetadata> generatePCDMetadata(
+    const std::vector<std::string> & pcd_paths) const;
 };
 
 #endif  // POINTCLOUD_MAP_LOADER__POINTCLOUD_MAP_LOADER_NODE_HPP_
