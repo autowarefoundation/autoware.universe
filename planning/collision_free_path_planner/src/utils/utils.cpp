@@ -452,7 +452,7 @@ ReferencePoint convertToReferencePoint(const TrajectoryPoint & traj_point)
 }
 
 std::vector<ReferencePoint> convertToReferencePoints(
-  const std::vector<TrajectoryPoint> & traj_points);
+  const std::vector<TrajectoryPoint> & traj_points)
 {
   std::vector<ReferencePoint> ref_points;
   for (const auto & traj_point : traj_points) {

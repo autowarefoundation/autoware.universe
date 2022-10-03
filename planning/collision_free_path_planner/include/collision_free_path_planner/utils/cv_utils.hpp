@@ -31,8 +31,6 @@
 
 namespace collision_free_path_planner
 {
-namespace util
-{
 /*
 struct Footprint;
 }
@@ -121,6 +119,5 @@ bool isOutsideDrivableAreaFromCirclesFootprint(
   const std::vector<double> vehicle_circle_longitudinal_offsets,
   const double vehicle_circle_radius);
 }  // namespace cv_drivable_area_utils
-}  // namespace util
 }  // namespace collision_free_path_planner
 #endif  // COLLISION_FREE_PATH_PLANNER__UTILS__CV_UTILS_HPP_

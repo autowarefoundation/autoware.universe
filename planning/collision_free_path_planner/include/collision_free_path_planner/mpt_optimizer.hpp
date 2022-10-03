@@ -316,6 +316,7 @@ private:
   void calcOrientation(std::vector<ReferencePoint> & ref_points) const;
 
   void calcCurvature(std::vector<ReferencePoint> & ref_points) const;
+  void calcFixedPoints(std::vector<ReferencePoint> & ref_points) const;
 
   void calcArcLength(std::vector<ReferencePoint> & ref_points) const;
 

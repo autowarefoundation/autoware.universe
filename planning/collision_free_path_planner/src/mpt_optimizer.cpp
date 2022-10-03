@@ -301,7 +301,8 @@ std::vector<TrajectoryPoint> resampleTrajectoryPoints(
 template <class T>
 std::vector<T> createVector(const T & value, const std::vector<T> & vector)
 {
-  std::vector<T> result_vector(value);
+  std::vector<T> result_vector;
+  result_vector.push_back(value);
   result_vector.insert(result_vector.end(), vector.begin(), vector.end());
   return result_vector;
 }
@@ -760,7 +761,7 @@ std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
 
   const double forward_distance =
     traj_param_.num_sampling_points * mpt_param_.delta_arc_length_for_mpt_points;
-  const double backward_distance = -traj_param_.backward_fixing_distance;
+  const double backward_distance = traj_param_.backward_fixing_distance;
 
   // convert smoothed points to reference points
   const auto resampled_smoothed_points =
@@ -769,24 +770,28 @@ std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
 
   // crop reference points with margin first to reduce calculation cost
   const double tmp_margin = 10.0;
-  const size_t ego_seg_idx = findEgoSegmentIndex(ref_points, p.ego_pose, ego_nearest_param_);
+  const size_t ego_seg_idx =
+    points_utils::findEgoSegmentIndex(ref_points, p.ego_pose, ego_nearest_param_);
   ref_points = points_utils::cropPoints(
     ref_points, p.ego_pose.position, ego_seg_idx, forward_distance + tmp_margin,
-    backward_distance - tmp_margin);
+    -backward_distance - tmp_margin);
 
-  // calculate curvature // must be after interpolation since curvatre's resampling is not
-  // length-based but index-based. NOTE: Calculating curvature and orientation required points
+  // calculate curvature
+  // must be after interpolation since curvatre's resampling is not
+  // length-based but index-based.
+  // NOTE: Calculating curvature and orientation requirs points
   // around the target points to be smooth.
   //       Therefore, crop margin is required.
   calcCurvature(ref_points);
   calcOrientation(ref_points);
 
-  //
-  calcFixedPoints();
+  // crop backward
+  ref_points = points_utils::cropPoints(
+    ref_points, p.ego_pose.position, ego_seg_idx, forward_distance + tmp_margin,
+    -backward_distance);
 
-  // crop with margin
-
-  // set fixed points
+  // must be after backward cropping
+  calcFixedPoints(ref_points);
 
   // crop with margin
   calcBounds(ref_points, p.enable_avoidance, p.ego_pose, maps, prev_trajs, debug_data);
@@ -858,8 +863,7 @@ std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
   return ref_points;
 }
 
-std::vector<ReferencePoint> MPTOptimizer::createReferencePoints(
-  const std::vector<TrajectoryPoint> & cropped_smoothed_points)
+void MPTOptimizer::calcFixedPoints(std::vector<ReferencePoint> & ref_points) const
 {
   /*
   // check if planning from ego pose is required
@@ -871,8 +875,9 @@ std::vector<ReferencePoint> MPTOptimizer::createReferencePoints(
   */
 
   if (prev_valid_mpt_ref_points_) {
-    const size_t prev_ref_front_seg_idx = findEgoSegmentIndex(
-      *prev_valid_mpt_ref_points, cropped_smoothed_points.front(), ego_nearest_param_);
+    const size_t prev_ref_front_seg_idx = points_utils::findEgoSegmentIndex(
+      *prev_valid_mpt_ref_points_, tier4_autoware_utils::getPose(ref_points.front()),
+      ego_nearest_param_);
     const size_t prev_ref_front_point_idx = prev_ref_front_seg_idx;
 
     // TODO(murooka) check deviation
@@ -882,15 +887,15 @@ std::vector<ReferencePoint> MPTOptimizer::createReferencePoints(
 
     // TODO(murooka) check smoothed_points fron is too close to front_ref_point
 
-    const auto ref_points_from_smoothed_points =
-      points_utils::convertToReferencePoints(cropped_smoothed_points);
+    ref_points = createVector(front_ref_point, ref_points);
 
-    const auto ref_points = createVector(front_ref_point, ref_points_from_smoothed_points);
-    return ref_points;
+    // TODO(murooka) resample reference points since fixed points is not
+
+    return;
   }
 
   // No fixed points
-  return points_utils::convertToReferencePoints(cropped_smoothedpoints);
+  return;
 }
 
 /*

@@ -170,8 +170,8 @@ T cropForwardPoints(
   }
 
   double sum_length =
-    -tier4_autoware_utils::calcLongitudinalOffsetToSegment(points, target_seg_idx, target_pos);
-  for (size_t i = target_seg_idx + 1; i < points.size(); + ; i) {
+    -motion_utils::calcLongitudinalOffsetToSegment(points, target_seg_idx, target_pos);
+  for (size_t i = target_seg_idx + 1; i < points.size(); ++i) {
     sum_length += tier4_autoware_utils::calcDistance2d(points.at(i), points.at(i - 1));
     if (forward_length < sum_length) {
       const size_t end_idx = i;
@@ -192,7 +192,7 @@ T cropBackwardPoints(
   }
 
   double sum_length =
-    -tier4_autoware_utils::calcLongitudinalOffsetToSegment(points, target_seg_idx, target_pos);
+    -motion_utils::calcLongitudinalOffsetToSegment(points, target_seg_idx, target_pos);
   for (size_t i = target_seg_idx; 0 < i;
        --i) {  // NOTE: use size_t since i is always positive value
     sum_length -= tier4_autoware_utils::calcDistance2d(points.at(i), points.at(i - 1));
@@ -208,16 +208,17 @@ T cropBackwardPoints(
 template <typename T>
 T cropPoints(
   const T & points, const geometry_msgs::msg::Point & target_pos, const size_t target_seg_idx,
-  cons double forward_length, const double backward_length)
+  const double forward_length, const double backward_length)
 {
   if (points.empty()) {
     return T{};
   }
 
   // NOTE: Cropping forward must be done first in order to keep target_seg_idx.
-  const cropped_forward_points =
+  const auto cropped_forward_points =
     cropForwardPoints(points, target_pos, target_seg_idx, forward_length);
-  const cropped_points = cropBackwardPoints(cropped_forward_points, target_pos, backward_length);
+  const auto cropped_points =
+    cropBackwardPoints(cropped_forward_points, target_pos, target_seg_idx, backward_length);
 
   return cropped_points;
 }
