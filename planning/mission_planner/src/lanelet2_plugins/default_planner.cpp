@@ -288,7 +288,7 @@ geometry_msgs::msg::Pose DefaultPlanner::refine_goal_height(
   const auto goal_lane_id = route_sections.back().preferred_primitive_id;
   lanelet::Lanelet goal_lanelet = lanelet_map_ptr_->laneletLayer.get(goal_lane_id);
   const auto goal_lanelet_pt = lanelet::utils::conversion::toLaneletPoint(goal.position);
-  double goal_height = project_goal_to_map(goal_lanelet, goal_lanelet_pt);
+  const auto goal_height = project_goal_to_map(goal_lanelet, goal_lanelet_pt);
 
   Pose refined_goal = goal;
   refined_goal.position.z = goal_height;
