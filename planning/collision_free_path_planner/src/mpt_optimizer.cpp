@@ -281,7 +281,7 @@ std::vector<T> createVector(const T & value, const std::vector<T> & vector)
   return result_vector;
 }
 
-std::vector<ReferencePoint> resampleReferencePoints(
+std::vector<ReferencePoint> resampleRefPoints(
   const std::vector<ReferencePoint> & ref_points, const double interval)
 {
   const auto traj_points = points_utils::convertToTrajectoryPoints(ref_points);
@@ -862,7 +862,7 @@ void MPTOptimizer::calcFixedPoints(std::vector<ReferencePoint> & ref_points) con
     ref_points.front().fix_kinematic_state = front_prev_ref_point.optimized_kinematic_state;
 
     // TODO(murooka) resample reference points since fixed points is not
-    // const auto resmapled_ref_points = resampleReferencePoints(ref_points,
+    // const auto resmapled_ref_points = resampleRefPoints(ref_points,
     // mpt_param_.delta_arc_length); ref_points
 
     return;

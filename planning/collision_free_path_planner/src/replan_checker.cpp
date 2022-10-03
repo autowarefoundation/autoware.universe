@@ -38,79 +38,96 @@ void ReplanChecker::onParam(const std::vector<rclcpp::Parameter> & parameters)
   updateParam<double>(parameters, "replan.max_delta_time_sec", max_delta_time_sec_);
 }
 
+bool ReplanChecker::isResetRequired(const PlannerData & planner_data)
+{
+  const auto & p = planner_data;
+
+  const bool reset_required = [&]() {
+    // guard
+    if (!prev_path_points_ptr_ || !prev_ego_pose_ptr_) {
+      return true;
+    }
+
+    const auto & prev_path_points = *prev_path_points_ptr_;
+
+    // path shape changes
+    if (isPathShapeChanged(planner_data, prev_path_points)) {
+      printInfo("Replan with resetting optimization since path shape was changed.");
+      return true;
+    }
+
+    // path goal changes
+    if (isPathGoalChanged(planner_data, prev_path_points)) {
+      printInfo("Replan with resetting optimization since path goal was changed.");
+      return true;
+    }
+
+    // ego pose is lost or new ego pose is designated in simulation
+    const double delta_dist =
+      tier4_autoware_utils::calcDistance2d(p.ego_pose, prev_ego_pose_ptr_->position);
+    if (max_ego_moving_dist_ < delta_dist) {
+      printInfo(
+        "Replan with resetting optimization since current ego pose is far from previous ego pose.");
+      return true;
+    }
+
+    return false;
+  }();
+
+  // update previous information required in this function
+  prev_path_points_ptr_ = std::make_shared<std::vector<PathPoint>>(p.path.points);
+  prev_ego_pose_ptr_ = std::make_shared<geometry_msgs::msg::Pose>(p.ego_pose);
+
+  return reset_required;
+}
+
 bool ReplanChecker::isReplanRequired(
   const PlannerData & planner_data, const rclcpp::Time & current_time,
   const std::shared_ptr<std::vector<TrajectoryPoint>> prev_mpt_traj_ptr)
 {
-  reset_optimization_ = false;
   const auto & p = planner_data;
 
-  if (
-    !prev_ego_pose_ptr_ || !prev_replanned_time_ptr_ || !prev_path_points_ptr_ ||
-    !prev_mpt_traj_ptr) {
-    return true;
+  const bool replan_required = [&]() {
+    if (!prev_replanned_time_ptr_ || !prev_path_points_ptr_ /*|| !prev_mpt_traj_ptr*/) {
+      return true;
+    }
+
+    /*
+    // empty mpt points
+    if (prev_mpt_traj_ptr->empty()) {
+      printInfo("Replan with resetting optimization since previous optimized trajectory is empty.");
+      return true;
+    }
+    */
+
+    const double delta_time_sec = (current_time - *prev_replanned_time_ptr_).seconds();
+    if (max_delta_time_sec_ < delta_time_sec) {
+      return true;
+    }
+
+    return false;
+  }();
+
+  // update previous information required in this function
+  if (replan_required) {
+    prev_replanned_time_ptr_ = std::make_shared<rclcpp::Time>(current_time);
   }
 
-  if (prev_mpt_traj_ptr->empty()) {
-    RCLCPP_INFO(
-      rclcpp::get_logger("ReplanChecker"),
-      "Replan with resetting optimization since previous optimized trajectory is empty.");
-    reset_optimization_ = true;
-    return true;
-  }
-
-  if (isPathShapeChanged(p)) {
-    RCLCPP_INFO(
-      rclcpp::get_logger("ReplanChecker"),
-      "Replan with resetting optimization since path shape was changed.");
-    reset_optimization_ = true;
-    return true;
-  }
-
-  if (isPathGoalChanged(planner_data)) {
-    RCLCPP_INFO(
-      rclcpp::get_logger("ReplanChecker"),
-      "Replan with resetting optimization since path goal was changed.");
-    reset_optimization_ = true;
-    return true;
-  }
-
-  // For when ego pose is lost or new ego pose is designated in simulation
-  const double delta_dist =
-    tier4_autoware_utils::calcDistance2d(p.ego_pose, prev_ego_pose_ptr_->position);
-  if (delta_dist > max_ego_moving_dist_) {
-    RCLCPP_INFO(
-      rclcpp::get_logger("ReplanChecker"),
-      "Replan with resetting optimization since current ego pose is far from previous ego pose.");
-    reset_optimization_ = true;
-    return true;
-  }
-
-  const double delta_time_sec = (current_time - *prev_replanned_time_ptr_).seconds();
-  if (delta_time_sec > max_delta_time_sec_) {
-    return true;
-  }
-
-  return false;
+  return replan_required;
 }
 
-bool ReplanChecker::isResetOptimizationRequired() { return reset_optimization_; }
-
-bool ReplanChecker::isPathShapeChanged(const PlannerData & planner_data)
+bool ReplanChecker::isPathShapeChanged(
+  const PlannerData & planner_data, const std::vector<PathPoint> & prev_path_points) const
 {
-  if (!prev_path_points_ptr_) {
-    return true;
-  }
-
   const auto & p = planner_data;
 
   const double max_path_length = 50.0;
 
   // truncate prev points from ego pose to fixed end points
   const auto prev_begin_idx =
-    points_utils::findEgoIndex(*prev_path_points_ptr_, p.ego_pose, ego_nearest_param_);
+    points_utils::findEgoIndex(prev_path_points, p.ego_pose, ego_nearest_param_);
   const auto truncated_prev_points =
-    points_utils::clipForwardPoints(*prev_path_points_ptr_, prev_begin_idx, max_path_length);
+    points_utils::clipForwardPoints(prev_path_points, prev_begin_idx, max_path_length);
 
   // truncate points from ego pose to fixed end points
   const auto begin_idx = points_utils::findEgoIndex(p.path.points, p.ego_pose, ego_nearest_param_);
@@ -134,13 +151,10 @@ bool ReplanChecker::isPathShapeChanged(const PlannerData & planner_data)
   return false;
 }
 
-bool ReplanChecker::isPathGoalChanged(const PlannerData & planner_data)
+bool ReplanChecker::isPathGoalChanged(
+  const PlannerData & planner_data, const std::vector<PathPoint> & prev_path_points) const
 {
   const auto & p = planner_data;
-
-  if (prev_path_points_ptr_) {
-    return true;
-  }
 
   constexpr double min_vel = 1e-3;
   if (std::abs(p.ego_vel) > min_vel) {
@@ -151,7 +165,7 @@ bool ReplanChecker::isPathGoalChanged(const PlannerData & planner_data)
   // Therefore we set a large value to distance threshold.
   constexpr double max_goal_moving_dist = 1.0;
   const double goal_moving_dist =
-    tier4_autoware_utils::calcDistance2d(p.path.points.back(), prev_path_points_ptr_->back());
+    tier4_autoware_utils::calcDistance2d(p.path.points.back(), prev_path_points.back());
   if (goal_moving_dist < max_goal_moving_dist) {
     return false;
   }

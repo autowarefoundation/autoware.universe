@@ -565,6 +565,20 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::generateOptimizedTrajecto
 
   const auto & path = planner_data.path;
 
+  const bool reset_prev_optimization = replan_checker_->isResetRequired(planner_data);
+  if (enable_reset_prev_optimization_ || reset_prev_optimization) {
+    resetPrevOptimization();
+    // always replan when resetting previous optimization
+  } else {
+    // check replan when not resetting previous optimization
+    const bool is_replan_required =
+      replan_checker_->isReplanRequired(planner_data, now(), prev_mpt_traj_ptr_);
+    if (!is_replan_required) {
+      return getPrevOptimizedTrajectory(path.points);
+    }
+  }
+
+  /*
   // check if optimization is required or not.
   // NOTE: previous trajectories information will be reset in some cases.
   const bool is_replan_required =
@@ -577,6 +591,7 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::generateOptimizedTrajecto
   if (enable_reset_prev_optimization_ || reset_prev_optimization_required) {
     resetPrevOptimization();
   }
+  */
 
   // create clearance maps
   const CVMaps cv_maps = costmap_generator_ptr_->getMaps(
@@ -625,6 +640,7 @@ return eb_path_optimizer_ptr_->getEBTrajectory(planner_data, prev_eb_traj_ptr_, 
     return getPrevOptimizedTrajectory(p.path.points);
   }
 
+  /*
   // EB has to be solved twice before solving MPT with fixed points
   // since the result of EB is likely to change with/without fixing (1st/2nd EB)
   // that makes MPT fixing points worse.
@@ -635,6 +651,7 @@ return eb_path_optimizer_ptr_->getEBTrajectory(planner_data, prev_eb_traj_ptr_, 
       prev_mpt_traj_ptr_->clear();
     }
   }
+  */
 
   // MPT: optimize trajectory to be kinematically feasible and collision free
   const auto mpt_trajs = mpt_optimizer_ptr_->getModelPredictiveTrajectory(

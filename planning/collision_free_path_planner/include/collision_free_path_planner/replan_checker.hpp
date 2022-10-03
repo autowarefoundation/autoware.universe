@@ -35,29 +35,36 @@ class ReplanChecker
 public:
   explicit ReplanChecker(rclcpp::Node & node, const EgoNearestParam & ego_nearest_param);
   void onParam(const std::vector<rclcpp::Parameter> & parameters);
+
+  bool isResetRequired(const PlannerData & planner_data);
+
   bool isReplanRequired(
     const PlannerData & planner_data, const rclcpp::Time & current_time,
     const std::shared_ptr<std::vector<TrajectoryPoint>> prev_mpt_traj_ptr);
-  bool isResetOptimizationRequired();
 
 private:
-  bool check(const PlannerData & planner_data, const rclcpp::Time & current_time);
-  bool isPathShapeChanged(const PlannerData & planner_data);
-  bool isPathGoalChanged(const PlannerData & planner_data);
-
-  // previous variables
+  // previous variables for isResetRequired
   std::shared_ptr<std::vector<PathPoint>> prev_path_points_ptr_{nullptr};
-  std::shared_ptr<rclcpp::Time> prev_replanned_time_ptr_{nullptr};
   std::shared_ptr<geometry_msgs::msg::Pose> prev_ego_pose_ptr_{nullptr};
+
+  // previous variable for isReplanRequired
+  std::shared_ptr<rclcpp::Time> prev_replanned_time_ptr_{nullptr};
 
   EgoNearestParam ego_nearest_param_;
 
-  bool reset_optimization_{false};
+  // bool reset_optimization_{false};
 
   // algorithm parameters
   double max_path_shape_change_dist_;
   double max_ego_moving_dist_;
   double max_delta_time_sec_;
+
+  bool isPathShapeChanged(
+    const PlannerData & planner_data, const std::vector<PathPoint> & prev_path_points) const;
+  bool isPathGoalChanged(
+    const PlannerData & planner_data, const std::vector<PathPoint> & prev_path_points) const;
+
+  void printInfo(const char * msg) const { RCLCPP_INFO(rclcpp::get_logger("ReplanChecker"), msg); }
 };
 }  // namespace collision_free_path_planner
 
