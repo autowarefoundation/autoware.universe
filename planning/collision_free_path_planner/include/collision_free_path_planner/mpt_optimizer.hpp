@@ -45,6 +45,7 @@
 #include "collision_free_path_planner/vehicle_model/vehicle_model_interface.hpp"
 #include "eigen3/Eigen/Core"
 #include "eigen3/Eigen/Sparse"
+#include "gtest/gtest.h"
 #include "interpolation/linear_interpolation.hpp"
 #include "osqp_interface/osqp_interface.hpp"
 #include "tier4_autoware_utils/system/stop_watch.hpp"
@@ -154,6 +155,8 @@ struct MPTTrajs
 
 class MPTOptimizer
 {
+  FRIEND_TEST(CollisionFreePathPlanner, MPTOptimizer);
+
 public:
   MPTOptimizer(
     rclcpp::Node * node, const bool is_showing_debug_info, const EgoNearestParam ego_nearest_param,

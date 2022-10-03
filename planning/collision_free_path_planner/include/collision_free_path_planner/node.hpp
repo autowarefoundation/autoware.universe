@@ -147,6 +147,8 @@ double lerpPoseZ(
 
 class CollisionFreePathPlanner : public rclcpp::Node
 {
+  FRIEND_TEST(CollisionFreePathPlanner, MPTOptimizer);
+
 public:
   explicit CollisionFreePathPlanner(const rclcpp::NodeOptions & node_options);
 
@@ -211,7 +213,6 @@ private:
   rclcpp::Subscription<Path>::SharedPtr path_sub_;
   rclcpp::Subscription<Odometry>::SharedPtr odom_sub_;
   rclcpp::Subscription<PredictedObjects>::SharedPtr objects_sub_;
-  rclcpp::Subscription<tier4_planning_msgs::msg::EnableAvoidance>::SharedPtr is_avoidance_sub_;
 
   // callback function for dynamic parameters
   rcl_interfaces::msg::SetParametersResult onParam(
@@ -221,12 +222,13 @@ private:
   // subscriber callback functions
   void onOdometry(const Odometry::SharedPtr);
   void onObjects(const PredictedObjects::SharedPtr);
-  void onEnableAvoidance(const tier4_planning_msgs::msg::EnableAvoidance::SharedPtr);
   void onPath(const Path::SharedPtr);
 
   // functions
   void resetPlanning();
   void resetPrevOptimization();
+
+  bool isDataReady();
 
   std::vector<TrajectoryPoint> generateOptimizedTrajectory(const PlannerData & planner_data);
 

@@ -1709,6 +1709,11 @@ std::vector<TrajectoryPoint> MPTOptimizer::getMPTPoints(
 
 void MPTOptimizer::calcOrientation(std::vector<ReferencePoint> & ref_points) const
 {
+  // NOTE: tmp: At least, two points are required.
+  if (ref_points.empty() || ref_points.size() == 1) {
+    return;
+  }
+
   const auto yaw_angles = splineYawFromReferencePoints(ref_points);
   for (size_t i = 0; i < ref_points.size(); ++i) {
     if (ref_points.at(i).fix_kinematic_state) {

@@ -189,9 +189,6 @@ CollisionFreePathPlanner::CollisionFreePathPlanner(const rclcpp::NodeOptions & n
   objects_sub_ = create_subscription<PredictedObjects>(
     "~/input/objects", rclcpp::QoS{10},
     std::bind(&CollisionFreePathPlanner::onObjects, this, std::placeholders::_1));
-  is_avoidance_sub_ = create_subscription<tier4_planning_msgs::msg::EnableAvoidance>(
-    "/planning/scenario_planning/lane_driving/obstacle_avoidance_approval", rclcpp::QoS{10},
-    std::bind(&CollisionFreePathPlanner::onEnableAvoidance, this, std::placeholders::_1));
 
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
   {  // vehicle param
@@ -326,7 +323,7 @@ CollisionFreePathPlanner::CollisionFreePathPlanner(const rclcpp::NodeOptions & n
   set_param_res_ = this->add_on_set_parameters_callback(
     std::bind(&CollisionFreePathPlanner::onParam, this, std::placeholders::_1));
 
-  self_pose_listener_.waitForFirstPose();
+  // self_pose_listener_.waitForFirstPose();
 }
 
 rcl_interfaces::msg::SetParametersResult CollisionFreePathPlanner::onParam(
@@ -465,12 +462,6 @@ void CollisionFreePathPlanner::onObjects(const PredictedObjects::SharedPtr msg)
   objects_ptr_ = std::make_unique<PredictedObjects>(*msg);
 }
 
-void CollisionFreePathPlanner::onEnableAvoidance(
-  const tier4_planning_msgs::msg::EnableAvoidance::SharedPtr msg)
-{
-  enable_avoidance_ = msg->enable_avoidance;
-}
-
 void CollisionFreePathPlanner::resetPlanning()
 {
   RCLCPP_WARN(get_logger(), "[CollisionFreePathPlanner] Reset planning");
@@ -496,9 +487,13 @@ void CollisionFreePathPlanner::onPath(const Path::SharedPtr path_ptr)
 {
   stop_watch_.tic(__func__);
 
-  if (
-    path_ptr->points.empty() || path_ptr->drivable_area.data.empty() || !current_twist_ptr_ ||
-    !objects_ptr_) {
+  // check if data is ready
+  if (!isDataReady()) {
+    return;
+  }
+
+  // check if data is valid
+  if (path_ptr->points.empty() || path_ptr->drivable_area.data.empty()) {
     return;
   }
 
@@ -530,6 +525,29 @@ void CollisionFreePathPlanner::onPath(const Path::SharedPtr path_ptr)
   }
 
   traj_pub_->publish(output_traj_msg);
+}
+
+bool CollisionFreePathPlanner::isDataReady()
+{
+  const auto is_data_missing = [this](const auto & name) {
+    RCLCPP_INFO_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for %s", name);
+    return false;
+  };
+
+  if (!current_twist_ptr_) {
+    return is_data_missing("self_twist");
+  }
+
+  if (!objects_ptr_) {
+    return is_data_missing("dynamic_object");
+  }
+
+  const auto ego_pose = self_pose_listener_.getCurrentPose();
+  if (!ego_pose) {
+    return is_data_missing("self_pose");
+  }
+
+  return true;
 }
 
 Trajectory CollisionFreePathPlanner::generateTrajectory(const PlannerData & planner_data)
@@ -1036,15 +1054,15 @@ void CollisionFreePathPlanner::publishDebugDataInMain(const Path & path) const
   {  // publish clearance map
     stop_watch_.tic("publishClearanceMap");
 
-    if (is_publishing_area_with_objects_) {  // false
+    if (is_publishing_area_with_objects_) {  // false by default
       debug_area_with_objects_pub_->publish(
         debug_utils::getDebugCostmap(debug_data_.area_with_objects_map, path.drivable_area));
     }
-    if (is_publishing_object_clearance_map_) {  // false
+    if (is_publishing_object_clearance_map_) {  // false by default
       debug_object_clearance_map_pub_->publish(
         debug_utils::getDebugCostmap(debug_data_.only_object_clearance_map, path.drivable_area));
     }
-    if (is_publishing_clearance_map_) {  // true
+    if (is_publishing_clearance_map_) {  // true by default
       debug_clearance_map_pub_->publish(
         debug_utils::getDebugCostmap(debug_data_.clearance_map, path.drivable_area));
     }
@@ -1055,5 +1073,6 @@ void CollisionFreePathPlanner::publishDebugDataInMain(const Path & path) const
   debug_data_.msg_stream << "  " << __func__ << ":= " << stop_watch_.toc(__func__) << " [ms]\n";
 }
 }  // namespace collision_free_path_planner
+
 #include "rclcpp_components/register_node_macro.hpp"
 RCLCPP_COMPONENTS_REGISTER_NODE(collision_free_path_planner::CollisionFreePathPlanner)
