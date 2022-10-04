@@ -21,6 +21,7 @@
 #include "ekf_localizer/state_index.hpp"
 #include "ekf_localizer/state_transition.hpp"
 #include "ekf_localizer/warning.hpp"
+#include "ekf_localizer/time.hpp"
 
 #include <rclcpp/logging.hpp>
 #include <tier4_autoware_utils/math/unit_conversion.hpp>
@@ -43,12 +44,6 @@
 // clang-format on
 
 using std::placeholders::_1;
-
-inline std::chrono::nanoseconds DoubleToNanoseconds(const double time)
-{
-  return std::chrono::duration_cast<std::chrono::nanoseconds>(
-    std::chrono::duration<double>(time));
-}
 
 EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOptions & node_options)
 : rclcpp::Node(node_name, node_options), warning_(this), dim_x_(6 /* x, y, yaw, yaw_bias, vx, wz */)
