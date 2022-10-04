@@ -222,6 +222,7 @@ The setting value of voltage_monitor.param.yaml is as follows.
 The above values of 2.7V and 2.90V are hypothetical. Depending on the motherboard and chipset, the value may vary. However, if the voltage of the lithium battery drops below 2.7V, it is recommended to replace it.
 In the above example, the message output to the topic /diagnostics is as follows.
 If the voltage < 2.9V then:
+
 ```txt
   name: /autoware/system/resource_monitoring/voltage/cmos_battery
   message: Warning
@@ -232,6 +233,7 @@ If the voltage < 2.9V then:
 ```
 
 If the voltage < 2.7V then:
+
 ```txt
   name: /autoware/system/resource_monitoring/voltage/cmos_battery
   message: Warning
@@ -242,6 +244,7 @@ If the voltage < 2.7V then:
 ```
 
 If neither, then:
+
 ```txt
   name: /autoware/system/resource_monitoring/voltage/cmos_battery
   message: OK
@@ -251,8 +254,8 @@ If neither, then:
     value: OK
 ```
 
-If the CMOS battery voltage drops less than voltage_error or voltage_warn,It will be a warning.
-If the battery runs out, the RTC will stop working when the power is turned off. However, since the vehicle can run, it is not an error. The vehicle will stop when an error occurs, but there is no need to stop immediately.
+If the battery voltage drops below voltage_error or voltage_warn,It will be a warning.
+If the CMOS battery runs out, the RTC will stop working when the power is turned off. However, since the vehicle can run, it is not an error. The vehicle will stop when an error occurs, but there is no need to stop immediately.
 It can be determined by the value of "Low Battery" or "Battery Died".
 
 ## UML diagrams
