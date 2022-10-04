@@ -12,10 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <gtest/gtest.h>
-
 #include "ekf_localizer/covariance.hpp"
 
+#include <gtest/gtest.h>
 
 TEST(EKFCovarianceToPoseMessageCovariance, SmokeTest)
 {

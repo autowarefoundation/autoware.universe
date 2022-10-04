@@ -26,14 +26,9 @@ std::array<double, 36> ekfCovarianceToPoseMessageCovariance(const Matrix6d & P)
   const double p21 = P(2, 1);
   const double p22 = P(2, 2);
 
-  return std::array<double, 36>{
-    p00, p01, 0.0, 0.0, 0.0, p02,
-    p10, p11, 0.0, 0.0, 0.0, p12,
-    0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-    0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-    0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-    p20, p21, 0.0, 0.0, 0.0, p22
-  };
+  return std::array<double, 36>{p00, p01, 0.0, 0.0, 0.0, p02, p10, p11, 0.0, 0.0, 0.0, p12,
+                                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, p20, p21, 0.0, 0.0, 0.0, p22};
 }
 
 std::array<double, 36> ekfCovarianceToTwistMessageCovariance(const Matrix6d & P)
@@ -43,12 +38,7 @@ std::array<double, 36> ekfCovarianceToTwistMessageCovariance(const Matrix6d & P)
   const double p54 = P(5, 4);
   const double p55 = P(5, 5);
 
-  return std::array<double, 36>{
-    p44, 0.0, 0.0, 0.0, 0.0, p45,
-    0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-    0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-    0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-    0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-    p54, 0.0, 0.0, 0.0, 0.0, p55
-  };
+  return std::array<double, 36>{p44, 0.0, 0.0, 0.0, 0.0, p45, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, p54, 0.0, 0.0, 0.0, 0.0, p55};
 }
