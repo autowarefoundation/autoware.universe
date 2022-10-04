@@ -116,3 +116,7 @@ repositories:
     type: git
     url: https://github.com/MORAI-Autonomous/MORAI-ROS2_morai_msgs.git
     version: main
+  rclcpp: # for temporally fix
+    type: git
+    url: https://github.com/tier4/rclcpp.git
+    version: galactic-with-fix-service-connection-patch
