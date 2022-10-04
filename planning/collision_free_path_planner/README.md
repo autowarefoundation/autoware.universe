@@ -37,6 +37,8 @@ Flowchart of functions is explained here.
 title pathCallback
 start
 
+:createPlannerData;
+
 group generateOptimizedTrajectory
   :checkReplan;
   if (replanning required?) then (yes)
@@ -66,12 +68,8 @@ group generateOptimizedTrajectory
 end group
 
 
-group generatePostProcessedTrajectory
-  :getExtendedOptimizedTrajectory;
-  :concatTrajectory;
-  :generateFineTrajectoryPoints;
-  :alignVelocity;
-end group
+extendedOptimizedTrajectory;
+:alignVelocity;
 
 :convertToTrajectory;
 

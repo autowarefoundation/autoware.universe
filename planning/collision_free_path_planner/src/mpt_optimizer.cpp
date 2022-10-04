@@ -241,25 +241,6 @@ std::vector<double> splineYawFromReferencePoints(const std::vector<ReferencePoin
 }
 
 template <class T>
-size_t findSoftNearestIndex(
-  const std::vector<T> & points, const geometry_msgs::msg::Pose & pose, const double dist_threshold,
-  const double yaw_threshold)
-{
-  const auto nearest_idx_opt =
-    motion_utils::findNearestIndex(points, pose, dist_threshold, yaw_threshold);
-  return nearest_idx_opt ? nearest_idx_opt.get()
-                         : motion_utils::findNearestIndex(points, pose.position);
-}
-
-std::vector<TrajectoryPoint> resampleTrajectoryPoints(
-  const std::vector<TrajectoryPoint> traj_points, const double interval)
-{
-  const auto traj = motion_utils::convertToTrajectory(traj_points);
-  const auto resampled_traj = motion_utils::resampleTrajectory(traj, interval);
-  return motion_utils::convertToTrajectoryPointArray(resampled_traj);
-}
-
-template <class T>
 std::vector<T> createVector(const T & value, const std::vector<T> & vector)
 {
   std::vector<T> result_vector;
@@ -272,7 +253,7 @@ std::vector<ReferencePoint> resampleRefPoints(
   const std::vector<ReferencePoint> & ref_points, const double interval)
 {
   const auto traj_points = points_utils::convertToTrajectoryPoints(ref_points);
-  const auto resampled_traj_points = resampleTrajectoryPoints(traj_points, interval);
+  const auto resampled_traj_points = points_utils::resampleTrajectoryPoints(traj_points, interval);
   return points_utils::convertToReferencePoints(resampled_traj_points);
 }
 }  // namespace
@@ -722,7 +703,7 @@ std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
 
   // convert smoothed points to reference points
   const auto resampled_smoothed_points =
-    resampleTrajectoryPoints(smoothed_points, mpt_param_.delta_arc_length);
+    points_utils::resampleTrajectoryPoints(smoothed_points, mpt_param_.delta_arc_length);
   auto ref_points = points_utils::convertToReferencePoints(resampled_smoothed_points);
 
   // crop reference points with margin first to reduce calculation cost
@@ -1147,7 +1128,7 @@ boost::optional<Eigen::VectorXd> MPTOptimizer::executeOptimization(
       ref_front_point.orientation =
         tier4_autoware_utils::createQuaternionFromYaw(ref_points.front().yaw);
 
-      const size_t seg_idx = findSoftNearestIndex(
+      const size_t seg_idx = points_utils::findSoftNearestIndex(
         *prev_ref_points_ptr_, ref_front_point, ego_nearest_param_.dist_threshold,
         ego_nearest_param_.yaw_threshold);
 
@@ -1726,7 +1707,7 @@ void MPTOptimizer::calcExtraPoints(std::vector<ReferencePoint> & ref_points) con
     if (prev_ref_points_ptr_ && prev_ref_points_ptr_->empty()) {
       const auto ref_points_with_yaw =
         points_utils::convertToPosesWithYawEstimation(points_utils::convertToPoints(ref_points));
-      const size_t prev_idx = findSoftNearestIndex(
+      const size_t prev_idx = points_utils::findSoftNearestIndex(
         *prev_ref_points_ptr_, ref_points_with_yaw.at(i),
         traj_param_.delta_dist_threshold_for_closest_point,
         traj_param_.delta_yaw_threshold_for_closest_point);

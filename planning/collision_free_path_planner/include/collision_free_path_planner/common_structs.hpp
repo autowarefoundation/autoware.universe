@@ -29,6 +29,15 @@
 
 namespace collision_free_path_planner
 {
+struct PlannerData
+{
+  Path path;
+  geometry_msgs::msg::Pose ego_pose{};
+  double ego_vel{};
+  std::vector<PredictedObject> objects{};
+  bool enable_avoidance{false};
+};
+
 struct ReferencePoint;
 
 struct Bounds;
@@ -49,18 +58,20 @@ struct CVMaps
 
 struct EBParam
 {
+  // qp
   struct QPParam
   {
     int max_iteration;
     double eps_abs;
     double eps_rel;
   };
+  QPParam qp_param;
 
+  // clearance
   double clearance_for_fixing;
   double clearance_for_straight_line;
   double clearance_for_joint;
   double clearance_for_only_smoothing;
-  QPParam qp_param;
 
   int num_joint_buffer_points;
   int num_offset_for_begin_idx;
@@ -122,34 +133,34 @@ struct DebugData
   }
 
   StreamWithPrint msg_stream;
+
+  // settting
   size_t mpt_visualize_sampling_num;
   geometry_msgs::msg::Pose current_ego_pose;
   std::vector<double> vehicle_circle_radiuses;
   std::vector<double> vehicle_circle_longitudinal_offsets;
 
-  boost::optional<geometry_msgs::msg::Pose> stop_pose_by_drivable_area = boost::none;
-  std::vector<geometry_msgs::msg::Point> interpolated_points;
-  std::vector<geometry_msgs::msg::Point> straight_points;
-  std::vector<geometry_msgs::msg::Pose> fixed_points;
-  std::vector<geometry_msgs::msg::Pose> non_fixed_points;
-  std::vector<ConstrainRectangle> constrain_rectangles;
   std::vector<TrajectoryPoint> avoiding_traj_points;
   std::vector<PredictedObject> avoiding_objects;
 
-  std::vector<std::vector<geometry_msgs::msg::Pose>> vehicle_circles_pose;
-  std::vector<ReferencePoint> ref_points;
-
-  std::vector<geometry_msgs::msg::Pose> mpt_ref_poses;
-  std::vector<double> lateral_errors;
-
+  // eb
+  std::vector<ConstrainRectangle> constrain_rectangles;
   std::vector<TrajectoryPoint> eb_traj;
-  // std::vector<TrajectoryPoint> mpt_fixed_traj;
-  // std::vector<TrajectoryPoint> mpt_ref_traj;
-  // std::vector<TrajectoryPoint> mpt_traj;
+  // mpt
+  std::vector<ReferencePoint> ref_points;
+  std::vector<geometry_msgs::msg::Pose> mpt_ref_poses;
+  SequentialBoundsCandidates sequential_bounds_candidates;
+  std::vector<double> lateral_errors;
+  std::vector<std::vector<geometry_msgs::msg::Pose>> vehicle_circles_pose;
+
+  boost::optional<geometry_msgs::msg::Pose> stop_pose_by_drivable_area = boost::none;
+
   std::vector<TrajectoryPoint> extended_fixed_traj;
   std::vector<TrajectoryPoint> extended_non_fixed_traj;
 
-  SequentialBoundsCandidates sequential_bounds_candidates;
+  // std::vector<TrajectoryPoint> mpt_fixed_traj;
+  // std::vector<TrajectoryPoint> mpt_ref_traj;
+  // std::vector<TrajectoryPoint> mpt_traj;
 };
 
 struct TrajectoryParam
@@ -174,15 +185,6 @@ struct EgoNearestParam
 {
   double dist_threshold{0.0};
   double yaw_threshold{0.0};
-};
-
-struct PlannerData
-{
-  Path path;
-  geometry_msgs::msg::Pose ego_pose{};
-  double ego_vel{};
-  std::vector<PredictedObject> objects{};
-  bool enable_avoidance{false};
 };
 
 }  // namespace collision_free_path_planner

@@ -14,15 +14,13 @@
 
 #include "collision_free_path_planner/debug_marker.hpp"
 
+#include "collision_free_path_planner/eb_path_optimizer.hpp"
 #include "collision_free_path_planner/mpt_optimizer.hpp"
 #include "collision_free_path_planner/utils/cv_utils.hpp"
 #include "collision_free_path_planner/utils/utils.hpp"
-#include "tf2/utils.h"
+#include "motion_utils/motion_utils.hpp"
 
 #include "visualization_msgs/msg/marker_array.hpp"
-
-#include <string>
-#include <vector>
 
 using tier4_autoware_utils::appendMarkerArray;
 using tier4_autoware_utils::createDefaultMarker;
@@ -34,44 +32,44 @@ namespace collision_free_path_planner
 namespace
 {
 template <typename T>
-visualization_msgs::msg::MarkerArray getPointsMarkerArray(
+MarkerArray getPointsMarkerArray(
   const std::vector<T> & points, const std::string & ns, const double r, const double g,
   const double b)
 {
   if (points.empty()) {
-    return visualization_msgs::msg::MarkerArray{};
+    return MarkerArray{};
   }
 
   auto marker = createDefaultMarker(
-    "map", rclcpp::Clock().now(), ns, 0, visualization_msgs::msg::Marker::LINE_LIST,
-    createMarkerScale(0.5, 0.5, 0.5), createMarkerColor(r, g, b, 0.99));
+    "map", rclcpp::Clock().now(), ns, 0, Marker::LINE_LIST, createMarkerScale(0.5, 0.5, 0.5),
+    createMarkerColor(r, g, b, 0.99));
   marker.lifetime = rclcpp::Duration::from_seconds(1.0);
 
   for (const auto & point : points) {
     marker.points.push_back(tier4_autoware_utils::getPoint(point));
   }
 
-  visualization_msgs::msg::MarkerArray msg;
+  MarkerArray msg;
   msg.markers.push_back(marker);
 
   return msg;
 }
 
 template <typename T>
-visualization_msgs::msg::MarkerArray getPointsTextMarkerArray(
+MarkerArray getPointsTextMarkerArray(
   const std::vector<T> & points, const std::string & ns, const double r, const double g,
   const double b)
 {
   if (points.empty()) {
-    return visualization_msgs::msg::MarkerArray{};
+    return MarkerArray{};
   }
 
   auto marker = createDefaultMarker(
-    "map", rclcpp::Clock().now(), ns, 0, visualization_msgs::msg::Marker::TEXT_VIEW_FACING,
+    "map", rclcpp::Clock().now(), ns, 0, Marker::TEXT_VIEW_FACING,
     createMarkerScale(0.0, 0.0, 0.15), createMarkerColor(r, g, b, 0.99));
   marker.lifetime = rclcpp::Duration::from_seconds(1.5);
 
-  visualization_msgs::msg::MarkerArray msg;
+  MarkerArray msg;
   for (size_t i = 0; i < points.size(); i++) {
     marker.id = i;
     marker.text = std::to_string(i);
@@ -82,184 +80,21 @@ visualization_msgs::msg::MarkerArray getPointsTextMarkerArray(
   return msg;
 }
 
-geometry_msgs::msg::Pose getVirtualWallPose(
-  const geometry_msgs::msg::Pose & target_pose, const vehicle_info_util::VehicleInfo & vehicle_info)
-{
-  const double base_link2front = vehicle_info.wheel_base_m + vehicle_info.front_overhang_m;
-  tf2::Transform tf_base_link2front(
-    tf2::Quaternion(0.0, 0.0, 0.0, 1.0), tf2::Vector3(base_link2front, 0.0, 0.0));
-  tf2::Transform tf_map2base_link;
-  tf2::fromMsg(target_pose, tf_map2base_link);
-  tf2::Transform tf_map2front = tf_map2base_link * tf_base_link2front;
-  geometry_msgs::msg::Pose virtual_wall_pose;
-  tf2::toMsg(tf_map2front, virtual_wall_pose);
-  return virtual_wall_pose;
-}
-
-visualization_msgs::msg::MarkerArray getDebugPointsMarkers(
-  const std::vector<geometry_msgs::msg::Point> & interpolated_points,
-  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & optimized_points,
-  const std::vector<geometry_msgs::msg::Point> & straight_points,
-  const std::vector<geometry_msgs::msg::Pose> & fixed_points,
-  const std::vector<geometry_msgs::msg::Pose> & non_fixed_points)
-{
-  visualization_msgs::msg::MarkerArray marker_array;
-  int unique_id = 0;
-
-  unique_id = 0;
-  visualization_msgs::msg::Marker interpolated_points_marker;
-  interpolated_points_marker.lifetime = rclcpp::Duration::from_seconds(0);
-  interpolated_points_marker.header.frame_id = "map";
-  interpolated_points_marker.header.stamp = rclcpp::Time(0);
-  interpolated_points_marker.ns = std::string("interpolated_points_marker");
-  interpolated_points_marker.action = visualization_msgs::msg::Marker::ADD;
-  interpolated_points_marker.pose.orientation.w = 1.0;
-  interpolated_points_marker.id = unique_id;
-  interpolated_points_marker.type = visualization_msgs::msg::Marker::SPHERE_LIST;
-  interpolated_points_marker.scale = createMarkerScale(.3, .3, .3);
-  interpolated_points_marker.color = createMarkerColor(1.0f, 0, 0, 0.8);
-  unique_id++;
-  for (const auto & point : interpolated_points) {
-    interpolated_points_marker.points.push_back(point);
-  }
-  if (!interpolated_points_marker.points.empty()) {
-    marker_array.markers.push_back(interpolated_points_marker);
-  }
-
-  unique_id = 0;
-  visualization_msgs::msg::Marker optimized_points_marker;
-  optimized_points_marker.lifetime = rclcpp::Duration::from_seconds(0);
-  optimized_points_marker.header.frame_id = "map";
-  optimized_points_marker.header.stamp = rclcpp::Time(0);
-  optimized_points_marker.ns = std::string("optimized_points_marker");
-  optimized_points_marker.action = visualization_msgs::msg::Marker::ADD;
-  optimized_points_marker.pose.orientation.w = 1.0;
-  optimized_points_marker.id = unique_id;
-  optimized_points_marker.type = visualization_msgs::msg::Marker::SPHERE_LIST;
-  optimized_points_marker.scale = createMarkerScale(0.35, 0.35, 0.35);
-  optimized_points_marker.color = createMarkerColor(0, 1.0f, 0, 0.99);
-  unique_id++;
-  for (const auto & point : optimized_points) {
-    optimized_points_marker.points.push_back(point.pose.position);
-  }
-  if (!optimized_points_marker.points.empty()) {
-    marker_array.markers.push_back(optimized_points_marker);
-  }
-
-  unique_id = 0;
-  for (size_t i = 0; i < optimized_points.size(); i++) {
-    visualization_msgs::msg::Marker optimized_points_text_marker;
-    optimized_points_text_marker.lifetime = rclcpp::Duration::from_seconds(0);
-    optimized_points_text_marker.header.frame_id = "map";
-    optimized_points_text_marker.header.stamp = rclcpp::Time(0);
-    optimized_points_text_marker.ns = std::string("optimized_points_text_marker");
-    optimized_points_text_marker.action = visualization_msgs::msg::Marker::ADD;
-    optimized_points_text_marker.pose.orientation.w = 1.0;
-    optimized_points_text_marker.id = unique_id;
-    optimized_points_text_marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
-    optimized_points_text_marker.pose.position = optimized_points[i].pose.position;
-    optimized_points_text_marker.scale = createMarkerScale(0, 0, 0.15);
-    optimized_points_text_marker.color = createMarkerColor(0, 1.0, 0, 0.99);
-    optimized_points_text_marker.text = std::to_string(i);
-    unique_id++;
-    marker_array.markers.push_back(optimized_points_text_marker);
-  }
-
-  unique_id = 0;
-  for (size_t i = 0; i < interpolated_points.size(); i++) {
-    visualization_msgs::msg::Marker interpolated_points_text_marker;
-    interpolated_points_text_marker.lifetime = rclcpp::Duration::from_seconds(0);
-    interpolated_points_text_marker.header.frame_id = "map";
-    interpolated_points_text_marker.header.stamp = rclcpp::Time(0);
-    interpolated_points_text_marker.ns = std::string("interpolated_points_text_marker");
-    interpolated_points_text_marker.action = visualization_msgs::msg::Marker::ADD;
-    interpolated_points_text_marker.pose.orientation.w = 1.0;
-    interpolated_points_text_marker.id = unique_id;
-    interpolated_points_text_marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
-    interpolated_points_text_marker.pose.position = interpolated_points[i];
-    interpolated_points_text_marker.scale = createMarkerScale(0, 0, 0.5);
-    interpolated_points_text_marker.color = createMarkerColor(0, 1.0, 0, 0.99);
-    interpolated_points_text_marker.text = std::to_string(i);
-    unique_id++;
-    marker_array.markers.push_back(interpolated_points_text_marker);
-  }
-
-  unique_id = 0;
-  visualization_msgs::msg::Marker straight_points_marker;
-  straight_points_marker.lifetime = rclcpp::Duration::from_seconds(40);
-  straight_points_marker.header.frame_id = "map";
-  straight_points_marker.header.stamp = rclcpp::Time(0);
-  straight_points_marker.ns = std::string("straight_points_marker");
-  straight_points_marker.action = visualization_msgs::msg::Marker::ADD;
-  straight_points_marker.pose.orientation.w = 1.0;
-  straight_points_marker.id = unique_id;
-  straight_points_marker.type = visualization_msgs::msg::Marker::SPHERE_LIST;
-  straight_points_marker.scale = createMarkerScale(1.0, 1.0, 1.0);
-  straight_points_marker.color = createMarkerColor(1.0, 1.0, 0, 0.99);
-  unique_id++;
-  for (const auto & point : straight_points) {
-    straight_points_marker.points.push_back(point);
-  }
-  if (!straight_points_marker.points.empty()) {
-    marker_array.markers.push_back(straight_points_marker);
-  }
-
-  unique_id = 0;
-  visualization_msgs::msg::Marker fixed_marker;
-  fixed_marker.lifetime = rclcpp::Duration::from_seconds(0);
-  fixed_marker.header.frame_id = "map";
-  fixed_marker.header.stamp = rclcpp::Time(0);
-  fixed_marker.ns = std::string("fixed_points_marker");
-  fixed_marker.action = visualization_msgs::msg::Marker::ADD;
-  fixed_marker.pose.orientation.w = 1.0;
-  fixed_marker.id = unique_id;
-  fixed_marker.type = visualization_msgs::msg::Marker::SPHERE_LIST;
-  fixed_marker.scale = createMarkerScale(0.3, 0.3, 0.3);
-  fixed_marker.color = createMarkerColor(1.0, 0, 0, 0.99);
-  unique_id++;
-  for (const auto & point : fixed_points) {
-    fixed_marker.points.push_back(point.position);
-  }
-  if (!fixed_marker.points.empty()) {
-    marker_array.markers.push_back(fixed_marker);
-  }
-
-  visualization_msgs::msg::Marker non_fixed_marker;
-  non_fixed_marker.lifetime = rclcpp::Duration::from_seconds(20);
-  non_fixed_marker.header.frame_id = "map";
-  non_fixed_marker.header.stamp = rclcpp::Time(0);
-  non_fixed_marker.ns = std::string("non_fixed_points_marker");
-  non_fixed_marker.action = visualization_msgs::msg::Marker::ADD;
-  non_fixed_marker.pose.orientation.w = 1.0;
-  non_fixed_marker.id = unique_id;
-  non_fixed_marker.type = visualization_msgs::msg::Marker::SPHERE_LIST;
-  non_fixed_marker.scale = createMarkerScale(1.0, 1.0, 1.0);
-  non_fixed_marker.color = createMarkerColor(0, 1.0, 0, 0.99);
-  unique_id++;
-  for (const auto & point : non_fixed_points) {
-    non_fixed_marker.points.push_back(point.position);
-  }
-  if (!non_fixed_marker.points.empty()) {
-    marker_array.markers.push_back(non_fixed_marker);
-  }
-  return marker_array;
-}
-
-visualization_msgs::msg::MarkerArray getDebugConstrainMarkers(
+MarkerArray getDebugConstrainMarkers(
   const std::vector<ConstrainRectangle> & constrain_ranges, const std::string & ns)
 {
-  visualization_msgs::msg::MarkerArray marker_array;
+  MarkerArray marker_array;
   int unique_id = 0;
   for (size_t i = 0; i < constrain_ranges.size(); i++) {
-    visualization_msgs::msg::Marker constrain_rect_marker;
+    Marker constrain_rect_marker;
     constrain_rect_marker.lifetime = rclcpp::Duration::from_seconds(0);
     constrain_rect_marker.header.frame_id = "map";
     constrain_rect_marker.header.stamp = rclcpp::Time(0);
     constrain_rect_marker.ns = ns;
-    constrain_rect_marker.action = visualization_msgs::msg::Marker::ADD;
+    constrain_rect_marker.action = Marker::ADD;
     constrain_rect_marker.pose.orientation.w = 1.0;
     constrain_rect_marker.id = unique_id;
-    constrain_rect_marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
+    constrain_rect_marker.type = Marker::LINE_STRIP;
     constrain_rect_marker.scale = createMarkerScale(0.01, 0, 0);
     constrain_rect_marker.color = createMarkerColor(1.0, 0, 0, 0.99);
     unique_id++;
@@ -276,15 +111,15 @@ visualization_msgs::msg::MarkerArray getDebugConstrainMarkers(
   }
 
   for (size_t i = 0; i < constrain_ranges.size(); i++) {
-    visualization_msgs::msg::Marker marker;
+    Marker marker;
     marker.header.frame_id = "map";
     marker.header.stamp = rclcpp::Time(0);
     marker.ns = ns + "_text";
     marker.id = unique_id++;
     marker.lifetime = rclcpp::Duration::from_seconds(0);
-    marker.action = visualization_msgs::msg::Marker::ADD;
+    marker.action = Marker::ADD;
     marker.pose.orientation.w = 1.0;
-    marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
+    marker.type = Marker::TEXT_VIEW_FACING;
     marker.scale = createMarkerScale(0, 0, 0.15);
     marker.color = createMarkerColor(1.0, 0, 0, 0.99);
     marker.text = std::to_string(i);
@@ -294,15 +129,15 @@ visualization_msgs::msg::MarkerArray getDebugConstrainMarkers(
 
   unique_id = 0;
   for (size_t i = 0; i < constrain_ranges.size(); i++) {
-    visualization_msgs::msg::Marker constrain_range_text_marker;
+    Marker constrain_range_text_marker;
     constrain_range_text_marker.lifetime = rclcpp::Duration::from_seconds(0);
     constrain_range_text_marker.header.frame_id = "map";
     constrain_range_text_marker.header.stamp = rclcpp::Time(0);
     constrain_range_text_marker.ns = ns + "_location";
-    constrain_range_text_marker.action = visualization_msgs::msg::Marker::ADD;
+    constrain_range_text_marker.action = Marker::ADD;
     constrain_range_text_marker.pose.orientation.w = 1.0;
     constrain_range_text_marker.id = unique_id;
-    constrain_range_text_marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
+    constrain_range_text_marker.type = Marker::TEXT_VIEW_FACING;
     constrain_range_text_marker.pose.position = constrain_ranges[i].top_left;
     constrain_range_text_marker.scale = createMarkerScale(0, 0, 0.1);
     constrain_range_text_marker.color = createMarkerColor(1.0, 0, 0, 0.99);
@@ -343,15 +178,15 @@ visualization_msgs::msg::MarkerArray getDebugConstrainMarkers(
   return marker_array;
 }
 
-visualization_msgs::msg::MarkerArray getObjectsMarkerArray(
+MarkerArray getObjectsMarkerArray(
   const std::vector<autoware_auto_perception_msgs::msg::PredictedObject> & objects,
   const std::string & ns, const double r, const double g, const double b)
 {
-  visualization_msgs::msg::MarkerArray msg;
+  MarkerArray msg;
 
   auto marker = createDefaultMarker(
-    "map", rclcpp::Clock().now(), ns, 0, visualization_msgs::msg::Marker::CUBE,
-    createMarkerScale(3.0, 1.0, 1.0), createMarkerColor(r, g, b, 0.8));
+    "map", rclcpp::Clock().now(), ns, 0, Marker::CUBE, createMarkerScale(3.0, 1.0, 1.0),
+    createMarkerColor(r, g, b, 0.8));
   marker.lifetime = rclcpp::Duration::from_seconds(1.5);
 
   for (size_t i = 0; i < objects.size(); ++i) {
@@ -364,12 +199,11 @@ visualization_msgs::msg::MarkerArray getObjectsMarkerArray(
   return msg;
 }
 
-visualization_msgs::msg::MarkerArray getRectanglesMarkerArray(
-  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> mpt_traj,
-  const vehicle_info_util::VehicleInfo & vehicle_info, const std::string & ns, const double r,
-  const double g, const double b, const size_t sampling_num)
+MarkerArray getRectanglesMarkerArray(
+  const std::vector<TrajectoryPoint> mpt_traj, const vehicle_info_util::VehicleInfo & vehicle_info,
+  const std::string & ns, const double r, const double g, const double b, const size_t sampling_num)
 {
-  visualization_msgs::msg::MarkerArray msg;
+  MarkerArray msg;
   for (size_t i = 0; i < mpt_traj.size(); ++i) {
     if (i % sampling_num != 0) {
       continue;
@@ -377,8 +211,8 @@ visualization_msgs::msg::MarkerArray getRectanglesMarkerArray(
     const auto & traj_point = mpt_traj.at(i);
 
     auto marker = createDefaultMarker(
-      "map", rclcpp::Clock().now(), ns, i, visualization_msgs::msg::Marker::LINE_STRIP,
-      createMarkerScale(0.05, 0.0, 0.0), createMarkerColor(r, g, b, 1.0));
+      "map", rclcpp::Clock().now(), ns, i, Marker::LINE_STRIP, createMarkerScale(0.05, 0.0, 0.0),
+      createMarkerColor(r, g, b, 1.0));
     marker.lifetime = rclcpp::Duration::from_seconds(1.5);
 
     const double half_width = vehicle_info.vehicle_width_m / 2.0;
@@ -404,17 +238,16 @@ visualization_msgs::msg::MarkerArray getRectanglesMarkerArray(
   return msg;
 }
 
-visualization_msgs::msg::MarkerArray getRectanglesNumMarkerArray(
-  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> mpt_traj,
-  const vehicle_info_util::VehicleInfo & vehicle_info, const std::string & ns, const double r,
-  const double g, const double b)
+MarkerArray getRectanglesNumMarkerArray(
+  const std::vector<TrajectoryPoint> mpt_traj, const vehicle_info_util::VehicleInfo & vehicle_info,
+  const std::string & ns, const double r, const double g, const double b)
 {
   auto marker = createDefaultMarker(
-    "map", rclcpp::Clock().now(), ns, 0, visualization_msgs::msg::Marker::TEXT_VIEW_FACING,
+    "map", rclcpp::Clock().now(), ns, 0, Marker::TEXT_VIEW_FACING,
     createMarkerScale(0.0, 0.0, 0.125), createMarkerColor(r, g, b, 0.99));
   marker.lifetime = rclcpp::Duration::from_seconds(1.5);
 
-  visualization_msgs::msg::MarkerArray msg;
+  MarkerArray msg;
   for (size_t i = 0; i < mpt_traj.size(); ++i) {
     const auto & traj_point = mpt_traj.at(i);
 
@@ -437,20 +270,20 @@ visualization_msgs::msg::MarkerArray getRectanglesNumMarkerArray(
   return msg;
 }
 
-visualization_msgs::msg::MarkerArray getBoundsCandidatesLineMarkerArray(
+MarkerArray getBoundsCandidatesLineMarkerArray(
   const std::vector<ReferencePoint> & ref_points,
   std::vector<std::vector<Bounds>> & bounds_candidates, const double r, const double g,
   const double b, [[maybe_unused]] const double vehicle_width, const size_t sampling_num)
 {
   const auto current_time = rclcpp::Clock().now();
-  visualization_msgs::msg::MarkerArray msg;
+  MarkerArray msg;
   const std::string ns = "bounds_candidates";
 
   if (ref_points.empty()) return msg;
 
   auto marker = createDefaultMarker(
-    "map", rclcpp::Clock().now(), ns, 0, visualization_msgs::msg::Marker::LINE_LIST,
-    createMarkerScale(0.05, 0.0, 0.0), createMarkerColor(r + 0.5, g, b, 0.3));
+    "map", rclcpp::Clock().now(), ns, 0, Marker::LINE_LIST, createMarkerScale(0.05, 0.0, 0.0),
+    createMarkerColor(r + 0.5, g, b, 0.3));
   marker.lifetime = rclcpp::Duration::from_seconds(1.5);
 
   for (size_t i = 0; i < ref_points.size(); i++) {
@@ -481,12 +314,12 @@ visualization_msgs::msg::MarkerArray getBoundsCandidatesLineMarkerArray(
   return msg;
 }
 
-visualization_msgs::msg::MarkerArray getBoundsLineMarkerArray(
+MarkerArray getBoundsLineMarkerArray(
   const std::vector<ReferencePoint> & ref_points, const double r, const double g, const double b,
   const double vehicle_width, const size_t sampling_num)
 {
   const auto current_time = rclcpp::Clock().now();
-  visualization_msgs::msg::MarkerArray msg;
+  MarkerArray msg;
 
   if (ref_points.empty()) return msg;
 
@@ -495,8 +328,8 @@ visualization_msgs::msg::MarkerArray getBoundsLineMarkerArray(
 
     {  // lower bound
       auto marker = createDefaultMarker(
-        "map", rclcpp::Clock().now(), ns, 0, visualization_msgs::msg::Marker::LINE_LIST,
-        createMarkerScale(0.05, 0.0, 0.0), createMarkerColor(r + 0.5, g, b, 0.3));
+        "map", rclcpp::Clock().now(), ns, 0, Marker::LINE_LIST, createMarkerScale(0.05, 0.0, 0.0),
+        createMarkerColor(r + 0.5, g, b, 0.3));
       marker.lifetime = rclcpp::Duration::from_seconds(1.5);
 
       for (size_t i = 0; i < ref_points.size(); i++) {
@@ -517,8 +350,8 @@ visualization_msgs::msg::MarkerArray getBoundsLineMarkerArray(
 
     {  // upper bound
       auto marker = createDefaultMarker(
-        "map", rclcpp::Clock().now(), ns, 1, visualization_msgs::msg::Marker::LINE_LIST,
-        createMarkerScale(0.05, 0.0, 0.0), createMarkerColor(r, g + 0.5, b, 0.3));
+        "map", rclcpp::Clock().now(), ns, 1, Marker::LINE_LIST, createMarkerScale(0.05, 0.0, 0.0),
+        createMarkerColor(r, g + 0.5, b, 0.3));
       marker.lifetime = rclcpp::Duration::from_seconds(1.5);
 
       for (size_t i = 0; i < ref_points.size(); i++) {
@@ -541,13 +374,13 @@ visualization_msgs::msg::MarkerArray getBoundsLineMarkerArray(
   return msg;
 }
 
-visualization_msgs::msg::MarkerArray getVehicleCircleLineMarkerArray(
+MarkerArray getVehicleCircleLineMarkerArray(
   const std::vector<std::vector<geometry_msgs::msg::Pose>> & vehicle_circles_pose,
   const double vehicle_width, const size_t sampling_num, const std::string & ns, const double r,
   const double g, const double b)
 {
   const auto current_time = rclcpp::Clock().now();
-  visualization_msgs::msg::MarkerArray msg;
+  MarkerArray msg;
 
   for (size_t i = 0; i < vehicle_circles_pose.size(); ++i) {
     if (i % sampling_num != 0) {
@@ -555,8 +388,8 @@ visualization_msgs::msg::MarkerArray getVehicleCircleLineMarkerArray(
     }
 
     auto marker = createDefaultMarker(
-      "map", rclcpp::Clock().now(), ns, i, visualization_msgs::msg::Marker::LINE_LIST,
-      createMarkerScale(0.1, 0, 0), createMarkerColor(r, g, b, 0.25));
+      "map", rclcpp::Clock().now(), ns, i, Marker::LINE_LIST, createMarkerScale(0.1, 0, 0),
+      createMarkerColor(r, g, b, 0.25));
     marker.lifetime = rclcpp::Duration::from_seconds(1.5);
 
     for (size_t j = 0; j < vehicle_circles_pose.at(i).size(); ++j) {
@@ -575,13 +408,13 @@ visualization_msgs::msg::MarkerArray getVehicleCircleLineMarkerArray(
   return msg;
 }
 
-visualization_msgs::msg::MarkerArray getLateralErrorsLineMarkerArray(
+MarkerArray getLateralErrorsLineMarkerArray(
   const std::vector<geometry_msgs::msg::Pose> mpt_ref_poses, std::vector<double> lateral_errors,
   const size_t sampling_num, const std::string & ns, const double r, const double g, const double b)
 {
   auto marker = createDefaultMarker(
-    "map", rclcpp::Clock().now(), ns, 0, visualization_msgs::msg::Marker::LINE_LIST,
-    createMarkerScale(0.1, 0, 0), createMarkerColor(r, g, b, 1.0));
+    "map", rclcpp::Clock().now(), ns, 0, Marker::LINE_LIST, createMarkerScale(0.1, 0, 0),
+    createMarkerColor(r, g, b, 1.0));
   marker.lifetime = rclcpp::Duration::from_seconds(1.5);
 
   for (size_t i = 0; i < mpt_ref_poses.size(); ++i) {
@@ -595,27 +428,27 @@ visualization_msgs::msg::MarkerArray getLateralErrorsLineMarkerArray(
     marker.points.push_back(vehicle_pose.position);
   }
 
-  visualization_msgs::msg::MarkerArray msg;
+  MarkerArray msg;
   msg.markers.push_back(marker);
 
   return msg;
 }
 
-visualization_msgs::msg::MarkerArray getCurrentVehicleCirclesMarkerArray(
+MarkerArray getCurrentVehicleCirclesMarkerArray(
   const geometry_msgs::msg::Pose & current_ego_pose,
   const std::vector<double> & vehicle_circle_longitudinal_offsets,
   const std::vector<double> & vehicle_circle_radiuses, const std::string & ns, const double r,
   const double g, const double b)
 {
-  visualization_msgs::msg::MarkerArray msg;
+  MarkerArray msg;
 
   size_t id = 0;
   for (size_t v_idx = 0; v_idx < vehicle_circle_longitudinal_offsets.size(); ++v_idx) {
     const double offset = vehicle_circle_longitudinal_offsets.at(v_idx);
 
     auto marker = createDefaultMarker(
-      "map", rclcpp::Clock().now(), ns, id, visualization_msgs::msg::Marker::LINE_STRIP,
-      createMarkerScale(0.05, 0.0, 0.0), createMarkerColor(r, g, b, 0.8));
+      "map", rclcpp::Clock().now(), ns, id, Marker::LINE_STRIP, createMarkerScale(0.05, 0.0, 0.0),
+      createMarkerColor(r, g, b, 0.8));
     marker.lifetime = rclcpp::Duration::from_seconds(1.5);
     marker.pose = tier4_autoware_utils::calcOffsetPose(current_ego_pose, offset, 0.0, 0.0);
 
@@ -637,13 +470,13 @@ visualization_msgs::msg::MarkerArray getCurrentVehicleCirclesMarkerArray(
   return msg;
 }
 
-visualization_msgs::msg::MarkerArray getVehicleCirclesMarkerArray(
-  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & mpt_traj_points,
+MarkerArray getVehicleCirclesMarkerArray(
+  const std::vector<TrajectoryPoint> & mpt_traj_points,
   const std::vector<double> & vehicle_circle_longitudinal_offsets,
   const std::vector<double> & vehicle_circle_radiuses, const size_t sampling_num,
   const std::string & ns, const double r, const double g, const double b)
 {
-  visualization_msgs::msg::MarkerArray msg;
+  MarkerArray msg;
 
   size_t id = 0;
   for (size_t i = 0; i < mpt_traj_points.size(); ++i) {
@@ -656,8 +489,8 @@ visualization_msgs::msg::MarkerArray getVehicleCirclesMarkerArray(
       const double offset = vehicle_circle_longitudinal_offsets.at(v_idx);
 
       auto marker = createDefaultMarker(
-        "map", rclcpp::Clock().now(), ns, id, visualization_msgs::msg::Marker::LINE_STRIP,
-        createMarkerScale(0.05, 0.0, 0.0), createMarkerColor(r, g, b, 0.8));
+        "map", rclcpp::Clock().now(), ns, id, Marker::LINE_STRIP, createMarkerScale(0.05, 0.0, 0.0),
+        createMarkerColor(r, g, b, 0.8));
       marker.lifetime = rclcpp::Duration::from_seconds(1.5);
       marker.pose = tier4_autoware_utils::calcOffsetPose(mpt_traj_point.pose, offset, 0.0, 0.0);
 
@@ -680,112 +513,105 @@ visualization_msgs::msg::MarkerArray getVehicleCirclesMarkerArray(
   return msg;
 }
 
-visualization_msgs::msg::MarkerArray getVirtualWallMarkerArray(
+/*
+MarkerArray getVirtualWallMarkerArray(
   const geometry_msgs::msg::Pose & pose, const std::string & ns, const double r, const double g,
   const double b)
 {
   auto marker = createDefaultMarker(
-    "map", rclcpp::Clock().now(), ns, 0, visualization_msgs::msg::Marker::CUBE,
+    "map", rclcpp::Clock().now(), ns, 0, Marker::CUBE,
     createMarkerScale(0.1, 5.0, 2.0), createMarkerColor(r, g, b, 0.5));
   marker.lifetime = rclcpp::Duration::from_seconds(1.5);
   marker.pose = pose;
 
-  visualization_msgs::msg::MarkerArray msg;
+  MarkerArray msg;
   msg.markers.push_back(marker);
 
   return msg;
 }
 
-visualization_msgs::msg::MarkerArray getVirtualWallTextMarkerArray(
+MarkerArray getVirtualWallTextMarkerArray(
   const geometry_msgs::msg::Pose & pose, const std::string & ns, const double r, const double g,
   const double b)
 {
   auto marker = createDefaultMarker(
-    "map", rclcpp::Clock().now(), ns, 0, visualization_msgs::msg::Marker::TEXT_VIEW_FACING,
+    "map", rclcpp::Clock().now(), ns, 0, Marker::TEXT_VIEW_FACING,
     createMarkerScale(0.0, 0.0, 1.0), createMarkerColor(r, g, b, 0.99));
   marker.lifetime = rclcpp::Duration::from_seconds(1.5);
   marker.pose = pose;
   marker.text = "drivable area";
 
-  visualization_msgs::msg::MarkerArray msg;
+  MarkerArray msg;
   msg.markers.push_back(marker);
 
   return msg;
 }
+*/
 }  // namespace
 
-visualization_msgs::msg::MarkerArray getDebugVisualizationMarker(
-  DebugData & debug_data,
-  const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & optimized_points,
+MarkerArray getDebugMarker(
+  DebugData & debug_data, const std::vector<TrajectoryPoint> & optimized_points,
   const vehicle_info_util::VehicleInfo & vehicle_info, const bool is_showing_debug_detail)
 {
-  visualization_msgs::msg::MarkerArray vis_marker_array;
+  MarkerArray marker_array;
 
   if (is_showing_debug_detail) {
-    const auto points_marker_array = getDebugPointsMarkers(
-      debug_data.interpolated_points, optimized_points, debug_data.straight_points,
-      debug_data.fixed_points, debug_data.non_fixed_points);
-
-    const auto constrain_marker_array =
-      getDebugConstrainMarkers(debug_data.constrain_rectangles, "constrain_rect");
-
-    appendMarkerArray(points_marker_array, &vis_marker_array);
-    appendMarkerArray(constrain_marker_array, &vis_marker_array);
+    appendMarkerArray(
+      getDebugConstrainMarkers(debug_data.constrain_rectangles, "constrain_rect"), &marker_array);
 
     appendMarkerArray(
       getRectanglesNumMarkerArray(
         optimized_points, vehicle_info, "num_vehicle_footprint", 0.99, 0.99, 0.2),
-      &vis_marker_array);
+      &marker_array);
 
     appendMarkerArray(
-      getPointsTextMarkerArray(debug_data.eb_traj, "eb_traj_text", 0.99, 0.99, 0.2),
-      &vis_marker_array);
+      getPointsTextMarkerArray(debug_data.eb_traj, "eb_traj_text", 0.99, 0.99, 0.2), &marker_array);
   }
 
   // avoiding objects
   appendMarkerArray(
     getObjectsMarkerArray(debug_data.avoiding_objects, "avoiding_objects", 0.99, 0.99, 0.2),
-    &vis_marker_array);
+    &marker_array);
   // mpt footprints
   appendMarkerArray(
     getRectanglesMarkerArray(
       optimized_points, vehicle_info, "mpt_footprints", 0.99, 0.99, 0.2,
       debug_data.mpt_visualize_sampling_num),
-    &vis_marker_array);
+    &marker_array);
   // bounds
   appendMarkerArray(
     getBoundsLineMarkerArray(
       debug_data.ref_points, 0.99, 0.99, 0.2, vehicle_info.vehicle_width_m,
       debug_data.mpt_visualize_sampling_num),
-    &vis_marker_array);
+    &marker_array);
 
   // bounds candidates
   appendMarkerArray(
     getBoundsCandidatesLineMarkerArray(
       debug_data.ref_points, debug_data.sequential_bounds_candidates, 0.2, 0.99, 0.99,
       vehicle_info.vehicle_width_m, debug_data.mpt_visualize_sampling_num),
-    &vis_marker_array);
+    &marker_array);
 
   // vehicle circle line
   appendMarkerArray(
     getVehicleCircleLineMarkerArray(
       debug_data.vehicle_circles_pose, vehicle_info.vehicle_width_m,
       debug_data.mpt_visualize_sampling_num, "vehicle_circle_lines", 0.99, 0.99, 0.2),
-    &vis_marker_array);
+    &marker_array);
 
   // lateral error line
   appendMarkerArray(
     getLateralErrorsLineMarkerArray(
       debug_data.mpt_ref_poses, debug_data.lateral_errors, debug_data.mpt_visualize_sampling_num,
       "lateral_errors", 0.1, 0.1, 0.8),
-    &vis_marker_array);
+    &marker_array);
 
   // current vehicle circles
   appendMarkerArray(
     getCurrentVehicleCirclesMarkerArray(
       debug_data.current_ego_pose, debug_data.vehicle_circle_longitudinal_offsets,
       debug_data.vehicle_circle_radiuses, "current_vehicle_circles", 1.0, 0.3, 0.3),
-    &vis_marker_array);
+    &marker_array);
 
   // vehicle circles
   appendMarkerArray(
@@ -793,36 +619,36 @@ visualization_msgs::msg::MarkerArray getDebugVisualizationMarker(
       optimized_points, debug_data.vehicle_circle_longitudinal_offsets,
       debug_data.vehicle_circle_radiuses, debug_data.mpt_visualize_sampling_num, "vehicle_circles",
       1.0, 0.3, 0.3),
-    &vis_marker_array);
+    &marker_array);
 
-  return vis_marker_array;
+  return marker_array;
 }
 
-visualization_msgs::msg::MarkerArray getDebugVisualizationWallMarker(
-  DebugData & debug_data, const vehicle_info_util::VehicleInfo & vehicle_info)
+MarkerArray getDebugWallMarker(
+  DebugData & debug_data, const vehicle_info_util::VehicleInfo & vehicle_info,
+  const rclcpp::Time & now)
 {
-  visualization_msgs::msg::MarkerArray vis_marker_array;
+  MarkerArray marker_array;
   if (debug_data.stop_pose_by_drivable_area) {
-    const auto virtual_wall_pose =
-      getVirtualWallPose(debug_data.stop_pose_by_drivable_area.get(), vehicle_info);
+    const auto virtual_wall_pose = tier4_autoware_utils::calcOffsetPose(
+      debug_data.stop_pose_by_drivable_area.get(), vehicle_info.max_longitudinal_offset_m, 0.0,
+      0.0);
     appendMarkerArray(
-      getVirtualWallMarkerArray(virtual_wall_pose, "virtual_wall", 1.0, 0, 0), &vis_marker_array);
-    appendMarkerArray(
-      getVirtualWallTextMarkerArray(virtual_wall_pose, "virtual_wall_text", 1.0, 1.0, 1.0),
-      &vis_marker_array);
+      motion_utils::createStopVirtualWallMarker(virtual_wall_pose, "drivable area", now, 0),
+      &marker_array);
   }
-  return vis_marker_array;
+
+  return marker_array;
 }
 
-nav_msgs::msg::OccupancyGrid getDebugCostmap(
-  const cv::Mat & clearance_map, const nav_msgs::msg::OccupancyGrid & occupancy_grid)
+OccupancyGrid getDebugCostmap(const cv::Mat & clearance_map, const OccupancyGrid & occupancy_grid)
 {
-  if (clearance_map.empty()) return nav_msgs::msg::OccupancyGrid();
+  if (clearance_map.empty()) return OccupancyGrid();
 
   cv::Mat tmp;
   clearance_map.copyTo(tmp);
   cv::normalize(tmp, tmp, 0, 255, cv::NORM_MINMAX, CV_8UC1);
-  nav_msgs::msg::OccupancyGrid clearance_map_in_og = occupancy_grid;
+  OccupancyGrid clearance_map_in_og = occupancy_grid;
   tmp.forEach<unsigned char>([&](const unsigned char & value, const int * position) -> void {
     cv_utils::putOccupancyGridValue(clearance_map_in_og, position[0], position[1], value);
   });

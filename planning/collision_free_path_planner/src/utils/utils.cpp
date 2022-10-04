@@ -555,6 +555,14 @@ Trajectory createTrajectory(
 
   return traj;
 }
+
+std::vector<TrajectoryPoint> resampleTrajectoryPoints(
+  const std::vector<TrajectoryPoint> traj_points, const double interval)
+{
+  const auto traj = motion_utils::convertToTrajectory(traj_points);
+  const auto resampled_traj = motion_utils::resampleTrajectory(traj, interval);
+  return motion_utils::convertToTrajectoryPointArray(resampled_traj);
+}
 }  // namespace points_utils
 
 namespace utils

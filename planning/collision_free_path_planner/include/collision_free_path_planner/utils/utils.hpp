@@ -433,8 +433,33 @@ size_t findEgoSegmentIndex(
     points, ego_pose, ego_nearest_param.dist_threshold, ego_nearest_param.yaw_threshold);
 }
 
+template <class T>
+size_t findSoftNearestIndex(
+  const std::vector<T> & points, const geometry_msgs::msg::Pose & pose, const double dist_threshold,
+  const double yaw_threshold)
+{
+  const auto nearest_idx_opt =
+    motion_utils::findNearestIndex(points, pose, dist_threshold, yaw_threshold);
+  return nearest_idx_opt ? nearest_idx_opt.get()
+                         : motion_utils::findNearestIndex(points, pose.position);
+}
+
+template <class T>
+size_t findSoftNearestSegmentIndex(
+  const std::vector<T> & points, const geometry_msgs::msg::Pose & pose, const double dist_threshold,
+  const double yaw_threshold)
+{
+  const auto nearest_idx_opt =
+    motion_utils::findNearestSegmentIndex(points, pose, dist_threshold, yaw_threshold);
+  return nearest_idx_opt ? nearest_idx_opt.get()
+                         : motion_utils::findNearestSegmentIndex(points, pose.position);
+}
+
 Trajectory createTrajectory(
   const std_msgs::msg::Header & header, const std::vector<TrajectoryPoint> & traj_points);
+
+std::vector<TrajectoryPoint> resampleTrajectoryPoints(
+  const std::vector<TrajectoryPoint> traj_points, const double interval);
 }  // namespace points_utils
 
 namespace utils
