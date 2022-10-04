@@ -1,0 +1,26 @@
+name: slack-send
+on:
+  workflow_run:
+    workflows:
+      - build-main
+      - build-humble
+    types:
+      - completed
+
+jobs:
+  on-failure:
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Send to Slack workflow
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "workflow-url": "${{ github.event.workflow_run.html_url }}"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WORKFLOW_WEBHOOK_URL }}
