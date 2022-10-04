@@ -46,9 +46,11 @@ boost::optional<double> getDistance(
 }
 
 bool isOutsideDrivableArea(
-  const geometry_msgs::msg::Point & pos, const cv::Mat & road_clearance_map,
-  const nav_msgs::msg::MapMetaData & map_info, const double max_dist)
+  const geometry_msgs::msg::Point & pos, const CVMaps & cv_maps, const double max_dist)
 {
+  const auto & map_info = cv_maps.map_info;
+  const auto & road_clearance_map = cv_maps.clearance_map;
+
   const auto dist = getDistance(road_clearance_map, pos, map_info);
   if (dist) {
     return dist.get() < max_dist;
@@ -410,51 +412,42 @@ boost::optional<Edges> getEdges(
 namespace cv_drivable_area_utils
 {
 bool isOutsideDrivableAreaFromRectangleFootprint(
-  const autoware_auto_planning_msgs::msg::TrajectoryPoint & traj_point,
-  const cv::Mat & road_clearance_map, const nav_msgs::msg::MapMetaData & map_info,
+  const geometry_msgs::msg::Pose & target_pose, const CVMaps & cv_maps,
   const vehicle_info_util::VehicleInfo & vehicle_info)
 {
   const double half_width = vehicle_info.vehicle_width_m / 2.0;
   const double base_to_front = vehicle_info.vehicle_length_m - vehicle_info.rear_overhang_m;
   const double base_to_rear = vehicle_info.rear_overhang_m;
 
+  // calculate footprint vertices
   const auto top_left_pos =
-    tier4_autoware_utils::calcOffsetPose(traj_point.pose, base_to_front, -half_width, 0.0).position;
+    tier4_autoware_utils::calcOffsetPose(target_pose, base_to_front, -half_width, 0.0).position;
   const auto top_right_pos =
-    tier4_autoware_utils::calcOffsetPose(traj_point.pose, base_to_front, half_width, 0.0).position;
+    tier4_autoware_utils::calcOffsetPose(target_pose, base_to_front, half_width, 0.0).position;
   const auto bottom_right_pos =
-    tier4_autoware_utils::calcOffsetPose(traj_point.pose, -base_to_rear, half_width, 0.0).position;
+    tier4_autoware_utils::calcOffsetPose(target_pose, -base_to_rear, half_width, 0.0).position;
   const auto bottom_left_pos =
-    tier4_autoware_utils::calcOffsetPose(traj_point.pose, -base_to_rear, -half_width, 0.0).position;
+    tier4_autoware_utils::calcOffsetPose(target_pose, -base_to_rear, -half_width, 0.0).position;
 
   constexpr double epsilon = 1e-8;
-  const bool out_top_left =
-    isOutsideDrivableArea(top_left_pos, road_clearance_map, map_info, epsilon);
-  const bool out_top_right =
-    isOutsideDrivableArea(top_right_pos, road_clearance_map, map_info, epsilon);
-  const bool out_bottom_left =
-    isOutsideDrivableArea(bottom_left_pos, road_clearance_map, map_info, epsilon);
-  const bool out_bottom_right =
-    isOutsideDrivableArea(bottom_right_pos, road_clearance_map, map_info, epsilon);
-
-  if (out_top_left || out_top_right || out_bottom_left || out_bottom_right) {
-    return true;
-  }
+  if (isOutsideDrivableArea(top_left_pos, cv_maps, epsilon)) return true;
+  if (isOutsideDrivableArea(top_right_pos, cv_maps, epsilon)) return true;
+  if (isOutsideDrivableArea(bottom_left_pos, cv_maps, epsilon)) return true;
+  if (isOutsideDrivableArea(bottom_right_pos, cv_maps, epsilon)) return true;
 
   return false;
 }
 
 [[maybe_unused]] bool isOutsideDrivableAreaFromCirclesFootprint(
-  const autoware_auto_planning_msgs::msg::TrajectoryPoint & traj_point,
-  const cv::Mat & road_clearance_map, const nav_msgs::msg::MapMetaData & map_info,
+  const geometry_msgs::msg::Pose & target_pose, const CVMaps & cv_maps,
   const std::vector<double> vehicle_circle_longitudinal_offsets, const double vehicle_circle_radius)
 {
   for (const double offset : vehicle_circle_longitudinal_offsets) {
     const auto avoiding_pos =
-      tier4_autoware_utils::calcOffsetPose(traj_point.pose, offset, 0.0, 0.0).position;
+      tier4_autoware_utils::calcOffsetPose(target_pose, offset, 0.0, 0.0).position;
 
     const bool outside_drivable_area =
-      isOutsideDrivableArea(avoiding_pos, road_clearance_map, map_info, vehicle_circle_radius);
+      isOutsideDrivableArea(avoiding_pos, cv_maps, vehicle_circle_radius);
     if (outside_drivable_area) {
       return true;
     }

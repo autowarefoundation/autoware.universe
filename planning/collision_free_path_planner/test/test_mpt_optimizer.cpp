@@ -58,7 +58,6 @@ TEST(CollisionFreePathPlanner, MPTOptimizer)
   // std::make_shared<CollisionFreePathPlanner>(node_options);
   auto node = CollisionFreePathPlanner(node_options);
   const auto & mpt = *node.mpt_optimizer_ptr_;
-  DebugData debug_data;
 
   ReferencePoint ref_point1 = createRefPoint(1, 0, 0, 1, 1);
   ReferencePoint ref_point2 = createRefPoint(2, 0, 0, 2, 2);
@@ -72,12 +71,12 @@ TEST(CollisionFreePathPlanner, MPTOptimizer)
     std::vector<ReferencePoint> three_identical_ref_points{ReferencePoint{}, ReferencePoint{}};
     std::vector<ReferencePoint> three_different_ref_points{ref_point1, ref_point2, ref_point3};
 
-    EXPECT_NO_THROW(mpt.generateMPTMatrix(empty_ref_points, debug_data));
-    EXPECT_NO_THROW(mpt.generateMPTMatrix(single_ref_points, debug_data));
-    EXPECT_NO_THROW(mpt.generateMPTMatrix(two_identical_ref_points, debug_data));
-    EXPECT_NO_THROW(mpt.generateMPTMatrix(two_different_ref_points, debug_data));
-    EXPECT_NO_THROW(mpt.generateMPTMatrix(three_identical_ref_points, debug_data));
-    EXPECT_NO_THROW(mpt.generateMPTMatrix(three_different_ref_points, debug_data));
+    EXPECT_NO_THROW(mpt.generateMPTMatrix(empty_ref_points));
+    EXPECT_NO_THROW(mpt.generateMPTMatrix(single_ref_points));
+    EXPECT_NO_THROW(mpt.generateMPTMatrix(two_identical_ref_points));
+    EXPECT_NO_THROW(mpt.generateMPTMatrix(two_different_ref_points));
+    EXPECT_NO_THROW(mpt.generateMPTMatrix(three_identical_ref_points));
+    EXPECT_NO_THROW(mpt.generateMPTMatrix(three_different_ref_points));
 
     /*
     EXPECT_NO_THROW(mpt.calcOrientation(empty_ref_points));

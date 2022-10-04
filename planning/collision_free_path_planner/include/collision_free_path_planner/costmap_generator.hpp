@@ -45,14 +45,14 @@ public:
     double max_avoiding_objects_velocity_ms;
   };
 
-  explicit CostmapGenerator(rclcpp::Node * node);
+  explicit CostmapGenerator(rclcpp::Node * node, const std::shared_ptr<DebugData> debug_data_ptr);
   void onParam(const std::vector<rclcpp::Parameter> & parameters);
 
-  CVMaps getMaps(
-    const PlannerData & planner_data, const TrajectoryParam & traj_param,
-    DebugData & debug_data) const;
+  CVMaps getMaps(const PlannerData & planner_data, const TrajectoryParam & traj_param) const;
 
 private:
+  mutable std::shared_ptr<DebugData> debug_data_ptr_;
+
   mutable tier4_autoware_utils::StopWatch<
     std::chrono::milliseconds, std::chrono::microseconds, std::chrono::steady_clock>
     stop_watch_;
@@ -69,10 +69,9 @@ private:
 
   void initializeParam(rclcpp::Node * node);
 
-  cv::Mat getAreaWithObjects(
-    const cv::Mat & drivable_area, const cv::Mat & objects_image, DebugData & debug_data) const;
+  cv::Mat getAreaWithObjects(const cv::Mat & drivable_area, const cv::Mat & objects_image) const;
 
-  cv::Mat getClearanceMap(const cv::Mat & drivable_area, DebugData & debug_data) const;
+  cv::Mat getClearanceMap(const cv::Mat & drivable_area) const;
 
   cv::Mat drawObstaclesOnImage(
     const bool enable_avoidance,
@@ -80,13 +79,12 @@ private:
     const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
     const nav_msgs::msg::MapMetaData & map_info, [[maybe_unused]] const cv::Mat & drivable_area,
     const cv::Mat & clearance_map, const TrajectoryParam & traj_param,
-    std::vector<autoware_auto_perception_msgs::msg::PredictedObject> * debug_avoiding_objects,
-    DebugData & debug_data) const;
+    std::vector<autoware_auto_perception_msgs::msg::PredictedObject> * debug_avoiding_objects)
+    const;
 
-  cv::Mat getDrivableAreaInCV(
-    const nav_msgs::msg::OccupancyGrid & occupancy_grid, DebugData & debug_data) const;
+  cv::Mat getDrivableAreaInCV(const nav_msgs::msg::OccupancyGrid & occupancy_grid) const;
 
-  void publishDebugMaps(const Path & path, const CVMaps & cv_maps, DebugData & debug_data) const;
+  void publishDebugMaps(const Path & path, const CVMaps & cv_maps) const;
 };
 }  // namespace collision_free_path_planner
 #endif  // COLLISION_FREE_PATH_PLANNER__COSTMAP_GENERATOR_HPP_

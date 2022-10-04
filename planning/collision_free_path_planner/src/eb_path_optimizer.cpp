@@ -84,10 +84,11 @@ namespace collision_free_path_planner
 {
 EBPathOptimizer::EBPathOptimizer(
   rclcpp::Node * node, const bool enable_debug_info, const EgoNearestParam ego_nearest_param,
-  const TrajectoryParam & traj_param)
+  const TrajectoryParam & traj_param, const std::shared_ptr<DebugData> debug_data_ptr)
 : enable_debug_info_(enable_debug_info),
   ego_nearest_param_(ego_nearest_param),
-  traj_param_(traj_param)
+  traj_param_(traj_param),
+  debug_data_ptr_(debug_data_ptr)
 {
   // eb param
   initializeEBParam(node);
@@ -192,7 +193,7 @@ void EBPathOptimizer::onParam(const std::vector<rclcpp::Parameter> & parameters)
 boost::optional<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>
 EBPathOptimizer::getEBTrajectory(
   const PlannerData & planner_data,
-  const std::shared_ptr<std::vector<TrajectoryPoint>> prev_eb_traj, DebugData & debug_data)
+  const std::shared_ptr<std::vector<TrajectoryPoint>> prev_eb_traj)
 {
   stop_watch_.tic(__func__);
 
@@ -207,7 +208,7 @@ EBPathOptimizer::getEBTrajectory(
   // get candidate points for optimization
   // decide fix or non fix, might not required only for smoothing purpose
   const CandidatePoints candidate_points =
-    getCandidatePoints(ego_pose, path.points, prev_eb_traj, debug_data);
+    getCandidatePoints(ego_pose, path.points, prev_eb_traj);
   if (candidate_points.fixed_points.empty() && candidate_points.non_fixed_points.empty()) {
     RCLCPP_INFO_EXPRESSION(
       rclcpp::get_logger("EBPathOptimizer"), enable_debug_info_,
@@ -217,7 +218,7 @@ EBPathOptimizer::getEBTrajectory(
   */
 
   // get optimized smooth points with elastic band
-  const auto eb_traj_points_opt = getOptimizedTrajectory(ego_pose, path, debug_data);
+  const auto eb_traj_points_opt = getOptimizedTrajectory(ego_pose, path);
   if (!eb_traj_points_opt) {
     RCLCPP_INFO_EXPRESSION(
       rclcpp::get_logger("EBPathOptimizer"), enable_debug_info_,
@@ -226,20 +227,21 @@ EBPathOptimizer::getEBTrajectory(
   }
   const auto eb_traj_points = eb_traj_points_opt.get();
 
-  debug_data.eb_traj = eb_traj_points;
+  debug_data_ptr_->eb_traj = eb_traj_points;
 
   {  // publish eb trajectory
     const auto eb_traj = points_utils::createTrajectory(p.path.header, eb_traj_points);
     debug_eb_traj_pub_->publish(eb_traj);
   }
 
-  debug_data.msg_stream << "      " << __func__ << ":= " << stop_watch_.toc(__func__) << " [ms]\n";
+  debug_data_ptr_->msg_stream << "      " << __func__ << ":= " << stop_watch_.toc(__func__)
+                              << " [ms]\n";
   return eb_traj_points;
 }
 
 boost::optional<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>
 EBPathOptimizer::getOptimizedTrajectory(
-  const geometry_msgs::msg::Pose & ego_pose, const Path & path, DebugData & debug_data)
+  const geometry_msgs::msg::Pose & ego_pose, const Path & path)
 {
   stop_watch_.tic(__func__);
 
@@ -275,7 +277,7 @@ EBPathOptimizer::getOptimizedTrajectory(
   updateConstrain(padded_path_points, rect_size_vec);
 
   // optimize trajectory by elastic band
-  const auto optimized_points = optimizeTrajectory(padded_path_points, debug_data);
+  const auto optimized_points = optimizeTrajectory(padded_path_points);
   if (!optimized_points) {
     return boost::none;
   }
@@ -284,8 +286,8 @@ EBPathOptimizer::getOptimizedTrajectory(
   const auto traj_points =
     convertOptimizedPointsToTrajectory(optimized_points.get(), pad_start_idx);
 
-  debug_data.msg_stream << "        " << __func__ << ":= " << stop_watch_.toc(__func__)
-                        << " [ms]\n";
+  debug_data_ptr_->msg_stream << "        " << __func__ << ":= " << stop_watch_.toc(__func__)
+                              << " [ms]\n";
   return traj_points;
 }
 
@@ -393,7 +395,7 @@ EBPathOptimizer::ConstrainLines EBPathOptimizer::getConstrainLinesFromConstrainR
 }
 
 boost::optional<std::vector<double>> EBPathOptimizer::optimizeTrajectory(
-  const std::vector<PathPoint> & path_points, DebugData & debug_data)
+  const std::vector<PathPoint> & path_points)
 {
   stop_watch_.tic(__func__);
 
@@ -414,8 +416,8 @@ boost::optional<std::vector<double>> EBPathOptimizer::optimizeTrajectory(
     return boost::none;
   }
 
-  debug_data.msg_stream << "          " << __func__ << ":= " << stop_watch_.toc(__func__)
-                        << " [ms]\n";
+  debug_data_ptr_->msg_stream << "          " << __func__ << ":= " << stop_watch_.toc(__func__)
+                              << " [ms]\n";
 
   return optimized_points;
 }
@@ -500,7 +502,7 @@ std::vector<TrajectoryPoint> EBPathOptimizer::convertOptimizedPointsToTrajectory
 // EBPathOptimizer::CandidatePoints EBPathOptimizer::getCandidatePoints(
 //   const geometry_msgs::msg::Pose & ego_pose,
 //   const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
-//   const std::shared_ptr<std::vector<TrajectoryPoint>> prev_eb_traj, DebugData & debug_data)
+//   const std::shared_ptr<std::vector<TrajectoryPoint>> prev_eb_traj)
 // {
 //   const std::vector<geometry_msgs::msg::Pose> fixed_points =
 //     getFixedPoints(ego_pose, path_points, prev_eb_traj);
@@ -535,8 +537,8 @@ std::vector<TrajectoryPoint> EBPathOptimizer::convertOptimizedPointsToTrajectory
 //   candidate_points.begin_path_idx = begin_idx;
 //   candidate_points.end_path_idx = path_points.size() - 1;
 //
-//   debug_data.fixed_points = candidate_points.fixed_points;
-//   debug_data.non_fixed_points = candidate_points.non_fixed_points;
+//   debug_data_ptr_->fixed_points = candidate_points.fixed_points;
+//   debug_data_ptr_->non_fixed_points = candidate_points.non_fixed_points;
 //   return candidate_points;
 // }
 //

@@ -110,15 +110,14 @@ boost::optional<Edges> getEdges(
 namespace cv_drivable_area_utils
 {
 bool isOutsideDrivableAreaFromRectangleFootprint(
-  const autoware_auto_planning_msgs::msg::TrajectoryPoint & traj_point,
-  const cv::Mat & road_clearance_map, const nav_msgs::msg::MapMetaData & map_info,
+  const geometry_msgs::msg::Pose & target_pose, const CVMaps & cv_maps,
   const vehicle_info_util::VehicleInfo & vehicle_info);
 
 bool isOutsideDrivableAreaFromCirclesFootprint(
-  const autoware_auto_planning_msgs::msg::TrajectoryPoint & traj_point,
-  const cv::Mat & road_clearance_map, const nav_msgs::msg::MapMetaData & map_info,
+  const geometry_msgs::msg::Pose & target_pose, const CVMaps & cv_maps,
   const std::vector<double> vehicle_circle_longitudinal_offsets,
   const double vehicle_circle_radius);
+
 }  // namespace cv_drivable_area_utils
 }  // namespace collision_free_path_planner
 #endif  // COLLISION_FREE_PATH_PLANNER__UTILS__CV_UTILS_HPP_

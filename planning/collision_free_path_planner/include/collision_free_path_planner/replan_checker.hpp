@@ -64,7 +64,10 @@ private:
   bool isPathGoalChanged(
     const PlannerData & planner_data, const std::vector<PathPoint> & prev_path_points) const;
 
-  void printInfo(const char * msg) const { RCLCPP_INFO(rclcpp::get_logger("ReplanChecker"), msg); }
+  void logInfo(const char * msg) const
+  {
+    RCLCPP_INFO(rclcpp::get_logger("CollisionFreePathPlanner::ReplanChecker"), msg);
+  }
 };
 }  // namespace collision_free_path_planner
 

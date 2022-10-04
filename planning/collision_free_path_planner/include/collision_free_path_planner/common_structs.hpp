@@ -103,7 +103,7 @@ struct DebugData
         debug_str += tmp_str;
 
         if (enable_calculation_time_info) {
-          tmp_str.pop_back();  // NOTE* remove '\n' which is unnecessary for RCLCPP_INFO_STREAM
+          tmp_str.pop_back();  // NOTE: remove '\n' which is unnecessary for RCLCPP_INFO_STREAM
           RCLCPP_INFO_STREAM(rclcpp::get_logger("collision_free_path_planner.time"), tmp_str);
         }
         sstream.str("");
@@ -124,25 +124,23 @@ struct DebugData
     std::stringstream sstream;
   };
 
-  void init(
-    const bool local_enable_calculation_time_info,
-    const geometry_msgs::msg::Pose & local_current_ego_pose)
+  void reset(const bool enable_calculation_time_info)
   {
-    msg_stream.enable_calculation_time_info = local_enable_calculation_time_info;
-    current_ego_pose = local_current_ego_pose;
+    msg_stream = StreamWithPrint{};
+    msg_stream.enable_calculation_time_info = enable_calculation_time_info;
   }
 
+  // string stream for calculation time
   StreamWithPrint msg_stream;
 
   // settting
   size_t mpt_visualize_sampling_num;
-  geometry_msgs::msg::Pose current_ego_pose;
+  geometry_msgs::msg::Pose ego_pose;
   std::vector<double> vehicle_circle_radiuses;
   std::vector<double> vehicle_circle_longitudinal_offsets;
 
-  std::vector<TrajectoryPoint> avoiding_traj_points;
+  // costmap
   std::vector<PredictedObject> avoiding_objects;
-
   // eb
   std::vector<ConstrainRectangle> constrain_rectangles;
   std::vector<TrajectoryPoint> eb_traj;

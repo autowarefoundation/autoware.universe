@@ -48,11 +48,11 @@ public:
 
   EBPathOptimizer(
     rclcpp::Node * node, const bool enable_debug_info, const EgoNearestParam ego_nearest_param,
-    const TrajectoryParam & traj_param);
+    const TrajectoryParam & traj_param, const std::shared_ptr<DebugData> debug_data_ptr);
 
   boost::optional<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>> getEBTrajectory(
     const PlannerData & planner_data,
-    const std::shared_ptr<std::vector<TrajectoryPoint>> prev_eb_traj, DebugData & debug_data);
+    const std::shared_ptr<std::vector<TrajectoryPoint>> prev_eb_traj);
 
   void reset(const bool enable_debug_info, const TrajectoryParam & traj_param);
   void onParam(const std::vector<rclcpp::Parameter> & parameters);
@@ -70,6 +70,7 @@ private:
   EgoNearestParam ego_nearest_param_;
   TrajectoryParam traj_param_;
   EBParam eb_param_;
+  mutable std::shared_ptr<DebugData> debug_data_ptr_;
 
   std::unique_ptr<autoware::common::osqp::OSQPInterface> osqp_solver_ptr_;
 
@@ -96,15 +97,14 @@ private:
     const geometry_msgs::msg::Pose & pose, const double rect_size);
 
   boost::optional<std::vector<double>> optimizeTrajectory(
-    const std::vector<PathPoint> & path_points, DebugData & debug_data);
+    const std::vector<PathPoint> & path_points);
 
   std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> convertOptimizedPointsToTrajectory(
     const std::vector<double> optimized_points, const size_t pad_start_idx);
 
   boost::optional<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>
   getOptimizedTrajectory(
-    const geometry_msgs::msg::Pose & ego_pose, const autoware_auto_planning_msgs::msg::Path & path,
-    DebugData & debug_data);
+    const geometry_msgs::msg::Pose & ego_pose, const autoware_auto_planning_msgs::msg::Path & path);
 
   /*
   std::vector<geometry_msgs::msg::Pose> getFixedPoints(
@@ -115,7 +115,7 @@ private:
   CandidatePoints getCandidatePoints(
     const geometry_msgs::msg::Pose & ego_pose,
     const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
-    const std::shared_ptr<std::vector<TrajectoryPoint>> prev_eb_traj, DebugData & debug_data);
+    const std::shared_ptr<std::vector<TrajectoryPoint>> prev_eb_traj);
 
   CandidatePoints getDefaultCandidatePoints(
     const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points);

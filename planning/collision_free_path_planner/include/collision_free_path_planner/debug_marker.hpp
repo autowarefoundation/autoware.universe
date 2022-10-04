@@ -32,7 +32,7 @@ using tier4_autoware_utils::createMarkerColor;
 using tier4_autoware_utils::createMarkerScale;
 
 MarkerArray getDebugMarker(
-  DebugData & debug_data,
+  const DebugData & debug_data,
   const std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> & optimized_points,
   const vehicle_info_util::VehicleInfo & vehicle_info, const bool is_showing_debug_detail);
 

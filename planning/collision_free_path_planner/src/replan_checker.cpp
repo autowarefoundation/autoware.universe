@@ -52,13 +52,13 @@ bool ReplanChecker::isResetRequired(const PlannerData & planner_data)
 
     // path shape changes
     if (isPathShapeChanged(planner_data, prev_path_points)) {
-      printInfo("Replan with resetting optimization since path shape was changed.");
+      logInfo("Replan with resetting optimization since path shape was changed.");
       return true;
     }
 
     // path goal changes
     if (isPathGoalChanged(planner_data, prev_path_points)) {
-      printInfo("Replan with resetting optimization since path goal was changed.");
+      logInfo("Replan with resetting optimization since path goal was changed.");
       return true;
     }
 
@@ -66,7 +66,7 @@ bool ReplanChecker::isResetRequired(const PlannerData & planner_data)
     const double delta_dist =
       tier4_autoware_utils::calcDistance2d(p.ego_pose, prev_ego_pose_ptr_->position);
     if (max_ego_moving_dist_ < delta_dist) {
-      printInfo(
+      logInfo(
         "Replan with resetting optimization since current ego pose is far from previous ego pose.");
       return true;
     }
@@ -96,7 +96,7 @@ bool ReplanChecker::isReplanRequired(
     /*
     // empty mpt points
     if (prev_mpt_traj_ptr->empty()) {
-      printInfo("Replan with resetting optimization since previous optimized trajectory is empty.");
+      logInfo("Replan with resetting optimization since previous optimized trajectory is empty.");
       return true;
     }
     */

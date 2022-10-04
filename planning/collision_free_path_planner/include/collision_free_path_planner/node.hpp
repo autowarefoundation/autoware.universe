@@ -155,7 +155,9 @@ private:
   };
   DrivingDirectionChecker driving_direction_checker_{};
 
-  rclcpp::Clock logger_ros_clock_;
+  // argument variables
+  mutable std::shared_ptr<DebugData> debug_data_ptr_;
+  vehicle_info_util::VehicleInfo vehicle_info_{};
   int eb_solved_count_;
 
   // flags for some functions
@@ -177,10 +179,8 @@ private:
   // parameters
   TrajectoryParam traj_param_{};
   EgoNearestParam ego_nearest_param_{};
-  vehicle_info_util::VehicleInfo vehicle_info_{};
 
   // variables for debugging
-  mutable DebugData debug_data_;
   mutable tier4_autoware_utils::StopWatch<
     std::chrono::milliseconds, std::chrono::microseconds, std::chrono::steady_clock>
     stop_watch_;
@@ -245,7 +245,7 @@ private:
 
   // util functions
   void logInfo(const int duration_sec, const char * msg);
-  void logWarnThrottle(const int duration_sec, const char * msg);
+  void logWarnThrottle(const int duration_ms, const char * msg);
 };
 }  // namespace collision_free_path_planner
 
