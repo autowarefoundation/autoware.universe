@@ -51,7 +51,7 @@ bool getDuplicatedPointIdx(
 bool getDetectionLanelets(
   lanelet::LaneletMapConstPtr lanelet_map_ptr, lanelet::routing::RoutingGraphPtr routing_graph_ptr,
   const int lane_id, const double detection_area_length,
-  lanelet::ConstLanelets * detection_lanelets_result);
+  lanelet::ConstLanelets * detection_lanelets_result, const bool tl_arrow_solid_on = false);
 
 struct StopLineIdx
 {

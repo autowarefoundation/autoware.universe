@@ -95,14 +95,12 @@ bool IntersectionModule::modifyPathVelocity(
     planner_data_->route_handler_->getLaneletMapPtr()->laneletLayer.get(lane_id_);
 
   /* get detection area*/
-  RCLCPP_INFO(
-    logger_, "isTrafficLightArrowActivated() = %d",
-    util::isTrafficLightArrowActivated(assigned_lanelet, planner_data_->traffic_light_id_map));
-
   lanelet::ConstLanelets detection_area_lanelets;
+  const bool tl_arrow_solid_on =
+    util::isTrafficLightArrowActivated(assigned_lanelet, planner_data_->traffic_light_id_map);
   util::getDetectionLanelets(
     lanelet_map_ptr, routing_graph_ptr, lane_id_, planner_param_.detection_area_length,
-    &detection_area_lanelets);
+    &detection_area_lanelets, tl_arrow_solid_on);
   std::vector<lanelet::CompoundPolygon3d> detection_areas =
     util::getPolygon3dFromLanelets(detection_area_lanelets, planner_param_.detection_area_length);
   std::vector<int> detection_area_lanelet_ids =

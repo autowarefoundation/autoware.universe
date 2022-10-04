@@ -312,7 +312,7 @@ bool getStopPoseIndexFromMap(
 bool getDetectionLanelets(
   lanelet::LaneletMapConstPtr lanelet_map_ptr, lanelet::routing::RoutingGraphPtr routing_graph_ptr,
   const int lane_id, const double detection_area_length,
-  lanelet::ConstLanelets * detection_lanelets_result)
+  lanelet::ConstLanelets * detection_lanelets_result, const bool tl_arrow_solid_on)
 {
   const auto & assigned_lanelet = lanelet_map_ptr->laneletLayer.get(lane_id);
 
@@ -377,27 +377,32 @@ bool getDetectionLanelets(
       detection_lanelets.push_back(conflicting_lanelet);
     }
   }
+
   // get possible lanelet path that reaches conflicting_lane longer than given length
-  const double length = detection_area_length;
-  lanelet::ConstLanelets detection_and_preceding_lanelets;
-  std::set<lanelet::Id> detection_ids;
-  for (const auto & ll : detection_lanelets) {
-    // Preceding lanes does not include detection_lane so add them at the end
-    const auto & inserted = detection_ids.insert(ll.id());
-    if (inserted.second) detection_and_preceding_lanelets.push_back(ll);
-    // get preceding lanelets without ego_lanelets
-    // to prevent the detection area from including the ego lanes and its' preceding lanes.
-    const auto lanelet_sequences = lanelet::utils::query::getPrecedingLaneletSequences(
-      routing_graph_ptr, ll, length, ego_lanelets);
-    for (const auto & ls : lanelet_sequences) {
-      for (const auto & l : ls) {
-        const auto & inserted = detection_ids.insert(l.id());
-        if (inserted.second) detection_and_preceding_lanelets.push_back(l);
+  // if traffic light arrow is active, this process is unnecessary
+  if (!tl_arrow_solid_on) {
+    const double length = detection_area_length;
+    lanelet::ConstLanelets detection_and_preceding_lanelets;
+    std::set<lanelet::Id> detection_ids;
+    for (const auto & ll : detection_lanelets) {
+      // Preceding lanes does not include detection_lane so add them at the end
+      const auto & inserted = detection_ids.insert(ll.id());
+      if (inserted.second) detection_and_preceding_lanelets.push_back(ll);
+      // get preceding lanelets without ego_lanelets
+      // to prevent the detection area from including the ego lanes and its' preceding lanes.
+      const auto lanelet_sequences = lanelet::utils::query::getPrecedingLaneletSequences(
+        routing_graph_ptr, ll, length, ego_lanelets);
+      for (const auto & ls : lanelet_sequences) {
+        for (const auto & l : ls) {
+          const auto & inserted = detection_ids.insert(l.id());
+          if (inserted.second) detection_and_preceding_lanelets.push_back(l);
+        }
       }
     }
+    *detection_lanelets_result = detection_and_preceding_lanelets;
+  } else {
+    *detection_lanelets_result = detection_lanelets;
   }
-
-  *detection_lanelets_result = detection_and_preceding_lanelets;
   return true;
 }
 
