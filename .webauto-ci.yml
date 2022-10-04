@@ -26,7 +26,7 @@ simulations:
         autoware_launch_package: autoware_launch
         autoware_launch_file: planning_simulator.launch.xml
         architecture_type: awf/universe
-        initialize_duration: "45"
+        initialize_duration: "90"
 
   - name: log_sim_v2
     type: log_sim_v2
