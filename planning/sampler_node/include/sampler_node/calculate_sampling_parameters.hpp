@@ -117,15 +117,6 @@ void calculateLongitudinalTargets(
     initial_configuration.velocity * initial_configuration.velocity +
     2 * params.sampling.confortable_acceleration * distance);
   target_vel = std::min(target_vel, confortable_target_vel);
-  /*
-  const auto duration = std::abs(initial_configuration.velocity - target_vel) /
-                        params.sampling.confortable_acceleration;
-  const auto distance = target_s - start_s;
-  const auto duration = (2 * distance) / (initial_configuration.velocity + target_vel);
-  sampling_parameters.target_longitudinal_velocities = {target_vel};
-  sampling_parameters.target_longitudinal_positions.push_back(target_s);
-  sampling_parameters.target_durations.push_back(duration);
-  */
   const auto duration = (2 * distance) / (velocity_extremum.max - initial_configuration.velocity);
   gridSamplingParameters(
     sampling_parameters, velocity_extremum.min, velocity_extremum.max, duration, 4 * duration, 5,

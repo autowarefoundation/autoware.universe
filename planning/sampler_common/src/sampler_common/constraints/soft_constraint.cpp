@@ -59,10 +59,11 @@ void calculateCost(
 
   // calculateVelocityCost(trajectory, constraints);
   // maximize average velocity
+  const auto weight_vel = -10.0;
   auto avg_vel =
     std::accumulate(
       trajectory.longitudinal_velocities.begin(), trajectory.longitudinal_velocities.end(), 0.0) /
     trajectory.longitudinal_velocities.size();
-  trajectory.cost += avg_vel;
+  trajectory.cost += avg_vel * weight_vel;
 }
 }  // namespace sampler_common::constraints

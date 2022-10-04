@@ -23,9 +23,9 @@
       enable_frenet: True
       enable_bezier: True
       resolution: 0.5
-      minimum_committed_length: 5.0
-      reuse_max_length_max: 5.0
-      reuse_samples: 1
+      minimum_committed_length: 10.0
+      reuse_max_length_max: 20.0
+      reuse_samples: 4
       reuse_max_deviation: 1.0
       target_lengths: [20.0, 40.0, 60.0]
       frenet:
