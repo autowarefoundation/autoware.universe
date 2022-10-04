@@ -16,11 +16,12 @@
 #define COMPONENT_INTERFACE_UTILS__RCLCPP__SERVICE_CLIENT_HPP_
 
 #include <component_interface_utils/rclcpp/exceptions.hpp>
-#include <rclcpp/client.hpp>
-#include <rclcpp/logger.hpp>
-#include <rclcpp/logging.hpp>
+#include <rclcpp/node.hpp>
+
+#include <tier4_system_msgs/msg/service_log.hpp>
 
 #include <optional>
+#include <string>
 #include <utility>
 
 namespace component_interface_utils
@@ -34,12 +35,15 @@ public:
   RCLCPP_SMART_PTR_DEFINITIONS(Client)
   using SpecType = SpecT;
   using WrapType = rclcpp::Client<typename SpecT::Service>;
+  using ServiceLog = tier4_system_msgs::msg::ServiceLog;
 
   /// Constructor.
-  explicit Client(typename WrapType::SharedPtr client, const rclcpp::Logger & logger)
-  : logger_(logger)
+  template <class NodeT>
+  Client(typename WrapType::SharedPtr client, NodeT * node)
   {
     client_ = client;  // to keep the reference count
+    pub_ = node->template create_publisher<ServiceLog>("/service_log", 10);
+    src_ = node->get_namespace() + std::string("/") + node->get_name();
   }
 
   /// Send request.
@@ -47,7 +51,7 @@ public:
     const typename WrapType::SharedRequest request, std::optional<double> timeout = std::nullopt)
   {
     if (!client_->service_is_ready()) {
-      RCLCPP_INFO_STREAM(logger_, "client unready: " << SpecT::name);
+      log(ServiceLog::ERROR_UNREADY);
       throw ServiceUnready(SpecT::name);
     }
 
@@ -55,7 +59,7 @@ public:
     if (timeout) {
       const auto duration = std::chrono::duration<double, std::ratio<1>>(timeout.value());
       if (future.wait_for(duration) != std::future_status::ready) {
-        RCLCPP_INFO_STREAM(logger_, "client timeout: " << SpecT::name);
+        log(ServiceLog::ERROR_TIMEOUT);
         throw ServiceTimeout(SpecT::name);
       }
     }
@@ -78,11 +82,11 @@ public:
 #endif
 
     const auto wrapped = [this, callback](typename WrapType::SharedFuture future) {
-      RCLCPP_INFO_STREAM(logger_, "client exit: " << SpecT::name << "\n" << to_yaml(*future.get()));
+      log(ServiceLog::CLIENT_RESPONSE, to_yaml(*future.get()));
       callback(future);
     };
 
-    RCLCPP_INFO_STREAM(logger_, "client call: " << SpecT::name << "\n" << to_yaml(*request));
+    log(ServiceLog::CLIENT_REQUEST, to_yaml(*request));
 
 #ifdef ROS_DISTRO_GALACTIC
     return client_->async_send_request(request, wrapped);
@@ -94,7 +98,20 @@ public:
 private:
   RCLCPP_DISABLE_COPY(Client)
   typename WrapType::SharedPtr client_;
-  rclcpp::Logger logger_;
+  rclcpp::Publisher<ServiceLog>::SharedPtr pub_;
+  std::string src_;
+
+  void log(ServiceLog::_type_type type, const std::string & yaml = "")
+  {
+    ServiceLog msg;
+    // msg.stamp =
+    msg.type = type;
+    msg.name = SpecT::name;
+    msg.node = src_;
+    // msg.guid =
+    msg.yaml = yaml;
+    pub_->publish(msg);
+  }
 };
 
 }  // namespace component_interface_utils

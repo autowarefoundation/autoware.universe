@@ -17,7 +17,10 @@
 
 #include <component_interface_utils/rclcpp/exceptions.hpp>
 #include <rclcpp/logging.hpp>
+#include <rclcpp/publisher.hpp>
 #include <rclcpp/service.hpp>
+
+#include <tier4_system_msgs/msg/service_log.hpp>
 
 namespace component_interface_utils
 {
@@ -81,6 +84,7 @@ public:
 private:
   RCLCPP_DISABLE_COPY(Service)
   typename WrapType::SharedPtr service_;
+  rclcpp::Publisher<tier4_system_msgs::msg::ServiceLog>::SharedPtr pub_;
 };
 
 }  // namespace component_interface_utils
