@@ -317,11 +317,11 @@ bool getDetectionLanelets(
   const auto & assigned_lanelet = lanelet_map_ptr->laneletLayer.get(lane_id);
 
   const auto tl_regelems = assigned_lanelet.regulatoryElementsAs<lanelet::TrafficLight>();
-  bool has_tl_right = false;
+  bool has_tl = false;
   if (tl_regelems.size() != 0) {
     const auto tl_regelem = tl_regelems.front();
     const auto stop_line_opt = tl_regelem->stopLine();
-    if (!!stop_line_opt) has_tl_right = true;
+    if (!!stop_line_opt) has_tl = true;
   }
 
   const auto turn_direction = assigned_lanelet.attributeOr("turn_direction", "else");
@@ -364,7 +364,9 @@ bool getDetectionLanelets(
 
   // exclude yield lanelets and ego lanelets from detection_lanelets
   // if assigned lanelet is "straight" with traffic light, detection area is not necessary
-  if (turn_direction != std::string("straight") || !has_tl_right) {
+  if (turn_direction == std::string("straight") && has_tl) {
+  } else {
+    // otherwise we need to know the priority from RightOfWay
     for (const auto & conflicting_lanelet : conflicting_lanelets) {
       if (lanelet::utils::contains(yield_lanelets, conflicting_lanelet)) {
         continue;
@@ -653,6 +655,41 @@ std::optional<Polygon2d> getIntersectionArea(
   Polygon2d poly{};
   for (const auto & p : poly_3d) poly.outer().emplace_back(p.x(), p.y());
   return std::make_optional(poly);
+}
+
+bool isTrafficLightArrowActivated(
+  lanelet::ConstLanelet lane,
+  const std::map<int, autoware_auto_perception_msgs::msg::TrafficSignalStamped> & tl_infos)
+{
+  const auto & turn_direction = lane.attributeOr("turn_direction", "else");
+  boost::optional<int> tl_id = boost::none;
+  for (auto && tl_regelem : lane.regulatoryElementsAs<lanelet::TrafficLight>()) {
+    tl_id = tl_regelem->id();
+    break;
+  }
+  if (!tl_id) {
+    // this lane has no traffic light
+    return false;
+  }
+  const auto tl_info_it = tl_infos.find(tl_id.get());
+  if (tl_info_it == tl_infos.end()) {
+    // the info of this traffic light is not available
+    return false;
+  }
+  const auto & tl_info = tl_info_it->second;
+  for (auto && tl_light : tl_info.signal.lights) {
+    if (tl_light.color != autoware_auto_perception_msgs::msg::TrafficLight::GREEN) continue;
+    if (tl_light.status != autoware_auto_perception_msgs::msg::TrafficLight::SOLID_ON) continue;
+    if (
+      turn_direction == std::string("left") &&
+      tl_light.shape == autoware_auto_perception_msgs::msg::TrafficLight::LEFT_ARROW)
+      return true;
+    if (
+      turn_direction == std::string("right") &&
+      tl_light.shape == autoware_auto_perception_msgs::msg::TrafficLight::RIGHT_ARROW)
+      return true;
+  }
+  return false;
 }
 
 }  // namespace util

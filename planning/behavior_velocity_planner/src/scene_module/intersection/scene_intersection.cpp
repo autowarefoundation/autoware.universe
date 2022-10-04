@@ -91,7 +91,14 @@ bool IntersectionModule::modifyPathVelocity(
   const auto lanelet_map_ptr = planner_data_->route_handler_->getLaneletMapPtr();
   const auto routing_graph_ptr = planner_data_->route_handler_->getRoutingGraphPtr();
 
+  const auto & assigned_lanelet =
+    planner_data_->route_handler_->getLaneletMapPtr()->laneletLayer.get(lane_id_);
+
   /* get detection area*/
+  std::cout << "isTrafficLightArrowActivated() = "
+            << util::isTrafficLightArrowActivated(
+                 assigned_lanelet, planner_data_->traffic_light_id_map);
+
   lanelet::ConstLanelets detection_area_lanelets;
   util::getDetectionLanelets(
     lanelet_map_ptr, routing_graph_ptr, lane_id_, planner_param_.detection_area_length,
@@ -110,8 +117,6 @@ bool IntersectionModule::modifyPathVelocity(
   debug_data_.detection_area = detection_areas;
 
   /* get intersection area */
-  const auto & assigned_lanelet =
-    planner_data_->route_handler_->getLaneletMapPtr()->laneletLayer.get(lane_id_);
   const auto intersection_area = util::getIntersectionArea(assigned_lanelet, lanelet_map_ptr);
   if (intersection_area) {
     const auto intersection_area_2d = intersection_area.value();

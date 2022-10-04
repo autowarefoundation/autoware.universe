@@ -26,6 +26,7 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
 
+#include <map>
 #include <memory>
 #include <optional>
 #include <string>
@@ -147,6 +148,10 @@ std::vector<int> extendedAdjacentDirectionLanes(
 
 std::optional<Polygon2d> getIntersectionArea(
   lanelet::ConstLanelet assigned_lane, lanelet::LaneletMapConstPtr lanelet_map_ptr);
+
+bool isTrafficLightArrowActivated(
+  lanelet::ConstLanelet lane,
+  const std::map<int, autoware_auto_perception_msgs::msg::TrafficSignalStamped> & tl_infos);
 
 }  // namespace util
 }  // namespace behavior_velocity_planner
