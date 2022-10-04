@@ -27,8 +27,18 @@
 namespace rviz_plugins
 {
 inline std::string Bool2String(const bool var) { return var ? "True" : "False"; }
+inline bool uint2bool(uint8_t var) { return var == static_cast<uint8_t>(0) ? false : true; }
 using std::placeholders::_1;
 using std::placeholders::_2;
+inline void changeCommand(Command & command)
+{
+  if (command.type == Command::ACTIVATE) {
+    command.type = Command::DEACTIVATE;
+  } else {
+    command.type = Command::ACTIVATE;
+  }
+}
+
 Module getModuleType(const std::string & module_name)
 {
   Module module;
@@ -171,6 +181,20 @@ RTCManagerPanel::RTCManagerPanel(QWidget * parent) : rviz_common::Panel(parent)
   }
   v_layout->addWidget(auto_mode_table_);
 
+  // execution
+  auto * rtc_exe_layout = new QHBoxLayout;
+  {
+    exec_button_ptr_ = new QPushButton("exe mode");
+    exec_button_ptr_->setCheckable(false);
+    connect(exec_button_ptr_, &QPushButton::clicked, this, &RTCManagerPanel::onClickExecution);
+    rtc_exe_layout->addWidget(exec_button_ptr_);
+    wait_button_ptr_ = new QPushButton("wait mode");
+    wait_button_ptr_->setCheckable(false);
+    connect(wait_button_ptr_, &QPushButton::clicked, this, &RTCManagerPanel::onClickWait);
+    rtc_exe_layout->addWidget(wait_button_ptr_);
+  }
+  v_layout->addLayout(rtc_exe_layout);
+
   // statuses
   auto * rtc_table_layout = new QHBoxLayout;
   {
@@ -194,9 +218,6 @@ void RTCManagerPanel::onInitialize()
 {
   raw_node_ = this->getDisplayContext()->getRosNodeAbstraction().lock()->get_raw_node();
 
-  sub_rtc_status_ = raw_node_->create_subscription<CooperateStatusArray>(
-    "/api/external/get/rtc_status", 1, std::bind(&RTCManagerPanel::onRTCStatus, this, _1));
-
   client_rtc_commands_ = raw_node_->create_client<CooperateCommands>(
     "/api/external/set/rtc_commands", rmw_qos_profile_services_default);
 
@@ -206,6 +227,9 @@ void RTCManagerPanel::onInitialize()
     a->enable_auto_mode_cli = raw_node_->create_client<AutoMode>(
       enable_auto_mode_namespace_ + "/" + a->module_name, rmw_qos_profile_services_default);
   }
+
+  sub_rtc_status_ = raw_node_->create_subscription<CooperateStatusArray>(
+    "/api/external/get/rtc_status", 1, std::bind(&RTCManagerPanel::onRTCStatus, this, _1));
 }
 
 void RTCAutoMode::onChangeToAutoMode()
@@ -230,20 +254,38 @@ void RTCAutoMode::onChangeToManualMode()
   auto_module_button_ptr->setChecked(false);
 }
 
+void RTCManagerPanel::onClickCommandRequest(const uint8_t command)
+{
+  if (!cooperate_statuses_ptr_) return;
+  if (cooperate_statuses_ptr_->statuses.empty()) return;
+  auto executable_cooperate_commands_request = std::make_shared<CooperateCommands::Request>();
+  executable_cooperate_commands_request->stamp = cooperate_statuses_ptr_->stamp;
+  // send coop request
+  for (auto status : cooperate_statuses_ptr_->statuses) {
+    CooperateCommand cooperate_command;
+    cooperate_command.uuid = status.uuid;
+    cooperate_command.module = status.module;
+    cooperate_command.command.type = command;
+    executable_cooperate_commands_request->commands.emplace_back(cooperate_command);
+  }
+  client_rtc_commands_->async_send_request(executable_cooperate_commands_request);
+}
+
+void RTCManagerPanel::onClickExecution() { onClickCommandRequest(Command::ACTIVATE); }
+
+void RTCManagerPanel::onClickWait() { onClickCommandRequest(Command::DEACTIVATE); }
+
 void RTCManagerPanel::onRTCStatus(const CooperateStatusArray::ConstSharedPtr msg)
 {
+  cooperate_statuses_ptr_ = std::make_shared<CooperateStatusArray>(*msg);
   rtc_table_->clearContents();
   if (msg->statuses.empty()) return;
-  std::vector<CooperateStatus> coop_vec;
-  std::copy(msg->statuses.cbegin(), msg->statuses.cend(), std::back_inserter(coop_vec));
-  std::sort(
-    coop_vec.begin(), coop_vec.end(), [](const CooperateStatus & c1, const CooperateStatus & c2) {
-      return c1.start_distance < c2.start_distance;
-    });
   // this is to stable rtc display not to occupy too much
   size_t min_display_size{5};
   size_t max_display_size{10};
-  rtc_table_->setRowCount(std::max(min_display_size, std::min(coop_vec.size(), max_display_size)));
+  // rtc messages are already sorted by distance
+  rtc_table_->setRowCount(
+    std::max(min_display_size, std::min(msg->statuses.size(), max_display_size)));
   int cnt = 0;
   for (auto status : msg->statuses) {
     // uuid
@@ -276,7 +318,7 @@ void RTCManagerPanel::onRTCStatus(const CooperateStatusArray::ConstSharedPtr msg
     }
 
     // is operator safe
-    const bool is_execute = status.command_status.type;
+    const bool is_execute = uint2bool(status.command_status.type);
     {
       std::string text = is_execute ? "EXECUTE" : "WAIT";
       if (status.auto_mode) text = "NONE";
@@ -322,7 +364,6 @@ void RTCManagerPanel::onRTCStatus(const CooperateStatusArray::ConstSharedPtr msg
         rtc_table_->cellWidget(cnt, i)->setStyleSheet("background-color: #FF0000;");
       }
     }
-
     cnt++;
   }
 }
