@@ -45,7 +45,8 @@ if(BUILD_TESTING)
     test/test_mahalanobis.cpp
     test/test_measurement.cpp
     test/test_numeric.cpp
-    test/test_state_transition.cpp)
+    test/test_state_transition.cpp
+    test/test_time.cpp)
 
   foreach(filepath ${TEST_FILES})
     add_testcase(${filepath})
