@@ -95,9 +95,9 @@ bool IntersectionModule::modifyPathVelocity(
     planner_data_->route_handler_->getLaneletMapPtr()->laneletLayer.get(lane_id_);
 
   /* get detection area*/
-  std::cout << "isTrafficLightArrowActivated() = "
-            << util::isTrafficLightArrowActivated(
-                 assigned_lanelet, planner_data_->traffic_light_id_map);
+  RCLCPP_INFO(
+    logger_, "isTrafficLightArrowActivated() = %d",
+    util::isTrafficLightArrowActivated(assigned_lanelet, planner_data_->traffic_light_id_map));
 
   lanelet::ConstLanelets detection_area_lanelets;
   util::getDetectionLanelets(
