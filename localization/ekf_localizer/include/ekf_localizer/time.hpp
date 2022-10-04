@@ -17,8 +17,7 @@
 
 inline std::chrono::nanoseconds DoubleToNanoseconds(const double time)
 {
-  return std::chrono::duration_cast<std::chrono::nanoseconds>(
-    std::chrono::duration<double>(time));
+  return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(time));
 }
 
 #endif  // EKF_LOCALIZER__TIME_HPP_

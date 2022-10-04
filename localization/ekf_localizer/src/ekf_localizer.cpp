@@ -20,8 +20,8 @@
 #include "ekf_localizer/numeric.hpp"
 #include "ekf_localizer/state_index.hpp"
 #include "ekf_localizer/state_transition.hpp"
-#include "ekf_localizer/warning.hpp"
 #include "ekf_localizer/time.hpp"
+#include "ekf_localizer/warning.hpp"
 
 #include <rclcpp/logging.hpp>
 #include <tier4_autoware_utils/math/unit_conversion.hpp>
