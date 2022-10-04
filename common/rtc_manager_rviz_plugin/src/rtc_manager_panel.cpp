@@ -143,7 +143,7 @@ RTCManagerPanel::RTCManagerPanel(QWidget * parent) : rviz_common::Panel(parent)
     exec_button_ptr_->setCheckable(false);
     connect(exec_button_ptr_, &QPushButton::clicked, this, &RTCManagerPanel::onClickExecution);
     rtc_exe_layout->addWidget(exec_button_ptr_);
-    wait_button_ptr_ = new QPushButton("wait mode");
+    wait_button_ptr_ = new QPushButton("Wait");
     wait_button_ptr_->setCheckable(false);
     connect(wait_button_ptr_, &QPushButton::clicked, this, &RTCManagerPanel::onClickWait);
     rtc_exe_layout->addWidget(wait_button_ptr_);
