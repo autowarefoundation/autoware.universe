@@ -388,7 +388,7 @@ TEST(perception_utils, test_get2dGeneralizedIoU)
 
   {  // non overlapped
     autoware_auto_perception_msgs::msg::DetectedObject source_obj;
-    source_obj.kinematics.pose_with_covariance.pose = createPose(1.5, 1.5, M_PI);
+    source_obj.kinematics.pose_with_covariance.pose = createPose(1.5, 0.0, M_PI);
     source_obj.shape.type = autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX;
     source_obj.shape.dimensions.x = 1.0;
     source_obj.shape.dimensions.y = 1.0;
@@ -399,12 +399,12 @@ TEST(perception_utils, test_get2dGeneralizedIoU)
     target_obj.shape.dimensions.x = 1.0;
 
     const double giou = get2dGeneralizedIoU(source_obj, target_obj);
-    EXPECT_NEAR(giou, -1 + (1 + 4 * quart_circle) / (2.5 * 2.5), epsilon_giou);  // not 0
+    EXPECT_NEAR(giou, (2 * quart_circle - 1) / (2 * quart_circle + 2), epsilon_giou);  // not 0
   }
 
   {  // partially overlapped
     autoware_auto_perception_msgs::msg::DetectedObject source_obj;
-    source_obj.kinematics.pose_with_covariance.pose = createPose(0.5, 0.5, M_PI);
+    source_obj.kinematics.pose_with_covariance.pose = createPose(0.5, 0.0, M_PI);
     source_obj.shape.type = autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX;
     source_obj.shape.dimensions.x = 1.0;
     source_obj.shape.dimensions.y = 1.0;
@@ -415,9 +415,7 @@ TEST(perception_utils, test_get2dGeneralizedIoU)
     target_obj.shape.dimensions.x = 1.0;
 
     const double giou = get2dGeneralizedIoU(source_obj, target_obj);
-    EXPECT_NEAR(
-      giou, quart_circle / (1.0 + quart_circle * 3) - 1.0 + (1.0 + 3 * quart_circle) / (1.5 * 1.5),
-      epsilon_giou);
+    EXPECT_NEAR(giou, 2 * quart_circle / (2 * quart_circle + 1), epsilon_giou);
   }
 
   {  // fully overlapped
