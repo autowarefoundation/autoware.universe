@@ -30,51 +30,6 @@ inline std::string Bool2String(const bool var) { return var ? "True" : "False"; 
 inline bool uint2bool(uint8_t var) { return var == static_cast<uint8_t>(0) ? false : true; }
 using std::placeholders::_1;
 using std::placeholders::_2;
-inline void changeCommand(Command & command)
-{
-  if (command.type == Command::ACTIVATE) {
-    command.type = Command::DEACTIVATE;
-  } else {
-    command.type = Command::ACTIVATE;
-  }
-}
-
-Module getModuleType(const std::string & module_name)
-{
-  Module module;
-  if (module_name == "blind_spot") {
-    module.type = Module::BLIND_SPOT;
-  } else if (module_name == "crosswalk") {
-    module.type = Module::CROSSWALK;
-  } else if (module_name == "detection_area") {
-    module.type = Module::DETECTION_AREA;
-  } else if (module_name == "intersection") {
-    module.type = Module::INTERSECTION;
-  } else if (module_name == "no_stopping_area") {
-    module.type = Module::NO_STOPPING_AREA;
-  } else if (module_name == "occlusion_spot") {
-    module.type = Module::OCCLUSION_SPOT;
-  } else if (module_name == "stop_line") {
-    module.type = Module::NONE;
-  } else if (module_name == "traffic_light") {
-    module.type = Module::TRAFFIC_LIGHT;
-  } else if (module_name == "virtual_traffic_light") {
-    module.type = Module::TRAFFIC_LIGHT;
-  } else if (module_name == "lane_change_left") {
-    module.type = Module::LANE_CHANGE_LEFT;
-  } else if (module_name == "lane_change_right") {
-    module.type = Module::LANE_CHANGE_RIGHT;
-  } else if (module_name == "avoidance_left") {
-    module.type = Module::AVOIDANCE_LEFT;
-  } else if (module_name == "avoidance_right") {
-    module.type = Module::AVOIDANCE_RIGHT;
-  } else if (module_name == "pull_over") {
-    module.type = Module::PULL_OVER;
-  } else if (module_name == "pull_out") {
-    module.type = Module::PULL_OUT;
-  }
-  return module;
-}
 
 std::string getModuleName(const uint8_t module_type)
 {
@@ -288,6 +243,7 @@ void RTCManagerPanel::onRTCStatus(const CooperateStatusArray::ConstSharedPtr msg
     std::max(min_display_size, std::min(msg->statuses.size(), max_display_size)));
   int cnt = 0;
   for (auto status : msg->statuses) {
+    if (cnt > max_display_size) return;
     // uuid
     {
       std::stringstream uuid;
@@ -355,14 +311,14 @@ void RTCManagerPanel::onRTCStatus(const CooperateStatusArray::ConstSharedPtr msg
       label->setText(QString::fromStdString(finish_distance));
       rtc_table_->setCellWidget(cnt, 6, label);
     }
-    for (size_t i = 0; i < column_size_; i++) {
-      if (is_rtc_auto_mode || (is_aw_safe && is_execute)) {
-        rtc_table_->cellWidget(cnt, i)->setStyleSheet("background-color: #00FF00;");
-      } else if (is_aw_safe || is_execute) {
-        rtc_table_->cellWidget(cnt, i)->setStyleSheet("background-color: #FFFF00;");
-      } else {
-        rtc_table_->cellWidget(cnt, i)->setStyleSheet("background-color: #FF0000;");
-      }
+
+    // add color for recognition
+    if (is_rtc_auto_mode || (is_aw_safe && is_execute)) {
+      rtc_table_->cellWidget(cnt, 1)->setStyleSheet("background-color: #00FF00;");
+    } else if (is_aw_safe || is_execute) {
+      rtc_table_->cellWidget(cnt, 1)->setStyleSheet("background-color: #FFFF00;");
+    } else {
+      rtc_table_->cellWidget(cnt, 1)->setStyleSheet("background-color: #FF0000;");
     }
     cnt++;
   }
