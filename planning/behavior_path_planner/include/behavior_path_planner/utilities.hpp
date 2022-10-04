@@ -74,6 +74,7 @@ using tier4_autoware_utils::Polygon2d;
 namespace bg = boost::geometry;
 using geometry_msgs::msg::Pose;
 using marker_utils::CollisionCheckDebug;
+using vehicle_info_util::VehicleInfo;
 
 struct FrenetCoordinate3d
 {
@@ -118,7 +119,8 @@ FrenetCoordinate3d convertToFrenetCoordinate3d(
     motion_utils::calcLongitudinalOffsetToSegment(pose_array, seg_idx, search_point_geom);
   frenet_coordinate.length =
     motion_utils::calcSignedArcLength(pose_array, 0, seg_idx) + longitudinal_length;
-  frenet_coordinate.distance = motion_utils::calcLateralOffset(pose_array, search_point_geom);
+  frenet_coordinate.distance =
+    motion_utils::calcLateralOffset(pose_array, search_point_geom, seg_idx);
 
   return frenet_coordinate;
 }
@@ -381,8 +383,10 @@ lanelet::ConstLanelets getExtendedCurrentLanes(
 lanelet::ConstLanelets calcLaneAroundPose(
   const std::shared_ptr<RouteHandler> route_handler, const geometry_msgs::msg::Pose & pose,
   const double forward_length, const double backward_length);
+
 Polygon2d convertBoundingBoxObjectToGeometryPolygon(
-  const Pose & current_pose, const double & length, const double & width);
+  const Pose & current_pose, const double & base_to_front, const double & base_to_rear,
+  const double & base_to_width);
 
 Polygon2d convertCylindricalObjectToGeometryPolygon(
   const Pose & current_pose, const Shape & obj_shape);
@@ -399,7 +403,7 @@ Pose projectCurrentPoseToTarget(const Pose & desired_object, const Pose & target
 bool getEgoExpectedPoseAndConvertToPolygon(
   const Pose & current_pose, const PredictedPath & pred_path, Pose & expected_pose,
   tier4_autoware_utils::Polygon2d & ego_polygon, const double & check_current_time,
-  const double & length, const double & width);
+  const VehicleInfo & ego_info);
 
 bool getObjectExpectedPoseAndConvertToPolygon(
   const PredictedPath & pred_path, const PredictedObject & object, Pose & expected_pose,
@@ -432,16 +436,16 @@ bool isLateralDistanceEnough(
 
 bool isSafeInLaneletCollisionCheck(
   const Pose & ego_current_pose, const Twist & ego_current_twist,
-  const PredictedPath & ego_predicted_path, const double & ego_vehicle_length,
-  const double & ego_vehicle_width, const double & check_start_time, const double & check_end_time,
+  const PredictedPath & ego_predicted_path, const VehicleInfo & ego_info,
+  const double & check_start_time, const double & check_end_time,
   const double & check_time_resolution, const PredictedObject & target_object,
   const PredictedPath & target_object_path, const BehaviorPathPlannerParameters & common_parameters,
   CollisionCheckDebug & debug);
 
 bool isSafeInFreeSpaceCollisionCheck(
   const Pose & ego_current_pose, const Twist & ego_current_twist,
-  const PredictedPath & ego_predicted_path, const double & ego_vehicle_length,
-  const double & ego_vehicle_width, const double & check_start_time, const double & check_end_time,
+  const PredictedPath & ego_predicted_path, const VehicleInfo & ego_info,
+  const double & check_start_time, const double & check_end_time,
   const double & check_time_resolution, const PredictedObject & target_object,
   const BehaviorPathPlannerParameters & common_parameters, CollisionCheckDebug & debug);
 }  // namespace behavior_path_planner::util

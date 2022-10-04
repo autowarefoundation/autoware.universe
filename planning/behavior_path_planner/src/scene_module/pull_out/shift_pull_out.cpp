@@ -41,7 +41,7 @@ boost::optional<PullOutPath> ShiftPullOut::plan(Pose start_pose, Pose goal_pose)
   const auto & route_handler = planner_data_->route_handler;
   const auto & common_parameters = planner_data_->parameters;
   const auto & dynamic_objects = planner_data_->dynamic_object;
-  const auto & road_lanes = util::getCurrentLanes(planner_data_);
+  const auto & road_lanes = util::getExtendedCurrentLanes(planner_data_);
   const auto & current_pose = planner_data_->self_pose->pose;
   const auto & shoulder_lanes = getPullOutLanes(road_lanes, planner_data_);
   if (shoulder_lanes.empty()) {
@@ -69,7 +69,7 @@ boost::optional<PullOutPath> ShiftPullOut::plan(Pose start_pose, Pose goal_pose)
     auto & shift_path =
       pull_out_path.partial_paths.front();  // shift path is not separate but only one.
 
-    // check lane_depature and collsion with path between current to pull_out_end
+    // check lane_departure and collision with path between current to pull_out_end
     PathWithLaneId path_current_to_shift_end;
     {
       const auto current_idx = findNearestIndex(shift_path.points, current_pose);
@@ -167,6 +167,7 @@ std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
       double s_end = arc_position_goal.length;
       road_lane_reference_path = route_handler.getCenterLinePath(road_lanes, s_start, s_end);
     }
+    path_shifter.setPath(road_lane_reference_path);
 
     // get shift point start/end
     const auto shift_point_start = shoulder_reference_path.points.back();
@@ -186,7 +187,6 @@ std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
       shift_point.length = distance_to_road_center;
     }
     path_shifter.addShiftPoint(shift_point);
-    path_shifter.setPath(road_lane_reference_path);
 
     // offset front side
     ShiftedPath shifted_path;
