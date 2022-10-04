@@ -22,9 +22,10 @@ The purpose of this Rviz plugin is
 
 ### Output
 
-| Name                             | Type                                     | Description                              |
-| -------------------------------- | ---------------------------------------- | ---------------------------------------- |
-| `/api/external/set/rtc_commands` | `tier4_rtc_msgs::src::CooperateCommands` | The Cooperate Commands for each planning |
+| Name                             | Type                                     | Description                                          |
+| -------------------------------- | ---------------------------------------- | ---------------------------------------------------- |
+| `/api/external/set/rtc_commands` | `tier4_rtc_msgs::src::CooperateCommands` | The Cooperate Commands for each planning             |
+| `/planning/enable_auto_mode/*`   | `tier4_rtc_msgs::src::AutoMode`          | The Cooperate Commands mode for each planning module |
 
 ## HowToUse
 
