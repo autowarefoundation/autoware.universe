@@ -8,7 +8,7 @@ if(NOT CMAKE_CXX_STANDARD)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Werror)
+  add_compile_options(-Wall -Wextra -Wpedantic -Werror)
 endif()
 
 # ===================================================
@@ -24,6 +24,11 @@ find_package(PCL REQUIRED)
 
 # Sophus
 find_package(Sophus REQUIRED)
+
+# https://github.com/strasdat/Sophus/issues/388
+# Sophus's macro cause compile error for the "-Wpedantic" flag, so make sure to import as a system.
+# We must always call the following command after "ament_auto_find_build_dependencies()" because it rewrite CMAKE_NO_SYSTEM_FROM_IMPORTED to TRUE.
+set(CMAKE_NO_SYSTEM_FROM_IMPORTED FALSE)
 
 # ===================================================
 # Library
