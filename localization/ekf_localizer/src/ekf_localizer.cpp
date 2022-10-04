@@ -44,6 +44,12 @@
 
 using std::placeholders::_1;
 
+inline std::chrono::nanoseconds DoubleToNanoseconds(const double time)
+{
+  return std::chrono::duration_cast<std::chrono::nanoseconds>(
+    std::chrono::duration<double>(time));
+}
+
 EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOptions & node_options)
 : rclcpp::Node(node_name, node_options), warning_(this), dim_x_(6 /* x, y, yaw, yaw_bias, vx, wz */)
 {
@@ -79,8 +85,7 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
   is_initialized_ = false;
 
   /* initialize ros system */
-  auto period_control_ns =
-    std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(ekf_dt_));
+  auto period_control_ns = DoubleToNanoseconds(ekf_dt_);
   timer_control_ = rclcpp::create_timer(
     this, get_clock(), period_control_ns, std::bind(&EKFLocalizer::timerCallback, this));
 
