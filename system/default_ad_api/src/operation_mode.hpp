@@ -38,13 +38,14 @@ public:
 
 private:
   using OperationModeState = autoware_ad_api::operation_mode::OperationModeState;
-  using OperationMode = OperationModeState::Message::_mode_type;
+  using EnableAutowareControl = autoware_ad_api::operation_mode::EnableAutowareControl;
+  using DisableAutowareControl = autoware_ad_api::operation_mode::DisableAutowareControl;
   using ChangeToStop = autoware_ad_api::operation_mode::ChangeToStop;
   using ChangeToAutonomous = autoware_ad_api::operation_mode::ChangeToAutonomous;
   using ChangeToLocal = autoware_ad_api::operation_mode::ChangeToLocal;
   using ChangeToRemote = autoware_ad_api::operation_mode::ChangeToRemote;
-  using EnableAutowareControl = autoware_ad_api::operation_mode::EnableAutowareControl;
-  using DisableAutowareControl = autoware_ad_api::operation_mode::DisableAutowareControl;
+  using OperationModeRequest = system_interface::ChangeOperationMode::Service::Request;
+  using AutowareControlRequest = system_interface::ChangeAutowareControl::Service::Request;
 
   DiagnosticsMonitor diagnostics_;
   OperationModeState::Message curr_state_;
@@ -88,7 +89,7 @@ private:
   void update_state();
 
   template <class ResponseT>
-  void change_mode(const ResponseT res, const OperationMode::_mode_type mode);
+  void change_mode(const ResponseT res, const OperationModeRequest::_mode_type mode);
 };
 
 }  // namespace default_ad_api

@@ -19,8 +19,6 @@
 namespace default_ad_api
 {
 
-using OperationModeRequest = system_interface::ChangeOperationMode::Service::Request;
-using AutowareControlRequest = system_interface::ChangeAutowareControl::Service::Request;
 using ServiceResponse = autoware_ad_api_msgs::srv::ChangeOperationMode::Response;
 
 OperationModeNode::OperationModeNode(const rclcpp::NodeOptions & options)
@@ -52,7 +50,8 @@ OperationModeNode::OperationModeNode(const rclcpp::NodeOptions & options)
 }
 
 template <class ResponseT>
-void OperationModeNode::change_mode(const ResponseT res, const OperationMode::_mode_type mode)
+void OperationModeNode::change_mode(
+  const ResponseT res, const OperationModeRequest::_mode_type mode)
 {
   if (!mode_available_[mode]) {
     throw component_interface_utils::ServiceException(
