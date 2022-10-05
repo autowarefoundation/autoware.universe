@@ -57,7 +57,7 @@ public:
 
   Eigen::Matrix<double, 6, 6> getHessian() const override;
   void setRegularizationScaleFactor(const float) override{};
-  float getRegularizationScaleFactor() override{return 0;};
+  float getRegularizationScaleFactor() override { return 0; };
   void setRegularizationPose(const Eigen::Matrix4f &) override {}
   void unsetRegularizationPose() override {}
 

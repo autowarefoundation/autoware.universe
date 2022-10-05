@@ -392,8 +392,8 @@ void NDTScanMatcher::callback_map_points(
   new_ndt_ptr->setParam(ndt_ptr_->getParam());
   if (ndt_implement_type_ == NDTImplementType::OMP) {
     using NDTOMP = NormalDistributionsTransformOMP<PointSource, PointTarget>;
-    std::dynamic_pointer_cast<NDTOMP>(new_ndt_ptr)->setOMPParam(
-      std::dynamic_pointer_cast<NDTOMP>(ndt_ptr_)->getOMPParam());
+    std::dynamic_pointer_cast<NDTOMP>(new_ndt_ptr)
+      ->setOMPParam(std::dynamic_pointer_cast<NDTOMP>(ndt_ptr_)->getOMPParam());
   }
 
   pcl::shared_ptr<pcl::PointCloud<PointTarget>> map_points_ptr(new pcl::PointCloud<PointTarget>);

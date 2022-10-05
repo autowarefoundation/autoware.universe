@@ -23,7 +23,8 @@ NormalDistributionsTransformBase<PointSource, PointTarget>::NormalDistributionsT
 }
 
 template <class PointSource, class PointTarget>
-void NormalDistributionsTransformBase<PointSource, PointTarget>::setParam(const BaseParam & base_param)
+void NormalDistributionsTransformBase<PointSource, PointTarget>::setParam(
+  const BaseParam & base_param)
 {
   setTransformationEpsilon(base_param.trans_epsilon);
   setStepSize(base_param.step_size);
@@ -34,7 +35,7 @@ void NormalDistributionsTransformBase<PointSource, PointTarget>::setParam(const 
 
 template <class PointSource, class PointTarget>
 typename NormalDistributionsTransformBase<PointSource, PointTarget>::BaseParam
-  NormalDistributionsTransformBase<PointSource, PointTarget>::getParam()
+NormalDistributionsTransformBase<PointSource, PointTarget>::getParam()
 {
   BaseParam param;
   param.trans_epsilon = getTransformationEpsilon();

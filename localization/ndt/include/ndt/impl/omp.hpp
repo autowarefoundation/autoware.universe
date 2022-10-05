@@ -236,7 +236,7 @@ void NormalDistributionsTransformOMP<PointSource, PointTarget>::setOMPParam(
 
 template <class PointSource, class PointTarget>
 typename NormalDistributionsTransformOMP<PointSource, PointTarget>::OMPParam
-  NormalDistributionsTransformOMP<PointSource, PointTarget>::getOMPParam()
+NormalDistributionsTransformOMP<PointSource, PointTarget>::getOMPParam()
 {
   OMPParam omp_param;
   omp_param.num_threads = getNumThreads();
