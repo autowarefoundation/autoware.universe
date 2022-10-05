@@ -26,52 +26,16 @@
 
 namespace
 {
-class TransformFootprintPoint
+geometry_msgs::msg::Point32 transformFootprintPoint(
+  const geometry_msgs::msg::Point32 & point, const geometry_msgs::msg::Pose & pose)
 {
-private:
-  tf2::Transform tf_target2objects_world_;
-  tf2::Transform tf_target2objects_;
-  tf2::Transform tf_objects_world2objects_;
-  geometry_msgs::msg::TransformStamped tf_target2objects_stamped_;
-
-public:
-  bool setTransformTarget2ObjectsWorld(
-    const autoware_auto_perception_msgs::msg::DetectedObjects &, const std::string &,
-    const tf2_ros::Buffer &);
-  bool setTransformTarget2Objects(const geometry_msgs::msg::Pose &);
-  geometry_msgs::msg::Point32 transformPoint(const geometry_msgs::msg::Point32 &);
-};
-
-bool TransformFootprintPoint::setTransformTarget2ObjectsWorld(
-  const autoware_auto_perception_msgs::msg::DetectedObjects & input_msg,
-  const std::string & target_frame_id, const tf2_ros::Buffer & tf_buffer)
-{
-  const auto ros_target2objects_world =
-    getTransform(tf_buffer, input_msg.header.frame_id, target_frame_id, input_msg.header.stamp);
-  if (!ros_target2objects_world) {
-    return false;
-  }
-  tf2::fromMsg(*ros_target2objects_world, tf_target2objects_world_);
-
-  return true;
-}
-
-bool TransformFootprintPoint::setTransformTarget2Objects(const geometry_msgs::msg::Pose & pose)
-{
-  // get tf object to map
-  tf2::fromMsg(pose, tf_objects_world2objects_);
-  tf_target2objects_ = tf_target2objects_world_ * tf_objects_world2objects_;
-  tf_target2objects_stamped_.transform = tf2::toMsg(tf_target2objects_);
-
-  return true;
-}
-
-geometry_msgs::msg::Point32 TransformFootprintPoint::transformPoint(
-  const geometry_msgs::msg::Point32 & point)
-{
+  tf2::Transform tf_data_;
+  geometry_msgs::msg::TransformStamped tf_data_stamped_;
+  tf2::convert(pose, tf_data_);
+  tf_data_stamped_.transform = tf2::toMsg(tf_data_);
   geometry_msgs::msg::Point32 point_transformed;
   tf2::doTransform<geometry_msgs::msg::Point32>(
-    point, point_transformed, tf_target2objects_stamped_);
+    point, point_transformed, tf_data_stamped_);
 
   return point_transformed;
 }
@@ -143,10 +107,6 @@ void ObjectLaneletFilterNode::objectCallback(
   // get intersected lanelets
   lanelet::ConstLanelets intersected_lanelets = getIntersectedLanelets(convex_hull, road_lanelets_);
 
-  // set tf_target2objects_world
-  TransformFootprintPoint transform_point = TransformFootprintPoint();
-  transform_point.setTransformTarget2ObjectsWorld(*input_msg, lanelet_frame_id_, tf_buffer_);
-
   int index = 0;
   for (const auto & object : transformed_objects.objects) {
     const auto & footprint = object.shape.footprint;
@@ -162,13 +122,9 @@ void ObjectLaneletFilterNode::objectCallback(
       (label == Label::PEDESTRIAN && filter_target_.PEDESTRIAN)) {
       Polygon2d polygon;
 
-      // set tf_target2objects
-      transform_point.setTransformTarget2Objects(
-        input_msg->objects.at(index).kinematics.pose_with_covariance.pose);
-
       for (const auto & point : footprint.points) {
         // transform points from base_link to map
-        const auto point_transformed = transform_point.transformPoint(point);
+        const geometry_msgs::msg::Point32 point_transformed = transformFootprintPoint(point, object.kinematics.pose_with_covariance.pose);
         polygon.outer().emplace_back(point_transformed.x, point_transformed.y);
       }
       polygon.outer().push_back(polygon.outer().front());
