@@ -24,22 +24,6 @@
 
 #include <lanelet2_core/geometry/Polygon.h>
 
-namespace
-{
-geometry_msgs::msg::Point32 transformFootprintPoint(
-  const geometry_msgs::msg::Point32 & point, const geometry_msgs::msg::Pose & pose)
-{
-  tf2::Transform tf_data_;
-  geometry_msgs::msg::TransformStamped tf_data_stamped_;
-  tf2::convert(pose, tf_data_);
-  tf_data_stamped_.transform = tf2::toMsg(tf_data_);
-  geometry_msgs::msg::Point32 point_transformed;
-  tf2::doTransform<geometry_msgs::msg::Point32>(point, point_transformed, tf_data_stamped_);
-
-  return point_transformed;
-}
-}  // namespace
-
 namespace object_lanelet_filter
 {
 ObjectLaneletFilterNode::ObjectLaneletFilterNode(const rclcpp::NodeOptions & node_options)
@@ -124,7 +108,7 @@ void ObjectLaneletFilterNode::objectCallback(
       for (const auto & point : footprint.points) {
         // transform points from base_link to map
         const geometry_msgs::msg::Point32 point_transformed =
-          transformFootprintPoint(point, object.kinematics.pose_with_covariance.pose);
+          tier4_autoware_utils::transformPoint(point, object.kinematics.pose_with_covariance.pose);
         polygon.outer().emplace_back(point_transformed.x, point_transformed.y);
       }
       polygon.outer().push_back(polygon.outer().front());
