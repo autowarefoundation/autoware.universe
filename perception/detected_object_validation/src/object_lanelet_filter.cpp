@@ -14,7 +14,6 @@
 
 #include "detected_object_filter/object_lanelet_filter.hpp"
 
-#include <autoware_auto_tf2/tf2_autoware_auto_msgs.hpp>
 #include <perception_utils/perception_utils.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
