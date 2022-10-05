@@ -24,7 +24,7 @@
 #include <algorithm>
 #include <vector>
 
-namespace
+namespace perception_utils
 {
 inline double getConvexShapeArea(
   const tier4_autoware_utils::Polygon2d & source_polygon,
@@ -37,10 +37,7 @@ inline double getConvexShapeArea(
   boost::geometry::convex_hull(union_polygons, hull);
   return boost::geometry::area(hull);
 }
-}  // namespace
 
-namespace perception_utils
-{
 template <class T1, class T2>
 double get2dIoU(const T1 source_object, const T2 target_object)
 {
