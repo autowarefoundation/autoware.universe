@@ -28,6 +28,7 @@ inline std::uint8_t getHighestProbLabel(
 {
   std::uint8_t label = ObjectClassification::UNKNOWN;
   float highest_prob = 0.0;
+  // TODO(Satoshi Tanaka): It might be simple if you use STL or range-v3.
   for (const auto & object_classification : object_classifications) {
     if (highest_prob < object_classification.probability) {
       highest_prob = object_classification.probability;

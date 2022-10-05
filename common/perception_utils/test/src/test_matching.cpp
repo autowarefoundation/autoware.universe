@@ -29,11 +29,8 @@ namespace
 geometry_msgs::msg::Pose createPose(const double x, const double y, const double yaw)
 {
   geometry_msgs::msg::Pose p;
-  p.position.x = x;
-  p.position.y = y;
-  p.position.z = 0.0;
+  p.position = geometry_msgs::build<geometry_msgs::msg::Point>().x(x).y(y).z(0.0);
   p.orientation = tier4_autoware_utils::createQuaternionFromYaw(yaw);
-
   return p;
 }
 }  // namespace
