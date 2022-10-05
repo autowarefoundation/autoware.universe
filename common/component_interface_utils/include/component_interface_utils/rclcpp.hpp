@@ -106,16 +106,6 @@ public:
     init_sub(sub, std::bind(callback, instance, _1));
   }
 
-  /// Create a subscription wrapper.
-  template <class SharedPtrT, class InstanceT>
-  void init_sub(
-    SharedPtrT & sub, InstanceT * instance,
-    MessageCallback<SharedPtrT, InstanceT> && callback) const
-  {
-    using std::placeholders::_1;
-    init_sub(sub, std::bind(callback, instance, _1));
-  }
-
   /// Create a service wrapper for logging.
   template <class SharedPtrT, class InstanceT>
   void init_srv(
