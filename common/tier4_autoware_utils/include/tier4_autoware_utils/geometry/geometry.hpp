@@ -29,6 +29,7 @@
 
 #include <autoware_auto_planning_msgs/msg/path.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
+#include <geometry_msgs/msg/point32.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <geometry_msgs/msg/quaternion.hpp>
@@ -488,6 +489,24 @@ inline geometry_msgs::msg::Point transformPoint(
   transformed_point.y = transformed_vec.y();
   transformed_point.z = transformed_vec.z();
   return transformed_point;
+}
+
+inline geometry_msgs::msg::Point32 transformPoint(
+  const geometry_msgs::msg::Point32 & point32, const geometry_msgs::msg::Pose & pose)
+{
+  geometry_msgs::msg::Point point;
+  point.x = point32.x;
+  point.y = point32.y;
+  point.z = point32.z;
+
+  geometry_msgs::msg::Point transformed_point;
+  geometry_msgs::msg::Point32 transformed_point32;
+  transformed_point = tier4_autoware_utils::transformPoint(point, pose);
+  transformed_point32.x = transformed_point.x;
+  transformed_point32.y = transformed_point.y;
+  transformed_point32.z = transformed_point.z;
+
+  return transformed_point32;
 }
 
 template <class T>
