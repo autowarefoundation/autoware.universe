@@ -46,10 +46,7 @@ typename Service<SpecT>::SharedPtr create_service_impl(
 {
   // This function is a wrapper for the following.
   // https://github.com/ros2/rclcpp/blob/48068130edbb43cdd61076dc1851672ff1a80408/rclcpp/include/rclcpp/node.hpp#L267-L281
-  auto wrapped = Service<SpecT>::wrap(callback, node->get_logger());
-  auto service = node->template create_service<typename SpecT::Service>(
-    SpecT::name, wrapped, rmw_qos_profile_services_default, group);
-  return Service<SpecT>::make_shared(service);
+  return Service<SpecT>::make_shared(node, std::forward<CallbackT>(callback), group);
 }
 
 /// Create a publisher using traits like services. This is a private implementation.

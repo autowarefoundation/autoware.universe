@@ -16,11 +16,11 @@
 #define COMPONENT_INTERFACE_UTILS__RCLCPP__SERVICE_SERVER_HPP_
 
 #include <component_interface_utils/rclcpp/exceptions.hpp>
-#include <rclcpp/logging.hpp>
-#include <rclcpp/publisher.hpp>
-#include <rclcpp/service.hpp>
+#include <rclcpp/node.hpp>
 
 #include <tier4_system_msgs/msg/service_log.hpp>
+
+#include <string>
 
 namespace component_interface_utils
 {
@@ -48,25 +48,31 @@ public:
   RCLCPP_SMART_PTR_DEFINITIONS(Service)
   using SpecType = SpecT;
   using WrapType = rclcpp::Service<typename SpecT::Service>;
+  using ServiceLog = tier4_system_msgs::msg::ServiceLog;
 
   /// Constructor.
-  explicit Service(typename WrapType::SharedPtr service)
+  template <class NodeT, class CallbackT>
+  Service(NodeT * node, CallbackT && callback, rclcpp::CallbackGroup::SharedPtr group = nullptr)
   {
-    service_ = service;  // to keep the reference count
+    service_ = node->template create_service<typename SpecT::Service>(
+      SpecT::name, wrap(callback), rmw_qos_profile_services_default, group);
+
+    pub_ = node->template create_publisher<ServiceLog>("/service_log", 10);
+    src_ = node->get_namespace() + std::string("/") + node->get_name();
   }
 
   /// Create a service callback with logging added.
   template <class CallbackT>
-  static auto wrap(CallbackT && callback, const rclcpp::Logger & logger)
+  typename WrapType::CallbackType wrap(CallbackT && callback)
   {
-    auto wrapped = [logger, callback](
+    auto wrapped = [this, callback](
                      typename SpecT::Service::Request::SharedPtr request,
                      typename SpecT::Service::Response::SharedPtr response) {
 #ifdef ROS_DISTRO_GALACTIC
       using rosidl_generator_traits::to_yaml;
 #endif
       // If the response has status, convert it from the exception.
-      RCLCPP_INFO_STREAM(logger, "service call: " << SpecT::name << "\n" << to_yaml(*request));
+      log(ServiceLog::SERVER_REQUEST, to_yaml(*request));
       if constexpr (!has_status_type<typename SpecT::Service::Response>::value) {
         callback(request, response);
       } else {
@@ -76,7 +82,7 @@ public:
           error.set(response->status);
         }
       }
-      RCLCPP_INFO_STREAM(logger, "service exit: " << SpecT::name << "\n" << to_yaml(*response));
+      log(ServiceLog::SERVER_RESPONSE, to_yaml(*response));
     };
     return wrapped;
   }
@@ -85,6 +91,19 @@ private:
   RCLCPP_DISABLE_COPY(Service)
   typename WrapType::SharedPtr service_;
   rclcpp::Publisher<tier4_system_msgs::msg::ServiceLog>::SharedPtr pub_;
+  std::string src_;
+
+  void log(ServiceLog::_type_type type, const std::string & yaml = "")
+  {
+    ServiceLog msg;
+    // msg.stamp =
+    msg.type = type;
+    msg.name = SpecT::name;
+    msg.node = src_;
+    // msg.guid =
+    msg.yaml = yaml;
+    pub_->publish(msg);
+  }
 };
 
 }  // namespace component_interface_utils
