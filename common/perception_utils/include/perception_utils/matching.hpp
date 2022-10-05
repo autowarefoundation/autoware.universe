@@ -56,6 +56,35 @@ double get2dIoU(const T1 source_object, const T2 target_object)
 }
 
 template <class T1, class T2>
+inline double get2dGeneralizedIoU(const T1 & source_object, const T2 & target_object)
+{
+  const auto & source_pose = getPose(source_object);
+  const auto & target_pose = getPose(target_object);
+
+  const auto & source_polygon = tier4_autoware_utils::toPolygon2d(source_pose, source_object.shape);
+  const auto & target_polygon = tier4_autoware_utils::toPolygon2d(target_pose, target_object.shape);
+
+  std::vector<tier4_autoware_utils::Polygon2d> union_polygons;
+  std::vector<tier4_autoware_utils::Polygon2d> intersection_polygons;
+  boost::geometry::union_(source_polygon, target_polygon, union_polygons);
+  boost::geometry::intersection(source_polygon, target_polygon, intersection_polygons);
+
+  double intersection_area = 0.0;
+  double union_area = 0.0;
+  for (const auto & intersection_polygon : intersection_polygons) {
+    intersection_area += boost::geometry::area(intersection_polygon);
+  }
+
+  for (const auto & union_polygon : union_polygons) {
+    union_area += boost::geometry::area(union_polygon);
+  }
+
+  const double iou = union_area < 0.01 ? 0.0 : std::min(1.0, intersection_area / union_area);
+  const double convex_shape_area = getConvexShapeArea(source_polygon, target_polygon);
+  return iou - (convex_shape_area - union_area) / convex_shape_area;
+}
+
+template <class T1, class T2>
 double get2dPrecision(const T1 source_object, const T2 target_object)
 {
   const auto & source_pose = getPose(source_object);
