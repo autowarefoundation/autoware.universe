@@ -134,19 +134,19 @@ Second section
 
 When it comes to handle several blinkers, it gives priority to the first blinker that comes first. However, this rule sometimes activate unnatural blinkers, so turn signal decider uses the following five rules to decide the necessary turn signal.
 
-- pattern1
+- pattern1  
   ![pattern1](./image/turn_signal_decider/pattern1.drawio.svg)
 
-- pattern2
+- pattern2  
   ![pattern2](./image/turn_signal_decider/pattern2.drawio.svg)
 
-- pattern3
+- pattern3  
   ![pattern3](./image/turn_signal_decider/pattern3.drawio.svg)
 
-- pattern4
+- pattern4  
   ![pattern4](./image/turn_signal_decider/pattern4.drawio.svg)
 
-- pattern5
+- pattern5  
   ![pattern5](./image/turn_signal_decider/pattern5.drawio.svg)
 
 Based on these five rules, turn signal decider can solve `blinker conflicts`. The following pictures show some examples of this kind of conflicts.
