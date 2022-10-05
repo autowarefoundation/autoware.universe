@@ -66,9 +66,9 @@ Lanelet2MapLoaderNode::Lanelet2MapLoaderNode(const rclcpp::NodeOptions & options
   const auto map_bin_msg = create_map_bin_msg(map, lanelet2_filename, now());
 
   // create publisher and publish
-  const auto pub_map_bin =
+  pub_map_bin_ =
     create_publisher<HADMapBin>("output/lanelet2_map", rclcpp::QoS{1}.transient_local());
-  pub_map_bin->publish(map_bin_msg);
+  pub_map_bin_->publish(map_bin_msg);
 }
 
 lanelet::LaneletMapPtr Lanelet2MapLoaderNode::load_map(

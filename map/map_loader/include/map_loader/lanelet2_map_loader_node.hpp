@@ -37,6 +37,9 @@ public:
   static HADMapBin create_map_bin_msg(
     const lanelet::LaneletMapPtr map, const std::string & lanelet2_filename,
     const rclcpp::Time & now);
+
+private:
+  rclcpp::Publisher<HADMapBin>::SharedPtr pub_map_bin_;
 };
 
 #endif  // MAP_LOADER__LANELET2_MAP_LOADER_NODE_HPP_
