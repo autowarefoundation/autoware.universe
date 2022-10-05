@@ -103,9 +103,7 @@ void ObjectLaneletFilterNode::objectCallback(
       (label == Label::BICYCLE && filter_target_.BICYCLE) ||
       (label == Label::PEDESTRIAN && filter_target_.PEDESTRIAN)) {
       Polygon2d polygon;
-
       for (const auto & point : footprint.points) {
-        // transform points from base_link to map
         const geometry_msgs::msg::Point32 point_transformed =
           tier4_autoware_utils::transformPoint(point, object.kinematics.pose_with_covariance.pose);
         polygon.outer().emplace_back(point_transformed.x, point_transformed.y);
