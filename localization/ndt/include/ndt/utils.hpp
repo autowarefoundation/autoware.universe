@@ -20,6 +20,8 @@
 #include <ndt/pcl_modified.hpp>
 #include <fmt/format.h>
 
+#include <string>
+#include <memory>
 
 template <typename PointSource, typename PointTarget>
 std::shared_ptr<NormalDistributionsTransformBase<PointSource, PointTarget>> get_ndt(
