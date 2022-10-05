@@ -1,0 +1,60 @@
+#include "builtin_interfaces/msg/Time.idl"
+
+module communication_delay_compensator{
+  module msg               {
+    @verbatim (language = "comment", text = " Reference error messages to estimate undelayed tracking references. ")
+    struct DelayCompensationRefs
+    {
+      builtin_interfaces::msg::Time stamp;
+
+      // Lateral deviation - error
+      @verbatim (language = "comment", text = "The lateral deviation error computed by the controller")
+      @default (value = 0.0)
+      double lateral_deviation_read;
+
+      @verbatim (language = "comment", text = "The correction computed by the compensator")
+      @default (value = 0.0)
+      double lateral_deviation_error_compensation_ref;
+
+      // Heading deviation - error
+      @verbatim (language = "comment", text = "The heading deviation error computed by the controller")
+      @default (value = 0.0)
+      double heading_angle_error_read;
+
+      @verbatim (language = "comment", text = "The correction computed by the compensator")
+      @default (value = 0.0)
+      double heading_angle_error_compensation_ref;
+
+      // Steering deviation - error
+      @verbatim (language = "comment", text = "The steering value observed by the controller")
+      @default (value = 0.0)
+      double steering_read;
+
+      @verbatim (language = "comment", text = "The correction computed by the compensator")
+      @default (value = 0.0)
+      double steering_compensation_ref;
+
+      @verbatim (language = "comment", text = "The steering value observed by the controller")
+      @default (value = 0.0)
+      double steering_dob;
+
+      // Velocity deviation - error
+      @verbatim (language = "comment", text = "The velocity deviation error computed by the controller")
+      @default (value = 0.0)
+      double velocity_error_read;
+
+      @verbatim (language = "comment", text = "The correction computed by the compensator")
+      @default (value = 0.0)
+      double velocity_error_compensation_ref;
+
+      // Acceleration deviation - error
+      @verbatim (language = "comment", text = "The velocity deviation error computed by the controller")
+      @default (value = 0.0)
+      double acceleration_error_read;
+
+      @verbatim (language = "comment", text = "The correction computed by the compensator")
+      @default (value = 0.0)
+      double acceleration_error_compensation_ref;
+    };
+  };
+};
