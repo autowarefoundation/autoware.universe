@@ -403,7 +403,8 @@ void NDTScanMatcher::callback_map_points(
   const auto max_iterations = ndt_ptr_->getMaximumIterations();
 
   using NDTBase = NormalDistributionsTransformBase<PointSource, PointTarget>;
-  std::shared_ptr<NDTBase> new_ndt_ptr = get_ndt<PointSource, PointTarget>(ndt_ptr_->getImplementationType());
+  std::shared_ptr<NDTBase> new_ndt_ptr =
+    get_ndt<PointSource, PointTarget>(ndt_ptr_->getImplementationType());
 
   if (ndt_ptr_->getImplementationType() == NDTImplementType::OMP) {
     using T = NormalDistributionsTransformOMP<PointSource, PointTarget>;

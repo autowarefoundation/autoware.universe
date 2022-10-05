@@ -48,7 +48,8 @@ void NormalDistributionsTransformPCLModified<PointSource, PointTarget>::setInput
 }
 
 template <class PointSource, class PointTarget>
-NDTImplementType NormalDistributionsTransformPCLModified<PointSource, PointTarget>::getImplementationType()
+NDTImplementType
+NormalDistributionsTransformPCLModified<PointSource, PointTarget>::getImplementationType()
 {
   return NDTImplementType::PCL_MODIFIED;
 }

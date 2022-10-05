@@ -48,7 +48,8 @@ void NormalDistributionsTransformPCLGeneric<PointSource, PointTarget>::setInputS
 }
 
 template <class PointSource, class PointTarget>
-NDTImplementType NormalDistributionsTransformPCLGeneric<PointSource, PointTarget>::getImplementationType()
+NDTImplementType
+NormalDistributionsTransformPCLGeneric<PointSource, PointTarget>::getImplementationType()
 {
   return NDTImplementType::PCL_GENERIC;
 }
