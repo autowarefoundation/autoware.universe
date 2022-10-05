@@ -25,7 +25,7 @@ These two sections have the following meanings.
 
 ### - Required Section
 
-    - In this section, ego vehicle must activate designated blinkers. However, if there is blinker conflictions, it must solve them based on the algorithm we mention later in this document.
+    - In this section, ego vehicle must activate designated blinkers. However, if there are blinker conflicts, it must solve them based on the algorithm we mention later in this document.
     - Required Section cannot be longer than desired section.
 
 For left turn, right turn, avoidance, lane change, pull over and pull out, we define these two sections, which are elaborated in the following part.
@@ -35,7 +35,7 @@ For left turn, right turn, avoidance, lane change, pull over and pull out, we de
 Turn signal decider checks each lanelet on the map if it has `turn_direction` information. If a lanelet has this information, it activates necessary blinker based on this information.
 
 - desired start point  
-  `v*3.0 + 30` meters before the start point of the intersection lanlet(depicted in gree in the following picture), where `v` is the velocity of the ego vehicle.
+  `v*3.0 + 30` meters before the start point of the intersection lanelet(depicted in gree in the following picture), where `v` is the velocity of the ego vehicle.
 
 - desired end point  
   Terminal point of the intersection lanelet.
