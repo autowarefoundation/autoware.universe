@@ -51,7 +51,7 @@ namespace motion_utils
  *        Otherwise, it uses spline interpolation
  * @return resampled path(poses)
  */
-std::vector<geometry_msgs::msg::Pose> resamplePath(
+std::vector<geometry_msgs::msg::Pose> resamplePoseVector(
   const std::vector<geometry_msgs::msg::Pose> & points,
   const std::vector<double> & resampled_arclength, const bool use_lerp_for_xy = false,
   const bool use_lerp_for_z = true);
