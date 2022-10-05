@@ -132,7 +132,8 @@ void ObjectLaneletFilterNode::objectCallback(
     return;
   }
   autoware_auto_perception_msgs::msg::DetectedObjects transformed_objects;
-  if (!perception_utils::transformObjects(*input_msg, lanelet_frame_id_, tf_buffer_, transformed_objects)) {
+  if (!perception_utils::transformObjects(
+        *input_msg, lanelet_frame_id_, tf_buffer_, transformed_objects)) {
     RCLCPP_ERROR(get_logger(), "Failed transform to %s.", lanelet_frame_id_.c_str());
     return;
   }
