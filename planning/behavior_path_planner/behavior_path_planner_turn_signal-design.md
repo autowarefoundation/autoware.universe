@@ -8,7 +8,7 @@ This module is responsible for activating a necessary blinker during driving. It
 
 ### Limitations
 
-Currently, this algorithm can sometimes give unnatural(not wrong) blinkers in a complicated situations. This is because it tries to follow the road traffic raw and cannot solve `blinker conflicts` clearly in that environment.
+Currently, this algorithm can sometimes give unnatural (not wrong) blinkers in a complicated situations. This is because it tries to follow the road traffic raw and cannot solve `blinker conflicts` clearly in that environment.
 
 ## Inner-workings / Algorithms
 
@@ -26,7 +26,7 @@ These two sections have the following meanings.
 ### - Required Section
 
     - In this section, ego vehicle must activate designated blinkers. However, if there are blinker conflicts, it must solve them based on the algorithm we mention later in this document.
-    - Required Section cannot be longer than desired section.
+    - Required section cannot be longer than desired section.
 
 For left turn, right turn, avoidance, lane change, pull over and pull out, we define these two sections, which are elaborated in the following part.
 
@@ -44,7 +44,7 @@ Turn signal decider checks each lanelet on the map if it has `turn_direction` in
   Initial point of the intersection lanelet.
 
 - required end point  
-  The earliest point that satisfies the following condition. $$ \theta - \theta*{end} < \delta $$ where $\theta*{end}$ is yaw angle of the terminal point of the lanelet, $\theta$ is the angle of a required end point and $\delta$ is the threshold defined by the user.
+  The earliest point that satisfies the following condition. $\theta - \theta_{\textrm{end}} < \delta$, where $\theta_{\textrm{end}}$ is yaw angle of the terminal point of the lanelet, $\theta$ is the angle of a required end point and $\delta$ is the threshold defined by the user.
 
 ![section_turn_signal](./image/turn_signal_decider/left_right_turn.drawio.svg)
 
@@ -157,13 +157,13 @@ In this scenario, ego vehicle has to pass several turns that are close each othe
 
 ![continuous_turns](./image/turn_signal_decider/continuous_turns.drawio.svg)
 
-#### - Avoidance with left turn1
+#### - Avoidance with left turn (1)
 
 In this scene, ego vehicle has to deal with the obstacle that is on its original path as well as make a left turn. The overall result can be varied by the position of the obstacle, but the image of the result is described in the following picture.
 
 ![avoidance_and_turn](./image/turn_signal_decider/avoidance_and_turn.drawio.svg)
 
-#### - Avoidance with left turn2
+#### - Avoidance with left turn (2)
 
 Same as the previous scenario, ego vehicle has to avoid the obstacle as well as make a turn left. However, in this scene, the obstacle is parked after the intersection. Similar to the previous one, the overall result can be varied by the position of the obstacle, but the image of the result is described in the following picture.
 
