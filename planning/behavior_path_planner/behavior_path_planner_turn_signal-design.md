@@ -163,7 +163,7 @@ In this scene, ego vehicle has to deal with the obstacle that is on its original
 
 ![avoidance_and_turn](./image/turn_signal_decider/avoidance_and_turn.drawio.svg)
 
-#### - Avoidance with left turn2
+#### - Avoidance with left turn (2)
 
 Same as the previous scenario, ego vehicle has to avoid the obstacle as well as make a turn left. However, in this scene, the obstacle is parked after the intersection. Similar to the previous one, the overall result can be varied by the position of the obstacle, but the image of the result is described in the following picture.
 
