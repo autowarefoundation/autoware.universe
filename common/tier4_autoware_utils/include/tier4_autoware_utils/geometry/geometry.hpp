@@ -494,19 +494,13 @@ inline geometry_msgs::msg::Point transformPoint(
 inline geometry_msgs::msg::Point32 transformPoint(
   const geometry_msgs::msg::Point32 & point32, const geometry_msgs::msg::Pose & pose)
 {
-  geometry_msgs::msg::Point point;
-  point.x = point32.x;
-  point.y = point32.y;
-  point.z = point32.z;
-
-  geometry_msgs::msg::Point transformed_point;
-  geometry_msgs::msg::Point32 transformed_point32;
-  transformed_point = tier4_autoware_utils::transformPoint(point, pose);
-  transformed_point32.x = transformed_point.x;
-  transformed_point32.y = transformed_point.y;
-  transformed_point32.z = transformed_point.z;
-
-  return transformed_point32;
+  const auto point =
+    geometry_msgs::build<geometry_msgs::msg::Point>().x(point32.x).y(point32.y).z(point32.z);
+  const auto transformed_point = tier4_autoware_utils::transformPoint(point, pose);
+  return geometry_msgs::build<geometry_msgs::msg::Point32>()
+    .x(transformed_point.x)
+    .y(transformed_point.y)
+    .z(transformed_point.z);
 }
 
 template <class T>
