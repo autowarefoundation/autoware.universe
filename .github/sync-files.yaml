@@ -24,8 +24,6 @@
     - source: .prettierrc.yaml
     - source: .shellcheckrc
     - source: .yamllint.yaml
-    - source: amd64.env
-    - source: arm64.env
     - source: CPPLINT.cfg
     - source: setup.cfg
 
@@ -59,10 +57,23 @@
               - name: Set git config" {source}
 
     # Setup
+    - source: amd64.env
+    - source: arm64.env
+
     - source: setup-dev-env.sh
       pre-commands: |
         sd "autoware.dev_env" "pilot_auto.dev_env" {source}
         sd "dev_env.universe" "dev_env.local_dev_env" {source}
+
+    - source: ansible-galaxy-requirements.yaml
+      pre-commands: |
+        latest_hash=$(git ls-remote --heads https://github.com/autowarefoundation/autoware.git refs/heads/main | awk '{print $1}')
+        sd "\z" \
+          "
+          - name: https://github.com/autowarefoundation/autoware.git#/ansible
+            type: git
+            version: $latest_hash
+          " {source}
 
     # Docker
     - source: docker/README.md
