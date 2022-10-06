@@ -44,7 +44,7 @@ Turn signal decider checks each lanelet on the map if it has `turn_direction` in
   Initial point of the intersection lanelet.
 
 - required end point  
-  The earliest point that satisfies the following condition. $$ \theta - \theta*{end} < \delta $$ where $\theta*{end}$ is yaw angle of the terminal point of the lanelet, $\theta$ is the angle of a required end point and $\delta$ is the threshold defined by the user.
+  The earliest point that satisfies the following condition. $ \theta - \theta_{\textrm{end}} < \delta $, where $ \theta_{\textrm{end}} $ is yaw angle of the terminal point of the lanelet, $ \theta $ is the angle of a required end point and $ \delta $ is the threshold defined by the user.
 
 ![section_turn_signal](./image/turn_signal_decider/left_right_turn.drawio.svg)
 
