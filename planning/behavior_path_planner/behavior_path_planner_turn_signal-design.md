@@ -8,7 +8,7 @@ This module is responsible for activating a necessary blinker during driving. It
 
 ### Limitations
 
-Currently, this algorithm can sometimes give unnatural(not wrong) blinkers in a complicated situations. This is because it tries to follow the road traffic raw and cannot solve `blinker conflicts` clearly in that environment.
+Currently, this algorithm can sometimes give unnatural (not wrong) blinkers in a complicated situations. This is because it tries to follow the road traffic raw and cannot solve `blinker conflicts` clearly in that environment.
 
 ## Inner-workings / Algorithms
 
