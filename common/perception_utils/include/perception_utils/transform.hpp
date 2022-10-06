@@ -17,9 +17,10 @@
 
 #include <geometry_msgs/msg/transform.hpp>
 
+#include <boost/optional.hpp>
+
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
-
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #else
@@ -27,6 +28,27 @@
 #endif
 
 #include <string>
+
+// To avoid unnamed namespace function in include file and to write template function in include
+// file, avoid unnamed namespace
+// "detail" name is used in boost library as same reason.
+namespace detail
+{
+[[maybe_unused]] inline boost::optional<geometry_msgs::msg::Transform> getTransform(
+  const tf2_ros::Buffer & tf_buffer, const std::string & source_frame_id,
+  const std::string & target_frame_id, const rclcpp::Time & time)
+{
+  try {
+    geometry_msgs::msg::TransformStamped self_transform_stamped;
+    self_transform_stamped = tf_buffer.lookupTransform(
+      target_frame_id, source_frame_id, time, rclcpp::Duration::from_seconds(0.5));
+    return self_transform_stamped.transform;
+  } catch (tf2::TransformException & ex) {
+    RCLCPP_WARN_STREAM(rclcpp::get_logger("perception_utils"), ex.what());
+    return boost::none;
+  }
+}
+}  // namespace detail
 
 namespace perception_utils
 {
@@ -44,8 +66,8 @@ bool transformObjects(
     tf2::Transform tf_target2objects;
     tf2::Transform tf_objects_world2objects;
     {
-      const auto ros_target2objects_world =
-        getTransform(tf_buffer, input_msg.header.frame_id, target_frame_id, input_msg.header.stamp);
+      const auto ros_target2objects_world = detail::getTransform(
+        tf_buffer, input_msg.header.frame_id, target_frame_id, input_msg.header.stamp);
       if (!ros_target2objects_world) {
         return false;
       }
@@ -61,4 +83,5 @@ bool transformObjects(
   return true;
 }
 }  // namespace perception_utils
+
 #endif  // PERCEPTION_UTILS__TRANSFORM_HPP_
