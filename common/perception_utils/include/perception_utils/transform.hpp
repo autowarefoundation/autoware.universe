@@ -29,9 +29,6 @@
 
 #include <string>
 
-// To avoid unnamed namespace function in include file and to write template function in include
-// file, avoid unnamed namespace
-// "detail" name is used in boost library as same reason.
 namespace detail
 {
 [[maybe_unused]] inline boost::optional<geometry_msgs::msg::Transform> getTransform(
