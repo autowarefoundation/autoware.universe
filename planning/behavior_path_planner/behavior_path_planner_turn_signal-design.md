@@ -157,7 +157,7 @@ In this scenario, ego vehicle has to pass several turns that are close each othe
 
 ![continuous_turns](./image/turn_signal_decider/continuous_turns.drawio.svg)
 
-#### - Avoidance with left turn1
+#### - Avoidance with left turn (1)
 
 In this scene, ego vehicle has to deal with the obstacle that is on its original path as well as make a left turn. The overall result can be varied by the position of the obstacle, but the image of the result is described in the following picture.
 
