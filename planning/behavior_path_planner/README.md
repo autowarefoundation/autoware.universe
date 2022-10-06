@@ -495,6 +495,7 @@ If the target path contains a goal, modify the points of the path so that the pa
 
 This module depends on the external [BehaviorTreeCpp](https://github.com/BehaviorTree/BehaviorTree.CPP) library.
 
+<!-- cspell:ignore Vorobieva, Minoiu, Enache, Mammar, IFAC -->
 [[1]](https://www.sciencedirect.com/science/article/pii/S1474667015347431) H. Vorobieva, S. Glaser, N. Minoiu-Enache, and S. Mammar, “Geometric path planning for automatic parallel parking in tiny spots”, IFAC Proceedings Volumes, vol. 45, no. 24, pp. 36–42, 2012.
 
 ## Future extensions / Unimplemented parts
