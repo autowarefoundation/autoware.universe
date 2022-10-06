@@ -16,8 +16,9 @@
 #define POINTCLOUD_PREPROCESSOR__UTILITY__UTILITIES_HPP_
 
 #include <common/types.hpp>
-#include <geometry_msgs/msg/polygon.hpp>
 #include <point_cloud_msg_wrapper/point_cloud_msg_wrapper.hpp>
+
+#include <geometry_msgs/msg/polygon.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>

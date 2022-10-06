@@ -49,7 +49,7 @@ void remove_polygon_cgal_from_cloud(
   pcl::PointCloud<pcl::PointXYZ> pcl_output;
 
   point_cloud_msg_wrapper::PointCloud2View<autoware::common::types::PointXYZ> view{cloud_in};
-  for (const auto& point : view) {
+  for (const auto & point : view) {
     // check if the point is inside the polygon
     if (
       CGAL::bounded_side_2(
@@ -96,7 +96,7 @@ void remove_polygon_cgal_from_cloud(
 
   pcl::PointCloud<pcl::PointXYZ> filtered_cloud;
   point_cloud_msg_wrapper::PointCloud2View<autoware::common::types::PointXYZ> view{cloud_in};
-  for (const auto& point : view) {
+  for (const auto & point : view) {
     // if the point is inside the polygon, skip inserting and check the next point
     pcl::PointXYZ p(point.x, point.y, point.z);
     if (point_within_cgal_polys(p, polyline_polygons)) {
