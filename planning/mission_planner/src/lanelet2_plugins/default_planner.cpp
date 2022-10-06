@@ -108,6 +108,7 @@ namespace mission_planner::lanelet2
 
 void DefaultPlanner::initialize(rclcpp::Node * node)
 {
+  is_graph_ready_ = false;
   node_ = node;
   map_subscriber_ = node_->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
     "input/vector_map", rclcpp::QoS{10}.transient_local(),
@@ -242,8 +243,8 @@ PlannerPlugin::HADMapRoute DefaultPlanner::plan(const RoutePoints & points)
            << "y: " << point.position.y << std::endl;
   }
   RCLCPP_INFO_STREAM(
-    logger, "start planning route with checkpoints: " << std::endl
-                                                      << log_ss.str());
+    logger, "start planning route with check points: " << std::endl
+                                                       << log_ss.str());
 
   autoware_auto_planning_msgs::msg::HADMapRoute route_msg;
   RouteSections route_sections;
@@ -254,11 +255,11 @@ PlannerPlugin::HADMapRoute DefaultPlanner::plan(const RoutePoints & points)
   }
 
   for (std::size_t i = 1; i < points.size(); i++) {
-    const auto start_checkpoint = points.at(i - 1);
-    const auto goal_checkpoint = points.at(i);
+    const auto start_check_point = points.at(i - 1);
+    const auto goal_check_point = points.at(i);
     lanelet::ConstLanelets path_lanelets;
     if (!route_handler_.planPathLaneletsBetweenCheckpoints(
-          start_checkpoint, goal_checkpoint, &path_lanelets)) {
+          start_check_point, goal_check_point, &path_lanelets)) {
       return route_msg;
     }
     // create local route sections
@@ -272,12 +273,12 @@ PlannerPlugin::HADMapRoute DefaultPlanner::plan(const RoutePoints & points)
     return route_msg;
   }
 
-  const auto goal = refine_goal_height(points.back(), route_sections);
-  RCLCPP_DEBUG(logger, "Goal Pose Z : %lf", goal.position.z);
+  const auto refined_goal = refine_goal_height(points.back(), route_sections);
+  RCLCPP_DEBUG(logger, "Goal Pose Z : %lf", refined_goal.position.z);
 
   // The header is assigned by mission planner.
   route_msg.start_pose = points.front();
-  route_msg.goal_pose = goal;
+  route_msg.goal_pose = refined_goal;
   route_msg.segments = route_sections;
   return route_msg;
 }
