@@ -26,7 +26,7 @@ These two sections have the following meanings.
 ### - Required Section
 
     - In this section, ego vehicle must activate designated blinkers. However, if there are blinker conflicts, it must solve them based on the algorithm we mention later in this document.
-    - Required Section cannot be longer than desired section.
+    - Required section cannot be longer than desired section.
 
 For left turn, right turn, avoidance, lane change, pull over and pull out, we define these two sections, which are elaborated in the following part.
 
