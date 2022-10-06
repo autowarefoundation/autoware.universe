@@ -7,14 +7,18 @@ repositories:
     type: git
     url: git@github.com:tier4/logsim.git
     version: main
-  simulator/awml_evaluation:
-    type: git
-    url: git@github.com:tier4/AWMLevaluation.git
-    version: main
   simulator/ndt_convergence_evaluation:
     type: git
     url: git@github.com:tier4/ndt_convergence_evaluation.git
     version: feature/standalone
+  simulator/driving_log_replayer:
+    type: git
+    url: https://github.com/tier4/driving_log_replayer.git
+    version: main
+  simulator/perception_eval:
+    type: git
+    url: https://github.com/tier4/autoware_perception_evaluation.git
+    version: main
   simulator/vendor/ros2_numpy:
     type: git
     url: https://github.com/Box-Robotics/ros2_numpy.git
