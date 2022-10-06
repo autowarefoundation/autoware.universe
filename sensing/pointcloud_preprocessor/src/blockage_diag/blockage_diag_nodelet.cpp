@@ -16,6 +16,7 @@
 
 #include "autoware_point_types/types.hpp"
 
+#include <boost/circular_buffer.hpp>
 #include <boost/thread/detail/platform_time.hpp>
 
 #include <algorithm>
@@ -46,12 +47,13 @@ BlockageDiagComponent::BlockageDiagComponent(const rclcpp::NodeOptions & options
     std::string(this->get_namespace()) + ": blockage_validation", this,
     &BlockageDiagComponent::onBlockageChecker);
   updater_.setPeriod(0.1);
-
-  lidar_depth_map_pub_ =
+  lidar_debug_pub = image_transport::create_publisher(this, "blockage_diag/debug/lidar_debug_img");
+  lidar_colorized_depth_map_pub_ =
     image_transport::create_publisher(this, "blockage_diag/debug/lidar_depth_map");
   blockage_mask_pub_ =
     image_transport::create_publisher(this, "blockage_diag/debug/blockage_mask_image");
-  img_proc_result_pub = image_transport::create_publisher(this, "blockage_diag/debug/result_image");
+  time_series_sobel_pub =
+    image_transport::create_publisher(this, "blockage_diag/debug/time_series_sobel_image");
 
   ground_blockage_ratio_pub_ = create_publisher<tier4_debug_msgs::msg::Float32Stamped>(
     "blockage_diag/debug/ground_blockage_ratio", rclcpp::SensorDataQoS());
@@ -134,8 +136,9 @@ void BlockageDiagComponent::filter(
   std::vector<pcl::PointCloud<PointXYZIRADRT>> each_ring_pointcloud(vertical_bins);
   cv::Mat full_size_depth_map(
     cv::Size(ideal_horizontal_bins, vertical_bins), CV_16UC1, cv::Scalar(0));
-  cv::Mat lidar_depth_map(cv::Size(horizontal_bins, vertical_bins), CV_16UC1, cv::Scalar(0));
-  cv::Mat lidar_depth_map_8u(cv::Size(horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0));
+  cv::Mat lidar_depth_map(cv::Size(ideal_horizontal_bins, vertical_bins), CV_16UC1, cv::Scalar(0));
+  cv::Mat lidar_depth_map_8u(
+    cv::Size(ideal_horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0));
   if (pcl_input->points.empty()) {
     ground_blockage_ratio_ = 1.0f;
     sky_blockage_ratio_ = 1.0f;
@@ -172,8 +175,12 @@ void BlockageDiagComponent::filter(
       }
     }
   }
+  //  RCLCPP_WARN_STREAM(
+  //    get_logger(), "full size depth map type is" << full_size_depth_map.type() << "  rows is"
+  //                                                << full_size_depth_map.rows << "  cols is"
+  //                                                << full_size_depth_map.cols);
   full_size_depth_map.convertTo(lidar_depth_map_8u, CV_8UC1, 1.0 / 300);
-  cv::Mat no_return_mask;
+  cv::Mat no_return_mask(cv::Size(ideal_horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0));
   cv::inRange(lidar_depth_map_8u, 0, 1, no_return_mask);
   cv::Mat erosion_dst;
   cv::Mat element = cv::getStructuringElement(
@@ -183,15 +190,16 @@ void BlockageDiagComponent::filter(
   cv::dilate(erosion_dst, no_return_mask, element);
   cv::Mat ground_no_return_mask;
   cv::Mat sky_no_return_mask;
-  no_return_mask(cv::Rect(0, 0, horizontal_bins, horizontal_ring_id_)).copyTo(sky_no_return_mask);
+  no_return_mask(cv::Rect(0, 0, ideal_horizontal_bins, horizontal_ring_id_))
+    .copyTo(sky_no_return_mask);
   no_return_mask(
-    cv::Rect(0, horizontal_ring_id_, horizontal_bins, vertical_bins - horizontal_ring_id_))
+    cv::Rect(0, horizontal_ring_id_, ideal_horizontal_bins, vertical_bins - horizontal_ring_id_))
     .copyTo(ground_no_return_mask);
   ground_blockage_ratio_ =
     static_cast<float>(cv::countNonZero(ground_no_return_mask)) /
-    static_cast<float>(horizontal_bins * (vertical_bins - horizontal_ring_id_));
+    static_cast<float>(ideal_horizontal_bins * (vertical_bins - horizontal_ring_id_));
   sky_blockage_ratio_ = static_cast<float>(cv::countNonZero(sky_no_return_mask)) /
-                        static_cast<float>(horizontal_bins * horizontal_ring_id_);
+                        static_cast<float>(ideal_horizontal_bins * horizontal_ring_id_);
 
   if (ground_blockage_ratio_ > blockage_ratio_threshold_) {
     cv::Rect ground_blockage_bb = cv::boundingRect(ground_no_return_mask);
@@ -225,29 +233,76 @@ void BlockageDiagComponent::filter(
   cv::inRange(lidar_depth_map_8u, 0, 1, sobeled_img);
   Sobel(sobeled_img, sobeled_img, CV_8UC1, 1, 0, 3);
   Sobel(sobeled_img, sobeled_img, CV_8UC1, 0, 1, 3);
-  cv::Mat morpho_img;
+  cv::Mat morpho_img = sobeled_img.clone();
   uint erode_kernel = 3;
   cv::Mat sobel_element = getStructuringElement(
     cv::MORPH_RECT, cv::Size(erode_kernel + 1, 2 * erode_kernel + 1),
     cv::Point(erode_kernel, erode_kernel));
   cv::dilate(sobeled_img, morpho_img, sobel_element);
   cv::erode(morpho_img, morpho_img, sobel_element);
-  cv::Mat result_mono_img = morpho_img.clone();
-  morpho_img.convertTo(result_mono_img, CV_8UC1, 255, 0);
-  sensor_msgs::msg::Image::SharedPtr result_img_msg =
-    cv_bridge::CvImage(std_msgs::msg::Header(), "mono8", result_mono_img).toImageMsg();
-  result_img_msg->header = input->header;
-  img_proc_result_pub.publish(result_img_msg);
+
+  static boost::circular_buffer<cv::Mat> binarized_sobel_mask_buffer(sobel_frames_);
+
+  cv::Mat sobel_mask = morpho_img.clone();
+  cv::Mat time_series_sobel_mask(
+    cv::Size(ideal_horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0));
+  cv::Mat time_series_sobel_result(
+    cv::Size(ideal_horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0));
+  cv::Mat sobel_mask_binarized(
+    cv::Size(ideal_horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0));
+
+  static uint frame_count;
+  frame_count++;
+  if (sobel_buffering_interval_ != 0) {
+    sobel_mask_binarized = sobel_mask / 255;
+    if (frame_count == sobel_buffering_interval_) {
+//      RCLCPP_WARN_STREAM(
+//        get_logger(),
+//        "binarized_sobel_mask_buffer.size() is" << binarized_sobel_mask_buffer.size());
+      binarized_sobel_mask_buffer.push_back(sobel_mask_binarized);  // ここコメントアウトで動く
+      frame_count = 0;
+    }
+    for (const auto & binary_mask : binarized_sobel_mask_buffer) {
+      time_series_sobel_mask += binary_mask;
+    }
+    //    cv::inRange(
+    //      time_series_sobel_mask, binarized_sobel_mask_buffer.size() - 1,
+    //      binarized_sobel_mask_buffer.size(), time_series_sobel_result);
+    cv::inRange(
+      time_series_sobel_mask, binarized_sobel_mask_buffer.size() - 1,
+      binarized_sobel_mask_buffer.size(), time_series_sobel_result);
+  } else {
+    no_return_mask.copyTo(time_series_sobel_result);
+  }
+
+  cv::Mat time_series_result_color_img;
+  cv::applyColorMap(time_series_sobel_result, time_series_result_color_img, cv::COLORMAP_JET);
+  //  morpho_img.convertTo(time_series_result_color_img, CV_8UC1, 255, 0);
+  sensor_msgs::msg::Image::SharedPtr time_series_result_img_msg =
+    cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", time_series_result_color_img).toImageMsg();
+  time_series_result_img_msg->header = input->header;
+  time_series_sobel_pub.publish(time_series_result_img_msg);
   /////////sobel
-  cv::Mat colorized_full_size_depth_map;
-  //  cv::applyColorMap(full_size_depth_map, colorized_full_size_depth_map, cv::COLORMAP_JET);
+  cv::Mat debug_color_img;
+//  cv::inRange(sobel_mask_binarized, 0, 0, sobel_mask_binarized);
+  cv::applyColorMap(sobel_mask_binarized, debug_color_img, cv::COLORMAP_JET);
+  sensor_msgs::msg::Image::SharedPtr lidar_debug_msg =
+    cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", debug_color_img).toImageMsg();
+  lidar_debug_msg->header = input->header;
+  lidar_debug_pub.publish(lidar_debug_msg);  // fullsizeをpubしているところ
+  cv::Mat colorized_full_size_depth_map(
+    cv::Size(ideal_horizontal_bins, vertical_bins), CV_16UC1, cv::Scalar(0));
   colorized_full_size_depth_map = full_size_depth_map.clone();
-  sensor_msgs::msg::Image::SharedPtr lidar_depth_msg =
+  //  RCLCPP_WARN_STREAM(
+  //    get_logger(), "colorized_full_size_depth_map type is"
+  //                    << colorized_full_size_depth_map.type() << "  rows is"
+  //                    << colorized_full_size_depth_map.rows << "  cols is"
+  //                    << colorized_full_size_depth_map.cols);
+  sensor_msgs::msg::Image::SharedPtr lidar_colorized_depth_msg =
     cv_bridge::CvImage(std_msgs::msg::Header(), "mono16", colorized_full_size_depth_map)
       .toImageMsg();
-  lidar_depth_msg->header = input->header;
-  lidar_depth_map_pub_.publish(lidar_depth_msg);  // fullsizeをpubしているところ
-
+  lidar_colorized_depth_msg->header = input->header;
+  lidar_colorized_depth_map_pub_.publish(lidar_colorized_depth_msg);  // fullsizeをpubしているところ
   cv::Mat blockage_mask_colorized;
   cv::applyColorMap(no_return_mask, blockage_mask_colorized, cv::COLORMAP_JET);
   sensor_msgs::msg::Image::SharedPtr blockage_mask_msg =

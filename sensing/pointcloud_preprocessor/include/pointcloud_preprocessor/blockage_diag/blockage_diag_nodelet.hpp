@@ -48,10 +48,11 @@ protected:
 
   /** \brief Parameter service callback */
   rcl_interfaces::msg::SetParametersResult paramCallback(const std::vector<rclcpp::Parameter> & p);
-  image_transport::Publisher lidar_depth_map_pub_;
-  image_transport::Publisher img_proc_result_pub;
+  image_transport::Publisher lidar_colorized_depth_map_pub_;
+  image_transport::Publisher time_series_sobel_pub;
   image_transport::Publisher blockage_mask_pub_;
   image_transport::Publisher dust_blockage_pub;
+  image_transport::Publisher lidar_debug_pub;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr ground_blockage_ratio_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr sky_blockage_ratio_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr processing_time_pub_;
@@ -72,8 +73,10 @@ private:
   uint sky_blockage_count_ = 0;
   uint blockage_count_threshold_;
   std::string lidar_model_;
-  uint buffering_frames_ = 100;
-  uint buffering_interval_ = 5;
+  uint blockage_frames_ = 100;
+  uint sobel_frames_ = 30;
+  uint blockage_buffering_interval_ = 5;
+  uint sobel_buffering_interval_ = 1;
 
 public:
   PCL_MAKE_ALIGNED_OPERATOR_NEW
