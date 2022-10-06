@@ -112,6 +112,7 @@ void Overlay::drawOverlay(const cv::Mat & image, const Pose & pose, const rclcpp
 void Overlay::drawOverlayLineSegments(
   cv::Mat & image, const Pose & pose, const LineSegments & near_segments)
 {
+  if (!camera_extrinsic_.has_value()) return;
   Eigen::Matrix3f K =
     Eigen::Map<Eigen::Matrix<double, 3, 3> >(info_->k.data()).cast<float>().transpose();
   Eigen::Affine3f T = camera_extrinsic_.value();

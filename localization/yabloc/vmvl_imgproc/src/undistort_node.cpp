@@ -18,32 +18,40 @@
 class UndistortNode : public rclcpp::Node
 {
 public:
-  UndistortNode() : Node("undistort"), WIDTH(declare_parameter("width", 800))
+  using CompressedImage = sensor_msgs::msg::CompressedImage;
+  using CameraInfo = sensor_msgs::msg::CameraInfo;
+  using Image = sensor_msgs::msg::Image;
+
+  UndistortNode()
+  : Node("undistort"),
+    OUTPUT_WIDTH(declare_parameter("width", 800)),
+    OVERRIDE_FRAME_ID(declare_parameter("override_frame_id", ""))
   {
-    rclcpp::QoS qos = rclcpp::QoS(10);
+    using std::placeholders::_1;
+    const rclcpp::QoS qos{10};
     // rclcpp::QoS qos = rclcpp::QoS(10).durability_volatile().best_effort();
 
-    sub_image_ = create_subscription<sensor_msgs::msg::CompressedImage>(
-      "/sensing/camera/traffic_light/image_raw/compressed", qos,
-      std::bind(&UndistortNode::imageCallback, this, std::placeholders::_1));
-    sub_info_ = create_subscription<sensor_msgs::msg::CameraInfo>(
-      "/sensing/camera/traffic_light/camera_info", qos,
-      std::bind(&UndistortNode::infoCallback, this, std::placeholders::_1));
+    auto on_image = std::bind(&UndistortNode::onImage, this, _1);
+    auto on_info = std::bind(&UndistortNode::onInfo, this, _1);
+    sub_image_ = create_subscription<CompressedImage>(
+      "/sensing/camera/traffic_light/image_raw/compressed", qos, std::move(on_image));
+    sub_info_ = create_subscription<CameraInfo>(
+      "/sensing/camera/traffic_light/camera_info", qos, std::move(on_info));
 
-    pub_info_ =
-      create_publisher<sensor_msgs::msg::CameraInfo>("/sensing/camera/undistorted/camera_info", 10);
-    pub_image_ =
-      create_publisher<sensor_msgs::msg::Image>("/sensing/camera/undistorted/image_raw", 10);
+    pub_info_ = create_publisher<CameraInfo>("/sensing/camera/undistorted/camera_info", 10);
+    pub_image_ = create_publisher<Image>("/sensing/camera/undistorted/image_raw", 10);
   }
 
 private:
-  const int WIDTH;
+  const int OUTPUT_WIDTH;
+  const std::string OVERRIDE_FRAME_ID;
 
-  rclcpp::Subscription<sensor_msgs::msg::CompressedImage>::SharedPtr sub_image_;
-  rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr sub_info_;
-  rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr pub_image_;
-  rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr pub_info_;
-  std::optional<sensor_msgs::msg::CameraInfo> info_{std::nullopt}, scaled_info_{std::nullopt};
+  rclcpp::Subscription<CompressedImage>::SharedPtr sub_image_;
+  rclcpp::Subscription<CameraInfo>::SharedPtr sub_info_;
+  rclcpp::Publisher<Image>::SharedPtr pub_image_;
+  rclcpp::Publisher<CameraInfo>::SharedPtr pub_info_;
+  std::optional<CameraInfo> info_{std::nullopt};
+  std::optional<CameraInfo> scaled_info_{std::nullopt};
 
   cv::Mat undistort_map_x, undistort_map_y;
 
@@ -55,7 +63,8 @@ private:
     cv::Size size(info_->width, info_->height);
 
     cv::Size new_size = size;
-    if (WIDTH > 0) new_size = cv::Size(WIDTH, 1.0f * WIDTH / size.width * size.height);
+    if (OUTPUT_WIDTH > 0)
+      new_size = cv::Size(OUTPUT_WIDTH, 1.0f * OUTPUT_WIDTH / size.width * size.height);
 
     cv::Mat new_K = cv::getOptimalNewCameraMatrix(K, D, size, 0, new_size);
 
@@ -73,7 +82,7 @@ private:
     scaled_info_->height = new_size.height;
   }
 
-  void imageCallback(const sensor_msgs::msg::CompressedImage & msg)
+  void onImage(const CompressedImage & msg)
   {
     Timer timer;
     if (!info_.has_value()) return;
@@ -83,21 +92,30 @@ private:
     cv::Mat undistorted_image;
     cv::remap(image, undistorted_image, undistort_map_x, undistort_map_y, cv::INTER_LINEAR);
 
-    scaled_info_->header = info_->header;
-    pub_info_->publish(scaled_info_.value());
+    // Publish CameraInfo
     {
-      cv_bridge::CvImage raw_image;
-      raw_image.header.stamp = msg.header.stamp;
-      raw_image.header.frame_id = msg.header.frame_id;
-      raw_image.encoding = "bgr8";
-      raw_image.image = undistorted_image;
-      pub_image_->publish(*raw_image.toImageMsg());
+      scaled_info_->header = info_->header;
+      if (OVERRIDE_FRAME_ID != "") scaled_info_->header.frame_id = OVERRIDE_FRAME_ID;
+      pub_info_->publish(scaled_info_.value());
+    }
+
+    // Publish Image
+    {
+      cv_bridge::CvImage bridge;
+      bridge.header.stamp = msg.header.stamp;
+      if (OVERRIDE_FRAME_ID != "")
+        bridge.header.frame_id = OVERRIDE_FRAME_ID;
+      else
+        bridge.header.frame_id = msg.header.frame_id;
+      bridge.encoding = "bgr8";
+      bridge.image = undistorted_image;
+      pub_image_->publish(*bridge.toImageMsg());
     }
 
     RCLCPP_INFO_STREAM(get_logger(), "decompress: " << timer.microSeconds() / 1000.f << "[ms]");
   }
 
-  void infoCallback(const sensor_msgs::msg::CameraInfo & msg) { info_ = msg; }
+  void onInfo(const CameraInfo & msg) { info_ = msg; }
 };
 
 int main(int argc, char * argv[])
