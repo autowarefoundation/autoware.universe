@@ -28,8 +28,11 @@ public:
     OVERRIDE_FRAME_ID(declare_parameter("override_frame_id", ""))
   {
     using std::placeholders::_1;
-    const rclcpp::QoS qos{10};
-    // rclcpp::QoS qos = rclcpp::QoS(10).durability_volatile().best_effort();
+
+    rclcpp::QoS qos{10};
+    if (declare_parameter("use_sensor_qos", false)) {
+      qos = rclcpp::QoS(10).durability_volatile().best_effort();
+    }
 
     auto on_image = std::bind(&UndistortNode::onImage, this, _1);
     auto on_info = std::bind(&UndistortNode::onInfo, this, _1);
