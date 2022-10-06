@@ -20,11 +20,11 @@ namespace segmentation_diagnostics
 {
 Stat<double> MetricsCalculator::updateStat(
   const Stat<double> stat_prev, const Metric metric, const PointCloud2 & pcl,
-  const PointCloud2 & pcl_gt_ground, const PointCloud2 & pcl_gt_obj, PointCloud2 & pcl_no_ex) const
+  const PointCloud2 & pcl_gt_negative_cls, const PointCloud2 & pcl_gt_positive_cls) const
 {
   switch (metric) {
     case Metric::segment_stat:
-      return metrics::updatePclStats(pcl, pcl_gt_ground, pcl_gt_obj, stat_prev, pcl_no_ex);
+      return metrics::updatePclStats(pcl, pcl_gt_negative_cls, pcl_gt_positive_cls, stat_prev);
     default:
       throw std::runtime_error(
         "[MetricsCalculator][calculate()] unknown Metric " +

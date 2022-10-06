@@ -51,12 +51,13 @@ public:
   /**
    * @brief synchronized callback on two point clouds
    * @param [in] msg Poind cloud message
-   * @param [in] msg_gt_ground Ground truth point cloud with ground
-   * @param [in] msg_gt_obj Ground truth point cloud with objects
+   * @param [in] msg_gt_negative_cls Ground truth point cloud with ground
+   * @param [in] msg_gt_positive_cls Ground truth point cloud with objects
    */
   void syncCallback(
-    const PointCloud2::ConstSharedPtr & msg, const PointCloud2::ConstSharedPtr & msg_gt_ground,
-    const PointCloud2::ConstSharedPtr & msg_gt_obj);
+    const PointCloud2::ConstSharedPtr & msg,
+    const PointCloud2::ConstSharedPtr & msg_gt_negative_cls,
+    const PointCloud2::ConstSharedPtr & msg_gt_positive_cls);
 
   /**
    * @brief publish the given metric statistic
@@ -65,11 +66,9 @@ public:
     const Metric & metric, const Stat<double> & metric_stat) const;
 
 private:
-  geometry_msgs::msg::Pose getCurrentEgoPose() const;
-
   // ROS
-  message_filters::Subscriber<PointCloud2> pcl_sub_, pcl_gt_ground_sub_, pcl_gt_obj_sub_;
-  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pcl_no_ex_pub_;
+  message_filters::Subscriber<PointCloud2> pcl_sub_, pcl_gt_negative_cls_sub_,
+    pcl_gt_positive_cls_sub_;
 
   typedef message_filters::sync_policies::ApproximateTime<PointCloud2, PointCloud2, PointCloud2>
     SyncPolicy;

@@ -48,14 +48,13 @@ public:
    * @param [in] metric Previous metric enum value
    * @param [in] stat_prev Previous metric
    * @param [in] pcl Point Cloud
-   * @param [in] pcl_gt_ground Ground truth point cloud with ground
-   * @param [in] pcl_gt_obj Ground truth point cloud with objects
+   * @param [in] pcl_gt_negative_cls Ground truth point cloud with ground
+   * @param [in] pcl_gt_positive_cls Ground truth point cloud with objects
    * @return string describing the requested metric
    */
   Stat<double> updateStat(
     const Stat<double> stat_prev, const Metric metric, const PointCloud2 & pcl,
-    const PointCloud2 & pcl_gt_ground, const PointCloud2 & pcl_gt_obj,
-    PointCloud2 & pcl_no_ex) const;
+    const PointCloud2 & pcl_gt_negative_cls, const PointCloud2 & pcl_gt_positive_cls) const;
 };  // class MetricsCalculator
 
 }  // namespace segmentation_diagnostics

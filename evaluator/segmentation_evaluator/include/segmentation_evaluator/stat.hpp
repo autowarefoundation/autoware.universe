@@ -31,35 +31,42 @@ class Stat
 {
 public:
   /**
-   * @brief add a value
-   * @param value value to add
+   * @brief get cumulative true positives
    */
-  void add(const T & value)
+  int tp() const { return tp_accu_; }
+
+  /**
+   * @brief get cumulative false positives
+   */
+  int fp() const { return fp_accu_; }
+
+  /**
+   * @brief get cumulative false negatives
+   */
+  int fn() const { return fn_accu_; }
+
+  /**
+   * @brief get cumulative true negatives
+   */
+  int tn() const { return tn_accu_; }
+
+  /**
+   * @brief get cumulative accuracy
+   */
+  float accuracy() const
   {
-    if (value < min_) {
-      min_ = value;
-    }
-    if (value > max_) {
-      max_ = value;
-    }
-    ++count_;
-    mean_ = mean_ + (value - mean_) / count_;
+    return float(tp_accu_ + tn_accu_) / float(tp_accu_ + tn_accu_ + fn_accu_ + fp_accu_);
   }
 
   /**
-   * @brief get the mean value
+   * @brief get cumulative precision
    */
-  long double mean() const { return mean_; }
+  float precision() const { return float(tp_accu_) / float(tp_accu_ + fp_accu_); }
 
   /**
-   * @brief get the minimum value
+   * @brief get cumulative recall
    */
-  T min() const { return min_; }
-
-  /**
-   * @brief get the maximum value
-   */
-  T max() const { return max_; }
+  float recall() const { return float(tp_accu_) / float(tp_accu_ + fn_accu_); }
 
   /**
    * @brief Print confusion matrix
@@ -138,9 +145,6 @@ private:
   int tp_ = 0, fn_ = 0, fp_ = 0, tn_ = 0;
   int tp_accu_ = 0, fn_accu_ = 0, fp_accu_ = 0, tn_accu_ = 0;
 
-  T min_ = std::numeric_limits<T>::max();
-  T max_ = std::numeric_limits<T>::min();
-  long double mean_ = 0.0;
   unsigned int count_ = 0;
 };
 

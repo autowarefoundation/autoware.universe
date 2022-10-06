@@ -32,19 +32,19 @@ using sensor_msgs::msg::PointCloud2;
  * @return Calculated statistics
  */
 Stat<double> updatePclStats(
-  const PointCloud2 & pcl, const PointCloud2 & pcl_gt_ground, const PointCloud2 & pcl_gt_obj,
-  const Stat<double> stat_prev, PointCloud2 & pcl_no_ex);
+  const PointCloud2 & pcl, const PointCloud2 & pcl_gt_negative_cls,
+  const PointCloud2 & pcl_gt_positive_cls, const Stat<double> stat_prev);
 
 /**
  * @brief Compute confustion matrix for point clouds
  * @param [in] pcl Point cloud
- * @param [in] pcl_gt_ground Ground truth point cloud with ground
- * @param [in] pcl_gt_obj Ground truth point cloud with objects
+ * @param [in] pcl_gt_negative_cls Ground truth point cloud with ground
+ * @param [in] pcl_gt_positive_cls Ground truth point cloud with objects
  * @return calculated statistics
  */
 std::vector<int> computeConfusionMatrix(
-  const PointCloud2 & pcl, const PointCloud2 & pcl_gt_ground, const PointCloud2 & pcl_gt_obj,
-  PointCloud2 & pcl_no_ex);
+  const PointCloud2 & pcl, const PointCloud2 & pcl_gt_negative_cls,
+  const PointCloud2 & pcl_gt_positive_cls);
 
 }  // namespace metrics
 }  // namespace segmentation_diagnostics
