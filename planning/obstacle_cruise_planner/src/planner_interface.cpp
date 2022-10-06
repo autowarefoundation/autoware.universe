@@ -140,9 +140,11 @@ Trajectory PlannerInterface::generateStopTrajectory(
     const auto closest_behavior_stop_idx =
       motion_utils::searchZeroVelocityIndex(planner_data.traj.points, nearest_segment_idx + 1);
 
-    if (
-      closest_behavior_stop_idx &&
-      closest_behavior_stop_idx != planner_data.traj.points.size() - 1) {
+    if (!closest_behavior_stop_idx) {
+      return longitudinal_info_.safe_distance_margin;
+    }
+
+    if (*closest_behavior_stop_idx != planner_data.traj.points.size() - 1) {
       const double closest_behavior_stop_dist_from_ego = motion_utils::calcSignedArcLength(
         planner_data.traj.points, planner_data.current_pose.position, nearest_segment_idx,
         *closest_behavior_stop_idx);
@@ -156,6 +158,9 @@ Trajectory PlannerInterface::generateStopTrajectory(
         // Use shorter margin (min_behavior_stop_margin) for obstacle stop
         return min_behavior_stop_margin_;
       }
+    } else {
+      // Closest behavior stop point is the end point
+      return longitudinal_info_.terminal_safe_distance_margin;
     }
     return longitudinal_info_.safe_distance_margin;
   }();
