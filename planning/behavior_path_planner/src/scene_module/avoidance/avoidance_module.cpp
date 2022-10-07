@@ -776,9 +776,8 @@ void AvoidanceModule::generateTotalShiftLine(
   }
 
   // overwrite shift with current_ego_shift until ego pose.
-  const auto current_shift = getCurrentLinearShift();
   for (size_t i = 0; i <= avoidance_data_.ego_closest_path_index; ++i) {
-    sl.shift_line.at(i) = current_shift;
+    sl.shift_line.at(i) = sl.shift_line.at(avoidance_data_.ego_closest_path_index);
     sl.shift_line_grad.at(i) = 0.0;
   }
 
