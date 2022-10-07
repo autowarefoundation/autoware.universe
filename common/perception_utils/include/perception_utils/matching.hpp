@@ -22,15 +22,17 @@
 #include <boost/geometry.hpp>
 
 #include <algorithm>
+#include <numeric>
+#include <utility>
 #include <vector>
 
 namespace perception_utils
 {
-inline double getConvexShapeArea(
-  const tier4_autoware_utils::Polygon2d & source_polygon,
-  const tier4_autoware_utils::Polygon2d & target_polygon)
+using tier4_autoware_utils::Polygon2d;
+
+inline double getConvexShapeArea(const Polygon2d & source_polygon, const Polygon2d & target_polygon)
 {
-  boost::geometry::model::multi_polygon<tier4_autoware_utils::Polygon2d> union_polygons;
+  boost::geometry::model::multi_polygon<Polygon2d> union_polygons;
   boost::geometry::union_(source_polygon, target_polygon, union_polygons);
 
   tier4_autoware_utils::Polygon2d hull;
@@ -38,30 +40,37 @@ inline double getConvexShapeArea(
   return boost::geometry::area(hull);
 }
 
+inline double getAreaSum(const std::vector<Polygon2d> & polygons)
+{
+  return std::accumulate(polygons.begin(), polygons.end(), 0.0, [](double acc, Polygon2d p) {
+    return acc + boost::geometry::area(p);
+  });
+}
+
+inline double getIntersectionArea(
+  const Polygon2d & source_polygon, const Polygon2d & target_polygon)
+{
+  std::vector<Polygon2d> intersection_polygons;
+  boost::geometry::intersection(source_polygon, target_polygon, intersection_polygons);
+  double intersection_area = getAreaSum(intersection_polygons);
+}
+
+inline double getUnionArea(const Polygon2d & source_polygon, const Polygon2d & target_polygon)
+{
+  std::vector<Polygon2d> union_polygons;
+  boost::geometry::union_(source_polygon, target_polygon, union_polygons);
+  return getAreaSum(union_polygons);
+}
+
 template <class T1, class T2>
 double get2dIoU(const T1 source_object, const T2 target_object)
 {
-  const auto & source_pose = getPose(source_object);
-  const auto & target_pose = getPose(target_object);
+  const auto source_polygon = tier4_autoware_utils::toPolygon2d(source_object);
+  const auto target_polygon = tier4_autoware_utils::toPolygon2d(target_object);
 
-  const auto source_polygon = tier4_autoware_utils::toPolygon2d(source_pose, source_object.shape);
-  const auto target_polygon = tier4_autoware_utils::toPolygon2d(target_pose, target_object.shape);
-
-  std::vector<tier4_autoware_utils::Polygon2d> union_polygons;
-  std::vector<tier4_autoware_utils::Polygon2d> intersection_polygons;
-  boost::geometry::union_(source_polygon, target_polygon, union_polygons);
-  boost::geometry::intersection(source_polygon, target_polygon, intersection_polygons);
-
-  double intersection_area = 0.0;
-  double union_area = 0.0;
-  for (const auto & intersection_polygon : intersection_polygons) {
-    intersection_area += boost::geometry::area(intersection_polygon);
-  }
+  double intersection_area = getIntersectionArea(source_polygon, target_polygon);
   if (intersection_area == 0.0) return 0.0;
-
-  for (const auto & union_polygon : union_polygons) {
-    union_area += boost::geometry::area(union_polygon);
-  }
+  double union_area = getUnionArea(source_polygon, target_polygon);
 
   const double iou = union_area < 0.01 ? 0.0 : std::min(1.0, intersection_area / union_area);
   return iou;
@@ -70,52 +79,27 @@ double get2dIoU(const T1 source_object, const T2 target_object)
 template <class T1, class T2>
 double get2dGeneralizedIoU(const T1 & source_object, const T2 & target_object)
 {
-  const auto & source_pose = getPose(source_object);
-  const auto & target_pose = getPose(target_object);
+  const auto source_polygon = tier4_autoware_utils::toPolygon2d(source_object);
+  const auto target_polygon = tier4_autoware_utils::toPolygon2d(target_object);
 
-  const auto & source_polygon = tier4_autoware_utils::toPolygon2d(source_pose, source_object.shape);
-  const auto & target_polygon = tier4_autoware_utils::toPolygon2d(target_pose, target_object.shape);
-
-  std::vector<tier4_autoware_utils::Polygon2d> union_polygons;
-  std::vector<tier4_autoware_utils::Polygon2d> intersection_polygons;
-  boost::geometry::union_(source_polygon, target_polygon, union_polygons);
-  boost::geometry::intersection(source_polygon, target_polygon, intersection_polygons);
-
-  double intersection_area = 0.0;
-  double union_area = 0.0;
-  for (const auto & intersection_polygon : intersection_polygons) {
-    intersection_area += boost::geometry::area(intersection_polygon);
-  }
-
-  for (const auto & union_polygon : union_polygons) {
-    union_area += boost::geometry::area(union_polygon);
-  }
+  double intersection_area = getIntersectionArea(source_polygon, target_polygon);
+  if (intersection_area == 0.0) return 0.0;
+  double union_area = getUnionArea(source_polygon, target_polygon);
+  const double convex_shape_area = getConvexShapeArea(source_polygon, target_polygon);
 
   const double iou = union_area < 0.01 ? 0.0 : std::min(1.0, intersection_area / union_area);
-  const double convex_shape_area = getConvexShapeArea(source_polygon, target_polygon);
   return iou - (convex_shape_area - union_area) / convex_shape_area;
 }
 
 template <class T1, class T2>
 double get2dPrecision(const T1 source_object, const T2 target_object)
 {
-  const auto & source_pose = getPose(source_object);
-  const auto & target_pose = getPose(target_object);
+  const auto source_polygon = tier4_autoware_utils::toPolygon2d(source_object);
+  const auto target_polygon = tier4_autoware_utils::toPolygon2d(target_object);
 
-  const auto source_polygon = tier4_autoware_utils::toPolygon2d(source_pose, source_object.shape);
-  const auto target_polygon = tier4_autoware_utils::toPolygon2d(target_pose, target_object.shape);
-
-  std::vector<tier4_autoware_utils::Polygon2d> intersection_polygons;
-  boost::geometry::intersection(source_polygon, target_polygon, intersection_polygons);
-
-  double intersection_area = 0.0;
-  double source_area = 0.0;
-  for (const auto & intersection_polygon : intersection_polygons) {
-    intersection_area += boost::geometry::area(intersection_polygon);
-  }
+  double intersection_area = getIntersectionArea(source_polygon, target_polygon);
   if (intersection_area == 0.0) return 0.0;
-
-  source_area = boost::geometry::area(source_polygon);
+  double source_area = boost::geometry::area(source_polygon);
 
   const double precision = std::min(1.0, intersection_area / source_area);
   return precision;
@@ -124,28 +108,15 @@ double get2dPrecision(const T1 source_object, const T2 target_object)
 template <class T1, class T2>
 double get2dRecall(const T1 source_object, const T2 target_object)
 {
-  const auto & source_pose = getPose(source_object);
-  const auto & target_pose = getPose(target_object);
+  const auto source_polygon = tier4_autoware_utils::toPolygon2d(source_object);
+  const auto target_polygon = tier4_autoware_utils::toPolygon2d(target_object);
 
-  const auto source_polygon = tier4_autoware_utils::toPolygon2d(source_pose, source_object.shape);
-  const auto target_polygon = tier4_autoware_utils::toPolygon2d(target_pose, target_object.shape);
-
-  std::vector<tier4_autoware_utils::Polygon2d> intersection_polygons;
-  boost::geometry::intersection(source_polygon, target_polygon, intersection_polygons);
-
-  double intersection_area = 0.0;
-  double target_area = 0.0;
-  for (const auto & intersection_polygon : intersection_polygons) {
-    intersection_area += boost::geometry::area(intersection_polygon);
-  }
+  double intersection_area = getIntersectionArea(source_polygon, target_polygon);
   if (intersection_area == 0.0) return 0.0;
-
-  target_area += boost::geometry::area(target_polygon);
+  double target_area = boost::geometry::area(target_polygon);
 
   const double recall = std::min(1.0, intersection_area / target_area);
   return recall;
 }
-
-}  // namespace perception_utils
 
 #endif  // PERCEPTION_UTILS__MATCHING_HPP_
