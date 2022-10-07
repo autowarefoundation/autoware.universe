@@ -23,72 +23,74 @@ namespace perception_utils
 {
 using autoware_auto_perception_msgs::msg::ObjectClassification;
 
+inline ObjectClassification getHighestProbClassification(
+  const std::vector<ObjectClassification> & object_classifications)
+{
+  auto highest_prob_iter = std::max_element(
+    std::begin(object_classifications), std::end(object_classifications),
+    [](const ObjectClassification & a, const ObjectClassification & b) {
+      return a.probability < b.probability
+    });
+  return *highest_prob_iter;
+}
+
 inline std::uint8_t getHighestProbLabel(
   const std::vector<ObjectClassification> & object_classifications)
 {
-  std::uint8_t label = ObjectClassification::UNKNOWN;
-  float highest_prob = 0.0;
-  // TODO(Satoshi Tanaka): It might be simple if you use STL or range-v3.
-  for (const auto & object_classification : object_classifications) {
-    if (highest_prob < object_classification.probability) {
-      highest_prob = object_classification.probability;
-      label = object_classification.label;
-    }
-  }
-  return label;
+  auto classification = getHighestProbClassification(object_classifications);
+  return classification.label;
 }
 
-inline bool isVehicle(const uint8_t object_classification)
+inline bool isVehicle(const uint8_t label)
 {
-  return object_classification == ObjectClassification::BICYCLE ||
-         object_classification == ObjectClassification::BUS ||
-         object_classification == ObjectClassification::CAR ||
-         object_classification == ObjectClassification::MOTORCYCLE ||
-         object_classification == ObjectClassification::TRAILER ||
-         object_classification == ObjectClassification::TRUCK;
+  return label == ObjectClassification::BICYCLE || label == ObjectClassification::BUS ||
+         label == ObjectClassification::CAR || label == ObjectClassification::MOTORCYCLE ||
+         label == ObjectClassification::TRAILER || label == ObjectClassification::TRUCK;
+}
+
+inline bool isVehicle(const ObjectClassification & object_classification)
+{
+  return isVehicle(object_classification.label);
 }
 
 inline bool isVehicle(const std::vector<ObjectClassification> & object_classifications)
 {
   auto highest_prob_classification = getHighestProbLabel(object_classifications);
-  return highest_prob_classification == ObjectClassification::BICYCLE ||
-         highest_prob_classification == ObjectClassification::BUS ||
-         highest_prob_classification == ObjectClassification::CAR ||
-         highest_prob_classification == ObjectClassification::MOTORCYCLE ||
-         highest_prob_classification == ObjectClassification::TRAILER ||
-         highest_prob_classification == ObjectClassification::TRUCK;
+  return isVehicle(highest_prob_classification);
 }
 
-inline bool isCarLikeVehicle(const uint8_t object_classification)
+inline bool isCarLikeVehicle(const uint8_t label)
 {
-  return object_classification == ObjectClassification::BUS ||
-         object_classification == ObjectClassification::CAR ||
-         object_classification == ObjectClassification::TRAILER ||
-         object_classification == ObjectClassification::TRUCK;
+  return label == ObjectClassification::BUS || label == ObjectClassification::CAR ||
+         label == ObjectClassification::TRAILER || label == ObjectClassification::TRUCK;
+}
+
+inline bool isCarLikeVehicle(const ObjectClassification & object_classification)
+{
+  return isCarLikeVehicle(object_classification.label);
 }
 
 inline bool isCarLikeVehicle(const std::vector<ObjectClassification> & object_classifications)
 {
   auto highest_prob_classification = getHighestProbLabel(object_classifications);
-  return highest_prob_classification == ObjectClassification::BUS ||
-         highest_prob_classification == ObjectClassification::CAR ||
-         highest_prob_classification == ObjectClassification::TRAILER ||
-         highest_prob_classification == ObjectClassification::TRUCK;
+  return isCarLikeVehicle(highest_prob_classification);
 }
 
-inline bool isLargeVehicle(const uint8_t object_classification)
+inline bool isLargeVehicle(const uint8_t label)
 {
-  return object_classification == ObjectClassification::BUS ||
-         object_classification == ObjectClassification::TRAILER ||
-         object_classification == ObjectClassification::TRUCK;
+  return label == ObjectClassification::BUS || label == ObjectClassification::TRAILER ||
+         label == ObjectClassification::TRUCK;
+}
+
+inline bool isLargeVehicle(const ObjectClassification & object_classification)
+{
+  return isLargeVehicle(object_classification.label);
 }
 
 inline bool isLargeVehicle(const std::vector<ObjectClassification> & object_classifications)
 {
   auto highest_prob_classification = getHighestProbLabel(object_classifications);
-  return highest_prob_classification == ObjectClassification::BUS ||
-         highest_prob_classification == ObjectClassification::TRAILER ||
-         highest_prob_classification == ObjectClassification::TRUCK;
+  return isLargeVehicle(highest_prob_classification);
 }
 }  // namespace perception_utils
 
