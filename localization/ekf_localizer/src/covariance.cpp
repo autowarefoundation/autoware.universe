@@ -13,8 +13,8 @@
 // limitations under the License.
 
 #include "ekf_localizer/covariance.hpp"
-#include "ekf_localizer/state_index.hpp"
 
+#include "ekf_localizer/state_index.hpp"
 #include "tier4_autoware_utils/ros/msg_covariance.hpp"
 
 using COV_IDX = tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
