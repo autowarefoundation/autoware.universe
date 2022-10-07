@@ -15,16 +15,17 @@
 #ifndef AUTOWARE_CONTROL_TOOLBOX_INCLUDE_SPLINES_BSPLINES_SMOOTHER_HPP_
 #define AUTOWARE_CONTROL_TOOLBOX_INCLUDE_SPLINES_BSPLINES_SMOOTHER_HPP_
 
+#include "utils_act/act_utils.hpp"
+#include "utils_act/act_utils_eigen.hpp"
+
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Sparse>
+
 #include <algorithm>
 #include <functional>
 #include <iostream>
 #include <numeric>
 #include <vector>
-
-#include "utils_act/act_utils.hpp"
-#include "utils_act/act_utils_eigen.hpp"
 
 namespace ns_splines
 {
@@ -33,37 +34,37 @@ namespace ns_splines
  *                    The Elements of Statistical Learning
  *
  * sbase a monotonic distance curve, ybase represents data to be interpolated.
- * The end-point of the trajectory is interpolated as line. The curvature must not be used at the last interval of
- * the trajectory interpolation.
+ * The end-point of the trajectory is interpolated as line. The curvature must not be used at the
+ * last interval of the trajectory interpolation.
  *
- * We compute a projection matrix once and can use this projection matrix with other data. No need to compute the
- * projection matrix for the new data.
+ * We compute a projection matrix once and can use this projection matrix with other data. No need
+ * to compute the projection matrix for the new data.
  *
- *  -Heading angle should not be interpolated by the splines as they are periodic and needed to be treated  differently.
+ *  -Heading angle should not be interpolated by the splines as they are periodic and needed to be
+ * treated  differently.
  *  - All the vectors must be column vector.
  *  - We use same size for interpolated vector.
  *   y(t) = f(t) =  [1, t, N0, N1, N2, .... ] where N0:Nk ~= (t - ti)**3 with basis
  * */
 class BSplineSmoother
 {
- public:
+public:
   BSplineSmoother() = default;
 
-  explicit BSplineSmoother(size_t const &base_signal_length,
-                           double const &num_of_knots_ratio = 0.3,
-                           double const &smoothing_factor = 1e-3);
+  explicit BSplineSmoother(
+    size_t const & base_signal_length, double const & num_of_knots_ratio = 0.3,
+    double const & smoothing_factor = 1e-3);
 
   // Multicolumn matrix can also be interpolated. MatrixBase and Interpolated matrix must have
   // the same size.
   void InterpolateInCoordinates(
-    Eigen::MatrixXd const &ybase,
-    Eigen::MatrixXd &data_tobe_interpolated);
+    Eigen::MatrixXd const & ybase, Eigen::MatrixXd & data_tobe_interpolated) const;
 
-  void getFirstDerivative(Eigen::MatrixXd const &ybase, Eigen::MatrixXd &ybase_dot) const;
+  void getFirstDerivative(Eigen::MatrixXd const & ybase, Eigen::MatrixXd & ybase_dot) const;
 
-  void getSecondDerivative(Eigen::MatrixXd const &ybase, Eigen::MatrixXd &ybase_dot_dot) const;
+  void getSecondDerivative(Eigen::MatrixXd const & ybase, Eigen::MatrixXd & ybase_dot_dot) const;
 
- private:
+private:
   // Pre-settings. Increasing lambda yield more smooth and flattened curve.
   // smoothing factor used in normal form of LS; B*B + (lambda**2)*D*D, D is f''(x).
   double lambda_{0.001};
@@ -94,31 +95,25 @@ class BSplineSmoother
 
   // Inner Methods.
   void createBasesMatrix(
-    std::vector<double> const &tvec,
-    Eigen::MatrixXd &basis_mat,
-    Eigen::MatrixXd &basis_dmat,
-    Eigen::MatrixXd &basis_ddmat);
+    std::vector<double> const & tvec, Eigen::MatrixXd & basis_mat, Eigen::MatrixXd & basis_dmat,
+    Eigen::MatrixXd & basis_ddmat);
 
-  std::vector<std::vector<double>> basisRowsWithDerivatives(double const &ti);
+  std::vector<std::vector<double>> basisRowsWithDerivatives(double const & ti);
 
-  std::vector<double> fPlusCube(double const &ti, double const &ki) const;  // returns max(0, t);
+  std::vector<double> fPlusCube(double const & ti, double const & ki) const;  // returns max(0, t);
 
   void solveByDemmlerReisch(
-    Eigen::MatrixXd &basis_mat,
-    Eigen::MatrixXd &basis_dmat,
-    Eigen::MatrixXd &basis_ddmat);                         // set projection mat.
+    Eigen::MatrixXd & basis_mat, Eigen::MatrixXd & basis_dmat,
+    Eigen::MatrixXd & basis_ddmat);  // set projection mat.
 
   void solveByQR(
-    Eigen::MatrixXd &basis_mat,
-    Eigen::MatrixXd &basis_dmat,
-    Eigen::MatrixXd &basis_ddmat);
+    Eigen::MatrixXd const & basis_mat, Eigen::MatrixXd const & basis_dmat,
+    Eigen::MatrixXd const & basis_ddmat);
 
   void createBasesMatrix(
-    const Eigen::MatrixXd &tvec,
-    Eigen::MatrixXd &basis_mat,
-    Eigen::MatrixXd &basis_dmat,
-    Eigen::MatrixXd &basis_ddmat);
+    const Eigen::MatrixXd & tvec, Eigen::MatrixXd & basis_mat, Eigen::MatrixXd & basis_dmat,
+    Eigen::MatrixXd & basis_ddmat);
 };
 }  // namespace ns_splines
 
-#endif //AUTOWARE_CONTROL_TOOLBOX_INCLUDE_SPLINES_BSPLINES_SMOOTHER_HPP_
+#endif  // AUTOWARE_CONTROL_TOOLBOX_INCLUDE_SPLINES_BSPLINES_SMOOTHER_HPP_

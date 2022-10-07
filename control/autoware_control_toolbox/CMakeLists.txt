@@ -5,20 +5,8 @@ project(autoware_control_toolbox)
 find_package(fmt)
 
 # require that dependencies from package.xml be available
-find_package(ament_cmake_auto REQUIRED)
-#ament_auto_find_build_dependencies(REQUIRED
-#  ${${PROJECT_NAME}_BUILD_DEPENDS}
-#  ${${PROJECT_NAME}_BUILDTOOL_DEPENDS})
-
-set(CMAKE_CXX_STANDARD 17)
-
-# Release, Debug, RelWithDebInfo, MinSizeRel
-#set(CMAKE_BUILD_TYPE "Debug")
-#if (CMAKE_BUILD_TYPE MATCHES RELEASE)
-#    set(CMAKE_CXX_FLAGS_RELEASE "-O3")
-#    message("In release mode ...")
-#endif ()
-
+find_package(autoware_cmake REQUIRED)
+autoware_package()
 
 # -------------  FLAGS ---------------------------------------------------
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
