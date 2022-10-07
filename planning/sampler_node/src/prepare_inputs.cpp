@@ -21,7 +21,8 @@
 #include "sampler_node/calculate_sampling_parameters.hpp"
 #include "sampler_node/utils/occupancy_grid_to_polygons.hpp"
 
-#include <eigen3/unsupported/Eigen/Splines>
+#include <Eigen/Core>
+#include <autoware_control_toolbox/splines/bsplines_smoother.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path.hpp>
@@ -128,36 +129,22 @@ sampler_common::transform::Spline2D preparePathSpline(
 {
   std::vector<double> x;
   std::vector<double> y;
+  x.reserve(path_msg.points.size());
+  y.reserve(path_msg.points.size());
   if (smooth_path) {
-    // TODO(Maxime CLEMENT): this version using Eigen::Spline often crashes
-    constexpr auto spline_dim = 3;
-    Eigen::MatrixXd control_points(path_msg.points.size(), 2);
+    const auto smoother = ns_splines::BSplineSmoother(path_msg.points.size());
+    Eigen::MatrixXd raw_points(path_msg.points.size(), 2);
     for (auto i = 0lu; i < path_msg.points.size(); ++i) {
-      const auto & point = path_msg.points[i];
-      control_points(i, 0) = point.pose.position.x;
-      control_points(i, 1) = point.pose.position.y;
+      const auto & p = path_msg.points[i].pose.position;
+      raw_points.row(i) = Eigen::Vector2d(p.x, p.y);
     }
-    control_points.transposeInPlace();
-    const auto nb_knots = path_msg.points.size() + spline_dim + 3;
-    Eigen::RowVectorXd knots(nb_knots);
-    constexpr auto repeat_endknots = 3lu;
-    const auto knot_step = 1.0 / static_cast<double>(nb_knots - 2 * repeat_endknots);
-    auto i = 0lu;
-    for (; i < repeat_endknots; ++i) knots[i] = 0.0;
-    for (; i < nb_knots - repeat_endknots; ++i) knots[i] = knots[i - 1] + knot_step;
-    for (; i < nb_knots; ++i) knots[i] = 1.0;
-    const auto spline = Eigen::Spline<double, 2, spline_dim>(knots, control_points);
-    x.reserve(path_msg.points.size());
-    y.reserve(path_msg.points.size());
-    const auto t_step = 1 / static_cast<double>(path_msg.points.size());
-    for (auto t = 0.0; t < 1.0; t += t_step) {
-      const auto p = spline(t);
-      x.push_back(p.x());
-      y.push_back(p.y());
+    Eigen::MatrixXd smooth_points(path_msg.points.size(), 2);
+    smoother.InterpolateInCoordinates(raw_points, smooth_points);
+    for (auto i = 0; i < smooth_points.rows(); ++i) {
+      x.push_back(smooth_points.row(i).x());
+      y.push_back(smooth_points.row(i).y());
     }
   } else {
-    x.reserve(path_msg.points.size());
-    y.reserve(path_msg.points.size());
     for (const auto & point : path_msg.points) {
       x.push_back(point.pose.position.x);
       y.push_back(point.pose.position.y);
