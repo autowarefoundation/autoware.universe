@@ -19,7 +19,7 @@
 namespace default_ad_api
 {
 
-using ServiceResponse = autoware_ad_api_msgs::srv::ChangeOperationMode::Response;
+using ServiceResponse = autoware_adapi_v1_msgs::srv::ChangeOperationMode::Response;
 
 OperationModeNode::OperationModeNode(const rclcpp::NodeOptions & options)
 : Node("operation_mode", options), diagnostics_(this)
@@ -40,13 +40,13 @@ OperationModeNode::OperationModeNode(const rclcpp::NodeOptions & options)
   timer_ = rclcpp::create_timer(
     this, get_clock(), rclcpp::Rate(1.0).period(), std::bind(&OperationModeNode::on_timer, this));
 
-  curr_state_.mode.mode = OperationMode::UNKNOWN;
-  prev_state_.mode.mode = OperationMode::UNKNOWN;
-  mode_available_[OperationMode::UNKNOWN] = false;
-  mode_available_[OperationMode::STOP] = true;
-  mode_available_[OperationMode::AUTONOMOUS] = false;
-  mode_available_[OperationMode::LOCAL] = true;
-  mode_available_[OperationMode::REMOTE] = true;
+  curr_state_.mode = OperationModeState::Message::UNKNOWN;
+  prev_state_.mode = OperationModeState::Message::UNKNOWN;
+  mode_available_[OperationModeState::Message::UNKNOWN] = false;
+  mode_available_[OperationModeState::Message::STOP] = true;
+  mode_available_[OperationModeState::Message::AUTONOMOUS] = false;
+  mode_available_[OperationModeState::Message::LOCAL] = true;
+  mode_available_[OperationModeState::Message::REMOTE] = true;
 }
 
 template <class ResponseT>
@@ -58,49 +58,49 @@ void OperationModeNode::change_mode(
       ServiceResponse::ERROR_NOT_AVAILABLE, "The mode change condition is not satisfied.");
   }
   const auto req = std::make_shared<OperationModeRequest>();
-  req->operation.mode = mode;
-  res->status = cli_mode_->call(req)->status;
+  req->mode = mode;
+  component_interface_utils::status::copy(cli_mode_->call(req), res);  // NOLINT
 }
 
 void OperationModeNode::on_change_to_stop(
   const ChangeToStop::Service::Request::SharedPtr,
   const ChangeToStop::Service::Response::SharedPtr res)
 {
-  change_mode(res, OperationMode::STOP);
+  change_mode(res, OperationModeRequest::STOP);
 }
 
 void OperationModeNode::on_change_to_autonomous(
   const ChangeToAutonomous::Service::Request::SharedPtr,
   const ChangeToAutonomous::Service::Response::SharedPtr res)
 {
-  change_mode(res, OperationMode::AUTONOMOUS);
+  change_mode(res, OperationModeRequest::AUTONOMOUS);
 }
 
 void OperationModeNode::on_change_to_local(
   const ChangeToLocal::Service::Request::SharedPtr,
   const ChangeToLocal::Service::Response::SharedPtr res)
 {
-  change_mode(res, OperationMode::LOCAL);
+  change_mode(res, OperationModeRequest::LOCAL);
 }
 
 void OperationModeNode::on_change_to_remote(
   const ChangeToRemote::Service::Request::SharedPtr,
   const ChangeToRemote::Service::Response::SharedPtr res)
 {
-  change_mode(res, OperationMode::REMOTE);
+  change_mode(res, OperationModeRequest::REMOTE);
 }
 
 void OperationModeNode::on_enable_autoware_control(
   const EnableAutowareControl::Service::Request::SharedPtr,
   const EnableAutowareControl::Service::Response::SharedPtr res)
 {
-  if (!mode_available_[curr_state_.mode.mode]) {
+  if (!mode_available_[curr_state_.mode]) {
     throw component_interface_utils::ServiceException(
       ServiceResponse::ERROR_NOT_AVAILABLE, "The mode change condition is not satisfied.");
   }
   const auto req = std::make_shared<AutowareControlRequest>();
   req->autoware_control = true;
-  res->status = cli_control_->call(req)->status;
+  component_interface_utils::status::copy(cli_control_->call(req), res);  // NOLINT
 }
 
 void OperationModeNode::on_disable_autoware_control(
@@ -109,7 +109,7 @@ void OperationModeNode::on_disable_autoware_control(
 {
   const auto req = std::make_shared<AutowareControlRequest>();
   req->autoware_control = false;
-  res->status = cli_control_->call(req)->status;
+  component_interface_utils::status::copy(cli_control_->call(req), res);  // NOLINT
 }
 
 void OperationModeNode::on_state(const OperationModeState::Message::ConstSharedPtr msg)
@@ -120,7 +120,7 @@ void OperationModeNode::on_state(const OperationModeState::Message::ConstSharedP
 
 void OperationModeNode::on_timer()
 {
-  mode_available_[OperationMode::AUTONOMOUS] = diagnostics_.is_ok();
+  mode_available_[OperationModeState::Message::AUTONOMOUS] = diagnostics_.is_ok();
   update_state();
 }
 
@@ -129,10 +129,10 @@ void OperationModeNode::update_state()
   // Clear stamp to compare other fields.
   OperationModeState::Message state = curr_state_;
   state.stamp = builtin_interfaces::msg::Time();
-  state.is_stop_mode_available &= mode_available_[OperationMode::STOP];
-  state.is_autonomous_mode_available &= mode_available_[OperationMode::AUTONOMOUS];
-  state.is_local_mode_available &= mode_available_[OperationMode::LOCAL];
-  state.is_remote_mode_available &= mode_available_[OperationMode::REMOTE];
+  state.is_stop_mode_available &= mode_available_[OperationModeState::Message::STOP];
+  state.is_autonomous_mode_available &= mode_available_[OperationModeState::Message::AUTONOMOUS];
+  state.is_local_mode_available &= mode_available_[OperationModeState::Message::LOCAL];
+  state.is_remote_mode_available &= mode_available_[OperationModeState::Message::REMOTE];
 
   if (prev_state_ != state) {
     prev_state_ = state;

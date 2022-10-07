@@ -19,6 +19,7 @@
 
 #include <autoware_ad_api_specs/operation_mode.hpp>
 #include <component_interface_specs/system.hpp>
+#include <component_interface_utils/status.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <unordered_map>
@@ -50,7 +51,7 @@ private:
   DiagnosticsMonitor diagnostics_;
   OperationModeState::Message curr_state_;
   OperationModeState::Message prev_state_;
-  std::unordered_map<OperationMode::_mode_type, bool> mode_available_;
+  std::unordered_map<OperationModeState::Message::_mode_type, bool> mode_available_;
 
   rclcpp::CallbackGroup::SharedPtr group_cli_;
   rclcpp::TimerBase::SharedPtr timer_;
