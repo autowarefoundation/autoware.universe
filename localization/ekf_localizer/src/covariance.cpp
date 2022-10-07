@@ -13,32 +13,39 @@
 // limitations under the License.
 
 #include "ekf_localizer/covariance.hpp"
+#include "ekf_localizer/state_index.hpp"
+
+#include "tier4_autoware_utils/ros/msg_covariance.hpp"
+
+using COV_IDX = tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
 
 std::array<double, 36> ekfCovarianceToPoseMessageCovariance(const Matrix6d & P)
 {
-  const double p00 = P(0, 0);
-  const double p01 = P(0, 1);
-  const double p02 = P(0, 2);
-  const double p10 = P(1, 0);
-  const double p11 = P(1, 1);
-  const double p12 = P(1, 2);
-  const double p20 = P(2, 0);
-  const double p21 = P(2, 1);
-  const double p22 = P(2, 2);
+  std::array<double, 36> covariance;
+  covariance.fill(0.);
 
-  return std::array<double, 36>{p00, p01, 0.0, 0.0, 0.0, p02, p10, p11, 0.0, 0.0, 0.0, p12,
-                                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-                                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, p20, p21, 0.0, 0.0, 0.0, p22};
+  covariance[COV_IDX::X_X] = P(IDX::X, IDX::X);
+  covariance[COV_IDX::X_Y] = P(IDX::X, IDX::Y);
+  covariance[COV_IDX::X_YAW] = P(IDX::X, IDX::YAW);
+  covariance[COV_IDX::Y_X] = P(IDX::Y, IDX::X);
+  covariance[COV_IDX::Y_Y] = P(IDX::Y, IDX::Y);
+  covariance[COV_IDX::Y_YAW] = P(IDX::Y, IDX::YAW);
+  covariance[COV_IDX::YAW_X] = P(IDX::YAW, IDX::X);
+  covariance[COV_IDX::YAW_Y] = P(IDX::YAW, IDX::Y);
+  covariance[COV_IDX::YAW_YAW] = P(IDX::YAW, IDX::YAW);
+
+  return covariance;
 }
 
 std::array<double, 36> ekfCovarianceToTwistMessageCovariance(const Matrix6d & P)
 {
-  const double p44 = P(4, 4);
-  const double p45 = P(4, 5);
-  const double p54 = P(5, 4);
-  const double p55 = P(5, 5);
+  std::array<double, 36> covariance;
+  covariance.fill(0.);
 
-  return std::array<double, 36>{p44, 0.0, 0.0, 0.0, 0.0, p45, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-                                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-                                0.0, 0.0, 0.0, 0.0, 0.0, 0.0, p54, 0.0, 0.0, 0.0, 0.0, p55};
+  covariance[COV_IDX::X_X] = P(IDX::VX, IDX::VX);
+  covariance[COV_IDX::X_YAW] = P(IDX::VX, IDX::WZ);
+  covariance[COV_IDX::YAW_X] = P(IDX::WZ, IDX::VX);
+  covariance[COV_IDX::YAW_YAW] = P(IDX::WZ, IDX::WZ);
+
+  return covariance;
 }
