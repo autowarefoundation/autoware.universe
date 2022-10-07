@@ -26,23 +26,23 @@
 
 template <typename PointSource, typename PointTarget>
 std::shared_ptr<NormalDistributionsTransformBase<PointSource, PointTarget>> get_ndt(
-  const NDTImplementType & ndt_mode)
+  const NDTImplementType & ndt_implement_type)
 {
   std::shared_ptr<NormalDistributionsTransformBase<PointSource, PointTarget>> ndt_ptr;
-  if (ndt_mode == NDTImplementType::PCL_GENERIC) {
+  if (ndt_implement_type == NDTImplementType::PCL_GENERIC) {
     ndt_ptr.reset(new NormalDistributionsTransformPCLGeneric<PointSource, PointTarget>);
     return ndt_ptr;
   }
-  if (ndt_mode == NDTImplementType::PCL_MODIFIED) {
+  if (ndt_implement_type == NDTImplementType::PCL_MODIFIED) {
     ndt_ptr.reset(new NormalDistributionsTransformPCLModified<PointSource, PointTarget>);
     return ndt_ptr;
   }
-  if (ndt_mode == NDTImplementType::OMP) {
+  if (ndt_implement_type == NDTImplementType::OMP) {
     ndt_ptr.reset(new NormalDistributionsTransformOMP<PointSource, PointTarget>);
     return ndt_ptr;
   }
 
-  const std::string s = fmt::format("Unknown NDT type {}", static_cast<int>(ndt_mode));
+  const std::string s = fmt::format("Unknown NDT type {}", static_cast<int>(ndt_implement_type));
   throw std::runtime_error(s);
 };
 
