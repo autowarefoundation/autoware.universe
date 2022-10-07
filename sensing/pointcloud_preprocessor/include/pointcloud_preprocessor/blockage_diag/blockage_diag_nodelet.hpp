@@ -48,7 +48,7 @@ protected:
 
   /** \brief Parameter service callback */
   rcl_interfaces::msg::SetParametersResult paramCallback(const std::vector<rclcpp::Parameter> & p);
-  image_transport::Publisher lidar_colorized_depth_map_pub_;
+  image_transport::Publisher lidar_depth_map_pub_;
   image_transport::Publisher time_series_sobel_pub;
   image_transport::Publisher blockage_mask_pub_;
   image_transport::Publisher one_shot_sobel_pub;
@@ -74,7 +74,7 @@ private:
   std::string lidar_model_;
   uint blockage_buffer_frames_ = 100;
   uint sobel_frames_ = 30;
-  uint blockage_buffering_interval_ = 5;
+  uint blockage_buffering_interval_ = 1;
   uint sobel_buffering_interval_ = 1;
 
 public:

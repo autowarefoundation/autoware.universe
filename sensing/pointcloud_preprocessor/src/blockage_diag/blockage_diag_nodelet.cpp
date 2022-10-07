@@ -49,10 +49,12 @@ BlockageDiagComponent::BlockageDiagComponent(const rclcpp::NodeOptions & options
   updater_.setPeriod(0.1);
   one_shot_sobel_pub =
     image_transport::create_publisher(this, "blockage_diag/debug/one_shot_sobel");
-  lidar_colorized_depth_map_pub_ =
+  lidar_depth_map_pub_ =
     image_transport::create_publisher(this, "blockage_diag/debug/lidar_depth_map");
   blockage_mask_pub_ =
     image_transport::create_publisher(this, "blockage_diag/debug/blockage_mask_image");
+  time_series_sobel_pub =
+    image_transport::create_publisher(this, "blockage_diag/debug/time_series_sobel_image");
   time_series_sobel_pub =
     image_transport::create_publisher(this, "blockage_diag/debug/time_series_sobel_image");
 
@@ -300,15 +302,6 @@ void BlockageDiagComponent::filter(
   //  one_shot_sobel_result_img =sobel_mask.clone();
   sensor_msgs::msg::Image::SharedPtr one_shot_sobel_result_msg =
     cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", one_shot_sobel_result_img).toImageMsg();
-  RCLCPP_WARN_STREAM(
-    get_logger(), "sobeled_img.type() is " << sobeled_img.type() << "sobeled_img.row is "
-                                           << sobeled_img.rows << "sobeled_img.cols is "
-                                           << sobeled_img.cols);
-  RCLCPP_WARN_STREAM(
-    get_logger(), "one_shot_sobeled_img.type() is "
-                    << one_shot_sobel_result_img.type() << "sobeled_img.row is "
-                    << one_shot_sobel_result_img.rows << "sobeled_img.cols is "
-                    << one_shot_sobel_result_img.cols);
   one_shot_sobel_pub.publish(one_shot_sobel_result_msg);
   cv::Mat time_series_sobel_result_color_img(
     cv::Size(ideal_horizontal_bins, vertical_bins), CV_8UC3, cv::Scalar(0));
@@ -324,11 +317,11 @@ void BlockageDiagComponent::filter(
   cv::Mat colorized_full_size_depth_map(
     cv::Size(ideal_horizontal_bins, vertical_bins), CV_16UC1, cv::Scalar(0));
   colorized_full_size_depth_map = full_size_depth_map.clone();
-  sensor_msgs::msg::Image::SharedPtr lidar_colorized_depth_msg =
+  sensor_msgs::msg::Image::SharedPtr lidar_depth_map_msg =
     cv_bridge::CvImage(std_msgs::msg::Header(), "mono16", colorized_full_size_depth_map)
       .toImageMsg();
-  lidar_colorized_depth_msg->header = input->header;
-  lidar_colorized_depth_map_pub_.publish(lidar_colorized_depth_msg);  // fullsizeをpubしているところ
+  lidar_depth_map_msg->header = input->header;
+  lidar_depth_map_pub_.publish(lidar_depth_map_msg);  // fullsizeをpubしているところ
   cv::Mat blockage_mask_colorized;
   cv::applyColorMap(no_return_mask_result, blockage_mask_colorized, cv::COLORMAP_JET);
   sensor_msgs::msg::Image::SharedPtr blockage_mask_msg =
@@ -339,7 +332,6 @@ void BlockageDiagComponent::filter(
   ground_blockage_ratio_msg.data = ground_blockage_ratio_;
   ground_blockage_ratio_msg.stamp = now();
   ground_blockage_ratio_pub_->publish(ground_blockage_ratio_msg);
-
   tier4_debug_msgs::msg::Float32Stamped sky_blockage_ratio_msg;
   sky_blockage_ratio_msg.data = sky_blockage_ratio_;
   sky_blockage_ratio_msg.stamp = now();
