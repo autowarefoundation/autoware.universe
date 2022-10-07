@@ -47,7 +47,8 @@ BlockageDiagComponent::BlockageDiagComponent(const rclcpp::NodeOptions & options
     std::string(this->get_namespace()) + ": blockage_validation", this,
     &BlockageDiagComponent::onBlockageChecker);
   updater_.setPeriod(0.1);
-  lidar_debug_pub = image_transport::create_publisher(this, "blockage_diag/debug/lidar_debug_img");
+  one_shot_sobel_pub =
+    image_transport::create_publisher(this, "blockage_diag/debug/one_shot_sobel");
   lidar_colorized_depth_map_pub_ =
     image_transport::create_publisher(this, "blockage_diag/debug/lidar_depth_map");
   blockage_mask_pub_ =
@@ -264,7 +265,7 @@ void BlockageDiagComponent::filter(
 
   static boost::circular_buffer<cv::Mat> binarized_sobel_mask_buffer(sobel_frames_);
 
-  cv::Mat sobel_mask = morpho_img.clone();
+  sobeled_img = morpho_img.clone();
   cv::Mat time_series_sobel_mask(
     cv::Size(ideal_horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0));
   cv::Mat time_series_sobel_result(
@@ -275,7 +276,7 @@ void BlockageDiagComponent::filter(
   static uint sobel_frame_count;
   sobel_frame_count++;
   if (sobel_buffering_interval_ != 0) {
-    sobel_mask_binarized = sobel_mask / 255;
+    sobel_mask_binarized = sobeled_img / 255;
     if (sobel_frame_count == sobel_buffering_interval_) {
       binarized_sobel_mask_buffer.push_back(sobel_mask_binarized);  // ここコメントアウトで動く
       sobel_frame_count = 0;
@@ -293,31 +294,36 @@ void BlockageDiagComponent::filter(
     no_return_mask.copyTo(time_series_sobel_result);
   }
 
+  cv::Mat one_shot_sobel_result_img(
+    cv::Size(ideal_horizontal_bins, vertical_bins), CV_8UC3, cv::Scalar(0));
+  cv::applyColorMap(sobeled_img, one_shot_sobel_result_img, cv::COLORMAP_JET);
+  //  one_shot_sobel_result_img =sobel_mask.clone();
+  sensor_msgs::msg::Image::SharedPtr one_shot_sobel_result_msg =
+    cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", one_shot_sobel_result_img).toImageMsg();
+  RCLCPP_WARN_STREAM(
+    get_logger(), "sobeled_img.type() is " << sobeled_img.type() << "sobeled_img.row is "
+                                           << sobeled_img.rows << "sobeled_img.cols is "
+                                           << sobeled_img.cols);
+  RCLCPP_WARN_STREAM(
+    get_logger(), "one_shot_sobeled_img.type() is "
+                    << one_shot_sobel_result_img.type() << "sobeled_img.row is "
+                    << one_shot_sobel_result_img.rows << "sobeled_img.cols is "
+                    << one_shot_sobel_result_img.cols);
+  one_shot_sobel_pub.publish(one_shot_sobel_result_msg);
   cv::Mat time_series_sobel_result_color_img(
     cv::Size(ideal_horizontal_bins, vertical_bins), CV_8UC3, cv::Scalar(0));
-  cv::applyColorMap(time_series_sobel_result, time_series_sobel_result_color_img, cv::COLORMAP_JET);
-  //  morpho_img.convertTo(time_series_sobel_result_color_img, CV_8UC1, 255, 0);
+  time_series_sobel_result.convertTo(time_series_sobel_result_color_img, CV_8UC1, 255, 0);
+  cv::applyColorMap(
+    time_series_sobel_result_color_img, time_series_sobel_result_color_img, cv::COLORMAP_JET);
   sensor_msgs::msg::Image::SharedPtr time_series_sobel_result_msg =
     cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", time_series_sobel_result_color_img)
       .toImageMsg();
   time_series_sobel_result_msg->header = input->header;
   time_series_sobel_pub.publish(time_series_sobel_result_msg);
   /////////sobel
-  cv::Mat debug_color_img;
-  //  cv::inRange(sobel_mask_binarized, 0, 0, sobel_mask_binarized);
-  cv::applyColorMap(sobel_mask_binarized, debug_color_img, cv::COLORMAP_JET);
-  sensor_msgs::msg::Image::SharedPtr lidar_debug_msg =
-    cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", debug_color_img).toImageMsg();
-  lidar_debug_msg->header = input->header;
-  lidar_debug_pub.publish(lidar_debug_msg);  // fullsizeをpubしているところ
   cv::Mat colorized_full_size_depth_map(
     cv::Size(ideal_horizontal_bins, vertical_bins), CV_16UC1, cv::Scalar(0));
   colorized_full_size_depth_map = full_size_depth_map.clone();
-  //  RCLCPP_WARN_STREAM(
-  //    get_logger(), "colorized_full_size_depth_map type is"
-  //                    << colorized_full_size_depth_map.type() << "  rows is"
-  //                    << colorized_full_size_depth_map.rows << "  cols is"
-  //                    << colorized_full_size_depth_map.cols);
   sensor_msgs::msg::Image::SharedPtr lidar_colorized_depth_msg =
     cv_bridge::CvImage(std_msgs::msg::Header(), "mono16", colorized_full_size_depth_map)
       .toImageMsg();

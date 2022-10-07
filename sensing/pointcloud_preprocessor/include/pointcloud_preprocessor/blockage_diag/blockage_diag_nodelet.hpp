@@ -51,8 +51,7 @@ protected:
   image_transport::Publisher lidar_colorized_depth_map_pub_;
   image_transport::Publisher time_series_sobel_pub;
   image_transport::Publisher blockage_mask_pub_;
-  image_transport::Publisher dust_blockage_pub;
-  image_transport::Publisher lidar_debug_pub;
+  image_transport::Publisher one_shot_sobel_pub;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr ground_blockage_ratio_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr sky_blockage_ratio_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr processing_time_pub_;
