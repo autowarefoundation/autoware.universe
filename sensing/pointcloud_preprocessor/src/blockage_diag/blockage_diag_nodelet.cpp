@@ -55,8 +55,8 @@ BlockageDiagComponent::BlockageDiagComponent(const rclcpp::NodeOptions & options
     image_transport::create_publisher(this, "blockage_diag/debug/blockage_mask_image");
   time_series_sobel_pub =
     image_transport::create_publisher(this, "blockage_diag/debug/time_series_sobel_image");
-  time_series_sobel_pub =
-    image_transport::create_publisher(this, "blockage_diag/debug/time_series_sobel_image");
+  blockage_dust_merged_pub =
+    image_transport::create_publisher(this, "blockage_diag/debug/blockage_dust_merge_image");
 
   ground_blockage_ratio_pub_ = create_publisher<tier4_debug_msgs::msg::Float32Stamped>(
     "blockage_diag/debug/ground_blockage_ratio", rclcpp::SensorDataQoS());
@@ -175,9 +175,13 @@ void BlockageDiagComponent::filter(
               UINT16_MAX - distance_coeffients * p.distance;
           }
         }
+        //        else {
+        //          RCLCPP_WARN_STREAM(
+        //            get_logger(), "p.ring is " << p.ring << "p.azimuth is " << p.azimuth / 100);
       }
     }
   }
+
   full_size_depth_map.convertTo(lidar_depth_map_8u, CV_8UC1, 1.0 / 300);
   cv::Mat no_return_mask(cv::Size(ideal_horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0));
   cv::inRange(lidar_depth_map_8u, 0, 1, no_return_mask);
@@ -188,7 +192,7 @@ void BlockageDiagComponent::filter(
   cv::erode(no_return_mask, erosion_dst, element);
   cv::dilate(erosion_dst, no_return_mask, element);
   static boost::circular_buffer<cv::Mat> no_return_mask_buffer(blockage_buffer_frames_);
-  cv::Mat no_return_mask_result(
+  cv::Mat time_series_blockage_result(
     cv::Size(ideal_horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0));
   cv::Mat time_series_blockage_mask(
     cv::Size(ideal_horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0));
@@ -208,9 +212,9 @@ void BlockageDiagComponent::filter(
     }
     cv::inRange(
       time_series_blockage_mask, no_return_mask_buffer.size() - 1, no_return_mask_buffer.size(),
-      no_return_mask_result);
+      time_series_blockage_result);
   } else {
-    no_return_mask.copyTo(no_return_mask_result);
+    no_return_mask.copyTo(time_series_blockage_result);
   }
   cv::Mat ground_no_return_mask;
   cv::Mat sky_no_return_mask;
@@ -258,7 +262,7 @@ void BlockageDiagComponent::filter(
   Sobel(sobeled_img, sobeled_img, CV_8UC1, 1, 0, 3);
   Sobel(sobeled_img, sobeled_img, CV_8UC1, 0, 1, 3);
   cv::Mat morpho_img = sobeled_img.clone();
-  uint erode_kernel = 3;
+  uint erode_kernel = 5;
   cv::Mat sobel_element = getStructuringElement(
     cv::MORPH_RECT, cv::Size(erode_kernel + 1, 2 * erode_kernel + 1),
     cv::Point(erode_kernel, erode_kernel));
@@ -299,13 +303,19 @@ void BlockageDiagComponent::filter(
   cv::Mat one_shot_sobel_result_img(
     cv::Size(ideal_horizontal_bins, vertical_bins), CV_8UC3, cv::Scalar(0));
   cv::applyColorMap(sobeled_img, one_shot_sobel_result_img, cv::COLORMAP_JET);
-  //  one_shot_sobel_result_img =sobel_mask.clone();
+  // merge start
+  cv::Mat blockage_dust_merged_img(
+    cv::Size(ideal_horizontal_bins, vertical_bins), CV_8UC3, cv::Scalar(0));
+  blockage_dust_merged_img = time_series_blockage_result.clone();
+  blockage_dust_merged_img += time_series_sobel_result;
+
+  // merge end
   sensor_msgs::msg::Image::SharedPtr one_shot_sobel_result_msg =
     cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", one_shot_sobel_result_img).toImageMsg();
   one_shot_sobel_pub.publish(one_shot_sobel_result_msg);
   cv::Mat time_series_sobel_result_color_img(
     cv::Size(ideal_horizontal_bins, vertical_bins), CV_8UC3, cv::Scalar(0));
-  time_series_sobel_result.convertTo(time_series_sobel_result_color_img, CV_8UC1, 255, 0);
+  time_series_sobel_result.convertTo(time_series_sobel_result_color_img, CV_8UC3, 255, 0);
   cv::applyColorMap(
     time_series_sobel_result_color_img, time_series_sobel_result_color_img, cv::COLORMAP_JET);
   sensor_msgs::msg::Image::SharedPtr time_series_sobel_result_msg =
@@ -323,11 +333,21 @@ void BlockageDiagComponent::filter(
   lidar_depth_map_msg->header = input->header;
   lidar_depth_map_pub_.publish(lidar_depth_map_msg);  // fullsizeをpubしているところ
   cv::Mat blockage_mask_colorized;
-  cv::applyColorMap(no_return_mask_result, blockage_mask_colorized, cv::COLORMAP_JET);
+  cv::applyColorMap(time_series_blockage_result, blockage_mask_colorized, cv::COLORMAP_JET);
   sensor_msgs::msg::Image::SharedPtr blockage_mask_msg =
     cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", blockage_mask_colorized).toImageMsg();
   blockage_mask_msg->header = input->header;
   blockage_mask_pub_.publish(blockage_mask_msg);
+
+  cv::Mat blockage_dust_merged_colorized(
+    cv::Size(ideal_horizontal_bins, vertical_bins), CV_8UC3, cv::Scalar(0));
+  cv::applyColorMap(blockage_dust_merged_img, blockage_dust_merged_colorized, cv::COLORMAP_JET);
+  sensor_msgs::msg::Image::SharedPtr blockage_dust_merged_msg =
+    cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", blockage_dust_merged_colorized)
+      .toImageMsg();
+  blockage_dust_merged_msg->header = input->header;
+  blockage_dust_merged_pub.publish(blockage_dust_merged_msg);  // 色合いまではいえｋた
+
   tier4_debug_msgs::msg::Float32Stamped ground_blockage_ratio_msg;
   ground_blockage_ratio_msg.data = ground_blockage_ratio_;
   ground_blockage_ratio_msg.stamp = now();
