@@ -118,5 +118,6 @@ double get2dRecall(const T1 source_object, const T2 target_object)
   const double recall = std::min(1.0, intersection_area / target_area);
   return recall;
 }
+}  // namespace perception_utils
 
 #endif  // PERCEPTION_UTILS__MATCHING_HPP_
