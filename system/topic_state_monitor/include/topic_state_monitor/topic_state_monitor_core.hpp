@@ -20,6 +20,8 @@
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <tf2_msgs/msg/tf_message.hpp>
+
 #include <deque>
 #include <map>
 #include <memory>
@@ -31,6 +33,14 @@ namespace topic_state_monitor
 struct NodeParam
 {
   double update_rate;
+  std::string diag_name;
+  std::string topic;
+  std::string topic_type;
+  std::string frame_id;
+  std::string child_frame_id;
+  bool transient_local;
+  bool best_effort;
+  bool is_transform;
 };
 
 class TopicStateMonitorNode : public rclcpp::Node
@@ -53,6 +63,7 @@ private:
 
   // Subscriber
   rclcpp::GenericSubscription::SharedPtr sub_topic_;
+  rclcpp::Subscription<tf2_msgs::msg::TFMessage>::SharedPtr sub_transform_;
 
   // Timer
   void onTimer();
