@@ -66,8 +66,8 @@ void generateBoxes3D_worker(
     const auto down_grid_size = config.down_grid_size_y_ * config.down_grid_size_x_;
     if (grid_idx >= down_grid_size) return;
 
-    const auto yi = (grid_idx % down_grid_size) / config.down_grid_size_x_;
-    const auto xi = (grid_idx % down_grid_size) / config.down_grid_size_y_;
+    const auto yi = grid_idx / config.down_grid_size_x_;
+    const auto xi = grid_idx % config.down_grid_size_x_;
 
     int32_t label = -1;
     float32_t max_score = -1;
@@ -146,9 +146,11 @@ void generateDetectedBoxes3D(
     det_boxes3d_nonms, config.circle_nms_dist_threshold_, final_keep_mask);
 
   det_boxes3d.resize(num_final_det_boxes3d);
-  for (std::size_t idx = 0; idx < num_final_det_boxes3d; idx++) {
+  std::size_t boxid = 0;
+  for (std::size_t idx = 0; idx < final_keep_mask.size(); idx++) {
     if (final_keep_mask[idx]){
-      det_boxes3d[idx] = det_boxes3d_nonms[idx];
+      det_boxes3d[boxid] = det_boxes3d_nonms[idx];
+      boxid++;
     }
   }
   // std::copy_if(det_boxes3d_nonms.begin(), det_boxes3d_nonms.end(), final_keep_mask.begin(),

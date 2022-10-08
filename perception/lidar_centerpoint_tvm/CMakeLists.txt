@@ -6,7 +6,6 @@ autoware_package()
 
 set(tvm_runtime_DIR ${tvm_vendor_DIR})
 find_package(tvm_runtime CONFIG REQUIRED)
-find_package(PCL 1.10 REQUIRED)
 
 # Get target backend
 set(${PROJECT_NAME}_BACKEND llvm CACHE STRING "${PROJECT_NAME} neural network backend")

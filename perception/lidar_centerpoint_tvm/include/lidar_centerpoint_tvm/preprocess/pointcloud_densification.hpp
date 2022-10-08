@@ -40,22 +40,23 @@ namespace lidar_centerpoint_tvm
 
 using autoware::common::types::bool8_t;
 using autoware::common::types::float32_t;
+using autoware::common::types::float64_t;
 
 class LIDAR_CENTERPOINT_TVM_LOCAL DensificationParam
 {
 public:
-  DensificationParam(const std::string & world_frame_id, const u_int32_t num_past_frames)
+  DensificationParam(const std::string & world_frame_id, const uint32_t num_past_frames)
   : world_frame_id_(std::move(world_frame_id)),
     pointcloud_cache_size_(num_past_frames + /*current frame*/ 1)
   {
   }
 
   std::string world_frame_id() const { return world_frame_id_; }
-  u_int32_t pointcloud_cache_size() const { return pointcloud_cache_size_; }
+  uint32_t pointcloud_cache_size() const { return pointcloud_cache_size_; }
 
 private:
   std::string world_frame_id_;
-  u_int32_t pointcloud_cache_size_{1};
+  uint32_t pointcloud_cache_size_{1};
 };
 
 struct PointCloudWithTransform
@@ -72,7 +73,7 @@ public:
   bool8_t enqueuePointCloud(
     const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg, const tf2_ros::Buffer & tf_buffer);
 
-  double getCurrentTimestamp() const { return current_timestamp_; }
+  float64_t getCurrentTimestamp() const { return current_timestamp_; }
   Eigen::Affine3f getAffineWorldToCurrent() const { return affine_world2current_; }
   std::list<PointCloudWithTransform>::iterator getPointCloudCacheIter()
   {
@@ -88,7 +89,7 @@ private:
   void dequeue();
 
   DensificationParam param_;
-  double current_timestamp_{0.0};
+  float64_t current_timestamp_{0.0};
   Eigen::Affine3f affine_world2current_;
   std::list<PointCloudWithTransform> pointcloud_cache_;
 };
