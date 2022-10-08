@@ -59,7 +59,8 @@ LidarCenterPointTVMNode::LidarCenterPointTVMNode(const rclcpp::NodeOptions & nod
     static_cast<std::size_t>(this->declare_parameter<std::int64_t>("point_feature_size"));
   const std::size_t max_voxel_size =
     static_cast<std::size_t>(this->declare_parameter<std::int64_t>("max_voxel_size"));
-  const auto point_cloud_range = this->declare_parameter<std::vector<float64_t>>("point_cloud_range");
+  const auto point_cloud_range =
+    this->declare_parameter<std::vector<float64_t>>("point_cloud_range");
   const auto voxel_size = this->declare_parameter<std::vector<float64_t>>("voxel_size");
   const std::size_t downsample_factor =
     static_cast<std::size_t>(this->declare_parameter<std::int64_t>("downsample_factor"));

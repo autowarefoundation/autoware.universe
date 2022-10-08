@@ -152,7 +152,7 @@ void generateDetectedBoxes3D(
   det_boxes3d.resize(num_final_det_boxes3d);
   std::size_t boxid = 0;
   for (std::size_t idx = 0; idx < final_keep_mask.size(); idx++) {
-    if (final_keep_mask[idx]){
+    if (final_keep_mask[idx]) {
       det_boxes3d[boxid] = det_boxes3d_nonms[idx];
       boxid++;
     }

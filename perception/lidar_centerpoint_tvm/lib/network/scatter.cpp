@@ -45,15 +45,14 @@ void scatterFeatures_worker(
 
     // 3D position(z,y,x) of the voxel/pillar
     int32_t coord[3] = {
-      coords[pillar_idx * 3], coords[pillar_idx * 3 + 1],
-      coords[pillar_idx * 3 + 2]};
-    if (coord[0] < 0) return; // if coord.z < 0 return
+      coords[pillar_idx * 3], coords[pillar_idx * 3 + 1], coords[pillar_idx * 3 + 2]};
+    if (coord[0] < 0) return;  // if coord.z < 0 return
 
-    for(std::size_t inner_idx = 0; inner_idx < config.encoder_out_feature_size_; inner_idx++){
+    for (std::size_t inner_idx = 0; inner_idx < config.encoder_out_feature_size_; inner_idx++) {
       std::size_t feature_idx = config.encoder_out_feature_size_ * pillar_idx + inner_idx;
       const auto feature = pillar_features[feature_idx];
-      int32_t scatter_idx = config.grid_size_y_ * config.grid_size_x_ * inner_idx
-        + config.grid_size_x_ * coord[1] + coord[2];
+      int32_t scatter_idx = config.grid_size_y_ * config.grid_size_x_ * inner_idx +
+                            config.grid_size_x_ * coord[1] + coord[2];
       scattered_features[scatter_idx] = feature;
     }
   }
