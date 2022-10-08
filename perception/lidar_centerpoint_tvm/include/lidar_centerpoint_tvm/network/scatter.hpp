@@ -15,9 +15,8 @@
 #ifndef LIDAR_CENTERPOINT_TVM__NETWORK__SCATTER_HPP_
 #define LIDAR_CENTERPOINT_TVM__NETWORK__SCATTER_HPP_
 
-#include <lidar_centerpoint_tvm/centerpoint_config.hpp>
-
 #include <common/types.hpp>
+#include <lidar_centerpoint_tvm/centerpoint_config.hpp>
 
 namespace autoware
 {

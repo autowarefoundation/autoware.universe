@@ -18,7 +18,6 @@
 #include <lidar_centerpoint_tvm/network/scatter.hpp>
 #include <lidar_centerpoint_tvm/preprocess/generate_features.hpp>
 #include <tier4_autoware_utils/math/constants.hpp>
-
 #include <tvm_utility/model_zoo.hpp>
 #include <tvm_utility/pipeline.hpp>
 
@@ -28,8 +27,10 @@
 #include <vector>
 
 // configs' path may need to be reset
-// using config_ve = model_zoo::perception::lidar_obstacle_detection::centerpoint_ve::onnx_fp32_kitti::config;
-// using config_bnh = model_zoo::perception::lidar_obstacle_detection::centerpoint_bnh::onnx_fp32_kitti::config;
+// using config_ve =
+// model_zoo::perception::lidar_obstacle_detection::centerpoint_ve::onnx_fp32_kitti::config; using
+// config_bnh =
+// model_zoo::perception::lidar_obstacle_detection::centerpoint_bnh::onnx_fp32_kitti::config;
 
 namespace autoware
 {
@@ -47,8 +48,7 @@ VoxelEncoderPreProcessor::VoxelEncoderPreProcessor(
   datatype_bytes(config.tvm_dtype_bits / 8),
   config_detail(config_mod)
 {
-  encoder_in_features.resize(
-    max_voxel_size * max_point_in_voxel_size * encoder_in_feature_size);
+  encoder_in_features.resize(max_voxel_size * max_point_in_voxel_size * encoder_in_feature_size);
   // Allocate input variable
   std::vector<int64_t> shape_x{max_voxel_size, max_point_in_voxel_size, encoder_in_feature_size};
   TVMArrayContainer x{
@@ -65,7 +65,7 @@ TVMArrayContainerVector VoxelEncoderPreProcessor::schedule(const MixedInputs & v
 {
   /// generate encoder_in_features from the voxels
   generateFeatures(
-    voxel_inputs.features, voxel_inputs.num_points_per_voxel, voxel_inputs.coords, 
+    voxel_inputs.features, voxel_inputs.num_points_per_voxel, voxel_inputs.coords,
     voxel_inputs.num_voxels, config_detail, encoder_in_features);
 
   TVMArrayCopyFromBytes(
@@ -87,12 +87,11 @@ VoxelEncoderPostProcessor::VoxelEncoderPostProcessor(
 std::vector<float32_t> VoxelEncoderPostProcessor::schedule(const TVMArrayContainerVector & input)
 {
   // TODO: Is it correct to assign to float* from TVMArrayContainer? Same below.
-  float32_t * ptr = static_cast<float32_t*>(input[0].getArray()->data);
+  float32_t * ptr = static_cast<float32_t *>(input[0].getArray()->data);
   pillar_features.assign(ptr, ptr + pillar_features.size());
 
   return pillar_features;
 }
-
 
 BackboneNeckHeadPreProcessor::BackboneNeckHeadPreProcessor(
   const tvm_utility::pipeline::InferenceEngineTVMConfig & config,
@@ -120,9 +119,9 @@ TVMArrayContainerVector BackboneNeckHeadPreProcessor::schedule(const MixedInputs
 {
   /// do scatter to convert pillar_features to spatial_features
   scatterFeatures(
-    pillar_inputs.features.data(), pillar_inputs.coords.data(), 
-    pillar_inputs.num_voxels, config_detail, spatial_features.data());
-  
+    pillar_inputs.features.data(), pillar_inputs.coords.data(), pillar_inputs.num_voxels,
+    config_detail, spatial_features.data());
+
   TVMArrayCopyFromBytes(
     output.getArray(), spatial_features.data(),
     input_channels * input_height * input_width * datatype_bytes);
@@ -131,34 +130,38 @@ TVMArrayContainerVector BackboneNeckHeadPreProcessor::schedule(const MixedInputs
 }
 
 BackboneNeckHeadPostProcessor::BackboneNeckHeadPostProcessor(
-  const tvm_utility::pipeline::InferenceEngineTVMConfig & config, 
+  const tvm_utility::pipeline::InferenceEngineTVMConfig & config,
   const CenterPointConfig & config_mod)
-: datatype_bytes(config.tvm_dtype_bits / 8),
-  config_detail(config_mod)
+: datatype_bytes(config.tvm_dtype_bits / 8), config_detail(config_mod)
 {
   head_out_heatmap.resize(
-    config.network_outputs[0].second[1] * config.network_outputs[0].second[2] * config.network_outputs[0].second[3]);
+    config.network_outputs[0].second[1] * config.network_outputs[0].second[2] *
+    config.network_outputs[0].second[3]);
   head_out_offset.resize(
-    config.network_outputs[1].second[1] * config.network_outputs[1].second[2] * config.network_outputs[1].second[3]);
+    config.network_outputs[1].second[1] * config.network_outputs[1].second[2] *
+    config.network_outputs[1].second[3]);
   head_out_z.resize(
-    config.network_outputs[2].second[1] * config.network_outputs[2].second[2] * config.network_outputs[2].second[3]);
+    config.network_outputs[2].second[1] * config.network_outputs[2].second[2] *
+    config.network_outputs[2].second[3]);
   head_out_dim.resize(
-    config.network_outputs[3].second[1] * config.network_outputs[3].second[2] * config.network_outputs[3].second[3]);
+    config.network_outputs[3].second[1] * config.network_outputs[3].second[2] *
+    config.network_outputs[3].second[3]);
   head_out_rot.resize(
-    config.network_outputs[4].second[1] * config.network_outputs[4].second[2] * config.network_outputs[4].second[3]);
+    config.network_outputs[4].second[1] * config.network_outputs[4].second[2] *
+    config.network_outputs[4].second[3]);
   head_out_vel.resize(
-    config.network_outputs[5].second[1] * config.network_outputs[5].second[2] * config.network_outputs[5].second[3]);
+    config.network_outputs[5].second[1] * config.network_outputs[5].second[2] *
+    config.network_outputs[5].second[3]);
 }
 
-std::vector<Box3D> BackboneNeckHeadPostProcessor::schedule(
-  const TVMArrayContainerVector & input)
+std::vector<Box3D> BackboneNeckHeadPostProcessor::schedule(const TVMArrayContainerVector & input)
 {
-  float32_t * heatmap_ptr = static_cast<float32_t*>(input[0].getArray()->data);
-  float32_t * offset_ptr = static_cast<float32_t*>(input[1].getArray()->data);
-  float32_t * z_ptr = static_cast<float32_t*>(input[2].getArray()->data);
-  float32_t * dim_ptr = static_cast<float32_t*>(input[3].getArray()->data);
-  float32_t * rot_ptr = static_cast<float32_t*>(input[4].getArray()->data);
-  float32_t * vel_ptr = static_cast<float32_t*>(input[5].getArray()->data);
+  float32_t * heatmap_ptr = static_cast<float32_t *>(input[0].getArray()->data);
+  float32_t * offset_ptr = static_cast<float32_t *>(input[1].getArray()->data);
+  float32_t * z_ptr = static_cast<float32_t *>(input[2].getArray()->data);
+  float32_t * dim_ptr = static_cast<float32_t *>(input[3].getArray()->data);
+  float32_t * rot_ptr = static_cast<float32_t *>(input[4].getArray()->data);
+  float32_t * vel_ptr = static_cast<float32_t *>(input[5].getArray()->data);
 
   head_out_heatmap.assign(heatmap_ptr, heatmap_ptr + head_out_heatmap.size());
   head_out_offset.assign(offset_ptr, offset_ptr + head_out_offset.size());
@@ -167,7 +170,7 @@ std::vector<Box3D> BackboneNeckHeadPostProcessor::schedule(
   head_out_rot.assign(rot_ptr, rot_ptr + head_out_rot.size());
   head_out_vel.assign(vel_ptr, vel_ptr + head_out_vel.size());
 
-  std::vector<Box3D> det_boxes3d; 
+  std::vector<Box3D> det_boxes3d;
 
   generateDetectedBoxes3D(
     head_out_heatmap.data(), head_out_offset.data(), head_out_z.data(), head_out_dim.data(),
@@ -176,20 +179,23 @@ std::vector<Box3D> BackboneNeckHeadPostProcessor::schedule(
   return det_boxes3d;
 }
 
-
 CenterPointTVM::CenterPointTVM(
   const DensificationParam & densification_param, const CenterPointConfig & config)
-: // TODO: the paths of config_ve and config_bnh may need to update in practice 
-  config_ve(model_zoo::perception::lidar_obstacle_detection::centerpoint_ve::onnx_fp32_kitti::config),
-  config_bnh(model_zoo::perception::lidar_obstacle_detection::centerpoint_bnh::onnx_fp32_kitti::config),
-  VE_PreP(std::make_shared<VE_PrePT>(config_ve, config)), 
+:  // TODO: the paths of config_ve and config_bnh may need to update in practice
+  config_ve(
+    model_zoo::perception::lidar_obstacle_detection::centerpoint_ve::onnx_fp32_kitti::config),
+  config_bnh(
+    model_zoo::perception::lidar_obstacle_detection::centerpoint_bnh::onnx_fp32_kitti::config),
+  VE_PreP(std::make_shared<VE_PrePT>(config_ve, config)),
   VE_IE(std::make_shared<IET>(config_ve)),
   VE_PostP(std::make_shared<VE_PostPT>(config_ve)),
-  ve_pipeline(std::make_shared<tvm_utility::pipeline::Pipeline<VE_PrePT, IET, VE_PostPT>>(*VE_PreP, *VE_IE, *VE_PostP)),
+  ve_pipeline(std::make_shared<tvm_utility::pipeline::Pipeline<VE_PrePT, IET, VE_PostPT>>(
+    *VE_PreP, *VE_IE, *VE_PostP)),
   BNH_PreP(std::make_shared<BNH_PrePT>(config_bnh, config)),
   BNH_IE(std::make_shared<IET>(config_bnh)),
   BNH_PostP(std::make_shared<BNH_PostPT>(config_bnh, config)),
-  bnh_pipeline(std::make_shared<tvm_utility::pipeline::Pipeline<BNH_PrePT, IET, BNH_PostPT>>(*BNH_PreP, *BNH_IE, *BNH_PostP)),
+  bnh_pipeline(std::make_shared<tvm_utility::pipeline::Pipeline<BNH_PrePT, IET, BNH_PostPT>>(
+    *BNH_PreP, *BNH_IE, *BNH_PostP)),
   config_(config)
 {
   vg_ptr_ = std::make_unique<VoxelGenerator>(densification_param, config_);

@@ -15,9 +15,8 @@
 #ifndef LIDAR_CENTERPOINT_TVM__POSTPROCESS__CIRCLE_NMS_HPP_
 #define LIDAR_CENTERPOINT_TVM__POSTPROCESS__CIRCLE_NMS_HPP_
 
-#include <lidar_centerpoint_tvm/utils.hpp>
-
 #include <common/types.hpp>
+#include <lidar_centerpoint_tvm/utils.hpp>
 
 #include <vector>
 

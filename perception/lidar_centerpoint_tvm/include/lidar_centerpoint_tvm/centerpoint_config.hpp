@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LIDAR_CENTERPOINT__CENTERPOINT_CONFIG_HPP_
-#define LIDAR_CENTERPOINT__CENTERPOINT_CONFIG_HPP_
+#ifndef LIDAR_CENTERPOINT_TVM__CENTERPOINT_CONFIG_HPP_
+#define LIDAR_CENTERPOINT_TVM__CENTERPOINT_CONFIG_HPP_
 
 #include <common/types.hpp>
 
@@ -35,11 +35,11 @@ class CenterPointConfig
 {
 public:
   explicit CenterPointConfig(
-    const std::size_t class_size, const float32_t point_feature_size, const std::size_t max_voxel_size,
-    const std::vector<float64_t> & point_cloud_range, const std::vector<float64_t> & voxel_size,
-    const std::size_t downsample_factor, const std::size_t encoder_in_feature_size,
-    const float32_t score_threshold, const float32_t circle_nms_dist_threshold,
-    const float32_t yaw_norm_threshold)
+    const std::size_t class_size, const float32_t point_feature_size,
+    const std::size_t max_voxel_size, const std::vector<float64_t> & point_cloud_range,
+    const std::vector<float64_t> & voxel_size, const std::size_t downsample_factor,
+    const std::size_t encoder_in_feature_size, const float32_t score_threshold,
+    const float32_t circle_nms_dist_threshold, const float32_t yaw_norm_threshold)
   {
     class_size_ = class_size;
     point_feature_size_ = point_feature_size;
@@ -71,7 +71,7 @@ public:
     if (yaw_norm_threshold >= 0 && yaw_norm_threshold < 1) {
       yaw_norm_threshold_ = yaw_norm_threshold;
     }
-  
+
     grid_size_x_ = static_cast<std::size_t>((range_max_x_ - range_min_x_) / voxel_size_x_);
     grid_size_y_ = static_cast<std::size_t>((range_max_y_ - range_min_y_) / voxel_size_y_);
     grid_size_z_ = static_cast<std::size_t>((range_max_z_ - range_min_z_) / voxel_size_z_);

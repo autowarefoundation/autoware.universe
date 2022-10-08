@@ -50,7 +50,7 @@ LidarCenterPointTVMNode::LidarCenterPointTVMNode(const rclcpp::NodeOptions & nod
     this->declare_parameter("densification_world_frame_id", "map");
   const int32_t densification_num_past_frames =
     this->declare_parameter("densification_num_past_frames", 1);
-  
+
   class_names_ = this->declare_parameter<std::vector<std::string>>("class_names");
   rename_car_to_truck_and_bus_ = this->declare_parameter("rename_car_to_truck_and_bus", false);
   has_twist_ = this->declare_parameter("has_twist", false);
@@ -83,8 +83,7 @@ LidarCenterPointTVMNode::LidarCenterPointTVMNode(const rclcpp::NodeOptions & nod
     class_names_.size(), point_feature_size, max_voxel_size, point_cloud_range, voxel_size,
     downsample_factor, encoder_in_feature_size, score_threshold, circle_nms_dist_threshold,
     yaw_norm_threshold);
-  detector_ptr_ =
-    std::make_unique<CenterPointTVM>(densification_param, config);
+  detector_ptr_ = std::make_unique<CenterPointTVM>(densification_param, config);
 
   pointcloud_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "~/input/pointcloud", rclcpp::SensorDataQoS{}.keep_last(1),
@@ -150,4 +149,5 @@ void LidarCenterPointTVMNode::pointCloudCallback(
 }  // namespace autoware
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(autoware::perception::lidar_centerpoint_tvm::LidarCenterPointTVMNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(
+  autoware::perception::lidar_centerpoint_tvm::LidarCenterPointTVMNode)

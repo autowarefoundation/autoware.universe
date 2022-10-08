@@ -15,13 +15,13 @@
 #ifndef LIDAR_CENTERPOINT_TVM__ROS_UTILS_HPP_
 #define LIDAR_CENTERPOINT_TVM__ROS_UTILS_HPP_
 
+#include <common/types.hpp>
 #include <lidar_centerpoint_tvm/utils.hpp>
 
 #include <autoware_auto_perception_msgs/msg/detected_object_kinematics.hpp>
 #include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
 #include <autoware_auto_perception_msgs/msg/object_classification.hpp>
 #include <autoware_auto_perception_msgs/msg/shape.hpp>
-#include <common/types.hpp>
 
 #include <string>
 #include <vector>

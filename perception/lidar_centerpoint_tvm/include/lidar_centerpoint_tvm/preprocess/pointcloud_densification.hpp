@@ -15,9 +15,8 @@
 #ifndef LIDAR_CENTERPOINT_TVM__PREPROCESS__POINTCLOUD_DENSIFICATION_HPP_
 #define LIDAR_CENTERPOINT_TVM__PREPROCESS__POINTCLOUD_DENSIFICATION_HPP_
 
-#include <lidar_centerpoint_tvm/visibility_control.hpp>
-
 #include <common/types.hpp>
+#include <lidar_centerpoint_tvm/visibility_control.hpp>
 
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>

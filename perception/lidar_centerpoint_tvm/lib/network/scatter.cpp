@@ -32,19 +32,21 @@ namespace lidar_centerpoint_tvm
 
 void scatterFeatures_worker(
   const float32_t * pillar_features, const int32_t * coords, const std::size_t num_pillars,
-  const CenterPointConfig & config, float32_t * scattered_features, 
-  std::size_t thread_idx, std::size_t pillars_per_thread)
+  const CenterPointConfig & config, float32_t * scattered_features, std::size_t thread_idx,
+  std::size_t pillars_per_thread)
 {
   // pillar_features: shape of max_num_pillars * encoder_out_feature_size
   // coords: shape of max_num_pillars * 3
   // scattered_features: shape of encoder_out_feature_size * grid_size_y * grid_size_x
 
-  for(std::size_t idx = 0; idx < pillars_per_thread; idx++){
+  for (std::size_t idx = 0; idx < pillars_per_thread; idx++) {
     std::size_t pillar_idx = thread_idx * pillars_per_thread + idx;
     if (pillar_idx >= num_pillars) return;
 
     // 3D position(z,y,x) of the voxel/pillar
-    int32_t coord[3] = {coords[pillar_idx*3], coords[pillar_idx*3+1], coords[pillar_idx*3+2]};
+    int32_t coord[3] = {
+      coords[pillar_idx * 3], coords[pillar_idx * 3 + 1],
+      coords[pillar_idx * 3 + 2]};
     if (coord[0] < 0) return; // if coord.z < 0 return
 
     for(std::size_t inner_idx = 0; inner_idx < config.encoder_out_feature_size_; inner_idx++){
@@ -64,8 +66,9 @@ void scatterFeatures(
   std::vector<std::thread> threadPool;
   std::size_t pillars_per_thread = divup(config.max_voxel_size_, THREAD_NUM_SCATTER);
   for (std::size_t idx = 0; idx < THREAD_NUM_SCATTER; idx++) {
-    std::thread worker(scatterFeatures_worker, pillar_features, coords, num_pillars, 
-      std::ref(config), scattered_features, idx, pillars_per_thread);
+    std::thread worker(
+      scatterFeatures_worker, pillar_features, coords, num_pillars, std::ref(config),
+      scattered_features, idx, pillars_per_thread);
     threadPool.push_back(std::move(worker));
   }
   for (std::size_t idx = 0; idx < THREAD_NUM_SCATTER; idx++) {
