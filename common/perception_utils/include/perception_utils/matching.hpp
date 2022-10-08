@@ -101,8 +101,7 @@ double get2dPrecision(const T1 source_object, const T2 target_object)
   if (intersection_area == 0.0) return 0.0;
   double source_area = boost::geometry::area(source_polygon);
 
-  const double precision = std::min(1.0, intersection_area / source_area);
-  return precision;
+  return std::min(1.0, intersection_area / source_area);
 }
 
 template <class T1, class T2>
@@ -115,8 +114,7 @@ double get2dRecall(const T1 source_object, const T2 target_object)
   if (intersection_area == 0.0) return 0.0;
   double target_area = boost::geometry::area(target_polygon);
 
-  const double recall = std::min(1.0, intersection_area / target_area);
-  return recall;
+  return std::min(1.0, intersection_area / target_area);
 }
 }  // namespace perception_utils
 
