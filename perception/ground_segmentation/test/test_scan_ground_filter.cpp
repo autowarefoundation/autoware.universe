@@ -113,8 +113,10 @@ public:
   void parse_yaml()
   {
     const auto share_dir = ament_index_cpp::get_package_share_directory("tier4_perception_launch");
-    const auto config_path = share_dir + "/config/obstacle_segmentation/ground_segmentation/ground_segmentation.param.yaml";
-    std::cout<<"config_path:"<<config_path<<std::endl;
+    const auto config_path =
+      share_dir +
+      "/config/obstacle_segmentation/ground_segmentation/ground_segmentation.param.yaml";
+    std::cout << "config_path:" << config_path << std::endl;
     YAML::Node config = YAML::LoadFile(config_path);
     auto params = config["/**"]["ros__parameters"]["common_ground_filter"]["parameters"];
     global_slope_max_angle_deg_ = params["global_slope_max_angle_deg"].as<float>();
@@ -135,10 +137,14 @@ TEST_F(ScanGroundFilterTest, TestCase1)
   sensor_msgs::msg::PointCloud2 out_cloud;
 
   // set filter parameter
-  scan_ground_filter_->set_parameter(rclcpp::Parameter("global_slope_max_angle_deg", global_slope_max_angle_deg_));
-  scan_ground_filter_->set_parameter(rclcpp::Parameter("local_slope_max_angle_deg", local_slope_max_angle_deg_));
-  scan_ground_filter_->set_parameter(rclcpp::Parameter("split_points_distance_tolerance", split_points_distance_tolerance_));
-  scan_ground_filter_->set_parameter(rclcpp::Parameter("split_height_distance", split_height_distance_));
+  scan_ground_filter_->set_parameter(
+    rclcpp::Parameter("global_slope_max_angle_deg", global_slope_max_angle_deg_));
+  scan_ground_filter_->set_parameter(
+    rclcpp::Parameter("local_slope_max_angle_deg", local_slope_max_angle_deg_));
+  scan_ground_filter_->set_parameter(
+    rclcpp::Parameter("split_points_distance_tolerance", split_points_distance_tolerance_));
+  scan_ground_filter_->set_parameter(
+    rclcpp::Parameter("split_height_distance", split_height_distance_));
 
   filter(out_cloud);
   output_pointcloud_pub_->publish(out_cloud);

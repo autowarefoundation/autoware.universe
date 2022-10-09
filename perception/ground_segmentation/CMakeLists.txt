@@ -78,7 +78,7 @@ link_directories(${YAML_CPP_LIBRARY_DIRS})
 if(NOT ${YAML_CPP_VERSION} VERSION_LESS "0.5")
   add_definitions(-DHAVE_NEW_YAMLCPP)
 endif(NOT ${YAML_CPP_VERSION} VERSION_LESS "0.5")
-             
+
 
 if(BUILD_TESTING)
   find_package(ament_cmake_ros REQUIRED)
