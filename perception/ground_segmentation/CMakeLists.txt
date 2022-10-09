@@ -62,6 +62,23 @@ ament_auto_package(INSTALL_TO_SHARE
   test/data
 )
 
+# Resolve system dependency on yaml-cpp, which apparently does not
+# provide a CMake find_package() module.
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(YAML_CPP REQUIRED yaml-cpp)
+find_path(YAML_CPP_INCLUDE_DIR
+          NAMES yaml_cpp.h
+          PATHS ${YAML_CPP_INCLUDE_DIRS})
+find_library(YAML_CPP_LIBRARY
+             NAMES YAML_CPP
+             PATHS ${YAML_CPP_LIBRARY_DIRS})
+
+link_directories(${YAML_CPP_LIBRARY_DIRS})
+
+if(NOT ${YAML_CPP_VERSION} VERSION_LESS "0.5")
+  add_definitions(-DHAVE_NEW_YAMLCPP)
+endif(NOT ${YAML_CPP_VERSION} VERSION_LESS "0.5")
+             
 
 if(BUILD_TESTING)
   find_package(ament_cmake_ros REQUIRED)
@@ -79,5 +96,6 @@ if(BUILD_TESTING)
 
   target_link_libraries(test_scan_ground_filter
     ground_segmentation
+    ${YAML_CPP_LIBRARIES}
   )
 endif()

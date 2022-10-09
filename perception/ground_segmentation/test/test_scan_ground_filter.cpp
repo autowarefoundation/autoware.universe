@@ -29,6 +29,8 @@
 #include <tf2_sensor_msgs/tf2_sensor_msgs.hpp>
 #endif
 
+#include <yaml-cpp/yaml.h>
+
 class ScanGroundFilterTest : public ::testing::Test
 {
 protected:
@@ -86,6 +88,8 @@ protected:
     t.transform.rotation.w = q.w();
 
     tf2::doTransform(*origin_input_msg_ptr, *input_msg_ptr_, t);
+
+    parse_yaml();
   }
 
   ScanGroundFilterTest() {}
@@ -105,6 +109,24 @@ public:
   {
     scan_ground_filter_->filter(input_msg_ptr_, nullptr, out_cloud);
   }
+
+  void parse_yaml()
+  {
+    const auto share_dir = ament_index_cpp::get_package_share_directory("tier4_perception_launch");
+    const auto config_path = share_dir + "/config/obstacle_segmentation/ground_segmentation/ground_segmentation.param.yaml";
+    std::cout<<"config_path:"<<config_path<<std::endl;
+    YAML::Node config = YAML::LoadFile(config_path);
+    auto params = config["/**"]["ros__parameters"]["common_ground_filter"]["parameters"];
+    global_slope_max_angle_deg_ = params["global_slope_max_angle_deg"].as<float>();
+    local_slope_max_angle_deg_ = params["local_slope_max_angle_deg"].as<float>();
+    split_points_distance_tolerance_ = params["split_points_distance_tolerance"].as<float>();
+    split_height_distance_ = params["split_height_distance"].as<float>();
+  }
+
+  float global_slope_max_angle_deg_ = 0.0;
+  float local_slope_max_angle_deg_ = 0.0;
+  float split_points_distance_tolerance_ = 0.0;
+  float split_height_distance_ = 0.0;
 };
 
 TEST_F(ScanGroundFilterTest, TestCase1)
@@ -113,10 +135,10 @@ TEST_F(ScanGroundFilterTest, TestCase1)
   sensor_msgs::msg::PointCloud2 out_cloud;
 
   // set filter parameter
-  scan_ground_filter_->set_parameter(rclcpp::Parameter("global_slope_max_angle_deg", 10.0));
-  scan_ground_filter_->set_parameter(rclcpp::Parameter("local_slope_max_angle_deg", 30.0));
-  scan_ground_filter_->set_parameter(rclcpp::Parameter("split_points_distance_tolerance", 0.2));
-  scan_ground_filter_->set_parameter(rclcpp::Parameter("split_height_distance", 0.2));
+  scan_ground_filter_->set_parameter(rclcpp::Parameter("global_slope_max_angle_deg", global_slope_max_angle_deg_));
+  scan_ground_filter_->set_parameter(rclcpp::Parameter("local_slope_max_angle_deg", local_slope_max_angle_deg_));
+  scan_ground_filter_->set_parameter(rclcpp::Parameter("split_points_distance_tolerance", split_points_distance_tolerance_));
+  scan_ground_filter_->set_parameter(rclcpp::Parameter("split_height_distance", split_height_distance_));
 
   filter(out_cloud);
   output_pointcloud_pub_->publish(out_cloud);
