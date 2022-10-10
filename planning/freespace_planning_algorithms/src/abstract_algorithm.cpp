@@ -133,7 +133,8 @@ void AbstractPlanningAlgorithm::computeCollisionIndexes(
   const auto base_theta = tf2::getYaw(base_pose.orientation);
 
   // Convert each point to index and check if the node is Obstacle
-  const auto addIndex2d = [&](const double x, const double y, std::vector<IndexXY> & indexes_cache) {
+  const auto addIndex2d = [&](
+                            const double x, const double y, std::vector<IndexXY> & indexes_cache) {
     // Calculate offset in rotated frame
     const double offset_x = std::cos(base_theta) * x - std::sin(base_theta) * y;
     const double offset_y = std::sin(base_theta) * x + std::cos(base_theta) * y;
@@ -161,8 +162,7 @@ void AbstractPlanningAlgorithm::computeCollisionIndexes(
   const auto compareIndex2d = [](const IndexXY & left, const IndexXY & right) {
     if (left.x != right.x) {
       return (left.x < right.x);
-    }
-    else {
+    } else {
       return (left.y < right.y);
     }
   };
@@ -173,7 +173,8 @@ void AbstractPlanningAlgorithm::computeCollisionIndexes(
 
   // remove duplicate indexes
   std::sort(indexes_2d.begin(), indexes_2d.end(), compareIndex2d);
-  indexes_2d.erase(std::unique(indexes_2d.begin(), indexes_2d.end(), equalIndex2d), indexes_2d.end());
+  indexes_2d.erase(
+    std::unique(indexes_2d.begin(), indexes_2d.end(), equalIndex2d), indexes_2d.end());
 
   addIndex2d(front, left, vertex_indexes_2d);
   addIndex2d(front, right, vertex_indexes_2d);

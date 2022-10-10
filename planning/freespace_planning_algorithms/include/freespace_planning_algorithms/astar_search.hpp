@@ -27,8 +27,8 @@
 #include <queue>
 #include <string>
 #include <tuple>
-#include <vector>
 #include <unordered_map>
+#include <vector>
 
 namespace freespace_planning_algorithms
 {
@@ -108,7 +108,6 @@ public:
 
   AstarSearch(const PlannerCommonParam & planner_common_param, const AstarParam & astar_param);
 
-
   void setMap(const nav_msgs::msg::OccupancyGrid & costmap) override;
   bool makePlan(
     const geometry_msgs::msg::Pose & start_pose,
@@ -117,7 +116,10 @@ public:
 
   const PlannerWaypoints & getWaypoints() const { return waypoints_; }
 
-  inline int getKey(const IndexXYT & index) { return (index.theta + (index.y * x_scale_ + index.x) * y_scale_); }
+  inline int getKey(const IndexXYT & index)
+  {
+    return (index.theta + (index.y * x_scale_ + index.x) * y_scale_);
+  }
 
 private:
   bool search();
@@ -128,7 +130,10 @@ private:
   double estimateCost(const geometry_msgs::msg::Pose & pose);
   bool isGoal(const AstarNode & node);
 
-  AstarNode * getNodeRef(const IndexXYT & index) { return &(graph_.emplace(getKey(index), AstarNode()).first->second); }
+  AstarNode * getNodeRef(const IndexXYT & index)
+  {
+    return &(graph_.emplace(getKey(index), AstarNode()).first->second);
+  }
 
   // Algorithm specific param
   AstarParam astar_param_;
@@ -144,7 +149,7 @@ private:
 
   // distance metric option (removed when the reeds_shepp gets stable)
   bool use_reeds_shepp_;
-  
+
   int x_scale_;
   int y_scale_;
 };

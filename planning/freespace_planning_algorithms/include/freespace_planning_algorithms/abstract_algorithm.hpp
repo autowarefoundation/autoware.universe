@@ -116,7 +116,8 @@ public:
   virtual ~AbstractPlanningAlgorithm() {}
 
 protected:
-  void computeCollisionIndexes(int theta_index, std::vector<IndexXY> & indexes, std::vector<IndexXY> & vertex_indexes_2d);
+  void computeCollisionIndexes(
+    int theta_index, std::vector<IndexXY> & indexes, std::vector<IndexXY> & vertex_indexes_2d);
   bool detectCollision(const IndexXYT & base_index);
   inline bool isOutOfRange(const IndexXYT & index)
   {
