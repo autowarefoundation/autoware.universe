@@ -33,7 +33,7 @@ TEST(EKFCovarianceToPoseMessageCovariance, SmokeTest)
     std::array<double, 36> covariance = ekfCovarianceToPoseMessageCovariance(P);
     EXPECT_EQ(covariance(0), 1.);
     EXPECT_EQ(covariance(1), 2.);
-    EXPECT_EQ(covariance(2), 3.);
+    EXPECT_EQ(covariance(5), 3.);
     EXPECT_EQ(covariance(6), 4.);
     EXPECT_EQ(covariance(7), 5.);
     EXPECT_EQ(covariance(11), 6.);
