@@ -40,6 +40,10 @@ repositories:
     type: git
     url: https://github.com/tier4/autoware_individual_params.git
     version: main
+  autoware/ml_model_provider:
+    type: git
+    url: git@github.com:tier4/ml_model_provider.git
+    version: main
   # description
   description/sensor/sensor_component_description:
     type: git
