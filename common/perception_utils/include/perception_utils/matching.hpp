@@ -96,9 +96,9 @@ double get2dPrecision(const T1 source_object, const T2 target_object)
   const auto source_polygon = tier4_autoware_utils::toPolygon2d(source_object);
   const auto target_polygon = tier4_autoware_utils::toPolygon2d(target_object);
 
-  double intersection_area = getIntersectionArea(source_polygon, target_polygon);
+  const double intersection_area = getIntersectionArea(source_polygon, target_polygon);
   if (intersection_area == 0.0) return 0.0;
-  double source_area = boost::geometry::area(source_polygon);
+  const double source_area = boost::geometry::area(source_polygon);
 
   return std::min(1.0, intersection_area / source_area);
 }
@@ -109,9 +109,9 @@ double get2dRecall(const T1 source_object, const T2 target_object)
   const auto source_polygon = tier4_autoware_utils::toPolygon2d(source_object);
   const auto target_polygon = tier4_autoware_utils::toPolygon2d(target_object);
 
-  double intersection_area = getIntersectionArea(source_polygon, target_polygon);
+  const double intersection_area = getIntersectionArea(source_polygon, target_polygon);
   if (intersection_area == 0.0) return 0.0;
-  double target_area = boost::geometry::area(target_polygon);
+  const double target_area = boost::geometry::area(target_polygon);
 
   return std::min(1.0, intersection_area / target_area);
 }
