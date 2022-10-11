@@ -40,9 +40,9 @@ void PartialMapLoaderModule::partialAreaLoad(
     // skip if the pcd file is not within the queried area
     if (!isGridWithinQueriedArea(area, metadata)) continue;
 
-    autoware_map_msgs::msg::PointCloudMapCellWithID pointcloud_cell_with_id = 
+    autoware_map_msgs::msg::PointCloudMapCellWithID pointcloud_map_cell_with_id = 
       loadPointCloudMapCellWithID(path, map_id, metadata.min, metadata.max);
-    response->new_pointcloud_with_ids.push_back(pointcloud_cell_with_id);
+    response->new_pointcloud_with_ids.push_back(pointcloud_map_cell_with_id);
   }
 }
 
@@ -63,14 +63,14 @@ autoware_map_msgs::msg::PointCloudMapCellWithID PartialMapLoaderModule::loadPoin
   if (pcl::io::loadPCDFile(path, pcd) == -1) {
     RCLCPP_ERROR_STREAM(logger_, "PCD load failed: " << path);
   }
-  autoware_map_msgs::msg::PointCloudMapCellWithID pointcloud_cell_with_id;
-  pointcloud_cell_with_id.pointcloud = pcd;
-  pointcloud_cell_with_id.cell_id = map_id;
-  pointcloud_cell_with_id.min_point.x = min_point.x;
-  pointcloud_cell_with_id.min_point.y = min_point.y;
-  pointcloud_cell_with_id.min_point.z = min_point.z;
-  pointcloud_cell_with_id.max_point.x = max_point.x;
-  pointcloud_cell_with_id.max_point.y = max_point.y;
-  pointcloud_cell_with_id.max_point.z = max_point.z;
-  return pointcloud_cell_with_id;
+  autoware_map_msgs::msg::PointCloudMapCellWithID pointcloud_map_cell_with_id;
+  pointcloud_map_cell_with_id.pointcloud = pcd;
+  pointcloud_map_cell_with_id.cell_id = map_id;
+  pointcloud_map_cell_with_id.min_point.x = min_point.x;
+  pointcloud_map_cell_with_id.min_point.y = min_point.y;
+  pointcloud_map_cell_with_id.min_point.z = min_point.z;
+  pointcloud_map_cell_with_id.max_point.x = max_point.x;
+  pointcloud_map_cell_with_id.max_point.y = max_point.y;
+  pointcloud_map_cell_with_id.max_point.z = max_point.z;
+  return pointcloud_map_cell_with_id;
 }
