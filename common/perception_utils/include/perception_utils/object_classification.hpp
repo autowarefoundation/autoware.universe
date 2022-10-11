@@ -29,7 +29,7 @@ inline ObjectClassification getHighestProbClassification(
   auto highest_prob_iter = std::max_element(
     std::begin(object_classifications), std::end(object_classifications),
     [](const ObjectClassification & a, const ObjectClassification & b) {
-      return a.probability < b.probability
+      return a.probability < b.probability;
     });
   return *highest_prob_iter;
 }
