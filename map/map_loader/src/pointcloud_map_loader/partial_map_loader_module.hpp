@@ -44,7 +44,7 @@ private:
   rclcpp::Logger logger_;
 
   std::map<std::string, PCDFileMetadata> all_pcd_file_metadata_dict_;
-  rclcpp::Service<GetPartialPointCloudMap>::SharedPtr load_partial_pcd_maps_service_;
+  rclcpp::Service<GetPartialPointCloudMap>::SharedPtr get_partial_pcd_maps_service_;
 
   bool onServiceGetPartialPointCloudMap(
     GetPartialPointCloudMap::Request::SharedPtr req,

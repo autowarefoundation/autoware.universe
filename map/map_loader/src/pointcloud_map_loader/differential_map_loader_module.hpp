@@ -44,7 +44,7 @@ private:
   rclcpp::Logger logger_;
 
   std::map<std::string, PCDFileMetadata> all_pcd_file_metadata_dict_;
-  rclcpp::Service<GetDifferentialPointCloudMap>::SharedPtr load_differential_pcd_maps_service_;
+  rclcpp::Service<GetDifferentialPointCloudMap>::SharedPtr get_differential_pcd_maps_service_;
 
   bool onServiceGetDifferentialPointCloudMap(
     GetDifferentialPointCloudMap::Request::SharedPtr req,
