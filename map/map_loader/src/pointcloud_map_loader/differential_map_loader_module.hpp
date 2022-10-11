@@ -19,7 +19,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include "autoware_map_msgs/srv/load_differential_point_cloud_map.hpp"
+#include "autoware_map_msgs/srv/get_differential_point_cloud_map.hpp"
 
 #include <pcl/common/common.h>
 #include <pcl/filters/voxel_grid.h>
@@ -34,7 +34,7 @@
 
 class DifferentialMapLoaderModule
 {
-  using LoadDifferentialPointCloudMap = autoware_map_msgs::srv::LoadDifferentialPointCloudMap;
+  using GetDifferentialPointCloudMap = autoware_map_msgs::srv::GetDifferentialPointCloudMap;
 
 public:
   explicit DifferentialMapLoaderModule(
@@ -44,18 +44,18 @@ private:
   rclcpp::Logger logger_;
 
   std::map<std::string, PCDFileMetadata> all_pcd_file_metadata_dict_;
-  rclcpp::Service<LoadDifferentialPointCloudMap>::SharedPtr load_differential_pcd_maps_service_;
+  rclcpp::Service<GetDifferentialPointCloudMap>::SharedPtr load_differential_pcd_maps_service_;
 
-  bool onServiceLoadDifferentialPointCloudMap(
-    LoadDifferentialPointCloudMap::Request::SharedPtr req,
-    LoadDifferentialPointCloudMap::Response::SharedPtr res);
+  bool onServiceGetDifferentialPointCloudMap(
+    GetDifferentialPointCloudMap::Request::SharedPtr req,
+    GetDifferentialPointCloudMap::Response::SharedPtr res);
   void differentialAreaLoad(
     const autoware_map_msgs::msg::AreaInfo area_info,
-    const std::vector<std::string> already_loaded_ids,
-    LoadDifferentialPointCloudMap::Response::SharedPtr & response) const;
-  void loadPointCloudMapWithID(
+    const std::vector<std::string> cached_ids,
+    GetDifferentialPointCloudMap::Response::SharedPtr & response) const;
+  autoware_map_msgs::msg::PointCloudMapCellWithID loadPointCloudMapCellWithID(
     const std::string path, const std::string map_id,
-    autoware_map_msgs::msg::PointCloudMapWithID & pcd_map_with_id) const;
+    const pcl::PointXYZ min_point, const pcl::PointXYZ max_point) const;
 };
 
 #endif  // POINTCLOUD_MAP_LOADER__DIFFERENTIAL_MAP_LOADER_MODULE_HPP_

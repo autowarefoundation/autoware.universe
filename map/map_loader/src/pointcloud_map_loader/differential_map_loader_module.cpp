@@ -18,19 +18,19 @@ DifferentialMapLoaderModule::DifferentialMapLoaderModule(
   rclcpp::Node * node, const std::map<std::string, PCDFileMetadata> & pcd_file_metadata_dict)
 : logger_(node->get_logger()), all_pcd_file_metadata_dict_(pcd_file_metadata_dict)
 {
-  load_differential_pcd_maps_service_ = node->create_service<LoadDifferentialPointCloudMap>(
+  load_differential_pcd_maps_service_ = node->create_service<GetDifferentialPointCloudMap>(
     "service/load_differential_pcd_map",
     std::bind(
-      &DifferentialMapLoaderModule::onServiceLoadDifferentialPointCloudMap, this,
+      &DifferentialMapLoaderModule::onServiceGetDifferentialPointCloudMap, this,
       std::placeholders::_1, std::placeholders::_2));
 }
 
 void DifferentialMapLoaderModule::differentialAreaLoad(
-  const autoware_map_msgs::msg::AreaInfo area, const std::vector<std::string> already_loaded_ids,
-  LoadDifferentialPointCloudMap::Response::SharedPtr & response) const
+  const autoware_map_msgs::msg::AreaInfo area, const std::vector<std::string> cached_ids,
+  GetDifferentialPointCloudMap::Response::SharedPtr & response) const
 {
   // iterate over all the available pcd map grids
-  std::vector<bool> should_remove(int(already_loaded_ids.size()), true);
+  std::vector<bool> should_remove(int(cached_ids.size()), true);
   for (const auto & ele : all_pcd_file_metadata_dict_) {
     std::string path = ele.first;
     PCDFileMetadata metadata = ele.second;
@@ -42,44 +42,52 @@ void DifferentialMapLoaderModule::differentialAreaLoad(
     if (!isGridWithinQueriedArea(area, metadata)) continue;
 
     auto id_in_already_loaded_list =
-      std::find(already_loaded_ids.begin(), already_loaded_ids.end(), map_id);
-    if (id_in_already_loaded_list != already_loaded_ids.end()) {
-      int index = id_in_already_loaded_list - already_loaded_ids.begin();
+      std::find(cached_ids.begin(), cached_ids.end(), map_id);
+    if (id_in_already_loaded_list != cached_ids.end()) {
+      int index = id_in_already_loaded_list - cached_ids.begin();
       should_remove[index] = false;
     } else {
-      autoware_map_msgs::msg::PointCloudMapWithID pcd_map_with_id;
-      loadPointCloudMapWithID(path, map_id, pcd_map_with_id);
-      response->loaded_pcds.push_back(pcd_map_with_id);
+      autoware_map_msgs::msg::PointCloudMapCellWithID pointcloud_cell_with_id = 
+        loadPointCloudMapCellWithID(path, map_id, metadata.min, metadata.max);
+      response->new_pointcloud_with_ids.push_back(pointcloud_cell_with_id);
     }
   }
 
-  for (int i = 0; i < int(already_loaded_ids.size()); ++i) {
+  for (int i = 0; i < int(cached_ids.size()); ++i) {
     if (should_remove[i]) {
-      response->ids_to_remove.push_back(already_loaded_ids[i]);
+      response->ids_to_remove.push_back(cached_ids[i]);
     }
   }
 
   RCLCPP_INFO_STREAM(logger_, "Finished diff area loading");
 }
 
-bool DifferentialMapLoaderModule::onServiceLoadDifferentialPointCloudMap(
-  LoadDifferentialPointCloudMap::Request::SharedPtr req,
-  LoadDifferentialPointCloudMap::Response::SharedPtr res)
+bool DifferentialMapLoaderModule::onServiceGetDifferentialPointCloudMap(
+  GetDifferentialPointCloudMap::Request::SharedPtr req,
+  GetDifferentialPointCloudMap::Response::SharedPtr res)
 {
   auto area = req->area;
-  std::vector<std::string> already_loaded_ids = req->already_loaded_ids;
-  differentialAreaLoad(area, already_loaded_ids, res);
+  std::vector<std::string> cached_ids = req->cached_ids;
+  differentialAreaLoad(area, cached_ids, res);
   return true;
 }
 
-void DifferentialMapLoaderModule::loadPointCloudMapWithID(
+autoware_map_msgs::msg::PointCloudMapCellWithID DifferentialMapLoaderModule::loadPointCloudMapCellWithID(
   const std::string path, const std::string map_id,
-  autoware_map_msgs::msg::PointCloudMapWithID & pcd_map_with_id) const
+  const pcl::PointXYZ min_point, const pcl::PointXYZ max_point) const
 {
   sensor_msgs::msg::PointCloud2 pcd;
   if (pcl::io::loadPCDFile(path, pcd) == -1) {
     RCLCPP_ERROR_STREAM(logger_, "PCD load failed: " << path);
   }
-  pcd_map_with_id.pointcloud = pcd;
-  pcd_map_with_id.id = map_id;
+  autoware_map_msgs::msg::PointCloudMapCellWithID pointcloud_cell_with_id;
+  pointcloud_cell_with_id.pointcloud = pcd;
+  pointcloud_cell_with_id.cell_id = map_id;
+  pointcloud_cell_with_id.min_point.x = min_point.x;
+  pointcloud_cell_with_id.min_point.y = min_point.y;
+  pointcloud_cell_with_id.min_point.z = min_point.z;
+  pointcloud_cell_with_id.max_point.x = max_point.x;
+  pointcloud_cell_with_id.max_point.y = max_point.y;
+  pointcloud_cell_with_id.max_point.z = max_point.z;
+  return pointcloud_cell_with_id;
 }

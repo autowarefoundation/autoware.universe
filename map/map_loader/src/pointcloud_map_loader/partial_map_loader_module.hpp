@@ -19,7 +19,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include "autoware_map_msgs/srv/load_partial_point_cloud_map.hpp"
+#include "autoware_map_msgs/srv/get_partial_point_cloud_map.hpp"
 
 #include <pcl/common/common.h>
 #include <pcl/filters/voxel_grid.h>
@@ -34,7 +34,7 @@
 
 class PartialMapLoaderModule
 {
-  using LoadPartialPointCloudMap = autoware_map_msgs::srv::LoadPartialPointCloudMap;
+  using GetPartialPointCloudMap = autoware_map_msgs::srv::GetPartialPointCloudMap;
 
 public:
   explicit PartialMapLoaderModule(
@@ -44,17 +44,17 @@ private:
   rclcpp::Logger logger_;
 
   std::map<std::string, PCDFileMetadata> all_pcd_file_metadata_dict_;
-  rclcpp::Service<LoadPartialPointCloudMap>::SharedPtr load_partial_pcd_maps_service_;
+  rclcpp::Service<GetPartialPointCloudMap>::SharedPtr load_partial_pcd_maps_service_;
 
-  bool onServiceLoadPartialPointCloudMap(
-    LoadPartialPointCloudMap::Request::SharedPtr req,
-    LoadPartialPointCloudMap::Response::SharedPtr res);
+  bool onServiceGetPartialPointCloudMap(
+    GetPartialPointCloudMap::Request::SharedPtr req,
+    GetPartialPointCloudMap::Response::SharedPtr res);
   void partialAreaLoad(
     const autoware_map_msgs::msg::AreaInfo area,
-    LoadPartialPointCloudMap::Response::SharedPtr & response) const;
-  void loadPointCloudMapWithID(
+    GetPartialPointCloudMap::Response::SharedPtr & response) const;
+  autoware_map_msgs::msg::PointCloudMapCellWithID loadPointCloudMapCellWithID(
     const std::string path, const std::string map_id,
-    autoware_map_msgs::msg::PointCloudMapWithID & pcd_map_with_id) const;
+    const pcl::PointXYZ min_point, const pcl::PointXYZ max_point) const;
 };
 
 #endif  // POINTCLOUD_MAP_LOADER__PARTIAL_MAP_LOADER_MODULE_HPP_
