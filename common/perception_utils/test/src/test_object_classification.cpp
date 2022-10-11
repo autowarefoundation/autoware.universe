@@ -36,28 +36,63 @@ TEST(object_classification, test_getHighestProbLabel)
   using perception_utils::getHighestProbLabel;
 
   {  // empty
-    std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> classification;
-    std::uint8_t label = getHighestProbLabel(classification);
+    std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> classifications;
+    std::uint8_t label = getHighestProbLabel(classifications);
     EXPECT_EQ(label, ObjectClassification::UNKNOWN);
   }
 
   {  // normal case
-    std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> classification;
-    classification.push_back(createObjectClassification(ObjectClassification::CAR, 0.5));
-    classification.push_back(createObjectClassification(ObjectClassification::TRUCK, 0.8));
-    classification.push_back(createObjectClassification(ObjectClassification::BUS, 0.7));
+    std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> classifications;
+    classifications.push_back(createObjectClassification(ObjectClassification::CAR, 0.5));
+    classifications.push_back(createObjectClassification(ObjectClassification::TRUCK, 0.8));
+    classifications.push_back(createObjectClassification(ObjectClassification::BUS, 0.7));
 
-    std::uint8_t label = getHighestProbLabel(classification);
+    std::uint8_t label = getHighestProbLabel(classifications);
     EXPECT_EQ(label, ObjectClassification::TRUCK);
   }
 
   {  // labels with the same probability
-    std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> classification;
-    classification.push_back(createObjectClassification(ObjectClassification::CAR, 0.8));
-    classification.push_back(createObjectClassification(ObjectClassification::TRUCK, 0.8));
-    classification.push_back(createObjectClassification(ObjectClassification::BUS, 0.7));
+    std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> classifications;
+    classifications.push_back(createObjectClassification(ObjectClassification::CAR, 0.8));
+    classifications.push_back(createObjectClassification(ObjectClassification::TRUCK, 0.8));
+    classifications.push_back(createObjectClassification(ObjectClassification::BUS, 0.7));
 
-    std::uint8_t label = getHighestProbLabel(classification);
+    std::uint8_t label = getHighestProbLabel(classifications);
     EXPECT_EQ(label, ObjectClassification::CAR);
+  }
+}
+
+TEST(object_classification, test_getHighestProbClassification)
+{
+  using autoware_auto_perception_msgs::msg::ObjectClassification;
+  using perception_utils::getHighestProbClassification;
+
+  {  // empty
+    std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> classifications;
+    auto classification = getHighestProbClassification(classifications);
+    EXPECT_EQ(classification.label, ObjectClassification::UNKNOWN);
+    EXPECT_EQ(classification.probability, 0.0);
+  }
+
+  {  // normal case
+    std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> classifications;
+    classifications.push_back(createObjectClassification(ObjectClassification::CAR, 0.5));
+    classifications.push_back(createObjectClassification(ObjectClassification::TRUCK, 0.8));
+    classifications.push_back(createObjectClassification(ObjectClassification::BUS, 0.7));
+
+    auto classification = getHighestProbClassification(classifications);
+    EXPECT_EQ(classification.label, ObjectClassification::TRUCK);
+    EXPECT_EQ(classification.probability, 0.8);
+  }
+
+  {  // labels with the same probability
+    std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> classifications;
+    classifications.push_back(createObjectClassification(ObjectClassification::CAR, 0.8));
+    classifications.push_back(createObjectClassification(ObjectClassification::TRUCK, 0.8));
+    classifications.push_back(createObjectClassification(ObjectClassification::BUS, 0.7));
+
+    auto classification = getHighestProbClassification(classifications);
+    EXPECT_EQ(classification.label, ObjectClassification::CAR);
+    EXPECT_EQ(classification.probability, 0.8);
   }
 }
