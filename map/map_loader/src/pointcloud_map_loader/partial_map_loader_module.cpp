@@ -20,8 +20,8 @@ PartialMapLoaderModule::PartialMapLoaderModule(
 {
   get_partial_pcd_maps_service_ = node->create_service<GetPartialPointCloudMap>(
     "service/get_partial_pcd_map", std::bind(
-                                      &PartialMapLoaderModule::onServiceGetPartialPointCloudMap,
-                                      this, std::placeholders::_1, std::placeholders::_2));
+                                     &PartialMapLoaderModule::onServiceGetPartialPointCloudMap,
+                                     this, std::placeholders::_1, std::placeholders::_2));
 }
 
 void PartialMapLoaderModule::partialAreaLoad(
