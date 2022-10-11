@@ -28,11 +28,10 @@ inline ObjectClassification getHighestProbClassification(
 {
   if (object_classifications.empty()) {
     return ObjectClassification{};
-  } else {
-    return *std::max_element(
-      std::begin(object_classifications), std::end(object_classifications),
-      [](const auto & a, const auto & b) { return a.probability < b.probability; });
   }
+  return *std::max_element(
+    std::begin(object_classifications), std::end(object_classifications),
+    [](const auto & a, const auto & b) { return a.probability < b.probability; });
 }
 
 inline std::uint8_t getHighestProbLabel(
