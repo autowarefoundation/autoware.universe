@@ -83,7 +83,6 @@ double get2dGeneralizedIoU(const T1 & source_object, const T2 & target_object)
   const auto target_polygon = tier4_autoware_utils::toPolygon2d(target_object);
 
   const double intersection_area = getIntersectionArea(source_polygon, target_polygon);
-  if (intersection_area == 0.0) return 0.0;
   const double union_area = getUnionArea(source_polygon, target_polygon);
   const double convex_shape_area = getConvexShapeArea(source_polygon, target_polygon);
 
