@@ -53,7 +53,7 @@ OperationModeTransitionManager::OperationModeTransitionManager(const rclcpp::Nod
   transition_timeout_ = declare_parameter<double>("transition_timeout");
   current_mode_ = OperationMode::STOP;
   transition_ = nullptr;
-  gate_operation_mode_.mode.mode = OperationModeValue::UNKNOWN;
+  gate_operation_mode_.mode = OperationModeState::UNKNOWN;
   gate_operation_mode_.is_in_transition = false;
   control_mode_report_.mode = ControlModeReport::NO_COMMAND;
 

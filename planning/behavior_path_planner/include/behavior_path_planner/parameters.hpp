@@ -39,6 +39,11 @@ struct BehaviorPathPlannerParameters
   double turn_light_on_threshold_dis_long;
   double turn_light_on_threshold_time;
 
+  double path_interval;
+
+  double ego_nearest_dist_threshold;
+  double ego_nearest_yaw_threshold;
+
   // vehicle info
   vehicle_info_util::VehicleInfo vehicle_info;
   double wheel_base;
@@ -54,6 +59,14 @@ struct BehaviorPathPlannerParameters
 
   // drivable area visualization
   bool visualize_drivable_area_for_shared_linestrings_lanelet;
+
+  // collision check
+  double lateral_distance_max_threshold;
+  double longitudinal_distance_min_threshold;
+  double expected_front_deceleration;
+  double expected_rear_deceleration;
+  double rear_vehicle_reaction_time;
+  double rear_vehicle_safety_time_margin;
 };
 
 #endif  // BEHAVIOR_PATH_PLANNER__PARAMETERS_HPP_

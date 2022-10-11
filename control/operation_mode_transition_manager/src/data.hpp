@@ -17,8 +17,8 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_ad_api_msgs/msg/operation_mode_state.hpp>
-#include <autoware_ad_api_msgs/srv/change_operation_mode.hpp>
+#include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
+#include <autoware_adapi_v1_msgs/srv/change_operation_mode.hpp>
 #include <autoware_auto_vehicle_msgs/msg/control_mode_report.hpp>
 #include <tier4_system_msgs/srv/change_operation_mode.hpp>
 #include <tier4_vehicle_msgs/srv/control_mode_request.hpp>
@@ -30,8 +30,8 @@
 namespace operation_mode_transition_manager
 {
 
-using ServiceResponse = autoware_ad_api_msgs::srv::ChangeOperationMode::Response;
-using OperationModeState = autoware_ad_api_msgs::msg::OperationModeState;
+using ServiceResponse = autoware_adapi_v1_msgs::srv::ChangeOperationMode::Response;
+using OperationModeState = autoware_adapi_v1_msgs::msg::OperationModeState;
 using OperationModeValue = OperationModeState::_mode_type;
 using ChangeOperationMode = tier4_system_msgs::srv::ChangeOperationMode;
 using ControlModeRequest = tier4_vehicle_msgs::srv::ControlModeRequest;

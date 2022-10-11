@@ -79,7 +79,8 @@ public:
 
 public:
   NoStoppingAreaModule(
-    const int64_t module_id, const lanelet::autoware::NoStoppingArea & no_stopping_area_reg_elem,
+    const int64_t module_id, const int64_t lane_id,
+    const lanelet::autoware::NoStoppingArea & no_stopping_area_reg_elem,
     const PlannerParam & planner_param, const rclcpp::Logger logger,
     const rclcpp::Clock::SharedPtr clock);
 
@@ -91,6 +92,8 @@ public:
   visualization_msgs::msg::MarkerArray createVirtualWallMarkerArray() override;
 
 private:
+  const int64_t lane_id_;
+
   mutable bool pass_judged_ = false;
   mutable bool is_stoppable_ = true;
   StateMachine state_machine_;  //! for state
@@ -148,17 +151,6 @@ private:
     const double stop_line_margin) const;
 
   /**
-   * @brief Calculate if ego-vehicle is in front of dead line or not
-   * @param path          original path
-   * @param self_pose       ego-car pose
-   * @param line_pose       stop line pose on the lane
-   * @return if over or not
-   */
-  bool isOverDeadLine(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-    const geometry_msgs::msg::Pose & self_pose, const geometry_msgs::msg::Pose & line_pose) const;
-
-  /**
    * @brief Calculate if it's possible for ego-vehicle to stop before area consider jerk limit
    * @param self_pose       ego-car pose
    * @param line_pose       stop line pose on the lane
@@ -174,10 +166,6 @@ private:
    */
   void insertStopPoint(
     autoware_auto_planning_msgs::msg::PathWithLaneId & path, const PathIndexWithPose & stop_point);
-
-  boost::optional<PathIndexWithPose> createTargetPoint(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const LineString2d & stop_line,
-    const double margin) const;
 
   // Key Feature
   const lanelet::autoware::NoStoppingArea & no_stopping_area_reg_elem_;

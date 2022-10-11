@@ -40,10 +40,12 @@ namespace behavior_velocity_planner
 namespace bg = boost::geometry;
 
 NoStoppingAreaModule::NoStoppingAreaModule(
-  const int64_t module_id, const lanelet::autoware::NoStoppingArea & no_stopping_area_reg_elem,
+  const int64_t module_id, const int64_t lane_id,
+  const lanelet::autoware::NoStoppingArea & no_stopping_area_reg_elem,
   const PlannerParam & planner_param, const rclcpp::Logger logger,
   const rclcpp::Clock::SharedPtr clock)
 : SceneModuleInterface(module_id, logger, clock),
+  lane_id_(lane_id),
   no_stopping_area_reg_elem_(no_stopping_area_reg_elem),
   planner_param_(planner_param)
 {
@@ -127,8 +129,9 @@ bool NoStoppingAreaModule::modifyPathVelocity(
     setSafe(true);
     return true;
   }
-  const auto stop_point =
-    createTargetPoint(original_path, stop_line.value(), planner_param_.stop_margin);
+  const auto stop_point = arc_lane_utils::createTargetPoint(
+    original_path, stop_line.value(), lane_id_, planner_param_.stop_margin,
+    planner_data_->vehicle_info_.max_longitudinal_offset_m);
   if (!stop_point) {
     setSafe(true);
     return true;
@@ -136,7 +139,8 @@ bool NoStoppingAreaModule::modifyPathVelocity(
   const auto & stop_pose = stop_point->second;
   setDistance(motion_utils::calcSignedArcLength(
     original_path.points, current_pose.pose.position, stop_pose.position));
-  if (isOverDeadLine(original_path, current_pose.pose, stop_pose)) {
+  if (planning_utils::isOverLine(
+        original_path, current_pose.pose, stop_pose, planner_param_.dead_line_margin)) {
     // ego can't stop in front of no stopping area -> GO or OR
     state_machine_.setState(StateMachine::State::GO);
     setSafe(true);
@@ -158,8 +162,8 @@ bool NoStoppingAreaModule::modifyPathVelocity(
     setSafe(true);
     return true;
   }
-  debug_data_.stuck_vehicle_detect_area = toGeomMsg(stuck_vehicle_detect_area);
-  debug_data_.stop_line_detect_area = toGeomMsg(stop_line_detect_area);
+  debug_data_.stuck_vehicle_detect_area = toGeomPoly(stuck_vehicle_detect_area);
+  debug_data_.stop_line_detect_area = toGeomPoly(stop_line_detect_area);
   // Find stuck vehicle in no stopping area
   const bool is_entry_prohibited_by_stuck_vehicle =
     checkStuckVehiclesInNoStoppingArea(stuck_vehicle_detect_area, predicted_obj_arr_ptr);
@@ -226,11 +230,11 @@ bool NoStoppingAreaModule::checkStuckVehiclesInNoStoppingArea(
       continue;  // not stop vehicle
     }
     // check if the footprint is in the stuck detect area
-    const Polygon2d obj_footprint = planning_utils::toFootprintPolygon(object);
+    const Polygon2d obj_footprint = tier4_autoware_utils::toPolygon2d(object);
     const bool is_in_stuck_area = !bg::disjoint(obj_footprint, poly);
     if (is_in_stuck_area) {
       RCLCPP_DEBUG(logger_, "stuck vehicle found.");
-      for (const auto p : obj_footprint.outer()) {
+      for (const auto & p : obj_footprint.outer()) {
         geometry_msgs::msg::Point point;
         point.x = p.x();
         point.y = p.y();
@@ -359,30 +363,15 @@ bool NoStoppingAreaModule::isTargetStuckVehicleType(
   return false;
 }
 
-bool NoStoppingAreaModule::isOverDeadLine(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  const geometry_msgs::msg::Pose & self_pose, const geometry_msgs::msg::Pose & line_pose) const
-{
-  return motion_utils::calcSignedArcLength(path.points, self_pose.position, line_pose.position) +
-           planner_param_.dead_line_margin <
-         0.0;
-}
-
 bool NoStoppingAreaModule::isStoppable(
   const geometry_msgs::msg::Pose & self_pose, const geometry_msgs::msg::Pose & line_pose) const
 {
   // get vehicle info and compute pass_judge_line_distance
   const auto current_velocity = planner_data_->current_velocity->twist.linear.x;
-  const auto current_acceleration = planner_data_->current_accel.get();
+  const auto current_acceleration = planner_data_->current_acceleration->accel.accel.linear.x;
   const double max_acc = planner_data_->max_stop_acceleration_threshold;
   const double max_jerk = planner_data_->max_stop_jerk_threshold;
   const double delay_response_time = planner_data_->delay_response_time;
-  if (!planner_data_->current_accel) {
-    RCLCPP_WARN_THROTTLE(
-      logger_, *clock_, 1000,
-      "[no stopping area] empty current acc! check current vel has been received.");
-    return false;
-  }
   const double stoppable_distance = planning_utils::calcJudgeLineDistWithJerkLimit(
     current_velocity, current_acceleration, max_acc, max_jerk, delay_response_time);
   const double signed_arc_length =
@@ -424,34 +413,4 @@ void NoStoppingAreaModule::insertStopPoint(
   // Insert stop point or replace with zero velocity
   planning_utils::insertVelocity(path, stop_point_with_lane_id, 0.0, insert_idx);
 }
-
-boost::optional<PathIndexWithPose> NoStoppingAreaModule::createTargetPoint(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const LineString2d & stop_line,
-  const double margin) const
-{
-  // Find collision segment
-  const auto collision_segment = arc_lane_utils::findCollisionSegment(path, stop_line);
-  if (!collision_segment) {
-    // No collision
-    return {};
-  }
-
-  // Calculate offset length from stop line
-  // Use '-' to make the positive direction is forward
-  const double offset_length = -(margin + planner_data_->vehicle_info_.max_longitudinal_offset_m);
-
-  // Find offset segment
-  const auto offset_segment =
-    arc_lane_utils::findOffsetSegment(path, *collision_segment, offset_length);
-  if (!offset_segment) {
-    // No enough path length
-    return {};
-  }
-
-  const auto front_idx = offset_segment->first;
-  const auto target_pose = arc_lane_utils::calcTargetPose(path, *offset_segment);
-
-  return std::make_pair(front_idx, target_pose);
-}
-
 }  // namespace behavior_velocity_planner

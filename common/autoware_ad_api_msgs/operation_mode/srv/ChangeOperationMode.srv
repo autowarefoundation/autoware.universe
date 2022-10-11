@@ -1,4 +1,0 @@
----
-uint16 ERROR_NOT_AVAILABLE = 1
-uint16 ERROR_IN_TRANSITION = 2
-autoware_ad_api_msgs/ResponseStatus status

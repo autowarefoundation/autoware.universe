@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "vehicle_cmd_gate/vehicle_cmd_gate.hpp"
+#include "vehicle_cmd_gate.hpp"
 
 #include <rclcpp/logging.hpp>
 #include <tier4_api_utils/tier4_api_utils.hpp>
@@ -164,7 +164,7 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
 
   // Set default value
   current_gate_mode_.data = GateMode::AUTO;
-  current_operation_mode_.mode.mode = OperationModeState::_mode_type::STOP;
+  current_operation_mode_.mode = OperationModeState::STOP;
 
   // Service
   srv_engage_ = create_service<tier4_external_api_msgs::srv::Engage>(
@@ -371,7 +371,6 @@ void VehicleCmdGate::onTimer()
   }
 
   // Publish topics
-  gate_mode_pub_->publish(current_gate_mode_);
   turn_indicator_cmd_pub_->publish(turn_indicator);
   hazard_light_cmd_pub_->publish(hazard_light);
   gear_cmd_pub_->publish(gear);

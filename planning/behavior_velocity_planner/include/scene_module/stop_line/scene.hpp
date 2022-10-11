@@ -27,6 +27,7 @@
 #include <lanelet2_extension/utility/query.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <scene_module/scene_module_interface.hpp>
+#include <utilization/boost_geometry_helper.hpp>
 #include <utilization/util.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
@@ -34,20 +35,36 @@
 
 namespace behavior_velocity_planner
 {
-
-using autoware_auto_planning_msgs::msg::PathWithLaneId;
-using tier4_planning_msgs::msg::StopFactor;
-using tier4_planning_msgs::msg::StopReason;
-
 class StopLineModule : public SceneModuleInterface
 {
+  using StopLineWithLaneId = std::pair<lanelet::ConstLineString3d, int64_t>;
+
 public:
   enum class State { APPROACH, STOPPED, START };
+
+  struct SegmentIndexWithPose
+  {
+    size_t index;
+    geometry_msgs::msg::Pose pose;
+  };
+
+  struct SegmentIndexWithPoint2d
+  {
+    size_t index;
+    Point2d point;
+  };
+
+  struct SegmentIndexWithOffset
+  {
+    size_t index;
+    double offset;
+  };
 
   struct DebugData
   {
     double base_link2front;
     boost::optional<geometry_msgs::msg::Pose> stop_pose;
+    std::vector<LineString2d> search_segments;
     LineString2d search_stopline;
   };
 
@@ -57,6 +74,7 @@ public:
     double stop_duration_sec;
     double hold_stop_margin_distance;
     bool use_initialization_stop_line_state;
+    bool show_stopline_collision_check;
   };
 
 public:
@@ -65,21 +83,21 @@ public:
     const PlannerParam & planner_param, const rclcpp::Logger logger,
     const rclcpp::Clock::SharedPtr clock);
 
-  bool modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason) override;
+  bool modifyPathVelocity(
+    autoware_auto_planning_msgs::msg::PathWithLaneId * path,
+    tier4_planning_msgs::msg::StopReason * stop_reason) override;
 
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
   visualization_msgs::msg::MarkerArray createVirtualWallMarkerArray() override;
 
 private:
-  int64_t module_id_;
-
-  void insertStopPoint(const geometry_msgs::msg::Point & stop_point, PathWithLaneId & path) const;
-
   std::shared_ptr<const rclcpp::Time> stopped_time_;
 
-  lanelet::ConstLineString3d stop_line_;
+  geometry_msgs::msg::Point getCenterOfStopLine(const lanelet::ConstLineString3d & stop_line);
 
   int64_t lane_id_;
+
+  lanelet::ConstLineString3d stop_line_;
 
   // State machine
   State state_;

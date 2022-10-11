@@ -58,7 +58,9 @@ struct Param
   double max_lateral_deviation;
   double max_longitudinal_deviation;
   double max_yaw_deviation_deg;
-  double delta_yaw_threshold_for_closest_point;
+  // nearest search to ego
+  double ego_nearest_dist_threshold;
+  double ego_nearest_yaw_threshold;
 };
 
 struct Input
@@ -102,9 +104,8 @@ public:
     vehicle_info_ptr_ = std::make_shared<vehicle_info_util::VehicleInfo>(vehicle_info);
   }
 
-  bool checkPathWillLeaveLane(const lanelet::ConstLanelets & lanelets, const PathWithLaneId & path);
-
-  vehicle_info_util::VehicleInfo vehicle_info_public_;
+  bool checkPathWillLeaveLane(
+    const lanelet::ConstLanelets & lanelets, const PathWithLaneId & path) const;
 
 private:
   Param param_;
@@ -112,7 +113,7 @@ private:
 
   static PoseDeviation calcTrajectoryDeviation(
     const Trajectory & trajectory, const geometry_msgs::msg::Pose & pose,
-    const double yaw_threshold);
+    const double dist_threshold, const double yaw_threshold);
 
   //! This function assumes the input trajectory is sampled dense enough
   static TrajectoryPoints resampleTrajectory(const Trajectory & trajectory, const double interval);
@@ -122,7 +123,7 @@ private:
   std::vector<LinearRing2d> createVehicleFootprints(
     const geometry_msgs::msg::PoseWithCovariance & covariance, const TrajectoryPoints & trajectory,
     const Param & param);
-  std::vector<LinearRing2d> createVehicleFootprints(const PathWithLaneId & path);
+  std::vector<LinearRing2d> createVehicleFootprints(const PathWithLaneId & path) const;
 
   static std::vector<LinearRing2d> createVehiclePassingAreas(
     const std::vector<LinearRing2d> & vehicle_footprints);

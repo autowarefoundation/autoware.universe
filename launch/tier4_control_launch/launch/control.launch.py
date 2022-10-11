@@ -44,6 +44,14 @@ def launch_setup(context, *args, **kwargs):
     with open(lat_controller_param_path, "r") as f:
         lat_controller_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
+    nearest_search_param_path = os.path.join(
+        LaunchConfiguration("tier4_control_launch_param_path").perform(context),
+        "common",
+        "nearest_search.param.yaml",
+    )
+    with open(nearest_search_param_path, "r") as f:
+        nearest_search_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+
     lon_controller_param_path = os.path.join(
         LaunchConfiguration("tier4_control_launch_param_path").perform(context),
         "trajectory_follower",
@@ -74,6 +82,14 @@ def launch_setup(context, *args, **kwargs):
     with open(operation_mode_transition_manager_param_path, "r") as f:
         operation_mode_transition_manager_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
+    shift_decider_param_path = os.path.join(
+        LaunchConfiguration("tier4_control_launch_param_path").perform(context),
+        "shift_decider",
+        "shift_decider.param.yaml",
+    )
+    with open(shift_decider_param_path, "r") as f:
+        shift_decider_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+
     controller_component = ComposableNode(
         package="trajectory_follower_nodes",
         plugin="autoware::motion::control::trajectory_follower_nodes::Controller",
@@ -83,6 +99,7 @@ def launch_setup(context, *args, **kwargs):
             ("~/input/reference_trajectory", "/planning/scenario_planning/trajectory"),
             ("~/input/current_odometry", "/localization/kinematic_state"),
             ("~/input/current_steering", "/vehicle/status/steering_status"),
+            ("~/input/current_accel", "/localization/acceleration"),
             ("~/output/predicted_trajectory", "lateral/predicted_trajectory"),
             ("~/output/lateral_diagnostic", "lateral/diagnostic"),
             ("~/output/slope_angle", "longitudinal/slope_angle"),
@@ -94,6 +111,7 @@ def launch_setup(context, *args, **kwargs):
                 "ctrl_period": 0.03,
                 "lateral_controller_mode": LaunchConfiguration("lateral_controller_mode"),
             },
+            nearest_search_param,
             lon_controller_param,
             lat_controller_param,
             vehicle_info_param,
@@ -117,7 +135,7 @@ def launch_setup(context, *args, **kwargs):
                 "/control/trajectory_follower/lateral/predicted_trajectory",
             ),
         ],
-        parameters=[lane_departure_checker_param, vehicle_info_param],
+        parameters=[nearest_search_param, lane_departure_checker_param, vehicle_info_param],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
 
@@ -128,7 +146,11 @@ def launch_setup(context, *args, **kwargs):
         name="shift_decider",
         remappings=[
             ("input/control_cmd", "/control/trajectory_follower/control_cmd"),
+            ("input/state", "/autoware/state"),
             ("output/gear_cmd", "/control/shift_decider/gear_cmd"),
+        ],
+        parameters=[
+            shift_decider_param,
         ],
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
@@ -201,6 +223,7 @@ def launch_setup(context, *args, **kwargs):
             ("control_mode_request", "/control/control_mode_request"),
         ],
         parameters=[
+            nearest_search_param_path,
             operation_mode_transition_manager_param,
             vehicle_info_param,
         ],

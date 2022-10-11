@@ -26,7 +26,7 @@ using std::placeholders::_2;
 void setFormatDate(QLabel * line, double time)
 {
   char buffer[128];
-  time_t seconds = static_cast<time_t>(time);
+  auto seconds = static_cast<time_t>(time);
   strftime(buffer, sizeof(buffer), "%Y-%m-%d-%H-%M-%S", localtime(&seconds));
   line->setText(QString(buffer));
 }
@@ -71,7 +71,7 @@ AutowareScreenCapturePanel::AutowareScreenCapturePanel(QWidget * parent)
     v_layout->addLayout(video_cap_layout);
     setLayout(v_layout);
   }
-  QTimer * timer = new QTimer(this);
+  auto * timer = new QTimer(this);
   connect(timer, &QTimer::timeout, this, &AutowareScreenCapturePanel::update);
   timer->start(1000);
   capture_timer_ = new QTimer(this);
@@ -80,8 +80,8 @@ AutowareScreenCapturePanel::AutowareScreenCapturePanel(QWidget * parent)
 }
 
 void AutowareScreenCapturePanel::onCaptureTrigger(
-  [[maybe_unused]] const std::shared_ptr<std_srvs::srv::Trigger::Request> req,
-  const std::shared_ptr<std_srvs::srv::Trigger::Response> res)
+  [[maybe_unused]] const std_srvs::srv::Trigger::Request::SharedPtr req,
+  const std_srvs::srv::Trigger::Response::SharedPtr res)
 {
   onClickVideoCapture();
   res->success = true;
@@ -103,7 +103,6 @@ void AutowareScreenCapturePanel::onClickScreenCapture()
   const std::string time_text = "capture/" + ros_time_label_->text().toStdString();
   getDisplayContext()->getViewManager()->getRenderPanel()->getRenderWindow()->captureScreenShot(
     time_text + ".png");
-  return;
 }
 
 void AutowareScreenCapturePanel::onClickVideoCapture()
@@ -112,7 +111,7 @@ void AutowareScreenCapturePanel::onClickVideoCapture()
   try {
     const QWidgetList top_level_widgets = QApplication::topLevelWidgets();
     for (QWidget * widget : top_level_widgets) {
-      QMainWindow * main_window_candidate = qobject_cast<QMainWindow *>(widget);
+      auto * main_window_candidate = qobject_cast<QMainWindow *>(widget);
       if (main_window_candidate) {
         main_window_ = main_window_candidate;
       }
@@ -132,27 +131,27 @@ void AutowareScreenCapturePanel::onClickVideoCapture()
       {
         int fourcc = cv::VideoWriter::fourcc('h', '2', '6', '4');  // mp4
         QScreen * screen = QGuiApplication::primaryScreen();
-        const auto qsize = screen->grabWindow(main_window_->winId())
-                             .toImage()
-                             .convertToFormat(QImage::Format_RGB888)
-                             .rgbSwapped()
-                             .size();
-        current_movie_size = cv::Size(qsize.width(), qsize.height());
-        writer.open(
+        const auto q_size = screen->grabWindow(main_window_->winId())
+                              .toImage()
+                              .convertToFormat(QImage::Format_RGB888)
+                              .rgbSwapped()
+                              .size();
+        current_movie_size_ = cv::Size(q_size.width(), q_size.height());
+        writer_.open(
           "capture/" + capture_file_name_ + ".mp4", fourcc, capture_hz_->value(),
-          current_movie_size);
+          current_movie_size_);
       }
       capture_timer_->start(clock);
       state_ = State::CAPTURING;
       break;
     case State::CAPTURING:
+      writer_.release();
       capture_timer_->stop();
       capture_to_mp4_button_ptr_->setText("waiting for capture");
       capture_to_mp4_button_ptr_->setStyleSheet("background-color: #00FF00;");
       state_ = State::WAITING_FOR_CAPTURE;
       break;
   }
-  return;
 }
 
 void AutowareScreenCapturePanel::onTimer()
@@ -161,18 +160,20 @@ void AutowareScreenCapturePanel::onTimer()
   // this is deprecated but only way to capture nicely
   QScreen * screen = QGuiApplication::primaryScreen();
   QPixmap original_pixmap = screen->grabWindow(main_window_->winId());
-  const auto qimage = original_pixmap.toImage().convertToFormat(QImage::Format_RGB888).rgbSwapped();
-  const int h = qimage.height();
-  const int w = qimage.width();
+  const auto q_image =
+    original_pixmap.toImage().convertToFormat(QImage::Format_RGB888).rgbSwapped();
+  const int h = q_image.height();
+  const int w = q_image.width();
   cv::Size size = cv::Size(w, h);
   cv::Mat image(
-    size, CV_8UC3, const_cast<uchar *>(qimage.bits()), static_cast<size_t>(qimage.bytesPerLine()));
-  if (size != current_movie_size) {
+    size, CV_8UC3, const_cast<uchar *>(q_image.bits()),
+    static_cast<size_t>(q_image.bytesPerLine()));
+  if (size != current_movie_size_) {
     cv::Mat new_image;
-    cv::resize(image, new_image, current_movie_size);
-    writer.write(new_image);
+    cv::resize(image, new_image, current_movie_size_);
+    writer_.write(new_image);
   } else {
-    writer.write(image);
+    writer_.write(image);
   }
   cv::waitKey(0);
 }

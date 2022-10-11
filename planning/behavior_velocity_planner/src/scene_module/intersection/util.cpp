@@ -26,6 +26,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -49,7 +50,7 @@ int insertPoint(
   const size_t closest_idx = closest_idx_opt.get();
 
   int insert_idx = closest_idx;
-  if (isAheadOf(in_pose, inout_path->points.at(closest_idx).point.pose)) {
+  if (planning_utils::isAheadOf(in_pose, inout_path->points.at(closest_idx).point.pose)) {
     ++insert_idx;
   }
 
@@ -63,56 +64,6 @@ int insertPoint(
   return insert_idx;
 }
 
-geometry_msgs::msg::Pose getAheadPose(
-  const size_t start_idx, const double ahead_dist,
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path)
-{
-  if (path.points.size() == 0) {
-    return geometry_msgs::msg::Pose{};
-  }
-
-  double curr_dist = 0.0;
-  double prev_dist = 0.0;
-  for (size_t i = start_idx; i < path.points.size() - 1; ++i) {
-    const geometry_msgs::msg::Pose p0 = path.points.at(i).point.pose;
-    const geometry_msgs::msg::Pose p1 = path.points.at(i + 1).point.pose;
-    curr_dist += tier4_autoware_utils::calcDistance2d(p0, p1);
-    if (curr_dist > ahead_dist) {
-      const double dl = std::max(curr_dist - prev_dist, 0.0001 /* avoid 0 divide */);
-      const double w_p0 = (curr_dist - ahead_dist) / dl;
-      const double w_p1 = (ahead_dist - prev_dist) / dl;
-      geometry_msgs::msg::Pose p;
-      p.position.x = w_p0 * p0.position.x + w_p1 * p1.position.x;
-      p.position.y = w_p0 * p0.position.y + w_p1 * p1.position.y;
-      p.position.z = w_p0 * p0.position.z + w_p1 * p1.position.z;
-      tf2::Quaternion q0_tf, q1_tf;
-      tf2::fromMsg(p0.orientation, q0_tf);
-      tf2::fromMsg(p1.orientation, q1_tf);
-      p.orientation = tf2::toMsg(q0_tf.slerp(q1_tf, w_p1));
-      return p;
-    }
-    prev_dist = curr_dist;
-  }
-  return path.points.back().point.pose;
-}
-
-bool setVelocityFrom(
-  const size_t idx, const double vel, autoware_auto_planning_msgs::msg::PathWithLaneId * input)
-{
-  for (size_t i = idx; i < input->points.size(); ++i) {
-    input->points.at(i).point.longitudinal_velocity_mps =
-      std::min(static_cast<float>(vel), input->points.at(i).point.longitudinal_velocity_mps);
-  }
-  return true;
-}
-
-bool isAheadOf(const geometry_msgs::msg::Pose & target, const geometry_msgs::msg::Pose & origin)
-{
-  geometry_msgs::msg::Pose p = planning_utils::transformRelCoordinate2D(target, origin);
-  bool is_target_ahead = (p.position.x > 0.0);
-  return is_target_ahead;
-}
-
 bool hasLaneId(const autoware_auto_planning_msgs::msg::PathPointWithLaneId & p, const int id)
 {
   for (const auto & pid : p.lane_ids) {
@@ -123,7 +74,7 @@ bool hasLaneId(const autoware_auto_planning_msgs::msg::PathPointWithLaneId & p, 
   return false;
 }
 
-bool hasDuplicatedPoint(
+bool getDuplicatedPointIdx(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const geometry_msgs::msg::Point & point, int * duplicated_point_idx)
 {
@@ -166,13 +117,14 @@ int getFirstPointInsidePolygons(
 bool generateStopLine(
   const int lane_id, const std::vector<lanelet::CompoundPolygon3d> detection_areas,
   const std::shared_ptr<const PlannerData> & planner_data, const double stop_line_margin,
+  const double keep_detection_line_margin,
   autoware_auto_planning_msgs::msg::PathWithLaneId * original_path,
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & target_path, int * stop_line_idx,
-  int * pass_judge_line_idx, int * first_idx_inside_lane, const rclcpp::Logger logger)
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & target_path,
+  StopLineIdx * stop_line_idxs, const rclcpp::Logger logger)
 {
   /* set judge line dist */
   const double current_vel = planner_data->current_velocity->twist.linear.x;
-  const double current_acc = planner_data->current_accel.get();
+  const double current_acc = planner_data->current_acceleration->accel.accel.linear.x;
   const double max_acc = planner_data->max_stop_acceleration_threshold;
   const double max_jerk = planner_data->max_stop_jerk_threshold;
   const double delay_response_time = planner_data->delay_response_time;
@@ -182,7 +134,8 @@ bool generateStopLine(
   /* set parameters */
   constexpr double interval = 0.2;
 
-  const int margin_idx_dist = std::ceil(stop_line_margin / interval);
+  const int stop_line_margin_idx_dist = std::ceil(stop_line_margin / interval);
+  const int keep_detection_line_margin_idx_dist = std::ceil(keep_detection_line_margin / interval);
   const int base2front_idx_dist =
     std::ceil(planner_data->vehicle_info_.max_longitudinal_offset_m / interval);
   const int pass_judge_idx_dist = std::ceil(pass_judge_line_dist / interval);
@@ -193,6 +146,10 @@ bool generateStopLine(
     return false;
   }
 
+  int first_idx_inside_lane = -1;
+  int pass_judge_line_idx = -1;
+  int stop_line_idx = -1;
+  int keep_detection_line_idx = -1;
   /* generate stop point */
   // If a stop_line is defined in lanelet_map, use it.
   // else, generates a local stop_line with considering the lane conflicts.
@@ -213,32 +170,45 @@ bool generateStopLine(
     const auto first_idx_inside_lane_opt =
       motion_utils::findNearestIndex(original_path->points, first_inside_point, 10.0, M_PI_4);
     if (first_idx_inside_lane_opt) {
-      *first_idx_inside_lane = first_idx_inside_lane_opt.get();
+      first_idx_inside_lane = first_idx_inside_lane_opt.get();
     }
 
-    if (*first_idx_inside_lane == 0) {
+    if (first_idx_inside_lane == 0) {
       RCLCPP_DEBUG(
         logger,
         "path[0] is already in the detection area. This happens if you have "
         "already crossed the stop line or are very far from the intersection. Ignore computation.");
-      *stop_line_idx = 0;
-      *pass_judge_line_idx = 0;
+      stop_line_idxs->first_idx_inside_lane = 0;
+      stop_line_idxs->pass_judge_line_idx = 0;
+      stop_line_idxs->stop_line_idx = 0;
+      stop_line_idxs->keep_detection_line_idx = 0;
       return true;
     }
-    stop_idx_ip = std::max(first_idx_ip_inside_lane - 1 - margin_idx_dist - base2front_idx_dist, 0);
+    stop_idx_ip =
+      std::max(first_idx_ip_inside_lane - 1 - stop_line_margin_idx_dist - base2front_idx_dist, 0);
+  }
+
+  /* insert keep_detection_line */
+  const int keep_detection_idx_ip = std::min(
+    stop_idx_ip + keep_detection_line_margin_idx_dist, static_cast<int>(path_ip.points.size()) - 1);
+  const auto inserted_keep_detection_point = path_ip.points.at(keep_detection_idx_ip).point.pose;
+  if (!util::getDuplicatedPointIdx(
+        *original_path, inserted_keep_detection_point.position, &keep_detection_line_idx)) {
+    keep_detection_line_idx = util::insertPoint(inserted_keep_detection_point, original_path);
   }
 
   /* insert stop_point */
   const auto inserted_stop_point = path_ip.points.at(stop_idx_ip).point.pose;
   // if path has too close (= duplicated) point to the stop point, do not insert it
   // and consider the index of the duplicated point as stop_line_idx
-  if (!util::hasDuplicatedPoint(*original_path, inserted_stop_point.position, stop_line_idx)) {
-    *stop_line_idx = util::insertPoint(inserted_stop_point, original_path);
+  if (!util::getDuplicatedPointIdx(*original_path, inserted_stop_point.position, &stop_line_idx)) {
+    stop_line_idx = util::insertPoint(inserted_stop_point, original_path);
+    ++keep_detection_line_idx;  // the index is incremented by judge stop line insertion
   }
 
   /* if another stop point exist before intersection stop_line, disable judge_line. */
   bool has_prior_stopline = false;
-  for (int i = 0; i < *stop_line_idx; ++i) {
+  for (int i = 0; i < stop_line_idx; ++i) {
     if (std::fabs(original_path->points.at(i).point.longitudinal_velocity_mps) < 0.1) {
       has_prior_stopline = true;
       break;
@@ -249,23 +219,29 @@ bool generateStopLine(
   const int pass_judge_idx_ip = std::min(
     static_cast<int>(path_ip.points.size()) - 1, std::max(stop_idx_ip - pass_judge_idx_dist, 0));
   if (has_prior_stopline || stop_idx_ip == pass_judge_idx_ip) {
-    *pass_judge_line_idx = *stop_line_idx;
+    pass_judge_line_idx = stop_line_idx;
   } else {
     const auto inserted_pass_judge_point = path_ip.points.at(pass_judge_idx_ip).point.pose;
     // if path has too close (= duplicated) point to the pass judge point, do not insert it
     // and consider the index of the duplicated point as pass_judge_line_idx
-    if (!util::hasDuplicatedPoint(
-          *original_path, inserted_pass_judge_point.position, pass_judge_line_idx)) {
-      *pass_judge_line_idx = util::insertPoint(inserted_pass_judge_point, original_path);
-      ++(*stop_line_idx);  // stop index is incremented by judge line insertion
+    if (!util::getDuplicatedPointIdx(
+          *original_path, inserted_pass_judge_point.position, &pass_judge_line_idx)) {
+      pass_judge_line_idx = util::insertPoint(inserted_pass_judge_point, original_path);
+      ++stop_line_idx;            // stop index is incremented by judge line insertion
+      ++keep_detection_line_idx;  // same.
     }
   }
+
+  stop_line_idxs->first_idx_inside_lane = first_idx_inside_lane;
+  stop_line_idxs->pass_judge_line_idx = pass_judge_line_idx;
+  stop_line_idxs->stop_line_idx = stop_line_idx;
+  stop_line_idxs->keep_detection_line_idx = keep_detection_line_idx;
 
   RCLCPP_DEBUG(
     logger,
     "generateStopLine() : stop_idx = %d, pass_judge_idx = %d, stop_idx_ip = "
     "%d, pass_judge_idx_ip = %d, has_prior_stopline = %d",
-    *stop_line_idx, *pass_judge_line_idx, stop_idx_ip, pass_judge_idx_ip, has_prior_stopline);
+    stop_line_idx, pass_judge_line_idx, stop_idx_ip, pass_judge_idx_ip, has_prior_stopline);
 
   return true;
 }
@@ -335,11 +311,9 @@ bool getStopPoseIndexFromMap(
 
 bool getObjectiveLanelets(
   lanelet::LaneletMapConstPtr lanelet_map_ptr, lanelet::routing::RoutingGraphPtr routing_graph_ptr,
-  const int lane_id, const double detection_area_length, double right_margin, double left_margin,
+  const int lane_id, const double detection_area_length,
   std::vector<lanelet::ConstLanelets> * conflicting_lanelets_result,
-  lanelet::ConstLanelets * objective_lanelets_result,
-  std::vector<lanelet::ConstLanelets> * objective_lanelets_with_margin_result,
-  const rclcpp::Logger logger)
+  lanelet::ConstLanelets * objective_lanelets_result, const rclcpp::Logger logger)
 {
   const auto & assigned_lanelet = lanelet_map_ptr->laneletLayer.get(lane_id);
 
@@ -380,7 +354,6 @@ bool getObjectiveLanelets(
   std::vector<lanelet::ConstLanelets>                      // conflicting lanes with "lane_id"
     conflicting_lanelets_ex_yield_ego;                     // excluding ego lanes and yield lanes
   std::vector<lanelet::ConstLanelets> objective_lanelets;  // final objective lanelets
-  std::vector<lanelet::ConstLanelets> objective_lanelets_with_margin;  // final objective lanelets
 
   // exclude yield lanelets and ego lanelets from objective_lanelets
   for (const auto & conflicting_lanelet : conflicting_lanelets) {
@@ -390,11 +363,8 @@ bool getObjectiveLanelets(
     if (lanelet::utils::contains(ego_lanelets, conflicting_lanelet)) {
       continue;
     }
-    const auto objective_lanelet_with_margin =
-      generateOffsetLanelet(conflicting_lanelet, right_margin, left_margin);
     conflicting_lanelets_ex_yield_ego.push_back({conflicting_lanelet});
     objective_lanelets.push_back({conflicting_lanelet});
-    objective_lanelets_with_margin.push_back({objective_lanelet_with_margin});
   }
 
   // get possible lanelet path that reaches conflicting_lane longer than given length
@@ -421,7 +391,6 @@ bool getObjectiveLanelets(
 
   *conflicting_lanelets_result = conflicting_lanelets_ex_yield_ego;
   *objective_lanelets_result = objective_and_preceding_lanelets;
-  *objective_lanelets_with_margin_result = objective_lanelets_with_margin;
 
   // set this flag true when debugging
   const bool is_debug = false;
@@ -488,21 +457,6 @@ std::vector<int> getLaneletIdsFromLaneletsVec(const std::vector<lanelet::ConstLa
   return id_list;
 }
 
-double calcArcLengthFromPath(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path, const size_t src_idx,
-  const size_t dst_idx)
-{
-  double length{0.0};
-  for (size_t i = src_idx; i < dst_idx; ++i) {
-    const double dx_wp = input_path.points.at(i + 1).point.pose.position.x -
-                         input_path.points.at(i).point.pose.position.x;
-    const double dy_wp = input_path.points.at(i + 1).point.pose.position.y -
-                         input_path.points.at(i).point.pose.position.y;
-    length += std::hypot(dx_wp, dy_wp);
-  }
-  return length;
-}
-
 lanelet::ConstLanelet generateOffsetLanelet(
   const lanelet::ConstLanelet lanelet, double right_margin, double left_margin)
 {
@@ -530,13 +484,6 @@ lanelet::ConstLanelet generateOffsetLanelet(
   return std::move(lanelet_with_margin);
 }
 
-geometry_msgs::msg::Pose toPose(const geometry_msgs::msg::Point & p)
-{
-  geometry_msgs::msg::Pose pose;
-  pose.position = p;
-  return pose;
-}
-
 bool generateStopLineBeforeIntersection(
   const int lane_id, lanelet::LaneletMapConstPtr lanelet_map_ptr,
   const std::shared_ptr<const PlannerData> & planner_data,
@@ -546,7 +493,7 @@ bool generateStopLineBeforeIntersection(
 {
   /* set judge line dist */
   const double current_vel = planner_data->current_velocity->twist.linear.x;
-  const double current_acc = planner_data->current_accel.get();
+  const double current_acc = planner_data->current_acceleration->accel.accel.linear.x;
   const double max_acc = planner_data->max_stop_acceleration_threshold;
   const double max_jerk = planner_data->max_stop_jerk_threshold;
   const double delay_response_time = planner_data->delay_response_time;
@@ -579,7 +526,7 @@ bool generateStopLineBeforeIntersection(
       const auto inserted_stop_point = path_ip.points.at(stop_idx_ip).point.pose;
       // if path has too close (= duplicated) point to the stop point, do not insert it
       // and consider the index of the duplicated point as *stuck_stop_line_idx
-      if (!util::hasDuplicatedPoint(
+      if (!util::getDuplicatedPointIdx(
             *output_path, inserted_stop_point.position, stuck_stop_line_idx)) {
         *stuck_stop_line_idx = util::insertPoint(inserted_stop_point, output_path);
       }
@@ -603,7 +550,7 @@ bool generateStopLineBeforeIntersection(
         const auto inserted_pass_judge_point = path_ip.points.at(pass_judge_idx_ip).point.pose;
         // if path has too close (= duplicated) point to the pass judge point, do not insert it
         // and consider the index of the duplicated point as pass_judge_line_idx
-        if (!util::hasDuplicatedPoint(
+        if (!util::getDuplicatedPointIdx(
               *output_path, inserted_pass_judge_point.position, pass_judge_line_idx)) {
           *pass_judge_line_idx = util::insertPoint(inserted_pass_judge_point, output_path);
           ++(*stuck_stop_line_idx);  // stop index is incremented by judge line insertion
@@ -620,6 +567,113 @@ bool generateStopLineBeforeIntersection(
     }
   }
   return false;
+}
+
+geometry_msgs::msg::Pose toPose(const geometry_msgs::msg::Point & p)
+{
+  geometry_msgs::msg::Pose pose;
+  pose.position = p;
+  return pose;
+}
+
+static std::string getTurnDirection(lanelet::ConstLanelet lane)
+{
+  return lane.attributeOr("turn_direction", "else");
+}
+
+bool isOverTargetIndex(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
+  const geometry_msgs::msg::Pose & current_pose, const int target_idx)
+{
+  if (closest_idx == target_idx) {
+    const geometry_msgs::msg::Pose target_pose = path.points.at(target_idx).point.pose;
+    return planning_utils::isAheadOf(current_pose, target_pose);
+  }
+  return static_cast<bool>(closest_idx > target_idx);
+}
+
+bool isBeforeTargetIndex(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
+  const geometry_msgs::msg::Pose & current_pose, const int target_idx)
+{
+  if (closest_idx == target_idx) {
+    const geometry_msgs::msg::Pose target_pose = path.points.at(target_idx).point.pose;
+    return planning_utils::isAheadOf(target_pose, current_pose);
+  }
+  return static_cast<bool>(target_idx > closest_idx);
+}
+
+static std::vector<int> getAllAdjacentLanelets(
+  const lanelet::routing::RoutingGraphPtr routing_graph, lanelet::ConstLanelet lane)
+{
+  std::set<int> results;
+
+  results.insert(lane.id());
+
+  auto it = routing_graph->adjacentRight(lane);
+  // take all lane on the right side
+  while (!!it) {
+    results.insert(it.get().id());
+    it = routing_graph->adjacentRight(it.get());
+  }
+  // take all lane on the left side
+  it = routing_graph->adjacentLeft(lane);
+  while (!!it) {
+    results.insert(it.get().id());
+    it = routing_graph->adjacentLeft(it.get());
+  }
+
+  return std::vector<int>(results.begin(), results.end());
+}
+
+std::vector<int> extendedAdjacentDirectionLanes(
+  const lanelet::LaneletMapPtr map, const lanelet::routing::RoutingGraphPtr routing_graph,
+  lanelet::ConstLanelet lane)
+{
+  // some of the intersections are not well-formed, and "adjacent" turning
+  // lanelets are not sharing the LineStrings
+  const std::string turn_direction = getTurnDirection(lane);
+  if (turn_direction != "left" && turn_direction != "right" && turn_direction != "straight")
+    return std::vector<int>();
+
+  std::set<int> previous_lanelet_ids;
+  for (auto && previous_lanelet : routing_graph->previous(lane)) {
+    previous_lanelet_ids.insert(previous_lanelet.id());
+  }
+
+  std::set<int> besides_previous_lanelet_ids;
+  for (auto && previous_lanelet_id : previous_lanelet_ids) {
+    lanelet::ConstLanelet previous_lanelet = map->laneletLayer.get(previous_lanelet_id);
+    for (auto && beside_lanelet : getAllAdjacentLanelets(routing_graph, previous_lanelet)) {
+      besides_previous_lanelet_ids.insert(beside_lanelet);
+    }
+  }
+
+  std::set<int> following_turning_lanelets;
+  following_turning_lanelets.insert(lane.id());
+  for (auto && besides_previous_lanelet_id : besides_previous_lanelet_ids) {
+    lanelet::ConstLanelet besides_previous_lanelet =
+      map->laneletLayer.get(besides_previous_lanelet_id);
+    for (auto && following_lanelet : routing_graph->following(besides_previous_lanelet)) {
+      // if this has {"turn_direction", "${turn_direction}"}, take this
+      if (getTurnDirection(following_lanelet) == turn_direction)
+        following_turning_lanelets.insert(following_lanelet.id());
+    }
+  }
+  return std::vector<int>(following_turning_lanelets.begin(), following_turning_lanelets.end());
+}
+
+std::optional<Polygon2d> getIntersectionArea(
+  lanelet::ConstLanelet assigned_lane, lanelet::LaneletMapConstPtr lanelet_map_ptr)
+{
+  const std::string area_id_str = assigned_lane.attributeOr("intersection_area", "else");
+  if (area_id_str == "else") return std::nullopt;
+
+  const int area_id = std::atoi(area_id_str.c_str());
+  const auto poly_3d = lanelet_map_ptr->polygonLayer.get(area_id);
+  Polygon2d poly{};
+  for (const auto & p : poly_3d) poly.outer().emplace_back(p.x(), p.y());
+  return std::make_optional(poly);
 }
 
 }  // namespace util

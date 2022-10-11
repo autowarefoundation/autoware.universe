@@ -65,6 +65,7 @@ void RadarFusionToDetectedObject::setParam(const Param & param)
   // Parameters for fixing object information
   param_.threshold_probability = param.threshold_probability;
   param_.convert_doppler_to_twist = param.convert_doppler_to_twist;
+  param_.compensate_probability = param.compensate_probability;
 }
 
 RadarFusionToDetectedObject::Output RadarFusionToDetectedObject::update(
@@ -107,18 +108,38 @@ RadarFusionToDetectedObject::Output RadarFusionToDetectedObject::update(
         if (isYawCorrect(split_object, twist_with_covariance, param_.threshold_yaw_diff)) {
           split_object.kinematics.twist_with_covariance = twist_with_covariance;
           split_object.kinematics.has_twist = true;
+          if (hasTwistCovariance(twist_with_covariance)) {
+            split_object.kinematics.has_twist_covariance = true;
+          }
         }
       }
 
       // Delete objects with low probability
       if (isQualified(split_object, radars_within_split_object)) {
-        split_object.classification.at(0).probability =
-          std::max(split_object.classification.at(0).probability, param_.threshold_probability);
+        if (param_.compensate_probability) {
+          split_object.existence_probability =
+            std::max(split_object.existence_probability, param_.threshold_probability);
+        }
         output.objects.objects.emplace_back(split_object);
+      } else {
+        output.debug_low_confidence_objects.objects.emplace_back(split_object);
       }
     }
   }
   return output;
+}
+
+// Judge whether twist covariance is available.
+bool RadarFusionToDetectedObject::hasTwistCovariance(
+  const TwistWithCovariance & twist_with_covariance)
+{
+  using IDX = tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
+  auto covariance = twist_with_covariance.covariance;
+  if (covariance[IDX::X_X] == 0.0 && covariance[IDX::Y_Y] == 0.0 && covariance[IDX::Z_Z] == 0.0) {
+    return false;
+  } else {
+    return true;
+  }
 }
 
 // Judge whether object's yaw is same direction with twist's yaw.
@@ -231,13 +252,15 @@ TwistWithCovariance RadarFusionToDetectedObject::estimateTwist(
 
   // calculate twist for radar data with top target value
   Eigen::Vector2d vec_top_target_value(0.0, 0.0);
+  auto comp_func = [](const RadarInput & a, const RadarInput & b) {
+    return a.target_value < b.target_value;
+  };
+  auto iter = std::max_element(std::begin((*radars)), std::end((*radars)), comp_func);
   if (param_.velocity_weight_target_value_top > 0.0) {
-    auto comp_func = [](const RadarInput & a, const RadarInput & b) {
-      return a.target_value < b.target_value;
-    };
-    auto iter = std::max_element(std::begin((*radars)), std::end((*radars)), comp_func);
     vec_top_target_value = toVector2d(iter->twist_with_covariance);
   }
+  // Get covariance values
+  auto twist_covariance = iter->twist_with_covariance.covariance;
 
   // calculate twist for radar data with target_value * average
   Eigen::Vector2d vec_target_value_average(0.0, 0.0);
@@ -256,6 +279,7 @@ TwistWithCovariance RadarFusionToDetectedObject::estimateTwist(
                             vec_top_target_value * param_.velocity_weight_target_value_top +
                             vec_target_value_average * param_.velocity_weight_target_value_average;
   TwistWithCovariance estimated_twist_with_covariance = toTwistWithCovariance(sum_vec);
+  estimated_twist_with_covariance.covariance = twist_covariance;
 
   // TODO(Satoshi Tanaka): Implement
   // Convert doppler velocity to twist

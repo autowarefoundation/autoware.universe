@@ -37,9 +37,9 @@ std::string toString(const std::optional<OperationMode> mode)
 
 std::optional<OperationMode> toEnum(const ChangeOperationMode::Request & request)
 {
-  using ServiceMode = ChangeOperationMode::Request::_operation_type;
+  using ServiceMode = ChangeOperationMode::Request;
 
-  switch (request.operation.mode) {
+  switch (request.mode) {
     case ServiceMode::STOP:
       return OperationMode::STOP;
     case ServiceMode::AUTONOMOUS:
@@ -54,23 +54,17 @@ std::optional<OperationMode> toEnum(const ChangeOperationMode::Request & request
 
 OperationModeValue toMsg(const OperationMode mode)
 {
-  const auto get_operation_mode = [](const OperationMode mode) {
-    switch (mode) {
-      case OperationMode::STOP:
-        return OperationModeValue::STOP;
-      case OperationMode::AUTONOMOUS:
-        return OperationModeValue::AUTONOMOUS;
-      case OperationMode::LOCAL:
-        return OperationModeValue::LOCAL;
-      case OperationMode::REMOTE:
-        return OperationModeValue::REMOTE;
-    }
-    return OperationModeValue::UNKNOWN;
-  };
-
-  OperationModeValue operation;
-  operation.mode = get_operation_mode(mode);
-  return operation;
+  switch (mode) {
+    case OperationMode::STOP:
+      return OperationModeState::STOP;
+    case OperationMode::AUTONOMOUS:
+      return OperationModeState::AUTONOMOUS;
+    case OperationMode::LOCAL:
+      return OperationModeState::LOCAL;
+    case OperationMode::REMOTE:
+      return OperationModeState::REMOTE;
+  }
+  return OperationModeState::UNKNOWN;
 }
 
 }  // namespace operation_mode_transition_manager
