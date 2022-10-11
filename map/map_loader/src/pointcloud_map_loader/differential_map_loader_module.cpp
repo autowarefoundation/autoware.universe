@@ -46,7 +46,7 @@ void DifferentialMapLoaderModule::differentialAreaLoad(
       int index = id_in_cached_list - cached_ids.begin();
       should_remove[index] = false;
     } else {
-      autoware_map_msgs::msg::PointCloudMapCellWithID pointcloud_map_cell_with_id = 
+      autoware_map_msgs::msg::PointCloudMapCellWithID pointcloud_map_cell_with_id =
         loadPointCloudMapCellWithID(path, map_id, metadata.min, metadata.max);
       response->new_pointcloud_with_ids.push_back(pointcloud_map_cell_with_id);
     }

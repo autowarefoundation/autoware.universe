@@ -40,7 +40,7 @@ void PartialMapLoaderModule::partialAreaLoad(
     // skip if the pcd file is not within the queried area
     if (!isGridWithinQueriedArea(area, metadata)) continue;
 
-    autoware_map_msgs::msg::PointCloudMapCellWithID pointcloud_map_cell_with_id = 
+    autoware_map_msgs::msg::PointCloudMapCellWithID pointcloud_map_cell_with_id =
       loadPointCloudMapCellWithID(path, map_id, metadata.min, metadata.max);
     response->new_pointcloud_with_ids.push_back(pointcloud_map_cell_with_id);
   }
