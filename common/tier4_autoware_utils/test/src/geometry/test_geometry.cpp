@@ -1637,3 +1637,78 @@ TEST(geometry, calcInterpolatedPose_with_Spherical_Interpolation)
     }
   }
 }
+
+TEST(geometry, getTwist)
+{
+  using tier4_autoware_utils::getVector3;
+
+  geometry_msgs::msg::Vector3 velocity = getVector3(1.0, 2.0, 3.0);
+
+  geometry_msgs::msg::Twist twist = geometry_msgs::build<geometry_msgs::msg::Twist>()
+                                      .linear(getVector3(1.0, 2.0, 3.0))
+                                      .angular(getVector3(0.1, 0.2, 0.3));
+
+  geometry_msgs::msg::TwistWithCovariance twist_with_covariance;
+  twist_with_covariance.twist = geometry_msgs::build<geometry_msgs::msg::Twist>()
+                                  .linear(getVector3(1.0, 2.0, 3.0))
+                                  .angular(getVector3(0.1, 0.2, 0.3));
+
+  // getTwist
+  {
+    auto t_out = tier4_autoware_utils::getTwist(velocity);
+    EXPECT_DOUBLE_EQ(t_out.linear.x, twist.linear.x);
+    EXPECT_DOUBLE_EQ(t_out.linear.y, twist.linear.y);
+    EXPECT_DOUBLE_EQ(t_out.linear.z, twist.linear.z);
+    EXPECT_DOUBLE_EQ(t_out.angular.x, 0.0);
+    EXPECT_DOUBLE_EQ(t_out.angular.y, 0.0);
+    EXPECT_DOUBLE_EQ(t_out.angular.z, 0.0);
+  }
+  // getTwistCovariance
+  {
+    auto t_out = tier4_autoware_utils::getTwistWithCovariance(velocity);
+    EXPECT_DOUBLE_EQ(t_out.twist.linear.x, twist.linear.x);
+    EXPECT_DOUBLE_EQ(t_out.twist.linear.y, twist.linear.y);
+    EXPECT_DOUBLE_EQ(t_out.twist.linear.z, twist.linear.z);
+    EXPECT_DOUBLE_EQ(t_out.twist.angular.x, 0.0);
+    EXPECT_DOUBLE_EQ(t_out.twist.angular.y, 0.0);
+    EXPECT_DOUBLE_EQ(t_out.twist.angular.z, 0.0);
+  }
+
+  // getTwistCovariance
+  {
+    auto t_out = tier4_autoware_utils::getTwistWithCovariance(twist);
+    EXPECT_DOUBLE_EQ(t_out.twist.linear.x, twist.linear.x);
+    EXPECT_DOUBLE_EQ(t_out.twist.linear.y, twist.linear.y);
+    EXPECT_DOUBLE_EQ(t_out.twist.linear.z, twist.linear.z);
+    EXPECT_DOUBLE_EQ(t_out.twist.angular.x, twist.angular.x);
+    EXPECT_DOUBLE_EQ(t_out.twist.angular.y, twist.angular.y);
+    EXPECT_DOUBLE_EQ(t_out.twist.angular.z, twist.angular.z);
+  }
+}
+
+TEST(geometry, getTwistNorm)
+{
+  using tier4_autoware_utils::getVector3;
+  geometry_msgs::msg::TwistWithCovariance twist_with_covariance;
+  twist_with_covariance.twist = geometry_msgs::build<geometry_msgs::msg::Twist>()
+                                  .linear(getVector3(3.0, 4.0, 0.0))
+                                  .angular(getVector3(0.1, 0.2, 0.3));
+
+  EXPECT_NEAR(tier4_autoware_utils::getTwistNorm(twist_with_covariance), 5.0, epsilon);
+  EXPECT_NEAR(tier4_autoware_utils::getTwistNorm(twist_with_covariance.twist), 5.0, epsilon);
+  EXPECT_NEAR(tier4_autoware_utils::getTwistNorm(twist_with_covariance.twist.linear), 5.0, epsilon);
+}
+
+TEST(geometry, isTwistCovarianceAvailable)
+{
+  using tier4_autoware_utils::getVector3;
+  geometry_msgs::msg::TwistWithCovariance twist_with_covariance;
+  twist_with_covariance.twist = geometry_msgs::build<geometry_msgs::msg::Twist>()
+                                  .linear(getVector3(1.0, 2.0, 3.0))
+                                  .angular(getVector3(0.1, 0.2, 0.3));
+
+  EXPECT_EQ(tier4_autoware_utils::isTwistCovarianceAvailable(twist_with_covariance), false);
+
+  twist_with_covariance.covariance.at(0) = 1.0;
+  EXPECT_EQ(tier4_autoware_utils::isTwistCovarianceAvailable(twist_with_covariance), true);
+}
