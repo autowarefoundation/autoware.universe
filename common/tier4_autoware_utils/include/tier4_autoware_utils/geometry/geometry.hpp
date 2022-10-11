@@ -23,6 +23,7 @@
 #include "tier4_autoware_utils/geometry/boost_geometry.hpp"
 #include "tier4_autoware_utils/math/constants.hpp"
 #include "tier4_autoware_utils/math/normalization.hpp"
+#include "tier4_autoware_utils/ros/msg_covariance.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -34,6 +35,9 @@
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <geometry_msgs/msg/quaternion.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
+#include <geometry_msgs/msg/twist.hpp>
+#include <geometry_msgs/msg/twist_with_covariance.hpp>
+#include <geometry_msgs/msg/vector3.hpp>
 
 #include <tf2/utils.h>
 
@@ -731,6 +735,63 @@ geometry_msgs::msg::Pose calcInterpolatedPose(
 
   return output_pose;
 }
+
+inline geometry_msgs::msg::Vector3 getVector3(const double x, double y, double z)
+{
+  return geometry_msgs::build<geometry_msgs::msg::Vector3>().x(x).y(y).z(z);
+}
+
+inline geometry_msgs::msg::Twist getTwist(const geometry_msgs::msg::Vector3 & velocity)
+{
+  geometry_msgs::msg::Twist twist;
+  twist.linear = velocity;
+  return twist;
+}
+
+inline geometry_msgs::msg::TwistWithCovariance getTwistWithCovariance(
+  const geometry_msgs::msg::Twist & twist)
+{
+  geometry_msgs::msg::TwistWithCovariance twist_with_covariance;
+  twist_with_covariance.twist = twist;
+  return twist_with_covariance;
+}
+
+inline geometry_msgs::msg::TwistWithCovariance getTwistWithCovariance(
+  const geometry_msgs::msg::Vector3 & velocity)
+{
+  geometry_msgs::msg::TwistWithCovariance twist_with_covariance;
+  twist_with_covariance.twist = getTwist(velocity);
+  return twist_with_covariance;
+}
+
+inline double getTwistNorm(const geometry_msgs::msg::Vector3 & v)
+{
+  return std::sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+}
+
+inline double getTwistNorm(const geometry_msgs::msg::Twist & twist)
+{
+  return getTwistNorm(twist.linear);
+}
+
+inline double getTwistNorm(const geometry_msgs::msg::TwistWithCovariance & twist_with_covariance)
+{
+  return getTwistNorm(twist_with_covariance.twist.linear);
+}
+
+// Judge whether twist covariance is available.
+// If all element of covariance is 0, return false.
+inline bool isTwistCovarianceAvailable(
+  const geometry_msgs::msg::TwistWithCovariance & twist_with_covariance)
+{
+  for (auto & c : twist_with_covariance.covariance) {
+    if (c != 0.0) {
+      return true;
+    }
+  }
+  return false;
+}
+
 }  // namespace tier4_autoware_utils
 
 #endif  // TIER4_AUTOWARE_UTILS__GEOMETRY__GEOMETRY_HPP_
