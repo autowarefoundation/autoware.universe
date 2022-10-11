@@ -16,6 +16,8 @@
 
 #include <gtest/gtest.h>
 
+constexpr double epsilon = 1e-06;
+
 namespace
 {
 autoware_auto_perception_msgs::msg::ObjectClassification createObjectClassification(
@@ -71,7 +73,7 @@ TEST(object_classification, test_getHighestProbClassification)
     std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> classifications;
     auto classification = getHighestProbClassification(classifications);
     EXPECT_EQ(classification.label, ObjectClassification::UNKNOWN);
-    EXPECT_EQ(classification.probability, 0.0);
+    EXPECT_DOUBLE_EQ(classification.probability, 0.0);
   }
 
   {  // normal case
@@ -82,7 +84,7 @@ TEST(object_classification, test_getHighestProbClassification)
 
     auto classification = getHighestProbClassification(classifications);
     EXPECT_EQ(classification.label, ObjectClassification::TRUCK);
-    EXPECT_EQ(classification.probability, 0.8);
+    EXPECT_NEAR(classification.probability, 0.8, epsilon);
   }
 
   {  // labels with the same probability
@@ -93,6 +95,6 @@ TEST(object_classification, test_getHighestProbClassification)
 
     auto classification = getHighestProbClassification(classifications);
     EXPECT_EQ(classification.label, ObjectClassification::CAR);
-    EXPECT_EQ(classification.probability, 0.8);
+    EXPECT_NEAR(classification.probability, 0.8, epsilon);
   }
 }
