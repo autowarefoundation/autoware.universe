@@ -21,7 +21,6 @@
 
 // Autoware
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
-#include <autoware_auto_system_msgs/msg/emergency_state.hpp>
 #include <autoware_auto_system_msgs/msg/hazard_status_stamped.hpp>
 #include <autoware_adapi_v1_msgs/srv/operate_mrm.hpp>
 #include <autoware_adapi_v1_msgs/msg/mrm_state.hpp>
@@ -95,7 +94,6 @@ private:
   rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::HazardLightsCommand>::SharedPtr
     pub_hazard_cmd_;
   rclcpp::Publisher<autoware_auto_vehicle_msgs::msg::GearCommand>::SharedPtr pub_gear_cmd_;
-  rclcpp::Publisher<autoware_auto_system_msgs::msg::EmergencyState>::SharedPtr pub_emergency_state_;
 
   autoware_auto_vehicle_msgs::msg::HazardLightsCommand createHazardCmdMsg();
   autoware_auto_vehicle_msgs::msg::GearCommand createGearCmdMsg();
@@ -132,19 +130,14 @@ private:
     heartbeat_hazard_status_;
 
   // Algorithm
-  autoware_auto_system_msgs::msg::EmergencyState::_state_type emergency_state_{
-    autoware_auto_system_msgs::msg::EmergencyState::NORMAL};
   rclcpp::Time takeover_requested_time_;
-  autoware_adapi_v1_msgs::msg::MRMState::_behavior_type mrm_behavior_{
-    autoware_adapi_v1_msgs::msg::MRMState::NONE};
-
+  bool is_takeover_request_ = false;
   void transitionTo(const int new_state);
-  void updateEmergencyState();
+  void updateMRMState();
   void operateMRM();
   autoware_adapi_v1_msgs::msg::MRMState::_behavior_type updateMRMBehavior();
   bool isStopped();
   bool isEmergency(const autoware_auto_system_msgs::msg::HazardStatus & hazard_status);
-  autoware_auto_control_msgs::msg::AckermannControlCommand selectAlternativeControlCommand();
 };
 
 #endif  // EMERGENCY_HANDLER__EMERGENCY_HANDLER_CORE_HPP_
