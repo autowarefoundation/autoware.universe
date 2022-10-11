@@ -416,7 +416,7 @@ bool PullOverModule::checkCollisionWithPose(const Pose & pose) const
 bool PullOverModule::planWithEfficientPath()
 {
   for (const auto & planner : pull_over_planners_) {
-    for (const auto goal_candidate : goal_candidates_) {
+    for (const auto & goal_candidate : goal_candidates_) {
       planner->setPlannerData(planner_data_);
       const auto pull_over_path = planner->plan(goal_candidate.goal_pose);
       if (!pull_over_path) {
@@ -434,7 +434,7 @@ bool PullOverModule::planWithEfficientPath()
 
 bool PullOverModule::planWithCloseGoal()
 {
-  for (const auto goal_candidate : goal_candidates_) {
+  for (const auto & goal_candidate : goal_candidates_) {
     for (const auto & planner : pull_over_planners_) {
       planner->setPlannerData(planner_data_);
       const auto pull_over_path = planner->plan(goal_candidate.goal_pose);
