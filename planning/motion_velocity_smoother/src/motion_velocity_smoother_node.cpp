@@ -328,7 +328,7 @@ void MotionVelocitySmootherNode::onExternalVelocityLimit(const VelocityLimit::Co
 
       if (msg->max_velocity < max_velocity_with_deceleration_) {
         // TODO(mkuri) If v0 < msg->max_velocity < max_velocity_with_deceleration_ meets, stronger
-        // jerk than expexted may be applied to external velocity limit.
+        // jerk than expected may be applied to external velocity limit.
         double stop_dist = 0.0;
         std::map<double, double> jerk_profile;
         if (!trajectory_utils::calcStopDistWithJerkConstraints(
