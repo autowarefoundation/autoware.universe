@@ -26,12 +26,13 @@ using autoware_auto_perception_msgs::msg::ObjectClassification;
 inline ObjectClassification getHighestProbClassification(
   const std::vector<ObjectClassification> & object_classifications)
 {
-  auto highest_prob_iter = std::max_element(
-    std::begin(object_classifications), std::end(object_classifications),
-    [](const ObjectClassification & a, const ObjectClassification & b) {
-      return a.probability < b.probability;
-    });
-  return *highest_prob_iter;
+  if (object_classifications.empty()) {
+    return ObjectClassification{};
+  } else {
+    return *std::max_element(
+      std::begin(object_classifications), std::end(object_classifications),
+      [](const auto & a, const auto & b) { return a.probability < b.probability; });
+  }
 }
 
 inline std::uint8_t getHighestProbLabel(
