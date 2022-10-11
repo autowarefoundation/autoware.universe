@@ -41,8 +41,7 @@ void DifferentialMapLoaderModule::differentialAreaLoad(
     // skip if the pcd file is not within the queried area
     if (!isGridWithinQueriedArea(area, metadata)) continue;
 
-    auto id_in_already_loaded_list =
-      std::find(cached_ids.begin(), cached_ids.end(), map_id);
+    auto id_in_already_loaded_list = std::find(cached_ids.begin(), cached_ids.end(), map_id);
     if (id_in_already_loaded_list != cached_ids.end()) {
       int index = id_in_already_loaded_list - cached_ids.begin();
       should_remove[index] = false;
@@ -72,9 +71,10 @@ bool DifferentialMapLoaderModule::onServiceGetDifferentialPointCloudMap(
   return true;
 }
 
-autoware_map_msgs::msg::PointCloudMapCellWithID DifferentialMapLoaderModule::loadPointCloudMapCellWithID(
-  const std::string path, const std::string map_id,
-  const pcl::PointXYZ min_point, const pcl::PointXYZ max_point) const
+autoware_map_msgs::msg::PointCloudMapCellWithID
+DifferentialMapLoaderModule::loadPointCloudMapCellWithID(
+  const std::string path, const std::string map_id, const pcl::PointXYZ min_point,
+  const pcl::PointXYZ max_point) const
 {
   sensor_msgs::msg::PointCloud2 pcd;
   if (pcl::io::loadPCDFile(path, pcd) == -1) {

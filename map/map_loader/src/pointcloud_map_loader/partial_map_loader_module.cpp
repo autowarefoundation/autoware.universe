@@ -47,8 +47,7 @@ void PartialMapLoaderModule::partialAreaLoad(
 }
 
 bool PartialMapLoaderModule::onServiceGetPartialPointCloudMap(
-  GetPartialPointCloudMap::Request::SharedPtr req,
-  GetPartialPointCloudMap::Response::SharedPtr res)
+  GetPartialPointCloudMap::Request::SharedPtr req, GetPartialPointCloudMap::Response::SharedPtr res)
 {
   auto area = req->area;
   partialAreaLoad(area, res);
@@ -56,8 +55,8 @@ bool PartialMapLoaderModule::onServiceGetPartialPointCloudMap(
 }
 
 autoware_map_msgs::msg::PointCloudMapCellWithID PartialMapLoaderModule::loadPointCloudMapCellWithID(
-  const std::string path, const std::string map_id,
-  const pcl::PointXYZ min_point, const pcl::PointXYZ max_point) const
+  const std::string path, const std::string map_id, const pcl::PointXYZ min_point,
+  const pcl::PointXYZ max_point) const
 {
   sensor_msgs::msg::PointCloud2 pcd;
   if (pcl::io::loadPCDFile(path, pcd) == -1) {
