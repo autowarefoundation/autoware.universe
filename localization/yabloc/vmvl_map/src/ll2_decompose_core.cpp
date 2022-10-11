@@ -23,15 +23,33 @@ Ll2Decomposer::Ll2Decomposer() : Node("ll2_to_image")
   auto cb_map = std::bind(&Ll2Decomposer::mapCallback, this, _1);
   sub_map_ = create_subscription<HADMapBin>("/map/vector_map", map_qos, cb_map);
 
-  {
-    // Load road marking labels from ros params
-    declare_parameter("road_marking_labels", std::vector<std::string>{});
-    auto labels = get_parameter("road_marking_labels").as_string_array();
-    for (auto l : labels) road_marking_labels_.insert(l);
-    if (road_marking_labels_.empty()) {
-      RCLCPP_FATAL_STREAM(
-        get_logger(), "There are no road marking labels. No LL2 elements will publish");
-    }
+  auto loadLanelet2Labels =
+    [this](const std::string & param_name, std::set<std::string> & labels) -> void {
+    declare_parameter(param_name, std::vector<std::string>{});
+    auto label_array = get_parameter(param_name).as_string_array();
+    for (auto l : label_array) labels.insert(l);
+  };
+
+  loadLanelet2Labels("road_marking_labels", road_marking_labels_);
+  loadLanelet2Labels("sign_board_labels", sign_board_labels_);
+  if (road_marking_labels_.empty()) {
+    RCLCPP_FATAL_STREAM(
+      get_logger(), "There are no road marking labels. No LL2 elements will publish");
+  }
+}
+
+void printAttr(const lanelet::LineStringLayer & line_string_layer)
+{
+  lanelet::ConstLineStrings3d line_strings;
+  std::set<std::string> types;
+  for (const lanelet::ConstLineString3d & line : line_string_layer) {
+    if (!line.hasAttribute(lanelet::AttributeName::Type)) continue;
+    lanelet::Attribute attr = line.attribute(lanelet::AttributeName::Type);
+    types.insert(attr.value());
+  }
+
+  for (const auto & type : types) {
+    std::cout << "lanelet type: " << type << std::endl;
   }
 }
 
@@ -41,10 +59,10 @@ void Ll2Decomposer::mapCallback(const HADMapBin & msg)
   lanelet::LaneletMapPtr lanelet_map = fromBinMsg(msg);
 
   const rclcpp::Time stamp = msg.header.stamp;
-  const std::set<std::string> sign_board_labels = {"sign-board"};
 
   const auto & ls_layer = lanelet_map->lineStringLayer;
-  auto tmp1 = extractSpecifiedLineString(ls_layer, sign_board_labels);
+  printAttr(ls_layer);
+  auto tmp1 = extractSpecifiedLineString(ls_layer, sign_board_labels_);
   auto tmp2 = extractSpecifiedLineString(ls_layer, road_marking_labels_);
   pcl::PointCloud<pcl::PointNormal> ll2_sign_board = splitLineStrings(tmp1);
   pcl::PointCloud<pcl::PointNormal> ll2_road_marking = splitLineStrings(tmp2);
@@ -131,7 +149,7 @@ Ll2Decomposer::MarkerArray Ll2Decomposer::makeSignMarkerMsg(
 
 void Ll2Decomposer::publishSignMarker(const lanelet::LineStringLayer & line_string_layer)
 {
-  auto marker1 = makeSignMarkerMsg(line_string_layer, {"sign-board"}, "sign_board");
+  auto marker1 = makeSignMarkerMsg(line_string_layer, sign_board_labels_, "sign_board");
   auto marker2 = makeSignMarkerMsg(line_string_layer, {"virtual"}, "virtual");
 
   std::copy(marker2.markers.begin(), marker2.markers.end(), std::back_inserter(marker1.markers));

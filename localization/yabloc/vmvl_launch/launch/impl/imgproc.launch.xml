@@ -28,7 +28,7 @@
         <node name="override_static_tf" pkg="tf2_ros" exec="static_transform_publisher" args="--x 0.431  --y -0.040  --z -0.135 --roll -1.571 --pitch 0.007 --yaw -1.544 --frame-id sensor_kit_base_link --child-frame-id override_camera_frame"/>
     </group>
     <group unless="$(var override_extrinsic)"> 
-        <node name="undistort" pkg="vmvl_imgproc" exec="undistort_node" output="screen" args="--ros-args --log-level $(var log_level)">
+        <node name="undistort" pkg="vmvl_imgproc" exec="undistort_node" output="screen" args="--ros-args --log-level info">
             <param name="use_sim_time" value="$(var use_sim_time)"/>
             <param name="width" value="800"/>
             <param name="override_frame_id" value=""/>

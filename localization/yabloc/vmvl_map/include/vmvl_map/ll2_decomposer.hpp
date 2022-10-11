@@ -29,6 +29,7 @@ private:
 
   rclcpp::Subscription<HADMapBin>::SharedPtr sub_map_;
   std::set<std::string> road_marking_labels_;
+  std::set<std::string> sign_board_labels_;
 
   pcl::PointNormal toPointNormal(
     const lanelet::ConstPoint3d & from, const lanelet::ConstPoint3d & to) const;

@@ -8,6 +8,7 @@
     <arg name="resized_info" default="/sensing/camera/undistorted/camera_info"/>
 
     <arg name="road_marking_labels" default="[zebra_marking, virtual, line_thin, line_thick, pedestrian_marking, stop_line]"/>
+    <arg name="sign_board_labels" default="[sign-board]"/>
     <arg name="min_segment_length" default="-1.0"/>
     <arg name="max_segment_distance" default="50.0"/>
     <arg name="max_lateral_distance" default="10.0"/>

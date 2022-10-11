@@ -31,6 +31,7 @@
     <node name="ll2_decompose" pkg="vmvl_map" exec="ll2_decompose_node" output="screen" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="road_marking_labels" value="$(var road_marking_labels)"/>
+        <param name="sign_board_labels" value="$(var sign_board_labels)"/>
 
         <remap from="ll2_road_marking" to="$(var output_ll2_road_marking)"/>
         <remap from="ll2_sign_board" to="$(var output_ll2_sign_board)"/>
