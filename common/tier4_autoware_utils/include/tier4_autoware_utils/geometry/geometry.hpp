@@ -764,7 +764,7 @@ inline geometry_msgs::msg::TwistWithCovariance getTwistWithCovariance(
   return twist_with_covariance;
 }
 
-inline double getTwistNorm(const geometry_msgs::msg::Vector3 & v)
+inline double calcTwistNorm(const geometry_msgs::msg::Vector3 & v)
 {
   return std::sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
 }
