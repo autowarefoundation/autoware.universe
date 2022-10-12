@@ -45,6 +45,7 @@ Emergency Handler is a node to select proper MRM from from system failure state 
 | timeout_hazard_status       | double | `0.5`         | If the input `hazard_status` topic cannot be received for more than `timeout_hazard_status`, vehicle will make an emergency stop. |
 | use_parking_after_stopped   | bool   | `false`       | If this parameter is true, it will publish PARKING shift command.                                                                 |
 | turning_hazard_on.emergency | bool   | `true`        | If this parameter is true, hazard lamps will be turned on during emergency state.                                                 |
+| use_comfortable_stop        | bool   | `false`       | If this parameter is true, operate comfortable stop when latent faults occur.
 
 ## Assumptions / Known limits
 
