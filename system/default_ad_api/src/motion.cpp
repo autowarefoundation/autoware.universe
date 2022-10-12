@@ -67,7 +67,7 @@ void MotionNode::on_timer()
     }
   }
 
-  if (state_ == State::kStarting) {
+  if (state_ == State::kStarted) {
     if (!vehicle_stop_checker_.isVehicleStopped(stop_check_duration_)) {
       change_state(State::kMoving);
     }
@@ -133,7 +133,7 @@ void MotionNode::on_accept(
   inner_req->pause = false;
 
   const auto inner_res = cli_set_pause_->call(inner_req);
-  component_interface_utils::status::copy(inner_res, res);  // NOLINT cpplint false positive
+  component_interface_utils::status::copy(inner_res, res);  // NOLINT
 }
 
 }  // namespace default_ad_api
