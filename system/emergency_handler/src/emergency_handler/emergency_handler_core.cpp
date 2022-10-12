@@ -286,6 +286,20 @@ bool EmergencyHandler::isDataReady()
     return false;
   }
 
+  if (param_.use_comfortable_stop && !mrm_comfortable_stop_status_->is_available) {
+    RCLCPP_INFO_THROTTLE(
+      this->get_logger(), *this->get_clock(), std::chrono::milliseconds(5000).count(),
+      "waiting for mrm comfortable stop to become available...");
+    return false;
+  }
+
+  if (!mrm_emergency_stop_status_->is_available) {
+    RCLCPP_INFO_THROTTLE(
+      this->get_logger(), *this->get_clock(), std::chrono::milliseconds(5000).count(),
+      "waiting for mrm emergency stop to become available...");
+    return false;
+  }
+
   return true;
 }
 
