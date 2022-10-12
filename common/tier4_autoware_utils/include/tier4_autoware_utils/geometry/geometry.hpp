@@ -769,14 +769,14 @@ inline double calcTwistNorm(const geometry_msgs::msg::Vector3 & v)
   return std::sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
 }
 
-inline double getTwistNorm(const geometry_msgs::msg::Twist & twist)
+inline double calcTwistNorm(const geometry_msgs::msg::Twist & twist)
 {
-  return getTwistNorm(twist.linear);
+  return calcTwistNorm(twist.linear);
 }
 
-inline double getTwistNorm(const geometry_msgs::msg::TwistWithCovariance & twist_with_covariance)
+inline double calcTwistNorm(const geometry_msgs::msg::TwistWithCovariance & twist_with_covariance)
 {
-  return getTwistNorm(twist_with_covariance.twist.linear);
+  return calcTwistNorm(twist_with_covariance.twist.linear);
 }
 
 // Judge whether twist covariance is available.
