@@ -47,7 +47,7 @@ private:
   State state_;
 
   double stop_check_duration_;
-  bool enable_starting_state_;
+  bool require_accept_start_;
   bool waiting_for_set_pause_;
 
   void change_state(const State state, const bool init = false);

@@ -24,7 +24,7 @@ MotionNode::MotionNode(const rclcpp::NodeOptions & options)
 : Node("motion", options), vehicle_stop_checker_(this)
 {
   stop_check_duration_ = declare_parameter("stop_check_duration", 1.0);
-  enable_starting_state_ = declare_parameter("enable_starting_state", false);
+  require_accept_start_ = declare_parameter("require_accept_start", false);
   waiting_for_set_pause_ = false;
 
   const auto adaptor = component_interface_utils::NodeAdaptor(this);
@@ -35,7 +35,7 @@ MotionNode::MotionNode(const rclcpp::NodeOptions & options)
   adaptor.init_sub(sub_is_paused_, this, &MotionNode::on_is_paused);
   adaptor.init_sub(sub_is_start_requested_, this, &MotionNode::on_is_start_requested);
 
-  rclcpp::Rate rate(5);
+  rclcpp::Rate rate(10);
   timer_ = rclcpp::create_timer(this, get_clock(), rate.period(), [this]() { on_timer(); });
   change_state(State::kMoving, true);
 }
@@ -74,9 +74,18 @@ void MotionNode::on_timer()
   }
 
   if (state_ == State::kStopping) {
-    if (!waiting_for_set_pause_ && cli_set_pause_->get_rclcpp_client()->service_is_ready()) {
+    if (!waiting_for_set_pause_ && cli_set_pause_->service_is_ready()) {
       const auto req = std::make_shared<control_interface::SetPause::Service::Request>();
       req->pause = true;
+      waiting_for_set_pause_ = true;
+      cli_set_pause_->async_send_request(req, [this](auto) { waiting_for_set_pause_ = false; });
+    }
+  }
+
+  if (state_ == State::kStarting) {
+    if (!waiting_for_set_pause_ && !require_accept_start_) {
+      const auto req = std::make_shared<control_interface::SetPause::Service::Request>();
+      req->pause = false;
       waiting_for_set_pause_ = true;
       cli_set_pause_->async_send_request(req, [this](auto) { waiting_for_set_pause_ = false; });
     }

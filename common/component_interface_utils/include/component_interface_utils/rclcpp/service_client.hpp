@@ -91,8 +91,8 @@ public:
 #endif
   }
 
-  /// Get rclcpp interface.
-  typename WrapType::SharedPtr get_rclcpp_client() { return client_; }
+  /// Check if the service is ready.
+  bool service_is_ready() const { return client_->service_is_ready(); }
 
 private:
   RCLCPP_DISABLE_COPY(Client)
