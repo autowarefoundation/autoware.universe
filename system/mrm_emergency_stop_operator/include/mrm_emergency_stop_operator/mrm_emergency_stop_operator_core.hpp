@@ -21,7 +21,7 @@
 
 // Autoware
 #include <autoware_adapi_v1_msgs/srv/operate_mrm.hpp>
-#include <autoware_adapi_v1_msgs/msg/mrm_behavior_status.hpp>
+#include <tier4_system_msgs/msg/mrm_behavior_status.hpp>
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
 
 // ROS2 core
@@ -30,7 +30,7 @@
 namespace mrm_emergency_stop_operator
 {
   using autoware_adapi_v1_msgs::srv::OperateMRM;
-  using autoware_adapi_v1_msgs::msg::MRMBehaviorStatus;
+  using tier4_system_msgs::msg::MRMBehaviorStatus;
   using autoware_auto_control_msgs::msg::AckermannControlCommand;
 
 struct Parameters

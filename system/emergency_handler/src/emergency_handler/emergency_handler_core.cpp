@@ -45,10 +45,10 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
   // subscribe control mode
   sub_control_mode_ = create_subscription<autoware_auto_vehicle_msgs::msg::ControlModeReport>(
     "~/input/control_mode", rclcpp::QoS{1}, std::bind(&EmergencyHandler::onControlMode, this, _1));
-  sub_mrm_comfortable_stop_status_ = create_subscription<autoware_adapi_v1_msgs::msg::MRMBehaviorStatus>(
+  sub_mrm_comfortable_stop_status_ = create_subscription<tier4_system_msgs::msg::MRMBehaviorStatus>(
     "~/input/mrm/comfortable_stop/status", rclcpp::QoS{1},
     std::bind(&EmergencyHandler::onMRMComfortableStopStatus, this, _1));
-  sub_mrm_emergency_stop_status_ = create_subscription<autoware_adapi_v1_msgs::msg::MRMBehaviorStatus>(
+  sub_mrm_emergency_stop_status_ = create_subscription<tier4_system_msgs::msg::MRMBehaviorStatus>(
     "~/input/mrm/emergency_stop/status", rclcpp::QoS{1},
     std::bind(&EmergencyHandler::onMRMEmergencyStopStatus, this, _1));
 
@@ -84,8 +84,8 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
   control_mode_ = std::make_shared<const autoware_auto_vehicle_msgs::msg::ControlModeReport>();
   prev_control_command_ = autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr(
     new autoware_auto_control_msgs::msg::AckermannControlCommand);
-  mrm_comfortable_stop_status_ = std::make_shared<const autoware_adapi_v1_msgs::msg::MRMBehaviorStatus>();
-  mrm_emergency_stop_status_ = std::make_shared<const autoware_adapi_v1_msgs::msg::MRMBehaviorStatus>();
+  mrm_comfortable_stop_status_ = std::make_shared<const tier4_system_msgs::msg::MRMBehaviorStatus>();
+  mrm_emergency_stop_status_ = std::make_shared<const tier4_system_msgs::msg::MRMBehaviorStatus>();
   mrm_state_.stamp = this->now();
   mrm_state_.state = autoware_adapi_v1_msgs::msg::MRMState::NORMAL;
   mrm_state_.behavior = autoware_adapi_v1_msgs::msg::MRMState::NONE;
@@ -123,13 +123,13 @@ void EmergencyHandler::onControlMode(
 }
 
 void EmergencyHandler::onMRMComfortableStopStatus(
-  const autoware_adapi_v1_msgs::msg::MRMBehaviorStatus::ConstSharedPtr msg)
+  const tier4_system_msgs::msg::MRMBehaviorStatus::ConstSharedPtr msg)
 {
   mrm_comfortable_stop_status_ = msg;
 }
 
 void EmergencyHandler::onMRMEmergencyStopStatus(
-  const autoware_adapi_v1_msgs::msg::MRMBehaviorStatus::ConstSharedPtr msg)
+  const tier4_system_msgs::msg::MRMBehaviorStatus::ConstSharedPtr msg)
 {
   mrm_emergency_stop_status_ = msg;
 }

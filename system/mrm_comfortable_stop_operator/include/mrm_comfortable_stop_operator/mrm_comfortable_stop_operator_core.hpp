@@ -20,7 +20,7 @@
 
 // Autoware
 #include <autoware_adapi_v1_msgs/srv/operate_mrm.hpp>
-#include <autoware_adapi_v1_msgs/msg/mrm_behavior_status.hpp>
+#include <tier4_system_msgs/msg/mrm_behavior_status.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit_constraints.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit_clear_command.hpp>
@@ -56,7 +56,7 @@ private:
     const autoware_adapi_v1_msgs::srv::OperateMRM::Response::SharedPtr response);
 
   // Publisher
-  rclcpp::Publisher<autoware_adapi_v1_msgs::msg::MRMBehaviorStatus>::SharedPtr pub_status_;
+  rclcpp::Publisher<tier4_system_msgs::msg::MRMBehaviorStatus>::SharedPtr pub_status_;
   rclcpp::Publisher<tier4_planning_msgs::msg::VelocityLimit>::SharedPtr pub_velocity_limit_;
   rclcpp::Publisher<tier4_planning_msgs::msg::VelocityLimitClearCommand>::SharedPtr pub_velocity_limit_clear_command_;
 
@@ -70,7 +70,7 @@ private:
   void onTimer() const;
 
   // States
-  autoware_adapi_v1_msgs::msg::MRMBehaviorStatus status_;
+  tier4_system_msgs::msg::MRMBehaviorStatus status_;
 
 };
 

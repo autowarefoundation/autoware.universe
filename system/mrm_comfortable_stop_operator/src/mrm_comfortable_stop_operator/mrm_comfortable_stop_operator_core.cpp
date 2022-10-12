@@ -33,7 +33,7 @@ MRMComfortableStopOperator::MRMComfortableStopOperator(const rclcpp::NodeOptions
     std::placeholders::_1, std::placeholders::_2));
 
   // Publisher
-  pub_status_ = create_publisher<autoware_adapi_v1_msgs::msg::MRMBehaviorStatus>(
+  pub_status_ = create_publisher<tier4_system_msgs::msg::MRMBehaviorStatus>(
     "~/output/mrm/comfortable_stop/status", 1);
   pub_velocity_limit_ = create_publisher<tier4_planning_msgs::msg::VelocityLimit>(
     "~/output/velocity_limit", rclcpp::QoS{1}.transient_local());

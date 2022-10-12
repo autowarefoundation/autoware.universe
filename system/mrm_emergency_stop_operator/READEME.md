@@ -20,7 +20,7 @@ MRM emergency stop operator is a node that generates emmergency stop commands ac
 
 | Name                                      | Type                                                       | Description            |
 |-------------------------------------------|------------------------------------------------------------|------------------------|
-| `~/output/mrm/emergency_stop/status`      | `autoware_adapi_v1_msgs::msg::MRMBehaviorStatus`           | MRM execution status   |
+| `~/output/mrm/emergency_stop/status`      | `tier4_system_msgs::msg::MRMBehaviorStatus`                | MRM execution status   |
 | `~/output/mrm/emergency_stop/control_cmd` | `autoware_auto_control_msgs::msg::AckermannControlCommand` | Emergency stop command |
 
 ## Parameters

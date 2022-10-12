@@ -24,7 +24,7 @@
 
 #include <autoware_adapi_v1_msgs/srv/operate_mrm.hpp>
 #include <autoware_adapi_v1_msgs/msg/mrm_state.hpp>
-#include <autoware_adapi_v1_msgs/msg/mrm_behavior_status.hpp>
+#include <tier4_system_msgs/msg/mrm_behavior_status.hpp>
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
 #include <autoware_auto_system_msgs/msg/emergency_state.hpp>
 #include <autoware_auto_vehicle_msgs/msg/engage.hpp>
@@ -48,7 +48,7 @@ namespace vehicle_cmd_gate
 {
 
 using autoware_adapi_v1_msgs::msg::MRMState;
-using autoware_adapi_v1_msgs::msg::MRMBehaviorStatus;
+using tier4_system_msgs::msg::MRMBehaviorStatus;
 using autoware_auto_control_msgs::msg::AckermannControlCommand;
 using autoware_auto_vehicle_msgs::msg::GearCommand;
 using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
