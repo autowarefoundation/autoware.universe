@@ -736,7 +736,7 @@ geometry_msgs::msg::Pose calcInterpolatedPose(
   return output_pose;
 }
 
-inline geometry_msgs::msg::Vector3 getVector3(const double x, double y, double z)
+inline geometry_msgs::msg::Vector3 createVector3(const double x, double y, double z)
 {
   return geometry_msgs::build<geometry_msgs::msg::Vector3>().x(x).y(y).z(z);
 }
