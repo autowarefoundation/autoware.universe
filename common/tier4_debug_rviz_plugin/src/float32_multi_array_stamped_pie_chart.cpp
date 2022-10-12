@@ -62,14 +62,14 @@ Float32MultiArrayStampedPieChartDisplay::Float32MultiArrayStampedPieChartDisplay
   fg_color_property_ = new rviz_common::properties::ColorProperty(
     "foreground color", QColor(25, 255, 240), "color to draw line", this, SLOT(updateFGColor()));
   fg_alpha_property_ = new rviz_common::properties::FloatProperty(
-    "foreground alpha", 0.7, "alpha belnding value for foreground", this, SLOT(updateFGAlpha()));
+    "foreground alpha", 0.7, "alpha blending value for foreground", this, SLOT(updateFGAlpha()));
   fg_alpha2_property_ = new rviz_common::properties::FloatProperty(
-    "foreground alpha 2", 0.4, "alpha belnding value for foreground for indicator", this,
+    "foreground alpha 2", 0.4, "alpha blending value for foreground for indicator", this,
     SLOT(updateFGAlpha2()));
   bg_color_property_ = new rviz_common::properties::ColorProperty(
     "background color", QColor(0, 0, 0), "background color", this, SLOT(updateBGColor()));
   bg_alpha_property_ = new rviz_common::properties::FloatProperty(
-    "backround alpha", 0.0, "alpha belnding value for background", this, SLOT(updateBGAlpha()));
+    "background alpha", 0.0, "alpha blending value for background", this, SLOT(updateBGAlpha()));
   text_size_property_ = new rviz_common::properties::IntProperty(
     "text size", 14, "text size", this, SLOT(updateTextSize()));
   show_caption_property_ = new rviz_common::properties::BoolProperty(
@@ -90,11 +90,11 @@ Float32MultiArrayStampedPieChartDisplay::Float32MultiArrayStampedPieChartDisplay
     SLOT(updateMedColor()));
 
   max_color_threshold_property_ = new rviz_common::properties::FloatProperty(
-    "max color change threthold", 0, "change the max color at threshold", this,
+    "max color change threshold", 0, "change the max color at threshold", this,
     SLOT(updateMaxColorThreshold()));
 
   med_color_threshold_property_ = new rviz_common::properties::FloatProperty(
-    "med color change threthold", 0, "change the med color at threshold ", this,
+    "med color change threshold", 0, "change the med color at threshold ", this,
     SLOT(updateMedColorThreshold()));
 
   clockwise_rotate_property_ = new rviz_common::properties::BoolProperty(
@@ -231,7 +231,7 @@ void Float32MultiArrayStampedPieChartDisplay::drawPlot(double val)
     const int value_indicator_line_width = 2;
     const int value_padding = 5;
 
-    const int value_aabb_offset = outer_line_width + value_padding + value_line_width / 2;
+    const int value_offset = outer_line_width + value_padding + value_line_width / 2;
 
     painter.setPen(QPen(fg_color, outer_line_width, Qt::SolidLine));
 
@@ -241,8 +241,8 @@ void Float32MultiArrayStampedPieChartDisplay::drawPlot(double val)
 
     painter.setPen(QPen(fg_color2, value_indicator_line_width, Qt::SolidLine));
     painter.drawEllipse(
-      value_aabb_offset, value_aabb_offset, width - value_aabb_offset * 2,
-      height - value_aabb_offset * 2 - caption_offset_);
+      value_offset, value_offset, width - value_offset * 2,
+      height - value_offset * 2 - caption_offset_);
 
     const double ratio = (val - min_value_) / (max_value_ - min_value_);
     const double rotate_direction = clockwise_rotate_ ? -1.0 : 1.0;
@@ -251,8 +251,8 @@ void Float32MultiArrayStampedPieChartDisplay::drawPlot(double val)
     painter.setPen(QPen(fg_color, value_line_width, Qt::SolidLine));
     painter.drawArc(
       QRectF(
-        value_aabb_offset, value_aabb_offset, width - value_aabb_offset * 2,
-        height - value_aabb_offset * 2 - caption_offset_),
+        value_offset, value_offset, width - value_offset * 2,
+        height - value_offset * 2 - caption_offset_),
       start_angle_offset * 16, ratio_angle * 16);
     QFont font = painter.font();
     font.setPointSize(text_size_);
