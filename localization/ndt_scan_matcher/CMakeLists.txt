@@ -22,7 +22,8 @@ else()
   endif()
 endif()
 
-find_package(PCL REQUIRED COMPONENTS common io registration filter)
+find_package(PCL REQUIRED COMPONENTS common io registration)
+include_directories(${PCL_INCLUDE_DIRS})
 
 ament_auto_add_executable(ndt_scan_matcher
   src/debug.cpp
@@ -32,8 +33,8 @@ ament_auto_add_executable(ndt_scan_matcher
   src/pose_array_interpolator.cpp
 )
 
-target_link_directories(ndt_scan_matcher PUBLIC ${PCL_LIBRARY_DIRS})
-target_link_libraries(ndt_scan_matcher PUBLIC ${PCL_LIBRARIES})
+link_directories(${PCL_LIBRARY_DIRS})
+target_link_libraries(ndt_scan_matcher ${PCL_LIBRARIES})
 
 ament_auto_package(
   INSTALL_TO_SHARE
