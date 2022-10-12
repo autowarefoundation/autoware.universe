@@ -784,7 +784,7 @@ inline double getTwistNorm(const geometry_msgs::msg::TwistWithCovariance & twist
 inline bool isTwistCovarianceAvailable(
   const geometry_msgs::msg::TwistWithCovariance & twist_with_covariance)
 {
-  for (auto & c : twist_with_covariance.covariance) {
+  for (const auto & c : twist_with_covariance.covariance) {
     if (c != 0.0) {
       return true;
     }
