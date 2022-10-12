@@ -7,10 +7,6 @@
     # Subscriber queue size
     input_sensor_points_queue_size: 1
 
-    # NDT implementation type
-    # 0=PCL_GENERIC, 1=PCL_MODIFIED, 2=OMP
-    ndt_implement_type: 2
-
     # The maximum difference between two consecutive
     # transformations in order to consider convergence
     trans_epsilon: 0.01
