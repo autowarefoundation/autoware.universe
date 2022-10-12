@@ -779,8 +779,13 @@ inline double calcTwistNorm(const geometry_msgs::msg::TwistWithCovariance & twis
   return calcTwistNorm(twist_with_covariance.twist.linear);
 }
 
-// Judge whether twist covariance is available.
-// If all element of covariance is 0, return false.
+/**
+ * @brief Judge whether twist covariance is valid.
+ *
+ * @param twist_with_covariance source twist with covariance
+ * @return If all element of covariance is 0, return false.
+ */
+//
 inline bool isTwistCovarianceAvailable(
   const geometry_msgs::msg::TwistWithCovariance & twist_with_covariance)
 {
