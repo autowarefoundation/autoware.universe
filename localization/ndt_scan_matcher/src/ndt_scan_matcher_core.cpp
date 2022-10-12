@@ -127,8 +127,8 @@ NDTScanMatcher::NDTScanMatcher()
   ndt_params_.step_size = this->declare_parameter<double>("step_size");
   ndt_params_.resolution = this->declare_parameter<double>("resolution");
   ndt_params_.max_iterations = this->declare_parameter<int>("max_iterations");
-  int search_method = this->declare_parameter<int>("omp_neighborhood_search_method", 
-    static_cast<int>(pclomp::NeighborSearchMethod::KDTREE));
+  int search_method = this->declare_parameter<int>(
+    "omp_neighborhood_search_method", static_cast<int>(pclomp::NeighborSearchMethod::KDTREE));
   ndt_params_.search_method = static_cast<pclomp::NeighborSearchMethod>(search_method);
   ndt_params_.num_threads = this->declare_parameter<int>("omp_num_threads");
   ndt_params_.num_threads = std::max(ndt_params_.num_threads, 1);
@@ -143,7 +143,8 @@ NDTScanMatcher::NDTScanMatcher()
 
   RCLCPP_INFO(
     get_logger(), "trans_epsilon: %lf, step_size: %lf, resolution: %lf, max_iterations: %d",
-    ndt_params_.trans_epsilon, ndt_params_.step_size, ndt_params_.resolution, ndt_params_.max_iterations);
+    ndt_params_.trans_epsilon, ndt_params_.step_size, ndt_params_.resolution,
+    ndt_params_.max_iterations);
 
   int converged_param_type_tmp = this->declare_parameter("converged_param_type", 0);
   converged_param_type_ = static_cast<ConvergedParamType>(converged_param_type_tmp);
@@ -422,8 +423,7 @@ void NDTScanMatcher::callback_sensor_points(
   initial_pose_array_lock.unlock();
 
   // if regularization is enabled and available, set pose to NDT for regularization
-  if (regularization_enabled_)
-    add_regularization_pose(sensor_ros_time);
+  if (regularization_enabled_) add_regularization_pose(sensor_ros_time);
 
   if (ndt_ptr_->getInputTarget() == nullptr) {
     RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1, "No MAP!");

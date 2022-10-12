@@ -19,11 +19,6 @@
 
 #include "ndt_scan_matcher/particle.hpp"
 
-#include <pcl/common/io.h>
-#include <pcl/io/pcd_io.h>
-#include <pcl/point_types.h>
-#include <pclomp/ndt_omp.h>
-
 #include <rclcpp/rclcpp.hpp>
 
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
@@ -37,6 +32,10 @@
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <fmt/format.h>
+#include <pcl/common/io.h>
+#include <pcl/io/pcd_io.h>
+#include <pcl/point_types.h>
+#include <pclomp/ndt_omp.h>
 #include <tf2/transform_datatypes.h>
 
 #ifdef ROS_DISTRO_GALACTIC
@@ -93,7 +92,8 @@ class NDTScanMatcher : public rclcpp::Node
 {
   using PointSource = pcl::PointXYZ;
   using PointTarget = pcl::PointXYZ;
-  using NormalDistributionsTransform = pclomp::NormalDistributionsTransform<PointSource, PointTarget>;
+  using NormalDistributionsTransform =
+    pclomp::NormalDistributionsTransform<PointSource, PointTarget>;
 
   // TODO(Tier IV): move file
   struct OMPParams
