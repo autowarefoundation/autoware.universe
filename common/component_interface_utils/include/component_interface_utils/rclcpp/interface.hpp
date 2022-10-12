@@ -21,6 +21,7 @@
 
 #include <memory>
 #include <string>
+#include <unordered_map>
 
 namespace component_interface_utils
 {
@@ -35,27 +36,36 @@ struct NodeInterface
     this->node = node;
     this->logger = node->create_publisher<ServiceLog>("/service_log", 10);
 
-    node_name_ = node->get_namespace();
-    if (node_name_.empty() || node_name_.back() != '/') {
-      node_name_ += "/";
+    node_name = node->get_namespace();
+    if (node_name.empty() || node_name.back() != '/') {
+      node_name += "/";
     }
-    node_name_ += node->get_name();
+    node_name += node->get_name();
   }
 
-  void log(ServiceLog::_type_type type, const std::string & name, const std::string & yaml)
+  void log(ServiceLog::_type_type type, const std::string & name, const std::string & yaml = "")
   {
+    static const auto type_text = std::unordered_map<ServiceLog::_type_type, std::string>(
+      {{ServiceLog::CLIENT_REQUEST, "client call"},
+       {ServiceLog::SERVER_REQUEST, "server call"},
+       {ServiceLog::SERVER_RESPONSE, "server exit"},
+       {ServiceLog::CLIENT_RESPONSE, "client exit"},
+       {ServiceLog::ERROR_UNREADY, "client unready"},
+       {ServiceLog::ERROR_TIMEOUT, "client timeout"}});
+    RCLCPP_INFO_STREAM(node->get_logger(), type_text.at(type) << ": " << name);
+
     ServiceLog msg;
     msg.stamp = node->now();
     msg.type = type;
     msg.name = name;
-    msg.node = node_name_;
+    msg.node = node_name;
     msg.yaml = yaml;
     logger->publish(msg);
   }
 
   rclcpp::Node * node;
   rclcpp::Publisher<ServiceLog>::SharedPtr logger;
-  std::string node_name_;
+  std::string node_name;
 };
 
 }  // namespace component_interface_utils

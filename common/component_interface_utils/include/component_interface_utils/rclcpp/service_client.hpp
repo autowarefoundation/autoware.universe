@@ -51,7 +51,7 @@ public:
     const typename WrapType::SharedRequest request, std::optional<double> timeout = std::nullopt)
   {
     if (!client_->service_is_ready()) {
-      interface_->log(ServiceLog::ERROR_UNREADY, SpecType::name, "");
+      interface_->log(ServiceLog::ERROR_UNREADY, SpecType::name);
       throw ServiceUnready(SpecT::name);
     }
 
@@ -59,7 +59,7 @@ public:
     if (timeout) {
       const auto duration = std::chrono::duration<double, std::ratio<1>>(timeout.value());
       if (future.wait_for(duration) != std::future_status::ready) {
-        interface_->log(ServiceLog::ERROR_TIMEOUT, SpecType::name, "");
+        interface_->log(ServiceLog::ERROR_TIMEOUT, SpecType::name);
         throw ServiceTimeout(SpecT::name);
       }
     }
