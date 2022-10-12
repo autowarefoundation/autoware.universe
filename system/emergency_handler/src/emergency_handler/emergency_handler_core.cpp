@@ -199,7 +199,7 @@ void EmergencyHandler::operateMRM()
     return;
   }
   if (mrm_state_.state == MRMState::MRM_OPERATING) {
-    const auto current_mrm_behavior = updateMRMBehavior();
+    const auto current_mrm_behavior = getCurrentMRMBehavior();
     if (current_mrm_behavior != mrm_state_.behavior) {
       cancelMRMBehavior(mrm_state_.behavior);
       callMRMBehavior(current_mrm_behavior);
@@ -402,7 +402,7 @@ void EmergencyHandler::updateMRMState()
   }
 }
 
-autoware_adapi_v1_msgs::msg::MRMState::_behavior_type EmergencyHandler::updateMRMBehavior()
+autoware_adapi_v1_msgs::msg::MRMState::_behavior_type EmergencyHandler::getCurrentMRMBehavior()
 {
   using autoware_auto_system_msgs::msg::HazardStatus;
   using autoware_adapi_v1_msgs::msg::MRMState;

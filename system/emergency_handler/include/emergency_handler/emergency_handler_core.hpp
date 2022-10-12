@@ -136,7 +136,7 @@ private:
   void transitionTo(const int new_state);
   void updateMRMState();
   void operateMRM();
-  autoware_adapi_v1_msgs::msg::MRMState::_behavior_type updateMRMBehavior();
+  autoware_adapi_v1_msgs::msg::MRMState::_behavior_type getCurrentMRMBehavior();
   bool isStopped();
   bool isEmergency(const autoware_auto_system_msgs::msg::HazardStatus & hazard_status);
 };
