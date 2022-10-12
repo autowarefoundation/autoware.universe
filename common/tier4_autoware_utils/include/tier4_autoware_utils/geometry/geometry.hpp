@@ -786,7 +786,7 @@ inline double calcTwistNorm(const geometry_msgs::msg::TwistWithCovariance & twis
  * @return If all element of covariance is 0, return false.
  */
 //
-inline bool isTwistCovarianceAvailable(
+inline bool isTwistCovarianceValid(
   const geometry_msgs::msg::TwistWithCovariance & twist_with_covariance)
 {
   for (const auto & c : twist_with_covariance.covariance) {
