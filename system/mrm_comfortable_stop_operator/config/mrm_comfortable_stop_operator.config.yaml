@@ -2,7 +2,7 @@
 ---
 /**:
   ros__parameters:
-    update_rate: 1
+    update_rate: 10
     min_acceleration: -1.0
     max_jerk: 0.3
     min_jerk: -0.3
