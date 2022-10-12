@@ -49,6 +49,7 @@ struct Param
   double timeout_takeover_request;
   bool use_takeover_request;
   bool use_parking_after_stopped;
+  bool use_comfortable_stop;
   HazardLampPolicy turning_hazard_on{};
 };
 

@@ -26,6 +26,7 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
   param_.timeout_takeover_request = declare_parameter<double>("timeout_takeover_request", 10.0);
   param_.use_takeover_request = declare_parameter<bool>("use_takeover_request", false);
   param_.use_parking_after_stopped = declare_parameter<bool>("use_parking_after_stopped", false);
+  param_.use_comfortable_stop = declare_parameter<bool>("use_comfortable_stop", false);
   param_.turning_hazard_on.emergency = declare_parameter<bool>("turning_hazard_on.emergency", true);
 
   using std::placeholders::_1;
@@ -412,7 +413,10 @@ autoware_adapi_v1_msgs::msg::MRMState::_behavior_type EmergencyHandler::updateMR
   // State machine
   if (mrm_state_.behavior == MRMState::NONE) {
     if (level == HazardStatus::LATENT_FAULT) {
-      return MRMState::COMFORTABLE_STOP;
+      if (param_.use_comfortable_stop) {
+        return MRMState::COMFORTABLE_STOP;
+      }
+      return MRMState::EMERGENCY_STOP;
     }
     if (level == HazardStatus::SINGLE_POINT_FAULT) {
       return MRMState::EMERGENCY_STOP;
