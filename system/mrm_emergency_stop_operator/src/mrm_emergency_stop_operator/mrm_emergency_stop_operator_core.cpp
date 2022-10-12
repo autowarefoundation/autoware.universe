@@ -48,7 +48,7 @@ MRMEmergencyStopOperator::MRMEmergencyStopOperator(const rclcpp::NodeOptions & n
     this, get_clock(), update_period_ns, std::bind(&MRMEmergencyStopOperator::onTimer, this));
 
   // Initialize
-  status_.is_available = true;
+  status_.is_available = false;
   status_.is_operating = false;
   is_prev_control_cmd_subscribed_ = false;
 }
@@ -90,6 +90,10 @@ void MRMEmergencyStopOperator::publishControlCommand(const AckermannControlComma
 
 void MRMEmergencyStopOperator::onTimer()
 {
+  if (is_prev_control_cmd_subscribed_) {
+    status_.is_operating = true;
+  }
+
   if (status_.is_operating) {
     auto control_cmd = calcTargetAcceleration(prev_control_cmd_);
     publishControlCommand(control_cmd);
