@@ -97,6 +97,7 @@ NDTScanMatcher::NDTScanMatcher()
   tf2_buffer_(this->get_clock()),
   tf2_listener_(tf2_buffer_),
   tf2_broadcaster_(*this),
+  ndt_ptr_(new NormalDistributionsTransform),
   base_frame_("base_link"),
   ndt_base_frame_("ndt_base_link"),
   map_frame_("map"),
