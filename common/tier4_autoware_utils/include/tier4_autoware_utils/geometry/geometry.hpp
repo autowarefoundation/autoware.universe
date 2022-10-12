@@ -741,10 +741,12 @@ inline geometry_msgs::msg::Vector3 createVector3(const double x, double y, doubl
   return geometry_msgs::build<geometry_msgs::msg::Vector3>().x(x).y(y).z(z);
 }
 
-inline geometry_msgs::msg::Twist getTwist(const geometry_msgs::msg::Vector3 & velocity)
+inline geometry_msgs::msg::Twist getTwist(
+  const geometry_msgs::msg::Vector3 & velocity, geometry_msgs::msg::Vector3 & angular)
 {
   geometry_msgs::msg::Twist twist;
   twist.linear = velocity;
+  twist.angular = angular;
   return twist;
 }
 
@@ -757,10 +759,10 @@ inline geometry_msgs::msg::TwistWithCovariance getTwistWithCovariance(
 }
 
 inline geometry_msgs::msg::TwistWithCovariance getTwistWithCovariance(
-  const geometry_msgs::msg::Vector3 & velocity)
+  const geometry_msgs::msg::Vector3 & velocity, geometry_msgs::msg::Vector3 & angular)
 {
   geometry_msgs::msg::TwistWithCovariance twist_with_covariance;
-  twist_with_covariance.twist = getTwist(velocity);
+  twist_with_covariance.twist = getTwist(velocity, angular);
   return twist_with_covariance;
 }
 
