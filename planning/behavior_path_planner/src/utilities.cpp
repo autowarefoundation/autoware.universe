@@ -832,6 +832,28 @@ bool calcObjectPolygon(const PredictedObject & object, Polygon2d * object_polygo
   return true;
 }
 
+bool calcObjectPolygon(
+  const Shape & object_shape, const Pose & object_pose, Polygon2d * object_polygon)
+{
+  if (object_shape.type == Shape::BOUNDING_BOX) {
+    const double & length_m = object_shape.dimensions.x / 2;
+    const double & width_m = object_shape.dimensions.y / 2;
+    *object_polygon =
+      convertBoundingBoxObjectToGeometryPolygon(object_pose, length_m, length_m, width_m);
+
+  } else if (object_shape.type == Shape::CYLINDER) {
+    *object_polygon = convertCylindricalObjectToGeometryPolygon(object_pose, object_shape);
+  } else if (object_shape.type == Shape::POLYGON) {
+    *object_polygon = convertPolygonObjectToGeometryPolygon(object_pose, object_shape);
+  } else {
+    RCLCPP_WARN(
+      rclcpp::get_logger("behavior_path_planner").get_child("utilities"), "Object shape unknown!");
+    return false;
+  }
+
+  return true;
+}
+
 std::vector<double> calcObjectsDistanceToPath(
   const PredictedObjects & objects, const PathWithLaneId & ego_path)
 {
@@ -2345,8 +2367,10 @@ bool getEgoExpectedPoseAndConvertToPolygon(
   tier4_autoware_utils::Polygon2d & ego_polygon, const double & check_current_time,
   const VehicleInfo & ego_info)
 {
+  bool is_lerped{true};
   if (!util::lerpByTimeStamp(pred_path, check_current_time, &expected_pose)) {
-    return false;
+    expected_pose = current_pose;
+    is_lerped = false;
   }
   expected_pose.orientation = current_pose.orientation;
 
@@ -2356,21 +2380,24 @@ bool getEgoExpectedPoseAndConvertToPolygon(
   const auto & back_m = i.rear_overhang_m;
 
   ego_polygon =
-    util::convertBoundingBoxObjectToGeometryPolygon(current_pose, front_m, back_m, width_m);
+    util::convertBoundingBoxObjectToGeometryPolygon(expected_pose, front_m, back_m, width_m);
 
-  return true;
+  return is_lerped;
 }
 
 bool getObjectExpectedPoseAndConvertToPolygon(
   const PredictedPath & pred_path, const PredictedObject & object, Pose & expected_pose,
   Polygon2d & obj_polygon, const double & check_current_time)
 {
+  bool is_lerped{true};
   if (!util::lerpByTimeStamp(pred_path, check_current_time, &expected_pose)) {
-    return false;
+    expected_pose = object.kinematics.initial_pose_with_covariance.pose;
+    is_lerped = false;
   }
   expected_pose.orientation = object.kinematics.initial_pose_with_covariance.pose.orientation;
 
-  return util::calcObjectPolygon(object, &obj_polygon);
+  is_lerped = util::calcObjectPolygon(object.shape, expected_pose, &obj_polygon);
+  return is_lerped;
 }
 
 std::vector<PredictedPath> getPredictedPathFromObj(
@@ -2513,7 +2540,6 @@ bool isSafeInLaneletCollisionCheck(
     if (!util::getObjectExpectedPoseAndConvertToPolygon(
           target_object_path, target_object, expected_obj_pose, obj_polygon, t)) {
       debug.failed_reason = "get_obj_info_failed";
-      continue;
     }
 
     Pose expected_ego_pose;
@@ -2566,7 +2592,7 @@ bool isSafeInFreeSpaceCollisionCheck(
     if (!util::getEgoExpectedPoseAndConvertToPolygon(
           ego_current_pose, ego_predicted_path, expected_ego_pose, ego_polygon, t, ego_info)) {
       debug.failed_reason = "get_ego_info_failed";
-      continue;
+      expected_ego_pose = ego_current_pose;
     }
 
     debug.ego_polygon = ego_polygon;

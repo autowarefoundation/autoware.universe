@@ -198,6 +198,9 @@ bool lerpByTimeStamp(const PredictedPath & path, const double t, Pose * lerped_p
 
 bool calcObjectPolygon(const PredictedObject & object, Polygon2d * object_polygon);
 
+bool calcObjectPolygon(
+  const Shape & object_shape, const Pose & object_pose, Polygon2d * object_polygon);
+
 PredictedPath resamplePredictedPath(
   const PredictedPath & input_path, const double resolution, const double duration);
 
