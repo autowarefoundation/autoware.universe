@@ -2556,28 +2556,51 @@ TurnSignalInfo AvoidanceModule::calcTurnSignalInfo(const ShiftedPath & path) con
     return {};
   }
 
-  const auto getRelativeLength = [this](const ShiftLine & sl) {
-    const auto current_shift = getCurrentShift();
-    return sl.end_shift_length - current_shift;
-  };
-
   const auto front_shift_line = shift_lines.front();
+  const size_t start_idx = front_shift_line.start_idx;
+  const size_t end_idx = front_shift_line.end_idx;
 
-  TurnSignalInfo turn_signal_info{};
+  const auto current_shift_length = getCurrentShift();
+  const double start_shift_length = path.shift_length.at(start_idx);
+  const double end_shift_length = path.shift_length.at(end_idx);
+  const double segment_shift_length = end_shift_length - start_shift_length;
 
-  if (std::abs(getRelativeLength(front_shift_line)) < 0.1) {
-    return turn_signal_info;
+  // If shift length is shorter than the threshold, it does not need to turn on blinkers
+  if (std::fabs(segment_shift_length) < 1.0) {
+    return {};
   }
+
+  // If the vehicle does not shift anymore, we turn off the blinker
+  if (std::fabs(end_shift_length - current_shift_length) < 0.1) {
+    return {};
+  }
+
+  // compute blinker start idx and end idx
+  const size_t blinker_start_idx = [&]() {
+    for (size_t idx = start_idx; idx <= end_idx; ++idx) {
+      const double current_shift_length = path.shift_length.at(idx);
+      if (current_shift_length > 0.2) {
+        return idx;
+      }
+    }
+    return start_idx;
+  }();
+  const size_t blinker_end_idx = end_idx;
+
+  const auto blinker_start_pose = path.path.points.at(blinker_start_idx).point.pose;
+  const auto blinker_end_pose = path.path.points.at(blinker_end_idx).point.pose;
 
   const auto signal_prepare_distance = std::max(getEgoSpeed() * 3.0, 10.0);
   const auto ego_to_shift_start =
-    calcSignedArcLength(path.path.points, getEgoPosition(), front_shift_line.start.position);
+    calcSignedArcLength(path.path.points, getEgoPosition(), blinker_start_pose.position);
 
   if (signal_prepare_distance < ego_to_shift_start) {
-    return turn_signal_info;
+    return {};
   }
 
-  if (getRelativeLength(front_shift_line) > 0.0) {
+  TurnSignalInfo turn_signal_info{};
+
+  if (segment_shift_length > 0.0) {
     turn_signal_info.turn_signal.command = TurnIndicatorsCommand::ENABLE_LEFT;
   } else {
     turn_signal_info.turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
@@ -2586,12 +2609,11 @@ TurnSignalInfo AvoidanceModule::calcTurnSignalInfo(const ShiftedPath & path) con
   if (ego_to_shift_start > 0.0) {
     turn_signal_info.desired_start_point = getEgoPosition();
   } else {
-    turn_signal_info.desired_start_point = front_shift_line.start.position;
+    turn_signal_info.desired_start_point = blinker_start_pose.position;
   }
-
-  turn_signal_info.desired_end_point = front_shift_line.end.position;
-  turn_signal_info.required_start_point = front_shift_line.start.position;
-  turn_signal_info.required_end_point = front_shift_line.end.position;
+  turn_signal_info.desired_end_point = blinker_end_pose.position;
+  turn_signal_info.required_start_point = blinker_start_pose.position;
+  turn_signal_info.required_end_point = blinker_end_pose.position;
 
   return turn_signal_info;
 }
