@@ -29,6 +29,7 @@
 #include <lanelet2_core/primitives/Primitive.h>
 
 #include <memory>
+#include <string>
 #include <vector>
 
 namespace behavior_path_planner
@@ -43,31 +44,26 @@ using geometry_msgs::msg::Twist;
 
 // TODO(sugahara) move to util
 PathWithLaneId combineReferencePath(const PathWithLaneId path1, const PathWithLaneId path2);
-
-std::vector<ShiftParkingPath> generateShiftParkingPaths(
-  const RouteHandler & route_handler, const lanelet::ConstLanelets & original_lanelets,
-  const lanelet::ConstLanelets & target_lanelets, const Pose & pose, const Pose & goal_pose,
-  const BehaviorPathPlannerParameters & common_parameter,
-  const behavior_path_planner::PullOverParameters & parameter);
-
-std::vector<ShiftParkingPath> selectValidPaths(
-  const std::vector<ShiftParkingPath> & paths, const lanelet::ConstLanelets & current_lanes,
-  const lanelet::ConstLanelets & target_lanes, const Pose & current_pose,
-  const bool is_in_goal_route_section, const Pose & goal_pose,
-  const lane_departure_checker::LaneDepartureChecker & lane_departure_checker);
-bool selectSafePath(
-  const std::vector<ShiftParkingPath> & paths,
-  const OccupancyGridBasedCollisionDetector & occupancy_grid_map, ShiftParkingPath & selected_path);
-bool hasEnoughDistance(
-  const ShiftParkingPath & path, const lanelet::ConstLanelets & current_lanes,
-  const Pose & current_pose, const bool is_in_goal_route_section, const Pose & goal_pose);
 lanelet::ConstLanelets getPullOverLanes(const RouteHandler & route_handler);
+bool hasEnoughDistanceToParkingStart(
+  const PathWithLaneId & path, const Pose & current_pose, const Pose & start_pose,
+  const double current_vel, const double maximum_deceleration, const double decide_path_distance,
+  const double ego_nearest_dist_threshold, const double ego_nearest_yaw_threshold);
+PredictedObjects filterObjectsByLateralDistance(
+  const Pose & ego_pose, const double vehicle_width, const PredictedObjects & objects,
+  const double distance_thresh, const bool filter_inside);
 
 // debug
 Marker createPullOverAreaMarker(
   const Pose & start_pose, const Pose & end_pose, const int32_t id,
   const std_msgs::msg::Header & header, const double base_link2front, const double base_link2rear,
   const double vehicle_width, const std_msgs::msg::ColorRGBA & color);
+MarkerArray createPosesMarkerArray(
+  const std::vector<Pose> & poses, std::string && ns, const std_msgs::msg::ColorRGBA & color);
+MarkerArray createTextsMarkerArray(
+  const std::vector<Pose> & poses, std::string && ns, const std_msgs::msg::ColorRGBA & color);
+MarkerArray createGoalCandidatesMarkerArray(
+  std::vector<GoalCandidate> goal_candidates, const std_msgs::msg::ColorRGBA & color);
 }  // namespace pull_over_utils
 }  // namespace behavior_path_planner
 

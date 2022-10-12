@@ -149,6 +149,8 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
       planner_data_->parameters.base_link2front, intersection_search_distance);
   }
 
+  steering_factor_interface_ptr_ = std::make_unique<SteeringFactorInterface>(this, "intersection");
+
   // Start timer
   {
     const auto planning_hz = declare_parameter("planning_hz", 10.0);
@@ -380,9 +382,13 @@ PullOverParameters BehaviorPathPlannerNode::getPullOverParam()
   p.forward_goal_search_length = dp("forward_goal_search_length", 20.0);
   p.backward_goal_search_length = dp("backward_goal_search_length", 20.0);
   p.goal_search_interval = dp("goal_search_interval", 5.0);
-  p.goal_to_obstacle_margin = dp("goal_to_obstacle_margin", 2.0);
+  p.longitudinal_margin = dp("longitudinal_margin", 3.0);
+  p.max_lateral_offset = dp("max_lateral_offset", 1.0);
+  p.lateral_offset_interval = dp("lateral_offset_interval", 0.25);
   // occupancy grid map
   p.use_occupancy_grid = dp("use_occupancy_grid", true);
+  p.use_occupancy_grid_for_longitudinal_margin =
+    dp("use_occupancy_grid_for_longitudinal_margin", false);
   p.occupancy_grid_collision_check_margin = dp("occupancy_grid_collision_check_margin", 0.0);
   p.theta_size = dp("theta_size", 360);
   p.obstacle_threshold = dp("obstacle_threshold", 90);
@@ -412,8 +418,8 @@ PullOverParameters BehaviorPathPlannerNode::getPullOverParam()
   p.arc_path_interval = dp("arc_path_interval", 1.0);
   p.pull_over_max_steer_angle = dp("pull_over_max_steer_angle", 0.35);  // 20deg
   // hazard
-  p.hazard_on_threshold_dis = dp("hazard_on_threshold_dis", 1.0);
-  p.hazard_on_threshold_vel = dp("hazard_on_threshold_vel", 0.5);
+  p.hazard_on_threshold_distance = dp("hazard_on_threshold_distance", 1.0);
+  p.hazard_on_threshold_velocity = dp("hazard_on_threshold_velocity", 0.5);
   // safety with dynamic objects. Not used now.
   p.pull_over_duration = dp("pull_over_duration", 4.0);
   p.pull_over_prepare_duration = dp("pull_over_prepare_duration", 2.0);
@@ -604,16 +610,21 @@ void BehaviorPathPlannerNode::run()
       turn_signal.command = TurnIndicatorsCommand::DISABLE;
       hazard_signal.command = output.turn_signal_info.hazard_signal.command;
     } else {
+      const auto & current_pose = planner_data->self_pose->pose;
+      const double & current_vel = planner_data->self_odometry->twist.twist.linear.x;
       const size_t ego_seg_idx = findEgoSegmentIndex(path->points);
+
       turn_signal = turn_signal_decider_.getTurnSignal(
-        *path, planner_data->self_pose->pose, ego_seg_idx, *(planner_data->route_handler),
-        output.turn_signal_info.turn_signal, output.turn_signal_info.signal_distance);
+        *path, current_pose, current_vel, ego_seg_idx, *(planner_data->route_handler),
+        output.turn_signal_info);
       hazard_signal.command = HazardLightsCommand::DISABLE;
     }
     turn_signal.stamp = get_clock()->now();
     hazard_signal.stamp = get_clock()->now();
     turn_signal_publisher_->publish(turn_signal);
     hazard_signal_publisher_->publish(hazard_signal);
+
+    publish_steering_factor(turn_signal);
   }
 
   // for debug
@@ -627,6 +638,36 @@ void BehaviorPathPlannerNode::run()
 
   mutex_bt_.unlock();
   RCLCPP_DEBUG(get_logger(), "----- behavior path planner end -----\n\n");
+}
+
+void BehaviorPathPlannerNode::publish_steering_factor(const TurnIndicatorsCommand & turn_signal)
+{
+  const auto [intersection_flag, approaching_intersection_flag] =
+    turn_signal_decider_.getIntersectionTurnSignalFlag();
+  if (intersection_flag || approaching_intersection_flag) {
+    const uint16_t steering_factor_direction = std::invoke([&turn_signal]() {
+      if (turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {
+        return SteeringFactor::LEFT;
+      }
+      return SteeringFactor::RIGHT;
+    });
+
+    const auto [intersection_pose, intersection_distance] =
+      turn_signal_decider_.getIntersectionPoseAndDistance();
+    const uint16_t steering_factor_state = std::invoke([&intersection_flag]() {
+      if (intersection_flag) {
+        return SteeringFactor::TURNING;
+      }
+      return SteeringFactor::TRYING;
+    });
+
+    steering_factor_interface_ptr_->updateSteeringFactor(
+      {intersection_pose, intersection_pose}, {intersection_distance, intersection_distance},
+      SteeringFactor::INTERSECTION, steering_factor_direction, steering_factor_state, "");
+  } else {
+    steering_factor_interface_ptr_->clearSteeringFactors();
+  }
+  steering_factor_interface_ptr_->publishSteeringFactor(get_clock()->now());
 }
 
 PathWithLaneId::SharedPtr BehaviorPathPlannerNode::getPath(

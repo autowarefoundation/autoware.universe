@@ -36,8 +36,8 @@ boost::optional<PullOutPath> GeometricPullOut::plan(Pose start_pose, Pose goal_p
 {
   PullOutPath output;
 
-  // conbine road lane and shoulder lane
-  const auto road_lanes = util::getCurrentLanes(planner_data_);
+  // combine road lane and shoulder lane
+  const auto road_lanes = util::getExtendedCurrentLanes(planner_data_);
   const auto shoulder_lanes = getPullOutLanes(road_lanes, planner_data_);
   auto lanes = road_lanes;
   lanes.insert(lanes.end(), shoulder_lanes.begin(), shoulder_lanes.end());
@@ -50,7 +50,7 @@ boost::optional<PullOutPath> GeometricPullOut::plan(Pose start_pose, Pose goal_p
     return {};
   }
 
-  // collsion check with objects in shoulder lanes
+  // collision check with objects in shoulder lanes
   const auto arc_path = planner_.getArcPath();
   const auto shoulder_lane_objects =
     util::filterObjectsByLanelets(*(planner_data_->dynamic_object), shoulder_lanes);
