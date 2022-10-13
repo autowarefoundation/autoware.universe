@@ -2549,8 +2549,6 @@ bool AvoidanceModule::isTargetObjectType(const PredictedObject & object) const
 
 TurnSignalInfo AvoidanceModule::calcTurnSignalInfo(const ShiftedPath & path) const
 {
-  TurnSignalInfo turn_signal;
-
   const auto shift_lines = path_shifter_.getShiftLines();
   if (shift_lines.empty()) {
     return {};
@@ -2590,11 +2588,14 @@ TurnSignalInfo AvoidanceModule::calcTurnSignalInfo(const ShiftedPath & path) con
   const auto blinker_start_pose = path.path.points.at(blinker_start_idx).point.pose;
   const auto blinker_end_pose = path.path.points.at(blinker_end_idx).point.pose;
 
+  const double ego_vehicle_offset =
+    planner_data_->parameters.vehicle_info.max_longitudinal_offset_m;
   const auto signal_prepare_distance = std::max(getEgoSpeed() * 3.0, 10.0);
-  const auto ego_to_shift_start =
-    calcSignedArcLength(path.path.points, getEgoPosition(), blinker_start_pose.position);
+  const auto ego_front_to_shift_start =
+    calcSignedArcLength(path.path.points, getEgoPosition(), blinker_start_pose.position) -
+    ego_vehicle_offset;
 
-  if (signal_prepare_distance < ego_to_shift_start) {
+  if (signal_prepare_distance < ego_front_to_shift_start) {
     return {};
   }
 
@@ -2606,7 +2607,7 @@ TurnSignalInfo AvoidanceModule::calcTurnSignalInfo(const ShiftedPath & path) con
     turn_signal_info.turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
   }
 
-  if (ego_to_shift_start > 0.0) {
+  if (ego_front_to_shift_start > 0.0) {
     turn_signal_info.desired_start_point = getEgoPosition();
   } else {
     turn_signal_info.desired_start_point = blinker_start_pose.position;
