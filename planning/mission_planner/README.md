@@ -39,6 +39,13 @@ The ROS message of route section contains following three elements for each rout
 - `preferred_primitive_id`: Preferred lane to follow towards the goal.
 - `primitives`: All neighbor lanes in the same direction including the preferred lane.
 
+## Parameters
+
+| Name                          | Unit | Type   | Description                               | Default value |
+| :---------------------------- | :--- | :----- |:------------------------------------------|:--------------|
+| drivable_area_resolution      | [°]  | double | the maximum angle at goal can be accepted | 45.0          |
+
+
 ## Implementation
 
 ### Mission Planner
