@@ -48,9 +48,7 @@
 
 #include <tier4_debug_msgs/msg/float32_multi_array_stamped.hpp>
 
-#include <OGRE/OgreColourValue.h>
 #include <OGRE/OgreMaterial.h>
-#include <OGRE/OgreTexture.h>
 
 #include <mutex>
 
