@@ -17,9 +17,7 @@
 
 struct MissionPlannerParameters
 {
-
   double th_angle;
-
 };
 
 #endif  // MISSION_PLANNER__PARAMETERS_HPP_

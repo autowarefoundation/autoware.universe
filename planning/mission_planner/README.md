@@ -41,10 +41,9 @@ The ROS message of route section contains following three elements for each rout
 
 ## Parameters
 
-| Name                          | Unit | Type   | Description                               | Default value |
-| :---------------------------- | :--- | :----- |:------------------------------------------|:--------------|
-| drivable_area_resolution      | [°]  | double | the maximum angle at goal can be accepted | 45.0          |
-
+| Name                     | Unit | Type   | Description                               | Default value |
+| :----------------------- | :--- | :----- | :---------------------------------------- | :------------ |
+| drivable_area_resolution | [°]  | double | the maximum angle at goal can be accepted | 45.0          |
 
 ## Implementation
 

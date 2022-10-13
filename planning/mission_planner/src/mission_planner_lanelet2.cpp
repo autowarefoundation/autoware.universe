@@ -118,10 +118,7 @@ double project_goal_to_map(
 
 namespace mission_planner
 {
-void MissionPlannerLanelet2::setCommonParam()
-{
-  p.th_angle = declare_parameter("th_angle", 45.0);
-}
+void MissionPlannerLanelet2::setCommonParam() { p.th_angle = declare_parameter("th_angle", 45.0); }
 
 MissionPlannerLanelet2::MissionPlannerLanelet2(const rclcpp::NodeOptions & node_options)
 : MissionPlannerInterface("mission_planner", node_options), is_graph_ready_(false)
@@ -269,7 +266,6 @@ autoware_auto_planning_msgs::msg::HADMapRoute MissionPlannerLanelet2::plan_route
 
   autoware_auto_planning_msgs::msg::HADMapRoute route_msg;
   RouteSections route_sections;
-
 
   if (!is_goal_valid(goal_pose)) {
     RCLCPP_WARN(get_logger(), "Goal is not valid! Please check position and angle of goal_pose");
