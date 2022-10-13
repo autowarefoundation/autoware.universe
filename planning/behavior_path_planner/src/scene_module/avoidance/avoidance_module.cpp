@@ -2577,7 +2577,7 @@ TurnSignalInfo AvoidanceModule::calcTurnSignalInfo(const ShiftedPath & path) con
   const size_t blinker_start_idx = [&]() {
     for (size_t idx = start_idx; idx <= end_idx; ++idx) {
       const double current_shift_length = path.shift_length.at(idx);
-      if (current_shift_length > 0.2) {
+      if (current_shift_length > 0.1) {
         return idx;
       }
     }
