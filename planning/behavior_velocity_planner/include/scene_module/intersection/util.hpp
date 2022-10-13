@@ -110,9 +110,9 @@ int getFirstPointInsidePolygons(
  * @param stop_pose stop point defined on map
  * @return true when the stop point is defined on map.
  */
-bool getStopPoseIndexFromMap(
+bool getStopLineIndexFromMap(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int lane_id,
-  const std::shared_ptr<const PlannerData> & planner_data, int & stop_idx_ip, int dist_thr,
+  const std::shared_ptr<const PlannerData> & planner_data, int * stop_idx_ip, int dist_thr,
   const rclcpp::Logger logger);
 
 std::vector<lanelet::CompoundPolygon3d> getPolygon3dFromLaneletsVec(
@@ -122,10 +122,6 @@ std::vector<lanelet::CompoundPolygon3d> getPolygon3dFromLanelets(
   const lanelet::ConstLanelets & ll_vec, double clip_length);
 
 std::vector<int> getLaneletIdsFromLaneletsVec(const std::vector<lanelet::ConstLanelets> & ll_vec);
-
-lanelet::ConstLanelet generateOffsetLanelet(
-  const lanelet::ConstLanelet lanelet, double right_margin, double left_margin);
-geometry_msgs::msg::Pose toPose(const geometry_msgs::msg::Point & p);
 
 /**
  * @brief check if ego is over the target_idx. If the index is same, compare the exact pose
@@ -142,7 +138,7 @@ bool isBeforeTargetIndex(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
   const geometry_msgs::msg::Pose & current_pose, const int target_idx);
 
-std::vector<int> extendedAdjacentDirectionLanes(
+lanelet::ConstLanelets extendedAdjacentDirectionLanes(
   const lanelet::LaneletMapPtr map, const lanelet::routing::RoutingGraphPtr routing_graph,
   lanelet::ConstLanelet lane);
 
