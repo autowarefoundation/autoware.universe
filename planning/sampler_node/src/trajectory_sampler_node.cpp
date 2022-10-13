@@ -101,6 +101,10 @@ TrajectorySamplerNode::TrajectorySamplerNode(const rclcpp::NodeOptions & node_op
     declare_parameter<double>("constraints.hard.max_acceleration");
   params_.constraints.hard.min_acceleration =
     declare_parameter<double>("constraints.hard.min_acceleration");
+  params_.constraints.hard.max_velocity =
+    declare_parameter<double>("constraints.hard.max_velocity");
+  params_.constraints.hard.min_velocity =
+    declare_parameter<double>("constraints.hard.min_velocity");
   params_.constraints.soft.lateral_deviation_weight =
     declare_parameter<double>("constraints.soft.lateral_deviation_weight");
   params_.constraints.soft.longitudinal_deviation_weight =
@@ -110,6 +114,8 @@ TrajectorySamplerNode::TrajectorySamplerNode(const rclcpp::NodeOptions & node_op
     declare_parameter<double>("constraints.soft.length_weight");
   params_.constraints.soft.curvature_weight =
     declare_parameter<double>("constraints.soft.curvature_weight");
+  params_.constraints.soft.velocity_weight =
+    declare_parameter<double>("constraints.soft.velocity_weight");
   params_.sampling.enable_frenet = declare_parameter<bool>("sampling.enable_frenet");
   params_.sampling.enable_bezier = declare_parameter<bool>("sampling.enable_bezier");
   params_.sampling.resolution = declare_parameter<double>("sampling.resolution");
@@ -121,6 +127,15 @@ TrajectorySamplerNode::TrajectorySamplerNode(const rclcpp::NodeOptions & node_op
   params_.sampling.reuse_max_deviation = declare_parameter<double>("sampling.reuse_max_deviation");
   params_.sampling.target_lengths =
     declare_parameter<std::vector<double>>("sampling.target_lengths");
+  params_.sampling.frenet.manual = declare_parameter<bool>("sampling.frenet.manual");
+  params_.sampling.frenet.target_durations =
+    declare_parameter<std::vector<double>>("sampling.frenet.target_durations");
+  params_.sampling.frenet.target_longitudinal_position_offsets =
+    declare_parameter<std::vector<double>>("sampling.frenet.target_longitudinal_position_offsets");
+  params_.sampling.frenet.target_longitudinal_velocities =
+    declare_parameter<std::vector<double>>("sampling.frenet.target_longitudinal_velocities");
+  params_.sampling.frenet.target_longitudinal_accelerations =
+    declare_parameter<std::vector<double>>("sampling.frenet.target_longitudinal_accelerations");
   params_.sampling.frenet.target_lateral_positions =
     declare_parameter<std::vector<double>>("sampling.frenet.target_lateral_positions");
   params_.sampling.frenet.target_lateral_velocities =
@@ -138,7 +153,11 @@ TrajectorySamplerNode::TrajectorySamplerNode(const rclcpp::NodeOptions & node_op
   params_.preprocessing.force_zero_heading =
     declare_parameter<bool>("preprocessing.force_zero_initial_heading");
   params_.preprocessing.smooth_reference =
-    declare_parameter<bool>("preprocessing.smooth_reference_trajectory");
+    declare_parameter<bool>("preprocessing.smooth_reference_trajectory.enable");
+  params_.preprocessing.control_points_ratio =
+    declare_parameter<double>("preprocessing.smooth_reference_trajectory.control_points_ratio");
+  params_.preprocessing.smooth_weight =
+    declare_parameter<double>("preprocessing.smooth_reference_trajectory.smoothing_weight");
   params_.postprocessing.desired_traj_behind_length =
     declare_parameter<double>("postprocessing.desired_traj_behind_length");
 
@@ -176,6 +195,10 @@ rcl_interfaces::msg::SetParametersResult TrajectorySamplerNode::onParameter(
       params_.constraints.hard.max_acceleration = parameter.as_double();
     } else if (parameter.get_name() == "constraints.hard.min_acceleration") {
       params_.constraints.hard.min_acceleration = parameter.as_double();
+    } else if (parameter.get_name() == "constraints.hard.max_velocity") {
+      params_.constraints.hard.max_velocity = parameter.as_double();
+    } else if (parameter.get_name() == "constraints.hard.min_velocity") {
+      params_.constraints.hard.min_velocity = parameter.as_double();
     } else if (parameter.get_name() == "constraints.soft.lateral_deviation_weight") {
       params_.constraints.soft.lateral_deviation_weight = parameter.as_double();
     } else if (parameter.get_name() == "constraints.soft.longitudinal_deviation_weight") {
@@ -184,6 +207,8 @@ rcl_interfaces::msg::SetParametersResult TrajectorySamplerNode::onParameter(
       params_.constraints.soft.jerk_weight = parameter.as_double();
     } else if (parameter.get_name() == "constraints.soft.length_weight") {
       params_.constraints.soft.length_weight = parameter.as_double();
+    } else if (parameter.get_name() == "constraints.soft.velocity_weight") {
+      params_.constraints.soft.velocity_weight = parameter.as_double();
     } else if (parameter.get_name() == "constraints.soft.curvature_weight") {
       params_.constraints.soft.curvature_weight = parameter.as_double();
     } else if (parameter.get_name() == "sampling.enable_frenet") {
@@ -202,6 +227,16 @@ rcl_interfaces::msg::SetParametersResult TrajectorySamplerNode::onParameter(
       params_.sampling.reuse_max_deviation = parameter.as_double();
     } else if (parameter.get_name() == "sampling.target_lengths") {
       params_.sampling.target_lengths = parameter.as_double_array();
+    } else if (parameter.get_name() == "sampling.frenet.manual") {
+      params_.sampling.frenet.manual = parameter.as_bool();
+    } else if (parameter.get_name() == "sampling.frenet.target_durations") {
+      params_.sampling.frenet.target_durations = parameter.as_double_array();
+    } else if (parameter.get_name() == "sampling.frenet.target_longitudinal_position_offsets") {
+      params_.sampling.frenet.target_longitudinal_position_offsets = parameter.as_double_array();
+    } else if (parameter.get_name() == "sampling.frenet.target_longitudinal_velocities") {
+      params_.sampling.frenet.target_longitudinal_velocities = parameter.as_double_array();
+    } else if (parameter.get_name() == "sampling.frenet.target_longitudinal_accelerations") {
+      params_.sampling.frenet.target_longitudinal_accelerations = parameter.as_double_array();
     } else if (parameter.get_name() == "sampling.frenet.target_lateral_positions") {
       params_.sampling.frenet.target_lateral_positions = parameter.as_double_array();
     } else if (parameter.get_name() == "sampling.frenet.target_lateral_velocities") {
@@ -224,8 +259,12 @@ rcl_interfaces::msg::SetParametersResult TrajectorySamplerNode::onParameter(
       params_.preprocessing.force_zero_deviation = parameter.as_bool();
     } else if (parameter.get_name() == "preprocessing.force_zero_initial_heading") {
       params_.preprocessing.force_zero_heading = parameter.as_bool();
-    } else if (parameter.get_name() == "preprocessing.smooth_reference_trajectory") {
+    } else if (parameter.get_name() == "preprocessing.smooth_reference_trajectory.enable") {
       params_.preprocessing.smooth_reference = parameter.as_bool();
+    } else if (parameter.get_name() == "preprocessing.smooth_reference_trajectory.control_points_ratio") {
+      params_.preprocessing.control_points_ratio = parameter.as_double();
+    } else if (parameter.get_name() == "preprocessing.smooth_reference_trajectory.smoothing_weight") {
+      params_.preprocessing.smooth_weight = parameter.as_double();
     } else if (parameter.get_name() == "postprocessing.desired_traj_behind_length") {
       params_.postprocessing.desired_traj_behind_length = parameter.as_double();
     } else {
@@ -236,7 +275,6 @@ rcl_interfaces::msg::SetParametersResult TrajectorySamplerNode::onParameter(
   return result;
 }
 
-// ROS callback functions
 void TrajectorySamplerNode::pathCallback(
   const autoware_auto_planning_msgs::msg::Path::ConstSharedPtr msg)
 {
@@ -252,7 +290,7 @@ void TrajectorySamplerNode::pathCallback(
   }
   const auto calc_begin = std::chrono::steady_clock::now();
 
-  const auto path_spline = preparePathSpline(*msg, params_.preprocessing.smooth_reference);
+  const auto path_spline = preparePathSpline(*msg, params_);
   const auto planning_configuration = getPlanningConfiguration(*current_state, path_spline);
   prepareConstraints(
     params_.constraints, *in_objects_ptr_, *lanelet_map_ptr_, drivable_ids_, prefered_ids_,
@@ -284,6 +322,7 @@ void TrajectorySamplerNode::pathCallback(
       prev_traj_.clear();
     } else {
       publishTrajectory(prev_traj_, msg->header.frame_id);
+      prev_traj_ = {};
     }
   }
   const auto calc_end = std::chrono::steady_clock::now();
@@ -291,8 +330,10 @@ void TrajectorySamplerNode::pathCallback(
   gui_.setInputs(*msg, path_spline, *current_state);
   gui_.setOutputs(trajectories, selected_trajectory_idx, prev_traj_);
   const auto gui_end = std::chrono::steady_clock::now();
-  const auto calc_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(calc_end - calc_begin).count();
-  const auto gui_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(gui_end - gui_begin).count();
+  const auto calc_time_ms =
+    std::chrono::duration_cast<std::chrono::milliseconds>(calc_end - calc_begin).count();
+  const auto gui_time_ms =
+    std::chrono::duration_cast<std::chrono::milliseconds>(gui_end - gui_begin).count();
   gui_.setPerformances(trajectories.size(), calc_time_ms, gui_time_ms);
 }
 
@@ -326,8 +367,10 @@ std::optional<sampler_common::Configuration> TrajectorySamplerNode::getCurrentEg
   auto config = sampler_common::Configuration();
   config.pose = {tf_current_pose.transform.translation.x, tf_current_pose.transform.translation.y};
   config.heading = tf2::getYaw(tf_current_pose.transform.rotation);
-  config.velocity = std::accumulate(velocities_.begin(), velocities_.end(), 0.0) / velocities_.size();
-  config.acceleration = std::accumulate(accelerations_.begin(), accelerations_.end(), 0.0) / accelerations_.size();
+  config.velocity =
+    std::accumulate(velocities_.begin(), velocities_.end(), 0.0) / velocities_.size();
+  config.acceleration =
+    std::accumulate(accelerations_.begin(), accelerations_.end(), 0.0) / accelerations_.size();
   return config;
 }
 
@@ -345,7 +388,7 @@ void TrajectorySamplerNode::publishTrajectory(
   traj_msg.header.frame_id = frame_id;
   traj_msg.header.stamp = now();
   autoware_auto_planning_msgs::msg::TrajectoryPoint point;
-  for (size_t i = 0; i + 2 < trajectory.points.size(); ++i) {
+  for (size_t i = 0; i + 1 < trajectory.points.size(); ++i) {
     point.pose.position.x = trajectory.points[i].x();
     point.pose.position.y = trajectory.points[i].y();
     q.setRPY(0, 0, trajectory.yaws[i]);

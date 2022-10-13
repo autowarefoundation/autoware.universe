@@ -132,7 +132,7 @@ Path generateCandidate(
 
 void calculateCartesian(const sampler_common::transform::Spline2D & reference, Path & path)
 {
-  if (path.valid && !path.frenet_points.empty()) {
+  if (!path.frenet_points.empty()) {
     path.points.reserve(path.frenet_points.size());
     path.yaws.reserve(path.frenet_points.size() - 1);
     path.intervals.reserve(path.frenet_points.size() - 1);
@@ -160,7 +160,7 @@ void calculateCartesian(const sampler_common::transform::Spline2D & reference, P
 void calculateCartesian(
   const sampler_common::transform::Spline2D & reference, Trajectory & trajectory)
 {
-  if (trajectory.valid && !trajectory.frenet_points.empty()) {
+  if (!trajectory.frenet_points.empty()) {
     trajectory.points.reserve(trajectory.frenet_points.size());
     trajectory.yaws.reserve(trajectory.frenet_points.size() - 1);
     trajectory.intervals.reserve(trajectory.frenet_points.size() - 1);

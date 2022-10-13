@@ -227,6 +227,7 @@ struct Constraints
     double longitudinal_deviation_weight;
     double length_weight;
     double velocity_deviation_weight;
+    double velocity_weight;
     double jerk_weight;
     double curvature_weight;
   } soft{};

@@ -35,6 +35,10 @@ namespace sampler_node::gui
 {
 MainWindow::MainWindow(QWidget * parent) : QMainWindow(parent), ui_(new Ui::MainWindow)
 {
+  const auto ref_path_color = QColor(150, 0, 0);
+  const auto raw_path_color = QColor(150, 150, 255);
+  const auto candidate_color = QColor(0, 0, 150);
+  // const auto prev_path_color = QColor(0, 150, 0);
   ui_->setupUi(this);
   // Output tab
   ui_->output_pos->addGraph();
@@ -44,12 +48,12 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow(parent), ui_(new Ui::Main
   ui_->output_pos->xAxis->setLabel("x position (m)");
   ui_->output_pos->yAxis->setLabel("y position (m)");
   output_pos_curve_ = new QCPCurve(ui_->output_pos->xAxis, ui_->output_pos->yAxis);
-  output_pos_curve_->setPen(QPen(QColor(150, 0, 0)));
+  output_pos_curve_->setPen(QPen(candidate_color));
   output_pos_raw_path_curve_ = new QCPCurve(ui_->output_pos->xAxis, ui_->output_pos->yAxis);
-  output_pos_raw_path_curve_->setPen(QPen(QColor(0, 0, 0)));
+  output_pos_raw_path_curve_->setPen(QPen(raw_path_color));
   output_pos_arrow_ = new QCPItemLine(ui_->output_pos);
   output_pos_arrow_->setHead(QCPLineEnding::esSpikeArrow);
-  output_pos_arrow_->setPen(QPen(QColor(0, 0, 150)));
+  output_pos_arrow_->setPen(QPen(candidate_color));
   // First graph for the output graph, Second graph for the current value point
   ui_->output_vel->addGraph();
   ui_->output_vel->addGraph();
@@ -67,6 +71,11 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow(parent), ui_(new Ui::Main
   ui_->output_jerk->addGraph();
   ui_->output_jerk->xAxis->setLabel("time (s)");
   ui_->output_jerk->yAxis->setLabel("jerk (m/s³)");
+  // Set interactions
+  ui_->output_pos->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
+  ui_->output_vel->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
+  ui_->output_acc->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
+  ui_->output_jerk->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
 
   // Inputs tab
   ui_->input_path->addGraph();
@@ -75,7 +84,10 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow(parent), ui_(new Ui::Main
   ui_->input_path->xAxis->setLabel("x position (m)");
   ui_->input_path->yAxis->setLabel("y position (m)");
   input_path_raw_curve_ = new QCPCurve(ui_->input_path->xAxis, ui_->input_path->yAxis);
+  input_path_raw_curve_->setPen(QPen(raw_path_color));
   input_path_smooth_curve_ = new QCPCurve(ui_->input_path->xAxis, ui_->input_path->yAxis);
+  input_path_smooth_curve_->setPen(QPen(ref_path_color));
+  input_path_smooth_curve_->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssCross));
   input_path_arrow_ = new QCPItemLine(ui_->output_pos);
   input_path_arrow_->setHead(QCPLineEnding::esSpikeArrow);
   ui_->input_curvature->addGraph();
@@ -89,6 +101,8 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow(parent), ui_(new Ui::Main
   ui_->cand_pos->addGraph();
   ui_->cand_pos->xAxis->setScaleRatio(ui_->cand_pos->yAxis);
   cand_pos_curve_ = new QCPCurve(ui_->cand_pos->xAxis, ui_->cand_pos->yAxis);
+  cand_path_curve_ = new QCPCurve(ui_->cand_pos->xAxis, ui_->cand_pos->yAxis);
+  cand_path_curve_->setPen(QPen(ref_path_color));
   ui_->cand_vel->addGraph();
   ui_->cand_acc->addGraph();
   ui_->cand_jerk->addGraph();
@@ -229,6 +243,15 @@ void MainWindow::plotInputs(
     ys.push_back(p.y());
   }
   input_path_smooth_curve_->setData(xs, ys);
+  cand_path_curve_->setData(xs, ys);
+  xs.clear();
+  ys.clear();
+  constexpr auto resolution = 0.1;
+  for (auto s = spline_path.firstS(); s <= spline_path.lastS(); s += resolution) {
+    xs.push_back(s);
+    ys.push_back(spline_path.curvature(s));
+  }
+  ui_->input_curvature->graph(0)->setData(xs, ys);
   // Arrow
   const auto end_x = std::cos(current_configuration.heading) * current_configuration.velocity +
                      current_configuration.pose.x();
@@ -246,6 +269,12 @@ void MainWindow::plotInputs(
   ui_->output_vel->graph()->setData({0.0}, {current_configuration.velocity});
   ui_->output_acc->graph()->setData({0.0}, {current_configuration.acceleration});
   ui_->input_curvature->graph()->setData({0.0}, {current_configuration.curvature});
+  ui_->input_path->rescaleAxes();
+  ui_->input_path->replot();
+  ui_->output_pos->rescaleAxes();
+  ui_->output_pos->replot();
+  ui_->input_curvature->rescaleAxes();
+  ui_->input_curvature->replot();
 }
 
 void MainWindow::fillCandidatesTable(const std::vector<sampler_common::Trajectory> & candidates)
@@ -283,9 +312,16 @@ void MainWindow::plotCandidate(const sampler_common::Trajectory & trajectory)
   ui_->cand_acc->graph(0)->setData(
     QVector<double>::fromStdVector(trajectory.times),
     QVector<double>::fromStdVector(trajectory.longitudinal_accelerations));
-  // TODO(Maxime CLEMENT): uncomment once jerk is calculated
-  // ui_->output_jerk->graph(0)->setData(QVector<double>::fromStdVector(trajectory.times),
-  // QVector<double>::fromStdVector(trajectory.jerks));
+  // TODO(Maxime CLEMENT): rename jerk to curvature
+  xs.clear();
+  auto s = 0.0;
+  for (auto i : trajectory.intervals) {
+    xs.push_back(s);
+    s += i;
+  }
+  xs.push_back(s);
+  ui_->cand_jerk->graph(0)->setData(xs, QVector<double>::fromStdVector(trajectory.curvatures));
+
   ui_->cand_pos->rescaleAxes();
   ui_->cand_pos->replot();
   ui_->cand_vel->rescaleAxes();

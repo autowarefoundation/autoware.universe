@@ -15,6 +15,7 @@
 #include "sampler_node/trajectory_generation.hpp"
 
 #include "frenet_planner/frenet_planner.hpp"
+#include "frenet_planner/structures.hpp"
 #include "sampler_common/trajectory_reuse.hpp"
 #include "sampler_node/prepare_inputs.hpp"
 
@@ -100,19 +101,53 @@ std::vector<sampler_common::Trajectory> generateCandidateTrajectories(
 
 std::vector<frenet_planner::Trajectory> generateFrenetTrajectories(
   const sampler_common::Configuration & initial_configuration,
-  const sampler_common::Path & base_path, const autoware_auto_planning_msgs::msg::Path & path,
+  const sampler_common::Trajectory & base_traj, const autoware_auto_planning_msgs::msg::Path & path,
   const sampler_common::transform::Spline2D & path_spline, const Parameters & params)
 {
+  const auto base_length =
+    std::accumulate(base_traj.intervals.begin(), base_traj.intervals.end(), 0.0);
+  const auto base_duration = base_traj.times.empty() ? 0.0 : base_traj.times.back();
   const auto sampling_parameters = prepareSamplingParameters(
-    initial_configuration, path,
-    std::accumulate(base_path.intervals.begin(), base_path.intervals.end(), 0.0), path_spline,
-    params);
+    initial_configuration, path, base_length, base_duration, path_spline, params);
 
   frenet_planner::FrenetState initial_frenet_state;
+  const auto final_s =
+    path_spline.frenet({path.points.back().pose.position.x, path.points.back().pose.position.y}).s;
   initial_frenet_state.position = path_spline.frenet(initial_configuration.pose);
   initial_frenet_state.longitudinal_velocity = initial_configuration.velocity;
   initial_frenet_state.longitudinal_acceleration = initial_configuration.acceleration;
-  return frenet_planner::generateTrajectories(
-    path_spline, initial_frenet_state, sampling_parameters);
+  auto trajectories =
+    frenet_planner::generateTrajectories(path_spline, initial_frenet_state, sampling_parameters);
+
+  frenet_planner::SamplingParameters stopping_sampling_parameters;
+  stopping_sampling_parameters.time_resolution = params.sampling.resolution;
+  stopping_sampling_parameters.target_lateral_velocities = {0.0};
+  stopping_sampling_parameters.target_lateral_accelerations = {0.0};
+  stopping_sampling_parameters.target_lateral_positions =
+    sampling_parameters.target_lateral_positions;
+  stopping_sampling_parameters.target_longitudinal_velocities = {0.0};
+  stopping_sampling_parameters.target_longitudinal_accelerations = {
+    0.0, params.constraints.hard.min_acceleration / 2, params.constraints.hard.min_acceleration};
+  bool close_to_end;
+  for (const auto target_const_decel :
+       stopping_sampling_parameters.target_longitudinal_accelerations) {
+    const auto duration = -initial_frenet_state.longitudinal_velocity / target_const_decel;
+    const auto displacement = 0.5 * initial_frenet_state.longitudinal_velocity * duration;
+    const auto target_s = initial_frenet_state.position.s + displacement;
+    if (target_s < final_s) {
+      stopping_sampling_parameters.target_longitudinal_positions.push_back(target_s);
+      stopping_sampling_parameters.target_durations.push_back(duration);
+    } else {
+      close_to_end = true;
+    }
+  }
+  if (close_to_end) stopping_sampling_parameters.target_longitudinal_positions.push_back(final_s);
+  auto stopping_trajectories = frenet_planner::generateTrajectories(
+    path_spline, initial_frenet_state, stopping_sampling_parameters);
+  for (auto & traj : stopping_trajectories) traj.cost += 1000.0;
+  if (close_to_end) return trajectories;
+  trajectories.insert(
+    trajectories.end(), stopping_trajectories.begin(), stopping_trajectories.end());
+  return trajectories;
 }
 }  // namespace sampler_node

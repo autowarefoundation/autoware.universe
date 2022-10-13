@@ -36,6 +36,11 @@ struct Parameters
     double confortable_acceleration = 1.0;  // TODO(Maxime CLEMENT): read from param file
     struct
     {
+      bool manual{};
+      std::vector<double> target_durations{};
+      std::vector<double> target_longitudinal_position_offsets{};
+      std::vector<double> target_longitudinal_velocities{};
+      std::vector<double> target_longitudinal_accelerations{};
       std::vector<double> target_lateral_positions{};
       std::vector<double> target_lateral_velocities{};
       std::vector<double> target_lateral_accelerations{};
@@ -48,6 +53,8 @@ struct Parameters
     bool force_zero_deviation{};
     bool force_zero_heading{};
     bool smooth_reference{};
+    double control_points_ratio{};
+    double smooth_weight{};
   } preprocessing{};
   struct
   {

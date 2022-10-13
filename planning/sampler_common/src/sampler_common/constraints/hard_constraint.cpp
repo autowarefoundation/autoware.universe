@@ -84,7 +84,6 @@ inline bool withinPolygons(const Polygon & footprint, const Polygon & polygons)
 
 NumberOfViolations checkHardConstraints(Path & path, const Constraints & constraints)
 {
-  // TODO(Maxime CLEMENT): get from vehicle parameters
   const Polygon footprint = buildFootprintPolygon(path, constraints);
   NumberOfViolations number_of_violations;
   if (collideWithPolygons(footprint, constraints.obstacle_polygons)) {
@@ -98,6 +97,11 @@ NumberOfViolations checkHardConstraints(Path & path, const Constraints & constra
   if (!satisfyMinMax(
         path.curvatures, constraints.hard.min_curvature, constraints.hard.max_curvature)) {
     ++number_of_violations.curvature;
+    path.valid = false;
+  }
+  if (!satisfyMinMax(
+        path.curvatures, constraints.hard.min_velocity, constraints.hard.max_velocity)) {
+    ++number_of_violations.velocity;
     path.valid = false;
   }
   return number_of_violations;

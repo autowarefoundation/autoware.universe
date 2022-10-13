@@ -233,7 +233,7 @@ void PathSamplerNode::pathCallback(const autoware_auto_planning_msgs::msg::Path:
 
   // const auto calc_begin = std::chrono::steady_clock::now();
 
-  const auto path_spline = preparePathSpline(*msg, params_.preprocessing.smooth_reference);
+  const auto path_spline = preparePathSpline(*msg, params_);
   const auto planning_state = getPlanningState(*current_state, path_spline);
   prepareConstraints(
     params_.constraints, *in_objects_ptr_, *lanelet_map_ptr_, drivable_ids_, prefered_ids_,

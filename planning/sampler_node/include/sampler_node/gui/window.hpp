@@ -52,6 +52,7 @@ private:
   QCPItemLine * input_path_arrow_;
   //// Candidate tab
   QCPCurve * cand_pos_curve_;
+  QCPCurve * cand_path_curve_;
   // Cached data
   std::vector<sampler_common::Trajectory> candidates_;
 
@@ -68,9 +69,9 @@ public:
 
   void plotSelected(const sampler_common::Trajectory & trajectory);
   void plotInputs(
-    const autoware_auto_planning_msgs::msg::Path & raw_reference_path_,
-    const sampler_common::transform::Spline2D & reference_path_,
-    const sampler_common::Configuration & configuration_);
+    const autoware_auto_planning_msgs::msg::Path & raw_path_,
+    const sampler_common::transform::Spline2D & spline_path_,
+    const sampler_common::Configuration & current_configuration_);
   void fillCandidatesTable(const std::vector<sampler_common::Trajectory> & candidates);
   void plotCandidate(const sampler_common::Trajectory & trajectory);
 

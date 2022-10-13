@@ -41,7 +41,6 @@ void calculateCost(
   Path & path, const Constraints & constraints, const transform::Spline2D & reference)
 {
   if (path.points.empty()) return;
-  path.cost = 0.0f;
   calculateCurvatureCost(path, constraints);
   calculateLengthCost(path, constraints);
   // calculateLateralDeviationCost(path, constraints, reference);
@@ -58,12 +57,10 @@ void calculateCost(
   calculateCost(path, constraints, reference);
 
   // calculateVelocityCost(trajectory, constraints);
-  // maximize average velocity
-  const auto weight_vel = -10.0;
-  auto avg_vel =
+  const auto avg_vel =
     std::accumulate(
       trajectory.longitudinal_velocities.begin(), trajectory.longitudinal_velocities.end(), 0.0) /
     trajectory.longitudinal_velocities.size();
-  trajectory.cost += avg_vel * weight_vel;
+  trajectory.cost += avg_vel * constraints.soft.velocity_weight;
 }
 }  // namespace sampler_common::constraints

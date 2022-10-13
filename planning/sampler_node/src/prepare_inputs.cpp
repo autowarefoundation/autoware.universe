@@ -19,6 +19,7 @@
 #include "sampler_common/structures.hpp"
 #include "sampler_common/transform/spline_transform.hpp"
 #include "sampler_node/calculate_sampling_parameters.hpp"
+#include "sampler_node/parameters.hpp"
 #include "sampler_node/utils/occupancy_grid_to_polygons.hpp"
 
 #include <Eigen/Core>
@@ -98,7 +99,8 @@ frenet_planner::SamplingParameters prepareSamplingParameters(
 frenet_planner::SamplingParameters prepareSamplingParameters(
   const sampler_common::Configuration & initial_configuration,
   const autoware_auto_planning_msgs::msg::Path & path, const double base_length,
-  const sampler_common::transform::Spline2D & path_spline, const Parameters & params)
+  const double base_duration, const sampler_common::transform::Spline2D & path_spline,
+  const Parameters & params)
 {
   frenet_planner::SamplingParameters sampling_parameters;
   sampling_parameters.time_resolution = params.sampling.resolution;
@@ -107,32 +109,36 @@ frenet_planner::SamplingParameters prepareSamplingParameters(
   sampling_parameters.target_lateral_accelerations =
     params.sampling.frenet.target_lateral_accelerations;
   calculateLongitudinalTargets(
-    sampling_parameters, initial_configuration, path, path_spline, params);
-  const auto max_s =
-    path_spline.frenet({path.points.back().pose.position.x, path.points.back().pose.position.y}).s;
-  for (const auto target_length : params.sampling.target_lengths) {
-    const auto target_s =
-      path_spline.frenet(initial_configuration.pose).s + std::max(0.0, target_length - base_length);
-    // Prevent a target past the end of the reference path
-    if (target_s < max_s) sampling_parameters.target_longitudinal_positions.push_back(target_s);
-  }
-  // Stopping case
-  if (sampling_parameters.target_longitudinal_positions.empty()) {
-    sampling_parameters.target_longitudinal_positions = {max_s};
-    sampling_parameters.target_longitudinal_velocities = {0.0};
+    sampling_parameters, initial_configuration, path, path_spline, params, base_length,
+    base_duration);
+  if (!params.sampling.frenet.manual) {
+    const auto max_s =
+      path_spline.frenet({path.points.back().pose.position.x, path.points.back().pose.position.y})
+        .s;
+    for (const auto target_length : params.sampling.target_lengths) {
+      const auto target_s = path_spline.frenet(initial_configuration.pose).s +
+                            std::max(0.0, target_length - base_length);
+      // Prevent a target past the end of the reference path
+      if (target_s < max_s) sampling_parameters.target_longitudinal_positions.push_back(target_s);
+    }
+    // Stopping case
+    if (sampling_parameters.target_longitudinal_positions.empty()) {
+      sampling_parameters.target_longitudinal_positions = {max_s};
+      sampling_parameters.target_longitudinal_velocities = {0.0};
+    }
   }
   return sampling_parameters;
 }
 
 sampler_common::transform::Spline2D preparePathSpline(
-  const autoware_auto_planning_msgs::msg::Path & path_msg, const bool smooth_path)
+  const autoware_auto_planning_msgs::msg::Path & path_msg, const Parameters & params)
 {
   std::vector<double> x;
   std::vector<double> y;
   x.reserve(path_msg.points.size());
   y.reserve(path_msg.points.size());
-  if (smooth_path) {
-    const auto smoother = ns_splines::BSplineSmoother(path_msg.points.size());
+  if (params.preprocessing.smooth_reference) {
+    const auto smoother = ns_splines::BSplineSmoother(path_msg.points.size(), params.preprocessing.control_points_ratio, params.preprocessing.smooth_weight);
     Eigen::MatrixXd raw_points(path_msg.points.size(), 2);
     for (auto i = 0lu; i < path_msg.points.size(); ++i) {
       const auto & p = path_msg.points[i].pose.position;
