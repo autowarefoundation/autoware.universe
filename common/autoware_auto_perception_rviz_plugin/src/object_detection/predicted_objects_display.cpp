@@ -30,7 +30,7 @@ PredictedObjectsDisplay::PredictedObjectsDisplay() : ObjectPolygonDisplayBase("t
 
 void PredictedObjectsDisplay::workerThread()
 {
-  for (;;) {
+  while (true) {
     std::unique_lock<std::mutex> lock(mutex);
     condition.wait(lock, [this] { return this->msg; });
 
@@ -179,7 +179,7 @@ void PredictedObjectsDisplay::update(float wall_dt, float ros_dt)
 {
   std::unique_lock<std::mutex> lock(mutex);
 
-  if (markers.size() > 0) {
+  if (!markers.empty()) {
     clear_markers();
 
     for (const auto & marker : markers) {
