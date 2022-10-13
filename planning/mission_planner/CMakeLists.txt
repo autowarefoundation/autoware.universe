@@ -24,6 +24,8 @@ rclcpp_components_register_node(goal_pose_visualizer_component
   EXECUTABLE goal_pose_visualizer
 )
 
-ament_auto_package(INSTALL_TO_SHARE
+ament_auto_package(
+  INSTALL_TO_SHARE
+  config
   launch
 )

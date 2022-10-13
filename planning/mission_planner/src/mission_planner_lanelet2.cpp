@@ -118,6 +118,11 @@ double project_goal_to_map(
 
 namespace mission_planner
 {
+void MissionPlannerLanelet2::setCommonParam()
+{
+  p.th_angle = declare_parameter("th_angle", 45.0);
+}
+
 MissionPlannerLanelet2::MissionPlannerLanelet2(const rclcpp::NodeOptions & node_options)
 : MissionPlannerInterface("mission_planner", node_options), is_graph_ready_(false)
 {
@@ -125,6 +130,7 @@ MissionPlannerLanelet2::MissionPlannerLanelet2(const rclcpp::NodeOptions & node_
   map_subscriber_ = create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
     "input/vector_map", rclcpp::QoS{10}.transient_local(),
     std::bind(&MissionPlannerLanelet2::map_callback, this, _1));
+  setCommonParam();
 }
 
 void MissionPlannerLanelet2::map_callback(
@@ -205,7 +211,7 @@ bool MissionPlannerLanelet2::is_goal_valid(const geometry_msgs::msg::Pose & goal
     const auto goal_yaw = tf2::getYaw(goal_pose.orientation);
     const auto angle_diff = normalize_radian(lane_yaw - goal_yaw);
 
-    constexpr double th_angle = M_PI / 4;
+    const double th_angle = M_PI / (180 / p.th_angle);
 
     if (std::abs(angle_diff) < th_angle) {
       return true;
@@ -237,7 +243,8 @@ bool MissionPlannerLanelet2::is_goal_valid(const geometry_msgs::msg::Pose & goal
     const auto goal_yaw = tf2::getYaw(goal_pose.orientation);
     const auto angle_diff = normalize_radian(lane_yaw - goal_yaw);
 
-    constexpr double th_angle = M_PI / 4;
+    const double th_angle = M_PI / (180 / p.th_angle);
+
     if (std::abs(angle_diff) < th_angle) {
       return true;
     }
@@ -262,6 +269,7 @@ autoware_auto_planning_msgs::msg::HADMapRoute MissionPlannerLanelet2::plan_route
 
   autoware_auto_planning_msgs::msg::HADMapRoute route_msg;
   RouteSections route_sections;
+
 
   if (!is_goal_valid(goal_pose)) {
     RCLCPP_WARN(get_logger(), "Goal is not valid! Please check position and angle of goal_pose");

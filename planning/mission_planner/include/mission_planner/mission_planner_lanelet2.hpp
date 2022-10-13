@@ -26,6 +26,7 @@
 
 // Autoware
 #include "mission_planner/mission_planner_interface.hpp"
+#include "mission_planner/parameters.hpp"
 
 #include <route_handler/route_handler.hpp>
 
@@ -53,6 +54,10 @@ private:
   lanelet::ConstLanelets road_lanelets_;
   lanelet::ConstLanelets shoulder_lanelets_;
   route_handler::RouteHandler route_handler_;
+
+  // parameters
+  MissionPlannerParameters p;
+  void setCommonParam();
 
   rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr map_subscriber_;
 
