@@ -31,6 +31,10 @@ cv::Point2i HierarchicalCostMap::toCvPoint(const Area & area, const Eigen::Vecto
 
 cv::Vec2b HierarchicalCostMap::at2(const Eigen::Vector2f & position)
 {
+  if (!cloud_.has_value()) {
+    return cv::Vec2b(128, 0);
+  }
+
   Area key(position);
   if (cost_maps_.count(key) == 0) {
     buildMap(key);
