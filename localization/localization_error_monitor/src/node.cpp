@@ -34,13 +34,10 @@ LocalizationErrorMonitor::LocalizationErrorMonitor()
 : Node("localization_error_monitor"), updater_(this)
 {
   scale_ = this->declare_parameter("scale", 3.0);
-  error_ellipse_size_ = this->declare_parameter("error_ellipse_size", 1.0);
-  warn_ellipse_size_ = this->declare_parameter("warn_ellipse_size", 0.8);
+  error_ellipse_size_ = this->declare_parameter("error_ellipse_size", 0.8);
 
   error_ellipse_size_lateral_direction_ =
-    this->declare_parameter("error_ellipse_size_lateral_direction", 0.3);
-  warn_ellipse_size_lateral_direction_ =
-    this->declare_parameter("warn_ellipse_size_lateral_direction", 0.2);
+    this->declare_parameter("error_ellipse_size_lateral_direction", 0.2);
 
   odom_sub_ = this->create_subscription<nav_msgs::msg::Odometry>(
     "input/odom", 1, std::bind(&LocalizationErrorMonitor::onOdom, this, std::placeholders::_1));
@@ -71,10 +68,6 @@ void LocalizationErrorMonitor::checkLocalizationAccuracy(
   stat.add("localization_accuracy", ellipse_.long_radius);
   int8_t diag_level = diagnostic_msgs::msg::DiagnosticStatus::OK;
   std::string diag_message = "ellipse size is within the expected range";
-  if (warn_ellipse_size_ <= ellipse_.long_radius) {
-    diag_level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
-    diag_message = "ellipse size is too large";
-  }
   if (error_ellipse_size_ <= ellipse_.long_radius) {
     diag_level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
     diag_message = "ellipse size is over the expected range";
@@ -88,10 +81,6 @@ void LocalizationErrorMonitor::checkLocalizationAccuracyLateralDirection(
   stat.add("localization_accuracy_lateral_direction", ellipse_.size_lateral_direction);
   int8_t diag_level = diagnostic_msgs::msg::DiagnosticStatus::OK;
   std::string diag_message = "ellipse size along lateral direction is within the expected range";
-  if (warn_ellipse_size_lateral_direction_ <= ellipse_.size_lateral_direction) {
-    diag_level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
-    diag_message = "ellipse size along lateral direction is too large";
-  }
   if (error_ellipse_size_lateral_direction_ <= ellipse_.size_lateral_direction) {
     diag_level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
     diag_message = "ellipse size along lateral direction is over the expected range";
