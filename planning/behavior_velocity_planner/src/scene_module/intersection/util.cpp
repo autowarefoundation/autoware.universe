@@ -179,6 +179,7 @@ bool generateStopLine(
 
   if (stop_idx_ip == 0) {
     RCLCPP_DEBUG(logger, "stop line is at path[0], ignore planning.");
+    return false;
   }
 
   /* insert keep_detection_line */

@@ -70,7 +70,7 @@ struct StopLineIdx
  * lane)
  * @param stop_line_idx   generated stop line index
  * @param pass_judge_line_idx  generated stop line index
- * @return false when generation failed
+ * @return false when path is not intersecting with detection area, or stop_line is behind path[0]
  */
 bool generateStopLine(
   const int lane_id, const std::vector<lanelet::CompoundPolygon3d> detection_areas,

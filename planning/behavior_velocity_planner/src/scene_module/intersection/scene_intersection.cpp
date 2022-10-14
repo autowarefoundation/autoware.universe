@@ -86,6 +86,7 @@ bool IntersectionModule::modifyPathVelocity(
 
   /* get current pose */
   const geometry_msgs::msg::PoseStamped current_pose = planner_data_->current_pose;
+  const double current_vel = planner_data_->current_velocity->twist.linear.x;
 
   /* get lanelet map */
   const auto lanelet_map_ptr = planner_data_->route_handler_->getLaneletMapPtr();
@@ -163,9 +164,9 @@ bool IntersectionModule::modifyPathVelocity(
      */
     const bool is_before_keep_detection_line =
       util::isBeforeTargetIndex(*path, closest_idx, current_pose.pose, keep_detection_line_idx);
-    if (
-      is_before_keep_detection_line && std::fabs(planner_data_->current_velocity->twist.linear.x) <
-                                         planner_param_.keep_detection_vel_thr) {
+    const bool keep_detection = is_before_keep_detection_line &&
+                                std::fabs(current_vel) < planner_param_.keep_detection_vel_thr;
+    if (keep_detection) {
       RCLCPP_DEBUG(
         logger_,
         "over the pass judge line, but before keep detection line and low speed, "
