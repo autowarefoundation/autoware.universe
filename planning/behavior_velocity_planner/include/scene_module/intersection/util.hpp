@@ -30,6 +30,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <tuple>
 #include <vector>
 
 namespace behavior_velocity_planner
@@ -48,10 +49,9 @@ bool getDuplicatedPointIdx(
 /**
  * @brief get objective polygons for detection area
  */
-bool getDetectionLanelets(
+std::tuple<lanelet::ConstLanelets, lanelet::ConstLanelets> getObjectiveLanelets(
   lanelet::LaneletMapConstPtr lanelet_map_ptr, lanelet::routing::RoutingGraphPtr routing_graph_ptr,
-  const int lane_id, const double detection_area_length,
-  lanelet::ConstLanelets * detection_lanelets_result, const bool tl_arrow_solid_on = false);
+  const int lane_id, const double detection_area_length, const bool tl_arrow_solid_on = false);
 
 struct StopLineIdx
 {

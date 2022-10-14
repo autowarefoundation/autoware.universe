@@ -293,12 +293,13 @@ bool getStopLineIndexFromMap(
   return true;
 }
 
-bool getDetectionLanelets(
+// TODO(Mamoru Sobue): return std::tuple<bool, lanelet::ConstLanelets, lanelet::ConstLanelets>
+std::tuple<lanelet::ConstLanelets, lanelet::ConstLanelets> getObjectiveLanelets(
   lanelet::LaneletMapConstPtr lanelet_map_ptr, lanelet::routing::RoutingGraphPtr routing_graph_ptr,
-  const int lane_id, const double detection_area_length,
-  lanelet::ConstLanelets * detection_lanelets_result, const bool tl_arrow_solid_on)
+  const int lane_id, const double detection_area_length, const bool tl_arrow_solid_on)
 {
   const auto & assigned_lanelet = lanelet_map_ptr->laneletLayer.get(lane_id);
+  const auto turn_direction = assigned_lanelet.attributeOr("turn_direction", "else");
 
   // retrieve a stopline associated with a traffic light
   bool has_traffic_light = false;
@@ -309,13 +310,10 @@ bool getDetectionLanelets(
     if (!!stop_line_opt) has_traffic_light = true;
   }
 
-  const auto turn_direction = assigned_lanelet.attributeOr("turn_direction", "else");
-
-  lanelet::ConstLanelets yield_lanelets;
-
   // for low priority lane
   // If ego_lane has right of way (i.e. is high priority),
   // ignore yieldLanelets (i.e. low priority lanes)
+  lanelet::ConstLanelets yield_lanelets{};
   const auto right_of_ways = assigned_lanelet.regulatoryElementsAs<lanelet::RightOfWay>();
   for (const auto & right_of_way : right_of_ways) {
     if (lanelet::utils::contains(right_of_way->rightOfWayLanelets(), assigned_lanelet)) {
@@ -328,9 +326,8 @@ bool getDetectionLanelets(
     }
   }
 
-  lanelet::ConstLanelets ego_lanelets;
-
-  // for the behind ego-car lane.
+  // get all following lanes of previous lane
+  lanelet::ConstLanelets ego_lanelets{};
   for (const auto & previous_lanelet : routing_graph_ptr->previous(assigned_lanelet)) {
     ego_lanelets.push_back(previous_lanelet);
     for (const auto & following_lanelet : routing_graph_ptr->following(previous_lanelet)) {
@@ -347,6 +344,12 @@ bool getDetectionLanelets(
 
   // final objective lanelets
   lanelet::ConstLanelets detection_lanelets;
+  lanelet::ConstLanelets conflicting_ex_ego_lanelets;
+  // conflicting lanes is necessary to get stop_line for stuck vehicle
+  for (auto && conflicting_lanelet : conflicting_lanelets) {
+    if (!lanelet::utils::contains(ego_lanelets, conflicting_lanelet))
+      conflicting_ex_ego_lanelets.push_back(conflicting_lanelet);
+  }
 
   // exclude yield lanelets and ego lanelets from detection_lanelets
   if (turn_direction == std::string("straight") && has_traffic_light) {
@@ -384,11 +387,10 @@ bool getDetectionLanelets(
         }
       }
     }
-    *detection_lanelets_result = detection_and_preceding_lanelets;
+    return {std::move(detection_and_preceding_lanelets), std::move(conflicting_ex_ego_lanelets)};
   } else {
-    *detection_lanelets_result = detection_lanelets;
+    return {std::move(detection_lanelets), std::move(conflicting_ex_ego_lanelets)};
   }
-  return true;
 }
 
 std::vector<lanelet::CompoundPolygon3d> getPolygon3dFromLanelets(
