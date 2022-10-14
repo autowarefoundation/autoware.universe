@@ -36,9 +36,9 @@ bool AccelMap::readAccelMapFromCSV(std::string csv_path)
 
   vehicle_name_ = table[0][0];
   vel_index_ = CSVLoader::getRowIndex(table);
+  throttle_index_ = CSVLoader::getColumnIndex(table);
 
   for (unsigned int i = 1; i < table.size(); i++) {
-    throttle_index_.push_back(std::stod(table[i][0]));
     std::vector<double> accs;
     for (unsigned int j = 1; j < table[i].size(); j++) {
       accs.push_back(std::stod(table[i][j]));

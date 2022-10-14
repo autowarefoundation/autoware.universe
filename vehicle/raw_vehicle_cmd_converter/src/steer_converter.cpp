@@ -99,9 +99,9 @@ bool SteerConverter::readSteerMapFromCSV(
 
   vehicle_name = table[0][0];
   vel_index = CSVLoader::getRowIndex(table);
+  output_index = CSVLoader::getColumnIndex(table);
 
   for (unsigned int i = 1; i < table.size(); ++i) {
-    output_index.push_back(std::stod(table[i][0]));
     std::vector<double> steer_angle_velocities;
     for (unsigned int j = 1; j < table[i].size(); ++j) {
       steer_angle_velocities.push_back(std::stod(table[i][j]));

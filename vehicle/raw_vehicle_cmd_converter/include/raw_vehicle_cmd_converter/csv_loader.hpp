@@ -32,6 +32,7 @@ public:
   bool readCSV(Table & result, const char delim = ',');
   static bool validateData(const Table & table, const std::string & csv_path);
   static std::vector<double> getRowIndex(const Table & table);
+  static std::vector<double> getColumnIndex(const Table & table);
 
 private:
   std::string csv_path_;
