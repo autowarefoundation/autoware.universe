@@ -45,11 +45,12 @@
 // POSSIBILITY OF SUCH DAMAGE.S SOFTWARE, EVEN IF ADVISED OF THE
 //  POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef TOOLS__JSK_OVERLAY_UTILS_HPP_
-#define TOOLS__JSK_OVERLAY_UTILS_HPP_
+#ifndef TIER4_DEBUG_RVIZ_PLUGIN__JSK_OVERLAY_UTILS_HPP_
+#define TIER4_DEBUG_RVIZ_PLUGIN__JSK_OVERLAY_UTILS_HPP_
 
 #include <OgreHardwarePixelBuffer.h>
 #include <OgreMaterialManager.h>
+#include <OgreSceneManager.h>
 #include <OgreTechnique.h>
 #include <OgreTexture.h>
 #include <OgreTextureManager.h>
@@ -73,8 +74,11 @@
 #endif
 
 #include <QColor>
+#include <QCursor>
 #include <QImage>
+#include <QVariant>
 #include <rclcpp/rclcpp.hpp>
+#include <rviz_rendering/render_system.hpp>
 
 namespace jsk_rviz_plugins
 {
@@ -105,7 +109,7 @@ class OverlayObject
 public:
   typedef std::shared_ptr<OverlayObject> Ptr;
 
-  explicit OverlayObject(const std::string & name);
+  OverlayObject(Ogre::SceneManager * manager, rclcpp::Logger logger, const std::string & name);
   virtual ~OverlayObject();
 
   virtual std::string getName();
@@ -122,6 +126,7 @@ public:
 
 protected:
   const std::string name_;
+  rclcpp::Logger logger_;
   Ogre::Overlay * overlay_;
   Ogre::PanelOverlayElement * panel_;
   Ogre::MaterialPtr panel_material_;
@@ -135,4 +140,4 @@ private:
 // Ogre::MaterialPtr createOverlayMaterial(Ogre::Overlay* overlay);
 }  // namespace jsk_rviz_plugins
 
-#endif  // TOOLS__JSK_OVERLAY_UTILS_HPP_
+#endif  // TIER4_DEBUG_RVIZ_PLUGIN__JSK_OVERLAY_UTILS_HPP_
