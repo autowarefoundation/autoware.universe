@@ -36,12 +36,6 @@
 #include <rviz_common/uniform_string_stream.hpp>
 #include <tier4_debug_rviz_plugin/float32_multi_array_stamped_pie_chart.hpp>
 
-#include <OGRE/OgreHardwarePixelBuffer.h>
-#include <OGRE/OgreMaterialManager.h>
-#include <OGRE/OgreTechnique.h>
-#include <OGRE/OgreTexture.h>
-#include <OGRE/OgreTextureManager.h>
-
 namespace rviz_plugins
 {
 
