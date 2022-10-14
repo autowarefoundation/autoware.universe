@@ -19,7 +19,6 @@ TOPICS = [
     '/sensing/lidar/top/velodyne_packets',
     '/sensing/camera/traffic_light/camera_info',
     '/sensing/camera/traffic_light/image_raw/compressed',
-    '/vehicle/status/control_mode',
     '/vehicle/status/gear_status',
     '/vehicle/status/steering_status',
     '/vehicle/status/velocity_status',
