@@ -29,6 +29,7 @@
 #include <autoware_auto_vehicle_msgs/msg/hazard_lights_command.hpp>
 
 #include <deque>
+#include <limits>
 #include <memory>
 #include <string>
 #include <utility>
@@ -70,9 +71,14 @@ struct GoalCandidate
 {
   Pose goal_pose{};
   double distance_from_original_goal{0.0};
+  double lateral_offset{0.0};
 
   bool operator<(const GoalCandidate & other) const noexcept
   {
+    // compare in order of decreasing lateral offset.
+    if (std::abs(lateral_offset - other.lateral_offset) > std::numeric_limits<double>::epsilon()) {
+      return lateral_offset < other.lateral_offset;
+    }
     return distance_from_original_goal < other.distance_from_original_goal;
   }
 };
@@ -125,6 +131,7 @@ private:
   tier4_autoware_utils::LinearRing2d vehicle_footprint_;
   std::unique_ptr<rclcpp::Time> last_received_time_;
   std::unique_ptr<rclcpp::Time> last_approved_time_;
+  std::unique_ptr<Pose> last_approved_pose_;
 
   void incrementPathIndex();
   PathWithLaneId getCurrentPath() const;
@@ -150,9 +157,7 @@ private:
     const Pose & ego_pose, const PredictedObjects & dynamic_objects) const;
   bool checkCollisionWithPose(const Pose & pose) const;
 
-  // turn signal
-  std::pair<HazardLightsCommand, double> getHazardInfo() const;
-  std::pair<TurnIndicatorsCommand, double> getTurnInfo() const;
+  TurnSignalInfo calcTurnSignalInfo() const;
 
   // debug
   void setDebugData();
