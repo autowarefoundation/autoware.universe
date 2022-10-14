@@ -22,7 +22,7 @@ $$
 \mathbf{y}
 $$
 
-where on $\hat{y}$ represents the interpolated and smoothed signal, whereas $y$ on the left-hand side is the original
+where on $\hat{y}$ represents the interpolated and smoothed signal, whereas $y$ on the right-hand side is the original
 signal to be smoothed. Since we use Tikhonov regularization [3], $D$ in the equation is an idendity matrix. The input
 signal $y$ can have multiple columns. The regressor
 
