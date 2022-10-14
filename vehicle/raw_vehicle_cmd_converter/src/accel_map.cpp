@@ -53,20 +53,11 @@ bool AccelMap::getThrottle(double acc, double vel, double & throttle)
 {
   std::vector<double> accs_interpolated;
 
-  if (vel < vel_index_.front()) {
+  if (vel < vel_index_.front() || vel_index_.back() < vel) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
-      logger_, clock_, 1000,
-      "Exceeding the vel range. Current vel: %f < min vel on map: %f. Use min "
-      "velocity.",
-      vel, vel_index_.front());
-    vel = vel_index_.front();
-  } else if (vel_index_.back() < vel) {
-    RCLCPP_WARN_SKIPFIRST_THROTTLE(
-      logger_, clock_, 1000,
-      "Exceeding the vel range. Current vel: %f > max vel on map: %f. Use max "
-      "velocity.",
-      vel, vel_index_.back());
-    vel = vel_index_.back();
+      logger_, clock_, 1000, "Exceeding the  min:%f  < current vel:%f < max:%f.",
+      vel_index_.front(), vel, vel_index_.back());
+    vel = std::min(std::max(vel, vel_index_.front()), vel_index_.back());
   }
 
   // (throttle, vel, acc) map => (throttle, acc) map by fixing vel
@@ -92,20 +83,11 @@ bool AccelMap::getAcceleration(double throttle, double vel, double & acc)
 {
   std::vector<double> accs_interpolated;
 
-  if (vel < vel_index_.front()) {
+  if (vel < vel_index_.front() || vel_index_.back() < vel) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
-      logger_, clock_, 1000,
-      "Exceeding the vel range. Current vel: %f < min vel on map: %f. Use min "
-      "velocity.",
-      vel, vel_index_.front());
-    vel = vel_index_.front();
-  } else if (vel_index_.back() < vel) {
-    RCLCPP_WARN_SKIPFIRST_THROTTLE(
-      logger_, clock_, 1000,
-      "Exceeding the vel range. Current vel: %f > max vel on map: %f. Use max "
-      "velocity.",
-      vel, vel_index_.back());
-    vel = vel_index_.back();
+      logger_, clock_, 1000, "Exceeding the  min:%f  < current vel:%f < max:%f.",
+      vel_index_.front(), vel, vel_index_.back());
+    vel = std::min(std::max(vel, vel_index_.front()), vel_index_.back());
   }
 
   // (throttle, vel, acc) map => (throttle, acc) map by fixing vel

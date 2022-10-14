@@ -118,20 +118,11 @@ void SteerConverter::calcFFMap(double steer_vel, double vehicle_vel, double & ou
 
   std::vector<double> steer_angle_velocities_interp;
 
-  if (vehicle_vel < vel_index_.front()) {
-    RCLCPP_WARN_THROTTLE(
-      logger_, clock, 1000,
-      "Exceeding the vel range. Current vel: "
-      "%f < min vel on map: %f. Use min velocity.",
-      vehicle_vel, vel_index_.front());
-    vehicle_vel = vel_index_.front();
-  } else if (vel_index_.back() < vehicle_vel) {
-    RCLCPP_WARN_THROTTLE(
-      logger_, clock, 1000,
-      "Exceeding the vel range. Current vel: "
-      "%f > max vel on map: %f. Use max velocity.",
+  if (vehicle_vel < vel_index_.front() || vel_index_.back() < vehicle_vel) {
+    RCLCPP_WARN_SKIPFIRST_THROTTLE(
+      logger_, clock, 1000, "Exceeding the  min:%f  < current vel:%f < max:%f.", vel_index_.front(),
       vehicle_vel, vel_index_.back());
-    vehicle_vel = vel_index_.back();
+    vehicle_vel = std::min(std::max(vehicle_vel, vel_index_.front()), vel_index_.back());
   }
 
   for (std::vector<double> steer_angle_velocities : steer_map_) {
