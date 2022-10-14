@@ -121,7 +121,14 @@ std::vector<lanelet::CompoundPolygon3d> getPolygon3dFromLaneletsVec(
 std::vector<lanelet::CompoundPolygon3d> getPolygon3dFromLanelets(
   const lanelet::ConstLanelets & ll_vec, double clip_length);
 
+std::vector<lanelet::CompoundPolygon3d> getPolygon3dFromLanelets(
+  const lanelet::ConstLanelets & ll_vec);
+
 std::vector<int> getLaneletIdsFromLaneletsVec(const std::vector<lanelet::ConstLanelets> & ll_vec);
+
+lanelet::ConstLanelet generateOffsetLanelet(
+  const lanelet::ConstLanelet lanelet, double right_margin, double left_margin);
+geometry_msgs::msg::Pose toPose(const geometry_msgs::msg::Point & p);
 
 /**
  * @brief check if ego is over the target_idx. If the index is same, compare the exact pose

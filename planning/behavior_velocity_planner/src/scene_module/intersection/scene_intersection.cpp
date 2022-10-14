@@ -102,7 +102,7 @@ bool IntersectionModule::modifyPathVelocity(
   util::getDetectionLanelets(
     lanelet_map_ptr, routing_graph_ptr, lane_id_, planner_param_.detection_area_length,
     &detection_area_lanelets, tl_arrow_solid_on);
-  if (detection_areas_lanelets.empty()) {
+  if (detection_area_lanelets.empty()) {
     RCLCPP_DEBUG(logger_, "no detection area. skip computation.");
     setSafe(true);
     setDistance(std::numeric_limits<double>::lowest());
@@ -121,9 +121,9 @@ bool IntersectionModule::modifyPathVelocity(
   }
 
   /* get adjacent lanelets */
-  const auto adjacent_lanelets =
+  auto adjacent_lanelets =
     util::extendedAdjacentDirectionLanes(lanelet_map_ptr, routing_graph_ptr, assigned_lanelet);
-  debug_data_.adjacent_area = adjacent_lanes;
+  debug_data_.adjacent_area = util::getPolygon3dFromLanelets(adjacent_lanelets);
 
   /* set stop-line and stop-judgement-line for base_link */
   util::StopLineIdx stop_line_idxs;
@@ -282,8 +282,7 @@ void IntersectionModule::cutPredictPathWithDuration(
 bool IntersectionModule::checkCollision(
   lanelet::LaneletMapConstPtr lanelet_map_ptr,
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-  const lanelet::ConstLanelets & detection_area_lanelets,
-  const lanelet::ConstLanelets & adjacent_lanelets,
+  lanelet::ConstLanelets & detection_area_lanelets, lanelet::ConstLanelets & adjacent_lanelets,
   const std::optional<Polygon2d> & intersection_area,
   const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
   const int closest_idx, const Polygon2d & stuck_vehicle_detect_area)
@@ -627,7 +626,7 @@ bool IntersectionModule::isTargetExternalInputStatus(const int target_status)
 }
 
 bool IntersectionModule::checkAngleForTargetLanelets(
-  const geometry_msgs::msg::Pose & pose, const lanelet::ConstLanelets & target_lanelets,
+  const geometry_msgs::msg::Pose & pose, lanelet::ConstLanelets & target_lanelets,
   const double margin)
 {
   for (const auto & ll : target_lanelets) {
