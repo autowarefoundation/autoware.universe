@@ -94,33 +94,13 @@ bool SteerConverter::readSteerMapFromCSV(
   std::vector<std::vector<std::string>> table;
 
   if (!csv.readCSV(table)) {
-    RCLCPP_ERROR_THROTTLE(logger_, clock, 3000, "Cannot open %s", csv_path.c_str());
-    return false;
-  }
-
-  if (table[0].size() < 2) {
-    RCLCPP_ERROR_THROTTLE(
-      logger_, clock, 3000,
-      "Cannot read %s. CSV file should have "
-      "at least 2 column",
-      csv_path.c_str());
     return false;
   }
 
   vehicle_name = table[0][0];
-  for (unsigned int i = 1; i < table[0].size(); ++i) {
-    vel_index.push_back(std::stod(table[0][i]));
-  }
+  vel_index = CSVLoader::getRowIndex(table);
 
   for (unsigned int i = 1; i < table.size(); ++i) {
-    if (table[0].size() != table[i].size()) {
-      RCLCPP_ERROR_THROTTLE(
-        logger_, clock, 3000,
-        "Cannot read %s. Each row should have "
-        "a same number of columns",
-        csv_path.c_str());
-      return false;
-    }
     output_index.push_back(std::stod(table[i][0]));
     std::vector<double> steer_angle_velocities;
     for (unsigned int j = 1; j < table[i].size(); ++j) {

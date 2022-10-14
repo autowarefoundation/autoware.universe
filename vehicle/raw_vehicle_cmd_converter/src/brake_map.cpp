@@ -28,27 +28,13 @@ bool BrakeMap::readBrakeMapFromCSV(std::string csv_path)
   std::vector<std::vector<std::string>> table;
 
   if (!csv.readCSV(table)) {
-    RCLCPP_ERROR(logger_, "Cannot open %s", csv_path.c_str());
-    return false;
-  }
-
-  if (table[0].size() < 2) {
-    RCLCPP_ERROR(
-      logger_, "Cannot read %s. CSV file should have at least 2 column", csv_path.c_str());
     return false;
   }
 
   vehicle_name_ = table[0][0];
-  for (unsigned int i = 1; i < table[0].size(); i++) {
-    vel_index_.push_back(std::stod(table[0][i]));
-  }
+  vel_index_ = CSVLoader::getRowIndex(table);
 
   for (unsigned int i = 1; i < table.size(); i++) {
-    if (table[0].size() != table[i].size()) {
-      RCLCPP_ERROR(
-        logger_, "Cannot read %s. Each row should have a same number of columns", csv_path.c_str());
-      return false;
-    }
     brake_index_.push_back(std::stod(table[i][0]));
     std::vector<double> accs;
     for (unsigned int j = 1; j < table[i].size(); j++) {

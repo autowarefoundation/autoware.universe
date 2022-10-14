@@ -25,6 +25,7 @@ bool CSVLoader::readCSV(std::vector<std::vector<std::string>> & result, const ch
 {
   std::ifstream ifs(csv_path_);
   if (!ifs.is_open()) {
+    std::cerr << "Cannot open " << csv_path_.c_str() << std::endl;
     return false;
   }
 
@@ -42,7 +43,36 @@ bool CSVLoader::readCSV(std::vector<std::vector<std::string>> & result, const ch
       result.push_back(tokens);
     }
   }
-
+  if (!validateData(result, csv_path_)) {
+    return false;
+  }
   return true;
 }
+
+bool CSVLoader::validateData(const Table & table, const std::string & csv_path)
+{
+  if (table[0].size() < 2) {
+    std::cerr << "Cannot read " << csv_path.c_str() << " CSV file should have at least 2 column"
+              << std::endl;
+    return false;
+  }
+  for (unsigned int i = 1; i < table.size(); i++) {
+    if (table[0].size() != table[i].size()) {
+      std::cerr << "Cannot read " << csv_path.c_str()
+                << ". Each row should have a same number of columns" << std::endl;
+      return false;
+    }
+  }
+  return true;
+}
+
+std::vector<double> CSVLoader::getRowIndex(const Table & table)
+{
+  std::vector<double> index = {};
+  for (unsigned int i = 1; i < table[0].size(); i++) {
+    index.push_back(std::stod(table[0][i]));
+  }
+  return index;
+}
+
 }  // namespace raw_vehicle_cmd_converter
