@@ -54,8 +54,7 @@ void SegmentFilter::execute(const PointCloud2 & lsd_msg, const PointCloud2 & seg
   Eigen::Matrix3f K = info_.intrinsic();
   Eigen::Matrix3f Kinv = K.inverse();
 
-  auto camera_extrinsic =
-    tf_subscriber_("traffic_light_left_camera/camera_optical_link", "base_link");
+  std::optional<Eigen::Affine3f> camera_extrinsic = tf_subscriber_(info_.getFrameId(), "base_link");
   if (!camera_extrinsic.has_value()) return;
   if (mask->empty()) {
     RCLCPP_WARN_STREAM(this->get_logger(), "there are no contours");

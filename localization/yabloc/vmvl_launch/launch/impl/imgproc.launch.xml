@@ -14,10 +14,8 @@
 
     <arg name="truncate_pixel_threshold" default="-1" description="For robustness verification, if positive value is given, line segments are truncated."/>
 
-
     <!-- undistort & resize -->
     <arg name="override_extrinsic" default="false" description="Value for overriding the camera's frame_id. Use when another static_tf is to be read."/>
-
     <group if="$(var override_extrinsic)"> 
         <node name="undistort" pkg="vmvl_imgproc" exec="undistort_node" output="screen" args="--ros-args --log-level $(var log_level)">
             <param name="use_sim_time" value="$(var use_sim_time)"/>
@@ -25,7 +23,7 @@
             <param name="override_frame_id" value="override_camera_frame"/>
             <param name="use_sensor_qos" value="$(var use_sensor_qos)"/>
         </node>
-        <node name="override_static_tf" pkg="tf2_ros" exec="static_transform_publisher" args="--x 0.431  --y -0.040  --z -0.135 --roll -1.571 --pitch 0.007 --yaw -1.544 --frame-id sensor_kit_base_link --child-frame-id override_camera_frame"/>
+        <node name="override_static_tf" pkg="tf2_ros" exec="static_transform_publisher" args="--x 1.121  --y -0.056 --z 1.974 --roll -1.551 --pitch 0.006 --yaw -1.580 --frame-id  base_link --child-frame-id override_camera_frame"/>
     </group>
     <group unless="$(var override_extrinsic)"> 
         <node name="undistort" pkg="vmvl_imgproc" exec="undistort_node" output="screen" args="--ros-args --log-level $(var log_level)">

@@ -7,13 +7,10 @@
     <arg name="resized_image" default="/sensing/camera/undistorted/image_raw"/>
     <arg name="resized_info" default="/sensing/camera/undistorted/camera_info"/>
 
-    <arg name="road_marking_labels" default="[zebra_marking, virtual, line_thin, line_thick, pedestrian_marking, stop_line]"/>
-    <arg name="sign_board_labels" default="[sign-board]"/>
     <arg name="min_segment_length" default="-1.0"/>
     <arg name="max_segment_distance" default="50.0"/>
     <arg name="max_lateral_distance" default="10.0"/>
     <arg name="initialpose_cov_xx_yy" default="[16.0,0.25]"/>
-    <arg name="use_eagleye" default="false"/>
     <arg name="rtk_enabled" default="true"/>
 
     <group>
@@ -71,12 +68,5 @@
             <push-ros-namespace namespace="map"/>
             <include file="$(find-pkg-share vmvl_launch)/launch/impl/map.launch.xml"/>
         </group>
-
-        <!-- eagleye -->
-        <group if="$(var use_eagleye)">
-            <push-ros-namespace namespace="eagleye"/>
-            <include file="$(find-pkg-share vmvl_launch)/launch/impl/eagleye.launch.xml"/>
-        </group>
-
     </group>
 </launch>

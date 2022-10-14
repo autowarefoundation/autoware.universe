@@ -2,7 +2,7 @@
     <arg name="use_sim_time" default="true"/>
     <arg name="log_level" default="warn"/>
     <arg name="rtk_enabled" default="true"/>
-    <arg name="static_scale_factor" default="-1.0"/>
+    <arg name="static_scale_factor" default="-1.0" description="if negative value, static_scale_factor is not used"/>
 
     <!-- static tf -->
     <node name="base_link_tf" pkg="tf2_ros" exec="static_transform_publisher" args="0 0 0 0 0 0 /particle_filter /base_link"/>

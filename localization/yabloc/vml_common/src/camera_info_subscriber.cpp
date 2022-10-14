@@ -13,6 +13,8 @@ bool CameraInfoSubscriber::isCameraInfoReady() const { return opt_info_.has_valu
 
 bool CameraInfoSubscriber::isCameraInfoNullOpt() const { return !(opt_info_.has_value()); }
 
+std::string CameraInfoSubscriber::getFrameId() const { return opt_info_->header.frame_id; }
+
 Eigen::Matrix3f CameraInfoSubscriber::intrinsic() const
 {
   if (!opt_info_.has_value()) {

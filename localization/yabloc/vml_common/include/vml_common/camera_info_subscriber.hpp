@@ -20,6 +20,9 @@ public:
 
   Eigen::Matrix3f intrinsic() const;
 
+  // This member function DOES NOT check isCameraInfoReady()
+  std::string getFrameId() const;
+
 private:
   rclcpp::Subscription<CameraInfo>::SharedPtr sub_info_;
   std::optional<CameraInfo> opt_info_;
