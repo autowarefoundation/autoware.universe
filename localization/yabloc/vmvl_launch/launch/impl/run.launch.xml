@@ -68,5 +68,8 @@
             <push-ros-namespace namespace="map"/>
             <include file="$(find-pkg-share vmvl_launch)/launch/impl/map.launch.xml"/>
         </group>
+
+        <!-- control/command/control_cmd visualizer -->
+        <node name="command_publisher" pkg="vmvl_launch" exec="control_command_publisher.py" output="screen" args="--ros-args --log-level info"/>
     </group>
 </launch>
