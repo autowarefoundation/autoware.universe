@@ -2,7 +2,7 @@
 
 ## Purpose
 
-MRM emergency stop operator is a node that generates emmergency stop commands according to the emmergency stop MRM order.
+MRM emergency stop operator is a node that generates emergency stop commands according to the emergency stop MRM order.
 
 ## Inner-workings / Algorithms
 
