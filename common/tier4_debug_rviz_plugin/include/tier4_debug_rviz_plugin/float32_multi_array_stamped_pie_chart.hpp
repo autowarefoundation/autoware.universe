@@ -48,8 +48,6 @@
 
 #include <tier4_debug_msgs/msg/float32_multi_array_stamped.hpp>
 
-#include <OGRE/OgreMaterial.h>
-
 #include <mutex>
 
 namespace rviz_plugins
