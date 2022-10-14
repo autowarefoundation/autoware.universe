@@ -21,7 +21,7 @@ namespace raw_vehicle_cmd_converter
 {
 CSVLoader::CSVLoader(std::string csv_path) { csv_path_ = csv_path; }
 
-bool CSVLoader::readCSV(std::vector<std::vector<std::string>> & result, const char delim)
+bool CSVLoader::readCSV(Table & result, const char delim)
 {
   std::ifstream ifs(csv_path_);
   if (!ifs.is_open()) {
