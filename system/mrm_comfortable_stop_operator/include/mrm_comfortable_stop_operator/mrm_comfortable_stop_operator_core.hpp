@@ -20,10 +20,10 @@
 
 // Autoware
 #include <autoware_adapi_v1_msgs/srv/operate_mrm.hpp>
-#include <tier4_system_msgs/msg/mrm_behavior_status.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit.hpp>
-#include <tier4_planning_msgs/msg/velocity_limit_constraints.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit_clear_command.hpp>
+#include <tier4_planning_msgs/msg/velocity_limit_constraints.hpp>
+#include <tier4_system_msgs/msg/mrm_behavior_status.hpp>
 
 // ROS2 core
 #include <rclcpp/rclcpp.hpp>
@@ -33,10 +33,10 @@ namespace mrm_comfortable_stop_operator
 
 struct Parameters
 {
-  int update_rate;  // [Hz]
+  int update_rate;          // [Hz]
   double min_acceleration;  // [m/s^2]
-  double max_jerk;  // [m/s^3]
-  double min_jerk;  // [m/s^3]
+  double max_jerk;          // [m/s^3]
+  double min_jerk;          // [m/s^3]
 };
 
 class MRMComfortableStopOperator : public rclcpp::Node
@@ -58,7 +58,8 @@ private:
   // Publisher
   rclcpp::Publisher<tier4_system_msgs::msg::MRMBehaviorStatus>::SharedPtr pub_status_;
   rclcpp::Publisher<tier4_planning_msgs::msg::VelocityLimit>::SharedPtr pub_velocity_limit_;
-  rclcpp::Publisher<tier4_planning_msgs::msg::VelocityLimitClearCommand>::SharedPtr pub_velocity_limit_clear_command_;
+  rclcpp::Publisher<tier4_planning_msgs::msg::VelocityLimitClearCommand>::SharedPtr
+    pub_velocity_limit_clear_command_;
 
   void publishStatus() const;
   void publishVelocityLimit() const;
@@ -71,7 +72,6 @@ private:
 
   // States
   tier4_system_msgs::msg::MRMBehaviorStatus status_;
-
 };
 
 }  // namespace mrm_comfortable_stop_operator

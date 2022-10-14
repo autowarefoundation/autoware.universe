@@ -64,27 +64,28 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
     "~/output/hazard", rclcpp::QoS{1});
   pub_gear_cmd_ =
     create_publisher<autoware_auto_vehicle_msgs::msg::GearCommand>("~/output/gear", rclcpp::QoS{1});
-  pub_mrm_state_ = create_publisher<autoware_adapi_v1_msgs::msg::MRMState>(
-    "~/output/mrm/state", rclcpp::QoS{1});
+  pub_mrm_state_ =
+    create_publisher<autoware_adapi_v1_msgs::msg::MRMState>("~/output/mrm/state", rclcpp::QoS{1});
 
   // Clients
   client_mrm_comfortable_stop_group_ =
     create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-  client_mrm_comfortable_stop_ =
-    create_client<autoware_adapi_v1_msgs::srv::OperateMRM>(
-      "~/output/mrm/comfortable_stop/operate", rmw_qos_profile_services_default, client_mrm_comfortable_stop_group_);
+  client_mrm_comfortable_stop_ = create_client<autoware_adapi_v1_msgs::srv::OperateMRM>(
+    "~/output/mrm/comfortable_stop/operate", rmw_qos_profile_services_default,
+    client_mrm_comfortable_stop_group_);
   client_mrm_emergency_stop_group_ =
     create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-  client_mrm_emergency_stop_ =
-    create_client<autoware_adapi_v1_msgs::srv::OperateMRM>(
-      "~/output/mrm/emergency_stop/operate", rmw_qos_profile_services_default, client_mrm_emergency_stop_group_);
+  client_mrm_emergency_stop_ = create_client<autoware_adapi_v1_msgs::srv::OperateMRM>(
+    "~/output/mrm/emergency_stop/operate", rmw_qos_profile_services_default,
+    client_mrm_emergency_stop_group_);
 
   // Initialize
   odom_ = std::make_shared<const nav_msgs::msg::Odometry>();
   control_mode_ = std::make_shared<const autoware_auto_vehicle_msgs::msg::ControlModeReport>();
   prev_control_command_ = autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr(
     new autoware_auto_control_msgs::msg::AckermannControlCommand);
-  mrm_comfortable_stop_status_ = std::make_shared<const tier4_system_msgs::msg::MRMBehaviorStatus>();
+  mrm_comfortable_stop_status_ =
+    std::make_shared<const tier4_system_msgs::msg::MRMBehaviorStatus>();
   mrm_emergency_stop_status_ = std::make_shared<const tier4_system_msgs::msg::MRMBehaviorStatus>();
   mrm_state_.stamp = this->now();
   mrm_state_.state = autoware_adapi_v1_msgs::msg::MRMState::NORMAL;
@@ -220,7 +221,7 @@ void EmergencyHandler::operateMRM()
 }
 
 void EmergencyHandler::callMRMBehavior(
-    const autoware_adapi_v1_msgs::msg::MRMState::_behavior_type & mrm_behavior) const
+  const autoware_adapi_v1_msgs::msg::MRMState::_behavior_type & mrm_behavior) const
 {
   using autoware_adapi_v1_msgs::msg::MRMState;
 
@@ -418,8 +419,8 @@ void EmergencyHandler::updateMRMState()
 
 autoware_adapi_v1_msgs::msg::MRMState::_behavior_type EmergencyHandler::getCurrentMRMBehavior()
 {
-  using autoware_auto_system_msgs::msg::HazardStatus;
   using autoware_adapi_v1_msgs::msg::MRMState;
+  using autoware_auto_system_msgs::msg::HazardStatus;
 
   // Get hazard level
   const auto level = hazard_status_stamped_->status.level;

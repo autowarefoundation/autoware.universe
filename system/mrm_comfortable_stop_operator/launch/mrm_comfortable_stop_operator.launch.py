@@ -24,7 +24,7 @@ import yaml
 def generate_launch_description():
     param_path = os.path.join(
         get_package_share_directory("mrm_comfortable_stop_operator"),
-        "config/mrm_comfortable_stop_operator.config.yaml"
+        "config/mrm_comfortable_stop_operator.config.yaml",
     )
 
     with open(param_path, "r") as f:

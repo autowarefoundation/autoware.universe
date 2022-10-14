@@ -22,9 +22,8 @@
 #include <std_srvs/srv/trigger.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
-#include <autoware_adapi_v1_msgs/srv/operate_mrm.hpp>
 #include <autoware_adapi_v1_msgs/msg/mrm_state.hpp>
-#include <tier4_system_msgs/msg/mrm_behavior_status.hpp>
+#include <autoware_adapi_v1_msgs/srv/operate_mrm.hpp>
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
 #include <autoware_auto_system_msgs/msg/emergency_state.hpp>
 #include <autoware_auto_vehicle_msgs/msg/engage.hpp>
@@ -39,6 +38,7 @@
 #include <tier4_external_api_msgs/msg/heartbeat.hpp>
 #include <tier4_external_api_msgs/srv/engage.hpp>
 #include <tier4_external_api_msgs/srv/set_emergency.hpp>
+#include <tier4_system_msgs/msg/mrm_behavior_status.hpp>
 #include <tier4_system_msgs/msg/operation_mode.hpp>
 #include <tier4_vehicle_msgs/msg/vehicle_emergency_stamped.hpp>
 
@@ -48,7 +48,6 @@ namespace vehicle_cmd_gate
 {
 
 using autoware_adapi_v1_msgs::msg::MRMState;
-using tier4_system_msgs::msg::MRMBehaviorStatus;
 using autoware_auto_control_msgs::msg::AckermannControlCommand;
 using autoware_auto_vehicle_msgs::msg::GearCommand;
 using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
@@ -58,6 +57,7 @@ using tier4_control_msgs::msg::GateMode;
 using tier4_external_api_msgs::msg::Emergency;
 using tier4_external_api_msgs::msg::Heartbeat;
 using tier4_external_api_msgs::srv::SetEmergency;
+using tier4_system_msgs::msg::MRMBehaviorStatus;
 using tier4_system_msgs::msg::OperationMode;
 using tier4_vehicle_msgs::msg::VehicleEmergencyStamped;
 
@@ -101,7 +101,6 @@ private:
   rclcpp::Subscription<SteeringReport>::SharedPtr steer_sub_;
   rclcpp::Subscription<OperationMode>::SharedPtr operation_mode_sub_;
   rclcpp::Subscription<MRMState>::SharedPtr mrm_state_sub_;
-
 
   void onGateMode(GateMode::ConstSharedPtr msg);
   void onExternalEmergencyStopHeartbeat(Heartbeat::ConstSharedPtr msg);

@@ -11,7 +11,7 @@ MRM emergency stop operator is a node that generates emergency stop commands acc
 ### Input
 
 | Name                                 | Type                                                       | Description                                                                                                                   |
-|--------------------------------------|------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------|
+| ------------------------------------ | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | `~/input/mrm/emergency_stop/operate` | `autoware_adapi_v1_msgs::srv::OperateMRM`                  | MRM execution order                                                                                                           |
 | `~/input/control/control_cmd`        | `autoware_auto_control_msgs::msg::AckermannControlCommand` | Control command output from the last node of the control component. Used for the initial value of the emergency stop command. |
 |                                      |                                                            |                                                                                                                               |
@@ -19,7 +19,7 @@ MRM emergency stop operator is a node that generates emergency stop commands acc
 ### Output
 
 | Name                                      | Type                                                       | Description            |
-|-------------------------------------------|------------------------------------------------------------|------------------------|
+| ----------------------------------------- | ---------------------------------------------------------- | ---------------------- |
 | `~/output/mrm/emergency_stop/status`      | `tier4_system_msgs::msg::MRMBehaviorStatus`                | MRM execution status   |
 | `~/output/mrm/emergency_stop/control_cmd` | `autoware_auto_control_msgs::msg::AckermannControlCommand` | Emergency stop command |
 
@@ -27,14 +27,14 @@ MRM emergency stop operator is a node that generates emergency stop commands acc
 
 ### Node Parameters
 
-| Name        | Type   | Default value | Explanation                               |
-|-------------|--------|---------------|-------------------------------------------|
-| update_rate | int    | `30`          | Timer callback frequency [Hz]             |
+| Name        | Type | Default value | Explanation                   |
+| ----------- | ---- | ------------- | ----------------------------- |
+| update_rate | int  | `30`          | Timer callback frequency [Hz] |
 
 ### Core Parameters
 
 | Name                | Type   | Default value | Explanation                                    |
-|---------------------|--------|---------------|------------------------------------------------|
+| ------------------- | ------ | ------------- | ---------------------------------------------- |
 | target_acceleration | double | `-2.5`        | Target acceleration for emergency stop [m/s^2] |
 | target_jerk         | double | `-1.5`        | Target jerk for emergency stop [m/s^3]         |
 

@@ -20,14 +20,14 @@
 #include <string>
 
 // Autoware
+#include <autoware_adapi_v1_msgs/msg/mrm_state.hpp>
+#include <autoware_adapi_v1_msgs/srv/operate_mrm.hpp>
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
 #include <autoware_auto_system_msgs/msg/hazard_status_stamped.hpp>
-#include <autoware_adapi_v1_msgs/srv/operate_mrm.hpp>
-#include <autoware_adapi_v1_msgs/msg/mrm_state.hpp>
-#include <tier4_system_msgs/msg/mrm_behavior_status.hpp>
 #include <autoware_auto_vehicle_msgs/msg/control_mode_report.hpp>
 #include <autoware_auto_vehicle_msgs/msg/gear_command.hpp>
 #include <autoware_auto_vehicle_msgs/msg/hazard_lights_command.hpp>
+#include <tier4_system_msgs/msg/mrm_behavior_status.hpp>
 
 // ROS2 core
 #include <rclcpp/create_timer.hpp>
@@ -67,8 +67,10 @@ private:
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
   rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::ControlModeReport>::SharedPtr
     sub_control_mode_;
-  rclcpp::Subscription<tier4_system_msgs::msg::MRMBehaviorStatus>::SharedPtr sub_mrm_comfortable_stop_status_;
-  rclcpp::Subscription<tier4_system_msgs::msg::MRMBehaviorStatus>::SharedPtr sub_mrm_emergency_stop_status_;
+  rclcpp::Subscription<tier4_system_msgs::msg::MRMBehaviorStatus>::SharedPtr
+    sub_mrm_comfortable_stop_status_;
+  rclcpp::Subscription<tier4_system_msgs::msg::MRMBehaviorStatus>::SharedPtr
+    sub_mrm_emergency_stop_status_;
 
   autoware_auto_system_msgs::msg::HazardStatusStamped::ConstSharedPtr hazard_status_stamped_;
   autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr prev_control_command_;
@@ -83,8 +85,10 @@ private:
     const autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr msg);
   void onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg);
   void onControlMode(const autoware_auto_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr msg);
-  void onMRMComfortableStopStatus(const tier4_system_msgs::msg::MRMBehaviorStatus::ConstSharedPtr msg);
-  void onMRMEmergencyStopStatus(const tier4_system_msgs::msg::MRMBehaviorStatus::ConstSharedPtr msg);
+  void onMRMComfortableStopStatus(
+    const tier4_system_msgs::msg::MRMBehaviorStatus::ConstSharedPtr msg);
+  void onMRMEmergencyStopStatus(
+    const tier4_system_msgs::msg::MRMBehaviorStatus::ConstSharedPtr msg);
 
   // Publisher
   rclcpp::Publisher<autoware_auto_control_msgs::msg::AckermannControlCommand>::SharedPtr
@@ -111,8 +115,10 @@ private:
   rclcpp::CallbackGroup::SharedPtr client_mrm_emergency_stop_group_;
   rclcpp::Client<autoware_adapi_v1_msgs::srv::OperateMRM>::SharedPtr client_mrm_emergency_stop_;
 
-  void callMRMBehavior(const autoware_adapi_v1_msgs::msg::MRMState::_behavior_type & mrm_behavior) const;
-  void cancelMRMBehavior(const autoware_adapi_v1_msgs::msg::MRMState::_behavior_type & mrm_behavior) const;
+  void callMRMBehavior(
+    const autoware_adapi_v1_msgs::msg::MRMState::_behavior_type & mrm_behavior) const;
+  void cancelMRMBehavior(
+    const autoware_adapi_v1_msgs::msg::MRMState::_behavior_type & mrm_behavior) const;
   void logMRMCallingResult(
     const autoware_adapi_v1_msgs::srv::OperateMRM::Response & result, const std::string & behavior,
     bool is_call) const;

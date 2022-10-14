@@ -28,17 +28,18 @@ MRMComfortableStopOperator::MRMComfortableStopOperator(const rclcpp::NodeOptions
 
   // Server
   service_operation_ = create_service<autoware_adapi_v1_msgs::srv::OperateMRM>(
-    "~/input/mrm/comfortable_stop/operate",
-    std::bind(&MRMComfortableStopOperator::operateComfortableStop, this,
-    std::placeholders::_1, std::placeholders::_2));
+    "~/input/mrm/comfortable_stop/operate", std::bind(
+                                              &MRMComfortableStopOperator::operateComfortableStop,
+                                              this, std::placeholders::_1, std::placeholders::_2));
 
   // Publisher
   pub_status_ = create_publisher<tier4_system_msgs::msg::MRMBehaviorStatus>(
     "~/output/mrm/comfortable_stop/status", 1);
   pub_velocity_limit_ = create_publisher<tier4_planning_msgs::msg::VelocityLimit>(
     "~/output/velocity_limit", rclcpp::QoS{1}.transient_local());
-  pub_velocity_limit_clear_command_ = create_publisher<tier4_planning_msgs::msg::VelocityLimitClearCommand>(
-    "~/output/velocity_limit/clear", rclcpp::QoS{1}.transient_local());
+  pub_velocity_limit_clear_command_ =
+    create_publisher<tier4_planning_msgs::msg::VelocityLimitClearCommand>(
+      "~/output/velocity_limit/clear", rclcpp::QoS{1}.transient_local());
 
   // Timer
   const auto update_period_ns = rclcpp::Rate(params_.update_rate).period();
@@ -51,8 +52,8 @@ MRMComfortableStopOperator::MRMComfortableStopOperator(const rclcpp::NodeOptions
 }
 
 void MRMComfortableStopOperator::operateComfortableStop(
-    const autoware_adapi_v1_msgs::srv::OperateMRM::Request::SharedPtr request,
-    const autoware_adapi_v1_msgs::srv::OperateMRM::Response::SharedPtr response)
+  const autoware_adapi_v1_msgs::srv::OperateMRM::Request::SharedPtr request,
+  const autoware_adapi_v1_msgs::srv::OperateMRM::Response::SharedPtr response)
 {
   if (request->operate == true) {
     publishVelocityLimit();
@@ -96,10 +97,7 @@ void MRMComfortableStopOperator::publishVelocityLimitClearCommand() const
   pub_velocity_limit_clear_command_->publish(velocity_limit_clear_command);
 }
 
-void MRMComfortableStopOperator::onTimer() const
-{
-  publishStatus();
-}
+void MRMComfortableStopOperator::onTimer() const { publishStatus(); }
 
 }  // namespace mrm_comfortable_stop_operator
 

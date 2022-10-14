@@ -32,15 +32,14 @@ MRMEmergencyStopOperator::MRMEmergencyStopOperator(const rclcpp::NodeOptions & n
 
   // Server
   service_operation_ = create_service<OperateMRM>(
-    "~/input/mrm/emergency_stop/operate",
-    std::bind(&MRMEmergencyStopOperator::operateEmergencyStop, this,
-    std::placeholders::_1, std::placeholders::_2));
+    "~/input/mrm/emergency_stop/operate", std::bind(
+                                            &MRMEmergencyStopOperator::operateEmergencyStop, this,
+                                            std::placeholders::_1, std::placeholders::_2));
 
   // Publisher
-  pub_status_ = create_publisher<MRMBehaviorStatus>(
-    "~/output/mrm/emergency_stop/status", 1);
-  pub_control_cmd_ = create_publisher<AckermannControlCommand>(
-    "~/output/mrm/emergency_stop/control_cmd", 1);
+  pub_status_ = create_publisher<MRMBehaviorStatus>("~/output/mrm/emergency_stop/status", 1);
+  pub_control_cmd_ =
+    create_publisher<AckermannControlCommand>("~/output/mrm/emergency_stop/control_cmd", 1);
 
   // Timer
   const auto update_period_ns = rclcpp::Rate(params_.update_rate).period();
@@ -53,9 +52,7 @@ MRMEmergencyStopOperator::MRMEmergencyStopOperator(const rclcpp::NodeOptions & n
   is_prev_control_cmd_subscribed_ = false;
 }
 
-
-void MRMEmergencyStopOperator::onControlCommand(
-    AckermannControlCommand::ConstSharedPtr msg)
+void MRMEmergencyStopOperator::onControlCommand(AckermannControlCommand::ConstSharedPtr msg)
 {
   if (status_.is_operating == false) {
     prev_control_cmd_ = *msg;
@@ -64,8 +61,7 @@ void MRMEmergencyStopOperator::onControlCommand(
 }
 
 void MRMEmergencyStopOperator::operateEmergencyStop(
-    const OperateMRM::Request::SharedPtr request,
-    const OperateMRM::Response::SharedPtr response)
+  const OperateMRM::Request::SharedPtr request, const OperateMRM::Response::SharedPtr response)
 {
   if (request->operate == true) {
     status_.is_operating = true;
@@ -123,8 +119,7 @@ AckermannControlCommand MRMEmergencyStopOperator::calcTargetAcceleration(
   control_cmd.stamp = this->now();
   control_cmd.longitudinal.stamp = this->now();
   control_cmd.longitudinal.speed = static_cast<float>(std::max(
-    prev_control_cmd.longitudinal.speed + prev_control_cmd.longitudinal.acceleration * dt,
-    0.0));
+    prev_control_cmd.longitudinal.speed + prev_control_cmd.longitudinal.acceleration * dt, 0.0));
   control_cmd.longitudinal.acceleration = static_cast<float>(std::max(
     prev_control_cmd.longitudinal.acceleration + params_.target_jerk * dt,
     params_.target_acceleration));

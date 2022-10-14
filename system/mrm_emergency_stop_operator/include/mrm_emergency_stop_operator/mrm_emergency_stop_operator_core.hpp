@@ -21,23 +21,23 @@
 
 // Autoware
 #include <autoware_adapi_v1_msgs/srv/operate_mrm.hpp>
-#include <tier4_system_msgs/msg/mrm_behavior_status.hpp>
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
+#include <tier4_system_msgs/msg/mrm_behavior_status.hpp>
 
 // ROS2 core
 #include <rclcpp/rclcpp.hpp>
 
 namespace mrm_emergency_stop_operator
 {
-  using autoware_adapi_v1_msgs::srv::OperateMRM;
-  using tier4_system_msgs::msg::MRMBehaviorStatus;
-  using autoware_auto_control_msgs::msg::AckermannControlCommand;
+using autoware_adapi_v1_msgs::srv::OperateMRM;
+using autoware_auto_control_msgs::msg::AckermannControlCommand;
+using tier4_system_msgs::msg::MRMBehaviorStatus;
 
 struct Parameters
 {
-  int update_rate;  // [Hz]
+  int update_rate;             // [Hz]
   double target_acceleration;  // [m/s^2]
-  double target_jerk;  // [m/s^3]
+  double target_jerk;          // [m/s^3]
 };
 
 class MRMEmergencyStopOperator : public rclcpp::Node
@@ -58,8 +58,7 @@ private:
   rclcpp::Service<OperateMRM>::SharedPtr service_operation_;
 
   void operateEmergencyStop(
-    const OperateMRM::Request::SharedPtr request,
-    const OperateMRM::Response::SharedPtr response);
+    const OperateMRM::Request::SharedPtr request, const OperateMRM::Response::SharedPtr response);
 
   // Publisher
   rclcpp::Publisher<MRMBehaviorStatus>::SharedPtr pub_status_;
@@ -79,8 +78,8 @@ private:
   bool is_prev_control_cmd_subscribed_;
 
   // Algorithm
-  AckermannControlCommand calcTargetAcceleration(const AckermannControlCommand & prev_control_cmd) const;
-
+  AckermannControlCommand calcTargetAcceleration(
+    const AckermannControlCommand & prev_control_cmd) const;
 };
 
 }  // namespace mrm_emergency_stop_operator

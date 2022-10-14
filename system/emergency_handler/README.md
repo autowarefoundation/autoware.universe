@@ -15,7 +15,7 @@ Emergency Handler is a node to select proper MRM from from system failure state 
 ### Input
 
 | Name                                      | Type                                                       | Description                                                                   |
-|-------------------------------------------|------------------------------------------------------------|-------------------------------------------------------------------------------|
+| ----------------------------------------- | ---------------------------------------------------------- | ----------------------------------------------------------------------------- |
 | `/system/emergency/hazard_status`         | `autoware_auto_system_msgs::msg::HazardStatusStamped`      | Used to select proper MRM from system failure state contained in HazardStatus |
 | `/control/vehicle_cmd`                    | `autoware_auto_control_msgs::msg::AckermannControlCommand` | Used as reference when generate Emergency Control Command                     |
 | `/localization/kinematic_state`           | `nav_msgs::msg::Odometry`                                  | Used to decide whether vehicle is stopped or not                              |
@@ -26,7 +26,7 @@ Emergency Handler is a node to select proper MRM from from system failure state 
 ### Output
 
 | Name                                       | Type                                                   | Description                                           |
-|--------------------------------------------|--------------------------------------------------------|-------------------------------------------------------|
+| ------------------------------------------ | ------------------------------------------------------ | ----------------------------------------------------- |
 | `/system/emergency/shift_cmd`              | `autoware_auto_vehicle_msgs::msg::GearCommand`         | Required to execute proper MRM (send gear cmd)        |
 | `/system/emergency/hazard_cmd`             | `autoware_auto_vehicle_msgs::msg::HazardLightsCommand` | Required to execute proper MRM (send turn signal cmd) |
 | `/api/fail_safe/mrm_state`                 | `autoware_adapi_v1_msgs::msg::MRMState`                | Inform MRM execution state and selected MRM behavior  |
@@ -48,7 +48,7 @@ Emergency Handler is a node to select proper MRM from from system failure state 
 | timeout_hazard_status       | double | `0.5`         | If the input `hazard_status` topic cannot be received for more than `timeout_hazard_status`, vehicle will make an emergency stop. |
 | use_parking_after_stopped   | bool   | `false`       | If this parameter is true, it will publish PARKING shift command.                                                                 |
 | turning_hazard_on.emergency | bool   | `true`        | If this parameter is true, hazard lamps will be turned on during emergency state.                                                 |
-| use_comfortable_stop        | bool   | `false`       | If this parameter is true, operate comfortable stop when latent faults occur.
+| use_comfortable_stop        | bool   | `false`       | If this parameter is true, operate comfortable stop when latent faults occur.                                                     |
 
 ## Assumptions / Known limits
 
