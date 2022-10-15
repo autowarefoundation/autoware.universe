@@ -22,29 +22,6 @@
 namespace raw_vehicle_cmd_converter
 {
 
-double SteerConverter::calcFBSteer(
-  const double target_steer_angle, const double dt, const double current_velocity,
-  const double current_steer_angle, std::vector<double> & pid_contributions,
-  std::vector<double> & errors)
-{
-  rclcpp::Clock clock{RCL_ROS_TIME};
-
-  if (!fb_gains_initialized_ || !fb_limits_initialized_) {
-    RCLCPP_WARN_THROTTLE(logger_, clock, 3000, "FB params are not initialized!");
-    return 0;
-  }
-
-  double fb_value = 0;
-  const double error_steer_angle = target_steer_angle - current_steer_angle;
-  bool enable_integration = true;
-  if (std::abs(current_velocity) < 0.01) {
-    enable_integration = false;
-  }
-  fb_value =
-    pid_.calculatePID(error_steer_angle, dt, enable_integration, pid_contributions, errors, false);
-  return fb_value;
-}
-
 bool SteerConverter::readSteerMapFromCSV(const std::string & csv_path)
 {
   CSVLoader csv(csv_path);
@@ -55,7 +32,7 @@ bool SteerConverter::readSteerMapFromCSV(const std::string & csv_path)
   }
 
   vehicle_name_ = table[0][0];
-  vel_index_ = CSVLoader::getRowIndex(table);
+  steer_index_ = CSVLoader::getRowIndex(table);
   output_index_ = CSVLoader::getColumnIndex(table);
   steer_map_ = CSVLoader::getMap(table);
   return true;
@@ -64,11 +41,11 @@ bool SteerConverter::readSteerMapFromCSV(const std::string & csv_path)
 void SteerConverter::getSteer(double steer_vel, double steer, double & output)
 {
   std::vector<double> steer_angle_velocities_interp;
-  steer = CSVLoader::clampValue(steer, vel_index_, "steer: steer");
+  steer = CSVLoader::clampValue(steer, steer_index_, "steer: steer");
 
   for (std::vector<double> steer_angle_velocities : steer_map_) {
     steer_angle_velocities_interp.push_back(
-      interpolation::lerp(vel_index_, steer_angle_velocities, steer));
+      interpolation::lerp(steer_index_, steer_angle_velocities, steer));
   }
   if (steer_vel < steer_angle_velocities_interp.front()) {
     steer_vel = steer_angle_velocities_interp.front();

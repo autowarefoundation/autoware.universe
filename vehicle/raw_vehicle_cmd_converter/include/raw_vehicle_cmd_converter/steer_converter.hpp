@@ -29,18 +29,11 @@ class SteerConverter
 {
 public:
   bool readSteerMapFromCSV(const std::string & csv_path);
-  double calcFBSteer(
-    const double target_steer_angle, const double dt, const double current_velocity,
-    const double current_steer_angle, std::vector<double> & pid_contributions,
-    std::vector<double> & errors);
   void getSteer(double steer_vel, double steer, double & output);
-  bool fb_gains_initialized_{false};
-  bool fb_limits_initialized_{false};
-  PIDController pid_;
 
 private:
   std::string vehicle_name_;
-  std::vector<double> vel_index_;
+  std::vector<double> steer_index_;
   std::vector<double> output_index_;
   std::vector<std::vector<double>> steer_map_;
   rclcpp::Logger logger_{

@@ -87,6 +87,9 @@ public:
   AckermannControlCommand::ConstSharedPtr control_cmd_ptr_;
   AccelMap accel_map_;
   BrakeMap brake_map_;
+  SteerConverter steer_map_;
+  // TODO(tanaka): consider accel/brake pid too
+  PIDController steer_pid_;
   bool ff_map_initialized_;
   double max_accel_cmd_;
   double max_brake_cmd_;
@@ -99,7 +102,6 @@ public:
   bool convert_accel_cmd_;  //!< @brief use accel or not
   bool convert_brake_cmd_;  //!< @brief use brake or not
   bool convert_steer_cmd_;  //!< @brief use steer or not
-  SteerConverter steer_controller_;
   rclcpp::Time prev_time_steer_calculation_{0, 0, RCL_ROS_TIME};
 
   double calculateAccelMap(
