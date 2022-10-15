@@ -163,6 +163,53 @@ struct DebugData
 
 struct TrajectoryParam
 {
+  TrajectoryParam() = default;
+  TrajectoryParam(rclcpp::Node * node, const double vehicle_width)
+  {  // trajectory parameter
+    num_sampling_points = node->declare_parameter<int>("common.num_sampling_points");
+    output_traj_length = node->declare_parameter<double>("common.output_traj_length");
+    forward_fixing_min_distance =
+      node->declare_parameter<double>("common.forward_fixing_min_distance");
+    forward_fixing_min_time = node->declare_parameter<double>("common.forward_fixing_min_time");
+    output_backward_traj_length =
+      node->declare_parameter<double>("common.output_backward_traj_length");
+    output_delta_arc_length = node->declare_parameter<double>("common.output_delta_arc_length");
+
+    delta_dist_threshold_for_closest_point =
+      node->declare_parameter<double>("common.delta_dist_threshold_for_closest_point");
+    delta_yaw_threshold_for_closest_point =
+      node->declare_parameter<double>("common.delta_yaw_threshold_for_closest_point");
+    delta_yaw_threshold_for_straight =
+      node->declare_parameter<double>("common.delta_yaw_threshold_for_straight");
+
+    // TODO(murooka) tune this param when avoiding with collision_free_path_planner
+    center_line_width = vehicle_width;
+  }
+
+  void onParam(const std::vector<rclcpp::Parameter> & parameters)
+  {
+    using tier4_autoware_utils::updateParam;
+
+    // common
+    updateParam<int>(parameters, "common.num_sampling_points", num_sampling_points);
+    updateParam<double>(parameters, "common.output_traj_length", output_traj_length);
+    updateParam<double>(
+      parameters, "common.forward_fixing_min_distance", forward_fixing_min_distance);
+    updateParam<double>(parameters, "common.forward_fixing_min_time", forward_fixing_min_time);
+    updateParam<double>(
+      parameters, "common.output_backward_traj_length", output_backward_traj_length);
+    updateParam<double>(parameters, "common.output_delta_arc_length", output_delta_arc_length);
+
+    updateParam<double>(
+      parameters, "common.delta_dist_threshold_for_closest_point",
+      delta_dist_threshold_for_closest_point);
+    updateParam<double>(
+      parameters, "common.delta_yaw_threshold_for_closest_point",
+      delta_yaw_threshold_for_closest_point);
+    updateParam<double>(
+      parameters, "common.delta_yaw_threshold_for_straight", delta_yaw_threshold_for_straight);
+  }
+
   // output
   double output_traj_length;
   double output_delta_arc_length;
@@ -186,6 +233,15 @@ struct EgoNearestParam
   {
     dist_threshold = node->declare_parameter<double>("ego_nearest_dist_threshold");
     yaw_threshold = node->declare_parameter<double>("ego_nearest_yaw_threshold");
+  }
+
+  void onParam(const std::vector<rclcpp::Parameter> & parameters)
+  {
+    using tier4_autoware_utils::updateParam;
+
+    // common
+    updateParam<double>(parameters, "ego_nearest_dist_threshold", dist_threshold);
+    updateParam<double>(parameters, "ego_nearest_yaw_threshold", yaw_threshold);
   }
 
   double dist_threshold{0.0};

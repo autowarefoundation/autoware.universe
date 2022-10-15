@@ -105,6 +105,7 @@ bool transformMapToImage(
   const nav_msgs::msg::MapMetaData & occupancy_grid_info, geometry_msgs::msg::Point & image_point);
 }  // namespace geometry_utils
 
+/*
 namespace interpolation_utils
 {
 std::vector<geometry_msgs::msg::Point> interpolate2DPoints(
@@ -153,6 +154,7 @@ std::vector<TrajectoryPoint> getConnectedInterpolatedPoints(
   const std::vector<TrajectoryPoint> & points, const double delta_arc_length,
   const double begin_yaw, const double end_yaw);
 }  // namespace interpolation_utils
+*/
 
 namespace points_utils
 {

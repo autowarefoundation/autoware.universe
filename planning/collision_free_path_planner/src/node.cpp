@@ -105,33 +105,13 @@ CollisionFreePathPlanner::CollisionFreePathPlanner(const rclcpp::NodeOptions & n
       declare_parameter<bool>("option.debug.enable_calculation_time_info");
   }
 
-  // ego nearest search parameter
+  // ego nearest search parameters declaration
   ego_nearest_param_ = EgoNearestParam(this);
 
-  {  // trajectory parameter
-    traj_param_.num_sampling_points = declare_parameter<int>("common.num_sampling_points");
-    traj_param_.output_traj_length = declare_parameter<double>("common.output_traj_length");
-    traj_param_.forward_fixing_min_distance =
-      declare_parameter<double>("common.forward_fixing_min_distance");
-    traj_param_.forward_fixing_min_time =
-      declare_parameter<double>("common.forward_fixing_min_time");
-    traj_param_.output_backward_traj_length =
-      declare_parameter<double>("common.output_backward_traj_length");
-    traj_param_.output_delta_arc_length =
-      declare_parameter<double>("common.output_delta_arc_length");
+  // trajectory parameters declaration
+  traj_param_ = TrajectoryParam(this, vehicle_info_.vehicle_width_m);
 
-    traj_param_.delta_dist_threshold_for_closest_point =
-      declare_parameter<double>("common.delta_dist_threshold_for_closest_point");
-    traj_param_.delta_yaw_threshold_for_closest_point =
-      declare_parameter<double>("common.delta_yaw_threshold_for_closest_point");
-    traj_param_.delta_yaw_threshold_for_straight =
-      declare_parameter<double>("common.delta_yaw_threshold_for_straight");
-
-    // TODO(murooka) tune this param when avoiding with collision_free_path_planner
-    traj_param_.center_line_width = vehicle_info_.vehicle_width_m;
-  }
-
-  // create core algorithm pointers
+  // create core algorithm pointers with parameter declaration
   replan_checker_ptr_ = std::make_shared<ReplanChecker>(this, ego_nearest_param_);
   costmap_generator_ptr_ = std::make_shared<CostmapGenerator>(this, debug_data_ptr_);
   eb_path_optimizer_ptr_ = std::make_shared<EBPathOptimizer>(
@@ -170,29 +150,11 @@ rcl_interfaces::msg::SetParametersResult CollisionFreePathPlanner::onParam(
       parameters, "option.debug.enable_calculation_time_info", enable_calculation_time_info_);
   }
 
-  {  // trajectory parameter
-    // common
-    updateParam<int>(parameters, "common.num_sampling_points", traj_param_.num_sampling_points);
-    updateParam<double>(parameters, "common.output_traj_length", traj_param_.output_traj_length);
-    updateParam<double>(
-      parameters, "common.forward_fixing_min_distance", traj_param_.forward_fixing_min_distance);
-    updateParam<double>(
-      parameters, "common.forward_fixing_min_time", traj_param_.forward_fixing_min_time);
-    updateParam<double>(
-      parameters, "common.output_backward_traj_length", traj_param_.output_backward_traj_length);
-    updateParam<double>(
-      parameters, "common.output_delta_arc_length", traj_param_.output_delta_arc_length);
+  // ego nearest search parameters
+  ego_nearest_param_.onParam(parameters);
 
-    updateParam<double>(
-      parameters, "common.delta_dist_threshold_for_closest_point",
-      traj_param_.delta_dist_threshold_for_closest_point);
-    updateParam<double>(
-      parameters, "common.delta_yaw_threshold_for_closest_point",
-      traj_param_.delta_yaw_threshold_for_closest_point);
-    updateParam<double>(
-      parameters, "common.delta_yaw_threshold_for_straight",
-      traj_param_.delta_yaw_threshold_for_straight);
-  }
+  // trajectory parameters
+  traj_param_.onParam(parameters);
 
   // core algorithms parameters
   replan_checker_ptr_->onParam(parameters);

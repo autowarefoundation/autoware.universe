@@ -239,6 +239,7 @@ bool transformMapToImage(
 }
 }  // namespace geometry_utils
 
+/*
 namespace interpolation_utils
 {
 std::vector<geometry_msgs::msg::Point> interpolate2DPoints(
@@ -428,6 +429,7 @@ std::vector<TrajectoryPoint> getConnectedInterpolatedPoints(
     validated_pose.at(0), validated_pose.at(1), delta_arc_length, begin_yaw, end_yaw);
 }
 }  // namespace interpolation_utils
+*/
 
 namespace points_utils
 {
