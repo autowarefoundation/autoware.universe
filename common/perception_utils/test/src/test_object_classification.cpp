@@ -164,4 +164,57 @@ TEST(object_classification, test_isCarLikeVehicle)
 
 
 
+// TEST isLargeVehicle
+TEST(object_classification, test_isLargeVehicle)
+{
+
+  using autoware_auto_perception_msgs::msg::ObjectClassification;
+  using perception_utils::isLargeVehicle;
+
+  {// True Case with uint8_t
+  std::vector<std::uint8_t> large_vehicle_labels;
+  large_vehicle_labels.push_back(ObjectClassification::BUS);
+  large_vehicle_labels.push_back(ObjectClassification::TRAILER);
+  large_vehicle_labels.push_back(ObjectClassification::TRUCK);
+  
+  for(auto label: large_vehicle_labels){
+    EXPECT_TRUE(isLargeVehicle(label));
+  }
+  }
+
+  // False Case with uint8_t
+  {
+  std::vector<std::uint8_t> non_large_vehicle_labels;
+  non_large_vehicle_labels.push_back(ObjectClassification::UNKNOWN);
+  non_large_vehicle_labels.push_back(ObjectClassification::BICYCLE);
+  non_large_vehicle_labels.push_back(ObjectClassification::PEDESTRIAN);
+  non_large_vehicle_labels.push_back(ObjectClassification::MOTORCYCLE);
+  non_large_vehicle_labels.push_back(ObjectClassification::CAR);
+
+  for(auto label: non_large_vehicle_labels){
+    EXPECT_FALSE(isLargeVehicle(label));
+  }
+  }
+
+  // True Case with object_classifications
+  {  // normal case
+    std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> classification;
+    classification.push_back(createObjectClassification(ObjectClassification::CAR, 0.5));
+    classification.push_back(createObjectClassification(ObjectClassification::TRUCK, 0.8));
+    classification.push_back(createObjectClassification(ObjectClassification::TRAILER,0.7));
+    EXPECT_TRUE(isLargeVehicle(classification));
+  }
+
+  // False Case with object_classifications
+  {  // false case
+    std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> classification;
+    classification.push_back(createObjectClassification(ObjectClassification::MOTORCYCLE, 0.8));
+    classification.push_back(createObjectClassification(ObjectClassification::BICYCLE, 0.8));
+    classification.push_back(createObjectClassification(ObjectClassification::CAR, 0.8));
+    EXPECT_FALSE(isLargeVehicle(classification));
+  }
+
+} // TEST isLargeVehicle
+
+
 }  // namespace
