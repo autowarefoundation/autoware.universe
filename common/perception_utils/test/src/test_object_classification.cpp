@@ -111,4 +111,57 @@ TEST(object_classification, test_isVehicle)
 
 } // TEST isVehicle
 
+
+// TEST isCarLikeVehicle
+TEST(object_classification, test_isCarLikeVehicle)
+{
+
+  using autoware_auto_perception_msgs::msg::ObjectClassification;
+  using perception_utils::isCarLikeVehicle;
+
+  {// True Case with uint8_t
+  std::vector<std::uint8_t> carlike_labels;
+  carlike_labels.push_back(ObjectClassification::BUS);
+  carlike_labels.push_back(ObjectClassification::CAR);
+  carlike_labels.push_back(ObjectClassification::TRAILER);
+  carlike_labels.push_back(ObjectClassification::TRUCK);
+  
+  for(auto label: carlike_labels){
+    EXPECT_TRUE(isCarLikeVehicle(label));
+  }
+  }
+
+  // False Case with uint8_t
+  {
+  std::vector<std::uint8_t> non_carlike_labels;
+  non_carlike_labels.push_back(ObjectClassification::UNKNOWN);
+  non_carlike_labels.push_back(ObjectClassification::BICYCLE);
+  non_carlike_labels.push_back(ObjectClassification::PEDESTRIAN);
+  non_carlike_labels.push_back(ObjectClassification::MOTORCYCLE);
+  for(auto label: non_carlike_labels){
+    EXPECT_FALSE(isCarLikeVehicle(label));
+  }
+  }
+
+  // True Case with object_classifications
+  {  // normal case
+    std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> classification;
+    classification.push_back(createObjectClassification(ObjectClassification::CAR, 0.5));
+    classification.push_back(createObjectClassification(ObjectClassification::TRUCK, 0.8));
+    classification.push_back(createObjectClassification(ObjectClassification::BICYCLE, 0.7));
+    EXPECT_TRUE(isCarLikeVehicle(classification));
+  }
+
+  // False Case with object_classifications
+  {  // false case
+    std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> classification;
+    classification.push_back(createObjectClassification(ObjectClassification::MOTORCYCLE, 0.8));
+    classification.push_back(createObjectClassification(ObjectClassification::BICYCLE, 0.8));
+    EXPECT_FALSE(isCarLikeVehicle(classification));
+  }
+
+} // TEST isCarLikeVehicle
+
+
+
 }  // namespace
