@@ -128,6 +128,7 @@ struct DebugData
   {
     msg_stream = StreamWithPrint{};
     msg_stream.enable_calculation_time_info = enable_calculation_time_info;
+    stop_pose_by_drivable_area = boost::none;
   }
 
   // string stream for calculation time
@@ -153,8 +154,7 @@ struct DebugData
 
   boost::optional<geometry_msgs::msg::Pose> stop_pose_by_drivable_area = boost::none;
 
-  std::vector<TrajectoryPoint> extended_fixed_traj;
-  std::vector<TrajectoryPoint> extended_non_fixed_traj;
+  std::vector<TrajectoryPoint> extended_traj_points;
 
   // std::vector<TrajectoryPoint> mpt_fixed_traj;
   // std::vector<TrajectoryPoint> mpt_ref_traj;

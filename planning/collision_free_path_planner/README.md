@@ -39,14 +39,14 @@ start
 
 :createPlannerData;
 
-group generateOptimizedTrajectory
-  group getMaps
-    :getDrivableArea;
-    :getRoadClearanceMap;
-    :drawObstacleOnImage;
-    :getObstacleClearanceMap;
-  end group
+group getMaps
+  :getDrivableArea;
+  :getRoadClearanceMap;
+  :drawObstacleOnImage;
+  :getObstacleClearanceMap;
+end group
 
+group generateOptimizedTrajectory
   group optimizeTrajectory
     :checkReplan;
     if (replanning required?) then (yes)
@@ -61,16 +61,15 @@ group generateOptimizedTrajectory
     endif
   end group
 
-  :updateVelocity;
+  :applyPathVelocity;
   :insertZeroVelocityOutsideDrivableArea;
   :publishDebugMarkerInOptimization;
 end group
 
 
-:extendedOptimizedTrajectory;
-:alignVelocity;
+:extendTrajectory;
 
-:convertToTrajectory;
+:setZeroVelocityAfterStopPoint;
 
 :publishDebugDataInMain;
 

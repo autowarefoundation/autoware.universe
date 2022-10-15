@@ -14,6 +14,7 @@
 
 #include "collision_free_path_planner/replan_checker.hpp"
 
+#include "collision_free_path_planner/utils/trajectory_utils.hpp"
 #include "motion_utils/motion_utils.hpp"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
@@ -127,14 +128,15 @@ bool ReplanChecker::isPathShapeChanged(
 
   // truncate prev points from ego pose to fixed end points
   const auto prev_begin_idx =
-    points_utils::findEgoIndex(prev_path_points, p.ego_pose, ego_nearest_param_);
+    trajectory_utils::findEgoIndex(prev_path_points, p.ego_pose, ego_nearest_param_);
   const auto truncated_prev_points =
-    points_utils::clipForwardPoints(prev_path_points, prev_begin_idx, max_path_length);
+    trajectory_utils::clipForwardPoints(prev_path_points, prev_begin_idx, max_path_length);
 
   // truncate points from ego pose to fixed end points
-  const auto begin_idx = points_utils::findEgoIndex(p.path.points, p.ego_pose, ego_nearest_param_);
+  const auto begin_idx =
+    trajectory_utils::findEgoIndex(p.path.points, p.ego_pose, ego_nearest_param_);
   const auto truncated_points =
-    points_utils::clipForwardPoints(p.path.points, begin_idx, max_path_length);
+    trajectory_utils::clipForwardPoints(p.path.points, begin_idx, max_path_length);
 
   // guard for lateral offset
   if (truncated_prev_points.size() < 2 || truncated_points.size() < 2) {

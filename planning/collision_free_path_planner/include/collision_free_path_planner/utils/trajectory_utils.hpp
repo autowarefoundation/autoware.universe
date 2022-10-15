@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2022 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef COLLISION_FREE_PATH_PLANNER__UTILS__UTILS_HPP_
-#define COLLISION_FREE_PATH_PLANNER__UTILS__UTILS_HPP_
+#ifndef COLLISION_FREE_PATH_PLANNER__UTILS__TRAJECTORY_UTILS_HPP_
+#define COLLISION_FREE_PATH_PLANNER__UTILS__TRAJECTORY_UTILS_HPP_
 
 #include "collision_free_path_planner/common_structs.hpp"
 #include "collision_free_path_planner/type_alias.hpp"
@@ -34,8 +34,6 @@
 #include <string>
 #include <vector>
 
-struct collision_free_path_planner::ReferencePoint;
-
 namespace tier4_autoware_utils
 {
 template <>
@@ -47,116 +45,7 @@ geometry_msgs::msg::Pose getPose(const collision_free_path_planner::ReferencePoi
 
 namespace collision_free_path_planner
 {
-namespace geometry_utils
-{
-template <typename T>
-geometry_msgs::msg::Point transformToRelativeCoordinate2D(
-  const T & point, const geometry_msgs::msg::Pose & origin)
-{
-  // NOTE: implement transformation without defining yaw variable
-  //       but directly sin/cos of yaw for fast calculation
-  const auto & q = origin.orientation;
-  const double cos_yaw = 1 - 2 * q.z * q.z;
-  const double sin_yaw = 2 * q.w * q.z;
-
-  geometry_msgs::msg::Point relative_p;
-  const double tmp_x = point.x - origin.position.x;
-  const double tmp_y = point.y - origin.position.y;
-  relative_p.x = tmp_x * cos_yaw + tmp_y * sin_yaw;
-  relative_p.y = -tmp_x * sin_yaw + tmp_y * cos_yaw;
-  relative_p.z = point.z;
-
-  return relative_p;
-}
-
-geometry_msgs::msg::Point transformToAbsoluteCoordinate2D(
-  const geometry_msgs::msg::Point & point, const geometry_msgs::msg::Pose & origin);
-
-geometry_msgs::msg::Quaternion getQuaternionFromPoints(
-  const geometry_msgs::msg::Point & a, const geometry_msgs::msg::Point & a_root);
-
-geometry_msgs::msg::Quaternion getQuaternionFromPoints(
-  const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2,
-  const geometry_msgs::msg::Point & p3, const geometry_msgs::msg::Point & p4);
-
-template <typename T>
-geometry_msgs::msg::Point transformMapToImage(
-  const T & map_point, const nav_msgs::msg::MapMetaData & occupancy_grid_info)
-{
-  geometry_msgs::msg::Point relative_p =
-    transformToRelativeCoordinate2D(map_point, occupancy_grid_info.origin);
-  double resolution = occupancy_grid_info.resolution;
-  double map_y_height = occupancy_grid_info.height;
-  double map_x_width = occupancy_grid_info.width;
-  double map_x_in_image_resolution = relative_p.x / resolution;
-  double map_y_in_image_resolution = relative_p.y / resolution;
-  geometry_msgs::msg::Point image_point;
-  image_point.x = map_y_height - map_y_in_image_resolution;
-  image_point.y = map_x_width - map_x_in_image_resolution;
-  return image_point;
-}
-
-boost::optional<geometry_msgs::msg::Point> transformMapToOptionalImage(
-  const geometry_msgs::msg::Point & map_point,
-  const nav_msgs::msg::MapMetaData & occupancy_grid_info);
-
-bool transformMapToImage(
-  const geometry_msgs::msg::Point & map_point,
-  const nav_msgs::msg::MapMetaData & occupancy_grid_info, geometry_msgs::msg::Point & image_point);
-}  // namespace geometry_utils
-
-/*
-namespace interpolation_utils
-{
-std::vector<geometry_msgs::msg::Point> interpolate2DPoints(
-  const std::vector<double> & base_x, const std::vector<double> & base_y, const double resolution,
-  const double offset);
-
-std::vector<TrajectoryPoint> interpolateConnected2DPoints(
-  const std::vector<double> & base_x, const std::vector<double> & base_y, const double resolution,
-  const double begin_yaw, const double end_yaw);
-
-std::vector<TrajectoryPoint> interpolate2DTrajectoryPoints(
-  const std::vector<double> & base_x, const std::vector<double> & base_y,
-  const std::vector<double> & base_yaw, const double resolution);
-
-std::vector<TrajectoryPoint> interpolate2DTrajectoryPoints(
-  const std::vector<double> & base_x, const std::vector<double> & base_y, const double resolution);
-
-template <typename T>
-std::vector<geometry_msgs::msg::Point> getInterpolatedPoints(
-  const T & points, const double delta_arc_length, const double offset = 0)
-{
-  constexpr double epsilon = 1e-6;
-  std::vector<double> tmp_x;
-  std::vector<double> tmp_y;
-  for (size_t i = 0; i < points.size(); i++) {
-    const auto & current_point = tier4_autoware_utils::getPoint(points.at(i));
-    if (i > 0) {
-      const auto & prev_point = tier4_autoware_utils::getPoint(points.at(i - 1));
-      if (
-        std::fabs(current_point.x - prev_point.x) < epsilon &&
-        std::fabs(current_point.y - prev_point.y) < epsilon) {
-        continue;
-      }
-    }
-    tmp_x.push_back(current_point.x);
-    tmp_y.push_back(current_point.y);
-  }
-
-  return interpolation_utils::interpolate2DPoints(tmp_x, tmp_y, delta_arc_length, offset);
-}
-
-std::vector<TrajectoryPoint> getInterpolatedTrajectoryPoints(
-  const std::vector<TrajectoryPoint> & points, const double delta_arc_length);
-
-std::vector<TrajectoryPoint> getConnectedInterpolatedPoints(
-  const std::vector<TrajectoryPoint> & points, const double delta_arc_length,
-  const double begin_yaw, const double end_yaw);
-}  // namespace interpolation_utils
-*/
-
-namespace points_utils
+namespace trajectory_utils
 {
 template <typename T>
 size_t findForwardIndex(const T & points, const size_t begin_idx, const double forward_length)
@@ -172,6 +61,42 @@ size_t findForwardIndex(const T & points, const size_t begin_idx, const double f
 }
 
 template <typename T>
+T cropPointsAfterOffsetPoint(
+  const T & points, const geometry_msgs::msg::Point & target_pos, const size_t target_seg_idx,
+  const double offset)
+{
+  if (points.empty()) {
+    return T{};
+  }
+
+  double sum_length =
+    -motion_utils::calcLongitudinalOffsetToSegment(points, target_seg_idx, target_pos);
+
+  // search forward
+  if (sum_length < offset) {
+    for (size_t i = target_seg_idx + 1; i < points.size(); ++i) {
+      sum_length += tier4_autoware_utils::calcDistance2d(points.at(i), points.at(i - 1));
+      if (offset < sum_length) {
+        return T{points.begin() + i - 1, points.end()};
+      }
+    }
+
+    return T{};
+  }
+
+  // search backward
+  for (size_t i = target_seg_idx; 0 < i;
+       --i) {  // NOTE: use size_t since i is always positive value
+    sum_length -= tier4_autoware_utils::calcDistance2d(points.at(i), points.at(i - 1));
+    if (sum_length < offset) {
+      return T{points.begin() + i - 1, points.end()};
+    }
+  }
+
+  return points;
+}
+
+template <typename T>
 T cropForwardPoints(
   const T & points, const geometry_msgs::msg::Point & target_pos, const size_t target_seg_idx,
   const double forward_length)
@@ -182,6 +107,7 @@ T cropForwardPoints(
 
   double sum_length =
     -motion_utils::calcLongitudinalOffsetToSegment(points, target_seg_idx, target_pos);
+  std::cerr << "sum length " << sum_length << std::endl;
   for (size_t i = target_seg_idx + 1; i < points.size(); ++i) {
     sum_length += tier4_autoware_utils::calcDistance2d(points.at(i), points.at(i - 1));
     if (forward_length < sum_length) {
@@ -462,6 +388,6 @@ Trajectory createTrajectory(
 
 std::vector<TrajectoryPoint> resampleTrajectoryPoints(
   const std::vector<TrajectoryPoint> traj_points, const double interval);
-}  // namespace points_utils
+}  // namespace trajectory_utils
 }  // namespace collision_free_path_planner
-#endif  // COLLISION_FREE_PATH_PLANNER__UTILS__UTILS_HPP_
+#endif  // COLLISION_FREE_PATH_PLANNER__UTILS__TRAJECTORY_UTILS_HPP_

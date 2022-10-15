@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2022 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -158,7 +158,6 @@ private:
   // argument variables
   mutable std::shared_ptr<DebugData> debug_data_ptr_;
   vehicle_info_util::VehicleInfo vehicle_info_{};
-  int eb_solved_count_;
 
   // flags for some functions
   bool enable_pub_debug_marker_;
@@ -193,21 +192,21 @@ private:
   std::shared_ptr<std::vector<TrajectoryPoint>> prev_mpt_traj_ptr_;
   std::shared_ptr<std::vector<TrajectoryPoint>> prev_eb_traj_ptr_;
 
-  // publisher
+  // I/F publisher
   rclcpp::Publisher<Trajectory>::SharedPtr traj_pub_;
-  rclcpp::Publisher<Trajectory>::SharedPtr debug_extended_fixed_traj_pub_;
-  rclcpp::Publisher<Trajectory>::SharedPtr debug_extended_non_fixed_traj_pub_;
+  rclcpp::Publisher<MarkerArray>::SharedPtr virtual_wall_pub_;
 
-  rclcpp::Publisher<MarkerArray>::SharedPtr debug_markers_pub_;
-  rclcpp::Publisher<MarkerArray>::SharedPtr debug_wall_markers_pub_;
-  rclcpp::Publisher<tier4_debug_msgs::msg::StringStamped>::SharedPtr debug_calculation_time_pub_;
-
-  // subscriber
+  // IF subscriber
   rclcpp::Subscription<Path>::SharedPtr path_sub_;
   rclcpp::Subscription<Odometry>::SharedPtr odom_sub_;
   rclcpp::Subscription<PredictedObjects>::SharedPtr objects_sub_;
 
-  // parameter callback functions
+  // debug publisher
+  rclcpp::Publisher<Trajectory>::SharedPtr debug_extended_traj_pub_;
+  rclcpp::Publisher<MarkerArray>::SharedPtr debug_markers_pub_;
+  rclcpp::Publisher<tier4_debug_msgs::msg::StringStamped>::SharedPtr debug_calculation_time_pub_;
+
+  // parameter callback
   rcl_interfaces::msg::SetParametersResult onParam(
     const std::vector<rclcpp::Parameter> & parameters);
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
@@ -222,20 +221,19 @@ private:
   // main functions
   bool isDataReady();
   PlannerData createPlannerData(const Path & path);
-  std::vector<TrajectoryPoint> generateOptimizedTrajectory(const PlannerData & planner_data);
+  std::vector<TrajectoryPoint> generateOptimizedTrajectory(
+    const PlannerData & planner_data, const CVMaps & cv_maps);
   std::vector<TrajectoryPoint> extendTrajectory(
     const std::vector<PathPoint> & path_points,
     const std::vector<TrajectoryPoint> & optimized_points);
-  std::vector<TrajectoryPoint> generatePostProcessedTrajectory(
-    const PlannerData & planner_data, const std::vector<TrajectoryPoint> & merged_optimized_points);
   void publishDebugDataInMain(const Path & path) const;
 
-  // functions for optimization
+  // functions in generateOptimizedTrajectory
   std::vector<TrajectoryPoint> optimizeTrajectory(
     const PlannerData & planner_data, const CVMaps & cv_maps);
   std::vector<TrajectoryPoint> getPrevOptimizedTrajectory(
     const std::vector<PathPoint> & path_points) const;
-  void updateVelocity(
+  void applyPathVelocity(
     std::vector<TrajectoryPoint> & traj_points, const std::vector<PathPoint> & path_points) const;
   void insertZeroVelocityOutsideDrivableArea(
     const PlannerData & planner_data, std::vector<TrajectoryPoint> & traj_points,

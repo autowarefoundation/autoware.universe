@@ -16,7 +16,7 @@
 
 #include "collision_free_path_planner/debug_marker.hpp"
 #include "collision_free_path_planner/utils/cv_utils.hpp"
-#include "collision_free_path_planner/utils/utils.hpp"
+#include "collision_free_path_planner/utils/geometry_utils.hpp"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
 namespace tier4_autoware_utils

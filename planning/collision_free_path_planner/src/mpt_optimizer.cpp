@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2022 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,7 +14,8 @@
 
 #include "collision_free_path_planner/mpt_optimizer.hpp"
 
-#include "collision_free_path_planner/utils/utils.hpp"
+#include "collision_free_path_planner/utils/geometry_utils.hpp"
+#include "collision_free_path_planner/utils/trajectory_utils.hpp"
 #include "collision_free_path_planner/vehicle_model/vehicle_model_bicycle_kinematics.hpp"
 #include "interpolation/spline_interpolation_points_2d.hpp"
 #include "motion_utils/motion_utils.hpp"
@@ -216,7 +217,7 @@ double calcLateralError(
   return lat_err;
 }
 
-Eigen::Vector2d getState(
+[[maybe_unused]] Eigen::Vector2d getState(
   const geometry_msgs::msg::Pose & target_pose, const geometry_msgs::msg::Pose & ref_pose)
 {
   const double lat_error = calcLateralError(target_pose.position, ref_pose);
@@ -249,12 +250,13 @@ std::vector<T> createVector(const T & value, const std::vector<T> & vector)
   return result_vector;
 }
 
-std::vector<ReferencePoint> resampleRefPoints(
+[[maybe_unused]] std::vector<ReferencePoint> resampleRefPoints(
   const std::vector<ReferencePoint> & ref_points, const double interval)
 {
-  const auto traj_points = points_utils::convertToTrajectoryPoints(ref_points);
-  const auto resampled_traj_points = points_utils::resampleTrajectoryPoints(traj_points, interval);
-  return points_utils::convertToReferencePoints(resampled_traj_points);
+  const auto traj_points = trajectory_utils::convertToTrajectoryPoints(ref_points);
+  const auto resampled_traj_points =
+    trajectory_utils::resampleTrajectoryPoints(traj_points, interval);
+  return trajectory_utils::convertToReferencePoints(resampled_traj_points);
 }
 }  // namespace
 
@@ -709,14 +711,14 @@ std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
 
   // convert smoothed points to reference points
   const auto resampled_smoothed_points =
-    points_utils::resampleTrajectoryPoints(smoothed_points, mpt_param_.delta_arc_length);
-  auto ref_points = points_utils::convertToReferencePoints(resampled_smoothed_points);
+    trajectory_utils::resampleTrajectoryPoints(smoothed_points, mpt_param_.delta_arc_length);
+  auto ref_points = trajectory_utils::convertToReferencePoints(resampled_smoothed_points);
 
   // crop reference points with margin first to reduce calculation cost
   const double tmp_margin = 10.0;
   const size_t ego_seg_idx =
-    points_utils::findEgoSegmentIndex(ref_points, p.ego_pose, ego_nearest_param_);
-  ref_points = points_utils::cropPoints(
+    trajectory_utils::findEgoSegmentIndex(ref_points, p.ego_pose, ego_nearest_param_);
+  ref_points = trajectory_utils::cropPoints(
     ref_points, p.ego_pose.position, ego_seg_idx, forward_distance + tmp_margin,
     -backward_distance - tmp_margin);
 
@@ -730,7 +732,7 @@ std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
   calcOrientation(ref_points);
 
   // crop backward
-  ref_points = points_utils::cropPoints(
+  ref_points = trajectory_utils::cropPoints(
     ref_points, p.ego_pose.position, ego_seg_idx, forward_distance + tmp_margin,
     -backward_distance);
 
@@ -749,7 +751,7 @@ std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
 
   /*
   // crop forward
-  ref_points = points_utils::cropForwardPoints(
+  ref_points = trajectory_utils::cropForwardPoints(
     ref_points, p.ego_pose.position, ego_seg_idx, forward_distance);
   */
 
@@ -759,7 +761,7 @@ std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
       const auto resampled_smoothed_points = resampleTrajectoryPoints(smoothed_points,
   mpt_param_.delta_arc_length); const size_t ego_seg_idx =
   findEgoSegmentIndex(resampled_smoothed_points, p.ego_pose, ego_nearest_param_); return
-  points_utils::cropBackwardPoints(resampled_smoothed_points, p.ego_pose.position, ego_seg_idx,
+  trajectory_utils::cropBackwardPoints(resampled_smoothed_points, p.ego_pose.position, ego_seg_idx,
   traj_param_.output_backward_traj_length);
     }();
 
@@ -779,7 +781,7 @@ std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
   constexpr double tmp_ref_points_margin = 20.0;
   const double ref_length_with_margin =
     traj_param_.num_sampling_points * mpt_param_.delta_arc_length + tmp_ref_points_margin;
-  ref_points = points_utils::clipForwardPoints(ref_points, 0, ref_length_with_margin);
+  ref_points = trajectory_utils::clipForwardPoints(ref_points, 0, ref_length_with_margin);
   if (ref_points.empty()) {
     return std::vector<ReferencePoint>{};
   }
@@ -793,7 +795,7 @@ std::vector<ReferencePoint> MPTOptimizer::getReferencePoints(
   calcExtraPoints(ref_points);
 
   const double ref_length = traj_param_.num_sampling_points * mpt_param_.delta_arc_length;
-  ref_points = points_utils::clipForwardPoints(ref_points, 0, ref_length);
+  ref_points = trajectory_utils::clipForwardPoints(ref_points, 0, ref_length);
 
   // bounds information is assigned to debug data after truncating reference points
   debug_data_ptr_->ref_points = ref_points;
@@ -820,7 +822,7 @@ void MPTOptimizer::calcFixedPoints(std::vector<ReferencePoint> & ref_points) con
   */
 
   if (prev_ref_points_ptr_) {
-    const size_t prev_ref_front_seg_idx = points_utils::findEgoSegmentIndex(
+    const size_t prev_ref_front_seg_idx = trajectory_utils::findEgoSegmentIndex(
       *prev_ref_points_ptr_, tier4_autoware_utils::getPose(ref_points.front()), ego_nearest_param_);
     const size_t prev_ref_front_point_idx = prev_ref_front_seg_idx;
 
@@ -859,15 +861,15 @@ void MPTOptimizer::calcPlanningFromEgo(
     // const auto interpolated_points = interpolation_utils::getInterpolatedPoints(
     //                                                                             points,
     // mpt_param_.delta_arc_length); const auto cropped_interpolated_points =
-    // points_utils::clipBackwardPoints( interpolated_points, current_pose_.position,
+    // trajectory_utils::clipBackwardPoints( interpolated_points, current_pose_.position,
     // traj_param_.output_backward_traj_length, mpt_param_.delta_arc_length);
     //
     // auto cropped_ref_points =
-    //   points_utils::convertToReferencePoints(cropped_interpolated_points);
+    //   trajectory_utils::convertToReferencePoints(cropped_interpolated_points);
 
     // assign fix kinematics
     const size_t nearest_ref_idx = motion_utils::findFirstNearestIndexWithSoftConstraints(
-      points_utils::convertToPosesWithYawEstimation(points_utils::convertToPoints(ref_points)),
+      trajectory_utils::convertToPosesWithYawEstimation(trajectory_utils::convertToPoints(ref_points)),
       ego_pose, ego_nearest_param_.dist_threshold, ego_nearest_param_.yaw_threshold);
 
     // calculate cropped_ref_points.at(nearest_ref_idx) with yaw
@@ -906,7 +908,7 @@ std::vector<ReferencePoint> MPTOptimizer::getFixedReferencePoints(
   const auto & prev_ref_points = prev_trajs->ref_points;
   const int nearest_prev_ref_idx =
     static_cast<int>(motion_utils::findFirstNearestIndexWithSoftConstraints(
-      points_utils::convertToPosesWithYawEstimation(points_utils::convertToPoints(prev_ref_points)),
+      trajectory_utils::convertToPosesWithYawEstimation(trajectory_utils::convertToPoints(prev_ref_points)),
       ego_pose, ego_nearest_param_.dist_threshold, ego_nearest_param_.yaw_threshold));
 
   // calculate begin_prev_ref_idx
@@ -1036,7 +1038,7 @@ MPTOptimizer::ValueMatrix MPTOptimizer::generateValueMatrix(
 
   const size_t D_v = D_x + (N_ref - 1) * D_u;
 
-  const bool is_containing_path_terminal_point = points_utils::isNearLastPathPoint(
+  const bool is_containing_path_terminal_point = trajectory_utils::isNearLastPathPoint(
     ref_points.back(), path_points, 0.0001, traj_param_.delta_yaw_threshold_for_closest_point);
 
   // update Q
@@ -1133,7 +1135,7 @@ boost::optional<Eigen::VectorXd> MPTOptimizer::executeOptimization(
       ref_front_point.orientation =
         tier4_autoware_utils::createQuaternionFromYaw(ref_points.front().yaw);
 
-      const size_t seg_idx = points_utils::findSoftNearestIndex(
+      const size_t seg_idx = trajectory_utils::findSoftNearestIndex(
         *prev_ref_points_ptr_, ref_front_point, ego_nearest_param_.dist_threshold,
         ego_nearest_param_.yaw_threshold);
 
@@ -1647,7 +1649,7 @@ void MPTOptimizer::calcCurvature(std::vector<ReferencePoint> & ref_points) const
   size_t max_smoothing_num = static_cast<size_t>(std::floor(0.5 * (num_points - 1)));
   size_t L =
     std::min(static_cast<size_t>(mpt_param_.num_curvature_sampling_points), max_smoothing_num);
-  auto curvatures = points_utils::calcCurvature(
+  auto curvatures = trajectory_utils::calcCurvature(
     ref_points, static_cast<size_t>(mpt_param_.num_curvature_sampling_points));
   for (size_t i = L; i < num_points - L; ++i) {
     if (!ref_points.at(i).fix_kinematic_state) {
@@ -1679,7 +1681,7 @@ void MPTOptimizer::calcExtraPoints(std::vector<ReferencePoint> & ref_points) con
   for (size_t i = 0; i < ref_points.size(); ++i) {
     // alpha
     const auto front_wheel_pos =
-      points_utils::getNearestPosition(ref_points, i, vehicle_info_.wheel_base_m);
+      trajectory_utils::getNearestPosition(ref_points, i, vehicle_info_.wheel_base_m);
 
     const bool are_too_close_points =
       tier4_autoware_utils::calcDistance2d(front_wheel_pos, ref_points.at(i).p) < 1e-03;
@@ -1710,9 +1712,9 @@ void MPTOptimizer::calcExtraPoints(std::vector<ReferencePoint> & ref_points) con
     // The point are considered to be near the object if nearest previous ref point is near the
     // object.
     if (prev_ref_points_ptr_ && prev_ref_points_ptr_->empty()) {
-      const auto ref_points_with_yaw =
-        points_utils::convertToPosesWithYawEstimation(points_utils::convertToPoints(ref_points));
-      const size_t prev_idx = points_utils::findSoftNearestIndex(
+      const auto ref_points_with_yaw = trajectory_utils::convertToPosesWithYawEstimation(
+        trajectory_utils::convertToPoints(ref_points));
+      const size_t prev_idx = trajectory_utils::findSoftNearestIndex(
         *prev_ref_points_ptr_, ref_points_with_yaw.at(i),
         traj_param_.delta_dist_threshold_for_closest_point,
         traj_param_.delta_yaw_threshold_for_closest_point);
@@ -1859,7 +1861,8 @@ void MPTOptimizer::calcVehicleBounds(
   }
 
   SplineInterpolationPoints2d ref_points_spline_interpolation;
-  ref_points_spline_interpolation.calcSplineCoefficients(points_utils::convertToPoints(ref_points));
+  ref_points_spline_interpolation.calcSplineCoefficients(
+    trajectory_utils::convertToPoints(ref_points));
 
   for (size_t p_idx = 0; p_idx < ref_points.size(); ++p_idx) {
     const auto & ref_point = ref_points.at(p_idx);
@@ -2099,14 +2102,14 @@ void MPTOptimizer::publishDebugTrajectories(
   const std::vector<TrajectoryPoint> & mpt_traj_points) const
 {
   const auto mpt_fixed_traj_points = extractMPTFixedPoints(ref_points);
-  const auto mpt_fixed_traj = points_utils::createTrajectory(header, mpt_fixed_traj_points);
+  const auto mpt_fixed_traj = trajectory_utils::createTrajectory(header, mpt_fixed_traj_points);
   debug_mpt_fixed_traj_pub_->publish(mpt_fixed_traj);
 
-  const auto ref_traj =
-    points_utils::createTrajectory(header, points_utils::convertToTrajectoryPoints(ref_points));
+  const auto ref_traj = trajectory_utils::createTrajectory(
+    header, trajectory_utils::convertToTrajectoryPoints(ref_points));
   debug_mpt_ref_traj_pub_->publish(ref_traj);
 
-  const auto mpt_traj = points_utils::createTrajectory(header, mpt_traj_points);
+  const auto mpt_traj = trajectory_utils::createTrajectory(header, mpt_traj_points);
   debug_mpt_traj_pub_->publish(mpt_traj);
 }
 

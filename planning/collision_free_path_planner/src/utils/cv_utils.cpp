@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2022 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 
 #include "collision_free_path_planner/utils/cv_utils.hpp"
 
-#include "collision_free_path_planner/utils/utils.hpp"
+#include "collision_free_path_planner/utils/geometry_utils.hpp"
 #include "tf2/utils.h"
 #include "tier4_autoware_utils/system/stop_watch.hpp"
 

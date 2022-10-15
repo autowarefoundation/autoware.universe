@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2022 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,7 +15,8 @@
 #include "collision_free_path_planner/eb_path_optimizer.hpp"
 
 #include "collision_free_path_planner/type_alias.hpp"
-#include "collision_free_path_planner/utils/utils.hpp"
+#include "collision_free_path_planner/utils/geometry_utils.hpp"
+#include "collision_free_path_planner/utils/trajectory_utils.hpp"
 #include "motion_utils/motion_utils.hpp"
 
 #include <algorithm>
@@ -230,7 +231,7 @@ EBPathOptimizer::getEBTrajectory(
   debug_data_ptr_->eb_traj = eb_traj_points;
 
   {  // publish eb trajectory
-    const auto eb_traj = points_utils::createTrajectory(p.path.header, eb_traj_points);
+    const auto eb_traj = trajectory_utils::createTrajectory(p.path.header, eb_traj_points);
     debug_eb_traj_pub_->publish(eb_traj);
   }
 
@@ -255,8 +256,8 @@ EBPathOptimizer::getOptimizedTrajectory(
 
   // crop path
   const size_t ego_seg_idx =
-    points_utils::findEgoSegmentIndex(path.points, ego_pose, ego_nearest_param_);
-  const auto cropped_path_points = points_utils::cropPoints(
+    trajectory_utils::findEgoSegmentIndex(path.points, ego_pose, ego_nearest_param_);
+  const auto cropped_path_points = trajectory_utils::cropPoints(
     path.points, ego_pose.position, ego_seg_idx, forward_distance + tmp_margin,
     -backward_distance - tmp_margin);
 
