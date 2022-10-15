@@ -66,7 +66,7 @@ bool loadBrakeMapData(BrakeMap & brake_map)
 
 bool loadSteerMapData(SteerConverter & steer_map)
 {
-  return steer_map.setFFMap(map_path + "test_steer_map.csv");
+  return steer_map.readSteerMapFromCSV(map_path + "test_steer_map.csv");
 }
 
 TEST(ConverterTests, LoadValidPath)
@@ -83,7 +83,7 @@ TEST(ConverterTests, LoadValidPath)
   // for invalid path
   EXPECT_FALSE(accel_map.readAccelMapFromCSV("invalid.csv"));
   EXPECT_FALSE(brake_map.readBrakeMapFromCSV("invalid.csv"));
-  EXPECT_FALSE(steer_map.setFFMap("invalid.csv"));
+  EXPECT_FALSE(steer_map.readSteerMapFromCSV("invalid.csv"));
 }
 
 TEST(ConverterTests, AccelMapCalculation)
@@ -111,6 +111,24 @@ TEST(ConverterTests, AccelMapCalculation)
 
   // case for interpolation
   EXPECT_DOUBLE_EQ(calcThrottle(9.0, 5.0), 0.25);
+
+  const auto calcAcceleration = [&](double throttle, double vel) {
+    double output;
+    accel_map.getAcceleration(throttle, vel, output);
+    return output;
+  };
+
+  // case for min vel
+  EXPECT_DOUBLE_EQ(calcAcceleration(1.0, 0.0), 3.0);
+
+  // case for min throttle
+  EXPECT_DOUBLE_EQ(calcAcceleration(0.0, 25.0), 21.0);
+
+  // case for direct access
+  EXPECT_DOUBLE_EQ(calcAcceleration(0.5, 10.0), 22.0);
+
+  // case for interpolation
+  EXPECT_DOUBLE_EQ(calcAcceleration(0.75, 5.0), 15.0);
 }
 
 TEST(ConverterTests, BrakeMapCalculation)
@@ -138,6 +156,24 @@ TEST(ConverterTests, BrakeMapCalculation)
 
   // case for interpolation
   EXPECT_DOUBLE_EQ(calcBrake(-9.0, 5.0), 0.25);
+
+  const auto calcAcceleration = [&](double brake, double vel) {
+    double output;
+    brake_map.getAcceleration(brake, vel, output);
+    return output;
+  };
+
+  // case for min vel
+  EXPECT_DOUBLE_EQ(calcAcceleration(1.0, 0.0), -3.0);
+
+  // case for min throttle
+  EXPECT_DOUBLE_EQ(calcAcceleration(0.0, 25.0), -21.0);
+
+  // case for direct access
+  EXPECT_DOUBLE_EQ(calcAcceleration(0.5, 10.0), -22.0);
+
+  // case for interpolation
+  EXPECT_DOUBLE_EQ(calcAcceleration(0.75, 5.0), -15.0);
 }
 
 TEST(ConverterTests, SteerMapCalculation)
@@ -145,7 +181,9 @@ TEST(ConverterTests, SteerMapCalculation)
   SteerConverter steer_map;
   loadSteerMapData(steer_map);
   const auto calcSteer = [&](double steer_vel, double steer) {
-    return steer_map.calcFFSteer(steer_vel, steer);
+    double output;
+    steer_map.getSteer(steer_vel, steer, output);
+    return output;
   };
 
   // case for min steer
