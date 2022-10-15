@@ -1202,7 +1202,7 @@ boost::optional<Eigen::VectorXd> MPTOptimizer::executeOptimization(
   // check solution status
   const int solution_status = std::get<3>(result);
   if (solution_status != 1) {
-    utils::logOSQPSolutionStatus(solution_status, "MPT: ");
+    osqp_solver_.logUnsolvedStatus("[MPT]");
     return boost::none;
   }
 

@@ -410,9 +410,8 @@ boost::optional<std::vector<double>> EBPathOptimizer::optimizeTrajectory(
   const auto status = std::get<3>(result);
 
   // check status
-  utils::logOSQPSolutionStatus(std::get<3>(result), "EB: ");
   if (status != 1) {
-    utils::logOSQPSolutionStatus(status, "EB: ");
+    osqp_solver_ptr_->logUnsolvedStatus("[EB]");
     return boost::none;
   }
 

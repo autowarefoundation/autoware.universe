@@ -525,41 +525,6 @@ MarkerArray getVehicleCirclesMarkerArray(
   }
   return msg;
 }
-
-/*
-MarkerArray getVirtualWallMarkerArray(
-  const geometry_msgs::msg::Pose & pose, const std::string & ns, const double r, const double g,
-  const double b)
-{
-  auto marker = createDefaultMarker(
-    "map", rclcpp::Clock().now(), ns, 0, Marker::CUBE,
-    createMarkerScale(0.1, 5.0, 2.0), createMarkerColor(r, g, b, 0.5));
-  marker.lifetime = rclcpp::Duration::from_seconds(1.5);
-  marker.pose = pose;
-
-  MarkerArray msg;
-  msg.markers.push_back(marker);
-
-  return msg;
-}
-
-MarkerArray getVirtualWallTextMarkerArray(
-  const geometry_msgs::msg::Pose & pose, const std::string & ns, const double r, const double g,
-  const double b)
-{
-  auto marker = createDefaultMarker(
-    "map", rclcpp::Clock().now(), ns, 0, Marker::TEXT_VIEW_FACING,
-    createMarkerScale(0.0, 0.0, 1.0), createMarkerColor(r, g, b, 0.99));
-  marker.lifetime = rclcpp::Duration::from_seconds(1.5);
-  marker.pose = pose;
-  marker.text = "drivable area";
-
-  MarkerArray msg;
-  msg.markers.push_back(marker);
-
-  return msg;
-}
-*/
 }  // namespace
 
 MarkerArray getDebugMarker(
@@ -635,23 +600,6 @@ MarkerArray getDebugMarker(
       debug_data.vehicle_circle_radiuses, debug_data.mpt_visualize_sampling_num, "vehicle_circles",
       1.0, 0.3, 0.3),
     &marker_array);
-
-  return marker_array;
-}
-
-MarkerArray getDebugWallMarker(
-  DebugData & debug_data, const vehicle_info_util::VehicleInfo & vehicle_info,
-  const rclcpp::Time & now)
-{
-  MarkerArray marker_array;
-  if (debug_data.stop_pose_by_drivable_area) {
-    const auto virtual_wall_pose = tier4_autoware_utils::calcOffsetPose(
-      debug_data.stop_pose_by_drivable_area.get(), vehicle_info.max_longitudinal_offset_m, 0.0,
-      0.0);
-    appendMarkerArray(
-      motion_utils::createStopVirtualWallMarker(virtual_wall_pose, "drivable area", now, 0),
-      &marker_array);
-  }
 
   return marker_array;
 }

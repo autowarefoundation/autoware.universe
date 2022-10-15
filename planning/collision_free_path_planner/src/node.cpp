@@ -66,9 +66,18 @@ CollisionFreePathPlanner::CollisionFreePathPlanner(const rclcpp::NodeOptions & n
   debug_data_ptr_(std::make_shared<DebugData>()),
   eb_solved_count_(0)
 {
-  // official publisher
+  // I/F publisher
   traj_pub_ = create_publisher<Trajectory>("~/output/path", 1);
   debug_wall_markers_pub_ = create_publisher<MarkerArray>("~/debug/wall_marker", 1);
+
+  // I/F subscriber
+  path_sub_ = create_subscription<Path>(
+    "~/input/path", 1, std::bind(&CollisionFreePathPlanner::onPath, this, std::placeholders::_1));
+  odom_sub_ = create_subscription<Odometry>(
+    "/localization/kinematic_state", 1,
+    [this](const Odometry::SharedPtr msg) { ego_state_ptr_ = msg; });
+  objects_sub_ = create_subscription<PredictedObjects>(
+    "~/input/objects", 1, [this](const PredictedObjects::SharedPtr msg) { objects_ptr_ = msg; });
 
   // debug publisher
   debug_extended_fixed_traj_pub_ = create_publisher<Trajectory>("~/debug/extended_fixed_traj", 1);
@@ -77,15 +86,6 @@ CollisionFreePathPlanner::CollisionFreePathPlanner(const rclcpp::NodeOptions & n
   debug_markers_pub_ = create_publisher<MarkerArray>("~/debug/marker", 1);
   debug_calculation_time_pub_ =
     create_publisher<tier4_debug_msgs::msg::StringStamped>("~/debug/calculation_time", 1);
-
-  // subscriber
-  path_sub_ = create_subscription<Path>(
-    "~/input/path", 1, std::bind(&CollisionFreePathPlanner::onPath, this, std::placeholders::_1));
-  odom_sub_ = create_subscription<Odometry>(
-    "/localization/kinematic_state", 1,
-    [this](const Odometry::SharedPtr msg) { ego_state_ptr_ = msg; });
-  objects_sub_ = create_subscription<PredictedObjects>(
-    "~/input/objects", 1, [this](const PredictedObjects::SharedPtr msg) { objects_ptr_ = msg; });
 
   {  // option parameter
     enable_outside_drivable_area_stop_ =
@@ -105,12 +105,8 @@ CollisionFreePathPlanner::CollisionFreePathPlanner(const rclcpp::NodeOptions & n
       declare_parameter<bool>("option.debug.enable_calculation_time_info");
   }
 
-  {  // ego nearest search parameter
-    const double ego_nearest_dist_threshold =
-      declare_parameter<double>("ego_nearest_dist_threshold");
-    const double ego_nearest_yaw_threshold = declare_parameter<double>("ego_nearest_yaw_threshold");
-    ego_nearest_param_ = EgoNearestParam{ego_nearest_dist_threshold, ego_nearest_yaw_threshold};
-  }
+  // ego nearest search parameter
+  ego_nearest_param_ = EgoNearestParam(this);
 
   {  // trajectory parameter
     traj_param_.num_sampling_points = declare_parameter<int>("common.num_sampling_points");
@@ -526,15 +522,19 @@ void CollisionFreePathPlanner::publishDebugMarkerInOptimization(
                                 << stop_watch_.toc("publishDebugMarker") << " [ms]\n";
 
     // debug wall marker
-    stop_watch_.tic("getDebugWallMarker");
-    const auto & debug_wall_marker = getDebugWallMarker(*debug_data_ptr_, vehicle_info_, now());
-    debug_data_ptr_->msg_stream << "      getDebugWallMarker:= "
-                                << stop_watch_.toc("getDebugWallMarker") << " [ms]\n";
+    stop_watch_.tic("getAndPublishDebugWallMarker");
+    const auto virtual_wall_marker_array = [&]() {
+      if (debug_data_ptr_->stop_pose_by_drivable_area) {
+        const auto & stop_pose = debug_data_ptr_->stop_pose_by_drivable_area.get();
+        return motion_utils::createStopVirtualWallMarker(
+          stop_pose, "drivable area", now(), 0, vehicle_info_.max_longitudinal_offset_m);
+      }
+      return motion_utils::createDeletedStopVirtualWallMarker(now(), 0);
+    }();
 
-    stop_watch_.tic("publishDebugWallMarker");
-    debug_wall_markers_pub_->publish(debug_wall_marker);
-    debug_data_ptr_->msg_stream << "      publishDebugWallMarker:= "
-                                << stop_watch_.toc("publishDebugWallMarker") << " [ms]\n";
+    debug_wall_markers_pub_->publish(virtual_wall_marker_array);
+    debug_data_ptr_->msg_stream << "      getAndPublishDebugWallMarker:= "
+                                << stop_watch_.toc("getAndPublishDebugWallMarker") << " [ms]\n";
   }
 
   debug_data_ptr_->msg_stream << "    " << __func__ << ":= " << stop_watch_.toc(__func__)

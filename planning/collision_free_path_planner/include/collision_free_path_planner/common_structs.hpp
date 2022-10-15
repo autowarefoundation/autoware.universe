@@ -181,6 +181,13 @@ struct TrajectoryParam
 
 struct EgoNearestParam
 {
+  EgoNearestParam() = default;
+  explicit EgoNearestParam(rclcpp::Node * node)
+  {
+    dist_threshold = node->declare_parameter<double>("ego_nearest_dist_threshold");
+    yaw_threshold = node->declare_parameter<double>("ego_nearest_yaw_threshold");
+  }
+
   double dist_threshold{0.0};
   double yaw_threshold{0.0};
 };

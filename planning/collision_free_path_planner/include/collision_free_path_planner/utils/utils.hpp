@@ -461,10 +461,5 @@ Trajectory createTrajectory(
 std::vector<TrajectoryPoint> resampleTrajectoryPoints(
   const std::vector<TrajectoryPoint> traj_points, const double interval);
 }  // namespace points_utils
-
-namespace utils
-{
-void logOSQPSolutionStatus(const int solution_status, const std::string & msg);
-}  // namespace utils
 }  // namespace collision_free_path_planner
 #endif  // COLLISION_FREE_PATH_PLANNER__UTILS__UTILS_HPP_
