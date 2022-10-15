@@ -22,7 +22,7 @@
 
 namespace raw_vehicle_cmd_converter
 {
-bool BrakeMap::readBrakeMapFromCSV(std::string csv_path)
+bool BrakeMap::readBrakeMapFromCSV(const std::string & csv_path)
 {
   CSVLoader csv(csv_path);
   std::vector<std::vector<std::string>> table;
@@ -41,7 +41,7 @@ bool BrakeMap::readBrakeMapFromCSV(std::string csv_path)
   return true;
 }
 
-bool BrakeMap::getBrake(double acc, double vel, double & brake)
+bool BrakeMap::getBrake(const double acc, double vel, double & brake)
 {
   std::vector<double> accs_interpolated;
   vel = CSVLoader::clampValue(vel, vel_index_, "brake: vel");

@@ -29,8 +29,8 @@ namespace raw_vehicle_cmd_converter
 class AccelMap
 {
 public:
-  bool readAccelMapFromCSV(std::string csv_path);
-  bool getThrottle(double acc, double vel, double & throttle) const;
+  bool readAccelMapFromCSV(const std::string & csv_path);
+  bool getThrottle(const double acc, double vel, double & throttle) const;
   bool getAcceleration(double throttle, double vel, double & acc) const;
   std::vector<double> getVelIdx() const { return vel_index_; }
   std::vector<double> getThrottleIdx() const { return throttle_index_; }

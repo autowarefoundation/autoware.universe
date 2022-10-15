@@ -25,7 +25,7 @@ using namespace std::literals::chrono_literals;
 
 namespace raw_vehicle_cmd_converter
 {
-bool AccelMap::readAccelMapFromCSV(std::string csv_path)
+bool AccelMap::readAccelMapFromCSV(const std::string & csv_path)
 {
   CSVLoader csv(csv_path);
   std::vector<std::vector<std::string>> table;
@@ -41,7 +41,7 @@ bool AccelMap::readAccelMapFromCSV(std::string csv_path)
   return true;
 }
 
-bool AccelMap::getThrottle(double acc, double vel, double & throttle) const
+bool AccelMap::getThrottle(const double acc, double vel, double & throttle) const
 {
   std::vector<double> accs_interpolated;
   vel = CSVLoader::clampValue(vel, vel_index_, "throttle: vel");

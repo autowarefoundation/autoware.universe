@@ -19,7 +19,7 @@
 
 namespace raw_vehicle_cmd_converter
 {
-CSVLoader::CSVLoader(std::string csv_path) { csv_path_ = csv_path; }
+CSVLoader::CSVLoader(const std::string & csv_path) { csv_path_ = csv_path; }
 
 bool CSVLoader::readCSV(Table & result, const char delim)
 {
@@ -98,7 +98,7 @@ std::vector<double> CSVLoader::getColumnIndex(const Table & table)
 }
 
 double CSVLoader::clampValue(
-  const double val, const std::vector<double> ranges, const std::string & name)
+  const double val, const std::vector<double> & ranges, const std::string & name)
 {
   const double max_value = ranges.back();
   const double min_value = ranges.front();
