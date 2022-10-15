@@ -235,8 +235,8 @@ private:
     const PlannerData & planner_data, const CVMaps & cv_maps);
   std::vector<TrajectoryPoint> getPrevOptimizedTrajectory(
     const std::vector<PathPoint> & path_points) const;
-  void calcVelocity(
-    const std::vector<PathPoint> & path_points, std::vector<TrajectoryPoint> & traj_points) const;
+  void updateVelocity(
+    std::vector<TrajectoryPoint> & traj_points, const std::vector<PathPoint> & path_points) const;
   void insertZeroVelocityOutsideDrivableArea(
     const PlannerData & planner_data, std::vector<TrajectoryPoint> & traj_points,
     const CVMaps & cv_maps);

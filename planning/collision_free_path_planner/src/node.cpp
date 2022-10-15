@@ -220,8 +220,6 @@ void CollisionFreePathPlanner::onPath(const Path::SharedPtr path_ptr)
   // 2. generate optimized trajectory
   const auto optimized_traj_points = generateOptimizedTrajectory(planner_data);
 
-  // 3. update velocity
-
   // 3. extend trajectory to connect the optimized trajectory and the following path smoothly
   const auto extended_traj_points =
     extendTrajectory(planner_data.path.points, optimized_traj_points);
@@ -288,6 +286,37 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::generateOptimizedTrajecto
 
   const auto & path = planner_data.path;
 
+  // 1. create clearance maps
+  const CVMaps cv_maps = costmap_generator_ptr_->getMaps(planner_data, traj_param_);
+
+  // 2. calculate trajectory with EB and MPT
+  //    NOTE: This function may return previously optimized trajectory points.
+  auto optimized_traj_points = optimizeTrajectory(planner_data, cv_maps);
+
+  // 3. update velocity
+  // Even if optimization is skipped, velocity in trajectory points must be updated since velocity
+  // in input path may change
+  updateVelocity(optimized_traj_points, path.points);
+
+  // 4. insert zero velocity when trajectory is over drivable area
+  if (enable_outside_drivable_area_stop_) {
+    insertZeroVelocityOutsideDrivableArea(planner_data, optimized_traj_points, cv_maps);
+  }
+
+  // 5. publish debug marker
+  publishDebugMarkerInOptimization(planner_data, optimized_traj_points);
+
+  debug_data_ptr_->msg_stream << "  " << __func__ << ":= " << stop_watch_.toc(__func__)
+                              << " [ms]\n";
+  return optimized_traj_points;
+}
+
+std::vector<TrajectoryPoint> CollisionFreePathPlanner::optimizeTrajectory(
+  const PlannerData & planner_data, const CVMaps & cv_maps)
+{
+  stop_watch_.tic(__func__);
+  const auto & p = planner_data;
+
   // 1. check if replan (= optimizatoin) is required
   const bool reset_prev_optimization = replan_checker_ptr_->isResetRequired(planner_data);
   if (enable_reset_prev_optimization_ || reset_prev_optimization) {
@@ -298,45 +327,15 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::generateOptimizedTrajecto
     const bool is_replan_required =
       replan_checker_ptr_->isReplanRequired(planner_data, now(), prev_mpt_traj_ptr_);
     if (!is_replan_required) {
-      return getPrevOptimizedTrajectory(path.points);
+      return getPrevOptimizedTrajectory(p.path.points);
     }
   }
-
-  // 2. create clearance maps
-  const CVMaps cv_maps = costmap_generator_ptr_->getMaps(planner_data, traj_param_);
-
-  // 3. calculate trajectory with EB and MPT
-  auto mpt_traj = optimizeTrajectory(planner_data, cv_maps);
-
-  // calculate velocity
-  // NOTE: Velocity is not considered in optimization.
-  calcVelocity(path.points, mpt_traj);
-
-  // 4. insert zero velocity when trajectory is over drivable area
-  if (enable_outside_drivable_area_stop_) {
-    insertZeroVelocityOutsideDrivableArea(planner_data, mpt_traj, cv_maps);
-  }
-
-  // 5. publish debug marker
-  publishDebugMarkerInOptimization(planner_data, mpt_traj);
-
-  debug_data_ptr_->msg_stream << "  " << __func__ << ":= " << stop_watch_.toc(__func__)
-                              << " [ms]\n";
-  return mpt_traj;
-}
-
-std::vector<TrajectoryPoint> CollisionFreePathPlanner::optimizeTrajectory(
-  const PlannerData & planner_data, const CVMaps & cv_maps)
-{
-  stop_watch_.tic(__func__);
-
-  const auto & p = planner_data;
 
   if (enable_skip_optimization_) {
     return points_utils::convertToTrajectoryPoints(p.path.points);
   }
 
-  // EB: smooth trajectory if enable_smoothing is true
+  // 2. Elastic Band: smooth trajectory if enable_smoothing is true
   const auto eb_traj = [&]() -> boost::optional<std::vector<TrajectoryPoint>> {
     // TODO(murooka) enable EB
     /*
@@ -363,14 +362,14 @@ return eb_path_optimizer_ptr_->getEBTrajectory(planner_data, prev_eb_traj_ptr_);
   }
   */
 
-  // MPT: optimize trajectory to be kinematically feasible and collision free
+  // 3. MPT: optimize trajectory to be kinematically feasible and collision free
   const auto mpt_trajs =
     mpt_optimizer_ptr_->getModelPredictiveTrajectory(planner_data, eb_traj.get(), cv_maps);
   if (!mpt_trajs) {
     return getPrevOptimizedTrajectory(p.path.points);
   }
 
-  // make prev trajectories
+  // 4. make prev trajectories
   prev_eb_traj_ptr_ = std::make_shared<std::vector<TrajectoryPoint>>(eb_traj.get());
   prev_mpt_traj_ptr_ = std::make_shared<std::vector<TrajectoryPoint>>(mpt_trajs->mpt);
 
@@ -391,8 +390,8 @@ std::vector<TrajectoryPoint> CollisionFreePathPlanner::getPrevOptimizedTrajector
   return points_utils::convertToTrajectoryPoints(path_points);
 }
 
-void CollisionFreePathPlanner::calcVelocity(
-  const std::vector<PathPoint> & path_points, std::vector<TrajectoryPoint> & traj_points) const
+void CollisionFreePathPlanner::updateVelocity(
+  std::vector<TrajectoryPoint> & traj_points, const std::vector<PathPoint> & path_points) const
 {
   stop_watch_.tic(__func__);
 
