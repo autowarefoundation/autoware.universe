@@ -37,8 +37,8 @@ public:
     const double max_ret_i, const double min_ret_i, const double max_ret_d, const double min_ret_d);
   void reset();
   void setDecay(const double decay) { invalid_integration_decay_ = decay; }
-  bool fb_gains_initialized_{false};
-  bool fb_limits_initialized_{false};
+  void setInitialized() { is_initialized_ = true; }
+  bool getInitialized() { return is_initialized_; }
 
 private:
   // parameters
@@ -58,6 +58,7 @@ private:
   double prev_error_{0.0};
   bool is_first_time_{true};
   double invalid_integration_decay_{0.0};
+  double is_initialized_{false};
 };
 }  // namespace raw_vehicle_cmd_converter
 

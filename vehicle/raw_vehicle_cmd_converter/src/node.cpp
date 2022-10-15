@@ -70,11 +70,10 @@ RawVehicleCommandConverterNode::RawVehicleCommandConverterNode(
       declare_parameter("steer_pid.invalid_integration_decay", 0.97)};
     steer_pid_.setDecay(invalid_integration_decay);
     steer_pid_.setGains(kp_steer, ki_steer, kd_steer);
-    steer_pid_.fb_gains_initialized_ = true;
     steer_pid_.setLimits(
       max_ret_steer, min_ret_steer, max_ret_p_steer, min_ret_p_steer, max_ret_i_steer,
       min_ret_i_steer, max_ret_d_steer, min_ret_d_steer);
-    steer_pid_.fb_limits_initialized_ = true;
+    steer_pid_.setInitialized();
   }
   pub_actuation_cmd_ = create_publisher<ActuationCommandStamped>("~/output/actuation_cmd", 1);
   sub_control_cmd_ = create_subscription<AckermannControlCommand>(
@@ -149,7 +148,7 @@ double RawVehicleCommandConverterNode::calculateSteer(
   double dt = (current_time - prev_time_steer_calculation_).seconds();
   if (std::abs(dt) > 1.0) {
     RCLCPP_WARN_EXPRESSION(get_logger(), is_debugging_, "ignore old topic");
-    dt = 0.0;
+    dt = 1.0;
   }
   prev_time_steer_calculation_ = current_time;
   // feed-forward
@@ -162,7 +161,7 @@ double RawVehicleCommandConverterNode::calculateSteer(
   }
   // feedback
   if (use_steer_fb_) {
-    if (steer_pid_.fb_gains_initialized_ && steer_pid_.fb_limits_initialized_) {
+    if (!steer_pid_.getInitialized()) {
       RCLCPP_WARN_EXPRESSION(get_logger(), is_debugging_, "FF map is not initialized!");
     } else {
       fb_value = steer_pid_.calculateFB(
