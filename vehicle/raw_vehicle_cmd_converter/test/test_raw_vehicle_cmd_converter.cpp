@@ -48,7 +48,7 @@
 
 using raw_vehicle_cmd_converter::AccelMap;
 using raw_vehicle_cmd_converter::BrakeMap;
-using raw_vehicle_cmd_converter::SteerConverter;
+using raw_vehicle_cmd_converter::SteerMap;
 
 // may throw PackageNotFoundError exception for invalid package
 const auto map_path =
@@ -64,7 +64,7 @@ bool loadBrakeMapData(BrakeMap & brake_map)
   return brake_map.readBrakeMapFromCSV(map_path + "test_brake_map.csv");
 }
 
-bool loadSteerMapData(SteerConverter & steer_map)
+bool loadSteerMapData(SteerMap & steer_map)
 {
   return steer_map.readSteerMapFromCSV(map_path + "test_steer_map.csv");
 }
@@ -73,7 +73,7 @@ TEST(ConverterTests, LoadValidPath)
 {
   AccelMap accel_map;
   BrakeMap brake_map;
-  SteerConverter steer_map;
+  SteerMap steer_map;
 
   // for valid path
   EXPECT_TRUE(loadAccelMapData(accel_map));
@@ -178,7 +178,7 @@ TEST(ConverterTests, BrakeMapCalculation)
 
 TEST(ConverterTests, SteerMapCalculation)
 {
-  SteerConverter steer_map;
+  SteerMap steer_map;
   loadSteerMapData(steer_map);
   const auto calcSteer = [&](double steer_vel, double steer) {
     double output;

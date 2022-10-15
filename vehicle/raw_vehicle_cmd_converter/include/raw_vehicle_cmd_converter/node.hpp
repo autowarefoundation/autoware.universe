@@ -87,7 +87,7 @@ public:
   AckermannControlCommand::ConstSharedPtr control_cmd_ptr_;
   AccelMap accel_map_;
   BrakeMap brake_map_;
-  SteerConverter steer_map_;
+  SteerMap steer_map_;
   // TODO(tanaka): consider accel/brake pid too
   PIDController steer_pid_;
   bool ff_map_initialized_;
