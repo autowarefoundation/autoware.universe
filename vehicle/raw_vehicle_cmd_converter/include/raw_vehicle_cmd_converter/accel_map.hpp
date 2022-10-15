@@ -30,11 +30,11 @@ class AccelMap
 {
 public:
   bool readAccelMapFromCSV(std::string csv_path);
-  bool getThrottle(double acc, double vel, double & throttle);
-  bool getAcceleration(double throttle, double vel, double & acc);
-  std::vector<double> getVelIdx() { return vel_index_; }
-  std::vector<double> getThrottleIdx() { return throttle_index_; }
-  std::vector<std::vector<double>> getAccelMap() { return accel_map_; }
+  bool getThrottle(double acc, double vel, double & throttle) const;
+  bool getAcceleration(double throttle, double vel, double & acc) const;
+  std::vector<double> getVelIdx() const { return vel_index_; }
+  std::vector<double> getThrottleIdx() const { return throttle_index_; }
+  std::vector<std::vector<double>> getAccelMap() const { return accel_map_; }
 
 private:
   rclcpp::Logger logger_{rclcpp::get_logger("raw_vehicle_cmd_converter").get_child("accel_map")};

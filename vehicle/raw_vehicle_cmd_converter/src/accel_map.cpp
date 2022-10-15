@@ -41,7 +41,7 @@ bool AccelMap::readAccelMapFromCSV(std::string csv_path)
   return true;
 }
 
-bool AccelMap::getThrottle(double acc, double vel, double & throttle)
+bool AccelMap::getThrottle(double acc, double vel, double & throttle) const
 {
   std::vector<double> accs_interpolated;
   vel = CSVLoader::clampValue(vel, vel_index_, "throttle: vel");
@@ -65,7 +65,7 @@ bool AccelMap::getThrottle(double acc, double vel, double & throttle)
   return true;
 }
 
-bool AccelMap::getAcceleration(double throttle, double vel, double & acc)
+bool AccelMap::getAcceleration(double throttle, double vel, double & acc) const
 {
   std::vector<double> accs_interpolated;
   vel = CSVLoader::clampValue(vel, vel_index_, "throttle: vel");

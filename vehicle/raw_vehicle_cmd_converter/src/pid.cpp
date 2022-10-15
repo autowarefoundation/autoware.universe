@@ -24,14 +24,9 @@ double PIDController::calculateFB(
   const double target_value, const double dt, const double reset_trigger_value,
   const double current_value, std::vector<double> & pid_contributions, std::vector<double> & errors)
 {
-  double fb_value = 0;
   const double error = target_value - current_value;
-  bool enable_integration = true;
-  if (std::abs(reset_trigger_value) < 0.01) {
-    enable_integration = false;
-  }
-  fb_value = calculatePID(error, dt, enable_integration, pid_contributions, errors, false);
-  return fb_value;
+  const bool enable_integration = (std::abs(reset_trigger_value) < 0.01) ? false : true;
+  return calculatePID(error, dt, enable_integration, pid_contributions, errors, false);
 }
 
 double PIDController::calculatePID(

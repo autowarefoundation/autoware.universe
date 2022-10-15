@@ -73,7 +73,7 @@ bool BrakeMap::getBrake(double acc, double vel, double & brake)
   return true;
 }
 
-bool BrakeMap::getAcceleration(double brake, double vel, double & acc)
+bool BrakeMap::getAcceleration(double brake, double vel, double & acc) const
 {
   std::vector<double> accs_interpolated;
   vel = CSVLoader::clampValue(vel, vel_index_, "brake: vel");
