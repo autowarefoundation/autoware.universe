@@ -70,11 +70,11 @@ Map CSVLoader::getMap(const Table & table)
 {
   Map map = {};
   for (size_t i = 1; i < table.size(); i++) {
-    std::vector<double> accs;
+    std::vector<double> accelerations;
     for (size_t j = 1; j < table[i].size(); j++) {
-      accs.push_back(std::stod(table[i][j]));
+      accelerations.push_back(std::stod(table[i][j]));
     }
-    map.push_back(accs);
+    map.push_back(accelerations);
   }
   return map;
 }
