@@ -36,8 +36,7 @@ private:
   std::vector<double> steer_index_;
   std::vector<double> output_index_;
   std::vector<std::vector<double>> steer_map_;
-  rclcpp::Logger logger_{
-    rclcpp::get_logger("raw_vehicle_cmd_converter").get_child("steer_map")};
+  rclcpp::Logger logger_{rclcpp::get_logger("raw_vehicle_cmd_converter").get_child("steer_map")};
 };
 }  // namespace raw_vehicle_cmd_converter
 
