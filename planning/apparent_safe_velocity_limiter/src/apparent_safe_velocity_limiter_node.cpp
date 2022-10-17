@@ -81,7 +81,6 @@ ApparentSafeVelocityLimiterNode::ApparentSafeVelocityLimiterNode(
 
   set_param_res_ =
     add_on_set_parameters_callback([this](const auto & params) { return onParameter(params); });
-  self_pose_listener_.waitForFirstPose();
 }
 
 rcl_interfaces::msg::SetParametersResult ApparentSafeVelocityLimiterNode::onParameter(
@@ -176,8 +175,7 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
   const auto current_pose_ptr = self_pose_listener_.getCurrentPose();
   if (!current_pose_ptr) {
     RCLCPP_WARN_THROTTLE(
-      get_logger(), *get_clock(), rcutils_duration_value_t(1000),
-      "Cannot get current pose with self pose listener");
+      get_logger(), *get_clock(), rcutils_duration_value_t(1000), "Waiting for current pose");
     return;
   }
   const auto ego_idx =
