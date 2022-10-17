@@ -18,7 +18,7 @@
 #include "raw_vehicle_cmd_converter/accel_map.hpp"
 #include "raw_vehicle_cmd_converter/brake_map.hpp"
 #include "raw_vehicle_cmd_converter/pid.hpp"
-#include "raw_vehicle_cmd_converter/steer_converter.hpp"
+#include "raw_vehicle_cmd_converter/steer_map.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 

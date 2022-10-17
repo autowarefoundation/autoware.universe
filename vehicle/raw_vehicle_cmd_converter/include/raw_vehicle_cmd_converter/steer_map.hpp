@@ -12,8 +12,8 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#ifndef RAW_VEHICLE_CMD_CONVERTER__STEER_CONVERTER_HPP_
-#define RAW_VEHICLE_CMD_CONVERTER__STEER_CONVERTER_HPP_
+#ifndef RAW_VEHICLE_CMD_CONVERTER__STEER_MAP_HPP_
+#define RAW_VEHICLE_CMD_CONVERTER__STEER_MAP_HPP_
 
 #include "raw_vehicle_cmd_converter/csv_loader.hpp"
 #include "raw_vehicle_cmd_converter/pid.hpp"
@@ -37,8 +37,8 @@ private:
   std::vector<double> output_index_;
   std::vector<std::vector<double>> steer_map_;
   rclcpp::Logger logger_{
-    rclcpp::get_logger("raw_vehicle_cmd_converter").get_child("steer_converter")};
+    rclcpp::get_logger("raw_vehicle_cmd_converter").get_child("steer_map")};
 };
 }  // namespace raw_vehicle_cmd_converter
 
-#endif  // RAW_VEHICLE_CMD_CONVERTER__STEER_CONVERTER_HPP_
+#endif  // RAW_VEHICLE_CMD_CONVERTER__STEER_MAP_HPP_

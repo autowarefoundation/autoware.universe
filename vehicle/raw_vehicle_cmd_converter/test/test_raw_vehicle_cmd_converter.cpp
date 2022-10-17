@@ -16,7 +16,7 @@
 #include "gtest/gtest.h"
 #include "raw_vehicle_cmd_converter/accel_map.hpp"
 #include "raw_vehicle_cmd_converter/brake_map.hpp"
-#include "raw_vehicle_cmd_converter/steer_converter.hpp"
+#include "raw_vehicle_cmd_converter/steer_map.hpp"
 
 #include <cmath>
 

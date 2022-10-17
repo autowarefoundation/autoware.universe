@@ -12,7 +12,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#include "raw_vehicle_cmd_converter/steer_converter.hpp"
+#include "raw_vehicle_cmd_converter/steer_map.hpp"
 
 #include "interpolation/linear_interpolation.hpp"
 
