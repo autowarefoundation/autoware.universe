@@ -14,6 +14,7 @@
 // limitations under the License.
 
 #include "apparent_safe_velocity_limiter/map_utils.hpp"
+
 #include "apparent_safe_velocity_limiter/types.hpp"
 #include "lanelet2_core/primitives/LineString.h"
 
@@ -26,14 +27,13 @@
 namespace apparent_safe_velocity_limiter
 {
 multilinestring_t extractStaticObstacles(
-  const lanelet::LaneletMap & lanelet_map, const std::vector<std::string> & tags,
-  const std::vector<int64_t> & obstacle_ids)
+  const lanelet::LaneletMap & lanelet_map, const std::vector<std::string> & tags)
 {
   multilinestring_t lines;
   linestring_t line;
   linestring_t simplified_line;
   for (const auto & ls : lanelet_map.lineStringLayer) {
-    if (isObstacle(ls, tags, obstacle_ids)) {
+    if (isObstacle(ls, tags)) {
       line.clear();
       simplified_line.clear();
       for (const auto & p : ls) line.push_back(point_t{p.x(), p.y()});
@@ -44,13 +44,10 @@ multilinestring_t extractStaticObstacles(
   return lines;
 }
 
-bool isObstacle(
-  const lanelet::ConstLineString3d & ls, const std::vector<std::string> & tags,
-  const std::vector<int64_t> & ids)
+bool isObstacle(const lanelet::ConstLineString3d & ls, const std::vector<std::string> & tags)
 {
   constexpr auto no_type = "";
   const auto type = ls.attributeOr(lanelet::AttributeName::Type, no_type);
-  return std::find(ids.begin(), ids.end(), ls.id()) != ids.end() ||
-         (type != no_type && std::find(tags.begin(), tags.end(), type) != tags.end());
+  return (type != no_type && std::find(tags.begin(), tags.end(), type) != tags.end());
 }
 }  // namespace apparent_safe_velocity_limiter

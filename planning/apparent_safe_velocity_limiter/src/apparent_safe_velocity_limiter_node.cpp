@@ -63,14 +63,14 @@ ApparentSafeVelocityLimiterNode::ApparentSafeVelocityLimiterNode(
     "~/input/map", rclcpp::QoS{1}.transient_local(),
     [this](const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg) {
       lanelet::utils::conversion::fromBinMsg(*msg, lanelet_map_ptr_);
-      static_map_obstacles_ = extractStaticObstacles(
-        *lanelet_map_ptr_, obstacle_params_.static_map_tags, static_map_obstacle_ids_);
+      static_map_obstacles_ =
+        extractStaticObstacles(*lanelet_map_ptr_, obstacle_params_.static_map_tags);
     });
 
   pub_trajectory_ = create_publisher<Trajectory>("~/output/trajectory", 1);
   pub_debug_markers_ =
     create_publisher<visualization_msgs::msg::MarkerArray>("~/output/debug_markers", 1);
-  pub_runtime_ = create_publisher<std_msgs::msg::Int64>("~/output/runtime_us", 1);
+  pub_runtime_ = create_publisher<std_msgs::msg::Int64>("~/output/runtime_microseconds", 1);
 
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
   vehicle_lateral_offset_ = static_cast<Float>(vehicle_info.max_lateral_offset_m);
@@ -135,8 +135,8 @@ rcl_interfaces::msg::SetParametersResult ApparentSafeVelocityLimiterNode::onPara
     } else if (parameter.get_name() == ObstacleParameters::MAP_TAGS_PARAM) {
       obstacle_params_.static_map_tags = parameter.as_string_array();
       if (lanelet_map_ptr_)
-        static_map_obstacles_ = extractStaticObstacles(
-          *lanelet_map_ptr_, obstacle_params_.static_map_tags, static_map_obstacle_ids_);
+        static_map_obstacles_ =
+          extractStaticObstacles(*lanelet_map_ptr_, obstacle_params_.static_map_tags);
     } else if (parameter.get_name() == ObstacleParameters::FILTERING_PARAM) {
       obstacle_params_.filter_envelope = parameter.as_bool();
     } else if (parameter.get_name() == ObstacleParameters::IGNORE_ON_PATH_PARAM) {
@@ -162,11 +162,6 @@ rcl_interfaces::msg::SetParametersResult ApparentSafeVelocityLimiterNode::onPara
       projection_params_.steering_angle_offset = parameter.as_double();
     } else if (parameter.get_name() == ProjectionParameters::DISTANCE_METHOD_PARAM) {
       projection_params_.updateDistanceMethod(*this, parameter.as_string());
-    } else if (parameter.get_name() == "obstacles.static_map_ids") {
-      static_map_obstacle_ids_ = parameter.as_integer_array();
-      if (lanelet_map_ptr_)
-        static_map_obstacles_ = extractStaticObstacles(
-          *lanelet_map_ptr_, obstacle_params_.static_map_tags, static_map_obstacle_ids_);
     } else {
       RCLCPP_WARN(get_logger(), "Unknown parameter %s", parameter.get_name().c_str());
       result.successful = false;
@@ -230,7 +225,6 @@ void ApparentSafeVelocityLimiterNode::onTrajectory(const Trajectory::ConstShared
 
   const auto t_end = std::chrono::system_clock::now();
   const auto runtime = std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start);
-  RCLCPP_WARN(get_logger(), "onTrajectory() runtime: %li us", runtime.count());
   pub_runtime_->publish(std_msgs::msg::Int64().set__data(runtime.count()));
 
   if (pub_debug_markers_->get_subscription_count() > 0) {

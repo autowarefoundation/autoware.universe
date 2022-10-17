@@ -77,10 +77,6 @@ private:
   multilinestring_t static_map_obstacles_;
   std::optional<Float> current_ego_velocity_;
 
-  // Benchmarking & Debugging TODO(Maxime CLEMENT): remove before merging
-  std::vector<int64_t> static_map_obstacle_ids_ =
-    declare_parameter<std::vector<int64_t>>("obstacles.static_map_ids");
-
   // parameters
   PreprocessingParameters preprocessing_params_;
   ProjectionParameters projection_params_;

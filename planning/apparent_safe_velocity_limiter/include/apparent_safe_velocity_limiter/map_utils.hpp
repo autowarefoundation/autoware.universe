@@ -28,20 +28,15 @@ namespace apparent_safe_velocity_limiter
 /// @brief Extract static obstacles from the lanelet map
 /// @param[in] lanelet_map lanelet map
 /// @param[in] tags tags to identify obstacle linestrings
-/// @param[in] obstacle_ids ids to identify obstacle linestrings
 /// @return the extracted obstacles
 multilinestring_t extractStaticObstacles(
-  const lanelet::LaneletMap & lanelet_map, const std::vector<std::string> & tags,
-  const std::vector<int64_t> & obstacle_ids);
+  const lanelet::LaneletMap & lanelet_map, const std::vector<std::string> & tags);
 
 /// @brief Determine if the given linestring is an obstacle
 /// @param[in] ls linestring to check
 /// @param[in] tags obstacle tags
-/// @param[in] ids obstacle ids
 /// @return true if the linestring is an obstacle
-bool isObstacle(
-  const lanelet::ConstLineString3d & ls, const std::vector<std::string> & tags,
-  const std::vector<int64_t> & ids);
+bool isObstacle(const lanelet::ConstLineString3d & ls, const std::vector<std::string> & tags);
 }  // namespace apparent_safe_velocity_limiter
 
 #endif  // APPARENT_SAFE_VELOCITY_LIMITER__MAP_UTILS_HPP_
