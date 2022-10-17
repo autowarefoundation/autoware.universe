@@ -36,6 +36,8 @@ struct BehaviorPathPlannerParameters
 
   double refine_goal_search_radius_range;
 
+  double turn_signal_intersection_search_distance;
+  double turn_signal_intersection_angle_threshold_deg;
   double turn_signal_search_time;
   double turn_signal_minimum_search_distance;
   double turn_signal_shift_length_threshold;
