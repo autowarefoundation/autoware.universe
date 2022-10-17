@@ -138,6 +138,15 @@ TEST(object_classification, test_isCarLikeVehicle)
     classification.push_back(createObjectClassification(ObjectClassification::BICYCLE, 0.8));
     EXPECT_FALSE(isCarLikeVehicle(classification));
   }
+
+    // Edge case when car and non-car label has same probability
+  {  
+    std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> classification;
+    classification.push_back(createObjectClassification(ObjectClassification::MOTORCYCLE, 0.8));
+    classification.push_back(createObjectClassification(ObjectClassification::CAR, 0.8));
+    EXPECT_FALSE(isCarLikeVehicle(classification));
+  }
+
 }  // TEST isCarLikeVehicle
 
 // TEST isLargeVehicle
