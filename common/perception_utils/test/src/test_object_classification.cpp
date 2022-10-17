@@ -70,27 +70,18 @@ TEST(object_classification, test_isVehicle)
   using perception_utils::isVehicle;
 
   {// True Case with uint8_t
-  std::vector<std::uint8_t> vehicle_labels;
-  vehicle_labels.push_back(ObjectClassification::BICYCLE);
-  vehicle_labels.push_back(ObjectClassification::BUS);
-  vehicle_labels.push_back(ObjectClassification::CAR);
-  vehicle_labels.push_back(ObjectClassification::MOTORCYCLE);
-  vehicle_labels.push_back(ObjectClassification::TRAILER);
-  vehicle_labels.push_back(ObjectClassification::TRUCK);
-  
-  for(auto label: vehicle_labels){
-    EXPECT_TRUE(isVehicle(label));
-  }
+  EXPECT_TRUE(isVehicle(ObjectClassification::BICYCLE));
+  EXPECT_TRUE(isVehicle(ObjectClassification::BUS));
+  EXPECT_TRUE(isVehicle(ObjectClassification::CAR));
+  EXPECT_TRUE(isVehicle(ObjectClassification::MOTORCYCLE));
+  EXPECT_TRUE(isVehicle(ObjectClassification::TRAILER));
+  EXPECT_TRUE(isVehicle(ObjectClassification::TRUCK));
   }
 
   // False Case with uint8_t
   {
-  std::vector<std::uint8_t> non_vehicle_labels;
-  non_vehicle_labels.push_back(ObjectClassification::UNKNOWN);
-  non_vehicle_labels.push_back(ObjectClassification::PEDESTRIAN);
-  for(auto label: non_vehicle_labels){
-    EXPECT_FALSE(isVehicle(label));
-  }
+  EXPECT_FALSE(isVehicle(ObjectClassification::UNKNOWN));
+  EXPECT_FALSE(isVehicle(ObjectClassification::PEDESTRIAN));
   }
 
   // True Case with object_classifications
@@ -121,27 +112,18 @@ TEST(object_classification, test_isCarLikeVehicle)
   using perception_utils::isCarLikeVehicle;
 
   {// True Case with uint8_t
-  std::vector<std::uint8_t> carlike_labels;
-  carlike_labels.push_back(ObjectClassification::BUS);
-  carlike_labels.push_back(ObjectClassification::CAR);
-  carlike_labels.push_back(ObjectClassification::TRAILER);
-  carlike_labels.push_back(ObjectClassification::TRUCK);
-  
-  for(auto label: carlike_labels){
-    EXPECT_TRUE(isCarLikeVehicle(label));
-  }
+  EXPECT_TRUE(isCarLikeVehicle(ObjectClassification::BUS));
+  EXPECT_TRUE(isCarLikeVehicle(ObjectClassification::CAR));
+  EXPECT_TRUE(isCarLikeVehicle(ObjectClassification::TRAILER));
+  EXPECT_TRUE(isCarLikeVehicle(ObjectClassification::TRUCK));  
   }
 
   // False Case with uint8_t
   {
-  std::vector<std::uint8_t> non_carlike_labels;
-  non_carlike_labels.push_back(ObjectClassification::UNKNOWN);
-  non_carlike_labels.push_back(ObjectClassification::BICYCLE);
-  non_carlike_labels.push_back(ObjectClassification::PEDESTRIAN);
-  non_carlike_labels.push_back(ObjectClassification::MOTORCYCLE);
-  for(auto label: non_carlike_labels){
-    EXPECT_FALSE(isCarLikeVehicle(label));
-  }
+  EXPECT_FALSE(isCarLikeVehicle(ObjectClassification::UNKNOWN));
+  EXPECT_FALSE(isCarLikeVehicle(ObjectClassification::BICYCLE));
+  EXPECT_FALSE(isCarLikeVehicle(ObjectClassification::PEDESTRIAN));
+  EXPECT_FALSE(isCarLikeVehicle(ObjectClassification::MOTORCYCLE));
   }
 
   // True Case with object_classifications
@@ -173,28 +155,18 @@ TEST(object_classification, test_isLargeVehicle)
   using perception_utils::isLargeVehicle;
 
   {// True Case with uint8_t
-  std::vector<std::uint8_t> large_vehicle_labels;
-  large_vehicle_labels.push_back(ObjectClassification::BUS);
-  large_vehicle_labels.push_back(ObjectClassification::TRAILER);
-  large_vehicle_labels.push_back(ObjectClassification::TRUCK);
-  
-  for(auto label: large_vehicle_labels){
-    EXPECT_TRUE(isLargeVehicle(label));
-  }
+  EXPECT_TRUE(isLargeVehicle(ObjectClassification::BUS));
+  EXPECT_TRUE(isLargeVehicle(ObjectClassification::TRAILER));
+  EXPECT_TRUE(isLargeVehicle(ObjectClassification::TRUCK));
   }
 
   // False Case with uint8_t
   {
-  std::vector<std::uint8_t> non_large_vehicle_labels;
-  non_large_vehicle_labels.push_back(ObjectClassification::UNKNOWN);
-  non_large_vehicle_labels.push_back(ObjectClassification::BICYCLE);
-  non_large_vehicle_labels.push_back(ObjectClassification::PEDESTRIAN);
-  non_large_vehicle_labels.push_back(ObjectClassification::MOTORCYCLE);
-  non_large_vehicle_labels.push_back(ObjectClassification::CAR);
-
-  for(auto label: non_large_vehicle_labels){
-    EXPECT_FALSE(isLargeVehicle(label));
-  }
+  EXPECT_FALSE(isLargeVehicle(ObjectClassification::UNKNOWN));
+  EXPECT_FALSE(isLargeVehicle(ObjectClassification::BICYCLE));
+  EXPECT_FALSE(isLargeVehicle(ObjectClassification::PEDESTRIAN));
+  EXPECT_FALSE(isLargeVehicle(ObjectClassification::MOTORCYCLE));
+  EXPECT_FALSE(isLargeVehicle(ObjectClassification::CAR));
   }
 
   // True Case with object_classifications
