@@ -68,11 +68,11 @@ bool AccelMap::getThrottle(const double acc, double vel, double & throttle) cons
 bool AccelMap::getAcceleration(const double throttle, const double vel, double & acc) const
 {
   std::vector<double> interpolated_acc_vec;
-  const double clamed_vel = CSVLoader::clampValue(vel, vel_index_, "throttle: vel");
+  const double clamped_vel = CSVLoader::clampValue(vel, vel_index_, "throttle: vel");
 
   // (throttle, vel, acc) map => (throttle, acc) map by fixing vel
   for (const auto & acc_vec : accel_map_) {
-    interpolated_acc_vec.push_back(interpolation::lerp(vel_index_, acc_vec, clamed_vel));
+    interpolated_acc_vec.push_back(interpolation::lerp(vel_index_, acc_vec, clamped_vel));
   }
 
   // calculate throttle
