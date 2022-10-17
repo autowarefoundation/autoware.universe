@@ -65,7 +65,6 @@ TEST(object_classification, test_getHighestProbLabel)
 // Test isVehicle
 TEST(object_classification, test_isVehicle)
 {
-
   using autoware_auto_perception_msgs::msg::ObjectClassification;
   using perception_utils::isVehicle;
 
@@ -101,13 +100,11 @@ TEST(object_classification, test_isVehicle)
     EXPECT_FALSE(isVehicle(classification));
   }
 
-} // TEST isVehicle
-
+}  // TEST isVehicle
 
 // TEST isCarLikeVehicle
 TEST(object_classification, test_isCarLikeVehicle)
 {
-
   using autoware_auto_perception_msgs::msg::ObjectClassification;
   using perception_utils::isCarLikeVehicle;
 
@@ -143,14 +140,11 @@ TEST(object_classification, test_isCarLikeVehicle)
     EXPECT_FALSE(isCarLikeVehicle(classification));
   }
 
-} // TEST isCarLikeVehicle
-
-
+}  // TEST isCarLikeVehicle
 
 // TEST isLargeVehicle
 TEST(object_classification, test_isLargeVehicle)
 {
-
   using autoware_auto_perception_msgs::msg::ObjectClassification;
   using perception_utils::isLargeVehicle;
 
@@ -169,16 +163,6 @@ TEST(object_classification, test_isLargeVehicle)
   EXPECT_FALSE(isLargeVehicle(ObjectClassification::CAR));
   }
 
-  // True Case with object_classifications
-  {  // normal case
-    std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> classification;
-    classification.push_back(createObjectClassification(ObjectClassification::CAR, 0.5));
-    classification.push_back(createObjectClassification(ObjectClassification::TRUCK, 0.8));
-    classification.push_back(createObjectClassification(ObjectClassification::TRAILER,0.7));
-    EXPECT_TRUE(isLargeVehicle(classification));
-  }
-
-  // False Case with object_classifications
   {  // false case
     std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> classification;
     classification.push_back(createObjectClassification(ObjectClassification::MOTORCYCLE, 0.8));
@@ -187,6 +171,4 @@ TEST(object_classification, test_isLargeVehicle)
     EXPECT_FALSE(isLargeVehicle(classification));
   }
 
-} // TEST isLargeVehicle
-
-
+}  // TEST isLargeVehicle
