@@ -65,32 +65,31 @@ TEST(object_classification, test_getHighestProbLabel)
 // Test isVehicle
 TEST(object_classification, test_isVehicle)
 {
-
   using autoware_auto_perception_msgs::msg::ObjectClassification;
   using perception_utils::isVehicle;
 
-  {// True Case with uint8_t
-  std::vector<std::uint8_t> vehicle_labels;
-  vehicle_labels.push_back(ObjectClassification::BICYCLE);
-  vehicle_labels.push_back(ObjectClassification::BUS);
-  vehicle_labels.push_back(ObjectClassification::CAR);
-  vehicle_labels.push_back(ObjectClassification::MOTORCYCLE);
-  vehicle_labels.push_back(ObjectClassification::TRAILER);
-  vehicle_labels.push_back(ObjectClassification::TRUCK);
-  
-  for(auto label: vehicle_labels){
-    EXPECT_TRUE(isVehicle(label));
-  }
+  {  // True Case with uint8_t
+    std::vector<std::uint8_t> vehicle_labels;
+    vehicle_labels.push_back(ObjectClassification::BICYCLE);
+    vehicle_labels.push_back(ObjectClassification::BUS);
+    vehicle_labels.push_back(ObjectClassification::CAR);
+    vehicle_labels.push_back(ObjectClassification::MOTORCYCLE);
+    vehicle_labels.push_back(ObjectClassification::TRAILER);
+    vehicle_labels.push_back(ObjectClassification::TRUCK);
+
+    for (auto label : vehicle_labels) {
+      EXPECT_TRUE(isVehicle(label));
+    }
   }
 
   // False Case with uint8_t
   {
-  std::vector<std::uint8_t> non_vehicle_labels;
-  non_vehicle_labels.push_back(ObjectClassification::UNKNOWN);
-  non_vehicle_labels.push_back(ObjectClassification::PEDESTRIAN);
-  for(auto label: non_vehicle_labels){
-    EXPECT_FALSE(isVehicle(label));
-  }
+    std::vector<std::uint8_t> non_vehicle_labels;
+    non_vehicle_labels.push_back(ObjectClassification::UNKNOWN);
+    non_vehicle_labels.push_back(ObjectClassification::PEDESTRIAN);
+    for (auto label : non_vehicle_labels) {
+      EXPECT_FALSE(isVehicle(label));
+    }
   }
 
   // True Case with object_classifications
@@ -110,38 +109,36 @@ TEST(object_classification, test_isVehicle)
     EXPECT_FALSE(isVehicle(classification));
   }
 
-} // TEST isVehicle
-
+}  // TEST isVehicle
 
 // TEST isCarLikeVehicle
 TEST(object_classification, test_isCarLikeVehicle)
 {
-
   using autoware_auto_perception_msgs::msg::ObjectClassification;
   using perception_utils::isCarLikeVehicle;
 
-  {// True Case with uint8_t
-  std::vector<std::uint8_t> carlike_labels;
-  carlike_labels.push_back(ObjectClassification::BUS);
-  carlike_labels.push_back(ObjectClassification::CAR);
-  carlike_labels.push_back(ObjectClassification::TRAILER);
-  carlike_labels.push_back(ObjectClassification::TRUCK);
-  
-  for(auto label: carlike_labels){
-    EXPECT_TRUE(isCarLikeVehicle(label));
-  }
+  {  // True Case with uint8_t
+    std::vector<std::uint8_t> carlike_labels;
+    carlike_labels.push_back(ObjectClassification::BUS);
+    carlike_labels.push_back(ObjectClassification::CAR);
+    carlike_labels.push_back(ObjectClassification::TRAILER);
+    carlike_labels.push_back(ObjectClassification::TRUCK);
+
+    for (auto label : carlike_labels) {
+      EXPECT_TRUE(isCarLikeVehicle(label));
+    }
   }
 
   // False Case with uint8_t
   {
-  std::vector<std::uint8_t> non_carlike_labels;
-  non_carlike_labels.push_back(ObjectClassification::UNKNOWN);
-  non_carlike_labels.push_back(ObjectClassification::BICYCLE);
-  non_carlike_labels.push_back(ObjectClassification::PEDESTRIAN);
-  non_carlike_labels.push_back(ObjectClassification::MOTORCYCLE);
-  for(auto label: non_carlike_labels){
-    EXPECT_FALSE(isCarLikeVehicle(label));
-  }
+    std::vector<std::uint8_t> non_carlike_labels;
+    non_carlike_labels.push_back(ObjectClassification::UNKNOWN);
+    non_carlike_labels.push_back(ObjectClassification::BICYCLE);
+    non_carlike_labels.push_back(ObjectClassification::PEDESTRIAN);
+    non_carlike_labels.push_back(ObjectClassification::MOTORCYCLE);
+    for (auto label : non_carlike_labels) {
+      EXPECT_FALSE(isCarLikeVehicle(label));
+    }
   }
 
   // True Case with object_classifications
@@ -161,40 +158,37 @@ TEST(object_classification, test_isCarLikeVehicle)
     EXPECT_FALSE(isCarLikeVehicle(classification));
   }
 
-} // TEST isCarLikeVehicle
-
-
+}  // TEST isCarLikeVehicle
 
 // TEST isLargeVehicle
 TEST(object_classification, test_isLargeVehicle)
 {
-
   using autoware_auto_perception_msgs::msg::ObjectClassification;
   using perception_utils::isLargeVehicle;
 
-  {// True Case with uint8_t
-  std::vector<std::uint8_t> large_vehicle_labels;
-  large_vehicle_labels.push_back(ObjectClassification::BUS);
-  large_vehicle_labels.push_back(ObjectClassification::TRAILER);
-  large_vehicle_labels.push_back(ObjectClassification::TRUCK);
-  
-  for(auto label: large_vehicle_labels){
-    EXPECT_TRUE(isLargeVehicle(label));
-  }
+  {  // True Case with uint8_t
+    std::vector<std::uint8_t> large_vehicle_labels;
+    large_vehicle_labels.push_back(ObjectClassification::BUS);
+    large_vehicle_labels.push_back(ObjectClassification::TRAILER);
+    large_vehicle_labels.push_back(ObjectClassification::TRUCK);
+
+    for (auto label : large_vehicle_labels) {
+      EXPECT_TRUE(isLargeVehicle(label));
+    }
   }
 
   // False Case with uint8_t
   {
-  std::vector<std::uint8_t> non_large_vehicle_labels;
-  non_large_vehicle_labels.push_back(ObjectClassification::UNKNOWN);
-  non_large_vehicle_labels.push_back(ObjectClassification::BICYCLE);
-  non_large_vehicle_labels.push_back(ObjectClassification::PEDESTRIAN);
-  non_large_vehicle_labels.push_back(ObjectClassification::MOTORCYCLE);
-  non_large_vehicle_labels.push_back(ObjectClassification::CAR);
+    std::vector<std::uint8_t> non_large_vehicle_labels;
+    non_large_vehicle_labels.push_back(ObjectClassification::UNKNOWN);
+    non_large_vehicle_labels.push_back(ObjectClassification::BICYCLE);
+    non_large_vehicle_labels.push_back(ObjectClassification::PEDESTRIAN);
+    non_large_vehicle_labels.push_back(ObjectClassification::MOTORCYCLE);
+    non_large_vehicle_labels.push_back(ObjectClassification::CAR);
 
-  for(auto label: non_large_vehicle_labels){
-    EXPECT_FALSE(isLargeVehicle(label));
-  }
+    for (auto label : non_large_vehicle_labels) {
+      EXPECT_FALSE(isLargeVehicle(label));
+    }
   }
 
   // True Case with object_classifications
@@ -202,7 +196,7 @@ TEST(object_classification, test_isLargeVehicle)
     std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> classification;
     classification.push_back(createObjectClassification(ObjectClassification::CAR, 0.5));
     classification.push_back(createObjectClassification(ObjectClassification::TRUCK, 0.8));
-    classification.push_back(createObjectClassification(ObjectClassification::TRAILER,0.7));
+    classification.push_back(createObjectClassification(ObjectClassification::TRAILER, 0.7));
     EXPECT_TRUE(isLargeVehicle(classification));
   }
 
@@ -215,6 +209,4 @@ TEST(object_classification, test_isLargeVehicle)
     EXPECT_FALSE(isLargeVehicle(classification));
   }
 
-} // TEST isLargeVehicle
-
-
+}  // TEST isLargeVehicle
