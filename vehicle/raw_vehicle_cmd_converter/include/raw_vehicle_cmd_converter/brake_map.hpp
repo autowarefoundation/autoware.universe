@@ -30,8 +30,8 @@ class BrakeMap
 {
 public:
   bool readBrakeMapFromCSV(const std::string & csv_path);
-  bool getBrake(const double acc, double vel, double & brake);
-  bool getAcceleration(double brake, double vel, double & acc) const;
+  bool getBrake(const double acc, const double vel, double & brake);
+  bool getAcceleration(const double brake, const double vel, double & acc) const;
   std::vector<double> getVelIdx() const { return vel_index_; }
   std::vector<double> getBrakeIdx() const { return brake_index_; }
   std::vector<std::vector<double>> getBrakeMap() const { return brake_map_; }

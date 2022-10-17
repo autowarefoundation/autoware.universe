@@ -30,8 +30,8 @@ class AccelMap
 {
 public:
   bool readAccelMapFromCSV(const std::string & csv_path);
-  bool getThrottle(const double acc, double vel, double & throttle) const;
-  bool getAcceleration(double throttle, double vel, double & acc) const;
+  bool getThrottle(const double acc, const double vel, double & throttle) const;
+  bool getAcceleration(const double throttle, const double vel, double & acc) const;
   std::vector<double> getVelIdx() const { return vel_index_; }
   std::vector<double> getThrottleIdx() const { return throttle_index_; }
   std::vector<std::vector<double>> getAccelMap() const { return accel_map_; }

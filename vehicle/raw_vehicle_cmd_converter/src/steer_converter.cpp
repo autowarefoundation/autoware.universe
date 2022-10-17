@@ -38,19 +38,16 @@ bool SteerMap::readSteerMapFromCSV(const std::string & csv_path)
   return true;
 }
 
-void SteerMap::getSteer(double steer_rate, double steer, double & output) const
+void SteerMap::getSteer(const double steer_rate, const double steer, double & output) const
 {
-  steer = CSVLoader::clampValue(steer, steer_index_, "steer: steer");
-
+  const double clamped_steer = CSVLoader::clampValue(steer, steer_index_, "steer: steer");
   std::vector<double> steer_rate_interp = {};
-  for (std::vector<double> steer_angle_velocities : steer_map_) {
-    steer_rate_interp.push_back(interpolation::lerp(steer_index_, steer_angle_velocities, steer));
+  for (const auto & steer_rate_vec : steer_map_) {
+    steer_rate_interp.push_back(interpolation::lerp(steer_index_, steer_rate_vec, clamped_steer));
   }
-  if (steer_rate < steer_rate_interp.front()) {
-    steer_rate = steer_rate_interp.front();
-  } else if (steer_rate_interp.back() < steer_rate) {
-    steer_rate = steer_rate_interp.back();
-  }
-  output = interpolation::lerp(steer_rate_interp, output_index_, steer_rate);
+
+  const double clamped_steer_rate =
+    CSVLoader::clampValue(steer_rate, steer_rate_interp, "steer: steer_rate");
+  output = interpolation::lerp(steer_rate_interp, output_index_, clamped_steer_rate);
 }
 }  // namespace raw_vehicle_cmd_converter

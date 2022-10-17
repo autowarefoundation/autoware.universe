@@ -41,53 +41,53 @@ bool BrakeMap::readBrakeMapFromCSV(const std::string & csv_path)
   return true;
 }
 
-bool BrakeMap::getBrake(const double acc, double vel, double & brake)
+bool BrakeMap::getBrake(const double acc, const double vel, double & brake)
 {
-  std::vector<double> accelerations_interpolated;
-  vel = CSVLoader::clampValue(vel, vel_index_, "brake: vel");
+  std::vector<double> interpolated_acc_vec;
+  const double clamped_vel = CSVLoader::clampValue(vel, vel_index_, "brake: vel");
 
   // (throttle, vel, acc) map => (throttle, acc) map by fixing vel
   for (std::vector<double> accelerations : brake_map_) {
-    accelerations_interpolated.push_back(interpolation::lerp(vel_index_, accelerations, vel));
+    interpolated_acc_vec.push_back(interpolation::lerp(vel_index_, accelerations, clamped_vel));
   }
 
   // calculate brake
   // When the desired acceleration is smaller than the brake area, return max brake on the map
   // When the desired acceleration is greater than the brake area, return min brake on the map
-  if (acc < accelerations_interpolated.back()) {
+  if (acc < interpolated_acc_vec.back()) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
       logger_, clock_, 1000,
       "Exceeding the acc range. Desired acc: %f < min acc on map: %f. return max "
       "value.",
-      acc, accelerations_interpolated.back());
+      acc, interpolated_acc_vec.back());
     brake = brake_index_.back();
     return true;
-  } else if (accelerations_interpolated.front() < acc) {
+  } else if (interpolated_acc_vec.front() < acc) {
     brake = brake_index_.front();
     return true;
   }
 
-  std::reverse(std::begin(accelerations_interpolated), std::end(accelerations_interpolated));
-  brake = interpolation::lerp(accelerations_interpolated, brake_index_rev_, acc);
+  std::reverse(std::begin(interpolated_acc_vec), std::end(interpolated_acc_vec));
+  brake = interpolation::lerp(interpolated_acc_vec, brake_index_rev_, acc);
 
   return true;
 }
 
-bool BrakeMap::getAcceleration(double brake, double vel, double & acc) const
+bool BrakeMap::getAcceleration(const double brake, const double vel, double & acc) const
 {
-  std::vector<double> accelerations_interpolated;
-  vel = CSVLoader::clampValue(vel, vel_index_, "brake: vel");
+  std::vector<double> interpolated_acc_vec;
+  const double clamped_vel = CSVLoader::clampValue(vel, vel_index_, "brake: vel");
 
   // (throttle, vel, acc) map => (throttle, acc) map by fixing vel
-  for (std::vector<double> accelerations : brake_map_) {
-    accelerations_interpolated.push_back(interpolation::lerp(vel_index_, accelerations, vel));
+  for (const auto & acc_vec : brake_map_) {
+    interpolated_acc_vec.push_back(interpolation::lerp(vel_index_, acc_vec, clamped_vel));
   }
 
   // calculate brake
   // When the desired acceleration is smaller than the brake area, return min acc
   // When the desired acceleration is greater than the brake area, return min acc
-  brake = CSVLoader::clampValue(brake, brake_index_, "brake: acc");
-  acc = interpolation::lerp(brake_index_, accelerations_interpolated, brake);
+  const double clamped_brake = CSVLoader::clampValue(brake, brake_index_, "brake: acc");
+  acc = interpolation::lerp(brake_index_, interpolated_acc_vec, clamped_brake);
 
   return true;
 }
