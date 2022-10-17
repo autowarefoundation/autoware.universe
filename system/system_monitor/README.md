@@ -228,6 +228,7 @@ The setting value of voltage_monitor.param.yaml is as follows.
 The above values of 2.7V and 2.90V are hypothetical. Depending on the motherboard and chipset, the value may vary. However, if the voltage of the lithium battery drops below 2.7V, it is recommended to replace it.
 In the above example, the message output to the topic /diagnostics is as follows.
 If the voltage < 2.9V then:
+
 ```txt
   name: /autoware/system/resource_monitoring/voltage/cmos_battery
   message: Warning
@@ -238,6 +239,7 @@ If the voltage < 2.9V then:
 ```
 
 If the voltage < 2.7V then:
+
 ```txt
   name: /autoware/system/resource_monitoring/voltage/cmos_battery
   message: Warning
@@ -248,6 +250,7 @@ If the voltage < 2.7V then:
 ```
 
 If neither, then:
+
 ```txt
   name: /autoware/system/resource_monitoring/voltage/cmos_battery
   message: OK
