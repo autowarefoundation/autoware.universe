@@ -28,6 +28,7 @@ autoware_auto_perception_msgs::msg::ObjectClassification createObjectClassificat
   return classification;
 }
 
+}  // namespace
 
 TEST(object_classification, test_getHighestProbLabel)
 {
@@ -217,4 +218,3 @@ TEST(object_classification, test_isLargeVehicle)
 } // TEST isLargeVehicle
 
 
-}  // namespace
