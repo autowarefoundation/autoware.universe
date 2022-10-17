@@ -329,7 +329,7 @@ geometry_msgs::msg::Point TurnSignalDecider::get_required_end_point(
   for (size_t i = 0; i < resampled_centerline.size(); ++i) {
     const double yaw = tf2::getYaw(resampled_centerline.at(i).orientation);
     const double yaw_diff = tier4_autoware_utils::normalizeRadian(yaw - terminal_yaw);
-    if (std::fabs(yaw_diff) < tier4_autoware_utils::deg2rad(15)) {
+    if (std::fabs(yaw_diff) < tier4_autoware_utils::deg2rad(intersection_angle_threshold_deg_)) {
       return resampled_centerline.at(i).position;
     }
   }

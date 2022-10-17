@@ -147,9 +147,11 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     double turn_signal_intersection_search_distance{
       declare_parameter("turn_signal_intersection_search_distance", 30.0)};
     double turn_signal_search_time{declare_parameter("turn_signal_search_time", 3.0)};
+    double turn_signal_intersection_angle_threshold_deg{
+      declare_parameter("turn_signal_intersection_angle_threshold_deg", 15.0)};
     turn_signal_decider_.setParameters(
       planner_data_->parameters.base_link2front, turn_signal_intersection_search_distance,
-      turn_signal_search_time);
+      turn_signal_search_time, turn_signal_intersection_angle_threshold_deg);
   }
 
   steering_factor_interface_ptr_ = std::make_unique<SteeringFactorInterface>(this, "intersection");
