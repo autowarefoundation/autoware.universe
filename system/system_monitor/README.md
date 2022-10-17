@@ -225,6 +225,7 @@ The setting value of voltage_monitor.param.yaml is as follows.
     cmos_battery_error: 2.70
     cmos_battery_label: "in7:"
 ```
+
 The above values of 2.7V and 2.90V are hypothetical. Depending on the motherboard and chipset, the value may vary. However, if the voltage of the lithium battery drops below 2.7V, it is recommended to replace it.
 In the above example, the message output to the topic /diagnostics is as follows.
 If the voltage < 2.9V then:
