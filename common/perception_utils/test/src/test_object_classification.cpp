@@ -99,7 +99,6 @@ TEST(object_classification, test_isVehicle)
     classification.push_back(createObjectClassification(ObjectClassification::BICYCLE, 0.7));
     EXPECT_FALSE(isVehicle(classification));
   }
-
 }  // TEST isVehicle
 
 // TEST isCarLikeVehicle
@@ -139,7 +138,6 @@ TEST(object_classification, test_isCarLikeVehicle)
     classification.push_back(createObjectClassification(ObjectClassification::BICYCLE, 0.8));
     EXPECT_FALSE(isCarLikeVehicle(classification));
   }
-
 }  // TEST isCarLikeVehicle
 
 // TEST isLargeVehicle
@@ -170,5 +168,4 @@ TEST(object_classification, test_isLargeVehicle)
     classification.push_back(createObjectClassification(ObjectClassification::CAR, 0.8));
     EXPECT_FALSE(isLargeVehicle(classification));
   }
-
 }  // TEST isLargeVehicle
