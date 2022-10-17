@@ -139,12 +139,16 @@ TEST(object_classification, test_isCarLikeVehicle)
     EXPECT_FALSE(isCarLikeVehicle(classification));
   }
 
-  // Edge case when car and non-car label has same probability
-  {
+  // Edge case
+  // When classification has more multiple labels with same maximum probability
+  // getHighestProbLabel() returns only first highest-scored label.
+  // so, in edge case it returns a label earlier added.
+  {  // When car and non-car label has same probability
     std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> classification;
     classification.push_back(createObjectClassification(ObjectClassification::MOTORCYCLE, 0.8));
     classification.push_back(createObjectClassification(ObjectClassification::CAR, 0.8));
-    EXPECT_FALSE(isCarLikeVehicle(classification));
+    EXPECT_FALSE(
+      isCarLikeVehicle(classification));  // evaluated with earlier appended "MOTORCYCLE" label
   }
 }  // TEST isCarLikeVehicle
 
@@ -175,5 +179,16 @@ TEST(object_classification, test_isLargeVehicle)
     classification.push_back(createObjectClassification(ObjectClassification::BICYCLE, 0.8));
     classification.push_back(createObjectClassification(ObjectClassification::CAR, 0.8));
     EXPECT_FALSE(isLargeVehicle(classification));
+  }
+
+  // Edge case
+  // When classification has more multiple labels with same maximum probability
+  // getHighestProbLabel() returns only first highest-scored label.
+  // so, in edge case it returns a label earlier added.
+  {  // When large-vehicle and non-large-vehicle label has same probability
+    std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> classification;
+    classification.push_back(createObjectClassification(ObjectClassification::BUS, 0.8));
+    classification.push_back(createObjectClassification(ObjectClassification::CAR, 0.8));
+    EXPECT_TRUE(isLargeVehicle(classification));  // evaluated with earlier appended "BUS" label
   }
 }  // TEST isLargeVehicle
