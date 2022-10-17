@@ -55,8 +55,8 @@ inline bool isVehicle(const ObjectClassification & object_classification)
 
 inline bool isVehicle(const std::vector<ObjectClassification> & object_classifications)
 {
-  auto highest_prob_classification = getHighestProbLabel(object_classifications);
-  return isVehicle(highest_prob_classification);
+  auto highest_prob_label = getHighestProbLabel(object_classifications);
+  return isVehicle(highest_prob_label);
 }
 
 inline bool isCarLikeVehicle(const uint8_t label)
@@ -72,8 +72,8 @@ inline bool isCarLikeVehicle(const ObjectClassification & object_classification)
 
 inline bool isCarLikeVehicle(const std::vector<ObjectClassification> & object_classifications)
 {
-  auto highest_prob_classification = getHighestProbLabel(object_classifications);
-  return isCarLikeVehicle(highest_prob_classification);
+  auto highest_prob_label = getHighestProbLabel(object_classifications);
+  return isCarLikeVehicle(highest_prob_label);
 }
 
 inline bool isLargeVehicle(const uint8_t label)
@@ -89,8 +89,8 @@ inline bool isLargeVehicle(const ObjectClassification & object_classification)
 
 inline bool isLargeVehicle(const std::vector<ObjectClassification> & object_classifications)
 {
-  auto highest_prob_classification = getHighestProbLabel(object_classifications);
-  return isLargeVehicle(highest_prob_classification);
+  auto highest_prob_label = getHighestProbLabel(object_classifications);
+  return isLargeVehicle(highest_prob_label);
 }
 }  // namespace perception_utils
 
