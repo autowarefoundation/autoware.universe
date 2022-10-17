@@ -40,7 +40,7 @@ inline double getConvexShapeArea(const Polygon2d & source_polygon, const Polygon
   return boost::geometry::area(hull);
 }
 
-inline double getAreaSum(const std::vector<Polygon2d> & polygons)
+inline double getSumArea(const std::vector<Polygon2d> & polygons)
 {
   return std::accumulate(polygons.begin(), polygons.end(), 0.0, [](double acc, Polygon2d p) {
     return acc + boost::geometry::area(p);
@@ -52,14 +52,14 @@ inline double getIntersectionArea(
 {
   std::vector<Polygon2d> intersection_polygons;
   boost::geometry::intersection(source_polygon, target_polygon, intersection_polygons);
-  return getAreaSum(intersection_polygons);
+  return getSumArea(intersection_polygons);
 }
 
 inline double getUnionArea(const Polygon2d & source_polygon, const Polygon2d & target_polygon)
 {
   std::vector<Polygon2d> union_polygons;
   boost::geometry::union_(source_polygon, target_polygon, union_polygons);
-  return getAreaSum(union_polygons);
+  return getSumArea(union_polygons);
 }
 
 template <class T1, class T2>
