@@ -27,10 +27,10 @@
 #include <string>
 <<<<<<< HEAD
 #include <regex>
-=======
+  =======
 >>>>>>> 24d1e32bf92ddae1a1a7b5d93ae54ab99099bd8d
 
-class VoltageMonitor : public rclcpp::Node
+  class VoltageMonitor : public rclcpp::Node
 {
 public:
   /**

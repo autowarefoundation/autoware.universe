@@ -20,14 +20,11 @@
 
 #ifndef SYSTEM_MONITOR__MEM_MONITOR__MEM_MONITOR_HPP_
 #define SYSTEM_MONITOR__MEM_MONITOR__MEM_MONITOR_HPP_
-=======
- * @file voltage_monitor.h
- * @brief  voltage monitor class
- */
+======= * @file voltage_monitor.h * @brief voltage monitor class * /
 
 #ifndef SYSTEM_MONITOR__VOLTAGE_MONITOR__VOLTAGE_MONITOR_HPP_
 #define SYSTEM_MONITOR__VOLTAGE_MONITOR__VOLTAGE_MONITOR_HPP_
->>>>>>> change name hardware_monitor -> voltage_monitor:system/system_monitor/include/system_monitor/voltage_monitor/voltage_monitor.hpp
+  >>>>>>> change name hardware_monitor -> voltage_monitor:system/system_monitor/include/system_monitor/voltage_monitor/voltage_monitor.hpp
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
 
@@ -35,10 +32,9 @@
 #include <map>
 #include <string>
 
-<<<<<<< HEAD:system/system_monitor/include/system_monitor/mem_monitor/mem_monitor.hpp
-class MemMonitor : public rclcpp::Node
+  <<<<<<< HEAD:system/system_monitor/include/system_monitor/mem_monitor/mem_monitor.hpp class MemMonitor : public rclcpp::Node
 =======
-class VoltageMonitor : public rclcpp::Node
+  class VoltageMonitor : public rclcpp::Node
 >>>>>>> change name hardware_monitor -> voltage_monitor:system/system_monitor/include/system_monitor/voltage_monitor/voltage_monitor.hpp
 {
 public:
@@ -92,5 +88,5 @@ protected:
 <<<<<<< HEAD:system/system_monitor/include/system_monitor/mem_monitor/mem_monitor.hpp
 #endif  // SYSTEM_MONITOR__MEM_MONITOR__MEM_MONITOR_HPP_
 =======
-#endif  // SYSTEM_MONITOR__VOLTAGE_MONITOR__VOLTAGE_MONITOR_HPP_
->>>>>>> change name hardware_monitor -> voltage_monitor:system/system_monitor/include/system_monitor/voltage_monitor/voltage_monitor.hpp
+#endif  // SYSTEM_MONITOR__MEM_MONITOR__MEM_MONITOR_HPP_
+  >>>>>>> change name hardware_monitor -> voltage_monitor:system/system_monitor/include/system_monitor/voltage_monitor/voltage_monitor.hpp

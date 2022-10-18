@@ -55,7 +55,7 @@ Every topic is published in 1 minute interval.
 
 [Usage] ✓：Supported, -：Not supported
 
- Node            | Message                      | Intel | arm64(tegra) | arm64(raspi) | Notes                                                                                                                                                                                           |
+| Node            | Message                      | Intel | arm64(tegra) | arm64(raspi) | Notes                                                                                                                                                                                           |
 | --------------- | ---------------------------- | :---: | :----------: | :----------: | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | CPU Monitor     | CPU Temperature              |   ✓   |      ✓       |      ✓       |                                                                                                                                                                                                 |
 |                 | CPU Usage                    |   ✓   |      ✓       |      ✓       |                                                                                                                                                                                                 |
