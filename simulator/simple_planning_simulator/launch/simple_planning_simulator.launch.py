@@ -38,6 +38,7 @@ def launch_setup(context, *args, **kwargs):
     with open(simulator_model_param_path, "r") as f:
         simulator_model_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
+
     simple_planning_simulator_node = Node(
         package="simple_planning_simulator",
         executable="simple_planning_simulator_exe",
@@ -49,6 +50,7 @@ def launch_setup(context, *args, **kwargs):
             vehicle_characteristics_param,
             simulator_model_param,
             {
+                "acceleration_map_path": "/home/t4tanaka/workspace/ci-pilot-auto/src/autoware/universe/simulator/simple_planning_simulator/param/acceleration_map.csv",
                 "initial_engage_state": LaunchConfiguration("initial_engage_state"),
             },
         ],

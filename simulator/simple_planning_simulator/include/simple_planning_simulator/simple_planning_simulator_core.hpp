@@ -199,7 +199,8 @@ private:
     DELAY_STEER_ACC = 2,
     DELAY_STEER_ACC_GEARED = 3,
     IDEAL_STEER_VEL = 4,
-    DELAY_STEER_VEL = 5
+    DELAY_STEER_VEL = 5,
+    DELAY_CONVERTER = 6
   } vehicle_model_type_;  //!< @brief vehicle model type to decide the model dynamics
   std::shared_ptr<SimModelInterface> vehicle_model_ptr_;  //!< @brief vehicle model pointer
 

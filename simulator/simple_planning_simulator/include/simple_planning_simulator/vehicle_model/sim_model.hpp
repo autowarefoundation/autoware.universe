@@ -22,5 +22,6 @@
 #include "simple_planning_simulator/vehicle_model/sim_model_ideal_steer_acc_geared.hpp"
 #include "simple_planning_simulator/vehicle_model/sim_model_ideal_steer_vel.hpp"
 #include "simple_planning_simulator/vehicle_model/sim_model_interface.hpp"
+#include "simple_planning_simulator/vehicle_model/sim_model_with_converter.hpp"
 
 #endif  // SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_HPP_
