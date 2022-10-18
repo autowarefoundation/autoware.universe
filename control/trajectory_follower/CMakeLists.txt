@@ -54,6 +54,7 @@ set(LONGITUDINAL_CONTROLLER_LIB_SRC
   src/pid.cpp
   src/smooth_stop.cpp
   src/longitudinal_controller_utils.cpp
+  src/pid_longitudinal_controller_diagnostic.cpp
 )
 
 set(LONGITUDINAL_CONTROLLER_LIB_HEADERS

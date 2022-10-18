@@ -34,7 +34,8 @@ namespace control
 {
 namespace trajectory_follower
 {
-PidLongitudinalController::PidLongitudinalController(rclcpp::Node & node) : node_{&node}
+PidLongitudinalController::PidLongitudinalController(rclcpp::Node & node)
+: node_{&node}, diagnostic_updater_(&node)
 {
   using std::placeholders::_1;
 
@@ -199,6 +200,9 @@ PidLongitudinalController::PidLongitudinalController(rclcpp::Node & node) : node
   // set parameter callback
   m_set_param_res = node_->add_on_set_parameters_callback(
     std::bind(&PidLongitudinalController::paramCallback, this, _1));
+
+  // diagnostic
+  setupDiagnosticUpdater();
 }
 void PidLongitudinalController::setInputData(InputData const & input_data)
 {
@@ -403,6 +407,9 @@ boost::optional<LongitudinalOutput> PidLongitudinalController::run()
 
   // publish debug data
   publishDebugData(ctrl_cmd, control_data);
+
+  // diagnostic
+  diagnostic_updater_.force_update();
 
   return output;
 }
