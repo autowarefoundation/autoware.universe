@@ -33,6 +33,7 @@
 namespace occupancy_grid_based_validator
 {
 using Shape = autoware_auto_perception_msgs::msg::Shape;
+using Polygon2d = tier4_autoware_utils::Polygon2d;
 
 OccupancyGridBasedValidator::OccupancyGridBasedValidator(const rclcpp::NodeOptions & node_options)
 : rclcpp::Node("occupancy_grid_based_validator", node_options),
@@ -103,14 +104,14 @@ std::optional<cv::Mat> OccupancyGridBasedValidator::getMask(
 {
   const auto & resolution = occupancy_grid.info.resolution;
   const auto & origin = occupancy_grid.info.origin;
-  std::vector<cv::Point2f> vertices;
   std::vector<cv::Point> pixel_vertices;
-  toPolygon2d(object, vertices);
+  Polygon2d poly2d =
+    tier4_autoware_utils::toPolygon2d(object.kinematics.pose_with_covariance.pose, object.shape);
 
   bool is_polygon_within_image = true;
-  for (const auto & vertex : vertices) {
-    const float px = (vertex.x - origin.position.x) / resolution;
-    const float py = (vertex.y - origin.position.y) / resolution;
+  for (const auto & p : poly2d.outer()) {
+    const float px = (p.x() - origin.position.x) / resolution;
+    const float py = (p.y() - origin.position.y) / resolution;
     const bool is_point_within_image = (0 <= px && px < mask.cols && 0 <= py && py < mask.rows);
 
     if (!is_point_within_image) is_polygon_within_image = false;
@@ -139,37 +140,6 @@ cv::Mat OccupancyGridBasedValidator::fromOccupancyGrid(
       std::min(std::max(data, static_cast<signed char>(0)), static_cast<signed char>(50)) * 2;
   }
   return cv_occ_grid;
-}
-
-void OccupancyGridBasedValidator::toPolygon2d(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object,
-  std::vector<cv::Point2f> & vertices)
-{
-  if (object.shape.type == Shape::BOUNDING_BOX) {
-    const auto & pose = object.kinematics.pose_with_covariance.pose;
-    double yaw = tier4_autoware_utils::normalizeRadian(tf2::getYaw(pose.orientation));
-    Eigen::Matrix2d rotation;
-    rotation << std::cos(yaw), -std::sin(yaw), std::sin(yaw), std::cos(yaw);
-    Eigen::Vector2d offset0, offset1, offset2, offset3;
-    offset0 = rotation *
-              Eigen::Vector2d(object.shape.dimensions.x * 0.5f, object.shape.dimensions.y * 0.5f);
-    offset1 = rotation *
-              Eigen::Vector2d(object.shape.dimensions.x * 0.5f, -object.shape.dimensions.y * 0.5f);
-    offset2 = rotation *
-              Eigen::Vector2d(-object.shape.dimensions.x * 0.5f, -object.shape.dimensions.y * 0.5f);
-    offset3 = rotation *
-              Eigen::Vector2d(-object.shape.dimensions.x * 0.5f, object.shape.dimensions.y * 0.5f);
-    vertices.push_back(cv::Point2f(pose.position.x + offset0.x(), pose.position.y + offset0.y()));
-    vertices.push_back(cv::Point2f(pose.position.x + offset1.x(), pose.position.y + offset1.y()));
-    vertices.push_back(cv::Point2f(pose.position.x + offset2.x(), pose.position.y + offset2.y()));
-    vertices.push_back(cv::Point2f(pose.position.x + offset3.x(), pose.position.y + offset3.y()));
-  } else if (object.shape.type == Shape::CYLINDER) {
-    RCLCPP_WARN_THROTTLE(
-      this->get_logger(), *this->get_clock(), 5000, "CYLINDER type is not supported");
-  } else if (object.shape.type == Shape::POLYGON) {
-    RCLCPP_WARN_THROTTLE(
-      this->get_logger(), *this->get_clock(), 5000, "POLYGON type is not supported");
-  }
 }
 
 void OccupancyGridBasedValidator::showDebugImage(
