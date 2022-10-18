@@ -4,7 +4,7 @@
   <name>mrm_emergency_stop_operator</name>
   <version>0.1.0</version>
   <description>The MRM emergency stop operator package</description>
-  <maintainer email="mkuri8m@gmail.com">Makoto Kurihara</maintainer>
+  <maintainer email="makoto.kurihara@tier4.jp">Makoto Kurihara</maintainer>
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
