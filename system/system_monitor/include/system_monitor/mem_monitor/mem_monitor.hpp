@@ -13,21 +13,12 @@
 // limitations under the License.
 
 /**
-<<<<<<< HEAD:system/system_monitor/include/system_monitor/mem_monitor/mem_monitor.hpp
  * @file mem_monitor.h
  * @brief Memory monitor class
  */
 
 #ifndef SYSTEM_MONITOR__MEM_MONITOR__MEM_MONITOR_HPP_
 #define SYSTEM_MONITOR__MEM_MONITOR__MEM_MONITOR_HPP_
-=======
- * @file voltage_monitor.h
- * @brief  voltage monitor class
- */
-
-#ifndef SYSTEM_MONITOR__VOLTAGE_MONITOR__VOLTAGE_MONITOR_HPP_
-#define SYSTEM_MONITOR__VOLTAGE_MONITOR__VOLTAGE_MONITOR_HPP_
->>>>>>> change name hardware_monitor -> voltage_monitor:system/system_monitor/include/system_monitor/voltage_monitor/voltage_monitor.hpp
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
 
@@ -35,22 +26,14 @@
 #include <map>
 #include <string>
 
-<<<<<<< HEAD:system/system_monitor/include/system_monitor/mem_monitor/mem_monitor.hpp
 class MemMonitor : public rclcpp::Node
-=======
-class VoltageMonitor : public rclcpp::Node
->>>>>>> change name hardware_monitor -> voltage_monitor:system/system_monitor/include/system_monitor/voltage_monitor/voltage_monitor.hpp
 {
 public:
   /**
    * @brief constructor
    * @param [in] options Options associated with this node.
    */
-<<<<<<< HEAD:system/system_monitor/include/system_monitor/mem_monitor/mem_monitor.hpp
   explicit MemMonitor(const rclcpp::NodeOptions & options);
-=======
-  explicit VoltageMonitor(const rclcpp::NodeOptions & options);
->>>>>>> change name hardware_monitor -> voltage_monitor:system/system_monitor/include/system_monitor/voltage_monitor/voltage_monitor.hpp
 
   /**
    * @brief Update the diagnostic state.
@@ -89,8 +72,4 @@ protected:
     {DiagStatus::OK, "OK"}, {DiagStatus::WARN, "high load"}, {DiagStatus::ERROR, "very high load"}};
 };
 
-<<<<<<< HEAD:system/system_monitor/include/system_monitor/mem_monitor/mem_monitor.hpp
 #endif  // SYSTEM_MONITOR__MEM_MONITOR__MEM_MONITOR_HPP_
-=======
-#endif  // SYSTEM_MONITOR__VOLTAGE_MONITOR__VOLTAGE_MONITOR_HPP_
->>>>>>> change name hardware_monitor -> voltage_monitor:system/system_monitor/include/system_monitor/voltage_monitor/voltage_monitor.hpp
