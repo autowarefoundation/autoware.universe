@@ -63,15 +63,22 @@ PullOverModule::PullOverModule(
       node, parameters, lane_departure_checker_, occupancy_grid_map_));
   }
   if (parameters_.enable_arc_forward_parking) {
-    const bool is_forward = true;
+    constexpr bool is_forward = true;
     pull_over_planners_.push_back(std::make_shared<GeometricPullOver>(
       node, parameters, getGeometricPullOverParameters(), occupancy_grid_map_, is_forward));
   }
   if (parameters_.enable_arc_backward_parking) {
-    const bool is_forward = false;
+    constexpr bool is_forward = false;
     pull_over_planners_.push_back(std::make_shared<GeometricPullOver>(
       node, parameters, getGeometricPullOverParameters(), occupancy_grid_map_, is_forward));
   }
+
+  // set selected goal searcher
+  // currently there is only one goal_searcher_type
+  const auto & vehicle_footprint =
+    createVehicleFootprint(vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo());
+  goal_searcher_ =
+    std::make_shared<GoalSearcher>(parameters, vehicle_footprint, occupancy_grid_map_);
 
   // for collision check with objects
   vehicle_footprint_ = createVehicleFootprint(vehicle_info_);
@@ -258,33 +265,6 @@ Pose PullOverModule::calcRefinedGoal() const
   return refined_goal_pose;
 }
 
-void PullOverModule::researchGoal()
-{
-  // Find goals in pull over areas.
-  goal_candidates_.clear();
-  for (double dx = -parameters_.backward_goal_search_length;
-       dx <= parameters_.forward_goal_search_length; dx += parameters_.goal_search_interval) {
-    const Pose search_pose = calcOffsetPose(refined_goal_pose_, dx, 0, 0);
-    if (checkCollisionWithPose(search_pose)) {
-      continue;
-    }
-
-    const auto objects_in_shoulder_lane =
-      util::filterObjectsByLanelets(*(planner_data_->dynamic_object), status_.pull_over_lanes);
-    if (checkCollisionWithLongitudinalDistance(search_pose, objects_in_shoulder_lane)) {
-      continue;
-    }
-
-    GoalCandidate goal_candidate;
-    goal_candidate.goal_pose = search_pose;
-    goal_candidate.distance_from_original_goal =
-      std::abs(inverseTransformPose(search_pose, refined_goal_pose_).position.x);
-    goal_candidates_.push_back(goal_candidate);
-  }
-  // Sort with distance from original goal
-  std::sort(goal_candidates_.begin(), goal_candidates_.end());
-}
-
 BT::NodeStatus PullOverModule::updateState()
 {
   // pull_out module will be run when setting new goal, so not need finishing pull_over module.
@@ -322,75 +302,10 @@ bool PullOverModule::isLongEnoughToParkingStart(
   return *dist_to_parking_start_pose > current_to_stop_distance;
 }
 
-bool PullOverModule::checkCollisionWithLongitudinalDistance(
-  const Pose & ego_pose, const PredictedObjects & dynamic_objects) const
-{
-  if (parameters_.use_occupancy_grid) {
-    bool check_out_of_range = false;
-    const double offset = std::max(
-      parameters_.goal_to_obstacle_margin - parameters_.occupancy_grid_collision_check_margin, 0.0);
-
-    // check forward collision
-    const Pose ego_pose_moved_forward = calcOffsetPose(ego_pose, offset, 0, 0);
-    const Pose forward_pose_grid_coords =
-      global2local(occupancy_grid_map_->getMap(), ego_pose_moved_forward);
-    const auto forward_idx = pose2index(
-      occupancy_grid_map_->getMap(), forward_pose_grid_coords,
-      occupancy_grid_map_->getParam().theta_size);
-    if (occupancy_grid_map_->detectCollision(forward_idx, check_out_of_range)) {
-      return true;
-    }
-
-    // check backward collision
-    const Pose ego_pose_moved_backward = calcOffsetPose(ego_pose, -offset, 0, 0);
-    const Pose backward_pose_grid_coords =
-      global2local(occupancy_grid_map_->getMap(), ego_pose_moved_backward);
-    const auto backward_idx = pose2index(
-      occupancy_grid_map_->getMap(), backward_pose_grid_coords,
-      occupancy_grid_map_->getParam().theta_size);
-    if (occupancy_grid_map_->detectCollision(backward_idx, check_out_of_range)) {
-      return true;
-    }
-  }
-
-  if (parameters_.use_object_recognition) {
-    if (
-      util::calcLongitudinalDistanceFromEgoToObjects(
-        ego_pose, planner_data_->parameters.base_link2front,
-        planner_data_->parameters.base_link2rear,
-        dynamic_objects) < parameters_.goal_to_obstacle_margin) {
-      return true;
-    }
-  }
-  return false;
-}
-
-bool PullOverModule::checkCollisionWithPose(const Pose & pose) const
-{
-  if (parameters_.use_occupancy_grid) {
-    const Pose pose_grid_coords = global2local(occupancy_grid_map_->getMap(), pose);
-    const auto idx = pose2index(
-      occupancy_grid_map_->getMap(), pose_grid_coords, occupancy_grid_map_->getParam().theta_size);
-    const bool check_out_of_range = false;
-    if (occupancy_grid_map_->detectCollision(idx, check_out_of_range)) {
-      return true;
-    }
-  }
-
-  if (parameters_.use_object_recognition) {
-    if (util::checkCollisionBetweenFootprintAndObjects(
-          vehicle_footprint_, pose, *(planner_data_->dynamic_object),
-          parameters_.object_recognition_collision_check_margin)) {
-      return true;
-    }
-  }
-  return false;
-}
-
 bool PullOverModule::planWithEfficientPath()
 {
   for (const auto & planner : pull_over_planners_) {
-    for (const auto goal_candidate : goal_candidates_) {
+    for (const auto & goal_candidate : goal_candidates_) {
       planner->setPlannerData(planner_data_);
       const auto pull_over_path = planner->plan(goal_candidate.goal_pose);
       if (!pull_over_path) {
@@ -408,7 +323,7 @@ bool PullOverModule::planWithEfficientPath()
 
 bool PullOverModule::planWithCloseGoal()
 {
-  for (const auto goal_candidate : goal_candidates_) {
+  for (const auto & goal_candidate : goal_candidates_) {
     for (const auto & planner : pull_over_planners_) {
       planner->setPlannerData(planner_data_);
       const auto pull_over_path = planner->plan(goal_candidate.goal_pose);
@@ -481,7 +396,7 @@ BehaviorModuleOutput PullOverModule::plan()
       // if using arc_path and finishing current_path, get next path
       // enough time for turn signal
       const bool has_passed_enough_time = (clock_->now() - *last_approved_time_).seconds() >
-                                          planner_data_->parameters.turn_light_on_threshold_time;
+                                          planner_data_->parameters.turn_signal_search_time;
 
       if (hasFinishedCurrentPath() && has_passed_enough_time) {
         incrementPathIndex();
@@ -490,7 +405,10 @@ BehaviorModuleOutput PullOverModule::plan()
 
   } else {  // Replan shift -> arc forward -> arc backward path with each goal candidate.
     // Research goal when enabling research and final path has not been decided
-    if (parameters_.enable_goal_research) researchGoal();
+    if (parameters_.enable_goal_research) {
+      goal_searcher_->setPlannerData(planner_data_);
+      goal_candidates_ = goal_searcher_->search(refined_goal_pose_, status_.pull_over_lanes);
+    }
 
     // plan paths with several goals and planner
     if (parameters_.search_priority == "efficient_path") {
@@ -675,7 +593,7 @@ PathWithLaneId PullOverModule::getReferencePath() const
 
   // slow down for turn signal, insert stop point to stop_pose
   reference_path = util::setDecelerationVelocityForTurnSignal(
-    reference_path, stop_pose, planner_data_->parameters.turn_light_on_threshold_time);
+    reference_path, stop_pose, planner_data_->parameters.turn_signal_search_time);
 
   // slow down before the search area.
   if (stop_pose != search_start_pose) {
@@ -875,18 +793,18 @@ void PullOverModule::setDebugData()
 
   using marker_utils::createPathMarkerArray;
   using marker_utils::createPoseMarkerArray;
+  using tier4_autoware_utils::createMarkerColor;
 
   const auto add = [this](const MarkerArray & added) {
     tier4_autoware_utils::appendMarkerArray(added, &debug_marker_);
   };
 
-  // Visualize pull over areas
   if (parameters_.enable_goal_research) {
+    // Visualize pull over areas
     const Pose start_pose =
       calcOffsetPose(refined_goal_pose_, -parameters_.backward_goal_search_length, 0, 0);
     const Pose end_pose =
       calcOffsetPose(refined_goal_pose_, parameters_.forward_goal_search_length, 0, 0);
-    // marker_array.markers.push_back(createParkingAreaMarker(start_pose, end_pose, 0));
     const auto header = planner_data_->route_handler->getRouteHeader();
     const auto color = status_.has_decided_path ? createMarkerColor(1.0, 1.0, 0.0, 0.999)  // yellow
                                                 : createMarkerColor(0.0, 1.0, 0.0, 0.999);  // green
@@ -894,6 +812,9 @@ void PullOverModule::setDebugData()
     debug_marker_.markers.push_back(pull_over_utils::createPullOverAreaMarker(
       start_pose, end_pose, 0, header, p.base_link2front, p.base_link2rear, p.vehicle_width,
       color));
+
+    // Visualize goal candidates
+    add(pull_over_utils::createGoalCandidatesMarkerArray(goal_candidates_, color));
   }
 
   // Visualize path and related pose
