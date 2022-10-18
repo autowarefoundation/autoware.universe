@@ -68,14 +68,16 @@ public:
     double max_delay_sec;
     double near_line_distance;
     double dead_line_margin;
+    double hold_stop_margin_distance;
     double max_yaw_deviation_rad;
     bool check_timeout_after_stop_line;
   };
 
 public:
   VirtualTrafficLightModule(
-    const int64_t module_id, const lanelet::autoware::VirtualTrafficLight & reg_elem,
-    lanelet::ConstLanelet lane, const PlannerParam & planner_param, const rclcpp::Logger logger,
+    const int64_t module_id, const int64_t lane_id,
+    const lanelet::autoware::VirtualTrafficLight & reg_elem, lanelet::ConstLanelet lane,
+    const PlannerParam & planner_param, const rclcpp::Logger logger,
     const rclcpp::Clock::SharedPtr clock);
 
   bool modifyPathVelocity(
@@ -86,7 +88,7 @@ public:
   visualization_msgs::msg::MarkerArray createVirtualWallMarkerArray() override;
 
 private:
-  const int64_t module_id_;
+  const int64_t lane_id_;
   const lanelet::autoware::VirtualTrafficLight & reg_elem_;
   const lanelet::ConstLanelet lane_;
   const PlannerParam planner_param_;
@@ -100,13 +102,15 @@ private:
   void setStopReason(
     const geometry_msgs::msg::Pose & stop_pose, tier4_planning_msgs::msg::StopReason * stop_reason);
 
-  bool isBeforeStartLine();
+  boost::optional<size_t> getPathIndexOfFirstEndLine();
 
-  bool isBeforeStopLine();
+  bool isBeforeStartLine(const size_t end_line_idx);
 
-  bool isAfterAnyEndLine();
+  bool isBeforeStopLine(const size_t end_line_idx);
 
-  bool isNearAnyEndLine();
+  bool isAfterAnyEndLine(const size_t end_line_idx);
+
+  bool isNearAnyEndLine(const size_t end_line_idx);
 
   boost::optional<tier4_v2x_msgs::msg::VirtualTrafficLightState> findCorrespondingState();
 
@@ -116,11 +120,11 @@ private:
 
   void insertStopVelocityAtStopLine(
     autoware_auto_planning_msgs::msg::PathWithLaneId * path,
-    tier4_planning_msgs::msg::StopReason * stop_reason);
+    tier4_planning_msgs::msg::StopReason * stop_reason, const size_t end_line_idx);
 
   void insertStopVelocityAtEndLine(
     autoware_auto_planning_msgs::msg::PathWithLaneId * path,
-    tier4_planning_msgs::msg::StopReason * stop_reason);
+    tier4_planning_msgs::msg::StopReason * stop_reason, const size_t end_line_idx);
 };
 }  // namespace behavior_velocity_planner
 #endif  // SCENE_MODULE__VIRTUAL_TRAFFIC_LIGHT__SCENE_HPP_

@@ -52,7 +52,6 @@ struct RunOutParam
   double stop_margin;
   double passing_margin;
   double deceleration_jerk;
-  double obstacle_velocity_kph;
   float detection_distance;
   float detection_span;
   float min_vel_ego_kmph;
@@ -65,12 +64,10 @@ struct VehicleParam
   float width;
 };
 
-struct DetectionAreaSize
+struct DetectionArea
 {
-  float dist_ahead;
-  float dist_behind;
-  float dist_right;
-  float dist_left;
+  float margin_ahead;
+  float margin_behind;
 };
 
 struct ApproachingParam
@@ -78,9 +75,14 @@ struct ApproachingParam
   bool enable;
   float margin;
   float limit_vel_kmph;
+};
+
+struct StateParam
+{
   float stop_thresh;
   float stop_time_thresh;
-  float dist_thresh;
+  float disable_approach_dist;
+  float keep_approach_duration;
 };
 
 struct SlowDownLimit
@@ -90,21 +92,22 @@ struct SlowDownLimit
   float max_acc;
 };
 
+struct Smoother
+{
+  double start_jerk;
+};
+
 struct PlannerParam
 {
   CommonParam common;
   RunOutParam run_out;
   VehicleParam vehicle_param;
-  DetectionAreaSize detection_area;
+  DetectionArea detection_area;
   ApproachingParam approaching;
+  StateParam state_param;
   DynamicObstacleParam dynamic_obstacle;
   SlowDownLimit slow_down_limit;
-};
-
-enum class State {
-  GO = 0,
-  APPROACH,
-  STOP,
+  Smoother smoother;
 };
 
 enum class DetectionMethod {
@@ -207,9 +210,6 @@ PathPointsWithLaneId decimatePathPoints(
 PathWithLaneId trimPathFromSelfPose(
   const PathWithLaneId & input, const geometry_msgs::msg::Pose & self_pose,
   const double trim_distance);
-
-std::vector<geometry_msgs::msg::Point> createDetectionAreaPolygon(
-  const geometry_msgs::msg::Pose & current_pose, const DetectionAreaSize detection_area_size);
 
 // create polygon for passing lines and deceleration line calculated by stopping jerk
 // note that this polygon is not closed

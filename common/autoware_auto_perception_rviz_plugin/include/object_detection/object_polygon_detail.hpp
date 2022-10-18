@@ -22,6 +22,7 @@
 #include <autoware_auto_perception_msgs/msg/object_classification.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_path.hpp>
 #include <autoware_auto_perception_msgs/msg/shape.hpp>
+#include <geometry_msgs/msg/accel.hpp>
 #include <geometry_msgs/msg/pose_with_covariance.hpp>
 #include <geometry_msgs/msg/twist.hpp>
 #include <geometry_msgs/msg/twist_with_covariance.hpp>
@@ -75,12 +76,13 @@ const std::map<
 /// \param centroid Centroid position of the shape in Object.header.frame_id frame
 /// \param orientation Orientation of the shape in Object.header.frame_id frame
 /// \param color_rgba Color and alpha values to use for the marker
+/// \param line_width Line thickness around the object
 /// \return Marker ptr. Id and header will have to be set by the caller
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC visualization_msgs::msg::Marker::SharedPtr
 get_shape_marker_ptr(
   const autoware_auto_perception_msgs::msg::Shape & shape_msg,
   const geometry_msgs::msg::Point & centroid, const geometry_msgs::msg::Quaternion & orientation,
-  const std_msgs::msg::ColorRGBA & color_rgba);
+  const std_msgs::msg::ColorRGBA & color_rgba, const double & line_width);
 
 /// \brief Convert the given polygon into a marker representing the shape in 3d
 /// \param centroid Centroid position of the shape in Object.header.frame_id frame
@@ -102,6 +104,11 @@ get_pose_with_covariance_marker_ptr(
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC visualization_msgs::msg::Marker::SharedPtr
 get_velocity_text_marker_ptr(
   const geometry_msgs::msg::Twist & twist, const geometry_msgs::msg::Point & vis_pos,
+  const std_msgs::msg::ColorRGBA & color_rgba);
+
+AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC visualization_msgs::msg::Marker::SharedPtr
+get_acceleration_text_marker_ptr(
+  const geometry_msgs::msg::Accel & accel, const geometry_msgs::msg::Point & vis_pos,
   const std_msgs::msg::ColorRGBA & color_rgba);
 
 AUTOWARE_AUTO_PERCEPTION_RVIZ_PLUGIN_PUBLIC visualization_msgs::msg::Marker::SharedPtr

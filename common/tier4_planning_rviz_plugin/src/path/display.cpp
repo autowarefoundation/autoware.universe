@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <path/display.hpp>
+#include <utils.hpp>
 
 #include <memory>
 #define EIGEN_MPL2_ONLY
@@ -25,9 +26,10 @@ std::unique_ptr<Ogre::ColourValue> AutowarePathDisplay::gradation(
   const QColor & color_min, const QColor & color_max, const double ratio)
 {
   std::unique_ptr<Ogre::ColourValue> color_ptr(new Ogre::ColourValue);
-  color_ptr->g = color_max.greenF() * ratio + color_min.greenF() * (1.0 - ratio);
-  color_ptr->r = color_max.redF() * ratio + color_min.redF() * (1.0 - ratio);
-  color_ptr->b = color_max.blueF() * ratio + color_min.blueF() * (1.0 - ratio);
+  color_ptr->g =
+    static_cast<float>(color_max.greenF() * ratio + color_min.greenF() * (1.0 - ratio));
+  color_ptr->r = static_cast<float>(color_max.redF() * ratio + color_min.redF() * (1.0 - ratio));
+  color_ptr->b = static_cast<float>(color_max.blueF() * ratio + color_min.blueF() * (1.0 - ratio));
 
   return color_ptr;
 }
@@ -166,7 +168,8 @@ void AutowarePathDisplay::processMessage(
     // path_manual_object_->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_TRIANGLE_STRIP);
     velocity_manual_object_->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_LINE_STRIP);
 
-    for (auto && path_point : msg_ptr->points) {
+    for (size_t point_idx = 0; point_idx < msg_ptr->points.size(); point_idx++) {
+      const auto & path_point = msg_ptr->points.at(point_idx);
       /*
        * Path
        */
@@ -181,20 +184,22 @@ void AutowarePathDisplay::processMessage(
           color = *dynamic_color_ptr;
         }
         color.a = property_path_alpha_->getFloat();
-        Eigen::Vector3f vec_in, vec_out;
+        Eigen::Vector3f vec_in;
+        Eigen::Vector3f vec_out;
         Eigen::Quaternionf quat_yaw_reverse(0, 0, 0, 1);
         {
           vec_in << 0, (property_path_width_->getFloat() / 2.0), 0;
           Eigen::Quaternionf quat(
             path_point.pose.orientation.w, path_point.pose.orientation.x,
             path_point.pose.orientation.y, path_point.pose.orientation.z);
-          if (path_point.longitudinal_velocity_mps < 0) {
+          if (!isDrivingForward(msg_ptr->points, point_idx)) {
             quat *= quat_yaw_reverse;
           }
           vec_out = quat * vec_in;
           path_manual_object_->position(
-            path_point.pose.position.x + vec_out.x(), path_point.pose.position.y + vec_out.y(),
-            path_point.pose.position.z + vec_out.z());
+            static_cast<float>(path_point.pose.position.x) + vec_out.x(),
+            static_cast<float>(path_point.pose.position.y) + vec_out.y(),
+            static_cast<float>(path_point.pose.position.z) + vec_out.z());
           path_manual_object_->colour(color);
         }
         {
@@ -202,13 +207,14 @@ void AutowarePathDisplay::processMessage(
           Eigen::Quaternionf quat(
             path_point.pose.orientation.w, path_point.pose.orientation.x,
             path_point.pose.orientation.y, path_point.pose.orientation.z);
-          if (path_point.longitudinal_velocity_mps < 0) {
+          if (!isDrivingForward(msg_ptr->points, point_idx)) {
             quat *= quat_yaw_reverse;
           }
           vec_out = quat * vec_in;
           path_manual_object_->position(
-            path_point.pose.position.x + vec_out.x(), path_point.pose.position.y + vec_out.y(),
-            path_point.pose.position.z + vec_out.z());
+            static_cast<float>(path_point.pose.position.x) + vec_out.x(),
+            static_cast<float>(path_point.pose.position.y) + vec_out.y(),
+            static_cast<float>(path_point.pose.position.z) + vec_out.z());
           path_manual_object_->colour(color);
         }
       }
@@ -229,7 +235,7 @@ void AutowarePathDisplay::processMessage(
 
         velocity_manual_object_->position(
           path_point.pose.position.x, path_point.pose.position.y,
-          path_point.pose.position.z +
+          static_cast<float>(path_point.pose.position.z) +
             path_point.longitudinal_velocity_mps * property_velocity_scale_->getFloat());
         velocity_manual_object_->colour(color);
       }

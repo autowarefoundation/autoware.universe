@@ -91,23 +91,22 @@ bool OcclusionSpotModule::modifyPathVelocity(
     param_.v.max_stop_jerk = planner_data_->max_stop_jerk_threshold;
     param_.v.max_stop_accel = planner_data_->max_stop_acceleration_threshold;
     param_.v.v_ego = planner_data_->current_velocity->twist.linear.x;
-    param_.v.a_ego = planner_data_->current_accel.get();
+    param_.v.a_ego = planner_data_->current_acceleration->accel.accel.linear.x;
     param_.v.delay_time = planner_data_->system_delay;
-    const double detection_area_offset = 5.0;  // for visualization and stability
     param_.detection_area_max_length =
       planning_utils::calcJudgeLineDistWithJerkLimit(
         param_.v.v_ego, param_.v.a_ego, param_.v.non_effective_accel, param_.v.non_effective_jerk,
         planner_data_->delay_response_time) +
-      detection_area_offset;
+      param_.detection_area_offset;  // To fill difference between planned and measured acc
   }
   const geometry_msgs::msg::Pose ego_pose = planner_data_->current_pose.pose;
   PathWithLaneId clipped_path;
   utils::clipPathByLength(*path, clipped_path, param_.detection_area_length);
   PathWithLaneId path_interpolated;
   //! never change this interpolation interval(will affect module accuracy)
-  splineInterpolate(clipped_path, 1.0, &path_interpolated, logger_);
+  splineInterpolate(clipped_path, 1.0, path_interpolated, logger_);
   const geometry_msgs::msg::Point start_point = path_interpolated.points.at(0).point.pose.position;
-  const auto offset = tier4_autoware_utils::calcSignedArcLength(
+  const auto offset = motion_utils::calcSignedArcLength(
     path_interpolated.points, ego_pose, start_point, param_.dist_thr, param_.angle_thr);
   if (offset == boost::none) return true;
   const double offset_from_start_to_ego = -offset.get();
@@ -123,8 +122,9 @@ bool OcclusionSpotModule::modifyPathVelocity(
     }
   }
   DEBUG_PRINT(show_time, "apply velocity [ms]: ", stop_watch_.toc("processing_time", true));
+  const size_t ego_seg_idx = findEgoSegmentIndex(predicted_path.points);
   if (!utils::buildDetectionAreaPolygon(
-        debug_data_.detection_area_polygons, predicted_path, ego_pose, param_)) {
+        debug_data_.detection_area_polygons, predicted_path, ego_pose, ego_seg_idx, param_)) {
     return true;  // path point is not enough
   }
   DEBUG_PRINT(show_time, "generate poly[ms]: ", stop_watch_.toc("processing_time", true));

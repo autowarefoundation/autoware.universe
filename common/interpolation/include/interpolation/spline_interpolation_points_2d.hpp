@@ -21,8 +21,12 @@
 
 namespace interpolation
 {
+std::array<std::vector<double>, 3> slerp2dFromXY(
+  const std::vector<double> & base_keys, const std::vector<double> & base_x_values,
+  const std::vector<double> & base_y_values, const std::vector<double> & query_keys);
+
 template <typename T>
-std::vector<double> slerpYawFromPoints(const std::vector<T> & points);
+std::vector<double> splineYawFromPoints(const std::vector<T> & points);
 }  // namespace interpolation
 
 // non-static points spline interpolation
@@ -66,8 +70,8 @@ public:
 
 private:
   void calcSplineCoefficientsInner(const std::vector<geometry_msgs::msg::Point> & points);
-  SplineInterpolation slerp_x_;
-  SplineInterpolation slerp_y_;
+  SplineInterpolation spline_x_;
+  SplineInterpolation spline_y_;
 
   std::vector<double> base_s_vec_;
 };

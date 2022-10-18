@@ -14,7 +14,6 @@
 
 import os
 
-from ament_index_python.packages import get_package_share_directory
 import launch
 from launch.actions import DeclareLaunchArgument
 from launch.actions import GroupAction
@@ -39,8 +38,7 @@ def launch_setup(context, *args, **kwargs):
 
     # planning common param path
     common_param_path = os.path.join(
-        get_package_share_directory("tier4_planning_launch"),
-        "config",
+        LaunchConfiguration("tier4_planning_launch_param_path").perform(context),
         "scenario_planning",
         "common",
         "common.param.yaml",
@@ -48,10 +46,19 @@ def launch_setup(context, *args, **kwargs):
     with open(common_param_path, "r") as f:
         common_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
+    # nearest search parameter
+    nearest_search_param_path = os.path.join(
+        LaunchConfiguration("tier4_planning_launch_param_path").perform(context),
+        "scenario_planning",
+        "common",
+        "nearest_search.param.yaml",
+    )
+    with open(nearest_search_param_path, "r") as f:
+        nearest_search_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+
     # obstacle avoidance planner
     obstacle_avoidance_planner_param_path = os.path.join(
-        get_package_share_directory("tier4_planning_launch"),
-        "config",
+        LaunchConfiguration("tier4_planning_launch_param_path").perform(context),
         "scenario_planning",
         "lane_driving",
         "motion_planning",
@@ -71,6 +78,7 @@ def launch_setup(context, *args, **kwargs):
             ("~/output/path", "obstacle_avoidance_planner/trajectory"),
         ],
         parameters=[
+            nearest_search_param,
             obstacle_avoidance_planner_param,
             vehicle_info_param,
             {"is_showing_debug_info": False},
@@ -81,8 +89,7 @@ def launch_setup(context, *args, **kwargs):
 
     # surround obstacle checker
     surround_obstacle_checker_param_path = os.path.join(
-        get_package_share_directory("tier4_planning_launch"),
-        "config",
+        LaunchConfiguration("tier4_planning_launch_param_path").perform(context),
         "scenario_planning",
         "lane_driving",
         "motion_planning",
@@ -120,8 +127,7 @@ def launch_setup(context, *args, **kwargs):
 
     # obstacle stop planner
     obstacle_stop_planner_param_path = os.path.join(
-        get_package_share_directory("tier4_planning_launch"),
-        "config",
+        LaunchConfiguration("tier4_planning_launch_param_path").perform(context),
         "scenario_planning",
         "lane_driving",
         "motion_planning",
@@ -129,8 +135,7 @@ def launch_setup(context, *args, **kwargs):
         "obstacle_stop_planner.param.yaml",
     )
     obstacle_stop_planner_acc_param_path = os.path.join(
-        get_package_share_directory("tier4_planning_launch"),
-        "config",
+        LaunchConfiguration("tier4_planning_launch_param_path").perform(context),
         "scenario_planning",
         "lane_driving",
         "motion_planning",
@@ -155,6 +160,7 @@ def launch_setup(context, *args, **kwargs):
                 "/planning/scenario_planning/clear_velocity_limit",
             ),
             ("~/output/trajectory", "/planning/scenario_planning/lane_driving/trajectory"),
+            ("~/input/acceleration", "/localization/acceleration"),
             (
                 "~/input/pointcloud",
                 "/perception/obstacle_segmentation/pointcloud",
@@ -164,6 +170,7 @@ def launch_setup(context, *args, **kwargs):
             ("~/input/trajectory", "obstacle_avoidance_planner/trajectory"),
         ],
         parameters=[
+            nearest_search_param,
             common_param,
             obstacle_stop_planner_param,
             obstacle_stop_planner_acc_param,
@@ -175,8 +182,7 @@ def launch_setup(context, *args, **kwargs):
 
     # obstacle cruise planner
     obstacle_cruise_planner_param_path = os.path.join(
-        get_package_share_directory("tier4_planning_launch"),
-        "config",
+        LaunchConfiguration("tier4_planning_launch_param_path").perform(context),
         "scenario_planning",
         "lane_driving",
         "motion_planning",
@@ -193,6 +199,7 @@ def launch_setup(context, *args, **kwargs):
         remappings=[
             ("~/input/trajectory", "obstacle_avoidance_planner/trajectory"),
             ("~/input/odometry", "/localization/kinematic_state"),
+            ("~/input/acceleration", "/localization/acceleration"),
             ("~/input/objects", "/perception/object_recognition/objects"),
             ("~/output/trajectory", "/planning/scenario_planning/lane_driving/trajectory"),
             ("~/output/velocity_limit", "/planning/scenario_planning/max_velocity_candidates"),
@@ -200,6 +207,7 @@ def launch_setup(context, *args, **kwargs):
             ("~/output/stop_reasons", "/planning/scenario_planning/status/stop_reasons"),
         ],
         parameters=[
+            nearest_search_param,
             common_param,
             obstacle_cruise_planner_param,
         ],
@@ -295,6 +303,8 @@ def generate_launch_description():
     add_launch_arg(
         "cruise_planner", "obstacle_stop_planner", "cruise planner type"
     )  # select from "obstacle_stop_planner", "obstacle_cruise_planner", "none"
+
+    add_launch_arg("tier4_planning_launch_param_path", None, "tier4_planning_launch parameter path")
 
     add_launch_arg("use_intra_process", "false", "use ROS2 component container communication")
     add_launch_arg("use_multithread", "false", "use multithread")

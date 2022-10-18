@@ -15,8 +15,13 @@
 #ifndef COMPONENT_INTERFACE_UTILS__RCLCPP__SERVICE_SERVER_HPP_
 #define COMPONENT_INTERFACE_UTILS__RCLCPP__SERVICE_SERVER_HPP_
 
-#include <rclcpp/logging.hpp>
-#include <rclcpp/service.hpp>
+#include <component_interface_utils/rclcpp/exceptions.hpp>
+#include <component_interface_utils/rclcpp/interface.hpp>
+#include <rclcpp/node.hpp>
+
+#include <tier4_system_msgs/msg/service_log.hpp>
+
+#include <string>
 
 namespace component_interface_utils
 {
@@ -25,30 +30,60 @@ namespace component_interface_utils
 template <class SpecT>
 class Service
 {
+private:
+  // Detect if the service response has status.
+  template <class, template <class> class, class = std::void_t<>>
+  struct detect : std::false_type
+  {
+  };
+  template <class T, template <class> class Check>
+  struct detect<T, Check, std::void_t<Check<T>>> : std::true_type
+  {
+  };
+  template <class T>
+  using has_status_impl = decltype(std::declval<T>().status);
+  template <class T>
+  using has_status_type = detect<T, has_status_impl>;
+
 public:
   RCLCPP_SMART_PTR_DEFINITIONS(Service)
   using SpecType = SpecT;
   using WrapType = rclcpp::Service<typename SpecT::Service>;
+  using ServiceLog = tier4_system_msgs::msg::ServiceLog;
 
   /// Constructor.
-  explicit Service(typename WrapType::SharedPtr service)
+  template <class CallbackT>
+  Service(
+    NodeInterface::SharedPtr interface, CallbackT && callback,
+    rclcpp::CallbackGroup::SharedPtr group)
+  : interface_(interface)
   {
-    service_ = service;  // to keep the reference count
+    service_ = interface_->node->create_service<typename SpecT::Service>(
+      SpecT::name, wrap(callback), rmw_qos_profile_services_default, group);
   }
 
   /// Create a service callback with logging added.
   template <class CallbackT>
-  static auto wrap(CallbackT && callback, const rclcpp::Logger & logger)
+  typename WrapType::CallbackType wrap(CallbackT && callback)
   {
-    auto wrapped = [logger, callback](
+    auto wrapped = [this, callback](
                      typename SpecT::Service::Request::SharedPtr request,
                      typename SpecT::Service::Response::SharedPtr response) {
 #ifdef ROS_DISTRO_GALACTIC
       using rosidl_generator_traits::to_yaml;
 #endif
-      RCLCPP_INFO_STREAM(logger, "service call: " << SpecT::name << "\n" << to_yaml(*request));
-      callback(request, response);
-      RCLCPP_INFO_STREAM(logger, "service exit: " << SpecT::name << "\n" << to_yaml(*response));
+      // If the response has status, convert it from the exception.
+      interface_->log(ServiceLog::SERVER_REQUEST, SpecType::name, to_yaml(*request));
+      if constexpr (!has_status_type<typename SpecT::Service::Response>::value) {
+        callback(request, response);
+      } else {
+        try {
+          callback(request, response);
+        } catch (const ServiceException & error) {
+          error.set(response->status);
+        }
+      }
+      interface_->log(ServiceLog::SERVER_RESPONSE, SpecType::name, to_yaml(*response));
     };
     return wrapped;
   }
@@ -56,6 +91,7 @@ public:
 private:
   RCLCPP_DISABLE_COPY(Service)
   typename WrapType::SharedPtr service_;
+  NodeInterface::SharedPtr interface_;
 };
 
 }  // namespace component_interface_utils

@@ -29,7 +29,8 @@ struct SceneModuleStatus
   explicit SceneModuleStatus(const std::string & n) : module_name(n) {}
   std::string module_name;  // TODO(Horibe) should be const
   bool is_requested{false};
-  bool is_waiting_approval{true};
+  bool is_execution_ready{false};
+  bool is_waiting_approval{false};
   BT::NodeStatus status{BT::NodeStatus::IDLE};
 };
 

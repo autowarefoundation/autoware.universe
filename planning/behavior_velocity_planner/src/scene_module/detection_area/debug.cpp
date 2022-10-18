@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <motion_utils/motion_utils.hpp>
 #include <scene_module/detection_area/scene.hpp>
-#include <utilization/marker_helper.hpp>
+#include <utilization/debug.hpp>
 #include <utilization/util.hpp>
 
 #ifdef ROS_DISTRO_GALACTIC
@@ -26,6 +27,11 @@
 
 namespace behavior_velocity_planner
 {
+using tier4_autoware_utils::appendMarkerArray;
+using tier4_autoware_utils::createDefaultMarker;
+using tier4_autoware_utils::createMarkerColor;
+using tier4_autoware_utils::createMarkerScale;
+
 namespace
 {
 using DebugData = DetectionAreaModule::DebugData;
@@ -61,8 +67,8 @@ visualization_msgs::msg::MarkerArray createCorrespondenceMarkerArray(
   {
     auto marker = createDefaultMarker(
       "map", now, "detection_area_id", detection_area_reg_elem.id(),
-      visualization_msgs::msg::Marker::TEXT_VIEW_FACING, createMarkerColor(1.0, 1.0, 1.0, 0.999));
-    marker.scale = createMarkerScale(0.0, 0.0, 1.0);
+      visualization_msgs::msg::Marker::TEXT_VIEW_FACING, createMarkerScale(0.0, 0.0, 1.0),
+      createMarkerColor(1.0, 1.0, 1.0, 0.999));
     marker.lifetime = rclcpp::Duration::from_seconds(0.5);
 
     for (const auto & detection_area : detection_area_reg_elem.detectionAreas()) {
@@ -80,8 +86,8 @@ visualization_msgs::msg::MarkerArray createCorrespondenceMarkerArray(
   {
     auto marker = createDefaultMarker(
       "map", now, "detection_area_polygon", detection_area_reg_elem.id(),
-      visualization_msgs::msg::Marker::LINE_LIST, createMarkerColor(0.1, 0.1, 1.0, 0.500));
-    marker.scale = createMarkerScale(0.1, 0.0, 0.0);
+      visualization_msgs::msg::Marker::LINE_LIST, createMarkerScale(0.1, 0.0, 0.0),
+      createMarkerColor(0.1, 0.1, 1.0, 0.500));
     marker.lifetime = rclcpp::Duration::from_seconds(0.5);
 
     for (const auto & detection_area : detection_area_reg_elem.detectionAreas()) {
@@ -106,8 +112,8 @@ visualization_msgs::msg::MarkerArray createCorrespondenceMarkerArray(
   {
     auto marker = createDefaultMarker(
       "map", now, "detection_area_correspondence", detection_area_reg_elem.id(),
-      visualization_msgs::msg::Marker::LINE_LIST, createMarkerColor(0.1, 0.1, 1.0, 0.500));
-    marker.scale = createMarkerScale(0.1, 0.0, 0.0);
+      visualization_msgs::msg::Marker::LINE_LIST, createMarkerScale(0.1, 0.0, 0.0),
+      createMarkerColor(0.1, 0.1, 1.0, 0.500));
     marker.lifetime = rclcpp::Duration::from_seconds(0.5);
 
     for (const auto & detection_area : detection_area_reg_elem.detectionAreas()) {
@@ -124,45 +130,21 @@ visualization_msgs::msg::MarkerArray createCorrespondenceMarkerArray(
 
   return msg;
 }
-
-visualization_msgs::msg::MarkerArray createObstacleMarkerArray(
-  const std::vector<geometry_msgs::msg::Point> & obstacle_points, const rclcpp::Time & now)
-{
-  visualization_msgs::msg::MarkerArray msg;
-
-  {
-    auto marker = createDefaultMarker(
-      "map", now, "obstacles", 0, visualization_msgs::msg::Marker::SPHERE,
-      createMarkerColor(1.0, 0.0, 0.0, 0.999));
-    marker.scale = createMarkerScale(0.6, 0.6, 0.6);
-    marker.lifetime = rclcpp::Duration::from_seconds(0.5);
-
-    for (size_t i = 0; i < obstacle_points.size(); ++i) {
-      marker.id = i;
-      marker.pose.position = obstacle_points.at(i);
-
-      msg.markers.push_back(marker);
-    }
-  }
-
-  return msg;
-}
-
 }  // namespace
 
 visualization_msgs::msg::MarkerArray DetectionAreaModule::createDebugMarkerArray()
 {
   visualization_msgs::msg::MarkerArray wall_marker;
-  const rclcpp::Time current_time = clock_->now();
+  const rclcpp::Time now = clock_->now();
 
   if (!debug_data_.stop_poses.empty()) {
     appendMarkerArray(
-      createCorrespondenceMarkerArray(detection_area_reg_elem_, current_time), current_time,
-      &wall_marker);
+      createCorrespondenceMarkerArray(detection_area_reg_elem_, now), &wall_marker, now);
 
     appendMarkerArray(
-      createObstacleMarkerArray(debug_data_.obstacle_points, current_time), current_time,
-      &wall_marker);
+      debug::createPointsMarkerArray(
+        debug_data_.obstacle_points, "obstalces", module_id_, now, 0.6, 0.6, 0.6, 1.0, 0.0, 0.0),
+      &wall_marker, now);
   }
 
   return wall_marker;
@@ -179,16 +161,16 @@ visualization_msgs::msg::MarkerArray DetectionAreaModule::createVirtualWallMarke
     const auto p_front =
       tier4_autoware_utils::calcOffsetPose(p, debug_data_.base_link2front, 0.0, 0.0);
     appendMarkerArray(
-      tier4_autoware_utils::createStopVirtualWallMarker(p_front, "detection_area", now, id++), now,
-      &wall_marker);
+      motion_utils::createStopVirtualWallMarker(p_front, "detection_area", now, id++), &wall_marker,
+      now);
   }
 
   for (const auto & p : debug_data_.dead_line_poses) {
     const auto p_front =
       tier4_autoware_utils::calcOffsetPose(p, debug_data_.base_link2front, 0.0, 0.0);
     appendMarkerArray(
-      tier4_autoware_utils::createDeadLineVirtualWallMarker(p_front, "detection_area", now, id++),
-      now, &wall_marker);
+      motion_utils::createDeadLineVirtualWallMarker(p_front, "detection_area", now, id++),
+      &wall_marker, now);
   }
 
   return wall_marker;

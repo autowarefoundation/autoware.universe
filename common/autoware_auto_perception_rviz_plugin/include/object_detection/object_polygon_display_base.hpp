@@ -68,12 +68,15 @@ public:
       this},
     m_display_velocity_text_property{
       "Display Velocity", true, "Enable/disable velocity text visualization", this},
+    m_display_acceleration_text_property{
+      "Display Acceleration", true, "Enable/disable acceleration text visualization", this},
     m_display_twist_property{"Display Twist", true, "Enable/disable twist visualization", this},
     m_display_predicted_paths_property{
       "Display Predicted Paths", true, "Enable/disable predicted paths visualization", this},
     m_display_path_confidence_property{
       "Display Predicted Path Confidence", true, "Enable/disable predicted paths visualization",
       this},
+    m_line_width_property{"Line Width", 0.03, "Line width of object-shape", this},
     m_default_topic{default_topic}
   {
     // iterate over default values to create and initialize the properties.
@@ -126,6 +129,11 @@ public:
     m_marker_common.addMessage(marker_ptr);
   }
 
+  void add_marker(visualization_msgs::msg::MarkerArray::ConstSharedPtr markers_ptr)
+  {
+    m_marker_common.addMessage(markers_ptr);
+  }
+
 protected:
   /// \brief Convert given shape msg into a Marker
   /// \tparam ClassificationContainerT List type with ObjectClassificationMsg
@@ -133,17 +141,18 @@ protected:
   /// \param centroid Centroid position of the shape in Object.header.frame_id frame
   /// \param orientation Orientation of the shape in Object.header.frame_id frame
   /// \param labels List of ObjectClassificationMsg objects
+  /// \param line_width Line thickness around the object
   /// \return Marker ptr. Id and header will have to be set by the caller
   template <typename ClassificationContainerT>
   std::optional<Marker::SharedPtr> get_shape_marker_ptr(
     const autoware_auto_perception_msgs::msg::Shape & shape_msg,
     const geometry_msgs::msg::Point & centroid, const geometry_msgs::msg::Quaternion & orientation,
-    const ClassificationContainerT & labels) const
+    const ClassificationContainerT & labels, const double & line_width) const
   {
     const std_msgs::msg::ColorRGBA color_rgba = get_color_rgba(labels);
 
     if (m_display_3d_property.getBool()) {
-      return detail::get_shape_marker_ptr(shape_msg, centroid, orientation, color_rgba);
+      return detail::get_shape_marker_ptr(shape_msg, centroid, orientation, color_rgba, line_width);
     } else {
       return std::nullopt;
     }
@@ -200,6 +209,19 @@ protected:
     if (m_display_velocity_text_property.getBool()) {
       const std_msgs::msg::ColorRGBA color_rgba = get_color_rgba(labels);
       return detail::get_velocity_text_marker_ptr(twist, vis_pos, color_rgba);
+    } else {
+      return std::nullopt;
+    }
+  }
+
+  template <typename ClassificationContainerT>
+  std::optional<Marker::SharedPtr> get_acceleration_text_marker_ptr(
+    const geometry_msgs::msg::Accel & accel, const geometry_msgs::msg::Point & vis_pos,
+    const ClassificationContainerT & labels) const
+  {
+    if (m_display_acceleration_text_property.getBool()) {
+      const std_msgs::msg::ColorRGBA color_rgba = get_color_rgba(labels);
+      return detail::get_acceleration_text_marker_ptr(accel, vis_pos, color_rgba);
     } else {
       return std::nullopt;
     }
@@ -335,6 +357,8 @@ protected:
     colors.push_back(sample_color);  // spring green
   }
 
+  double get_line_width() { return m_line_width_property.getFloat(); }
+
 private:
   // All rviz plugins should have this. Should be initialized with pointer to this class
   MarkerCommon m_marker_common;
@@ -352,12 +376,16 @@ private:
   rviz_common::properties::BoolProperty m_display_pose_with_covariance_property;
   // Property to enable/disable velocity text visualization
   rviz_common::properties::BoolProperty m_display_velocity_text_property;
+  // Property to enable/disable acceleration text visualization
+  rviz_common::properties::BoolProperty m_display_acceleration_text_property;
   // Property to enable/disable twist visualization
   rviz_common::properties::BoolProperty m_display_twist_property;
   // Property to enable/disable predicted paths visualization
   rviz_common::properties::BoolProperty m_display_predicted_paths_property;
   // Property to enable/disable predicted path confidence visualization
   rviz_common::properties::BoolProperty m_display_path_confidence_property;
+  // Property to decide line width of object shape
+  rviz_common::properties::FloatProperty m_line_width_property;
   // Default topic name to be visualized
   std::string m_default_topic;
 

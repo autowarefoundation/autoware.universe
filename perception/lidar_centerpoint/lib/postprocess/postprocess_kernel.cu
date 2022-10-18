@@ -17,6 +17,7 @@
 #include <lidar_centerpoint/postprocess/postprocess_kernel.hpp>
 
 #include <thrust/count.h>
+#include <thrust/device_vector.h>
 #include <thrust/sort.h>
 
 namespace
@@ -47,14 +48,14 @@ struct score_greater
   __device__ bool operator()(const Box3D & lb, const Box3D & rb) { return lb.score > rb.score; }
 };
 
-__device__ inline float sigmoid(float x) { return 1.0f / expf(-x); }
+__device__ inline float sigmoid(float x) { return 1.0f / (1.0f + expf(-x)); }
 
 __global__ void generateBoxes3D_kernel(
   const float * out_heatmap, const float * out_offset, const float * out_z, const float * out_dim,
   const float * out_rot, const float * out_vel, const float voxel_size_x, const float voxel_size_y,
   const float range_min_x, const float range_min_y, const std::size_t down_grid_size_x,
   const std::size_t down_grid_size_y, const std::size_t downsample_factor, const int class_size,
-  Box3D * det_boxes3d)
+  const float * yaw_norm_thresholds, Box3D * det_boxes3d)
 {
   // generate boxes3d from the outputs of the network.
   // shape of out_*: (N, DOWN_GRID_SIZE_Y, DOWN_GRID_SIZE_X)
@@ -88,11 +89,12 @@ __global__ void generateBoxes3D_kernel(
   const float h = out_dim[down_grid_size * 2 + idx];
   const float yaw_sin = out_rot[down_grid_size * 0 + idx];
   const float yaw_cos = out_rot[down_grid_size * 1 + idx];
+  const float yaw_norm = sqrtf(yaw_sin * yaw_sin + yaw_cos * yaw_cos);
   const float vel_x = out_vel[down_grid_size * 0 + idx];
   const float vel_y = out_vel[down_grid_size * 1 + idx];
 
   det_boxes3d[idx].label = label;
-  det_boxes3d[idx].score = max_score;
+  det_boxes3d[idx].score = yaw_norm >= yaw_norm_thresholds[label] ? max_score : 0.f;
   det_boxes3d[idx].x = x;
   det_boxes3d[idx].y = y;
   det_boxes3d[idx].z = z;
@@ -108,6 +110,8 @@ PostProcessCUDA::PostProcessCUDA(const CenterPointConfig & config) : config_(con
 {
   const auto num_raw_boxes3d = config.down_grid_size_y_ * config.down_grid_size_x_;
   boxes3d_d_ = thrust::device_vector<Box3D>(num_raw_boxes3d);
+  yaw_norm_thresholds_d_ = thrust::device_vector<float>(
+    config_.yaw_norm_thresholds_.begin(), config_.yaw_norm_thresholds_.end());
 }
 
 cudaError_t PostProcessCUDA::generateDetectedBoxes3D_launch(
@@ -123,6 +127,7 @@ cudaError_t PostProcessCUDA::generateDetectedBoxes3D_launch(
     out_heatmap, out_offset, out_z, out_dim, out_rot, out_vel, config_.voxel_size_x_,
     config_.voxel_size_y_, config_.range_min_x_, config_.range_min_y_, config_.down_grid_size_x_,
     config_.down_grid_size_y_, config_.downsample_factor_, config_.class_size_,
+    thrust::raw_pointer_cast(yaw_norm_thresholds_d_.data()),
     thrust::raw_pointer_cast(boxes3d_d_.data()));
 
   // suppress by socre

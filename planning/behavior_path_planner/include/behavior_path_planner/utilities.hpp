@@ -16,11 +16,10 @@
 #define BEHAVIOR_PATH_PLANNER__UTILITIES_HPP_
 
 #include "behavior_path_planner/data_manager.hpp"
-#include "behavior_path_planner/scene_module/lane_change/lane_change_path.hpp"
+#include "behavior_path_planner/debug_utilities.hpp"
 #include "behavior_path_planner/scene_module/pull_out/pull_out_path.hpp"
 
 #include <opencv2/opencv.hpp>
-#include <rclcpp/rclcpp.hpp>
 #include <route_handler/route_handler.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
@@ -35,14 +34,7 @@
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/pose_array.hpp>
 
-#include <boost/geometry/geometries/box.hpp>
-#include <boost/geometry/geometries/point_xy.hpp>
-#include <boost/geometry/geometries/polygon.hpp>
-#include <boost/geometry/geometry.hpp>
-
 #include <lanelet2_core/geometry/Lanelet.h>
-#include <lanelet2_routing/Route.h>
-#include <lanelet2_routing/RoutingGraph.h>
 #include <lanelet2_routing/RoutingGraphContainer.h>
 #include <tf2/utils.h>
 
@@ -57,74 +49,14 @@
 #include <string>
 #include <vector>
 
-namespace tier4_autoware_utils
-{
-template <>
-inline geometry_msgs::msg::Point getPoint(
-  const autoware_auto_planning_msgs::msg::PathPointWithLaneId & p)
-{
-  return p.point.pose.position;
-}
-
-template <>
-inline geometry_msgs::msg::Pose getPose(
-  const autoware_auto_planning_msgs::msg::PathPointWithLaneId & p)
-{
-  return p.point.pose;
-}
-}  // namespace tier4_autoware_utils
-
-namespace tf2
-{
-inline void fromMsg(const geometry_msgs::msg::PoseStamped & msg, tf2::Stamped<tf2::Transform> & out)
-{
-  out.stamp_ = tf2_ros::fromMsg(msg.header.stamp);
-  out.frame_id_ = msg.header.frame_id;
-  tf2::Transform tmp;
-  fromMsg(msg.pose, tmp);
-  out.setData(tmp);
-}
-#ifdef ROS_DISTRO_GALACTIC
-// Remove after this commit is released
-// https://github.com/ros2/geometry2/commit/e9da371d81e388a589540357c050e262442f1b4a
-inline geometry_msgs::msg::Point & toMsg(const tf2::Vector3 & in, geometry_msgs::msg::Point & out)
-{
-  out.x = in.getX();
-  out.y = in.getY();
-  out.z = in.getZ();
-  return out;
-}
-
-// Remove after this commit is released
-// https://github.com/ros2/geometry2/commit/e9da371d81e388a589540357c050e262442f1b4a
-inline void fromMsg(const geometry_msgs::msg::Point & in, tf2::Vector3 & out)
-{
-  out = tf2::Vector3(in.x, in.y, in.z);
-}
-
-template <>
-inline void doTransform(
-  const geometry_msgs::msg::Point & t_in, geometry_msgs::msg::Point & t_out,
-  const geometry_msgs::msg::TransformStamped & transform)
-{
-  tf2::Transform t;
-  fromMsg(transform.transform, t);
-  tf2::Vector3 v_in;
-  fromMsg(t_in, v_in);
-  tf2::Vector3 v_out = t * v_in;
-  toMsg(v_out, t_out);
-}
-#endif
-}  // namespace tf2
-
-namespace behavior_path_planner
-{
-namespace util
+namespace behavior_path_planner::util
 {
 using autoware_auto_perception_msgs::msg::ObjectClassification;
 using autoware_auto_perception_msgs::msg::PredictedObject;
 using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_perception_msgs::msg::PredictedPath;
+
+using autoware_auto_perception_msgs::msg::Shape;
 using autoware_auto_planning_msgs::msg::Path;
 using autoware_auto_planning_msgs::msg::PathPointWithLaneId;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
@@ -139,6 +71,10 @@ using route_handler::RouteHandler;
 using tier4_autoware_utils::LineString2d;
 using tier4_autoware_utils::Point2d;
 using tier4_autoware_utils::Polygon2d;
+namespace bg = boost::geometry;
+using geometry_msgs::msg::Pose;
+using marker_utils::CollisionCheckDebug;
+using vehicle_info_util::VehicleInfo;
 
 struct FrenetCoordinate3d
 {
@@ -146,31 +82,54 @@ struct FrenetCoordinate3d
   double distance{0.0};  // lateral
 };
 
+struct ProjectedDistancePoint
+{
+  Point2d projected_point;
+  double distance{0.0};
+};
+
+template <typename Pythagoras = bg::strategy::distance::pythagoras<> >
+ProjectedDistancePoint pointToSegment(
+  const Point2d & reference_point, const Point2d & point_from_ego,
+  const Point2d & point_from_object);
+
+void getProjectedDistancePointFromPolygons(
+  const Polygon2d & ego_polygon, const Polygon2d & object_polygon, Pose & point_on_ego,
+  Pose & point_on_object);
 // data conversions
 
-Path convertToPathFromPathWithLaneId(const PathWithLaneId & path_with_lane_id);
-
-std::vector<Point> convertToPointArray(const PathWithLaneId & path);
+std::vector<Pose> convertToPoseArray(const PathWithLaneId & path);
 
 std::vector<Point> convertToGeometryPointArray(const PathWithLaneId & path);
 
 PoseArray convertToGeometryPoseArray(const PathWithLaneId & path);
 
 PredictedPath convertToPredictedPath(
-  const PathWithLaneId & path, const Twist & vehicle_twist, const Pose & vehicle_pose,
-  const double duration, const double resolution, const double acceleration);
+  const PathWithLaneId & path, const Twist & vehicle_twist, const Pose & pose,
+  const double nearest_seg_idx, const double duration, const double resolution,
+  const double acceleration, const double min_speed = 1.0);
 
-bool checkIfPositionIsOnTheLine(const double & linestring_length, const FrenetCoordinate3d & pose);
+template <class T>
 FrenetCoordinate3d convertToFrenetCoordinate3d(
-  const std::vector<Point> & linestring, const Point & search_point_geom);
+  const std::vector<T> & pose_array, const Point & search_point_geom, const size_t seg_idx)
+{
+  FrenetCoordinate3d frenet_coordinate;
 
-bool convertToFrenetCoordinate3d(
-  const PathWithLaneId & path, const Point & search_point_geom,
-  FrenetCoordinate3d * frenet_coordinate);
+  const double longitudinal_length =
+    motion_utils::calcLongitudinalOffsetToSegment(pose_array, seg_idx, search_point_geom);
+  frenet_coordinate.length =
+    motion_utils::calcSignedArcLength(pose_array, 0, seg_idx) + longitudinal_length;
+  frenet_coordinate.distance =
+    motion_utils::calcLateralOffset(pose_array, search_point_geom, seg_idx);
 
-bool convertToFrenetCoordinate3d(
-  const std::vector<Point> & linestring, const Point search_point_geom,
-  FrenetCoordinate3d * frenet_coordinate);
+  return frenet_coordinate;
+}
+
+inline FrenetCoordinate3d convertToFrenetCoordinate3d(
+  const PathWithLaneId & path, const Point & search_point_geom, const size_t seg_idx)
+{
+  return convertToFrenetCoordinate3d(path.points, search_point_geom, seg_idx);
+}
 
 std::vector<uint64_t> getIds(const lanelet::ConstLanelets & lanelets);
 
@@ -198,13 +157,44 @@ double getArcLengthToTargetLanelet(
 
 Pose lerpByPose(const Pose & p1, const Pose & p2, const double t);
 
-Point lerpByLength(const std::vector<Point> & array, const double length);
+inline Point lerpByPoint(const Point & p1, const Point & p2, const double t)
+{
+  tf2::Vector3 v1, v2;
+  v1.setValue(p1.x, p1.y, p1.z);
+  v2.setValue(p2.x, p2.y, p2.z);
+
+  const auto lerped_point = v1.lerp(v2, t);
+
+  Point point;
+  point.x = lerped_point.x();
+  point.y = lerped_point.y();
+  point.z = lerped_point.z();
+  return point;
+}
+
+template <class T>
+Point lerpByLength(const std::vector<T> & point_array, const double length)
+{
+  Point lerped_point;
+  if (point_array.empty()) {
+    return lerped_point;
+  }
+  Point prev_geom_pt = tier4_autoware_utils::getPoint(point_array.front());
+  double accumulated_length = 0;
+  for (const auto & pt : point_array) {
+    const auto & geom_pt = tier4_autoware_utils::getPoint(pt);
+    const double distance = tier4_autoware_utils::calcDistance3d(prev_geom_pt, geom_pt);
+    if (accumulated_length + distance > length) {
+      return lerpByPoint(prev_geom_pt, geom_pt, (length - accumulated_length) / distance);
+    }
+    accumulated_length += distance;
+    prev_geom_pt = geom_pt;
+  }
+
+  return tier4_autoware_utils::getPoint(point_array.back());
+}
 
 bool lerpByTimeStamp(const PredictedPath & path, const double t, Pose * lerped_pt);
-
-bool lerpByDistance(
-  const behavior_path_planner::PullOutPath & path, const double & s, Pose * lerped_pt,
-  const lanelet::ConstLanelets & road_lanes);
 
 bool calcObjectPolygon(const PredictedObject & object, Polygon2d * object_polygon);
 
@@ -219,16 +209,50 @@ double getDistanceBetweenPredictedPathAndObject(
   const PredictedObject & object, const PredictedPath & path, const double start_time,
   const double end_time, const double resolution);
 
-double getDistanceBetweenPredictedPathAndObjectPolygon(
-  const PredictedObject & object, const PullOutPath & ego_path,
-  const tier4_autoware_utils::LinearRing2d & vehicle_footprint, double distance_resolution,
-  const lanelet::ConstLanelets & road_lanes);
+/**
+ * @brief Check collision between ego path footprints and objects.
+ * @return Has collision or not
+ */
+bool checkCollisionBetweenPathFootprintsAndObjects(
+  const tier4_autoware_utils::LinearRing2d & vehicle_footprint, const PathWithLaneId & ego_path,
+  const PredictedObjects & dynamic_objects, const double margin);
+
+/**
+ * @brief Check collision between ego footprints and objects.
+ * @return Has collision or not
+ */
+bool checkCollisionBetweenFootprintAndObjects(
+  const tier4_autoware_utils::LinearRing2d & vehicle_footprint, const Pose & ego_pose,
+  const PredictedObjects & dynamic_objects, const double margin);
+
+/**
+ * @brief calculate lateral distance from ego pose to object
+ * @return distance from ego pose to object
+ */
+double calcLateralDistanceFromEgoToObject(
+  const Pose & ego_pose, const double vehicle_width, const PredictedObject & dynamic_object);
+
+/**
+ * @brief calculate longitudinal distance from ego pose to object
+ * @return distance from ego pose to object
+ */
+double calcLongitudinalDistanceFromEgoToObject(
+  const Pose & ego_pose, const double base_link2front, const double base_link2rear,
+  const PredictedObject & dynamic_object);
+
+/**
+ * @brief calculate minimum longitudinal distance from ego pose to objects
+ * @return minimum distance from ego pose to objects
+ */
+double calcLongitudinalDistanceFromEgoToObjects(
+  const Pose & ego_pose, double base_link2front, double base_link2rear,
+  const PredictedObjects & dynamic_objects);
 
 /**
  * @brief Get index of the obstacles inside the lanelets with start and end length
  * @return Indices corresponding to the obstacle inside the lanelets
  */
-std::vector<size_t> filterObjectsByLanelets(
+std::vector<size_t> filterObjectIndicesByLanelets(
   const PredictedObjects & objects, const lanelet::ConstLanelets & lanelets,
   const double start_arc_length, const double end_arc_length);
 
@@ -236,10 +260,13 @@ std::vector<size_t> filterObjectsByLanelets(
  * @brief Get index of the obstacles inside the lanelets
  * @return Indices corresponding to the obstacle inside the lanelets
  */
-std::vector<size_t> filterObjectsByLanelets(
+std::vector<size_t> filterObjectIndicesByLanelets(
   const PredictedObjects & objects, const lanelet::ConstLanelets & target_lanelets);
 
-std::vector<size_t> filterObjectsByPath(
+PredictedObjects filterObjectsByLanelets(
+  const PredictedObjects & objects, const lanelet::ConstLanelets & target_lanelets);
+
+std::vector<size_t> filterObjectsIndicesByPath(
   const PredictedObjects & objects, const std::vector<size_t> & object_indices,
   const PathWithLaneId & ego_path, const double vehicle_width);
 
@@ -258,8 +285,8 @@ cv::Point toCVPoint(
   const Point & geom_point, const double width_m, const double height_m, const double resolution);
 
 OccupancyGrid generateDrivableArea(
-  const lanelet::ConstLanelets & lanes, const double resolution, const double vehicle_length,
-  const std::shared_ptr<const PlannerData> planner_data);
+  const PathWithLaneId & path, const lanelet::ConstLanelets & lanes, const double resolution,
+  const double vehicle_length, const std::shared_ptr<const PlannerData> planner_data);
 
 lanelet::ConstLineStrings3d getDrivableAreaForAllSharedLinestringLanelets(
   const std::shared_ptr<const PlannerData> & planner_data);
@@ -310,6 +337,7 @@ PathPointWithLaneId insertStopPoint(double length, PathWithLaneId * path);
 
 double getDistanceToShoulderBoundary(
   const lanelet::ConstLanelets & shoulder_lanelets, const Pose & pose);
+double getDistanceToRightBoundary(const lanelet::ConstLanelets & lanelets, const Pose & pose);
 
 // misc
 
@@ -326,7 +354,7 @@ void shiftPose(Pose * pose, double shift_length);
 PathWithLaneId getCenterLinePath(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & lanelet_sequence,
   const Pose & pose, const double backward_path_length, const double forward_path_length,
-  const BehaviorPathPlannerParameters & parameter, double optional_length = 0.0);
+  const BehaviorPathPlannerParameters & parameter, const double optional_length = 0.0);
 
 PathWithLaneId setDecelerationVelocity(
   const RouteHandler & route_handler, const PathWithLaneId & input,
@@ -341,12 +369,92 @@ PathWithLaneId setDecelerationVelocity(
 
 bool checkLaneIsInIntersection(
   const RouteHandler & route_handler, const PathWithLaneId & ref,
-  const lanelet::ConstLanelets & lanelet_sequence, double & additional_length_to_add);
+  const lanelet::ConstLanelets & lanelet_sequence, const BehaviorPathPlannerParameters & parameters,
+  const int num_lane_change, double & additional_length_to_add);
+
+PathWithLaneId setDecelerationVelocity(
+  const PathWithLaneId & input, const double target_velocity, const Pose target_pose,
+  const double buffer, const double deceleration_interval);
+
+PathWithLaneId setDecelerationVelocityForTurnSignal(
+  const PathWithLaneId & input, const Pose target_pose, const double turn_light_on_threshold_time);
 
 // object label
 std::uint8_t getHighestProbLabel(const std::vector<ObjectClassification> & classification);
 
-}  // namespace util
-}  // namespace behavior_path_planner
+lanelet::ConstLanelets getCurrentLanes(const std::shared_ptr<const PlannerData> & planner_data);
+
+lanelet::ConstLanelets getExtendedCurrentLanes(
+  const std::shared_ptr<const PlannerData> & planner_data);
+
+lanelet::ConstLanelets calcLaneAroundPose(
+  const std::shared_ptr<RouteHandler> route_handler, const geometry_msgs::msg::Pose & pose,
+  const double forward_length, const double backward_length);
+
+Polygon2d convertBoundingBoxObjectToGeometryPolygon(
+  const Pose & current_pose, const double & base_to_front, const double & base_to_rear,
+  const double & base_to_width);
+
+Polygon2d convertCylindricalObjectToGeometryPolygon(
+  const Pose & current_pose, const Shape & obj_shape);
+
+Polygon2d convertPolygonObjectToGeometryPolygon(const Pose & current_pose, const Shape & obj_shape);
+
+std::string getUuidStr(const PredictedObject & obj);
+
+std::vector<PredictedPath> getPredictedPathFromObj(
+  const PredictedObject & obj, const bool & is_use_all_predicted_path);
+
+Pose projectCurrentPoseToTarget(const Pose & desired_object, const Pose & target_object);
+
+bool getEgoExpectedPoseAndConvertToPolygon(
+  const Pose & current_pose, const PredictedPath & pred_path, Pose & expected_pose,
+  tier4_autoware_utils::Polygon2d & ego_polygon, const double & check_current_time,
+  const VehicleInfo & ego_info);
+
+bool getObjectExpectedPoseAndConvertToPolygon(
+  const PredictedPath & pred_path, const PredictedObject & object, Pose & expected_pose,
+  Polygon2d & obj_polygon, const double & check_current_time);
+
+bool isObjectFront(const Pose & ego_pose, const Pose & obj_pose);
+
+bool isObjectFront(const Pose & projected_ego_pose);
+
+double stoppingDistance(const double & vehicle_velocity, const double & vehicle_accel);
+
+double frontVehicleStopDistance(
+  const double & front_vehicle_velocity, const double & front_vehicle_accel,
+  const double & distance_to_collision);
+
+double rearVehicleStopDistance(
+  const double & rear_vehicle_velocity, const double & rear_vehicle_accel,
+  const double & rear_vehicle_reaction_time, const double & rear_vehicle_safety_time_margin);
+
+bool isLongitudinalDistanceEnough(
+  const double & rear_vehicle_stop_threshold, const double & front_vehicle_stop_threshold);
+
+bool hasEnoughDistance(
+  const Pose & expected_ego_pose, const Twist & ego_current_twist,
+  const Pose & expected_object_pose, const Twist & object_current_twist,
+  const BehaviorPathPlannerParameters & param, CollisionCheckDebug & debug);
+
+bool isLateralDistanceEnough(
+  const double & relative_lateral_distance, const double & lateral_distance_threshold);
+
+bool isSafeInLaneletCollisionCheck(
+  const Pose & ego_current_pose, const Twist & ego_current_twist,
+  const PredictedPath & ego_predicted_path, const VehicleInfo & ego_info,
+  const double & check_start_time, const double & check_end_time,
+  const double & check_time_resolution, const PredictedObject & target_object,
+  const PredictedPath & target_object_path, const BehaviorPathPlannerParameters & common_parameters,
+  CollisionCheckDebug & debug);
+
+bool isSafeInFreeSpaceCollisionCheck(
+  const Pose & ego_current_pose, const Twist & ego_current_twist,
+  const PredictedPath & ego_predicted_path, const VehicleInfo & ego_info,
+  const double & check_start_time, const double & check_end_time,
+  const double & check_time_resolution, const PredictedObject & target_object,
+  const BehaviorPathPlannerParameters & common_parameters, CollisionCheckDebug & debug);
+}  // namespace behavior_path_planner::util
 
 #endif  // BEHAVIOR_PATH_PLANNER__UTILITIES_HPP_

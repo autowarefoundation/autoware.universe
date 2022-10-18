@@ -30,6 +30,7 @@
 #define EIGEN_MPL2_ONLY
 #include "multi_object_tracker/multi_object_tracker_core.hpp"
 #include "multi_object_tracker/utils/utils.hpp"
+#include "perception_utils/perception_utils.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -39,7 +40,7 @@ using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
 
 namespace
 {
-boost::optional<geometry_msgs::msg::Transform> getTransform(
+boost::optional<geometry_msgs::msg::Transform> getTransformAnonymous(
   const tf2_ros::Buffer & tf_buffer, const std::string & source_frame_id,
   const std::string & target_frame_id, const rclcpp::Time & time)
 {
@@ -53,38 +54,6 @@ boost::optional<geometry_msgs::msg::Transform> getTransform(
     RCLCPP_WARN_STREAM(rclcpp::get_logger("multi_object_tracker"), ex.what());
     return boost::none;
   }
-}
-
-bool transformDetectedObjects(
-  const autoware_auto_perception_msgs::msg::DetectedObjects & input_msg,
-  const std::string & target_frame_id, const tf2_ros::Buffer & tf_buffer,
-  autoware_auto_perception_msgs::msg::DetectedObjects & output_msg)
-{
-  output_msg = input_msg;
-
-  /* transform to world coordinate */
-  if (input_msg.header.frame_id != target_frame_id) {
-    output_msg.header.frame_id = target_frame_id;
-    tf2::Transform tf_target2objects_world;
-    tf2::Transform tf_target2objects;
-    tf2::Transform tf_objects_world2objects;
-    {
-      const auto ros_target2objects_world =
-        getTransform(tf_buffer, input_msg.header.frame_id, target_frame_id, input_msg.header.stamp);
-      if (!ros_target2objects_world) {
-        return false;
-      }
-      tf2::fromMsg(*ros_target2objects_world, tf_target2objects_world);
-    }
-    for (size_t i = 0; i < output_msg.objects.size(); ++i) {
-      tf2::fromMsg(
-        output_msg.objects.at(i).kinematics.pose_with_covariance.pose, tf_objects_world2objects);
-      tf_target2objects = tf_target2objects_world * tf_objects_world2objects;
-      tf2::toMsg(tf_target2objects, output_msg.objects.at(i).kinematics.pose_with_covariance.pose);
-      // TODO(yukkysaito) transform covariance
-    }
-  }
-  return true;
 }
 
 inline float getVelocity(const autoware_auto_perception_msgs::msg::TrackedObject & object)
@@ -137,7 +106,7 @@ bool isSpecificAlivePattern(
     tracker->getTotalMeasurementCount() /
     (tracker->getTotalNoMeasurementCount() + tracker->getTotalMeasurementCount());
 
-  const bool big_vehicle = (label == Label::TRUCK || label == Label::BUS);
+  const bool big_vehicle = utils::isLargeVehicleLabel(label);
 
   const bool slow_velocity = getVelocity(object) < max_velocity;
 
@@ -204,6 +173,8 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   tracker_map_.insert(
     std::make_pair(Label::BUS, this->declare_parameter<std::string>("bus_tracker")));
   tracker_map_.insert(
+    std::make_pair(Label::TRAILER, this->declare_parameter<std::string>("trailer_tracker")));
+  tracker_map_.insert(
     std::make_pair(Label::PEDESTRIAN, this->declare_parameter<std::string>("pedestrian_tracker")));
   tracker_map_.insert(
     std::make_pair(Label::BICYCLE, this->declare_parameter<std::string>("bicycle_tracker")));
@@ -218,15 +189,15 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
 void MultiObjectTracker::onMeasurement(
   const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr input_objects_msg)
 {
-  const auto self_transform =
-    getTransform(tf_buffer_, "base_link", world_frame_id_, input_objects_msg->header.stamp);
+  const auto self_transform = getTransformAnonymous(
+    tf_buffer_, "base_link", world_frame_id_, input_objects_msg->header.stamp);
   if (!self_transform) {
     return;
   }
 
   /* transform to world coordinate */
   autoware_auto_perception_msgs::msg::DetectedObjects transformed_objects;
-  if (!transformDetectedObjects(
+  if (!perception_utils::transformObjects(
         *input_objects_msg, world_frame_id_, tf_buffer_, transformed_objects)) {
     return;
   }
@@ -266,7 +237,9 @@ void MultiObjectTracker::onMeasurement(
     if (reverse_assignment.find(i) != reverse_assignment.end()) {  // found
       continue;
     }
-    list_tracker_.push_back(createNewTracker(transformed_objects.objects.at(i), measurement_time));
+    std::shared_ptr<Tracker> tracker =
+      createNewTracker(transformed_objects.objects.at(i), measurement_time);
+    if (tracker) list_tracker_.push_back(tracker);
   }
 
   if (publish_timer_ == nullptr) {
@@ -278,7 +251,7 @@ std::shared_ptr<Tracker> MultiObjectTracker::createNewTracker(
   const autoware_auto_perception_msgs::msg::DetectedObject & object,
   const rclcpp::Time & time) const
 {
-  const std::uint8_t label = utils::getHighestProbLabel(object.classification);
+  const std::uint8_t label = perception_utils::getHighestProbLabel(object.classification);
   if (tracker_map_.count(label) != 0) {
     const auto tracker = tracker_map_.at(label);
 
@@ -304,7 +277,8 @@ std::shared_ptr<Tracker> MultiObjectTracker::createNewTracker(
 void MultiObjectTracker::onTimer()
 {
   rclcpp::Time current_time = this->now();
-  const auto self_transform = getTransform(tf_buffer_, world_frame_id_, "base_link", current_time);
+  const auto self_transform =
+    getTransformAnonymous(tf_buffer_, world_frame_id_, "base_link", current_time);
   if (!self_transform) {
     return;
   }
@@ -341,6 +315,7 @@ void MultiObjectTracker::sanitizeTracker(
   std::list<std::shared_ptr<Tracker>> & list_tracker, const rclcpp::Time & time)
 {
   constexpr float min_iou = 0.1;
+  constexpr float min_iou_for_unknown_object = 0.001;
   constexpr double distance_threshold = 5.0;
   /* delete collision tracker */
   for (auto itr1 = list_tracker.begin(); itr1 != list_tracker.end(); ++itr1) {
@@ -357,15 +332,46 @@ void MultiObjectTracker::sanitizeTracker(
       if (distance_threshold < distance) {
         continue;
       }
-      if (min_iou < utils::get2dIoU(object1, object2)) {
-        if ((*itr1)->getTotalMeasurementCount() < (*itr2)->getTotalMeasurementCount()) {
-          itr1 = list_tracker.erase(itr1);
-          --itr1;
-          break;
-        } else {
-          itr2 = list_tracker.erase(itr2);
-          --itr2;
+
+      const auto iou = perception_utils::get2dIoU(object1, object2);
+      const auto & label1 = (*itr1)->getHighestProbLabel();
+      const auto & label2 = (*itr2)->getHighestProbLabel();
+      bool should_delete_tracker1 = false;
+      bool should_delete_tracker2 = false;
+
+      // If at least one of them is UNKNOWN, delete the one with lower IOU. Because the UNKNOWN
+      // objects are not reliable.
+      if (label1 == Label::UNKNOWN || label2 == Label::UNKNOWN) {
+        if (min_iou_for_unknown_object < iou) {
+          if (label1 == Label::UNKNOWN && label2 == Label::UNKNOWN) {
+            if ((*itr1)->getTotalMeasurementCount() < (*itr2)->getTotalMeasurementCount()) {
+              should_delete_tracker1 = true;
+            } else {
+              should_delete_tracker2 = true;
+            }
+          } else if (label1 == Label::UNKNOWN) {
+            should_delete_tracker1 = true;
+          } else if (label2 == Label::UNKNOWN) {
+            should_delete_tracker2 = true;
+          }
         }
+      } else {  // If neither is UNKNOWN, delete the one with lower IOU.
+        if (min_iou < iou) {
+          if ((*itr1)->getTotalMeasurementCount() < (*itr2)->getTotalMeasurementCount()) {
+            should_delete_tracker1 = true;
+          } else {
+            should_delete_tracker2 = true;
+          }
+        }
+      }
+
+      if (should_delete_tracker1) {
+        itr1 = list_tracker.erase(itr1);
+        --itr1;
+        break;
+      } else if (should_delete_tracker2) {
+        itr2 = list_tracker.erase(itr2);
+        --itr2;
       }
     }
   }

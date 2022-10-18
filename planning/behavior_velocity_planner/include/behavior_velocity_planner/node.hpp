@@ -58,6 +58,7 @@ private:
     sub_predicted_objects_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_no_ground_pointcloud_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_vehicle_odometry_;
+  rclcpp::Subscription<geometry_msgs::msg::AccelWithCovarianceStamped>::SharedPtr sub_acceleration_;
   rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr sub_lanelet_map_;
   rclcpp::Subscription<autoware_auto_perception_msgs::msg::TrafficSignalArray>::SharedPtr
     sub_traffic_signals_;
@@ -78,6 +79,7 @@ private:
     const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr msg);
   void onNoGroundPointCloud(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg);
   void onVehicleVelocity(const nav_msgs::msg::Odometry::ConstSharedPtr msg);
+  void onAcceleration(const geometry_msgs::msg::AccelWithCovarianceStamped::ConstSharedPtr msg);
   void onLaneletMap(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg);
   void onTrafficSignals(
     const autoware_auto_perception_msgs::msg::TrafficSignalArray::ConstSharedPtr msg);
@@ -106,13 +108,17 @@ private:
   // member
   PlannerData planner_data_;
   BehaviorVelocityPlannerManager planner_manager_;
+  bool is_driving_forward_{true};
 
   // mutex for planner_data_
   std::mutex mutex_;
 
   // function
   geometry_msgs::msg::PoseStamped getCurrentPose();
-  bool isDataReady(const PlannerData planner_data) const;
+  bool isDataReady(const PlannerData planner_data, rclcpp::Clock clock) const;
+  autoware_auto_planning_msgs::msg::Path generatePath(
+    const autoware_auto_planning_msgs::msg::PathWithLaneId::ConstSharedPtr input_path_msg,
+    const PlannerData & planner_data);
 };
 }  // namespace behavior_velocity_planner
 

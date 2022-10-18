@@ -20,6 +20,8 @@
 
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
+using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
+
 MultipleVehicleTracker::MultipleVehicleTracker(
   const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object)
 : Tracker(time, object.classification),
@@ -40,7 +42,8 @@ bool MultipleVehicleTracker::measure(
 {
   big_vehicle_tracker_.measure(object, time);
   normal_vehicle_tracker_.measure(object, time);
-  setClassification(object.classification);
+  if (perception_utils::getHighestProbLabel(object.classification) != Label::UNKNOWN)
+    setClassification(object.classification);
   return true;
 }
 
@@ -52,7 +55,7 @@ bool MultipleVehicleTracker::getTrackedObject(
 
   if (label == Label::CAR) {
     normal_vehicle_tracker_.getTrackedObject(time, object);
-  } else if (label == Label::BUS || label == Label::TRUCK) {
+  } else if (utils::isLargeVehicleLabel(label)) {
     big_vehicle_tracker_.getTrackedObject(time, object);
   }
   object.object_id = getUUID();

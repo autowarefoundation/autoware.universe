@@ -25,6 +25,7 @@
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_perception_msgs/msg/traffic_signal_array.hpp>
 #include <autoware_auto_perception_msgs/msg/traffic_signal_stamped.hpp>
+#include <geometry_msgs/msg/accel_with_covariance_stamped.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
@@ -70,13 +71,17 @@ struct PlannerData
 
   // msgs from callbacks that are used for data-ready
   geometry_msgs::msg::TwistStamped::ConstSharedPtr current_velocity;
-  boost::optional<double> current_accel;
+  geometry_msgs::msg::AccelWithCovarianceStamped::ConstSharedPtr current_acceleration;
   static constexpr double velocity_buffer_time_sec = 10.0;
   std::deque<geometry_msgs::msg::TwistStamped> velocity_buffer;
   autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr predicted_objects;
   pcl::PointCloud<pcl::PointXYZ>::ConstPtr no_ground_pointcloud;
   // occupancy grid
   nav_msgs::msg::OccupancyGrid::ConstSharedPtr occupancy_grid;
+
+  // nearest search
+  double ego_nearest_dist_threshold;
+  double ego_nearest_yaw_threshold;
 
   // other internal data
   std::map<int, autoware_auto_perception_msgs::msg::TrafficSignalStamped> traffic_light_id_map;
@@ -114,7 +119,9 @@ struct PlannerData
     for (const auto & velocity : velocity_buffer) {
       vs.push_back(velocity.twist.linear.x);
 
-      const auto time_diff = now - velocity.header.stamp;
+      const auto & s = velocity.header.stamp;
+      const auto time_diff =
+        now >= s ? now - s : rclcpp::Duration(0, 0);  // Note: negative time throws an exception.
       if (time_diff.seconds() >= stop_duration) {
         break;
       }
@@ -150,44 +157,6 @@ struct PlannerData
     return std::make_shared<autoware_auto_perception_msgs::msg::TrafficSignalStamped>(
       external_traffic_light_id_map.at(id));
   }
-
-private:
-  boost::optional<double> prev_accel_;
-  geometry_msgs::msg::TwistStamped::ConstSharedPtr prev_velocity_;
-  double accel_lowpass_gain_;
-
-  void updateCurrentAcc()
-  {
-    current_accel = {};
-
-    if (!current_velocity) {
-      return;
-    }
-
-    if (!prev_velocity_) {
-      prev_velocity_ = current_velocity;
-      return;
-    }
-
-    const double dv = current_velocity->twist.linear.x - prev_velocity_->twist.linear.x;
-    const double dt = std::max(
-      (rclcpp::Time(current_velocity->header.stamp) - rclcpp::Time(prev_velocity_->header.stamp))
-        .seconds(),
-      1e-03);
-
-    const double accel = dv / dt;
-    prev_velocity_ = current_velocity;
-
-    if (!prev_accel_) {
-      prev_accel_ = accel;
-      return;
-    }
-    // apply lowpass filter
-    current_accel = accel_lowpass_gain_ * accel + (1.0 - accel_lowpass_gain_) * prev_accel_.get();
-
-    prev_accel_ = current_accel;
-  }
-  friend BehaviorVelocityPlannerNode;
 };
 }  // namespace behavior_velocity_planner
 

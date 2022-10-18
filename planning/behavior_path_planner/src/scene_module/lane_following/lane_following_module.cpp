@@ -14,7 +14,10 @@
 
 #include "behavior_path_planner/scene_module/lane_following/lane_following_module.hpp"
 
+#include "behavior_path_planner/path_utilities.hpp"
 #include "behavior_path_planner/utilities.hpp"
+
+#include <lanelet2_extension/utility/utilities.hpp>
 
 #include <memory>
 #include <string>
@@ -84,7 +87,8 @@ PathWithLaneId LaneFollowingModule::getReferencePath() const
 
   lanelet::ConstLanelet current_lane;
   if (!planner_data_->route_handler->getClosestLaneletWithinRoute(current_pose, &current_lane)) {
-    RCLCPP_ERROR(getLogger(), "failed to find closest lanelet within route!!!");
+    RCLCPP_ERROR_THROTTLE(
+      getLogger(), *clock_, 5000, "failed to find closest lanelet within route!!!");
     return reference_path;  // TODO(Horibe)
   }
 
@@ -96,25 +100,36 @@ PathWithLaneId LaneFollowingModule::getReferencePath() const
     return reference_path;
   }
 
+  // calculate path with backward margin to avoid end points' instability by spline interpolation
+  constexpr double extra_margin = 10.0;
+  const double backward_length =
+    std::max(p.backward_path_length, p.backward_path_length + extra_margin);
+  const auto current_lanes_with_backward_margin =
+    util::calcLaneAroundPose(route_handler, current_pose, p.forward_path_length, backward_length);
   reference_path = util::getCenterLinePath(
-    *route_handler, current_lanes, current_pose, p.backward_path_length, p.forward_path_length, p);
+    *route_handler, current_lanes_with_backward_margin, current_pose, backward_length,
+    p.forward_path_length, p);
+
+  // clip backward length
+  const size_t current_seg_idx = findEgoSegmentIndex(reference_path.points);
+  util::clipPathLength(
+    reference_path, current_seg_idx, p.forward_path_length, p.backward_path_length);
 
   {
+    const int num_lane_change =
+      std::abs(route_handler->getNumLaneToPreferredLane(current_lanes.back()));
     double optional_lengths{0.0};
     const auto isInIntersection = util::checkLaneIsInIntersection(
-      *route_handler, reference_path, current_lanes, optional_lengths);
-
+      *route_handler, reference_path, current_lanes, p, num_lane_change, optional_lengths);
     if (isInIntersection) {
       reference_path = util::getCenterLinePath(
         *route_handler, current_lanes, current_pose, p.backward_path_length, p.forward_path_length,
         p, optional_lengths);
     }
 
-    // buffer for min_lane_change_length
-    const double buffer = p.backward_length_buffer_for_end_of_lane + optional_lengths;
-    const int num_lane_change =
-      std::abs(route_handler->getNumLaneToPreferredLane(current_lanes.back()));
-    const double lane_change_buffer = num_lane_change * (p.minimum_lane_change_length + buffer);
+    const double buffer = p.backward_length_buffer_for_end_of_lane;
+    const double lane_change_buffer =
+      num_lane_change * (p.minimum_lane_change_length + buffer) + optional_lengths;
 
     reference_path = util::setDecelerationVelocity(
       *route_handler, reference_path, current_lanes, parameters_.lane_change_prepare_duration,
@@ -141,9 +156,8 @@ PathWithLaneId LaneFollowingModule::getReferencePath() const
   }
 
   reference_path.drivable_area = util::generateDrivableArea(
-    current_lanes, p.drivable_area_resolution, p.vehicle_length, planner_data_);
+    reference_path, current_lanes, p.drivable_area_resolution, p.vehicle_length, planner_data_);
 
   return reference_path;
 }
-
 }  // namespace behavior_path_planner

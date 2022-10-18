@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <motion_utils/trajectory/trajectory.hpp>
 #include <scene_module/traffic_light/scene.hpp>
-#include <tier4_autoware_utils/trajectory/trajectory.hpp>
 #include <utilization/util.hpp>
 
 #include <boost/optional.hpp>  // To be replaced by std::optional in C++17
@@ -187,10 +187,12 @@ autoware_auto_perception_msgs::msg::LookingTrafficSignal initializeTrafficSignal
 }  // namespace
 
 TrafficLightModule::TrafficLightModule(
-  const int64_t module_id, const lanelet::TrafficLight & traffic_light_reg_elem,
-  lanelet::ConstLanelet lane, const PlannerParam & planner_param, const rclcpp::Logger logger,
+  const int64_t module_id, const int64_t lane_id,
+  const lanelet::TrafficLight & traffic_light_reg_elem, lanelet::ConstLanelet lane,
+  const PlannerParam & planner_param, const rclcpp::Logger logger,
   const rclcpp::Clock::SharedPtr clock)
 : SceneModuleInterface(module_id, logger, clock),
+  lane_id_(lane_id),
   traffic_light_reg_elem_(traffic_light_reg_elem),
   lane_(lane),
   state_(State::APPROACH),
@@ -228,6 +230,8 @@ bool TrafficLightModule::modifyPathVelocity(
         planner_param_.stop_margin + planner_data_->vehicle_info_.max_longitudinal_offset_m,
         planner_data_->stop_line_extend_length, stop_line_point, stop_line_point_idx)) {
     RCLCPP_WARN_THROTTLE(logger_, *clock_, 5000, "Failed to calculate stop point and insert index");
+    setSafe(true);
+    setDistance(std::numeric_limits<double>::lowest());
     return false;
   }
 
@@ -235,7 +239,7 @@ bool TrafficLightModule::modifyPathVelocity(
   geometry_msgs::msg::Point stop_line_point_msg;
   stop_line_point_msg.x = stop_line_point.x();
   stop_line_point_msg.y = stop_line_point.y();
-  const double signed_arc_length_to_stop_point = tier4_autoware_utils::calcSignedArcLength(
+  const double signed_arc_length_to_stop_point = motion_utils::calcSignedArcLength(
     input_path.points, self_pose.pose.position, stop_line_point_msg);
   setDistance(signed_arc_length_to_stop_point);
 
@@ -328,17 +332,12 @@ bool TrafficLightModule::isPassthrough(const double & signed_arc_length) const
   const double reachable_distance =
     planner_data_->current_velocity->twist.linear.x * planner_param_.yellow_lamp_period;
 
-  if (!planner_data_->current_accel) {
-    RCLCPP_WARN_THROTTLE(
-      logger_, *clock_, 1000,
-      "[traffic_light] empty current acc! check current vel has been received.");
-    return false;
-  }
   // Calculate distance until ego vehicle decide not to stop,
   // taking into account the jerk and acceleration.
   const double pass_judge_line_distance = planning_utils::calcJudgeLineDistWithJerkLimit(
-    planner_data_->current_velocity->twist.linear.x, planner_data_->current_accel.get(), max_acc,
-    max_jerk, delay_response_time);
+    planner_data_->current_velocity->twist.linear.x,
+    planner_data_->current_acceleration->accel.accel.linear.x, max_acc, max_jerk,
+    delay_response_time);
 
   const bool distance_stoppable = pass_judge_line_distance < signed_arc_length;
   const bool slow_velocity = planner_data_->current_velocity->twist.linear.x < 2.0;
@@ -441,8 +440,9 @@ bool TrafficLightModule::getHighestConfidenceTrafficSignal(
       highest_confidence = tl_state.lights.front().confidence;
       highest_confidence_tl_state = *tl_state_stamped;
       try {
-        debug_data_.traffic_light_points.push_back(getTrafficLightPosition(traffic_light));
-        debug_data_.highest_confidence_traffic_light_point = getTrafficLightPosition(traffic_light);
+        auto tl_position = getTrafficLightPosition(traffic_light);
+        debug_data_.traffic_light_points.push_back(tl_position);
+        debug_data_.highest_confidence_traffic_light_point = std::make_optional(tl_position);
       } catch (const std::invalid_argument & ex) {
         RCLCPP_WARN_STREAM(logger_, ex.what());
         continue;
@@ -452,7 +452,7 @@ bool TrafficLightModule::getHighestConfidenceTrafficSignal(
   }
   if (!found) {
     RCLCPP_WARN_THROTTLE(
-      logger_, *clock_, 1000 /* ms */, "cannot find traffic light lamp state (%s).",
+      logger_, *clock_, 5000 /* ms */, "cannot find traffic light lamp state (%s).",
       reason.c_str());
     return false;
   }
@@ -486,10 +486,11 @@ autoware_auto_planning_msgs::msg::PathWithLaneId TrafficLightModule::insertStopP
   // Get stop point and stop factor
   tier4_planning_msgs::msg::StopFactor stop_factor;
   stop_factor.stop_pose = debug_data_.first_stop_pose;
-  stop_factor.stop_factor_points =
-    std::vector<geometry_msgs::msg::Point>{debug_data_.highest_confidence_traffic_light_point};
-  planning_utils::appendStopReason(stop_factor, stop_reason);
-
+  if (debug_data_.highest_confidence_traffic_light_point != std::nullopt) {
+    stop_factor.stop_factor_points = std::vector<geometry_msgs::msg::Point>{
+      debug_data_.highest_confidence_traffic_light_point.value()};
+    planning_utils::appendStopReason(stop_factor, stop_reason);
+  }
   return modified_path;
 }
 

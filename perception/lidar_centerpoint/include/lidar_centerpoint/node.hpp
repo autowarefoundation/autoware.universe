@@ -15,8 +15,13 @@
 #ifndef LIDAR_CENTERPOINT__NODE_HPP_
 #define LIDAR_CENTERPOINT__NODE_HPP_
 
+#include "lidar_centerpoint/postprocess/non_maximum_suppression.hpp"
+
 #include <lidar_centerpoint/centerpoint_trt.hpp>
+#include <lidar_centerpoint/detection_class_remapper.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <tier4_autoware_utils/ros/debug_publisher.hpp>
+#include <tier4_autoware_utils/system/stop_watch.hpp>
 
 #include <autoware_auto_perception_msgs/msg/detected_object_kinematics.hpp>
 #include <autoware_auto_perception_msgs/msg/detected_objects.hpp>
@@ -47,10 +52,17 @@ private:
 
   float score_threshold_{0.0};
   std::vector<std::string> class_names_;
-  bool rename_car_to_truck_and_bus_{false};
   bool has_twist_{false};
 
+  NonMaximumSuppression iou_bev_nms_;
+  DetectionClassRemapper detection_class_remapper_;
+
   std::unique_ptr<CenterPointTRT> detector_ptr_{nullptr};
+
+  // debugger
+  std::unique_ptr<tier4_autoware_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_{
+    nullptr};
+  std::unique_ptr<tier4_autoware_utils::DebugPublisher> debug_publisher_ptr_{nullptr};
 };
 
 }  // namespace centerpoint

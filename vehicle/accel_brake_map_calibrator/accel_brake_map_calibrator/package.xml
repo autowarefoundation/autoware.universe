@@ -14,6 +14,7 @@
   <depend>autoware_auto_vehicle_msgs</depend>
   <depend>diagnostic_updater</depend>
   <depend>geometry_msgs</depend>
+  <depend>motion_utils</depend>
   <depend>raw_vehicle_cmd_converter</depend>
   <depend>rclcpp</depend>
   <depend>std_msgs</depend>

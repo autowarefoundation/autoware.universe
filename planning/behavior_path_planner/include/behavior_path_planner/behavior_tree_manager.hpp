@@ -18,8 +18,6 @@
 #include "behavior_path_planner/data_manager.hpp"
 #include "behavior_path_planner/scene_module/scene_module_bt_node_interface.hpp"
 
-#include <route_handler/route_handler.hpp>
-
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <behaviortree_cpp_v3/behavior_tree.h>
@@ -29,8 +27,6 @@
 
 #include <memory>
 #include <string>
-#include <tuple>
-#include <unordered_map>
 #include <vector>
 
 namespace behavior_path_planner
@@ -53,7 +49,6 @@ public:
 
   BehaviorModuleOutput run(const std::shared_ptr<PlannerData> & data);
   std::vector<std::shared_ptr<SceneModuleStatus>> getModulesStatus();
-  std::vector<MarkerArray> getDebugMarkers();
   AvoidanceDebugMsgArray getAvoidanceDebugMsgArray();
 
 private:

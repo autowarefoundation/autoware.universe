@@ -143,25 +143,38 @@ void AbstractPlanningAlgorithm::computeCollisionIndexes(
   const auto base_theta = tf2::getYaw(base_pose.orientation);
 
   // Convert each point to index and check if the node is Obstacle
-  for (double x = back; x <= front; x += costmap_.info.resolution) {
-    for (double y = right; y <= left; y += costmap_.info.resolution) {
-      // Calculate offset in rotated frame
-      const double offset_x = std::cos(base_theta) * x - std::sin(base_theta) * y;
-      const double offset_y = std::sin(base_theta) * x + std::cos(base_theta) * y;
+  const auto addIndex2d = [&](const double x, const double y) {
+    // Calculate offset in rotated frame
+    const double offset_x = std::cos(base_theta) * x - std::sin(base_theta) * y;
+    const double offset_y = std::sin(base_theta) * x + std::cos(base_theta) * y;
 
-      geometry_msgs::msg::Pose pose_local;
-      pose_local.position.x = base_pose.position.x + offset_x;
-      pose_local.position.y = base_pose.position.y + offset_y;
+    geometry_msgs::msg::Pose pose_local;
+    pose_local.position.x = base_pose.position.x + offset_x;
+    pose_local.position.y = base_pose.position.y + offset_y;
 
-      const auto index = pose2index(costmap_, pose_local, planner_common_param_.theta_size);
-      const auto index_2d = IndexXY{index.x, index.y};
-      indexes_2d.push_back(index_2d);
+    const auto index = pose2index(costmap_, pose_local, planner_common_param_.theta_size);
+    const auto index_2d = IndexXY{index.x, index.y};
+    indexes_2d.push_back(index_2d);
+  };
+
+  for (double x = back; x <= front; x += costmap_.info.resolution / 2) {
+    for (double y = right; y <= left; y += costmap_.info.resolution / 2) {
+      addIndex2d(x, y);
     }
+    addIndex2d(x, left);
   }
+  for (double y = right; y <= left; y += costmap_.info.resolution / 2) {
+    addIndex2d(front, y);
+  }
+  addIndex2d(front, left);
 }
 
 bool AbstractPlanningAlgorithm::detectCollision(const IndexXYT & base_index) const
 {
+  if (coll_indexes_table_.empty()) {
+    std::cerr << "[abstract_algorithm] setMap has not yet been done." << std::endl;
+    return false;
+  }
   const auto & coll_indexes_2d = coll_indexes_table_[base_index.theta];
   for (const auto & coll_index_2d : coll_indexes_2d) {
     int idx_theta = 0;  // whatever. Yaw is nothing to do with collision detection between grids.

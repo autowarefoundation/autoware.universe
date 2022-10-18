@@ -113,34 +113,37 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
     "~/input/vehicle_odometry", 1,
     std::bind(&BehaviorVelocityPlannerNode::onVehicleVelocity, this, _1),
     createSubscriptionOptions(this));
+  sub_acceleration_ = this->create_subscription<geometry_msgs::msg::AccelWithCovarianceStamped>(
+    "~/input/accel", 1, std::bind(&BehaviorVelocityPlannerNode::onAcceleration, this, _1),
+    createSubscriptionOptions(this));
   sub_lanelet_map_ = this->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
     "~/input/vector_map", rclcpp::QoS(10).transient_local(),
     std::bind(&BehaviorVelocityPlannerNode::onLaneletMap, this, _1),
     createSubscriptionOptions(this));
   sub_traffic_signals_ =
     this->create_subscription<autoware_auto_perception_msgs::msg::TrafficSignalArray>(
-      "~/input/traffic_signals", 10,
+      "~/input/traffic_signals", 1,
       std::bind(&BehaviorVelocityPlannerNode::onTrafficSignals, this, _1),
       createSubscriptionOptions(this));
   sub_external_crosswalk_states_ = this->create_subscription<tier4_api_msgs::msg::CrosswalkStatus>(
-    "~/input/external_crosswalk_states", 10,
+    "~/input/external_crosswalk_states", 1,
     std::bind(&BehaviorVelocityPlannerNode::onExternalCrosswalkStates, this, _1),
     createSubscriptionOptions(this));
   sub_external_intersection_states_ =
     this->create_subscription<tier4_api_msgs::msg::IntersectionStatus>(
-      "~/input/external_intersection_states", 10,
+      "~/input/external_intersection_states", 1,
       std::bind(&BehaviorVelocityPlannerNode::onExternalIntersectionStates, this, _1));
   sub_external_velocity_limit_ = this->create_subscription<VelocityLimit>(
     "~/input/external_velocity_limit_mps", rclcpp::QoS{1}.transient_local(),
     std::bind(&BehaviorVelocityPlannerNode::onExternalVelocityLimit, this, _1));
   sub_external_traffic_signals_ =
     this->create_subscription<autoware_auto_perception_msgs::msg::TrafficSignalArray>(
-      "~/input/external_traffic_signals", 10,
+      "~/input/external_traffic_signals", 1,
       std::bind(&BehaviorVelocityPlannerNode::onExternalTrafficSignals, this, _1),
       createSubscriptionOptions(this));
   sub_virtual_traffic_light_states_ =
     this->create_subscription<tier4_v2x_msgs::msg::VirtualTrafficLightStateArray>(
-      "~/input/virtual_traffic_light_states", 10,
+      "~/input/virtual_traffic_light_states", 1,
       std::bind(&BehaviorVelocityPlannerNode::onVirtualTrafficLightStates, this, _1),
       createSubscriptionOptions(this));
   sub_occupancy_grid_ = this->create_subscription<nav_msgs::msg::OccupancyGrid>(
@@ -159,9 +162,13 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   // Parameters
   forward_path_length_ = this->declare_parameter("forward_path_length", 1000.0);
   backward_path_length_ = this->declare_parameter("backward_path_length", 5.0);
-  // TODO(yukkysaito): This will become unnecessary when acc output from localization is available.
-  planner_data_.accel_lowpass_gain_ = this->declare_parameter("lowpass_gain", 0.5);
   planner_data_.stop_line_extend_length = this->declare_parameter("stop_line_extend_length", 5.0);
+
+  // nearest search
+  planner_data_.ego_nearest_dist_threshold =
+    this->declare_parameter<double>("ego_nearest_dist_threshold");
+  planner_data_.ego_nearest_yaw_threshold =
+    this->declare_parameter<double>("ego_nearest_yaw_threshold");
 
   // Initialize PlannerManager
   if (this->declare_parameter("launch_crosswalk", true)) {
@@ -203,35 +210,46 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
 }
 
 // NOTE: argument planner_data must not be referenced for multithreading
-bool BehaviorVelocityPlannerNode::isDataReady(const PlannerData planner_data) const
+bool BehaviorVelocityPlannerNode::isDataReady(
+  const PlannerData planner_data, rclcpp::Clock clock) const
 {
   const auto & d = planner_data;
 
   // from tf
   if (d.current_pose.header.frame_id == "") {
+    RCLCPP_INFO_THROTTLE(get_logger(), clock, 3000, "Frame id of current pose is missing");
     return false;
   }
 
   // from callbacks
   if (!d.current_velocity) {
+    RCLCPP_INFO_THROTTLE(get_logger(), clock, 3000, "Waiting for current velocity");
     return false;
   }
-  if (!d.current_accel) {
+  if (!d.current_acceleration) {
+    RCLCPP_INFO_THROTTLE(get_logger(), clock, 3000, "Waiting for current acceleration");
     return false;
   }
   if (!d.predicted_objects) {
+    RCLCPP_INFO_THROTTLE(get_logger(), clock, 3000, "Waiting for predicted_objects");
     return false;
   }
   if (!d.no_ground_pointcloud) {
+    RCLCPP_INFO_THROTTLE(get_logger(), clock, 3000, "Waiting for pointcloud");
     return false;
   }
   if (!d.route_handler_) {
+    RCLCPP_INFO_THROTTLE(
+      get_logger(), clock, 3000, "Waiting for the initialization of route_handler");
     return false;
   }
   if (!d.route_handler_->isMapMsgReady()) {
+    RCLCPP_INFO_THROTTLE(get_logger(), clock, 3000, "Waiting for the initialization of map");
     return false;
   }
   if (!d.velocity_smoother_) {
+    RCLCPP_INFO_THROTTLE(
+      get_logger(), clock, 3000, "Waiting for the initialization of velocity smoother");
     return false;
   }
   return true;
@@ -288,14 +306,14 @@ void BehaviorVelocityPlannerNode::onVehicleVelocity(
   current_velocity->twist = msg->twist.twist;
   planner_data_.current_velocity = current_velocity;
 
-  planner_data_.updateCurrentAcc();
-
   // Add velocity to buffer
   planner_data_.velocity_buffer.push_front(*current_velocity);
-  const auto now = this->now();
-  while (true) {
+  const rclcpp::Time now = this->now();
+  while (!planner_data_.velocity_buffer.empty()) {
     // Check oldest data time
-    const auto time_diff = now - planner_data_.velocity_buffer.back().header.stamp;
+    const auto & s = planner_data_.velocity_buffer.back().header.stamp;
+    const auto time_diff =
+      now >= s ? now - s : rclcpp::Duration(0, 0);  // Note: negative time throws an exception.
 
     // Finish when oldest data is newer than threshold
     if (time_diff.seconds() <= PlannerData::velocity_buffer_time_sec) {
@@ -305,6 +323,13 @@ void BehaviorVelocityPlannerNode::onVehicleVelocity(
     // Remove old data
     planner_data_.velocity_buffer.pop_back();
   }
+}
+
+void BehaviorVelocityPlannerNode::onAcceleration(
+  const geometry_msgs::msg::AccelWithCovarianceStamped::ConstSharedPtr msg)
+{
+  std::lock_guard<std::mutex> lock(mutex_);
+  planner_data_.current_acceleration = msg;
 }
 
 void BehaviorVelocityPlannerNode::onParam()
@@ -378,6 +403,7 @@ void BehaviorVelocityPlannerNode::onTrigger(
   const autoware_auto_planning_msgs::msg::PathWithLaneId::ConstSharedPtr input_path_msg)
 {
   mutex_.lock();  // for planner_data_
+
   // Check ready
   try {
     planner_data_.current_pose =
@@ -388,7 +414,7 @@ void BehaviorVelocityPlannerNode::onTrigger(
     return;
   }
 
-  if (!isDataReady(planner_data_)) {
+  if (!isDataReady(planner_data_, *get_clock())) {
     mutex_.unlock();
     return;
   }
@@ -396,6 +422,41 @@ void BehaviorVelocityPlannerNode::onTrigger(
   // NOTE: planner_data must not be referenced for multithreading
   const auto planner_data = planner_data_;
   mutex_.unlock();
+
+  if (input_path_msg->points.empty()) {
+    return;
+  }
+
+  const autoware_auto_planning_msgs::msg::Path output_path_msg =
+    generatePath(input_path_msg, planner_data);
+
+  path_pub_->publish(output_path_msg);
+  stop_reason_diag_pub_->publish(planner_manager_.getStopReasonDiag());
+
+  if (debug_viz_pub_->get_subscription_count() > 0) {
+    publishDebugMarker(output_path_msg);
+  }
+}
+
+autoware_auto_planning_msgs::msg::Path BehaviorVelocityPlannerNode::generatePath(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId::ConstSharedPtr input_path_msg,
+  const PlannerData & planner_data)
+{
+  autoware_auto_planning_msgs::msg::Path output_path_msg;
+
+  // TODO(someone): support backward path
+  const auto is_driving_forward = motion_utils::isDrivingForward(input_path_msg->points);
+  is_driving_forward_ = is_driving_forward ? is_driving_forward.get() : is_driving_forward_;
+  if (!is_driving_forward_) {
+    RCLCPP_WARN_THROTTLE(
+      get_logger(), *get_clock(), 3000,
+      "Backward path is NOT supported. just converting path_with_lane_id to path");
+    output_path_msg = to_path(*input_path_msg);
+    output_path_msg.header.frame_id = "map";
+    output_path_msg.header.stamp = this->now();
+    output_path_msg.drivable_area = input_path_msg->drivable_area;
+    return output_path_msg;
+  }
 
   // Plan path velocity
   const auto velocity_planned_path = planner_manager_.planPathVelocity(
@@ -408,19 +469,15 @@ void BehaviorVelocityPlannerNode::onTrigger(
   const auto interpolated_path_msg = interpolatePath(filtered_path, forward_path_length_);
 
   // check stop point
-  auto output_path_msg = filterStopPathPoint(interpolated_path_msg);
+  output_path_msg = filterStopPathPoint(interpolated_path_msg);
+
   output_path_msg.header.frame_id = "map";
   output_path_msg.header.stamp = this->now();
 
   // TODO(someone): This must be updated in each scene module, but copy from input message for now.
   output_path_msg.drivable_area = input_path_msg->drivable_area;
 
-  path_pub_->publish(output_path_msg);
-  stop_reason_diag_pub_->publish(planner_manager_.getStopReasonDiag());
-
-  if (debug_viz_pub_->get_subscription_count() > 0) {
-    publishDebugMarker(output_path_msg);
-  }
+  return output_path_msg;
 }
 
 void BehaviorVelocityPlannerNode::publishDebugMarker(

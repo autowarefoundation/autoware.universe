@@ -42,15 +42,12 @@ PoseHistory::PoseHistory() : last_stamp_(0, 0, RCL_ROS_TIME)
   property_line_width_->setMin(0.0);
 }
 
-PoseHistory::~PoseHistory()
-{
-  // Properties are deleted by Qt
-}
+PoseHistory::~PoseHistory() = default;  // Properties are deleted by Qt
 
 void PoseHistory::onInitialize()
 {
   MFDClass::onInitialize();
-  lines_.reset(new rviz_rendering::BillboardLine(scene_manager_, scene_node_));
+  lines_ = std::make_unique<rviz_rendering::BillboardLine>(scene_manager_, scene_node_);
 }
 
 void PoseHistory::onEnable() { subscribe(); }

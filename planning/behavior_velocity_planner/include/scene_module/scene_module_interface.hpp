@@ -19,10 +19,12 @@
 
 #include <builtin_interfaces/msg/time.hpp>
 #include <rtc_interface/rtc_interface.hpp>
+#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 #include <utilization/util.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+#include <tier4_debug_msgs/msg/float64_stamped.hpp>
 #include <tier4_planning_msgs/msg/stop_reason.hpp>
 #include <tier4_planning_msgs/msg/stop_reason_array.hpp>
 #include <tier4_v2x_msgs/msg/infrastructure_command_array.hpp>
@@ -35,6 +37,7 @@
 #include <set>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 // Debug
 #include <rclcpp/rclcpp.hpp>
@@ -43,9 +46,14 @@
 
 namespace behavior_velocity_planner
 {
+
 using builtin_interfaces::msg::Time;
 using rtc_interface::RTCInterface;
+using tier4_autoware_utils::DebugPublisher;
+using tier4_autoware_utils::StopWatch;
+using tier4_debug_msgs::msg::Float64Stamped;
 using unique_identifier_msgs::msg::UUID;
+
 class SceneModuleInterface
 {
 public:
@@ -103,23 +111,50 @@ protected:
 
   void setSafe(const bool safe) { safe_ = safe; }
   void setDistance(const double distance) { distance_ = distance; }
+
+  template <class T>
+  size_t findEgoSegmentIndex(const std::vector<T> & points) const
+  {
+    const auto & p = planner_data_;
+    return motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+      points, p->current_pose.pose, p->ego_nearest_dist_threshold, p->ego_nearest_yaw_threshold);
+  }
+
+  template <class T>
+  size_t findEgoIndex(const std::vector<T> & points) const
+  {
+    const auto & p = planner_data_;
+    return motion_utils::findFirstNearestIndexWithSoftConstraints(
+      points, p->current_pose.pose, p->ego_nearest_dist_threshold, p->ego_nearest_yaw_threshold);
+  }
 };
 
 class SceneModuleManagerInterface
 {
 public:
-  SceneModuleManagerInterface(rclcpp::Node & node, const char * module_name)
+  SceneModuleManagerInterface(rclcpp::Node & node, [[maybe_unused]] const char * module_name)
   : clock_(node.get_clock()), logger_(node.get_logger())
   {
     const auto ns = std::string("~/debug/") + module_name;
-    pub_debug_ = node.create_publisher<visualization_msgs::msg::MarkerArray>(ns, 20);
+    pub_debug_ = node.create_publisher<visualization_msgs::msg::MarkerArray>(ns, 1);
+    if (!node.has_parameter("is_publish_debug_path")) {
+      is_publish_debug_path_ = node.declare_parameter("is_publish_debug_path", false);
+    } else {
+      is_publish_debug_path_ = node.get_parameter("is_publish_debug_path").as_bool();
+    }
+    if (is_publish_debug_path_) {
+      pub_debug_path_ = node.create_publisher<autoware_auto_planning_msgs::msg::PathWithLaneId>(
+        std::string("~/debug/path_with_lane_id/") + module_name, 1);
+    }
     pub_virtual_wall_ = node.create_publisher<visualization_msgs::msg::MarkerArray>(
-      std::string("~/virtual_wall/") + module_name, 20);
+      std::string("~/virtual_wall/") + module_name, 5);
     pub_stop_reason_ =
-      node.create_publisher<tier4_planning_msgs::msg::StopReasonArray>("~/output/stop_reasons", 20);
+      node.create_publisher<tier4_planning_msgs::msg::StopReasonArray>("~/output/stop_reasons", 1);
     pub_infrastructure_commands_ =
       node.create_publisher<tier4_v2x_msgs::msg::InfrastructureCommandArray>(
-        "~/output/infrastructure_commands", 20);
+        "~/output/infrastructure_commands", 1);
+
+    processing_time_publisher_ = std::make_shared<DebugPublisher>(&node, "~/debug");
   }
 
   virtual ~SceneModuleManagerInterface() = default;
@@ -146,6 +181,8 @@ public:
 protected:
   virtual void modifyPathVelocity(autoware_auto_planning_msgs::msg::PathWithLaneId * path)
   {
+    StopWatch<std::chrono::milliseconds> stop_watch;
+    stop_watch.tic("Total");
     visualization_msgs::msg::MarkerArray debug_marker_array;
     visualization_msgs::msg::MarkerArray virtual_wall_marker_array;
     tier4_planning_msgs::msg::StopReasonArray stop_reason_array;
@@ -187,7 +224,15 @@ protected:
     }
     pub_infrastructure_commands_->publish(infrastructure_command_array);
     pub_debug_->publish(debug_marker_array);
+    if (is_publish_debug_path_) {
+      autoware_auto_planning_msgs::msg::PathWithLaneId debug_path;
+      debug_path.header = path->header;
+      debug_path.points = path->points;
+      pub_debug_path_->publish(debug_path);
+    }
     pub_virtual_wall_->publish(virtual_wall_marker_array);
+    processing_time_publisher_->publish<Float64Stamped>(
+      std::string(getModuleName()) + "/processing_time_ms", stop_watch.toc("Total"));
   }
 
   virtual void launchNewModules(const autoware_auto_planning_msgs::msg::PathWithLaneId & path) = 0;
@@ -233,6 +278,23 @@ protected:
     scene_modules_.erase(scene_module);
   }
 
+  template <class T>
+  size_t findEgoSegmentIndex(const std::vector<T> & points) const
+  {
+    const auto & p = planner_data_;
+    return motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+      points, p->current_pose.pose, p->ego_nearest_dist_threshold, p->ego_nearest_yaw_threshold);
+  }
+
+  template <class T>
+  size_t findEgoIndex(
+    const std::vector<T> & points, const geometry_msgs::msg::Pose & ego_pose) const
+  {
+    const auto & p = planner_data_;
+    return motion_utils::findFirstNearestIndexWithSoftConstraints(
+      points, p->current_pose.pose, p->ego_nearest_dist_threshold, p->ego_nearest_yaw_threshold);
+  }
+
   std::set<std::shared_ptr<SceneModuleInterface>> scene_modules_;
   std::set<int64_t> registered_module_id_set_;
 
@@ -241,19 +303,23 @@ protected:
   boost::optional<int> first_stop_path_point_index_;
   rclcpp::Clock::SharedPtr clock_;
   // Debug
+  bool is_publish_debug_path_ = {false};  // note : this is very heavy debug topic option
   rclcpp::Logger logger_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_virtual_wall_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_debug_;
+  rclcpp::Publisher<autoware_auto_planning_msgs::msg::PathWithLaneId>::SharedPtr pub_debug_path_;
   rclcpp::Publisher<tier4_planning_msgs::msg::StopReasonArray>::SharedPtr pub_stop_reason_;
   rclcpp::Publisher<tier4_v2x_msgs::msg::InfrastructureCommandArray>::SharedPtr
     pub_infrastructure_commands_;
+
+  std::shared_ptr<DebugPublisher> processing_time_publisher_;
 };
 
 class SceneModuleManagerInterfaceWithRTC : public SceneModuleManagerInterface
 {
 public:
   SceneModuleManagerInterfaceWithRTC(rclcpp::Node & node, const char * module_name)
-  : SceneModuleManagerInterface(node, module_name), rtc_interface_(node, module_name)
+  : SceneModuleManagerInterface(node, module_name), rtc_interface_(&node, module_name)
   {
   }
 
@@ -288,7 +354,7 @@ protected:
   void updateRTCStatus(
     const UUID & uuid, const bool safe, const double distance, const Time & stamp)
   {
-    rtc_interface_.updateCooperateStatus(uuid, safe, distance, stamp);
+    rtc_interface_.updateCooperateStatus(uuid, safe, distance, distance, stamp);
   }
 
   void removeRTCStatus(const UUID & uuid) { rtc_interface_.removeCooperateStatus(uuid); }

@@ -100,8 +100,11 @@ bool JerkFilteredSmoother::apply(
   debug_trajectories[2] = filtered;
 
   // Resample TrajectoryPoints for Optimization
-  auto opt_resampled_trajectory =
-    resampling::resampleTrajectory(filtered, v0, 0, base_param_.resample_param);
+  // TODO(planning/control team) deal with overlapped lanes with the same direction
+  const auto initial_traj_pose = filtered.front().pose;
+  auto opt_resampled_trajectory = resampling::resampleTrajectory(
+    filtered, v0, initial_traj_pose, std::numeric_limits<double>::max(),
+    std::numeric_limits<double>::max(), base_param_.resample_param);
 
   if (!opt_resampled_trajectory) {
     RCLCPP_WARN(logger_, "Resample failed!");
@@ -123,7 +126,7 @@ bool JerkFilteredSmoother::apply(
 
   // to avoid getting 0 as a stop point, search zero velocity index from 1.
   // the size of the resampled trajectory must not be less than 2.
-  const auto zero_vel_id = tier4_autoware_utils::searchZeroVelocityIndex(
+  const auto zero_vel_id = motion_utils::searchZeroVelocityIndex(
     *opt_resampled_trajectory, 1, opt_resampled_trajectory->size());
 
   if (!zero_vel_id) {
@@ -301,10 +304,7 @@ bool JerkFilteredSmoother::apply(
     output.at(i).acceleration_mps2 = a_stop_decel;
   }
 
-  const int status_val = std::get<3>(result);
-  if (status_val != 1) {
-    RCLCPP_ERROR(logger_, "optimization failed : %s", qp_solver_.getStatusMessage().c_str());
-  }
+  qp_solver_.logUnsolvedStatus("[motion_velocity_smoother]");
 
   if (TMP_SHOW_DEBUG_INFO) {
     // jerk calculation
@@ -468,10 +468,13 @@ TrajectoryPoints JerkFilteredSmoother::mergeFilteredTrajectory(
 }
 
 boost::optional<TrajectoryPoints> JerkFilteredSmoother::resampleTrajectory(
-  const TrajectoryPoints & input, const double /*v_current*/, const int closest_id) const
+  const TrajectoryPoints & input, [[maybe_unused]] const double v0,
+  const geometry_msgs::msg::Pose & current_pose, const double nearest_dist_threshold,
+  const double nearest_yaw_threshold) const
 {
   return resampling::resampleTrajectory(
-    input, closest_id, base_param_.resample_param, smoother_param_.jerk_filter_ds);
+    input, current_pose, nearest_dist_threshold, nearest_yaw_threshold, base_param_.resample_param,
+    smoother_param_.jerk_filter_ds);
 }
 
 }  // namespace motion_velocity_smoother

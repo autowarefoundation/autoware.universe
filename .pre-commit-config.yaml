@@ -19,7 +19,7 @@ repos:
         args: [--markdown-linebreak-ext=md]
 
   - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: v0.31.1
+    rev: v0.32.1
     hooks:
       - id: markdownlint
         args: [-c, .markdownlint.yaml, --fix]
@@ -30,7 +30,7 @@ repos:
       - id: prettier
 
   - repo: https://github.com/adrienverge/yamllint
-    rev: v1.26.3
+    rev: v1.27.1
     hooks:
       - id: yamllint
 
@@ -61,13 +61,13 @@ repos:
       - id: isort
 
   - repo: https://github.com/psf/black
-    rev: 22.3.0
+    rev: 22.6.0
     hooks:
       - id: black
         args: [--line-length=100]
 
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: v14.0.5
+    rev: v14.0.6
     hooks:
       - id: clang-format
         types_or: [c++, c, cuda]

@@ -35,7 +35,8 @@ void TrackedObjectsDisplay::processMessage(TrackedObjects::ConstSharedPtr msg)
     // Get marker for shape
     auto shape_marker = get_shape_marker_ptr(
       object.shape, object.kinematics.pose_with_covariance.pose.position,
-      object.kinematics.pose_with_covariance.pose.orientation, object.classification);
+      object.kinematics.pose_with_covariance.pose.orientation, object.classification,
+      get_line_width());
     if (shape_marker) {
       auto shape_marker_ptr = shape_marker.value();
       shape_marker_ptr->header = msg->header;
@@ -91,6 +92,21 @@ void TrackedObjectsDisplay::processMessage(TrackedObjects::ConstSharedPtr msg)
       velocity_text_marker_ptr->header = msg->header;
       velocity_text_marker_ptr->id = uuid_to_marker_id(object.object_id);
       add_marker(velocity_text_marker_ptr);
+    }
+
+    // Get marker for acceleration text
+    geometry_msgs::msg::Point acc_vis_position;
+    acc_vis_position.x = uuid_vis_position.x - 1.0;
+    acc_vis_position.y = uuid_vis_position.y;
+    acc_vis_position.z = uuid_vis_position.z - 1.0;
+    auto acceleration_text_marker = get_acceleration_text_marker_ptr(
+      object.kinematics.acceleration_with_covariance.accel, acc_vis_position,
+      object.classification);
+    if (acceleration_text_marker) {
+      auto acceleration_text_marker_ptr = acceleration_text_marker.value();
+      acceleration_text_marker_ptr->header = msg->header;
+      acceleration_text_marker_ptr->id = uuid_to_marker_id(object.object_id);
+      add_marker(acceleration_text_marker_ptr);
     }
 
     // Get marker for twist

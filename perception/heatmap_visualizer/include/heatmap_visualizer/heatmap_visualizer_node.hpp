@@ -27,8 +27,6 @@
 
 namespace heatmap_visualizer
 {
-using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
-
 class HeatmapVisualizerNode : public rclcpp::Node
 {
 public:
@@ -66,8 +64,8 @@ private:
   float map_length_;
   float map_resolution_;
   bool use_confidence_;
-  std::vector<std::string> class_names_{"CAR",     "TRUCK",     "BUS",       "TRAILER",
-                                        "BICYCLE", "MOTORBIKE", "PEDESTRIAN"};
+  std::vector<std::string> class_names_{"UNKNWON", "CAR",     "TRUCK",     "BUS",
+                                        "TRAILER", "BICYCLE", "MOTORBIKE", "PEDESTRIAN"};
   bool rename_car_to_truck_and_bus_;
 
   // Number of width and height cells

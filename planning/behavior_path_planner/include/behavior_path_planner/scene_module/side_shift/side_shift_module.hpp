@@ -15,16 +15,14 @@
 #ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SIDE_SHIFT__SIDE_SHIFT_MODULE_HPP_
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SIDE_SHIFT__SIDE_SHIFT_MODULE_HPP_
 
-#include "behavior_path_planner/path_shifter/path_shifter.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
+#include "behavior_path_planner/scene_module/utils/path_shifter.hpp"
 
 #include <rclcpp/rclcpp.hpp>
-#include <route_handler/route_handler.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <tier4_planning_msgs/msg/lateral_offset.hpp>
 
-#include <chrono>
 #include <memory>
 #include <string>
 #include <utility>
@@ -34,9 +32,6 @@ namespace behavior_path_planner
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using geometry_msgs::msg::Pose;
 using nav_msgs::msg::OccupancyGrid;
-using std::chrono::duration;
-using std::chrono::high_resolution_clock;
-using std::chrono::time_point;
 using tier4_planning_msgs::msg::LateralOffset;
 
 struct SideShiftParameters
@@ -82,9 +77,9 @@ private:
   // non-const methods
   void adjustDrivableArea(ShiftedPath * path) const;
 
-  ShiftPoint calcShiftPoint() const;
+  ShiftLine calcShiftLine() const;
 
-  bool addShiftPoint();
+  bool addShiftLine();
 
   // const methods
   void publishPath(const PathWithLaneId & path) const;
@@ -109,6 +104,7 @@ private:
   PathShifter path_shifter_;
 
   ShiftedPath prev_output_;
+  ShiftLine prev_shift_line_;
 
   // NOTE: this function is ported from avoidance.
   PoseStamped getUnshiftedEgoPose(const ShiftedPath & prev_path) const;

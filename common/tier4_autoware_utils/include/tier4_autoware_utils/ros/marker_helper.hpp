@@ -19,6 +19,8 @@
 
 #include <visualization_msgs/msg/marker_array.hpp>
 
+#include <boost/optional.hpp>
+
 #include <string>
 
 namespace tier4_autoware_utils
@@ -86,12 +88,30 @@ inline visualization_msgs::msg::Marker createDefaultMarker(
   return marker;
 }
 
+inline visualization_msgs::msg::Marker createDeletedDefaultMarker(
+  const rclcpp::Time & now, const std::string & ns, const int32_t id)
+{
+  visualization_msgs::msg::Marker marker;
+
+  marker.header.stamp = now;
+  marker.ns = ns;
+  marker.id = id;
+  marker.action = visualization_msgs::msg::Marker::DELETE;
+
+  return marker;
+}
+
 inline void appendMarkerArray(
   const visualization_msgs::msg::MarkerArray & additional_marker_array,
-  visualization_msgs::msg::MarkerArray * marker_array)
+  visualization_msgs::msg::MarkerArray * marker_array,
+  const boost::optional<rclcpp::Time> & current_time = {})
 {
   for (const auto & marker : additional_marker_array.markers) {
     marker_array->markers.push_back(marker);
+
+    if (current_time) {
+      marker_array->markers.back().header.stamp = current_time.get();
+    }
   }
 }
 }  // namespace tier4_autoware_utils

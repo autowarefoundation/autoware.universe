@@ -30,6 +30,7 @@
 #include "boost/optional.hpp"
 
 #include <memory>
+#include <utility>
 #include <vector>
 
 class EBPathOptimizer
@@ -141,7 +142,7 @@ private:
   boost::optional<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>
   getOptimizedTrajectory(
     const autoware_auto_planning_msgs::msg::Path & path, const CandidatePoints & candidate_points,
-    std::shared_ptr<DebugData> debug_data_ptr);
+    DebugData & debug_data);
 
   void updateConstrain(
     const std::vector<geometry_msgs::msg::Point> & interpolated_points,
@@ -159,17 +160,18 @@ private:
   CandidatePoints getCandidatePoints(
     const geometry_msgs::msg::Pose & ego_pose,
     const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points,
-    const std::unique_ptr<Trajectories> & prev_trajs, std::shared_ptr<DebugData> debug_data_ptr);
+    const std::unique_ptr<Trajectories> & prev_trajs, DebugData & debug_data);
 
   CandidatePoints getDefaultCandidatePoints(
     const std::vector<autoware_auto_planning_msgs::msg::PathPoint> & path_points);
 
-  std::vector<double> solveQP();
+  std::pair<std::vector<double>, int64_t> solveQP();
 
-  std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> calculateTrajectory(
+  boost::optional<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>>
+  calculateTrajectory(
     const std::vector<geometry_msgs::msg::Point> & padded_interpolated_points,
     const std::vector<ConstrainRectangle> & constrain_rectangles, const int farthest_idx,
-    std::shared_ptr<DebugData> debug_data_ptr);
+    DebugData & debug_data);
 
 public:
   EBPathOptimizer(
@@ -179,7 +181,7 @@ public:
   boost::optional<std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint>> getEBTrajectory(
     const geometry_msgs::msg::Pose & ego_pose, const autoware_auto_planning_msgs::msg::Path & path,
     const std::unique_ptr<Trajectories> & prev_trajs, const double current_ego_vel,
-    std::shared_ptr<DebugData> debug_data_ptr);
+    DebugData & debug_data);
 };
 
 #endif  // OBSTACLE_AVOIDANCE_PLANNER__EB_PATH_OPTIMIZER_HPP_

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.5)
 project(vehicle_cmd_gate)
 
 find_package(autoware_cmake REQUIRED)
@@ -7,6 +7,7 @@ autoware_package()
 ament_auto_add_library(vehicle_cmd_gate_node SHARED
   src/vehicle_cmd_gate.cpp
   src/vehicle_cmd_filter.cpp
+  src/pause_interface.cpp
 )
 
 rclcpp_components_register_node(vehicle_cmd_gate_node

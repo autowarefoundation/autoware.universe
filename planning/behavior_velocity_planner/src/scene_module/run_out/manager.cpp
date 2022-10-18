@@ -35,6 +35,12 @@ RunOutModuleManager::RunOutModuleManager(rclcpp::Node & node)
   const std::string ns(getModuleName());
 
   {
+    auto & p = planner_param_.smoother;
+    // smoother parameters are already declared in behavior velocity node, so use get parameter
+    p.start_jerk = node.get_parameter("backward.start_jerk").get_value<double>();
+  }
+
+  {
     auto & p = planner_param_.common;
     p.normal_min_jerk = node.declare_parameter(".normal.min_jerk", -0.3);
     p.normal_min_acc = node.declare_parameter(".normal.min_acc", -1.0);
@@ -50,7 +56,6 @@ RunOutModuleManager::RunOutModuleManager(rclcpp::Node & node)
     p.stop_margin = node.declare_parameter(ns + ".stop_margin", 2.5);
     p.passing_margin = node.declare_parameter(ns + ".passing_margin", 1.0);
     p.deceleration_jerk = node.declare_parameter(ns + ".deceleration_jerk", -0.3);
-    p.obstacle_velocity_kph = node.declare_parameter(ns + ".obstacle_velocity_kph", 5.0);
     p.detection_distance = node.declare_parameter(ns + ".detection_distance", 45.0);
     p.detection_span = node.declare_parameter(ns + ".detection_span", 1.0);
     p.min_vel_ego_kmph = node.declare_parameter(ns + ".min_vel_ego_kmph", 5.0);
@@ -58,11 +63,9 @@ RunOutModuleManager::RunOutModuleManager(rclcpp::Node & node)
 
   {
     auto & p = planner_param_.detection_area;
-    const std::string ns_da = ns + ".detection_area_size";
-    p.dist_ahead = node.declare_parameter(ns_da + ".dist_ahead", 50.0);
-    p.dist_behind = node.declare_parameter(ns_da + ".dist_behind", 5.0);
-    p.dist_right = node.declare_parameter(ns_da + ".dist_right", 10.0);
-    p.dist_left = node.declare_parameter(ns_da + ".dist_left", 10.0);
+    const std::string ns_da = ns + ".detection_area";
+    p.margin_ahead = node.declare_parameter(ns_da + ".margin_ahead", 1.0);
+    p.margin_behind = node.declare_parameter(ns_da + ".margin_behind", 0.5);
   }
 
   {
@@ -74,6 +77,7 @@ RunOutModuleManager::RunOutModuleManager(rclcpp::Node & node)
     p.height = node.declare_parameter(ns_do + ".height", 2.0);
     p.max_prediction_time = node.declare_parameter(ns_do + ".max_prediction_time", 10.0);
     p.time_step = node.declare_parameter(ns_do + ".time_step", 0.5);
+    p.points_interval = node.declare_parameter(ns_do + ".points_interval", 0.1);
   }
 
   {
@@ -82,9 +86,15 @@ RunOutModuleManager::RunOutModuleManager(rclcpp::Node & node)
     p.enable = node.declare_parameter(ns_a + ".enable", false);
     p.margin = node.declare_parameter(ns_a + ".margin", 0.0);
     p.limit_vel_kmph = node.declare_parameter(ns_a + ".limit_vel_kmph", 5.0);
-    p.stop_thresh = node.declare_parameter(ns_a + ".stop_thresh", 0.01);
-    p.stop_time_thresh = node.declare_parameter(ns_a + ".stop_time_thresh", 3.0);
-    p.dist_thresh = node.declare_parameter(ns_a + ".dist_thresh", 0.5);
+  }
+
+  {
+    auto & p = planner_param_.state_param;
+    const std::string ns_s = ns + ".state";
+    p.stop_thresh = node.declare_parameter(ns_s + ".stop_thresh", 0.01);
+    p.stop_time_thresh = node.declare_parameter(ns_s + ".stop_time_thresh", 3.0);
+    p.disable_approach_dist = node.declare_parameter(ns_s + ".disable_approach_dist", 4.0);
+    p.keep_approach_duration = node.declare_parameter(ns_s + ".keep_approach_duration", 1.0);
   }
 
   {

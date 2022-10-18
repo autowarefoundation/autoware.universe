@@ -17,6 +17,7 @@
 
 #include "surround_obstacle_checker/debug_marker.hpp"
 
+#include <motion_utils/motion_utils.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
@@ -47,6 +48,7 @@ using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_perception_msgs::msg::Shape;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+using motion_utils::VehicleStopChecker;
 using tier4_planning_msgs::msg::VelocityLimit;
 using tier4_planning_msgs::msg::VelocityLimitClearCommand;
 using vehicle_info_util::VehicleInfo;
@@ -70,8 +72,7 @@ public:
     double surround_check_recover_distance;
     double surround_check_distance;
     double state_clear_time;
-    double stop_state_ego_speed;
-    double stop_state_entry_duration_time;
+    bool publish_debug_footprints;
   };
 
 private:
@@ -95,8 +96,6 @@ private:
 
   bool isStopRequired(const bool is_obstacle_found, const bool is_stopped);
 
-  bool isVehicleStopped();
-
   // ros
   mutable tf2_ros::Buffer tf_buffer_{get_clock()};
   mutable tf2_ros::TransformListener tf_listener_{tf_buffer_};
@@ -109,6 +108,9 @@ private:
   rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticStatus>::SharedPtr pub_stop_reason_;
   rclcpp::Publisher<VelocityLimitClearCommand>::SharedPtr pub_clear_velocity_limit_;
   rclcpp::Publisher<VelocityLimit>::SharedPtr pub_velocity_limit_;
+
+  // stop checker
+  std::unique_ptr<VehicleStopChecker> vehicle_stop_checker_;
 
   // debug
   std::shared_ptr<SurroundObstacleCheckerDebugNode> debug_ptr_;
@@ -125,7 +127,6 @@ private:
   // State Machine
   State state_ = State::PASS;
   std::shared_ptr<const rclcpp::Time> last_obstacle_found_time_;
-  std::shared_ptr<const rclcpp::Time> last_running_time_;
 };
 }  // namespace surround_obstacle_checker
 

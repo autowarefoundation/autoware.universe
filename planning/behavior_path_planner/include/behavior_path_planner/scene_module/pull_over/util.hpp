@@ -18,6 +18,8 @@
 #include "behavior_path_planner/scene_module/pull_over/pull_over_module.hpp"
 #include "behavior_path_planner/utilities.hpp"
 
+#include <lane_departure_checker/lane_departure_checker.hpp>
+
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_path.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
@@ -27,6 +29,7 @@
 #include <lanelet2_core/primitives/Primitive.h>
 
 #include <memory>
+#include <string>
 #include <vector>
 
 namespace behavior_path_planner
@@ -41,39 +44,26 @@ using geometry_msgs::msg::Twist;
 
 // TODO(sugahara) move to util
 PathWithLaneId combineReferencePath(const PathWithLaneId path1, const PathWithLaneId path2);
-bool isPathInLanelets(
-  const PathWithLaneId & path, const lanelet::ConstLanelets & original_lanelets,
-  const lanelet::ConstLanelets & target_lanelets);
-std::vector<PullOverPath> getPullOverPaths(
-  const RouteHandler & route_handler, const lanelet::ConstLanelets & original_lanelets,
-  const lanelet::ConstLanelets & target_lanelets, const Pose & pose, const Twist & twist,
-  const BehaviorPathPlannerParameters & common_parameter,
-  const behavior_path_planner::PullOverParameters & parameter);
+lanelet::ConstLanelets getPullOverLanes(const RouteHandler & route_handler);
+bool hasEnoughDistanceToParkingStart(
+  const PathWithLaneId & path, const Pose & current_pose, const Pose & start_pose,
+  const double current_vel, const double maximum_deceleration, const double decide_path_distance,
+  const double ego_nearest_dist_threshold, const double ego_nearest_yaw_threshold);
+PredictedObjects filterObjectsByLateralDistance(
+  const Pose & ego_pose, const double vehicle_width, const PredictedObjects & objects,
+  const double distance_thresh, const bool filter_inside);
 
-std::vector<PullOverPath> selectValidPaths(
-  const std::vector<PullOverPath> & paths, const lanelet::ConstLanelets & current_lanes,
-  const lanelet::ConstLanelets & target_lanes,
-  const lanelet::routing::RoutingGraphContainer & overall_graphs, const Pose & current_pose,
-  const bool isInGoalRouteSection, const Pose & goal_pose);
-bool selectSafePath(
-  const std::vector<PullOverPath> & paths, const lanelet::ConstLanelets & current_lanes,
-  const lanelet::ConstLanelets & target_lanes,
-  const PredictedObjects::ConstSharedPtr dynamic_objects, const Pose & current_pose,
-  const Twist & current_twist, const double vehicle_width,
-  const behavior_path_planner::PullOverParameters & ros_parameters, PullOverPath * selected_path);
-bool isPullOverPathSafe(
-  const PathWithLaneId & path, const lanelet::ConstLanelets & current_lanes,
-  const lanelet::ConstLanelets & target_lanes,
-  const PredictedObjects::ConstSharedPtr dynamic_objects, const Pose & current_pose,
-  const Twist & current_twist, const double vehicle_width,
-  const behavior_path_planner::PullOverParameters & ros_parameters, const bool use_buffer = true,
-  const double acceleration = 0.0);
-bool hasEnoughDistance(
-  const PullOverPath & path, const lanelet::ConstLanelets & current_lanes,
-  const lanelet::ConstLanelets & target_lanes, const Pose & current_pose,
-  const bool isInGoalRouteSection, const Pose & goal_pose,
-  const lanelet::routing::RoutingGraphContainer & overall_graphs);
-bool isObjectFront(const Pose & ego_pose, const Pose & obj_pose);
+// debug
+Marker createPullOverAreaMarker(
+  const Pose & start_pose, const Pose & end_pose, const int32_t id,
+  const std_msgs::msg::Header & header, const double base_link2front, const double base_link2rear,
+  const double vehicle_width, const std_msgs::msg::ColorRGBA & color);
+MarkerArray createPosesMarkerArray(
+  const std::vector<Pose> & poses, std::string && ns, const std_msgs::msg::ColorRGBA & color);
+MarkerArray createTextsMarkerArray(
+  const std::vector<Pose> & poses, std::string && ns, const std_msgs::msg::ColorRGBA & color);
+MarkerArray createGoalCandidatesMarkerArray(
+  std::vector<GoalCandidate> goal_candidates, const std_msgs::msg::ColorRGBA & color);
 }  // namespace pull_over_utils
 }  // namespace behavior_path_planner
 

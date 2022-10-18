@@ -15,10 +15,14 @@
 #ifndef COMPONENT_INTERFACE_UTILS__RCLCPP__SERVICE_CLIENT_HPP_
 #define COMPONENT_INTERFACE_UTILS__RCLCPP__SERVICE_CLIENT_HPP_
 
-#include <rclcpp/client.hpp>
-#include <rclcpp/logger.hpp>
-#include <rclcpp/logging.hpp>
+#include <component_interface_utils/rclcpp/exceptions.hpp>
+#include <component_interface_utils/rclcpp/interface.hpp>
+#include <rclcpp/node.hpp>
 
+#include <tier4_system_msgs/msg/service_log.hpp>
+
+#include <optional>
+#include <string>
 #include <utility>
 
 namespace component_interface_utils
@@ -32,19 +36,40 @@ public:
   RCLCPP_SMART_PTR_DEFINITIONS(Client)
   using SpecType = SpecT;
   using WrapType = rclcpp::Client<typename SpecT::Service>;
+  using ServiceLog = tier4_system_msgs::msg::ServiceLog;
 
   /// Constructor.
-  explicit Client(typename WrapType::SharedPtr client, const rclcpp::Logger & logger)
-  : logger_(logger)
+  Client(NodeInterface::SharedPtr interface, rclcpp::CallbackGroup::SharedPtr group)
+  : interface_(interface)
   {
-    client_ = client;  // to keep the reference count
+    client_ = interface->node->create_client<typename SpecT::Service>(
+      SpecT::name, rmw_qos_profile_services_default, group);
+  }
+
+  /// Send request.
+  typename WrapType::SharedResponse call(
+    const typename WrapType::SharedRequest request, std::optional<double> timeout = std::nullopt)
+  {
+    if (!client_->service_is_ready()) {
+      interface_->log(ServiceLog::ERROR_UNREADY, SpecType::name);
+      throw ServiceUnready(SpecT::name);
+    }
+
+    const auto future = this->async_send_request(request);
+    if (timeout) {
+      const auto duration = std::chrono::duration<double, std::ratio<1>>(timeout.value());
+      if (future.wait_for(duration) != std::future_status::ready) {
+        interface_->log(ServiceLog::ERROR_TIMEOUT, SpecType::name);
+        throw ServiceTimeout(SpecT::name);
+      }
+    }
+    return future.get();
   }
 
   /// Send request.
   typename WrapType::SharedFuture async_send_request(typename WrapType::SharedRequest request)
   {
-    const auto callback = [this](typename WrapType::SharedFuture future) {};
-    return this->async_send_request(request, callback);
+    return this->async_send_request(request, [](typename WrapType::SharedFuture) {});
   }
 
   /// Send request.
@@ -57,18 +82,23 @@ public:
 #endif
 
     const auto wrapped = [this, callback](typename WrapType::SharedFuture future) {
-      RCLCPP_INFO_STREAM(logger_, "client exit: " << SpecT::name << "\n" << to_yaml(*future.get()));
+      interface_->log(ServiceLog::CLIENT_RESPONSE, SpecType::name, to_yaml(*future.get()));
       callback(future);
     };
 
-    RCLCPP_INFO_STREAM(logger_, "client call: " << SpecT::name << "\n" << to_yaml(*request));
+    interface_->log(ServiceLog::CLIENT_REQUEST, SpecType::name, to_yaml(*request));
+
+#ifdef ROS_DISTRO_GALACTIC
     return client_->async_send_request(request, wrapped);
+#else
+    return client_->async_send_request(request, wrapped).future;
+#endif
   }
 
 private:
   RCLCPP_DISABLE_COPY(Client)
   typename WrapType::SharedPtr client_;
-  rclcpp::Logger logger_;
+  NodeInterface::SharedPtr interface_;
 };
 
 }  // namespace component_interface_utils

@@ -15,21 +15,28 @@
 #ifndef BEHAVIOR_PATH_PLANNER__SCENE_MODULE__PULL_OVER__PULL_OVER_PATH_HPP_
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__PULL_OVER__PULL_OVER_PATH_HPP_
 
-#include "behavior_path_planner/path_shifter/path_shifter.hpp"
+#include "behavior_path_planner/scene_module/utils/path_shifter.hpp"
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+
+#include <vector>
 
 namespace behavior_path_planner
 {
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 struct PullOverPath
 {
-  PathWithLaneId path;
-  ShiftedPath shifted_path;
-  ShiftPoint shift_point;
+  PathWithLaneId path{};
+  std::vector<PathWithLaneId> partial_paths{};
+  PathWithLaneId straight_path{};
+  Pose start_pose{};
+  Pose end_pose{};
+  ShiftedPath shifted_path{};
+  ShiftLine shift_line{};
   double acceleration{0.0};
   double preparation_length{0.0};
   double pull_over_length{0.0};
+  bool is_safe{false};
 };
 }  // namespace behavior_path_planner
 #endif  // BEHAVIOR_PATH_PLANNER__SCENE_MODULE__PULL_OVER__PULL_OVER_PATH_HPP_

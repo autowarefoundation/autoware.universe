@@ -4,8 +4,9 @@
   <name>imu_corrector</name>
   <version>1.0.0</version>
   <description>The ROS2 imu_corrector package</description>
-  <maintainer email="yamato.ando@gmail.com">Yamato Ando</maintainer>
+  <maintainer email="yamato.ando@tier4.jp">Yamato Ando</maintainer>
   <license>Apache License 2.0</license>
+  <author email="yamato.ando@tier4.jp">Yamato Ando</author>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
@@ -14,6 +15,7 @@
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>sensor_msgs</depend>
+  <depend>tier4_autoware_utils</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>

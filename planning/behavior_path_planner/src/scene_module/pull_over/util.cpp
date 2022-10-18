@@ -14,8 +14,8 @@
 
 #include "behavior_path_planner/scene_module/pull_over/util.hpp"
 
-#include "behavior_path_planner/path_shifter/path_shifter.hpp"
 #include "behavior_path_planner/path_utilities.hpp"
+#include "behavior_path_planner/scene_module/utils/path_shifter.hpp"
 
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
@@ -34,6 +34,13 @@
 #include <string>
 #include <vector>
 
+using motion_utils::calcSignedArcLength;
+using tier4_autoware_utils::calcOffsetPose;
+using tier4_autoware_utils::createDefaultMarker;
+using tier4_autoware_utils::createMarkerColor;
+using tier4_autoware_utils::createMarkerScale;
+using tier4_autoware_utils::createPoint;
+
 namespace behavior_path_planner
 {
 namespace pull_over_utils
@@ -49,487 +56,145 @@ PathWithLaneId combineReferencePath(const PathWithLaneId path1, const PathWithLa
   return path;
 }
 
-bool isPathInLanelets(
-  const PathWithLaneId & path, const lanelet::ConstLanelets & original_lanelets,
-  const lanelet::ConstLanelets & target_lanelets)
+lanelet::ConstLanelets getPullOverLanes(const RouteHandler & route_handler)
 {
-  for (const auto & pt : path.points) {
-    bool is_in_lanelet = false;
-    for (const auto & llt : original_lanelets) {
-      if (lanelet::utils::isInLanelet(pt.point.pose, llt, 0.1)) {
-        is_in_lanelet = true;
-      }
-    }
-    for (const auto & llt : target_lanelets) {
-      if (lanelet::utils::isInLanelet(pt.point.pose, llt, 0.1)) {
-        is_in_lanelet = true;
-      }
-    }
-    if (!is_in_lanelet) {
-      return false;
-    }
+  lanelet::ConstLanelets pull_over_lanes;
+  lanelet::ConstLanelet target_shoulder_lane;
+  const Pose goal_pose = route_handler.getGoalPose();
+
+  if (route_handler.getPullOverTarget(
+        route_handler.getShoulderLanelets(), goal_pose, &target_shoulder_lane)) {
+    constexpr double pull_over_lane_length = 200;
+    pull_over_lanes = route_handler.getShoulderLaneletSequence(
+      target_shoulder_lane, goal_pose, pull_over_lane_length, pull_over_lane_length);
   }
-  return true;
+  return pull_over_lanes;
 }
 
-std::vector<PullOverPath> getPullOverPaths(
-  const RouteHandler & route_handler, const lanelet::ConstLanelets & original_lanelets,
-  const lanelet::ConstLanelets & target_lanelets, const Pose & pose,
-  [[maybe_unused]] const Twist & twist, const BehaviorPathPlannerParameters & common_parameter,
-  const PullOverParameters & parameter)
+bool hasEnoughDistanceToParkingStart(
+  const PathWithLaneId & path, const Pose & current_pose, const Pose & start_pose,
+  const double current_vel, const double maximum_deceleration, const double decide_path_distance,
+  const double ego_nearest_dist_threshold, const double ego_nearest_yaw_threshold)
 {
-  std::vector<PullOverPath> candidate_paths;
+  const size_t ego_segment_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+    path.points, current_pose, ego_nearest_dist_threshold, ego_nearest_yaw_threshold);
+  const size_t start_segment_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+    path.points, start_pose, ego_nearest_dist_threshold, ego_nearest_yaw_threshold);
+  const double dist_to_start_pose = calcSignedArcLength(
+    path.points, current_pose.position, ego_segment_idx, start_pose.position, start_segment_idx);
 
-  if (original_lanelets.empty() || target_lanelets.empty()) {
-    return candidate_paths;
-  }
+  // const double current_vel = planner_data_->self_odometry->twist.twist.linear.x;
+  const double current_to_stop_distance = std::pow(current_vel, 2) / maximum_deceleration / 2;
 
-  // rename parameter
-  const double backward_path_length = common_parameter.backward_path_length;
-  const double forward_path_length = common_parameter.forward_path_length;
-  const double minimum_pull_over_velocity = parameter.minimum_pull_over_velocity;
-  const double after_pull_over_straight_distance = parameter.after_pull_over_straight_distance;
-  const double before_pull_over_straight_distance = parameter.before_pull_over_straight_distance;
-  const double margin = parameter.margin_from_boundary;
-  const double minimum_lateral_jerk = parameter.minimum_lateral_jerk;
-  const double maximum_lateral_jerk = parameter.maximum_lateral_jerk;
-  const double deceleration_interval = parameter.deceleration_interval;
-  const int pull_over_sampling_num = parameter.pull_over_sampling_num;
-  const double jerk_resolution =
-    std::abs(maximum_lateral_jerk - minimum_lateral_jerk) / pull_over_sampling_num;
-
-  double distance_to_shoulder_lane_boundary =
-    util::getDistanceToShoulderBoundary(route_handler.getShoulderLanelets(), pose);
-  double offset_from_current_pose =
-    distance_to_shoulder_lane_boundary + common_parameter.vehicle_width / 2 + margin;
-
-  for (double lateral_jerk = 0.5; lateral_jerk <= maximum_lateral_jerk;
-       lateral_jerk += jerk_resolution) {
-    PathShifter path_shifter;
-    ShiftedPath shifted_path;
-    PullOverPath candidate_path;
-
-    double pull_over_distance = path_shifter.calcLongitudinalDistFromJerk(
-      abs(offset_from_current_pose), lateral_jerk, minimum_pull_over_velocity);
-
-    // calculate straight distance before pull over
-    double straight_distance;
-    {
-      const auto arc_position_goal =
-        lanelet::utils::getArcCoordinates(original_lanelets, route_handler.getGoalPose());
-      const auto arc_position_pose = lanelet::utils::getArcCoordinates(original_lanelets, pose);
-      straight_distance = arc_position_goal.length - after_pull_over_straight_distance -
-                          pull_over_distance - arc_position_pose.length;
-      if (straight_distance < before_pull_over_straight_distance) {
-        RCLCPP_ERROR_STREAM(
-          rclcpp::get_logger("behavior_path_planner").get_child("pull_over").get_child("util"),
-          "straight distance before pull_over is not enough");
-        continue;
-      }
-    }
-
-    PathWithLaneId reference_path2;
-    {
-      const auto arc_position_goal =
-        lanelet::utils::getArcCoordinates(target_lanelets, route_handler.getGoalPose());
-      double s_start = arc_position_goal.length - after_pull_over_straight_distance;
-      double s_end = arc_position_goal.length;
-      s_end = std::max(s_end, s_start + std::numeric_limits<double>::epsilon());
-      reference_path2 = route_handler.getCenterLinePath(target_lanelets, s_start, s_end);
-    }
-
-    PathWithLaneId reference_path1;
-    {
-      const auto arc_position = lanelet::utils::getArcCoordinates(original_lanelets, pose);
-      const auto arc_position_ref2_front = lanelet::utils::getArcCoordinates(
-        original_lanelets, reference_path2.points.front().point.pose);
-      const double s_start = arc_position.length - backward_path_length;
-      const double s_end = arc_position_ref2_front.length - pull_over_distance;
-      reference_path1 = route_handler.getCenterLinePath(original_lanelets, s_start, s_end);
-      // decelerate velocity linearly to minimum pull over velocity
-      // ( or accelerate if original velocity is lower than minimum velocity )
-      for (auto & point : reference_path1.points) {
-        const auto arclength =
-          lanelet::utils::getArcCoordinates(original_lanelets, point.point.pose).length;
-        const double distance_to_pull_over_start = std::max(0.0, s_end - arclength);
-        point.point.longitudinal_velocity_mps = std::min(
-          point.point.longitudinal_velocity_mps,
-          static_cast<float>(
-            (distance_to_pull_over_start / deceleration_interval) *
-              (point.point.longitudinal_velocity_mps - minimum_pull_over_velocity) +
-            minimum_pull_over_velocity));
-      }
-    }
-
-    if (reference_path1.points.empty() || reference_path2.points.empty()) {
-      RCLCPP_ERROR_STREAM(
-        rclcpp::get_logger("behavior_path_planner").get_child("pull_over").get_child("util"),
-        "reference path is empty!! something wrong...");
-      continue;
-    }
-
-    PathWithLaneId target_lane_reference_path;
-    {
-      const lanelet::ArcCoordinates pull_over_start_arc_position =
-        lanelet::utils::getArcCoordinates(
-          target_lanelets, reference_path1.points.back().point.pose);
-      double s_start = pull_over_start_arc_position.length;
-      double s_end = s_start + pull_over_distance + forward_path_length;
-      target_lane_reference_path = route_handler.getCenterLinePath(target_lanelets, s_start, s_end);
-      // distance between shoulder lane's left boundary and shoulder lane center
-      double distance_shoulder_to_left_bound = util::getDistanceToShoulderBoundary(
-        route_handler.getShoulderLanelets(), reference_path2.points.front().point.pose);
-
-      // distance between shoulder lane center and target line
-      double distance_shoulder_to_target =
-        distance_shoulder_to_left_bound + common_parameter.vehicle_width / 2 + margin;
-
-      // Apply shifting shoulder lane to adjust to target line
-      double offset = -distance_shoulder_to_target;
-      for (size_t i = 0; i < target_lane_reference_path.points.size(); ++i) {
-        {
-          if (fabs(offset) < 1.0e-8) {
-            RCLCPP_WARN_STREAM(
-              rclcpp::get_logger("behavior_path_planner").get_child("pull_over").get_child("util"),
-              "no offset from current lane center.");
-          }
-
-          auto & p = target_lane_reference_path.points.at(i).point.pose;
-          double yaw = tf2::getYaw(p.orientation);
-          p.position.x -= std::sin(yaw) * offset;
-          p.position.y += std::cos(yaw) * offset;
-        }
-        path_shifter.setPath(target_lane_reference_path);
-      }
-    }
-    ShiftPoint shift_point;
-    {
-      shift_point.start = reference_path1.points.back().point.pose;
-      shift_point.end = reference_path2.points.front().point.pose;
-
-      // distance between shoulder lane's left boundary and current lane center
-      double distance_road_to_left_boundary = util::getDistanceToShoulderBoundary(
-        route_handler.getShoulderLanelets(), reference_path1.points.back().point.pose);
-      // distance between shoulder lane's left boundary and current lane center
-      double distance_road_to_target =
-        distance_road_to_left_boundary + common_parameter.vehicle_width / 2 + margin;
-
-      shift_point.length = distance_road_to_target;
-      path_shifter.addShiftPoint(shift_point);
-    }
-
-    // offset front side from reference path
-    bool offset_back = false;
-    if (!path_shifter.generate(&shifted_path, offset_back)) {
-      RCLCPP_ERROR_STREAM(
-        rclcpp::get_logger("behavior_path_planner").get_child("pull_over").get_child("util"),
-        "failed to generate shifted path.");
-      continue;
-    }
-
-    const auto shift_end_idx = tier4_autoware_utils::findNearestIndex(
-      shifted_path.path.points, reference_path2.points.front().point.pose);
-
-    const auto goal_idx =
-      tier4_autoware_utils::findNearestIndex(shifted_path.path.points, route_handler.getGoalPose());
-
-    if (shift_end_idx && goal_idx) {
-      const auto distance_pull_over_end_to_goal = tier4_autoware_utils::calcDistance2d(
-        shifted_path.path.points.at(*shift_end_idx).point.pose,
-        shifted_path.path.points.at(*goal_idx).point.pose);
-      for (size_t i = 0; i < shifted_path.path.points.size(); ++i) {
-        auto & point = shifted_path.path.points.at(i);
-        if (i < *shift_end_idx) {
-          // set velocity during shift
-          point.point.longitudinal_velocity_mps = std::min(
-            point.point.longitudinal_velocity_mps,
-            reference_path1.points.back().point.longitudinal_velocity_mps);
-          continue;
-        } else if (i > *goal_idx) {
-          // set velocity after goal
-          point.point.longitudinal_velocity_mps = 0.0;
-          continue;
-        }
-        // set velocity between shift end and goal. decelerate linearly from shift end to 0
-        auto distance_to_goal = tier4_autoware_utils::calcDistance2d(
-          point.point.pose, shifted_path.path.points.at(*goal_idx).point.pose);
-        point.point.longitudinal_velocity_mps = std::min(
-          minimum_pull_over_velocity,
-          std::max(
-            0.0, (distance_to_goal / distance_pull_over_end_to_goal * minimum_pull_over_velocity)));
-        point.lane_ids = reference_path2.points.front().lane_ids;
-      }
-      candidate_path.path = combineReferencePath(reference_path1, shifted_path.path);
-      candidate_path.shifted_path = shifted_path;
-      shift_point.start_idx = tier4_autoware_utils::findNearestIndex(
-        shifted_path.path.points, shift_point.start.position);
-      shift_point.end_idx =
-        tier4_autoware_utils::findNearestIndex(shifted_path.path.points, shift_point.end.position);
-      candidate_path.shift_point = shift_point;
-      // candidate_path.acceleration = acceleration;
-      candidate_path.preparation_length = straight_distance;
-      candidate_path.pull_over_length = pull_over_distance;
-    } else {
-      RCLCPP_ERROR_STREAM(
-        rclcpp::get_logger("behavior_path_planner").get_child("pull_over").get_child("util"),
-        "lane change end idx not found on target path.");
-      continue;
-    }
-
-    // ROS_ERROR("candidate path is push backed");
-    candidate_paths.push_back(candidate_path);
-  }
-
-  return candidate_paths;
-}
-
-std::vector<PullOverPath> selectValidPaths(
-  const std::vector<PullOverPath> & paths, const lanelet::ConstLanelets & current_lanes,
-  const lanelet::ConstLanelets & target_lanes,
-  const lanelet::routing::RoutingGraphContainer & overall_graphs, const Pose & current_pose,
-  const bool isInGoalRouteSection, const Pose & goal_pose)
-{
-  std::vector<PullOverPath> available_paths;
-
-  for (const auto & path : paths) {
-    if (hasEnoughDistance(
-          path, current_lanes, target_lanes, current_pose, isInGoalRouteSection, goal_pose,
-          overall_graphs)) {
-      available_paths.push_back(path);
-    }
-  }
-
-  return available_paths;
-}
-
-bool selectSafePath(
-  const std::vector<PullOverPath> & paths, const lanelet::ConstLanelets & current_lanes,
-  const lanelet::ConstLanelets & target_lanes,
-  const PredictedObjects::ConstSharedPtr dynamic_objects, const Pose & current_pose,
-  const Twist & current_twist, const double vehicle_width,
-  const PullOverParameters & ros_parameters, PullOverPath * selected_path)
-{
-  for (const auto & path : paths) {
-    if (isPullOverPathSafe(
-          path.path, current_lanes, target_lanes, dynamic_objects, current_pose, current_twist,
-          vehicle_width, ros_parameters, true, path.acceleration)) {
-      *selected_path = path;
-      return true;
-    }
-  }
-
-  // set first path for force pull over if no valid path found
-  if (!paths.empty()) {
-    *selected_path = paths.front();
+  // once stopped, it cannot start again if start_pose is close.
+  // so need enough distance to restart
+  constexpr double eps_vel = 0.01;
+  // dist to restart should be less than decide_path_distance.
+  // otherwise, the goal would change immediately after departure.
+  const double dist_to_restart = decide_path_distance / 2;
+  if (std::abs(current_vel) < eps_vel && dist_to_start_pose < dist_to_restart) {
     return false;
   }
 
-  return false;
+  return dist_to_start_pose > current_to_stop_distance;
 }
 
-bool hasEnoughDistance(
-  const PullOverPath & path, const lanelet::ConstLanelets & current_lanes,
-  [[maybe_unused]] const lanelet::ConstLanelets & target_lanes, const Pose & current_pose,
-  const bool isInGoalRouteSection, const Pose & goal_pose,
-  [[maybe_unused]] const lanelet::routing::RoutingGraphContainer & overall_graphs)
+PredictedObjects filterObjectsByLateralDistance(
+  const Pose & ego_pose, const double vehicle_width, const PredictedObjects & objects,
+  const double distance_thresh, const bool filter_inside)
 {
-  const double pull_over_prepare_distance = path.preparation_length;
-  const double pull_over_distance = path.pull_over_length;
-  const double pull_over_total_distance = pull_over_prepare_distance + pull_over_distance;
-
-  if (pull_over_total_distance > util::getDistanceToEndOfLane(current_pose, current_lanes)) {
-    return false;
+  PredictedObjects filtered_objects;
+  for (const auto & object : objects.objects) {
+    const double distance =
+      util::calcLateralDistanceFromEgoToObject(ego_pose, vehicle_width, object);
+    if (filter_inside ? distance < distance_thresh : distance > distance_thresh) {
+      filtered_objects.objects.push_back(object);
+    }
   }
 
-  // if (pull_over_total_distance >
-  // util::getDistanceToNextIntersection(current_pose, current_lanes)) {
-  //   return false;
-  // }
-
-  if (
-    isInGoalRouteSection &&
-    pull_over_total_distance > util::getSignedDistance(current_pose, goal_pose, current_lanes)) {
-    return false;
-  }
-
-  // if (
-  //   pullover_total_distance >
-  //   util::getDistanceToCrosswalk(current_pose, current_lanes, overall_graphs)) {
-  //   return false;
-  // }
-  return true;
+  return filtered_objects;
 }
 
-bool isPullOverPathSafe(
-  const PathWithLaneId & path, const lanelet::ConstLanelets & current_lanes,
-  const lanelet::ConstLanelets & target_lanes,
-  const PredictedObjects::ConstSharedPtr dynamic_objects, const Pose & current_pose,
-  const Twist & current_twist, const double vehicle_width,
-  const PullOverParameters & ros_parameters, const bool use_buffer, const double acceleration)
+Marker createPullOverAreaMarker(
+  const Pose & start_pose, const Pose & end_pose, const int32_t id,
+  const std_msgs::msg::Header & header, const double base_link2front, const double base_link2rear,
+  const double vehicle_width, const std_msgs::msg::ColorRGBA & color)
 {
-  if (path.points.empty()) {
-    return false;
-  }
-  if (target_lanes.empty() || current_lanes.empty()) {
-    return false;
-  }
-  if (dynamic_objects == nullptr) {
-    return true;
-  }
-  const auto arc = lanelet::utils::getArcCoordinates(current_lanes, current_pose);
-  constexpr double check_distance = 100.0;
+  Marker marker = createDefaultMarker(
+    header.frame_id, header.stamp, "pull_over_area", id,
+    visualization_msgs::msg::Marker::LINE_STRIP, createMarkerScale(0.1, 0.0, 0.0), color);
 
-  // parameters
-  const double time_resolution = ros_parameters.prediction_time_resolution;
-  const double min_thresh = ros_parameters.min_stop_distance;
-  const double stop_time = ros_parameters.stop_time;
+  auto p_left_front = calcOffsetPose(end_pose, base_link2front, vehicle_width / 2, 0).position;
+  marker.points.push_back(createPoint(p_left_front.x, p_left_front.y, p_left_front.z));
 
-  double buffer;
-  double lateral_buffer;
-  if (use_buffer) {
-    buffer = ros_parameters.hysteresis_buffer_distance;
-    lateral_buffer = 0.5;
-  } else {
-    buffer = 0.0;
-    lateral_buffer = 0.0;
-  }
-  double current_lane_check_start_time = 0.0;
-  const double current_lane_check_end_time =
-    ros_parameters.pull_over_prepare_duration + ros_parameters.pull_over_duration;
-  double target_lane_check_start_time = 0.0;
-  const double target_lane_check_end_time =
-    ros_parameters.pull_over_prepare_duration + ros_parameters.pull_over_duration;
-  if (!ros_parameters.enable_collision_check_at_prepare_phase) {
-    current_lane_check_start_time = ros_parameters.pull_over_prepare_duration;
-    target_lane_check_start_time = ros_parameters.pull_over_prepare_duration;
-  }
+  auto p_right_front = calcOffsetPose(end_pose, base_link2front, -vehicle_width / 2, 0).position;
+  marker.points.push_back(createPoint(p_right_front.x, p_right_front.y, p_right_front.z));
 
-  // find obstacle in pull_over target lanes
-  // retrieve lanes that are merging target lanes as well
-  const auto target_lane_object_indices =
-    util::filterObjectsByLanelets(*dynamic_objects, target_lanes);
+  auto p_right_back = calcOffsetPose(start_pose, -base_link2rear, -vehicle_width / 2, 0).position;
+  marker.points.push_back(createPoint(p_right_back.x, p_right_back.y, p_right_back.z));
 
-  // find objects in current lane
-  const auto current_lane_object_indices_lanelet = util::filterObjectsByLanelets(
-    *dynamic_objects, current_lanes, arc.length, arc.length + check_distance);
-  const auto current_lane_object_indices = util::filterObjectsByPath(
-    *dynamic_objects, current_lane_object_indices_lanelet, path,
-    vehicle_width / 2 + lateral_buffer);
+  auto p_left_back = calcOffsetPose(start_pose, -base_link2rear, vehicle_width / 2, 0).position;
+  marker.points.push_back(createPoint(p_left_back.x, p_left_back.y, p_left_back.z));
 
-  const auto & vehicle_predicted_path = util::convertToPredictedPath(
-    path, current_twist, current_pose, target_lane_check_end_time, time_resolution, acceleration);
+  marker.points.push_back(createPoint(p_left_front.x, p_left_front.y, p_left_front.z));
 
-  // Collision check for objects in current lane
-  for (const auto & i : current_lane_object_indices) {
-    const auto & obj = dynamic_objects->objects.at(i);
-    std::vector<PredictedPath> predicted_paths;
-    if (ros_parameters.use_all_predicted_path) {
-      predicted_paths.resize(obj.kinematics.predicted_paths.size());
-      std::copy(
-        obj.kinematics.predicted_paths.begin(), obj.kinematics.predicted_paths.end(),
-        predicted_paths.begin());
-    } else {
-      auto & max_confidence_path = *(std::max_element(
-        obj.kinematics.predicted_paths.begin(), obj.kinematics.predicted_paths.end(),
-        [](const auto & path1, const auto & path2) {
-          return path1.confidence > path2.confidence;
-        }));
-      predicted_paths.push_back(max_confidence_path);
-    }
-    for (const auto & obj_path : predicted_paths) {
-      double distance = util::getDistanceBetweenPredictedPaths(
-        obj_path, vehicle_predicted_path, current_lane_check_start_time,
-        current_lane_check_end_time, time_resolution);
-      double thresh;
-      if (isObjectFront(current_pose, obj.kinematics.initial_pose_with_covariance.pose)) {
-        thresh = util::l2Norm(current_twist.linear) * stop_time;
-      } else {
-        thresh =
-          util::l2Norm(obj.kinematics.initial_twist_with_covariance.twist.linear) * stop_time;
-      }
-      thresh = std::max(thresh, min_thresh);
-      thresh += buffer;
-      if (distance < thresh) {
-        return false;
-      }
-    }
-  }
-
-  // Collision check for objects in pull over target lane
-  for (const auto & i : target_lane_object_indices) {
-    const auto & obj = dynamic_objects->objects.at(i);
-    std::vector<PredictedPath> predicted_paths;
-    if (ros_parameters.use_all_predicted_path) {
-      predicted_paths.resize(obj.kinematics.predicted_paths.size());
-      std::copy(
-        obj.kinematics.predicted_paths.begin(), obj.kinematics.predicted_paths.end(),
-        predicted_paths.begin());
-    } else {
-      auto & max_confidence_path = *(std::max_element(
-        obj.kinematics.predicted_paths.begin(), obj.kinematics.predicted_paths.end(),
-        [](const auto & path1, const auto & path2) {
-          return path1.confidence > path2.confidence;
-        }));
-      predicted_paths.push_back(max_confidence_path);
-    }
-
-    bool is_object_in_target = false;
-    if (ros_parameters.use_predicted_path_outside_lanelet) {
-      is_object_in_target = true;
-    } else {
-      for (const auto & llt : target_lanes) {
-        if (lanelet::utils::isInLanelet(obj.kinematics.initial_pose_with_covariance.pose, llt)) {
-          is_object_in_target = true;
-        }
-      }
-    }
-
-    if (is_object_in_target) {
-      for (const auto & obj_path : predicted_paths) {
-        const double distance = util::getDistanceBetweenPredictedPaths(
-          obj_path, vehicle_predicted_path, target_lane_check_start_time,
-          target_lane_check_end_time, time_resolution);
-        double thresh;
-        if (isObjectFront(current_pose, obj.kinematics.initial_pose_with_covariance.pose)) {
-          thresh = util::l2Norm(current_twist.linear) * stop_time;
-        } else {
-          thresh =
-            util::l2Norm(obj.kinematics.initial_twist_with_covariance.twist.linear) * stop_time;
-        }
-        thresh = std::max(thresh, min_thresh);
-        thresh += buffer;
-        if (distance < thresh) {
-          return false;
-        }
-      }
-    } else {
-      const double distance = util::getDistanceBetweenPredictedPathAndObject(
-        obj, vehicle_predicted_path, target_lane_check_start_time, target_lane_check_end_time,
-        time_resolution);
-      double thresh = min_thresh;
-      if (isObjectFront(current_pose, obj.kinematics.initial_pose_with_covariance.pose)) {
-        thresh = std::max(thresh, util::l2Norm(current_twist.linear) * stop_time);
-      }
-      thresh += buffer;
-      if (distance < thresh) {
-        return false;
-      }
-    }
-  }
-
-  return true;
+  return marker;
 }
 
-bool isObjectFront(const Pose & ego_pose, const Pose & obj_pose)
+MarkerArray createPosesMarkerArray(
+  const std::vector<Pose> & poses, std::string && ns, const std_msgs::msg::ColorRGBA & color)
 {
-  tf2::Transform tf_map2ego, tf_map2obj;
-  Pose obj_from_ego;
-  tf2::fromMsg(ego_pose, tf_map2ego);
-  tf2::fromMsg(obj_pose, tf_map2obj);
-  tf2::toMsg(tf_map2ego.inverse() * tf_map2obj, obj_from_ego);
+  MarkerArray msg{};
+  int32_t i = 0;
+  for (const auto & pose : poses) {
+    Marker marker = tier4_autoware_utils::createDefaultMarker(
+      "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, i, Marker::ARROW,
+      createMarkerScale(0.5, 0.25, 0.25), color);
+    marker.pose = pose;
+    marker.id = i++;
+    msg.markers.push_back(marker);
+  }
 
-  return obj_from_ego.position.x > 0;
+  return msg;
 }
 
+MarkerArray createTextsMarkerArray(
+  const std::vector<Pose> & poses, std::string && ns, const std_msgs::msg::ColorRGBA & color)
+{
+  MarkerArray msg{};
+  int32_t i = 0;
+  for (const auto & pose : poses) {
+    Marker marker = createDefaultMarker(
+      "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, i, Marker::TEXT_VIEW_FACING,
+      createMarkerScale(0.3, 0.3, 0.3), color);
+    marker.pose = calcOffsetPose(pose, 0, 0, 1.0);
+    marker.id = i;
+    marker.text = std::to_string(i);
+    msg.markers.push_back(marker);
+    i++;
+  }
+
+  return msg;
+}
+
+MarkerArray createGoalCandidatesMarkerArray(
+  std::vector<GoalCandidate> goal_candidates, const std_msgs::msg::ColorRGBA & color)
+{
+  // convert to pose vector
+  std::vector<Pose> pose_vector{};
+  for (const auto & goal_candidate : goal_candidates) {
+    pose_vector.push_back(goal_candidate.goal_pose);
+  }
+
+  auto marker_array = createPosesMarkerArray(pose_vector, "goal_candidates", color);
+  for (const auto & text_marker :
+       createTextsMarkerArray(
+         pose_vector, "goal_candidates_priority", createMarkerColor(1.0, 1.0, 1.0, 0.999))
+         .markers) {
+    marker_array.markers.push_back(text_marker);
+  }
+
+  return marker_array;
+}
 }  // namespace pull_over_utils
 }  // namespace behavior_path_planner

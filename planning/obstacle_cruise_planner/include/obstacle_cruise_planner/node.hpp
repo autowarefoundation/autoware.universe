@@ -26,6 +26,9 @@
 #include "autoware_auto_perception_msgs/msg/predicted_object.hpp"
 #include "autoware_auto_perception_msgs/msg/predicted_objects.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
+#include "geometry_msgs/msg/accel_stamped.hpp"
+#include "geometry_msgs/msg/accel_with_covariance_stamped.hpp"
+#include "geometry_msgs/msg/point_stamped.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "geometry_msgs/msg/twist_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
@@ -47,6 +50,8 @@ using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_perception_msgs::msg::PredictedPath;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+using geometry_msgs::msg::AccelStamped;
+using geometry_msgs::msg::AccelWithCovarianceStamped;
 using nav_msgs::msg::Odometry;
 using tier4_debug_msgs::msg::Float32Stamped;
 using tier4_planning_msgs::msg::StopReasonArray;
@@ -67,37 +72,51 @@ private:
     const std::vector<rclcpp::Parameter> & parameters);
   void onObjects(const PredictedObjects::ConstSharedPtr msg);
   void onOdometry(const Odometry::ConstSharedPtr);
+  void onAccel(const AccelWithCovarianceStamped::ConstSharedPtr);
   void onTrajectory(const Trajectory::ConstSharedPtr msg);
   void onSmoothedTrajectory(const Trajectory::ConstSharedPtr msg);
 
   // member Functions
-  ObstacleCruisePlannerData createPlannerData(
+  ObstacleCruisePlannerData createCruiseData(
     const Trajectory & trajectory, const geometry_msgs::msg::Pose & current_pose,
-    DebugData & debug_data);
-  double calcCurrentAccel() const;
+    const std::vector<TargetObstacle> & obstacles, const bool is_driving_forward);
+  ObstacleCruisePlannerData createStopData(
+    const Trajectory & trajectory, const geometry_msgs::msg::Pose & current_pose,
+    const std::vector<TargetObstacle> & obstacles, const bool is_driving_forward);
+  std::vector<TargetObstacle> getTargetObstacles(
+    const Trajectory & trajectory, const geometry_msgs::msg::Pose & current_pose,
+    const double current_vel, const bool is_driving_forward, DebugData & debug_data);
   std::vector<TargetObstacle> filterObstacles(
     const PredictedObjects & predicted_objects, const Trajectory & traj,
     const geometry_msgs::msg::Pose & current_pose, const double current_vel,
-    DebugData & debug_data);
-  geometry_msgs::msg::Point calcNearestCollisionPoint(
-    const size_t & first_within_idx,
-    const std::vector<geometry_msgs::msg::Point> & collision_points,
-    const Trajectory & decimated_traj);
+    const bool is_driving_forward, DebugData & debug_data);
+  void updateHasStopped(std::vector<TargetObstacle> & target_obstacles);
+  void checkConsistency(
+    const rclcpp::Time & current_time, const PredictedObjects & predicted_objects,
+    const Trajectory & traj, std::vector<TargetObstacle> & target_obstacles);
   double calcCollisionTimeMargin(
     const geometry_msgs::msg::Pose & current_pose, const double current_vel,
-    const geometry_msgs::msg::Point & nearest_collision_point,
-    const PredictedObject & predicted_object, const size_t first_within_idx,
-    const Trajectory & decimated_traj,
-    const std::vector<tier4_autoware_utils::Polygon2d> & decimated_traj_polygons);
+    const std::vector<geometry_msgs::msg::PointStamped> & collision_points,
+    const PredictedObject & predicted_object, const Trajectory & traj,
+    const bool is_driving_forward);
   void publishVelocityLimit(const boost::optional<VelocityLimit> & vel_limit);
   void publishDebugData(const DebugData & debug_data) const;
   void publishCalculationTime(const double calculation_time) const;
+
+  bool isCruiseObstacle(const uint8_t label);
+  bool isStopObstacle(const uint8_t label);
+  bool isFrontCollideObstacle(
+    const Trajectory & traj, const PredictedObject & object, const size_t first_collision_idx);
 
   bool is_showing_debug_info_;
   double min_behavior_stop_margin_;
   double nearest_dist_deviation_threshold_;
   double nearest_yaw_deviation_threshold_;
   double obstacle_velocity_threshold_from_cruise_to_stop_;
+  double obstacle_velocity_threshold_from_stop_to_cruise_;
+
+  std::vector<int> cruise_obstacle_types_;
+  std::vector<int> stop_obstacle_types_;
 
   // parameter callback result
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
@@ -116,6 +135,7 @@ private:
   rclcpp::Subscription<Trajectory>::SharedPtr smoothed_trajectory_sub_;
   rclcpp::Subscription<PredictedObjects>::SharedPtr objects_sub_;
   rclcpp::Subscription<Odometry>::SharedPtr odom_sub_;
+  rclcpp::Subscription<AccelWithCovarianceStamped>::SharedPtr acc_sub_;
 
   // self pose listener
   tier4_autoware_utils::SelfPoseListener self_pose_listener_;
@@ -123,10 +143,8 @@ private:
   // data for callback functions
   PredictedObjects::ConstSharedPtr in_objects_ptr_;
   geometry_msgs::msg::TwistStamped::SharedPtr current_twist_ptr_;
-  geometry_msgs::msg::TwistStamped::SharedPtr prev_twist_ptr_;
 
-  // low pass filter of acceleration
-  std::shared_ptr<LowpassFilter1d> lpf_acc_ptr_;
+  geometry_msgs::msg::AccelStamped::SharedPtr current_accel_ptr_;
 
   // Vehicle Parameters
   VehicleInfo vehicle_info_;
@@ -144,22 +162,41 @@ private:
   // planner
   std::unique_ptr<PlannerInterface> planner_ptr_;
 
+  // previous closest obstacle
+  std::shared_ptr<TargetObstacle> prev_closest_obstacle_ptr_{nullptr};
+
   // obstacle filtering parameter
   struct ObstacleFilteringParam
   {
     double rough_detection_area_expand_width;
     double detection_area_expand_width;
     double decimate_trajectory_step_length;
+    // inside
     double crossing_obstacle_velocity_threshold;
     double collision_time_margin;
+    // outside
+    double outside_rough_detection_area_expand_width;
+    double outside_obstacle_min_velocity_threshold;
     double ego_obstacle_overlap_time_threshold;
     double max_prediction_time_for_collision_check;
     double crossing_obstacle_traj_angle_threshold;
     std::vector<int> ignored_outside_obstacle_types;
+    // obstacle hold
+    double stop_obstacle_hold_time_threshold;
+    // prediction resampling
+    double prediction_resampling_time_interval;
+    double prediction_resampling_time_horizon;
+    // goal extension
+    double goal_extension_length;
+    double goal_extension_interval;
   };
   ObstacleFilteringParam obstacle_filtering_param_;
 
   bool need_to_clear_vel_limit_{false};
+
+  bool is_driving_forward_{true};
+
+  std::vector<TargetObstacle> prev_target_obstacles_;
 };
 }  // namespace motion_planning
 

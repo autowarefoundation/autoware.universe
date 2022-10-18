@@ -14,8 +14,9 @@
 
 #include "lidar_centerpoint/ros_utils.hpp"
 
-#include <tier4_autoware_utils/geometry/geometry.hpp>
-#include <tier4_autoware_utils/math/constants.hpp>
+#include "perception_utils/perception_utils.hpp"
+#include "tier4_autoware_utils/geometry/geometry.hpp"
+#include "tier4_autoware_utils/math/constants.hpp"
 
 namespace centerpoint
 {
@@ -23,8 +24,7 @@ namespace centerpoint
 using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
 
 void box3DToDetectedObject(
-  const Box3D & box3d, const std::vector<std::string> & class_names,
-  const bool rename_car_to_truck_and_bus, const bool has_twist,
+  const Box3D & box3d, const std::vector<std::string> & class_names, const bool has_twist,
   autoware_auto_perception_msgs::msg::DetectedObject & obj)
 {
   // TODO(yukke42): the value of classification confidence of DNN, not probability.
@@ -41,18 +41,7 @@ void box3DToDetectedObject(
       rclcpp::get_logger("lidar_centerpoint"), "Unexpected label: UNKNOWN is set.");
   }
 
-  float l = box3d.length;
-  float w = box3d.width;
-  if (classification.label == Label::CAR && rename_car_to_truck_and_bus) {
-    // Note: object size is referred from multi_object_tracker
-    if ((w * l > 2.2 * 5.5) && (w * l <= 2.5 * 7.9)) {
-      classification.label = Label::TRUCK;
-    } else if (w * l > 2.5 * 7.9) {
-      classification.label = Label::BUS;
-    }
-  }
-
-  if (isCarLikeVehicleLabel(classification.label)) {
+  if (perception_utils::isCarLikeVehicle(classification.label)) {
     obj.kinematics.orientation_availability =
       autoware_auto_perception_msgs::msg::DetectedObjectKinematics::SIGN_UNKNOWN;
   }
@@ -71,13 +60,15 @@ void box3DToDetectedObject(
     tier4_autoware_utils::createTranslation(box3d.length, box3d.width, box3d.height);
 
   // twist
-  float vel_x = box3d.vel_x;
-  float vel_y = box3d.vel_y;
-  geometry_msgs::msg::Twist twist;
-  twist.linear.x = std::sqrt(std::pow(vel_x, 2) + std::pow(vel_y, 2));
-  twist.angular.z = 2 * (std::atan2(vel_y, vel_x) - yaw);
-  obj.kinematics.twist_with_covariance.twist = twist;
-  obj.kinematics.has_twist = has_twist;
+  if (has_twist) {
+    float vel_x = box3d.vel_x;
+    float vel_y = box3d.vel_y;
+    geometry_msgs::msg::Twist twist;
+    twist.linear.x = std::sqrt(std::pow(vel_x, 2) + std::pow(vel_y, 2));
+    twist.angular.z = 2 * (std::atan2(vel_y, vel_x) - yaw);
+    obj.kinematics.twist_with_covariance.twist = twist;
+    obj.kinematics.has_twist = has_twist;
+  }
 }
 
 uint8_t getSemanticType(const std::string & class_name)
@@ -99,12 +90,6 @@ uint8_t getSemanticType(const std::string & class_name)
   } else {
     return Label::UNKNOWN;
   }
-}
-
-bool isCarLikeVehicleLabel(const uint8_t label)
-{
-  return label == Label::CAR || label == Label::TRUCK || label == Label::BUS ||
-         label == Label::TRAILER;
 }
 
 }  // namespace centerpoint
