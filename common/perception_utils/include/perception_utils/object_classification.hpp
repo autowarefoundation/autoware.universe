@@ -17,6 +17,7 @@
 
 #include "autoware_auto_perception_msgs/msg/object_classification.hpp"
 
+#include <string>
 #include <vector>
 
 namespace perception_utils
