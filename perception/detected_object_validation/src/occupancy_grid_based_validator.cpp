@@ -75,8 +75,7 @@ void OccupancyGridBasedValidator::onObjectsAndOccGrid(
     const auto & transformed_object = transformed_objects.objects.at(i);
     const auto & object = input_objects->objects.at(i);
     const auto & label = object.classification.front().label;
-    const bool is_vehicle = perception_utils::isCarLikeVehicle(label);
-    if (is_vehicle) {
+    if (perception_utils::isCarLikeVehicle(label)) {
       auto mask = getMask(*input_occ_grid, transformed_object);
       const float mean = mask ? cv::mean(occ_grid, mask.value())[0] * 0.01 : 1.0;
       if (mean_threshold_ < mean) output.objects.push_back(object);
@@ -154,8 +153,7 @@ void OccupancyGridBasedValidator::showDebugImage(
   // Get vehicle mask image and calculate mean within mask.
   for (const auto & object : objects.objects) {
     const auto & label = object.classification.front().label;
-    const bool is_vehicle = perception_utils::isCarLikeVehicle(label);
-    if (is_vehicle) {
+    if (perception_utils::isCarLikeVehicle(label)) {
       auto mask = getMask(ros_occ_grid, object);
       const float mean = mask ? cv::mean(occ_grid, mask.value())[0] * 0.01 : 1.0;
       if (mean_threshold_ < mean) {
