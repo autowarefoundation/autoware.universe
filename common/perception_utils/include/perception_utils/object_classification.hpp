@@ -92,6 +92,52 @@ inline bool isLargeVehicle(const std::vector<ObjectClassification> & object_clas
   auto highest_prob_label = getHighestProbLabel(object_classifications);
   return isLargeVehicle(highest_prob_label);
 }
+
+inline uint8_t toObjectClassification(const std::string & class_name)
+{
+  if (class_name == "UNKNOWN") {
+    return ObjectClassification::UNKNOWN;
+  } else if (class_name == "CAR") {
+    return ObjectClassification::CAR;
+  } else if (class_name == "TRUCK") {
+    return ObjectClassification::TRUCK;
+  } else if (class_name == "BUS") {
+    return ObjectClassification::BUS;
+  } else if (class_name == "TRAILER") {
+    return ObjectClassification::TRAILER;
+  } else if (class_name == "MOTORCYCLE") {
+    return ObjectClassification::MOTORCYCLE;
+  } else if (class_name == "BICYCLE") {
+    return ObjectClassification::BICYCLE;
+  } else if (class_name == "PEDESTRIAN") {
+    return ObjectClassification::PEDESTRIAN;
+  } else {
+    return ObjectClassification::UNKNOWN;
+  }
+}
+
+inline std::string toString(const uint8_t label)
+{
+  if (label == ObjectClassification::UNKNOWN) {
+    return "UNKNOWN";
+  } else if (label == ObjectClassification::CAR) {
+    return "CAR";
+  } else if (label == ObjectClassification::TRUCK) {
+    return "TRUCK";
+  } else if (label == ObjectClassification::BUS) {
+    return "BUS";
+  } else if (label == ObjectClassification::TRAILER) {
+    return "TRAILER";
+  } else if (label == ObjectClassification::MOTORCYCLE) {
+    return "MOTORCYCLE";
+  } else if (label == ObjectClassification::BICYCLE) {
+    return "BICYCLE";
+  } else if (label == ObjectClassification::PEDESTRIAN) {
+    return "PEDESTRIAN";
+  } else {
+    return "UNKNOWN";
+  }
+}
 }  // namespace perception_utils
 
 #endif  // PERCEPTION_UTILS__OBJECT_CLASSIFICATION_HPP_
