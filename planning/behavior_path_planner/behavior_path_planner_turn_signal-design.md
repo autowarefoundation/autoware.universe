@@ -70,7 +70,7 @@ Turn signal decider checks each lanelet on the map if it has `turn_direction` in
 
 #### 2. Avoidance
 
-Avoidance can be separated into two sections, first section and second section. The first section is from the start point of the path shift to the end of the path shift. The second section is from the end of shift point to the end of avoidance.
+Avoidance can be separated into two sections, first section and second section. The first section is from the start point of the path shift to the end of the path shift. The second section is from the end of shift point to the end of avoidance. Note that avoidance module will not activate turn signal when its shift length is below `turn_signal_shift_length_threshold`.
 
 First section
 
