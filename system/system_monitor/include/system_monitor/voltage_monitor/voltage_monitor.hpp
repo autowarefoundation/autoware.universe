@@ -25,10 +25,9 @@
 #include <climits>
 #include <regex>
 #include <string>
-#include <regex>
 <<<<<<< HEAD
 =======
-  =======
+== == == =
 >>>>>>> 24d1e32bf92ddae1a1a7b5d93ae54ab99099bd8d
 >>>>>>> e9c848290a1c083b8c0d81b195b0398f5ce301d9
 
