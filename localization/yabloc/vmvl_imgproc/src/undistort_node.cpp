@@ -87,11 +87,12 @@ private:
 
   void onImage(const CompressedImage & msg)
   {
-    Timer timer;
     if (!info_.has_value()) return;
     if (undistort_map_x.empty()) makeRemapLUT();
 
+    Timer timer;
     cv::Mat image = vml_common::decompress2CvMat(msg);
+
     cv::Mat undistorted_image;
     cv::remap(image, undistorted_image, undistort_map_x, undistort_map_y, cv::INTER_LINEAR);
 
@@ -115,7 +116,7 @@ private:
       pub_image_->publish(*bridge.toImageMsg());
     }
 
-    RCLCPP_INFO_STREAM(get_logger(), "decompress: " << timer.microSeconds() / 1000.f << "[ms]");
+    RCLCPP_INFO_STREAM(get_logger(), "image undistort: " << timer);
   }
 
   void onInfo(const CameraInfo & msg) { info_ = msg; }
