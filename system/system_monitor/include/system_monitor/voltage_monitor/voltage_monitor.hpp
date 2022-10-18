@@ -25,7 +25,10 @@
 #include <climits>
 #include <regex>
 #include <string>
+<<<<<<< HEAD
 #include <regex>
+=======
+>>>>>>> 24d1e32bf92ddae1a1a7b5d93ae54ab99099bd8d
 
 class VoltageMonitor : public rclcpp::Node
 {
@@ -44,6 +47,7 @@ public:
 protected:
   using DiagStatus = diagnostic_msgs::msg::DiagnosticStatus;
 
+<<<<<<< HEAD
   /**
    * @brief check Memory usage
    * @param @param [out] stat diagnostic message passed directly to diagnostic publish calls
@@ -65,6 +69,28 @@ protected:
   char hostname_[HOST_NAME_MAX + 1];  //!< @brief host name
 
   size_t available_size_;  //!< @brief Memory available size to generate error
+=======
+  diagnostic_updater::Updater updater_;  //!< @brief Updater class which advertises to /diagnostics
+
+  char hostname_[HOST_NAME_MAX + 1];  //!< @brief host name
+
+  /**
+   * @brief check CMOS Battey
+   * @param [out] stat diagnostic message passed directly to diagnostic publish calls
+   * @note NOLINT syntax is needed since diagnostic_updater asks for a non-const reference
+   * to pass diagnostic message updated in this function to diagnostic publish calls.
+   */
+  void checkVoltage(
+    diagnostic_updater::DiagnosticStatusWrapper & stat);  // NOLINT(runtime/references)
+  /**
+   * @brief check CMOS Battey
+   * @param [out] stat diagnostic message passed directly to diagnostic publish calls
+   * @note NOLINT syntax is needed since diagnostic_updater asks for a non-const reference
+   * to pass diagnostic message updated in this function to diagnostic publish calls.
+   */
+  void checkBatteryStatus(
+    diagnostic_updater::DiagnosticStatusWrapper & stat);  // NOLINT(runtime/references)
+>>>>>>> 24d1e32bf92ddae1a1a7b5d93ae54ab99099bd8d
 
   float voltage_warn_;
   float voltage_error_;

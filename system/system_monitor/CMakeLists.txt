@@ -303,10 +303,7 @@ if(BUILD_TESTING)
 
 endif()
 
-<<<<<<< HEAD
-=======
 
->>>>>>> change name hardware_monitor -> voltage_monitor
 ament_auto_package(INSTALL_TO_SHARE
   launch
   config

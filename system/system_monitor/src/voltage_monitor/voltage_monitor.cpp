@@ -152,7 +152,11 @@ void VoltageMonitor::checkBatteryStatus(diagnostic_updater::DiagnosticStatusWrap
     stat.add("pipe2", strerror(errno));
     return;
   }
+<<<<<<< HEAD
   bp::pipe{out_fd[0], out_fd[1]};
+=======
+  bp::pipe out_pipe{out_fd[0], out_fd[1]};
+>>>>>>> 24d1e32bf92ddae1a1a7b5d93ae54ab99099bd8d
   bp::ipstream is_out{std::move(out_pipe)};
 
   int err_fd[2];
