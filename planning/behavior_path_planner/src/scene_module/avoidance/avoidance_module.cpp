@@ -2181,8 +2181,7 @@ BehaviorModuleOutput AvoidanceModule::plan()
   }
   output.path = std::make_shared<PathWithLaneId>(avoidance_path.path);
 
-  output.modified_goal.header.frame_id = planner_data_->route_handler->getRouteHeader().frame_id;
-  output.modified_goal.header.stamp = clock_->now();
+  output.modified_goal.header = planner_data_->route_handler->getRouteHeader();
   output.modified_goal.pose = planner_data_->route_handler->getGoalPose();
 
   const size_t ego_idx = findEgoIndex(output.path->points);

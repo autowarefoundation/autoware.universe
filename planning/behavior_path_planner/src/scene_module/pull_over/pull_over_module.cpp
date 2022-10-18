@@ -477,8 +477,7 @@ BehaviorModuleOutput PullOverModule::plan()
   }
 
   // set modified goal pose
-  output.modified_goal.header.frame_id = planner_data_->route_handler->getRouteHeader().frame_id;
-  output.modified_goal.header.stamp = clock_->now();
+  output.modified_goal.header = planner_data_->route_handler->getRouteHeader();
   output.modified_goal.pose = modified_goal_pose_;
 
   const auto distance_to_path_change = calcDistanceToPathChange();

@@ -195,8 +195,7 @@ BehaviorModuleOutput LaneChangeModule::plan()
     status_.lane_change_path.shift_line, planner_data_->self_pose->pose,
     planner_data_->self_odometry->twist.twist.linear.x, planner_data_->parameters);
   output.turn_signal_info.turn_signal.command = turn_signal_info.first.command;
-  output.modified_goal.header.frame_id = planner_data_->route_handler->getRouteHeader().frame_id;
-  output.modified_goal.header.stamp = clock_->now();
+  output.modified_goal.header = planner_data_->route_handler->getRouteHeader();
   output.modified_goal.pose = planner_data_->route_handler->getGoalPose();
 
   lane_change_utils::get_turn_signal_info(status_.lane_change_path, &output.turn_signal_info);

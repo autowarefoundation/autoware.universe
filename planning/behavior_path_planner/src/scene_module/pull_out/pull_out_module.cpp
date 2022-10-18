@@ -193,8 +193,7 @@ BehaviorModuleOutput PullOutModule::plan()
     planner_data_->parameters.vehicle_length, planner_data_);
 
   output.path = std::make_shared<PathWithLaneId>(path);
-  output.modified_goal.header.frame_id = planner_data_->route_handler->getRouteHeader().frame_id;
-  output.modified_goal.header.stamp = clock_->now();
+  output.modified_goal.header = planner_data_->route_handler->getRouteHeader();
   output.modified_goal.pose = planner_data_->route_handler->getGoalPose();
   output.turn_signal_info = calcTurnSignalInfo();
 
@@ -298,8 +297,7 @@ BehaviorModuleOutput PullOutModule::planWaitingApproval()
   }
 
   output.path = std::make_shared<PathWithLaneId>(stop_path);
-  output.modified_goal.header.frame_id = planner_data_->route_handler->getRouteHeader().frame_id;
-  output.modified_goal.header.stamp = clock_->now();
+  output.modified_goal.header = planner_data_->route_handler->getRouteHeader();
   output.modified_goal.pose = planner_data_->route_handler->getGoalPose();
   output.turn_signal_info = calcTurnSignalInfo();
   output.path_candidate = std::make_shared<PathWithLaneId>(candidate_path);
