@@ -60,4 +60,13 @@ int main()
 
   // Print continuous time roots.
   bf.printFilterContinuousTimeRoots();
+  bf.printContinuousTimeTF();
+
+  // Compute the discrete time transfer function.
+  bf.computeDiscreteTimeTF();
+  bf.printDiscreteTimeTF();
+
+  int a = 1;
+
+  return 0;
 }

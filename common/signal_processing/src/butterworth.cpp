@@ -55,6 +55,10 @@ sOrderCutoff ButterworthFilter::getOrderCutOff() const
 {
   return sOrderCutoff{order_, cutoff_frequency_};
 }
+
+/**
+ * @brief Matlab equivalent : [b, a]  = butter(n, Wn, 's')
+ * */
 void ButterworthFilter::computeContinuousTimeTF(const bool & use_sampling_frequency)
 {
   // First compute  the phase angles of the roots
@@ -129,4 +133,128 @@ void ButterworthFilter::printFilterContinuousTimeRoots() const
   for (auto const & x : continuous_time_roots_) {
     print(std::real(x), std::imag(x) < 0 ? " - " : " + ", " j", std::abs(std::imag(x)));
   }
+}
+void ButterworthFilter::printContinuousTimeTF() const
+{
+  auto const & n = order_;
+
+  std::cout << "\nThe Continuous Time Transfer Function of the Filter is ;\n" << std::endl;
+
+  print(continuous_time_numerator_, " / ");
+
+  for (int i = n; i > 0; i--) {
+    printf("%4.3f *", continuous_time_denominator_[n - i].real());
+    printf("s[%d] + ", i);
+  }
+
+  printf("%4.3f \n", continuous_time_denominator_[n].real());
+}
+
+/**
+ * @brief This method assumes the continuous time transfer function of filter has already been
+ * computed and stored in the object and uses the bilinear transformation to obtain the discrete
+ * time transfer function.
+ *
+ * Matlab equivalent :
+ * Td = 2.
+ * [numd, dend]=bilinear(sys_filt.Numerator{1}, sys_filt.Denominator{1}, 1/Td)
+ * where sys_filt is the continuous time transfer function.
+ * */
+void ButterworthFilter::computeDiscreteTimeTF(const bool & use_sampling_frequency)
+{
+  discrete_time_zeros_.resize(order_, {-1.0, 0.0});  // Butter puts zeros at -1.0 for causality
+  discrete_time_roots_.resize(order_, {0.0, 0.0});
+  An_.resize(order_ + 1, 0.0);
+  Bn_.resize(order_ + 1, 0.0);
+
+  discrete_time_gain_ = {continuous_time_numerator_, 0.0};
+
+  // Bi-linear Transformation of the Roots
+  int k{};
+
+  if (use_sampling_frequency) {
+    for (auto & dr : discrete_time_roots_) {
+      dr = (1.0 + continuous_time_roots_[k] / (sampling_frequency_ * 2.0)) /
+           (1.0 - continuous_time_roots_[k] / (sampling_frequency_ * 2.0));
+      k++;
+    }
+
+    discrete_time_denominator_ = poly(discrete_time_roots_);
+
+    // Obtain the coefficients of numerator and denominator
+    k = 0;
+    discrete_time_numerator_ = poly(discrete_time_zeros_);
+
+    // Compute Discrete Time Gain
+    std::complex<double> sum_num{0.0, 0.0};
+    std::complex<double> sum_den{0.0, 0.0};
+
+    for (auto const & n : discrete_time_numerator_) {
+      sum_num += n;
+    }
+
+    for (auto const & n : discrete_time_denominator_) {
+      sum_den += n;
+    }
+
+    discrete_time_gain_ = (sum_den / sum_num);
+
+    for (auto && dn : discrete_time_numerator_) {
+      dn = dn * discrete_time_gain_;
+      Bn_[k] = dn.real();
+      k++;
+    }
+
+    k = 0;
+    for (auto const & dd : discrete_time_denominator_) {
+      An_[k] = dd.real();
+      k++;
+    }
+  } else {
+    for (auto && dr : discrete_time_roots_) {
+      dr = (1.0 + Td_ * continuous_time_roots_[k] / 2.0) /
+           (1.0 - Td_ * continuous_time_roots_[k] / 2.0);
+
+      discrete_time_gain_ = discrete_time_gain_ / (1.0 - continuous_time_roots_[k]);
+      k++;
+    }
+
+    discrete_time_denominator_ = poly(discrete_time_roots_);
+
+    // Obtain the coefficients of numerator and denominator
+    k = 0;
+    discrete_time_numerator_ = poly(discrete_time_zeros_);
+
+    for (auto && dn : discrete_time_numerator_) {
+      dn = dn * discrete_time_gain_;
+      Bn_[k] = dn.real();
+      k++;
+    }
+
+    k = 0;
+    for (auto const & dd : discrete_time_denominator_) {
+      An_[k] = dd.real();
+      k++;
+    }
+  }
+}
+void ButterworthFilter::printDiscreteTimeTF() const
+{
+  int const & n = order_;
+  print("\nThe Discrete Time Transfer Function of the Filter is ;\n");
+
+  for (int i = n; i > 0; i--) {
+    printf("%4.3f *", discrete_time_numerator_[n - i].real());
+    printf("z[-%d] + ", i);
+  }
+  printf("%4.3f", discrete_time_numerator_[n].real());
+  print(" / ");
+
+  for (int i = n; i > 0; i--) {
+    printf("%4.3f *", discrete_time_denominator_[n - i].real());
+    printf("z[-%d] + ", i);
+  }
+
+  printf("%4.3f", discrete_time_denominator_[n].real());
+  std::cout << "\n" << std::endl;
 }

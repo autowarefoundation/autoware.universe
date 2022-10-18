@@ -79,7 +79,7 @@ public:
 
 private:
   // member variables
-  int order_{};                // filter order
+  int order_{1};               // filter order
   double cutoff_frequency_{};  // filter cut-off frequency [rad/sec]
 
   // Boolean parameter when a sampling frequency is defined. Default is false.
@@ -104,8 +104,8 @@ private:
   double continuous_time_numerator_{0.0};
 
   // Discrete time transfer function numerator denominators
-  std::vector<std::complex<double>> mDiscreteTimeDenominator{{0.0, 0.0}};
-  std::vector<std::complex<double>> mDiscreteTimeNumerator{{0.0, 0.0}};
+  std::vector<std::complex<double>> discrete_time_denominator_{{0.0, 0.0}};
+  std::vector<std::complex<double>> discrete_time_numerator_{{0.0, 0.0}};
 
   // Numerator and Denominator Coefficients Bn and An of Discrete Time Filter
 
@@ -114,7 +114,7 @@ private:
 
   // METHODS
   // polynomial function returns the coefficients given the roots of a polynomial
-  std::vector<std::complex<double>> poly(std::vector<std::complex<double>> const & roots);
+  static std::vector<std::complex<double>> poly(std::vector<std::complex<double>> const & roots);
 
   /*
    * Implementation starts by computing the pole locations of the filter in the
