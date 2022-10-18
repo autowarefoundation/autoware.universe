@@ -52,6 +52,7 @@ private:
   float lower_bound_x_;
   float lower_bound_y_;
   utils::FilterTargetLabel filter_target_;
+  bool isObjectInBounds(const autoware_auto_perception_msgs::msg::DetectedObject & object) const;
 };
 
 }  // namespace object_position_filter

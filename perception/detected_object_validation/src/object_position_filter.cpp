@@ -56,12 +56,9 @@ void ObjectPositionFilterNode::objectCallback(
   output_object_msg.header = input_msg->header;
 
   for (const auto & object : input_msg->objects) {
-    const auto & position = object.kinematics.pose_with_covariance.pose.position;
     const auto & label = object.classification.front().label;
     if (filter_target_.isTarget(label)) {
-      if (
-        position.x > lower_bound_x_ && position.x < upper_bound_x_ && position.y > lower_bound_y_ &&
-        position.y < upper_bound_y_) {
+      if (isObjectInBounds(object)) {
         output_object_msg.objects.emplace_back(object);
       }
     } else {
@@ -70,6 +67,14 @@ void ObjectPositionFilterNode::objectCallback(
   }
 
   object_pub_->publish(output_object_msg);
+}
+
+bool ObjectPositionFilterNode::isObjectInBounds(
+  const autoware_auto_perception_msgs::msg::DetectedObject & object) const
+{
+  const auto & position = object.kinematics.pose_with_covariance.pose.position;
+  return position.x > lower_bound_x_ && position.x < upper_bound_x_ &&
+         position.y > lower_bound_y_ && position.y < upper_bound_y_;
 }
 
 }  // namespace object_position_filter
