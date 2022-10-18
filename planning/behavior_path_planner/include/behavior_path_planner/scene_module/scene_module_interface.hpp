@@ -66,6 +66,8 @@ struct BehaviorModuleOutput
   PlanResult path_candidate{};
 
   TurnSignalInfo turn_signal_info{};
+
+  PoseStamped modified_goal{};
 };
 
 struct CandidateOutput

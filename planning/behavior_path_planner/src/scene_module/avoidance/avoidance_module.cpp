@@ -2181,6 +2181,10 @@ BehaviorModuleOutput AvoidanceModule::plan()
   }
   output.path = std::make_shared<PathWithLaneId>(avoidance_path.path);
 
+  output.modified_goal.header.frame_id = planner_data_->route_handler->getRouteHeader().frame_id;
+  output.modified_goal.header.stamp = clock_->now();
+  output.modified_goal.pose = planner_data_->route_handler->getGoalPose();
+
   const size_t ego_idx = findEgoIndex(output.path->points);
   util::clipPathLength(*output.path, ego_idx, planner_data_->parameters);
 
@@ -2248,6 +2252,8 @@ BehaviorModuleOutput AvoidanceModule::planWaitingApproval()
 {
   // we can execute the plan() since it handles the approval appropriately.
   BehaviorModuleOutput out = plan();
+  out.modified_goal.header.frame_id = planner_data_->route_handler->getRouteHeader().frame_id;
+  out.modified_goal.header.stamp = clock_->now();
   const auto candidate = planCandidate();
   constexpr double threshold_to_update_status = -1.0e-03;
   if (candidate.start_distance_to_path_change > threshold_to_update_status) {

@@ -307,6 +307,7 @@ bool PullOverModule::isLongEnoughToParkingStart(
 
 bool PullOverModule::planWithEfficientPath()
 {
+  modified_goal_pose_ = planner_data_->route_handler->getGoalPose();
   for (const auto & planner : pull_over_planners_) {
     for (const auto & goal_candidate : goal_candidates_) {
       planner->setPlannerData(planner_data_);
@@ -326,6 +327,7 @@ bool PullOverModule::planWithEfficientPath()
 
 bool PullOverModule::planWithCloseGoal()
 {
+  modified_goal_pose_ = planner_data_->route_handler->getGoalPose();
   for (const auto & goal_candidate : goal_candidates_) {
     for (const auto & planner : pull_over_planners_) {
       planner->setPlannerData(planner_data_);
@@ -474,19 +476,17 @@ BehaviorModuleOutput PullOverModule::plan()
     output.turn_signal_info = calcTurnSignalInfo();
   }
 
+  // set modified goal pose
+  output.modified_goal.header.frame_id = planner_data_->route_handler->getRouteHeader().frame_id;
+  output.modified_goal.header.stamp = clock_->now();
+  output.modified_goal.pose = modified_goal_pose_;
+
   const auto distance_to_path_change = calcDistanceToPathChange();
   updateRTCStatus(distance_to_path_change.first, distance_to_path_change.second);
 
   setDebugData();
 
-  // Publish the modified goal only when its path is safe.
-  if (status_.is_safe) {
-    PoseStamped goal_pose_stamped;
-    goal_pose_stamped.header = planner_data_->route_handler->getRouteHeader();
-    goal_pose_stamped.pose = modified_goal_pose_;
-    goal_pose_pub_->publish(goal_pose_stamped);
-  }
-
+  // update steering factor
   const uint16_t steering_factor_direction = std::invoke([this]() {
     const auto turn_signal = calcTurnSignalInfo();
     if (turn_signal.turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {
@@ -496,7 +496,6 @@ BehaviorModuleOutput PullOverModule::plan()
     }
     return SteeringFactor::STRAIGHT;
   });
-
   // TODO(tkhmy) add handle status TRYING
   steering_factor_interface_ptr_->updateSteeringFactor(
     {status_.pull_over_path.start_pose, modified_goal_pose_},
@@ -518,11 +517,15 @@ CandidateOutput PullOverModule::planCandidate() const { return CandidateOutput{}
 
 BehaviorModuleOutput PullOverModule::planWaitingApproval()
 {
-  updateOccupancyGrid();
-  BehaviorModuleOutput out;
   plan();  // update status_
   out.path = std::make_shared<PathWithLaneId>(getReferencePath());
   out.path_candidate = status_.is_safe ? std::make_shared<PathWithLaneId>(getFullPath()) : out.path;
+  plan();  // update status_
+  out.path = std::make_shared<PathWithLaneId>(getReferencePath());
+  out.path_candidate = status_.is_safe ? std::make_shared<PathWithLaneId>(getFullPath()) : out.path;
+  out.modified_goal.header.frame_id = planner_data_->route_handler->getRouteHeader().frame_id;
+  out.modified_goal.header.stamp = clock_->now();
+  out.modified_goal.pose = planner_data_->route_handler->getGoalPose();
 
   const auto distance_to_path_change = calcDistanceToPathChange();
   updateRTCStatus(distance_to_path_change.first, distance_to_path_change.second);

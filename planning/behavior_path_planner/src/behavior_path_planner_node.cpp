@@ -65,6 +65,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   turn_signal_publisher_ =
     create_publisher<TurnIndicatorsCommand>("~/output/turn_indicators_cmd", 1);
   hazard_signal_publisher_ = create_publisher<HazardLightsCommand>("~/output/hazard_lights_cmd", 1);
+  goal_publisher_ = create_publisher<PoseStamped>("~/output/modified_goal", 1);
   debug_avoidance_msg_array_publisher_ =
     create_publisher<AvoidanceDebugMsgArray>("~/debug/avoidance_debug_message_array", 1);
   debug_lane_change_msg_array_publisher_ =
@@ -652,6 +653,7 @@ void BehaviorPathPlannerNode::run()
   }
 
   publishSceneModuleDebugMsg();
+  goal_publisher_->publish(output.modified_goal);
 
   if (planner_data->parameters.visualize_drivable_area_for_shared_linestrings_lanelet) {
     const auto drivable_area_lines = marker_utils::createFurthestLineStringMarkerArray(

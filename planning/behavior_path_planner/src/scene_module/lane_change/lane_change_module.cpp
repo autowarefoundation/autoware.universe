@@ -195,6 +195,9 @@ BehaviorModuleOutput LaneChangeModule::plan()
     status_.lane_change_path.shift_line, planner_data_->self_pose->pose,
     planner_data_->self_odometry->twist.twist.linear.x, planner_data_->parameters);
   output.turn_signal_info.turn_signal.command = turn_signal_info.first.command;
+  output.modified_goal.header.frame_id = planner_data_->route_handler->getRouteHeader().frame_id;
+  output.modified_goal.header.stamp = clock_->now();
+  output.modified_goal.pose = planner_data_->route_handler->getGoalPose();
 
   lane_change_utils::get_turn_signal_info(status_.lane_change_path, &output.turn_signal_info);
   // output.turn_signal_info.signal_distance = turn_signal_info.second;
@@ -250,6 +253,8 @@ BehaviorModuleOutput LaneChangeModule::planWaitingApproval()
 {
   BehaviorModuleOutput out;
   out.path = std::make_shared<PathWithLaneId>(getReferencePath());
+  out.modified_goal.header.frame_id = planner_data_->route_handler->getRouteHeader().frame_id;
+  out.modified_goal.header.stamp = clock_->now();
   const auto candidate = planCandidate();
   out.path_candidate = std::make_shared<PathWithLaneId>(candidate.path_candidate);
   updateRTCStatus(candidate);
