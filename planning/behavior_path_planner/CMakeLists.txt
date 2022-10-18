@@ -28,6 +28,7 @@ ament_auto_add_library(behavior_path_planner_node SHARED
   src/scene_module/pull_over/util.cpp
   src/scene_module/pull_over/shift_pull_over.cpp
   src/scene_module/pull_over/geometric_pull_over.cpp
+  src/scene_module/pull_over/goal_searcher.cpp
   src/scene_module/pull_out/pull_out_module.cpp
   src/scene_module/pull_out/util.cpp
   src/scene_module/pull_out/shift_pull_out.cpp
@@ -64,6 +65,14 @@ if(BUILD_TESTING)
   )
 
   target_link_libraries(test_${CMAKE_PROJECT_NAME}_avoidance_module
+    behavior_path_planner_node
+  )
+
+  ament_add_ros_isolated_gmock(test_${CMAKE_PROJECT_NAME}_turn_signal
+    test/test_turn_signal.cpp
+  )
+
+  target_link_libraries(test_${CMAKE_PROJECT_NAME}_turn_signal
     behavior_path_planner_node
   )
 
