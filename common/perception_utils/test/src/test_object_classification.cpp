@@ -99,20 +99,38 @@ TEST(object_classification, test_getHighestProbClassification)
   }
 }
 
-TEST(object_classification, test_toObjectClassification)
+TEST(object_classification, test_fromString)
 {
   using autoware_auto_perception_msgs::msg::ObjectClassification;
+  using perception_utils::toLabel;
   using perception_utils::toObjectClassification;
+  using perception_utils::toObjectClassifications;
 
-  EXPECT_EQ(toObjectClassification("UNKNOWN"), ObjectClassification::UNKNOWN);
-  EXPECT_EQ(toObjectClassification("CAR"), ObjectClassification::CAR);
-  EXPECT_EQ(toObjectClassification("TRUCK"), ObjectClassification::TRUCK);
-  EXPECT_EQ(toObjectClassification("BUS"), ObjectClassification::BUS);
-  EXPECT_EQ(toObjectClassification("TRAILER"), ObjectClassification::TRAILER);
-  EXPECT_EQ(toObjectClassification("MOTORCYCLE"), ObjectClassification::MOTORCYCLE);
-  EXPECT_EQ(toObjectClassification("BICYCLE"), ObjectClassification::BICYCLE);
-  EXPECT_EQ(toObjectClassification("PEDESTRIAN"), ObjectClassification::PEDESTRIAN);
-  EXPECT_EQ(toObjectClassification(""), ObjectClassification::UNKNOWN);
+  // toLabel
+  {
+    EXPECT_EQ(toLabel("UNKNOWN"), ObjectClassification::UNKNOWN);
+    EXPECT_EQ(toLabel("CAR"), ObjectClassification::CAR);
+    EXPECT_EQ(toLabel("TRUCK"), ObjectClassification::TRUCK);
+    EXPECT_EQ(toLabel("BUS"), ObjectClassification::BUS);
+    EXPECT_EQ(toLabel("TRAILER"), ObjectClassification::TRAILER);
+    EXPECT_EQ(toLabel("MOTORCYCLE"), ObjectClassification::MOTORCYCLE);
+    EXPECT_EQ(toLabel("BICYCLE"), ObjectClassification::BICYCLE);
+    EXPECT_EQ(toLabel("PEDESTRIAN"), ObjectClassification::PEDESTRIAN);
+    EXPECT_EQ(toLabel(""), ObjectClassification::UNKNOWN);
+  }
+
+  // Classification
+  {
+    auto classification = toObjectClassification("CAR", 0.7);
+    EXPECT_EQ(classification.label, ObjectClassification::CAR);
+    EXPECT_NEAR(classification.probability, 0.7, epsilon);
+  }
+  // Classifications
+  {
+    auto classifications = toObjectClassifications("CAR", 0.7);
+    EXPECT_EQ(classifications.at(0).label, ObjectClassification::CAR);
+    EXPECT_NEAR(classifications.at(0).probability, 0.7, epsilon);
+  }
 }
 
 TEST(object_classification, test_toString)
@@ -120,12 +138,32 @@ TEST(object_classification, test_toString)
   using autoware_auto_perception_msgs::msg::ObjectClassification;
   using perception_utils::toString;
 
-  EXPECT_EQ(toString(ObjectClassification::UNKNOWN), "UNKNOWN");
-  EXPECT_EQ(toString(ObjectClassification::CAR), "CAR");
-  EXPECT_EQ(toString(ObjectClassification::TRUCK), "TRUCK");
-  EXPECT_EQ(toString(ObjectClassification::BUS), "BUS");
-  EXPECT_EQ(toString(ObjectClassification::TRAILER), "TRAILER");
-  EXPECT_EQ(toString(ObjectClassification::MOTORCYCLE), "MOTORCYCLE");
-  EXPECT_EQ(toString(ObjectClassification::BICYCLE), "BICYCLE");
-  EXPECT_EQ(toString(ObjectClassification::PEDESTRIAN), "PEDESTRIAN");
+  // from label
+  {
+    EXPECT_EQ(toString(ObjectClassification::UNKNOWN), "UNKNOWN");
+    EXPECT_EQ(toString(ObjectClassification::CAR), "CAR");
+    EXPECT_EQ(toString(ObjectClassification::TRUCK), "TRUCK");
+    EXPECT_EQ(toString(ObjectClassification::BUS), "BUS");
+    EXPECT_EQ(toString(ObjectClassification::TRAILER), "TRAILER");
+    EXPECT_EQ(toString(ObjectClassification::MOTORCYCLE), "MOTORCYCLE");
+    EXPECT_EQ(toString(ObjectClassification::BICYCLE), "BICYCLE");
+    EXPECT_EQ(toString(ObjectClassification::PEDESTRIAN), "PEDESTRIAN");
+  }
+
+  // from ObjectClassification
+  {
+    auto classification = createObjectClassification(ObjectClassification::CAR, 0.8);
+
+    EXPECT_EQ(toString(classification), "CAR");
+  }
+
+  // from ObjectClassifications
+  {
+    std::vector<autoware_auto_perception_msgs::msg::ObjectClassification> classifications;
+    classifications.push_back(createObjectClassification(ObjectClassification::CAR, 0.5));
+    classifications.push_back(createObjectClassification(ObjectClassification::TRUCK, 0.8));
+    classifications.push_back(createObjectClassification(ObjectClassification::BUS, 0.7));
+
+    EXPECT_EQ(toString(classifications), "TRUCK");
+  }
 }
