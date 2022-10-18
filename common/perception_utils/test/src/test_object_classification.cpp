@@ -98,3 +98,34 @@ TEST(object_classification, test_getHighestProbClassification)
     EXPECT_NEAR(classification.probability, 0.8, epsilon);
   }
 }
+
+TEST(object_classification, test_toObjectClassification)
+{
+  using autoware_auto_perception_msgs::msg::ObjectClassification;
+  using perception_utils::toObjectClassification;
+
+  EXPECT_EQ(toObjectClassification("UNKNOWN"), ObjectClassification::UNKNOWN);
+  EXPECT_EQ(toObjectClassification("CAR"), ObjectClassification::CAR);
+  EXPECT_EQ(toObjectClassification("TRUCK"), ObjectClassification::TRUCK);
+  EXPECT_EQ(toObjectClassification("BUS"), ObjectClassification::BUS);
+  EXPECT_EQ(toObjectClassification("TRAILER"), ObjectClassification::TRAILER);
+  EXPECT_EQ(toObjectClassification("MOTORCYCLE"), ObjectClassification::MOTORCYCLE);
+  EXPECT_EQ(toObjectClassification("BICYCLE"), ObjectClassification::BICYCLE);
+  EXPECT_EQ(toObjectClassification("PEDESTRIAN"), ObjectClassification::PEDESTRIAN);
+  EXPECT_EQ(toObjectClassification(""), ObjectClassification::UNKNOWN);
+}
+
+TEST(object_classification, test_toString)
+{
+  using autoware_auto_perception_msgs::msg::ObjectClassification;
+  using perception_utils::toString;
+
+  EXPECT_EQ(toString(ObjectClassification::UNKNOWN), "UNKNOWN");
+  EXPECT_EQ(toString(ObjectClassification::CAR), "CAR");
+  EXPECT_EQ(toString(ObjectClassification::TRUCK), "TRUCK");
+  EXPECT_EQ(toString(ObjectClassification::BUS), "BUS");
+  EXPECT_EQ(toString(ObjectClassification::TRAILER), "TRAILER");
+  EXPECT_EQ(toString(ObjectClassification::MOTORCYCLE), "MOTORCYCLE");
+  EXPECT_EQ(toString(ObjectClassification::BICYCLE), "BICYCLE");
+  EXPECT_EQ(toString(ObjectClassification::PEDESTRIAN), "PEDESTRIAN");
+}
