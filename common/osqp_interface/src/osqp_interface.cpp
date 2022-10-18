@@ -339,7 +339,7 @@ void OSQPInterface::logUnsolvedStatus(const std::string & prefix_message) const
 {
   const int status = getStatus();
   if (status == 1) {
-    // No need to log since optimziatoin was solved.
+    // No need to log since optimization was solved.
     return;
   }
 
