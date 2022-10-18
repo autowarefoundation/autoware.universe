@@ -119,7 +119,7 @@ void ObstaclePointCloudBasedValidator::onObjectsAndObstaclePointCloud(
   pcl::PointCloud<pcl::PointXY>::Ptr obstacle_pointcloud(new pcl::PointCloud<pcl::PointXY>);
   pcl::fromROSMsg(*input_obstacle_pointcloud, *obstacle_pointcloud);
   if (obstacle_pointcloud->empty()) {
-    RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 5, "cannot receieve pointcloud");
+    RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 5, "cannot receive pointcloud");
     // objects_pub_->publish(*input_objects);
     return;
   }
@@ -153,10 +153,8 @@ void ObstaclePointCloudBasedValidator::onObjectsAndObstaclePointCloud(
     // Filter object that have few pointcloud in them.
     const auto num = getPointCloudNumWithinPolygon(transformed_object, neighbor_pointcloud);
     if (num) {
-      if (min_pointcloud_num_ <= num.value())
-        output.objects.push_back(object);
-      else
-        removed_objects.objects.push_back(object);
+      (min_pointcloud_num_ <= num.value()) ? output.objects.push_back(object)
+                                           : removed_objects.objects.push_back(object);
     } else {
       output.objects.push_back(object);
     }
@@ -207,9 +205,7 @@ std::optional<size_t> ObstaclePointCloudBasedValidator::getPointCloudNumWithinPo
 std::optional<float> ObstaclePointCloudBasedValidator::getMaxRadius(
   const autoware_auto_perception_msgs::msg::DetectedObject & object)
 {
-  if (object.shape.type == Shape::BOUNDING_BOX) {
-    return std::hypot(object.shape.dimensions.x * 0.5f, object.shape.dimensions.y * 0.5f);
-  } else if (object.shape.type == Shape::CYLINDER) {
+  if (object.shape.type == Shape::BOUNDING_BOX || object.shape.type == Shape::CYLINDER) {
     return std::hypot(object.shape.dimensions.x * 0.5f, object.shape.dimensions.y * 0.5f);
   } else if (object.shape.type == Shape::POLYGON) {
     float max_dist = 0.0;

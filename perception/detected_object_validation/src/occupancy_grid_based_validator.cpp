@@ -152,8 +152,7 @@ void OccupancyGridBasedValidator::showDebugImage(
   cv::Mat passed_objects_image = occ_grid.clone();
 
   // Get vehicle mask image and calculate mean within mask.
-  for (size_t i = 0; i < objects.objects.size(); ++i) {
-    const auto & object = objects.objects.at(i);
+  for (const auto & object : objects.objects) {
     const auto & label = object.classification.front().label;
     const bool is_vehicle = perception_utils::isCarLikeVehicle(label);
     if (is_vehicle) {
