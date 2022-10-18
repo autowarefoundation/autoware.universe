@@ -182,12 +182,10 @@ std::optional<size_t> ObstaclePointCloudBasedValidator::getPointCloudNumWithinPo
 
   pcl::PointCloud<pcl::PointXYZ>::Ptr poly3d(new pcl::PointCloud<pcl::PointXYZ>);
 
-  size_t idx = 0;
-  for (const auto & p : poly2d.outer()) {
-    vertices.vertices.emplace_back(idx);
+  for (size_t i = 0; i < poly2d.outer().size(); ++i) {
+    vertices.vertices.emplace_back(i);
     vertices_array.emplace_back(vertices);
-    poly3d->emplace_back(p.x(), p.y(), 0.0);
-    idx++;
+    poly3d->emplace_back(poly2d.outer().at(i).x(), poly2d.outer().at(i).y(), 0.0);
   }
 
   pcl::CropHull<pcl::PointXYZ> cropper;  // don't be implemented PointXY by PCL
