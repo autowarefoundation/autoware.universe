@@ -41,7 +41,17 @@ void PidLongitudinalController::checkControlState(
 
   if (m_control_state == ControlState::EMERGENCY) {
     level = DiagnosticStatus::ERROR;
-    msg = "emergency occurred";
+    msg = "emergency occurred due to ";
+  }
+
+  if(m_state_transition_params.emergency_state_traj_trans_dev < m_control_data.trans_deviation)
+  {
+    msg += "translation deviation";
+  }
+
+  if(m_state_transition_params.emergency_state_traj_rot_dev < m_control_data.rot_deviation)
+  {
+    msg += "rotation deviation";
   }
 
   stat.add<int32_t>("control_state", static_cast<int32_t>(m_control_state));
