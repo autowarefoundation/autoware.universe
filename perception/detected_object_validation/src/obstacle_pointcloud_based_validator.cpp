@@ -68,7 +68,6 @@ inline pcl::PointCloud<pcl::PointXYZ>::Ptr toXYZ(
 
 namespace obstacle_pointcloud_based_validator
 {
-using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
 using Shape = autoware_auto_perception_msgs::msg::Shape;
 
 ObstaclePointCloudBasedValidator::ObstaclePointCloudBasedValidator(

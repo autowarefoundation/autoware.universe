@@ -14,6 +14,7 @@
 
 #include "occupancy_grid_based_validator/occupancy_grid_based_validator.hpp"
 
+#include <perception_utils/object_classification.hpp>
 #include <perception_utils/perception_utils.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
@@ -31,7 +32,6 @@
 
 namespace occupancy_grid_based_validator
 {
-using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
 using Shape = autoware_auto_perception_msgs::msg::Shape;
 
 OccupancyGridBasedValidator::OccupancyGridBasedValidator(const rclcpp::NodeOptions & node_options)
@@ -74,8 +74,7 @@ void OccupancyGridBasedValidator::onObjectsAndOccGrid(
     const auto & transformed_object = transformed_objects.objects.at(i);
     const auto & object = input_objects->objects.at(i);
     const auto & label = object.classification.front().label;
-    const bool is_vehicle = Label::CAR == label || Label::TRUCK == label || Label::BUS == label ||
-                            Label::TRAILER == label;
+    const bool is_vehicle = perception_utils::isCarLikeVehicle(label);
     if (is_vehicle) {
       auto mask = getMask(*input_occ_grid, transformed_object);
       const float mean = mask ? cv::mean(occ_grid, mask.value())[0] * 0.01 : 1.0;
@@ -186,8 +185,7 @@ void OccupancyGridBasedValidator::showDebugImage(
   for (size_t i = 0; i < objects.objects.size(); ++i) {
     const auto & object = objects.objects.at(i);
     const auto & label = object.classification.front().label;
-    const bool is_vehicle = Label::CAR == label || Label::TRUCK == label || Label::BUS == label ||
-                            Label::TRAILER == label;
+    const bool is_vehicle = perception_utils::isCarLikeVehicle(label);
     if (is_vehicle) {
       auto mask = getMask(ros_occ_grid, object);
       const float mean = mask ? cv::mean(occ_grid, mask.value())[0] * 0.01 : 1.0;
