@@ -68,10 +68,11 @@ void convertObjectMsg2SensorMsg(
 {
   output.header = input.header;
 
-  size_t pointcloud_size = 0;
-  for (const auto & feature_object : input.feature_objects) {
-    pointcloud_size += feature_object.feature.cluster.width * feature_object.feature.cluster.height;
-  }
+  const size_t pointcloud_size = std::accumulate(
+    input.feature_objects.begin(), input.feature_objects.end(), 0,
+    [](size_t acc, const auto & obj) {
+      return acc + obj.feature.cluster.width * obj.feature.cluster.height;
+    });
 
   sensor_msgs::PointCloud2Modifier modifier(output);
   modifier.setPointCloud2Fields(
