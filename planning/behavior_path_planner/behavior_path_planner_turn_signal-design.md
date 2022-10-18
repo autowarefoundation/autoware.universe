@@ -28,7 +28,7 @@ Currently, this algorithm can sometimes give unnatural (not wrong) blinkers in a
 | turn_signal_search_time                         | [s]  | double | search time for to decide activation of blinkers                             | 10            |
 | turn_signal_shift_length_threshold              | [m]  | double | shift length threshold to decide activation of blinkers                      | 0.3           |
 
-Note that the default values for `turn_signal_intersection_search_distance` and `turn_signal_search_time` is strictly followed Japanese Traffic Laws. So if your country does not allow to use these default values, you should change these values in configuration files.
+Note that the default values for `turn_signal_intersection_search_distance` and `turn_signal_search_time` is strictly followed by [Japanese Road Traffic Laws](https://www.japaneselawtranslation.go.jp/ja/laws/view/2962). So if your country does not allow to use these default values, you should change these values in configuration files.
 
 ## Inner-workings / Algorithms
 
