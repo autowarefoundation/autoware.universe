@@ -108,23 +108,21 @@ int main()
   bf3.computeDiscreteTimeTF(use_sampling_frequency);
   bf3.printDiscreteTimeTF();
 
-  //  auto AnBn = bf3.getAnBn();
-  //  auto An = bf3.getAn();
-  //  auto Bn = bf3.getBn();
-  //
-  //  print("An : ");
-  //
-  //  for (double it : An) {
-  //    std::cout << std::setprecision(4) << it << ", ";
-  //  }
-  //
-  //  print("\nBn : \n");
-  //
-  //  for (double it : Bn) {
-  //    std::cout << std::setprecision(4) << it << ", ";
-  //  }
+  auto AnBn = bf3.getAnBn();
+  auto An = bf3.getAn();
+  auto Bn = bf3.getBn();
 
-  int a = 1;
+  print("An : ");
+
+  for (double it : An) {
+    std::cout << std::setprecision(4) << it << ", ";
+  }
+
+  print("\nBn : \n");
+
+  for (double it : Bn) {
+    std::cout << std::setprecision(4) << it << ", ";
+  }
 
   return 0;
 }

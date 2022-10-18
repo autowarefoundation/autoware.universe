@@ -49,7 +49,7 @@ void ButterworthFilter::Buttord(
 
 void ButterworthFilter::setOrder(int const & N) { order_ = N; }
 
-void ButterworthFilter::setCuttoffFrequency(const double & Wc) { cutoff_frequency_ = Wc; }
+void ButterworthFilter::setCuttoffFrequency(const double & Wc) { cutoff_frequency_rad_sec = Wc; }
 
 /**
  * @brief Sets the cut-off and sampling frequencies.
@@ -67,13 +67,13 @@ void ButterworthFilter::setCuttoffFrequency(const double & fc, const double & fs
     return;
   }
 
-  cutoff_frequency_ = fc * 2.0 * M_PI;
-  sampling_frequency_ = fs * 2.0 * M_PI;
+  cutoff_frequency_rad_sec = fc * 2.0 * M_PI;
+  sampling_frequency_hz = fs;
 }
 
 sOrderCutoff ButterworthFilter::getOrderCutOff() const
 {
-  return sOrderCutoff{order_, cutoff_frequency_};
+  return sOrderCutoff{order_, cutoff_frequency_rad_sec};
 }
 
 /**
@@ -86,7 +86,7 @@ void ButterworthFilter::computeContinuousTimeTF(const bool & use_sampling_freque
   computeContinuousTimeRoots(use_sampling_frequency);
 
   continuous_time_denominator_ = poly(continuous_time_roots_);
-  continuous_time_numerator_ = std::pow(cutoff_frequency_, order_);
+  continuous_time_numerator_ = std::pow(cutoff_frequency_rad_sec, order_);
 }
 
 void ButterworthFilter::computePhaseAngles()
@@ -109,8 +109,8 @@ void ButterworthFilter::computeContinuousTimeRoots(const bool & use_sampling_fre
   if (use_sampling_freqency) {
     print("\n Sampling Frequency is used to compute pre-warped frequency \n");
 
-    double const & Fc =
-      (sampling_frequency_ / M_PI) * tan(cutoff_frequency_ / (sampling_frequency_ * 2.0));
+    double const & Fc = (sampling_frequency_hz / M_PI) *
+                        tan(cutoff_frequency_rad_sec / (sampling_frequency_hz * 2.0));
 
     for (auto & x : continuous_time_roots_) {
       x = {cos(phase_angles_[k]) * Fc * 2.0 * M_PI, sin(phase_angles_[k]) * Fc * 2.0 * M_PI};
@@ -119,7 +119,9 @@ void ButterworthFilter::computeContinuousTimeRoots(const bool & use_sampling_fre
 
   } else {
     for (auto & x : continuous_time_roots_) {
-      x = {cutoff_frequency_ * cos(phase_angles_[k]), cutoff_frequency_ * sin(phase_angles_[k])};
+      x = {
+        cutoff_frequency_rad_sec * cos(phase_angles_[k]),
+        cutoff_frequency_rad_sec * sin(phase_angles_[k])};
       k++;
     }
   }
@@ -195,8 +197,8 @@ void ButterworthFilter::computeDiscreteTimeTF(const bool & use_sampling_frequenc
 
   if (use_sampling_frequency) {
     for (auto & dr : discrete_time_roots_) {
-      dr = (1.0 + continuous_time_roots_[k] / (sampling_frequency_ * 2.0)) /
-           (1.0 - continuous_time_roots_[k] / (sampling_frequency_ * 2.0));
+      dr = (1.0 + continuous_time_roots_[k] / (sampling_frequency_hz * 2.0)) /
+           (1.0 - continuous_time_roots_[k] / (sampling_frequency_hz * 2.0));
       k++;
     }
 
@@ -268,6 +270,7 @@ void ButterworthFilter::printDiscreteTimeTF() const
     printf("%4.3f *", discrete_time_numerator_[n - i].real());
     printf("z[-%d] + ", i);
   }
+
   printf("%4.3f", discrete_time_numerator_[n].real());
   print(" / ");
 
@@ -291,5 +294,5 @@ void ButterworthFilter::printFilterSpecs() const
    *
    * */
   print("The order of the filter : ", this->order_);
-  print("Cut-off Frequency : ", this->cutoff_frequency_, " rad/sec\n");
+  print("Cut-off Frequency : ", this->cutoff_frequency_rad_sec, " rad/sec\n");
 }
