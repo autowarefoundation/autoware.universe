@@ -90,6 +90,7 @@ private:
 
   /// @brief callback for parameter updates
   /// @param[in] parameters updated parameters and their new values
+  /// @return result of parameter update
   rcl_interfaces::msg::SetParametersResult onParameter(
     const std::vector<rclcpp::Parameter> & parameters);
 

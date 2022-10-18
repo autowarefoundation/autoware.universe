@@ -63,7 +63,6 @@ linestring_t bicycleProjectionLine(
   const geometry_msgs::msg::Point & origin, const ProjectionParameters & params,
   const double steering_angle)
 {
-  // TODO(Maxime CLEMENT): use Eigen for faster calculation
   linestring_t line;
   line.reserve(params.points_per_projection);
   line.emplace_back(origin.x, origin.y);

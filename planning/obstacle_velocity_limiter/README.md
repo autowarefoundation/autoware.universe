@@ -152,11 +152,11 @@ For example a value of `1` means all trajectory points will be evaluated while a
 
 ### Outputs
 
-| Name                     | Type                                     | Description                                              |
-| ------------------------ | ---------------------------------------- | -------------------------------------------------------- |
-| `~/output/trajectory`    | `autoware_auto_planning_msgs/Trajectory` | Trajectory with adjusted velocities                      |
-| `~/output/debug_markers` | `visualization_msgs/MarkerArray`         | Debug markers (envelopes, obstacle polygons)             |
-| `~/output/runtime_us`    | `std_msgs/Int64`                         | Time taken to calculate the trajectory (in microseconds) |
+| Name                            | Type                                     | Description                                              |
+| ------------------------------- | ---------------------------------------- | -------------------------------------------------------- |
+| `~/output/trajectory`           | `autoware_auto_planning_msgs/Trajectory` | Trajectory with adjusted velocities                      |
+| `~/output/debug_markers`        | `visualization_msgs/MarkerArray`         | Debug markers (envelopes, obstacle polygons)             |
+| `~/output/runtime_microseconds` | `std_msgs/Int64`                         | Time taken to calculate the trajectory (in microseconds) |
 
 ## Parameters
 
