@@ -139,7 +139,7 @@ Second section
 #### 5. Pull over
 
 - desired start point  
-  `v*3.0` meters before the start point of the pull over path.
+  `v * turn_signal_search_time` meters before the start point of the pull over path.
 
 - desired end point  
   Terminal point of the path of pull over.
