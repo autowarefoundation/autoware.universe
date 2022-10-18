@@ -94,7 +94,7 @@ inline bool isLargeVehicle(const std::vector<ObjectClassification> & object_clas
   return isLargeVehicle(highest_prob_label);
 }
 
-inline uint8_t toObjectClassification(const std::string & class_name)
+inline uint8_t toLabel(const std::string & class_name)
 {
   if (class_name == "UNKNOWN") {
     return ObjectClassification::UNKNOWN;
@@ -115,6 +115,23 @@ inline uint8_t toObjectClassification(const std::string & class_name)
   } else {
     return ObjectClassification::UNKNOWN;
   }
+}
+
+inline ObjectClassification toObjectClassification(
+  const std::string & class_name, float probability)
+{
+  ObjectClassification classification;
+  classification.label = toLabel(class_name);
+  classification.probability = probability;
+  return classification;
+}
+
+inline std::vector<ObjectClassification> toObjectClassifications(
+  const std::string & class_name, float probability)
+{
+  std::vector<ObjectClassification> classifications;
+  classifications.push_back(toObjectClassification(class_name, probability));
+  return classifications;
 }
 
 inline std::string toString(const uint8_t label)
@@ -139,6 +156,18 @@ inline std::string toString(const uint8_t label)
     return "UNKNOWN";
   }
 }
+
+inline std::string toString(const ObjectClassification object_classification)
+{
+  return toString(object_classification.label);
+}
+
+inline std::string toString(const std::vector<ObjectClassification> object_classifications)
+{
+  auto highest_prob_label = getHighestProbLabel(object_classifications);
+  return toString(highest_prob_label);
+}
+
 }  // namespace perception_utils
 
 #endif  // PERCEPTION_UTILS__OBJECT_CLASSIFICATION_HPP_
