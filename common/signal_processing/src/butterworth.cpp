@@ -51,6 +51,26 @@ void ButterworthFilter::setOrder(int const & N) { order_ = N; }
 
 void ButterworthFilter::setCuttoffFrequency(const double & Wc) { cutoff_frequency_ = Wc; }
 
+/**
+ * @brief Sets the cut-off and sampling frequencies.
+ * @param fc [in] cut-off frequency in Hz.
+ * @param fs [in] sampling frequency in Hz.
+ * */
+void ButterworthFilter::setCuttoffFrequency(const double & fc, const double & fs)
+{
+  /*
+   * fc is the cut-off frequency in [Hz]
+   * fs is the sampling frequency in [Hz]
+   * */
+  if (fc >= fs / 2) {
+    print("Invalid argument : Cut-off frequency  fc must be less than fs/2 \n");
+    return;
+  }
+
+  cutoff_frequency_ = fc * 2.0 * M_PI;
+  sampling_frequency_ = fs * 2.0 * M_PI;
+}
+
 sOrderCutoff ButterworthFilter::getOrderCutOff() const
 {
   return sOrderCutoff{order_, cutoff_frequency_};
@@ -164,6 +184,7 @@ void ButterworthFilter::computeDiscreteTimeTF(const bool & use_sampling_frequenc
 {
   discrete_time_zeros_.resize(order_, {-1.0, 0.0});  // Butter puts zeros at -1.0 for causality
   discrete_time_roots_.resize(order_, {0.0, 0.0});
+
   An_.resize(order_ + 1, 0.0);
   Bn_.resize(order_ + 1, 0.0);
 
@@ -257,4 +278,18 @@ void ButterworthFilter::printDiscreteTimeTF() const
 
   printf("%4.3f", discrete_time_denominator_[n].real());
   std::cout << "\n" << std::endl;
+}
+std::vector<double> ButterworthFilter::getAn() const { return An_; }
+std::vector<double> ButterworthFilter::getBn() const { return Bn_; }
+
+sDifferenceAnBn ButterworthFilter::getAnBn() const { return {An_, Bn_}; }
+
+void ButterworthFilter::printFilterSpecs() const
+{
+  /**
+   * @brief Prints the order and cut-off angular frequency (rad/sec) of the filter
+   *
+   * */
+  print("The order of the filter : ", this->order_);
+  print("Cut-off Frequency : ", this->cutoff_frequency_, " rad/sec\n");
 }

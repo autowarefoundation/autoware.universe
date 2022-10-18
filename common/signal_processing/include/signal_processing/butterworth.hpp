@@ -17,6 +17,7 @@
 
 #include <cmath>
 #include <complex>
+#include <iomanip>
 #include <iostream>
 #include <vector>
 
@@ -61,15 +62,15 @@ public:
   void setCuttoffFrequency(double const & Wc);  // Wc is the cut-off frequency in [rad/sec]
 
   // fc is cut-off frequency in [Hz] and fs is the sampling frequency in [Hz]
-  void setCuttoffFrequency(double fc, double fs);
+  void setCuttoffFrequency(double const & fc, double const & fs);
   void setOrder(int const & N);
 
   // Get the order, cut-off frequency and other filter properties
-  sOrderCutoff getOrderCutOff() const;
-  sDifferenceAnBn getAnBn() const;
+  [[nodiscard]] sOrderCutoff getOrderCutOff() const;
+  [[nodiscard]] sDifferenceAnBn getAnBn() const;
 
-  std::vector<double> getAn() const;
-  std::vector<double> getBn() const;
+  [[nodiscard]] std::vector<double> getAn() const;
+  [[nodiscard]] std::vector<double> getBn() const;
 
   // computes continuous time transfer function
   void computeContinuousTimeTF(bool const & use_sampling_frequency = false);

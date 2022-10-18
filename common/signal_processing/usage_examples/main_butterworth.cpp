@@ -46,25 +46,83 @@ int main()
   double Ap{6.};   // pass-band ripple mag or loss [dB]
   double As{20.};  // stop band ripple attenuation [dB]
 
-  ButterworthFilter bf;
-  bf.Buttord(Wp, Ws, Ap, As);
+  ButterworthFilter bf1;
+  bf1.Buttord(Wp, Ws, Ap, As);
 
-  auto NWc = bf.getOrderCutOff();
+  auto NWc = bf1.getOrderCutOff();
   print("The computed order and frequency for the give specification : ");
   print("Minimum order N = ", NWc.N, ", and The cut-off frequency Wc = ", NWc.Wc, "rad/sec \n");
+  bf1.printFilterSpecs();
 
   /**
    * Approximate the continuous and discrete time transfer functions.
    * */
-  bf.computeContinuousTimeTF();
+  bf1.computeContinuousTimeTF();
 
   // Print continuous time roots.
-  bf.printFilterContinuousTimeRoots();
-  bf.printContinuousTimeTF();
+  bf1.printFilterContinuousTimeRoots();
+  bf1.printContinuousTimeTF();
 
   // Compute the discrete time transfer function.
-  bf.computeDiscreteTimeTF();
-  bf.printDiscreteTimeTF();
+  bf1.computeDiscreteTimeTF();
+  bf1.printDiscreteTimeTF();
+
+  // 2nd METHOD
+  // Setting filter order N and cut-off frequency explicitly
+  print("SECOND TYPE of FILTER INITIALIZATION ");
+
+  ButterworthFilter bf2;
+  bf2.setOrder(2);
+  bf2.setCuttoffFrequency(2.0);
+  bf2.printFilterSpecs();
+
+  // Get the computed order and Cut-off frequency
+  NWc = bf2.getOrderCutOff();
+
+  // Print continuous time roots.
+  bf2.computeContinuousTimeTF();
+  bf2.printFilterContinuousTimeRoots();
+  bf2.printContinuousTimeTF();
+
+  // Compute the discrete time transfer function.
+  bf2.computeDiscreteTimeTF();
+  bf2.printDiscreteTimeTF();
+
+  // 3rd METHOD
+  // defining a sampling frequency together with the cut-off fc, fs
+  print("THIRD TYPE of FILTER INITIALIZATION ");
+
+  ButterworthFilter bf3;
+  bf3.setOrder(2);
+
+  bf3.setCuttoffFrequency(10, 100);
+  bf3.printFilterSpecs();
+
+  bool use_sampling_frequency{true};
+
+  bf3.computeContinuousTimeTF(use_sampling_frequency);
+  bf3.printFilterContinuousTimeRoots();
+  bf3.printContinuousTimeTF();
+
+  // Compute Discrete Time TF
+  bf3.computeDiscreteTimeTF(use_sampling_frequency);
+  bf3.printDiscreteTimeTF();
+
+  //  auto AnBn = bf3.getAnBn();
+  //  auto An = bf3.getAn();
+  //  auto Bn = bf3.getBn();
+  //
+  //  print("An : ");
+  //
+  //  for (double it : An) {
+  //    std::cout << std::setprecision(4) << it << ", ";
+  //  }
+  //
+  //  print("\nBn : \n");
+  //
+  //  for (double it : Bn) {
+  //    std::cout << std::setprecision(4) << it << ", ";
+  //  }
 
   int a = 1;
 
