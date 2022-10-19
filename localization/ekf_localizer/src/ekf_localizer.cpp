@@ -14,6 +14,7 @@
 
 #include "ekf_localizer/ekf_localizer.hpp"
 
+#include "ekf_localizer/covariance.hpp"
 #include "ekf_localizer/mahalanobis.hpp"
 #include "ekf_localizer/matrix_types.hpp"
 #include "ekf_localizer/measurement.hpp"
@@ -22,6 +23,7 @@
 #include "ekf_localizer/state_transition.hpp"
 #include "ekf_localizer/warning.hpp"
 
+#include <rclcpp/duration.hpp>
 #include <rclcpp/logging.hpp>
 #include <tier4_autoware_utils/math/unit_conversion.hpp>
 #include <tier4_autoware_utils/ros/msg_covariance.hpp>
@@ -79,14 +81,13 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
   is_activated_ = false;
 
   /* initialize ros system */
-  auto period_control_ns =
-    std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(ekf_dt_));
   timer_control_ = rclcpp::create_timer(
-    this, get_clock(), period_control_ns, std::bind(&EKFLocalizer::timerCallback, this));
+    this, get_clock(), rclcpp::Duration::from_seconds(ekf_dt_),
+    std::bind(&EKFLocalizer::timerCallback, this));
 
-  const auto period_tf_ns = rclcpp::Rate(tf_rate_).period();
   timer_tf_ = rclcpp::create_timer(
-    this, get_clock(), period_tf_ns, std::bind(&EKFLocalizer::timerTFCallback, this));
+    this, get_clock(), rclcpp::Rate(tf_rate_).period(),
+    std::bind(&EKFLocalizer::timerTFCallback, this));
 
   pub_pose_ = create_publisher<geometry_msgs::msg::PoseStamped>("ekf_pose", 1);
   pub_pose_cov_ =
@@ -615,20 +616,11 @@ void EKFLocalizer::publishEstimateResult()
   pub_biased_pose_->publish(current_biased_ekf_pose_);
 
   /* publish latest pose with covariance */
-  using COV_IDX = tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
   geometry_msgs::msg::PoseWithCovarianceStamped pose_cov;
   pose_cov.header.stamp = current_time;
   pose_cov.header.frame_id = current_ekf_pose_.header.frame_id;
   pose_cov.pose.pose = current_ekf_pose_.pose;
-  pose_cov.pose.covariance[COV_IDX::X_X] = P(IDX::X, IDX::X);
-  pose_cov.pose.covariance[COV_IDX::X_Y] = P(IDX::X, IDX::Y);
-  pose_cov.pose.covariance[COV_IDX::X_YAW] = P(IDX::X, IDX::YAW);
-  pose_cov.pose.covariance[COV_IDX::Y_X] = P(IDX::Y, IDX::X);
-  pose_cov.pose.covariance[COV_IDX::Y_Y] = P(IDX::Y, IDX::Y);
-  pose_cov.pose.covariance[COV_IDX::Y_YAW] = P(IDX::Y, IDX::YAW);
-  pose_cov.pose.covariance[COV_IDX::YAW_X] = P(IDX::YAW, IDX::X);
-  pose_cov.pose.covariance[COV_IDX::YAW_Y] = P(IDX::YAW, IDX::Y);
-  pose_cov.pose.covariance[COV_IDX::YAW_YAW] = P(IDX::YAW, IDX::YAW);
+  pose_cov.pose.covariance = ekfCovarianceToPoseMessageCovariance(P);
   pub_pose_cov_->publish(pose_cov);
 
   geometry_msgs::msg::PoseWithCovarianceStamped biased_pose_cov = pose_cov;
@@ -643,10 +635,7 @@ void EKFLocalizer::publishEstimateResult()
   twist_cov.header.stamp = current_time;
   twist_cov.header.frame_id = current_ekf_twist_.header.frame_id;
   twist_cov.twist.twist = current_ekf_twist_.twist;
-  twist_cov.twist.covariance[COV_IDX::X_X] = P(IDX::VX, IDX::VX);
-  twist_cov.twist.covariance[COV_IDX::X_YAW] = P(IDX::VX, IDX::WZ);
-  twist_cov.twist.covariance[COV_IDX::YAW_X] = P(IDX::WZ, IDX::VX);
-  twist_cov.twist.covariance[COV_IDX::YAW_YAW] = P(IDX::WZ, IDX::WZ);
+  twist_cov.twist.covariance = ekfCovarianceToTwistMessageCovariance(P);
   pub_twist_cov_->publish(twist_cov);
 
   /* publish yaw bias */
