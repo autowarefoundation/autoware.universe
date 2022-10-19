@@ -57,7 +57,7 @@ void EuclideanClusterNode::onPointCloud(
   cluster_pub_->publish(output);
 
   // build debug msg
-  if (debug_pub_->get_subscription_count() >= 1) {
+  if (1 <= debug_pub_->get_subscription_count()) {
     sensor_msgs::msg::PointCloud2 debug;
     convertObjectMsg2SensorMsg(output, debug);
     debug_pub_->publish(debug);
