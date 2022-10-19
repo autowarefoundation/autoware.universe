@@ -1141,6 +1141,19 @@ Trajectories ObstacleAvoidancePlanner::optimizeTrajectory(
     return getPrevTrajs(p.path.points);
   }
 
+  // NOTE: Elastic band sometimes diverges with status = "OSQP_SOLVED".
+  constexpr double max_path_change_diff = 1.0e4;
+  for (size_t i = 0; i < eb_traj->size(); ++i) {
+    const auto & eb_pos = eb_traj->at(i).pose.position;
+    const auto & path_pos = p.path.points.at(std::min(i, p.path.points.size() - 1)).pose.position;
+
+    const double diff_x = eb_pos.x - path_pos.x;
+    const double diff_y = eb_pos.y - path_pos.y;
+    if (max_path_change_diff < std::abs(diff_x) || max_path_change_diff < std::abs(diff_y)) {
+      return getPrevTrajs(p.path.points);
+    }
+  }
+
   // EB has to be solved twice before solving MPT with fixed points
   // since the result of EB is likely to change with/without fixing (1st/2nd EB)
   // that makes MPT fixing points worse.
@@ -1248,6 +1261,14 @@ void ObstacleAvoidancePlanner::insertZeroVelocityOutsideDrivableArea(
     if (is_outside) {
       traj_points[i].longitudinal_velocity_mps = 0.0;
       debug_data_.stop_pose_by_drivable_area = traj_points[i].pose;
+
+      // NOTE: traj_points does not have valid z for efficient calculation of trajectory
+      if (!planner_data.path.points.empty()) {
+        const size_t path_idx =
+          motion_utils::findNearestIndex(planner_data.path.points, traj_points[i].pose.position);
+        debug_data_.stop_pose_by_drivable_area->position.z =
+          planner_data.path.points.at(path_idx).pose.position.z;
+      }
       break;
     }
   }

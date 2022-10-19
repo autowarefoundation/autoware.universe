@@ -99,6 +99,7 @@ def launch_setup(context, *args, **kwargs):
             ("~/input/reference_trajectory", "/planning/scenario_planning/trajectory"),
             ("~/input/current_odometry", "/localization/kinematic_state"),
             ("~/input/current_steering", "/vehicle/status/steering_status"),
+            ("~/input/current_accel", "/localization/acceleration"),
             ("~/output/predicted_trajectory", "lateral/predicted_trajectory"),
             ("~/output/lateral_diagnostic", "lateral/diagnostic"),
             ("~/output/slope_angle", "longitudinal/slope_angle"),
@@ -238,7 +239,7 @@ def launch_setup(context, *args, **kwargs):
         launch_arguments=[
             ("use_intra_process", LaunchConfiguration("use_intra_process")),
             ("target_container", "/control/control_container"),
-            ("initial_selector_mode", "remote"),
+            ("initial_selector_mode", LaunchConfiguration("initial_selector_mode")),
         ],
     )
 
@@ -303,6 +304,13 @@ def generate_launch_description():
         "lateral_controller_mode",
         "mpc_follower",
         "lateral controller mode: `mpc_follower` or `pure_pursuit`",
+    )
+
+    # longitudinal controller mode
+    add_launch_arg(
+        "longitudinal_controller_mode",
+        "pid",
+        "longitudinal controller mode: `pid`",
     )
 
     add_launch_arg(
