@@ -82,17 +82,29 @@ inline bool withinPolygons(const Polygon & footprint, const Polygon & polygons)
   return boost::geometry::within(footprint, polygons);
 }
 
+inline bool belowCollisionDistance(
+  const Polygon & footprint, const MultiPolygon & polygons, const double min_dist)
+{
+  for (const auto & polygon : polygons) {
+    if (boost::geometry::distance(footprint, polygon) < min_dist) return true;
+  }
+  return false;
+}
+
 NumberOfViolations checkHardConstraints(Path & path, const Constraints & constraints)
 {
   const Polygon footprint = buildFootprintPolygon(path, constraints);
   NumberOfViolations number_of_violations;
-  if (collideWithPolygons(footprint, constraints.obstacle_polygons)) {
-    ++number_of_violations.collision;
-    path.valid = false;
-  }
-  if (collideWithPolygons(footprint, constraints.drivable_polygons)) {
-    ++number_of_violations.outside;
-    path.valid = false;
+  if (!footprint.outer().empty()) {
+    if (belowCollisionDistance(
+          footprint, constraints.obstacle_polygons, constraints.hard.collision_distance_buffer)) {
+      ++number_of_violations.collision;
+      path.valid = false;
+    }
+    if (collideWithPolygons(footprint, constraints.drivable_polygons)) {
+      ++number_of_violations.outside;
+      path.valid = false;
+    }
   }
   if (!satisfyMinMax(
         path.curvatures, constraints.hard.min_curvature, constraints.hard.max_curvature)) {

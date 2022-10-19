@@ -243,6 +243,7 @@ struct Constraints
     double max_jerk;
     double min_curvature;
     double max_curvature;
+    double collision_distance_buffer;
   } hard{};
   struct
   {

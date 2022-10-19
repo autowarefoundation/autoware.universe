@@ -18,6 +18,7 @@
         min_acceleration: -2.0  # [m/s²]
         max_velocity: 3.0  # [m/s]
         min_velocity: -0.5  # [m/s]
+        collision_distance_buffer: 1.0 # [m]
       soft:
         lateral_deviation_weight: 0.1
         longitudinal_deviation_weight: 1.0

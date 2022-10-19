@@ -105,6 +105,8 @@ TrajectorySamplerNode::TrajectorySamplerNode(const rclcpp::NodeOptions & node_op
     declare_parameter<double>("constraints.hard.max_velocity");
   params_.constraints.hard.min_velocity =
     declare_parameter<double>("constraints.hard.min_velocity");
+  params_.constraints.hard.collision_distance_buffer =
+    declare_parameter<double>("constraints.hard.collision_distance_buffer");
   params_.constraints.soft.lateral_deviation_weight =
     declare_parameter<double>("constraints.soft.lateral_deviation_weight");
   params_.constraints.soft.longitudinal_deviation_weight =
@@ -197,6 +199,8 @@ rcl_interfaces::msg::SetParametersResult TrajectorySamplerNode::onParameter(
       params_.constraints.hard.min_acceleration = parameter.as_double();
     } else if (parameter.get_name() == "constraints.hard.max_velocity") {
       params_.constraints.hard.max_velocity = parameter.as_double();
+    } else if (parameter.get_name() == "constraints.hard.collision_distance_buffer") {
+      params_.constraints.hard.collision_distance_buffer = parameter.as_double();
     } else if (parameter.get_name() == "constraints.hard.min_velocity") {
       params_.constraints.hard.min_velocity = parameter.as_double();
     } else if (parameter.get_name() == "constraints.soft.lateral_deviation_weight") {
@@ -261,9 +265,11 @@ rcl_interfaces::msg::SetParametersResult TrajectorySamplerNode::onParameter(
       params_.preprocessing.force_zero_heading = parameter.as_bool();
     } else if (parameter.get_name() == "preprocessing.smooth_reference_trajectory.enable") {
       params_.preprocessing.smooth_reference = parameter.as_bool();
-    } else if (parameter.get_name() == "preprocessing.smooth_reference_trajectory.control_points_ratio") {
+    } else if (
+      parameter.get_name() == "preprocessing.smooth_reference_trajectory.control_points_ratio") {
       params_.preprocessing.control_points_ratio = parameter.as_double();
-    } else if (parameter.get_name() == "preprocessing.smooth_reference_trajectory.smoothing_weight") {
+    } else if (
+      parameter.get_name() == "preprocessing.smooth_reference_trajectory.smoothing_weight") {
       params_.preprocessing.smooth_weight = parameter.as_double();
     } else if (parameter.get_name() == "postprocessing.desired_traj_behind_length") {
       params_.postprocessing.desired_traj_behind_length = parameter.as_double();
