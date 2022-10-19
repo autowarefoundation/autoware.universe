@@ -157,19 +157,8 @@ void PurePursuitLateralController::setResampledTrajectory()
     motion_utils::convertToTrajectoryPointArray(*trajectory_resampled_));
 }
 
-boost::optional<LateralOutput> PurePursuitLateralController::run()
+boost::optional<Trajectory> PurePursuitLateralController::generatePredictedTrajectory()
 {
-  current_pose_ = self_pose_listener_.getCurrentPose();
-  if (!isDataReady()) {
-    return boost::none;
-  }
-
-  setResampledTrajectory();
-
-  if (!output_tp_array_ or !trajectory_resampled_) {
-    return boost::none;
-  }
-
   const auto closest_idx_result =
     motion_utils::findNearestIndex(*output_tp_array_, current_pose_->pose, 3.0, M_PI_4);
 
@@ -184,35 +173,32 @@ boost::optional<LateralOutput> PurePursuitLateralController::run()
     static_cast<int>(std::ceil(
       std::min(remaining_distance, param_.prediction_distance_length) / param_.prediction_ds)),
     1);
-  AckermannLateralCommand cmd_msg;
   Trajectory predicted_trajectory;
 
   // Iterative prediction:
   for (int i = 0; i < num_of_iteration; i++) {
     if (i == 0) {
+      // For first point, use the odometry for velocity, and use the current_pose for prediction.
+
       TrajectoryPoint p;
       p.pose = current_pose_->pose;
       p.longitudinal_velocity_mps = current_odometry_->twist.twist.linear.x;
       predicted_trajectory.points.push_back(p);
 
       const auto pp_output = calcTargetCurvature(true, predicted_trajectory.points.at(i).pose);
+      AckermannLateralCommand tmp_msg;
 
       if (pp_output) {
-        cmd_msg = generateCtrlCmdMsg(pp_output->curvature);
-        prev_cmd_ = boost::optional<AckermannLateralCommand>(cmd_msg);
-        publishDebugMarker();
+        tmp_msg = generateCtrlCmdMsg(pp_output->curvature);
+        predicted_trajectory.points.at(i).longitudinal_velocity_mps = pp_output->velocity;
       } else {
         RCLCPP_WARN_THROTTLE(
           node_->get_logger(), *node_->get_clock(), 5000,
-          "failed to solve pure_pursuit for control command calculation");
-        if (prev_cmd_) {
-          cmd_msg = *prev_cmd_;
-        } else {
-          cmd_msg = generateCtrlCmdMsg(0.0);
-        }
+          "failed to solve pure_pursuit for prediction");
+        tmp_msg = generateCtrlCmdMsg(0.0);
       }
       TrajectoryPoint p2;
-      p2 = calcNextPose(param_.prediction_ds, predicted_trajectory.points.at(i), cmd_msg);
+      p2 = calcNextPose(param_.prediction_ds, predicted_trajectory.points.at(i), tmp_msg);
       predicted_trajectory.points.push_back(p2);
 
     } else {
@@ -237,14 +223,68 @@ boost::optional<LateralOutput> PurePursuitLateralController::run()
   predicted_trajectory.points.back().longitudinal_velocity_mps = 0.0;
   predicted_trajectory.header.frame_id = trajectory_resampled_->header.frame_id;
   predicted_trajectory.header.stamp = trajectory_resampled_->header.stamp;
-  pub_predicted_trajectory_->publish(predicted_trajectory);
+
+  return predicted_trajectory;
+}
+
+boost::optional<LateralOutput> PurePursuitLateralController::run()
+{
+  current_pose_ = self_pose_listener_.getCurrentPose();
+  if (!isDataReady()) {
+    return boost::none;
+  }
+  setResampledTrajectory();
+  if (!output_tp_array_ or !trajectory_resampled_) {
+    return boost::none;
+  }
+  const auto cmd_msg = generateOutputControlCmd();
+  if (!cmd_msg) {
+    RCLCPP_ERROR(node_->get_logger(), "Failed to generate control command.");
+    return boost::none;
+  }
 
   LateralOutput output;
-  output.control_cmd = cmd_msg;
-  output.sync_data.is_steer_converged =
-    std::abs(cmd_msg.steering_tire_angle - current_steering_->steering_tire_angle) <
-    static_cast<float>(param_.converged_steer_rad_);
+  output.control_cmd = *cmd_msg;
+  output.sync_data.is_steer_converged = calcIsSteerConverged(*cmd_msg);
+
+  // calculate predicted trajectory with iterative calculation
+  const auto predicted_trajectory = generatePredictedTrajectory();
+  if (!predicted_trajectory) {
+    RCLCPP_ERROR(node_->get_logger(), "Failed to generate predicted trajectory.");
+  } else {
+    pub_predicted_trajectory_->publish(*predicted_trajectory);
+  }
+
   return output;
+}
+
+bool PurePursuitLateralController::calcIsSteerConverged(const AckermannLateralCommand & cmd)
+{
+  return std::abs(cmd.steering_tire_angle - current_steering_->steering_tire_angle) <
+         static_cast<float>(param_.converged_steer_rad_);
+}
+
+boost::optional<AckermannLateralCommand> PurePursuitLateralController::generateOutputControlCmd()
+{
+  // Generate the control command
+  const auto pp_output = calcTargetCurvature(true, current_pose_->pose);
+  AckermannLateralCommand output_cmd;
+
+  if (pp_output) {
+    output_cmd = generateCtrlCmdMsg(pp_output->curvature);
+    prev_cmd_ = boost::optional<AckermannLateralCommand>(output_cmd);
+    publishDebugMarker();
+  } else {
+    RCLCPP_WARN_THROTTLE(
+      node_->get_logger(), *node_->get_clock(), 5000,
+      "failed to solve pure_pursuit for control command calculation");
+    if (prev_cmd_) {
+      output_cmd = *prev_cmd_;
+    } else {
+      output_cmd = generateCtrlCmdMsg(0.0);
+    }
+  }
+  return output_cmd;
 }
 
 AckermannLateralCommand PurePursuitLateralController::generateCtrlCmdMsg(

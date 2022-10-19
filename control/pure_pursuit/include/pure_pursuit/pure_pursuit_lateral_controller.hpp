@@ -159,6 +159,12 @@ private:
   TrajectoryPoint calcNextPose(
     const double ds, TrajectoryPoint & point, AckermannLateralCommand cmd) const;
 
+  boost::optional<Trajectory> generatePredictedTrajectory();
+
+  boost::optional<AckermannLateralCommand> generateOutputControlCmd();
+
+  bool calcIsSteerConverged(const AckermannLateralCommand & cmd);
+
   // Debug
   mutable DebugData debug_data_;
 };
