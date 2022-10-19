@@ -2251,8 +2251,7 @@ BehaviorModuleOutput AvoidanceModule::planWaitingApproval()
 {
   // we can execute the plan() since it handles the approval appropriately.
   BehaviorModuleOutput out = plan();
-  out.modified_goal.header.frame_id = planner_data_->route_handler->getRouteHeader().frame_id;
-  out.modified_goal.header.stamp = clock_->now();
+  out.modified_goal.header = planner_data_->route_handler->getRouteHeader();
   const auto candidate = planCandidate();
   constexpr double threshold_to_update_status = -1.0e-03;
   if (candidate.start_distance_to_path_change > threshold_to_update_status) {

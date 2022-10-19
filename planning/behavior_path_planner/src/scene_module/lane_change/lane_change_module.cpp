@@ -252,8 +252,7 @@ BehaviorModuleOutput LaneChangeModule::planWaitingApproval()
 {
   BehaviorModuleOutput out;
   out.path = std::make_shared<PathWithLaneId>(getReferencePath());
-  out.modified_goal.header.frame_id = planner_data_->route_handler->getRouteHeader().frame_id;
-  out.modified_goal.header.stamp = clock_->now();
+  out.modified_goal.header = planner_data_->route_handler->getRouteHeader();
   const auto candidate = planCandidate();
   out.path_candidate = std::make_shared<PathWithLaneId>(candidate.path_candidate);
   updateRTCStatus(candidate);

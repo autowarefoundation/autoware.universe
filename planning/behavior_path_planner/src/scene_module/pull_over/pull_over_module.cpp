@@ -519,11 +519,7 @@ BehaviorModuleOutput PullOverModule::planWaitingApproval()
   plan();  // update status_
   out.path = std::make_shared<PathWithLaneId>(getReferencePath());
   out.path_candidate = status_.is_safe ? std::make_shared<PathWithLaneId>(getFullPath()) : out.path;
-  plan();  // update status_
-  out.path = std::make_shared<PathWithLaneId>(getReferencePath());
-  out.path_candidate = status_.is_safe ? std::make_shared<PathWithLaneId>(getFullPath()) : out.path;
-  out.modified_goal.header.frame_id = planner_data_->route_handler->getRouteHeader().frame_id;
-  out.modified_goal.header.stamp = clock_->now();
+  out.modified_goal.header = planner_data_->route_handler->getRouteHeader();
   out.modified_goal.pose = planner_data_->route_handler->getGoalPose();
 
   const auto distance_to_path_change = calcDistanceToPathChange();
