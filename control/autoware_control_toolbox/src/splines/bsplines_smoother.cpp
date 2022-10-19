@@ -61,7 +61,7 @@ void ns_splines::BSplineSmoother::createBasesMatrix(
   const std::vector<double> & tvec, Eigen::MatrixXd & basis_mat, Eigen::MatrixXd & basis_dmat,
   Eigen::MatrixXd & basis_ddmat)
 {
-  for (Eigen::Index k = 0; k < npoints_; k++) {
+  for (size_t k = 0; k < npoints_; k++) {
     auto const & ti = tvec[k];
 
     // first row is polynomial row, the rest are first and second derivatives.

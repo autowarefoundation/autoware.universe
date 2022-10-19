@@ -8,27 +8,8 @@ find_package(fmt)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
-# -------------  FLAGS ---------------------------------------------------
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(
-    -Wall
-    -Wextra
-    -Wpedantic
-    # -Wuseless-cast
-    # -Wno-unused-parameter
-    # -Wno-unused-variable
-    # -Wno-narrowing
-    # -Wno-error=unused-but-set-variable
-    -Wno-conversion
-    -Wno-error=sign-conversion
-    -Wno-sign-compare
-    # -Wdouble-promotion
-    # -Wfloat-equal
-    -Waddress
-    -fvisibility=default
-    -fPIC) # visibility hidden or default is set here.
-endif()
-##----------------- Library headers and sources -------------------------------
+
+##------------ Library headers and sources --------------------
 
 ##------------- CONTROL LIB  ----------------------------------
 
