@@ -61,7 +61,7 @@ public:
 
 protected:
   ClusterParameters params_;
-  virtual void setPointcloud(
+  virtual void preparePointcloud(
     const pcl::PointCloud<pcl::PointXYZ>::ConstPtr & pointcloud,
     pcl::PointCloud<pcl::PointXYZ>::ConstPtr & pointcloud_ptr) = 0;
 };  // class EuclideanClusterInterface

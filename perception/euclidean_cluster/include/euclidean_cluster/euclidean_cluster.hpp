@@ -32,7 +32,7 @@ public:
     std::vector<pcl::PointCloud<pcl::PointXYZ>> & clusters) override;
 
 private:
-  void setPointcloud(
+  void preparePointcloud(
     const pcl::PointCloud<pcl::PointXYZ>::ConstPtr & pointcloud,
     pcl::PointCloud<pcl::PointXYZ>::ConstPtr & pointcloud_ptr) override;
 };

@@ -38,7 +38,7 @@ bool EuclideanCluster::cluster(
 {
   // convert 2d pointcloud
   pcl::PointCloud<pcl::PointXYZ>::ConstPtr pointcloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
-  setPointcloud(pointcloud, pointcloud_ptr);
+  preparePointcloud(pointcloud, pointcloud_ptr);
 
   pcl::EuclideanClusterExtraction<pcl::PointXYZ> pcl_euclidean_cluster;
   std::vector<pcl::PointIndices> cluster_indices;
@@ -60,7 +60,7 @@ bool EuclideanCluster::cluster(
   return true;
 }
 
-void EuclideanCluster::setPointcloud(
+void EuclideanCluster::preparePointcloud(
   const pcl::PointCloud<pcl::PointXYZ>::ConstPtr & pointcloud,
   pcl::PointCloud<pcl::PointXYZ>::ConstPtr & pointcloud_ptr)
 {

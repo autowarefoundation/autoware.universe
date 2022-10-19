@@ -40,7 +40,7 @@ bool VoxelGridBasedEuclideanCluster::cluster(
   std::vector<pcl::PointCloud<pcl::PointXYZ>> & clusters)
 {
   pcl::PointCloud<pcl::PointXYZ>::ConstPtr pointcloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
-  setPointcloud(pointcloud, pointcloud_ptr);
+  preparePointcloud(pointcloud, pointcloud_ptr);
 
   std::vector<pcl::PointCloud<pcl::PointXYZ>> temporary_clusters;  // no check about cluster size
   solveVoxelBasedClustering(pointcloud_ptr, temporary_clusters);
@@ -62,7 +62,7 @@ bool VoxelGridBasedEuclideanCluster::cluster(
   return true;
 }
 
-void VoxelGridBasedEuclideanCluster::setPointcloud(
+void VoxelGridBasedEuclideanCluster::preparePointcloud(
   const pcl::PointCloud<pcl::PointXYZ>::ConstPtr & pointcloud,
   pcl::PointCloud<pcl::PointXYZ>::ConstPtr & pointcloud_ptr)
 {

@@ -45,7 +45,7 @@ private:
   float voxel_leaf_size_;
   int min_points_number_per_voxel_;
 
-  void setPointcloud(
+  void preparePointcloud(
     const pcl::PointCloud<pcl::PointXYZ>::ConstPtr & pointcloud,
     pcl::PointCloud<pcl::PointXYZ>::ConstPtr & pointcloud_ptr) override;
   void solveVoxelBasedClustering(
