@@ -56,28 +56,6 @@ boost::optional<geometry_msgs::msg::Transform> getTransformAnonymous(
   }
 }
 
-inline float getVelocity(const autoware_auto_perception_msgs::msg::TrackedObject & object)
-{
-  return std::hypot(
-    object.kinematics.twist_with_covariance.twist.linear.x,
-    object.kinematics.twist_with_covariance.twist.linear.y);
-}
-
-inline geometry_msgs::msg::Pose getPose(
-  const autoware_auto_perception_msgs::msg::TrackedObject & object)
-{
-  return object.kinematics.pose_with_covariance.pose;
-}
-
-float getXYSquareDistance(
-  const geometry_msgs::msg::Transform & self_transform,
-  const autoware_auto_perception_msgs::msg::TrackedObject & object)
-{
-  const auto object_pos = getPose(object).position;
-  const float x = self_transform.translation.x - object_pos.x;
-  const float y = self_transform.translation.y - object_pos.y;
-  return x * x + y * y;
-}
 }  // namespace
 
 MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
@@ -246,7 +224,7 @@ void MultiObjectTracker::onTimer()
 
 void MultiObjectTracker::checkTrackerLifeCycle(
   std::list<std::shared_ptr<Tracker>> & list_tracker, const rclcpp::Time & time,
-  const geometry_msgs::msg::Transform & self_transform)
+  [[maybe_unused]] const geometry_msgs::msg::Transform & self_transform)
 {
   /* params */
   constexpr float max_elapsed_time = 1.0;
