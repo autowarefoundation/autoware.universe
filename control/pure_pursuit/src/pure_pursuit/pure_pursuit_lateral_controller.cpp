@@ -234,7 +234,7 @@ boost::optional<LateralOutput> PurePursuitLateralController::run()
     return boost::none;
   }
   setResampledTrajectory();
-  if (!output_tp_array_ or !trajectory_resampled_) {
+  if (!output_tp_array_ || !trajectory_resampled_) {
     return boost::none;
   }
   const auto cmd_msg = generateOutputControlCmd();
