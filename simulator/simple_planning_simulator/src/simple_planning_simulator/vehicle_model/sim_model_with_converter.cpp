@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "simple_planning_simulator/vehicle_model/sim_model_with_converter.hpp"
+
 #include "raw_vehicle_cmd_converter/csv_loader.hpp"
 
 #include "autoware_auto_vehicle_msgs/msg/gear_command.hpp"
@@ -54,10 +55,15 @@ float64_t SimModelWithConverter::getSteer() { return state_(IDX::STEER); }
 void SimModelWithConverter::update(const float64_t & dt)
 {
   Eigen::VectorXd delayed_input = Eigen::VectorXd::Zero(dim_u_);
-
-  acc_input_queue_.push_back(input_(IDX_U::ACCX_DES));
-  delayed_input(IDX_U::ACCX_DES) = acc_input_queue_.front();
-  acc_input_queue_.pop_front();
+  // TODO(tanaka): consider delay input for acc
+  const bool consider_acc_delay = false;
+  if (consider_acc_delay) {
+    acc_input_queue_.push_back(input_(IDX_U::ACCX_DES));
+    delayed_input(IDX_U::ACCX_DES) = acc_input_queue_.front();
+    acc_input_queue_.pop_front();
+  } else {
+    delayed_input(IDX_U::ACCX_DES) = input_(IDX_U::ACCX_DES);
+  }
   steer_input_queue_.push_back(input_(IDX_U::STEER_DES));
   delayed_input(IDX_U::STEER_DES) = steer_input_queue_.front();
   steer_input_queue_.pop_front();
@@ -104,10 +110,16 @@ Eigen::VectorXd SimModelWithConverter::calcModel(
   d_state(IDX::YAW) = vel * std::tan(steer) / wheelbase_;
   d_state(IDX::VX) = acc;
   d_state(IDX::STEER) = steer_rate;
-  double converted_acc=acc_des;
-  acc_map_.getAcceleration(acc_des,acc,converted_acc);
-  d_state(IDX::ACCX) = -(acc - converted_acc) / acc_time_constant_;
-
+  double converted_acc = acc_des;
+  acc_map_.getAcceleration(acc_des, acc, converted_acc);
+  // TODO(tanaka): consider time constant for acc
+  const bool consider_acc_time_constant = true;
+  const double scale_factor = 1.0;  // default should be 1.0
+  if (consider_acc_time_constant) {
+    d_state(IDX::ACCX) = -(acc - converted_acc) / acc_time_constant_;
+  } else {
+    d_state(IDX::ACCX) = converted_acc * scale_factor;
+  }
   return d_state;
 }
 

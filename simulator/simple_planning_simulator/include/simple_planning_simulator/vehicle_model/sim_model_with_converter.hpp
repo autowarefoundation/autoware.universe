@@ -17,50 +17,53 @@
 
 #include "eigen3/Eigen/Core"
 #include "eigen3/Eigen/LU"
-#include "simple_planning_simulator/vehicle_model/sim_model_interface.hpp"
 #include "interpolation/linear_interpolation.hpp"
 #include "raw_vehicle_cmd_converter/csv_loader.hpp"
+#include "simple_planning_simulator/vehicle_model/sim_model_interface.hpp"
 
 #include <deque>
 #include <iostream>
 #include <queue>
+#include <string>
+#include <vector>
 
 using namespace raw_vehicle_cmd_converter;
 
 class AccelerationMap
 {
-
 public:
-  bool readAccelerationMapFromCSV(const std::string & csv_path){
-      CSVLoader csv(csv_path);
-      std::vector<std::vector<std::string>> table;
+  bool readAccelerationMapFromCSV(const std::string & csv_path)
+  {
+    CSVLoader csv(csv_path);
+    std::vector<std::vector<std::string>> table;
 
-      if (!csv.readCSV(table)) {
-        return false;
-      }
+    if (!csv.readCSV(table)) {
+      return false;
+    }
 
-      vehicle_name_ = table[0][0];
-      vel_index_ = CSVLoader::getRowIndex(table);
-      acc_index_ = CSVLoader::getColumnIndex(table);
-      acceleration_map_ = CSVLoader::getMap(table);
-      return true;
+    vehicle_name_ = table[0][0];
+    vel_index_ = CSVLoader::getRowIndex(table);
+    acc_index_ = CSVLoader::getColumnIndex(table);
+    acceleration_map_ = CSVLoader::getMap(table);
+    return true;
   }
-  bool getAcceleration(const double acc_des, const double vel, double & acc) const{
-      std::vector<double> interpolated_acc_vec;
-      const double clamped_vel = CSVLoader::clampValue(vel, vel_index_, "acc: vel");
+  bool getAcceleration(const double acc_des, const double vel, double & acc) const
+  {
+    std::vector<double> interpolated_acc_vec;
+    const double clamped_vel = CSVLoader::clampValue(vel, vel_index_, "acc: vel");
 
-      // (throttle, vel, acc) map => (throttle, acc) map by fixing vel
-      for (const auto & acc_vec : acceleration_map_) {
-        interpolated_acc_vec.push_back(interpolation::lerp(vel_index_, acc_vec, clamped_vel));
-      }
+    // (throttle, vel, acc) map => (throttle, acc) map by fixing vel
+    for (const auto & acc_vec : acceleration_map_) {
+      interpolated_acc_vec.push_back(interpolation::lerp(vel_index_, acc_vec, clamped_vel));
+    }
 
-      // calculate throttle
-      // When the desired acceleration is smaller than the throttle area, return min acc
-      // When the desired acceleration is greater than the throttle area, return max acc
-      const double clamped_acc = CSVLoader::clampValue(acc_des, acc_index_, "throttle: acc");
-      acc = interpolation::lerp(acc_index_, interpolated_acc_vec, clamped_acc);
+    // calculate throttle
+    // When the desired acceleration is smaller than the throttle area, return min acc
+    // When the desired acceleration is greater than the throttle area, return max acc
+    const double clamped_acc = CSVLoader::clampValue(acc_des, acc_index_, "throttle: acc");
+    acc = interpolation::lerp(acc_index_, interpolated_acc_vec, clamped_acc);
 
-  return true;
+    return true;
   }
 
 private:
@@ -127,7 +130,7 @@ private:
   const float64_t acc_time_constant_;        //!< @brief time constant for accel dynamics
   const float64_t steer_delay_;              //!< @brief time delay for steering command [s]
   const float64_t steer_time_constant_;      //!< @brief time constant for steering dynamics
-  const std::string path_;                    //!< @brief conversion map path
+  const std::string path_;                   //!< @brief conversion map path
 
   /**
    * @brief set queue buffer for input command
@@ -200,4 +203,4 @@ private:
     const double dt);
 };
 
-#endif  // SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_DELAY_STEER_ACC_GEARED_HPP_
+#endif  // SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_WITH_CONVERTER_HPP_

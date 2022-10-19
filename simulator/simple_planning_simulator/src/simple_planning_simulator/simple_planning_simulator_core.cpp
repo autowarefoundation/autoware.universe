@@ -366,8 +366,7 @@ void SimplePlanningSimulator::set_input(const AckermannControlCommand & cmd)
   } else if (  // NOLINT
     vehicle_model_type_ == VehicleModelType::IDEAL_STEER_ACC_GEARED ||
     vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC_GEARED ||
-    vehicle_model_type_ == VehicleModelType::DELAY_CONVERTER
-    ) {
+    vehicle_model_type_ == VehicleModelType::DELAY_CONVERTER) {
     input << acc, steer;
   }
   vehicle_model_ptr_->setInput(input);
@@ -454,7 +453,7 @@ void SimplePlanningSimulator::set_initial_state(const Pose & pose, const Twist &
     state << x, y, yaw, vx, steer;
   } else if (  // NOLINT
     vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC ||
-    vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC_GEARED||
+    vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC_GEARED ||
     vehicle_model_type_ == VehicleModelType::DELAY_CONVERTER) {
     state << x, y, yaw, vx, steer, accx;
   }
