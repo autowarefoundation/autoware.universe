@@ -17,6 +17,9 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <algorithm>
+#include <string>
+
 class HyperParameters
 {
 public:
