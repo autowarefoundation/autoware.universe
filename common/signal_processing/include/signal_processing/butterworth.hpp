@@ -132,7 +132,7 @@ private:
   void computePhaseAngles();
 
   // Computes continuous time roots from the phase angles
-  void computeContinuousTimeRoots(bool const & use_sampling_freqency = false);
+  void computeContinuousTimeRoots(bool const & use_sampling_frequency = false);
 };
 
 #endif  // SIGNAL_PROCESSING_INCLUDE_SIGNAL_PROCESSING_BUTTERWORTH_HPP_

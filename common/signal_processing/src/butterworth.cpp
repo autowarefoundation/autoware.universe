@@ -101,12 +101,12 @@ void ButterworthFilter::computePhaseAngles()
   }
 }
 
-void ButterworthFilter::computeContinuousTimeRoots(const bool & use_sampling_freqency)
+void ButterworthFilter::computeContinuousTimeRoots(const bool & use_sampling_frequency)
 {
   continuous_time_roots_.resize(order_, {0.0, 0.0});
   int k{};
 
-  if (use_sampling_freqency) {
+  if (use_sampling_frequency) {
     // print("\n Sampling Frequency is used to compute pre-warped frequency \n");
 
     double const & Fc = (sampling_frequency_hz / M_PI) *
