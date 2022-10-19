@@ -93,7 +93,7 @@ int main()
   print("THIRD TYPE of FILTER INITIALIZATION ");
 
   ButterworthFilter bf3;
-  bf3.setOrder(2);
+  bf3.setOrder(3);
 
   bf3.setCuttoffFrequency(10, 100);
   bf3.printFilterSpecs();

@@ -29,8 +29,8 @@ void ButterworthFilter::Buttord(
   // N*ln(alpha) > ln(beta)
 
   auto alpha = Ws / Wp;
-  auto beta = sqrt((pow(10, As / 10.0) - 1.0) / (pow(10, Ap / 10.0) - 1.0));
-  auto order = static_cast<int>(std::ceil(log(beta) / log(alpha)));
+  auto beta = std::sqrt((std::pow(10, As / 10.0) - 1.0) / (std::pow(10, Ap / 10.0) - 1.0));
+  auto order = static_cast<int>(std::ceil(std::log(beta) / std::log(alpha)));
 
   setOrder(order);
 
@@ -41,8 +41,8 @@ void ButterworthFilter::Buttord(
    * frequency whereas Matlab gives right limit
    * */
 
-  double right_lim = Ws * (pow((pow(10.0, As / 10.0) - 1.0), -1.0 / (2. * order)));
-  // double left_lim = Wp * (pow((pow(10.0, Ap / 10.0) - 1.0), -1.0 / (2. * order)));
+  double right_lim = Ws * (std::pow((std::pow(10.0, As / 10.0) - 1.0), -1.0 / (2. * order)));
+  // double left_lim = Wp * (std::pow((std::pow(10.0, Ap / 10.0) - 1.0), -1.0 / (2. * order)));
 
   setCuttoffFrequency(right_lim);
 }
@@ -97,7 +97,7 @@ void ButterworthFilter::computePhaseAngles()
   for (auto & x : phase_angles_) {
     x = M_PI_2 + (M_PI * (2.0 * k - 1.0) / (2.0 * order_));
     k++;
-    print("Phase angle x = ", x);
+    // print("Phase angle x = ", x);
   }
 }
 
@@ -107,13 +107,14 @@ void ButterworthFilter::computeContinuousTimeRoots(const bool & use_sampling_fre
   int k{};
 
   if (use_sampling_freqency) {
-    print("\n Sampling Frequency is used to compute pre-warped frequency \n");
+    // print("\n Sampling Frequency is used to compute pre-warped frequency \n");
 
     double const & Fc = (sampling_frequency_hz / M_PI) *
                         tan(cutoff_frequency_rad_sec / (sampling_frequency_hz * 2.0));
 
     for (auto & x : continuous_time_roots_) {
-      x = {cos(phase_angles_[k]) * Fc * 2.0 * M_PI, sin(phase_angles_[k]) * Fc * 2.0 * M_PI};
+      x = {
+        std::cos(phase_angles_[k]) * Fc * 2.0 * M_PI, std::sin(phase_angles_[k]) * Fc * 2.0 * M_PI};
       k++;
     }
 
@@ -179,7 +180,7 @@ void ButterworthFilter::printContinuousTimeTF() const
  *
  * Matlab equivalent :
  * Td = 2.
- * [numd, dend]=bilinear(sys_filt.Numerator{1}, sys_filt.Denominator{1}, 1/Td)
+ * [numd, dend] = bilinear(sys_filt.Numerator{1}, sys_filt.Denominator{1}, 1/Td)
  * where sys_filt is the continuous time transfer function.
  * */
 void ButterworthFilter::computeDiscreteTimeTF(const bool & use_sampling_frequency)
