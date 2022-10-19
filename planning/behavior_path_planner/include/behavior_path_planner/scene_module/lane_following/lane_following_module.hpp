@@ -21,6 +21,7 @@
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 
+#include <memory>
 #include <string>
 
 namespace behavior_path_planner
@@ -50,6 +51,11 @@ public:
   void onExit() override;
 
   void setParameters(const LaneFollowingParameters & parameters);
+  void accept_visitor(
+    [[maybe_unused]] const std::shared_ptr<SceneModuleVisitor> & visitor) const override
+  {
+    std::cerr << "visited lane following module\n";
+  }
 
 private:
   LaneFollowingParameters parameters_;

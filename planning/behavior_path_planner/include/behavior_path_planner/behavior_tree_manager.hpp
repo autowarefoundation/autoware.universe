@@ -17,6 +17,7 @@
 
 #include "behavior_path_planner/data_manager.hpp"
 #include "behavior_path_planner/scene_module/scene_module_bt_node_interface.hpp"
+#include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
 
 #include <visualization_msgs/msg/marker_array.hpp>
 
@@ -49,6 +50,9 @@ public:
 
   BehaviorModuleOutput run(const std::shared_ptr<PlannerData> & data);
   std::vector<std::shared_ptr<SceneModuleStatus>> getModulesStatus();
+  std::shared_ptr<BehaviorTreeVisitorInterface> get_all_debug_data();
+  void get_debug_msg_array();
+
   AvoidanceDebugMsgArray getAvoidanceDebugMsgArray();
 
 private:
@@ -58,6 +62,7 @@ private:
   std::vector<std::shared_ptr<SceneModuleStatus>> modules_status_;
   rclcpp::Logger logger_;
   rclcpp::Clock clock_;
+  std::shared_ptr<BehaviorTreeVisitorInterface> bt_visitor_interface_;
 
   BT::BehaviorTreeFactory bt_factory_;
   BT::Tree bt_tree_;

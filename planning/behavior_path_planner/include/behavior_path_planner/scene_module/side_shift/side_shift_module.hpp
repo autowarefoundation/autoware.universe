@@ -70,6 +70,12 @@ public:
 
   void setParameters(const SideShiftParameters & parameters);
 
+  void accept_visitor(
+    [[maybe_unused]] const std::shared_ptr<SceneModuleVisitor> & visitor) const override
+  {
+    std::cerr << "visited side shift module\n";
+  }
+
 private:
   rclcpp::Subscription<LateralOffset>::SharedPtr lateral_offset_subscriber_;
 

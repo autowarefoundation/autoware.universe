@@ -16,6 +16,7 @@
 
 #include "behavior_path_planner/scene_module/scene_module_bt_node_interface.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
+#include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
 #include "behavior_path_planner/utilities.hpp"
 
 #include <algorithm>
@@ -158,4 +159,24 @@ void BehaviorTreeManager::resetGrootMonitor()
   }
 }
 
+void BehaviorTreeManager::get_debug_msg_array()
+{
+  bt_visitor_interface_ = std::make_shared<BehaviorTreeVisitorInterface>();
+  for (const auto & module : scene_modules_) {
+    if (module->name() == "LaneChange") {
+      std::shared_ptr<LaneChangeVisitor> visitor_ptr = std::make_shared<LaneChangeVisitor>();
+      module->accept_visitor(visitor_ptr);
+      const auto get_ptr = visitor_ptr->get_lane_change_debug_msg_array();
+      if (get_ptr) {
+        bt_visitor_interface_->set_lane_change_debug_ptr(get_ptr);
+      }
+    }
+  }
+}
+
+std::shared_ptr<BehaviorTreeVisitorInterface> BehaviorTreeManager::get_all_debug_data()
+{
+  get_debug_msg_array();
+  return bt_visitor_interface_;
+}
 }  // namespace behavior_path_planner

@@ -17,6 +17,7 @@
 
 #include "behavior_path_planner/scene_module/avoidance/avoidance_module_data.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
+#include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
 #include "behavior_path_planner/scene_module/utils/path_shifter.hpp"
 
 #include <rclcpp/rclcpp.hpp>
@@ -49,6 +50,11 @@ public:
   void onEntry() override;
   void onExit() override;
   void updateData() override;
+  void accept_visitor(
+    [[maybe_unused]] const std::shared_ptr<SceneModuleVisitor> & visitor) const override
+  {
+    std::cerr << "visited avoidance module\n";
+  }
 
   void publishRTCStatus() override
   {
