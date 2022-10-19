@@ -21,6 +21,8 @@
 #include "osqp_interface/csc_matrix_conv.hpp"
 #include "osqp_interface/visibility_control.hpp"
 
+#include <rclcpp/rclcpp.hpp>
+
 #include <limits>
 #include <memory>
 #include <string>
@@ -78,6 +80,7 @@ public:
   OSQPInterface(
     const CSC_Matrix & P, const CSC_Matrix & A, const std::vector<float64_t> & q,
     const std::vector<float64_t> & l, const std::vector<float64_t> & u, const c_float eps_abs);
+  ~OSQPInterface();
 
   /****************
    * OPTIMIZATION
@@ -179,6 +182,8 @@ public:
   inline float64_t getObjVal() const { return m_latest_work_info.obj_val; }
   /// \brief Returns flag asserting interface condition (Healthy condition: 0).
   inline int64_t getExitFlag() const { return m_exitflag; }
+
+  void logUnsolvedStatus(const std::string & prefix_message = "") const;
 };
 
 }  // namespace osqp
