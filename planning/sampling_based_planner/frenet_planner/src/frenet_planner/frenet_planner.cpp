@@ -18,6 +18,7 @@
 
 #include <frenet_planner/polynomials.hpp>
 #include <frenet_planner/structures.hpp>
+#include <motion_common/trajectory_common.hpp>
 #include <sampler_common/structures.hpp>
 #include <sampler_common/transform/spline_transform.hpp>
 
@@ -152,7 +153,8 @@ void calculateCartesian(const sampler_common::transform::Spline2D & reference, P
     }
     // Calculate curvatures, velocities, accelerations
     for (size_t i = 1; i < path.yaws.size(); ++i) {
-      const auto dyaw = path.yaws[i] - path.yaws[i - 1];
+      const auto dyaw =
+        autoware::motion::motion_common::calcYawDeviation(path.yaws[i], path.yaws[i - 1]);
       path.curvatures.push_back(dyaw / path.intervals[i - 1]);
     }
   }
@@ -169,6 +171,10 @@ void calculateCartesian(
     for (const auto & fp : trajectory.frenet_points) {
       trajectory.points.push_back(reference.cartesian(fp));
     }
+    for (size_t i = 1; i < trajectory.frenet_points.size(); ++i) {
+      trajectory.intervals.push_back(
+        trajectory.frenet_points[i].s - trajectory.frenet_points[i - 1].s);
+    }
     // TODO(Maxime CLEMENT): more precise calculations are proposed in Appendix I of the paper:
     // Optimal trajectory Generation for Dynamic Street Scenarios in a Frenet Frame (Werling2010)
     // Calculate cartesian yaw and interval values
@@ -176,11 +182,11 @@ void calculateCartesian(
       const auto dx = std::next(it)->x() - it->x();
       const auto dy = std::next(it)->y() - it->y();
       trajectory.yaws.push_back(std::atan2(dy, dx));
-      trajectory.intervals.push_back(std::hypot(dx, dy));
     }
     // Calculate curvatures, velocities, accelerations
     for (size_t i = 1; i < trajectory.yaws.size(); ++i) {
-      const auto dyaw = trajectory.yaws[i] - trajectory.yaws[i - 1];
+      const auto dyaw = autoware::motion::motion_common::calcYawDeviation(
+        trajectory.yaws[i], trajectory.yaws[i - 1]);
       trajectory.curvatures.push_back(dyaw / trajectory.intervals[i - 1]);
     }
     for (const auto time : trajectory.times) {
