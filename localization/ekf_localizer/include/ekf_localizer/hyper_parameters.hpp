@@ -53,9 +53,9 @@ public:
   const double twist_additional_delay;
   const double twist_gate_dist;
   const int twist_smoothing_steps;
-  const double proc_stddev_vx_c;        //!< @brief  vx process noise
-  const double proc_stddev_wz_c;        //!< @brief  wz process noise
-  const double proc_stddev_yaw_c;       //!< @brief  yaw process noise
+  const double proc_stddev_vx_c;   //!< @brief  vx process noise
+  const double proc_stddev_wz_c;   //!< @brief  wz process noise
+  const double proc_stddev_yaw_c;  //!< @brief  yaw process noise
 };
 
 #endif  // EKF_LOCALIZER__HYPER_PARAMETERS_HPP_

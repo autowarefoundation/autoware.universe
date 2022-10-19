@@ -294,8 +294,8 @@ void EKFLocalizer::callbackInitialPose(
   geometry_msgs::msg::TransformStamped transform;
   if (!getTransformFromTF(params_.pose_frame_id, initialpose->header.frame_id, transform)) {
     RCLCPP_ERROR(
-      get_logger(), "[EKF] TF transform failed. parent = %s, child = %s", params_.pose_frame_id.c_str(),
-      initialpose->header.frame_id.c_str());
+      get_logger(), "[EKF] TF transform failed. parent = %s, child = %s",
+      params_.pose_frame_id.c_str(), initialpose->header.frame_id.c_str());
   }
 
   Eigen::MatrixXd X(dim_x_, 1);
@@ -491,7 +491,8 @@ void EKFLocalizer::measurementUpdatePose(const geometry_msgs::msg::PoseWithCovar
   DEBUG_PRINT_MAT((y - y_ekf).transpose());
 
   const Eigen::Matrix<double, 3, 6> C = poseMeasurementMatrix();
-  const Eigen::Matrix3d R = poseMeasurementCovariance(pose.pose.covariance, params_.pose_smoothing_steps);
+  const Eigen::Matrix3d R =
+    poseMeasurementCovariance(pose.pose.covariance, params_.pose_smoothing_steps);
 
   ekf_.updateWithDelay(y, C, R, delay_step);
 
