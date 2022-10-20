@@ -1,4 +1,4 @@
-// Copyright 2021 Arm Limited and Contributors.
+// Copyright 2022 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,13 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef TVM_UTILITY__MODEL_ZOO_HPP_
-#define TVM_UTILITY__MODEL_ZOO_HPP_
+#ifndef UTILS__UTILS_HPP_
+#define UTILS__UTILS_HPP_
 
-#ifndef NETWORKS_BACKEND
-#define NETWORKS_BACKEND llvm
-#endif  // BACKEND
+#include <cstdint>
 
-@GENERATED_MODEL_INCLUDES@
+namespace utils
+{
+struct FilterTargetLabel
+{
+  bool UNKNOWN;
+  bool CAR;
+  bool TRUCK;
+  bool BUS;
+  bool TRAILER;
+  bool MOTORCYCLE;
+  bool BICYCLE;
+  bool PEDESTRIAN;
+  bool isTarget(const uint8_t label) const;
+};  // struct FilterTargetLabel
+}  // namespace utils
 
-#endif  // TVM_UTILITY__MODEL_ZOO_HPP_
+#endif  // UTILS__UTILS_HPP_
