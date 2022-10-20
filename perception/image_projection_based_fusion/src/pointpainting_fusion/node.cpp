@@ -26,7 +26,7 @@
 namespace image_projection_based_fusion
 {
 
-PointpaintingFusionNode::PointpaintingFusionNode(const rclcpp::NodeOptions & options)
+PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & options)
 : FusionNode<sensor_msgs::msg::PointCloud2, DetectedObjects>("pointpainting_fusion", options)
 {
   const float score_threshold =
@@ -58,13 +58,6 @@ PointpaintingFusionNode::PointpaintingFusionNode(const rclcpp::NodeOptions & opt
     static_cast<std::size_t>(this->declare_parameter<std::int64_t>("downsample_factor"));
   const std::size_t encoder_in_feature_size =
     static_cast<std::size_t>(this->declare_parameter<std::int64_t>("encoder_in_feature_size"));
-  const auto allow_remapping_by_area_matrix =
-    this->declare_parameter<std::vector<int64_t>>("allow_remapping_by_area_matrix");
-  const auto min_area_matrix = this->declare_parameter<std::vector<double>>("min_area_matrix");
-  const auto max_area_matrix = this->declare_parameter<std::vector<double>>("max_area_matrix");
-
-  detection_class_remapper_.setParameters(
-    allow_remapping_by_area_matrix, min_area_matrix, max_area_matrix);
 
   centerpoint::NetworkParam encoder_param(encoder_onnx_path, encoder_engine_path, trt_precision);
   centerpoint::NetworkParam head_param(head_onnx_path, head_engine_path, trt_precision);
@@ -84,7 +77,7 @@ PointpaintingFusionNode::PointpaintingFusionNode(const rclcpp::NodeOptions & opt
   obj_pub_ptr_ = this->create_publisher<DetectedObjects>("~/output/objects", rclcpp::QoS{1});
 }
 
-void PointpaintingFusionNode::preprocess(sensor_msgs::msg::PointCloud2 & painted_pointcloud_msg)
+void PointPaintingFusionNode::preprocess(sensor_msgs::msg::PointCloud2 & painted_pointcloud_msg)
 {
   sensor_msgs::msg::PointCloud2 tmp;
   tmp = painted_pointcloud_msg;
@@ -131,7 +124,7 @@ void PointpaintingFusionNode::preprocess(sensor_msgs::msg::PointCloud2 & painted
     static_cast<uint32_t>(painted_pointcloud_msg.data.size() / painted_pointcloud_msg.height);
 }
 
-void PointpaintingFusionNode::fuseOnSingleImage(
+void PointPaintingFusionNode::fuseOnSingleImage(
   __attribute__((unused)) const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg,
   const std::size_t image_id, const DetectedObjectsWithFeature & input_roi_msg,
   const sensor_msgs::msg::CameraInfo & camera_info,
@@ -231,7 +224,7 @@ void PointpaintingFusionNode::fuseOnSingleImage(
   }
 }
 
-void PointpaintingFusionNode::postprocess(sensor_msgs::msg::PointCloud2 & painted_pointcloud_msg)
+void PointPaintingFusionNode::postprocess(sensor_msgs::msg::PointCloud2 & painted_pointcloud_msg)
 {
   std::vector<centerpoint::Box3D> det_boxes3d;
   bool is_success = detector_ptr_->detect(painted_pointcloud_msg, tf_buffer_, det_boxes3d);
@@ -250,12 +243,10 @@ void PointpaintingFusionNode::postprocess(sensor_msgs::msg::PointCloud2 & painte
     output_obj_msg.objects.emplace_back(obj);
   }
 
-  detection_class_remapper_.mapClasses(output_obj_msg);
-
   obj_pub_ptr_->publish(output_obj_msg);
 }
 
-bool PointpaintingFusionNode::out_of_scope(__attribute__((unused)) const DetectedObjects & obj)
+bool PointPaintingFusionNode::out_of_scope(__attribute__((unused)) const DetectedObjects & obj)
 {
   return false;
 }
@@ -263,4 +254,4 @@ bool PointpaintingFusionNode::out_of_scope(__attribute__((unused)) const Detecte
 }  // namespace image_projection_based_fusion
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(image_projection_based_fusion::PointpaintingFusionNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(image_projection_based_fusion::PointPaintingFusionNode)
