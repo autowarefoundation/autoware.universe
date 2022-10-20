@@ -31,6 +31,7 @@ ament_auto_add_executable(ndt_scan_matcher
   src/ndt_scan_matcher_core.cpp
   src/util_func.cpp
   src/pose_array_interpolator.cpp
+  src/tf2_listener_module.cpp
 )
 
 link_directories(${PCL_LIBRARY_DIRS})
