@@ -5,16 +5,18 @@
   <version>0.0.0</version>
   <description>The tier4_autoware_api_launch package</description>
   <maintainer email="isamu.takagi@tier4.jp">Takagi, Isamu</maintainer>
-  <maintainer email="ryohsuke.mitsudome@tier4.jp">Ryohsuke, Mitsudome</maintainer>
+  <maintainer email="ryohsuke.mitsudome@tier4.jp">Ryohsuke Mitsudome</maintainer>
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
   <build_depend>autoware_cmake</build_depend>
 
+  <exec_depend>ad_api_adaptors</exec_depend>
   <exec_depend>autoware_iv_external_api_adaptor</exec_depend>
   <exec_depend>autoware_iv_internal_api_adaptor</exec_depend>
   <exec_depend>awapi_awiv_adapter</exec_depend>
+  <exec_depend>default_ad_api</exec_depend>
   <exec_depend>path_distance_calculator</exec_depend>
   <exec_depend>topic_tools</exec_depend>
 

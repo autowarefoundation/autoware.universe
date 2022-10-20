@@ -208,10 +208,7 @@ bool L2PseudoJerkSmoother::apply(
   //     v_max[i], optval.at(i + N), optval.at(i), optval.at(i + 2 * N), optval.at(i + 3 * N));
   // }
 
-  const int status_val = std::get<3>(result);
-  if (status_val != 1) {
-    RCLCPP_WARN(logger_, "optimization failed : %s", qp_solver_.getStatusMessage().c_str());
-  }
+  qp_solver_.logUnsolvedStatus("[motion_velocity_smoother]");
 
   const auto tf2 = std::chrono::system_clock::now();
   const double dt_ms2 =
@@ -223,10 +220,11 @@ bool L2PseudoJerkSmoother::apply(
 
 boost::optional<TrajectoryPoints> L2PseudoJerkSmoother::resampleTrajectory(
   const TrajectoryPoints & input, const double v0, const geometry_msgs::msg::Pose & current_pose,
-  const double delta_yaw_threshold) const
+  const double nearest_dist_threshold, const double nearest_yaw_threshold) const
 {
   return resampling::resampleTrajectory(
-    input, v0, current_pose, delta_yaw_threshold, base_param_.resample_param);
+    input, v0, current_pose, nearest_dist_threshold, nearest_yaw_threshold,
+    base_param_.resample_param);
 }
 
 }  // namespace motion_velocity_smoother

@@ -17,15 +17,15 @@
 
 #include "behavior_path_planner/behavior_tree_manager.hpp"
 #include "behavior_path_planner/data_manager.hpp"
-#include "behavior_path_planner/scene_module/avoidance/avoidance_module.hpp"
+#include "behavior_path_planner/scene_module/avoidance/avoidance_module_data.hpp"
 #include "behavior_path_planner/scene_module/lane_change/lane_change_module.hpp"
 #include "behavior_path_planner/scene_module/lane_following/lane_following_module.hpp"
 #include "behavior_path_planner/scene_module/pull_out/pull_out_module.hpp"
 #include "behavior_path_planner/scene_module/pull_over/pull_over_module.hpp"
 #include "behavior_path_planner/scene_module/side_shift/side_shift_module.hpp"
+#include "behavior_path_planner/steering_factor_interface.hpp"
 #include "behavior_path_planner/turn_signal_decider.hpp"
 
-#include <route_handler/route_handler.hpp>
 #include <tier4_autoware_utils/ros/self_pose_listener.hpp>
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
@@ -38,23 +38,26 @@
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <tier4_planning_msgs/msg/approval.hpp>
-#include <tier4_planning_msgs/msg/avoidance_debug_factor.hpp>
-#include <tier4_planning_msgs/msg/avoidance_debug_msg.hpp>
 #include <tier4_planning_msgs/msg/avoidance_debug_msg_array.hpp>
 #include <tier4_planning_msgs/msg/path_change_module.hpp>
-#include <tier4_planning_msgs/msg/path_change_module_array.hpp>
-#include <tier4_planning_msgs/msg/path_change_module_id.hpp>
 #include <tier4_planning_msgs/msg/scenario.hpp>
-#include <tier4_planning_msgs/msg/stop_reason_array.hpp>
-
-#include <lanelet2_core/LaneletMap.h>
-#include <lanelet2_routing/RoutingGraph.h>
-#include <lanelet2_traffic_rules/TrafficRulesFactory.h>
 
 #include <memory>
 #include <mutex>
 #include <string>
 #include <vector>
+
+template <typename T>
+inline void update_param(
+  const std::vector<rclcpp::Parameter> & parameters, const std::string & name, T & value)
+{
+  const auto it = std::find_if(
+    parameters.cbegin(), parameters.cend(),
+    [&name](const rclcpp::Parameter & parameter) { return parameter.get_name() == name; });
+  if (it != parameters.cend()) {
+    value = static_cast<T>(it->template get_value<T>());
+  }
+}
 
 namespace behavior_path_planner
 {
@@ -69,12 +72,10 @@ using autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand;
 using geometry_msgs::msg::TwistStamped;
 using nav_msgs::msg::OccupancyGrid;
 using nav_msgs::msg::Odometry;
-using route_handler::RouteHandler;
-using tier4_planning_msgs::msg::AvoidanceDebugFactor;
-using tier4_planning_msgs::msg::AvoidanceDebugMsg;
+using rcl_interfaces::msg::SetParametersResult;
+using steering_factor_interface::SteeringFactorInterface;
 using tier4_planning_msgs::msg::AvoidanceDebugMsgArray;
 using tier4_planning_msgs::msg::PathChangeModule;
-using tier4_planning_msgs::msg::PathChangeModuleArray;
 using tier4_planning_msgs::msg::Scenario;
 using visualization_msgs::msg::MarkerArray;
 
@@ -87,6 +88,7 @@ private:
   rclcpp::Subscription<HADMapRoute>::SharedPtr route_subscriber_;
   rclcpp::Subscription<HADMapBin>::SharedPtr vector_map_subscriber_;
   rclcpp::Subscription<Odometry>::SharedPtr velocity_subscriber_;
+  rclcpp::Subscription<AccelWithCovarianceStamped>::SharedPtr acceleration_subscriber_;
   rclcpp::Subscription<Scenario>::SharedPtr scenario_subscriber_;
   rclcpp::Subscription<PredictedObjects>::SharedPtr perception_subscriber_;
   rclcpp::Subscription<OccupancyGrid>::SharedPtr occupancy_grid_subscriber_;
@@ -98,6 +100,7 @@ private:
 
   std::shared_ptr<PlannerData> planner_data_;
   std::shared_ptr<BehaviorTreeManager> bt_manager_;
+  std::unique_ptr<SteeringFactorInterface> steering_factor_interface_ptr_;
   tier4_autoware_utils::SelfPoseListener self_pose_listener_{this};
   Scenario::SharedPtr current_scenario_{nullptr};
 
@@ -107,9 +110,12 @@ private:
   std::mutex mutex_bt_;  // mutex for bt_manager_
 
   // setup
-  void waitForData();
+  bool isDataReady();
 
   // parameters
+  std::shared_ptr<AvoidanceParameters> avoidance_param_ptr;
+  std::shared_ptr<LaneChangeParameters> lane_change_param_ptr;
+
   BehaviorPathPlannerParameters getCommonParam();
   BehaviorTreeManagerParam getBehaviorTreeManagerParam();
   SideShiftParameters getSideShiftParam();
@@ -121,20 +127,21 @@ private:
 
   // callback
   void onVelocity(const Odometry::ConstSharedPtr msg);
+  void onAcceleration(const AccelWithCovarianceStamped::ConstSharedPtr msg);
   void onPerception(const PredictedObjects::ConstSharedPtr msg);
   void onOccupancyGrid(const OccupancyGrid::ConstSharedPtr msg);
   void onExternalApproval(const ApprovalMsg::ConstSharedPtr msg);
   void onForceApproval(const PathChangeModule::ConstSharedPtr msg);
   void onMap(const HADMapBin::ConstSharedPtr map_msg);
   void onRoute(const HADMapRoute::ConstSharedPtr route_msg);
+  SetParametersResult onSetParam(const std::vector<rclcpp::Parameter> & parameters);
 
   /**
    * @brief Modify the path points near the goal to smoothly connect the lanelet and the goal point.
    */
   PathWithLaneId modifyPathForSmoothGoalConnection(
     const PathWithLaneId & path) const;  // (TODO) move to util
-
-  void clipPathLength(PathWithLaneId & path) const;  // (TODO) move to util
+  OnSetParametersCallbackHandle::SharedPtr m_set_param_res;
 
   /**
    * @brief Execute behavior tree and publish planned data.
@@ -160,14 +167,35 @@ private:
     const std::vector<std::shared_ptr<SceneModuleStatus>> & statuses) const;
 
   // debug
-
-private:
-  rclcpp::Publisher<OccupancyGrid>::SharedPtr debug_drivable_area_publisher_;
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_drivable_area_lanelets_publisher_;
-  rclcpp::Publisher<Path>::SharedPtr debug_path_publisher_;
   rclcpp::Publisher<AvoidanceDebugMsgArray>::SharedPtr debug_avoidance_msg_array_publisher_;
-  rclcpp::Publisher<MarkerArray>::SharedPtr debug_marker_publisher_;
-  void publishDebugMarker(const std::vector<MarkerArray> & debug_markers);
+  /**
+   * @brief check path if it is unsafe or forced
+   */
+  bool isForcedCandidatePath() const;
+
+  /**
+   * @brief publish steering factor from intersection
+   */
+  void publish_steering_factor(const TurnIndicatorsCommand & turn_signal);
+
+  template <class T>
+  size_t findEgoIndex(const std::vector<T> & points) const
+  {
+    const auto & p = planner_data_;
+    return motion_utils::findFirstNearestIndexWithSoftConstraints(
+      points, p->self_pose->pose, p->parameters.ego_nearest_dist_threshold,
+      p->parameters.ego_nearest_yaw_threshold);
+  }
+
+  template <class T>
+  size_t findEgoSegmentIndex(const std::vector<T> & points) const
+  {
+    const auto & p = planner_data_;
+    return motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+      points, p->self_pose->pose, p->parameters.ego_nearest_dist_threshold,
+      p->parameters.ego_nearest_yaw_threshold);
+  }
 };
 }  // namespace behavior_path_planner
 

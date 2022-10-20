@@ -44,7 +44,7 @@ public:
   void onInitialize() override;
   void callbackUpdateSuggest(const std_msgs::msg::Bool::ConstSharedPtr msg);
 
-public Q_SLOTS:
+public Q_SLOTS:  // NOLINT for Qt
   void editTopic();
   void pushCalibrationButton();
 
@@ -56,8 +56,6 @@ protected:
 
   QLabel * topic_label_;
   QLineEdit * topic_edit_;
-  QLabel * dir_label_;
-  QLineEdit * dir_edit_;
   QPushButton * calibration_button_;
   QLabel * status_label_;
 };

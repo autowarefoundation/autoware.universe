@@ -48,7 +48,8 @@ std::shared_ptr<LongitudinalController> makeLongitudinalNode()
   node_options.arguments(
     {"--ros-args", "--params-file",
      share_dir + "/param/longitudinal_controller_defaults.param.yaml", "--params-file",
-     share_dir + "/param/test_vehicle_info.param.yaml"});
+     share_dir + "/param/test_vehicle_info.param.yaml", "--params-file",
+     share_dir + "/param/test_nearest_search.param.yaml"});
   std::shared_ptr<LongitudinalController> node =
     std::make_shared<LongitudinalController>(node_options);
 
@@ -56,7 +57,7 @@ std::shared_ptr<LongitudinalController> makeLongitudinalNode()
   auto ret =
     rcutils_logging_set_logger_level(node->get_logger().get_name(), RCUTILS_LOG_SEVERITY_DEBUG);
   if (ret != RCUTILS_RET_OK) {
-    std::cout << "Failed to set logging severerity to DEBUG\n";
+    std::cout << "Failed to set logging severity to DEBUG\n";
   }
   return node;
 }

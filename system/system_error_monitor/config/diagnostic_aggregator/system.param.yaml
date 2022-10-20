@@ -96,6 +96,12 @@
                   contains: [": GPU Thermal Throttling"]
                   timeout: 3.0
 
+                frequency:
+                  type: diagnostic_aggregator/GenericAnalyzer
+                  path: frequency
+                  contains: [": GPU Frequency"]
+                  timeout: 3.0
+
             memory:
               type: diagnostic_aggregator/AnalyzerGroup
               path: memory
@@ -122,6 +128,18 @@
                   contains: [": Network Traffic"]
                   timeout: 3.0
 
+                network_crc_error:
+                  type: diagnostic_aggregator/GenericAnalyzer
+                  path: network_crc_error
+                  contains: [": Network CRC Error"]
+                  timeout: 3.0
+
+                ip_packet_reassembles_failed:
+                  type: diagnostic_aggregator/GenericAnalyzer
+                  path: ip_packet_reassembles_failed
+                  contains: [": IP Packet Reassembles Failed"]
+                  timeout: 3.0
+
             storage:
               type: diagnostic_aggregator/AnalyzerGroup
               path: storage
@@ -130,6 +148,36 @@
                   type: diagnostic_aggregator/GenericAnalyzer
                   path: temperature
                   contains: [": HDD Temperature"]
+                  timeout: 3.0
+
+                recovered_error:
+                  type: diagnostic_aggregator/GenericAnalyzer
+                  path: recovered_error
+                  contains: [": HDD RecoveredError"]
+                  timeout: 3.0
+
+                read_data_rate:
+                  type: diagnostic_aggregator/GenericAnalyzer
+                  path: read_data_rate
+                  contains: [": HDD ReadDataRate"]
+                  timeout: 3.0
+
+                write_data_rate:
+                  type: diagnostic_aggregator/GenericAnalyzer
+                  path: write_data_rate
+                  contains: [": HDD WriteDataRate"]
+                  timeout: 3.0
+
+                read_iops:
+                  type: diagnostic_aggregator/GenericAnalyzer
+                  path: read_iops
+                  contains: [": HDD ReadIOPS"]
+                  timeout: 3.0
+
+                write_iops:
+                  type: diagnostic_aggregator/GenericAnalyzer
+                  path: write_iops
+                  contains: [": HDD WriteIOPS"]
                   timeout: 3.0
 
                 usage:
@@ -148,6 +196,12 @@
                   type: diagnostic_aggregator/GenericAnalyzer
                   path: total_data_written
                   contains: [": HDD TotalDataWritten"]
+                  timeout: 3.0
+
+                connection:
+                  type: diagnostic_aggregator/GenericAnalyzer
+                  path: connection
+                  contains: [": HDD Connection"]
                   timeout: 3.0
 
             process:

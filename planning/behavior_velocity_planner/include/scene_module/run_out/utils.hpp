@@ -52,7 +52,6 @@ struct RunOutParam
   double stop_margin;
   double passing_margin;
   double deceleration_jerk;
-  double obstacle_velocity_kph;
   float detection_distance;
   float detection_span;
   float min_vel_ego_kmph;
@@ -76,9 +75,14 @@ struct ApproachingParam
   bool enable;
   float margin;
   float limit_vel_kmph;
+};
+
+struct StateParam
+{
   float stop_thresh;
   float stop_time_thresh;
-  float dist_thresh;
+  float disable_approach_dist;
+  float keep_approach_duration;
 };
 
 struct SlowDownLimit
@@ -100,15 +104,10 @@ struct PlannerParam
   VehicleParam vehicle_param;
   DetectionArea detection_area;
   ApproachingParam approaching;
+  StateParam state_param;
   DynamicObstacleParam dynamic_obstacle;
   SlowDownLimit slow_down_limit;
   Smoother smoother;
-};
-
-enum class State {
-  GO = 0,
-  APPROACH,
-  STOP,
 };
 
 enum class DetectionMethod {

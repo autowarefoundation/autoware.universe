@@ -142,8 +142,8 @@ LaneDepartureCheckerNode::LaneDepartureCheckerNode(const rclcpp::NodeOptions & o
   param_.max_lateral_deviation = declare_parameter("max_lateral_deviation", 1.0);
   param_.max_longitudinal_deviation = declare_parameter("max_longitudinal_deviation", 1.0);
   param_.max_yaw_deviation_deg = declare_parameter("max_yaw_deviation_deg", 30.0);
-  param_.delta_yaw_threshold_for_closest_point =
-    declare_parameter("delta_yaw_threshold_for_closest_point", 90.0);
+  param_.ego_nearest_dist_threshold = declare_parameter<double>("ego_nearest_dist_threshold");
+  param_.ego_nearest_yaw_threshold = declare_parameter<double>("ego_nearest_yaw_threshold");
 
   // Parameter Callback
   set_param_res_ =
@@ -266,13 +266,13 @@ bool LaneDepartureCheckerNode::isDataValid()
 {
   if (reference_trajectory_->points.empty()) {
     RCLCPP_ERROR_THROTTLE(
-      get_logger(), *get_clock(), 1000, "reference_trajectory is empty. Not expected!");
+      get_logger(), *get_clock(), 5000, "reference_trajectory is empty. Not expected!");
     return false;
   }
 
   if (predicted_trajectory_->points.empty()) {
     RCLCPP_ERROR_THROTTLE(
-      get_logger(), *get_clock(), 1000, "predicted_trajectory is empty. Not expected!");
+      get_logger(), *get_clock(), 5000, "predicted_trajectory is empty. Not expected!");
     return false;
   }
 

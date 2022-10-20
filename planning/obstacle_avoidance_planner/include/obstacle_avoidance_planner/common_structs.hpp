@@ -203,6 +203,9 @@ struct TrajectoryParam
   double acceleration_for_non_deceleration_range;
   int num_fix_points_for_extending;
   double max_dist_for_extending_end_point;
+
+  double ego_nearest_dist_threshold;
+  double ego_nearest_yaw_threshold;
 };
 
 struct MPTParam
@@ -212,6 +215,7 @@ struct MPTParam
   bool steer_limit_constraint;
   bool fix_points_around_ego;
   int num_curvature_sampling_points;
+  bool is_fixed_point_single;
 
   std::vector<double> vehicle_circle_longitudinal_offsets;  // from base_link
   std::vector<double> vehicle_circle_radiuses;

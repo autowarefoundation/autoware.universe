@@ -20,12 +20,10 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
-#include <autoware_auto_planning_msgs/msg/path.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
-#include <geometry_msgs/msg/pose_stamped.hpp>
-#include <tier4_planning_msgs/msg/avoidance_debug_factor.hpp>
-#include <tier4_planning_msgs/msg/avoidance_debug_msg.hpp>
 #include <tier4_planning_msgs/msg/avoidance_debug_msg_array.hpp>
+
+#include <lanelet2_core/geometry/Lanelet.h>
 
 #include <memory>
 #include <string>
@@ -34,16 +32,12 @@
 namespace behavior_path_planner
 {
 using autoware_auto_perception_msgs::msg::PredictedObject;
-using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 
-using tier4_planning_msgs::msg::AvoidanceDebugFactor;
-using tier4_planning_msgs::msg::AvoidanceDebugMsg;
 using tier4_planning_msgs::msg::AvoidanceDebugMsgArray;
 
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
-using geometry_msgs::msg::PoseStamped;
 
 struct AvoidanceParameters
 {
@@ -207,11 +201,8 @@ using ObjectDataArray = std::vector<ObjectData>;
 /*
  * Shift point with additional info for avoidance planning
  */
-struct AvoidPoint : public ShiftPoint
+struct AvoidLine : public ShiftLine
 {
-  // relative shift length from start to end point
-  double start_length = 0.0;
-
   // Distance from ego to start point in Frenet
   double start_longitudinal = 0.0;
 
@@ -227,13 +218,13 @@ struct AvoidPoint : public ShiftPoint
   // corresponding object
   ObjectData object{};
 
-  double getRelativeLength() const { return length - start_length; }
+  double getRelativeLength() const { return end_shift_length - start_shift_length; }
 
   double getRelativeLongitudinal() const { return end_longitudinal - start_longitudinal; }
 
   double getGradient() const { return getRelativeLength() / getRelativeLongitudinal(); }
 };
-using AvoidPointArray = std::vector<AvoidPoint>;
+using AvoidLineArray = std::vector<AvoidLine>;
 
 /*
  * Common data for avoidance planning
@@ -293,20 +284,20 @@ struct DebugData
   std::shared_ptr<lanelet::ConstLanelets> current_lanelets;
   std::shared_ptr<lanelet::ConstLineStrings3d> farthest_linestring_from_overhang;
 
-  AvoidPointArray current_shift_points;  // in path shifter
-  AvoidPointArray new_shift_points;      // in path shifter
+  AvoidLineArray current_shift_lines;  // in path shifter
+  AvoidLineArray new_shift_lines;      // in path shifter
 
-  AvoidPointArray registered_raw_shift;
-  AvoidPointArray current_raw_shift;
-  AvoidPointArray extra_return_shift;
+  AvoidLineArray registered_raw_shift;
+  AvoidLineArray current_raw_shift;
+  AvoidLineArray extra_return_shift;
 
-  AvoidPointArray merged;
-  AvoidPointArray trim_similar_grad_shift;
-  AvoidPointArray quantized;
-  AvoidPointArray trim_small_shift;
-  AvoidPointArray trim_similar_grad_shift_second;
-  AvoidPointArray trim_momentary_return;
-  AvoidPointArray trim_too_sharp_shift;
+  AvoidLineArray merged;
+  AvoidLineArray trim_similar_grad_shift;
+  AvoidLineArray quantized;
+  AvoidLineArray trim_small_shift;
+  AvoidLineArray trim_similar_grad_shift_second;
+  AvoidLineArray trim_momentary_return;
+  AvoidLineArray trim_too_sharp_shift;
   std::vector<double> pos_shift;
   std::vector<double> neg_shift;
   std::vector<double> total_shift;

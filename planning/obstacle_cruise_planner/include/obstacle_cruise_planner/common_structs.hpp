@@ -60,7 +60,6 @@ struct TargetObstacle
     velocity = aligned_velocity;
     is_classified = true;
     classification = object.classification.at(0);
-    shape = object.shape;
     uuid = toHexString(object.object_id);
 
     predicted_paths.clear();
@@ -79,7 +78,6 @@ struct TargetObstacle
   float velocity;
   bool is_classified;
   ObjectClassification classification;
-  Shape shape;
   std::string uuid;
   std::vector<PredictedPath> predicted_paths;
   std::vector<geometry_msgs::msg::PointStamped> collision_points;
@@ -111,6 +109,7 @@ struct LongitudinalInfo
   double min_ego_accel_for_rss;
   double min_object_accel_for_rss;
   double safe_distance_margin;
+  double terminal_safe_distance_margin;
 };
 
 struct DebugData
@@ -122,6 +121,16 @@ struct DebugData
   visualization_msgs::msg::MarkerArray cruise_wall_marker;
   std::vector<tier4_autoware_utils::Polygon2d> detection_polygons;
   std::vector<geometry_msgs::msg::Point> collision_points;
+};
+
+struct EgoNearestParam
+{
+  EgoNearestParam(const double arg_dist_threshold, const double arg_yaw_threshold)
+  : dist_threshold(arg_dist_threshold), yaw_threshold(arg_yaw_threshold)
+  {
+  }
+  double dist_threshold;
+  double yaw_threshold;
 };
 
 #endif  // OBSTACLE_CRUISE_PLANNER__COMMON_STRUCTS_HPP_

@@ -85,37 +85,27 @@ RadarObjectFusionToDetectedObjectNode::RadarObjectFusionToDetectedObjectNode(
     declare_parameter<bool>("core_params.convert_doppler_to_twist", false);
   core_param_.threshold_probability =
     declare_parameter<float>("core_params.threshold_probability", 0.0);
+  core_param_.compensate_probability =
+    declare_parameter<bool>("core_params.compensate_probability", false);
 
   // Core
   radar_fusion_to_detected_object_ = std::make_unique<RadarFusionToDetectedObject>(get_logger());
   radar_fusion_to_detected_object_->setParam(core_param_);
 
   // Subscriber
-  sub_object_ = create_subscription<DetectedObjects>(
-    "~/input/objects", rclcpp::QoS{1},
-    std::bind(&RadarObjectFusionToDetectedObjectNode::onDetectedObjects, this, _1));
-  sub_radar_ = create_subscription<TrackedObjects>(
-    "~/input/radars", rclcpp::QoS{1},
-    std::bind(&RadarObjectFusionToDetectedObjectNode::onRadarObjects, this, _1));
+  sub_object_.subscribe(this, "~/input/objects", rclcpp::QoS{1}.get_rmw_qos_profile());
+  sub_radar_.subscribe(this, "~/input/radars", rclcpp::QoS{1}.get_rmw_qos_profile());
+
+  using std::placeholders::_1;
+  using std::placeholders::_2;
+  sync_ptr_ = std::make_shared<Sync>(SyncPolicy(10), sub_object_, sub_radar_);
+  sync_ptr_->registerCallback(
+    std::bind(&RadarObjectFusionToDetectedObjectNode::onData, this, _1, _2));
 
   // Publisher
   pub_objects_ = create_publisher<DetectedObjects>("~/output/objects", 1);
-
-  // Timer
-  const auto update_period_ns = rclcpp::Rate(node_param_.update_rate_hz).period();
-  timer_ = rclcpp::create_timer(
-    this, get_clock(), update_period_ns,
-    std::bind(&RadarObjectFusionToDetectedObjectNode::onTimer, this));
-}
-
-void RadarObjectFusionToDetectedObjectNode::onDetectedObjects(
-  const DetectedObjects::ConstSharedPtr msg)
-{
-  detected_objects_ = msg;
-}
-void RadarObjectFusionToDetectedObjectNode::onRadarObjects(const TrackedObjects::ConstSharedPtr msg)
-{
-  radar_objects_ = msg;
+  pub_debug_low_confidence_objects_ =
+    create_publisher<DetectedObjects>("~/debug/low_confidence_objects", 1);
 }
 
 rcl_interfaces::msg::SetParametersResult RadarObjectFusionToDetectedObjectNode::onSetParam(
@@ -148,6 +138,9 @@ rcl_interfaces::msg::SetParametersResult RadarObjectFusionToDetectedObjectNode::
         p.velocity_weight_target_value_average);
       update_param(
         params, "core_params.velocity_weight_target_value_top", p.velocity_weight_target_value_top);
+      update_param(params, "core_params.convert_doppler_to_twist", p.convert_doppler_to_twist);
+      update_param(params, "core_params.threshold_probability", p.threshold_probability);
+      update_param(params, "core_params.compensate_probability", p.compensate_probability);
 
       // Set parameter to instance
       if (radar_fusion_to_detected_object_) {
@@ -187,8 +180,11 @@ bool RadarObjectFusionToDetectedObjectNode::isDataReady()
   return true;
 }
 
-void RadarObjectFusionToDetectedObjectNode::onTimer()
+void RadarObjectFusionToDetectedObjectNode::onData(
+  const DetectedObjects::ConstSharedPtr object_msg, const TrackedObjects::ConstSharedPtr radar_msg)
 {
+  detected_objects_ = object_msg;
+  radar_objects_ = radar_msg;
   if (!isDataReady()) {
     return;
   }
@@ -211,6 +207,7 @@ void RadarObjectFusionToDetectedObjectNode::onTimer()
   // Update
   output_ = radar_fusion_to_detected_object_->update(input);
   pub_objects_->publish(output_.objects);
+  pub_debug_low_confidence_objects_->publish(output_.debug_low_confidence_objects);
 }
 
 RadarFusionToDetectedObject::RadarInput RadarObjectFusionToDetectedObjectNode::setRadarInput(

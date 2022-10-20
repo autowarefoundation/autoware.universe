@@ -70,7 +70,7 @@ bool8_t MPC::calculateMPC(
   trajectory_follower::MPCTrajectory mpc_resampled_ref_traj;
   const float64_t mpc_start_time = mpc_data.nearest_time + m_param.input_delay;
   const float64_t prediction_dt =
-    getPredictionDeletaTime(mpc_start_time, reference_trajectory, current_pose);
+    getPredictionDeltaTime(mpc_start_time, reference_trajectory, current_pose);
   if (!resampleMPCTrajectoryByTime(
         mpc_start_time, prediction_dt, reference_trajectory, &mpc_resampled_ref_traj)) {
     RCLCPP_WARN_THROTTLE(m_logger, *m_clock, 1000 /*ms*/, "trajectory resampling failed.");
@@ -181,8 +181,7 @@ void MPC::setReferenceTrajectory(
   const autoware_auto_planning_msgs::msg::Trajectory & trajectory_msg,
   const float64_t traj_resample_dist, const bool8_t enable_path_smoothing,
   const int64_t path_filter_moving_ave_num, const int64_t curvature_smoothing_num_traj,
-  const int64_t curvature_smoothing_num_ref_steer,
-  const geometry_msgs::msg::PoseStamped::SharedPtr current_pose_ptr)
+  const int64_t curvature_smoothing_num_ref_steer)
 {
   trajectory_follower::MPCTrajectory mpc_traj_raw;        // received raw trajectory
   trajectory_follower::MPCTrajectory mpc_traj_resampled;  // resampled trajectory
@@ -220,10 +219,8 @@ void MPC::setReferenceTrajectory(
   }
 
   /* calculate yaw angle */
-  if (current_pose_ptr) {
-    trajectory_follower::MPCUtils::calcTrajectoryYawFromXY(&mpc_traj_smoothed, m_is_forward_shift);
-    trajectory_follower::MPCUtils::convertEulerAngleToMonotonic(&mpc_traj_smoothed.yaw);
-  }
+  trajectory_follower::MPCUtils::calcTrajectoryYawFromXY(&mpc_traj_smoothed, m_is_forward_shift);
+  trajectory_follower::MPCUtils::convertEulerAngleToMonotonic(&mpc_traj_smoothed.yaw);
 
   /* calculate curvature */
   trajectory_follower::MPCUtils::calcTrajectoryCurvature(
@@ -233,7 +230,7 @@ void MPC::setReferenceTrajectory(
   /* add end point with vel=0 on traj for mpc prediction */
   {
     auto & t = mpc_traj_smoothed;
-    const float64_t t_ext = 100.0;  // extra time to prevent mpc calcul failure due to short time
+    const float64_t t_ext = 100.0;  // extra time to prevent mpc calc failure due to short time
     const float64_t t_end = t.relative_time.back() + t_ext;
     const float64_t v_end = 0.0;
     t.vx.back() = v_end;  // set for end point
@@ -264,8 +261,8 @@ bool8_t MPC::getData(
   static constexpr auto duration = 5000 /*ms*/;
   size_t nearest_idx;
   if (!trajectory_follower::MPCUtils::calcNearestPoseInterp(
-        traj, current_pose, &(data->nearest_pose), &(nearest_idx), &(data->nearest_time), m_logger,
-        *m_clock)) {
+        traj, current_pose, &(data->nearest_pose), &(nearest_idx), &(data->nearest_time),
+        ego_nearest_dist_threshold, ego_nearest_yaw_threshold, m_logger, *m_clock)) {
     // reset previous MPC result
     // Note: When a large deviation from the trajectory occurs, the optimization stops and
     // the vehicle will return to the path by re-planning the trajectory or external operation.
@@ -490,10 +487,15 @@ trajectory_follower::MPCTrajectory MPC::applyVelocityDynamicsFilter(
   const trajectory_follower::MPCTrajectory & input, const geometry_msgs::msg::Pose & current_pose,
   const float64_t v0) const
 {
-  int64_t nearest_idx = trajectory_follower::MPCUtils::calcNearestIndex(input, current_pose);
-  if (nearest_idx < 0) {
+  autoware_auto_planning_msgs::msg::Trajectory autoware_traj;
+  autoware::motion::control::trajectory_follower::MPCUtils::convertToAutowareTrajectory(
+    input, autoware_traj);
+  if (autoware_traj.points.empty()) {
     return input;
   }
+
+  const size_t nearest_idx = motion_utils::findFirstNearestIndexWithSoftConstraints(
+    autoware_traj.points, current_pose, ego_nearest_dist_threshold, ego_nearest_yaw_threshold);
 
   const float64_t acc_lim = m_param.acceleration_limit;
   const float64_t tau = m_param.velocity_time_constant;
@@ -778,13 +780,16 @@ void MPC::addSteerWeightF(const float64_t prediction_dt, Eigen::MatrixXd * f_ptr
   f(0, 1) += (2.0 * m_raw_steer_cmd_prev * steer_acc_r_cp1) * 0.5;
 }
 
-float64_t MPC::getPredictionDeletaTime(
+float64_t MPC::getPredictionDeltaTime(
   const float64_t start_time, const trajectory_follower::MPCTrajectory & input,
   const geometry_msgs::msg::Pose & current_pose) const
 {
   // Calculate the time min_prediction_length ahead from current_pose
-  const size_t nearest_idx =
-    static_cast<size_t>(trajectory_follower::MPCUtils::calcNearestIndex(input, current_pose));
+  autoware_auto_planning_msgs::msg::Trajectory autoware_traj;
+  autoware::motion::control::trajectory_follower::MPCUtils::convertToAutowareTrajectory(
+    input, autoware_traj);
+  const size_t nearest_idx = motion_utils::findFirstNearestIndexWithSoftConstraints(
+    autoware_traj.points, current_pose, ego_nearest_dist_threshold, ego_nearest_yaw_threshold);
   float64_t sum_dist = 0;
   const float64_t target_time = [&]() {
     const float64_t t_ext =
@@ -806,7 +811,7 @@ float64_t MPC::getPredictionDeletaTime(
     return input.relative_time.back() - t_ext;
   }();
 
-  // Calculate deleta time for min_prediction_length
+  // Calculate delta time for min_prediction_length
   const float64_t dt =
     (target_time - start_time) / static_cast<float64_t>(m_param.prediction_horizon - 1);
 

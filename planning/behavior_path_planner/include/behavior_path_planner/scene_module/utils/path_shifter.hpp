@@ -18,20 +18,14 @@
 #include "behavior_path_planner/parameters.hpp"
 
 #include <rclcpp/rclcpp.hpp>
-#include <tier4_autoware_utils/ros/marker_helper.hpp>
 
-#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <geometry_msgs/msg/point.hpp>
-#include <geometry_msgs/msg/polygon.hpp>
-#include <visualization_msgs/msg/marker_array.hpp>
 
-#include <lanelet2_core/LaneletMap.h>
-#include <lanelet2_routing/RoutingGraph.h>
+#include <boost/optional.hpp>
 
 #include <algorithm>
 #include <string>
-#include <utility>
 #include <vector>
 
 namespace behavior_path_planner
@@ -41,16 +35,21 @@ using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 
-struct ShiftPoint
+struct ShiftLine
 {
-  Pose start{};     // shift start point in absolute coordinate
-  Pose end{};       // shift start point in absolute coordinate
-  double length{};  // absolute shift length at the end point related to the reference path
+  Pose start{};  // shift start point in absolute coordinate
+  Pose end{};    // shift start point in absolute coordinate
+
+  // relative shift length at the start point related to the reference path
+  double start_shift_length{};
+
+  // relative shift length at the end point related to the reference path
+  double end_shift_length{};
 
   size_t start_idx{};  // associated start-point index for the reference path
   size_t end_idx{};    // associated end-point index for the reference path
 };
-using ShiftPointArray = std::vector<ShiftPoint>;
+using ShiftLineArray = std::vector<ShiftLine>;
 
 struct ShiftedPath
 {
@@ -76,33 +75,47 @@ public:
   /**
    * @brief  Add shift point. You don't have to care about the start/end_idx.
    */
-  void addShiftPoint(const ShiftPoint & point);
+  void addShiftLine(const ShiftLine & point);
 
   /**
    * @brief  Set new shift point. You don't have to care about the start/end_idx.
    */
-  void setShiftPoints(const std::vector<ShiftPoint> & points);
+  void setShiftLines(const std::vector<ShiftLine> & lines);
 
-  std::vector<ShiftPoint> getShiftPoints() const { return shift_points_; }
-  PathWithLaneId getReferencePath() const { return reference_path_; }
-  size_t getShiftPointsSize() const { return shift_points_.size(); }
+  /**
+   * @brief  Get shift points.
+   */
+  std::vector<ShiftLine> getShiftLines() const { return shift_lines_; }
 
+  /**
+   * @brief  Get shift points size.
+   */
+  size_t getShiftLinesSize() const { return shift_lines_.size(); }
+
+  /**
+   * @brief  Get base offset.
+   */
   double getBaseOffset() const { return base_offset_; }
+
+  /**
+   * @brief  Get reference path.
+   */
+  PathWithLaneId getReferencePath() const { return reference_path_; }
 
   /**
    * @brief  Generate a shifted path according to the given reference path and shift points.
    * @return False if the path is empty or shift points have conflicts.
    */
   bool generate(
-    ShiftedPath * shift_path, const bool offset_back = true,
-    const SHIFT_TYPE type = SHIFT_TYPE::SPLINE);
+    ShiftedPath * shifted_path, const bool offset_back = true,
+    const SHIFT_TYPE type = SHIFT_TYPE::SPLINE) const;
 
   /**
    * @brief Remove behind shift points and add the removed offset to the base_offset_.
    * @details The previous offset information is stored in the base_offset_.
    *          This should be called after generate().
    */
-  void removeBehindShiftPointAndSetBaseOffset(const Point & base);
+  void removeBehindShiftLineAndSetBaseOffset(const size_t nearest_idx);
 
   ////////////////////////////////////////
   // Utility Functions
@@ -133,92 +146,83 @@ public:
   double getTotalShiftLength() const
   {
     double sum = base_offset_;
-    for (const auto & p : shift_points_) {
-      sum += p.length;
+    for (const auto & l : shift_lines_) {
+      sum += l.end_shift_length;
     }
     return sum;
   }
 
   double getLastShiftLength() const
   {
-    if (shift_points_.empty()) {
+    if (shift_lines_.empty()) {
       return base_offset_;
     }
 
-    // TODO(Horibe) enable this with const
-    // if (!is_index_aligned_) {
-    //   updateShiftPointIndices();
-    // }
     const auto furthest = std::max_element(
-      shift_points_.begin(), shift_points_.end(),
+      shift_lines_.begin(), shift_lines_.end(),
       [](auto & a, auto & b) { return a.end_idx < b.end_idx; });
 
-    return furthest->length;
+    return furthest->end_shift_length;
   }
 
-  boost::optional<ShiftPoint> getLastShiftPoint() const
+  boost::optional<ShiftLine> getLastShiftLine() const
   {
-    if (shift_points_.empty()) {
+    if (shift_lines_.empty()) {
       return {};
     }
 
     const auto furthest = std::max_element(
-      shift_points_.begin(), shift_points_.end(),
+      shift_lines_.begin(), shift_lines_.end(),
       [](auto & a, auto & b) { return a.end_idx > b.end_idx; });
 
     return *furthest;
   }
 
   /**
-   * @brief  Calculate the theoretical lateral jerk by spline shifting for current shift_points_.
+   * @brief  Calculate the theoretical lateral jerk by spline shifting for current shift_lines_.
    * @return Jerk array. THe size is same as the shift points.
    */
-  std::vector<double> calcLateralJerk();
-
-  /**
-   * @brief  Calculate shift point from path arclength for start and end point.
-   */
-  static bool calcShiftPointFromArcLength(
-    const PathWithLaneId & path, const Point & origin, double dist_to_start, double dist_to_end,
-    double shift_length, ShiftPoint * shift_point);
+  std::vector<double> calcLateralJerk() const;
 
 private:
   // The reference path along which the shift will be performed.
   PathWithLaneId reference_path_;
 
   // Shift points used for shifted-path generation.
-  ShiftPointArray shift_points_;
+  ShiftLineArray shift_lines_;
 
   // The amount of shift length to the entire path.
   double base_offset_{0.0};
 
-  // Flag to check the path index is aligned. (cleared when new path or shift points are received)
-  bool is_index_aligned_{false};
+  // Logger
+  mutable rclcpp::Logger logger_{
+    rclcpp::get_logger("behavior_path_planner").get_child("path_shifter")};
 
-  rclcpp::Logger logger_{rclcpp::get_logger("behavior_path_planner").get_child("path_shifter")};
+  // Clock
+  mutable rclcpp::Clock clock_{RCL_ROS_TIME};
 
   /**
-   * @brief Calculate path index for shift_points and set is_index_aligned_ to true.
+   * @brief Calculate path index for shift_lines and set is_index_aligned_ to true.
    */
-  void updateShiftPointIndices();
+  void updateShiftLinesIndices(ShiftLineArray & shift_lines) const;
 
   /**
    * @brief Sort the points in order from the front of the path.
    */
-  bool sortShiftPointsAlongPath(const PathWithLaneId & path);
+  void sortShiftLinesAlongPath(ShiftLineArray & shift_lines) const;
 
   /**
-   * @brief Generate shifted path from reference_path_ and shift_points_ with linear shifting.
+   * @brief Generate shifted path from reference_path_ and shift_lines_ with linear shifting.
    */
-  void applyLinearShifter(ShiftedPath * shifted_path);
+  void applyLinearShifter(ShiftedPath * shifted_path) const;
 
   /**
-   * @brief Generate shifted path from reference_path_ and shift_points_ with spline_based shifting.
+   * @brief Generate shifted path from reference_path_ and shift_lines_ with spline_based shifting.
    * @details Calculate the shift so that the horizontal jerk remains constant. This is achieved by
    *          dividing the shift interval into four parts and apply a cubic spline to them.
    *          The resultant shifting shape is closed to the Clothoid curve.
    */
-  void applySplineShifter(ShiftedPath * shifted_path, const bool offset_back);
+  void applySplineShifter(ShiftedPath * shifted_path, const bool offset_back) const;
 
   ////////////////////////////////////////
   // Helper Functions
@@ -227,11 +231,11 @@ private:
   /**
    * @brief Check if the shift points are aligned in order and have no conflict range.
    */
-  bool checkShiftPointsAlignment(const ShiftPointArray & shift_points) const;
+  bool checkShiftLinesAlignment(const ShiftLineArray & shift_lines) const;
 
-  void addLateralOffsetOnIndexPoint(ShiftedPath * point, double offset, size_t index) const;
+  void addLateralOffsetOnIndexPoint(ShiftedPath * path, double offset, size_t index) const;
 
-  void shiftBaseLength(ShiftedPath * point, double offset) const;
+  void shiftBaseLength(ShiftedPath * path, double offset) const;
 
   void setBaseOffset(const double val)
   {

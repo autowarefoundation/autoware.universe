@@ -19,6 +19,7 @@
 #include <scene_module/scene_module_interface.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 #include <utilization/boost_geometry_helper.hpp>
+#include <utilization/state_machine.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
@@ -42,43 +43,6 @@ using TimeDistanceArray = std::vector<std::pair<double, double>>;
 class IntersectionModule : public SceneModuleInterface
 {
 public:
-  enum class State {
-    STOP = 0,
-    GO,
-  };
-  std::string toString(const State & state)
-  {
-    if (state == State::STOP) {
-      return "STOP";
-    } else if (state == State::GO) {
-      return "GO";
-    } else {
-      return "UNKNOWN";
-    }
-  }
-
-  /**
-   * @brief Manage stop-go states with safety margin time.
-   */
-  class StateMachine
-  {
-  public:
-    StateMachine()
-    {
-      state_ = State::GO;
-      margin_time_ = 0.0;
-    }
-    void setStateWithMarginTime(State state, rclcpp::Logger logger, rclcpp::Clock & clock);
-    void setState(State state);
-    void setMarginTime(const double t);
-    State getState();
-
-  private:
-    State state_;                               //! current state
-    double margin_time_;                        //! margin time when transit to Go from Stop
-    std::shared_ptr<rclcpp::Time> start_time_;  //! first time received GO when STOP state
-  };
-
   struct DebugData
   {
     bool stop_required;
@@ -89,12 +53,13 @@ public:
     geometry_msgs::msg::Pose stop_point_pose;
     geometry_msgs::msg::Pose judge_point_pose;
     geometry_msgs::msg::Polygon ego_lane_polygon;
-    std::vector<lanelet::CompoundPolygon3d> detection_area_with_margin;
     geometry_msgs::msg::Polygon stuck_vehicle_detect_area;
     geometry_msgs::msg::Polygon candidate_collision_ego_lane_polygon;
     std::vector<geometry_msgs::msg::Polygon> candidate_collision_object_polygons;
     std::vector<lanelet::ConstLanelet> intersection_detection_lanelets;
     std::vector<lanelet::CompoundPolygon3d> detection_area;
+    geometry_msgs::msg::Polygon intersection_area;
+    std::vector<lanelet::CompoundPolygon3d> adjacent_area;
     autoware_auto_perception_msgs::msg::PredictedObjects conflicting_targets;
     autoware_auto_perception_msgs::msg::PredictedObjects stuck_targets;
     geometry_msgs::msg::Pose predicted_obj_pose;
@@ -105,6 +70,10 @@ public:
   {
     double state_transit_margin_time;
     double stop_line_margin;  //! distance from auto-generated stopline to detection_area boundary
+    double keep_detection_line_margin;  //! distance (toward path end) from generated stop line.
+                                        //! keep detection if ego is before this line and ego.vel <
+                                        //! keep_detection_vel_thr
+    double keep_detection_vel_thr;
     double stuck_vehicle_detect_dist;  //! distance from end point to finish stuck vehicle check
     double
       stuck_vehicle_ignore_dist;   //! distance from intersection start to start stuck vehicle check
@@ -161,6 +130,7 @@ private:
    * @param path             ego-car lane
    * @param detection_area_lanelet_ids  angle check is performed for obstacles using this lanelet
    * ids
+   * @param intersection_area associated intersection_area if exists
    * @param objects_ptr      target objects
    * @param closest_idx      ego-car position index on the lane
    * @return true if collision is detected
@@ -168,7 +138,9 @@ private:
   bool checkCollision(
     lanelet::LaneletMapConstPtr lanelet_map_ptr,
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
-    const std::vector<int> & detection_area_lanelet_ids,
+    const lanelet::ConstLanelets & detection_area_lanelets,
+    const lanelet::ConstLanelets & adjacent_lanelets,
+    const std::optional<Polygon2d> & intersection_area,
     const autoware_auto_perception_msgs::msg::PredictedObjects::ConstSharedPtr objects_ptr,
     const int closest_idx, const Polygon2d & stuck_vehicle_detect_area);
 
@@ -236,24 +208,6 @@ private:
     const autoware_auto_perception_msgs::msg::PredictedObject & object) const;
 
   /**
-   * @brief convert object to footprint polygon
-   * @param object detected object
-   * @return 2d polygon of the object footprint
-   */
-  Polygon2d toFootprintPolygon(
-    const autoware_auto_perception_msgs::msg::PredictedObject & object) const;
-
-  /**
-   * @brief convert predicted object to footprint polygon
-   * @param object detected object
-   * @param predicted_pose predicted object pose
-   * @return 2d polygon of the object footprint
-   */
-  Polygon2d toPredictedFootprintPolygon(
-    const autoware_auto_perception_msgs::msg::PredictedObject & object,
-    const geometry_msgs::msg::Pose & predicted_pose) const;
-
-  /**
    * @brief Whether target tier4_api_msgs::Intersection::status is valid or not
    * @param target_status target tier4_api_msgs::Intersection::status
    * @return rue if the object has a target type
@@ -268,7 +222,8 @@ private:
    * @return true if the given pose belongs to any target lanelet
    */
   bool checkAngleForTargetLanelets(
-    const geometry_msgs::msg::Pose & pose, const std::vector<int> & target_lanelet_ids);
+    const geometry_msgs::msg::Pose & pose, const lanelet::ConstLanelets & target_lanelet_ids,
+    const double margin = 0);
 
   /**
    * @brief Get lanes including ego lanelet and next lanelet

@@ -81,10 +81,10 @@ private:
   Odometry::ConstSharedPtr current_odometry_ptr_;  // current odometry
   Trajectory::ConstSharedPtr base_traj_raw_ptr_;   // current base_waypoints
   double external_velocity_limit_;                 // current external_velocity_limit
-
-  // maximum velocity with deceleration for external velocity limit
-  double max_velocity_with_deceleration_;
-  double external_velocity_limit_dist_{0.0};  // distance to set external velocity limit
+  double max_velocity_with_deceleration_;          // maximum velocity with deceleration
+                                                   // for external velocity limit
+  double external_velocity_limit_dist_{0.0};       // distance to set external velocity limit
+  double wheelbase_;                               // wheelbase
 
   TrajectoryPoints prev_output_;  // previously published trajectory
 
@@ -125,7 +125,9 @@ private:
     double extract_ahead_dist;            // forward waypoints distance from current position [m]
     double extract_behind_dist;           // backward waypoints distance from current position [m]
     double stop_dist_to_prohibit_engage;  // prevent to move toward close stop point
-    double delta_yaw_threshold;           // for closest index calculation
+    double ego_nearest_dist_threshold;    // for ego's closest index calculation
+    double ego_nearest_yaw_threshold;     // for ego's closest index calculation
+
     resampling::ResampleParam post_resample_param;
     AlgorithmType algorithm_type;  // Option : JerkFiltered, Linf, L2
   } node_param_{};
@@ -211,6 +213,7 @@ private:
   rclcpp::Publisher<VelocityLimit>::SharedPtr pub_velocity_limit_;
   rclcpp::Publisher<Trajectory>::SharedPtr pub_trajectory_vel_lim_;
   rclcpp::Publisher<Trajectory>::SharedPtr pub_trajectory_latacc_filtered_;
+  rclcpp::Publisher<Trajectory>::SharedPtr pub_trajectory_steering_rate_limited_;
   rclcpp::Publisher<Trajectory>::SharedPtr pub_trajectory_resampled_;
   rclcpp::Publisher<Float32Stamped>::SharedPtr debug_closest_velocity_;
   rclcpp::Publisher<Float32Stamped>::SharedPtr debug_closest_acc_;
@@ -225,9 +228,7 @@ private:
   rclcpp::Publisher<Float32Stamped>::SharedPtr pub_closest_merged_velocity_;
 
   // helper functions
-  boost::optional<size_t> findNearestIndex(
-    const TrajectoryPoints & points, const geometry_msgs::msg::Pose & p) const;
-  boost::optional<size_t> findNearestIndexFromEgo(const TrajectoryPoints & points) const;
+  size_t findNearestIndexFromEgo(const TrajectoryPoints & points) const;
   bool isReverse(const TrajectoryPoints & points) const;
   void flipVelocity(TrajectoryPoints & points) const;
   void publishStopWatchTime();

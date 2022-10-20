@@ -227,16 +227,16 @@ private:
    * @param [in] reference_trajectory used for linearization around reference trajectory
    */
   MPCMatrix generateMPCMatrix(
-    const trajectory_follower::MPCTrajectory & reference_trajectory, const float64_t predition_dt);
+    const trajectory_follower::MPCTrajectory & reference_trajectory, const float64_t prediction_dt);
   /**
    * @brief generate MPC matrix with trajectory and vehicle model
    * @param [in] mpc_matrix parameters matrix to use for optimization
    * @param [in] x0 initial state vector
-   * @param [in] precition_dt predition deleta time
+   * @param [in] prediction_dt prediction delta time
    * @param [out] Uex optimized input vector
    */
   bool8_t executeOptimization(
-    const MPCMatrix & mpc_matrix, const Eigen::VectorXd & x0, const float64_t predition_dt,
+    const MPCMatrix & mpc_matrix, const Eigen::VectorXd & x0, const float64_t prediction_dt,
     Eigen::VectorXd * Uex);
   /**
    * @brief resample trajectory with mpc resampling time
@@ -255,17 +255,17 @@ private:
    * @brief get prediction delta time of mpc.
    * If trajectory length is shorter than min_prediction length, adjust delta time.
    */
-  float64_t getPredictionDeletaTime(
+  float64_t getPredictionDeltaTime(
     const float64_t start_time, const trajectory_follower::MPCTrajectory & input,
     const geometry_msgs::msg::Pose & current_pose) const;
   /**
    * @brief add weights related to lateral_jerk, steering_rate, steering_acc into R
    */
-  void addSteerWeightR(const float64_t predition_dt, Eigen::MatrixXd * R) const;
+  void addSteerWeightR(const float64_t prediction_dt, Eigen::MatrixXd * R) const;
   /**
    * @brief add weights related to lateral_jerk, steering_rate, steering_acc into f
    */
-  void addSteerWeightF(const float64_t predition_dt, Eigen::MatrixXd * f) const;
+  void addSteerWeightF(const float64_t prediction_dt, Eigen::MatrixXd * f) const;
 
   /**
    * @brief calculate desired steering rate.
@@ -373,6 +373,9 @@ public:
   /* parameters for path smoothing */
   //!< @brief flag to use predicted steer, not measured steer.
   bool8_t m_use_steer_prediction;
+  //!< @brief parameters for nearest index search
+  double ego_nearest_dist_threshold;
+  double ego_nearest_yaw_threshold;
 
   /**
    * @brief constructor
@@ -400,8 +403,7 @@ public:
     const autoware_auto_planning_msgs::msg::Trajectory & trajectory_msg,
     const float64_t traj_resample_dist, const bool8_t enable_path_smoothing,
     const int64_t path_filter_moving_ave_num, const int64_t curvature_smoothing_num_traj,
-    const int64_t curvature_smoothing_num_ref_steer,
-    const geometry_msgs::msg::PoseStamped::SharedPtr current_pose_ptr);
+    const int64_t curvature_smoothing_num_ref_steer);
   /**
    * @brief set the vehicle model of this MPC
    */

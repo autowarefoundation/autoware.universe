@@ -26,37 +26,6 @@
 #include <stdexcept>
 #include <vector>
 
-namespace
-{
-template <class T>
-std::vector<geometry_msgs::msg::Point> removeOverlapPoints(const T & points, const size_t & idx)
-{
-  std::vector<geometry_msgs::msg::Point> dst;
-
-  for (const auto & pt : points) {
-    dst.push_back(tier4_autoware_utils::getPoint(pt));
-  }
-
-  if (points.empty()) {
-    return dst;
-  }
-
-  constexpr double eps = 1.0E-08;
-  size_t i = idx;
-  while (i != dst.size() - 1) {
-    const auto p = tier4_autoware_utils::getPoint(dst.at(i));
-    const auto p_next = tier4_autoware_utils::getPoint(dst.at(i + 1));
-    const Eigen::Vector3d v{p_next.x - p.x, p_next.y - p.y, 0.0};
-    if (v.norm() < eps) {
-      dst.erase(dst.begin() + i + 1);
-    } else {
-      ++i;
-    }
-  }
-  return dst;
-}
-}  // namespace
-
 namespace motion_utils
 {
 template <class T>
@@ -123,6 +92,33 @@ boost::optional<bool> isDrivingForwardWithTwist(const T points_with_twist)
 }
 
 template <class T>
+T removeOverlapPoints(const T & points, const size_t & start_idx = 0)
+{
+  if (points.size() < start_idx + 1) {
+    return points;
+  }
+
+  T dst;
+
+  for (size_t i = 0; i <= start_idx; ++i) {
+    dst.push_back(points.at(i));
+  }
+
+  constexpr double eps = 1.0E-08;
+  for (size_t i = start_idx + 1; i < points.size(); ++i) {
+    const auto prev_p = tier4_autoware_utils::getPoint(dst.back());
+    const auto curr_p = tier4_autoware_utils::getPoint(points.at(i));
+    const double dist = tier4_autoware_utils::calcDistance2d(prev_p, curr_p);
+    if (dist < eps) {
+      continue;
+    }
+    dst.push_back(points.at(i));
+  }
+
+  return dst;
+}
+
+template <class T>
 boost::optional<size_t> searchZeroVelocityIndex(
   const T & points_with_twist, const size_t src_idx, const size_t dst_idx)
 {
@@ -141,6 +137,19 @@ boost::optional<size_t> searchZeroVelocityIndex(
   }
 
   return {};
+}
+
+template <class T>
+boost::optional<size_t> searchZeroVelocityIndex(const T & points_with_twist, const size_t & src_idx)
+{
+  try {
+    validateNonEmpty(points_with_twist);
+  } catch (const std::exception & e) {
+    std::cerr << e.what() << std::endl;
+    return {};
+  }
+
+  return searchZeroVelocityIndex(points_with_twist, src_idx, points_with_twist.size());
 }
 
 template <class T>
@@ -338,6 +347,43 @@ boost::optional<size_t> findNearestSegmentIndex(
  */
 template <class T>
 double calcLateralOffset(
+  const T & points, const geometry_msgs::msg::Point & p_target, const size_t seg_idx,
+  const bool throw_exception = false)
+{
+  const auto overlap_removed_points = removeOverlapPoints(points, 0);
+
+  if (throw_exception) {
+    validateNonEmpty(overlap_removed_points);
+  } else {
+    try {
+      validateNonEmpty(overlap_removed_points);
+    } catch (const std::exception & e) {
+      std::cerr << e.what() << std::endl;
+      return std::nan("");
+    }
+  }
+
+  if (overlap_removed_points.size() == 1) {
+    const std::runtime_error e("Same points are given.");
+    if (throw_exception) {
+      throw e;
+    }
+    std::cerr << e.what() << std::endl;
+    return std::nan("");
+  }
+
+  const auto p_front = tier4_autoware_utils::getPoint(overlap_removed_points.at(seg_idx));
+  const auto p_back = tier4_autoware_utils::getPoint(overlap_removed_points.at(seg_idx + 1));
+
+  const Eigen::Vector3d segment_vec{p_back.x - p_front.x, p_back.y - p_front.y, 0.0};
+  const Eigen::Vector3d target_vec{p_target.x - p_front.x, p_target.y - p_front.y, 0.0};
+
+  const Eigen::Vector3d cross_vec = segment_vec.cross(target_vec);
+  return cross_vec(2) / segment_vec.norm();
+}
+
+template <class T>
+double calcLateralOffset(
   const T & points, const geometry_msgs::msg::Point & p_target, const bool throw_exception = false)
 {
   const auto overlap_removed_points = removeOverlapPoints(points, 0);
@@ -363,15 +409,7 @@ double calcLateralOffset(
   }
 
   const size_t seg_idx = findNearestSegmentIndex(overlap_removed_points, p_target);
-
-  const auto p_front = tier4_autoware_utils::getPoint(overlap_removed_points.at(seg_idx));
-  const auto p_back = tier4_autoware_utils::getPoint(overlap_removed_points.at(seg_idx + 1));
-
-  const Eigen::Vector3d segment_vec{p_back.x - p_front.x, p_back.y - p_front.y, 0.0};
-  const Eigen::Vector3d target_vec{p_target.x - p_front.x, p_target.y - p_front.y, 0.0};
-
-  const Eigen::Vector3d cross_vec = segment_vec.cross(target_vec);
-  return cross_vec(2) / segment_vec.norm();
+  return calcLateralOffset(points, p_target, seg_idx, throw_exception);
 }
 
 /**
@@ -703,11 +741,14 @@ inline boost::optional<geometry_msgs::msg::Point> calcLongitudinalOffsetPoint(
  * @param points points of trajectory, path, ...
  * @param src_idx index of source point
  * @param offset length of offset from source point
+ * @param set_orientation_from_position_direction set orientation by spherical interpolation if
+ * false
  * @return offset pose
  */
 template <class T>
 inline boost::optional<geometry_msgs::msg::Pose> calcLongitudinalOffsetPose(
-  const T & points, const size_t src_idx, const double offset, const bool throw_exception = false)
+  const T & points, const size_t src_idx, const double offset,
+  const bool set_orientation_from_position_direction = true, const bool throw_exception = false)
 {
   try {
     validateNonEmpty(points);
@@ -749,7 +790,8 @@ inline boost::optional<geometry_msgs::msg::Pose> calcLongitudinalOffsetPose(
       const auto dist_res = -offset - dist_sum;
       if (dist_res <= 0.0) {
         return tier4_autoware_utils::calcInterpolatedPose(
-          p_back, p_front, std::abs(dist_res / dist_segment));
+          p_back, p_front, std::abs(dist_res / dist_segment),
+          set_orientation_from_position_direction);
       }
     }
   } else {
@@ -765,7 +807,8 @@ inline boost::optional<geometry_msgs::msg::Pose> calcLongitudinalOffsetPose(
       const auto dist_res = offset - dist_sum;
       if (dist_res <= 0.0) {
         return tier4_autoware_utils::calcInterpolatedPose(
-          p_front, p_back, 1.0 - std::abs(dist_res / dist_segment));
+          p_front, p_back, 1.0 - std::abs(dist_res / dist_segment),
+          set_orientation_from_position_direction);
       }
     }
   }
@@ -779,11 +822,14 @@ inline boost::optional<geometry_msgs::msg::Pose> calcLongitudinalOffsetPose(
  * @param points points of trajectory, path, ...
  * @param src_point source point
  * @param offset length of offset from source point
+ * @param set_orientation_from_position_direction set orientation by spherical interpolation if
+ * false
  * @return offset pase
  */
 template <class T>
 inline boost::optional<geometry_msgs::msg::Pose> calcLongitudinalOffsetPose(
-  const T & points, const geometry_msgs::msg::Point & src_point, const double offset)
+  const T & points, const geometry_msgs::msg::Point & src_point, const double offset,
+  const bool set_orientation_from_position_direction = true)
 {
   try {
     validateNonEmpty(points);
@@ -796,7 +842,9 @@ inline boost::optional<geometry_msgs::msg::Pose> calcLongitudinalOffsetPose(
   const double signed_length_src_offset =
     calcLongitudinalOffsetToSegment(points, src_seg_idx, src_point);
 
-  return calcLongitudinalOffsetPose(points, src_seg_idx, offset + signed_length_src_offset);
+  return calcLongitudinalOffsetPose(
+    points, src_seg_idx, offset + signed_length_src_offset,
+    set_orientation_from_position_direction);
 }
 
 /**
@@ -1058,6 +1106,38 @@ inline boost::optional<size_t> insertStopPoint(
 }
 
 template <class T>
+void insertOrientation(T & points, const bool is_driving_forward)
+{
+  if (is_driving_forward) {
+    for (size_t i = 0; i < points.size() - 1; ++i) {
+      const auto & src_point = tier4_autoware_utils::getPoint(points.at(i));
+      const auto & dst_point = tier4_autoware_utils::getPoint(points.at(i + 1));
+      const double pitch = tier4_autoware_utils::calcElevationAngle(src_point, dst_point);
+      const double yaw = tier4_autoware_utils::calcAzimuthAngle(src_point, dst_point);
+      tier4_autoware_utils::setOrientation(
+        tier4_autoware_utils::createQuaternionFromRPY(0.0, pitch, yaw), points.at(i));
+      if (i == points.size() - 2) {
+        // Terminal orientation is same as the point before it
+        tier4_autoware_utils::setOrientation(
+          tier4_autoware_utils::getPose(points.at(i)).orientation, points.at(i + 1));
+      }
+    }
+  } else {
+    for (size_t i = points.size() - 1; i >= 1; --i) {
+      const auto & src_point = tier4_autoware_utils::getPoint(points.at(i));
+      const auto & dst_point = tier4_autoware_utils::getPoint(points.at(i - 1));
+      const double pitch = tier4_autoware_utils::calcElevationAngle(src_point, dst_point);
+      const double yaw = tier4_autoware_utils::calcAzimuthAngle(src_point, dst_point);
+      tier4_autoware_utils::setOrientation(
+        tier4_autoware_utils::createQuaternionFromRPY(0.0, pitch, yaw), points.at(i));
+    }
+    // Initial orientation is same as the point after it
+    tier4_autoware_utils::setOrientation(
+      tier4_autoware_utils::getPose(points.at(1)).orientation, points.at(0));
+  }
+}
+
+template <class T>
 double calcSignedArcLength(
   const T & points, const geometry_msgs::msg::Point & src_point, const size_t src_seg_idx,
   const geometry_msgs::msg::Point & dst_point, const size_t dst_seg_idx)
@@ -1071,6 +1151,34 @@ double calcSignedArcLength(
     calcLongitudinalOffsetToSegment(points, dst_seg_idx, dst_point);
 
   return signed_length_on_traj - signed_length_src_offset + signed_length_dst_offset;
+}
+
+template <class T>
+double calcSignedArcLength(
+  const T & points, const geometry_msgs::msg::Point & src_point, const size_t src_seg_idx,
+  const size_t dst_idx)
+{
+  validateNonEmpty(points);
+
+  const double signed_length_on_traj = calcSignedArcLength(points, src_seg_idx, dst_idx);
+  const double signed_length_src_offset =
+    calcLongitudinalOffsetToSegment(points, src_seg_idx, src_point);
+
+  return signed_length_on_traj - signed_length_src_offset;
+}
+
+template <class T>
+double calcSignedArcLength(
+  const T & points, const size_t src_idx, const geometry_msgs::msg::Point & dst_point,
+  const size_t dst_seg_idx)
+{
+  validateNonEmpty(points);
+
+  const double signed_length_on_traj = calcSignedArcLength(points, src_idx, dst_seg_idx);
+  const double signed_length_dst_offset =
+    calcLongitudinalOffsetToSegment(points, dst_seg_idx, dst_point);
+
+  return signed_length_on_traj + signed_length_dst_offset;
 }
 
 template <class T>
