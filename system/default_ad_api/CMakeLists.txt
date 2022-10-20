@@ -9,6 +9,7 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/localization.cpp
   src/motion.cpp
   src/routing.cpp
+  src/utils/route_conversion.cpp
 )
 
 rclcpp_components_register_nodes(${PROJECT_NAME}
