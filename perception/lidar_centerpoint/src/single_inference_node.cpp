@@ -80,12 +80,12 @@ SingleInferenceLidarCenterPointNode::SingleInferenceLidarCenterPointNode(
 
   if (point_cloud_range.size() != 6) {
     RCLCPP_WARN_STREAM(
-      rclcpp::get_logger("lidar_centerpoint"),
+      rclcpp::get_logger("single_inference_lidar_centerpoint"),
       "The size of point_cloud_range != 6: use the default parameters.");
   }
   if (voxel_size.size() != 3) {
     RCLCPP_WARN_STREAM(
-      rclcpp::get_logger("lidar_centerpoint"),
+      rclcpp::get_logger("single_inference_lidar_centerpoint"),
       "The size of voxel_size != 3: use the default parameters.");
   }
   CenterPointConfig config(
@@ -96,6 +96,7 @@ SingleInferenceLidarCenterPointNode::SingleInferenceLidarCenterPointNode(
     std::make_unique<CenterPointTRT>(encoder_param, head_param, densification_param, config);
 
   detect(pcd_path);
+  exit(0);
 }
 
 std::vector<Eigen::Vector3d> SingleInferenceLidarCenterPointNode::getVertices(
@@ -175,6 +176,10 @@ void SingleInferenceLidarCenterPointNode::detect(const std::string & pcd_path)
   std::string output_path = pcd_path.substr(0, pcd_path.find_last_of(".")) + ".ply";
 
   dumpDetectionsAsMesh(output_msg, output_path);
+
+  RCLCPP_INFO(
+    rclcpp::get_logger("single_inference_lidar_centerpoint"),
+    "The detection results were saved as meshes in %s", output_path.c_str());
 }
 
 void SingleInferenceLidarCenterPointNode::dumpDetectionsAsMesh(

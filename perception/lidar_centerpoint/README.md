@@ -49,6 +49,22 @@ We trained the models using <https://github.com/open-mmlab/mmdetection3d>.
 
 You can download the onnx format of trained models by clicking on the links below.
 
+## Standalone inference and visualization
+
+In addition to its use as a standard ROS node, `lidar_centerpoint` can also be used to perform inferences in an isolated manner.
+To do so, execute the following launcher, where `pcd_path` is the path of the pointcloud to be used for inference.
+
+```bash
+ros2 launch lidar_centerpoint single_inference_lidar_centerpoint.launch.xml pcd_path:=test_pointcloud.pcd
+```
+
+`lidar_centerpoint` generated a `ply` file with the same name which contains the detections as meshes.
+These detections can be visualized by most 3D tools, but we also provide a small script to visualize the detections alonsgside the input pointcloud.
+
+```bash
+python3 scripts/visualize_resuls.py -pcd_path test_pointcloud.pcd -detections_path test_pointcloud.ply
+```
+
 ### Changelog
 
 #### v1 (2022/07/06)
