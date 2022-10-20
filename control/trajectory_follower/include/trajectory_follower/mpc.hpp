@@ -232,7 +232,7 @@ private:
    * @brief generate MPC matrix with trajectory and vehicle model
    * @param [in] mpc_matrix parameters matrix to use for optimization
    * @param [in] x0 initial state vector
-   * @param [in] precition_dt prediction delta time
+   * @param [in] prediction_dt prediction delta time
    * @param [out] Uex optimized input vector
    */
   bool8_t executeOptimization(
