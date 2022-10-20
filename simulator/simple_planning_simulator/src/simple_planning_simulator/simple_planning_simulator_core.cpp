@@ -397,6 +397,7 @@ void SimplePlanningSimulator::on_control_mode_request(
     response->success = true;
   } else {  // not supported
     response->success = false;
+    RCLCPP_ERROR(this->get_logger(), "Requested mode not supported");
   }
   return;
 }
