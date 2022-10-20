@@ -230,7 +230,7 @@ void MPC::setReferenceTrajectory(
   /* add end point with vel=0 on traj for mpc prediction */
   {
     auto & t = mpc_traj_smoothed;
-    const float64_t t_ext = 100.0;  // extra time to prevent mpc calcul failure due to short time
+    const float64_t t_ext = 100.0;  // extra time to prevent mpc calc failure due to short time
     const float64_t t_end = t.relative_time.back() + t_ext;
     const float64_t v_end = 0.0;
     t.vx.back() = v_end;  // set for end point
