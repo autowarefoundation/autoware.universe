@@ -14,139 +14,228 @@
 
 #include "mission_planner.hpp"
 
-#include <lanelet2_extension/utility/message_conversion.hpp>
-#include <lanelet2_extension/utility/query.hpp>
-#include <lanelet2_extension/visualization/visualization.hpp>
+#include <autoware_adapi_v1_msgs/srv/set_route.hpp>
+#include <autoware_adapi_v1_msgs/srv/set_route_points.hpp>
 
-#include <lanelet2_routing/Route.h>
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #else
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
-#include <visualization_msgs/msg/marker_array.h>
 
-#include <string>
+namespace
+{
+
+using autoware_auto_mapping_msgs::msg::HADMapSegment;
+using autoware_auto_mapping_msgs::msg::MapPrimitive;
+using autoware_planning_msgs::msg::VectorMapPrimitive;
+using autoware_planning_msgs::msg::VectorMapSegment;
+
+MapPrimitive convert(const VectorMapPrimitive & p)
+{
+  MapPrimitive primitive;
+  primitive.id = p.id;
+  primitive.primitive_type = p.primitive_type;
+  return primitive;
+}
+
+HADMapSegment convert(const VectorMapSegment & s)
+{
+  HADMapSegment segment;
+  segment.preferred_primitive_id = s.preferred_primitive.id;
+  segment.primitives.push_back(convert(s.preferred_primitive));
+  for (const auto & p : s.primitives) {
+    segment.primitives.push_back(convert(p));
+  }
+  return segment;
+}
+
+}  // namespace
 
 namespace mission_planner
 {
-MissionPlanner::MissionPlanner(
-  const std::string & node_name, const rclcpp::NodeOptions & node_options)
-: Node(node_name, node_options), tf_buffer_(get_clock()), tf_listener_(tf_buffer_)
+
+MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
+: Node("mission_planner", options),
+  arrival_checker_(this),
+  plugin_loader_("mission_planner", "mission_planner::PlannerPlugin"),
+  tf_buffer_(get_clock()),
+  tf_listener_(tf_buffer_)
 {
-  map_frame_ = declare_parameter("map_frame", "map");
-  base_link_frame_ = declare_parameter("base_link_frame", "base_link");
+  map_frame_ = declare_parameter<std::string>("map_frame");
 
-  using std::placeholders::_1;
+  planner_ = plugin_loader_.createSharedInstance("mission_planner::lanelet2::DefaultPlanner");
+  planner_->initialize(this);
 
-  goal_subscriber_ = create_subscription<geometry_msgs::msg::PoseStamped>(
-    "input/goal_pose", 10, std::bind(&MissionPlanner::goal_pose_callback, this, _1));
-  checkpoint_subscriber_ = create_subscription<geometry_msgs::msg::PoseStamped>(
-    "input/checkpoint", 10, std::bind(&MissionPlanner::checkpoint_callback, this, _1));
+  odometry_ = nullptr;
+  sub_odometry_ = create_subscription<Odometry>(
+    "/localization/kinematic_state", rclcpp::QoS(1),
+    std::bind(&MissionPlanner::on_odometry, this, std::placeholders::_1));
 
-  rclcpp::QoS durable_qos{1};
-  durable_qos.transient_local();
-  route_publisher_ =
-    create_publisher<autoware_auto_planning_msgs::msg::HADMapRoute>("output/route", durable_qos);
-  marker_publisher_ =
-    create_publisher<visualization_msgs::msg::MarkerArray>("debug/route_marker", durable_qos);
+  const auto durable_qos = rclcpp::QoS(1).transient_local();
+  pub_marker_ = create_publisher<MarkerArray>("debug/route_marker", durable_qos);
+
+  const auto adaptor = component_interface_utils::NodeAdaptor(this);
+  adaptor.init_pub(pub_state_);
+  adaptor.init_pub(pub_route_);
+  adaptor.init_srv(srv_clear_route_, this, &MissionPlanner::on_clear_route);
+  adaptor.init_srv(srv_set_route_, this, &MissionPlanner::on_set_route);
+  adaptor.init_srv(srv_set_route_points_, this, &MissionPlanner::on_set_route_points);
+
+  change_state(RouteState::Message::UNSET);
 }
 
-bool MissionPlanner::get_ego_vehicle_pose(geometry_msgs::msg::PoseStamped * ego_vehicle_pose)
+void MissionPlanner::on_odometry(const Odometry::ConstSharedPtr msg)
 {
-  geometry_msgs::msg::PoseStamped base_link_origin;
-  base_link_origin.header.frame_id = base_link_frame_;
-  base_link_origin.pose.position.x = 0;
-  base_link_origin.pose.position.y = 0;
-  base_link_origin.pose.position.z = 0;
-  base_link_origin.pose.orientation.x = 0;
-  base_link_origin.pose.orientation.y = 0;
-  base_link_origin.pose.orientation.z = 0;
-  base_link_origin.pose.orientation.w = 1;
+  odometry_ = msg;
 
-  //  transform base_link frame origin to map_frame to get vehicle positions
-  return transform_pose(base_link_origin, ego_vehicle_pose, map_frame_);
+  // NOTE: Do not check in the changing state as goal may change.
+  if (state_.state == RouteState::Message::SET) {
+    PoseStamped pose;
+    pose.header = odometry_->header;
+    pose.pose = odometry_->pose.pose;
+    if (arrival_checker_.is_arrived(pose)) {
+      change_state(RouteState::Message::ARRIVED);
+    }
+  }
 }
 
-bool MissionPlanner::transform_pose(
-  const geometry_msgs::msg::PoseStamped & input_pose, geometry_msgs::msg::PoseStamped * output_pose,
-  const std::string & target_frame)
+PoseStamped MissionPlanner::transform_pose(const PoseStamped & input)
 {
+  PoseStamped output;
   geometry_msgs::msg::TransformStamped transform;
   try {
-    transform =
-      tf_buffer_.lookupTransform(target_frame, input_pose.header.frame_id, tf2::TimePointZero);
-    tf2::doTransform(input_pose, *output_pose, transform);
-    return true;
-  } catch (tf2::TransformException & ex) {
-    RCLCPP_WARN(get_logger(), "%s", ex.what());
-    return false;
+    transform = tf_buffer_.lookupTransform(map_frame_, input.header.frame_id, tf2::TimePointZero);
+    tf2::doTransform(input, output, transform);
+    return output;
+  } catch (tf2::TransformException & error) {
+    throw component_interface_utils::TransformError(error.what());
   }
 }
 
-void MissionPlanner::goal_pose_callback(
-  const geometry_msgs::msg::PoseStamped::ConstSharedPtr goal_msg_ptr)
+void MissionPlanner::change_route()
 {
-  // set start pose
-  if (!get_ego_vehicle_pose(&start_pose_)) {
-    RCLCPP_ERROR(
-      get_logger(), "Failed to get ego vehicle pose in map frame. Aborting mission planning");
-    return;
+  arrival_checker_.reset_goal();
+  // TODO(Takagi, Isamu): publish an empty route here
+}
+
+void MissionPlanner::change_route(const HADMapRoute & route)
+{
+  // TODO(Takagi, Isamu): replace when modified goal is always published
+  // arrival_checker_.reset_goal();
+  PoseStamped goal;
+  goal.header = route.header;
+  goal.pose = route.goal_pose;
+  arrival_checker_.reset_goal(goal);
+
+  pub_route_->publish(route);
+  pub_marker_->publish(planner_->visualize(route));
+}
+
+void MissionPlanner::change_state(RouteState::Message::_state_type state)
+{
+  state_.stamp = now();
+  state_.state = state;
+  pub_state_->publish(state_);
+}
+
+void MissionPlanner::on_clear_route(
+  const ClearRoute::Service::Request::SharedPtr, const ClearRoute::Service::Response::SharedPtr res)
+{
+  // NOTE: The route services should be mutually exclusive by callback group.
+  RCLCPP_INFO_STREAM(get_logger(), "ClearRoute");
+
+  change_route();
+  change_state(RouteState::Message::UNSET);
+  res->status.success = true;
+}
+
+void MissionPlanner::on_set_route(
+  const SetRoute::Service::Request::SharedPtr req, const SetRoute::Service::Response::SharedPtr res)
+{
+  using ResponseCode = autoware_adapi_v1_msgs::srv::SetRoute::Response;
+
+  // NOTE: The route services should be mutually exclusive by callback group.
+  if (state_.state != RouteState::Message::UNSET) {
+    throw component_interface_utils::ServiceException(
+      ResponseCode::ERROR_ROUTE_EXISTS, "The route is already set.");
   }
-  // set goal pose
-  if (!transform_pose(*goal_msg_ptr, &goal_pose_, map_frame_)) {
-    RCLCPP_ERROR(get_logger(), "Failed to get goal pose in map frame. Aborting mission planning");
-    return;
+  if (!odometry_) {
+    throw component_interface_utils::ServiceException(
+      ResponseCode::ERROR_PLANNER_UNREADY, "The vehicle pose is not received.");
   }
 
-  RCLCPP_INFO(get_logger(), "New goal pose is set. Reset checkpoints.");
-  checkpoints_.clear();
-  checkpoints_.push_back(start_pose_);
-  checkpoints_.push_back(goal_pose_);
+  // Use temporary pose stapmed for transform.
+  PoseStamped pose;
+  pose.header = req->header;
+  pose.pose = req->goal;
 
-  if (!is_routing_graph_ready()) {
-    RCLCPP_ERROR(get_logger(), "RoutingGraph is not ready. Aborting mission planning");
-    return;
+  // Convert route.
+  HADMapRoute route;
+  route.header.stamp = req->header.stamp;
+  route.header.frame_id = map_frame_;
+  route.start_pose = odometry_->pose.pose;
+  route.goal_pose = transform_pose(pose).pose;
+  for (const auto & segment : req->segments) {
+    route.segments.push_back(convert(segment));
   }
 
-  autoware_auto_planning_msgs::msg::HADMapRoute route = plan_route();
-  publish_route(route);
+  // Update route.
+  change_route(route);
+  change_state(RouteState::Message::SET);
+  res->status.success = true;
+}
+
+void MissionPlanner::on_set_route_points(
+  const SetRoutePoints::Service::Request::SharedPtr req,
+  const SetRoutePoints::Service::Response::SharedPtr res)
+{
+  using ResponseCode = autoware_adapi_v1_msgs::srv::SetRoutePoints::Response;
+
+  // NOTE: The route services should be mutually exclusive by callback group.
+  if (state_.state != RouteState::Message::UNSET) {
+    throw component_interface_utils::ServiceException(
+      ResponseCode::ERROR_ROUTE_EXISTS, "The route is already set.");
+  }
+  if (!planner_->ready()) {
+    throw component_interface_utils::ServiceException(
+      ResponseCode::ERROR_PLANNER_UNREADY, "The planner is not ready.");
+  }
+  if (!odometry_) {
+    throw component_interface_utils::ServiceException(
+      ResponseCode::ERROR_PLANNER_UNREADY, "The vehicle pose is not received.");
+  }
+
+  // Use temporary pose stapmed for transform.
+  PoseStamped pose;
+  pose.header = req->header;
+
+  // Convert route points.
+  PlannerPlugin::RoutePoints points;
+  points.push_back(odometry_->pose.pose);
+  for (const auto & waypoint : req->waypoints) {
+    pose.pose = waypoint;
+    points.push_back(transform_pose(pose).pose);
+  }
+  pose.pose = req->goal;
+  points.push_back(transform_pose(pose).pose);
+
+  // Plan route.
+  HADMapRoute route = planner_->plan(points);
+  if (route.segments.empty()) {
+    throw component_interface_utils::ServiceException(
+      ResponseCode::ERROR_PLANNER_FAILED, "The planned route is empty.");
+  }
+  route.header.stamp = req->header.stamp;
+  route.header.frame_id = map_frame_;
+
+  // Update route.
+  change_route(route);
+  change_state(RouteState::Message::SET);
+  res->status.success = true;
+}
+
 }  // namespace mission_planner
 
-void MissionPlanner::checkpoint_callback(
-  const geometry_msgs::msg::PoseStamped::ConstSharedPtr checkpoint_msg_ptr)
-{
-  if (checkpoints_.size() < 2) {
-    RCLCPP_ERROR(
-      get_logger(),
-      "You must set start and goal before setting checkpoints. Aborting mission planning");
-    return;
-  }
-
-  geometry_msgs::msg::PoseStamped transformed_checkpoint;
-  if (!transform_pose(*checkpoint_msg_ptr, &transformed_checkpoint, map_frame_)) {
-    RCLCPP_ERROR(
-      get_logger(), "Failed to get checkpoint pose in map frame. Aborting mission planning");
-    return;
-  }
-
-  // insert checkpoint before goal
-  checkpoints_.insert(checkpoints_.end() - 1, transformed_checkpoint);
-
-  autoware_auto_planning_msgs::msg::HADMapRoute route = plan_route();
-  publish_route(route);
-}
-
-void MissionPlanner::publish_route(
-  const autoware_auto_planning_msgs::msg::HADMapRoute & route) const
-{
-  if (!route.segments.empty()) {
-    RCLCPP_INFO(get_logger(), "Route successfully planned. Publishing...");
-    route_publisher_->publish(route);
-    visualize_route(route);
-  } else {
-    RCLCPP_ERROR(get_logger(), "Calculated route is empty!");
-  }
-}
-
-}  // namespace mission_planner
+#include <rclcpp_components/register_node_macro.hpp>
+RCLCPP_COMPONENTS_REGISTER_NODE(mission_planner::MissionPlanner)

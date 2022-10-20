@@ -18,7 +18,6 @@
 
 #include <QHBoxLayout>
 #include <QHeaderView>
-#include <QString>
 #include <QVBoxLayout>
 #include <rviz_common/display_context.hpp>
 
@@ -27,44 +26,9 @@
 namespace rviz_plugins
 {
 inline std::string Bool2String(const bool var) { return var ? "True" : "False"; }
+inline bool uint2bool(uint8_t var) { return var == static_cast<uint8_t>(0) ? false : true; }
 using std::placeholders::_1;
 using std::placeholders::_2;
-Module getModuleType(const std::string & module_name)
-{
-  Module module;
-  if (module_name == "blind_spot") {
-    module.type = Module::BLIND_SPOT;
-  } else if (module_name == "crosswalk") {
-    module.type = Module::CROSSWALK;
-  } else if (module_name == "detection_area") {
-    module.type = Module::DETECTION_AREA;
-  } else if (module_name == "intersection") {
-    module.type = Module::INTERSECTION;
-  } else if (module_name == "no_stopping_area") {
-    module.type = Module::NO_STOPPING_AREA;
-  } else if (module_name == "occlusion_spot") {
-    module.type = Module::OCCLUSION_SPOT;
-  } else if (module_name == "stop_line") {
-    module.type = Module::NONE;
-  } else if (module_name == "traffic_light") {
-    module.type = Module::TRAFFIC_LIGHT;
-  } else if (module_name == "virtual_traffic_light") {
-    module.type = Module::TRAFFIC_LIGHT;
-  } else if (module_name == "lane_change_left") {
-    module.type = Module::LANE_CHANGE_LEFT;
-  } else if (module_name == "lane_change_right") {
-    module.type = Module::LANE_CHANGE_RIGHT;
-  } else if (module_name == "avoidance_left") {
-    module.type = Module::AVOIDANCE_LEFT;
-  } else if (module_name == "avoidance_right") {
-    module.type = Module::AVOIDANCE_RIGHT;
-  } else if (module_name == "pull_over") {
-    module.type = Module::PULL_OVER;
-  } else if (module_name == "pull_out") {
-    module.type = Module::PULL_OUT;
-  }
-  return module;
-}
 
 std::string getModuleName(const uint8_t module_type)
 {
@@ -112,6 +76,17 @@ std::string getModuleName(const uint8_t module_type)
   return "NONE";
 }
 
+bool isPathChangeModule(const uint8_t module_type)
+{
+  if (
+    module_type == Module::LANE_CHANGE_LEFT || module_type == Module::LANE_CHANGE_RIGHT ||
+    module_type == Module::AVOIDANCE_LEFT || module_type == Module::AVOIDANCE_RIGHT ||
+    module_type == Module::PULL_OVER || module_type == Module::PULL_OUT) {
+    return true;
+  }
+  return false;
+}
+
 RTCManagerPanel::RTCManagerPanel(QWidget * parent) : rviz_common::Panel(parent)
 {
   // TODO(tanaka): replace this magic number to Module::SIZE
@@ -135,11 +110,16 @@ RTCManagerPanel::RTCManagerPanel(QWidget * parent) : rviz_common::Panel(parent)
     rtc_auto_mode->setParent(this);
     // module
     {
-      rtc_auto_mode->module_name = getModuleName(static_cast<uint8_t>(i));
+      const uint8_t module_type = static_cast<uint8_t>(i);
+      rtc_auto_mode->module_name = getModuleName(module_type);
       std::string module_name = rtc_auto_mode->module_name;
       auto label = new QLabel(QString::fromStdString(module_name));
       label->setAlignment(Qt::AlignCenter);
       label->setText(QString::fromStdString(module_name));
+      if (isPathChangeModule(module_type))
+        label->setStyleSheet(BG_PURPLE);
+      else
+        label->setStyleSheet(BG_ORANGE);
       auto_mode_table_->setCellWidget(i, 0, label);
     }
     // mode button
@@ -171,6 +151,60 @@ RTCManagerPanel::RTCManagerPanel(QWidget * parent) : rviz_common::Panel(parent)
   }
   v_layout->addWidget(auto_mode_table_);
 
+  // lateral execution
+  auto * exe_path_change_layout = new QHBoxLayout;
+  {
+    exec_path_change_button_ptr_ = new QPushButton("Execute Path Change");
+    exec_path_change_button_ptr_->setCheckable(false);
+    exec_path_change_button_ptr_->setStyleSheet(BG_PURPLE);
+    connect(
+      exec_path_change_button_ptr_, &QPushButton::clicked, this,
+      &RTCManagerPanel::onClickExecutePathChange);
+    exe_path_change_layout->addWidget(exec_path_change_button_ptr_);
+    wait_path_change_button_ptr_ = new QPushButton("Wait Path Change");
+    wait_path_change_button_ptr_->setCheckable(false);
+    wait_path_change_button_ptr_->setStyleSheet(BG_PURPLE);
+    connect(
+      wait_path_change_button_ptr_, &QPushButton::clicked, this,
+      &RTCManagerPanel::onClickWaitPathChange);
+    exe_path_change_layout->addWidget(wait_path_change_button_ptr_);
+  }
+  v_layout->addLayout(exe_path_change_layout);
+
+  // longitudinal execution
+  auto * exe_vel_change_layout = new QHBoxLayout;
+  {
+    exec_vel_change_button_ptr_ = new QPushButton("Execute Velocity Change");
+    exec_vel_change_button_ptr_->setCheckable(false);
+    exec_vel_change_button_ptr_->setStyleSheet(BG_ORANGE);
+    connect(
+      exec_vel_change_button_ptr_, &QPushButton::clicked, this,
+      &RTCManagerPanel::onClickExecuteVelChange);
+    exe_vel_change_layout->addWidget(exec_vel_change_button_ptr_);
+    wait_vel_change_button_ptr_ = new QPushButton("Wait Velocity Change");
+    wait_vel_change_button_ptr_->setCheckable(false);
+    wait_vel_change_button_ptr_->setStyleSheet(BG_ORANGE);
+    connect(
+      wait_vel_change_button_ptr_, &QPushButton::clicked, this,
+      &RTCManagerPanel::onClickWaitVelChange);
+    exe_vel_change_layout->addWidget(wait_vel_change_button_ptr_);
+  }
+  v_layout->addLayout(exe_vel_change_layout);
+
+  // execution
+  auto * rtc_exe_layout = new QHBoxLayout;
+  {
+    exec_button_ptr_ = new QPushButton("Execute All");
+    exec_button_ptr_->setCheckable(false);
+    connect(exec_button_ptr_, &QPushButton::clicked, this, &RTCManagerPanel::onClickExecution);
+    rtc_exe_layout->addWidget(exec_button_ptr_);
+    wait_button_ptr_ = new QPushButton("Wait All");
+    wait_button_ptr_->setCheckable(false);
+    connect(wait_button_ptr_, &QPushButton::clicked, this, &RTCManagerPanel::onClickWait);
+    rtc_exe_layout->addWidget(wait_button_ptr_);
+  }
+  v_layout->addLayout(rtc_exe_layout);
+
   // statuses
   auto * rtc_table_layout = new QHBoxLayout;
   {
@@ -194,9 +228,6 @@ void RTCManagerPanel::onInitialize()
 {
   raw_node_ = this->getDisplayContext()->getRosNodeAbstraction().lock()->get_raw_node();
 
-  sub_rtc_status_ = raw_node_->create_subscription<CooperateStatusArray>(
-    "/api/external/get/rtc_status", 1, std::bind(&RTCManagerPanel::onRTCStatus, this, _1));
-
   client_rtc_commands_ = raw_node_->create_client<CooperateCommands>(
     "/api/external/set/rtc_commands", rmw_qos_profile_services_default);
 
@@ -206,6 +237,9 @@ void RTCManagerPanel::onInitialize()
     a->enable_auto_mode_cli = raw_node_->create_client<AutoMode>(
       enable_auto_mode_namespace_ + "/" + a->module_name, rmw_qos_profile_services_default);
   }
+
+  sub_rtc_status_ = raw_node_->create_subscription<CooperateStatusArray>(
+    "/api/external/get/rtc_status", 1, std::bind(&RTCManagerPanel::onRTCStatus, this, _1));
 }
 
 void RTCAutoMode::onChangeToAutoMode()
@@ -214,7 +248,7 @@ void RTCAutoMode::onChangeToAutoMode()
   request->enable = true;
   enable_auto_mode_cli->async_send_request(request);
   auto_manual_mode_label->setText("AutoMode");
-  auto_manual_mode_label->setStyleSheet("background-color: #00FFFF;");
+  auto_manual_mode_label->setStyleSheet(BG_BLUE);
   auto_module_button_ptr->setChecked(true);
   manual_module_button_ptr->setChecked(false);
 }
@@ -225,27 +259,76 @@ void RTCAutoMode::onChangeToManualMode()
   request->enable = false;
   enable_auto_mode_cli->async_send_request(request);
   auto_manual_mode_label->setText("ManualMode");
-  auto_manual_mode_label->setStyleSheet("background-color: #FFFF00;");
+  auto_manual_mode_label->setStyleSheet(BG_YELLOW);
   manual_module_button_ptr->setChecked(true);
   auto_module_button_ptr->setChecked(false);
 }
 
+CooperateCommand setRTCCommandFromStatus(CooperateStatus & status)
+{
+  CooperateCommand cooperate_command;
+  cooperate_command.uuid = status.uuid;
+  cooperate_command.module = status.module;
+  cooperate_command.command = status.command_status;
+  return cooperate_command;
+}
+
+void RTCManagerPanel::onClickChangeRequest(const bool is_path_change, const uint8_t command)
+{
+  if (!cooperate_statuses_ptr_) return;
+  if (cooperate_statuses_ptr_->statuses.empty()) return;
+  auto executable_cooperate_commands_request = std::make_shared<CooperateCommands::Request>();
+  executable_cooperate_commands_request->stamp = cooperate_statuses_ptr_->stamp;
+  // send coop request
+  for (auto status : cooperate_statuses_ptr_->statuses) {
+    if (is_path_change ^ isPathChangeModule(status.module.type)) continue;
+    CooperateCommand cooperate_command = setRTCCommandFromStatus(status);
+    cooperate_command.command.type = command;
+    executable_cooperate_commands_request->commands.emplace_back(cooperate_command);
+    //  To consider needs to change path step by step
+    if (is_path_change && !status.auto_mode && status.command_status.type ^ command) {
+      break;
+    }
+  }
+  client_rtc_commands_->async_send_request(executable_cooperate_commands_request);
+}
+
+void RTCManagerPanel::onClickCommandRequest(const uint8_t command)
+{
+  if (!cooperate_statuses_ptr_) return;
+  if (cooperate_statuses_ptr_->statuses.empty()) return;
+  auto executable_cooperate_commands_request = std::make_shared<CooperateCommands::Request>();
+  executable_cooperate_commands_request->stamp = cooperate_statuses_ptr_->stamp;
+  // send coop request
+  for (auto status : cooperate_statuses_ptr_->statuses) {
+    CooperateCommand cooperate_command = setRTCCommandFromStatus(status);
+    cooperate_command.command.type = command;
+    executable_cooperate_commands_request->commands.emplace_back(cooperate_command);
+  }
+  client_rtc_commands_->async_send_request(executable_cooperate_commands_request);
+}
+
+void RTCManagerPanel::onClickExecuteVelChange() { onClickChangeRequest(false, Command::ACTIVATE); }
+void RTCManagerPanel::onClickWaitVelChange() { onClickChangeRequest(false, Command::DEACTIVATE); }
+void RTCManagerPanel::onClickExecutePathChange() { onClickChangeRequest(true, Command::ACTIVATE); }
+void RTCManagerPanel::onClickWaitPathChange() { onClickChangeRequest(true, Command::DEACTIVATE); }
+void RTCManagerPanel::onClickExecution() { onClickCommandRequest(Command::ACTIVATE); }
+void RTCManagerPanel::onClickWait() { onClickCommandRequest(Command::DEACTIVATE); }
+
 void RTCManagerPanel::onRTCStatus(const CooperateStatusArray::ConstSharedPtr msg)
 {
+  cooperate_statuses_ptr_ = std::make_shared<CooperateStatusArray>(*msg);
   rtc_table_->clearContents();
   if (msg->statuses.empty()) return;
-  std::vector<CooperateStatus> coop_vec;
-  std::copy(msg->statuses.cbegin(), msg->statuses.cend(), std::back_inserter(coop_vec));
-  std::sort(
-    coop_vec.begin(), coop_vec.end(), [](const CooperateStatus & c1, const CooperateStatus & c2) {
-      return c1.start_distance < c2.start_distance;
-    });
   // this is to stable rtc display not to occupy too much
   size_t min_display_size{5};
   size_t max_display_size{10};
-  rtc_table_->setRowCount(std::max(min_display_size, std::min(coop_vec.size(), max_display_size)));
+  // rtc messages are already sorted by distance
+  rtc_table_->setRowCount(
+    std::max(min_display_size, std::min(msg->statuses.size(), max_display_size)));
   int cnt = 0;
   for (auto status : msg->statuses) {
+    if (static_cast<size_t>(cnt) > max_display_size) return;
     // uuid
     {
       std::stringstream uuid;
@@ -276,7 +359,7 @@ void RTCManagerPanel::onRTCStatus(const CooperateStatusArray::ConstSharedPtr msg
     }
 
     // is operator safe
-    const bool is_execute = status.command_status.type;
+    const bool is_execute = uint2bool(status.command_status.type);
     {
       std::string text = is_execute ? "EXECUTE" : "WAIT";
       if (status.auto_mode) text = "NONE";
@@ -313,16 +396,15 @@ void RTCManagerPanel::onRTCStatus(const CooperateStatusArray::ConstSharedPtr msg
       label->setText(QString::fromStdString(finish_distance));
       rtc_table_->setCellWidget(cnt, 6, label);
     }
-    for (size_t i = 0; i < column_size_; i++) {
-      if (is_rtc_auto_mode || (is_aw_safe && is_execute)) {
-        rtc_table_->cellWidget(cnt, i)->setStyleSheet("background-color: #00FF00;");
-      } else if (is_aw_safe || is_execute) {
-        rtc_table_->cellWidget(cnt, i)->setStyleSheet("background-color: #FFFF00;");
-      } else {
-        rtc_table_->cellWidget(cnt, i)->setStyleSheet("background-color: #FF0000;");
-      }
-    }
 
+    // add color for recognition
+    if (is_rtc_auto_mode || (is_aw_safe && is_execute)) {
+      rtc_table_->cellWidget(cnt, 1)->setStyleSheet(BG_GREEN);
+    } else if (is_aw_safe || is_execute) {
+      rtc_table_->cellWidget(cnt, 1)->setStyleSheet(BG_YELLOW);
+    } else {
+      rtc_table_->cellWidget(cnt, 1)->setStyleSheet(BG_RED);
+    }
     cnt++;
   }
 }
