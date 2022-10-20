@@ -19,15 +19,20 @@
 
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 
+#include <vector>
+
 namespace behavior_path_planner
 {
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
-struct ShiftParkingPath
+struct PullOverPath
 {
   PathWithLaneId path{};
+  std::vector<PathWithLaneId> partial_paths{};
   PathWithLaneId straight_path{};
+  Pose start_pose{};
+  Pose end_pose{};
   ShiftedPath shifted_path{};
-  ShiftPoint shift_point{};
+  ShiftLine shift_line{};
   double acceleration{0.0};
   double preparation_length{0.0};
   double pull_over_length{0.0};
