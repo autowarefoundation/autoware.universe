@@ -20,7 +20,7 @@ from rclpy.node import Node
 from tier4_debug_msgs.msg import Float32Stamped
 
 MAX_ACCEL = 1.0  # [-]
-MIN_ACCEL = 0.0  # [-]
+MIN_ACCEL = -1.0  # [-]
 
 
 class AccelTester(Node):
