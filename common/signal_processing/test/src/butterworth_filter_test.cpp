@@ -76,7 +76,7 @@ TEST_F(ButterWorthTestFixture, butterDefinedSamplingOrder1)
   ButterworthFilter bf;
   double tol{1e-12};
 
-  // Test with defined sampling frequency
+  // Test with a defined sampling frequency
   int order{1};
   double cut_off_frq_hz{5.};
   double sampling_frq_hz{40.};
