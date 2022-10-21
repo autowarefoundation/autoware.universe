@@ -96,7 +96,6 @@ void ButterworthFilter::computePhaseAngles()
   for (auto & x : phase_angles_) {
     x = M_PI_2 + (M_PI * (2.0 * k - 1.0) / (2.0 * order_));
     k++;
-    // print("Phase angle x = ", x);
   }
 }
 
