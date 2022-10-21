@@ -133,28 +133,28 @@ TEST(object_classification, test_fromString)
   }
 }
 
-TEST(object_classification, test_toString)
+TEST(object_classification, test_convertLabelToString)
 {
   using autoware_auto_perception_msgs::msg::ObjectClassification;
-  using perception_utils::toString;
+  using perception_utils::convertLabelToString;
 
   // from label
   {
-    EXPECT_EQ(toString(ObjectClassification::UNKNOWN), "UNKNOWN");
-    EXPECT_EQ(toString(ObjectClassification::CAR), "CAR");
-    EXPECT_EQ(toString(ObjectClassification::TRUCK), "TRUCK");
-    EXPECT_EQ(toString(ObjectClassification::BUS), "BUS");
-    EXPECT_EQ(toString(ObjectClassification::TRAILER), "TRAILER");
-    EXPECT_EQ(toString(ObjectClassification::MOTORCYCLE), "MOTORCYCLE");
-    EXPECT_EQ(toString(ObjectClassification::BICYCLE), "BICYCLE");
-    EXPECT_EQ(toString(ObjectClassification::PEDESTRIAN), "PEDESTRIAN");
+    EXPECT_EQ(convertLabelToString(ObjectClassification::UNKNOWN), "UNKNOWN");
+    EXPECT_EQ(convertLabelToString(ObjectClassification::CAR), "CAR");
+    EXPECT_EQ(convertLabelToString(ObjectClassification::TRUCK), "TRUCK");
+    EXPECT_EQ(convertLabelToString(ObjectClassification::BUS), "BUS");
+    EXPECT_EQ(convertLabelToString(ObjectClassification::TRAILER), "TRAILER");
+    EXPECT_EQ(convertLabelToString(ObjectClassification::MOTORCYCLE), "MOTORCYCLE");
+    EXPECT_EQ(convertLabelToString(ObjectClassification::BICYCLE), "BICYCLE");
+    EXPECT_EQ(convertLabelToString(ObjectClassification::PEDESTRIAN), "PEDESTRIAN");
   }
 
   // from ObjectClassification
   {
     auto classification = createObjectClassification(ObjectClassification::CAR, 0.8);
 
-    EXPECT_EQ(toString(classification), "CAR");
+    EXPECT_EQ(convertLabelToString(classification), "CAR");
   }
 
   // from ObjectClassifications
@@ -164,6 +164,6 @@ TEST(object_classification, test_toString)
     classifications.push_back(createObjectClassification(ObjectClassification::TRUCK, 0.8));
     classifications.push_back(createObjectClassification(ObjectClassification::BUS, 0.7));
 
-    EXPECT_EQ(toString(classifications), "TRUCK");
+    EXPECT_EQ(convertLabelToString(classifications), "TRUCK");
   }
 }

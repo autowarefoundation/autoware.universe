@@ -134,7 +134,7 @@ inline std::vector<ObjectClassification> toObjectClassifications(
   return classifications;
 }
 
-inline std::string toString(const uint8_t label)
+inline std::string convertLabelToString(const uint8_t label)
 {
   if (label == ObjectClassification::UNKNOWN) {
     return "UNKNOWN";
@@ -157,15 +157,16 @@ inline std::string toString(const uint8_t label)
   }
 }
 
-inline std::string toString(const ObjectClassification object_classification)
+inline std::string convertLabelToString(const ObjectClassification object_classification)
 {
-  return toString(object_classification.label);
+  return convertLabelToString(object_classification.label);
 }
 
-inline std::string toString(const std::vector<ObjectClassification> object_classifications)
+inline std::string convertLabelToString(
+  const std::vector<ObjectClassification> object_classifications)
 {
   auto highest_prob_label = getHighestProbLabel(object_classifications);
-  return toString(highest_prob_label);
+  return convertLabelToString(highest_prob_label);
 }
 
 }  // namespace perception_utils
