@@ -20,8 +20,8 @@
 #include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
 #include <autoware_adapi_v1_msgs/srv/change_operation_mode.hpp>
 #include <autoware_auto_vehicle_msgs/msg/control_mode_report.hpp>
+#include <autoware_auto_vehicle_msgs/srv/control_mode_command.hpp>
 #include <tier4_system_msgs/srv/change_operation_mode.hpp>
-#include <tier4_vehicle_msgs/srv/control_mode_request.hpp>
 
 #include <cmath>
 #include <optional>
@@ -34,7 +34,7 @@ using ServiceResponse = autoware_adapi_v1_msgs::srv::ChangeOperationMode::Respon
 using OperationModeState = autoware_adapi_v1_msgs::msg::OperationModeState;
 using OperationModeValue = OperationModeState::_mode_type;
 using ChangeOperationMode = tier4_system_msgs::srv::ChangeOperationMode;
-using ControlModeRequest = tier4_vehicle_msgs::srv::ControlModeRequest;
+using ControlModeCommand = autoware_auto_vehicle_msgs::srv::ControlModeCommand;
 using ControlModeReport = autoware_auto_vehicle_msgs::msg::ControlModeReport;
 
 enum class OperationMode { STOP, AUTONOMOUS, LOCAL, REMOTE };

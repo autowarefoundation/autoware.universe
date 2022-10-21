@@ -47,15 +47,15 @@ private:
     const ChangeOperationModeAPI::Service::Request::SharedPtr request,
     const ChangeOperationModeAPI::Service::Response::SharedPtr response);
 
-  using ControlModeRequestType = ControlModeRequest::Request::_mode_type;
+  using ControlModeCommandType = ControlModeCommand::Request::_mode_type;
   rclcpp::Subscription<ControlModeReport>::SharedPtr sub_control_mode_report_;
   rclcpp::Subscription<OperationModeState>::SharedPtr sub_gate_operation_mode_;
-  rclcpp::Client<ControlModeRequest>::SharedPtr cli_control_mode_;
+  rclcpp::Client<ControlModeCommand>::SharedPtr cli_control_mode_;
   rclcpp::Publisher<ModeChangeBase::DebugInfo>::SharedPtr pub_debug_info_;
   rclcpp::TimerBase::SharedPtr timer_;
   void onTimer();
   void publishData();
-  void changeControlMode(ControlModeRequestType::_data_type mode);
+  void changeControlMode(ControlModeCommandType mode);
   void changeOperationMode(std::optional<OperationMode> mode);
   void cancelTransition();
   void processTransition();

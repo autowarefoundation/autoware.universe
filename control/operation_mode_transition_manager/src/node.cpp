@@ -30,7 +30,7 @@ OperationModeTransitionManager::OperationModeTransitionManager(const rclcpp::Nod
     "gate_operation_mode", 1,
     [this](const OperationModeState::SharedPtr msg) { gate_operation_mode_ = *msg; });
 
-  cli_control_mode_ = create_client<ControlModeRequest>("control_mode_request");
+  cli_control_mode_ = create_client<ControlModeCommand>("control_mode_request");
   pub_debug_info_ = create_publisher<ModeChangeBase::DebugInfo>("~/debug_info", 1);
 
   // component interface
@@ -74,7 +74,7 @@ void OperationModeTransitionManager::onChangeAutowareControl(
   } else {
     // Allow mode transition to complete without canceling.
     transition_.reset();
-    changeControlMode(ControlModeRequestType::MANUAL);
+    changeControlMode(ControlModeCommand::Request::MANUAL);
   }
   response->status.success = true;
 }
@@ -91,9 +91,9 @@ void OperationModeTransitionManager::onChangeOperationMode(
   response->status.success = true;
 }
 
-void OperationModeTransitionManager::changeControlMode(ControlModeRequestType::_data_type mode)
+void OperationModeTransitionManager::changeControlMode(ControlModeCommandType mode)
 {
-  const auto callback = [this](rclcpp::Client<ControlModeRequest>::SharedFuture future) {
+  const auto callback = [this](rclcpp::Client<ControlModeCommand>::SharedFuture future) {
     if (!future.get()->success) {
       RCLCPP_WARN(get_logger(), "Autonomous mode change was rejected.");
       if (transition_) {
@@ -102,9 +102,9 @@ void OperationModeTransitionManager::changeControlMode(ControlModeRequestType::_
     }
   };
 
-  const auto request = std::make_shared<ControlModeRequest::Request>();
-  request->mode.header.stamp = now();
-  request->mode.data = mode;
+  const auto request = std::make_shared<ControlModeCommand::Request>();
+  request->stamp = now();
+  request->mode = mode;
   cli_control_mode_->async_send_request(request, callback);
 }
 
@@ -151,7 +151,7 @@ void OperationModeTransitionManager::cancelTransition()
   if (previous) {
     current_mode_ = previous.value();
   } else {
-    changeControlMode(ControlModeRequestType::MANUAL);
+    changeControlMode(ControlModeCommand::Request::MANUAL);
   }
   transition_.reset();
 }
@@ -187,7 +187,7 @@ void OperationModeTransitionManager::processTransition()
   } else {
     if (transition_->is_engage_requested && gate_operation_mode_.is_in_transition) {
       transition_->is_engage_requested = false;
-      return changeControlMode(ControlModeRequestType::AUTO);
+      return changeControlMode(ControlModeCommand::Request::AUTONOMOUS);
     }
   }
 }
