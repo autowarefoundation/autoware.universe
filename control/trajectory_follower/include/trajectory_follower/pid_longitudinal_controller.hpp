@@ -211,7 +211,7 @@ private:
   struct DiagnosticData
   {
     float64_t trans_deviation{0.0};  // translation deviation between nearest point and current_pose
-    float64_t rot_deviation{0.0};  // rotation deviation between nearest point and current_pose
+    float64_t rot_deviation{0.0};    // rotation deviation between nearest point and current_pose
   };
   DiagnosticData m_diagnostic_data;
   void setupDiagnosticUpdater();
