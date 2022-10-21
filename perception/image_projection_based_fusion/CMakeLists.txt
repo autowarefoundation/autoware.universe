@@ -173,7 +173,7 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
   )
 
   rclcpp_components_register_node(pointpainting_lib
-    PLUGIN "image_projection_based_fusion::PointpaintingFusionNode"
+    PLUGIN "image_projection_based_fusion::PointPaintingFusionNode"
     EXECUTABLE pointpainting_fusion_node
   )
 
