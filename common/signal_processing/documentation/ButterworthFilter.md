@@ -38,8 +38,8 @@ cut-off frequency (Wc [rad/sec]) for the filter.
 #### Obtaining Filter Transfer Functions
 
 The discrete transfer function of the filter requires the roots and gain of the continuous-time transfer function.
-Therefore, it is a must to call the first computeContinuousTimeTF() to create the continuous-time transfer of the
-method;
+Therefore, it is a must to call the first computeContinuousTimeTF() to create the continuous-time transfer function
+of the filter using;
 
     bf.computeContinuousTimeTF();
 
