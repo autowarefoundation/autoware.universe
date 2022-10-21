@@ -2,15 +2,20 @@
 
 ## Purpose
 
-This node reduces the velocity of a trajectory around obstacles in order to convey a better feeling of apparent safety to the passengers.
+|                                     Without this node | With this node                                      |
+| ----------------------------------------------------: | :-------------------------------------------------- |
+| ![obstacle_velocity_limiter_off](./media/ovl_off.png) | ![obstacle_velocity_limiter_on](./media/ovl_on.png) |
+
+This node limits the velocity when driving in the direction of an obstacle.
+For example, it allows to reduce the velocity when driving close to a guard rail in a curve.
 
 ## Inner-workings / Algorithms
 
-Using a parameter `min_ttc` (minimum time to collision), the feeling of apparent safety is defined as
-"no collision with an obstacle even without control inputs for a duration of `min_ttc`".
+Using a parameter `min_ttc` (minimum time to collision), the node set velocity limits such that
+no collision with an obstacle would occur, even without new control inputs for a duration of `min_ttc`.
 
-In this node, the motion of the ego vehicle is simulated at each point of the trajectory to create a corresponding footprint.
-If the footprint collides with some obstacle, the velocity at the trajectory point is reduced to remove the collision.
+To achieve this, the motion of the ego vehicle is simulated forward in time at each point of the trajectory to create a corresponding footprint.
+If the footprint collides with some obstacle, the velocity at the trajectory point is reduced such that the new simulated footprint do not have any collision.
 
 ### Simulated Motion, Footprint, and Collision Distance
 
@@ -191,7 +196,7 @@ This velocity profile is meant to be used as an upper bound on the actual veloci
 ## (Optional) Error detection and handling
 
 The critical case for this node is when an obstacle is falsely detected very close to the trajectory such that
-the corresponding apparent safe velocity suddenly becomes very low.
+the corresponding velocity suddenly becomes very low.
 This can cause a sudden brake and two mechanisms can be used to mitigate these errors.
 
 Parameter `min_adjusted_velocity` allow to set a minimum to the adjusted velocity, preventing the node to slow down the vehicle too much.
