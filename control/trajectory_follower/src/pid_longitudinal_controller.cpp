@@ -377,36 +377,36 @@ boost::optional<LongitudinalOutput> PidLongitudinalController::run()
   // calculate current pose and control data
   geometry_msgs::msg::Pose current_pose = m_current_kinematic_state_ptr->pose.pose;
 
-  m_control_data = getControlData(current_pose);
+  const auto control_data = getControlData(current_pose);
 
   // self pose is far from trajectory
-  if (m_control_data.is_far_from_trajectory) {
+  if (control_data.is_far_from_trajectory) {
     if (m_enable_large_tracking_error_emergency) {
       m_control_state = ControlState::EMERGENCY;  // update control state
     }
-    const Motion raw_ctrl_cmd = calcEmergencyCtrlCmd(m_control_data.dt);  // calculate control command
+    const Motion raw_ctrl_cmd = calcEmergencyCtrlCmd(control_data.dt);  // calculate control command
     m_prev_raw_ctrl_cmd = raw_ctrl_cmd;
     const auto cmd_msg =
-      createCtrlCmdMsg(raw_ctrl_cmd, m_control_data.current_motion.vel);  // create control command
-    publishDebugData(raw_ctrl_cmd, m_control_data);                       // publish debug data
+      createCtrlCmdMsg(raw_ctrl_cmd, control_data.current_motion.vel);  // create control command
+    publishDebugData(raw_ctrl_cmd, control_data);                       // publish debug data
     LongitudinalOutput output;
     output.control_cmd = cmd_msg;
     return output;
   }
 
   // update control state
-  m_control_state = updateControlState(m_control_state, m_control_data);
+  m_control_state = updateControlState(m_control_state, control_data);
 
   // calculate control command
-  const Motion ctrl_cmd = calcCtrlCmd(m_control_state, current_pose, m_control_data);
+  const Motion ctrl_cmd = calcCtrlCmd(m_control_state, current_pose, control_data);
 
   // publish control command
-  const auto cmd_msg = createCtrlCmdMsg(ctrl_cmd, m_control_data.current_motion.vel);
+  const auto cmd_msg = createCtrlCmdMsg(ctrl_cmd, control_data.current_motion.vel);
   LongitudinalOutput output;
   output.control_cmd = cmd_msg;
 
   // publish debug data
-  publishDebugData(ctrl_cmd, m_control_data);
+  publishDebugData(ctrl_cmd, control_data);
 
   // diagnostic
   diagnostic_updater_.force_update();
@@ -433,13 +433,14 @@ PidLongitudinalController::ControlData PidLongitudinalController::getControlData
   const auto & nearest_point = m_trajectory_ptr->points.at(nearest_idx).pose;
 
   // check if the deviation is worth emergency
-  control_data.trans_deviation = tier4_autoware_utils::calcDistance2d(nearest_point, current_pose);
+  m_diagnostic_data.trans_deviation =
+    tier4_autoware_utils::calcDistance2d(nearest_point, current_pose);
   const bool is_dist_deviation_large =
-    m_state_transition_params.emergency_state_traj_trans_dev < control_data.trans_deviation;
-  control_data.rot_deviation = std::abs(tier4_autoware_utils::normalizeRadian(
-      tf2::getYaw(nearest_point.orientation) - tf2::getYaw(current_pose.orientation)));
+    m_state_transition_params.emergency_state_traj_trans_dev < m_diagnostic_data.trans_deviation;
+  m_diagnostic_data.rot_deviation = std::abs(tier4_autoware_utils::normalizeRadian(
+    tf2::getYaw(nearest_point.orientation) - tf2::getYaw(current_pose.orientation)));
   const bool is_yaw_deviation_large =
-    m_state_transition_params.emergency_state_traj_rot_dev < control_data.rot_deviation;
+    m_state_transition_params.emergency_state_traj_rot_dev < m_diagnostic_data.rot_deviation;
 
   if (is_dist_deviation_large || is_yaw_deviation_large) {
     // return here if nearest index is not found
@@ -962,13 +963,12 @@ void PidLongitudinalController::checkControlState(
     msg = "emergency occurred due to ";
   }
 
-  if(m_state_transition_params.emergency_state_traj_trans_dev < m_control_data.trans_deviation)
-  {
+  if (
+    m_state_transition_params.emergency_state_traj_trans_dev < m_diagnostic_data.trans_deviation) {
     msg += "translation deviation";
   }
 
-  if(m_state_transition_params.emergency_state_traj_rot_dev < m_control_data.rot_deviation)
-  {
+  if (m_state_transition_params.emergency_state_traj_rot_dev < m_diagnostic_data.rot_deviation) {
     msg += "rotation deviation";
   }
 
@@ -976,10 +976,10 @@ void PidLongitudinalController::checkControlState(
   stat.addf(
     "translation deviation threshold", "%lf",
     m_state_transition_params.emergency_state_traj_trans_dev);
-  stat.addf("translation deviation", "%lf", m_control_data.trans_deviation);
+  stat.addf("translation deviation", "%lf", m_diagnostic_data.trans_deviation);
   stat.addf(
     "rotation deviation threshold", "%lf", m_state_transition_params.emergency_state_traj_rot_dev);
-  stat.addf("rotation deviation", "%lf", m_control_data.rot_deviation);
+  stat.addf("rotation deviation", "%lf", m_diagnostic_data.rot_deviation);
   stat.summary(level, msg);
 }
 
