@@ -27,7 +27,6 @@ void ButterworthFilter::Buttord(
   const double & Wp, const double & Ws, const double & Ap, const double & As)
 {
   // N*ln(alpha) > ln(beta)
-
   auto alpha = Ws / Wp;
   auto beta = std::sqrt((std::pow(10, As / 10.0) - 1.0) / (std::pow(10, Ap / 10.0) - 1.0));
   auto order = static_cast<int>(std::ceil(std::log(beta) / std::log(alpha)));
@@ -37,8 +36,8 @@ void ButterworthFilter::Buttord(
   // right limit, left limit
   /**
    * The left and right limits of the magnitudes satisfy the specs at the
-   * frequencies Ws and Wp Scipy.buttord gives left limit as the cut-off
-   * frequency whereas Matlab gives right limit
+   * frequencies Ws and Wp Scipy.buttord gives left limit as the cut-off frequency whereas Matlab
+   * gives right limit. We keep left_lim as a definition and commented out.
    * */
 
   double right_lim = Ws * (std::pow((std::pow(10.0, As / 10.0) - 1.0), -1.0 / (2. * order)));
@@ -107,8 +106,6 @@ void ButterworthFilter::computeContinuousTimeRoots(const bool & use_sampling_fre
   int k{};
 
   if (use_sampling_frequency) {
-    // print("\n Sampling Frequency is used to compute pre-warped frequency \n");
-
     double const & Fc = (sampling_frequency_hz / M_PI) *
                         tan(cutoff_frequency_rad_sec / (sampling_frequency_hz * 2.0));
 

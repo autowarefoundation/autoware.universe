@@ -83,8 +83,7 @@ private:
   int order_{1};                      // filter order
   double cutoff_frequency_rad_sec{};  // filter cut-off frequency [rad/sec]
 
-  // Boolean parameter when a sampling frequency is defined. Default is false.
-  // bool pre_warp_{};
+  // Sampling frequency
   double sampling_frequency_hz{1.0};
 
   const double Td_{2.};  // constant of bilinear transformation
