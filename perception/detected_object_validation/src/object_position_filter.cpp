@@ -49,6 +49,7 @@ ObjectPositionFilterNode::ObjectPositionFilterNode(const rclcpp::NodeOptions & n
 void ObjectPositionFilterNode::objectCallback(
   const autoware_auto_perception_msgs::msg::DetectedObjects::ConstSharedPtr input_msg)
 {
+  using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
   // Guard
   if (object_pub_->get_subscription_count() < 1) return;
 
@@ -56,9 +57,20 @@ void ObjectPositionFilterNode::objectCallback(
   output_object_msg.header = input_msg->header;
 
   for (const auto & object : input_msg->objects) {
+    const auto & position = object.kinematics.pose_with_covariance.pose.position;
     const auto & label = object.classification.front().label;
-    if (filter_target_.isTarget(label)) {
-      if (isObjectInBounds(object)) {
+    if (
+      (label == Label::UNKNOWN && filter_target_.UNKNOWN) ||
+      (label == Label::CAR && filter_target_.CAR) ||
+      (label == Label::TRUCK && filter_target_.TRUCK) ||
+      (label == Label::BUS && filter_target_.BUS) ||
+      (label == Label::TRAILER && filter_target_.TRAILER) ||
+      (label == Label::MOTORCYCLE && filter_target_.MOTORCYCLE) ||
+      (label == Label::BICYCLE && filter_target_.BICYCLE) ||
+      (label == Label::PEDESTRIAN && filter_target_.PEDESTRIAN)) {
+      if (
+        position.x > lower_bound_x_ && position.x < upper_bound_x_ && position.y > lower_bound_y_ &&
+        position.y < upper_bound_y_) {
         output_object_msg.objects.emplace_back(object);
       }
     } else {
@@ -67,14 +79,6 @@ void ObjectPositionFilterNode::objectCallback(
   }
 
   object_pub_->publish(output_object_msg);
-}
-
-bool ObjectPositionFilterNode::isObjectInBounds(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object) const
-{
-  const auto & position = object.kinematics.pose_with_covariance.pose.position;
-  return position.x > lower_bound_x_ && position.x < upper_bound_x_ &&
-         position.y > lower_bound_y_ && position.y < upper_bound_y_;
 }
 
 }  // namespace object_position_filter

@@ -15,8 +15,6 @@
 #ifndef DETECTED_OBJECT_FILTER__OBJECT_POSITION_FILTER_HPP_
 #define DETECTED_OBJECT_FILTER__OBJECT_POSITION_FILTER_HPP_
 
-#include "utils/utils.hpp"
-
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -32,6 +30,17 @@
 
 namespace object_position_filter
 {
+struct Filter_target_label
+{
+  bool UNKNOWN;
+  bool CAR;
+  bool TRUCK;
+  bool BUS;
+  bool TRAILER;
+  bool MOTORCYCLE;
+  bool BICYCLE;
+  bool PEDESTRIAN;
+};
 
 class ObjectPositionFilterNode : public rclcpp::Node
 {
@@ -51,8 +60,7 @@ private:
   float upper_bound_y_;
   float lower_bound_x_;
   float lower_bound_y_;
-  utils::FilterTargetLabel filter_target_;
-  bool isObjectInBounds(const autoware_auto_perception_msgs::msg::DetectedObject & object) const;
+  Filter_target_label filter_target_;
 };
 
 }  // namespace object_position_filter
