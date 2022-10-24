@@ -315,6 +315,37 @@ boost::optional<geometry_msgs::msg::Point> CrosswalkModule::findNearestStopPoint
 
   const auto ignore_crosswalk = debug_data_.ignore_crosswalk = isRedSignalForPedestrians();
 
+  const auto ego_polygon = createVehiclePolygon(planner_data_->vehicle_info_);
+
+  Polygon attention_area;
+  for (size_t j = 0; j < sparse_resample_path.points.size() - 1; ++j) {
+    const auto & p_ego_front = sparse_resample_path.points.at(j).point.pose;
+    const auto & p_ego_back = sparse_resample_path.points.at(j + 1).point.pose;
+    const auto front_length =
+      calcSignedArcLength(sparse_resample_path.points, ego_pos, p_ego_front.position);
+    const auto back_length =
+      calcSignedArcLength(sparse_resample_path.points, ego_pos, p_ego_back.position);
+
+    if (back_length < crosswalk_attention_range.first) {
+      continue;
+    }
+
+    if (crosswalk_attention_range.second < front_length) {
+      break;
+    }
+
+    const auto ego_one_step_polygon = createOneStepPolygon(p_ego_front, p_ego_back, ego_polygon);
+
+    debug_data_.ego_polygons.push_back(toMsg(ego_one_step_polygon, ego_pos.z));
+
+    std::vector<Polygon> unions;
+    bg::union_(attention_area, ego_one_step_polygon, unions);
+    if (!unions.empty()) {
+      attention_area = unions.front();
+      bg::correct(attention_area);
+    }
+  }
+
   for (const auto & object : objects_ptr->objects) {
     const auto & obj_pos = object.kinematics.initial_pose_with_covariance.pose.position;
     const auto & obj_vel = object.kinematics.initial_twist_with_covariance.twist.linear;
@@ -332,7 +363,8 @@ boost::optional<geometry_msgs::msg::Point> CrosswalkModule::findNearestStopPoint
       continue;
     }
 
-    for (auto & cp : getCollisionPoints(sparse_resample_path, object, crosswalk_attention_range)) {
+    for (auto & cp : getCollisionPoints(
+           sparse_resample_path, object, attention_area, crosswalk_attention_range)) {
       const auto is_ignore_object = ignore_objects_.count(obj_uuid) != 0;
       if (is_ignore_object) {
         cp.state = CollisionPointState::IGNORE;
@@ -602,7 +634,7 @@ void CrosswalkModule::clampAttentionRangeByNeighborCrosswalks(
 }
 
 std::vector<CollisionPoint> CrosswalkModule::getCollisionPoints(
-  const PathWithLaneId & ego_path, const PredictedObject & object,
+  const PathWithLaneId & ego_path, const PredictedObject & object, const Polygon & attention_area,
   const std::pair<double, double> & crosswalk_attention_range)
 {
   stop_watch_.tic(__func__);
@@ -614,36 +646,8 @@ std::vector<CollisionPoint> CrosswalkModule::getCollisionPoints(
   const auto & ego_pos = planner_data_->current_pose.pose.position;
   const auto & ego_vel = planner_data_->current_velocity->twist.linear;
 
-  const auto ego_polygon = createVehiclePolygon(planner_data_->vehicle_info_);
   const auto obj_polygon =
     createObjectPolygon(object.shape.dimensions.x, object.shape.dimensions.y);
-
-  Polygon attention_area;
-  for (size_t j = 0; j < ego_path.points.size() - 1; ++j) {
-    const auto & p_ego_front = ego_path.points.at(j).point.pose;
-    const auto & p_ego_back = ego_path.points.at(j + 1).point.pose;
-    const auto front_length = calcSignedArcLength(ego_path.points, ego_pos, p_ego_front.position);
-    const auto back_length = calcSignedArcLength(ego_path.points, ego_pos, p_ego_back.position);
-
-    if (back_length < crosswalk_attention_range.first) {
-      continue;
-    }
-
-    if (crosswalk_attention_range.second < front_length) {
-      break;
-    }
-
-    const auto ego_one_step_polygon = createOneStepPolygon(p_ego_front, p_ego_back, ego_polygon);
-
-    debug_data_.ego_polygons.push_back(toMsg(ego_one_step_polygon, ego_pos.z));
-
-    std::vector<Polygon> unions;
-    bg::union_(attention_area, ego_one_step_polygon, unions);
-    if (!unions.empty()) {
-      attention_area = unions.front();
-      bg::correct(attention_area);
-    }
-  }
 
   for (const auto & obj_path : object.kinematics.predicted_paths) {
     for (size_t i = 0; i < obj_path.path.size() - 1; ++i) {
