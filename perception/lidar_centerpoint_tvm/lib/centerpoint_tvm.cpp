@@ -12,11 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <centerpoint_encoder/inference_engine_tvm_config.hpp>
-#include <centerpoint_backbone/inference_engine_tvm_config.hpp>
-
 #include "lidar_centerpoint_tvm/centerpoint_tvm.hpp"
 
+#include <centerpoint_backbone/inference_engine_tvm_config.hpp>
+#include <centerpoint_encoder/inference_engine_tvm_config.hpp>
 #include <lidar_centerpoint_tvm/centerpoint_config.hpp>
 #include <lidar_centerpoint_tvm/network/scatter.hpp>
 #include <lidar_centerpoint_tvm/preprocess/generate_features.hpp>
@@ -29,10 +28,10 @@
 #include <vector>
 
 // configs' path may need to be reset
-auto config_en =
-model_zoo::perception::lidar_obstacle_detection::centerpoint_encoder::onnx_centerpoint_encoder::config;
-auto config_bk =
-model_zoo::perception::lidar_obstacle_detection::centerpoint_backbone::onnx_centerpoint_backbone::config;
+auto config_en = model_zoo::perception::lidar_obstacle_detection::centerpoint_encoder::
+  onnx_centerpoint_encoder::config;
+auto config_bk = model_zoo::perception::lidar_obstacle_detection::centerpoint_backbone::
+  onnx_centerpoint_backbone::config;
 
 namespace autoware
 {
@@ -125,8 +124,8 @@ TVMArrayContainerVector BackboneNeckHeadPreProcessor::schedule(const MixedInputs
 {
   /// do scatter to convert pillar_features to spatial_features
   scatterFeatures(
-    pillar_inputs.features, pillar_inputs.coords, pillar_inputs.num_voxels,
-    config_detail, spatial_features);
+    pillar_inputs.features, pillar_inputs.coords, pillar_inputs.num_voxels, config_detail,
+    spatial_features);
 
   TVMArrayCopyFromBytes(
     output.getArray(), spatial_features.data(),
@@ -179,8 +178,8 @@ std::vector<Box3D> BackboneNeckHeadPostProcessor::schedule(const TVMArrayContain
   std::vector<Box3D> det_boxes3d;
 
   generateDetectedBoxes3D(
-    head_out_heatmap, head_out_offset, head_out_z, head_out_dim,
-    head_out_rot, head_out_vel, config_detail, det_boxes3d);
+    head_out_heatmap, head_out_offset, head_out_z, head_out_dim, head_out_rot, head_out_vel,
+    config_detail, det_boxes3d);
 
   return det_boxes3d;
 }

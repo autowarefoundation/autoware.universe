@@ -18,8 +18,8 @@
 
 #include <algorithm>
 #include <cmath>
-#include <thread>
 #include <iostream>
+#include <thread>
 
 namespace
 {
@@ -126,8 +126,9 @@ void generateDetectedBoxes3D(
   std::size_t grids_per_thread = divup(down_grid_size, THREAD_NUM_POST);
   for (std::size_t idx = 0; idx < THREAD_NUM_POST; idx++) {
     std::thread worker(
-      generateBoxes3D_worker, std::ref(out_heatmap), std::ref(out_offset), std::ref(out_z), std::ref(out_dim), 
-      std::ref(out_rot), std::ref(out_vel), std::ref(config), std::ref(boxes3d), idx, grids_per_thread);
+      generateBoxes3D_worker, std::ref(out_heatmap), std::ref(out_offset), std::ref(out_z),
+      std::ref(out_dim), std::ref(out_rot), std::ref(out_vel), std::ref(config), std::ref(boxes3d),
+      idx, grids_per_thread);
     threadPool.push_back(std::move(worker));
   }
   for (std::size_t idx = 0; idx < THREAD_NUM_POST; idx++) {

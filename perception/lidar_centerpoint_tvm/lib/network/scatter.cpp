@@ -72,8 +72,8 @@ void scatterFeatures(
   std::size_t pillars_per_thread = divup(config.max_voxel_size_, THREAD_NUM_SCATTER);
   for (std::size_t idx = 0; idx < THREAD_NUM_SCATTER; idx++) {
     std::thread worker(
-      scatterFeatures_worker, std::ref(pillar_features), std::ref(coords), num_pillars, std::ref(config),
-      std::ref(scattered_features), idx, pillars_per_thread);
+      scatterFeatures_worker, std::ref(pillar_features), std::ref(coords), num_pillars,
+      std::ref(config), std::ref(scattered_features), idx, pillars_per_thread);
     threadPool.push_back(std::move(worker));
   }
   for (std::size_t idx = 0; idx < THREAD_NUM_SCATTER; idx++) {
