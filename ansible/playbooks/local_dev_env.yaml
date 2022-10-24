@@ -3,3 +3,4 @@
 - hosts: localhost
   connection: local
   roles:
+    - pilot_auto.dev_env.git_lfs

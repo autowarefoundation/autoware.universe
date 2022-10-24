@@ -1,21 +1,43 @@
-name: update beta branch
+name: update-beta-branch
 
 on:
   schedule:
-    - cron: 0 0 * * 0
+    - cron: 0 0 * * *
   workflow_dispatch:
 
 env:
   SYNC_BRANCH_PREFIX: update-beta-branch
 
 jobs:
+  search-beta-branch:
+    runs-on: ubuntu-latest
+    outputs:
+      beta-branch: ${{ steps.search-beta-branch.outputs.value }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Search beta branch
+        id: search-beta-branch
+        run: |
+          branch_names=$(git branch -a | grep 'remotes/origin/beta/' | sed -E 's|.*(beta/.*)|\1|g')
+          if [ -n "$branch_names" ]; then
+            branch_names_json=$(printf '"%s", ' $branch_names)
+            branch_names_json="[${branch_names_json%, }]"
+            echo ::set-output name=value::"$branch_names_json"
+          fi
+          echo "Detected beta branch: $branch_names_json"
+
   update-beta-branch:
-    runs-on: ubuntu-20.04
+    needs: search-beta-branch
+    if: ${{ needs.search-beta-branch.outputs.beta-branch != '' }}
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        beta-branch:
-          - beta/v1.0.0 # TODO(maintainer): Edit here in each fork repository
+        beta-branch: ${{ fromJson(needs.search-beta-branch.outputs.beta-branch) }}
     steps:
       - name: Set BASE_BRANCH
         run: |
