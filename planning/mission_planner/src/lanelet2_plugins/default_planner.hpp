@@ -40,6 +40,10 @@ public:
   HADMapRoute plan(const RoutePoints & points) override;
   MarkerArray visualize(const HADMapRoute & route) const override;
 
+  autoware_auto_planning_msgs::msg::HADMapRoute plan_route(
+    const std::vector<geometry_msgs::msg::Pose> & check_points) override;
+  void map_callback(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg);
+
 private:
   using RouteSections = std::vector<autoware_auto_mapping_msgs::msg::HADMapSegment>;
   using Pose = geometry_msgs::msg::Pose;
@@ -54,9 +58,13 @@ private:
   rclcpp::Node * node_;
   rclcpp::Subscription<autoware_auto_mapping_msgs::msg::HADMapBin>::SharedPtr map_subscriber_;
 
-  void map_callback(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg);
-  bool is_goal_valid(const geometry_msgs::msg::Pose & goal) const;
-  Pose refine_goal_height(const Pose & goal, const RouteSections & route_sections);
+  bool is_goal_valid(const geometry_msgs::msg::Pose & goal_pose) const;
+  geometry_msgs::msg::Pose refine_goal_height(
+    const RouteSections & route_sections, const geometry_msgs::msg::Pose & goal_pose) const;
+
+  // virtual functions
+  bool is_routing_graph_ready() const override;
+  void visualize_route(const autoware_auto_planning_msgs::msg::HADMapRoute & route) const override;
 };
 
 }  // namespace mission_planner::lanelet2

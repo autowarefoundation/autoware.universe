@@ -1,0 +1,9 @@
+<launch>
+  <!-- mandatory arguments for planning-->
+  <arg name="vehicle_model"/>
+
+  <include file="$(find-pkg-share static_centerline_optimizer)/launch/static_centerline_optimizer.launch.xml">
+    <arg name="vehicle_model" value="$(var vehicle_model)"/>
+    <arg name="run_background" value="true"/>
+  </include>
+</launch>
