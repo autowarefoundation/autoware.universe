@@ -437,7 +437,7 @@ int get_hdd_info(boost::archive::text_iarchive & ia, boost::archive::text_oarchi
         continue;
       }
       // Get SMART DATA for ATA drive
-      info.error_code_ = get_ata_SmartData(fd, &info, hdd_device);
+      info.error_code_ = get_ata_smart_data(fd, &info, hdd_device);
       if (info.error_code_ != 0) {
         syslog(LOG_ERR, "Failed to get SMART LOG for ATA drive. %s\n", strerror(info.error_code_));
         close(fd);
