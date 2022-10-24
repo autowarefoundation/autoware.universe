@@ -14,7 +14,7 @@
 
 # Get user-provided variables
 set(DOWNLOAD_ARTIFACTS OFF CACHE BOOL "enable artifacts download")
-set(MODELZOO_VERSION "1.3.0-20220902" CACHE STRING "targeted ModelZoo version")
+set(MODELZOO_VERSION "1.4.0-20221003" CACHE STRING "targeted ModelZoo version")
 
 #
 # Download the selected neural network if it is not already present on disk.
@@ -56,6 +56,7 @@ function(get_neural_network MODEL_NAME MODEL_BACKEND DEPENDENCY)
     elseif(DOWNLOAD_ARTIFACTS)
       message(STATUS "Downloading ${ARCHIVE_NAME} ...")
       set(URL "https://autoware-modelzoo.s3.us-east-2.amazonaws.com/models/${MODELZOO_VERSION}/${ARCHIVE_NAME}")
+      message(WARNING "https://autoware-modelzoo.s3.us-east-2.amazonaws.com/models/${MODELZOO_VERSION}/${ARCHIVE_NAME}")
     else()
       message(WARNING "Skipped download for ${MODEL_NAME} (enable by setting DOWNLOAD_ARTIFACTS)")
       set(${DEPENDENCY} "" PARENT_SCOPE)

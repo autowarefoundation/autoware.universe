@@ -32,8 +32,9 @@ using autoware::common::types::bool8_t;
 using autoware::common::types::float32_t;
 
 void generateDetectedBoxes3D(
-  const float32_t * out_heatmap, const float32_t * out_offset, const float32_t * out_z,
-  const float32_t * out_dim, const float32_t * out_rot, const float32_t * out_vel,
+  const std::vector<float32_t> & out_heatmap, const std::vector<float32_t> & out_offset,
+  const std::vector<float32_t> & out_z, const std::vector<float32_t> & out_dim,
+  const std::vector<float32_t> & out_rot, const std::vector<float32_t> & out_vel,
   const CenterPointConfig & config, std::vector<Box3D> & det_boxes3d);
 
 }  // namespace lidar_centerpoint_tvm

@@ -7,21 +7,30 @@ autoware_package()
 set(tvm_runtime_DIR ${tvm_vendor_DIR})
 find_package(tvm_runtime CONFIG REQUIRED)
 
-# Get target backend
+# Gather neural network information.
 set(${PROJECT_NAME}_BACKEND llvm CACHE STRING "${PROJECT_NAME} neural network backend")
+set(MODEL_NAME_ENCODER centerpoint_encoder)
 
-# Test if files exist. The results are set in centerpoint_ve_FOUND and centerpoint_bnh_FOUND
-autoware_check_neural_network(centerpoint_ve "${${PROJECT_NAME}_BACKEND}")
-autoware_check_neural_network(centerpoint_bnh "${${PROJECT_NAME}_BACKEND}")
+# Get neural network.
+set(NN_DEPENDENCY_ENCOER "")
+get_neural_network(${MODEL_NAME_ENCODER} ${${PROJECT_NAME}_BACKEND} NN_DEPENDENCY_ENCOER)
 
-if(centerpoint_ve_FOUND AND centerpoint_bnh_FOUND)
-  ## the shared settings
+set(MODEL_NAME_BACKBONE centerpoint_backbone)
+
+# Get neural network.
+set(NN_DEPENDENCY_BACKBONE "")
+get_neural_network(${MODEL_NAME_BACKBONE} ${${PROJECT_NAME}_BACKEND} NN_DEPENDENCY_BACKBONE)
+
+if((NOT NN_DEPENDENCY_ENCOER STREQUAL "") AND (NOT NN_DEPENDENCY_BACKBONE STREQUAL ""))
+  # ## the shared settings
   include_directories(
     include
   )
 
   ## centerpoint_tvm ##
-  ament_auto_add_library(centerpoint_tvm_lib SHARED
+  ament_auto_add_library(${PROJECT_NAME} SHARED
+    data/models/${MODEL_NAME_ENCODER}/inference_engine_tvm_config.hpp
+    data/models/${MODEL_NAME_BACKBONE}/inference_engine_tvm_config.hpp
     lib/centerpoint_tvm.cpp
     lib/utils.cpp
     lib/ros_utils.cpp
@@ -33,17 +42,27 @@ if(centerpoint_ve_FOUND AND centerpoint_bnh_FOUND)
     lib/postprocess/generate_detected_boxes.cpp
   )
 
-  target_compile_options(centerpoint_tvm_lib PRIVATE "-Wno-sign-conversion" "-Wno-conversion")
-  target_compile_definitions(centerpoint_tvm_lib PRIVATE NETWORKS_BACKEND=${${PROJECT_NAME}_BACKEND})
+  # message(WARNING "${NN_DEPENDENCY_ENCOER}")
+  # message(WARNING "${NN_DEPENDENCY_BACKBONE}")
 
-  target_include_directories(centerpoint_tvm_lib SYSTEM PUBLIC
+  add_dependencies(${PROJECT_NAME} ${NN_DEPENDENCY_ENCOER})
+  add_dependencies(${PROJECT_NAME} ${NN_DEPENDENCY_BACKBONE})
+
+  target_compile_options(${PROJECT_NAME} PRIVATE "-Wno-sign-conversion" "-Wno-conversion")
+  target_compile_definitions(${PROJECT_NAME} PRIVATE NETWORKS_BACKEND=${${PROJECT_NAME}_BACKEND})
+
+  target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
     # $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     # $<INSTALL_INTERFACE:include>
     "${tvm_vendor_INCLUDE_DIRS}"
   )
 
-  target_link_libraries(centerpoint_tvm_lib
+  target_link_libraries(${PROJECT_NAME}
     ${tvm_runtime_LIBRARIES}
+  )
+
+  target_include_directories(${PROJECT_NAME} PRIVATE
+    data/models
   )
 
   ## node ##
@@ -52,7 +71,7 @@ if(centerpoint_ve_FOUND AND centerpoint_bnh_FOUND)
   )
 
   target_link_libraries(lidar_centerpoint_tvm_component
-    centerpoint_tvm_lib
+    ${PROJECT_NAME}
   )
 
   rclcpp_components_register_node(lidar_centerpoint_tvm_component

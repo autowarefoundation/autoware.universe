@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <cmath>
 #include <thread>
+#include <iostream>
 
 namespace
 {
@@ -54,9 +55,10 @@ struct score_greater
 inline float32_t sigmoid(float32_t x) { return 1.0f / (1.0f + expf(-x)); }
 
 void generateBoxes3D_worker(
-  const float32_t * out_heatmap, const float32_t * out_offset, const float32_t * out_z,
-  const float32_t * out_dim, const float32_t * out_rot, const float32_t * out_vel,
-  const CenterPointConfig & config, Box3D * boxes3d, std::size_t thread_idx,
+  const std::vector<float32_t> & out_heatmap, const std::vector<float32_t> & out_offset,
+  const std::vector<float32_t> & out_z, const std::vector<float32_t> & out_dim,
+  const std::vector<float32_t> & out_rot, const std::vector<float32_t> & out_vel,
+  const CenterPointConfig & config, std::vector<Box3D> & boxes3d, std::size_t thread_idx,
   std::size_t grids_per_thread)
 {
   // generate boxes3d from the outputs of the network.
@@ -65,7 +67,9 @@ void generateBoxes3D_worker(
   for (std::size_t idx = 0; idx < grids_per_thread; idx++) {
     std::size_t grid_idx = thread_idx * grids_per_thread + idx;
     const auto down_grid_size = config.down_grid_size_y_ * config.down_grid_size_x_;
-    if (grid_idx >= down_grid_size) return;
+    if (grid_idx >= down_grid_size) {
+      return;
+    }
 
     const auto yi = grid_idx / config.down_grid_size_x_;
     const auto xi = grid_idx % config.down_grid_size_x_;
@@ -111,8 +115,9 @@ void generateBoxes3D_worker(
 }
 
 void generateDetectedBoxes3D(
-  const float32_t * out_heatmap, const float32_t * out_offset, const float32_t * out_z,
-  const float32_t * out_dim, const float32_t * out_rot, const float32_t * out_vel,
+  const std::vector<float32_t> & out_heatmap, const std::vector<float32_t> & out_offset,
+  const std::vector<float32_t> & out_z, const std::vector<float32_t> & out_dim,
+  const std::vector<float32_t> & out_rot, const std::vector<float32_t> & out_vel,
   const CenterPointConfig & config, std::vector<Box3D> & det_boxes3d)
 {
   std::vector<std::thread> threadPool;
@@ -121,8 +126,8 @@ void generateDetectedBoxes3D(
   std::size_t grids_per_thread = divup(down_grid_size, THREAD_NUM_POST);
   for (std::size_t idx = 0; idx < THREAD_NUM_POST; idx++) {
     std::thread worker(
-      generateBoxes3D_worker, out_heatmap, out_offset, out_z, out_dim, out_rot, out_vel, config,
-      &boxes3d.front(), idx, grids_per_thread);
+      generateBoxes3D_worker, std::ref(out_heatmap), std::ref(out_offset), std::ref(out_z), std::ref(out_dim), 
+      std::ref(out_rot), std::ref(out_vel), std::ref(config), std::ref(boxes3d), idx, grids_per_thread);
     threadPool.push_back(std::move(worker));
   }
   for (std::size_t idx = 0; idx < THREAD_NUM_POST; idx++) {
@@ -134,7 +139,7 @@ void generateDetectedBoxes3D(
     std::count_if(boxes3d.begin(), boxes3d.end(), is_score_greater(config.score_threshold_));
   if (num_det_boxes3d == 0) {
     // construct boxes3d failed
-    throw std::runtime_error("lidar_centerpoint_tvm: construct boxes3d failed");
+    std::cerr << "lidar_centerpoint_tvm: construct boxes3d failed" << std::endl;
   }
   std::vector<Box3D> det_boxes3d_nonms(num_det_boxes3d);
   std::copy_if(

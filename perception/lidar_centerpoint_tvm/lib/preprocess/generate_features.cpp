@@ -48,8 +48,8 @@ void generateFeatures_worker(
     std::size_t points_count = voxel_num_points[pillar_idx];  // number of points in the voxel
 
     for (std::size_t i = 0; i < config.max_point_in_voxel_size_; i++) {
-      std::size_t point_idx =
-        pillar_idx * config.max_point_in_voxel_size_ + i * config.point_feature_size_;
+      std::size_t point_idx = pillar_idx * config.max_point_in_voxel_size_ * config.point_feature_size_ +
+        i * config.point_feature_size_;
       for (std::size_t j = 0; j < config.point_feature_size_; j++) {
         // point (x, y, z, instensity)
         if (i < points_count && j < 3) points_sum[j] += voxel_features[point_idx + j];
@@ -70,8 +70,8 @@ void generateFeatures_worker(
       std::size_t feature_idx =
         pillar_idx * config.max_point_in_voxel_size_ * config.encoder_in_feature_size_ +
         i * config.encoder_in_feature_size_;
-      std::size_t point_idx =
-        pillar_idx * config.max_point_in_voxel_size_ + i * config.point_feature_size_;
+      std::size_t point_idx = pillar_idx * config.max_point_in_voxel_size_ * config.point_feature_size_ +
+        i * config.point_feature_size_;
       if (i < points_count) {
         features[feature_idx + 0] = voxel_features[point_idx + 0];
         features[feature_idx + 1] = voxel_features[point_idx + 1];

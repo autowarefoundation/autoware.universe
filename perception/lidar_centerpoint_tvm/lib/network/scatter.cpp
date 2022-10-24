@@ -31,8 +31,9 @@ namespace lidar_centerpoint_tvm
 {
 
 void scatterFeatures_worker(
-  const float32_t * pillar_features, const int32_t * coords, const std::size_t num_pillars,
-  const CenterPointConfig & config, float32_t * scattered_features, std::size_t thread_idx,
+  const std::vector<float32_t> & pillar_features, const std::vector<int32_t> & coords,
+  const std::size_t num_pillars, const CenterPointConfig & config,
+  std::vector<float32_t> & scattered_features, std::size_t thread_idx,
   std::size_t pillars_per_thread)
 {
   // pillar_features: shape of max_num_pillars * encoder_out_feature_size
@@ -41,12 +42,16 @@ void scatterFeatures_worker(
 
   for (std::size_t idx = 0; idx < pillars_per_thread; idx++) {
     std::size_t pillar_idx = thread_idx * pillars_per_thread + idx;
-    if (pillar_idx >= num_pillars) return;
+    if (pillar_idx >= num_pillars) {
+      return;
+    }
 
     // 3D position(z,y,x) of the voxel/pillar
     int32_t coord[3] = {
       coords[pillar_idx * 3], coords[pillar_idx * 3 + 1], coords[pillar_idx * 3 + 2]};
-    if (coord[0] < 0) return;  // if coord.z < 0 return
+    if (coord[0] < 0) {
+      continue;
+    }  // if coord.z < 0 return
 
     for (std::size_t inner_idx = 0; inner_idx < config.encoder_out_feature_size_; inner_idx++) {
       std::size_t feature_idx = config.encoder_out_feature_size_ * pillar_idx + inner_idx;
@@ -59,15 +64,16 @@ void scatterFeatures_worker(
 }
 
 void scatterFeatures(
-  const float32_t * pillar_features, const int32_t * coords, const std::size_t num_pillars,
-  const CenterPointConfig & config, float32_t * scattered_features)
+  const std::vector<float32_t> & pillar_features, const std::vector<int32_t> & coords,
+  const std::size_t num_pillars, const CenterPointConfig & config,
+  std::vector<float32_t> & scattered_features)
 {
   std::vector<std::thread> threadPool;
   std::size_t pillars_per_thread = divup(config.max_voxel_size_, THREAD_NUM_SCATTER);
   for (std::size_t idx = 0; idx < THREAD_NUM_SCATTER; idx++) {
     std::thread worker(
-      scatterFeatures_worker, pillar_features, coords, num_pillars, std::ref(config),
-      scattered_features, idx, pillars_per_thread);
+      scatterFeatures_worker, std::ref(pillar_features), std::ref(coords), num_pillars, std::ref(config),
+      std::ref(scattered_features), idx, pillars_per_thread);
     threadPool.push_back(std::move(worker));
   }
   for (std::size_t idx = 0; idx < THREAD_NUM_SCATTER; idx++) {

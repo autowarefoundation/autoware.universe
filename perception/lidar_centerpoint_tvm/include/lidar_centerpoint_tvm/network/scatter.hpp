@@ -28,8 +28,9 @@ namespace lidar_centerpoint_tvm
 using autoware::common::types::float32_t;
 
 void scatterFeatures(
-  const float32_t * pillar_features, const int32_t * coords, const std::size_t num_pillars,
-  const CenterPointConfig & config, float32_t * scattered_features);
+  const std::vector<float32_t> & pillar_features, const std::vector<int32_t> & coords,
+  const std::size_t num_pillars, const CenterPointConfig & config,
+  std::vector<float32_t> & scattered_features);
 
 }  // namespace lidar_centerpoint_tvm
 }  // namespace perception

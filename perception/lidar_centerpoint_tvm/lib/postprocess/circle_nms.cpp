@@ -25,9 +25,9 @@ namespace perception
 namespace lidar_centerpoint_tvm
 {
 
-inline float32_t dist2dPow(const Box3D * a, const Box3D * b)
+inline float32_t dist2dPow(const Box3D & a, const Box3D & b)
 {
-  return powf(a->x - b->x, 2) + powf(a->y - b->y, 2);
+  return powf(a.x - b.x, 2) + powf(a.y - b.y, 2);
 }
 
 std::size_t circleNMS(
@@ -42,7 +42,6 @@ std::size_t circleNMS(
   std::vector<bool8_t> suppress(
     num_boxes3d);  // suppress[i]=true mean i-th box should be suppressed
 
-  Box3D * boxes_ptr = &boxes3d.front();
   // std::uint64_t * suppress_ptr = & suppress.front();
   for (std::size_t i = 0; i < num_boxes3d; i++) {
     if (suppress[i]) {
@@ -54,7 +53,7 @@ std::size_t circleNMS(
         // if the j-th box has been suppressed, continue
         if (suppress[j]) continue;
         // if the j-th box is in the circle of i-th, set j-th box to be suppressed
-        if (dist2dPow(boxes_ptr + i, boxes_ptr + j) < dist2d_pow_thresh) suppress[j] = true;
+        if (dist2dPow(boxes3d[i], boxes3d[j]) < dist2d_pow_thresh) suppress[j] = true;
       }
     }
   }
