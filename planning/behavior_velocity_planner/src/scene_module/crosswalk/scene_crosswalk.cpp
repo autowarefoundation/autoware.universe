@@ -16,6 +16,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <scene_module/crosswalk/scene_crosswalk.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+#include <utilization/path_utilization.hpp>
 #include <utilization/util.hpp>
 
 #include <cmath>
@@ -290,13 +291,19 @@ boost::optional<geometry_msgs::msg::Point> CrosswalkModule::findNearestStopPoint
   bool found_pedestrians = false;
   bool found_stuck_vehicle = false;
 
-  const auto crosswalk_attention_range = getAttentionRange(ego_path);
+  PathWithLaneId sparse_resample_path{};
+  constexpr double RESAMPLE_INTERVAL = 4.0;
+  if (!splineInterpolate(ego_path, RESAMPLE_INTERVAL, sparse_resample_path, logger_)) {
+    return {};
+  }
+
+  const auto crosswalk_attention_range = getAttentionRange(sparse_resample_path);
   const auto & ego_pos = planner_data_->current_pose.pose.position;
   const auto & objects_ptr = planner_data_->predicted_objects;
   const auto & base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
 
   bool exist_stopline_in_map;
-  const auto p_stop_line = getStopLine(ego_path, exist_stopline_in_map);
+  const auto p_stop_line = getStopLine(sparse_resample_path, exist_stopline_in_map);
   if (!p_stop_line) {
     return {};
   }
@@ -314,7 +321,7 @@ boost::optional<geometry_msgs::msg::Point> CrosswalkModule::findNearestStopPoint
     const auto obj_uuid = toHexString(object.object_id);
 
     if (isVehicle(object)) {
-      found_stuck_vehicle = found_stuck_vehicle || isStuckVehicle(ego_path, object);
+      found_stuck_vehicle = found_stuck_vehicle || isStuckVehicle(sparse_resample_path, object);
     }
 
     if (!isTargetType(object)) {
@@ -325,7 +332,7 @@ boost::optional<geometry_msgs::msg::Point> CrosswalkModule::findNearestStopPoint
       continue;
     }
 
-    for (auto & cp : getCollisionPoints(ego_path, object, crosswalk_attention_range)) {
+    for (auto & cp : getCollisionPoints(sparse_resample_path, object, crosswalk_attention_range)) {
       const auto is_ignore_object = ignore_objects_.count(obj_uuid) != 0;
       if (is_ignore_object) {
         cp.state = CollisionPointState::IGNORE;
@@ -347,8 +354,9 @@ boost::optional<geometry_msgs::msg::Point> CrosswalkModule::findNearestStopPoint
       found_pedestrians = true;
       stop_factor.stop_factor_points.push_back(obj_pos);
 
-      const auto dist_ego2cp = calcSignedArcLength(ego_path.points, ego_pos, cp.collision_point) -
-                               planner_param_.stop_margin;
+      const auto dist_ego2cp =
+        calcSignedArcLength(sparse_resample_path.points, ego_pos, cp.collision_point) -
+        planner_param_.stop_margin;
 
       if (dist_ego2cp < minimum_stop_dist) {
         first_stop_point = cp.collision_point;
@@ -404,7 +412,7 @@ boost::optional<geometry_msgs::msg::Point> CrosswalkModule::findNearestStopPoint
   const auto stop_line_distance = exist_stopline_in_map ? 0.0 : planner_param_.stop_line_distance;
   const auto margin = stop_at_stop_line ? stop_line_distance + base_link2front
                                         : planner_param_.stop_margin + base_link2front;
-  const auto stop_pose = calcLongitudinalOffsetPose(ego_path.points, p_stop, -margin);
+  const auto stop_pose = calcLongitudinalOffsetPose(sparse_resample_path.points, p_stop, -margin);
 
   if (!stop_pose) {
     return {};
