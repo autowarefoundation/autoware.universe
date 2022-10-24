@@ -17,7 +17,11 @@
 #include "behavior_path_planner/data_manager.hpp"
 #include "behavior_path_planner/utilities.hpp"
 #include "map_loader/lanelet2_map_loader_node.hpp"
-#include "mission_planner/mission_planner_lanelet2.hpp"
+#include <pluginlib/class_loader.hpp>
+
+// #include "mission_planner/lanelet2_plugins/default_planner.hpp"
+#include <mission_planner/mission_planner_plugin.hpp>
+
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
 namespace static_centerline_optimizer
@@ -68,11 +72,16 @@ HADMapRoute plan_route(
   const HADMapBin::ConstSharedPtr map_bin_msg_ptr,
   const std::vector<geometry_msgs::msg::Pose> & check_points)
 {
-  auto mission_planner_node = mission_planner::MissionPlannerLanelet2(create_node_options());
+  // create mission_planner plugin
+  auto plugin_loader = pluginlib::ClassLoader<mission_planner::PlannerPlugin>("mission_planner", "mission_planner::PlannerPlugin");
+  auto mission_planner = plugin_loader.createSharedInstance("mission_planner::lanelet2::DefaultPlanner");
 
-  mission_planner_node.map_callback(map_bin_msg_ptr);
-  const auto route = mission_planner_node.plan_route(check_points);
+  // initialize mission_plnanner
+  auto node = rclcpp::Node("po");
+  mission_planner->initialize(&node, map_bin_msg_ptr);
 
+  // plan route
+  const auto route = mission_planner->plan(check_points);
   return route;
 }
 

@@ -5,6 +5,7 @@ find_package(autoware_cmake REQUIRED)
 autoware_package()
 
 find_package(builtin_interfaces REQUIRED)
+find_package(geometry_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(Eigen3 REQUIRED)
@@ -15,7 +16,8 @@ rosidl_generate_interfaces(
   "srv/LoadMap.srv"
   "srv/PlanRoute.srv"
   "srv/PlanPath.srv"
-  DEPENDENCIES builtin_interfaces
+  "msg/PointsWithLaneId.msg"
+  DEPENDENCIES builtin_interfaces geometry_msgs
 )
 
 ament_auto_add_executable(main

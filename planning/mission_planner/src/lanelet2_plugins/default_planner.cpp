@@ -13,7 +13,6 @@
 // limitations under the License.
 
 #include "default_planner.hpp"
-
 #include "utility_functions.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
@@ -113,6 +112,13 @@ void DefaultPlanner::initialize(rclcpp::Node * node)
   map_subscriber_ = node_->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
     "input/vector_map", rclcpp::QoS{10}.transient_local(),
     std::bind(&DefaultPlanner::map_callback, this, std::placeholders::_1));
+}
+
+void DefaultPlanner::initialize(rclcpp::Node * node, const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg)
+{
+  is_graph_ready_ = false;
+  node_ = node;
+  map_callback(msg);
 }
 
 bool DefaultPlanner::ready() const { return is_graph_ready_; }

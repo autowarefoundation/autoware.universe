@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "static_centerline_optimizer/static_centerline_optimizer_node.hpp"
+#include "static_centerline_optimizer/msg/points_with_lane_id.hpp"
 
 #include "lanelet2_extension/utility/message_conversion.hpp"
 #include "lanelet2_extension/utility/query.hpp"
@@ -62,6 +63,12 @@ lanelet::ConstLanelets get_lanelets_from_route(
 rclcpp::NodeOptions create_node_options() { return rclcpp::NodeOptions{}; }
 
 rclcpp::QoS create_transient_local_qos() { return rclcpp::QoS{1}.transient_local(); }
+
+lanelet::BasicPoint2d convertToLaneletPoint(const geometry_msgs::msg::Point & geom_point)
+{
+  lanelet::BasicPoint2d point(geom_point.x, geom_point.y);
+  return point;
+}
 }  // namespace
 
 StaticCenterlineOptimizerNode::StaticCenterlineOptimizerNode(
@@ -77,19 +84,19 @@ StaticCenterlineOptimizerNode::StaticCenterlineOptimizerNode(
   // services
   callback_group_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   srv_load_map_ = create_service<LoadMap>(
-    "load_map",
+    "/planning/static_centerline_optimizer/load_map",
     std::bind(
       &StaticCenterlineOptimizerNode::on_load_map, this, std::placeholders::_1,
       std::placeholders::_2),
     rmw_qos_profile_services_default, callback_group_);
   srv_plan_route_ = create_service<PlanRoute>(
-    "plan_route",
+    "/planning/static_centerline_optimizer/plan_route",
     std::bind(
       &StaticCenterlineOptimizerNode::on_plan_route, this, std::placeholders::_1,
       std::placeholders::_2),
     rmw_qos_profile_services_default, callback_group_);
   srv_plan_path_ = create_service<PlanPath>(
-    "plan_path",
+    "/planning/static_centerline_optimizer/plan_path",
     std::bind(
       &StaticCenterlineOptimizerNode::on_plan_path, this, std::placeholders::_1,
       std::placeholders::_2),
@@ -107,6 +114,7 @@ void StaticCenterlineOptimizerNode::run()
   load_map(lanelet2_input_file_name);
   plan_route(start_lanelet_id, end_lanelet_id);
   plan_path(start_lanelet_id);
+  std::cerr << "PO1" << std::endl;
   save_map(lanelet2_output_file_name);
 }
 
@@ -198,12 +206,64 @@ void StaticCenterlineOptimizerNode::on_plan_path(
   } else if (result == PlanPathResult::ROUTE_IS_NOT_READY) {
   }
 
-  // TODO(murooka)
   /*
-  for (const auto & point : optimized_traj_points_) {
+  auto target_lanelet = lanelets_ptr_->cbegin();
+  bool is_end_lanelet = false;
+  current_lanelet_points;
+  for (const auto & traj_point : optimized_traj_points_) {
+    // convert optimized point to lanelet point
+    const lanelet::BasicPoint2d point(traj_point.pose.position.x, traj_point.pose.position.y);
+
+    // check if point is inside the target lanelet
+    while(!lanelet::geometry::inside(*target_lanelet, point)) {
+      current_lanelet_points.clear();
+      // If not inside, next lanelet is target.
+      target_lanelet++;
+
+      if (target_lanelet == lanelets_ptr_->cend()) {
+        is_end_lanelet = true;
+        break;
+      }
+    }
+
+    response->lane_ids.push_back(target_lanelet->id());
+    std::unique(response->lane_ids);
+
+    response->points_array.push_back(target_lanelet->id());
+
+    if (is_end_lanelet) {
+      break;
+    }
   }
-  response->points_array.push_back();
   */
+
+
+  auto target_traj_point = optimized_traj_points_.cbegin();
+  bool is_end_lanelet = false;
+  for (const auto & lanelet : *lanelets_ptr_) {
+
+    std::vector<geometry_msgs::msg::Point> current_lanelet_points;
+    while(!lanelet::geometry::inside(lanelet, convertToLaneletPoint(target_traj_point->pose.position))) {
+      current_lanelet_points.push_back(target_traj_point->pose.position);
+      target_traj_point++;
+
+      if (target_traj_point == optimized_traj_points_.cend()) {
+        is_end_lanelet = true;
+        break;
+      }
+    }
+
+    if (!current_lanelet_points.empty()) {
+      static_centerline_optimizer::msg::PointsWithLaneId points_with_lane_id;
+      points_with_lane_id.lane_id = lanelet.id();
+      points_with_lane_id.points = current_lanelet_points;
+      response->points_with_lane_ids.push_back(points_with_lane_id);
+    }
+
+    if (is_end_lanelet) {
+      break;
+    }
+  }
 }
 
 StaticCenterlineOptimizerNode::PlanPathResult StaticCenterlineOptimizerNode::plan_path(
@@ -234,13 +294,15 @@ StaticCenterlineOptimizerNode::PlanPathResult StaticCenterlineOptimizerNode::pla
   RCLCPP_INFO(get_logger(), "Converted to path and published.");
 
   // optimize trajectory by the obstacle_avoidance_planner package
-  StaticCenterlineOptmizer successive_path_optimizer(create_node_options());
+  auto a = create_node_options();
+  StaticCenterlineOptmizer successive_path_optimizer(a);
   optimized_traj_points_ = successive_path_optimizer.pathCallback(std::make_shared<Path>(raw_path));
   RCLCPP_INFO(get_logger(), "Optimized trajectory and published.");
 }
 
 void StaticCenterlineOptimizerNode::save_map(const std::string & lanelet2_output_file_name)
 {
+  std::cerr << "PO2" << std::endl;
   if (!route_handler_ptr_) {
     return;
   }
@@ -252,6 +314,7 @@ void StaticCenterlineOptimizerNode::save_map(const std::string & lanelet2_output
   // save map with modified center line
   lanelet::write(lanelet2_output_file_name, *route_handler_ptr_->getLaneletMapPtr());
   RCLCPP_INFO(get_logger(), "Saved map.");
+  std::cerr << "PO3" << std::endl;
 }
 
 }  // namespace static_centerline_optimizer

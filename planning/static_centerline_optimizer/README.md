@@ -19,7 +19,7 @@ There are two interfaces to communicate with the centerline optimizer.
 Run the autoware server with the following command by designating `vehicle_model` as lexus for example.
 
 ```sh
-ros2 run static_centerline_optimizer run_planning_server.sh vehicle_model:=lexus
+$ ros2 launch static_centerline_optimizer run_planning_server.launch.xml vehicle_model:=lexus
 ```
 
 Run http server with the following command.
