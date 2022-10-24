@@ -116,7 +116,7 @@ TEST(object_classification, test_fromString)
     EXPECT_EQ(toLabel("MOTORCYCLE"), ObjectClassification::MOTORCYCLE);
     EXPECT_EQ(toLabel("BICYCLE"), ObjectClassification::BICYCLE);
     EXPECT_EQ(toLabel("PEDESTRIAN"), ObjectClassification::PEDESTRIAN);
-    EXPECT_EQ(toLabel(""), ObjectClassification::UNKNOWN);
+    EXPECT_THROW(toLabel(""), std::runtime_error);
   }
 
   // Classification

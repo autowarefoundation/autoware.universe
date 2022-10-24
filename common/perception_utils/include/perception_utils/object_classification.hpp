@@ -113,7 +113,7 @@ inline uint8_t toLabel(const std::string & class_name)
   } else if (class_name == "PEDESTRIAN") {
     return ObjectClassification::PEDESTRIAN;
   } else {
-    return ObjectClassification::UNKNOWN;
+    throw std::runtime_error("Invalid Classification label.");
   }
 }
 
