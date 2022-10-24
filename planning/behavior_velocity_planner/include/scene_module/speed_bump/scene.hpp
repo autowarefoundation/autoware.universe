@@ -18,8 +18,8 @@
 #include <rclcpp/rclcpp.hpp>
 #include <scene_module/scene_module_interface.hpp>
 
-#include <vector>
 #include <utility>
+#include <vector>
 
 namespace behavior_velocity_planner
 {
