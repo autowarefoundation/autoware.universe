@@ -32,9 +32,16 @@ std::vector<Trajectory> generateTrajectories(
   const sampler_common::transform::Spline2D & reference_spline, const FrenetState & initial_state,
   const SamplingParameters & sampling_parameters)
 {
-  auto candidates = generateCandidates(initial_state, sampling_parameters);
-  for (auto & candidate : candidates) calculateCartesian(reference_spline, candidate);
-  return candidates;
+  std::vector<Trajectory> trajectories;
+  trajectories.reserve(sampling_parameters.parameters.size());
+  for (const auto & parameter : sampling_parameters.parameters) {
+    auto trajectory = generateCandidate(
+      initial_state, parameter.target_state, parameter.target_duration,
+      sampling_parameters.resolution);
+    calculateCartesian(reference_spline, trajectory);
+    trajectories.push_back(trajectory);
+  }
+  return trajectories;
 }
 
 std::vector<Path> generatePaths(
@@ -42,53 +49,12 @@ std::vector<Path> generatePaths(
   const SamplingParameters & sampling_parameters)
 {
   std::vector<Path> candidates;
-  FrenetState target_state;
-  const auto & sp = sampling_parameters;
-  for (const auto target_s : sp.target_longitudinal_positions) {
-    target_state.position.s = target_s;
-    for (const auto target_d : sp.target_lateral_positions) {
-      target_state.position.d = target_d;
-      for (const auto target_d_vel : sp.target_lateral_velocities) {
-        target_state.lateral_velocity = target_d_vel;
-        for (const auto target_d_acc : sp.target_lateral_accelerations) {
-          target_state.lateral_acceleration = target_d_acc;
-          auto candidate =
-            generateCandidate(initial_state, target_state, sampling_parameters.time_resolution);
-          calculateCartesian(reference_spline, candidate);
-          candidates.push_back(candidate);
-        }
-      }
-    }
-  }
-  return candidates;
-}
-
-std::vector<Trajectory> generateCandidates(
-  const FrenetState & initial_state, const SamplingParameters & sp)
-{
-  std::vector<Trajectory> candidates;
-  FrenetState target_state;
-  for (const auto target_s : sp.target_longitudinal_positions) {
-    target_state.position.s = target_s;
-    for (const auto target_d : sp.target_lateral_positions) {
-      target_state.position.d = target_d;
-      for (const auto target_s_vel : sp.target_longitudinal_velocities) {
-        target_state.longitudinal_velocity = target_s_vel;
-        for (const auto target_d_vel : sp.target_lateral_velocities) {
-          target_state.lateral_velocity = target_d_vel;
-          for (const auto target_s_acc : sp.target_longitudinal_accelerations) {
-            target_state.longitudinal_acceleration = target_s_acc;
-            for (const auto target_d_acc : sp.target_lateral_accelerations) {
-              target_state.lateral_acceleration = target_d_acc;
-              for (const auto duration : sp.target_durations) {
-                candidates.push_back(
-                  generateCandidate(initial_state, target_state, duration, sp.time_resolution));
-              }
-            }
-          }
-        }
-      }
-    }
+  candidates.reserve(sampling_parameters.parameters.size());
+  for (const auto parameter : sampling_parameters.parameters) {
+    auto candidate =
+      generateCandidate(initial_state, parameter.target_state, sampling_parameters.resolution);
+    calculateCartesian(reference_spline, candidate);
+    candidates.push_back(candidate);
   }
   return candidates;
 }
@@ -166,7 +132,7 @@ void calculateCartesian(
     trajectory.points.reserve(trajectory.frenet_points.size());
     trajectory.yaws.reserve(trajectory.frenet_points.size() - 1);
     trajectory.intervals.reserve(trajectory.frenet_points.size() - 1);
-    trajectory.curvatures.reserve(trajectory.frenet_points.size() - 1);
+    trajectory.curvatures.reserve(trajectory.frenet_points.size());
     // Calculate cartesian positions
     for (const auto & fp : trajectory.frenet_points) {
       trajectory.points.push_back(reference.cartesian(fp));
@@ -184,6 +150,7 @@ void calculateCartesian(
       trajectory.yaws.push_back(std::atan2(dy, dx));
     }
     // Calculate curvatures, velocities, accelerations
+    trajectory.curvatures.push_back(0.0);
     for (size_t i = 1; i < trajectory.yaws.size(); ++i) {
       const auto dyaw = autoware::motion::motion_common::calcYawDeviation(
         trajectory.yaws[i], trajectory.yaws[i - 1]);

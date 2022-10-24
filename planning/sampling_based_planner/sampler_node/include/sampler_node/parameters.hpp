@@ -36,14 +36,22 @@ struct Parameters
     double confortable_acceleration = 1.0;  // TODO(Maxime CLEMENT): read from param file
     struct
     {
-      bool manual{};
-      std::vector<double> target_durations{};
-      std::vector<double> target_longitudinal_position_offsets{};
-      std::vector<double> target_longitudinal_velocities{};
-      std::vector<double> target_longitudinal_accelerations{};
-      std::vector<double> target_lateral_positions{};
-      std::vector<double> target_lateral_velocities{};
-      std::vector<double> target_lateral_accelerations{};
+      struct
+      {
+        bool enable{};
+        std::vector<double> target_durations{};
+        std::vector<double> target_longitudinal_position_offsets{};
+        std::vector<double> target_longitudinal_velocities{};
+        std::vector<double> target_longitudinal_accelerations{};
+        std::vector<double> target_lateral_positions{};
+        std::vector<double> target_lateral_velocities{};
+        std::vector<double> target_lateral_accelerations{};
+      } manual;
+      struct
+      {
+        bool enable{};
+        int target_longitudinal_velocity_samples{};
+      } calc;
     } frenet;
     bezier_sampler::SamplingParameters bezier{};
   } sampling;

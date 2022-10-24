@@ -42,11 +42,12 @@
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 
+#include <boost/circular_buffer.hpp>
+#include <boost/circular_buffer/base.hpp>
+
 #include <lanelet2_core/Forward.h>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
-#include <boost/circular_buffer.hpp>
-#include <boost/circular_buffer/base.hpp>
 
 #include <memory>
 #include <string>
@@ -81,6 +82,8 @@ private:
   lanelet::Ids prefered_ids_;
   boost::circular_buffer<double> velocities_{5};
   boost::circular_buffer<double> accelerations_{5};
+  boost::circular_buffer<sampler_common::Point> points_{50};
+  boost::circular_buffer<double> yaws_{50};
 
   // ROS pub / sub
   rclcpp::Publisher<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr trajectory_pub_;
@@ -117,7 +120,8 @@ private:
     const sampler_common::transform::Spline2D & path_spline) const;
   sampler_common::Trajectory prependTrajectory(
     const sampler_common::Trajectory & trajectory,
-    const sampler_common::transform::Spline2D & reference) const;
+    const sampler_common::transform::Spline2D & reference,
+    const sampler_common::Configuration & current_state) const;
 
 public:
   explicit TrajectorySamplerNode(const rclcpp::NodeOptions & node_options);

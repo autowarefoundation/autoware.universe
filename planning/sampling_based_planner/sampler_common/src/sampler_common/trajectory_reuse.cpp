@@ -29,36 +29,41 @@ bool tryToReuseTrajectory(
   const double max_reuse_length, const double max_deviation, const Constraints & constraints,
   Trajectory & reusable_traj)
 {
-  // TODO(Maxime CLEMENT): use interpolation if we want better precision
-  if (traj_to_reuse.points.empty()) {
-    return false;
-  }
+  if (traj_to_reuse.points.empty()) return false;
 
   reusable_traj.clear();
-  size_t start_index = 0;
+  size_t closest_idx = 0;
   double min_dist = std::numeric_limits<double>::max();
   for (size_t i = 0; i < traj_to_reuse.points.size(); ++i) {
     const auto dist = boost::geometry::distance(current_pose, traj_to_reuse.points[i]);
     if (dist < min_dist) {
-      start_index = i;
+      closest_idx = i;
       min_dist = dist;
     }
   }
 
-  if (min_dist > max_deviation) {
+  if (min_dist > max_deviation || traj_to_reuse.longitudinal_velocities[closest_idx] == 0.0) {
     return false;
   }
 
-  size_t end_index = start_index;
+  size_t end_index = closest_idx;
   double distance = 0.0;
   double duration = 0.0;
-  for (size_t i = start_index; i < traj_to_reuse.points.size() - 2; ++i) {
+  for (size_t i = closest_idx; i < traj_to_reuse.points.size() - 2; ++i) {
     duration += traj_to_reuse.times[i];
     distance += traj_to_reuse.intervals[i];
     if (duration > max_reuse_duration || distance > max_reuse_length) {
       end_index = i;
       break;
     }
+  }
+  size_t start_index = closest_idx;
+  distance = 0.0;
+  while (start_index > 0 && distance < 5.0) {  // TODO(Maxime CLEMENT): from param
+    const auto & p1 = traj_to_reuse.points[start_index];
+    --start_index;
+    const auto & p2 = traj_to_reuse.points[start_index];
+    distance += boost::geometry::distance(p1, p2);
   }
   reusable_traj = *traj_to_reuse.subset(start_index, end_index);
   constraints::checkHardConstraints(reusable_traj, constraints);

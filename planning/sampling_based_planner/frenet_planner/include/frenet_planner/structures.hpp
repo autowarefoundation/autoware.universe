@@ -132,16 +132,22 @@ struct FrenetState
   double longitudinal_acceleration{};
 };
 
+struct SamplingParameter
+{
+  double target_duration{};
+  FrenetState target_state;
+};
+inline std::ostream & operator<<(std::ostream & os, const SamplingParameter & sp)
+{
+  const auto & s = sp.target_state;
+  return os << "[T=" << sp.target_duration << ", s=" << s.position.s << ", d=" << s.position.d
+            << ", s'=" << s.longitudinal_velocity << ", d'=" << s.lateral_velocity
+            << ", s\"=" << s.longitudinal_acceleration << ", d\"=" << s.lateral_acceleration << "]";
+}
 struct SamplingParameters
 {
-  std::vector<double> target_durations;
-  std::vector<double> target_lateral_positions;
-  std::vector<double> target_longitudinal_positions;
-  std::vector<double> target_lateral_velocities;
-  std::vector<double> target_longitudinal_velocities;
-  std::vector<double> target_lateral_accelerations;
-  std::vector<double> target_longitudinal_accelerations;
-  double time_resolution;
+  std::vector<SamplingParameter> parameters;
+  double resolution;
 };
 
 struct Debug

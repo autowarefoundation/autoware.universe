@@ -20,6 +20,7 @@
 #include "sampler_common/transform/spline_transform.hpp"
 #include "sampler_node/parameters.hpp"
 
+#include <interpolation/linear_interpolation.hpp>
 #include <motion_common/trajectory_common.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path.hpp>
@@ -35,7 +36,7 @@ struct VelocityExtremum
   double max_s{};
 };
 
-VelocityExtremum findVelocityExtremum(
+inline VelocityExtremum findVelocityExtremum(
   const autoware_auto_planning_msgs::msg::Path & path,
   const double max_distance = std::numeric_limits<double>::max())
 {
@@ -57,6 +58,10 @@ VelocityExtremum findVelocityExtremum(
       path.points[i - 1].pose.position, path.points[i].pose.position);
     if (arc_length > max_distance) break;
   }
+  if (extremum.min_s == extremum.max_s) {  // only one velocity value in the Path
+    extremum.min_s = 0.0;
+    extremum.max_s = max_distance;
+  }
   return extremum;
 }
 
@@ -72,24 +77,33 @@ inline double durationBetweenVelocities(
   return std::abs((to_velocity - from_velocity) / acceleration);
 }
 
-void gridSamplingParameters(
+inline void gridSamplingParameters(
   frenet_planner::SamplingParameters & sampling_parameters, const double min_velocity,
   const double max_velocity, const double min_duration, const double max_duration,
   const int velocity_samples, const int duration_samples)
 {
-  sampling_parameters.target_longitudinal_velocities.reserve(velocity_samples);
-  sampling_parameters.target_durations.reserve(duration_samples);
   const auto vel_step = (max_velocity - min_velocity) / velocity_samples;
   const auto dur_step = (max_duration - min_duration) / duration_samples;
+  std::vector<double> target_velocities = {max_velocity};
+  std::vector<double> target_durations = {max_duration};
   for (auto vel = min_velocity; vel < max_velocity; vel += vel_step)
-    sampling_parameters.target_longitudinal_velocities.push_back(vel);
-  sampling_parameters.target_longitudinal_velocities.push_back(max_velocity);
+    target_velocities.push_back(vel);
   for (auto duration = min_duration; duration < max_duration; duration += dur_step)
-    sampling_parameters.target_durations.push_back(duration);
-  sampling_parameters.target_durations.push_back(max_duration);
+    target_durations.push_back(duration);
+
+  frenet_planner::SamplingParameter sp;
+  sp.target_state.longitudinal_acceleration = 0.0;
+  sp.target_state.lateral_acceleration = 0.0;
+  for (const auto target_vel : target_velocities) {
+    sp.target_state.longitudinal_velocity = target_vel;
+    for (const auto target_duration : target_durations) {
+      sp.target_duration = target_duration;
+      sampling_parameters.parameters.push_back(sp);
+    }
+  }
 }
 
-void calculateLongitudinalTargets(
+inline void calculateTargets(
   frenet_planner::SamplingParameters & sampling_parameters,
   const sampler_common::Configuration & initial_configuration,
   const autoware_auto_planning_msgs::msg::Path & path,
@@ -99,47 +113,75 @@ void calculateLongitudinalTargets(
   const auto start_s = path_spline.frenet(initial_configuration.pose).s;
   const auto final_s =
     path_spline.frenet({path.points.back().pose.position.x, path.points.back().pose.position.y}).s;
-  if (params.sampling.frenet.manual) {
-    for (const auto d : params.sampling.frenet.target_durations) {
-      if (d - base_duration > 0.0)
-        sampling_parameters.target_durations.push_back(d - base_duration);
-    }
-    for (const auto offset : params.sampling.frenet.target_longitudinal_position_offsets) {
-      if (offset - base_length > 0.0) {
-        const auto target_s = start_s + offset - base_length;
-        if (target_s <= final_s)
-          sampling_parameters.target_longitudinal_positions.push_back(target_s);
+  frenet_planner::SamplingParameter sp;
+  if (params.sampling.frenet.manual.enable) {
+    for (const auto target_lat_pos : params.sampling.frenet.manual.target_lateral_positions) {
+      sp.target_state.position.d = target_lat_pos;
+      for (const auto target_lat_vel : params.sampling.frenet.manual.target_lateral_velocities) {
+        sp.target_state.lateral_velocity = target_lat_vel;
+        for (const auto target_lat_acc :
+             params.sampling.frenet.manual.target_lateral_accelerations) {
+          sp.target_state.lateral_acceleration = target_lat_acc;
+          for (const auto target_vel :
+               params.sampling.frenet.manual.target_longitudinal_velocities) {
+            sp.target_state.longitudinal_velocity = target_vel;
+            for (const auto target_acc :
+                 params.sampling.frenet.manual.target_longitudinal_accelerations) {
+              sp.target_state.longitudinal_acceleration = target_acc;
+              for (const auto d : params.sampling.frenet.manual.target_durations) {
+                if (d - base_duration > 0.0) {
+                  sp.target_duration = d - base_duration;
+                  for (const auto offset :
+                       params.sampling.frenet.manual.target_longitudinal_position_offsets) {
+                    if (offset - base_length > 0.0) {
+                      const auto target_s = start_s + offset - base_length;
+                      if (target_s <= final_s) {
+                        sp.target_state.position.s = target_s;
+                        sampling_parameters.parameters.push_back(sp);
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     }
-    sampling_parameters.target_longitudinal_velocities =
-      params.sampling.frenet.target_longitudinal_velocities;
-    sampling_parameters.target_longitudinal_accelerations =
-      params.sampling.frenet.target_longitudinal_accelerations;
-  } else {
+  }
+  if (params.sampling.frenet.calc.enable) {
+    sp.target_state.lateral_velocity = 0.0;
+    sp.target_state.longitudinal_acceleration = 0.0;
+    sp.target_state.lateral_acceleration = 0.0;
     const auto velocity_extremum = findVelocityExtremum(path, 50.0);
-    // sampling_parameters.target_longitudinal_positions.push_back(velocity_extremum.max_s -
-    // start_s);
-    sampling_parameters.target_longitudinal_accelerations = {0.0};
-    // sampling_parameters.target_longitudinal_velocities = {initial_configuration.velocity,
-    // velocity_extremum.min, velocity_extremum.max};
-    auto target_vel = 0.0;
-    auto target_s = 0.0;
-    if (velocity_extremum.min > 0) {
-      target_vel = velocity_extremum.min;
-      target_s = velocity_extremum.min_s;
-    } else {
-      target_vel = velocity_extremum.max;
-      target_s = velocity_extremum.max_s;
+    const auto samples = params.sampling.frenet.calc.target_longitudinal_velocity_samples;
+    for (auto i = 0; i < samples; ++i) {
+      const auto ratio = static_cast<double>(i) / (samples - 1.0);
+      const auto target_vel = interpolation::lerp(
+        velocity_extremum.min,
+        std::min(velocity_extremum.max, params.constraints.hard.max_velocity), ratio);
+      const auto distance =
+        interpolation::lerp(velocity_extremum.min_s, velocity_extremum.max_s, ratio);
+      if (distance == 0) continue;
+      // std::printf("i=%d: ratio=%2.2f, target_vel=%2.2f, distance=%2.2f, min_s=%2.2f,
+      // max_s=%2.2f\n", i, ratio, target_vel, distance, velocity_extremum.min_s,
+      // velocity_extremum.max_s);
+      sp.target_state.position.s = start_s + distance;
+      const auto confortable_target_vel = std::sqrt(
+        initial_configuration.velocity * initial_configuration.velocity +
+        2 * params.sampling.confortable_acceleration * distance);
+      sp.target_state.longitudinal_velocity = std::min(target_vel, confortable_target_vel);
+      if (sp.target_state.longitudinal_velocity + initial_configuration.velocity == 0.0)
+        sp.target_duration = distance / params.constraints.hard.max_velocity;
+      else
+        sp.target_duration =
+          (2 * distance) / (sp.target_state.longitudinal_velocity + initial_configuration.velocity);
+      for (const auto d : params.sampling.frenet.manual.target_lateral_positions) {
+        sp.target_state.position.d = d;
+        sampling_parameters.parameters.push_back(sp);
+        // std::cout << sp << std::endl;
+      }
     }
-    if (target_s == 0.0) target_s += params.sampling.target_lengths.front();
-    const auto distance = target_s - start_s;
-    const auto confortable_target_vel = std::sqrt(
-      initial_configuration.velocity * initial_configuration.velocity +
-      2 * params.sampling.confortable_acceleration * distance);
-    target_vel = std::min(target_vel, confortable_target_vel);
-    const auto duration = (2 * distance) / (velocity_extremum.max - initial_configuration.velocity);
-    gridSamplingParameters(
-      sampling_parameters, 0.0, velocity_extremum.max, duration / 2, 4 * duration, 10, 10);
   }
 }
 

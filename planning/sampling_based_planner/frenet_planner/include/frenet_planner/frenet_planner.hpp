@@ -41,9 +41,6 @@ Path generateCandidate(
 Trajectory generateCandidate(
   const FrenetState & initial_state, const FrenetState & target_state, const double duration,
   const double time_resolution);
-/// @brief generate candidate trajectories
-std::vector<Trajectory> generateCandidates(
-  const FrenetState & initial_state, const SamplingParameters & sp);
 /// @brief calculate the cartesian frame of the given path
 void calculateCartesian(const sampler_common::transform::Spline2D & reference, Path & path);
 /// @brief calculate the cartesian frame of the given trajectory

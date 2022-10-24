@@ -34,6 +34,9 @@
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <geometry_msgs/msg/transform_stamped.hpp>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+
+#include <boost/geometry/algorithms/distance.hpp>
 
 #include <lanelet2_routing/RoutingGraph.h>
 #include <lanelet2_traffic_rules/TrafficRules.h>
@@ -45,6 +48,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cstdio>
+#include <iterator>
 #include <limits>
 #include <memory>
 #include <numeric>
@@ -129,21 +133,26 @@ TrajectorySamplerNode::TrajectorySamplerNode(const rclcpp::NodeOptions & node_op
   params_.sampling.reuse_max_deviation = declare_parameter<double>("sampling.reuse_max_deviation");
   params_.sampling.target_lengths =
     declare_parameter<std::vector<double>>("sampling.target_lengths");
-  params_.sampling.frenet.manual = declare_parameter<bool>("sampling.frenet.manual");
-  params_.sampling.frenet.target_durations =
-    declare_parameter<std::vector<double>>("sampling.frenet.target_durations");
-  params_.sampling.frenet.target_longitudinal_position_offsets =
-    declare_parameter<std::vector<double>>("sampling.frenet.target_longitudinal_position_offsets");
-  params_.sampling.frenet.target_longitudinal_velocities =
-    declare_parameter<std::vector<double>>("sampling.frenet.target_longitudinal_velocities");
-  params_.sampling.frenet.target_longitudinal_accelerations =
-    declare_parameter<std::vector<double>>("sampling.frenet.target_longitudinal_accelerations");
-  params_.sampling.frenet.target_lateral_positions =
-    declare_parameter<std::vector<double>>("sampling.frenet.target_lateral_positions");
-  params_.sampling.frenet.target_lateral_velocities =
-    declare_parameter<std::vector<double>>("sampling.frenet.target_lateral_velocities");
-  params_.sampling.frenet.target_lateral_accelerations =
-    declare_parameter<std::vector<double>>("sampling.frenet.target_lateral_accelerations");
+  params_.sampling.frenet.manual.enable = declare_parameter<bool>("sampling.frenet.manual.enable");
+  params_.sampling.frenet.manual.target_durations =
+    declare_parameter<std::vector<double>>("sampling.frenet.manual.target_durations");
+  params_.sampling.frenet.manual.target_longitudinal_position_offsets =
+    declare_parameter<std::vector<double>>(
+      "sampling.frenet.manual.target_longitudinal_position_offsets");
+  params_.sampling.frenet.manual.target_longitudinal_velocities =
+    declare_parameter<std::vector<double>>("sampling.frenet.manual.target_longitudinal_velocities");
+  params_.sampling.frenet.manual.target_longitudinal_accelerations =
+    declare_parameter<std::vector<double>>(
+      "sampling.frenet.manual.target_longitudinal_accelerations");
+  params_.sampling.frenet.manual.target_lateral_positions =
+    declare_parameter<std::vector<double>>("sampling.frenet.manual.target_lateral_positions");
+  params_.sampling.frenet.manual.target_lateral_velocities =
+    declare_parameter<std::vector<double>>("sampling.frenet.manual.target_lateral_velocities");
+  params_.sampling.frenet.manual.target_lateral_accelerations =
+    declare_parameter<std::vector<double>>("sampling.frenet.manual.target_lateral_accelerations");
+  params_.sampling.frenet.calc.enable = declare_parameter<bool>("sampling.frenet.calc.enable");
+  params_.sampling.frenet.calc.target_longitudinal_velocity_samples =
+    declare_parameter<int>("sampling.frenet.calc.target_longitudinal_velocity_samples");
   params_.sampling.bezier.nb_k = declare_parameter<int>("sampling.bezier.nb_k");
   params_.sampling.bezier.mk_min = declare_parameter<double>("sampling.bezier.mk_min");
   params_.sampling.bezier.mk_max = declare_parameter<double>("sampling.bezier.mk_max");
@@ -178,7 +187,7 @@ TrajectorySamplerNode::TrajectorySamplerNode(const rclcpp::NodeOptions & node_op
     add_on_set_parameters_callback([this](const auto & params) { return onParameter(params); });
   // This is necessary to interact with the GUI even when we are not generating trajectories
   gui_process_timer_ =
-    create_wall_timer(std::chrono::milliseconds(20), [this]() { gui_.update(); });
+    create_wall_timer(std::chrono::milliseconds(100), [this]() { gui_.update(); });
 }
 
 rcl_interfaces::msg::SetParametersResult TrajectorySamplerNode::onParameter(
@@ -231,22 +240,30 @@ rcl_interfaces::msg::SetParametersResult TrajectorySamplerNode::onParameter(
       params_.sampling.reuse_max_deviation = parameter.as_double();
     } else if (parameter.get_name() == "sampling.target_lengths") {
       params_.sampling.target_lengths = parameter.as_double_array();
-    } else if (parameter.get_name() == "sampling.frenet.manual") {
-      params_.sampling.frenet.manual = parameter.as_bool();
-    } else if (parameter.get_name() == "sampling.frenet.target_durations") {
-      params_.sampling.frenet.target_durations = parameter.as_double_array();
-    } else if (parameter.get_name() == "sampling.frenet.target_longitudinal_position_offsets") {
-      params_.sampling.frenet.target_longitudinal_position_offsets = parameter.as_double_array();
+    } else if (parameter.get_name() == "sampling.frenet.manual.enable") {
+      params_.sampling.frenet.manual.enable = parameter.as_bool();
+    } else if (parameter.get_name() == "sampling.frenet.manual.target_durations") {
+      params_.sampling.frenet.manual.target_durations = parameter.as_double_array();
+    } else if (
+      parameter.get_name() == "sampling.frenet.manual.target_longitudinal_position_offsets") {
+      params_.sampling.frenet.manual.target_longitudinal_position_offsets =
+        parameter.as_double_array();
     } else if (parameter.get_name() == "sampling.frenet.target_longitudinal_velocities") {
-      params_.sampling.frenet.target_longitudinal_velocities = parameter.as_double_array();
-    } else if (parameter.get_name() == "sampling.frenet.target_longitudinal_accelerations") {
-      params_.sampling.frenet.target_longitudinal_accelerations = parameter.as_double_array();
-    } else if (parameter.get_name() == "sampling.frenet.target_lateral_positions") {
-      params_.sampling.frenet.target_lateral_positions = parameter.as_double_array();
-    } else if (parameter.get_name() == "sampling.frenet.target_lateral_velocities") {
-      params_.sampling.frenet.target_lateral_velocities = parameter.as_double_array();
-    } else if (parameter.get_name() == "sampling.frenet.target_lateral_accelerations") {
-      params_.sampling.frenet.target_lateral_accelerations = parameter.as_double_array();
+      params_.sampling.frenet.manual.target_longitudinal_velocities = parameter.as_double_array();
+    } else if (parameter.get_name() == "sampling.frenet.manual.target_longitudinal_accelerations") {
+      params_.sampling.frenet.manual.target_longitudinal_accelerations =
+        parameter.as_double_array();
+    } else if (parameter.get_name() == "sampling.frenet.manual.target_lateral_positions") {
+      params_.sampling.frenet.manual.target_lateral_positions = parameter.as_double_array();
+    } else if (parameter.get_name() == "sampling.frenet.manual.target_lateral_velocities") {
+      params_.sampling.frenet.manual.target_lateral_velocities = parameter.as_double_array();
+    } else if (parameter.get_name() == "sampling.frenet.manual.target_lateral_accelerations") {
+      params_.sampling.frenet.manual.target_lateral_accelerations = parameter.as_double_array();
+    } else if (parameter.get_name() == "sampling.frenet.calc.enable") {
+      params_.sampling.frenet.calc.enable = parameter.as_bool();
+    } else if (
+      parameter.get_name() == "sampling.frenet.calc.target_longitudinal_velocity_samples") {
+      params_.sampling.frenet.calc.target_longitudinal_velocity_samples = parameter.as_int();
     } else if (parameter.get_name() == "sampling.bezier.nb_k") {
       params_.sampling.bezier.nb_k = parameter.as_int();
     } else if (parameter.get_name() == "sampling.bezier.mk_min") {
@@ -312,8 +329,17 @@ void TrajectorySamplerNode::pathCallback(
   const auto selected_trajectory_idx = selectBestTrajectory(trajectories);
   if (selected_trajectory_idx) {
     const auto & selected_trajectory = trajectories[*selected_trajectory_idx];
-    auto final_trajectory = prependTrajectory(selected_trajectory, path_spline);
-    publishTrajectory(final_trajectory, msg->header.frame_id);
+    // Make the trajectory nicer for the controller
+    auto final_trajectory = prependTrajectory(selected_trajectory, path_spline, *current_state);
+    if (
+      final_trajectory.longitudinal_velocities.size() > 1 &&
+      final_trajectory.longitudinal_velocities.front() < 0.1) {
+      final_trajectory.longitudinal_velocities.front() =
+        final_trajectory.longitudinal_velocities[1];
+      std::cout << "[prependTrajectory] updated 1st 0 velocity to "
+                << final_trajectory.longitudinal_velocities.front() << "\n";
+    }
+    if (!final_trajectory.points.empty()) publishTrajectory(final_trajectory, msg->header.frame_id);
     prev_traj_ = selected_trajectory;
   } else {
     RCLCPP_WARN(
@@ -327,14 +353,19 @@ void TrajectorySamplerNode::pathCallback(
       trajectory_pub_->publish(*fallback_traj_ptr_);
       prev_traj_.clear();
     } else {
-      publishTrajectory(prev_traj_, msg->header.frame_id);
-      prev_traj_ = {};
+      if (!prev_traj_.points.empty()) {
+        std::fill(
+          prev_traj_.longitudinal_velocities.begin(), prev_traj_.longitudinal_velocities.end(),
+          0.0);
+        publishTrajectory(prev_traj_, msg->header.frame_id);
+      }
     }
   }
   const auto calc_end = std::chrono::steady_clock::now();
   const auto gui_begin = std::chrono::steady_clock::now();
   gui_.setInputs(*msg, path_spline, *current_state);
   gui_.setOutputs(trajectories, selected_trajectory_idx, prev_traj_);
+  gui_.update();
   const auto gui_end = std::chrono::steady_clock::now();
   const auto calc_time_ms =
     std::chrono::duration_cast<std::chrono::milliseconds>(calc_end - calc_begin).count();
@@ -373,6 +404,20 @@ std::optional<sampler_common::Configuration> TrajectorySamplerNode::getCurrentEg
   auto config = sampler_common::Configuration();
   config.pose = {tf_current_pose.transform.translation.x, tf_current_pose.transform.translation.y};
   config.heading = tf2::getYaw(tf_current_pose.transform.rotation);
+  if (!points_.empty()) {
+    const auto dist = boost::geometry::distance(config.pose, points_.back());
+    if (dist > 2.0) {
+      points_.clear();
+      yaws_.clear();
+    } else if (dist > 0.1) {
+      points_.push_back(config.pose);
+      yaws_.push_back(config.heading);
+    }
+  } else {
+    points_.push_back(config.pose);
+    yaws_.push_back(config.heading);
+  }
+  // TODO(Maxime CLEMENT): use a proper filter from the signal_processing lib
   config.velocity =
     std::accumulate(velocities_.begin(), velocities_.end(), 0.0) / velocities_.size();
   config.acceleration =
@@ -458,19 +503,50 @@ sampler_common::Configuration TrajectorySamplerNode::getPlanningConfiguration(
 
 sampler_common::Trajectory TrajectorySamplerNode::prependTrajectory(
   const sampler_common::Trajectory & trajectory,
-  const sampler_common::transform::Spline2D & reference) const
+  const sampler_common::transform::Spline2D & reference,
+  const sampler_common::Configuration & current_state) const
 {
   if (trajectory.points.empty()) return {};
+  // only prepend if the trajectory starts from the current pose
+  if (
+    !params_.preprocessing.force_zero_deviation &&
+    (trajectory.points.front().x() != current_state.pose.x() ||
+     trajectory.points.front().y() != current_state.pose.y())) {
+    std::cout << "[prependTrajectory] no prepend when 1st traj point is current pose\n";
+    return trajectory;
+  }
   const auto current_frenet = reference.frenet(trajectory.points.front());
   const auto resolution = params_.sampling.resolution;
   sampler_common::Trajectory trajectory_to_prepend;
   const auto first_s = current_frenet.s - params_.postprocessing.desired_traj_behind_length;
+  const auto min_s =
+    std::max(resolution, first_s);  // avoid s=0 where the reference spline may diverge
   std::vector<double> ss;
-  for (auto s = std::max(resolution, first_s); s < current_frenet.s; s += resolution)
-    ss.push_back(s);
+  if (!params_.preprocessing.force_zero_deviation) {
+    auto s = current_frenet.s;
+    for (auto i = 1lu; i + 1 < points_.size() && s >= min_s; ++i) {
+      const auto & curr = points_[points_.size() - i];
+      const auto & prev = points_[points_.size() - i - 1];
+      trajectory_to_prepend.points.push_back(curr);
+      if (!params_.preprocessing.force_zero_heading)
+        trajectory_to_prepend.yaws.push_back(yaws_[points_.size() - i]);
+      s -= boost::geometry::distance(curr, prev);
+      ss.push_back(s);
+    }
+    std::reverse(trajectory_to_prepend.points.begin(), trajectory_to_prepend.points.end());
+    if (!params_.preprocessing.force_zero_heading)
+      std::reverse(trajectory_to_prepend.yaws.begin(), trajectory_to_prepend.yaws.end());
+    std::reverse(ss.begin(), ss.end());
+  } else {
+    for (auto s = min_s; s < current_frenet.s; s += resolution) {
+      ss.push_back(s);
+    }
+  }
   for (const auto s : ss) {
-    trajectory_to_prepend.points.push_back(reference.cartesian(s));
-    trajectory_to_prepend.yaws.push_back(reference.yaw(s));
+    if (params_.preprocessing.force_zero_deviation)
+      trajectory_to_prepend.points.push_back(reference.cartesian(s));
+    if (params_.preprocessing.force_zero_heading)
+      trajectory_to_prepend.yaws.push_back(reference.yaw(s));
     trajectory_to_prepend.curvatures.push_back(reference.curvature(s));
     trajectory_to_prepend.intervals.push_back(resolution);
     trajectory_to_prepend.longitudinal_velocities.push_back(
