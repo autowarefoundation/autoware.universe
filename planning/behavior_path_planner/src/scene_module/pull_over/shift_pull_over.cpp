@@ -242,7 +242,7 @@ boost::optional<PullOverPath> ShiftPullOver::generatePullOverPath(
   pull_over_path.start_pose = path_shifter.getShiftLines().front().start;
   pull_over_path.end_pose = path_shifter.getShiftLines().front().end;
 
-  // check enogh distance
+  // check enough distance
   if (!hasEnoughDistance(
         pull_over_path.path, road_lanes, pull_over_path.start_pose, goal_pose,
         pull_over_distance)) {
