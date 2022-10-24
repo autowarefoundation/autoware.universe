@@ -4,7 +4,7 @@
 
 This module slows down the vehicle for speed bump.
 
-![](docs/speed_bump/speed_bump.png)
+![speed_bump](docs/speed_bump/speed_bump.png)
 
 ### Activation Timing
 
@@ -24,7 +24,7 @@ the reference path.
 - Get speed bump regulatory element on the path from lanelet2 map
 - Calculate `slow_down_speed` wrt to `speed_bump_hieght` specified in regulatory element.
 
-![](docs/speed_bump/speed_bump_vel_calc.png)
+![speed_bump_vel_calc](docs/speed_bump/speed_bump_vel_calc.png)
 
 - Set `slow_down_speed` to the path during `slow_area`
 

@@ -18,6 +18,9 @@
 #include <rclcpp/rclcpp.hpp>
 #include <scene_module/scene_module_interface.hpp>
 
+#include <vector>
+#include <utility>
+
 namespace behavior_velocity_planner
 {
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
