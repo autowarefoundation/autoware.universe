@@ -559,7 +559,7 @@ AvoidLineArray AvoidanceModule::calcRawShiftLinesFromObjects(const ObjectDataArr
   const auto & vehicle_width = planner_data_->parameters.vehicle_width;
   const auto & road_shoulder_safety_margin = parameters_->road_shoulder_safety_margin;
 
-  const auto avoid_margin =
+  auto avoid_margin =
     lat_collision_safety_buffer + lat_collision_margin + 0.5 * vehicle_width;
 
   AvoidLineArray avoid_lines;
@@ -585,7 +585,7 @@ AvoidLineArray AvoidanceModule::calcRawShiftLinesFromObjects(const ObjectDataArr
 
     if (max_allowable_lateral_distance <= avoid_margin) {
       avoidance_debug_array_false_and_push_back(AvoidanceDebugFactor::INSUFFICIENT_LATERAL_MARGIN);
-      continue;
+      avoid_margin = max_allowable_lateral_distance;
     }
 
     const auto is_object_on_right = isOnRight(o);
