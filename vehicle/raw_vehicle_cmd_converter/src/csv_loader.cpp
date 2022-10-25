@@ -14,6 +14,7 @@
 
 #include "raw_vehicle_cmd_converter/csv_loader.hpp"
 
+#include <algorithm>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -141,10 +142,10 @@ std::vector<double> CSVLoader::getColumnIndex(const Table & table)
 double CSVLoader::clampValue(
   const double val, const std::vector<double> & ranges, const std::string & name)
 {
-  const double max_value = ranges.back();
-  const double min_value = ranges.front();
+  const double max_value = *std::max_element(ranges.begin(), ranges.end());
+  const double min_value = *std::min_element(ranges.begin(), ranges.end());
   if (val < min_value || max_value < val) {
-    std::cerr << "Input" << name << ": " << val << " is out off range. use closest value."
+    std::cerr << "Input " << name << ": " << val << " is out of range. use closest value."
               << std::endl;
     return std::min(std::max(val, min_value), max_value);
   }
