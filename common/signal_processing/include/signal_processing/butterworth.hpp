@@ -89,20 +89,27 @@ private:
   std::complex<double> discrete_time_gain_{1.0, 0.0};
 
   // Continuous time transfer function roots
-  std::vector<double> phase_angles_{};
-  std::vector<std::complex<double>> continuous_time_roots_{};
 
-  // Discrete time zeros and roots
-  std::vector<std::complex<double>> discrete_time_roots_{{0.0, 0.0}};
-  std::vector<std::complex<double>> discrete_time_zeros_{{-1.0, 0.0}};
+  struct
+  {
+    std::vector<double> phase_angles_{};
+    std::vector<std::complex<double>> continuous_time_roots_{};
 
-  // Continuous time transfer function numerator denominators
-  std::vector<std::complex<double>> continuous_time_denominator_{{0.0, 0.0}};
-  double continuous_time_numerator_{0.0};
+    // Continuous time transfer function numerator denominators
+    std::vector<std::complex<double>> continuous_time_denominator_{{0.0, 0.0}};
+    double continuous_time_numerator_{0.0};
+  } ct_tf_{};
 
-  // Discrete time transfer function numerator denominators
-  std::vector<std::complex<double>> discrete_time_denominator_{{0.0, 0.0}};
-  std::vector<std::complex<double>> discrete_time_numerator_{{0.0, 0.0}};
+  struct
+  {
+    // Discrete time zeros and roots
+    std::vector<std::complex<double>> discrete_time_roots_{{0.0, 0.0}};
+    std::vector<std::complex<double>> discrete_time_zeros_{{-1.0, 0.0}};
+
+    // Discrete time transfer function numerator denominators
+    std::vector<std::complex<double>> discrete_time_denominator_{{0.0, 0.0}};
+    std::vector<std::complex<double>> discrete_time_numerator_{{0.0, 0.0}};
+  } dt_tf_{};
 
   // Numerator and Denominator Coefficients Bn and An of Discrete Time Filter
   sDifferenceAnBn AnBn_{};
