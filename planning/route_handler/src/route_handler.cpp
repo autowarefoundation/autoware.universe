@@ -872,7 +872,6 @@ boost::optional<lanelet::ConstLanelet> RouteHandler::getLeftLanelet(
   const auto & adjacent_left_lane = routing_graph_ptr_->adjacentLeft(lanelet);
   return adjacent_left_lane;
 }
-
 lanelet::Lanelets RouteHandler::getRightOppositeLanelets(
   const lanelet::ConstLanelet & lanelet) const
 {
@@ -889,6 +888,17 @@ lanelet::Lanelets RouteHandler::getRightOppositeLanelets(
   }
 
   return opposite_lanelets;
+}
+
+lanelet::ConstLanelet RouteHandler::getMostLeftLanelet(const lanelet::ConstLanelet & lanelet) const
+{
+  // recursively compute the width of the lanes
+  const auto & same = getLeftLanelet(lanelet);
+
+  if (same) {
+    return getMostLeftLanelet(same.get());
+  }
+  return lanelet;
 }
 
 lanelet::ConstLanelets RouteHandler::getAllLeftSharedLinestringLanelets(

@@ -126,6 +126,15 @@ public:
   lanelet::ConstLanelets getPreviousLanelets(const lanelet::ConstLanelet & lanelet) const;
 
   /**
+   * @brief Check if same-direction lane is available at the left side of the lanelet
+   * Searches for any lanes regardless of whether it is lane-changeable or not.
+   * Required the linestring to be shared(same line ID) between the lanelets.
+   * @param the lanelet of interest
+   * @return most right lanelet
+   */
+  lanelet::ConstLanelet getMostLeftLanelet(const lanelet::ConstLanelet & lanelet) const;
+
+  /**
    * @brief Check if opposite-direction lane is available at the right side of the lanelet
    * Required the linestring to be shared(same line ID) between the lanelets.
    * @param the lanelet of interest
