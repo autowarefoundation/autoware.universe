@@ -38,7 +38,7 @@ TurnIndicatorsCommand TurnSignalDecider::getTurnSignal(
   }
 
   // Data
-  const double nearest_dist_threshold = planner_data->parameters.ego_nearest_dist_threshold;
+  const double nearest_dist_threshold = 50.0;
   const double nearest_yaw_threshold = planner_data->parameters.ego_nearest_yaw_threshold;
   const auto & current_pose = planner_data->self_pose->pose;
   const double & current_vel = planner_data->self_odometry->twist.twist.linear.x;
@@ -109,10 +109,9 @@ boost::optional<TurnSignalInfo> TurnSignalDecider::getIntersectionTurnSignalInfo
 
     // lane front and back pose
     Pose lane_front_pose;
-    Pose lane_terminal_pose;
+    Pose lane_back_pose;
     lane_front_pose.position = lanelet::utils::conversion::toGeomMsgPt(lane.centerline3d().front());
-    lane_terminal_pose.position =
-      lanelet::utils::conversion::toGeomMsgPt(lane.centerline3d().back());
+    lane_back_pose.position = lanelet::utils::conversion::toGeomMsgPt(lane.centerline3d().back());
 
     {
       const auto & current_point = lane_front_pose.position;
@@ -124,16 +123,16 @@ boost::optional<TurnSignalInfo> TurnSignalDecider::getIntersectionTurnSignalInfo
       const auto lane_size = lane.centerline3d().size();
       const auto & current_point =
         lanelet::utils::conversion::toGeomMsgPt(lane.centerline3d()[lane_size - 2]);
-      const auto & next_point = lane_front_pose.position;
-      lane_terminal_pose.orientation = calc_orientation(current_point, next_point);
+      const auto & next_point = lane_back_pose.position;
+      lane_back_pose.orientation = calc_orientation(current_point, next_point);
     }
 
     const size_t front_nearest_seg_idx =
       motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
         path.points, lane_front_pose, nearest_dist_threshold, nearest_yaw_threshold);
-    const size_t terminal_nearest_seg_idx =
+    const size_t back_nearest_seg_idx =
       motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-        path.points, lane_terminal_pose, nearest_dist_threshold, nearest_yaw_threshold);
+        path.points, lane_back_pose, nearest_dist_threshold, nearest_yaw_threshold);
 
     // Distance from ego vehicle front pose to front point of the lane
     const double dist_to_front_point = motion_utils::calcSignedArcLength(
@@ -142,19 +141,20 @@ boost::optional<TurnSignalInfo> TurnSignalDecider::getIntersectionTurnSignalInfo
                                        base_link2front_;
 
     // Distance from ego vehicle base link to the terminal point of the lane
-    const double dist_to_terminal_point = motion_utils::calcSignedArcLength(
-      path.points, current_pose.position, current_seg_idx, lane_terminal_pose.position,
-      terminal_nearest_seg_idx);
+    const double dist_to_back_point = motion_utils::calcSignedArcLength(
+      path.points, current_pose.position, current_seg_idx, lane_back_pose.position,
+      back_nearest_seg_idx);
 
-    if (dist_to_terminal_point < 0.0) {
+    if (dist_to_back_point < 0.0) {
       // Vehicle is already passed this lane
       if (desired_start_point_map_.find(lane_id) != desired_start_point_map_.end()) {
         desired_start_point_map_.erase(lane_id);
       }
       continue;
     } else if (search_distance < dist_to_front_point) {
-      break;
+      continue;
     }
+
     const std::string lane_attribute = lane.attributeOr("turn_direction", std::string("none"));
     if (
       (lane_attribute == "right" || lane_attribute == "left") &&
@@ -168,7 +168,7 @@ boost::optional<TurnSignalInfo> TurnSignalDecider::getIntersectionTurnSignalInfo
       turn_signal_info.desired_start_point = desired_start_point_map_.at(lane_id);
       turn_signal_info.required_start_point = lane_front_pose;
       turn_signal_info.required_end_point = get_required_end_point(lane.centerline3d());
-      turn_signal_info.desired_end_point = lane_terminal_pose;
+      turn_signal_info.desired_end_point = lane_back_pose;
       turn_signal_info.turn_signal.command = signal_map.at(lane_attribute);
       signal_queue.push(turn_signal_info);
     }
