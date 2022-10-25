@@ -50,7 +50,7 @@ The computed continuous-time transfer function roots can be printed on the scree
 
 The resulting screen output for a 5th order filter is demonstrated below.
 
-     Roots of Continous Time Filter Transfer Function Denominator are : 
+     Roots of Continuous Time Filter Transfer Function Denominator are : 
     -0.585518 + j 1.80204
     -1.53291 + j 1.11372
     -1.89478 + j 2.32043e-16
@@ -66,7 +66,7 @@ The resulting screen output for a 5th order filter is demonstrated below.
 
 #### Discrete Time Transfer Function (Difference Equations)
 
-The digital filter equivalent of the continuous-time definitions is produced by using the bilinear transformation.
+The digital filter equivalent of the continuous-time definitions is produced by using the bi-linear transformation.
 When creating the discrete-time function of the ButterworthFilter object, its Numerator (Bn) and Denominator (An
 ) coefficients are stored in a vector of filter order size N.
 
