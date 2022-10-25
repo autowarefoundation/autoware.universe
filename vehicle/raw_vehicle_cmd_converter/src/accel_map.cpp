@@ -38,6 +38,9 @@ bool AccelMap::readAccelMapFromCSV(const std::string & csv_path)
   vel_index_ = CSVLoader::getRowIndex(table);
   throttle_index_ = CSVLoader::getColumnIndex(table);
   accel_map_ = CSVLoader::getMap(table);
+  if (!CSVLoader::validateMap(accel_map_, true, true)) {
+    return false;
+  }
   return true;
 }
 
