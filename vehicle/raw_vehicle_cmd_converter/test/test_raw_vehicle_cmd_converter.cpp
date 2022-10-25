@@ -115,21 +115,17 @@ TEST(ConverterTests, AccelMapCalculation)
     return output;
   };
 
-  // case for max vel
-  EXPECT_DOUBLE_EQ(calcThrottle(1.0, 20.0), 0.0);
-  EXPECT_DOUBLE_EQ(calcThrottle(1.5, 20.0), 0.25);
-  EXPECT_DOUBLE_EQ(calcThrottle(3.0, 20.0), 1.0);
+  // case for max vel nominal acc
+  EXPECT_DOUBLE_EQ(calcThrottle(0.0, 20.0), 0.5);
 
-  // case for min throttle
-  EXPECT_DOUBLE_EQ(calcThrottle(6.0, 5.0), 0.0);
-  EXPECT_DOUBLE_EQ(calcThrottle(21.0, 20.0), 1.0);
+  // case for max vel max acc
+  EXPECT_DOUBLE_EQ(calcThrottle(2.0, 5.0), 1.0);
 
   // case for direct access
-  EXPECT_DOUBLE_EQ(calcThrottle(22.0, 10.0), 0.5);
-  EXPECT_DOUBLE_EQ(calcThrottle(46.0, 20.0), 1.0);
+  EXPECT_DOUBLE_EQ(calcThrottle(0.5, 5.0), 0.5);
 
   // case for interpolation
-  EXPECT_DOUBLE_EQ(calcThrottle(24.0, 5.0), 0.25);
+  EXPECT_DOUBLE_EQ(calcThrottle(2.0, 0.0), 0.75);
 
   const auto calcAcceleration = [&](double throttle, double vel) {
     double output;
@@ -137,17 +133,17 @@ TEST(ConverterTests, AccelMapCalculation)
     return output;
   };
 
-  // case for min vel
-  EXPECT_DOUBLE_EQ(calcAcceleration(1.0, 20.0), 3.0);
+  // case for min vel max throttle
+  EXPECT_DOUBLE_EQ(calcAcceleration(1.0, 0.0), 3.0);
 
-  // case for min throttle
-  EXPECT_DOUBLE_EQ(calcAcceleration(0.0, 25.0), 1.0);
+  // case for max vel max throttle
+  EXPECT_DOUBLE_EQ(calcAcceleration(2.0, 10.0), 1.5);
 
   // case for direct access
-  EXPECT_DOUBLE_EQ(calcAcceleration(0.5, 10.0), 22.0);
+  EXPECT_DOUBLE_EQ(calcAcceleration(0.0, 10.0), -0.5);
 
   // case for interpolation
-  EXPECT_DOUBLE_EQ(calcAcceleration(0.75, 5.0), 35.75);
+  EXPECT_DOUBLE_EQ(calcAcceleration(0.75, 5.0), 1.25);
 }
 
 TEST(ConverterTests, BrakeMapCalculation)
@@ -160,21 +156,17 @@ TEST(ConverterTests, BrakeMapCalculation)
     return output;
   };
 
-  // case for min vel
-  EXPECT_DOUBLE_EQ(calcBrake(-1.0, 0.0), 0.0);
-  EXPECT_DOUBLE_EQ(calcBrake(-1.5, 0.0), 0.25);
-  EXPECT_DOUBLE_EQ(calcBrake(-3.0, 0.0), 1.0);
+  // case for min vel min acc
+  EXPECT_DOUBLE_EQ(calcBrake(-2.5, 0.0), 1.0);
 
-  // case for min brake
-  EXPECT_DOUBLE_EQ(calcBrake(-6.0, 5.0), 0.0);
-  EXPECT_DOUBLE_EQ(calcBrake(-21.0, 20.0), 0.0);
+  // case for max vel low acc
+  EXPECT_DOUBLE_EQ(calcBrake(-2.0, 11.0), 0.5);
 
   // case for direct access
-  EXPECT_DOUBLE_EQ(calcBrake(-22.0, 10.0), 0.5);
-  EXPECT_DOUBLE_EQ(calcBrake(-46.0, 20.0), 1.0);
+  EXPECT_DOUBLE_EQ(calcBrake(-2.0, 5.0), 0.5);
 
   // case for interpolation
-  EXPECT_DOUBLE_EQ(calcBrake(-9.0, 5.0), 0.25);
+  EXPECT_DOUBLE_EQ(calcBrake(-2.25, 5.0), 0.75);
 
   const auto calcAcceleration = [&](double brake, double vel) {
     double output;
@@ -182,17 +174,17 @@ TEST(ConverterTests, BrakeMapCalculation)
     return output;
   };
 
-  // case for min vel
-  EXPECT_DOUBLE_EQ(calcAcceleration(1.0, 0.0), -3.0);
+  // case for min vel max brake
+  EXPECT_DOUBLE_EQ(calcAcceleration(1.1, 0.0), -2.0);
 
-  // case for min throttle
-  EXPECT_DOUBLE_EQ(calcAcceleration(0.0, 25.0), -21.0);
+  // case for max vel max brake
+  EXPECT_DOUBLE_EQ(calcAcceleration(1.1, 12.0), -3.0);
 
   // case for direct access
-  EXPECT_DOUBLE_EQ(calcAcceleration(0.5, 10.0), -22.0);
+  EXPECT_DOUBLE_EQ(calcAcceleration(0.5, 10.0), -2.0);
 
   // case for interpolation
-  EXPECT_DOUBLE_EQ(calcAcceleration(0.75, 5.0), -15.0);
+  EXPECT_DOUBLE_EQ(calcAcceleration(0.75, 5.0), -2.25);
 }
 
 TEST(ConverterTests, SteerMapCalculation)
