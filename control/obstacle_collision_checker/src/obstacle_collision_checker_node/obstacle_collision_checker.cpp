@@ -100,6 +100,7 @@ Output ObstacleCollisionChecker::update(const Input & input)
   const auto abs_velocity = raw_abs_velocity < min_velocity ? 0.0 : raw_abs_velocity;
   const auto braking_distance =
     calcBrakingDistance(abs_velocity, param_.max_deceleration, param_.delay_time);
+
   output.resampled_trajectory = cutTrajectory(
     resampleTrajectory(*input.predicted_trajectory, param_.resample_interval), braking_distance);
   output.processing_time_map["resampleTrajectory"] = stop_watch.toc(true);
@@ -107,6 +108,7 @@ Output ObstacleCollisionChecker::update(const Input & input)
   // resample pointcloud
   const auto obstacle_pointcloud =
     getTransformedPointCloud(*input.obstacle_pointcloud, input.obstacle_transform->transform);
+
   const auto filtered_obstacle_pointcloud = filterPointCloudByTrajectory(
     obstacle_pointcloud, output.resampled_trajectory, param_.search_radius);
 
@@ -163,7 +165,7 @@ autoware_auto_planning_msgs::msg::Trajectory ObstacleCollisionChecker::cutTrajec
     const auto remain_distance = length - total_length;
 
     // Over length
-    if (remain_distance <= 0) {
+    if (remain_distance <= 0.0) {
       break;
     }
 
@@ -239,7 +241,9 @@ bool ObstacleCollisionChecker::willCollide(
   const pcl::PointCloud<pcl::PointXYZ> & obstacle_pointcloud,
   const std::vector<LinearRing2d> & vehicle_footprints)
 {
-  for (const auto & vehicle_footprint : vehicle_footprints) {
+  for (size_t i = 1; i < vehicle_footprints.size();
+       i++) {  // skip first footprint because surround obstacle checker handle it
+    const auto & vehicle_footprint = vehicle_footprints.at(i);
     if (hasCollision(obstacle_pointcloud, vehicle_footprint)) {
       RCLCPP_WARN(
         rclcpp::get_logger("obstacle_collision_checker"), "ObstacleCollisionChecker::willCollide");
@@ -254,7 +258,7 @@ bool ObstacleCollisionChecker::hasCollision(
   const pcl::PointCloud<pcl::PointXYZ> & obstacle_pointcloud,
   const LinearRing2d & vehicle_footprint)
 {
-  for (const auto & point : obstacle_pointcloud) {
+  for (const auto & point : obstacle_pointcloud.points) {
     if (boost::geometry::within(
           tier4_autoware_utils::Point2d{point.x, point.y}, vehicle_footprint)) {
       RCLCPP_WARN(
