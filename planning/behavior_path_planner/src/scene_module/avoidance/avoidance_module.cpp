@@ -25,8 +25,8 @@
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <tier4_planning_msgs/msg/avoidance_debug_factor.hpp>
-#include <tier4_planning_msgs/msg/avoidance_debug_msg_array.hpp>
 #include <tier4_planning_msgs/msg/avoidance_debug_msg.hpp>
+#include <tier4_planning_msgs/msg/avoidance_debug_msg_array.hpp>
 
 #include <algorithm>
 #include <limits>

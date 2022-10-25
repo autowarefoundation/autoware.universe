@@ -98,7 +98,7 @@ private:
   std::shared_ptr<LaneChangeParameters> parameters_;
   LaneChangeStatus status_;
   PathShifter path_shifter_;
-  mutable std::shared_ptr<LaneChangeDebugMsgArray> debug_msg_ptr_;
+  mutable LaneChangeDebugMsgArray lane_change_debug_msg_array_;
 
   double lane_change_lane_length_{200.0};
   double check_distance_{100.0};

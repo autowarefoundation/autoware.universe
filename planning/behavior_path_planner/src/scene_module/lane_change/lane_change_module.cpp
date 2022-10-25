@@ -155,6 +155,7 @@ BT::NodeStatus LaneChangeModule::updateState()
   }
 
   if (hasFinishedLaneChange()) {
+    lane_change_debug_msg_array_.lane_change_info.clear();
     current_state_ = BT::NodeStatus::SUCCESS;
     return current_state_;
   }
@@ -421,11 +422,15 @@ std::pair<bool, bool> LaneChangeModule::getSafePath(
     for (const auto & [uuid, debug_data] : object_debug_) {
       LaneChangeDebugMsg debug_msg;
       debug_msg.object_id = uuid;
+      debug_msg.allow_lane_change = debug_data.allow_lane_change;
+      debug_msg.is_front = debug_data.is_front;
+      debug_msg.relative_distance = debug_data.relative_to_ego;
       debug_msg.failed_reason = debug_data.failed_reason;
+      debug_msg.velocity = util::l2Norm(debug_data.object_twist.linear);
       debug_msg_array.lane_change_info.push_back(debug_msg);
     }
 
-    debug_msg_ptr_ = std::make_shared<LaneChangeDebugMsgArray>(debug_msg_array);
+    lane_change_debug_msg_array_ = debug_msg_array;
     if (parameters_->publish_debug_marker) {
       setObjectDebugVisualization();
     } else {
@@ -595,7 +600,8 @@ void LaneChangeModule::setObjectDebugVisualization() const
 
 std::shared_ptr<LaneChangeDebugMsgArray> LaneChangeModule::get_debug_msg_array() const
 {
-  return debug_msg_ptr_;
+  lane_change_debug_msg_array_.header.stamp = clock_->now();
+  return std::make_shared<LaneChangeDebugMsgArray>(lane_change_debug_msg_array_);
 }
 
 void LaneChangeModule::accept_visitor(const std::shared_ptr<SceneModuleVisitor> & visitor) const
