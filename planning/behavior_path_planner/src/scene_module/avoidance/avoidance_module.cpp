@@ -71,7 +71,7 @@ bool AvoidanceModule::isExecutionRequested() const
   DebugData debug;
   const auto avoid_data = calcAvoidancePlanningData(debug);
 
-  const bool has_avoidance_target = !avoid_data.objects.empty();
+  const bool has_avoidance_target = !avoid_data.target_objects.empty();
   return has_avoidance_target ? true : false;
 }
 
@@ -97,7 +97,7 @@ BT::NodeStatus AvoidanceModule::updateState()
 
   DebugData debug;
   const auto avoid_data = calcAvoidancePlanningData(debug);
-  const bool has_avoidance_target = !avoid_data.objects.empty();
+  const bool has_avoidance_target = !avoid_data.target_objects.empty();
   if (!is_plan_running && !has_avoidance_target) {
     current_state_ = BT::NodeStatus::SUCCESS;
   } else {
@@ -158,9 +158,10 @@ AvoidancePlanningData AvoidanceModule::calcAvoidancePlanningData(DebugData & deb
     planner_data_->parameters.forward_path_length, planner_data_->parameters.backward_path_length);
 
   // target objects for avoidance
-  data.objects = calcAvoidanceTargetObjects(data.current_lanelets, data.reference_path, debug);
+  data.target_objects =
+    calcAvoidanceTargetObjects(data.current_lanelets, data.reference_path, debug);
 
-  DEBUG_PRINT("target object size = %lu", data.objects.size());
+  DEBUG_PRINT("target object size = %lu", data.target_objects.size());
 
   return data;
 }
@@ -356,7 +357,7 @@ AvoidLineArray AvoidanceModule::calcShiftLines(
    * Generate raw_shift_lines (shift length, avoidance start point, end point, return point, etc)
    * for each object. These raw shift points are merged below to compute appropriate shift points.
    */
-  current_raw_shift_lines = calcRawShiftLinesFromObjects(avoidance_data_.objects);
+  current_raw_shift_lines = calcRawShiftLinesFromObjects(avoidance_data_.target_objects);
   debug.current_raw_shift = current_raw_shift_lines;
 
   /**
@@ -1957,7 +1958,7 @@ boost::optional<AvoidLine> AvoidanceModule::calcIntersectionShiftLine(
     constexpr double intersection_shift_margin = 1.0;
 
     double shift_length = 0.0;  // default (no obstacle) is zero.
-    for (const auto & obj : avoidance_data_.objects) {
+    for (const auto & obj : avoidance_data_.target_objects) {
       if (
         std::abs(obj.longitudinal - ego_to_intersection_dist) > intersection_obstacle_check_dist) {
         continue;
@@ -2382,8 +2383,8 @@ void AvoidanceModule::updateData()
   avoidance_data_ = calcAvoidancePlanningData(debug_data_);
 
   // TODO(Horibe): this is not tested yet, disable now.
-  updateRegisteredObject(avoidance_data_.objects);
-  CompensateDetectionLost(avoidance_data_.objects);
+  updateRegisteredObject(avoidance_data_.target_objects);
+  CompensateDetectionLost(avoidance_data_.target_objects);
 
   path_shifter_.setPath(avoidance_data_.reference_path);
 
@@ -2677,8 +2678,8 @@ void AvoidanceModule::setDebugData(const PathShifter & shifter, const DebugData 
 
   add(createLaneletsAreaMarkerArray(*debug.current_lanelets, "current_lanelet", 0.0, 1.0, 0.0));
   add(createLaneletsAreaMarkerArray(*debug.expanded_lanelets, "expanded_lanelet", 0.8, 0.8, 0.0));
-  add(createAvoidanceObjectsMarkerArray(avoidance_data_.objects, "avoidance_object"));
-  add(makeOverhangToRoadShoulderMarkerArray(avoidance_data_.objects, "overhang"));
+  add(createAvoidanceObjectsMarkerArray(avoidance_data_.target_objects, "avoidance_object"));
+  add(makeOverhangToRoadShoulderMarkerArray(avoidance_data_.target_objects, "overhang"));
   add(createOverhangFurthestLineStringMarkerArray(
     *debug.farthest_linestring_from_overhang, "farthest_linestring_from_overhang", 1.0, 0.0, 1.0));
 
