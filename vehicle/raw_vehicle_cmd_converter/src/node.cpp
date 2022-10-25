@@ -43,7 +43,6 @@ RawVehicleCommandConverterNode::RawVehicleCommandConverterNode(
   use_steer_fb_ = declare_parameter("use_steer_fb", true);
   if (convert_accel_cmd_) {
     if (!accel_map_.readAccelMapFromCSV(csv_path_accel_map)) {
-      std::cerr << "thow?" << std::endl;
       throw std::invalid_argument("Accel map is invalid.");
     }
   }
