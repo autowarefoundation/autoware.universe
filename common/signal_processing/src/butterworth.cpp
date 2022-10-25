@@ -52,9 +52,9 @@ void ButterworthFilter::Buttord(
   setCuttoffFrequency(right_lim);
 }
 
-void ButterworthFilter::setOrder(const int & N) { order_ = N; }
+void ButterworthFilter::setOrder(const int & N) { filter_specs_.N = N; }
 
-void ButterworthFilter::setCuttoffFrequency(const double & Wc) { cutoff_frequency_rad_sec = Wc; }
+void ButterworthFilter::setCuttoffFrequency(const double & Wc) { filter_specs_.Wc_rad_sec = Wc; }
 
 /**
  * @brief Sets the cut-off and sampling frequencies.
@@ -72,14 +72,11 @@ void ButterworthFilter::setCuttoffFrequency(const double & fc, const double & fs
     return;
   }
 
-  cutoff_frequency_rad_sec = fc * 2.0 * M_PI;
-  sampling_frequency_hz = fs;
+  filter_specs_.Wc_rad_sec = fc * 2.0 * M_PI;
+  filter_specs_.fs = fs;
 }
 
-sOrderCutoff ButterworthFilter::getOrderCutOff() const
-{
-  return sOrderCutoff{order_, cutoff_frequency_rad_sec};
-}
+sOrderCutoff ButterworthFilter::getOrderCutOff() const { return filter_specs_; }
 
 /**
  * @brief Matlab equivalent : [b, a]  = butter(n, Wn, 's')
@@ -90,23 +87,31 @@ void ButterworthFilter::computeContinuousTimeTF(const bool & use_sampling_freque
   computePhaseAngles();
   computeContinuousTimeRoots(use_sampling_frequency);
 
+  auto cutoff_frequency_rad_sec = filter_specs_.Wc_rad_sec;
+  auto order = filter_specs_.N;
+
   continuous_time_denominator_ = poly(continuous_time_roots_);
-  continuous_time_numerator_ = std::pow(cutoff_frequency_rad_sec, order_);
+  continuous_time_numerator_ = std::pow(cutoff_frequency_rad_sec, order);
 }
 
 void ButterworthFilter::computePhaseAngles()
 {
-  phase_angles_.resize(order_, 0.);
+  const auto & order = filter_specs_.N;
+  phase_angles_.resize(order, 0.);
 
   for (size_t i = 0; i < phase_angles_.size(); ++i) {
     auto & x = phase_angles_.at(i);
-    x = M_PI_2 + (M_PI * (2.0 * static_cast<double>((i + 1)) - 1.0) / (2.0 * order_));
+    x = M_PI_2 + (M_PI * (2.0 * static_cast<double>((i + 1)) - 1.0) / (2.0 * order));
   }
 }
 
 void ButterworthFilter::computeContinuousTimeRoots(const bool & use_sampling_frequency)
 {
-  continuous_time_roots_.resize(order_, {0.0, 0.0});
+  const auto & order = filter_specs_.N;
+  const auto & sampling_frequency_hz = filter_specs_.fs;
+  const auto & cutoff_frequency_rad_sec = filter_specs_.Wc_rad_sec;
+
+  continuous_time_roots_.resize(order, {0.0, 0.0});
 
   if (use_sampling_frequency) {
     const double & Fc = (sampling_frequency_hz / M_PI) *
@@ -165,7 +170,7 @@ void ButterworthFilter::printFilterContinuousTimeRoots() const
 }
 void ButterworthFilter::printContinuousTimeTF() const
 {
-  const auto & n = order_;
+  const auto & n = filter_specs_.N;
 
   RCLCPP_INFO(
     rclcpp::get_logger("rclcpp"), "\nThe Continuous Time Transfer Function of the Filter is ;\n");
@@ -196,11 +201,17 @@ void ButterworthFilter::printContinuousTimeTF() const
  * */
 void ButterworthFilter::computeDiscreteTimeTF(const bool & use_sampling_frequency)
 {
-  discrete_time_zeros_.resize(order_, {-1.0, 0.0});  // Butter puts zeros at -1.0 for causality
-  discrete_time_roots_.resize(order_, {0.0, 0.0});
+  const auto & order = filter_specs_.N;
+  const auto & sampling_frequency_hz = filter_specs_.fs;
 
-  An_.resize(order_ + 1, 0.0);
-  Bn_.resize(order_ + 1, 0.0);
+  discrete_time_zeros_.resize(order, {-1.0, 0.0});  // Butter puts zeros at -1.0 for causality
+  discrete_time_roots_.resize(order, {0.0, 0.0});
+
+  auto & An_ = AnBn_.An;
+  auto & Bn_ = AnBn_.Bn;
+
+  An_.resize(order + 1, 0.0);
+  Bn_.resize(order + 1, 0.0);
 
   discrete_time_gain_ = {continuous_time_numerator_, 0.0};
 
@@ -268,7 +279,7 @@ void ButterworthFilter::computeDiscreteTimeTF(const bool & use_sampling_frequenc
 }
 void ButterworthFilter::printDiscreteTimeTF() const
 {
-  const int & n = order_;
+  const int & n = filter_specs_.N;
 
   std::stringstream stream;
   stream << "\nThe Discrete Time Transfer Function of the Filter is ;\n";
@@ -288,10 +299,9 @@ void ButterworthFilter::printDiscreteTimeTF() const
 
   RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[%s]", stream.str().c_str());
 }
-std::vector<double> ButterworthFilter::getAn() const { return An_; }
-std::vector<double> ButterworthFilter::getBn() const { return Bn_; }
-
-sDifferenceAnBn ButterworthFilter::getAnBn() const { return {An_, Bn_}; }
+std::vector<double> ButterworthFilter::getAn() const { return AnBn_.An; }
+std::vector<double> ButterworthFilter::getBn() const { return AnBn_.Bn; }
+sDifferenceAnBn ButterworthFilter::getAnBn() const { return AnBn_; }
 
 void ButterworthFilter::printFilterSpecs() const
 {
@@ -300,9 +310,9 @@ void ButterworthFilter::printFilterSpecs() const
    *
    * */
 
-  RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "The order of the filter : %d ", this->order_);
+  RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "The order of the filter : %d ", this->filter_specs_.N);
 
   RCLCPP_INFO(
     rclcpp::get_logger("rclcpp"), "Cut-off Frequency : %2.2f rad/sec",
-    this->cutoff_frequency_rad_sec);
+    this->filter_specs_.Wc_rad_sec);
 }

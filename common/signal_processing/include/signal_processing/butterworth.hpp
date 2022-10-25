@@ -36,8 +36,9 @@ void print(Args &&... args)
 
 struct sOrderCutoff
 {
-  int N{};
-  double Wc{};
+  int N{1};
+  double Wc_rad_sec{};  // sampling frequency rad/sec
+  double fs{1.};        // cut-off frequency Hz
 };
 
 struct sDifferenceAnBn
@@ -80,13 +81,9 @@ public:
 
 private:
   // member variables
-  int order_{1};                      // filter order
-  double cutoff_frequency_rad_sec{};  // filter cut-off frequency [rad/sec]
+  sOrderCutoff filter_specs_{};
 
-  // Sampling frequency
-  double sampling_frequency_hz{1.0};
-
-  const double Td_{2.};  // constant of bilinear transformation
+  const double Td_{2.};  // constant of bi-linear transformation
 
   // Gain of the discrete time function
   std::complex<double> discrete_time_gain_{1.0, 0.0};
@@ -108,9 +105,7 @@ private:
   std::vector<std::complex<double>> discrete_time_numerator_{{0.0, 0.0}};
 
   // Numerator and Denominator Coefficients Bn and An of Discrete Time Filter
-
-  std::vector<double> An_{0.0};
-  std::vector<double> Bn_{0.0};
+  sDifferenceAnBn AnBn_{};
 
   // METHODS
   // polynomial function returns the coefficients given the roots of a polynomial

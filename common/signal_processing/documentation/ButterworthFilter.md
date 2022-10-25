@@ -7,7 +7,7 @@ constructor creates the object without any argument.
 The filter can be prepared in three ways. If the filter specifications are known, such as the pass-band, and stop-band
 frequencies (Wp and Ws) together with the pass-band and stop-band ripple magnitudes (Ap and As), one can call the
 filter's buttord method with these arguments to obtain the recommended filter order (N) and cut-off frequency
-(Wc  [rad/s]).
+(Wc_rad_sec  [rad/s]).
 
 ![img.png](img.png)
 Figure 1. Butterworth Low-pass filter specification from [1].
@@ -28,12 +28,12 @@ An example call is demonstrated below;
     sOrderCutoff NWc = bf.getOrderCutOff();]
     
     cout << " The computed order is ;" << NWc.N << endl;
-    cout << " The computed cut-off frequency is ;" << NWc.Wc << endl;
+    cout << " The computed cut-off frequency is ;" << NWc.Wc_rad_sec << endl;
 
 The filter order and cut-off frequency can be obtained in a struct using bf.getOrderCutoff() method. These specs can be
 printed on the screen by calling PrintFilterSpecs() method. If the user would like to define the order and cut-off
 frequency manually, the setter methods for these variables can be called to set the filter order (N) and the desired
-cut-off frequency (Wc [rad/sec]) for the filter.
+cut-off frequency (Wc_rad_sec [rad/sec]) for the filter.
 
 #### Obtaining Filter Transfer Functions
 

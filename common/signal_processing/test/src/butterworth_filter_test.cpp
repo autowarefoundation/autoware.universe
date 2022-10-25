@@ -44,7 +44,7 @@ TEST_F(ButterWorthTestFixture, butterworthOrderTest)
   bf.printDiscreteTimeTF();
 
   ASSERT_EQ(5, NWc.N);
-  ASSERT_NEAR(1.89478, NWc.Wc, tol);
+  ASSERT_NEAR(1.89478, NWc.Wc_rad_sec, tol);
 
   // test transfer functions
   bf.computeContinuousTimeTF();
