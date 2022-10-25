@@ -120,9 +120,8 @@ boost::optional<TurnSignalInfo> TurnSignalDecider::getIntersectionTurnSignalInfo
     }
 
     {
-      const auto lane_size = lane.centerline3d().size();
-      const auto & current_point =
-        lanelet::utils::conversion::toGeomMsgPt(lane.centerline3d()[lane_size - 2]);
+      const auto & current_point = lanelet::utils::conversion::toGeomMsgPt(
+        lane.centerline3d()[lane.centerline3d().size() - 2]);
       const auto & next_point = lane_back_pose.position;
       lane_back_pose.orientation = calc_orientation(current_point, next_point);
     }
