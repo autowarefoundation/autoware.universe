@@ -84,7 +84,7 @@ TEST_F(ButterWorthTestFixture, butterDefinedSamplingOrder1)
 
   // Prepare the filter
   bf.setOrder(order);
-  bf.setCuttoffFrequency(cut_off_frq_hz, sampling_frq_hz);
+  bf.setCutOffFrequency(cut_off_frq_hz, sampling_frq_hz);
   bf.computeContinuousTimeTF(use_sampling_frequency);
   bf.computeDiscreteTimeTF(use_sampling_frequency);
 
@@ -113,7 +113,7 @@ TEST_F(ButterWorthTestFixture, butterDefinedSamplingOrder2)
 
   // Prepare the filter
   bf.setOrder(order);
-  bf.setCuttoffFrequency(cut_off_frq_hz, sampling_frq_hz);
+  bf.setCutOffFrequency(cut_off_frq_hz, sampling_frq_hz);
   bf.computeContinuousTimeTF(use_sampling_frequency);
   bf.computeDiscreteTimeTF(use_sampling_frequency);
 
@@ -142,7 +142,7 @@ TEST_F(ButterWorthTestFixture, butterDefinedSamplingOrder3)
 
   // Prepare the filter
   bf.setOrder(order);
-  bf.setCuttoffFrequency(cut_off_frq_hz, sampling_frq_hz);
+  bf.setCutOffFrequency(cut_off_frq_hz, sampling_frq_hz);
   bf.computeContinuousTimeTF(use_sampling_frequency);
   bf.computeDiscreteTimeTF(use_sampling_frequency);
 

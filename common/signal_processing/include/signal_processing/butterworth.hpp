@@ -60,10 +60,10 @@ public:
   void Buttord(double const & Wp, double const & Ws, double const & Ap, double const & As);
 
   // Setters and Getters
-  void setCuttoffFrequency(double const & Wc);  // Wc is the cut-off frequency in [rad/sec]
+  void setCutOffFrequency(double const & Wc);  // Wc is the cut-off frequency in [rad/sec]
 
   // fc is cut-off frequency in [Hz] and fs is the sampling frequency in [Hz]
-  void setCuttoffFrequency(double const & fc, double const & fs);
+  void setCutOffFrequency(double const & fc, double const & fs);
   void setOrder(int const & N);
 
   // Get the order, cut-off frequency and other filter properties

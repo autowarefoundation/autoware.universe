@@ -102,7 +102,7 @@ The filter is prepared by the following calling options;
 
      // 3rd METHOD defining a sampling frequency together with the cut-off fc, fs
      bf.setOrder(2);
-     bf.setCuttoffFrequency(10, 100);
+     bf.setCutOffFrequency(10, 100);
 
 At this step, we define a boolean variable whether to use the pre-warping option or not.
 

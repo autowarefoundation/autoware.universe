@@ -49,19 +49,19 @@ void ButterworthFilter::Buttord(
   double right_lim = Ws * (std::pow((std::pow(10.0, As / 10.0) - 1.0), -1.0 / (2. * order)));
   // double left_lim = Wp * (std::pow((std::pow(10.0, Ap / 10.0) - 1.0), -1.0 / (2. * order)));
 
-  setCuttoffFrequency(right_lim);
+  setCutOffFrequency(right_lim);
 }
 
 void ButterworthFilter::setOrder(const int & N) { filter_specs_.N = N; }
 
-void ButterworthFilter::setCuttoffFrequency(const double & Wc) { filter_specs_.Wc_rad_sec = Wc; }
+void ButterworthFilter::setCutOffFrequency(const double & Wc) { filter_specs_.Wc_rad_sec = Wc; }
 
 /**
  * @brief Sets the cut-off and sampling frequencies.
  * @param fc [in] cut-off frequency in Hz.
  * @param fs [in] sampling frequency in Hz.
  * */
-void ButterworthFilter::setCuttoffFrequency(const double & fc, const double & fs)
+void ButterworthFilter::setCutOffFrequency(const double & fc, const double & fs)
 {
   /*
    * fc is the cut-off frequency in [Hz]
