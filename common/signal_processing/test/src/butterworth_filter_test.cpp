@@ -17,15 +17,15 @@ TEST_F(ButterWorthTestFixture, butterworthOrderTest)
   double tol = 1e-4;
 
   // 1st Method
-  double const & Wp{2.};   // pass-band frequency [rad/sec]
-  double const & Ws{3.};   // stop-band frequency [rad/sec]
-  double const & Ap{6.};   // pass-band ripple mag or loss [dB]
-  double const & As{20.};  // stop band ripple attenuation [dB]
+  const double & Wp{2.};   // pass-band frequency [rad/sec]
+  const double & Ws{3.};   // stop-band frequency [rad/sec]
+  const double & Ap{6.};   // pass-band ripple mag or loss [dB]
+  const double & As{20.};  // stop band ripple attenuation [dB]
 
   ButterworthFilter bf;
   bf.Buttord(Wp, Ws, Ap, As);
 
-  auto const & NWc = bf.getOrderCutOff();
+  const auto & NWc = bf.getOrderCutOff();
   // print("The computed order and frequency for the give specification : ");
   // print("Minimum order N = ", NWc.N, ", and The cut-off frequency Wc = ", NWc.Wc, "rad/sec \n");
   bf.printFilterSpecs();
@@ -50,8 +50,8 @@ TEST_F(ButterWorthTestFixture, butterworthOrderTest)
   bf.computeContinuousTimeTF();
   bf.computeDiscreteTimeTF();
 
-  std::vector<double> const & An = bf.getAn();
-  std::vector<double> const & Bn = bf.getBn();
+  const std::vector<double> & An = bf.getAn();
+  const std::vector<double> & Bn = bf.getBn();
 
   /**
    * Bd = [0.1913    0.9564    1.9128    1.9128    0.9564    0.1913]
@@ -74,13 +74,13 @@ TEST_F(ButterWorthTestFixture, butterworthOrderTest)
 TEST_F(ButterWorthTestFixture, butterDefinedSamplingOrder1)
 {
   ButterworthFilter bf;
-  double tol{1e-12};
+  const double tol{1e-12};
 
   // Test with a defined sampling frequency
-  int order{1};
-  double cut_off_frq_hz{5.};
-  double sampling_frq_hz{40.};
-  bool use_sampling_frequency = true;
+  const int order{1};
+  const double cut_off_frq_hz{5.};
+  const double sampling_frq_hz{40.};
+  const bool use_sampling_frequency = true;
 
   // Prepare the filter
   bf.setOrder(order);
@@ -88,8 +88,8 @@ TEST_F(ButterWorthTestFixture, butterDefinedSamplingOrder1)
   bf.computeContinuousTimeTF(use_sampling_frequency);
   bf.computeDiscreteTimeTF(use_sampling_frequency);
 
-  auto const & An = bf.getAn();
-  auto const & Bn = bf.getBn();
+  const auto & An = bf.getAn();
+  const auto & Bn = bf.getBn();
 
   std::vector<double> const & An_gtruth{1., -0.414213562373095};
   std::vector<double> const & Bn_gtruth{0.292893218813452, 0.292893218813452};
@@ -103,13 +103,13 @@ TEST_F(ButterWorthTestFixture, butterDefinedSamplingOrder1)
 TEST_F(ButterWorthTestFixture, butterDefinedSamplingOrder2)
 {
   ButterworthFilter bf;
-  double tol{1e-12};
+  const double tol{1e-12};
 
   // Test with defined sampling frequency
-  int order{2};
-  double cut_off_frq_hz{10.};
-  double sampling_frq_hz{100};
-  bool use_sampling_frequency = true;
+  const int order{2};
+  const double cut_off_frq_hz{10.};
+  const double sampling_frq_hz{100};
+  const bool use_sampling_frequency = true;
 
   // Prepare the filter
   bf.setOrder(order);
@@ -117,11 +117,11 @@ TEST_F(ButterWorthTestFixture, butterDefinedSamplingOrder2)
   bf.computeContinuousTimeTF(use_sampling_frequency);
   bf.computeDiscreteTimeTF(use_sampling_frequency);
 
-  auto const & An = bf.getAn();
-  auto const & Bn = bf.getBn();
+  const auto & An = bf.getAn();
+  const auto & Bn = bf.getBn();
 
-  std::vector<double> const & An_gtruth{1., -1.142980502539901, 0.412801598096189};
-  std::vector<double> const & Bn_gtruth{0.067455273889072, 0.134910547778144, 0.067455273889072};
+  const std::vector<double> & An_gtruth{1., -1.142980502539901, 0.412801598096189};
+  const std::vector<double> & Bn_gtruth{0.067455273889072, 0.134910547778144, 0.067455273889072};
 
   for (size_t k = 0; k < An.size(); ++k) {
     ASSERT_NEAR(An[k], An_gtruth[k], tol);
@@ -132,13 +132,13 @@ TEST_F(ButterWorthTestFixture, butterDefinedSamplingOrder2)
 TEST_F(ButterWorthTestFixture, butterDefinedSamplingOrder3)
 {
   ButterworthFilter bf;
-  double tol{1e-12};
+  const double tol{1e-12};
 
   // Test with a defined sampling frequency
-  int order{3};
-  double cut_off_frq_hz{10.};
-  double sampling_frq_hz{100};
-  bool use_sampling_frequency = true;
+  const int order{3};
+  const double cut_off_frq_hz{10.};
+  const double sampling_frq_hz{100};
+  const bool use_sampling_frequency = true;
 
   // Prepare the filter
   bf.setOrder(order);
@@ -146,12 +146,13 @@ TEST_F(ButterWorthTestFixture, butterDefinedSamplingOrder3)
   bf.computeContinuousTimeTF(use_sampling_frequency);
   bf.computeDiscreteTimeTF(use_sampling_frequency);
 
-  auto const & An = bf.getAn();
-  auto const & Bn = bf.getBn();
+  const auto & An = bf.getAn();
+  const auto & Bn = bf.getBn();
 
-  std::vector<double> const & An_gtruth{
+  const std::vector<double> & An_gtruth{
     1., -1.760041880343169, 1.182893262037831, -0.278059917634546};
-  std::vector<double> const & Bn_gtruth{
+
+  const std::vector<double> & Bn_gtruth{
     0.018098933007514, 0.054296799022543, 0.054296799022543, 0.018098933007514};
 
   for (size_t k = 0; k < An.size(); ++k) {

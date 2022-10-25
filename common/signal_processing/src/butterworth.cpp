@@ -52,7 +52,7 @@ void ButterworthFilter::Buttord(
   setCuttoffFrequency(right_lim);
 }
 
-void ButterworthFilter::setOrder(int const & N) { order_ = N; }
+void ButterworthFilter::setOrder(const int & N) { order_ = N; }
 
 void ButterworthFilter::setCuttoffFrequency(const double & Wc) { cutoff_frequency_rad_sec = Wc; }
 
@@ -109,7 +109,7 @@ void ButterworthFilter::computeContinuousTimeRoots(const bool & use_sampling_fre
   continuous_time_roots_.resize(order_, {0.0, 0.0});
 
   if (use_sampling_frequency) {
-    double const & Fc = (sampling_frequency_hz / M_PI) *
+    const double & Fc = (sampling_frequency_hz / M_PI) *
                         tan(cutoff_frequency_rad_sec / (sampling_frequency_hz * 2.0));
 
     for (size_t i = 0; i < continuous_time_roots_.size(); ++i) {
@@ -132,7 +132,7 @@ std::vector<std::complex<double>> ButterworthFilter::poly(
 {
   std::vector<std::complex<double>> coefficients(roots.size() + 1, {0, 0});
 
-  int const n{static_cast<int>(roots.size())};
+  const int n{static_cast<int>(roots.size())};
 
   coefficients[0] = {1.0, 0.0};
 
@@ -154,7 +154,7 @@ void ButterworthFilter::printFilterContinuousTimeRoots() const
   std::stringstream stream;
   stream << "\n The roots of the continuous-time filter Transfer Function's Denominator are : \n";
 
-  for (auto const & x : continuous_time_roots_) {
+  for (const auto & x : continuous_time_roots_) {
     stream << std::fixed << std::setprecision(2) << std::real(x) << " j";
 
     auto txt = std::imag(x) < 0 ? " - j " : " + j ";
@@ -165,7 +165,7 @@ void ButterworthFilter::printFilterContinuousTimeRoots() const
 }
 void ButterworthFilter::printContinuousTimeTF() const
 {
-  auto const & n = order_;
+  const auto & n = order_;
 
   RCLCPP_INFO(
     rclcpp::get_logger("rclcpp"), "\nThe Continuous Time Transfer Function of the Filter is ;\n");
@@ -180,7 +180,7 @@ void ButterworthFilter::printContinuousTimeTF() const
 
   stream << std::fixed << std::setprecision(2) << continuous_time_denominator_[n].real();
 
-  auto const & tf_text = stream.str();
+  const auto & tf_text = stream.str();
   RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[%s]", tf_text.c_str());
 }
 
@@ -220,10 +220,10 @@ void ButterworthFilter::computeDiscreteTimeTF(const bool & use_sampling_frequenc
     discrete_time_numerator_ = poly(discrete_time_zeros_);
 
     // Compute Discrete Time Gain
-    auto const & sum_num = std::accumulate(
+    const auto & sum_num = std::accumulate(
       discrete_time_numerator_.cbegin(), discrete_time_numerator_.cend(), std::complex<double>{});
 
-    auto const & sum_den = std::accumulate(
+    const auto & sum_den = std::accumulate(
       discrete_time_denominator_.cbegin(), discrete_time_denominator_.cend(),
       std::complex<double>{});
 
@@ -236,7 +236,7 @@ void ButterworthFilter::computeDiscreteTimeTF(const bool & use_sampling_frequenc
     }
 
     for (size_t i = 0; i < discrete_time_denominator_.size(); ++i) {
-      auto const & dd = discrete_time_denominator_[i];
+      const auto & dd = discrete_time_denominator_[i];
       An_[i] = dd.real();
     }
   } else {
@@ -259,14 +259,14 @@ void ButterworthFilter::computeDiscreteTimeTF(const bool & use_sampling_frequenc
     }
 
     for (size_t i = 0; i < discrete_time_denominator_.size(); ++i) {
-      auto const & dd = discrete_time_denominator_[i];
+      const auto & dd = discrete_time_denominator_[i];
       An_[i] = dd.real();
     }
   }
 }
 void ButterworthFilter::printDiscreteTimeTF() const
 {
-  int const & n = order_;
+  const int & n = order_;
 
   // *****
   std::stringstream stream;
