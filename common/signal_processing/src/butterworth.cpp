@@ -14,6 +14,8 @@
 
 #include "signal_processing/butterworth.hpp"
 
+#include <numeric>
+
 /**
  *  @brief Computes the minimum of an analog Butterworth filter order and cut-off frequency give
  *  the pass and stop-band frequencies and ripple magnitude (tolerances).
@@ -203,18 +205,14 @@ void ButterworthFilter::computeDiscreteTimeTF(const bool & use_sampling_frequenc
     discrete_time_numerator_ = poly(discrete_time_zeros_);
 
     // Compute Discrete Time Gain
-    std::complex<double> sum_num{0.0, 0.0};
-    std::complex<double> sum_den{0.0, 0.0};
+    auto const & sum_num = std::accumulate(
+      discrete_time_numerator_.cbegin(), discrete_time_numerator_.cend(), std::complex<double>{});
 
-    for (auto const & n : discrete_time_numerator_) {
-      sum_num += n;
-    }
+    auto const & sum_den = std::accumulate(
+      discrete_time_denominator_.cbegin(), discrete_time_denominator_.cend(),
+      std::complex<double>{});
 
-    for (auto const & n : discrete_time_denominator_) {
-      sum_den += n;
-    }
-
-    discrete_time_gain_ = (sum_den / sum_num);
+    discrete_time_gain_ = std::abs(sum_den / sum_num);
 
     for (size_t i = 0; i < discrete_time_numerator_.size(); ++i) {
       auto & dn = discrete_time_numerator_[i];
@@ -235,10 +233,8 @@ void ButterworthFilter::computeDiscreteTimeTF(const bool & use_sampling_frequenc
       discrete_time_gain_ = discrete_time_gain_ / (1.0 - continuous_time_roots_[i]);
     }
 
-    discrete_time_denominator_ = poly(discrete_time_roots_);
-
     // Obtain the coefficients of numerator and denominator
-
+    discrete_time_denominator_ = poly(discrete_time_roots_);
     discrete_time_numerator_ = poly(discrete_time_zeros_);
 
     for (size_t i = 0; i < discrete_time_numerator_.size(); ++i) {

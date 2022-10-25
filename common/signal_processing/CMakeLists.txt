@@ -23,3 +23,5 @@ endif()
 
 ament_auto_package()
 
+add_executable(main_butterworth usage_examples/main_butterworth.cpp)
+target_link_libraries(main_butterworth lowpass_filters)
