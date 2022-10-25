@@ -91,35 +91,33 @@ void ButterworthFilter::computeContinuousTimeTF(const bool & use_sampling_freque
 void ButterworthFilter::computePhaseAngles()
 {
   phase_angles_.resize(order_, 0.);
-  int k{1};
 
-  for (auto & x : phase_angles_) {
-    x = M_PI_2 + (M_PI * (2.0 * k - 1.0) / (2.0 * order_));
-    k++;
+  for (size_t i = 0; i < phase_angles_.size(); ++i) {
+    auto & x = phase_angles_.at(i);
+    x = M_PI_2 + (M_PI * (2.0 * static_cast<double>((i + 1)) - 1.0) / (2.0 * order_));
   }
 }
 
 void ButterworthFilter::computeContinuousTimeRoots(const bool & use_sampling_frequency)
 {
   continuous_time_roots_.resize(order_, {0.0, 0.0});
-  int k{};
 
   if (use_sampling_frequency) {
     double const & Fc = (sampling_frequency_hz / M_PI) *
                         tan(cutoff_frequency_rad_sec / (sampling_frequency_hz * 2.0));
 
-    for (auto & x : continuous_time_roots_) {
+    for (size_t i = 0; i < continuous_time_roots_.size(); ++i) {
+      auto & x = continuous_time_roots_[i];
       x = {
-        std::cos(phase_angles_[k]) * Fc * 2.0 * M_PI, std::sin(phase_angles_[k]) * Fc * 2.0 * M_PI};
-      k++;
+        std::cos(phase_angles_[i]) * Fc * 2.0 * M_PI, std::sin(phase_angles_[i]) * Fc * 2.0 * M_PI};
     }
 
   } else {
-    for (auto & x : continuous_time_roots_) {
+    for (size_t i = 0; i < continuous_time_roots_.size(); ++i) {
+      auto & x = continuous_time_roots_[i];
       x = {
-        cutoff_frequency_rad_sec * cos(phase_angles_[k]),
-        cutoff_frequency_rad_sec * sin(phase_angles_[k])};
-      k++;
+        cutoff_frequency_rad_sec * cos(phase_angles_[i]),
+        cutoff_frequency_rad_sec * sin(phase_angles_[i])};
     }
   }
 }
@@ -190,19 +188,18 @@ void ButterworthFilter::computeDiscreteTimeTF(const bool & use_sampling_frequenc
   discrete_time_gain_ = {continuous_time_numerator_, 0.0};
 
   // Bi-linear Transformation of the Roots
-  int k{};
 
   if (use_sampling_frequency) {
-    for (auto & dr : discrete_time_roots_) {
-      dr = (1.0 + continuous_time_roots_[k] / (sampling_frequency_hz * 2.0)) /
-           (1.0 - continuous_time_roots_[k] / (sampling_frequency_hz * 2.0));
-      k++;
+    for (size_t i = 0; i < discrete_time_roots_.size(); ++i) {
+      auto & dr = discrete_time_roots_[i];
+
+      dr = (1.0 + continuous_time_roots_[i] / (sampling_frequency_hz * 2.0)) /
+           (1.0 - continuous_time_roots_[i] / (sampling_frequency_hz * 2.0));
     }
 
     discrete_time_denominator_ = poly(discrete_time_roots_);
 
     // Obtain the coefficients of numerator and denominator
-    k = 0;
     discrete_time_numerator_ = poly(discrete_time_zeros_);
 
     // Compute Discrete Time Gain
@@ -219,42 +216,40 @@ void ButterworthFilter::computeDiscreteTimeTF(const bool & use_sampling_frequenc
 
     discrete_time_gain_ = (sum_den / sum_num);
 
-    for (auto && dn : discrete_time_numerator_) {
+    for (size_t i = 0; i < discrete_time_numerator_.size(); ++i) {
+      auto & dn = discrete_time_numerator_[i];
       dn = dn * discrete_time_gain_;
-      Bn_[k] = dn.real();
-      k++;
+      Bn_[i] = dn.real();
     }
 
-    k = 0;
-    for (auto const & dd : discrete_time_denominator_) {
-      An_[k] = dd.real();
-      k++;
+    for (size_t i = 0; i < discrete_time_denominator_.size(); ++i) {
+      auto const & dd = discrete_time_denominator_[i];
+      An_[i] = dd.real();
     }
   } else {
-    for (auto && dr : discrete_time_roots_) {
-      dr = (1.0 + Td_ * continuous_time_roots_[k] / 2.0) /
-           (1.0 - Td_ * continuous_time_roots_[k] / 2.0);
+    for (size_t i = 0; i < discrete_time_roots_.size(); ++i) {
+      auto & dr = discrete_time_roots_[i];
+      dr = (1.0 + Td_ * continuous_time_roots_[i] / 2.0) /
+           (1.0 - Td_ * continuous_time_roots_[i] / 2.0);
 
-      discrete_time_gain_ = discrete_time_gain_ / (1.0 - continuous_time_roots_[k]);
-      k++;
+      discrete_time_gain_ = discrete_time_gain_ / (1.0 - continuous_time_roots_[i]);
     }
 
     discrete_time_denominator_ = poly(discrete_time_roots_);
 
     // Obtain the coefficients of numerator and denominator
-    k = 0;
+
     discrete_time_numerator_ = poly(discrete_time_zeros_);
 
-    for (auto && dn : discrete_time_numerator_) {
+    for (size_t i = 0; i < discrete_time_numerator_.size(); ++i) {
+      auto & dn = discrete_time_numerator_[i];
       dn = dn * discrete_time_gain_;
-      Bn_[k] = dn.real();
-      k++;
+      Bn_[i] = dn.real();
     }
 
-    k = 0;
-    for (auto const & dd : discrete_time_denominator_) {
-      An_[k] = dd.real();
-      k++;
+    for (size_t i = 0; i < discrete_time_denominator_.size(); ++i) {
+      auto const & dd = discrete_time_denominator_[i];
+      An_[i] = dd.real();
     }
   }
 }
