@@ -30,6 +30,7 @@ using tier4_autoware_utils::createDefaultMarker;
 using tier4_autoware_utils::createMarkerColor;
 using tier4_autoware_utils::createMarkerScale;
 using tier4_autoware_utils::createPoint;
+using tier4_autoware_utils::rad2deg;
 using visualization_msgs::msg::Marker;
 
 MarkerArray createAvoidLineMarkerArray(
@@ -82,42 +83,151 @@ MarkerArray createAvoidLineMarkerArray(
   return msg;
 }
 
-MarkerArray createAvoidanceObjectsMarkerArray(
+MarkerArray createTargetObjectsMarkerArray(
   const behavior_path_planner::ObjectDataArray & objects, std::string && ns)
 {
   const auto normal_color = tier4_autoware_utils::createMarkerColor(0.9, 0.0, 0.0, 0.8);
   const auto disappearing_color = tier4_autoware_utils::createMarkerColor(0.9, 0.5, 0.9, 0.6);
 
-  Marker marker = createDefaultMarker(
-    "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, 0L, Marker::CUBE,
-    createMarkerScale(3.0, 1.5, 1.5), normal_color);
-  int32_t i{0};
+  const auto uuid_to_id = [](const unique_identifier_msgs::msg::UUID & object_id) {
+    int32_t ret = 0;
+
+    for (size_t i = 0; i < sizeof(int32_t) / sizeof(int8_t); ++i) {
+      ret <<= sizeof(int8_t);
+      ret |= object_id.uuid.at(i);
+    }
+
+    return ret;
+  };
+
   MarkerArray msg;
-  for (const auto & object : objects) {
-    marker.id = ++i;
-    marker.pose = object.object.kinematics.initial_pose_with_covariance.pose;
-    marker.scale = tier4_autoware_utils::createMarkerScale(3.0, 1.5, 1.5);
-    marker.color = std::fabs(object.lost_time) < 1e-2 ? normal_color : disappearing_color;
-    msg.markers.push_back(marker);
+
+  {
+    auto marker = createDefaultMarker(
+      "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, 0L, Marker::CUBE,
+      createMarkerScale(3.0, 1.5, 1.5), normal_color);
+    for (const auto & object : objects) {
+      marker.id = uuid_to_id(object.object.object_id);
+      marker.pose = object.object.kinematics.initial_pose_with_covariance.pose;
+      marker.scale = tier4_autoware_utils::createMarkerScale(3.0, 1.5, 1.5);
+      marker.color = std::fabs(object.lost_time) < 1e-2 ? normal_color : disappearing_color;
+      msg.markers.push_back(marker);
+    }
+  }
+
+  {
+    for (const auto & object : objects) {
+      const auto pos = object.object.kinematics.initial_pose_with_covariance.pose.position;
+
+      auto marker = createDefaultMarker(
+        "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns + "_envelope_polygon", 0L, Marker::LINE_STRIP,
+        createMarkerScale(0.1, 0.0, 0.0), createMarkerColor(1.0, 1.0, 1.0, 0.999));
+
+      for (const auto & p : object.envelope_poly.outer()) {
+        marker.points.push_back(createPoint(p.x(), p.y(), pos.z));
+      }
+
+      marker.points.push_back(marker.points.front());
+      marker.id = uuid_to_id(object.object.object_id);
+      msg.markers.push_back(marker);
+    }
   }
 
   return msg;
 }
 
-MarkerArray makeOverhangToRoadShoulderMarkerArray(
+MarkerArray createIgnoreObjectsMarkerArray(
   const behavior_path_planner::ObjectDataArray & objects, std::string && ns)
 {
+  const auto normal_color = tier4_autoware_utils::createMarkerColor(0.0, 1.0, 0.0, 0.8);
+
+  const auto uuid_to_id = [](const unique_identifier_msgs::msg::UUID & object_id) {
+    int32_t ret = 0;
+
+    for (size_t i = 0; i < sizeof(int32_t) / sizeof(int8_t); ++i) {
+      ret <<= sizeof(int8_t);
+      ret |= object_id.uuid.at(i);
+    }
+
+    return ret;
+  };
+
+  MarkerArray msg;
+
+  {
+    Marker marker = createDefaultMarker(
+      "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, 0L, Marker::CUBE,
+      createMarkerScale(3.0, 1.5, 1.5), normal_color);
+    for (const auto & object : objects) {
+      const auto show_object_marker =
+        object.reason != "OutOfTargetArea" && object.reason != "ObjectIsNotType";
+      if (!show_object_marker) {
+        continue;
+      }
+
+      marker.id = uuid_to_id(object.object.object_id);
+      marker.pose = object.object.kinematics.initial_pose_with_covariance.pose;
+      marker.scale = tier4_autoware_utils::createMarkerScale(3.0, 1.5, 1.5);
+      marker.color = normal_color;
+      msg.markers.push_back(marker);
+    }
+  }
+
+  {
+    Marker marker = createDefaultMarker(
+      "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns + "_reason", 0L, Marker::TEXT_VIEW_FACING,
+      createMarkerScale(1.0, 1.0, 1.0), createMarkerColor(1.0, 1.0, 1.0, 1.0));
+    for (const auto & object : objects) {
+      marker.id = uuid_to_id(object.object.object_id);
+      marker.pose = object.object.kinematics.initial_pose_with_covariance.pose;
+      std::ostringstream string_stream;
+      string_stream << "(reason: " << object.reason << " )";
+      marker.text = string_stream.str();
+      msg.markers.push_back(marker);
+    }
+  }
+
+  return msg;
+}
+
+MarkerArray createObjectsStatusMarkerArray(
+  const behavior_path_planner::ObjectDataArray & objects, std::string && ns)
+{
+  const auto uuid_to_id = [](const unique_identifier_msgs::msg::UUID & object_id) {
+    int32_t ret = 0;
+
+    for (size_t i = 0; i < sizeof(int32_t) / sizeof(int8_t); ++i) {
+      ret <<= sizeof(int8_t);
+      ret |= object_id.uuid.at(i);
+    }
+
+    return ret;
+  };
+
+  MarkerArray msg;
+
   Marker marker = createDefaultMarker(
     "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, 0L, Marker::TEXT_VIEW_FACING,
-    createMarkerScale(1.0, 1.0, 1.0), createMarkerColor(1.0, 1.0, 0.0, 1.0));
+    createMarkerScale(0.5, 0.5, 0.5), createMarkerColor(1.0, 1.0, 0.0, 1.0));
 
-  int32_t i{0};
-  MarkerArray msg;
   for (const auto & object : objects) {
-    marker.id = ++i;
-    marker.pose = object.overhang_pose;
+    const auto show_object_marker = object.reason != "OutOfTargetArea" &&
+                                    object.reason != "ObjectIsNotType" &&
+                                    object.reason != "MovingObject";
+
+    if (!show_object_marker) {
+      continue;
+    }
+
+    marker.id = uuid_to_id(object.object.object_id);
+    marker.pose = object.object.kinematics.initial_pose_with_covariance.pose;
     std::ostringstream string_stream;
-    string_stream << "(to_road_shoulder_distance = " << object.to_road_shoulder_distance << " [m])";
+    string_stream << "to_centerline:" << object.lateral << " [m]\n"
+                  << "to_right_bound:" << object.to_road_shoulder_distance << " [m]\n"
+                  << "to_left_bound:" << object.to_road_left_boundary_distance << " [m]\n"
+                  << "shiftable_ratio:" << object.offset_ratio << " [-]\n"
+                  << "overhang_dist:" << object.overhang_dist << " [m]\n"
+                  << "relative_yaw:" << rad2deg(object.relative_yaw) << " [deg]";
     marker.text = string_stream.str();
     msg.markers.push_back(marker);
   }
