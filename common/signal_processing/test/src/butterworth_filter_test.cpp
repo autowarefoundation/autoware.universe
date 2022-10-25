@@ -50,8 +50,8 @@ TEST_F(ButterWorthTestFixture, butterworthOrderTest)
   bf.computeContinuousTimeTF();
   bf.computeDiscreteTimeTF();
 
-  std::vector<double> An = bf.getAn();
-  std::vector<double> Bn = bf.getBn();
+  std::vector<double> const & An = bf.getAn();
+  std::vector<double> const & Bn = bf.getBn();
 
   /**
    * Bd = [0.1913    0.9564    1.9128    1.9128    0.9564    0.1913]
@@ -88,11 +88,11 @@ TEST_F(ButterWorthTestFixture, butterDefinedSamplingOrder1)
   bf.computeContinuousTimeTF(use_sampling_frequency);
   bf.computeDiscreteTimeTF(use_sampling_frequency);
 
-  auto const &An = bf.getAn();
-  auto const &Bn = bf.getBn();
+  auto const & An = bf.getAn();
+  auto const & Bn = bf.getBn();
 
-  std::vector<double> const &An_gtruth{1., -0.414213562373095};
-  std::vector<double> const &Bn_gtruth{0.292893218813452, 0.292893218813452};
+  std::vector<double> const & An_gtruth{1., -0.414213562373095};
+  std::vector<double> const & Bn_gtruth{0.292893218813452, 0.292893218813452};
 
   for (size_t k = 0; k < An.size(); ++k) {
     ASSERT_NEAR(An[k], An_gtruth[k], tol);
@@ -117,11 +117,11 @@ TEST_F(ButterWorthTestFixture, butterDefinedSamplingOrder2)
   bf.computeContinuousTimeTF(use_sampling_frequency);
   bf.computeDiscreteTimeTF(use_sampling_frequency);
 
-  auto const &An = bf.getAn();
-  auto const &Bn = bf.getBn();
+  auto const & An = bf.getAn();
+  auto const & Bn = bf.getBn();
 
-  std::vector<double> const &An_gtruth{1., -1.142980502539901, 0.412801598096189};
-  std::vector<double> const &Bn_gtruth{0.067455273889072, 0.134910547778144, 0.067455273889072};
+  std::vector<double> const & An_gtruth{1., -1.142980502539901, 0.412801598096189};
+  std::vector<double> const & Bn_gtruth{0.067455273889072, 0.134910547778144, 0.067455273889072};
 
   for (size_t k = 0; k < An.size(); ++k) {
     ASSERT_NEAR(An[k], An_gtruth[k], tol);
@@ -146,11 +146,12 @@ TEST_F(ButterWorthTestFixture, butterDefinedSamplingOrder3)
   bf.computeContinuousTimeTF(use_sampling_frequency);
   bf.computeDiscreteTimeTF(use_sampling_frequency);
 
-  auto const &An = bf.getAn();
-  auto const &Bn = bf.getBn();
+  auto const & An = bf.getAn();
+  auto const & Bn = bf.getBn();
 
-  std::vector<double> const &An_gtruth{1., -1.760041880343169, 1.182893262037831, -0.278059917634546};
-  std::vector<double> const &Bn_gtruth{
+  std::vector<double> const & An_gtruth{
+    1., -1.760041880343169, 1.182893262037831, -0.278059917634546};
+  std::vector<double> const & Bn_gtruth{
     0.018098933007514, 0.054296799022543, 0.054296799022543, 0.018098933007514};
 
   for (size_t k = 0; k < An.size(); ++k) {

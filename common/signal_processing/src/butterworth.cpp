@@ -113,14 +113,14 @@ void ButterworthFilter::computeContinuousTimeRoots(const bool & use_sampling_fre
       x = {
         std::cos(phase_angles_[i]) * Fc * 2.0 * M_PI, std::sin(phase_angles_[i]) * Fc * 2.0 * M_PI};
     }
+    return;
+  }
 
-  } else {
-    for (size_t i = 0; i < continuous_time_roots_.size(); ++i) {
-      auto & x = continuous_time_roots_[i];
-      x = {
-        cutoff_frequency_rad_sec * cos(phase_angles_[i]),
-        cutoff_frequency_rad_sec * sin(phase_angles_[i])};
-    }
+  for (size_t i = 0; i < continuous_time_roots_.size(); ++i) {
+    auto & x = continuous_time_roots_[i];
+    x = {
+      cutoff_frequency_rad_sec * cos(phase_angles_[i]),
+      cutoff_frequency_rad_sec * sin(phase_angles_[i])};
   }
 }
 std::vector<std::complex<double>> ButterworthFilter::poly(
