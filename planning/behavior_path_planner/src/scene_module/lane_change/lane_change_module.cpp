@@ -609,4 +609,9 @@ void LaneChangeVisitor::visit_lane_change_module(const LaneChangeModule * module
 {
   lane_change_visitor_ = module->get_debug_msg_array();
 }
+
+void LaneChangeVisitor::visit_avoidance_module(
+  [[maybe_unused]] const AvoidanceModule * module) const
+{
+}
 }  // namespace behavior_path_planner

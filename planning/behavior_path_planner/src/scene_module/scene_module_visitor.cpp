@@ -24,6 +24,11 @@ void BehaviorTreeVisitorInterface::visit_lane_change_module(
 {
 }
 
+void BehaviorTreeVisitorInterface::visit_avoidance_module(
+  [[maybe_unused]] const AvoidanceModule * module) const
+{
+}
+
 void BehaviorTreeVisitorInterface::set_avoidance_debug_ptr(
   const std::shared_ptr<AvoidanceDebugMsgArray> & debug_msg_ptr)
 {

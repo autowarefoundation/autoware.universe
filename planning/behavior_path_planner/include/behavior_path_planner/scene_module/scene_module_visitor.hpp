@@ -41,9 +41,8 @@ using tier4_planning_msgs::msg::LaneChangeDebugMsgArray;
 class SceneModuleVisitor
 {
 public:
-  // virtual void visit_avoidance_module([[maybe_unused]] const AvoidanceModule * module) const = 0;
-  virtual void visit_lane_change_module([[maybe_unused]] const LaneChangeModule * module) const = 0;
-
+  virtual void visit_avoidance_module(const AvoidanceModule * module) const = 0;
+  virtual void visit_lane_change_module(const LaneChangeModule * module) const = 0;
   // getter
   [[nodiscard]] std::shared_ptr<AvoidanceDebugMsgArray> get_avoidance_debug_msg_array() const
   {
@@ -59,15 +58,24 @@ protected:
   mutable std::shared_ptr<AvoidanceDebugMsgArray> avoidance_visitor_;
 };
 
+class AvoidanceVisitor : public SceneModuleVisitor
+{
+public:
+  void visit_avoidance_module(const AvoidanceModule * module) const override;
+  void visit_lane_change_module([[maybe_unused]] const LaneChangeModule * module) const override;
+};
+
 class LaneChangeVisitor : public SceneModuleVisitor
 {
 public:
-  void visit_lane_change_module([[maybe_unused]] const LaneChangeModule * module) const override;
+  void visit_lane_change_module(const LaneChangeModule * module) const override;
+  void visit_avoidance_module([[maybe_unused]] const AvoidanceModule * module) const override;
 };
 
 class BehaviorTreeVisitorInterface : public SceneModuleVisitor
 {
 public:
+  void visit_avoidance_module([[maybe_unused]] const AvoidanceModule * module) const override;
   void visit_lane_change_module([[maybe_unused]] const LaneChangeModule * module) const override;
   void set_lane_change_debug_ptr(const std::shared_ptr<LaneChangeDebugMsgArray> & debug_msg_ptr);
   void set_avoidance_debug_ptr(const std::shared_ptr<AvoidanceDebugMsgArray> & debug_msg_ptr);

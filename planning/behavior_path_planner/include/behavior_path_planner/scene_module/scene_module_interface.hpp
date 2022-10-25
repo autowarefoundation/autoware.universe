@@ -226,13 +226,6 @@ public:
 
   std::shared_ptr<const PlannerData> planner_data_;
 
-  AvoidanceDebugMsgArray::SharedPtr getAvoidanceDebugMsgArray()
-  {
-    if (debug_avoidance_msg_array_ptr_) {
-      debug_avoidance_msg_array_ptr_->header.stamp = clock_->now();
-    }
-    return debug_avoidance_msg_array_ptr_;
-  }
   bool isWaitingApproval() const { return is_waiting_approval_; }
 
   virtual void lockRTCCommand()
@@ -259,7 +252,6 @@ private:
 protected:
   rclcpp::Clock::SharedPtr clock_;
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_debug_marker_;
-  mutable AvoidanceDebugMsgArray::SharedPtr debug_avoidance_msg_array_ptr_{};
   mutable MarkerArray debug_marker_;
 
   std::shared_ptr<RTCInterface> rtc_interface_ptr_;

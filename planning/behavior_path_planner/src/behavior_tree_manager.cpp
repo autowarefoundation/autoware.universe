@@ -115,22 +115,6 @@ BehaviorTreeManager::getModulesStatus()
   return modules_status_;
 }
 
-AvoidanceDebugMsgArray BehaviorTreeManager::getAvoidanceDebugMsgArray()
-{
-  const auto avoidance_module = std::find_if(
-    scene_modules_.begin(), scene_modules_.end(),
-    [](const std::shared_ptr<SceneModuleInterface> & module_ptr) {
-      return module_ptr->name() == "Avoidance";
-    });
-  if (avoidance_module != scene_modules_.end()) {
-    const auto & ptr = avoidance_module->get()->getAvoidanceDebugMsgArray();
-    if (ptr) {
-      return *ptr;
-    }
-  }
-  return AvoidanceDebugMsgArray();
-}
-
 BT::NodeStatus BehaviorTreeManager::checkForceApproval(const std::string & name)
 {
   const auto & approval = current_planner_data_->approval.is_force_approved;
@@ -164,11 +148,18 @@ void BehaviorTreeManager::get_debug_msg_array()
   bt_visitor_interface_ = std::make_shared<BehaviorTreeVisitorInterface>();
   for (const auto & module : scene_modules_) {
     if (module->name() == "LaneChange") {
-      std::shared_ptr<LaneChangeVisitor> visitor_ptr = std::make_shared<LaneChangeVisitor>();
+      auto visitor_ptr = std::make_shared<LaneChangeVisitor>();
       module->accept_visitor(visitor_ptr);
       const auto get_ptr = visitor_ptr->get_lane_change_debug_msg_array();
       if (get_ptr) {
         bt_visitor_interface_->set_lane_change_debug_ptr(get_ptr);
+      }
+    } else if (module->name() == "Avoidance") {
+      auto visitor_ptr = std::make_shared<AvoidanceVisitor>();
+      module->accept_visitor(visitor_ptr);
+      const auto get_ptr = visitor_ptr->get_avoidance_debug_msg_array();
+      if (get_ptr) {
+        bt_visitor_interface_->set_avoidance_debug_ptr(get_ptr);
       }
     }
   }

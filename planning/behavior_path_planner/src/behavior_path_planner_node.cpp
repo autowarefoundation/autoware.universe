@@ -650,10 +650,14 @@ void BehaviorPathPlannerNode::run()
   }
 
   // for debug
-  debug_avoidance_msg_array_publisher_->publish(bt_manager_->getAvoidanceDebugMsgArray());
 
   const auto debug_data = bt_manager_->get_all_debug_data();
-  const auto & lc_debug = debug_data->get_lane_change_debug_msg_array();
+  const auto avoidance_debug = debug_data->get_avoidance_debug_msg_array();
+  if (avoidance_debug) {
+    debug_avoidance_msg_array_publisher_->publish(*avoidance_debug);
+  }
+
+  const auto lc_debug = debug_data->get_lane_change_debug_msg_array();
   if (lc_debug) {
     debug_lane_change_msg_array_publisher_->publish(*lc_debug);
   }
