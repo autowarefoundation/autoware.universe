@@ -223,12 +223,44 @@ bool BicycleTracker::predict(const double dt, KalmanFilter & ekf) const
 bool BicycleTracker::measureWithPose(
   const autoware_auto_perception_msgs::msg::DetectedObject & object)
 {
+  // yaw measurement
+  double measurement_yaw = tier4_autoware_utils::normalizeRadian(
+    tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation));
+
+  // prediction
+  Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);
+  ekf_.getX(X_t);
+
+  // TODO(yoshiri): set better angle threshold for validation
+  /// angle threshold to filter
+  double yaw_threshold = M_PI_2;  // do not filter anything
+
+  // validate if orientation is available
   bool use_orientation_information = false;
-  // if orientation is available
-  if (object.kinematics.orientation_availability) {
-    // TODO(yoshiri): additional check to prevent yaw update from detected object (currently
-    // nothing)
-    use_orientation_information = true;
+  if (
+    object.kinematics.orientation_availability ==
+    autoware_auto_perception_msgs::msg::DetectedObjectKinematics::SIGN_UNKNOWN) {  // has 180 degree
+                                                                                   // uncertainty
+    // fix orientation
+    while (M_PI_2 <= X_t(IDX::YAW) - measurement_yaw) {
+      measurement_yaw = measurement_yaw + M_PI;
+    }
+    while (M_PI_2 <= measurement_yaw - X_t(IDX::YAW)) {
+      measurement_yaw = measurement_yaw - M_PI;
+    }
+    // check if valid angle measurement
+    if (std::abs(X_t(IDX::YAW) - measurement_yaw) < yaw_threshold) {
+      use_orientation_information = true;
+    }
+
+  } else if (
+    object.kinematics.orientation_availability ==
+    autoware_auto_perception_msgs::msg::DetectedObjectKinematics::AVAILABLE) {  // know full angle
+
+    // check if valid angle measurement
+    if (std::abs(X_t(IDX::YAW) - measurement_yaw) < yaw_threshold) {
+      use_orientation_information = true;
+    }
   }
 
   const int dim_y =
@@ -261,20 +293,6 @@ bool BicycleTracker::measureWithPose(
 
   // if there are orientation available
   if (dim_y == 3) {
-    // get compensated yaw measurement
-    double measurement_yaw = tier4_autoware_utils::normalizeRadian(
-      tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation));
-    {
-      Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);
-      ekf_.getX(X_t);
-      while (M_PI_2 <= X_t(IDX::YAW) - measurement_yaw) {
-        measurement_yaw = measurement_yaw + M_PI;
-      }
-      while (M_PI_2 <= measurement_yaw - X_t(IDX::YAW)) {
-        measurement_yaw = measurement_yaw - M_PI;
-      }
-    }
-
     // fill yaw observation and measurement matrix
     Y(IDX::YAW, 0) = measurement_yaw;
     C(2, IDX::YAW) = 1.0;
