@@ -151,11 +151,17 @@ std::vector<std::complex<double>> ButterworthFilter::poly(
 
 void ButterworthFilter::printFilterContinuousTimeRoots() const
 {
-  print("\n The roots of the continuous-time filter Transfer Function's Denominator are : \n");
+  std::stringstream stream;
+  stream << "\n The roots of the continuous-time filter Transfer Function's Denominator are : \n";
 
   for (auto const & x : continuous_time_roots_) {
-    print(std::real(x), std::imag(x) < 0 ? " - " : " + ", " j", std::abs(std::imag(x)));
+    stream << std::fixed << std::setprecision(2) << std::real(x) << " j";
+
+    auto txt = std::imag(x) < 0 ? " - j " : " + j ";
+    stream << std::fixed << std::setprecision(2) << txt << std::abs(std::imag(x)) << " \n";
   }
+
+  RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "%s", stream.str().c_str());
 }
 void ButterworthFilter::printContinuousTimeTF() const
 {
@@ -174,7 +180,7 @@ void ButterworthFilter::printContinuousTimeTF() const
 
   stream << std::fixed << std::setprecision(2) << continuous_time_denominator_[n].real();
 
-  auto tf_text = stream.str();
+  auto const & tf_text = stream.str();
   RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[%s]", tf_text.c_str());
 }
 
@@ -261,23 +267,25 @@ void ButterworthFilter::computeDiscreteTimeTF(const bool & use_sampling_frequenc
 void ButterworthFilter::printDiscreteTimeTF() const
 {
   int const & n = order_;
-  print("\nThe Discrete Time Transfer Function of the Filter is ;\n");
+
+  // *****
+  std::stringstream stream;
+  stream << "\nThe Discrete Time Transfer Function of the Filter is ;\n";
 
   for (int i = n; i > 0; i--) {
-    printf("%4.3f *", discrete_time_numerator_[n - i].real());
-    printf("z[-%d] + ", i);
+    stream << std::fixed << std::setprecision(2) << discrete_time_numerator_[n - i].real();
+    stream << " z[-" << i << " ] + ";
   }
 
-  printf("%4.3f", discrete_time_numerator_[n].real());
-  print(" / ");
+  stream << std::fixed << std::setprecision(2) << discrete_time_numerator_[n].real() << " / \n";
 
   for (int i = n; i > 0; i--) {
-    printf("%4.3f *", discrete_time_denominator_[n - i].real());
-    printf("z[-%d] + ", i);
+    stream << std::fixed << std::setprecision(2) << discrete_time_denominator_[n - i].real();
+    stream << " z[-" << i << " ] + ";
   }
+  stream << std::fixed << std::setprecision(2) << discrete_time_denominator_[n].real() << " \n\n";
 
-  printf("%4.3f", discrete_time_denominator_[n].real());
-  std::cout << "\n" << std::endl;
+  RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[%s]", stream.str().c_str());
 }
 std::vector<double> ButterworthFilter::getAn() const { return An_; }
 std::vector<double> ButterworthFilter::getBn() const { return Bn_; }
@@ -290,6 +298,10 @@ void ButterworthFilter::printFilterSpecs() const
    * @brief Prints the order and cut-off angular frequency (rad/sec) of the filter
    *
    * */
-  print("The order of the filter : ", this->order_);
-  print("Cut-off Frequency : ", this->cutoff_frequency_rad_sec, " rad/sec\n");
+
+  RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "The order of the filter : %d ", this->order_);
+
+  RCLCPP_INFO(
+    rclcpp::get_logger("rclcpp"), "Cut-off Frequency : %2.2f rad/sec",
+    this->cutoff_frequency_rad_sec);
 }

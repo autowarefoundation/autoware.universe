@@ -26,8 +26,8 @@ TEST_F(ButterWorthTestFixture, butterworthOrderTest)
   bf.Buttord(Wp, Ws, Ap, As);
 
   auto const & NWc = bf.getOrderCutOff();
-  print("The computed order and frequency for the give specification : ");
-  print("Minimum order N = ", NWc.N, ", and The cut-off frequency Wc = ", NWc.Wc, "rad/sec \n");
+  // print("The computed order and frequency for the give specification : ");
+  // print("Minimum order N = ", NWc.N, ", and The cut-off frequency Wc = ", NWc.Wc, "rad/sec \n");
   bf.printFilterSpecs();
 
   /**
