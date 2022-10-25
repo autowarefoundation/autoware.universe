@@ -82,14 +82,9 @@ public:
 private:
   // member variables
   sOrderCutoff filter_specs_{};
-
   const double Td_{2.};  // constant of bi-linear transformation
 
-  // Gain of the discrete time function
-  std::complex<double> discrete_time_gain_{1.0, 0.0};
-
   // Continuous time transfer function roots
-
   struct
   {
     std::vector<double> phase_angles_{};
@@ -102,6 +97,9 @@ private:
 
   struct
   {
+    // Gain of the discrete time function
+    std::complex<double> discrete_time_gain_{1.0, 0.0};
+
     // Discrete time zeros and roots
     std::vector<std::complex<double>> discrete_time_roots_{{0.0, 0.0}};
     std::vector<std::complex<double>> discrete_time_zeros_{{-1.0, 0.0}};

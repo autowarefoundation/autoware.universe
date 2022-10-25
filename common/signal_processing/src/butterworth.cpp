@@ -205,8 +205,8 @@ void ButterworthFilter::computeDiscreteTimeTF(const bool & use_sampling_frequenc
   const auto & order = filter_specs_.N;
   const auto & sampling_frequency_hz = filter_specs_.fs;
 
-  dt_tf_.discrete_time_zeros_.resize(
-    order, {-1.0, 0.0});  // Butter puts zeros at -1.0 for causality
+  // Butter puts zeros at -1.0 for causality
+  dt_tf_.discrete_time_zeros_.resize(order, {-1.0, 0.0});
   dt_tf_.discrete_time_roots_.resize(order, {0.0, 0.0});
 
   auto & An_ = AnBn_.An;
@@ -215,7 +215,7 @@ void ButterworthFilter::computeDiscreteTimeTF(const bool & use_sampling_frequenc
   An_.resize(order + 1, 0.0);
   Bn_.resize(order + 1, 0.0);
 
-  discrete_time_gain_ = {ct_tf_.continuous_time_numerator_, 0.0};
+  dt_tf_.discrete_time_gain_ = {ct_tf_.continuous_time_numerator_, 0.0};
 
   // Bi-linear Transformation of the Roots
 
@@ -241,11 +241,11 @@ void ButterworthFilter::computeDiscreteTimeTF(const bool & use_sampling_frequenc
       dt_tf_.discrete_time_denominator_.cbegin(), dt_tf_.discrete_time_denominator_.cend(),
       std::complex<double>{});
 
-    discrete_time_gain_ = std::abs(sum_den / sum_num);
+    dt_tf_.discrete_time_gain_ = std::abs(sum_den / sum_num);
 
     for (size_t i = 0; i < dt_tf_.discrete_time_numerator_.size(); ++i) {
       auto & dn = dt_tf_.discrete_time_numerator_[i];
-      dn = dn * discrete_time_gain_;
+      dn = dn * dt_tf_.discrete_time_gain_;
       Bn_[i] = dn.real();
     }
 
@@ -262,7 +262,8 @@ void ButterworthFilter::computeDiscreteTimeTF(const bool & use_sampling_frequenc
     dr = (1.0 + Td_ * ct_tf_.continuous_time_roots_[i] / 2.0) /
          (1.0 - Td_ * ct_tf_.continuous_time_roots_[i] / 2.0);
 
-    discrete_time_gain_ = discrete_time_gain_ / (1.0 - ct_tf_.continuous_time_roots_[i]);
+    dt_tf_.discrete_time_gain_ =
+      dt_tf_.discrete_time_gain_ / (1.0 - ct_tf_.continuous_time_roots_[i]);
   }
 
   // Obtain the coefficients of numerator and denominator
@@ -271,7 +272,7 @@ void ButterworthFilter::computeDiscreteTimeTF(const bool & use_sampling_frequenc
 
   for (size_t i = 0; i < dt_tf_.discrete_time_numerator_.size(); ++i) {
     auto & dn = dt_tf_.discrete_time_numerator_[i];
-    dn = dn * discrete_time_gain_;
+    dn = dn * dt_tf_.discrete_time_gain_;
     Bn_[i] = dn.real();
   }
 
