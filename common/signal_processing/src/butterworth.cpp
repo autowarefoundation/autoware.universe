@@ -268,7 +268,6 @@ void ButterworthFilter::printDiscreteTimeTF() const
 {
   const int & n = order_;
 
-  // *****
   std::stringstream stream;
   stream << "\nThe Discrete Time Transfer Function of the Filter is ;\n";
 
