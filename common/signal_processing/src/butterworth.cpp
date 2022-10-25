@@ -14,7 +14,11 @@
 
 #include "signal_processing/butterworth.hpp"
 
+#include <rclcpp/logging.hpp>
+
+#include <iomanip>
 #include <numeric>
+#include <sstream>
 
 /**
  *  @brief Computes the minimum of an analog Butterworth filter order and cut-off frequency give
@@ -157,16 +161,21 @@ void ButterworthFilter::printContinuousTimeTF() const
 {
   auto const & n = order_;
 
-  std::cout << "\nThe Continuous Time Transfer Function of the Filter is ;\n" << std::endl;
+  RCLCPP_INFO(
+    rclcpp::get_logger("rclcpp"), "\nThe Continuous Time Transfer Function of the Filter is ;\n");
 
-  print(continuous_time_numerator_, " / ");
+  std::stringstream stream;
+  stream << std::fixed << std::setprecision(2) << continuous_time_numerator_ << " / \n";
 
   for (int i = n; i > 0; i--) {
-    printf("%4.3f *", continuous_time_denominator_[n - i].real());
-    printf("s[%d] + ", i);
+    stream << std::fixed << std::setprecision(2) << continuous_time_denominator_[n - i].real()
+           << " * s [" << i << "] + ";
   }
 
-  printf("%4.3f \n", continuous_time_denominator_[n].real());
+  stream << std::fixed << std::setprecision(2) << continuous_time_denominator_[n].real();
+
+  auto tf_text = stream.str();
+  RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "[%s]", tf_text.c_str());
 }
 
 /**

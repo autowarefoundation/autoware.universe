@@ -14,6 +14,7 @@
 #define SIGNAL_PROCESSING_TEST_INCLUDE_BUTTERWORTH_FILTER_TEST_HPP_
 
 #include "gtest/gtest.h"
+#include "rclcpp/rclcpp.hpp"
 #include "signal_processing/butterworth.hpp"
 
 class ButterWorthTestFixture : public ::testing::Test

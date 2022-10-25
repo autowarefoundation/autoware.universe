@@ -17,15 +17,15 @@ TEST_F(ButterWorthTestFixture, butterworthOrderTest)
   double tol = 1e-4;
 
   // 1st Method
-  double Wp{2.};   // pass-band frequency [rad/sec]
-  double Ws{3.};   // stop-band frequency [rad/sec]
-  double Ap{6.};   // pass-band ripple mag or loss [dB]
-  double As{20.};  // stop band ripple attenuation [dB]
+  double const & Wp{2.};   // pass-band frequency [rad/sec]
+  double const & Ws{3.};   // stop-band frequency [rad/sec]
+  double const & Ap{6.};   // pass-band ripple mag or loss [dB]
+  double const & As{20.};  // stop band ripple attenuation [dB]
 
   ButterworthFilter bf;
   bf.Buttord(Wp, Ws, Ap, As);
 
-  auto NWc = bf.getOrderCutOff();
+  auto const & NWc = bf.getOrderCutOff();
   print("The computed order and frequency for the give specification : ");
   print("Minimum order N = ", NWc.N, ", and The cut-off frequency Wc = ", NWc.Wc, "rad/sec \n");
   bf.printFilterSpecs();
