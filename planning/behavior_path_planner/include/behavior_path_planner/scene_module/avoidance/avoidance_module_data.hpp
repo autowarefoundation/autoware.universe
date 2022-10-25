@@ -35,6 +35,7 @@ namespace behavior_path_planner
 using autoware_auto_perception_msgs::msg::PredictedObject;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 
+using tier4_autoware_utils::Point2d;
 using tier4_autoware_utils::Polygon2d;
 using tier4_planning_msgs::msg::AvoidanceDebugMsgArray;
 
@@ -227,6 +228,9 @@ struct ObjectData  // avoidance target
 
   // the position of the overhang
   Pose overhang_pose;
+
+  // envelope polygon centroid
+  Point2d centroid{};
 
   // envelope polygon
   Polygon2d envelope_poly{};
