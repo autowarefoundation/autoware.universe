@@ -258,17 +258,27 @@ void BlockageDiagComponent::filter(
   cv::Mat sobeled_img(
     cv::Size(lidar_depth_map_8u.rows, lidar_depth_map_8u.cols), CV_8UC1, cv::Scalar(0));
   sobeled_img = lidar_depth_map_8u.clone();
-  cv::inRange(lidar_depth_map_8u, 0, 1, sobeled_img);
-  Sobel(sobeled_img, sobeled_img, CV_8UC1, 1, 0, 3);
-  Sobel(sobeled_img, sobeled_img, CV_8UC1, 0, 1, 3);
   cv::Mat morpho_img = sobeled_img.clone();
-  uint erode_kernel = 5;
+  cv::inRange(lidar_depth_map_8u, 0, 1, sobeled_img);  // 2値化
+  uint erode_kernel = 2;
   cv::Mat sobel_element = getStructuringElement(
     cv::MORPH_RECT, cv::Size(erode_kernel + 1, 2 * erode_kernel + 1),
     cv::Point(erode_kernel, erode_kernel));
   cv::dilate(sobeled_img, morpho_img, sobel_element);
   cv::erode(morpho_img, morpho_img, sobel_element);
 
+  cv::inRange(morpho_img, 0, 1, morpho_img);  // 2値化
+  cv::GaussianBlur(morpho_img, morpho_img, cv::Size(5, 5), 0);
+  cv::inRange(morpho_img, 0, 1, morpho_img);  // 2値化
+                                              //  cv::dilate(morpho_img, morpho_img, sobel_element);
+                                              //  cv::erode(morpho_img, morpho_img, sobel_element);
+
+  //        cv::Mat distanced_img(cv::Size(lidar_depth_map_8u.rows, lidar_depth_map_8u.cols),
+  //        CV_32FC1, cv::Scalar(0)); cv::distanceTransform(morpho_img, distanced_img, CV_DIST_L2,
+  //        3); distanced_img.convertTo(morpho_img,CV_8UC1);
+  //        cv::cvtColor(distance_coeffients,morpho_img,CV_8UC1);
+
+  // time_series_sobel
   static boost::circular_buffer<cv::Mat> binarized_sobel_mask_buffer(sobel_frames_);
 
   sobeled_img = morpho_img.clone();
@@ -279,24 +289,24 @@ void BlockageDiagComponent::filter(
   cv::Mat sobel_mask_binarized(
     cv::Size(ideal_horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0));
 
-  static uint sobel_frame_count;
-  sobel_frame_count++;
-  if (sobel_buffering_interval_ != 0) {
-    sobel_mask_binarized = sobeled_img / 255;
-    if (sobel_frame_count == sobel_buffering_interval_) {
-      binarized_sobel_mask_buffer.push_back(sobel_mask_binarized);  // ここコメントアウトで動く
-      sobel_frame_count = 0;
-    }
-    for (const auto & binary_mask : binarized_sobel_mask_buffer) {
-      time_series_sobel_mask += binary_mask;
-    }
-    cv::inRange(
-      time_series_sobel_mask, binarized_sobel_mask_buffer.size() - 1,
-      binarized_sobel_mask_buffer.size(), time_series_sobel_result);
-  } else {
-    no_return_mask.copyTo(time_series_sobel_result);
-  }
-
+  //  static uint sobel_frame_count;
+  //  sobel_frame_count++;
+  //  if (sobel_buffering_interval_ != 0) {
+  //    sobel_mask_binarized = sobeled_img / 255;
+  //    if (sobel_frame_count == sobel_buffering_interval_) {
+  //      binarized_sobel_mask_buffer.push_back(sobel_mask_binarized);  // ここコメントアウトで動く
+  //      sobel_frame_count = 0;
+  //    }
+  //    for (const auto & binary_mask : binarized_sobel_mask_buffer) {
+  //      time_series_sobel_mask += binary_mask;
+  //    }
+  //    cv::inRange(
+  //      time_series_sobel_mask, binarized_sobel_mask_buffer.size() - 1,
+  //      binarized_sobel_mask_buffer.size(), time_series_sobel_result);
+  //  } else {
+  //    no_return_mask.copyTo(time_series_sobel_result);
+  //  }
+  // time_series_sobel
   cv::Mat single_shot_sobel_result_img(
     cv::Size(ideal_horizontal_bins, vertical_bins), CV_8UC3, cv::Scalar(0, 0, 0));
   cv::applyColorMap(sobeled_img, single_shot_sobel_result_img, cv::COLORMAP_JET);
@@ -404,4 +414,5 @@ rcl_interfaces::msg::SetParametersResult BlockageDiagComponent::paramCallback(
 }  // namespace pointcloud_preprocessor
 
 #include <rclcpp_components/register_node_macro.hpp>
+
 RCLCPP_COMPONENTS_REGISTER_NODE(pointcloud_preprocessor::BlockageDiagComponent)
