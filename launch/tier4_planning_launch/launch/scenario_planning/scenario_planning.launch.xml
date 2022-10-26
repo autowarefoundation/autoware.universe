@@ -23,15 +23,6 @@
     </include>
   </group>
 
-  <!-- obstacle velocity limiter -->
-  <group>
-    <set_remap from="~/input/trajectory" to="/planning/scenario_planning/scenario_selector/trajectory"/>
-    <set_remap from="~/output/trajectory" to="/planning/scenario_planning/obstacle_velocity_limiter/trajectory"/>
-    <include file="$(find-pkg-share obstacle_velocity_limiter)/launch/obstacle_velocity_limiter.launch.xml">
-      <arg name="vehicle_info_param_file" value="$(var vehicle_info_param_file)"/>
-    </include>
-  </group>
-
   <!-- velocity planning with max velocity, acceleration, jerk, stop point constraint -->
   <group>
     <arg name="param_path" default="$(var tier4_planning_launch_param_path)/scenario_planning/common/motion_velocity_smoother/motion_velocity_smoother.param.yaml"/>
@@ -45,7 +36,7 @@
     <!-- motion velocity smoother -->
     <group>
       <arg name="smoother_type" default="JerkFiltered" description="options: JerkFiltered, L2, Analytical, Linf(Unstable)"/>
-      <set_remap from="~/input/trajectory" to="/planning/scenario_planning/obstacle_velocity_limiter/trajectory"/>
+      <set_remap from="~/input/trajectory" to="/planning/scenario_planning/scenario_selector/trajectory"/>
       <set_remap from="~/output/trajectory" to="/planning/scenario_planning/trajectory"/>
       <include file="$(find-pkg-share motion_velocity_smoother)/launch/motion_velocity_smoother.launch.xml">
         <arg name="smoother_type" value="$(var smoother_type)"/>
