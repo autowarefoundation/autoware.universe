@@ -37,18 +37,18 @@ MotionNode::MotionNode(const rclcpp::NodeOptions & options)
 
   rclcpp::Rate rate(10);
   timer_ = rclcpp::create_timer(this, get_clock(), rate.period(), [this]() { on_timer(); });
-  change_state(State::kMoving, true);
+  change_state(State::Moving, true);
 }
 
 void MotionNode::change_state(const State state, const bool init)
 {
   using MotionState = autoware_ad_api::motion::State::Message;
   static const auto mapping = std::unordered_map<State, MotionState::_state_type>(
-    {{State::kMoving, MotionState::MOVING},
-     {State::kStopping, MotionState::STOPPED},
-     {State::kStopped, MotionState::STOPPED},
-     {State::kStarting, MotionState::STARTING},
-     {State::kStarted, MotionState::STARTING}});
+    {{State::Moving, MotionState::MOVING},
+     {State::Pausing, MotionState::STOPPED},
+     {State::Paused, MotionState::STOPPED},
+     {State::Resuming, MotionState::STARTING},
+     {State::Resumed, MotionState::STARTING}});
 
   if (init || mapping.at(state_) != mapping.at(state)) {
     MotionState msg;
@@ -61,19 +61,19 @@ void MotionNode::change_state(const State state, const bool init)
 
 void MotionNode::on_timer()
 {
-  if (state_ == State::kMoving) {
+  if (state_ == State::Moving) {
     if (vehicle_stop_checker_.isVehicleStopped(stop_check_duration_)) {
-      change_state(State::kStopping);
+      change_state(State::Pausing);
     }
   }
 
-  if (state_ == State::kStarted) {
+  if (state_ == State::Resumed) {
     if (!vehicle_stop_checker_.isVehicleStopped(stop_check_duration_)) {
-      change_state(State::kMoving);
+      change_state(State::Moving);
     }
   }
 
-  if (state_ == State::kStopping) {
+  if (state_ == State::Pausing) {
     if (!waiting_for_set_pause_ && cli_set_pause_->service_is_ready()) {
       const auto req = std::make_shared<control_interface::SetPause::Service::Request>();
       req->pause = true;
@@ -82,7 +82,7 @@ void MotionNode::on_timer()
     }
   }
 
-  if (state_ == State::kStarting) {
+  if (state_ == State::Resuming) {
     if (!waiting_for_set_pause_ && !require_accept_start_) {
       const auto req = std::make_shared<control_interface::SetPause::Service::Request>();
       req->pause = false;
@@ -95,17 +95,17 @@ void MotionNode::on_timer()
 void MotionNode::on_is_paused(const control_interface::IsPaused::Message::ConstSharedPtr msg)
 {
   switch (state_) {
-    case State::kMoving:
-    case State::kStopping:
-    case State::kStarted:
+    case State::Moving:
+    case State::Pausing:
+    case State::Resumed:
       if (msg->data) {
-        change_state(State::kStopped);
+        change_state(State::Paused);
       }
       break;
-    case State::kStopped:
-    case State::kStarting:
+    case State::Paused:
+    case State::Resuming:
       if (!msg->data) {
-        change_state(State::kStarted);
+        change_state(State::Resumed);
       }
       break;
   }
@@ -115,15 +115,15 @@ void MotionNode::on_is_start_requested(
   const control_interface::IsStartRequested::Message::ConstSharedPtr msg)
 {
   if (msg->data) {
-    if (state_ == State::kStopped) {
-      return change_state(State::kStarting);
+    if (state_ == State::Paused) {
+      return change_state(State::Resuming);
     }
   } else {
-    if (state_ == State::kStarting) {
-      return change_state(State::kStopped);
+    if (state_ == State::Resuming) {
+      return change_state(State::Paused);
     }
-    if (state_ == State::kStarted) {
-      return change_state(State::kStopping);
+    if (state_ == State::Resumed) {
+      return change_state(State::Pausing);
     }
   }
 }
@@ -132,7 +132,7 @@ void MotionNode::on_accept(
   const autoware_ad_api::motion::AcceptStart::Service::Request::SharedPtr,
   const autoware_ad_api::motion::AcceptStart::Service::Response::SharedPtr res)
 {
-  if (state_ != State::kStarting) {
+  if (state_ != State::Resuming) {
     using AcceptStartResponse = autoware_ad_api::motion::AcceptStart::Service::Response;
     throw component_interface_utils::ServiceException(
       AcceptStartResponse::ERROR_NOT_STARTING, "The motion state is not starting");

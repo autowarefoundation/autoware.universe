@@ -43,7 +43,7 @@ private:
   Sub<control_interface::IsPaused> sub_is_paused_;
   Sub<control_interface::IsStartRequested> sub_is_start_requested_;
 
-  enum class State { kStopping, kStopped, kStarting, kStarted, kMoving };
+  enum class State { Pausing, Paused, Resuming, Resumed, Moving };
   State state_;
 
   double stop_check_duration_;
