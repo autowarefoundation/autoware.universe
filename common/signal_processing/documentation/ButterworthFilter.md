@@ -25,7 +25,7 @@ An example call is demonstrated below;
     bf.Buttord(Wp, Ws, Ap, As);
 
     // Get the computed order and Cut-off frequency
-    sOrderCutoff NWc = bf.getOrderCutOff();]
+    sOrderCutOff NWc = bf.getOrderCutOff();]
 
     cout << " The computed order is ;" << NWc.N << endl;
     cout << " The computed cut-off frequency is ;" << NWc.Wc_rad_sec << endl;

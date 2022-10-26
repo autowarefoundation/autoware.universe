@@ -76,7 +76,7 @@ void ButterworthFilter::setCutOffFrequency(const double & fc, const double & fs)
   filter_specs_.fs = fs;
 }
 
-sOrderCutoff ButterworthFilter::getOrderCutOff() const { return filter_specs_; }
+sOrderCutOff ButterworthFilter::getOrderCutOff() const { return filter_specs_; }
 
 /**
  * @brief Matlab equivalent : [b, a]  = butter(n, Wn, 's')

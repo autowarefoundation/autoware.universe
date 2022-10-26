@@ -93,12 +93,12 @@ TEST_F(ButterWorthTestFixture, butterDefinedSamplingOrder1)
   const auto & An = bf.getAn();
   const auto & Bn = bf.getBn();
 
-  std::vector<double> const & An_gtruth{1., -0.414213562373095};
-  std::vector<double> const & Bn_gtruth{0.292893218813452, 0.292893218813452};
+  std::vector<double> const & An_ground_truth{1., -0.414213562373095};
+  std::vector<double> const & Bn_ground_truth{0.292893218813452, 0.292893218813452};
 
   for (size_t k = 0; k < An.size(); ++k) {
-    ASSERT_NEAR(An[k], An_gtruth[k], tol);
-    ASSERT_NEAR(Bn[k], Bn_gtruth[k], tol);
+    ASSERT_NEAR(An[k], An_ground_truth[k], tol);
+    ASSERT_NEAR(Bn[k], Bn_ground_truth[k], tol);
   }
 }
 
@@ -122,12 +122,13 @@ TEST_F(ButterWorthTestFixture, butterDefinedSamplingOrder2)
   const auto & An = bf.getAn();
   const auto & Bn = bf.getBn();
 
-  const std::vector<double> & An_gtruth{1., -1.142980502539901, 0.412801598096189};
-  const std::vector<double> & Bn_gtruth{0.067455273889072, 0.134910547778144, 0.067455273889072};
+  const std::vector<double> & An_ground_truth{1., -1.142980502539901, 0.412801598096189};
+  const std::vector<double> & Bn_ground_truth{
+    0.067455273889072, 0.134910547778144, 0.067455273889072};
 
   for (size_t k = 0; k < An.size(); ++k) {
-    ASSERT_NEAR(An[k], An_gtruth[k], tol);
-    ASSERT_NEAR(Bn[k], Bn_gtruth[k], tol);
+    ASSERT_NEAR(An[k], An_ground_truth[k], tol);
+    ASSERT_NEAR(Bn[k], Bn_ground_truth[k], tol);
   }
 }
 
@@ -151,14 +152,14 @@ TEST_F(ButterWorthTestFixture, butterDefinedSamplingOrder3)
   const auto & An = bf.getAn();
   const auto & Bn = bf.getBn();
 
-  const std::vector<double> & An_gtruth{
+  const std::vector<double> & An_ground_truth{
     1., -1.760041880343169, 1.182893262037831, -0.278059917634546};
 
-  const std::vector<double> & Bn_gtruth{
+  const std::vector<double> & Bn_ground_truth{
     0.018098933007514, 0.054296799022543, 0.054296799022543, 0.018098933007514};
 
   for (size_t k = 0; k < An.size(); ++k) {
-    ASSERT_NEAR(An[k], An_gtruth[k], tol);
-    ASSERT_NEAR(Bn[k], Bn_gtruth[k], tol);
+    ASSERT_NEAR(An[k], An_ground_truth[k], tol);
+    ASSERT_NEAR(Bn[k], Bn_ground_truth[k], tol);
   }
 }

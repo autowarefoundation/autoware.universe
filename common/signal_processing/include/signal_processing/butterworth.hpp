@@ -34,7 +34,7 @@ void print(Args &&... args)
   (std::cout << ... << append_separator(args)) << "\n";
 }
 
-struct sOrderCutoff
+struct sOrderCutOff
 {
   int N{1};
   double Wc_rad_sec{};  // sampling frequency rad/sec
@@ -67,7 +67,7 @@ public:
   void setOrder(int const & N);
 
   // Get the order, cut-off frequency and other filter properties
-  [[nodiscard]] sOrderCutoff getOrderCutOff() const;
+  [[nodiscard]] sOrderCutOff getOrderCutOff() const;
   [[nodiscard]] sDifferenceAnBn getAnBn() const;
 
   [[nodiscard]] std::vector<double> getAn() const;
@@ -81,7 +81,7 @@ public:
 
 private:
   // member variables
-  sOrderCutoff filter_specs_{};
+  sOrderCutOff filter_specs_{};
   const double Td_{2.};  // constant of bi-linear transformation
 
   // Continuous time transfer function roots
