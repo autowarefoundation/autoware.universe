@@ -231,10 +231,6 @@ bool BicycleTracker::measureWithPose(
   Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);
   ekf_.getX(X_t);
 
-  // TODO(yoshiri): set better angle threshold for validation
-  /// angle threshold to filter
-  double yaw_threshold = M_PI_2;  // do not filter anything
-
   // validate if orientation is available
   bool use_orientation_information = false;
   if (
@@ -248,19 +244,13 @@ bool BicycleTracker::measureWithPose(
     while (M_PI_2 <= measurement_yaw - X_t(IDX::YAW)) {
       measurement_yaw = measurement_yaw - M_PI;
     }
-    // check if valid angle measurement
-    if (std::abs(X_t(IDX::YAW) - measurement_yaw) < yaw_threshold) {
-      use_orientation_information = true;
-    }
+    use_orientation_information = true;
 
   } else if (
     object.kinematics.orientation_availability ==
     autoware_auto_perception_msgs::msg::DetectedObjectKinematics::AVAILABLE) {  // know full angle
 
-    // check if valid angle measurement
-    if (std::abs(X_t(IDX::YAW) - measurement_yaw) < yaw_threshold) {
-      use_orientation_information = true;
-    }
+    use_orientation_information = true;
   }
 
   const int dim_y =
