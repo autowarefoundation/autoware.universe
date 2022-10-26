@@ -18,7 +18,6 @@
 #include <bezier_sampler/constraint_checker.hpp>
 
 #include <nav_msgs/msg/occupancy_grid.hpp>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include <gtest/gtest.h>
 
