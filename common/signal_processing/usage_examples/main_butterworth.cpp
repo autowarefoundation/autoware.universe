@@ -27,13 +27,13 @@
  *
  *   2- Defining the order and cut-off frequency (rad/sec) directly and computing the filter TFs
  *      bf.setOrder(N); N is integer
- *      bf.setCuttoffFrequency(Wc); Wc in [rad/sec]
+ *      bf.setCutOffFrequency(Wc); Wc in [rad/sec]
  *      bf.computeContinuousTimeTF();
  *      bf.computeDiscreteTimeTF();
  *
  *   3- Defining the order N, cut-off and sampling frequencies (Hz)
  *      bf.setOrder(N); N is integer
- *      bf.setCuttoffFrequency_Hz(fc, fs); cut-off fc and sampling fs are in [Hz]
+ *      bf.setCutOffFrequency_Hz(fc, fs); cut-off fc and sampling fs are in [Hz]
  *      bf.computeContinuousTimeTF();
  *      bf.computeDiscreteTimeTF();
  * */

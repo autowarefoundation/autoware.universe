@@ -16,15 +16,15 @@ An example call is demonstrated below;
 
     ButterworthFilter bf();
 
-    Wp = 2.0; // passband frequency [rad/sec]
-    Ws = 3.0; // stopband frequency [rad/sec]
-    Ap = 6.0; // passband ripple mag or loss [dB]
+    Wp = 2.0; // pass-band frequency [rad/sec]
+    Ws = 3.0; // stop-band frequency [rad/sec]
+    Ap = 6.0; // pass-band ripple mag or loss [dB]
     As = 20.0; // stop band ripple attenuation [dB]
 
     // Computing filter coefficients from the specs
     bf.Buttord(Wp, Ws, Ap, As);
 
-    // Get the computed order and Cut-off frequency
+    // Get the computed order and Cut-Off frequency
     sOrderCutOff NWc = bf.getOrderCutOff();]
 
     cout << " The computed order is ;" << NWc.N << endl;
