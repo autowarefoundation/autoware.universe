@@ -290,6 +290,19 @@ OccupancyGrid generateDrivableArea(
 
 lanelet::ConstLineStrings3d getDrivableAreaForAllSharedLinestringLanelets(
   const std::shared_ptr<const PlannerData> & planner_data);
+
+/**
+ * @brief Expand the borders of the given lanelets
+ * @param [in] lanelets lanelets to expand
+ * @param [in] left_bound_offset [m] expansion distance of the left bound
+ * @param [in] right_bound_offset [m] expansion distance of the right bound
+ * @param [in] types_to_skip linestring types that will not be expanded
+ * @return expanded lanelets
+ */
+lanelet::ConstLanelets expandLanelets(
+  const lanelet::ConstLanelets & lanelets, const double left_bound_offset,
+  const double right_bound_offset, const std::vector<std::string> & types_to_skip = {});
+
 // goal management
 
 /**
@@ -335,9 +348,10 @@ std::shared_ptr<PathWithLaneId> generateCenterLinePath(
 
 PathPointWithLaneId insertStopPoint(double length, PathWithLaneId * path);
 
-double getDistanceToShoulderBoundary(
+double getSignedDistanceFromShoulderLeftBoundary(
   const lanelet::ConstLanelets & shoulder_lanelets, const Pose & pose);
-double getDistanceToRightBoundary(const lanelet::ConstLanelets & lanelets, const Pose & pose);
+double getSignedDistanceFromRightBoundary(
+  const lanelet::ConstLanelets & lanelets, const Pose & pose);
 
 // misc
 
