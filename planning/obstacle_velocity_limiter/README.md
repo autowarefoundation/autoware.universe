@@ -2,12 +2,12 @@
 
 ## Purpose
 
+This node limits the velocity when driving in the direction of an obstacle.
+For example, it allows to reduce the velocity when driving close to a guard rail in a curve.
+
 |                                     Without this node | With this node                                      |
 | ----------------------------------------------------: | :-------------------------------------------------- |
 | ![obstacle_velocity_limiter_off](./media/ovl_off.png) | ![obstacle_velocity_limiter_on](./media/ovl_on.png) |
-
-This node limits the velocity when driving in the direction of an obstacle.
-For example, it allows to reduce the velocity when driving close to a guard rail in a curve.
 
 ## Inner-workings / Algorithms
 
