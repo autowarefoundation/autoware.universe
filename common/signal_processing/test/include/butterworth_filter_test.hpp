@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SIGNAL_PROCESSING_TEST_INCLUDE_BUTTERWORTH_FILTER_TEST_HPP_
-#define SIGNAL_PROCESSING_TEST_INCLUDE_BUTTERWORTH_FILTER_TEST_HPP_
+#ifndef BUTTERWORTH_FILTER_TEST_HPP_
+#define BUTTERWORTH_FILTER_TEST_HPP_
 
 #include "gtest/gtest.h"
 #include "rclcpp/rclcpp.hpp"
@@ -27,4 +27,4 @@ protected:
   ~ButterWorthTestFixture() override = default;
 };
 
-#endif  // SIGNAL_PROCESSING_TEST_INCLUDE_BUTTERWORTH_FILTER_TEST_HPP_
+#endif  // BUTTERWORTH_FILTER_TEST_HPP_

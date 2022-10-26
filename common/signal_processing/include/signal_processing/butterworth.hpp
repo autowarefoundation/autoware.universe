@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SIGNAL_PROCESSING_INCLUDE_SIGNAL_PROCESSING_BUTTERWORTH_HPP_
-#define SIGNAL_PROCESSING_INCLUDE_SIGNAL_PROCESSING_BUTTERWORTH_HPP_
+#ifndef SIGNAL_PROCESSING__BUTTERWORTH_HPP_
+#define SIGNAL_PROCESSING__BUTTERWORTH_HPP_
 
 #include <cmath>
 #include <complex>
@@ -134,4 +134,4 @@ private:
   void computeContinuousTimeRoots(bool const & use_sampling_frequency = false);
 };
 
-#endif  // SIGNAL_PROCESSING_INCLUDE_SIGNAL_PROCESSING_BUTTERWORTH_HPP_
+#endif  // SIGNAL_PROCESSING__BUTTERWORTH_HPP_

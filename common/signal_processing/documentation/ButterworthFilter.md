@@ -7,7 +7,7 @@ constructor creates the object without any argument.
 The filter can be prepared in three ways. If the filter specifications are known, such as the pass-band, and stop-band
 frequencies (Wp and Ws) together with the pass-band and stop-band ripple magnitudes (Ap and As), one can call the
 filter's buttord method with these arguments to obtain the recommended filter order (N) and cut-off frequency
-(Wc_rad_sec  [rad/s]).
+(Wc_rad_sec [rad/s]).
 
 ![img.png](img.png)
 Figure 1. Butterworth Low-pass filter specification from [1].
@@ -20,13 +20,13 @@ An example call is demonstrated below;
     Ws = 3.0; // stopband frequency [rad/sec]
     Ap = 6.0; // passband ripple mag or loss [dB]
     As = 20.0; // stop band ripple attenuation [dB]
-    
+
     // Computing filter coefficients from the specs
     bf.Buttord(Wp, Ws, Ap, As);
 
     // Get the computed order and Cut-off frequency
     sOrderCutoff NWc = bf.getOrderCutOff();]
-    
+
     cout << " The computed order is ;" << NWc.N << endl;
     cout << " The computed cut-off frequency is ;" << NWc.Wc_rad_sec << endl;
 
@@ -50,19 +50,19 @@ The computed continuous-time transfer function roots can be printed on the scree
 
 The resulting screen output for a 5th order filter is demonstrated below.
 
-     Roots of Continuous Time Filter Transfer Function Denominator are : 
+     Roots of Continuous Time Filter Transfer Function Denominator are :
     -0.585518 + j 1.80204
     -1.53291 + j 1.11372
     -1.89478 + j 2.32043e-16
     -1.53291 + j -1.11372
     -0.585518 + j -1.80204
-    
-    
+
+
     The Continuous-Time Transfer Function of the Filter is ;
-    
-                                       24.422 
+
+                                       24.422
     -------------------------------------------------------------------------------
-    1.000 *s[5] + 6.132 *s[4] + 18.798 *s[3] + 35.619 *s[2] + 41.711 *s[1] + 24.422 
+    1.000 *s[5] + 6.132 *s[4] + 18.798 *s[3] + 35.619 *s[2] + 41.711 *s[1] + 24.422
 
 #### Discrete Time Transfer Function (Difference Equations)
 
@@ -88,7 +88,7 @@ and the associated difference coefficients An and Bn by withing a struct ;
 
 The difference coefficients appear in the filtering equation in the form of.
 
-    An * Y_filtered = Bn * Y_unfiltered  
+    An * Y_filtered = Bn * Y_unfiltered
 
 To filter a signal given in a vector form ;
 
@@ -121,7 +121,4 @@ At this step, we define a boolean variable whether to use the pre-warping option
 1. Manolakis, Dimitris G., and Vinay K. Ingle. Applied digital signal processing: theory and practice. Cambridge
    University Press, 2011.
 
-2. https://en.wikibooks.org/wiki/Digital_Signal_Processing/Bilinear_Transform
- 
- 
-    
+2. <https://en.wikibooks.org/wiki/Digital_Signal_Processing/Bilinear_Transform>
