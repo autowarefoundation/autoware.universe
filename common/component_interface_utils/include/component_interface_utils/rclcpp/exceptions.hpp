@@ -41,7 +41,7 @@ public:
   {
     status.success = false;
     status.code = code_;
-    status.message = what();
+    status.message = message_;
   }
 
   ResponseStatus status() const
@@ -49,7 +49,7 @@ public:
     ResponseStatus status;
     status.success = false;
     status.code = code_;
-    status.message = what();
+    status.message = message_;
     return status;
   }
 
