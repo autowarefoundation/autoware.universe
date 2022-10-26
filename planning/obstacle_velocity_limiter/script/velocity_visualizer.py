@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright 2022 Tier IV, Inc.
+# Copyright 2022 TIER IV, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -31,13 +31,13 @@ class TrajectoryVisualizer(Node):
 
         self.sub_original_traj = self.create_subscription(
             Trajectory,
-            "/planning/scenario_planning/scenario_selector/trajectory",
+            "/planning/scenario_planning/lane_driving/motion_planning/obstacle_stop_planner/trajectory",
             self.plotOriginalTrajectory,
             1,
         )
         self.sub_adjusted_traj = self.create_subscription(
             Trajectory,
-            "/planning/scenario_planning/obstacle_velocity_limiter/trajectory",
+            "/planning/scenario_planning/lane_driving/trajectory",
             self.plotAdjustedTrajectory,
             1,
         )
