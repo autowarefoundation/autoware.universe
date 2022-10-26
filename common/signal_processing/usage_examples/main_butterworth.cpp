@@ -51,7 +51,8 @@ int main()
 
   auto NWc = bf1.getOrderCutOff();
   print("The computed order and frequency for the give specification : ");
-  print("Minimum order N = ", NWc.N, ", and The cut-off frequency Wc = ", NWc.Wc, "rad/sec \n");
+  print(
+    "Minimum order N = ", NWc.N, ", and The cut-off frequency Wc = ", NWc.Wc_rad_sec, "rad/sec \n");
   bf1.printFilterSpecs();
 
   /**
@@ -73,7 +74,7 @@ int main()
 
   ButterworthFilter bf2;
   bf2.setOrder(2);
-  bf2.setCuttoffFrequency(2.0);
+  bf2.setCutOffFrequency(2.0);
   bf2.printFilterSpecs();
 
   // Get the computed order and Cut-off frequency
@@ -95,7 +96,7 @@ int main()
   ButterworthFilter bf3;
   bf3.setOrder(3);
 
-  bf3.setCuttoffFrequency(10, 100);
+  bf3.setCutOffFrequency(10, 100);
   bf3.printFilterSpecs();
 
   bool use_sampling_frequency{true};

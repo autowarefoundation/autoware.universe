@@ -19,7 +19,7 @@ An example call is demonstrated below;
     Wp = 2.0; // passband frequency [rad/sec]
     Ws = 3.0; // stopband frequency [rad/sec]
     Ap = 6.0; // passband ripple mag or loss [dB]
-    As = 20.0; // stop band rippe attenuation [dB]
+    As = 20.0; // stop band ripple attenuation [dB]
     
     // Computing filter coefficients from the specs
     bf.Buttord(Wp, Ws, Ap, As);
