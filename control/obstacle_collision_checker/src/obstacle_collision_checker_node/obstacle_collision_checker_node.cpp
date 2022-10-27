@@ -203,7 +203,6 @@ void ObstacleCollisionCheckerNode::onTimer()
     try {
       obstacle_transform_ = transform_listener_->getTransform(
         "map", header.frame_id, header.stamp, rclcpp::Duration::from_seconds(0.01));
-
     } catch (tf2::TransformException & ex) {
       RCLCPP_INFO(
         this->get_logger(), "Could not transform map to %s: %s", header.frame_id.c_str(),
