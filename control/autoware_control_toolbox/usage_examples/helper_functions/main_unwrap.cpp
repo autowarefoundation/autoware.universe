@@ -1,10 +1,19 @@
+// Copyright 2022 The Autoware Foundation.
 //
-// Created by ali on 14/07/22.
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
 //
+//  http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
-
-#include "utils_act/writetopath.hpp"
 #include "utils_act/act_utils.hpp"
+#include "utils_act/writetopath.hpp"
 
 int main()
 {
@@ -17,11 +26,9 @@ int main()
   // Generate y = 6*sin(2*pi*n/N).
 
   std::vector<double> yvec;
-  std::transform(
-    xvec.cbegin(), xvec.cend(), std::back_inserter(yvec), [&](auto const & x)
-    {
-      return 6 * sin(2 * M_PI * x / Nx);
-    });
+  std::transform(xvec.cbegin(), xvec.cend(), std::back_inserter(yvec), [&](auto const & x) {
+    return 6 * sin(2 * M_PI * x / Nx);
+  });
 
   writeToFile(log_path, yvec, "xc");
 
@@ -30,11 +37,9 @@ int main()
    * */
 
   std::vector<double> xw;
-  std::transform(
-    yvec.cbegin(), yvec.cend(), std::back_inserter(xw), [&](auto const & x)
-    {
-      return std::atan2(sin(x), cos(x));
-    });
+  std::transform(yvec.cbegin(), yvec.cend(), std::back_inserter(xw), [&](auto const & x) {
+    return std::atan2(sin(x), cos(x));
+  });
 
   writeToFile(log_path, xw, "xw");
 

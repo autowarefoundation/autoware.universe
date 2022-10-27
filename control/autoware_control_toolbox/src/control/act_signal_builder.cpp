@@ -25,10 +25,7 @@ Eigen::VectorXd ns_control_toolbox::make_sinus_signal(
   const Eigen::VectorXd & time_vec, const double & frequency_hz)
 {
   double const w_ = 2 * M_PI * frequency_hz;  // [rad/sec]
-  auto sin_vec = Eigen::VectorXd(
-    time_vec.unaryExpr(
-      [&w_](auto const & t)
-      {return sin(w_ * t);}));
+  auto sin_vec = Eigen::VectorXd(time_vec.unaryExpr([&w_](auto const & t) { return sin(w_ * t); }));
 
   return sin_vec;
 }
@@ -37,12 +34,9 @@ Eigen::VectorXd ns_control_toolbox::make_square_signal(
   const Eigen::VectorXd & time_vec, const double & frequency_hz)
 {
   double const w_ = 2 * M_PI * frequency_hz;  // [rad/sec]
-  auto sqr_vec = Eigen::VectorXd(
-    time_vec.unaryExpr(
-      [&w_](auto const & t)
-      {
-        return sin(w_ * t) < 0 ? -1. : sin(w_ * t) == 0 ? 0. : 1.;
-      }));
+  auto sqr_vec = Eigen::VectorXd(time_vec.unaryExpr([&w_](auto const & t) {
+    return sin(w_ * t) < 0 ? -1. : sin(w_ * t) == 0 ? 0. : 1.;
+  }));
   return sqr_vec;
 }
 
@@ -59,16 +53,11 @@ Eigen::VectorXd ns_control_toolbox::make_triangle_signal(
   auto tmax = time_vec.maxCoeff();
 
   // define a starting point.
+  auto trg_vec = Eigen::VectorXd(time_vec.unaryExpr([&period, &tmax](auto const & t) {
+    auto tn = t / tmax;
+    auto y = 2 * std::fabs(tn / period - std::floor(tn / period + 1. / 2));
 
-  auto trg_vec = Eigen::VectorXd(
-    time_vec.unaryExpr(
-      [&period, &tmax](auto const & t)
-      {
-        auto tn = t / tmax;
-        auto y =
-        2 * std::fabs(tn / period - std::floor(tn / period + 1. / 2));
-
-        return y;
-      }));
+    return y;
+  }));
   return trg_vec;
 }

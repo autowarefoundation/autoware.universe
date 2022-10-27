@@ -1,4 +1,4 @@
-// Copyright 2021 The Autoware Foundation.
+// Copyright 2022 The Autoware Foundation.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -36,8 +36,6 @@ void balance_a_matrix(Eigen::MatrixXd & A, Eigen::MatrixXd & Tsimilarity);
  * r*alpha and c=c/alpha. In the method, ahat = a*alpha, bhat = b/alpha order is followed.
  * @param c: A column norm.
  * @param r: A row norm. In general l1-norm is used.
- *
- *
  * */
 double balance_symmetric(double const & a, double const & b);
 

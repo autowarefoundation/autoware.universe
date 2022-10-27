@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//  http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,12 +16,11 @@
 
 double tic()
 {
-  struct timespec t{};
+  struct timespec t
+  {
+  };
   clock_gettime(CLOCK_REALTIME, &t);
   return double(t.tv_sec) * 1000. + double(t.tv_nsec) / 1000000.;
 }
 
-double toc(double start)
-{
-  return tic() - start;
-}
+double toc(double start) { return tic() - start; }

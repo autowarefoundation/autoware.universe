@@ -1,4 +1,4 @@
-// Copyright 2021 The Autoware Foundation.
+// Copyright 2022 The Autoware Foundation.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,22 +23,22 @@ namespace ns_control_toolbox
 /**
  * @brief Creates a time vector given a final time and time-step.
  * */
-Eigen::VectorXd make_time_signal(double const &dt, double const &final_time);
+Eigen::VectorXd make_time_signal(double const & dt, double const & final_time);
 
 /**
  * @brief Creates a sin wave vector given a time vector and frequency in Hz.
  * */
-Eigen::VectorXd make_sinus_signal(Eigen::VectorXd const &time_vec, double const &frequency_hz);
+Eigen::VectorXd make_sinus_signal(Eigen::VectorXd const & time_vec, double const & frequency_hz);
 
 /**
  * @brief Creates a square wave vector given a time vector and frequency in Hz.
  * */
-Eigen::VectorXd make_square_signal(Eigen::VectorXd const &time_vec, double const &frequency_hz);
+Eigen::VectorXd make_square_signal(Eigen::VectorXd const & time_vec, double const & frequency_hz);
 
 /**
  * @brief Creates a triangle wave vector given a time vector and frequency in Hz.
  * */
-Eigen::VectorXd make_triangle_signal(Eigen::VectorXd const &time_vec, double const &frequency_hz);
+Eigen::VectorXd make_triangle_signal(Eigen::VectorXd const & time_vec, double const & frequency_hz);
 
 }  // namespace ns_control_toolbox
 

@@ -112,28 +112,3 @@ endif()
 #ament package generation and installing
 ament_auto_package(INSTALL_TO_SHARE)
 
-#-------------------------  PROTOTYPES __________________________________________
-## CONTROL
-#ament_auto_add_executable(main_tf usage_examples/control/main_tf.cpp)
-#ament_auto_add_executable(main_pade usage_examples/control/main_pade.cpp)
-#ament_auto_add_executable(main_tf2ss usage_examples/control/main_tf2ss.cpp)
-#ament_auto_add_executable(main_tf_algebra usage_examples/control/main_tf_algebra.cpp)
-#ament_auto_add_executable(main_balance usage_examples/control/main_balance.cpp)
-#ament_auto_add_executable(main_signal_generator usage_examples/control/main_signal_generator.cpp)
-
-##---------------------- SPLINEs ------------------------------------------------
-
-#add_executable(main_spline_pcg usage_examples/splines/main_spline_eigen_pcg.cpp)
-#target_link_libraries(main_spline_pcg ${CONTROL_LIB} fmt::fmt stdc++fs)
-#add_executable(main_bspline_smoother usage_examples/splines/main_bspline_smoother.cpp)
-#target_link_libraries(main_bspline_smoother ${CONTROL_LIB} fmt::fmt stdc++fs)
-#add_executable(main_bspline_interp usage_examples/splines/main_bspline_interpolator.cpp)
-#target_link_libraries(main_bspline_interp ${CONTROL_LIB} fmt::fmt stdc++fs)
-#add_executable(main_bspline_interp_template usage_examples/splines/main_bspline_interpolator_templated.cpp)
-#target_link_libraries(main_bspline_interp_template ${CONTROL_LIB} fmt::fmt stdc++fs)
-#add_executable(main_unwrap usage_examples/helper_functions/main_unwrap.cpp)
-#target_link_libraries(main_unwrap ${CONTROL_LIB} fmt::fmt stdc++fs)
-#add_executable(main_1d_interp usage_examples/helper_functions/main_linear_1dinterp.cpp)
-#target_link_libraries(main_1d_interp ${CONTROL_LIB} fmt::fmt stdc++fs)
-#add_executable(main_diff_matt usage_examples/helper_functions/main_difference_matrix.cpp)
-#target_link_libraries(main_diff_matt ${CONTROL_LIB} fmt::fmt stdc++fs)
