@@ -35,9 +35,12 @@ struct PullOverParameters
   double forward_goal_search_length;
   double backward_goal_search_length;
   double goal_search_interval;
-  double goal_to_obstacle_margin;
+  double longitudinal_margin;
+  double max_lateral_offset;
+  double lateral_offset_interval;
   // occupancy grid map
   bool use_occupancy_grid;
+  bool use_occupancy_grid_for_longitudinal_margin;
   double occupancy_grid_collision_check_margin;
   double theta_size;
   double obstacle_threshold;
@@ -78,6 +81,9 @@ struct PullOverParameters
   bool enable_collision_check_at_prepare_phase;
   bool use_predicted_path_outside_lanelet;
   bool use_all_predicted_path;
+  // drivable area expansion
+  double drivable_area_right_bound_offset;
+  double drivable_area_left_bound_offset;
   // debug
   bool print_debug_info;
 };
