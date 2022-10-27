@@ -16,6 +16,7 @@ Ll2Decomposer::Ll2Decomposer() : Node("ll2_to_image")
 
   // Publisher
   pub_cloud_ = create_publisher<Cloud2>("ll2_road_marking", latch_qos);
+  pub_polygon_ = create_publisher<Cloud2>("ll2_polygon", latch_qos);
   pub_sign_board_ = create_publisher<Cloud2>("ll2_sign_board", latch_qos);
   pub_marker_ = create_publisher<MarkerArray>("sign_board_marker", latch_qos);
 
@@ -59,6 +60,23 @@ void printAttr(const lanelet::LaneletMapPtr & lanelet_map)
   }
 }
 
+pcl::PointCloud<pcl::PointXYZ> convertPolygon2XyzLNormal(const lanelet::PolygonLayer & polygons)
+{
+  pcl::PointCloud<pcl::PointXYZ> cloud;
+  int index = 0;
+  for (const lanelet::ConstPolygon3d & polygon : polygons) {
+    for (const lanelet::ConstPoint3d & p : polygon) {
+      pcl::PointXYZ xyz;
+      xyz.x = p.x();
+      xyz.y = p.y();
+      xyz.z = p.z();
+      cloud.push_back(xyz);
+    }
+    index++;
+  }
+  return cloud;
+}
+
 void Ll2Decomposer::mapCallback(const HADMapBin & msg)
 {
   RCLCPP_INFO_STREAM(get_logger(), "subscribed binary vector map");
@@ -72,11 +90,13 @@ void Ll2Decomposer::mapCallback(const HADMapBin & msg)
   auto tmp2 = extractSpecifiedLineString(ls_layer, road_marking_labels_);
   pcl::PointCloud<pcl::PointNormal> ll2_sign_board = splitLineStrings(tmp1);
   pcl::PointCloud<pcl::PointNormal> ll2_road_marking = splitLineStrings(tmp2);
+  pcl::PointCloud<pcl::PointXYZ> ll2_polygon = convertPolygon2XyzLNormal(lanelet_map->polygonLayer);
 
   publishAdditionalMarker(lanelet_map);
 
   vml_common::publishCloud(*pub_sign_board_, ll2_sign_board, stamp);
   vml_common::publishCloud(*pub_cloud_, ll2_road_marking, stamp);
+  vml_common::publishCloud(*pub_polygon_, ll2_polygon, stamp);
 
   RCLCPP_INFO_STREAM(get_logger(), "successed map decomposing");
 }

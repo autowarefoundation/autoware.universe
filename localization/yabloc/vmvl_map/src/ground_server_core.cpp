@@ -1,5 +1,6 @@
 #include "vmvl_map/ground_server.hpp"
 #include "vmvl_map/ll2_util.hpp"
+#include "vmvl_map/polygon_operation.hpp"
 
 #include <Eigen/Eigenvalues>
 #include <vml_common/color.hpp>
@@ -75,26 +76,50 @@ void GroundServer::onPoseStamped(const PoseStamped & msg)
   }
 }
 
+void GroundServer::upsampleLineString(
+  const lanelet::ConstPoint3d & from, const lanelet::ConstPoint3d & to,
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud)
+{
+  Eigen::Vector3f f(from.x(), from.y(), from.z());
+  Eigen::Vector3f t(to.x(), to.y(), to.z());
+  float length = (t - f).norm();
+  Eigen::Vector3f d = (t - f).normalized();
+  for (float l = 0; l < length; l += 0.5f) {
+    pcl::PointXYZ xyz;
+    xyz.getVector3fMap() = (f + l * d);
+    cloud->push_back(xyz);
+  }
+};
+
+pcl::PointCloud<pcl::PointXYZ> GroundServer::sampleFromPolygons(
+  const lanelet::PolygonLayer & polygons)
+{
+  pcl::PointCloud<pcl::PointXYZ> raw_cloud;
+
+  if (polygons.size() >= 2) {
+    RCLCPP_FATAL_STREAM(get_logger(), "current ground server does not handle multi polygons");
+  }
+
+  for (const lanelet::ConstPolygon3d & polygon : polygons) {
+    for (const lanelet::ConstPoint3d & p : polygon) {
+      pcl::PointXYZ xyz;
+      xyz.x = p.x();
+      xyz.y = p.y();
+      xyz.z = p.z();
+      raw_cloud.push_back(xyz);
+    }
+  }
+  return fillPointsInPolygon(raw_cloud);
+}
+
 void GroundServer::onMap(const HADMapBin & msg)
 {
   lanelet::LaneletMapPtr lanelet_map = fromBinMsg(msg);
 
-  auto upSample = [](
-                    const lanelet::ConstPoint3d & from, const lanelet::ConstPoint3d & to,
-                    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud) -> void {
-    Eigen::Vector3f f(from.x(), from.y(), from.z());
-    Eigen::Vector3f t(to.x(), to.y(), to.z());
-    float length = (t - f).norm();
-    Eigen::Vector3f d = (t - f).normalized();
-    for (float l = 0; l < length; l += 0.5f) {
-      pcl::PointXYZ xyz;
-      xyz.getVector3fMap() = (f + l * d);
-      cloud->push_back(xyz);
-    }
-  };
-
+  // TODO: has to be loaded from rosparm
   const std::set<std::string> visible_labels = {
-    "zebra_marking", "virtual", "line_thin", "line_thick", "pedestrian_marking", "stop_line"};
+    "zebra_marking",      "virtual",   "line_thin", "line_thick",
+    "pedestrian_marking", "stop_line", "curbstone"};
 
   pcl::PointCloud<pcl::PointXYZ>::Ptr upsampled_cloud =
     pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
@@ -107,10 +132,12 @@ void GroundServer::onMap(const HADMapBin & msg)
 
     lanelet::ConstPoint3d const * from = nullptr;
     for (const lanelet::ConstPoint3d & p : line) {
-      if (from != nullptr) upSample(*from, p, upsampled_cloud);
+      if (from != nullptr) upsampleLineString(*from, p, upsampled_cloud);
       from = &p;
     }
   }
+
+  *upsampled_cloud += sampleFromPolygons(lanelet_map->polygonLayer);
 
   cloud_ = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
   // Voxel

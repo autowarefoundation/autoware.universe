@@ -25,6 +25,7 @@ public:
 private:
   rclcpp::Publisher<Cloud2>::SharedPtr pub_cloud_;
   rclcpp::Publisher<Cloud2>::SharedPtr pub_sign_board_;
+  rclcpp::Publisher<Cloud2>::SharedPtr pub_polygon_;
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_marker_;
 
   rclcpp::Subscription<HADMapBin>::SharedPtr sub_map_;

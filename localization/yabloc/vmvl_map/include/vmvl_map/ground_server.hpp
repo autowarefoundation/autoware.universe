@@ -13,6 +13,7 @@
 
 #include <boost/circular_buffer.hpp>
 
+#include <lanelet2_core/LaneletMap.h>
 #include <pcl/features/normal_3d.h>
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/point_cloud.h>
@@ -70,6 +71,12 @@ private:
   void publishMarker(const GroundPlane & plane);
 
   std::vector<int> ransacEstimation(const std::vector<int> & indices_raw);
+
+  void upsampleLineString(
+    const lanelet::ConstPoint3d & from, const lanelet::ConstPoint3d & to,
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud);
+
+  pcl::PointCloud<pcl::PointXYZ> sampleFromPolygons(const lanelet::PolygonLayer & polygons);
 };
 
 }  // namespace map
