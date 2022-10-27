@@ -55,8 +55,8 @@ int main()
     });
 
     // Arc-length parametrization.
-    std::vector<double> dx;  //{1, 0.0};
-    std::vector<double> dy;  //{1, 0.0};
+    std::vector<double> dx;  // {1, 0.0};
+    std::vector<double> dy;  // {1, 0.0};
 
     std::adjacent_difference(xvec.begin(), xvec.end(), std::back_inserter(dx));
     std::adjacent_difference(yvec.begin(), yvec.end(), std::back_inserter(dy));
@@ -161,8 +161,8 @@ int main()
     });
 
     // Arc-length parametrization.
-    std::vector<double> dx;  //{1, 0.0};
-    std::vector<double> dy;  //{1, 0.0};
+    std::vector<double> dx;  // {1, 0.0};
+    std::vector<double> dy;  // {1, 0.0};
 
     std::adjacent_difference(xvec.begin(), xvec.end(), std::back_inserter(dx));
     std::adjacent_difference(yvec.begin(), yvec.end(), std::back_inserter(dy));
@@ -199,9 +199,6 @@ int main()
 
     Eigen::MatrixXd dydt(xe.unaryExpr([&](auto x) { return cy * kx * cos(x); }));
 
-    //  std::cout << "dydt " << std::endl;
-    //  ns_eigen_utils::printEigenMat(dydt);
-
     // Second derivative
     Eigen::MatrixXd dxdt2(xe.rows(), 1);
     dxdt2.setZero();
@@ -214,10 +211,10 @@ int main()
 
     // Cross product example.
     //  Eigen::MatrixXd cross_product(xe.rows(), 1);
-    //    auto cross_product = ns_eigen_utils::crossProduct<double>(rdt, rdt2);
+    //  auto cross_product = ns_eigen_utils::crossProduct<double>(rdt, rdt2);
 
     // Curvature example.
-    Eigen::MatrixXd curvature_original;  //(xe.rows(), 1);
+    Eigen::MatrixXd curvature_original;  // (xe.rows(), 1);
     curvature_original = ns_eigen_utils::Curvature(rdt, rdt2);
 
     //  ns_eigen_utils::printEigenMat(curvature_original);

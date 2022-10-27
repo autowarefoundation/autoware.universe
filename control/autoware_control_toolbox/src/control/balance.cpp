@@ -91,11 +91,9 @@ double ns_control_toolbox::balance_symmetric(double const & a, double const & b)
     if (large_number < small_number) {
       break;
     }
-
     small_number *= RADIX;
     large_number /= RADIX;
     f *= RADIX;
-
   } while (large_number > EPS && small_number > EPS);
 
   return f;

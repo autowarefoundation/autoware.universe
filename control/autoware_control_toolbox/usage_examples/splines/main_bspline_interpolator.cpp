@@ -50,8 +50,8 @@ int main()
     });
 
     // Arc-length parametrization.
-    std::vector<double> dx;  //{1, 0.0};
-    std::vector<double> dy;  //{1, 0.0};
+    std::vector<double> dx;  // {1, 0.0};
+    std::vector<double> dy;  // {1, 0.0};
 
     std::adjacent_difference(xvec.begin(), xvec.end(), std::back_inserter(dx));
     std::adjacent_difference(yvec.begin(), yvec.end(), std::back_inserter(dy));
@@ -133,8 +133,8 @@ int main()
     });
 
     // Arc-length parametrization.
-    std::vector<double> dx;  //{1, 0.0};
-    std::vector<double> dy;  //{1, 0.0};
+    std::vector<double> dx;  // {1, 0.0};
+    std::vector<double> dy;  // {1, 0.0};
 
     std::adjacent_difference(xvec.begin(), xvec.end(), std::back_inserter(dx));
     std::adjacent_difference(yvec.begin(), yvec.end(), std::back_inserter(dy));
@@ -249,7 +249,7 @@ int main()
     auto rdt2 = ns_eigen_utils::hstack<double>(dxdt2, dydt2);
 
     // Curvature example.
-    Eigen::MatrixXd curvature_orginal;  //(xe.rows(), 1);
+    Eigen::MatrixXd curvature_orginal;  // (xe.rows(), 1);
     curvature_orginal = ns_eigen_utils::Curvature(rdt, rdt2);
 
     //  ns_eigen_utils::printEigenMat(curvature_orginal);
@@ -274,8 +274,8 @@ int main()
     });
 
     // Arc-length parametrization.
-    std::vector<double> dx;  //{1, 0.0};
-    std::vector<double> dy;  //{1, 0.0};
+    std::vector<double> dx;  // {1, 0.0};
+    std::vector<double> dy;  // {1, 0.0};
 
     std::adjacent_difference(xvec.begin(), xvec.end(), std::back_inserter(dx));
     std::adjacent_difference(yvec.begin(), yvec.end(), std::back_inserter(dy));
@@ -358,12 +358,12 @@ int main()
 
     Eigen::MatrixXd dydt2(xe.unaryExpr([&](auto x) { return -cy * kx * kx * sin(x); }));
 
-    // compute r0, r1 as r0 = [dxdt, dydt] and r1[dxdt2, dydt2]
+    // compute r0, r1 as r0 = [dxdt, dydt] and r1 [dxdt2, dydt2]
     auto rdt = ns_eigen_utils::hstack<double>(dxdt, dydt);
     auto rdt2 = ns_eigen_utils::hstack<double>(dxdt2, dydt2);
 
     // Curvature example.
-    Eigen::MatrixXd curvature_orginal_ROS;  //(xe.rows(), 1);
+    Eigen::MatrixXd curvature_orginal_ROS;  // (xe.rows(), 1);
     curvature_orginal_ROS = ns_eigen_utils::Curvature(rdt, rdt2);
 
     writeToFile(log_path, curvature_orginal_ROS, "curvature_original_ROS");

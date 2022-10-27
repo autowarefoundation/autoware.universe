@@ -18,6 +18,8 @@
 #include <experimental/filesystem>  // fmt package
 
 #include <fstream>
+#include <string>
+#include <vector>
 
 // for creating an output file
 namespace fs = std::experimental::filesystem;
