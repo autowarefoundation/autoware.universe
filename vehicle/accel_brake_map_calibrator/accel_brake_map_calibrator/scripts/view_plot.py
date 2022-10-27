@@ -67,10 +67,10 @@ class ViewPlot(Node):
             )
         
         if calibration_method is None:
-            calibration_method = "eachcell"
-        elif not ((calibration_method == "eachcell") | (calibration_method == "fourcell")):
+            calibration_method = "each_cell"
+        elif not ((calibration_method == "each_cell") | (calibration_method == "four_cell")):
             print("invalid method.")
-            calibration_method = "eachcell"
+            calibration_method = "each_cell"
 
         print("default map dir: {}".format(default_map_dir))
         print("calibrated map dir: {}".format(calibrated_map_dir))
@@ -279,7 +279,7 @@ if __name__ == "__main__":
         "-c", "--calibrated-map-dir", default=None, type=str, help="directory of calibrated map"
     )
     parser.add_argument(
-        "-m", "--method", default="None", type=str, help="calibration method : eachcell or fourcell"
+        "-m", "--method", default="None", type=str, help="calibration method : each_cell or four_cell"
     )
     parser.add_argument("-s", "--scatter-only", action="store_true", help="show only scatters")
     parser.add_argument(

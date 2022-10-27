@@ -80,7 +80,7 @@ class CalcUtils:
         data_list = get_map_list(y_num, x_num)
         full_data_list = get_map_list(y_num, x_num)
 
-        if calibration_method == "fourcell":
+        if calibration_method == "four_cell":
             x_thresh = np.abs(x_index_list[1] - x_index_list[0])/2
             y_thresh = np.abs(y_index_list[1] - y_index_list[0])/2
 
