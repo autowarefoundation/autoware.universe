@@ -75,18 +75,13 @@ int main()
   /*
    In case we use random noise.
    Generate noise.
-      std::random_device rd;
-      std::default_random_engine generator{rd()};
-      std::normal_distribution<double> distribution(0.0, 0.3);
+      std::random_device rd; std::default_random_engine
+      generator{rd()}; std::normal_distribution<double> distribution(0.0, 0.3);
    */
 
   std::vector<double> yinterp;
-  // PACK yz into vector of vectors.
-  // std::vector<std::vector<double>> yz_base{yvec, zvec};
 
-  // Create a spline object from the x
   // Default spline type is 'spline'. We can choose 'line' as an additional implementation.
-
   auto interpolating_spline_aw = ns_splines::InterpolatingSplinePCG(3);
 
   const double timer_interpolation = tic();
@@ -103,8 +98,7 @@ int main()
   std::vector<double> zinterp;
 
   // Set reuse coeffs true so that we can use the same coefficients for the repeated interpolation.
-  // When creating the interpolator first time, we set reuse false so that it computes the
-  // coefficients.
+  // When creating the interpolator first time, we set reuse false so that it computes the coeffs.
 
   is_interpolated = interpolating_spline_aw.Interpolate(svec, zvec, se_new, zinterp);
   ns_utils::print("Is interpolated :", is_interpolated);
@@ -145,9 +139,7 @@ int main()
 
   writeToFile(log_path, zinterp_itemwise, "zinterp_itemwise");
 
-  /**
-   * Initialized and vector interpolation
-   * */
+  // Initialized and vector interpolation
   auto se_new3 = ns_utils::linspace(svec[0] + 0.5, svec.back(), 30);
 
   std::vector<double> zvectorwise;
@@ -156,20 +148,15 @@ int main()
   writeToFile(log_path, se_new3, "snew3");
   writeToFile(log_path, zvectorwise, "zvectorwise");
 
-  /**
-   * LINEAR INTERPOLATION
-   * */
+  //  LINEAR INTERPOLATION
   std::vector<double> ylinear;
   ns_splines::InterpolatingSplinePCG linear_interp(1);
   is_interpolated = interpolating_spline_aw.Interpolate(svec, yvec, se_new, ylinear);
   ns_utils::print("Is interpolated :", is_interpolated);
 
-  writeToFile(log_path, ylinear, "ylinear");
+  // writeToFile(log_path, ylinear, "ylinear");
 
-  /**
-   * Constant vector interpolation.
-   * */
-
+  // Constant vector interpolation.
   std::vector<double> yconst(svec.size(), 1.);
   ns_splines::InterpolatingSplinePCG constant_interp(3);
   constant_interp.Initialize(svec, yconst);
@@ -177,7 +164,7 @@ int main()
   double yconst0{};
   constant_interp.Interpolate(svec[2] + 0.01, yconst0);
 
-  assert(("Left must equal right : ", yconst[0] == yconst0));
-  ns_utils::print("Is equal : ", yconst[0], yconst0);
+  // assert(("Left must equal right : ", yconst[0] == yconst0));
+  // ns_utils::print("Is equal : ", yconst[0], yconst0);
   return 0;
 }
