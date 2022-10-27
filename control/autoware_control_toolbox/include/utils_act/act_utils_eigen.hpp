@@ -53,7 +53,7 @@ constexpr eigen_dynamic_type<T> reshape(
 
 /**
  * @brief Stack matrix in sequence vertically
- *        imspired by numpy.vstack
+ *        inspired by numpy.vstack
  *        https://docs.scipy.org/doc/numpy/reference/generated/numpy.vstack.html
  *
  * @param m1 first matrix
@@ -411,19 +411,20 @@ void backSubstitution(
         Xtobesolved(i, k) = Xtobesolved(i, k) / R(k, k);
       }
     }
-  } else {
-    for (auto i = 0; i < mrow; ++i) {
-      Xtobesolved(i, ncol - 1) = B(i, ncol - 1) / R(ncol - 1, ncol - 1);
+    return;
+  }
 
-      for (auto k = ncol - 2; k >= 0; --k) {
-        Xtobesolved(i, k) = B(i, k);
+  for (auto i = 0; i < mrow; ++i) {
+    Xtobesolved(i, ncol - 1) = B(i, ncol - 1) / R(ncol - 1, ncol - 1);
 
-        for (auto j = k + 1; j < ncol; ++j) {
-          Xtobesolved(i, k) = Xtobesolved(i, k) - Xtobesolved(i, j) * R(j, k);
-        }
+    for (auto k = ncol - 2; k >= 0; --k) {
+      Xtobesolved(i, k) = B(i, k);
 
-        Xtobesolved(i, k) = Xtobesolved(i, k) / R(k, k);
+      for (auto j = k + 1; j < ncol; ++j) {
+        Xtobesolved(i, k) = Xtobesolved(i, k) - Xtobesolved(i, j) * R(j, k);
       }
+
+      Xtobesolved(i, k) = Xtobesolved(i, k) / R(k, k);
     }
   }
 }

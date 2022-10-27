@@ -8,11 +8,8 @@ find_package(fmt)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
-
 ##------------ Library headers and sources --------------------
-
 ##------------- CONTROL LIB  ----------------------------------
-
 set(CONTROL_LIB autoware_control_toolbox_lib)
 
 set(CONTROL_LIB_SOURCE
@@ -64,7 +61,7 @@ set(CONTROL_LIB_INCLUDE_DIRS
   include/splines
   include/utils_act)
 
-##------------- Whole LIBRARY COMPILE --------------------
+##------------- LIBRARY to COMPILE --------------------
 
 ament_auto_add_library(${CONTROL_LIB} SHARED
   ${CONTROL_LIB_SOURCE}
@@ -101,13 +98,10 @@ if(BUILD_TESTING)
     test/tests_spline_modules.cpp
     test/tests_util_modules.cpp)
 
-  # ament_target_dependencies(${ACT_TESTs} ${CONTROL_LIB})
-  # autoware_set_compile_options(${ACT_TESTs})
-
   target_link_libraries(${ACT_TESTs}
     ${CONTROL_LIB}
     ${EIGEN3_LIBRARIES})
 endif()
 
-#ament package generation and installing
+# ament package generation and installing
 ament_auto_package(INSTALL_TO_SHARE)
