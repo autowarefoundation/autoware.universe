@@ -94,14 +94,6 @@ class NDTScanMatcher : public rclcpp::Node
   using NormalDistributionsTransform =
     pclomp::NormalDistributionsTransform<PointSource, PointTarget>;
 
-  // TODO(Tier IV): move file
-  struct OMPParams
-  {
-    OMPParams() : search_method(pclomp::NeighborSearchMethod::KDTREE), num_threads(1) {}
-    pclomp::NeighborSearchMethod search_method;
-    int num_threads;
-  };
-
 public:
   NDTScanMatcher();
 
