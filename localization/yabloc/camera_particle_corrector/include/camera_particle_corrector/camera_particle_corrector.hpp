@@ -27,6 +27,7 @@ public:
 private:
   void onLsd(const PointCloud2 & msg);
   void onLl2(const PointCloud2 & msg);
+  void onUnmappedArea(const PointCloud2 & msg);
   void onPose(const PoseStamped & msg);
   void onTimer();
 
@@ -38,6 +39,7 @@ private:
   LineSegment transformCloud(const LineSegment & src, const Eigen::Affine3f & transform) const;
   Pose meanParticles(const ParticleArray & particle_array) const;
 
+  rclcpp::Subscription<PointCloud2>::SharedPtr sub_unmapped_area_;
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_lsd_;
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_ll2_;
   rclcpp::Subscription<PoseStamped>::SharedPtr sub_pose_;

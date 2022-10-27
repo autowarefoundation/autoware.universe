@@ -26,6 +26,9 @@ CameraParticleCorrector::CameraParticleCorrector()
   auto ll2_callback = std::bind(&CameraParticleCorrector::onLl2, this, _1);
   sub_ll2_ = create_subscription<PointCloud2>("ll2_road_marking", 10, ll2_callback);
 
+  auto unmapped_area_callback = std::bind(&CameraParticleCorrector::onUnmappedArea, this, _1);
+  sub_unmapped_area_ = create_subscription<PointCloud2>("ll2_polygon", 10, unmapped_area_callback);
+
   auto pose_callback = std::bind(&CameraParticleCorrector::onPose, this, _1);
   sub_pose_ = create_subscription<PoseStamped>("particle_pose", 10, pose_callback);
 
@@ -41,7 +44,16 @@ CameraParticleCorrector::CameraParticleCorrector()
 
 void CameraParticleCorrector::onPose(const PoseStamped & msg) { latest_pose_ = msg; }
 
-void CameraParticleCorrector::onLsd(const sensor_msgs::msg::PointCloud2 & lsd_msg)
+void CameraParticleCorrector::onUnmappedArea(const PointCloud2 & msg)
+{
+  // TODO: This does not handle multiple polygons
+  pcl::PointCloud<pcl::PointXYZ> ll2_polygon;
+  pcl::fromROSMsg(msg, ll2_polygon);
+  cost_map_.setUnmappedArea(ll2_polygon);
+  RCLCPP_INFO_STREAM(get_logger(), "Set unmapped-area into Hierarchical cost map");
+}
+
+void CameraParticleCorrector::onLsd(const PointCloud2 & lsd_msg)
 {
   const rclcpp::Time stamp = lsd_msg.header.stamp;
   std::optional<ParticleArray> opt_array = this->getSynchronizedParticleArray(stamp);

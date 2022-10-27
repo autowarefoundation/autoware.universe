@@ -29,6 +29,22 @@ cv::Point2i HierarchicalCostMap::toCvPoint(const Area & area, const Eigen::Vecto
   return {static_cast<int>(px), static_cast<int>(py)};
 }
 
+cv::Vec3b HierarchicalCostMap::at3(const Eigen::Vector2f & position)
+{
+  if (!cloud_.has_value()) {
+    return cv::Vec3b(128, 0, 0);
+  }
+
+  Area key(position);
+  if (cost_maps_.count(key) == 0) {
+    buildMap(key);
+  }
+  map_accessed_[key] = true;
+
+  cv::Point2i tmp = toCvPoint(key, position);
+  return cost_maps_.at(key).at<cv::Vec3b>(tmp);
+}
+
 cv::Vec2b HierarchicalCostMap::at2(const Eigen::Vector2f & position)
 {
   if (!cloud_.has_value()) {
@@ -42,7 +58,8 @@ cv::Vec2b HierarchicalCostMap::at2(const Eigen::Vector2f & position)
   map_accessed_[key] = true;
 
   cv::Point2i tmp = toCvPoint(key, position);
-  return cost_maps_.at(key).at<cv::Vec2b>(tmp);
+  cv::Vec3b value = cost_maps_.at(key).at<cv::Vec3b>(tmp);
+  return {value[0], value[1]};
 }
 
 float HierarchicalCostMap::at(const Eigen::Vector2f & position)
@@ -54,7 +71,12 @@ float HierarchicalCostMap::at(const Eigen::Vector2f & position)
   map_accessed_[key] = true;
 
   cv::Point2i tmp = toCvPoint(key, position);
-  return cost_maps_.at(key).at<cv::Vec2b>(tmp)[0];
+  return cost_maps_.at(key).at<cv::Vec3b>(tmp)[0];
+}
+
+void HierarchicalCostMap::setUnmappedArea(const pcl::PointCloud<pcl::PointXYZ> & polygon)
+{
+  unmapped_polygon_ = polygon;
 }
 
 void HierarchicalCostMap::setCloud(const pcl::PointCloud<pcl::PointNormal> & cloud)
@@ -84,14 +106,23 @@ void HierarchicalCostMap::buildMap(const Area & area)
     cv::line(image, from, to, cv::Scalar::all(0), 1);
     cv::line(orientation, from, to, cv::Scalar::all(degree), 1);
   }
+
+  // channel-1
   cv::Mat distance;
   cv::distanceTransform(image, distance, cv::DIST_L2, 3);
   cv::threshold(distance, distance, 100, 100, cv::THRESH_TRUNC);
   distance.convertTo(distance, CV_8UC1, -2.55, 255);
 
+  // channel-2
   cv::Mat whole_orientation = directCostMap(orientation, image);
+
+  // channel-3
+  cv::Mat available_area = createAvailableAreaImage(area);
+
   cv::Mat directed_cost_map;
-  cv::merge(std::vector<cv::Mat>{gamma_converter(distance), whole_orientation}, directed_cost_map);
+  cv::merge(
+    std::vector<cv::Mat>{gamma_converter(distance), whole_orientation, available_area},
+    directed_cost_map);
 
   cost_maps_[area] = directed_cost_map;
   generated_map_history_.push_back(area);
@@ -152,8 +183,11 @@ cv::Mat HierarchicalCostMap::getMapImage(const Pose & pose)
   cv::Mat image = cv::Mat::zeros(cv::Size(image_size_, image_size_), CV_8UC3);
   for (int w = 0; w < image_size_; w++) {
     for (int h = 0; h < image_size_; h++) {
-      cv::Vec2b v2 = this->at2(toVector2f(h, w));
-      image.at<cv::Vec3b>(h, w) = cv::Vec3b(v2[1], v2[0], v2[0]);
+      cv::Vec3b v3 = this->at3(toVector2f(h, w));
+      if (v3[2] == 0)
+        image.at<cv::Vec3b>(h, w) = cv::Vec3b(v3[1], v3[0], v3[0]);
+      else
+        image.at<cv::Vec3b>(h, w) = cv::Vec3b(0, 0, 255);
     }
   }
 
@@ -176,6 +210,21 @@ void HierarchicalCostMap::eraseObsolete()
   }
 
   map_accessed_.clear();
+}
+
+cv::Mat HierarchicalCostMap::createAvailableAreaImage(const Area & area)
+{
+  cv::Mat available_area = cv::Mat::zeros(cv::Size(image_size_, image_size_), CV_8UC1);
+  if (unmapped_polygon_.empty()) return available_area;
+
+  // TODO: Need roughly check before drawContours because it will be heavy to repeat.
+  std::vector<std::vector<cv::Point2i>> contours(1);
+  for (const pcl::PointXYZ & p : unmapped_polygon_) {
+    contours.front().push_back(toCvPoint(area, {p.x, p.y}));
+  }
+
+  cv::drawContours(available_area, contours, 0, cv::Scalar::all(1), -1);
+  return available_area;
 }
 
 }  // namespace modularized_particle_filter

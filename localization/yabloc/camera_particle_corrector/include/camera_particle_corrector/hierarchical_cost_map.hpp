@@ -58,9 +58,11 @@ public:
   HierarchicalCostMap(rclcpp::Node * node);
 
   void setCloud(const pcl::PointCloud<pcl::PointNormal> & cloud);
+  void setUnmappedArea(const pcl::PointCloud<pcl::PointXYZ> & polygon);
 
   float at(const Eigen::Vector2f & position);
   cv::Vec2b at2(const Eigen::Vector2f & position);
+  cv::Vec3b at3(const Eigen::Vector2f & position);
 
   MarkerArray showMapRange() const;
 
@@ -80,9 +82,12 @@ private:
 
   std::list<Area> generated_map_history_;
   std::optional<pcl::PointCloud<pcl::PointNormal>> cloud_;
+  pcl::PointCloud<pcl::PointXYZ> unmapped_polygon_;
   std::unordered_map<Area, cv::Mat, Area> cost_maps_;
 
   cv::Point toCvPoint(const Area & are, const Eigen::Vector2f);
   void buildMap(const Area & area);
+
+  cv::Mat createAvailableAreaImage(const Area & area);
 };
 }  // namespace modularized_particle_filter
