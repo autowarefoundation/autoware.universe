@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef UTILS__ACT_UTILS_EIGEN_HPP_
-#define UTILS__ACT_UTILS_EIGEN_HPP_
+#ifndef UTILS_ACT__ACT_UTILS_EIGEN_HPP_
+#define UTILS_ACT__ACT_UTILS_EIGEN_HPP_
 
 #include "eigen3/Eigen/Core"
 
@@ -542,4 +542,4 @@ eigen_dynamic_type<T> difference_matrix_bspline(int const & n, int const & k, in
 }
 
 }  // namespace ns_eigen_utils
-#endif  // UTILS__ACT_UTILS_EIGEN_HPP_
+#endif  // UTILS_ACT__ACT_UTILS_EIGEN_HPP_

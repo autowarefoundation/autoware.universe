@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_CONTROL_TOOLBOX_INCLUDE_SPLINES_INTERPOLATING_SPLINE_PCG_HPP_
-#define AUTOWARE_CONTROL_TOOLBOX_INCLUDE_SPLINES_INTERPOLATING_SPLINE_PCG_HPP_
+#ifndef SPLINES__INTERPOLATING_SPLINE_PCG_HPP_
+#define SPLINES__INTERPOLATING_SPLINE_PCG_HPP_
 
 #include "utils_act/act_utils.hpp"
 #include "utils_act/act_utils_eigen.hpp"
@@ -92,7 +92,7 @@ public:
 
   // Initialize to eliminate settings frequently reusing var.
   bool Initialize(std::vector<double> const & tbase, std::vector<double> const & ybase);
-  [[nodiscard]] bool isInitialized() const {return initialized_;}
+  [[nodiscard]] bool isInitialized() const { return initialized_; }
 
 private:
   size_t interp_type_{3};  // 1 or 3 for linear and spline interpolation, respectively.
@@ -123,4 +123,4 @@ private:
 
 }  // namespace ns_splines
 
-#endif  // AUTOWARE_CONTROL_TOOLBOX_INCLUDE_SPLINES_INTERPOLATING_SPLINE_PCG_HPP_
+#endif  // SPLINES__INTERPOLATING_SPLINE_PCG_HPP_

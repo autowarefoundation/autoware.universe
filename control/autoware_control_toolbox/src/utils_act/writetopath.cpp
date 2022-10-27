@@ -14,5 +14,4 @@
 
 #include "utils_act/writetopath.hpp"
 
-fs::path getOutputPath()
-{ return fs::path("..") / "analyze_outputs_py/" / "logs"; }
+fs::path getOutputPath() { return fs::path("..") / "analyze_outputs_py/" / "logs"; }

@@ -40,8 +40,8 @@ int main()
   sys.print();
 
   /**
-   * The TF factor class can can be used to represent a numerator or denominator which are equipped with algebraic
-   * operations (summation, subtraction and multiplication).
+   * The TF factor class can can be used to represent a numerator or denominator which are equipped
+   * with algebraic operations (summation, subtraction and multiplication).
    * */
   ns_control_toolbox::tf_factor ntf1{{1, 0, 0}};
   ns_control_toolbox::tf_factor dtf2{{1, 0, 0.2}};

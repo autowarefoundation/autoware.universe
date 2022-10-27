@@ -13,11 +13,11 @@ one can
 add,
 subtract or multiply transfer functions.
 
- ```c++
+```c++
 
 /**
- *  Define a transfer function by its numerator and denominator.
- * */
+*  Define a transfer function by its numerator and denominator.
+* */
 
 std::vector<double> num{ 1. };
 std::vector<double> den{ 5.039e-07, 0.00019, 0.02387, 1 };
@@ -28,12 +28,12 @@ ns_control_toolbox::tf sys(num, den);
 // Print the transfer function representation.
 sys.print();
 
-/** 
- *   Prints 
- *                1
- *   -------------------------------------------
- *   5.039e-07 s^3 + 0.00019 s^2 + 0.02387 s + 1
- **/
+/**
+*   Prints
+*                1
+*   -------------------------------------------
+*   5.039e-07 s^3 + 0.00019 s^2 + 0.02387 s + 1
+**/
 
 ```
 
@@ -99,7 +99,7 @@ transfer function, we can construct it as given in the following code snippet;
 // sys(s) = tf(num, den, a, b)
 ns_control_toolbox::tf tf2{{ 2 }, { 1, 1 }, 3., 3. };
 
-/** prints 
+/** prints
  *  2 s + 2
  *  -------
  *  3 s + 1
@@ -129,53 +129,53 @@ tf_delay.print();
 auto ss_sys = ns_control_toolbox::tf2ss(tf_delay);
 ss_sys.print();
 
-/** prints 
-     A : 
-    
+/** prints
+     A :
+
     [ -1200, -585.9, -457.8]
     [  1024,      0,      0]
     [     0,    256,      0]
     ----------------------------------------
-     B : 
-    
+     B :
+
     [64]
     [ 0]
     [ 0]
     ----------------------------------------
-     C : 
-    
+     C :
+
     [ 37.5,     0, 14.31]
     ----------------------------------------
-     D : 
-    
-    [-1] 
+     D :
+
+    [-1]
  * */
- 
+
 // Test discretization and compare with Matlab.
 double Ts = 0.1; // sampling time.
 
 // Print discrete state-space representation
 ss_sys.print_discrete_system();
 
-/** prints 
- Ad : 
- 
+/** prints
+ Ad :
+
  [  -0.9999,  -0.03892, -0.002764]
  [ 0.006183,   -0.9926,   -0.1415]
  [  0.07914,   0.09429,   -0.8115]
  ----------------------------------------
-  Bd : 
- 
+  Bd :
+
  [0.0003865]
  [  0.01979]
  [   0.2533]
  ----------------------------------------
-  Cd : 
- 
+  Cd :
+
  [  0.5684, -0.05528,    1.297]
  ----------------------------------------
-  Dd : 
- 
+  Dd :
+
  [0.8187]
 **/
 ```
@@ -189,5 +189,5 @@ References :
 1. Golub and Van Loan, Matrix Computations, 4rd edition, Chapter 9., Section 9.3.1 pp 530
 2. [Matlab Matrix Balancing algorithm.](http://www.ece.northwestern.edu/local-apps/matlabhelp/techdoc/ref/balance.html)
 3. [ssbal](http://www.ece.northwestern.edu/local-apps/matlabhelp/toolbox/control/ref/ssbal.html)
-3. James, R., Langou, J. and Lowery, B.R., 2014. On matrix balancing and eigenvector computation. arXiv preprint arXiv:
+4. James, R., Langou, J. and Lowery, B.R., 2014. On matrix balancing and eigenvector computation. arXiv preprint arXiv:
    1401.5766.

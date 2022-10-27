@@ -22,7 +22,7 @@
 size_t ns_control_toolbox::tf::getPolynomialStringAndSize(
   std::vector<double> const & num_or_den, std::ostringstream & string_stream)
 {
-  auto Nn = num_or_den.size();
+  auto const & Nn = num_or_den.size();
   int precision = 4;
 
   for (size_t k = 0; k < Nn; ++k) {
@@ -54,7 +54,7 @@ size_t ns_control_toolbox::tf::getPolynomialStringAndSize(
           string_stream << " s";
         }
 
-      } else { // if k is the last index
+      } else {  // if k is the last index
         if (Nn > 1) {
           string_stream << sign_str << std::setprecision(precision) << coeff_abs;
         } else {
@@ -98,10 +98,6 @@ void ns_control_toolbox::tf::print() const
 
 void ns_control_toolbox::tf::inv()
 {
-  //	std::vector<double> temp_den{ std::move(den_) };
-  //	den_ = std::move(num_);
-  //	num_ = std::move(temp_den);
-
   std::swap(num_, den_);
   std::swap(num_constant_, den_constant_);
 }
@@ -113,17 +109,13 @@ ns_control_toolbox::tf::tf(
   den_ = den();
 }
 
-void ns_control_toolbox::tf::update_num(std::vector<double> const & num)
-{num_ = num;}
+void ns_control_toolbox::tf::update_num(std::vector<double> const & num) { num_ = num; }
 
-void ns_control_toolbox::tf::update_num(tf_factor const & num)
-{num_ = num();}
+void ns_control_toolbox::tf::update_num(tf_factor const & num) { num_ = num(); }
 
-void ns_control_toolbox::tf::update_den(const std::vector<double> & den)
-{den_ = den;}
+void ns_control_toolbox::tf::update_den(const std::vector<double> & den) { den_ = den; }
 
-void ns_control_toolbox::tf::update_den(const ns_control_toolbox::tf_factor & den)
-{den_ = den();}
+void ns_control_toolbox::tf::update_den(const ns_control_toolbox::tf_factor & den) { den_ = den(); }
 
 /**
  * @brief multiples all terms by a constant in numerator and denominator.
@@ -163,17 +155,13 @@ std::vector<double> ns_control_toolbox::tf::den() const
   return den_constant_ * den_;
 }
 
-double ns_control_toolbox::tf::num_constant() const
-{return num_constant_;}
+double ns_control_toolbox::tf::num_constant() const { return num_constant_; }
 
-double ns_control_toolbox::tf::den_constant() const
-{return den_constant_;}
+double ns_control_toolbox::tf::den_constant() const { return den_constant_; }
 
-std::vector<double> ns_control_toolbox::tf::num_vector_only() const
-{return num_;}
+std::vector<double> ns_control_toolbox::tf::num_vector_only() const { return num_; }
 
-std::vector<double> ns_control_toolbox::tf::den_vector_only() const
-{return den_;}
+std::vector<double> ns_control_toolbox::tf::den_vector_only() const { return den_; }
 
 ns_control_toolbox::tf ns_control_toolbox::padecoeff(const double & Td, const size_t & order)
 {
@@ -200,13 +188,9 @@ ns_control_toolbox::tf ns_control_toolbox::padecoeff(const double & Td, const si
   }
 
   auto const den0 = den[0];
-  std::transform(
-    num.begin(), num.end(), num.begin(), [&den0](auto & x)
-    {return x / den0;});
+  std::transform(num.begin(), num.end(), num.begin(), [&den0](auto & x) { return x / den0; });
 
-  std::transform(
-    den.begin(), den.end(), den.begin(), [&den0](auto & x)
-    {return x / den0;});
+  std::transform(den.begin(), den.end(), den.begin(), [&den0](auto & x) { return x / den0; });
 
   return {num, den};
 }

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_CONTROL_TOOLBOX_TRANSFER_FUNCTIONS_HPP
-#define AUTOWARE_CONTROL_TOOLBOX_TRANSFER_FUNCTIONS_HPP
+#ifndef CONTROL__TRANSFER_FUNCTIONS_HPP_
+#define CONTROL__TRANSFER_FUNCTIONS_HPP_
 
 #include "act_definitions.hpp"
 #include "tf_algebra.hpp"
@@ -191,4 +191,4 @@ tf padecoeff(double const & Td, size_t const & order);
 
 }  // namespace ns_control_toolbox
 
-#endif  // AUTOWARE_CONTROL_TOOLBOX_TRANSFER_FUNCTIONS_HPP
+#endif  // CONTROL__TRANSFER_FUNCTIONS_HPP_

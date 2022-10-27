@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "control/state_space.hpp"
+
 #include "control/transfer_functions.hpp"
 
 #include <utility>
@@ -106,8 +107,7 @@ ns_control_toolbox::tf2ss::tf2ss(
 }
 
 void ns_control_toolbox::tf2ss::computeSystemMatrices(
-  const std::vector<double> & num,
-  const std::vector<double> & den)
+  const std::vector<double> & num, const std::vector<double> & den)
 {
   auto const & nx = N_;  // static_cast<long>(den.size() - 1);       // Order of the system.
 
@@ -148,13 +148,11 @@ void ns_control_toolbox::tf2ss::computeSystemMatrices(
   if (std::fabs(den_first_item) > EPS) {
     std::transform(
       zero_padded_num.begin(), zero_padded_num.end(), zero_padded_num.begin(),
-      [&den_first_item](auto const & x)
-      {return x / den_first_item;});
+      [&den_first_item](auto const & x) { return x / den_first_item; });
 
     std::transform(
       normalized_den.begin(), normalized_den.end(), normalized_den.begin(),
-      [&den_first_item](auto const & x)
-      {return x / den_first_item;});
+      [&den_first_item](auto const & x) { return x / den_first_item; });
   } else {
     throw std::invalid_argument("The first item in the denominator cannot be zero ...");
   }
@@ -179,20 +177,14 @@ void ns_control_toolbox::tf2ss::computeSystemMatrices(
   }
 
   // Balance the matrices.
-  // Call balance_a_matrix method on the system matrices.
-  //	ns_utils::print("Before Balancing");
-  //	ns_eigen_utils::printEigenMat(A_);
-  //	ns_eigen_utils::printEigenMat(B_);
-  //	ns_eigen_utils::printEigenMat(C_);
-  //	ns_eigen_utils::printEigenMat(D_);
-
   ns_control_toolbox::balance_a_matrix(A_, Tsimilarity_mat_);
 
   // Balance C_ and B_;
   double const & nB = B_.lpNorm<1>();
   double const & nC = C_.lpNorm<1>();
 
-  // alpha is a conditioning number that multiplies the smaller normed vector, divides the larger one.
+  // alpha is a conditioning number that multiplies the smaller normed vector, divides the larger
+  // one.
   double const & alpha = ns_control_toolbox::balance_symmetric(nB, nC);
   // ns_utils::print("Alpha :", alpha);
 
@@ -204,21 +196,6 @@ void ns_control_toolbox::tf2ss::computeSystemMatrices(
     B_ = Tsimilarity_mat_.inverse() * B_.eval() / alpha;
     C_ = C_.eval() * Tsimilarity_mat_ * alpha;
   }
-
-  //	nB = B_.lpNorm<1>();
-  //	ns_utils::print("After Balancing");
-  //	ns_eigen_utils::printEigenMat(A_);
-  //	ns_eigen_utils::printEigenMat(B_);
-  //	ns_eigen_utils::printEigenMat(C_);
-  //	ns_eigen_utils::printEigenMat(D_);
-
-  // auto Tinv = Eigen::MatrixXd()
-
-  //	ns_utils::print("Tsimilarity ");
-  //	ns_eigen_utils::printEigenMat(Tsimilarity_mat_);
-  //
-  //	ns_utils::print("Tsimilarity Inverse ");
-  //	ns_eigen_utils::printEigenMat(Tsimilarity_mat_.inverse());
 }
 
 void ns_control_toolbox::tf2ss::print() const
@@ -268,46 +245,26 @@ void ns_control_toolbox::tf2ss::discretisize(double const & Ts)
   Bd_ = inv1_ATs * B_ * Ts;
   Cd_ = C_ * inv1_ATs;
   Dd_ = D_ + C_ * Bd_ / 2.;
-
-  //	ns_utils::print("Ad : ");
-  //	ns_eigen_utils::printEigenMat(Ad_);
-  //
-  //	ns_utils::print("Bd : ");
-  //	ns_eigen_utils::printEigenMat(Bd_);
-  //
-  //	ns_utils::print("Cd : ");
-  //	ns_eigen_utils::printEigenMat(Cd_);
-  //
-  //	ns_utils::print("Dd : ");
-  //	ns_eigen_utils::printEigenMat(Dd_);
 }
 
 // Getters for the system matrices.
 // Discrete time state-space matrices.
-Eigen::MatrixXd ns_control_toolbox::tf2ss::Ad() const
-{return Ad_;}
+Eigen::MatrixXd ns_control_toolbox::tf2ss::Ad() const { return Ad_; }
 
-Eigen::MatrixXd ns_control_toolbox::tf2ss::Bd() const
-{return Bd_;}
+Eigen::MatrixXd ns_control_toolbox::tf2ss::Bd() const { return Bd_; }
 
-Eigen::MatrixXd ns_control_toolbox::tf2ss::Cd() const
-{return Cd_;}
+Eigen::MatrixXd ns_control_toolbox::tf2ss::Cd() const { return Cd_; }
 
-Eigen::MatrixXd ns_control_toolbox::tf2ss::Dd() const
-{return Dd_;}
+Eigen::MatrixXd ns_control_toolbox::tf2ss::Dd() const { return Dd_; }
 
 // Continuous time state-space matrices.
-Eigen::MatrixXd ns_control_toolbox::tf2ss::A() const
-{return A_;}
+Eigen::MatrixXd ns_control_toolbox::tf2ss::A() const { return A_; }
 
-Eigen::MatrixXd ns_control_toolbox::tf2ss::B() const
-{return B_;}
+Eigen::MatrixXd ns_control_toolbox::tf2ss::B() const { return B_; }
 
-Eigen::MatrixXd ns_control_toolbox::tf2ss::C() const
-{return C_;}
+Eigen::MatrixXd ns_control_toolbox::tf2ss::C() const { return C_; }
 
-Eigen::MatrixXd ns_control_toolbox::tf2ss::D() const
-{return D_;}
+Eigen::MatrixXd ns_control_toolbox::tf2ss::D() const { return D_; }
 
 /**
  * @brief simulated the discrete system matrices [Ad, Bd:Cd, Dd] for one step. Its state matrix as
@@ -326,14 +283,11 @@ double ns_control_toolbox::tf2ss::simulateOneStep(Eigen::MatrixXd & x0, const do
   return y;
 }
 
-Eigen::MatrixXd ns_control_toolbox::tf2ss::T() const
-{return Tsimilarity_mat_;}
+Eigen::MatrixXd ns_control_toolbox::tf2ss::T() const { return Tsimilarity_mat_; }
 
 ns_control_toolbox::scalarFilters_ss::scalarFilters_ss(
-  const ns_control_toolbox::tf & sys_tf,
-  const double & Ts)
+  const ns_control_toolbox::tf & sys_tf, const double & Ts)
 {
-
   // Low-pass filter case
   auto num = sys_tf.num();
   auto den = sys_tf.den();
@@ -343,7 +297,7 @@ ns_control_toolbox::scalarFilters_ss::scalarFilters_ss(
   double c_{};
   double d_{};
 
-  if (num.size() == 1) { // low-pass filter
+  if (num.size() == 1) {  // low-pass filter
     auto a0 = num[0];
     auto b0 = den[0];
     auto b1 = den[1];
@@ -355,7 +309,7 @@ ns_control_toolbox::scalarFilters_ss::scalarFilters_ss(
     d_ = 0.;
   }
 
-  if (num.size() == 2) { // high-pass filter
+  if (num.size() == 2) {  // high-pass filter
     auto a0 = num[0];
     auto a1 = num[1];
 
@@ -376,7 +330,6 @@ ns_control_toolbox::scalarFilters_ss::scalarFilters_ss(
   bd_ = inv_a * b_ * Ts;
   cd_ = c_ * inv_a;
   dd_ = d_ + c_ * bd_ / 2.;
-
 }
 double ns_control_toolbox::scalarFilters_ss::simulateOneStep(const double & u)
 {
@@ -390,5 +343,4 @@ void ns_control_toolbox::scalarFilters_ss::print() const
 {
   ns_utils::print("Scalar filter discrete-time state space");
   ns_utils::print("Ad, Bd, Cd, Dd : ", ad_, bd_, cd_, dd_);
-
 }

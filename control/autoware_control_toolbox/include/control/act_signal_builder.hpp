@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_CONTROL_TOOLBOX_ACT_SIGNAL_BUILDER_HPP
-#define AUTOWARE_CONTROL_TOOLBOX_ACT_SIGNAL_BUILDER_HPP
+#ifndef CONTROL__ACT_SIGNAL_BUILDER_HPP_
+#define CONTROL__ACT_SIGNAL_BUILDER_HPP_
 
 #include "../utils_act/act_utils.hpp"
 #include "../utils_act/act_utils_eigen.hpp"
@@ -42,4 +42,4 @@ Eigen::VectorXd make_triangle_signal(Eigen::VectorXd const & time_vec, double co
 
 }  // namespace ns_control_toolbox
 
-#endif  // AUTOWARE_CONTROL_TOOLBOX_ACT_SIGNAL_BUILDER_HPP
+#endif  // CONTROL__ACT_SIGNAL_BUILDER_HPP_

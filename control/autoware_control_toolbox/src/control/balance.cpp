@@ -24,7 +24,7 @@
  * */
 void ns_control_toolbox::permute(Eigen::MatrixXd &)
 {
-  // will be implementing when necessary
+  // will be implemented when necessary
 }
 
 /**
@@ -96,7 +96,7 @@ double ns_control_toolbox::balance_symmetric(double const & a, double const & b)
     large_number /= RADIX;
     f *= RADIX;
 
-  } while ((large_number > EPS && small_number > EPS));
+  } while (large_number > EPS && small_number > EPS);
 
   return f;
 }

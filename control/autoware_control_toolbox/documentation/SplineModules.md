@@ -40,7 +40,7 @@ coordinates of a path.
 const size_t Nin = 120;  // input dimension
 const size_t Nout = 80; // output dimension - down-sampled
 
-// Assume we have a noisy signal. 
+// Assume we have a noisy signal.
 double const &add_noise = 1;
 
 std::random_device rd;
@@ -60,7 +60,7 @@ Eigen::MatrixXd ye(xe.unaryExpr([&](auto x)
 {
 return cy * sin(x) + distribution(generator) * add_noise; }));
 
-// for interpolating another signal with the same regressor. 
+// for interpolating another signal with the same regressor.
 Eigen::MatrixXd ze(xe.unaryExpr([&](auto x)
 {
 return 2 * cos(x) - 3 * sin(x) + distribution(generator) * add_noise; }));
@@ -70,10 +70,10 @@ return 2 * cos(x) - 3 * sin(x) + distribution(generator) * add_noise; }));
 Eigen::MatrixXd yinterp(ye.rows(), ye.cols());
 
 // Create a new smoothing spline.
-double know_number_ratio = 0.3;  // percentage ratio of the number of know points to the input size. 
+double know_number_ratio = 0.3;  // percentage ratio of the number of know points to the input size.
 bool compute_derivatives{ true };
 
-// Create the smoother. 
+// Create the smoother.
 ns_splines::BSplineInterpolatorTemplated<Nin, Nout> interpolating_bspline(know_number_ratio, compute_derivatives);
 
 // Store the interpolated data
@@ -102,7 +102,7 @@ curvature_bspline_smoother = ns_eigen_utils::Curvature(rdot_interp, rddot_interp
 
 ```
 
-## Natural Cubic Spline (Piecewise) by Preconditioned Conjugate Gradients.
+## Natural Cubic Spline (Piecewise) by Preconditioned Conjugate Gradients
 
 The spline modules provide a piecewise cubic (and with a linear option) class which can be used to fit a curve or
 line to the given data piecewise. The implementation depends on the Eigen library, the matrix version of
@@ -157,4 +157,4 @@ ns_utils::print("Is interpolated :", is_interpolated);
 1. Ruppert, D., Wand, M.P. and Carroll, R.J., 2003. Semiparametric regression (No. 12). Cambridge university press.
 2. Hastie, T., Tibshirani, R., Friedman, J.H. and Friedman, J.H., 2009. The elements of statistical learning: data
    mining, inference, and prediction (Vol. 2, pp. 1-758). New York: springer.
-3. https://en.wikipedia.org/wiki/Tikhonov_regularization
+3. <https://en.wikipedia.org/wiki/Tikhonov_regularization>

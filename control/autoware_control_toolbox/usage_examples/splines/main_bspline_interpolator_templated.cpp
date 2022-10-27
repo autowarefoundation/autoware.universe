@@ -12,18 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "utils_act/writetopath.hpp"
+#include "splines/bspline_interpolator_templated.hpp"
 #include "utils_act/act_utils.hpp"
-#include <vector>
+#include "utils_act/timekeep.hpp"
+#include "utils_act/writetopath.hpp"
+
 #include <algorithm>
 #include <numeric>
 #include <random>
-#include "utils_act/timekeep.hpp"
-#include "splines/bspline_interpolator_templated.hpp"
+#include <vector>
 
 int main()
 {
-
   auto log_path = getOutputPath() / "bspline_interp_templated";
 
   // <--------------- Dimension Expansion -------------------------------->
@@ -45,23 +45,18 @@ int main()
     // Generate y = sin(x).
     double cy = 10;
     std::vector<double> yvec;
-    std::transform(
-      xvec.cbegin(), xvec.cend(), std::back_inserter(yvec), [&](auto const & x)
-      {
-        return cy * sin(x) + distribution(generator) * add_noise;
-      });
+    std::transform(xvec.cbegin(), xvec.cend(), std::back_inserter(yvec), [&](auto const & x) {
+      return cy * sin(x) + distribution(generator) * add_noise;
+    });
 
     std::vector<double> zvec;
-    std::transform(
-      xvec.cbegin(), xvec.cend(), std::back_inserter(zvec), [&](auto const & x)
-      {
-        return 2 * cos(x) - 3 * sin(x) + distribution(generator) * add_noise;
-      });
-
+    std::transform(xvec.cbegin(), xvec.cend(), std::back_inserter(zvec), [&](auto const & x) {
+      return 2 * cos(x) - 3 * sin(x) + distribution(generator) * add_noise;
+    });
 
     // Arc-length parametrization.
-    std::vector<double> dx; //{1, 0.0};
-    std::vector<double> dy; //{1, 0.0};
+    std::vector<double> dx;  //{1, 0.0};
+    std::vector<double> dy;  //{1, 0.0};
 
     std::adjacent_difference(xvec.begin(), xvec.end(), std::back_inserter(dx));
     std::adjacent_difference(yvec.begin(), yvec.end(), std::back_inserter(dy));
@@ -69,9 +64,7 @@ int main()
     // Define arc-length cumsum()
     std::vector<double> svec;
     std::transform(
-      dx.cbegin(), dx.cend(), dy.cbegin(), std::back_inserter(svec),
-      [](auto dxi, auto dyi)
-      {
+      dx.cbegin(), dx.cend(), dy.cbegin(), std::back_inserter(svec), [](auto dxi, auto dyi) {
         static double ds = 0.0;
         ds += std::hypot(dxi, dyi);
 
@@ -94,7 +87,6 @@ int main()
     // Create new interpolating coordinates
     auto snew = ns_utils::linspace(svec[0], svec.back(), 101);
 
-
     // Create a spline object from the x
     // Default spline type is 'spline'. We can choose 'line' as an additional implementation.
 
@@ -103,13 +95,11 @@ int main()
     Eigen::MatrixXd xe;
     xe = Eigen::Map<Eigen::Matrix<double, Nin, 1>>(xvec.data());
 
-    Eigen::MatrixXd ye(xe.unaryExpr(
-        [&](auto x)
-        {return cy * sin(x) + distribution(generator) * add_noise;}));
+    Eigen::MatrixXd ye(
+      xe.unaryExpr([&](auto x) { return cy * sin(x) + distribution(generator) * add_noise; }));
 
     Eigen::MatrixXd ze(xe.unaryExpr(
-        [&](auto x)
-        {return 2 * cos(x) - 3 * sin(x) + distribution(generator) * add_noise;}));
+      [&](auto x) { return 2 * cos(x) - 3 * sin(x) + distribution(generator) * add_noise; }));
 
     Eigen::MatrixXd se;
     se = Eigen::Map<Eigen::Matrix<double, Nin, 1>>(svec.data());
@@ -130,8 +120,8 @@ int main()
 
     // Create a new smoothing spline.
     double know_number_ratio = 0.3;
-    ns_splines::BSplineInterpolatorTemplated<Nin, Nout> interpolating_bspline(know_number_ratio,
-      true);
+    ns_splines::BSplineInterpolatorTemplated<Nin, Nout> interpolating_bspline(
+      know_number_ratio, true);
 
     // Different size multi-column interpolation. Expanding the data points.
     interpolating_bspline.InterpolateImplicitCoordinates(ye, yinterp);
@@ -166,15 +156,13 @@ int main()
     // Generate y = sin(x).
     double cy = 10;
     std::vector<double> yvec;
-    std::transform(
-      xvec.cbegin(), xvec.cend(), std::back_inserter(yvec), [&](auto const & x)
-      {
-        return cy * sin(x) + distribution(generator) * 0;
-      });
+    std::transform(xvec.cbegin(), xvec.cend(), std::back_inserter(yvec), [&](auto const & x) {
+      return cy * sin(x) + distribution(generator) * 0;
+    });
 
     // Arc-length parametrization.
-    std::vector<double> dx; //{1, 0.0};
-    std::vector<double> dy; //{1, 0.0};
+    std::vector<double> dx;  //{1, 0.0};
+    std::vector<double> dy;  //{1, 0.0};
 
     std::adjacent_difference(xvec.begin(), xvec.end(), std::back_inserter(dx));
     std::adjacent_difference(yvec.begin(), yvec.end(), std::back_inserter(dy));
@@ -182,9 +170,7 @@ int main()
     // Define arc-length cumsum()
     std::vector<double> svec;
     std::transform(
-      dx.cbegin(), dx.cend(), dy.cbegin(), std::back_inserter(svec),
-      [](auto dxi, auto dyi)
-      {
+      dx.cbegin(), dx.cend(), dy.cbegin(), std::back_inserter(svec), [](auto dxi, auto dyi) {
         static double ds = 0.0;
         ds += std::hypot(dxi, dyi);
 
@@ -195,13 +181,10 @@ int main()
     Eigen::MatrixXd xe;
     xe = Eigen::Map<Eigen::Matrix<double, Nin, 1>>(xvec.data());
 
-    Eigen::MatrixXd ye(xe.unaryExpr(
-        [&](auto x)
-        {return cy * sin(x) + distribution(generator);}));
+    Eigen::MatrixXd ye(xe.unaryExpr([&](auto x) { return cy * sin(x) + distribution(generator); }));
 
-    Eigen::MatrixXd ze(xe.unaryExpr(
-        [&](auto x)
-        {return 2 * cos(x) - 3 * sin(x) + distribution(generator);}));
+    Eigen::MatrixXd ze(
+      xe.unaryExpr([&](auto x) { return 2 * cos(x) - 3 * sin(x) + distribution(generator); }));
     // Generate arc length
     Eigen::MatrixXd se;
     se = Eigen::Map<Eigen::Matrix<double, Nin, 1>>(svec.data());
@@ -210,13 +193,11 @@ int main()
     Eigen::MatrixXd dxdt(xe.rows(), 1);
 
     // First derivative
-    dxdt.setConstant(kx); // dxdt = k*x and kx is k of x
+    dxdt.setConstant(kx);  // dxdt = k*x and kx is k of x
     //  std::cout << " dxdt " << std::endl;
     //  ns_eigen_utils::printEigenMat(dxdt);
 
-    Eigen::MatrixXd dydt(xe.unaryExpr(
-        [&](auto x)
-        {return cy * kx * cos(x);}));
+    Eigen::MatrixXd dydt(xe.unaryExpr([&](auto x) { return cy * kx * cos(x); }));
 
     //  std::cout << "dydt " << std::endl;
     //  ns_eigen_utils::printEigenMat(dydt);
@@ -225,9 +206,7 @@ int main()
     Eigen::MatrixXd dxdt2(xe.rows(), 1);
     dxdt2.setZero();
 
-    Eigen::MatrixXd dydt2(xe.unaryExpr(
-        [&](auto x)
-        {return -cy * kx * kx * sin(x);}));
+    Eigen::MatrixXd dydt2(xe.unaryExpr([&](auto x) { return -cy * kx * kx * sin(x); }));
 
     // compute r0, r1 as r0 = [dxdt, dydt] and r1[dxdt2, dydt2]
     auto rdt = ns_eigen_utils::hstack<double>(dxdt, dydt);
@@ -238,21 +217,21 @@ int main()
     //    auto cross_product = ns_eigen_utils::crossProduct<double>(rdt, rdt2);
 
     // Curvature example.
-    Eigen::MatrixXd curvature_orginal; //(xe.rows(), 1);
+    Eigen::MatrixXd curvature_orginal;  //(xe.rows(), 1);
     curvature_orginal = ns_eigen_utils::Curvature(rdt, rdt2);
     //  ns_eigen_utils::printEigenMat(curvature_orginal);
     writeToFile(log_path, curvature_orginal, "curvature_original");
 
     // Create a new smoothing spline.
     double know_number_ratio = 0.3;
-    ns_splines::BSplineInterpolatorTemplated<Nin, Nout> interpolating_bspline(know_number_ratio,
-      true);
+    ns_splines::BSplineInterpolatorTemplated<Nin, Nout> interpolating_bspline(
+      know_number_ratio, true);
 
     // Get xdot, ydot
-    Eigen::MatrixXd rdot_interp(Nout, 2); // [xdot, ydot]
+    Eigen::MatrixXd rdot_interp(Nout, 2);  // [xdot, ydot]
 
     // Get xddot, yddot
-    Eigen::MatrixXd rddot_interp(Nout, 2); // [xddot, yddot]
+    Eigen::MatrixXd rddot_interp(Nout, 2);  // [xddot, yddot]
 
     auto xy_data = ns_eigen_utils::hstack<double>(xe, ye);
     interpolating_bspline.getFirstDerivative(xy_data, rdot_interp);
@@ -265,10 +244,10 @@ int main()
     Eigen::MatrixXd curvature_bspline_smoother;
     curvature_bspline_smoother = ns_eigen_utils::Curvature(rdot_interp, rddot_interp);
     writeToFile(log_path, curvature_bspline_smoother, "curvature_bspline_interpolator");
-
   }
 
-  // < ------------------- Given X, Y compute curvature by smoothing Bsplines CIRCLE example ----------- >
+  // < ------------------- Given X, Y compute curvature by smoothing Bsplines CIRCLE example
+  // ----------- >
   {
     // Generate a noisy sinusoidal signal with arc-length parametrization. This is our test signal.
     // Generate x.
@@ -282,24 +261,20 @@ int main()
     double R = 100;
 
     // EIGEN IMPLEMENTATION.
-    Eigen::MatrixXd xe(theta_eg.unaryExpr(
-        [&R](auto x)
-        {return R * cos(x);}));
+    Eigen::MatrixXd xe(theta_eg.unaryExpr([&R](auto x) { return R * cos(x); }));
 
-    Eigen::MatrixXd ye(theta_eg.unaryExpr(
-        [&R](auto x)
-        {return R * sin(x);}));
+    Eigen::MatrixXd ye(theta_eg.unaryExpr([&R](auto x) { return R * sin(x); }));
 
     // Create a new smoothing spline.
     double know_number_ratio = 0.3;
-    ns_splines::BSplineInterpolatorTemplated<Nin, Nout> interpolating_bspline(know_number_ratio,
-      true);
+    ns_splines::BSplineInterpolatorTemplated<Nin, Nout> interpolating_bspline(
+      know_number_ratio, true);
 
     // Get xdot, ydot
-    Eigen::MatrixXd rdot_interp(Nout, 2); // [xdot, ydot]
+    Eigen::MatrixXd rdot_interp(Nout, 2);  // [xdot, ydot]
 
     // Get xddot, yddot
-    Eigen::MatrixXd rddot_interp(Nout, 2); // [xddot, yddot]
+    Eigen::MatrixXd rddot_interp(Nout, 2);  // [xddot, yddot]
 
     auto xy_data = ns_eigen_utils::hstack<double>(xe, ye);
     interpolating_bspline.getFirstDerivative(xy_data, rdot_interp);
@@ -309,7 +284,6 @@ int main()
     Eigen::MatrixXd curvature_bspline_smoother;
     curvature_bspline_smoother = ns_eigen_utils::Curvature(rdot_interp, rddot_interp);
     writeToFile(log_path, curvature_bspline_smoother, "curvature_circle");
-
   }
 
   return 0;

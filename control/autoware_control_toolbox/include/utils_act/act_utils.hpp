@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef UTILS__ACT_UTILS_HPP_
-#define UTILS__ACT_UTILS_HPP_
+#ifndef UTILS_ACT__ACT_UTILS_HPP_
+#define UTILS_ACT__ACT_UTILS_HPP_
 
 #include <eigen3/Eigen/Dense>
 
@@ -589,4 +589,4 @@ constexpr auto toUType(E e) noexcept
 
 }  // namespace ns_utils
 
-#endif  // UTILS__ACT_UTILS_HPP_
+#endif  // UTILS_ACT__ACT_UTILS_HPP_
