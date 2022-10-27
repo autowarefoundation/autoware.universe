@@ -47,16 +47,14 @@ BlockageDiagComponent::BlockageDiagComponent(const rclcpp::NodeOptions & options
     std::string(this->get_namespace()) + ": blockage_validation", this,
     &BlockageDiagComponent::onBlockageChecker);
   updater_.setPeriod(0.1);
-  single_shot_sobel_pub =
-    image_transport::create_publisher(this, "blockage_diag/debug/single_shot_sobel_image");
+  dust_result_img_pub =
+    image_transport::create_publisher(this, "blockage_diag/debug/dust_mask_image");
   lidar_depth_map_pub_ =
     image_transport::create_publisher(this, "blockage_diag/debug/lidar_depth_map");
   blockage_mask_pub_ =
     image_transport::create_publisher(this, "blockage_diag/debug/blockage_mask_image");
-  time_series_sobel_pub =
-    image_transport::create_publisher(this, "blockage_diag/debug/time_series_sobel_image");
   blockage_dust_merged_pub =
-    image_transport::create_publisher(this, "blockage_diag/debug/blockage_dust_merge_image");
+    image_transport::create_publisher(this, "blockage_diag/debug/blockage_dust_merged_image");
 
   ground_blockage_ratio_pub_ = create_publisher<tier4_debug_msgs::msg::Float32Stamped>(
     "blockage_diag/debug/ground_blockage_ratio", rclcpp::SensorDataQoS());
@@ -253,64 +251,29 @@ void BlockageDiagComponent::filter(
   } else {
     sky_blockage_count_ = 0;
   }
-
-  /////////sobel
-  cv::Mat sobeled_img(
+ //dust
+  cv::Mat ground_depthmap = lidar_depth_map_8u(
+    cv::Rect(0, horizontal_ring_id_, ideal_horizontal_bins, vertical_bins - horizontal_ring_id_));
+  cv::Mat sky_blank(horizontal_ring_id_, ideal_horizontal_bins, CV_8UC1, cv::Scalar(0));
+  cv::Mat single_dust_img(
     cv::Size(lidar_depth_map_8u.rows, lidar_depth_map_8u.cols), CV_8UC1, cv::Scalar(0));
-  sobeled_img = lidar_depth_map_8u.clone();
-  cv::Mat morpho_img = sobeled_img.clone();
-  cv::inRange(lidar_depth_map_8u, 0, 1, sobeled_img);  // 2値化
-  uint erode_kernel = 2;
+  single_dust_img = lidar_depth_map_8u.clone();
+  cv::Mat single_dust_ground_img = ground_depthmap.clone();
+  cv::inRange(single_dust_ground_img, 0, 1, single_dust_ground_img);
+  int erode_kernel = 2;
   cv::Mat sobel_element = getStructuringElement(
     cv::MORPH_RECT, cv::Size(erode_kernel + 1, 2 * erode_kernel + 1),
     cv::Point(erode_kernel, erode_kernel));
-  cv::dilate(sobeled_img, morpho_img, sobel_element);
-  cv::erode(morpho_img, morpho_img, sobel_element);
-
-  cv::inRange(morpho_img, 0, 1, morpho_img);  // 2値化
-  cv::GaussianBlur(morpho_img, morpho_img, cv::Size(5, 5), 0);
-  cv::inRange(morpho_img, 0, 1, morpho_img);  // 2値化
-                                              //  cv::dilate(morpho_img, morpho_img, sobel_element);
-                                              //  cv::erode(morpho_img, morpho_img, sobel_element);
-
-  //        cv::Mat distanced_img(cv::Size(lidar_depth_map_8u.rows, lidar_depth_map_8u.cols),
-  //        CV_32FC1, cv::Scalar(0)); cv::distanceTransform(morpho_img, distanced_img, CV_DIST_L2,
-  //        3); distanced_img.convertTo(morpho_img,CV_8UC1);
-  //        cv::cvtColor(distance_coeffients,morpho_img,CV_8UC1);
-
-  // time_series_sobel
-  static boost::circular_buffer<cv::Mat> binarized_sobel_mask_buffer(sobel_frames_);
-
-  sobeled_img = morpho_img.clone();
-  cv::Mat time_series_sobel_mask(
-    cv::Size(ideal_horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0));
-  cv::Mat time_series_sobel_result(
-    cv::Size(ideal_horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0));
-  cv::Mat sobel_mask_binarized(
-    cv::Size(ideal_horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0));
-
-  //  static uint sobel_frame_count;
-  //  sobel_frame_count++;
-  //  if (sobel_buffering_interval_ != 0) {
-  //    sobel_mask_binarized = sobeled_img / 255;
-  //    if (sobel_frame_count == sobel_buffering_interval_) {
-  //      binarized_sobel_mask_buffer.push_back(sobel_mask_binarized);  // ここコメントアウトで動く
-  //      sobel_frame_count = 0;
-  //    }
-  //    for (const auto & binary_mask : binarized_sobel_mask_buffer) {
-  //      time_series_sobel_mask += binary_mask;
-  //    }
-  //    cv::inRange(
-  //      time_series_sobel_mask, binarized_sobel_mask_buffer.size() - 1,
-  //      binarized_sobel_mask_buffer.size(), time_series_sobel_result);
-  //  } else {
-  //    no_return_mask.copyTo(time_series_sobel_result);
-  //  }
-  // time_series_sobel
+  cv::dilate(single_dust_ground_img, single_dust_ground_img, sobel_element);
+  cv::erode(single_dust_ground_img, single_dust_ground_img, sobel_element);
+  cv::inRange(single_dust_ground_img, 0, 1, single_dust_ground_img);
+  cv::GaussianBlur(single_dust_ground_img, single_dust_ground_img, cv::Size(5, 5), 0);
+  cv::inRange(single_dust_ground_img, 0, 1, single_dust_ground_img);
+  cv::Mat ground_mask(cv::Size(ideal_horizontal_bins, horizontal_ring_id_), CV_8UC1);
+  cv::vconcat(sky_blank, single_dust_ground_img, single_dust_img);
   cv::Mat single_shot_sobel_result_img(
     cv::Size(ideal_horizontal_bins, vertical_bins), CV_8UC3, cv::Scalar(0, 0, 0));
-  cv::applyColorMap(sobeled_img, single_shot_sobel_result_img, cv::COLORMAP_JET);
-  // merge start
+  cv::applyColorMap(single_dust_img, single_shot_sobel_result_img, cv::COLORMAP_JET);
   cv::Mat blockage_dust_merged_img(
     cv::Size(ideal_horizontal_bins, vertical_bins), CV_8UC3, cv::Scalar(0, 0, 0));
   cv::Mat blockage_dust_merged_mask(
@@ -320,24 +283,19 @@ void BlockageDiagComponent::filter(
   cv::Mat red_plane(cv::Size(ideal_horizontal_bins, vertical_bins), CV_8UC3, cv::Scalar(0, 0, 255));
   cv::Mat blue_plane(
     cv::Size(ideal_horizontal_bins, vertical_bins), CV_8UC3, cv::Scalar(255, 0, 0));
-  cv::bitwise_and(time_series_blockage_result, time_series_sobel_result, blockage_dust_merged_mask);
-  red_plane.copyTo(blockage_dust_merged_img, time_series_blockage_result);
-  yellow_plane.copyTo(blockage_dust_merged_img, time_series_sobel_result);
-  blue_plane.copyTo(blockage_dust_merged_img, blockage_dust_merged_mask);
+  cv::bitwise_and(time_series_blockage_result, single_dust_img, blockage_dust_merged_mask);
+  red_plane.copyTo(blockage_dust_merged_img, time_series_blockage_result);  // red_plane: blockage
+  yellow_plane.copyTo(blockage_dust_merged_img, single_dust_img);           // yellow : dust
+  blue_plane.copyTo(blockage_dust_merged_img, blockage_dust_merged_mask);   // blue : both
 
-  sensor_msgs::msg::Image::SharedPtr single_shot_sobel_result_msg =
+  sensor_msgs::msg::Image::SharedPtr dust_result_msg =
     cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", single_shot_sobel_result_img).toImageMsg();
-  single_shot_sobel_pub.publish(single_shot_sobel_result_msg);
+  dust_result_img_pub.publish(dust_result_msg);
+
   cv::Mat time_series_sobel_result_color_img(
     cv::Size(ideal_horizontal_bins, vertical_bins), CV_8UC3, cv::Scalar(0));
-  time_series_sobel_result.convertTo(time_series_sobel_result_color_img, CV_8UC3, 255, 0);
   cv::applyColorMap(
     time_series_sobel_result_color_img, time_series_sobel_result_color_img, cv::COLORMAP_JET);
-  sensor_msgs::msg::Image::SharedPtr time_series_sobel_result_msg =
-    cv_bridge::CvImage(std_msgs::msg::Header(), "bgr8", time_series_sobel_result_color_img)
-      .toImageMsg();
-  time_series_sobel_result_msg->header = input->header;
-  time_series_sobel_pub.publish(time_series_sobel_result_msg);
   cv::Mat colorized_full_size_depth_map(
     cv::Size(ideal_horizontal_bins, vertical_bins), CV_8UC1, cv::Scalar(0, 0, 0));
   colorized_full_size_depth_map = full_size_depth_map.clone();
