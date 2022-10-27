@@ -1,4 +1,4 @@
-// Copyright 2018 Autoware Foundation. All rights reserved.
+// Copyright 2022 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,13 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "shape_estimation/corrector/truck_corrector.hpp"
+#ifndef UTILS__UTILS_HPP_
+#define UTILS__UTILS_HPP_
 
-bool TruckCorrector::correct(
-  autoware_auto_perception_msgs::msg::Shape & shape, geometry_msgs::msg::Pose & pose)
+#include <cstdint>
+
+namespace utils
 {
-  if (use_reference_yaw_) {
-    return correctVehicleBoundingBoxWithReferenceYaw(params_, shape, pose);
-  }
-  return correctVehicleBoundingBox(params_, shape, pose);
-}
+struct FilterTargetLabel
+{
+  bool UNKNOWN;
+  bool CAR;
+  bool TRUCK;
+  bool BUS;
+  bool TRAILER;
+  bool MOTORCYCLE;
+  bool BICYCLE;
+  bool PEDESTRIAN;
+  bool isTarget(const uint8_t label) const;
+};  // struct FilterTargetLabel
+}  // namespace utils
+
+#endif  // UTILS__UTILS_HPP_

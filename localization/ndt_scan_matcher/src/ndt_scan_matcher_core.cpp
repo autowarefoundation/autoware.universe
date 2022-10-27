@@ -97,6 +97,7 @@ NDTScanMatcher::NDTScanMatcher()
   regularization_enabled_(declare_parameter("regularization_enabled", false))
 {
   key_value_stdmap_["state"] = "Initializing";
+  is_activated_ = false;
 
   int points_queue_size = this->declare_parameter("input_sensor_points_queue_size", 0);
   points_queue_size = std::max(points_queue_size, 0);
@@ -221,6 +222,11 @@ NDTScanMatcher::NDTScanMatcher()
     std::bind(
       &NDTScanMatcher::service_ndt_align, this, std::placeholders::_1, std::placeholders::_2),
     rclcpp::ServicesQoS().get_rmw_qos_profile(), main_callback_group);
+  service_trigger_node_ = this->create_service<std_srvs::srv::SetBool>(
+    "trigger_node_srv",
+    std::bind(
+      &NDTScanMatcher::service_trigger_node, this, std::placeholders::_1, std::placeholders::_2),
+    rclcpp::ServicesQoS().get_rmw_qos_profile(), main_callback_group);
 
   diagnostic_thread_ = std::thread(&NDTScanMatcher::timer_diagnostic, this);
   diagnostic_thread_.detach();
@@ -316,6 +322,8 @@ void NDTScanMatcher::service_ndt_align(
 void NDTScanMatcher::callback_initial_pose(
   const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr initial_pose_msg_ptr)
 {
+  if (!is_activated_) return;
+
   // lock mutex for initial pose
   std::lock_guard<std::mutex> initial_pose_array_lock(initial_pose_array_mtx_);
   // if rosbag restart, clear buffer
@@ -397,6 +405,7 @@ void NDTScanMatcher::callback_sensor_points(
   transform_sensor_measurement(
     sensor_frame, base_frame_, sensor_points_sensorTF_ptr, sensor_points_baselinkTF_ptr);
   ndt_ptr_->setInputSource(sensor_points_baselinkTF_ptr);
+  if (!is_activated_) return;
 
   // calculate initial pose
   std::unique_lock<std::mutex> initial_pose_array_lock(initial_pose_array_mtx_);
@@ -747,4 +756,19 @@ void NDTScanMatcher::add_regularization_pose(const rclcpp::Time & sensor_ros_tim
     ndt_ptr_->setRegularizationPose(pose_opt.value());
     RCLCPP_DEBUG_STREAM(get_logger(), "Regularization pose is set to NDT");
   }
+}
+
+void NDTScanMatcher::service_trigger_node(
+  const std_srvs::srv::SetBool::Request::SharedPtr req,
+  std_srvs::srv::SetBool::Response::SharedPtr res)
+{
+  is_activated_ = req->data;
+  if (is_activated_) {
+    std::lock_guard<std::mutex> initial_pose_array_lock(initial_pose_array_mtx_);
+    initial_pose_msg_ptr_array_.clear();
+  } else {
+    key_value_stdmap_["state"] = "Initializing";
+  }
+  res->success = true;
+  return;
 }
