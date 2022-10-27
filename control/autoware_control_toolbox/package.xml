@@ -21,7 +21,6 @@
   <test_depend>autoware_testing</test_depend>
   <test_depend>eigen</test_depend>
 
-
   <export>
     <build_type>ament_cmake</build_type>
   </export>
