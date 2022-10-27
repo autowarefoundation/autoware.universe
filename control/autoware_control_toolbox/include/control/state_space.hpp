@@ -1,27 +1,25 @@
-/*
- * Copyright 2021 - 2022 Autoware Foundation. All rights reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2022 The Autoware Foundation.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #ifndef AUTOWARE_CONTROL_TOOLBOX_STATE_SPACE_HPP
 #define AUTOWARE_CONTROL_TOOLBOX_STATE_SPACE_HPP
 
 #include "act_definitions.hpp"
-#include "utils_act/act_utils.hpp"
-#include "utils_act/act_utils_eigen.hpp"
 #include "balance.hpp"
 #include "transfer_functions.hpp"
+#include "utils_act/act_utils.hpp"
+#include "utils_act/act_utils_eigen.hpp"
 
 #include <algorithm>
 #include <vector>
@@ -104,7 +102,8 @@ private:
    *	C_ = ss_system.bottomLeftCorner(1, nx);
    *	D_ = ss_system.bottomRightCorner(1, 1);
    * */
-  Eigen::MatrixXd Tsimilarity_mat_{Eigen::MatrixXd::Identity(1, 1)};  // Similarity mat of A, Aprime = Tinv * A *T.
+  Eigen::MatrixXd Tsimilarity_mat_{
+    Eigen::MatrixXd::Identity(1, 1)};  // Similarity mat of A, Aprime = Tinv * A *T.
 
   // Data members
   // Continuous time state-space model
@@ -138,14 +137,13 @@ private:
 
   // internal state
   double x0_{};
-
 };
 
 // Type definitions.
-template<int nx, int ny>
+template <int nx, int ny>
 using mat_type_t = Eigen::Matrix<double, nx, ny>;
 
-template<int N>
+template <int N>
 using state_type_t = Eigen::Matrix<double, N, 1>;
 
 }  // namespace ns_control_toolbox

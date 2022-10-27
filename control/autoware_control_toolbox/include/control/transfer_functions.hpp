@@ -1,26 +1,24 @@
-/*
- * Copyright 2021 - 2022 Autoware Foundation. All rights reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2022 The Autoware Foundation.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #ifndef AUTOWARE_CONTROL_TOOLBOX_TRANSFER_FUNCTIONS_HPP
 #define AUTOWARE_CONTROL_TOOLBOX_TRANSFER_FUNCTIONS_HPP
 
 #include "act_definitions.hpp"
+#include "tf_algebra.hpp"
 #include "utils_act/act_utils.hpp"
 #include "utils_act/act_utils_eigen.hpp"
-#include "tf_algebra.hpp"
 
 #include <algorithm>
 #include <string>
@@ -31,7 +29,7 @@ namespace ns_control_toolbox
 {
 
 // Multiplication Operator.
-template<typename T>
+template <typename T>
 struct TF_multiplication
 {
   friend T operator*(T const & tf1, T const & tf2)
@@ -82,7 +80,7 @@ struct TF_multiplication
 };
 
 // All algebraic operations.
-template<typename T>
+template <typename T>
 struct TF_algebra : public TF_multiplication<T>
 {
 };
@@ -100,14 +98,10 @@ struct TF_algebra : public TF_multiplication<T>
 struct tf : TF_algebra<tf>
 {
   // Constructors.
-  tf()
-  : num_{1.}, den_{1.}
-  {
-  }
+  tf() : num_{1.}, den_{1.} {}
 
   // Constructor from non-empty numerator and denominator std::vectors.
-  tf(std::vector<double> num, std::vector<double> den)
-  : num_{std::move(num)}, den_{std::move(den)}
+  tf(std::vector<double> num, std::vector<double> den) : num_{std::move(num)}, den_{std::move(den)}
   {
     ns_utils::stripVectorZerosFromLeft(num_);  // remove zeros from the left.
     ns_utils::stripVectorZerosFromLeft(den_);
@@ -141,7 +135,7 @@ struct tf : TF_algebra<tf>
   [[nodiscard]] std::vector<double> den() const;
 
   [[nodiscard]] std::vector<double> num_vector_only()
-  const;  // gets num without multiplied by its constant.
+    const;  // gets num without multiplied by its constant.
 
   [[nodiscard]] std::vector<double> den_vector_only() const;  //
 
