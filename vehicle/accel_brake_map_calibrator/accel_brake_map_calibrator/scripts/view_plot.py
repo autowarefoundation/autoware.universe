@@ -65,7 +65,7 @@ class ViewPlot(Node):
                 .get_parameter_value()
                 .string_value
             )
-        
+
         if calibration_method is None:
             calibration_method = "each_cell"
         elif not ((calibration_method == "each_cell") | (calibration_method == "four_cell")):
@@ -279,7 +279,11 @@ if __name__ == "__main__":
         "-c", "--calibrated-map-dir", default=None, type=str, help="directory of calibrated map"
     )
     parser.add_argument(
-        "-m", "--method", default="None", type=str, help="calibration method : each_cell or four_cell"
+        "-m",
+        "--method",
+        default="None",
+        type=str,
+        help="calibration method : each_cell or four_cell",
     )
     parser.add_argument("-s", "--scatter-only", action="store_true", help="show only scatters")
     parser.add_argument(

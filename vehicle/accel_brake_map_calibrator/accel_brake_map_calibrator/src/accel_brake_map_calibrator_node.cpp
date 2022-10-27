@@ -852,7 +852,8 @@ bool AccelBrakeMapCalibrator::updateFourCellAroundOffset(
   const auto & pedal_index_ = accel_mode ? accel_pedal_index_ : brake_pedal_index_;
   const auto & vel_index = accel_mode ? accel_vel_index : brake_vel_index;
   const auto & vel_index_ = accel_mode ? accel_vel_index_ : brake_vel_index_;
-  const auto & delayed_pedal = accel_mode ? delayed_accel_pedal_ptr_->data : delayed_brake_pedal_ptr_->data;
+  const auto & delayed_pedal =
+    accel_mode ? delayed_accel_pedal_ptr_->data : delayed_brake_pedal_ptr_->data;
   auto & map_offset_vec = accel_mode ? accel_map_offset_vec_ : brake_map_offset_vec_;
   auto & covariance_mat = accel_mode ? accel_covariance_mat_ : brake_covariance_mat_;
 
