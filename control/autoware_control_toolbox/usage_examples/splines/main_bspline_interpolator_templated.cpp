@@ -217,10 +217,11 @@ int main()
     //    auto cross_product = ns_eigen_utils::crossProduct<double>(rdt, rdt2);
 
     // Curvature example.
-    Eigen::MatrixXd curvature_orginal;  //(xe.rows(), 1);
-    curvature_orginal = ns_eigen_utils::Curvature(rdt, rdt2);
-    //  ns_eigen_utils::printEigenMat(curvature_orginal);
-    writeToFile(log_path, curvature_orginal, "curvature_original");
+    Eigen::MatrixXd curvature_original;  //(xe.rows(), 1);
+    curvature_original = ns_eigen_utils::Curvature(rdt, rdt2);
+
+    //  ns_eigen_utils::printEigenMat(curvature_original);
+    writeToFile(log_path, curvature_original, "curvature_original");
 
     // Create a new smoothing spline.
     double know_number_ratio = 0.3;
@@ -246,8 +247,7 @@ int main()
     writeToFile(log_path, curvature_bspline_smoother, "curvature_bspline_interpolator");
   }
 
-  // < ------------------- Given X, Y compute curvature by smoothing Bsplines CIRCLE example
-  // ----------- >
+  // < ----- Given X, Y compute curvature by smoothing Bsplines CIRCLE example ----------- >
   {
     // Generate a noisy sinusoidal signal with arc-length parametrization. This is our test signal.
     // Generate x.

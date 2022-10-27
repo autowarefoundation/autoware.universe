@@ -40,13 +40,13 @@ bool InterpolatingSplinePCG::Interpolate(
       continue;
     }
     auto const & left_ind = ns_utils::binary_index_search(ti, tbase);
-    auto const & picewise_coeffs = coefficients_[left_ind];
+    auto const & piecewise_coeffs = coefficients_[left_ind];
 
     // Compute mpc_dt.
     auto const & dt = (ti - tbase[left_ind]) / (tbase[left_ind + 1] - tbase[left_ind]);
 
     // std::cout << mpc_dt << std::endl;
-    auto const & yval = evaluatePolynomial(dt, picewise_coeffs);
+    auto const & yval = evaluatePolynomial(dt, piecewise_coeffs);
     ynew.emplace_back(yval);
   }
 
@@ -71,13 +71,13 @@ bool InterpolatingSplinePCG::Interpolate(
     }
 
     auto const & left_ind = ns_utils::binary_index_search(ti, tbase_);
-    auto const & picewise_coeffs = coefficients_[left_ind];
+    auto const & piecewise_coeffs = coefficients_[left_ind];
 
     // Compute mpc_dt.
     auto const & dt = (ti - tbase_[left_ind]) / (tbase_[left_ind + 1] - tbase_[left_ind]);
 
     // std::cout << mpc_dt << std::endl;
-    auto const & yval = evaluatePolynomial(dt, picewise_coeffs);
+    auto const & yval = evaluatePolynomial(dt, piecewise_coeffs);
     ynew.emplace_back(yval);
   }
 
@@ -102,13 +102,13 @@ bool InterpolatingSplinePCG::Interpolate(
 
   // Binary Search.
   auto const & left_ind = ns_utils::binary_index_search(tnew, tbase);
-  auto const & picewise_coeffs = coefficients_[left_ind];
+  auto const & piecewise_coeffs = coefficients_[left_ind];
 
   // Compute mpc_dt.
   auto const & dt = (tnew - tbase[left_ind]) / (tbase[left_ind + 1] - tbase[left_ind]);
 
   // Set the interpolated value.
-  ynew = evaluatePolynomial(dt, picewise_coeffs);
+  ynew = evaluatePolynomial(dt, piecewise_coeffs);
 
   return couldSolve_and_Monotonic;
 }
@@ -127,13 +127,13 @@ bool InterpolatingSplinePCG::Interpolate(const double & tnew, double & ynew) con
 
   // Binary Search.
   auto const & left_ind = ns_utils::binary_index_search(tnew, tbase_);
-  auto const & picewise_coeffs = coefficients_[left_ind];
+  auto const & piecewise_coeffs = coefficients_[left_ind];
 
   // Compute mpc_dt.
   auto const & dt = (tnew - tbase_[left_ind]) / (tbase_[left_ind + 1] - tbase_[left_ind]);
 
   // Set the interpolated value.
-  ynew = evaluatePolynomial(dt, picewise_coeffs);
+  ynew = evaluatePolynomial(dt, piecewise_coeffs);
 
   return true;
 }
