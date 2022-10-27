@@ -34,8 +34,6 @@
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <fmt/format.h>
-// #include <pcl/common/io.h>
-// #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
 #include <pclomp/ndt_omp.h>
 #include <tf2/transform_datatypes.h>
