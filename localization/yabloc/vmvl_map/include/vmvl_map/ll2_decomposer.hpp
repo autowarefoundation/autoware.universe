@@ -39,6 +39,8 @@ private:
 
   lanelet::ConstLineStrings3d extractSpecifiedLineString(
     const lanelet::LineStringLayer & line_strings, const std::set<std::string> & visible_labels);
+  lanelet::ConstPolygons3d extractSpecifiedPolygon(
+    const lanelet::PolygonLayer & polygon_layer, const std::set<std::string> & visible_labels);
 
   void mapCallback(const HADMapBin & msg);
 
@@ -46,6 +48,10 @@ private:
     const lanelet::LineStringLayer & line_string_layer, const std::set<std::string> & labels,
     const std::string & ns);
 
-  void publishSignMarker(const lanelet::LineStringLayer & line_string_layer);
+  MarkerArray makePolygonMarkerMsg(
+    const lanelet::PolygonLayer & polygon_layer, const std::set<std::string> & labels,
+    const std::string & ns);
+
+  void publishAdditionalMarker(const lanelet::LaneletMapPtr & lanelet_map);
 };
 }  // namespace map

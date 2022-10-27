@@ -38,13 +38,19 @@ Ll2Decomposer::Ll2Decomposer() : Node("ll2_to_image")
   }
 }
 
-void printAttr(const lanelet::LineStringLayer & line_string_layer)
+void printAttr(const lanelet::LaneletMapPtr & lanelet_map)
 {
-  lanelet::ConstLineStrings3d line_strings;
   std::set<std::string> types;
-  for (const lanelet::ConstLineString3d & line : line_string_layer) {
+  for (const lanelet::ConstLineString3d & line : lanelet_map->lineStringLayer) {
     if (!line.hasAttribute(lanelet::AttributeName::Type)) continue;
     lanelet::Attribute attr = line.attribute(lanelet::AttributeName::Type);
+    types.insert(attr.value());
+  }
+  for (const lanelet::ConstPolygon3d & polygon : lanelet_map->polygonLayer) {
+    if (!polygon.hasAttribute(lanelet::AttributeName::Type)) {
+      continue;
+    }
+    lanelet::Attribute attr = polygon.attribute(lanelet::AttributeName::Type);
     types.insert(attr.value());
   }
 
@@ -61,13 +67,14 @@ void Ll2Decomposer::mapCallback(const HADMapBin & msg)
   const rclcpp::Time stamp = msg.header.stamp;
 
   const auto & ls_layer = lanelet_map->lineStringLayer;
-  printAttr(ls_layer);
+  printAttr(lanelet_map);
   auto tmp1 = extractSpecifiedLineString(ls_layer, sign_board_labels_);
   auto tmp2 = extractSpecifiedLineString(ls_layer, road_marking_labels_);
   pcl::PointCloud<pcl::PointNormal> ll2_sign_board = splitLineStrings(tmp1);
   pcl::PointCloud<pcl::PointNormal> ll2_road_marking = splitLineStrings(tmp2);
 
-  publishSignMarker(lanelet_map->lineStringLayer);
+  publishAdditionalMarker(lanelet_map);
+
   vml_common::publishCloud(*pub_sign_board_, ll2_sign_board, stamp);
   vml_common::publishCloud(*pub_cloud_, ll2_road_marking, stamp);
 
@@ -102,6 +109,19 @@ lanelet::ConstLineStrings3d Ll2Decomposer::extractSpecifiedLineString(
     line_strings.push_back(line);
   }
   return line_strings;
+}
+
+lanelet::ConstPolygons3d Ll2Decomposer::extractSpecifiedPolygon(
+  const lanelet::PolygonLayer & polygon_layer, const std::set<std::string> & visible_labels)
+{
+  lanelet::ConstPolygons3d polygons;
+  for (const lanelet::ConstPolygon3d & polygon : polygon_layer) {
+    if (!polygon.hasAttribute(lanelet::AttributeName::Type)) continue;
+    lanelet::Attribute attr = polygon.attribute(lanelet::AttributeName::Type);
+    if (visible_labels.count(attr.value()) == 0) continue;
+    polygons.push_back(polygon);
+  }
+  return polygons;
 }
 
 pcl::PointNormal Ll2Decomposer::toPointNormal(
@@ -147,12 +167,44 @@ Ll2Decomposer::MarkerArray Ll2Decomposer::makeSignMarkerMsg(
   return marker_array;
 }
 
-void Ll2Decomposer::publishSignMarker(const lanelet::LineStringLayer & line_string_layer)
+Ll2Decomposer::MarkerArray Ll2Decomposer::makePolygonMarkerMsg(
+  const lanelet::PolygonLayer & polygon_layer, const std::set<std::string> & labels,
+  const std::string & ns)
 {
-  auto marker1 = makeSignMarkerMsg(line_string_layer, sign_board_labels_, "sign_board");
-  auto marker2 = makeSignMarkerMsg(line_string_layer, {"virtual"}, "virtual");
+  lanelet::ConstPolygons3d polygons = extractSpecifiedPolygon(polygon_layer, labels);
+
+  MarkerArray marker_array;
+  int id = 0;
+  for (const lanelet::ConstPolygon3d & polygon : polygons) {
+    Marker marker;
+    marker.header.frame_id = "map";
+    marker.header.stamp = get_clock()->now();
+    marker.type = Marker::LINE_STRIP;
+    marker.color = vml_common::Color(0.4f, 0.4f, 0.8f, 0.999f);
+    marker.scale.x = 0.1;
+    marker.ns = ns;
+    marker.id = id++;
+
+    for (const lanelet::ConstPoint3d & p : polygon) {
+      geometry_msgs::msg::Point gp;
+      gp.x = p.x();
+      gp.y = p.y();
+      gp.z = p.z();
+      marker.points.push_back(gp);
+    }
+    marker_array.markers.push_back(marker);
+  }
+  return marker_array;
+}
+
+void Ll2Decomposer::publishAdditionalMarker(const lanelet::LaneletMapPtr & lanelet_map)
+{
+  auto marker1 = makeSignMarkerMsg(lanelet_map->lineStringLayer, sign_board_labels_, "sign_board");
+  auto marker2 = makeSignMarkerMsg(lanelet_map->lineStringLayer, {"virtual"}, "virtual");
+  auto marker3 = makePolygonMarkerMsg(lanelet_map->polygonLayer, {"polygon"}, "unmapped");
 
   std::copy(marker2.markers.begin(), marker2.markers.end(), std::back_inserter(marker1.markers));
+  std::copy(marker3.markers.begin(), marker3.markers.end(), std::back_inserter(marker1.markers));
   pub_marker_->publish(marker1);
 }
 

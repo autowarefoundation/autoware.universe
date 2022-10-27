@@ -12,8 +12,6 @@ BASIC_TOPICS = [
     '/sensing/gnss/ublox/navpvt',
     '/sensing/imu/tamagawa/imu_raw',
     '/vehicle/status/actuation_status', # iv, universe
-    '/vehicle/status/shift', # iv
-    '/vehicle/status/control_mode', # iv, universe
     '/vehicle/status/twist', # iv
     '/vehicle/status/velocity_status', # universe
     '/vehicle/status/steering', # iv
