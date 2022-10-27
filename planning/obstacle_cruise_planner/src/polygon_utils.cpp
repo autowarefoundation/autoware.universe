@@ -233,16 +233,16 @@ geometry_msgs::msg::PointStamped calcNearestCollisionPoint(
                              traj_front_pose, vehicle_max_longitudinal_offset, 0.0, 0.0)
                              .position;
     if (is_driving_forward) {
-      segment_points.at(0) = traj_front_pose.position;
-      segment_points.at(1) = front_pos;
+      segment_points.push_back(traj_front_pose.position);
+      segment_points.push_back(front_pos);
     } else {
-      segment_points.at(0) = front_pos;
-      segment_points.at(1) = traj_front_pose.position;
+      segment_points.push_back(front_pos);
+      segment_points.push_back(traj_front_pose.position);
     }
   } else {
     const size_t seg_idx = first_within_idx - 1;
-    segment_points.at(0) = decimated_traj.points.at(seg_idx).pose.position;
-    segment_points.at(1) = decimated_traj.points.at(seg_idx + 1).pose.position;
+    segment_points.push_back(decimated_traj.points.at(seg_idx).pose.position);
+    segment_points.push_back(decimated_traj.points.at(seg_idx + 1).pose.position);
   }
 
   size_t min_idx = 0;
