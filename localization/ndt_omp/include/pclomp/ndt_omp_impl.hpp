@@ -876,33 +876,18 @@ double pclomp::NormalDistributionsTransform<PointSource, PointTarget>::trialValu
 
     double a_t_next;
 
-<<<<<<< HEAD
     if (std::fabs(a_c - a_t) < std::fabs(a_s - a_t)) {
-=======
-    if (std::fabs(a_c - a_t) < std::fabs(a_s - a_t))
->>>>>>> d1af6cd933420359081a6d0f701b228c094fa5a5
       a_t_next = a_c;
     } else {
       a_t_next = a_s;
     }
 
-<<<<<<< HEAD
     if (a_t > a_l) {
       return (std::min(a_t + 0.66 * (a_u - a_t), a_t_next));
     } else {
       return (std::max(a_t + 0.66 * (a_u - a_t), a_t_next));
     }
   } else {  // Case 4 in Trial Value Selection [More, Thuente 1994]
-=======
-  if (a_t > a_l)
-    return (std::min(a_t + 0.66 * (a_u - a_t), a_t_next));
-  else
-    return (std::max(a_t + 0.66 * (a_u - a_t), a_t_next));
-}
-// Case 4 in Trial Value Selection [More, Thuente 1994]
-else
-{
->>>>>>> d1af6cd933420359081a6d0f701b228c094fa5a5
     // Calculate the minimizer of the cubic that interpolates f_u, f_t, g_u and g_t
     // Equation 2.4.52 [Sun, Yuan 2006]
     double z = 3 * (f_t - f_u) / (a_t - a_u) - g_t - g_u;
@@ -930,12 +915,7 @@ double pclomp::NormalDistributionsTransform<PointSource, PointTarget>::computeSt
     // Not a decent direction
     if (d_phi_0 == 0) {
       return 0;
-<<<<<<< HEAD
     } else {
-=======
-      else
-      {
->>>>>>> d1af6cd933420359081a6d0f701b228c094fa5a5
       // Reverse step direction and calculate optimal step.
       d_phi_0 *= -1;
       step_dir *= -1;
