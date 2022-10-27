@@ -54,6 +54,7 @@
 
 #ifndef PCLOMP__NDT_OMP_H_
 #define PCLOMP__NDT_OMP_H_
+<<<<<<< HEAD
 
 #include "voxel_grid_covariance_omp.h"
 
@@ -65,6 +66,17 @@
 #include <pcl/registration/registration.h>
 
 #include <vector>
+=======
+
+#include "voxel_grid_covariance_omp.h"
+
+#include <pcl/search/impl/search.hpp>
+#include <unsupported/Eigen/NonLinearOptimization>
+>>>>>>> d1af6cd933420359081a6d0f701b228c094fa5a5
+
+#include "boost/optional.hpp"
+
+#include <pcl/registration/registration.h>
 
 namespace pclomp
 {
@@ -207,11 +219,18 @@ public:
    */
   static void convertTransform(const Eigen::Matrix<double, 6, 1> & x, Eigen::Affine3f & trans)
   {
+<<<<<<< HEAD
     trans = Eigen::Translation<float, 3>(
               static_cast<float>(x(0)), static_cast<float>(x(1)), static_cast<float>(x(2))) *
             Eigen::AngleAxis<float>(static_cast<float>(x(3)), Eigen::Vector3f::UnitX()) *
             Eigen::AngleAxis<float>(static_cast<float>(x(4)), Eigen::Vector3f::UnitY()) *
             Eigen::AngleAxis<float>(static_cast<float>(x(5)), Eigen::Vector3f::UnitZ());
+=======
+    trans = Eigen::Translation<float, 3>(float(x(0)), float(x(1)), float(x(2))) *
+            Eigen::AngleAxis<float>(float(x(3)), Eigen::Vector3f::UnitX()) *
+            Eigen::AngleAxis<float>(float(x(4)), Eigen::Vector3f::UnitY()) *
+            Eigen::AngleAxis<float>(float(x(5)), Eigen::Vector3f::UnitZ());
+>>>>>>> d1af6cd933420359081a6d0f701b228c094fa5a5
   }
 
   /** \brief Convert 6 element transformation vector to transformation matrix.

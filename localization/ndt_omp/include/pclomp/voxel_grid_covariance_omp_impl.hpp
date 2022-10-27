@@ -59,9 +59,12 @@
 
 #include <pcl/common/common.h>
 #include <pcl/filters/boost.h>
+<<<<<<< HEAD
 
 #include <limits>
 #include <vector>
+=======
+>>>>>>> d1af6cd933420359081a6d0f701b228c094fa5a5
 
 //////////////////////////////////////////////////////////////////////////////////////////
 template <typename PointT>
@@ -216,7 +219,13 @@ void pclomp::VoxelGridCovariance<PointT>::applyFilter(PointCloud & output)
       }
       ++leaf.nr_points;
     }
+<<<<<<< HEAD
   } else {  // No distance filtering, process all data
+=======
+  }
+  // No distance filtering, process all data
+  else {
+>>>>>>> d1af6cd933420359081a6d0f701b228c094fa5a5
     // First pass: go over all points and insert them into the right leaf
     for (size_t cp = 0; cp < input_->points.size(); ++cp) {
       if (!input_->is_dense)

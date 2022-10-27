@@ -60,7 +60,10 @@
 
 #include <map>
 #include <unordered_map>
+<<<<<<< HEAD
 #include <vector>
+=======
+>>>>>>> d1af6cd933420359081a6d0f701b228c094fa5a5
 
 namespace pclomp
 {
@@ -289,9 +292,14 @@ public:
     if (leaf_iter != leaves_.end()) {
       LeafConstPtr ret(&(leaf_iter->second));
       return ret;
+<<<<<<< HEAD
     } else {
       return NULL;
     }
+=======
+    } else
+      return NULL;
+>>>>>>> d1af6cd933420359081a6d0f701b228c094fa5a5
   }
 
   /** \brief Get the voxel containing point p.
@@ -314,9 +322,14 @@ public:
       // If such a leaf exists return the pointer to the leaf structure
       LeafConstPtr ret(&(leaf_iter->second));
       return ret;
+<<<<<<< HEAD
     } else {
       return NULL;
     }
+=======
+    } else
+      return NULL;
+>>>>>>> d1af6cd933420359081a6d0f701b228c094fa5a5
   }
 
   /** \brief Get the voxel containing point p.
@@ -339,9 +352,14 @@ public:
       // If such a leaf exists return the pointer to the leaf structure
       LeafConstPtr ret(&(leaf_iter->second));
       return ret;
+<<<<<<< HEAD
     } else {
       return NULL;
     }
+=======
+    } else
+      return NULL;
+>>>>>>> d1af6cd933420359081a6d0f701b228c094fa5a5
   }
 
   /** \brief Get the voxels surrounding point p, not including the voxel containing point p.
