@@ -38,7 +38,7 @@ using eigen_vector_type = Eigen::Matrix<T, Eigen::Dynamic, 1>;
  *
  * @param x input matrix
  * @param r the number of row elements
- * @param c the number of collum elements
+ * @param c the number of column elements
  *
  * @return The new shape matrix
  */
@@ -88,7 +88,7 @@ constexpr eigen_dynamic_type<T> vstack(M const & first, Args const &... args)
 
 /**
  * @brief Stack matrix in sequence horizontally
- *        imspired by numpy.hstack
+ *        inspired by numpy.hstack
  *        https://docs.scipy.org/doc/numpy/reference/generated/numpy.hstack.html
  *
  * @param m1 first matrix
