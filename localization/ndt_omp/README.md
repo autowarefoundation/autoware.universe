@@ -6,9 +6,9 @@ NOTE: This package's implementation is a customized version of [ndt_omp from koi
 
 [![Build](https://github.com/koide3/ndt_omp/actions/workflows/build.yml/badge.svg)](https://github.com/koide3/ndt_omp/actions/workflows/build.yml)
 
-### Benchmark (on Core i7-6700K)
+## Benchmark (on Core i7-6700K)
 
-```
+```bash
 $ roscd ndt_omp/data
 $ rosrun ndt_omp align 251370668.pcd 251371071.pcd
 --- pcl::NDT ---
