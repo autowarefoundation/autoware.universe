@@ -63,12 +63,12 @@
 
 #include <limits>
 #include <vector>
-=======
+  =======
 >>>>>>> d1af6cd933420359081a6d0f701b228c094fa5a5
 
-//////////////////////////////////////////////////////////////////////////////////////////
-template <typename PointT>
-void pclomp::VoxelGridCovariance<PointT>::applyFilter(PointCloud & output)
+  //////////////////////////////////////////////////////////////////////////////////////////
+  template <typename PointT>
+  void pclomp::VoxelGridCovariance<PointT>::applyFilter(PointCloud & output)
 {
   voxel_centroids_leaf_indices_.clear();
 
