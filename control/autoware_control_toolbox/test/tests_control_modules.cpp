@@ -43,10 +43,9 @@ TEST(ACTcontrol, tffactorConstruction)
  * Tests multiplication of two transfer functions with their constant multipliers
  * In a TF representation : a x 1 / (tau*s + 1)  a: represents the constant multiplier.
  * */
-TEST(ACTcontrol, transferFunctionMultiplication)
+TEST(ACTcontrol, tfFactorConstantMultiplication_1)
 {
   // test TF x TF multiplication
-
   ns_control_toolbox::tf tf1{{5}, {1, 0}, 2., 7.};  // tf = (2/7) * 5 /(s^2)
   tf1.print();
 
@@ -55,7 +54,10 @@ TEST(ACTcontrol, transferFunctionMultiplication)
 
   ASSERT_DOUBLE_EQ(num1[0], 10);
   ASSERT_DOUBLE_EQ(den1[0], 7);
+}
 
+TEST(ACTControl, tfFactorConstantMultiplication_2)
+{
   ns_control_toolbox::tf tf2{{2}, {1, 1}, 3., 3.};
   tf2.print();
 
@@ -65,9 +67,17 @@ TEST(ACTcontrol, transferFunctionMultiplication)
   ASSERT_DOUBLE_EQ(num2[0], 6);
   ASSERT_DOUBLE_EQ(den2[0], 3);
   ASSERT_DOUBLE_EQ(den2[1], 3);
+}
+
+TEST(ACTControl, transferFunctionMultiplication)
+{
+  ns_control_toolbox::tf tf1{{5}, {1, 0}, 2., 7.};  // tf = (2/7) * 5 /(s^2)
+  tf1.print();
+
+  ns_control_toolbox::tf tf2{{2}, {1, 1}, 3., 3.};
+  tf2.print();
 
   auto const & tf3 = tf1 * tf2;
-
   auto const & num3 = tf3.num();
   auto const & den3 = tf3.den();
 
