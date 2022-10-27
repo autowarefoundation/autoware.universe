@@ -289,7 +289,7 @@ TEST(ACTcontrol, takingSquareOfTFandSS)
   auto temp_tfactor_den = ns_control_toolbox::tf_factor{{tau, 1.}};
   temp_tfactor_den.power(norder);
 
-  auto temp_tf = ns_control_toolbox::tf({1.}, temp_tfactor_den());
+  auto const & temp_tf = ns_control_toolbox::tf({1.}, temp_tfactor_den());
   temp_tf.print();
 
   auto const & tf_den = temp_tf.den();
@@ -302,10 +302,10 @@ TEST(ACTcontrol, takingSquareOfTFandSS)
   auto ss_cont = ns_control_toolbox::tf2ss(temp_tf);
   ss_cont.print();
 
-  auto A = ss_cont.A();
-  auto B = ss_cont.B();
-  auto C = ss_cont.C();
-  auto D = ss_cont.D();
+  auto const & A = ss_cont.A();
+  auto const & B = ss_cont.B();
+  auto const & C = ss_cont.C();
+  auto const & D = ss_cont.D();
 
   ASSERT_DOUBLE_EQ(A(0, 0), -250.);
   ASSERT_DOUBLE_EQ(A(0, 1), -122.0703125);
@@ -331,13 +331,13 @@ TEST(ACTcontrol, SSandDiscretization)
   ns_control_toolbox::tf_factor den({tau, 1});
   den.power(2);
 
-  auto TFsys = ns_control_toolbox::tf(num, den);
+  auto const & TFsys = ns_control_toolbox::tf(num, den);
 
   ns_utils::print("First order transfer function : ");
   TFsys.print();
 
-  double Ts = 0.05;
-  auto SSsys = ns_control_toolbox::tf2ss(TFsys, Ts);
+  double const Ts{0.05};
+  auto const & SSsys = ns_control_toolbox::tf2ss(TFsys, Ts);
 
   ns_utils::print("Continuous-time state-space : ");
   SSsys.print();
@@ -391,11 +391,11 @@ TEST(ACTcontrol, padeApproximation)
   auto tf_delay = ns_control_toolbox::pade(Td, order);
   tf_delay.print();
 
-  auto ss_sys = ns_control_toolbox::tf2ss(tf_delay);
+  auto const & ss_sys = ns_control_toolbox::tf2ss(tf_delay);
   ss_sys.print();
 
-  auto num = tf_delay.num();
-  auto den = tf_delay.den();
+  auto const & num = tf_delay.num();
+  auto const & den = tf_delay.den();
 
   ASSERT_DOUBLE_EQ(num[0], -1.);
   ASSERT_DOUBLE_EQ(den[0], 1.);
