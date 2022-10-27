@@ -96,8 +96,8 @@ TEST(ACTControl, transferFunctionMultiplication)
 TEST(ACTcontrol, tfInversion)
 {
   // test construction from tf factors.
-  auto numerator_vector = std::vector<double>{1, 0, 0};
-  auto denominator_vector = std::vector<double>{1, 0, 0.2};
+  auto numerator_vector = std::vector<double>{1, 0};
+  auto denominator_vector = std::vector<double>{1, 0.2};
 
   auto tf1 = ns_control_toolbox::tf(numerator_vector, denominator_vector);
 
