@@ -484,7 +484,7 @@ void pclomp::NormalDistributionsTransform<PointSource, PointTarget>::computeAngl
     h_ang_c2_ << (-sx * cz - cx * sy * sz), (sx * sz - cx * sy * cz), 0;
     h_ang_c3_ << (cx * cz - sx * sy * sz), (-sx * sy * cz - cx * sz), 0;
 
-    h_ang_d1_ << (-cy * cz), (cy * sz), (sy);
+    h_ang_d1_ << (-cy * cz), (cy * sz), (sy); // ToDo: (sy) should be modified to (-sy) with the appropriate validation
     h_ang_d2_ << (-sx * sy * cz), (sx * sy * sz), (sx * cy);
     h_ang_d3_ << (cx * sy * cz), (-cx * sy * sz), (-cx * cy);
 
