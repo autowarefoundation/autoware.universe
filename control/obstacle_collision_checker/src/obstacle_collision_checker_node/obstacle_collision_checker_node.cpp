@@ -26,6 +26,26 @@
 #include <utility>
 #include <vector>
 
+namespace
+{
+template <class T>
+bool update_param(
+  const std::vector<rclcpp::Parameter> & params, const std::string & name, T & value)
+{
+  const auto itr = std::find_if(
+    params.cbegin(), params.cend(),
+    [&name](const rclcpp::Parameter & p) { return p.get_name() == name; });
+
+  // Not found
+  if (itr == params.cend()) {
+    return false;
+  }
+
+  value = itr->template get_value<T>();
+  return true;
+}
+}  // namespace
+
 namespace obstacle_collision_checker
 {
 ObstacleCollisionCheckerNode::ObstacleCollisionCheckerNode(const rclcpp::NodeOptions & node_options)
@@ -42,6 +62,11 @@ ObstacleCollisionCheckerNode::ObstacleCollisionCheckerNode(const rclcpp::NodeOpt
   param_.max_deceleration = declare_parameter("max_deceleration", 2.0);
   param_.resample_interval = declare_parameter("resample_interval", 0.5);
   param_.search_radius = declare_parameter("search_radius", 5.0);
+
+
+  // Dynamic Reconfigure
+  set_param_res_ = this->add_on_set_parameters_callback(
+    std::bind(&ObstacleCollisionCheckerNode::paramCallback, this, _1));
 
   // Core
   obstacle_collision_checker_ = std::make_unique<ObstacleCollisionChecker>(*this);
@@ -210,6 +235,40 @@ void ObstacleCollisionCheckerNode::onTimer()
   debug_publisher_->publish("marker_array", createMarkerArray());
 
   time_publisher_->publish(output_.processing_time_map);
+}
+
+rcl_interfaces::msg::SetParametersResult ObstacleCollisionCheckerNode::paramCallback(
+  const std::vector<rclcpp::Parameter> & parameters)
+{
+  rcl_interfaces::msg::SetParametersResult result;
+  result.successful = true;
+  result.reason = "success";
+
+  try {
+    // Node Parameter
+    {
+      auto & p = node_param_;
+
+      // Update params
+      update_param(parameters, "update_rate", p.update_rate);
+    }
+
+    auto & p = param_;
+
+    update_param(parameters, "delay_time", p.delay_time);
+    update_param(parameters, "footprint_margin", p.footprint_margin);
+    update_param(parameters, "max_deceleration", p.max_deceleration);
+    update_param(parameters, "resample_interval", p.resample_interval);
+    update_param(parameters, "search_radius", p.search_radius);
+
+    if (obstacle_collision_checker_) {
+      obstacle_collision_checker_->setParam(param_);
+    }
+  } catch (const rclcpp::exceptions::InvalidParameterTypeException & e) {
+    result.successful = false;
+    result.reason = e.what();
+  }
+  return result;
 }
 
 void ObstacleCollisionCheckerNode::checkLaneDeparture(
