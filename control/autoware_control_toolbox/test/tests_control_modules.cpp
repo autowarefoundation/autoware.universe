@@ -332,7 +332,7 @@ TEST(ACTcontrol, takingSquareOfTFandSS)
 /**
  * Test state-space methods and discretization.
  * */
-TEST(ACTcontrol, SSandDiscretization)
+TEST(ACTcontrol, StateSPaceContinuousTimeTest)
 {
   // Second-order low-pass filter and its discrete time state space.
   double tau = 0.1;
@@ -357,37 +357,86 @@ TEST(ACTcontrol, SSandDiscretization)
 
   // Matlab results - Continuous time SS.
   auto const & A = SSsys.A();
-  ASSERT_DOUBLE_EQ(A(0, 0), -20);
-  ASSERT_DOUBLE_EQ(A(0, 1), -12.5);
-  ASSERT_DOUBLE_EQ(A(1, 0), 8.);
-  ASSERT_DOUBLE_EQ(A(1, 1), 0.);
+
+  //  ASSERT_DOUBLE_EQ(A(0, 0), -20.);
+  //  ASSERT_DOUBLE_EQ(A(0, 1), -12.5);
+  //  ASSERT_DOUBLE_EQ(A(1, 0), 8.);
+  //  ASSERT_DOUBLE_EQ(A(1, 1), 0.);
+
+  Eigen::MatrixXd A_ground_truth(2, 2);
+  A_ground_truth << -20., -12.5, 8., 0.;
+
+  auto dAnorm = (A - A_ground_truth).norm();
+  ASSERT_NEAR(dAnorm, 0., 1e-14);
 
   auto const & B = SSsys.B();
-
   auto const & C = SSsys.C();
 
   ASSERT_DOUBLE_EQ(C(0, 1) * B(0, 0), 12.5);
 
   auto const & D = SSsys.D();
   ASSERT_DOUBLE_EQ(D(0, 0), 0.);
+}
+
+TEST(ACTcontrol, StateSPaceDisreteTimeTest)
+{
+  // Second-order low-pass filter and its discrete time state space.
+  double tau = 0.1;
+
+  ns_control_toolbox::tf_factor num({1.});
+  ns_control_toolbox::tf_factor den({tau, 1});
+  den.power(2);
+
+  auto const & TFsys = ns_control_toolbox::tf(num, den);
+
+  ns_utils::print("First order transfer function : ");
+  TFsys.print();
+
+  double const Ts{0.05};
+  auto const & SSsys = ns_control_toolbox::tf2ss(TFsys, Ts);
+
+  ns_utils::print("Continuous-time state-space : ");
+  SSsys.print();
+
+  ns_utils::print("Discrete-time state-space : ");
+  SSsys.print_discrete_system();
 
   // Discretization results
   auto const & Ad = SSsys.Ad();
-  ASSERT_DOUBLE_EQ(Ad(0, 0), 0.28);
-  ASSERT_DOUBLE_EQ(Ad(0, 1), -0.4);
-  ASSERT_DOUBLE_EQ(Ad(1, 0), 0.256);
-  ASSERT_DOUBLE_EQ(Ad(1, 1), 0.92);
+
+  //    ASSERT_DOUBLE_EQ(Ad(0, 0), 0.28);
+  //    ASSERT_DOUBLE_EQ(Ad(0, 1), -0.4);
+  //    ASSERT_DOUBLE_EQ(Ad(1, 0), 0.256);
+  //    ASSERT_DOUBLE_EQ(Ad(1, 1), 0.92);
+
+  Eigen::MatrixXd Ad_ground_truth(2, 2);
+  Ad_ground_truth << 0.28, -0.4, 0.256, 0.92;
+
+  auto dAnorm = (Ad - Ad_ground_truth).norm();
+  ASSERT_NEAR(dAnorm, 0., 1e-14);
 
   auto const & Bd = SSsys.Bd();
-  ASSERT_DOUBLE_EQ(Bd(0, 0), 0.256);
-  ASSERT_DOUBLE_EQ(Bd(1, 0), 0.0512);
+  //  ASSERT_DOUBLE_EQ(Bd(0, 0), 0.256);
+  //  ASSERT_DOUBLE_EQ(Bd(1, 0), 0.0512);
+
+  Eigen::MatrixXd Bd_ground_truth(2, 1);
+  Bd_ground_truth << 0.256, 0.0512;
+
+  auto dBnorm = (Bd - Bd_ground_truth).norm();
+  ASSERT_NEAR(dBnorm, 0., 1e-14);
 
   auto const & Cd = SSsys.Cd();
-  ASSERT_DOUBLE_EQ(Cd(0, 0), 0.2);
-  ASSERT_DOUBLE_EQ(Cd(0, 1), 1.5);
+  //  ASSERT_DOUBLE_EQ(Cd(0, 0), 0.2);
+  //  ASSERT_DOUBLE_EQ(Cd(0, 1), 1.5);
 
-  auto const & Dd = SSsys.Dd();
-  ASSERT_DOUBLE_EQ(Dd(0, 0), 0.04);
+  Eigen::MatrixXd Cd_ground_truth(1, 2);
+  Cd_ground_truth << 0.2, 1.5;
+
+  auto dCnorm = (Cd - Cd_ground_truth).norm();
+  ASSERT_NEAR(dCnorm, 0., 1e-14);
+
+  //  auto const & Dd = SSsys.Dd();
+  //  ASSERT_DOUBLE_EQ(Dd(0, 0), 0.04);
 }
 
 /**
