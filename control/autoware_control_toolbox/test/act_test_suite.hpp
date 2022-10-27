@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_CONTROL_TOOLBOX_TEST_ACT_TEST_SUITE_HPP_
-#define AUTOWARE_CONTROL_TOOLBOX_TEST_ACT_TEST_SUITE_HPP_
+#ifndef ACT_TEST_SUITE_HPP_
+#define ACT_TEST_SUITE_HPP_
 
-#include "gtest/gtest.h"
 #include "autoware_control_toolbox.hpp"
+#include "gtest/gtest.h"
 
-#endif // AUTOWARE_CONTROL_TOOLBOX_TEST_ACT_TEST_SUITE_HPP_
+#endif  // ACT_TEST_SUITE_HPP_

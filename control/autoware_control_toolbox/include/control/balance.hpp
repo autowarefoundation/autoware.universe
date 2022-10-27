@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_CONTROL_TOOLBOX_BALANCE_HPP
-#define AUTOWARE_CONTROL_TOOLBOX_BALANCE_HPP
+#ifndef CONTROL__BALANCE_HPP_
+#define CONTROL__BALANCE_HPP_
 
 #include "../utils_act/act_utils.hpp"
 #include "../utils_act/act_utils_eigen.hpp"
@@ -41,4 +41,4 @@ double balance_symmetric(double const & a, double const & b);
 
 }  // namespace ns_control_toolbox
 
-#endif  // AUTOWARE_CONTROL_TOOLBOX_BALANCE_HPP
+#endif  // CONTROL__BALANCE_HPP_

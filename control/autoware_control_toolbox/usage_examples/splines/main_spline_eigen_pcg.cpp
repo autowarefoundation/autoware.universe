@@ -37,14 +37,12 @@ int main()
   std::vector<double> yvec;
 
   std::transform(
-    xvec.cbegin(), xvec.cend(), std::back_inserter(yvec), [](auto const & x)
-    {return sin(x);});
+    xvec.cbegin(), xvec.cend(), std::back_inserter(yvec), [](auto const & x) { return sin(x); });
 
   // Generate z = cos(x).
   std::vector<double> zvec;
   std::transform(
-    xvec.cbegin(), xvec.cend(), std::back_inserter(zvec), [](auto const & x)
-    {return cos(x);});
+    xvec.cbegin(), xvec.cend(), std::back_inserter(zvec), [](auto const & x) { return cos(x); });
 
   // Arc-length parametrization.
   std::vector<double> dx;  //{1, 0.0};
@@ -56,8 +54,7 @@ int main()
   // Define arc-length cumsum()
   std::vector<double> svec;
   std::transform(
-    dx.cbegin(), dx.cend(), dy.cbegin(), std::back_inserter(svec), [](auto dxi, auto dyi)
-    {
+    dx.cbegin(), dx.cend(), dy.cbegin(), std::back_inserter(svec), [](auto dxi, auto dyi) {
       static double ds = 0.0;
       ds += std::hypot(dxi, dyi);
 

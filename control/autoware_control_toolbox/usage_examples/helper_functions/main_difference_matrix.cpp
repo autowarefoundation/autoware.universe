@@ -18,7 +18,6 @@
 
 int main()
 {
-
   size_t n = 10;
   size_t k = 5;
   size_t d = 2;

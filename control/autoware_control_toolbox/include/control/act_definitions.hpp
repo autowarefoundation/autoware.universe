@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_CONTROL_TOOLBOX_ACT_DEFINITIONS_HPP
-#define AUTOWARE_CONTROL_TOOLBOX_ACT_DEFINITIONS_HPP
+#ifndef CONTROL__ACT_DEFINITIONS_HPP_
+#define CONTROL__ACT_DEFINITIONS_HPP_
 
 #include <limits>
 namespace ns_control_toolbox
@@ -22,4 +22,4 @@ constexpr auto EPS = std::numeric_limits<double>::epsilon();
 constexpr double RADIX = 2.;  // used in the balance_a_matrix.hpp
 }  // namespace ns_control_toolbox
 
-#endif  // AUTOWARE_CONTROL_TOOLBOX_ACT_DEFINITIONS_HPP
+#endif  // CONTROL__ACT_DEFINITIONS_HPP_

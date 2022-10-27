@@ -15,7 +15,6 @@
 #include "splines/bsplines_interpolator.hpp"
 
 #include <functional>
-
 #include <vector>
 
 ns_splines::BSplineInterpolator::BSplineInterpolator(
@@ -26,8 +25,9 @@ ns_splines::BSplineInterpolator::BSplineInterpolator(
   compute_derivatives_{compute_derivatives}
 {
   /**
-   *  This interpolation class is designed to get re-sampled vectors or matrices. The entire signals are
-   *  parameterized using a "t" parameter scaled in [0, 1]. The curve starts at zero and ends at one.
+   *  This interpolation class is designed to get re-sampled vectors or matrices. The entire signals
+   * are parameterized using a "t" parameter scaled in [0, 1]. The curve starts at zero and ends at
+   * one.
    * */
   // We need two different coordinates, one for base, one for the new dimensions.
   // base signal coordinates
@@ -151,14 +151,10 @@ ns_splines::BSplineInterpolator::BSplineInterpolator(
   auto max_tvec_base = tvec_base.maxCoeff();
 
   Eigen::MatrixXd tvec_base_normed(
-    tvec_base.unaryExpr(
-      [&max_tvec_base](auto x)
-      {return x / max_tvec_base;}));
+    tvec_base.unaryExpr([&max_tvec_base](auto x) { return x / max_tvec_base; }));
 
   Eigen::MatrixXd tvec_new_normed(
-    tvec_new.unaryExpr(
-      [&max_tvec_base](auto x)
-      {return x / max_tvec_base;}));
+    tvec_new.unaryExpr([&max_tvec_base](auto x) { return x / max_tvec_base; }));
 
   // Create the knot points.
   nknots_ = static_cast<size_t>(static_cast<double>(tvec_base_normed.size()) * num_of_knots_ratio);
@@ -190,15 +186,14 @@ ns_splines::BSplineInterpolator::BSplineInterpolator(
     // Second option.
     // solveByQR(basis_mat, penalized_weights_D);
     /**
-     * Once the following matrix is computed, we multiply it with the given ybase which yields ynew_in_new coordinates.
-     * This new matrix; projection_mat_w_new_base_ can be used to interpolate ybase --> ynew with a new length.
-     * ynew_length = projection_mat_w_new_base_ @ ybase_length
-     * ynew = A{A^T@A + lambda diag(s)}−1@A^T .
+     * Once the following matrix is computed, we multiply it with the given ybase which yields
+     *ynew_in_new coordinates. This new matrix; projection_mat_w_new_base_ can be used to
+     *interpolate ybase --> ynew with a new length. ynew_length = projection_mat_w_new_base_ @
+     *ybase_length ynew = A{A^T@A + lambda diag(s)}−1@A^T .
      **/
 
     projection_mat_w_new_base_ = interpolating_base_mat * projection_mat_base_;
   } else {
-
     // Base matrix to compute the coefficients from the data ybase.
     Eigen::MatrixXd basis_mat(n_base_points_, nknots_ + 4);
 
@@ -210,8 +205,8 @@ ns_splines::BSplineInterpolator::BSplineInterpolator(
     createBasesMatrix(tvec_base_normed, basis_mat);
 
     /**
-     * Compute the new interpolation base matrices. The coefficients computed  for the ybase and new bases.
-     * y, y', y" = B, B', B" @ coeff_base.
+     * Compute the new interpolation base matrices. The coefficients computed  for the ybase and new
+     * bases. y, y', y" = B, B', B" @ coeff_base.
      * **/
 
     Eigen::MatrixXd new_basis_mat(new_npoints_, nknots_ + 4);
@@ -225,16 +220,16 @@ ns_splines::BSplineInterpolator::BSplineInterpolator(
     createBasesMatrix(tvec_new_normed, new_basis_mat, new_basis_d_mat, new_basis_dd_mat);
 
     /**
-     * Once the following matrix is computed, we multiply it with the given ybase which yields ynew_in_new
-     * coordinates.
-     * This new matrix; projection_mat_w_new_base_ can be used to interpolate ybase --> ynew with a new length.
-     * ynew_length = projection_mat_w_new_base_ @ ybase_length
+     * Once the following matrix is computed, we multiply it with the given ybase which yields
+     *ynew_in_new coordinates. This new matrix; projection_mat_w_new_base_ can be used to
+     *interpolate ybase --> ynew with a new length. ynew_length = projection_mat_w_new_base_ @
+     *ybase_length
      **/
 
     solveByDemmlerReisch(basis_mat, basis_mat_dd);
     /**
-     * We cannot use these methods with the second derivative matrix, singularity arises. We need use identity matrix
-     * for regularization.
+     * We cannot use these methods with the second derivative matrix, singularity arises. We need
+     * use identity matrix for regularization.
      */
 
     // Second solution option.
@@ -248,7 +243,8 @@ ns_splines::BSplineInterpolator::BSplineInterpolator(
 }
 
 /*
- *  Create a basis matrix for the polynomial approximation. Basis matrix is parametrized by t, B = B(t)
+ *  Create a basis matrix for the polynomial approximation. Basis matrix is parametrized by t, B =
+ * B(t)
  *
  * */
 void ns_splines::BSplineInterpolator::createBasesMatrix(
@@ -260,26 +256,17 @@ void ns_splines::BSplineInterpolator::createBasesMatrix(
    **/
   basis_mat.col(0).setConstant(1.);
   basis_mat.col(1) = tvec;
-  basis_mat.col(2) = Eigen::VectorXd(
-    tvec.unaryExpr(
-      [](auto const & x)
-      {return x * x;}));
+  basis_mat.col(2) = Eigen::VectorXd(tvec.unaryExpr([](auto const & x) { return x * x; }));
 
-  basis_mat.col(3) = Eigen::VectorXd(
-    tvec.unaryExpr(
-      [](auto const & x)
-      {return x * x * x;}));
+  basis_mat.col(3) = Eigen::VectorXd(tvec.unaryExpr([](auto const & x) { return x * x * x; }));
 
   for (auto k = 4; k < basis_mat.cols(); k++) {
     auto ki = knots_vec_[static_cast<size_t>(k - 4)];
-    basis_mat.col(k) = Eigen::VectorXd(
-      tvec.unaryExpr(
-        [&ki](auto const & x)
-        {
-          auto val_pos = std::max(0.0, (x - ki));
+    basis_mat.col(k) = Eigen::VectorXd(tvec.unaryExpr([&ki](auto const & x) {
+      auto val_pos = std::max(0.0, (x - ki));
 
-          return std::pow(val_pos, 3);
-        }));
+      return std::pow(val_pos, 3);
+    }));
   }
 }
 
@@ -302,15 +289,10 @@ void ns_splines::BSplineInterpolator::createBasesMatrix(
   basis_mat.col(0).setConstant(1.);  // [1, ...]
   basis_mat.col(1) = tvec;           // [1, t, ...]
   basis_mat.col(2) =
-    Eigen::VectorXd(
-    tvec.unaryExpr(
-      [](auto const & x)
-      {return x * x;}));                                   // [1, t, t**2]
+    Eigen::VectorXd(tvec.unaryExpr([](auto const & x) { return x * x; }));  // [1, t, t**2]
 
   basis_mat.col(3) = Eigen::VectorXd(
-    tvec.unaryExpr(
-      [](auto const & x)
-      {return x * x * x;}));                   // [1, t, t**2, t**3]
+    tvec.unaryExpr([](auto const & x) { return x * x * x; }));  // [1, t, t**2, t**3]
 
   // Second derivative
   /**
@@ -325,23 +307,17 @@ void ns_splines::BSplineInterpolator::createBasesMatrix(
 
   for (auto k = 4; k < basis_mat.cols(); k++) {
     auto ki = knots_vec_[static_cast<size_t>(k - 4)];
-    basis_mat.col(k) = Eigen::VectorXd(
-      tvec.unaryExpr(
-        [&ki](auto const & x)
-        {
-          auto val_pos = std::max(0.0, (x - ki));
+    basis_mat.col(k) = Eigen::VectorXd(tvec.unaryExpr([&ki](auto const & x) {
+      auto val_pos = std::max(0.0, (x - ki));
 
-          return std::pow(val_pos, 3);
-        }));
+      return std::pow(val_pos, 3);
+    }));
 
-    regularization_mat_dd.col(k) = Eigen::VectorXd(
-      tvec.unaryExpr(
-        [&ki](auto const & x)
-        {
-          auto val_pos = std::max(0.0, (x - ki));
+    regularization_mat_dd.col(k) = Eigen::VectorXd(tvec.unaryExpr([&ki](auto const & x) {
+      auto val_pos = std::max(0.0, (x - ki));
 
-          return 6.0 * val_pos;
-        }));
+      return 6.0 * val_pos;
+    }));
   }
 }
 
@@ -370,15 +346,9 @@ void ns_splines::BSplineInterpolator::createBasesMatrix(
   // Base polynomial
   basis_mat.col(0).setConstant(1.);
   basis_mat.col(1) = tvec;
-  basis_mat.col(2) = Eigen::VectorXd(
-    tvec.unaryExpr(
-      [](auto const & x)
-      {return x * x;}));
+  basis_mat.col(2) = Eigen::VectorXd(tvec.unaryExpr([](auto const & x) { return x * x; }));
 
-  basis_mat.col(3) = Eigen::VectorXd(
-    tvec.unaryExpr(
-      [](auto const & x)
-      {return x * x * x;}));
+  basis_mat.col(3) = Eigen::VectorXd(tvec.unaryExpr([](auto const & x) { return x * x * x; }));
 
   // First derivative of the basis matrix.
   /**
@@ -389,10 +359,7 @@ void ns_splines::BSplineInterpolator::createBasesMatrix(
   basis_dmat.col(0).setConstant(0.);
   basis_dmat.col(1).setConstant(1.);
   basis_dmat.col(2) = 2 * tvec;
-  basis_dmat.col(3) = Eigen::VectorXd(
-    tvec.unaryExpr(
-      [](auto const & x)
-      {return 3 * x * x;}));
+  basis_dmat.col(3) = Eigen::VectorXd(tvec.unaryExpr([](auto const & x) { return 3 * x * x; }));
 
   // Second derivative
   /**
@@ -408,36 +375,26 @@ void ns_splines::BSplineInterpolator::createBasesMatrix(
   for (auto k = 4; k < basis_mat.cols(); k++) {
     auto ki = knots_vec_[static_cast<size_t>(k - 4)];
     // (t-k)**3
-    basis_mat.col(k) = Eigen::VectorXd(
-      tvec.unaryExpr(
-        [&ki](auto const & x)
-        {
-          auto val_pos = std::max(0.0, (x - ki));
+    basis_mat.col(k) = Eigen::VectorXd(tvec.unaryExpr([&ki](auto const & x) {
+      auto val_pos = std::max(0.0, (x - ki));
 
-          return std::pow(val_pos, 3);
-        }));
+      return std::pow(val_pos, 3);
+    }));
 
     // 3*(t-k)**2
-    basis_dmat.col(k) = Eigen::VectorXd(
-      tvec.unaryExpr(
-        [&ki](auto const & x)
-        {
-          auto val_pos = std::max(0.0, (x - ki));
+    basis_dmat.col(k) = Eigen::VectorXd(tvec.unaryExpr([&ki](auto const & x) {
+      auto val_pos = std::max(0.0, (x - ki));
 
-          return 3.0 * val_pos * val_pos;
-        }));
+      return 3.0 * val_pos * val_pos;
+    }));
 
     //  6*(t-k)
-    basis_ddmat.col(k) = Eigen::VectorXd(
-      tvec.unaryExpr(
-        [&ki](auto const & x)
-        {
-          auto val_pos = std::max(0.0, (x - ki));
+    basis_ddmat.col(k) = Eigen::VectorXd(tvec.unaryExpr([&ki](auto const & x) {
+      auto val_pos = std::max(0.0, (x - ki));
 
-          return 6.0 * val_pos;
-        }));
+      return 6.0 * val_pos;
+    }));
   }
-
 }
 
 void ns_splines::BSplineInterpolator::solveByDemmlerReisch(
@@ -446,7 +403,8 @@ void ns_splines::BSplineInterpolator::solveByDemmlerReisch(
   // To be computed in the constructor.
   /**
    *   y = Ax --> At*y = At*x -- > x = coeffs = inv(At*A)*A*ybase_data and A = A(t parameter)
-   *                          -- > ynew = Anew(t) * x  = Anew(t) * coeffs  = Anew(t) * inv(At*A)*A * ydata
+   *                          -- > ynew = Anew(t) * x  = Anew(t) * coeffs  = Anew(t) * inv(At*A)*A *
+   *ydata
    *                          -- > projection matrix p = inv(At*A)*A this is projection_mat_base_.
    *                          ---> projection with base included  Anew(t) * inv(At*A)*A    *
    **/
@@ -480,14 +438,13 @@ void ns_splines::BSplineInterpolator::solveByDemmlerReisch(
    * */
 
   projection_mat_base_ = Rinv * svd.matrixU() *
-    (A.transpose() * A + lambda_ * lambda_ * Sdiag).inverse() *
-    A.transpose();                                            // y_interp = A(A^T@A + )
+                         (A.transpose() * A + lambda_ * lambda_ * Sdiag).inverse() *
+                         A.transpose();  // y_interp = A(A^T@A + )
 }
 
 void ns_splines::BSplineInterpolator::InterpolateInCoordinates(
   const Eigen::MatrixXd & ybase, Eigen::MatrixXd & data_tobe_interpolated)
 {
-
   // Standardize or normalize the data and restore back.
   auto numcols = static_cast<size_t>(ybase.cols());
   auto numrows = static_cast<size_t>(ybase.rows());
@@ -505,9 +462,7 @@ void ns_splines::BSplineInterpolator::InterpolateInCoordinates(
     auto && colmax = ybase.col(p).cwiseAbs().maxCoeff();  // normalize each columns
     colmaxvec[k] = colmax;
     ybase_normalized.col(p) =
-      ybase.col(p).unaryViewExpr(
-      [&colmax](auto const & x)
-      {return x / colmax;});
+      ybase.col(p).unaryViewExpr([&colmax](auto const & x) { return x / colmax; });
   }
 
   auto && normalized_interpolated_data = projection_mat_w_new_base_ * ybase_normalized;
@@ -518,8 +473,7 @@ void ns_splines::BSplineInterpolator::InterpolateInCoordinates(
     auto const & p = static_cast<Eigen::Index>(k);
     auto const & colmax = colmaxvec[k];
     data_tobe_interpolated.col(p) = normalized_interpolated_data.col(p).unaryExpr(
-      [&colmax](auto const & x)
-      {return x * colmax;});
+      [&colmax](auto const & x) { return x * colmax; });
   }
 
   // If we want to skip normalization procedures above, just use the
@@ -557,8 +511,8 @@ void ns_splines::BSplineInterpolator::getFirstDerivative(
 {
   if (!compute_derivatives_) {
     std::cout << " The interpolator was not prepared by the compute_derivative_option = True. "
-      "Cannot return the "
-      "derivatives... ";
+                 "Cannot return the "
+                 "derivatives... ";
     return;
   }
 
@@ -578,9 +532,7 @@ void ns_splines::BSplineInterpolator::getFirstDerivative(
     auto && colmax = ybase.col(k).cwiseAbs().maxCoeff();
     colmaxvec[k] = colmax;
     ybase_normalized.col(k) =
-      ybase.col(k).unaryViewExpr(
-      [&colmax](auto const & x)
-      {return x / colmax;});
+      ybase.col(k).unaryViewExpr([&colmax](auto const & x) { return x / colmax; });
   }
 
   auto && normalized_interpolated_data = projection_mat_w_new_base_dot_ * ybase_normalized;
@@ -590,8 +542,7 @@ void ns_splines::BSplineInterpolator::getFirstDerivative(
   for (auto k = 0; k < numcols; k++) {
     auto && colmax = colmaxvec[k];
     data_dot_tobe_interpolated.col(k) = normalized_interpolated_data.col(k).unaryExpr(
-      [&colmax](auto const & x)
-      {return x * colmax;});
+      [&colmax](auto const & x) { return x * colmax; });
   }
 
   // If we want to skip normalization procedures above,
@@ -604,8 +555,8 @@ void ns_splines::BSplineInterpolator::getSecondDerivative(
 {
   if (!compute_derivatives_) {
     std::cout << " The interpolator was not prepared by the compute_derivative_option = True. "
-      "Cannot return the "
-      "derivatives... ";
+                 "Cannot return the "
+                 "derivatives... ";
     return;
   }
 
@@ -625,9 +576,7 @@ void ns_splines::BSplineInterpolator::getSecondDerivative(
     auto && colmax = ybase.col(k).cwiseAbs().maxCoeff();
     colmaxvec[k] = colmax;
     ybase_normalized.col(k) =
-      ybase.col(k).unaryViewExpr(
-      [&colmax](auto const & x)
-      {return x / colmax;});
+      ybase.col(k).unaryViewExpr([&colmax](auto const & x) { return x / colmax; });
   }
 
   auto && normalized_interpolated_data = projection_mat_w_new_base_dot_dot_ * ybase_normalized;
@@ -635,10 +584,9 @@ void ns_splines::BSplineInterpolator::getSecondDerivative(
     normalized_interpolated_data.rows(), normalized_interpolated_data.cols());
 
   for (auto k = 0; k < numcols; k++) {
-    auto && colmax = colmaxvec[k];
+    auto const & colmax = colmaxvec[k];
     data_dot_dot_tobe_interpolated.col(k) = normalized_interpolated_data.col(k).unaryExpr(
-      [&colmax](auto const & x)
-      {return x * colmax;});
+      [&colmax](auto const & x) { return x * colmax; });
   }
 
   // If we want to skip normalization procedures above, just use the line below and

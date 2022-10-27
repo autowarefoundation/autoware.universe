@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_CONTROL_TOOLBOX_INCLUDE_SPLINES_BSPLINEINTERPOLATORTEMPLATED_HPP_
-#define AUTOWARE_CONTROL_TOOLBOX_INCLUDE_SPLINES_BSPLINEINTERPOLATORTEMPLATED_HPP_
+#ifndef SPLINES__BSPLINE_INTERPOLATOR_TEMPLATED_HPP_
+#define SPLINES__BSPLINE_INTERPOLATOR_TEMPLATED_HPP_
 
 #include "utils_act/act_utils.hpp"
 #include "utils_act/act_utils_eigen.hpp"
@@ -144,7 +144,7 @@ private:
 
   // Set projection matrix for the base data.
   /**
-   * @brief Computes the spline coefficients using Demmler-Reisch ortogonalization.
+   * @brief Computes the spline coefficients using Demmler-Reisch orthogonalization.
    * @param [in] basis_mat projection matrix.
    * @param [in] penalizing_mat_D regularization matrix.
    * */
@@ -677,4 +677,4 @@ void BSplineInterpolatorTemplated<Nin, Nout>::normalizeColumns_Back(
   }
 }
 }  // namespace ns_splines
-#endif  // AUTOWARE_CONTROL_TOOLBOX_INCLUDE_SPLINES_BSPLINEINTERPOLATORTEMPLATED_HPP_
+#endif  // SPLINES__BSPLINE_INTERPOLATOR_TEMPLATED_HPP_

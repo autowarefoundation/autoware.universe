@@ -12,17 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "utils_act/writetopath.hpp"
 #include "utils_act/act_utils.hpp"
-#include <vector>
+#include "utils_act/writetopath.hpp"
+
 #include <algorithm>
+#include <vector>
 
 int main()
 {
   auto log_path = getOutputPath() / "interp_1d";
 
   // Generate a  sinusoidal signal with arc-length parametrization. This is our test signal.
-  size_t const num_of_points = 100; // number of points in the signal.
+  size_t const num_of_points = 100;  // number of points in the signal.
 
   // Generate x.
   std::vector<double> xvec = ns_utils::linspace(0.0, 13.0, num_of_points + 1);
@@ -31,10 +32,7 @@ int main()
   std::vector<double> yvec;
 
   std::transform(
-    xvec.cbegin(), xvec.cend(), std::back_inserter(yvec), [](auto const & x)
-    {
-      return sin(x);
-    });
+    xvec.cbegin(), xvec.cend(), std::back_inserter(yvec), [](auto const & x) { return sin(x); });
 
   writeToFile(log_path, xvec, "xvec");
   writeToFile(log_path, yvec, "yvec");
@@ -42,7 +40,7 @@ int main()
   /**
    * Piecewise interpolation
    * */
-  size_t const nnew = 60; // number of points in the signal.
+  size_t const nnew = 60;  // number of points in the signal.
   std::vector<double> xnew = ns_utils::linspace(-2.0, 18.0, nnew + 1);
 
   std::vector<double> ypw;
@@ -64,5 +62,4 @@ int main()
   std::vector<double> yvw;
   ns_utils::interp1d_linear(xvec, yvec, xnew, yvw);
   writeToFile(log_path, yvw, "yvw");
-
 }

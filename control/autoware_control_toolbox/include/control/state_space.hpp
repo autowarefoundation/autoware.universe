@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_CONTROL_TOOLBOX_STATE_SPACE_HPP
-#define AUTOWARE_CONTROL_TOOLBOX_STATE_SPACE_HPP
+#ifndef CONTROL__STATE_SPACE_HPP_
+#define CONTROL__STATE_SPACE_HPP_
 
 #include "act_definitions.hpp"
 #include "balance.hpp"
@@ -147,4 +147,4 @@ template <int N>
 using state_type_t = Eigen::Matrix<double, N, 1>;
 
 }  // namespace ns_control_toolbox
-#endif  // AUTOWARE_CONTROL_TOOLBOX_STATE_SPACE_HPP
+#endif  // CONTROL__STATE_SPACE_HPP_

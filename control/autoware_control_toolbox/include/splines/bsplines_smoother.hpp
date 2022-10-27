@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE_CONTROL_TOOLBOX_INCLUDE_SPLINES_BSPLINES_SMOOTHER_HPP_
-#define AUTOWARE_CONTROL_TOOLBOX_INCLUDE_SPLINES_BSPLINES_SMOOTHER_HPP_
+#ifndef SPLINES__BSPLINES_SMOOTHER_HPP_
+#define SPLINES__BSPLINES_SMOOTHER_HPP_
 
 #include "utils_act/act_utils.hpp"
 #include "utils_act/act_utils_eigen.hpp"
@@ -100,7 +100,8 @@ private:
 
   std::vector<std::vector<double>> basisRowsWithDerivatives(double const & ti);
 
-  std::vector<double> fPlusCube(double const & ti, double const & ki) const;  // returns max(0, t);
+  [[nodiscard]] std::vector<double> fPlusCube(
+    double const & ti, double const & ki) const;  // returns max(0, t);
 
   void solveByDemmlerReisch(
     Eigen::MatrixXd & basis_mat, Eigen::MatrixXd & basis_dmat,
@@ -116,4 +117,4 @@ private:
 };
 }  // namespace ns_splines
 
-#endif  // AUTOWARE_CONTROL_TOOLBOX_INCLUDE_SPLINES_BSPLINES_SMOOTHER_HPP_
+#endif  // SPLINES__BSPLINES_SMOOTHER_HPP_

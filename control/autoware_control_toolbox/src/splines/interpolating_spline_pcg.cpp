@@ -152,7 +152,7 @@ bool InterpolatingSplinePCG::compute_coefficients(std::vector<double> const & yb
   auto const & y0 = ybase[0];
 
   bool is_a_constant_vector = std::all_of(
-    ybase.cbegin() + 1, ybase.cend(), [&y0](auto const y) {return ns_utils::isEqual(y, y0);});
+    ybase.cbegin() + 1, ybase.cend(), [&y0](auto const y) { return ns_utils::isEqual(y, y0); });
 
   // Jacobi Preconditioner Iteration.
   std::vector<double> cmat_diag;
@@ -165,7 +165,7 @@ bool InterpolatingSplinePCG::compute_coefficients(std::vector<double> const & yb
     // compute differences (a_{i+1} - a_i)
     std::transform(
       ybase.cbegin(), ybase.cend(), ybase.cbegin() + 1, std::back_inserter(b_coeff),
-      [](auto & v0, auto & v1) {return v1 - v0;});
+      [](auto & v0, auto & v1) { return v1 - v0; });
 
     b_coeff.emplace_back(0.0);  // b_coeff[n] = 0
 
@@ -251,14 +251,14 @@ void InterpolatingSplinePCG::set_bd_coeffs_(
   // Set coeff d.
   std::transform(
     c_coeffs.cbegin(), c_coeffs.cend(), c_coeffs.begin() + 1, std::back_inserter(d_coeffs),
-    [](auto c0, auto c1) {return (c1 - c0) / 3;});
+    [](auto c0, auto c1) { return (c1 - c0) / 3; });
 
   d_coeffs.emplace_back(0.0);  // set last d[n]=0
 
   // Set coeff b.
   auto & a_coeff = ybase;
 
-  for (size_t k = 0; k < dimc - 1; k++) { // set coeffs[0:n-1]
+  for (size_t k = 0; k < dimc - 1; k++) {  // set coeffs[0:n-1]
     auto && b = (a_coeff[k + 1] - a_coeff[k]) - (c_coeffs[k + 1] + 2 * c_coeffs[k]) / 3;
     b_coeffs.emplace_back(b);
 
@@ -356,7 +356,7 @@ bool PCG::solve(
   //  ns_eigen_utils::printEigenMat(rn);
   // Initialize inverse of the diagonals.
   Eigen::VectorXd invDiag(b.rows(), 1);
-  invDiag << Asparse.diagonal().unaryExpr([](auto x) {return 1 / x;});
+  invDiag << Asparse.diagonal().unaryExpr([](auto x) { return 1 / x; });
 
   // Solve for rtilda.
   Eigen::VectorXd rtilda_n(invDiag.cwiseProduct(rn));

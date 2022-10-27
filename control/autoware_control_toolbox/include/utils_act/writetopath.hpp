@@ -15,7 +15,8 @@
 #pragma once
 #define GET_VARIABLE_NAME(Variable) (#Variable)
 
-#include <experimental/filesystem> // fmt package
+#include <experimental/filesystem>  // fmt package
+
 #include <fstream>
 
 // for creating an output file
@@ -23,8 +24,8 @@ namespace fs = std::experimental::filesystem;
 
 fs::path getOutputPath();
 
-template<typename T>
-void writeToFile(const fs::path &outputPath, T var, std::string varname)
+template <typename T>
+void writeToFile(const fs::path & outputPath, T var, std::string varname)
 {
   /**
    * @brief writes the given variable into the folder in txt format
@@ -34,8 +35,7 @@ void writeToFile(const fs::path &outputPath, T var, std::string varname)
    *
    * */
 
-  if (not fs::exists(outputPath) and not fs::create_directories(outputPath))
-  {
+  if (!fs::exists(outputPath) && !fs::create_directories(outputPath)) {
     throw std::runtime_error("Could not create output directory!");
   }
 
@@ -43,11 +43,10 @@ void writeToFile(const fs::path &outputPath, T var, std::string varname)
   std::ofstream f(outputPath / varname);
 
   f << var;
-
 }
 
-template<typename T>
-void writeToFile(const fs::path &outputPath, std::vector<T> var, std::string varname)
+template <typename T>
+void writeToFile(const fs::path & outputPath, std::vector<T> var, std::string varname)
 {
   /**
    * @brief writes the given variable into the folder in txt format
@@ -57,18 +56,14 @@ void writeToFile(const fs::path &outputPath, std::vector<T> var, std::string var
    *
    * */
 
-  if (not fs::exists(outputPath) and not fs::create_directories(outputPath))
-  {
+  if (!fs::exists(outputPath) && !fs::create_directories(outputPath)) {
     throw std::runtime_error("Could not create output directory!");
   }
 
   varname += ".txt";
   std::ofstream f(outputPath / varname);
 
-  for (auto &&x : var)
-  {
+  for (auto && x : var) {
     f << x << " ";
   }
-
 }
-

@@ -12,21 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifndef SPLINES__BSPLINES_INTERPOLATOR_HPP_
+#define SPLINES__BSPLINES_INTERPOLATOR_HPP_
 
-#ifndef AUTOWARE_CONTROL_TOOLBOX_INCLUDE_SPLINES_BSPLINES_INTERPOLATOR_HPP_
-#define AUTOWARE_CONTROL_TOOLBOX_INCLUDE_SPLINES_BSPLINES_INTERPOLATOR_HPP_
+#include "utils_act/act_utils.hpp"
+#include "utils_act/act_utils_eigen.hpp"
 
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/IterativeLinearSolvers>
 #include <eigen3/Eigen/Sparse>
+
 #include <algorithm>
 #include <functional>
 #include <iostream>
 #include <numeric>
 #include <utility>
 #include <vector>
-#include "utils_act/act_utils.hpp"
-#include "utils_act/act_utils_eigen.hpp"
 
 namespace ns_splines
 {
@@ -34,24 +35,17 @@ class BSplineInterpolator
 {
 public:
   BSplineInterpolator()
-  : n_base_points_{2},
-    new_npoints_{2},
-    knots_ratio_{0.3}, compute_derivatives_{true}, nknots_{1}
+  : n_base_points_{2}, new_npoints_{2}, knots_ratio_{0.3}, compute_derivatives_{true}, nknots_{1}
   {
-
   }
 
   explicit BSplineInterpolator(
-    size_t base_signal_length,
-    size_t new_length,
-    double num_of_knots_ratio = 0.3,
+    size_t base_signal_length, size_t new_length, double num_of_knots_ratio = 0.3,
     bool compute_derivatives = false);
 
   explicit BSplineInterpolator(
-    Eigen::MatrixXd const & tvec_base,
-    Eigen::MatrixXd const & tvec_new,
-    double num_of_knots_ratio = 0.3,
-    bool compute_derivatives = false);
+    Eigen::MatrixXd const & tvec_base, Eigen::MatrixXd const & tvec_new,
+    double num_of_knots_ratio = 0.3, bool compute_derivatives = false);
 
   // Copy Constructors
   BSplineInterpolator(BSplineInterpolator const & other)
@@ -62,12 +56,9 @@ public:
     nknots_{other.nknots_},
     projection_mat_base_{other.projection_mat_base_},
     projection_mat_w_new_base_{other.projection_mat_w_new_base_},
-    projection_mat_w_new_base_dot_{
-      other.projection_mat_w_new_base_dot_},
-    projection_mat_w_new_base_dot_dot_{
-      other.projection_mat_w_new_base_dot_dot_}
+    projection_mat_w_new_base_dot_{other.projection_mat_w_new_base_dot_},
+    projection_mat_w_new_base_dot_dot_{other.projection_mat_w_new_base_dot_dot_}
   {
-
   }
 
   BSplineInterpolator & operator=(BSplineInterpolator const & other)
@@ -100,7 +91,6 @@ public:
     projection_mat_w_new_base_dot_{std::move(other.projection_mat_w_new_base_dot_)},
     projection_mat_w_new_base_dot_dot_{std::move(other.projection_mat_w_new_base_dot_dot_)}
   {
-
   }
 
   BSplineInterpolator & operator=(BSplineInterpolator && other) noexcept
@@ -148,9 +138,10 @@ private:
 
   // To be computed in the constructor.
   /*
-   *   A = A(t) parametric polynomials in the rows, each row has [1, t, t**2, t**3, (t-knot)**3_i ... ]
-   *   y = Ax --> A^T*y = A^T A*x -- > x = coeffs = inv(A^T*A)*A*ybase_data
-   *                          -- > ynew = Anew_base(t) * x  = Anew(t) * coeffs  = Anew(t) * inv(A^T*A)*A * ydata
+   *   A = A(t) parametric polynomials in the rows, each row has [1, t, t**2, t**3, (t-knot)**3_i
+   * ... ] y = Ax --> A^T*y = A^T A*x -- > x = coeffs = inv(A^T*A)*A*ybase_data
+   *                          -- > ynew = Anew_base(t) * x  = Anew(t) * coeffs  = Anew(t) *
+   * inv(A^T*A)*A * ydata
    *                          -- > projection matrix p = inv(A^T*A)*A
    *                          ---> projection with base included  Anew(t) * inv(At*A)*A
    *
@@ -182,10 +173,10 @@ private:
 
   void solveByDemmlerReisch(
     Eigen::MatrixXd const & basis_mat,
-    Eigen::MatrixXd const & penalizing_mat_D);                         // set projection mat for the base data.
+    Eigen::MatrixXd const & penalizing_mat_D);  // set projection mat for the base data.
 
   void solveByQR(Eigen::MatrixXd const & basis_mat, Eigen::MatrixXd const & penalizing_mat_D);
 };
 }  // namespace ns_splines
 
-#endif //AUTOWARE_CONTROL_TOOLBOX_INCLUDE_SPLINES_BSPLINES_INTERPOLATOR_HPP_
+#endif  // SPLINES__BSPLINES_INTERPOLATOR_HPP_
