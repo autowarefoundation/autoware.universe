@@ -191,16 +191,16 @@ protected:
   tvm_utility::pipeline::InferenceEngineTVMConfig config_bnh;
 
   // Voxel Encoder Pipeline.
-  const std::shared_ptr<VE_PrePT> VE_PreP;
-  const std::shared_ptr<IET> VE_IE;
-  const std::shared_ptr<VE_PostPT> VE_PostP;
-  const std::shared_ptr<tvm_utility::pipeline::Pipeline<VE_PrePT, IET, VE_PostPT>> ve_pipeline;
+  std::shared_ptr<VE_PrePT> VE_PreP;
+  std::shared_ptr<IET> VE_IE;
+  std::shared_ptr<VE_PostPT> VE_PostP;
+  std::shared_ptr<tvm_utility::pipeline::Pipeline<VE_PrePT, IET, VE_PostPT>> ve_pipeline;
 
   // Backbone Neck Head Pipeline.
-  const std::shared_ptr<BNH_PrePT> BNH_PreP;
-  const std::shared_ptr<IET> BNH_IE;
-  const std::shared_ptr<BNH_PostPT> BNH_PostP;
-  const std::shared_ptr<tvm_utility::pipeline::Pipeline<BNH_PrePT, IET, BNH_PostPT>> bnh_pipeline;
+  std::shared_ptr<BNH_PrePT> BNH_PreP;
+  std::shared_ptr<IET> BNH_IE;
+  std::shared_ptr<BNH_PostPT> BNH_PostP;
+  std::shared_ptr<tvm_utility::pipeline::Pipeline<BNH_PrePT, IET, BNH_PostPT>> bnh_pipeline;
 
   // Variables
   std::unique_ptr<VoxelGeneratorTemplate> vg_ptr_{nullptr};

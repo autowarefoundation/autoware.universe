@@ -93,7 +93,7 @@ std::vector<float32_t> VoxelEncoderPostProcessor::schedule(const TVMArrayContain
 
   TVMArrayCopyToBytes(
     input[0].getArray(), pillar_features.data(),
-    max_voxel_size * encoder_out_feature_size * datatype_bytes);
+    pillar_features.size() * datatype_bytes);
 
   return pillar_features;
 }
@@ -161,19 +161,38 @@ BackboneNeckHeadPostProcessor::BackboneNeckHeadPostProcessor(
 
 std::vector<Box3D> BackboneNeckHeadPostProcessor::schedule(const TVMArrayContainerVector & input)
 {
-  float32_t * heatmap_ptr = static_cast<float32_t *>(input[0].getArray()->data);
-  float32_t * offset_ptr = static_cast<float32_t *>(input[1].getArray()->data);
-  float32_t * z_ptr = static_cast<float32_t *>(input[2].getArray()->data);
-  float32_t * dim_ptr = static_cast<float32_t *>(input[3].getArray()->data);
-  float32_t * rot_ptr = static_cast<float32_t *>(input[4].getArray()->data);
-  float32_t * vel_ptr = static_cast<float32_t *>(input[5].getArray()->data);
+  // float32_t * heatmap_ptr = static_cast<float32_t *>(input[0].getArray()->data);
+  // float32_t * offset_ptr = static_cast<float32_t *>(input[1].getArray()->data);
+  // float32_t * z_ptr = static_cast<float32_t *>(input[2].getArray()->data);
+  // float32_t * dim_ptr = static_cast<float32_t *>(input[3].getArray()->data);
+  // float32_t * rot_ptr = static_cast<float32_t *>(input[4].getArray()->data);
+  // float32_t * vel_ptr = static_cast<float32_t *>(input[5].getArray()->data);
 
-  head_out_heatmap.assign(heatmap_ptr, heatmap_ptr + head_out_heatmap.size());
-  head_out_offset.assign(offset_ptr, offset_ptr + head_out_offset.size());
-  head_out_z.assign(z_ptr, z_ptr + head_out_z.size());
-  head_out_dim.assign(dim_ptr, dim_ptr + head_out_dim.size());
-  head_out_rot.assign(rot_ptr, rot_ptr + head_out_rot.size());
-  head_out_vel.assign(vel_ptr, vel_ptr + head_out_vel.size());
+  // head_out_heatmap.assign(heatmap_ptr, heatmap_ptr + head_out_heatmap.size());
+  // head_out_offset.assign(offset_ptr, offset_ptr + head_out_offset.size());
+  // head_out_z.assign(z_ptr, z_ptr + head_out_z.size());
+  // head_out_dim.assign(dim_ptr, dim_ptr + head_out_dim.size());
+  // head_out_rot.assign(rot_ptr, rot_ptr + head_out_rot.size());
+  // head_out_vel.assign(vel_ptr, vel_ptr + head_out_vel.size());
+
+  TVMArrayCopyToBytes(
+    input[0].getArray(), head_out_heatmap.data(),
+    head_out_heatmap.size() * datatype_bytes);
+  TVMArrayCopyToBytes(
+    input[1].getArray(), head_out_offset.data(),
+    head_out_offset.size() * datatype_bytes);
+  TVMArrayCopyToBytes(
+    input[2].getArray(), head_out_z.data(),
+    head_out_z.size() * datatype_bytes);
+  TVMArrayCopyToBytes(
+    input[3].getArray(), head_out_dim.data(),
+    head_out_dim.size() * datatype_bytes);
+  TVMArrayCopyToBytes(
+    input[4].getArray(), head_out_rot.data(),
+    head_out_rot.size() * datatype_bytes);
+  TVMArrayCopyToBytes(
+    input[5].getArray(), head_out_vel.data(),
+    head_out_vel.size() * datatype_bytes);
 
   std::vector<Box3D> det_boxes3d;
 

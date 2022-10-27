@@ -42,9 +42,6 @@ if((NOT NN_DEPENDENCY_ENCOER STREQUAL "") AND (NOT NN_DEPENDENCY_BACKBONE STREQU
     lib/postprocess/generate_detected_boxes.cpp
   )
 
-  # message(WARNING "${NN_DEPENDENCY_ENCOER}")
-  # message(WARNING "${NN_DEPENDENCY_BACKBONE}")
-
   add_dependencies(${PROJECT_NAME} ${NN_DEPENDENCY_ENCOER})
   add_dependencies(${PROJECT_NAME} ${NN_DEPENDENCY_BACKBONE})
 
