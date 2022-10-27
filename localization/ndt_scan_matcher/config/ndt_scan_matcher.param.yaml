@@ -22,7 +22,6 @@
 
     # Converged param type
     # 0=TRANSFORM_PROBABILITY, 1=NEAREST_VOXEL_TRANSFORMATION_LIKELIHOOD
-    # NEAREST_VOXEL_TRANSFORMATION_LIKELIHOOD is only available when NDTImplementType::OMP is selected
     converged_param_type: 1
 
     # If converged_param_type is 0

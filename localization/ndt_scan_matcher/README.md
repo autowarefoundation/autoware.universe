@@ -60,9 +60,12 @@ One optional function is regularization. Please see the regularization chapter i
 | `step_size`                             | double | The newton line search maximum step length                                                      |
 | `resolution`                            | double | The ND voxel grid resolution [m]                                                                |
 | `max_iterations`                        | int    | The number of iterations required to calculate alignment                                        |
+| `converged_param_type`                  | int    | The type of indicators for scan matching score (0: TP, 1: NVTL)                                 |
 | `converged_param_transform_probability` | double | Threshold for deciding whether to trust the estimation result                                   |
 | `neighborhood_search_method`            | int    | neighborhood search method (0=KDTREE, 1=DIRECT26, 2=DIRECT7, 3=DIRECT1)                         |
 | `num_threads`                           | int    | Number of threads used for parallel computing                                                   |
+
+(TP: Transform Probability, NVTL: Nearest Voxel Transform Probability)
 
 ## Regularization
 

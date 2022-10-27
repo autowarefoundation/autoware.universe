@@ -1,5 +1,6 @@
 /**:
   ros__parameters:
+
     # Vehicle reference frame
     base_frame: "base_link"
 
@@ -18,6 +19,10 @@
 
     # The number of iterations required to calculate alignment
     max_iterations: 30
+
+    # Converged param type
+    # 0=TRANSFORM_PROBABILITY, 1=NEAREST_VOXEL_TRANSFORMATION_LIKELIHOOD
+    converged_param_type: 1
 
     # If converged_param_type is 0
     # Threshold for deciding whether to trust the estimation result
