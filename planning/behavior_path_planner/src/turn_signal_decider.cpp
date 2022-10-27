@@ -423,10 +423,7 @@ void TurnSignalDecider::set_intersection_info(
       approaching_intersection_turn_signal_ = false;
     }
     intersection_distance_ = dist_to_intersection_required_start;
-    const size_t required_start_nearest_seg_idx =
-      motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-        path.points, inter_required_start_point, nearest_dist_threshold, nearest_yaw_threshold);
-    intersection_pose_point_ = path.points.at(required_start_nearest_seg_idx).point.pose;
+    intersection_pose_point_ = inter_required_start_point;
   }
 
   initialize_intersection_info();
