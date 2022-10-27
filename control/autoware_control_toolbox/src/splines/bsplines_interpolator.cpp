@@ -171,7 +171,6 @@ ns_splines::BSplineInterpolator::BSplineInterpolator(
     penalized_weights_D.setIdentity();
 
     // Create the bases matrices for b-spline, its first and second derivatives.
-
     // Create the bases matrices for b-spline using the base data size.
     createBasesMatrix(tvec_base_normed, basis_mat);
 
@@ -221,9 +220,9 @@ ns_splines::BSplineInterpolator::BSplineInterpolator(
 
     /**
      * Once the following matrix is computed, we multiply it with the given ybase which yields
-     *ynew_in_new coordinates. This new matrix; projection_mat_w_new_base_ can be used to
-     *interpolate ybase --> ynew with a new length. ynew_length = projection_mat_w_new_base_ @
-     *ybase_length
+     * ynew_in_new coordinates. This new matrix; projection_mat_w_new_base_ can be used to
+     * interpolate ybase --> ynew with a new length. ynew_length = projection_mat_w_new_base_ @
+     * ybase_length
      **/
 
     solveByDemmlerReisch(basis_mat, basis_mat_dd);
