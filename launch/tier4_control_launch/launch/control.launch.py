@@ -157,7 +157,10 @@ def launch_setup(context, *args, **kwargs):
             ("input/lanelet_map_bin", "/map/vector_map"),
             ("input/obstacle_pointcloud", "/perception/obstacle_segmentation/pointcloud"),
             ("input/reference_trajectory", "/planning/scenario_planning/trajectory"),
-            ("input/predicted_trajectory", "/control/trajectory_follower/lateral/predicted_trajectory"),
+            (
+                "input/predicted_trajectory",
+                "/control/trajectory_follower/lateral/predicted_trajectory",
+            ),
             ("input/odometry", "/localization/kinematic_state"),
         ],
         parameters=[

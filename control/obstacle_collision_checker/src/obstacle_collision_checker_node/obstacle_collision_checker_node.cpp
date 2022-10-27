@@ -63,7 +63,6 @@ ObstacleCollisionCheckerNode::ObstacleCollisionCheckerNode(const rclcpp::NodeOpt
   param_.resample_interval = declare_parameter("resample_interval", 0.5);
   param_.search_radius = declare_parameter("search_radius", 5.0);
 
-
   // Dynamic Reconfigure
   set_param_res_ = this->add_on_set_parameters_callback(
     std::bind(&ObstacleCollisionCheckerNode::paramCallback, this, _1));

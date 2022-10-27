@@ -91,7 +91,7 @@ private:
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
   rcl_interfaces::msg::SetParametersResult paramCallback(
     const std::vector<rclcpp::Parameter> & parameters);
-    
+
   // Core
   Input input_;
   Output output_;
