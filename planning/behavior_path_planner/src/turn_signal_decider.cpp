@@ -38,17 +38,28 @@ TurnIndicatorsCommand TurnSignalDecider::getTurnSignal(
   }
 
   // Data
-  const double nearest_dist_threshold = 50.0;
+  const double nearest_dist_threshold = planner_data->parameters.ego_nearest_dist_threshold;
   const double nearest_yaw_threshold = planner_data->parameters.ego_nearest_yaw_threshold;
   const auto & current_pose = planner_data->self_pose->pose;
   const double & current_vel = planner_data->self_odometry->twist.twist.linear.x;
-  const size_t ego_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-    path.points, current_pose, nearest_dist_threshold, nearest_yaw_threshold);
   const auto route_handler = *(planner_data->route_handler);
+
+  // Get current lanelets
+  const double forward_length = planner_data->parameters.forward_path_length;
+  const double backward_length = 50.0;
+  const lanelet::ConstLanelets current_lanes = util::calcLaneAroundPose(
+    planner_data->route_handler, current_pose, forward_length, backward_length);
+  const PathWithLaneId extended_path = util::getCenterLinePath(
+    route_handler, current_lanes, current_pose, backward_length, forward_length,
+    planner_data->parameters);
+
+  // Closest ego segment
+  const size_t ego_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+    extended_path.points, current_pose, nearest_dist_threshold, nearest_yaw_threshold);
 
   // Get closest intersection turn signal if exists
   const auto intersection_turn_signal_info = getIntersectionTurnSignalInfo(
-    path, current_pose, current_vel, ego_seg_idx, route_handler, nearest_dist_threshold,
+    extended_path, current_pose, current_vel, ego_seg_idx, route_handler, nearest_dist_threshold,
     nearest_yaw_threshold);
 
   if (!intersection_turn_signal_info) {
@@ -58,13 +69,13 @@ TurnIndicatorsCommand TurnSignalDecider::getTurnSignal(
     turn_signal_info.turn_signal.command == TurnIndicatorsCommand::NO_COMMAND ||
     turn_signal_info.turn_signal.command == TurnIndicatorsCommand::DISABLE) {
     set_intersection_info(
-      path, current_pose, ego_seg_idx, *intersection_turn_signal_info, nearest_dist_threshold,
-      nearest_yaw_threshold);
+      extended_path, current_pose, ego_seg_idx, *intersection_turn_signal_info,
+      nearest_dist_threshold, nearest_yaw_threshold);
     return intersection_turn_signal_info->turn_signal;
   }
 
   return resolve_turn_signal(
-    path, current_pose, ego_seg_idx, *intersection_turn_signal_info, turn_signal_info,
+    extended_path, current_pose, ego_seg_idx, *intersection_turn_signal_info, turn_signal_info,
     nearest_dist_threshold, nearest_yaw_threshold);
 }
 
