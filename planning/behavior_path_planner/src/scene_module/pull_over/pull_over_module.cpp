@@ -65,12 +65,14 @@ PullOverModule::PullOverModule(
   if (parameters_.enable_arc_forward_parking) {
     constexpr bool is_forward = true;
     pull_over_planners_.push_back(std::make_shared<GeometricPullOver>(
-      node, parameters, getGeometricPullOverParameters(), occupancy_grid_map_, is_forward));
+      node, parameters, getGeometricPullOverParameters(), lane_departure_checker_,
+      occupancy_grid_map_, is_forward));
   }
   if (parameters_.enable_arc_backward_parking) {
     constexpr bool is_forward = false;
     pull_over_planners_.push_back(std::make_shared<GeometricPullOver>(
-      node, parameters, getGeometricPullOverParameters(), occupancy_grid_map_, is_forward));
+      node, parameters, getGeometricPullOverParameters(), lane_departure_checker_,
+      occupancy_grid_map_, is_forward));
   }
 
   // set selected goal searcher
