@@ -62,10 +62,11 @@
 #include <unordered_map>
 <<<<<<< HEAD
 #include <vector>
-  =======
+  == == ==
+  =
 >>>>>>> d1af6cd933420359081a6d0f701b228c094fa5a5
 
-  namespace pclomp
+    namespace pclomp
 {
   /** \brief A searchable voxel structure containing the mean and covariance of the data.
    * \note For more information please see

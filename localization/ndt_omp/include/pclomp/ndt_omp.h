@@ -66,19 +66,20 @@
 #include <pcl/registration/registration.h>
 
 #include <vector>
-  =======
+  == == ==
+  =
 
 #include "voxel_grid_covariance_omp.h"
 
 #include <pcl/search/impl/search.hpp>
 #include <unsupported/Eigen/NonLinearOptimization>
-  >>>>>>> d1af6cd933420359081a6d0f701b228c094fa5a5
+    >>>>>>> d1af6cd933420359081a6d0f701b228c094fa5a5
 
 #include "boost/optional.hpp"
 
 #include <pcl/registration/registration.h>
 
-  namespace pclomp
+    namespace pclomp
 {
   enum NeighborSearchMethod { KDTREE, DIRECT26, DIRECT7, DIRECT1 };
 
