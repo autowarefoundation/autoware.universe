@@ -407,7 +407,7 @@ BehaviorModuleOutput PullOverModule::plan()
     // Research goal when enabling research and final path has not been decided
     if (parameters_.enable_goal_research) {
       goal_searcher_->setPlannerData(planner_data_);
-      goal_candidates_ = goal_searcher_->search(refined_goal_pose_, status_.pull_over_lanes);
+      goal_candidates_ = goal_searcher_->search(refined_goal_pose_);
     }
 
     // plan paths with several goals and planner
