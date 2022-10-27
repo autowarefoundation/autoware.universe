@@ -364,7 +364,6 @@ bool PCG::solve(
   // Initialize search direction pn.
   auto pn = rtilda_n;
 
-  //  ns_eigen_utils::printEigenMat(rtilda_n);
   // Compute the step length.
   auto alpha_n = rn.dot(rtilda_n) / pApnorm(pn);
 
@@ -375,19 +374,8 @@ bool PCG::solve(
   auto rn_prev = rn;
 
   // Update the residuals.
-  //  auto &&Ap = pAdot(pn);
   rn = rn - alpha_n * Asparse * pn;
-  //  rn = rn - alpha_n * pAdot(pn);
-
-  //  ns_eigen_utils::printEigenMat(rn);
-  // Define gradient correction factor beta.
   double beta{};
-
-  // DEBUG
-  // std::cout << "\nrn_tilda \n";
-  // ns_eigen_utils::printEigenMat(rtilda_n);
-  //  ns_eigen_utils::printEigenMat(invDiag);
-  // end of DEBUG
 
   for (size_t k = 0; k < maxiter_; k++) {
     auto rtilda_prev = rtilda_n;  // copy
@@ -400,7 +388,6 @@ bool PCG::solve(
     pn.noalias() = rtilda_n + beta * pn;
 
     // Compute alpha; step length.
-    //    alpha_n = rn.dot(rtilda_n) / pApnorm(pn);
     alpha_n = rn.dot(rtilda_n) / pn.dot(Asparse * pn);
 
     // Update the solution.
@@ -409,10 +396,6 @@ bool PCG::solve(
     // Update r(n-1) and r(n).
     rn_prev = rn;
     rn.noalias() = rn - alpha_n * Asparse * pn;
-
-    //    rn.noalias() = rn - alpha_n * pAdot(pn);
-    //    std::cout << rn.rows() << " " << pAdot(pn).rows() << std::endl;
-    //    ns_eigen_utils::printEigenMat(pAdot(pn) - rn);
 
     if (isConvergedL1(rn)) {
       // Set solution and return.
@@ -427,7 +410,6 @@ bool PCG::solve(
 bool PCG::isConvergedL1(Eigen::VectorXd const & residuals) const
 {
   auto l1norm = residuals.cwiseAbs().sum();
-  // std::cout << "L1 norm of the residuals is : " << l1norm << std::endl;
 
   return l1norm < eps_;
 }
@@ -438,11 +420,10 @@ double PCG::pApnorm(const Eigen::MatrixXd & p)
 
   // results, p[0]**2 + p[n]**2
   double panorm = p(0) * p(0) + p(dim_p - 1) * p(dim_p - 1);
-  for (int k = 1; k < (int)dim_p - 1; ++k) {
+  for (int k = 1; k < static_cast<int>(dim_p) - 1; ++k) {
     panorm += p(k) * (p(k - 1) + 4 * p(k) + p(k + 1));
   }
 
   return panorm;
 }
-
 }  // namespace ns_splines

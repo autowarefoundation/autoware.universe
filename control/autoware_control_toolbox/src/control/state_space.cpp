@@ -161,9 +161,6 @@ void ns_control_toolbox::tf2ss::computeSystemMatrices(
     D_(0, 0) = zero_padded_num[0];
   }
 
-  //	auto B = Eigen::MatrixXd::Identity(nx - 1, nx);
-  //	ns_eigen_utils::printEigenMat(B);
-
   if (nx > 1) {
     A_.bottomRows(nx - 1) = Eigen::MatrixXd::Identity(nx - 1, nx);
   }
@@ -171,7 +168,8 @@ void ns_control_toolbox::tf2ss::computeSystemMatrices(
   // normalize the denominator and assign the first row of the A_matrix to the normalized
   // denominator's values excluding the first item of the denominator.
   for (size_t k = 1; k < normalized_den.size(); k++) {
-    auto const & ind_eig = Eigen::Index{static_cast<long>(k - 1)};
+    auto const & ind_eig = static_cast<Eigen::Index>(k - 1);
+
     A_(0, ind_eig) = -1 * normalized_den[k];
     C_(0, ind_eig) = zero_padded_num[k] - zero_padded_num[0] * normalized_den[k];
   }

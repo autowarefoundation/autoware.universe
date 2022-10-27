@@ -20,6 +20,7 @@
 #include <eigen3/Eigen/Sparse>
 
 #include <iostream>
+#include <limits>
 #include <string>
 #include <vector>
 

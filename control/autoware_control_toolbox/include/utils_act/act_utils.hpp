@@ -23,9 +23,9 @@
 #include <cmath>
 #include <iomanip>
 #include <iostream>
+#include <limits>
 #include <utility>
 #include <vector>
-
 /**
  * @brief Overloads vector * scalar multiplication.
  *
@@ -39,10 +39,6 @@ std::vector<T> operator*(std::vector<T> const & vec, T const & a)
 
   std::transform(temp.begin(), temp.end(), temp.begin(), [&](auto & xi) { return xi * a; });
 
-  //	for (auto& x: temp)
-  //	{
-  //		x = x * a;
-  //	}
   return temp;
 }
 
@@ -53,11 +49,6 @@ std::vector<T> & operator*=(std::vector<T> & vec, T const & a)
 {
   std::transform(vec.begin(), vec.end(), vec.begin(), [&](auto & xi) { return xi * a; });
 
-  //	for (auto& x: vec)
-  //	{
-  //		x = x * a;
-  //	}
-
   return vec;
 }
 
@@ -67,13 +58,7 @@ template <
 std::vector<T> operator*(T const & a, std::vector<T> const & vec)
 {
   std::vector<T> temp{vec};
-
   std::transform(temp.begin(), temp.end(), temp.begin(), [&](auto & xi) { return xi * a; });
-
-  //	for (auto& x: temp)
-  //	{
-  //		x = x * a;
-  //	}
 
   return temp;
 }
@@ -84,11 +69,6 @@ template <
 std::vector<T> & operator*=(T const & a, std::vector<T> & vec)
 {
   std::transform(vec.begin(), vec.end(), vec.begin(), [&](auto & xi) { return xi * a; });
-
-  //	for (auto& x: vec)
-  //	{
-  //		x = x * a;
-  //	}
 
   return vec;
 }
@@ -163,7 +143,7 @@ T deg2rad(T const & angle)
 }
 
 /**
- * brief abs_diff for size_t
+ * @brief abs_diff for size_t
  * */
 template <typename T>
 T abs_diff(T a, T b)

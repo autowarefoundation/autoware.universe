@@ -52,8 +52,8 @@ int main()
     });
 
     // Arc-length parametrization.
-    std::vector<double> dx;  //{1, 0.0};
-    std::vector<double> dy;  //{1, 0.0};
+    std::vector<double> dx;  // {1, 0.0};
+    std::vector<double> dy;  // {1, 0.0};
 
     std::adjacent_difference(xvec.begin(), xvec.end(), std::back_inserter(dx));
     std::adjacent_difference(yvec.begin(), yvec.end(), std::back_inserter(dy));
@@ -164,9 +164,9 @@ int main()
       return cy * sin(x) + distribution(generator) * 0;
     });
 
-    // Arc-length parametrization.
-    std::vector<double> dx;  //{1, 0.0};
-    std::vector<double> dy;  //{1, 0.0};
+    // Arc-length parametriztion.
+    std::vector<double> dx;
+    std::vector<double> dy;
 
     std::adjacent_difference(xvec.begin(), xvec.end(), std::back_inserter(dx));
     std::adjacent_difference(yvec.begin(), yvec.end(), std::back_inserter(dy));
@@ -212,7 +212,7 @@ int main()
     auto rdt2 = ns_eigen_utils::hstack<double>(dxdt2, dydt2);
 
     // Curvature example.
-    Eigen::MatrixXd curvature_orginal;  //(xe.rows(), 1);
+    Eigen::MatrixXd curvature_orginal;  // (xe.rows(), 1);
     curvature_orginal = ns_eigen_utils::Curvature(rdt, rdt2);
 
     writeToFile(log_path, curvature_orginal, "curvature_original");

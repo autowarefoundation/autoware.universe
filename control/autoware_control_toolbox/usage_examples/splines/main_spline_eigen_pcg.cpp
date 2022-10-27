@@ -45,8 +45,8 @@ int main()
     xvec.cbegin(), xvec.cend(), std::back_inserter(zvec), [](auto const & x) { return cos(x); });
 
   // Arc-length parametrization.
-  std::vector<double> dx;  //{1, 0.0};
-  std::vector<double> dy;  //{1, 0.0};
+  std::vector<double> dx;  // {1, 0.0};
+  std::vector<double> dy;  // {1, 0.0};
 
   std::adjacent_difference(xvec.begin(), xvec.end(), std::back_inserter(dx));
   std::adjacent_difference(yvec.begin(), yvec.end(), std::back_inserter(dy));
@@ -64,7 +64,6 @@ int main()
   auto log_path = getOutputPath() / "spline_pcg";
 
   // Create new interpolating coordinates
-  // double sfinal = svec.back();
   auto se_new = ns_utils::linspace(svec[0] - 2., svec.back() + 3., 50);
 
   writeToFile(log_path, xvec, "xe");
