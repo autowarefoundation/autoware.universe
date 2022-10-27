@@ -66,11 +66,11 @@ int main()
   // Create new interpolating coordinates
   auto se_new = ns_utils::linspace(svec[0] - 2., svec.back() + 3., 50);
 
-  writeToFile(log_path, xvec, "xe");
-  writeToFile(log_path, yvec, "ye");
-  writeToFile(log_path, zvec, "ze");
-  writeToFile(log_path, svec, "se");
-  writeToFile(log_path, se_new, "snew");
+  //  writeToFile(log_path, xvec, "xe");
+  //  writeToFile(log_path, yvec, "ye");
+  //  writeToFile(log_path, zvec, "ze");
+  //  writeToFile(log_path, svec, "se");
+  //  writeToFile(log_path, se_new, "snew");
 
   /*
    In case we use random noise.
@@ -113,8 +113,8 @@ int main()
   is_interpolated = interpolating_spline_aw.Interpolate(svec, zvec, se_new2, zinterp2);
   ns_utils::print("Is interpolated :", is_interpolated);
 
-  writeToFile(log_path, se_new2, "se_new2");
-  writeToFile(log_path, zinterp2, "zinterp2");
+  //  writeToFile(log_path, se_new2, "se_new2");
+  //  writeToFile(log_path, zinterp2, "zinterp2");
 
   // Interpolate a scalar value.
   auto ti = se_new[10];
@@ -137,16 +137,15 @@ int main()
     zinterp_itemwise.emplace_back(zint);
   }
 
-  writeToFile(log_path, zinterp_itemwise, "zinterp_itemwise");
-
+  //  writeToFile(log_path, zinterp_itemwise, "zinterp_itemwise");
   // Initialized and vector interpolation
   auto se_new3 = ns_utils::linspace(svec[0] + 0.5, svec.back(), 30);
 
   std::vector<double> zvectorwise;
   interpolating_spline_aw.Interpolate(se_new3, zvectorwise);
 
-  writeToFile(log_path, se_new3, "snew3");
-  writeToFile(log_path, zvectorwise, "zvectorwise");
+  //  writeToFile(log_path, se_new3, "snew3");
+  //  writeToFile(log_path, zvectorwise, "zvectorwise");
 
   //  LINEAR INTERPOLATION
   std::vector<double> ylinear;
