@@ -109,11 +109,9 @@ ns_control_toolbox::tf2ss::tf2ss(
 void ns_control_toolbox::tf2ss::computeSystemMatrices(
   const std::vector<double> & num, const std::vector<double> & den)
 {
-  auto const & nx = N_;  // static_cast<long>(den.size() - 1);       // Order of the system.
+  auto const & nx = N_;  // static_cast<long>(den.size() - 1);  // Order of the system.
 
-  // We can put system check function if the nx = 0 -- i.e throw exception.
-  // B_ = Eigen::MatrixXd::Identity(nx, 1); // We assign B here and this not only an initialization.
-
+  // We can put system check function if the nx = 0 -- i.e. throw exception.
   if (A_.rows() != nx && A_.cols() != nx) {
     A_ = Eigen::MatrixXd::Zero(nx, nx);
     B_ = Eigen::MatrixXd::Zero(nx, 1);
@@ -184,16 +182,17 @@ void ns_control_toolbox::tf2ss::computeSystemMatrices(
   // alpha is a conditioning number that multiplies the smaller normed vector, divides the larger
   // one.
   double const & alpha = ns_control_toolbox::balance_symmetric(nB, nC);
-  // ns_utils::print("Alpha :", alpha);
 
   if (nB < nC) {
     // Apply similarity transformation
     B_ = Tsimilarity_mat_.inverse() * B_.eval() * alpha;
     C_ = C_.eval() * Tsimilarity_mat_ / alpha;
-  } else {
-    B_ = Tsimilarity_mat_.inverse() * B_.eval() / alpha;
-    C_ = C_.eval() * Tsimilarity_mat_ * alpha;
+
+    return;
   }
+
+  B_ = Tsimilarity_mat_.inverse() * B_.eval() / alpha;
+  C_ = C_.eval() * Tsimilarity_mat_ * alpha;
 }
 
 void ns_control_toolbox::tf2ss::print() const

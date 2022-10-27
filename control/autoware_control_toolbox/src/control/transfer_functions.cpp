@@ -23,7 +23,7 @@ size_t ns_control_toolbox::tf::getPolynomialStringAndSize(
   std::vector<double> const & num_or_den, std::ostringstream & string_stream)
 {
   auto const & Nn = num_or_den.size();
-  int precision = 4;
+  int const precision{4};
 
   for (size_t k = 0; k < Nn; ++k) {
     auto && power_of_term = Nn - 1 - k;
@@ -53,13 +53,13 @@ size_t ns_control_toolbox::tf::getPolynomialStringAndSize(
         } else {
           string_stream << " s";
         }
+      }
 
-      } else {  // if k is the last index
-        if (Nn > 1) {
-          string_stream << sign_str << std::setprecision(precision) << coeff_abs;
-        } else {
-          string_stream << num_or_den.at(k);
-        }
+      // if k is the last index
+      if (Nn > 1) {
+        string_stream << sign_str << std::setprecision(precision) << coeff_abs;
+      } else {
+        string_stream << num_or_den.at(k);
       }
     }
   }
