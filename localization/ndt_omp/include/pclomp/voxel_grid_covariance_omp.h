@@ -49,8 +49,8 @@
  *
  */
 
-#ifndef PCL_VOXEL_GRID_COVARIANCE_OMP_H_
-#define PCL_VOXEL_GRID_COVARIANCE_OMP_H_
+#ifndef PCLOMP__VOXEL_GRID_COVARIANCE_OMP_H_
+#define PCLOMP__VOXEL_GRID_COVARIANCE_OMP_H_
 
 #include <pcl/pcl_macros.h>
 #include <pcl/filters/boost.h>
@@ -568,4 +568,4 @@ namespace pclomp
   };
 }
 
-#endif  //#ifndef PCL_VOXEL_GRID_COVARIANCE_H_
+#endif  // PCLOMP__VOXEL_GRID_COVARIANCE_OMP_H_

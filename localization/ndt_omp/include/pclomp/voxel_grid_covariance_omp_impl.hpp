@@ -49,8 +49,8 @@
  *
  */
 
-#ifndef PCL_VOXEL_GRID_COVARIANCE_IMPL_OMP_H_
-#define PCL_VOXEL_GRID_COVARIANCE_IMPL_OMP_H_
+#ifndef PCLOMP__VOXEL_GRID_COVARIANCE_OMP_IMPL_HPP_
+#define PCLOMP__VOXEL_GRID_COVARIANCE_OMP_IMPL_HPP_
 
 #include <pcl/common/common.h>
 #include <pcl/filters/boost.h>
@@ -498,4 +498,4 @@ pclomp::VoxelGridCovariance<PointT>::getDisplayCloud (pcl::PointCloud<pcl::Point
 
 #define PCL_INSTANTIATE_VoxelGridCovariance(T) template class PCL_EXPORTS pcl::VoxelGridCovariance<T>;
 
-#endif    // PCL_VOXEL_GRID_COVARIANCE_IMPL_H_
+#endif  // PCLOMP__VOXEL_GRID_COVARIANCE_OMP_IMPL_HPP_

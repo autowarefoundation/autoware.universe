@@ -54,8 +54,8 @@
 
 #include "ndt_omp.h"
 
-#ifndef PCL_REGISTRATION_NDT_OMP_IMPL_H_
-#define PCL_REGISTRATION_NDT_OMP_IMPL_H_
+#ifndef PCLOMP__NDT_OMP_IMPL_HPP_
+#define PCLOMP__NDT_OMP_IMPL_HPP_
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 template<typename PointSource, typename PointTarget>
@@ -1203,4 +1203,4 @@ double pclomp::NormalDistributionsTransform<PointSource, PointTarget>::calculate
   return output_score;
 }
 
-#endif // PCL_REGISTRATION_NDT_IMPL_H_
+#endif  // PCLOMP__NDT_OMP_IMPL_HPP_
