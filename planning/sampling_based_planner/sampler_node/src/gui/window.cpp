@@ -94,6 +94,9 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow(parent), ui_(new Ui::Main
   ui_->input_curvature->addGraph();
   ui_->input_curvature->xAxis->setLabel("longitudinal position (m)");
   ui_->input_curvature->yAxis->setLabel("curvature (m⁻¹)");
+  ui_->input_velocity->addGraph();
+  ui_->input_velocity->xAxis->setLabel("longitudinal position (m)");
+  ui_->input_velocity->yAxis->setLabel("velocity (m/s)");
 
   // Candidates tab
   ui_->candidates_table->setColumnCount(3);
@@ -223,17 +226,32 @@ void MainWindow::plotInputs(
   const sampler_common::transform::Spline2D & spline_path,
   const sampler_common::Configuration & current_configuration)
 {
-  // Raw path
   QVector<double> xs;
   QVector<double> ys;
-  xs.reserve(static_cast<int>(raw_path.points.size()));
-  ys.reserve(static_cast<int>(raw_path.points.size()));
-  for (const auto & p : raw_path.points) {
-    xs.push_back(p.pose.position.x);
-    ys.push_back(p.pose.position.y);
+  // Raw path
+  if (!raw_path.points.empty()) {
+    xs.reserve(static_cast<int>(raw_path.points.size()));
+    ys.reserve(static_cast<int>(raw_path.points.size()));
+    for (const auto & p : raw_path.points) {
+      xs.push_back(p.pose.position.x);
+      ys.push_back(p.pose.position.y);
+    }
+    xs.clear();
+    ys.clear();
+    output_pos_raw_path_curve_->setData(xs, ys);
+    input_path_raw_curve_->setData(xs, ys);
+    auto prev_point = raw_path.points.front();
+    auto s = 0.0;
+    for (auto p : raw_path.points) {
+      const auto dx = prev_point.pose.position.x - p.pose.position.x;
+      const auto dy = prev_point.pose.position.y - p.pose.position.y;
+      s += std::hypot(dx, dy);
+      xs.push_back(s);
+      ys.push_back(p.longitudinal_velocity_mps);
+      prev_point = p;
+    }
+    ui_->input_velocity->graph()->setData(xs, ys);
   }
-  output_pos_raw_path_curve_->setData(xs, ys);
-  input_path_raw_curve_->setData(xs, ys);
   // Smooth path
   xs.clear();
   ys.clear();
@@ -275,6 +293,8 @@ void MainWindow::plotInputs(
   ui_->output_pos->replot();
   ui_->input_curvature->rescaleAxes();
   ui_->input_curvature->replot();
+  ui_->input_velocity->rescaleAxes();
+  ui_->input_velocity->replot();
 }
 
 void MainWindow::fillCandidatesTable(const std::vector<sampler_common::Trajectory> & candidates)
