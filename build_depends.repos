@@ -33,10 +33,6 @@ repositories:
     type: git
     url: https://github.com/tier4/muSSP.git
     version: tier4/main
-  universe/external/ndt_omp:
-    type: git
-    url: https://github.com/tier4/ndt_omp.git
-    version: tier4/main
   universe/external/morai_msgs:
     type: git
     url: https://github.com/MORAI-Autonomous/MORAI-ROS2_morai_msgs.git
