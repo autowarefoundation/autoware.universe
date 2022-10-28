@@ -122,7 +122,7 @@ bool IntersectionModule::modifyPathVelocity(
 
   /* set stop-line and stop-judgement-line for base_link */
   util::StopLineIdx stop_line_idxs;
-  // if staright, need to care stuck vehicle ahead of the lane using conflicting_lane
+  // if straight, need to care stuck vehicle ahead of the lane using conflicting_lane
   const auto & attention_area = (turn_direction.compare("straight") == 0 && detection_area.empty())
                                   ? conflicting_area
                                   : detection_area;
