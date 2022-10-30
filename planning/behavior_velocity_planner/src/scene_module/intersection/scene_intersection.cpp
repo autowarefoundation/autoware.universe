@@ -128,7 +128,7 @@ bool IntersectionModule::modifyPathVelocity(
                                   : detection_area;
   if (!util::generateStopLine(
         lane_id_, attention_area, planner_data_, planner_param_.stop_line_margin,
-        planner_param_.keep_detection_line_margin, path, *path, &stop_line_idxs,
+        planner_param_.keep_detection_line_margin, path, &stop_line_idxs,
         logger_.get_child("util"))) {
     // returns here if path is not intersecting with attention_area
     RCLCPP_WARN_SKIPFIRST_THROTTLE(logger_, *clock_, 1000 /* ms */, "setStopLineIdx fail");
@@ -226,7 +226,7 @@ bool IntersectionModule::modifyPathVelocity(
       int stuck_stop_line_idx = -1;
       int stuck_pass_judge_line_idx = -1;
       if (util::generateStopLineBeforeIntersection(
-            lane_id_, lanelet_map_ptr, planner_data_, *path, path, &stuck_stop_line_idx,
+            lane_id_, lanelet_map_ptr, planner_data_, path, &stuck_stop_line_idx,
             &stuck_pass_judge_line_idx, logger_.get_child("util"))) {
         stop_line_idx_stop = stuck_stop_line_idx;
         pass_judge_line_idx_stop = stuck_pass_judge_line_idx;

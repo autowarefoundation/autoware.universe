@@ -227,17 +227,16 @@ bool BlindSpotModule::generateStopLine(
   autoware_auto_planning_msgs::msg::PathWithLaneId * path, int * stop_line_idx) const
 {
   /* set parameters */
-  constexpr double interval = 0.2;
+  const double interval = planner_data_->interpolate_interval;
   const int margin_idx_dist = std::ceil(planner_param_.stop_line_margin / interval);
   const int base2front_idx_dist =
     std::ceil(planner_data_->vehicle_info_.max_longitudinal_offset_m / interval);
 
   /* spline interpolation */
-  autoware_auto_planning_msgs::msg::PathWithLaneId path_ip;
-  if (!splineInterpolate(*path, interval, path_ip, logger_)) {
+  if (!planner_data_->interpolated_path.has_value()) {
     return false;
   }
-  debug_data_.spline_path = path_ip;
+  const auto & path_ip = planner_data_->interpolated_path.value();
 
   /* generate stop point */
   int stop_idx_ip = 0;  // stop point index for interpolated path.

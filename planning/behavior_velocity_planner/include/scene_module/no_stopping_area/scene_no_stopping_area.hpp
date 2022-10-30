@@ -136,7 +136,6 @@ private:
    * @return generated polygon
    */
   Polygon2d generateEgoNoStoppingAreaLanePolygon(
-    const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
     const geometry_msgs::msg::Pose & ego_pose, const double margin, const double extra_dist) const;
 
   /**

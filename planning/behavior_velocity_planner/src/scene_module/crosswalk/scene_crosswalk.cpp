@@ -291,11 +291,12 @@ boost::optional<geometry_msgs::msg::Point> CrosswalkModule::findNearestStopPoint
   bool found_pedestrians = false;
   bool found_stuck_vehicle = false;
 
-  PathWithLaneId sparse_resample_path{};
   constexpr double RESAMPLE_INTERVAL = 4.0;
-  if (!splineInterpolate(ego_path, RESAMPLE_INTERVAL, sparse_resample_path, logger_)) {
+  const auto sparse_resample_path_opt = splineInterpolate(ego_path, RESAMPLE_INTERVAL, logger_);
+  if (!sparse_resample_path_opt.has_value()) {
     return {};
   }
+  const PathWithLaneId & sparse_resample_path = sparse_resample_path_opt.value();
 
   const auto crosswalk_attention_range = getAttentionRange(sparse_resample_path);
   const auto & ego_pos = planner_data_->current_pose.pose.position;

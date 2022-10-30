@@ -76,9 +76,8 @@ bool generateStopLine(
   const int lane_id, const std::vector<lanelet::CompoundPolygon3d> detection_areas,
   const std::shared_ptr<const PlannerData> & planner_data, const double stop_line_margin,
   const double keep_detection_line_margin,
-  autoware_auto_planning_msgs::msg::PathWithLaneId * original_path,
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & target_path,
-  StopLineIdx * stop_line_idxs, const rclcpp::Logger logger);
+  autoware_auto_planning_msgs::msg::PathWithLaneId * original_path, StopLineIdx * stop_line_idxs,
+  const rclcpp::Logger logger);
 
 /**
  * @brief If use_stuck_stopline is true, a stop line is generated before the intersection.
@@ -91,7 +90,6 @@ bool generateStopLine(
 bool generateStopLineBeforeIntersection(
   const int lane_id, lanelet::LaneletMapConstPtr lanelet_map_ptr,
   const std::shared_ptr<const PlannerData> & planner_data,
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path,
   autoware_auto_planning_msgs::msg::PathWithLaneId * output_path, int * stuck_stop_line_idx,
   int * pass_judge_line_idx, const rclcpp::Logger logger);
 

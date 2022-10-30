@@ -182,11 +182,12 @@ pcl::PointCloud<pcl::PointXYZ> extractLateralNearestPoints(
   const float interval)
 {
   // interpolate path points with given interval
-  PathWithLaneId interpolated_path;
-  if (!splineInterpolate(
-        path, interval, interpolated_path, rclcpp::get_logger("dynamic_obstacle_creator"))) {
+  const auto interpolated_path_opt =
+    splineInterpolate(path, interval, rclcpp::get_logger("dynamic_obstacle_creator"));
+  if (!interpolated_path_opt.has_value()) {
     return input_points;
   }
+  const auto & interpolated_path = interpolated_path_opt.value();
 
   // divide points into groups according to nearest segment index
   const auto points_with_index =
@@ -360,6 +361,8 @@ void DynamicObstacleCreatorForPoints::onCompareMapFilteredPointCloud(
     extractObstaclePointsWithinPolygon(voxel_grid_filtered_points, detection_area_polygon);
 
   // filter points that have lateral nearest distance
+  // TODO(Mamour Sobue): check the smallest interval of this module and use interpolated path in
+  // planner_data
   const auto lateral_nearest_points =
     extractLateralNearestPoints(detection_area_filtered_points, path, param_.points_interval);
 

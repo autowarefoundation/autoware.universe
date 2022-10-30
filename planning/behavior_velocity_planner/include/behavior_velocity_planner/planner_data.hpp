@@ -50,6 +50,7 @@
 #include <deque>
 #include <map>
 #include <memory>
+#include <optional>
 #include <vector>
 
 namespace behavior_velocity_planner
@@ -65,6 +66,7 @@ struct PlannerData
     max_stop_jerk_threshold = node.declare_parameter("max_jerk", -5.0);
     system_delay = node.declare_parameter("system_delay", 0.50);
     delay_response_time = node.declare_parameter("delay_response_time", 0.50);
+    interpolate_interval = node.declare_parameter("interpolate_interval", 0.2);
   }
   // tf
   geometry_msgs::msg::PoseStamped current_pose;
@@ -78,6 +80,9 @@ struct PlannerData
   pcl::PointCloud<pcl::PointXYZ>::ConstPtr no_ground_pointcloud;
   // occupancy grid
   nav_msgs::msg::OccupancyGrid::ConstSharedPtr occupancy_grid;
+
+  // interpolation
+  std::optional<autoware_auto_planning_msgs::msg::PathWithLaneId> interpolated_path;
 
   // nearest search
   double ego_nearest_dist_threshold;
@@ -106,6 +111,7 @@ struct PlannerData
   double system_delay;
   double delay_response_time;
   double stop_line_extend_length;
+  double interpolate_interval;
 
   bool isVehicleStopped(const double stop_duration = 0.0) const
   {

@@ -79,11 +79,9 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(
 
   /* set stop-line and stop-judgement-line for base_link */
   util::StopLineIdx stop_line_idxs;
-  const auto private_path =
-    extractPathNearExitOfPrivateRoad(*path, planner_data_->vehicle_info_.vehicle_length_m);
   if (!util::generateStopLine(
         lane_id_, detection_area, planner_data_, planner_param_.stop_line_margin,
-        0.0 /* unnecessary in merge_from_private */, path, private_path, &stop_line_idxs,
+        0.0 /* unnecessary in merge_from_private */, path, &stop_line_idxs,
         logger_.get_child("util"))) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(logger_, *clock_, 1000 /* ms */, "setStopLineIdx fail");
     return false;

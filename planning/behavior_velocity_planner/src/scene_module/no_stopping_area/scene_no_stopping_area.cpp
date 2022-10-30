@@ -151,13 +151,11 @@ bool NoStoppingAreaModule::modifyPathVelocity(
   const double ego_space_in_front_of_stuck_vehicle =
     margin + vi.vehicle_length_m + planner_param_.stuck_vehicle_front_margin;
   const Polygon2d stuck_vehicle_detect_area = generateEgoNoStoppingAreaLanePolygon(
-    *path, current_pose.pose, ego_space_in_front_of_stuck_vehicle,
-    planner_param_.detection_area_length);
+    current_pose.pose, ego_space_in_front_of_stuck_vehicle, planner_param_.detection_area_length);
   const double ego_space_in_front_of_stop_line =
     margin + planner_param_.stop_margin + vi.rear_overhang_m;
   const Polygon2d stop_line_detect_area = generateEgoNoStoppingAreaLanePolygon(
-    *path, current_pose.pose, ego_space_in_front_of_stop_line,
-    planner_param_.detection_area_length);
+    current_pose.pose, ego_space_in_front_of_stop_line, planner_param_.detection_area_length);
   if (stuck_vehicle_detect_area.outer().empty() && stop_line_detect_area.outer().empty()) {
     setSafe(true);
     return true;
@@ -275,17 +273,15 @@ bool NoStoppingAreaModule::checkStopLinesInNoStoppingArea(
 }
 
 Polygon2d NoStoppingAreaModule::generateEgoNoStoppingAreaLanePolygon(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const geometry_msgs::msg::Pose & ego_pose, const double margin, const double extra_dist) const
 {
   Polygon2d ego_area;  // open polygon
   double dist_from_start_sum = 0.0;
-  const double interpolation_interval = 0.5;
   bool is_in_area = false;
-  autoware_auto_planning_msgs::msg::PathWithLaneId interpolated_path;
-  if (!splineInterpolate(path, interpolation_interval, interpolated_path, logger_)) {
+  if (!planner_data_->interpolated_path.has_value()) {
     return ego_area;
   }
+  const auto & interpolated_path = planner_data_->interpolated_path.value();
   auto & pp = interpolated_path.points;
   /* calc closest index */
   const auto closest_idx_opt =

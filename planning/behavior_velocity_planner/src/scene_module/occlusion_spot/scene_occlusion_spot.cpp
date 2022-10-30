@@ -102,9 +102,8 @@ bool OcclusionSpotModule::modifyPathVelocity(
   const geometry_msgs::msg::Pose ego_pose = planner_data_->current_pose.pose;
   PathWithLaneId clipped_path;
   utils::clipPathByLength(*path, clipped_path, param_.detection_area_length);
-  PathWithLaneId path_interpolated;
   //! never change this interpolation interval(will affect module accuracy)
-  splineInterpolate(clipped_path, 1.0, path_interpolated, logger_);
+  const PathWithLaneId & path_interpolated = splineInterpolate(clipped_path, 1.0, logger_).value();
   const geometry_msgs::msg::Point start_point = path_interpolated.points.at(0).point.pose.position;
   const auto offset = motion_utils::calcSignedArcLength(
     path_interpolated.points, ego_pose, start_point, param_.dist_thr, param_.angle_thr);

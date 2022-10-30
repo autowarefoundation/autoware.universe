@@ -21,13 +21,14 @@
 #include <autoware_auto_planning_msgs/msg/path.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 
+#include <optional>
 #include <vector>
 
 namespace behavior_velocity_planner
 {
-bool splineInterpolate(
+std::optional<autoware_auto_planning_msgs::msg::PathWithLaneId> splineInterpolate(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & input, const double interval,
-  autoware_auto_planning_msgs::msg::PathWithLaneId & output, const rclcpp::Logger logger);
+  const rclcpp::Logger logger);
 autoware_auto_planning_msgs::msg::Path interpolatePath(
   const autoware_auto_planning_msgs::msg::Path & path, const double length,
   const double interval = 1.0);

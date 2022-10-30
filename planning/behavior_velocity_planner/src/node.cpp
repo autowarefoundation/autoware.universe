@@ -32,6 +32,7 @@
 
 #include <functional>
 #include <memory>
+#include <optional>
 
 // Scene modules
 #include <scene_module/blind_spot/manager.hpp>
@@ -413,6 +414,10 @@ void BehaviorVelocityPlannerNode::onTrigger(
     mutex_.unlock();
     return;
   }
+
+  // spline interpolate
+  planner_data_.interpolated_path =
+    splineInterpolate(*input_path_msg, planner_data_.interpolate_interval, get_logger());
 
   if (!isDataReady(planner_data_, *get_clock())) {
     mutex_.unlock();

@@ -12,6 +12,7 @@
     launch_run_out: false
     forward_path_length: 1000.0
     backward_path_length: 5.0
+    interpolate_interval: 0.2
     max_accel: -2.8
     max_jerk: -5.0
     system_delay: 0.5

@@ -119,9 +119,8 @@ bool generateStopLine(
   const int lane_id, const std::vector<lanelet::CompoundPolygon3d> detection_areas,
   const std::shared_ptr<const PlannerData> & planner_data, const double stop_line_margin,
   const double keep_detection_line_margin,
-  autoware_auto_planning_msgs::msg::PathWithLaneId * original_path,
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & target_path,
-  StopLineIdx * stop_line_idxs, const rclcpp::Logger logger)
+  autoware_auto_planning_msgs::msg::PathWithLaneId * original_path, StopLineIdx * stop_line_idxs,
+  const rclcpp::Logger logger)
 {
   /* set judge line dist */
   const double current_vel = planner_data->current_velocity->twist.linear.x;
@@ -133,12 +132,12 @@ bool generateStopLine(
     current_vel, current_acc, max_acc, max_jerk, delay_response_time);
 
   /* spline interpolation */
-  constexpr double interval = 0.2;
-  autoware_auto_planning_msgs::msg::PathWithLaneId path_ip;
+  const double interval = planner_data->interpolate_interval;
   // TODO(Mamoru Sobue): crop only intersection part of path for computation cost
-  if (!splineInterpolate(target_path, interval, path_ip, logger)) {
+  if (!planner_data->interpolated_path.has_value()) {
     return false;
   }
+  const auto & path_ip = planner_data->interpolated_path.value();
 
   const int stop_line_margin_idx_dist = std::ceil(stop_line_margin / interval);
   const int keep_detection_line_margin_idx_dist = std::ceil(keep_detection_line_margin / interval);
@@ -428,7 +427,6 @@ std::vector<int> getLaneletIdsFromLanelets(lanelet::ConstLanelets ll)
 bool generateStopLineBeforeIntersection(
   const int lane_id, lanelet::LaneletMapConstPtr lanelet_map_ptr,
   const std::shared_ptr<const PlannerData> & planner_data,
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path,
   autoware_auto_planning_msgs::msg::PathWithLaneId * output_path, int * stuck_stop_line_idx,
   int * pass_judge_line_idx, const rclcpp::Logger logger)
 {
@@ -448,10 +446,10 @@ bool generateStopLineBeforeIntersection(
   const int pass_judge_idx_dist = std::ceil(pass_judge_line_dist / interval);
 
   /* spline interpolation */
-  autoware_auto_planning_msgs::msg::PathWithLaneId path_ip;
-  if (!splineInterpolate(input_path, interval, path_ip, logger)) {
+  if (!planner_data->interpolated_path.has_value()) {
     return false;
   }
+  const auto & path_ip = planner_data->interpolated_path.value();
   const auto & assigned_lanelet = lanelet_map_ptr->laneletLayer.get(lane_id);
   for (size_t i = 0; i < path_ip.points.size(); i++) {
     const auto & p = path_ip.points.at(i).point.pose;
