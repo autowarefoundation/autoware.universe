@@ -22,7 +22,6 @@
 #include "sampler_common/structures.hpp"
 #include "sampler_common/trajectory_reuse.hpp"
 #include "sampler_common/transform/spline_transform.hpp"
-#include "sampler_node/debug.hpp"
 #include "sampler_node/prepare_inputs.hpp"
 #include "sampler_node/trajectory_generation.hpp"
 #include "sampler_node/utils/occupancy_grid_to_polygons.hpp"
@@ -305,7 +304,6 @@ rcl_interfaces::msg::SetParametersResult TrajectorySamplerNode::onParameter(
 void TrajectorySamplerNode::pathCallback(
   const autoware_auto_planning_msgs::msg::Path::ConstSharedPtr msg)
 {
-  sampler_node::debug::Debug debug;
   const auto current_state = getCurrentEgoConfiguration();
   // TODO(Maxime CLEMENT): move to "validInputs(current_state, msg)"
   if (msg->points.size() < 2 || msg->drivable_area.data.empty() || !current_state) {
@@ -326,8 +324,7 @@ void TrajectorySamplerNode::pathCallback(
   auto trajectories = generateCandidateTrajectories(
     planning_configuration, prev_traj_, path_spline, *msg, gui_, params_);
   for (auto & trajectory : trajectories) {
-    debug.violations +=
-      sampler_common::constraints::checkHardConstraints(trajectory, params_.constraints);
+    sampler_common::constraints::checkHardConstraints(trajectory, params_.constraints);
     sampler_common::constraints::calculateCost(trajectory, params_.constraints, path_spline);
   }
   const auto selected_trajectory_idx = selectBestTrajectory(trajectories);
@@ -346,10 +343,12 @@ void TrajectorySamplerNode::pathCallback(
     if (!final_trajectory.points.empty()) publishTrajectory(final_trajectory, msg->header.frame_id);
     prev_traj_ = selected_trajectory;
   } else {
+    /*
     RCLCPP_WARN(
       get_logger(), "All candidates rejected: out=%d coll=%d curv=%d vel=%d acc=%d",
       debug.violations.outside, debug.violations.collision, debug.violations.curvature,
       debug.violations.velocity, debug.violations.acceleration);
+    */
     if (
       fallback_traj_ptr_ &&
       (now() - fallback_traj_ptr_->header.stamp).seconds() < fallback_timeout_) {
@@ -385,7 +384,7 @@ std::optional<size_t> TrajectorySamplerNode::selectBestTrajectory(
   std::optional<size_t> best_trajectory_idx;
   for (size_t i = 0; i < trajectories.size(); ++i) {
     const auto & traj = trajectories[i];
-    if (traj.valid && traj.cost < min_cost) {
+    if (traj.constraint_results.isValid() && traj.cost < min_cost) {
       min_cost = traj.cost;
       best_trajectory_idx = i;
     }

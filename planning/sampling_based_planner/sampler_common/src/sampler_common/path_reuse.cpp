@@ -73,6 +73,6 @@ bool tryToReusePath(
   constraints::checkHardConstraints(reusable_path, constraints);
   // TODO(Maxime CLEMENT): points become empty when all paths are invalid but this should be
   // detected earlier
-  return !reusable_path.points.empty() && reusable_path.valid;
+  return !reusable_path.points.empty() && reusable_path.constraint_results.isValid();
 }
 }  // namespace sampler_common

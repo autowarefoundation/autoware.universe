@@ -203,7 +203,7 @@ void Plotter::plotCartesianTrajectories(
       continue;
     }
     auto * cart_curve = toCartesianCurve(trajectory, cartesian_rect_);
-    cart_curve->setPen(trajectory.valid ? valid_pen : invalid_pen);
+    cart_curve->setPen(trajectory.constraint_results.isValid() ? valid_pen : invalid_pen);
     cartesian_curves_.push_back(cart_curve);
   }
 }
@@ -217,7 +217,7 @@ void Plotter::plotCartesianPaths(const std::vector<sampler_common::Path> & paths
       continue;
     }
     auto * cart_curve = toCartesianCurve(path, cartesian_rect_);
-    cart_curve->setPen(path.valid ? valid_pen : invalid_pen);
+    cart_curve->setPen(path.constraint_results.isValid() ? valid_pen : invalid_pen);
     cartesian_curves_.push_back(cart_curve);
   }
 }

@@ -149,17 +149,6 @@ struct SamplingParameters
   std::vector<SamplingParameter> parameters;
   double resolution;
 };
-
-struct Debug
-{
-  struct
-  {
-    size_t collision{};
-    size_t curvature{};
-    size_t velocity{};
-    size_t lateral_deviation{};
-  } nb_constraint_violations;
-};
 }  // namespace frenet_planner
 
 #endif  // FRENET_PLANNER__STRUCTURES_HPP_

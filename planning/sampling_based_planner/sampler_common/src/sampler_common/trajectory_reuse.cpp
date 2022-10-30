@@ -69,6 +69,6 @@ bool tryToReuseTrajectory(
   constraints::checkHardConstraints(reusable_traj, constraints);
   // TODO(Maxime CLEMENT): points become empty when all trajectories are invalid but this should be
   // detected earlier
-  return reusable_traj.valid && !reusable_traj.points.empty();
+  return reusable_traj.constraint_results.isValid() && !reusable_traj.points.empty();
 }
 }  // namespace sampler_common

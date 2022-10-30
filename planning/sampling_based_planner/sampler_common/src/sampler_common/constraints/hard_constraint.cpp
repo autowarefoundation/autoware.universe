@@ -91,58 +91,42 @@ inline bool belowCollisionDistance(
   return false;
 }
 
-NumberOfViolations checkHardConstraints(Path & path, const Constraints & constraints)
+void checkHardConstraints(Path & path, const Constraints & constraints)
 {
   const Polygon footprint = buildFootprintPolygon(path, constraints);
-  NumberOfViolations number_of_violations;
   if (!footprint.outer().empty()) {
     if (belowCollisionDistance(
           footprint, constraints.obstacle_polygons, constraints.hard.collision_distance_buffer)) {
-      ++number_of_violations.collision;
-      path.valid = false;
+      path.constraint_results.collision = false;
     }
     if (collideWithPolygons(footprint, constraints.drivable_polygons)) {
-      ++number_of_violations.outside;
-      path.valid = false;
+      path.constraint_results.drivable_area = false;
     }
   }
   if (!satisfyMinMax(
         path.curvatures, constraints.hard.min_curvature, constraints.hard.max_curvature)) {
-    ++number_of_violations.curvature;
-    path.valid = false;
+    path.constraint_results.curvature = false;
   }
-  if (!satisfyMinMax(
-        path.curvatures, constraints.hard.min_velocity, constraints.hard.max_velocity)) {
-    ++number_of_violations.velocity;
-    path.valid = false;
-  }
-  return number_of_violations;
 }
 
-NumberOfViolations checkHardConstraints(Trajectory & traj, const Constraints & constraints)
+void checkHardConstraints(Trajectory & traj, const Constraints & constraints)
 {
   Path & path = traj;
-  auto number_of_violations = checkHardConstraints(path, constraints);
-  number_of_violations += checkVelocityConstraints(traj, constraints);
-  return number_of_violations;
+  checkHardConstraints(path, constraints);
+  checkVelocityConstraints(traj, constraints);
 }
 
-NumberOfViolations checkVelocityConstraints(Trajectory & traj, const Constraints & constraints)
+void checkVelocityConstraints(Trajectory & traj, const Constraints & constraints)
 {
-  NumberOfViolations violations;
-  for (const auto vel : traj.longitudinal_velocities) {
-    if (/*vel > constraints.hard.max_velocity ||*/ vel < 0) {
-      traj.valid = false;
-      violations.velocity++;
-      break;
-    }
+  if (!satisfyMinMax(
+        traj.longitudinal_velocities, constraints.hard.min_velocity,
+        constraints.hard.max_velocity)) {
+    traj.constraint_results.velocity = false;
   }
   if (!satisfyMinMax(
         traj.longitudinal_accelerations, constraints.hard.min_acceleration,
         constraints.hard.max_acceleration)) {
-    traj.valid = false;
-    violations.acceleration++;
+    traj.constraint_results.acceleration = false;
   }
-  return violations;
 }
 }  // namespace sampler_common::constraints

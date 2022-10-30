@@ -53,6 +53,9 @@ private:
   //// Candidate tab
   QCPCurve * cand_pos_curve_;
   QCPCurve * cand_path_curve_;
+  //// Pruning tab
+  QCPBars * pruning_nb_violations_bars_;
+  QCPItemStraightLine * pruning_nb_violations_max_line_;
   // Cached data
   std::vector<sampler_common::Trajectory> candidates_;
 
@@ -73,6 +76,7 @@ public:
     const sampler_common::transform::Spline2D & spline_path_,
     const sampler_common::Configuration & current_configuration_);
   void fillCandidatesTable(const std::vector<sampler_common::Trajectory> & candidates);
+  void plotNbViolatedConstraints(const std::vector<sampler_common::Trajectory> & candidates);
   void plotCandidate(const sampler_common::Trajectory & trajectory);
 
 private slots:

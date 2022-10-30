@@ -32,6 +32,22 @@ using Polygon = boost::geometry::model::polygon<Point>;
 using MultiPolygon = boost::geometry::model::multi_polygon<Polygon>;
 
 // TODO(Maxime CLEMENT): split in multiple files
+/// @brief data about constraint check results of a given path
+struct ConstraintResults
+{
+  bool collision = true;
+  bool curvature = true;
+  bool drivable_area = true;
+  bool velocity = true;
+  bool acceleration = true;
+
+  [[nodiscard]] bool isValid() const
+  {
+    return collision && curvature && drivable_area && velocity && acceleration;
+  }
+
+  void clear() { collision = curvature = drivable_area = velocity = acceleration = true; }
+};
 struct FrenetPoint
 {
   FrenetPoint(double s_, double d_) : s(s_), d(d_) {}
@@ -60,7 +76,7 @@ struct Path
   std::vector<double> yaws{};
   std::vector<double> jerks{};
   std::vector<double> intervals{};  // TODO(Maxime CLEMENT): unnecessary ?
-  bool valid = true;
+  ConstraintResults constraint_results{};
   double cost{};
 
   Path() = default;
@@ -73,7 +89,7 @@ struct Path
     yaws.clear();
     jerks.clear();
     intervals.clear();
-    valid = true;
+    constraint_results.clear();
     cost = 0.0;
   }
 
@@ -105,7 +121,7 @@ struct Path
       extended_path.intervals.end(), path.intervals.begin(), path.intervals.end());
     // TODO(Maxime CLEMENT): direct copy from the 2nd path. might need to be improved
     extended_path.cost = path.cost;
-    extended_path.valid = path.valid;
+    extended_path.constraint_results = path.constraint_results;
     return extended_path;
   }
 

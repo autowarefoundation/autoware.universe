@@ -114,6 +114,7 @@ public:
     }
     if (to_update_[Tab::candidates]) {
       window_.fillCandidatesTable(candidates_);
+      window_.plotNbViolatedConstraints(candidates_);
       to_update_[Tab::candidates] = false;
     }
     if (to_update_[Tab::frenet]) {

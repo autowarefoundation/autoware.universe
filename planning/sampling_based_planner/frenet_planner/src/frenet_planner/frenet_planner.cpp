@@ -137,16 +137,13 @@ void calculateCartesian(
     for (const auto & fp : trajectory.frenet_points) {
       trajectory.points.push_back(reference.cartesian(fp));
     }
-    for (size_t i = 1; i < trajectory.frenet_points.size(); ++i) {
-      trajectory.intervals.push_back(
-        trajectory.frenet_points[i].s - trajectory.frenet_points[i - 1].s);
-    }
     // TODO(Maxime CLEMENT): more precise calculations are proposed in Appendix I of the paper:
     // Optimal trajectory Generation for Dynamic Street Scenarios in a Frenet Frame (Werling2010)
     // Calculate cartesian yaw and interval values
     for (auto it = trajectory.points.begin(); it != std::prev(trajectory.points.end()); ++it) {
       const auto dx = std::next(it)->x() - it->x();
       const auto dy = std::next(it)->y() - it->y();
+      trajectory.intervals.push_back(std::hypot(dx, dy));
       trajectory.yaws.push_back(std::atan2(dy, dx));
     }
     // Calculate curvatures, velocities, accelerations
@@ -154,7 +151,8 @@ void calculateCartesian(
     for (size_t i = 1; i < trajectory.yaws.size(); ++i) {
       const auto dyaw = autoware::motion::motion_common::calcYawDeviation(
         trajectory.yaws[i], trajectory.yaws[i - 1]);
-      trajectory.curvatures.push_back(dyaw / trajectory.intervals[i - 1]);
+      const auto curvature = dyaw / trajectory.intervals[i];
+      trajectory.curvatures.push_back(curvature);
     }
     for (const auto time : trajectory.times) {
       trajectory.longitudinal_velocities.push_back(

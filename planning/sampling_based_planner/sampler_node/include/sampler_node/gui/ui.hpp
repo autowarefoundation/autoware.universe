@@ -15,6 +15,8 @@
 #ifndef SAMPLER_NODE__GUI__UI_HPP_
 #define SAMPLER_NODE__GUI__UI_HPP_
 
+#include "qboxlayout.h"
+
 #include <QtCore/QVariant>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QGridLayout>
@@ -70,6 +72,8 @@ public:
   QCustomPlot * frenet_d;
   QWidget * bezier_tab;
   QWidget * pruning_tab;
+  QCustomPlot * pruning_tab_plot;
+  QVBoxLayout * pruning_tab_layout;
   QWidget * selection_tab;
   QWidget * perf_tab;
   QMenuBar * menubar;
@@ -206,6 +210,9 @@ public:
     pruning_tab = new QWidget();
     pruning_tab->setObjectName(QString::fromUtf8("pruning_tab"));
     tabWidget->addTab(pruning_tab, QString());
+    pruning_tab_layout = new QVBoxLayout(pruning_tab);
+    pruning_tab_plot = new QCustomPlot(pruning_tab);
+    pruning_tab_layout->addWidget(pruning_tab_plot);
     selection_tab = new QWidget();
     selection_tab->setObjectName(QString::fromUtf8("selection_tab"));
     tabWidget->addTab(selection_tab, QString());
