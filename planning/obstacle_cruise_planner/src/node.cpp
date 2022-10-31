@@ -205,7 +205,7 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
     "~/input/trajectory", rclcpp::QoS{1},
     std::bind(&ObstacleCruisePlannerNode::onTrajectory, this, _1));
   smoothed_trajectory_sub_ = create_subscription<Trajectory>(
-    "/planning/scenario_planning/trajectory", rclcpp::QoS{1},
+    "/planning/trajectory", rclcpp::QoS{1},
     std::bind(&ObstacleCruisePlannerNode::onSmoothedTrajectory, this, _1));
   objects_sub_ = create_subscription<PredictedObjects>(
     "~/input/objects", rclcpp::QoS{1}, std::bind(&ObstacleCruisePlannerNode::onObjects, this, _1));

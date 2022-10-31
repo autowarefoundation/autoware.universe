@@ -1,5 +1,5 @@
 <launch>
-  <arg name="input/trajectory" default="/planning/scenario_planning/trajectory"/>
+  <arg name="input/trajectory" default="/planning/trajectory"/>
   <arg name="input/reference_trajectory" default="/planning/scenario_planning/lane_driving/motion_planning/obstacle_avoidance_planner/trajectory"/>
   <arg name="input/objects" default="/perception/object_recognition/objects"/>
 

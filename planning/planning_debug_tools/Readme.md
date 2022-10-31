@@ -42,7 +42,7 @@ behavior_path = '/planning/scenario_planning/lane_driving/behavior_planning/path
 behavior_velocity = '/planning/scenario_planning/lane_driving/behavior_planning/path/debug_info'
 motion_avoid = '/planning/scenario_planning/lane_driving/motion_planning/obstacle_avoidance_planner/trajectory/debug_info'
 motion_smoother_latacc = '/planning/scenario_planning/motion_velocity_smoother/debug/trajectory_lateral_acc_filtered/debug_info'
-motion_smoother = '/planning/scenario_planning/trajectory/debug_info'
+motion_smoother = '/planning/trajectory/debug_info'
 ```
 
 in function(tracker_time)

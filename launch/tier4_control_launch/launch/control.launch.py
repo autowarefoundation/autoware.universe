@@ -96,7 +96,7 @@ def launch_setup(context, *args, **kwargs):
         name="controller_node_exe",
         namespace="trajectory_follower",
         remappings=[
-            ("~/input/reference_trajectory", "/planning/scenario_planning/trajectory"),
+            ("~/input/reference_trajectory", "/planning/trajectory"),
             ("~/input/current_odometry", "/localization/kinematic_state"),
             ("~/input/current_steering", "/vehicle/status/steering_status"),
             ("~/input/current_accel", "/localization/acceleration"),
@@ -129,7 +129,7 @@ def launch_setup(context, *args, **kwargs):
             ("~/input/odometry", "/localization/kinematic_state"),
             ("~/input/lanelet_map_bin", "/map/vector_map"),
             ("~/input/route", "/planning/mission_planning/route"),
-            ("~/input/reference_trajectory", "/planning/scenario_planning/trajectory"),
+            ("~/input/reference_trajectory", "/planning/trajectory"),
             (
                 "~/input/predicted_trajectory",
                 "/control/trajectory_follower/lateral/predicted_trajectory",
@@ -214,7 +214,7 @@ def launch_setup(context, *args, **kwargs):
             # input
             ("kinematics", "/localization/kinematic_state"),
             ("steering", "/vehicle/status/steering_status"),
-            ("trajectory", "/planning/scenario_planning/trajectory"),
+            ("trajectory", "/planning/trajectory"),
             ("control_cmd", "/control/command/control_cmd"),
             ("control_mode_report", "/vehicle/status/control_mode"),
             ("gate_operation_mode", "/control/vehicle_cmd_gate/operation_mode"),
@@ -246,7 +246,8 @@ def launch_setup(context, *args, **kwargs):
     # external cmd converter
     external_cmd_converter_loader = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            [FindPackageShare("external_cmd_converter"), "/launch/external_cmd_converter.launch.py"]
+            [FindPackageShare("external_cmd_converter"),
+             "/launch/external_cmd_converter.launch.py"]
         ),
         launch_arguments=[
             ("use_intra_process", LaunchConfiguration("use_intra_process")),

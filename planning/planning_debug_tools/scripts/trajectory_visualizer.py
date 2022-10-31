@@ -131,19 +131,21 @@ class TrajectoryVisualizer(Node):
         self.sub2 = message_filters.Subscriber(
             self, Trajectory, optimizer_debug + "trajectory_lateral_acc_filtered"
         )
-        self.sub3 = message_filters.Subscriber(self, Trajectory, optimizer_debug + "trajectory_raw")
+        self.sub3 = message_filters.Subscriber(
+            self, Trajectory, optimizer_debug + "trajectory_raw")
         self.sub4 = message_filters.Subscriber(
             self, Trajectory, optimizer_debug + "trajectory_time_resampled"
         )
         self.sub5 = message_filters.Subscriber(
-            self, Trajectory, "/planning/scenario_planning/trajectory"
+            self, Trajectory, "/planning/trajectory"
         )
 
         lane_driving = "/planning/scenario_planning/lane_driving"
         self.sub6 = message_filters.Subscriber(
             self, PathWithLaneId, lane_driving + "/behavior_planning/path_with_lane_id"
         )
-        self.sub7 = message_filters.Subscriber(self, Path, lane_driving + "/behavior_planning/path")
+        self.sub7 = message_filters.Subscriber(
+            self, Path, lane_driving + "/behavior_planning/path")
         self.sub8 = message_filters.Subscriber(
             self,
             Trajectory,

@@ -13,7 +13,7 @@
               ,/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/path_with_lane_id/walkway
               ]"
     />
-    <param name="trajectory_topics" value="[/planning/scenario_planning/trajectory]"/>
+    <param name="trajectory_topics" value="[/planning/trajectory]"/>
     <remap from="ego_kinematics" to="/localization/kinematic_state"/>
   </node>
 </launch>

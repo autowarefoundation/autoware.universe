@@ -103,7 +103,7 @@ VehicleArrivalChecker::VehicleArrivalChecker(rclcpp::Node * node) : VehicleStopC
   using std::placeholders::_1;
 
   sub_trajectory_ = node->create_subscription<Trajectory>(
-    "/planning/scenario_planning/trajectory", rclcpp::QoS(1),
+    "/planning/trajectory", rclcpp::QoS(1),
     std::bind(&VehicleArrivalChecker::onTrajectory, this, _1));
 }
 

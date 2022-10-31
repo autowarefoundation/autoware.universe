@@ -29,7 +29,7 @@
         "/initialpose3d",
         "/localization/pose_twist_fusion_filter/pose",
         "/planning/mission_planning/route",
-        "/planning/scenario_planning/trajectory",
+        "/planning/trajectory",
         "/control/trajectory_follower/control_cmd",
         "/control/command/control_cmd",
         "/vehicle/status/velocity_status",
@@ -90,7 +90,7 @@
           type: "autoware_auto_planning_msgs/msg/HADMapRoute"
           transient_local: True
 
-        /planning/scenario_planning/trajectory:
+        /planning/trajectory:
           module: "planning"
           timeout: 1.0
           warn_rate: 5.0

@@ -12,7 +12,7 @@
               /planning/scenario_planning/motion_velocity_smoother/debug/trajectory_lateral_acc_filtered,
               /planning/scenario_planning/motion_velocity_smoother/debug/trajectory_raw,
               /planning/scenario_planning/motion_velocity_smoother/debug/trajectory_time_resampled,
-              /planning/scenario_planning/trajectory]"
+              /planning/trajectory]"
     />
     <remap from="ego_kinematics" to="/localization/kinematic_state"/>
   </node>

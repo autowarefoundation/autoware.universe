@@ -58,7 +58,7 @@ public:
   PubManager() : Node("test_pub_node")
   {
     pub_odom_ = create_publisher<Odometry>("/localization/kinematic_state", 1);
-    pub_traj_ = create_publisher<Trajectory>("/planning/scenario_planning/trajectory", 1);
+    pub_traj_ = create_publisher<Trajectory>("/planning/trajectory", 1);
   }
 
   rclcpp::Publisher<Odometry>::SharedPtr pub_odom_;

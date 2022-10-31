@@ -5,7 +5,7 @@
 
   <!-- input/output -->
   <arg name="input_trajectory" default="/planning/scenario_planning/scenario_selector/trajectory"/>
-  <arg name="output_trajectory" default="/planning/scenario_planning/trajectory"/>
+  <arg name="output_trajectory" default="/planning/trajectory"/>
 
   <!-- debug flags -->
   <arg name="publish_debug_trajs" default="false"/>
