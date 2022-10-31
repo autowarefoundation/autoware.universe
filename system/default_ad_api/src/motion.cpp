@@ -94,9 +94,9 @@ void MotionNode::change_state(const State state)
      {State::Pausing, MotionState::STOPPED},
      {State::Paused, MotionState::STOPPED},
      {State::Starting, MotionState::STARTING},
-     {State::Moving, MotionState::MOVING},
      {State::Resuming, MotionState::MOVING},
-     {State::Resumed, MotionState::MOVING}});
+     {State::Resumed, MotionState::MOVING},
+     {State::Moving, MotionState::MOVING}});
 
   if (mapping.at(state_) != mapping.at(state)) {
     MotionState msg;
