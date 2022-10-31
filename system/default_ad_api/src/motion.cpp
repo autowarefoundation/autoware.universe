@@ -25,8 +25,6 @@ MotionNode::MotionNode(const rclcpp::NodeOptions & options)
 {
   stop_check_duration_ = declare_parameter("stop_check_duration", 1.0);
   require_accept_start_ = declare_parameter("require_accept_start", false);
-
-  is_start_accepted_ = false;
   is_calling_set_pause_ = false;
 
   const auto adaptor = component_interface_utils::NodeAdaptor(this);

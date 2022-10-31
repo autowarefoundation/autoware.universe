@@ -50,8 +50,6 @@ private:
 
   double stop_check_duration_;
   bool require_accept_start_;
-
-  bool is_start_accepted_;
   bool is_calling_set_pause_;
 
   void update_state();
