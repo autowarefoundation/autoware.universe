@@ -208,10 +208,10 @@ public:
   static void convertTransform(const Eigen::Matrix<double, 6, 1> & x, Eigen::Affine3f & trans)
   {
     trans = Eigen::Translation<float, 3>(
-      static_cast<float>x(0)), static_cast<float>x(1)), static_cast<float>x(2))) *
-      Eigen::AngleAxis<float>(static_cast<float>x(3)), Eigen::Vector3f::UnitX()) *
-      Eigen::AngleAxis<float>(static_cast<float>x(4)), Eigen::Vector3f::UnitY()) *
-      Eigen::AngleAxis<float>(static_cast<float>x(5)), Eigen::Vector3f::UnitZ());
+      static_cast<float>(x(0)), static_cast<float>(x(1)), static_cast<float>(x(2))) *
+      Eigen::AngleAxis<float>(static_cast<float>(x(3)), Eigen::Vector3f::UnitX()) *
+      Eigen::AngleAxis<float>(static_cast<float>(x(4)), Eigen::Vector3f::UnitY()) *
+      Eigen::AngleAxis<float>(static_cast<float>(x(5)), Eigen::Vector3f::UnitZ());
   }
 
   /** \brief Convert 6 element transformation vector to transformation matrix.
