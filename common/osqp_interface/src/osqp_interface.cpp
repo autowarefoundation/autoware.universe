@@ -208,6 +208,29 @@ void OSQPInterface::updateAlpha(const double alpha)
   }
 }
 
+void OSQPInterface::updateScaling(const int scaling) { m_settings->scaling = scaling; }
+
+void OSQPInterface::updatePolish(const bool polish)
+{
+  m_settings->polish = polish;
+  if (m_work_initialized) {
+    osqp_update_polish(m_work.get(), polish);
+  }
+}
+
+void OSQPInterface::updatePolishRefinementIteration(const int polish_refine_iter)
+{
+  if (polish_refine_iter < 0) {
+    std::cerr << "Polish refinement iterations must be positive" << std::endl;
+    return;
+  }
+
+  m_settings->polish_refine_iter = polish_refine_iter;
+  if (m_work_initialized) {
+    osqp_update_polish_refine_iter(m_work.get(), polish_refine_iter);
+  }
+}
+
 bool OSQPInterface::setWarmStart(
   const std::vector<double> & primal_variables, const std::vector<double> & dual_variables)
 {

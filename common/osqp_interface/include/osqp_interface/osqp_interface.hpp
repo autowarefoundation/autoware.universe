@@ -167,6 +167,9 @@ public:
   void updateRhoInterval(const int rho_interval);
   void updateRho(const double rho);
   void updateAlpha(const double alpha);
+  void updateScaling(const int scaling);
+  void updatePolish(const bool polish);
+  void updatePolishRefinementIteration(const int polish_refine_iter);
 
   /// \brief Get the number of iteration taken to solve the problem
   inline int64_t getTakenIter() const { return static_cast<int64_t>(m_latest_work_info.iter); }
