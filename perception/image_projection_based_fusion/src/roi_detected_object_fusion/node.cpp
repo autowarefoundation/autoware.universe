@@ -61,7 +61,7 @@ void RoiDetectedObjectFusionNode::fuseOnSingleImage(
   {
     const auto transform_stamped_optional = getTransformStamped(
       tf_buffer_, /*target*/ camera_info.header.frame_id,
-      /*source*/ input_object_msg.header.frame_id, camera_info.header.stamp);
+      /*source*/ input_object_msg.header.frame_id, input_object_msg.header.stamp);
     if (!transform_stamped_optional) {
       return;
     }
