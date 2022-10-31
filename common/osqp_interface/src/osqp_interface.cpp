@@ -208,6 +208,42 @@ void OSQPInterface::updateAlpha(const double alpha)
   }
 }
 
+bool OSQPInterface::setWarmStart(
+  const std::vector<double> & primal_variables, const std::vector<double> & dual_variables)
+{
+  return setPrimalVariables(primal_variables) && setDualVariables(dual_variables);
+}
+
+bool OSQPInterface::setPrimalVariables(const std::vector<double> & primal_variables)
+{
+  if (!m_work_initialized) {
+    return false;
+  }
+
+  const auto result = osqp_warm_start_x(m_work.get(), primal_variables.data());
+  if (result != 0) {
+    std::cerr << "Failed to set primal variables for warm start" << std::endl;
+    return false;
+  }
+
+  return true;
+}
+
+bool OSQPInterface::setDualVariables(const std::vector<double> & dual_variables)
+{
+  if (!m_work_initialized) {
+    return false;
+  }
+
+  const auto result = osqp_warm_start_y(m_work.get(), dual_variables.data());
+  if (result != 0) {
+    std::cerr << "Failed to set dual variables for warm start" << std::endl;
+    return false;
+  }
+
+  return true;
+}
+
 int64_t OSQPInterface::initializeProblem(
   const Eigen::MatrixXd & P, const Eigen::MatrixXd & A, const std::vector<float64_t> & q,
   const std::vector<float64_t> & l, const std::vector<float64_t> & u)

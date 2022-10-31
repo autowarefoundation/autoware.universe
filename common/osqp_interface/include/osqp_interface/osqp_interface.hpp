@@ -138,6 +138,12 @@ public:
     CSC_Matrix P, CSC_Matrix A, const std::vector<float64_t> & q, const std::vector<float64_t> & l,
     const std::vector<float64_t> & u);
 
+  // Setter functions for warm start
+  bool setWarmStart(
+    const std::vector<double> & primal_variables, const std::vector<double> & dual_variables);
+  bool setPrimalVariables(const std::vector<double> & primal_variables);
+  bool setDualVariables(const std::vector<double> & dual_variables);
+
   // Updates problem parameters while keeping solution in memory.
   //
   // Args:
