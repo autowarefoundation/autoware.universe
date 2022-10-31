@@ -624,8 +624,43 @@ bool checkCollisionBetweenFootprintAndObjects(
   return false;
 }
 
+double calcLateralDistanceFromEgoToObject(
+  const Pose & ego_pose, const double vehicle_width, const PredictedObject & dynamic_object)
+{
+  double min_distance = std::numeric_limits<double>::max();
+  Polygon2d obj_polygon;
+  if (!calcObjectPolygon(dynamic_object, &obj_polygon)) {
+    return min_distance;
+  }
+
+  const auto vehicle_left_pose =
+    tier4_autoware_utils::calcOffsetPose(ego_pose, 0, vehicle_width / 2, 0);
+  const auto vehicle_right_pose =
+    tier4_autoware_utils::calcOffsetPose(ego_pose, 0, -vehicle_width / 2, 0);
+
+  for (const auto & p : obj_polygon.outer()) {
+    const auto point = tier4_autoware_utils::createPoint(p.x(), p.y(), 0.0);
+    // left direction is positive
+    const double signed_distance_from_left =
+      tier4_autoware_utils::calcLateralDeviation(vehicle_left_pose, point);
+    // right direction is positive
+    const double signed_distance_from_right =
+      tier4_autoware_utils::calcLateralDeviation(vehicle_right_pose, point);
+
+    if (signed_distance_from_left < 0.0 && signed_distance_from_right < 0.0) {
+      // point is between left and right
+      return 0.0;
+    }
+
+    const double distance_from_ego =
+      std::min(std::abs(signed_distance_from_left), std::abs(signed_distance_from_right));
+    min_distance = std::min(min_distance, distance_from_ego);
+  }
+  return min_distance;
+}
+
 double calcLongitudinalDistanceFromEgoToObject(
-  const Pose & ego_pose, double base_link2front, double base_link2rear,
+  const Pose & ego_pose, const double base_link2front, const double base_link2rear,
   const PredictedObject & dynamic_object)
 {
   double min_distance = std::numeric_limits<double>::max();
@@ -642,8 +677,10 @@ double calcLongitudinalDistanceFromEgoToObject(
   for (const auto & p : obj_polygon.outer()) {
     const auto point = tier4_autoware_utils::createPoint(p.x(), p.y(), 0.0);
 
+    // forward is positive
     const double signed_distance_from_front =
       tier4_autoware_utils::calcLongitudinalDeviation(vehicle_front_pose, point);
+    // backward is positive
     const double signed_distance_from_rear =
       -tier4_autoware_utils::calcLongitudinalDeviation(vehicle_rear_pose, point);
 
@@ -775,10 +812,10 @@ PredictedObjects filterObjectsByLanelets(
 bool calcObjectPolygon(const PredictedObject & object, Polygon2d * object_polygon)
 {
   if (object.shape.type == Shape::BOUNDING_BOX) {
-    const double & len_x = object.shape.dimensions.x;
-    const double & len_y = object.shape.dimensions.y;
+    const double & length_m = object.shape.dimensions.x / 2;
+    const double & width_m = object.shape.dimensions.y / 2;
     *object_polygon = convertBoundingBoxObjectToGeometryPolygon(
-      object.kinematics.initial_pose_with_covariance.pose, len_x, len_y);
+      object.kinematics.initial_pose_with_covariance.pose, length_m, length_m, width_m);
 
   } else if (object.shape.type == Shape::CYLINDER) {
     *object_polygon = convertCylindricalObjectToGeometryPolygon(
@@ -1441,7 +1478,7 @@ PathPointWithLaneId insertStopPoint(double length, PathWithLaneId * path)
   return stop_point;
 }
 
-double getDistanceToShoulderBoundary(
+double getSignedDistanceFromShoulderLeftBoundary(
   const lanelet::ConstLanelets & shoulder_lanelets, const Pose & pose)
 {
   lanelet::ConstLanelet closest_shoulder_lanelet;
@@ -1462,13 +1499,14 @@ double getDistanceToShoulderBoundary(
   return arc_coordinates.distance;
 }
 
-double getDistanceToRightBoundary(const lanelet::ConstLanelets & lanelets, const Pose & pose)
+double getSignedDistanceFromRightBoundary(
+  const lanelet::ConstLanelets & lanelets, const Pose & pose)
 {
-  lanelet::ConstLanelet closest_shoulder_lanelet;
+  lanelet::ConstLanelet closest_lanelet;
   lanelet::ArcCoordinates arc_coordinates;
-  if (lanelet::utils::query::getClosestLanelet(lanelets, pose, &closest_shoulder_lanelet)) {
+  if (lanelet::utils::query::getClosestLanelet(lanelets, pose, &closest_lanelet)) {
     const auto lanelet_point = lanelet::utils::conversion::toLaneletPoint(pose.position);
-    const auto & right_line_2d = lanelet::utils::to2D(closest_shoulder_lanelet.rightBound3d());
+    const auto & right_line_2d = lanelet::utils::to2D(closest_lanelet.rightBound3d());
     arc_coordinates = lanelet::geometry::toArcCoordinates(
       right_line_2d, lanelet::utils::to2D(lanelet_point).basicPoint());
   } else {
@@ -1655,6 +1693,32 @@ lanelet::ConstLineStrings3d getDrivableAreaForAllSharedLinestringLanelets(
   }
 
   return linestring_shared;
+}
+
+lanelet::ConstLanelets expandLanelets(
+  const lanelet::ConstLanelets & lanelets, const double left_bound_offset,
+  const double right_bound_offset, const std::vector<std::string> & types_to_skip)
+{
+  if (left_bound_offset == 0.0 && right_bound_offset == 0.0) return lanelets;
+
+  lanelet::ConstLanelets expanded_lanelets{};
+  expanded_lanelets.reserve(lanelets.size());
+  for (const auto & lanelet : lanelets) {
+    const std::string l_type =
+      lanelet.leftBound().attributeOr(lanelet::AttributeName::Type, "none");
+    const std::string r_type =
+      lanelet.rightBound().attributeOr(lanelet::AttributeName::Type, "none");
+
+    const bool l_skip =
+      std::find(types_to_skip.begin(), types_to_skip.end(), l_type) != types_to_skip.end();
+    const bool r_skip =
+      std::find(types_to_skip.begin(), types_to_skip.end(), r_type) != types_to_skip.end();
+    const double l_offset = l_skip ? 0.0 : left_bound_offset;
+    const double r_offset = r_skip ? 0.0 : -right_bound_offset;
+
+    expanded_lanelets.push_back(lanelet::utils::getExpandedLanelet(lanelet, l_offset, r_offset));
+  }
+  return expanded_lanelets;
 }
 
 PredictedObjects filterObjectsByVelocity(const PredictedObjects & objects, double lim_v)
@@ -1965,7 +2029,7 @@ lanelet::ConstLanelets getCurrentLanes(const std::shared_ptr<const PlannerData> 
 {
   const auto & route_handler = planner_data->route_handler;
   const auto current_pose = planner_data->self_pose->pose;
-  const auto common_parameters = planner_data->parameters;
+  const auto & common_parameters = planner_data->parameters;
 
   lanelet::ConstLanelet current_lane;
   if (!route_handler->getClosestLaneletWithinRoute(current_pose, &current_lane)) {
@@ -1986,6 +2050,7 @@ lanelet::ConstLanelets getExtendedCurrentLanes(
   const auto & route_handler = planner_data->route_handler;
   const auto current_pose = planner_data->self_pose->pose;
   const auto common_parameters = planner_data->parameters;
+  const auto routing_graph_ptr = route_handler->getRoutingGraphPtr();
 
   lanelet::ConstLanelet current_lane;
   if (!route_handler->getClosestLaneletWithinRoute(current_pose, &current_lane)) {
@@ -2001,17 +2066,13 @@ lanelet::ConstLanelets getExtendedCurrentLanes(
     common_parameters.forward_path_length);
 
   // Add next_lanes
-  const auto next_lanes = route_handler->getNextLanelets(current_lanes.back());
-  if (!next_lanes.empty()) {
-    // TODO(kosuke55) which lane should be added?
-    current_lanes.push_back(next_lanes.front());
+  for (const auto & next_lane : route_handler->getNextLanelets(current_lanes.back())) {
+    current_lanes.push_back(next_lane);
   }
 
-  // Add prev_lane
-  lanelet::ConstLanelets prev_lanes;
-  if (route_handler->getPreviousLaneletsWithinRoute(current_lanes.front(), &prev_lanes)) {
-    // TODO(kosuke55) which lane should be added?
-    current_lanes.insert(current_lanes.begin(), 0, prev_lanes.front());
+  // Add previous lanes
+  for (const auto & prev_lane : route_handler->getPreviousLanelets(current_lanes.front())) {
+    current_lanes.insert(current_lanes.begin(), prev_lane);
   }
 
   return current_lanes;
@@ -2037,46 +2098,34 @@ lanelet::ConstLanelets calcLaneAroundPose(
 }
 
 Polygon2d convertBoundingBoxObjectToGeometryPolygon(
-  const Pose & current_pose, const double & length, const double & width)
+  const Pose & current_pose, const double & base_to_front, const double & base_to_rear,
+  const double & base_to_width)
 {
-  Polygon2d object_polygon;
-
-  tf2::Transform tf_map2obj;
-  tf2::fromMsg(current_pose, tf_map2obj);
+  const auto mapped_point = [](const double & length_scalar, const double & width_scalar) {
+    tf2::Vector3 map;
+    map.setX(length_scalar);
+    map.setY(width_scalar);
+    map.setZ(0.0);
+    map.setW(1.0);
+    return map;
+  };
 
   // set vertices at map coordinate
-  tf2::Vector3 p1_map;
-  p1_map.setX(length / 2);
-  p1_map.setY(width / 2);
-  p1_map.setZ(0.0);
-  p1_map.setW(1.0);
-
-  tf2::Vector3 p2_map;
-  p2_map.setX(-length / 2);
-  p2_map.setY(width / 2);
-  p2_map.setZ(0.0);
-  p2_map.setW(1.0);
-
-  tf2::Vector3 p3_map;
-  p3_map.setX(-length / 2);
-  p3_map.setY(-width / 2);
-  p3_map.setZ(0.0);
-  p3_map.setW(1.0);
-
-  tf2::Vector3 p4_map;
-  p4_map.setX(length / 2);
-  p4_map.setY(-width / 2);
-  p4_map.setZ(0.0);
-  p4_map.setW(1.0);
+  const tf2::Vector3 p1_map = std::invoke(mapped_point, base_to_front, -base_to_width);
+  const tf2::Vector3 p2_map = std::invoke(mapped_point, base_to_front, base_to_width);
+  const tf2::Vector3 p3_map = std::invoke(mapped_point, -base_to_rear, base_to_width);
+  const tf2::Vector3 p4_map = std::invoke(mapped_point, -base_to_rear, -base_to_width);
 
   // transform vertices from map coordinate to object coordinate
-  tf2::Vector3 p1_obj = tf_map2obj * p1_map;
-  tf2::Vector3 p2_obj = tf_map2obj * p2_map;
-  tf2::Vector3 p3_obj = tf_map2obj * p3_map;
-  tf2::Vector3 p4_obj = tf_map2obj * p4_map;
+  tf2::Transform tf_map2obj;
+  tf2::fromMsg(current_pose, tf_map2obj);
+  const tf2::Vector3 p1_obj = tf_map2obj * p1_map;
+  const tf2::Vector3 p2_obj = tf_map2obj * p2_map;
+  const tf2::Vector3 p3_obj = tf_map2obj * p3_map;
+  const tf2::Vector3 p4_obj = tf_map2obj * p4_map;
 
+  Polygon2d object_polygon;
   object_polygon.outer().reserve(5);
-
   object_polygon.outer().emplace_back(p1_obj.x(), p1_obj.y());
   object_polygon.outer().emplace_back(p2_obj.x(), p2_obj.y());
   object_polygon.outer().emplace_back(p3_obj.x(), p3_obj.y());
@@ -2209,13 +2258,20 @@ void getProjectedDistancePointFromPolygons(
 bool getEgoExpectedPoseAndConvertToPolygon(
   const Pose & current_pose, const PredictedPath & pred_path, Pose & expected_pose,
   tier4_autoware_utils::Polygon2d & ego_polygon, const double & check_current_time,
-  const double & length, const double & width)
+  const VehicleInfo & ego_info)
 {
   if (!util::lerpByTimeStamp(pred_path, check_current_time, &expected_pose)) {
     return false;
   }
   expected_pose.orientation = current_pose.orientation;
-  ego_polygon = util::convertBoundingBoxObjectToGeometryPolygon(expected_pose, length, width);
+
+  const auto & i = ego_info;
+  const auto & front_m = i.max_longitudinal_offset_m;
+  const auto & width_m = i.vehicle_width_m / 2.0;
+  const auto & back_m = i.rear_overhang_m;
+
+  ego_polygon =
+    util::convertBoundingBoxObjectToGeometryPolygon(current_pose, front_m, back_m, width_m);
 
   return true;
 }
@@ -2271,10 +2327,13 @@ Pose projectCurrentPoseToTarget(const Pose & desired_object, const Pose & target
 bool isObjectFront(const Pose & ego_pose, const Pose & obj_pose)
 {
   const auto obj_from_ego = projectCurrentPoseToTarget(ego_pose, obj_pose);
-  return obj_from_ego.position.x > 0;
+  return obj_from_ego.position.x > -1e-3;
 }
 
-bool isObjectFront(const Pose & projected_ego_pose) { return projected_ego_pose.position.x > 0; }
+bool isObjectFront(const Pose & projected_ego_pose)
+{
+  return projected_ego_pose.position.x > -1e-3;
+}
 
 double stoppingDistance(const double & vehicle_velocity, const double & vehicle_accel)
 {
@@ -2301,7 +2360,7 @@ double rearVehicleStopDistance(
 bool isLongitudinalDistanceEnough(
   const double & rear_vehicle_stop_threshold, const double & front_vehicle_stop_threshold)
 {
-  return rear_vehicle_stop_threshold < front_vehicle_stop_threshold;
+  return rear_vehicle_stop_threshold <= front_vehicle_stop_threshold;
 }
 
 bool hasEnoughDistance(
@@ -2351,8 +2410,8 @@ bool isLateralDistanceEnough(
 
 bool isSafeInLaneletCollisionCheck(
   const Pose & ego_current_pose, const Twist & ego_current_twist,
-  const PredictedPath & ego_predicted_path, const double & ego_vehicle_length,
-  const double & ego_vehicle_width, const double & check_start_time, const double & check_end_time,
+  const PredictedPath & ego_predicted_path, const VehicleInfo & ego_info,
+  const double & check_start_time, const double & check_end_time,
   const double & check_time_resolution, const PredictedObject & target_object,
   const PredictedPath & target_object_path, const BehaviorPathPlannerParameters & common_parameters,
   CollisionCheckDebug & debug)
@@ -2374,8 +2433,7 @@ bool isSafeInLaneletCollisionCheck(
     Pose expected_ego_pose;
     tier4_autoware_utils::Polygon2d ego_polygon;
     if (!util::getEgoExpectedPoseAndConvertToPolygon(
-          ego_current_pose, ego_predicted_path, expected_ego_pose, ego_polygon, t,
-          ego_vehicle_length, ego_vehicle_width)) {
+          ego_current_pose, ego_predicted_path, expected_ego_pose, ego_polygon, t, ego_info)) {
       debug.failed_reason = "get_ego_info_failed";
       continue;
     }
@@ -2407,8 +2465,8 @@ bool isSafeInLaneletCollisionCheck(
 
 bool isSafeInFreeSpaceCollisionCheck(
   const Pose & ego_current_pose, const Twist & ego_current_twist,
-  const PredictedPath & ego_predicted_path, const double & ego_vehicle_length,
-  const double & ego_vehicle_width, const double & check_start_time, const double & check_end_time,
+  const PredictedPath & ego_predicted_path, const VehicleInfo & ego_info,
+  const double & check_start_time, const double & check_end_time,
   const double & check_time_resolution, const PredictedObject & target_object,
   const BehaviorPathPlannerParameters & common_parameters, CollisionCheckDebug & debug)
 {
@@ -2420,8 +2478,7 @@ bool isSafeInFreeSpaceCollisionCheck(
     Pose expected_ego_pose;
     tier4_autoware_utils::Polygon2d ego_polygon;
     if (!util::getEgoExpectedPoseAndConvertToPolygon(
-          ego_current_pose, ego_predicted_path, expected_ego_pose, ego_polygon, t,
-          ego_vehicle_length, ego_vehicle_width)) {
+          ego_current_pose, ego_predicted_path, expected_ego_pose, ego_polygon, t, ego_info)) {
       debug.failed_reason = "get_ego_info_failed";
       continue;
     }

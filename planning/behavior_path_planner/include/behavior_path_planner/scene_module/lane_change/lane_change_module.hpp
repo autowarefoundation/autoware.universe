@@ -16,8 +16,10 @@
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__LANE_CHANGE_MODULE_HPP_
 
 #include "behavior_path_planner/scene_module/lane_change/debug.hpp"
+#include "behavior_path_planner/scene_module/lane_change/lane_change_module_data.hpp"
 #include "behavior_path_planner/scene_module/lane_change/lane_change_path.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
+#include "behavior_path_planner/turn_signal_decider.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -35,38 +37,6 @@ namespace behavior_path_planner
 {
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using marker_utils::CollisionCheckDebug;
-
-struct LaneChangeParameters
-{
-  double lane_change_prepare_duration;
-  double lane_changing_duration;
-  double minimum_lane_change_prepare_distance;
-  double lane_change_finish_judge_buffer;
-  double minimum_lane_change_velocity;
-  double prediction_time_resolution;
-  double maximum_deceleration;
-  int lane_change_sampling_num;
-  double abort_lane_change_velocity_thresh;
-  double abort_lane_change_angle_thresh;
-  double abort_lane_change_distance_thresh;
-  bool enable_abort_lane_change;
-  bool enable_collision_check_at_prepare_phase;
-  bool use_predicted_path_outside_lanelet;
-  bool use_all_predicted_path;
-  bool publish_debug_marker;
-};
-
-struct LaneChangeStatus
-{
-  PathWithLaneId lane_follow_path;
-  LaneChangePath lane_change_path;
-  lanelet::ConstLanelets current_lanes;
-  lanelet::ConstLanelets lane_change_lanes;
-  std::vector<uint64_t> lane_follow_lane_ids;
-  std::vector<uint64_t> lane_change_lane_ids;
-  bool is_safe;
-  double start_distance;
-};
 
 class LaneChangeModule : public SceneModuleInterface
 {
@@ -101,6 +71,18 @@ public:
       return rtc_interface_right_.isActivated(uuid_right_);
     }
     return false;
+  }
+
+  void lockRTCCommand() override
+  {
+    rtc_interface_left_.lockCommandUpdate();
+    rtc_interface_right_.lockCommandUpdate();
+  }
+
+  void unlockRTCCommand() override
+  {
+    rtc_interface_left_.unlockCommandUpdate();
+    rtc_interface_right_.unlockCommandUpdate();
   }
 
 private:
@@ -159,7 +141,6 @@ private:
   }
 
   PathWithLaneId getReferencePath() const;
-  lanelet::ConstLanelets getCurrentLanes() const;
   lanelet::ConstLanelets getLaneChangeLanes(
     const lanelet::ConstLanelets & current_lanes, const double lane_change_lane_length) const;
   std::pair<bool, bool> getSafePath(

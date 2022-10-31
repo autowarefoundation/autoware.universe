@@ -224,7 +224,7 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
     "~/output/clear_velocity_limit", rclcpp::QoS{1}.transient_local());
   debug_calculation_time_pub_ = create_publisher<Float32Stamped>("~/debug/calculation_time", 1);
   debug_cruise_wall_marker_pub_ =
-    create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/cruise_wall_marker", 1);
+    create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/cruise/virtual_wall", 1);
   debug_stop_wall_marker_pub_ =
     create_publisher<visualization_msgs::msg::MarkerArray>("~/virtual_wall", 1);
   debug_marker_pub_ = create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/marker", 1);
@@ -245,6 +245,8 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
       declare_parameter<double>("common.min_object_accel_for_rss");
     const double idling_time = declare_parameter<double>("common.idling_time");
     const double safe_distance_margin = declare_parameter<double>("common.safe_distance_margin");
+    const double terminal_safe_distance_margin =
+      declare_parameter<double>("common.terminal_safe_distance_margin");
 
     return LongitudinalInfo{
       max_accel,
@@ -258,7 +260,16 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
       idling_time,
       min_ego_accel_for_rss,
       min_object_accel_for_rss,
-      safe_distance_margin};
+      safe_distance_margin,
+      terminal_safe_distance_margin};
+  }();
+
+  const auto ego_nearest_param = [&]() {
+    const double ego_nearest_dist_threshold =
+      declare_parameter<double>("ego_nearest_dist_threshold");
+    const double ego_nearest_yaw_threshold = declare_parameter<double>("ego_nearest_yaw_threshold");
+
+    return EgoNearestParam(ego_nearest_dist_threshold, ego_nearest_yaw_threshold);
   }();
 
   is_showing_debug_info_ = declare_parameter<bool>("common.is_showing_debug_info");
@@ -337,10 +348,11 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
     planning_algorithm_ = getPlanningAlgorithmType(planning_algorithm_param);
 
     if (planning_algorithm_ == PlanningAlgorithm::OPTIMIZATION_BASE) {
-      planner_ptr_ =
-        std::make_unique<OptimizationBasedPlanner>(*this, longitudinal_info, vehicle_info_);
+      planner_ptr_ = std::make_unique<OptimizationBasedPlanner>(
+        *this, longitudinal_info, vehicle_info_, ego_nearest_param);
     } else if (planning_algorithm_ == PlanningAlgorithm::PID_BASE) {
-      planner_ptr_ = std::make_unique<PIDBasedPlanner>(*this, longitudinal_info, vehicle_info_);
+      planner_ptr_ = std::make_unique<PIDBasedPlanner>(
+        *this, longitudinal_info, vehicle_info_, ego_nearest_param);
     } else {
       std::logic_error("Designated algorithm is not supported.");
     }

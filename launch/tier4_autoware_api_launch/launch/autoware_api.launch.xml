@@ -1,15 +1,16 @@
 <launch>
   <arg name="respawn_rosbridge" default="true"/>
-  <arg name="launch_image_base64_converter" default="false"/>
   <arg name="launch_path_distance_calculator" default="false"/>
   <arg name="launch_default_ad_api" default="true"/>
+  <arg name="launch_rviz_adaptors" default="true"/>
   <!-- external api adaptor -->
   <arg name="launch_calibration_status_api" default="false"/>
   <arg name="launch_start_api" default="true"/>
 
   <!-- AD API -->
-  <group if="$(var launch_default_ad_api)">
-    <include file="$(find-pkg-share default_ad_api)/launch/default_ad_api.launch.py"/>
+  <group>
+    <include file="$(find-pkg-share default_ad_api)/launch/default_ad_api.launch.py" if="$(var launch_default_ad_api)"/>
+    <include file="$(find-pkg-share ad_api_adaptors)/launch/rviz_adaptors.launch.xml" if="$(var launch_rviz_adaptors)"/>
   </group>
 
   <!-- awapi (deprecated) -->
@@ -32,7 +33,6 @@
   <group>
     <push-ros-namespace namespace="autoware_api/utils"/>
     <include file="$(find-pkg-share path_distance_calculator)/launch/path_distance_calculator.launch.xml" if="$(var launch_path_distance_calculator)"/>
-    <include file="$(find-pkg-share image_base64_converter)/launch/image_base64_converter.launch.xml" if="$(var launch_image_base64_converter)"/>
   </group>
 
   <!-- rosbridge -->

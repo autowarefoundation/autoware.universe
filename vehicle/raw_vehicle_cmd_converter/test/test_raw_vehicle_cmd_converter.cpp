@@ -16,9 +16,10 @@
 #include "gtest/gtest.h"
 #include "raw_vehicle_cmd_converter/accel_map.hpp"
 #include "raw_vehicle_cmd_converter/brake_map.hpp"
-#include "raw_vehicle_cmd_converter/steer_converter.hpp"
+#include "raw_vehicle_cmd_converter/steer_map.hpp"
 
 #include <cmath>
+#include <stdexcept>
 
 /*
  * Throttle data: (vel, throttle -> acc)
@@ -48,8 +49,8 @@
 
 using raw_vehicle_cmd_converter::AccelMap;
 using raw_vehicle_cmd_converter::BrakeMap;
-using raw_vehicle_cmd_converter::SteerConverter;
-
+using raw_vehicle_cmd_converter::SteerMap;
+double epsilon = 1e-4;
 // may throw PackageNotFoundError exception for invalid package
 const auto map_path =
   ament_index_cpp::get_package_share_directory("raw_vehicle_cmd_converter") + "/test/map_data/";
@@ -64,16 +65,29 @@ bool loadBrakeMapData(BrakeMap & brake_map)
   return brake_map.readBrakeMapFromCSV(map_path + "test_brake_map.csv");
 }
 
-bool loadSteerMapData(SteerConverter & steer_map)
+bool loadSteerMapData(SteerMap & steer_map)
 {
-  return steer_map.setFFMap(map_path + "test_steer_map.csv");
+  return steer_map.readSteerMapFromCSV(map_path + "test_steer_map.csv");
+}
+
+TEST(ConverterTests, LoadExampleMap)
+{
+  AccelMap accel_map;
+  BrakeMap brake_map;
+  SteerMap steer_map;
+  const auto data_path =
+    ament_index_cpp::get_package_share_directory("raw_vehicle_cmd_converter") + "/data/default/";
+  // for invalid path
+  EXPECT_TRUE(accel_map.readAccelMapFromCSV(data_path + "accel_map.csv"));
+  EXPECT_TRUE(brake_map.readBrakeMapFromCSV(data_path + "brake_map.csv"));
+  EXPECT_TRUE(steer_map.readSteerMapFromCSV(data_path + "steer_map.csv"));
 }
 
 TEST(ConverterTests, LoadValidPath)
 {
   AccelMap accel_map;
   BrakeMap brake_map;
-  SteerConverter steer_map;
+  SteerMap steer_map;
 
   // for valid path
   EXPECT_TRUE(loadAccelMapData(accel_map));
@@ -83,7 +97,12 @@ TEST(ConverterTests, LoadValidPath)
   // for invalid path
   EXPECT_FALSE(accel_map.readAccelMapFromCSV("invalid.csv"));
   EXPECT_FALSE(brake_map.readBrakeMapFromCSV("invalid.csv"));
-  EXPECT_FALSE(steer_map.setFFMap("invalid.csv"));
+  EXPECT_FALSE(steer_map.readSteerMapFromCSV("invalid.csv"));
+
+  // for invalid maps
+  EXPECT_FALSE(accel_map.readAccelMapFromCSV(map_path + "test_1col_map.csv"));
+  EXPECT_FALSE(accel_map.readAccelMapFromCSV(map_path + "test_inconsistent_rows_map.csv"));
+  EXPECT_FALSE(accel_map.readAccelMapFromCSV(map_path + "test_not_interpolatable.csv"));
 }
 
 TEST(ConverterTests, AccelMapCalculation)
@@ -91,26 +110,40 @@ TEST(ConverterTests, AccelMapCalculation)
   AccelMap accel_map;
   loadAccelMapData(accel_map);
   const auto calcThrottle = [&](double acc, double vel) {
-    double output;
+    double output = 0.0;
     accel_map.getThrottle(acc, vel, output);
     return output;
   };
 
-  // case for min vel
-  EXPECT_DOUBLE_EQ(calcThrottle(1.0, 0.0), 0.0);
-  EXPECT_DOUBLE_EQ(calcThrottle(1.5, 0.0), 0.25);
-  EXPECT_DOUBLE_EQ(calcThrottle(3.0, 0.0), 1.0);
+  // case for max vel nominal acc
+  EXPECT_DOUBLE_EQ(calcThrottle(0.0, 20.0), 0.5);
 
-  // case for min throttle
-  EXPECT_DOUBLE_EQ(calcThrottle(6.0, 5.0), 0.0);
-  EXPECT_DOUBLE_EQ(calcThrottle(21.0, 20.0), 0.0);
+  // case for max vel max acc
+  EXPECT_DOUBLE_EQ(calcThrottle(2.0, 5.0), 1.0);
 
   // case for direct access
-  EXPECT_DOUBLE_EQ(calcThrottle(22.0, 10.0), 0.5);
-  EXPECT_DOUBLE_EQ(calcThrottle(46.0, 20.0), 1.0);
+  EXPECT_DOUBLE_EQ(calcThrottle(0.5, 5.0), 0.5);
 
   // case for interpolation
-  EXPECT_DOUBLE_EQ(calcThrottle(9.0, 5.0), 0.25);
+  EXPECT_DOUBLE_EQ(calcThrottle(2.0, 0.0), 0.75);
+
+  const auto calcAcceleration = [&](double throttle, double vel) {
+    double output;
+    accel_map.getAcceleration(throttle, vel, output);
+    return output;
+  };
+
+  // case for min vel max throttle
+  EXPECT_DOUBLE_EQ(calcAcceleration(1.0, 0.0), 3.0);
+
+  // case for max vel max throttle
+  EXPECT_DOUBLE_EQ(calcAcceleration(2.0, 10.0), 1.5);
+
+  // case for direct access
+  EXPECT_DOUBLE_EQ(calcAcceleration(0.0, 10.0), -0.5);
+
+  // case for interpolation
+  EXPECT_DOUBLE_EQ(calcAcceleration(0.75, 5.0), 1.25);
 }
 
 TEST(ConverterTests, BrakeMapCalculation)
@@ -123,29 +156,45 @@ TEST(ConverterTests, BrakeMapCalculation)
     return output;
   };
 
-  // case for min vel
-  EXPECT_DOUBLE_EQ(calcBrake(-1.0, 0.0), 0.0);
-  EXPECT_DOUBLE_EQ(calcBrake(-1.5, 0.0), 0.25);
-  EXPECT_DOUBLE_EQ(calcBrake(-3.0, 0.0), 1.0);
+  // case for min vel min acc
+  EXPECT_DOUBLE_EQ(calcBrake(-2.5, 0.0), 1.0);
 
-  // case for min brake
-  EXPECT_DOUBLE_EQ(calcBrake(-6.0, 5.0), 0.0);
-  EXPECT_DOUBLE_EQ(calcBrake(-21.0, 20.0), 0.0);
+  // case for max vel low acc
+  EXPECT_DOUBLE_EQ(calcBrake(-2.0, 11.0), 0.5);
 
   // case for direct access
-  EXPECT_DOUBLE_EQ(calcBrake(-22.0, 10.0), 0.5);
-  EXPECT_DOUBLE_EQ(calcBrake(-46.0, 20.0), 1.0);
+  EXPECT_DOUBLE_EQ(calcBrake(-2.0, 5.0), 0.5);
 
   // case for interpolation
-  EXPECT_DOUBLE_EQ(calcBrake(-9.0, 5.0), 0.25);
+  EXPECT_DOUBLE_EQ(calcBrake(-2.25, 5.0), 0.75);
+
+  const auto calcAcceleration = [&](double brake, double vel) {
+    double output;
+    brake_map.getAcceleration(brake, vel, output);
+    return output;
+  };
+
+  // case for min vel max brake
+  EXPECT_DOUBLE_EQ(calcAcceleration(1.1, 0.0), -2.0);
+
+  // case for max vel max brake
+  EXPECT_DOUBLE_EQ(calcAcceleration(1.1, 12.0), -3.0);
+
+  // case for direct access
+  EXPECT_DOUBLE_EQ(calcAcceleration(0.5, 10.0), -2.0);
+
+  // case for interpolation
+  EXPECT_DOUBLE_EQ(calcAcceleration(0.75, 5.0), -2.25);
 }
 
 TEST(ConverterTests, SteerMapCalculation)
 {
-  SteerConverter steer_map;
+  SteerMap steer_map;
   loadSteerMapData(steer_map);
   const auto calcSteer = [&](double steer_vel, double steer) {
-    return steer_map.calcFFSteer(steer_vel, steer);
+    double output;
+    steer_map.getSteer(steer_vel, steer, output);
+    return output;
   };
 
   // case for min steer

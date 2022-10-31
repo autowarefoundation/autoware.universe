@@ -39,7 +39,7 @@ JerkFilteredSmoother::JerkFilteredSmoother(rclcpp::Node & node) : SmootherBase(n
 
   qp_solver_.updateMaxIter(20000);
   qp_solver_.updateRhoInterval(0);  // 0 means automatic
-  qp_solver_.updateEpsRel(1.0e-4);  // def: 1.0e-4
+  qp_solver_.updateEpsRel(1.0e-6);  // def: 1.0e-4
   qp_solver_.updateEpsAbs(1.0e-8);  // def: 1.0e-4
   qp_solver_.updateVerbose(false);
 }
@@ -305,10 +305,7 @@ bool JerkFilteredSmoother::apply(
     output.at(i).acceleration_mps2 = a_stop_decel;
   }
 
-  const int status_val = std::get<3>(result);
-  if (status_val != 1) {
-    RCLCPP_ERROR(logger_, "optimization failed : %s", qp_solver_.getStatusMessage().c_str());
-  }
+  qp_solver_.logUnsolvedStatus("[motion_velocity_smoother]");
 
   const int status_polish = std::get<2>(result);
   if (status_polish != 1) {
