@@ -14,6 +14,7 @@
 
 #include "ekf_localizer/ekf_localizer.hpp"
 
+#include "ekf_localizer/covariance.hpp"
 #include "ekf_localizer/mahalanobis.hpp"
 #include "ekf_localizer/matrix_types.hpp"
 #include "ekf_localizer/measurement.hpp"
@@ -22,6 +23,7 @@
 #include "ekf_localizer/state_transition.hpp"
 #include "ekf_localizer/warning.hpp"
 
+#include <rclcpp/duration.hpp>
 #include <rclcpp/logging.hpp>
 #include <tier4_autoware_utils/math/unit_conversion.hpp>
 #include <tier4_autoware_utils/ros/msg_covariance.hpp>
@@ -76,17 +78,16 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
   proc_cov_wz_d_ = std::pow(proc_stddev_wz_c_ * ekf_dt_, 2.0);
   proc_cov_yaw_d_ = std::pow(proc_stddev_yaw_c_ * ekf_dt_, 2.0);
 
-  is_initialized_ = false;
+  is_activated_ = false;
 
   /* initialize ros system */
-  auto period_control_ns =
-    std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(ekf_dt_));
   timer_control_ = rclcpp::create_timer(
-    this, get_clock(), period_control_ns, std::bind(&EKFLocalizer::timerCallback, this));
+    this, get_clock(), rclcpp::Duration::from_seconds(ekf_dt_),
+    std::bind(&EKFLocalizer::timerCallback, this));
 
-  const auto period_tf_ns = rclcpp::Rate(tf_rate_).period();
   timer_tf_ = rclcpp::create_timer(
-    this, get_clock(), period_tf_ns, std::bind(&EKFLocalizer::timerTFCallback, this));
+    this, get_clock(), rclcpp::Rate(tf_rate_).period(),
+    std::bind(&EKFLocalizer::timerTFCallback, this));
 
   pub_pose_ = create_publisher<geometry_msgs::msg::PoseStamped>("ekf_pose", 1);
   pub_pose_cov_ =
@@ -105,6 +106,11 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
     "in_pose_with_covariance", 1, std::bind(&EKFLocalizer::callbackPoseWithCovariance, this, _1));
   sub_twist_with_cov_ = create_subscription<geometry_msgs::msg::TwistWithCovarianceStamped>(
     "in_twist_with_covariance", 1, std::bind(&EKFLocalizer::callbackTwistWithCovariance, this, _1));
+  service_trigger_node_ = create_service<std_srvs::srv::SetBool>(
+    "trigger_node_srv",
+    std::bind(
+      &EKFLocalizer::serviceTriggerNode, this, std::placeholders::_1, std::placeholders::_2),
+    rclcpp::ServicesQoS().get_rmw_qos_profile());
 
   dim_x_ex_ = dim_x_ * extend_state_step_;
 
@@ -149,7 +155,9 @@ void EKFLocalizer::updatePredictFrequency()
  */
 void EKFLocalizer::timerCallback()
 {
-  if (!is_initialized_) {
+  if (!is_activated_) {
+    warning_.warnThrottle(
+      "The node is not activated. Provide initial pose to pose_initializer", 2000);
     return;
   }
 
@@ -250,7 +258,7 @@ void EKFLocalizer::showCurrentX()
  */
 void EKFLocalizer::timerTFCallback()
 {
-  if (!is_initialized_) {
+  if (!is_activated_) {
     return;
   }
 
@@ -343,12 +351,7 @@ void EKFLocalizer::callbackInitialPose(
   P(IDX::WZ, IDX::WZ) = 0.01;
 
   ekf_.init(X, P, extend_state_step_);
-
   updateSimple1DFilters(*initialpose);
-
-  while (!current_pose_info_queue_.empty()) current_pose_info_queue_.pop();
-
-  is_initialized_ = true;
 }
 
 /*
@@ -357,6 +360,7 @@ void EKFLocalizer::callbackInitialPose(
 void EKFLocalizer::callbackPoseWithCovariance(
   geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg)
 {
+  if (!is_activated_) return;
   PoseInfo pose_info = {msg, 0, pose_smoothing_steps_};
   current_pose_info_queue_.push(pose_info);
 
@@ -612,20 +616,11 @@ void EKFLocalizer::publishEstimateResult()
   pub_biased_pose_->publish(current_biased_ekf_pose_);
 
   /* publish latest pose with covariance */
-  using COV_IDX = tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
   geometry_msgs::msg::PoseWithCovarianceStamped pose_cov;
   pose_cov.header.stamp = current_time;
   pose_cov.header.frame_id = current_ekf_pose_.header.frame_id;
   pose_cov.pose.pose = current_ekf_pose_.pose;
-  pose_cov.pose.covariance[COV_IDX::X_X] = P(IDX::X, IDX::X);
-  pose_cov.pose.covariance[COV_IDX::X_Y] = P(IDX::X, IDX::Y);
-  pose_cov.pose.covariance[COV_IDX::X_YAW] = P(IDX::X, IDX::YAW);
-  pose_cov.pose.covariance[COV_IDX::Y_X] = P(IDX::Y, IDX::X);
-  pose_cov.pose.covariance[COV_IDX::Y_Y] = P(IDX::Y, IDX::Y);
-  pose_cov.pose.covariance[COV_IDX::Y_YAW] = P(IDX::Y, IDX::YAW);
-  pose_cov.pose.covariance[COV_IDX::YAW_X] = P(IDX::YAW, IDX::X);
-  pose_cov.pose.covariance[COV_IDX::YAW_Y] = P(IDX::YAW, IDX::Y);
-  pose_cov.pose.covariance[COV_IDX::YAW_YAW] = P(IDX::YAW, IDX::YAW);
+  pose_cov.pose.covariance = ekfCovarianceToPoseMessageCovariance(P);
   pub_pose_cov_->publish(pose_cov);
 
   geometry_msgs::msg::PoseWithCovarianceStamped biased_pose_cov = pose_cov;
@@ -640,10 +635,7 @@ void EKFLocalizer::publishEstimateResult()
   twist_cov.header.stamp = current_time;
   twist_cov.header.frame_id = current_ekf_twist_.header.frame_id;
   twist_cov.twist.twist = current_ekf_twist_.twist;
-  twist_cov.twist.covariance[COV_IDX::X_X] = P(IDX::VX, IDX::VX);
-  twist_cov.twist.covariance[COV_IDX::X_YAW] = P(IDX::VX, IDX::WZ);
-  twist_cov.twist.covariance[COV_IDX::YAW_X] = P(IDX::WZ, IDX::VX);
-  twist_cov.twist.covariance[COV_IDX::YAW_YAW] = P(IDX::WZ, IDX::WZ);
+  twist_cov.twist.covariance = ekfCovarianceToTwistMessageCovariance(P);
   pub_twist_cov_->publish(twist_cov);
 
   /* publish yaw bias */
@@ -700,4 +692,22 @@ void EKFLocalizer::updateSimple1DFilters(const geometry_msgs::msg::PoseWithCovar
   z_filter_.update(z, z_dev, pose.header.stamp);
   roll_filter_.update(roll, roll_dev, pose.header.stamp);
   pitch_filter_.update(pitch, pitch_dev, pose.header.stamp);
+}
+
+/**
+ * @brief trigger node
+ */
+void EKFLocalizer::serviceTriggerNode(
+  const std_srvs::srv::SetBool::Request::SharedPtr req,
+  std_srvs::srv::SetBool::Response::SharedPtr res)
+{
+  if (req->data) {
+    while (!current_pose_info_queue_.empty()) current_pose_info_queue_.pop();
+    while (!current_twist_info_queue_.empty()) current_twist_info_queue_.pop();
+    is_activated_ = true;
+  } else {
+    is_activated_ = false;
+  }
+  res->success = true;
+  return;
 }

@@ -144,9 +144,14 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
 
   // turn signal decider
   {
-    double intersection_search_distance{declare_parameter("intersection_search_distance", 30.0)};
+    const double turn_signal_intersection_search_distance =
+      planner_data_->parameters.turn_signal_intersection_search_distance;
+    const double turn_signal_intersection_angle_threshold_deg =
+      planner_data_->parameters.turn_signal_intersection_angle_threshold_deg;
+    const double turn_signal_search_time = planner_data_->parameters.turn_signal_search_time;
     turn_signal_decider_.setParameters(
-      planner_data_->parameters.base_link2front, intersection_search_distance);
+      planner_data_->parameters.base_link2front, turn_signal_intersection_search_distance,
+      turn_signal_search_time, turn_signal_intersection_angle_threshold_deg);
   }
 
   steering_factor_interface_ptr_ = std::make_unique<SteeringFactorInterface>(this, "intersection");
@@ -205,9 +210,15 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   p.drivable_lane_margin = declare_parameter<double>("drivable_lane_margin");
   p.drivable_area_margin = declare_parameter<double>("drivable_area_margin");
   p.refine_goal_search_radius_range = declare_parameter("refine_goal_search_radius_range", 7.5);
-  p.turn_light_on_threshold_dis_lat = declare_parameter("turn_light_on_threshold_dis_lat", 0.3);
-  p.turn_light_on_threshold_dis_long = declare_parameter("turn_light_on_threshold_dis_long", 10.0);
-  p.turn_light_on_threshold_time = declare_parameter("turn_light_on_threshold_time", 3.0);
+  p.turn_signal_intersection_search_distance =
+    declare_parameter("turn_signal_intersection_search_distance", 30.0);
+  p.turn_signal_intersection_angle_threshold_deg =
+    declare_parameter("turn_signal_intersection_angle_threshold_deg", 15.0);
+  p.turn_signal_minimum_search_distance =
+    declare_parameter("turn_signal_minimum_search_distance", 10.0);
+  p.turn_signal_search_time = declare_parameter("turn_signal_search_time", 3.0);
+  p.turn_signal_shift_length_threshold =
+    declare_parameter("turn_signal_shift_length_threshold", 0.3);
   p.path_interval = declare_parameter<double>("path_interval");
   p.visualize_drivable_area_for_shared_linestrings_lanelet =
     declare_parameter("visualize_drivable_area_for_shared_linestrings_lanelet", true);
@@ -238,6 +249,8 @@ SideShiftParameters BehaviorPathPlannerNode::getSideShiftParam()
   p.min_shifting_distance = dp("min_shifting_distance", 5.0);
   p.min_shifting_speed = dp("min_shifting_speed", 5.56);
   p.shift_request_time_limit = dp("shift_request_time_limit", 1.0);
+  p.drivable_area_right_bound_offset = dp("drivable_area_right_bound_offset", 0.0);
+  p.drivable_area_left_bound_offset = dp("drivable_area_left_bound_offset", 0.0);
 
   return p;
 }
@@ -300,6 +313,9 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
   p.avoid_motorcycle = dp("target_object.motorcycle", false);
   p.avoid_pedestrian = dp("target_object.pedestrian", false);
 
+  p.drivable_area_right_bound_offset = dp("drivable_area_right_bound_offset", 0.0);
+  p.drivable_area_left_bound_offset = dp("drivable_area_left_bound_offset", 0.0);
+
   p.avoidance_execution_lateral_threshold = dp("avoidance_execution_lateral_threshold", 0.499);
 
   return p;
@@ -308,9 +324,10 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
 LaneFollowingParameters BehaviorPathPlannerNode::getLaneFollowingParam()
 {
   LaneFollowingParameters p{};
-  p.expand_drivable_area = declare_parameter("lane_following.expand_drivable_area", false);
-  p.right_bound_offset = declare_parameter("lane_following.right_bound_offset", 0.5);
-  p.left_bound_offset = declare_parameter("lane_following.left_bound_offset", 0.5);
+  p.drivable_area_right_bound_offset =
+    declare_parameter("lane_following.drivable_area_right_bound_offset", 0.0);
+  p.drivable_area_left_bound_offset =
+    declare_parameter("lane_following.drivable_area_left_bound_offset", 0.0);
   p.lane_change_prepare_duration =
     declare_parameter("lane_following.lane_change_prepare_duration", 2.0);
   return p;
@@ -341,6 +358,8 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
   p.use_predicted_path_outside_lanelet = dp("use_predicted_path_outside_lanelet", true);
   p.use_all_predicted_path = dp("use_all_predicted_path", true);
   p.publish_debug_marker = dp("publish_debug_marker", false);
+  p.drivable_area_right_bound_offset = dp("drivable_area_right_bound_offset", 0.0);
+  p.drivable_area_left_bound_offset = dp("drivable_area_left_bound_offset", 0.0);
 
   // validation of parameters
   if (p.lane_change_sampling_num < 1) {
@@ -430,6 +449,9 @@ PullOverParameters BehaviorPathPlannerNode::getPullOverParam()
   p.enable_collision_check_at_prepare_phase = dp("enable_collision_check_at_prepare_phase", true);
   p.use_predicted_path_outside_lanelet = dp("use_predicted_path_outside_lanelet", true);
   p.use_all_predicted_path = dp("use_all_predicted_path", false);
+  // drivable area
+  p.drivable_area_right_bound_offset = dp("drivable_area_right_bound_offset", 0.0);
+  p.drivable_area_left_bound_offset = dp("drivable_area_left_bound_offset", 0.0);
   // debug
   p.print_debug_info = dp("print_debug_info", false);
 
@@ -489,6 +511,9 @@ PullOutParameters BehaviorPathPlannerNode::getPullOutParam()
   p.max_back_distance = dp("max_back_distance", 15.0);
   p.backward_search_resolution = dp("backward_search_resolution", 2.0);
   p.backward_path_update_duration = dp("backward_path_update_duration", 3.0);
+  // drivable area
+  p.drivable_area_right_bound_offset = dp("drivable_area_right_bound_offset", 0.0);
+  p.drivable_area_left_bound_offset = dp("drivable_area_left_bound_offset", 0.0);
 
   // validation of parameters
   if (p.pull_out_sampling_num < 1) {
