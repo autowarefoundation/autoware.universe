@@ -65,12 +65,14 @@ PullOverModule::PullOverModule(
   if (parameters_.enable_arc_forward_parking) {
     constexpr bool is_forward = true;
     pull_over_planners_.push_back(std::make_shared<GeometricPullOver>(
-      node, parameters, getGeometricPullOverParameters(), occupancy_grid_map_, is_forward));
+      node, parameters, getGeometricPullOverParameters(), lane_departure_checker_,
+      occupancy_grid_map_, is_forward));
   }
   if (parameters_.enable_arc_backward_parking) {
     constexpr bool is_forward = false;
     pull_over_planners_.push_back(std::make_shared<GeometricPullOver>(
-      node, parameters, getGeometricPullOverParameters(), occupancy_grid_map_, is_forward));
+      node, parameters, getGeometricPullOverParameters(), lane_departure_checker_,
+      occupancy_grid_map_, is_forward));
   }
 
   // set selected goal searcher
@@ -255,7 +257,7 @@ Pose PullOverModule::calcRefinedGoal() const
   const Pose center_pose =
     lanelet::utils::getClosestCenterPose(closest_shoulder_lanelet, goal_pose.position);
 
-  const double distance_to_left_bound = util::getDistanceToShoulderBoundary(
+  const double distance_to_left_bound = util::getSignedDistanceFromShoulderLeftBoundary(
     planner_data_->route_handler->getShoulderLanelets(), center_pose);
   const double offset_from_center_line = distance_to_left_bound +
                                          planner_data_->parameters.vehicle_width / 2 +
@@ -407,7 +409,7 @@ BehaviorModuleOutput PullOverModule::plan()
     // Research goal when enabling research and final path has not been decided
     if (parameters_.enable_goal_research) {
       goal_searcher_->setPlannerData(planner_data_);
-      goal_candidates_ = goal_searcher_->search(refined_goal_pose_, status_.pull_over_lanes);
+      goal_candidates_ = goal_searcher_->search(refined_goal_pose_);
     }
 
     // plan paths with several goals and planner
@@ -439,6 +441,9 @@ BehaviorModuleOutput PullOverModule::plan()
   for (size_t i = status_.current_path_idx; i < status_.pull_over_path.partial_paths.size(); ++i) {
     auto & path = status_.pull_over_path.partial_paths.at(i);
     const auto p = planner_data_->parameters;
+    const auto lane = util::expandLanelets(
+      status_.lanes, parameters_.drivable_area_left_bound_offset,
+      parameters_.drivable_area_right_bound_offset);
     path.drivable_area = util::generateDrivableArea(
       path, status_.lanes, p.drivable_area_resolution, p.vehicle_length, planner_data_);
   }
@@ -602,8 +607,12 @@ PathWithLaneId PullOverModule::getReferencePath() const
       -calcMinimumShiftPathDistance(), parameters_.deceleration_interval);
   }
 
+  const auto lanes = util::expandLanelets(
+    status_.current_lanes, parameters_.drivable_area_left_bound_offset,
+    parameters_.drivable_area_right_bound_offset);
+
   reference_path.drivable_area = util::generateDrivableArea(
-    reference_path, status_.current_lanes, common_parameters.drivable_area_resolution,
+    reference_path, lanes, common_parameters.drivable_area_resolution,
     common_parameters.vehicle_length, planner_data_);
 
   return reference_path;
@@ -641,9 +650,13 @@ PathWithLaneId PullOverModule::generateStopPath() const
     }
   }
 
+  const auto lanes = util::expandLanelets(
+    status_.current_lanes, parameters_.drivable_area_left_bound_offset,
+    parameters_.drivable_area_right_bound_offset);
+
   stop_path.drivable_area = util::generateDrivableArea(
-    stop_path, status_.current_lanes, common_parameters.drivable_area_resolution,
-    common_parameters.vehicle_length, planner_data_);
+    stop_path, lanes, common_parameters.drivable_area_resolution, common_parameters.vehicle_length,
+    planner_data_);
 
   return stop_path;
 }
@@ -686,8 +699,8 @@ double PullOverModule::calcMinimumShiftPathDistance() const
   const double distance_before_pull_over = parameters_.before_pull_over_straight_distance;
   const auto & route_handler = planner_data_->route_handler;
 
-  double distance_to_left_bound =
-    util::getDistanceToShoulderBoundary(route_handler->getShoulderLanelets(), current_pose);
+  double distance_to_left_bound = util::getSignedDistanceFromShoulderLeftBoundary(
+    route_handler->getShoulderLanelets(), current_pose);
   double offset_from_center_line = distance_to_left_bound +
                                    planner_data_->parameters.vehicle_width / 2 +
                                    parameters_.margin_from_boundary;
@@ -776,12 +789,11 @@ TurnSignalInfo PullOverModule::calcTurnSignalInfo() const
   {
     // ego decelerates so that current pose is the point `turn_light_on_threshold_time` seconds
     // before starting pull_over
-    turn_signal.desired_start_point = last_approved_pose_ && status_.has_decided_path
-                                        ? last_approved_pose_->position
-                                        : current_pose.position;
-    turn_signal.desired_end_point = end_pose.position;
-    turn_signal.required_start_point = start_pose.position;
-    turn_signal.required_end_point = end_pose.position;
+    turn_signal.desired_start_point =
+      last_approved_pose_ && status_.has_decided_path ? *last_approved_pose_ : current_pose;
+    turn_signal.desired_end_point = end_pose;
+    turn_signal.required_start_point = start_pose;
+    turn_signal.required_end_point = end_pose;
   }
 
   return turn_signal;

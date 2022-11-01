@@ -20,10 +20,8 @@
 #include "ndt_scan_matcher/particle.hpp"
 #include "ndt_scan_matcher/tf2_listener_module.hpp"
 
-#include <ndt/omp.hpp>
-#include <ndt/pcl_generic.hpp>
-#include <ndt/pcl_modified.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <std_srvs/srv/set_bool.hpp>
 
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
@@ -36,6 +34,8 @@
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <fmt/format.h>
+#include <pcl/point_types.h>
+#include <pclomp/ndt_omp.h>
 #include <tf2/transform_datatypes.h>
 
 #ifdef ROS_DISTRO_GALACTIC
@@ -61,7 +61,6 @@
 #include <thread>
 #include <vector>
 
-enum class NDTImplementType { PCL_GENERIC = 0, PCL_MODIFIED = 1, OMP = 2 };
 enum class ConvergedParamType {
   TRANSFORM_PROBABILITY = 0,
   NEAREST_VOXEL_TRANSFORMATION_LIKELIHOOD = 1
@@ -76,40 +75,23 @@ struct NdtResult
   std::vector<geometry_msgs::msg::Pose> transformation_array;
 };
 
-template <typename PointSource, typename PointTarget>
-std::shared_ptr<NormalDistributionsTransformBase<PointSource, PointTarget>> get_ndt(
-  const NDTImplementType & ndt_mode)
+struct NDTParams
 {
-  std::shared_ptr<NormalDistributionsTransformBase<PointSource, PointTarget>> ndt_ptr;
-  if (ndt_mode == NDTImplementType::PCL_GENERIC) {
-    ndt_ptr.reset(new NormalDistributionsTransformPCLGeneric<PointSource, PointTarget>);
-    return ndt_ptr;
-  }
-  if (ndt_mode == NDTImplementType::PCL_MODIFIED) {
-    ndt_ptr.reset(new NormalDistributionsTransformPCLModified<PointSource, PointTarget>);
-    return ndt_ptr;
-  }
-  if (ndt_mode == NDTImplementType::OMP) {
-    ndt_ptr.reset(new NormalDistributionsTransformOMP<PointSource, PointTarget>);
-    return ndt_ptr;
-  }
-
-  const std::string s = fmt::format("Unknown NDT type {}", static_cast<int>(ndt_mode));
-  throw std::runtime_error(s);
-}
+  double trans_epsilon;
+  double step_size;
+  double resolution;
+  int max_iterations;
+  pclomp::NeighborSearchMethod search_method;
+  int num_threads;
+  float regularization_scale_factor;
+};
 
 class NDTScanMatcher : public rclcpp::Node
 {
   using PointSource = pcl::PointXYZ;
   using PointTarget = pcl::PointXYZ;
-
-  // TODO(Tier IV): move file
-  struct OMPParams
-  {
-    OMPParams() : search_method(pclomp::NeighborSearchMethod::KDTREE), num_threads(1) {}
-    pclomp::NeighborSearchMethod search_method;
-    int num_threads;
-  };
+  using NormalDistributionsTransform =
+    pclomp::NormalDistributionsTransform<PointSource, PointTarget>;
 
 public:
   NDTScanMatcher();
@@ -118,6 +100,9 @@ private:
   void service_ndt_align(
     const tier4_localization_msgs::srv::PoseWithCovarianceStamped::Request::SharedPtr req,
     tier4_localization_msgs::srv::PoseWithCovarianceStamped::Response::SharedPtr res);
+  void service_trigger_node(
+    const std_srvs::srv::SetBool::Request::SharedPtr req,
+    std_srvs::srv::SetBool::Response::SharedPtr res);
 
   void callback_map_points(sensor_msgs::msg::PointCloud2::ConstSharedPtr pointcloud2_msg_ptr);
   void callback_sensor_points(sensor_msgs::msg::PointCloud2::ConstSharedPtr pointcloud2_msg_ptr);
@@ -128,7 +113,7 @@ private:
 
   NdtResult align(const geometry_msgs::msg::Pose & initial_pose_msg);
   geometry_msgs::msg::PoseWithCovarianceStamped align_using_monte_carlo(
-    const std::shared_ptr<NormalDistributionsTransformBase<PointSource, PointTarget>> & ndt_ptr,
+    const std::shared_ptr<NormalDistributionsTransform> & ndt_ptr,
     const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_with_cov);
 
   void transform_sensor_measurement(
@@ -194,11 +179,11 @@ private:
   rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr diagnostics_pub_;
 
   rclcpp::Service<tier4_localization_msgs::srv::PoseWithCovarianceStamped>::SharedPtr service_;
+  rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr service_trigger_node_;
 
   tf2_ros::TransformBroadcaster tf2_broadcaster_;
 
-  NDTImplementType ndt_implement_type_;
-  std::shared_ptr<NormalDistributionsTransformBase<PointSource, PointTarget>> ndt_ptr_;
+  std::shared_ptr<NormalDistributionsTransform> ndt_ptr_;
 
   Eigen::Matrix4f base_to_sensor_matrix_;
   std::string base_frame_;
@@ -221,17 +206,17 @@ private:
   std::mutex ndt_ptr_mtx_;
   std::mutex initial_pose_array_mtx_;
 
-  OMPParams omp_params_;
+  NDTParams ndt_params_;
 
   std::thread diagnostic_thread_;
   std::map<std::string, std::string> key_value_stdmap_;
 
   // variables for regularization
   const bool regularization_enabled_;
-  const float regularization_scale_factor_;
   std::deque<geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr>
     regularization_pose_msg_ptr_array_;
 
+  bool is_activated_;
   std::shared_ptr<Tf2ListenerModule> tf2_listener_module_;
 };
 

@@ -4,6 +4,9 @@ project(pointcloud_preprocessor)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
+# Suppress CGAL warning
+set(CGAL_DATA_DIR ".")
+
 find_package(OpenCV REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(Boost REQUIRED)
@@ -37,6 +40,7 @@ ament_target_dependencies(pointcloud_preprocessor_filter_base
   sensor_msgs
   tf2_ros
   tier4_autoware_utils
+  pcl_ros
 )
 
 ament_auto_add_library(pointcloud_preprocessor_filter SHARED

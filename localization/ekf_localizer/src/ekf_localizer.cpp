@@ -60,7 +60,7 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
   proc_cov_wz_d_ = std::pow(params_.proc_stddev_wz_c * ekf_dt_, 2.0);
   proc_cov_yaw_d_ = std::pow(params_.proc_stddev_yaw_c * ekf_dt_, 2.0);
 
-  is_initialized_ = false;
+  is_activated_ = false;
 
   /* initialize ros system */
   timer_control_ = rclcpp::create_timer(
@@ -88,6 +88,11 @@ EKFLocalizer::EKFLocalizer(const std::string & node_name, const rclcpp::NodeOpti
     "in_pose_with_covariance", 1, std::bind(&EKFLocalizer::callbackPoseWithCovariance, this, _1));
   sub_twist_with_cov_ = create_subscription<geometry_msgs::msg::TwistWithCovarianceStamped>(
     "in_twist_with_covariance", 1, std::bind(&EKFLocalizer::callbackTwistWithCovariance, this, _1));
+  service_trigger_node_ = create_service<std_srvs::srv::SetBool>(
+    "trigger_node_srv",
+    std::bind(
+      &EKFLocalizer::serviceTriggerNode, this, std::placeholders::_1, std::placeholders::_2),
+    rclcpp::ServicesQoS().get_rmw_qos_profile());
 
   dim_x_ex_ = dim_x_ * params_.extend_state_step;
 
@@ -132,7 +137,9 @@ void EKFLocalizer::updatePredictFrequency()
  */
 void EKFLocalizer::timerCallback()
 {
-  if (!is_initialized_) {
+  if (!is_activated_) {
+    warning_.warnThrottle(
+      "The node is not activated. Provide initial pose to pose_initializer", 2000);
     return;
   }
 
@@ -233,7 +240,7 @@ void EKFLocalizer::showCurrentX()
  */
 void EKFLocalizer::timerTFCallback()
 {
-  if (!is_initialized_) {
+  if (!is_activated_) {
     return;
   }
 
@@ -328,10 +335,6 @@ void EKFLocalizer::callbackInitialPose(
   ekf_.init(X, P, params_.extend_state_step);
 
   updateSimple1DFilters(*initialpose);
-
-  while (!current_pose_info_queue_.empty()) current_pose_info_queue_.pop();
-
-  is_initialized_ = true;
 }
 
 /*
@@ -340,7 +343,11 @@ void EKFLocalizer::callbackInitialPose(
 void EKFLocalizer::callbackPoseWithCovariance(
   geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg)
 {
+  if (!is_activated_) {
+    return;
+  }
   PoseInfo pose_info = {msg, 0, params_.pose_smoothing_steps};
+
   current_pose_info_queue_.push(pose_info);
 
   updateSimple1DFilters(*msg);
@@ -672,4 +679,22 @@ void EKFLocalizer::updateSimple1DFilters(const geometry_msgs::msg::PoseWithCovar
   z_filter_.update(z, z_dev, pose.header.stamp);
   roll_filter_.update(roll, roll_dev, pose.header.stamp);
   pitch_filter_.update(pitch, pitch_dev, pose.header.stamp);
+}
+
+/**
+ * @brief trigger node
+ */
+void EKFLocalizer::serviceTriggerNode(
+  const std_srvs::srv::SetBool::Request::SharedPtr req,
+  std_srvs::srv::SetBool::Response::SharedPtr res)
+{
+  if (req->data) {
+    while (!current_pose_info_queue_.empty()) current_pose_info_queue_.pop();
+    while (!current_twist_info_queue_.empty()) current_twist_info_queue_.pop();
+    is_activated_ = true;
+  } else {
+    is_activated_ = false;
+  }
+  res->success = true;
+  return;
 }
