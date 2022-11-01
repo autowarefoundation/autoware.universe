@@ -41,32 +41,38 @@ SpeedBumpModule::SpeedBumpModule(
   state_(State::SLOW_DOWN),
   passed_slow_start_point_(false)
 {
-  // point.x : height [m] -- point.y : speed [m/s]
-  Point32 p1;
-  Point32 p2;
-
-  p1.x = 0.05;  // min speed bump height
-  p2.x = 0.30;  // max speed bump height
-
-  p1.y = 2.78;  // [10 kph] max speed for any speed bump
-  p2.y = 1.39;  // [5 kph] min speed for any speed bump
-
-  auto const & constants = getLinearEquation(p1, p2);
-  auto const & m = constants.first;
-  auto const & b = constants.second;
-
   // Read speed bump height [m] from map
-  speed_bump_height_ =
+  auto const speed_bump_height =
     static_cast<float>(speed_bump_reg_elem_.speedBump().attributeOr("height", 0.5));
 
-  // Calculate the speed [m/s] for speed bump
-  speed_bump_slow_down_speed_ = m * speed_bump_height_ + b;
+  // If slow_down_speed is specified on speed_bump annotation use it instead of calculating it
+  if (!speed_bump_reg_elem_.speedBump().hasAttribute("slow_down_speed")) {
+    // point.x : height [m] -- point.y : speed [m/s]
+    Point32 p1;
+    Point32 p2;
+
+    p1.x = 0.05;  // min speed bump height
+    p2.x = 0.30;  // max speed bump height
+
+    p1.y = 2.78;  // [10 kph] max speed for any speed bump
+    p2.y = 1.39;  // [5 kph] min speed for any speed bump
+
+    auto const & constants = getLinearEquation(p1, p2);
+    auto const & m = constants.first;
+    auto const & b = constants.second;
+
+    // Calculate the speed [m/s] for speed bump
+    speed_bump_slow_down_speed_ = m * speed_bump_height + b;
+  } else {
+    speed_bump_slow_down_speed_ = static_cast<float>(
+      speed_bump_reg_elem_.speedBump().attribute("slow_down_speed").asDouble().get() / 3.6);
+  }
 
   if (planner_param_.print_debug_info) {
     std::cout << "------------------------------" << std::endl;
     std::cout << "Speed Bump ID: " << module_id_ << std::endl;
-    std::cout << "Speed Bump Height [cm]: " << speed_bump_height_ * 100 << std::endl;
-    std::cout << "Calculated Speed [kph]: " << speed_bump_slow_down_speed_ * 3.6 << std::endl;
+    std::cout << "Speed Bump Height [cm]: " << speed_bump_height * 100 << std::endl;
+    std::cout << "Slow Down Speed [kph]: " << speed_bump_slow_down_speed_ * 3.6 << std::endl;
     std::cout << "------------------------------" << std::endl;
   }
 }

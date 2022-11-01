@@ -28,6 +28,10 @@ the reference path.
 
 - Set `slow_down_speed` to the path during `slow_area`
 
+**Note:** If in speed bump annotation `slow_down_speed` tag is used then calculating the speed wrt
+the speed bump height will be ignored. In such case, specified `slow_down_speed` value in **[kph]**
+is being used.
+
 ### Future Work
 
 - In an article [here](https://journals.sagepub.com/doi/10.1155/2014/736576), a bump modeling method

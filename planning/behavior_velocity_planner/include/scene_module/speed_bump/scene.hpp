@@ -85,7 +85,6 @@ private:
   static std::pair<float, float> getLinearEquation(const Point32 & p1, const Point32 & p2);
 
   bool passed_slow_start_point_;
-  float speed_bump_height_;
   float speed_bump_slow_down_speed_;
 };
 
