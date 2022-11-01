@@ -276,7 +276,6 @@ void FusionNode<Msg, Obj>::roiCallback(
       }
 
       if (std::count(is_fused_.begin(), is_fused_.end(), true) == int(rois_number_)) {
-        std::cout << "all subscribed" << std::endl;
         timer_->cancel();
         postprocess(*(sub_stdpair_.second));
         publish(*(sub_stdpair_.second));
