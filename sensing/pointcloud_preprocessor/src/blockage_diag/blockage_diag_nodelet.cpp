@@ -251,7 +251,7 @@ void BlockageDiagComponent::filter(
   } else {
     sky_blockage_count_ = 0;
   }
- //dust
+  // dust
   cv::Mat ground_depthmap = lidar_depth_map_8u(
     cv::Rect(0, horizontal_ring_id_, ideal_horizontal_bins, vertical_bins - horizontal_ring_id_));
   cv::Mat sky_blank(horizontal_ring_id_, ideal_horizontal_bins, CV_8UC1, cv::Scalar(0));
