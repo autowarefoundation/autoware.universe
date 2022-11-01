@@ -64,7 +64,6 @@
 
 // clang-format on
 
-
 namespace pclomp
 {
 /** \brief A searchable voxel structure containing the mean and covariance of the data.
