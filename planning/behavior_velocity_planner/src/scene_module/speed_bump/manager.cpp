@@ -32,10 +32,21 @@ using lanelet::autoware::SpeedBump;
 SpeedBumpModuleManager::SpeedBumpModuleManager(rclcpp::Node & node)
 : SceneModuleManagerInterfaceWithRTC(node, getModuleName())
 {
-  const std::string ns(getModuleName());
+  std::string ns(getModuleName());
   planner_param_.slow_start_margin = node.declare_parameter(ns + ".slow_start_margin", 1.0);
   planner_param_.slow_end_margin = node.declare_parameter(ns + ".slow_end_margin", 1.0);
   planner_param_.print_debug_info = node.declare_parameter(ns + ".print_debug_info", false);
+
+  // limits for speed bump height and slow down speed
+  ns += ".speed_calculation";
+  planner_param_.speed_calculation_min_height =
+    static_cast<float>(node.declare_parameter(ns + ".min_height", 0.05));
+  planner_param_.speed_calculation_max_height =
+    static_cast<float>(node.declare_parameter(ns + ".max_height", 0.30));
+  planner_param_.speed_calculation_min_speed =
+    static_cast<float>(node.declare_parameter(ns + ".min_speed", 1.39));
+  planner_param_.speed_calculation_max_speed =
+    static_cast<float>(node.declare_parameter(ns + ".max_speed", 2.78));
 }
 
 void SpeedBumpModuleManager::launchNewModules(

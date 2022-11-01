@@ -51,18 +51,20 @@ SpeedBumpModule::SpeedBumpModule(
     Point32 p1;
     Point32 p2;
 
-    p1.x = 0.05;  // min speed bump height
-    p2.x = 0.30;  // max speed bump height
+    p1.x = planner_param_.speed_calculation_min_height;
+    p2.x = planner_param_.speed_calculation_max_height;
 
-    p1.y = 2.78;  // [10 kph] max speed for any speed bump
-    p2.y = 1.39;  // [5 kph] min speed for any speed bump
+    p1.y = planner_param_.speed_calculation_max_speed;
+    p2.y = planner_param_.speed_calculation_min_speed;
 
     auto const & constants = getLinearEquation(p1, p2);
     auto const & m = constants.first;
     auto const & b = constants.second;
 
     // Calculate the speed [m/s] for speed bump
-    speed_bump_slow_down_speed_ = m * speed_bump_height + b;
+    speed_bump_slow_down_speed_ = std::clamp(
+      m * speed_bump_height + b, planner_param_.speed_calculation_min_speed,
+      planner_param_.speed_calculation_max_speed);
   } else {
     speed_bump_slow_down_speed_ = static_cast<float>(
       speed_bump_reg_elem_.speedBump().attribute("slow_down_speed").asDouble().get() / 3.6);

@@ -45,6 +45,10 @@ public:
     double slow_start_margin;
     double slow_end_margin;
     bool print_debug_info;
+    float speed_calculation_min_height;
+    float speed_calculation_max_height;
+    float speed_calculation_min_speed;
+    float speed_calculation_max_speed;
   };
 
   SpeedBumpModule(
