@@ -107,7 +107,7 @@ bool SpeedBumpModule::applySlowDownSpeed(PathWithLaneId & output)
   }
 
   const auto & ego_pos = planner_data_->current_pose.pose.position;
-  const auto ego_path = output;
+  const auto & ego_path = output;
 
   // the range until to the point where ego will start accelerate
   auto slow_end_point_range =
