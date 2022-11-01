@@ -750,14 +750,6 @@ inline geometry_msgs::msg::Twist createTwist(
   return twist;
 }
 
-inline geometry_msgs::msg::TwistWithCovariance getTwistWithCovariance(
-  const geometry_msgs::msg::Vector3 & velocity, geometry_msgs::msg::Vector3 & angular)
-{
-  geometry_msgs::msg::TwistWithCovariance twist_with_covariance;
-  twist_with_covariance.twist = getTwist(velocity, angular);
-  return twist_with_covariance;
-}
-
 inline double calcTwistNorm(const geometry_msgs::msg::Vector3 & v)
 {
   return std::sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
