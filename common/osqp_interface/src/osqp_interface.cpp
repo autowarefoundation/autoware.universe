@@ -231,6 +231,19 @@ void OSQPInterface::updatePolishRefinementIteration(const int polish_refine_iter
   }
 }
 
+void OSQPInterface::updateCheckTermination(const int check_termination)
+{
+  if (check_termination < 0) {
+    std::cerr << "Check termination must be positive" << std::endl;
+    return;
+  }
+
+  m_settings->check_termination = check_termination;
+  if (m_work_initialized) {
+    osqp_update_check_termination(m_work.get(), check_termination);
+  }
+}
+
 bool OSQPInterface::setWarmStart(
   const std::vector<double> & primal_variables, const std::vector<double> & dual_variables)
 {

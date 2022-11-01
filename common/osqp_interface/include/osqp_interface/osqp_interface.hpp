@@ -170,6 +170,7 @@ public:
   void updateScaling(const int scaling);
   void updatePolish(const bool polish);
   void updatePolishRefinementIteration(const int polish_refine_iter);
+  void updateCheckTermination(const int check_termination);
 
   /// \brief Get the number of iteration taken to solve the problem
   inline int64_t getTakenIter() const { return static_cast<int64_t>(m_latest_work_info.iter); }
