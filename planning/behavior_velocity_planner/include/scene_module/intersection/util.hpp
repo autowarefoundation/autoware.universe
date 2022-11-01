@@ -101,8 +101,8 @@ bool generateStopLineBeforeIntersection(
  * @param polygons target polygon
  * @return path point index
  */
-int getFirstPointInsidePolygons(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+std::optional<int> getFirstPointInsidePolygons(
+  const int lane_id, const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const std::vector<lanelet::CompoundPolygon3d> & polygons);
 
 /**

@@ -91,13 +91,25 @@ bool getDuplicatedPointIdx(
   return false;
 }
 
-// TODO(Mamoru Sobue): return optional, not -1
-int getFirstPointInsidePolygons(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+std::optional<int> getFirstPointInsidePolygons(
+  const int lane_id, const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const std::vector<lanelet::CompoundPolygon3d> & polygons)
 {
-  int first_idx_inside_lanelet = -1;
+  std::optional<int> first_idx_inside_lanelet = std::nullopt;
+  bool is_in_intersection = false;  // a flag if iterating over intersection lane
   for (size_t i = 0; i < path.points.size(); ++i) {
+    if (is_in_intersection && !hasLaneId(path.points.at(i), lane_id)) {
+      // iteration over intersection lane ended
+      break;
+    }
+    if (hasLaneId(path.points.at(i), lane_id) && !is_in_intersection) {
+      is_in_intersection = true;
+      // iteration over intersection lane started
+    }
+    if (!is_in_intersection) {
+      // do not check within(polygons)
+      continue;
+    }
     bool is_in_lanelet = false;
     auto p = path.points.at(i).point.pose.position;
     for (const auto & polygon : polygons) {
@@ -135,7 +147,6 @@ bool generateStopLine(
   /* spline interpolation */
   constexpr double interval = 0.2;
   autoware_auto_planning_msgs::msg::PathWithLaneId path_ip;
-  // TODO(Mamoru Sobue): crop only intersection part of path for computation cost
   if (!splineInterpolate(target_path, interval, path_ip, logger)) {
     return false;
   }
@@ -161,13 +172,15 @@ bool generateStopLine(
     stop_idx_ip = std::max(stop_idx_ip - base2front_idx_dist, 0);
   } else {
     // find the index of the first point that intersects with detection_areas
-    const int first_idx_ip_inside_lane = getFirstPointInsidePolygons(path_ip, detection_areas);
+    const auto first_idx_ip_inside_lane_opt =
+      getFirstPointInsidePolygons(lane_id, path_ip, detection_areas);
     // if path is not intersecting with detection_area, skip
-    if (first_idx_ip_inside_lane == -1) {
+    if (!first_idx_ip_inside_lane_opt.has_value()) {
       RCLCPP_DEBUG(
         logger, "Path is not intersecting with detection_area, not generating stop_line");
       return false;
     }
+    const auto first_idx_ip_inside_lane = first_idx_ip_inside_lane_opt.value();
     const auto & first_inside_point = path_ip.points.at(first_idx_ip_inside_lane).point.pose;
     const auto first_idx_inside_lane_opt =
       motion_utils::findNearestIndex(original_path->points, first_inside_point, 10.0, M_PI_4);
@@ -295,7 +308,6 @@ bool getStopLineIndexFromMap(
   return true;
 }
 
-// TODO(Mamoru Sobue): return std::tuple<bool, lanelet::ConstLanelets, lanelet::ConstLanelets>
 std::tuple<lanelet::ConstLanelets, lanelet::ConstLanelets> getObjectiveLanelets(
   lanelet::LaneletMapConstPtr lanelet_map_ptr, lanelet::routing::RoutingGraphPtr routing_graph_ptr,
   const int lane_id, const double detection_area_length, const bool tl_arrow_solid_on)
