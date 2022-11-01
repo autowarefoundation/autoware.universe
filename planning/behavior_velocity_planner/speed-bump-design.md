@@ -22,7 +22,7 @@ the reference path.
 ### Inner-workings / Algorithms
 
 - Get speed bump regulatory element on the path from lanelet2 map
-- Calculate `slow_down_speed` wrt to `speed_bump_hieght` specified in regulatory element.
+- Calculate `slow_down_speed` wrt to `speed_bump_height` specified in regulatory element.
 
 ![speed_bump_vel_calc](docs/speed_bump/speed_bump_vel_calc.png)
 
