@@ -82,7 +82,7 @@ private:
     PathWithLaneId & output);
 
   // returns m and b consts for y=mx+b
-  static std::pair<float, float> getLinearEquation(Point32 p1, Point32 p2);
+  static std::pair<float, float> getLinearEquation(const Point32 & p1, const Point32 & p2);
 
   bool passed_slow_start_point_;
   float speed_bump_height_;
