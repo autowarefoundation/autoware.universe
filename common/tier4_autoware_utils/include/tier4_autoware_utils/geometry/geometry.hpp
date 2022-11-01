@@ -741,7 +741,7 @@ inline geometry_msgs::msg::Vector3 createVector3(const double x, double y, doubl
   return geometry_msgs::build<geometry_msgs::msg::Vector3>().x(x).y(y).z(z);
 }
 
-inline geometry_msgs::msg::Twist getTwist(
+inline geometry_msgs::msg::Twist createTwist(
   const geometry_msgs::msg::Vector3 & velocity, geometry_msgs::msg::Vector3 & angular)
 {
   geometry_msgs::msg::Twist twist;
