@@ -37,7 +37,7 @@ visualization_msgs::msg::MarkerArray createSpeedBumpMarkers(
   const SpeedBumpModule::DebugData & debug_data, const rclcpp::Time & now, const int64_t module_id)
 {
   visualization_msgs::msg::MarkerArray msg;
-  int32_t uid = planning_utils::bitShift(module_id);
+  const int32_t uid = planning_utils::bitShift(module_id);
 
   // Speed bump polygon
   if (!debug_data.speed_bump_polygon.empty()) {
