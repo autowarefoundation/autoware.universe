@@ -1674,17 +1674,6 @@ TEST(geometry, getTwist)
     EXPECT_DOUBLE_EQ(t_out.twist.angular.y, twist.angular.y);
     EXPECT_DOUBLE_EQ(t_out.twist.angular.z, twist.angular.z);
   }
-
-  // getTwistCovariance
-  {
-    auto t_out = tier4_autoware_utils::getTwistWithCovariance(twist);
-    EXPECT_DOUBLE_EQ(t_out.twist.linear.x, twist.linear.x);
-    EXPECT_DOUBLE_EQ(t_out.twist.linear.y, twist.linear.y);
-    EXPECT_DOUBLE_EQ(t_out.twist.linear.z, twist.linear.z);
-    EXPECT_DOUBLE_EQ(t_out.twist.angular.x, twist.angular.x);
-    EXPECT_DOUBLE_EQ(t_out.twist.angular.y, twist.angular.y);
-    EXPECT_DOUBLE_EQ(t_out.twist.angular.z, twist.angular.z);
-  }
 }
 
 TEST(geometry, getTwistNorm)

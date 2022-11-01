@@ -751,14 +751,6 @@ inline geometry_msgs::msg::Twist getTwist(
 }
 
 inline geometry_msgs::msg::TwistWithCovariance getTwistWithCovariance(
-  const geometry_msgs::msg::Twist & twist)
-{
-  geometry_msgs::msg::TwistWithCovariance twist_with_covariance;
-  twist_with_covariance.twist = twist;
-  return twist_with_covariance;
-}
-
-inline geometry_msgs::msg::TwistWithCovariance getTwistWithCovariance(
   const geometry_msgs::msg::Vector3 & velocity, geometry_msgs::msg::Vector3 & angular)
 {
   geometry_msgs::msg::TwistWithCovariance twist_with_covariance;
