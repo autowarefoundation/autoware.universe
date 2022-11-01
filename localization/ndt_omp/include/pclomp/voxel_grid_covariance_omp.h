@@ -52,15 +52,18 @@
 #ifndef PCLOMP__VOXEL_GRID_COVARIANCE_OMP_H_
 #define PCLOMP__VOXEL_GRID_COVARIANCE_OMP_H_
 
+// clang-format off
+#include <pcl/pcl_macros.h>
 #include <pcl/filters/boost.h>
 #include <pcl/filters/voxel_grid.h>
-#include <pcl/kdtree/kdtree_flann.h>
-#include <pcl/pcl_macros.h>
-#include <pcl/point_types.h>
-
 #include <map>
 #include <unordered_map>
+#include <pcl/point_types.h>
+#include <pcl/kdtree/kdtree_flann.h>
 #include <vector>
+
+// clang-format on
+
 
 namespace pclomp
 {
