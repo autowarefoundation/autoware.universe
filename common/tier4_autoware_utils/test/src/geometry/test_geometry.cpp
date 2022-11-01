@@ -1656,7 +1656,7 @@ TEST(geometry, getTwist)
 
   // getTwist
   {
-    auto t_out = tier4_autoware_utils::getTwist(velocity, angular);
+    auto t_out = tier4_autoware_utils::createTwist(velocity, angular);
     EXPECT_DOUBLE_EQ(t_out.linear.x, twist.linear.x);
     EXPECT_DOUBLE_EQ(t_out.linear.y, twist.linear.y);
     EXPECT_DOUBLE_EQ(t_out.linear.z, twist.linear.z);
