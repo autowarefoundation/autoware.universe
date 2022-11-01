@@ -178,8 +178,8 @@ void SpeedBumpModule::insertDecelPointWithDebugInfo(
 
 std::pair<float, float> SpeedBumpModule::getLinearEquation(const Point32 & p1, const Point32 & p2)
 {
-  float m = (p1.y - p2.y) / (p1.x - p2.x);
-  float b = p1.y - (m * p1.x);
+  const float m = (p1.y - p2.y) / (p1.x - p2.x);
+  const float b = p1.y - (m * p1.x);
 
   return std::make_pair(m, b);
 }
