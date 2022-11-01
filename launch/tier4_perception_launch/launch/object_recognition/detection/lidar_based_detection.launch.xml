@@ -67,7 +67,7 @@
   <group if="$(eval &quot;'$(var lidar_detection_model)'=='centerpoint'&quot;)">
     <push-ros-namespace namespace="centerpoint"/>
     <group>
-      <include file="$(find-pkg-share lidar_centerpoint_tvm)/launch/lidar_centerpoint_tvm.launch.xml">
+      <include file="$(find-pkg-share lidar_centerpoint)/launch/lidar_centerpoint.launch.xml">
         <arg name="input/pointcloud" value="$(var input/pointcloud)"/>
         <arg name="output/objects" value="objects"/>
         <arg name="score_threshold" value="$(var score_threshold)"/>
