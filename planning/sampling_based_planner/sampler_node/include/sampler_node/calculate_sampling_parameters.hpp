@@ -153,33 +153,47 @@ inline void calculateTargets(
     sp.target_state.lateral_velocity = 0.0;
     sp.target_state.longitudinal_acceleration = 0.0;
     sp.target_state.lateral_acceleration = 0.0;
+    // TODO(Maxime CLEMENT): don't hardcode 50m here
     const auto velocity_extremum = findVelocityExtremum(path, 50.0);
+    const auto min_vel =
+      std::min(velocity_extremum.min, params.constraints.hard.max_velocity / 2.0);
+    const auto max_vel = std::min(velocity_extremum.max, params.constraints.hard.max_velocity);
     const auto samples = params.sampling.frenet.calc.target_longitudinal_velocity_samples;
     for (auto i = 0; i < samples; ++i) {
       const auto ratio = static_cast<double>(i) / (samples - 1.0);
-      const auto target_vel = interpolation::lerp(
-        velocity_extremum.min,
-        std::min(velocity_extremum.max, params.constraints.hard.max_velocity), ratio);
+      const auto target_vel = interpolation::lerp(min_vel, max_vel, ratio);
       const auto distance =
         interpolation::lerp(velocity_extremum.min_s, velocity_extremum.max_s, ratio);
-      if (distance == 0) continue;
-      // std::printf("i=%d: ratio=%2.2f, target_vel=%2.2f, distance=%2.2f, min_s=%2.2f,
-      // max_s=%2.2f\n", i, ratio, target_vel, distance, velocity_extremum.min_s,
-      // velocity_extremum.max_s);
+      if (distance < params.sampling.resolution) continue;
       sp.target_state.position.s = start_s + distance;
       const auto confortable_target_vel = std::sqrt(
         initial_configuration.velocity * initial_configuration.velocity +
         2 * params.sampling.confortable_acceleration * distance);
       sp.target_state.longitudinal_velocity = std::min(target_vel, confortable_target_vel);
-      if (sp.target_state.longitudinal_velocity + initial_configuration.velocity == 0.0)
-        sp.target_duration = distance / params.constraints.hard.max_velocity;
-      else
+      if (sp.target_state.longitudinal_velocity == 0.0 && initial_configuration.velocity == 0.0) {
+        // assuming bang band velocity profile
+        const auto dist_to_max_vel =
+          (max_vel * max_vel) / (2 * params.sampling.confortable_acceleration);
+        if (dist_to_max_vel * 2.0 > distance) {
+          // no time to reach max vel, assume "triangle" velocity profile to a reduced max vel
+          const auto new_max_vel = std::sqrt(params.sampling.confortable_acceleration * distance);
+          sp.target_duration = 4.0 * distance / new_max_vel;
+        } else {
+          // enough time to reach max vel, assume /‾‾\ profile, add the duration at const velocity
+          const auto duration_to_max_vel = 2.0 * dist_to_max_vel / max_vel;
+          const auto dist_at_max_vel = distance - 2.0 * dist_to_max_vel;
+          const auto duration_at_max_vel = dist_at_max_vel / max_vel;
+          sp.target_duration = 2 * duration_to_max_vel + duration_at_max_vel;
+        }
+      } else {
+        // assuming const accel velocity profile
         sp.target_duration =
           (2 * distance) / (sp.target_state.longitudinal_velocity + initial_configuration.velocity);
+      }
+      std::cout << sp << std::endl;
       for (const auto d : params.sampling.frenet.manual.target_lateral_positions) {
         sp.target_state.position.d = d;
         sampling_parameters.parameters.push_back(sp);
-        // std::cout << sp << std::endl;
       }
     }
   }

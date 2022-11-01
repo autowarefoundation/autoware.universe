@@ -334,9 +334,10 @@ void TrajectorySamplerNode::pathCallback(
     auto final_trajectory = prependTrajectory(selected_trajectory, path_spline, *current_state);
     if (
       final_trajectory.longitudinal_velocities.size() > 1 &&
-      final_trajectory.longitudinal_velocities.front() < 0.1) {
-      final_trajectory.longitudinal_velocities.front() =
-        final_trajectory.longitudinal_velocities[1];
+      final_trajectory.longitudinal_velocities.front() < 0.25 &&
+      final_trajectory.longitudinal_velocities[1] > 0.0) {
+      // TODO(Maxime CLEMENT): 0.25m/s is the min engage velocity. Should be a parameter.
+      final_trajectory.longitudinal_velocities.front() = 0.25;
       std::cout << "[prependTrajectory] updated 1st 0 velocity to "
                 << final_trajectory.longitudinal_velocities.front() << "\n";
     }
@@ -455,6 +456,15 @@ void TrajectorySamplerNode::publishTrajectory(
     point.front_wheel_angle_rad = 0.0f;
     point.rear_wheel_angle_rad = 0.0f;
     traj_msg.points.push_back(point);
+    const auto & next = trajectory.points[i + 1];
+    const auto dist_to_next =
+      std::hypot(next.x() - trajectory.points[i].x(), next.y() - trajectory.points[i].y());
+    if (dist_to_next > 100.0) {
+      RCLCPP_WARN(
+        get_logger(), "Weird point (%lu/%lu) at dist %2.2f. Ignore remaining points", i,
+        trajectory.points.size(), dist_to_next);
+      break;
+    }
   }
   trajectory_pub_->publish(traj_msg);
 }

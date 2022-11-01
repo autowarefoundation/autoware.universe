@@ -67,7 +67,7 @@ public:
   QCustomPlot * cand_acc;
   QCustomPlot * cand_jerk;
   QWidget * frenet_tab;
-  QVBoxLayout * verticalLayout_8;
+  QVBoxLayout * frenet_tab_layout;
   QCustomPlot * frenet_s;
   QCustomPlot * frenet_d;
   QWidget * bezier_tab;
@@ -191,17 +191,17 @@ public:
     tabWidget->addTab(candidates_tab, QString());
     frenet_tab = new QWidget();
     frenet_tab->setObjectName(QString::fromUtf8("frenet_tab"));
-    verticalLayout_8 = new QVBoxLayout(frenet_tab);
-    verticalLayout_8->setObjectName(QString::fromUtf8("verticalLayout_8"));
+    frenet_tab_layout = new QVBoxLayout(frenet_tab);
+    frenet_tab_layout->setObjectName(QString::fromUtf8("frenet_tab_layout"));
     frenet_s = new QCustomPlot(frenet_tab);
     frenet_s->setObjectName(QString::fromUtf8("frenet_s"));
 
-    verticalLayout_8->addWidget(frenet_s);
+    frenet_tab_layout->addWidget(frenet_s);
 
     frenet_d = new QCustomPlot(frenet_tab);
     frenet_d->setObjectName(QString::fromUtf8("frenet_d"));
 
-    verticalLayout_8->addWidget(frenet_d);
+    frenet_tab_layout->addWidget(frenet_d);
 
     tabWidget->addTab(frenet_tab, QString());
     bezier_tab = new QWidget();
