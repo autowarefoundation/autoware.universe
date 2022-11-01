@@ -219,7 +219,6 @@ void FusionNode<Msg, Obj>::subCallback(const typename Msg::ConstSharedPtr input_
 
   // if all camera fused, postprocess; else, cache the Msg
   if (std::count(is_fused_.begin(), is_fused_.end(), true) == int(rois_number_)) {
-    std::cout << "all subscribed" << std::endl;
     timer_->cancel();
     postprocess(*output_msg);
     publish(*output_msg);
