@@ -77,14 +77,14 @@ bool SpeedBumpModule::modifyPathVelocity(
   debug_data_ = DebugData();
   debug_data_.base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
 
-  auto ego_path = *path;
+  const auto & ego_path = *path;
 
   path_intersects_.clear();
 
   const auto & ego_pos = planner_data_->current_pose.pose.position;
-  const auto speed_bump = speed_bump_reg_elem_.speedBump();
+  const auto & speed_bump = speed_bump_reg_elem_.speedBump();
 
-  const auto intersects =
+  const auto & intersects =
     getPolygonIntersects(ego_path, lanelet::utils::to2D(speed_bump).basicPolygon(), ego_pos, 2);
 
   for (const auto & p : intersects) {
@@ -165,7 +165,7 @@ void SpeedBumpModule::insertDecelPointWithDebugInfo(
   const geometry_msgs::msg::Point & slow_point, const float target_velocity,
   PathWithLaneId & output)
 {
-  const auto slow_pose = planning_utils::insertDecelPoint(slow_point, output, target_velocity);
+  const auto & slow_pose = planning_utils::insertDecelPoint(slow_point, output, target_velocity);
   if (!slow_pose) {
     return;
   }
@@ -173,7 +173,7 @@ void SpeedBumpModule::insertDecelPointWithDebugInfo(
 
   setDistance(calcSignedArcLength(output.points, ego_pos, slow_pose->position));
 
-  debug_data_.slow_start_poses.push_back(*slow_pose);
+  debug_data_.slow_start_poses.push_back(slow_pose.get());
 }
 
 std::pair<float, float> SpeedBumpModule::getLinearEquation(const Point32 & p1, const Point32 & p2)
