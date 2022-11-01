@@ -744,10 +744,7 @@ inline geometry_msgs::msg::Vector3 createVector3(const double x, double y, doubl
 inline geometry_msgs::msg::Twist createTwist(
   const geometry_msgs::msg::Vector3 & velocity, geometry_msgs::msg::Vector3 & angular)
 {
-  geometry_msgs::msg::Twist twist;
-  twist.linear = velocity;
-  twist.angular = angular;
-  return twist;
+  return geometry_msgs::build<geometry_msgs::msg::Twist>().linear(velocity).angular(angular);
 }
 
 inline double calcNorm(const geometry_msgs::msg::Vector3 & v) { return std::hypot(v.x, v.y, v.z); }
