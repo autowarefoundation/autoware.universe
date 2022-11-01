@@ -1673,10 +1673,7 @@ TEST(geometry, getTwistNorm)
   twist_with_covariance.twist = geometry_msgs::build<geometry_msgs::msg::Twist>()
                                   .linear(createVector3(3.0, 4.0, 0.0))
                                   .angular(createVector3(0.1, 0.2, 0.3));
-
-  EXPECT_NEAR(tier4_autoware_utils::calcTwistNorm(twist_with_covariance.twist), 5.0, epsilon);
-  EXPECT_NEAR(
-    tier4_autoware_utils::calcTwistNorm(twist_with_covariance.twist.linear), 5.0, epsilon);
+  EXPECT_NEAR(tier4_autoware_utils::calcNorm(twist_with_covariance.twist.linear), 5.0, epsilon);
 }
 
 TEST(geometry, isTwistCovarianceValid)
