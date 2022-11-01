@@ -305,7 +305,6 @@ void FusionNode<Msg, Obj>::postprocess(Msg & output_msg __attribute__((unused)))
 template <class Msg, class Obj>
 void FusionNode<Msg, Obj>::timer_callback()
 {
-  std::cout << "timeout" << std::endl;
   using std::chrono_literals::operator""ms;
   timer_->cancel();
   if (mutex_.try_lock()) {
