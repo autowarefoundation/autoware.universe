@@ -439,10 +439,10 @@ void NDTScanMatcher::callback_sensor_points(
     1000.0;
 
   const geometry_msgs::msg::Pose result_pose_msg = matrix4f_to_pose(ndt_result.pose);
-  std::vector<geometry_msgs::msg::Pose> transformation_array_msg;
+  std::vector<geometry_msgs::msg::Pose> transformation_msg_array;
   for (auto pose_matrix : ndt_result.transformation_array) {
     geometry_msgs::msg::Pose pose_ros = matrix4f_to_pose(pose_matrix);
-    transformation_array_msg.push_back(pose_ros);
+    transformation_msg_array.push_back(pose_ros);
   }
 
   // perform several validations
@@ -463,7 +463,7 @@ void NDTScanMatcher::callback_sensor_points(
   bool is_local_optimal_solution_oscillation = false;
   if (!is_ok_iteration_num) {
     is_local_optimal_solution_oscillation = validate_local_optimal_solution_oscillation(
-      transformation_array_msg, oscillation_threshold_, inversion_vector_threshold_);
+      transformation_msg_array, oscillation_threshold_, inversion_vector_threshold_);
   }
   bool is_ok_converged_param = validate_converged_param(
     ndt_result.transform_probability, ndt_result.nearest_voxel_transformation_likelihood);
@@ -486,7 +486,7 @@ void NDTScanMatcher::callback_sensor_points(
   iteration_num_pub_->publish(make_int32_stamped(sensor_ros_time, ndt_result.iteration_num));
   publish_tf(sensor_ros_time, result_pose_msg);
   publish_pose(sensor_ros_time, result_pose_msg, is_converged);
-  publish_marker(sensor_ros_time, transformation_array_msg);
+  publish_marker(sensor_ros_time, transformation_msg_array);
   publish_initial_to_result_distances(
     sensor_ros_time, result_pose_msg, interpolator.get_current_pose(), interpolator.get_old_pose(),
     interpolator.get_new_pose());
