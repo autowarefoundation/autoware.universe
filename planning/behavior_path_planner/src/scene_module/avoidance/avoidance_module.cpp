@@ -408,6 +408,43 @@ AvoidLineArray AvoidanceModule::calcShiftLines(
   auto shift_lines = trimShiftLine(merged_shift_lines, debug);
   DEBUG_PRINT("final shift point size = %lu", shift_lines.size());
 
+  auto max_dist_from_shoulder =
+    parameters_->road_shoulder_safety_margin + 0.5 * planner_data_->parameters.vehicle_width;
+
+  int ctr_sp = 0;
+  for (auto & sp : shift_lines) {
+    auto current_shift_point_lanes =
+      util::calcLaneAroundPose(planner_data_->route_handler, sp.start, 0.0, 0.0);
+
+    auto clamp_shift_point = [&, max_dist_from_shoulder](
+                               const geometry_msgs::msg::Point & shift_point, double & length) {
+      lanelet::BasicPoint3d shift_point_basic(shift_point.x, shift_point.y, shift_point.z);
+
+      // absolute
+      auto dist_to_left = lanelet::geometry::distance2d(
+        lanelet::utils::to2D(shift_point_basic),
+        lanelet::utils::to2D(current_shift_point_lanes.front().leftBound2d().basicLineString()));
+
+      auto max_shift_to_left = std::max(0.0, dist_to_left - max_dist_from_shoulder);
+
+      // absolute
+      auto dist_to_right = lanelet::geometry::distance2d(
+        lanelet::utils::to2D(shift_point_basic),
+        lanelet::utils::to2D(current_shift_point_lanes.front().rightBound2d().basicLineString()));
+
+      auto max_shift_to_right = std::max(0.0, dist_to_right - max_dist_from_shoulder);
+
+      length = std::clamp(length, -max_shift_to_right, max_shift_to_left);
+    };
+
+    clamp_shift_point(sp.start.position, sp.start_shift_length);
+    clamp_shift_point(sp.end.position, sp.end_shift_length);
+
+    ctr_sp++;
+  }
+
+  debug.merged = shift_lines;
+
   return shift_lines;
 }
 
