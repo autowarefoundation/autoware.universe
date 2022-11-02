@@ -18,82 +18,110 @@
 #include <array>
 #include <stdexcept>
 #include <vector>
+#include <algorithm>
 
 namespace interpolation_utils
 {
-inline bool isIncreasing(const std::vector<double> & x)
+
+// Strictly monotonic increasing
+inline bool isIncreasing(const std::vector<double> &x)
 {
-  if (x.empty()) {
+  if (x.empty())
+  {
     throw std::invalid_argument("Points is empty.");
   }
 
-  for (size_t i = 0; i < x.size() - 1; ++i) {
-    if (x.at(i) >= x.at(i + 1)) {
-      return false;
-    }
-  }
+  // x(i) <= x(i+1) condition check
+  auto const &is_increasing_it = std::adjacent_find(x.begin(), x.end(), std::greater_equal<>());
 
-  return true;
+  return is_increasing_it == x.cend();
 }
 
-inline bool isNotDecreasing(const std::vector<double> & x)
+// Strictly increasing and monotonic
+inline bool isNotDecreasing(const std::vector<double> &x)
 {
-  if (x.empty()) {
+  if (x.empty())
+  {
     throw std::invalid_argument("Points is empty.");
   }
 
-  for (size_t i = 0; i < x.size() - 1; ++i) {
-    if (x.at(i) > x.at(i + 1)) {
-      return false;
-    }
+  // x(i) < x(i+1) condition check ( x(i) == x(i+1) is allowed)
+  auto const &is_strictly_increasing_it = std::adjacent_find(x.begin(), x.end(), std::greater<>());
+
+  return is_strictly_increasing_it == x.cend();
+}
+
+inline bool isStrictlyMonotonic(const std::vector<double> &x)
+{
+  if (x.empty())
+  {
+    throw std::invalid_argument("Points is empty.");
   }
 
-  return true;
+  // x(i) <= or >= x(i+1) condition check
+  auto const &is_strictly_increasing_it = std::adjacent_find(x.begin(), x.end(), std::greater_equal<>());
+  auto const &is_strictly_decreasing_it = std::adjacent_find(x.begin(), x.end(), std::less_equal<>());
+
+  // if cannot find <= or >= conditions, the vector is strictly monotonic.
+  bool const is_strictly_increasing = is_strictly_increasing_it == x.cend();
+  bool const is_strictly_decreasing = is_strictly_decreasing_it == x.cend();
+
+  bool const is_monotonic = (is_strictly_increasing && !is_strictly_decreasing) ||
+                            (!is_strictly_increasing && is_strictly_decreasing);
+
+  return is_monotonic;
 }
 
 inline void validateKeys(
-  const std::vector<double> & base_keys, const std::vector<double> & query_keys)
+  const std::vector<double> &base_keys, const std::vector<double> &query_keys)
 {
   // when vectors are empty
-  if (base_keys.empty() || query_keys.empty()) {
+  if (base_keys.empty() || query_keys.empty())
+  {
     throw std::invalid_argument("Points is empty.");
   }
 
   // when size of vectors are less than 2
-  if (base_keys.size() < 2) {
+  if (base_keys.size() < 2)
+  {
     throw std::invalid_argument(
       "The size of points is less than 2. base_keys.size() = " + std::to_string(base_keys.size()));
   }
 
   // when indices are not sorted
-  if (!isIncreasing(base_keys) || !isNotDecreasing(query_keys)) {
+  if (!isIncreasing(base_keys) || !isNotDecreasing(query_keys))
+  {
     throw std::invalid_argument("Either base_keys or query_keys is not sorted.");
   }
 
   // when query_keys is out of base_keys (This function does not allow exterior division.)
-  if (query_keys.front() < base_keys.front() || base_keys.back() < query_keys.back()) {
+  if (query_keys.front() < base_keys.front() || base_keys.back() < query_keys.back())
+  {
     throw std::invalid_argument("query_keys is out of base_keys");
   }
 }
 
-template <class T>
+template<class T>
 void validateKeysAndValues(
-  const std::vector<double> & base_keys, const std::vector<T> & base_values)
+  const std::vector<double> &base_keys, const std::vector<T> &base_values)
 {
   // when vectors are empty
-  if (base_keys.empty() || base_values.empty()) {
+  if (base_keys.empty() || base_values.empty())
+  {
     throw std::invalid_argument("Points is empty.");
   }
 
   // when size of vectors are less than 2
-  if (base_keys.size() < 2 || base_values.size() < 2) {
+  if (base_keys.size() < 2 || base_values.size() < 2)
+  {
     throw std::invalid_argument(
       "The size of points is less than 2. base_keys.size() = " + std::to_string(base_keys.size()) +
       ", base_values.size() = " + std::to_string(base_values.size()));
   }
 
   // when sizes of indices and values are not same
-  if (base_keys.size() != base_values.size()) {
+  if (base_keys.size() != base_values.size())
+  {
     throw std::invalid_argument("The size of base_keys and base_values are not the same.");
   }
 }

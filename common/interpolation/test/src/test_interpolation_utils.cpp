@@ -58,6 +58,25 @@ TEST(interpolation_utils, isNotDecreasing)
   EXPECT_EQ(interpolation_utils::isNotDecreasing(decreasing_vec), false);
 }
 
+TEST(interpolation_utils, isStrictlyMonotonic)
+{
+  // strictly monotonic increasing
+  const std::vector<double> strictly_increasing_vec{0.0, 1.5, 3.0, 4.5, 6.0};
+  EXPECT_EQ(interpolation_utils::isStrictlyMonotonic(strictly_increasing_vec), true);
+
+  // strictly monotonic decreasing
+  const std::vector<double> strictly_decreasing_vec{6.0, 4.5, 3.0, 1.5, 0.0};
+  EXPECT_EQ(interpolation_utils::isStrictlyMonotonic(strictly_decreasing_vec), true);
+
+  // not strictly monotonic increasing
+  const std::vector<double> not_strictly_increasing_vec{0.0, 1.5, 1.5, 4.5, 6.0};
+  EXPECT_EQ(interpolation_utils::isStrictlyMonotonic(not_strictly_increasing_vec), false);
+
+  // strictly monotonic decreasing
+  const std::vector<double> not_strictly_decreasing_vec{6.0, 4.5, 1.5, 1.5, 0.0};
+  EXPECT_EQ(interpolation_utils::isStrictlyMonotonic(not_strictly_decreasing_vec), false);
+}
+
 TEST(interpolation_utils, validateKeys)
 {
   using interpolation_utils::validateKeys;
