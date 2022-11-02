@@ -105,10 +105,10 @@ double lerp(
 
   if ((query_key < base_keys.front() || query_key > base_keys.back()) && extrapolate_end_points)
   {
-    double extrapolated_key{};
-    lerp_extrapolate(base_keys, base_values, query_key, extrapolated_key);
+    double extrapolated_value{};
+    lerp_extrapolate(base_keys, base_values, query_key, extrapolated_value);
 
-    return extrapolated_key;
+    return extrapolated_value;
   }
 
   // Binary search the minimum element in the base_key in such way that : query_key <= base_key[i]
