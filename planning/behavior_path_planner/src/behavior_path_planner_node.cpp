@@ -650,16 +650,18 @@ void BehaviorPathPlannerNode::run()
   }
 
   // for debug
+  {
+    const auto debug_messages_data_ptr = bt_manager_->get_all_debug_data();
+    const auto avoidance_debug_message = debug_messages_data_ptr->get_avoidance_debug_msg_array();
+    if (avoidance_debug_message) {
+      debug_avoidance_msg_array_publisher_->publish(*avoidance_debug_message);
+    }
 
-  const auto debug_data = bt_manager_->get_all_debug_data();
-  const auto avoidance_debug = debug_data->get_avoidance_debug_msg_array();
-  if (avoidance_debug) {
-    debug_avoidance_msg_array_publisher_->publish(*avoidance_debug);
-  }
-
-  const auto lc_debug = debug_data->get_lane_change_debug_msg_array();
-  if (lc_debug) {
-    debug_lane_change_msg_array_publisher_->publish(*lc_debug);
+    const auto lane_change_debug_message =
+      debug_messages_data_ptr->get_lane_change_debug_msg_array();
+    if (lane_change_debug_message) {
+      debug_lane_change_msg_array_publisher_->publish(*lane_change_debug_message);
+    }
   }
 
   if (planner_data->parameters.visualize_drivable_area_for_shared_linestrings_lanelet) {
