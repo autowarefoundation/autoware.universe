@@ -153,13 +153,18 @@ BT::NodeStatus SideShiftModule::updateState()
     const auto & current_lanes = util::getCurrentLanes(planner_data_);
     const auto & current_pose = planner_data_->self_pose->pose;
     const auto & inserted_shift_line_start_pose = inserted_shift_line_.start;
+    const auto & inserted_shift_line_end_pose = inserted_shift_line_.end;
     const double self_to_shift_line_start_arc_length =
       behavior_path_planner::util::getSignedDistance(
         current_pose, inserted_shift_line_start_pose, current_lanes);
+    const double self_to_shift_line_end_arc_length = behavior_path_planner::util::getSignedDistance(
+      current_pose, inserted_shift_line_end_pose, current_lanes);
     if (self_to_shift_line_start_arc_length >= 0) {
       shift_status_ = SideShiftStatus::BEFORE_SHIFT;
-    } else {
+    } else if (self_to_shift_line_start_arc_length < 0 && self_to_shift_line_end_arc_length > 0) {
       shift_status_ = SideShiftStatus::SHIFTING;
+    } else {
+      shift_status_ = SideShiftStatus::AFTER_SHIFT;
     }
     current_state_ = BT::NodeStatus::RUNNING;
   }
@@ -226,7 +231,9 @@ void SideShiftModule::replaceShiftLine()
 BehaviorModuleOutput SideShiftModule::plan()
 {
   // Replace shift line
-  if (lateral_offset_change_request_ && (shift_status_ == SideShiftStatus::BEFORE_SHIFT)) {
+  if (
+    lateral_offset_change_request_ && ((shift_status_ == SideShiftStatus::BEFORE_SHIFT) ||
+                                       (shift_status_ == SideShiftStatus::AFTER_SHIFT))) {
     replaceShiftLine();
   } else if (shift_status_ != SideShiftStatus::BEFORE_SHIFT) {
     RCLCPP_DEBUG(getLogger(), "ego is shifting");
