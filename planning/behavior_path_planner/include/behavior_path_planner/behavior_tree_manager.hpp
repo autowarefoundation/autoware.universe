@@ -62,7 +62,7 @@ private:
   std::vector<std::shared_ptr<SceneModuleStatus>> modules_status_;
   rclcpp::Logger logger_;
   rclcpp::Clock clock_;
-  std::shared_ptr<SceneModuleVisitor> scene_module_visior_ptr_;
+  std::shared_ptr<SceneModuleVisitor> scene_module_visitor_ptr_;
 
   BT::BehaviorTreeFactory bt_factory_;
   BT::Tree bt_tree_;
