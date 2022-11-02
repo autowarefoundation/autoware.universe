@@ -78,6 +78,44 @@ inline bool isLargeVehicleLabel(const uint8_t label)
   return label == Label::BUS || label == Label::TRUCK || label == Label::TRAILER;
 }
 
+/**
+ * @brief Get the Nearest Corner or Surface from detected object
+ *
+ * @param object
+ * @return int
+ */
+int GetNearestCornerSurface(
+  const autoware_auto_perception_msgs::msg::DetectedObject & object, rclcpp::Time & time,
+  tf2::BufferCore & tf_buffer)
+{
+  // only work for BBOX shape
+  if (object.shape.type != autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+    return false;
+  }
+
+  double x, y, yaw, width, length;
+  x = object.kinematics.pose_with_covariance.pose.position.x;
+  y = object.kinematics.pose_with_covariance.pose.position.y;
+  yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
+  width = object.shape.dimensions.x;
+  length = object.shape.dimensions.y;
+
+  // get local vehicle pose
+  geometry_msgs::msg::TransformStamped transform;
+  double x0, y0, xl, yl;
+  transform = tf_buffer.lookupTransform("map", "base_link", time);
+
+  x0 = transform.transform.translation.x;
+  y0 = transform.transform.translation.y;
+
+  // localize to object coordinate
+  // R.T (X-X0)
+  xl = std::cos(yaw) * (x - x0) + std::sin(yaw) * (y - y0);
+  yl = -std::sin(yaw) * (x - x0) + std::cos(yaw) * (y - y0);
+
+  return 0;  // 0 to 7 + 1(null) value
+}
+
 }  // namespace utils
 
 #endif  // MULTI_OBJECT_TRACKER__UTILS__UTILS_HPP_
