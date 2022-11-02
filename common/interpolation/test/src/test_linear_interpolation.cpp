@@ -36,7 +36,8 @@ TEST(linear_interpolation, lerp_vector)
     const std::vector<double> ans = base_values;
 
     const auto query_values = interpolation::lerp(base_keys, base_values, query_keys);
-    for (size_t i = 0; i < query_values.size(); ++i) {
+    for (size_t i = 0; i < query_values.size(); ++i)
+    {
       EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
     }
   }
@@ -48,7 +49,8 @@ TEST(linear_interpolation, lerp_vector)
     const std::vector<double> ans{0.0, 1.05, 2.85, 6.0};
 
     const auto query_values = interpolation::lerp(base_keys, base_values, query_keys);
-    for (size_t i = 0; i < query_values.size(); ++i) {
+    for (size_t i = 0; i < query_values.size(); ++i)
+    {
       EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
     }
   }
@@ -60,7 +62,8 @@ TEST(linear_interpolation, lerp_vector)
     const std::vector<double> ans = base_values;
 
     const auto query_values = interpolation::lerp(base_keys, base_values, query_keys);
-    for (size_t i = 0; i < query_values.size(); ++i) {
+    for (size_t i = 0; i < query_values.size(); ++i)
+    {
       EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
     }
   }
@@ -72,7 +75,8 @@ TEST(linear_interpolation, lerp_vector)
     const std::vector<double> ans{-0.18, 1.12, 1.4};
 
     const auto query_values = interpolation::lerp(base_keys, base_values, query_keys);
-    for (size_t i = 0; i < query_values.size(); ++i) {
+    for (size_t i = 0; i < query_values.size(); ++i)
+    {
       EXPECT_NEAR(query_values.at(i), ans.at(i), epsilon);
     }
   }
@@ -86,9 +90,12 @@ TEST(linear_interpolation, lerp_scalar_query)
     const std::vector<double> query_keys{0.0, 8.0, 18.0};
     const std::vector<double> ans{-0.18, 1.12, 1.4};
 
-    for (size_t i = 0; i < query_keys.size(); ++i) {
+    for (size_t i = 0; i < query_keys.size(); ++i)
+    {
       const auto query_value = interpolation::lerp(base_keys, base_values, query_keys.at(i));
       EXPECT_NEAR(query_value, ans.at(i), epsilon);
     }
   }
 }
+
+

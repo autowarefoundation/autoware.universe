@@ -22,6 +22,13 @@
 
 namespace interpolation_utils
 {
+constexpr double EPS = std::numeric_limits<double>::epsilon();
+
+template<class T, typename std::enable_if_t<std::is_floating_point_v<T>, bool> * = nullptr>
+bool isEqual(T a, T b)
+{
+  return abs(a - b) < std::numeric_limits<T>::epsilon();
+}
 
 // Strictly monotonic increasing
 inline bool isIncreasing(const std::vector<double> &x)
@@ -73,7 +80,9 @@ inline bool isStrictlyMonotonic(const std::vector<double> &x)
 }
 
 inline void validateKeys(
-  const std::vector<double> &base_keys, const std::vector<double> &query_keys)
+  const std::vector<double> &base_keys,
+  const std::vector<double> &query_keys,
+  const bool &extrapolate_end_points = false)
 {
   // when vectors are empty
   if (base_keys.empty() || query_keys.empty())
@@ -94,8 +103,8 @@ inline void validateKeys(
     throw std::invalid_argument("Either base_keys or query_keys is not sorted.");
   }
 
-  // when query_keys is out of base_keys (This function does not allow exterior division.)
-  if (query_keys.front() < base_keys.front() || base_keys.back() < query_keys.back())
+  // When query_keys is out of base_keys (This function does not allow extrapolation when extrapolation boolean is false  // ).
+  if ((query_keys.front() < base_keys.front() || base_keys.back() < query_keys.back()) && !extrapolate_end_points)
   {
     throw std::invalid_argument("query_keys is out of base_keys");
   }
