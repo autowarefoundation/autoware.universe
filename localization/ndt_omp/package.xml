@@ -8,7 +8,7 @@
   <maintainer email="kento.yabuuchi.2@tier4.jp">Kento Yabuuchi</maintainer>
   <maintainer email="koji.minoda@tier4.jp">Koji Minoda</maintainer>
   <author email="koide@aisl.cs.tut.ac.jp">koide</author>
-  <license>Apache License 2.0</license>
+  <license>Apache License 2.0</license> <!-- The original package is BSD-2 License -->
 
   <buildtool_depend condition="$ROS_VERSION == 1">catkin</buildtool_depend>
   <buildtool_depend condition="$ROS_VERSION == 2">ament_cmake_auto</buildtool_depend>
