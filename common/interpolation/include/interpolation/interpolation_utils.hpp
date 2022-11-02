@@ -35,7 +35,7 @@ inline bool isIncreasing(const std::vector<double> &x)
 {
   if (x.empty())
   {
-    throw std::invalid_argument("Points is empty.");
+    throw std::invalid_argument("The vector x is empty.");
   }
 
   // x(i) <= x(i+1) condition check
@@ -49,7 +49,7 @@ inline bool isNotDecreasing(const std::vector<double> &x)
 {
   if (x.empty())
   {
-    throw std::invalid_argument("Points is empty.");
+    throw std::invalid_argument("The vector x is empty.");
   }
 
   // x(i) < x(i+1) condition check ( x(i) == x(i+1) is allowed)
@@ -62,7 +62,7 @@ inline bool isStrictlyMonotonic(const std::vector<double> &x)
 {
   if (x.empty())
   {
-    throw std::invalid_argument("Points is empty.");
+    throw std::invalid_argument("The vector x is empty.");
   }
 
   // x(i) <= or >= x(i+1) condition check
@@ -87,7 +87,7 @@ inline void validateKeys(
   // when vectors are empty
   if (base_keys.empty() || query_keys.empty())
   {
-    throw std::invalid_argument("Points is empty.");
+    throw std::invalid_argument("Either the base_keys or the query_keys is empty.");
   }
 
   // when size of vectors are less than 2
@@ -106,7 +106,7 @@ inline void validateKeys(
   // When query_keys is out of base_keys (This function does not allow extrapolation when extrapolation boolean is false  // ).
   if ((query_keys.front() < base_keys.front() || base_keys.back() < query_keys.back()) && !extrapolate_end_points)
   {
-    throw std::invalid_argument("query_keys is out of base_keys");
+    throw std::invalid_argument("The query_keys is out of the range of base_keys, consider to extrapolate option");
   }
 }
 
@@ -117,7 +117,7 @@ void validateKeysAndValues(
   // when vectors are empty
   if (base_keys.empty() || base_values.empty())
   {
-    throw std::invalid_argument("Points is empty.");
+    throw std::invalid_argument("Either the base_keys or the query_keys is empty");
   }
 
   // when size of vectors are less than 2
