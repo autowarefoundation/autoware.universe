@@ -523,11 +523,25 @@ PidLongitudinalController::ControlState PidLongitudinalController::updateControl
   const bool8_t emergency_condition = m_enable_overshoot_emergency &&
                                       stop_dist < -p.emergency_state_overshoot_stop_dist &&
                                       current_vel_cmd < vel_epsilon;
+  const bool8_t has_nonzero_target_vel = std::abs(current_vel_cmd) > 1.0e-5;
+
+  const auto print_and_return = [this, current_control_state](const auto s) {
+    if (s != current_control_state) {
+      RCLCPP_DEBUG(
+        node_->get_logger(), "%s -> %s", toStr(current_control_state).c_str(), toStr(s).c_str());
+    }
+    return s;
+  };
+
+  const auto info_throttle = [this](const auto & s) {
+    RCLCPP_INFO_SKIPFIRST_THROTTLE(node_->get_logger(), *node_->get_clock(), 3000, "%s", s);
+  };
 
   // transit state
+  // in DRIVE state
   if (current_control_state == ControlState::DRIVE) {
     if (emergency_condition) {
-      return ControlState::EMERGENCY;
+      return print_and_return(ControlState::EMERGENCY);
     }
 
     if (m_enable_smooth_stop) {
@@ -539,20 +553,24 @@ PidLongitudinalController::ControlState PidLongitudinalController::updateControl
           control_data.stop_dist -
           0.5 * (pred_vel_in_target + current_vel) * m_delay_compensation_time;
         m_smooth_stop.init(pred_vel_in_target, pred_stop_dist);
-        return ControlState::STOPPING;
+        return print_and_return(ControlState::STOPPING);
       }
     } else {
       if (stopped_condition && !departure_condition_from_stopped) {
-        return ControlState::STOPPED;
+        return print_and_return(ControlState::STOPPED);
       }
     }
-  } else if (current_control_state == ControlState::STOPPING) {
+    return print_and_return(ControlState::DRIVE);
+  }
+
+  // in STOPPING state
+  if (current_control_state == ControlState::STOPPING) {
     if (emergency_condition) {
-      return ControlState::EMERGENCY;
+      return print_and_return(ControlState::EMERGENCY);
     }
 
     if (stopped_condition) {
-      return ControlState::STOPPED;
+      return print_and_return(ControlState::STOPPED);
     }
 
     if (departure_condition_from_stopping) {
@@ -560,24 +578,45 @@ PidLongitudinalController::ControlState PidLongitudinalController::updateControl
       m_lpf_vel_error->reset(0.0);
       // prevent the car from taking a long time to start to move
       m_prev_ctrl_cmd.acc = std::max(0.0, m_prev_ctrl_cmd.acc);
-      return ControlState::DRIVE;
+      return print_and_return(ControlState::DRIVE);
     }
-  } else if (current_control_state == ControlState::STOPPED) {
-    if (keep_stopped_condition) return ControlState::STOPPED;
+    return print_and_return(ControlState::STOPPING);
+  }
+
+  // in STOPPED state
+  if (current_control_state == ControlState::STOPPED) {
+    // -- debug print --
+    if (has_nonzero_target_vel && !departure_condition_from_stopped) {
+      info_throttle("target speed > 0, but departure condition is not met. Keep STOPPED.");
+    }
+    if (has_nonzero_target_vel && keep_stopped_condition) {
+      info_throttle("target speed > 0, but keep stop condition is met. Keep STOPPED.");
+    }
+    // ---------------
+
+    if (keep_stopped_condition) {
+      return print_and_return(ControlState::STOPPED);
+    }
     if (departure_condition_from_stopped) {
       m_pid_vel.reset();
       m_lpf_vel_error->reset(0.0);
       // prevent the car from taking a long time to start to move
       m_prev_ctrl_cmd.acc = std::max(0.0, m_prev_ctrl_cmd.acc);
-      return ControlState::DRIVE;
+      return print_and_return(ControlState::DRIVE);
     }
-  } else if (m_control_state == ControlState::EMERGENCY) {
-    if (stopped_condition && !emergency_condition) {
-      return ControlState::STOPPED;
-    }
+
+    return print_and_return(ControlState::STOPPED);
   }
 
-  return current_control_state;
+  // in EMERGENCY state
+  if (m_control_state == ControlState::EMERGENCY) {
+    if (stopped_condition && !emergency_condition) {
+      return print_and_return(ControlState::STOPPED);
+    }
+    return print_and_return(ControlState::EMERGENCY);
+  }
+
+  return print_and_return(current_control_state);
 }
 
 PidLongitudinalController::Motion PidLongitudinalController::calcCtrlCmd(

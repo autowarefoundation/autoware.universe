@@ -107,6 +107,14 @@ private:
   // control state
   enum class ControlState { DRIVE = 0, STOPPING, STOPPED, EMERGENCY };
   ControlState m_control_state{ControlState::STOPPED};
+  std::string toStr(const ControlState s)
+  {
+    if (s == ControlState::DRIVE) return "DRIVE";
+    if (s == ControlState::STOPPING) return "STOPPING";
+    if (s == ControlState::STOPPED) return "STOPPED";
+    if (s == ControlState::EMERGENCY) return "EMERGENCY";
+    return "UNDEFINED";
+  };
 
   // control period
   float64_t m_longitudinal_ctrl_period;
