@@ -115,7 +115,8 @@ public:
 
 protected:
   void computeCollisionIndexes(
-    int theta_index, std::vector<IndexXY> & indexes, std::vector<IndexXY> & vertex_indexes_2d) const;
+    int theta_index, std::vector<IndexXY> & indexes,
+    std::vector<IndexXY> & vertex_indexes_2d) const;
   bool detectCollision(const IndexXYT & base_index) const;
   inline bool isOutOfRange(const IndexXYT & index) const
   {

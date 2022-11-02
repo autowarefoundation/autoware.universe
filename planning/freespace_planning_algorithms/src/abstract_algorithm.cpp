@@ -129,7 +129,8 @@ void AbstractPlanningAlgorithm::setMap(const nav_msgs::msg::OccupancyGrid & cost
 }
 
 void AbstractPlanningAlgorithm::computeCollisionIndexes(
-  int theta_index, std::vector<IndexXY> & indexes_2d, std::vector<IndexXY> & vertex_indexes_2d) const
+  int theta_index, std::vector<IndexXY> & indexes_2d,
+  std::vector<IndexXY> & vertex_indexes_2d) const
 {
   IndexXYT base_index{0, 0, theta_index};
   const VehicleShape & vehicle_shape = collision_vehicle_shape_;
