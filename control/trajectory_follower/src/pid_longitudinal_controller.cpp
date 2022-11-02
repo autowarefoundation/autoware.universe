@@ -527,14 +527,15 @@ PidLongitudinalController::ControlState PidLongitudinalController::updateControl
 
   const auto print_and_return = [this, current_control_state](const auto s) {
     if (s != current_control_state) {
-      RCLCPP_DEBUG(
-        node_->get_logger(), "%s -> %s", toStr(current_control_state).c_str(), toStr(s).c_str());
+      RCLCPP_DEBUG_STREAM(
+        node_->get_logger(),
+        "controller state changed: " << toStr(current_control_state) << " -> " << toStr(s));
     }
     return s;
   };
 
   const auto info_throttle = [this](const auto & s) {
-    RCLCPP_INFO_SKIPFIRST_THROTTLE(node_->get_logger(), *node_->get_clock(), 3000, "%s", s);
+    RCLCPP_INFO_SKIPFIRST_THROTTLE(node_->get_logger(), *node_->get_clock(), 5000, "%s", s);
   };
 
   // transit state
