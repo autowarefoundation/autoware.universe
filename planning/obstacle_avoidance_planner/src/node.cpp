@@ -233,7 +233,7 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
   debug_markers_pub_ =
     create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/marker", durable_qos);
   debug_wall_markers_pub_ =
-    create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/wall_marker", durable_qos);
+    create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/virtual_wall", durable_qos);
   debug_clearance_map_pub_ = create_publisher<OccupancyGrid>("~/debug/clearance_map", durable_qos);
   debug_object_clearance_map_pub_ =
     create_publisher<OccupancyGrid>("~/debug/object_clearance_map", durable_qos);
@@ -1261,6 +1261,14 @@ void ObstacleAvoidancePlanner::insertZeroVelocityOutsideDrivableArea(
     if (is_outside) {
       traj_points[i].longitudinal_velocity_mps = 0.0;
       debug_data_.stop_pose_by_drivable_area = traj_points[i].pose;
+
+      // NOTE: traj_points does not have valid z for efficient calculation of trajectory
+      if (!planner_data.path.points.empty()) {
+        const size_t path_idx =
+          motion_utils::findNearestIndex(planner_data.path.points, traj_points[i].pose.position);
+        debug_data_.stop_pose_by_drivable_area->position.z =
+          planner_data.path.points.at(path_idx).pose.position.z;
+      }
       break;
     }
   }
