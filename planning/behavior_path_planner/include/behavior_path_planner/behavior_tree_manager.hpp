@@ -50,7 +50,7 @@ public:
 
   BehaviorModuleOutput run(const std::shared_ptr<PlannerData> & data);
   std::vector<std::shared_ptr<SceneModuleStatus>> getModulesStatus();
-  std::shared_ptr<BehaviorTreeVisitorInterface> get_all_debug_data();
+  std::shared_ptr<SceneModuleVisitor> get_all_debug_data();
   void get_debug_msg_array();
 
   AvoidanceDebugMsgArray getAvoidanceDebugMsgArray();
@@ -62,7 +62,7 @@ private:
   std::vector<std::shared_ptr<SceneModuleStatus>> modules_status_;
   rclcpp::Logger logger_;
   rclcpp::Clock clock_;
-  std::shared_ptr<BehaviorTreeVisitorInterface> bt_visitor_interface_;
+  std::shared_ptr<SceneModuleVisitor> scene_module_visior_ptr_;
 
   BT::BehaviorTreeFactory bt_factory_;
   BT::Tree bt_tree_;

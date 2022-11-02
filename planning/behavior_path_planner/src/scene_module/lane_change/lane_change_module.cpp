@@ -611,7 +611,7 @@ void LaneChangeModule::accept_visitor(const std::shared_ptr<SceneModuleVisitor> 
   }
 }
 
-void DebugMessageReader::visit_lane_change_module(const LaneChangeModule * module) const
+void SceneModuleVisitor::visit_lane_change_module(const LaneChangeModule * module) const
 {
   lane_change_visitor_ = module->get_debug_msg_array();
 }

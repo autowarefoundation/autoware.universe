@@ -2739,7 +2739,7 @@ void AvoidanceModule::accept_visitor(const std::shared_ptr<SceneModuleVisitor> &
   }
 }
 
-void DebugMessageReader::visit_avoidance_module(const AvoidanceModule * module) const
+void SceneModuleVisitor::visit_avoidance_module(const AvoidanceModule * module) const
 {
   avoidance_visitor_ = module->get_debug_msg_array();
 }

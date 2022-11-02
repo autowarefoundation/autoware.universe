@@ -18,24 +18,23 @@
 
 namespace behavior_path_planner
 {
-
-void BehaviorTreeVisitorInterface::visit_lane_change_module(
-  [[maybe_unused]] const LaneChangeModule * module) const
+std::shared_ptr<AvoidanceDebugMsgArray> SceneModuleVisitor::get_avoidance_debug_msg_array() const
 {
+  return avoidance_visitor_;
 }
 
-void BehaviorTreeVisitorInterface::visit_avoidance_module(
-  [[maybe_unused]] const AvoidanceModule * module) const
+std::shared_ptr<LaneChangeDebugMsgArray> SceneModuleVisitor::get_lane_change_debug_msg_array() const
 {
+  return lane_change_visitor_;
 }
 
-void BehaviorTreeVisitorInterface::set_avoidance_debug_ptr(
+void SceneModuleVisitor::set_avoidance_debug_ptr(
   const std::shared_ptr<AvoidanceDebugMsgArray> & debug_msg_ptr)
 {
   avoidance_visitor_ = debug_msg_ptr;
 }
 
-void BehaviorTreeVisitorInterface::set_lane_change_debug_ptr(
+void SceneModuleVisitor::set_lane_change_debug_ptr(
   const std::shared_ptr<LaneChangeDebugMsgArray> & debug_msg_ptr)
 {
   lane_change_visitor_ = debug_msg_ptr;
