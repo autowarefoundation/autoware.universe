@@ -57,13 +57,6 @@ struct SideShiftParameters
   double drivable_area_left_bound_offset;
 };
 
-struct SideShiftDebugData
-{
-  std::shared_ptr<PathShifter> path_shifter;
-  ShiftLineArray shift_points;
-  double current_request;
-};
-
 class SideShiftModule : public SceneModuleInterface
 {
 public:
@@ -139,9 +132,6 @@ private:
 
   mutable rclcpp::Time last_requested_shift_change_time_{clock_->now()};
 
-  // debug
-  mutable SideShiftDebugData debug_data_;
-  void setDebugMarkersVisualization() const;
 };
 }  // namespace behavior_path_planner
 

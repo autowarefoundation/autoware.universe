@@ -14,7 +14,6 @@
 
 #include "behavior_path_planner/scene_module/side_shift/side_shift_module.hpp"
 
-#include "behavior_path_planner/debug_utilities.hpp"
 #include "behavior_path_planner/path_utilities.hpp"
 #include "behavior_path_planner/scene_module/side_shift/util.hpp"
 #include "behavior_path_planner/utilities.hpp"
@@ -46,7 +45,6 @@ SideShiftModule::SideShiftModule(
 void SideShiftModule::initVariables()
 {
   reference_path_ = std::make_shared<PathWithLaneId>();
-  debug_data_.path_shifter = nullptr;
   start_pose_reset_request_ = false;
   requested_lateral_offset_ = 0.0;
   inserted_lateral_offset_ = 0.0;
@@ -254,8 +252,6 @@ BehaviorModuleOutput SideShiftModule::plan()
   output.path = std::make_shared<PathWithLaneId>(shifted_path.path);
 
   prev_output_ = shifted_path;
-  debug_data_.path_shifter = std::make_shared<PathShifter>(path_shifter_);
-  setDebugMarkersVisualization();
 
   return output;
 }
@@ -442,24 +438,4 @@ PathWithLaneId SideShiftModule::calcCenterLinePath(
   return centerline_path;
 }
 
-void SideShiftModule::setDebugMarkersVisualization() const
-{
-  using marker_utils::createShiftLineMarkerArray;
-
-  debug_marker_.markers.clear();
-
-  const auto add = [this](const MarkerArray & added) {
-    tier4_autoware_utils::appendMarkerArray(added, &debug_marker_);
-  };
-
-  const auto addShiftPoint = [this, add](const auto & ns, auto r, auto g, auto b, double w = 0.1) {
-    add(createShiftLineMarkerArray(
-      debug_data_.path_shifter->getShiftLines(), debug_data_.path_shifter->getBaseOffset(), ns, r,
-      g, b, w));
-  };
-
-  if (debug_data_.path_shifter) {
-    addShiftPoint("side_shift_shift_points", 0.7, 0.7, 0.7, 0.4);
-  }
-}
 }  // namespace behavior_path_planner

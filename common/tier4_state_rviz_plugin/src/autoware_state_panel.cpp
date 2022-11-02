@@ -100,20 +100,11 @@ AutowareStatePanel::AutowareStatePanel(QWidget * parent) : rviz_common::Panel(pa
   // Emergency Button
   emergency_button_ptr_ = new QPushButton("Set Emergency");
   connect(emergency_button_ptr_, SIGNAL(clicked()), this, SLOT(onClickEmergencyButton()));
-  // for side shift
-  lateral_offset_slider_ptr_ = new QSlider(Qt::Horizontal, this);
-  lateral_offset_slider_ptr_->setRange(-8.0, 8.0);
-  lateral_offset_slider_ptr_->setValue(0.0);
-  pub_velocity_limit_input_->setSingleStep(1.0);
-  lateral_offset_value_ptr_ = new QLabel();
-  connect(
-    lateral_offset_slider_ptr_, SIGNAL(valueChanged(int)), this, SLOT(onClickLateralOffset()));
 
   // Layout
   auto * v_layout = new QVBoxLayout;
   auto * gate_mode_path_change_approval_layout = new QHBoxLayout;
   auto * velocity_limit_layout = new QHBoxLayout();
-  auto * lateral_offset_slider_layout = new QHBoxLayout;
   v_layout->addLayout(gate_layout);
   v_layout->addLayout(selector_layout);
   v_layout->addLayout(state_layout);
@@ -129,11 +120,6 @@ AutowareStatePanel::AutowareStatePanel(QWidget * parent) : rviz_common::Panel(pa
   velocity_limit_layout->addWidget(new QLabel("  [km/h]"));
   velocity_limit_layout->addWidget(emergency_button_ptr_);
   v_layout->addLayout(velocity_limit_layout);
-  lateral_offset_slider_layout->addWidget(new QLabel("Side Shift "));
-  lateral_offset_slider_layout->addWidget(lateral_offset_slider_ptr_);
-  lateral_offset_slider_layout->addWidget(lateral_offset_value_ptr_);
-  lateral_offset_slider_layout->addWidget(new QLabel("  [m]"));
-  v_layout->addLayout(lateral_offset_slider_layout);
   setLayout(v_layout);
 }
 
@@ -179,21 +165,6 @@ void AutowareStatePanel::onInitialize()
     "path_change_approval",
     rclcpp::QoS{1}.transient_local());
 
-  pub_lateral_offset_ = raw_node_->create_publisher<LateralOffset>(
-    "/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/input/"
-    "lateral_offset",
-    rclcpp::QoS(1));
-}
-
-void AutowareStatePanel::onClickLateralOffset()
-{
-  const double shift_step = -0.5;
-  lateral_offset_ = lateral_offset_slider_ptr_->sliderPosition() * shift_step;
-  const QString lateral_offset_string = QString::fromStdString(std::to_string(lateral_offset_));
-  lateral_offset_value_ptr_->setText(lateral_offset_string);
-  pub_lateral_offset_->publish(tier4_planning_msgs::build<LateralOffset>()
-                                 .stamp(raw_node_->now())
-                                 .lateral_offset(lateral_offset_));
 }
 
 void AutowareStatePanel::onGateMode(const tier4_control_msgs::msg::GateMode::ConstSharedPtr msg)
