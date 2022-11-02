@@ -429,7 +429,8 @@ void NDTScanMatcher::callback_sensor_points(
 
   // perform ndt scan matching
   key_value_stdmap_["state"] = "Aligning";
-  const Eigen::Matrix4f initial_pose_matrix = pose_to_matrix4f(interpolator.get_current_pose().pose.pose);
+  const Eigen::Matrix4f initial_pose_matrix =
+    pose_to_matrix4f(interpolator.get_current_pose().pose.pose);
   const pclomp::NdtResult ndt_result = ndt_ptr_->executeScanMatching(initial_pose_matrix);
   key_value_stdmap_["state"] = "Sleeping";
 
@@ -546,15 +547,15 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_using_monte_
     const pclomp::NdtResult ndt_result = ndt_ptr_->executeScanMatching(initial_pose_matrix);
 
     Particle particle(
-      initial_pose, matrix4f_to_pose(ndt_result.pose), ndt_result.transform_probability, ndt_result.iteration_num);
+      initial_pose, matrix4f_to_pose(ndt_result.pose), ndt_result.transform_probability,
+      ndt_result.iteration_num);
     particle_array.push_back(particle);
     const auto marker_array = make_debug_markers(
       this->now(), map_frame_, tier4_autoware_utils::createMarkerScale(0.3, 0.1, 0.1), particle, i);
     ndt_monte_carlo_initial_pose_marker_pub_->publish(marker_array);
 
     auto sensor_points_mapTF_ptr = std::make_shared<pcl::PointCloud<PointSource>>();
-    pcl::transformPointCloud(
-      *ndt_ptr->getInputSource(), *sensor_points_mapTF_ptr, ndt_result.pose);
+    pcl::transformPointCloud(*ndt_ptr->getInputSource(), *sensor_points_mapTF_ptr, ndt_result.pose);
     publish_point_cloud(initial_pose_with_cov.header.stamp, map_frame_, sensor_points_mapTF_ptr);
   }
 
