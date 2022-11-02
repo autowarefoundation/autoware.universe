@@ -62,6 +62,13 @@ OperationModeTransitionManager::OperationModeTransitionManager(const rclcpp::Nod
   modes_[OperationMode::AUTONOMOUS] = std::make_unique<AutonomousMode>(this);
   modes_[OperationMode::LOCAL] = std::make_unique<LocalMode>();
   modes_[OperationMode::REMOTE] = std::make_unique<RemoteMode>();
+
+  // TODO(Takagi, Isamu): remove backward compatibility
+  sub_autoware_engage_ = create_subscription<AutowareEngage>(
+    "~/compatibility/autoware_engage", 1, [this](const AutowareEngage::SharedPtr msg) {
+      transition_.reset();
+      (void)msg;
+    });
 }
 
 void OperationModeTransitionManager::onChangeAutowareControl(
