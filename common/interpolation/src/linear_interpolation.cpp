@@ -72,9 +72,9 @@ std::vector<double> lerp(
   {
     if ((query_key < base_keys.front() || query_key > base_keys.back()) && extrapolate_end_points)
     {
-      double extrapolated_key{};
-      lerp_extrapolate(base_keys, base_values, query_key, extrapolated_key);
-      query_values.emplace_back(extrapolated_key);
+      double extrapolated_value{};
+      lerp_extrapolate(base_keys, base_values, query_key, extrapolated_value);
+      query_values.emplace_back(extrapolated_value);
       continue;
     }
 
