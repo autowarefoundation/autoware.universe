@@ -148,14 +148,14 @@ void BehaviorTreeManager::get_debug_msg_array()
   bt_visitor_interface_ = std::make_shared<BehaviorTreeVisitorInterface>();
   for (const auto & module : scene_modules_) {
     if (module->name() == "LaneChange") {
-      auto visitor_ptr = std::make_shared<LaneChangeVisitor>();
+      auto visitor_ptr = std::make_shared<DebugMessageReader>();
       module->accept_visitor(visitor_ptr);
       const auto get_ptr = visitor_ptr->get_lane_change_debug_msg_array();
       if (get_ptr) {
         bt_visitor_interface_->set_lane_change_debug_ptr(get_ptr);
       }
     } else if (module->name() == "Avoidance") {
-      auto visitor_ptr = std::make_shared<AvoidanceVisitor>();
+      auto visitor_ptr = std::make_shared<DebugMessageReader>();
       module->accept_visitor(visitor_ptr);
       const auto get_ptr = visitor_ptr->get_avoidance_debug_msg_array();
       if (get_ptr) {

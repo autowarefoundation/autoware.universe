@@ -58,18 +58,11 @@ protected:
   mutable std::shared_ptr<AvoidanceDebugMsgArray> avoidance_visitor_;
 };
 
-class AvoidanceVisitor : public SceneModuleVisitor
-{
-public:
-  void visit_avoidance_module(const AvoidanceModule * module) const override;
-  void visit_lane_change_module([[maybe_unused]] const LaneChangeModule * module) const override;
-};
-
-class LaneChangeVisitor : public SceneModuleVisitor
+class DebugMessageReader : public SceneModuleVisitor
 {
 public:
   void visit_lane_change_module(const LaneChangeModule * module) const override;
-  void visit_avoidance_module([[maybe_unused]] const AvoidanceModule * module) const override;
+  void visit_avoidance_module(const AvoidanceModule * module) const override;
 };
 
 class BehaviorTreeVisitorInterface : public SceneModuleVisitor

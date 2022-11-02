@@ -2739,12 +2739,7 @@ void AvoidanceModule::accept_visitor(const std::shared_ptr<SceneModuleVisitor> &
   }
 }
 
-void AvoidanceVisitor::visit_lane_change_module(
-  [[maybe_unused]] const LaneChangeModule * module) const
-{
-}
-
-void AvoidanceVisitor::visit_avoidance_module(const AvoidanceModule * module) const
+void DebugMessageReader::visit_avoidance_module(const AvoidanceModule * module) const
 {
   avoidance_visitor_ = module->get_debug_msg_array();
 }
