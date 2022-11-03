@@ -19,6 +19,8 @@
 #ifndef MULTI_OBJECT_TRACKER__UTILS__UTILS_HPP_
 #define MULTI_OBJECT_TRACKER__UTILS__UTILS_HPP_
 
+#include <Eigen/Core>
+#include <Eigen/Geometry>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <autoware_auto_perception_msgs/msg/detected_object.hpp>
@@ -82,9 +84,9 @@ inline bool isLargeVehicleLabel(const uint8_t label)
  * @brief Get the Nearest Corner or Surface from detected object
  *
  * @param object
- * @return int
+ * @return int index
  */
-int GetNearestCornerSurface(
+int getNearestCornerSurface(
   const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
   const tf2_ros::Buffer & tf_buffer)
 {
@@ -115,27 +117,124 @@ int GetNearestCornerSurface(
 
   // grid search
   int xgrid, ygrid;
-  const int labels[3][3] = {
-                          {7, 0, 4},
-                          {3,-1, 1},
-                          {6, 2, 5}
-  };
-  if(xl > length/2.0){
+  const int labels[3][3] = {{7, 0, 4}, {3, -1, 1}, {6, 2, 5}};
+  if (xl > length / 2.0) {
     xgrid = 0;
-  }else if(xl>-length/2.0){
+  } else if (xl > -length / 2.0) {
     xgrid = 1;
-  }else{
+  } else {
     xgrid = 2;
   }
-  if(yl > width/2.0){
+  if (yl > width / 2.0) {
     ygrid = 2;
-  }else if(yl > -width/2.0){
+  } else if (yl > -width / 2.0) {
     ygrid = 1;
-  }else{
+  } else {
     ygrid = 0;
   }
 
   return labels[xgrid][ygrid];  // 0 to 7 + 1(null) value
+}
+
+/**
+ * @brief Get the Nearest Corner or Surface from detected object
+ *
+ * @param object
+ * @return int index
+ */
+int getNearestCornerSurface(
+  const double x, const double y, const double yaw, const double width, const double length,
+  const rclcpp::Time & time, const tf2_ros::Buffer & tf_buffer)
+{
+  // get local vehicle pose
+  geometry_msgs::msg::TransformStamped transform;
+  double x0, y0, xl, yl;
+  transform = tf_buffer.lookupTransform("map", "base_link", time);
+
+  x0 = transform.transform.translation.x;
+  y0 = transform.transform.translation.y;
+
+  // localize to object coordinate
+  // R.T (X-X0)
+  xl = std::cos(yaw) * (x - x0) + std::sin(yaw) * (y - y0);
+  yl = -std::sin(yaw) * (x - x0) + std::cos(yaw) * (y - y0);
+
+  // grid search
+  int xgrid, ygrid;
+  const int labels[3][3] = {{7, 0, 4}, {3, -1, 1}, {6, 2, 5}};
+  if (xl > length / 2.0) {
+    xgrid = 0;
+  } else if (xl > -length / 2.0) {
+    xgrid = 1;
+  } else {
+    xgrid = 2;
+  }
+  if (yl > width / 2.0) {
+    ygrid = 2;
+  } else if (yl > -width / 2.0) {
+    ygrid = 1;
+  } else {
+    ygrid = 0;
+  }
+
+  return labels[xgrid][ygrid];  // 0 to 7 + 1(null) value
+}
+
+Eigen::Vector2d getTrackingCorner(
+  const double x, const double y, const double yaw, const double w, const double l, const int indx)
+{
+  const Eigen::Vector2d center{x, y};
+  const double sign[4][2] = {{1, -1}, {-1, -1}, {-1, 1}, {1, 1}};
+
+  Eigen::Vector2d diagonal_vec{sign[indx][0] * l / 2.0, sign[indx][1] * w / 2.0};
+  Eigen::Matrix2d Rinv = Eigen::Rotation2Dd(-yaw);
+  Eigen::Vector2d tracked_corner = center + Rinv * diagonal_vec;
+
+  return tracked_corner;
+}
+
+/**
+ * @brief Calc offset from center to anchor pointGet the Nearest Corner or Surface from detected
+ * object
+ *
+ * @param object
+ * @return int index
+ */
+void calcAnchorPointOffset(
+  const double w, const double l, const int indx,
+  const autoware_auto_perception_msgs::msg::DetectedObject & input_object,
+  autoware_auto_perception_msgs::msg::DetectedObject & offset_object, Eigen::Vector2d & offset)
+{
+  // copy value
+  offset_object = input_object;
+  // invalid index
+  if (indx < 0 || indx > 7) {
+    return;
+  }
+
+  // current object width and height
+  double w_n, l_n;
+  w_n = input_object.shape.dimensions.x;
+  l_n = input_object.shape.dimensions.y;
+
+  // if surface
+  if (indx < 4) {
+    const double sign[4][2] = {{1, 0}, {0, -1}, {-1, 0}, {0, 1}};
+    offset(0, 0) = sign[indx][0] * (l_n - l);
+    offset(1, 0) = sign[indx][1] * (w_n - w);
+  } else {
+    // corner
+    const double sign[4][2] = {{1, -1}, {-1, -1}, {-1, 1}, {1, 1}};
+    offset(0, 0) = sign[indx - 4][0] * (l_n - l);
+    offset(1, 0) = sign[indx - 4][1] * (w_n - w);
+  }
+
+  const double yaw = tf2::getYaw(input_object.kinematics.pose_with_covariance.pose.orientation);
+  Eigen::Matrix2d R = Eigen::Rotation2Dd(yaw);
+  Eigen::Vector2d rotated_offset = R * offset;
+
+  offset_object.kinematics.pose_with_covariance.pose.position.x += rotated_offset.x();
+  offset_object.kinematics.pose_with_covariance.pose.position.y += rotated_offset.y();
 }
 
 }  // namespace utils
