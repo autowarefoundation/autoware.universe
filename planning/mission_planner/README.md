@@ -14,12 +14,13 @@ In current Autoware.universe, only Lanelet2 map format is supported.
 
 ### Parameters
 
-| Name                      | Type   | Description                       |
-| ------------------------- | ------ | --------------------------------- |
-| `map_frame`               | string | The frame name for map            |
-| `arrival_check_angle_deg` | double | Angle threshold for goal check    |
-| `arrival_check_distance`  | double | Distance threshold for goal check |
-| `arrival_check_duration`  | double | Duration threshold for goal check |
+| Name                      | Type   | Description                          |
+| ------------------------- | ------ | ------------------------------------ |
+| `map_frame`               | string | The frame name for map               |
+| `arrival_check_angle_deg` | double | Angle threshold for goal check       |
+| `arrival_check_distance`  | double | Distance threshold for goal check    |
+| `arrival_check_duration`  | double | Duration threshold for goal check    |
+| `goal_angle_threshold`    | double | Max goal pose angle for goal approve |
 
 ### Services
 
@@ -43,6 +44,7 @@ In current Autoware.universe, only Lanelet2 map format is supported.
 | `/planning/routing/route_state` | autoware_adapi_v1_msgs::msg::RouteState | route state            |
 | `/planning/routing/route`       | autoware_planning_msgs/LaneletRoute     | route                  |
 | `debug/route_marker`            | visualization_msgs::msg::MarkerArray    | route marker for debug |
+| `debug/goal_footprint`          | visualization_msgs::msg::MarkerArray    | goal footprint for debug |
 
 ## Route section
 

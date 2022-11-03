@@ -21,6 +21,7 @@
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <lanelet2_extension/visualization/visualization.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
+#include <vehicle_info_util/vehicle_info_util.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_core/geometry/Lanelet.h>
@@ -92,6 +93,42 @@ bool is_in_parking_lot(
   return false;
 }
 
+bool is_footprint_in_lanelet(
+  const lanelet::ConstLanelet & goal_lanelet, tier4_autoware_utils::LinearRing2d goal_footprint,
+  lanelet::routing::RoutingGraphPtr routing_graph_ptr_, lanelet::ConstLanelets path_lanelets)
+{
+  std::vector<tier4_autoware_utils::Point2d> points_intersection;
+
+  // check if goal footprint is in current lane
+  boost::geometry::intersection(
+    goal_footprint, goal_lanelet.polygon2d().basicPolygon(), points_intersection);
+  if (points_intersection.empty()) {
+    return true;
+  }
+  points_intersection.clear();
+
+  // check if goal footprint is in between many lanelets
+  lanelet::ConstLanelet combined_prev_lanelet;
+  combined_prev_lanelet = combine_lanelets(path_lanelets);
+  auto next_lanelets = routing_graph_ptr_->following(goal_lanelet);
+  for (const auto & next_lane : next_lanelets) {
+    lanelet::ConstLanelets lanelets;
+    lanelets.push_back(combined_prev_lanelet);
+    lanelets.push_back(next_lane);
+
+    auto combined_lanelets = combine_lanelets(lanelets);
+    boost::geometry::intersection(
+      goal_footprint, combined_lanelets.polygon2d().basicPolygon(), points_intersection);
+
+    if (points_intersection.empty()) {
+      return true;
+    }
+    points_intersection.clear();
+  }
+
+  return false;
+}
+
 double project_goal_to_map(
   const lanelet::Lanelet & lanelet_component, const lanelet::ConstPoint3d & goal_point)
 {
@@ -113,6 +150,14 @@ void DefaultPlanner::initialize(rclcpp::Node * node)
   map_subscriber_ = node_->create_subscription<HADMapBin>(
     "input/vector_map", rclcpp::QoS{10}.transient_local(),
     std::bind(&DefaultPlanner::map_callback, this, std::placeholders::_1));
+
+  const auto durable_qos = rclcpp::QoS(1).transient_local();
+  pub_goal_footprint_marker_ =
+    node_->create_publisher<MarkerArray>("debug/goal_footprint", durable_qos);
+
+  vehicle_info_ = vehicle_info_util::VehicleInfoUtil(*node_).getVehicleInfo();
+
+  param_.goal_angle_threshold_deg = node_->declare_parameter("goal_angle_threshold_deg", 45.0);
 }
 
 void DefaultPlanner::initialize(rclcpp::Node * node, const HADMapBin::ConstSharedPtr msg)
@@ -186,12 +231,56 @@ PlannerPlugin::MarkerArray DefaultPlanner::visualize(const LaneletRoute & route)
   return route_marker_array;
 }
 
-bool DefaultPlanner::is_goal_valid(const geometry_msgs::msg::Pose & goal) const
+visualization_msgs::msg::MarkerArray DefaultPlanner::visualize_debug_footprint(
+  tier4_autoware_utils::LinearRing2d goal_footprint_) const
 {
+  visualization_msgs::msg::MarkerArray msg;
+  auto marker = tier4_autoware_utils::createDefaultMarker(
+    "map", rclcpp::Clock().now(), "goal_footprint", 0, visualization_msgs::msg::Marker::LINE_STRIP,
+    tier4_autoware_utils::createMarkerScale(0.05, 0.0, 0.0),
+    tier4_autoware_utils::createMarkerColor(0.99, 0.99, 0.2, 1.0));
+  marker.lifetime = rclcpp::Duration::from_seconds(2.5);
+
+  marker.points.push_back(
+    tier4_autoware_utils::createPoint(goal_footprint_[0][0], goal_footprint_[0][1], 0.0));
+  marker.points.push_back(
+    tier4_autoware_utils::createPoint(goal_footprint_[1][0], goal_footprint_[1][1], 0.0));
+  marker.points.push_back(
+    tier4_autoware_utils::createPoint(goal_footprint_[2][0], goal_footprint_[2][1], 0.0));
+  marker.points.push_back(
+    tier4_autoware_utils::createPoint(goal_footprint_[3][0], goal_footprint_[3][1], 0.0));
+  marker.points.push_back(marker.points.front());
+
+  msg.markers.push_back(marker);
+
+  return msg;
+}
+
+bool DefaultPlanner::is_goal_valid(
+  const geometry_msgs::msg::Pose & goal, lanelet::ConstLanelets path_lanelets) const
+{
+  const auto logger = node_->get_logger();
   lanelet::Lanelet closest_lanelet;
   if (!lanelet::utils::query::getClosestLanelet(road_lanelets_, goal, &closest_lanelet)) {
     return false;
   }
+
+  const auto local_vehicle_footprint = createVehicleFootprint(vehicle_info_);
+  tier4_autoware_utils::LinearRing2d goal_footprint_ =
+    transformVector(local_vehicle_footprint, tier4_autoware_utils::pose2transform(goal));
+
+  pub_goal_footprint_marker_->publish(visualize_debug_footprint(goal_footprint_));
+
+  // check if goal footprint exceeds lane and isn't in parking_lot
+  if (
+    !is_footprint_in_lanelet(closest_lanelet, goal_footprint_, routing_graph_ptr_, path_lanelets) &&
+    !is_in_parking_lot(
+      lanelet::utils::query::getAllParkingLots(lanelet_map_ptr_),
+      lanelet::utils::conversion::toLaneletPoint(goal.position))) {
+    RCLCPP_WARN(logger, "Goal's footprint exceeds lane!");
+    return false;
+  }
+
   const auto goal_lanelet_pt = lanelet::utils::conversion::toLaneletPoint(goal.position);
 
   if (is_in_lane(closest_lanelet, goal_lanelet_pt)) {
@@ -199,8 +288,7 @@ bool DefaultPlanner::is_goal_valid(const geometry_msgs::msg::Pose & goal) const
     const auto goal_yaw = tf2::getYaw(goal.orientation);
     const auto angle_diff = tier4_autoware_utils::normalizeRadian(lane_yaw - goal_yaw);
 
-    constexpr double th_angle = M_PI / 4;
-
+    const double th_angle = tier4_autoware_utils::deg2rad(param_.goal_angle_threshold_deg);
     if (std::abs(angle_diff) < th_angle) {
       return true;
     }
@@ -230,12 +318,11 @@ bool DefaultPlanner::is_goal_valid(const geometry_msgs::msg::Pose & goal) const
     const auto goal_yaw = tf2::getYaw(goal.orientation);
     const auto angle_diff = tier4_autoware_utils::normalizeRadian(lane_yaw - goal_yaw);
 
-    constexpr double th_angle = M_PI / 4;
+    const double th_angle = tier4_autoware_utils::deg2rad(param_.goal_angle_threshold_deg);
     if (std::abs(angle_diff) < th_angle) {
       return true;
     }
   }
-
   return false;
 }
 
@@ -255,15 +342,11 @@ PlannerPlugin::LaneletRoute DefaultPlanner::plan(const RoutePoints & points)
   LaneletRoute route_msg;
   RouteSections route_sections;
 
-  if (!is_goal_valid(points.back())) {
-    RCLCPP_WARN(logger, "Goal is not valid! Please check position and angle of goal_pose");
-    return route_msg;
-  }
-
+  lanelet::ConstLanelets path_lanelets;
   for (std::size_t i = 1; i < points.size(); i++) {
     const auto start_check_point = points.at(i - 1);
     const auto goal_check_point = points.at(i);
-    lanelet::ConstLanelets path_lanelets;
+    path_lanelets.clear();
     if (!route_handler_.planPathLaneletsBetweenCheckpoints(
           start_check_point, goal_check_point, &path_lanelets)) {
       return route_msg;
@@ -272,6 +355,11 @@ PlannerPlugin::LaneletRoute DefaultPlanner::plan(const RoutePoints & points)
     route_handler_.setRouteLanelets(path_lanelets);
     const auto local_route_sections = route_handler_.createMapSegments(path_lanelets);
     route_sections = combine_consecutive_route_sections(route_sections, local_route_sections);
+  }
+
+  if (!is_goal_valid(points.back(), path_lanelets)) {
+    RCLCPP_WARN(logger, "Goal is not valid! Please check position and angle of goal_pose");
+    return route_msg;
   }
 
   if (route_handler_.isRouteLooped(route_sections)) {
