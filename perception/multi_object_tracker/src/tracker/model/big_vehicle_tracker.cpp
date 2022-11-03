@@ -36,6 +36,7 @@
 #include <Eigen/Geometry>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
+
 using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
 
 BigVehicleTracker::BigVehicleTracker(
@@ -265,13 +266,19 @@ bool BigVehicleTracker::measureWithPose(
     }
   }
 
+  /* get offseted measurement*/
+  Eigen::Vector2d offset;
+  autoware_auto_perception_msgs::msg::DetectedObject offset_object;
+  utils::calcAnchorPointOffset(bounding_box_.width, bounding_box_.length, nearest_corner_index_, object, offset_object, offset);
+
+
   /* Set measurement matrix */
   Eigen::MatrixXd Y(dim_y, 1);
   Eigen::MatrixXd C = Eigen::MatrixXd::Zero(dim_y, ekf_params_.dim_x);
   Eigen::MatrixXd R = Eigen::MatrixXd::Zero(dim_y, dim_y);
 
-  Y(IDX::X, 0) = object.kinematics.pose_with_covariance.pose.position.x;
-  Y(IDX::Y, 0) = object.kinematics.pose_with_covariance.pose.position.y;
+  Y(IDX::X, 0) = offset_object.kinematics.pose_with_covariance.pose.position.x;
+  Y(IDX::Y, 0) = offset_object.kinematics.pose_with_covariance.pose.position.y;
   Y(IDX::YAW, 0) = measurement_yaw;
   C(0, IDX::X) = 1.0;    // for pos x
   C(1, IDX::Y) = 1.0;    // for pos y
@@ -313,6 +320,19 @@ bool BigVehicleTracker::measureWithPose(
   if (!ekf_.update(Y, C, R)) {
     RCLCPP_WARN(logger_, "Cannot update");
   }
+
+  /* fix offset value */
+  // This is trying to do ekf_.setX(X_new) with ekf_.init()
+  Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);
+  Eigen::MatrixXd P_t(ekf_params_.dim_x, ekf_params_.dim_x);
+  ekf_.getX(X_t);
+  ekf_.getP(P_t);
+  const Eigen::Matrix2d Ryaw = Eigen::Rotation2Dd(X_t(IDX::YAW));
+  const Eigen::Vector2d rotated_offset = Ryaw * offset;
+  X_t(IDX::X) += rotated_offset.x();
+  X_t(IDX::Y) += rotated_offset.y();
+  ekf_.init(X_t, P_t);
+
 
   // normalize yaw and limit vx, wz
   {
@@ -369,6 +389,9 @@ bool BigVehicleTracker::measure(
 
   measureWithPose(object);
   measureWithShape(object);
+
+  /* calc nearest corner index*/
+  setNearestCornerSurfaceIndex(time);
 
   return true;
 }
@@ -453,4 +476,10 @@ bool BigVehicleTracker::getTrackedObject(
     tier4_autoware_utils::rotatePolygon(object.shape.footprint, origin_yaw - ekf_pose_yaw);
 
   return true;
+}
+
+void BigVehicleTracker::setNearestCornerSurfaceIndex(const rclcpp::Time & time){
+  Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);
+  ekf_.getX(X_t);
+  nearest_corner_index_ =  utils::getNearestCornerSurface(X_t(IDX::X), X_t(IDX::Y), X_t(IDX::YAW), bounding_box_.width, bounding_box_.length, time, tf_buffer_);
 }

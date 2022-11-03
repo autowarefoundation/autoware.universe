@@ -22,12 +22,15 @@
 #include "multi_object_tracker/tracker/model/tracker_base.hpp"
 
 #include <kalman_filter/kalman_filter.hpp>
-
+#include "tf2_ros/transform_listener.h"
+#include "tf2_ros/buffer.h"
 class BigVehicleTracker : public Tracker
 {
 private:
   autoware_auto_perception_msgs::msg::DetectedObject object_;
   rclcpp::Logger logger_;
+  int nearest_corner_index_;
+  tf2_ros::Buffer tf_buffer_;
 
 private:
   KalmanFilter ekf_;
@@ -85,6 +88,7 @@ public:
   bool getTrackedObject(
     const rclcpp::Time & time,
     autoware_auto_perception_msgs::msg::TrackedObject & object) const override;
+  void setNearestCornerSurfaceIndex(const rclcpp::Time & time);
   virtual ~BigVehicleTracker() {}
 };
 
