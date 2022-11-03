@@ -114,7 +114,7 @@ current version, no filter is available.
     # OSQP Options.
     osqp_warm_start: true
     osqp_polishing: true
-    osqp_scaling: true
+    osqp_scaling_iter: true
     osqp_max_iters: 500
     osqp_polish_iters: 5
     osqp_time_limit: 0.02 # seconds - currently disabled

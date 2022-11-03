@@ -26,6 +26,9 @@
 #include "rclcpp/rclcpp.hpp"
 #include "utils/nmpc_utils.hpp"
 
+#include "interpolation/linear_interpolation.hpp"
+#include "interpolation/spline_interpolation.hpp"
+
 #include <limits>
 #include <memory>
 #include <string>
@@ -42,21 +45,21 @@ using optproblem_type = ns_opt::OptimizationProblemOSQP<
  * */
 class NonlinearMPCController
 {
-public:
+ public:
   // User initialization.
   NonlinearMPCController(
     Model::model_ptr_t model_ptr, ns_data::data_nmpc_core_type_t data_nmpc_core,
-    ns_data::param_lpv_type_t const & params_lpv, ns_data::ParamsOptimization params_opt);
+    ns_data::param_lpv_type_t const &params_lpv, ns_data::ParamsOptimization params_opt);
 
   // Copy constructors and assignments.
-  NonlinearMPCController(NonlinearMPCController const & other);
+  NonlinearMPCController(NonlinearMPCController const &other);
 
-  NonlinearMPCController & operator=(NonlinearMPCController const & other);
+  NonlinearMPCController &operator=(NonlinearMPCController const &other);
 
   // Move constructor and assignment.
-  NonlinearMPCController(NonlinearMPCController && other) noexcept;
+  NonlinearMPCController(NonlinearMPCController &&other) noexcept;
 
-  NonlinearMPCController & operator=(NonlinearMPCController && other) noexcept;
+  NonlinearMPCController &operator=(NonlinearMPCController &&other) noexcept;
 
   // Destructor.
   ~NonlinearMPCController() = default;
@@ -67,14 +70,14 @@ public:
    * @param MPCtrajs_raw trajectory class that keeps the raw trajectory received from the planner
    * modules.
    */
-  void setMPCtrajectoryRawVectorsPtr(ns_data::MPCdataTrajectoryVectors const & MPCtrajs_raw);
+  void setMPCtrajectoryRawVectorsPtr(ns_data::MPCdataTrajectoryVectors const &MPCtrajs_raw);
 
   void setMPCtrajectorySmoothVectorsPtr(
-    ns_data::MPCdataTrajectoryVectors const & MPCtrajs_smoothed);
+    ns_data::MPCdataTrajectoryVectors const &MPCtrajs_smoothed);
 
-  void setCurrentAvgMPCComputationTime(const double & avg_mpc_computation_time);
+  void setCurrentAvgMPCComputationTime(const double &avg_mpc_computation_time);
 
-  void updateInitialStates_x0(Model::state_vector_t const & x0);
+  void updateInitialStates_x0(Model::state_vector_t const &x0);
 
   /**
    * @brief simulate the model equations given a control [vx, steering]_inputs and an initial state.
@@ -84,8 +87,8 @@ public:
    * @param xk the initial state to be propagated by the simulator.
    * */
   void simulateOneStep(
-    Model::input_vector_t const & u, Model::param_vector_t const & params, double const & dt,
-    Model::state_vector_t & xk) const;
+    Model::input_vector_t const &u, Model::param_vector_t const &params, double const &dt,
+    Model::state_vector_t &xk) const;
 
   /**
    * @brief simulate the model equations given a control [steering only], vx from trajectory planner
@@ -97,50 +100,50 @@ public:
    * */
 
   void simulateOneStepVariableSpeed(
-    Model::input_vector_t const & u, Model::param_vector_t const & params, const double & v0,
-    const double & v1, double const & dt, Model::state_vector_t & xk) const;
+    Model::input_vector_t const &u, Model::param_vector_t const &params, const double &v0,
+    const double &v1, double const &dt, Model::state_vector_t &xk) const;
 
   /**
    * @brief simulate a given control sequence successively and store the states in the data
    * containers.
    * */
   void simulateControlSequenceByPredictedInputs(
-    Model::state_vector_t const & x0_predicted,
-    ns_splines::InterpolatingSplinePCG const & piecewise_interpolator);
+    Model::state_vector_t const &x0_predicted,
+    ns_splines::InterpolatingSplinePCG const &piecewise_interpolator);
 
   void simulateControlSequenceUseVaryingSpeed(
-    Model::state_vector_t const & x0_predicted,
-    ns_splines::InterpolatingSplinePCG const & piecewise_interpolator);
+    Model::state_vector_t const &x0_predicted,
+    ns_splines::InterpolatingSplinePCG const &piecewise_interpolator);
 
   /**
    * @brief Sets the reference states to be tracked. In this application, since lateral and heading
    * error is required to be zero and we use the error dynamics, there is no reference state to
    * track except the longitudinal speed.
    * */
-  void updateRefTargetStatesByTimeInterpolation(double const & current_avg_mpc_comp_time);
+  void updateRefTargetStatesByTimeInterpolation(double const &current_avg_mpc_comp_time);
 
   // Interpolates the velocity based on the estimated trajectory path length.
-  void updateScaledPredictedTargetStatesByArcLength(double const & current_predicted_s0);
+  void updateScaledPredictedTargetStatesByArcLength(double const &current_predicted_s0);
 
-  bool reInitializeTrajectories(ns_splines::InterpolatingSplinePCG const & piecewise_interpolator);
+  bool reInitializeTrajectories(ns_splines::InterpolatingSplinePCG const &piecewise_interpolator);
 
   bool initializeTrajectories(
-    ns_splines::InterpolatingSplinePCG const & piecewise_interpolator,
+    ns_splines::InterpolatingSplinePCG const &piecewise_interpolator,
     bool use_linear_initialization = false);
 
   bool linearTrajectoryInitialization(
-    ns_splines::InterpolatingSplinePCG const & piecewise_interpolator);
+    ns_splines::InterpolatingSplinePCG const &piecewise_interpolator);
 
-  void setCurrent_s0(double const & s0);
+  void setCurrent_s0(double const &s0);
 
-  void setCurrent_t0(double const & t0);
+  void setCurrent_t0(double const &t0);
 
-  void setCurrent_s0_predicted(double const & s0_predicted);
+  void setCurrent_s0_predicted(double const &s0_predicted);
 
-  void setLoggerName(std::string_view const & logger_name);
+  void setLoggerName(std::string_view const &logger_name);
 
   // NMPC solution medhods.
-  bool solveNMPC_problem(ns_splines::InterpolatingSplinePCG const & piecewise_interpolator);
+  bool solveNMPC_problem(ns_splines::InterpolatingSplinePCG const &piecewise_interpolator);
 
   // Get the solution from OSQP and shift the trajectories.
   void readSolutionsFromOSQP();
@@ -148,7 +151,7 @@ public:
   // Shift controls to predict the next reference trajectories.
   void shiftControls();
 
-  void getControlSolutions(Model::input_vector_t & u_solution);  // [ax, steering_rate]
+  void getControlSolutions(Model::input_vector_t &u_solution);  // [ax, steering_rate]
 
   double getPredictedVxControl();
 
@@ -157,36 +160,36 @@ public:
   /**
    * @brief apply state constraints to the given index.
    * */
-  void applyStateConstraints(Eigen::Index const & idx, Model::state_vector_t & x);
+  void applyStateConstraints(Eigen::Index const &idx, Model::state_vector_t &x);
 
-  void applyStateConstraints(Model::state_vector_t & x);
+  void applyStateConstraints(Model::state_vector_t &x);
 
-  void applyControlConstraints(Eigen::Index const & idx, Model::input_vector_t & u);
+  void applyControlConstraints(Eigen::Index const &idx, Model::input_vector_t &u);
 
-  void applyControlConstraints(Model::input_vector_t & u);
+  void applyControlConstraints(Model::input_vector_t &u);
 
   // Getters.
-  void getRawDistanceAtIdx(size_t const & idx, double & s_distance) const;
+  void getRawDistanceAtIdx(size_t const &idx, double &s_distance) const;
 
-  void getRawRelativeTimeAtIdx(size_t const & idx, double & t_time) const;
+  void getRawRelativeTimeAtIdx(size_t const &idx, double &t_time) const;
 
-  void getRawVxAtDistance(double const & s0, double & vx) const;
+  void getRawVxAtDistance(double const &s0, double &vx) const;
 
-  void getSmoothVxAtDistance(double const & s0, double & vx) const;
-  void getSmoothYawAtDistance(double const & s0, double & yaw) const;
-  void getSmoothXYZAtDistance(double const & s0, std::array<double, 3> & xyz) const;
+  void getSmoothVxAtDistance(double const &s0, double &vx) const;
+  void getSmoothYawAtDistance(double const &s0, double &yaw) const;
+  void getSmoothXYZAtDistance(double const &s0, std::array<double, 3> &xyz) const;
 
   /** @brief gets the base arc-length coordinates from the raw trajectory data. */
-  void getPlannerTravelledDistanceVector(std::vector<double> & s_distance_vector) const;
+  void getPlannerTravelledDistanceVector(std::vector<double> &s_distance_vector) const;
 
   /** @brief gets the time-vx table from the smoothed trajectory data. */
-  void getTimeSpeedVectsFromSmoothTraj(std::vector<std::vector<double>> & t_speed_vects) const;
+  void getTimeSpeedVectsFromSmoothTraj(std::vector<std::vector<double>> &t_speed_vects) const;
 
-  void getInitialState(Model::state_vector_t & x0) const;
+  void getInitialState(Model::state_vector_t &x0) const;
 
   // Given a speed trajectory, predict the travelled distance depending on the speed.
   void getPredictedArcLengthDistanceVector(
-    std::vector<double> & s_predicted, double const & current_predicted_s0) const;
+    std::vector<double> &s_predicted, double const &current_predicted_s0) const;
 
   // Gets the total cost (value function value from the OSQP object.)
   [[nodiscard]] double getObjectiveValue() const;
@@ -198,9 +201,10 @@ public:
 
   [[nodiscard]] bool isInitialized() const;
 
-  [[nodiscard]] auto getLPVparams() const {return params_lpv_;}
+  [[nodiscard]] auto getLPVparams() const
+  { return params_lpv_; }
 
-private:
+ private:
   size_t K_mpc_steps{MPC_NUM_OF_PRED_STEPS};
 
   /**

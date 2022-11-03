@@ -126,7 +126,7 @@ struct ParamsOptimization
   // OSQP.
   bool osqp_warm_start{};
   bool osqp_polishing{};
-  bool osqp_scaling{};
+  int32_t osqp_scaling_iter{};
   int32_t osqp_max_iters{};
   int32_t osqp_polish_iters{};
   double osqp_time_limit{};
@@ -169,8 +169,8 @@ struct DataNMPCcore
 {
   DataNMPCcore() = default;
 
-  explicit DataNMPCcore(double const & mpc_dt)
-  : mpc_prediction_dt{mpc_dt}
+  explicit DataNMPCcore(double const &mpc_dt)
+    : mpc_prediction_dt{mpc_dt}
   {
     trajectory_data.initializeTrajectory(mpc_numPredictionStepsK, mpc_dt);
     target_reference_states_and_controls.initializeTrajectory(mpc_numPredictionStepsK, mpc_dt);
