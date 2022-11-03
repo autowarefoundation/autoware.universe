@@ -20,6 +20,34 @@
 
 namespace ns_utils
 {
+// Time methods.
+double tic()
+{
+  struct timespec t
+  {
+  };
+  clock_gettime(CLOCK_REALTIME, &t);
+  return static_cast<double>(t.tv_sec) * 1000. + static_cast<double>(t.tv_nsec) / 1000000.;
+}
+
+double toc(double start) { return tic() - start; }
+
+template <typename T>
+void computeYawFromXY(
+  const std::vector<T> & xvect, const std::vector<T> & yvect, std::vector<T> & yaw_vect)
+{
+  for (size_t k = 1; k < xvect.size(); ++k) {
+    auto const && dx = xvect[k] - xvect[k - 1];
+    auto const && dy = yvect[k] - yvect[k - 1];
+
+    T const && yaw_angle = std::atan2(dy, dx);
+    yaw_vect.template emplace_back(yaw_angle);
+  }
+
+  if (yaw_vect.size() > 1) {
+    yaw_vect.template emplace_back(yaw_vect.back());
+  }
+}
 
 /**
  * @brief some numerator and denominator can be defined by leading zeros like [0, 0, 1], and we want

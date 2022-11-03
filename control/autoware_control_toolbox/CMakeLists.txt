@@ -24,6 +24,7 @@ set(CONTROL_LIB_SOURCE
   src/control/act_signal_builder.cpp
 
   #SPLINES
+  src/splines/interpolating_spline_pcg.cpp
   src/splines/bsplines_smoother.cpp
   src/splines/bsplines_interpolator.cpp
   src/splines/bspline_interpolator_templated.cpp
@@ -104,22 +105,3 @@ endif()
 
 # ament package generation and installing
 ament_auto_package(INSTALL_TO_SHARE)
-
-#add_executable(main_bspline_smoother usage_examples/splines/main_bspline_smoother.cpp)
-#target_link_libraries(main_bspline_smoother ${CONTROL_LIB} fmt::fmt stdc++fs)
-#
-#add_executable(main_bspline_interp usage_examples/splines/main_bspline_interpolator.cpp)
-#target_link_libraries(main_bspline_interp ${CONTROL_LIB} fmt::fmt stdc++fs)
-#
-#add_executable(main_bspline_interp_template usage_examples/splines/main_bspline_interpolator_templated.cpp)
-#target_link_libraries(main_bspline_interp_template ${CONTROL_LIB} fmt::fmt stdc++fs)
-#
-#add_executable(main_unwrap usage_examples/helper_functions/main_unwrap.cpp)
-#target_link_libraries(main_unwrap ${CONTROL_LIB} fmt::fmt stdc++fs)
-#
-#add_executable(main_1d_interp usage_examples/helper_functions/main_linear_1dinterp.cpp)
-#target_link_libraries(main_1d_interp ${CONTROL_LIB} fmt::fmt stdc++fs)
-#
-#add_executable(main_diff_matt usage_examples/helper_functions/main_difference_matrix.cpp)
-#target_link_libraries(main_diff_matt ${CONTROL_LIB} fmt::fmt stdc++fs)
-

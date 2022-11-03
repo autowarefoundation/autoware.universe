@@ -40,13 +40,13 @@ bool InterpolatingSplinePCG::Interpolate(
       continue;
     }
     auto const & left_ind = ns_utils::binary_index_search(ti, tbase);
-    auto const & picewise_coeffs = coefficients_[left_ind];
+    auto const & piecewise_coeffs = coefficients_[left_ind];
 
     // Compute mpc_dt.
     auto const & dt = (ti - tbase[left_ind]) / (tbase[left_ind + 1] - tbase[left_ind]);
 
     // std::cout << mpc_dt << std::endl;
-    auto const & yval = evaluatePolynomial(dt, picewise_coeffs);
+    auto const & yval = evaluatePolynomial(dt, piecewise_coeffs);
     ynew.emplace_back(yval);
   }
 
@@ -71,13 +71,13 @@ bool InterpolatingSplinePCG::Interpolate(
     }
 
     auto const & left_ind = ns_utils::binary_index_search(ti, tbase_);
-    auto const & picewise_coeffs = coefficients_[left_ind];
+    auto const & piecewise_coeffs = coefficients_[left_ind];
 
     // Compute mpc_dt.
     auto const & dt = (ti - tbase_[left_ind]) / (tbase_[left_ind + 1] - tbase_[left_ind]);
 
     // std::cout << mpc_dt << std::endl;
-    auto const & yval = evaluatePolynomial(dt, picewise_coeffs);
+    auto const & yval = evaluatePolynomial(dt, piecewise_coeffs);
     ynew.emplace_back(yval);
   }
 
@@ -102,13 +102,13 @@ bool InterpolatingSplinePCG::Interpolate(
 
   // Binary Search.
   auto const & left_ind = ns_utils::binary_index_search(tnew, tbase);
-  auto const & picewise_coeffs = coefficients_[left_ind];
+  auto const & piecewise_coeffs = coefficients_[left_ind];
 
   // Compute mpc_dt.
   auto const & dt = (tnew - tbase[left_ind]) / (tbase[left_ind + 1] - tbase[left_ind]);
 
   // Set the interpolated value.
-  ynew = evaluatePolynomial(dt, picewise_coeffs);
+  ynew = evaluatePolynomial(dt, piecewise_coeffs);
 
   return couldSolve_and_Monotonic;
 }
@@ -127,13 +127,13 @@ bool InterpolatingSplinePCG::Interpolate(const double & tnew, double & ynew) con
 
   // Binary Search.
   auto const & left_ind = ns_utils::binary_index_search(tnew, tbase_);
-  auto const & picewise_coeffs = coefficients_[left_ind];
+  auto const & piecewise_coeffs = coefficients_[left_ind];
 
   // Compute mpc_dt.
   auto const & dt = (tnew - tbase_[left_ind]) / (tbase_[left_ind + 1] - tbase_[left_ind]);
 
   // Set the interpolated value.
-  ynew = evaluatePolynomial(dt, picewise_coeffs);
+  ynew = evaluatePolynomial(dt, piecewise_coeffs);
 
   return true;
 }
@@ -152,7 +152,7 @@ bool InterpolatingSplinePCG::compute_coefficients(std::vector<double> const & yb
   auto const & y0 = ybase[0];
 
   bool is_a_constant_vector = std::all_of(
-    ybase.cbegin() + 1, ybase.cend(), [&y0](auto const y) {return ns_utils::isEqual(y, y0);});
+    ybase.cbegin() + 1, ybase.cend(), [&y0](auto const y) { return ns_utils::isEqual(y, y0); });
 
   // Jacobi Preconditioner Iteration.
   std::vector<double> cmat_diag;
@@ -165,7 +165,7 @@ bool InterpolatingSplinePCG::compute_coefficients(std::vector<double> const & yb
     // compute differences (a_{i+1} - a_i)
     std::transform(
       ybase.cbegin(), ybase.cend(), ybase.cbegin() + 1, std::back_inserter(b_coeff),
-      [](auto & v0, auto & v1) {return v1 - v0;});
+      [](auto & v0, auto & v1) { return v1 - v0; });
 
     b_coeff.emplace_back(0.0);  // b_coeff[n] = 0
 
@@ -251,14 +251,14 @@ void InterpolatingSplinePCG::set_bd_coeffs_(
   // Set coeff d.
   std::transform(
     c_coeffs.cbegin(), c_coeffs.cend(), c_coeffs.begin() + 1, std::back_inserter(d_coeffs),
-    [](auto c0, auto c1) {return (c1 - c0) / 3;});
+    [](auto c0, auto c1) { return (c1 - c0) / 3; });
 
   d_coeffs.emplace_back(0.0);  // set last d[n]=0
 
   // Set coeff b.
   auto & a_coeff = ybase;
 
-  for (size_t k = 0; k < dimc - 1; k++) { // set coeffs[0:n-1]
+  for (size_t k = 0; k < dimc - 1; k++) {  // set coeffs[0:n-1]
     auto && b = (a_coeff[k + 1] - a_coeff[k]) - (c_coeffs[k + 1] + 2 * c_coeffs[k]) / 3;
     b_coeffs.emplace_back(b);
 
@@ -356,7 +356,7 @@ bool PCG::solve(
   //  ns_eigen_utils::printEigenMat(rn);
   // Initialize inverse of the diagonals.
   Eigen::VectorXd invDiag(b.rows(), 1);
-  invDiag << Asparse.diagonal().unaryExpr([](auto x) {return 1 / x;});
+  invDiag << Asparse.diagonal().unaryExpr([](auto x) { return 1 / x; });
 
   // Solve for rtilda.
   Eigen::VectorXd rtilda_n(invDiag.cwiseProduct(rn));
@@ -364,7 +364,6 @@ bool PCG::solve(
   // Initialize search direction pn.
   auto pn = rtilda_n;
 
-  //  ns_eigen_utils::printEigenMat(rtilda_n);
   // Compute the step length.
   auto alpha_n = rn.dot(rtilda_n) / pApnorm(pn);
 
@@ -375,19 +374,8 @@ bool PCG::solve(
   auto rn_prev = rn;
 
   // Update the residuals.
-  //  auto &&Ap = pAdot(pn);
   rn = rn - alpha_n * Asparse * pn;
-  //  rn = rn - alpha_n * pAdot(pn);
-
-  //  ns_eigen_utils::printEigenMat(rn);
-  // Define gradient correction factor beta.
   double beta{};
-
-  // DEBUG
-  // std::cout << "\nrn_tilda \n";
-  // ns_eigen_utils::printEigenMat(rtilda_n);
-  //  ns_eigen_utils::printEigenMat(invDiag);
-  // end of DEBUG
 
   for (size_t k = 0; k < maxiter_; k++) {
     auto rtilda_prev = rtilda_n;  // copy
@@ -400,7 +388,6 @@ bool PCG::solve(
     pn.noalias() = rtilda_n + beta * pn;
 
     // Compute alpha; step length.
-    //    alpha_n = rn.dot(rtilda_n) / pApnorm(pn);
     alpha_n = rn.dot(rtilda_n) / pn.dot(Asparse * pn);
 
     // Update the solution.
@@ -409,10 +396,6 @@ bool PCG::solve(
     // Update r(n-1) and r(n).
     rn_prev = rn;
     rn.noalias() = rn - alpha_n * Asparse * pn;
-
-    //    rn.noalias() = rn - alpha_n * pAdot(pn);
-    //    std::cout << rn.rows() << " " << pAdot(pn).rows() << std::endl;
-    //    ns_eigen_utils::printEigenMat(pAdot(pn) - rn);
 
     if (isConvergedL1(rn)) {
       // Set solution and return.
@@ -427,7 +410,6 @@ bool PCG::solve(
 bool PCG::isConvergedL1(Eigen::VectorXd const & residuals) const
 {
   auto l1norm = residuals.cwiseAbs().sum();
-  // std::cout << "L1 norm of the residuals is : " << l1norm << std::endl;
 
   return l1norm < eps_;
 }
@@ -438,11 +420,10 @@ double PCG::pApnorm(const Eigen::MatrixXd & p)
 
   // results, p[0]**2 + p[n]**2
   double panorm = p(0) * p(0) + p(dim_p - 1) * p(dim_p - 1);
-  for (int k = 1; k < (int)dim_p - 1; ++k) {
+  for (int k = 1; k < static_cast<int>(dim_p) - 1; ++k) {
     panorm += p(k) * (p(k - 1) + 4 * p(k) + p(k + 1));
   }
 
   return panorm;
 }
-
 }  // namespace ns_splines

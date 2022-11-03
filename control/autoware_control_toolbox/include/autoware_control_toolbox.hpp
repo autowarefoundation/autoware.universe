@@ -36,6 +36,7 @@
 #include "splines/bspline_interpolator_templated.hpp"
 #include "splines/bsplines_interpolator.hpp"
 #include "splines/bsplines_smoother.hpp"
+#include "splines/interpolating_spline_pcg.hpp"
 #include "utils_act/act_utils_eigen.hpp"
 
 #endif  // AUTOWARE_CONTROL_TOOLBOX_HPP_
