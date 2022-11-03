@@ -133,15 +133,6 @@ void extrapolate(
   }
 }
 
-/**
- * @brief Saturates given values
- * */
-template<typename T>
-constexpr T clamp(const T &val, const T &lower, const T &upper)
-{
-  return std::max(lower, std::min(val, upper));
-}
-
 template<typename T, typename std::enable_if_t<std::is_floating_point_v<T>> * = nullptr>
 T deg2rad(T const &angle)
 {

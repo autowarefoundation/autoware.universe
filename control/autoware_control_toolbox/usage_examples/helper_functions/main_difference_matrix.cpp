@@ -40,5 +40,13 @@ int main()
   printf("front point %4.15f \n", points.front());
   printf("back point %4.15f \n", points.back());
 
+  // std::clamp
+  double v{-.2};
+  double vmin{-.3};
+  double vmax{12};
+
+  auto vclamped = std::clamp(v, vmin, vmax);
+  ns_utils::print("vmin = ", vmin, "<=", vclamped, "<= ", vmax);
+
   return 0;
 }

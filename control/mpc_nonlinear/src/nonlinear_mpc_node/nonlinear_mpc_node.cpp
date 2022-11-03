@@ -1077,7 +1077,7 @@ bool NonlinearMPCNode::makeFixedSizeMat_sxyz(
 {
   /**
    * @brief Raw trajectory enters in variable size, it is resampled into a fixed size, and curvature
-   * map is created to mpc interpolator_spline_pws size (ns_nmpc_interface::MPC_MAP_SMOOTHER_OUT).
+   * map is created to a fixed size (ns_nmpc_interface::MPC_MAP_SMOOTHER_OUT).
    */
 
   size_t const &map_in_fixed_size = ns_splines::MPC_MAP_SMOOTHER_IN;
@@ -1089,53 +1089,17 @@ bool NonlinearMPCNode::makeFixedSizeMat_sxyz(
   /**
    * @brief A new coordinate vector for a fixed size trajectories.
    **/
-  std::vector<double> s_fixed_size_coordinate =
-    ns_utils::linspace(initial_distance, final_distance, map_in_fixed_size);
-
-  /**
-   * @brief Create a piece-wise cubic interpolator for x and y.
-   * */
-  ns_splines::InterpolatingSplinePCG interpolator_spline_pws(3);  // piecewise
+  std::vector<double> s_fixed_size_coordinate = ns_utils::linspace(initial_distance, final_distance, map_in_fixed_size);
 
   /**
    * @brief Create a piece-wise linear interpolator for the rest of the coordinates.
    * */
-//  ns_splines::InterpolatingSplinePCG interpolator_linear(1);
-//
-//  // Interpolated vector containers.
-//  std::vector<double> xinterp;
-//  std::vector<double> yinterp;
-//  std::vector<double> zinterp;
-//
-//  xinterp.reserve(map_in_fixed_size);
-//  yinterp.reserve(map_in_fixed_size);
-//  zinterp.reserve(map_in_fixed_size);
-//
-//  // Resample the varying size raw trajectory into a fixed size trajectory points.
-//  auto const &&is_interpolated_x = interpolator_spline_pws.Interpolate(
-//    mpc_traj_raw.s, mpc_traj_raw.x, s_fixed_size_coordinate, xinterp);
-//
-//  auto const &&is_interpolated_y = interpolator_spline_pws.Interpolate(
-//    mpc_traj_raw.s, mpc_traj_raw.y, s_fixed_size_coordinate, yinterp);
-//
-//  auto const &&is_interpolated_z = interpolator_linear.Interpolate(
-//    mpc_traj_raw.s, mpc_traj_raw.z, s_fixed_size_coordinate, zinterp);
-
-  ns_utils::print("in make fixed map : sbase start end vs sfixed start end: ");
-  ns_utils::print("in make fixed map : sbase start end vs sfixed start end: ",
-                  mpc_traj_raw.s.front(),
-                  mpc_traj_raw.s.back(),
-                  s_fixed_size_coordinate.front(),
-                  s_fixed_size_coordinate.back());
 
   // Interpolated vector containers.
   // Resample the varying size raw trajectory into a fixed size trajectory points.
   auto xinterp = interpolation::spline(mpc_traj_raw.s, mpc_traj_raw.x, s_fixed_size_coordinate);
   auto yinterp = interpolation::spline(mpc_traj_raw.s, mpc_traj_raw.y, s_fixed_size_coordinate);
   auto zinterp = interpolation::spline(mpc_traj_raw.s, mpc_traj_raw.z, s_fixed_size_coordinate);
-
-  // ns_utils::print("on trajectory vector sizes, zinterp vs map size", zinterp.size(),
-  // map_in_fixed_size);
 
   /**
    * @brief save into the reference map which accepts the resampled fixed size coordinates.

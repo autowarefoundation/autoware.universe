@@ -166,10 +166,10 @@ void ns_nmpc_interface::NonlinearMPCController::getInitialState(Model::state_vec
   x0 = data_nmpc_.trajectory_data.X[0];
 }
 
-void ns_nmpc_interface::NonlinearMPCController::applyStateConstraints(
-  const Eigen::Index &idx, Model::state_vector_t &x)
+void ns_nmpc_interface::NonlinearMPCController::applyStateConstraints(const Eigen::Index &idx, Model::state_vector_t &x)
 {
-  x(idx) = ns_utils::clamp(x(idx), params_opt_.xlower(idx), params_opt_.xupper(idx));
+  x(idx) = std::clamp(x(idx), params_opt_.xlower(idx), params_opt_.xupper(idx));
+
 }
 
 void ns_nmpc_interface::NonlinearMPCController::applyStateConstraints(Model::state_vector_t &x)
@@ -178,7 +178,7 @@ void ns_nmpc_interface::NonlinearMPCController::applyStateConstraints(Model::sta
   {
     if (params_opt_.xlower(idx) > -kInfinity && params_opt_.xupper(idx) < kInfinity)
     {
-      x(idx) = ns_utils::clamp(x(idx), params_opt_.xlower(idx), params_opt_.xupper(idx));
+      x(idx) = std::clamp(x(idx), params_opt_.xlower(idx), params_opt_.xupper(idx));
     }
   }
 }
@@ -186,14 +186,14 @@ void ns_nmpc_interface::NonlinearMPCController::applyStateConstraints(Model::sta
 void ns_nmpc_interface::NonlinearMPCController::applyControlConstraints(
   const Eigen::Index &idx, Model::input_vector_t &u)
 {
-  u(idx) = ns_utils::clamp(u(idx), params_opt_.ulower(idx), params_opt_.uupper(idx));
+  u(idx) = std::clamp(u(idx), params_opt_.ulower(idx), params_opt_.uupper(idx));
 }
 
 void ns_nmpc_interface::NonlinearMPCController::applyControlConstraints(Model::input_vector_t &u)
 {
   for (Eigen::Index idx = 0; idx < u.size(); ++idx)
   {
-    u(idx) = ns_utils::clamp(u(idx), params_opt_.ulower(idx), params_opt_.uupper(idx));
+    u(idx) = std::clamp(u(idx), params_opt_.ulower(idx), params_opt_.uupper(idx));
   }
 }
 
