@@ -98,36 +98,6 @@ bool isEqual(T a, T b)
 }
 
 /**
- * Linear extrapolation
- * */
-template <typename T, typename std::enable_if_t<std::is_floating_point_v<T>> * = nullptr>
-void extrapolate(
-  std::vector<T> const & tbase, std::vector<T> const & ybase, T const & tnew, T & ynew)
-{
-  if (tnew < tbase[0]) {
-    auto const & t0 = tbase[0];
-    auto const & t1 = tbase[1];
-
-    auto const & y0 = ybase[0];
-    auto const & y1 = ybase[1];
-
-    auto const & ratio = (t0 - tnew) / (t1 - t0);
-    ynew = y0 - ratio * (y1 - y0);
-  }
-
-  if (tnew > tbase.back()) {
-    auto const & tn = tbase.rbegin()[0];
-    auto const & tn_1 = tbase.rbegin()[1];
-
-    auto const & yn = ybase.rbegin()[0];
-    auto const & yn_1 = ybase.rbegin()[1];
-
-    auto const & ratio = (tnew - tn) / (tn - tn_1);
-    ynew = yn + ratio * (yn - yn_1);
-  }
-}
-
-/**
  * @brief Saturates given values
  * */
 template <typename T>
@@ -212,18 +182,6 @@ void unWrap(std::vector<T> & vec)
       pm = cp;
       vec[k] = cp;
     }
-  }
-}
-
-template <typename T>
-void convertEulerAngleToMonotonic(std::vector<T> * a)
-{
-  if (!a) {
-    return;
-  }
-  for (unsigned int i = 1; i < a->size(); ++i) {
-    const double da = a->at(i) - a->at(i - 1);
-    a->at(i) = a->at(i - 1) + wrapToPi<T>(da);
   }
 }
 
@@ -368,88 +326,6 @@ size_t constexpr binary_index_search(T const & ti, std::vector<T> const & tbase)
   return left_ind;
 }
 
-/**
- * @brief Interpolates the data at the new coordinates given the base coordinate-data pair. The data
- * out of bound is extrapolated to prevent the numerical problems.
- * @param [in] sbase_coord the base coordinate, monotonic series,
- * @param [in] base_data the base data,
- * @param [in] snew_coords the new coordinates,
- * @param [out] new_data_to_be_interpolated.
- * */
-template <class T, typename std::enable_if_t<std::is_floating_point_v<T>, bool> * = nullptr>
-
-bool interp1d_linear(
-  std::vector<T> const & tbase, std::vector<T> const & ybase, std::vector<T> const & tnew,
-  std::vector<T> & ynew)
-{
-  // Prepare the data container to be interpolated.
-  ynew.clear();
-  ynew.reserve(tbase.size());
-
-  // auto const &&EPS = std::numeric_limits<double>::epsilon();
-
-  // For each coordinate in the new coordinate vector.
-  for (double const & tk : tnew) {
-    if (tk < tbase[0] || tk > tbase.back()) {
-      T yk{};
-      ns_utils::extrapolate(tbase, ybase, tk, yk);
-      ynew.emplace_back(yk);
-      continue;
-    }
-
-    // Get indices.
-    size_t const & left_ind = binary_index_search(tk, tbase);
-    size_t const & right_ind = left_ind + 1;  // We guaranteed the existence of right_ind.
-
-    // find interval length and ratio.
-    auto const & t0 = tbase[left_ind];
-    auto const & t1 = tbase[right_ind];
-
-    if (isEqual(t1, t0)) {
-      return false;
-    }
-
-    auto const & ratio = (tk - t0) / (t1 - t0);
-
-    // Get terminal data items.
-    auto const & yk = ybase[left_ind] + ratio * (ybase[right_ind] - ybase[left_ind]);
-
-    // Push back.
-    ynew.emplace_back(yk);
-  }
-  return true;
-}
-
-template <class T, typename std::enable_if_t<std::is_floating_point_v<T>, bool> * = nullptr>
-bool interp1d_linear(
-  std::vector<T> const & tbase, std::vector<T> const & ybase, T const & tnew, T & ynew)
-{
-  if (tnew < tbase[0] || tnew > tbase.back()) {
-    ns_utils::extrapolate(tbase, ybase, tnew, ynew);
-
-    return true;
-  }
-
-  // For each coordinate in the new coordinate vector.
-  // Get indices.
-  size_t const & left_ind = binary_index_search(tnew, tbase);
-  size_t const & right_ind = left_ind + 1;  // We guaranteed the existence of right.
-
-  // find interval length and ratio.
-  auto const & t0 = tbase[left_ind];
-  auto const & t1 = tbase[right_ind];
-
-  if (isEqual(t1, t0)) {
-    return false;
-  }
-
-  auto const & ratio = (tnew - t0) / (t1 - t0);
-
-  // Get terminal data items.
-  ynew = ybase[left_ind] + ratio * (ybase[right_ind] - ybase[left_ind]);
-
-  return true;
-}
 // Cross Product
 template <typename T>
 constexpr std::vector<T> crossProduct(std::vector<T> const & va, std::vector<T> const & vb)
