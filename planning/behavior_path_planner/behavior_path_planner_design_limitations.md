@@ -56,3 +56,7 @@ Currently, the implementation doesn't cover avoidance at corners and intersectio
 There are possibilities that the shifted path chatters as a result of various factors. For example, bounded box shape or position from the perception input. Sometimes, it is difficult for the perception to get complete information about the object's size. As the object size is updated, the object length will also be updated. This might cause shifts point to be re-calculated, therefore resulting in chattering shift points.
 
 ![limitation-chattering-shift](./image/limitations/limitation-chattering_shifts.png)
+
+## Limitation: Size of Path Points
+
+Some modules and functions do not support paths with only one point. Therefore, this module should generate the path with more than two path points.

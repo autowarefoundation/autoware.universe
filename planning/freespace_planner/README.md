@@ -127,3 +127,7 @@ endif
 stop
 @enduml
 ```
+
+### Limitation
+
+Some modules and functions do not support paths with only one point. Therefore, this module should generate the path with more than two path points.
