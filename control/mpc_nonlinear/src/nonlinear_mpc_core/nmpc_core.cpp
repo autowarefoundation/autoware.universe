@@ -299,13 +299,9 @@ void ns_nmpc_interface::NonlinearMPCController::simulateControlSequenceUseVaryin
     auto const &uk = data_nmpc_.trajectory_data.U[k - 1];
 
     // InterpolateInCoordinates the target v0, v1 on the trajectory.
-    ns_utils::interp1d_linear(
-      current_MPCtraj_smooth_vects_ptr_->t, current_MPCtraj_smooth_vects_ptr_->vx, td0, v0);
-
-    // use the mpc time step duration dt.
-    ns_utils::interp1d_linear(
-      current_MPCtraj_smooth_vects_ptr_->t, current_MPCtraj_smooth_vects_ptr_->vx,
-      td0 + data_nmpc_.mpc_prediction_dt, v1);
+    v0 = interpolation::lerp(current_MPCtraj_smooth_vects_ptr_->t, current_MPCtraj_smooth_vects_ptr_->vx, td0);
+    v1 = interpolation::lerp(current_MPCtraj_smooth_vects_ptr_->t, current_MPCtraj_smooth_vects_ptr_->vx,
+                             td0 + data_nmpc_.mpc_prediction_dt);
 
     params(0) = kappa0;
     params(1) = data_nmpc_.target_reference_states_and_controls.X[k - 1](6);
@@ -347,28 +343,15 @@ void ns_nmpc_interface::NonlinearMPCController::updateRefTargetStatesByTimeInter
   Model::state_vector_t xk{Model::state_vector_t::Zero()};  // placeholder for the iterated states.
 
   // Prepare the start time for the MPC trajectory.
-  double const &t_mpc_start =
-    current_t0_ + data_nmpc_.input_delay_time + current_avg_mpc_comp_time;
-  double const &t_mpc_ends =
-    t_mpc_start + static_cast<double>(K_mpc_steps - 1) * data_nmpc_.mpc_prediction_dt;
+  double const &t_mpc_start = current_t0_ + data_nmpc_.input_delay_time + current_avg_mpc_comp_time;
+  double const &t_mpc_ends = t_mpc_start + static_cast<double>(K_mpc_steps - 1) * data_nmpc_.mpc_prediction_dt;
 
   // to create a base time coordinate for the time-vx interpolator.
-  auto const &t_predicted_coords =
-    ns_utils::linspace<double>(t_mpc_start, t_mpc_ends, K_mpc_steps);
-  std::vector<double> vx_interpolated_vect;
+  auto const &t_predicted_coords = ns_utils::linspace<double>(t_mpc_start, t_mpc_ends, K_mpc_steps);
 
-  ns_splines::InterpolatingSplinePCG interpolator_time_speed(1);
-
-  if (auto const &is_interpolated = interpolator_time_speed.Interpolate(
-      current_MPCtraj_smooth_vects_ptr_->t, current_MPCtraj_smooth_vects_ptr_->vx,
-      t_predicted_coords, vx_interpolated_vect);
-    !is_interpolated)
-  {
-    RCLCPP_ERROR(
-      rclcpp::get_logger(node_logger_name_),
-      "[mpc_nonlinear] UpdateScaledTargets couldn't interpolate the target speeds ...");
-    return;
-  }
+  auto const &vx_interpolated_vect = interpolation::lerp(current_MPCtraj_smooth_vects_ptr_->t,
+                                                         current_MPCtraj_smooth_vects_ptr_->vx,
+                                                         t_predicted_coords);
 
   // Set the target states.
   for (size_t k = 0; k < nX; ++k)
@@ -387,8 +370,9 @@ void ns_nmpc_interface::NonlinearMPCController::updateScaledPredictedTargetState
   // Prepare the target trajectory data;
   // number of stored states in the horizon.
   auto const &&nX = data_nmpc_.target_reference_states_and_controls.nX();
-  Model::state_vector_t xk(
-    Model::state_vector_t::Zero());  // placeholder for the iterated integration.
+
+  // placeholder for the iterated integration.
+  Model::state_vector_t xk(Model::state_vector_t::Zero());
 
   // Prepare the predicted road travelled distance vector.
   std::vector<double> s_predicted;
@@ -400,24 +384,10 @@ void ns_nmpc_interface::NonlinearMPCController::updateScaledPredictedTargetState
    * - get the current vx_vector and use as the base data.
    **/
 
-  // Use of Autoware spline.
-  std::vector<double> vx_interpolated;
-
-  // Alternatively we can use Eigen version of Autoware spline.
-  ns_splines::InterpolatingSplinePCG spline_aw_eigen(1);  // linear interpolation.
-
   auto const &sbase = current_MPCtraj_raw_vects_ptr_->s;
   auto const &vxbase = current_MPCtraj_raw_vects_ptr_->vx;
 
-  if (auto const &is_interpolated =
-      spline_aw_eigen.Interpolate(sbase, vxbase, s_predicted, vx_interpolated);
-    !is_interpolated)
-  {
-    RCLCPP_ERROR(
-      rclcpp::get_logger(node_logger_name_),
-      "[mpc_nonlinear] UpdateScaledTargets couldn't interpolate the target states ...");
-    return;
-  }
+  auto const &vx_interpolated = interpolation::lerp(sbase, vxbase, s_predicted);
 
   // Set the target states.
   for (size_t k = 0; k < nX; k++)
