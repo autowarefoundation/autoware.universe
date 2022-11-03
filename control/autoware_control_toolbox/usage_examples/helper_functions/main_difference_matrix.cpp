@@ -29,5 +29,16 @@ int main()
   auto Db = ns_eigen_utils::difference_matrix_bspline<double>(n, k, d);
   ns_eigen_utils::printEigenMat(Db, "Bspline difference matrix : ");
 
+  // Test linspace.
+  double start_point{0.};
+  double endpoint{25.};
+  size_t num_ofpoints = 20;
+
+  auto points = ns_utils::linspace(start_point, endpoint, num_ofpoints);
+  ns_utils::print_container(points);
+
+  printf("front point %4.15f \n", points.front());
+  printf("back point %4.15f \n", points.back());
+
   return 0;
 }
