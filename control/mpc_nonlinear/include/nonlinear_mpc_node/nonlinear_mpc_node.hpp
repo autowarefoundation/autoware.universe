@@ -61,6 +61,9 @@
 // Autoware headers.
 #include "helper_functions/angle_utils.hpp"
 
+#include "interpolation/linear_interpolation.hpp"
+#include "interpolation/spline_interpolation.hpp"
+#include "tier4_autoware_utils/system/stop_watch.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 #include "autoware_auto_vehicle_msgs/msg/steering_report.hpp"
 
@@ -95,24 +98,25 @@ struct DebugData
 
 template<typename T>
 void update_param(
-  const std::vector<rclcpp::Parameter> & parameters, const std::string & name, T & value)
+  const std::vector<rclcpp::Parameter> &parameters, const std::string &name, T &value)
 {
   auto it = std::find_if(
     parameters.cbegin(), parameters.cend(),
-    [&name](const rclcpp::Parameter & parameter)
-    {return parameter.get_name() == name;});
-  if (it != parameters.cend()) {
+    [&name](const rclcpp::Parameter &parameter)
+    { return parameter.get_name() == name; });
+  if (it != parameters.cend())
+  {
     value = static_cast<T>(it->template get_value<T>());
   }
 }
 
 struct sCommandTimeStampFind
 {
-  explicit sCommandTimeStampFind(rclcpp::Time const & timestamp)
-  : time_stamp_(timestamp)
+  explicit sCommandTimeStampFind(rclcpp::Time const &timestamp)
+    : time_stamp_(timestamp)
   {}
 
-  bool operator()(ControlCmdMsg const & cmd) const
+  bool operator()(ControlCmdMsg const &cmd) const
   {
     return rclcpp::Time(cmd.stamp) < rclcpp::Time(time_stamp_);
   }
@@ -126,11 +130,11 @@ struct sCommandTimeStampFind
 
 class NonlinearMPCNode : public rclcpp::Node
 {
-public:
+ public:
   /**
    * @brief Constructor
    */
-  explicit NonlinearMPCNode(const rclcpp::NodeOptions & node_options);
+  explicit NonlinearMPCNode(const rclcpp::NodeOptions &node_options);
 
   /**
    * @brief Destructor
@@ -160,7 +164,7 @@ public:
     return *nonlinear_mpc_controller_ptr_;
   }
 
-private:
+ private:
   // Publishers and subscribers.
   // PUBLISHERS.
   // <-@brief publishes control command.
@@ -202,13 +206,14 @@ private:
 
   //!<- @brief timer to update after a given interval.
   rclcpp::TimerBase::SharedPtr timer_{nullptr};
+  tier4_autoware_utils::StopWatch<> stop_watch_{};
 
   // Node members.
   double wheel_base_{};
   ns_data::ParamsNMPCNode params_node_{};
   std::unique_ptr<ns_nmpc_interface::NonlinearMPCController> nonlinear_mpc_controller_ptr_{nullptr};
 
-  /**
+/**
    *  @brief Bspline interpolators, takes a fixed size trajectory EigenMatrix [x, y] and yields a
    * interpolated smooth [x, y] matrix. These smoothed coordinates are used to interpolate their
    * first and second derivatives rdot(x, y), rddot(x,y). We compute a curvature vector using these
@@ -351,12 +356,12 @@ private:
   void loadNodeParameters();  // load the parameters used in the node.
 
   // load vehicle model params.
-  void loadVehicleParameters(ns_models::ParamsVehicle & params_vehicle);
+  void loadVehicleParameters(ns_models::ParamsVehicle &params_vehicle);
 
   // Load NMPCCore, LPV parameters and OSQP class parameters.
   void loadNMPCoreParameters(
-    ns_data::data_nmpc_core_type_t & data_nmpc_core, ns_data::param_lpv_type_t & params_lpv,
-    ns_data::ParamsOptimization & params_optimization);
+    ns_data::data_nmpc_core_type_t &data_nmpc_core, ns_data::param_lpv_type_t &params_lpv,
+    ns_data::ParamsOptimization &params_optimization);
 
   /**
    *   @brief We use state and control scaling for within the optimization algorithms.
@@ -372,7 +377,7 @@ private:
    *  ax, au are put on the diagonals of the scaling matrices. bx, bu are the centering vector
    * entries.
    * */
-  static void computeScalingMatrices(ns_data::ParamsOptimization & params);
+  static void computeScalingMatrices(ns_data::ParamsOptimization &params);
 
   /**
    * @brief set current_trajectory_ with received message
@@ -400,7 +405,7 @@ private:
   OnSetParametersCallbackHandle::SharedPtr is_parameters_set_res_;
 
   rcl_interfaces::msg::SetParametersResult onParameterUpdate(
-    const std::vector<rclcpp::Parameter> & parameters);
+    const std::vector<rclcpp::Parameter> &parameters);
 
   void updateCurrentPose();
 
@@ -413,19 +418,19 @@ private:
 
   void computeClosestPointOnTraj();
 
-  void setCurrentCOGPose(geometry_msgs::msg::PoseStamped const & ps);
+  void setCurrentCOGPose(geometry_msgs::msg::PoseStamped const &ps);
 
   /**
    * @brief calculates the distance to the vehicle states in which the speed is less than a
    * threshold.
    * */
-  double calcStopDistance(const size_t & prev_waypoint_index) const;
+  double calcStopDistance(const size_t &prev_waypoint_index) const;
 
   // Gets the distance to the stopping point, ego speed and the speed at the next traj. point.
   std::array<double, 3> getDistanceEgoTargetSpeeds() const;
 
   /** @brief Get average MPC computation time in seconds. */
-  void getAverageMPCcomputeTime(double & avg_compute_time_in_sec) const;
+  void getAverageMPCcomputeTime(double &avg_compute_time_in_sec) const;
 
   /**
    * @brief compute the initial error and set the initial states and controls.
@@ -448,14 +453,14 @@ private:
    * @brief predict the initial states using the vx control input buffer.
    * @param [in-out] xd0 the integrated initial state iteratively.
    * */
-  void predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::state_vector_t & x0_predicted);
+  void predictDelayedInitialStateBy_MPCPredicted_Inputs(Model::state_vector_t &x0_predicted);
 
   /**
    * @brief Set the timer object.
    **/
   void initTimer(double period_s);  //!< @brief Set the timer object.
 
-  static bool isValidTrajectory(const TrajectoryMsg & msg_traj);
+  static bool isValidTrajectory(const TrajectoryMsg &msg_traj);
 
   /**
    * f resamples the current trajectory with a varying size into a fixed-sized trajectories and
@@ -472,7 +477,7 @@ private:
    * @param fixed_map_ref_sxyz Eigen matrix that stores the interpolated coordinates.
    * */
   static bool makeFixedSizeMat_sxyz(
-    ns_data::MPCdataTrajectoryVectors const & mpc_traj_raw, map_matrix_in_t & fixed_map_ref_sxyz);
+    ns_data::MPCdataTrajectoryVectors const &mpc_traj_raw, map_matrix_in_t &fixed_map_ref_sxyz);
 
   /**
    * @brief given a fixed size [s, x, y, z] trajectory, create the other references.
@@ -480,34 +485,34 @@ private:
    * except the arc_length-curvature table.
    * */
   bool createSmoothTrajectoriesWithCurvature(
-    ns_data::MPCdataTrajectoryVectors const & mpc_traj_raw,
-    map_matrix_in_t const & fixed_map_ref_sxyz);
+    ns_data::MPCdataTrajectoryVectors const &mpc_traj_raw,
+    map_matrix_in_t const &fixed_map_ref_sxyz);
 
   static ControlCmdMsg createControlCommand(
-    double const & ax, double const & vx, double const & steering_rate,
-    double const & steering_val);
+    double const &ax, double const &vx, double const &steering_rate,
+    double const &steering_val);
 
   /**
    * @brief publish control command as autoware_msgs/ControlCommand type
    * @param [in] cmd published control command
    */
-  void publishControlCommands(ControlCmdMsg & control_cmd) const;
+  void publishControlCommands(ControlCmdMsg &control_cmd) const;
 
-  void publishControlsAndUpdateVars(ControlCmdMsg & control_cmd);
+  void publishControlsAndUpdateVars(ControlCmdMsg &control_cmd);
 
-  void publishPerformanceVariables(const ControlCmdMsg & control_cmd);
+  void publishPerformanceVariables(const ControlCmdMsg &control_cmd);
 
-  void publishPredictedTrajectories(std::string const & ns, std::string const & frame_id) const;
+  void publishPredictedTrajectories(std::string const &ns, std::string const &frame_id) const;
 
-  void publishClosestPointMarker(std::string const & ns) const;
+  void publishClosestPointMarker(std::string const &ns) const;
 
-  void setErrorReport(Model::state_vector_t const & x);
+  void setErrorReport(Model::state_vector_t const &x);
 
-  void publishErrorReport(ErrorReportMsg & error_rpt_msg) const;
+  void publishErrorReport(ErrorReportMsg &error_rpt_msg) const;
 
   visualization_msgs::msg::MarkerArray createPredictedTrajectoryMarkers(
-    std::string const & ns, std::string const & frame_id, std::array<double, 2> xy0,
-    Model::trajectory_data_t const & td) const;
+    std::string const &ns, std::string const &frame_id, std::array<double, 2> xy0,
+    Model::trajectory_data_t const &td) const;
 
   /**
    * @brief get initial command
@@ -517,7 +522,7 @@ private:
   /**
    * @brief get stop command
    */
-  void getStopControlCommand(ControlCmdMsg & control_cmd);
+  void getStopControlCommand(ControlCmdMsg &control_cmd);
 
   // Debug Parameters
   mutable DebugData debug_data_{};

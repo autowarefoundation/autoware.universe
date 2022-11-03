@@ -215,7 +215,9 @@ void NonlinearMPCNode::onTimer()
    * @brief MPC loop : THIS SCOPE is important to update and maintain the MPC_CORE object. The
    * operations are in an order.
    * */
-  double const &&timer_mpc_step = ns_utils::tic();
+  std::string const timer_mpc_step{"mpc_calc_time"};
+  stop_watch_.tic(timer_mpc_step);
+
 
   // Find the index of the prev and next waypoint.
   current_error_report_ = ErrorReportMsg{};
@@ -472,10 +474,10 @@ void NonlinearMPCNode::onTimer()
   inputs_buffer_.emplace_back(control_cmd);
 
   /** estimate the average solve time */
-  auto const &&current_mpc_solve_time_msec = ns_utils::toc(timer_mpc_step);
+  const auto &current_mpc_solve_time_msec = stop_watch_.toc(timer_mpc_step);
 
   // convert milliseconds to seconds.
-  auto &&current_mpc_solve_time_sec = current_mpc_solve_time_msec * 1e-3;
+  auto &&current_mpc_solve_time_sec = current_mpc_solve_time_msec;
   average_mpc_solve_time_ =
     ns_utils::exponentialMovingAverage(average_mpc_solve_time_, 100, current_mpc_solve_time_sec);
 
