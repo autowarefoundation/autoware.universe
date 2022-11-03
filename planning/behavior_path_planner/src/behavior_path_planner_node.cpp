@@ -613,10 +613,10 @@ void BehaviorPathPlannerNode::run()
       RCLCPP_WARN(
         get_logger(), "Path orientation is invalid. Path yaw deviation: %f (deg)",
         yaw_dev * 180 / M_PI);
-      if (!planner_data_->prev_output_path->points.empty()) {
-        path = planner_data_->prev_output_path;
-      } else {
+      if (planner_data_->prev_output_path->points.empty()) {
         return;
+      } else {
+        path = planner_data_->prev_output_path;
       }
     } else {
       // update planner data
