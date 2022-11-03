@@ -191,6 +191,9 @@ void SplineInterpolation::calcSplineCoefficients(
   // throw exceptions for invalid arguments
   interpolation_utils::validateKeysAndValues(base_keys, base_values);
 
+  // TODO ali: Is this really necessary?
+  interpolation_utils::isStrictlyMonotonic(base_keys);
+
   const size_t num_base = base_keys.size();  // N+1
 
   std::vector<double> diff_keys;    // N
@@ -201,7 +204,8 @@ void SplineInterpolation::calcSplineCoefficients(
     diff_values.push_back(base_values.at(i + 1) - base_values.at(i));
   }
 
-  std::vector<double> v = {0.0};
+  std::vector<double> v{0.0};
+
   if (num_base > 2)
   {
     // solve tridiagonal matrix algorithm
@@ -260,7 +264,7 @@ std::vector<double> SplineInterpolation::getSplineInterpolatedValues(
       ++j;
     }
 
-    const double ds = query_key - base_keys_.at(j);
+    const double &ds = query_key - base_keys_.at(j);
     res.push_back(d.at(j) + (c.at(j) + (b.at(j) + a.at(j) * ds) * ds) * ds);
   }
 
@@ -286,7 +290,7 @@ std::vector<double> SplineInterpolation::getSplineInterpolatedDiffValues(
       ++j;
     }
 
-    const double ds = query_key - base_keys_.at(j);
+    const double &ds = query_key - base_keys_.at(j);
     res.push_back(c.at(j) + (2.0 * b.at(j) + 3.0 * a.at(j) * ds) * ds);
   }
 

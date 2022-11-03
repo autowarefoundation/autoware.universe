@@ -72,8 +72,7 @@ class SplineInterpolation
  public:
   SplineInterpolation() = default;
 
-  void calcSplineCoefficients(
-    const std::vector<double> &base_keys, const std::vector<double> &base_values);
+  void calcSplineCoefficients(const std::vector<double> &base_keys, const std::vector<double> &base_values);
 
   //!< @brief get values of spline interpolation on designated sampling points.
   //!< @details Assuming that query_keys are t vector for sampling, and interpolation is for x,
