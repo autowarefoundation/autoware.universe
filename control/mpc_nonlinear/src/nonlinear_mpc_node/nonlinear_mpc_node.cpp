@@ -864,7 +864,7 @@ void NonlinearMPCNode::loadNMPCoreParameters(
   params_optimization.osqp_eps_abs = declare_parameter<double>("osqp_eps_abs", 1e-5);
   params_optimization.osqp_eps_rel = declare_parameter<double>("osqp_eps_rel", 1e-5);
   params_optimization.osqp_verbose = declare_parameter<bool>("osqp_verbose", true);
-  params_optimization.osqp_polish_iters = declare_parameter<int64_t>("osqp_polish_iters", 50);
+  params_optimization.osqp_polish_iters = declare_parameter<int64_t>("osqp_polish_iters", 10);
   params_optimization.osqp_time_limit = declare_parameter<double>("osqp_time_limit", 0.2);
   params_optimization.osqp_scaled_termination = declare_parameter("osqp_scaled_termination", false);
 

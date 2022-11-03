@@ -859,13 +859,11 @@ void ns_nmpc_interface::NonlinearMPCController::shiftControls()
   data_nmpc_.trajectory_data.U.rbegin()[0] = data_nmpc_.trajectory_data.U.rbegin()[0];
 }
 
-void ns_nmpc_interface::NonlinearMPCController::getControlSolutions(
-  Model::input_vector_t &u_solution)
+void ns_nmpc_interface::NonlinearMPCController::getControlSolutions(Model::input_vector_t &u_solution)
 {
   // Interpolates the OSQP solutions between U[0] and U[1].
-  data_nmpc_.trajectory_data.getControlMPCSolutionsAtTime(
-    0.0,  // params_ptr_->control_period,
-    data_nmpc_.mpc_prediction_dt, u_solution);
+  data_nmpc_.trajectory_data.getControlMPCSolutionsAtTime(0.0,  // params_ptr_->control_period,
+                                                          data_nmpc_.mpc_prediction_dt, u_solution);
 
   u_solution_last_ = u_solution;
 }
@@ -897,36 +895,29 @@ double ns_nmpc_interface::NonlinearMPCController::getObjectiveValue() const
   return osqp_interface_.getObjectiveValue();
 }
 
-void ns_nmpc_interface::NonlinearMPCController::getRawVxAtDistance(
-  double const &s, double &vx) const
+void ns_nmpc_interface::NonlinearMPCController::getRawVxAtDistance(double const &s, double &vx) const
 {
-  ns_utils::interp1d_linear(
-    current_MPCtraj_raw_vects_ptr_->s, current_MPCtraj_raw_vects_ptr_->vx, s, vx);
+  vx = interpolation::lerp(current_MPCtraj_raw_vects_ptr_->s, current_MPCtraj_raw_vects_ptr_->vx, s);
 }
 
-void ns_nmpc_interface::NonlinearMPCController::getSmoothVxAtDistance(
-  double const &s, double &vx) const
+void ns_nmpc_interface::NonlinearMPCController::getSmoothVxAtDistance(double const &s, double &vx) const
 {
-  ns_utils::interp1d_linear(
-    current_MPCtraj_smooth_vects_ptr_->s, current_MPCtraj_smooth_vects_ptr_->vx, s, vx);
+  vx = interpolation::lerp(current_MPCtraj_smooth_vects_ptr_->s, current_MPCtraj_smooth_vects_ptr_->vx, s);
 }
 
-void ns_nmpc_interface::NonlinearMPCController::getSmoothYawAtDistance(
-  double const &s, double &yaw) const
+void ns_nmpc_interface::NonlinearMPCController::getSmoothYawAtDistance(double const &s, double &yaw) const
 {
-  ns_utils::interp1d_linear(
-    current_MPCtraj_smooth_vects_ptr_->s, current_MPCtraj_smooth_vects_ptr_->yaw, s, yaw);
+  yaw = interpolation::lerp(
+    current_MPCtraj_smooth_vects_ptr_->s, current_MPCtraj_smooth_vects_ptr_->yaw, s);
 }
 
-void ns_nmpc_interface::NonlinearMPCController::getSmoothXYZAtDistance(
-  double const &s, std::array<double, 3> &xyz) const
+void ns_nmpc_interface::NonlinearMPCController::getSmoothXYZAtDistance(double const &s,
+                                                                       std::array<double, 3> &xyz) const
 {
-  ns_utils::interp1d_linear(
-    current_MPCtraj_smooth_vects_ptr_->s, current_MPCtraj_smooth_vects_ptr_->x, s, xyz[0]);
 
-  ns_utils::interp1d_linear(
-    current_MPCtraj_smooth_vects_ptr_->s, current_MPCtraj_smooth_vects_ptr_->y, s, xyz[1]);
+  xyz[0] = interpolation::lerp(current_MPCtraj_smooth_vects_ptr_->s, current_MPCtraj_smooth_vects_ptr_->x, s);
 
-  ns_utils::interp1d_linear(
-    current_MPCtraj_smooth_vects_ptr_->s, current_MPCtraj_smooth_vects_ptr_->z, s, xyz[2]);
+  xyz[1] = interpolation::lerp(current_MPCtraj_smooth_vects_ptr_->s, current_MPCtraj_smooth_vects_ptr_->y, s);
+
+  xyz[2] = interpolation::lerp(current_MPCtraj_smooth_vects_ptr_->s, current_MPCtraj_smooth_vects_ptr_->z, s);
 }
