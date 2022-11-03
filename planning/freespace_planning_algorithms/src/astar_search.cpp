@@ -169,6 +169,8 @@ void AstarSearch::clearNodes()
   // clearing openlist is necessary because otherwise remaining elements of openlist
   // point to deleted node.
   openlist_ = std::priority_queue<AstarNode *, std::vector<AstarNode *>, NodeComparison>();
+
+  graph_ = std::unordered_map<uint, AstarNode>();
 }
 
 bool AstarSearch::setStartNode()
