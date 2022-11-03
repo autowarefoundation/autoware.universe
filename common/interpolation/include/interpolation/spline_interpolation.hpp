@@ -47,12 +47,12 @@ struct MultiSplineCoef
 
 // static spline interpolation functions
 std::vector<double> spline(
-  const std::vector<double> & base_keys, const std::vector<double> & base_values,
-  const std::vector<double> & query_keys);
+  const std::vector<double> &base_keys, const std::vector<double> &base_values,
+  const std::vector<double> &query_keys);
 
 std::vector<double> splineByAkima(
-  const std::vector<double> & base_keys, const std::vector<double> & base_values,
-  const std::vector<double> & query_keys);
+  const std::vector<double> &base_keys, const std::vector<double> &base_values,
+  const std::vector<double> &query_keys);
 }  // namespace interpolation
 
 // non-static 1-dimensional spline interpolation
@@ -69,26 +69,26 @@ std::vector<double> splineByAkima(
 // ```
 class SplineInterpolation
 {
-public:
+ public:
   SplineInterpolation() = default;
 
   void calcSplineCoefficients(
-    const std::vector<double> & base_keys, const std::vector<double> & base_values);
+    const std::vector<double> &base_keys, const std::vector<double> &base_values);
 
   //!< @brief get values of spline interpolation on designated sampling points.
   //!< @details Assuming that query_keys are t vector for sampling, and interpolation is for x,
   //            meaning that spline interpolation was applied to x(t),
   //            return value will be x(t) vector
-  std::vector<double> getSplineInterpolatedValues(const std::vector<double> & query_keys) const;
-  double getSplineInterpolatedValues(const double & query_key);
+  std::vector<double> getSplineInterpolatedValues(const std::vector<double> &query_keys) const;
+  double interpolatePoint(const double &query_key) const;
 
   //!< @brief get 1st differential values of spline interpolation on designated sampling points.
   //!< @details Assuming that query_keys are t vector for sampling, and interpolation is for x,
   //            meaning that spline interpolation was applied to x(t),
   //            return value will be dx/dt(t) vector
-  std::vector<double> getSplineInterpolatedDiffValues(const std::vector<double> & query_keys) const;
+  std::vector<double> getSplineInterpolatedDiffValues(const std::vector<double> &query_keys) const;
 
-private:
+ private:
   std::vector<double> base_keys_;
   interpolation::MultiSplineCoef multi_spline_coef_;
 };
