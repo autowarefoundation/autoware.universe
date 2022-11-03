@@ -114,7 +114,6 @@ TEST(interpolation_utils, validateKeys)
 
   const std::vector<double> back_out_query_keys{0.0, 1.0, 2.0, 4.0};
   EXPECT_THROW(validateKeys(base_keys, back_out_query_keys), std::invalid_argument);
-
 }
 
 TEST(interpolation_utils, validateKeysAndValues)
