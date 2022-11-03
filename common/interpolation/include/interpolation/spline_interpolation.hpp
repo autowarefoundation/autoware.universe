@@ -79,6 +79,7 @@ class SplineInterpolation
   //            meaning that spline interpolation was applied to x(t),
   //            return value will be x(t) vector
   std::vector<double> getSplineInterpolatedValues(const std::vector<double> &query_keys) const;
+  double getSplineInterpolatedValues(const double &query_key);
 
   //!< @brief get 1st differential values of spline interpolation on designated sampling points.
   //!< @details Assuming that query_keys are t vector for sampling, and interpolation is for x,

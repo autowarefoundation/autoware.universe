@@ -24,38 +24,6 @@ double lerp(const double src_val, const double dst_val, const double ratio)
   return src_val + (dst_val - src_val) * ratio;
 }
 
-/**
- * Linear extrapolation
- * */
-template<typename T, typename std::enable_if_t<std::is_floating_point_v<T>> * = nullptr>
-void lerp_extrapolate(
-  std::vector<T> const &base_keys, std::vector<T> const &base_values, T const &query_key, T &query_value)
-{
-  if (query_key < base_keys[0])
-  {
-    auto const &t0 = base_keys[0];
-    auto const &t1 = base_keys[1];
-
-    auto const &y0 = base_values[0];
-    auto const &y1 = base_values[1];
-
-    auto const &ratio = (t0 - query_key) / (t1 - t0);
-    query_value = y0 - ratio * (y1 - y0);
-  }
-
-  if (query_key > base_keys.back())
-  {
-    auto const &tn = base_keys.rbegin()[0];
-    auto const &tn_1 = base_keys.rbegin()[1];
-
-    auto const &yn = base_values.rbegin()[0];
-    auto const &yn_1 = base_values.rbegin()[1];
-
-    auto const &ratio = (query_key - tn) / (tn - tn_1);
-    query_value = yn + ratio * (yn - yn_1); // extrapolation and lerp have different semantics.
-  }
-}
-
 std::vector<double> lerp(
   const std::vector<double> &base_keys, const std::vector<double> &base_values,
   const std::vector<double> &query_keys, bool const &extrapolate_end_points)
@@ -73,7 +41,7 @@ std::vector<double> lerp(
     if ((query_key < base_keys.front() || query_key > base_keys.back()) && extrapolate_end_points)
     {
       double extrapolated_value{};
-      lerp_extrapolate(base_keys, base_values, query_key, extrapolated_value);
+      interpolation_utils::lerp_extrapolate(base_keys, base_values, query_key, extrapolated_value);
       query_values.emplace_back(extrapolated_value);
       continue;
     }
@@ -106,7 +74,7 @@ double lerp(
   if ((query_key < base_keys.front() || query_key > base_keys.back()) && extrapolate_end_points)
   {
     double extrapolated_value{};
-    lerp_extrapolate(base_keys, base_values, query_key, extrapolated_value);
+    interpolation_utils::lerp_extrapolate(base_keys, base_values, query_key, extrapolated_value);
 
     return extrapolated_value;
   }

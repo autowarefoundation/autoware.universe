@@ -271,6 +271,36 @@ std::vector<double> SplineInterpolation::getSplineInterpolatedValues(
   return res;
 }
 
+double SplineInterpolation::getSplineInterpolatedValues(const double &query_key)
+{
+  if (base_keys_.empty())
+  {
+
+    throw std::domain_error("The base keys are not available, please initialize the keys.");
+    return false;
+  }
+
+  const auto &a = multi_spline_coef_.a;
+  const auto &b = multi_spline_coef_.b;
+  const auto &c = multi_spline_coef_.c;
+  const auto &d = multi_spline_coef_.d;
+
+  // Binary search the minimum element in the base_key in such way that : query_key <= base_key[i]
+  auto const lower_bound_it = std::lower_bound(base_keys_.cbegin(), base_keys_.cend(), query_key);
+
+  // k1 is the index query_key <=base_keys[k1]
+  auto const &k1 = std::distance(base_keys_.cbegin(), lower_bound_it);
+  auto const &k0 = k1 == 0 ? k1 : k1 - 1; // if upper bound coincides with the first element
+
+
+  // Get the interpolated value
+  const double &ds = query_key - base_keys_.at(k0);
+  auto const &query_value = d.at(k0) + (c.at(k0) + (b.at(k0) + a.at(k0) * ds) * ds) * ds;
+
+  return query_value;
+
+}
+
 std::vector<double> SplineInterpolation::getSplineInterpolatedDiffValues(
   const std::vector<double> &query_keys) const
 {
@@ -296,3 +326,4 @@ std::vector<double> SplineInterpolation::getSplineInterpolatedDiffValues(
 
   return res;
 }
+

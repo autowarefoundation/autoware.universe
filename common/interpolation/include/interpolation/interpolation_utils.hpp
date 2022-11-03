@@ -134,6 +134,39 @@ void validateKeysAndValues(
     throw std::invalid_argument("The size of base_keys and base_values are not the same.");
   }
 }
+
+/**
+ * Linear extrapolation
+ * */
+template<typename T, typename std::enable_if_t<std::is_floating_point_v<T>> * = nullptr>
+void lerp_extrapolate(
+  std::vector<T> const &base_keys, std::vector<T> const &base_values, T const &query_key, T &query_value)
+{
+  if (query_key < base_keys[0])
+  {
+    auto const &t0 = base_keys[0];
+    auto const &t1 = base_keys[1];
+
+    auto const &y0 = base_values[0];
+    auto const &y1 = base_values[1];
+
+    auto const &ratio = (t0 - query_key) / (t1 - t0);
+    query_value = y0 - ratio * (y1 - y0);
+  }
+
+  if (query_key > base_keys.back())
+  {
+    auto const &tn = base_keys.rbegin()[0];
+    auto const &tn_1 = base_keys.rbegin()[1];
+
+    auto const &yn = base_values.rbegin()[0];
+    auto const &yn_1 = base_values.rbegin()[1];
+
+    auto const &ratio = (query_key - tn) / (tn - tn_1);
+    query_value = yn + ratio * (yn - yn_1); // extrapolation and lerp have different semantics.
+  }
+}
+
 }  // namespace interpolation_utils
 
 #endif  // INTERPOLATION__INTERPOLATION_UTILS_HPP_
