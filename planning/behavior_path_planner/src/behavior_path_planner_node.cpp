@@ -604,8 +604,7 @@ void BehaviorPathPlannerNode::run()
 
   // check if path orientation is valid
   if (!path->points.empty()) {
-    const auto closest_path_point_idx =
-      motion_utils::findNearestIndex(path->points, planner_data->self_pose->pose.position);
+    const auto closest_path_point_idx = findEgoIndex(path->points);
     const auto yaw_dev = tier4_autoware_utils::calcYawDeviation(
       path->points.at(closest_path_point_idx).point.pose, planner_data->self_pose->pose);
 
