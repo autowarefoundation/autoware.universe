@@ -85,8 +85,8 @@ inline bool isLargeVehicleLabel(const uint8_t label)
  * @return int
  */
 int GetNearestCornerSurface(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object, rclcpp::Time & time,
-  tf2::BufferCore & tf_buffer)
+  const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
+  const tf2_ros::Buffer & tf_buffer)
 {
   // only work for BBOX shape
   if (object.shape.type != autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
@@ -113,7 +113,29 @@ int GetNearestCornerSurface(
   xl = std::cos(yaw) * (x - x0) + std::sin(yaw) * (y - y0);
   yl = -std::sin(yaw) * (x - x0) + std::cos(yaw) * (y - y0);
 
-  return 0;  // 0 to 7 + 1(null) value
+  // grid search
+  int xgrid, ygrid;
+  const int labels[3][3] = {
+                          {7, 0, 4},
+                          {3,-1, 1},
+                          {6, 2, 5}
+  };
+  if(xl > length/2.0){
+    xgrid = 0;
+  }else if(xl>-length/2.0){
+    xgrid = 1;
+  }else{
+    xgrid = 2;
+  }
+  if(yl > width/2.0){
+    ygrid = 2;
+  }else if(yl > -width/2.0){
+    ygrid = 1;
+  }else{
+    ygrid = 0;
+  }
+
+  return labels[xgrid][ygrid];  // 0 to 7 + 1(null) value
 }
 
 }  // namespace utils
