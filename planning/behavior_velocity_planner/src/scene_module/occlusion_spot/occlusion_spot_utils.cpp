@@ -82,6 +82,9 @@ bool buildDetectionAreaPolygon(
     std::min(p.detection_area_max_length, p.detection_area_length) +
     da_range.min_longitudinal_distance;
   da_range.max_lateral_distance = p.detection_area.max_lateral_distance;
+  da_range.wheel_tread = p.wheel_tread;
+  da_range.right_overhang = p.right_overhang;
+  da_range.left_overhang = p.left_overhang;
   slices.clear();
   return planning_utils::createDetectionAreaPolygons(
     slices, path, target_pose, target_seg_idx, da_range, p.pedestrian_vel);

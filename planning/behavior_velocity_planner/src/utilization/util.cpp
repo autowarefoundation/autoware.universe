@@ -110,6 +110,7 @@ bool createDetectionAreaPolygons(
     const double v = std::max(v_average, min_velocity);
     const double dt = ds / v;
     ttc += dt;
+
     // for offset calculation
     const double max_lateral_distance_right =
       std::min(max_dst, offset_right + ttc * obstacle_vel_mps + eps);

@@ -305,12 +305,11 @@ std::vector<geometry_msgs::msg::Point> RunOutModule::createVehiclePolygon(
   const double base_to_left =
     (planner_param_.vehicle_param.wheel_tread / 2.0) + planner_param_.vehicle_param.left_overhang;
 
-  const auto p1 = tier4_autoware_utils::calcOffsetPose(base_pose, base_to_front, base_to_left, 0.0);
-  const auto p2 =
-    tier4_autoware_utils::calcOffsetPose(base_pose, base_to_front, -base_to_right, 0.0);
-  const auto p3 =
-    tier4_autoware_utils::calcOffsetPose(base_pose, -base_to_rear, -base_to_right, 0.0);
-  const auto p4 = tier4_autoware_utils::calcOffsetPose(base_pose, -base_to_rear, base_to_left, 0.0);
+  using tier4_autoware_utils::calcOffsetPose;
+  const auto p1 = calcOffsetPose(base_pose, base_to_front, base_to_left, 0.0);
+  const auto p2 = calcOffsetPose(base_pose, base_to_front, -base_to_right, 0.0);
+  const auto p3 = calcOffsetPose(base_pose, -base_to_rear, -base_to_right, 0.0);
+  const auto p4 = calcOffsetPose(base_pose, -base_to_rear, base_to_left, 0.0);
 
   std::vector<geometry_msgs::msg::Point> vehicle_poly;
   vehicle_poly.push_back(p1.position);
