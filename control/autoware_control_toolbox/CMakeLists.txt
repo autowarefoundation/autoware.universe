@@ -24,7 +24,6 @@ set(CONTROL_LIB_SOURCE
   src/control/act_signal_builder.cpp
 
   #SPLINES
-  src/splines/interpolating_spline_pcg.cpp
   src/splines/bsplines_smoother.cpp
   src/splines/bsplines_interpolator.cpp
   src/splines/bspline_interpolator_templated.cpp
@@ -53,7 +52,7 @@ set(CONTROL_LIB_HEADERS
   include/utils_act/act_utils_eigen.hpp
   include/utils_act/act_utils.hpp
   include/utils_act/writetopath.hpp
-  include/utils_act/timekeep.hpp)
+  include/utils_act/timekeep.hpp  )
 
 set(CONTROL_LIB_INCLUDE_DIRS
   include
