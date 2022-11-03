@@ -31,44 +31,48 @@
  *
  * */
 
-template <
+template<
   typename T, typename std::enable_if_t<std::is_floating_point_v<T>, std::vector<T>> * = nullptr>
-std::vector<T> operator*(std::vector<T> const & vec, T const & a)
+std::vector<T> operator*(std::vector<T> const &vec, T const &a)
 {
   std::vector<T> temp{vec};
 
-  std::transform(temp.begin(), temp.end(), temp.begin(), [&](auto & xi) { return xi * a; });
+  std::transform(temp.begin(), temp.end(), temp.begin(), [&](auto &xi)
+  { return xi * a; });
 
   return temp;
 }
 
-template <
+template<
   typename T, typename std::enable_if_t<std::is_floating_point_v<T>, std::vector<T>> * = nullptr>
 
-std::vector<T> & operator*=(std::vector<T> & vec, T const & a)
+std::vector<T> &operator*=(std::vector<T> &vec, T const &a)
 {
-  std::transform(vec.begin(), vec.end(), vec.begin(), [&](auto & xi) { return xi * a; });
+  std::transform(vec.begin(), vec.end(), vec.begin(), [&](auto &xi)
+  { return xi * a; });
 
   return vec;
 }
 
-template <
+template<
   typename T, typename std::enable_if_t<std::is_floating_point_v<T>, std::vector<T>> * = nullptr>
 
-std::vector<T> operator*(T const & a, std::vector<T> const & vec)
+std::vector<T> operator*(T const &a, std::vector<T> const &vec)
 {
   std::vector<T> temp{vec};
-  std::transform(temp.begin(), temp.end(), temp.begin(), [&](auto & xi) { return xi * a; });
+  std::transform(temp.begin(), temp.end(), temp.begin(), [&](auto &xi)
+  { return xi * a; });
 
   return temp;
 }
 
-template <
+template<
   typename T, typename std::enable_if_t<std::is_floating_point_v<T>, std::vector<T>> * = nullptr>
 
-std::vector<T> & operator*=(T const & a, std::vector<T> & vec)
+std::vector<T> &operator*=(T const &a, std::vector<T> &vec)
 {
-  std::transform(vec.begin(), vec.end(), vec.begin(), [&](auto & xi) { return xi * a; });
+  std::transform(vec.begin(), vec.end(), vec.begin(), [&](auto &xi)
+  { return xi * a; });
 
   return vec;
 }
@@ -78,20 +82,20 @@ namespace ns_utils
 /**
  * @brief signum function.
  * */
-template <typename T>
+template<typename T>
 int sgn(T val)
 {
   return (T(0) < val) - (val < T(0));
 }
 
 // Comparing data types.
-template <class T, typename std::enable_if_t<std::is_integral_v<T>, bool> * = nullptr>
+template<class T, typename std::enable_if_t<std::is_integral_v<T>, bool> * = nullptr>
 bool isEqual(T a, T b)
 {
   return a == b;
 }
 
-template <class T, typename std::enable_if_t<std::is_floating_point_v<T>, bool> * = nullptr>
+template<class T, typename std::enable_if_t<std::is_floating_point_v<T>, bool> * = nullptr>
 bool isEqual(T a, T b)
 {
   return abs(a - b) < std::numeric_limits<T>::epsilon();
@@ -100,14 +104,14 @@ bool isEqual(T a, T b)
 /**
  * @brief Saturates given values
  * */
-template <typename T>
-constexpr T clamp(const T & val, const T & lower, const T & upper)
+template<typename T>
+constexpr T clamp(const T &val, const T &lower, const T &upper)
 {
   return std::max(lower, std::min(val, upper));
 }
 
-template <typename T, typename std::enable_if_t<std::is_floating_point_v<T>> * = nullptr>
-T deg2rad(T const & angle)
+template<typename T, typename std::enable_if_t<std::is_floating_point_v<T>> * = nullptr>
+T deg2rad(T const &angle)
 {
   return angle * M_PI / 180.;
 }
@@ -115,7 +119,7 @@ T deg2rad(T const & angle)
 /**
  * @brief abs_diff for size_t
  * */
-template <typename T>
+template<typename T>
 T abs_diff(T a, T b)
 {
   return a > b ? a - b : b - a;
@@ -124,25 +128,25 @@ T abs_diff(T a, T b)
 /**
  * @brief angle wrapping w(x) = mod(x, +pi, 2*pi) - pi
  * */
-template <typename T, typename std::enable_if_t<std::is_floating_point_v<T>> * = nullptr>
-constexpr T angleDistance(T const & theta)
+template<typename T, typename std::enable_if_t<std::is_floating_point_v<T>> * = nullptr>
+constexpr T angleDistance(T const &theta)
 {
   T mod_theta_2pi = std::fmod(theta + M_PI, 2 * M_PI) - M_PI;
 
   return mod_theta_2pi < -M_PI ? mod_theta_2pi + 2 * M_PI : mod_theta_2pi;
 }
 
-template <typename T, typename std::enable_if_t<std::is_floating_point_v<T>> * = nullptr>
-constexpr T angleDistance(T const & theta, T const & theta_ref)
+template<typename T, typename std::enable_if_t<std::is_floating_point_v<T>> * = nullptr>
+constexpr T angleDistance(T const &theta, T const &theta_ref)
 {
-  T const && angle_diff = theta - theta_ref;
+  T const &&angle_diff = theta - theta_ref;
   T mod_theta_2pi = std::fmod(angle_diff + M_PI, 2 * M_PI) - M_PI;
 
   return mod_theta_2pi < -M_PI ? mod_theta_2pi + 2 * M_PI : mod_theta_2pi;
 }
 
-template <typename T, typename std::enable_if_t<std::is_floating_point_v<T>> * = nullptr>
-T wrapToPi(T const & angle)
+template<typename T, typename std::enable_if_t<std::is_floating_point_v<T>> * = nullptr>
+T wrapToPi(T const &angle)
 {
   const std::complex<double> i(0, 1);
   auto complex_number = std::exp(i * angle);
@@ -153,27 +157,31 @@ T wrapToPi(T const & angle)
  * @brief Unwraps a series of angles.
  * */
 
-template <typename T, typename std::enable_if_t<std::is_floating_point_v<T>> * = nullptr>
-void unWrap(std::vector<T> & vec)
+template<typename T, typename std::enable_if_t<std::is_floating_point_v<T>> * = nullptr>
+void unWrap(std::vector<T> &vec)
 {
-  auto const & n = vec.size();
+  auto const &n = vec.size();
   auto constexpr EPS = std::numeric_limits<T>::epsilon();
   auto pm = vec[0];
 
   auto thr = M_PI - EPS;
   T po{};
 
-  if (!vec.empty()) {
-    for (size_t k = 1; k < n; ++k) {
+  if (!vec.empty())
+  {
+    for (size_t k = 1; k < n; ++k)
+    {
       auto cp = vec[k] + po;
       auto dp = cp - pm;
 
-      while (dp > thr) {
+      while (dp > thr)
+      {
         po -= 2 * M_PI;
         dp -= 2 * M_PI;
       }
 
-      while (dp < -thr) {
+      while (dp < -thr)
+      {
         po += 2 * M_PI;
         dp += 2 * M_PI;
       }
@@ -188,12 +196,12 @@ void unWrap(std::vector<T> & vec)
 // ---------------- Taken from Kinematic Control package -------------------
 
 // Right hand sided tangent and normal vectors
-inline std::array<double, 2> getTangentVector(double const & yaw_angle)
+inline std::array<double, 2> getTangentVector(double const &yaw_angle)
 {
   return std::array<double, 2>{cos(yaw_angle), sin(yaw_angle)};
 }
 
-inline std::array<double, 2> getNormalVector(double const & yaw_angle)
+inline std::array<double, 2> getNormalVector(double const &yaw_angle)
 {
   return std::array<double, 2>{-sin(yaw_angle), cos(yaw_angle)};
 }
@@ -201,17 +209,17 @@ inline std::array<double, 2> getNormalVector(double const & yaw_angle)
 // Normal vector in Counterclockwise.
 constexpr std::array<double, 2>
 
-getNormalVectorCC(double const & yaw_angle)
+getNormalVectorCC(double const &yaw_angle)
 {
   return std::array<double, 2>{sin(yaw_angle), -cos(yaw_angle)};
 }
 
 inline double computeLateralError(
-  std::array<double, 2> const & closest_point_position,
-  std::array<double, 2> const & vehicle_position, double const & vehicle_yaw_angle)
+  std::array<double, 2> const &closest_point_position,
+  std::array<double, 2> const &vehicle_position, double const &vehicle_yaw_angle)
 {
   // Normal vector of vehicle direction
-  auto && normal_vector = getNormalVector(vehicle_yaw_angle);
+  auto &&normal_vector = getNormalVector(vehicle_yaw_angle);
 
   // Vector to path point originating from the vehicle
   std::array<double, 2> vector_to_path_point{
@@ -226,7 +234,7 @@ inline double computeLateralError(
 
 // Scales x = a*xhat + b for the given intervals.
 constexpr std::array<double, 2> get_scalers(
-  std::array<double, 2> const & x_minmax, std::array<double, 2> const & xhat_minmax)
+  std::array<double, 2> const &x_minmax, std::array<double, 2> const &xhat_minmax)
 {
   auto a_num = x_minmax[1] - x_minmax[0];  // xupper - xmin
   auto a_den = xhat_minmax[1] - xhat_minmax[0];
@@ -237,26 +245,30 @@ constexpr std::array<double, 2> get_scalers(
   return std::array<double, 2>{a, b};
 }
 
-template <typename T>
-constexpr std::vector<T> linspace(const T & start, const T & end, const size_t & num_of_steps)
+template<typename T>
+constexpr std::vector<T> linspace(const T &start, const T &end, const size_t &num_of_steps)
 {
+  auto constexpr EPS = std::numeric_limits<T>::epsilon();
+
   // Prepare a container.
   // Compute step increment.
   T step_increment = (end - start) / static_cast<double>(num_of_steps - 1);
   std::vector<T> linear_vector(num_of_steps, 0);
 
-  linear_vector[0] = start;
+  linear_vector[0] = start + EPS;
 
   // Transform interpolated_value.
-  for (auto it = linear_vector.begin() + 1; it != linear_vector.end(); it++) {
+  for (auto it = linear_vector.begin() + 1; it != linear_vector.end(); it++)
+  {
     *it = *std::prev(it) + step_increment;
   }
 
+  linear_vector.back() = end - EPS; // make sure linear_vector is in (start, end)
   return linear_vector;
 }
 
-template <typename T>
-constexpr std::vector<T> linspace_dt(const T & start, const T & end, const T & step_size)
+template<typename T>
+constexpr std::vector<T> linspace_dt(const T &start, const T &end, const T &step_size)
 {
   // Prepare a container.
   // Compute step increment.
@@ -266,7 +278,8 @@ constexpr std::vector<T> linspace_dt(const T & start, const T & end, const T & s
   linear_vector[0] = start;
 
   // Transform interpolated_value.
-  for (auto it = linear_vector.begin() + 1; it != linear_vector.end(); it++) {
+  for (auto it = linear_vector.begin() + 1; it != linear_vector.end(); it++)
+  {
     *it = *std::prev(it) + step_size;
   }
 
@@ -274,12 +287,13 @@ constexpr std::vector<T> linspace_dt(const T & start, const T & end, const T & s
 }
 
 // Prints any std vector type.
-template <template <typename, typename> class ContainerType, typename ValueType, typename AllocType>
-void constexpr print_container(const ContainerType<ValueType, AllocType> & c)
+template<template<typename, typename> class ContainerType, typename ValueType, typename AllocType>
+void constexpr print_container(const ContainerType<ValueType, AllocType> &c)
 {
   std::cout << "\n [";
 
-  for (auto it = c.cbegin(); it != c.cend() - 1; ++it) {
+  for (auto it = c.cbegin(); it != c.cend() - 1; ++it)
+  {
     std::cout << std::setprecision(4) << *it << ", ";
   }
 
@@ -288,7 +302,7 @@ void constexpr print_container(const ContainerType<ValueType, AllocType> & c)
 }
 
 // Type definition.
-template <typename T>
+template<typename T>
 using eigen_dynamic_type = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>;
 
 // BINARY SEARCH for interpolating functions. // search value in the given interval
@@ -299,25 +313,29 @@ using eigen_dynamic_type = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>;
  * @param tbase base coordinate vector.
  *
  * */
-template <typename T>
-size_t constexpr binary_index_search(T const & ti, std::vector<T> const & tbase)
+template<typename T>
+size_t constexpr binary_index_search(T const &ti, std::vector<T> const &tbase)
 {
   size_t left_ind = 0;                  // low number
   size_t right_ind = tbase.size() - 1;  // last index of the coordinate - high number
 
   // Check if ti corresponds to the final value of tbase
-  if (double const EPS = 1e-6; ti >= tbase[right_ind] && std::fabs(tbase[right_ind] - ti) <= EPS) {
+  if (double const EPS = 1e-6; ti >= tbase[right_ind] && std::fabs(tbase[right_ind] - ti) <= EPS)
+  {
     left_ind = right_ind - 1;
     return left_ind;
   }
 
-  while (right_ind > left_ind + 1) {
+  while (right_ind > left_ind + 1)
+  {
     // size_t mid = (left_ind + right_ind  ) / 2;
     size_t mid = left_ind + (right_ind - left_ind) / 2;  // to prevent overflow.
 
-    if (ti < tbase[mid]) {
+    if (ti < tbase[mid])
+    {
       right_ind = mid;
-    } else {
+    } else
+    {
       left_ind = mid;
     }
     // ti < tbase[mid] ? right_ind : left_ind = mid;
@@ -327,11 +345,12 @@ size_t constexpr binary_index_search(T const & ti, std::vector<T> const & tbase)
 }
 
 // Cross Product
-template <typename T>
-constexpr std::vector<T> crossProduct(std::vector<T> const & va, std::vector<T> const & vb)
+template<typename T>
+constexpr std::vector<T> crossProduct(std::vector<T> const &va, std::vector<T> const &vb)
 {
   // Check size and make 3d vector for cross product
-  if (va.size() < 3) {
+  if (va.size() < 3)
+  {
     va.emplace_back(0.0);
   }
 
@@ -344,14 +363,14 @@ constexpr std::vector<T> crossProduct(std::vector<T> const & va, std::vector<T> 
 }
 
 // Fold expression
-template <typename T>
-const T & append_separator(const T & arg)
+template<typename T>
+const T &append_separator(const T &arg)
 {
   std::cout << " ";
   return arg;
 }
 
-template <typename... Args>
+template<typename... Args>
 void print(Args &&... args)
 {
   (std::cout << ... << append_separator(args)) << "\n";
@@ -363,20 +382,20 @@ double tic();
 double toc(double start);
 
 constexpr double exponentialMovingAverage(
-  double const & previous_avg, double const & period, double const & new_value)
+  double const &previous_avg, double const &period, double const &new_value)
 {
-  double const & smoothing_factor = 2. / (period + 1.);  // 2/(EMA_length + 1)
-  double const & results = (new_value - previous_avg) * smoothing_factor + previous_avg;
+  double const &smoothing_factor = 2. / (period + 1.);  // 2/(EMA_length + 1)
+  double const &results = (new_value - previous_avg) * smoothing_factor + previous_avg;
   return results;
 }
 
 /**
  * @brief Strip zeros of a vector from left.
  * */
-void stripVectorZerosFromLeft(std::vector<double> & num_or_den);
+void stripVectorZerosFromLeft(std::vector<double> &num_or_den);
 
 // JOIN VECTORS
-template <typename T>
+template<typename T>
 std::vector<T> constexpr join_vectors(std::vector<T> a, std::vector<T> b)
 {
   std::vector<T> ab;
@@ -388,16 +407,16 @@ std::vector<T> constexpr join_vectors(std::vector<T> a, std::vector<T> b)
   return ab;
 }
 
-template <typename T, class... Args>
+template<typename T, class... Args>
 std::vector<T> constexpr join_vectors(std::vector<T> first, Args const &... args)
 {
   return join_vectors(first, join_vectors(args...));
 }
 
 // COMPARE and ZERO PAD
-template <typename T>
+template<typename T>
 std::vector<std::vector<T>> zero_pad_left_make_equal(
-  std::vector<T> const & a, std::vector<T> const & b)
+  std::vector<T> const &a, std::vector<T> const &b)
 {
   auto asize = a.size();
   auto bsize = b.size();
@@ -410,7 +429,8 @@ std::vector<std::vector<T>> zero_pad_left_make_equal(
     auto c = join_vectors(std::vector<T>(diff), b);
     return std::vector<std::vector<T>>{a, c};
   }
-  if (bsize > asize) {
+  if (bsize > asize)
+  {
     auto c = join_vectors(std::vector<T>(diff), a);
     return std::vector<std::vector<T>>{c, b};
   }
@@ -418,16 +438,17 @@ std::vector<std::vector<T>> zero_pad_left_make_equal(
   return std::vector<std::vector<T>>{a, b};
 }
 
-template <typename T>
-std::vector<T> zero_pad_left_first_arg(std::vector<T> const & a, std::vector<T> const & b)
+template<typename T>
+std::vector<T> zero_pad_left_first_arg(std::vector<T> const &a, std::vector<T> const &b)
 {
   auto asize = a.size();
   auto bsize = b.size();
 
   auto diff = abs_diff(asize, bsize);
 
-  if (bsize > asize) {
-    auto && c = join_vectors(std::vector<T>(diff), a);
+  if (bsize > asize)
+  {
+    auto &&c = join_vectors(std::vector<T>(diff), a);
     return c;
   }
 
@@ -437,7 +458,7 @@ std::vector<T> zero_pad_left_first_arg(std::vector<T> const & a, std::vector<T> 
 /**
  * @brief Fetching the underlying type from strongly typed Enum class.
  * */
-template <typename E>
+template<typename E>
 constexpr auto toUType(E e) noexcept
 {
   return static_cast<std::underlying_type_t<E>>(e);
