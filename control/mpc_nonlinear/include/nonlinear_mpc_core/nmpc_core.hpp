@@ -127,9 +127,8 @@ class NonlinearMPCController
 
   bool reInitializeTrajectories(ns_splines::InterpolatingSplinePCG const &piecewise_interpolator);
 
-  bool initializeTrajectories(
-    ns_splines::InterpolatingSplinePCG const &piecewise_interpolator,
-    bool use_linear_initialization = false);
+  bool initializeTrajectories(ns_splines::InterpolatingSplinePCG const &piecewise_interpolator,
+                              bool use_linear_initialization = false);
 
   bool linearTrajectoryInitialization(
     ns_splines::InterpolatingSplinePCG const &piecewise_interpolator);
