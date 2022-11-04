@@ -74,6 +74,29 @@ bool hasLaneId(const autoware_auto_planning_msgs::msg::PathPointWithLaneId & p, 
   return false;
 }
 
+std::optional<std::pair<int, int>> findLaneIdInterval(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & p, const int lane_id)
+{
+  bool found = false;
+  int start = 0;
+  int end = p.points.size() - 1;
+  for (unsigned i = 0; i < p.points.size(); ++i) {
+    if (hasLaneId(p.points.at(i), lane_id)) {
+      if (!found) {
+        // found interval for the first time
+        found = true;
+        start = static_cast<int>(i);
+      }
+    } else if (found) {
+      // prior point was in the interval. interval ended
+      end = i;
+      break;
+    }
+  }
+  start = std::max(0, start - 1);  // the idx of last point before the interval
+  return found ? std::make_optional(std::make_pair(start, end)) : std::nullopt;
+}
+
 bool getDuplicatedPointIdx(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const geometry_msgs::msg::Point & point, int * duplicated_point_idx)
@@ -92,24 +115,12 @@ bool getDuplicatedPointIdx(
 }
 
 std::optional<int> getFirstPointInsidePolygons(
-  const int lane_id, const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int lane_interval_start,
+  const int lane_interval_end, [[maybe_unused]] const int lane_id,
   const std::vector<lanelet::CompoundPolygon3d> & polygons)
 {
   std::optional<int> first_idx_inside_lanelet = std::nullopt;
-  bool is_in_intersection = false;  // a flag if iterating over intersection lane
-  for (size_t i = 0; i < path.points.size(); ++i) {
-    if (is_in_intersection && !hasLaneId(path.points.at(i), lane_id)) {
-      // iteration over intersection lane ended
-      break;
-    }
-    if (hasLaneId(path.points.at(i), lane_id) && !is_in_intersection) {
-      is_in_intersection = true;
-      // iteration over intersection lane started
-    }
-    if (!is_in_intersection) {
-      // do not check within(polygons)
-      continue;
-    }
+  for (int i = lane_interval_start; i <= lane_interval_end; ++i) {
     bool is_in_lanelet = false;
     auto p = path.points.at(i).point.pose.position;
     for (const auto & polygon : polygons) {
@@ -168,12 +179,20 @@ bool generateStopLine(
   // stop_line_margin).
   // stop point index for interpolated(ip) path.
   int stop_idx_ip;
-  if (getStopLineIndexFromMap(path_ip, lane_id, planner_data, &stop_idx_ip, 10.0, logger)) {
+  const auto lane_interval_opt = util::findLaneIdInterval(path_ip, lane_id);
+  if (!lane_interval_opt.has_value()) {
+    RCLCPP_INFO(logger, "Path has no interval on intersection lane %d", lane_id);
+    return false;
+  }
+  const auto [lane_interval_start, lane_interval_end] = lane_interval_opt.value();
+  if (getStopLineIndexFromMap(
+        path_ip, lane_interval_start, lane_interval_end, lane_id, planner_data, &stop_idx_ip, 10.0,
+        logger)) {
     stop_idx_ip = std::max(stop_idx_ip - base2front_idx_dist, 0);
   } else {
     // find the index of the first point that intersects with detection_areas
-    const auto first_idx_ip_inside_lane_opt =
-      getFirstPointInsidePolygons(lane_id, path_ip, detection_areas);
+    const auto first_idx_ip_inside_lane_opt = getFirstPointInsidePolygons(
+      path_ip, lane_interval_start, lane_interval_end, lane_id, detection_areas);
     // if path is not intersecting with detection_area, skip
     if (!first_idx_ip_inside_lane_opt.has_value()) {
       RCLCPP_DEBUG(
@@ -246,7 +265,8 @@ bool generateStopLine(
 }
 
 bool getStopLineIndexFromMap(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int lane_id,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int lane_interval_start,
+  const int lane_interval_end, const int lane_id,
   const std::shared_ptr<const PlannerData> & planner_data, int * stop_idx_ip, int dist_thr,
   const rclcpp::Logger logger)
 {
@@ -271,7 +291,7 @@ bool getStopLineIndexFromMap(
   const LineString2d extended_stop_line =
     planning_utils::extendLine(p_start, p_end, planner_data->stop_line_extend_length);
 
-  for (size_t i = 0; i < path.points.size() - 1; i++) {
+  for (int i = lane_interval_start; i <= lane_interval_end; i++) {
     const auto & p_front = path.points.at(i).point.pose.position;
     const auto & p_back = path.points.at(i + 1).point.pose.position;
 

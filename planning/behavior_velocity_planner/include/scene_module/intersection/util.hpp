@@ -31,6 +31,7 @@
 #include <optional>
 #include <string>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 namespace behavior_velocity_planner
@@ -42,6 +43,8 @@ int insertPoint(
   autoware_auto_planning_msgs::msg::PathWithLaneId * inout_path);
 
 bool hasLaneId(const autoware_auto_planning_msgs::msg::PathPointWithLaneId & p, const int id);
+std::optional<std::pair<int, int>> findLaneIdInterval(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & p, const int lane_id);
 bool getDuplicatedPointIdx(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
   const geometry_msgs::msg::Point & point, int * duplicated_point_idx);
@@ -98,11 +101,14 @@ bool generateStopLineBeforeIntersection(
 /**
  * @brief Calculate first path index that is in the polygon.
  * @param path     target path
+ * @param lane_interval_start the start index of point on the lane
+ * @param lane_interval_end the last index of point on the lane
  * @param polygons target polygon
  * @return path point index
  */
 std::optional<int> getFirstPointInsidePolygons(
-  const int lane_id, const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int lane_interval_start,
+  const int lane_interval_end, const int lane_id,
   const std::vector<lanelet::CompoundPolygon3d> & polygons);
 
 /**
@@ -111,7 +117,8 @@ std::optional<int> getFirstPointInsidePolygons(
  * @return true when the stop point is defined on map.
  */
 bool getStopLineIndexFromMap(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int lane_id,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int lane_interval_start,
+  const int lane_interval_end, const int lane_id,
   const std::shared_ptr<const PlannerData> & planner_data, int * stop_idx_ip, int dist_thr,
   const rclcpp::Logger logger);
 
