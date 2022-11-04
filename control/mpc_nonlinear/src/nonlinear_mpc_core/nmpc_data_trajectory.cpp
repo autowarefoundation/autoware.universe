@@ -90,10 +90,10 @@ void ns_data::MPCdataTrajectoryVectors::emplace_back(
   curvature = std::vector<double>(s.size(), 0.0);
 
   // Add end-points as an extra points.
-  double const ds = 1.0e-1;       // !<@brief for guaranteeing the monotonicity condition in s.
+  double const ds = 2.0e-1;       // !<@brief for guaranteeing the monotonicity condition in s.
   s.emplace_back(s.back() + ds);  // !<@brief zero velocity no motion.
 
-  double const t_ext = 10.0;  // !<@brief extra time for MPC
+  double const t_ext = 100.0;  // !<@brief extra time for MPC
   t.emplace_back(t.back() + t_ext);
 
   auto atemp = ax.back();
@@ -206,10 +206,10 @@ void ns_data::MPCdataTrajectoryVectors::setTrajectoryCoordinate(
 void ns_data::MPCdataTrajectoryVectors::addExtraEndPoints(double const &avg_mpc_compute_time)
 {
   //  Add end-points as an extra points.
-  double const ds = 1.0e-1;       // for guaranteeing the monotonicity condition in s.
+  double const ds = 2.0e-1;       // for guaranteeing the monotonicity condition in s.
   s.emplace_back(s.back() + ds);  // zero velocity no motion.
 
-  double &&t_ext = 10.0 + avg_mpc_compute_time;
+  double &&t_ext = 100.0 + avg_mpc_compute_time;
   t.emplace_back(t.back() + t_ext);
 
   // Add x, y points on the current direction line.

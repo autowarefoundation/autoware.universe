@@ -1097,9 +1097,6 @@ bool NonlinearMPCNode::makeFixedSizeMat_sxyz(
 
   // Interpolated vector containers.
   // Resample the varying size raw trajectory into a fixed size trajectory points.
-  ns_utils::print("in make fixed map: will resample");
-  ns_utils::print("traj s first last ", mpc_traj_raw.s.front(), mpc_traj_raw.s.back());
-  ns_utils::print("sfixed first last ", s_fixed_size_coordinate.front(), s_fixed_size_coordinate.back());
 
   auto xinterp = interpolation::spline(mpc_traj_raw.s, mpc_traj_raw.x, s_fixed_size_coordinate);
   auto yinterp = interpolation::spline(mpc_traj_raw.s, mpc_traj_raw.y, s_fixed_size_coordinate);
@@ -1182,8 +1179,8 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(
     z_smooth_vect.at(k) = interpolated_map.col(3)(k);
 
     // interpolate the longitudinal speed.
-
-    auto const &vx_temp = interpolation::lerp(mpc_traj_raw.s, mpc_traj_raw.vx, s_smooth_vect.at(k));
+    auto const &vx_temp = interpolation::lerp(mpc_traj_raw.s, mpc_traj_raw.vx,
+                                              s_smooth_vect.at(k), true);
     v_smooth_vect.at(k) = vx_temp;
 
     curvature_smooth_vect.at(k) = curvature.col(0)(k);
@@ -1225,10 +1222,7 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(
     curvature_smooth_vect, trajVectorVariant{ns_data::curv_tag()});
 
   // Compute relative time and acceleration from the given data.
-  if (current_fsm_state_ == ns_states::motionStateEnums::willbeStopping)
-  {
-    mpc_traj_smoothed.addExtraEndPoints(average_mpc_solve_time_);
-  }
+  mpc_traj_smoothed.addExtraEndPoints(average_mpc_solve_time_);
 
   nonlinear_mpc_controller_ptr_->setMPCtrajectorySmoothVectorsPtr(mpc_traj_smoothed);
 

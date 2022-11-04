@@ -351,7 +351,7 @@ void ns_nmpc_interface::NonlinearMPCController::updateRefTargetStatesByTimeInter
 
   auto const &vx_interpolated_vect = interpolation::lerp(current_MPCtraj_smooth_vects_ptr_->t,
                                                          current_MPCtraj_smooth_vects_ptr_->vx,
-                                                         t_predicted_coords);
+                                                         t_predicted_coords, true);
 
   // Set the target states.
   for (size_t k = 0; k < nX; ++k)
@@ -387,7 +387,8 @@ void ns_nmpc_interface::NonlinearMPCController::updateScaledPredictedTargetState
   auto const &sbase = current_MPCtraj_raw_vects_ptr_->s;
   auto const &vxbase = current_MPCtraj_raw_vects_ptr_->vx;
 
-  auto const &vx_interpolated = interpolation::lerp(sbase, vxbase, s_predicted);
+  auto const &vx_interpolated = interpolation::lerp(sbase, vxbase,
+                                                    s_predicted, true);
 
   // Set the target states.
   for (size_t k = 0; k < nX; k++)
@@ -636,23 +637,25 @@ bool ns_nmpc_interface::NonlinearMPCController::linearTrajectoryInitialization(
   // Fill the empty predicted vectors.
   auto xpredicted = interpolation::lerp(current_MPCtraj_smooth_vects_ptr_->s,
                                         current_MPCtraj_smooth_vects_ptr_->x,
-                                        s_predicted_vect);  // x
+                                        s_predicted_vect, true);  // x
 
 
   auto ypredicted =
     interpolation::lerp(current_MPCtraj_smooth_vects_ptr_->s,
-                        current_MPCtraj_smooth_vects_ptr_->y, s_predicted_vect);  // y
+                        current_MPCtraj_smooth_vects_ptr_->y,
+                        s_predicted_vect, true);  // y
 
   auto yaw_predicted = interpolation::lerp(current_MPCtraj_smooth_vects_ptr_->s,
                                            current_MPCtraj_smooth_vects_ptr_->yaw,
-                                           s_predicted_vect);  // yaw
+                                           s_predicted_vect, true);  // yaw
 
   auto vx_predicted = interpolation::lerp(current_MPCtraj_smooth_vects_ptr_->s,
                                           current_MPCtraj_smooth_vects_ptr_->vx,
-                                          s_predicted_vect);  // Vx
+                                          s_predicted_vect, true);  // Vx
 
   auto ax_predicted = interpolation::lerp(current_MPCtraj_smooth_vects_ptr_->s,
-                                          current_MPCtraj_smooth_vects_ptr_->ax, s_predicted_vect);  // ax
+                                          current_MPCtraj_smooth_vects_ptr_->ax,
+                                          s_predicted_vect, true);  // ax
 
   //  [x, y, psi, s, ey, epsi, delta]
   auto ey_predicted = ns_utils::linspace(xinitial_measured(4), 0.0, K_mpc_steps);
