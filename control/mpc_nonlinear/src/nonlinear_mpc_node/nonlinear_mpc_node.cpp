@@ -1182,9 +1182,8 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(
     z_smooth_vect.at(k) = interpolated_map.col(3)(k);
 
     // interpolate the longitudinal speed.
-    double vx_temp{};
-    ns_utils::interp1d_linear(mpc_traj_raw.s, mpc_traj_raw.vx, s_smooth_vect.at(k), vx_temp);
 
+    auto const &vx_temp = interpolation::lerp(mpc_traj_raw.s, mpc_traj_raw.vx, s_smooth_vect.at(k));
     v_smooth_vect.at(k) = vx_temp;
 
     curvature_smooth_vect.at(k) = curvature.col(0)(k);
