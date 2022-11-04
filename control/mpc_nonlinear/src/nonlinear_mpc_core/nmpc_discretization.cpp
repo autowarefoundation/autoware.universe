@@ -215,6 +215,7 @@ bool ns_discretization::multipleShootingTrajectory(Model::model_ptr_t const &mod
     kappa0_kappa1.reserve(2);
 
     // InterpolateInCoordinates wit PCG setting reusing_param true.
+    ns_utils::print("in discretization s0s1: ", s0s1[0], s0s1[1]);
     kappa0_kappa1 = piecewise_interpolator.getSplineInterpolatedValues(s0s1);
 
     params0(ns_utils::toUType(VehicleParamIds::curvature)) = kappa0_kappa1[0];

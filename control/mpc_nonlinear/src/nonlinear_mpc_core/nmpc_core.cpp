@@ -608,6 +608,7 @@ bool ns_nmpc_interface::NonlinearMPCController::linearTrajectoryInitialization(
 
   // Get predicted arc-length vector.
   // Fill the empty predicted vectors.
+
   auto xpredicted = interpolation::lerp(current_MPCtraj_smooth_vects_ptr_->s,
                                         current_MPCtraj_smooth_vects_ptr_->x,
                                         s_predicted_vect, true);  // x
