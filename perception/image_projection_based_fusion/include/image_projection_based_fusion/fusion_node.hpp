@@ -99,7 +99,7 @@ protected:
   int maximum_queue_size_ = 3;
 
   rclcpp::TimerBase::SharedPtr timer_;
-  double timeout_sec_ = 0.01;
+  double timeout_ms_ = 10;
   int match_threshold_ms_ = 50;
 
   /** \brief A vector of subscriber. */
