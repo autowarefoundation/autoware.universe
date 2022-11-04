@@ -243,7 +243,7 @@ public:
     }
     rtc_interface_ptr_->unlockCommandUpdate();
   }
-  virtual void accept_visitor(const std::shared_ptr<SceneModuleVisitor> & visitor) const = 0;
+  virtual void acceptVisitor(const std::shared_ptr<SceneModuleVisitor> & visitor) const = 0;
 
 private:
   std::string name_;

@@ -2732,14 +2732,14 @@ std::shared_ptr<AvoidanceDebugMsgArray> AvoidanceModule::get_debug_msg_array() c
   return std::make_shared<AvoidanceDebugMsgArray>(debug_data_.avoidance_debug_msg_array);
 }
 
-void AvoidanceModule::accept_visitor(const std::shared_ptr<SceneModuleVisitor> & visitor) const
+void AvoidanceModule::acceptVisitor(const std::shared_ptr<SceneModuleVisitor> & visitor) const
 {
   if (visitor) {
-    visitor->visit_avoidance_module(this);
+    visitor->visitAvoidanceModule(this);
   }
 }
 
-void SceneModuleVisitor::visit_avoidance_module(const AvoidanceModule * module) const
+void SceneModuleVisitor::visitAvoidanceModule(const AvoidanceModule * module) const
 {
   avoidance_visitor_ = module->get_debug_msg_array();
 }

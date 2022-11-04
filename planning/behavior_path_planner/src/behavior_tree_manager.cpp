@@ -143,31 +143,12 @@ void BehaviorTreeManager::resetGrootMonitor()
   }
 }
 
-void BehaviorTreeManager::get_debug_msg_array()
+std::shared_ptr<SceneModuleVisitor> BehaviorTreeManager::getAllSceneModuleDebugMsgData()
 {
   scene_module_visitor_ptr_ = std::make_shared<SceneModuleVisitor>();
   for (const auto & module : scene_modules_) {
-    if (module->name() == "LaneChange") {
-      auto visitor_ptr = std::make_shared<SceneModuleVisitor>();
-      module->accept_visitor(visitor_ptr);
-      const auto get_ptr = visitor_ptr->get_lane_change_debug_msg_array();
-      if (get_ptr) {
-        scene_module_visitor_ptr_->set_lane_change_debug_ptr(get_ptr);
-      }
-    } else if (module->name() == "Avoidance") {
-      auto visitor_ptr = std::make_shared<SceneModuleVisitor>();
-      module->accept_visitor(visitor_ptr);
-      const auto get_ptr = visitor_ptr->get_avoidance_debug_msg_array();
-      if (get_ptr) {
-        scene_module_visitor_ptr_->set_avoidance_debug_ptr(get_ptr);
-      }
-    }
+    module->acceptVisitor(scene_module_visitor_ptr_);
   }
-}
-
-std::shared_ptr<SceneModuleVisitor> BehaviorTreeManager::get_all_debug_data()
-{
-  get_debug_msg_array();
   return scene_module_visitor_ptr_;
 }
 }  // namespace behavior_path_planner

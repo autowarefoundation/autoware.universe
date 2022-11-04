@@ -89,7 +89,7 @@ public:
 
   void setParameters(const PullOverParameters & parameters);
 
-  void accept_visitor(
+  void acceptVisitor(
     [[maybe_unused]] const std::shared_ptr<SceneModuleVisitor> & visitor) const override
   {
   }

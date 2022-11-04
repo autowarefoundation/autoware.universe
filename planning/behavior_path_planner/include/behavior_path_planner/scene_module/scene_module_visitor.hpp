@@ -41,14 +41,11 @@ using tier4_planning_msgs::msg::LaneChangeDebugMsgArray;
 class SceneModuleVisitor
 {
 public:
-  void visit_lane_change_module(const LaneChangeModule * module) const;
-  void visit_avoidance_module(const AvoidanceModule * module) const;
+  void visitLaneChangeModule(const LaneChangeModule * module) const;
+  void visitAvoidanceModule(const AvoidanceModule * module) const;
 
-  std::shared_ptr<AvoidanceDebugMsgArray> get_avoidance_debug_msg_array() const;
-  std::shared_ptr<LaneChangeDebugMsgArray> get_lane_change_debug_msg_array() const;
-
-  void set_lane_change_debug_ptr(const std::shared_ptr<LaneChangeDebugMsgArray> & debug_msg_ptr);
-  void set_avoidance_debug_ptr(const std::shared_ptr<AvoidanceDebugMsgArray> & debug_msg_ptr);
+  std::shared_ptr<AvoidanceDebugMsgArray> getAvoidanceModuleDebugMsg() const;
+  std::shared_ptr<LaneChangeDebugMsgArray> getLaneChangeModuleDebugMsg() const;
 
 protected:
   mutable std::shared_ptr<LaneChangeDebugMsgArray> lane_change_visitor_;

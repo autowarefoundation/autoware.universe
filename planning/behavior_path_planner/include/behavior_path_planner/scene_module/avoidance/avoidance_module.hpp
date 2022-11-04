@@ -51,7 +51,7 @@ public:
   void onEntry() override;
   void onExit() override;
   void updateData() override;
-  void accept_visitor(const std::shared_ptr<SceneModuleVisitor> & visitor) const override;
+  void acceptVisitor(const std::shared_ptr<SceneModuleVisitor> & visitor) const override;
 
   void publishRTCStatus() override
   {

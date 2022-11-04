@@ -604,14 +604,14 @@ std::shared_ptr<LaneChangeDebugMsgArray> LaneChangeModule::get_debug_msg_array()
   return std::make_shared<LaneChangeDebugMsgArray>(lane_change_debug_msg_array_);
 }
 
-void LaneChangeModule::accept_visitor(const std::shared_ptr<SceneModuleVisitor> & visitor) const
+void LaneChangeModule::acceptVisitor(const std::shared_ptr<SceneModuleVisitor> & visitor) const
 {
   if (visitor) {
-    visitor->visit_lane_change_module(this);
+    visitor->visitLaneChangeModule(this);
   }
 }
 
-void SceneModuleVisitor::visit_lane_change_module(const LaneChangeModule * module) const
+void SceneModuleVisitor::visitLaneChangeModule(const LaneChangeModule * module) const
 {
   lane_change_visitor_ = module->get_debug_msg_array();
 }

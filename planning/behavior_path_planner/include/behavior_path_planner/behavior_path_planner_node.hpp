@@ -184,6 +184,11 @@ private:
    */
   void publish_steering_factor(const TurnIndicatorsCommand & turn_signal);
 
+  /**
+   * @brief publish debug messages
+   */
+  void publishSceneModuleDebugMsg();
+
   template <class T>
   size_t findEgoIndex(const std::vector<T> & points) const
   {
