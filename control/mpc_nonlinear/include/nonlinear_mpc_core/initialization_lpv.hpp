@@ -24,14 +24,16 @@
 #include "nonlinear_mpc_core/nmpc_simulation.hpp"
 #include "splines/interpolating_spline_pcg.hpp"
 #include "vehicle_models/kinematic_model_definitions.hpp"
-
+#include "helper_functions/angle_utils.hpp"
+#include "motion_common/motion_common.hpp"
+#include "helper_functions/angle_utils.hpp"
 class LPVinitializer
 {
-public:
+ public:
   LPVinitializer() = default;
 
-  explicit LPVinitializer(size_t const & number_of_nonlinear_terms_in_A)
-  : ntheta_(number_of_nonlinear_terms_in_A)
+  explicit LPVinitializer(size_t const &number_of_nonlinear_terms_in_A)
+    : ntheta_(number_of_nonlinear_terms_in_A)
   {
     thetas_ = std::vector<double>(ntheta_);
   }
@@ -43,13 +45,13 @@ public:
    * @param piecewise_interpolator piecewise interpolator for the curvature.
    * */
   bool simulateWithFeedback(
-    Model::model_ptr_t const & model_ptr,
-    ns_splines::InterpolatingSplinePCG const & piecewise_interpolator,
-    ns_data::param_lpv_type_t const & params_lpv,
-    ns_data::ParamsOptimization const & param_opt,
-    ns_data::data_nmpc_core_type_t & nmpc_data);
+    Model::model_ptr_t const &model_ptr,
+    ns_splines::InterpolatingSplinePCG const &piecewise_interpolator,
+    ns_data::param_lpv_type_t const &params_lpv,
+    ns_data::ParamsOptimization const &param_opt,
+    ns_data::data_nmpc_core_type_t &nmpc_data);
 
-private:
+ private:
   size_t ntheta_{};  // <- @brief Number of nonlinear terms in the state transition matrix A(theta).
   std::vector<double> thetas_{};  // <-@brief Computed non-linearities are stored in this vector.
 };

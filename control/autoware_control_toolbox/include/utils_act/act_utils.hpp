@@ -143,34 +143,6 @@ T abs_diff(T a, T b)
 }
 
 /**
- * @brief angle wrapping w(x) = mod(x, +pi, 2*pi) - pi
- * */
-template<typename T, typename std::enable_if_t<std::is_floating_point_v<T>> * = nullptr>
-constexpr T angleDistance(T const &theta)
-{
-  T mod_theta_2pi = std::fmod(theta + M_PI, 2 * M_PI) - M_PI;
-
-  return mod_theta_2pi < -M_PI ? mod_theta_2pi + 2 * M_PI : mod_theta_2pi;
-}
-
-template<typename T, typename std::enable_if_t<std::is_floating_point_v<T>> * = nullptr>
-constexpr T angleDistance(T const &theta, T const &theta_ref)
-{
-  T const &&angle_diff = theta - theta_ref;
-  T mod_theta_2pi = std::fmod(angle_diff + M_PI, 2 * M_PI) - M_PI;
-
-  return mod_theta_2pi < -M_PI ? mod_theta_2pi + 2 * M_PI : mod_theta_2pi;
-}
-
-template<typename T, typename std::enable_if_t<std::is_floating_point_v<T>> * = nullptr>
-T wrapToPi(T const &angle)
-{
-  const std::complex<double> i(0, 1);
-  auto complex_number = std::exp(i * angle);
-  return std::arg(complex_number);
-}
-
-/**
  * @brief Unwraps a series of angles.
  * */
 
@@ -210,19 +182,6 @@ void unWrap(std::vector<T> &vec)
   }
 }
 
-template<typename T>
-void convertEulerAngleToMonotonic(std::vector<T> *a)
-{
-  if (!a)
-  {
-    return;
-  }
-  for (unsigned int i = 1; i < a->size(); ++i)
-  {
-    const double da = a->at(i) - a->at(i - 1);
-    a->at(i) = a->at(i - 1) + wrapToPi<T>(da);
-  }
-}
 
 // ---------------- Taken from Kinematic Control package -------------------
 

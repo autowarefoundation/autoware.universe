@@ -43,48 +43,6 @@ TEST(ACTutils, linearInterpolateExtrapolate)
   ASSERT_DOUBLE_EQ(yextrapolation[2], a * xnew[2] + b);
 }
 
-TEST(ACTutils, angleDistance)
-{
-
-  auto deg2rad = [](const double &angle)
-  { return angle * M_PI / 180.; };
-
-  auto theta_ref = deg2rad(0.);
-  auto theta_1 = deg2rad(5.);
-  auto theta_2 = deg2rad(-5.);
-
-  auto theta_3 = deg2rad(179.);
-  auto theta_4 = deg2rad(181.);
-  auto theta_5 = deg2rad(-179.);
-  auto theta_6 = deg2rad(365.);
-
-  ns_utils::print(theta_ref, theta_1, theta_2, theta_3, theta_4, theta_5, theta_6);
-  ASSERT_TRUE(true);
-
-  std::vector<double> thetas{theta_1, theta_2, theta_3, theta_4, theta_5, theta_6};
-  std::vector<double> distances;
-
-  for (auto const &th : thetas)
-  {
-    auto dist = ns_utils::angleDistance(th, theta_ref);
-    distances.emplace_back(dist);
-  }
-
-  ns_utils::print_container(distances);
-  ns_utils::print_container(thetas);
-
-  ASSERT_LE(std::fabs(distances[0] - theta_1), 1e-12);
-  ASSERT_LE(std::fabs(distances[1] - theta_2), 1e-12);
-  ASSERT_LE(std::fabs(distances[2] - theta_3), 1e-12);
-  ASSERT_LE(std::fabs(distances[3] + theta_3), 1e-12);  // theta_3 = -theta_4
-  ASSERT_LE(std::fabs(distances[4] + theta_3), 1e-12);  // the same.
-  ASSERT_LE(std::fabs(distances[5] - theta_1), 1e-12);  // theta_1 == theta_6
-
-  // Test the single arg angle_distance.
-  auto theta_6_dist = ns_utils::angleDistance(theta_6);
-  ASSERT_LE(std::fabs(theta_6_dist - theta_1), 1e-12);  // theta_1 == theta_6
-}
-
 TEST(ACTutils, unwrap)
 {
   double Nx = 512;

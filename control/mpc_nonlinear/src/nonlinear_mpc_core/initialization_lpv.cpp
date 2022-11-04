@@ -166,7 +166,7 @@ bool LPVinitializer::simulateWithFeedback(
 
     // Unwrap error and yaw angles.
     xk(ns_utils::toUType(VehicleStateIds::yaw)) =
-      ns_utils::angleDistance(xk(ns_utils::toUType(VehicleStateIds::yaw)));
+      autoware::common::helper_functions::wrap_angle(xk(ns_utils::toUType(VehicleStateIds::yaw)));
 
     // Update xk, uk
     nmpc_data.trajectory_data.X[k + 1] << xk.eval();

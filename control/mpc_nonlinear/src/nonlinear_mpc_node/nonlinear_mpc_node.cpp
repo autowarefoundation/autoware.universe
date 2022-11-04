@@ -1284,7 +1284,9 @@ void NonlinearMPCNode::findClosestPrevWayPointIdx()
     auto const &point = current_trajectory_ptr_->points[k];
     auto const &pose_yaw = tf2::getYaw(point.pose.orientation);
 
-    if (auto const &yaw_diff = ns_utils::angleDistance(yawvec, pose_yaw);
+
+    // autoware::motion::motion_common::calcYawDeviation(target_angle, ref_angle)
+    if (auto const &yaw_diff = autoware::motion::motion_common::calcYawDeviation(yawvec, pose_yaw);
       std::fabs(yaw_diff) > (M_PI / 3.0))
     {
       continue;
@@ -1412,19 +1414,18 @@ void NonlinearMPCNode::computeClosestPointOnTraj()
 
   double interp_yaw_angle{};
   nonlinear_mpc_controller_ptr_->getSmoothYawAtDistance(current_s0_, interp_yaw_angle);
-  interp_yaw_angle = ns_utils::wrapToPi(interp_yaw_angle);
+  interp_yaw_angle = autoware::common::helper_functions::wrap_angle(interp_yaw_angle);
 
   // nmpc_performance_vars_.lateral_velocity = interp_yaw_angles;
   // double const &&interp_yaw_angle = ns_utils::angleDistance(prev_yaw + ratio_t *
   // dyaw_prev_to_next);
 
-  geometry_msgs::msg::Quaternion orient_msg =
-    ns_nmpc_utils::createOrientationMsgfromYaw(interp_yaw_angle);
+  geometry_msgs::msg::Quaternion orient_msg = ns_nmpc_utils::createOrientationMsgfromYaw(interp_yaw_angle);
   interpolated_traj_point.pose.orientation = orient_msg;
 
   // InterpolateInCoordinates the Vx longitudinal speed.
-  double const &vx_prev = static_cast<double>(
-    current_trajectory_ptr_->points.at(*idx_prev_wp_ptr_).longitudinal_velocity_mps);
+  double const
+    &vx_prev = static_cast<double>(    current_trajectory_ptr_->points.at(*idx_prev_wp_ptr_).longitudinal_velocity_mps);
   // double const &vx_next =
   // current_trajectory_ptr_->points.at(*idx_next_wp_ptr_).longitudinal_velocity_mps;
 
@@ -1466,7 +1467,7 @@ std::array<double, 2> NonlinearMPCNode::computeErrorStates()
                                                           current_interpolated_traj_point_ptr_->pose.position.y};
 
   auto reference_yaw_angle = tf2::getYaw(current_interpolated_traj_point_ptr_->pose.orientation);
-  reference_yaw_angle = ns_utils::angleDistance(reference_yaw_angle);  // overloaded angle distance also wraps.
+  reference_yaw_angle = autoware::common::helper_functions::wrap_angle(reference_yaw_angle);
 
   double const &vehicle_yaw_angle = tf2::getYaw(current_COG_pose_ptr_->pose.orientation);
 
@@ -1483,9 +1484,11 @@ std::array<double, 2> NonlinearMPCNode::computeErrorStates()
   auto const &error_ey =
     normal_vector[0] * vector_to_path_point[0] + normal_vector[1] * vector_to_path_point[1];
 
-  double const &heading_yaw_error =
-    1.0 * ns_utils::angleDistance(vehicle_yaw_angle, reference_yaw_angle);
-  // heading_yaw_error = autoware::common::helper_functions::wrap_angle(heading_yaw_error);
+  //  double const &heading_yaw_error =
+  //    1.0 * ns_utils::angleDistance(vehicle_yaw_angle, reference_yaw_angle);
+
+  double const &heading_yaw_error = -1. * autoware::motion::motion_common::calcYawDeviation(vehicle_yaw_angle,
+                                                                                            reference_yaw_angle);
 
   // Set nmpc_performance yaw angles.
   nmpc_performance_vars_.yaw_angle_measured = vehicle_yaw_angle;
@@ -1711,7 +1714,7 @@ visualization_msgs::msg::MarkerArray NonlinearMPCNode::createPredictedTrajectory
 
     marker_poses.pose.position.z = 0.0;
 
-    auto const &&yaw_angle = ns_utils::wrapToPi(td.X.at(k)(2));
+    auto const &&yaw_angle = autoware::common::helper_functions::wrap_angle(td.X.at(k)(2));
     marker_poses.pose.orientation = ns_nmpc_utils::getQuaternionFromYaw(yaw_angle);
     marker_array.markers.emplace_back(marker_poses);
   }
