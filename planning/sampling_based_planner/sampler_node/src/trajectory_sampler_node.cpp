@@ -332,14 +332,19 @@ void TrajectorySamplerNode::pathCallback(
     const auto & selected_trajectory = trajectories[*selected_trajectory_idx];
     // Make the trajectory nicer for the controller
     auto final_trajectory = prependTrajectory(selected_trajectory, path_spline, *current_state);
+    constexpr auto min_engage_vel = 0.25;
     if (
-      final_trajectory.longitudinal_velocities.size() > 1 &&
-      final_trajectory.longitudinal_velocities.front() < 0.25 &&
-      final_trajectory.longitudinal_velocities[1] > 0.0) {
+      final_trajectory.longitudinal_velocities.size() > 1lu &&
+      *std::max_element(
+        final_trajectory.longitudinal_velocities.begin(),
+        final_trajectory.longitudinal_velocities.end()) > min_engage_vel) {
       // TODO(Maxime CLEMENT): 0.25m/s is the min engage velocity. Should be a parameter.
-      final_trajectory.longitudinal_velocities.front() = 0.25;
-      std::cout << "[prependTrajectory] updated 1st 0 velocity to "
-                << final_trajectory.longitudinal_velocities.front() << "\n";
+      for (auto i = 0lu; i < final_trajectory.longitudinal_velocities.size() &&
+                         final_trajectory.longitudinal_velocities[i] < min_engage_vel;
+           ++i)
+        final_trajectory.longitudinal_velocities[i] = min_engage_vel;
+      std::cout << "[prependTrajectory] updated first velocity points to "
+                << final_trajectory.longitudinal_velocities.front() << "m/s\n";
     }
     if (!final_trajectory.points.empty()) publishTrajectory(final_trajectory, msg->header.frame_id);
     prev_traj_ = selected_trajectory;
