@@ -1097,9 +1097,14 @@ bool NonlinearMPCNode::makeFixedSizeMat_sxyz(
 
   // Interpolated vector containers.
   // Resample the varying size raw trajectory into a fixed size trajectory points.
+  ns_utils::print("in make fixed map: will resample");
+  ns_utils::print("traj s first last ", mpc_traj_raw.s.front(), mpc_traj_raw.s.back());
+  ns_utils::print("sfixed first last ", s_fixed_size_coordinate.front(), s_fixed_size_coordinate.back());
+
   auto xinterp = interpolation::spline(mpc_traj_raw.s, mpc_traj_raw.x, s_fixed_size_coordinate);
   auto yinterp = interpolation::spline(mpc_traj_raw.s, mpc_traj_raw.y, s_fixed_size_coordinate);
   auto zinterp = interpolation::spline(mpc_traj_raw.s, mpc_traj_raw.z, s_fixed_size_coordinate);
+
 
   /**
    * @brief save into the reference map which accepts the resampled fixed size coordinates.
