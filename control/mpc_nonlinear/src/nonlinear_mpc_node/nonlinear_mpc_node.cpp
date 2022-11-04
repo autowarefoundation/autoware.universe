@@ -967,20 +967,22 @@ void NonlinearMPCNode::computeScalingMatrices(ns_data::ParamsOptimization &param
 // Callbacks.
 void NonlinearMPCNode::onTrajectory(const TrajectoryMsg::SharedPtr msg)
 {
-  if (msg->points.size() < 3)
-  {
-    RCLCPP_DEBUG(get_logger(), "received path size is < 3, not enough.");
-    return;
-  }
-
   if (!isValidTrajectory(*msg))
   {
     RCLCPP_ERROR(get_logger(), "Trajectory is invalid!! stop computing.");
     return;
   }
 
+  if (msg->points.size() < 3)
+  {
+    RCLCPP_DEBUG(get_logger(), "received path size is < 3, not enough.");
+    return;
+  }
+
   current_trajectory_ptr_ = msg;
   current_trajectory_size_ = msg->points.size();
+
+  ns_utils::print("calling resample traj with the message size : ", msg->points.size());
 
   // Resample the planning trajectory and store in the MPCdataTrajectoryVectors.
   if (bool const &&is_resampled = resampleRawTrajectoriesToaFixedSize(); !is_resampled)
@@ -1048,6 +1050,8 @@ bool NonlinearMPCNode::resampleRawTrajectoriesToaFixedSize()
   // !<-@brief [s, x, y, z ] size [MPC_MAP_SMOOTHER_IN x 4]
   map_matrix_in_t reference_map_sxyz(map_matrix_in_t::Zero());
 
+  ns_utils::print("in resample traj : end value of sraw-back ", mpc_traj_raw.s.back());
+
   if (bool const &&is_resampled = makeFixedSizeMat_sxyz(mpc_traj_raw, reference_map_sxyz);
     !is_resampled)
   {
@@ -1060,8 +1064,7 @@ bool NonlinearMPCNode::resampleRawTrajectoriesToaFixedSize()
 
   // ------------------- Smooth Trajectories ---------------------------------------
   // Create MPCtraj smooth_ref_traj.
-  bool const &&is_smoothed =
-    createSmoothTrajectoriesWithCurvature(mpc_traj_raw, reference_map_sxyz);
+  bool const &&is_smoothed = createSmoothTrajectoriesWithCurvature(mpc_traj_raw, reference_map_sxyz);
 
   return is_smoothed;
 }
@@ -1112,9 +1115,8 @@ bool NonlinearMPCNode::makeFixedSizeMat_sxyz(
   return are_interpolated;
 }
 
-bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(
-  ns_data::MPCdataTrajectoryVectors const &mpc_traj_raw,
-  map_matrix_in_t const &fixed_map_ref_sxyz)
+bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(ns_data::MPCdataTrajectoryVectors const &mpc_traj_raw,
+                                                             map_matrix_in_t const &fixed_map_ref_sxyz)
 {
   using ::ns_data::trajVectorVariant;
 
@@ -1156,7 +1158,7 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(
 
   // These are not smoothed, but they belong to the smooth MPCtraj.
   std::vector<double> t_smooth_vect(map_out_mpc_size);
-  std::vector<double> acc_smooth_vect(map_out_mpc_size);
+  std::vector<double> acc_smooth_vect(map_out_mpc_size, 0.);
 
   // Smooth yaw.
   std::vector<double> yaw_smooth_vect(map_out_mpc_size);  // We do not use yaw as a reference.
@@ -1212,8 +1214,7 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(
   mpc_traj_smoothed.setTrajectoryVector(z_smooth_vect, trajVectorVariant{ns_data::z_tag()});
   mpc_traj_smoothed.setTrajectoryVector(v_smooth_vect, trajVectorVariant{ns_data::vx_tag()});
   mpc_traj_smoothed.setTrajectoryVector(yaw_smooth_vect, trajVectorVariant{ns_data::yaw_tag()});
-  mpc_traj_smoothed.setTrajectoryVector(
-    curvature_smooth_vect, trajVectorVariant{ns_data::curv_tag()});
+  mpc_traj_smoothed.setTrajectoryVector(curvature_smooth_vect, trajVectorVariant{ns_data::curv_tag()});
 
   // Compute relative time and acceleration from the given data.
   mpc_traj_smoothed.addExtraEndPoints(average_mpc_solve_time_);
@@ -1221,11 +1222,6 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(
   nonlinear_mpc_controller_ptr_->setMPCtrajectorySmoothVectorsPtr(mpc_traj_smoothed);
 
   // DEBUG
-  // TODO: remove this debug
-  //  ns_utils::print("Smoothed MPC traj ");
-  //  mpc_traj_smoothed.print();
-  // end of DEBUG
-
   // Verify size
   if (auto const &size_of_mpc_smooth = mpc_traj_smoothed.size(); size_of_mpc_smooth == 0)
   {
@@ -1241,6 +1237,8 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(
    * node modules.
    * */
 
+  ns_utils::print("Current s-vector sent to the interpolator : ");
+  ns_utils::print_container(mpc_traj_smoothed.s);
   interpolator_curvature_pws.calcSplineCoefficients(mpc_traj_smoothed.s, mpc_traj_smoothed.curvature);
 
   // DEBUG
