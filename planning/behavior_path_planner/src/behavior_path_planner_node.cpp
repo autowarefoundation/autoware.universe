@@ -691,7 +691,8 @@ void BehaviorPathPlannerNode::publish_steering_factor(const TurnIndicatorsComman
   steering_factor_interface_ptr_->publishSteeringFactor(get_clock()->now());
 }
 
-void BehaviorPathPlannerNode::publishSceneModuleDebugMsg(){
+void BehaviorPathPlannerNode::publishSceneModuleDebugMsg()
+{
   {
     const auto debug_messages_data_ptr = bt_manager_->getAllSceneModuleDebugMsgData();
     const auto avoidance_debug_message = debug_messages_data_ptr->getAvoidanceModuleDebugMsg();
@@ -699,8 +700,7 @@ void BehaviorPathPlannerNode::publishSceneModuleDebugMsg(){
       debug_avoidance_msg_array_publisher_->publish(*avoidance_debug_message);
     }
 
-    const auto lane_change_debug_message =
-      debug_messages_data_ptr->getLaneChangeModuleDebugMsg();
+    const auto lane_change_debug_message = debug_messages_data_ptr->getLaneChangeModuleDebugMsg();
     if (lane_change_debug_message) {
       debug_lane_change_msg_array_publisher_->publish(*lane_change_debug_message);
     }

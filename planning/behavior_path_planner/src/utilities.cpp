@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "behavior_path_planner/utilities.hpp"
+
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
