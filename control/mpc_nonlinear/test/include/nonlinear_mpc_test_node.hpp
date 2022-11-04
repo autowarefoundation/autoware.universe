@@ -31,6 +31,7 @@
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
+#include "tier4_autoware_utils/math/unit_conversion.hpp"
 
 #include "gtest/gtest.h"
 #include "fake_test_node/fake_test_node.hpp"
@@ -52,6 +53,7 @@ using ErrorReportMsg = communication_delay_compensator::msg::ControllerErrorRepo
 auto constexpr EPS = std::numeric_limits<double>::epsilon();
 
 using FakeNodeFixture = autoware::tools::testing::FakeTestNode;
+using tier4_autoware_utils::deg2rad;
 
 // Make shared node
 std::shared_ptr<NonlinearMPCNode> makeNonlinearMPCNode();

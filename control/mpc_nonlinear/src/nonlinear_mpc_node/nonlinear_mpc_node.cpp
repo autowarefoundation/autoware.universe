@@ -1458,17 +1458,15 @@ std::array<double, 2> NonlinearMPCNode::computeErrorStates()
   /**
    * @brief current closest point on the trajectory
    * */
-  std::array<double, 2> const current_pose_xy{
-    current_COG_pose_ptr_->pose.position.x, current_COG_pose_ptr_->pose.position.y};
+  std::array<double, 2> const
+    current_pose_xy{current_COG_pose_ptr_->pose.position.x, current_COG_pose_ptr_->pose.position.y};
 
   // Get Yaw angles of the reference waypoint and the vehicle
-  std::array<double, 2> interpolated_smooth_traj_point_xy{
-    current_interpolated_traj_point_ptr_->pose.position.x,
-    current_interpolated_traj_point_ptr_->pose.position.y};
+  std::array<double, 2> interpolated_smooth_traj_point_xy{current_interpolated_traj_point_ptr_->pose.position.x,
+                                                          current_interpolated_traj_point_ptr_->pose.position.y};
 
   auto reference_yaw_angle = tf2::getYaw(current_interpolated_traj_point_ptr_->pose.orientation);
-  reference_yaw_angle =
-    ns_utils::angleDistance(reference_yaw_angle);  // overloaded angle distance also wraps.
+  reference_yaw_angle = ns_utils::angleDistance(reference_yaw_angle);  // overloaded angle distance also wraps.
 
   double const &vehicle_yaw_angle = tf2::getYaw(current_COG_pose_ptr_->pose.orientation);
 
@@ -1512,14 +1510,11 @@ void NonlinearMPCNode::updateInitialStatesAndControls_fromMeasurements()
 
   // Vehicle x-y are always zero at each iteration.
   // x0_initial_states_(0) = 0.0;  // <-@brief current_pose_ptr_->pose.position.x - xw0;
-  // x0_initial_states_(1) = 0.0;  // <-@brief current_pose_ptr_->pose.position.y - yw0;
-  x0_initial_states_(toUType(VehicleStateIds::yaw)) =
-    tf2::getYaw(current_COG_pose_ptr_->pose.orientation);
+  x0_initial_states_(toUType(VehicleStateIds::yaw)) = tf2::getYaw(current_COG_pose_ptr_->pose.orientation);
   x0_initial_states_(toUType(VehicleStateIds::s)) = current_s0_;
 
   // Error model states.
-  x0_initial_states_(toUType(VehicleStateIds::ey)) =
-    error_states[0];  // e_y  : lateral tracking error.
+  x0_initial_states_(toUType(VehicleStateIds::ey)) = error_states[0];  // e_y  : lateral tracking error.
   x0_initial_states_(toUType(VehicleStateIds::eyaw)) = error_states[1];  // e_psi : heading error
 
   auto const &vx_meas = current_velocity_ptr_->twist.twist.linear.x;
@@ -1585,8 +1580,8 @@ void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(
    * */
   auto timestamp = this->now();
 
-  if (auto it_first_cmd_to_appy = std::find_if(
-      inputs_buffer_.cbegin(), inputs_buffer_.cend(), sCommandTimeStampFind(timestamp));
+  if (auto it_first_cmd_to_appy = std::find_if(inputs_buffer_.cbegin(), inputs_buffer_.cend(),
+                                               sCommandTimeStampFind(timestamp));
     it_first_cmd_to_appy != inputs_buffer_.end())
   {
     first_control_entering_system_ = *it_first_cmd_to_appy;
@@ -1607,8 +1602,7 @@ void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(
 
       // Extract the controls from the input buffer.
       uk(toUType(VehicleControlIds::u_vx)) = static_cast<double>(it->longitudinal.acceleration);
-      uk(toUType(VehicleControlIds::u_steering)) =
-        static_cast<double>(it->lateral.steering_tire_angle);
+      uk(toUType(VehicleControlIds::u_steering)) = static_cast<double>(it->lateral.steering_tire_angle);
 
       // d stands for  delayed states.
       auto const &sd0 = x0_predicted(ns_utils::toUType(VehicleStateIds::s));

@@ -28,7 +28,8 @@ TEST(ACTutils, linearInterpolateExtrapolate)
   double const b = 1.;
 
   std::vector<double> yvec;
-  std::transform(xvec.cbegin(), xvec.cend(), std::back_inserter(yvec), [&a, &b](auto const & x) {
+  std::transform(xvec.cbegin(), xvec.cend(), std::back_inserter(yvec), [&a, &b](auto const &x)
+  {
     return a * x + b;
   });
 
@@ -44,14 +45,18 @@ TEST(ACTutils, linearInterpolateExtrapolate)
 
 TEST(ACTutils, angleDistance)
 {
-  auto theta_ref = ns_utils::deg2rad(0.);
-  auto theta_1 = ns_utils::deg2rad(5.);
-  auto theta_2 = ns_utils::deg2rad(-5.);
 
-  auto theta_3 = ns_utils::deg2rad(179.);
-  auto theta_4 = ns_utils::deg2rad(181.);
-  auto theta_5 = ns_utils::deg2rad(-179.);
-  auto theta_6 = ns_utils::deg2rad(365.);
+  auto deg2rad = [](const double &angle)
+  { return angle * M_PI / 180.; };
+
+  auto theta_ref = deg2rad(0.);
+  auto theta_1 = deg2rad(5.);
+  auto theta_2 = deg2rad(-5.);
+
+  auto theta_3 = deg2rad(179.);
+  auto theta_4 = deg2rad(181.);
+  auto theta_5 = deg2rad(-179.);
+  auto theta_6 = deg2rad(365.);
 
   ns_utils::print(theta_ref, theta_1, theta_2, theta_3, theta_4, theta_5, theta_6);
   ASSERT_TRUE(true);
@@ -59,7 +64,8 @@ TEST(ACTutils, angleDistance)
   std::vector<double> thetas{theta_1, theta_2, theta_3, theta_4, theta_5, theta_6};
   std::vector<double> distances;
 
-  for (auto const & th : thetas) {
+  for (auto const &th : thetas)
+  {
     auto dist = ns_utils::angleDistance(th, theta_ref);
     distances.emplace_back(dist);
   }
@@ -86,7 +92,8 @@ TEST(ACTutils, unwrap)
 
   // Generate y = 6*sin(2*pi*n/N).
   std::vector<double> yvec;
-  std::transform(xvec.cbegin(), xvec.cend(), std::back_inserter(yvec), [&](auto const & x) {
+  std::transform(xvec.cbegin(), xvec.cend(), std::back_inserter(yvec), [&](auto const &x)
+  {
     return 6 * sin(2 * M_PI * x / Nx);
   });
 
@@ -94,7 +101,8 @@ TEST(ACTutils, unwrap)
    * Wrap the signal into [-pi, pi]
    * */
   std::vector<double> xw;
-  std::transform(yvec.cbegin(), yvec.cend(), std::back_inserter(xw), [&](auto const & x) {
+  std::transform(yvec.cbegin(), yvec.cend(), std::back_inserter(xw), [&](auto const &x)
+  {
     return std::atan2(sin(x), cos(x));
   });
 
@@ -103,7 +111,8 @@ TEST(ACTutils, unwrap)
    * */
   ns_utils::unWrap(xw);
 
-  for (size_t k = 0; k < xw.size(); ++k) {
+  for (size_t k = 0; k < xw.size(); ++k)
+  {
     ASSERT_DOUBLE_EQ(yvec[k], xw[k]);
   }
 }

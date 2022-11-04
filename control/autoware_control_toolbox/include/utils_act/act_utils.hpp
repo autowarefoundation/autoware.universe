@@ -133,12 +133,6 @@ void extrapolate(
   }
 }
 
-template<typename T, typename std::enable_if_t<std::is_floating_point_v<T>> * = nullptr>
-T deg2rad(T const &angle)
-{
-  return angle * M_PI / 180.;
-}
-
 /**
  * @brief abs_diff for size_t
  * */
