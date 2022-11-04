@@ -109,11 +109,11 @@ class NonlinearMPCController
    * */
   void simulateControlSequenceByPredictedInputs(
     Model::state_vector_t const &x0_predicted,
-    ns_splines::InterpolatingSplinePCG const &piecewise_interpolator);
+    SplineInterpolation const &piecewise_interpolator);
 
   void simulateControlSequenceUseVaryingSpeed(
     Model::state_vector_t const &x0_predicted,
-    ns_splines::InterpolatingSplinePCG const &piecewise_interpolator);
+    SplineInterpolation const &piecewise_interpolator);
 
   /**
    * @brief Sets the reference states to be tracked. In this application, since lateral and heading
@@ -125,13 +125,12 @@ class NonlinearMPCController
   // Interpolates the velocity based on the estimated trajectory path length.
   void updateScaledPredictedTargetStatesByArcLength(double const &current_predicted_s0);
 
-  bool reInitializeTrajectories(ns_splines::InterpolatingSplinePCG const &piecewise_interpolator);
+  bool reInitializeTrajectories(SplineInterpolation const &piecewise_interpolator);
 
-  bool initializeTrajectories(ns_splines::InterpolatingSplinePCG const &piecewise_interpolator,
+  bool initializeTrajectories(SplineInterpolation const &piecewise_interpolator,
                               bool use_linear_initialization = false);
 
-  bool linearTrajectoryInitialization(
-    ns_splines::InterpolatingSplinePCG const &piecewise_interpolator);
+  bool linearTrajectoryInitialization(SplineInterpolation const &piecewise_interpolator);
 
   void setCurrent_s0(double const &s0);
 
@@ -142,7 +141,7 @@ class NonlinearMPCController
   void setLoggerName(std::string_view const &logger_name);
 
   // NMPC solution medhods.
-  bool solveNMPC_problem(ns_splines::InterpolatingSplinePCG const &piecewise_interpolator);
+  bool solveNMPC_problem(SplineInterpolation const &piecewise_interpolator);
 
   // Get the solution from OSQP and shift the trajectories.
   void readSolutionsFromOSQP();

@@ -18,11 +18,11 @@
 
 #include <vector>
 
-bool LPVinitializer::simulateWithFeedback(
-  Model::model_ptr_t const &model_ptr,
-  ns_splines::InterpolatingSplinePCG const &piecewise_interpolator,
-  ns_data::param_lpv_type_t const &params_lpv, ns_data::ParamsOptimization const &params_opt,
-  ns_data::data_nmpc_core_type_t &nmpc_data)
+bool LPVinitializer::simulateWithFeedback(Model::model_ptr_t const &model_ptr,
+                                          SplineInterpolation const &piecewise_interpolator,
+                                          ns_data::param_lpv_type_t const &params_lpv,
+                                          ns_data::ParamsOptimization const &params_opt,
+                                          ns_data::data_nmpc_core_type_t &nmpc_data)
 {
   // Get the size of the trajectory.
   // number of state vectors stored in the std::vector.
@@ -93,12 +93,7 @@ bool LPVinitializer::simulateWithFeedback(
     double kappa0{};
 
     // ns_utils::print("s vs curvature in LPV feedback : ", s0, kappa0);
-    if (auto const &&could_interpolate = piecewise_interpolator.Interpolate(s0, kappa0);
-      !could_interpolate)
-    {
-      ns_utils::print("LPV spline interpolator failed to compute the spline coefficients");
-      return false;
-    }
+    kappa0 = piecewise_interpolator.interpolatePoint(s0);
 
     ns_utils::print("curvature and x_error in feedback", kappa0);
     ns_eigen_utils::printEigenMat(Eigen::MatrixXd(x_error));

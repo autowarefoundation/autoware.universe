@@ -132,7 +132,9 @@ NonlinearMPCNode::NonlinearMPCNode(const rclcpp::NodeOptions &node_options)
    * bspline_interpolator_ptr_ = std::make_unique<spline_type_bspline>(0.3, true);
    */
 
-  bspline_interpolator_ptr_ = std::make_unique<bspline_type_t>(0.5, true);
+  double smoothing_factor = 0.5 * 0.001; // default 1e-3
+  bspline_interpolator_ptr_ = std::make_unique<bspline_type_t>(0.5, true, smoothing_factor);
+
   // bspline_interpolator_ptr_ =
   // std::make_unique<ns_splines::BSplineSmoother>(ns_nmpc_interface::MPC_MAP_SMOOTHER_IN, 0.3);
 
@@ -598,14 +600,6 @@ bool NonlinearMPCNode::isDataReady()
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
       get_logger(), *get_clock(), (1000ms).count(),
       "[mpc_nonlinear] Waiting for the current steering measurement ...");
-    return false;
-  }
-
-  if (!interpolator_curvature_pws.isInitialized())
-  {
-    RCLCPP_WARN_SKIPFIRST_THROTTLE(
-      get_logger(), *get_clock(), (1000ms).count(),
-      "[mpc_nonlinear] Waiting for the curvature interpolator to be initialized ...");
     return false;
   }
 
@@ -1247,19 +1241,9 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(
    * node modules.
    * */
 
-  if (auto const &is_updated =
-      interpolator_curvature_pws.Initialize(mpc_traj_smoothed.s, mpc_traj_smoothed.curvature);
-    !is_updated)
-  {
-    RCLCPP_ERROR(
-      get_logger(),
-      "[mpc_nonlinear - resampling] Could not update the point-wise curvature "
-      "interpolator_spline_pws  data ...");
-    return false;
-  }
+  interpolator_curvature_pws.calcSplineCoefficients(mpc_traj_smoothed.s, mpc_traj_smoothed.curvature);
 
   // DEBUG
-
   // end of DEBUG
   return true;
 }
@@ -1531,16 +1515,8 @@ void NonlinearMPCNode::updateInitialStatesAndControls_fromMeasurements()
     error_states[0], error_states[1]);
 
   // compute the current curvature and store it.
-  if (auto const &&could_interpolate =
-      interpolator_curvature_pws.Interpolate(current_s0_, current_curvature_k0_);
-    !could_interpolate)
-  {
-    RCLCPP_ERROR(
-      get_logger(),
-      "[mpc_nonlinear] Could not interpolate the curvature in the initial state update "
-      "method ...");
-    return;
-  }
+  current_curvature_k0_ = interpolator_curvature_pws.interpolatePoint(current_s0_);
+
 
   // Create the dynamic parameters
   Model::param_vector_t params(Model::param_vector_t::Zero());
@@ -1611,15 +1587,7 @@ void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(
       double vxk{};      // to interpolate the target speed.
 
       // Estimate the curvature.  The spline data is updated in the onTrajectory().
-      if (auto const &&could_interpolate = interpolator_curvature_pws.Interpolate(sd0, kappad0);
-        !could_interpolate)
-      {
-        RCLCPP_ERROR(
-          get_logger(),
-          "[nonlinear_mpc - predict initial state]: spline interpolator failed to compute  the  "
-          "coefficients ...");
-        return;
-      }
+      kappad0 = interpolator_curvature_pws.interpolatePoint(sd0);
 
       nonlinear_mpc_controller_ptr_->getSmoothVxAtDistance(sd0, vxk);
 
@@ -1643,7 +1611,7 @@ void NonlinearMPCNode::predictDelayedInitialStateBy_MPCPredicted_Inputs(
   nonlinear_mpc_controller_ptr_->setCurrent_s0_predicted(current_predicted_s0_);
 
   // Predict the curvature and Ackermann steering angle.
-  interpolator_curvature_pws.Interpolate(current_predicted_s0_, current_predicted_curvature_p0_);
+  current_predicted_curvature_p0_ = interpolator_curvature_pws.interpolatePoint(current_predicted_s0_);
 
   current_feedforward_steering_ = std::atan(current_predicted_curvature_p0_ * wheel_base_);
 

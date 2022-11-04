@@ -27,6 +27,9 @@
 #include "helper_functions/angle_utils.hpp"
 #include "motion_common/motion_common.hpp"
 #include "helper_functions/angle_utils.hpp"
+#include "interpolation/linear_interpolation.hpp"
+#include "interpolation/spline_interpolation.hpp"
+
 class LPVinitializer
 {
  public:
@@ -46,7 +49,7 @@ class LPVinitializer
    * */
   bool simulateWithFeedback(
     Model::model_ptr_t const &model_ptr,
-    ns_splines::InterpolatingSplinePCG const &piecewise_interpolator,
+    SplineInterpolation const &piecewise_interpolator,
     ns_data::param_lpv_type_t const &params_lpv,
     ns_data::ParamsOptimization const &param_opt,
     ns_data::data_nmpc_core_type_t &nmpc_data);

@@ -156,8 +156,7 @@ class NonlinearMPCNode : public rclcpp::Node
    *
    * */
   // pws stands for point-wise
-  ns_splines::InterpolatingSplinePCG interpolator_curvature_pws =
-    ns_splines::InterpolatingSplinePCG(3);
+  SplineInterpolation interpolator_curvature_pws{};
 
   ns_nmpc_interface::NonlinearMPCController getNMPCcore() const
   {

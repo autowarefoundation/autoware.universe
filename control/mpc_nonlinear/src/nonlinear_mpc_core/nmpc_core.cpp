@@ -214,7 +214,7 @@ void ns_nmpc_interface::NonlinearMPCController::simulateOneStepVariableSpeed(
 
 void ns_nmpc_interface::NonlinearMPCController::simulateControlSequenceByPredictedInputs(
   Model::state_vector_t const &x0_predicted,
-  ns_splines::InterpolatingSplinePCG const &piecewise_interpolator)
+  SplineInterpolation const &piecewise_interpolator)
 {
   size_t const &nX = data_nmpc_.trajectory_data.nX();  // get the size of nX.
 
@@ -231,15 +231,7 @@ void ns_nmpc_interface::NonlinearMPCController::simulateControlSequenceByPredict
     double const &s0 = xk(3);  // always (k-1)th. x[k-1].
 
     // We don't need to use could_interpolate, as the interpolator is verified inside.
-    if (bool const &&could_interpolate = piecewise_interpolator.Interpolate(s0, kappa0);
-      !could_interpolate)
-    {
-      RCLCPP_ERROR(
-        rclcpp::get_logger(node_logger_name_),
-        "[nonlinear-mpc - simulate with predicted input ],"
-        "the spline could not  interpolate ...");
-      return;
-    }
+    kappa0 = piecewise_interpolator.interpolatePoint(s0);
 
     params(0) = kappa0;
     params(1) = data_nmpc_.target_reference_states_and_controls.X[k - 1](6);  // target vx
@@ -262,9 +254,8 @@ void ns_nmpc_interface::NonlinearMPCController::simulateControlSequenceByPredict
   }
 }
 
-void ns_nmpc_interface::NonlinearMPCController::simulateControlSequenceUseVaryingSpeed(
-  Model::state_vector_t const &x0_predicted,
-  ns_splines::InterpolatingSplinePCG const &piecewise_interpolator)
+void ns_nmpc_interface::NonlinearMPCController::simulateControlSequenceUseVaryingSpeed(Model::state_vector_t const &x0_predicted,
+                                                                                       SplineInterpolation const &piecewise_interpolator)
 {
   size_t const &&nX = data_nmpc_.trajectory_data.nX();  // get the size of nX
 
@@ -287,15 +278,7 @@ void ns_nmpc_interface::NonlinearMPCController::simulateControlSequenceUseVaryin
     double s0 = xk(3);  // always (k-1)th. x[k-1].
 
     // We don't need to use could_interpolate, as the interpolator is verified inside
-    if (auto could_interpolate = piecewise_interpolator.Interpolate(s0, kappa0);
-      !could_interpolate)
-    {
-      RCLCPP_ERROR(
-        rclcpp::get_logger(node_logger_name_),
-        "[nonlinear-mpc - simulate varying speed sequence], the spline could not interpolate ...");
-      return;
-    }
-
+    kappa0 = piecewise_interpolator.interpolatePoint(s0);
     auto const &uk = data_nmpc_.trajectory_data.U[k - 1];
 
     // InterpolateInCoordinates the target v0, v1 on the trajectory.
@@ -494,14 +477,14 @@ void ns_nmpc_interface::NonlinearMPCController::getPredictedArcLengthDistanceVec
 }
 
 bool ns_nmpc_interface::NonlinearMPCController::reInitializeTrajectories(
-  ns_splines::InterpolatingSplinePCG const &piecewise_interpolator)
+  SplineInterpolation const &piecewise_interpolator)
 {
   auto const is_initialized_traj = linearTrajectoryInitialization(piecewise_interpolator);
   return is_initialized_traj;
 }
 
 bool ns_nmpc_interface::NonlinearMPCController::initializeTrajectories(
-  ns_splines::InterpolatingSplinePCG const &piecewise_interpolator, bool use_linear_initialization)
+  SplineInterpolation const &piecewise_interpolator, bool use_linear_initialization)
 {
   // Initialize the trajectories.
   bool is_initialized_traj{};
@@ -605,7 +588,7 @@ bool ns_nmpc_interface::NonlinearMPCController::initializeTrajectories(
 }
 
 bool ns_nmpc_interface::NonlinearMPCController::linearTrajectoryInitialization(
-  ns_splines::InterpolatingSplinePCG const &piecewise_interpolator)
+  SplineInterpolation const &piecewise_interpolator)
 {
   // Create the new s-coordinates from the predicted speed trajectory.
   std::vector<double> s_predicted_vect;
@@ -667,17 +650,7 @@ bool ns_nmpc_interface::NonlinearMPCController::linearTrajectoryInitialization(
     // InterpolateInCoordinates the curvature and compute the steering
     auto const &sk = xk(3);
 
-    if (bool const &could_interpolate = piecewise_interpolator.Interpolate(sk, kappa0);
-      !could_interpolate)
-    {
-      RCLCPP_ERROR(
-        rclcpp::get_logger(node_logger_name_),
-        "[nonlinear_mpc] Linear trajectory initialization, spline "
-        " interpolator failed to compute  the coefficients ...");
-
-      return false;
-    }
-
+    kappa0 = piecewise_interpolator.interpolatePoint(sk);
     double const &&steering_k = atan(kappa0 * data_nmpc_.wheel_base);
 
     xk(7) = steering_k;
@@ -741,8 +714,7 @@ trajectory_data_t ns_nmpc_interface::NonlinearMPCController::getCurrentTargetTra
   return data_nmpc_.target_reference_states_and_controls;
 }
 
-bool ns_nmpc_interface::NonlinearMPCController::solveNMPC_problem(
-  ns_splines::InterpolatingSplinePCG const &piecewise_interpolator)
+bool ns_nmpc_interface::NonlinearMPCController::solveNMPC_problem(SplineInterpolation const &piecewise_interpolator)
 {
   // Discretisize.
   if (bool const &&is_discretisized = ns_discretization::multipleShootingTrajectory(
