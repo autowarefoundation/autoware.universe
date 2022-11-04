@@ -443,7 +443,7 @@ void NDTScanMatcher::callback_sensor_points(
 
   const geometry_msgs::msg::Pose result_pose_msg = matrix4f_to_pose(ndt_result.pose);
   std::vector<geometry_msgs::msg::Pose> transformation_msg_array;
-  for (auto pose_matrix : ndt_result.transformation_array) {
+  for (const auto & pose_matrix : ndt_result.transformation_array) {
     geometry_msgs::msg::Pose pose_ros = matrix4f_to_pose(pose_matrix);
     transformation_msg_array.push_back(pose_ros);
   }
