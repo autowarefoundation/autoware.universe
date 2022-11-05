@@ -102,55 +102,12 @@ bool isEqual(T a, T b)
 }
 
 /**
- * @brief Saturates given values
- * */
-template<typename T>
-constexpr T clamp(const T &val, const T &lower, const T &upper)
-{
-  return std::max(lower, std::min(val, upper));
-}
-
-template<typename T, typename std::enable_if_t<std::is_floating_point_v<T>> * = nullptr>
-T deg2rad(T const &angle)
-{
-  return angle * M_PI / 180.;
-}
-
-/**
  * @brief abs_diff for size_t
  * */
 template<typename T>
 T abs_diff(T a, T b)
 {
   return a > b ? a - b : b - a;
-}
-
-/**
- * @brief angle wrapping w(x) = mod(x, +pi, 2*pi) - pi
- * */
-template<typename T, typename std::enable_if_t<std::is_floating_point_v<T>> * = nullptr>
-constexpr T angleDistance(T const &theta)
-{
-  T mod_theta_2pi = std::fmod(theta + M_PI, 2 * M_PI) - M_PI;
-
-  return mod_theta_2pi < -M_PI ? mod_theta_2pi + 2 * M_PI : mod_theta_2pi;
-}
-
-template<typename T, typename std::enable_if_t<std::is_floating_point_v<T>> * = nullptr>
-constexpr T angleDistance(T const &theta, T const &theta_ref)
-{
-  T const &&angle_diff = theta - theta_ref;
-  T mod_theta_2pi = std::fmod(angle_diff + M_PI, 2 * M_PI) - M_PI;
-
-  return mod_theta_2pi < -M_PI ? mod_theta_2pi + 2 * M_PI : mod_theta_2pi;
-}
-
-template<typename T, typename std::enable_if_t<std::is_floating_point_v<T>> * = nullptr>
-T wrapToPi(T const &angle)
-{
-  const std::complex<double> i(0, 1);
-  auto complex_number = std::exp(i * angle);
-  return std::arg(complex_number);
 }
 
 /**
