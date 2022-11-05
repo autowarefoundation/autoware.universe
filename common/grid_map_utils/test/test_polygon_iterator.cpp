@@ -61,8 +61,7 @@ TEST(PolygonIterator, FullCover)
   EXPECT_EQ(0, (*iterator)(0));
   EXPECT_EQ(2, (*iterator)(1));
 
-  for (int i = 0; i < 37; ++i)
-    ++iterator;
+  for (int i = 0; i < 37; ++i) ++iterator;
 
   EXPECT_FALSE(iterator.isPastEnd());
   EXPECT_EQ(7, (*iterator)(0));
@@ -75,7 +74,7 @@ TEST(PolygonIterator, FullCover)
 // Copied from grid_map::PolygonIterator
 TEST(PolygonIterator, Outside)
 {
-  GridMap map({ "types" });
+  GridMap map({"types"});
   map.setGeometry(Length(8.0, 5.0), 1.0, Position(0.0, 0.0));  // bufferSize(8, 5)
 
   Polygon polygon;
@@ -92,7 +91,7 @@ TEST(PolygonIterator, Outside)
 // Copied from grid_map::PolygonIterator
 TEST(PolygonIterator, Square)
 {
-  GridMap map({ "types" });
+  GridMap map({"types"});
   map.setGeometry(Length(8.0, 5.0), 1.0, Position(0.0, 0.0));  // bufferSize(8, 5)
 
   Polygon polygon;
@@ -139,7 +138,7 @@ TEST(PolygonIterator, Square)
 // Copied from grid_map::PolygonIterator
 TEST(PolygonIterator, TopLeftTriangle)
 {
-  GridMap map({ "types" });
+  GridMap map({"types"});
   map.setGeometry(Length(8.0, 5.0), 1.0, Position(0.0, 0.0));  // bufferSize(8, 5)
 
   Polygon polygon;
@@ -162,7 +161,7 @@ TEST(PolygonIterator, TopLeftTriangle)
 // Copied from grid_map::PolygonIterator
 TEST(PolygonIterator, MoveMap)
 {
-  GridMap map({ "layer" });
+  GridMap map({"layer"});
   map.setGeometry(Length(8.0, 5.0), 1.0, Position(0.0, 0.0));  // bufferSize(8, 5)
   map.move(Position(2.0, 0.0));
 
@@ -182,8 +181,7 @@ TEST(PolygonIterator, MoveMap)
   EXPECT_EQ(6, (*iterator)(0));
   EXPECT_EQ(2, (*iterator)(1));
 
-  for (int i = 0; i < 4; ++i)
-    ++iterator;
+  for (int i = 0; i < 4; ++i) ++iterator;
 
   EXPECT_FALSE(iterator.isPastEnd());
   EXPECT_EQ(7, (*iterator)(0));
@@ -194,8 +192,7 @@ TEST(PolygonIterator, MoveMap)
   EXPECT_EQ(0, (*iterator)(0));
   EXPECT_EQ(1, (*iterator)(1));
 
-  for (int i = 0; i < 8; ++i)
-    ++iterator;
+  for (int i = 0; i < 8; ++i) ++iterator;
 
   EXPECT_FALSE(iterator.isPastEnd());
   EXPECT_EQ(2, (*iterator)(0));
@@ -208,7 +205,7 @@ TEST(PolygonIterator, MoveMap)
 // This test shows a difference when an edge passes exactly through the center of a cell
 TEST(PolygonIterator, Difference)
 {
-  GridMap map({ "layer" });
+  GridMap map({"layer"});
   map.setGeometry(Length(5.0, 5.0), 1.0, Position(0.0, 0.0));  // bufferSize(8, 5)
 
   // Triangle where the hypotenuse is an exact diagonal of the map: difference.
@@ -219,15 +216,12 @@ TEST(PolygonIterator, Difference)
   grid_map_utils::PolygonIterator iterator(map, polygon);
   grid_map::PolygonIterator gm_iterator(map, polygon);
   bool diff = false;
-  while (!iterator.isPastEnd() && !gm_iterator.isPastEnd())
-  {
-    if ((*gm_iterator)(0) != (*iterator)(0) || (*gm_iterator)(1) != (*iterator)(1))
-      diff = true;
+  while (!iterator.isPastEnd() && !gm_iterator.isPastEnd()) {
+    if ((*gm_iterator)(0) != (*iterator)(0) || (*gm_iterator)(1) != (*iterator)(1)) diff = true;
     ++iterator;
     ++gm_iterator;
   }
-  if (iterator.isPastEnd() != gm_iterator.isPastEnd())
-  {
+  if (iterator.isPastEnd() != gm_iterator.isPastEnd()) {
     diff = true;
   }
   EXPECT_TRUE(diff);
@@ -240,15 +234,12 @@ TEST(PolygonIterator, Difference)
   iterator = grid_map_utils::PolygonIterator(map, polygon);
   gm_iterator = grid_map::PolygonIterator(map, polygon);
   diff = false;
-  while (!iterator.isPastEnd() && !gm_iterator.isPastEnd())
-  {
-    if ((*gm_iterator)(0) != (*iterator)(0) || (*gm_iterator)(1) != (*iterator)(1))
-      diff = true;
+  while (!iterator.isPastEnd() && !gm_iterator.isPastEnd()) {
+    if ((*gm_iterator)(0) != (*iterator)(0) || (*gm_iterator)(1) != (*iterator)(1)) diff = true;
     ++iterator;
     ++gm_iterator;
   }
-  if (iterator.isPastEnd() != gm_iterator.isPastEnd())
-  {
+  if (iterator.isPastEnd() != gm_iterator.isPastEnd()) {
     diff = true;
   }
   EXPECT_FALSE(diff);
@@ -256,7 +247,7 @@ TEST(PolygonIterator, Difference)
 
 TEST(PolygonIterator, SelfCrossingPolygon)
 {
-  GridMap map({ "layer" });
+  GridMap map({"layer"});
   map.setGeometry(Length(5.0, 5.0), 1.0, Position(0.0, 0.0));  // bufferSize(8, 5)
 
   // Hour-glass shape
@@ -268,15 +259,13 @@ TEST(PolygonIterator, SelfCrossingPolygon)
   grid_map_utils::PolygonIterator iterator(map, polygon);
   grid_map::PolygonIterator gm_iterator(map, polygon);
 
-  const std::vector<Index> expected_indexes = { Index(0, 0), Index(0, 1), Index(0, 2), Index(0, 3), Index(0, 4),
-                                                Index(1, 1), Index(1, 2), Index(1, 3), Index(2, 2), Index(3, 2),
-                                                Index(4, 1), Index(4, 2), Index(4, 3) };
+  const std::vector<Index> expected_indexes = {
+    Index(0, 0), Index(0, 1), Index(0, 2), Index(0, 3), Index(0, 4), Index(1, 1), Index(1, 2),
+    Index(1, 3), Index(2, 2), Index(3, 2), Index(4, 1), Index(4, 2), Index(4, 3)};
   bool diff = false;
   size_t i = 0;
-  while (!iterator.isPastEnd() && !gm_iterator.isPastEnd())
-  {
-    if ((*gm_iterator)(0) != (*iterator)(0) || (*gm_iterator)(1) != (*iterator)(1))
-      diff = true;
+  while (!iterator.isPastEnd() && !gm_iterator.isPastEnd()) {
+    if ((*gm_iterator)(0) != (*iterator)(0) || (*gm_iterator)(1) != (*iterator)(1)) diff = true;
     ASSERT_TRUE(i < expected_indexes.size());
     EXPECT_EQ((*iterator)(0), expected_indexes[i](0));
     EXPECT_EQ((*iterator)(1), expected_indexes[i](1));
@@ -284,8 +273,7 @@ TEST(PolygonIterator, SelfCrossingPolygon)
     ++iterator;
     ++gm_iterator;
   }
-  if (iterator.isPastEnd() != gm_iterator.isPastEnd())
-  {
+  if (iterator.isPastEnd() != gm_iterator.isPastEnd()) {
     diff = true;
   }
   EXPECT_FALSE(diff);
