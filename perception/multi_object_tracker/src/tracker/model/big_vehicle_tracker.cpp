@@ -331,7 +331,7 @@ bool BigVehicleTracker::measureWithPose(
   Eigen::MatrixXd P_t(ekf_params_.dim_x, ekf_params_.dim_x);
   ekf_.getX(X_t);
   ekf_.getP(P_t);
-  const Eigen::Matrix2d Ryaw = Eigen::Rotation2Dd(X_t(IDX::YAW));
+  const Eigen::Matrix2d Ryaw = Eigen::Rotation2Dd(X_t(IDX::YAW)).toRotationMatrix();
   const Eigen::Vector2d rotated_offset = Ryaw * offset;
   X_t(IDX::X) -= rotated_offset.x();
   X_t(IDX::Y) -= rotated_offset.y();

@@ -41,7 +41,8 @@
 using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
 
 PedestrianTracker::PedestrianTracker(
-  const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object)
+  const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object,
+  const geometry_msgs::msg::Transform & /*self_transform*/)
 : Tracker(time, object.classification),
   logger_(rclcpp::get_logger("PedestrianTracker")),
   last_update_time_(time),
@@ -313,7 +314,8 @@ bool PedestrianTracker::measureWithShape(
 }
 
 bool PedestrianTracker::measure(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time)
+  const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
+  const geometry_msgs::msg::Transform & self_transform)
 {
   const auto & current_classification = getClassification();
   object_ = object;
@@ -330,6 +332,7 @@ bool PedestrianTracker::measure(
   measureWithPose(object);
   measureWithShape(object);
 
+  (void)self_transform;  // currently do not use self vehicle position
   return true;
 }
 

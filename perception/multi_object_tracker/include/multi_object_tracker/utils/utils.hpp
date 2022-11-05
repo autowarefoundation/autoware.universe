@@ -86,32 +86,7 @@ inline bool isLargeVehicleLabel(const uint8_t label)
  * @param object
  * @return int index
  */
-int getNearestCornerSurfaceFromObject(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object,
-  const geometry_msgs::msg::Transform & self_transform)
-{
-  // only work for BBOX shape
-  if (object.shape.type != autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
-    return false;
-  }
-
-  double x, y, yaw, width, length;
-  x = object.kinematics.pose_with_covariance.pose.position.x;
-  y = object.kinematics.pose_with_covariance.pose.position.y;
-  yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
-  width = object.shape.dimensions.x;
-  length = object.shape.dimensions.y;
-
-  return getNearestCornerSurface(x, y, yaw, width, length, self_transform);
-}
-
-/**
- * @brief Get the Nearest Corner or Surface from detected object
- *
- * @param object
- * @return int index
- */
-int getNearestCornerSurface(
+inline int getNearestCornerSurface(
   const double x, const double y, const double yaw, const double width, const double length,
   const geometry_msgs::msg::Transform & self_transform)
 {
@@ -146,14 +121,39 @@ int getNearestCornerSurface(
   return labels[xgrid][ygrid];  // 0 to 7 + 1(null) value
 }
 
-Eigen::Vector2d getTrackingCorner(
+/**
+ * @brief Get the Nearest Corner or Surface from detected object
+ *
+ * @param object
+ * @return int index
+ */
+inline int getNearestCornerSurfaceFromObject(
+  const autoware_auto_perception_msgs::msg::DetectedObject & object,
+  const geometry_msgs::msg::Transform & self_transform)
+{
+  // only work for BBOX shape
+  if (object.shape.type != autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+    return false;
+  }
+
+  double x, y, yaw, width, length;
+  x = object.kinematics.pose_with_covariance.pose.position.x;
+  y = object.kinematics.pose_with_covariance.pose.position.y;
+  yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
+  width = object.shape.dimensions.x;
+  length = object.shape.dimensions.y;
+
+  return getNearestCornerSurface(x, y, yaw, width, length, self_transform);
+}
+
+inline Eigen::Vector2d getTrackingCorner(
   const double x, const double y, const double yaw, const double w, const double l, const int indx)
 {
   const Eigen::Vector2d center{x, y};
   const double sign[4][2] = {{1, -1}, {-1, -1}, {-1, 1}, {1, 1}};
 
   Eigen::Vector2d diagonal_vec{sign[indx][0] * l / 2.0, sign[indx][1] * w / 2.0};
-  Eigen::Matrix2d Rinv = Eigen::Rotation2Dd(-yaw);
+  Eigen::Matrix2d Rinv = Eigen::Rotation2Dd(-yaw).toRotationMatrix();
   Eigen::Vector2d tracked_corner = center + Rinv * diagonal_vec;
 
   return tracked_corner;
@@ -166,7 +166,7 @@ Eigen::Vector2d getTrackingCorner(
  * @param object
  * @return int index
  */
-void calcAnchorPointOffset(
+inline void calcAnchorPointOffset(
   const double w, const double l, const int indx,
   const autoware_auto_perception_msgs::msg::DetectedObject & input_object,
   autoware_auto_perception_msgs::msg::DetectedObject & offset_object, Eigen::Vector2d & offset)
@@ -196,7 +196,7 @@ void calcAnchorPointOffset(
   }
 
   const double yaw = tf2::getYaw(input_object.kinematics.pose_with_covariance.pose.orientation);
-  Eigen::Matrix2d R = Eigen::Rotation2Dd(yaw);
+  Eigen::Matrix2d R = Eigen::Rotation2Dd(yaw).toRotationMatrix();
   Eigen::Vector2d rotated_offset = R * offset;
 
   offset_object.kinematics.pose_with_covariance.pose.position.x += rotated_offset.x();

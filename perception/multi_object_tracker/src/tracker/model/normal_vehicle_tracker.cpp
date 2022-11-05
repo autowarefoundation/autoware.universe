@@ -39,7 +39,8 @@
 using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
 
 NormalVehicleTracker::NormalVehicleTracker(
-  const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object)
+  const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object,
+  const geometry_msgs::msg::Transform & /*self_transform*/)
 : Tracker(time, object.classification),
   logger_(rclcpp::get_logger("NormalVehicleTracker")),
   last_update_time_(time),
@@ -355,7 +356,8 @@ bool NormalVehicleTracker::measureWithShape(
 }
 
 bool NormalVehicleTracker::measure(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time)
+  const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
+  const geometry_msgs::msg::Transform & self_transform)
 {
   const auto & current_classification = getClassification();
   object_ = object;
@@ -371,6 +373,9 @@ bool NormalVehicleTracker::measure(
 
   measureWithPose(object);
   measureWithShape(object);
+
+  /* calc nearest corner index*/
+  setNearestCornerSurfaceIndex(self_transform);  // this index is used in next measure step
 
   return true;
 }
@@ -454,4 +459,14 @@ bool NormalVehicleTracker::getTrackedObject(
   object.shape.footprint =
     tier4_autoware_utils::rotatePolygon(object.shape.footprint, origin_yaw - ekf_pose_yaw);
   return true;
+}
+
+void NormalVehicleTracker::setNearestCornerSurfaceIndex(
+  const geometry_msgs::msg::Transform & self_transform)
+{
+  Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);
+  ekf_.getX(X_t);
+  nearest_corner_index_ = utils::getNearestCornerSurface(
+    X_t(IDX::X), X_t(IDX::Y), X_t(IDX::YAW), bounding_box_.width, bounding_box_.length,
+    self_transform);
 }

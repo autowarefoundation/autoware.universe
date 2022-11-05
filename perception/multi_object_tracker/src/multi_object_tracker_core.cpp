@@ -186,7 +186,7 @@ std::shared_ptr<Tracker> MultiObjectTracker::createNewTracker(
     const auto tracker = tracker_map_.at(label);
 
     if (tracker == "bicycle_tracker") {
-      return std::make_shared<BicycleTracker>(time, object);
+      return std::make_shared<BicycleTracker>(time, object, self_transform);
     } else if (tracker == "big_vehicle_tracker") {
       return std::make_shared<BigVehicleTracker>(time, object, self_transform);
     } else if (tracker == "multi_vehicle_tracker") {
@@ -194,14 +194,14 @@ std::shared_ptr<Tracker> MultiObjectTracker::createNewTracker(
     } else if (tracker == "normal_vehicle_tracker") {
       return std::make_shared<NormalVehicleTracker>(time, object, self_transform);
     } else if (tracker == "pass_through_tracker") {
-      return std::make_shared<PassThroughTracker>(time, object);
+      return std::make_shared<PassThroughTracker>(time, object, self_transform);
     } else if (tracker == "pedestrian_and_bicycle_tracker") {
-      return std::make_shared<PedestrianAndBicycleTracker>(time, object);
+      return std::make_shared<PedestrianAndBicycleTracker>(time, object, self_transform);
     } else if (tracker == "pedestrian_tracker") {
-      return std::make_shared<PedestrianTracker>(time, object);
+      return std::make_shared<PedestrianTracker>(time, object, self_transform);
     }
   }
-  return std::make_shared<UnknownTracker>(time, object);
+  return std::make_shared<UnknownTracker>(time, object, self_transform);
 }
 
 void MultiObjectTracker::onTimer()
