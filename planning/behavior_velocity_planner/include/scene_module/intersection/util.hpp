@@ -43,7 +43,7 @@ int insertPoint(
   autoware_auto_planning_msgs::msg::PathWithLaneId * inout_path);
 
 bool hasLaneId(const autoware_auto_planning_msgs::msg::PathPointWithLaneId & p, const int id);
-std::optional<std::pair<int, int>> findLaneIdInterval(
+std::optional<std::pair<size_t, size_t>> findLaneIdInterval(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & p, const int lane_id);
 bool getDuplicatedPointIdx(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path,
@@ -58,6 +58,7 @@ std::tuple<lanelet::ConstLanelets, lanelet::ConstLanelets> getObjectiveLanelets(
 
 struct StopLineIdx
 {
+  // TODO(Mamoru Sobue): replace optional<size_t>
   int first_idx_inside_lane = -1;
   int pass_judge_line_idx = -1;
   int stop_line_idx = -1;
@@ -106,9 +107,9 @@ bool generateStopLineBeforeIntersection(
  * @param polygons target polygon
  * @return path point index
  */
-std::optional<int> getFirstPointInsidePolygons(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int lane_interval_start,
-  const int lane_interval_end, const int lane_id,
+std::optional<size_t> getFirstPointInsidePolygons(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const size_t lane_interval_start,
+  const size_t lane_interval_end, const int lane_id,
   const std::vector<lanelet::CompoundPolygon3d> & polygons);
 
 /**
@@ -117,8 +118,8 @@ std::optional<int> getFirstPointInsidePolygons(
  * @return true when the stop point is defined on map.
  */
 bool getStopLineIndexFromMap(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int lane_interval_start,
-  const int lane_interval_end, const int lane_id,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const size_t lane_interval_start,
+  const size_t lane_interval_end, const int lane_id,
   const std::shared_ptr<const PlannerData> & planner_data, int * stop_idx_ip, int dist_thr,
   const rclcpp::Logger logger);
 

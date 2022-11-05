@@ -74,12 +74,12 @@ bool hasLaneId(const autoware_auto_planning_msgs::msg::PathPointWithLaneId & p, 
   return false;
 }
 
-std::optional<std::pair<int, int>> findLaneIdInterval(
+std::optional<std::pair<size_t, size_t>> findLaneIdInterval(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & p, const int lane_id)
 {
   bool found = false;
-  int start = 0;
-  int end = p.points.size() - 1;
+  size_t start = 0;
+  size_t end = p.points.size() - 1;
   for (unsigned i = 0; i < p.points.size(); ++i) {
     if (hasLaneId(p.points.at(i), lane_id)) {
       if (!found) {
@@ -93,7 +93,7 @@ std::optional<std::pair<int, int>> findLaneIdInterval(
       break;
     }
   }
-  start = std::max(0, start - 1);  // the idx of last point before the interval
+  start = std::max<size_t>(0, start - 1);  // the idx of last point before the interval
   return found ? std::make_optional(std::make_pair(start, end)) : std::nullopt;
 }
 
@@ -114,20 +114,20 @@ bool getDuplicatedPointIdx(
   return false;
 }
 
-std::optional<int> getFirstPointInsidePolygons(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int lane_interval_start,
-  const int lane_interval_end, [[maybe_unused]] const int lane_id,
+std::optional<size_t> getFirstPointInsidePolygons(
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const size_t lane_interval_start,
+  const size_t lane_interval_end, [[maybe_unused]] const int lane_id,
   const std::vector<lanelet::CompoundPolygon3d> & polygons)
 {
-  std::optional<int> first_idx_inside_lanelet = std::nullopt;
-  for (int i = lane_interval_start; i <= lane_interval_end; ++i) {
+  std::optional<size_t> first_idx_inside_lanelet = std::nullopt;
+  for (size_t i = lane_interval_start; i <= lane_interval_end; ++i) {
     bool is_in_lanelet = false;
     auto p = path.points.at(i).point.pose.position;
     for (const auto & polygon : polygons) {
       const auto polygon_2d = lanelet::utils::to2D(polygon);
       is_in_lanelet = bg::within(to_bg2d(p), polygon_2d);
       if (is_in_lanelet) {
-        first_idx_inside_lanelet = static_cast<int>(i);
+        first_idx_inside_lanelet = static_cast<size_t>(i);
         break;
       }
     }
@@ -206,8 +206,8 @@ bool generateStopLine(
     if (first_idx_inside_lane_opt) {
       *first_idx_inside_lane = first_idx_inside_lane_opt.get();
     }
-    stop_idx_ip =
-      std::max(first_idx_ip_inside_lane - 1 - stop_line_margin_idx_dist - base2front_idx_dist, 0);
+    stop_idx_ip = std::max<size_t>(
+      first_idx_ip_inside_lane - 1 - stop_line_margin_idx_dist - base2front_idx_dist, 0);
   }
 
   if (stop_idx_ip == 0) {
@@ -265,8 +265,8 @@ bool generateStopLine(
 }
 
 bool getStopLineIndexFromMap(
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int lane_interval_start,
-  const int lane_interval_end, const int lane_id,
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const size_t lane_interval_start,
+  const size_t lane_interval_end, const int lane_id,
   const std::shared_ptr<const PlannerData> & planner_data, int * stop_idx_ip, int dist_thr,
   const rclcpp::Logger logger)
 {
@@ -291,7 +291,7 @@ bool getStopLineIndexFromMap(
   const LineString2d extended_stop_line =
     planning_utils::extendLine(p_start, p_end, planner_data->stop_line_extend_length);
 
-  for (int i = lane_interval_start; i <= lane_interval_end; i++) {
+  for (size_t i = lane_interval_start; i <= lane_interval_end; i++) {
     const auto & p_front = path.points.at(i).point.pose.position;
     const auto & p_back = path.points.at(i + 1).point.pose.position;
 
