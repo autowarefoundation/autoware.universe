@@ -84,7 +84,7 @@ None
 | `max planning time`     | double | maximum planning time [msec] (used only when `enable_update` is set `true`)   |
 | `enable_update`         | bool   | whether update after feasible solution found until `max_planning time` elapse |
 | `use_informed_sampling` | bool   | Use informed RRT\* (of Gammmell et al.)                                       |
-| `neighbor_radius`      | double | neighbor radius of RRT\* algorithm                                           |
+| `neighbor_radius`       | double | neighbor radius of RRT\* algorithm                                            |
 | `margin`                | double | safety margin ensured in path's collision checking in RRT\* algorithm         |
 
 ### Flowchart
