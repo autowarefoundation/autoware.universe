@@ -982,8 +982,6 @@ void NonlinearMPCNode::onTrajectory(const TrajectoryMsg::SharedPtr msg)
   current_trajectory_ptr_ = msg;
   current_trajectory_size_ = msg->points.size();
 
-  ns_utils::print("calling resample traj with the message size : ", msg->points.size());
-
   // Resample the planning trajectory and store in the MPCdataTrajectoryVectors.
   if (bool const &&is_resampled = resampleRawTrajectoriesToaFixedSize(); !is_resampled)
   {
@@ -1049,8 +1047,6 @@ bool NonlinearMPCNode::resampleRawTrajectoriesToaFixedSize()
   // !<-@brief smooth map reference of [MPC_MAP_SMOOTHER_OUT x 4]
   // !<-@brief [s, x, y, z ] size [MPC_MAP_SMOOTHER_IN x 4]
   map_matrix_in_t reference_map_sxyz(map_matrix_in_t::Zero());
-
-  ns_utils::print("in resample traj : end value of sraw-back ", mpc_traj_raw.s.back());
 
   if (bool const &&is_resampled = makeFixedSizeMat_sxyz(mpc_traj_raw, reference_map_sxyz);
     !is_resampled)
@@ -1233,12 +1229,10 @@ bool NonlinearMPCNode::createSmoothTrajectoriesWithCurvature(ns_data::MPCdataTra
   }
 
   /**
-   *  @brief update curvature spline interpolator data. This interpolator is used all across the
+   * @brief update curvature spline interpolator data. This interpolator is used all across the
    * node modules.
    * */
 
-  ns_utils::print("Current s-vector sent to the interpolator : ");
-  ns_utils::print_container(mpc_traj_smoothed.s);
   interpolator_curvature_pws.calcSplineCoefficients(mpc_traj_smoothed.s, mpc_traj_smoothed.curvature);
 
   // DEBUG

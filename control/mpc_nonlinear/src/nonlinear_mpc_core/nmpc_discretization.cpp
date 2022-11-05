@@ -199,13 +199,6 @@ bool ns_discretization::multipleShootingTrajectory(Model::model_ptr_t const &mod
   Model::param_vector_t params0(Model::param_vector_t::Zero());
   Model::param_vector_t params1(Model::param_vector_t::Zero());
 
-  ns_utils::print("in discretization last x and u: ");
-  for (size_t k = 0; k < K; ++k)
-  {
-    ns_utils::print("s: ", trajectory_data.X[k](3), "v: ", trajectory_data.X[k](6),
-                    "u : ", trajectory_data.U[k](0), trajectory_data.U[k](1));
-  }
-
   for (size_t k = 0; k < K; ++k)
   {
     // Compute kappa0, kappa1.
@@ -222,7 +215,6 @@ bool ns_discretization::multipleShootingTrajectory(Model::model_ptr_t const &mod
     kappa0_kappa1.reserve(2);
 
     // InterpolateInCoordinates wit PCG setting reusing_param.
-    ns_utils::print("in discretization s0s1: ", s0s1[0], s0s1[1]);
     kappa0_kappa1 = piecewise_interpolator.getSplineInterpolatedValues(s0s1);
 
     params0(ns_utils::toUType(VehicleParamIds::curvature)) = kappa0_kappa1[0];
