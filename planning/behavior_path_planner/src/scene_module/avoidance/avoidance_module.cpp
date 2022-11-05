@@ -3475,7 +3475,7 @@ TurnSignalInfo AvoidanceModule::calcTurnSignalInfo(const ShiftedPath & path) con
   if (turn_signal_on_swerving) {
     if (segment_shift_length > 0.0) {
       turn_signal_info.turn_signal.command = TurnIndicatorsCommand::ENABLE_LEFT;
-    } else {
+  } else {
       turn_signal_info.turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
     }
   } else {
