@@ -36,11 +36,11 @@
 #include <Eigen/Geometry>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
-
 using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
 
 BigVehicleTracker::BigVehicleTracker(
-  const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object)
+  const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object,
+  const geometry_msgs::msg::Transform & self_transform)
 : Tracker(time, object.classification),
   logger_(rclcpp::get_logger("BigVehicleTracker")),
   last_update_time_(time),
@@ -136,6 +136,9 @@ BigVehicleTracker::BigVehicleTracker(
     bounding_box_ = {2.0, 7.0, 2.0};
   }
   ekf_.init(X, P);
+
+  /* calc nearest corner index*/
+  setNearestCornerSurfaceIndex(self_transform);  // this index is used in next measure step
 }
 
 bool BigVehicleTracker::predict(const rclcpp::Time & time)
@@ -269,8 +272,9 @@ bool BigVehicleTracker::measureWithPose(
   /* get offseted measurement*/
   Eigen::Vector2d offset;
   autoware_auto_perception_msgs::msg::DetectedObject offset_object;
-  utils::calcAnchorPointOffset(bounding_box_.width, bounding_box_.length, nearest_corner_index_, object, offset_object, offset);
-
+  utils::calcAnchorPointOffset(
+    bounding_box_.width, bounding_box_.length, nearest_corner_index_, object, offset_object,
+    offset);
 
   /* Set measurement matrix */
   Eigen::MatrixXd Y(dim_y, 1);
@@ -329,10 +333,9 @@ bool BigVehicleTracker::measureWithPose(
   ekf_.getP(P_t);
   const Eigen::Matrix2d Ryaw = Eigen::Rotation2Dd(X_t(IDX::YAW));
   const Eigen::Vector2d rotated_offset = Ryaw * offset;
-  X_t(IDX::X) += rotated_offset.x();
-  X_t(IDX::Y) += rotated_offset.y();
+  X_t(IDX::X) -= rotated_offset.x();
+  X_t(IDX::Y) -= rotated_offset.y();
   ekf_.init(X_t, P_t);
-
 
   // normalize yaw and limit vx, wz
   {
@@ -373,7 +376,8 @@ bool BigVehicleTracker::measureWithShape(
 }
 
 bool BigVehicleTracker::measure(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time)
+  const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
+  const geometry_msgs::msg::Transform & self_transform)
 {
   const auto & current_classification = getClassification();
   object_ = object;
@@ -391,7 +395,7 @@ bool BigVehicleTracker::measure(
   measureWithShape(object);
 
   /* calc nearest corner index*/
-  setNearestCornerSurfaceIndex(time);
+  setNearestCornerSurfaceIndex(self_transform);  // this index is used in next measure step
 
   return true;
 }
@@ -478,8 +482,12 @@ bool BigVehicleTracker::getTrackedObject(
   return true;
 }
 
-void BigVehicleTracker::setNearestCornerSurfaceIndex(const rclcpp::Time & time){
+void BigVehicleTracker::setNearestCornerSurfaceIndex(
+  const geometry_msgs::msg::Transform & self_transform)
+{
   Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);
   ekf_.getX(X_t);
-  nearest_corner_index_ =  utils::getNearestCornerSurface(X_t(IDX::X), X_t(IDX::Y), X_t(IDX::YAW), bounding_box_.width, bounding_box_.length, time, tf_buffer_);
+  nearest_corner_index_ = utils::getNearestCornerSurface(
+    X_t(IDX::X), X_t(IDX::Y), X_t(IDX::YAW), bounding_box_.width, bounding_box_.length,
+    self_transform);
 }

@@ -86,9 +86,9 @@ inline bool isLargeVehicleLabel(const uint8_t label)
  * @param object
  * @return int index
  */
-int getNearestCornerSurface(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
-  const tf2_ros::Buffer & tf_buffer)
+int getNearestCornerSurfaceFromObject(
+  const autoware_auto_perception_msgs::msg::DetectedObject & object,
+  const geometry_msgs::msg::Transform & self_transform)
 {
   // only work for BBOX shape
   if (object.shape.type != autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
@@ -102,38 +102,7 @@ int getNearestCornerSurface(
   width = object.shape.dimensions.x;
   length = object.shape.dimensions.y;
 
-  // get local vehicle pose
-  geometry_msgs::msg::TransformStamped transform;
-  double x0, y0, xl, yl;
-  transform = tf_buffer.lookupTransform("map", "base_link", time);
-
-  x0 = transform.transform.translation.x;
-  y0 = transform.transform.translation.y;
-
-  // localize to object coordinate
-  // R.T (X-X0)
-  xl = std::cos(yaw) * (x - x0) + std::sin(yaw) * (y - y0);
-  yl = -std::sin(yaw) * (x - x0) + std::cos(yaw) * (y - y0);
-
-  // grid search
-  int xgrid, ygrid;
-  const int labels[3][3] = {{7, 0, 4}, {3, -1, 1}, {6, 2, 5}};
-  if (xl > length / 2.0) {
-    xgrid = 0;
-  } else if (xl > -length / 2.0) {
-    xgrid = 1;
-  } else {
-    xgrid = 2;
-  }
-  if (yl > width / 2.0) {
-    ygrid = 2;
-  } else if (yl > -width / 2.0) {
-    ygrid = 1;
-  } else {
-    ygrid = 0;
-  }
-
-  return labels[xgrid][ygrid];  // 0 to 7 + 1(null) value
+  return getNearestCornerSurface(x, y, yaw, width, length, self_transform);
 }
 
 /**
@@ -144,15 +113,12 @@ int getNearestCornerSurface(
  */
 int getNearestCornerSurface(
   const double x, const double y, const double yaw, const double width, const double length,
-  const rclcpp::Time & time, const tf2_ros::Buffer & tf_buffer)
+  const geometry_msgs::msg::Transform & self_transform)
 {
-  // get local vehicle pose
-  geometry_msgs::msg::TransformStamped transform;
   double x0, y0, xl, yl;
-  transform = tf_buffer.lookupTransform("map", "base_link", time);
-
-  x0 = transform.transform.translation.x;
-  y0 = transform.transform.translation.y;
+  // get local vehicle pose
+  x0 = self_transform.translation.x;
+  y0 = self_transform.translation.y;
 
   // localize to object coordinate
   // R.T (X-X0)
