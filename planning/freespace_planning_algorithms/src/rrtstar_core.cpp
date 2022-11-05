@@ -386,8 +386,8 @@ std::vector<NodeConstSharedPtr> RRTStar::findNeighborNodes(const Pose& x_new) co
   {
     if (cspace_.distanceLowerBound(node->pose, x_new) > radius_neighbor)
       continue;
-    const bool is_neighbour = (cspace_.distance(node->pose, x_new) < radius_neighbor);
-    if (is_neighbour)
+    const bool is_neighbor = (cspace_.distance(node->pose, x_new) < radius_neighbor);
+    if (is_neighbor)
     {
       nodes.push_back(node);
     }

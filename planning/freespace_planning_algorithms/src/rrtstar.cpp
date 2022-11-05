@@ -82,7 +82,7 @@ bool RRTStar::makePlan(
   const bool is_informed = rrtstar_param_.use_informed_sampling;  // always better
   const double collision_check_resolution = rrtstar_param_.margin * 2;
   auto algo = rrtstar_core::RRTStar(
-    x_start, x_goal, rrtstar_param_.neighbour_radius, collision_check_resolution, is_informed,
+    x_start, x_goal, rrtstar_param_.neighbor_radius, collision_check_resolution, is_informed,
     cspace);
   while (true) {
     const rclcpp::Time now = rclcpp::Clock(RCL_ROS_TIME).now();

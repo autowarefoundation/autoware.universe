@@ -30,7 +30,7 @@ struct RRTStarParam
   bool enable_update;          // update solution even after feasible solution found with given time budget
   bool use_informed_sampling;  // use informed sampling (informed rrtstar)
   double max_planning_time;    // if enable_update is true, update is done before time elapsed [msec]
-  double neighbour_radius;     // neighbor radius [m]
+  double neighbor_radius;      // neighbor radius [m]
   double margin;               // [m]
 };
 
@@ -46,7 +46,7 @@ public:
               RRTStarParam{ node.declare_parameter("rrtstar.enable_update", true),
                             node.declare_parameter("rrtstar.use_informed_sampling", true),
                             node.declare_parameter("rrtstar.max_planning_time", 150.0),
-                            node.declare_parameter("rrtstar.neighbour_radius", 8.0),
+                            node.declare_parameter("rrtstar.neighbor_radius", 8.0),
                             node.declare_parameter("rrtstar.margin", 0.1) })
   {
   }
