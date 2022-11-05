@@ -483,6 +483,15 @@ bool ns_nmpc_interface::NonlinearMPCController::reInitializeTrajectories(
   return is_initialized_traj;
 }
 
+void ns_nmpc_interface::NonlinearMPCController::resetPreviouslyComputedLongInputs()
+{
+  for (auto &uk : data_nmpc_.trajectory_data.U)
+  {
+    uk(0) = 0.;
+  }
+
+}
+
 bool ns_nmpc_interface::NonlinearMPCController::initializeTrajectories(
   SplineInterpolation const &piecewise_interpolator, bool use_linear_initialization)
 {

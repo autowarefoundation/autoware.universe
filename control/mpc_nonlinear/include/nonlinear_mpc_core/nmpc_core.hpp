@@ -127,6 +127,8 @@ class NonlinearMPCController
 
   bool reInitializeTrajectories(SplineInterpolation const &piecewise_interpolator);
 
+  void resetPreviouslyComputedLongInputs();
+
   bool initializeTrajectories(SplineInterpolation const &piecewise_interpolator,
                               bool use_linear_initialization = false);
 

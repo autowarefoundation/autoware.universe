@@ -320,6 +320,9 @@ class NonlinearMPCNode : public rclcpp::Node
   ns_states::motionStateEnums current_fsm_state_{
     ns_states::motionStateEnums::isAtCompleteStop};  // state machine.
 
+  ns_states::motionStateEnums previous_fsm_state_{
+    ns_states::motionStateEnums::isAtCompleteStop};
+
   /**
    * @brief PLACEHOLDERS where the computed variables are updated and hold.
    * */

@@ -236,19 +236,24 @@ void NonlinearMPCNode::onTimer()
   nmpc_performance_vars_.distance_to_stop_point = dist_v0_vnext[0];
   vehicle_motion_fsm_.toggle(dist_v0_vnext);
 
-  // vehicle_motion_fsm_.printCurrentStateMsg();
-  // ns_utils::print("Distance, V0, Vnext ", dist_v0_vnext[0], dist_v0_vnext[1], dist_v0_vnext[2]);
 
+  // Update the states of the vehicle motion.
+  /**
+   * The motion states keep track of the vehicle stopping and moving conditions triggered by current velocity and
+   * distance to the stopping points. Can be seen vehicle_motion_fsm_.printCurrentStateMsg();.
+   * */
+  previous_fsm_state_ = current_fsm_state_;
   current_fsm_state_ = vehicle_motion_fsm_.getCurrentStateType();
-  // ns_utils::print("Finite state machine state numbers : ",
-  // ns_states::as_integer(current_fsm_state_));
 
   RCLCPP_WARN_SKIPFIRST_THROTTLE(
     get_logger(), *get_clock(), (1000ms).count(), "\n[mpc_nonlinear] %s",
     std::string(vehicle_motion_fsm_.getFSMTypeReport()).c_str());
 
-  //    if (current_fsm_state_ == ns_states::motionStateEnums::isAtComplete   Stop ||
-  //        current_fsm_state_ == ns_states::motionStateEnums::isInEmergency)
+  /**
+   * We can also use vehicle isinEmergency flag.
+   * ns_states::motionStateEnums::isInEmergency
+   * */
+
   if (current_fsm_state_ == ns_states::motionStateEnums::isAtCompleteStop)
   {
     // kalman_filter_ptr_->reset();
@@ -266,11 +271,20 @@ void NonlinearMPCNode::onTimer()
     }
 
     publishControlsAndUpdateVars(control_cmd);
-
     inputs_buffer_.pop_front();
 
     control_cmd.stamp = this->now() + rclcpp::Duration::from_seconds(params_node_.input_delay_time);
     inputs_buffer_.emplace_back(control_cmd);
+
+    /**
+     * Reset the previous computed control inputs (vehicle was stopping and we do not want to use these inputs to
+     * start a motion)
+     * */
+
+    if (previous_fsm_state_ == ns_states::motionStateEnums::willbeStopping)
+    {
+      nonlinear_mpc_controller_ptr_->resetPreviouslyComputedLongInputs();
+    }
 
     return;
   }
@@ -279,11 +293,6 @@ void NonlinearMPCNode::onTimer()
   x0_predicted_.setZero();
   nonlinear_mpc_controller_ptr_->getInitialState(x0_predicted_);
 
-  // DEBUG
-  // TODO: debug
-  //  ns_utils::print("Initial states");
-  //  ns_eigen_utils::printEigenMat(x0_predicted_);
-  // end of DEBUG
 
   // If there is no input delay in the system, predict_initial_states is set to false automatically
   // in the constructor.
@@ -334,7 +343,6 @@ void NonlinearMPCNode::onTimer()
       !is_initialized)
     {
       // vehicle_motion_fsm_.setEmergencyFlag(true);
-
       RCLCPP_WARN_SKIPFIRST_THROTTLE(
         get_logger(), *get_clock(), (1000ms).count(),
         "[mpc_nonlinear] Couldn't initialize the LPV controller ... %s \n",
@@ -364,9 +372,8 @@ void NonlinearMPCNode::onTimer()
   /**
    * @brief
    * - Simulate the controls starting from the delayed initial state.
-   * - Apply the predicted control to the vehicle model starting from predicted initial state and
-   * replace the
-   * - measured initial state with the predicted initial state.
+   * - Apply the predicted control to the vehicle model starting from predicted initial state and replace the
+   * measured initial state with the predicted initial state.
    */
 
   /**
@@ -426,8 +433,6 @@ void NonlinearMPCNode::onTimer()
     return;
   }
 
-  // ns_utils::print("the NMPC problem is solved ...");
-
   // Get MPC controls [acc, steering rate]
   nonlinear_mpc_controller_ptr_->getControlSolutions(u_solution_);  // [acc, steering_rate]
 
@@ -485,11 +490,6 @@ void NonlinearMPCNode::onTimer()
 
   // Set NMPC avg_mpc_computation_time.
   nonlinear_mpc_controller_ptr_->setCurrentAvgMPCComputationTime(average_mpc_solve_time_);
-
-  //  ns_utils::print("\nOne step MPC step takes time to compute in milliseconds : ",
-  //  current_mpc_solve_time_msec); ns_utils::print("Average MPC solve time takes time to compute in
-  //  milliseconds : ",
-  //                  average_mpc_solve_time_ * 1000, "\n");
 
   // -------------------------------- END of the MPC loop. -------------------------------
   // Set Debug Marker next waypoint
