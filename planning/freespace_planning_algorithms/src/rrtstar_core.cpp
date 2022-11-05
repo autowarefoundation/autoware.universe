@@ -375,7 +375,7 @@ std::vector<NodeConstSharedPtr> RRTStar::findNeighborNodes(const Pose& x_new) co
   // the time.
   // Due to above difficulty in design of radius update, radius is simply fixed here.
   // In practice, the fixed radius setting works well as long as mu_ value is
-  // propery tuned. In car planning scenario, the order or planning world area
+  // properly tuned. In car planning scenario, the order or planning world area
   // is similar, and turining radius is also similar through different problems.
   // So, tuning mu_ parameter is not so difficult.
 
