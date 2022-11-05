@@ -80,12 +80,12 @@ std::optional<std::pair<size_t, size_t>> findLaneIdInterval(
   bool found = false;
   size_t start = 0;
   size_t end = p.points.size() - 1;
-  for (unsigned i = 0; i < p.points.size(); ++i) {
+  for (size_t i = 0; i < p.points.size(); ++i) {
     if (hasLaneId(p.points.at(i), lane_id)) {
       if (!found) {
         // found interval for the first time
         found = true;
-        start = static_cast<int>(i);
+        start = i;
       }
     } else if (found) {
       // prior point was in the interval. interval ended
@@ -127,7 +127,7 @@ std::optional<size_t> getFirstPointInsidePolygons(
       const auto polygon_2d = lanelet::utils::to2D(polygon);
       is_in_lanelet = bg::within(to_bg2d(p), polygon_2d);
       if (is_in_lanelet) {
-        first_idx_inside_lanelet = static_cast<size_t>(i);
+        first_idx_inside_lanelet = i;
         break;
       }
     }
@@ -206,8 +206,10 @@ bool generateStopLine(
     if (first_idx_inside_lane_opt) {
       *first_idx_inside_lane = first_idx_inside_lane_opt.get();
     }
-    stop_idx_ip = std::max<size_t>(
-      first_idx_ip_inside_lane - 1 - stop_line_margin_idx_dist - base2front_idx_dist, 0);
+    stop_idx_ip = static_cast<size_t>(std::max<int>(
+      static_cast<int>(first_idx_ip_inside_lane) - 1 - stop_line_margin_idx_dist -
+        base2front_idx_dist,
+      0));
   }
 
   if (stop_idx_ip == 0) {
