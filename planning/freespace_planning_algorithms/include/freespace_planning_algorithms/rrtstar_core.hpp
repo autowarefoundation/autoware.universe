@@ -41,14 +41,14 @@ const double inf = std::numeric_limits<double>::infinity();
 class CSpace
 {
 public:
-  CSpace(const Pose & lo, const Pose & hi, double r, std::function<bool(Pose)> is_obstacle_free);
+  CSpace(const Pose& lo, const Pose& hi, double r, std::function<bool(Pose)> is_obstacle_free);
   Pose uniformSampling();
-  Pose ellipticInformedSampling(double c_best, const Pose & p_start, const Pose & p_goal);
-  double distance(const Pose & pose0, const Pose & pose1) const
+  Pose ellipticInformedSampling(double c_best, const Pose& p_start, const Pose& p_goal);
+  double distance(const Pose& pose0, const Pose& pose1) const
   {
     return rsspace_.distance(pose0, pose1);
   }
-  double distanceLowerBound(const Pose & pose0, const Pose & pose1) const
+  double distanceLowerBound(const Pose& pose0, const Pose& pose1) const
   {
     return std::hypot(pose0.x - pose1.x, pose0.y - pose1.y);
   };
@@ -66,20 +66,23 @@ public:
   //
   // In this code, by forcing all reeds-shepp-involved methods take arguments in the
   // child-to-parent order, we keep the consistency of the resulting reeds-shepp paths.
-  void sampleWayPoints_child2parent(
-    const Pose & pose_child, const Pose & pose_parent, double step,
-    std::vector<Pose> & pose_seq) const;
-  Pose interpolate_child2parent(
-    const Pose & pose_child, const Pose & pose_parent, double seg) const;
-  bool isValidPath_child2parent(
-    const Pose & pose_child, const Pose & pose_parent, double step) const;
+  void sampleWayPoints_child2parent(const Pose& pose_child, const Pose& pose_parent, double step,
+                                    std::vector<Pose>& pose_seq) const;
+  Pose interpolate_child2parent(const Pose& pose_child, const Pose& pose_parent, double seg) const;
+  bool isValidPath_child2parent(const Pose& pose_child, const Pose& pose_parent, double step) const;
 
-  bool isValidPose(const Pose & pose) const { return isInside(pose) && is_obstacle_free_(pose); }
-  double getReedsSheppRadius() const { return rsspace_.rho_; }
+  bool isValidPose(const Pose& pose) const
+  {
+    return isInside(pose) && is_obstacle_free_(pose);
+  }
+  double getReedsSheppRadius() const
+  {
+    return rsspace_.rho_;
+  }
 
 private:
-  bool isInside(const Pose & p) const;
-  Pose interpolate(Path & path, const Pose & pose, double seg) const;
+  bool isInside(const Pose& p) const;
+  Pose interpolate(Path& path, const Pose& pose, double seg) const;
   const Pose lo_;
   const Pose hi_;
   const ReedsSheppStateSpace rsspace_;
@@ -101,51 +104,58 @@ struct Node
   NodeWeakPtr parent = NodeWeakPtr();
   std::vector<NodeSharedPtr> childs = std::vector<NodeSharedPtr>();
 
-  bool isRoot() const { return getParent() == nullptr; }
+  bool isRoot() const
+  {
+    return getParent() == nullptr;
+  }
 
-  void addParent(const NodeSharedPtr & parent_, double cost_to_parent_)
+  void addParent(const NodeSharedPtr& parent_, double cost_to_parent_)
   {
     parent = parent_;
     cost_to_parent = cost_to_parent_;
   }
 
-  void deleteChild(const NodeSharedPtr & node)
+  void deleteChild(const NodeSharedPtr& node)
   {
-    const auto & delete_iter = std::find_if(
-      childs.begin(), childs.end(), [&node](const NodeConstSharedPtr node_child) -> bool {
-        return node_child.get() == node.get();
-      });
+    const auto& delete_iter =
+        std::find_if(childs.begin(), childs.end(),
+                     [&node](const NodeConstSharedPtr node_child) -> bool { return node_child.get() == node.get(); });
     childs.erase(delete_iter);
   }
 
-  NodeSharedPtr getParent() const { return parent.lock(); }
+  NodeSharedPtr getParent() const
+  {
+    return parent.lock();
+  }
 };
 
 class RRTStar
 {
 public:
-  RRTStar(
-    Pose x_start, Pose x_goal, double mu, double collision_check_resolution, bool is_informed,
-    CSpace cspace);
-  bool isSolutionFound() const { return (reached_nodes_.size() > 0); }
+  RRTStar(Pose x_start, Pose x_goal, double mu, double collision_check_resolution, bool is_informed, CSpace cspace);
+  bool isSolutionFound() const
+  {
+    return (reached_nodes_.size() > 0);
+  }
   void extend();
   void deleteNodeUsingBranchAndBound();
   std::vector<Pose> sampleSolutionWaypoints() const;
   void dumpState(std::string filename) const;
-  double getSolutionCost() const { return *node_goal_->cost_from_start; }
+  double getSolutionCost() const
+  {
+    return *node_goal_->cost_from_start;
+  }
   std::vector<NodeConstSharedPtr> getNodes() const;
 
 private:
-  NodeConstSharedPtr findNearestNode(const Pose & x_rand) const;
-  std::vector<NodeConstSharedPtr> findNeighboreNodes(const Pose & pose) const;
-  NodeSharedPtr addNewNode(const Pose & pose, NodeSharedPtr node_parent);
-  NodeConstSharedPtr getBestParentNode(
-    const Pose & pose_new, const NodeConstSharedPtr & node_nearest,
-    const std::vector<NodeConstSharedPtr> & neighbore_nodes) const;
-  void reconnect(const NodeSharedPtr & node_new, const NodeSharedPtr & node_reconnect);
-  NodeConstSharedPtr getReconnectTargeNode(
-    const NodeConstSharedPtr node_new,
-    const std::vector<NodeConstSharedPtr> & neighbore_nodes) const;
+  NodeConstSharedPtr findNearestNode(const Pose& x_rand) const;
+  std::vector<NodeConstSharedPtr> findNeighborNodes(const Pose& pose) const;
+  NodeSharedPtr addNewNode(const Pose& pose, NodeSharedPtr node_parent);
+  NodeConstSharedPtr getBestParentNode(const Pose& pose_new, const NodeConstSharedPtr& node_nearest,
+                                       const std::vector<NodeConstSharedPtr>& neighbor_nodes) const;
+  void reconnect(const NodeSharedPtr& node_new, const NodeSharedPtr& node_reconnect);
+  NodeConstSharedPtr getReconnectTargeNode(const NodeConstSharedPtr node_new,
+                                           const std::vector<NodeConstSharedPtr>& neighbor_nodes) const;
 
   NodeSharedPtr node_start_;
   NodeSharedPtr node_goal_;

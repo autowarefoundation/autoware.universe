@@ -27,41 +27,35 @@ namespace freespace_planning_algorithms
 struct RRTStarParam
 {
   // algorithm configs
-  bool enable_update;  // update solution even after feasible solution found with given time budget
+  bool enable_update;          // update solution even after feasible solution found with given time budget
   bool use_informed_sampling;  // use informed sampling (informed rrtstar)
-  double max_planning_time;  // if enable_update is true, update is done before time elapsed [msec]
-  double neighbour_radius;   // neighbore radius [m]
-  double margin;             // [m]
+  double max_planning_time;    // if enable_update is true, update is done before time elapsed [msec]
+  double neighbour_radius;     // neighbor radius [m]
+  double margin;               // [m]
 };
 
 class RRTStar : public AbstractPlanningAlgorithm
 {
 public:
-  RRTStar(
-    const PlannerCommonParam & planner_common_param, const VehicleShape & original_vehicle_shape,
-    const RRTStarParam & rrtstar_param);
+  RRTStar(const PlannerCommonParam& planner_common_param, const VehicleShape& original_vehicle_shape,
+          const RRTStarParam& rrtstar_param);
 
-  RRTStar(
-    const PlannerCommonParam & planner_common_param, const VehicleShape & original_vehicle_shape,
-    rclcpp::Node & node)
-  : RRTStar(
-      planner_common_param, original_vehicle_shape,
-      RRTStarParam{
-        node.declare_parameter("rrtstar.enable_update", true),
-        node.declare_parameter("rrtstar.use_informed_sampling", true),
-        node.declare_parameter("rrtstar.max_planning_time", 150.0),
-        node.declare_parameter("rrtstar.neighbour_radius", 8.0),
-        node.declare_parameter("rrtstar.margin", 0.1)})
+  RRTStar(const PlannerCommonParam& planner_common_param, const VehicleShape& original_vehicle_shape,
+          rclcpp::Node& node)
+    : RRTStar(planner_common_param, original_vehicle_shape,
+              RRTStarParam{ node.declare_parameter("rrtstar.enable_update", true),
+                            node.declare_parameter("rrtstar.use_informed_sampling", true),
+                            node.declare_parameter("rrtstar.max_planning_time", 150.0),
+                            node.declare_parameter("rrtstar.neighbour_radius", 8.0),
+                            node.declare_parameter("rrtstar.margin", 0.1) })
   {
   }
 
-  bool makePlan(
-    const geometry_msgs::msg::Pose & start_pose,
-    const geometry_msgs::msg::Pose & goal_pose) override;
-  bool hasObstacleOnTrajectory(const geometry_msgs::msg::PoseArray & trajectory) const override;
+  bool makePlan(const geometry_msgs::msg::Pose& start_pose, const geometry_msgs::msg::Pose& goal_pose) override;
+  bool hasObstacleOnTrajectory(const geometry_msgs::msg::PoseArray& trajectory) const override;
 
 private:
-  void setRRTPath(const std::vector<rrtstar_core::Pose> & waypints);
+  void setRRTPath(const std::vector<rrtstar_core::Pose>& waypints);
 
   // algorithm specific param
   const RRTStarParam rrtstar_param_;
