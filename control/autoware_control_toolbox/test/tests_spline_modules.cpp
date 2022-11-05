@@ -15,7 +15,6 @@
 #include "act_test_suite.hpp"
 #include "gtest/gtest.h"
 
-
 TEST(ACTspline, bSplineInterpolatorDownSampling)
 {
   // Generate a noisy sinusoidal signal with arc-length parametrization. This is our test signal.

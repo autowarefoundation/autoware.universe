@@ -22,8 +22,7 @@ TEST(ACTutils, unwrap)
 
   // Generate y = 6*sin(2*pi*n/N).
   std::vector<double> yvec;
-  std::transform(xvec.cbegin(), xvec.cend(), std::back_inserter(yvec), [&](auto const &x)
-  {
+  std::transform(xvec.cbegin(), xvec.cend(), std::back_inserter(yvec), [&](auto const & x) {
     return 6 * sin(2 * M_PI * x / Nx);
   });
 
@@ -31,8 +30,7 @@ TEST(ACTutils, unwrap)
    * Wrap the signal into [-pi, pi]
    * */
   std::vector<double> xw;
-  std::transform(yvec.cbegin(), yvec.cend(), std::back_inserter(xw), [&](auto const &x)
-  {
+  std::transform(yvec.cbegin(), yvec.cend(), std::back_inserter(xw), [&](auto const & x) {
     return std::atan2(sin(x), cos(x));
   });
 
@@ -41,8 +39,7 @@ TEST(ACTutils, unwrap)
    * */
   ns_utils::unWrap(xw);
 
-  for (size_t k = 0; k < xw.size(); ++k)
-  {
+  for (size_t k = 0; k < xw.size(); ++k) {
     ASSERT_DOUBLE_EQ(yvec[k], xw[k]);
   }
 }
