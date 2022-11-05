@@ -32,7 +32,10 @@ protected:
   using Point = typename DataStructure::value_type;
   using Real = decltype(autoware::common::geometry::point_adapter::x_(std::declval<Point>()));
 
-  auto area() { return autoware::common::geometry::area_checked_2d(data_.begin(), data_.end()); }
+  auto area()
+  {
+    return autoware::common::geometry::area_checked_2d(data_.begin(), data_.end());
+  }
 
   void add_point(Real x, Real y)
   {
@@ -53,7 +56,10 @@ using TestTypes = TestTypes_<geometry_msgs::msg::Point32>;
 TYPED_TEST_SUITE(AreaTest, TestTypes, );
 
 // The empty set has zero area
-TYPED_TEST(AreaTest, DegenerateZero) { EXPECT_FLOAT_EQ(0.0, this->area()); }
+TYPED_TEST(AreaTest, DegenerateZero)
+{
+  EXPECT_FLOAT_EQ(0.0, this->area());
+}
 
 // An individual point has zero area
 TYPED_TEST(AreaTest, DegenerateOne)
@@ -79,7 +85,7 @@ TYPED_TEST(AreaTest, Triangle)
   EXPECT_FLOAT_EQ(2.0, this->area());  // A = (1/2) * b * h
 }
 
-// Rectangle is easy to do computationall
+// Rectangle is easy to do computational
 TYPED_TEST(AreaTest, Rectangle)
 {
   this->add_point(-5.0, -5.0);
