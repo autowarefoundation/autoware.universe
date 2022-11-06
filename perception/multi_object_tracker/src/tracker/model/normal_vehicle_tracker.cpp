@@ -40,7 +40,7 @@ using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
 
 NormalVehicleTracker::NormalVehicleTracker(
   const rclcpp::Time & time, const autoware_auto_perception_msgs::msg::DetectedObject & object,
-  const geometry_msgs::msg::Transform & /*self_transform*/)
+  const geometry_msgs::msg::Transform & self_transform)
 : Tracker(time, object.classification),
   logger_(rclcpp::get_logger("NormalVehicleTracker")),
   last_update_time_(time),
@@ -136,6 +136,9 @@ NormalVehicleTracker::NormalVehicleTracker(
     bounding_box_ = {1.7, 4.0, 2.0};
   }
   ekf_.init(X, P);
+
+  /* calc nearest corner index*/
+  setNearestCornerSurfaceIndex(self_transform);  // this index is used in next measure step
 }
 
 bool NormalVehicleTracker::predict(const rclcpp::Time & time)
@@ -266,13 +269,20 @@ bool NormalVehicleTracker::measureWithPose(
     }
   }
 
+  /* get offseted measurement*/
+  Eigen::Vector2d offset;
+  autoware_auto_perception_msgs::msg::DetectedObject offset_object;
+  utils::calcAnchorPointOffset(
+    bounding_box_.width, bounding_box_.length, nearest_corner_index_, object, offset_object,
+    offset);
+
   /* Set measurement matrix and noise covariance*/
   Eigen::MatrixXd Y(dim_y, 1);
   Eigen::MatrixXd C = Eigen::MatrixXd::Zero(dim_y, ekf_params_.dim_x);
   Eigen::MatrixXd R = Eigen::MatrixXd::Zero(dim_y, dim_y);
 
-  Y(IDX::X, 0) = object.kinematics.pose_with_covariance.pose.position.x;
-  Y(IDX::Y, 0) = object.kinematics.pose_with_covariance.pose.position.y;
+  Y(IDX::X, 0) = offset_object.kinematics.pose_with_covariance.pose.position.x;
+  Y(IDX::Y, 0) = offset_object.kinematics.pose_with_covariance.pose.position.y;
   Y(IDX::YAW, 0) = measurement_yaw;
   C(0, IDX::X) = 1.0;    // for pos x
   C(1, IDX::Y) = 1.0;    // for pos y
@@ -316,6 +326,18 @@ bool NormalVehicleTracker::measureWithPose(
   if (!ekf_.update(Y, C, R)) {
     RCLCPP_WARN(logger_, "Cannot update");
   }
+
+  /* fix offset value */
+  // This is trying to do ekf_.setX(X_new) with ekf_.init()
+  Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);
+  Eigen::MatrixXd P_t(ekf_params_.dim_x, ekf_params_.dim_x);
+  ekf_.getX(X_t);
+  ekf_.getP(P_t);
+  const Eigen::Matrix2d Ryaw = Eigen::Rotation2Dd(X_t(IDX::YAW)).toRotationMatrix();
+  const Eigen::Vector2d rotated_offset = Ryaw * offset;
+  X_t(IDX::X) -= rotated_offset.x();
+  X_t(IDX::Y) -= rotated_offset.y();
+  ekf_.init(X_t, P_t);
 
   // normalize yaw and limit vx, wz
   {
