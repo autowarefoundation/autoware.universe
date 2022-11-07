@@ -136,15 +136,15 @@ public:
     // Compute distance in units of voxels
     const Index iradius = static_cast<Index>(std::ceil(radius / m_side_length));
     // Dumb ternary because potentially unsigned Index type
-    const Index xmin = (ref.x > iradius) ? (ref.x - iradius) : 0U;
-    const Index ymin = (ref.y > iradius) ? (ref.y - iradius) : 0U;
-    const Index zmin = (ref.z > iradius) ? (ref.z - iradius) : 0U;
+    const Index x_min = (ref.x > iradius) ? (ref.x - iradius) : 0U;
+    const Index y_min = (ref.y > iradius) ? (ref.y - iradius) : 0U;
+    const Index z_min = (ref.z > iradius) ? (ref.z - iradius) : 0U;
     // In 2D mode, m_max_z should be 0, same with ref.z
-    const Index xmax = std::min(ref.x + iradius, m_max_x_idx);
-    const Index ymax = std::min(ref.y + iradius, m_max_y_idx);
-    const Index zmax = std::min(ref.z + iradius, m_max_z_idx);
+    const Index x_max = std::min(ref.x + iradius, m_max_x_idx);
+    const Index y_max = std::min(ref.y + iradius, m_max_y_idx);
+    const Index z_max = std::min(ref.z + iradius, m_max_z_idx);
     // return bottom-left portion of cube and top-right portion of cube
-    return {{xmin, ymin, zmin}, {xmax, ymax, zmax}};
+    return {{x_min, y_min, z_min}, {x_max, y_max, z_max}};
   }
 
   /// \brief Get next index within a given range
