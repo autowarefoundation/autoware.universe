@@ -345,8 +345,8 @@ std::vector<NodeConstSharedPtr> RRTStar::findNeighborNodes(const Pose & x_new) c
 {
   // In the original paper of rrtstar, radius is shrinking over time.
   // However, because we use reeds-shepp distance metric instead of Euclidean metric,
-  // it is hard to design the shirinking radius update. Usage of informed sampling
-  // makes the problem far more complex, as the sampling region is shirinking over
+  // it is hard to design the shrinking radius update. Usage of informed sampling
+  // makes the problem far more complex, as the sampling region is shrinking over
   // the time.
   // Due to above difficulty in design of radius update, radius is simply fixed here.
   // In practice, the fixed radius setting works well as long as mu_ value is
