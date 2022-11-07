@@ -109,7 +109,7 @@ public:
       throw std::domain_error("SpatialHash::Config: voxel index may overflow!");
     }
     // small fudging to prevent weird boundary effects
-    // (e.g (x=xmax, y) rolls index over to (x=0, y+1)
+    // (e.g (x=x_max, y) rolls index over to (x=0, y+1)
     constexpr auto FEPS = std::numeric_limits<float32_t>::epsilon();
     // lint -e{1938} read only access is fine NOLINT
     m_max_x -= FEPS;
