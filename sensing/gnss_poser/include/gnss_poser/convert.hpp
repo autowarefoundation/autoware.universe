@@ -30,8 +30,8 @@
 namespace gnss_poser
 {
 enum class MGRSPrecision {
-  _10_KIRO_METER = 1,
-  _1_KIRO_METER = 2,
+  _10_KILO_METER = 1,
+  _1_KILO_METER = 2,
   _100_METER = 3,
   _10_METER = 4,
   _1_METER = 5,
