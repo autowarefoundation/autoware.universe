@@ -92,7 +92,7 @@ class VehicleModel:
         return cls(pd.vehicle_length.data, pd.vehicle_width.data, pd.vehicle_base2back.data)
 
     def get_vertices(self, pose: Pose) -> np.ndarray:
-        x, y, yaw = self.posemsg_to_nparr(pose)
+        x, y, yaw = self.pose_msg_to_nparr(pose)
 
         back = -1.0 * self.base2back
         front = self.length - self.base2back
@@ -133,7 +133,7 @@ class VehicleModel:
         return roll, pitch, yaw
 
     @staticmethod
-    def posemsg_to_nparr(pose_msg: Pose) -> Tuple[float, float, float]:
+    def pose_msg_to_nparr(pose_msg: Pose) -> Tuple[float, float, float]:
         _, _, yaw = VehicleModel.euler_from_quaternion(pose_msg.orientation)
         return pose_msg.position.x, pose_msg.position.y, yaw
 

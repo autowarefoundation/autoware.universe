@@ -17,7 +17,7 @@
 namespace
 {
 
-rrtstar_core::Pose posemsgToPose(const geometry_msgs::msg::Pose & pose_msg)
+rrtstar_core::Pose poseMsgToPose(const geometry_msgs::msg::Pose & pose_msg)
 {
   return rrtstar_core::Pose{
     pose_msg.position.x, pose_msg.position.y, tf2::getYaw(pose_msg.orientation)};
@@ -68,8 +68,8 @@ bool RRTStar::makePlan(
     M_PI};
   const double radius = planner_common_param_.minimum_turning_radius;
   const auto cspace = rrtstar_core::CSpace(lo, hi, radius, is_obstacle_free);
-  const auto x_start = posemsgToPose(start_pose_);
-  const auto x_goal = posemsgToPose(goal_pose_);
+  const auto x_start = poseMsgToPose(start_pose_);
+  const auto x_goal = poseMsgToPose(goal_pose_);
 
   if (!is_obstacle_free(x_start)) {
     return false;
