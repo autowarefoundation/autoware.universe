@@ -262,7 +262,6 @@ T times_2d(const T & p, const float32_t a)
 /// \tparam T point type. Must have point adapters defined or have float members x and y
 /// \brief solve p + t * u = q + s * v
 ///        Ref: https://stackoverflow.com/questions/563198/
-///             whats-the-most-efficent-way-to-calculate-where-two-line-segments-intersect
 /// \param[in] pt anchor point of first line
 /// \param[in] u direction of first line
 /// \param[in] q anchor point of second line
