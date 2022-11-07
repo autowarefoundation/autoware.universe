@@ -18,10 +18,10 @@
 #include <scene_module/detection_area/scene.hpp>
 #include <utilization/util.hpp>
 
-#ifdef ROS_DISTRO_GALACTIC
-#include <tf2_eigen/tf2_eigen.h>
-#else
+#if __has_include ( <tf2_eigen/tf2_eigen.hpp> )
 #include <tf2_eigen/tf2_eigen.hpp>
+#else
+#include <tf2_eigen/tf2_eigen.h>
 #endif
 
 #include <algorithm>
