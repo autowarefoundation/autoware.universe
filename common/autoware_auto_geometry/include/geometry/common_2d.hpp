@@ -333,7 +333,7 @@ inline T get_normal(const T & pt)
 /// \tparam T point type. Must have point adapters defined or have float members x and y
 /// \brief get magnitude of x and y components:
 /// \param[in] pt point to get magnitude of
-/// \return magitude of x and y components together
+/// \return magnitude of x and y components together
 template <typename T>
 inline auto norm_2d(const T & pt)
 {
