@@ -188,7 +188,8 @@ std::pair<std::optional<size_t>, std::optional<StopLineIdx>> generateStopLine(
       logger, "Path is not intersecting with conflicting area, not generating stuck_stop_line");
     return {std::nullopt, std::nullopt};
   }
-  int stuck_stop_line_idx = 0;
+
+  size_t stuck_stop_line_idx = 0;
   {
     /* insert stuck stop line */
     const auto & insert_point = path_ip.points.at(stuck_stop_line_idx_ip_opt.value()).point.pose;
@@ -255,6 +256,10 @@ std::pair<std::optional<size_t>, std::optional<StopLineIdx>> generateStopLine(
       idxs.keep_detection_line = insert_idx_opt.value();
     } else {
       idxs.keep_detection_line = util::insertPoint(insert_point, original_path);
+      if (stuck_stop_line_idx >= idxs.keep_detection_line) {
+        stuck_stop_line_idx =
+          std::min<size_t>(stuck_stop_line_idx + 1, original_path->points.size() - 1);
+      }
     }
   }
 
@@ -269,6 +274,10 @@ std::pair<std::optional<size_t>, std::optional<StopLineIdx>> generateStopLine(
       // the index is incremented by judge stop line insertion
       idxs.keep_detection_line =
         std::min<size_t>(idxs.keep_detection_line + 1, original_path->points.size() - 1);
+      if (stuck_stop_line_idx >= idxs.stop_line) {
+        stuck_stop_line_idx =
+          std::min<size_t>(stuck_stop_line_idx + 1, original_path->points.size() - 1);
+      }
     }
   }
 
@@ -293,6 +302,10 @@ std::pair<std::optional<size_t>, std::optional<StopLineIdx>> generateStopLine(
       idxs.stop_line = std::min<size_t>(idxs.stop_line + 1, original_path->points.size() - 1);
       idxs.keep_detection_line =
         std::min<size_t>(idxs.keep_detection_line + 1, original_path->points.size() - 1);
+      if (stuck_stop_line_idx >= idxs.pass_judge_line) {
+        stuck_stop_line_idx =
+          std::min<size_t>(stuck_stop_line_idx + 1, original_path->points.size() - 1);
+      }
     }
   }
   RCLCPP_DEBUG(
@@ -701,6 +714,16 @@ std::optional<Polygon2d> getIntersectionArea(
   return std::make_optional(poly);
 }
 
+bool hasAssociatedTrafficLight(lanelet::ConstLanelet lane)
+{
+  std::optional<int> tl_id = std::nullopt;
+  for (auto && tl_reg_elem : lane.regulatoryElementsAs<lanelet::TrafficLight>()) {
+    tl_id = tl_reg_elem->id();
+    break;
+  }
+  return tl_id.has_value();
+}
+
 bool isTrafficLightArrowActivated(
   lanelet::ConstLanelet lane,
   const std::map<int, autoware_auto_perception_msgs::msg::TrafficSignalStamped> & tl_infos)
@@ -711,7 +734,7 @@ bool isTrafficLightArrowActivated(
     tl_id = tl_reg_elem->id();
     break;
   }
-  if (!tl_id) {
+  if (!tl_id.has_value()) {
     // this lane has no traffic light
     return false;
   }

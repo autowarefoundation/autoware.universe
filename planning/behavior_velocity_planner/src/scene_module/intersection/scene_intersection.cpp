@@ -99,7 +99,7 @@ bool IntersectionModule::modifyPathVelocity(
 
   /* get detection area*/
   /* dynamically change detection area based on tl_arrow_solid_on */
-  const bool has_tl = true;  // TODO(Mamoru Sobue): implement this
+  const bool has_tl = util::hasAssociatedTrafficLight(assigned_lanelet);
   const bool tl_arrow_solid_on =
     util::isTrafficLightArrowActivated(assigned_lanelet, planner_data_->traffic_light_id_map);
   auto && [detection_lanelets, conflicting_lanelets] = util::getObjectiveLanelets(

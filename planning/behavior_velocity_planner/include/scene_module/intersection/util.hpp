@@ -155,6 +155,7 @@ lanelet::ConstLanelets extendedAdjacentDirectionLanes(
 std::optional<Polygon2d> getIntersectionArea(
   lanelet::ConstLanelet assigned_lane, lanelet::LaneletMapConstPtr lanelet_map_ptr);
 
+bool hasAssociatedTrafficLight(lanelet::ConstLanelet lane);
 bool isTrafficLightArrowActivated(
   lanelet::ConstLanelet lane,
   const std::map<int, autoware_auto_perception_msgs::msg::TrafficSignalStamped> & tl_infos);
