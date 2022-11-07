@@ -42,20 +42,23 @@ int insertPoint(
 {
   static constexpr double dist_thr = 10.0;
   static constexpr double angle_thr = M_PI / 1.5;
-  int closest_idx = -1;
-  if (!planning_utils::calcClosestIndex(*inout_path, in_pose, closest_idx, dist_thr, angle_thr)) {
+  const auto closest_idx_opt =
+    motion_utils::findNearestIndex(inout_path->points, in_pose, dist_thr, angle_thr);
+  if (!closest_idx_opt) {
     return -1;
   }
-  int insert_idx = closest_idx;
+  const size_t closest_idx = closest_idx_opt.get();
   // vector.insert(i) inserts element on the left side of v[i]
   // the velocity need to be zero order hold(from prior point)
+  int insert_idx = closest_idx;
   autoware_auto_planning_msgs::msg::PathPointWithLaneId inserted_point =
     inout_path->points.at(closest_idx);
-  if (isAheadOf(in_pose, inout_path->points.at(closest_idx).point.pose)) {
+  if (planning_utils::isAheadOf(in_pose, inout_path->points.at(closest_idx).point.pose)) {
     ++insert_idx;
   } else {
     // copy with velocity from prior point
-    inserted_point = inout_path->points.at(closest_idx - 1);
+    const size_t prior_ind = closest_idx > 0 ? closest_idx - 1 : 0;
+    inserted_point = inout_path->points.at(prior_ind);
   }
   inserted_point.point.pose = in_pose;
 
