@@ -108,7 +108,7 @@ std::vector<multilinestring_t> createProjectedLines(
 
 /// @brief limit the velocity of the given trajectory
 /// @param[in] trajectory input trajectory
-/// @param[in] collision_checker object used to retrive collision points
+/// @param[in] collision_checker object used to retrieve collision points
 /// @param[in] projections forward projection lines at each trajectory point
 /// @param[in] footprints footprint of the forward projection at each trajectory point
 /// @param[in] projection_params projection parameters
