@@ -286,7 +286,7 @@ bool Interval<T>::bounds_valid(const Interval & i)
 {
   const auto is_ordered = (Interval::min(i) <= Interval::max(i));
 
-  // Check for emptiness expicitly because it requires both bounds to be NaN
+  // Check for emptiness explicitly because it requires both bounds to be NaN
   return Interval::empty(i) || is_ordered;
 }
 
