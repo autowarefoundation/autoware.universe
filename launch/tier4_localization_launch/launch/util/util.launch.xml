@@ -6,7 +6,7 @@
   <arg name="output/pointcloud" default="downsample/pointcloud" description="final output topic name"/>
 
   <!-- container -->
-  <arg name="use_pointcloud_container" default="False" description="launch pointcloud container"/>
+  <arg name="use_pointcloud_container" default="True" description="launch pointcloud container"/>
   <arg name="pointcloud_container_name" default="/pointcloud_container" description="container name"/>
 
   <!-- option -->
