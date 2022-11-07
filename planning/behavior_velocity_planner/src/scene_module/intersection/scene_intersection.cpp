@@ -116,28 +116,23 @@ bool IntersectionModule::modifyPathVelocity(
   }
 
   /* get adjacent lanelets */
-  auto adjacent_lanelets =
+  const auto adjacent_lanelets =
     util::extendedAdjacentDirectionLanes(lanelet_map_ptr, routing_graph_ptr, assigned_lanelet);
   debug_data_.adjacent_area = util::getPolygon3dFromLanelets(adjacent_lanelets);
 
-  /* set stop-line and stop-judgement-line for base_link */
-  util::StopLineIdx stop_line_idxs;
-  // if straight, need to care stuck vehicle ahead of the lane using conflicting_lane
-  const auto & attention_area = (turn_direction.compare("straight") == 0 && detection_area.empty())
-                                  ? conflicting_area
-                                  : detection_area;
-  if (!util::generateStopLine(
-        lane_id_, attention_area, planner_data_, planner_param_.stop_line_margin,
-        planner_param_.keep_detection_line_margin, path, *path, &stop_line_idxs,
-        logger_.get_child("util"))) {
-    // returns here if path is not intersecting with attention_area
+  /* set stop lines for base_link */
+  const auto [stop_line_ok, stop_line] = generateStopLine(
+    lane_id_, detection_area, conflicting_area, planner_data_, planner_param_.stop_line_margin,
+    planner_param_.keep_detection_line_margin, path, *path, &stop_line_idxs,
+    logger_.get_child("util"));
+  if (!stop_line_ok) {
+    // returns here if path is not intersecting with detection areas and conflicting areas
     RCLCPP_WARN_SKIPFIRST_THROTTLE(logger_, *clock_, 1000 /* ms */, "setStopLineIdx fail");
     RCLCPP_DEBUG(logger_, "===== plan end =====");
     setSafe(true);
     setDistance(std::numeric_limits<double>::lowest());
     return false;
   }
-
   const int stop_line_idx = stop_line_idxs.stop_line_idx;
   const int pass_judge_line_idx = stop_line_idxs.pass_judge_line_idx;
   const int keep_detection_line_idx = stop_line_idxs.keep_detection_line_idx;
