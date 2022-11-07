@@ -26,10 +26,10 @@
 #include <tf2/convert.h>
 #include <tf2/transform_datatypes.h>
 
-#ifdef ROS_DISTRO_GALACTIC
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-#else
+#if __has_include ( <tf2_geometry_msgs/tf2_geometry_msgs.hpp> )
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#else
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #endif
 
 #include <tf2_ros/buffer.h>

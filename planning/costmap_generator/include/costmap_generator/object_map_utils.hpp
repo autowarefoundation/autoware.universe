@@ -39,10 +39,10 @@
 
 #include <grid_map_msgs/msg/grid_map.hpp>
 
-#ifdef ROS_DISTRO_GALACTIC
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-#else
+#if __has_include ( <tf2_geometry_msgs/tf2_geometry_msgs.hpp> )
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#else
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #endif
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
