@@ -184,8 +184,11 @@ std::pair<std::optional<size_t>, std::optional<StopLineIdx>> generateStopLine(
   const auto stuck_stop_line_idx_ip_opt = util::getFirstPointInsidePolygons(
     path_ip, lane_interval_start, lane_interval_end, lane_id, conflicting_areas);
   if (!stuck_stop_line_idx_ip_opt.has_value()) {
-    RCLCPP_DEBUG(
-      logger, "Path is not intersecting with conflicting area, not generating stuck_stop_line");
+    RCLCPP_INFO(
+      logger,
+      "Path is not intersecting with conflicting area, not generating stuck_stop_line. start = "
+      "%ld, end = %ld",
+      lane_interval_start, lane_interval_end);
     return {std::nullopt, std::nullopt};
   }
 

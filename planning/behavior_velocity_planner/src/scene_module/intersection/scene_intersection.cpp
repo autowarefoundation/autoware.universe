@@ -133,7 +133,7 @@ bool IntersectionModule::modifyPathVelocity(
     planner_param_.keep_detection_line_margin, path, *path, logger_.get_child("util"));
   if (!stuck_line_idx_opt.has_value()) {
     // returns here if path is not intersecting with conflicting areas
-    RCLCPP_WARN_SKIPFIRST_THROTTLE(
+    RCLCPP_INFO_SKIPFIRST_THROTTLE(
       logger_, *clock_, 1000 /* ms */, "setStopLineIdx for stuck line fail");
     RCLCPP_DEBUG(logger_, "===== plan end =====");
     setSafe(true);
@@ -178,7 +178,7 @@ bool IntersectionModule::modifyPathVelocity(
         "continue planning");
       // no return here, keep planning
     } else if (is_go_out_ && !external_stop) {
-      RCLCPP_DEBUG(logger_, "over the keep_detection line and not low speed. no plan needed.");
+      RCLCPP_INFO(logger_, "over the keep_detection line and not low speed. no plan needed.");
       RCLCPP_DEBUG(logger_, "===== plan end =====");
       setSafe(true);
       setDistance(motion_utils::calcSignedArcLength(
@@ -202,6 +202,7 @@ bool IntersectionModule::modifyPathVelocity(
   const bool is_stuck = checkStuckVehicleInIntersection(objects_ptr, stuck_vehicle_detect_area);
   int stop_line_idx_final = -1;
   int pass_judge_line_idx_final = -1;
+  std::cout << "is_stuck = " << is_stuck << std::endl;
   if (external_go) {
     is_entry_prohibited = false;
   } else if (external_stop) {
@@ -224,13 +225,15 @@ bool IntersectionModule::modifyPathVelocity(
       lanelet_map_ptr, *path, detection_lanelets, adjacent_lanelets, intersection_area, objects_ptr,
       closest_idx, stuck_vehicle_detect_area);
     is_entry_prohibited = (has_collision || is_stuck);
-    const auto & stop_lines_idx = stop_lines_idx_opt.value();
-    if (keep_detection) {
-      stop_line_idx_final = stop_lines_idx.keep_detection_line;
-      pass_judge_line_idx_final = stop_lines_idx.keep_detection_line;
-    } else {
-      stop_line_idx_final = stop_lines_idx.stop_line;
-      pass_judge_line_idx_final = stop_lines_idx.pass_judge_line;
+    if (stop_lines_idx_opt.has_value()) {
+      const auto & stop_lines_idx = stop_lines_idx_opt.value();
+      if (keep_detection) {
+        stop_line_idx_final = stop_lines_idx.keep_detection_line;
+        pass_judge_line_idx_final = stop_lines_idx.keep_detection_line;
+      } else {
+        stop_line_idx_final = stop_lines_idx.stop_line;
+        pass_judge_line_idx_final = stop_lines_idx.pass_judge_line;
+      }
     }
   }
 
