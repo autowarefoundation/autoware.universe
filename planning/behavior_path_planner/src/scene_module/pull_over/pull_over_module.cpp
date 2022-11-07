@@ -65,12 +65,14 @@ PullOverModule::PullOverModule(
   if (parameters_.enable_arc_forward_parking) {
     constexpr bool is_forward = true;
     pull_over_planners_.push_back(std::make_shared<GeometricPullOver>(
-      node, parameters, getGeometricPullOverParameters(), occupancy_grid_map_, is_forward));
+      node, parameters, getGeometricPullOverParameters(), lane_departure_checker_,
+      occupancy_grid_map_, is_forward));
   }
   if (parameters_.enable_arc_backward_parking) {
     constexpr bool is_forward = false;
     pull_over_planners_.push_back(std::make_shared<GeometricPullOver>(
-      node, parameters, getGeometricPullOverParameters(), occupancy_grid_map_, is_forward));
+      node, parameters, getGeometricPullOverParameters(), lane_departure_checker_,
+      occupancy_grid_map_, is_forward));
   }
 
   // set selected goal searcher
@@ -407,7 +409,7 @@ BehaviorModuleOutput PullOverModule::plan()
     // Research goal when enabling research and final path has not been decided
     if (parameters_.enable_goal_research) {
       goal_searcher_->setPlannerData(planner_data_);
-      goal_candidates_ = goal_searcher_->search(refined_goal_pose_, status_.pull_over_lanes);
+      goal_candidates_ = goal_searcher_->search(refined_goal_pose_);
     }
 
     // plan paths with several goals and planner
@@ -787,12 +789,11 @@ TurnSignalInfo PullOverModule::calcTurnSignalInfo() const
   {
     // ego decelerates so that current pose is the point `turn_light_on_threshold_time` seconds
     // before starting pull_over
-    turn_signal.desired_start_point = last_approved_pose_ && status_.has_decided_path
-                                        ? last_approved_pose_->position
-                                        : current_pose.position;
-    turn_signal.desired_end_point = end_pose.position;
-    turn_signal.required_start_point = start_pose.position;
-    turn_signal.required_end_point = end_pose.position;
+    turn_signal.desired_start_point =
+      last_approved_pose_ && status_.has_decided_path ? *last_approved_pose_ : current_pose;
+    turn_signal.desired_end_point = end_pose;
+    turn_signal.required_start_point = start_pose;
+    turn_signal.required_end_point = end_pose;
   }
 
   return turn_signal;
