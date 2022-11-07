@@ -107,7 +107,7 @@ template <typename PointT>
 using Point4 = std::array<PointT, 4U>;
 
 /// \brief Helper struct for compile time introspection of array size from
-/// stackoverflow.com/questions/16866033/getting-the-number-of-elements-in-stdarray-at-compile-time
+///        Ref: https://stackoverflow.com/questions/16866033
 template <typename>
 struct array_size;
 template <typename T, std::size_t N>
