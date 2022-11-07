@@ -291,7 +291,7 @@ inline T intersection_2d(const T & pt, const T & u, const T & q, const T & v)
 /// \brief rotate point given precomputed sin and cos
 /// \param[inout] pt point to rotate
 /// \param[in] cos_th precomputed cosine value
-/// \param[in] sin_th precompined sine value
+/// \param[in] sin_th precomputed sine value
 template <typename T>
 inline void rotate_2d(T & pt, const float32_t cos_th, const float32_t sin_th)
 {
