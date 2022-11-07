@@ -35,7 +35,7 @@ namespace lidar_centerpoint_tvm
 
 struct is_score_greater
 {
-  is_score_greater(float32_t t) : t_(t) {}
+  explicit is_score_greater(float32_t t) : t_(t) {}
   bool8_t operator()(const Box3D & b) { return b.score > t_; }
 
 private:

@@ -4,12 +4,12 @@
 
 ### Usage
 
-lidar_centerpoint_tvm is a package for detecting dynamic 3D objects using TVM compiled centerpoint module for different backends.
+lidar_centerpoint_tvm is a package for detecting dynamic 3D objects using TVM compiled centerpoint module for different backends. To use this package, replace `lidar_centerpoint` with `lidar_centerpoint_tvm` in perception launch files(for example, `lidar_based_detection.launch.xml` is lidar based detection is chosen.). 
 
 #### Neural network
 
 This package will not build without a neural network for its inference.
-The network is provided by the neural_networks_provider package.
+The network is provided by the `tvm_utility` package.
 See its design page for more information on how to enable downloading pre-compiled networks (by setting the `DOWNLOAD_ARTIFACTS` cmake variable), or how to handle user-compiled networks.
 
 #### Backend
@@ -20,12 +20,39 @@ It defaults to `llvm`.
 
 ### Inputs / Outputs
 
-to be added
+### Input
+
+| Name                 | Type                            | Description      |
+| -------------------- | ------------------------------- | ---------------- |
+| `~/input/pointcloud` | `sensor_msgs::msg::PointCloud2` | input pointcloud |
+
+### Output
+
+| Name                       | Type                                                  | Description          |
+| -------------------------- | ----------------------------------------------------- | -------------------- |
+| `~/output/objects`         | `autoware_auto_perception_msgs::msg::DetectedObjects` | detected objects     |
+| `debug/cyclic_time_ms`     | `tier4_debug_msgs::msg::Float64Stamped`               | cyclic time (msg)    |
+| `debug/processing_time_ms` | `tier4_debug_msgs::msg::Float64Stamped`               | processing time (ms) |
+
+## Parameters
+
+### Core Parameters
+
+| Name                            | Type         | Default Value | Description                                                   |
+| ------------------------------- | ------------ | ------------- | ------------------------------------------------------------- |
+| `score_threshold`               | float        | `0.1`         | detected objects with score less than threshold are ignored   |
+| `densification_world_frame_id`  | string       | `map`         | the world frame id to fuse multi-frame pointcloud             |
+| `densification_num_past_frames` | int          | `1`           | the number of past frames to fuse with the current frame      |
 
 ### Bounding Box
 
 The lidar segmentation node establishes a bounding box for the detected obstacles.
 The `L-fit` method of fitting a bounding box to a cluster is used for that.
+
+### Limitation and Known Issue
+
+Due to an accurary issue of `centerpoint` model, `vulkan` cannot be used at the moment.
+As for 'llvm' backend, real-time performance cannot be achieved. 
 
 ## Reference
 

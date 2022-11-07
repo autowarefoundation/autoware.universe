@@ -87,10 +87,6 @@ VoxelEncoderPostProcessor::VoxelEncoderPostProcessor(
 
 std::vector<float32_t> VoxelEncoderPostProcessor::schedule(const TVMArrayContainerVector & input)
 {
-  // TODO: Is it correct to assign to float* from TVMArrayContainer? Same below.
-  // float32_t * ptr = static_cast<float32_t *>(input[0].getArray()->data);
-  // pillar_features.assign(ptr, ptr + pillar_features.size());
-
   TVMArrayCopyToBytes(
     input[0].getArray(), pillar_features.data(), pillar_features.size() * datatype_bytes);
 
@@ -197,8 +193,7 @@ std::vector<Box3D> BackboneNeckHeadPostProcessor::schedule(const TVMArrayContain
 
 CenterPointTVM::CenterPointTVM(
   const DensificationParam & densification_param, const CenterPointConfig & config)
-:  // TODO: the paths of config_ve and config_bnh may need to update in practice
-  config_ve(config_en),
+: config_ve(config_en),
   config_bnh(config_bk),
   VE_PreP(std::make_shared<VE_PrePT>(config_en, config)),
   VE_IE(std::make_shared<IET>(config_en, "lidar_centerpoint_tvm")),
