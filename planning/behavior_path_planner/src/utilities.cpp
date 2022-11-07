@@ -2028,15 +2028,13 @@ lanelet::ConstLanelets getExtendedCurrentLanes(
     current_lane, current_pose, common_parameters.backward_path_length,
     common_parameters.forward_path_length);
 
-  // Add next_lanes
-  for (const auto & next_lane : route_handler->getNextLanelets(current_lanes.back())) {
-    current_lanes.push_back(next_lane);
-  }
+  // Add next lane
+  const auto next_lanes = route_handler->getNextLanelets(current_lanes.back());
+  current_lanes.push_back(next_lanes.front());
 
-  // Add previous lanes
-  for (const auto & prev_lane : route_handler->getPreviousLanelets(current_lanes.front())) {
-    current_lanes.insert(current_lanes.begin(), prev_lane);
-  }
+  // Add previous lane
+  const auto prev_lanes = route_handler->getPreviousLanelets(current_lanes.front());
+  current_lanes.insert(current_lanes.begin(), prev_lanes.front());
 
   return current_lanes;
 }
