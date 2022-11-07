@@ -233,7 +233,7 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
   debug_markers_pub_ =
     create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/marker", durable_qos);
   debug_wall_markers_pub_ =
-    create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/wall_marker", durable_qos);
+    create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/virtual_wall", durable_qos);
   debug_clearance_map_pub_ = create_publisher<OccupancyGrid>("~/debug/clearance_map", durable_qos);
   debug_object_clearance_map_pub_ =
     create_publisher<OccupancyGrid>("~/debug/object_clearance_map", durable_qos);
@@ -1001,7 +1001,7 @@ bool ObstacleAvoidancePlanner::checkReplan(const PlannerData & planner_data)
     return true;
   }
 
-  if (isPathGoalChanged(planner_data)) {
+  if (isPathGoalChanged(p)) {
     RCLCPP_INFO(get_logger(), "Replan with resetting optimization since path goal was changed.");
     resetPrevOptimization();
     return true;
@@ -1077,7 +1077,7 @@ bool ObstacleAvoidancePlanner::isPathGoalChanged(const PlannerData & planner_dat
 {
   const auto & p = planner_data;
 
-  if (prev_path_points_ptr_) {
+  if (!prev_path_points_ptr_) {
     return false;
   }
 
