@@ -6,7 +6,7 @@ Let us define $f(x)$ as minimum cost of the path when path is constrained to pas
 
 In most case, $f(x)$ is unknown, thus it is straightforward to approximiate the function $f$ by a heuristic function $\hat{f}$. A heuristic function is [admissible](https://en.wikipedia.org/wiki/Admissible_heuristic) if $\forall x \in X, \hat{f}(x) < f(x)$, which is sufficient condition of conversion to optimal path. The good heuristic function $\hat{f}$ has two properties: 1) it is an admissible tight lower bound of $f$ and 2) sampling from $X(\hat{f})$ is easy.
 
-According to Gammell et al [1], a good heursitic function when path is always straight is $\hat{f}(x) = ||x_{\mathrm{start}} - x|| + ||x - x_{\mathrm{goal}}||$. If we don't assume any obstacle information the heursitic is tightest. Also, $X(\hat{f})$ is hyper-ellipsoid, and hence sampling from it can be done analitically.
+According to Gammell et al [1], a good heuristic function when path is always straight is $\hat{f}(x) = ||x_{\mathrm{start}} - x|| + ||x - x_{\mathrm{goal}}||$. If we don't assume any obstacle information the heuristic is tightest. Also, $X(\hat{f})$ is hyper-ellipsoid, and hence sampling from it can be done analitically.
 
 ### Modification to fit reeds-sheep path case
 
