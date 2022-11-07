@@ -363,7 +363,7 @@ TEST(AstarSearchTestSuite, MultiCurvature)
   EXPECT_TRUE(test_algorithm(AlgorithmType::ASTAR_MULTI));
 }
 
-TEST(RRTStarTestSuite, Fastetst) { EXPECT_TRUE(test_algorithm(AlgorithmType::RRTSTAR_FASTEST)); }
+TEST(RRTStarTestSuite, Fastest) { EXPECT_TRUE(test_algorithm(AlgorithmType::RRTSTAR_FASTEST)); }
 
 TEST(RRTStarTestSuite, Update) { EXPECT_TRUE(test_algorithm(AlgorithmType::RRTSTAR_UPDATE)); }
 
