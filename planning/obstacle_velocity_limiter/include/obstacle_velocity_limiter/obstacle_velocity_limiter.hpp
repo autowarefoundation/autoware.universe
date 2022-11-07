@@ -102,7 +102,7 @@ polygon_t createEnvelopePolygon(const std::vector<polygon_t> & footprints);
 /// @details depending on the method used, multiple lines can be created for a same trajectory point
 /// @param[in] trajectory input trajectory
 /// @param[in] params projection parameters
-/// @return projecton lines for each trajectory point
+/// @return projection lines for each trajectory point
 std::vector<multilinestring_t> createProjectedLines(
   const Trajectory & trajectory, ProjectionParameters & params);
 
