@@ -172,17 +172,47 @@ stop
 
 #### How to decide the target obstacles
 
+The avoidance target is stationary vehicles that are in or vicinity of the Ego path. As a limitation, the avoidance module does **NOT** support avoidance for moving vehicle and non vehicle objects (See following table).
+
+| Object Class | STATIONARY               | MOVING                   |
+| ------------ | ------------------------ | ------------------------ |
+| UNKNOWN      | :heavy_multiplication_x: | :heavy_multiplication_x: |
+| CAR          | :heavy_check_mark:       | :heavy_multiplication_x: |
+| TRUCK        | :heavy_check_mark:       | :heavy_multiplication_x: |
+| BUS          | :heavy_check_mark:       | :heavy_multiplication_x: |
+| TRAILER      | :heavy_check_mark:       | :heavy_multiplication_x: |
+| MOTORCYCLE   | :heavy_check_mark:       | :heavy_multiplication_x: |
+| BICYCLE      | :heavy_multiplication_x: | :heavy_multiplication_x: |
+| PEDESTRIAN   | :heavy_multiplication_x: | :heavy_multiplication_x: |
+
+##### Parking vehicle detection
+
+If the vehicle is waiting at a traffic light, stop line and crosswalk, the vehicle will eventually start moving, so the Ego can follow the target path without avoidance. On the other hand, the Ego has to avoid the vehicle parked on the road shoulder, because it is unlikely that the vehicle will be gone soon. Therefore, it is necessary to judge whether it is the parking vehicle or just a stopping vehicle.
+
+![fig1](./image/avoidance_design/target_vehicle_selection.drawio.svg)
+
+This module calculates maximum length that can be shifted and actual shift length for each vehicles, and uses the ratio of that two length as an indicator to determine whether the vehicle is a roadside parked vehicle or not.
+
+![fig1](./image/avoidance_design/target_vehicle_selection.drawio.svg)
+
+##### Merging vehicle detection
+
 The avoidance target should be limited to stationary objects (you should not avoid a vehicle waiting at a traffic light even if it blocks your path). Therefore, target vehicles for avoidance should meet the following specific conditions.
 
 - It is in the vicinity of your lane (parametrized)
 - It is stopped (estimated speed is lower than threshold)
   - This means that overtaking is not supported (will be supported in the future).
+- It is **NOT** a vehicle merging into the Ego lane.
 - It is a specific class.
+
   - User can limit avoidance targets (e.g. do not avoid unknown-class targets).
+
 - It is not being in the center of the route
   - This means that the vehicle is parked on the edge of the lane. This prevents the vehicle from avoiding a vehicle waiting at a traffic light in the middle of the lane. However, this is not an appropriate implementation for the purpose. Even if a vehicle is in the center of the lane, it should be avoided if it has its hazard lights on, and this is a point that should be improved in the future as the recognition performance improves.
 
 ![fig1](./image/avoidance_design/target_vehicle_selection.drawio.svg)
+
+##### Detection for parking vehicle
 
 ##### Compensation for detection lost
 
