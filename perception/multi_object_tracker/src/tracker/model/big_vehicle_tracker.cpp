@@ -275,6 +275,10 @@ bool BigVehicleTracker::measureWithPose(
   utils::calcAnchorPointOffset(
     bounding_box_.width, bounding_box_.length, nearest_corner_index_, object, offset_object,
     offset);
+  std::cout << "MOT_offset: " << offset.x() << " " << offset.y()
+            << " closest_corner: " << nearest_corner_index_ << " "
+            << object.kinematics.pose_with_covariance.pose.position.x << " "
+            << object.kinematics.pose_with_covariance.pose.position.y << std::endl;
 
   /* Set measurement matrix */
   Eigen::MatrixXd Y(dim_y, 1);
@@ -390,7 +394,12 @@ bool BigVehicleTracker::measure(
       logger_, "There is a large gap between predicted time and measurement time. (%f)",
       (time - last_update_time_).seconds());
   }
-
+  std::cout << "object offset: "
+            << object.kinematics.pose_with_covariance.pose.position.x - self_transform.translation.x
+            << " "
+            << object.kinematics.pose_with_covariance.pose.position.y - self_transform.translation.y
+            << " yaw: " << tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation)
+            << std::endl;
   measureWithPose(object);
   measureWithShape(object);
 

@@ -95,10 +95,10 @@ inline int getNearestCornerSurface(
   x0 = self_transform.translation.x;
   y0 = self_transform.translation.y;
 
-  // localize to object coordinate
-  // R.T (X-X0)
-  xl = std::cos(yaw) * (x - x0) + std::sin(yaw) * (y - y0);
-  yl = -std::sin(yaw) * (x - x0) + std::cos(yaw) * (y - y0);
+  // localize self vehicle pose to object coordinate
+  // R.T (X0-X)
+  xl = std::cos(yaw) * (x0 - x) + std::sin(yaw) * (y0 - y);
+  yl = -std::sin(yaw) * (x0 - x) + std::cos(yaw) * (y0 - y);
 
   // grid search
   int xgrid, ygrid;
@@ -186,13 +186,13 @@ inline void calcAnchorPointOffset(
   // if surface
   if (indx < 4) {
     const double sign[4][2] = {{1, 0}, {0, -1}, {-1, 0}, {0, 1}};
-    offset(0, 0) = sign[indx][0] * (l_n - l);
-    offset(1, 0) = sign[indx][1] * (w_n - w);
+    offset(0, 0) = sign[indx][0] * (l_n - l) / 2.0;
+    offset(1, 0) = sign[indx][1] * (w_n - w) / 2.0;
   } else {
     // corner
     const double sign[4][2] = {{1, -1}, {-1, -1}, {-1, 1}, {1, 1}};
-    offset(0, 0) = sign[indx - 4][0] * (l_n - l);
-    offset(1, 0) = sign[indx - 4][1] * (w_n - w);
+    offset(0, 0) = sign[indx - 4][0] * (l_n - l) / 2.0;
+    offset(1, 0) = sign[indx - 4][1] * (w_n - w) / 2.0;
   }
 
   const double yaw = tf2::getYaw(input_object.kinematics.pose_with_covariance.pose.orientation);
