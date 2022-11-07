@@ -141,7 +141,7 @@ TrajectoryPoint PurePursuitLateralController::calcNextPose(
 
 void PurePursuitLateralController::setResampledTrajectory()
 {
-  // Interpolate with constant interval distance for lateral acceleration calculation.
+  // Interpolate with constant interval distance.
   std::vector<double> out_arclength;
   const auto input_tp_array = motion_utils::convertToTrajectoryPointArray(*trajectory_);
   const auto traj_length = motion_utils::calcArcLength(input_tp_array);
