@@ -71,7 +71,7 @@ struct StopLineIdx
  * @param original_path   ego-car lane
  * @param target_path     target lane to insert stop point (part of ego-car lane or same to ego-car
  * lane)
- * @return nullopt if path is not interseting with detection areas
+ * @return nullopt if path is not intersecting with detection areas
  */
 std::pair<std::optional<size_t>, std::optional<StopLineIdx>> generateStopLine(
   const int lane_id, const std::vector<lanelet::CompoundPolygon3d> & detection_areas,

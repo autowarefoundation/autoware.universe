@@ -185,7 +185,7 @@ std::pair<std::optional<size_t>, std::optional<StopLineIdx>> generateStopLine(
     path_ip, lane_interval_start, lane_interval_end, lane_id, conflicting_areas);
   if (!stuck_stop_line_idx_ip_opt.has_value()) {
     RCLCPP_DEBUG(
-      logger, "Path is not intersecting with conflictign area, not genearting stuck_stop_line");
+      logger, "Path is not intersecting with conflicting area, not generating stuck_stop_line");
     return {std::nullopt, std::nullopt};
   }
   int stuck_stop_line_idx = 0;
