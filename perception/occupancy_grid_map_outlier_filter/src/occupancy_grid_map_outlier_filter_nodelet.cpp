@@ -22,7 +22,7 @@
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
 
-#if __has_include ( <tf2_eigen/tf2_eigen.hpp> )
+#if __has_include(<tf2_eigen/tf2_eigen.hpp> )
 #include <tf2_eigen/tf2_eigen.hpp>
 #else
 #include <tf2_eigen/tf2_eigen.h>

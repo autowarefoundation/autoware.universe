@@ -50,7 +50,7 @@
 #include <autoware_auto_perception_msgs/msg/object_classification.hpp>
 
 #include <pcl_conversions/pcl_conversions.h>
-#if __has_include ( <tf2_geometry_msgs/tf2_geometry_msgs.hpp> )
+#if __has_include(<tf2_geometry_msgs/tf2_geometry_msgs.hpp> )
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #else
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>

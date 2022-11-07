@@ -21,7 +21,7 @@
 #include <geometry_msgs/msg/pose.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 
-#if __has_include ( <tf2_geometry_msgs/tf2_geometry_msgs.hpp> )
+#if __has_include(<tf2_geometry_msgs/tf2_geometry_msgs.hpp> )
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #else
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>

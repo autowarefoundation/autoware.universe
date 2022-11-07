@@ -47,7 +47,7 @@
 
 #include <grid_map_ros/grid_map_ros.hpp>
 
-#if __has_include ( <tf2_geometry_msgs/tf2_geometry_msgs.hpp> )
+#if __has_include(<tf2_geometry_msgs/tf2_geometry_msgs.hpp> )
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #else
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>

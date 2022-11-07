@@ -38,7 +38,7 @@
 #include <pclomp/ndt_omp.h>
 #include <tf2/transform_datatypes.h>
 
-#if __has_include ( <tf2_geometry_msgs/tf2_geometry_msgs.hpp> )
+#if __has_include(<tf2_geometry_msgs/tf2_geometry_msgs.hpp> )
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #else
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
@@ -46,7 +46,7 @@
 
 #include <tf2_ros/transform_broadcaster.h>
 
-#if __has_include ( <tf2_sensor_msgs/tf2_sensor_msgs.hpp> )
+#if __has_include(<tf2_sensor_msgs/tf2_sensor_msgs.hpp> )
 #include <tf2_sensor_msgs/tf2_sensor_msgs.hpp>
 #else
 #include <tf2_sensor_msgs/tf2_sensor_msgs.h>
