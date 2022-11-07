@@ -36,7 +36,8 @@ namespace
 {
 using DebugData = DetectionAreaModule::DebugData;
 
-struct MarkerColor {
+struct MarkerColor
+{
   float r;
   float g;
   float b;
@@ -62,7 +63,8 @@ geometry_msgs::msg::Point toMsg(const lanelet::BasicPoint3d & point)
 }
 
 visualization_msgs::msg::MarkerArray createCorrespondenceMarkerArray(
-  const lanelet::autoware::DetectionArea & detection_area_reg_elem, const rclcpp::Time & now, MarkerColor marker_color)
+  const lanelet::autoware::DetectionArea & detection_area_reg_elem, const rclcpp::Time & now,
+  MarkerColor marker_color)
 {
   visualization_msgs::msg::MarkerArray msg;
 
