@@ -42,12 +42,13 @@ RoutingAdaptor::RoutingAdaptor() : Node("routing_adaptor")
 
 void RoutingAdaptor::on_timer()
 {
-  // Wait a moment to merge waypoints. This value is used for flag and delay counter.
-  constexpr int delay_count = 3;
-  if (0 < request_control_ && request_control_ < delay_count) {
-    ++request_control_;
+  // Wait a moment to combine consecutive goals and checkpoints into a single request.
+  // This value is rate dependent and set the wait time for merging.
+  constexpr int delay_count = 3;  // 0.4 seconds (rate * (value - 1))
+  if (0 < request_timing_control_ && request_timing_control_ < delay_count) {
+    ++request_timing_control_;
   }
-  if (request_control_ != delay_count) {
+  if (request_timing_control_ != delay_count) {
     return;
   }
 
@@ -57,7 +58,7 @@ void RoutingAdaptor::on_timer()
       calling_service_ = true;
       cli_clear_->async_send_request(request, [this](auto) { calling_service_ = false; });
     } else {
-      request_control_ = 0;
+      request_timing_control_ = 0;
       calling_service_ = true;
       cli_route_->async_send_request(route_, [this](auto) { calling_service_ = false; });
     }
@@ -66,7 +67,7 @@ void RoutingAdaptor::on_timer()
 
 void RoutingAdaptor::on_goal(const PoseStamped::ConstSharedPtr pose)
 {
-  request_control_ = 1;
+  request_timing_control_ = 1;
   route_->header = pose->header;
   route_->goal = pose->pose;
   route_->waypoints.clear();
@@ -78,7 +79,7 @@ void RoutingAdaptor::on_waypoint(const PoseStamped::ConstSharedPtr pose)
     RCLCPP_ERROR_STREAM(get_logger(), "The waypoint frame does not match the goal.");
     return;
   }
-  request_control_ = 1;
+  request_timing_control_ = 1;
   route_->waypoints.push_back(pose->pose);
 }
 
