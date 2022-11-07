@@ -36,6 +36,13 @@ namespace
 {
 using DebugData = DetectionAreaModule::DebugData;
 
+struct MarkerColor {
+  float r;
+  float g;
+  float b;
+  float a;
+};
+
 lanelet::BasicPoint3d getCentroidPoint(const lanelet::BasicPolygon3d & poly)
 {
   lanelet::BasicPoint3d p_sum{0.0, 0.0, 0.0};
@@ -55,7 +62,7 @@ geometry_msgs::msg::Point toMsg(const lanelet::BasicPoint3d & point)
 }
 
 visualization_msgs::msg::MarkerArray createCorrespondenceMarkerArray(
-  const lanelet::autoware::DetectionArea & detection_area_reg_elem, const rclcpp::Time & now)
+  const lanelet::autoware::DetectionArea & detection_area_reg_elem, const rclcpp::Time & now, MarkerColor marker_color)
 {
   visualization_msgs::msg::MarkerArray msg;
 
@@ -87,7 +94,7 @@ visualization_msgs::msg::MarkerArray createCorrespondenceMarkerArray(
     auto marker = createDefaultMarker(
       "map", now, "detection_area_polygon", detection_area_reg_elem.id(),
       visualization_msgs::msg::Marker::LINE_LIST, createMarkerScale(0.1, 0.0, 0.0),
-      createMarkerColor(0.1, 0.1, 1.0, 0.500));
+      createMarkerColor(marker_color.r, marker_color.g, marker_color.b, marker_color.a));
     marker.lifetime = rclcpp::Duration::from_seconds(0.5);
 
     for (const auto & detection_area : detection_area_reg_elem.detectionAreas()) {
@@ -113,7 +120,7 @@ visualization_msgs::msg::MarkerArray createCorrespondenceMarkerArray(
     auto marker = createDefaultMarker(
       "map", now, "detection_area_correspondence", detection_area_reg_elem.id(),
       visualization_msgs::msg::Marker::LINE_LIST, createMarkerScale(0.1, 0.0, 0.0),
-      createMarkerColor(0.1, 0.1, 1.0, 0.500));
+      createMarkerColor(marker_color.r, marker_color.g, marker_color.b, marker_color.a));
     marker.lifetime = rclcpp::Duration::from_seconds(0.5);
 
     for (const auto & detection_area : detection_area_reg_elem.detectionAreas()) {
@@ -138,13 +145,28 @@ visualization_msgs::msg::MarkerArray DetectionAreaModule::createDebugMarkerArray
   const rclcpp::Time now = clock_->now();
 
   if (!debug_data_.stop_poses.empty()) {
+    MarkerColor marker_color;
+    marker_color.r = 1.0;
+    marker_color.g = 0.0;
+    marker_color.b = 0.0;
+    marker_color.a = 1.0;
+
     appendMarkerArray(
-      createCorrespondenceMarkerArray(detection_area_reg_elem_, now), &wall_marker, now);
+      createCorrespondenceMarkerArray(detection_area_reg_elem_, now, marker_color), &wall_marker);
 
     appendMarkerArray(
       debug::createPointsMarkerArray(
         debug_data_.obstacle_points, "obstalces", module_id_, now, 0.6, 0.6, 0.6, 1.0, 0.0, 0.0),
       &wall_marker, now);
+  } else {
+    MarkerColor marker_color;
+    marker_color.r = 0.0;
+    marker_color.g = 1.0;
+    marker_color.b = 0.0;
+    marker_color.a = 1.0;
+
+    appendMarkerArray(
+      createCorrespondenceMarkerArray(detection_area_reg_elem_, now, marker_color), &wall_marker);
   }
 
   return wall_marker;
