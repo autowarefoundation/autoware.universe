@@ -38,9 +38,7 @@
 #include <thread>
 
 NDTScanMatcher::NDTScanMatcher()
-: Node("ndt_scan_matcher"),
-  ndt_ptr_(new NormalDistributionsTransform),
-  map_frame_("map")
+: Node("ndt_scan_matcher"), ndt_ptr_(new NormalDistributionsTransform), map_frame_("map")
 {
   // key_value_stdmap_["state"] = "Initializing";
   // is_activated_ = false;
@@ -123,7 +121,8 @@ NDTScanMatcher::NDTScanMatcher()
     std::bind(&NDTScanMatcher::callback_map_points, this, std::placeholders::_1), main_sub_opt);
   // sensor_points_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
   //   "points_raw", rclcpp::SensorDataQoS().keep_last(points_queue_size),
-  //   std::bind(&NDTScanMatcher::callback_sensor_points, this, std::placeholders::_1), main_sub_opt);
+  //   std::bind(&NDTScanMatcher::callback_sensor_points, this, std::placeholders::_1),
+  //   main_sub_opt);
   // regularization_pose_sub_ =
   //   this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
   //     "regularization_pose_with_covariance", 100,
@@ -138,8 +137,8 @@ NDTScanMatcher::NDTScanMatcher()
   // initial_pose_with_covariance_pub_ =
   //   this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
   //     "initial_pose_with_covariance", 10);
-  // exe_time_pub_ = this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("exe_time_ms", 10);
-  // transform_probability_pub_ =
+  // exe_time_pub_ = this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("exe_time_ms",
+  // 10); transform_probability_pub_ =
   //   this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("transform_probability", 10);
   // nearest_voxel_transformation_likelihood_pub_ =
   //   this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>(
@@ -147,14 +146,16 @@ NDTScanMatcher::NDTScanMatcher()
   // iteration_num_pub_ =
   //   this->create_publisher<tier4_debug_msgs::msg::Int32Stamped>("iteration_num", 10);
   // initial_to_result_distance_pub_ =
-  //   this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("initial_to_result_distance", 10);
+  //   this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("initial_to_result_distance",
+  //   10);
   // initial_to_result_distance_old_pub_ =
   //   this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>(
   //     "initial_to_result_distance_old", 10);
   // initial_to_result_distance_new_pub_ =
   //   this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>(
   //     "initial_to_result_distance_new", 10);
-  // ndt_marker_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("ndt_marker", 10);
+  // ndt_marker_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("ndt_marker",
+  // 10);
   ndt_monte_carlo_aligned_points_pub_ =
     this->create_publisher<sensor_msgs::msg::PointCloud2>("monte_carlo_points_aligned", 10);
   ndt_monte_carlo_initial_pose_marker_pub_ =
@@ -180,14 +181,8 @@ NDTScanMatcher::NDTScanMatcher()
 
   tf2_listener_module_ = std::make_shared<Tf2ListenerModule>(this);
   ndt_scan_matching_module_ = std::make_unique<NDTScanMatchingModule>(
-    this,
-    &ndt_ptr_mtx_,
-    &ndt_ptr_,
-    tf2_listener_module_,
-    map_frame_,
-    main_callback_group,
-    initial_pose_callback_group,
-    &key_value_stdmap_);
+    this, &ndt_ptr_mtx_, &ndt_ptr_, tf2_listener_module_, map_frame_, main_callback_group,
+    initial_pose_callback_group, &key_value_stdmap_);
 }
 
 void NDTScanMatcher::timer_diagnostic()
@@ -301,7 +296,6 @@ void NDTScanMatcher::callback_map_points(
   ndt_ptr_mtx_.unlock();
 }
 
-
 geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_using_monte_carlo(
   const std::shared_ptr<NormalDistributionsTransform> & ndt_ptr,
   const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_with_cov)
@@ -334,7 +328,8 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_using_monte_
 
     auto sensor_points_mapTF_ptr = std::make_shared<pcl::PointCloud<PointSource>>();
     pcl::transformPointCloud(*ndt_ptr->getInputSource(), *sensor_points_mapTF_ptr, ndt_result.pose);
-    publish_monte_carlo_point_cloud(initial_pose_with_cov.header.stamp, map_frame_, sensor_points_mapTF_ptr);
+    publish_monte_carlo_point_cloud(
+      initial_pose_with_cov.header.stamp, map_frame_, sensor_points_mapTF_ptr);
   }
 
   auto best_particle_ptr = std::max_element(
@@ -349,7 +344,6 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_using_monte_
 
   return result_pose_with_cov_msg;
 }
-
 
 void NDTScanMatcher::publish_monte_carlo_point_cloud(
   const rclcpp::Time & sensor_ros_time, const std::string & frame_id,

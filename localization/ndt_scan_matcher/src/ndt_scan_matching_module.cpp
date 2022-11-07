@@ -14,7 +14,6 @@
 
 #include "ndt_scan_matcher/ndt_scan_matching_module.hpp"
 
-
 tier4_debug_msgs::msg::Float32Stamped make_float32_stamped(
   const builtin_interfaces::msg::Time & stamp, const float data)
 {
@@ -28,7 +27,6 @@ tier4_debug_msgs::msg::Int32Stamped make_int32_stamped(
   using T = tier4_debug_msgs::msg::Int32Stamped;
   return tier4_debug_msgs::build<T>().stamp(stamp).data(data);
 }
-
 
 bool validate_local_optimal_solution_oscillation(
   const std::vector<geometry_msgs::msg::Pose> & result_pose_msg_array,
@@ -58,13 +56,10 @@ bool validate_local_optimal_solution_oscillation(
   return false;
 }
 
-
-
 NDTScanMatchingModule::NDTScanMatchingModule(
   rclcpp::Node * node, std::mutex * ndt_ptr_mutex,
   std::shared_ptr<NormalDistributionsTransform> * ndt_ptr,
-  std::shared_ptr<Tf2ListenerModule> tf2_listener_module,
-  std::string map_frame,
+  std::shared_ptr<Tf2ListenerModule> tf2_listener_module, std::string map_frame,
   rclcpp::CallbackGroup::SharedPtr main_callback_group,
   rclcpp::CallbackGroup::SharedPtr initial_pose_callback_group,
   std::map<std::string, std::string> * key_value_stdmap_ptr)
@@ -134,14 +129,15 @@ NDTScanMatchingModule::NDTScanMatchingModule(
     initial_pose_sub_opt);
   sensor_points_sub_ = node->create_subscription<sensor_msgs::msg::PointCloud2>(
     "points_raw", rclcpp::SensorDataQoS().keep_last(points_queue_size),
-    std::bind(&NDTScanMatchingModule::callback_sensor_points, this, std::placeholders::_1), main_sub_opt);
+    std::bind(&NDTScanMatchingModule::callback_sensor_points, this, std::placeholders::_1),
+    main_sub_opt);
   regularization_pose_sub_ =
     node->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
       "regularization_pose_with_covariance", 100,
       std::bind(&NDTScanMatchingModule::callback_regularization_pose, this, std::placeholders::_1));
 
   sensor_aligned_pose_pub_ =
-      node->create_publisher<sensor_msgs::msg::PointCloud2>("points_aligned", 10);
+    node->create_publisher<sensor_msgs::msg::PointCloud2>("points_aligned", 10);
   ndt_pose_pub_ = node->create_publisher<geometry_msgs::msg::PoseStamped>("ndt_pose", 10);
   ndt_pose_with_covariance_pub_ =
     node->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
@@ -166,13 +162,13 @@ NDTScanMatchingModule::NDTScanMatchingModule(
     node->create_publisher<tier4_debug_msgs::msg::Float32Stamped>(
       "initial_to_result_distance_new", 10);
   ndt_marker_pub_ = node->create_publisher<visualization_msgs::msg::MarkerArray>("ndt_marker", 10);
-  
+
   service_trigger_node_ = node->create_service<std_srvs::srv::SetBool>(
     "trigger_node_srv",
     std::bind(
-      &NDTScanMatchingModule::service_trigger_node, this, std::placeholders::_1, std::placeholders::_2),
+      &NDTScanMatchingModule::service_trigger_node, this, std::placeholders::_1,
+      std::placeholders::_2),
     rclcpp::ServicesQoS().get_rmw_qos_profile(), main_callback_group);
-
 }
 
 void NDTScanMatchingModule::callback_initial_pose(
@@ -330,7 +326,8 @@ void NDTScanMatchingModule::callback_sensor_points(
     *sensor_points_baselinkTF_ptr, *sensor_points_mapTF_ptr, ndt_result.pose);
   publish_point_cloud(sensor_ros_time, map_frame_, sensor_points_mapTF_ptr);
 
-  (*key_value_stdmap_ptr_)["transform_probability"] = std::to_string(ndt_result.transform_probability);
+  (*key_value_stdmap_ptr_)["transform_probability"] =
+    std::to_string(ndt_result.transform_probability);
   (*key_value_stdmap_ptr_)["nearest_voxel_transformation_likelihood"] =
     std::to_string(ndt_result.nearest_voxel_transformation_likelihood);
   (*key_value_stdmap_ptr_)["iteration_num"] = std::to_string(ndt_result.iteration_num);
@@ -357,7 +354,6 @@ void NDTScanMatchingModule::transform_sensor_measurement(
   pcl::transformPointCloud(
     *sensor_points_input_ptr, *sensor_points_output_ptr, base_to_sensor_matrix);
 }
-
 
 void NDTScanMatchingModule::publish_tf(
   const rclcpp::Time & sensor_ros_time, const geometry_msgs::msg::Pose & result_pose_msg)
@@ -473,8 +469,8 @@ bool NDTScanMatchingModule::validate_score(
   bool is_ok_score = score > score_threshold;
   if (!is_ok_score) {
     RCLCPP_WARN(
-      logger_, "%s is below the threshold. Score: %lf, Threshold: %lf", score_name.c_str(),
-      score, score_threshold);
+      logger_, "%s is below the threshold. Score: %lf, Threshold: %lf", score_name.c_str(), score,
+      score_threshold);
   }
   return is_ok_score;
 }
@@ -493,8 +489,7 @@ bool NDTScanMatchingModule::validate_converged_param(
       "Nearest Voxel Transformation Likelihood");
   } else {
     is_ok_converged_param = false;
-    RCLCPP_ERROR_STREAM_THROTTLE(
-      logger_, *clock_, 1, "Unknown converged param type.");
+    RCLCPP_ERROR_STREAM_THROTTLE(logger_, *clock_, 1, "Unknown converged param type.");
   }
   return is_ok_converged_param;
 }
