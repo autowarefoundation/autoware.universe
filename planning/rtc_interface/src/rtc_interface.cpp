@@ -226,7 +226,6 @@ void RTCInterface::removeCooperateStatus(const UUID & uuid)
 
 void RTCInterface::removeStoredCommand(const UUID & uuid)
 {
-  std::lock_guard<std::mutex> lock(mutex_);
   // Find stored command which has same uuid and erase it
   const auto itr = std::find_if(
     stored_commands_.begin(), stored_commands_.end(), [uuid](auto & s) { return s.uuid == uuid; });
