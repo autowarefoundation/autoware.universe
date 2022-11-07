@@ -93,7 +93,8 @@ std::optional<std::pair<size_t, size_t>> findLaneIdInterval(
       break;
     }
   }
-  start = std::max<size_t>(0, start - 1);  // the idx of last point before the interval
+  start = static_cast<size_t>(
+    std::max<int>(0, static_cast<int>(start) - 1));  // the idx of last point before the interval
   return found ? std::make_optional(std::make_pair(start, end)) : std::nullopt;
 }
 
