@@ -51,8 +51,8 @@ CenterPointTRT::CenterPointTRT(
   head_trt_ptr_->init(head_param.onnx_path(), head_param.engine_path(), head_param.trt_precision());
   head_trt_ptr_->context_->setInputShape(
     "spatial_features", nvinfer1::Dims4(
-         config_.batch_size_, config_.encoder_out_feature_size_, config_.grid_size_y_,
-         config_.grid_size_x_));
+                          config_.batch_size_, config_.encoder_out_feature_size_,
+                          config_.grid_size_y_, config_.grid_size_x_));
 
   initPtr();
 
