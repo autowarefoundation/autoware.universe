@@ -83,7 +83,7 @@ std::vector<Line> get_sorted_face_list(const Iter start, const Iter end)
   return face_list;
 }
 
-/// \brief Append points of the polygon `internal` that are contained in the polygon `exernal`.
+/// \brief Append points of the polygon `internal` that are contained in the polygon `external`.
 template <
   template <typename...> class Iterable1T, template <typename...> class Iterable2T, typename PointT>
 void append_contained_points(
