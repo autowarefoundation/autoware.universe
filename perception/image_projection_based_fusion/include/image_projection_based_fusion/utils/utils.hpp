@@ -24,7 +24,7 @@
 #if __has_include ( <tf2_eigen/tf2_eigen.hpp> )
 #include <tf2_eigen/tf2_eigen.hpp>
 #else
-#include <<tf2_eigen/tf2_eigen.h>
+#include <tf2_eigen/tf2_eigen.h>
 #endif
 
 #if __has_include ( <tf2_geometry_msgs/tf2_geometry_msgs.hpp> )
