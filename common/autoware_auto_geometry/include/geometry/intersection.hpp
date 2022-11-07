@@ -274,7 +274,7 @@ std::list<PointT> convex_polygon_intersection2d(
 /// \param polygon1 A convex polygon
 /// \param polygon2 A convex polygon
 /// \return (Intersection / Union) between two given polygons.
-/// \throws std::domain_error If there is any inconsistency on the undderlying geometrical
+/// \throws std::domain_error If there is any inconsistency on the underlying geometrical
 /// computation.
 template <
   template <typename...> class Iterable1T, template <typename...> class Iterable2T, typename PointT>
