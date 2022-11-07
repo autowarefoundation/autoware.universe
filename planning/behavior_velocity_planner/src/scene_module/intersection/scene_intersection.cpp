@@ -70,17 +70,19 @@ bool IntersectionModule::modifyPathVelocity(
   autoware_auto_planning_msgs::msg::PathWithLaneId * path,
   tier4_planning_msgs::msg::StopReason * stop_reason)
 {
+  RCLCPP_DEBUG(logger_, "===== plan start =====");
+
   const bool external_go = isTargetExternalInputStatus(tier4_api_msgs::msg::IntersectionStatus::GO);
   const bool external_stop =
     isTargetExternalInputStatus(tier4_api_msgs::msg::IntersectionStatus::STOP);
-  RCLCPP_DEBUG(logger_, "===== plan start =====");
+  const StateMachine::State current_state = state_machine_.getState();
+
   debug_data_ = DebugData();
+  debug_data_.path_raw = *path;
+
   *stop_reason =
     planning_utils::initializeStopReason(tier4_planning_msgs::msg::StopReason::INTERSECTION);
 
-  debug_data_.path_raw = *path;
-
-  StateMachine::State current_state = state_machine_.getState();
   RCLCPP_DEBUG(
     logger_, "lane_id = %ld, state = %s", lane_id_, StateMachine::toString(current_state).c_str());
 
@@ -97,6 +99,7 @@ bool IntersectionModule::modifyPathVelocity(
 
   /* get detection area*/
   /* dynamically change detection area based on tl_arrow_solid_on */
+  const bool has_tl = true;  // TODO(Mamoru Sobue): implement this
   const bool tl_arrow_solid_on =
     util::isTrafficLightArrowActivated(assigned_lanelet, planner_data_->traffic_light_id_map);
   auto && [detection_lanelets, conflicting_lanelets] = util::getObjectiveLanelets(
@@ -107,6 +110,10 @@ bool IntersectionModule::modifyPathVelocity(
   const std::vector<lanelet::CompoundPolygon3d> conflicting_area =
     util::getPolygon3dFromLanelets(conflicting_lanelets);
   debug_data_.detection_area = detection_area;
+
+  // TODO(Mamoru Sobue): reconsider this
+  const bool can_go_through =
+    (has_tl) && (turn_direction.compare("straight") == 0) && (detection_area.empty());
 
   /* get intersection area */
   const auto intersection_area = util::getIntersectionArea(assigned_lanelet, lanelet_map_ptr);
@@ -121,21 +128,19 @@ bool IntersectionModule::modifyPathVelocity(
   debug_data_.adjacent_area = util::getPolygon3dFromLanelets(adjacent_lanelets);
 
   /* set stop lines for base_link */
-  const auto [stop_line_ok, stop_line] = generateStopLine(
+  const auto [stuck_line, other_lines] = generateStopLine(
     lane_id_, detection_area, conflicting_area, planner_data_, planner_param_.stop_line_margin,
     planner_param_.keep_detection_line_margin, path, *path, &stop_line_idxs,
     logger_.get_child("util"));
-  if (!stop_line_ok) {
-    // returns here if path is not intersecting with detection areas and conflicting areas
-    RCLCPP_WARN_SKIPFIRST_THROTTLE(logger_, *clock_, 1000 /* ms */, "setStopLineIdx fail");
+  if (!stuck_line.has_value()) {
+    // returns here if path is not intersecting with conflicting areas
+    RCLCPP_WARN_SKIPFIRST_THROTTLE(
+      logger_, *clock_, 1000 /* ms */, "setStopLineIdx for stuck line fail");
     RCLCPP_DEBUG(logger_, "===== plan end =====");
     setSafe(true);
     setDistance(std::numeric_limits<double>::lowest());
     return false;
   }
-  const int stop_line_idx = stop_line_idxs.stop_line_idx;
-  const int pass_judge_line_idx = stop_line_idxs.pass_judge_line_idx;
-  const int keep_detection_line_idx = stop_line_idxs.keep_detection_line_idx;
 
   /* calc closest index */
   const auto closest_idx_opt =
@@ -150,60 +155,64 @@ bool IntersectionModule::modifyPathVelocity(
   }
   const size_t closest_idx = closest_idx_opt.get();
 
-  const bool is_over_pass_judge_line =
-    util::isOverTargetIndex(*path, closest_idx, current_pose.pose, pass_judge_line_idx);
-  if (is_over_pass_judge_line) {
-    /*
-      in case ego could not stop exactly before the stop line, but with some overshoot, keep
-      detection within some margin and low velocity threshold
-     */
+  bool keep_detection = false;
+  if (!can_go_through) {
+    const size_t pass_judge_line_idx = other_lines.value().pass_judge_line_idx;
+    const size_t keep_detection_line_idx = other_lines.value().keep_detection_line_idx;
+
+    const bool is_over_pass_judge_line =
+      util::isOverTargetIndex(*path, closest_idx, current_pose.pose, pass_judge_line_idx);
     const bool is_before_keep_detection_line =
       util::isBeforeTargetIndex(*path, closest_idx, current_pose.pose, keep_detection_line_idx);
-    const bool keep_detection = is_before_keep_detection_line &&
-                                std::fabs(current_vel) < planner_param_.keep_detection_vel_thr;
-    if (keep_detection) {
+    keep_detection = is_before_keep_detection_line &&
+                     std::fabs(current_vel) < planner_param_.keep_detection_vel_thr;
+
+    if (is_over_pass_judge_line && keep_detection) {
+      // in case ego could not stop exactly before the stop line, but with some overshoot,
+      // keep detection within some margin under low velocity threshold
       RCLCPP_DEBUG(
         logger_,
         "over the pass judge line, but before keep detection line and low speed, "
         "continue planning");
       // no return here, keep planning
     } else if (is_go_out_ && !external_stop) {
-      // TODO(Mamoru Sobue): refactor this block
       RCLCPP_DEBUG(logger_, "over the keep_detection line and not low speed. no plan needed.");
       RCLCPP_DEBUG(logger_, "===== plan end =====");
       setSafe(true);
       setDistance(motion_utils::calcSignedArcLength(
         path->points, planner_data_->current_pose.pose.position,
         path->points.at(stop_line_idx).point.pose.position));
-      return true;  // no plan needed.
+      // no plan needed.
+      return true;
     }
   }
 
   /* get dynamic object */
   const auto objects_ptr = planner_data_->predicted_objects;
 
-  /* calculate dynamic collision around detection area */
-  const double detect_length =
-    planner_param_.stuck_vehicle_detect_dist + planner_data_->vehicle_info_.vehicle_length_m;
+  /* calculate is_entry_prohibited */
+  bool is_entry_prohibited = true;
   const auto stuck_vehicle_detect_area = generateEgoIntersectionLanePolygon(
     lanelet_map_ptr, *path, closest_idx, stop_line_idx, detect_length,
     planner_param_.stuck_vehicle_detect_dist);
   const bool is_stuck = checkStuckVehicleInIntersection(objects_ptr, stuck_vehicle_detect_area);
-  const bool has_collision = checkCollision(
-    lanelet_map_ptr, *path, detection_lanelets, adjacent_lanelets, intersection_area, objects_ptr,
-    closest_idx, stuck_vehicle_detect_area);
-  // TODO(Mamoru Sobue): process external_go at the top of this function
-  bool is_entry_prohibited = (has_collision || is_stuck);
   if (external_go) {
     is_entry_prohibited = false;
   } else if (external_stop) {
     is_entry_prohibited = true;
+  } else {
+    /* calculate dynamic collision around detection area */
+    const double detect_length =
+      planner_param_.stuck_vehicle_detect_dist + planner_data_->vehicle_info_.vehicle_length_m;
+    const bool has_collision = checkCollision(
+      lanelet_map_ptr, *path, detection_lanelets, adjacent_lanelets, intersection_area, objects_ptr,
+      closest_idx, stuck_vehicle_detect_area);
+    is_entry_prohibited = (has_collision || is_stuck);
   }
+
   state_machine_.setStateWithMarginTime(
     is_entry_prohibited ? StateMachine::State::STOP : StateMachine::State::GO,
     logger_.get_child("state_machine"), *clock_);
-
-  const double base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
 
   setSafe(state_machine_.getState() == StateMachine::State::GO);
   setDistance(motion_utils::calcSignedArcLength(
@@ -212,27 +221,41 @@ bool IntersectionModule::modifyPathVelocity(
 
   if (!isActivated()) {
     // if RTC says intersection entry is 'dangerous', insert stop_line(v == 0.0) in this block
-    constexpr double v = 0.0;
     is_go_out_ = false;
-    int stop_line_idx_stop = stop_line_idx;
-    int pass_judge_line_idx_stop = pass_judge_line_idx;
-    // TODO(Mamoru Sobue): refactor this block
-    if (planner_param_.use_stuck_stopline && is_stuck) {
-      int stuck_stop_line_idx = -1;
-      int stuck_pass_judge_line_idx = -1;
-      if (util::generateStopLineBeforeIntersection(
-            lane_id_, lanelet_map_ptr, planner_data_, *path, path, &stuck_stop_line_idx,
-            &stuck_pass_judge_line_idx, logger_.get_child("util"))) {
-        stop_line_idx_stop = stuck_stop_line_idx;
-        pass_judge_line_idx_stop = stuck_pass_judge_line_idx;
+
+    int stop_line_idx_final = 0;
+    int pass_judge_line_idx_final = 0;
+    if (is_stuck) {
+      // use calculated stuck_line
+      // TODO(Mamoru Sobue): set pass judge line precisely?
+      stop_line_idx_final = stuck_line.value();
+      pass_judge_line_idx_final = stuck_line.value();
+
+      if (planner_param_.use_stuck_stopline) {
+        const auto stop_lines_opt = util::generateStopLineBeforeIntersection(
+          lane_id_, lanelet_map_ptr, planner_data_, *path, path, logger_.get_child("util"));
+        if (stop_lines_opt.has_value()) {
+          stop_line_idx_final = stop_lines_opt.value().stop_line;
+          pass_judge_line_idx_final = stop_lines_opt.value().pass_judge_line;
+        }
+      }
+    } else {
+      // if keep_detection is true, stop at this line
+      if (keep_detection) {
+        stop_line_idx_final = pass_judge_line_idx_final = other_lines.value().keep_detection_line;
+      } else {
+        stop_line_idx_final = other_lines.value().stop_line;
+        pass_judge_line_idx_final = other_lines.value().pass_judge_line;
       }
     }
-    planning_utils::setVelocityFromIndex(stop_line_idx_stop, v, path);
+    constexpr double v = 0.0;
+    planning_utils::setVelocityFromIndex(stop_line_idx_final, v, path);
     debug_data_.stop_required = true;
+    const double base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
     debug_data_.stop_wall_pose =
-      planning_utils::getAheadPose(stop_line_idx_stop, base_link2front, *path);
-    debug_data_.stop_point_pose = path->points.at(stop_line_idx_stop).point.pose;
-    debug_data_.judge_point_pose = path->points.at(pass_judge_line_idx_stop).point.pose;
+      planning_utils::getAheadPose(stop_line_idx_final, base_link2front, *path);
+    debug_data_.stop_point_pose = path->points.at(stop_line_idx_final).point.pose;
+    debug_data_.judge_point_pose = path->points.at(pass_judge_line_idx_final).point.pose;
 
     /* get stop point and stop factor */
     tier4_planning_msgs::msg::StopFactor stop_factor;

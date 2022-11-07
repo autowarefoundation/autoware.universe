@@ -141,7 +141,7 @@ std::optional<size_t> getFirstPointInsidePolygons(
   return first_idx_inside_lanelet;
 }
 
-std::tuple<bool, StopLineIdx> generateStopLine(
+std::pair<std::optional<size_t>, std::optional<StopLineIdx>> generateStopLine(
   const int lane_id, const std::vector<lanelet::CompoundPolygon3d> & detection_areas,
   const std::vector<lanelet::CompoundPolygon3d> & conflicting_areas,
   const std::shared_ptr<const PlannerData> & planner_data, const double stop_line_margin,
@@ -162,7 +162,7 @@ std::tuple<bool, StopLineIdx> generateStopLine(
   constexpr double interval = 0.2;
   autoware_auto_planning_msgs::msg::PathWithLaneId path_ip;
   if (!splineInterpolate(target_path, interval, path_ip, logger)) {
-    return false;
+    return std::nullopt;
   }
 
   const int stop_line_margin_idx_dist = std::ceil(stop_line_margin / interval);
@@ -171,16 +171,39 @@ std::tuple<bool, StopLineIdx> generateStopLine(
     std::ceil(planner_data->vehicle_info_.max_longitudinal_offset_m / interval);
   const int pass_judge_idx_dist = std::ceil(pass_judge_line_dist / interval);
 
-  /* generate stop point */
-  // If a stop_line tag is defined on lanelet_map, use it.
-  // else generate a stop_line behind the intersection of path and detection area
   const auto lane_interval_opt = util::findLaneIdInterval(path_ip, lane_id);
   if (!lane_interval_opt.has_value()) {
     RCLCPP_INFO(logger, "Path has no interval on intersection lane %d", lane_id);
-    return {false, util::StopLineIdx{}};
+    return std::nullopt;
+  }
+  const auto [lane_interval_start, lane_interval_end] = lane_interval_opt.value();
+
+  /* generate stuck stop line */
+  // NOTE: the order of stuck_stop_line cannot be determined a-priori
+  // so this value should adjusted
+  const auto stuck_stop_line_idx_ip_opt = util::getFirstPointInsidePolygons(
+    path_ip, lane_interval_start, lane_interval_end, lane_id, conflicting_areas);
+  if (!stuck_stop_line_idx_ip_opt.has_value()) {
+    RCLCPP_DEBUG(
+      logger, "Path is not intersecting with conflictign area, not genearting stuck_stop_line");
+    return {std::nullopt, st::nullopt};
+  }
+  int stuck_stop_line_idx = 0;
+  {
+    /* insert stuck stop line */
+    const auto & insert_point = path_ip.points.at(stuck_stop_line_idx_ip_opt.value()).point.pose;
+    const auto insert_idx_opt =
+      util::getDuplicatedPointIndex(*original_path, insert_point.position);
+    if (insert_idx_opt.has_value()) {
+      stuck_stop_line_idx = insert_idx_opt.value();
+    } else {
+      stuck_stop_line_idx = util::insertPoint(insert_point, original_path);
+    }
   }
 
-  const auto [lane_interval_start, lane_interval_end] = lane_interval_opt.value();
+  /* generate stop point */
+  // If a stop_line tag is defined on lanelet_map, use it.
+  // else generate a stop_line behind the intersection of path and detection area
   // stop point index on interpolated(ip) path.
   size_t stop_idx_ip;
   if (getStopLineIndexFromMap(
@@ -195,7 +218,7 @@ std::tuple<bool, StopLineIdx> generateStopLine(
     if (!first_inside_lane_idx_ip_opt.has_value()) {
       RCLCPP_DEBUG(
         logger, "Path is not intersecting with detection_area, not generating stop_line");
-      return {false, util::StopLineIdx{}};
+      return {stuck_stop_line_idx, std::nullopt};
     }
 
     const auto first_inside_lane_idx_ip = first_inside_lane_idx_ip_opt.value();
@@ -207,30 +230,10 @@ std::tuple<bool, StopLineIdx> generateStopLine(
 
   if (stop_idx_ip == 0) {
     RCLCPP_DEBUG(logger, "stop line is at path[0], ignore planning.");
-    return {false, util::StopLineIdx{}};
+    return {stuck_stop_line_idx, std::nullopt};
   }
 
   util::StopLineIdx idxs;
-
-  const auto stuck_stop_line_idx_ip_opt = util::getFirstPointInsidePolygons(
-    path_ip, lane_interval_start, lane_interval_end, lane_id, conflicting_areas);
-  if (!stuck_stop_line_idx_ip_opt.has_value()) {
-    RCLCPP_DEBUG(
-      logger, "Path is not intersecting with conflictign area, not genearting stuck_stop_line");
-    return {false, util::StopLineIdx{}};
-  }
-
-  {
-    /* insert stuck_stop_line */
-    const int stuck_stop_line_idx_ip = stuck_stop_line_idx_ip_opt.value();
-    const auto & insert_point = path_ip.points.at(stuck_stop_line_idx_ip).point.pose;
-    const auto insert_idx_opt = util::getDuplicatedPointIdx(*original_path, insert_point.position);
-    if (insert_idx_opt.has_value()) {
-      idxs.stuck_stop_line = insert_idx_opt.value();
-    } else {
-      idxs.stuck_stop_line = util::insertPoint(insert_point, original_path);
-    }
-  }
 
   {
     /* insert keep_detection_line */
@@ -243,10 +246,6 @@ std::tuple<bool, StopLineIdx> generateStopLine(
       idxs.keep_detection_line = insert_idx_opt.value();
     } else {
       idxs.keep_detection_line = util::insertPoint(inserted_point, original_path);
-      if (idxs.stuck_stop_line >= idxs.keep_detection_line) {
-        idxs.stuck_stop_line =
-          std::min<size_t>(idxs.stuck_stop_line + 1, original_path.points.size() - 1);
-      }
     }
   }
 
@@ -261,10 +260,6 @@ std::tuple<bool, StopLineIdx> generateStopLine(
       // the index is incremented by judge stop line insertion
       idxs.keep_detection_line =
         std::min<size_t>(idxs.keep_detection_line + 1, original_path.points.size() - 1);
-      if (idxs.stuck_stop_line >= idxs.stop_line) {
-        idxs.stuck_stop_line =
-          std::min<size_t>(idxs.stuck_stop_line + 1, original_path.points.size() - 1);
-      }
     }
   }
 
@@ -288,20 +283,15 @@ std::tuple<bool, StopLineIdx> generateStopLine(
       idxs.stop_line = std::min<size_t>(idxs.stop_line + 1, original_path.size() - 1);
       idxs.keep_detection_line =
         std::min<size_t>(idxs.keep_detection_line + 1, original_path.points.size() - 1);
-      if (idxs.stuck_stop_line >= idxs.keep_detection_line) {
-        idxs.stuck_stop_line =
-          std::min<size_t>(idxs.stuck_stop_line + 1, original_path.points.size() - 1);
-      }
     }
   }
   RCLCPP_DEBUG(
     logger,
     "generateStopLine() : keep_detection_idx = %d, stop_idx = %d, pass_judge_idx = %d"
-    ", stuck_stop_line_idx = %d, has_prior_stopline = %d",
-    idxs.keep_detection_line, idxs.stop_line, idxs.pass_judge_line, idxs.stuck_stop_line,
-    has_prior_stopline);
+    ", has_prior_stopline = %d",
+    idxs.keep_detection_line, idxs.stop_line, idxs.pass_judge_line, has_prior_stopline);
 
-  return {true, idxs};
+  return {stuck_stop_line_idx, std::make_optional<StopLineIdx>(idxs)};
 }
 
 bool getStopLineIndexFromMap(
@@ -497,7 +487,7 @@ std::vector<int> getLaneletIdsFromLanelets(lanelet::ConstLanelets ll)
   return id_list;
 }
 
-std::tuple<bool, StopLineIdx> generateStopLineBeforeIntersection(
+std::optional<StopLineIdx> generateStopLineBeforeIntersection(
   const int lane_id, lanelet::LaneletMapConstPtr lanelet_map_ptr,
   const std::shared_ptr<const PlannerData> & planner_data,
   const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path,
@@ -521,7 +511,7 @@ std::tuple<bool, StopLineIdx> generateStopLineBeforeIntersection(
   /* spline interpolation */
   autoware_auto_planning_msgs::msg::PathWithLaneId path_ip;
   if (!splineInterpolate(input_path, interval, path_ip, logger)) {
-    return {false, StopLineIdx{}};
+    return std::nullopt;
   }
 
   const auto & assigned_lanelet = lanelet_map_ptr->laneletLayer.get(lane_id);
@@ -537,7 +527,7 @@ std::tuple<bool, StopLineIdx> generateStopLineBeforeIntersection(
       "generate stopline before intersection, but ego is already in the intersection or path "
       "is "
       "not in the intersection");
-    return {false, StopLineIdx{}};
+    return std::nullopt;
   }
 
   StopLineIdx idxs;
@@ -581,7 +571,7 @@ std::tuple<bool, StopLineIdx> generateStopLineBeforeIntersection(
     "has_prior_stopline = %d",
     idxs.stop_line, idxs.pass_judge_line, has_prior_stopline);
 
-  return {true, idxs};
+  return std::make_optional<StopLineIdx>(idxs);
 }
 
 geometry_msgs::msg::Pose toPose(const geometry_msgs::msg::Point & p)

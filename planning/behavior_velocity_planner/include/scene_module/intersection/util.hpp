@@ -58,7 +58,6 @@ std::tuple<lanelet::ConstLanelets, lanelet::ConstLanelets> getObjectiveLanelets(
 
 struct StopLineIdx
 {
-  size_t stuck_stop_line = 0;
   size_t pass_judge_line = 0;
   size_t stop_line = 0;
   size_t keep_detection_line = 0;
@@ -71,9 +70,9 @@ struct StopLineIdx
  * @param original_path   ego-car lane
  * @param target_path     target lane to insert stop point (part of ego-car lane or same to ego-car
  * lane)
- * @return false if path is not interseting with areas
+ * @return nullopt if path is not interseting with detection areas
  */
-std::tuple<bool, StopLineIdx> generateStopLine(
+std::pair<std::optional<size_t>, std::optional<StopLineIdx>> generateStopLine(
   const int lane_id, const std::vector<lanelet::CompoundPolygon3d> & detection_areas,
   const std::vector<lanelet::CompoundPolygon3d> & conflicting_areas,
   const std::shared_ptr<const PlannerData> & planner_data, const double stop_line_margin,
@@ -88,7 +87,7 @@ std::tuple<bool, StopLineIdx> generateStopLine(
  * @param output_path     output path
  * @return valid value in pass_judge_line_idx and stop_line_idx field
  */
-std::tuple<bool, StopLineIdx> generateStopLineBeforeIntersection(
+std::optional<StopLineIdx> generateStopLineBeforeIntersection(
   const int lane_id, lanelet::LaneletMapConstPtr lanelet_map_ptr,
   const std::shared_ptr<const PlannerData> & planner_data,
   const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path,
