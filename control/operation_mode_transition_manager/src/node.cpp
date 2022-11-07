@@ -20,7 +20,7 @@ namespace operation_mode_transition_manager
 {
 
 OperationModeTransitionManager::OperationModeTransitionManager(const rclcpp::NodeOptions & options)
-: Node("operation_mode_transition_manager", options)
+: Node("operation_mode_transition_manager", options), compatibility_(this)
 {
   sub_control_mode_report_ = create_subscription<ControlModeReport>(
     "control_mode_report", 1,
@@ -62,13 +62,6 @@ OperationModeTransitionManager::OperationModeTransitionManager(const rclcpp::Nod
   modes_[OperationMode::AUTONOMOUS] = std::make_unique<AutonomousMode>(this);
   modes_[OperationMode::LOCAL] = std::make_unique<LocalMode>();
   modes_[OperationMode::REMOTE] = std::make_unique<RemoteMode>();
-
-  // TODO(Takagi, Isamu): remove backward compatibility
-  sub_autoware_engage_ = create_subscription<AutowareEngage>(
-    "~/compatibility/autoware_engage", 1, [this](const AutowareEngage::SharedPtr msg) {
-      transition_.reset();
-      (void)msg;
-    });
 }
 
 void OperationModeTransitionManager::onChangeAutowareControl(
@@ -186,6 +179,11 @@ void OperationModeTransitionManager::processTransition()
     }
   }
 
+  // Set operation mode
+  if (!compatibility_.set_mode(current_mode_)) {
+    return;
+  }
+
   // Check completion when engaged, otherwise engage after the gate reflects transition.
   if (current_control) {
     if (modes_.at(current_mode_)->isModeChangeCompleted()) {
@@ -211,6 +209,13 @@ void OperationModeTransitionManager::onTimer()
 
   if (transition_) {
     processTransition();
+  } else {
+    // Reflects the mode when changed by the compatible interface.
+    const auto mode = compatibility_.get_mode().value_or(current_mode_);
+    if (mode != current_mode_) {
+      current_mode_ = mode;
+      RCLCPP_DEBUG_STREAM(get_logger(), "Reflects the compatible interface mode");
+    }
   }
 
   publishData();

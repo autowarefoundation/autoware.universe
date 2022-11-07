@@ -7,8 +7,9 @@ find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
 ament_auto_add_library(operation_mode_transition_manager_node SHARED
-  src/node.cpp
+  src/compatibility.cpp
   src/data.cpp
+  src/node.cpp
   src/state.cpp
 )
 

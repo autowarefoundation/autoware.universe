@@ -15,6 +15,7 @@
 #ifndef NODE_HPP_
 #define NODE_HPP_
 
+#include "compatibility.hpp"
 #include "state.hpp"
 
 #include <component_interface_specs/system.hpp>
@@ -24,9 +25,6 @@
 #include <memory>
 #include <unordered_map>
 #include <utility>
-
-// TODO(Takagi, Isamu): remove backward compatibility
-#include <autoware_auto_vehicle_msgs/msg/engage.hpp>
 
 namespace operation_mode_transition_manager
 {
@@ -71,12 +69,8 @@ private:
   OperationModeState gate_operation_mode_;
   ControlModeReport control_mode_report_;
 
+  Compatibility compatibility_;
   std::optional<OperationModeStateAPI::Message> prev_state_;
-
-  // TODO(Takagi, Isamu): remove backward compatibility
-  using AutowareEngage = autoware_auto_vehicle_msgs::msg::Engage;
-  rclcpp::Subscription<AutowareEngage>::SharedPtr sub_autoware_engage_;
-  void on_autoware_engage(const AutowareEngage::ConstSharedPtr msg);
 };
 
 }  // namespace operation_mode_transition_manager
