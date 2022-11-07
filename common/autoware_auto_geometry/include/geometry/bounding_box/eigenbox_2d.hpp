@@ -54,7 +54,7 @@ struct Covariance2d
 /// \param[in] begin An iterator pointing to the first point in a point list
 /// \param[in] end An iterator pointing to one past the last point in the point list
 /// \tparam IT An iterator type dereferencable into a point with float members x and y
-/// \return A 2d covariance matrix for all points inthe list
+/// \return A 2d covariance matrix for all points in the list
 template <typename IT>
 Covariance2d covariance_2d(const IT begin, const IT end)
 {
