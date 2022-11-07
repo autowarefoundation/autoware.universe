@@ -164,35 +164,34 @@ void Net::save(const std::string & path)
   file.write(reinterpret_cast<const char *>(plan_->data()), plan_->size());
 }
 
-void Net::infer(std::vector<void *> & buffers, const int batch_size)
+void Net::infer(std::vector<void *> &, const int batch_size)
 {
   if (!context_) {
     throw std::runtime_error("Fail to create context");
   }
-  auto input_dims = engine_->getBindingDimensions(0);
-  context_->setBindingDimensions(
-    0, nvinfer1::Dims4(batch_size, input_dims.d[1], input_dims.d[2], input_dims.d[3]));
-  context_->enqueueV2(buffers.data(), stream_, nullptr);
+  auto input_dims = engine_->getTensorShape("input");
+  context_->setInputShape("input", nvinfer1::Dims4(batch_size, input_dims.d[1], input_dims.d[2], input_dims.d[3]));
+  context_->enqueueV3(stream_);
   cudaStreamSynchronize(stream_);
 }
 
 std::vector<int> Net::getInputSize()
 {
-  auto dims = engine_->getBindingDimensions(0);
+  auto dims =  engine_->getTensorShape("input");
   return {dims.d[1], dims.d[2], dims.d[3]};
 }
 
 std::vector<int> Net::getOutputScoreSize()
 {
-  auto dims = engine_->getBindingDimensions(1);
+  auto dims = engine_->getTensorShape("scores");
   return {dims.d[1], dims.d[2]};
 }
 
 int Net::getMaxBatchSize()
 {
-  return engine_->getProfileDimensions(0, 0, nvinfer1::OptProfileSelector::kMAX).d[0];
+  return engine_->getProfileShape("input", 0, nvinfer1::OptProfileSelector::kMAX).d[0];
 }
 
-int Net::getMaxDetections() { return engine_->getBindingDimensions(1).d[1]; }
+int Net::getMaxDetections() { return engine_->getTensorShape("scores").d[1]; }
 
 }  // namespace ssd

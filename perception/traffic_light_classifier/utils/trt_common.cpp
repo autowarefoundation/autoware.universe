@@ -75,8 +75,8 @@ void TrtCommon::setup()
   }
 
   context_ = UniquePtr<nvinfer1::IExecutionContext>(engine_->createExecutionContext());
-  input_dims_ = engine_->getBindingDimensions(getInputBindingIndex());
-  output_dims_ = engine_->getBindingDimensions(getOutputBindingIndex());
+  input_dims_ = engine_->getTensorShape(input_name_.c_str());
+  output_dims_ = engine_->getTensorShape(output_name_.c_str());
   is_initialized_ = true;
 }
 
@@ -154,9 +154,5 @@ int TrtCommon::getNumOutput()
   return std::accumulate(
     output_dims_.d, output_dims_.d + output_dims_.nbDims, 1, std::multiplies<int>());
 }
-
-int TrtCommon::getInputBindingIndex() { return engine_->getBindingIndex(input_name_.c_str()); }
-
-int TrtCommon::getOutputBindingIndex() { return engine_->getBindingIndex(output_name_.c_str()); }
 
 }  // namespace Tn

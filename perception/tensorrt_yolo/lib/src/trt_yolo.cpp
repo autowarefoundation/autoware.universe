@@ -276,15 +276,14 @@ void Net::save(const std::string & path) const
   file.write(reinterpret_cast<const char *>(plan_->data()), plan_->size());
 }
 
-void Net::infer(std::vector<void *> & buffers, const int batch_size)
+void Net::infer(std::vector<void *> &, const int batch_size)
 {
   if (!context_) {
     throw std::runtime_error("Fail to create context");
   }
-  auto input_dims = engine_->getBindingDimensions(0);
-  context_->setBindingDimensions(
-    0, nvinfer1::Dims4(batch_size, input_dims.d[1], input_dims.d[2], input_dims.d[3]));
-  context_->enqueueV2(buffers.data(), stream_, nullptr);
+  auto input_dims = engine_->getTensorShape("000_net");
+  context_->setInputShape("000_net", nvinfer1::Dims4(batch_size, input_dims.d[1], input_dims.d[2], input_dims.d[3]));
+  context_->enqueueV3(stream_);
   cudaStreamSynchronize(stream_);
 }
 
@@ -316,13 +315,13 @@ bool Net::detect(const cv::Mat & in_img, float * out_scores, float * out_boxes, 
 
 std::vector<int> Net::getInputDims() const
 {
-  auto dims = engine_->getBindingDimensions(0);
+  auto dims = engine_->getTensorShape("000_net");
   return {dims.d[1], dims.d[2], dims.d[3]};
 }
 
 int Net::getMaxBatchSize() const
 {
-  return engine_->getProfileDimensions(0, 0, nvinfer1::OptProfileSelector::kMAX).d[0];
+  return engine_->getProfileShape("000_net", 0, nvinfer1::OptProfileSelector::kMAX).d[0];
 }
 
 int Net::getInputSize() const
@@ -333,6 +332,6 @@ int Net::getInputSize() const
   return input_size;
 }
 
-int Net::getMaxDetections() const { return engine_->getBindingDimensions(1).d[1]; }
+int Net::getMaxDetections() const { return engine_->getTensorShape("106_convolutional").d[1]; }
 
 }  // namespace yolo
