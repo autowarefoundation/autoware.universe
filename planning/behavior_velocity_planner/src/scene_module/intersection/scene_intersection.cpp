@@ -128,11 +128,10 @@ bool IntersectionModule::modifyPathVelocity(
   debug_data_.adjacent_area = util::getPolygon3dFromLanelets(adjacent_lanelets);
 
   /* set stop lines for base_link */
-  const auto [stuck_line, other_lines] = generateStopLine(
+  const auto [stuck_line_idx_opt, stop_lines_idx_opt] = util::generateStopLine(
     lane_id_, detection_area, conflicting_area, planner_data_, planner_param_.stop_line_margin,
-    planner_param_.keep_detection_line_margin, path, *path, &stop_line_idxs,
-    logger_.get_child("util"));
-  if (!stuck_line.has_value()) {
+    planner_param_.keep_detection_line_margin, path, *path, logger_.get_child("util"));
+  if (!stuck_line_idx_opt.has_value()) {
     // returns here if path is not intersecting with conflicting areas
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
       logger_, *clock_, 1000 /* ms */, "setStopLineIdx for stuck line fail");
@@ -141,6 +140,7 @@ bool IntersectionModule::modifyPathVelocity(
     setDistance(std::numeric_limits<double>::lowest());
     return false;
   }
+  const auto stuck_line_idx = stuck_line_idx_opt.value();
 
   /* calc closest index */
   const auto closest_idx_opt =
@@ -157,8 +157,10 @@ bool IntersectionModule::modifyPathVelocity(
 
   bool keep_detection = false;
   if (!can_go_through) {
-    const size_t pass_judge_line_idx = other_lines.value().pass_judge_line_idx;
-    const size_t keep_detection_line_idx = other_lines.value().keep_detection_line_idx;
+    const auto & stop_lines = stop_lines_idx_opt.value();
+    const size_t stop_line_idx = stop_lines.stop_line;
+    const size_t pass_judge_line_idx = stop_lines.pass_judge_line;
+    const size_t keep_detection_line_idx = stop_lines.keep_detection_line;
 
     const bool is_over_pass_judge_line =
       util::isOverTargetIndex(*path, closest_idx, current_pose.pose, pass_judge_line_idx);
@@ -192,8 +194,10 @@ bool IntersectionModule::modifyPathVelocity(
 
   /* calculate is_entry_prohibited */
   bool is_entry_prohibited = true;
+  const double detect_length =
+    planner_param_.stuck_vehicle_detect_dist + planner_data_->vehicle_info_.vehicle_length_m;
   const auto stuck_vehicle_detect_area = generateEgoIntersectionLanePolygon(
-    lanelet_map_ptr, *path, closest_idx, stop_line_idx, detect_length,
+    lanelet_map_ptr, *path, closest_idx, stuck_line_idx, detect_length,
     planner_param_.stuck_vehicle_detect_dist);
   const bool is_stuck = checkStuckVehicleInIntersection(objects_ptr, stuck_vehicle_detect_area);
   if (external_go) {
@@ -202,8 +206,6 @@ bool IntersectionModule::modifyPathVelocity(
     is_entry_prohibited = true;
   } else {
     /* calculate dynamic collision around detection area */
-    const double detect_length =
-      planner_param_.stuck_vehicle_detect_dist + planner_data_->vehicle_info_.vehicle_length_m;
     const bool has_collision = checkCollision(
       lanelet_map_ptr, *path, detection_lanelets, adjacent_lanelets, intersection_area, objects_ptr,
       closest_idx, stuck_vehicle_detect_area);
@@ -215,9 +217,11 @@ bool IntersectionModule::modifyPathVelocity(
     logger_.get_child("state_machine"), *clock_);
 
   setSafe(state_machine_.getState() == StateMachine::State::GO);
+  const int stop_target_idx =
+    stop_lines_idx_opt.has_value() ? stop_lines_idx_opt.value().stop_line : stuck_line_idx;
   setDistance(motion_utils::calcSignedArcLength(
     path->points, planner_data_->current_pose.pose.position,
-    path->points.at(stop_line_idx).point.pose.position));
+    path->points.at(stop_target_idx).point.pose.position));
 
   if (!isActivated()) {
     // if RTC says intersection entry is 'dangerous', insert stop_line(v == 0.0) in this block
@@ -228,8 +232,7 @@ bool IntersectionModule::modifyPathVelocity(
     if (is_stuck) {
       // use calculated stuck_line
       // TODO(Mamoru Sobue): set pass judge line precisely?
-      stop_line_idx_final = stuck_line.value();
-      pass_judge_line_idx_final = stuck_line.value();
+      stop_line_idx_final = pass_judge_line_idx_final = stuck_line_idx;
 
       if (planner_param_.use_stuck_stopline) {
         const auto stop_lines_opt = util::generateStopLineBeforeIntersection(
@@ -240,12 +243,13 @@ bool IntersectionModule::modifyPathVelocity(
         }
       }
     } else {
+      const auto & stop_lines_idx = stop_lines_idx_opt.value();
       // if keep_detection is true, stop at this line
       if (keep_detection) {
-        stop_line_idx_final = pass_judge_line_idx_final = other_lines.value().keep_detection_line;
+        stop_line_idx_final = pass_judge_line_idx_final = stop_lines_idx.keep_detection_line;
       } else {
-        stop_line_idx_final = other_lines.value().stop_line;
-        pass_judge_line_idx_final = other_lines.value().pass_judge_line;
+        stop_line_idx_final = stop_lines_idx.stop_line;
+        pass_judge_line_idx_final = stop_lines_idx.pass_judge_line;
       }
     }
     constexpr double v = 0.0;

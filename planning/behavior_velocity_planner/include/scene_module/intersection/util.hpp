@@ -58,6 +58,7 @@ std::tuple<lanelet::ConstLanelets, lanelet::ConstLanelets> getObjectiveLanelets(
 
 struct StopLineIdx
 {
+  size_t first_inside_lane = 0;
   size_t pass_judge_line = 0;
   size_t stop_line = 0;
   size_t keep_detection_line = 0;
@@ -114,8 +115,8 @@ std::optional<size_t> getFirstPointInsidePolygons(
 bool getStopLineIndexFromMap(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const size_t lane_interval_start,
   const size_t lane_interval_end, const int lane_id,
-  const std::shared_ptr<const PlannerData> & planner_data, int * stop_idx_ip, int dist_thr,
-  const rclcpp::Logger logger);
+  const std::shared_ptr<const PlannerData> & planner_data, size_t * stop_idx_ip,
+  const double dist_thr, const rclcpp::Logger logger);
 
 std::vector<lanelet::CompoundPolygon3d> getPolygon3dFromLaneletsVec(
   const std::vector<lanelet::ConstLanelets> & ll_vec, double clip_length);
