@@ -6,15 +6,30 @@ This package provides the features of loading various maps.
 
 ### Feature
 
-pointcloud_map_loader loads PointCloud file and publishes the map data as sensor_msgs/PointCloud2 message.
+`pointcloud_map_loader` provides pointcloud maps to the other Autoware nodes in various configurations.
+Currently, it supports the following four types:
+- Publish raw pointcloud map as `sensor_msgs/msg/PointCloud2`
+- Publish downsampled pointcloud map as `sensor_msgs/msg/PointCloud2`
+- Send partial pointcloud map loading as `autoware_map_msgs/srv/GetPartialPointCloudMap`
+- Send differential pointcloud map loading as `autoware_map_msgs/srv/GetDifferentialPointCloudMap`
 
-### How to run
+### Parameters
 
-`ros2 run map_loader pointcloud_map_loader --ros-args -p "pcd_paths_or_directory:=[path/to/pointcloud1.pcd, path/to/pointcloud2.pcd, ...]"`
+| Name                          | Type   | Description                                                                        | Default value |
+| :---------------------------- | :----- | :--------------------------------------------------------------------------------- | :------------ |
+| enable_whole_load             | bool   | A flag to enable raw pointcloud map publishing                                     | true          |
+| enable_downsampled_whole_load | bool   | A flag to enable downsampled pointcloud map publishing                             | true          |
+| enable_partial_load           | bool   | A flag to enable partial pointcloud map server                                     | true          |
+| enable_differential_load      | bool   | A flag to enable differential pointcloud map server                                | true          |
+| leaf_size                     | double | Downsampling leaf size (only used when enable_downsampled_whole_load is set true)  | 3.0           |
 
-### Published Topics
 
-- pointcloud_map (sensor_msgs/PointCloud2) : PointCloud Map
+### Interfaces
+
+- `output/pointcloud_map` (sensor_msgs/msg/PointCloud2) : Raw pointcloud map
+- `output/debug/downsampled_pointcloud_map` (sensor_msgs/msg/PointCloud2) : Downsampled pointcloud map
+- `service/get_partial_pcd_map` (autoware_map_msgs/srv/GetPartialPointCloudMap) : Partial pointcloud map
+- `service/get_differential_pcd_map` (autoware_map_msgs/srv/GetDifferentialPointCloudMap) : Differential pointcloud map
 
 ---
 
