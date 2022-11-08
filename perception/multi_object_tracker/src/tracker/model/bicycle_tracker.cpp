@@ -301,8 +301,8 @@ bool BicycleTracker::measureWithShape(
   }
   constexpr float gain = 0.9;
 
-  bounding_box_.width = gain * bounding_box_.width + (1.0 - gain) * object.shape.dimensions.x;
-  bounding_box_.length = gain * bounding_box_.length + (1.0 - gain) * object.shape.dimensions.y;
+  bounding_box_.width = gain * bounding_box_.width + (1.0 - gain) * object.shape.dimensions.y;
+  bounding_box_.length = gain * bounding_box_.length + (1.0 - gain) * object.shape.dimensions.x;
   bounding_box_.height = gain * bounding_box_.height + (1.0 - gain) * object.shape.dimensions.z;
 
   return true;
@@ -400,8 +400,8 @@ bool BicycleTracker::getTrackedObject(
   twist_with_cov.covariance[utils::MSG_COV_IDX::YAW_YAW] = P(IDX::WZ, IDX::WZ);
 
   // set shape
-  object.shape.dimensions.x = bounding_box_.width;
-  object.shape.dimensions.y = bounding_box_.length;
+  object.shape.dimensions.x = bounding_box_.length;
+  object.shape.dimensions.y = bounding_box_.width;
   object.shape.dimensions.z = bounding_box_.height;
   const auto origin_yaw = tf2::getYaw(object_.kinematics.pose_with_covariance.pose.orientation);
   const auto ekf_pose_yaw = tf2::getYaw(pose_with_cov.pose.orientation);
