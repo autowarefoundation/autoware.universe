@@ -47,7 +47,7 @@ void DifferentialMapLoaderModule::differentialAreaLoad(
       should_remove[index] = false;
     } else {
       autoware_map_msgs::msg::PointCloudMapCellWithID pointcloud_map_cell_with_id =
-        loadPointCloudMapCellWithID(path, map_id, metadata.min, metadata.max);
+        loadPointCloudMapCellWithID(path, map_id);
       response->new_pointcloud_with_ids.push_back(pointcloud_map_cell_with_id);
     }
   }
@@ -68,13 +68,13 @@ bool DifferentialMapLoaderModule::onServiceGetDifferentialPointCloudMap(
   auto area = req->area;
   std::vector<std::string> cached_ids = req->cached_ids;
   differentialAreaLoad(area, cached_ids, res);
+  res->header.frame_id = "map";
   return true;
 }
 
 autoware_map_msgs::msg::PointCloudMapCellWithID
 DifferentialMapLoaderModule::loadPointCloudMapCellWithID(
-  const std::string path, const std::string map_id, const pcl::PointXYZ min_point,
-  const pcl::PointXYZ max_point) const
+  const std::string path, const std::string map_id) const
 {
   sensor_msgs::msg::PointCloud2 pcd;
   if (pcl::io::loadPCDFile(path, pcd) == -1) {
@@ -83,11 +83,5 @@ DifferentialMapLoaderModule::loadPointCloudMapCellWithID(
   autoware_map_msgs::msg::PointCloudMapCellWithID pointcloud_map_cell_with_id;
   pointcloud_map_cell_with_id.pointcloud = pcd;
   pointcloud_map_cell_with_id.cell_id = map_id;
-  pointcloud_map_cell_with_id.min_point.x = min_point.x;
-  pointcloud_map_cell_with_id.min_point.y = min_point.y;
-  pointcloud_map_cell_with_id.min_point.z = min_point.z;
-  pointcloud_map_cell_with_id.max_point.x = max_point.x;
-  pointcloud_map_cell_with_id.max_point.y = max_point.y;
-  pointcloud_map_cell_with_id.max_point.z = max_point.z;
   return pointcloud_map_cell_with_id;
 }
