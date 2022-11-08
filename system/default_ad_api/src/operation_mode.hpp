@@ -15,23 +15,22 @@
 #ifndef OPERATION_MODE_HPP_
 #define OPERATION_MODE_HPP_
 
-#include "diagnostics.hpp"
-
 #include <autoware_ad_api_specs/operation_mode.hpp>
 #include <component_interface_specs/system.hpp>
 #include <component_interface_utils/status.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <unordered_map>
+#include <vector>
+
+// TODO(Takagi, Isamu): define interface
+#include <tier4_system_msgs/msg/mode_change_available.hpp>
 
 // This file should be included after messages.
 #include "utils/types.hpp"
 
 namespace default_ad_api
 {
-
-class DiagnosticsMonitor;
-
 class OperationModeNode : public rclcpp::Node
 {
 public:
@@ -47,8 +46,8 @@ private:
   using ChangeToRemote = autoware_ad_api::operation_mode::ChangeToRemote;
   using OperationModeRequest = system_interface::ChangeOperationMode::Service::Request;
   using AutowareControlRequest = system_interface::ChangeAutowareControl::Service::Request;
+  using ModeChangeAvailable = tier4_system_msgs::msg::ModeChangeAvailable;
 
-  DiagnosticsMonitor diagnostics_;
   OperationModeState::Message curr_state_;
   OperationModeState::Message prev_state_;
   std::unordered_map<OperationModeState::Message::_mode_type, bool> mode_available_;
@@ -65,6 +64,9 @@ private:
   Sub<system_interface::OperationModeState> sub_state_;
   Cli<system_interface::ChangeOperationMode> cli_mode_;
   Cli<system_interface::ChangeAutowareControl> cli_control_;
+
+  std::vector<bool> module_states_;
+  std::vector<rclcpp::Subscription<ModeChangeAvailable>::SharedPtr> sub_module_states_;
 
   void on_change_to_stop(
     const ChangeToStop::Service::Request::SharedPtr req,

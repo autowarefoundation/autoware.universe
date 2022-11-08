@@ -5,7 +5,6 @@ find_package(autoware_cmake REQUIRED)
 autoware_package()
 
 ament_auto_add_library(${PROJECT_NAME} SHARED
-  src/diagnostics.cpp
   src/interface.cpp
   src/localization.cpp
   src/motion.cpp
@@ -31,4 +30,4 @@ install(
   DESTINATION lib/${PROJECT_NAME}
 )
 
-ament_auto_package(INSTALL_TO_SHARE config launch test)
+ament_auto_package(INSTALL_TO_SHARE launch test)

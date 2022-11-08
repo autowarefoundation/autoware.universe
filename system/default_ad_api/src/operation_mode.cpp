@@ -15,6 +15,8 @@
 #include "operation_mode.hpp"
 
 #include <memory>
+#include <string>
+#include <vector>
 
 namespace default_ad_api
 {
@@ -22,7 +24,7 @@ namespace default_ad_api
 using ServiceResponse = autoware_adapi_v1_msgs::srv::ChangeOperationMode::Response;
 
 OperationModeNode::OperationModeNode(const rclcpp::NodeOptions & options)
-: Node("operation_mode", options), diagnostics_(this)
+: Node("operation_mode", options)
 {
   const auto adaptor = component_interface_utils::NodeAdaptor(this);
   group_cli_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
@@ -37,8 +39,22 @@ OperationModeNode::OperationModeNode(const rclcpp::NodeOptions & options)
   adaptor.init_cli(cli_mode_, group_cli_);
   adaptor.init_cli(cli_control_, group_cli_);
 
+  const std::vector<std::string> module_names = {
+    "sensing", "perception", "map", "localization", "planning", "control", "vehicle", "system",
+  };
+
+  for (size_t i = 0; i < module_names.size(); ++i) {
+    const auto name = "/system/component_state_monitor/component/autonomous/" + module_names[i];
+    const auto qos = rclcpp::QoS(1).transient_local();
+    const auto callback = [this, i](const ModeChangeAvailable::ConstSharedPtr msg) {
+      module_states_[i] = msg->available;
+    };
+    sub_module_states_.push_back(create_subscription<ModeChangeAvailable>(name, qos, callback));
+  }
+  module_states_.resize(module_names.size());
+
   timer_ = rclcpp::create_timer(
-    this, get_clock(), rclcpp::Rate(1.0).period(), std::bind(&OperationModeNode::on_timer, this));
+    this, get_clock(), rclcpp::Rate(5.0).period(), std::bind(&OperationModeNode::on_timer, this));
 
   curr_state_.mode = OperationModeState::Message::UNKNOWN;
   prev_state_.mode = OperationModeState::Message::UNKNOWN;
@@ -120,7 +136,12 @@ void OperationModeNode::on_state(const OperationModeState::Message::ConstSharedP
 
 void OperationModeNode::on_timer()
 {
-  mode_available_[OperationModeState::Message::AUTONOMOUS] = diagnostics_.is_ok();
+  bool autonomous_available = true;
+  for (const auto & state : module_states_) {
+    autonomous_available &= state;
+  }
+  mode_available_[OperationModeState::Message::AUTONOMOUS] = autonomous_available;
+
   update_state();
 }
 
