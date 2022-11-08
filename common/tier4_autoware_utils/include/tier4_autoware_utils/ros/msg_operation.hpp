@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef TIER4_AUTOWARE_UTILS__ROS__OPERATION_HPP_
-#define TIER4_AUTOWARE_UTILS__ROS__OPERATION_HPP_
+#ifndef TIER4_AUTOWARE_UTILS__ROS__MSG_OPERATION_HPP_
+#define TIER4_AUTOWARE_UTILS__ROS__MSG_OPERATION_HPP_
 
 #include "geometry_msgs/msg/quaternion.hpp"
 
@@ -28,4 +28,4 @@ Quaternion operator-(Quaternion a, Quaternion b) noexcept;
 }  // namespace msg
 }  // namespace geometry_msgs
 
-#endif  // TIER4_AUTOWARE_UTILS__ROS__OPERATION_HPP_
+#endif  // TIER4_AUTOWARE_UTILS__ROS__MSG_OPERATION_HPP_

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "tier4_autoware_utils/ros/operation.hpp"
+#include "tier4_autoware_utils/ros/msg_operation.hpp"
 
 #include <tf2/utils.h>
 
