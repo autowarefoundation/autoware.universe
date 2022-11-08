@@ -38,7 +38,7 @@ namespace behavior_velocity_planner
 {
 namespace util
 {
-int insertPoint(
+std::optional<size_t> insertPoint(
   const geometry_msgs::msg::Pose & in_pose,
   autoware_auto_planning_msgs::msg::PathWithLaneId * inout_path);
 

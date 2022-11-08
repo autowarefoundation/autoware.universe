@@ -177,7 +177,7 @@ bool IntersectionModule::modifyPathVelocity(
         "over the pass judge line, but before keep detection line and low speed, "
         "continue planning");
       // no return here, keep planning
-    } else if (is_go_out_ && !external_stop) {
+    } else if (is_over_pass_judge_line && is_go_out_ && !external_stop) {
       RCLCPP_INFO(logger_, "over the keep_detection line and not low speed. no plan needed.");
       RCLCPP_DEBUG(logger_, "===== plan end =====");
       setSafe(true);
@@ -202,7 +202,6 @@ bool IntersectionModule::modifyPathVelocity(
   const bool is_stuck = checkStuckVehicleInIntersection(objects_ptr, stuck_vehicle_detect_area);
   int stop_line_idx_final = -1;
   int pass_judge_line_idx_final = -1;
-  std::cout << "is_stuck = " << is_stuck << std::endl;
   if (external_go) {
     is_entry_prohibited = false;
   } else if (external_stop) {
