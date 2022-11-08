@@ -25,11 +25,14 @@ public:
   Reprojector();
 
 private:
+  const float min_segment_length_;
+
   // Publisher
   rclcpp::Publisher<Image>::SharedPtr pub_image_;
   // Subscriber
   rclcpp::Subscription<Image>::SharedPtr sub_image_;
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_lsd_;
+  rclcpp::Subscription<TwistStamped>::SharedPtr sub_twist_;
   vml_common::CameraInfoSubscriber info_;
   vml_common::StaticTfSubscriber tf_subscriber_;
 
@@ -40,8 +43,8 @@ private:
   void onTwist(TwistStamped::ConstSharedPtr msg);
   void onLineSegments(const PointCloud2 & msg);
 
-  void popObsoleteMsg(const rclcpp::Time & stamp);
-  void reproject(const Image & old_image, const Image & cur_image);
+  void popObsoleteMsg();
+  void reproject(const Image & old_image_msg, const PointCloud2 & cloud_msg);
 
   Sophus::SE3f accumulateTravelDistance(
     const rclcpp::Time & from_stamp, const rclcpp::Time & to_stamp);
