@@ -109,7 +109,7 @@ NDTScanMatcher::NDTScanMatcher()
   ndt_base_frame_ = this->declare_parameter("ndt_base_frame", ndt_base_frame_);
   RCLCPP_INFO(get_logger(), "ndt_base_frame_id: %s", ndt_base_frame_.c_str());
 
-  pclomp::NDTParams ndt_params;
+  pclomp::NdtParams ndt_params;
   ndt_params.trans_epsilon = this->declare_parameter<double>("trans_epsilon");
   ndt_params.step_size = this->declare_parameter<double>("step_size");
   ndt_params.resolution = this->declare_parameter<double>("resolution");
@@ -422,7 +422,7 @@ void NDTScanMatcher::callback_sensor_points(
     pose_to_matrix4f(interpolator.get_current_pose().pose.pose);
   auto output_cloud = std::make_shared<pcl::PointCloud<PointSource>>();
   ndt_ptr_->align(*output_cloud, initial_pose_matrix);
-  const pclomp::NDTResult ndt_result = ndt_ptr_->getResult();
+  const pclomp::NdtResult ndt_result = ndt_ptr_->getResult();
   key_value_stdmap_["state"] = "Sleeping";
 
   const auto exe_end_time = std::chrono::system_clock::now();
@@ -536,7 +536,7 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_using_monte_
     const auto & initial_pose = initial_poses[i];
     const Eigen::Matrix4f initial_pose_matrix = pose_to_matrix4f(initial_pose);
     ndt_ptr->align(*output_cloud, initial_pose_matrix);
-    const pclomp::NDTResult ndt_result = ndt_ptr->getResult();
+    const pclomp::NdtResult ndt_result = ndt_ptr->getResult();
 
     Particle particle(
       initial_pose, matrix4f_to_pose(ndt_result.pose), ndt_result.transform_probability,
