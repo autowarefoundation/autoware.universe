@@ -55,7 +55,7 @@ PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & opt
 
   std::string publisher_name = "output/pointcloud_map";
   pcd_map_loader_ =
-    std::make_unique<PointcloudMapLoaderModule>(this, pcd_paths, publisher_name, false);
+    std::make_unique<PointcloudMapLoaderModule>(this, pcd_paths, publisher_name);
 }
 
 std::vector<std::string> PointCloudMapLoaderNode::getPcdPaths(
