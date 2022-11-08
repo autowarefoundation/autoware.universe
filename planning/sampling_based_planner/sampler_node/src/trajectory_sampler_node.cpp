@@ -17,7 +17,7 @@
 #include "Eigen/src/Core/Matrix.h"
 #include "frenet_planner/structures.hpp"
 #include "lanelet2_core/LaneletMap.h"
-#include "sampler_common/constraints/path_footprint.hpp"
+#include "sampler_common/constraints/footprint.hpp"
 #include "sampler_common/constraints/soft_constraint.hpp"
 #include "sampler_common/structures.hpp"
 #include "sampler_common/trajectory_reuse.hpp"

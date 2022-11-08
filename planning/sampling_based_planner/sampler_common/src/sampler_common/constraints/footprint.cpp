@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#ifndef SAMPLER_COMMON__CONSTRAINTS__PATH_FOOTPRINT_HPP_
-#define SAMPLER_COMMON__CONSTRAINTS__PATH_FOOTPRINT_HPP_
+#ifndef SAMPLER_COMMON__CONSTRAINTS__FOOTPRINT_HPP_
+#define SAMPLER_COMMON__CONSTRAINTS__FOOTPRINT_HPP_
 
-#include "sampler_common/constraints/path_footprint.hpp"
+#include "sampler_common/constraints/footprint.hpp"
 
 #include "sampler_common/structures.hpp"
 
@@ -33,13 +33,41 @@
 namespace sampler_common::constraints
 {
 
+namespace
+{
+const auto to_eigen = [](const Point & p) { return Eigen::Vector2d(p.x(), p.y()); };
+}  // namespace
+
+Polygon buildFootprintPolygon(
+  const Point & point, const double yaw, const Constraints & constraints)
+{
+  Polygon footprint;
+  footprint.outer().reserve(5);
+
+  const auto & offsets = constraints.vehicle_offsets;
+  const auto p = to_eigen(point);
+  Eigen::Matrix2d rotation;
+  rotation << std::cos(yaw), -std::sin(yaw), std::sin(yaw), std::cos(yaw);
+  const Eigen::Vector2d left_rear_point = p + rotation * offsets.left_rear;
+  const Eigen::Vector2d right_rear_point = p + rotation * offsets.right_rear;
+  const Eigen::Vector2d left_front_point = p + rotation * offsets.left_front;
+  const Eigen::Vector2d right_front_point = p + rotation * offsets.right_front;
+  boost::geometry::append(footprint, Point(right_rear_point.x(), right_rear_point.y()));
+  boost::geometry::append(footprint, Point(left_rear_point.x(), left_rear_point.y()));
+  boost::geometry::append(footprint, Point(left_front_point.x(), left_front_point.y()));
+  boost::geometry::append(footprint, Point(right_front_point.x(), right_front_point.y()));
+  boost::geometry::append(footprint, footprint.outer().front());
+
+  return footprint;
+}
+
 Polygon buildFootprintPolygon(const Path & path, const Constraints & constraints)
 {
-  const auto to_eigen = [](const Point & p) { return Eigen::Vector2d(p.x(), p.y()); };
   Polygon footprint;
 
-  // TODO(Maxime CLEMENT): special case when = 1
-  if (path.points.size() < 2) return footprint;
+  if (path.points.size() == 1 && !path.yaws.empty())
+    return buildFootprintPolygon(path.points.front(), path.yaws.front(), constraints);
+  if (path.points.empty()) return footprint;
 
   // Using the method from Section IV.A of A. Artuñedoet al.: Real-Time Motion Planning Approach for
   // Automated Driving in Urban Environments
@@ -62,7 +90,7 @@ Polygon buildFootprintPolygon(const Path & path, const Constraints & constraints
   // For each points (except 1st and last)
   for (auto i = 0ul; i + 1 < path.points.size(); ++i) {
     const Eigen::Vector2d point = to_eigen(path.points[i]);
-    const double prev_heading = path.yaws[i-1];
+    const double prev_heading = path.yaws[i - 1];
     const double heading = path.yaws[i];
     Eigen::Matrix2d rotation;
     rotation << std::cos(heading), -std::sin(heading), std::sin(heading), std::cos(heading);
@@ -96,4 +124,4 @@ Polygon buildFootprintPolygon(const Path & path, const Constraints & constraints
 }
 }  // namespace sampler_common::constraints
 
-#endif  // SAMPLER_COMMON__CONSTRAINTS__PATH_FOOTPRINT_HPP_
+#endif  // SAMPLER_COMMON__CONSTRAINTS__FOOTPRINT_HPP_

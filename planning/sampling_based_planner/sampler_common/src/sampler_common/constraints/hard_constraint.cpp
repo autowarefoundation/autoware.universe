@@ -14,7 +14,7 @@
 
 #include "sampler_common/constraints/hard_constraint.hpp"
 
-#include "sampler_common/constraints/path_footprint.hpp"
+#include "sampler_common/constraints/footprint.hpp"
 #include "sampler_common/structures.hpp"
 
 #include <boost/geometry.hpp>

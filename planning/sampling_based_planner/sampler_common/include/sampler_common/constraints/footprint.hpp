@@ -14,14 +14,26 @@
  * limitations under the License.
  */
 
-#ifndef SAMPLER_COMMON__CONSTRAINTS__PATH_FOOTPRINT_HPP_
-#define SAMPLER_COMMON__CONSTRAINTS__PATH_FOOTPRINT_HPP_
+#ifndef SAMPLER_COMMON__CONSTRAINTS__FOOTPRINT_HPP_
+#define SAMPLER_COMMON__CONSTRAINTS__FOOTPRINT_HPP_
 
 #include "sampler_common/structures.hpp"
 
 namespace sampler_common::constraints
 {
+
+/// @brief Calculate the footprint of the given pose (point + yaw)
+/// @param point input XY point
+/// @param yaw input orientation
+/// @param constraints input constraint object containing vehicle footprint offsets
+/// @return the polygon footprint of the pose
+Polygon buildFootprintPolygon(
+  const Point & point, const double yaw, const Constraints & constraints);
+/// @brief Calculate the footprint of the given path
+/// @param path sequence of pose used to build the footprint
+/// @param constraints input constraint object containing vehicle footprint offsets
+/// @return the polygon footprint of the path
 Polygon buildFootprintPolygon(const Path & path, const Constraints & constraints);
 }  // namespace sampler_common::constraints
 
-#endif  // SAMPLER_COMMON__CONSTRAINTS__PATH_FOOTPRINT_HPP_
+#endif  // SAMPLER_COMMON__CONSTRAINTS__FOOTPRINT_HPP_
