@@ -98,7 +98,7 @@ inline static void downsamplePoints(const Mat & src, Mat & dst, size_t count)
   dst.at<Point3_<uchar>>(1) = src.at<Point3_<uchar>>(maxLoc.y);
 
   // ignore cspell error due to the source from OpenCV
-  // cspell: ignore activedDists
+  // cspell: ignore actived Dists randu
   Mat activedDists(0, dists.cols, dists.type());
   Mat candidatePointsMask(1, dists.cols, CV_8UC1, Scalar(255));
   activedDists.push_back(dists.row(maxLoc.y));
