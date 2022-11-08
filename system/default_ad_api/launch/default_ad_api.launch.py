@@ -69,6 +69,7 @@ def launch_setup(context, *args, **kwargs):
     components = [
         create_api_node("interface", "InterfaceNode"),
         create_api_node("localization", "LocalizationNode"),
+        create_api_node("motion", "MotionNode", parameters=[{"require_accept_start": False}]),
         create_api_node("operation_mode", "OperationModeNode", parameters=param_operation_mode),
         create_api_node("routing", "RoutingNode"),
     ]

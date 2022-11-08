@@ -140,16 +140,29 @@ Trajectory PlannerInterface::generateStopTrajectory(
     const auto closest_behavior_stop_idx =
       motion_utils::searchZeroVelocityIndex(planner_data.traj.points, nearest_segment_idx + 1);
 
-    if (
-      closest_behavior_stop_idx &&
-      closest_behavior_stop_idx != planner_data.traj.points.size() - 1) {
-      const double closest_behavior_stop_dist_from_ego = motion_utils::calcSignedArcLength(
-        planner_data.traj.points, planner_data.current_pose.position, nearest_segment_idx,
-        *closest_behavior_stop_idx);
+    if (!closest_behavior_stop_idx) {
+      return longitudinal_info_.safe_distance_margin;
+    }
+
+    const double closest_behavior_stop_dist_from_ego = motion_utils::calcSignedArcLength(
+      planner_data.traj.points, planner_data.current_pose.position, nearest_segment_idx,
+      *closest_behavior_stop_idx);
+
+    if (*closest_behavior_stop_idx == planner_data.traj.points.size() - 1) {
+      // Closest behavior stop point is the end point
+      const double closest_obstacle_stop_dist_from_ego =
+        closest_obstacle_dist - dist_to_ego - longitudinal_info_.terminal_safe_distance_margin -
+        abs_ego_offset;
+      const double stop_dist_diff =
+        closest_behavior_stop_dist_from_ego - closest_obstacle_stop_dist_from_ego;
+      if (stop_dist_diff < longitudinal_info_.safe_distance_margin) {
+        // Use terminal margin (terminal_safe_distance_margin) for obstacle stop
+        return longitudinal_info_.terminal_safe_distance_margin;
+      }
+    } else {
       const double closest_obstacle_stop_dist_from_ego = closest_obstacle_dist - dist_to_ego -
                                                          longitudinal_info_.safe_distance_margin -
                                                          abs_ego_offset;
-
       const double stop_dist_diff =
         closest_behavior_stop_dist_from_ego - closest_obstacle_stop_dist_from_ego;
       if (0.0 < stop_dist_diff && stop_dist_diff < longitudinal_info_.safe_distance_margin) {
@@ -182,13 +195,10 @@ Trajectory PlannerInterface::generateStopTrajectory(
     std::max(0.0, closest_obstacle_dist - abs_ego_offset - feasible_margin_from_obstacle);
   const auto zero_vel_idx = motion_utils::insertStopPoint(0, zero_vel_dist, output_traj.points);
   if (zero_vel_idx) {
-    const auto wall_idx = obstacle_cruise_utils::getIndexWithLongitudinalOffset(
-      output_traj.points, abs_ego_offset, *zero_vel_idx);
-
     // virtual wall marker for stop obstacle
-    const auto marker_pose = output_traj.points.at(wall_idx).pose;
     const auto markers = motion_utils::createStopVirtualWallMarker(
-      marker_pose, "obstacle stop", planner_data.current_time, 0);
+      output_traj.points.at(*zero_vel_idx).pose, "obstacle stop", planner_data.current_time, 0,
+      abs_ego_offset);
     tier4_autoware_utils::appendMarkerArray(markers, &debug_data.stop_wall_marker);
     debug_data.obstacles_to_stop.push_back(*closest_stop_obstacle);
 

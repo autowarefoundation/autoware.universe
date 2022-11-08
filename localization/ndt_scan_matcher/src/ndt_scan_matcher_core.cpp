@@ -82,7 +82,7 @@ bool validate_local_optimal_solution_oscillation(
 NDTScanMatcher::NDTScanMatcher()
 : Node("ndt_scan_matcher"),
   tf2_broadcaster_(*this),
-  ndt_implement_type_(NDTImplementType::PCL_GENERIC),
+  ndt_ptr_(new NormalDistributionsTransform),
   base_frame_("base_link"),
   ndt_base_frame_("ndt_base_link"),
   map_frame_("map"),
@@ -94,38 +94,10 @@ NDTScanMatcher::NDTScanMatcher()
   initial_pose_distance_tolerance_m_(10.0),
   inversion_vector_threshold_(-0.9),
   oscillation_threshold_(10),
-  regularization_enabled_(declare_parameter("regularization_enabled", false)),
-  regularization_scale_factor_(declare_parameter("regularization_scale_factor", 0.01))
+  regularization_enabled_(declare_parameter("regularization_enabled", false))
 {
   key_value_stdmap_["state"] = "Initializing";
-
-  int ndt_implement_type_tmp = this->declare_parameter("ndt_implement_type", 0);
-  ndt_implement_type_ = static_cast<NDTImplementType>(ndt_implement_type_tmp);
-
-  RCLCPP_INFO(get_logger(), "NDT Implement Type is %d", ndt_implement_type_tmp);
-  try {
-    ndt_ptr_ = get_ndt<PointSource, PointTarget>(ndt_implement_type_);
-  } catch (std::exception & e) {
-    RCLCPP_ERROR(get_logger(), "%s", e.what());
-    return;
-  }
-
-  if (ndt_implement_type_ == NDTImplementType::OMP) {
-    using T = NormalDistributionsTransformOMP<PointSource, PointTarget>;
-
-    // FIXME(IshitaTakeshi) Not sure if this is safe
-    std::shared_ptr<T> ndt_omp_ptr = std::dynamic_pointer_cast<T>(ndt_ptr_);
-    int search_method = static_cast<int>(omp_params_.search_method);
-    search_method = this->declare_parameter("omp_neighborhood_search_method", search_method);
-    omp_params_.search_method = static_cast<pclomp::NeighborSearchMethod>(search_method);
-    // TODO(Tier IV): check search_method is valid value.
-    ndt_omp_ptr->setNeighborhoodSearchMethod(omp_params_.search_method);
-
-    omp_params_.num_threads = this->declare_parameter("omp_num_threads", omp_params_.num_threads);
-    omp_params_.num_threads = std::max(omp_params_.num_threads, 1);
-    ndt_omp_ptr->setNumThreads(omp_params_.num_threads);
-    ndt_ptr_ = ndt_omp_ptr;
-  }
+  is_activated_ = false;
 
   int points_queue_size = this->declare_parameter("input_sensor_points_queue_size", 0);
   points_queue_size = std::max(points_queue_size, 0);
@@ -137,35 +109,30 @@ NDTScanMatcher::NDTScanMatcher()
   ndt_base_frame_ = this->declare_parameter("ndt_base_frame", ndt_base_frame_);
   RCLCPP_INFO(get_logger(), "ndt_base_frame_id: %s", ndt_base_frame_.c_str());
 
-  double trans_epsilon = ndt_ptr_->getTransformationEpsilon();
-  double step_size = ndt_ptr_->getStepSize();
-  double resolution = ndt_ptr_->getResolution();
-  int max_iterations = ndt_ptr_->getMaximumIterations();
-  trans_epsilon = this->declare_parameter("trans_epsilon", trans_epsilon);
-  step_size = this->declare_parameter("step_size", step_size);
-  resolution = this->declare_parameter("resolution", resolution);
-  max_iterations = this->declare_parameter("max_iterations", max_iterations);
-  ndt_ptr_->setTransformationEpsilon(trans_epsilon);
-  ndt_ptr_->setStepSize(step_size);
-  ndt_ptr_->setResolution(resolution);
-  ndt_ptr_->setMaximumIterations(max_iterations);
-  ndt_ptr_->setRegularizationScaleFactor(regularization_scale_factor_);
+  ndt_params_.trans_epsilon = this->declare_parameter<double>("trans_epsilon");
+  ndt_params_.step_size = this->declare_parameter<double>("step_size");
+  ndt_params_.resolution = this->declare_parameter<double>("resolution");
+  ndt_params_.max_iterations = this->declare_parameter<int>("max_iterations");
+  int search_method = this->declare_parameter<int>("neighborhood_search_method");
+  ndt_params_.search_method = static_cast<pclomp::NeighborSearchMethod>(search_method);
+  ndt_params_.num_threads = this->declare_parameter<int>("num_threads");
+  ndt_params_.num_threads = std::max(ndt_params_.num_threads, 1);
+
+  ndt_ptr_->setTransformationEpsilon(ndt_params_.trans_epsilon);
+  ndt_ptr_->setStepSize(ndt_params_.step_size);
+  ndt_ptr_->setResolution(ndt_params_.resolution);
+  ndt_ptr_->setMaximumIterations(ndt_params_.max_iterations);
+  ndt_ptr_->setRegularizationScaleFactor(ndt_params_.regularization_scale_factor);
+  ndt_ptr_->setNeighborhoodSearchMethod(ndt_params_.search_method);
+  ndt_ptr_->setNumThreads(ndt_params_.num_threads);
 
   RCLCPP_INFO(
     get_logger(), "trans_epsilon: %lf, step_size: %lf, resolution: %lf, max_iterations: %d",
-    trans_epsilon, step_size, resolution, max_iterations);
+    ndt_params_.trans_epsilon, ndt_params_.step_size, ndt_params_.resolution,
+    ndt_params_.max_iterations);
 
   int converged_param_type_tmp = this->declare_parameter("converged_param_type", 0);
   converged_param_type_ = static_cast<ConvergedParamType>(converged_param_type_tmp);
-  if (
-    ndt_implement_type_ != NDTImplementType::OMP &&
-    converged_param_type_ == ConvergedParamType::NEAREST_VOXEL_TRANSFORMATION_LIKELIHOOD) {
-    RCLCPP_ERROR(
-      get_logger(),
-      "ConvergedParamType::NEAREST_VOXEL_TRANSFORMATION_LIKELIHOOD is only available when "
-      "NDTImplementType::OMP is selected.");
-    return;
-  }
 
   converged_param_transform_probability_ = this->declare_parameter(
     "converged_param_transform_probability", converged_param_transform_probability_);
@@ -253,6 +220,11 @@ NDTScanMatcher::NDTScanMatcher()
     "ndt_align_srv",
     std::bind(
       &NDTScanMatcher::service_ndt_align, this, std::placeholders::_1, std::placeholders::_2),
+    rclcpp::ServicesQoS().get_rmw_qos_profile(), main_callback_group);
+  service_trigger_node_ = this->create_service<std_srvs::srv::SetBool>(
+    "trigger_node_srv",
+    std::bind(
+      &NDTScanMatcher::service_trigger_node, this, std::placeholders::_1, std::placeholders::_2),
     rclcpp::ServicesQoS().get_rmw_qos_profile(), main_callback_group);
 
   diagnostic_thread_ = std::thread(&NDTScanMatcher::timer_diagnostic, this);
@@ -349,6 +321,8 @@ void NDTScanMatcher::service_ndt_align(
 void NDTScanMatcher::callback_initial_pose(
   const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr initial_pose_msg_ptr)
 {
+  if (!is_activated_) return;
+
   // lock mutex for initial pose
   std::lock_guard<std::mutex> initial_pose_array_lock(initial_pose_array_mtx_);
   // if rosbag restart, clear buffer
@@ -387,29 +361,14 @@ void NDTScanMatcher::callback_regularization_pose(
 void NDTScanMatcher::callback_map_points(
   sensor_msgs::msg::PointCloud2::ConstSharedPtr map_points_msg_ptr)
 {
-  const auto trans_epsilon = ndt_ptr_->getTransformationEpsilon();
-  const auto step_size = ndt_ptr_->getStepSize();
-  const auto resolution = ndt_ptr_->getResolution();
-  const auto max_iterations = ndt_ptr_->getMaximumIterations();
-
-  using NDTBase = NormalDistributionsTransformBase<PointSource, PointTarget>;
-  std::shared_ptr<NDTBase> new_ndt_ptr = get_ndt<PointSource, PointTarget>(ndt_implement_type_);
-
-  if (ndt_implement_type_ == NDTImplementType::OMP) {
-    using T = NormalDistributionsTransformOMP<PointSource, PointTarget>;
-
-    // FIXME(IshitaTakeshi) Not sure if this is safe
-    std::shared_ptr<T> ndt_omp_ptr = std::dynamic_pointer_cast<T>(ndt_ptr_);
-    ndt_omp_ptr->setNeighborhoodSearchMethod(omp_params_.search_method);
-    ndt_omp_ptr->setNumThreads(omp_params_.num_threads);
-    new_ndt_ptr = ndt_omp_ptr;
-  }
-
-  new_ndt_ptr->setTransformationEpsilon(trans_epsilon);
-  new_ndt_ptr->setStepSize(step_size);
-  new_ndt_ptr->setResolution(resolution);
-  new_ndt_ptr->setMaximumIterations(max_iterations);
-  new_ndt_ptr->setRegularizationScaleFactor(regularization_scale_factor_);
+  std::shared_ptr<NormalDistributionsTransform> new_ndt_ptr(new NormalDistributionsTransform);
+  new_ndt_ptr->setTransformationEpsilon(ndt_params_.trans_epsilon);
+  new_ndt_ptr->setStepSize(ndt_params_.step_size);
+  new_ndt_ptr->setResolution(ndt_params_.resolution);
+  new_ndt_ptr->setMaximumIterations(ndt_params_.max_iterations);
+  new_ndt_ptr->setRegularizationScaleFactor(ndt_params_.regularization_scale_factor);
+  new_ndt_ptr->setNeighborhoodSearchMethod(ndt_params_.search_method);
+  new_ndt_ptr->setNumThreads(ndt_params_.num_threads);
 
   pcl::shared_ptr<pcl::PointCloud<PointTarget>> map_points_ptr(new pcl::PointCloud<PointTarget>);
   pcl::fromROSMsg(*map_points_msg_ptr, *map_points_ptr);
@@ -417,7 +376,7 @@ void NDTScanMatcher::callback_map_points(
   // create Thread
   // detach
   auto output_cloud = std::make_shared<pcl::PointCloud<PointSource>>();
-  new_ndt_ptr->align(*output_cloud, Eigen::Matrix4f::Identity());
+  new_ndt_ptr->align(*output_cloud);
 
   // swap
   ndt_ptr_mtx_.lock();
@@ -445,6 +404,7 @@ void NDTScanMatcher::callback_sensor_points(
   transform_sensor_measurement(
     sensor_frame, base_frame_, sensor_points_sensorTF_ptr, sensor_points_baselinkTF_ptr);
   ndt_ptr_->setInputSource(sensor_points_baselinkTF_ptr);
+  if (!is_activated_) return;
 
   // calculate initial pose
   std::unique_lock<std::mutex> initial_pose_array_lock(initial_pose_array_mtx_);
@@ -460,8 +420,7 @@ void NDTScanMatcher::callback_sensor_points(
   initial_pose_array_lock.unlock();
 
   // if regularization is enabled and available, set pose to NDT for regularization
-  if (regularization_enabled_ && (ndt_implement_type_ == NDTImplementType::OMP))
-    add_regularization_pose(sensor_ros_time);
+  if (regularization_enabled_) add_regularization_pose(sensor_ros_time);
 
   if (ndt_ptr_->getInputTarget() == nullptr) {
     RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1, "No MAP!");
@@ -470,13 +429,24 @@ void NDTScanMatcher::callback_sensor_points(
 
   // perform ndt scan matching
   key_value_stdmap_["state"] = "Aligning";
-  const NdtResult ndt_result = align(interpolator.get_current_pose().pose.pose);
+  const Eigen::Matrix4f initial_pose_matrix =
+    pose_to_matrix4f(interpolator.get_current_pose().pose.pose);
+  auto output_cloud = std::make_shared<pcl::PointCloud<PointSource>>();
+  ndt_ptr_->align(*output_cloud, initial_pose_matrix);
+  const pclomp::NdtResult ndt_result = ndt_ptr_->getResult();
   key_value_stdmap_["state"] = "Sleeping";
 
   const auto exe_end_time = std::chrono::system_clock::now();
   const double exe_time =
     std::chrono::duration_cast<std::chrono::microseconds>(exe_end_time - exe_start_time).count() /
     1000.0;
+
+  const geometry_msgs::msg::Pose result_pose_msg = matrix4f_to_pose(ndt_result.pose);
+  std::vector<geometry_msgs::msg::Pose> transformation_msg_array;
+  for (const auto & pose_matrix : ndt_result.transformation_array) {
+    geometry_msgs::msg::Pose pose_ros = matrix4f_to_pose(pose_matrix);
+    transformation_msg_array.push_back(pose_ros);
+  }
 
   // perform several validations
   /*****************************************************************************
@@ -496,7 +466,7 @@ void NDTScanMatcher::callback_sensor_points(
   bool is_local_optimal_solution_oscillation = false;
   if (!is_ok_iteration_num) {
     is_local_optimal_solution_oscillation = validate_local_optimal_solution_oscillation(
-      ndt_result.transformation_array, oscillation_threshold_, inversion_vector_threshold_);
+      transformation_msg_array, oscillation_threshold_, inversion_vector_threshold_);
   }
   bool is_ok_converged_param = validate_converged_param(
     ndt_result.transform_probability, ndt_result.nearest_voxel_transformation_likelihood);
@@ -517,16 +487,16 @@ void NDTScanMatcher::callback_sensor_points(
   nearest_voxel_transformation_likelihood_pub_->publish(
     make_float32_stamped(sensor_ros_time, ndt_result.nearest_voxel_transformation_likelihood));
   iteration_num_pub_->publish(make_int32_stamped(sensor_ros_time, ndt_result.iteration_num));
-  publish_tf(sensor_ros_time, ndt_result.pose);
-  publish_pose(sensor_ros_time, ndt_result.pose, is_converged);
-  publish_marker(sensor_ros_time, ndt_result.transformation_array);
+  publish_tf(sensor_ros_time, result_pose_msg);
+  publish_pose(sensor_ros_time, result_pose_msg, is_converged);
+  publish_marker(sensor_ros_time, transformation_msg_array);
   publish_initial_to_result_distances(
-    sensor_ros_time, ndt_result.pose, interpolator.get_current_pose(), interpolator.get_old_pose(),
+    sensor_ros_time, result_pose_msg, interpolator.get_current_pose(), interpolator.get_old_pose(),
     interpolator.get_new_pose());
 
   auto sensor_points_mapTF_ptr = std::make_shared<pcl::PointCloud<PointSource>>();
   pcl::transformPointCloud(
-    *sensor_points_baselinkTF_ptr, *sensor_points_mapTF_ptr, pose_to_matrix4f(ndt_result.pose));
+    *sensor_points_baselinkTF_ptr, *sensor_points_mapTF_ptr, ndt_result.pose);
   publish_point_cloud(sensor_ros_time, map_frame_, sensor_points_mapTF_ptr);
 
   key_value_stdmap_["transform_probability"] = std::to_string(ndt_result.transform_probability);
@@ -557,33 +527,8 @@ void NDTScanMatcher::transform_sensor_measurement(
     *sensor_points_input_ptr, *sensor_points_output_ptr, base_to_sensor_matrix);
 }
 
-NdtResult NDTScanMatcher::align(const geometry_msgs::msg::Pose & initial_pose_msg)
-{
-  const Eigen::Matrix4f initial_pose_matrix = pose_to_matrix4f(initial_pose_msg);
-
-  auto output_cloud = std::make_shared<pcl::PointCloud<PointSource>>();
-  ndt_ptr_->align(*output_cloud, initial_pose_matrix);
-
-  const std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>>
-    transformation_array_matrix = ndt_ptr_->getFinalTransformationArray();
-  std::vector<geometry_msgs::msg::Pose> transformation_array_msg;
-  for (auto pose_matrix : transformation_array_matrix) {
-    geometry_msgs::msg::Pose pose_ros = matrix4f_to_pose(pose_matrix);
-    transformation_array_msg.push_back(pose_ros);
-  }
-
-  NdtResult ndt_result;
-  ndt_result.pose = matrix4f_to_pose(ndt_ptr_->getFinalTransformation());
-  ndt_result.transformation_array = transformation_array_msg;
-  ndt_result.transform_probability = ndt_ptr_->getTransformationProbability();
-  ndt_result.nearest_voxel_transformation_likelihood =
-    ndt_ptr_->getNearestVoxelTransformationLikelihood();
-  ndt_result.iteration_num = ndt_ptr_->getFinalNumIteration();
-  return ndt_result;
-}
-
 geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_using_monte_carlo(
-  const std::shared_ptr<NormalDistributionsTransformBase<PointSource, PointTarget>> & ndt_ptr,
+  const std::shared_ptr<NormalDistributionsTransform> & ndt_ptr,
   const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_with_cov)
 {
   if (ndt_ptr->getInputTarget() == nullptr || ndt_ptr->getInputSource() == nullptr) {
@@ -600,18 +545,20 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_using_monte_
 
   for (unsigned int i = 0; i < initial_poses.size(); i++) {
     const auto & initial_pose = initial_poses[i];
-    const NdtResult ndt_result = align(initial_pose);
+    const Eigen::Matrix4f initial_pose_matrix = pose_to_matrix4f(initial_pose);
+    ndt_ptr_->align(*output_cloud, initial_pose_matrix);
+    const pclomp::NdtResult ndt_result = ndt_ptr_->getResult();
 
     Particle particle(
-      initial_pose, ndt_result.pose, ndt_result.transform_probability, ndt_result.iteration_num);
+      initial_pose, matrix4f_to_pose(ndt_result.pose), ndt_result.transform_probability,
+      ndt_result.iteration_num);
     particle_array.push_back(particle);
     const auto marker_array = make_debug_markers(
       this->now(), map_frame_, tier4_autoware_utils::createMarkerScale(0.3, 0.1, 0.1), particle, i);
     ndt_monte_carlo_initial_pose_marker_pub_->publish(marker_array);
 
     auto sensor_points_mapTF_ptr = std::make_shared<pcl::PointCloud<PointSource>>();
-    pcl::transformPointCloud(
-      *ndt_ptr->getInputSource(), *sensor_points_mapTF_ptr, pose_to_matrix4f(ndt_result.pose));
+    pcl::transformPointCloud(*ndt_ptr->getInputSource(), *sensor_points_mapTF_ptr, ndt_result.pose);
     publish_point_cloud(initial_pose_with_cov.header.stamp, map_frame_, sensor_points_mapTF_ptr);
   }
 
@@ -796,4 +743,19 @@ void NDTScanMatcher::add_regularization_pose(const rclcpp::Time & sensor_ros_tim
     ndt_ptr_->setRegularizationPose(pose_opt.value());
     RCLCPP_DEBUG_STREAM(get_logger(), "Regularization pose is set to NDT");
   }
+}
+
+void NDTScanMatcher::service_trigger_node(
+  const std_srvs::srv::SetBool::Request::SharedPtr req,
+  std_srvs::srv::SetBool::Response::SharedPtr res)
+{
+  is_activated_ = req->data;
+  if (is_activated_) {
+    std::lock_guard<std::mutex> initial_pose_array_lock(initial_pose_array_mtx_);
+    initial_pose_msg_ptr_array_.clear();
+  } else {
+    key_value_stdmap_["state"] = "Initializing";
+  }
+  res->success = true;
+  return;
 }

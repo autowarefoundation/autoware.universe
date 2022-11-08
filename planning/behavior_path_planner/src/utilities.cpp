@@ -624,8 +624,43 @@ bool checkCollisionBetweenFootprintAndObjects(
   return false;
 }
 
+double calcLateralDistanceFromEgoToObject(
+  const Pose & ego_pose, const double vehicle_width, const PredictedObject & dynamic_object)
+{
+  double min_distance = std::numeric_limits<double>::max();
+  Polygon2d obj_polygon;
+  if (!calcObjectPolygon(dynamic_object, &obj_polygon)) {
+    return min_distance;
+  }
+
+  const auto vehicle_left_pose =
+    tier4_autoware_utils::calcOffsetPose(ego_pose, 0, vehicle_width / 2, 0);
+  const auto vehicle_right_pose =
+    tier4_autoware_utils::calcOffsetPose(ego_pose, 0, -vehicle_width / 2, 0);
+
+  for (const auto & p : obj_polygon.outer()) {
+    const auto point = tier4_autoware_utils::createPoint(p.x(), p.y(), 0.0);
+    // left direction is positive
+    const double signed_distance_from_left =
+      tier4_autoware_utils::calcLateralDeviation(vehicle_left_pose, point);
+    // right direction is positive
+    const double signed_distance_from_right =
+      tier4_autoware_utils::calcLateralDeviation(vehicle_right_pose, point);
+
+    if (signed_distance_from_left < 0.0 && signed_distance_from_right < 0.0) {
+      // point is between left and right
+      return 0.0;
+    }
+
+    const double distance_from_ego =
+      std::min(std::abs(signed_distance_from_left), std::abs(signed_distance_from_right));
+    min_distance = std::min(min_distance, distance_from_ego);
+  }
+  return min_distance;
+}
+
 double calcLongitudinalDistanceFromEgoToObject(
-  const Pose & ego_pose, double base_link2front, double base_link2rear,
+  const Pose & ego_pose, const double base_link2front, const double base_link2rear,
   const PredictedObject & dynamic_object)
 {
   double min_distance = std::numeric_limits<double>::max();
@@ -642,8 +677,10 @@ double calcLongitudinalDistanceFromEgoToObject(
   for (const auto & p : obj_polygon.outer()) {
     const auto point = tier4_autoware_utils::createPoint(p.x(), p.y(), 0.0);
 
+    // forward is positive
     const double signed_distance_from_front =
       tier4_autoware_utils::calcLongitudinalDeviation(vehicle_front_pose, point);
+    // backward is positive
     const double signed_distance_from_rear =
       -tier4_autoware_utils::calcLongitudinalDeviation(vehicle_rear_pose, point);
 
@@ -1441,7 +1478,7 @@ PathPointWithLaneId insertStopPoint(double length, PathWithLaneId * path)
   return stop_point;
 }
 
-double getDistanceToShoulderBoundary(
+double getSignedDistanceFromShoulderLeftBoundary(
   const lanelet::ConstLanelets & shoulder_lanelets, const Pose & pose)
 {
   lanelet::ConstLanelet closest_shoulder_lanelet;
@@ -1462,13 +1499,14 @@ double getDistanceToShoulderBoundary(
   return arc_coordinates.distance;
 }
 
-double getDistanceToRightBoundary(const lanelet::ConstLanelets & lanelets, const Pose & pose)
+double getSignedDistanceFromRightBoundary(
+  const lanelet::ConstLanelets & lanelets, const Pose & pose)
 {
-  lanelet::ConstLanelet closest_shoulder_lanelet;
+  lanelet::ConstLanelet closest_lanelet;
   lanelet::ArcCoordinates arc_coordinates;
-  if (lanelet::utils::query::getClosestLanelet(lanelets, pose, &closest_shoulder_lanelet)) {
+  if (lanelet::utils::query::getClosestLanelet(lanelets, pose, &closest_lanelet)) {
     const auto lanelet_point = lanelet::utils::conversion::toLaneletPoint(pose.position);
-    const auto & right_line_2d = lanelet::utils::to2D(closest_shoulder_lanelet.rightBound3d());
+    const auto & right_line_2d = lanelet::utils::to2D(closest_lanelet.rightBound3d());
     arc_coordinates = lanelet::geometry::toArcCoordinates(
       right_line_2d, lanelet::utils::to2D(lanelet_point).basicPoint());
   } else {
@@ -1655,6 +1693,32 @@ lanelet::ConstLineStrings3d getDrivableAreaForAllSharedLinestringLanelets(
   }
 
   return linestring_shared;
+}
+
+lanelet::ConstLanelets expandLanelets(
+  const lanelet::ConstLanelets & lanelets, const double left_bound_offset,
+  const double right_bound_offset, const std::vector<std::string> & types_to_skip)
+{
+  if (left_bound_offset == 0.0 && right_bound_offset == 0.0) return lanelets;
+
+  lanelet::ConstLanelets expanded_lanelets{};
+  expanded_lanelets.reserve(lanelets.size());
+  for (const auto & lanelet : lanelets) {
+    const std::string l_type =
+      lanelet.leftBound().attributeOr(lanelet::AttributeName::Type, "none");
+    const std::string r_type =
+      lanelet.rightBound().attributeOr(lanelet::AttributeName::Type, "none");
+
+    const bool l_skip =
+      std::find(types_to_skip.begin(), types_to_skip.end(), l_type) != types_to_skip.end();
+    const bool r_skip =
+      std::find(types_to_skip.begin(), types_to_skip.end(), r_type) != types_to_skip.end();
+    const double l_offset = l_skip ? 0.0 : left_bound_offset;
+    const double r_offset = r_skip ? 0.0 : -right_bound_offset;
+
+    expanded_lanelets.push_back(lanelet::utils::getExpandedLanelet(lanelet, l_offset, r_offset));
+  }
+  return expanded_lanelets;
 }
 
 PredictedObjects filterObjectsByVelocity(const PredictedObjects & objects, double lim_v)

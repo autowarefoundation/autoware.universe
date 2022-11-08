@@ -68,6 +68,12 @@ OSQPInterface::OSQPInterface(
   initializeProblem(P, A, q, l, u);
 }
 
+OSQPInterface::~OSQPInterface()
+{
+  if (m_data->P) free(m_data->P);
+  if (m_data->A) free(m_data->A);
+}
+
 void OSQPInterface::OSQPWorkspaceDeleter(OSQPWorkspace * ptr) noexcept
 {
   if (ptr != nullptr) {
@@ -202,6 +208,78 @@ void OSQPInterface::updateAlpha(const double alpha)
   }
 }
 
+void OSQPInterface::updateScaling(const int scaling) { m_settings->scaling = scaling; }
+
+void OSQPInterface::updatePolish(const bool polish)
+{
+  m_settings->polish = polish;
+  if (m_work_initialized) {
+    osqp_update_polish(m_work.get(), polish);
+  }
+}
+
+void OSQPInterface::updatePolishRefinementIteration(const int polish_refine_iter)
+{
+  if (polish_refine_iter < 0) {
+    std::cerr << "Polish refinement iterations must be positive" << std::endl;
+    return;
+  }
+
+  m_settings->polish_refine_iter = polish_refine_iter;
+  if (m_work_initialized) {
+    osqp_update_polish_refine_iter(m_work.get(), polish_refine_iter);
+  }
+}
+
+void OSQPInterface::updateCheckTermination(const int check_termination)
+{
+  if (check_termination < 0) {
+    std::cerr << "Check termination must be positive" << std::endl;
+    return;
+  }
+
+  m_settings->check_termination = check_termination;
+  if (m_work_initialized) {
+    osqp_update_check_termination(m_work.get(), check_termination);
+  }
+}
+
+bool OSQPInterface::setWarmStart(
+  const std::vector<double> & primal_variables, const std::vector<double> & dual_variables)
+{
+  return setPrimalVariables(primal_variables) && setDualVariables(dual_variables);
+}
+
+bool OSQPInterface::setPrimalVariables(const std::vector<double> & primal_variables)
+{
+  if (!m_work_initialized) {
+    return false;
+  }
+
+  const auto result = osqp_warm_start_x(m_work.get(), primal_variables.data());
+  if (result != 0) {
+    std::cerr << "Failed to set primal variables for warm start" << std::endl;
+    return false;
+  }
+
+  return true;
+}
+
+bool OSQPInterface::setDualVariables(const std::vector<double> & dual_variables)
+{
+  if (!m_work_initialized) {
+    return false;
+  }
+
+  const auto result = osqp_warm_start_y(m_work.get(), dual_variables.data());
+  if (result != 0) {
+    std::cerr << "Failed to set dual variables for warm start" << std::endl;
+    return false;
+  }
+
+  return true;
+}
+
 int64_t OSQPInterface::initializeProblem(
   const Eigen::MatrixXd & P, const Eigen::MatrixXd & A, const std::vector<float64_t> & q,
   const std::vector<float64_t> & l, const std::vector<float64_t> & u)
@@ -261,10 +339,12 @@ int64_t OSQPInterface::initializeProblem(
    * POPULATE DATA
    *****************/
   m_data->n = m_param_n;
+  if (m_data->P) free(m_data->P);
   m_data->P = csc_matrix(
     m_data->n, m_data->n, static_cast<c_int>(P_csc.m_vals.size()), P_csc.m_vals.data(),
     P_csc.m_row_idxs.data(), P_csc.m_col_idxs.data());
   m_data->q = q_dyn;
+  if (m_data->A) free(m_data->A);
   m_data->A = csc_matrix(
     m_data->m, m_data->n, static_cast<c_int>(A_csc.m_vals.size()), A_csc.m_vals.data(),
     A_csc.m_row_idxs.data(), A_csc.m_col_idxs.data());
@@ -335,6 +415,26 @@ OSQPInterface::optimize(
   return result;
 }
 
+void OSQPInterface::logUnsolvedStatus(const std::string & prefix_message) const
+{
+  const int status = getStatus();
+  if (status == 1) {
+    // No need to log since optimization was solved.
+    return;
+  }
+
+  // create message
+  std::string output_message = "";
+  if (prefix_message != "") {
+    output_message = prefix_message + " ";
+  }
+
+  const auto status_message = getStatusMessage();
+  output_message += "Optimization failed due to " + status_message;
+
+  // log with warning
+  RCLCPP_WARN(rclcpp::get_logger("osqp_interface"), output_message.c_str());
+}
 }  // namespace osqp
 }  // namespace common
 }  // namespace autoware
