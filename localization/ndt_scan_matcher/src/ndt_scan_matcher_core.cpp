@@ -109,27 +109,22 @@ NDTScanMatcher::NDTScanMatcher()
   ndt_base_frame_ = this->declare_parameter("ndt_base_frame", ndt_base_frame_);
   RCLCPP_INFO(get_logger(), "ndt_base_frame_id: %s", ndt_base_frame_.c_str());
 
-  ndt_params_.trans_epsilon = this->declare_parameter<double>("trans_epsilon");
-  ndt_params_.step_size = this->declare_parameter<double>("step_size");
-  ndt_params_.resolution = this->declare_parameter<double>("resolution");
-  ndt_params_.max_iterations = this->declare_parameter<int>("max_iterations");
+  pclomp::NDTParams ndt_params;
+  ndt_params.trans_epsilon = this->declare_parameter<double>("trans_epsilon");
+  ndt_params.step_size = this->declare_parameter<double>("step_size");
+  ndt_params.resolution = this->declare_parameter<double>("resolution");
+  ndt_params.max_iterations = this->declare_parameter<int>("max_iterations");
   int search_method = this->declare_parameter<int>("neighborhood_search_method");
-  ndt_params_.search_method = static_cast<pclomp::NeighborSearchMethod>(search_method);
-  ndt_params_.num_threads = this->declare_parameter<int>("num_threads");
-  ndt_params_.num_threads = std::max(ndt_params_.num_threads, 1);
-
-  ndt_ptr_->setTransformationEpsilon(ndt_params_.trans_epsilon);
-  ndt_ptr_->setStepSize(ndt_params_.step_size);
-  ndt_ptr_->setResolution(ndt_params_.resolution);
-  ndt_ptr_->setMaximumIterations(ndt_params_.max_iterations);
-  ndt_ptr_->setRegularizationScaleFactor(ndt_params_.regularization_scale_factor);
-  ndt_ptr_->setNeighborhoodSearchMethod(ndt_params_.search_method);
-  ndt_ptr_->setNumThreads(ndt_params_.num_threads);
+  ndt_params.search_method = static_cast<pclomp::NeighborSearchMethod>(search_method);
+  ndt_params.num_threads = this->declare_parameter<int>("num_threads");
+  ndt_params.num_threads = std::max(ndt_params.num_threads, 1);
+  ndt_params.regularization_scale_factor = this->declare_parameter<float>("regularization_scale_factor");
+  ndt_ptr_->setParams(ndt_params);
 
   RCLCPP_INFO(
     get_logger(), "trans_epsilon: %lf, step_size: %lf, resolution: %lf, max_iterations: %d",
-    ndt_params_.trans_epsilon, ndt_params_.step_size, ndt_params_.resolution,
-    ndt_params_.max_iterations);
+    ndt_params.trans_epsilon, ndt_params.step_size, ndt_params.resolution,
+    ndt_params.max_iterations);
 
   int converged_param_type_tmp = this->declare_parameter("converged_param_type", 0);
   converged_param_type_ = static_cast<ConvergedParamType>(converged_param_type_tmp);
@@ -362,13 +357,7 @@ void NDTScanMatcher::callback_map_points(
   sensor_msgs::msg::PointCloud2::ConstSharedPtr map_points_msg_ptr)
 {
   std::shared_ptr<NormalDistributionsTransform> new_ndt_ptr(new NormalDistributionsTransform);
-  new_ndt_ptr->setTransformationEpsilon(ndt_params_.trans_epsilon);
-  new_ndt_ptr->setStepSize(ndt_params_.step_size);
-  new_ndt_ptr->setResolution(ndt_params_.resolution);
-  new_ndt_ptr->setMaximumIterations(ndt_params_.max_iterations);
-  new_ndt_ptr->setRegularizationScaleFactor(ndt_params_.regularization_scale_factor);
-  new_ndt_ptr->setNeighborhoodSearchMethod(ndt_params_.search_method);
-  new_ndt_ptr->setNumThreads(ndt_params_.num_threads);
+  new_ndt_ptr->setParams(ndt_ptr_->getParams());
 
   pcl::shared_ptr<pcl::PointCloud<PointTarget>> map_points_ptr(new pcl::PointCloud<PointTarget>);
   pcl::fromROSMsg(*map_points_msg_ptr, *map_points_ptr);
@@ -433,7 +422,7 @@ void NDTScanMatcher::callback_sensor_points(
     pose_to_matrix4f(interpolator.get_current_pose().pose.pose);
   auto output_cloud = std::make_shared<pcl::PointCloud<PointSource>>();
   ndt_ptr_->align(*output_cloud, initial_pose_matrix);
-  const pclomp::NdtResult ndt_result = ndt_ptr_->getResult();
+  const pclomp::NDTResult ndt_result = ndt_ptr_->getResult();
   key_value_stdmap_["state"] = "Sleeping";
 
   const auto exe_end_time = std::chrono::system_clock::now();
@@ -547,7 +536,7 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_using_monte_
     const auto & initial_pose = initial_poses[i];
     const Eigen::Matrix4f initial_pose_matrix = pose_to_matrix4f(initial_pose);
     ndt_ptr_->align(*output_cloud, initial_pose_matrix);
-    const pclomp::NdtResult ndt_result = ndt_ptr_->getResult();
+    const pclomp::NDTResult ndt_result = ndt_ptr_->getResult();
 
     Particle particle(
       initial_pose, matrix4f_to_pose(ndt_result.pose), ndt_result.transform_probability,
