@@ -197,7 +197,7 @@ void RRTStar::extend()
 
 void RRTStar::deleteNodeUsingBranchAndBound()
 {
-  // see III.B of Karaman et al. ICRA 2011
+  // ref : III.B of Karaman et al. ICRA 2011
   if (!isSolutionFound()) {
     return;
   }

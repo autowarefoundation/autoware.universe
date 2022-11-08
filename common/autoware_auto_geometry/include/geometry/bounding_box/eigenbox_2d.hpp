@@ -50,6 +50,7 @@ struct Covariance2d
   std::size_t num_points;
 };  // struct Covariance2d
 
+// cspell: ignore Welford
 /// \brief Compute 2d covariance matrix of a list of points using Welford's online algorithm
 /// \param[in] begin An iterator pointing to the first point in a point list
 /// \param[in] end An iterator pointing to one past the last point in the point list
