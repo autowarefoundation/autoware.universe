@@ -38,6 +38,8 @@
 #include <filesystem>
 #include <string>
 #include <vector>
+#include <memory>
+#include <map>
 
 namespace fs = std::filesystem;
 

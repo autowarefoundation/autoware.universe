@@ -30,7 +30,7 @@ void DifferentialMapLoaderModule::differentialAreaLoad(
   GetDifferentialPointCloudMap::Response::SharedPtr & response) const
 {
   // iterate over all the available pcd map grids
-  std::vector<bool> should_remove(int(cached_ids.size()), true);
+  std::vector<bool> should_remove(static_cast<int>(cached_ids.size()), true);
   for (const auto & ele : all_pcd_file_metadata_dict_) {
     std::string path = ele.first;
     PCDFileMetadata metadata = ele.second;
@@ -52,7 +52,7 @@ void DifferentialMapLoaderModule::differentialAreaLoad(
     }
   }
 
-  for (int i = 0; i < int(cached_ids.size()); ++i) {
+  for (int i = 0; i < static_cast<int>(cached_ids.size()); ++i) {
     if (should_remove[i]) {
       response->ids_to_remove.push_back(cached_ids[i]);
     }

@@ -45,6 +45,8 @@
 #include <set>
 #include <string>
 #include <vector>
+#include <memory>
+#include <map>
 
 class PointCloudMapLoaderNode : public rclcpp::Node
 {

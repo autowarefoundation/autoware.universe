@@ -18,6 +18,9 @@
 #include <pcl/io/pcd_io.h>
 #include <pcl_conversions/pcl_conversions.h>
 
+#include <string>
+#include <vector>
+
 sensor_msgs::msg::PointCloud2 downsample(
   const sensor_msgs::msg::PointCloud2 & msg_input, const float leaf_size)
 {
@@ -68,7 +71,7 @@ sensor_msgs::msg::PointCloud2 PointcloudMapLoaderModule::loadPCDFiles(
   sensor_msgs::msg::PointCloud2 whole_pcd;
   sensor_msgs::msg::PointCloud2 partial_pcd;
 
-  for (int i = 0; i < int(pcd_paths.size()); ++i) {
+  for (int i = 0; i < static_cast<int>(pcd_paths.size()); ++i) {
     auto & path = pcd_paths[i];
     if (i % 50 == 0) {
       RCLCPP_INFO_STREAM(

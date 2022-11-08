@@ -21,6 +21,9 @@
 
 #include <boost/optional.hpp>
 
+#include <string>
+#include <vector>
+
 class PointcloudMapLoaderModule
 {
 public:
