@@ -33,13 +33,8 @@ void MapModule::callback_map_points(
   sensor_msgs::msg::PointCloud2::ConstSharedPtr map_points_msg_ptr)
 {
   std::shared_ptr<NormalDistributionsTransform> new_ndt_ptr(new NormalDistributionsTransform);
-  new_ndt_ptr->setTransformationEpsilon(ndt_params_.trans_epsilon);
-  new_ndt_ptr->setStepSize(ndt_params_.step_size);
-  new_ndt_ptr->setResolution(ndt_params_.resolution);
-  new_ndt_ptr->setMaximumIterations(ndt_params_.max_iterations);
-  new_ndt_ptr->setRegularizationScaleFactor(ndt_params_.regularization_scale_factor);
-  new_ndt_ptr->setNeighborhoodSearchMethod(ndt_params_.search_method);
-  new_ndt_ptr->setNumThreads(ndt_params_.num_threads);
+  new_ndt_ptr->setParams((*ndt_ptr_ptr_)->getParams());
+
 
   pcl::shared_ptr<pcl::PointCloud<PointTarget>> map_points_ptr(new pcl::PointCloud<PointTarget>);
   pcl::fromROSMsg(*map_points_msg_ptr, *map_points_ptr);
@@ -51,6 +46,6 @@ void MapModule::callback_map_points(
 
   // swap
   ndt_ptr_mutex_->lock();
-  ndt_ptr_ = new_ndt_ptr;
+  *ndt_ptr_ptr_ = new_ndt_ptr;
   ndt_ptr_mutex_->unlock();
 }
