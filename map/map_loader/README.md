@@ -8,6 +8,7 @@ This package provides the features of loading various maps.
 
 `pointcloud_map_loader` provides pointcloud maps to the other Autoware nodes in various configurations.
 Currently, it supports the following four types:
+
 - Publish raw pointcloud map as `sensor_msgs/msg/PointCloud2`
 - Publish downsampled pointcloud map as `sensor_msgs/msg/PointCloud2`
 - Send partial pointcloud map loading as `autoware_map_msgs/srv/GetPartialPointCloudMap`
@@ -15,14 +16,13 @@ Currently, it supports the following four types:
 
 ### Parameters
 
-| Name                          | Type   | Description                                                                        | Default value |
-| :---------------------------- | :----- | :--------------------------------------------------------------------------------- | :------------ |
-| enable_whole_load             | bool   | A flag to enable raw pointcloud map publishing                                     | true          |
-| enable_downsampled_whole_load | bool   | A flag to enable downsampled pointcloud map publishing                             | true          |
-| enable_partial_load           | bool   | A flag to enable partial pointcloud map server                                     | true          |
-| enable_differential_load      | bool   | A flag to enable differential pointcloud map server                                | true          |
-| leaf_size                     | double | Downsampling leaf size (only used when enable_downsampled_whole_load is set true)  | 3.0           |
-
+| Name                          | Type   | Description                                                                       | Default value |
+| :---------------------------- | :----- | :-------------------------------------------------------------------------------- | :------------ |
+| enable_whole_load             | bool   | A flag to enable raw pointcloud map publishing                                    | true          |
+| enable_downsampled_whole_load | bool   | A flag to enable downsampled pointcloud map publishing                            | true          |
+| enable_partial_load           | bool   | A flag to enable partial pointcloud map server                                    | true          |
+| enable_differential_load      | bool   | A flag to enable differential pointcloud map server                               | true          |
+| leaf_size                     | double | Downsampling leaf size (only used when enable_downsampled_whole_load is set true) | 3.0           |
 
 ### Interfaces
 
