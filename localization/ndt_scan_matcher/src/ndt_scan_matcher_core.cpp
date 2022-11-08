@@ -38,7 +38,9 @@
 #include <thread>
 
 NDTScanMatcher::NDTScanMatcher()
-: Node("ndt_scan_matcher"), ndt_ptr_(new NormalDistributionsTransform), map_frame_("map")
+: Node("ndt_scan_matcher"),
+  ndt_ptr_(new NormalDistributionsTransform),
+  map_frame_("map")
 {
   ndt_params_.trans_epsilon = this->declare_parameter<double>("trans_epsilon");
   ndt_params_.step_size = this->declare_parameter<double>("step_size");
@@ -96,10 +98,19 @@ NDTScanMatcher::NDTScanMatcher()
   diagnostic_thread_ = std::thread(&NDTScanMatcher::timer_diagnostic, this);
   diagnostic_thread_.detach();
 
+  ndt_ptr_ptr_ = std::make_shared<std::shared_ptr<NormalDistributionsTransform>>(ndt_ptr_);
   tf2_listener_module_ = std::make_shared<Tf2ListenerModule>(this);
   ndt_scan_matching_module_ = std::make_unique<NDTScanMatchingModule>(
-    this, &ndt_ptr_mtx_, &ndt_ptr_, tf2_listener_module_, map_frame_, main_callback_group,
-    initial_pose_callback_group, &key_value_stdmap_);
+    this,
+    &ndt_ptr_mtx_,
+    ndt_ptr_ptr_,
+    tf2_listener_module_,
+    map_frame_,
+    main_callback_group,
+    initial_pose_callback_group,
+    &key_value_stdmap_);
+  std::cout << "KOJI ndt_scan_matcher ctor " << *ndt_ptr_ptr_ << std::endl;
+
 }
 
 void NDTScanMatcher::timer_diagnostic()
@@ -165,13 +176,13 @@ void NDTScanMatcher::service_ndt_align(
   // transform pose_frame to map_frame
   const auto mapTF_initial_pose_msg = transform(req->pose_with_covariance, *TF_pose_to_map_ptr);
 
-  if (ndt_ptr_->getInputTarget() == nullptr) {
+  if ((*ndt_ptr_ptr_)->getInputTarget() == nullptr) {
     res->success = false;
     RCLCPP_WARN(get_logger(), "No InputTarget");
     return;
   }
 
-  if (ndt_ptr_->getInputSource() == nullptr) {
+  if ((*ndt_ptr_ptr_)->getInputSource() == nullptr) {
     res->success = false;
     RCLCPP_WARN(get_logger(), "No InputSource");
     return;
@@ -181,7 +192,7 @@ void NDTScanMatcher::service_ndt_align(
   std::lock_guard<std::mutex> lock(ndt_ptr_mtx_);
 
   key_value_stdmap_["state"] = "Aligning";
-  res->pose_with_covariance = align_using_monte_carlo(ndt_ptr_, mapTF_initial_pose_msg);
+  res->pose_with_covariance = align_using_monte_carlo((*ndt_ptr_ptr_), mapTF_initial_pose_msg);
   key_value_stdmap_["state"] = "Sleeping";
   res->success = true;
   res->pose_with_covariance.pose.covariance = req->pose_with_covariance.pose.covariance;
@@ -209,8 +220,9 @@ void NDTScanMatcher::callback_map_points(
 
   // swap
   ndt_ptr_mtx_.lock();
-  ndt_ptr_ = new_ndt_ptr;
+  (*ndt_ptr_ptr_).swap(new_ndt_ptr);
   ndt_ptr_mtx_.unlock();
+  std::cout << "KOJI ndt_scan_matcher callbackMap " << *ndt_ptr_ptr_  << std::endl;
 }
 
 geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_using_monte_carlo(
@@ -232,8 +244,8 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_using_monte_
   for (unsigned int i = 0; i < initial_poses.size(); i++) {
     const auto & initial_pose = initial_poses[i];
     const Eigen::Matrix4f initial_pose_matrix = pose_to_matrix4f(initial_pose);
-    ndt_ptr_->align(*output_cloud, initial_pose_matrix);
-    const pclomp::NdtResult ndt_result = ndt_ptr_->getResult();
+    ndt_ptr->align(*output_cloud, initial_pose_matrix);
+    const pclomp::NdtResult ndt_result = ndt_ptr->getResult();
 
     Particle particle(
       initial_pose, matrix4f_to_pose(ndt_result.pose), ndt_result.transform_probability,
@@ -245,8 +257,7 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_using_monte_
 
     auto sensor_points_mapTF_ptr = std::make_shared<pcl::PointCloud<PointSource>>();
     pcl::transformPointCloud(*ndt_ptr->getInputSource(), *sensor_points_mapTF_ptr, ndt_result.pose);
-    publish_monte_carlo_point_cloud(
-      initial_pose_with_cov.header.stamp, map_frame_, sensor_points_mapTF_ptr);
+    publish_monte_carlo_point_cloud(initial_pose_with_cov.header.stamp, map_frame_, sensor_points_mapTF_ptr);
   }
 
   auto best_particle_ptr = std::max_element(
@@ -261,6 +272,7 @@ geometry_msgs::msg::PoseWithCovarianceStamped NDTScanMatcher::align_using_monte_
 
   return result_pose_with_cov_msg;
 }
+
 
 void NDTScanMatcher::publish_monte_carlo_point_cloud(
   const rclcpp::Time & sensor_ros_time, const std::string & frame_id,

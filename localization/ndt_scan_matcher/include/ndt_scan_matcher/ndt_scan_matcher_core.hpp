@@ -103,6 +103,7 @@ private:
   rclcpp::Service<tier4_localization_msgs::srv::PoseWithCovarianceStamped>::SharedPtr service_;
 
   std::shared_ptr<NormalDistributionsTransform> ndt_ptr_;
+  std::shared_ptr<std::shared_ptr<NormalDistributionsTransform>> ndt_ptr_ptr_;
 
   std::string map_frame_;
 

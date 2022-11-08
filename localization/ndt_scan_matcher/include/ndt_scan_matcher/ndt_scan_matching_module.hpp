@@ -62,7 +62,7 @@ class NDTScanMatchingModule
 public:
   explicit NDTScanMatchingModule(
     rclcpp::Node * node, std::mutex * ndt_ptr_mutex,
-    std::shared_ptr<NormalDistributionsTransform> * ndt_ptr,
+    std::shared_ptr<std::shared_ptr<NormalDistributionsTransform>> ndt_ptr_ptr,
     std::shared_ptr<Tf2ListenerModule> tf2_listener_module, std::string map_frame,
     rclcpp::CallbackGroup::SharedPtr main_callback_group,
     rclcpp::CallbackGroup::SharedPtr initial_pose_callback_group,
@@ -139,7 +139,7 @@ private:
   rclcpp::Node * node_;
   rclcpp::Logger logger_;
   rclcpp::Clock::SharedPtr clock_;
-  std::shared_ptr<NormalDistributionsTransform> * ndt_ptr_ptr_;
+  std::shared_ptr<std::shared_ptr<NormalDistributionsTransform>> ndt_ptr_ptr_;
   std::map<std::string, std::string> * key_value_stdmap_ptr_;
   std::shared_ptr<Tf2ListenerModule> tf2_listener_module_;
   tf2_ros::TransformBroadcaster tf2_broadcaster_;

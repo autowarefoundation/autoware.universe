@@ -58,7 +58,7 @@ bool validate_local_optimal_solution_oscillation(
 
 NDTScanMatchingModule::NDTScanMatchingModule(
   rclcpp::Node * node, std::mutex * ndt_ptr_mutex,
-  std::shared_ptr<NormalDistributionsTransform> * ndt_ptr,
+  std::shared_ptr<std::shared_ptr<NormalDistributionsTransform>> ndt_ptr_ptr,
   std::shared_ptr<Tf2ListenerModule> tf2_listener_module, std::string map_frame,
   rclcpp::CallbackGroup::SharedPtr main_callback_group,
   rclcpp::CallbackGroup::SharedPtr initial_pose_callback_group,
@@ -66,7 +66,7 @@ NDTScanMatchingModule::NDTScanMatchingModule(
 : node_(node),
   logger_(node->get_logger()),
   clock_(node->get_clock()),
-  ndt_ptr_ptr_(ndt_ptr),
+  ndt_ptr_ptr_(ndt_ptr_ptr),
   key_value_stdmap_ptr_(key_value_stdmap_ptr),
   tf2_listener_module_(tf2_listener_module),
   tf2_broadcaster_(node),
@@ -231,6 +231,7 @@ void NDTScanMatchingModule::callback_sensor_points(
   transform_sensor_measurement(
     sensor_frame, base_frame_, sensor_points_sensorTF_ptr, sensor_points_baselinkTF_ptr);
   (*ndt_ptr_ptr_)->setInputSource(sensor_points_baselinkTF_ptr);
+  std::cout << "KOJI ndt_scan_matcher callbackPoints " << *ndt_ptr_ptr_ << std::endl;
   if (!is_activated_) return;
 
   // calculate initial pose
