@@ -18,7 +18,6 @@
 #include "common/types.hpp"
 #include "geometry/common_2d.hpp"
 #include "helper_functions/angle_utils.hpp"
-#include "motion_common/motion_common.hpp"
 #include "osqp_interface/osqp_interface.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_components/register_node_macro.hpp"
@@ -37,9 +36,9 @@
 
 #include "autoware_auto_control_msgs/msg/ackermann_lateral_command.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
-#include "autoware_auto_system_msgs/msg/float32_multi_array_diagnostic.hpp"
 #include "autoware_auto_vehicle_msgs/msg/steering_report.hpp"
 #include "geometry_msgs/msg/pose.hpp"
+#include "tier4_debug_msgs/msg/float32_multi_array_stamped.hpp"
 
 #include <deque>
 #include <memory>
@@ -395,7 +394,7 @@ public:
     const float64_t current_velocity, const geometry_msgs::msg::Pose & current_pose,
     autoware_auto_control_msgs::msg::AckermannLateralCommand & ctrl_cmd,
     autoware_auto_planning_msgs::msg::Trajectory & predicted_traj,
-    autoware_auto_system_msgs::msg::Float32MultiArrayDiagnostic & diagnostic);
+    tier4_debug_msgs::msg::Float32MultiArrayStamped & diagnostic);
   /**
    * @brief set the reference trajectory to follow
    */
