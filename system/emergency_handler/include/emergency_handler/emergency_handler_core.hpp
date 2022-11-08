@@ -32,7 +32,6 @@
 // ROS2 core
 #include <rclcpp/create_timer.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <tier4_autoware_utils/system/heartbeat_checker.hpp>
 
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <nav_msgs/msg/odometry.hpp>
@@ -133,8 +132,7 @@ private:
   void onTimer();
 
   // Heartbeat
-  std::shared_ptr<HeaderlessHeartbeatChecker<autoware_auto_system_msgs::msg::HazardStatusStamped>>
-    heartbeat_hazard_status_;
+  rclcpp::Time stamp_hazard_status_;
 
   // Algorithm
   rclcpp::Time takeover_requested_time_;

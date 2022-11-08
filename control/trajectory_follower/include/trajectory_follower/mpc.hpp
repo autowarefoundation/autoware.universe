@@ -18,7 +18,6 @@
 #include "common/types.hpp"
 #include "geometry/common_2d.hpp"
 #include "helper_functions/angle_utils.hpp"
-#include "motion_common/motion_common.hpp"
 #include "osqp_interface/osqp_interface.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_components/register_node_macro.hpp"
@@ -37,9 +36,9 @@
 
 #include "autoware_auto_control_msgs/msg/ackermann_lateral_command.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
-#include "autoware_auto_system_msgs/msg/float32_multi_array_diagnostic.hpp"
 #include "autoware_auto_vehicle_msgs/msg/steering_report.hpp"
 #include "geometry_msgs/msg/pose.hpp"
+#include "tier4_debug_msgs/msg/float32_multi_array_stamped.hpp"
 
 #include <deque>
 #include <memory>
@@ -227,16 +226,16 @@ private:
    * @param [in] reference_trajectory used for linearization around reference trajectory
    */
   MPCMatrix generateMPCMatrix(
-    const trajectory_follower::MPCTrajectory & reference_trajectory, const float64_t predition_dt);
+    const trajectory_follower::MPCTrajectory & reference_trajectory, const float64_t prediction_dt);
   /**
    * @brief generate MPC matrix with trajectory and vehicle model
    * @param [in] mpc_matrix parameters matrix to use for optimization
    * @param [in] x0 initial state vector
-   * @param [in] precition_dt predition deleta time
+   * @param [in] prediction_dt prediction delta time
    * @param [out] Uex optimized input vector
    */
   bool8_t executeOptimization(
-    const MPCMatrix & mpc_matrix, const Eigen::VectorXd & x0, const float64_t predition_dt,
+    const MPCMatrix & mpc_matrix, const Eigen::VectorXd & x0, const float64_t prediction_dt,
     Eigen::VectorXd * Uex);
   /**
    * @brief resample trajectory with mpc resampling time
@@ -255,17 +254,25 @@ private:
    * @brief get prediction delta time of mpc.
    * If trajectory length is shorter than min_prediction length, adjust delta time.
    */
-  float64_t getPredictionDeletaTime(
+  float64_t getPredictionDeltaTime(
     const float64_t start_time, const trajectory_follower::MPCTrajectory & input,
     const geometry_msgs::msg::Pose & current_pose) const;
   /**
    * @brief add weights related to lateral_jerk, steering_rate, steering_acc into R
    */
-  void addSteerWeightR(const float64_t predition_dt, Eigen::MatrixXd * R) const;
+  void addSteerWeightR(const float64_t prediction_dt, Eigen::MatrixXd * R) const;
   /**
    * @brief add weights related to lateral_jerk, steering_rate, steering_acc into f
    */
-  void addSteerWeightF(const float64_t predition_dt, Eigen::MatrixXd * f) const;
+  void addSteerWeightF(const float64_t prediction_dt, Eigen::MatrixXd * f) const;
+
+  /**
+   * @brief calculate desired steering rate.
+   */
+  float64_t calcDesiredSteeringRate(
+    const MPCMatrix & m, const Eigen::MatrixXd & x0, const Eigen::MatrixXd & Uex,
+    const float64_t u_filtered, const float current_steer, const float64_t predict_dt) const;
+
   /**
    * @brief check if the matrix has invalid value
    */
@@ -387,7 +394,7 @@ public:
     const float64_t current_velocity, const geometry_msgs::msg::Pose & current_pose,
     autoware_auto_control_msgs::msg::AckermannLateralCommand & ctrl_cmd,
     autoware_auto_planning_msgs::msg::Trajectory & predicted_traj,
-    autoware_auto_system_msgs::msg::Float32MultiArrayDiagnostic & diagnostic);
+    tier4_debug_msgs::msg::Float32MultiArrayStamped & diagnostic);
   /**
    * @brief set the reference trajectory to follow
    */

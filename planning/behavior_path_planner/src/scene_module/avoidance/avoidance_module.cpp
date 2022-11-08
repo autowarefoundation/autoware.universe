@@ -1775,6 +1775,10 @@ void AvoidanceModule::generateExtendedDrivableArea(ShiftedPath * shifted_path) c
       });
   }
 
+  extended_lanelets = util::expandLanelets(
+    extended_lanelets, parameters_->drivable_area_left_bound_offset,
+    parameters_->drivable_area_right_bound_offset, {"road_border"});
+
   {
     const auto & p = planner_data_->parameters;
     shifted_path->path.drivable_area = util::generateDrivableArea(
@@ -2563,8 +2567,14 @@ TurnSignalInfo AvoidanceModule::calcTurnSignalInfo(const ShiftedPath & path) con
   const double end_shift_length = path.shift_length.at(end_idx);
   const double segment_shift_length = end_shift_length - start_shift_length;
 
+  const double turn_signal_shift_length_threshold =
+    planner_data_->parameters.turn_signal_shift_length_threshold;
+  const double turn_signal_search_time = planner_data_->parameters.turn_signal_search_time;
+  const double turn_signal_minimum_search_distance =
+    planner_data_->parameters.turn_signal_minimum_search_distance;
+
   // If shift length is shorter than the threshold, it does not need to turn on blinkers
-  if (std::fabs(segment_shift_length) < 1.0) {
+  if (std::fabs(segment_shift_length) < turn_signal_shift_length_threshold) {
     return {};
   }
 
@@ -2590,7 +2600,8 @@ TurnSignalInfo AvoidanceModule::calcTurnSignalInfo(const ShiftedPath & path) con
 
   const double ego_vehicle_offset =
     planner_data_->parameters.vehicle_info.max_longitudinal_offset_m;
-  const auto signal_prepare_distance = std::max(getEgoSpeed() * 3.0, 10.0);
+  const auto signal_prepare_distance =
+    std::max(getEgoSpeed() * turn_signal_search_time, turn_signal_minimum_search_distance);
   const auto ego_front_to_shift_start =
     calcSignedArcLength(path.path.points, getEgoPosition(), blinker_start_pose.position) -
     ego_vehicle_offset;
@@ -2608,13 +2619,13 @@ TurnSignalInfo AvoidanceModule::calcTurnSignalInfo(const ShiftedPath & path) con
   }
 
   if (ego_front_to_shift_start > 0.0) {
-    turn_signal_info.desired_start_point = getEgoPosition();
+    turn_signal_info.desired_start_point = planner_data_->self_pose->pose;
   } else {
-    turn_signal_info.desired_start_point = blinker_start_pose.position;
+    turn_signal_info.desired_start_point = blinker_start_pose;
   }
-  turn_signal_info.desired_end_point = blinker_end_pose.position;
-  turn_signal_info.required_start_point = blinker_start_pose.position;
-  turn_signal_info.required_end_point = blinker_end_pose.position;
+  turn_signal_info.desired_end_point = blinker_end_pose;
+  turn_signal_info.required_start_point = blinker_start_pose;
+  turn_signal_info.required_end_point = blinker_end_pose;
 
   return turn_signal_info;
 }
