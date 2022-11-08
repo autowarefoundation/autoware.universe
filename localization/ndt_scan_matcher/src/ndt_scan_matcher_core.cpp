@@ -118,7 +118,8 @@ NDTScanMatcher::NDTScanMatcher()
   ndt_params.search_method = static_cast<pclomp::NeighborSearchMethod>(search_method);
   ndt_params.num_threads = this->declare_parameter<int>("num_threads");
   ndt_params.num_threads = std::max(ndt_params.num_threads, 1);
-  ndt_params.regularization_scale_factor = this->declare_parameter<float>("regularization_scale_factor");
+  ndt_params.regularization_scale_factor =
+    this->declare_parameter<float>("regularization_scale_factor");
   ndt_ptr_->setParams(ndt_params);
 
   RCLCPP_INFO(
