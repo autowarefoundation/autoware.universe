@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef POINTCLOUD_MAP_LOADER__POINTCLOUD_MAP_LOADER_NODE_HPP_
-#define POINTCLOUD_MAP_LOADER__POINTCLOUD_MAP_LOADER_NODE_HPP_
+#ifndef POINTCLOUD_MAP_LOADER__POINTCLOUD_MAP_LOADER_HPP_
+#define POINTCLOUD_MAP_LOADER__POINTCLOUD_MAP_LOADER_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -42,4 +42,4 @@ private:
     const std::vector<std::string> & pcd_paths_or_directory) const;
 };
 
-#endif  // POINTCLOUD_MAP_LOADER__POINTCLOUD_MAP_LOADER_NODE_HPP_
+#endif  // POINTCLOUD_MAP_LOADER__POINTCLOUD_MAP_LOADER_HPP_
