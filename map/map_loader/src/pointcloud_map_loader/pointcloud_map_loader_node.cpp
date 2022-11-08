@@ -17,12 +17,10 @@
 #include "pointcloud_map_loader_node.hpp"
 
 #include <glob.h>
-#include <pcl/filters/voxel_grid.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl_conversions/pcl_conversions.h>
 
 #include <filesystem>
-#include <map>
 #include <memory>
 #include <string>
 #include <vector>
