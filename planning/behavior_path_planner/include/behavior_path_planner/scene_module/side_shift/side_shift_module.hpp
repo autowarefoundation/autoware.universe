@@ -100,12 +100,13 @@ private:
   // Requested lateral offset to shift the reference path.
   double requested_lateral_offset_{0.0};
 
-  // inserted lateral offset
+  // Inserted lateral offset to shift the reference path.
   double inserted_lateral_offset_{0.0};
 
-  // inserted shift lines
+  // Inserted shift lines in the path
   ShiftLine inserted_shift_line_;
 
+  // Shift status
   SideShiftStatus shift_status_;
 
   // Flag to check lateral offset change is requested
@@ -127,6 +128,7 @@ private:
 
   mutable rclcpp::Time last_requested_shift_change_time_{clock_->now()};
 };
+
 }  // namespace behavior_path_planner
 
 #endif  // BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SIDE_SHIFT__SIDE_SHIFT_MODULE_HPP_

@@ -218,7 +218,6 @@ void SideShiftModule::replaceShiftLine()
 
   // set to path_shifter
   path_shifter_.setShiftLines(shift_lines);
-
   lateral_offset_change_request_ = false;
   inserted_lateral_offset_ = requested_lateral_offset_;
   inserted_shift_line_ = new_sl;
