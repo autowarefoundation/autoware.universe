@@ -42,19 +42,6 @@ NDTScanMatcher::NDTScanMatcher()
   ndt_ptr_(new NormalDistributionsTransform),
   map_frame_("map")
 {
-  // key_value_stdmap_["state"] = "Initializing";
-  // is_activated_ = false;
-
-  // int points_queue_size = this->declare_parameter("input_sensor_points_queue_size", 0);
-  // points_queue_size = std::max(points_queue_size, 0);
-  // RCLCPP_INFO(get_logger(), "points_queue_size: %d", points_queue_size);
-
-  // base_frame_ = this->declare_parameter("base_frame", base_frame_);
-  // RCLCPP_INFO(get_logger(), "base_frame_id: %s", base_frame_.c_str());
-
-  // ndt_base_frame_ = this->declare_parameter("ndt_base_frame", ndt_base_frame_);
-  // RCLCPP_INFO(get_logger(), "ndt_base_frame_id: %s", ndt_base_frame_.c_str());
-
   ndt_params_.trans_epsilon = this->declare_parameter<double>("trans_epsilon");
   ndt_params_.step_size = this->declare_parameter<double>("step_size");
   ndt_params_.resolution = this->declare_parameter<double>("resolution");
@@ -77,29 +64,8 @@ NDTScanMatcher::NDTScanMatcher()
     ndt_params_.trans_epsilon, ndt_params_.step_size, ndt_params_.resolution,
     ndt_params_.max_iterations);
 
-  // int converged_param_type_tmp = this->declare_parameter("converged_param_type", 0);
-  // converged_param_type_ = static_cast<ConvergedParamType>(converged_param_type_tmp);
-
-  // converged_param_transform_probability_ = this->declare_parameter(
-  //   "converged_param_transform_probability", converged_param_transform_probability_);
-  // converged_param_nearest_voxel_transformation_likelihood_ = this->declare_parameter(
-  //   "converged_param_nearest_voxel_transformation_likelihood",
-  //   converged_param_nearest_voxel_transformation_likelihood_);
-
   initial_estimate_particles_num_ =
     this->declare_parameter("initial_estimate_particles_num", initial_estimate_particles_num_);
-
-  // initial_pose_timeout_sec_ =
-  //   this->declare_parameter("initial_pose_timeout_sec", initial_pose_timeout_sec_);
-
-  // initial_pose_distance_tolerance_m_ = this->declare_parameter(
-  //   "initial_pose_distance_tolerance_m", initial_pose_distance_tolerance_m_);
-
-  // std::vector<double> output_pose_covariance =
-  //   this->declare_parameter<std::vector<double>>("output_pose_covariance");
-  // for (std::size_t i = 0; i < output_pose_covariance.size(); ++i) {
-  //   output_pose_covariance_[i] = output_pose_covariance[i];
-  // }
 
   rclcpp::CallbackGroup::SharedPtr initial_pose_callback_group;
   initial_pose_callback_group =
@@ -108,53 +74,12 @@ NDTScanMatcher::NDTScanMatcher()
   rclcpp::CallbackGroup::SharedPtr main_callback_group;
   main_callback_group = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 
-  // auto initial_pose_sub_opt = rclcpp::SubscriptionOptions();
-  // initial_pose_sub_opt.callback_group = initial_pose_callback_group;
-
   auto main_sub_opt = rclcpp::SubscriptionOptions();
   main_sub_opt.callback_group = main_callback_group;
 
-  // initial_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
-  //   "ekf_pose_with_covariance", 100,
-  //   std::bind(&NDTScanMatcher::callback_initial_pose, this, std::placeholders::_1),
-  //   initial_pose_sub_opt);
   map_points_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "pointcloud_map", rclcpp::QoS{1}.transient_local(),
     std::bind(&NDTScanMatcher::callback_map_points, this, std::placeholders::_1), main_sub_opt);
-  // sensor_points_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
-  //   "points_raw", rclcpp::SensorDataQoS().keep_last(points_queue_size),
-  //   std::bind(&NDTScanMatcher::callback_sensor_points, this, std::placeholders::_1), main_sub_opt);
-  // regularization_pose_sub_ =
-  //   this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
-  //     "regularization_pose_with_covariance", 100,
-  //     std::bind(&NDTScanMatcher::callback_regularization_pose, this, std::placeholders::_1));
-
-  // sensor_aligned_pose_pub_ =
-  //   this->create_publisher<sensor_msgs::msg::PointCloud2>("points_aligned", 10);
-  // ndt_pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("ndt_pose", 10);
-  // ndt_pose_with_covariance_pub_ =
-  //   this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
-  //     "ndt_pose_with_covariance", 10);
-  // initial_pose_with_covariance_pub_ =
-  //   this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
-  //     "initial_pose_with_covariance", 10);
-  // exe_time_pub_ = this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("exe_time_ms", 10);
-  // transform_probability_pub_ =
-  //   this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("transform_probability", 10);
-  // nearest_voxel_transformation_likelihood_pub_ =
-  //   this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>(
-  //     "nearest_voxel_transformation_likelihood", 10);
-  // iteration_num_pub_ =
-  //   this->create_publisher<tier4_debug_msgs::msg::Int32Stamped>("iteration_num", 10);
-  // initial_to_result_distance_pub_ =
-  //   this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("initial_to_result_distance", 10);
-  // initial_to_result_distance_old_pub_ =
-  //   this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>(
-  //     "initial_to_result_distance_old", 10);
-  // initial_to_result_distance_new_pub_ =
-  //   this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>(
-  //     "initial_to_result_distance_new", 10);
-  // ndt_marker_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("ndt_marker", 10);
   ndt_monte_carlo_aligned_points_pub_ =
     this->create_publisher<sensor_msgs::msg::PointCloud2>("monte_carlo_points_aligned", 10);
   ndt_monte_carlo_initial_pose_marker_pub_ =
@@ -169,11 +94,6 @@ NDTScanMatcher::NDTScanMatcher()
     std::bind(
       &NDTScanMatcher::service_ndt_align, this, std::placeholders::_1, std::placeholders::_2),
     rclcpp::ServicesQoS().get_rmw_qos_profile(), main_callback_group);
-  // service_trigger_node_ = this->create_service<std_srvs::srv::SetBool>(
-  //   "trigger_node_srv",
-  //   std::bind(
-  //     &NDTScanMatcher::service_trigger_node, this, std::placeholders::_1, std::placeholders::_2),
-  //   rclcpp::ServicesQoS().get_rmw_qos_profile(), main_callback_group);
 
   diagnostic_thread_ = std::thread(&NDTScanMatcher::timer_diagnostic, this);
   diagnostic_thread_.detach();
