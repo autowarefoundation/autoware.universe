@@ -15,29 +15,28 @@
 #ifndef NDT_SCAN_MATCHER__NDT_SCAN_MATCHING_MODULE_HPP_
 #define NDT_SCAN_MATCHER__NDT_SCAN_MATCHING_MODULE_HPP_
 
-#include "ndt_scan_matcher/tf2_listener_module.hpp"
 #include "ndt_scan_matcher/debug.hpp"
 #include "ndt_scan_matcher/matrix_type.hpp"
-#include "ndt_scan_matcher/util_func.hpp"
 #include "ndt_scan_matcher/pose_array_interpolator.hpp"
-
-#include <tier4_autoware_utils/geometry/geometry.hpp>
-#include <tier4_autoware_utils/ros/marker_helper.hpp>
-
-#include <pclomp/ndt_omp.h>
+#include "ndt_scan_matcher/tf2_listener_module.hpp"
+#include "ndt_scan_matcher/util_func.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 #include <std_srvs/srv/set_bool.hpp>
+#include <tier4_autoware_utils/geometry/geometry.hpp>
+#include <tier4_autoware_utils/ros/marker_helper.hpp>
+
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <tier4_debug_msgs/msg/float32_stamped.hpp>
 #include <tier4_debug_msgs/msg/int32_stamped.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
-#include <tf2_ros/transform_broadcaster.h>
-#include <tf2/transform_datatypes.h>
 #include <pcl/common/transforms.h>
 #include <pcl_conversions/pcl_conversions.h>
+#include <pclomp/ndt_omp.h>
+#include <tf2/transform_datatypes.h>
+#include <tf2_ros/transform_broadcaster.h>
 
 #include <array>
 #include <deque>
@@ -64,8 +63,7 @@ public:
   explicit NDTScanMatchingModule(
     rclcpp::Node * node, std::mutex * ndt_ptr_mutex,
     std::shared_ptr<NormalDistributionsTransform> * ndt_ptr,
-    std::shared_ptr<Tf2ListenerModule> tf2_listener_module,
-    std::string map_frame,
+    std::shared_ptr<Tf2ListenerModule> tf2_listener_module, std::string map_frame,
     rclcpp::CallbackGroup::SharedPtr main_callback_group,
     rclcpp::CallbackGroup::SharedPtr initial_pose_callback_group,
     std::map<std::string, std::string> * key_value_stdmap_ptr);

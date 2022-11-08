@@ -17,9 +17,9 @@
 
 #define FMT_HEADER_ONLY
 
+#include "ndt_scan_matcher/ndt_scan_matching_module.hpp"
 #include "ndt_scan_matcher/particle.hpp"
 #include "ndt_scan_matcher/tf2_listener_module.hpp"
-#include "ndt_scan_matcher/ndt_scan_matching_module.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
