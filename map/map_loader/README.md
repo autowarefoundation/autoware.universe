@@ -15,22 +15,22 @@ Currently, it supports the following four types:
 
 
 #### Publish raw pointcloud map (ROS 2 topic)
-The node publishes the raw pointcloud map loaded from `.pcd` file(s).
+The node publishes the raw pointcloud map loaded from the `.pcd` file(s).
 
 #### Publish downsampled pointcloud map (ROS 2 topic)
-The node publishes the downsampled pointcloud map loaded from `.pcd` file(s). You can specify the downsample resolution by changing `leaf_size` parameter.
+The node publishes the downsampled pointcloud map loaded from the `.pcd` file(s). You can specify the downsample resolution by changing the `leaf_size` parameter.
 
 #### Send partial pointcloud map (ROS 2 service)
 Here, we assume that the pointcloud maps are divided into grids.
 
 Given a query from a client node, the node sends a set of pointcloud maps that overlaps with the queried area.
-Please see [the definition of `GetPartialPointCloudMap.srv`](https://github.com/autowarefoundation/autoware_msgs/tree/main/autoware_map_msgs#getpartialpointcloudmapsrv) for details.
+Please see [the description of `GetPartialPointCloudMap.srv`](https://github.com/autowarefoundation/autoware_msgs/tree/main/autoware_map_msgs#getpartialpointcloudmapsrv) for details.
 
 #### Send differential pointcloud map (ROS 2 service)
 Here, we assume that the pointcloud maps are divided into grids.
 
-Given a query and a set of map IDs, the node sends a set of pointcloud maps that overlaps with the queried area and does not included in the set of map IDs. 
-Please see [the definition of `GetDifferentialPointCloudMap.srv`](https://github.com/autowarefoundation/autoware_msgs/tree/main/autoware_map_msgs#getdifferentialpointcloudmapsrv) for details.
+Given a query and set of map IDs, the node sends a set of pointcloud maps that overlap with the queried area and are not included in the set of map IDs. 
+Please see [the description of `GetDifferentialPointCloudMap.srv`](https://github.com/autowarefoundation/autoware_msgs/tree/main/autoware_map_msgs#getdifferentialpointcloudmapsrv) for details.
 
 ### Parameters
 
