@@ -14,10 +14,8 @@
 
 #include "trajectory_follower/pid_longitudinal_controller.hpp"
 
-#include "motion_common/motion_common.hpp"
-#include "motion_common/trajectory_common.hpp"
+#include "motion_utils/motion_utils.hpp"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
-#include "time_utils/time_utils.hpp"
 
 #include <algorithm>
 #include <limits>
@@ -190,12 +188,10 @@ PidLongitudinalController::PidLongitudinalController(rclcpp::Node & node)
       : node_->declare_parameter<double>("ego_nearest_yaw_threshold");  // [rad]
 
   // subscriber, publisher
-  m_pub_slope =
-    node_->create_publisher<autoware_auto_system_msgs::msg::Float32MultiArrayDiagnostic>(
-      "~/output/slope_angle", rclcpp::QoS{1});
-  m_pub_debug =
-    node_->create_publisher<autoware_auto_system_msgs::msg::Float32MultiArrayDiagnostic>(
-      "~/output/longitudinal_diagnostic", rclcpp::QoS{1});
+  m_pub_slope = node_->create_publisher<tier4_debug_msgs::msg::Float32MultiArrayStamped>(
+    "~/output/slope_angle", rclcpp::QoS{1});
+  m_pub_debug = node_->create_publisher<tier4_debug_msgs::msg::Float32MultiArrayStamped>(
+    "~/output/longitudinal_diagnostic", rclcpp::QoS{1});
 
   // set parameter callback
   m_set_param_res = node_->add_on_set_parameters_callback(
@@ -684,19 +680,18 @@ void PidLongitudinalController::publishDebugData(
   m_debug_values.setValues(DebugValues::TYPE::ACC_CMD_PUBLISHED, ctrl_cmd.acc);
 
   // publish debug values
-  autoware_auto_system_msgs::msg::Float32MultiArrayDiagnostic debug_msg{};
-  debug_msg.diag_header.data_stamp = node_->now();
+  tier4_debug_msgs::msg::Float32MultiArrayStamped debug_msg{};
+  debug_msg.stamp = node_->now();
   for (const auto & v : m_debug_values.getValues()) {
-    debug_msg.diag_array.data.push_back(
-      static_cast<decltype(debug_msg.diag_array.data)::value_type>(v));
+    debug_msg.data.push_back(static_cast<decltype(debug_msg.data)::value_type>(v));
   }
   m_pub_debug->publish(debug_msg);
 
   // slope angle
-  autoware_auto_system_msgs::msg::Float32MultiArrayDiagnostic slope_msg{};
-  slope_msg.diag_header.data_stamp = node_->now();
-  slope_msg.diag_array.data.push_back(
-    static_cast<decltype(slope_msg.diag_array.data)::value_type>(control_data.slope_angle));
+  tier4_debug_msgs::msg::Float32MultiArrayStamped slope_msg{};
+  slope_msg.stamp = node_->now();
+  slope_msg.data.push_back(
+    static_cast<decltype(slope_msg.data)::value_type>(control_data.slope_angle));
   m_pub_slope->publish(slope_msg);
 }
 
@@ -735,7 +730,7 @@ float64_t PidLongitudinalController::calcFilteredAcc(
   const float64_t raw_acc, const ControlData & control_data)
 {
   using trajectory_follower::DebugValues;
-  const float64_t acc_max_filtered = ::motion::motion_common::clamp(raw_acc, m_min_acc, m_max_acc);
+  const float64_t acc_max_filtered = std::clamp(raw_acc, m_min_acc, m_max_acc);
   m_debug_values.setValues(DebugValues::TYPE::ACC_CMD_ACC_LIMITED, acc_max_filtered);
 
   // store ctrl cmd without slope filter
@@ -801,7 +796,7 @@ PidLongitudinalController::Motion PidLongitudinalController::keepBrakeBeforeStop
     return output_motion;
   }
   // const auto stop_idx = motion_utils::searchZeroVelocityIndex(traj.points);
-  const auto stop_idx = motion_common::searchZeroVelocityIndex(traj.points);
+  const auto stop_idx = motion_utils::searchZeroVelocityIndex(traj.points);
   if (!stop_idx) {
     return output_motion;
   }
