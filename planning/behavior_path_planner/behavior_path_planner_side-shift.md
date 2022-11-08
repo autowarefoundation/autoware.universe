@@ -76,7 +76,7 @@ partition updateState {
   else (false)
     if (ego's position is behind of shift line's start point) then( yes)
       :shifting_status_ = BEFORE_SHIFT;
-    else ( no) 
+    else ( no)
       if ( ego's position is between shift line's start point and end point) then (yes)
         :shifting_status_ = SHIFTING;
       else( no)
