@@ -398,7 +398,7 @@ boost::optional<LongitudinalOutput> PidLongitudinalController::run()
   updateControlState(control_data);
 
   // calculate control command
-  const Motion ctrl_cmd = calcCtrlCmd(m_control_state, current_pose, control_data);
+  const Motion ctrl_cmd = calcCtrlCmd(current_pose, control_data);
 
   // publish control command
   const auto cmd_msg = createCtrlCmdMsg(ctrl_cmd, control_data.current_motion.vel);
@@ -622,8 +622,7 @@ void PidLongitudinalController::updateControlState(const ControlData & control_d
 }
 
 PidLongitudinalController::Motion PidLongitudinalController::calcCtrlCmd(
-  const ControlState & current_control_state, const geometry_msgs::msg::Pose & current_pose,
-  const ControlData & control_data)
+  const geometry_msgs::msg::Pose & current_pose, const ControlData & control_data)
 {
   const size_t nearest_idx = control_data.nearest_idx;
   const float64_t current_vel = control_data.current_motion.vel;
@@ -632,7 +631,7 @@ PidLongitudinalController::Motion PidLongitudinalController::calcCtrlCmd(
   // velocity and acceleration command
   Motion raw_ctrl_cmd{};
   Motion target_motion{};
-  if (current_control_state == ControlState::DRIVE) {
+  if (m_control_state == ControlState::DRIVE) {
     const auto target_pose = trajectory_follower::longitudinal_utils::calcPoseAfterTimeDelay(
       current_pose, m_delay_compensation_time, current_vel);
     const auto target_interpolated_point =
@@ -656,7 +655,7 @@ PidLongitudinalController::Motion PidLongitudinalController::calcCtrlCmd(
       "feedback_ctrl_cmd.ac: %3.3f",
       raw_ctrl_cmd.vel, raw_ctrl_cmd.acc, control_data.dt, current_vel, target_motion.vel,
       raw_ctrl_cmd.acc);
-  } else if (current_control_state == ControlState::STOPPING) {
+  } else if (m_control_state == ControlState::STOPPING) {
     raw_ctrl_cmd.acc = m_smooth_stop.calculate(
       control_data.stop_dist, current_vel, current_acc, m_vel_hist, m_delay_compensation_time);
     raw_ctrl_cmd.vel = m_stopped_state_params.vel;
@@ -664,7 +663,7 @@ PidLongitudinalController::Motion PidLongitudinalController::calcCtrlCmd(
     RCLCPP_DEBUG(
       node_->get_logger(), "[smooth stop]: Smooth stopping. vel: %3.3f, acc: %3.3f",
       raw_ctrl_cmd.vel, raw_ctrl_cmd.acc);
-  } else if (current_control_state == ControlState::STOPPED) {
+  } else if (m_control_state == ControlState::STOPPED) {
     // This acceleration is without slope compensation
     const auto & p = m_stopped_state_params;
     raw_ctrl_cmd.vel = p.vel;
@@ -673,7 +672,7 @@ PidLongitudinalController::Motion PidLongitudinalController::calcCtrlCmd(
 
     RCLCPP_DEBUG(
       node_->get_logger(), "[Stopped]. vel: %3.3f, acc: %3.3f", raw_ctrl_cmd.vel, raw_ctrl_cmd.acc);
-  } else if (current_control_state == ControlState::EMERGENCY) {
+  } else if (m_control_state == ControlState::EMERGENCY) {
     raw_ctrl_cmd = calcEmergencyCtrlCmd(control_data.dt);
   }
 

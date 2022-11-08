@@ -274,13 +274,11 @@ private:
 
   /**
    * @brief calculate control command based on the current control state
-   * @param [in] current_control_state current control state
    * @param [in] current_pose current ego pose
    * @param [in] control_data control data
    */
   Motion calcCtrlCmd(
-    const ControlState & current_control_state, const geometry_msgs::msg::Pose & current_pose,
-    const ControlData & control_data);
+    const geometry_msgs::msg::Pose & current_pose, const ControlData & control_data);
 
   /**
    * @brief publish control command
