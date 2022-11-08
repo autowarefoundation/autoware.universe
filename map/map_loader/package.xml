@@ -14,6 +14,7 @@
 
   <depend>autoware_auto_mapping_msgs</depend>
   <depend>autoware_map_msgs</depend>
+  <depend>fmt</depend>
   <depend>geometry_msgs</depend>
   <depend>lanelet2_extension</depend>
   <depend>libpcl-all-dev</depend>
@@ -28,7 +29,6 @@
   <depend>tier4_autoware_utils</depend>
   <depend>tier4_debug_msgs</depend>
   <depend>visualization_msgs</depend>
-  <depend>fmt</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>
