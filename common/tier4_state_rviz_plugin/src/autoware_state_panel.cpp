@@ -164,7 +164,6 @@ void AutowareStatePanel::onInitialize()
     "/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/"
     "path_change_approval",
     rclcpp::QoS{1}.transient_local());
-
 }
 
 void AutowareStatePanel::onGateMode(const tier4_control_msgs::msg::GateMode::ConstSharedPtr msg)

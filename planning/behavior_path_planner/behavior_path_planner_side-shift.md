@@ -62,7 +62,7 @@ start
 partition updateState {
   :last_sp = path_shifter_.getLastShiftLine();
   note left
-  get furthest shift lines 
+  get furthest shift lines
   end note
   :calculate max_planned_shift_length;
   note left

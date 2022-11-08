@@ -34,12 +34,7 @@ using geometry_msgs::msg::Pose;
 using nav_msgs::msg::OccupancyGrid;
 using tier4_planning_msgs::msg::LateralOffset;
 
-enum class SideShiftStatus {
-  STOP = 0,
-  BEFORE_SHIFT,
-  SHIFTING,
-  AFTER_SHIFT
-};
+enum class SideShiftStatus { STOP = 0, BEFORE_SHIFT, SHIFTING, AFTER_SHIFT };
 
 struct SideShiftParameters
 {
@@ -131,7 +126,6 @@ private:
     const std::shared_ptr<const PlannerData> & planner_data, const PoseStamped & pose) const;
 
   mutable rclcpp::Time last_requested_shift_change_time_{clock_->now()};
-
 };
 }  // namespace behavior_path_planner
 
