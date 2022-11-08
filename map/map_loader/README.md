@@ -8,10 +8,29 @@ This package provides the features of loading various maps.
 
 `pointcloud_map_loader` provides pointcloud maps to the other Autoware nodes in various configurations.
 Currently, it supports the following four types:
-- Publish raw pointcloud map as `sensor_msgs/msg/PointCloud2`
-- Publish downsampled pointcloud map as `sensor_msgs/msg/PointCloud2`
-- Send partial pointcloud map loading as `autoware_map_msgs/srv/GetPartialPointCloudMap`
-- Send differential pointcloud map loading as `autoware_map_msgs/srv/GetDifferentialPointCloudMap`
+- Publish raw pointcloud map
+- Publish downsampled pointcloud map
+- Send partial pointcloud map loading via ROS 2 service
+- Send differential pointcloud map loading via ROS 2 service
+
+
+#### Publish raw pointcloud map
+The node publishes the raw pointcloud map loaded from `.pcd` file(s) as a ROS 2 topic.
+
+#### Publish downsampled pointcloud map
+The node publishes the downsampled pointcloud map loaded from `.pcd` file(s) as a ROS 2 topic. You can specify the downsample resolution by changing `leaf_size` parameter.
+
+#### Send partial pointcloud map
+Here, we assume that the pointcloud maps are divided into grids.
+
+Given a query from a client node, the node sends a set of pointcloud maps that overlaps with the queried area.
+Please see [the definition of `GetPartialPointCloudMap.srv`](https://github.com/autowarefoundation/autoware_msgs/tree/main/autoware_map_msgs#getpartialpointcloudmapsrv) for details.
+
+#### Send differential pointcloud map
+Here, we assume that the pointcloud maps are divided into grids.
+
+Given a query and a set of map IDs, the node sends a set of pointcloud maps that overlaps with the queried area and does not included in the set of map IDs. 
+Please see [the definition of `GetDifferentialPointCloudMap.srv`](https://github.com/autowarefoundation/autoware_msgs/tree/main/autoware_map_msgs#getdifferentialpointcloudmapsrv) for details.
 
 ### Parameters
 
