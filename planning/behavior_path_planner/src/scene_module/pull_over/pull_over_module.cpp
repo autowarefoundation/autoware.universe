@@ -523,7 +523,7 @@ BehaviorModuleOutput PullOverModule::planWaitingApproval()
 {
   updateOccupancyGrid();
   BehaviorModuleOutput out;
-  [[maybe_unused]] const auto path = *(plan().path);  // update status_
+  plan();  // update status_
   out.path = std::make_shared<PathWithLaneId>(getReferencePath());
   out.path_candidate = status_.is_safe ? std::make_shared<PathWithLaneId>(getFullPath()) : out.path;
 
@@ -641,8 +641,7 @@ PathWithLaneId PullOverModule::generateStopPath() const
   const size_t ego_idx = findEgoIndex(stop_path.points);
   const double current_to_stop_distance =
     std::pow(current_vel, 2) / parameters_.maximum_deceleration / 2;
-  [[maybe_unused]] const auto stop_idx =
-    motion_utils::insertStopPoint(current_pose, current_to_stop_distance, stop_path.points);
+  motion_utils::insertStopPoint(current_pose, current_to_stop_distance, stop_path.points);
 
   for (auto & point : stop_path.points) {
     auto & p = point.point;
