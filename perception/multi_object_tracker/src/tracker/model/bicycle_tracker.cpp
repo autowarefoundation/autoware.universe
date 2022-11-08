@@ -130,7 +130,7 @@ BicycleTracker::BicycleTracker(
 
   if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
     bounding_box_ = {
-      object.shape.dimensions.x, object.shape.dimensions.y, object.shape.dimensions.z};
+      object.shape.dimensions.y, object.shape.dimensions.x, object.shape.dimensions.z};
   } else {
     bounding_box_ = {1.0, 0.5, 1.7};
   }
