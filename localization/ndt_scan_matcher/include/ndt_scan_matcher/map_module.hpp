@@ -16,13 +16,16 @@
 #define NDT_SCAN_MATCHER__MAP_MODULE_HPP_
 
 #include <rclcpp/rclcpp.hpp>
-#include <sensor_msgs/msg/point_cloud2.hpp>
-#include <pcl/point_types.h>
-#include <pclomp/ndt_omp.h>
-#include <fmt/format.h>
-#include <pcl_conversions/pcl_conversions.h>
 
-class MapModule {
+#include <sensor_msgs/msg/point_cloud2.hpp>
+
+#include <fmt/format.h>
+#include <pcl/point_types.h>
+#include <pcl_conversions/pcl_conversions.h>
+#include <pclomp/ndt_omp.h>
+
+class MapModule
+{
   using PointSource = pcl::PointXYZ;
   using PointTarget = pcl::PointXYZ;
   using NormalDistributionsTransform =
@@ -40,7 +43,6 @@ private:
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr map_points_sub_;
   std::shared_ptr<std::shared_ptr<NormalDistributionsTransform>> ndt_ptr_ptr_;
   std::mutex * ndt_ptr_mutex_;
-
 };
 
 #endif  // NDT_SCAN_MATCHER__MAP_MODULE_HPP_

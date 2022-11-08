@@ -18,8 +18,7 @@ MapModule::MapModule(
   rclcpp::Node * node, std::mutex * ndt_ptr_mutex,
   std::shared_ptr<std::shared_ptr<NormalDistributionsTransform>> ndt_ptr_ptr,
   rclcpp::CallbackGroup::SharedPtr map_callback_group)
-: ndt_ptr_ptr_(ndt_ptr_ptr),
-  ndt_ptr_mutex_(ndt_ptr_mutex)
+: ndt_ptr_ptr_(ndt_ptr_ptr), ndt_ptr_mutex_(ndt_ptr_mutex)
 {
   auto map_sub_opt = rclcpp::SubscriptionOptions();
   map_sub_opt.callback_group = map_callback_group;
@@ -34,7 +33,6 @@ void MapModule::callback_map_points(
 {
   std::shared_ptr<NormalDistributionsTransform> new_ndt_ptr(new NormalDistributionsTransform);
   new_ndt_ptr->setParams((*ndt_ptr_ptr_)->getParams());
-
 
   pcl::shared_ptr<pcl::PointCloud<PointTarget>> map_points_ptr(new pcl::PointCloud<PointTarget>);
   pcl::fromROSMsg(*map_points_msg_ptr, *map_points_ptr);
