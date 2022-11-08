@@ -140,8 +140,8 @@ inline int getNearestCornerSurfaceFromObject(
   x = object.kinematics.pose_with_covariance.pose.position.x;
   y = object.kinematics.pose_with_covariance.pose.position.y;
   yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
-  width = object.shape.dimensions.x;
-  length = object.shape.dimensions.y;
+  width = object.shape.dimensions.y;
+  length = object.shape.dimensions.x;
 
   return getNearestCornerSurface(x, y, yaw, width, length, self_transform);
 }
@@ -180,8 +180,8 @@ inline void calcAnchorPointOffset(
 
   // current object width and height
   double w_n, l_n;
-  w_n = input_object.shape.dimensions.x;
-  l_n = input_object.shape.dimensions.y;
+  l_n = input_object.shape.dimensions.x;
+  w_n = input_object.shape.dimensions.y;
 
   // if surface
   if (indx < 4) {
