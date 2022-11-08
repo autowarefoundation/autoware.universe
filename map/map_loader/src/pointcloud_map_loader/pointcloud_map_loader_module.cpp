@@ -14,10 +14,10 @@
 
 #include "pointcloud_map_loader_module.hpp"
 
+#include <fmt/format.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl_conversions/pcl_conversions.h>
-#include <fmt/format.h>
 
 #include <string>
 #include <vector>
@@ -76,7 +76,7 @@ sensor_msgs::msg::PointCloud2 PointcloudMapLoaderModule::loadPCDFiles(
     auto & path = pcd_paths[i];
     if (i % 50 == 0) {
       RCLCPP_INFO_STREAM(
-        logger_, fmt::format("Load {} ({} out of {})", path, i+1, int(pcd_paths.size())));
+        logger_, fmt::format("Load {} ({} out of {})", path, i + 1, int(pcd_paths.size())));
     }
 
     if (pcl::io::loadPCDFile(path, partial_pcd) == -1) {
