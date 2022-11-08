@@ -36,14 +36,13 @@ namespace control
 namespace trajectory_follower
 {
 using namespace std::literals::chrono_literals;
-using ::motion::motion_common::to_angle;
 
 bool8_t MPC::calculateMPC(
   const autoware_auto_vehicle_msgs::msg::SteeringReport & current_steer,
   const float64_t current_velocity, const geometry_msgs::msg::Pose & current_pose,
   autoware_auto_control_msgs::msg::AckermannLateralCommand & ctrl_cmd,
   autoware_auto_planning_msgs::msg::Trajectory & predicted_traj,
-  autoware_auto_system_msgs::msg::Float32MultiArrayDiagnostic & diagnostic)
+  tier4_debug_msgs::msg::Float32MultiArrayStamped & diagnostic)
 {
   /* recalculate velocity from ego-velocity with dynamics */
   trajectory_follower::MPCTrajectory reference_trajectory =
@@ -133,9 +132,9 @@ bool8_t MPC::calculateMPC(
   const float64_t steer_cmd = ctrl_cmd.steering_tire_angle;
   const float64_t wb = m_vehicle_model_ptr->getWheelbase();
 
-  typedef decltype(diagnostic.diag_array.data)::value_type DiagnosticValueType;
+  typedef decltype(diagnostic.data)::value_type DiagnosticValueType;
   auto append_diag_data = [&](const auto & val) -> void {
-    diagnostic.diag_array.data.push_back(static_cast<DiagnosticValueType>(val));
+    diagnostic.data.push_back(static_cast<DiagnosticValueType>(val));
   };
   // [0] final steering command (MPC + LPF)
   append_diag_data(steer_cmd);
@@ -150,9 +149,9 @@ bool8_t MPC::calculateMPC(
   // [5] lateral error
   append_diag_data(mpc_data.lateral_err);
   // [6] current_pose yaw
-  append_diag_data(to_angle(current_pose.orientation));
+  append_diag_data(tf2::getYaw(current_pose.orientation));
   // [7] nearest_pose yaw
-  append_diag_data(to_angle(mpc_data.nearest_pose.orientation));
+  append_diag_data(tf2::getYaw(mpc_data.nearest_pose.orientation));
   // [8] yaw error
   append_diag_data(mpc_data.yaw_err);
   // [9] reference velocity
@@ -280,7 +279,7 @@ bool8_t MPC::getData(
   data->lateral_err =
     trajectory_follower::MPCUtils::calcLateralError(current_pose, data->nearest_pose);
   data->yaw_err = autoware::common::helper_functions::wrap_angle(
-    to_angle(current_pose.orientation) - to_angle(data->nearest_pose.orientation));
+    tf2::getYaw(current_pose.orientation) - tf2::getYaw(data->nearest_pose.orientation));
 
   /* get predicted steer */
   if (!m_steer_prediction_prev) {

@@ -66,26 +66,6 @@ enum class ConvergedParamType {
   NEAREST_VOXEL_TRANSFORMATION_LIKELIHOOD = 1
 };
 
-struct NdtResult
-{
-  geometry_msgs::msg::Pose pose;
-  float transform_probability;
-  float nearest_voxel_transformation_likelihood;
-  int iteration_num;
-  std::vector<geometry_msgs::msg::Pose> transformation_array;
-};
-
-struct NDTParams
-{
-  double trans_epsilon;
-  double step_size;
-  double resolution;
-  int max_iterations;
-  pclomp::NeighborSearchMethod search_method;
-  int num_threads;
-  float regularization_scale_factor;
-};
-
 class NDTScanMatcher : public rclcpp::Node
 {
   using PointSource = pcl::PointXYZ;
@@ -111,7 +91,6 @@ private:
   void callback_regularization_pose(
     geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose_conv_msg_ptr);
 
-  NdtResult align(const geometry_msgs::msg::Pose & initial_pose_msg);
   geometry_msgs::msg::PoseWithCovarianceStamped align_using_monte_carlo(
     const std::shared_ptr<NormalDistributionsTransform> & ndt_ptr,
     const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_with_cov);
@@ -205,8 +184,6 @@ private:
     initial_pose_msg_ptr_array_;
   std::mutex ndt_ptr_mtx_;
   std::mutex initial_pose_array_mtx_;
-
-  NDTParams ndt_params_;
 
   std::thread diagnostic_thread_;
   std::map<std::string, std::string> key_value_stdmap_;
