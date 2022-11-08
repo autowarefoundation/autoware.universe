@@ -66,4 +66,6 @@
 
 ## Assumptions / Known limits
 
-TBD.
+`use_external_emergency_stop` is true by default, as it is assumed that an external module will instruct emergency stop.
+Also, the `~/input/external_emergency_stop_heartbeat` topic is required for the external module's health monitoring.
+If you don't use this, set `use_external_emergency_stop` to false.
