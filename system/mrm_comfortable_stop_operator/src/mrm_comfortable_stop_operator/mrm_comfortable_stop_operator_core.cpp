@@ -27,13 +27,13 @@ MRMComfortableStopOperator::MRMComfortableStopOperator(const rclcpp::NodeOptions
   params_.min_jerk = declare_parameter<double>("min_jerk", 0.3);
 
   // Server
-  service_operation_ = create_service<autoware_adapi_v1_msgs::srv::OperateMRM>(
+  service_operation_ = create_service<autoware_adapi_v1_msgs::srv::OperateMrm>(
     "~/input/mrm/comfortable_stop/operate", std::bind(
                                               &MRMComfortableStopOperator::operateComfortableStop,
                                               this, std::placeholders::_1, std::placeholders::_2));
 
   // Publisher
-  pub_status_ = create_publisher<tier4_system_msgs::msg::MRMBehaviorStatus>(
+  pub_status_ = create_publisher<tier4_system_msgs::msg::MrmBehaviorStatus>(
     "~/output/mrm/comfortable_stop/status", 1);
   pub_velocity_limit_ = create_publisher<tier4_planning_msgs::msg::VelocityLimit>(
     "~/output/velocity_limit", rclcpp::QoS{1}.transient_local());
@@ -52,8 +52,8 @@ MRMComfortableStopOperator::MRMComfortableStopOperator(const rclcpp::NodeOptions
 }
 
 void MRMComfortableStopOperator::operateComfortableStop(
-  const autoware_adapi_v1_msgs::srv::OperateMRM::Request::SharedPtr request,
-  const autoware_adapi_v1_msgs::srv::OperateMRM::Response::SharedPtr response)
+  const autoware_adapi_v1_msgs::srv::OperateMrm::Request::SharedPtr request,
+  const autoware_adapi_v1_msgs::srv::OperateMrm::Response::SharedPtr response)
 {
   if (request->operate == true) {
     publishVelocityLimit();

@@ -31,13 +31,13 @@ MRMEmergencyStopOperator::MRMEmergencyStopOperator(const rclcpp::NodeOptions & n
     std::bind(&MRMEmergencyStopOperator::onControlCommand, this, std::placeholders::_1));
 
   // Server
-  service_operation_ = create_service<OperateMRM>(
+  service_operation_ = create_service<OperateMrm>(
     "~/input/mrm/emergency_stop/operate", std::bind(
                                             &MRMEmergencyStopOperator::operateEmergencyStop, this,
                                             std::placeholders::_1, std::placeholders::_2));
 
   // Publisher
-  pub_status_ = create_publisher<MRMBehaviorStatus>("~/output/mrm/emergency_stop/status", 1);
+  pub_status_ = create_publisher<MrmBehaviorStatus>("~/output/mrm/emergency_stop/status", 1);
   pub_control_cmd_ =
     create_publisher<AckermannControlCommand>("~/output/mrm/emergency_stop/control_cmd", 1);
 
@@ -61,7 +61,7 @@ void MRMEmergencyStopOperator::onControlCommand(AckermannControlCommand::ConstSh
 }
 
 void MRMEmergencyStopOperator::operateEmergencyStop(
-  const OperateMRM::Request::SharedPtr request, const OperateMRM::Response::SharedPtr response)
+  const OperateMrm::Request::SharedPtr request, const OperateMrm::Response::SharedPtr response)
 {
   if (request->operate == true) {
     status_.is_operating = true;

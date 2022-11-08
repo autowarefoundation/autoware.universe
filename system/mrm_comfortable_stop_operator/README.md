@@ -12,13 +12,13 @@ MRM comfortable stop operator is a node that generates comfortable stop commands
 
 | Name                                   | Type                                      | Description         |
 | -------------------------------------- | ----------------------------------------- | ------------------- |
-| `~/input/mrm/comfortable_stop/operate` | `autoware_adapi_v1_msgs::srv::OperateMRM` | MRM execution order |
+| `~/input/mrm/comfortable_stop/operate` | `autoware_adapi_v1_msgs::srv::OperateMrm` | MRM execution order |
 
 ### Output
 
 | Name                                   | Type                                                  | Description                  |
 | -------------------------------------- | ----------------------------------------------------- | ---------------------------- |
-| `~/output/mrm/comfortable_stop/status` | `tier4_system_msgs::msg::MRMBehaviorStatus`           | MRM execution status         |
+| `~/output/mrm/comfortable_stop/status` | `tier4_system_msgs::msg::MrmBehaviorStatus`           | MRM execution status         |
 | `~/output/velocity_limit`              | `tier4_planning_msgs::msg::VelocityLimit`             | Velocity limit command       |
 | `~/output/velocity_limit/clear`        | `tier4_planning_msgs::msg::VelocityLimitClearCommand` | Velocity limit clear command |
 

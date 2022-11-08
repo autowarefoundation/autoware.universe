@@ -66,17 +66,17 @@ private:
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
   rclcpp::Subscription<autoware_auto_vehicle_msgs::msg::ControlModeReport>::SharedPtr
     sub_control_mode_;
-  rclcpp::Subscription<tier4_system_msgs::msg::MRMBehaviorStatus>::SharedPtr
+  rclcpp::Subscription<tier4_system_msgs::msg::MrmBehaviorStatus>::SharedPtr
     sub_mrm_comfortable_stop_status_;
-  rclcpp::Subscription<tier4_system_msgs::msg::MRMBehaviorStatus>::SharedPtr
+  rclcpp::Subscription<tier4_system_msgs::msg::MrmBehaviorStatus>::SharedPtr
     sub_mrm_emergency_stop_status_;
 
   autoware_auto_system_msgs::msg::HazardStatusStamped::ConstSharedPtr hazard_status_stamped_;
   autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr prev_control_command_;
   nav_msgs::msg::Odometry::ConstSharedPtr odom_;
   autoware_auto_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr control_mode_;
-  tier4_system_msgs::msg::MRMBehaviorStatus::ConstSharedPtr mrm_comfortable_stop_status_;
-  tier4_system_msgs::msg::MRMBehaviorStatus::ConstSharedPtr mrm_emergency_stop_status_;
+  tier4_system_msgs::msg::MrmBehaviorStatus::ConstSharedPtr mrm_comfortable_stop_status_;
+  tier4_system_msgs::msg::MrmBehaviorStatus::ConstSharedPtr mrm_emergency_stop_status_;
 
   void onHazardStatusStamped(
     const autoware_auto_system_msgs::msg::HazardStatusStamped::ConstSharedPtr msg);
@@ -85,9 +85,9 @@ private:
   void onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg);
   void onControlMode(const autoware_auto_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr msg);
   void onMRMComfortableStopStatus(
-    const tier4_system_msgs::msg::MRMBehaviorStatus::ConstSharedPtr msg);
+    const tier4_system_msgs::msg::MrmBehaviorStatus::ConstSharedPtr msg);
   void onMRMEmergencyStopStatus(
-    const tier4_system_msgs::msg::MRMBehaviorStatus::ConstSharedPtr msg);
+    const tier4_system_msgs::msg::MrmBehaviorStatus::ConstSharedPtr msg);
 
   // Publisher
   rclcpp::Publisher<autoware_auto_control_msgs::msg::AckermannControlCommand>::SharedPtr
@@ -103,23 +103,23 @@ private:
   autoware_auto_vehicle_msgs::msg::GearCommand createGearCmdMsg();
   void publishControlCommands();
 
-  rclcpp::Publisher<autoware_adapi_v1_msgs::msg::MRMState>::SharedPtr pub_mrm_state_;
+  rclcpp::Publisher<autoware_adapi_v1_msgs::msg::MrmState>::SharedPtr pub_mrm_state_;
 
-  autoware_adapi_v1_msgs::msg::MRMState mrm_state_;
+  autoware_adapi_v1_msgs::msg::MrmState mrm_state_;
   void publishMRMState();
 
   // Clients
   rclcpp::CallbackGroup::SharedPtr client_mrm_comfortable_stop_group_;
-  rclcpp::Client<autoware_adapi_v1_msgs::srv::OperateMRM>::SharedPtr client_mrm_comfortable_stop_;
+  rclcpp::Client<autoware_adapi_v1_msgs::srv::OperateMrm>::SharedPtr client_mrm_comfortable_stop_;
   rclcpp::CallbackGroup::SharedPtr client_mrm_emergency_stop_group_;
-  rclcpp::Client<autoware_adapi_v1_msgs::srv::OperateMRM>::SharedPtr client_mrm_emergency_stop_;
+  rclcpp::Client<autoware_adapi_v1_msgs::srv::OperateMrm>::SharedPtr client_mrm_emergency_stop_;
 
   void callMRMBehavior(
-    const autoware_adapi_v1_msgs::msg::MRMState::_behavior_type & mrm_behavior) const;
+    const autoware_adapi_v1_msgs::msg::MrmState::_behavior_type & mrm_behavior) const;
   void cancelMRMBehavior(
-    const autoware_adapi_v1_msgs::msg::MRMState::_behavior_type & mrm_behavior) const;
+    const autoware_adapi_v1_msgs::msg::MrmState::_behavior_type & mrm_behavior) const;
   void logMRMCallingResult(
-    const autoware_adapi_v1_msgs::srv::OperateMRM::Response & result, const std::string & behavior,
+    const autoware_adapi_v1_msgs::srv::OperateMrm::Response & result, const std::string & behavior,
     bool is_call) const;
 
   // Timer
@@ -140,7 +140,7 @@ private:
   void transitionTo(const int new_state);
   void updateMRMState();
   void operateMRM();
-  autoware_adapi_v1_msgs::msg::MRMState::_behavior_type getCurrentMRMBehavior();
+  autoware_adapi_v1_msgs::msg::MrmState::_behavior_type getCurrentMRMBehavior();
   bool isStopped();
   bool isEmergency(const autoware_auto_system_msgs::msg::HazardStatus & hazard_status);
 };

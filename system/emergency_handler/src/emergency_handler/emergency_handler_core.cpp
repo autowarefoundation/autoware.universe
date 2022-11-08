@@ -45,10 +45,10 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
   // subscribe control mode
   sub_control_mode_ = create_subscription<autoware_auto_vehicle_msgs::msg::ControlModeReport>(
     "~/input/control_mode", rclcpp::QoS{1}, std::bind(&EmergencyHandler::onControlMode, this, _1));
-  sub_mrm_comfortable_stop_status_ = create_subscription<tier4_system_msgs::msg::MRMBehaviorStatus>(
+  sub_mrm_comfortable_stop_status_ = create_subscription<tier4_system_msgs::msg::MrmBehaviorStatus>(
     "~/input/mrm/comfortable_stop/status", rclcpp::QoS{1},
     std::bind(&EmergencyHandler::onMRMComfortableStopStatus, this, _1));
-  sub_mrm_emergency_stop_status_ = create_subscription<tier4_system_msgs::msg::MRMBehaviorStatus>(
+  sub_mrm_emergency_stop_status_ = create_subscription<tier4_system_msgs::msg::MrmBehaviorStatus>(
     "~/input/mrm/emergency_stop/status", rclcpp::QoS{1},
     std::bind(&EmergencyHandler::onMRMEmergencyStopStatus, this, _1));
 
@@ -60,17 +60,17 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
   pub_gear_cmd_ =
     create_publisher<autoware_auto_vehicle_msgs::msg::GearCommand>("~/output/gear", rclcpp::QoS{1});
   pub_mrm_state_ =
-    create_publisher<autoware_adapi_v1_msgs::msg::MRMState>("~/output/mrm/state", rclcpp::QoS{1});
+    create_publisher<autoware_adapi_v1_msgs::msg::MrmState>("~/output/mrm/state", rclcpp::QoS{1});
 
   // Clients
   client_mrm_comfortable_stop_group_ =
     create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-  client_mrm_comfortable_stop_ = create_client<autoware_adapi_v1_msgs::srv::OperateMRM>(
+  client_mrm_comfortable_stop_ = create_client<autoware_adapi_v1_msgs::srv::OperateMrm>(
     "~/output/mrm/comfortable_stop/operate", rmw_qos_profile_services_default,
     client_mrm_comfortable_stop_group_);
   client_mrm_emergency_stop_group_ =
     create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-  client_mrm_emergency_stop_ = create_client<autoware_adapi_v1_msgs::srv::OperateMRM>(
+  client_mrm_emergency_stop_ = create_client<autoware_adapi_v1_msgs::srv::OperateMrm>(
     "~/output/mrm/emergency_stop/operate", rmw_qos_profile_services_default,
     client_mrm_emergency_stop_group_);
 
@@ -80,11 +80,11 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
   prev_control_command_ = autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr(
     new autoware_auto_control_msgs::msg::AckermannControlCommand);
   mrm_comfortable_stop_status_ =
-    std::make_shared<const tier4_system_msgs::msg::MRMBehaviorStatus>();
-  mrm_emergency_stop_status_ = std::make_shared<const tier4_system_msgs::msg::MRMBehaviorStatus>();
+    std::make_shared<const tier4_system_msgs::msg::MrmBehaviorStatus>();
+  mrm_emergency_stop_status_ = std::make_shared<const tier4_system_msgs::msg::MrmBehaviorStatus>();
   mrm_state_.stamp = this->now();
-  mrm_state_.state = autoware_adapi_v1_msgs::msg::MRMState::NORMAL;
-  mrm_state_.behavior = autoware_adapi_v1_msgs::msg::MRMState::NONE;
+  mrm_state_.state = autoware_adapi_v1_msgs::msg::MrmState::NORMAL;
+  mrm_state_.behavior = autoware_adapi_v1_msgs::msg::MrmState::NONE;
 
   // Timer
   const auto update_period_ns = rclcpp::Rate(param_.update_rate).period();
@@ -120,13 +120,13 @@ void EmergencyHandler::onControlMode(
 }
 
 void EmergencyHandler::onMRMComfortableStopStatus(
-  const tier4_system_msgs::msg::MRMBehaviorStatus::ConstSharedPtr msg)
+  const tier4_system_msgs::msg::MrmBehaviorStatus::ConstSharedPtr msg)
 {
   mrm_comfortable_stop_status_ = msg;
 }
 
 void EmergencyHandler::onMRMEmergencyStopStatus(
-  const tier4_system_msgs::msg::MRMBehaviorStatus::ConstSharedPtr msg)
+  const tier4_system_msgs::msg::MrmBehaviorStatus::ConstSharedPtr msg)
 {
   mrm_emergency_stop_status_ = msg;
 }
@@ -184,18 +184,18 @@ void EmergencyHandler::publishMRMState()
 
 void EmergencyHandler::operateMRM()
 {
-  using autoware_adapi_v1_msgs::msg::MRMState;
+  using autoware_adapi_v1_msgs::msg::MrmState;
 
-  if (mrm_state_.state == MRMState::NORMAL) {
+  if (mrm_state_.state == MrmState::NORMAL) {
     // Cancel MRM behavior when returning to NORMAL state
-    const auto current_mrm_behavior = MRMState::NONE;
+    const auto current_mrm_behavior = MrmState::NONE;
     if (current_mrm_behavior != mrm_state_.behavior) {
       cancelMRMBehavior(mrm_state_.behavior);
       mrm_state_.behavior = current_mrm_behavior;
     }
     return;
   }
-  if (mrm_state_.state == MRMState::MRM_OPERATING) {
+  if (mrm_state_.state == MrmState::MRM_OPERATING) {
     const auto current_mrm_behavior = getCurrentMRMBehavior();
     if (current_mrm_behavior != mrm_state_.behavior) {
       cancelMRMBehavior(mrm_state_.behavior);
@@ -204,12 +204,12 @@ void EmergencyHandler::operateMRM()
     }
     return;
   }
-  if (mrm_state_.state == MRMState::MRM_SUCCEEDED) {
+  if (mrm_state_.state == MrmState::MRM_SUCCEEDED) {
     // TODO(mkuri): operate MRC behavior
     // Do nothing
     return;
   }
-  if (mrm_state_.state == MRMState::MRM_FAILED) {
+  if (mrm_state_.state == MrmState::MRM_FAILED) {
     // Do nothing
     return;
   }
@@ -217,14 +217,14 @@ void EmergencyHandler::operateMRM()
 }
 
 void EmergencyHandler::callMRMBehavior(
-  const autoware_adapi_v1_msgs::msg::MRMState::_behavior_type & mrm_behavior) const
+  const autoware_adapi_v1_msgs::msg::MrmState::_behavior_type & mrm_behavior) const
 {
-  using autoware_adapi_v1_msgs::msg::MRMState;
+  using autoware_adapi_v1_msgs::msg::MrmState;
 
-  auto request = std::make_shared<autoware_adapi_v1_msgs::srv::OperateMRM::Request>();
+  auto request = std::make_shared<autoware_adapi_v1_msgs::srv::OperateMrm::Request>();
   request->operate = true;
 
-  if (mrm_behavior == MRMState::COMFORTABLE_STOP) {
+  if (mrm_behavior == MrmState::COMFORTABLE_STOP) {
     auto result = client_mrm_comfortable_stop_->async_send_request(request).get();
     if (result->response.success == true) {
       RCLCPP_WARN(this->get_logger(), "Comfortable stop is operated");
@@ -233,7 +233,7 @@ void EmergencyHandler::callMRMBehavior(
     }
     return;
   }
-  if (mrm_behavior == MRMState::EMERGENCY_STOP) {
+  if (mrm_behavior == MrmState::EMERGENCY_STOP) {
     auto result = client_mrm_emergency_stop_->async_send_request(request).get();
     if (result->response.success == true) {
       RCLCPP_WARN(this->get_logger(), "Emergency stop is operated");
@@ -246,14 +246,14 @@ void EmergencyHandler::callMRMBehavior(
 }
 
 void EmergencyHandler::cancelMRMBehavior(
-  const autoware_adapi_v1_msgs::msg::MRMState::_behavior_type & mrm_behavior) const
+  const autoware_adapi_v1_msgs::msg::MrmState::_behavior_type & mrm_behavior) const
 {
-  using autoware_adapi_v1_msgs::msg::MRMState;
+  using autoware_adapi_v1_msgs::msg::MrmState;
 
-  auto request = std::make_shared<autoware_adapi_v1_msgs::srv::OperateMRM::Request>();
+  auto request = std::make_shared<autoware_adapi_v1_msgs::srv::OperateMrm::Request>();
   request->operate = false;
 
-  if (mrm_behavior == MRMState::COMFORTABLE_STOP) {
+  if (mrm_behavior == MrmState::COMFORTABLE_STOP) {
     auto result = client_mrm_comfortable_stop_->async_send_request(request).get();
     if (result->response.success == true) {
       RCLCPP_WARN(this->get_logger(), "Comfortable stop is canceled");
@@ -262,7 +262,7 @@ void EmergencyHandler::cancelMRMBehavior(
     }
     return;
   }
-  if (mrm_behavior == MRMState::EMERGENCY_STOP) {
+  if (mrm_behavior == MrmState::EMERGENCY_STOP) {
     auto result = client_mrm_emergency_stop_->async_send_request(request).get();
     if (result->response.success == true) {
       RCLCPP_WARN(this->get_logger(), "Emergency stop is canceled");
@@ -311,7 +311,7 @@ void EmergencyHandler::onTimer()
     RCLCPP_WARN_THROTTLE(
       this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
       "heartbeat_hazard_status is timeout");
-    mrm_state_.state = autoware_adapi_v1_msgs::msg::MRMState::MRM_OPERATING;
+    mrm_state_.state = autoware_adapi_v1_msgs::msg::MrmState::MRM_OPERATING;
     publishControlCommands();
     return;
   }
@@ -327,19 +327,19 @@ void EmergencyHandler::onTimer()
 
 void EmergencyHandler::transitionTo(const int new_state)
 {
-  using autoware_adapi_v1_msgs::msg::MRMState;
+  using autoware_adapi_v1_msgs::msg::MrmState;
 
   const auto state2string = [](const int state) {
-    if (state == MRMState::NORMAL) {
+    if (state == MrmState::NORMAL) {
       return "NORMAL";
     }
-    if (state == MRMState::MRM_OPERATING) {
+    if (state == MrmState::MRM_OPERATING) {
       return "MRM_OPERATING";
     }
-    if (state == MRMState::MRM_SUCCEEDED) {
+    if (state == MrmState::MRM_SUCCEEDED) {
       return "MRM_SUCCEEDED";
     }
-    if (state == MRMState::MRM_FAILED) {
+    if (state == MrmState::MRM_FAILED) {
       return "MRM_FAILED";
     }
 
@@ -356,7 +356,7 @@ void EmergencyHandler::transitionTo(const int new_state)
 
 void EmergencyHandler::updateMRMState()
 {
-  using autoware_adapi_v1_msgs::msg::MRMState;
+  using autoware_adapi_v1_msgs::msg::MrmState;
   using autoware_auto_vehicle_msgs::msg::ControlModeReport;
 
   // Check emergency
@@ -367,7 +367,7 @@ void EmergencyHandler::updateMRMState()
   const bool is_takeover_done = control_mode_->mode == ControlModeReport::MANUAL;
 
   // State Machine
-  if (mrm_state_.state == MRMState::NORMAL) {
+  if (mrm_state_.state == MrmState::NORMAL) {
     // NORMAL
     if (is_auto_mode && is_emergency) {
       if (param_.use_takeover_request) {
@@ -375,7 +375,7 @@ void EmergencyHandler::updateMRMState()
         is_takeover_request_ = true;
         return;
       } else {
-        transitionTo(MRMState::MRM_OPERATING);
+        transitionTo(MrmState::MRM_OPERATING);
         return;
       }
     }
@@ -383,30 +383,30 @@ void EmergencyHandler::updateMRMState()
     // Emergency
     // Send recovery events if "not emergency" or "takeover done"
     if (!is_emergency) {
-      transitionTo(MRMState::NORMAL);
+      transitionTo(MrmState::NORMAL);
       return;
     }
     // TODO(Kenji Miyake): Check if human can safely override, for example using DSM
     if (is_takeover_done) {
-      transitionTo(MRMState::NORMAL);
+      transitionTo(MrmState::NORMAL);
       return;
     }
 
     if (is_takeover_request_) {
       const auto time_from_takeover_request = this->get_clock()->now() - takeover_requested_time_;
       if (time_from_takeover_request.seconds() > param_.timeout_takeover_request) {
-        transitionTo(MRMState::MRM_OPERATING);
+        transitionTo(MrmState::MRM_OPERATING);
         return;
       }
-    } else if (mrm_state_.state == MRMState::MRM_OPERATING) {
+    } else if (mrm_state_.state == MrmState::MRM_OPERATING) {
       // TODO(Kenji Miyake): Check MRC is accomplished
       if (isStopped()) {
-        transitionTo(MRMState::MRM_SUCCEEDED);
+        transitionTo(MrmState::MRM_SUCCEEDED);
         return;
       }
-    } else if (mrm_state_.state == MRMState::MRM_SUCCEEDED) {
+    } else if (mrm_state_.state == MrmState::MRM_SUCCEEDED) {
       // Do nothing(only checking common recovery events)
-    } else if (mrm_state_.state == MRMState::MRM_FAILED) {
+    } else if (mrm_state_.state == MrmState::MRM_FAILED) {
       // Do nothing(only checking common recovery events)
     } else {
       const auto msg = "invalid state: " + std::to_string(mrm_state_.state);
@@ -415,29 +415,29 @@ void EmergencyHandler::updateMRMState()
   }
 }
 
-autoware_adapi_v1_msgs::msg::MRMState::_behavior_type EmergencyHandler::getCurrentMRMBehavior()
+autoware_adapi_v1_msgs::msg::MrmState::_behavior_type EmergencyHandler::getCurrentMRMBehavior()
 {
-  using autoware_adapi_v1_msgs::msg::MRMState;
+  using autoware_adapi_v1_msgs::msg::MrmState;
   using autoware_auto_system_msgs::msg::HazardStatus;
 
   // Get hazard level
   const auto level = hazard_status_stamped_->status.level;
 
   // State machine
-  if (mrm_state_.behavior == MRMState::NONE) {
+  if (mrm_state_.behavior == MrmState::NONE) {
     if (level == HazardStatus::LATENT_FAULT) {
       if (param_.use_comfortable_stop) {
-        return MRMState::COMFORTABLE_STOP;
+        return MrmState::COMFORTABLE_STOP;
       }
-      return MRMState::EMERGENCY_STOP;
+      return MrmState::EMERGENCY_STOP;
     }
     if (level == HazardStatus::SINGLE_POINT_FAULT) {
-      return MRMState::EMERGENCY_STOP;
+      return MrmState::EMERGENCY_STOP;
     }
   }
-  if (mrm_state_.behavior == MRMState::COMFORTABLE_STOP) {
+  if (mrm_state_.behavior == MrmState::COMFORTABLE_STOP) {
     if (level == HazardStatus::SINGLE_POINT_FAULT) {
-      return MRMState::EMERGENCY_STOP;
+      return MrmState::EMERGENCY_STOP;
     }
   }
 

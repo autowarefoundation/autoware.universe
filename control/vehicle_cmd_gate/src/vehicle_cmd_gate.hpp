@@ -48,7 +48,7 @@
 namespace vehicle_cmd_gate
 {
 
-using autoware_adapi_v1_msgs::msg::MRMState;
+using autoware_adapi_v1_msgs::msg::MrmState;
 using autoware_auto_control_msgs::msg::AckermannControlCommand;
 using autoware_auto_vehicle_msgs::msg::GearCommand;
 using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
@@ -58,7 +58,7 @@ using tier4_control_msgs::msg::GateMode;
 using tier4_external_api_msgs::msg::Emergency;
 using tier4_external_api_msgs::msg::Heartbeat;
 using tier4_external_api_msgs::srv::SetEmergency;
-using tier4_system_msgs::msg::MRMBehaviorStatus;
+using tier4_system_msgs::msg::MrmBehaviorStatus;
 using tier4_system_msgs::msg::OperationMode;
 using tier4_vehicle_msgs::msg::VehicleEmergencyStamped;
 
@@ -101,19 +101,19 @@ private:
   rclcpp::Subscription<GateMode>::SharedPtr gate_mode_sub_;
   rclcpp::Subscription<SteeringReport>::SharedPtr steer_sub_;
   rclcpp::Subscription<OperationMode>::SharedPtr operation_mode_sub_;
-  rclcpp::Subscription<MRMState>::SharedPtr mrm_state_sub_;
+  rclcpp::Subscription<MrmState>::SharedPtr mrm_state_sub_;
 
   void onGateMode(GateMode::ConstSharedPtr msg);
   void onExternalEmergencyStopHeartbeat(Heartbeat::ConstSharedPtr msg);
   void onSteering(SteeringReport::ConstSharedPtr msg);
-  void onMRMState(MRMState::ConstSharedPtr msg);
+  void onMRMState(MrmState::ConstSharedPtr msg);
 
   bool is_engaged_;
   bool is_system_emergency_ = false;
   bool is_external_emergency_stop_ = false;
   double current_steer_ = 0;
   GateMode current_gate_mode_;
-  MRMState current_mrm_state_;
+  MrmState current_mrm_state_;
 
   // Heartbeat
   std::shared_ptr<rclcpp::Time> emergency_state_heartbeat_received_time_;

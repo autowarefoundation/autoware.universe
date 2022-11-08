@@ -49,14 +49,14 @@ private:
   Parameters params_;
 
   // Server
-  rclcpp::Service<autoware_adapi_v1_msgs::srv::OperateMRM>::SharedPtr service_operation_;
+  rclcpp::Service<autoware_adapi_v1_msgs::srv::OperateMrm>::SharedPtr service_operation_;
 
   void operateComfortableStop(
-    const autoware_adapi_v1_msgs::srv::OperateMRM::Request::SharedPtr request,
-    const autoware_adapi_v1_msgs::srv::OperateMRM::Response::SharedPtr response);
+    const autoware_adapi_v1_msgs::srv::OperateMrm::Request::SharedPtr request,
+    const autoware_adapi_v1_msgs::srv::OperateMrm::Response::SharedPtr response);
 
   // Publisher
-  rclcpp::Publisher<tier4_system_msgs::msg::MRMBehaviorStatus>::SharedPtr pub_status_;
+  rclcpp::Publisher<tier4_system_msgs::msg::MrmBehaviorStatus>::SharedPtr pub_status_;
   rclcpp::Publisher<tier4_planning_msgs::msg::VelocityLimit>::SharedPtr pub_velocity_limit_;
   rclcpp::Publisher<tier4_planning_msgs::msg::VelocityLimitClearCommand>::SharedPtr
     pub_velocity_limit_clear_command_;
@@ -71,7 +71,7 @@ private:
   void onTimer() const;
 
   // States
-  tier4_system_msgs::msg::MRMBehaviorStatus status_;
+  tier4_system_msgs::msg::MrmBehaviorStatus status_;
 };
 
 }  // namespace mrm_comfortable_stop_operator

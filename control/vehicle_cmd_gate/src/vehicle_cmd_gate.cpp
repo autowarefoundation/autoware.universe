@@ -82,7 +82,7 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
     "input/operation_mode", 1, [this](const tier4_system_msgs::msg::OperationMode::SharedPtr msg) {
       current_operation_mode_ = *msg;
     });
-  mrm_state_sub_ = this->create_subscription<MRMState>(
+  mrm_state_sub_ = this->create_subscription<MrmState>(
     "input/mrm_state", 1, std::bind(&VehicleCmdGate::onMRMState, this, _1));
 
   // Subscriber for auto
@@ -579,12 +579,12 @@ void VehicleCmdGate::onSteering(SteeringReport::ConstSharedPtr msg)
   current_steer_ = msg->steering_tire_angle;
 }
 
-void VehicleCmdGate::onMRMState(MRMState::ConstSharedPtr msg)
+void VehicleCmdGate::onMRMState(MrmState::ConstSharedPtr msg)
 {
   is_system_emergency_ =
-    (msg->state == MRMState::MRM_OPERATING || msg->state == MRMState::MRM_SUCCEEDED ||
-     msg->state == MRMState::MRM_FAILED) &&
-    (msg->behavior == MRMState::EMERGENCY_STOP);
+    (msg->state == MrmState::MRM_OPERATING || msg->state == MrmState::MRM_SUCCEEDED ||
+     msg->state == MrmState::MRM_FAILED) &&
+    (msg->behavior == MrmState::EMERGENCY_STOP);
   emergency_state_heartbeat_received_time_ = std::make_shared<rclcpp::Time>(this->now());
 }
 

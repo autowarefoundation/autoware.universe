@@ -29,9 +29,9 @@
 
 namespace mrm_emergency_stop_operator
 {
-using autoware_adapi_v1_msgs::srv::OperateMRM;
+using autoware_adapi_v1_msgs::srv::OperateMrm;
 using autoware_auto_control_msgs::msg::AckermannControlCommand;
-using tier4_system_msgs::msg::MRMBehaviorStatus;
+using tier4_system_msgs::msg::MrmBehaviorStatus;
 
 struct Parameters
 {
@@ -55,13 +55,13 @@ private:
   void onControlCommand(AckermannControlCommand::ConstSharedPtr msg);
 
   // Server
-  rclcpp::Service<OperateMRM>::SharedPtr service_operation_;
+  rclcpp::Service<OperateMrm>::SharedPtr service_operation_;
 
   void operateEmergencyStop(
-    const OperateMRM::Request::SharedPtr request, const OperateMRM::Response::SharedPtr response);
+    const OperateMrm::Request::SharedPtr request, const OperateMrm::Response::SharedPtr response);
 
   // Publisher
-  rclcpp::Publisher<MRMBehaviorStatus>::SharedPtr pub_status_;
+  rclcpp::Publisher<MrmBehaviorStatus>::SharedPtr pub_status_;
   rclcpp::Publisher<AckermannControlCommand>::SharedPtr pub_control_cmd_;
 
   void publishStatus() const;
@@ -73,7 +73,7 @@ private:
   void onTimer();
 
   // States
-  MRMBehaviorStatus status_;
+  MrmBehaviorStatus status_;
   AckermannControlCommand prev_control_cmd_;
   bool is_prev_control_cmd_subscribed_;
 
