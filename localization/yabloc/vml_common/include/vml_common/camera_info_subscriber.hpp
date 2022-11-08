@@ -21,6 +21,7 @@ public:
   Eigen::Matrix3f intrinsic() const;
 
   // This member function DOES NOT check isCameraInfoReady()
+  // If it it not ready, throw bad optional access
   std::string getFrameId() const;
 
 private:

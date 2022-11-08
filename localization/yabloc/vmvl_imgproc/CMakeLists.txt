@@ -8,7 +8,8 @@ if(NOT CMAKE_CXX_STANDARD)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic -Werror)
+  # add_compile_options(-Wall -Wextra -Wpedantic -Werror)
+  add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
 # ===================================================
@@ -57,6 +58,7 @@ ADD_EXE(TARGET undistort_node SRC src/undistort_node.cpp INC include)
 ADD_EXE(TARGET segment_filter_node SRC src/segment_filter_*.cpp INC include)
 ADD_EXE(TARGET lsd_node SRC src/lsd_*.cpp INC include LIB cv_lsd INC include)
 ADD_EXE(TARGET graph_segment_node SRC src/graph_segment_*.cpp INC include)
+ADD_EXE(TARGET reprojection_node SRC src/reproject_*.cpp INC include)
 
 # ===================================================
 ament_auto_package(INSTALL_TO_SHARE launch)
