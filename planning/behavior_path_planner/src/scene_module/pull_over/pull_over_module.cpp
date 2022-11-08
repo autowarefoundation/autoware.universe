@@ -586,11 +586,11 @@ PathWithLaneId PullOverModule::getReferencePath() const
     route_handler->getCenterLinePath(status_.current_lanes, s_start, s_end, true);
 
   // if not approved, stop parking start position or goal search start position.
-  const auto refied_goal_arc_coordinates =
+  const auto refined_goal_arc_coordinates =
     lanelet::utils::getArcCoordinates(status_.current_lanes, refined_goal_pose_);
   const Pose search_start_pose = calcOffsetPose(
     refined_goal_pose_, -parameters_.backward_goal_search_length,
-    -refied_goal_arc_coordinates.distance, 0);
+    -refined_goal_arc_coordinates.distance, 0);
   const Pose stop_pose = status_.is_safe ? status_.pull_over_path.start_pose : search_start_pose;
 
   // if stop pose is behind current pose, stop as soon as possible
