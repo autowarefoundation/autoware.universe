@@ -140,6 +140,12 @@ bool IntersectionModule::modifyPathVelocity(
     setDistance(std::numeric_limits<double>::lowest());
     return false;
   }
+  if (!stop_lines_idx_opt.has_value()) {
+    RCLCPP_DEBUG(logger_, "stop line is at path[0], ignore planning\n===== plan end =====");
+    setSafe(true);
+    setDistance(std::numeric_limits<double>::lowest());
+    return false;
+  }
   const auto stuck_line_idx = stuck_line_idx_opt.value();
 
   /* calc closest index */

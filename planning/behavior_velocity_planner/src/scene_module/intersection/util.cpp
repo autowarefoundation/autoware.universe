@@ -207,8 +207,10 @@ std::pair<std::optional<size_t>, std::optional<StopLineIdx>> generateStopLine(
   size_t stuck_stop_line_idx = 0;
   {
     /* insert stuck stop line */
-    const size_t insert_idx_ip = std::max<size_t>(
-      stuck_stop_line_idx_ip_opt.value() - 1 - stop_line_margin_idx_dist - base2front_idx_dist, 0);
+    const size_t insert_idx_ip = static_cast<size_t>(std::max(
+      static_cast<int>(stuck_stop_line_idx_ip_opt.value()) - 1 - stop_line_margin_idx_dist -
+        base2front_idx_dist,
+      0));
     const auto & insert_point = path_ip.points.at(insert_idx_ip).point.pose;
     const auto insert_idx_opt = util::getDuplicatedPointIdx(*original_path, insert_point.position);
     if (insert_idx_opt.has_value()) {
@@ -222,7 +224,6 @@ std::pair<std::optional<size_t>, std::optional<StopLineIdx>> generateStopLine(
   /* generate stop points */
   util::StopLineIdx idxs;
   idxs.first_inside_lane = first_inside_lane_idx;
-  ;
 
   // If a stop_line tag is defined on lanelet_map, use it.
   // else generate a stop_line behind the intersection of path and detection area
@@ -233,12 +234,6 @@ std::pair<std::optional<size_t>, std::optional<StopLineIdx>> generateStopLine(
         logger)) {
     stop_idx_ip =
       static_cast<size_t>(std::max<int>(static_cast<int>(stop_idx_ip) - base2front_idx_dist, 0));
-    const auto & first_inside_point = path_ip.points.at(stop_idx_ip).point.pose;
-    const auto first_inside_lane_idx_opt =
-      motion_utils::findNearestIndex(original_path->points, first_inside_point, 10.0, M_PI_4);
-    if (first_inside_lane_idx_opt) {
-      idxs.first_inside_lane = first_inside_lane_idx_opt.get();
-    }
   } else {
     // find the index of the first point that intersects with detection_areas
     const auto first_inside_detection_idx_ip_opt = getFirstPointInsidePolygons(
@@ -257,7 +252,6 @@ std::pair<std::optional<size_t>, std::optional<StopLineIdx>> generateStopLine(
       0));
   }
   if (stop_idx_ip == 0) {
-    RCLCPP_DEBUG(logger, "stop line is at path[0], ignore planning.");
     return {stuck_stop_line_idx, std::nullopt};
   }
 
