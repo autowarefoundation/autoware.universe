@@ -395,7 +395,7 @@ boost::optional<LongitudinalOutput> PidLongitudinalController::run()
   }
 
   // update control state
-  m_control_state = updateControlState(m_control_state, control_data);
+  updateControlState(control_data);
 
   // calculate control command
   const Motion ctrl_cmd = calcCtrlCmd(m_control_state, current_pose, control_data);
@@ -488,8 +488,7 @@ PidLongitudinalController::Motion PidLongitudinalController::calcEmergencyCtrlCm
   return Motion{vel, acc};
 }
 
-PidLongitudinalController::ControlState PidLongitudinalController::updateControlState(
-  const ControlState current_control_state, const ControlData & control_data)
+void PidLongitudinalController::updateControlState(const ControlData & control_data)
 {
   const float64_t current_vel = control_data.current_motion.vel;
   const float64_t current_acc = control_data.current_motion.acc;
@@ -525,13 +524,14 @@ PidLongitudinalController::ControlState PidLongitudinalController::updateControl
                                       current_vel_cmd < vel_epsilon;
   const bool8_t has_nonzero_target_vel = std::abs(current_vel_cmd) > 1.0e-5;
 
-  const auto print_and_return = [this, current_control_state](const auto s) {
-    if (s != current_control_state) {
+  const auto changeState = [this](const auto s) {
+    if (s != m_control_state) {
       RCLCPP_DEBUG_STREAM(
         node_->get_logger(),
-        "controller state changed: " << toStr(current_control_state) << " -> " << toStr(s));
+        "controller state changed: " << toStr(m_control_state) << " -> " << toStr(s));
     }
-    return s;
+    m_control_state = s;
+    return;
   };
 
   const auto info_throttle = [this](const auto & s) {
@@ -540,9 +540,9 @@ PidLongitudinalController::ControlState PidLongitudinalController::updateControl
 
   // transit state
   // in DRIVE state
-  if (current_control_state == ControlState::DRIVE) {
+  if (m_control_state == ControlState::DRIVE) {
     if (emergency_condition) {
-      return print_and_return(ControlState::EMERGENCY);
+      return changeState(ControlState::EMERGENCY);
     }
 
     if (m_enable_smooth_stop) {
@@ -554,24 +554,24 @@ PidLongitudinalController::ControlState PidLongitudinalController::updateControl
           control_data.stop_dist -
           0.5 * (pred_vel_in_target + current_vel) * m_delay_compensation_time;
         m_smooth_stop.init(pred_vel_in_target, pred_stop_dist);
-        return print_and_return(ControlState::STOPPING);
+        return changeState(ControlState::STOPPING);
       }
     } else {
       if (stopped_condition && !departure_condition_from_stopped) {
-        return print_and_return(ControlState::STOPPED);
+        return changeState(ControlState::STOPPED);
       }
     }
-    return print_and_return(ControlState::DRIVE);
+    return;
   }
 
   // in STOPPING state
-  if (current_control_state == ControlState::STOPPING) {
+  if (m_control_state == ControlState::STOPPING) {
     if (emergency_condition) {
-      return print_and_return(ControlState::EMERGENCY);
+      return changeState(ControlState::EMERGENCY);
     }
 
     if (stopped_condition) {
-      return print_and_return(ControlState::STOPPED);
+      return changeState(ControlState::STOPPED);
     }
 
     if (departure_condition_from_stopping) {
@@ -579,13 +579,13 @@ PidLongitudinalController::ControlState PidLongitudinalController::updateControl
       m_lpf_vel_error->reset(0.0);
       // prevent the car from taking a long time to start to move
       m_prev_ctrl_cmd.acc = std::max(0.0, m_prev_ctrl_cmd.acc);
-      return print_and_return(ControlState::DRIVE);
+      return changeState(ControlState::DRIVE);
     }
-    return print_and_return(ControlState::STOPPING);
+    return;
   }
 
   // in STOPPED state
-  if (current_control_state == ControlState::STOPPED) {
+  if (m_control_state == ControlState::STOPPED) {
     // -- debug print --
     if (has_nonzero_target_vel && !departure_condition_from_stopped) {
       info_throttle("target speed > 0, but departure condition is not met. Keep STOPPED.");
@@ -596,28 +596,29 @@ PidLongitudinalController::ControlState PidLongitudinalController::updateControl
     // ---------------
 
     if (keep_stopped_condition) {
-      return print_and_return(ControlState::STOPPED);
+      return changeState(ControlState::STOPPED);
     }
     if (departure_condition_from_stopped) {
       m_pid_vel.reset();
       m_lpf_vel_error->reset(0.0);
       // prevent the car from taking a long time to start to move
       m_prev_ctrl_cmd.acc = std::max(0.0, m_prev_ctrl_cmd.acc);
-      return print_and_return(ControlState::DRIVE);
+      return changeState(ControlState::DRIVE);
     }
 
-    return print_and_return(ControlState::STOPPED);
+    return;
   }
 
   // in EMERGENCY state
   if (m_control_state == ControlState::EMERGENCY) {
     if (stopped_condition && !emergency_condition) {
-      return print_and_return(ControlState::STOPPED);
+      return changeState(ControlState::STOPPED);
     }
-    return print_and_return(ControlState::EMERGENCY);
+    return;
   }
 
-  return print_and_return(current_control_state);
+  RCLCPP_FATAL(node_->get_logger(), "invalid state found.");
+  return;
 }
 
 PidLongitudinalController::Motion PidLongitudinalController::calcCtrlCmd(

@@ -268,11 +268,9 @@ private:
 
   /**
    * @brief update control state according to the current situation
-   * @param [in] current_control_state current control state
    * @param [in] control_data control data
    */
-  ControlState updateControlState(
-    const ControlState current_control_state, const ControlData & control_data);
+  void updateControlState(const ControlData & control_data);
 
   /**
    * @brief calculate control command based on the current control state
