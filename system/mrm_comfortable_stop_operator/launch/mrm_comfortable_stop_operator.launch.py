@@ -38,8 +38,8 @@ def generate_launch_description():
             param,
         ],
         remappings=[
-            ("~/input/mrm/comfortable_stop/operate", "/system/api/mrm/comfortable_stop/operate"),
-            ("~/output/mrm/comfortable_stop/status", "/system/api/mrm/comfortable_stop/status"),
+            ("~/input/mrm/comfortable_stop/operate", "/system/mrm/comfortable_stop/operate"),
+            ("~/output/mrm/comfortable_stop/status", "/system/mrm/comfortable_stop/status"),
             ("~/output/velocity_limit", "/planning/scenario_planning/max_velocity_candidates"),
             ("~/output/velocity_limit/clear", "/planning/scenario_planning/clear_velocity_limit"),
         ],
