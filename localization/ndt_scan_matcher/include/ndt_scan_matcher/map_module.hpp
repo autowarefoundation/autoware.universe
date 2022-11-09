@@ -24,6 +24,8 @@
 #include <pcl_conversions/pcl_conversions.h>
 #include <pclomp/ndt_omp.h>
 
+#include <memory>
+
 class MapModule
 {
   using PointSource = pcl::PointXYZ;
