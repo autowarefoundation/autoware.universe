@@ -82,6 +82,7 @@ NDTScanMatcher::NDTScanMatcher()
 : Node("ndt_scan_matcher"),
   tf2_broadcaster_(*this),
   ndt_ptr_(new NormalDistributionsTransform),
+  state_ptr_(new StdMap),
   base_frame_("base_link"),
   ndt_base_frame_("ndt_base_link"),
   map_frame_("map"),
@@ -95,7 +96,7 @@ NDTScanMatcher::NDTScanMatcher()
   oscillation_threshold_(10),
   regularization_enabled_(declare_parameter("regularization_enabled", false))
 {
-  key_value_stdmap_["state"] = "Initializing";
+  (*state_ptr_)["state"] = "Initializing";
   is_activated_ = false;
 
   int points_queue_size = this->declare_parameter("input_sensor_points_queue_size", 0);
@@ -134,9 +135,6 @@ NDTScanMatcher::NDTScanMatcher()
   converged_param_nearest_voxel_transformation_likelihood_ = this->declare_parameter(
     "converged_param_nearest_voxel_transformation_likelihood",
     converged_param_nearest_voxel_transformation_likelihood_);
-
-  // initial_estimate_particles_num_ =
-  //   this->declare_parameter("initial_estimate_particles_num", initial_estimate_particles_num_);
 
   initial_pose_timeout_sec_ =
     this->declare_parameter("initial_pose_timeout_sec", initial_pose_timeout_sec_);
@@ -216,7 +214,7 @@ NDTScanMatcher::NDTScanMatcher()
   tf2_listener_module_ = std::make_shared<Tf2ListenerModule>(this);
   map_module_ = std::make_unique<MapModule>(this, &ndt_ptr_mtx_, ndt_ptr_, main_callback_group);
   pose_init_module_ = std::make_unique<PoseInitializationModule>(this, &ndt_ptr_mtx_, ndt_ptr_,
-    tf2_listener_module_, map_frame_, main_callback_group, std::make_shared<StdMap>(key_value_stdmap_));
+    tf2_listener_module_, map_frame_, main_callback_group, state_ptr_);
 }
 
 void NDTScanMatcher::timer_diagnostic()
@@ -227,7 +225,7 @@ void NDTScanMatcher::timer_diagnostic()
     diag_status_msg.name = "ndt_scan_matcher";
     diag_status_msg.hardware_id = "";
 
-    for (const auto & key_value : key_value_stdmap_) {
+    for (const auto & key_value : (*state_ptr_)) {
       diagnostic_msgs::msg::KeyValue key_value_msg;
       key_value_msg.key = key_value.first;
       key_value_msg.value = key_value.second;
@@ -236,26 +234,26 @@ void NDTScanMatcher::timer_diagnostic()
 
     diag_status_msg.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
     diag_status_msg.message = "";
-    if (key_value_stdmap_.count("state") && key_value_stdmap_["state"] == "Initializing") {
+    if (state_ptr_->count("state") && (*state_ptr_)["state"] == "Initializing") {
       diag_status_msg.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
       diag_status_msg.message += "Initializing State. ";
     }
     if (
-      key_value_stdmap_.count("skipping_publish_num") &&
-      std::stoi(key_value_stdmap_["skipping_publish_num"]) > 1) {
+      state_ptr_->count("skipping_publish_num") &&
+      std::stoi((*state_ptr_)["skipping_publish_num"]) > 1) {
       diag_status_msg.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
       diag_status_msg.message += "skipping_publish_num > 1. ";
     }
     if (
-      key_value_stdmap_.count("skipping_publish_num") &&
-      std::stoi(key_value_stdmap_["skipping_publish_num"]) >= 5) {
+      state_ptr_->count("skipping_publish_num") &&
+      std::stoi((*state_ptr_)["skipping_publish_num"]) >= 5) {
       diag_status_msg.level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
       diag_status_msg.message += "skipping_publish_num exceed limit. ";
     }
     // Ignore local optimal solution
     if (
-      key_value_stdmap_.count("is_local_optimal_solution_oscillation") &&
-      std::stoi(key_value_stdmap_["is_local_optimal_solution_oscillation"])) {
+      state_ptr_->count("is_local_optimal_solution_oscillation") &&
+      std::stoi((*state_ptr_)["is_local_optimal_solution_oscillation"])) {
       diag_status_msg.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
       diag_status_msg.message = "local optimal solution oscillation occurred";
     }
@@ -355,13 +353,13 @@ void NDTScanMatcher::callback_sensor_points(
   }
 
   // perform ndt scan matching
-  key_value_stdmap_["state"] = "Aligning";
+  (*state_ptr_)["state"] = "Aligning";
   const Eigen::Matrix4f initial_pose_matrix =
     pose_to_matrix4f(interpolator.get_current_pose().pose.pose);
   auto output_cloud = std::make_shared<pcl::PointCloud<PointSource>>();
   ndt_ptr_->align(*output_cloud, initial_pose_matrix);
   const pclomp::NdtResult ndt_result = ndt_ptr_->getResult();
-  key_value_stdmap_["state"] = "Sleeping";
+  (*state_ptr_)["state"] = "Sleeping";
 
   const auto exe_end_time = std::chrono::system_clock::now();
   const double exe_time =
@@ -426,15 +424,15 @@ void NDTScanMatcher::callback_sensor_points(
     *sensor_points_baselinkTF_ptr, *sensor_points_mapTF_ptr, ndt_result.pose);
   publish_point_cloud(sensor_ros_time, map_frame_, sensor_points_mapTF_ptr);
 
-  key_value_stdmap_["transform_probability"] = std::to_string(ndt_result.transform_probability);
-  key_value_stdmap_["nearest_voxel_transformation_likelihood"] =
+  (*state_ptr_)["transform_probability"] = std::to_string(ndt_result.transform_probability);
+  (*state_ptr_)["nearest_voxel_transformation_likelihood"] =
     std::to_string(ndt_result.nearest_voxel_transformation_likelihood);
-  key_value_stdmap_["iteration_num"] = std::to_string(ndt_result.iteration_num);
-  key_value_stdmap_["skipping_publish_num"] = std::to_string(skipping_publish_num);
+  (*state_ptr_)["iteration_num"] = std::to_string(ndt_result.iteration_num);
+  (*state_ptr_)["skipping_publish_num"] = std::to_string(skipping_publish_num);
   if (is_local_optimal_solution_oscillation) {
-    key_value_stdmap_["is_local_optimal_solution_oscillation"] = "1";
+    (*state_ptr_)["is_local_optimal_solution_oscillation"] = "1";
   } else {
-    key_value_stdmap_["is_local_optimal_solution_oscillation"] = "0";
+    (*state_ptr_)["is_local_optimal_solution_oscillation"] = "0";
   }
 }
 
@@ -633,7 +631,7 @@ void NDTScanMatcher::service_trigger_node(
     std::lock_guard<std::mutex> initial_pose_array_lock(initial_pose_array_mtx_);
     initial_pose_msg_ptr_array_.clear();
   } else {
-    key_value_stdmap_["state"] = "Initializing";
+    (*state_ptr_)["state"] = "Initializing";
   }
   res->success = true;
   return;

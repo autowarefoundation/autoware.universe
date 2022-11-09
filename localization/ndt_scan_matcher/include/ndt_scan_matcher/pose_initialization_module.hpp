@@ -46,7 +46,7 @@ public:
     std::shared_ptr<Tf2ListenerModule> tf2_listener_module,
     std::string map_frame,
     rclcpp::CallbackGroup::SharedPtr main_callback_group,
-    std::shared_ptr<StdMap> key_value_stdmap_ptr);
+    std::shared_ptr<StdMap> state_ptr);
 
 private:
   void service_ndt_align(
@@ -72,7 +72,7 @@ private:
   rclcpp::Logger logger_;
   rclcpp::Clock::SharedPtr clock_;
   std::shared_ptr<Tf2ListenerModule> tf2_listener_module_;
-  std::shared_ptr<StdMap> key_value_stdmap_ptr_;
+  std::shared_ptr<StdMap> state_ptr_;
 };
 
 #endif  // NDT_SCAN_MATCHER__POSE_INITIALIZATION_MODULE_HPP_

@@ -20,14 +20,14 @@ PoseInitializationModule::PoseInitializationModule(
   std::shared_ptr<Tf2ListenerModule> tf2_listener_module,
   std::string map_frame,
   rclcpp::CallbackGroup::SharedPtr main_callback_group,
-  std::shared_ptr<StdMap> key_value_stdmap_ptr)
+  std::shared_ptr<StdMap> state_ptr)
 : ndt_ptr_(ndt_ptr),
   ndt_ptr_mutex_(ndt_ptr_mutex),
   map_frame_(map_frame),
   logger_(node->get_logger()),
   clock_(node->get_clock()),
   tf2_listener_module_(tf2_listener_module),
-  key_value_stdmap_ptr_(key_value_stdmap_ptr)
+  state_ptr_(state_ptr)
 {
   initial_estimate_particles_num_ =
     node->declare_parameter("initial_estimate_particles_num", initial_estimate_particles_num_);
@@ -72,9 +72,9 @@ void PoseInitializationModule::service_ndt_align(
   // mutex Map
   std::lock_guard<std::mutex> lock(*ndt_ptr_mutex_);
 
-  (*key_value_stdmap_ptr_)["state"] = "Aligning";
+  (*state_ptr_)["state"] = "Aligning";
   res->pose_with_covariance = align_using_monte_carlo(ndt_ptr_, mapTF_initial_pose_msg);
-  (*key_value_stdmap_ptr_)["state"] = "Sleeping";
+  (*state_ptr_)["state"] = "Sleeping";
   res->success = true;
   res->pose_with_covariance.pose.covariance = req->pose_with_covariance.pose.covariance;
 }

@@ -162,6 +162,7 @@ private:
   tf2_ros::TransformBroadcaster tf2_broadcaster_;
 
   std::shared_ptr<NormalDistributionsTransform> ndt_ptr_;
+  std::shared_ptr<StdMap> state_ptr_;
 
   Eigen::Matrix4f base_to_sensor_matrix_;
   std::string base_frame_;
@@ -185,7 +186,6 @@ private:
   std::mutex initial_pose_array_mtx_;
 
   std::thread diagnostic_thread_;
-  StdMap key_value_stdmap_;
 
   // variables for regularization
   const bool regularization_enabled_;
