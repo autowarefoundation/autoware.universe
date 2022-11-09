@@ -8,6 +8,7 @@ This package provides the features of loading various maps.
 
 `pointcloud_map_loader` provides pointcloud maps to the other Autoware nodes in various configurations.
 Currently, it supports the following three types:
+
 - Publish raw pointcloud map
 - Send partial pointcloud map loading via ROS 2 service
 - Send differential pointcloud map loading via ROS 2 service
@@ -32,12 +33,12 @@ Please see [the description of `GetDifferentialPointCloudMap.srv`](https://githu
 
 ### Parameters
 
-| Name                          | Type   | Description                                                                       | Default value |
-| :---------------------------- | :----- | :-------------------------------------------------------------------------------- | :------------ |
-| enable_whole_load             | bool   | A flag to enable raw pointcloud map publishing                                    | true          |
-| enable_partial_load           | bool   | A flag to enable partial pointcloud map server                                    | true          |
-| enable_differential_load      | bool   | A flag to enable differential pointcloud map server                               | true          |
-| leaf_size                     | double | Downsampling leaf size (only used when enable_downsampled_whole_load is set true) | 3.0           |
+| Name                     | Type   | Description                                                                       | Default value |
+| :----------------------- | :----- | :-------------------------------------------------------------------------------- | :------------ |
+| enable_whole_load        | bool   | A flag to enable raw pointcloud map publishing                                    | true          |
+| enable_partial_load      | bool   | A flag to enable partial pointcloud map server                                    | true          |
+| enable_differential_load | bool   | A flag to enable differential pointcloud map server                               | true          |
+| leaf_size                | double | Downsampling leaf size (only used when enable_downsampled_whole_load is set true) | 3.0           |
 
 ### Interfaces
 
