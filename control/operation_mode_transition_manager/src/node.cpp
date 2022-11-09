@@ -73,6 +73,7 @@ void OperationModeTransitionManager::onChangeAutowareControl(
     changeOperationMode(std::nullopt);
   } else {
     // Allow mode transition to complete without canceling.
+    compatibility_transition_ = std::nullopt;
     transition_.reset();
     changeControlMode(ControlModeCommand::Request::MANUAL);
   }
@@ -142,6 +143,7 @@ void OperationModeTransitionManager::changeOperationMode(std::optional<Operation
       transition_ = std::make_unique<Transition>(now(), request_control, current_mode_);
     }
   }
+  compatibility_transition_ = now();
   current_mode_ = request_mode.value_or(current_mode_);
 }
 
@@ -154,6 +156,7 @@ void OperationModeTransitionManager::cancelTransition()
     changeControlMode(ControlModeCommand::Request::MANUAL);
   }
   transition_.reset();
+  compatibility_transition_ = std::nullopt;
 }
 
 void OperationModeTransitionManager::processTransition()
@@ -179,8 +182,8 @@ void OperationModeTransitionManager::processTransition()
     }
   }
 
-  // Set operation mode
-  if (!compatibility_.set_mode(current_mode_)) {
+  // Check reflection of mode change to the compatible interface.
+  if (current_mode_ != compatibility_.get_mode()) {
     return;
   }
 
@@ -207,15 +210,27 @@ void OperationModeTransitionManager::onTimer()
     available_mode_change_[type] = mode->isModeChangeAvailable();
   }
 
+  // Check sync timeout to the compatible interface.
+  if (compatibility_transition_) {
+    if (transition_timeout_ < (now() - compatibility_transition_.value()).seconds()) {
+      compatibility_transition_ = std::nullopt;
+    }
+  }
+
+  // Reflects the mode when changed by the compatible interface.
+  if (compatibility_transition_) {
+    compatibility_.set_mode(current_mode_);
+  } else {
+    current_mode_ = compatibility_.get_mode().value_or(current_mode_);
+  }
+
+  // Reset sync timeout when it is completed.
+  if (current_mode_ == compatibility_.get_mode()) {
+    compatibility_transition_ = std::nullopt;
+  }
+
   if (transition_) {
     processTransition();
-  } else {
-    // Reflects the mode when changed by the compatible interface.
-    const auto mode = compatibility_.get_mode().value_or(current_mode_);
-    if (mode != current_mode_) {
-      current_mode_ = mode;
-      RCLCPP_DEBUG_STREAM(get_logger(), "Reflects the compatible interface mode");
-    }
   }
 
   publishData();

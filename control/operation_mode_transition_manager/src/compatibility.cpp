@@ -70,11 +70,11 @@ std::optional<OperationMode> Compatibility::get_mode() const
   return std::nullopt;
 }
 
-bool Compatibility::set_mode(const OperationMode mode)
+void Compatibility::set_mode(const OperationMode mode)
 {
   // Set operation mode in order from upstream node
   if (!(autoware_engage_ && gate_mode_ && selector_mode_)) {
-    return false;
+    return;
   }
 
   // Convert mode for each node.
@@ -104,7 +104,7 @@ bool Compatibility::set_mode(const OperationMode mode)
       break;
     default:
       RCLCPP_ERROR_STREAM(node_->get_logger(), "unknown mode");
-      return false;
+      return;
   }
 
   // Set selector mode.
@@ -124,7 +124,7 @@ bool Compatibility::set_mode(const OperationMode mode)
     GateMode msg;
     msg.data = gate_mode;
     pub_gate_mode_->publish(msg);
-    return false;
+    return;
   }
 
   // Set autoware engage.
@@ -133,10 +133,8 @@ bool Compatibility::set_mode(const OperationMode mode)
     msg.stamp = node_->now();
     msg.engage = autoware_engage;
     pub_autoware_engage_->publish(msg);
-    return false;
+    return;
   }
-
-  return true;
 }
 
 }  // namespace operation_mode_transition_manager

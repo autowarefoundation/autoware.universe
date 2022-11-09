@@ -69,8 +69,10 @@ private:
   OperationModeState gate_operation_mode_;
   ControlModeReport control_mode_report_;
 
-  Compatibility compatibility_;
   std::optional<OperationModeStateAPI::Message> prev_state_;
+
+  Compatibility compatibility_;
+  std::optional<rclcpp::Time> compatibility_transition_;
 };
 
 }  // namespace operation_mode_transition_manager

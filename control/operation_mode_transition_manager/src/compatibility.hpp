@@ -29,7 +29,7 @@ class Compatibility
 {
 public:
   explicit Compatibility(rclcpp::Node * node);
-  bool set_mode(const OperationMode mode);
+  void set_mode(const OperationMode mode);
   std::optional<OperationMode> get_mode() const;
 
 private:
