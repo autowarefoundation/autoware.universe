@@ -20,18 +20,18 @@
 #include <memory>
 
 // Autoware
-#include <tier4_system_msgs/srv/operate_mrm.hpp>
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
 #include <tier4_system_msgs/msg/mrm_behavior_status.hpp>
+#include <tier4_system_msgs/srv/operate_mrm.hpp>
 
 // ROS2 core
 #include <rclcpp/rclcpp.hpp>
 
 namespace mrm_emergency_stop_operator
 {
-using tier4_system_msgs::srv::OperateMrm;
 using autoware_auto_control_msgs::msg::AckermannControlCommand;
 using tier4_system_msgs::msg::MrmBehaviorStatus;
+using tier4_system_msgs::srv::OperateMrm;
 
 struct Parameters
 {

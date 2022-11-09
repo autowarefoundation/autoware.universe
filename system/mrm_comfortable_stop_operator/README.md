@@ -10,9 +10,9 @@ MRM comfortable stop operator is a node that generates comfortable stop commands
 
 ### Input
 
-| Name                                   | Type                                      | Description         |
-| -------------------------------------- | ----------------------------------------- | ------------------- |
-| `~/input/mrm/comfortable_stop/operate` | `tier4_system_msgs::srv::OperateMrm`      | MRM execution order |
+| Name                                   | Type                                 | Description         |
+| -------------------------------------- | ------------------------------------ | ------------------- |
+| `~/input/mrm/comfortable_stop/operate` | `tier4_system_msgs::srv::OperateMrm` | MRM execution order |
 
 ### Output
 
