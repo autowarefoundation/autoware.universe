@@ -68,6 +68,13 @@ PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & opt
   sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "~/input/pointcloud", rclcpp::SensorDataQoS().keep_last(3), sub_callback);
 
+  tan_h_.resize(rois_number_);
+  for (std::size_t roi_i = 0; roi_i < rois_number_; ++roi_i) {
+    auto fx = camera_info_map_[roi_i].k.at(0);
+    auto x0 = camera_info_map_[roi_i].k.at(2);
+    tan_h_[roi_i] = x0 / fx;
+  }
+
   detection_class_remapper_.setParameters(
     allow_remapping_by_area_matrix, min_area_matrix, max_area_matrix);
 

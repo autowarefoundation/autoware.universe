@@ -50,6 +50,8 @@ protected:
 
   rclcpp::Publisher<DetectedObjects>::SharedPtr obj_pub_ptr_;
 
+  std::vector<double> tan_h_;  // horizontal field of view
+
   float score_threshold_{0.0};
   std::vector<std::string> class_names_;
   std::vector<double> pointcloud_range;

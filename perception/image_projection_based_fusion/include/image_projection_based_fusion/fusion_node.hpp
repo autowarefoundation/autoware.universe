@@ -93,14 +93,10 @@ protected:
   // camera_info
   std::map<std::size_t, sensor_msgs::msg::CameraInfo> camera_info_map_;
   std::vector<rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr> camera_info_subs_;
-  std::vector<double> tan_h_;  // horizontal field of view
-
-  /** \brief The maximum number of messages that we can store in the queue. */
-  int maximum_queue_size_ = 3;
 
   rclcpp::TimerBase::SharedPtr timer_;
-  double timeout_ms_ = 10;
-  int match_threshold_ms_ = 50;
+  double timeout_ms_{};
+  double match_threshold_ms_{};
 
   /** \brief A vector of subscriber. */
   typename rclcpp::Subscription<Msg>::SharedPtr sub_;
