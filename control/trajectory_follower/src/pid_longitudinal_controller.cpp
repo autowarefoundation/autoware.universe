@@ -514,8 +514,8 @@ void PidLongitudinalController::updateControlState(const ControlData & control_d
   const double current_vel_cmd =
     std::fabs(m_trajectory_ptr->points.at(control_data.nearest_idx).longitudinal_velocity_mps);
   const bool emergency_condition = m_enable_overshoot_emergency &&
-                                      stop_dist < -p.emergency_state_overshoot_stop_dist &&
-                                      current_vel_cmd < vel_epsilon;
+                                   stop_dist < -p.emergency_state_overshoot_stop_dist &&
+                                   current_vel_cmd < vel_epsilon;
   const bool has_nonzero_target_vel = std::abs(current_vel_cmd) > 1.0e-5;
 
   const auto changeState = [this](const auto s) {
