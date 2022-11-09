@@ -483,7 +483,7 @@ PathWithLaneId GeometricParallelParking::generateArcPath(
   // insert the last point exactly
   const auto p = generateArcPathPoint(center, radius, end_yaw, is_left_turn, is_forward);
   constexpr double min_dist = 0.01;
-  if (calcDistance2d(path.points.back(), p) > min_dist) {
+  if (path.points.empty() || calcDistance2d(path.points.back(), p) > min_dist) {
     path.points.push_back(p);
   }
 
