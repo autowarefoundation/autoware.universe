@@ -120,7 +120,6 @@ NDTScanMatcher::NDTScanMatcher()
   ndt_params.num_threads = std::max(ndt_params.num_threads, 1);
   ndt_params.regularization_scale_factor =
     this->declare_parameter<float>("regularization_scale_factor");
-
   ndt_ptr_->setParams(ndt_params);
 
   RCLCPP_INFO(
