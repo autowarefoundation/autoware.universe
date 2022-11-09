@@ -47,10 +47,10 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
     "~/input/control_mode", rclcpp::QoS{1}, std::bind(&EmergencyHandler::onControlMode, this, _1));
   sub_mrm_comfortable_stop_status_ = create_subscription<tier4_system_msgs::msg::MrmBehaviorStatus>(
     "~/input/mrm/comfortable_stop/status", rclcpp::QoS{1},
-    std::bind(&EmergencyHandler::onMRMComfortableStopStatus, this, _1));
+    std::bind(&EmergencyHandler::onMrmComfortableStopStatus, this, _1));
   sub_mrm_emergency_stop_status_ = create_subscription<tier4_system_msgs::msg::MrmBehaviorStatus>(
     "~/input/mrm/emergency_stop/status", rclcpp::QoS{1},
-    std::bind(&EmergencyHandler::onMRMEmergencyStopStatus, this, _1));
+    std::bind(&EmergencyHandler::onMrmEmergencyStopStatus, this, _1));
 
   // Publisher
   pub_control_command_ = create_publisher<autoware_auto_control_msgs::msg::AckermannControlCommand>(
@@ -119,13 +119,13 @@ void EmergencyHandler::onControlMode(
   control_mode_ = msg;
 }
 
-void EmergencyHandler::onMRMComfortableStopStatus(
+void EmergencyHandler::onMrmComfortableStopStatus(
   const tier4_system_msgs::msg::MrmBehaviorStatus::ConstSharedPtr msg)
 {
   mrm_comfortable_stop_status_ = msg;
 }
 
-void EmergencyHandler::onMRMEmergencyStopStatus(
+void EmergencyHandler::onMrmEmergencyStopStatus(
   const tier4_system_msgs::msg::MrmBehaviorStatus::ConstSharedPtr msg)
 {
   mrm_emergency_stop_status_ = msg;
@@ -176,13 +176,13 @@ void EmergencyHandler::publishControlCommands()
   }
 }
 
-void EmergencyHandler::publishMRMState()
+void EmergencyHandler::publishMrmState()
 {
   mrm_state_.stamp = this->now();
   pub_mrm_state_->publish(mrm_state_);
 }
 
-void EmergencyHandler::operateMRM()
+void EmergencyHandler::operateMrm()
 {
   using autoware_adapi_v1_msgs::msg::MrmState;
 
@@ -190,16 +190,16 @@ void EmergencyHandler::operateMRM()
     // Cancel MRM behavior when returning to NORMAL state
     const auto current_mrm_behavior = MrmState::NONE;
     if (current_mrm_behavior != mrm_state_.behavior) {
-      cancelMRMBehavior(mrm_state_.behavior);
+      cancelMrmBehavior(mrm_state_.behavior);
       mrm_state_.behavior = current_mrm_behavior;
     }
     return;
   }
   if (mrm_state_.state == MrmState::MRM_OPERATING) {
-    const auto current_mrm_behavior = getCurrentMRMBehavior();
+    const auto current_mrm_behavior = getCurrentMrmBehavior();
     if (current_mrm_behavior != mrm_state_.behavior) {
-      cancelMRMBehavior(mrm_state_.behavior);
-      callMRMBehavior(current_mrm_behavior);
+      cancelMrmBehavior(mrm_state_.behavior);
+      callMrmBehavior(current_mrm_behavior);
       mrm_state_.behavior = current_mrm_behavior;
     }
     return;
@@ -216,7 +216,7 @@ void EmergencyHandler::operateMRM()
   RCLCPP_WARN(this->get_logger(), "invalid MRM state: %d", mrm_state_.state);
 }
 
-void EmergencyHandler::callMRMBehavior(
+void EmergencyHandler::callMrmBehavior(
   const autoware_adapi_v1_msgs::msg::MrmState::_behavior_type & mrm_behavior) const
 {
   using autoware_adapi_v1_msgs::msg::MrmState;
@@ -245,7 +245,7 @@ void EmergencyHandler::callMRMBehavior(
   RCLCPP_WARN(this->get_logger(), "invalid MRM behavior: %d", mrm_behavior);
 }
 
-void EmergencyHandler::cancelMRMBehavior(
+void EmergencyHandler::cancelMrmBehavior(
   const autoware_adapi_v1_msgs::msg::MrmState::_behavior_type & mrm_behavior) const
 {
   using autoware_adapi_v1_msgs::msg::MrmState;
@@ -320,12 +320,12 @@ void EmergencyHandler::onTimer()
   }
 
   // Update Emergency State
-  updateMRMState();
+  updateMrmState();
 
   // Publish control commands
   publishControlCommands();
-  operateMRM();
-  publishMRMState();
+  operateMrm();
+  publishMrmState();
 }
 
 void EmergencyHandler::transitionTo(const int new_state)
@@ -357,7 +357,7 @@ void EmergencyHandler::transitionTo(const int new_state)
   mrm_state_.state = new_state;
 }
 
-void EmergencyHandler::updateMRMState()
+void EmergencyHandler::updateMrmState()
 {
   using autoware_adapi_v1_msgs::msg::MrmState;
   using autoware_auto_vehicle_msgs::msg::ControlModeReport;
@@ -418,7 +418,7 @@ void EmergencyHandler::updateMRMState()
   }
 }
 
-autoware_adapi_v1_msgs::msg::MrmState::_behavior_type EmergencyHandler::getCurrentMRMBehavior()
+autoware_adapi_v1_msgs::msg::MrmState::_behavior_type EmergencyHandler::getCurrentMrmBehavior()
 {
   using autoware_adapi_v1_msgs::msg::MrmState;
   using autoware_auto_system_msgs::msg::HazardStatus;

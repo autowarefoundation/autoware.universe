@@ -17,7 +17,7 @@
 namespace mrm_comfortable_stop_operator
 {
 
-MRMComfortableStopOperator::MRMComfortableStopOperator(const rclcpp::NodeOptions & node_options)
+MrmComfortableStopOperator::MrmComfortableStopOperator(const rclcpp::NodeOptions & node_options)
 : Node("mrm_comfortable_stop_operator", node_options)
 {
   // Parameter
@@ -29,7 +29,7 @@ MRMComfortableStopOperator::MRMComfortableStopOperator(const rclcpp::NodeOptions
   // Server
   service_operation_ = create_service<tier4_system_msgs::srv::OperateMrm>(
     "~/input/mrm/comfortable_stop/operate", std::bind(
-                                              &MRMComfortableStopOperator::operateComfortableStop,
+                                              &MrmComfortableStopOperator::operateComfortableStop,
                                               this, std::placeholders::_1, std::placeholders::_2));
 
   // Publisher
@@ -44,13 +44,13 @@ MRMComfortableStopOperator::MRMComfortableStopOperator(const rclcpp::NodeOptions
   // Timer
   const auto update_period_ns = rclcpp::Rate(params_.update_rate).period();
   timer_ = rclcpp::create_timer(
-    this, get_clock(), update_period_ns, std::bind(&MRMComfortableStopOperator::onTimer, this));
+    this, get_clock(), update_period_ns, std::bind(&MrmComfortableStopOperator::onTimer, this));
 
   // Initialize
   status_.state = tier4_system_msgs::msg::MrmBehaviorStatus::AVAILABLE;
 }
 
-void MRMComfortableStopOperator::operateComfortableStop(
+void MrmComfortableStopOperator::operateComfortableStop(
   const tier4_system_msgs::srv::OperateMrm::Request::SharedPtr request,
   const tier4_system_msgs::srv::OperateMrm::Response::SharedPtr response)
 {
@@ -65,14 +65,14 @@ void MRMComfortableStopOperator::operateComfortableStop(
   }
 }
 
-void MRMComfortableStopOperator::publishStatus() const
+void MrmComfortableStopOperator::publishStatus() const
 {
   auto status = status_;
   status.stamp = this->now();
   pub_status_->publish(status);
 }
 
-void MRMComfortableStopOperator::publishVelocityLimit() const
+void MrmComfortableStopOperator::publishVelocityLimit() const
 {
   auto velocity_limit = tier4_planning_msgs::msg::VelocityLimit();
   velocity_limit.stamp = this->now();
@@ -86,7 +86,7 @@ void MRMComfortableStopOperator::publishVelocityLimit() const
   pub_velocity_limit_->publish(velocity_limit);
 }
 
-void MRMComfortableStopOperator::publishVelocityLimitClearCommand() const
+void MrmComfortableStopOperator::publishVelocityLimitClearCommand() const
 {
   auto velocity_limit_clear_command = tier4_planning_msgs::msg::VelocityLimitClearCommand();
   velocity_limit_clear_command.stamp = this->now();
@@ -96,9 +96,9 @@ void MRMComfortableStopOperator::publishVelocityLimitClearCommand() const
   pub_velocity_limit_clear_command_->publish(velocity_limit_clear_command);
 }
 
-void MRMComfortableStopOperator::onTimer() const { publishStatus(); }
+void MrmComfortableStopOperator::onTimer() const { publishStatus(); }
 
 }  // namespace mrm_comfortable_stop_operator
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(mrm_comfortable_stop_operator::MRMComfortableStopOperator)
+RCLCPP_COMPONENTS_REGISTER_NODE(mrm_comfortable_stop_operator::MrmComfortableStopOperator)

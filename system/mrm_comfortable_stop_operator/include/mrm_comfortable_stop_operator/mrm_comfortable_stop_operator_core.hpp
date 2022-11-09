@@ -39,10 +39,10 @@ struct Parameters
   double min_jerk;          // [m/s^3]
 };
 
-class MRMComfortableStopOperator : public rclcpp::Node
+class MrmComfortableStopOperator : public rclcpp::Node
 {
 public:
-  explicit MRMComfortableStopOperator(const rclcpp::NodeOptions & node_options);
+  explicit MrmComfortableStopOperator(const rclcpp::NodeOptions & node_options);
 
 private:
   // Parameters

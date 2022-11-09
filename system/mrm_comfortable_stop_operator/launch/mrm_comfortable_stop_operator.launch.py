@@ -32,7 +32,7 @@ def generate_launch_description():
 
     component = ComposableNode(
         package="mrm_comfortable_stop_operator",
-        plugin="mrm_comfortable_stop_operator::MRMComfortableStopOperator",
+        plugin="mrm_comfortable_stop_operator::MrmComfortableStopOperator",
         name="mrm_comfortable_stop_operator",
         parameters=[
             param,

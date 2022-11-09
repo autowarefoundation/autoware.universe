@@ -32,7 +32,7 @@ def generate_launch_description():
 
     component = ComposableNode(
         package="mrm_emergency_stop_operator",
-        plugin="mrm_emergency_stop_operator::MRMEmergencyStopOperator",
+        plugin="mrm_emergency_stop_operator::MrmEmergencyStopOperator",
         name="mrm_emergency_stop_operator",
         parameters=[
             param,

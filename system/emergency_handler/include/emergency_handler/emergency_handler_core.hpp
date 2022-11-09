@@ -84,9 +84,9 @@ private:
     const autoware_auto_control_msgs::msg::AckermannControlCommand::ConstSharedPtr msg);
   void onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg);
   void onControlMode(const autoware_auto_vehicle_msgs::msg::ControlModeReport::ConstSharedPtr msg);
-  void onMRMComfortableStopStatus(
+  void onMrmComfortableStopStatus(
     const tier4_system_msgs::msg::MrmBehaviorStatus::ConstSharedPtr msg);
-  void onMRMEmergencyStopStatus(
+  void onMrmEmergencyStopStatus(
     const tier4_system_msgs::msg::MrmBehaviorStatus::ConstSharedPtr msg);
 
   // Publisher
@@ -106,7 +106,7 @@ private:
   rclcpp::Publisher<autoware_adapi_v1_msgs::msg::MrmState>::SharedPtr pub_mrm_state_;
 
   autoware_adapi_v1_msgs::msg::MrmState mrm_state_;
-  void publishMRMState();
+  void publishMrmState();
 
   // Clients
   rclcpp::CallbackGroup::SharedPtr client_mrm_comfortable_stop_group_;
@@ -114,11 +114,11 @@ private:
   rclcpp::CallbackGroup::SharedPtr client_mrm_emergency_stop_group_;
   rclcpp::Client<tier4_system_msgs::srv::OperateMrm>::SharedPtr client_mrm_emergency_stop_;
 
-  void callMRMBehavior(
+  void callMrmBehavior(
     const autoware_adapi_v1_msgs::msg::MrmState::_behavior_type & mrm_behavior) const;
-  void cancelMRMBehavior(
+  void cancelMrmBehavior(
     const autoware_adapi_v1_msgs::msg::MrmState::_behavior_type & mrm_behavior) const;
-  void logMRMCallingResult(
+  void logMrmCallingResult(
     const tier4_system_msgs::srv::OperateMrm::Response & result, const std::string & behavior,
     bool is_call) const;
 
@@ -138,9 +138,9 @@ private:
   rclcpp::Time takeover_requested_time_;
   bool is_takeover_request_ = false;
   void transitionTo(const int new_state);
-  void updateMRMState();
-  void operateMRM();
-  autoware_adapi_v1_msgs::msg::MrmState::_behavior_type getCurrentMRMBehavior();
+  void updateMrmState();
+  void operateMrm();
+  autoware_adapi_v1_msgs::msg::MrmState::_behavior_type getCurrentMrmBehavior();
   bool isStopped();
   bool isEmergency(const autoware_auto_system_msgs::msg::HazardStatus & hazard_status);
 };

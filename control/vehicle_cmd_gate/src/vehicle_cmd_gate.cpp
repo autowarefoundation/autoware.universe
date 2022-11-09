@@ -83,7 +83,7 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
       current_operation_mode_ = *msg;
     });
   mrm_state_sub_ = this->create_subscription<MrmState>(
-    "input/mrm_state", 1, std::bind(&VehicleCmdGate::onMRMState, this, _1));
+    "input/mrm_state", 1, std::bind(&VehicleCmdGate::onMrmState, this, _1));
 
   // Subscriber for auto
   auto_control_cmd_sub_ = this->create_subscription<AckermannControlCommand>(
@@ -579,7 +579,7 @@ void VehicleCmdGate::onSteering(SteeringReport::ConstSharedPtr msg)
   current_steer_ = msg->steering_tire_angle;
 }
 
-void VehicleCmdGate::onMRMState(MrmState::ConstSharedPtr msg)
+void VehicleCmdGate::onMrmState(MrmState::ConstSharedPtr msg)
 {
   is_system_emergency_ =
     (msg->state == MrmState::MRM_OPERATING || msg->state == MrmState::MRM_SUCCEEDED ||

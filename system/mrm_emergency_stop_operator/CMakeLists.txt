@@ -9,7 +9,7 @@ ament_auto_add_library(mrm_emergency_stop_operator_component SHARED
 )
 
 rclcpp_components_register_node(mrm_emergency_stop_operator_component
-  PLUGIN "mrm_emergency_stop_operator::MRMEmergencyStopOperator"
+  PLUGIN "mrm_emergency_stop_operator::MrmEmergencyStopOperator"
   EXECUTABLE mrm_emergency_stop_operator)
 
 ament_auto_package(INSTALL_TO_SHARE

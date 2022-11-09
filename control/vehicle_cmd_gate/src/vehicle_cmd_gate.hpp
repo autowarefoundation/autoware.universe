@@ -105,7 +105,7 @@ private:
   void onGateMode(GateMode::ConstSharedPtr msg);
   void onExternalEmergencyStopHeartbeat(Heartbeat::ConstSharedPtr msg);
   void onSteering(SteeringReport::ConstSharedPtr msg);
-  void onMRMState(MrmState::ConstSharedPtr msg);
+  void onMrmState(MrmState::ConstSharedPtr msg);
 
   bool is_engaged_;
   bool is_system_emergency_ = false;

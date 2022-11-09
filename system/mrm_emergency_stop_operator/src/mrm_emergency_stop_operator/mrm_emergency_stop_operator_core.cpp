@@ -17,7 +17,7 @@
 namespace mrm_emergency_stop_operator
 {
 
-MRMEmergencyStopOperator::MRMEmergencyStopOperator(const rclcpp::NodeOptions & node_options)
+MrmEmergencyStopOperator::MrmEmergencyStopOperator(const rclcpp::NodeOptions & node_options)
 : Node("mrm_emergency_stop_operator", node_options)
 {
   // Parameter
@@ -28,12 +28,12 @@ MRMEmergencyStopOperator::MRMEmergencyStopOperator(const rclcpp::NodeOptions & n
   // Subscriber
   sub_control_cmd_ = create_subscription<AckermannControlCommand>(
     "~/input/control/control_cmd", 1,
-    std::bind(&MRMEmergencyStopOperator::onControlCommand, this, std::placeholders::_1));
+    std::bind(&MrmEmergencyStopOperator::onControlCommand, this, std::placeholders::_1));
 
   // Server
   service_operation_ = create_service<OperateMrm>(
     "~/input/mrm/emergency_stop/operate", std::bind(
-                                            &MRMEmergencyStopOperator::operateEmergencyStop, this,
+                                            &MrmEmergencyStopOperator::operateEmergencyStop, this,
                                             std::placeholders::_1, std::placeholders::_2));
 
   // Publisher
@@ -44,14 +44,14 @@ MRMEmergencyStopOperator::MRMEmergencyStopOperator(const rclcpp::NodeOptions & n
   // Timer
   const auto update_period_ns = rclcpp::Rate(params_.update_rate).period();
   timer_ = rclcpp::create_timer(
-    this, get_clock(), update_period_ns, std::bind(&MRMEmergencyStopOperator::onTimer, this));
+    this, get_clock(), update_period_ns, std::bind(&MrmEmergencyStopOperator::onTimer, this));
 
   // Initialize
   status_.state = MrmBehaviorStatus::AVAILABLE;
   is_prev_control_cmd_subscribed_ = false;
 }
 
-void MRMEmergencyStopOperator::onControlCommand(AckermannControlCommand::ConstSharedPtr msg)
+void MrmEmergencyStopOperator::onControlCommand(AckermannControlCommand::ConstSharedPtr msg)
 {
   if (status_.state != MrmBehaviorStatus::OPERATING) {
     prev_control_cmd_ = *msg;
@@ -59,7 +59,7 @@ void MRMEmergencyStopOperator::onControlCommand(AckermannControlCommand::ConstSh
   }
 }
 
-void MRMEmergencyStopOperator::operateEmergencyStop(
+void MrmEmergencyStopOperator::operateEmergencyStop(
   const OperateMrm::Request::SharedPtr request, const OperateMrm::Response::SharedPtr response)
 {
   if (request->operate == true) {
@@ -71,19 +71,19 @@ void MRMEmergencyStopOperator::operateEmergencyStop(
   }
 }
 
-void MRMEmergencyStopOperator::publishStatus() const
+void MrmEmergencyStopOperator::publishStatus() const
 {
   auto status = status_;
   status.stamp = this->now();
   pub_status_->publish(status);
 }
 
-void MRMEmergencyStopOperator::publishControlCommand(const AckermannControlCommand & command) const
+void MrmEmergencyStopOperator::publishControlCommand(const AckermannControlCommand & command) const
 {
   pub_control_cmd_->publish(command);
 }
 
-void MRMEmergencyStopOperator::onTimer()
+void MrmEmergencyStopOperator::onTimer()
 {
   if (status_.state == MrmBehaviorStatus::OPERATING) {
     auto control_cmd = calcTargetAcceleration(prev_control_cmd_);
@@ -95,7 +95,7 @@ void MRMEmergencyStopOperator::onTimer()
   publishStatus();
 }
 
-AckermannControlCommand MRMEmergencyStopOperator::calcTargetAcceleration(
+AckermannControlCommand MrmEmergencyStopOperator::calcTargetAcceleration(
   const AckermannControlCommand & prev_control_cmd) const
 {
   auto control_cmd = AckermannControlCommand();
@@ -134,4 +134,4 @@ AckermannControlCommand MRMEmergencyStopOperator::calcTargetAcceleration(
 }  // namespace mrm_emergency_stop_operator
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(mrm_emergency_stop_operator::MRMEmergencyStopOperator)
+RCLCPP_COMPONENTS_REGISTER_NODE(mrm_emergency_stop_operator::MrmEmergencyStopOperator)

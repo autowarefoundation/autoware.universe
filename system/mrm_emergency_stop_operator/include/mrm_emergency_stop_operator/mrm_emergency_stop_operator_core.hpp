@@ -40,10 +40,10 @@ struct Parameters
   double target_jerk;          // [m/s^3]
 };
 
-class MRMEmergencyStopOperator : public rclcpp::Node
+class MrmEmergencyStopOperator : public rclcpp::Node
 {
 public:
-  explicit MRMEmergencyStopOperator(const rclcpp::NodeOptions & node_options);
+  explicit MrmEmergencyStopOperator(const rclcpp::NodeOptions & node_options);
 
 private:
   // Parameters
