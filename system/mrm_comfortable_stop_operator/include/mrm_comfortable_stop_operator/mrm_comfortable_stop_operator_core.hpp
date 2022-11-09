@@ -19,7 +19,7 @@
 #include <memory>
 
 // Autoware
-#include <autoware_adapi_v1_msgs/srv/operate_mrm.hpp>
+#include <tier4_system_msgs/srv/operate_mrm.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit_clear_command.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit_constraints.hpp>
@@ -49,11 +49,11 @@ private:
   Parameters params_;
 
   // Server
-  rclcpp::Service<autoware_adapi_v1_msgs::srv::OperateMrm>::SharedPtr service_operation_;
+  rclcpp::Service<tier4_system_msgs::srv::OperateMrm>::SharedPtr service_operation_;
 
   void operateComfortableStop(
-    const autoware_adapi_v1_msgs::srv::OperateMrm::Request::SharedPtr request,
-    const autoware_adapi_v1_msgs::srv::OperateMrm::Response::SharedPtr response);
+    const tier4_system_msgs::srv::OperateMrm::Request::SharedPtr request,
+    const tier4_system_msgs::srv::OperateMrm::Response::SharedPtr response);
 
   // Publisher
   rclcpp::Publisher<tier4_system_msgs::msg::MrmBehaviorStatus>::SharedPtr pub_status_;

@@ -30,8 +30,8 @@ Emergency Handler is a node to select proper MRM from from system failure state 
 | `/system/emergency/shift_cmd`              | `autoware_auto_vehicle_msgs::msg::GearCommand`         | Required to execute proper MRM (send gear cmd)        |
 | `/system/emergency/hazard_cmd`             | `autoware_auto_vehicle_msgs::msg::HazardLightsCommand` | Required to execute proper MRM (send turn signal cmd) |
 | `/api/fail_safe/mrm_state`                 | `autoware_adapi_v1_msgs::msg::MrmState`                | Inform MRM execution state and selected MRM behavior  |
-| `/system/api/mrm/comfortable_stop/operate` | `autoware_adapi_v1_msgs::srv::OperateMrm`              | Execution order for MRM comfortable stop              |
-| `/system/api/mrm/emergency_stop/operate`   | `autoware_adapi_v1_msgs::srv::OperateMrm`              | Execution order for MRM emergency stop                |
+| `/system/api/mrm/comfortable_stop/operate` | `tier4_system_msgs::srv::OperateMrm`                   | Execution order for MRM comfortable stop              |
+| `/system/api/mrm/emergency_stop/operate`   | `tier4_system_msgs::srv::OperateMrm`                   | Execution order for MRM emergency stop                |
 
 ## Parameters
 

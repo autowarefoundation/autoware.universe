@@ -21,7 +21,7 @@
 
 // Autoware
 #include <autoware_adapi_v1_msgs/msg/mrm_state.hpp>
-#include <autoware_adapi_v1_msgs/srv/operate_mrm.hpp>
+#include <tier4_system_msgs/srv/operate_mrm.hpp>
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
 #include <autoware_auto_system_msgs/msg/hazard_status_stamped.hpp>
 #include <autoware_auto_vehicle_msgs/msg/control_mode_report.hpp>
@@ -110,16 +110,16 @@ private:
 
   // Clients
   rclcpp::CallbackGroup::SharedPtr client_mrm_comfortable_stop_group_;
-  rclcpp::Client<autoware_adapi_v1_msgs::srv::OperateMrm>::SharedPtr client_mrm_comfortable_stop_;
+  rclcpp::Client<tier4_system_msgs::srv::OperateMrm>::SharedPtr client_mrm_comfortable_stop_;
   rclcpp::CallbackGroup::SharedPtr client_mrm_emergency_stop_group_;
-  rclcpp::Client<autoware_adapi_v1_msgs::srv::OperateMrm>::SharedPtr client_mrm_emergency_stop_;
+  rclcpp::Client<tier4_system_msgs::srv::OperateMrm>::SharedPtr client_mrm_emergency_stop_;
 
   void callMRMBehavior(
     const autoware_adapi_v1_msgs::msg::MrmState::_behavior_type & mrm_behavior) const;
   void cancelMRMBehavior(
     const autoware_adapi_v1_msgs::msg::MrmState::_behavior_type & mrm_behavior) const;
   void logMRMCallingResult(
-    const autoware_adapi_v1_msgs::srv::OperateMrm::Response & result, const std::string & behavior,
+    const tier4_system_msgs::srv::OperateMrm::Response & result, const std::string & behavior,
     bool is_call) const;
 
   // Timer

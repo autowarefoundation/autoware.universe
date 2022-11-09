@@ -20,7 +20,7 @@
 #include <memory>
 
 // Autoware
-#include <autoware_adapi_v1_msgs/srv/operate_mrm.hpp>
+#include <tier4_system_msgs/srv/operate_mrm.hpp>
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
 #include <tier4_system_msgs/msg/mrm_behavior_status.hpp>
 
@@ -29,7 +29,7 @@
 
 namespace mrm_emergency_stop_operator
 {
-using autoware_adapi_v1_msgs::srv::OperateMrm;
+using tier4_system_msgs::srv::OperateMrm;
 using autoware_auto_control_msgs::msg::AckermannControlCommand;
 using tier4_system_msgs::msg::MrmBehaviorStatus;
 

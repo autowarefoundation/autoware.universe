@@ -27,7 +27,7 @@ MRMComfortableStopOperator::MRMComfortableStopOperator(const rclcpp::NodeOptions
   params_.min_jerk = declare_parameter<double>("min_jerk", 0.3);
 
   // Server
-  service_operation_ = create_service<autoware_adapi_v1_msgs::srv::OperateMrm>(
+  service_operation_ = create_service<tier4_system_msgs::srv::OperateMrm>(
     "~/input/mrm/comfortable_stop/operate", std::bind(
                                               &MRMComfortableStopOperator::operateComfortableStop,
                                               this, std::placeholders::_1, std::placeholders::_2));
@@ -47,21 +47,20 @@ MRMComfortableStopOperator::MRMComfortableStopOperator(const rclcpp::NodeOptions
     this, get_clock(), update_period_ns, std::bind(&MRMComfortableStopOperator::onTimer, this));
 
   // Initialize
-  status_.is_available = true;
-  status_.is_operating = false;
+  status_.state = tier4_system_msgs::msg::MrmBehaviorStatus::AVAILABLE;
 }
 
 void MRMComfortableStopOperator::operateComfortableStop(
-  const autoware_adapi_v1_msgs::srv::OperateMrm::Request::SharedPtr request,
-  const autoware_adapi_v1_msgs::srv::OperateMrm::Response::SharedPtr response)
+  const tier4_system_msgs::srv::OperateMrm::Request::SharedPtr request,
+  const tier4_system_msgs::srv::OperateMrm::Response::SharedPtr response)
 {
   if (request->operate == true) {
     publishVelocityLimit();
-    status_.is_operating = true;
+    status_.state = tier4_system_msgs::msg::MrmBehaviorStatus::OPERATING;
     response->response.success = true;
   } else {
     publishVelocityLimitClearCommand();
-    status_.is_operating = false;
+    status_.state = tier4_system_msgs::msg::MrmBehaviorStatus::AVAILABLE;
     response->response.success = true;
   }
 }

@@ -65,12 +65,12 @@ EmergencyHandler::EmergencyHandler() : Node("emergency_handler")
   // Clients
   client_mrm_comfortable_stop_group_ =
     create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-  client_mrm_comfortable_stop_ = create_client<autoware_adapi_v1_msgs::srv::OperateMrm>(
+  client_mrm_comfortable_stop_ = create_client<tier4_system_msgs::srv::OperateMrm>(
     "~/output/mrm/comfortable_stop/operate", rmw_qos_profile_services_default,
     client_mrm_comfortable_stop_group_);
   client_mrm_emergency_stop_group_ =
     create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-  client_mrm_emergency_stop_ = create_client<autoware_adapi_v1_msgs::srv::OperateMrm>(
+  client_mrm_emergency_stop_ = create_client<tier4_system_msgs::srv::OperateMrm>(
     "~/output/mrm/emergency_stop/operate", rmw_qos_profile_services_default,
     client_mrm_emergency_stop_group_);
 
@@ -221,7 +221,7 @@ void EmergencyHandler::callMRMBehavior(
 {
   using autoware_adapi_v1_msgs::msg::MrmState;
 
-  auto request = std::make_shared<autoware_adapi_v1_msgs::srv::OperateMrm::Request>();
+  auto request = std::make_shared<tier4_system_msgs::srv::OperateMrm::Request>();
   request->operate = true;
 
   if (mrm_behavior == MrmState::COMFORTABLE_STOP) {
@@ -250,7 +250,7 @@ void EmergencyHandler::cancelMRMBehavior(
 {
   using autoware_adapi_v1_msgs::msg::MrmState;
 
-  auto request = std::make_shared<autoware_adapi_v1_msgs::srv::OperateMrm::Request>();
+  auto request = std::make_shared<tier4_system_msgs::srv::OperateMrm::Request>();
   request->operate = false;
 
   if (mrm_behavior == MrmState::COMFORTABLE_STOP) {
@@ -283,14 +283,15 @@ bool EmergencyHandler::isDataReady()
     return false;
   }
 
-  if (param_.use_comfortable_stop && !mrm_comfortable_stop_status_->is_available) {
+  if (param_.use_comfortable_stop &&
+      mrm_comfortable_stop_status_->state == tier4_system_msgs::msg::MrmBehaviorStatus::NOT_AVAILABLE) {
     RCLCPP_INFO_THROTTLE(
       this->get_logger(), *this->get_clock(), std::chrono::milliseconds(5000).count(),
       "waiting for mrm comfortable stop to become available...");
     return false;
   }
 
-  if (!mrm_emergency_stop_status_->is_available) {
+  if (mrm_emergency_stop_status_->state == tier4_system_msgs::msg::MrmBehaviorStatus::NOT_AVAILABLE) {
     RCLCPP_INFO_THROTTLE(
       this->get_logger(), *this->get_clock(), std::chrono::milliseconds(5000).count(),
       "waiting for mrm emergency stop to become available...");

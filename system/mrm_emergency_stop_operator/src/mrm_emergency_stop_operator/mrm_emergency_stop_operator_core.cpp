@@ -47,14 +47,13 @@ MRMEmergencyStopOperator::MRMEmergencyStopOperator(const rclcpp::NodeOptions & n
     this, get_clock(), update_period_ns, std::bind(&MRMEmergencyStopOperator::onTimer, this));
 
   // Initialize
-  status_.is_available = true;
-  status_.is_operating = false;
+  status_.state = MrmBehaviorStatus::AVAILABLE;
   is_prev_control_cmd_subscribed_ = false;
 }
 
 void MRMEmergencyStopOperator::onControlCommand(AckermannControlCommand::ConstSharedPtr msg)
 {
-  if (status_.is_operating == false) {
+  if (status_.state != MrmBehaviorStatus::OPERATING) {
     prev_control_cmd_ = *msg;
     is_prev_control_cmd_subscribed_ = true;
   }
@@ -64,10 +63,10 @@ void MRMEmergencyStopOperator::operateEmergencyStop(
   const OperateMrm::Request::SharedPtr request, const OperateMrm::Response::SharedPtr response)
 {
   if (request->operate == true) {
-    status_.is_operating = true;
+    status_.state = MrmBehaviorStatus::OPERATING;
     response->response.success = true;
   } else {
-    status_.is_operating = false;
+    status_.state = MrmBehaviorStatus::AVAILABLE;
     response->response.success = true;
   }
 }
@@ -86,7 +85,7 @@ void MRMEmergencyStopOperator::publishControlCommand(const AckermannControlComma
 
 void MRMEmergencyStopOperator::onTimer()
 {
-  if (status_.is_operating) {
+  if (status_.state == MrmBehaviorStatus::OPERATING) {
     auto control_cmd = calcTargetAcceleration(prev_control_cmd_);
     publishControlCommand(control_cmd);
     prev_control_cmd_ = control_cmd;
