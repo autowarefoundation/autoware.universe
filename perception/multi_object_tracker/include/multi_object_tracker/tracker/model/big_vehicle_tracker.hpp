@@ -65,8 +65,8 @@ private:
 private:
   struct BoundingBox
   {
-    double width;
     double length;
+    double width;
     double height;
   };
   BoundingBox bounding_box_;
