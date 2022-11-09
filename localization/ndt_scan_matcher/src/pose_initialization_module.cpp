@@ -17,10 +17,8 @@
 PoseInitializationModule::PoseInitializationModule(
   rclcpp::Node * node, std::mutex * ndt_ptr_mutex,
   std::shared_ptr<NormalDistributionsTransform> ndt_ptr,
-  std::shared_ptr<Tf2ListenerModule> tf2_listener_module,
-  std::string map_frame,
-  rclcpp::CallbackGroup::SharedPtr main_callback_group,
-  std::shared_ptr<StdMap> state_ptr)
+  std::shared_ptr<Tf2ListenerModule> tf2_listener_module, std::string map_frame,
+  rclcpp::CallbackGroup::SharedPtr main_callback_group, std::shared_ptr<StdMap> state_ptr)
 : ndt_ptr_(ndt_ptr),
   ndt_ptr_mutex_(ndt_ptr_mutex),
   map_frame_(map_frame),
@@ -41,7 +39,8 @@ PoseInitializationModule::PoseInitializationModule(
   service_ = node->create_service<tier4_localization_msgs::srv::PoseWithCovarianceStamped>(
     "ndt_align_srv",
     std::bind(
-      &PoseInitializationModule::service_ndt_align, this, std::placeholders::_1, std::placeholders::_2),
+      &PoseInitializationModule::service_ndt_align, this, std::placeholders::_1,
+      std::placeholders::_2),
     rclcpp::ServicesQoS().get_rmw_qos_profile(), main_callback_group);
 }
 
@@ -79,7 +78,6 @@ void PoseInitializationModule::service_ndt_align(
   res->pose_with_covariance.pose.covariance = req->pose_with_covariance.pose.covariance;
 }
 
-
 geometry_msgs::msg::PoseWithCovarianceStamped PoseInitializationModule::align_using_monte_carlo(
   const std::shared_ptr<NormalDistributionsTransform> & ndt_ptr,
   const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_with_cov)
@@ -107,7 +105,8 @@ geometry_msgs::msg::PoseWithCovarianceStamped PoseInitializationModule::align_us
       ndt_result.iteration_num);
     particle_array.push_back(particle);
     const auto marker_array = make_debug_markers(
-      clock_->now(), map_frame_, tier4_autoware_utils::createMarkerScale(0.3, 0.1, 0.1), particle, i);
+      clock_->now(), map_frame_, tier4_autoware_utils::createMarkerScale(0.3, 0.1, 0.1), particle,
+      i);
     ndt_monte_carlo_initial_pose_marker_pub_->publish(marker_array);
 
     auto sensor_points_mapTF_ptr = std::make_shared<pcl::PointCloud<PointSource>>();

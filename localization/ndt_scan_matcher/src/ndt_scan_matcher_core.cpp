@@ -213,8 +213,9 @@ NDTScanMatcher::NDTScanMatcher()
 
   tf2_listener_module_ = std::make_shared<Tf2ListenerModule>(this);
   map_module_ = std::make_unique<MapModule>(this, &ndt_ptr_mtx_, ndt_ptr_, main_callback_group);
-  pose_init_module_ = std::make_unique<PoseInitializationModule>(this, &ndt_ptr_mtx_, ndt_ptr_,
-    tf2_listener_module_, map_frame_, main_callback_group, state_ptr_);
+  pose_init_module_ = std::make_unique<PoseInitializationModule>(
+    this, &ndt_ptr_mtx_, ndt_ptr_, tf2_listener_module_, map_frame_, main_callback_group,
+    state_ptr_);
 }
 
 void NDTScanMatcher::timer_diagnostic()
@@ -267,7 +268,6 @@ void NDTScanMatcher::timer_diagnostic()
     rate.sleep();
   }
 }
-
 
 void NDTScanMatcher::callback_initial_pose(
   const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr initial_pose_msg_ptr)
