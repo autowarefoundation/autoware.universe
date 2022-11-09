@@ -3,8 +3,3 @@ uint8 start_lane_id
 ---
 static_centerline_optimizer/PointsWithLaneId[] points_with_lane_ids
 string message
-
-# uint8[] lane_ids
-# geometry_msgs/PoseArray[] points_array
-
-

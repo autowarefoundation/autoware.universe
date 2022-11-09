@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2022 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@
 #include "autoware_auto_planning_msgs/msg/path_point.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"
+#include "visualization_msgs/msg/marker_array.hpp"
 
 namespace static_centerline_optimizer
 {
@@ -35,6 +36,7 @@ using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using route_handler::RouteHandler;
+using visualization_msgs::msg::MarkerArray;
 }  // namespace static_centerline_optimizer
 
 #endif  // STATIC_CENTERLINE_OPTIMIZER__TYPE_ALIAS_HPP_

@@ -2,3 +2,4 @@ uint8 start_lane_id
 uint8 end_lane_id
 ---
 uint8[] lane_ids
+string message

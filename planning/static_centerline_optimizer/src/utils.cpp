@@ -18,10 +18,7 @@
 #include "behavior_path_planner/utilities.hpp"
 #include "map_loader/lanelet2_map_loader_node.hpp"
 #include <pluginlib/class_loader.hpp>
-
-// #include "mission_planner/lanelet2_plugins/default_planner.hpp"
 #include <mission_planner/mission_planner_plugin.hpp>
-
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
 namespace static_centerline_optimizer

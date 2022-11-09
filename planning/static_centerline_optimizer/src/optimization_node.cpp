@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2022 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,12 +14,12 @@
 
 #include "static_centerline_optimizer/optimization_node.hpp"
 
+#include "vehicle_info_util/vehicle_info_util.hpp"
 #include "interpolation/spline_interpolation_points_2d.hpp"
 #include "motion_utils/motion_utils.hpp"
 #include "rclcpp/time.hpp"
 #include "tf2/utils.h"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
-#include "vehicle_info_util/vehicle_info_util.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -105,7 +105,7 @@ std::vector<TrajectoryPoint> convertToTrajectoryPoints(const std::vector<T> & po
 }
 }  // namespace
 
-StaticCenterlineOptmizer::StaticCenterlineOptmizer(const rclcpp::NodeOptions & node_options)
+StaticCenterlineOptimizer::StaticCenterlineOptimizer(const rclcpp::NodeOptions & node_options)
 : Node("static_centerline_optimizer", node_options), logger_ros_clock_(RCL_ROS_TIME)
 {
   rclcpp::Clock::SharedPtr clock = std::make_shared<rclcpp::Clock>(RCL_ROS_TIME);
@@ -117,7 +117,7 @@ StaticCenterlineOptmizer::StaticCenterlineOptmizer(const rclcpp::NodeOptions & n
   // subscriber
   path_sub_ = create_subscription<Path>(
     "debug/raw_centerline", rclcpp::QoS{1}.transient_local(),
-    std::bind(&StaticCenterlineOptmizer::pathCallback, this, std::placeholders::_1));
+    std::bind(&StaticCenterlineOptimizer::pathCallback, this, std::placeholders::_1));
 
   const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo();
   {  // vehicle param
@@ -369,7 +369,7 @@ StaticCenterlineOptmizer::StaticCenterlineOptmizer(const rclcpp::NodeOptions & n
   resetPlanning();
 }
 
-void StaticCenterlineOptmizer::resetPlanning()
+void StaticCenterlineOptimizer::resetPlanning()
 {
   RCLCPP_WARN(get_logger(), "[ObstacleAvoidancePlanner] Reset planning");
 
@@ -385,13 +385,13 @@ void StaticCenterlineOptmizer::resetPlanning()
   resetPrevOptimization();
 }
 
-void StaticCenterlineOptmizer::resetPrevOptimization()
+void StaticCenterlineOptimizer::resetPrevOptimization()
 {
   prev_optimal_trajs_ptr_ = nullptr;
   eb_solved_count_ = 0;
 }
 
-std::vector<TrajectoryPoint> StaticCenterlineOptmizer::pathCallback(const Path::SharedPtr path_ptr)
+std::vector<TrajectoryPoint> StaticCenterlineOptimizer::pathCallback(const Path::SharedPtr path_ptr)
 {
   if (path_ptr->points.empty() || path_ptr->drivable_area.data.empty()) {
     return std::vector<TrajectoryPoint>{};
@@ -466,4 +466,4 @@ std::vector<TrajectoryPoint> StaticCenterlineOptmizer::pathCallback(const Path::
 }  // namespace static_centerline_optimizer
 
 #include "rclcpp_components/register_node_macro.hpp"
-RCLCPP_COMPONENTS_REGISTER_NODE(static_centerline_optimizer::StaticCenterlineOptmizer)
+RCLCPP_COMPONENTS_REGISTER_NODE(static_centerline_optimizer::StaticCenterlineOptimizer)

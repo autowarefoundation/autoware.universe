@@ -73,16 +73,19 @@ def plan_route_post():
     cli = create_client(PlanRoute, "/planning/static_centerline_optimizer/plan_route")
 
     # request route planning
-    # req = PlanRoute.Request(start_lane_id=data["start_lane_id"], end_lane_id=data["end_lane_id"])
     req = PlanRoute.Request(start_lane_id=int(args.get("start_lane_id")), end_lane_id=int(args.get("end_lane_id")))
     future = cli.call_async(req)
     rclpy.spin_until_future_complete(node, future)
     res = future.result()
 
-    # TODO(murooka)
-    error = False
-    if error:
-        abort(500, "error_message")
+    # error handling
+    if res.message != "":
+        if res.message == "route_has_not_been_planned":
+            abort(500, "error_message")
+        else:
+            # invalid
+            pass
+
 
     return {"lane_ids": list(res.lane_ids)}
 
@@ -100,6 +103,16 @@ def plan_path_post():
     future = cli.call_async(req)
     rclpy.spin_until_future_complete(node, future)
     res = future.result()
+
+    # error handling
+    if res.message != "":
+        if True:
+            pass
+        else:
+            # invalid
+            pass
+
+
 
     # create output json
     result_json = []

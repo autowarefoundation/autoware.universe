@@ -8,6 +8,7 @@
 
   <!-- mandatory arguments when run_background is true -->
   <arg name="lanelet2_input_file_name" default=""/>
+  <arg name="lanelet2_output_file_name" default="/tmp/lanelet2_map.osm"/>
   <arg name="start_lanelet_id" default=""/>
   <arg name="end_lanelet_id" default=""/>
 
@@ -46,9 +47,11 @@
     <remap from="lanelet2_map_topic" to="$(var lanelet2_map_topic)"/>
     <remap from="debug/raw_centerline" to="~/debug/raw_centerline"/>
     <remap from="debug/optimized_centerline" to="~/debug/optimized_centerline"/>
+    <remap from="debug/unsafe_footprints" to="~/debug/unsafe_footprints"/>
 
     <param name="run_background" value="$(var run_background)"/>
     <param name="lanelet2_input_file_name" value="$(var lanelet2_input_file_name)"/>
+    <param name="lanelet2_output_file_name" value="$(var lanelet2_output_file_name)"/>
     <param name="start_lanelet_id" value="$(var start_lanelet_id)"/>
     <param name="end_lanelet_id" value="$(var end_lanelet_id)"/>
     <!-- common param -->
@@ -57,6 +60,8 @@
     <!-- component param -->
     <param from="$(var map_loader_param)"/>
     <param from="$(var obstacle_avoidance_planner_param)"/>
+    <!-- node param -->
+    <param from="$(find-pkg-share static_centerline_optimizer)/config/static_centerline_optimizer.param.yaml"/>
   </node>
 
   <!-- rviz -->

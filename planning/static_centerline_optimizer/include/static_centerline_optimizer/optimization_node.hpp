@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2022 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@
 
 namespace static_centerline_optimizer
 {
-class StaticCenterlineOptmizer : public rclcpp::Node
+class StaticCenterlineOptimizer : public rclcpp::Node
 {
 private:
   rclcpp::Clock logger_ros_clock_;
@@ -96,7 +96,7 @@ private:
   //   const CVMaps & cv_maps);
 
 public:
-  explicit StaticCenterlineOptmizer(const rclcpp::NodeOptions & node_options);
+  explicit StaticCenterlineOptimizer(const rclcpp::NodeOptions & node_options);
 
   // subscriber callback functions
   std::vector<TrajectoryPoint> pathCallback(const Path::SharedPtr);
