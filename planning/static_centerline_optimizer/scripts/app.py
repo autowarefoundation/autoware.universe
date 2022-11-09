@@ -16,6 +16,7 @@
 
 from IPython import embed
 import json
+from flask_cors import CORS
 from flask import Flask
 from flask import abort
 from flask import request
@@ -30,6 +31,10 @@ rclpy.init()
 node = Node("app")
 
 app = Flask(__name__)
+CORS(
+    app,
+    supports_credentials=True
+)
 app.secret_key = "tmp_secret_key"
 
 def create_client(service_type, server_name):
@@ -40,7 +45,7 @@ def create_client(service_type, server_name):
     return cli
 
 
-@app.route("/post_map", methods=["POST"])
+@app.route("/map", methods=["POST"])
 def load_map_post():
     data = request.get_json()
     session["map_id"] = 1
@@ -61,13 +66,16 @@ def load_map_post():
         abort(500, "error_message")
 
     # TODO(murooka) generate uuid
-    return {"mapId": "1"}
+    return "D61E1C81-784A-4C0A-8244-3AA65559D7C5"
 
-
-@app.route("/get_planned_route", methods=["GET"])
+@app.route("/planned_route", methods=["GET"])
 def plan_route_post():
     # data = request.get_json()
     args = request.args.to_dict()
+
+    print("received")
+    print(args.get("start_lane_id"))
+    print(args.get("end_lane_id"))
 
     # create client
     cli = create_client(PlanRoute, "/planning/static_centerline_optimizer/plan_route")
@@ -81,16 +89,14 @@ def plan_route_post():
     # error handling
     if res.message != "":
         if res.message == "route_has_not_been_planned":
-            abort(500, "error_message")
+            abort(404, "route not found")
         else:
             # invalid
             pass
 
+    return json.dumps(tuple(res.lane_ids))
 
-    return {"lane_ids": list(res.lane_ids)}
-
-
-@app.route("/get_planned_path", methods=["GET"])
+@app.route("/planned_path", methods=["GET"])
 def plan_path_post():
     # data = request.get_json()
     args = request.args.to_dict()
@@ -99,7 +105,8 @@ def plan_path_post():
     cli = create_client(PlanPath, "/planning/static_centerline_optimizer/plan_path")
 
     # request path planning
-    req = PlanPath.Request(start_lane_id=int(args.get("start_lane_id")))
+    # TODO: use this statuses = request.args.getlist("status")
+    req = PlanPath.Request(start_lane_id=9183) # int(args.get("start_lane_id")))
     future = cli.call_async(req)
     rclpy.spin_until_future_complete(node, future)
     res = future.result()
@@ -112,8 +119,6 @@ def plan_path_post():
             # invalid
             pass
 
-
-
     # create output json
     result_json = []
     for points_with_lane_id in res.points_with_lane_ids:
@@ -123,15 +128,15 @@ def plan_path_post():
             current_lane_points.append(point)
 
         current_result_json = {}
-        current_result_json["lane_id"] = int(points_with_lane_id.lane_id)
+        current_result_json["laneId"] = int(points_with_lane_id.lane_id)
         current_result_json["points"] = current_lane_points
 
         result_json.append(current_result_json)
 
-    return json.dumps(result_json)
+    return json.dumps(tuple(result_json))
 
 
 if __name__ == "__main__":
     app.debug = True
     app.secret_key = "anyrandomstring"
-    app.run(host="localhost")
+    app.run(host="localhost", port=4010)

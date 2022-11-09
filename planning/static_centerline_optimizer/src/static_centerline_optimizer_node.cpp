@@ -162,7 +162,7 @@ void StaticCenterlineOptimizerNode::run()
   load_map(lanelet2_input_file_name);
   plan_route(start_lanelet_id, end_lanelet_id);
   plan_path(start_lanelet_id);
-  evaluate();
+  // evaluate();
   // save_map(lanelet2_output_file_name);
 }
 
@@ -217,7 +217,7 @@ void StaticCenterlineOptimizerNode::on_plan_route(
   }
 
   // extract lane ids
-  std::vector<uint8_t> lane_ids;
+  std::vector<unsigned int> lane_ids;
   for (const auto & lanelet : *lanelets_ptr_) {
     lane_ids.push_back(lanelet.id());
   }
@@ -252,7 +252,9 @@ void StaticCenterlineOptimizerNode::on_plan_path(
   const int start_lanelet_id = request->start_lane_id;
 
   // plan path
+  std::cerr << "PO1" << std::endl;
   const auto result = plan_path(start_lanelet_id);
+  std::cerr << "PO2" << std::endl;
   if (result == PlanPathResult::ROUTE_IS_NOT_READY || !lanelets_ptr_) {
     response->message = "route_is_not_ready";
     return;

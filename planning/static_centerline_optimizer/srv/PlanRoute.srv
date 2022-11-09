@@ -1,5 +1,5 @@
-uint8 start_lane_id
-uint8 end_lane_id
+uint32 start_lane_id
+uint32 end_lane_id
 ---
-uint8[] lane_ids
+uint32[] lane_ids
 string message
