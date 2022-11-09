@@ -28,16 +28,21 @@
 
 namespace
 {
-template <typename T>
-void update_param(
-  const std::vector<rclcpp::Parameter> & parameters, const std::string & name, T & value)
+template <class T>
+bool update_param(
+  const std::vector<rclcpp::Parameter> & params, const std::string & name, T & value)
 {
-  auto it = std::find_if(
-    parameters.cbegin(), parameters.cend(),
-    [&name](const rclcpp::Parameter & parameter) { return parameter.get_name() == name; });
-  if (it != parameters.cend()) {
-    value = it->template get_value<T>();
+  const auto itr = std::find_if(
+    params.cbegin(), params.cend(),
+    [&name](const rclcpp::Parameter & p) { return p.get_name() == name; });
+
+  // Not found
+  if (itr == params.cend()) {
+    return false;
   }
+
+  value = itr->template get_value<T>();
+  return true;
 }
 }  // namespace
 
@@ -71,7 +76,7 @@ ObstacleCollisionCheckerNode::ObstacleCollisionCheckerNode(const rclcpp::NodeOpt
   transform_listener_ = std::make_shared<tier4_autoware_utils::TransformListener>(this);
 
   sub_obstacle_pointcloud_ = create_subscription<sensor_msgs::msg::PointCloud2>(
-    "input/obstacle_pointcloud", 1,
+    "input/obstacle_pointcloud", rclcpp::SensorDataQoS(),
     std::bind(&ObstacleCollisionCheckerNode::onObstaclePointcloud, this, _1));
   sub_reference_trajectory_ = create_subscription<autoware_auto_planning_msgs::msg::Trajectory>(
     "input/reference_trajectory", 1,
@@ -182,7 +187,7 @@ bool ObstacleCollisionCheckerNode::isDataTimeout()
   const auto pose_time_diff = rclcpp::Time(current_pose_->header.stamp).seconds() - now.seconds();
   if (pose_time_diff > th_pose_timeout) {
     RCLCPP_WARN_THROTTLE(
-      this->get_logger(), *this->get_clock(), 1000 /* ms */, "pose is timeout...");
+      this->get_logger(), *this->get_clock(), 5000 /* ms */, "pose is timeout...");
     return true;
   }
 
@@ -194,8 +199,15 @@ void ObstacleCollisionCheckerNode::onTimer()
   current_pose_ = self_pose_listener_->getCurrentPose();
   if (obstacle_pointcloud_) {
     const auto & header = obstacle_pointcloud_->header;
-    obstacle_transform_ = transform_listener_->getTransform(
-      "map", header.frame_id, header.stamp, rclcpp::Duration::from_seconds(0.01));
+    try {
+      obstacle_transform_ = transform_listener_->getTransform(
+        "map", header.frame_id, header.stamp, rclcpp::Duration::from_seconds(0.01));
+    } catch (tf2::TransformException & ex) {
+      RCLCPP_INFO(
+        this->get_logger(), "Could not transform map to %s: %s", header.frame_id.c_str(),
+        ex.what());
+      return;
+    }
   }
 
   if (!isDataReady()) {
@@ -229,14 +241,23 @@ rcl_interfaces::msg::SetParametersResult ObstacleCollisionCheckerNode::paramCall
   result.successful = true;
   result.reason = "success";
 
-  Param param;
   try {
-    update_param(parameters, "delay_time", param.delay_time);
-    update_param(parameters, "footprint_margin", param.footprint_margin);
-    update_param(parameters, "max_deceleration", param.max_deceleration);
-    update_param(parameters, "resample_interval", param.resample_interval);
-    update_param(parameters, "search_radius", param.search_radius);
-    param_ = param;
+    // Node Parameter
+    {
+      auto & p = node_param_;
+
+      // Update params
+      update_param(parameters, "update_rate", p.update_rate);
+    }
+
+    auto & p = param_;
+
+    update_param(parameters, "delay_time", p.delay_time);
+    update_param(parameters, "footprint_margin", p.footprint_margin);
+    update_param(parameters, "max_deceleration", p.max_deceleration);
+    update_param(parameters, "resample_interval", p.resample_interval);
+    update_param(parameters, "search_radius", p.search_radius);
+
     if (obstacle_collision_checker_) {
       obstacle_collision_checker_->setParam(param_);
     }

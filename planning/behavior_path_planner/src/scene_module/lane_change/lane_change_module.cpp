@@ -17,6 +17,7 @@
 #include "behavior_path_planner/path_utilities.hpp"
 #include "behavior_path_planner/scene_module/lane_change/util.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
+#include "behavior_path_planner/turn_signal_decider.hpp"
 #include "behavior_path_planner/utilities.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
@@ -46,6 +47,7 @@ LaneChangeModule::LaneChangeModule(
   uuid_left_{generateUUID()},
   uuid_right_{generateUUID()}
 {
+  steering_factor_interface_ptr_ = std::make_unique<SteeringFactorInterface>(&node, "lane_change");
 }
 
 BehaviorModuleOutput LaneChangeModule::run()
@@ -57,15 +59,27 @@ BehaviorModuleOutput LaneChangeModule::run()
   const auto turn_signal_info = output.turn_signal_info;
   const auto current_pose = planner_data_->self_pose->pose;
   const double start_distance = motion_utils::calcSignedArcLength(
-    output.path->points, current_pose.position,
-    status_.lane_change_path.shift_point.start.position);
+    output.path->points, current_pose.position, status_.lane_change_path.shift_line.start.position);
   const double finish_distance = motion_utils::calcSignedArcLength(
-    output.path->points, current_pose.position, status_.lane_change_path.shift_point.end.position);
-  if (turn_signal_info.turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {
-    waitApprovalLeft(start_distance, finish_distance);
-  } else if (turn_signal_info.turn_signal.command == TurnIndicatorsCommand::ENABLE_RIGHT) {
-    waitApprovalRight(start_distance, finish_distance);
-  }
+    output.path->points, current_pose.position, status_.lane_change_path.shift_line.end.position);
+
+  const uint16_t steering_factor_direction =
+    std::invoke([this, &start_distance, &finish_distance, &turn_signal_info]() {
+      if (turn_signal_info.turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {
+        waitApprovalLeft(start_distance, finish_distance);
+        return SteeringFactor::LEFT;
+      }
+      if (turn_signal_info.turn_signal.command == TurnIndicatorsCommand::ENABLE_RIGHT) {
+        waitApprovalRight(start_distance, finish_distance);
+        return SteeringFactor::RIGHT;
+      }
+      return SteeringFactor::UNKNOWN;
+    });
+  // TODO(tkhmy) add handle status TRYING
+  steering_factor_interface_ptr_->updateSteeringFactor(
+    {status_.lane_change_path.shift_line.start, status_.lane_change_path.shift_line.end},
+    {start_distance, finish_distance}, SteeringFactor::LANE_CHANGE, steering_factor_direction,
+    SteeringFactor::TURNING, "");
   return output;
 }
 
@@ -85,6 +99,7 @@ void LaneChangeModule::onExit()
 {
   clearWaitingApproval();
   removeRTCStatus();
+  steering_factor_interface_ptr_->clearSteeringFactors();
   debug_marker_.markers.clear();
   current_state_ = BT::NodeStatus::IDLE;
   RCLCPP_DEBUG(getLogger(), "LANE_CHANGE onExit");
@@ -156,6 +171,9 @@ BehaviorModuleOutput LaneChangeModule::plan()
     lanes.reserve(status_.current_lanes.size() + status_.lane_change_lanes.size());
     lanes.insert(lanes.end(), status_.current_lanes.begin(), status_.current_lanes.end());
     lanes.insert(lanes.end(), status_.lane_change_lanes.begin(), status_.lane_change_lanes.end());
+    lanes = util::expandLanelets(
+      lanes, parameters_->drivable_area_left_bound_offset,
+      parameters_->drivable_area_right_bound_offset);
 
     const double & resolution = common_parameters.drivable_area_resolution;
     path.drivable_area = util::generateDrivableArea(
@@ -172,10 +190,12 @@ BehaviorModuleOutput LaneChangeModule::plan()
   output.path = std::make_shared<PathWithLaneId>(path);
   const auto turn_signal_info = util::getPathTurnSignal(
     status_.current_lanes, status_.lane_change_path.shifted_path,
-    status_.lane_change_path.shift_point, planner_data_->self_pose->pose,
+    status_.lane_change_path.shift_line, planner_data_->self_pose->pose,
     planner_data_->self_odometry->twist.twist.linear.x, planner_data_->parameters);
   output.turn_signal_info.turn_signal.command = turn_signal_info.first.command;
-  output.turn_signal_info.signal_distance = turn_signal_info.second;
+
+  lane_change_utils::get_turn_signal_info(status_.lane_change_path, &output.turn_signal_info);
+  // output.turn_signal_info.signal_distance = turn_signal_info.second;
   return output;
 }
 
@@ -196,18 +216,30 @@ CandidateOutput LaneChangeModule::planCandidate() const
     return output;
   }
 
-  const auto & start_idx = selected_path.shift_point.start_idx;
-  const auto & end_idx = selected_path.shift_point.end_idx;
+  const auto & start_idx = selected_path.shift_line.start_idx;
+  const auto & end_idx = selected_path.shift_line.end_idx;
 
   output.path_candidate = selected_path.path;
   output.lateral_shift = selected_path.shifted_path.shift_length.at(end_idx) -
                          selected_path.shifted_path.shift_length.at(start_idx);
   output.start_distance_to_path_change = motion_utils::calcSignedArcLength(
     selected_path.path.points, planner_data_->self_pose->pose.position,
-    selected_path.shift_point.start.position);
+    selected_path.shift_line.start.position);
   output.finish_distance_to_path_change = motion_utils::calcSignedArcLength(
     selected_path.path.points, planner_data_->self_pose->pose.position,
-    selected_path.shift_point.end.position);
+    selected_path.shift_line.end.position);
+
+  const uint16_t steering_factor_direction = std::invoke([&output]() {
+    if (output.lateral_shift > 0.0) {
+      return SteeringFactor::LEFT;
+    }
+    return SteeringFactor::RIGHT;
+  });
+
+  steering_factor_interface_ptr_->updateSteeringFactor(
+    {selected_path.shift_line.start, selected_path.shift_line.end},
+    {output.start_distance_to_path_change, output.finish_distance_to_path_change},
+    SteeringFactor::LANE_CHANGE, steering_factor_direction, SteeringFactor::APPROACHING, "");
 
   return output;
 }
@@ -294,8 +326,12 @@ PathWithLaneId LaneChangeModule::getReferencePath() const
     *route_handler, reference_path, current_lanes, parameters_->lane_change_prepare_duration,
     lane_change_buffer);
 
+  const auto current_extended_lanes = util::expandLanelets(
+    current_lanes, parameters_->drivable_area_left_bound_offset,
+    parameters_->drivable_area_right_bound_offset);
+
   reference_path.drivable_area = util::generateDrivableArea(
-    reference_path, current_lanes, common_parameters.drivable_area_resolution,
+    reference_path, current_extended_lanes, common_parameters.drivable_area_resolution,
     common_parameters.vehicle_length, planner_data_);
 
   return reference_path;

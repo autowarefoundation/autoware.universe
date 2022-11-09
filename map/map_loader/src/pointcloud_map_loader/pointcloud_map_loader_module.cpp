@@ -40,8 +40,7 @@ sensor_msgs::msg::PointCloud2 downsample(
 }
 
 PointcloudMapLoaderModule::PointcloudMapLoaderModule(
-  rclcpp::Node * node, const std::vector<std::string> & pcd_paths, const std::string publisher_name,
-  const bool use_downsample)
+  rclcpp::Node * node, const std::vector<std::string> & pcd_paths, const std::string publisher_name)
 : logger_(node->get_logger())
 {
   rclcpp::QoS durable_qos{1};
@@ -49,13 +48,7 @@ PointcloudMapLoaderModule::PointcloudMapLoaderModule(
   pub_pointcloud_map_ =
     node->create_publisher<sensor_msgs::msg::PointCloud2>(publisher_name, durable_qos);
 
-  sensor_msgs::msg::PointCloud2 pcd;
-  if (use_downsample) {
-    float leaf_size = node->declare_parameter<float>("leaf_size");
-    pcd = loadPCDFiles(pcd_paths, leaf_size);
-  } else {
-    pcd = loadPCDFiles(pcd_paths, boost::none);
-  }
+  sensor_msgs::msg::PointCloud2 pcd = loadPCDFiles(pcd_paths);
 
   if (pcd.width == 0) {
     RCLCPP_ERROR(logger_, "No PCD was loaded: pcd_paths.size() = %zu", pcd_paths.size());
@@ -67,7 +60,7 @@ PointcloudMapLoaderModule::PointcloudMapLoaderModule(
 }
 
 sensor_msgs::msg::PointCloud2 PointcloudMapLoaderModule::loadPCDFiles(
-  const std::vector<std::string> & pcd_paths, const boost::optional<float> leaf_size) const
+  const std::vector<std::string> & pcd_paths) const
 {
   sensor_msgs::msg::PointCloud2 whole_pcd;
   sensor_msgs::msg::PointCloud2 partial_pcd;
@@ -76,15 +69,12 @@ sensor_msgs::msg::PointCloud2 PointcloudMapLoaderModule::loadPCDFiles(
     auto & path = pcd_paths[i];
     if (i % 50 == 0) {
       RCLCPP_INFO_STREAM(
-        logger_, fmt::format("Load {} ({} out of {})", path, i + 1, int(pcd_paths.size())));
+        logger_,
+        fmt::format("Load {} ({} out of {})", path, i + 1, static_cast<int>(pcd_paths.size())));
     }
 
     if (pcl::io::loadPCDFile(path, partial_pcd) == -1) {
       RCLCPP_ERROR_STREAM(logger_, "PCD load failed: " << path);
-    }
-
-    if (leaf_size) {
-      partial_pcd = downsample(partial_pcd, leaf_size.get());
     }
 
     if (whole_pcd.width == 0) {

@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2022 The Autoware Contributors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,22 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/*
- * Copyright 2015-2019 Autoware Foundation. All rights reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 #include "pointcloud_map_loader_node.hpp"
 
 #include <glob.h>
@@ -36,7 +20,6 @@
 #include <pcl_conversions/pcl_conversions.h>
 
 #include <filesystem>
-#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -67,20 +50,13 @@ PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & opt
   const auto pcd_paths =
     getPcdPaths(declare_parameter<std::vector<std::string>>("pcd_paths_or_directory"));
   bool enable_whole_load = declare_parameter<bool>("enable_whole_load");
-  bool enable_downsample_whole_load = declare_parameter<bool>("enable_downsampled_whole_load");
   bool enable_partial_load = declare_parameter<bool>("enable_partial_load");
   bool enable_differential_load = declare_parameter<bool>("enable_differential_load");
 
   if (enable_whole_load) {
     std::string publisher_name = "output/pointcloud_map";
     pcd_map_loader_ =
-      std::make_unique<PointcloudMapLoaderModule>(this, pcd_paths, publisher_name, false);
-  }
-
-  if (enable_downsample_whole_load) {
-    std::string publisher_name = "output/debug/downsampled_pointcloud_map";
-    downsampled_pcd_map_loader_ =
-      std::make_unique<PointcloudMapLoaderModule>(this, pcd_paths, publisher_name, true);
+      std::make_unique<PointcloudMapLoaderModule>(this, pcd_paths, publisher_name);
   }
 
   if (enable_partial_load | enable_differential_load) {

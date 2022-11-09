@@ -22,12 +22,21 @@ else()
   endif()
 endif()
 
+find_package(PCL REQUIRED COMPONENTS common io registration)
+include_directories(${PCL_INCLUDE_DIRS})
+
 ament_auto_add_executable(ndt_scan_matcher
   src/debug.cpp
   src/ndt_scan_matcher_node.cpp
   src/ndt_scan_matcher_core.cpp
   src/util_func.cpp
+  src/pose_array_interpolator.cpp
+  src/tf2_listener_module.cpp
+  src/map_module.cpp
 )
+
+link_directories(${PCL_LIBRARY_DIRS})
+target_link_libraries(ndt_scan_matcher ${PCL_LIBRARIES})
 
 ament_auto_package(
   INSTALL_TO_SHARE

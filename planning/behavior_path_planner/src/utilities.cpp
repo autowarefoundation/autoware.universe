@@ -624,8 +624,43 @@ bool checkCollisionBetweenFootprintAndObjects(
   return false;
 }
 
+double calcLateralDistanceFromEgoToObject(
+  const Pose & ego_pose, const double vehicle_width, const PredictedObject & dynamic_object)
+{
+  double min_distance = std::numeric_limits<double>::max();
+  Polygon2d obj_polygon;
+  if (!calcObjectPolygon(dynamic_object, &obj_polygon)) {
+    return min_distance;
+  }
+
+  const auto vehicle_left_pose =
+    tier4_autoware_utils::calcOffsetPose(ego_pose, 0, vehicle_width / 2, 0);
+  const auto vehicle_right_pose =
+    tier4_autoware_utils::calcOffsetPose(ego_pose, 0, -vehicle_width / 2, 0);
+
+  for (const auto & p : obj_polygon.outer()) {
+    const auto point = tier4_autoware_utils::createPoint(p.x(), p.y(), 0.0);
+    // left direction is positive
+    const double signed_distance_from_left =
+      tier4_autoware_utils::calcLateralDeviation(vehicle_left_pose, point);
+    // right direction is positive
+    const double signed_distance_from_right =
+      tier4_autoware_utils::calcLateralDeviation(vehicle_right_pose, point);
+
+    if (signed_distance_from_left < 0.0 && signed_distance_from_right < 0.0) {
+      // point is between left and right
+      return 0.0;
+    }
+
+    const double distance_from_ego =
+      std::min(std::abs(signed_distance_from_left), std::abs(signed_distance_from_right));
+    min_distance = std::min(min_distance, distance_from_ego);
+  }
+  return min_distance;
+}
+
 double calcLongitudinalDistanceFromEgoToObject(
-  const Pose & ego_pose, double base_link2front, double base_link2rear,
+  const Pose & ego_pose, const double base_link2front, const double base_link2rear,
   const PredictedObject & dynamic_object)
 {
   double min_distance = std::numeric_limits<double>::max();
@@ -642,8 +677,10 @@ double calcLongitudinalDistanceFromEgoToObject(
   for (const auto & p : obj_polygon.outer()) {
     const auto point = tier4_autoware_utils::createPoint(p.x(), p.y(), 0.0);
 
+    // forward is positive
     const double signed_distance_from_front =
       tier4_autoware_utils::calcLongitudinalDeviation(vehicle_front_pose, point);
+    // backward is positive
     const double signed_distance_from_rear =
       -tier4_autoware_utils::calcLongitudinalDeviation(vehicle_rear_pose, point);
 
@@ -1441,7 +1478,7 @@ PathPointWithLaneId insertStopPoint(double length, PathWithLaneId * path)
   return stop_point;
 }
 
-double getDistanceToShoulderBoundary(
+double getSignedDistanceFromShoulderLeftBoundary(
   const lanelet::ConstLanelets & shoulder_lanelets, const Pose & pose)
 {
   lanelet::ConstLanelet closest_shoulder_lanelet;
@@ -1462,13 +1499,14 @@ double getDistanceToShoulderBoundary(
   return arc_coordinates.distance;
 }
 
-double getDistanceToRightBoundary(const lanelet::ConstLanelets & lanelets, const Pose & pose)
+double getSignedDistanceFromRightBoundary(
+  const lanelet::ConstLanelets & lanelets, const Pose & pose)
 {
-  lanelet::ConstLanelet closest_shoulder_lanelet;
+  lanelet::ConstLanelet closest_lanelet;
   lanelet::ArcCoordinates arc_coordinates;
-  if (lanelet::utils::query::getClosestLanelet(lanelets, pose, &closest_shoulder_lanelet)) {
+  if (lanelet::utils::query::getClosestLanelet(lanelets, pose, &closest_lanelet)) {
     const auto lanelet_point = lanelet::utils::conversion::toLaneletPoint(pose.position);
-    const auto & right_line_2d = lanelet::utils::to2D(closest_shoulder_lanelet.rightBound3d());
+    const auto & right_line_2d = lanelet::utils::to2D(closest_lanelet.rightBound3d());
     arc_coordinates = lanelet::geometry::toArcCoordinates(
       right_line_2d, lanelet::utils::to2D(lanelet_point).basicPoint());
   } else {
@@ -1655,6 +1693,32 @@ lanelet::ConstLineStrings3d getDrivableAreaForAllSharedLinestringLanelets(
   }
 
   return linestring_shared;
+}
+
+lanelet::ConstLanelets expandLanelets(
+  const lanelet::ConstLanelets & lanelets, const double left_bound_offset,
+  const double right_bound_offset, const std::vector<std::string> & types_to_skip)
+{
+  if (left_bound_offset == 0.0 && right_bound_offset == 0.0) return lanelets;
+
+  lanelet::ConstLanelets expanded_lanelets{};
+  expanded_lanelets.reserve(lanelets.size());
+  for (const auto & lanelet : lanelets) {
+    const std::string l_type =
+      lanelet.leftBound().attributeOr(lanelet::AttributeName::Type, "none");
+    const std::string r_type =
+      lanelet.rightBound().attributeOr(lanelet::AttributeName::Type, "none");
+
+    const bool l_skip =
+      std::find(types_to_skip.begin(), types_to_skip.end(), l_type) != types_to_skip.end();
+    const bool r_skip =
+      std::find(types_to_skip.begin(), types_to_skip.end(), r_type) != types_to_skip.end();
+    const double l_offset = l_skip ? 0.0 : left_bound_offset;
+    const double r_offset = r_skip ? 0.0 : -right_bound_offset;
+
+    expanded_lanelets.push_back(lanelet::utils::getExpandedLanelet(lanelet, l_offset, r_offset));
+  }
+  return expanded_lanelets;
 }
 
 PredictedObjects filterObjectsByVelocity(const PredictedObjects & objects, double lim_v)
@@ -1854,44 +1918,6 @@ PathWithLaneId setDecelerationVelocity(
   return reference_path;
 }
 
-PathWithLaneId setDecelerationVelocity(
-  const RouteHandler & route_handler, const PathWithLaneId & input,
-  const lanelet::ConstLanelets & lanelet_sequence, const double distance_after_pullover,
-  const double pullover_distance_min, const double distance_before_pull_over,
-  const double deceleration_interval, Pose goal_pose)
-{
-  auto reference_path = input;
-  const auto pullover_buffer =
-    distance_after_pullover + pullover_distance_min + distance_before_pull_over;
-  const auto arclength_goal_pose =
-    lanelet::utils::getArcCoordinates(lanelet_sequence, goal_pose).length;
-  const auto arclength_pull_over_start = arclength_goal_pose - pullover_buffer;
-  const auto arclength_path_front =
-    lanelet::utils::getArcCoordinates(lanelet_sequence, reference_path.points.front().point.pose)
-      .length;
-
-  if (
-    route_handler.isDeadEndLanelet(lanelet_sequence.back()) &&
-    pullover_distance_min > std::numeric_limits<double>::epsilon()) {
-    for (auto & point : reference_path.points) {
-      const auto arclength =
-        lanelet::utils::getArcCoordinates(lanelet_sequence, point.point.pose).length;
-      const double distance_to_pull_over_start =
-        std::max(0.0, arclength_pull_over_start - arclength);
-      point.point.longitudinal_velocity_mps = std::min(
-        point.point.longitudinal_velocity_mps,
-        static_cast<float>(distance_to_pull_over_start / deceleration_interval) *
-          point.point.longitudinal_velocity_mps);
-    }
-  }
-
-  double distance_to_pull_over_start =
-    std::max(0.0, arclength_pull_over_start - arclength_path_front);
-  const auto stop_point = util::insertStopPoint(distance_to_pull_over_start, &reference_path);
-
-  return reference_path;
-}
-
 // TODO(murooka) remove calcSignedArcLength using findNearestSegmentIndex inside the
 // function
 PathWithLaneId setDecelerationVelocity(
@@ -1916,7 +1942,8 @@ PathWithLaneId setDecelerationVelocity(
 
   const auto stop_point_length =
     motion_utils::calcSignedArcLength(reference_path.points, 0, target_pose.position) + buffer;
-  if (target_velocity == 0.0 && stop_point_length > 0) {
+  constexpr double eps{0.01};
+  if (std::abs(target_velocity) < eps && stop_point_length > 0.0) {
     const auto stop_point = util::insertStopPoint(stop_point_length, &reference_path);
   }
 
@@ -1986,6 +2013,7 @@ lanelet::ConstLanelets getExtendedCurrentLanes(
   const auto & route_handler = planner_data->route_handler;
   const auto current_pose = planner_data->self_pose->pose;
   const auto common_parameters = planner_data->parameters;
+  const auto routing_graph_ptr = route_handler->getRoutingGraphPtr();
 
   lanelet::ConstLanelet current_lane;
   if (!route_handler->getClosestLaneletWithinRoute(current_pose, &current_lane)) {
@@ -2000,19 +2028,13 @@ lanelet::ConstLanelets getExtendedCurrentLanes(
     current_lane, current_pose, common_parameters.backward_path_length,
     common_parameters.forward_path_length);
 
-  // Add next_lanes
+  // Add next lane
   const auto next_lanes = route_handler->getNextLanelets(current_lanes.back());
-  if (!next_lanes.empty()) {
-    // TODO(kosuke55) which lane should be added?
-    current_lanes.push_back(next_lanes.front());
-  }
+  current_lanes.push_back(next_lanes.front());
 
-  // Add prev_lane
-  lanelet::ConstLanelets prev_lanes;
-  if (route_handler->getPreviousLaneletsWithinRoute(current_lanes.front(), &prev_lanes)) {
-    // TODO(kosuke55) which lane should be added?
-    current_lanes.insert(current_lanes.begin(), 0, prev_lanes.front());
-  }
+  // Add previous lane
+  const auto prev_lanes = route_handler->getPreviousLanelets(current_lanes.front());
+  current_lanes.insert(current_lanes.begin(), prev_lanes.front());
 
   return current_lanes;
 }

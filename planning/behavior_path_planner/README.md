@@ -238,12 +238,13 @@ Generate footprints from ego-vehicle path points and determine obstacle collisio
 
 ##### Parameters for occupancy grid based collision check
 
-| Name                                  | Unit | Type   | Description                                                                                                     | Default value |
-| :------------------------------------ | :--- | :----- | :-------------------------------------------------------------------------------------------------------------- | :------------ |
-| use_occupancy_grid                    | -    | bool   | flag whether to use occupancy grid for collision check                                                          | true          |
-| occupancy_grid_collision_check_margin | [m]  | double | margin to calculate ego-vehicle cells from footprint.                                                           | 0.0           |
-| theta_size                            | -    | int    | size of theta angle to be considered. angular resolution for collision check will be 2$\pi$ / theta_size [rad]. | 360           |
-| obstacle_threshold                    | -    | int    | threshold of cell values to be considered as obstacles                                                          | 60            |
+| Name                                       | Unit | Type   | Description                                                                                                     | Default value |
+| :----------------------------------------- | :--- | :----- | :-------------------------------------------------------------------------------------------------------------- | :------------ |
+| use_occupancy_grid                         | -    | bool   | flag whether to use occupancy grid for collision check                                                          | true          |
+| use_occupancy_grid_for_longitudinal_margin | -    | bool   | flag whether to use occupancy grid for keeping longitudinal margin                                              | false         |
+| occupancy_grid_collision_check_margin      | [m]  | double | margin to calculate ego-vehicle cells from footprint.                                                           | 0.0           |
+| theta_size                                 | -    | int    | size of theta angle to be considered. angular resolution for collision check will be 2$\pi$ / theta_size [rad]. | 360           |
+| obstacle_threshold                         | -    | int    | threshold of cell values to be considered as obstacles                                                          | 60            |
 
 ##### Parameters for object recognition based collision check
 
@@ -268,7 +269,9 @@ searched for in certain range of the shoulder lane.
 | forward_goal_search_length  | [m]  | double | length of forward range to be explored from the original goal                                                                                                                                                            | 20.0           |
 | backward_goal_search_length | [m]  | double | length of backward range to be explored from the original goal                                                                                                                                                           | 20.0           |
 | goal_search_interval        | [m]  | double | distance interval for goal search                                                                                                                                                                                        | 2.0            |
-| goal_to_obstacle_margin     | [m]  | double | margin between ego-vehicle at the goal position and obstacles                                                                                                                                                            | 3.0            |
+| longitudinal_margin         | [m]  | double | margin between ego-vehicle at the goal position and obstacles                                                                                                                                                            | 3.0            |
+| max_lateral_offset          | [m]  | double | maximum offset of goal search in the lateral direction                                                                                                                                                                   | 3.0            |
+| lateral_offset_interval     | [m]  | double | distance interval of goal search in the lateral direction                                                                                                                                                                | 3.0            |
 
 #### **Path Generation**
 
@@ -491,35 +494,11 @@ If the target path contains a goal, modify the points of the path so that the pa
 
 ![path_goal_refinement](./image/path_goal_refinement.drawio.svg)
 
-### Turn signal
-
-Turn on signal when the planned path crosses lanes or when a right or left turn is required. The turn signal information includes the direction of the turn signal and the distance to the point where the turn signal is needed.
-
-#### From planned path
-
-- turn signal direction  
-  Calculate the lateral movement distance from the shift start and end point and judges whether the line is crossed or not. If the vehicle straddles the line during lateral movement, the system turns on the blinker.  
-  ![cross_judgment](./image/turn_signal_fig1.drawio.svg)  
-  The timing to start lighting is when the time required to reach the shift start point is 3 seconds or less, or when the distance becomes smaller than threshold (default: `10.0 m`).  
-  The Japanese Road Traffic Law requires turn signal to be turned on `3.0 sec` before the vehicle starts moving sideways, but it also gives a condition based on distance because the turn signal may be turned off by slowing down before the shift start point.
-- distance  
-  The distance from the top of ego vehicle to the shift end point.
-
-#### From map information
-
-- turn signal direction  
-  Determine right or left turns based on the "turn_direction" information embedded in the lanelet.
-
-- distance  
-  The distance to the lane where you start to turn.
-
-#### Conciliation
-
-When multiple turn signal conditions are met, the turn signal with the smaller distance is selected.
-
 ## References / External links
 
 This module depends on the external [BehaviorTreeCpp](https://github.com/BehaviorTree/BehaviorTree.CPP) library.
+
+<!-- cspell:ignore Vorobieva, Minoiu, Enache, Mammar, IFAC -->
 
 [[1]](https://www.sciencedirect.com/science/article/pii/S1474667015347431) H. Vorobieva, S. Glaser, N. Minoiu-Enache, and S. Mammar, “Geometric path planning for automatic parallel parking in tiny spots”, IFAC Proceedings Volumes, vol. 45, no. 24, pp. 36–42, 2012.
 

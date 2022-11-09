@@ -19,6 +19,7 @@
 #include "behavior_path_planner/scene_module/lane_change/lane_change_module_data.hpp"
 #include "behavior_path_planner/scene_module/lane_change/lane_change_path.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
+#include "behavior_path_planner/turn_signal_decider.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -70,6 +71,18 @@ public:
       return rtc_interface_right_.isActivated(uuid_right_);
     }
     return false;
+  }
+
+  void lockRTCCommand() override
+  {
+    rtc_interface_left_.lockCommandUpdate();
+    rtc_interface_right_.lockCommandUpdate();
+  }
+
+  void unlockRTCCommand() override
+  {
+    rtc_interface_left_.unlockCommandUpdate();
+    rtc_interface_right_.unlockCommandUpdate();
   }
 
 private:

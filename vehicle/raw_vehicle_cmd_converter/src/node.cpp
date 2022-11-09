@@ -15,6 +15,7 @@
 #include "raw_vehicle_cmd_converter/node.hpp"
 
 #include <algorithm>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -40,48 +41,39 @@ RawVehicleCommandConverterNode::RawVehicleCommandConverterNode(
   // for steering steer controller
   use_steer_ff_ = declare_parameter("use_steer_ff", true);
   use_steer_fb_ = declare_parameter("use_steer_fb", true);
-  const auto kp_steer{declare_parameter("steer_pid.kp", 150.0)};
-  const auto ki_steer{declare_parameter("steer_pid.ki", 15.0)};
-  const auto kd_steer{declare_parameter("steer_pid.kd", 0.0)};
-  const auto max_ret_steer{declare_parameter("steer_pid.max", 8.0)};
-  const auto min_ret_steer{declare_parameter("steer_pid.min", -8.0)};
-  const auto max_ret_p_steer{declare_parameter("steer_pid.max_p", 8.0)};
-  const auto min_ret_p_steer{declare_parameter("steer_pid.min_p", -8.0)};
-  const auto max_ret_i_steer{declare_parameter("steer_pid.max_i", 8.0)};
-  const auto min_ret_i_steer{declare_parameter("steer_pid.min_i", -8.0)};
-  const auto max_ret_d_steer{declare_parameter("steer_pid.max_d", 0.0)};
-  const auto min_ret_d_steer{declare_parameter("steer_pid.min_d", 0.0)};
-  const auto invalid_integration_decay{
-    declare_parameter("steer_pid.invalid_integration_decay", 0.97)};
-  ff_map_initialized_ = true;
   if (convert_accel_cmd_) {
     if (!accel_map_.readAccelMapFromCSV(csv_path_accel_map)) {
-      RCLCPP_ERROR(
-        get_logger(), "Cannot read accelmap. csv path = %s. stop calculation.",
-        csv_path_accel_map.c_str());
-      ff_map_initialized_ = false;
+      throw std::invalid_argument("Accel map is invalid.");
     }
   }
   if (convert_brake_cmd_) {
     if (!brake_map_.readBrakeMapFromCSV(csv_path_brake_map)) {
-      RCLCPP_ERROR(
-        get_logger(), "Cannot read brakemap. csv path = %s. stop calculation.",
-        csv_path_brake_map.c_str());
-      ff_map_initialized_ = false;
+      throw std::invalid_argument("Brake map is invalid.");
     }
   }
   if (convert_steer_cmd_) {
-    steer_controller_.setDecay(invalid_integration_decay);
-    if (!steer_controller_.setFFMap(csv_path_steer_map)) {
-      RCLCPP_ERROR(
-        get_logger(), "Cannot read steer map. csv path = %s. stop calculation.",
-        csv_path_steer_map.c_str());
-      ff_map_initialized_ = false;
+    if (!steer_map_.readSteerMapFromCSV(csv_path_steer_map)) {
+      throw std::invalid_argument("Steer map is invalid.");
     }
-    steer_controller_.setFBGains(kp_steer, ki_steer, kd_steer);
-    steer_controller_.setFBLimits(
+    const auto kp_steer{declare_parameter("steer_pid.kp", 150.0)};
+    const auto ki_steer{declare_parameter("steer_pid.ki", 15.0)};
+    const auto kd_steer{declare_parameter("steer_pid.kd", 0.0)};
+    const auto max_ret_steer{declare_parameter("steer_pid.max", 8.0)};
+    const auto min_ret_steer{declare_parameter("steer_pid.min", -8.0)};
+    const auto max_ret_p_steer{declare_parameter("steer_pid.max_p", 8.0)};
+    const auto min_ret_p_steer{declare_parameter("steer_pid.min_p", -8.0)};
+    const auto max_ret_i_steer{declare_parameter("steer_pid.max_i", 8.0)};
+    const auto min_ret_i_steer{declare_parameter("steer_pid.min_i", -8.0)};
+    const auto max_ret_d_steer{declare_parameter("steer_pid.max_d", 0.0)};
+    const auto min_ret_d_steer{declare_parameter("steer_pid.min_d", 0.0)};
+    const auto invalid_integration_decay{
+      declare_parameter("steer_pid.invalid_integration_decay", 0.97)};
+    steer_pid_.setDecay(invalid_integration_decay);
+    steer_pid_.setGains(kp_steer, ki_steer, kd_steer);
+    steer_pid_.setLimits(
       max_ret_steer, min_ret_steer, max_ret_p_steer, min_ret_p_steer, max_ret_i_steer,
       min_ret_i_steer, max_ret_d_steer, min_ret_d_steer);
+    steer_pid_.setInitialized();
   }
   pub_actuation_cmd_ = create_publisher<ActuationCommandStamped>("~/output/actuation_cmd", 1);
   sub_control_cmd_ = create_subscription<AckermannControlCommand>(
@@ -96,13 +88,11 @@ RawVehicleCommandConverterNode::RawVehicleCommandConverterNode(
 
 void RawVehicleCommandConverterNode::publishActuationCmd()
 {
-  if (!ff_map_initialized_) {
-    RCLCPP_WARN_EXPRESSION(get_logger(), is_debugging_, "ff map is not initialized");
-    return;
-  }
   if (!current_twist_ptr_ || !control_cmd_ptr_ || !current_steer_ptr_) {
     RCLCPP_WARN_EXPRESSION(
-      get_logger(), is_debugging_, "some of twist/control_cmd/steer pointer is null");
+      get_logger(), is_debugging_, "some pointers are null: %s, %s, %s",
+      !current_twist_ptr_ ? "twist" : "", !control_cmd_ptr_ ? "cmd" : "",
+      !current_steer_ptr_ ? "steer" : "");
     return;
   }
   double desired_accel_cmd = 0.0;
@@ -124,9 +114,9 @@ void RawVehicleCommandConverterNode::publishActuationCmd()
     if (accel_cmd_is_zero) {
       desired_brake_cmd = calculateBrakeMap(vel, acc);
     }
-  } else {
-    // if conversion is disabled use acceleration as brake cmd
-    desired_brake_cmd = (acc < 0) ? acc : 0;
+  } else if (acc < 0) {
+    // if conversion is disabled use negative acceleration as brake cmd
+    desired_brake_cmd = -acc;
   }
   if (convert_steer_cmd_) {
     desired_steer_cmd = calculateSteer(vel, steer, steer_rate);
@@ -154,17 +144,17 @@ double RawVehicleCommandConverterNode::calculateSteer(
   double dt = (current_time - prev_time_steer_calculation_).seconds();
   if (std::abs(dt) > 1.0) {
     RCLCPP_WARN_EXPRESSION(get_logger(), is_debugging_, "ignore old topic");
-    dt = 0.0;
+    dt = 0.1;  // set ordinaray delta time instead
   }
   prev_time_steer_calculation_ = current_time;
   // feed-forward
   if (use_steer_ff_) {
-    ff_value = steer_controller_.calcFFSteer(steer_rate, *current_steer_ptr_);
+    steer_map_.getSteer(steer_rate, *current_steer_ptr_, ff_value);
   }
-  // feedback
+  // feed-back
   if (use_steer_fb_) {
-    fb_value = steer_controller_.calcFBSteer(
-      steering, dt, vel, *current_steer_ptr_, pid_contributions, pid_errors);
+    fb_value =
+      steer_pid_.calculateFB(steering, dt, vel, *current_steer_ptr_, pid_contributions, pid_errors);
   }
   steering_output = ff_value + fb_value;
   // for steer debugging

@@ -366,11 +366,11 @@ std::vector<PathWithLaneId> GeometricParallelParking::planOneTrial(
   const Pose Cr = calcOffsetPose(arc_end_pose, 0, -R_E_r, 0);
   const double d_Cr_Einit = calcDistance2d(Cr, start_pose);
 
-  const Point Cr_goalcoords = inverseTransformPoint(Cr.position, arc_end_pose);
-  const Point self_point_goalcoords = inverseTransformPoint(start_pose.position, arc_end_pose);
+  const Point Cr_goal_coords = inverseTransformPoint(Cr.position, arc_end_pose);
+  const Point self_point_goal_coords = inverseTransformPoint(start_pose.position, arc_end_pose);
 
   const double alpha =
-    M_PI_2 - psi + std::asin((self_point_goalcoords.y - Cr_goalcoords.y) / d_Cr_Einit);
+    M_PI_2 - psi + std::asin((self_point_goal_coords.y - Cr_goal_coords.y) / d_Cr_Einit);
 
   const double R_E_l =
     (std::pow(d_Cr_Einit, 2) - std::pow(R_E_r, 2)) / (2 * (R_E_r + d_Cr_Einit * std::cos(alpha)));
@@ -388,7 +388,7 @@ std::vector<PathWithLaneId> GeometricParallelParking::planOneTrial(
     const double R_front_left =
       std::hypot(R_E_r + common_params.vehicle_width / 2, common_params.base_link2front);
     const double distance_to_left_bound =
-      util::getDistanceToShoulderBoundary(shoulder_lanes, arc_end_pose);
+      util::getSignedDistanceFromShoulderLeftBoundary(shoulder_lanes, arc_end_pose);
     const double left_deviation = R_front_left - R_E_r;
     if (std::abs(distance_to_left_bound) - left_deviation < lane_departure_margin) {
       return std::vector<PathWithLaneId>{};
@@ -397,7 +397,8 @@ std::vector<PathWithLaneId> GeometricParallelParking::planOneTrial(
     const double R_front_right =
       std::hypot(R_E_l + common_params.vehicle_width / 2, common_params.base_link2front);
     const double right_deviation = R_front_right - R_E_l;
-    const double distance_to_right_bound = util::getDistanceToRightBoundary(lanes, start_pose);
+    const double distance_to_right_bound =
+      util::getSignedDistanceFromRightBoundary(lanes, start_pose);
     if (distance_to_right_bound - right_deviation < lane_departure_margin) {
       return std::vector<PathWithLaneId>{};
     }
@@ -410,35 +411,32 @@ std::vector<PathWithLaneId> GeometricParallelParking::planOneTrial(
     (2 * R_E_l * (R_E_l + R_E_r)));
   theta_l = is_forward ? theta_l : -theta_l;
 
-  // get closest lanes
-  lanelet::Lanelet closest_road_lanelet;
-  lanelet::utils::query::getClosestLanelet(road_lanes, goal_pose, &closest_road_lanelet);
-  lanelet::Lanelet closest_shoulder_lanelet;
-  lanelet::utils::query::getClosestLanelet(shoulder_lanes, goal_pose, &closest_shoulder_lanelet);
-
   PathWithLaneId path_turn_left =
     generateArcPath(Cl, R_E_l, -M_PI_2, normalizeRadian(-M_PI_2 + theta_l), is_forward, is_forward);
-  for (auto & p : path_turn_left.points) {
-    p.lane_ids.push_back(closest_road_lanelet.id());
-    p.lane_ids.push_back(closest_shoulder_lanelet.id());
-  }
   path_turn_left.header = planner_data_->route_handler->getRouteHeader();
 
   PathWithLaneId path_turn_right = generateArcPath(
     Cr, R_E_r, normalizeRadian(psi + M_PI_2 + theta_l), M_PI_2, !is_forward, is_forward);
-  for (auto & p : path_turn_right.points) {
-    p.lane_ids.push_back(closest_road_lanelet.id());
-    p.lane_ids.push_back(closest_shoulder_lanelet.id());
-  }
   path_turn_right.header = planner_data_->route_handler->getRouteHeader();
+
+  auto setLaneIds = [lanes](PathPointWithLaneId & p) {
+    for (const auto & lane : lanes) {
+      p.lane_ids.push_back(lane.id());
+    }
+  };
+  auto setLaneIdsToPath = [setLaneIds](PathWithLaneId & path) {
+    for (auto & p : path.points) {
+      setLaneIds(p);
+    }
+  };
+  setLaneIdsToPath(path_turn_left);
+  setLaneIdsToPath(path_turn_right);
 
   // Need to add straight path to last right_turning for parking in parallel
   if (std::abs(end_pose_offset) > 0) {
     PathPointWithLaneId straight_point{};
-    lanelet::ConstLanelet goal_lane;
-    lanelet::utils::query::getClosestLanelet(shoulder_lanes, goal_pose, &goal_lane);
     straight_point.point.pose = goal_pose;
-    straight_point.lane_ids.push_back(goal_lane.id());
+    setLaneIds(straight_point);
     path_turn_right.points.push_back(straight_point);
   }
 
@@ -446,11 +444,14 @@ std::vector<PathWithLaneId> GeometricParallelParking::planOneTrial(
   paths_.push_back(path_turn_left);
   paths_.push_back(path_turn_right);
 
+  // set pull_over start and end pose
+  // todo: make start and end pose for pull_out
+  start_pose_ = start_pose;
+  arc_end_pose_ = arc_end_pose;
+
   // debug
   Cr_ = Cr;
   Cl_ = Cl;
-  start_pose_ = start_pose;
-  arc_end_pose_ = arc_end_pose;
 
   return paths_;
 }
@@ -481,9 +482,12 @@ PathWithLaneId GeometricParallelParking::generateArcPath(
 
   // insert the last point exactly
   const auto p = generateArcPathPoint(center, radius, end_yaw, is_left_turn, is_forward);
-  path.points.push_back(p);
+  constexpr double min_dist = 0.01;
+  if (path.points.empty() || calcDistance2d(path.points.back(), p) > min_dist) {
+    path.points.push_back(p);
+  }
 
-  return removeOverlappingPoints(path);
+  return path;
 }
 
 PathPointWithLaneId GeometricParallelParking::generateArcPathPoint(
@@ -491,9 +495,9 @@ PathPointWithLaneId GeometricParallelParking::generateArcPathPoint(
   const bool is_forward)
 {
   // get pose in center_pose coords
-  Pose pose_centercoords;
-  pose_centercoords.position.x = radius * std::cos(yaw);
-  pose_centercoords.position.y = radius * std::sin(yaw);
+  Pose pose_center_coords;
+  pose_center_coords.position.x = radius * std::cos(yaw);
+  pose_center_coords.position.y = radius * std::sin(yaw);
 
   // set orientation
   tf2::Quaternion quat;
@@ -502,11 +506,11 @@ PathPointWithLaneId GeometricParallelParking::generateArcPathPoint(
   } else {
     quat.setRPY(0, 0, normalizeRadian(yaw + M_PI_2));
   }
-  pose_centercoords.orientation = tf2::toMsg(quat);
+  pose_center_coords.orientation = tf2::toMsg(quat);
 
   // get pose in map coords
   PathPointWithLaneId p{};
-  p.point.pose = transformPose(pose_centercoords, center);
+  p.point.pose = transformPose(pose_center_coords, center);
 
   return p;
 }

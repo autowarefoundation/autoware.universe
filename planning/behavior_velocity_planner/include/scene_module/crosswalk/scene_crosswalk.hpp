@@ -111,10 +111,12 @@ private:
     const PathWithLaneId & ego_path, StopFactor & stop_factor);
 
   boost::optional<std::pair<double, geometry_msgs::msg::Point>> getStopLine(
-    const PathWithLaneId & ego_path) const;
+    const PathWithLaneId & ego_path, bool & exist_stopline_in_map) const;
 
   std::vector<CollisionPoint> getCollisionPoints(
     const PathWithLaneId & ego_path, const PredictedObject & object,
+    const boost::geometry::model::polygon<boost::geometry::model::d2::point_xy<double>> &
+      attention_area,
     const std::pair<double, double> & crosswalk_attention_range);
 
   std::pair<double, double> getAttentionRange(const PathWithLaneId & ego_path);
