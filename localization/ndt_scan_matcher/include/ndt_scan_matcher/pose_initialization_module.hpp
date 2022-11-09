@@ -24,8 +24,8 @@
 #include <tier4_localization_msgs/srv/pose_with_covariance_stamped.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
-
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
+
 #include <pcl_conversions/pcl_conversions.h>
 
 #include <pclomp/ndt_omp.h>
@@ -37,6 +37,7 @@ class PoseInitializationModule {
   using PointTarget = pcl::PointXYZ;
   using NormalDistributionsTransform =
     pclomp::NormalDistributionsTransform<PointSource, PointTarget>;
+  using StdMap = std::map<std::string, std::string>;
 
 public:
   PoseInitializationModule(
@@ -45,7 +46,7 @@ public:
     std::shared_ptr<Tf2ListenerModule> tf2_listener_module,
     std::string map_frame,
     rclcpp::CallbackGroup::SharedPtr main_callback_group,
-    std::map<std::string, std::string> * key_value_stdmap_ptr);
+    std::shared_ptr<StdMap> key_value_stdmap_ptr);
 
 private:
   void service_ndt_align(
@@ -71,7 +72,7 @@ private:
   rclcpp::Logger logger_;
   rclcpp::Clock::SharedPtr clock_;
   std::shared_ptr<Tf2ListenerModule> tf2_listener_module_;
-  std::map<std::string, std::string> * key_value_stdmap_ptr_;
+  std::shared_ptr<StdMap> key_value_stdmap_ptr_;
 };
 
 #endif  // NDT_SCAN_MATCHER__POSE_INITIALIZATION_MODULE_HPP_

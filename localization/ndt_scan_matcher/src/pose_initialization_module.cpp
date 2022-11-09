@@ -20,7 +20,7 @@ PoseInitializationModule::PoseInitializationModule(
   std::shared_ptr<Tf2ListenerModule> tf2_listener_module,
   std::string map_frame,
   rclcpp::CallbackGroup::SharedPtr main_callback_group,
-  std::map<std::string, std::string> * key_value_stdmap_ptr)
+  std::shared_ptr<StdMap> key_value_stdmap_ptr)
 : ndt_ptr_(ndt_ptr),
   ndt_ptr_mutex_(ndt_ptr_mutex),
   map_frame_(map_frame),

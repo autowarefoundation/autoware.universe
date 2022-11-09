@@ -31,7 +31,6 @@
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <tier4_debug_msgs/msg/float32_stamped.hpp>
 #include <tier4_debug_msgs/msg/int32_stamped.hpp>
-#include <tier4_localization_msgs/srv/pose_with_covariance_stamped.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <fmt/format.h>
@@ -73,6 +72,7 @@ class NDTScanMatcher : public rclcpp::Node
   using PointTarget = pcl::PointXYZ;
   using NormalDistributionsTransform =
     pclomp::NormalDistributionsTransform<PointSource, PointTarget>;
+  using StdMap = std::map<std::string, std::string>;
 
 public:
   NDTScanMatcher();
@@ -185,7 +185,7 @@ private:
   std::mutex initial_pose_array_mtx_;
 
   std::thread diagnostic_thread_;
-  std::map<std::string, std::string> key_value_stdmap_;
+  StdMap key_value_stdmap_;
 
   // variables for regularization
   const bool regularization_enabled_;
