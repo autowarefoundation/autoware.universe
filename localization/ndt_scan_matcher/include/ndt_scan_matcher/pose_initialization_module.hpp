@@ -37,7 +37,6 @@ class PoseInitializationModule {
   using PointTarget = pcl::PointXYZ;
   using NormalDistributionsTransform =
     pclomp::NormalDistributionsTransform<PointSource, PointTarget>;
-  using StdMap = std::map<std::string, std::string>;
 
 public:
   PoseInitializationModule(
@@ -46,7 +45,7 @@ public:
     std::shared_ptr<Tf2ListenerModule> tf2_listener_module,
     std::string map_frame,
     rclcpp::CallbackGroup::SharedPtr main_callback_group,
-    std::shared_ptr<StdMap> state_ptr);
+    std::shared_ptr<std::map<std::string, std::string>> state_ptr);
 
 private:
   void service_ndt_align(
@@ -72,7 +71,7 @@ private:
   rclcpp::Logger logger_;
   rclcpp::Clock::SharedPtr clock_;
   std::shared_ptr<Tf2ListenerModule> tf2_listener_module_;
-  std::shared_ptr<StdMap> state_ptr_;
+  std::shared_ptr<std::map<std::string, std::string>> state_ptr_;
 };
 
 #endif  // NDT_SCAN_MATCHER__POSE_INITIALIZATION_MODULE_HPP_

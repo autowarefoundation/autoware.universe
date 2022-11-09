@@ -82,7 +82,7 @@ NDTScanMatcher::NDTScanMatcher()
 : Node("ndt_scan_matcher"),
   tf2_broadcaster_(*this),
   ndt_ptr_(new NormalDistributionsTransform),
-  state_ptr_(new StdMap),
+  state_ptr_(new std::map<std::string, std::string>),
   base_frame_("base_link"),
   ndt_base_frame_("ndt_base_link"),
   map_frame_("map"),
