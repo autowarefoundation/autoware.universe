@@ -12,7 +12,7 @@
     <include file="$(find-pkg-share map_loader)/launch/pointcloud_map_loader.launch.xml">
       <param name="pcd_paths_or_directory" value="$(var pointcloud_map_path)"/>
       <param from="$(var pointcloud_map_loader_param_path)"/>
-    </node>
+    </include>
 
     <include file="$(find-pkg-share map_tf_generator)/launch/map_tf_generator.launch.xml">
       <arg name="input_vector_map_topic" value="/map/vector_map"/>
