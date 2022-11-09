@@ -240,8 +240,7 @@ std::pair<std::optional<size_t>, std::optional<StopLineIdx>> generateStopLine(
       path_ip, lane_interval_start, lane_interval_end, lane_id, detection_areas);
     // if path is not intersecting with detection_area, skip
     if (!first_inside_detection_idx_ip_opt.has_value()) {
-      RCLCPP_DEBUG(
-        logger, "Path is not intersecting with detection_area, not generating stop_line");
+      RCLCPP_INFO(logger, "Path is not intersecting with detection_area, not generating stop_line");
       return {stuck_stop_line_idx, std::nullopt};
     }
 
@@ -252,6 +251,7 @@ std::pair<std::optional<size_t>, std::optional<StopLineIdx>> generateStopLine(
       0));
   }
   if (stop_idx_ip == 0) {
+    RCLCPP_INFO(logger, "stop line is at path[0], ignore planning\n===== plan end =====");
     return {stuck_stop_line_idx, std::nullopt};
   }
 
@@ -320,7 +320,7 @@ std::pair<std::optional<size_t>, std::optional<StopLineIdx>> generateStopLine(
       }
     }
   }
-  RCLCPP_DEBUG(
+  RCLCPP_INFO(
     logger,
     "generateStopLine() : keep_detection_idx = %ld, stop_idx = %ld, pass_judge_idx = %ld"
     ", stuck_stop_idx = %ld, has_prior_stopline = %d",
@@ -371,7 +371,7 @@ bool getStopLineIndexFromMap(
 
     *stop_idx_ip = i;
 
-    RCLCPP_DEBUG(logger, "found collision point");
+    RCLCPP_INFO(logger, "found collision point");
 
     return true;
   }
@@ -384,12 +384,12 @@ bool getStopLineIndexFromMap(
   const auto stop_idx_ip_opt =
     motion_utils::findNearestIndex(path.points, stop_point_from_map, static_cast<double>(dist_thr));
   if (!stop_idx_ip_opt) {
-    RCLCPP_DEBUG(logger, "found stop line, but not found stop index");
+    RCLCPP_INFO(logger, "found stop line, but not found stop index");
     return false;
   }
   *stop_idx_ip = stop_idx_ip_opt.get();
 
-  RCLCPP_DEBUG(logger, "found stop line and stop index");
+  RCLCPP_INFO(logger, "found stop line and stop index");
 
   return true;
 }
@@ -553,13 +553,13 @@ std::optional<StopLineIdx> generateStopLineBeforeIntersection(
   const auto & assigned_lanelet = lanelet_map_ptr->laneletLayer.get(lane_id);
   const auto lane_interval_opt = findLaneIdInterval(path_ip, lane_id);
   if (!lane_interval_opt.has_value()) {
-    RCLCPP_DEBUG(
+    RCLCPP_INFO(
       logger, "generate stopline before intersection, but ego is not in the intersection");
     return std::nullopt;
   }
   const auto [lane_interval_start, lane_interval_end] = lane_interval_opt.value();
   if (lane_interval_start == 0) {
-    RCLCPP_DEBUG(
+    RCLCPP_INFO(
       logger,
       "generate stopline before intersection, but ego is already in the intersection or path "
       "is "
@@ -607,7 +607,7 @@ std::optional<StopLineIdx> generateStopLineBeforeIntersection(
     }
   }
 
-  RCLCPP_DEBUG(
+  RCLCPP_INFO(
     logger,
     "generateStopLineBeforeIntersection() : stop_line_idx = %ld, pass_judge_idx = %ld, "
     "has_prior_stopline = %d",
