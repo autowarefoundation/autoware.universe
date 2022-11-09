@@ -17,8 +17,8 @@
 
 #define FMT_HEADER_ONLY
 
+#include "ndt_scan_matcher/pose_initialization_module.hpp"
 #include "ndt_scan_matcher/map_module.hpp"
-#include "ndt_scan_matcher/particle.hpp"
 #include "ndt_scan_matcher/tf2_listener_module.hpp"
 
 #include <rclcpp/rclcpp.hpp>
@@ -195,6 +195,7 @@ private:
   bool is_activated_;
   std::shared_ptr<Tf2ListenerModule> tf2_listener_module_;
   std::unique_ptr<MapModule> map_module_;
+  std::unique_ptr<PoseInitializationModule> pose_init_module_;
 };
 
 #endif  // NDT_SCAN_MATCHER__NDT_SCAN_MATCHER_CORE_HPP_
