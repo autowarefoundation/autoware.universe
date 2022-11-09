@@ -3,6 +3,3 @@
     enable_whole_load: true
     enable_partial_load: true
     enable_differential_load: true
-
-    # only used when downsample_whole_load enabled
-    leaf_size: 3.0 # downsample leaf size [m]
