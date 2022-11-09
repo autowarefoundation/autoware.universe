@@ -15,24 +15,25 @@
 #ifndef NDT_SCAN_MATCHER__POSE_INITIALIZATION_MODULE_HPP_
 #define NDT_SCAN_MATCHER__POSE_INITIALIZATION_MODULE_HPP_
 
-#include "ndt_scan_matcher/particle.hpp"
 #include "ndt_scan_matcher/debug.hpp"
+#include "ndt_scan_matcher/particle.hpp"
 #include "ndt_scan_matcher/tf2_listener_module.hpp"
 #include "ndt_scan_matcher/util_func.hpp"
 
 #include <rclcpp/rclcpp.hpp>
-#include <tier4_localization_msgs/srv/pose_with_covariance_stamped.hpp>
-#include <visualization_msgs/msg/marker_array.hpp>
-#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <tier4_autoware_utils/ros/marker_helper.hpp>
 
-#include <pcl_conversions/pcl_conversions.h>
+#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
+#include <tier4_localization_msgs/srv/pose_with_covariance_stamped.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
 
+#include <pcl_conversions/pcl_conversions.h>
 #include <pclomp/ndt_omp.h>
 
 #include <memory>
 
-class PoseInitializationModule {
+class PoseInitializationModule
+{
   using PointSource = pcl::PointXYZ;
   using PointTarget = pcl::PointXYZ;
   using NormalDistributionsTransform =
