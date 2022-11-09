@@ -18,8 +18,6 @@
 #include "diagnostic_updater/diagnostic_updater.hpp"
 #include "eigen3/Eigen/Core"
 #include "eigen3/Eigen/Geometry"
-#include "motion_common/motion_common.hpp"
-#include "motion_common/trajectory_common.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tf2/utils.h"
 #include "tf2_ros/buffer.h"
@@ -34,11 +32,11 @@
 
 #include "autoware_auto_control_msgs/msg/longitudinal_command.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
-#include "autoware_auto_system_msgs/msg/float32_multi_array_diagnostic.hpp"
 #include "autoware_auto_vehicle_msgs/msg/vehicle_odometry.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "tf2_msgs/msg/tf_message.hpp"
+#include "tier4_debug_msgs/msg/float32_multi_array_stamped.hpp"
 
 #include <deque>
 #include <memory>
@@ -57,7 +55,6 @@ namespace trajectory_follower
 using autoware::common::types::bool8_t;
 using autoware::common::types::float64_t;
 namespace trajectory_follower = ::autoware::motion::control::trajectory_follower;
-namespace motion_common = ::autoware::motion::motion_common;
 
 /// \class PidLongitudinalController
 /// \brief The node class used for generating longitudinal control commands (velocity/acceleration)
@@ -87,10 +84,8 @@ private:
   };
   rclcpp::Node * node_;
   // ros variables
-  rclcpp::Publisher<autoware_auto_system_msgs::msg::Float32MultiArrayDiagnostic>::SharedPtr
-    m_pub_slope;
-  rclcpp::Publisher<autoware_auto_system_msgs::msg::Float32MultiArrayDiagnostic>::SharedPtr
-    m_pub_debug;
+  rclcpp::Publisher<tier4_debug_msgs::msg::Float32MultiArrayStamped>::SharedPtr m_pub_slope;
+  rclcpp::Publisher<tier4_debug_msgs::msg::Float32MultiArrayStamped>::SharedPtr m_pub_debug;
 
   rclcpp::Node::OnSetParametersCallbackHandle::SharedPtr m_set_param_res;
   rcl_interfaces::msg::SetParametersResult paramCallback(
@@ -107,6 +102,14 @@ private:
   // control state
   enum class ControlState { DRIVE = 0, STOPPING, STOPPED, EMERGENCY };
   ControlState m_control_state{ControlState::STOPPED};
+  std::string toStr(const ControlState s)
+  {
+    if (s == ControlState::DRIVE) return "DRIVE";
+    if (s == ControlState::STOPPING) return "STOPPING";
+    if (s == ControlState::STOPPED) return "STOPPED";
+    if (s == ControlState::EMERGENCY) return "EMERGENCY";
+    return "UNDEFINED";
+  };
 
   // control period
   float64_t m_longitudinal_ctrl_period;
@@ -260,21 +263,17 @@ private:
 
   /**
    * @brief update control state according to the current situation
-   * @param [in] current_control_state current control state
    * @param [in] control_data control data
    */
-  ControlState updateControlState(
-    const ControlState current_control_state, const ControlData & control_data);
+  void updateControlState(const ControlData & control_data);
 
   /**
    * @brief calculate control command based on the current control state
-   * @param [in] current_control_state current control state
    * @param [in] current_pose current ego pose
    * @param [in] control_data control data
    */
   Motion calcCtrlCmd(
-    const ControlState & current_control_state, const geometry_msgs::msg::Pose & current_pose,
-    const ControlData & control_data);
+    const geometry_msgs::msg::Pose & current_pose, const ControlData & control_data);
 
   /**
    * @brief publish control command
