@@ -115,6 +115,14 @@ void DefaultPlanner::initialize(rclcpp::Node * node)
     std::bind(&DefaultPlanner::map_callback, this, std::placeholders::_1));
 }
 
+void DefaultPlanner::initialize(
+  rclcpp::Node * node, const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg)
+{
+  is_graph_ready_ = false;
+  node_ = node;
+  map_callback(msg);
+}
+
 bool DefaultPlanner::ready() const { return is_graph_ready_; }
 
 void DefaultPlanner::map_callback(
