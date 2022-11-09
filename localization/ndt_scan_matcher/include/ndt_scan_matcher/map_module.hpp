@@ -19,7 +19,6 @@
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
-#include <fmt/format.h>
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <pclomp/ndt_omp.h>
