@@ -161,7 +161,7 @@ private:
 
   tf2_ros::TransformBroadcaster tf2_broadcaster_;
 
-  std::shared_ptr<std::shared_ptr<NormalDistributionsTransform>> ndt_ptr_ptr_;
+  std::shared_ptr<NormalDistributionsTransform> ndt_ptr_;
 
   Eigen::Matrix4f base_to_sensor_matrix_;
   std::string base_frame_;

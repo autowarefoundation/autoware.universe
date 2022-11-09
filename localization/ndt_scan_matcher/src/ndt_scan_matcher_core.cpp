@@ -82,6 +82,7 @@ bool validate_local_optimal_solution_oscillation(
 NDTScanMatcher::NDTScanMatcher()
 : Node("ndt_scan_matcher"),
   tf2_broadcaster_(*this),
+  ndt_ptr_(new NormalDistributionsTransform),
   base_frame_("base_link"),
   ndt_base_frame_("ndt_base_link"),
   map_frame_("map"),
@@ -120,9 +121,7 @@ NDTScanMatcher::NDTScanMatcher()
   ndt_params.regularization_scale_factor =
     this->declare_parameter<float>("regularization_scale_factor");
 
-  std::shared_ptr<NormalDistributionsTransform> ndt_ptr(new NormalDistributionsTransform);
-  ndt_ptr->setParams(ndt_params);
-  ndt_ptr_ptr_ = std::make_shared<std::shared_ptr<NormalDistributionsTransform>>(ndt_ptr);
+  ndt_ptr_->setParams(ndt_params);
 
   RCLCPP_INFO(
     get_logger(), "trans_epsilon: %lf, step_size: %lf, resolution: %lf, max_iterations: %d",
@@ -226,7 +225,7 @@ NDTScanMatcher::NDTScanMatcher()
   diagnostic_thread_.detach();
 
   tf2_listener_module_ = std::make_shared<Tf2ListenerModule>(this);
-  map_module_ = std::make_unique<MapModule>(this, &ndt_ptr_mtx_, ndt_ptr_ptr_, main_callback_group);
+  map_module_ = std::make_unique<MapModule>(this, &ndt_ptr_mtx_, ndt_ptr_, main_callback_group);
 }
 
 void NDTScanMatcher::timer_diagnostic()
@@ -292,13 +291,13 @@ void NDTScanMatcher::service_ndt_align(
   // transform pose_frame to map_frame
   const auto mapTF_initial_pose_msg = transform(req->pose_with_covariance, *TF_pose_to_map_ptr);
 
-  if ((*ndt_ptr_ptr_)->getInputTarget() == nullptr) {
+  if (ndt_ptr_->getInputTarget() == nullptr) {
     res->success = false;
     RCLCPP_WARN(get_logger(), "No InputTarget");
     return;
   }
 
-  if ((*ndt_ptr_ptr_)->getInputSource() == nullptr) {
+  if (ndt_ptr_->getInputSource() == nullptr) {
     res->success = false;
     RCLCPP_WARN(get_logger(), "No InputSource");
     return;
@@ -308,7 +307,7 @@ void NDTScanMatcher::service_ndt_align(
   std::lock_guard<std::mutex> lock(ndt_ptr_mtx_);
 
   key_value_stdmap_["state"] = "Aligning";
-  res->pose_with_covariance = align_using_monte_carlo(*ndt_ptr_ptr_, mapTF_initial_pose_msg);
+  res->pose_with_covariance = align_using_monte_carlo(ndt_ptr_, mapTF_initial_pose_msg);
   key_value_stdmap_["state"] = "Sleeping";
   res->success = true;
   res->pose_with_covariance.pose.covariance = req->pose_with_covariance.pose.covariance;
@@ -373,7 +372,7 @@ void NDTScanMatcher::callback_sensor_points(
   pcl::fromROSMsg(*sensor_points_sensorTF_msg_ptr, *sensor_points_sensorTF_ptr);
   transform_sensor_measurement(
     sensor_frame, base_frame_, sensor_points_sensorTF_ptr, sensor_points_baselinkTF_ptr);
-  (*ndt_ptr_ptr_)->setInputSource(sensor_points_baselinkTF_ptr);
+  ndt_ptr_->setInputSource(sensor_points_baselinkTF_ptr);
   if (!is_activated_) return;
 
   // calculate initial pose
@@ -392,7 +391,7 @@ void NDTScanMatcher::callback_sensor_points(
   // if regularization is enabled and available, set pose to NDT for regularization
   if (regularization_enabled_) add_regularization_pose(sensor_ros_time);
 
-  if ((*ndt_ptr_ptr_)->getInputTarget() == nullptr) {
+  if (ndt_ptr_->getInputTarget() == nullptr) {
     RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1, "No MAP!");
     return;
   }
@@ -402,8 +401,8 @@ void NDTScanMatcher::callback_sensor_points(
   const Eigen::Matrix4f initial_pose_matrix =
     pose_to_matrix4f(interpolator.get_current_pose().pose.pose);
   auto output_cloud = std::make_shared<pcl::PointCloud<PointSource>>();
-  (*ndt_ptr_ptr_)->align(*output_cloud, initial_pose_matrix);
-  const pclomp::NdtResult ndt_result = (*ndt_ptr_ptr_)->getResult();
+  ndt_ptr_->align(*output_cloud, initial_pose_matrix);
+  const pclomp::NdtResult ndt_result = ndt_ptr_->getResult();
   key_value_stdmap_["state"] = "Sleeping";
 
   const auto exe_end_time = std::chrono::system_clock::now();
@@ -420,7 +419,7 @@ void NDTScanMatcher::callback_sensor_points(
 
   // perform several validations
   /*****************************************************************************
-  The reason the add 2 to the (*ndt_ptr_ptr_)->getMaximumIterations() is that there are bugs in
+  The reason the add 2 to the ndt_ptr_->getMaximumIterations() is that there are bugs in
   implementation of ndt.
   1. gradient descent method ends when the iteration is greater than max_iteration if it does not
   converge (be careful it's 'greater than' instead of 'greater equal than'.)
@@ -432,7 +431,7 @@ void NDTScanMatcher::callback_sensor_points(
   https://github.com/PointCloudLibrary/pcl/blob/424c1c6a0ca97d94ca63e5daff4b183a4db8aae4/registration/include/pcl/registration/impl/ndt.hpp#L73-L180
   *****************************************************************************/
   bool is_ok_iteration_num =
-    validate_num_iteration(ndt_result.iteration_num, (*ndt_ptr_ptr_)->getMaximumIterations() + 2);
+    validate_num_iteration(ndt_result.iteration_num, ndt_ptr_->getMaximumIterations() + 2);
   bool is_local_optimal_solution_oscillation = false;
   if (!is_ok_iteration_num) {
     is_local_optimal_solution_oscillation = validate_local_optimal_solution_oscillation(
@@ -609,7 +608,7 @@ void NDTScanMatcher::publish_marker(
   }
 
   // TODO(Tier IV): delete old marker
-  for (; i < (*ndt_ptr_ptr_)->getMaximumIterations() + 2;) {
+  for (; i < ndt_ptr_->getMaximumIterations() + 2;) {
     marker.id = i++;
     marker.pose = geometry_msgs::msg::Pose();
     marker.color = exchange_color_crc(0);
@@ -707,10 +706,10 @@ std::optional<Eigen::Matrix4f> NDTScanMatcher::interpolate_regularization_pose(
 
 void NDTScanMatcher::add_regularization_pose(const rclcpp::Time & sensor_ros_time)
 {
-  (*ndt_ptr_ptr_)->unsetRegularizationPose();
+  ndt_ptr_->unsetRegularizationPose();
   std::optional<Eigen::Matrix4f> pose_opt = interpolate_regularization_pose(sensor_ros_time);
   if (pose_opt.has_value()) {
-    (*ndt_ptr_ptr_)->setRegularizationPose(pose_opt.value());
+    ndt_ptr_->setRegularizationPose(pose_opt.value());
     RCLCPP_DEBUG_STREAM(get_logger(), "Regularization pose is set to NDT");
   }
 }

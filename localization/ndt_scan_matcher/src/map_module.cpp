@@ -16,9 +16,9 @@
 
 MapModule::MapModule(
   rclcpp::Node * node, std::mutex * ndt_ptr_mutex,
-  std::shared_ptr<std::shared_ptr<NormalDistributionsTransform>> ndt_ptr_ptr,
+  std::shared_ptr<NormalDistributionsTransform> ndt_ptr,
   rclcpp::CallbackGroup::SharedPtr map_callback_group)
-: ndt_ptr_ptr_(ndt_ptr_ptr),
+: ndt_ptr_(ndt_ptr),
   ndt_ptr_mutex_(ndt_ptr_mutex)
 {
   auto map_sub_opt = rclcpp::SubscriptionOptions();
@@ -32,20 +32,20 @@ MapModule::MapModule(
 void MapModule::callback_map_points(
   sensor_msgs::msg::PointCloud2::ConstSharedPtr map_points_msg_ptr)
 {
-  std::shared_ptr<NormalDistributionsTransform> new_ndt_ptr(new NormalDistributionsTransform);
-  new_ndt_ptr->setParams((*ndt_ptr_ptr_)->getParams());
-
+  NormalDistributionsTransform new_ndt;
+  new_ndt.setParams(ndt_ptr_->getParams());
+  new_ndt.setNumThreads(2);
 
   pcl::shared_ptr<pcl::PointCloud<PointTarget>> map_points_ptr(new pcl::PointCloud<PointTarget>);
   pcl::fromROSMsg(*map_points_msg_ptr, *map_points_ptr);
-  new_ndt_ptr->setInputTarget(map_points_ptr);
+  new_ndt.setInputTarget(map_points_ptr);
   // create Thread
   // detach
   auto output_cloud = std::make_shared<pcl::PointCloud<PointSource>>();
-  new_ndt_ptr->align(*output_cloud);
+  new_ndt.align(*output_cloud);
 
   // swap
   ndt_ptr_mutex_->lock();
-  *ndt_ptr_ptr_ = new_ndt_ptr;
+  *ndt_ptr_ = new_ndt;
   ndt_ptr_mutex_->unlock();
 }

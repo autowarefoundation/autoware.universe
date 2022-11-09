@@ -31,14 +31,14 @@ class MapModule {
 public:
   MapModule(
     rclcpp::Node * node, std::mutex * ndt_ptr_mutex,
-    std::shared_ptr<std::shared_ptr<NormalDistributionsTransform>> ndt_ptr_ptr,
+    std::shared_ptr<NormalDistributionsTransform> ndt_ptr,
     rclcpp::CallbackGroup::SharedPtr map_callback_group);
 
 private:
   void callback_map_points(sensor_msgs::msg::PointCloud2::ConstSharedPtr pointcloud2_msg_ptr);
 
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr map_points_sub_;
-  std::shared_ptr<std::shared_ptr<NormalDistributionsTransform>> ndt_ptr_ptr_;
+  std::shared_ptr<NormalDistributionsTransform> ndt_ptr_;
   std::mutex * ndt_ptr_mutex_;
 
 };
