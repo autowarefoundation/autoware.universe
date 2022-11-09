@@ -11,8 +11,8 @@
     </include>
 
     <include file="$(find-pkg-share map_loader)/launch/pointcloud_map_loader.launch.xml">
-      <param name="pcd_paths_or_directory" value="$(var pointcloud_map_path)"/>
-      <param from="$(var pointcloud_map_loader_param_path)"/>
+      <arg name="pointcloud_map_path" value="$(var pointcloud_map_path)"/>
+      <arg name="pointcloud_map_loader_param_path" value="$(var pointcloud_map_loader_param_path)"/>
     </include>
 
     <include file="$(find-pkg-share map_tf_generator)/launch/map_tf_generator.launch.xml">
