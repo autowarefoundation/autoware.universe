@@ -43,8 +43,7 @@ public:
   PoseInitializationModule(
     rclcpp::Node * node, std::mutex * ndt_ptr_mutex,
     std::shared_ptr<NormalDistributionsTransform> ndt_ptr,
-    std::shared_ptr<Tf2ListenerModule> tf2_listener_module,
-    std::string map_frame,
+    std::shared_ptr<Tf2ListenerModule> tf2_listener_module, std::string map_frame,
     rclcpp::CallbackGroup::SharedPtr main_callback_group,
     std::shared_ptr<std::map<std::string, std::string>> state_ptr);
 
