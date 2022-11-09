@@ -34,7 +34,6 @@ void MapModule::callback_map_points(
 {
   NormalDistributionsTransform new_ndt;
   new_ndt.setParams(ndt_ptr_->getParams());
-  new_ndt.setNumThreads(2);
 
   pcl::shared_ptr<pcl::PointCloud<PointTarget>> map_points_ptr(new pcl::PointCloud<PointTarget>);
   pcl::fromROSMsg(*map_points_msg_ptr, *map_points_ptr);
