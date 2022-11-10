@@ -14,9 +14,7 @@
 
 import os
 
-from ament_index_python.packages import get_package_share_directory
 import launch
-from launch.actions import DeclareLaunchArgument
 from launch.actions import OpaqueFunction
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import ComposableNodeContainer
@@ -26,7 +24,49 @@ import yaml
 
 def launch_setup(context, *args, **kwargs):
 
-    with open(LaunchConfiguration("cpu_monitor_config_file").perform(context), "r") as f:
+    cpu_monitor_config_file = os.path.join(
+        LaunchConfiguration("tier4_system_launch_param_path").perform(context),
+        "system_monitor",
+        "cpu_monitor.param.yaml",
+    )
+
+    hdd_monitor_config_file = os.path.join(
+        LaunchConfiguration("tier4_system_launch_param_path").perform(context),
+        "system_monitor",
+        "hdd_monitor.param.yaml",
+    )
+    mem_monitor_config_file = os.path.join(
+        LaunchConfiguration("tier4_system_launch_param_path").perform(context),
+        "system_monitor",
+        "mem_monitor.param.yaml",
+    )
+    net_monitor_config_file = os.path.join(
+        LaunchConfiguration("tier4_system_launch_param_path").perform(context),
+        "system_monitor",
+        "net_monitor.param.yaml",
+    )
+    ntp_monitor_config_file = os.path.join(
+        LaunchConfiguration("tier4_system_launch_param_path").perform(context),
+        "system_monitor",
+        "ntp_monitor.param.yaml",
+    )
+    process_monitor_config_file = os.path.join(
+        LaunchConfiguration("tier4_system_launch_param_path").perform(context),
+        "system_monitor",
+        "process_monitor.param.yaml",
+    )
+    gpu_monitor_config_file = os.path.join(
+        LaunchConfiguration("tier4_system_launch_param_path").perform(context),
+        "system_monitor",
+        "gpu_monitor.param.yaml",
+    )
+    voltage_monitor_config_file = os.path.join(
+        LaunchConfiguration("tier4_system_launch_param_path").perform(context),
+        "system_monitor",
+        "voltage_monitor.param.yaml",
+    )
+
+    with open(cpu_monitor_config_file, "r") as f:
         cpu_monitor_config = yaml.safe_load(f)["/**"]["ros__parameters"]
     cpu_monitor = ComposableNode(
         package="system_monitor",
@@ -36,7 +76,7 @@ def launch_setup(context, *args, **kwargs):
             cpu_monitor_config,
         ],
     )
-    with open(LaunchConfiguration("hdd_monitor_config_file").perform(context), "r") as f:
+    with open(hdd_monitor_config_file, "r") as f:
         hdd_monitor_config = yaml.safe_load(f)["/**"]["ros__parameters"]
     hdd_monitor = ComposableNode(
         package="system_monitor",
@@ -46,7 +86,7 @@ def launch_setup(context, *args, **kwargs):
             hdd_monitor_config,
         ],
     )
-    with open(LaunchConfiguration("mem_monitor_config_file").perform(context), "r") as f:
+    with open(mem_monitor_config_file, "r") as f:
         mem_monitor_config = yaml.safe_load(f)["/**"]["ros__parameters"]
     mem_monitor = ComposableNode(
         package="system_monitor",
@@ -56,7 +96,7 @@ def launch_setup(context, *args, **kwargs):
             mem_monitor_config,
         ],
     )
-    with open(LaunchConfiguration("net_monitor_config_file").perform(context), "r") as f:
+    with open(net_monitor_config_file, "r") as f:
         net_monitor_config = yaml.safe_load(f)["/**"]["ros__parameters"]
     net_monitor = ComposableNode(
         package="system_monitor",
@@ -66,7 +106,7 @@ def launch_setup(context, *args, **kwargs):
             net_monitor_config,
         ],
     )
-    with open(LaunchConfiguration("ntp_monitor_config_file").perform(context), "r") as f:
+    with open(ntp_monitor_config_file, "r") as f:
         ntp_monitor_config = yaml.safe_load(f)["/**"]["ros__parameters"]
     ntp_monitor = ComposableNode(
         package="system_monitor",
@@ -76,7 +116,7 @@ def launch_setup(context, *args, **kwargs):
             ntp_monitor_config,
         ],
     )
-    with open(LaunchConfiguration("process_monitor_config_file").perform(context), "r") as f:
+    with open(process_monitor_config_file, "r") as f:
         process_monitor_config = yaml.safe_load(f)["/**"]["ros__parameters"]
     process_monitor = ComposableNode(
         package="system_monitor",
@@ -86,7 +126,7 @@ def launch_setup(context, *args, **kwargs):
             process_monitor_config,
         ],
     )
-    with open(LaunchConfiguration("gpu_monitor_config_file").perform(context), "r") as f:
+    with open(gpu_monitor_config_file, "r") as f:
         gpu_monitor_config = yaml.safe_load(f)["/**"]["ros__parameters"]
     gpu_monitor = ComposableNode(
         package="system_monitor",
@@ -96,7 +136,7 @@ def launch_setup(context, *args, **kwargs):
             gpu_monitor_config,
         ],
     )
-    with open(LaunchConfiguration("voltage_monitor_config_file").perform(context), "r") as f:
+    with open(voltage_monitor_config_file, "r") as f:
         voltage_monitor_config = yaml.safe_load(f)["/**"]["ros__parameters"]
     voltage_monitor = ComposableNode(
         package="system_monitor",
@@ -129,43 +169,8 @@ def launch_setup(context, *args, **kwargs):
 
 
 def generate_launch_description():
-    system_monitor_path = os.path.join(
-        get_package_share_directory("tier4_system_launch"), "config", "system_monitor"
-    )
     return launch.LaunchDescription(
         [
-            DeclareLaunchArgument(
-                "cpu_monitor_config_file",
-                default_value=os.path.join(system_monitor_path, "cpu_monitor.param.yaml"),
-            ),
-            DeclareLaunchArgument(
-                "hdd_monitor_config_file",
-                default_value=os.path.join(system_monitor_path, "hdd_monitor.param.yaml"),
-            ),
-            DeclareLaunchArgument(
-                "mem_monitor_config_file",
-                default_value=os.path.join(system_monitor_path, "mem_monitor.param.yaml"),
-            ),
-            DeclareLaunchArgument(
-                "net_monitor_config_file",
-                default_value=os.path.join(system_monitor_path, "net_monitor.param.yaml"),
-            ),
-            DeclareLaunchArgument(
-                "ntp_monitor_config_file",
-                default_value=os.path.join(system_monitor_path, "ntp_monitor.param.yaml"),
-            ),
-            DeclareLaunchArgument(
-                "process_monitor_config_file",
-                default_value=os.path.join(system_monitor_path, "process_monitor.param.yaml"),
-            ),
-            DeclareLaunchArgument(
-                "gpu_monitor_config_file",
-                default_value=os.path.join(system_monitor_path, "gpu_monitor.param.yaml"),
-            ),
-            DeclareLaunchArgument(
-                "voltage_monitor_config_file",
-                default_value=os.path.join(system_monitor_path, "voltage_monitor.param.yaml"),
-            ),
             OpaqueFunction(function=launch_setup),
         ]
     )
