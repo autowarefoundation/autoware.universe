@@ -114,9 +114,8 @@ void Reprojector::draw(const PointCloud2 & cloud_msg)
     return v;
   };
 
-  // project segment on ground
+  // Project segment on ground
   cv::Mat update_image = cv::Mat::zeros(histogram_image_.size(), CV_8UC1);
-
   for (const auto & ls : *lsd) {
     std::optional<Eigen::Vector3f> opt1 = project_func(ls.getVector3fMap());
     std::optional<Eigen::Vector3f> opt2 = project_func(ls.getNormalVector3fMap());
@@ -128,7 +127,23 @@ void Reprojector::draw(const PointCloud2 & cloud_msg)
     cv::line(update_image, cv_pt2(*opt1), cv_pt2(*opt2), cv::Scalar::all(255), 1);
   }
   histogram_image_ += update_image;
-  histogram_image_ -= 10;
+
+  // Decrease beflief in unsee area
+  {
+    std::vector<cv::Point2i> points;
+    auto project = [this, &points, project_func](const Eigen::Vector3f & u) -> void {
+      std::optional<Eigen::Vector3f> p = project_func(u);
+      points.push_back(cv_pt2(*p));
+    };
+    project({0, 270, 1});
+    project({800, 270, 1});
+    project({800, 516, 1});
+    project({0, 516, 1});
+
+    cv::Mat decrease_image = cv::Mat::zeros(histogram_image_.size(), CV_8UC1);
+    cv::fillPoly(decrease_image, points, cv::Scalar::all(10), 8, 0);
+    histogram_image_ -= decrease_image;
+  }
 }
 
 // void Reprojector::reproject(const PointCloud2 & cloud_msg)
