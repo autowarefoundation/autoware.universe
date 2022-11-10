@@ -123,7 +123,6 @@ geometry_msgs::msg::PoseWithCovarianceStamped PoseInitializationModule::align_us
   result_pose_with_cov_msg.header.stamp = initial_pose_with_cov.header.stamp;
   result_pose_with_cov_msg.header.frame_id = map_frame_;
   result_pose_with_cov_msg.pose.pose = best_particle_ptr->result_pose;
-  // ndt_pose_with_covariance_pub_->publish(result_pose_with_cov_msg);
 
   return result_pose_with_cov_msg;
 }

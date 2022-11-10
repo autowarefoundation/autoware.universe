@@ -14,7 +14,6 @@
 
 #include "ndt_scan_matcher/ndt_scan_matcher_core.hpp"
 
-#include "ndt_scan_matcher/debug.hpp"
 #include "ndt_scan_matcher/matrix_type.hpp"
 #include "ndt_scan_matcher/particle.hpp"
 #include "ndt_scan_matcher/pose_array_interpolator.hpp"
