@@ -39,12 +39,21 @@ private:
   std::list<Image::ConstSharedPtr> image_list_;
   std::list<TwistStamped::ConstSharedPtr> twist_list_;
 
+  const int IMAGE_RADIUS = 250;
+  const float METRIC_PER_PIXEL = 0.1;  // [m/pixel]
+  cv::Mat histogram_image_;
+
   void onImage(Image::ConstSharedPtr msg);
   void onTwist(TwistStamped::ConstSharedPtr msg);
   void onLineSegments(const PointCloud2 & msg);
+  void transformImage(const rclcpp::Time & from_stamp, const rclcpp::Time & to_stamp);
+
+  cv::Point cv_pt2(const Eigen::Vector3f & v) const;
+  Eigen::Vector3f eigen_vec3f(const cv::Point2f & v) const;
 
   void popObsoleteMsg();
-  void reproject(const Image & old_image_msg, const PointCloud2 & cloud_msg);
+  // void reproject(const Image & old_image_msg, const PointCloud2 & cloud_msg);
+  void draw(const PointCloud2 & cloud_msg);
 
   cv::Mat applyPerspective(const cv::Mat & image);
 
