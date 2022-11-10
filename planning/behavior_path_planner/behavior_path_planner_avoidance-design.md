@@ -205,7 +205,7 @@ else
   shift_length = avoid_margin - overhang_distance
 }
 ```
- 
+
 The following figure illustrates these variables(This figure just shows the max value of lateral shift length).
 
 ![shift_point_and_its_constraints](./image/avoidance_design/avoidance_module-shift_point_and_its_constraints.drawio.png)
@@ -233,17 +233,24 @@ These elements are used to compute the distance from the object to the road's sh
 ![obstacle_to_road_shoulder_distance](./image/avoidance_design/obstacle_to_road_shoulder_distance.drawio.svg)
 
 If one of the following conditions is `false`, then the shift point will not be generated.
-- The distance to shoulder of road  is enough
+
+- The distance to shoulder of road is enough
+
 ```C++
 avoid_margin = lateral_collision_margin + lateral_collision_safety_buffer + 0.5 * vehicle_width
 avoid_margin <= (to_road_shoulder_distance - 0.5 * vehicle_width - road_shoulder_safety_margin)
 ```
+
 - The obstacle intrudes into the current driving path.
+
   - when the object is on right of the path
+
     ```C++
     -overhang_dist<(lateral_collision_margin + lateral_collision_safety_buffer + 0.5 * vehicle_width)
     ```
+
   - when the object is on left of the path
+
     ```C++
     overhang_dist<(lateral_collision_margin + lateral_collision_safety_buffer + 0.5 * vehicle_width)
     ```
