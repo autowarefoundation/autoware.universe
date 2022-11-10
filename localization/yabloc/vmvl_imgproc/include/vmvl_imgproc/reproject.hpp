@@ -29,7 +29,6 @@ private:
 
   // Publisher
   rclcpp::Publisher<Image>::SharedPtr pub_image_;
-  rclcpp::Publisher<Image>::SharedPtr pub_track_image_;
   // Subscriber
   rclcpp::Subscription<Image>::SharedPtr sub_image_;
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_lsd_;
@@ -57,8 +56,6 @@ private:
   void draw(const PointCloud2 & cloud_msg);
 
   cv::Mat applyPerspective(const cv::Mat & image);
-
-  void rough_tracking(const cv::Mat & image1, const cv::Mat & image2) const;
 
   Sophus::SE3f accumulateTravelDistance(
     const rclcpp::Time & from_stamp, const rclcpp::Time & to_stamp);

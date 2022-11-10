@@ -27,23 +27,13 @@ Reprojector::Reprojector()
 
   // Publisher
   pub_image_ = create_publisher<Image>("reprojected_image", 10);
-  pub_track_image_ = create_publisher<Image>("tracked_image", 10);
 
   histogram_image_ = 128 * cv::Mat::ones(cv::Size(2 * IMAGE_RADIUS, 2 * IMAGE_RADIUS), CV_8UC1);
 }
 
 void Reprojector::onTwist(TwistStamped::ConstSharedPtr msg) { twist_list_.push_back(msg); }
 
-void Reprojector::onImage(Image::ConstSharedPtr msg)
-{
-  image_list_.push_back(msg);
-
-  if (image_list_.size() > 2) {
-    cv::Mat image1 = vml_common::decompress2CvMat(*msg);
-    cv::Mat image2 = vml_common::decompress2CvMat(*image_list_.front());
-    rough_tracking(image1, image2);
-  }
-}
+void Reprojector::onImage(Image::ConstSharedPtr msg) { image_list_.push_back(msg); }
 
 cv::Point2f Reprojector::cv_pt2(const Eigen::Vector3f & v) const
 {
@@ -53,44 +43,6 @@ cv::Point2f Reprojector::cv_pt2(const Eigen::Vector3f & v) const
 Eigen::Vector3f Reprojector::eigen_vec3f(const cv::Point2f & p) const
 {
   return {-(p.y - IMAGE_RADIUS) * METRIC_PER_PIXEL, -(p.x - IMAGE_RADIUS) * METRIC_PER_PIXEL, 0};
-}
-
-void Reprojector::rough_tracking(const cv::Mat & image1, const cv::Mat & image2) const
-{
-  cv::Mat resized1, resized2;
-  cv::resize(image1, resized1, cv::Size(0, 0), 0.5, 0.5);
-  cv::resize(image2, resized2, cv::Size(0, 0), 0.5, 0.5);
-
-  cv::Ptr<cv::BRISK> detector = cv::BRISK::create();
-  std::vector<cv::KeyPoint> keypoints1, keypoints2;
-  cv::Mat descriptors1, descriptors2;
-  detector->detectAndCompute(resized1, cv::noArray(), keypoints1, descriptors1);
-  detector->detectAndCompute(resized2, cv::noArray(), keypoints2, descriptors2);
-
-  cv::Ptr<cv::DescriptorMatcher> matcher =
-    cv::DescriptorMatcher::create(cv::DescriptorMatcher::BRUTEFORCE_HAMMING);
-  std::vector<std::vector<cv::DMatch> > knn_matches;
-  matcher->knnMatch(descriptors1, descriptors2, knn_matches, 2);
-
-  // Filter matches using the Lowe's ratio test
-  const float ratio_thresh = 0.7f;
-  std::vector<cv::DMatch> good_matches;
-  for (size_t i = 0; i < knn_matches.size(); i++) {
-    if (knn_matches[i][0].distance < ratio_thresh * knn_matches[i][1].distance) {
-      good_matches.push_back(knn_matches[i][0]);
-    }
-  }
-
-  // Draw matches
-  cv::Mat img_matches;
-  cv::drawMatches(
-    resized1, keypoints1, resized2, keypoints2, good_matches, img_matches, cv::Scalar::all(-1),
-    cv::Scalar::all(-1), std::vector<char>(), cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
-
-  // Show detected matches
-  cv::resize(img_matches, img_matches, cv::Size(), 2, 2);
-  cv::imshow("Good Matches", img_matches);
-  cv::waitKey(1);
 }
 
 void Reprojector::onLineSegments(const PointCloud2 & msg)
