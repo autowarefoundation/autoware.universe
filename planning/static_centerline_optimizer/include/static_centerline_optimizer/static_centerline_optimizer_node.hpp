@@ -31,9 +31,6 @@ namespace static_centerline_optimizer
 using static_centerline_optimizer::srv::LoadMap;
 using static_centerline_optimizer::srv::PlanPath;
 using static_centerline_optimizer::srv::PlanRoute;
-using tier4_autoware_utils::LinearRing2d;
-using tier4_autoware_utils::LineString2d;
-using tier4_autoware_utils::Point2d;
 
 class StaticCenterlineOptimizerNode : public rclcpp::Node
 {
@@ -62,9 +59,6 @@ private:
     const PlanPath::Request::SharedPtr request, const PlanPath::Response::SharedPtr response);
   PlanPathResult plan_path(const std::vector<unsigned int> & route_lane_ids);
   void evaluate(const std::vector<unsigned int> & route_lane_ids);
-  MarkerArray createFootprintMarker(
-    const LinearRing2d & footprint_poly, const std::array<double, 3> & marker_color,
-    const size_t idx);
 
   void save_map(
     const std::string & lanelet2_output_file_path,

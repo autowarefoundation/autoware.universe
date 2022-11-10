@@ -37,6 +37,10 @@ PathWithLaneId get_path_with_lane_id(
 void update_centerline(
   RouteHandler & route_handler, const lanelet::ConstLanelets & lanelets,
   const std::vector<TrajectoryPoint> & new_centerline);
+
+MarkerArray create_footprint_marker(
+  const LinearRing2d & footprint_poly, const std::array<double, 3> & marker_color,
+  const rclcpp::Time & now, const size_t idx);
 }  // namespace utils
 }  // namespace static_centerline_optimizer
 

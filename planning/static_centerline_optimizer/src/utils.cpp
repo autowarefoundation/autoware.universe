@@ -153,5 +153,37 @@ void update_centerline(
     }
   }
 }
+
+MarkerArray create_footprint_marker(
+  const LinearRing2d & footprint_poly, const std::array<double, 3> & marker_color,
+  const rclcpp::Time & now, const size_t idx)
+{
+  const double r = marker_color.at(0);
+  const double g = marker_color.at(1);
+  const double b = marker_color.at(2);
+
+  auto marker = tier4_autoware_utils::createDefaultMarker(
+    "map", rclcpp::Clock().now(), "unsafe_footprints", idx,
+    visualization_msgs::msg::Marker::LINE_STRIP,
+    tier4_autoware_utils::createMarkerScale(0.1, 0.0, 0.0),
+    tier4_autoware_utils::createMarkerColor(r, g, b, 0.999));
+  marker.header.stamp = now;
+  marker.lifetime = rclcpp::Duration(0, 0);
+
+  for (const auto & point : footprint_poly) {
+    geometry_msgs::msg::Point geom_point;
+    geom_point.x = point.x();
+    geom_point.y = point.y();
+    // geom_point.z = point.z();
+
+    marker.points.push_back(geom_point);
+  }
+  marker.points.push_back(marker.points.front());
+
+  visualization_msgs::msg::MarkerArray marker_array;
+  marker_array.markers.push_back(marker);
+
+  return marker_array;
+}
 }  // namespace utils
 }  // namespace static_centerline_optimizer

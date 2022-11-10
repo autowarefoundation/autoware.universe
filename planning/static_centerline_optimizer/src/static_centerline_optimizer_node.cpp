@@ -453,7 +453,8 @@ void StaticCenterlineOptimizerNode::evaluate(const std::vector<unsigned int> & r
     const auto marker_color_opt = get_marker_color(min_dist_to_bound);
     if (marker_color_opt) {
       const auto & marker_color = marker_color_opt.get();
-      const auto footprint_marker = createFootprintMarker(footprint_poly, marker_color, i);
+      const auto footprint_marker =
+        utils::create_footprint_marker(footprint_poly, marker_color, now(), i);
       tier4_autoware_utils::appendMarkerArray(footprint_marker, &marker_array);
     }
 
@@ -463,38 +464,6 @@ void StaticCenterlineOptimizerNode::evaluate(const std::vector<unsigned int> & r
   pub_debug_unsafe_footprints_->publish(marker_array);
 
   RCLCPP_INFO(get_logger(), "Minimum distance to road is %f [m]", min_dist);
-}
-
-MarkerArray StaticCenterlineOptimizerNode::createFootprintMarker(
-  const LinearRing2d & footprint_poly, const std::array<double, 3> & marker_color,
-  [[maybe_unused]] const size_t idx)
-{
-  const double r = marker_color.at(0);
-  const double g = marker_color.at(1);
-  const double b = marker_color.at(2);
-
-  auto marker = tier4_autoware_utils::createDefaultMarker(
-    "map", rclcpp::Clock().now(), "unsafe_footprints", 0,
-    visualization_msgs::msg::Marker::LINE_STRIP,
-    tier4_autoware_utils::createMarkerScale(0.1, 0.0, 0.0),
-    tier4_autoware_utils::createMarkerColor(r, g, b, 0.999));
-  // marker.header.stamp = rclcpp::Time();
-  // marker.lifetime = rclcpp::Duration(0, 0);
-
-  for (const auto & point : footprint_poly) {
-    geometry_msgs::msg::Point geom_point;
-    geom_point.x = point.x();
-    geom_point.y = point.y();
-    // geom_point.z = point.z();
-
-    marker.points.push_back(geom_point);
-  }
-  marker.points.push_back(marker.points.front());
-
-  visualization_msgs::msg::MarkerArray marker_array;
-  marker_array.markers.push_back(marker);
-
-  return marker_array;
 }
 
 void StaticCenterlineOptimizerNode::save_map(
