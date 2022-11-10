@@ -1,5 +1,4 @@
 <launch>
-  <arg name="system_run_mode" default="online" description="options: online, planning_simulation"/>
   <arg name="respawn_rosbridge" default="true"/>
   <arg name="launch_path_distance_calculator" default="false"/>
   <arg name="launch_default_ad_api" default="true"/>
@@ -7,11 +6,6 @@
   <!-- external api adaptor -->
   <arg name="launch_calibration_status_api" default="false"/>
   <arg name="launch_start_api" default="true"/>
-
-  <!-- TODO(Takagi, Isamu): move -->
-  <!-- convert arguments -->
-  <let name="online_mode" value="true" if="$(eval &quot;'$(var system_run_mode)'=='online'&quot;)"/>
-  <let name="online_mode" value="false" if="$(eval &quot;'$(var system_run_mode)'=='planning_simulation'&quot;)"/>
 
   <!-- AD API -->
   <group>

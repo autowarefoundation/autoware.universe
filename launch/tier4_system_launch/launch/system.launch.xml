@@ -23,7 +23,6 @@
       </include>
     </group>
 
-    <!-- TODO(Takagi, Isamu): replace node -->
     <!-- State Monitor -->
     <group>
       <let name="config_file" value="$(var tier4_system_launch_param_path)/ad_service_state_monitor/ad_service_state_monitor.param.yaml" if="$(eval &quot;'$(var run_mode)'=='online'&quot;)"/>
