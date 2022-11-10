@@ -168,7 +168,7 @@ bool IntersectionModule::modifyPathVelocity(
     if (is_over_pass_judge_line && keep_detection) {
       // in case ego could not stop exactly before the stop line, but with some overshoot,
       // keep detection within some margin under low velocity threshold
-      RCLCPP_DEBUG(
+      RCLCPP_INFO(
         logger_,
         "over the pass judge line, but before keep detection line and low speed, "
         "continue planning");
@@ -196,8 +196,8 @@ bool IntersectionModule::modifyPathVelocity(
     lanelet_map_ptr, *path, closest_idx, stuck_line_idx, detect_length,
     planner_param_.stuck_vehicle_detect_dist);
   const bool is_stuck = checkStuckVehicleInIntersection(objects_ptr, stuck_vehicle_detect_area);
-  int stop_line_idx_final = -1;
-  int pass_judge_line_idx_final = -1;
+  int stop_line_idx_final = stuck_line_idx;
+  int pass_judge_line_idx_final = stuck_line_idx;
   if (external_go) {
     is_entry_prohibited = false;
   } else if (external_stop) {
@@ -207,6 +207,7 @@ bool IntersectionModule::modifyPathVelocity(
     stop_line_idx_final = stuck_line_idx;
     pass_judge_line_idx_final = stuck_line_idx;
     if (planner_param_.use_stuck_stopline) {
+      // TODO(Mamoru Sobue): pass this flag to generateStopLine instead
       const auto stop_lines_before_int_opt = util::generateStopLineBeforeIntersection(
         lane_id_, lanelet_map_ptr, planner_data_, *path, path, logger_.get_child("util"));
       if (stop_lines_before_int_opt.has_value()) {
@@ -215,28 +216,33 @@ bool IntersectionModule::modifyPathVelocity(
       }
     }
   } else {
-    if (!stop_lines_idx_opt.has_value()) {
-      RCLCPP_WARN_SKIPFIRST_THROTTLE(
-        logger_, *clock_, 1000 /* ms */,
-        "generateStopLine() returned invalid stop_lines_idx for detected objects");
-      RCLCPP_DEBUG(logger_, "===== plan end =====");
-      setSafe(true);
-      setDistance(std::numeric_limits<double>::lowest());
-      return false;
-    }
-
     /* calculate dynamic collision around detection area */
     const bool has_collision = checkCollision(
       lanelet_map_ptr, *path, detection_lanelets, adjacent_lanelets, intersection_area, objects_ptr,
       closest_idx, stuck_vehicle_detect_area);
     is_entry_prohibited = (has_collision || is_stuck);
-    const auto & stop_lines_idx = stop_lines_idx_opt.value();
-    if (keep_detection) {
-      stop_line_idx_final = stop_lines_idx.keep_detection_line;
-      pass_judge_line_idx_final = stop_lines_idx.keep_detection_line;
+    if (stop_lines_idx_opt.has_value()) {
+      const auto & stop_lines_idx = stop_lines_idx_opt.value();
+      if (keep_detection) {
+        stop_line_idx_final = stop_lines_idx.keep_detection_line;
+        pass_judge_line_idx_final = stop_lines_idx.keep_detection_line;
+      } else {
+        stop_line_idx_final = stop_lines_idx.stop_line;
+        pass_judge_line_idx_final = stop_lines_idx.pass_judge_line;
+      }
     } else {
-      stop_line_idx_final = stop_lines_idx.stop_line;
-      pass_judge_line_idx_final = stop_lines_idx.pass_judge_line;
+      if (has_collision) {
+        RCLCPP_ERROR(logger_, "generateStopLine() failed for detected objects");
+        RCLCPP_DEBUG(logger_, "===== plan end =====");
+        setSafe(true);
+        setDistance(std::numeric_limits<double>::lowest());
+        return false;
+      } else {
+        RCLCPP_DEBUG(logger_, "no need to stop\n===== plan end =====");
+        setSafe(true);
+        setDistance(std::numeric_limits<double>::lowest());
+        return true;
+      }
     }
   }
 
