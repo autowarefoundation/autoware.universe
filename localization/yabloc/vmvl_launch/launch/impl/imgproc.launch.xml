@@ -76,8 +76,14 @@
         <remap from="projected_image" to="$(var output_projected_image)"/>
     </node>
 
+    <!-- mapping -->
+    <node name="mapping" pkg="anti_shadow" exec="mapping_node" output="screen" args="--ros-args --log-level info">
+        <remap from="$(var src_image)" to="$(var resized_image)"/>
+        <remap from="/localization/imgproc/camera_info" to="$(var resized_info)"/>
+    </node>
+
     <!-- reprojection -->
-    <node name="reprojection" pkg="vmvl_imgproc" exec="reprojection_node" output="screen" args="--ros-args --log-level info">
+    <node if="false" name="reprojection" pkg="anti_shadow" exec="reprojection_node" output="screen" args="--ros-args --log-level info">
         <remap from="$(var src_image)" to="$(var resized_image)"/>
         <remap from="/localization/imgproc/camera_info" to="$(var resized_info)"/>
     </node>

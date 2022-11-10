@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(vmvl_imgproc)
+project(anti_shadow)
 
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
@@ -30,13 +30,6 @@ find_package(PCL REQUIRED)
 find_package(Sophus REQUIRED)
 
 # ===================================================
-# Library
-file(GLOB REGULATORY_ELEMENT_SOURCE 3rd/regulatory_elements/lib/*cpp)
-ament_auto_add_library(cv_lsd SHARED
-  3rd/opencv_lsd/lsd/lsd.cpp)
-target_include_directories(cv_lsd PUBLIC include 3rd/opencv_lsd/)
-
-# ===================================================
 # Executable
 macro(ADD_EXE)
   cmake_parse_arguments(_ARG "" "TARGET" "SRC;LIB;INC" ${ARGN})
@@ -54,10 +47,8 @@ macro(ADD_EXE)
   target_link_libraries(${TARGET_NAME} ${_ARG_LIB} ${PCL_LIBRARIES} Sophus::Sophus ${OpenCV_LIBS})
 endmacro()
 
-ADD_EXE(TARGET undistort_node SRC src/undistort_node.cpp INC include)
-ADD_EXE(TARGET segment_filter_node SRC src/segment_filter_*.cpp INC include)
-ADD_EXE(TARGET lsd_node SRC src/lsd_*.cpp INC include LIB cv_lsd INC include)
-ADD_EXE(TARGET graph_segment_node SRC src/graph_segment_*.cpp INC include)
+ADD_EXE(TARGET reprojection_node SRC src/reproject_*.cpp INC include)
+ADD_EXE(TARGET mapping_node SRC src/mapping_*.cpp INC include)
 
 # ===================================================
-ament_auto_package(INSTALL_TO_SHARE launch)
+ament_auto_package()
