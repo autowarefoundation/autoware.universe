@@ -68,11 +68,12 @@ private:
 private:
   struct BoundingBox
   {
-    double width;
     double length;
+    double width;
     double height;
   };
   BoundingBox bounding_box_;
+  BoundingBox last_input_bounding_box_;
 
 public:
   NormalVehicleTracker(

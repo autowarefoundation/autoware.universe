@@ -131,9 +131,11 @@ BigVehicleTracker::BigVehicleTracker(
 
   if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
     bounding_box_ = {
-      object.shape.dimensions.y, object.shape.dimensions.x, object.shape.dimensions.z};
+      object.shape.dimensions.x, object.shape.dimensions.y, object.shape.dimensions.z};
+    last_input_bounding_box_ = bounding_box_;
   } else {
-    bounding_box_ = {2.0, 7.0, 2.0};
+    bounding_box_ = {7.0, 2.0, 2.0};
+    last_input_bounding_box_ = {-1, -1, -1};
   }
   ekf_.init(X, P);
 
@@ -269,12 +271,17 @@ bool BigVehicleTracker::measureWithPose(
     }
   }
 
+  if (last_input_bounding_box_.length == -1) {
+    last_input_bounding_box_ = {
+      object.shape.dimensions.x, object.shape.dimensions.y, object.shape.dimensions.z};
+  }
+
   /* get offseted measurement*/
   Eigen::Vector2d offset;
   autoware_auto_perception_msgs::msg::DetectedObject offset_object;
   utils::calcAnchorPointOffset(
-    bounding_box_.width, bounding_box_.length, nearest_corner_index_, object, offset_object,
-    offset);
+    last_input_bounding_box_.width, last_input_bounding_box_.length, nearest_corner_index_, object,
+    offset_object, offset);
   std::cout << "MOT_offset: " << offset.x() << " " << offset.y()
             << " closest_corner: " << nearest_corner_index_ << " "
             << object.kinematics.pose_with_covariance.pose.position.x << " "
@@ -371,11 +378,11 @@ bool BigVehicleTracker::measureWithShape(
     return false;
   }
   constexpr float gain = 0.9;
-
-  bounding_box_.width = gain * bounding_box_.width + (1.0 - gain) * object.shape.dimensions.y;
   bounding_box_.length = gain * bounding_box_.length + (1.0 - gain) * object.shape.dimensions.x;
+  bounding_box_.width = gain * bounding_box_.width + (1.0 - gain) * object.shape.dimensions.y;
   bounding_box_.height = gain * bounding_box_.height + (1.0 - gain) * object.shape.dimensions.z;
-
+  last_input_bounding_box_ = {
+    object.shape.dimensions.x, object.shape.dimensions.y, object.shape.dimensions.z};
   return true;
 }
 

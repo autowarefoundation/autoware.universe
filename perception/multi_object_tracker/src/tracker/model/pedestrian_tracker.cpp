@@ -300,8 +300,8 @@ bool PedestrianTracker::measureWithShape(
 {
   constexpr float gain = 0.9;
   if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
-    bounding_box_.width = gain * bounding_box_.width + (1.0 - gain) * object.shape.dimensions.y;
     bounding_box_.length = gain * bounding_box_.length + (1.0 - gain) * object.shape.dimensions.x;
+    bounding_box_.width = gain * bounding_box_.width + (1.0 - gain) * object.shape.dimensions.y;
     bounding_box_.height = gain * bounding_box_.height + (1.0 - gain) * object.shape.dimensions.z;
   } else if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::CYLINDER) {
     cylinder_.width = gain * cylinder_.width + (1.0 - gain) * object.shape.dimensions.x;

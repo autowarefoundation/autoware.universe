@@ -131,9 +131,12 @@ NormalVehicleTracker::NormalVehicleTracker(
 
   if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
     bounding_box_ = {
-      object.shape.dimensions.y, object.shape.dimensions.x, object.shape.dimensions.z};
+      object.shape.dimensions.x, object.shape.dimensions.y, object.shape.dimensions.z};
+    last_input_bounding_box_ = {
+      object.shape.dimensions.x, object.shape.dimensions.y, object.shape.dimensions.z};
   } else {
-    bounding_box_ = {1.7, 4.0, 2.0};
+    bounding_box_ = {4.0, 1.7, 2.0};
+    last_input_bounding_box_ = {-1, -1, -1};
   }
   ekf_.init(X, P);
 
@@ -269,6 +272,11 @@ bool NormalVehicleTracker::measureWithPose(
     }
   }
 
+  if (last_input_bounding_box_.length == -1) {
+    last_input_bounding_box_ = {
+      object.shape.dimensions.x, object.shape.dimensions.y, object.shape.dimensions.z};
+  }
+
   /* get offseted measurement*/
   Eigen::Vector2d offset;
   autoware_auto_perception_msgs::msg::DetectedObject offset_object;
@@ -370,10 +378,11 @@ bool NormalVehicleTracker::measureWithShape(
   }
   constexpr float gain = 0.9;
 
-  bounding_box_.width = gain * bounding_box_.width + (1.0 - gain) * object.shape.dimensions.y;
   bounding_box_.length = gain * bounding_box_.length + (1.0 - gain) * object.shape.dimensions.x;
+  bounding_box_.width = gain * bounding_box_.width + (1.0 - gain) * object.shape.dimensions.y;
   bounding_box_.height = gain * bounding_box_.height + (1.0 - gain) * object.shape.dimensions.z;
-
+  last_input_bounding_box_ = {
+    object.shape.dimensions.x, object.shape.dimensions.y, object.shape.dimensions.z};
   return true;
 }
 

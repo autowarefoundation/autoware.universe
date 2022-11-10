@@ -64,8 +64,8 @@ private:
 private:
   struct BoundingBox
   {
-    double width;
     double length;
+    double width;
     double height;
   };
   struct Cylinder
