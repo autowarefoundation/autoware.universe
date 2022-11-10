@@ -11,6 +11,10 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+// NOTE: This file was copied from a part of implementation in
+// https://github.com/autowarefoundation/autoware.universe/blob/main/planning/obstacle_avoidance_planner/include/obstacle_avoidance_planner/node.hpp
+
 #ifndef STATIC_CENTERLINE_OPTIMIZER__COLLISION_FREE_OPTIMIZER_NODE_HPP_
 #define STATIC_CENTERLINE_OPTIMIZER__COLLISION_FREE_OPTIMIZER_NODE_HPP_
 
@@ -89,10 +93,6 @@ private:
   // functions
   void resetPlanning();
   void resetPrevOptimization();
-
-  // void insertZeroVelocityOutsideDrivableArea(
-  //   std::vector<TrajectoryPoint> & traj_points,
-  //   const CVMaps & cv_maps);
 
 public:
   explicit CollisionFreeOptimizerNode(const rclcpp::NodeOptions & node_options);

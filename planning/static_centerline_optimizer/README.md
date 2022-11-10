@@ -44,7 +44,7 @@ FYI, port ID of the http server is 4010 by default.
 The optimized centerline can be generated from the command line interface by designating
 
 - `<input-osm-path>`
-- (`<output-osm-path>` not mandatory)
+- `<output-osm-path>` (not mandatory)
 - `<start-lanelet-id>`
 - `<end-lanelet-id>`
 - `<vehicle-model>`
@@ -53,13 +53,16 @@ The optimized centerline can be generated from the command line interface by des
 ros2 launch static_centerline_optimizer static_centerline_optimizer.launch.xml run_backgrond:=false lanelet2_input_file_path:=<input-osm-path> lanelet2_output_file_path:=<output-osm-path> start_lanelet_id:=<start-lane-id> end_lanelet_id:=<end-lane-id> vehicle_model:=<vehicle-model>
 ```
 
+The default output map path containing the optimized centerline locates `/tmp/lanelet2_map.osm`.
+If you want to change the output map path, you can remap the path by designating `<output-osm-path>`.
+
 ## Visualization
 
-image
+When launching the path planning server, rviz is launched as well as follows.
+![rviz](./media/rviz.png)
 
-The yellow footprints are the original ones in the map file.
-The red footprints are the optimized ones.
-You can see that the red footprints are inside the lane although the yellow ones are outside.
-
-The default output map with the optimized centerline locates `/tmp/lanelet2_map.osm`
-If you want to change the output map path, you can remap the path by adding the option `lanelet2_output_file_path:=<output-osm-path>`
+- The yellow footprints are the original ones from the osm map file.
+  - FYI: Footprints are generated based on the centerline and vehicle size.
+- The red footprints are the optimized ones.
+- The gray area is the drivable area.
+- You can see that the red footprints are inside the drivable area although the yellow ones are outside.

@@ -3,8 +3,7 @@ Panels:
     Help Height: 0
     Name: Displays
     Property Tree Widget:
-      Expanded:
-        - /debug1
+      Expanded: ~
       Splitter Ratio: 0.550000011920929
     Tree Height: 388
   - Class: rviz_common/Selection
@@ -134,7 +133,7 @@ Visualization Manager:
       Enabled: true
       Name: Map
     - Class: rviz_plugins/PathWithLaneIdFootprint
-      Enabled: false
+      Enabled: true
       Name: Raw Centerline
       Topic:
         Depth: 5
@@ -143,7 +142,7 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /static_centerline_optimizer/input_centerline
-      Value: false
+      Value: true
       View LaneId:
         Scale: 0.10000000149011612
         Value: true
@@ -178,7 +177,7 @@ Visualization Manager:
         Offset: 0
         Radius: 0.10000000149011612
         Value: false
-    - Alpha: 0.20000000298023224
+    - Alpha: 0.3499999940395355
       Class: rviz_plugins/DrivableArea
       Color Scheme: map
       Draw Behind: true
@@ -231,7 +230,7 @@ Visualization Manager:
             Reliability Policy: Reliable
             Value: /static_centerline_optimizer/debug/unsafe_footprints
           Value: true
-      Enabled: true
+      Enabled: false
       Name: debug
   Enabled: true
   Global Options:
@@ -323,7 +322,7 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: 0.39500001072883606
+      Angle: 0.47999992966651917
       Class: rviz_default_plugins/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
@@ -333,11 +332,11 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 17.565271377563477
+      Scale: 20.43703842163086
       Target Frame: map
       Value: TopDownOrtho (rviz_default_plugins)
-      X: 3773.541015625
-      Y: 73740.9140625
+      X: 3834.074462890625
+      Y: 73743.28125
     Saved:
       - Class: rviz_default_plugins/ThirdPersonFollower
         Distance: 18
