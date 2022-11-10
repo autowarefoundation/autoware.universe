@@ -418,9 +418,7 @@ Trajectory CollisionFreeOptimizerNode::pathCallback(const Path::SharedPtr path_p
   auto target_pose = resampled_path.points.at(initial_target_index).pose;  // TODO(murooka)
   std::vector<TrajectoryPoint> whole_optimized_traj_points;
 
-  std::cerr << "==============================================" << std::endl;
   for (size_t i = 0; i < path_segment_num; ++i) {
-    std::cerr << i << std::endl;
     target_pose = resampled_path.points
                     .at(initial_target_index + valid_optimized_path_length / resample_interval * i)
                     .pose;

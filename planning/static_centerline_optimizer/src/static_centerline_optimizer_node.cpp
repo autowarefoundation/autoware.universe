@@ -367,11 +367,6 @@ void StaticCenterlineOptimizerNode::on_plan_path(
   const PlanPath::Request::SharedPtr request, const PlanPath::Response::SharedPtr response)
 {
   const auto route_lane_ids = request->route;
-
-  std::cerr << "================================" << std::endl;
-  for (int lane_id : route_lane_ids) {
-    std::cerr << lane_id << std::endl;
-  }
   const auto route_lanelets = get_lanelets_from_ids(*route_handler_ptr_, route_lane_ids);
 
   // plan path
