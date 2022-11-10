@@ -30,8 +30,8 @@
 #include <pcl_conversions/pcl_conversions.h>
 #include <pclomp/ndt_omp.h>
 
-#include <memory>
 #include <map>
+#include <memory>
 #include <string>
 
 class PoseInitializationModule
