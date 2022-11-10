@@ -37,8 +37,7 @@ public:
 
   virtual ~PlannerPlugin() = default;
   virtual void initialize(rclcpp::Node * node) = 0;
-  virtual void initialize(
-    rclcpp::Node * node, const HADMapBin::ConstSharedPtr msg) = 0;
+  virtual void initialize(rclcpp::Node * node, const HADMapBin::ConstSharedPtr msg) = 0;
   virtual bool ready() const = 0;
   virtual HADMapRoute plan(const RoutePoints & points) = 0;
   virtual MarkerArray visualize(const HADMapRoute & route) const = 0;
