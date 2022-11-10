@@ -132,7 +132,7 @@ BicycleTracker::BicycleTracker(
     bounding_box_ = {
       object.shape.dimensions.x, object.shape.dimensions.y, object.shape.dimensions.z};
   } else {
-    bounding_box_ = {0.5, 1.0, 1.7};
+    bounding_box_ = {1.0, 0.5, 1.7};
   }
   ekf_.init(X, P);
 }
