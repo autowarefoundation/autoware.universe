@@ -48,7 +48,7 @@ private:
   void onLineSegments(const PointCloud2 & msg);
   void transformImage(const rclcpp::Time & from_stamp, const rclcpp::Time & to_stamp);
 
-  cv::Point cv_pt2(const Eigen::Vector3f & v) const;
+  cv::Point2f cv_pt2(const Eigen::Vector3f & v) const;
   Eigen::Vector3f eigen_vec3f(const cv::Point2f & v) const;
 
   void popObsoleteMsg();

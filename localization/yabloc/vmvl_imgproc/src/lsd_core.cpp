@@ -49,8 +49,9 @@ void LineSegmentDetector::execute(const cv::Mat & image, const rclcpp::Time & st
   vml_common::publishImage(*pub_image_lsd_, gray_image, stamp);
 
   pcl::PointCloud<pcl::PointNormal> line_cloud;
-  for (int i = 0; i < lines.rows; i++) {
-    cv::Mat xy_xy = lines.row(i);
+  std::vector<cv::Mat> filtered_lines = removeTooOuterElements(lines, image.size());
+
+  for (const cv::Mat & xy_xy : filtered_lines) {
     Eigen::Vector3f xy1, xy2;
     xy1 << xy_xy.at<float>(0), xy_xy.at<float>(1), 0;
     xy2 << xy_xy.at<float>(2), xy_xy.at<float>(3), 0;
@@ -60,6 +61,34 @@ void LineSegmentDetector::execute(const cv::Mat & image, const rclcpp::Time & st
     line_cloud.push_back(pn);
   }
   vml_common::publishCloud(*pub_cloud_, line_cloud, stamp);
+}
+
+std::vector<cv::Mat> LineSegmentDetector::removeTooOuterElements(
+  const cv::Mat & lines, const cv::Size & size) const
+{
+  std::vector<cv::Rect2i> rect_vector;
+  rect_vector.emplace_back(0, 0, size.width, 3);
+  rect_vector.emplace_back(0, size.height - 3, size.width, 3);
+  rect_vector.emplace_back(0, 0, 3, size.height);
+  rect_vector.emplace_back(size.width - 3, 0, 3, size.height);
+
+  std::vector<cv::Mat> filtered_lines;
+  for (int i = 0; i < lines.rows; i++) {
+    cv::Mat xy_xy = lines.row(i);
+    cv::Point2f xy1(xy_xy.at<float>(0), xy_xy.at<float>(1));
+    cv::Point2f xy2(xy_xy.at<float>(2), xy_xy.at<float>(3));
+
+    bool enabled = true;
+    for (const cv::Rect2i & rect : rect_vector) {
+      if (rect.contains(xy1) || rect.contains(xy2)) {
+        enabled = false;
+        break;
+      }
+    }
+    if (enabled) filtered_lines.push_back(xy_xy);
+  }
+
+  return filtered_lines;
 }
 
 }  // namespace imgproc

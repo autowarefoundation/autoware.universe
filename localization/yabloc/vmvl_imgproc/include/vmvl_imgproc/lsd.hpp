@@ -38,6 +38,7 @@ private:
 
   cv::Ptr<cv::lsd::LineSegmentDetector> lsd_;
 
+  std::vector<cv::Mat> removeTooOuterElements(const cv::Mat & lines, const cv::Size & size) const;
   void imageCallback(const sensor_msgs::msg::Image & msg);
   void execute(const cv::Mat & image, const rclcpp::Time & stamp);
 };

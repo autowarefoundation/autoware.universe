@@ -35,7 +35,7 @@ void Reprojector::onTwist(TwistStamped::ConstSharedPtr msg) { twist_list_.push_b
 
 void Reprojector::onImage(Image::ConstSharedPtr msg) { image_list_.push_back(msg); }
 
-cv::Point Reprojector::cv_pt2(const Eigen::Vector3f & v) const
+cv::Point2f Reprojector::cv_pt2(const Eigen::Vector3f & v) const
 {
   return {-v.y() / METRIC_PER_PIXEL + IMAGE_RADIUS, -v.x() / METRIC_PER_PIXEL + IMAGE_RADIUS};
 }
@@ -63,7 +63,6 @@ void Reprojector::onLineSegments(const PointCloud2 & msg)
 
 void Reprojector::transformImage(const rclcpp::Time & from_stamp, const rclcpp::Time & to_stamp)
 {
-  std::cout << "dt: " << (to_stamp - from_stamp).seconds() << std::endl;
   // Transform histogram image
   Sophus::SE3f odom = accumulateTravelDistance(from_stamp, to_stamp).inverse();
 
@@ -74,9 +73,9 @@ void Reprojector::transformImage(const rclcpp::Time & from_stamp, const rclcpp::
 
   std::vector<cv::Point2f> src_points;
   std::vector<cv::Point2f> dst_points;
-  src_points.push_back(cv::Point2f(400, 450));
+  src_points.push_back(cv::Point2f(400, 500));
   src_points.push_back(cv::Point2f(300, 400));
-  src_points.push_back(cv::Point2f(500, 450));
+  src_points.push_back(cv::Point2f(500, 400));
   for (const auto & p : src_points) dst_points.push_back(transform(p));
 
   cv::Mat warp_mat = cv::getAffineTransform(src_points, dst_points);
@@ -238,7 +237,6 @@ Sophus::SE3f Reprojector::accumulateTravelDistance(
 
     Eigen::Vector3f v(linear.x, linear.y, linear.z);
     Eigen::Vector3f w(angular.x, angular.y, angular.z);
-
     pose *= Sophus::SE3f{Sophus::SO3f::exp(w * dt), dt * v};
     last_stamp = stamp;
   }
