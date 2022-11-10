@@ -99,7 +99,7 @@ bool IntersectionModule::modifyPathVelocity(
 
   /* get detection area*/
   /* dynamically change detection area based on tl_arrow_solid_on */
-  const bool has_tl = util::hasAssociatedTrafficLight(assigned_lanelet);
+  [[maybe_unused]] const bool has_tl = util::hasAssociatedTrafficLight(assigned_lanelet);
   const bool tl_arrow_solid_on =
     util::isTrafficLightArrowActivated(assigned_lanelet, planner_data_->traffic_light_id_map);
   auto && [detection_lanelets, conflicting_lanelets] = util::getObjectiveLanelets(
@@ -110,10 +110,6 @@ bool IntersectionModule::modifyPathVelocity(
   const std::vector<lanelet::CompoundPolygon3d> conflicting_area =
     util::getPolygon3dFromLanelets(conflicting_lanelets);
   debug_data_.detection_area = detection_area;
-
-  // TODO(Mamoru Sobue): reconsider this
-  const bool can_go_through =
-    (has_tl) && (turn_direction.compare("straight") == 0) && (detection_area.empty());
 
   /* get intersection area */
   const auto intersection_area = util::getIntersectionArea(assigned_lanelet, lanelet_map_ptr);
@@ -156,7 +152,7 @@ bool IntersectionModule::modifyPathVelocity(
   const size_t closest_idx = closest_idx_opt.get();
 
   bool keep_detection = false;
-  if (!can_go_through && stop_lines_idx_opt.has_value()) {
+  if (stop_lines_idx_opt.has_value()) {
     const auto & stop_lines = stop_lines_idx_opt.value();
     const size_t stop_line_idx = stop_lines.stop_line;
     const size_t pass_judge_line_idx = stop_lines.pass_judge_line;
@@ -219,20 +215,28 @@ bool IntersectionModule::modifyPathVelocity(
       }
     }
   } else {
+    if (!stop_lines_idx_opt.has_value()) {
+      RCLCPP_WARN_SKIPFIRST_THROTTLE(
+        logger_, *clock_, 1000 /* ms */,
+        "generateStopLine() returned invalid stop_lines_idx for detected objects");
+      RCLCPP_DEBUG(logger_, "===== plan end =====");
+      setSafe(true);
+      setDistance(std::numeric_limits<double>::lowest());
+      return false;
+    }
+
     /* calculate dynamic collision around detection area */
     const bool has_collision = checkCollision(
       lanelet_map_ptr, *path, detection_lanelets, adjacent_lanelets, intersection_area, objects_ptr,
       closest_idx, stuck_vehicle_detect_area);
     is_entry_prohibited = (has_collision || is_stuck);
-    if (stop_lines_idx_opt.has_value()) {
-      const auto & stop_lines_idx = stop_lines_idx_opt.value();
-      if (keep_detection) {
-        stop_line_idx_final = stop_lines_idx.keep_detection_line;
-        pass_judge_line_idx_final = stop_lines_idx.keep_detection_line;
-      } else {
-        stop_line_idx_final = stop_lines_idx.stop_line;
-        pass_judge_line_idx_final = stop_lines_idx.pass_judge_line;
-      }
+    const auto & stop_lines_idx = stop_lines_idx_opt.value();
+    if (keep_detection) {
+      stop_line_idx_final = stop_lines_idx.keep_detection_line;
+      pass_judge_line_idx_final = stop_lines_idx.keep_detection_line;
+    } else {
+      stop_line_idx_final = stop_lines_idx.stop_line;
+      pass_judge_line_idx_final = stop_lines_idx.pass_judge_line;
     }
   }
 
