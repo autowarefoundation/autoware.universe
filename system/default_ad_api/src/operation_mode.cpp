@@ -71,7 +71,7 @@ void OperationModeNode::change_mode(
 {
   if (!mode_available_[mode]) {
     throw component_interface_utils::ServiceException(
-      ServiceResponse::ERROR_NOT_AVAILABLE, "The mode change condition is not satisfied.");
+      ServiceResponse::ERROR_NOT_AVAILABLE, "The mode change is blocked by the system.");
   }
   const auto req = std::make_shared<OperationModeRequest>();
   req->mode = mode;
@@ -112,7 +112,7 @@ void OperationModeNode::on_enable_autoware_control(
 {
   if (!mode_available_[curr_state_.mode]) {
     throw component_interface_utils::ServiceException(
-      ServiceResponse::ERROR_NOT_AVAILABLE, "The mode change condition is not satisfied.");
+      ServiceResponse::ERROR_NOT_AVAILABLE, "The mode change is blocked by the system.");
   }
   const auto req = std::make_shared<AutowareControlRequest>();
   req->autoware_control = true;
