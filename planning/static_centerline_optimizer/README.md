@@ -66,3 +66,18 @@ When launching the path planning server, rviz is launched as well as follows.
 - The red footprints are the optimized ones.
 - The gray area is the drivable area.
 - You can see that the red footprints are inside the drivable area although the yellow ones are outside.
+
+### Unsafe footprints
+
+Sometimes the optimized centerline footprints are close to the lanes' boundaries.
+We can check how close they are with `unsafe footprints` marker as follows.
+
+Footprints' color depends on its distance to the boundaries, and text expresses its distance.
+
+![rviz](./media/unsafe_footprints.png)
+
+By default, footprints' color is
+
+- when the distance is less than 0.1 [m] : red
+- when the distance is less than 0.2 [m] : green
+- when the distance is less than 0.3 [m] : blue

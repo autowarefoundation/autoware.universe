@@ -97,7 +97,7 @@ lanelet::BasicPoint2d convertToLaneletPoint(const geometry_msgs::msg::Point & ge
   return point;
 }
 
-LinearRing2d createVehicleFootprint(
+LinearRing2d create_vehicle_footprint(
   const geometry_msgs::msg::Pose & pose, const vehicle_info_util::VehicleInfo & vehicle_info,
   const double margin = 0.0)
 {
@@ -120,7 +120,20 @@ LinearRing2d createVehicleFootprint(
   }
   footprint.push_back(footprint.back());
 
+  boost::geometry::correct(footprint);
+
   return footprint;
+}
+
+geometry_msgs::msg::Pose get_text_pose(
+  const geometry_msgs::msg::Pose & pose, const vehicle_info_util::VehicleInfo & vehicle_info)
+{
+  const auto & i = vehicle_info;
+
+  const double x_front = i.front_overhang_m + i.wheel_base_m;
+  const double y_left = i.wheel_tread_m / 2.0 + i.left_overhang_m + 1.0;
+
+  return tier4_autoware_utils::calcOffsetPose(pose, x_front, y_left, 0.0);
 }
 
 std::array<double, 3> convertHexStrintToDecimal(const std::string & hex_str_color)
@@ -435,11 +448,10 @@ void StaticCenterlineOptimizerNode::evaluate(const std::vector<unsigned int> & r
   // calculate the distance between footprint and right/left bounds
   MarkerArray marker_array;
   double min_dist = std::numeric_limits<double>::max();
-  // for (const auto & traj_point : optimized_traj_points_) {
   for (size_t i = 0; i < optimized_traj_points_.size(); ++i) {
     const auto & traj_point = optimized_traj_points_.at(i);
 
-    const auto footprint_poly = createVehicleFootprint(traj_point.pose, vehicle_info_);
+    const auto footprint_poly = create_vehicle_footprint(traj_point.pose, vehicle_info_);
 
     const double dist_to_right = boost::geometry::distance(footprint_poly, right_bound);
     const double dist_to_left = boost::geometry::distance(footprint_poly, left_bound);
@@ -453,12 +465,18 @@ void StaticCenterlineOptimizerNode::evaluate(const std::vector<unsigned int> & r
     const auto marker_color_opt = get_marker_color(min_dist_to_bound);
     if (marker_color_opt) {
       const auto & marker_color = marker_color_opt.get();
+
+      // add footprint marker
       const auto footprint_marker =
         utils::create_footprint_marker(footprint_poly, marker_color, now(), i);
       tier4_autoware_utils::appendMarkerArray(footprint_marker, &marker_array);
-    }
 
-    std::cerr << dist_to_right << " " << dist_to_left << std::endl;
+      // add text of distance to bounds marker
+      const auto text_pose = get_text_pose(traj_point.pose, vehicle_info_);
+      const auto text_marker =
+        utils::create_distance_text_marker(text_pose, min_dist_to_bound, marker_color, now(), i);
+      tier4_autoware_utils::appendMarkerArray(text_marker, &marker_array);
+    }
   }
 
   pub_debug_unsafe_footprints_->publish(marker_array);

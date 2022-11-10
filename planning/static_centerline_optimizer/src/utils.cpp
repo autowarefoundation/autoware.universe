@@ -185,5 +185,32 @@ MarkerArray create_footprint_marker(
 
   return marker_array;
 }
+
+MarkerArray create_distance_text_marker(
+  const geometry_msgs::msg::Pose & pose, const double dist,
+  const std::array<double, 3> & marker_color, const rclcpp::Time & now, const size_t idx)
+{
+  const double r = marker_color.at(0);
+  const double g = marker_color.at(1);
+  const double b = marker_color.at(2);
+
+  auto marker = tier4_autoware_utils::createDefaultMarker(
+    "map", rclcpp::Clock().now(), "unsafe_footprints_distance", idx,
+    visualization_msgs::msg::Marker::TEXT_VIEW_FACING,
+    tier4_autoware_utils::createMarkerScale(0.5, 0.5, 0.5),
+    tier4_autoware_utils::createMarkerColor(r, g, b, 0.999));
+  marker.pose = pose;
+  marker.header.stamp = now;
+  marker.lifetime = rclcpp::Duration(0, 0);
+
+  std::stringstream ss;
+  ss << std::setprecision(2) << dist;
+  marker.text = ss.str();
+
+  visualization_msgs::msg::MarkerArray marker_array;
+  marker_array.markers.push_back(marker);
+
+  return marker_array;
+}
 }  // namespace utils
 }  // namespace static_centerline_optimizer
