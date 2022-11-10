@@ -31,6 +31,8 @@
 #include <pclomp/ndt_omp.h>
 
 #include <memory>
+#include <map>
+#include <string>
 
 class PoseInitializationModule
 {
