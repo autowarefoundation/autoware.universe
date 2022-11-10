@@ -36,9 +36,6 @@ class DefaultPlanner : public mission_planner::PlannerPlugin
 {
 public:
   void initialize(rclcpp::Node * node) override;
-  void initialize(
-    rclcpp::Node * node,
-    const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg) override;
   bool ready() const override;
   HADMapRoute plan(const RoutePoints & points) override;
   MarkerArray visualize(const HADMapRoute & route) const override;
