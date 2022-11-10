@@ -31,7 +31,16 @@ Reprojector::Reprojector()
 
 void Reprojector::onTwist(TwistStamped::ConstSharedPtr msg) { twist_list_.push_back(msg); }
 
-void Reprojector::onImage(Image::ConstSharedPtr msg) { image_list_.push_back(msg); }
+void Reprojector::onImage(Image::ConstSharedPtr msg)
+{
+  image_list_.push_back(msg);
+
+  cv::Mat image = vml_common::decompress2CvMat(*msg);
+
+  if (info_.isCameraInfoNullOpt()) return;
+  cv::Mat warped_image = applyPerspective(image);
+  vml_common::publishImage(*pub_image_, warped_image, msg->header.stamp);
+}
 
 void Reprojector::onLineSegments(const PointCloud2 & msg)
 {
@@ -112,7 +121,8 @@ void Reprojector::reproject(const Image & old_image_msg, const PointCloud2 & clo
   }
 
   std::cout << "finish reproject()  " << draw_cnt << std::endl;
-  vml_common::publishImage(*pub_image_, old_image, cloud_msg.header.stamp);
+  // NOTE:TEMP:
+  // vml_common::publishImage(*pub_image_, old_image, cloud_msg.header.stamp);
 }
 
 Sophus::SE3f Reprojector::accumulateTravelDistance(
@@ -155,6 +165,41 @@ void Reprojector::popObsoleteMsg()
     if (rclcpp::Time((*itr)->header.stamp) > oldest_stamp) break;
     itr = twist_list_.erase(itr);
   }
+}
+
+cv::Mat Reprojector::applyPerspective(const cv::Mat & image)
+{
+  std::optional<Eigen::Affine3f> camera_extrinsic = tf_subscriber_(info_.getFrameId(), "base_link");
+  if (!camera_extrinsic.has_value()) return image;
+
+  const Eigen::Matrix3f K = info_.intrinsic();
+  const Eigen::Matrix3f Kinv = K.inverse();
+  const Eigen::Vector3f t = camera_extrinsic->translation();
+  const Eigen::Quaternionf q(camera_extrinsic->rotation());
+
+  auto project_func = [Kinv, q, t](const cv::Point2f & u) -> cv::Point2f {
+    Eigen::Vector3f u3(u.x, u.y, 1);
+    Eigen::Vector3f u_bearing = (q * Kinv * u3).normalized();
+    float u_distance = -t.z() / u_bearing.z();
+    cv::Point2f v;
+    v.y = -10 * (t.x() + u_bearing.x() * u_distance) + 500;
+    v.x = -10 * (t.y() + u_bearing.y() * u_distance) + 400;
+    return v;
+  };
+
+  std::vector<cv::Point2f> src_points;
+  src_points.push_back(cv::Point2f(400, 450));
+  src_points.push_back(cv::Point2f(300, 400));
+  src_points.push_back(cv::Point2f(500, 450));
+  src_points.push_back(cv::Point2f(400, 350));
+  std::vector<cv::Point2f> dst_points;
+  for (int i = 0; i < 4; ++i) dst_points.push_back(project_func(src_points[i]));
+
+  cv::Mat warp_mat = cv::getPerspectiveTransform(src_points, dst_points);
+  cv::Mat warp_image;
+  cv::warpPerspective(image, warp_image, warp_mat, image.size());
+  return warp_image;
+  // return image;
 }
 
 }  // namespace imgproc

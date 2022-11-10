@@ -46,6 +46,8 @@ private:
   void popObsoleteMsg();
   void reproject(const Image & old_image_msg, const PointCloud2 & cloud_msg);
 
+  cv::Mat applyPerspective(const cv::Mat & image);
+
   Sophus::SE3f accumulateTravelDistance(
     const rclcpp::Time & from_stamp, const rclcpp::Time & to_stamp);
 };
