@@ -194,8 +194,8 @@ In order to prevent chattering of recognition results, once an obstacle is targe
 The lateral shift length is affected by 4 variables, namely `lateral_collision_safety_buffer`, `lateral_collision_margin`, `vehicle_width` and `overhang_distance`. The equation is as follows
 
 ```C++
-max_allowable_lateral_distance = lateral_collision_margin + lateral_collision_safety_buffer + 0.5 * vehicle_width
-shift_length = max_allowable_lateral_distance - overhang_distance
+avoid_margin = lateral_collision_margin + lateral_collision_safety_buffer + 0.5 * vehicle_width
+max_allowable_lateral_distance = to_road_shoulder_distance - road_shoulder_safety_margin - 0.5 * vehicle_width
 if(isOnRight(o))
 {
   shift_length = avoid_margin + overhang_distance
