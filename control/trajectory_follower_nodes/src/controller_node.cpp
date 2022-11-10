@@ -14,10 +14,7 @@
 
 #include "trajectory_follower_nodes/controller_node.hpp"
 
-#include "motion_common/motion_common.hpp"
-#include "motion_common/trajectory_common.hpp"
 #include "pure_pursuit/pure_pursuit_lateral_controller.hpp"
-#include "time_utils/time_utils.hpp"
 #include "trajectory_follower/mpc_lateral_controller.hpp"
 #include "trajectory_follower/pid_longitudinal_controller.hpp"
 
@@ -84,7 +81,7 @@ Controller::Controller(const rclcpp::NodeOptions & node_options) : Node("control
   // Timer
   {
     const auto period_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
-      std::chrono::duration<float64_t>(ctrl_period));
+      std::chrono::duration<double>(ctrl_period));
     timer_control_ = rclcpp::create_timer(
       this, get_clock(), period_ns, std::bind(&Controller::callbackTimerControl, this));
   }
