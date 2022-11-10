@@ -23,7 +23,7 @@ rosidl_generate_interfaces(
 ament_auto_add_executable(main
   src/main.cpp
   src/static_centerline_optimizer_node.cpp
-  src/optimization_node.cpp
+  src/collision_free_optimizer_node.cpp
   src/utils.cpp
   )
 
@@ -54,7 +54,6 @@ ament_auto_package(
 )
 
 install(PROGRAMS
-  scripts/optimize_centerline.sh
   scripts/app.py
   DESTINATION lib/${PROJECT_NAME}
 )

@@ -16,11 +16,7 @@
 
 #include "behavior_path_planner/data_manager.hpp"
 #include "behavior_path_planner/utilities.hpp"
-#include "map_loader/lanelet2_map_loader_node.hpp"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
-
-#include <mission_planner/mission_planner_plugin.hpp>
-#include <pluginlib/class_loader.hpp>
 
 namespace static_centerline_optimizer
 {
@@ -47,42 +43,6 @@ lanelet::Point3d createPoint3d(const double x, const double y, const double z = 
 
 namespace utils
 {
-HADMapBin::ConstSharedPtr create_map(
-  rclcpp::Node & node, const std::string & lanelet2_file_name, const rclcpp::Time & current_time)
-{
-  // load map
-  lanelet::LaneletMapPtr map_ptr;
-  map_ptr = Lanelet2MapLoaderNode::load_map(node, lanelet2_file_name, "MGRS");
-  if (!map_ptr) {
-    return nullptr;
-  }
-
-  // create map bin msg
-  const auto map_bin_msg =
-    Lanelet2MapLoaderNode::create_map_bin_msg(map_ptr, lanelet2_file_name, current_time);
-
-  return std::make_shared<HADMapBin>(map_bin_msg);
-}
-
-HADMapRoute plan_route(
-  const HADMapBin::ConstSharedPtr map_bin_msg_ptr,
-  const std::vector<geometry_msgs::msg::Pose> & check_points)
-{
-  // create mission_planner plugin
-  auto plugin_loader = pluginlib::ClassLoader<mission_planner::PlannerPlugin>(
-    "mission_planner", "mission_planner::PlannerPlugin");
-  auto mission_planner =
-    plugin_loader.createSharedInstance("mission_planner::lanelet2::DefaultPlanner");
-
-  // initialize mission_plnanner
-  auto node = rclcpp::Node("po");
-  mission_planner->initialize(&node, map_bin_msg_ptr);
-
-  // plan route
-  const auto route = mission_planner->plan(check_points);
-  return route;
-}
-
 geometry_msgs::msg::Pose get_center_pose(
   const RouteHandler & route_handler, const size_t lanelet_id)
 {

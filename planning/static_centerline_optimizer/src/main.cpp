@@ -23,7 +23,8 @@ int main(int argc, char * argv[])
   auto node =
     std::make_shared<static_centerline_optimizer::StaticCenterlineOptimizerNode>(node_options);
 
-  const bool run_background = node->declare_parameter<bool>("run_background", true);
+  // get ros parameter
+  const bool run_background = node->declare_parameter<bool>("run_background");
 
   // process
   if (!run_background) {

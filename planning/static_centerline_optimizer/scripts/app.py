@@ -28,11 +28,10 @@ from static_centerline_optimizer.srv import PlanPath
 from static_centerline_optimizer.srv import PlanRoute
 
 rclpy.init()
-node = Node("app")
+node = Node("static_centerline_optimizer_http_server")
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
-app.secret_key = "tmp_secret_key"
 
 
 def create_client(service_type, server_name):
@@ -44,11 +43,10 @@ def create_client(service_type, server_name):
 
 
 @app.route("/map", methods=["POST"])
-def load_map_post():
+def get_map():
+    # TODO(murooka) use map_id
     data = request.get_json()
     session["map_id"] = 1
-
-    print(data["map"])
 
     # create client
     cli = create_client(LoadMap, "/planning/static_centerline_optimizer/load_map")
@@ -58,7 +56,7 @@ def load_map_post():
     future = cli.call_async(req)
     rclpy.spin_until_future_complete(node, future)
 
-    # TODO(murooka)
+    # TODO(murooka) error handling
     error = False
     if error:
         abort(500, "error_message")
@@ -68,8 +66,7 @@ def load_map_post():
 
 
 @app.route("/planned_route", methods=["GET"])
-def plan_route_post():
-    # data = request.get_json()
+def post_planned_route():
     args = request.args.to_dict()
 
     # create client
@@ -83,7 +80,7 @@ def plan_route_post():
     rclpy.spin_until_future_complete(node, future)
     res = future.result()
 
-    # error handling
+    # TODO(murooka) error handling
     if res.message != "":
         if res.message == "route_has_not_been_planned":
             abort(404, "route not found")
@@ -95,21 +92,18 @@ def plan_route_post():
 
 
 @app.route("/planned_path", methods=["GET"])
-def plan_path_post():
-    # data = request.get_json()
-    # args = request.args.to_dict()
-
+def post_planned_path():
     # create client
     cli = create_client(PlanPath, "/planning/static_centerline_optimizer/plan_path")
 
     # request path planning
-    # TODO: use this statuses = request.args.getlist("status")
-    req = PlanPath.Request(start_lane_id=9183)  # int(args.get("start_lane_id")))
+    route_lane_ids = [eval(i) for i in request.args.getlist("route")]
+    req = PlanPath.Request(route=route_lane_ids)
     future = cli.call_async(req)
     rclpy.spin_until_future_complete(node, future)
     res = future.result()
 
-    # error handling
+    # TODO(murooka) error handling
     if res.message != "":
         if True:
             pass
@@ -136,5 +130,5 @@ def plan_path_post():
 
 if __name__ == "__main__":
     app.debug = True
-    app.secret_key = "anyrandomstring"
+    app.secret_key = "tmp_secret_key"
     app.run(host="localhost", port=4010)

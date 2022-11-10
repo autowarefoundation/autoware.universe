@@ -7,8 +7,8 @@
   <arg name="rviz" default="true"/>
 
   <!-- mandatory arguments when run_background is true -->
-  <arg name="lanelet2_input_file_name" default=""/>
-  <arg name="lanelet2_output_file_name" default="/tmp/lanelet2_map.osm"/>
+  <arg name="lanelet2_input_file_path" default=""/>
+  <arg name="lanelet2_output_file_path" default="/tmp/lanelet2_map.osm"/>
   <arg name="start_lanelet_id" default=""/>
   <arg name="end_lanelet_id" default=""/>
 
@@ -45,13 +45,14 @@
   <!-- optimize path -->
   <node pkg="static_centerline_optimizer" exec="main" name="static_centerline_optimizer">
     <remap from="lanelet2_map_topic" to="$(var lanelet2_map_topic)"/>
+    <remap from="input_centerline" to="~/input_centerline"/>
+    <remap from="output_centerline" to="~/output_centerline"/>
     <remap from="debug/raw_centerline" to="~/debug/raw_centerline"/>
-    <remap from="debug/optimized_centerline" to="~/debug/optimized_centerline"/>
     <remap from="debug/unsafe_footprints" to="~/debug/unsafe_footprints"/>
 
     <param name="run_background" value="$(var run_background)"/>
-    <param name="lanelet2_input_file_name" value="$(var lanelet2_input_file_name)"/>
-    <param name="lanelet2_output_file_name" value="$(var lanelet2_output_file_name)"/>
+    <param name="lanelet2_input_file_path" value="$(var lanelet2_input_file_path)"/>
+    <param name="lanelet2_output_file_path" value="$(var lanelet2_output_file_path)"/>
     <param name="start_lanelet_id" value="$(var start_lanelet_id)"/>
     <param name="end_lanelet_id" value="$(var end_lanelet_id)"/>
     <!-- common param -->

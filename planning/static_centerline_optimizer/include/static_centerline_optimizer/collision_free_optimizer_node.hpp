@@ -11,8 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef STATIC_CENTERLINE_OPTIMIZER__OPTIMIZATION_NODE_HPP_
-#define STATIC_CENTERLINE_OPTIMIZER__OPTIMIZATION_NODE_HPP_
+#ifndef STATIC_CENTERLINE_OPTIMIZER__COLLISION_FREE_OPTIMIZER_NODE_HPP_
+#define STATIC_CENTERLINE_OPTIMIZER__COLLISION_FREE_OPTIMIZER_NODE_HPP_
 
 #include "motion_utils/motion_utils.hpp"
 #include "obstacle_avoidance_planner/common_structs.hpp"
@@ -33,7 +33,7 @@
 
 namespace static_centerline_optimizer
 {
-class StaticCenterlineOptimizer : public rclcpp::Node
+class CollisionFreeOptimizerNode : public rclcpp::Node
 {
 private:
   rclcpp::Clock logger_ros_clock_;
@@ -84,7 +84,6 @@ private:
   std::unique_ptr<rclcpp::Time> latest_replanned_time_ptr_;
 
   // ROS
-  rclcpp::Publisher<Trajectory>::SharedPtr traj_pub_;
   rclcpp::Subscription<Path>::SharedPtr path_sub_;
 
   // functions
@@ -96,11 +95,11 @@ private:
   //   const CVMaps & cv_maps);
 
 public:
-  explicit StaticCenterlineOptimizer(const rclcpp::NodeOptions & node_options);
+  explicit CollisionFreeOptimizerNode(const rclcpp::NodeOptions & node_options);
 
   // subscriber callback functions
-  std::vector<TrajectoryPoint> pathCallback(const Path::SharedPtr);
+  Trajectory pathCallback(const Path::SharedPtr);
 };
 }  // namespace static_centerline_optimizer
 
-#endif  // STATIC_CENTERLINE_OPTIMIZER__OPTIMIZATION_NODE_HPP_
+#endif  // STATIC_CENTERLINE_OPTIMIZER__COLLISION_FREE_OPTIMIZER_NODE_HPP_

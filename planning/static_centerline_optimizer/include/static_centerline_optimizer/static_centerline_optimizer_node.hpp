@@ -48,29 +48,30 @@ public:
 
 private:
   // load map
-  void load_map(const std::string & lanelet2_input_file_name);
+  void load_map(const std::string & lanelet2_input_file_path);
   void on_load_map(
     const LoadMap::Request::SharedPtr request, const LoadMap::Response::SharedPtr response);
 
   // plan route
+  std::vector<unsigned int> plan_route(const int start_lanelet_id, const int end_lanelet_id);
   void on_plan_route(
     const PlanRoute::Request::SharedPtr request, const PlanRoute::Response::SharedPtr response);
-  void plan_route(const int start_lanelet_id, const int end_lanelet_id);
 
   // plan path
   void on_plan_path(
     const PlanPath::Request::SharedPtr request, const PlanPath::Response::SharedPtr response);
-  PlanPathResult plan_path(const int start_lanelet_id);
-  void evaluate();
+  PlanPathResult plan_path(const std::vector<unsigned int> & route_lane_ids);
+  void evaluate(const std::vector<unsigned int> & route_lane_ids);
   MarkerArray createFootprintMarker(
     const LinearRing2d & footprint_poly, const std::array<double, 3> & marker_color,
     const size_t idx);
 
-  void save_map(const std::string & lanelet2_output_file_name);
+  void save_map(
+    const std::string & lanelet2_output_file_path,
+    const std::vector<unsigned int> & route_lane_ids);
 
   HADMapBin::ConstSharedPtr map_bin_ptr_{nullptr};
   std::shared_ptr<RouteHandler> route_handler_ptr_{nullptr};
-  std::shared_ptr<lanelet::ConstLanelets> lanelets_ptr_{nullptr};
   std::vector<TrajectoryPoint> optimized_traj_points_{};
 
   // publisher
@@ -78,6 +79,7 @@ private:
   rclcpp::Publisher<PathWithLaneId>::SharedPtr pub_raw_path_with_lane_id_{nullptr};
   rclcpp::Publisher<Path>::SharedPtr pub_raw_path_{nullptr};
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_debug_unsafe_footprints_{nullptr};
+  rclcpp::Publisher<Trajectory>::SharedPtr pub_optimized_centerline_{nullptr};
 
   // service
   rclcpp::Service<LoadMap>::SharedPtr srv_load_map_;

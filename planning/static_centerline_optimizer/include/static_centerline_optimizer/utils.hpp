@@ -26,16 +26,6 @@ namespace static_centerline_optimizer
 {
 namespace utils
 {
-HADMapBin::ConstSharedPtr create_map(
-  rclcpp::Node & node, const std::string & lanelet2_file_name, const rclcpp::Time & current_time);
-
-std::vector<geometry_msgs::msg::Pose> create_check_points(
-  const RouteHandler & route_handler, const size_t start_lanelet_id, const size_t end_lanelet_id);
-
-HADMapRoute plan_route(
-  const HADMapBin::ConstSharedPtr map_bin_msg_ptr,
-  const std::vector<geometry_msgs::msg::Pose> & check_points);
-
 geometry_msgs::msg::Pose get_center_pose(
   const RouteHandler & route_handler, const size_t lanelet_id);
 

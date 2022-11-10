@@ -5,9 +5,6 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /debug1
-        - /MarkerArray1
-        - /MarkerArray1/Topic1
-        - /MarkerArray1/Namespaces1
       Splitter Ratio: 0.550000011920929
     Tree Height: 388
   - Class: rviz_common/Selection
@@ -145,7 +142,7 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /raw_path_with_lane_id
+        Value: /static_centerline_optimizer/input_centerline
       Value: false
       View LaneId:
         Scale: 0.10000000149011612
@@ -158,7 +155,7 @@ Visualization Manager:
         Vehicle Length: 4.769999980926514
         Vehicle Width: 1.8300000429153442
     - Class: rviz_plugins/TrajectoryFootprint
-      Enabled: false
+      Enabled: true
       Name: Opimized Centerline
       Topic:
         Depth: 5
@@ -166,8 +163,8 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /static_centerline_optimizer/debug/optimized_centerline
-      Value: false
+        Value: /static_centerline_optimizer/output_centerline
+      Value: true
       View Trajectory Footprint:
         Alpha: 0.5
         Color: 239; 41; 41
@@ -222,20 +219,20 @@ Visualization Manager:
             Value: true
             Vehicle Length: 4.769999980926514
             Vehicle Width: 1.8300000429153442
-      Enabled: false
-      Name: debug
-    - Class: rviz_default_plugins/MarkerArray
+        - Class: rviz_default_plugins/MarkerArray
+          Enabled: true
+          Name: MarkerArray
+          Namespaces:
+            {}
+          Topic:
+            Depth: 5
+            Durability Policy: Transient Local
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /static_centerline_optimizer/debug/unsafe_footprints
+          Value: true
       Enabled: true
-      Name: MarkerArray
-      Namespaces:
-        unsafe_footprints: true
-      Topic:
-        Depth: 5
-        Durability Policy: Transient Local
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /static_centerline_optimizer/debug/unsafe_footprints
-      Value: true
+      Name: debug
   Enabled: true
   Global Options:
     Background Color: 10; 10; 10
