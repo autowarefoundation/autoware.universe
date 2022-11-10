@@ -155,7 +155,7 @@ Visualization Manager:
         Vehicle Width: 1.8300000429153442
     - Class: rviz_plugins/TrajectoryFootprint
       Enabled: true
-      Name: Opimized Centerline
+      Name: Optimized Centerline
       Topic:
         Depth: 5
         Durability Policy: Transient Local

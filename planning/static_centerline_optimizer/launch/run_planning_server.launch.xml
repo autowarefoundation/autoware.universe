@@ -7,6 +7,6 @@
     <arg name="run_background" value="true"/>
   </include>
 
-  <!-- local server to connect path optimzier and cloud software -->
+  <!-- local server to connect path optimizer and cloud software -->
   <node pkg="static_centerline_optimizer" exec="app.py" name="static_centerline_optimizer_http_server" output="screen"/>
 </launch>

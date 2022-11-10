@@ -136,7 +136,7 @@ geometry_msgs::msg::Pose get_text_pose(
   return tier4_autoware_utils::calcOffsetPose(pose, x_front, y_left, 0.0);
 }
 
-std::array<double, 3> convertHexStrintToDecimal(const std::string & hex_str_color)
+std::array<double, 3> convertHexStringToDecimal(const std::string & hex_str_color)
 {
   unsigned int hex_int_color;
   std::istringstream iss(hex_str_color);
@@ -153,7 +153,7 @@ std::array<double, 3> convertHexStrintToDecimal(const std::string & hex_str_colo
 
 StaticCenterlineOptimizerNode::StaticCenterlineOptimizerNode(
   const rclcpp::NodeOptions & node_options)
-: Node("static_centerlin_optimizer", node_options)
+: Node("static_centerline_optimizer", node_options)
 {
   // publishers
   pub_map_bin_ = create_publisher<HADMapBin>("lanelet2_map_topic", create_transient_local_qos());
@@ -279,7 +279,7 @@ std::vector<unsigned int> StaticCenterlineOptimizerNode::plan_route(
     auto mission_planner =
       plugin_loader.createSharedInstance("mission_planner::lanelet2::DefaultPlanner");
 
-    // initialize mission_plnanner
+    // initialize mission_planner
     auto node = rclcpp::Node("po");
     mission_planner->initialize(&node, map_bin_ptr_);
 
@@ -413,7 +413,7 @@ void StaticCenterlineOptimizerNode::on_plan_path(
     }
   }
 
-  // empty string if error did not occurr
+  // empty string if error did not occur
   response->message = "";
 }
 
@@ -427,7 +427,7 @@ void StaticCenterlineOptimizerNode::evaluate(const std::vector<unsigned int> & r
     for (size_t i = 0; i < dist_thresh_vec.size(); ++i) {
       const double dist_thresh = dist_thresh_vec.at(i);
       if (dist < dist_thresh) {
-        return convertHexStrintToDecimal(marker_color_vec.at(i));
+        return convertHexStringToDecimal(marker_color_vec.at(i));
       }
     }
     return boost::none;
