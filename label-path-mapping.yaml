@@ -10,6 +10,9 @@ document:
   - docs/**/*
   - "**/*.txt"
   - "**/*.md"
+  - "**/*.jpg"
+  - "**/*.png"
+  - "**/*.svg"
 common:
   - common/**/*
 control:

@@ -1,5 +1,6 @@
 name: pr-labeler
-on: [pull_request]
+on:
+  - pull_request
 
 jobs:
   label:
