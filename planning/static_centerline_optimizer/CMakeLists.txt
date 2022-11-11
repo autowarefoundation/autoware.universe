@@ -25,7 +25,7 @@ ament_auto_add_executable(main
   src/static_centerline_optimizer_node.cpp
   src/collision_free_optimizer_node.cpp
   src/utils.cpp
-  )
+)
 
 target_include_directories(main
   SYSTEM PUBLIC
