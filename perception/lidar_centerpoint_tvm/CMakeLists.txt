@@ -22,11 +22,6 @@ set(NN_DEPENDENCY_BACKBONE "")
 get_neural_network(${MODEL_NAME_BACKBONE} ${${PROJECT_NAME}_BACKEND} NN_DEPENDENCY_BACKBONE)
 
 if((NOT NN_DEPENDENCY_ENCOER STREQUAL "") AND (NOT NN_DEPENDENCY_BACKBONE STREQUAL ""))
-  # ## the shared settings
-  include_directories(
-    include
-  )
-
   ## centerpoint_tvm ##
   ament_auto_add_library(${PROJECT_NAME} SHARED
     data/models/${MODEL_NAME_ENCODER}/inference_engine_tvm_config.hpp
@@ -46,11 +41,8 @@ if((NOT NN_DEPENDENCY_ENCOER STREQUAL "") AND (NOT NN_DEPENDENCY_BACKBONE STREQU
   add_dependencies(${PROJECT_NAME} ${NN_DEPENDENCY_BACKBONE})
 
   target_compile_options(${PROJECT_NAME} PRIVATE "-Wno-sign-conversion" "-Wno-conversion")
-  target_compile_definitions(${PROJECT_NAME} PRIVATE NETWORKS_BACKEND=${${PROJECT_NAME}_BACKEND})
 
   target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
-    # $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    # $<INSTALL_INTERFACE:include>
     "${tvm_vendor_INCLUDE_DIRS}"
   )
 
