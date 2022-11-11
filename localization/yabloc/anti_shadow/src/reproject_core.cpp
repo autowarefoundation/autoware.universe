@@ -88,7 +88,7 @@ void Reprojector::onSynchro(const Image & image_msg, const PointCloud2 & lsd_msg
   pcl::PointCloud<pcl::PointNormal>::Ptr lsd{new pcl::PointCloud<pcl::PointNormal>()};
   pcl::fromROSMsg(lsd_msg, *lsd);
   cv::Mat old_image = vml_common::decompress2CvMat(old_image_msg);
-  cv::Mat current_image = vml_common::decompress2CvMat(image_msg);
+  cv::Mat cur_image = vml_common::decompress2CvMat(image_msg);
 
   // Accumulate travel distance
   const rclcpp::Time old_stamp{old_image_msg.header.stamp};
@@ -102,20 +102,53 @@ void Reprojector::onSynchro(const Image & image_msg, const PointCloud2 & lsd_msg
   std::vector<TransformPair> pairs = makeTransformPairs(func, *lsd);
   std::cout << "pairs " << pairs.size() << std::endl;
 
-  drawTransformedPixel(pairs, old_image);
-  vml_common::publishImage(*pub_image_, old_image, cur_stamp);
+  cv::Mat draw_image = drawTransformedPixel(pairs, old_image, cur_image);
+  vml_common::publishImage(*pub_image_, draw_image, cur_stamp);
   std::cout << "draw & publish" << std::endl;
 
   popObsoleteMsg();
 }
 
-void Reprojector::drawTransformedPixel(const std::vector<TransformPair> & pairs, cv::Mat image)
+cv::Mat Reprojector::drawTransformedPixel(
+  const std::vector<TransformPair> & pairs, const cv::Mat & old_image, const cv::Mat & cur_image)
 {
+  std::vector<cv::Point2i> offsets = {{-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 0},
+                                      {0, 1},   {1, -1}, {1, 0},  {1, 1}};
+
+  auto compute_gap = [&](const TransformPair & pair, const cv::Point2f & offset) -> int {
+    int gap = 0;
+    const int N = pair.src.size();
+    // TODO: check out of image
+    for (int i = 0; i < N; ++i) {
+      cv::Vec3b s = cur_image.at<cv::Vec3b>(pair.src.at(i));
+      cv::Vec3b d = old_image.at<cv::Vec3b>(pair.dst.at(i) + offset);
+      gap += (s - d).dot(s - d);
+    }
+    return gap;
+  };
+
+  cv::Mat draw_image = old_image.clone();
+
   for (const auto & pair : pairs) {
-    for (const auto & p : pair.dst) {
-      image.at<cv::Vec3b>(p) = cv::Vec3b(0, 255, 255);
+    int best_gap = std::numeric_limits<int>::max();
+    cv::Point2f best_offset;
+    for (const auto & offset : offsets) {
+      int gap = compute_gap(pair, offset);
+      if (gap < best_gap) {
+        best_gap = gap;
+        best_offset = offset;
+      }
+    }
+
+    // Draw
+    const int N = pair.src.size();
+    for (int i = 0; i < N; ++i) {
+      const auto & d = pair.dst.at(i);
+      draw_image.at<cv::Vec3b>(d + best_offset) = cv::Vec3b(0, 255, 255);
     }
   }
+
+  return draw_image;
 }
 
 std::vector<Reprojector::TransformPair> Reprojector::makeTransformPairs(
@@ -162,52 +195,6 @@ std::vector<cv::Point2i> Reprojector::line2Polygon(
   }
   return non_zero;
 }
-
-// void Reprojector::reproject(
-//   const Image & old_image_msg, const Image & current_image_msg, const PointCloud2 & lsd_msg)
-// {
-//   auto cv_pt2 = [](const Eigen::Vector3f & v) -> cv::Point { return {v.x(), v.y()}; };
-//   auto cvvec_norm = [](const cv::Vec3b & v) -> float {
-//     return v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
-//   };
-
-//   // Reproject linesegments
-//   for (const auto & ls : *lsd) {
-//     std::vector<cv::Point2i> polygon = line2Polygon({ls.x, ls.y}, {ls.normal_x, ls.normal_y});
-
-//     int draw_cnt = 0;
-//     float intensity_gap = 0;
-//     for (const auto & p : polygon) {
-//       // project segment on ground
-//       std::optional<Eigen::Vector3f> opt = project_func({p.x, p.y, 0});
-//       if (!opt.has_value()) continue;
-
-//       // transform segment on ground
-//       Eigen::Vector3f transformed = pose * opt.value();
-
-//       // reproject segment from ground
-//       std::optional<Eigen::Vector3f> re_opt = reproject_func(transformed);
-//       if (!re_opt.has_value()) continue;
-
-//       cv::Point2i src = p;
-//       cv::Point2i dst(re_opt->x(), re_opt->y());
-//       cv::Vec3b gap = old_image.at<cv::Vec3b>(dst) - current_image.at<cv::Vec3b>(src);
-//       intensity_gap += cvvec_norm(gap);
-//       draw_cnt++;
-//     }
-//     if (draw_cnt == 0)
-//       intensity_gap = 255;
-//     else {
-//       intensity_gap /= draw_cnt;
-//       intensity_gap *= gain_;
-//     }
-
-//     cv::line(
-//       current_image, cv_pt2(ls.getVector3fMap()), cv_pt2(ls.getNormalVector3fMap()),
-//       cv::Scalar::all(intensity_gap), 2);
-//   }
-
-// }
 
 Sophus::SE3f Reprojector::accumulateTravelDistance(
   const rclcpp::Time & from_stamp, const rclcpp::Time & to_stamp) const

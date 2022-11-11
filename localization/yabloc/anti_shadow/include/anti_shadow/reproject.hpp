@@ -67,10 +67,9 @@ private:
     ProjectFunc func, pcl::PointCloud<pcl::PointNormal> & segments);
 
   void popObsoleteMsg();
-  // void reproject(
-  //   const Image & old_image_msg, const Image & current_image_msg, const PointCloud2 & cloud_msg);
 
-  void drawTransformedPixel(const std::vector<TransformPair> & pairs, cv::Mat image);
+  cv::Mat drawTransformedPixel(
+    const std::vector<TransformPair> & pairs, const cv::Mat & old_image, const cv::Mat & cur_image);
 
   void tryDefineParam();
   ProjectFunc defineProjectionFunction(const Sophus::SE3f & odom);
