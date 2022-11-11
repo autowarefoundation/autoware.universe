@@ -80,19 +80,19 @@ void Reprojector::onSynchro(const Image & image_msg, const PointCloud2 & lsd_msg
     reproject(image_list_.front(), image_msg, lsd_msg);
   }
 
-  {
-    cv::Mat image = vml_common::decompress2CvMat(image_msg);
-    pcl::PointCloud<pcl::PointNormal>::Ptr lsd{new pcl::PointCloud<pcl::PointNormal>()};
-    pcl::fromROSMsg(lsd_msg, *lsd);
-    for (const auto l : *lsd) {
-      std::vector<cv::Point2i> polygon = line2Polygon({l.x, l.y}, {l.normal_x, l.normal_y});
-      for (const auto & p : polygon) {
-        image.at<cv::Vec3b>(p) = cv::Vec3b(0, 255, 255);
-      }
-    }
+  // {
+  //   cv::Mat image = vml_common::decompress2CvMat(image_msg);
+  //   pcl::PointCloud<pcl::PointNormal>::Ptr lsd{new pcl::PointCloud<pcl::PointNormal>()};
+  //   pcl::fromROSMsg(lsd_msg, *lsd);
+  //   for (const auto l : *lsd) {
+  //     std::vector<cv::Point2i> polygon = line2Polygon({l.x, l.y}, {l.normal_x, l.normal_y});
+  //     for (const auto & p : polygon) {
+  //       image.at<cv::Vec3b>(p) = cv::Vec3b(0, 255, 255);
+  //     }
+  //   }
 
-    vml_common::publishImage(*pub_image_, image, image_msg.header.stamp);
-  }
+  //   vml_common::publishImage(*pub_image_, image, image_msg.header.stamp);
+  // }
 
   popObsoleteMsg();
 }
@@ -127,7 +127,7 @@ void Reprojector::reproject(
   pcl::PointCloud<pcl::PointNormal>::Ptr lsd{new pcl::PointCloud<pcl::PointNormal>()};
   pcl::fromROSMsg(lsd_msg, *lsd);
   cv::Mat old_image = vml_common::decompress2CvMat(old_image_msg);
-  cv::Mat curent_image = vml_common::decompress2CvMat(current_image_msg);
+  cv::Mat current_image = vml_common::decompress2CvMat(current_image_msg);
 
   rclcpp::Time old_stamp{old_image_msg.header.stamp};
   rclcpp::Time cur_stamp{current_image_msg.header.stamp};
@@ -143,31 +143,29 @@ void Reprojector::reproject(
   // Reproject linesegments
   int draw_cnt = 0;
   for (const auto & ls : *lsd) {
-    // project segment on ground
-    std::optional<Eigen::Vector3f> opt1 = project_func(ls.getVector3fMap());
-    std::optional<Eigen::Vector3f> opt2 = project_func(ls.getNormalVector3fMap());
-    if (!opt1.has_value()) continue;
-    if (!opt2.has_value()) continue;
-    float length = (opt1.value() - opt2.value()).norm();
-    if (length < min_segment_length_) continue;
+    std::vector<cv::Point2i> polygon = line2Polygon({ls.x, ls.y}, {ls.normal_x, ls.normal_y});
 
-    // transform segment on ground
-    Eigen::Vector3f transformed1 = pose * opt1.value();
-    Eigen::Vector3f transformed2 = pose * opt2.value();
+    for (const auto & p : polygon) {
+      // project segment on ground
+      std::optional<Eigen::Vector3f> opt = project_func({p.x, p.y, 0});
+      if (!opt.has_value()) continue;
 
-    // reproject segment from ground
-    std::optional<Eigen::Vector3f> re_opt1 = reproject_func(transformed1);
-    std::optional<Eigen::Vector3f> re_opt2 = reproject_func(transformed2);
-    if (!re_opt1.has_value()) continue;
-    if (!re_opt2.has_value()) continue;
+      // transform segment on ground
+      Eigen::Vector3f transformed = pose * opt.value();
 
-    cv::line(old_image, cv_pt2(*re_opt1), cv_pt2(*re_opt2), cv::Scalar(0, 0, 255), 2);
-    draw_cnt++;
+      // reproject segment from ground
+      std::optional<Eigen::Vector3f> re_opt = reproject_func(transformed);
+      if (!re_opt.has_value()) continue;
+
+      cv::Point2i src = p;
+      cv::Point2i dst(re_opt->x(), re_opt->y());
+      old_image.at<cv::Vec3b>(dst) = current_image.at<cv::Vec3b>(src);
+      draw_cnt++;
+    }
   }
 
-  // TODO: TEMP:
-  // std::cout << "finish reproject()  " << draw_cnt << std::endl;
-  // vml_common::publishImage(*pub_image_, old_image, cur_stamp);
+  std::cout << "finish reproject()  " << draw_cnt << std::endl;
+  vml_common::publishImage(*pub_image_, old_image, cur_stamp);
 }
 
 Sophus::SE3f Reprojector::accumulateTravelDistance(
