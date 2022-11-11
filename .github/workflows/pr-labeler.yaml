@@ -1,6 +1,6 @@
 name: pr-labeler
 on:
-  - pull_request
+  - pull_request:
 
 jobs:
   label:
@@ -9,4 +9,4 @@ jobs:
       - uses: actions/labeler@v2
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-          configuration-path: label-path-mapping.yaml
+          configuration-path: .github/labeler.yaml
