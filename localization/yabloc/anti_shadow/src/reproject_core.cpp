@@ -80,7 +80,42 @@ void Reprojector::onSynchro(const Image & image_msg, const PointCloud2 & lsd_msg
     reproject(image_list_.front(), image_msg, lsd_msg);
   }
 
+  {
+    cv::Mat image = vml_common::decompress2CvMat(image_msg);
+    pcl::PointCloud<pcl::PointNormal>::Ptr lsd{new pcl::PointCloud<pcl::PointNormal>()};
+    pcl::fromROSMsg(lsd_msg, *lsd);
+    for (const auto l : *lsd) {
+      std::vector<cv::Point2i> polygon = line2Polygon({l.x, l.y}, {l.normal_x, l.normal_y});
+      for (const auto & p : polygon) {
+        image.at<cv::Vec3b>(p) = cv::Vec3b(0, 255, 255);
+      }
+    }
+
+    vml_common::publishImage(*pub_image_, image, image_msg.header.stamp);
+  }
+
   popObsoleteMsg();
+}
+
+std::vector<cv::Point2i> Reprojector::line2Polygon(const cv::Point2f & from, const cv::Point2f & to)
+{
+  cv::Point2f upper_left, bottom_right;
+  upper_left.x = std::min(from.x, to.x) - 2;
+  upper_left.y = std::min(from.y, to.y) - 2;
+  bottom_right.x = std::max(from.x, to.x) + 2;
+  bottom_right.y = std::max(from.y, to.y) + 2;
+
+  cv::Size size(bottom_right.x - upper_left.x, bottom_right.y - upper_left.y);
+  cv::Mat canvas = cv::Mat::zeros(size, CV_8UC1);
+
+  cv::line(canvas, from - upper_left, to - upper_left, cv::Scalar::all(255), 2, cv::LINE_8);
+
+  std::vector<cv::Point2i> non_zero;
+  cv::findNonZero(canvas, non_zero);
+  for (cv::Point2i & p : non_zero) {
+    p += cv::Point2i(upper_left);
+  }
+  return non_zero;
 }
 
 void Reprojector::reproject(
@@ -130,8 +165,9 @@ void Reprojector::reproject(
     draw_cnt++;
   }
 
-  std::cout << "finish reproject()  " << draw_cnt << std::endl;
-  vml_common::publishImage(*pub_image_, old_image, cur_stamp);
+  // TODO: TEMP:
+  // std::cout << "finish reproject()  " << draw_cnt << std::endl;
+  // vml_common::publishImage(*pub_image_, old_image, cur_stamp);
 }
 
 Sophus::SE3f Reprojector::accumulateTravelDistance(
@@ -177,24 +213,6 @@ void Reprojector::popObsoleteMsg()
 
 // cv::Mat Reprojector::applyPerspective(const cv::Mat & image)
 // {
-//   std::optional<Eigen::Affine3f> camera_extrinsic = tf_subscriber_(info_.getFrameId(),
-//   "base_link"); if (!camera_extrinsic.has_value()) return image;
-
-//   const Eigen::Matrix3f K = info_.intrinsic();
-//   const Eigen::Matrix3f Kinv = K.inverse();
-//   const Eigen::Vector3f t = camera_extrinsic->translation();
-//   const Eigen::Quaternionf q(camera_extrinsic->rotation());
-
-//   auto project_func = [Kinv, q, t](const cv::Point2f & u) -> cv::Point2f {
-//     Eigen::Vector3f u3(u.x, u.y, 1);
-//     Eigen::Vector3f u_bearing = (q * Kinv * u3).normalized();
-//     float u_distance = -t.z() / u_bearing.z();
-//     cv::Point2f v;
-//     v.y = -10 * (t.x() + u_bearing.x() * u_distance) + 500;
-//     v.x = -10 * (t.y() + u_bearing.y() * u_distance) + 400;
-//     return v;
-//   };
-
 //   std::vector<cv::Point2f> src_points;
 //   src_points.push_back(cv::Point2f(400, 450));
 //   src_points.push_back(cv::Point2f(300, 400));
@@ -202,7 +220,6 @@ void Reprojector::popObsoleteMsg()
 //   src_points.push_back(cv::Point2f(400, 350));
 //   std::vector<cv::Point2f> dst_points;
 //   for (int i = 0; i < 4; ++i) dst_points.push_back(project_func(src_points[i]));
-
 //   cv::Mat warp_mat = cv::getPerspectiveTransform(src_points, dst_points);
 //   cv::Mat warp_image;
 //   cv::warpPerspective(image, warp_image, warp_mat, image.size());

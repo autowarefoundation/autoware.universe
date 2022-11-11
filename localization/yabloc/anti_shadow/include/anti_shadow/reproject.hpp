@@ -55,6 +55,8 @@ private:
   void reproject(
     const Image & old_image_msg, const Image & current_image_msg, const PointCloud2 & cloud_msg);
 
+  std::vector<cv::Point2i> line2Polygon(const cv::Point2f & from, const cv::Point2f & to);
+
   void tryDefineProjectFunction();
 
   Sophus::SE3f accumulateTravelDistance(
