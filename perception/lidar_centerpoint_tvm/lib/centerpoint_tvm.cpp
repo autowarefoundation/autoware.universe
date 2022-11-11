@@ -159,8 +159,7 @@ std::vector<Box3D> BackboneNeckHeadPostProcessor::schedule(const TVMArrayContain
     input[0].getArray(), head_out_heatmap.data(), head_out_heatmap.size() * datatype_bytes);
   TVMArrayCopyToBytes(
     input[1].getArray(), head_out_offset.data(), head_out_offset.size() * datatype_bytes);
-  TVMArrayCopyToBytes(
-    input[2].getArray(), head_out_z.data(), head_out_z.size() * datatype_bytes);
+  TVMArrayCopyToBytes(input[2].getArray(), head_out_z.data(), head_out_z.size() * datatype_bytes);
   TVMArrayCopyToBytes(
     input[3].getArray(), head_out_dim.data(), head_out_dim.size() * datatype_bytes);
   TVMArrayCopyToBytes(
