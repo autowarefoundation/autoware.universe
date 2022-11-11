@@ -6,7 +6,7 @@ ci:
   - .clang-format
   - .gitignore
   - .prettierignore
-docs:
+document:
   - docs/**/*
   - "**/*.txt"
   - "**/*.md"
