@@ -83,7 +83,7 @@
     </node>
 
     <!-- reprojection -->
-    <node if="false" name="reprojection" pkg="anti_shadow" exec="reprojection_node" output="screen" args="--ros-args --log-level info">
+    <node name="reprojection" pkg="anti_shadow" exec="reprojection_node" output="screen" args="--ros-args --log-level info">
         <remap from="$(var src_image)" to="$(var resized_image)"/>
         <remap from="/localization/imgproc/camera_info" to="$(var resized_info)"/>
     </node>

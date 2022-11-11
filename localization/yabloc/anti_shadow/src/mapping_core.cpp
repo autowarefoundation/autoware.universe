@@ -23,7 +23,7 @@ Mapping::Mapping()
     create_subscription<TwistStamped>("/localization/trajectory/kalman/twist", 10, on_twist);
 
   // Publisher
-  pub_image_ = create_publisher<Image>("reprojected_image", 10);
+  pub_image_ = create_publisher<Image>("mapping_image", 10);
 
   histogram_image_ = 128 * cv::Mat::ones(cv::Size(2 * IMAGE_RADIUS, 2 * IMAGE_RADIUS), CV_8UC1);
 }
