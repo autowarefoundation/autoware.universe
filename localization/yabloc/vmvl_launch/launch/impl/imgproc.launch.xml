@@ -77,7 +77,7 @@
     </node>
 
     <!-- mapping -->
-    <node name="mapping" pkg="anti_shadow" exec="mapping_node" output="screen" args="--ros-args --log-level info">
+    <node if="false" name="mapping" pkg="anti_shadow" exec="mapping_node" output="screen" args="--ros-args --log-level info">
         <remap from="$(var src_image)" to="$(var resized_image)"/>
         <remap from="/localization/imgproc/camera_info" to="$(var resized_info)"/>
     </node>

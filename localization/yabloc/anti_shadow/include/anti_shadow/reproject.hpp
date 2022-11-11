@@ -43,26 +43,40 @@ private:
   std::list<Image> image_list_;
   std::list<TwistStamped::ConstSharedPtr> twist_list_;
 
-  std::function<std::optional<Eigen::Vector3f>(const Eigen::Vector3f & u)> project_func{nullptr};
-  std::function<std::optional<Eigen::Vector3f>(const Eigen::Vector3f & u)> reproject_func{nullptr};
+  using ProjectFunc = std::function<std::optional<cv::Point2f>(const cv::Point2f &)>;
 
+  struct Parameter
+  {
+    Sophus::SE3f extrinsic_;
+    Eigen::Matrix3f K_;
+    Eigen::Matrix3f Kinv_;
+  };
+  struct TransformPair
+  {
+    std::vector<cv::Point2f> src;
+    std::vector<cv::Point2f> dst;
+  };
+
+  std::optional<Parameter> param_{std::nullopt};
+
+  // Callback
   void onSynchro(const Image & image_msg, const PointCloud2 & lsd_msg);
   void onTwist(TwistStamped::ConstSharedPtr msg);
 
-  cv::Point2f cv_pt2(const Eigen::Vector3f & v) const;
-  Eigen::Vector3f eigen_vec3f(const cv::Point2f & v) const;
+  std::vector<TransformPair> makeTransformPairs(
+    ProjectFunc func, pcl::PointCloud<pcl::PointNormal> & segments);
 
   void popObsoleteMsg();
-  void reproject(
-    const Image & old_image_msg, const Image & current_image_msg, const PointCloud2 & cloud_msg);
+  // void reproject(
+  //   const Image & old_image_msg, const Image & current_image_msg, const PointCloud2 & cloud_msg);
 
-  std::vector<cv::Point2i> line2Polygon(const cv::Point2f & from, const cv::Point2f & to);
+  void drawTransformedPixel(const std::vector<TransformPair> & pairs, cv::Mat image);
 
-  void tryDefineProjectFunction();
+  void tryDefineParam();
+  ProjectFunc defineProjectionFunction(const Sophus::SE3f & odom);
 
+  std::vector<cv::Point2i> line2Polygon(const cv::Point2f & from, const cv::Point2f & to) const;
   Sophus::SE3f accumulateTravelDistance(
-    const rclcpp::Time & from_stamp, const rclcpp::Time & to_stamp);
-
-  // cv::Mat applyPerspective(const cv::Mat & image);
+    const rclcpp::Time & from_stamp, const rclcpp::Time & to_stamp) const;
 };
 }  // namespace imgproc

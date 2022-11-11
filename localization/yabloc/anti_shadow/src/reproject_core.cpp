@@ -32,59 +32,117 @@ Reprojector::Reprojector()
 
 void Reprojector::onTwist(TwistStamped::ConstSharedPtr msg) { twist_list_.push_back(msg); }
 
-void Reprojector::tryDefineProjectFunction()
+void Reprojector::tryDefineParam()
 {
-  if (project_func && reproject_func) {
-    return;
-  }
+  if (param_.has_value()) return;
 
-  // Check intrinsic & extrinsic
-  std::optional<Eigen::Affine3f> camera_extrinsic = tf_subscriber_(info_.getFrameId(), "base_link");
-  if (!camera_extrinsic.has_value()) return;
+  std::optional<Sophus::SE3f> extrinsic = tf_subscriber_.se3f(info_.getFrameId(), "base_link");
+  if (!extrinsic.has_value()) return;
   if (info_.isCameraInfoNullOpt()) return;
+
   const Eigen::Matrix3f K = info_.intrinsic();
   const Eigen::Matrix3f Kinv = K.inverse();
 
+  param_ = Parameter{*extrinsic, K, Kinv};
   RCLCPP_INFO_STREAM(get_logger(), "extrinsic & intrinsic are ready");
+}
 
-  // Define projection function
-  const Eigen::Vector3f t = camera_extrinsic->translation();
-  const Eigen::Quaternionf q(camera_extrinsic->rotation());
+Reprojector::ProjectFunc Reprojector::defineProjectionFunction(const Sophus::SE3f & odom)
+{
+  return [this, odom](const cv::Point2f & src) -> std::optional<cv::Point2f> {
+    const Eigen::Vector3f t = param_->extrinsic_.translation();
+    const Eigen::Quaternionf q(param_->extrinsic_.unit_quaternion());
+    const Eigen::Matrix3f K = param_->K_;
+    const Eigen::Matrix3f Kinv = param_->Kinv_;
 
-  project_func = [Kinv, q, t](const Eigen::Vector3f & u) -> std::optional<Eigen::Vector3f> {
-    Eigen::Vector3f u3(u.x(), u.y(), 1);
+    Eigen::Vector3f u3(src.x, src.y, 1);
     Eigen::Vector3f u_bearing = (q * Kinv * u3).normalized();
     if (u_bearing.z() > -0.01) return std::nullopt;
+
     float u_distance = -t.z() / u_bearing.z();
     Eigen::Vector3f v;
     v.x() = t.x() + u_bearing.x() * u_distance;
     v.y() = t.y() + u_bearing.y() * u_distance;
     v.z() = 0;
-    return v;
-  };
 
-  reproject_func = [K, q, t](const Eigen::Vector3f & u) -> std::optional<Eigen::Vector3f> {
-    Eigen::Vector3f from_camera = q.conjugate() * (u - t);
+    // NOTE:
+    v = odom * v;
+
+    Eigen::Vector3f from_camera = q.conjugate() * (v - t);
     if (from_camera.z() < 0.01) return std::nullopt;
     Eigen::Vector3f reprojected = K * from_camera / from_camera.z();
-    return reprojected;
+    return cv::Point2f{reprojected.x(), reprojected.y()};
   };
 }
 
 void Reprojector::onSynchro(const Image & image_msg, const PointCloud2 & lsd_msg)
 {
   image_list_.push_back(image_msg);
+  if (image_list_.size() < 2) return;
+  const Image & old_image_msg = image_list_.front();
 
-  tryDefineProjectFunction();
+  tryDefineParam();
+  if (!param_.has_value()) return;
 
-  if (image_list_.size() > 2) {
-    reproject(image_list_.front(), image_msg, lsd_msg);
-  }
+  // Convert ROS messages to native messages
+  pcl::PointCloud<pcl::PointNormal>::Ptr lsd{new pcl::PointCloud<pcl::PointNormal>()};
+  pcl::fromROSMsg(lsd_msg, *lsd);
+  cv::Mat old_image = vml_common::decompress2CvMat(old_image_msg);
+  cv::Mat current_image = vml_common::decompress2CvMat(image_msg);
+
+  // Accumulate travel distance
+  const rclcpp::Time old_stamp{old_image_msg.header.stamp};
+  const rclcpp::Time cur_stamp{image_msg.header.stamp};
+  Sophus::SE3f odom = accumulateTravelDistance(old_stamp, cur_stamp);
+  RCLCPP_INFO_STREAM(get_logger(), "relative possition: " << odom.translation().transpose());
+
+  // Define projection function from relative pose
+  ProjectFunc func = defineProjectionFunction(odom);
+
+  std::vector<TransformPair> pairs = makeTransformPairs(func, *lsd);
+  std::cout << "pairs " << pairs.size() << std::endl;
+
+  drawTransformedPixel(pairs, old_image);
+  vml_common::publishImage(*pub_image_, old_image, cur_stamp);
+  std::cout << "draw & publish" << std::endl;
 
   popObsoleteMsg();
 }
 
-std::vector<cv::Point2i> Reprojector::line2Polygon(const cv::Point2f & from, const cv::Point2f & to)
+void Reprojector::drawTransformedPixel(const std::vector<TransformPair> & pairs, cv::Mat image)
+{
+  for (const auto & pair : pairs) {
+    for (const auto & p : pair.dst) {
+      image.at<cv::Vec3b>(p) = cv::Vec3b(0, 255, 255);
+    }
+  }
+}
+
+std::vector<Reprojector::TransformPair> Reprojector::makeTransformPairs(
+  ProjectFunc func, pcl::PointCloud<pcl::PointNormal> & segments)
+{
+  std::vector<TransformPair> pairs;
+
+  for (const auto & ls : segments) {
+    TransformPair pair;
+    std::vector<cv::Point2i> polygon = line2Polygon({ls.x, ls.y}, {ls.normal_x, ls.normal_y});
+
+    for (const auto & p : polygon) {
+      std::optional<cv::Point2f> opt = func(p);
+
+      if (opt.has_value()) {
+        pair.src.push_back(p);
+        pair.dst.push_back(*opt);
+      }
+    }
+    if (!pair.src.empty()) pairs.push_back(pair);
+  }
+
+  return pairs;
+}
+
+std::vector<cv::Point2i> Reprojector::line2Polygon(
+  const cv::Point2f & from, const cv::Point2f & to) const
 {
   cv::Point2f upper_left, bottom_right;
   upper_left.x = std::min(from.x, to.x) - 2;
@@ -105,79 +163,59 @@ std::vector<cv::Point2i> Reprojector::line2Polygon(const cv::Point2f & from, con
   return non_zero;
 }
 
-void Reprojector::reproject(
-  const Image & old_image_msg, const Image & current_image_msg, const PointCloud2 & lsd_msg)
-{
-  if ((!project_func) || (!reproject_func)) return;
+// void Reprojector::reproject(
+//   const Image & old_image_msg, const Image & current_image_msg, const PointCloud2 & lsd_msg)
+// {
+//   auto cv_pt2 = [](const Eigen::Vector3f & v) -> cv::Point { return {v.x(), v.y()}; };
+//   auto cvvec_norm = [](const cv::Vec3b & v) -> float {
+//     return v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
+//   };
 
-  // Convert ROS messages to native messages
-  pcl::PointCloud<pcl::PointNormal>::Ptr lsd{new pcl::PointCloud<pcl::PointNormal>()};
-  pcl::fromROSMsg(lsd_msg, *lsd);
-  cv::Mat old_image = vml_common::decompress2CvMat(old_image_msg);
-  cv::Mat current_image = vml_common::decompress2CvMat(current_image_msg);
+//   // Reproject linesegments
+//   for (const auto & ls : *lsd) {
+//     std::vector<cv::Point2i> polygon = line2Polygon({ls.x, ls.y}, {ls.normal_x, ls.normal_y});
 
-  rclcpp::Time old_stamp{old_image_msg.header.stamp};
-  rclcpp::Time cur_stamp{current_image_msg.header.stamp};
+//     int draw_cnt = 0;
+//     float intensity_gap = 0;
+//     for (const auto & p : polygon) {
+//       // project segment on ground
+//       std::optional<Eigen::Vector3f> opt = project_func({p.x, p.y, 0});
+//       if (!opt.has_value()) continue;
 
-  // Accumulate travel distance
-  Sophus::SE3f pose = accumulateTravelDistance(old_stamp, cur_stamp);
-  RCLCPP_INFO_STREAM(get_logger(), "relative pose: " << pose.translation().transpose());
-  RCLCPP_INFO_STREAM(
-    get_logger(), "relative pose: " << pose.unit_quaternion().coeffs().transpose());
+//       // transform segment on ground
+//       Eigen::Vector3f transformed = pose * opt.value();
 
-  auto cv_pt2 = [](const Eigen::Vector3f & v) -> cv::Point { return {v.x(), v.y()}; };
-  auto cvvec_norm = [](const cv::Vec3b & v) -> float {
-    return v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
-  };
+//       // reproject segment from ground
+//       std::optional<Eigen::Vector3f> re_opt = reproject_func(transformed);
+//       if (!re_opt.has_value()) continue;
 
-  // Reproject linesegments
-  for (const auto & ls : *lsd) {
-    std::vector<cv::Point2i> polygon = line2Polygon({ls.x, ls.y}, {ls.normal_x, ls.normal_y});
+//       cv::Point2i src = p;
+//       cv::Point2i dst(re_opt->x(), re_opt->y());
+//       cv::Vec3b gap = old_image.at<cv::Vec3b>(dst) - current_image.at<cv::Vec3b>(src);
+//       intensity_gap += cvvec_norm(gap);
+//       draw_cnt++;
+//     }
+//     if (draw_cnt == 0)
+//       intensity_gap = 255;
+//     else {
+//       intensity_gap /= draw_cnt;
+//       intensity_gap *= gain_;
+//     }
 
-    int draw_cnt = 0;
-    float intensity_gap = 0;
-    for (const auto & p : polygon) {
-      // project segment on ground
-      std::optional<Eigen::Vector3f> opt = project_func({p.x, p.y, 0});
-      if (!opt.has_value()) continue;
+//     cv::line(
+//       current_image, cv_pt2(ls.getVector3fMap()), cv_pt2(ls.getNormalVector3fMap()),
+//       cv::Scalar::all(intensity_gap), 2);
+//   }
 
-      // transform segment on ground
-      Eigen::Vector3f transformed = pose * opt.value();
-
-      // reproject segment from ground
-      std::optional<Eigen::Vector3f> re_opt = reproject_func(transformed);
-      if (!re_opt.has_value()) continue;
-
-      cv::Point2i src = p;
-      cv::Point2i dst(re_opt->x(), re_opt->y());
-      cv::Vec3b gap = old_image.at<cv::Vec3b>(dst) - current_image.at<cv::Vec3b>(src);
-      intensity_gap += cvvec_norm(gap);
-      draw_cnt++;
-    }
-    if (draw_cnt == 0)
-      intensity_gap = 255;
-    else {
-      intensity_gap /= draw_cnt;
-      intensity_gap *= gain_;
-    }
-
-    cv::line(
-      current_image, cv_pt2(ls.getVector3fMap()), cv_pt2(ls.getNormalVector3fMap()),
-      cv::Scalar::all(intensity_gap), 2);
-  }
-
-  std::cout << "finish reproject()  " << std::endl;
-  vml_common::publishImage(*pub_image_, current_image, cur_stamp);
-}
+// }
 
 Sophus::SE3f Reprojector::accumulateTravelDistance(
-  const rclcpp::Time & from_stamp, const rclcpp::Time & to_stamp)
+  const rclcpp::Time & from_stamp, const rclcpp::Time & to_stamp) const
 {
   // TODO: Honestly, this accumulation does not provide accurate relative pose
-
   Sophus::SE3f pose;
-
   rclcpp::Time last_stamp = from_stamp;
+
   for (auto itr = twist_list_.begin(); itr != twist_list_.end(); ++itr) {
     rclcpp::Time stamp{(*itr)->header.stamp};
     if (stamp < from_stamp) continue;
@@ -210,20 +248,5 @@ void Reprojector::popObsoleteMsg()
     itr = twist_list_.erase(itr);
   }
 }
-
-// cv::Mat Reprojector::applyPerspective(const cv::Mat & image)
-// {
-//   std::vector<cv::Point2f> src_points;
-//   src_points.push_back(cv::Point2f(400, 450));
-//   src_points.push_back(cv::Point2f(300, 400));
-//   src_points.push_back(cv::Point2f(500, 450));
-//   src_points.push_back(cv::Point2f(400, 350));
-//   std::vector<cv::Point2f> dst_points;
-//   for (int i = 0; i < 4; ++i) dst_points.push_back(project_func(src_points[i]));
-//   cv::Mat warp_mat = cv::getPerspectiveTransform(src_points, dst_points);
-//   cv::Mat warp_image;
-//   cv::warpPerspective(image, warp_image, warp_mat, image.size());
-//   return warp_image;
-// }
 
 }  // namespace imgproc
