@@ -94,8 +94,10 @@ bool is_in_parking_lot(
 }
 
 bool is_footprint_in_lanelet(
-  const lanelet::ConstLanelet & goal_lanelet, tier4_autoware_utils::LinearRing2d goal_footprint,
-  lanelet::routing::RoutingGraphPtr routing_graph_ptr_, lanelet::ConstLanelets path_lanelets)
+  const lanelet::ConstLanelet & goal_lanelet,
+  const tier4_autoware_utils::LinearRing2d & goal_footprint,
+  const lanelet::routing::RoutingGraphPtr & routing_graph_ptr_,
+  const lanelet::ConstLanelets & path_lanelets)
 {
   std::vector<tier4_autoware_utils::Point2d> points_intersection;
 
