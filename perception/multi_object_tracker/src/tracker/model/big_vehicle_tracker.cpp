@@ -407,8 +407,24 @@ bool BigVehicleTracker::measure(
             << object.kinematics.pose_with_covariance.pose.position.y - self_transform.translation.y
             << " yaw: " << tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation)
             << std::endl;
+
+  const int nearest_index = utils::getNearestCornerSurfaceFromObject(object, self_transform);
+  const Eigen::Vector2d tracking_point = utils::getTrackingPointFromObject(object, nearest_index);
+
   measureWithPose(object);
   measureWithShape(object);
+
+  // refinement
+  Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);
+  Eigen::MatrixXd P_t(ekf_params_.dim_x, ekf_params_.dim_x);
+  ekf_.getX(X_t);
+  ekf_.getP(P_t);
+  const Eigen::Vector2d offset_position = utils::recoverFromTrackingPoint(
+    X_t(IDX::X), X_t(IDX::Y), X_t(IDX::YAW), bounding_box_.width, bounding_box_.length,
+    nearest_index, tracking_point);
+  X_t(IDX::X) = offset_position.x();
+  X_t(IDX::Y) = offset_position.y();
+  // ekf_.init(X_t, P_t);
 
   /* calc nearest corner index*/
   setNearestCornerSurfaceIndex(self_transform);  // this index is used in next measure step

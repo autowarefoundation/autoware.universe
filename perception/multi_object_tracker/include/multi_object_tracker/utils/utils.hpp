@@ -146,17 +146,73 @@ inline int getNearestCornerSurfaceFromObject(
   return getNearestCornerSurface(x, y, yaw, width, length, self_transform);
 }
 
-inline Eigen::Vector2d getTrackingCorner(
+inline Eigen::Vector2d getTrackingPointFromObject(
+  const autoware_auto_perception_msgs::msg::DetectedObject & object, const int indx)
+{
+  double x, y, yaw, w, l;
+  x = object.kinematics.pose_with_covariance.pose.position.x;
+  y = object.kinematics.pose_with_covariance.pose.position.y;
+  yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
+  w = object.shape.dimensions.y;
+  l = object.shape.dimensions.x;
+
+  const Eigen::Vector2d center{x, y};
+  Eigen::Matrix2d Rinv = Eigen::Rotation2Dd(yaw).toRotationMatrix();
+  Eigen::Vector2d tracked_corner;
+  // if surface
+  if (indx < 4) {
+    const double sign[4][2] = {{1, 0}, {0, -1}, {-1, 0}, {0, 1}};
+    Eigen::Vector2d offset_vec{sign[indx][0] * l / 2.0, sign[indx][1] * w / 2.0};
+    tracked_corner = center + Rinv * offset_vec;
+  } else {
+    // corner
+    const double sign[4][2] = {{1, -1}, {-1, -1}, {-1, 1}, {1, 1}};
+    Eigen::Vector2d offset_vec{sign[indx - 4][0] * l / 2.0, sign[indx - 4][1] * w / 2.0};
+    tracked_corner = center + Rinv * offset_vec;
+  }
+
+  return tracked_corner;
+}
+
+inline Eigen::Vector2d getTrackingPoint(
   const double x, const double y, const double yaw, const double w, const double l, const int indx)
 {
   const Eigen::Vector2d center{x, y};
-  const double sign[4][2] = {{1, -1}, {-1, -1}, {-1, 1}, {1, 1}};
-
-  Eigen::Vector2d diagonal_vec{sign[indx][0] * l / 2.0, sign[indx][1] * w / 2.0};
-  Eigen::Matrix2d Rinv = Eigen::Rotation2Dd(-yaw).toRotationMatrix();
-  Eigen::Vector2d tracked_corner = center + Rinv * diagonal_vec;
+  Eigen::Matrix2d Rinv = Eigen::Rotation2Dd(yaw).toRotationMatrix();
+  Eigen::Vector2d tracked_corner;
+  // if surface
+  if (indx < 4) {
+    const double sign[4][2] = {{1, 0}, {0, -1}, {-1, 0}, {0, 1}};
+    Eigen::Vector2d offset_vec{sign[indx][0] * l / 2.0, sign[indx][1] * w / 2.0};
+    tracked_corner = center + Rinv * offset_vec;
+  } else {
+    // corner
+    const double sign[4][2] = {{1, -1}, {-1, -1}, {-1, 1}, {1, 1}};
+    Eigen::Vector2d offset_vec{sign[indx - 4][0] * l / 2.0, sign[indx - 4][1] * w / 2.0};
+    tracked_corner = center + Rinv * offset_vec;
+  }
 
   return tracked_corner;
+}
+
+inline Eigen::Vector2d recoverFromTrackingPoint(
+  const double x, const double y, const double yaw, const double w, const double l, const int indx,
+  const Eigen::Vector2d & tracked_corner)
+{
+  Eigen::Vector2d center;
+  Eigen::Matrix2d Rinv = Eigen::Rotation2Dd(yaw).toRotationMatrix();
+  // if surface
+  if (indx < 4) {
+    const double sign[4][2] = {{1, 0}, {0, -1}, {-1, 0}, {0, 1}};
+    Eigen::Vector2d offset_vec{sign[indx][0] * l / 2.0, sign[indx][1] * w / 2.0};
+    center = tracked_corner - Rinv * offset_vec;
+  } else {
+    // corner
+    const double sign[4][2] = {{1, -1}, {-1, -1}, {-1, 1}, {1, 1}};
+    Eigen::Vector2d offset_vec{sign[indx - 4][0] * l / 2.0, sign[indx - 4][1] * w / 2.0};
+    center = tracked_corner - Rinv * offset_vec;
+  }
+  return center;
 }
 
 /**
