@@ -71,28 +71,17 @@ struct StopLineIdx
  * @param original_path   ego-car lane
  * @param target_path     target lane to insert stop point (part of ego-car lane or same to ego-car
  * lane)
+ " @param use_stuck_stopline if true, a stop line is generated at the beginning of intersection lane
  * @return nullopt if path is not intersecting with detection areas
  */
 std::pair<std::optional<size_t>, std::optional<StopLineIdx>> generateStopLine(
   const int lane_id, const std::vector<lanelet::CompoundPolygon3d> & detection_areas,
   const std::vector<lanelet::CompoundPolygon3d> & conflicting_areas,
   const std::shared_ptr<const PlannerData> & planner_data, const double stop_line_margin,
-  const double keep_detection_line_margin,
+  const double keep_detection_line_margin, const bool use_stuck_stopline,
   autoware_auto_planning_msgs::msg::PathWithLaneId * original_path,
   const autoware_auto_planning_msgs::msg::PathWithLaneId & target_path,
   const rclcpp::Logger logger);
-
-/**
- * @brief If use_stuck_stopline is true, a stop line is generated before the intersection.
- * @param input_path      input path
- * @param output_path     output path
- * @return valid value in pass_judge_line_idx and stop_line_idx field
- */
-std::optional<StopLineIdx> generateStopLineBeforeIntersection(
-  const int lane_id, lanelet::LaneletMapConstPtr lanelet_map_ptr,
-  const std::shared_ptr<const PlannerData> & planner_data,
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path,
-  autoware_auto_planning_msgs::msg::PathWithLaneId * output_path, const rclcpp::Logger logger);
 
 /**
  * @brief Calculate first path index that is in the polygon.

@@ -126,7 +126,8 @@ bool IntersectionModule::modifyPathVelocity(
   /* set stop lines for base_link */
   const auto [stuck_line_idx_opt, stop_lines_idx_opt] = util::generateStopLine(
     lane_id_, detection_area, conflicting_area, planner_data_, planner_param_.stop_line_margin,
-    planner_param_.keep_detection_line_margin, path, *path, logger_.get_child("util"));
+    planner_param_.keep_detection_line_margin, planner_param_.use_stuck_stopline, path, *path,
+    logger_.get_child("util"));
   if (!stuck_line_idx_opt.has_value()) {
     // returns here if path is not intersecting with conflicting areas
     RCLCPP_INFO_SKIPFIRST_THROTTLE(
@@ -206,15 +207,6 @@ bool IntersectionModule::modifyPathVelocity(
     is_entry_prohibited = true;
     stop_line_idx_final = stuck_line_idx;
     pass_judge_line_idx_final = stuck_line_idx;
-    if (planner_param_.use_stuck_stopline) {
-      // TODO(Mamoru Sobue): pass this flag to generateStopLine instead
-      const auto stop_lines_before_int_opt = util::generateStopLineBeforeIntersection(
-        lane_id_, lanelet_map_ptr, planner_data_, *path, path, logger_.get_child("util"));
-      if (stop_lines_before_int_opt.has_value()) {
-        stop_line_idx_final = stop_lines_before_int_opt.value().stop_line;
-        pass_judge_line_idx_final = stop_lines_before_int_opt.value().pass_judge_line;
-      }
-    }
   } else {
     /* calculate dynamic collision around detection area */
     const bool has_collision = checkCollision(
@@ -238,7 +230,8 @@ bool IntersectionModule::modifyPathVelocity(
         setDistance(std::numeric_limits<double>::lowest());
         return false;
       } else {
-        RCLCPP_DEBUG(logger_, "no need to stop\n===== plan end =====");
+        RCLCPP_DEBUG(logger_, "no need to stop");
+        RCLCPP_DEBUG(logger_, "===== plan end =====");
         setSafe(true);
         setDistance(std::numeric_limits<double>::lowest());
         return true;
