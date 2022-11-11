@@ -27,6 +27,7 @@ public:
 
 private:
   const float min_segment_length_;
+  const float gain_;
 
   // Publisher
   rclcpp::Publisher<Image>::SharedPtr pub_image_;

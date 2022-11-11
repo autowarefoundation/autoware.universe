@@ -13,7 +13,8 @@ Reprojector::Reprojector()
   info_(this),
   tf_subscriber_(this->get_clock()),
   synchro_subscriber_(this, "/sensing/camera/undistorted/image_raw", "lsd_cloud"),
-  min_segment_length_(declare_parameter<float>("min_segment_length", 0.5))
+  min_segment_length_(declare_parameter<float>("min_segment_length", 0.5)),
+  gain_(declare_parameter<float>("gain", 0.1))
 {
   using std::placeholders::_1;
   using std::placeholders::_2;
@@ -80,20 +81,6 @@ void Reprojector::onSynchro(const Image & image_msg, const PointCloud2 & lsd_msg
     reproject(image_list_.front(), image_msg, lsd_msg);
   }
 
-  // {
-  //   cv::Mat image = vml_common::decompress2CvMat(image_msg);
-  //   pcl::PointCloud<pcl::PointNormal>::Ptr lsd{new pcl::PointCloud<pcl::PointNormal>()};
-  //   pcl::fromROSMsg(lsd_msg, *lsd);
-  //   for (const auto l : *lsd) {
-  //     std::vector<cv::Point2i> polygon = line2Polygon({l.x, l.y}, {l.normal_x, l.normal_y});
-  //     for (const auto & p : polygon) {
-  //       image.at<cv::Vec3b>(p) = cv::Vec3b(0, 255, 255);
-  //     }
-  //   }
-
-  //   vml_common::publishImage(*pub_image_, image, image_msg.header.stamp);
-  // }
-
   popObsoleteMsg();
 }
 
@@ -139,12 +126,16 @@ void Reprojector::reproject(
     get_logger(), "relative pose: " << pose.unit_quaternion().coeffs().transpose());
 
   auto cv_pt2 = [](const Eigen::Vector3f & v) -> cv::Point { return {v.x(), v.y()}; };
+  auto cvvec_norm = [](const cv::Vec3b & v) -> float {
+    return v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
+  };
 
   // Reproject linesegments
-  int draw_cnt = 0;
   for (const auto & ls : *lsd) {
     std::vector<cv::Point2i> polygon = line2Polygon({ls.x, ls.y}, {ls.normal_x, ls.normal_y});
 
+    int draw_cnt = 0;
+    float intensity_gap = 0;
     for (const auto & p : polygon) {
       // project segment on ground
       std::optional<Eigen::Vector3f> opt = project_func({p.x, p.y, 0});
@@ -159,13 +150,24 @@ void Reprojector::reproject(
 
       cv::Point2i src = p;
       cv::Point2i dst(re_opt->x(), re_opt->y());
-      old_image.at<cv::Vec3b>(dst) = current_image.at<cv::Vec3b>(src);
+      cv::Vec3b gap = old_image.at<cv::Vec3b>(dst) - current_image.at<cv::Vec3b>(src);
+      intensity_gap += cvvec_norm(gap);
       draw_cnt++;
     }
+    if (draw_cnt == 0)
+      intensity_gap = 255;
+    else {
+      intensity_gap /= draw_cnt;
+      intensity_gap *= gain_;
+    }
+
+    cv::line(
+      current_image, cv_pt2(ls.getVector3fMap()), cv_pt2(ls.getNormalVector3fMap()),
+      cv::Scalar::all(intensity_gap), 2);
   }
 
-  std::cout << "finish reproject()  " << draw_cnt << std::endl;
-  vml_common::publishImage(*pub_image_, old_image, cur_stamp);
+  std::cout << "finish reproject()  " << std::endl;
+  vml_common::publishImage(*pub_image_, current_image, cur_stamp);
 }
 
 Sophus::SE3f Reprojector::accumulateTravelDistance(
