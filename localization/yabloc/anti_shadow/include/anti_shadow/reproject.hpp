@@ -28,9 +28,12 @@ public:
 private:
   const float min_segment_length_;
   const float gain_;
+  const int polygon_thick_;
+  const float gap_threshold_;
 
   // Publisher
   rclcpp::Publisher<Image>::SharedPtr pub_image_;
+  rclcpp::Publisher<PointCloud2>::SharedPtr pub_cloud_;
   // Subscriber
   rclcpp::Subscription<Image>::SharedPtr sub_image_;
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_lsd_;
@@ -69,6 +72,9 @@ private:
   void popObsoleteMsg();
 
   cv::Mat drawTransformedPixel(
+    const std::vector<TransformPair> & pairs, const cv::Mat & old_image, const cv::Mat & cur_image);
+
+  cv::Mat computeGap(
     const std::vector<TransformPair> & pairs, const cv::Mat & old_image, const cv::Mat & cur_image);
 
   void tryDefineParam();

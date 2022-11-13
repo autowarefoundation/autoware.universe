@@ -80,7 +80,7 @@ std::vector<cv::Mat> LineSegmentDetector::removeTooOuterElements(
 
     bool enabled = true;
     for (const cv::Rect2i & rect : rect_vector) {
-      if (rect.contains(xy1) || rect.contains(xy2)) {
+      if (rect.contains(xy1) && rect.contains(xy2)) {
         enabled = false;
         break;
       }

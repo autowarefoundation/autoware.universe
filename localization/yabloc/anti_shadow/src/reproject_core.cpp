@@ -4,6 +4,8 @@
 #include <vml_common/pub_sub.hpp>
 #include <vml_common/timer.hpp>
 
+#include <boost/range/combine.hpp>
+
 #include <pcl_conversions/pcl_conversions.h>
 
 namespace imgproc
@@ -14,7 +16,9 @@ Reprojector::Reprojector()
   tf_subscriber_(this->get_clock()),
   synchro_subscriber_(this, "/sensing/camera/undistorted/image_raw", "lsd_cloud"),
   min_segment_length_(declare_parameter<float>("min_segment_length", 0.5)),
-  gain_(declare_parameter<float>("gain", 0.1))
+  gain_(declare_parameter<float>("gain", 0.5)),
+  polygon_thick_(declare_parameter<int>("polygon_thic", 3)),
+  gap_threshold_(declare_parameter<float>("gap_threshold", 150))
 {
   using std::placeholders::_1;
   using std::placeholders::_2;
@@ -28,6 +32,7 @@ Reprojector::Reprojector()
 
   // Publisher
   pub_image_ = create_publisher<Image>("reprojected_image", 10);
+  pub_cloud_ = create_publisher<PointCloud2>("filtered_lsd", 10);
 }
 
 void Reprojector::onTwist(TwistStamped::ConstSharedPtr msg) { twist_list_.push_back(msg); }
@@ -77,6 +82,8 @@ Reprojector::ProjectFunc Reprojector::defineProjectionFunction(const Sophus::SE3
 
 void Reprojector::onSynchro(const Image & image_msg, const PointCloud2 & lsd_msg)
 {
+  Timer timer;
+
   image_list_.push_back(image_msg);
   if (image_list_.size() < 2) return;
   const Image & old_image_msg = image_list_.front();
@@ -102,18 +109,21 @@ void Reprojector::onSynchro(const Image & image_msg, const PointCloud2 & lsd_msg
   std::vector<TransformPair> pairs = makeTransformPairs(func, *lsd);
   std::cout << "pairs " << pairs.size() << std::endl;
 
-  cv::Mat draw_image = drawTransformedPixel(pairs, old_image, cur_image);
+  // Search offsets to refine alignment
+  cv::Mat draw_image = computeGap(pairs, old_image, cur_image);
   vml_common::publishImage(*pub_image_, draw_image, cur_stamp);
   std::cout << "draw & publish" << std::endl;
 
   popObsoleteMsg();
+
+  RCLCPP_INFO_STREAM(get_logger(), "whole time: " << timer);
 }
 
-cv::Mat Reprojector::drawTransformedPixel(
+cv::Mat Reprojector::computeGap(
   const std::vector<TransformPair> & pairs, const cv::Mat & old_image, const cv::Mat & cur_image)
 {
-  std::vector<cv::Point2i> offsets = {{-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 0},
-                                      {0, 1},   {1, -1}, {1, 0},  {1, 1}};
+  std::vector<cv::Point2f> offset_bases = {{-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 0},
+                                           {0, 1},   {1, -1}, {1, 0},  {1, 1}};
 
   auto compute_gap = [&](const TransformPair & pair, const cv::Point2f & offset) -> int {
     int gap = 0;
@@ -124,15 +134,19 @@ cv::Mat Reprojector::drawTransformedPixel(
       cv::Vec3b d = old_image.at<cv::Vec3b>(pair.dst.at(i) + offset);
       gap += (s - d).dot(s - d);
     }
-    return gap;
+    return gap / static_cast<float>(N);
   };
 
-  cv::Mat draw_image = old_image.clone();
+  std::vector<int> gaps;
+  std::vector<cv::Point2f> offsets;
+
+  pcl::PointCloud<pcl::PointNormal> cloud;
 
   for (const auto & pair : pairs) {
+    // First search
     int best_gap = std::numeric_limits<int>::max();
     cv::Point2f best_offset;
-    for (const auto & offset : offsets) {
+    for (const auto & offset : offset_bases) {
       int gap = compute_gap(pair, offset);
       if (gap < best_gap) {
         best_gap = gap;
@@ -140,13 +154,33 @@ cv::Mat Reprojector::drawTransformedPixel(
       }
     }
 
-    // Draw
+    // Second search
+    int second_best_gap = std::numeric_limits<int>::max();
+    cv::Point2f second_best_offset;
+    for (const auto & offset : offsets) {
+      int gap = compute_gap(pair, offset + best_offset);
+      if (gap < second_best_gap) {
+        second_best_gap = gap;
+        second_best_offset = offset;
+      }
+    }
+    offsets.push_back(second_best_offset + best_offset);
+    gaps.push_back(second_best_gap);
+  }
+
+  cv::Mat draw_image = old_image.clone();
+  for (const auto [pair, gap, offset] : boost::combine(pairs, gaps, offsets)) {
     const int N = pair.src.size();
+
     for (int i = 0; i < N; ++i) {
-      const auto & d = pair.dst.at(i);
-      draw_image.at<cv::Vec3b>(d + best_offset) = cv::Vec3b(0, 255, 255);
+      auto src = pair.src.at(i);
+      auto dst = pair.dst.at(i);
+      // draw_image.at<cv::Vec3b>(dst) = cv::Vec3b(0, 255, 255);
+      draw_image.at<cv::Vec3b>(dst + offset) = cv::Vec3b(gap, gap, gap) * gain_;
     }
   }
+
+  vml_common::publishCloud(*pub_cloud_, cloud, rclcpp::Time());
 
   return draw_image;
 }
@@ -186,7 +220,8 @@ std::vector<cv::Point2i> Reprojector::line2Polygon(
   cv::Size size(bottom_right.x - upper_left.x, bottom_right.y - upper_left.y);
   cv::Mat canvas = cv::Mat::zeros(size, CV_8UC1);
 
-  cv::line(canvas, from - upper_left, to - upper_left, cv::Scalar::all(255), 2, cv::LINE_8);
+  cv::line(
+    canvas, from - upper_left, to - upper_left, cv::Scalar::all(255), polygon_thick_, cv::LINE_8);
 
   std::vector<cv::Point2i> non_zero;
   cv::findNonZero(canvas, non_zero);
