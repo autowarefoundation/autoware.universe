@@ -80,6 +80,9 @@ struct AvoidanceParameters
   // object's enveloped polygon
   double object_envelope_buffer;
 
+  // vehicles which is moving more than this parameter will not be avoided
+  double threshold_time_object_is_moving;
+
   // we want to keep this lateral margin when avoiding
   double lateral_collision_margin;
   // a buffer in case lateral_collision_margin is set to 0. Will throw error
@@ -197,6 +200,10 @@ struct ObjectData  // avoidance target
   rclcpp::Time last_seen;
   double lost_time{0.0};
 
+  // count up when object moved. Removed when it exceeds threshold.
+  rclcpp::Time last_stop;
+  double move_time{0.0};
+
   // store the information of the lanelet which the object's overhang is currently occupying
   lanelet::ConstLanelet overhang_lanelet;
 
@@ -261,7 +268,10 @@ struct AvoidancePlanningData
   lanelet::ConstLanelets current_lanelets;
 
   // avoidance target objects
-  ObjectDataArray objects;
+  ObjectDataArray target_objects;
+
+  // the others
+  ObjectDataArray other_objects;
 };
 
 /*
