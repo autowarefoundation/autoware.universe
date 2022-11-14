@@ -18,7 +18,8 @@ Reprojector::Reprojector()
   min_segment_length_(declare_parameter<float>("min_segment_length", 0.5)),
   gain_(declare_parameter<float>("gain", 0.5)),
   polygon_thick_(declare_parameter<int>("polygon_thic", 3)),
-  gap_threshold_(declare_parameter<float>("gap_threshold", 150))
+  gap_threshold_(declare_parameter<float>("gap_threshold", 150)),
+  search_iteration_max_(declare_parameter<int>("search_iteration_max", 4))
 {
   using std::placeholders::_1;
   using std::placeholders::_2;
@@ -198,29 +199,28 @@ std::unordered_map<size_t, Reprojector::GapResult> Reprojector::computeGap(
   for (const auto & pair : pairs) {
     // First search
     int best_gap = std::numeric_limits<int>::max();
-    cv::Point2f best_offset;
-    for (const auto & offset : offset_bases) {
-      int gap = compute_gap(pair, offset);
-      if (gap < best_gap) {
-        best_gap = gap;
-        best_offset = offset;
+    cv::Point2f best_offset(0, 0);
+
+    for (int itr = 0; itr < search_iteration_max_; itr++) {
+      int tmp_best_gap = std::numeric_limits<int>::max();
+      cv::Point2f tmp_best_offset(0, 0);
+
+      for (const auto & offset : offset_bases) {
+        int gap = compute_gap(pair, offset + best_offset);
+        if (gap < tmp_best_gap) {
+          tmp_best_gap = gap;
+          tmp_best_offset = offset;
+        }
       }
+
+      best_gap = tmp_best_gap;
+      best_offset = best_offset + tmp_best_offset;
     }
 
-    // Second search
-    int second_best_gap = std::numeric_limits<int>::max();
-    cv::Point2f second_best_offset;
-    for (const auto & offset : offset_bases) {
-      int gap = compute_gap(pair, offset + best_offset);
-      if (gap < second_best_gap) {
-        second_best_gap = gap;
-        second_best_offset = offset;
-      }
-    }
     GapResult result;
     result.id = pair.id;
-    result.final_offset = second_best_offset + best_offset;
-    result.gap = second_best_gap;
+    result.final_offset = best_offset;
+    result.gap = best_gap;
     gap_results.emplace(pair.id, result);
   }
 

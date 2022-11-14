@@ -30,6 +30,7 @@ private:
   const float gain_;
   const int polygon_thick_;
   const float gap_threshold_;
+  const int search_iteration_max_;
 
   // Publisher
   rclcpp::Publisher<Image>::SharedPtr pub_old_image_;
