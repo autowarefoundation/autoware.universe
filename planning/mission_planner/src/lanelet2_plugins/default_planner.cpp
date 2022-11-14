@@ -93,44 +93,6 @@ bool is_in_parking_lot(
   return false;
 }
 
-bool is_footprint_in_lanelet(
-  const lanelet::ConstLanelet & goal_lanelet,
-  const tier4_autoware_utils::LinearRing2d & goal_footprint,
-  const lanelet::routing::RoutingGraphPtr & routing_graph_ptr_,
-  const lanelet::ConstLanelets & path_lanelets)
-{
-  std::vector<tier4_autoware_utils::Point2d> points_intersection;
-
-  // check if goal footprint is in current lane
-  boost::geometry::intersection(
-    goal_footprint, goal_lanelet.polygon2d().basicPolygon(), points_intersection);
-  if (points_intersection.empty()) {
-    return true;
-  }
-  points_intersection.clear();
-
-  // check if goal footprint is in between many lanelets
-  lanelet::ConstLanelet combined_prev_lanelet;
-  combined_prev_lanelet = combine_lanelets(path_lanelets);
-  auto next_lanelets = routing_graph_ptr_->following(goal_lanelet);
-  for (const auto & next_lane : next_lanelets) {
-    lanelet::ConstLanelets lanelets;
-    lanelets.push_back(combined_prev_lanelet);
-    lanelets.push_back(next_lane);
-
-    auto combined_lanelets = combine_lanelets(lanelets);
-    boost::geometry::intersection(
-      goal_footprint, combined_lanelets.polygon2d().basicPolygon(), points_intersection);
-
-    if (points_intersection.empty()) {
-      return true;
-    }
-    points_intersection.clear();
-  }
-
-  return false;
-}
-
 double project_goal_to_map(
   const lanelet::Lanelet & lanelet_component, const lanelet::ConstPoint3d & goal_point)
 {
@@ -258,8 +220,46 @@ visualization_msgs::msg::MarkerArray DefaultPlanner::visualize_debug_footprint(
   return msg;
 }
 
+bool DefaultPlanner::check_goal_footprint(
+  const lanelet::ConstLanelet & current_lanelet, const lanelet::ConstLanelet & goal_lanelet,
+  const tier4_autoware_utils::LinearRing2d & goal_footprint, double & next_lane_length)
+{
+  std::vector<tier4_autoware_utils::Point2d> points_intersection;
+
+  // check if goal footprint is in current lane
+  boost::geometry::intersection(
+    goal_footprint, goal_lanelet.polygon2d().basicPolygon(), points_intersection);
+  if (points_intersection.empty()) {
+    return true;
+  }
+  points_intersection.clear();
+
+  // check if goal footprint is in between many lanelets
+  for (const auto & next_lane : routing_graph_ptr_->following(current_lanelet)) {
+    next_lane_length += lanelet::utils::getLaneletLength2d(next_lane);
+    lanelet::ConstLanelets lanelets;
+    lanelets.push_back(goal_lanelet);
+    lanelets.push_back(next_lane);
+    lanelet::ConstLanelet combined_lanelets = combine_lanelets(lanelets);
+
+    // if next lanelet length longer than vehicle longitudinal offset
+    if (vehicle_info_.max_longitudinal_offset_m < next_lane_length) {
+      next_lane_length -= lanelet::utils::getLaneletLength2d(next_lane);
+      boost::geometry::intersection(
+        goal_footprint, combined_lanelets.polygon2d().basicPolygon(), points_intersection);
+      if (points_intersection.empty()) {
+        return true;
+      }
+      points_intersection.clear();
+    } else {
+      // if next lanelet length shorter than vehicle longitudinal offset -> recursive call
+      return check_goal_footprint(next_lane, combined_lanelets, goal_footprint, next_lane_length);
+    }
+  }
+  return false;
+}
 bool DefaultPlanner::is_goal_valid(
-  const geometry_msgs::msg::Pose & goal, lanelet::ConstLanelets path_lanelets) const
+  const geometry_msgs::msg::Pose & goal, lanelet::ConstLanelets path_lanelets)
 {
   const auto logger = node_->get_logger();
   lanelet::Lanelet closest_lanelet;
@@ -273,9 +273,14 @@ bool DefaultPlanner::is_goal_valid(
 
   pub_goal_footprint_marker_->publish(visualize_debug_footprint(goal_footprint_));
 
+  double next_lane_length = 0.0;
+  // combine calculated route lanelets
+  lanelet::ConstLanelet combined_prev_lanelet = combine_lanelets(path_lanelets);
+
   // check if goal footprint exceeds lane and isn't in parking_lot
   if (
-    !is_footprint_in_lanelet(closest_lanelet, goal_footprint_, routing_graph_ptr_, path_lanelets) &&
+    !check_goal_footprint(
+      closest_lanelet, combined_prev_lanelet, goal_footprint_, next_lane_length) &&
     !is_in_parking_lot(
       lanelet::utils::query::getAllParkingLots(lanelet_map_ptr_),
       lanelet::utils::conversion::toLaneletPoint(goal.position))) {
