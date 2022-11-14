@@ -173,7 +173,7 @@ def launch_setup(context, *args, **kwargs):
         remappings=[
             ("input/emergency_state", "/system/emergency/emergency_state"),
             ("input/steering", "/vehicle/status/steering_status"),
-            ("input/operation_mode", "/control/operation_mode"),
+            ("input/operation_mode", "/system/operation_mode/state"),
             ("input/auto/control_cmd", "/control/trajectory_follower/control_cmd"),
             ("input/auto/turn_indicators_cmd", "/planning/turn_indicators_cmd"),
             ("input/auto/hazard_lights_cmd", "/planning/hazard_lights_cmd"),
@@ -187,6 +187,7 @@ def launch_setup(context, *args, **kwargs):
             ("input/emergency/control_cmd", "/system/emergency/control_cmd"),
             ("input/emergency/hazard_lights_cmd", "/system/emergency/hazard_lights_cmd"),
             ("input/emergency/gear_cmd", "/system/emergency/gear_cmd"),
+            ("input/mrm_state", "/system/fail_safe/mrm_state"),
             ("output/vehicle_cmd_emergency", "/control/command/emergency_cmd"),
             ("output/control_cmd", "/control/command/control_cmd"),
             ("output/gear_cmd", "/control/command/gear_cmd"),
@@ -228,10 +229,8 @@ def launch_setup(context, *args, **kwargs):
             ("control_cmd", "/control/command/control_cmd"),
             ("control_mode_report", "/vehicle/status/control_mode"),
             ("gate_operation_mode", "/control/vehicle_cmd_gate/operation_mode"),
-            ("operation_mode_request", "/system/operation_mode_request"),
             # output
             ("is_autonomous_available", "/control/is_autonomous_available"),
-            ("operation_mode", "/control/operation_mode"),
             ("control_mode_request", "/control/control_mode_request"),
         ],
         parameters=[
