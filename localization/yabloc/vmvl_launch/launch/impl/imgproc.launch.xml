@@ -77,10 +77,10 @@
     </node>
 
     <!-- mapping -->
-    <node if="false" name="mapping" pkg="anti_shadow" exec="mapping_node" output="screen" args="--ros-args --log-level info">
+    <node name="mapping" pkg="anti_shadow" exec="mapping_node" output="screen" args="--ros-args --log-level info">
         <remap from="$(var src_image)" to="$(var resized_image)"/>
         <remap from="/localization/imgproc/camera_info" to="$(var resized_info)"/>
-        <remap from="/localization/imgproc/lsd_cloud" to="/localization/imgproc/filt_lsd"/>
+        <remap from="/localization/imgproc/lsd_cloud" to="/localization/imgproc/filtered_lsd"/>
     </node>
 
     <!-- reprojection -->
@@ -88,6 +88,8 @@
         <remap from="$(var src_image)" to="$(var resized_image)"/>
         <remap from="/localization/imgproc/camera_info" to="$(var resized_info)"/>
         <param name="gain" value="4.0"/>
+        <param name="polygon_thic" value="5"/>
+        <param name="gap_threshold" value="150.0"/>
     </node>
 
 </launch>

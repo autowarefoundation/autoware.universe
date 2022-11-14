@@ -31,7 +31,8 @@ Reprojector::Reprojector()
   synchro_subscriber_.setCallback(std::move(cb));
 
   // Publisher
-  pub_image_ = create_publisher<Image>("reprojected_image", 10);
+  pub_cur_image_ = create_publisher<Image>("reprojected_image", 10);
+  pub_old_image_ = create_publisher<Image>("old_reprojected_image", 10);
   pub_cloud_ = create_publisher<PointCloud2>("filtered_lsd", 10);
 }
 
@@ -101,46 +102,98 @@ void Reprojector::onSynchro(const Image & image_msg, const PointCloud2 & lsd_msg
   const rclcpp::Time old_stamp{old_image_msg.header.stamp};
   const rclcpp::Time cur_stamp{image_msg.header.stamp};
   Sophus::SE3f odom = accumulateTravelDistance(old_stamp, cur_stamp);
-  RCLCPP_INFO_STREAM(get_logger(), "relative possition: " << odom.translation().transpose());
+  RCLCPP_INFO_STREAM(get_logger(), "relative position: " << odom.translation().transpose());
 
   // Define projection function from relative pose
   ProjectFunc func = defineProjectionFunction(odom);
 
   std::vector<TransformPair> pairs = makeTransformPairs(func, *lsd);
-  std::cout << "pairs " << pairs.size() << std::endl;
+  RCLCPP_INFO_STREAM(get_logger(), "successfully transformed segments: " << pairs.size());
 
   // Search offsets to refine alignment
-  cv::Mat draw_image = computeGap(pairs, old_image, cur_image);
-  vml_common::publishImage(*pub_image_, draw_image, cur_stamp);
-  std::cout << "draw & publish" << std::endl;
+  std::unordered_map<size_t, GapResult> gap_map = computeGap(pairs, old_image, cur_image);
+  RCLCPP_INFO_STREAM(get_logger(), "successfully compute gap");
 
+  // Visualize & publish
+  visualizeAndPublish(pairs, gap_map, old_image, cur_image);
+  RCLCPP_INFO_STREAM(get_logger(), "publish");
+
+  // Filt line segments using gap, then publish
+  publishCloud(*lsd, gap_map, cur_stamp);
+
+  // Pop
   popObsoleteMsg();
 
   RCLCPP_INFO_STREAM(get_logger(), "whole time: " << timer);
 }
 
-cv::Mat Reprojector::computeGap(
+void Reprojector::publishCloud(
+  const pcl::PointCloud<pcl::PointNormal> & src, const std::unordered_map<size_t, GapResult> & gaps,
+  const rclcpp::Time & stamp)
+{
+  pcl::PointCloud<pcl::PointNormal> dst;
+  for (const auto & [id, gap] : gaps) {
+    if (gap.gap * gain_ < gap_threshold_) {
+      dst.push_back(src.at(id));
+    }
+  }
+  vml_common::publishCloud(*pub_cloud_, dst, stamp);
+}
+
+void Reprojector::visualizeAndPublish(
+  const std::vector<TransformPair> & pairs, const std::unordered_map<size_t, GapResult> & gap_map,
+  const cv::Mat & old_image, const cv::Mat & cur_image)
+{
+  // Visualize old image using best offset
+  cv::Mat draw_old_image = old_image.clone();
+  cv::Rect rect(0, 0, old_image.cols, old_image.rows);
+  for (const auto & pair : pairs) {
+    const cv::Point2f offset = gap_map.at(pair.id).final_offset;
+    for (const auto & dst : pair.dst) {
+      if (rect.contains(dst)) draw_old_image.at<cv::Vec3b>(dst) = cv::Vec3b(255, 0, 0);
+      if (rect.contains(dst + offset))
+        draw_old_image.at<cv::Vec3b>(dst + offset) = cv::Vec3b(0, 255, 255);
+    }
+  }
+
+  // Visualize cur image using gap score
+  cv::Mat draw_cur_image = cur_image.clone();
+  for (const auto & pair : pairs) {
+    const int gap = gap_map.at(pair.id).gap;
+    const cv::Vec3b color = cv::Vec3b(gap, gap, gap) * gain_;
+    for (const auto & src : pair.src) {
+      if (rect.contains(src)) draw_cur_image.at<cv::Vec3b>(src) = color;
+    }
+  }
+  vml_common::publishImage(*pub_old_image_, draw_old_image, get_clock()->now());
+  vml_common::publishImage(*pub_cur_image_, draw_cur_image, get_clock()->now());
+}
+
+std::unordered_map<size_t, Reprojector::GapResult> Reprojector::computeGap(
   const std::vector<TransformPair> & pairs, const cv::Mat & old_image, const cv::Mat & cur_image)
 {
   std::vector<cv::Point2f> offset_bases = {{-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 0},
                                            {0, 1},   {1, -1}, {1, 0},  {1, 1}};
 
-  auto compute_gap = [&](const TransformPair & pair, const cv::Point2f & offset) -> int {
+  const cv::Rect rect(0, 0, old_image.cols, old_image.rows);
+
+  auto compute_gap = [&](const TransformPair & pair, const cv::Point2f & offset) -> float {
     int gap = 0;
+    int gap_cnt = 0;
     const int N = pair.src.size();
-    // TODO: check out of image
+
     for (int i = 0; i < N; ++i) {
-      cv::Vec3b s = cur_image.at<cv::Vec3b>(pair.src.at(i));
-      cv::Vec3b d = old_image.at<cv::Vec3b>(pair.dst.at(i) + offset);
-      gap += (s - d).dot(s - d);
+      if (rect.contains(pair.src.at(i)) && rect.contains(pair.dst.at(i) + offset)) {
+        cv::Vec3b s = cur_image.at<cv::Vec3b>(pair.src.at(i));
+        cv::Vec3b d = old_image.at<cv::Vec3b>(pair.dst.at(i) + offset);
+        gap += (s - d).dot(s - d);
+        gap_cnt++;
+      }
     }
-    return gap / static_cast<float>(N);
+    return gap / static_cast<float>(gap_cnt);
   };
 
-  std::vector<int> gaps;
-  std::vector<cv::Point2f> offsets;
-
-  pcl::PointCloud<pcl::PointNormal> cloud;
+  std::unordered_map<size_t, GapResult> gap_results;
 
   for (const auto & pair : pairs) {
     // First search
@@ -157,32 +210,21 @@ cv::Mat Reprojector::computeGap(
     // Second search
     int second_best_gap = std::numeric_limits<int>::max();
     cv::Point2f second_best_offset;
-    for (const auto & offset : offsets) {
+    for (const auto & offset : offset_bases) {
       int gap = compute_gap(pair, offset + best_offset);
       if (gap < second_best_gap) {
         second_best_gap = gap;
         second_best_offset = offset;
       }
     }
-    offsets.push_back(second_best_offset + best_offset);
-    gaps.push_back(second_best_gap);
+    GapResult result;
+    result.id = pair.id;
+    result.final_offset = second_best_offset + best_offset;
+    result.gap = second_best_gap;
+    gap_results.emplace(pair.id, result);
   }
 
-  cv::Mat draw_image = old_image.clone();
-  for (const auto [pair, gap, offset] : boost::combine(pairs, gaps, offsets)) {
-    const int N = pair.src.size();
-
-    for (int i = 0; i < N; ++i) {
-      auto src = pair.src.at(i);
-      auto dst = pair.dst.at(i);
-      // draw_image.at<cv::Vec3b>(dst) = cv::Vec3b(0, 255, 255);
-      draw_image.at<cv::Vec3b>(dst + offset) = cv::Vec3b(gap, gap, gap) * gain_;
-    }
-  }
-
-  vml_common::publishCloud(*pub_cloud_, cloud, rclcpp::Time());
-
-  return draw_image;
+  return gap_results;
 }
 
 std::vector<Reprojector::TransformPair> Reprojector::makeTransformPairs(
@@ -190,10 +232,12 @@ std::vector<Reprojector::TransformPair> Reprojector::makeTransformPairs(
 {
   std::vector<TransformPair> pairs;
 
-  for (const auto & ls : segments) {
+  for (size_t i = 0; i < segments.size(); ++i) {
+    const auto & ls = segments.at(i);
     TransformPair pair;
-    std::vector<cv::Point2i> polygon = line2Polygon({ls.x, ls.y}, {ls.normal_x, ls.normal_y});
+    pair.id = i;
 
+    std::vector<cv::Point2i> polygon = line2Polygon({ls.x, ls.y}, {ls.normal_x, ls.normal_y});
     for (const auto & p : polygon) {
       std::optional<cv::Point2f> opt = func(p);
 
@@ -202,7 +246,11 @@ std::vector<Reprojector::TransformPair> Reprojector::makeTransformPairs(
         pair.dst.push_back(*opt);
       }
     }
-    if (!pair.src.empty()) pairs.push_back(pair);
+
+    // If at least one pixel are transformed
+    if (!pair.src.empty()) {
+      pairs.push_back(pair);
+    }
   }
 
   return pairs;

@@ -29,6 +29,9 @@ find_package(PCL REQUIRED)
 # Sophus
 find_package(Sophus REQUIRED)
 
+# glog
+find_package(glog REQUIRED)
+
 # ===================================================
 # Executable
 macro(ADD_EXE)
@@ -44,7 +47,7 @@ macro(ADD_EXE)
   set(TARGET_NAME ${_ARG_TARGET})
   ament_auto_add_executable(${TARGET_NAME} ${SOURCE})
   target_include_directories(${TARGET_NAME} PUBLIC ${_ARG_INC} ${EIGEN3_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})
-  target_link_libraries(${TARGET_NAME} ${_ARG_LIB} ${PCL_LIBRARIES} Sophus::Sophus ${OpenCV_LIBS})
+  target_link_libraries(${TARGET_NAME} ${_ARG_LIB} ${PCL_LIBRARIES} Sophus::Sophus ${OpenCV_LIBS} glog::glog)
 endmacro()
 
 ADD_EXE(TARGET reprojection_node SRC src/reproject_*.cpp INC include)

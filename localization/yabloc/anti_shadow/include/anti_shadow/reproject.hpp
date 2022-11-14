@@ -32,7 +32,8 @@ private:
   const float gap_threshold_;
 
   // Publisher
-  rclcpp::Publisher<Image>::SharedPtr pub_image_;
+  rclcpp::Publisher<Image>::SharedPtr pub_old_image_;
+  rclcpp::Publisher<Image>::SharedPtr pub_cur_image_;
   rclcpp::Publisher<PointCloud2>::SharedPtr pub_cloud_;
   // Subscriber
   rclcpp::Subscription<Image>::SharedPtr sub_image_;
@@ -56,8 +57,15 @@ private:
   };
   struct TransformPair
   {
+    size_t id;
     std::vector<cv::Point2f> src;
     std::vector<cv::Point2f> dst;
+  };
+  struct GapResult
+  {
+    size_t id;
+    cv::Point2f final_offset;
+    int gap;
   };
 
   std::optional<Parameter> param_{std::nullopt};
@@ -71,16 +79,22 @@ private:
 
   void popObsoleteMsg();
 
-  cv::Mat drawTransformedPixel(
+  std::unordered_map<size_t, GapResult> computeGap(
     const std::vector<TransformPair> & pairs, const cv::Mat & old_image, const cv::Mat & cur_image);
 
-  cv::Mat computeGap(
-    const std::vector<TransformPair> & pairs, const cv::Mat & old_image, const cv::Mat & cur_image);
+  void visualizeAndPublish(
+    const std::vector<TransformPair> & pairs, const std::unordered_map<size_t, GapResult> & gap_map,
+    const cv::Mat & old_image, const cv::Mat & cur_image);
 
   void tryDefineParam();
   ProjectFunc defineProjectionFunction(const Sophus::SE3f & odom);
 
+  void publishCloud(
+    const pcl::PointCloud<pcl::PointNormal> & src,
+    const std::unordered_map<size_t, GapResult> & gaps, const rclcpp::Time & stamp);
+
   std::vector<cv::Point2i> line2Polygon(const cv::Point2f & from, const cv::Point2f & to) const;
+
   Sophus::SE3f accumulateTravelDistance(
     const rclcpp::Time & from_stamp, const rclcpp::Time & to_stamp) const;
 };
