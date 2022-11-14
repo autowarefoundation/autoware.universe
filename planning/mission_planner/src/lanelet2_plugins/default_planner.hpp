@@ -68,7 +68,8 @@ private:
 
   void map_callback(const HADMapBin::ConstSharedPtr msg);
   bool check_goal_footprint(
-    const lanelet::ConstLanelet & current_lanelet, const lanelet::ConstLanelet & goal_lanelet,
+    const lanelet::ConstLanelet & current_lanelet,
+    const lanelet::ConstLanelet & combined_prev_lanelet,
     const tier4_autoware_utils::LinearRing2d & goal_footprint, double & next_lane_length);
   bool is_goal_valid(const geometry_msgs::msg::Pose & goal, lanelet::ConstLanelets path_lanelets);
   Pose refine_goal_height(const Pose & goal, const RouteSections & route_sections);

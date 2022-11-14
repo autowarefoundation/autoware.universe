@@ -45,7 +45,7 @@ bool exists(const std::vector<T> & vectors, const T & item)
   return false;
 }
 
-tier4_autoware_utils::LinearRing2d createVehicleFootprint(
+tier4_autoware_utils::LinearRing2d create_vehicle_footprint(
   const vehicle_info_util::VehicleInfo & vehicle_info);
 
 void set_color(std_msgs::msg::ColorRGBA * cl, double r, double g, double b, double a);

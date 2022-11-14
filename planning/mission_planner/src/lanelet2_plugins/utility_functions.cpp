@@ -24,7 +24,7 @@ bool exists(const std::unordered_set<lanelet::Id> & set, const lanelet::Id & id)
   return set.find(id) != set.end();
 }
 
-tier4_autoware_utils::LinearRing2d createVehicleFootprint(
+tier4_autoware_utils::LinearRing2d create_vehicle_footprint(
   const vehicle_info_util::VehicleInfo & vehicle_info)
 {
   using tier4_autoware_utils::LinearRing2d;

@@ -120,7 +120,6 @@ void DefaultPlanner::initialize(rclcpp::Node * node)
     node_->create_publisher<MarkerArray>("debug/goal_footprint", durable_qos);
 
   vehicle_info_ = vehicle_info_util::VehicleInfoUtil(*node_).getVehicleInfo();
-
   param_.goal_angle_threshold_deg = node_->declare_parameter("goal_angle_threshold_deg", 45.0);
 }
 
@@ -221,14 +220,15 @@ visualization_msgs::msg::MarkerArray DefaultPlanner::visualize_debug_footprint(
 }
 
 bool DefaultPlanner::check_goal_footprint(
-  const lanelet::ConstLanelet & current_lanelet, const lanelet::ConstLanelet & goal_lanelet,
+  const lanelet::ConstLanelet & current_lanelet,
+  const lanelet::ConstLanelet & combined_prev_lanelet,
   const tier4_autoware_utils::LinearRing2d & goal_footprint, double & next_lane_length)
 {
   std::vector<tier4_autoware_utils::Point2d> points_intersection;
 
   // check if goal footprint is in current lane
   boost::geometry::intersection(
-    goal_footprint, goal_lanelet.polygon2d().basicPolygon(), points_intersection);
+    goal_footprint, combined_prev_lanelet.polygon2d().basicPolygon(), points_intersection);
   if (points_intersection.empty()) {
     return true;
   }
@@ -238,7 +238,7 @@ bool DefaultPlanner::check_goal_footprint(
   for (const auto & next_lane : routing_graph_ptr_->following(current_lanelet)) {
     next_lane_length += lanelet::utils::getLaneletLength2d(next_lane);
     lanelet::ConstLanelets lanelets;
-    lanelets.push_back(goal_lanelet);
+    lanelets.push_back(combined_prev_lanelet);
     lanelets.push_back(next_lane);
     lanelet::ConstLanelet combined_lanelets = combine_lanelets(lanelets);
 
@@ -251,13 +251,17 @@ bool DefaultPlanner::check_goal_footprint(
         return true;
       }
       points_intersection.clear();
-    } else {
-      // if next lanelet length shorter than vehicle longitudinal offset -> recursive call
-      return check_goal_footprint(next_lane, combined_lanelets, goal_footprint, next_lane_length);
+    } else {  // if next lanelet length shorter than vehicle longitudinal offset -> recursive call
+      if (!check_goal_footprint(next_lane, combined_lanelets, goal_footprint, next_lane_length)) {
+        continue;
+      } else {
+        return true;
+      }
     }
   }
   return false;
 }
+
 bool DefaultPlanner::is_goal_valid(
   const geometry_msgs::msg::Pose & goal, lanelet::ConstLanelets path_lanelets)
 {
@@ -267,7 +271,7 @@ bool DefaultPlanner::is_goal_valid(
     return false;
   }
 
-  const auto local_vehicle_footprint = createVehicleFootprint(vehicle_info_);
+  const auto local_vehicle_footprint = create_vehicle_footprint(vehicle_info_);
   tier4_autoware_utils::LinearRing2d goal_footprint_ =
     transformVector(local_vehicle_footprint, tier4_autoware_utils::pose2transform(goal));
 
