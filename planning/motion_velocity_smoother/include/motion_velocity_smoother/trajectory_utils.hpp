@@ -38,13 +38,11 @@ using TrajectoryPoints = std::vector<TrajectoryPoint>;
 using geometry_msgs::msg::Pose;
 
 TrajectoryPoint calcInterpolatedTrajectoryPoint(
-  const TrajectoryPoints & trajectory, const Pose & target_pose);
+  const TrajectoryPoints & trajectory, const Pose & target_pose, const size_t seg_idx);
 
 TrajectoryPoints extractPathAroundIndex(
   const TrajectoryPoints & trajectory, const size_t index, const double & ahead_length,
   const double & behind_length);
-
-double calcArcLength(const TrajectoryPoints & trajectory, const int idx1, const int idx2);
 
 std::vector<double> calcArclengthArray(const TrajectoryPoints & trajectory);
 

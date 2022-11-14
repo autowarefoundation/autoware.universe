@@ -44,9 +44,9 @@ public:
     const double initial_vel, const double initial_acc, const TrajectoryPoints & input,
     TrajectoryPoints & output, std::vector<TrajectoryPoints> & debug_trajectories) override;
 
-  boost::optional<TrajectoryPoints> resampleTrajectory(
+  TrajectoryPoints resampleTrajectory(
     const TrajectoryPoints & input, const double v0, const geometry_msgs::msg::Pose & current_pose,
-    const double delta_yaw_threshold) const override;
+    const double nearest_dist_threshold, const double nearest_yaw_threshold) const override;
 
   void setParam(const Param & smoother_param);
   Param getParam() const;

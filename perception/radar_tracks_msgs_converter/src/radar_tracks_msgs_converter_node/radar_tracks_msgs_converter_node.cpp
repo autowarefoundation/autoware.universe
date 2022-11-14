@@ -118,6 +118,7 @@ rcl_interfaces::msg::SetParametersResult RadarTracksMsgsConverterNode::onSetPara
 
       // Update params
       update_param(params, "update_rate_hz", p.update_rate_hz);
+      update_param(params, "new_frame_id", p.new_frame_id);
       update_param(params, "use_twist_compensation", p.use_twist_compensation);
     }
   } catch (const rclcpp::exceptions::InvalidParameterTypeException & e) {
@@ -161,6 +162,8 @@ TrackedObjects RadarTracksMsgsConverterNode::convertRadarTrackToTrackedObjects()
   TrackedObjects tracked_objects;
   tracked_objects.header = radar_data_->header;
   tracked_objects.header.frame_id = node_param_.new_frame_id;
+  using POSE_IDX = tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
+  using RADAR_IDX = tier4_autoware_utils::xyz_upper_covariance_index::XYZ_UPPER_COV_IDX;
 
   for (auto & radar_track : radar_data_->tracks) {
     TrackedObject tracked_object;
@@ -183,15 +186,19 @@ TrackedObjects RadarTracksMsgsConverterNode::convertRadarTrackToTrackedObjects()
     tf2::doTransform(radar_pose_stamped, transformed_pose_stamped, *transform_);
     kinematics.pose_with_covariance.pose = transformed_pose_stamped.pose;
 
-    kinematics.pose_with_covariance.covariance[0] = radar_track.position_covariance[0];
-    kinematics.pose_with_covariance.covariance[1] = radar_track.position_covariance[1];
-    kinematics.pose_with_covariance.covariance[2] = radar_track.position_covariance[2];
-    kinematics.pose_with_covariance.covariance[6] = radar_track.position_covariance[1];
-    kinematics.pose_with_covariance.covariance[7] = radar_track.position_covariance[3];
-    kinematics.pose_with_covariance.covariance[8] = radar_track.position_covariance[4];
-    kinematics.pose_with_covariance.covariance[12] = radar_track.position_covariance[2];
-    kinematics.pose_with_covariance.covariance[13] = radar_track.position_covariance[4];
-    kinematics.pose_with_covariance.covariance[14] = radar_track.position_covariance[5];
+    {
+      auto & pose_cov = kinematics.pose_with_covariance.covariance;
+      auto & radar_position_cov = radar_track.position_covariance;
+      pose_cov[POSE_IDX::X_X] = radar_position_cov[RADAR_IDX::X_X];
+      pose_cov[POSE_IDX::X_Y] = radar_position_cov[RADAR_IDX::X_Y];
+      pose_cov[POSE_IDX::X_Z] = radar_position_cov[RADAR_IDX::X_Z];
+      pose_cov[POSE_IDX::Y_X] = radar_position_cov[RADAR_IDX::X_Y];
+      pose_cov[POSE_IDX::Y_Y] = radar_position_cov[RADAR_IDX::Y_Y];
+      pose_cov[POSE_IDX::Y_Z] = radar_position_cov[RADAR_IDX::Y_Z];
+      pose_cov[POSE_IDX::Z_X] = radar_position_cov[RADAR_IDX::X_Z];
+      pose_cov[POSE_IDX::Z_Y] = radar_position_cov[RADAR_IDX::Y_Z];
+      pose_cov[POSE_IDX::Z_Z] = radar_position_cov[RADAR_IDX::Z_Z];
+    }
 
     // convert by tf
     geometry_msgs::msg::Vector3Stamped radar_velocity_stamped{};
@@ -211,25 +218,32 @@ TrackedObjects RadarTracksMsgsConverterNode::convertRadarTrackToTrackedObjects()
       }
     }
 
-    kinematics.twist_with_covariance.covariance[0] = radar_track.velocity_covariance[0];
-    kinematics.twist_with_covariance.covariance[1] = radar_track.velocity_covariance[1];
-    kinematics.twist_with_covariance.covariance[2] = radar_track.velocity_covariance[2];
-    kinematics.twist_with_covariance.covariance[6] = radar_track.velocity_covariance[1];
-    kinematics.twist_with_covariance.covariance[7] = radar_track.velocity_covariance[3];
-    kinematics.twist_with_covariance.covariance[8] = radar_track.velocity_covariance[4];
-    kinematics.twist_with_covariance.covariance[12] = radar_track.velocity_covariance[2];
-    kinematics.twist_with_covariance.covariance[13] = radar_track.velocity_covariance[4];
-    kinematics.twist_with_covariance.covariance[14] = radar_track.velocity_covariance[5];
-
-    kinematics.acceleration_with_covariance.covariance[0] = radar_track.acceleration_covariance[0];
-    kinematics.acceleration_with_covariance.covariance[1] = radar_track.acceleration_covariance[1];
-    kinematics.acceleration_with_covariance.covariance[2] = radar_track.acceleration_covariance[2];
-    kinematics.acceleration_with_covariance.covariance[6] = radar_track.acceleration_covariance[1];
-    kinematics.acceleration_with_covariance.covariance[7] = radar_track.acceleration_covariance[3];
-    kinematics.acceleration_with_covariance.covariance[8] = radar_track.acceleration_covariance[4];
-    kinematics.acceleration_with_covariance.covariance[12] = radar_track.acceleration_covariance[2];
-    kinematics.acceleration_with_covariance.covariance[13] = radar_track.acceleration_covariance[4];
-    kinematics.acceleration_with_covariance.covariance[14] = radar_track.acceleration_covariance[5];
+    {
+      auto & twist_cov = kinematics.twist_with_covariance.covariance;
+      auto & radar_vel_cov = radar_track.velocity_covariance;
+      twist_cov[POSE_IDX::X_X] = radar_vel_cov[RADAR_IDX::X_X];
+      twist_cov[POSE_IDX::X_Y] = radar_vel_cov[RADAR_IDX::X_Y];
+      twist_cov[POSE_IDX::X_Z] = radar_vel_cov[RADAR_IDX::X_Z];
+      twist_cov[POSE_IDX::Y_X] = radar_vel_cov[RADAR_IDX::X_Y];
+      twist_cov[POSE_IDX::Y_Y] = radar_vel_cov[RADAR_IDX::Y_Y];
+      twist_cov[POSE_IDX::Y_Z] = radar_vel_cov[RADAR_IDX::Y_Z];
+      twist_cov[POSE_IDX::Z_X] = radar_vel_cov[RADAR_IDX::X_Z];
+      twist_cov[POSE_IDX::Z_Y] = radar_vel_cov[RADAR_IDX::Y_Z];
+      twist_cov[POSE_IDX::Z_Z] = radar_vel_cov[RADAR_IDX::Z_Z];
+    }
+    {
+      auto & accel_cov = kinematics.acceleration_with_covariance.covariance;
+      auto & radar_accel_cov = radar_track.acceleration_covariance;
+      accel_cov[POSE_IDX::X_X] = radar_accel_cov[RADAR_IDX::X_X];
+      accel_cov[POSE_IDX::X_Y] = radar_accel_cov[RADAR_IDX::X_Y];
+      accel_cov[POSE_IDX::X_Z] = radar_accel_cov[RADAR_IDX::X_Z];
+      accel_cov[POSE_IDX::Y_X] = radar_accel_cov[RADAR_IDX::X_Y];
+      accel_cov[POSE_IDX::Y_Y] = radar_accel_cov[RADAR_IDX::Y_Y];
+      accel_cov[POSE_IDX::Y_Z] = radar_accel_cov[RADAR_IDX::Y_Z];
+      accel_cov[POSE_IDX::Z_X] = radar_accel_cov[RADAR_IDX::X_Z];
+      accel_cov[POSE_IDX::Z_Y] = radar_accel_cov[RADAR_IDX::Y_Z];
+      accel_cov[POSE_IDX::Z_Z] = radar_accel_cov[RADAR_IDX::Z_Z];
+    }
 
     tracked_object.kinematics = kinematics;
 

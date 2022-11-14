@@ -20,7 +20,6 @@
 
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
 namespace behavior_path_planner
@@ -33,23 +32,19 @@ double calcShiftLength(
 
 bool isSameDirectionShift(const bool & is_object_on_right, const double & shift_length);
 
-lanelet::ConstLanelets calcLaneAroundPose(
-  const std::shared_ptr<const PlannerData> & planner_data, const Pose & pose,
-  const double backward_length);
-
 size_t findPathIndexFromArclength(
   const std::vector<double> & path_arclength_arr, const double target_arc);
 
 ShiftedPath toShiftedPath(const PathWithLaneId & path);
 
-ShiftPointArray toShiftPointArray(const AvoidPointArray & avoid_points);
+ShiftLineArray toShiftLineArray(const AvoidLineArray & avoid_points);
 
 std::vector<size_t> concatParentIds(
   const std::vector<size_t> & ids1, const std::vector<size_t> & ids2);
 
-double lerpShiftLengthOnArc(double arc, const AvoidPoint & ap);
+double lerpShiftLengthOnArc(double arc, const AvoidLine & al);
 
-void clipByMinStartIdx(const AvoidPointArray & shift_points, PathWithLaneId & path);
+void clipByMinStartIdx(const AvoidLineArray & shift_lines, PathWithLaneId & path);
 
 void fillLongitudinalAndLengthByClosestFootprint(
   const PathWithLaneId & path, const PredictedObject & object, const Point & ego_pos,
@@ -59,11 +54,11 @@ double calcOverhangDistance(
   const ObjectData & object_data, const Pose & base_pose, Point & overhang_pose);
 
 void setEndData(
-  AvoidPoint & ap, const double length, const geometry_msgs::msg::Pose & end, const size_t end_idx,
+  AvoidLine & al, const double length, const geometry_msgs::msg::Pose & end, const size_t end_idx,
   const double end_dist);
 
 void setStartData(
-  AvoidPoint & ap, const double start_length, const geometry_msgs::msg::Pose & start,
+  AvoidLine & al, const double start_shift_length, const geometry_msgs::msg::Pose & start,
   const size_t start_idx, const double start_dist);
 
 std::string getUuidStr(const ObjectData & obj);

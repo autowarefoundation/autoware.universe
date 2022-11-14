@@ -23,16 +23,21 @@
 #include "tier4_autoware_utils/geometry/boost_geometry.hpp"
 #include "tier4_autoware_utils/math/constants.hpp"
 #include "tier4_autoware_utils/math/normalization.hpp"
+#include "tier4_autoware_utils/ros/msg_covariance.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
 #include <autoware_auto_planning_msgs/msg/path.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
+#include <geometry_msgs/msg/point32.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <geometry_msgs/msg/quaternion.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
+#include <geometry_msgs/msg/twist.hpp>
+#include <geometry_msgs/msg/twist_with_covariance.hpp>
+#include <geometry_msgs/msg/vector3.hpp>
 
 #include <tf2/utils.h>
 
@@ -199,7 +204,7 @@ inline double getLongitudinalVelocity(const autoware_auto_planning_msgs::msg::Tr
 }
 
 template <class T>
-void setPose(const geometry_msgs::msg::Pose & pose, [[maybe_unused]] T & p)
+void setPose([[maybe_unused]] const geometry_msgs::msg::Pose & pose, [[maybe_unused]] T & p)
 {
   static_assert(sizeof(T) == 0, "Only specializations of getPose can be used.");
   throw std::logic_error("Only specializations of getPose can be used.");
@@ -232,7 +237,15 @@ inline void setPose(
 }
 
 template <class T>
-void setLongitudinalVelocity(const double velocity, [[maybe_unused]] T & p)
+inline void setOrientation(const geometry_msgs::msg::Quaternion & orientation, T & p)
+{
+  auto pose = getPose(p);
+  pose.orientation = orientation;
+  setPose(pose, p);
+}
+
+template <class T>
+void setLongitudinalVelocity([[maybe_unused]] const double velocity, [[maybe_unused]] T & p)
 {
   static_assert(sizeof(T) == 0, "Only specializations of getLongitudinalVelocity can be used.");
   throw std::logic_error("Only specializations of getLongitudinalVelocity can be used.");
@@ -413,13 +426,25 @@ inline geometry_msgs::msg::Transform pose2transform(const geometry_msgs::msg::Po
 }
 
 inline geometry_msgs::msg::TransformStamped pose2transform(
-  const geometry_msgs::msg::PoseStamped & pose, const std::string child_frame_id)
+  const geometry_msgs::msg::PoseStamped & pose, const std::string & child_frame_id)
 {
   geometry_msgs::msg::TransformStamped transform;
   transform.header = pose.header;
   transform.transform = pose2transform(pose.pose);
   transform.child_frame_id = child_frame_id;
   return transform;
+}
+
+template <class Point1, class Point2>
+tf2::Vector3 point2tfVector(const Point1 & src, const Point2 & dst)
+{
+  const auto src_p = getPoint(src);
+  const auto dst_p = getPoint(dst);
+
+  double dx = dst_p.x - src_p.x;
+  double dy = dst_p.y - src_p.y;
+  double dz = dst_p.z - src_p.z;
+  return tf2::Vector3(dx, dy, dz);
 }
 
 inline Point3d transformPoint(
@@ -445,7 +470,7 @@ inline Point2d transformPoint(
 }
 
 inline Eigen::Vector3d transformPoint(
-  const Eigen::Vector3d point, const geometry_msgs::msg::Pose pose)
+  const Eigen::Vector3d & point, const geometry_msgs::msg::Pose & pose)
 {
   geometry_msgs::msg::Transform transform;
   transform.translation.x = pose.position.x;
@@ -458,7 +483,7 @@ inline Eigen::Vector3d transformPoint(
 }
 
 inline geometry_msgs::msg::Point transformPoint(
-  const geometry_msgs::msg::Point point, const geometry_msgs::msg::Pose pose)
+  const geometry_msgs::msg::Point & point, const geometry_msgs::msg::Pose & pose)
 {
   const Eigen::Vector3d vec = Eigen::Vector3d(point.x, point.y, point.z);
   auto transformed_vec = transformPoint(vec, pose);
@@ -468,6 +493,18 @@ inline geometry_msgs::msg::Point transformPoint(
   transformed_point.y = transformed_vec.y();
   transformed_point.z = transformed_vec.z();
   return transformed_point;
+}
+
+inline geometry_msgs::msg::Point32 transformPoint(
+  const geometry_msgs::msg::Point32 & point32, const geometry_msgs::msg::Pose & pose)
+{
+  const auto point =
+    geometry_msgs::build<geometry_msgs::msg::Point>().x(point32.x).y(point32.y).z(point32.z);
+  const auto transformed_point = tier4_autoware_utils::transformPoint(point, pose);
+  return geometry_msgs::build<geometry_msgs::msg::Point32>()
+    .x(transformed_point.x)
+    .y(transformed_point.y)
+    .z(transformed_point.z);
 }
 
 template <class T>
@@ -546,21 +583,21 @@ inline geometry_msgs::msg::Pose inverseTransformPose(
 
 // Transform point in world coordinates to local coordinates
 inline Eigen::Vector3d inverseTransformPoint(
-  const Eigen::Vector3d point, const geometry_msgs::msg::Pose pose)
+  const Eigen::Vector3d & point, const geometry_msgs::msg::Pose & pose)
 {
   const Eigen::Quaterniond q(
     pose.orientation.w, pose.orientation.x, pose.orientation.y, pose.orientation.z);
   const Eigen::Matrix3d R = q.normalized().toRotationMatrix();
 
   const Eigen::Vector3d local_origin(pose.position.x, pose.position.y, pose.position.z);
-  const Eigen::Vector3d local_point = R.transpose() * point - R.transpose() * local_origin;
+  Eigen::Vector3d local_point = R.transpose() * point - R.transpose() * local_origin;
 
   return local_point;
 }
 
 // Transform point in world coordinates to local coordinates
 inline geometry_msgs::msg::Point inverseTransformPoint(
-  const geometry_msgs::msg::Point point, const geometry_msgs::msg::Pose pose)
+  const geometry_msgs::msg::Point & point, const geometry_msgs::msg::Pose & pose)
 {
   const Eigen::Vector3d local_vec =
     inverseTransformPoint(Eigen::Vector3d(point.x, point.y, point.z), pose);
@@ -591,11 +628,7 @@ bool isDrivingForward(const Pose1 & src_pose, const Pose2 & dst_pose)
   // check the first point direction
   const double src_yaw = tf2::getYaw(getPose(src_pose).orientation);
   const double pose_direction_yaw = calcAzimuthAngle(getPoint(src_pose), getPoint(dst_pose));
-  if (std::fabs(normalizeRadian(src_yaw - pose_direction_yaw)) < pi / 2.0) {
-    return true;
-  }
-
-  return false;
+  return std::fabs(normalizeRadian(src_yaw - pose_direction_yaw)) < pi / 2.0;
 }
 
 /**
@@ -692,7 +725,8 @@ geometry_msgs::msg::Pose calcInterpolatedPose(
     }
   } else {
     // Get orientation by spherical linear interpolation
-    tf2::Transform src_tf, dst_tf;
+    tf2::Transform src_tf;
+    tf2::Transform dst_tf;
     tf2::fromMsg(getPose(src_pose), src_tf);
     tf2::fromMsg(getPose(dst_pose), dst_tf);
     const auto & quaternion = tf2::slerp(src_tf.getRotation(), dst_tf.getRotation(), clamped_ratio);
@@ -701,6 +735,38 @@ geometry_msgs::msg::Pose calcInterpolatedPose(
 
   return output_pose;
 }
+
+inline geometry_msgs::msg::Vector3 createVector3(const double x, double y, double z)
+{
+  return geometry_msgs::build<geometry_msgs::msg::Vector3>().x(x).y(y).z(z);
+}
+
+inline geometry_msgs::msg::Twist createTwist(
+  const geometry_msgs::msg::Vector3 & velocity, geometry_msgs::msg::Vector3 & angular)
+{
+  return geometry_msgs::build<geometry_msgs::msg::Twist>().linear(velocity).angular(angular);
+}
+
+inline double calcNorm(const geometry_msgs::msg::Vector3 & v) { return std::hypot(v.x, v.y, v.z); }
+
+/**
+ * @brief Judge whether twist covariance is valid.
+ *
+ * @param twist_with_covariance source twist with covariance
+ * @return If all element of covariance is 0, return false.
+ */
+//
+inline bool isTwistCovarianceValid(
+  const geometry_msgs::msg::TwistWithCovariance & twist_with_covariance)
+{
+  for (const auto & c : twist_with_covariance.covariance) {
+    if (c != 0.0) {
+      return true;
+    }
+  }
+  return false;
+}
+
 }  // namespace tier4_autoware_utils
 
 #endif  // TIER4_AUTOWARE_UTILS__GEOMETRY__GEOMETRY_HPP_

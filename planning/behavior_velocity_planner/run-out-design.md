@@ -137,6 +137,32 @@ If the collision is detected, stop point is inserted on distance of base link to
 
 ![brief](./docs/run_out/insert_velocity.svg)
 
+#### Insert velocity to approach the obstacles
+
+If you select the method of `Points` or `ObjectWithoutPath`, sometimes ego keeps stopping in front of the obstacle.
+To avoid this problem, This feature has option to approach the obstacle with slow velocity after stopping.
+If the parameter of `approaching.enable` is set to true, ego will approach the obstacle after ego stopped for `state.stop_time_thresh` seconds.
+The maximum velocity of approaching can be specified by the parameter of `approaching.limit_vel_kmph`.
+The decision to approach the obstacle is determined by a simple state transition as following image.
+
+![brief](./docs/run_out/insert_velocity_to_approach.svg)
+
+```plantuml
+@startuml
+hide empty description
+left to right direction
+title State transition for approaching the obstacle
+
+[*] --> GO
+GO --> STOP : Current velocity is less than threshold
+STOP --> GO : Current velocity is larger than threshold
+
+STOP --> APPROACH : Stop duration is larger than threshold
+APPROACH --> GO : There are no obstacles or \n distance to the obstacle is larger than threshold
+APPROACH --> APPROACH : Approach duration is less than threshold
+@enduml
+```
+
 ##### Limit velocity with specified jerk and acc limit
 
 The maximum slowdown velocity is calculated in order not to slowdown too much.
@@ -153,7 +179,6 @@ You can choose whether to use this feature by parameter of `slow_down_limit.enab
 | `stop_margin`           | double | [m] the vehicle decelerates to be able to stop with this margin                                                          |
 | `passing_margin`        | double | [m] the vehicle begins to accelerate if the vehicle's front in predicted position is ahead of the obstacle + this margin |
 | `deceleration_jerk`     | double | [m/s^3] ego decelerates with this jerk when stopping for obstacles                                                       |
-| `obstacle_velocity_kph` | double | [km/h] assumption for obstacle velocity                                                                                  |
 | `detection_distance`    | double | [m] ahead distance from ego to detect the obstacles                                                                      |
 | `detection_span`        | double | [m] calculate collision with this span to reduce calculation time                                                        |
 | `min_vel_ego_kmph`      | double | [km/h] min velocity to calculate time to collision                                                                       |
@@ -163,23 +188,28 @@ You can choose whether to use this feature by parameter of `slow_down_limit.enab
 | `margin_ahead`            | double | [m] ahead margin for detection area polygon  |
 | `margin_behind`           | double | [m] behind margin for detection area polygon |
 
-| Parameter /dynamic_obstacle | Type   | Description                                                                                                 |
-| --------------------------- | ------ | ----------------------------------------------------------------------------------------------------------- |
-| `min_vel_kmph`              | double | [km/h] minimum velocity for dynamic obstacles                                                               |
-| `max_vel_kmph`              | double | [km/h] maximum velocity for dynamic obstacles                                                               |
-| `diameter`                  | double | [m] diameter of obstacles. used for creating dynamic obstacles from points                                  |
-| `height`                    | double | [m] height of obstacles. used for creating dynamic obstacles from points                                    |
-| `max_prediction_time`       | double | [sec] create predicted path until this time                                                                 |
-| `time_step`                 | double | [sec] time step for each path step. used for creating dynamic obstacles from points or objects without path |
+| Parameter /dynamic_obstacle | Type   | Description                                                                                                                   |
+| --------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| `min_vel_kmph`              | double | [km/h] minimum velocity for dynamic obstacles                                                                                 |
+| `max_vel_kmph`              | double | [km/h] maximum velocity for dynamic obstacles                                                                                 |
+| `diameter`                  | double | [m] diameter of obstacles. used for creating dynamic obstacles from points                                                    |
+| `height`                    | double | [m] height of obstacles. used for creating dynamic obstacles from points                                                      |
+| `max_prediction_time`       | double | [sec] create predicted path until this time                                                                                   |
+| `time_step`                 | double | [sec] time step for each path step. used for creating dynamic obstacles from points or objects without path                   |
+| `points_interval`           | double | [m] divide obstacle points into groups with this interval, and detect only lateral nearest point. used only for Points method |
 
-| Parameter /approaching | Type   | Description                                                                                        |
-| ---------------------- | ------ | -------------------------------------------------------------------------------------------------- |
-| `enable`               | bool   | [-] whether to enable approaching after stopping                                                   |
-| `margin`               | double | [m] distance on how close ego approaches the obstacle                                              |
-| `limit_vel_kmph`       | double | [km/h] limit velocity for approaching after stopping                                               |
-| `stop_thresh`          | double | [m/s] threshold to decide if ego is stopping                                                       |
-| `stop_time_thresh`     | double | [sec] threshold for stopping time to transit to approaching state                                  |
-| `dist_thresh`          | double | [m] end the approaching state if distance to the obstacle is longer than stop_margin + dist_thresh |
+| Parameter /approaching | Type   | Description                                           |
+| ---------------------- | ------ | ----------------------------------------------------- |
+| `enable`               | bool   | [-] whether to enable approaching after stopping      |
+| `margin`               | double | [m] distance on how close ego approaches the obstacle |
+| `limit_vel_kmph`       | double | [km/h] limit velocity for approaching after stopping  |
+
+| Parameter /state         | Type   | Description                                                                         |
+| ------------------------ | ------ | ----------------------------------------------------------------------------------- |
+| `stop_thresh`            | double | [m/s] threshold to decide if ego is stopping                                        |
+| `stop_time_thresh`       | double | [sec] threshold for stopping time to transit to approaching state                   |
+| `disable_approach_dist`  | double | [m] end the approaching state if distance to the obstacle is longer than this value |
+| `keep_approach_duration` | double | [sec] keep approach state for this duration to avoid chattering of state transition |
 
 | Parameter /slow_down_limit | Type   | Description                                                   |
 | -------------------------- | ------ | ------------------------------------------------------------- |

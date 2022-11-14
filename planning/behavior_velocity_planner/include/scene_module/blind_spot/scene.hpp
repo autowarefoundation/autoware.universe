@@ -18,6 +18,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <scene_module/scene_module_interface.hpp>
 #include <utilization/boost_geometry_helper.hpp>
+#include <utilization/state_machine.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_object.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
@@ -43,54 +44,16 @@ struct BlindSpotPolygons
 class BlindSpotModule : public SceneModuleInterface
 {
 public:
-  enum class State {
-    STOP = 0,
-    GO,
-  };
-  std::string toString(const State & state)
-  {
-    if (state == State::STOP) {
-      return "STOP";
-    } else if (state == State::GO) {
-      return "GO";
-    } else {
-      return "UNKNOWN";
-    }
-  }
-
   enum class TurnDirection { LEFT = 0, RIGHT, INVALID };
-
-  /**
-   * @brief Manage stop-go states with safety margin time.
-   */
-  class StateMachine
-  {
-  public:
-    StateMachine()
-    {
-      state_ = State::GO;
-      margin_time_ = 0.0;
-    }
-    void setStateWithMarginTime(State state, rclcpp::Logger logger, rclcpp::Clock & clock);
-    void setState(State state);
-    void setMarginTime(const double t);
-    State getState();
-
-  private:
-    State state_;                               //! current state
-    double margin_time_;                        //! margin time when transit to Go from Stop
-    std::shared_ptr<rclcpp::Time> start_time_;  //! first time received GO when STOP state
-  };
 
   struct DebugData
   {
     autoware_auto_planning_msgs::msg::PathWithLaneId path_raw;
-
     geometry_msgs::msg::Pose virtual_wall_pose;
     geometry_msgs::msg::Pose stop_point_pose;
     geometry_msgs::msg::Pose judge_point_pose;
-    lanelet::CompoundPolygon3d conflict_area_for_blind_spot;
-    lanelet::CompoundPolygon3d detection_area_for_blind_spot;
+    geometry_msgs::msg::Polygon conflict_area_for_blind_spot;
+    geometry_msgs::msg::Polygon detection_area_for_blind_spot;
     autoware_auto_planning_msgs::msg::PathWithLaneId spline_path;
     autoware_auto_perception_msgs::msg::PredictedObjects conflicting_targets;
   };
@@ -123,7 +86,7 @@ public:
   visualization_msgs::msg::MarkerArray createVirtualWallMarkerArray() override;
 
 private:
-  int64_t lane_id_;
+  const int64_t lane_id_;
   TurnDirection turn_direction_;
   bool has_traffic_light_;
   bool is_over_pass_judge_line_;
@@ -207,8 +170,7 @@ private:
    */
   bool generateStopLine(
     const lanelet::ConstLanelets straight_lanelets,
-    autoware_auto_planning_msgs::msg::PathWithLaneId * path, int * stop_line_idx,
-    int * pass_judge_line_idx) const;
+    autoware_auto_planning_msgs::msg::PathWithLaneId * path, int * stop_line_idx) const;
 
   /**
    * @brief Insert a point to target path
@@ -219,7 +181,7 @@ private:
    */
   int insertPoint(
     const int insert_idx_ip, const autoware_auto_planning_msgs::msg::PathWithLaneId path_ip,
-    autoware_auto_planning_msgs::msg::PathWithLaneId * path, bool & is_point_inserted) const;
+    autoware_auto_planning_msgs::msg::PathWithLaneId * path) const;
 
   /**
    * @brief Calculate first path index that is conflicting lanelets.
@@ -236,7 +198,7 @@ private:
    * @param lane_id lane id of objective lanelet
    * @return end point of lanelet
    */
-  boost::optional<geometry_msgs::msg::Point> getStartPointFromLaneLet(const int lane_id) const;
+  boost::optional<geometry_msgs::msg::Pose> getStartPointFromLaneLet(const int lane_id) const;
 
   /**
    * @brief get straight lanelets in intersection

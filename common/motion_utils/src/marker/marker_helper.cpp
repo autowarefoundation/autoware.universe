@@ -17,6 +17,7 @@
 #include <string>
 
 using tier4_autoware_utils::createDefaultMarker;
+using tier4_autoware_utils::createDeletedDefaultMarker;
 using tier4_autoware_utils::createMarkerColor;
 using tier4_autoware_utils::createMarkerScale;
 
@@ -57,31 +58,74 @@ inline visualization_msgs::msg::MarkerArray createVirtualWallMarkerArray(
   return marker_array;
 }
 
+inline visualization_msgs::msg::MarkerArray createDeletedVirtualWallMarkerArray(
+  const std::string & ns_prefix, const rclcpp::Time & now, const int32_t id)
+{
+  visualization_msgs::msg::MarkerArray marker_array;
+
+  // Virtual Wall
+  {
+    auto marker = createDeletedDefaultMarker(now, ns_prefix + "virtual_wall", id);
+    marker_array.markers.push_back(marker);
+  }
+
+  // Factor Text
+  {
+    auto marker = createDeletedDefaultMarker(now, ns_prefix + "factor_text", id);
+    marker_array.markers.push_back(marker);
+  }
+
+  return marker_array;
+}
 }  // namespace
 
 namespace motion_utils
 {
 visualization_msgs::msg::MarkerArray createStopVirtualWallMarker(
   const geometry_msgs::msg::Pose & pose, const std::string & module_name, const rclcpp::Time & now,
-  const int32_t id)
+  const int32_t id, const double longitudinal_offset)
 {
+  const auto pose_with_offset =
+    tier4_autoware_utils::calcOffsetPose(pose, longitudinal_offset, 0.0, 0.0);
   return createVirtualWallMarkerArray(
-    pose, module_name, "stop_", now, id, createMarkerColor(1.0, 0.0, 0.0, 0.5));
+    pose_with_offset, module_name, "stop_", now, id, createMarkerColor(1.0, 0.0, 0.0, 0.5));
 }
 
 visualization_msgs::msg::MarkerArray createSlowDownVirtualWallMarker(
   const geometry_msgs::msg::Pose & pose, const std::string & module_name, const rclcpp::Time & now,
-  const int32_t id)
+  const int32_t id, const double longitudinal_offset)
 {
+  const auto pose_with_offset =
+    tier4_autoware_utils::calcOffsetPose(pose, longitudinal_offset, 0.0, 0.0);
   return createVirtualWallMarkerArray(
-    pose, module_name, "slow_down_", now, id, createMarkerColor(1.0, 1.0, 0.0, 0.5));
+    pose_with_offset, module_name, "slow_down_", now, id, createMarkerColor(1.0, 1.0, 0.0, 0.5));
 }
 
 visualization_msgs::msg::MarkerArray createDeadLineVirtualWallMarker(
   const geometry_msgs::msg::Pose & pose, const std::string & module_name, const rclcpp::Time & now,
-  const int32_t id)
+  const int32_t id, const double longitudinal_offset)
 {
+  const auto pose_with_offset =
+    tier4_autoware_utils::calcOffsetPose(pose, longitudinal_offset, 0.0, 0.0);
   return createVirtualWallMarkerArray(
-    pose, module_name, "dead_line_", now, id, createMarkerColor(0.0, 1.0, 0.0, 0.5));
+    pose_with_offset, module_name, "dead_line_", now, id, createMarkerColor(0.0, 1.0, 0.0, 0.5));
+}
+
+visualization_msgs::msg::MarkerArray createDeletedStopVirtualWallMarker(
+  const rclcpp::Time & now, const int32_t id)
+{
+  return createDeletedVirtualWallMarkerArray("stop_", now, id);
+}
+
+visualization_msgs::msg::MarkerArray createDeletedSlowDownVirtualWallMarker(
+  const rclcpp::Time & now, const int32_t id)
+{
+  return createDeletedVirtualWallMarkerArray("slow_down_", now, id);
+}
+
+visualization_msgs::msg::MarkerArray createDeletedDeadLineVirtualWallMarker(
+  const rclcpp::Time & now, const int32_t id)
+{
+  return createDeletedVirtualWallMarkerArray("dead_line_", now, id);
 }
 }  // namespace motion_utils

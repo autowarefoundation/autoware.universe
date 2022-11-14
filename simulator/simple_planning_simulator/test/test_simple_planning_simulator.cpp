@@ -52,8 +52,9 @@ public:
       [this](const Odometry::SharedPtr msg) { current_odom_ = msg; });
     pub_ackermann_command_ =
       create_publisher<AckermannControlCommand>("input/ackermann_control_command", rclcpp::QoS{1});
-    pub_initialpose_ = create_publisher<PoseWithCovarianceStamped>("/initialpose", rclcpp::QoS{1});
-    pub_gear_cmd_ = create_publisher<GearCommand>("/input/gear_command", rclcpp::QoS{1});
+    pub_initialpose_ =
+      create_publisher<PoseWithCovarianceStamped>("input/initialpose", rclcpp::QoS{1});
+    pub_gear_cmd_ = create_publisher<GearCommand>("input/gear_command", rclcpp::QoS{1});
   }
 
   rclcpp::Subscription<Odometry>::SharedPtr current_odom_sub_;
@@ -74,8 +75,8 @@ public:
  * @param [in] jerk [m/s3] jerk
  */
 AckermannControlCommand cmdGen(
-  const builtin_interfaces::msg::Time & t, float32_t steer, float32_t steer_rate, float32_t vel,
-  float32_t acc, float32_t jerk)
+  const builtin_interfaces::msg::Time & t, double steer, double steer_rate, double vel, double acc,
+  double jerk)
 {
   AckermannControlCommand cmd;
   cmd.stamp = t;
@@ -147,34 +148,34 @@ void sendCommand(
 //
 void isOnForward(const Odometry & state, const Odometry & init)
 {
-  float64_t forward_thr = 1.0;
-  float64_t dx = state.pose.pose.position.x - init.pose.pose.position.x;
+  double forward_thr = 1.0;
+  double dx = state.pose.pose.position.x - init.pose.pose.position.x;
   EXPECT_GT(dx, forward_thr) << "[curr] " << toStrInfo(state) << ", [init] " << toStrInfo(init);
 }
 
 void isOnBackward(const Odometry & state, const Odometry & init)
 {
-  float64_t backward_thr = -1.0;
-  float64_t dx = state.pose.pose.position.x - init.pose.pose.position.x;
+  double backward_thr = -1.0;
+  double dx = state.pose.pose.position.x - init.pose.pose.position.x;
   EXPECT_LT(dx, backward_thr) << "[curr] " << toStrInfo(state) << ", [init] " << toStrInfo(init);
 }
 
 void isOnForwardLeft(const Odometry & state, const Odometry & init)
 {
-  float64_t forward_thr = 1.0;
-  float64_t left_thr = 0.1f;
-  float64_t dx = state.pose.pose.position.x - init.pose.pose.position.x;
-  float64_t dy = state.pose.pose.position.y - init.pose.pose.position.y;
+  double forward_thr = 1.0;
+  double left_thr = 0.1f;
+  double dx = state.pose.pose.position.x - init.pose.pose.position.x;
+  double dy = state.pose.pose.position.y - init.pose.pose.position.y;
   EXPECT_GT(dx, forward_thr) << "[curr] " << toStrInfo(state) << ", [init] " << toStrInfo(init);
   EXPECT_GT(dy, left_thr) << "[curr] " << toStrInfo(state) << ", [init] " << toStrInfo(init);
 }
 
 void isOnBackwardRight(const Odometry & state, const Odometry & init)
 {
-  float64_t backward_thr = -1.0;
-  float64_t right_thr = -0.1;
-  float64_t dx = state.pose.pose.position.x - init.pose.pose.position.x;
-  float64_t dy = state.pose.pose.position.y - init.pose.pose.position.y;
+  double backward_thr = -1.0;
+  double right_thr = -0.1;
+  double dx = state.pose.pose.position.x - init.pose.pose.position.x;
+  double dy = state.pose.pose.position.y - init.pose.pose.position.y;
   EXPECT_LT(dx, backward_thr) << "[curr] " << toStrInfo(state) << ", [init] " << toStrInfo(init);
   EXPECT_LT(dy, right_thr) << "[curr] " << toStrInfo(state) << ", [init] " << toStrInfo(init);
 }
@@ -216,9 +217,9 @@ TEST_P(TestSimplePlanningSimulator, TestIdealSteerVel)
 
   const auto pub_sub_node = std::make_shared<PubSubNode>();
 
-  const float32_t target_vel = 5.0f;
-  const float32_t target_acc = 5.0f;
-  const float32_t target_steer = 0.2f;
+  const double target_vel = 5.0f;
+  const double target_acc = 5.0f;
+  const double target_steer = 0.2f;
 
   auto _resetInitialpose = [&]() { resetInitialpose(sim_node, pub_sub_node); };
   auto _sendFwdGear = [&]() { sendGear(GearCommand::DRIVE, sim_node, pub_sub_node); };

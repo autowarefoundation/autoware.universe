@@ -12,6 +12,7 @@
     - source: .github/PULL_REQUEST_TEMPLATE/standard-change.md
     - source: .github/dependabot.yaml
     - source: .github/stale.yml
+    - source: .github/workflows/cancel-previous-workflows.yaml
     - source: .github/workflows/github-release.yaml
     - source: .github/workflows/pre-commit.yaml
     - source: .github/workflows/pre-commit-optional.yaml
@@ -51,12 +52,11 @@
         sd -- \
         "       include:" \
         "       container-suffix:
-                  - \"\"
                   - -cuda
                 include:" {source}
 
-        sd "^    container: ghcr.io/autowarefoundation/autoware-universe:galactic-latest" \
-            "    container: ghcr.io/autowarefoundation/autoware-universe:galactic-latest-cuda" {source}
+        sd "^    container: ghcr.io/autowarefoundation/autoware-universe:(\w+)-latest\$" \
+            "    container: ghcr.io/autowarefoundation/autoware-universe:\$1-latest-cuda" {source}
     - source: .github/workflows/build-and-test-differential-self-hosted.yaml
       pre-commands: |
         sd "container: ros:(\w+)" "container: ghcr.io/autowarefoundation/autoware-universe:\$1-latest" {source}
@@ -66,7 +66,6 @@
         sd -- \
         "       include:" \
         "       container-suffix:
-                  - \"\"
                   - -cuda
                 include:" {source}
     - source: .github/workflows/build-and-test-self-hosted.yaml
@@ -83,8 +82,10 @@
                 include:" {source}
     - source: .github/workflows/check-build-depends.yaml
       pre-commands: |
-        sd "container: ros:(\w+)" "container: ghcr.io/autowarefoundation/autoware-universe:\$1-latest" {source}
         sd -f ms '(rosdistro: humble.*?build-depends-repos): build_depends.repos' '$1: build_depends.humble.repos' {source}
+    - source: .github/workflows/clang-tidy-pr-comments.yaml
+    - source: .github/workflows/clang-tidy-pr-comments-manually.yaml
+    - source: .github/workflows/update-codeowners-from-packages.yaml
     - source: codecov.yaml
 
 - repository: autowarefoundation/autoware-documentation

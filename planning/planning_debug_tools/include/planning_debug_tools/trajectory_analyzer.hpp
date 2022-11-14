@@ -91,8 +91,12 @@ public:
     const auto arclength_offset = motion_utils::calcSignedArcLength(points, 0, ego_p);
     data.arclength = calcPathArcLengthArray(points, -arclength_offset);
     data.velocity = getVelocityArray(points);
+    data.acceleration = getAccelerationArray(points);
+    data.yaw = getYawArray(points);
 
-    if (data.size != data.arclength.size() || data.size != data.velocity.size()) {
+    if (
+      data.size != data.arclength.size() || data.size != data.velocity.size() ||
+      data.size != data.yaw.size()) {
       RCLCPP_ERROR(node_->get_logger(), "computation failed.");
       return;
     }
@@ -112,7 +116,7 @@ private:
   void onEgoKinematics(const Odometry::ConstSharedPtr msg);
 
   std::vector<std::shared_ptr<TrajectoryAnalyzer<Path>>> path_analyzers_;
-  std::vector<std::shared_ptr<TrajectoryAnalyzer<PathWithLaneId>>> path_wlid_analyzers_;
+  std::vector<std::shared_ptr<TrajectoryAnalyzer<PathWithLaneId>>> path_with_lane_id_analyzers_;
   std::vector<std::shared_ptr<TrajectoryAnalyzer<Trajectory>>> trajectory_analyzers_;
 };
 

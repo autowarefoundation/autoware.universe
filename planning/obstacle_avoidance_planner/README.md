@@ -711,7 +711,7 @@ $N_{circle}$ is the number of circles to check collision.
 - `advanced.mpt.bounds_search_widths`
   - In order to efficiently search precise lateral boundaries on each trajectory point, different resolutions of search widths are defined.
   - By default, [0.45, 0.15, 0.05, 0.01] is used. In this case, the goal is to get the boundaries' length on each trajectory point with 0.01 [m] resolution.
-  - Firstly, lateral boundaries are searhed with a rough resolution (= 0.45 [m]).
+  - Firstly, lateral boundaries are searched with a rough resolution (= 0.45 [m]).
   - Then, within its 0.45 [m] resolution which boundaries are inside, they are searched again with a bit precise resolution (= 0.15 [m]).
   - Following this rule, finally boundaries with 0.01 [m] will be found.
 
@@ -808,55 +808,6 @@ under research yet
 Based on these pros/cons, we chose the optimization-based planner first.
 Although it has a cons to converge to the local minima, it can get a good solution by the preprocessing to approximate the convex problem that almost equals to the original non-convex problem.
 
-## How to debug
+# Debug
 
-Topics for debugging will be explained in this section.
-
-- **Drivable area**
-  - Drivable area to cover the road. Whether this area is continuous and covers the road can be checked.
-  - `/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/debug/drivable_area`, whose type is `nav_msgs/msg/OccupancyGrid`
-
-![drivable_area](./media/drivable_area.png)
-
-- **Path from behavior**
-  - The input path of obstacle_avoidance_planner. Whether this path is continuous and the curvature is not so high can be checked.
-  - `Path` or `PathFootprint` rviz plugin.
-
-![behavior_path](./media/behavior_path.png)
-
-- **EB trajectory**
-  - The output trajectory of elastic band. Whether this trajectory is very smooth and a sampling width is constant can be checked.
-  - `Trajectory` or `TrajectoryFootprint` rviz plugin.
-
-![eb_traj](./media/eb_traj.png)
-
-- **MPT reference trajectory**
-  - The reference trajectory of model predictive trajectory. Whether this trajectory is very smooth and a sampling width is constant can be checked.
-  - `Trajectory` or `TrajectoryFootprint` rviz plugin.
-
-![mpt_ref_traj](./media/mpt_ref_traj.png)
-
-- **MPT fixed trajectory**
-  - The fixed trajectory around the ego of model predictive trajectory.
-  - `Trajectory` or `TrajectoryFootprint` rviz plugin.
-
-![mpt_fixed_traj](./media/mpt_fixed_traj.png)
-
-- **bounds**
-  - Lateral Distance to the road or object boundaries to check collision in model predictive trajectory.
-  - Whether these lines' ends align the road or obstacle boundaries can be checked.
-  - `bounds*` of `/planning/scenario_planning/lane_driving/motion_planning/obstacle_avoidance_planner/debug/marker` whose type is `visualization_msgs/msg/MarkerArray`
-
-![bounds](./media/bounds.png)
-
-- **MPT trajectory**
-  - The output of model predictive trajectory. Whether this trajectory is smooth enough and inside the drivable area can be checked.
-  - `Trajectory` or `TrajectoryFootprint` rviz plugin.
-
-![mpt_traj](./media/mpt_traj.png)
-
-- **Output trajectory**
-  - The output of obstacle_avoidance_planner. Whether this trajectory is smooth enough can be checked.
-  - `Trajectory` or `TrajectoryFootprint` rviz plugin.
-
-![output_traj](./media/output_traj.png)
+Debug information are written [here](debug.md).

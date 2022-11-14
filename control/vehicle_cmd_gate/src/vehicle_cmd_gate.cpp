@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "vehicle_cmd_gate/vehicle_cmd_gate.hpp"
+#include "vehicle_cmd_gate.hpp"
 
 #include <rclcpp/logging.hpp>
 #include <tier4_api_utils/tier4_api_utils.hpp>
@@ -66,11 +66,10 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
   engage_pub_ = this->create_publisher<EngageMsg>("output/engage", durable_qos);
   pub_external_emergency_ =
     this->create_publisher<Emergency>("output/external_emergency", durable_qos);
-  operation_mode_pub_ = this->create_publisher<OperationMode>("output/operation_mode", durable_qos);
+  operation_mode_pub_ =
+    this->create_publisher<OperationModeState>("output/operation_mode", durable_qos);
 
   // Subscriber
-  emergency_state_sub_ = this->create_subscription<EmergencyState>(
-    "input/emergency_state", 1, std::bind(&VehicleCmdGate::onEmergencyState, this, _1));
   external_emergency_stop_heartbeat_sub_ = this->create_subscription<Heartbeat>(
     "input/external_emergency_stop_heartbeat", 1,
     std::bind(&VehicleCmdGate::onExternalEmergencyStopHeartbeat, this, _1));
@@ -80,10 +79,11 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
     "input/engage", 1, std::bind(&VehicleCmdGate::onEngage, this, _1));
   steer_sub_ = this->create_subscription<SteeringReport>(
     "input/steering", 1, std::bind(&VehicleCmdGate::onSteering, this, _1));
-  operation_mode_sub_ = this->create_subscription<tier4_system_msgs::msg::OperationMode>(
-    "input/operation_mode", 1, [this](const tier4_system_msgs::msg::OperationMode::SharedPtr msg) {
-      current_operation_mode_ = *msg;
-    });
+  operation_mode_sub_ = this->create_subscription<OperationModeState>(
+    "input/operation_mode", rclcpp::QoS(1).transient_local(),
+    [this](const OperationModeState::SharedPtr msg) { current_operation_mode_ = *msg; });
+  mrm_state_sub_ = this->create_subscription<MrmState>(
+    "input/mrm_state", 1, std::bind(&VehicleCmdGate::onMrmState, this, _1));
 
   // Subscriber for auto
   auto_control_cmd_sub_ = this->create_subscription<AckermannControlCommand>(
@@ -164,6 +164,7 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
 
   // Set default value
   current_gate_mode_.data = GateMode::AUTO;
+  current_operation_mode_.mode = OperationModeState::STOP;
 
   // Service
   srv_engage_ = create_service<tier4_external_api_msgs::srv::Engage>(
@@ -185,12 +186,8 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
   });
   updater_.add("emergency_stop_operation", this, &VehicleCmdGate::checkExternalEmergencyStop);
 
-  // Start Request
-  const auto use_start_request = declare_parameter("use_start_request", false);
-  const auto stopped_state_entry_duration_time =
-    declare_parameter("stopped_state_entry_duration_time", 0.1);
-  start_request_ =
-    std::make_unique<StartRequest>(this, use_start_request, stopped_state_entry_duration_time);
+  // Pause interface
+  pause_ = std::make_unique<PauseInterface>(this);
 
   // Timer
   const auto period_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
@@ -311,7 +308,7 @@ void VehicleCmdGate::onTimer()
 
     if (is_emergency_state_heartbeat_timeout_) {
       RCLCPP_WARN_THROTTLE(
-        get_logger(), *get_clock(), 1000 /*ms*/, "system_emergency heartbeat is timeout.");
+        get_logger(), *get_clock(), 5000 /*ms*/, "system_emergency heartbeat is timeout.");
       publishEmergencyStopControlCommands();
       return;
     }
@@ -324,7 +321,7 @@ void VehicleCmdGate::onTimer()
 
     if (is_external_emergency_stop_heartbeat_timeout_) {
       RCLCPP_WARN_THROTTLE(
-        get_logger(), *get_clock(), 1000 /*ms*/, "external_emergency_stop heartbeat is timeout.");
+        get_logger(), *get_clock(), 5000 /*ms*/, "external_emergency_stop heartbeat is timeout.");
       is_external_emergency_stop_ = true;
     }
   }
@@ -333,7 +330,7 @@ void VehicleCmdGate::onTimer()
   if (is_external_emergency_stop_) {
     if (!is_external_emergency_stop_heartbeat_timeout_) {
       RCLCPP_INFO_THROTTLE(
-        get_logger(), *get_clock(), 1000 /*ms*/,
+        get_logger(), *get_clock(), 5000 /*ms*/,
         "Please call `clear_external_emergency_stop` service to clear state.");
     }
 
@@ -370,13 +367,9 @@ void VehicleCmdGate::onTimer()
   }
 
   // Publish topics
-  gate_mode_pub_->publish(current_gate_mode_);
   turn_indicator_cmd_pub_->publish(turn_indicator);
   hazard_light_cmd_pub_->publish(hazard_light);
   gear_cmd_pub_->publish(gear);
-
-  // Publish start request
-  start_request_->publishStartAccepted();
 }
 
 void VehicleCmdGate::publishControlCommands(const Commands & commands)
@@ -412,18 +405,17 @@ void VehicleCmdGate::publishControlCommands(const Commands & commands)
     filtered_commands.gear = emergency_commands_.gear;  // tmp
   }
 
-  // Check start after applying all gates except engage
-  if (is_engaged_) {
-    start_request_->checkStartRequest(filtered_commands.control);
-  }
-
   // Check engage
-  if (!is_engaged_ || !start_request_->isAccepted()) {
+  if (!is_engaged_) {
     filtered_commands.control = createStopControlCmd();
   }
 
-  // Check stopped after applying all gates
-  start_request_->checkStopped(filtered_commands.control);
+  // Check pause
+  pause_->update(filtered_commands.control);
+  if (pause_->is_paused()) {
+    filtered_commands.control.longitudinal.speed = 0.0;
+    filtered_commands.control.longitudinal.acceleration = stop_hold_acceleration_;
+  }
 
   // Apply limit filtering
   filtered_commands.control = filterControlCommand(filtered_commands.control);
@@ -450,8 +442,8 @@ void VehicleCmdGate::publishEmergencyStopControlCommands()
   control_cmd.stamp = stamp;
   control_cmd = createEmergencyStopControlCmd();
 
-  // Check stopped after applying all gates
-  start_request_->checkStopped(control_cmd);
+  // Update control command
+  pause_->update(control_cmd);
 
   // gear
   GearCommand gear;
@@ -479,9 +471,6 @@ void VehicleCmdGate::publishEmergencyStopControlCommands()
   turn_indicator_cmd_pub_->publish(turn_indicator);
   hazard_light_cmd_pub_->publish(hazard_light);
   gear_cmd_pub_->publish(gear);
-
-  // Publish start request
-  start_request_->publishStartAccepted();
 }
 
 void VehicleCmdGate::publishStatus()
@@ -502,17 +491,17 @@ void VehicleCmdGate::publishStatus()
   engage_pub_->publish(autoware_engage);
   pub_external_emergency_->publish(external_emergency);
   operation_mode_pub_->publish(current_operation_mode_);
+  pause_->publish();
 }
 
 AckermannControlCommand VehicleCmdGate::filterControlCommand(const AckermannControlCommand & in)
 {
   AckermannControlCommand out = in;
   const double dt = getDt();
-
-  const auto mode = current_operation_mode_.mode;
+  const auto mode = current_operation_mode_;
 
   // Apply transition_filter when transiting from MANUAL to AUTO.
-  if (mode == OperationMode::TRANSITION_TO_AUTO) {
+  if (mode.is_in_transition) {
     filter_on_transition_.filterAll(dt, current_steer_, out);
   } else {
     filter_.filterAll(dt, current_steer_, out);
@@ -557,14 +546,6 @@ AckermannControlCommand VehicleCmdGate::createEmergencyStopControlCmd() const
   return cmd;
 }
 
-void VehicleCmdGate::onEmergencyState(EmergencyState::ConstSharedPtr msg)
-{
-  is_system_emergency_ = (msg->state == EmergencyState::MRM_OPERATING) ||
-                         (msg->state == EmergencyState::MRM_SUCCEEDED) ||
-                         (msg->state == EmergencyState::MRM_FAILED);
-  emergency_state_heartbeat_received_time_ = std::make_shared<rclcpp::Time>(this->now());
-}
-
 void VehicleCmdGate::onExternalEmergencyStopHeartbeat(
   [[maybe_unused]] Heartbeat::ConstSharedPtr msg)
 {
@@ -596,6 +577,15 @@ void VehicleCmdGate::onEngageService(
 void VehicleCmdGate::onSteering(SteeringReport::ConstSharedPtr msg)
 {
   current_steer_ = msg->steering_tire_angle;
+}
+
+void VehicleCmdGate::onMrmState(MrmState::ConstSharedPtr msg)
+{
+  is_system_emergency_ =
+    (msg->state == MrmState::MRM_OPERATING || msg->state == MrmState::MRM_SUCCEEDED ||
+     msg->state == MrmState::MRM_FAILED) &&
+    (msg->behavior == MrmState::EMERGENCY_STOP);
+  emergency_state_heartbeat_received_time_ = std::make_shared<rclcpp::Time>(this->now());
 }
 
 double VehicleCmdGate::getDt()
@@ -682,108 +672,6 @@ void VehicleCmdGate::checkExternalEmergencyStop(diagnostic_updater::DiagnosticSt
   }
 
   stat.summary(status.level, status.message);
-}
-
-VehicleCmdGate::StartRequest::StartRequest(
-  rclcpp::Node * node, bool use_start_request, double stopped_state_entry_duration_time)
-{
-  using std::placeholders::_1;
-
-  node_ = node;
-  use_start_request_ = use_start_request;
-  is_start_requesting_ = false;
-  is_start_accepted_ = false;
-  is_start_cancelled_ = false;
-
-  if (!use_start_request_) {
-    return;
-  }
-
-  request_start_cli_ =
-    node_->create_client<std_srvs::srv::Trigger>("/api/autoware/set/start_request");
-  request_start_pub_ = node_->create_publisher<tier4_debug_msgs::msg::BoolStamped>(
-    "/api/autoware/get/start_accepted", rclcpp::QoS(1));
-  current_twist_sub_ = node_->create_subscription<Odometry>(
-    "/localization/kinematic_state", rclcpp::QoS(1),
-    std::bind(&VehicleCmdGate::StartRequest::onCurrentTwist, this, _1));
-
-  last_running_time_ = std::make_shared<rclcpp::Time>(node_->now());
-  stopped_state_entry_duration_time_ = stopped_state_entry_duration_time;
-}
-
-void VehicleCmdGate::StartRequest::onCurrentTwist(Odometry::ConstSharedPtr msg)
-{
-  current_twist_ = *msg;
-}
-
-bool VehicleCmdGate::StartRequest::isAccepted()
-{
-  return !use_start_request_ || is_start_accepted_;
-}
-
-void VehicleCmdGate::StartRequest::publishStartAccepted()
-{
-  if (!use_start_request_) {
-    return;
-  }
-
-  tier4_debug_msgs::msg::BoolStamped start_accepted;
-  start_accepted.stamp = node_->now();
-  start_accepted.data = is_start_accepted_;
-  request_start_pub_->publish(start_accepted);
-}
-
-void VehicleCmdGate::StartRequest::checkStopped(const ControlCommandStamped & control)
-{
-  if (!use_start_request_) {
-    return;
-  }
-
-  if (is_start_accepted_) {
-    const auto control_velocity = std::abs(control.longitudinal.speed);
-    const auto current_velocity = std::abs(current_twist_.twist.twist.linear.x);
-
-    if (eps < current_velocity) {
-      last_running_time_ = std::make_shared<rclcpp::Time>(node_->now());
-    }
-
-    const auto is_stopped =
-      stopped_state_entry_duration_time_ < (node_->now() - *last_running_time_).seconds();
-
-    if (control_velocity < eps && is_stopped) {
-      is_start_accepted_ = false;
-      is_start_cancelled_ = true;
-      RCLCPP_INFO(node_->get_logger(), "clear start request");
-    }
-  }
-}
-
-void VehicleCmdGate::StartRequest::checkStartRequest(const ControlCommandStamped & control)
-{
-  if (!use_start_request_) {
-    return;
-  }
-
-  if (!is_start_accepted_ && !is_start_requesting_) {
-    const auto control_velocity = std::abs(control.longitudinal.speed);
-    if (eps < control_velocity) {
-      is_start_requesting_ = true;
-      is_start_cancelled_ = false;
-      request_start_cli_->async_send_request(
-        std::make_shared<std_srvs::srv::Trigger::Request>(),
-        [this](rclcpp::Client<std_srvs::srv::Trigger>::SharedFuture future) {
-          const auto response = future.get();
-          is_start_requesting_ = false;
-          if (!is_start_cancelled_) {
-            is_start_accepted_ = response->success;
-            RCLCPP_INFO(node_->get_logger(), "start request is updated");
-          } else {
-            RCLCPP_INFO(node_->get_logger(), "start request is cancelled");
-          }
-        });
-      RCLCPP_INFO(node_->get_logger(), "call start request");
-    }
-  }
 }
 
 }  // namespace vehicle_cmd_gate

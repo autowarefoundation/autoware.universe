@@ -141,22 +141,25 @@ Near Cut-in vehicles are defined as vehicle objects
 
 In the `obstacle_filtering` namespace,
 
-| Parameter                                 | Type   | Description                                                     |
-| ----------------------------------------- | ------ | --------------------------------------------------------------- |
-| `ego_obstacle_overlap_time_threshold`     | double | time threshold to decide cut-in obstacle for cruise or stop [s] |
-| `max_prediction_time_for_collision_check` | double | prediction time to check collision between obstacle and ego [s] |
+| Parameter                                 | Type   | Description                                                              |
+| ----------------------------------------- | ------ | ------------------------------------------------------------------------ |
+| `ego_obstacle_overlap_time_threshold`     | double | time threshold to decide cut-in obstacle for cruise or stop [s]          |
+| `max_prediction_time_for_collision_check` | double | prediction time to check collision between obstacle and ego [s]          |
+| `outside_obstacle_min_velocity_threshold` | double | minimum velocity threshold of target obstacle for cut-in detection [m/s] |
 
 ### Stop planning
 
-| Parameter                     | Type   | Description                               |
-| ----------------------------- | ------ | ----------------------------------------- |
-| `common.min_strong_accel`     | double | ego's minimum acceleration to stop [m/ss] |
-| `common.safe_distance_margin` | double | distance with obstacles for stop [m]      |
+| Parameter                              | Type   | Description                                                                                |
+| -------------------------------------- | ------ | ------------------------------------------------------------------------------------------ |
+| `common.min_strong_accel`              | double | ego's minimum acceleration to stop [m/ss]                                                  |
+| `common.safe_distance_margin`          | double | distance with obstacles for stop [m]                                                       |
+| `common.terminal_safe_distance_margin` | double | terminal_distance with obstacles for stop, which cannot be exceed safe distance margin [m] |
 
 The role of the stop planning is keeping a safe distance with static vehicle objects or dynamic/static non vehicle objects.
 
 The stop planning just inserts the stop point in the trajectory to keep a distance with obstacles inside the detection area.
 The safe distance is parameterized as `common.safe_distance_margin`.
+When it stops at the end of the trajectory, and obstacle is on the same point, the safe distance becomes `terminal_safe_distance_margin`.
 
 When inserting the stop point, the required acceleration for the ego to stop in front of the stop point is calculated.
 If the acceleration is less than `common.min_strong_accel`, the stop planning will be cancelled since this package does not assume a strong sudden brake for emergency.
@@ -272,6 +275,16 @@ In the case of the crosswalk described above, `obstacle_cruise_planner` inserts 
 | Parameter                         | Type   | Description                                                            |
 | --------------------------------- | ------ | ---------------------------------------------------------------------- |
 | `common.min_behavior_stop_margin` | double | minimum stop margin when stopping with the behavior module enabled [m] |
+
+### A function to keep the closest stop obstacle in target obstacles
+
+In order to keep the closest stop obstacle in the target obstacles, we check whether it is disappeared or not from the target obstacles in the `checkConsistency` function.
+If the previous closest stop obstacle is remove from the lists, we keep it in the lists for `stop_obstacle_hold_time_threshold` seconds.
+Note that if a new stop obstacle appears and the previous closest obstacle removes from the lists, we do not add it to the target obstacles again.
+
+| Parameter                                              | Type   | Description                                        |
+| ------------------------------------------------------ | ------ | -------------------------------------------------- |
+| `obstacle_filtering.stop_obstacle_hold_time_threshold` | double | maximum time for holding closest stop obstacle [s] |
 
 ## Visualization for debugging
 

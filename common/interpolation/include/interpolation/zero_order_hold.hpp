@@ -27,36 +27,20 @@ std::vector<T> zero_order_hold(
   const std::vector<double> & query_keys, const double overlap_threshold = 1e-3)
 {
   // throw exception for invalid arguments
-  interpolation_utils::validateKeys(base_keys, query_keys);
-
-  // when vectors are empty
-  if (base_keys.empty() || base_values.empty()) {
-    throw std::invalid_argument("Points is empty.");
-  }
-
-  // when size of vectors are less than 2
-  if (base_keys.size() < 2 || base_values.size() < 2) {
-    throw std::invalid_argument(
-      "The size of points is less than 2. base_keys.size() = " + std::to_string(base_keys.size()) +
-      ", base_values.size() = " + std::to_string(base_values.size()));
-  }
-
-  // when sizes of indices and values are not same
-  if (base_keys.size() != base_values.size()) {
-    throw std::invalid_argument("The size of base_keys and base_values are not the same.");
-  }
+  const auto validated_query_keys = interpolation_utils::validateKeys(base_keys, query_keys);
+  interpolation_utils::validateKeysAndValues(base_keys, base_values);
 
   std::vector<T> query_values;
   size_t closest_segment_idx = 0;
-  for (size_t i = 0; i < query_keys.size(); ++i) {
+  for (size_t i = 0; i < validated_query_keys.size(); ++i) {
     // Check if query_key is closes to the terminal point of the base keys
-    if (base_keys.back() - overlap_threshold < query_keys.at(i)) {
+    if (base_keys.back() - overlap_threshold < validated_query_keys.at(i)) {
       closest_segment_idx = base_keys.size() - 1;
     } else {
       for (size_t j = closest_segment_idx; j < base_keys.size() - 1; ++j) {
         if (
-          base_keys.at(j) - overlap_threshold < query_keys.at(i) &&
-          query_keys.at(i) < base_keys.at(j + 1)) {
+          base_keys.at(j) - overlap_threshold < validated_query_keys.at(i) &&
+          validated_query_keys.at(i) < base_keys.at(j + 1)) {
           // find closest segment in base keys
           closest_segment_idx = j;
         }

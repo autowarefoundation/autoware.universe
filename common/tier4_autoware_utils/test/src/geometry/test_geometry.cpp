@@ -15,6 +15,8 @@
 #include "tier4_autoware_utils/geometry/geometry.hpp"
 #include "tier4_autoware_utils/math/unit_conversion.hpp"
 
+#include <geometry_msgs/msg/point32.hpp>
+
 #include <gtest/gtest.h>
 
 #include <string>
@@ -286,6 +288,22 @@ TEST(geometry, setPose)
     EXPECT_DOUBLE_EQ(p_out.pose.orientation.z, q_z_ans);
     EXPECT_DOUBLE_EQ(p_out.pose.orientation.w, q_w_ans);
   }
+}
+
+TEST(geometry, setOrientation)
+{
+  using tier4_autoware_utils::createQuaternionFromRPY;
+  using tier4_autoware_utils::deg2rad;
+  using tier4_autoware_utils::setOrientation;
+
+  geometry_msgs::msg::Pose p;
+  const auto orientation = createQuaternionFromRPY(deg2rad(30), deg2rad(30), deg2rad(30));
+  setOrientation(orientation, p);
+
+  EXPECT_DOUBLE_EQ(p.orientation.x, orientation.x);
+  EXPECT_DOUBLE_EQ(p.orientation.y, orientation.y);
+  EXPECT_DOUBLE_EQ(p.orientation.z, orientation.z);
+  EXPECT_DOUBLE_EQ(p.orientation.w, orientation.w);
 }
 
 TEST(geometry, setLongitudinalVelocity)
@@ -736,6 +754,73 @@ TEST(geometry, pose2transform)
   }
 }
 
+TEST(geometry, point2tfVector)
+{
+  using tier4_autoware_utils::createQuaternionFromRPY;
+  using tier4_autoware_utils::deg2rad;
+  using tier4_autoware_utils::point2tfVector;
+
+  // Point
+  {
+    geometry_msgs::msg::Point src;
+    src.x = 1.0;
+    src.y = 2.0;
+    src.z = 3.0;
+
+    geometry_msgs::msg::Point dst;
+    dst.x = 10.0;
+    dst.y = 5.0;
+    dst.z = -5.0;
+
+    const auto vec = point2tfVector(src, dst);
+
+    EXPECT_DOUBLE_EQ(vec.x(), 9.0);
+    EXPECT_DOUBLE_EQ(vec.y(), 3.0);
+    EXPECT_DOUBLE_EQ(vec.z(), -8.0);
+  }
+
+  // Pose
+  {
+    geometry_msgs::msg::Pose src;
+    src.position.x = 1.0;
+    src.position.y = 2.0;
+    src.position.z = 3.0;
+    src.orientation = createQuaternionFromRPY(deg2rad(30), deg2rad(30), deg2rad(30));
+
+    geometry_msgs::msg::Pose dst;
+    dst.position.x = 10.0;
+    dst.position.y = 5.0;
+    dst.position.z = -5.0;
+    dst.orientation = createQuaternionFromRPY(deg2rad(10), deg2rad(10), deg2rad(10));
+
+    const auto vec = point2tfVector(src, dst);
+
+    EXPECT_DOUBLE_EQ(vec.x(), 9.0);
+    EXPECT_DOUBLE_EQ(vec.y(), 3.0);
+    EXPECT_DOUBLE_EQ(vec.z(), -8.0);
+  }
+
+  // Point and Pose
+  {
+    geometry_msgs::msg::Point src;
+    src.x = 1.0;
+    src.y = 2.0;
+    src.z = 3.0;
+
+    geometry_msgs::msg::Pose dst;
+    dst.position.x = 10.0;
+    dst.position.y = 5.0;
+    dst.position.z = -5.0;
+    dst.orientation = createQuaternionFromRPY(deg2rad(10), deg2rad(10), deg2rad(10));
+
+    const auto vec = point2tfVector(src, dst);
+
+    EXPECT_DOUBLE_EQ(vec.x(), 9.0);
+    EXPECT_DOUBLE_EQ(vec.y(), 3.0);
+    EXPECT_DOUBLE_EQ(vec.z(), -8.0);
+  }
+}
+
 TEST(geometry, transformPoint)
 {
   using tier4_autoware_utils::createQuaternionFromRPY;
@@ -807,6 +892,25 @@ TEST(geometry, transformPoint)
     EXPECT_DOUBLE_EQ(p_transformed.x, 3.1919872981077804);
     EXPECT_DOUBLE_EQ(p_transformed.y, 3.5334936490538906);
     EXPECT_DOUBLE_EQ(p_transformed.z, 5.6160254037844393);
+  }
+
+  {
+    geometry_msgs::msg::Point32 p;
+    p.x = 1.0;
+    p.y = 2.0;
+    p.z = 3.0;
+
+    geometry_msgs::msg::Pose pose_transform;
+    pose_transform.position.x = 1.0;
+    pose_transform.position.y = 2.0;
+    pose_transform.position.z = 3.0;
+    pose_transform.orientation = createQuaternionFromRPY(deg2rad(30), deg2rad(30), deg2rad(30));
+
+    const geometry_msgs::msg::Point32 p_transformed = transformPoint(p, pose_transform);
+
+    EXPECT_DOUBLE_EQ(p_transformed.x, 3.1919872760772705);
+    EXPECT_DOUBLE_EQ(p_transformed.y, 3.5334937572479248);
+    EXPECT_DOUBLE_EQ(p_transformed.z, 5.616025447845459);
   }
 }
 
@@ -1532,4 +1636,56 @@ TEST(geometry, calcInterpolatedPose_with_Spherical_Interpolation)
       EXPECT_DOUBLE_EQ(p_out.orientation.w, 1.0);
     }
   }
+}
+
+TEST(geometry, getTwist)
+{
+  using tier4_autoware_utils::createVector3;
+
+  geometry_msgs::msg::Vector3 velocity = createVector3(1.0, 2.0, 3.0);
+  geometry_msgs::msg::Vector3 angular = createVector3(0.1, 0.2, 0.3);
+
+  geometry_msgs::msg::Twist twist = geometry_msgs::build<geometry_msgs::msg::Twist>()
+                                      .linear(createVector3(1.0, 2.0, 3.0))
+                                      .angular(createVector3(0.1, 0.2, 0.3));
+
+  geometry_msgs::msg::TwistWithCovariance twist_with_covariance;
+  twist_with_covariance.twist = geometry_msgs::build<geometry_msgs::msg::Twist>()
+                                  .linear(createVector3(1.0, 2.0, 3.0))
+                                  .angular(createVector3(0.1, 0.2, 0.3));
+
+  // getTwist
+  {
+    auto t_out = tier4_autoware_utils::createTwist(velocity, angular);
+    EXPECT_DOUBLE_EQ(t_out.linear.x, twist.linear.x);
+    EXPECT_DOUBLE_EQ(t_out.linear.y, twist.linear.y);
+    EXPECT_DOUBLE_EQ(t_out.linear.z, twist.linear.z);
+    EXPECT_DOUBLE_EQ(t_out.angular.x, twist.angular.x);
+    EXPECT_DOUBLE_EQ(t_out.angular.y, twist.angular.y);
+    EXPECT_DOUBLE_EQ(t_out.angular.z, twist.angular.z);
+  }
+}
+
+TEST(geometry, getTwistNorm)
+{
+  using tier4_autoware_utils::createVector3;
+  geometry_msgs::msg::TwistWithCovariance twist_with_covariance;
+  twist_with_covariance.twist = geometry_msgs::build<geometry_msgs::msg::Twist>()
+                                  .linear(createVector3(3.0, 4.0, 0.0))
+                                  .angular(createVector3(0.1, 0.2, 0.3));
+  EXPECT_NEAR(tier4_autoware_utils::calcNorm(twist_with_covariance.twist.linear), 5.0, epsilon);
+}
+
+TEST(geometry, isTwistCovarianceValid)
+{
+  using tier4_autoware_utils::createVector3;
+  geometry_msgs::msg::TwistWithCovariance twist_with_covariance;
+  twist_with_covariance.twist = geometry_msgs::build<geometry_msgs::msg::Twist>()
+                                  .linear(createVector3(1.0, 2.0, 3.0))
+                                  .angular(createVector3(0.1, 0.2, 0.3));
+
+  EXPECT_EQ(tier4_autoware_utils::isTwistCovarianceValid(twist_with_covariance), false);
+
+  twist_with_covariance.covariance.at(0) = 1.0;
+  EXPECT_EQ(tier4_autoware_utils::isTwistCovarianceValid(twist_with_covariance), true);
 }

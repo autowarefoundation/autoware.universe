@@ -102,15 +102,17 @@ ManualController::ManualController(QWidget * parent) : rviz_common::Panel(parent
   v_layout->addLayout(cruise_velocity_layout);
   setLayout(v_layout);
 
-  QTimer * timer = new QTimer(this);
+  auto * timer = new QTimer(this);
   connect(timer, &QTimer::timeout, this, &ManualController::update);
   timer->start(30);
 }
 
 void ManualController::update()
 {
+  if (!raw_node_) return;
   AckermannControlCommand ackermann;
   {
+    ackermann.stamp = raw_node_->get_clock()->now();
     ackermann.lateral.steering_tire_angle = steering_angle_;
     ackermann.longitudinal.speed = cruise_velocity_;
     if (current_acceleration_) {
@@ -268,7 +270,7 @@ void ManualController::onClickEnableButton()
       return;
     }
     client_engage_->async_send_request(
-      req, [this]([[maybe_unused]] rclcpp::Client<EngageSrv>::SharedFuture result) {});
+      req, []([[maybe_unused]] rclcpp::Client<EngageSrv>::SharedFuture result) {});
   }
 }
 

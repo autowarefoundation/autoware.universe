@@ -54,8 +54,8 @@ Float32MultiArrayStamped convertDebugValuesToMsg(
 
 PIDBasedPlanner::PIDBasedPlanner(
   rclcpp::Node & node, const LongitudinalInfo & longitudinal_info,
-  const vehicle_info_util::VehicleInfo & vehicle_info)
-: PlannerInterface(node, longitudinal_info, vehicle_info)
+  const vehicle_info_util::VehicleInfo & vehicle_info, const EgoNearestParam & ego_nearest_param)
+: PlannerInterface(node, longitudinal_info, vehicle_info, ego_nearest_param)
 {
   min_accel_during_cruise_ =
     node.declare_parameter<double>("pid_based_planner.min_accel_during_cruise");
@@ -124,8 +124,13 @@ void PIDBasedPlanner::calcObstaclesToCruise(
   for (size_t o_idx = 0; o_idx < planner_data.target_obstacles.size(); ++o_idx) {
     const auto & obstacle = planner_data.target_obstacles.at(o_idx);
 
+    if (obstacle.collision_points.empty()) {
+      continue;
+    }
+
     // NOTE: from ego's front to obstacle's back
-    const double dist_to_obstacle = calcDistanceToObstacle(planner_data, obstacle);
+    const double dist_to_obstacle =
+      calcDistanceToCollisionPoint(planner_data, obstacle.collision_points.front().point);
 
     if (!obstacle.has_stopped) {  // cruise
       // calculate distance between ego and obstacle based on RSS
@@ -152,25 +157,6 @@ void PIDBasedPlanner::calcObstaclesToCruise(
   }
 }
 
-double PIDBasedPlanner::calcDistanceToObstacle(
-  const ObstacleCruisePlannerData & planner_data, const TargetObstacle & obstacle)
-{
-  const size_t ego_segment_idx =
-    findExtendedNearestSegmentIndex(planner_data.traj, planner_data.current_pose);
-  const double segment_offset = std::max(
-    0.0, motion_utils::calcLongitudinalOffsetToSegment(
-           planner_data.traj.points, ego_segment_idx, planner_data.current_pose.position));
-  const double abs_ego_offset = planner_data.is_driving_forward
-                                  ? std::abs(vehicle_info_.max_longitudinal_offset_m)
-                                  : std::abs(vehicle_info_.min_longitudinal_offset_m);
-
-  const double offset = abs_ego_offset + segment_offset;
-
-  return motion_utils::calcSignedArcLength(
-           planner_data.traj.points, ego_segment_idx, obstacle.collision_point.point) -
-         offset;
-}
-
 void PIDBasedPlanner::planCruise(
   const ObstacleCruisePlannerData & planner_data, boost::optional<VelocityLimit> & vel_limit,
   const boost::optional<CruiseObstacleInfo> & cruise_obstacle_info, DebugData & debug_data)
@@ -193,6 +179,11 @@ void PIDBasedPlanner::planCruise(
     // reset previous target velocity if adaptive cruise is not enabled
     prev_target_vel_ = {};
     lpf_cruise_ptr_->reset();
+
+    // delete marker
+    const auto markers =
+      motion_utils::createDeletedSlowDownVirtualWallMarker(planner_data.current_time, 0);
+    tier4_autoware_utils::appendMarkerArray(markers, &debug_data.cruise_wall_marker);
   }
 }
 
@@ -208,7 +199,7 @@ VelocityLimit PIDBasedPlanner::doCruise(
   }();
   const double dist_to_obstacle = cruise_obstacle_info.dist_to_obstacle;
 
-  const size_t ego_idx = findExtendedNearestIndex(planner_data.traj, planner_data.current_pose);
+  const size_t ego_idx = findEgoIndex(planner_data.traj, planner_data.current_pose);
 
   // calculate target velocity with acceleration limit by PID controller
   const double pid_output_vel = pid_controller_->calc(filtered_normalized_dist_to_cruise);
@@ -247,11 +238,10 @@ VelocityLimit PIDBasedPlanner::doCruise(
                                   : std::abs(vehicle_info_.min_longitudinal_offset_m);
   const double dist_to_rss_wall =
     std::min(dist_to_cruise + abs_ego_offset, dist_to_obstacle + abs_ego_offset);
-  const size_t wall_idx = obstacle_cruise_utils::getIndexWithLongitudinalOffset(
-    planner_data.traj.points, dist_to_rss_wall, ego_idx);
 
   const auto markers = motion_utils::createSlowDownVirtualWallMarker(
-    planner_data.traj.points.at(wall_idx).pose, "obstacle cruise", planner_data.current_time, 0);
+    planner_data.traj.points.at(ego_idx).pose, "obstacle cruise", planner_data.current_time, 0,
+    dist_to_rss_wall);
   tier4_autoware_utils::appendMarkerArray(markers, &debug_wall_marker);
 
   debug_obstacles_to_cruise.push_back(cruise_obstacle_info.obstacle);

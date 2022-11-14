@@ -45,7 +45,6 @@
 
 namespace behavior_velocity_planner
 {
-
 using autoware_auto_perception_msgs::msg::ObjectClassification;
 using autoware_auto_perception_msgs::msg::PredictedObject;
 using autoware_auto_perception_msgs::msg::PredictedObjects;
@@ -94,9 +93,8 @@ public:
   };
 
   CrosswalkModule(
-    const int64_t module_id, const lanelet::ConstLanelet & crosswalk,
-    const PlannerParam & planner_param, const rclcpp::Logger logger,
-    const rclcpp::Clock::SharedPtr clock);
+    const int64_t module_id, lanelet::ConstLanelet crosswalk, const PlannerParam & planner_param,
+    const rclcpp::Logger & logger, const rclcpp::Clock::SharedPtr clock);
 
   bool modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason) override;
 
@@ -113,15 +111,17 @@ private:
     const PathWithLaneId & ego_path, StopFactor & stop_factor);
 
   boost::optional<std::pair<double, geometry_msgs::msg::Point>> getStopLine(
-    const PathWithLaneId & ego_path) const;
+    const PathWithLaneId & ego_path, bool & exist_stopline_in_map) const;
 
   std::vector<CollisionPoint> getCollisionPoints(
     const PathWithLaneId & ego_path, const PredictedObject & object,
+    const boost::geometry::model::polygon<boost::geometry::model::d2::point_xy<double>> &
+      attention_area,
     const std::pair<double, double> & crosswalk_attention_range);
 
   std::pair<double, double> getAttentionRange(const PathWithLaneId & ego_path);
 
-  void insertDecelPoint(
+  void insertDecelPointWithDebugInfo(
     const geometry_msgs::msg::Point & stop_point, const float target_velocity,
     PathWithLaneId & output);
 
@@ -135,6 +135,8 @@ private:
 
   CollisionPointState getCollisionPointState(const double ttc, const double ttv) const;
 
+  bool applySafetySlowDownSpeed(PathWithLaneId & output);
+
   float calcTargetVelocity(
     const geometry_msgs::msg::Point & stop_point, const PathWithLaneId & ego_path) const;
 
@@ -142,17 +144,17 @@ private:
 
   bool isRedSignalForPedestrians() const;
 
-  bool isVehicle(const PredictedObject & object) const;
+  static bool isVehicle(const PredictedObject & object);
 
   bool isTargetType(const PredictedObject & object) const;
 
   bool isTargetExternalInputStatus(const int target_status) const;
 
-  geometry_msgs::msg::Polygon createObjectPolygon(
-    const double width_m, const double length_m) const;
+  static geometry_msgs::msg::Polygon createObjectPolygon(
+    const double width_m, const double length_m);
 
-  geometry_msgs::msg::Polygon createVehiclePolygon(
-    const vehicle_info_util::VehicleInfo & vehicle_info) const;
+  static geometry_msgs::msg::Polygon createVehiclePolygon(
+    const vehicle_info_util::VehicleInfo & vehicle_info);
 
   lanelet::ConstLanelet crosswalk_;
 
@@ -170,6 +172,9 @@ private:
 
   // Stop watch
   StopWatch<std::chrono::milliseconds> stop_watch_;
+
+  // whether ego passed safety_slow_point
+  bool passed_safety_slow_point_;
 };
 }  // namespace behavior_velocity_planner
 

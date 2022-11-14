@@ -14,10 +14,7 @@
 
 #include "trajectory_follower_nodes/controller_node.hpp"
 
-#include "motion_common/motion_common.hpp"
-#include "motion_common/trajectory_common.hpp"
 #include "pure_pursuit/pure_pursuit_lateral_controller.hpp"
-#include "time_utils/time_utils.hpp"
 #include "trajectory_follower/mpc_lateral_controller.hpp"
 #include "trajectory_follower/pid_longitudinal_controller.hpp"
 
@@ -76,13 +73,15 @@ Controller::Controller(const rclcpp::NodeOptions & node_options) : Node("control
     "~/input/current_steering", rclcpp::QoS{1}, std::bind(&Controller::onSteering, this, _1));
   sub_odometry_ = create_subscription<nav_msgs::msg::Odometry>(
     "~/input/current_odometry", rclcpp::QoS{1}, std::bind(&Controller::onOdometry, this, _1));
+  sub_accel_ = create_subscription<geometry_msgs::msg::AccelWithCovarianceStamped>(
+    "~/input/current_accel", rclcpp::QoS{1}, std::bind(&Controller::onAccel, this, _1));
   control_cmd_pub_ = create_publisher<autoware_auto_control_msgs::msg::AckermannControlCommand>(
     "~/output/control_cmd", rclcpp::QoS{1}.transient_local());
 
   // Timer
   {
     const auto period_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
-      std::chrono::duration<float64_t>(ctrl_period));
+      std::chrono::duration<double>(ctrl_period));
     timer_control_ = rclcpp::create_timer(
       this, get_clock(), period_ns, std::bind(&Controller::callbackTimerControl, this));
   }
@@ -120,18 +119,23 @@ void Controller::onSteering(const autoware_auto_vehicle_msgs::msg::SteeringRepor
   input_data_.current_steering_ptr = msg;
 }
 
+void Controller::onAccel(const geometry_msgs::msg::AccelWithCovarianceStamped::SharedPtr msg)
+{
+  input_data_.current_accel_ptr = msg;
+}
+
 bool Controller::isTimeOut()
 {
   const auto now = this->now();
   if ((now - lateral_output_->control_cmd.stamp).seconds() > timeout_thr_sec_) {
     RCLCPP_ERROR_THROTTLE(
-      get_logger(), *get_clock(), 1000 /*ms*/,
+      get_logger(), *get_clock(), 5000 /*ms*/,
       "Lateral control command too old, control_cmd will not be published.");
     return true;
   }
   if ((now - longitudinal_output_->control_cmd.stamp).seconds() > timeout_thr_sec_) {
     RCLCPP_ERROR_THROTTLE(
-      get_logger(), *get_clock(), 1000 /*ms*/,
+      get_logger(), *get_clock(), 5000 /*ms*/,
       "Longitudinal control command too old, control_cmd will not be published.");
     return true;
   }

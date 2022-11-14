@@ -16,7 +16,6 @@
 
 #include "interpolation/linear_interpolation.hpp"
 #include "interpolation/spline_interpolation.hpp"
-#include "motion_velocity_smoother/linear_interpolation.hpp"
 
 #include <algorithm>
 #include <limits>
@@ -59,7 +58,7 @@ inline double integ_v(double v0, double a0, double j0, double t)
 inline double integ_a(double a0, double j0, double t) { return a0 + j0 * t; }
 
 TrajectoryPoint calcInterpolatedTrajectoryPoint(
-  const TrajectoryPoints & trajectory, const Pose & target_pose)
+  const TrajectoryPoints & trajectory, const Pose & target_pose, const size_t seg_idx)
 {
   TrajectoryPoint traj_p{};
   traj_p.pose = target_pose;
@@ -76,17 +75,14 @@ TrajectoryPoint calcInterpolatedTrajectoryPoint(
     return traj_p;
   }
 
-  const size_t segment_idx =
-    motion_utils::findNearestSegmentIndex(trajectory, target_pose.position);
-
-  auto v1 = getTransVector3(trajectory.at(segment_idx).pose, trajectory.at(segment_idx + 1).pose);
-  auto v2 = getTransVector3(trajectory.at(segment_idx).pose, target_pose);
+  auto v1 = getTransVector3(trajectory.at(seg_idx).pose, trajectory.at(seg_idx + 1).pose);
+  auto v2 = getTransVector3(trajectory.at(seg_idx).pose, target_pose);
   // calc internal proportion
   const double prop{std::max(0.0, std::min(1.0, v1.dot(v2) / v1.length2()))};
 
   {
-    const auto & seg_pt = trajectory.at(segment_idx);
-    const auto & next_pt = trajectory.at(segment_idx + 1);
+    const auto & seg_pt = trajectory.at(seg_idx);
+    const auto & next_pt = trajectory.at(seg_idx + 1);
     traj_p.pose = tier4_autoware_utils::calcInterpolatedPose(seg_pt.pose, next_pt.pose, prop);
     traj_p.longitudinal_velocity_mps = interpolation::lerp(
       seg_pt.longitudinal_velocity_mps, next_pt.longitudinal_velocity_mps, prop);
@@ -140,41 +136,20 @@ TrajectoryPoints extractPathAroundIndex(
   return extracted_traj;
 }
 
-double calcArcLength(const TrajectoryPoints & path, const int idx1, const int idx2)
-{
-  if (idx1 == idx2) {  // zero distance
-    return 0.0;
-  }
-
-  if (
-    idx1 < 0 || idx2 < 0 || static_cast<int>(path.size()) - 1 < idx1 ||
-    static_cast<int>(path.size()) - 1 < idx2) {
-    RCLCPP_ERROR(
-      rclcpp::get_logger("motion_velocity_smoother").get_child("trajectory_utils"),
-      "invalid index");
-    return 0.0;
-  }
-
-  const int idx_from = std::min(idx1, idx2);
-  const int idx_to = std::max(idx1, idx2);
-  double dist_sum = 0.0;
-  for (int i = idx_from; i < idx_to; ++i) {
-    dist_sum += tier4_autoware_utils::calcDistance2d(path.at(i), path.at(i + 1));
-  }
-  return dist_sum;
-}
-
 std::vector<double> calcArclengthArray(const TrajectoryPoints & trajectory)
 {
-  std::vector<double> arclength;
+  if (trajectory.empty()) {
+    return {};
+  }
+
+  std::vector<double> arclength(trajectory.size());
   double dist = 0.0;
-  arclength.clear();
-  arclength.push_back(dist);
+  arclength.front() = dist;
   for (unsigned int i = 1; i < trajectory.size(); ++i) {
     const TrajectoryPoint tp = trajectory.at(i);
     const TrajectoryPoint tp_prev = trajectory.at(i - 1);
     dist += tier4_autoware_utils::calcDistance2d(tp.pose, tp_prev.pose);
-    arclength.push_back(dist);
+    arclength.at(i) = dist;
   }
   return arclength;
 }
@@ -211,23 +186,32 @@ std::vector<double> calcTrajectoryCurvatureFrom3Points(
   }
 
   // calculate curvature by circle fitting from three points
-  std::vector<double> k_arr;
-  for (size_t i = idx_dist; i < trajectory.size() - idx_dist; ++i) {
-    try {
-      const auto p0 = getPoint(trajectory.at(i - idx_dist));
-      const auto p1 = getPoint(trajectory.at(i));
-      const auto p2 = getPoint(trajectory.at(i + idx_dist));
-      k_arr.push_back(calcCurvature(p0, p1, p2));
-    } catch (...) {
-      k_arr.push_back(0.0);  // points are too close. No curvature.
-    }
-  }
+  std::vector<double> k_arr(trajectory.size(), 0.0);
 
-  // first and last curvature is copied from next value
-  for (size_t i = 0; i < idx_dist; ++i) {
-    k_arr.insert(k_arr.begin(), k_arr.front());
-    k_arr.push_back(k_arr.back());
+  for (size_t i = 1; i + 1 < trajectory.size(); i++) {
+    double curvature = 0.0;
+    const auto p0 = getPoint(trajectory.at(i - std::min(idx_dist, i)));
+    const auto p1 = getPoint(trajectory.at(i));
+    const auto p2 = getPoint(trajectory.at(i + std::min(idx_dist, trajectory.size() - 1 - i)));
+    try {
+      curvature = calcCurvature(p0, p1, p2);
+    } catch (std::exception const & e) {
+      // ...code that handles the error...
+      RCLCPP_WARN(
+        rclcpp::get_logger("motion_velocity_smoother").get_child("trajectory_utils"), "%s",
+        e.what());
+      if (i > 1) {
+        curvature = k_arr.at(i - 1);  // previous curvature
+      } else {
+        curvature = 0.0;
+      }
+    }
+    k_arr.at(i) = curvature;
   }
+  // copy curvatures for the last and first points;
+  k_arr.at(0) = k_arr.at(1);
+  k_arr.back() = k_arr.at((trajectory.size() - 2));
+
   return k_arr;
 }
 
@@ -520,21 +504,26 @@ boost::optional<TrajectoryPoints> applyDecelFilterWithJerkConstraint(
     distance_all.begin(), distance_all.end(), [&xs](double x) { return x > xs.back(); });
   const std::vector<double> distance{distance_all.begin() + start_index, it_end};
 
-  const auto vel_at_wp = linear_interpolation::interpolate(xs, vs, distance);
-  const auto acc_at_wp = linear_interpolation::interpolate(xs, as, distance);
-
-  if (!vel_at_wp || !acc_at_wp) {
-    RCLCPP_WARN_STREAM(
-      rclcpp::get_logger("motion_velocity_smoother").get_child("trajectory_utils"),
-      "interpolation error");
+  if (
+    !interpolation_utils::isIncreasing(xs) || !interpolation_utils::isIncreasing(distance) ||
+    !interpolation_utils::isNotDecreasing(xs) || !interpolation_utils::isNotDecreasing(distance)) {
     return {};
   }
 
-  for (unsigned int i = 0; i < vel_at_wp->size(); ++i) {
-    output_trajectory.at(start_index + i).longitudinal_velocity_mps = vel_at_wp->at(i);
-    output_trajectory.at(start_index + i).acceleration_mps2 = acc_at_wp->at(i);
+  if (
+    xs.size() < 2 || vs.size() < 2 || as.size() < 2 || distance.empty() ||
+    distance.front() < xs.front() || xs.back() < distance.back()) {
+    return {};
   }
-  for (unsigned int i = start_index + vel_at_wp->size(); i < output_trajectory.size(); ++i) {
+
+  const auto vel_at_wp = interpolation::lerp(xs, vs, distance);
+  const auto acc_at_wp = interpolation::lerp(xs, as, distance);
+
+  for (unsigned int i = 0; i < vel_at_wp.size(); ++i) {
+    output_trajectory.at(start_index + i).longitudinal_velocity_mps = vel_at_wp.at(i);
+    output_trajectory.at(start_index + i).acceleration_mps2 = acc_at_wp.at(i);
+  }
+  for (unsigned int i = start_index + vel_at_wp.size(); i < output_trajectory.size(); ++i) {
     output_trajectory.at(i).longitudinal_velocity_mps = decel_target_vel;
     output_trajectory.at(i).acceleration_mps2 = 0.0;
   }

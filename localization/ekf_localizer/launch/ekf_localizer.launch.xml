@@ -5,7 +5,8 @@
   <arg name="tf_rate" default="10.0"/>
   <arg name="extend_state_step" default="50"/>
 
-  <arg name="input_initial_pose_name" default="initialpose"/>
+  <arg name="input_initial_pose_name" default="initialpose3d"/>
+  <arg name="input_trigger_node_service_name" default="trigger_node" description="trigger node service"/>
 
   <!-- for Pose measurement -->
   <arg name="input_pose_with_cov_name" default="in_pose_with_covariance"/>
@@ -22,7 +23,6 @@
 
   <!-- for process model -->
   <arg name="proc_stddev_yaw_c" default="0.005"/>
-  <arg name="proc_stddev_yaw_bias_c" default="0.001"/>
   <arg name="proc_stddev_vx_c" default="5.0"/>
   <arg name="proc_stddev_wz_c" default="1.0"/>
 
@@ -30,8 +30,8 @@
   <arg name="output_odom_name" default="ekf_odom"/>
   <arg name="output_pose_name" default="ekf_pose"/>
   <arg name="output_pose_with_covariance_name" default="ekf_pose_with_covariance"/>
-  <arg name="output_pose_without_yawbias_name" default="ekf_pose_without_yawbias"/>
-  <arg name="output_pose_with_covariance_without_yawbias_name" default="ekf_pose_with_covariance_without_yawbias"/>
+  <arg name="output_biased_pose_name" default="ekf_biased_pose"/>
+  <arg name="output_biased_pose_with_covariance_name" default="ekf_biased_pose_with_covariance"/>
   <arg name="output_twist_name" default="ekf_twist"/>
   <arg name="output_twist_with_covariance_name" default="ekf_twist_with_covariance"/>
 
@@ -41,6 +41,7 @@
     <remap from="in_twist_with_covariance" to="$(var input_twist_with_cov_name)"/>
 
     <remap from="initialpose" to="$(var input_initial_pose_name)"/>
+    <remap from="trigger_node_srv" to="$(var input_trigger_node_service_name)"/>
 
     <param name="pose_frame_id" value="map"/>
 
@@ -61,15 +62,14 @@
     <param name="twist_gate_dist" value="$(var twist_gate_dist)"/>
 
     <param name="proc_stddev_yaw_c" value="$(var proc_stddev_yaw_c)"/>
-    <param name="proc_stddev_yaw_bias_c" value="$(var proc_stddev_yaw_bias_c)"/>
     <param name="proc_stddev_vx_c" value="$(var proc_stddev_vx_c)"/>
     <param name="proc_stddev_wz_c" value="$(var proc_stddev_wz_c)"/>
 
     <remap from="ekf_odom" to="$(var output_odom_name)"/>
     <remap from="ekf_pose" to="$(var output_pose_name)"/>
     <remap from="ekf_pose_with_covariance" to="$(var output_pose_with_covariance_name)"/>
-    <remap from="ekf_pose_without_yawbias" to="$(var output_pose_without_yawbias_name)"/>
-    <remap from="ekf_pose_with_covariance_without_yawbias" to="$(var output_pose_with_covariance_without_yawbias_name)"/>
+    <remap from="ekf_biased_pose" to="$(var output_biased_pose_name)"/>
+    <remap from="ekf_biased_pose_with_covariance" to="$(var output_biased_pose_with_covariance_name)"/>
     <remap from="ekf_twist" to="$(var output_twist_name)"/>
     <remap from="ekf_twist_with_covariance" to="$(var output_twist_with_covariance_name)"/>
   </node>

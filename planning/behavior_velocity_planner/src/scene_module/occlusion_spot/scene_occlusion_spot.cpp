@@ -91,7 +91,7 @@ bool OcclusionSpotModule::modifyPathVelocity(
     param_.v.max_stop_jerk = planner_data_->max_stop_jerk_threshold;
     param_.v.max_stop_accel = planner_data_->max_stop_acceleration_threshold;
     param_.v.v_ego = planner_data_->current_velocity->twist.linear.x;
-    param_.v.a_ego = planner_data_->current_accel.get();
+    param_.v.a_ego = planner_data_->current_acceleration->accel.accel.linear.x;
     param_.v.delay_time = planner_data_->system_delay;
     param_.detection_area_max_length =
       planning_utils::calcJudgeLineDistWithJerkLimit(
@@ -122,8 +122,9 @@ bool OcclusionSpotModule::modifyPathVelocity(
     }
   }
   DEBUG_PRINT(show_time, "apply velocity [ms]: ", stop_watch_.toc("processing_time", true));
+  const size_t ego_seg_idx = findEgoSegmentIndex(predicted_path.points);
   if (!utils::buildDetectionAreaPolygon(
-        debug_data_.detection_area_polygons, predicted_path, ego_pose, param_)) {
+        debug_data_.detection_area_polygons, predicted_path, ego_pose, ego_seg_idx, param_)) {
     return true;  // path point is not enough
   }
   DEBUG_PRINT(show_time, "generate poly[ms]: ", stop_watch_.toc("processing_time", true));

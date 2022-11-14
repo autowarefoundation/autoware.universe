@@ -23,7 +23,7 @@ TEST(lowpass_filter_1d, filter)
   LowpassFilter1d lowpass_filter_1d(0.1);
 
   // initial state
-  EXPECT_EQ(*lowpass_filter_1d.getValue(), {});
+  EXPECT_EQ(lowpass_filter_1d.getValue(), boost::none);
 
   // random filter
   EXPECT_NEAR(lowpass_filter_1d.filter(0.0), 0.0, epsilon);
@@ -33,17 +33,11 @@ TEST(lowpass_filter_1d, filter)
 
   // reset without value
   lowpass_filter_1d.reset();
-  EXPECT_EQ(*lowpass_filter_1d.getValue(), {});
+  EXPECT_EQ(lowpass_filter_1d.getValue(), boost::none);
 
   // reset with value
   lowpass_filter_1d.reset(-1.1);
   EXPECT_NEAR(*lowpass_filter_1d.getValue(), -1.1, epsilon);
   EXPECT_NEAR(lowpass_filter_1d.filter(0.0), -0.11, epsilon);
   EXPECT_NEAR(*lowpass_filter_1d.getValue(), -0.11, epsilon);
-}
-
-int main(int argc, char * argv[])
-{
-  ::testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
 }

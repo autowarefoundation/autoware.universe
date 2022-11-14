@@ -47,17 +47,20 @@ class GroundSegmentationPipeline:
         self.use_time_series_filter = self.ground_segmentation_param["use_time_series_filter"]
 
     def get_vehicle_info(self):
-        path = LaunchConfiguration("vehicle_param_file").perform(self.context)
-        with open(path, "r") as f:
-            p = yaml.safe_load(f)["/**"]["ros__parameters"]
-        p["vehicle_length"] = p["front_overhang"] + p["wheel_base"] + p["rear_overhang"]
-        p["vehicle_width"] = p["wheel_tread"] + p["left_overhang"] + p["right_overhang"]
-        p["min_longitudinal_offset"] = -p["rear_overhang"]
-        p["max_longitudinal_offset"] = p["front_overhang"] + p["wheel_base"]
-        p["min_lateral_offset"] = -(p["wheel_tread"] / 2.0 + p["right_overhang"])
-        p["max_lateral_offset"] = p["wheel_tread"] / 2.0 + p["left_overhang"]
+        # TODO(TIER IV): Use Parameter Substitution after we drop Galactic support
+        # https://github.com/ros2/launch_ros/blob/master/launch_ros/launch_ros/substitutions/parameter.py
+        gp = self.context.launch_configurations.get("ros_params", {})
+        if not gp:
+            gp = dict(self.context.launch_configurations.get("global_params", {}))
+        p = {}
+        p["vehicle_length"] = gp["front_overhang"] + gp["wheel_base"] + gp["rear_overhang"]
+        p["vehicle_width"] = gp["wheel_tread"] + gp["left_overhang"] + gp["right_overhang"]
+        p["min_longitudinal_offset"] = -gp["rear_overhang"]
+        p["max_longitudinal_offset"] = gp["front_overhang"] + gp["wheel_base"]
+        p["min_lateral_offset"] = -(gp["wheel_tread"] / 2.0 + gp["right_overhang"])
+        p["max_lateral_offset"] = gp["wheel_tread"] / 2.0 + gp["left_overhang"]
         p["min_height_offset"] = 0.0
-        p["max_height_offset"] = p["vehicle_height"]
+        p["max_height_offset"] = gp["vehicle_height"]
         return p
 
     def get_vehicle_mirror_info(self):
@@ -81,8 +84,6 @@ class GroundSegmentationPipeline:
                     {
                         "input_frame": LaunchConfiguration("base_frame"),
                         "output_frame": LaunchConfiguration("base_frame"),
-                        "min_z": self.vehicle_info["min_height_offset"],
-                        "max_z": self.vehicle_info["max_height_offset"],
                     },
                     self.ground_segmentation_param[f"{lidar_name}_crop_box_filter"]["parameters"],
                 ],
@@ -215,8 +216,6 @@ class GroundSegmentationPipeline:
                     {
                         "input_frame": LaunchConfiguration("base_frame"),
                         "output_frame": LaunchConfiguration("base_frame"),
-                        "min_z": self.vehicle_info["min_height_offset"],
-                        "max_z": self.vehicle_info["max_height_offset"],
                     },
                     self.ground_segmentation_param["common_crop_box_filter"]["parameters"],
                 ],
@@ -238,6 +237,8 @@ class GroundSegmentationPipeline:
                 parameters=[
                     self.ground_segmentation_param["common_ground_filter"]["parameters"],
                     self.vehicle_info,
+                    {"input_frame": "base_link"},
+                    {"output_frame": "base_link"},
                 ],
                 extra_arguments=[
                     {"use_intra_process_comms": LaunchConfiguration("use_intra_process")}
@@ -267,7 +268,7 @@ class GroundSegmentationPipeline:
             components.append(
                 self.get_additional_lidars_concatenated_component(
                     input_topics=[common_pipeline_output]
-                    + list(map(lambda x: f"{x}/pointcloud"), additional_lidars),
+                    + [f"{x}/pointcloud" for x in additional_lidars],
                     output_topic=relay_topic if use_ransac else output_topic,
                 )
             )
@@ -463,7 +464,7 @@ def launch_setup(context, *args, **kwargs):
     components = []
     components.extend(
         pipeline.create_single_frame_obstacle_segmentation_components(
-            input_topic="/sensing/lidar/concatenated/pointcloud",
+            input_topic=LaunchConfiguration("input/pointcloud"),
             output_topic=pipeline.single_frame_obstacle_seg_output,
         )
     )
@@ -513,12 +514,12 @@ def generate_launch_description():
         launch_arguments.append(DeclareLaunchArgument(name, default_value=default_value))
 
     add_launch_arg("base_frame", "base_link")
-    add_launch_arg("vehicle_param_file")
     add_launch_arg("use_multithread", "False")
     add_launch_arg("use_intra_process", "True")
     add_launch_arg("use_pointcloud_container", "False")
     add_launch_arg("container_name", "perception_pipeline_container")
     add_launch_arg("tier4_perception_launch_param_path", "tier4_perception_launch parameter path")
+    add_launch_arg("input/pointcloud", "/sensing/lidar/concatenated/pointcloud")
 
     set_container_executable = SetLaunchConfiguration(
         "container_executable",

@@ -53,7 +53,7 @@ class AutowareScreenCapturePanel : public rviz_common::Panel
 
 public:
   explicit AutowareScreenCapturePanel(QWidget * parent = nullptr);
-  ~AutowareScreenCapturePanel();
+  ~AutowareScreenCapturePanel() override;
   void update();
   void onInitialize() override;
   void createWallTimer();
@@ -61,30 +61,32 @@ public:
   void save(rviz_common::Config config) const override;
   void load(const rviz_common::Config & config) override;
   void onCaptureTrigger(
-    const std::shared_ptr<std_srvs::srv::Trigger::Request> req,
-    const std::shared_ptr<std_srvs::srv::Trigger::Response> res);
+    const std_srvs::srv::Trigger::Request::SharedPtr req,
+    const std_srvs::srv::Trigger::Response::SharedPtr res);
 
 public Q_SLOTS:
   void onClickScreenCapture();
   void onClickVideoCapture();
+  void onPrefixChanged();
   void onRateChanged();
 
 private:
   QLabel * ros_time_label_;
   QPushButton * screen_capture_button_ptr_;
   QPushButton * capture_to_mp4_button_ptr_;
+  QLineEdit * file_name_prefix_;
   QSpinBox * capture_hz_;
   QTimer * capture_timer_;
-  QMainWindow * main_window_;
+  QMainWindow * main_window_{nullptr};
   enum class State { WAITING_FOR_CAPTURE, CAPTURING };
   State state_;
   std::string capture_file_name_;
-  bool is_capture_;
-  cv::VideoWriter writer;
-  cv::Size current_movie_size;
+  bool is_capture_{false};
+  cv::VideoWriter writer_;
+  cv::Size current_movie_size_;
   std::vector<cv::Mat> image_vec_;
 
-  std::string stateToString(const State & state)
+  static std::string stateToString(const State & state)
   {
     if (state == State::WAITING_FOR_CAPTURE) {
       return "waiting for capture";

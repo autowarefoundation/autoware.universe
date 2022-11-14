@@ -16,11 +16,13 @@
 #define COMPONENT_INTERFACE_UTILS__RCLCPP_HPP_
 
 #include <component_interface_utils/rclcpp/create_interface.hpp>
+#include <component_interface_utils/rclcpp/interface.hpp>
 #include <component_interface_utils/rclcpp/service_client.hpp>
 #include <component_interface_utils/rclcpp/service_server.hpp>
 #include <component_interface_utils/rclcpp/topic_publisher.hpp>
 #include <component_interface_utils/rclcpp/topic_subscription.hpp>
 
+#include <memory>
 #include <optional>
 #include <utility>
 
@@ -33,20 +35,24 @@ private:
   using CallbackGroup = rclcpp::CallbackGroup::SharedPtr;
 
   template <class SharedPtrT, class InstanceT>
+  using MessageCallback =
+    void (InstanceT::*)(const typename SharedPtrT::element_type::SpecType::Message::ConstSharedPtr);
+
+  template <class SharedPtrT, class InstanceT>
   using ServiceCallback = void (InstanceT::*)(
     const typename SharedPtrT::element_type::SpecType::Service::Request::SharedPtr,
     const typename SharedPtrT::element_type::SpecType::Service::Response::SharedPtr);
 
 public:
   /// Constructor.
-  explicit NodeAdaptor(rclcpp::Node * node) : node_(node) {}
+  explicit NodeAdaptor(rclcpp::Node * node) { interface_ = std::make_shared<NodeInterface>(node); }
 
   /// Create a client wrapper for logging.
   template <class SharedPtrT>
   void init_cli(SharedPtrT & cli, CallbackGroup group = nullptr) const
   {
     using SpecT = typename SharedPtrT::element_type::SpecType;
-    cli = create_client_impl<SpecT>(node_, group);
+    cli = create_client_impl<SpecT>(interface_, group);
   }
 
   /// Create a service wrapper for logging.
@@ -54,7 +60,7 @@ public:
   void init_srv(SharedPtrT & srv, CallbackT && callback, CallbackGroup group = nullptr) const
   {
     using SpecT = typename SharedPtrT::element_type::SpecType;
-    srv = create_service_impl<SpecT>(node_, std::forward<CallbackT>(callback), group);
+    srv = create_service_impl<SpecT>(interface_, std::forward<CallbackT>(callback), group);
   }
 
   /// Create a publisher using traits like services.
@@ -62,7 +68,7 @@ public:
   void init_pub(SharedPtrT & pub) const
   {
     using SpecT = typename SharedPtrT::element_type::SpecType;
-    pub = create_publisher_impl<SpecT>(node_);
+    pub = create_publisher_impl<SpecT>(interface_->node);
   }
 
   /// Create a subscription using traits like services.
@@ -70,7 +76,7 @@ public:
   void init_sub(SharedPtrT & sub, CallbackT && callback) const
   {
     using SpecT = typename SharedPtrT::element_type::SpecType;
-    sub = create_subscription_impl<SpecT>(node_, std::forward<CallbackT>(callback));
+    sub = create_subscription_impl<SpecT>(interface_->node, std::forward<CallbackT>(callback));
   }
 
   /// Relay message.
@@ -87,26 +93,35 @@ public:
   void relay_service(
     C & cli, S & srv, CallbackGroup group, std::optional<double> timeout = std::nullopt) const
   {
-    using ReqT = typename C::element_type::SpecType::Service::Request::SharedPtr;
-    using ResT = typename C::element_type::SpecType::Service::Response::SharedPtr;
     init_cli(cli);
     init_srv(
-      srv, [cli, timeout](ReqT req, ResT res) { *res = *cli->call(req, timeout); }, group);
+      srv, [cli, timeout](auto req, auto res) { *res = *cli->call(req, timeout); }, group);
+  }
+
+  /// Create a subscription wrapper.
+  template <class SharedPtrT, class InstanceT>
+  void init_sub(
+    SharedPtrT & sub, InstanceT * instance,
+    MessageCallback<SharedPtrT, InstanceT> && callback) const
+  {
+    using std::placeholders::_1;
+    init_sub(sub, std::bind(callback, instance, _1));
   }
 
   /// Create a service wrapper for logging.
   template <class SharedPtrT, class InstanceT>
   void init_srv(
-    SharedPtrT & srv, InstanceT * instance, ServiceCallback<SharedPtrT, InstanceT> callback,
+    SharedPtrT & srv, InstanceT * instance, ServiceCallback<SharedPtrT, InstanceT> && callback,
     CallbackGroup group = nullptr) const
   {
-    init_srv(
-      srv, [instance, callback](auto req, auto res) { (instance->*callback)(req, res); }, group);
+    using std::placeholders::_1;
+    using std::placeholders::_2;
+    init_srv(srv, std::bind(callback, instance, _1, _2), group);
   }
 
 private:
   // Use a node pointer because shared_from_this cannot be used in constructor.
-  rclcpp::Node * node_;
+  NodeInterface::SharedPtr interface_;
 };
 
 }  // namespace component_interface_utils

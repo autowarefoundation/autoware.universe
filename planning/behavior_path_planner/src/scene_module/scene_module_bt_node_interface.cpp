@@ -45,11 +45,13 @@ BT::NodeStatus SceneModuleBTNodeInterface::tick()
 
   scene_module_->onEntry();
   module_status_->is_waiting_approval = scene_module_->isWaitingApproval();
+  module_status_->is_execution_ready = scene_module_->isExecutionReady();
 
   const bool is_lane_following = scene_module_->name() == "LaneFollowing";
 
   const bool is_waiting_approval = !scene_module_->isActivated();
   if (is_waiting_approval && !is_lane_following) {
+    scene_module_->lockRTCCommand();
     try {
       // NOTE: Since BehaviorTreeCpp has an issue to shadow the exception reason thrown
       // in the TreeNode, catch and display it here until the issue is fixed.
@@ -59,17 +61,20 @@ BT::NodeStatus SceneModuleBTNodeInterface::tick()
         RCLCPP_ERROR_STREAM(scene_module_->getLogger(), "setOutput() failed : " << res.error());
       }
       module_status_->is_waiting_approval = scene_module_->isWaitingApproval();
+      module_status_->is_execution_ready = scene_module_->isExecutionReady();
     } catch (const std::exception & e) {
       RCLCPP_ERROR_STREAM(
         scene_module_->getLogger(), "behavior module has failed with exception: " << e.what());
       // std::exit(EXIT_FAILURE);  // TODO(Horibe) do appropriate handing
     }
+    scene_module_->unlockRTCCommand();
     return BT::NodeStatus::SUCCESS;
   }
 
   while (rclcpp::ok()) {
     // NOTE: Since BehaviorTreeCpp has an issue to shadow the exception reason thrown
     // in the TreeNode, catch and display it here until the issue is fixed.
+    scene_module_->lockRTCCommand();
     try {
       auto res = setOutput<BehaviorModuleOutput>("output", scene_module_->run());
       if (!res) {
@@ -81,6 +86,7 @@ BT::NodeStatus SceneModuleBTNodeInterface::tick()
       // for data output
       module_status_->status = current_status;
       module_status_->is_waiting_approval = scene_module_->isWaitingApproval();
+      module_status_->is_execution_ready = scene_module_->isExecutionReady();
     } catch (const std::exception & e) {
       RCLCPP_ERROR_STREAM(
         scene_module_->getLogger(), "behavior module has failed with exception: " << e.what());
@@ -94,6 +100,7 @@ BT::NodeStatus SceneModuleBTNodeInterface::tick()
       break;
     }
 
+    scene_module_->unlockRTCCommand();
     setStatusRunningAndYield();
   }
 

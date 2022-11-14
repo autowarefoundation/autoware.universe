@@ -17,12 +17,9 @@
 #include "behavior_path_planner/scene_module/avoidance/avoidance_module_data.hpp"
 #include "behavior_path_planner/utilities.hpp"
 
-#include <lanelet2_extension/utility/message_conversion.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <algorithm>
-#include <iomanip>
 #include <limits>
 #include <memory>
 #include <set>
@@ -46,28 +43,6 @@ bool isSameDirectionShift(const bool & is_object_on_right, const double & shift_
   return (is_object_on_right == std::signbit(shift_length));
 }
 
-lanelet::ConstLanelets calcLaneAroundPose(
-  const std::shared_ptr<const PlannerData> & planner_data, const geometry_msgs::msg::Pose & pose,
-  const double backward_length)
-{
-  const auto & p = planner_data->parameters;
-  const auto & route_handler = planner_data->route_handler;
-
-  lanelet::ConstLanelet current_lane;
-  if (!route_handler->getClosestLaneletWithinRoute(pose, &current_lane)) {
-    RCLCPP_ERROR(
-      rclcpp::get_logger("behavior_path_planner").get_child("avoidance"),
-      "failed to find closest lanelet within route!!!");
-    return {};  // TODO(Horibe)
-  }
-
-  // For current_lanes with desired length
-  lanelet::ConstLanelets current_lanes =
-    route_handler->getLaneletSequence(current_lane, pose, backward_length, p.forward_path_length);
-
-  return current_lanes;
-}
-
 ShiftedPath toShiftedPath(const PathWithLaneId & path)
 {
   ShiftedPath out;
@@ -77,13 +52,13 @@ ShiftedPath toShiftedPath(const PathWithLaneId & path)
   return out;
 }
 
-ShiftPointArray toShiftPointArray(const AvoidPointArray & avoid_points)
+ShiftLineArray toShiftLineArray(const AvoidLineArray & avoid_points)
 {
-  ShiftPointArray shift_points;
+  ShiftLineArray shift_lines;
   for (const auto & ap : avoid_points) {
-    shift_points.push_back(ap);
+    shift_lines.push_back(ap);
   }
-  return shift_points;
+  return shift_lines;
 }
 
 size_t findPathIndexFromArclength(
@@ -112,27 +87,27 @@ std::vector<size_t> concatParentIds(
   return v;
 }
 
-double lerpShiftLengthOnArc(double arc, const AvoidPoint & ap)
+double lerpShiftLengthOnArc(double arc, const AvoidLine & ap)
 {
   if (ap.start_longitudinal <= arc && arc < ap.end_longitudinal) {
     if (std::abs(ap.getRelativeLongitudinal()) < 1.0e-5) {
-      return ap.length;
+      return ap.end_shift_length;
     }
     const auto start_weight = (ap.end_longitudinal - arc) / ap.getRelativeLongitudinal();
-    return start_weight * ap.start_length + (1.0 - start_weight) * ap.length;
+    return start_weight * ap.start_shift_length + (1.0 - start_weight) * ap.end_shift_length;
   }
   return 0.0;
 }
 
-void clipByMinStartIdx(const AvoidPointArray & shift_points, PathWithLaneId & path)
+void clipByMinStartIdx(const AvoidLineArray & shift_lines, PathWithLaneId & path)
 {
   if (path.points.empty()) {
     return;
   }
 
   size_t min_start_idx = std::numeric_limits<size_t>::max();
-  for (const auto & sp : shift_points) {
-    min_start_idx = std::min(min_start_idx, sp.start_idx);
+  for (const auto & sl : shift_lines) {
+    min_start_idx = std::min(min_start_idx, sl.start_idx);
   }
   min_start_idx = std::min(min_start_idx, path.points.size() - 1);
   path.points =
@@ -193,20 +168,20 @@ double calcOverhangDistance(
 }
 
 void setEndData(
-  AvoidPoint & ap, const double length, const geometry_msgs::msg::Pose & end, const size_t end_idx,
+  AvoidLine & ap, const double length, const geometry_msgs::msg::Pose & end, const size_t end_idx,
   const double end_dist)
 {
-  ap.length = length;
+  ap.end_shift_length = length;
   ap.end = end;
   ap.end_idx = end_idx;
   ap.end_longitudinal = end_dist;
 }
 
 void setStartData(
-  AvoidPoint & ap, const double start_length, const geometry_msgs::msg::Pose & start,
+  AvoidLine & ap, const double start_shift_length, const geometry_msgs::msg::Pose & start,
   const size_t start_idx, const double start_dist)
 {
-  ap.start_length = start_length;
+  ap.start_shift_length = start_shift_length;
   ap.start = start;
   ap.start_idx = start_idx;
   ap.start_longitudinal = start_dist;

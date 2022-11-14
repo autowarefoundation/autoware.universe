@@ -50,6 +50,7 @@ using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::PoseStamped;
 using std_msgs::msg::Header;
+using RouteSections = std::vector<autoware_auto_mapping_msgs::msg::HADMapSegment>;
 
 enum class LaneChangeDirection { NONE, LEFT, RIGHT };
 enum class PullOverDirection { NONE, LEFT, RIGHT };
@@ -65,8 +66,6 @@ public:
   void setMap(const HADMapBin & map_msg);
   void setRoute(const HADMapRoute & route_msg);
   void setRouteLanelets(const lanelet::ConstLanelets & path_lanelets);
-  void setPullOverGoalPose(
-    const lanelet::ConstLanelet target_lane, const double vehicle_width, const double margin);
 
   // const methods
 
@@ -87,11 +86,11 @@ public:
     const Pose & start_checkpoint, const Pose & goal_checkpoint,
     lanelet::ConstLanelets * path_lanelets) const;
   std::vector<HADMapSegment> createMapSegments(const lanelet::ConstLanelets & path_lanelets) const;
+  static bool isRouteLooped(const RouteSections & route_sections);
 
   // for goal
   bool isInGoalRouteSection(const lanelet::ConstLanelet & lanelet) const;
   Pose getGoalPose() const;
-  Pose getPullOverGoalPose() const;
   lanelet::Id getGoalLaneId() const;
   bool getGoalLanelet(lanelet::ConstLanelet * goal_lanelet) const;
   std::vector<lanelet::ConstLanelet> getLanesBeforePose(
@@ -124,6 +123,7 @@ public:
   boost::optional<lanelet::ConstLanelet> getLeftLanelet(
     const lanelet::ConstLanelet & lanelet) const;
   lanelet::ConstLanelets getNextLanelets(const lanelet::ConstLanelet & lanelet) const;
+  lanelet::ConstLanelets getPreviousLanelets(const lanelet::ConstLanelet & lanelet) const;
 
   /**
    * @brief Check if opposite-direction lane is available at the right side of the lanelet
@@ -223,7 +223,7 @@ public:
   bool getClosestLaneletWithinRoute(
     const Pose & search_pose, lanelet::ConstLanelet * closest_lanelet) const;
   lanelet::ConstLanelet getLaneletsFromId(const lanelet::Id id) const;
-  lanelet::ConstLanelets getLaneletsFromIds(const lanelet::Ids ids) const;
+  lanelet::ConstLanelets getLaneletsFromIds(const lanelet::Ids & ids) const;
   lanelet::ConstLanelets getLaneletSequence(
     const lanelet::ConstLanelet & lanelet, const Pose & current_pose,
     const double backward_distance, const double forward_distance) const;
@@ -232,7 +232,7 @@ public:
     const double backward_distance = std::numeric_limits<double>::max(),
     const double forward_distance = std::numeric_limits<double>::max()) const;
   lanelet::ConstLanelets getShoulderLaneletSequence(
-    const lanelet::ConstLanelet & lanelet, const Pose & current_pose,
+    const lanelet::ConstLanelet & lanelet, const Pose & pose,
     const double backward_distance = std::numeric_limits<double>::max(),
     const double forward_distance = std::numeric_limits<double>::max()) const;
   lanelet::ConstLanelets getCheckTargetLanesFromPath(
@@ -248,11 +248,12 @@ public:
     bool use_exact = true) const;
   bool getLaneChangeTarget(
     const lanelet::ConstLanelets & lanelets, lanelet::ConstLanelet * target_lanelet) const;
-  bool getPullOverTarget(
-    const lanelet::ConstLanelets & lanelets, lanelet::ConstLanelet * target_lanelet) const;
-  bool getPullOutStart(
-    const lanelet::ConstLanelets & lanelets, lanelet::ConstLanelet * target_lanelet,
-    const Pose & pose, const double vehicle_width) const;
+  static bool getPullOverTarget(
+    const lanelet::ConstLanelets & lanelets, const Pose & goal_pose,
+    lanelet::ConstLanelet * target_lanelet);
+  static bool getPullOutStartLane(
+    const lanelet::ConstLanelets & lanelets, const Pose & pose, const double vehicle_width,
+    lanelet::ConstLanelet * target_lanelet);
   double getLaneChangeableDistance(
     const Pose & current_pose, const LaneChangeDirection & direction) const;
   lanelet::ConstPolygon3d getIntersectionAreaById(const lanelet::Id id) const;
@@ -269,7 +270,6 @@ private:
   lanelet::ConstLanelets start_lanelets_;
   lanelet::ConstLanelets goal_lanelets_;
   lanelet::ConstLanelets shoulder_lanelets_;
-  Pose pull_over_goal_pose_;
   HADMapRoute route_msg_;
 
   rclcpp::Logger logger_{rclcpp::get_logger("route_handler")};
