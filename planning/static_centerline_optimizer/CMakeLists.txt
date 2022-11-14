@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.14)
 project(static_centerline_optimizer)
 
 find_package(autoware_cmake REQUIRED)
-autoware_package()
 
 find_package(builtin_interfaces REQUIRED)
 find_package(geometry_msgs REQUIRED)
@@ -19,6 +18,8 @@ rosidl_generate_interfaces(
   "msg/PointsWithLaneId.msg"
   DEPENDENCIES builtin_interfaces geometry_msgs
 )
+
+autoware_package()
 
 ament_auto_add_executable(main
   src/main.cpp
