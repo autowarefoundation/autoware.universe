@@ -31,6 +31,7 @@
 #include <lanelet2_io/Io.h>
 #include <lanelet2_projection/UTM.h>
 
+#include <fstream>
 #include <limits>
 #include <memory>
 #include <string>
