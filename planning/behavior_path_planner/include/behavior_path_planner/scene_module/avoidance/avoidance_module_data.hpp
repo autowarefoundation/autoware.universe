@@ -18,6 +18,7 @@
 #include "behavior_path_planner/scene_module/utils/path_shifter.hpp"
 
 #include <rclcpp/rclcpp.hpp>
+#include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
@@ -34,10 +35,12 @@ namespace behavior_path_planner
 using autoware_auto_perception_msgs::msg::PredictedObject;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 
+using tier4_autoware_utils::Polygon2d;
 using tier4_planning_msgs::msg::AvoidanceDebugMsgArray;
 
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
+using geometry_msgs::msg::TransformStamped;
 
 struct AvoidanceParameters
 {
@@ -73,6 +76,9 @@ struct AvoidanceParameters
 
   // continue to detect backward vehicles as avoidance targets until they are this distance away
   double object_check_backward_distance;
+
+  // object's enveloped polygon
+  double object_envelope_buffer;
 
   // we want to keep this lateral margin when avoiding
   double lateral_collision_margin;
@@ -196,6 +202,9 @@ struct ObjectData  // avoidance target
 
   // the position of the overhang
   Pose overhang_pose;
+
+  // envelope polygon
+  Polygon2d envelope_poly{};
 
   // lateral distance from overhang to the road shoulder
   double to_road_shoulder_distance{0.0};

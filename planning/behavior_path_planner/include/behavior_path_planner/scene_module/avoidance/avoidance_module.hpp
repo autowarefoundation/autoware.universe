@@ -192,6 +192,11 @@ private:
     }
   }
 
+  /**
+   * object pre-process
+   */
+  void fillObjectEnvelopePolygon(const Pose & closest_pose, ObjectData & object_data) const;
+
   // data used in previous planning
   ShiftedPath prev_output_;
   ShiftedPath prev_linear_shift_path_;  // used for shift point check

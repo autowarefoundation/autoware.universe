@@ -227,8 +227,15 @@ ObjectDataArray AvoidanceModule::calcAvoidanceTargetObjects(
     ObjectData object_data;
     object_data.object = object;
     avoidance_debug_msg.object_id = getUuidStr(object_data);
+
+    const auto object_closest_index = findNearestIndex(path_points, object_pos);
+    const auto object_closest_pose = path_points.at(object_closest_index).point.pose;
+
+    // Calc envelop polygon.
+    fillObjectEnvelopePolygon(object_closest_pose, object_data);
+
     // calc longitudinal distance from ego to closest target object footprint point.
-    fillLongitudinalAndLengthByClosestFootprint(reference_path, object, ego_pos, object_data);
+    fillLongitudinalAndLengthByClosestEnvelopeFootprint(reference_path, ego_pos, object_data);
     avoidance_debug_msg.longitudinal_distance = object_data.longitudinal;
 
     // object is behind ego or too far.
@@ -248,14 +255,12 @@ ObjectDataArray AvoidanceModule::calcAvoidanceTargetObjects(
     }
 
     // Calc lateral deviation from path to target object.
-    const auto object_closest_index = findNearestIndex(path_points, object_pos);
-    const auto object_closest_pose = path_points.at(object_closest_index).point.pose;
     object_data.lateral = calcLateralDeviation(object_closest_pose, object_pos);
     avoidance_debug_msg.lateral_distance_from_centerline = object_data.lateral;
 
     // Find the footprint point closest to the path, set to object_data.overhang_distance.
-    object_data.overhang_dist =
-      calcOverhangDistance(object_data, object_closest_pose, object_data.overhang_pose.position);
+    object_data.overhang_dist = calcEnvelopeOverhangDistance(
+      object_data, object_closest_pose, object_data.overhang_pose.position);
 
     lanelet::ConstLanelet overhang_lanelet;
     if (!rh->getClosestLaneletWithinRoute(object_closest_pose, &overhang_lanelet)) {
@@ -316,6 +321,34 @@ ObjectDataArray AvoidanceModule::calcAvoidanceTargetObjects(
   }
 
   return target_objects;
+}
+
+void AvoidanceModule::fillObjectEnvelopePolygon(
+  const Pose & closest_pose, ObjectData & object_data) const
+{
+  using boost::geometry::within;
+
+  const auto id = object_data.object.object_id;
+  const auto same_id_obj = std::find_if(
+    registered_objects_.begin(), registered_objects_.end(),
+    [&id](const auto & o) { return o.object.object_id == id; });
+
+  if (same_id_obj == registered_objects_.end()) {
+    object_data.envelope_poly =
+      createEnvelopePolygon(object_data, closest_pose, parameters_->object_envelope_buffer);
+    return;
+  }
+
+  Polygon2d object_polygon{};
+  util::calcObjectPolygon(object_data.object, &object_polygon);
+
+  if (!within(object_polygon, same_id_obj->envelope_poly)) {
+    object_data.envelope_poly =
+      createEnvelopePolygon(object_data, closest_pose, parameters_->object_envelope_buffer);
+    return;
+  }
+
+  object_data.envelope_poly = same_id_obj->envelope_poly;
 }
 
 /**
