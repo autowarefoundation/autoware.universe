@@ -16,6 +16,7 @@
   <depend>geometry_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>visualization_msgs</depend>
+  <depend>sophus</depend>
 
   <depend>modularized_particle_filter</depend>
   <depend>vml_common</depend>
