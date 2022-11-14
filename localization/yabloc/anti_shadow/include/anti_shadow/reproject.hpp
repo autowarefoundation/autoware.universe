@@ -27,10 +27,10 @@ public:
 
 private:
   const float min_segment_length_;
-  const float gain_;
   const int polygon_thick_;
   const float gap_threshold_;
   const int search_iteration_max_;
+  const int backward_frame_interval_;
 
   // Publisher
   rclcpp::Publisher<Image>::SharedPtr pub_old_image_;
@@ -66,7 +66,7 @@ private:
   {
     size_t id;
     cv::Point2f final_offset;
-    int gap;
+    float gap;
   };
 
   std::optional<Parameter> param_{std::nullopt};

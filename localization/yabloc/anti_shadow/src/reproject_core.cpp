@@ -16,10 +16,10 @@ Reprojector::Reprojector()
   tf_subscriber_(this->get_clock()),
   synchro_subscriber_(this, "/sensing/camera/undistorted/image_raw", "lsd_cloud"),
   min_segment_length_(declare_parameter<float>("min_segment_length", 0.5)),
-  gain_(declare_parameter<float>("gain", 0.5)),
   polygon_thick_(declare_parameter<int>("polygon_thic", 3)),
   gap_threshold_(declare_parameter<float>("gap_threshold", 150)),
-  search_iteration_max_(declare_parameter<int>("search_iteration_max", 4))
+  search_iteration_max_(declare_parameter<int>("search_iteration_max", 4)),
+  backward_frame_interval_(declare_parameter<int>("backward_frame_interval", 4))
 {
   using std::placeholders::_1;
   using std::placeholders::_2;
@@ -134,7 +134,7 @@ void Reprojector::publishCloud(
 {
   pcl::PointCloud<pcl::PointNormal> dst;
   for (const auto & [id, gap] : gaps) {
-    if (gap.gap * gain_ < gap_threshold_) {
+    if (gap.gap < gap_threshold_) {
       dst.push_back(src.at(id));
     }
   }
@@ -160,8 +160,12 @@ void Reprojector::visualizeAndPublish(
   // Visualize cur image using gap score
   cv::Mat draw_cur_image = cur_image.clone();
   for (const auto & pair : pairs) {
-    const int gap = gap_map.at(pair.id).gap;
-    const cv::Vec3b color = cv::Vec3b(gap, gap, gap) * gain_;
+    const float gap = gap_map.at(pair.id).gap;
+
+    float score = (gap / gap_threshold_ * 255.f);
+    cv::Vec3b color(0, 0, 255);
+    if (score < 255) color = cv::Vec3b(score, score, score);
+
     for (const auto & src : pair.src) {
       if (rect.contains(src)) draw_cur_image.at<cv::Vec3b>(src) = color;
     }
@@ -178,16 +182,25 @@ std::unordered_map<size_t, Reprojector::GapResult> Reprojector::computeGap(
 
   const cv::Rect rect(0, 0, old_image.cols, old_image.rows);
 
+  // TODO: someday, compute both x&y gradient and compute inner product
+  cv::Mat old_edge, cur_edge;
+  cv::cvtColor(old_image, old_edge, cv::COLOR_BGR2GRAY);
+  cv::cvtColor(cur_image, cur_edge, cv::COLOR_BGR2GRAY);
+  cv::Sobel(cur_edge, cur_edge, CV_8U, 1, 0);
+  cv::Sobel(old_edge, old_edge, CV_8U, 1, 0);
+
   auto compute_gap = [&](const TransformPair & pair, const cv::Point2f & offset) -> float {
     int gap = 0;
     int gap_cnt = 0;
-    const int N = pair.src.size();
 
-    for (int i = 0; i < N; ++i) {
+    for (int i = 0; i < pair.src.size(); ++i) {
       if (rect.contains(pair.src.at(i)) && rect.contains(pair.dst.at(i) + offset)) {
-        cv::Vec3b s = cur_image.at<cv::Vec3b>(pair.src.at(i));
-        cv::Vec3b d = old_image.at<cv::Vec3b>(pair.dst.at(i) + offset);
-        gap += (s - d).dot(s - d);
+        // cv::Vec3b s = cur_image.at<cv::Vec3b>(pair.src.at(i));
+        // cv::Vec3b d = old_image.at<cv::Vec3b>(pair.dst.at(i) + offset);
+        // gap += (s - d).dot(s - d);
+        unsigned char s = cur_edge.at<unsigned char>(pair.src.at(i));
+        unsigned char d = old_edge.at<unsigned char>(pair.dst.at(i) + offset);
+        gap += (s - d) * (s - d);
         gap_cnt++;
       }
     }
@@ -198,11 +211,11 @@ std::unordered_map<size_t, Reprojector::GapResult> Reprojector::computeGap(
 
   for (const auto & pair : pairs) {
     // First search
-    int best_gap = std::numeric_limits<int>::max();
+    float best_gap = std::numeric_limits<float>::max();
     cv::Point2f best_offset(0, 0);
 
     for (int itr = 0; itr < search_iteration_max_; itr++) {
-      int tmp_best_gap = std::numeric_limits<int>::max();
+      float tmp_best_gap = std::numeric_limits<float>::max();
       cv::Point2f tmp_best_offset(0, 0);
 
       for (const auto & offset : offset_bases) {
@@ -306,7 +319,7 @@ Sophus::SE3f Reprojector::accumulateTravelDistance(
 
 void Reprojector::popObsoleteMsg()
 {
-  if (image_list_.size() < 5) {
+  if (image_list_.size() < backward_frame_interval_) {
     return;
   }
 
