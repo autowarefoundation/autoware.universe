@@ -74,6 +74,18 @@ enum MSG_COV_IDX {
   YAW_YAW = 35
 };
 
+enum BBOX_IDX {
+  FRONT_SURFACE = 0,
+  RIGHT_SURFACE = 1,
+  REAR_SURFACE = 2,
+  LEFT_SURFACE = 3,
+  FRONT_R_CORNER = 4,
+  REAR_R_CORNER = 5,
+  REAR_L_CORNER = 6,
+  FRONT_L_CORNER = 7,
+  INSIDE = -1
+};
+
 inline bool isLargeVehicleLabel(const uint8_t label)
 {
   using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
@@ -100,22 +112,31 @@ inline int getNearestCornerSurface(
   xl = std::cos(yaw) * (x0 - x) + std::sin(yaw) * (y0 - y);
   yl = -std::sin(yaw) * (x0 - x) + std::cos(yaw) * (y0 - y);
 
-  // grid search
+  // Determine Index
+  //     x+ (front)
+  //         __
+  // y+     |  | y-
+  // (left) |  | (right)
+  //         --
+  //     x- (rear)
   int xgrid, ygrid;
-  const int labels[3][3] = {{7, 0, 4}, {3, -1, 1}, {6, 2, 5}};
+  const int labels[3][3] = {
+    {BBOX_IDX::FRONT_L_CORNER, BBOX_IDX::FRONT_SURFACE, BBOX_IDX::FRONT_R_CORNER},
+    {BBOX_IDX::LEFT_SURFACE, BBOX_IDX::INSIDE, BBOX_IDX::RIGHT_SURFACE},
+    {BBOX_IDX::REAR_L_CORNER, BBOX_IDX::REAR_SURFACE, BBOX_IDX::REAR_R_CORNER}};
   if (xl > length / 2.0) {
-    xgrid = 0;
+    xgrid = 0;  // front
   } else if (xl > -length / 2.0) {
-    xgrid = 1;
+    xgrid = 1;  // middle
   } else {
-    xgrid = 2;
+    xgrid = 2;  // rear
   }
   if (yl > width / 2.0) {
-    ygrid = 2;
+    ygrid = 0;  // left
   } else if (yl > -width / 2.0) {
-    ygrid = 1;
+    ygrid = 1;  // middle
   } else {
-    ygrid = 0;
+    ygrid = 2;  // right
   }
 
   return labels[xgrid][ygrid];  // 0 to 7 + 1(null) value
