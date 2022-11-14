@@ -2,4 +2,3 @@
   ros__parameters:
     enable_whole_load: true
     enable_partial_load: true
-    enable_differential_load: true
