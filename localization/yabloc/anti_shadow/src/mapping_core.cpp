@@ -24,6 +24,7 @@ Mapping::Mapping()
 
   // Publisher
   pub_image_ = create_publisher<Image>("mapping_image", 10);
+  pub_rgb_image_ = create_publisher<Image>("rgb_mapping_image", 10);
 
   histogram_image_ = 128 * cv::Mat::ones(cv::Size(2 * IMAGE_RADIUS, 2 * IMAGE_RADIUS), CV_8UC1);
 }
@@ -51,9 +52,12 @@ void Mapping::onLineSegments(const PointCloud2 & msg)
   draw(msg);
   popObsoleteMsg(*last_stamp);
 
-  cv::Mat color_image;
+  cv::Mat color_image, histogram_3ch_image;
   cv::applyColorMap(histogram_image_, color_image, cv::COLORMAP_JET);
-  vml_common::publishImage(*pub_image_, color_image, msg.header.stamp);
+  cv::cvtColor(histogram_image_, histogram_3ch_image, cv::COLOR_GRAY2BGR);
+
+  vml_common::publishImage(*pub_image_, histogram_3ch_image, msg.header.stamp);
+  vml_common::publishImage(*pub_rgb_image_, color_image, msg.header.stamp);
 }
 
 void Mapping::transformImage(const rclcpp::Time & from_stamp, const rclcpp::Time & to_stamp)

@@ -29,6 +29,7 @@ private:
 
   // Publisher
   rclcpp::Publisher<Image>::SharedPtr pub_image_;
+  rclcpp::Publisher<Image>::SharedPtr pub_rgb_image_;
   // Subscriber
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_lsd_;
   rclcpp::Subscription<TwistStamped>::SharedPtr sub_twist_;

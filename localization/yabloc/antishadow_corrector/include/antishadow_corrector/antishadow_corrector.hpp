@@ -16,9 +16,10 @@ namespace modularized_particle_filter
 class AntishadowCorrector : public modularized_particle_filter::AbstCorrector
 {
 public:
-  using LineSegment = pcl::PointCloud<pcl::PointNormal>;
+  using LineSegments = pcl::PointCloud<pcl::PointNormal>;
   using PointCloud2 = sensor_msgs::msg::PointCloud2;
   using Image = sensor_msgs::msg::Image;
+  using PoseStamped = geometry_msgs::msg::PoseStamped;
   AntishadowCorrector();
 
 private:
@@ -27,13 +28,17 @@ private:
 
   rclcpp::Subscription<Image>::SharedPtr sub_lsd_;
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_ll2_;
-  LineSegment ll2_cloud_;
+  rclcpp::Subscription<PoseStamped>::SharedPtr sub_pose_stamped_;
+  LineSegments ll2_cloud_;
+  std::optional<Sophus::SE3f> latest_pose_{std::nullopt};
 
   void onLsd(const Image & msg);
   void onLl2(const PointCloud2 & msg);
+  void onPoseStamped(const PoseStamped & msg);
 
-  LineSegment transformCloud(const LineSegment & src, const Sophus::SE3f & transform) const;
-  float computeScore(const LineSegment & src, const cv::Mat & lsd_image) const;
+  LineSegments cropLineSegments(const LineSegments & src, const Sophus::SE3f & transform) const;
+  LineSegments transformCloud(const LineSegments & src, const Sophus::SE3f & transform) const;
+  float computeScore(const LineSegments & src, const cv::Mat & lsd_image) const;
 
   cv::Point2f cv_pt2(const Eigen::Vector3f & v) const;
 };
