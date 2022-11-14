@@ -389,7 +389,7 @@ void CollisionFreeOptimizerNode::resetPrevOptimization()
   eb_solved_count_ = 0;
 }
 
-Trajectory CollisionFreeOptimizerNode::pathCallback(const Path::SharedPtr path_ptr)
+Trajectory CollisionFreeOptimizerNode::pathCallback(const Path::ConstSharedPtr path_ptr)
 {
   if (path_ptr->points.empty() || path_ptr->drivable_area.data.empty()) {
     return Trajectory{};

@@ -98,7 +98,7 @@ public:
   explicit CollisionFreeOptimizerNode(const rclcpp::NodeOptions & node_options);
 
   // subscriber callback functions
-  Trajectory pathCallback(const Path::SharedPtr);
+  Trajectory pathCallback(const Path::ConstSharedPtr);
 };
 }  // namespace static_centerline_optimizer
 
