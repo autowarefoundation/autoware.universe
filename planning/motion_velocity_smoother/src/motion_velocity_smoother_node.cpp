@@ -318,7 +318,6 @@ void MotionVelocitySmootherNode::calcExternalVelocityLimit()
     eps) {
     const double v0 = prev_closest_point_->longitudinal_velocity_mps;
     const double a0 = prev_closest_point_->acceleration_mps2;
-    std::cerr << v0 << " " << a0 << " external velocity limit" << std::endl;
 
     if (isEngageStatus(v0)) {
       max_velocity_with_deceleration_ = external_velocity_limit_ptr_->max_velocity;
@@ -529,7 +528,6 @@ bool MotionVelocitySmootherNode::smoothVelocity(
 {
   // Calculate initial motion for smoothing
   const auto [initial_motion, type] = calcInitialMotion(input, input_closest);
-  std::cerr << initial_motion.vel << " " << initial_motion.acc << " initial motion" << std::endl;
 
   // Lateral acceleration limit
   const auto traj_lateral_acc_filtered =
