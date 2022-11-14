@@ -74,7 +74,6 @@ void Mapping::transformImage(const rclcpp::Time & from_stamp, const rclcpp::Time
   for (const auto & p : src_points) dst_points.push_back(transform(p));
 
   cv::Mat warp_mat = cv::getAffineTransform(src_points, dst_points);
-  std::cout << warp_mat << std::endl;
   cv::warpAffine(
     histogram_image_, histogram_image_, warp_mat, histogram_image_.size(), 1, 0,
     cv::Scalar::all(128));
@@ -92,7 +91,6 @@ void Mapping::draw(const PointCloud2 & cloud_msg)
   if (info_.isCameraInfoNullOpt()) return;
   const Eigen::Matrix3f K = info_.intrinsic();
   const Eigen::Matrix3f Kinv = K.inverse();
-  std::cout << "extrinsic & intrinsic are ready" << std::endl;
 
   const Eigen::Vector3f t = camera_extrinsic->translation();
   const Eigen::Quaternionf q(camera_extrinsic->rotation());

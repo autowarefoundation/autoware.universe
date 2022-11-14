@@ -195,6 +195,7 @@ std::unordered_map<size_t, Reprojector::GapResult> Reprojector::computeGap(
 
     for (int i = 0; i < pair.src.size(); ++i) {
       if (rect.contains(pair.src.at(i)) && rect.contains(pair.dst.at(i) + offset)) {
+        // TODO:
         // cv::Vec3b s = cur_image.at<cv::Vec3b>(pair.src.at(i));
         // cv::Vec3b d = old_image.at<cv::Vec3b>(pair.dst.at(i) + offset);
         // gap += (s - d).dot(s - d);

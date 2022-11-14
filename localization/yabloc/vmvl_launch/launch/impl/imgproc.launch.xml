@@ -75,20 +75,4 @@
         <remap from="projected_lsd_cloud" to="$(var output_projected_lsd_cloud)"/>
         <remap from="projected_image" to="$(var output_projected_image)"/>
     </node>
-
-    <!-- mapping -->
-    <node name="mapping" pkg="anti_shadow" exec="mapping_node" output="screen" args="--ros-args --log-level info">
-        <remap from="$(var src_image)" to="$(var resized_image)"/>
-        <remap from="/localization/imgproc/camera_info" to="$(var resized_info)"/>
-        <remap from="/localization/imgproc/lsd_cloud" to="/localization/imgproc/filtered_lsd"/>
-    </node>
-
-    <!-- reprojection -->
-    <node name="reprojection" pkg="anti_shadow" exec="reprojection_node" output="screen" args="--ros-args --log-level info">
-        <remap from="$(var src_image)" to="$(var resized_image)"/>
-        <remap from="/localization/imgproc/camera_info" to="$(var resized_info)"/>
-        <param name="polygon_thic" value="5"/>
-        <param name="gap_threshold" value="1000.0"/>
-    </node>
-
 </launch>

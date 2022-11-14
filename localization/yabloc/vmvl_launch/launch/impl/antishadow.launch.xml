@@ -1,0 +1,36 @@
+<launch>
+    <arg name="use_sim_time" default="true"/>
+    <arg name="log_level" default="warn"/>
+
+    <arg name="resized_image" default="/sensing/camera/undistorted/image_raw"/>
+    <arg name="resized_info" default="/sensing/camera/undistorted/camera_info"/>
+
+    <arg name="min_segment_length" default="-1.0"/>
+    <arg name="max_segment_distance" default="-1.0"/>
+    <arg name="max_lateral_distance" default="-1.0"/>
+
+
+    <!-- mapping -->
+    <node name="mapping" pkg="anti_shadow" exec="mapping_node" output="screen" args="--ros-args --log-level warn">
+        <param name="use_sim_time" value="$(var use_sim_time)"/>
+        <remap from="$(var src_image)" to="$(var resized_image)"/>
+        <remap from="/localization/imgproc/camera_info" to="$(var resized_info)"/>
+        <remap from="/localization/imgproc/lsd_cloud" to="/localization/imgproc/filtered_lsd"/>
+    </node>
+
+    <!-- reprojection -->
+    <node name="reprojection" pkg="anti_shadow" exec="reprojection_node" output="screen" args="--ros-args --log-level warn">
+        <param name="use_sim_time" value="$(var use_sim_time)"/>
+        <remap from="$(var src_image)" to="$(var resized_image)"/>
+        <remap from="/localization/imgproc/camera_info" to="$(var resized_info)"/>
+        <param name="polygon_thic" value="5"/>
+        <param name="gap_threshold" value="1000.0"/>
+    </node>
+
+    <!-- corrector -->
+    <node name="antishadow_corrector" pkg="antishadow_corrector" exec="antishadow_corrector" output="screen" args="--ros-args --log-level info">
+        <param name="use_sim_time" value="$(var use_sim_time)"/>
+        <remap from="/localization/imgproc/predicted_particles" to="/localization/pf/predicted_particles"/>
+    </node>
+
+</launch>

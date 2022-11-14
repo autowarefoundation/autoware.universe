@@ -37,7 +37,6 @@ private:
     const LineSegment & lsd_cloud, const Eigen::Vector3f & self_position);
 
   LineSegment transformCloud(const LineSegment & src, const Eigen::Affine3f & transform) const;
-  Pose meanParticles(const ParticleArray & particle_array) const;
 
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_unmapped_area_;
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_lsd_;
