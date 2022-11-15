@@ -127,6 +127,11 @@ GyroOdometer::~GyroOdometer() {}
 
 void GyroOdometer::timerCallback()
 {
+  if (vel_buffer_.empty() || gyro_buffer_.empty()) {
+    vel_buffer_.clear();
+    gyro_buffer_.clear();
+    return;
+  }
   try {
     validityCheck(is_velocity_arrived_, is_imu_arrived_, vel_buffer_, gyro_buffer_);
   } catch (const std::exception & e) {
