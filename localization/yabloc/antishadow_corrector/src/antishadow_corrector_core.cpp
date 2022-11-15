@@ -10,7 +10,11 @@
 
 namespace modularized_particle_filter
 {
-AntishadowCorrector::AntishadowCorrector() : AbstCorrector("camera_particle_corrector")
+AntishadowCorrector::AntishadowCorrector()
+: AbstCorrector("camera_particle_corrector"),
+  score_min_(declare_parameter<float>("score_min", 70)),
+  score_max_(declare_parameter<float>("score_max", 128)),
+  weight_min_(declare_parameter<float>("weight_min", 0.5))
 {
   using std::placeholders::_1;
   auto lsd_callback = std::bind(&AntishadowCorrector::onLsd, this, _1);
@@ -36,7 +40,6 @@ void AntishadowCorrector::onPoseStamped(const PoseStamped & msg)
 
 void AntishadowCorrector::onLsd(const Image & msg)
 {
-  RCLCPP_INFO_STREAM(get_logger(), "LSD map is subscribed");
   Timer timer;
 
   cv::Mat lsd_image = vml_common::decompress2CvMat(msg);
@@ -67,16 +70,48 @@ void AntishadowCorrector::onLsd(const Image & msg)
 
   LineSegments cropped_ll2_cloud = cropLineSegments(ll2_cloud_, *latest_pose_);
 
+  auto normalize = defineNormalizeScore();
   for (auto & p : weighted_particles.particles) {
     Sophus::SE3f pose = vml_common::pose2Se3(p.pose);
     auto dst_cloud = transformCloud(cropped_ll2_cloud, pose.inverse());
-    p.weight = computeScore(dst_cloud, lsd_image);
+    float score = computeScore(dst_cloud, lsd_image);
+    p.weight = normalize(score);
   }
+
+  printParticleStatistics(weighted_particles);
 
   // TODO: skip weighting if ego vehicle does not move enought
 
   this->setWeightedParticleArray(weighted_particles);
-  RCLCPP_WARN_STREAM(get_logger(), "onLsd() " << timer);
+  RCLCPP_INFO_STREAM(get_logger(), "onLsd() " << timer);
+}
+
+void AntishadowCorrector::printParticleStatistics(const ParticleArray & array) const
+{
+  const int N = array.particles.size();
+  std::vector<float> weights;
+  weights.reserve(N);
+
+  float sum = 0, sum2 = 0;
+  for (const auto & p : array.particles) {
+    weights.push_back(p.weight);
+    sum += p.weight;
+    sum2 += p.weight * p.weight;
+  }
+  std::sort(weights.begin(), weights.end());
+
+  const float min = weights.front();
+  const float max = weights.back();
+  const float median = weights.at(N / 2);
+  const float mean = sum / N;
+  const float var = sum2 / N - mean * mean;
+  const float sigma = std::sqrt(var);
+
+  std::cout << "min: " << min << std::endl;
+  std::cout << "max: " << max << std::endl;
+  std::cout << "median: " << median << std::endl;
+  std::cout << "mean: " << mean << std::endl;
+  std::cout << "sigma: " << sigma << std::endl;
 }
 
 float AntishadowCorrector::computeScore(const LineSegments & src, const cv::Mat & lsd_image) const
@@ -84,7 +119,7 @@ float AntishadowCorrector::computeScore(const LineSegments & src, const cv::Mat 
   cv::Rect rect(0, 0, lsd_image.cols, lsd_image.rows);
 
   float score = 0;
-
+  int pixel_count = 0;
   for (const pcl::PointNormal & pn : src) {
     Eigen::Vector3f t1 = (pn.getNormalVector3fMap() - pn.getVector3fMap()).normalized();
     float l1 = (pn.getVector3fMap() - pn.getNormalVector3fMap()).norm();
@@ -95,10 +130,11 @@ float AntishadowCorrector::computeScore(const LineSegments & src, const cv::Mat 
       if (!rect.contains(px)) continue;
 
       score += lsd_image.at<unsigned char>(px);
+      pixel_count++;
     }
   }
 
-  return score;
+  return score / pixel_count;
 }
 
 void AntishadowCorrector::onLl2(const PointCloud2 & ll2_msg)
@@ -151,6 +187,17 @@ AntishadowCorrector::LineSegments AntishadowCorrector::cropLineSegments(
     }
   }
   return dst;
+}
+
+std::function<float(float)> AntishadowCorrector::defineNormalizeScore() const
+{
+  float k = -std::log(weight_min_);
+
+  return [this, k](float score) -> float {
+    score = std::clamp(score, this->score_min_, this->score_max_);
+    float r = (score - score_min_) / (score_max_ - score_min_);
+    return this->weight_min_ * std::exp(k * r);
+  };
 }
 
 }  // namespace modularized_particle_filter

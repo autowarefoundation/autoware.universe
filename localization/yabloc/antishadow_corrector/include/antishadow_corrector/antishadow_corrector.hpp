@@ -25,6 +25,9 @@ public:
 private:
   const int IMAGE_RADIUS = 250;
   const float METRIC_PER_PIXEL = 0.1;  // [m/pixel]
+  const float score_min_;
+  const float score_max_;
+  const float weight_min_;
 
   rclcpp::Subscription<Image>::SharedPtr sub_lsd_;
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_ll2_;
@@ -41,5 +44,9 @@ private:
   float computeScore(const LineSegments & src, const cv::Mat & lsd_image) const;
 
   cv::Point2f cv_pt2(const Eigen::Vector3f & v) const;
+
+  std::function<float(float)> defineNormalizeScore() const;
+
+  void printParticleStatistics(const ParticleArray & array) const;
 };
 }  // namespace modularized_particle_filter

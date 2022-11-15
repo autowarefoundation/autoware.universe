@@ -32,6 +32,7 @@
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="visualize" value="true"/>
         <remap from="/localization/imgproc/predicted_particles" to="/localization/pf/predicted_particles"/>
+        <remap from="/localization/imgproc/weighted_particles" to="/localization/pf/weighted_particles"/>
     </node>
 
 </launch>

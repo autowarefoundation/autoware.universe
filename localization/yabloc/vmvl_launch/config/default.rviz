@@ -6,8 +6,9 @@ Panels:
       Expanded:
         - /VectorMap1/Namespaces1
         - /TF1/Frames1
+        - /Overlay1
       Splitter Ratio: 0.46451613306999207
-    Tree Height: 312
+    Tree Height: 733
   - Class: rviz_common/Selection
     Name: Selection
   - Class: rviz_common/Tool Properties
@@ -169,6 +170,8 @@ Visualization Manager:
           Value: true
         camera5/camera_optical_link:
           Value: true
+        gnss_base_link:
+          Value: true
         gnss_link:
           Value: true
         livox_front_left:
@@ -278,14 +281,14 @@ Visualization Manager:
         - Alpha: 0.30000001192092896
           Class: rviz_plugins/Image
           Enabled: true
-          Height: 500
+          Height: 400
           Image Topic Style: true
           Left: 0
           Name: Overlay
           Top: 0
           Topic: /localization/validation/overlay_image
           Value: true
-          Width: 800
+          Width: 400
         - Alpha: 0.30000001192092896
           Class: rviz_plugins/Image
           Enabled: true
@@ -293,7 +296,7 @@ Visualization Manager:
           Image Topic Style: true
           Left: 300
           Name: ProjectedLSD
-          Top: 500
+          Top: 400
           Topic: /localization/imgproc/projected_image
           Value: true
           Width: 300
@@ -304,59 +307,35 @@ Visualization Manager:
           Image Topic Style: true
           Left: 0
           Name: LSD
-          Top: 500
+          Top: 400
           Topic: /localization/imgproc/lsd_image
           Value: true
           Width: 300
         - Alpha: 0.10000000149011612
           Class: rviz_plugins/Image
           Enabled: true
-          Height: 200
+          Height: 400
           Image Topic Style: true
-          Left: 600
-          Name: CostMap
-          Top: 500
-          Topic: /localization/pf/match_image
+          Left: 400
+          Name: Mapping
+          Top: 0
+          Topic: /localization/imgproc/rgb_mapping_image
           Value: true
-          Width: 200
-        - Alpha: 0.10000000149011612
-          Class: rviz_plugins/Image
-          Enabled: true
-          Height: 300
-          Image Topic Style: true
-          Left: 0
-          Name: Segment
-          Top: 800
-          Topic: /localization/imgproc/segmented_image
-          Value: true
-          Width: 300
+          Width: 400
       Enabled: true
       Name: Overlay
     - Class: rviz_default_plugins/MarkerArray
-      Enabled: true
+      Enabled: false
       Name: Particles
       Namespaces:
-        "": true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /localization/pf/predicted_particles_marker
-      Value: true
-    - Class: rviz_default_plugins/Marker
-      Enabled: true
-      Name: ProjectedLsd
-      Namespaces:
-        "": true
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        Filter size: 10
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /localization/validation/projected_marker
-      Value: true
+      Value: false
     - Class: rviz_default_plugins/MarkerArray
       Enabled: true
       Name: GnssEffectRange
@@ -369,18 +348,6 @@ Visualization Manager:
         Reliability Policy: Reliable
         Value: /localization/pf/gnss/range_marker
       Value: true
-    - Class: rviz_default_plugins/MarkerArray
-      Enabled: false
-      Name: CostMapRange
-      Namespaces:
-        {}
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /localization/pf/cost_map_range
-      Value: false
     - Class: rviz_common/Group
       Displays:
         - Background Alpha: 0
@@ -439,67 +406,19 @@ Visualization Manager:
           Topic: /localization/validation/ape_diag
           Value: true
           Width: 400
-      Enabled: true
+      Enabled: false
       Name: Status
     - Class: rviz_default_plugins/MarkerArray
       Enabled: true
-      Name: SignMarker
+      Name: MarkerArray
       Namespaces:
-        virtual: true
-      Topic:
-        Depth: 5
-        Durability Policy: Transient Local
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /localization/map/sign_board_marker
-      Value: true
-    - Alpha: 1
-      Autocompute Intensity Bounds: true
-      Autocompute Value Bounds:
-        Max Value: 10
-        Min Value: -10
-        Value: true
-      Axis: Z
-      Channel Name: intensity
-      Class: rviz_default_plugins/PointCloud2
-      Color: 255; 255; 255
-      Color Transformer: Intensity
-      Decay Time: 0
-      Enabled: false
-      Invert Rainbow: false
-      Max Color: 255; 255; 255
-      Max Intensity: 4096
-      Min Color: 0; 0; 0
-      Min Intensity: 0
-      Name: NearLL2Point
-      Position Transformer: XYZ
-      Selectable: true
-      Size (Pixels): 6
-      Size (m): 0.009999999776482582
-      Style: Points
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        Filter size: 10
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /localization/map/near_cloud
-      Use Fixed Frame: true
-      Use rainbow: true
-      Value: false
-    - Class: rviz_default_plugins/Image
-      Enabled: true
-      Max Value: 1
-      Median window: 5
-      Min Value: 0
-      Name: Image
-      Normalize Range: true
+        "": true
       Topic:
         Depth: 5
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /localization/imgproc/reprojected_image
+        Value: /localization/imgproc/particles_marker_array
       Value: true
   Enabled: true
   Global Options:
@@ -546,7 +465,7 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: -1.159999966621399
+      Angle: -4.180000305175781
       Class: rviz_default_plugins/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
@@ -556,11 +475,11 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 6.455392837524414
-      Target Frame: viewer
+      Scale: 17.781509399414062
+      Target Frame: base_link
       Value: TopDownOrtho (rviz_default_plugins)
-      X: -248.26173400878906
-      Y: -257.47576904296875
+      X: -1.0342031717300415
+      Y: -12.385319709777832
     Saved:
       - Angle: -0.07999999076128006
         Class: rviz_default_plugins/TopDownOrtho
@@ -594,17 +513,15 @@ Visualization Manager:
         Y: 0
 Window Geometry:
   Displays:
-    collapsed: false
+    collapsed: true
   Height: 1043
-  Hide Left Dock: false
+  Hide Left Dock: true
   Hide Right Dock: true
-  Image:
-    collapsed: false
   InitialPosePanel:
     collapsed: false
   PlayerPanel:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd0000000400000000000001d300000369fc020000000cfb000000100044006900730070006c006100790073010000003e000001c4000000ca00fffffffb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000c00430061006d006500720061000000033e000002610000000000000000fb0000000a0049006d00610067006500000001f8000001ba0000000000000000fb0000000a0049006d00610067006501000003ae000001f10000000000000000fb0000000a0049006d00610067006501000002080000019f0000002800ffffff00000001000002d10000036bfc0200000003fb0000000a00560069006500770073000000003d0000036b000000a600fffffffb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000078000000048fc0100000004fb000000160050006c006100790065007200500061006e0065006c0100000000000000850000007800fffffffb0000000800540069006d0065010000008b000004af0000027100fffffffb000000200049006e0069007400690061006c0050006f0073006500500061006e0065006c0100000540000002400000014800fffffffb0000000800540069006d00650100000000000004500000000000000000000005a70000036900000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000400000000000001d300000369fc020000000cfb000000100044006900730070006c006100790073000000003e00000369000000ca00fffffffb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000c00430061006d006500720061000000033e000002610000000000000000fb0000000a0049006d00610067006500000001f8000001ba0000000000000000fb0000000a0049006d00610067006501000003ae000001f10000000000000000fb0000000a0049006d00610067006501000002080000019f000000000000000000000001000002d100000369fc0200000003fb0000000a00560069006500770073000000003e00000369000000a600fffffffb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000078000000048fc0100000004fb000000160050006c006100790065007200500061006e0065006c0100000000000000850000007800fffffffb0000000800540069006d0065010000008b000004af0000027100fffffffb000000200049006e0069007400690061006c0050006f0073006500500061006e0065006c0100000540000002400000015500fffffffb0000000800540069006d00650100000000000004500000000000000000000007800000036900000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
