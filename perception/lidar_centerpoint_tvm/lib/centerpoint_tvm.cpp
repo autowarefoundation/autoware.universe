@@ -81,7 +81,8 @@ VoxelEncoderPostProcessor::VoxelEncoderPostProcessor(
   encoder_out_feature_size(config.network_outputs[0].second[2]),
   datatype_bytes(config.tvm_dtype_bits / 8)
 {
-  pillar_features = std::make_shared<std::vector<std::float32_t>>(max_voxel_size * encoder_out_feature_size, 0);
+  pillar_features =
+    std::make_shared<std::vector<std::float32_t>>(max_voxel_size * encoder_out_feature_size, 0);
 }
 
 std::vector<float32_t> VoxelEncoderPostProcessor::schedule(const TVMArrayContainerVector & input)
