@@ -353,7 +353,7 @@ void ObstacleStopPlannerNode::searchObstacle(
       planner_data.found_slow_down_points = withinPolygon(
         one_step_move_slow_down_range_polygon, slow_down_param_.slow_down_search_radius,
         prev_center_point, next_center_point, obstacle_candidate_pointcloud_ptr,
-        slow_down_pointcloud_ptr);
+        slow_down_pointcloud_ptr, vehicle_info.vehicle_height_m);
 
       const auto found_first_slow_down_points =
         planner_data.found_slow_down_points && !planner_data.slow_down_require;
@@ -394,7 +394,8 @@ void ObstacleStopPlannerNode::searchObstacle(
 
       planner_data.found_collision_points = withinPolygon(
         one_step_move_vehicle_polygon, stop_param.stop_search_radius, prev_center_point,
-        next_center_point, slow_down_pointcloud_ptr, collision_pointcloud_ptr);
+        next_center_point, slow_down_pointcloud_ptr, collision_pointcloud_ptr,
+        vehicle_info.vehicle_height_m);
 
       if (planner_data.found_collision_points) {
         planner_data.decimate_trajectory_collision_index = i;

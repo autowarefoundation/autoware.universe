@@ -428,7 +428,7 @@ rclcpp::SubscriptionOptions createSubscriptionOptions(rclcpp::Node * node_ptr)
 bool withinPolygon(
   const std::vector<cv::Point2d> & cv_polygon, const double radius, const Point2d & prev_point,
   const Point2d & next_point, PointCloud::Ptr candidate_points_ptr,
-  PointCloud::Ptr within_points_ptr)
+  PointCloud::Ptr within_points_ptr, double vehicle_height)
 {
   Polygon2d boost_polygon;
   bool find_within_points = false;
@@ -441,8 +441,10 @@ bool withinPolygon(
     Point2d point(candidate_points_ptr->at(j).x, candidate_points_ptr->at(j).y);
     if (bg::distance(prev_point, point) < radius || bg::distance(next_point, point) < radius) {
       if (bg::within(point, boost_polygon)) {
-        within_points_ptr->push_back(candidate_points_ptr->at(j));
-        find_within_points = true;
+        if(candidate_points_ptr->at(j).z < vehicle_height) {
+          within_points_ptr->push_back(candidate_points_ptr->at(j));
+          find_within_points = true;
+        }
       }
     }
   }
