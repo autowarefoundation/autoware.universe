@@ -86,7 +86,7 @@ private:
 };
 
 class LIDAR_CENTERPOINT_TVM_LOCAL VoxelEncoderPostProcessor
-: public tvm_utility::pipeline::PostProcessor<std::vector<float32_t>>
+: public tvm_utility::pipeline::PostProcessor<std::shared_ptr<std::vector<float32_t>>>
 {
 public:
   /// \brief Constructor.
@@ -97,13 +97,13 @@ public:
   /// \brief Copy the inference result.
   /// \param[in] input The result of the voxel_encoder inference engine.
   /// \return The inferred data.
-  std::vector<float32_t> schedule(const TVMArrayContainerVector & input);
+  std::shared_ptr<std::vector<float32_t>> schedule(const TVMArrayContainerVector & input);
 
 private:
   const int64_t max_voxel_size;
   const int64_t encoder_out_feature_size;
   const int64_t datatype_bytes;
-  std::vector<float32_t> pillar_features;
+  std::shared_ptr<std::vector<float32_t>> pillar_features;
 };
 
 class LIDAR_CENTERPOINT_TVM_LOCAL BackboneNeckHeadPreProcessor
@@ -207,9 +207,9 @@ protected:
 
   CenterPointConfig config_;
   std::size_t num_voxels_{0};
-  std::vector<float32_t> voxels_;
-  std::vector<int32_t> coordinates_;
-  std::vector<float32_t> num_points_per_voxel_;
+  std::shared_ptr<std::vector<float32_t>> voxels_;
+  std::shared_ptr<std::vector<int32_t>> coordinates_;
+  std::shared_ptr<std::vector<float32_t>> num_points_per_voxel_;
 };
 
 }  // namespace lidar_centerpoint_tvm

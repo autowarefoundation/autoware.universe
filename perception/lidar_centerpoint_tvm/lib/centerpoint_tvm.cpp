@@ -81,13 +81,13 @@ VoxelEncoderPostProcessor::VoxelEncoderPostProcessor(
   encoder_out_feature_size(config.network_outputs[0].second[2]),
   datatype_bytes(config.tvm_dtype_bits / 8)
 {
-  pillar_features.resize(max_voxel_size * encoder_out_feature_size);
+  pillar_features = std::make_shared<std::vector<std::float32_t>>(max_voxel_size * encoder_out_feature_size, 0);
 }
 
 std::vector<float32_t> VoxelEncoderPostProcessor::schedule(const TVMArrayContainerVector & input)
 {
   TVMArrayCopyToBytes(
-    input[0].getArray(), pillar_features.data(), pillar_features.size() * datatype_bytes);
+    input[0].getArray(), pillar_features->data(), pillar_features->size() * datatype_bytes);
 
   return pillar_features;
 }
@@ -202,18 +202,18 @@ void CenterPointTVM::initPtr()
     config_.max_voxel_size_ * config_.max_point_in_voxel_size_ * config_.point_feature_size_;
   const auto coordinates_size = config_.max_voxel_size_ * config_.point_dim_size_;
 
-  voxels_.resize(voxels_size);
-  coordinates_.resize(coordinates_size);
-  num_points_per_voxel_.resize(config_.max_voxel_size_);
+  voxels_ = std::make_shared<std::vector<float32_t>>(voxels_size);
+  coordinates_ = std::make_shared<std::vector<int32_t>>(coordinates_size);
+  num_points_per_voxel_ = std::make_shared<std::vector<float32_t>>(config_.max_voxel_size_);
 }
 
 bool8_t CenterPointTVM::detect(
   const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg, const tf2_ros::Buffer & tf_buffer,
   std::vector<Box3D> & det_boxes3d)
 {
-  std::fill(voxels_.begin(), voxels_.end(), 0);
-  std::fill(coordinates_.begin(), coordinates_.end(), -1);
-  std::fill(num_points_per_voxel_.begin(), num_points_per_voxel_.end(), 0);
+  std::fill(voxels_->begin(), voxels_->end(), 0);
+  std::fill(coordinates_->begin(), coordinates_->end(), -1);
+  std::fill(num_points_per_voxel_->begin(), num_points_per_voxel_->end(), 0);
 
   if (!preprocess(input_pointcloud_msg, tf_buffer)) {
     RCLCPP_WARN_STREAM(
@@ -221,10 +221,10 @@ bool8_t CenterPointTVM::detect(
     return false;
   }
 
-  MixedInputs voxel_inputs{num_voxels_, voxels_, num_points_per_voxel_, coordinates_};
+  MixedInputs voxel_inputs{num_voxels_, *voxels_, *num_points_per_voxel_, *coordinates_};
   auto ve_output = ve_pipeline->schedule(voxel_inputs);
 
-  MixedInputs pillar_inputs{num_voxels_, ve_output, num_points_per_voxel_, coordinates_};
+  MixedInputs pillar_inputs{num_voxels_, *ve_output, *num_points_per_voxel_, *coordinates_};
   auto bnh_output = bnh_pipeline->schedule(pillar_inputs);
 
   det_boxes3d = bnh_output;
@@ -242,7 +242,7 @@ bool8_t CenterPointTVM::preprocess(
   if (!is_success) {
     return false;
   }
-  num_voxels_ = vg_ptr_->pointsToVoxels(voxels_, coordinates_, num_points_per_voxel_);
+  num_voxels_ = vg_ptr_->pointsToVoxels(*voxels_, *coordinates_, *num_points_per_voxel_);
   if (num_voxels_ == 0) {
     return false;
   }
