@@ -26,6 +26,11 @@ public:
 
 private:
   const float min_segment_length_;
+  const int IMAGE_RADIUS = 250;
+  const float METRIC_PER_PIXEL = 0.1;  // [m/pixel]
+  const int default_map_value_;
+  const float map_update_interval_;
+  cv::Mat histogram_image_;
 
   // Publisher
   rclcpp::Publisher<Image>::SharedPtr pub_image_;
@@ -38,13 +43,9 @@ private:
 
   std::list<TwistStamped::ConstSharedPtr> twist_list_;
 
-  const int IMAGE_RADIUS = 250;
-  const float METRIC_PER_PIXEL = 0.1;  // [m/pixel]
-  cv::Mat histogram_image_;
-
   void onTwist(TwistStamped::ConstSharedPtr msg);
   void onLineSegments(const PointCloud2 & msg);
-  void transformImage(const rclcpp::Time & from_stamp, const rclcpp::Time & to_stamp);
+  void transformImage(const Sophus::SE3f & odom);
 
   cv::Point2f cv_pt2(const Eigen::Vector3f & v) const;
   Eigen::Vector3f eigen_vec3f(const cv::Point2f & v) const;

@@ -13,6 +13,7 @@
     <!-- mapping -->
     <node name="mapping" pkg="anti_shadow" exec="mapping_node" output="screen" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
+        <param name="default_map_value" value="10"/>
         <remap from="$(var src_image)" to="$(var resized_image)"/>
         <remap from="/localization/imgproc/camera_info" to="$(var resized_info)"/>
         <remap from="/localization/imgproc/lsd_cloud" to="/localization/imgproc/filtered_lsd"/>
@@ -33,6 +34,8 @@
         <param name="visualize" value="true"/>
         <remap from="/localization/imgproc/predicted_particles" to="/localization/pf/predicted_particles"/>
         <remap from="/localization/imgproc/weighted_particles" to="/localization/pf/weighted_particles"/>
+        <param name="score_min" value="00.0" />
+        <param name="score_max" value="50.0" />
     </node>
 
 </launch>

@@ -34,6 +34,7 @@ private:
   rclcpp::Subscription<PoseStamped>::SharedPtr sub_pose_stamped_;
   LineSegments ll2_cloud_;
   std::optional<Sophus::SE3f> latest_pose_{std::nullopt};
+  Eigen::Vector3f last_mean_position_{0, 0, 0};
 
   void onLsd(const Image & msg);
   void onLl2(const PointCloud2 & msg);

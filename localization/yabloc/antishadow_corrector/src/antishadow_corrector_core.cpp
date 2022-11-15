@@ -80,9 +80,16 @@ void AntishadowCorrector::onLsd(const Image & msg)
 
   printParticleStatistics(weighted_particles);
 
-  // TODO: skip weighting if ego vehicle does not move enought
+  // NOTE: skip weighting if ego vehicle does not move enought
+  auto mean_pose = modularized_particle_filter::meanPose(weighted_particles);
+  Eigen::Vector3f mean_position = vml_common::pose2Affine(mean_pose).translation();
+  if ((mean_position - last_mean_position_).squaredNorm() > 1) {
+    this->setWeightedParticleArray(weighted_particles);
+    last_mean_position_ = mean_position;
+  } else {
+    RCLCPP_WARN_STREAM(get_logger(), "Skip weighting because almost same positon");
+  }
 
-  this->setWeightedParticleArray(weighted_particles);
   RCLCPP_INFO_STREAM(get_logger(), "onLsd() " << timer);
 }
 

@@ -11,7 +11,9 @@ Mapping::Mapping()
 : Node("reprojector"),
   info_(this),
   tf_subscriber_(this->get_clock()),
-  min_segment_length_(declare_parameter<float>("min_segment_length", 0.5))
+  min_segment_length_(declare_parameter<float>("min_segment_length", 0.5)),
+  default_map_value_(declare_parameter<int>("default_map_value", 00)),
+  map_update_interval_(declare_parameter<float>("map_update_interval", 0.5))
 {
   using std::placeholders::_1;
 
@@ -26,7 +28,8 @@ Mapping::Mapping()
   pub_image_ = create_publisher<Image>("mapping_image", 10);
   pub_rgb_image_ = create_publisher<Image>("rgb_mapping_image", 10);
 
-  histogram_image_ = 128 * cv::Mat::ones(cv::Size(2 * IMAGE_RADIUS, 2 * IMAGE_RADIUS), CV_8UC1);
+  histogram_image_ =
+    default_map_value_ * cv::Mat::ones(cv::Size(2 * IMAGE_RADIUS, 2 * IMAGE_RADIUS), CV_8UC1);
 }
 
 void Mapping::onTwist(TwistStamped::ConstSharedPtr msg) { twist_list_.push_back(msg); }
@@ -44,8 +47,12 @@ Eigen::Vector3f Mapping::eigen_vec3f(const cv::Point2f & p) const
 void Mapping::onLineSegments(const PointCloud2 & msg)
 {
   static std::optional<rclcpp::Time> last_stamp{std::nullopt};
+
   if (last_stamp.has_value()) {
-    transformImage(*last_stamp, msg.header.stamp);
+    Sophus::SE3f odom = accumulateTravelDistance(*last_stamp, msg.header.stamp).inverse();
+    if (odom.translation().norm() < map_update_interval_) return;  // NOTE: Skip map update
+
+    transformImage(odom);
   }
   last_stamp = msg.header.stamp;
 
@@ -60,10 +67,9 @@ void Mapping::onLineSegments(const PointCloud2 & msg)
   vml_common::publishImage(*pub_rgb_image_, color_image, msg.header.stamp);
 }
 
-void Mapping::transformImage(const rclcpp::Time & from_stamp, const rclcpp::Time & to_stamp)
+void Mapping::transformImage(const Sophus::SE3f & odom)
 {
   // Transform histogram image
-  Sophus::SE3f odom = accumulateTravelDistance(from_stamp, to_stamp).inverse();
 
   auto transform = [this, odom](const cv::Point2f & src) -> cv::Point2f {
     Eigen::Vector3f v = eigen_vec3f(src);
@@ -80,7 +86,7 @@ void Mapping::transformImage(const rclcpp::Time & from_stamp, const rclcpp::Time
   cv::Mat warp_mat = cv::getAffineTransform(src_points, dst_points);
   cv::warpAffine(
     histogram_image_, histogram_image_, warp_mat, histogram_image_.size(), 1, 0,
-    cv::Scalar::all(128));
+    cv::Scalar::all(default_map_value_));
 }
 
 void Mapping::draw(const PointCloud2 & cloud_msg)
