@@ -227,10 +227,10 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   p.ego_nearest_dist_threshold = declare_parameter<double>("ego_nearest_dist_threshold");
   p.ego_nearest_yaw_threshold = declare_parameter<double>("ego_nearest_yaw_threshold");
 
-  p.lateral_distance_max_threshold = declare_parameter("lateral_distance_max_threshold", 3.0);
+  p.lateral_distance_max_threshold = declare_parameter("lateral_distance_max_threshold", 2.0);
   p.longitudinal_distance_min_threshold =
     declare_parameter("longitudinal_distance_min_threshold", 3.0);
-  p.expected_front_deceleration = declare_parameter("expected_front_deceleration", -1.0);
+  p.expected_front_deceleration = declare_parameter("expected_front_deceleration", -0.5);
   p.expected_rear_deceleration = declare_parameter("expected_rear_deceleration", -1.0);
   p.rear_vehicle_reaction_time = declare_parameter("rear_vehicle_reaction_time", 2.0);
   p.rear_vehicle_safety_time_margin = declare_parameter("rear_vehicle_safety_time_margin", 2.0);
@@ -349,7 +349,7 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
   p.lane_changing_duration = dp("lane_changing_duration", 4.0);
   p.minimum_lane_change_prepare_distance = dp("minimum_lane_change_prepare_distance", 4.0);
   p.lane_change_finish_judge_buffer = dp("lane_change_finish_judge_buffer", 3.0);
-  p.minimum_lane_change_velocity = dp("minimum_lane_change_velocity", 8.3);
+  p.minimum_lane_change_velocity = dp("minimum_lane_change_velocity", 5.6);
   p.prediction_time_resolution = dp("prediction_time_resolution", 0.5);
   p.maximum_deceleration = dp("maximum_deceleration", 1.0);
   p.lane_change_sampling_num = dp("lane_change_sampling_num", 10);
