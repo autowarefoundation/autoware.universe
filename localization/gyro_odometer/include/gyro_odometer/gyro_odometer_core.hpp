@@ -37,6 +37,7 @@ class GyroOdometer : public rclcpp::Node
 {
   using TwistStamped = geometry_msgs::msg::TwistStamped;
   using TwistWithCovarianceStamped = geometry_msgs::msg::TwistWithCovarianceStamped;
+
 public:
   GyroOdometer();
   ~GyroOdometer();
@@ -55,18 +56,15 @@ private:
     const std::vector<TwistWithCovarianceStamped> & velocity_buffer,
     const std::vector<TwistWithCovarianceStamped> & gyro_buffer) const;
 
-  rclcpp::Subscription<TwistWithCovarianceStamped>::SharedPtr
-    vehicle_twist_with_cov_sub_;
+  rclcpp::Subscription<TwistWithCovarianceStamped>::SharedPtr vehicle_twist_with_cov_sub_;
   rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;
   rclcpp::TimerBase::SharedPtr timer_;
 
   rclcpp::Publisher<TwistStamped>::SharedPtr twist_raw_pub_;
-  rclcpp::Publisher<TwistWithCovarianceStamped>::SharedPtr
-    twist_with_covariance_raw_pub_;
+  rclcpp::Publisher<TwistWithCovarianceStamped>::SharedPtr twist_with_covariance_raw_pub_;
 
   rclcpp::Publisher<TwistStamped>::SharedPtr twist_pub_;
-  rclcpp::Publisher<TwistWithCovarianceStamped>::SharedPtr
-    twist_with_covariance_pub_;
+  rclcpp::Publisher<TwistWithCovarianceStamped>::SharedPtr twist_with_covariance_pub_;
 
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
