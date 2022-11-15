@@ -15,9 +15,10 @@
 # limitations under the License.
 
 import json
+import uuid
 
 from flask import Flask
-from flask import abort
+from flask import jsonify
 from flask import request
 from flask import session
 from flask_cors import CORS
@@ -44,9 +45,11 @@ def create_client(service_type, server_name):
 
 @app.route("/map", methods=["POST"])
 def get_map():
-    # TODO(murooka) use map_id
     data = request.get_json()
-    session["map_id"] = 1
+
+    # TODO(murooka) use map_id
+    map_uuid = str(uuid.uuid4())
+    session["map_id"] = map_uuid
 
     # create client
     cli = create_client(LoadMap, "/planning/static_centerline_optimizer/load_map")
@@ -54,15 +57,24 @@ def get_map():
     # request map loading
     req = LoadMap.Request(map=data["map"])
     future = cli.call_async(req)
+
+    # get result
     rclpy.spin_until_future_complete(node, future)
+    res = future.result()
 
-    # TODO(murooka) error handling
-    error = False
-    if error:
-        abort(500, "error_message")
+    # error handling
+    if res.message == "InvalidMapFormat":
+        return jsonify(code=res.message, message="Map format is invalid."), 400
+    elif res.message != "":
+        return (
+            jsonify(
+                code="InternalServerError",
+                message="Error occurred on the server. Please check the terminal.",
+            ),
+            500,
+        )
 
-    # TODO(murooka) generate uuid
-    return "D61E1C81-784A-4C0A-8244-3AA65559D7C5"
+    return map_uuid
 
 
 @app.route("/planned_route", methods=["GET"])
@@ -77,16 +89,24 @@ def post_planned_route():
         start_lane_id=int(args.get("start_lane_id")), end_lane_id=int(args.get("end_lane_id"))
     )
     future = cli.call_async(req)
+
+    # get result
     rclpy.spin_until_future_complete(node, future)
     res = future.result()
 
-    # TODO(murooka) error handling
-    if res.message != "":
-        if res.message == "route_has_not_been_planned":
-            abort(404, "route not found")
-        else:
-            # invalid
-            pass
+    # error handling
+    if res.message == "MapNotFound":
+        return jsonify(code=res.message, message="Map is missing."), 404
+    elif res.message == "RouteNotFound":
+        return jsonify(code=res.message, message="Planning route failed."), 404
+    elif res.message != "":
+        return (
+            jsonify(
+                code="InternalServerError",
+                message="Error occurred on the server. Please check the terminal.",
+            ),
+            500,
+        )
 
     return json.dumps(tuple(res.lane_ids))
 
@@ -98,18 +118,34 @@ def post_planned_path():
 
     # request path planning
     route_lane_ids = [eval(i) for i in request.args.getlist("route")]
+    print(route_lane_ids)
     req = PlanPath.Request(route=route_lane_ids)
     future = cli.call_async(req)
+
+    # get result
     rclpy.spin_until_future_complete(node, future)
     res = future.result()
 
-    # TODO(murooka) error handling
-    if res.message != "":
-        if True:
-            pass
-        else:
-            # invalid
-            pass
+    # error handling
+    if res.message == "MapNotFound":
+        return jsonify(code=res.message, message="Map is missing."), 404
+    elif res.message == "LaneletsNotConnected":
+        return (
+            jsonify(
+                code=res.message,
+                message="Lanelets are not connected.",
+                object_ids=tuple(res.unconnected_lane_ids),
+            ),
+            400,
+        )
+    elif res.message != "":
+        return (
+            jsonify(
+                code="InternalServerError",
+                message="Error occurred on the server. Please check the terminal.",
+            ),
+            500,
+        )
 
     # create output json
     result_json = []
@@ -120,7 +156,7 @@ def post_planned_path():
             current_lane_points.append(point)
 
         current_result_json = {}
-        current_result_json["laneId"] = int(points_with_lane_id.lane_id)
+        current_result_json["lane_id"] = int(points_with_lane_id.lane_id)
         current_result_json["points"] = current_lane_points
 
         result_json.append(current_result_json)

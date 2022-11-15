@@ -123,6 +123,8 @@ public:
   boost::optional<lanelet::ConstLanelet> getLeftLanelet(
     const lanelet::ConstLanelet & lanelet) const;
   lanelet::ConstLanelets getNextLanelets(const lanelet::ConstLanelet & lanelet) const;
+  bool getNextLaneletWithinRoute(
+    const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * next_lanelet) const;
   lanelet::ConstLanelets getPreviousLanelets(const lanelet::ConstLanelet & lanelet) const;
 
   /**
@@ -291,8 +293,6 @@ private:
   bool isBijectiveConnection(
     const lanelet::ConstLanelets & lanelet_section1,
     const lanelet::ConstLanelets & lanelet_section2) const;
-  bool getNextLaneletWithinRoute(
-    const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * next_lanelet) const;
   bool getPreviousLaneletWithinRouteExceptGoal(
     const lanelet::ConstLanelet & lanelet, lanelet::ConstLanelet * prev_lanelet) const;
   bool getNextLaneletWithinRouteExceptStart(
