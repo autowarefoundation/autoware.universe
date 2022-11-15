@@ -40,11 +40,15 @@ PathWithLaneId combineReferencePath(const PathWithLaneId path1, const PathWithLa
 PathWithLaneId getBackwardPath(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & target_lanes,
   const Pose & current_pose, const Pose & backed_pose, const double velocity);
-lanelet::ConstLanelets getPullOutLanes(
-  const lanelet::ConstLanelets & current_lanes,
-  const std::shared_ptr<const PlannerData> & planner_data);
+lanelet::ConstLanelets getPullOutLanes(const std::shared_ptr<const PlannerData> & planner_data);
 Pose getBackedPose(
   const Pose & current_pose, const double & yaw_shoulder_lane, const double & back_distance);
+boost::optional<lanelet::ConstLanelet> getRightLanelet(
+  const lanelet::ConstLanelet & current_lane, const lanelet::ConstLanelets & shoulder_lanes);
+boost::optional<lanelet::ConstLanelet> getLeftLanelet(
+  const lanelet::ConstLanelet & current_lane, const lanelet::ConstLanelets & shoulder_lanes);
+std::vector<DrivableLanes> generateDrivableLanes(
+  const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & shoulder_lanes);
 }  // namespace behavior_path_planner::pull_out_utils
 
 #endif  // BEHAVIOR_PATH_PLANNER__SCENE_MODULE__PULL_OUT__UTIL_HPP_

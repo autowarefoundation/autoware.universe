@@ -1102,6 +1102,42 @@ bool containsGoal(const lanelet::ConstLanelets & lanes, const lanelet::Id & goal
   return false;
 }
 
+lanelet::ConstLanelets transformToLanelets(const DrivableLanes & drivable_lanes)
+{
+  lanelet::ConstLanelets lanes;
+
+  const auto has_same_lane = [&](const auto & lane) {
+    if (lanes.empty()) return false;
+    const auto has_same = [&](const auto & ll) { return ll.id() == lane.id(); };
+    return std::find_if(lanes.begin(), lanes.end(), has_same) != lanes.end();
+  };
+
+  lanes.push_back(drivable_lanes.right_lane);
+  if (!has_same_lane(drivable_lanes.left_lane)) {
+    lanes.push_back(drivable_lanes.left_lane);
+  }
+
+  for (const auto & ml : drivable_lanes.middle_lanes) {
+    if (!has_same_lane(ml)) {
+      lanes.push_back(ml);
+    }
+  }
+
+  return lanes;
+}
+
+lanelet::ConstLanelets transformToLanelets(const std::vector<DrivableLanes> & drivable_lanes)
+{
+  lanelet::ConstLanelets lanes;
+
+  for (const auto & drivable_lane : drivable_lanes) {
+    const auto transformed_lane = transformToLanelets(drivable_lane);
+    lanes.insert(lanes.end(), transformed_lane.begin(), transformed_lane.end());
+  }
+
+  return lanes;
+}
+
 // input lanes must be in sequence
 // NOTE: lanes in the path argument is used to calculate the size of the drivable area to cover
 // designated forward and backward length by getPathScope function.

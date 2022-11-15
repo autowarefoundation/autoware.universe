@@ -94,28 +94,78 @@ Pose getBackedPose(
 }
 
 // getShoulderLanesOnCurrentPose
-lanelet::ConstLanelets getPullOutLanes(
-  const lanelet::ConstLanelets & current_lanes,
-  const std::shared_ptr<const PlannerData> & planner_data)
+lanelet::ConstLanelets getPullOutLanes(const std::shared_ptr<const PlannerData> & planner_data)
 {
   const double pull_out_lane_length = 200.0;
-  lanelet::ConstLanelets shoulder_lanes;
+  const double & vehicle_width = planner_data->parameters.vehicle_width;
   const auto & route_handler = planner_data->route_handler;
   const auto current_pose = planner_data->self_pose->pose;
-  lanelet::ConstLanelet shoulder_lane;
 
-  if (current_lanes.empty()) {
-    return shoulder_lanes;
-  }
-
+  lanelet::ConstLanelet current_shoulder_lane;
+  lanelet::ConstLanelets shoulder_lanes;
   if (route_handler->getPullOutStartLane(
-        route_handler->getShoulderLanelets(), current_pose, planner_data->parameters.vehicle_width,
-        &shoulder_lane)) {
+        route_handler->getShoulderLanelets(), current_pose, vehicle_width,
+        &current_shoulder_lane)) {
     shoulder_lanes = route_handler->getShoulderLaneletSequence(
-      shoulder_lane, current_pose, pull_out_lane_length, pull_out_lane_length);
+      current_shoulder_lane, current_pose, pull_out_lane_length, pull_out_lane_length);
   }
 
   return shoulder_lanes;
+}
+
+boost::optional<lanelet::ConstLanelet> getRightLanelet(
+  const lanelet::ConstLanelet & current_lane, const lanelet::ConstLanelets & shoulder_lanes)
+{
+  for (const auto & shoulder_lane : shoulder_lanes) {
+    if (shoulder_lane.leftBound().id() == current_lane.rightBound().id()) {
+      return shoulder_lane;
+    }
+  }
+
+  return {};
+}
+
+boost::optional<lanelet::ConstLanelet> getLeftLanelet(
+  const lanelet::ConstLanelet & current_lane, const lanelet::ConstLanelets & shoulder_lanes)
+{
+  for (const auto & shoulder_lane : shoulder_lanes) {
+    if (shoulder_lane.rightBound().id() == current_lane.leftBound().id()) {
+      return shoulder_lane;
+    }
+  }
+
+  return {};
+}
+
+std::vector<DrivableLanes> generateDrivableLanes(
+  const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & shoulder_lanes)
+{
+  std::vector<DrivableLanes> drivable_lanes;
+  for (const auto & current_lane : current_lanes) {
+    DrivableLanes drivable_lane;
+
+    const auto right_lane = getRightLanelet(current_lane, shoulder_lanes);
+    const auto left_lane = getLeftLanelet(current_lane, shoulder_lanes);
+
+    if (right_lane && left_lane) {
+      drivable_lane.right_lane = *right_lane;
+      drivable_lane.left_lane = *left_lane;
+      drivable_lane.middle_lanes.push_back(current_lane);
+    } else if (right_lane) {
+      drivable_lane.right_lane = *right_lane;
+      drivable_lane.left_lane = current_lane;
+    } else if (left_lane) {
+      drivable_lane.right_lane = current_lane;
+      drivable_lane.left_lane = *left_lane;
+    } else {
+      drivable_lane.right_lane = current_lane;
+      drivable_lane.left_lane = current_lane;
+    }
+
+    drivable_lanes.push_back(drivable_lane);
+  }
+
+  return drivable_lanes;
 }
 
 }  // namespace behavior_path_planner::pull_out_utils

@@ -276,6 +276,8 @@ PredictedObjects filterObjectsByVelocity(
   const PredictedObjects & objects, double min_v, double max_v);
 
 // drivable area generation
+lanelet::ConstLanelets transformToLanelets(const DrivableLanes & drivable_lanes);
+lanelet::ConstLanelets transformToLanelets(const std::vector<DrivableLanes> & drivable_lanes);
 
 void occupancyGridToImage(const OccupancyGrid & occupancy_grid, cv::Mat * cv_image);
 
