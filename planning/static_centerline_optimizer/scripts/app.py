@@ -47,7 +47,6 @@ def create_client(service_type, server_name):
 def get_map():
     data = request.get_json()
 
-    # TODO(murooka) use map_id
     map_uuid = str(uuid.uuid4())
     session["map_id"] = map_uuid
 
@@ -80,6 +79,9 @@ def get_map():
 @app.route("/planned_route", methods=["GET"])
 def post_planned_route():
     args = request.args.to_dict()
+    if session["map_id"] != args.get("map_id"):
+        # TODO(murooka) error handling for map_id mismatch
+        print("map_id is not correct.")
 
     # create client
     cli = create_client(PlanRoute, "/planning/static_centerline_optimizer/plan_route")
@@ -113,12 +115,16 @@ def post_planned_route():
 
 @app.route("/planned_path", methods=["GET"])
 def post_planned_path():
+    args = request.args.to_dict()
+    if session["map_id"] != args.get("map_id"):
+        # TODO(murooka) error handling for map_id mismatch
+        print("map_id is not correct.")
+
     # create client
     cli = create_client(PlanPath, "/planning/static_centerline_optimizer/plan_path")
 
     # request path planning
     route_lane_ids = [eval(i) for i in request.args.getlist("route")]
-    print(route_lane_ids)
     req = PlanPath.Request(route=route_lane_ids)
     future = cli.call_async(req)
 

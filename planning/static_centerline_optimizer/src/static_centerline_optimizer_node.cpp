@@ -440,8 +440,8 @@ void StaticCenterlineOptimizerNode::on_plan_path(
     std::vector<geometry_msgs::msg::Point> current_lanelet_points;
 
     // check if target point is inside the lanelet
-    while (!lanelet::geometry::inside(
-      lanelet, convertToLaneletPoint(target_traj_point->pose.position))) {
+    while (
+      lanelet::geometry::inside(lanelet, convertToLaneletPoint(target_traj_point->pose.position))) {
       // memorize points inside the lanelet
       current_lanelet_points.push_back(target_traj_point->pose.position);
       target_traj_point++;
