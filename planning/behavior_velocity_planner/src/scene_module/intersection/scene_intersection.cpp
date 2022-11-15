@@ -152,7 +152,6 @@ bool IntersectionModule::modifyPathVelocity(
   }
   const size_t closest_idx = closest_idx_opt.get();
 
-  bool keep_detection = false;
   if (stop_lines_idx_opt.has_value()) {
     const auto & stop_lines = stop_lines_idx_opt.value();
     const size_t stop_line_idx = stop_lines.stop_line;
@@ -163,8 +162,8 @@ bool IntersectionModule::modifyPathVelocity(
       util::isOverTargetIndex(*path, closest_idx, current_pose.pose, pass_judge_line_idx);
     const bool is_before_keep_detection_line =
       util::isBeforeTargetIndex(*path, closest_idx, current_pose.pose, keep_detection_line_idx);
-    keep_detection = is_before_keep_detection_line &&
-                     std::fabs(current_vel) < planner_param_.keep_detection_vel_thr;
+    const bool keep_detection = is_before_keep_detection_line &&
+                                std::fabs(current_vel) < planner_param_.keep_detection_vel_thr;
 
     if (is_over_pass_judge_line && keep_detection) {
       // in case ego could not stop exactly before the stop line, but with some overshoot,
@@ -212,16 +211,11 @@ bool IntersectionModule::modifyPathVelocity(
     const bool has_collision = checkCollision(
       lanelet_map_ptr, *path, detection_lanelets, adjacent_lanelets, intersection_area, objects_ptr,
       closest_idx, stuck_vehicle_detect_area);
-    is_entry_prohibited = (has_collision || is_stuck);
+    is_entry_prohibited = has_collision;
     if (stop_lines_idx_opt.has_value()) {
       const auto & stop_lines_idx = stop_lines_idx_opt.value();
-      if (keep_detection) {
-        stop_line_idx_final = stop_lines_idx.keep_detection_line;
-        pass_judge_line_idx_final = stop_lines_idx.keep_detection_line;
-      } else {
-        stop_line_idx_final = stop_lines_idx.stop_line;
-        pass_judge_line_idx_final = stop_lines_idx.pass_judge_line;
-      }
+      stop_line_idx_final = stop_lines_idx.stop_line;
+      pass_judge_line_idx_final = stop_lines_idx.pass_judge_line;
     } else {
       if (has_collision) {
         RCLCPP_ERROR(logger_, "generateStopLine() failed for detected objects");
@@ -244,7 +238,7 @@ bool IntersectionModule::modifyPathVelocity(
     logger_.get_child("state_machine"), *clock_);
 
   setSafe(state_machine_.getState() == StateMachine::State::GO);
-  if (stop_line_idx_final != -1 && pass_judge_line_idx_final != -1) {
+  if (is_entry_prohibited) {
     setDistance(motion_utils::calcSignedArcLength(
       path->points, planner_data_->current_pose.pose.position,
       path->points.at(stop_line_idx_final).point.pose.position));
