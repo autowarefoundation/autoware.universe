@@ -26,7 +26,6 @@
 #include <memory>
 #include <string>
 
-
 geometry_msgs::msg::TwistWithCovarianceStamped get_twist_from_velocity_buffer(
   const std::vector<geometry_msgs::msg::TwistWithCovarianceStamped> & velocity_buffer)
 {
@@ -36,13 +35,13 @@ geometry_msgs::msg::TwistWithCovarianceStamped get_twist_from_velocity_buffer(
     return twist_with_cov;
   }
 
-  for (const auto vel: velocity_buffer)
-  {
+  for (const auto vel : velocity_buffer) {
     twist_with_cov.twist.twist.linear.x += vel.twist.twist.linear.x;
     twist_with_cov.twist.covariance[0] += vel.twist.covariance[0];
   }
   twist_with_cov.twist.twist.linear.x /= velocity_buffer.size();
-  twist_with_cov.twist.covariance[0] /= velocity_buffer.size();  // TODO: divide by appropriate value!!!!!!!!!
+  twist_with_cov.twist.covariance[0] /=
+    velocity_buffer.size();  // TODO: divide by appropriate value!!!!!!!!!
   return twist_with_cov;
 }
 
@@ -57,8 +56,7 @@ geometry_msgs::msg::TwistWithCovarianceStamped get_twist_from_gyro_buffer(
     return twist_with_cov;
   }
 
-  for (const auto gyro: gyro_buffer)
-  {
+  for (const auto gyro : gyro_buffer) {
     twist_with_cov.twist.twist.angular.x += gyro.twist.twist.angular.x;
     twist_with_cov.twist.twist.angular.y += gyro.twist.twist.angular.y;
     twist_with_cov.twist.twist.angular.z += gyro.twist.twist.angular.z;
@@ -69,7 +67,8 @@ geometry_msgs::msg::TwistWithCovarianceStamped get_twist_from_gyro_buffer(
   twist_with_cov.twist.twist.angular.x /= gyro_buffer.size();
   twist_with_cov.twist.twist.angular.y /= gyro_buffer.size();
   twist_with_cov.twist.twist.angular.z /= gyro_buffer.size();
-  twist_with_cov.twist.covariance[3 * 6 + 3] /= gyro_buffer.size();  // TODO: divide by appropriate value!!!!!!!!!
+  twist_with_cov.twist.covariance[3 * 6 + 3] /=
+    gyro_buffer.size();  // TODO: divide by appropriate value!!!!!!!!!
   twist_with_cov.twist.covariance[4 * 6 + 4] /= gyro_buffer.size();
   twist_with_cov.twist.covariance[5 * 6 + 5] /= gyro_buffer.size();
   return twist_with_cov;
@@ -110,12 +109,12 @@ GyroOdometer::GyroOdometer()
     "imu", rclcpp::QoS{100}, std::bind(&GyroOdometer::callbackImu, this, std::placeholders::_1));
 
   twist_raw_pub_ = create_publisher<TwistStamped>("twist_raw", rclcpp::QoS{10});
-  twist_with_covariance_raw_pub_ = create_publisher<TwistWithCovarianceStamped>(
-    "twist_with_covariance_raw", rclcpp::QoS{10});
+  twist_with_covariance_raw_pub_ =
+    create_publisher<TwistWithCovarianceStamped>("twist_with_covariance_raw", rclcpp::QoS{10});
 
   twist_pub_ = create_publisher<TwistStamped>("twist", rclcpp::QoS{10});
-  twist_with_covariance_pub_ = create_publisher<TwistWithCovarianceStamped>(
-    "twist_with_covariance", rclcpp::QoS{10});
+  twist_with_covariance_pub_ =
+    create_publisher<TwistWithCovarianceStamped>("twist_with_covariance", rclcpp::QoS{10});
 
   double output_rate = declare_parameter("output_rate", 50.0);
   timer_ = rclcpp::create_timer(
@@ -136,12 +135,10 @@ void GyroOdometer::timerCallback()
     return;
   }
 
-  TwistWithCovarianceStamped twist_with_cov_from_vel =
-    get_twist_from_velocity_buffer(vel_buffer_);
+  TwistWithCovarianceStamped twist_with_cov_from_vel = get_twist_from_velocity_buffer(vel_buffer_);
   vel_buffer_.clear();
 
-  TwistWithCovarianceStamped twist_with_cov_from_gyro =
-    get_twist_from_gyro_buffer(gyro_buffer_);
+  TwistWithCovarianceStamped twist_with_cov_from_gyro = get_twist_from_gyro_buffer(gyro_buffer_);
   gyro_buffer_.clear();
 
   TwistWithCovarianceStamped twist_with_cov_raw =
@@ -162,8 +159,7 @@ void GyroOdometer::timerCallback()
   TwistWithCovarianceStamped twist_with_cov = twist_with_cov_raw;
   if (
     std::fabs(twist_with_cov_raw.twist.twist.linear.x) < 0.01 &&
-    std::fabs(twist_with_cov_raw.twist.twist.angular.z) < 0.01)
-  {
+    std::fabs(twist_with_cov_raw.twist.twist.angular.z) < 0.01) {
     twist.twist.angular.x = 0.0;
     twist.twist.angular.y = 0.0;
     twist.twist.angular.z = 0.0;
@@ -203,7 +199,8 @@ void GyroOdometer::callbackImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_m
   gyro.twist.twist.angular.x = transformed_angular_velocity.vector.x;
   gyro.twist.twist.angular.y = transformed_angular_velocity.vector.y;
   gyro.twist.twist.angular.z = transformed_angular_velocity.vector.z;
-  // TODO: The following assumes that the covariance does not change before and after the transformation
+  // TODO: The following assumes that the covariance does not change before and after the
+  // transformation
   gyro.twist.covariance[3 * 6 + 3] = imu_msg_ptr->angular_velocity_covariance[0 * 3 + 0];
   gyro.twist.covariance[4 * 6 + 4] = imu_msg_ptr->angular_velocity_covariance[1 * 3 + 1];
   gyro.twist.covariance[5 * 6 + 5] = imu_msg_ptr->angular_velocity_covariance[2 * 3 + 2];
@@ -267,7 +264,8 @@ void GyroOdometer::validityCheck(
     throw std::domain_error(error_msg);
   }
   if (!velocity_buffer.empty()) {
-    const double velocity_dt = std::abs((this->now() - velocity_buffer.front().header.stamp).seconds());
+    const double velocity_dt =
+      std::abs((this->now() - velocity_buffer.front().header.stamp).seconds());
     if (velocity_dt > message_timeout_sec_) {
       error_msg = fmt::format(
         "Twist msg is timeout. twist_dt: {}[sec], tolerance {}[sec]", velocity_dt,
@@ -279,8 +277,7 @@ void GyroOdometer::validityCheck(
     const double imu_dt = std::abs((this->now() - gyro_buffer.front().header.stamp).seconds());
     if (imu_dt > message_timeout_sec_) {
       error_msg = fmt::format(
-        "Imu msg is timeout. imu_dt: {}[sec], tolerance {}[sec]", imu_dt,
-        message_timeout_sec_);
+        "Imu msg is timeout. imu_dt: {}[sec], tolerance {}[sec]", imu_dt, message_timeout_sec_);
       throw std::domain_error(error_msg);
     }
   }
