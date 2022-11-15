@@ -36,6 +36,7 @@ struct LaneChangeParameters
   double abort_lane_change_velocity_thresh;
   double abort_lane_change_angle_thresh;
   double abort_lane_change_distance_thresh;
+  double prepare_phase_ignore_target_speed_thresh;
   bool enable_abort_lane_change;
   bool enable_collision_check_at_prepare_phase;
   bool use_predicted_path_outside_lanelet;
