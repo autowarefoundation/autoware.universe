@@ -441,7 +441,7 @@ bool withinPolygon(
     Point2d point(candidate_points_ptr->at(j).x, candidate_points_ptr->at(j).y);
     if (bg::distance(prev_point, point) < radius || bg::distance(next_point, point) < radius) {
       if (bg::within(point, boost_polygon)) {
-        if(candidate_points_ptr->at(j).z < vehicle_height) {
+        if (candidate_points_ptr->at(j).z < vehicle_height) {
           within_points_ptr->push_back(candidate_points_ptr->at(j));
           find_within_points = true;
         }
