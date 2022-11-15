@@ -12,3 +12,5 @@ ament_auto_add_executable(${PROJECT_NAME}
 ament_auto_package(INSTALL_TO_SHARE
   launch
 )
+
+target_link_libraries(gyro_odometer fmt)

@@ -31,41 +31,54 @@
 #include <tf2_ros/transform_listener.h>
 
 #include <string>
+#include <vector>
 
 class GyroOdometer : public rclcpp::Node
 {
+  using TwistStamped = geometry_msgs::msg::TwistStamped;
+  using TwistWithCovarianceStamped = geometry_msgs::msg::TwistWithCovarianceStamped;
 public:
   GyroOdometer();
   ~GyroOdometer();
 
 private:
+  void timerCallback();
+
   void callbackTwistWithCovariance(
-    const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr twist_with_cov_msg_ptr);
+    const TwistWithCovarianceStamped::ConstSharedPtr twist_with_cov_msg_ptr);
   void callbackImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg_ptr);
   bool getTransform(
     const std::string & target_frame, const std::string & source_frame,
     const geometry_msgs::msg::TransformStamped::SharedPtr transform_stamped_ptr);
+  void validityCheck(
+    const bool is_velocity_arrived, const bool is_imu_arrived,
+    const std::vector<TwistWithCovarianceStamped> & velocity_buffer,
+    const std::vector<TwistWithCovarianceStamped> & gyro_buffer) const;
 
-  rclcpp::Subscription<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr
+  rclcpp::Subscription<TwistWithCovarianceStamped>::SharedPtr
     vehicle_twist_with_cov_sub_;
   rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;
+  rclcpp::TimerBase::SharedPtr timer_;
 
-  rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr twist_raw_pub_;
-  rclcpp::Publisher<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr
+  rclcpp::Publisher<TwistStamped>::SharedPtr twist_raw_pub_;
+  rclcpp::Publisher<TwistWithCovarianceStamped>::SharedPtr
     twist_with_covariance_raw_pub_;
 
-  rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr twist_pub_;
-  rclcpp::Publisher<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr
+  rclcpp::Publisher<TwistStamped>::SharedPtr twist_pub_;
+  rclcpp::Publisher<TwistWithCovarianceStamped>::SharedPtr
     twist_with_covariance_pub_;
 
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
 
+  std::vector<TwistWithCovarianceStamped> vel_buffer_;
+  std::vector<TwistWithCovarianceStamped> gyro_buffer_;
+
   std::string output_frame_;
   double message_timeout_sec_;
 
-  geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr twist_with_cov_msg_ptr_;
-  sensor_msgs::msg::Imu::ConstSharedPtr imu_msg_ptr_;
+  bool is_velocity_arrived_;
+  bool is_imu_arrived_;
 };
 
 #endif  // GYRO_ODOMETER__GYRO_ODOMETER_CORE_HPP_
