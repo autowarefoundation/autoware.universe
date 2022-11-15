@@ -80,8 +80,8 @@ std::pair<std::optional<size_t>, std::optional<StopLineIdx>> generateStopLine(
   const std::shared_ptr<const PlannerData> & planner_data, const double stop_line_margin,
   const double keep_detection_line_margin, const bool use_stuck_stopline,
   autoware_auto_planning_msgs::msg::PathWithLaneId * original_path,
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & target_path,
-  const rclcpp::Logger logger);
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & target_path, const rclcpp::Logger logger,
+  const rclcpp::Clock::SharedPtr clock);
 
 /**
  * @brief Calculate first path index that is in the polygon.

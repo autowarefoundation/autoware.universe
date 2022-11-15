@@ -127,10 +127,10 @@ bool IntersectionModule::modifyPathVelocity(
   const auto [stuck_line_idx_opt, stop_lines_idx_opt] = util::generateStopLine(
     lane_id_, detection_area, conflicting_area, planner_data_, planner_param_.stop_line_margin,
     planner_param_.keep_detection_line_margin, planner_param_.use_stuck_stopline, path, *path,
-    logger_.get_child("util"));
+    logger_.get_child("util"), clock_);
   if (!stuck_line_idx_opt.has_value()) {
     // returns here if path is not intersecting with conflicting areas
-    RCLCPP_INFO_SKIPFIRST_THROTTLE(
+    RCLCPP_WARN_SKIPFIRST_THROTTLE(
       logger_, *clock_, 1000 /* ms */, "setStopLineIdx for stuck line fail");
     RCLCPP_DEBUG(logger_, "===== plan end =====");
     setSafe(true);
@@ -168,13 +168,13 @@ bool IntersectionModule::modifyPathVelocity(
     if (is_over_pass_judge_line && keep_detection) {
       // in case ego could not stop exactly before the stop line, but with some overshoot,
       // keep detection within some margin under low velocity threshold
-      RCLCPP_INFO(
+      RCLCPP_DEBUG(
         logger_,
         "over the pass judge line, but before keep detection line and low speed, "
         "continue planning");
       // no return here, keep planning
     } else if (is_over_pass_judge_line && is_go_out_ && !external_stop) {
-      RCLCPP_INFO(logger_, "over the keep_detection line and not low speed. no plan needed.");
+      RCLCPP_DEBUG(logger_, "over the keep_detection line and not low speed. no plan needed.");
       RCLCPP_DEBUG(logger_, "===== plan end =====");
       setSafe(true);
       setDistance(motion_utils::calcSignedArcLength(

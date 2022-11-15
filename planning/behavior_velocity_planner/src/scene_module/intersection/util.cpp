@@ -147,7 +147,8 @@ std::pair<std::optional<size_t>, std::optional<StopLineIdx>> generateStopLine(
   const std::shared_ptr<const PlannerData> & planner_data, const double stop_line_margin,
   const double keep_detection_line_margin, const bool use_stuck_stopline,
   autoware_auto_planning_msgs::msg::PathWithLaneId * original_path,
-  const autoware_auto_planning_msgs::msg::PathWithLaneId & target_path, const rclcpp::Logger logger)
+  const autoware_auto_planning_msgs::msg::PathWithLaneId & target_path, const rclcpp::Logger logger,
+  const rclcpp::Clock::SharedPtr clock)
 {
   /* set judge line dist */
   const double current_vel = planner_data->current_velocity->twist.linear.x;
@@ -196,8 +197,8 @@ std::pair<std::optional<size_t>, std::optional<StopLineIdx>> generateStopLine(
     // the first point in intersection lane
     stuck_stop_line_idx_ip = lane_interval_ip_start;
     if (stuck_stop_line_idx_ip == 0) {
-      RCLCPP_WARN(
-        logger,
+      RCLCPP_WARN_SKIPFIRST_THROTTLE(
+        logger, *clock, 1000 /* ms */,
         "use_stuck_stopline, but ego is already in the intersection, not generating stuck stop "
         "line");
       return {std::nullopt, std::nullopt};
@@ -206,7 +207,7 @@ std::pair<std::optional<size_t>, std::optional<StopLineIdx>> generateStopLine(
     const auto stuck_stop_line_idx_ip_opt = util::getFirstPointInsidePolygons(
       path_ip, lane_interval_ip_start, lane_interval_ip_end, lane_id, conflicting_areas);
     if (!stuck_stop_line_idx_ip_opt.has_value()) {
-      RCLCPP_WARN(
+      RCLCPP_DEBUG(
         logger,
         "Path is not intersecting with conflicting area, not generating stuck_stop_line. start = "
         "%ld, end = %ld",
@@ -257,7 +258,8 @@ std::pair<std::optional<size_t>, std::optional<StopLineIdx>> generateStopLine(
       path_ip, lane_interval_ip_start, lane_interval_ip_end, lane_id, detection_areas);
     // if path is not intersecting with detection_area, skip
     if (!first_inside_detection_idx_ip_opt.has_value()) {
-      RCLCPP_INFO(logger, "Path is not intersecting with detection_area, not generating stop_line");
+      RCLCPP_DEBUG(
+        logger, "Path is not intersecting with detection_area, not generating stop_line");
       return {stuck_stop_line_idx, std::nullopt};
     }
 
@@ -268,7 +270,7 @@ std::pair<std::optional<size_t>, std::optional<StopLineIdx>> generateStopLine(
       0));
   }
   if (stop_idx_ip == 0) {
-    RCLCPP_INFO(logger, "stop line is at path[0], ignore planning\n===== plan end =====");
+    RCLCPP_DEBUG(logger, "stop line is at path[0], ignore planning\n===== plan end =====");
     return {stuck_stop_line_idx, std::nullopt};
   }
 
@@ -346,7 +348,7 @@ std::pair<std::optional<size_t>, std::optional<StopLineIdx>> generateStopLine(
     }
   }
 
-  RCLCPP_INFO(
+  RCLCPP_DEBUG(
     logger,
     "generateStopLine() : keep_detection_idx = %ld, stop_idx = %ld, pass_judge_idx = %ld"
     ", stuck_stop_idx = %ld, has_prior_stopline = %d",
@@ -397,7 +399,7 @@ bool getStopLineIndexFromMap(
 
     *stop_idx_ip = i;
 
-    RCLCPP_INFO(logger, "found collision point");
+    RCLCPP_DEBUG(logger, "found collision point");
 
     return true;
   }
@@ -410,12 +412,12 @@ bool getStopLineIndexFromMap(
   const auto stop_idx_ip_opt =
     motion_utils::findNearestIndex(path.points, stop_point_from_map, static_cast<double>(dist_thr));
   if (!stop_idx_ip_opt) {
-    RCLCPP_INFO(logger, "found stop line, but not found stop index");
+    RCLCPP_DEBUG(logger, "found stop line, but not found stop index");
     return false;
   }
   *stop_idx_ip = stop_idx_ip_opt.get();
 
-  RCLCPP_INFO(logger, "found stop line and stop index");
+  RCLCPP_DEBUG(logger, "found stop line and stop index");
 
   return true;
 }
