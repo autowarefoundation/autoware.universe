@@ -416,7 +416,8 @@ void SideShiftModule::adjustDrivableArea(ShiftedPath * path) const
     -parameters_.drivable_area_right_bound_offset);
 
   const auto drivable_lanes = util::generateDrivableLanes(current_lanelets_);
-  const auto expanded_lanes = util::expandLanelets(drivable_lanes, left_offset, right_offset);
+  const auto expanded_lanes = util::expandLanelets(
+    drivable_lanes, left_offset, right_offset, parameters_.drivable_area_types_to_skip);
 
   {
     const auto & p = planner_data_->parameters;

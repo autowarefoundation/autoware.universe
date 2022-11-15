@@ -187,7 +187,7 @@ BehaviorModuleOutput PullOutModule::plan()
 
   const auto expanded_lanes = util::expandLanelets(
     status_.lanes, parameters_.drivable_area_left_bound_offset,
-    parameters_.drivable_area_right_bound_offset);
+    parameters_.drivable_area_right_bound_offset, parameters_.drivable_area_types_to_skip);
   path.drivable_area = util::generateDrivableArea(
     path, expanded_lanes, planner_data_->parameters.drivable_area_resolution,
     planner_data_->parameters.vehicle_length, planner_data_);
@@ -283,7 +283,7 @@ BehaviorModuleOutput PullOutModule::planWaitingApproval()
 
   const auto expanded_lanes = util::expandLanelets(
     drivable_lanes, parameters_.drivable_area_left_bound_offset,
-    parameters_.drivable_area_right_bound_offset);
+    parameters_.drivable_area_right_bound_offset, parameters_.drivable_area_types_to_skip);
 
   auto candidate_path = status_.back_finished ? getCurrentPath() : status_.backward_path;
   candidate_path.drivable_area = util::generateDrivableArea(
