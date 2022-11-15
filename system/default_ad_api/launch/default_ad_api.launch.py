@@ -30,6 +30,7 @@ def create_api_node(node_name, class_name, **kwargs):
 
 def generate_launch_description():
     components = [
+        create_api_node("autoware_state", "AutowareStateNode"),
         create_api_node("interface", "InterfaceNode"),
         create_api_node("localization", "LocalizationNode"),
         create_api_node("motion", "MotionNode", parameters=[{"require_accept_start": False}]),
