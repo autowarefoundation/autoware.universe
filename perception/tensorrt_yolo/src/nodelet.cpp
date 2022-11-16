@@ -136,6 +136,7 @@ void TensorrtYoloNodelet::callback(const sensor_msgs::msg::Image::ConstSharedPtr
 
   if (!yolo::set_cuda_device(gpu_device_id_)) {
     RCLCPP_ERROR(this->get_logger(), "Given GPU not exist or suitable");
+    return;
   }
 
   cv_bridge::CvImagePtr in_image_ptr;
