@@ -123,12 +123,24 @@ public:
     local_slope_max_angle_deg_ = params["local_slope_max_angle_deg"].as<float>();
     split_points_distance_tolerance_ = params["split_points_distance_tolerance"].as<float>();
     split_height_distance_ = params["split_height_distance"].as<float>();
+    non_ground_height_threshold_ = params["non_ground_height_threshold"].as<float>();
+    grid_size_m_ = params["grid_size_m"].as<float>();
+    grid_mode_switch_radius_ = params["grid_mode_switch_radius"].as<float>();
+    gnd_grid_buffer_size_ = params["gnd_grid_buffer_size"].as<uint16_t>();
+    detection_range_z_max_ = params["detection_range_z_max"].as<float>();
+    elevation_grid_mode_ = params["elevation_grid_mode"].as<bool>();
   }
 
   float global_slope_max_angle_deg_ = 0.0;
   float local_slope_max_angle_deg_ = 0.0;
   float split_points_distance_tolerance_ = 0.0;
   float split_height_distance_ = 0.0;
+  float non_ground_height_threshold_ = 0.0;
+  float grid_size_m_ = 0.0;
+  float grid_mode_switch_radius_ = 0.0;
+  uint16_t   gnd_grid_buffer_size_ = 0;
+  float detection_range_z_max_ = 0.0;
+  bool  elevation_grid_mode_ = false;
 };
 
 TEST_F(ScanGroundFilterTest, TestCase1)
@@ -145,6 +157,18 @@ TEST_F(ScanGroundFilterTest, TestCase1)
     rclcpp::Parameter("split_points_distance_tolerance", split_points_distance_tolerance_));
   scan_ground_filter_->set_parameter(
     rclcpp::Parameter("split_height_distance", split_height_distance_));
+  scan_ground_filter_->set_parameter(
+    rclcpp::Parameter("non_ground_height_threshold", non_ground_height_threshold_));
+  scan_ground_filter_->set_parameter(
+    rclcpp::Parameter("grid_size_m", grid_size_m_));
+  scan_ground_filter_->set_parameter(
+    rclcpp::Parameter("grid_mode_switch_radius", grid_mode_switch_radius_));
+  scan_ground_filter_->set_parameter(
+    rclcpp::Parameter("gnd_grid_buffer_size", gnd_grid_buffer_size_));
+  scan_ground_filter_->set_parameter(
+    rclcpp::Parameter("detection_range_z_max", detection_range_z_max_));
+  scan_ground_filter_->set_parameter(
+    rclcpp::Parameter("elevation_grid_mode", elevation_grid_mode_));
 
   filter(out_cloud);
   output_pointcloud_pub_->publish(out_cloud);
