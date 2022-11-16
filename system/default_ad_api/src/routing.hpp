@@ -17,6 +17,7 @@
 
 #include <autoware_ad_api_specs/routing.hpp>
 #include <component_interface_specs/planning.hpp>
+#include <component_interface_specs/system.hpp>
 #include <component_interface_utils/status.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -43,9 +44,11 @@ private:
   Cli<planning_interface::SetRoutePoints> cli_set_route_points_;
   Cli<planning_interface::SetRoute> cli_set_route_;
   Cli<planning_interface::ClearRoute> cli_clear_route_;
+  Cli<system_interface::ChangeOperationMode> cli_operation_mode_;
 
   using State = planning_interface::RouteState;
   using Route = planning_interface::Route;
+  void change_stop_mode();
   void on_state(const State::Message::ConstSharedPtr msg);
   void on_route(const Route::Message::ConstSharedPtr msg);
   void on_set_route(
