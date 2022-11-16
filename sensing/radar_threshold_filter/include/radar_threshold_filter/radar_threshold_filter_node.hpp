@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef RADAR_THRESHOLD_FILTER__RADAR_THRESHOLD_FILTER_NODE_HPP__
-#define RADAR_THRESHOLD_FILTER__RADAR_THRESHOLD_FILTER_NODE_HPP__
+#ifndef RADAR_THRESHOLD_FILTER__RADAR_THRESHOLD_FILTER_NODE_HPP_
+#define RADAR_THRESHOLD_FILTER__RADAR_THRESHOLD_FILTER_NODE_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -84,4 +84,4 @@ private:
 
 }  // namespace radar_threshold_filter
 
-#endif  // RADAR_THRESHOLD_FILTER__RADAR_THRESHOLD_FILTER_NODE_HPP__
+#endif  // RADAR_THRESHOLD_FILTER__RADAR_THRESHOLD_FILTER_NODE_HPP_
