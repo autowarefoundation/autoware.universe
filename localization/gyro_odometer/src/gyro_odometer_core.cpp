@@ -128,7 +128,8 @@ void GyroOdometer::timerCallback()
 {
   std::string error_msg;
   if (!is_velocity_arrived_) {
-    RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Twist msg is not subscribed");
+    RCLCPP_WARN_THROTTLE(
+      this->get_logger(), *this->get_clock(), 1000, "Twist msg is not subscribed");
   }
   if (!is_imu_arrived_) {
     RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Imu msg is not subscribed");
@@ -139,8 +140,7 @@ void GyroOdometer::timerCallback()
     return;
   }
 
-  const double velocity_dt =
-    std::abs((this->now() - vel_buffer_.front().header.stamp).seconds());
+  const double velocity_dt = std::abs((this->now() - vel_buffer_.front().header.stamp).seconds());
   const double imu_dt = std::abs((this->now() - gyro_buffer_.front().header.stamp).seconds());
 
   if (velocity_dt > message_timeout_sec_) {
