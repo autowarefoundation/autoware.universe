@@ -36,7 +36,7 @@ geometry_msgs::msg::TwistWithCovarianceStamped get_twist_from_velocity_buffer(
   }
 
   int n = static_cast<int>(velocity_buffer.size());
-  for (const auto vel : velocity_buffer) {
+  for (const auto & vel : velocity_buffer) {
     twist_with_cov.twist.twist.linear.x += vel.twist.twist.linear.x;
     twist_with_cov.twist.covariance[0] += vel.twist.covariance[0];
   }
@@ -57,7 +57,7 @@ geometry_msgs::msg::TwistWithCovarianceStamped get_twist_from_gyro_buffer(
   }
 
   int n = static_cast<int>(gyro_buffer.size());
-  for (const auto gyro : gyro_buffer) {
+  for (const auto & gyro : gyro_buffer) {
     twist_with_cov.twist.twist.angular.x += gyro.twist.twist.angular.x;
     twist_with_cov.twist.twist.angular.y += gyro.twist.twist.angular.y;
     twist_with_cov.twist.twist.angular.z += gyro.twist.twist.angular.z;
