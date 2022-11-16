@@ -138,7 +138,8 @@ void GyroOdometer::timerCallback()
       is_valid = false;
     }
   } else {
-    RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Twist msg is not subscribed");
+    RCLCPP_WARN_THROTTLE(
+      this->get_logger(), *this->get_clock(), 1000, "Twist msg is not subscribed");
   }
 
   if (is_imu_arrived_) {
@@ -154,7 +155,6 @@ void GyroOdometer::timerCallback()
     RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Imu msg is not subscribed");
   }
   if (!is_valid) return;
-
 
   TwistWithCovarianceStamped twist_with_cov_from_vel = get_twist_from_velocity_buffer(vel_buffer_);
   vel_buffer_.clear();
