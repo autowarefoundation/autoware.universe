@@ -20,7 +20,6 @@ import uuid
 from flask import Flask
 from flask import jsonify
 from flask import request
-from flask import session
 from flask_cors import CORS
 import rclpy
 from rclpy.node import Node
@@ -32,7 +31,7 @@ rclpy.init()
 node = Node("static_centerline_optimizer_http_server")
 
 app = Flask(__name__)
-CORS(app, supports_credentials=True)
+CORS(app)
 
 
 def create_client(service_type, server_name):
@@ -48,7 +47,8 @@ def get_map():
     data = request.get_json()
 
     map_uuid = str(uuid.uuid4())
-    session["map_id"] = map_uuid
+    global map_id
+    map_id = map_uuid
 
     # create client
     cli = create_client(LoadMap, "/planning/static_centerline_optimizer/load_map")
@@ -79,7 +79,8 @@ def get_map():
 @app.route("/planned_route", methods=["GET"])
 def post_planned_route():
     args = request.args.to_dict()
-    if session["map_id"] != args.get("map_id"):
+    global map_id
+    if map_id != args.get("map_id"):
         # TODO(murooka) error handling for map_id mismatch
         print("map_id is not correct.")
 
@@ -116,7 +117,8 @@ def post_planned_route():
 @app.route("/planned_path", methods=["GET"])
 def post_planned_path():
     args = request.args.to_dict()
-    if session["map_id"] != args.get("map_id"):
+    global map_id
+    if map_id != args.get("map_id"):
         # TODO(murooka) error handling for map_id mismatch
         print("map_id is not correct.")
 
@@ -124,7 +126,7 @@ def post_planned_path():
     cli = create_client(PlanPath, "/planning/static_centerline_optimizer/plan_path")
 
     # request path planning
-    route_lane_ids = [eval(i) for i in request.args.getlist("route")]
+    route_lane_ids = [eval(i) for i in request.args.getlist("route[]")]
     req = PlanPath.Request(route=route_lane_ids)
     future = cli.call_async(req)
 
