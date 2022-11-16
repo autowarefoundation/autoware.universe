@@ -850,39 +850,35 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
 
   std::vector<PredictedRefPath> all_ref_paths;
   for (const auto & current_lanelet_data : current_lanelets_data) {
+    // parameter for lanelet::routing::PossiblePathsParams
+    const double search_dist = prediction_time_horizon_ * obj_vel +
+                               lanelet::utils::getLaneletLength3d(current_lanelet_data.lanelet);
+    lanelet::routing::PossiblePathsParams possible_params{search_dist, {}, 0, false, true};
+
     // Step1. Get the path
     // Step1.1 Get the left lanelet
     lanelet::routing::LaneletPaths left_paths;
     auto opt_left = routing_graph_ptr_->left(current_lanelet_data.lanelet);
     if (!!opt_left) {
-      for (double horizon = prediction_time_horizon_; horizon > 0; horizon -= delta_horizon) {
-        const double search_dist = horizon * obj_vel + 10.0;
-        lanelet::routing::LaneletPaths tmp_paths =
-          routing_graph_ptr_->possiblePaths(*opt_left, search_dist, 0, false);
-        addValidPath(tmp_paths, left_paths);
-      }
+      lanelet::routing::LaneletPaths tmp_paths =
+        routing_graph_ptr_->possiblePaths(*opt_left, possible_params);
+      addValidPath(tmp_paths, left_paths);
     }
 
     // Step1.2 Get the right lanelet
     lanelet::routing::LaneletPaths right_paths;
     auto opt_right = routing_graph_ptr_->right(current_lanelet_data.lanelet);
     if (!!opt_right) {
-      for (double horizon = prediction_time_horizon_; horizon > 0; horizon -= delta_horizon) {
-        const double search_dist = horizon * obj_vel + 10.0;
-        lanelet::routing::LaneletPaths tmp_paths =
-          routing_graph_ptr_->possiblePaths(*opt_right, search_dist, 0, false);
-        addValidPath(tmp_paths, right_paths);
-      }
+      lanelet::routing::LaneletPaths tmp_paths =
+        routing_graph_ptr_->possiblePaths(*opt_right, possible_params);
+      addValidPath(tmp_paths, right_paths);
     }
 
     // Step1.3 Get the centerline
     lanelet::routing::LaneletPaths center_paths;
-    for (double horizon = prediction_time_horizon_; horizon > 0; horizon -= delta_horizon) {
-      const double search_dist = horizon * obj_vel + 10.0;
-      lanelet::routing::LaneletPaths tmp_paths =
-        routing_graph_ptr_->possiblePaths(current_lanelet_data.lanelet, search_dist, 0, false);
-      addValidPath(tmp_paths, center_paths);
-    }
+    lanelet::routing::LaneletPaths tmp_paths =
+      routing_graph_ptr_->possiblePaths(current_lanelet_data.lanelet, possible_params);
+    addValidPath(tmp_paths, center_paths);
 
     // Skip calculations if all paths are empty
     if (left_paths.empty() && right_paths.empty() && center_paths.empty()) {
