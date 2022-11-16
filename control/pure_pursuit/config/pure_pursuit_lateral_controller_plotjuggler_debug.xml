@@ -8,22 +8,22 @@
       <plot flip_y="false" mode="TimeSeries" flip_x="false" style="Lines">
        <range right="80.040302" top="4.460166" bottom="-0.166817" left="0.000000"/>
        <limitY/>
-       <curve color="#1f77b4" name="/control/trajectory_follower/controller_node_exe/debug/ld_outputs/diag_array/data.0">
+       <curve color="#1f77b4" name="/control/trajectory_follower/controller_node_exe/debug/ld_outputs/data.0">
          <transform alias="Velocity_LD" name="Scale/Offset">
           <options value_scale="1.0" time_offset="0" value_offset="0"/>
          </transform>
        </curve>
-       <curve color="#d62728" name="/control/trajectory_follower/controller_node_exe/debug/ld_outputs/diag_array/data.1">
+       <curve color="#d62728" name="/control/trajectory_follower/controller_node_exe/debug/ld_outputs/data.1">
          <transform alias="Curvature_LD" name="Scale/Offset">
           <options value_scale="1.0" time_offset="0" value_offset="0"/>
          </transform>
        </curve>
-       <curve color="#1ac938" name="/control/trajectory_follower/controller_node_exe/debug/ld_outputs/diag_array/data.2">
+       <curve color="#1ac938" name="/control/trajectory_follower/controller_node_exe/debug/ld_outputs/data.2">
          <transform alias="Lateral_Error_LD" name="Scale/Offset">
           <options value_scale="1.0" time_offset="0" value_offset="0"/>
          </transform>
        </curve>
-       <curve color="#ff7f0e" name="/control/trajectory_follower/controller_node_exe/debug/ld_outputs/diag_array/data.3">
+       <curve color="#ff7f0e" name="/control/trajectory_follower/controller_node_exe/debug/ld_outputs/data.3">
          <transform alias="Total_LD" name="Scale/Offset">
           <options value_scale="1.0" time_offset="0" value_offset="0"/>
          </transform>
@@ -35,7 +35,7 @@
        <plot flip_y="false" mode="TimeSeries" flip_x="false" style="Lines">
         <range right="80.040302" top="0.100000" bottom="-0.100000" left="0.000000"/>
         <limitY/>
-        <curve color="#f14cc1" name="/control/trajectory_follower/controller_node_exe/debug/ld_outputs/diag_array/data.6">
+        <curve color="#f14cc1" name="/control/trajectory_follower/controller_node_exe/debug/ld_outputs/data.6">
          <transform alias="Velocity" name="Scale/Offset">
           <options value_scale="1.0" time_offset="0" value_offset="0"/>
          </transform>
@@ -46,7 +46,7 @@
        <plot flip_y="false" mode="TimeSeries" flip_x="false" style="Lines">
         <range right="80.040302" top="0.537336" bottom="0.537336" left="0.000000"/>
         <limitY/>
-        <curve color="#9467bd" name="/control/trajectory_follower/controller_node_exe/debug/ld_outputs/diag_array/data.5">
+        <curve color="#9467bd" name="/control/trajectory_follower/controller_node_exe/debug/ld_outputs/data.5">
          <transform alias="Lateral_Error" name="Scale/Offset">
           <options value_scale="1.0" time_offset="0" value_offset="0"/>
          </transform>
@@ -57,7 +57,7 @@
        <plot flip_y="false" mode="TimeSeries" flip_x="false" style="Lines">
         <range right="80.040302" top="0.000473" bottom="0.000426" left="0.000000"/>
         <limitY/>
-        <curve color="#17becf" name="/control/trajectory_follower/controller_node_exe/debug/ld_outputs/diag_array/data.4">
+        <curve color="#17becf" name="/control/trajectory_follower/controller_node_exe/debug/ld_outputs/data.4">
          <transform alias="Curvature" name="Scale/Offset">
           <options value_scale="1.0" time_offset="0" value_offset="0"/>
          </transform>

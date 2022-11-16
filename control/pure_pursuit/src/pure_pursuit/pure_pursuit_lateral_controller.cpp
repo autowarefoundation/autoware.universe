@@ -87,9 +87,8 @@ PurePursuitLateralController::PurePursuitLateralController(rclcpp::Node & node)
   // Debug Publishers
   pub_debug_marker_ =
     node_->create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/markers", 0);
-  pub_debug_values_ =
-    node_->create_publisher<autoware_auto_system_msgs::msg::Float32MultiArrayDiagnostic>(
-      "~/debug/ld_outputs", rclcpp::QoS{1});
+  pub_debug_values_ = node_->create_publisher<tier4_debug_msgs::msg::Float32MultiArrayStamped>(
+    "~/debug/ld_outputs", rclcpp::QoS{1});
 
   // Publish predicted trajectory
   pub_predicted_trajectory_ = node_->create_publisher<autoware_auto_planning_msgs::msg::Trajectory>(
@@ -129,7 +128,7 @@ bool PurePursuitLateralController::isDataReady()
 }
 
 double PurePursuitLateralController::calcLookaheadDistance(
-  const double lateral_error, const double curvature, const double velocity,
+  const double lateral_error, const double curvature, const double velocity, const double min_ld,
   const bool is_control_cmd)
 {
   const double vel_ld = abs(param_.ld_velocity_ratio * velocity);
@@ -142,21 +141,20 @@ double PurePursuitLateralController::calcLookaheadDistance(
     lateral_error_ld = abs(param_.ld_lateral_error_ratio * lateral_error);
   }
 
-  const double total_ld = std::clamp(
-    vel_ld + curvature_ld + lateral_error_ld, param_.min_lookahead_distance,
-    param_.max_lookahead_distance);
+  const double total_ld =
+    std::clamp(vel_ld + curvature_ld + lateral_error_ld, min_ld, param_.max_lookahead_distance);
 
   auto pubDebugValues = [&]() {
-    autoware_auto_system_msgs::msg::Float32MultiArrayDiagnostic debug_msg{};
-    debug_msg.diag_array.data.resize(TYPE::SIZE);
-    debug_msg.diag_array.data.at(TYPE::VEL_LD) = static_cast<float>(vel_ld);
-    debug_msg.diag_array.data.at(TYPE::CURVATURE_LD) = static_cast<float>(curvature_ld);
-    debug_msg.diag_array.data.at(TYPE::LATERAL_ERROR_LD) = static_cast<float>(lateral_error_ld);
-    debug_msg.diag_array.data.at(TYPE::TOTAL_LD) = static_cast<float>(total_ld);
-    debug_msg.diag_array.data.at(TYPE::VELOCITY) = static_cast<float>(velocity);
-    debug_msg.diag_array.data.at(TYPE::CURVATURE) = static_cast<float>(curvature);
-    debug_msg.diag_array.data.at(TYPE::LATERAL_ERROR) = static_cast<float>(lateral_error);
-    debug_msg.diag_header.data_stamp = node_->now();
+    tier4_debug_msgs::msg::Float32MultiArrayStamped debug_msg{};
+    debug_msg.data.resize(TYPE::SIZE);
+    debug_msg.data.at(TYPE::VEL_LD) = static_cast<float>(vel_ld);
+    debug_msg.data.at(TYPE::CURVATURE_LD) = static_cast<float>(curvature_ld);
+    debug_msg.data.at(TYPE::LATERAL_ERROR_LD) = static_cast<float>(lateral_error_ld);
+    debug_msg.data.at(TYPE::TOTAL_LD) = static_cast<float>(total_ld);
+    debug_msg.data.at(TYPE::VELOCITY) = static_cast<float>(velocity);
+    debug_msg.data.at(TYPE::CURVATURE) = static_cast<float>(curvature);
+    debug_msg.data.at(TYPE::LATERAL_ERROR) = static_cast<float>(lateral_error);
+    debug_msg.stamp = node_->now();
     pub_debug_values_->publish(debug_msg);
   };
 
@@ -209,21 +207,37 @@ void PurePursuitLateralController::setResampledTrajectory()
     motion_utils::convertToTrajectoryPointArray(*trajectory_resampled_));
 }
 
-double PurePursuitLateralController::calcCurvature(
-  const TrajectoryPoint & p1, const TrajectoryPoint & p2, const TrajectoryPoint & p3)
+double PurePursuitLateralController::calcCurvature(const size_t closest_idx)
 {
-  // Calculation details are described in the following page
-  // https://en.wikipedia.org/wiki/Menger_curvature
-  const double denominator = tier4_autoware_utils::calcDistance2d(p1, p2) *
-                             tier4_autoware_utils::calcDistance2d(p2, p3) *
-                             tier4_autoware_utils::calcDistance2d(p3, p1);
-  if (std::fabs(denominator) < 1e-10) {
-    throw std::runtime_error("points are too close for curvature calculation.");
+  // Calculate current curvature
+  const size_t idx_dist = static_cast<size_t>(
+    std::max(static_cast<int>((param_.curvature_calculation_distance) / param_.resampling_ds), 1));
+
+  // Find the points in trajectory to calculate curvature
+  size_t next_idx = trajectory_resampled_->points.size() - 1;
+  size_t prev_idx = 0;
+
+  if (static_cast<size_t>(closest_idx) >= idx_dist) {
+    prev_idx = closest_idx - idx_dist;
   }
-  return 2.0 *
-         ((p2.pose.position.x - p1.pose.position.x) * (p3.pose.position.y - p1.pose.position.y) -
-          (p2.pose.position.y - p1.pose.position.y) * (p3.pose.position.x - p1.pose.position.x)) /
-         denominator;
+  if (trajectory_resampled_->points.size() - 1 >= closest_idx + idx_dist) {
+    next_idx = closest_idx + idx_dist;
+  }
+
+  // Calculate curvature assuming the trajectory points interval is constant
+  double current_curvature = 0.0;
+
+  try {
+    current_curvature = tier4_autoware_utils::calcCurvature(
+      tier4_autoware_utils::getPoint(trajectory_resampled_->points.at(prev_idx)),
+      tier4_autoware_utils::getPoint(trajectory_resampled_->points.at(closest_idx)),
+      tier4_autoware_utils::getPoint(trajectory_resampled_->points.at(next_idx)));
+  } catch (std::exception const & e) {
+    // ...code that handles the error...
+    RCLCPP_WARN(rclcpp::get_logger("pure_pursuit"), "%s", e.what());
+    current_curvature = 0.0;
+  }
+  return current_curvature;
 }
 
 boost::optional<Trajectory> PurePursuitLateralController::generatePredictedTrajectory()
@@ -384,8 +398,6 @@ void PurePursuitLateralController::publishDebugMarker() const
 boost::optional<PpOutput> PurePursuitLateralController::calcTargetCurvature(
   bool is_control_output, geometry_msgs::msg::Pose pose)
 {
-  constexpr double threshold = 1e-5;  // 0.00001
-
   // Ignore invalid trajectory
   if (trajectory_resampled_->points.size() < 3) {
     RCLCPP_WARN_THROTTLE(
@@ -402,73 +414,31 @@ boost::optional<PpOutput> PurePursuitLateralController::calcTargetCurvature(
     return {};
   }
 
-  const double && target_vel =
+  const double target_vel =
     trajectory_resampled_->points.at(*closest_idx_result).longitudinal_velocity_mps;
 
   // calculate the lateral error
 
-  geometry_msgs::msg::Point vec_end;
-  geometry_msgs::msg::Point vec_start;
-
-  if (*closest_idx_result == output_tp_array_->size() - 1) {
-    vec_end = output_tp_array_->at(*closest_idx_result).pose.position;
-    vec_start = output_tp_array_->at(*closest_idx_result - 1).pose.position;
-  } else {
-    vec_start = output_tp_array_->at(*closest_idx_result).pose.position;
-    vec_end = output_tp_array_->at(*closest_idx_result + 1).pose.position;
-  }
-
-  Eigen::Vector3d vec_a(
-    (vec_end.x - vec_start.x), (vec_end.y - vec_start.y), (vec_end.z - vec_start.z));
-
-  if (vec_a.norm() < threshold) {
-    RCLCPP_ERROR(node_->get_logger(), "Trajectory point interval is almost 0.");
-    return {};
-  }
-
   const double lateral_error =
-    planning_utils::calcLateralError2D(vec_start, vec_end, pose.position);
+    motion_utils::calcLateralOffset(trajectory_resampled_->points, pose.position);
 
-  // Calculate current curvature
-  const size_t idx_dist = static_cast<size_t>(
-    std::max(static_cast<int>((param_.curvature_calculation_distance) / param_.resampling_ds), 1));
+  // calculate the current curvature
 
-  // Find the points in trajectory to calculate curvature
-  size_t next_idx = trajectory_resampled_->points.size() - 1;
-  size_t prev_idx = 0;
-
-  if (static_cast<size_t>(*closest_idx_result) >= idx_dist) {
-    prev_idx = *closest_idx_result - idx_dist;
-  }
-  if (trajectory_resampled_->points.size() - 1 >= *closest_idx_result + idx_dist) {
-    next_idx = *closest_idx_result + idx_dist;
-  }
-
-  // Calculate curvature assuming the trajectory points interval is constant
-  double current_curvature = 0.0;
-
-  try {
-    current_curvature = calcCurvature(
-      trajectory_resampled_->points.at(prev_idx),
-      trajectory_resampled_->points.at(*closest_idx_result),
-      trajectory_resampled_->points.at(next_idx));
-  } catch (std::exception const & e) {
-    // ...code that handles the error...
-    RCLCPP_WARN(rclcpp::get_logger("pure_pursuit"), "%s", e.what());
-    current_curvature = 0.0;
-  }
+  const double current_curvature = calcCurvature(*closest_idx_result);
 
   // Calculate lookahead distance
+
   const bool is_reverse = (target_vel < 0);
   const double min_lookahead_distance =
     is_reverse ? param_.reverse_min_lookahead_distance : param_.min_lookahead_distance;
   double lookahead_distance = min_lookahead_distance;
   if (is_control_output) {
     lookahead_distance = calcLookaheadDistance(
-      lateral_error, current_curvature, current_odometry_->twist.twist.linear.x, is_control_output);
+      lateral_error, current_curvature, current_odometry_->twist.twist.linear.x,
+      min_lookahead_distance, is_control_output);
   } else {
-    lookahead_distance =
-      calcLookaheadDistance(lateral_error, current_curvature, target_vel, is_control_output);
+    lookahead_distance = calcLookaheadDistance(
+      lateral_error, current_curvature, target_vel, min_lookahead_distance, is_control_output);
   }
 
   // Set PurePursuit data

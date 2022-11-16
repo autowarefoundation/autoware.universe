@@ -44,10 +44,10 @@
 
 #include "autoware_auto_control_msgs/msg/ackermann_lateral_command.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
-#include "autoware_auto_system_msgs/msg/float32_multi_array_diagnostic.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/twist_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
+#include "tier4_debug_msgs/msg/float32_multi_array_stamped.hpp"
 
 #include <boost/optional.hpp>  // To be replaced by std::optional in C++17
 
@@ -113,8 +113,7 @@ private:
 
   // Debug Publisher
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_debug_marker_;
-  rclcpp::Publisher<autoware_auto_system_msgs::msg::Float32MultiArrayDiagnostic>::SharedPtr
-    pub_debug_values_;
+  rclcpp::Publisher<tier4_debug_msgs::msg::Float32MultiArrayStamped>::SharedPtr pub_debug_values_;
   // Predicted Trajectory publish
   rclcpp::Publisher<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr
     pub_predicted_trajectory_;
@@ -170,11 +169,11 @@ private:
   bool calcIsSteerConverged(const AckermannLateralCommand & cmd);
 
   double calcLookaheadDistance(
-    const double lateral_error, const double curvature, const double velocity,
+    const double lateral_error, const double curvature, const double velocity, const double min_ld,
     const bool is_control_cmd);
 
-  double calcCurvature(
-    const TrajectoryPoint & p1, const TrajectoryPoint & p2, const TrajectoryPoint & p3);
+  double calcCurvature(const size_t closest_idx);
+
   // Debug
   mutable DebugData debug_data_;
 };
