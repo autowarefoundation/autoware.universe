@@ -31,70 +31,103 @@ AutowareStateNode::AutowareStateNode(const rclcpp::NodeOptions & options)
     const auto name = "/system/component_state_monitor/component/launch/" + module_names[i];
     const auto qos = rclcpp::QoS(1).transient_local();
     const auto callback = [this, i](const ModeChangeAvailable::ConstSharedPtr msg) {
-      launch_states_[i] = msg->available;
+      component_states_[i] = msg->available;
     };
-    sub_launch_states_.push_back(create_subscription<ModeChangeAvailable>(name, qos, callback));
+    sub_component_states_.push_back(create_subscription<ModeChangeAvailable>(name, qos, callback));
   }
-  launch_states_.resize(module_names.size());
+
+  pub_autoware_state_ = create_publisher<AutowareState>("/autoware/state2", 1);
 
   const auto adaptor = component_interface_utils::NodeAdaptor(this);
-  adaptor.init_sub(sub_localization_, [this](const LocalizationState::ConstSharedPtr msg) {
-    localization_ = *msg;
-  });
-  // adaptor.init_sub(sub_routing_, on_interface_version);
-  // adaptor.init_sub(sub_operation_mode_, on_interface_version);
+  adaptor.init_sub(sub_localization_, this, &AutowareStateNode::on_localization);
+  adaptor.init_sub(sub_routing_, this, &AutowareStateNode::on_routing);
+  adaptor.init_sub(sub_operation_mode_, this, &AutowareStateNode::on_operation_mode);
 
-  const auto rate = rclcpp::Rate(1.0);
-  // const auto rate = rclcpp::Rate(5.0);
+  // TODO(Takagi, Isamu): remove default value
+  const auto rate = rclcpp::Rate(declare_parameter("update_rate", 10.0));
   timer_ = rclcpp::create_timer(this, get_clock(), rate.period(), [this]() { on_timer(); });
 
-  launch_ = LaunchState::Initializing;
-  localization_.state = LocalizationState::UNKNOWN;
-  routing_.state = RoutingState::UNKNOWN;
-  operation_mode_.mode = OperationModeState::UNKNOWN;
+  component_states_.resize(module_names.size());
+  launch_state_ = LaunchState::Initializing;
+  localization_state_.state = LocalizationState::UNKNOWN;
+  routing_state_.state = RoutingState::UNKNOWN;
+  operation_mode_state_.mode = OperationModeState::UNKNOWN;
+}
+
+void AutowareStateNode::on_localization(const LocalizationState::ConstSharedPtr msg)
+{
+  localization_state_ = *msg;
+}
+void AutowareStateNode::on_routing(const RoutingState::ConstSharedPtr msg)
+{
+  routing_state_ = *msg;
+}
+void AutowareStateNode::on_operation_mode(const OperationModeState::ConstSharedPtr msg)
+{
+  operation_mode_state_ = *msg;
 }
 
 void AutowareStateNode::on_timer()
 {
-  using autoware_auto_system_msgs::msg::AutowareState;
-
-  const auto convert_state = [this]() -> uint8_t {
-    if (launch_ == LaunchState::Initializing) {
-      return AutowareState::INITIALIZING;
-    }
-    if (launch_ == LaunchState::Finalizing) {
+  const auto convert_state = [this]() {
+    if (launch_state_ == LaunchState::Finalizing) {
       return AutowareState::FINALIZING;
     }
-    if (localization_.state != LocalizationState::INITIALIZED) {
+    if (launch_state_ == LaunchState::Initializing) {
       return AutowareState::INITIALIZING;
     }
-    if (routing_.state == RoutingState::UNSET) {
+    if (localization_state_.state == LocalizationState::UNKNOWN) {
+      return AutowareState::INITIALIZING;
+    }
+    if (routing_state_.state == RoutingState::UNKNOWN) {
+      return AutowareState::INITIALIZING;
+    }
+    if (operation_mode_state_.mode == OperationModeState::UNKNOWN) {
+      return AutowareState::INITIALIZING;
+    }
+    if (localization_state_.state != LocalizationState::INITIALIZED) {
+      return AutowareState::INITIALIZING;
+    }
+    if (routing_state_.state == RoutingState::UNSET) {
       return AutowareState::WAITING_FOR_ROUTE;
     }
-    if (routing_.state == RoutingState::ARRIVED) {
+    if (routing_state_.state == RoutingState::ARRIVED) {
       return AutowareState::ARRIVED_GOAL;
     }
-    if (operation_mode_.mode != OperationModeState::STOP) {
-      return AutowareState::DRIVING;
+    if (operation_mode_state_.mode != OperationModeState::STOP) {
+      if (operation_mode_state_.is_autoware_control_enabled) {
+        return AutowareState::DRIVING;
+      }
     }
-    if (operation_mode_.is_autonomous_mode_available) {
+    if (operation_mode_state_.is_autonomous_mode_available) {
       return AutowareState::WAITING_FOR_ENGAGE;
     }
     return AutowareState::PLANNING;
   };
 
-  if (launch_ == LaunchState::Initializing) {
+  // Update launch state.
+  if (launch_state_ == LaunchState::Initializing) {
     bool is_initialized = true;
-    for (const auto & state : launch_states_) {
+    for (const auto & state : component_states_) {
       is_initialized &= state;
     }
     if (is_initialized) {
-      launch_ = LaunchState::Running;
+      launch_state_ = LaunchState::Running;
     }
   }
 
-  const auto state = convert_state();
-  RCLCPP_INFO_STREAM(get_logger(), (int)state);
+  // Update routing state to reproduce old logic.
+  if (routing_state_.state == RoutingState::ARRIVED) {
+    const auto duration = now() - rclcpp::Time(routing_state_.stamp);
+    if (2.0 < duration.seconds()) {
+      routing_state_.state = RoutingState::UNSET;
+    }
+  }
+
+  AutowareState msg;
+  msg.stamp = now();
+  msg.state = convert_state();
+  pub_autoware_state_->publish(msg);
 }
 
 }  // namespace default_ad_api

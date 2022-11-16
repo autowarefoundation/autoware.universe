@@ -43,18 +43,25 @@ private:
   Sub<autoware_ad_api::localization::InitializationState> sub_localization_;
   Sub<autoware_ad_api::routing::RouteState> sub_routing_;
   Sub<autoware_ad_api::operation_mode::OperationModeState> sub_operation_mode_;
-  std::vector<bool> launch_states_;
-  std::vector<rclcpp::Subscription<ModeChangeAvailable>::SharedPtr> sub_launch_states_;
 
+  using AutowareState = autoware_auto_system_msgs::msg::AutowareState;
   using LocalizationState = autoware_ad_api::localization::InitializationState::Message;
   using RoutingState = autoware_ad_api::routing::RouteState::Message;
   using OperationModeState = autoware_ad_api::operation_mode::OperationModeState::Message;
+  std::vector<bool> component_states_;
+  std::vector<rclcpp::Subscription<ModeChangeAvailable>::SharedPtr> sub_component_states_;
+  rclcpp::Publisher<AutowareState>::SharedPtr pub_autoware_state_;
+
   enum class LaunchState { Initializing, Running, Finalizing };
-  LaunchState launch_;
-  LocalizationState localization_;
-  RoutingState routing_;
-  OperationModeState operation_mode_;
+  LaunchState launch_state_;
+  LocalizationState localization_state_;
+  RoutingState routing_state_;
+  OperationModeState operation_mode_state_;
+
   void on_timer();
+  void on_localization(const LocalizationState::ConstSharedPtr msg);
+  void on_routing(const RoutingState::ConstSharedPtr msg);
+  void on_operation_mode(const OperationModeState::ConstSharedPtr msg);
 };
 
 }  // namespace default_ad_api
