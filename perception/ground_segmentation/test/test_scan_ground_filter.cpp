@@ -138,9 +138,9 @@ public:
   float non_ground_height_threshold_ = 0.0;
   float grid_size_m_ = 0.0;
   float grid_mode_switch_radius_ = 0.0;
-  uint16_t   gnd_grid_buffer_size_ = 0;
+  uint16_t gnd_grid_buffer_size_ = 0;
   float detection_range_z_max_ = 0.0;
-  bool  elevation_grid_mode_ = false;
+  bool elevation_grid_mode_ = false;
 };
 
 TEST_F(ScanGroundFilterTest, TestCase1)
@@ -159,8 +159,7 @@ TEST_F(ScanGroundFilterTest, TestCase1)
     rclcpp::Parameter("split_height_distance", split_height_distance_));
   scan_ground_filter_->set_parameter(
     rclcpp::Parameter("non_ground_height_threshold", non_ground_height_threshold_));
-  scan_ground_filter_->set_parameter(
-    rclcpp::Parameter("grid_size_m", grid_size_m_));
+  scan_ground_filter_->set_parameter(rclcpp::Parameter("grid_size_m", grid_size_m_));
   scan_ground_filter_->set_parameter(
     rclcpp::Parameter("grid_mode_switch_radius", grid_mode_switch_radius_));
   scan_ground_filter_->set_parameter(
