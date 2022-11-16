@@ -70,6 +70,8 @@ private:
 
   std::vector<TwistWithCovarianceStamped> vel_buffer_;
   std::vector<TwistWithCovarianceStamped> gyro_buffer_;
+  rclcpp::Time latest_vel_timestamp_;
+  rclcpp::Time latest_imu_timestamp_;
 
   std::string output_frame_;
   double message_timeout_sec_;

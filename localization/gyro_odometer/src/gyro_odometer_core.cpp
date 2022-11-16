@@ -126,40 +126,35 @@ GyroOdometer::~GyroOdometer() {}
 
 void GyroOdometer::timerCallback()
 {
-  std::string error_msg;
-  if (!is_velocity_arrived_) {
+  bool is_valid = true;
+  if (is_velocity_arrived_) {
+    is_valid &= !vel_buffer_.empty();
+    const double velocity_dt = std::abs((this->now() - latest_vel_timestamp_).seconds());
+    if (velocity_dt > message_timeout_sec_) {
+      std::string error_msg = fmt::format(
+        "Twist msg is timeout. twist_dt: {}[sec], tolerance {}[sec]", velocity_dt,
+        message_timeout_sec_);
+      RCLCPP_ERROR_THROTTLE(this->get_logger(), *this->get_clock(), 1000, error_msg.c_str());
+      is_valid = false;
+    }
+  } else {
     RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Twist msg is not subscribed");
   }
-  if (!is_imu_arrived_) {
+
+  if (is_imu_arrived_) {
+    is_valid &= !vel_buffer_.empty();
+    const double imu_dt = std::abs((this->now() - latest_imu_timestamp_).seconds());
+    if (imu_dt > message_timeout_sec_) {
+      std::string error_msg = fmt::format(
+        "Imu msg is timeout. imu_dt: {}[sec], tolerance {}[sec]", imu_dt, message_timeout_sec_);
+      RCLCPP_ERROR_THROTTLE(this->get_logger(), *this->get_clock(), 1000, error_msg.c_str());
+      is_valid = false;
+    }
+  } else {
     RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Imu msg is not subscribed");
   }
-  if (vel_buffer_.empty() || gyro_buffer_.empty()) {
-    vel_buffer_.clear();
-    gyro_buffer_.clear();
-    return;
-  }
+  if (!is_valid) return;
 
-  const double velocity_dt =
-    std::abs((this->now() - vel_buffer_.front().header.stamp).seconds());
-  const double imu_dt = std::abs((this->now() - gyro_buffer_.front().header.stamp).seconds());
-
-  if (velocity_dt > message_timeout_sec_) {
-    std::string error_msg = fmt::format(
-      "Twist msg is timeout. twist_dt: {}[sec], tolerance {}[sec]", velocity_dt,
-      message_timeout_sec_);
-    RCLCPP_ERROR_THROTTLE(this->get_logger(), *this->get_clock(), 1000, error_msg.c_str());
-    vel_buffer_.clear();
-    gyro_buffer_.clear();
-    return;
-  }
-  if (imu_dt > message_timeout_sec_) {
-    std::string error_msg = fmt::format(
-      "Imu msg is timeout. imu_dt: {}[sec], tolerance {}[sec]", imu_dt, message_timeout_sec_);
-    RCLCPP_ERROR_THROTTLE(this->get_logger(), *this->get_clock(), 1000, error_msg.c_str());
-    vel_buffer_.clear();
-    gyro_buffer_.clear();
-    return;
-  }
 
   TwistWithCovarianceStamped twist_with_cov_from_vel = get_twist_from_velocity_buffer(vel_buffer_);
   vel_buffer_.clear();
@@ -203,6 +198,7 @@ void GyroOdometer::callbackTwistWithCovariance(
 {
   // TODO(YamatoAndo) trans from twist_with_cov_msg_ptr->header to base_frame
   vel_buffer_.push_back(*twist_with_cov_msg_ptr);
+  latest_vel_timestamp_ = twist_with_cov_msg_ptr->header.stamp;
   is_velocity_arrived_ = true;
 }
 
@@ -231,6 +227,7 @@ void GyroOdometer::callbackImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_m
   gyro.twist.covariance[4 * 6 + 4] = imu_msg_ptr->angular_velocity_covariance[1 * 3 + 1];
   gyro.twist.covariance[5 * 6 + 5] = imu_msg_ptr->angular_velocity_covariance[2 * 3 + 2];
   gyro_buffer_.push_back(gyro);
+  latest_imu_timestamp_ = imu_msg_ptr->header.stamp;
   is_imu_arrived_ = true;
 }
 
