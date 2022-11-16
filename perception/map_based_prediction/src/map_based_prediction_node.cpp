@@ -859,25 +859,19 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
     lanelet::routing::LaneletPaths left_paths;
     auto opt_left = routing_graph_ptr_->left(current_lanelet_data.lanelet);
     if (!!opt_left) {
-      lanelet::routing::LaneletPaths tmp_paths =
-        routing_graph_ptr_->possiblePaths(*opt_left, possible_params);
-      addValidPath(tmp_paths, left_paths);
+      left_paths = routing_graph_ptr_->possiblePaths(*opt_left, possible_params);
     }
 
     // Step1.2 Get the right lanelet
     lanelet::routing::LaneletPaths right_paths;
     auto opt_right = routing_graph_ptr_->right(current_lanelet_data.lanelet);
     if (!!opt_right) {
-      lanelet::routing::LaneletPaths tmp_paths =
-        routing_graph_ptr_->possiblePaths(*opt_right, possible_params);
-      addValidPath(tmp_paths, right_paths);
+      right_paths = routing_graph_ptr_->possiblePaths(*opt_right, possible_params);
     }
 
     // Step1.3 Get the centerline
-    lanelet::routing::LaneletPaths center_paths;
-    lanelet::routing::LaneletPaths tmp_paths =
+    lanelet::routing::LaneletPaths center_paths =
       routing_graph_ptr_->possiblePaths(current_lanelet_data.lanelet, possible_params);
-    addValidPath(tmp_paths, center_paths);
 
     // Skip calculations if all paths are empty
     if (left_paths.empty() && right_paths.empty() && center_paths.empty()) {
@@ -903,26 +897,6 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
   }
 
   return all_ref_paths;
-}
-
-void MapBasedPredictionNode::addValidPath(
-  const lanelet::routing::LaneletPaths & candidate_paths,
-  lanelet::routing::LaneletPaths & valid_paths)
-{
-  // Check if candidate paths are already in the valid paths
-  for (const auto & candidate_path : candidate_paths) {
-    bool already_searched = false;
-    for (const auto & valid_path : valid_paths) {
-      for (const auto & llt : valid_path) {
-        if (candidate_path.back().id() == llt.id()) {
-          already_searched = true;
-        }
-      }
-    }
-    if (!already_searched) {
-      valid_paths.push_back(candidate_path);
-    }
-  }
 }
 
 Maneuver MapBasedPredictionNode::predictObjectManeuver(
