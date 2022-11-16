@@ -19,11 +19,11 @@
 #include <autoware_ad_api_specs/operation_mode.hpp>
 #include <autoware_ad_api_specs/routing.hpp>
 
-#include <vector>
-
-// TODO(Takagi, Isamu): define interface
 #include <autoware_auto_system_msgs/msg/autoware_state.hpp>
+#include <std_srvs/srv/trigger.hpp>
 #include <tier4_system_msgs/msg/mode_change_available.hpp>
+
+#include <vector>
 
 // This file should be included after messages.
 #include "../utils/types.hpp"
@@ -48,9 +48,11 @@ private:
   using LocalizationState = autoware_ad_api::localization::InitializationState::Message;
   using RoutingState = autoware_ad_api::routing::RouteState::Message;
   using OperationModeState = autoware_ad_api::operation_mode::OperationModeState::Message;
+  using Trigger = std_srvs::srv::Trigger;
   std::vector<bool> component_states_;
   std::vector<rclcpp::Subscription<ModeChangeAvailable>::SharedPtr> sub_component_states_;
   rclcpp::Publisher<AutowareState>::SharedPtr pub_autoware_state_;
+  rclcpp::Service<Trigger>::SharedPtr srv_autoware_shutdown_;
 
   enum class LaunchState { Initializing, Running, Finalizing };
   LaunchState launch_state_;
@@ -62,6 +64,7 @@ private:
   void on_localization(const LocalizationState::ConstSharedPtr msg);
   void on_routing(const RoutingState::ConstSharedPtr msg);
   void on_operation_mode(const OperationModeState::ConstSharedPtr msg);
+  void on_shutdown(const Trigger::Request::SharedPtr, const Trigger::Response::SharedPtr);
 };
 
 }  // namespace default_ad_api

@@ -8,12 +8,12 @@
   <arg name="input_odometry" default="/localization/kinematic_state"/>
 
   <!-- Output -->
-  <arg name="output_autoware_state" default="/autoware/state"/>
-  <arg name="output_autoware_engage" default="/autoware/engage"/>
+  <arg name="output_autoware_state" default="/old/autoware/state"/>
+  <arg name="output_autoware_engage" default="/old/autoware/engage"/>
 
   <!-- Service -->
-  <arg name="service_shutdown" default="/autoware/shutdown"/>
-  <arg name="service_reset_route" default="/autoware/reset_route"/>
+  <arg name="service_shutdown" default="/old/autoware/shutdown"/>
+  <arg name="service_reset_route" default="/old/autoware/reset_route"/>
 
   <!-- Config -->
   <arg name="config_file" default="$(find-pkg-share ad_service_state_monitor)/config/ad_service_state_monitor.param.yaml"/>

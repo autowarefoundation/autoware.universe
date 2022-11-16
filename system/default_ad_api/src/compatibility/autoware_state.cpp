@@ -36,7 +36,10 @@ AutowareStateNode::AutowareStateNode(const rclcpp::NodeOptions & options)
     sub_component_states_.push_back(create_subscription<ModeChangeAvailable>(name, qos, callback));
   }
 
-  pub_autoware_state_ = create_publisher<AutowareState>("/autoware/state2", 1);
+  pub_autoware_state_ = create_publisher<AutowareState>("/autoware/state", 1);
+  srv_autoware_shutdown_ = create_service<std_srvs::srv::Trigger>(
+    "/autoware/shutdown",
+    std::bind(&AutowareStateNode::on_shutdown, this, std::placeholders::_1, std::placeholders::_2));
 
   const auto adaptor = component_interface_utils::NodeAdaptor(this);
   adaptor.init_sub(sub_localization_, this, &AutowareStateNode::on_localization);
@@ -65,6 +68,14 @@ void AutowareStateNode::on_routing(const RoutingState::ConstSharedPtr msg)
 void AutowareStateNode::on_operation_mode(const OperationModeState::ConstSharedPtr msg)
 {
   operation_mode_state_ = *msg;
+}
+
+void AutowareStateNode::on_shutdown(
+  const Trigger::Request::SharedPtr, const Trigger::Response::SharedPtr res)
+{
+  launch_state_ = LaunchState::Finalizing;
+  res->success = true;
+  res->message = "Shutdown Autoware.";
 }
 
 void AutowareStateNode::on_timer()
