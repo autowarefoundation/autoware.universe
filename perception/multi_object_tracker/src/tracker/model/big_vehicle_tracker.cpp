@@ -256,7 +256,7 @@ bool BigVehicleTracker::measureWithPose(
     }
   }
   // to check if detection orientation is reverted from tracker
-  int orientation_reverted = 0;
+  double orientation_reverted = 0;
 
   // pos x, pos y, yaw, vx depending on pose measurement
   const int dim_y = enable_velocity_measurement ? 4 : 3;
@@ -285,8 +285,8 @@ bool BigVehicleTracker::measureWithPose(
   Eigen::Vector2d offset;
   autoware_auto_perception_msgs::msg::DetectedObject offset_object;
   utils::calcAnchorPointOffset(
-    bounding_box_.width, bounding_box_.length, nearest_corner_index_, object, offset_object,
-    offset);
+    last_input_bounding_box_.width, last_input_bounding_box_.length, nearest_corner_index_, object,
+    offset_object, offset);
   std::cout << "MOT_offset: " << offset.x() << " " << offset.y()
             << " closest_corner: " << nearest_corner_index_ << " "
             << object.kinematics.pose_with_covariance.pose.position.x << " "
@@ -441,7 +441,7 @@ bool BigVehicleTracker::measure(
     nearest_index, tracking_point);
   X_t(IDX::X) = offset_position.x();
   X_t(IDX::Y) = offset_position.y();
-  ekf_.init(X_t, P_t);
+  // ekf_.init(X_t, P_t);
 
   /* calc nearest corner index*/
   setNearestCornerSurfaceIndex(self_transform);  // this index is used in next measure step

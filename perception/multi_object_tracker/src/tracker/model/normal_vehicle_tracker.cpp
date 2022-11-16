@@ -256,6 +256,8 @@ bool NormalVehicleTracker::measureWithPose(
       enable_velocity_measurement = true;
     }
   }
+  //
+  double orientation_reverted = 0;
   // pos x, pos y, yaw, vx depending on pose output
   const int dim_y = enable_velocity_measurement ? 4 : 3;
   double measurement_yaw = tier4_autoware_utils::normalizeRadian(
@@ -266,9 +268,11 @@ bool NormalVehicleTracker::measureWithPose(
     // Fixed measurement_yaw to be in the range of +-90 degrees of X_t(IDX::YAW)
     while (M_PI_2 <= X_t(IDX::YAW) - measurement_yaw) {
       measurement_yaw = measurement_yaw + M_PI;
+      orientation_reverted += 1;
     }
     while (M_PI_2 <= measurement_yaw - X_t(IDX::YAW)) {
       measurement_yaw = measurement_yaw - M_PI;
+      orientation_reverted += 1;
     }
   }
 
@@ -341,7 +345,10 @@ bool NormalVehicleTracker::measureWithPose(
   Eigen::MatrixXd P_t(ekf_params_.dim_x, ekf_params_.dim_x);
   ekf_.getX(X_t);
   ekf_.getP(P_t);
-  const Eigen::Matrix2d Ryaw = Eigen::Rotation2Dd(X_t(IDX::YAW)).toRotationMatrix();
+  double rotate_angle =
+    X_t(IDX::YAW) +
+    orientation_reverted * M_PI;  // to include the situation that detection orientation is reverted
+  const Eigen::Matrix2d Ryaw = Eigen::Rotation2Dd(rotate_angle).toRotationMatrix();
   const Eigen::Vector2d rotated_offset = Ryaw * offset;
   X_t(IDX::X) -= rotated_offset.x();
   X_t(IDX::Y) -= rotated_offset.y();
