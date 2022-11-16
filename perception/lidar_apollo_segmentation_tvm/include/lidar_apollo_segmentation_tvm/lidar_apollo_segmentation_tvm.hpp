@@ -120,7 +120,6 @@ private:
   const float32_t score_threshold_;
   const float32_t height_thresh_;
   const int32_t min_pts_num_;
-  const std::shared_ptr<float32_t> inferred_data;
   const pcl::PointCloud<pcl::PointXYZI>::ConstPtr pc_ptr_;
   const std::shared_ptr<Cluster2D> cluster2d_;
 };
@@ -158,6 +157,14 @@ public:
   std::shared_ptr<const DetectedObjectsWithFeature> detectDynamicObjects(
     const sensor_msgs::msg::PointCloud2 & input);
 
+  /// \brief Get the name of the neural network used.
+  /// \return The name.
+  const std::string & network_name() const;
+
+  /// \brief Check the model's version against supported versions.
+  /// \return The version status.
+  tvm_utility::Version version_check() const;
+
 private:
   const int32_t range_;
   const float32_t score_threshold_;
@@ -166,6 +173,8 @@ private:
   const int32_t min_pts_num_;
   const float32_t height_thresh_;
   const pcl::PointCloud<pcl::PointXYZI>::Ptr pcl_pointcloud_ptr_;
+  // Earliest supported model version.
+  const std::array<char8_t, 3> model_version_from{2, 0, 0};
 
   // Pipeline
   using PrePT = ApolloLidarSegmentationPreProcessor;

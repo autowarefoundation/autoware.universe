@@ -66,6 +66,16 @@ ScanGroundFilterComponent::ScanGroundFilterComponent(const rclcpp::NodeOptions &
   using std::placeholders::_1;
   set_param_res_ = this->add_on_set_parameters_callback(
     std::bind(&ScanGroundFilterComponent::onParameter, this, _1));
+
+  // initialize debug tool
+  {
+    using tier4_autoware_utils::DebugPublisher;
+    using tier4_autoware_utils::StopWatch;
+    stop_watch_ptr_ = std::make_unique<StopWatch<std::chrono::milliseconds>>();
+    debug_publisher_ptr_ = std::make_unique<DebugPublisher>(this, "scan_ground_filter");
+    stop_watch_ptr_->tic("cyclic_time");
+    stop_watch_ptr_->tic("processing_time");
+  }
 }
 
 void ScanGroundFilterComponent::convertPointcloudGridScan(
@@ -314,9 +324,7 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
         continue;
       }
 
-      if (
-        !initialized_first_gnd_grid && global_slope_p < -global_slope_max_angle_rad_ &&
-        p->orig_point->z < -non_ground_height_threshold_local) {
+      if (!initialized_first_gnd_grid) {
         prev_p = p;
         continue;
       }
@@ -519,6 +527,8 @@ void ScanGroundFilterComponent::filter(
   const PointCloud2ConstPtr & input, [[maybe_unused]] const IndicesPtr & indices,
   PointCloud2 & output)
 {
+  std::scoped_lock lock(mutex_);
+  stop_watch_ptr_->toc("processing_time", true);
   pcl::PointCloud<pcl::PointXYZ>::Ptr current_sensor_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
   pcl::fromROSMsg(*input, *current_sensor_cloud_ptr);
 
@@ -543,6 +553,15 @@ void ScanGroundFilterComponent::filter(
 
   no_ground_cloud_msg_ptr->header = input->header;
   output = *no_ground_cloud_msg_ptr;
+
+  if (debug_publisher_ptr_ && stop_watch_ptr_) {
+    const double cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
+    const double processing_time_ms = stop_watch_ptr_->toc("processing_time", true);
+    debug_publisher_ptr_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/cyclic_time_ms", cyclic_time_ms);
+    debug_publisher_ptr_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/processing_time_ms", processing_time_ms);
+  }
 }
 
 rcl_interfaces::msg::SetParametersResult ScanGroundFilterComponent::onParameter(

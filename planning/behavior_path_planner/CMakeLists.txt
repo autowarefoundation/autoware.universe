@@ -28,6 +28,7 @@ ament_auto_add_library(behavior_path_planner_node SHARED
   src/scene_module/pull_over/util.cpp
   src/scene_module/pull_over/shift_pull_over.cpp
   src/scene_module/pull_over/geometric_pull_over.cpp
+  src/scene_module/pull_over/goal_searcher.cpp
   src/scene_module/pull_out/pull_out_module.cpp
   src/scene_module/pull_out/util.cpp
   src/scene_module/pull_out/shift_pull_out.cpp
@@ -35,6 +36,7 @@ ament_auto_add_library(behavior_path_planner_node SHARED
   src/scene_module/utils/geometric_parallel_parking.cpp
   src/scene_module/utils/occupancy_grid_based_collision_detector.cpp
   src/scene_module/utils/path_shifter.cpp
+  src/scene_module/scene_module_visitor.cpp
 )
 
 target_include_directories(behavior_path_planner_node SYSTEM PUBLIC

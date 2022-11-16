@@ -184,8 +184,11 @@ BehaviorModuleOutput PullOutModule::plan()
   } else {
     path = status_.backward_path;
   }
+  const auto expanded_lanes = util::expandLanelets(
+    status_.lanes, parameters_.drivable_area_left_bound_offset,
+    parameters_.drivable_area_right_bound_offset);
   path.drivable_area = util::generateDrivableArea(
-    path, status_.lanes, planner_data_->parameters.drivable_area_resolution,
+    path, expanded_lanes, planner_data_->parameters.drivable_area_resolution,
     planner_data_->parameters.vehicle_length, planner_data_);
 
   output.path = std::make_shared<PathWithLaneId>(path);
@@ -276,6 +279,10 @@ BehaviorModuleOutput PullOutModule::planWaitingApproval()
   const auto pull_out_lanes = pull_out_utils::getPullOutLanes(current_lanes, planner_data_);
   auto lanes = current_lanes;
   lanes.insert(lanes.end(), pull_out_lanes.begin(), pull_out_lanes.end());
+
+  lanes = util::expandLanelets(
+    lanes, parameters_.drivable_area_left_bound_offset,
+    parameters_.drivable_area_right_bound_offset);
 
   auto candidate_path = status_.back_finished ? getCurrentPath() : status_.backward_path;
   candidate_path.drivable_area = util::generateDrivableArea(
@@ -427,10 +434,6 @@ void PullOutModule::updatePullOutStatus()
 
   status_.current_lanes = util::getExtendedCurrentLanes(planner_data_);
   status_.pull_out_lanes = pull_out_utils::getPullOutLanes(status_.current_lanes, planner_data_);
-
-  // Get pull_out lanes
-  const auto pull_out_lanes = pull_out_utils::getPullOutLanes(status_.current_lanes, planner_data_);
-  status_.pull_out_lanes = pull_out_lanes;
 
   // combine road and shoulder lanes
   status_.lanes = status_.current_lanes;
@@ -616,11 +619,11 @@ TurnSignalInfo PullOutModule::calcTurnSignalInfo() const
   if (!status_.back_finished) {
     turn_signal.hazard_signal.command = HazardLightsCommand::ENABLE;
     const auto back_start_pose = isWaitingApproval() ? current_pose : *last_approved_pose_;
-    turn_signal.desired_start_point = back_start_pose.position;
-    turn_signal.required_start_point = back_start_pose.position;
+    turn_signal.desired_start_point = back_start_pose;
+    turn_signal.required_start_point = back_start_pose;
     // pull_out start_pose is same to backward driving end_pose
-    turn_signal.required_end_point = status_.pull_out_path.start_pose.position;
-    turn_signal.desired_end_point = status_.pull_out_path.start_pose.position;
+    turn_signal.required_end_point = status_.pull_out_path.start_pose;
+    turn_signal.desired_end_point = status_.pull_out_path.start_pose;
     return turn_signal;
   }
 
@@ -635,10 +638,10 @@ TurnSignalInfo PullOutModule::calcTurnSignalInfo() const
     turn_signal.turn_signal.command = TurnIndicatorsCommand::DISABLE;
   }
 
-  turn_signal.desired_start_point = status_.pull_out_path.start_pose.position;
-  turn_signal.required_start_point = status_.pull_out_path.start_pose.position;
-  turn_signal.required_end_point = status_.pull_out_path.end_pose.position;
-  turn_signal.desired_end_point = status_.pull_out_path.end_pose.position;
+  turn_signal.desired_start_point = status_.pull_out_path.start_pose;
+  turn_signal.required_start_point = status_.pull_out_path.start_pose;
+  turn_signal.required_end_point = status_.pull_out_path.end_pose;
+  turn_signal.desired_end_point = status_.pull_out_path.end_pose;
 
   return turn_signal;
 }

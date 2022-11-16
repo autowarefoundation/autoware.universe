@@ -226,11 +226,18 @@ bool checkCollisionBetweenFootprintAndObjects(
   const PredictedObjects & dynamic_objects, const double margin);
 
 /**
+ * @brief calculate lateral distance from ego pose to object
+ * @return distance from ego pose to object
+ */
+double calcLateralDistanceFromEgoToObject(
+  const Pose & ego_pose, const double vehicle_width, const PredictedObject & dynamic_object);
+
+/**
  * @brief calculate longitudinal distance from ego pose to object
  * @return distance from ego pose to object
  */
 double calcLongitudinalDistanceFromEgoToObject(
-  const Pose & ego_pose, double base_link2front, double base_link2rear,
+  const Pose & ego_pose, const double base_link2front, const double base_link2rear,
   const PredictedObject & dynamic_object);
 
 /**
@@ -283,6 +290,19 @@ OccupancyGrid generateDrivableArea(
 
 lanelet::ConstLineStrings3d getDrivableAreaForAllSharedLinestringLanelets(
   const std::shared_ptr<const PlannerData> & planner_data);
+
+/**
+ * @brief Expand the borders of the given lanelets
+ * @param [in] lanelets lanelets to expand
+ * @param [in] left_bound_offset [m] expansion distance of the left bound
+ * @param [in] right_bound_offset [m] expansion distance of the right bound
+ * @param [in] types_to_skip linestring types that will not be expanded
+ * @return expanded lanelets
+ */
+lanelet::ConstLanelets expandLanelets(
+  const lanelet::ConstLanelets & lanelets, const double left_bound_offset,
+  const double right_bound_offset, const std::vector<std::string> & types_to_skip = {});
+
 // goal management
 
 /**
@@ -328,9 +348,10 @@ std::shared_ptr<PathWithLaneId> generateCenterLinePath(
 
 PathPointWithLaneId insertStopPoint(double length, PathWithLaneId * path);
 
-double getDistanceToShoulderBoundary(
+double getSignedDistanceFromShoulderLeftBoundary(
   const lanelet::ConstLanelets & shoulder_lanelets, const Pose & pose);
-double getDistanceToRightBoundary(const lanelet::ConstLanelets & lanelets, const Pose & pose);
+double getSignedDistanceFromRightBoundary(
+  const lanelet::ConstLanelets & lanelets, const Pose & pose);
 
 // misc
 
@@ -353,12 +374,6 @@ PathWithLaneId setDecelerationVelocity(
   const RouteHandler & route_handler, const PathWithLaneId & input,
   const lanelet::ConstLanelets & lanelet_sequence, const double lane_change_prepare_duration,
   const double lane_change_buffer);
-
-PathWithLaneId setDecelerationVelocity(
-  const RouteHandler & route_handler, const PathWithLaneId & input,
-  const lanelet::ConstLanelets & lanelet_sequence, const double distance_after_pullover,
-  const double pullover_distance_min, const double distance_before_pull_over,
-  const double deceleration_interval, Pose goal_pose);
 
 bool checkLaneIsInIntersection(
   const RouteHandler & route_handler, const PathWithLaneId & ref,

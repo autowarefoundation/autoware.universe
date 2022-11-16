@@ -25,6 +25,7 @@ from launch.conditions import UnlessCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import ComposableNodeContainer
+from launch_ros.actions import LoadComposableNodes
 from launch_ros.actions import PushRosNamespace
 from launch_ros.descriptions import ComposableNode
 from launch_ros.substitutions import FindPackageShare
@@ -89,6 +90,15 @@ def launch_setup(context, *args, **kwargs):
     )
     with open(shift_decider_param_path, "r") as f:
         shift_decider_param = yaml.safe_load(f)["/**"]["ros__parameters"]
+
+    obstacle_collision_checker_param_path = os.path.join(
+        LaunchConfiguration("tier4_control_launch_param_path").perform(context),
+        "obstacle_collision_checker",
+        "obstacle_collision_checker.param.yaml",
+    )
+
+    with open(obstacle_collision_checker_param_path, "r") as f:
+        obstacle_collision_checker_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     controller_component = ComposableNode(
         package="trajectory_follower_nodes",
@@ -163,7 +173,7 @@ def launch_setup(context, *args, **kwargs):
         remappings=[
             ("input/emergency_state", "/system/emergency/emergency_state"),
             ("input/steering", "/vehicle/status/steering_status"),
-            ("input/operation_mode", "/control/operation_mode"),
+            ("input/operation_mode", "/system/operation_mode/state"),
             ("input/auto/control_cmd", "/control/trajectory_follower/control_cmd"),
             ("input/auto/turn_indicators_cmd", "/planning/turn_indicators_cmd"),
             ("input/auto/hazard_lights_cmd", "/planning/hazard_lights_cmd"),
@@ -177,6 +187,7 @@ def launch_setup(context, *args, **kwargs):
             ("input/emergency/control_cmd", "/system/emergency/control_cmd"),
             ("input/emergency/hazard_lights_cmd", "/system/emergency/hazard_lights_cmd"),
             ("input/emergency/gear_cmd", "/system/emergency/gear_cmd"),
+            ("input/mrm_state", "/system/fail_safe/mrm_state"),
             ("output/vehicle_cmd_emergency", "/control/command/emergency_cmd"),
             ("output/control_cmd", "/control/command/control_cmd"),
             ("output/gear_cmd", "/control/command/gear_cmd"),
@@ -218,10 +229,8 @@ def launch_setup(context, *args, **kwargs):
             ("control_cmd", "/control/command/control_cmd"),
             ("control_mode_report", "/vehicle/status/control_mode"),
             ("gate_operation_mode", "/control/vehicle_cmd_gate/operation_mode"),
-            ("operation_mode_request", "/system/operation_mode_request"),
             # output
             ("is_autonomous_available", "/control/is_autonomous_available"),
-            ("operation_mode", "/control/operation_mode"),
             ("control_mode_request", "/control/control_mode_request"),
         ],
         parameters=[
@@ -254,6 +263,34 @@ def launch_setup(context, *args, **kwargs):
         ],
     )
 
+    # obstacle collision checker
+    obstacle_collision_checker_component = ComposableNode(
+        package="obstacle_collision_checker",
+        plugin="obstacle_collision_checker::ObstacleCollisionCheckerNode",
+        name="obstacle_collision_checker",
+        remappings=[
+            ("input/lanelet_map_bin", "/map/vector_map"),
+            ("input/obstacle_pointcloud", "/perception/obstacle_segmentation/pointcloud"),
+            ("input/reference_trajectory", "/planning/scenario_planning/trajectory"),
+            (
+                "input/predicted_trajectory",
+                "/control/trajectory_follower/lateral/predicted_trajectory",
+            ),
+            ("input/odometry", "/localization/kinematic_state"),
+        ],
+        parameters=[
+            obstacle_collision_checker_param,
+            vehicle_info_param,
+        ],
+        extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
+    )
+
+    obstacle_collision_checker_loader = LoadComposableNodes(
+        condition=IfCondition(LaunchConfiguration("enable_obstacle_collision_checker")),
+        composable_node_descriptions=[obstacle_collision_checker_component],
+        target_container="/control/control_container",
+    )
+
     # set container to run all required components in the same process
     container = ComposableNodeContainer(
         name="control_container",
@@ -275,6 +312,7 @@ def launch_setup(context, *args, **kwargs):
             container,
             external_cmd_selector_loader,
             external_cmd_converter_loader,
+            obstacle_collision_checker_loader,
         ]
     )
 
@@ -306,6 +344,13 @@ def generate_launch_description():
         "lateral controller mode: `mpc_follower` or `pure_pursuit`",
     )
 
+    # longitudinal controller mode
+    add_launch_arg(
+        "longitudinal_controller_mode",
+        "pid",
+        "longitudinal controller mode: `pid`",
+    )
+
     add_launch_arg(
         "vehicle_info_param_file",
         [
@@ -319,6 +364,9 @@ def generate_launch_description():
         "lane_departure_checker_param_path",
         [FindPackageShare("lane_departure_checker"), "/config/lane_departure_checker.param.yaml"],
     )
+
+    # obstacle collision checker
+    add_launch_arg("enable_obstacle_collision_checker", "false", "use obstacle collision checker")
 
     # velocity controller
     add_launch_arg("show_debug_info", "false", "show debug information")

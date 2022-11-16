@@ -44,6 +44,9 @@ void test_segmentation(bool use_intensity_feature, bool use_constant_feature, bo
     range, score_threshold, use_intensity_feature, use_constant_feature, z_offset, min_height,
     max_height, objectness_thresh, min_pts_num, height_thresh);
 
+  auto version_status = segmentation.version_check();
+  EXPECT_NE(version_status, tvm_utility::Version::Unsupported);
+
   std::random_device rd;
   std::mt19937 gen(42);
   std::uniform_real_distribution<float32_t> dis(-50.0, 50.0);
@@ -82,15 +85,11 @@ void test_segmentation(bool use_intensity_feature, bool use_constant_feature, bo
   EXPECT_EQ(expect_throw, has_thrown);
 }
 
-// Test configuration matching the default-provided network.
-TEST(lidar_apollo_segmentation_tvm, sanity) { test_segmentation(true, false, false); }
-
-// Test that configuring ApolloLidarSegmentation with too few channels results in an error.
-TEST(lidar_apollo_segmentation_tvm, runtime_error) { test_segmentation(false, false, true); }
-
 // Other test configurations to increase code coverage.
 TEST(lidar_apollo_segmentation_tvm, others)
 {
   test_segmentation(false, true, false);
   test_segmentation(true, true, false);
+  test_segmentation(false, false, false);
+  test_segmentation(true, false, false);
 }

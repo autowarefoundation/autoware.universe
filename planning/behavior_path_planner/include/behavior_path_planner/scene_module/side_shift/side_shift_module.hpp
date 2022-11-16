@@ -45,6 +45,9 @@ struct SideShiftParameters
   double drivable_area_width;
   double drivable_area_height;
   double shift_request_time_limit;
+  // drivable area expansion
+  double drivable_area_right_bound_offset;
+  double drivable_area_left_bound_offset;
 };
 
 class SideShiftModule : public SceneModuleInterface
@@ -67,6 +70,11 @@ public:
 
   void setParameters(const SideShiftParameters & parameters);
 
+  void acceptVisitor(
+    [[maybe_unused]] const std::shared_ptr<SceneModuleVisitor> & visitor) const override
+  {
+  }
+
 private:
   rclcpp::Subscription<LateralOffset>::SharedPtr lateral_offset_subscriber_;
 
@@ -77,9 +85,9 @@ private:
   // non-const methods
   void adjustDrivableArea(ShiftedPath * path) const;
 
-  ShiftPoint calcShiftPoint() const;
+  ShiftLine calcShiftLine() const;
 
-  bool addShiftPoint();
+  bool addShiftLine();
 
   // const methods
   void publishPath(const PathWithLaneId & path) const;
@@ -104,7 +112,7 @@ private:
   PathShifter path_shifter_;
 
   ShiftedPath prev_output_;
-  ShiftPoint prev_shift_point_;
+  ShiftLine prev_shift_line_;
 
   // NOTE: this function is ported from avoidance.
   PoseStamped getUnshiftedEgoPose(const ShiftedPath & prev_path) const;
