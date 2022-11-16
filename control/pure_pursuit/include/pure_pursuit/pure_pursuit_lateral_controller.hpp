@@ -44,6 +44,7 @@
 
 #include "autoware_auto_control_msgs/msg/ackermann_lateral_command.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
+#include "autoware_auto_system_msgs/msg/float32_multi_array_diagnostic.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/twist_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
@@ -89,6 +90,8 @@ struct Param
   double resampling_ds;
   double curvature_calculation_distance;
   double long_ld_lateral_error_threshold;
+  bool enable_path_smoothing;
+  int path_filter_moving_ave_num;
 };
 
 struct DebugData
@@ -173,6 +176,8 @@ private:
     const bool is_control_cmd);
 
   double calcCurvature(const size_t closest_idx);
+
+  void averageFilterTrajectory(autoware_auto_planning_msgs::msg::Trajectory & u);
 
   // Debug
   mutable DebugData debug_data_;
