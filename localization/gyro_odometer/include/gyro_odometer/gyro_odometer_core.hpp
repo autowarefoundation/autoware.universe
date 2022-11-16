@@ -51,10 +51,9 @@ private:
   bool getTransform(
     const std::string & target_frame, const std::string & source_frame,
     const geometry_msgs::msg::TransformStamped::SharedPtr transform_stamped_ptr);
-  void validityCheck(
-    const bool is_velocity_arrived, const bool is_imu_arrived,
-    const std::vector<TwistWithCovarianceStamped> & velocity_buffer,
-    const std::vector<TwistWithCovarianceStamped> & gyro_buffer) const;
+  void checkTimeout(
+  const std::vector<geometry_msgs::msg::TwistWithCovarianceStamped> & velocity_buffer,
+  const std::vector<geometry_msgs::msg::TwistWithCovarianceStamped> & gyro_buffer) const;
 
   rclcpp::Subscription<TwistWithCovarianceStamped>::SharedPtr vehicle_twist_with_cov_sub_;
   rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;

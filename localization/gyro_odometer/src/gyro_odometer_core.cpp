@@ -35,13 +35,13 @@ geometry_msgs::msg::TwistWithCovarianceStamped get_twist_from_velocity_buffer(
     return twist_with_cov;
   }
 
+  int n = static_cast<int>(velocity_buffer.size());
   for (const auto vel : velocity_buffer) {
     twist_with_cov.twist.twist.linear.x += vel.twist.twist.linear.x;
     twist_with_cov.twist.covariance[0] += vel.twist.covariance[0];
   }
-  twist_with_cov.twist.twist.linear.x /= velocity_buffer.size();
-  twist_with_cov.twist.covariance[0] /=
-    velocity_buffer.size();  // TODO: divide by appropriate value!!!!!!!!!
+  twist_with_cov.twist.twist.linear.x /= n;
+  twist_with_cov.twist.covariance[0] /= n * n;  // Central limit theorem
   return twist_with_cov;
 }
 
@@ -56,6 +56,7 @@ geometry_msgs::msg::TwistWithCovarianceStamped get_twist_from_gyro_buffer(
     return twist_with_cov;
   }
 
+  int n = static_cast<int>(gyro_buffer.size());
   for (const auto gyro : gyro_buffer) {
     twist_with_cov.twist.twist.angular.x += gyro.twist.twist.angular.x;
     twist_with_cov.twist.twist.angular.y += gyro.twist.twist.angular.y;
@@ -64,13 +65,12 @@ geometry_msgs::msg::TwistWithCovarianceStamped get_twist_from_gyro_buffer(
     twist_with_cov.twist.covariance[4 * 6 + 4] += gyro.twist.covariance[4 * 6 + 4];
     twist_with_cov.twist.covariance[5 * 6 + 5] += gyro.twist.covariance[5 * 6 + 5];
   }
-  twist_with_cov.twist.twist.angular.x /= gyro_buffer.size();
-  twist_with_cov.twist.twist.angular.y /= gyro_buffer.size();
-  twist_with_cov.twist.twist.angular.z /= gyro_buffer.size();
-  twist_with_cov.twist.covariance[3 * 6 + 3] /=
-    gyro_buffer.size();  // TODO: divide by appropriate value!!!!!!!!!
-  twist_with_cov.twist.covariance[4 * 6 + 4] /= gyro_buffer.size();
-  twist_with_cov.twist.covariance[5 * 6 + 5] /= gyro_buffer.size();
+  twist_with_cov.twist.twist.angular.x /= n;
+  twist_with_cov.twist.twist.angular.y /= n;
+  twist_with_cov.twist.twist.angular.z /= n;
+  twist_with_cov.twist.covariance[3 * 6 + 3] /= n * n;  // Central limit theorem
+  twist_with_cov.twist.covariance[4 * 6 + 4] /= n * n;
+  twist_with_cov.twist.covariance[5 * 6 + 5] /= n * n;
   return twist_with_cov;
 }
 
@@ -126,15 +126,36 @@ GyroOdometer::~GyroOdometer() {}
 
 void GyroOdometer::timerCallback()
 {
+  std::string error_msg;
+  if (!is_velocity_arrived_) {
+    RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Twist msg is not subscribed");
+  }
+  if (!is_imu_arrived_) {
+    RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Imu msg is not subscribed");
+  }
   if (vel_buffer_.empty() || gyro_buffer_.empty()) {
     vel_buffer_.clear();
     gyro_buffer_.clear();
     return;
   }
-  try {
-    validityCheck(is_velocity_arrived_, is_imu_arrived_, vel_buffer_, gyro_buffer_);
-  } catch (const std::exception & e) {
-    RCLCPP_ERROR_THROTTLE(this->get_logger(), *this->get_clock(), 1000, e.what());
+
+  const double velocity_dt =
+    std::abs((this->now() - vel_buffer_.front().header.stamp).seconds());
+  const double imu_dt = std::abs((this->now() - gyro_buffer_.front().header.stamp).seconds());
+
+  if (velocity_dt > message_timeout_sec_) {
+    std::string error_msg = fmt::format(
+      "Twist msg is timeout. twist_dt: {}[sec], tolerance {}[sec]", velocity_dt,
+      message_timeout_sec_);
+    RCLCPP_ERROR_THROTTLE(this->get_logger(), *this->get_clock(), 1000, error_msg.c_str());
+    vel_buffer_.clear();
+    gyro_buffer_.clear();
+    return;
+  }
+  if (imu_dt > message_timeout_sec_) {
+    std::string error_msg = fmt::format(
+      "Imu msg is timeout. imu_dt: {}[sec], tolerance {}[sec]", imu_dt, message_timeout_sec_);
+    RCLCPP_ERROR_THROTTLE(this->get_logger(), *this->get_clock(), 1000, error_msg.c_str());
     vel_buffer_.clear();
     gyro_buffer_.clear();
     return;
@@ -254,36 +275,22 @@ bool GyroOdometer::getTransform(
   return true;
 }
 
-void GyroOdometer::validityCheck(
-  const bool is_velocity_arrived, const bool is_imu_arrived,
+void GyroOdometer::checkTimeout(
   const std::vector<geometry_msgs::msg::TwistWithCovarianceStamped> & velocity_buffer,
   const std::vector<geometry_msgs::msg::TwistWithCovarianceStamped> & gyro_buffer) const
 {
-  std::string error_msg;
-  if (!is_velocity_arrived) {
-    error_msg = "Twist msg is not subscribed";
+  const double velocity_dt =
+    std::abs((this->now() - velocity_buffer.front().header.stamp).seconds());
+  if (velocity_dt > message_timeout_sec_) {
+    std::string error_msg = fmt::format(
+      "Twist msg is timeout. twist_dt: {}[sec], tolerance {}[sec]", velocity_dt,
+      message_timeout_sec_);
     throw std::domain_error(error_msg);
   }
-  if (!is_imu_arrived) {
-    error_msg = "Imu msg is not subscribed";
+  const double imu_dt = std::abs((this->now() - gyro_buffer.front().header.stamp).seconds());
+  if (imu_dt > message_timeout_sec_) {
+    std::string error_msg = fmt::format(
+      "Imu msg is timeout. imu_dt: {}[sec], tolerance {}[sec]", imu_dt, message_timeout_sec_);
     throw std::domain_error(error_msg);
-  }
-  if (!velocity_buffer.empty()) {
-    const double velocity_dt =
-      std::abs((this->now() - velocity_buffer.front().header.stamp).seconds());
-    if (velocity_dt > message_timeout_sec_) {
-      error_msg = fmt::format(
-        "Twist msg is timeout. twist_dt: {}[sec], tolerance {}[sec]", velocity_dt,
-        message_timeout_sec_);
-      throw std::domain_error(error_msg);
-    }
-  }
-  if (!gyro_buffer.empty()) {
-    const double imu_dt = std::abs((this->now() - gyro_buffer.front().header.stamp).seconds());
-    if (imu_dt > message_timeout_sec_) {
-      error_msg = fmt::format(
-        "Imu msg is timeout. imu_dt: {}[sec], tolerance {}[sec]", imu_dt, message_timeout_sec_);
-      throw std::domain_error(error_msg);
-    }
   }
 }
