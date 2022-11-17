@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>twist_estimator</name>
+  <name>overlay_monitor</name>
   <version>0.0.0</version>
-  <description>twist estimator for pcd-less localizer </description>
+  <description>validation library for pcd-less localizer </description>
   <maintainer email="kento.yabuuchi.2@tier4.jp">kentoyabuuchi2</maintainer>
   <license>Apache 2</license>
 
@@ -11,8 +11,6 @@
 
   <depend>rclcpp</depend>
 
-  <depend>tf2</depend>
-  <depend>tf2_ros</depend>
   <depend>std_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>nav_msgs</depend>
@@ -28,4 +26,3 @@
     <build_type>ament_cmake</build_type>
   </export>
 </package>
-

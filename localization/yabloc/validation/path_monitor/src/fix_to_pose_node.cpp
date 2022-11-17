@@ -1,10 +1,10 @@
+#include <pcdless_common/fix2mgrs.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <vml_common/fix2mgrs.hpp>
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
+#include <ground_msgs/srv/ground.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
-#include <vmvl_msgs/srv/ground.hpp>
 
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/point_cloud.h>
@@ -14,7 +14,7 @@ class Fix2Pose : public rclcpp::Node
 {
 public:
   using NavSatFix = sensor_msgs::msg::NavSatFix;
-  using Ground = vmvl_msgs::srv::Ground;
+  using Ground = ground_msgs::srv::Ground;
 
   Fix2Pose() : Node("fix_to_pose")
   {
@@ -62,7 +62,7 @@ private:
 
   void callGroundService(const Eigen::Vector3f & xyz)
   {
-    auto request = std::make_shared<vmvl_msgs::srv::Ground::Request>();
+    auto request = std::make_shared<Ground::Request>();
     request->point.x = xyz.x();
     request->point.y = xyz.y();
     request->point.z = xyz.z();

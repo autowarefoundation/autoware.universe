@@ -34,6 +34,11 @@
   <!--twist-->
   <depend>twist_converter</depend>
   <depend>twist_estimator</depend>
+  <!--validation-->
+  <depend>ape_monitor</depend>
+  <depend>covariance_monitor</depend>
+  <depend>overlay_monitor</depend>
+  <depend>path_monitor</depend>
 
   <export>
     <build_type>ament_cmake</build_type>

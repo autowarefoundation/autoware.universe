@@ -21,7 +21,7 @@
   <depend>pcl_conversions</depend>
 
 
-  <depend>vml_common</depend>
+  <depend>pcdless_common</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
