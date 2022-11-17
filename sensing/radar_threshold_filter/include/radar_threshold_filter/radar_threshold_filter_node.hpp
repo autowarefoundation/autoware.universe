@@ -64,11 +64,6 @@ private:
   // Publisher
   rclcpp::Publisher<RadarScan>::SharedPtr pub_radar_{};
 
-  // Timer
-  rclcpp::TimerBase::SharedPtr timer_{};
-
-  bool isDataReady();
-
   // Parameter Server
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
   rcl_interfaces::msg::SetParametersResult onSetParam(
@@ -79,6 +74,7 @@ private:
 
   // Function
   bool isWithinThreshold(const RadarReturn & radar_return);
+  bool isDataReady();
 };
 
 }  // namespace radar_threshold_filter
