@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 
-project(vmvl_launch)
+project(pcdless_launch)
 
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
