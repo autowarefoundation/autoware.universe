@@ -20,10 +20,6 @@
 #include <string>
 #include <vector>
 
-using namespace std::literals;
-using std::chrono::duration;
-using std::chrono::duration_cast;
-using std::chrono::nanoseconds;
 using std::placeholders::_1;
 
 namespace
@@ -53,7 +49,6 @@ bool isWithin(double value, double max, double min)
     return false;
   }
 }
-
 }  // namespace
 
 namespace radar_threshold_filter
@@ -87,14 +82,7 @@ RadarThresholdFilterNode::RadarThresholdFilterNode(const rclcpp::NodeOptions & n
 
   // Publisher
   pub_radar_ = create_publisher<RadarScan>("~/output/radar", 1);
-
-  // Timer
-  const auto update_period_ns = rclcpp::Rate(node_param_.update_rate_hz).period();
-  timer_ = rclcpp::create_timer(
-    this, get_clock(), update_period_ns, std::bind(&RadarThresholdFilterNode::onTimer, this));
 }
-
-void RadarThresholdFilterNode::onData(const RadarScan::ConstSharedPtr msg) { radar_data_ = msg; }
 
 rcl_interfaces::msg::SetParametersResult RadarThresholdFilterNode::onSetParam(
   const std::vector<rclcpp::Parameter> & params)
@@ -130,12 +118,12 @@ bool RadarThresholdFilterNode::isDataReady()
     RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 1000, "waiting for radar msg...");
     return false;
   }
-
   return true;
 }
 
-void RadarThresholdFilterNode::onTimer()
+void RadarThresholdFilterNode::onData(const RadarScan::ConstSharedPtr msg)
 {
+  radar_data_ = msg;
   if (!isDataReady()) {
     return;
   }
