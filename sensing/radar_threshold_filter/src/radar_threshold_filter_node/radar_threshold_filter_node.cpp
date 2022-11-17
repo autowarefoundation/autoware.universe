@@ -64,7 +64,6 @@ RadarThresholdFilterNode::RadarThresholdFilterNode(const rclcpp::NodeOptions & n
     std::bind(&RadarThresholdFilterNode::onSetParam, this, _1));
 
   // Node Parameter
-  node_param_.update_rate_hz = declare_parameter<double>("node_params.update_rate_hz", 20.0);
   node_param_.is_amplitude_filter =
     declare_parameter<bool>("node_params.is_amplitude_filter", false);
   node_param_.amplitude_min = declare_parameter<double>("node_params.amplitude_min", 0.0);
@@ -91,7 +90,6 @@ rcl_interfaces::msg::SetParametersResult RadarThresholdFilterNode::onSetParam(
   try {
     {
       auto & p = node_param_;
-      update_param(params, "node_params.update_rate_hz", p.update_rate_hz);
       update_param(params, "node_params.is_amplitude_filter", p.is_amplitude_filter);
       update_param(params, "node_params.amplitude_min", p.amplitude_min);
       update_param(params, "node_params.amplitude_max", p.amplitude_max);

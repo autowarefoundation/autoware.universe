@@ -28,7 +28,6 @@ Calculation cost is O(n). `n` is the number of radar return.
 
 | Name                | Type   | Description                                                                                           |
 | ------------------- | ------ | ----------------------------------------------------------------------------------------------------- |
-| update_rate         | double | node Hz                                                                                               |
 | is_amplitude_filter | bool   | if this parameter is true, apply amplitude filter (publish amplitude_min < amplitude < amplitude_max) |
 | amplitude_min       | double | [dBm^2]                                                                                               |
 | amplitude_max       | double | [dBm^2]                                                                                               |

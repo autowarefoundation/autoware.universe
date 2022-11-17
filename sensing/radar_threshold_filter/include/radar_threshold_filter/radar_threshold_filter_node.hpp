@@ -36,7 +36,6 @@ public:
 
   struct NodeParam
   {
-    double update_rate_hz{};
     bool is_amplitude_filter{};
     double amplitude_min{};
     double amplitude_max{};
