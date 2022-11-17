@@ -33,8 +33,7 @@ namespace lidar_centerpoint_tvm
 void scatterFeatures_worker(
   const std::vector<float> & pillar_features, const std::vector<int32_t> & coords,
   const std::size_t num_pillars, const CenterPointConfig & config,
-  std::vector<float> & scattered_features, std::size_t thread_idx,
-  std::size_t pillars_per_thread)
+  std::vector<float> & scattered_features, std::size_t thread_idx, std::size_t pillars_per_thread)
 {
   // pillar_features: shape of max_num_pillars * encoder_out_feature_size
   // coords: shape of max_num_pillars * 3

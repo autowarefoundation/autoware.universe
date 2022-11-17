@@ -39,8 +39,7 @@ std::size_t circleNMS(
 
   // generate keep_mask
   std::size_t num_to_keep = 0;
-  std::vector<bool> suppress(
-    num_boxes3d);  // suppress[i]=true mean i-th box should be suppressed
+  std::vector<bool> suppress(num_boxes3d);  // suppress[i]=true mean i-th box should be suppressed
 
   // std::uint64_t * suppress_ptr = & suppress.front();
   for (std::size_t i = 0; i < num_boxes3d; i++) {

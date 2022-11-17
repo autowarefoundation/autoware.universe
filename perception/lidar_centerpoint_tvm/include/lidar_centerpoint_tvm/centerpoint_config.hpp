@@ -28,11 +28,11 @@ class CenterPointConfig
 {
 public:
   explicit CenterPointConfig(
-    const std::size_t class_size, const float point_feature_size,
-    const std::size_t max_voxel_size, const std::vector<double> & point_cloud_range,
-    const std::vector<double> & voxel_size, const std::size_t downsample_factor,
-    const std::size_t encoder_in_feature_size, const float score_threshold,
-    const float circle_nms_dist_threshold, const float yaw_norm_threshold)
+    const std::size_t class_size, const float point_feature_size, const std::size_t max_voxel_size,
+    const std::vector<double> & point_cloud_range, const std::vector<double> & voxel_size,
+    const std::size_t downsample_factor, const std::size_t encoder_in_feature_size,
+    const float score_threshold, const float circle_nms_dist_threshold,
+    const float yaw_norm_threshold)
   {
     class_size_ = class_size;
     point_feature_size_ = point_feature_size;
