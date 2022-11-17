@@ -45,12 +45,19 @@ private:
   Cli<planning_interface::SetRoute> cli_set_route_;
   Cli<planning_interface::ClearRoute> cli_clear_route_;
   Cli<system_interface::ChangeOperationMode> cli_operation_mode_;
+  Sub<system_interface::OperationModeState> sub_operation_mode_;
+  bool is_auto_mode = false;
 
+  using OperationModeState = system_interface::OperationModeState;
   using State = planning_interface::RouteState;
   using Route = planning_interface::Route;
   void change_stop_mode();
+  void on_operation_mode(const OperationModeState::Message::ConstSharedPtr msg);
   void on_state(const State::Message::ConstSharedPtr msg);
   void on_route(const Route::Message::ConstSharedPtr msg);
+  void on_clear_route(
+    const autoware_ad_api::routing::ClearRoute::Service::Request::SharedPtr req,
+    const autoware_ad_api::routing::ClearRoute::Service::Response::SharedPtr res);
   void on_set_route(
     const autoware_ad_api::routing::SetRoute::Service::Request::SharedPtr req,
     const autoware_ad_api::routing::SetRoute::Service::Response::SharedPtr res);
