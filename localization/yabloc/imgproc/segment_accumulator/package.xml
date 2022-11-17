@@ -11,8 +11,6 @@
 
   <depend>rclcpp</depend>
 
-  <depend>tf2</depend>
-  <depend>tf2_ros</depend>
   <depend>std_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>nav_msgs</depend>
@@ -21,8 +19,7 @@
   <depend>pcl_conversions</depend>
 
 
-  <depend>vmvl_msgs</depend>
-  <depend>vml_common</depend>
+  <depend>pcdless_common</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

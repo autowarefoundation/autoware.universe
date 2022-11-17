@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(vml_common)
+project(pcdless_common)
 
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)

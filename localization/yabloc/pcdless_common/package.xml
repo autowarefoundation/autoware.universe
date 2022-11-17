@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>vml_common</name>
+  <name>pcdless_common</name>
   <version>0.1.0</version>
   <description>Vector Map Localizer Common package</description>
   <maintainer email="kento.yabuuchi.2@tier4.jp">kentoyabuuchi2</maintainer>
