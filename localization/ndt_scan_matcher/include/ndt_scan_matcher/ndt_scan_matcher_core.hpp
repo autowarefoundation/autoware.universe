@@ -52,6 +52,11 @@
 #include <tf2_sensor_msgs/tf2_sensor_msgs.hpp>
 #endif
 
+#include <message_filters/subscriber.h>
+#include <message_filters/sync_policies/approximate_time.h>
+#include <message_filters/sync_policies/exact_time.h>
+#include <message_filters/synchronizer.h>
+
 #include <array>
 #include <deque>
 #include <map>
@@ -60,11 +65,6 @@
 #include <string>
 #include <thread>
 #include <vector>
-
-#include <message_filters/subscriber.h>
-#include <message_filters/sync_policies/approximate_time.h>
-#include <message_filters/sync_policies/exact_time.h>
-#include <message_filters/synchronizer.h>
 enum class ConvergedParamType {
   TRANSFORM_PROBABILITY = 0,
   NEAREST_VOXEL_TRANSFORMATION_LIKELIHOOD = 1
@@ -88,7 +88,8 @@ private:
     const std_srvs::srv::SetBool::Request::SharedPtr req,
     std_srvs::srv::SetBool::Response::SharedPtr res);
 
-  void callback_points(sensor_msgs::msg::PointCloud2::ConstSharedPtr sensorpoints_msg_ptr,
+  void callback_points(
+    sensor_msgs::msg::PointCloud2::ConstSharedPtr sensorpoints_msg_ptr,
     sensor_msgs::msg::PointCloud2::ConstSharedPtr no_ground_points_msg_ptr);
   void callback_initial_pose(
     geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose_conv_msg_ptr);
@@ -202,7 +203,8 @@ private:
   std::unique_ptr<MapModule> map_module_;
   std::unique_ptr<PoseInitializationModule> pose_init_module_;
 
-  using SyncPolicy = message_filters::sync_policies::ExactTime<sensor_msgs::msg::PointCloud2, sensor_msgs::msg::PointCloud2>;
+  using SyncPolicy = message_filters::sync_policies::ExactTime<
+    sensor_msgs::msg::PointCloud2, sensor_msgs::msg::PointCloud2>;
   using Sync = message_filters::Synchronizer<SyncPolicy>;
   typename std::shared_ptr<Sync> sync_ptr_;
 };

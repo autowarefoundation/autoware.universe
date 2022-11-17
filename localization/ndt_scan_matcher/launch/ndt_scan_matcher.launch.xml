@@ -17,7 +17,7 @@
   <node pkg="ndt_scan_matcher" exec="ndt_scan_matcher" name="$(var node_name)" output="log">
     <remap from="points_raw" to="$(var input/pointcloud)"/>
     <remap from="points_no_ground" to="$(var input/no_ground_pointcloud)"/>
-    
+
     <remap from="ekf_pose_with_covariance" to="$(var input_initial_pose_topic)"/>
     <remap from="pointcloud_map" to="$(var input_map_points_topic)"/>
 
