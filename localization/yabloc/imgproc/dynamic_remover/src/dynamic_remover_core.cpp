@@ -1,8 +1,9 @@
 #include "dynamic_remover/dynamic_remover.hpp"
 
-#include <vml_common/cv_decompress.hpp>
-#include <vml_common/pub_sub.hpp>
-#include <vml_common/timer.hpp>
+#include <opencv4/opencv2/imgproc.hpp>
+#include <pcdless_common/cv_decompress.hpp>
+#include <pcdless_common/pub_sub.hpp>
+#include <pcdless_common/timer.hpp>
 
 #include <boost/range/combine.hpp>
 
@@ -12,14 +13,14 @@ namespace imgproc
 {
 Reprojector::Reprojector()
 : Node("reprojector"),
-  info_(this),
-  tf_subscriber_(this->get_clock()),
-  synchro_subscriber_(this, "/sensing/camera/undistorted/image_raw", "lsd_cloud"),
   min_segment_length_(declare_parameter<float>("min_segment_length", 0.5)),
   polygon_thick_(declare_parameter<int>("polygon_thic", 3)),
   gap_threshold_(declare_parameter<float>("gap_threshold", 150)),
   search_iteration_max_(declare_parameter<int>("search_iteration_max", 4)),
-  backward_frame_interval_(declare_parameter<int>("backward_frame_interval", 4))
+  backward_frame_interval_(declare_parameter<int>("backward_frame_interval", 4)),
+  info_(this),
+  tf_subscriber_(this->get_clock()),
+  synchro_subscriber_(this, "/sensing/camera/undistorted/image_raw", "lsd_cloud")
 {
   using std::placeholders::_1;
   using std::placeholders::_2;
@@ -193,7 +194,7 @@ std::unordered_map<size_t, Reprojector::GapResult> Reprojector::computeGap(
     int gap = 0;
     int gap_cnt = 0;
 
-    for (int i = 0; i < pair.src.size(); ++i) {
+    for (size_t i = 0; i < pair.src.size(); ++i) {
       if (rect.contains(pair.src.at(i)) && rect.contains(pair.dst.at(i) + offset)) {
         // TODO:
         // cv::Vec3b s = cur_image.at<cv::Vec3b>(pair.src.at(i));

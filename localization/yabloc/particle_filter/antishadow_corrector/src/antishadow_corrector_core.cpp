@@ -1,10 +1,9 @@
 #include "antishadow_corrector/antishadow_corrector.hpp"
 
-#include <opencv4/opencv2/highgui.hpp>
 #include <opencv4/opencv2/imgproc.hpp>
-#include <vml_common/cv_decompress.hpp>
-#include <vml_common/pose_conversions.hpp>
-#include <vml_common/timer.hpp>
+#include <pcdless_common/cv_decompress.hpp>
+#include <pcdless_common/pose_conversions.hpp>
+#include <pcdless_common/timer.hpp>
 
 #include <pcl_conversions/pcl_conversions.h>
 

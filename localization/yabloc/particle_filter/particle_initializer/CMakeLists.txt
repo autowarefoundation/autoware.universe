@@ -20,7 +20,7 @@ ament_auto_find_build_dependencies()
 find_package(Eigen3 REQUIRED)
 
 # PCL
-find_package(PCL REQUIRED)
+find_package(PCL REQUIRED COMPONENTS common)
 
 # ===================================================
 # Executable

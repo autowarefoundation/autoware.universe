@@ -8,7 +8,6 @@
 
   <buildtool_depend>ament_cmake_ros</buildtool_depend>
 
-  <depend>rcl_interfaces</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>tf2</depend>
@@ -18,7 +17,7 @@
   <depend>visualization_msgs</depend>
 
   <depend>modularized_particle_filter</depend>
-  <depend>vml_common</depend>
+  <depend>pcdless_common</depend>
 
   <export>
     <build_type>ament_cmake</build_type>

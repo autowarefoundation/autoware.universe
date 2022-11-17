@@ -23,9 +23,6 @@ find_package(Eigen3 REQUIRED)
 # OpenCV
 find_package(OpenCV REQUIRED)
 
-# OpenCV
-find_package(PCL REQUIRED)
-
 # ===================================================
 # Executable
 macro(ADD_EXE)
@@ -40,8 +37,8 @@ macro(ADD_EXE)
 
   set(TARGET_NAME ${_ARG_TARGET})
   ament_auto_add_executable(${TARGET_NAME} ${SOURCE})
-  target_include_directories(${TARGET_NAME} PUBLIC ${_ARG_INC} ${EIGEN3_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})
-  target_link_libraries(${TARGET_NAME} ${_ARG_LIB} ${PCL_LIBRARIES} ${OpenCV_LIBS})
+  target_include_directories(${TARGET_NAME} PUBLIC ${_ARG_INC} ${EIGEN3_INCLUDE_DIRS})
+  target_link_libraries(${TARGET_NAME} ${_ARG_LIB} ${OpenCV_LIBS})
 endmacro()
 
 ADD_EXE(TARGET lsd_node SRC src/lsd_node.cpp src/lsd_core.cpp INC include)

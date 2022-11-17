@@ -49,7 +49,7 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/color.cpp)
 target_link_libraries(${PROJECT_NAME} Geographic ${PCL_LIBRARIES} Sophus::Sophus)
 target_include_directories(
-  ${PROJECT_NAME} PUBLIC
+  ${PROJECT_NAME} PRIVATE
   SYSTEM
   ${PCL_INCLUDE_DIRS}
   ${GeographicLib_INCLUDE_DIRS}
@@ -57,6 +57,8 @@ target_include_directories(
   ${OpenCV_INCLUDE_DIRS}
   include
 )
+
+ament_export_dependencies(PCL)
 
 # ===================================================
 ament_auto_package()

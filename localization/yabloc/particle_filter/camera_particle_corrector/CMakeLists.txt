@@ -22,6 +22,9 @@ find_package(Eigen3 REQUIRED)
 # Sophus
 find_package(Sophus REQUIRED)
 
+# PCL
+find_package(PCL REQUIRED COMPONENTS common)
+
 # ===================================================
 # Executable
 set(TARGET camera_particle_corrector)
@@ -31,8 +34,8 @@ ament_auto_add_executable(${TARGET}
   src/camera_particle_corrector_node.cpp
   src/camera_particle_corrector_core.cpp)
 target_include_directories(${TARGET} PUBLIC include)
-target_include_directories(${TARGET} SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIRS})
-target_link_libraries(${TARGET} Sophus::Sophus)
+target_include_directories(${TARGET} SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})
+target_link_libraries(${TARGET} Sophus::Sophus ${PCL_LIBRARIES})
 
 # ===================================================
 ament_auto_package()

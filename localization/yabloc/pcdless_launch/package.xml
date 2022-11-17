@@ -9,18 +9,6 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <depend>rclcpp</depend>
-  <depend>rclpy</depend>
-
-  <depend>modularized_particle_filter</depend>
-  <depend>camera_particle_corrector</depend>
-  <depend>gnss_particle_corrector</depend>
-  <depend>vmvl_imgproc</depend>
-  <depend>vmvl_map</depend>
-  <depend>vmvl_trajectory</depend>
-  <depend>vmvl_validation</depend>
-  <depend>particle_initializer</depend>
-
   <!--imgproc-->
   <depend>dynamic_remover</depend>
   <depend>graph_segment</depend>
@@ -39,6 +27,12 @@
   <depend>covariance_monitor</depend>
   <depend>overlay_monitor</depend>
   <depend>path_monitor</depend>
+  <!--particle filter-->
+  <depend>antishadow_corrector</depend>
+  <depend>camera_particle_corrector</depend>
+  <depend>gnss_particle_corrector</depend>
+  <depend>particle_initializer</depend>
+
 
   <export>
     <build_type>ament_cmake</build_type>

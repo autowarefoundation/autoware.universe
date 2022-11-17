@@ -1,9 +1,9 @@
 #pragma once
-#include <opencv4/opencv2/opencv.hpp>
+#include <opencv4/opencv2/core.hpp>
+#include <pcdless_common/camera_info_subscriber.hpp>
+#include <pcdless_common/static_tf_subscriber.hpp>
+#include <pcdless_common/synchro_subscriber.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <vml_common/camera_info_subscriber.hpp>
-#include <vml_common/static_tf_subscriber.hpp>
-#include <vml_common/synchro_subscriber.hpp>
 
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <sensor_msgs/msg/camera_info.hpp>
@@ -30,7 +30,10 @@ private:
   const int polygon_thick_;
   const float gap_threshold_;
   const int search_iteration_max_;
-  const int backward_frame_interval_;
+  const size_t backward_frame_interval_;
+
+  vml_common::CameraInfoSubscriber info_;
+  vml_common::StaticTfSubscriber tf_subscriber_;
 
   // Publisher
   rclcpp::Publisher<Image>::SharedPtr pub_old_image_;
@@ -41,9 +44,6 @@ private:
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_lsd_;
   rclcpp::Subscription<TwistStamped>::SharedPtr sub_twist_;
   SynchroSubscriber<Image, PointCloud2> synchro_subscriber_;
-
-  vml_common::CameraInfoSubscriber info_;
-  vml_common::StaticTfSubscriber tf_subscriber_;
 
   std::list<Image> image_list_;
   std::list<TwistStamped::ConstSharedPtr> twist_list_;
