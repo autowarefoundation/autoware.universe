@@ -3,6 +3,7 @@
 
   <!-- Topics -->
   <arg name="input/pointcloud" default="/points_raw" description="Sensor points topic"/>
+  <arg name="input/no_ground_pointcloud" default="/points_no_ground" description="de-ground points topic"/>
   <arg name="input_initial_pose_topic" default="/ekf_pose_with_covariance" description="Initial position topic to align"/>
   <arg name="input_map_points_topic" default="/pointcloud_map" description="Map points topic"/>
   <arg name="input_regularization_pose_topic" default="/sensing/gnss/pose_with_covariance" description="Regularization pose topic"/>
@@ -15,7 +16,8 @@
 
   <node pkg="ndt_scan_matcher" exec="ndt_scan_matcher" name="$(var node_name)" output="log">
     <remap from="points_raw" to="$(var input/pointcloud)"/>
-
+    <remap from="points_no_ground" to="$(var input/no_ground_pointcloud)"/>
+    
     <remap from="ekf_pose_with_covariance" to="$(var input_initial_pose_topic)"/>
     <remap from="pointcloud_map" to="$(var input_map_points_topic)"/>
 
