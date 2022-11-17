@@ -1,9 +1,9 @@
 [submodule "src/autoware_auto_msgs"]
-	path = autoware_auto_msgs
+	path = standalone/autoware_auto_msgs
 	url = git@github.com:tier4/autoware_auto_msgs.git
 [submodule "src/rviz2_plugins/rosbag2_rviz_plugins"]
 	path = rviz2_plugins/rosbag2_rviz_plugins
 	url = https://github.com/Kettenhoax/rosbag2_rviz_plugins.git
 [submodule "Sophus"]
-	path = Sophus
+	path = standalone/Sophus
 	url = https://github.com/strasdat/Sophus.git
