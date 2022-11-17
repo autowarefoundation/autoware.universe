@@ -30,6 +30,8 @@ find_package(Sophus REQUIRED)
 # We must always call the following command after "ament_auto_find_build_dependencies()" because it rewrite CMAKE_NO_SYSTEM_FROM_IMPORTED to TRUE.
 set(CMAKE_NO_SYSTEM_FROM_IMPORTED FALSE)
 
+find_package(glog REQUIRED)
+
 # ===================================================
 # Library
 file(GLOB REGULATORY_ELEMENT_SOURCE 3rd/regulatory_elements/lib/*cpp)
@@ -47,7 +49,7 @@ ament_auto_add_executable(${TARGET}
   src/polygon_operation.cpp)
 target_include_directories(${TARGET} PUBLIC include)
 target_include_directories(${TARGET} SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})
-target_link_libraries(${TARGET} ${PCL_LIBRARIES} Sophus::Sophus)
+target_link_libraries(${TARGET} ${PCL_LIBRARIES} Sophus::Sophus glog::glog)
 
 set(TARGET ll2_decompose_node)
 ament_auto_add_executable(${TARGET}

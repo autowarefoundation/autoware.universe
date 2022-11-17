@@ -137,7 +137,8 @@ void GroundServer::onMap(const HADMapBin & msg)
     }
   }
 
-  *upsampled_cloud += sampleFromPolygons(lanelet_map->polygonLayer);
+  if (lanelet_map->polygonLayer.size() > 0)
+    *upsampled_cloud += sampleFromPolygons(lanelet_map->polygonLayer);
 
   cloud_ = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
   // Voxel
