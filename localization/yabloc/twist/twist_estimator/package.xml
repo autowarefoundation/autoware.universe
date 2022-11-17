@@ -1,16 +1,15 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>vmvl_trajectory</name>
+  <name>twist_estimator</name>
   <version>0.0.0</version>
-  <description>trajectory library for vector map visual localizer </description>
+  <description>twist estimator for pcd-less localizer </description>
   <maintainer email="kento.yabuuchi.2@tier4.jp">kentoyabuuchi2</maintainer>
   <license>Apache 2</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <depend>rclcpp</depend>
-  <depend>rclpy</depend>
 
   <depend>tf2</depend>
   <depend>tf2_ros</depend>
@@ -20,9 +19,7 @@
   <depend>visualization_msgs</depend>
   <depend>ublox_msgs</depend>
 
-  <depend>vmvl_map</depend>
-  <depend>vmvl_msgs</depend>
-  <depend>vml_common</depend>
+  <depend>pcdless_common</depend>
   <depend>autoware_auto_vehicle_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>

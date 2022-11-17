@@ -1,8 +1,8 @@
-#include "vmvl_trajectory/twist_estimator.hpp"
+#include "twist_estimator/twist_estimator.hpp"
 
-#include <eigen3/Eigen/Dense>
-#include <eigen3/Eigen/QR>
-#include <eigen3/Eigen/SVD>
+#include <Eigen/Dense>
+#include <Eigen/QR>
+#include <Eigen/SVD>
 #include <sophus/geometry.hpp>
 
 namespace vmvl_trajectory
