@@ -110,8 +110,9 @@ BT::NodeStatus AvoidanceModule::updateState()
   }
 
   // if dynamic objects are removed on path, change current state and reset path
-  if(planner_data_->dynamic_object->objects.size() == 0 &&
-      parameters_->enable_update_path_when_object_is_gone){
+  if (
+    planner_data_->dynamic_object->objects.size() == 0 &&
+    parameters_->enable_update_path_when_object_is_gone) {
     current_state_ = BT::NodeStatus::SUCCESS;
   }
 
