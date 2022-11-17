@@ -156,7 +156,7 @@ private:
 
   PathWithLaneId getReferencePath() const;
   lanelet::ConstLanelets getLaneChangeLanes(
-    const lanelet::ConstLanelets & current_lanes, const double lane_change_lane_length) const;
+    const route_handler::LaneletPath & current_path, const double lane_change_lane_length) const;
   std::pair<bool, bool> getSafePath(
     const lanelet::ConstLanelets & lane_change_lanes, const double check_distance,
     LaneChangePath & safe_path) const;

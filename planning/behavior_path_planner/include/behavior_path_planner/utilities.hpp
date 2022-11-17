@@ -18,6 +18,7 @@
 #include "behavior_path_planner/data_manager.hpp"
 #include "behavior_path_planner/debug_utilities.hpp"
 #include "behavior_path_planner/scene_module/pull_out/pull_out_path.hpp"
+#include "route_handler/lanelet_path.hpp"
 
 #include <opencv2/opencv.hpp>
 #include <route_handler/route_handler.hpp>
@@ -289,6 +290,8 @@ std::vector<DrivableLanes> generateDrivableLanesWithShoulderLanes(
   const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & shoulder_lanes);
 
 boost::optional<size_t> getOverlappedLaneletId(const std::vector<DrivableLanes> & lanes);
+// FIXME(vrichard)
+// [[deprecated("Will most likely break the path. Use LaneletPath for safe path abstraction")]]
 std::vector<DrivableLanes> cutOverlappedLanes(
   PathWithLaneId & path, const std::vector<DrivableLanes> & lanes);
 
@@ -374,13 +377,12 @@ void shiftPose(Pose * pose, double shift_length);
 
 // route handler
 PathWithLaneId getCenterLinePath(
-  const RouteHandler & route_handler, const lanelet::ConstLanelets & lanelet_sequence,
-  const Pose & pose, const double backward_path_length, const double forward_path_length,
+  const RouteHandler & route_handler, const route_handler::LaneletPath & lanelet_path,
   const BehaviorPathPlannerParameters & parameter, const double optional_length = 0.0);
 
 PathWithLaneId setDecelerationVelocity(
   const RouteHandler & route_handler, const PathWithLaneId & input,
-  const lanelet::ConstLanelets & lanelet_sequence, const double lane_change_prepare_duration,
+  const route_handler::LaneletPath & lanelet_path, const double lane_change_prepare_duration,
   const double lane_change_buffer);
 
 bool checkLaneIsInIntersection(
@@ -398,15 +400,23 @@ PathWithLaneId setDecelerationVelocityForTurnSignal(
 // object label
 std::uint8_t getHighestProbLabel(const std::vector<ObjectClassification> & classification);
 
-lanelet::ConstLanelets getCurrentLanes(const std::shared_ptr<const PlannerData> & planner_data);
+route_handler::LaneletPath getCurrentPath(const std::shared_ptr<const PlannerData> & planner_data);
 
+// TODO(vrichard)
+// [[deprecated("Planner modules should never need to access path internal lanelets")]]
+lanelet::ConstLanelets getPathLanelets(const route_handler::LaneletPath &path);
+
+// TODO(vrichard)
+// [[deprecated("Use LaneletRoute::extendPath() instead")]]
 lanelet::ConstLanelets extendLanes(
   const std::shared_ptr<RouteHandler> route_handler, const lanelet::ConstLanelets & lanes);
 
+// TODO(vrichard)
+// [[deprecated("Use getCurrentPath() + LaneletRoute::extendPath() instead")]]
 lanelet::ConstLanelets getExtendedCurrentLanes(
   const std::shared_ptr<const PlannerData> & planner_data);
 
-lanelet::ConstLanelets calcLaneAroundPose(
+route_handler::LaneletPath calcLaneletPathAroundPose(
   const std::shared_ptr<RouteHandler> route_handler, const geometry_msgs::msg::Pose & pose,
   const double forward_length, const double backward_length);
 

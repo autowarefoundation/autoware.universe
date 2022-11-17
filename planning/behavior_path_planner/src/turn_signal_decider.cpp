@@ -15,6 +15,7 @@
 #include "behavior_path_planner/turn_signal_decider.hpp"
 
 #include "behavior_path_planner/utilities.hpp"
+#include "route_handler/lanelet_path.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
@@ -47,16 +48,14 @@ TurnIndicatorsCommand TurnSignalDecider::getTurnSignal(
   // Get current lanelets
   const double forward_length = planner_data->parameters.forward_path_length;
   const double backward_length = 50.0;
-  const lanelet::ConstLanelets current_lanes = util::calcLaneAroundPose(
+  const route_handler::LaneletPath current_lanelet_path = util::calcLaneletPathAroundPose(
     planner_data->route_handler, current_pose, forward_length, backward_length);
 
-  if (current_lanes.empty()) {
+  if (current_lanelet_path.empty()) {
     return turn_signal_info.turn_signal;
   }
 
-  const PathWithLaneId extended_path = util::getCenterLinePath(
-    route_handler, current_lanes, current_pose, backward_length, forward_length,
-    planner_data->parameters);
+  const PathWithLaneId extended_path = util::getCenterLinePath(route_handler, current_lanelet_path, planner_data->parameters);
 
   if (extended_path.points.empty()) {
     return turn_signal_info.turn_signal;

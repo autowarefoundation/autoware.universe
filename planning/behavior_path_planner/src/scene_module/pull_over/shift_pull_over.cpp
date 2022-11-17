@@ -19,6 +19,7 @@
 
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
+#include <lanelet2_core/geometry/Lanelet.h>
 
 #include <memory>
 #include <vector>
@@ -50,6 +51,8 @@ boost::optional<PullOverPath> ShiftPullOver::plan(const Pose & goal_pose)
     return {};
   }
 
+  const auto lanelet_route_ptr = route_handler->getLaneletRoutePtr();
+
   const auto goal_shoulder_arc_coords =
     lanelet::utils::getArcCoordinates(shoulder_lanes, goal_pose);
 
@@ -59,8 +62,12 @@ boost::optional<PullOverPath> ShiftPullOver::plan(const Pose & goal_pose)
     const double s_start = std::max(
       goal_shoulder_arc_coords.length - after_pull_over_straight_distance, 0.0);  // shift end
     const double s_end = s_start + std::numeric_limits<double>::epsilon();
+
+    const auto whole_lanes_shoulder_path = lanelet_route_ptr->getPathFromLanelets(shoulder_lanes);
+    const auto shoulder_path = whole_lanes_shoulder_path.truncate(whole_lanes_shoulder_path.getPointAt(s_start), whole_lanes_shoulder_path.getPointAt(s_end));
+
     const auto shoulder_lane_path =
-      route_handler->getCenterLinePath(shoulder_lanes, s_start, s_end, true);
+      route_handler->getCenterLinePath(shoulder_path, true);
     return shoulder_lane_path.points.front().point.pose;
   });
 
@@ -112,7 +119,13 @@ PathWithLaneId ShiftPullOver::generateRoadLaneReferencePath(
     lanelet::utils::getArcCoordinates(road_lanes, shift_end_pose);
   double s_end = shift_end_road_arc_coords.length - pull_over_distance;
   s_end = std::max(s_end, s_start + std::numeric_limits<double>::epsilon());
-  auto road_lane_reference_path = route_handler->getCenterLinePath(road_lanes, s_start, s_end);
+
+  const auto lanelet_route_ptr = route_handler->getLaneletRoutePtr();
+
+  const auto whole_lanes_road_path = lanelet_route_ptr->getPathFromLanelets(road_lanes);
+  const auto road_path = whole_lanes_road_path.truncate(whole_lanes_road_path.getPointAt(s_start), whole_lanes_road_path.getPointAt(s_end));
+
+  auto road_lane_reference_path = route_handler->getCenterLinePath(road_path);
   // resample road straight path and shift source path respectively
   road_lane_reference_path =
     util::resamplePathWithSpline(road_lane_reference_path, resample_interval_);
@@ -145,8 +158,16 @@ PathWithLaneId ShiftPullOver::generateShoulderLaneReferencePath(
   const auto goal_shoulder_arc_coords =
     lanelet::utils::getArcCoordinates(shoulder_lanes, goal_pose);
   const double s_end = goal_shoulder_arc_coords.length;
+
+  const auto lanelet_route_ptr = route_handler->getLaneletRoutePtr();
+
+  const auto whole_lanes_shoulder_path = lanelet_route_ptr->getPathFromLanelets(shoulder_lanes);
+  const auto shoulder_path = whole_lanes_shoulder_path.truncate(
+    whole_lanes_shoulder_path.getPointAt(s_start), 
+  whole_lanes_shoulder_path.getPointAt(s_end));
+
   auto shoulder_lane_reference_path =
-    route_handler->getCenterLinePath(shoulder_lanes, s_start, s_end);
+    route_handler->getCenterLinePath(shoulder_path);
   // offset to goal line
   for (auto & p : shoulder_lane_reference_path.points) {
     p.point.pose =
@@ -290,11 +311,16 @@ bool ShiftPullOver::hasEnoughDistance(
     return false;
   }
 
-  const bool is_in_goal_route_section =
-    planner_data_->route_handler->isInGoalRouteSection(road_lanes.back());
-  if (
-    is_in_goal_route_section &&
-    road_lane_dist_to_goal > util::getSignedDistance(current_pose, goal_pose, road_lanes)) {
+  const auto lanelet_route_ptr = planner_data_->route_handler->getLaneletRoutePtr();
+  const auto current_lanelet_point = lanelet_route_ptr->getClosestLaneletPointWithinRoute(current_pose);
+  const double current_route_arc_length = *lanelet_route_ptr->getRouteArcLength(current_lanelet_point);  
+  // TODO(vrichard) what is the goal_pose here? if it the route goal pose, then distance to goal is simply:
+  // lanelet_route_ptr->getMainPath().length() - current_route_arc_length
+  const auto goal_lanelet_point = lanelet_route_ptr->getClosestLaneletPointWithinRoute(goal_pose);
+  const double goal_route_arc_length = * lanelet_route_ptr->getRouteArcLength(goal_lanelet_point);
+  const double distance_to_route_goal = goal_route_arc_length - current_route_arc_length;
+
+  if (road_lane_dist_to_goal > distance_to_route_goal) {
     return false;
   }
 

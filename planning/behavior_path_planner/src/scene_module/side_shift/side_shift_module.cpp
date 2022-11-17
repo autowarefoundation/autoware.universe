@@ -17,6 +17,7 @@
 #include "behavior_path_planner/path_utilities.hpp"
 #include "behavior_path_planner/scene_module/side_shift/util.hpp"
 #include "behavior_path_planner/utilities.hpp"
+#include "route_handler/lanelet_path.hpp"
 
 #include <lanelet2_extension/utility/utilities.hpp>
 
@@ -148,7 +149,8 @@ BT::NodeStatus SideShiftModule::updateState()
   if (no_request && no_shifted_plan && no_offset_diff) {
     current_state_ = BT::NodeStatus::SUCCESS;
   } else {
-    const auto & current_lanes = util::getCurrentLanes(planner_data_);
+    const auto & current_path = util::getCurrentPath(planner_data_);
+    const auto & current_lanes = util::getPathLanelets(current_path);
     const auto & current_pose = planner_data_->self_pose->pose;
     const auto & inserted_shift_line_start_pose = inserted_shift_line_.start;
     const auto & inserted_shift_line_end_pose = inserted_shift_line_.end;
@@ -184,15 +186,17 @@ void SideShiftModule::updateData()
   const auto & route_handler = planner_data_->route_handler;
   const auto & p = planner_data_->parameters;
 
-  lanelet::ConstLanelet current_lane;
-  if (!route_handler->getClosestLaneletWithinRoute(reference_pose.pose, &current_lane)) {
-    RCLCPP_ERROR_THROTTLE(
-      getLogger(), *clock_, 5000, "failed to find closest lanelet within route!!!");
-  }
+
+  const auto lanelet_route_ptr = route_handler->getLaneletRoutePtr();
+
 
   // For current_lanes with desired length
-  current_lanelets_ = route_handler->getLaneletSequence(
-    current_lane, reference_pose.pose, p.backward_path_length, p.forward_path_length);
+  const auto current_lanelet_point = lanelet_route_ptr->getClosestLaneletPointWithinRoute(reference_pose.pose);
+  const auto current_lanelet_path = lanelet_route_ptr->getStraightPath(
+    current_lanelet_point, p.backward_path_length, p.forward_path_length);
+
+  // NOTE(vrichard) lanelet list is only used to generate the drivable area, so it is fine to work on the lanelets instead of sections
+  current_lanelets_ = behavior_path_planner::util::getPathLanelets(current_lanelet_path);
 
   const size_t nearest_idx = findEgoIndex(path_shifter_.getReferencePath().points);
   path_shifter_.removeBehindShiftLineAndSetBaseOffset(nearest_idx);
@@ -428,10 +432,9 @@ PathWithLaneId SideShiftModule::calcCenterLinePath(
     "p.backward_path_length = %f, longest_dist_to_shift_line = %f, backward_length = %f",
     p.backward_path_length, longest_dist_to_shift_line, backward_length);
 
-  const lanelet::ConstLanelets current_lanes =
-    util::calcLaneAroundPose(route_handler, pose.pose, p.forward_path_length, backward_length);
-  centerline_path = util::getCenterLinePath(
-    *route_handler, current_lanes, pose.pose, backward_length, p.forward_path_length, p);
+  const route_handler::LaneletPath current_lanelet_path = util::calcLaneletPathAroundPose(
+    route_handler, pose.pose, p.forward_path_length, backward_length);
+  centerline_path = util::getCenterLinePath(*route_handler, current_lanelet_path, p);
 
   centerline_path.header = route_handler->getRouteHeader();
 
