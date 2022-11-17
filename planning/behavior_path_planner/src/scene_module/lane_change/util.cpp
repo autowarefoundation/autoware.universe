@@ -457,10 +457,10 @@ bool isLaneChangePathSafe(
 
     const auto object_speed =
       util::l2Norm(obj.kinematics.initial_twist_with_covariance.twist.linear);
-    const double check_start_time =
-      (enable_collision_check_at_prepare_phase && (object_speed > 0.1))
-        ? 0.0
-        : lane_change_prepare_duration;
+    const double check_start_time = (enable_collision_check_at_prepare_phase &&
+                                     (object_speed > prepare_phase_ignore_target_speed_thresh))
+                                      ? 0.0
+                                      : lane_change_prepare_duration;
     if (is_object_in_target) {
       for (const auto & obj_path : predicted_paths) {
         if (!util::isSafeInLaneletCollisionCheck(
