@@ -17,7 +17,7 @@
     <!-- undistort & resize -->
     <arg name="override_extrinsic" default="false" description="Value for overriding the camera's frame_id. Use when another static_tf is to be read."/>
     <group if="$(var override_extrinsic)"> 
-        <node name="undistort" pkg="vmvl_imgproc" exec="undistort_node" output="screen" args="--ros-args --log-level $(var log_level)">
+        <node name="undistort" pkg="undistort" exec="undistort_node" output="screen" args="--ros-args --log-level $(var log_level)">
             <param name="use_sim_time" value="$(var use_sim_time)"/>
             <param name="width" value="800"/>
             <param name="override_frame_id" value="override_camera_frame"/>
@@ -26,7 +26,7 @@
         <node name="override_static_tf" pkg="tf2_ros" exec="static_transform_publisher" args="--x 1.121  --y -0.056 --z 1.974 --roll -1.551 --pitch 0.006 --yaw -1.580 --frame-id  base_link --child-frame-id override_camera_frame"/>
     </group>
     <group unless="$(var override_extrinsic)"> 
-        <node name="undistort" pkg="vmvl_imgproc" exec="undistort_node" output="screen" args="--ros-args --log-level $(var log_level)">
+        <node name="undistort" pkg="undistort" exec="undistort_node" output="screen" args="--ros-args --log-level $(var log_level)">
             <param name="use_sim_time" value="$(var use_sim_time)"/>
             <param name="width" value="800"/>
             <param name="override_frame_id" value=""/>
@@ -39,7 +39,7 @@
     <arg name="output_lsd_image" default="lsd_image"/>
     <arg name="output_lsd_cloud" default="lsd_cloud"/>
 
-    <node name="lsd" pkg="vmvl_imgproc" exec="lsd_node" output="screen" args="--ros-args --log-level $(var log_level)">
+    <node name="lsd" pkg="lsd" exec="lsd_node" output="screen" args="--ros-args --log-level $(var log_level)">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <remap from="$(var src_image)" to="$(var resized_image)"/>
         <remap from="$(var src_info)" to="$(var resized_info)"/>
@@ -51,7 +51,7 @@
     <!-- graph based segmentation -->
     <arg name="output_graph_segmented" default="graph_segmented"/>
     <arg name="output_segmented_image" default="segmented_image"/>
-    <node name="graph_segment" pkg="vmvl_imgproc" exec="graph_segment_node" output="screen" args="--ros-args --log-level info">
+    <node name="graph_segment" pkg="graph_segment" exec="graph_segment_node" output="screen" args="--ros-args --log-level info">
         <remap from="$(var src_image)" to="$(var resized_image)"/>
         <remap from="$(var src_info)" to="$(var resized_info)"/>
         <remap from="graph_segmented" to="$(var output_graph_segmented)"/>
@@ -63,7 +63,7 @@
     <arg name="input_lsd_cloud" default="lsd_cloud"/>
     <arg name="output_projected_lsd_cloud" default="projected_lsd_cloud"/>
     <arg name="output_projected_image" default="projected_image"/>
-    <node name="segment_filter" pkg="vmvl_imgproc" exec="segment_filter_node" output="screen" args="--ros-args --log-level info">
+    <node name="segment_filter" pkg="segment_filter" exec="segment_filter_node" output="screen" args="--ros-args --log-level info">
         <param name="truncate_pixel_threshold" value="$(var truncate_pixel_threshold)" />
         <param name="min_segment_length" value="$(var min_segment_length)"/>
         <param name="max_segment_distance" value="$(var max_segment_distance)"/>

@@ -11,7 +11,7 @@
     <arg name="output_projectedmarker" default="projected_marker"/>
     <arg name="output_overlay_image" default="overlay_image"/>
 
-    <node name="overlay" pkg="vmvl_validation" exec="overlay_node" output="screen" args="--ros-args --log-level warn">
+    <node name="overlay" pkg="overlay_monitor" exec="overlay_node" output="screen" args="--ros-args --log-level warn">
         <remap from="src_image" to="$(var resized_image)"/>
         <remap from="src_info" to="$(var resized_info)"/>
         <remap from="particle_pose" to="$(var input_particle_pose)"/>
@@ -27,7 +27,7 @@
     <arg name="output_cov_diag" default="cov_diag"/>
     <arg name="output_pose_with_cov" default="pose_with_cov"/>
 
-    <node name="covariance" pkg="vmvl_validation" exec="covariance_node" output="screen" args="--ros-args --log-level warn">
+    <node name="covariance" pkg="covariance_monitor" exec="covariance_node" output="screen" args="--ros-args --log-level warn">
         <remap from="particles" to="$(var input_particles)"/>
         <remap from="particle_pose" to="$(var input_particle_pose)"/>
         <remap from="cov_diag" to="$(var output_cov_diag)"/>
@@ -38,7 +38,7 @@
     <arg name="input_pose_with_cov" default="pose_with_cov"/>
     <arg name="output_ape_diag" default="ape_diag"/>
 
-    <node name="ape" pkg="vmvl_validation" exec="ape_node" output="screen" args="--ros-args --log-level warn">
+    <node name="ape" pkg="ape_monitor" exec="ape_node" output="screen" args="--ros-args --log-level warn">
         <param name="reference_bags_path" value="$(var reference_bags_path)"/>
         <remap from="pose_with_cov" to="$(var input_pose_with_cov)"/>
         <remap from="ape_diag" to="$(var output_ape_diag)"/>

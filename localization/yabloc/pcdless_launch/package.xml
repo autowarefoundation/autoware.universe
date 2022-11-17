@@ -7,7 +7,10 @@
   <maintainer email="kento.yabuuchi.2@tier4.jp">kentoyabuuchi2</maintainer>
   <license>Apache 2</license>
 
+
   <buildtool_depend>ament_cmake</buildtool_depend>
+  <depend>rclpy</depend>
+  <depend>autoware_auto_control_msgs</depend>
 
   <!--imgproc-->
   <depend>dynamic_remover</depend>
@@ -32,6 +35,9 @@
   <depend>camera_particle_corrector</depend>
   <depend>gnss_particle_corrector</depend>
   <depend>particle_initializer</depend>
+  <!--rviz plugin-->
+  <depend>rviz2_initialpose_plugins</depend>
+  <depend>rviz2_overlay_plugins</depend>
 
 
   <export>

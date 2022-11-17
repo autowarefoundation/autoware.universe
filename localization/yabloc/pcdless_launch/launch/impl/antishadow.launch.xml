@@ -10,8 +10,8 @@
     <arg name="max_lateral_distance" default="-1.0"/>
 
 
-    <!-- mapping -->
-    <node name="mapping" pkg="anti_shadow" exec="mapping_node" output="screen" args="--ros-args --log-level warn">
+    <!-- segment_accumulator -->
+    <node name="accumulator" pkg="segment_accumulator" exec="segment_accumulator_node" output="screen" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="default_map_value" value="10"/>
         <remap from="$(var src_image)" to="$(var resized_image)"/>
@@ -19,8 +19,8 @@
         <remap from="/localization/imgproc/lsd_cloud" to="/localization/imgproc/filtered_lsd"/>
     </node>
 
-    <!-- reprojection -->
-    <node name="reprojection" pkg="anti_shadow" exec="reprojection_node" output="screen" args="--ros-args --log-level warn">
+    <!-- dynamic remover -->
+    <node name="dynamic_remover" pkg="dynamic_remover" exec="dynamic_remover_node" output="screen" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <remap from="$(var src_image)" to="$(var resized_image)"/>
         <remap from="/localization/imgproc/camera_info" to="$(var resized_info)"/>

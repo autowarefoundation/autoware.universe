@@ -29,7 +29,7 @@
         <!-- particle filter -->
         <group>
             <push-ros-namespace namespace="pf"/>
-            <include file="$(find-pkg-share vmvl_launch)/launch/impl/pf.launch.xml">
+            <include file="$(find-pkg-share pcdless_launch)/launch/impl/pf.launch.xml">
                 <arg name="use_sim_time" value="$(var use_sim_time)" />
                 <arg name="log_level" value="$(var log_level)"/>
             </include>
@@ -38,7 +38,7 @@
         <!-- image processing -->
         <group>
             <push-ros-namespace namespace="imgproc"/>
-            <include file="$(find-pkg-share vmvl_launch)/launch/impl/imgproc.launch.xml">
+            <include file="$(find-pkg-share pcdless_launch)/launch/impl/imgproc.launch.xml">
                 <arg name="use_sim_time" value="$(var use_sim_time)" />
                 <arg name="log_level" value="$(var log_level)"/>
                 <arg name="src_image" value="$(var src_image)"/>
@@ -51,7 +51,7 @@
         <!-- anti_shadow -->
         <group>
             <push-ros-namespace namespace="imgproc"/>
-            <include file="$(find-pkg-share vmvl_launch)/launch/impl/antishadow.launch.xml">
+            <include file="$(find-pkg-share pcdless_launch)/launch/impl/antishadow.launch.xml">
                 <arg name="use_sim_time" value="$(var use_sim_time)" />
                 <arg name="resized_image" value="$(var resized_image)"/>
                 <arg name="resized_info" value="$(var resized_info)"/>
@@ -61,7 +61,7 @@
         <!-- trajectory -->
         <group>
             <push-ros-namespace namespace="trajectory"/>
-            <include file="$(find-pkg-share vmvl_launch)/launch/impl/trajectory.launch.xml">
+            <include file="$(find-pkg-share pcdless_launch)/launch/impl/trajectory.launch.xml">
                 <arg name="use_sim_time" value="$(var use_sim_time)" />
                 <arg name="log_level" value="$(var log_level)"/>
             </include>
@@ -70,16 +70,16 @@
         <!-- validation -->
         <group>
             <push-ros-namespace namespace="validation"/>
-            <include file="$(find-pkg-share vmvl_launch)/launch/impl/validation.launch.xml"/>
+            <include file="$(find-pkg-share pcdless_launch)/launch/impl/validation.launch.xml"/>
         </group>
 
         <!-- map -->
         <group>
             <push-ros-namespace namespace="map"/>
-            <include file="$(find-pkg-share vmvl_launch)/launch/impl/map.launch.xml"/>
+            <include file="$(find-pkg-share pcdless_launch)/launch/impl/map.launch.xml"/>
         </group>
 
         <!-- control/command/control_cmd visualizer -->
-        <node name="command_publisher" pkg="vmvl_launch" exec="control_command_publisher.py" output="screen" args="--ros-args --log-level info"/>
+        <node name="command_publisher" pkg="pcdless_launch" exec="control_command_publisher.py" output="screen" args="--ros-args --log-level info"/>
     </group>
 </launch>

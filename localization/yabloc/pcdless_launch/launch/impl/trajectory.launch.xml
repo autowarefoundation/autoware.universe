@@ -8,14 +8,14 @@
     <node name="base_link_tf" pkg="tf2_ros" exec="static_transform_publisher" args="0 0 0 0 0 0 /particle_filter /base_link"/>
 
     <!-- fix to pose -->
-    <node name="fix_to_pose" pkg="vmvl_trajectory" exec="fix_to_pose_node" output="log" args="--ros-args --log-level warn">
+    <node name="fix_to_pose" pkg="path_monitor" exec="fix_to_pose" output="log" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <remap from="pose" to="/sensing/gnss/ublox/pose"/>
         <remap from="fix_topic" to="/sensing/gnss/ublox/nav_sat_fix"/>
     </node>
 
     <!-- pose to path -->
-    <node name="pose_to_path" pkg="vmvl_trajectory" exec="pose_to_path_node" output="log" args="--ros-args --log-level info">
+    <node name="pose_to_path" pkg="path_monitor" exec="pose_to_path" output="log" args="--ros-args --log-level info">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="sub_topics" value="[/sensing/gnss/ublox/pose, /localization/pose_estimator/pose, /localization/particle_pose]"/>
         <param name="pub_topics" value="[/sensing/gnss/ublox/path, /localization/pose_estimator/path, /localization/particle_path]"/>
@@ -31,7 +31,7 @@
         <arg name="output_doppler_vel" default="doppler_vel"/>
         <arg name="output_twist_with_cov" default="twist_with_cov"/>
 
-        <node name="twist_estimator" pkg="vmvl_trajectory" exec="twist_node" output="screen" args="--ros-args --log-level warn">
+        <node name="twist_estimator" pkg="twist_estimator" exec="twist_estimator_node" output="screen" args="--ros-args --log-level warn">
             <param name="use_sim_time" value="$(var use_sim_time)"/>
             <param name="rtk_enabled" value="$(var rtk_enabled)"/>
             <param name="static_scale_factor" value="$(var static_scale_factor)"/>
@@ -45,19 +45,12 @@
     </group>
 
     <!-- velocity report converter -->
-    <node name="velocity_report_node" pkg="vmvl_trajectory" exec="velocity_report_node" output="screen" args="--ros-args --log-level warn">
+    <node name="velocity_report_node" pkg="twist_converter" exec="velocity_report_converter" output="screen" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
     </node>
 
-    <!-- gnss pose initializer -->
-    <arg name="output_pose" default="/localization/init/pose"/>
-    <node name="gnss_pose_initializer" pkg="vmvl_trajectory" exec="pose_init_node" output="log" args="--ros-args --log-level warn">
-        <remap from="ublox_topic" to="/sensing/gnss/ublox/navpvt"/>
-        <remap from="pose" to="$(var output_pose)"/>
-    </node>
-
     <!-- pose twist fuser-->
-    <node name="pose_twist_fuser" pkg="vmvl_trajectory" exec="pose_twist_fuse_node" output="log" args="--ros-args --log-level warn">
+    <node name="pose_twist_fuser" pkg="twist_converter" exec="pose_twist_fuser" output="log" args="--ros-args --log-level warn">
         <remap from="twist" to="/localization/trajectory/kalman/twist"/>
         <remap from="pose" to="/localization/pf/particle_pose"/>
         <remap from="odometry" to="/localization/kinematic_state"/>

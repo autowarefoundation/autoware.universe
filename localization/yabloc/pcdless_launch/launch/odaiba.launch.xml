@@ -10,5 +10,5 @@
     <arg name="road_marking_labels" default="[zebra_marking, line_thin, line_thick, pedestrian_marking, stop_line, road_border]"/>
     <arg name="sign_board_labels" default="[sign-board]"/>
 
-    <include file="$(find-pkg-share vmvl_launch)/launch/impl/run.launch.xml"/>
+    <include file="$(find-pkg-share pcdless_launch)/launch/impl/run.launch.xml"/>
 </launch>

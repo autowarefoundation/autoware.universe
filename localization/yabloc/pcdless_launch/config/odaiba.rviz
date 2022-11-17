@@ -28,8 +28,6 @@ Panels:
     Name: Time
     SyncMode: 0
     SyncSource: ""
-  - Class: rosbag2_rviz_plugins/PlayerPanel
-    Name: PlayerPanel
   - Class: initialpose_plugins/InitialPosePanel
     Name: InitialPosePanel
 Visualization Manager:

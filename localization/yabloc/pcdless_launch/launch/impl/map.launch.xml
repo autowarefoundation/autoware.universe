@@ -10,7 +10,7 @@
     <arg name="output_near_cloud" default="near_cloud"/>
 
     <!-- ground server -->
-    <node name="ground_server" pkg="vmvl_map" exec="ground_server_node" output="screen" args="--ros-args --log-level warn">
+    <node name="ground_server" pkg="ground_server" exec="ground_server_node" output="screen" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="force_zero_tilt" value="$(var force_zero_tilt)"/>
         <param name="K" value="50"/>
@@ -28,7 +28,7 @@
     <arg name="output_ll2_sign_board" default="ll2_sign_board"/>
 
     <!-- lanelet2 -->
-    <node name="ll2_decompose" pkg="vmvl_map" exec="ll2_decompose_node" output="screen" args="--ros-args --log-level warn">
+    <node name="ll2_decompose" pkg="ll2_decomposer" exec="ll2_decompose_node" output="screen" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="road_marking_labels" value="$(var road_marking_labels)"/>
         <param name="sign_board_labels" value="$(var sign_board_labels)"/>
