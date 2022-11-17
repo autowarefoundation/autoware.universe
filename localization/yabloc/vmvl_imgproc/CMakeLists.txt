@@ -30,13 +30,6 @@ find_package(PCL REQUIRED)
 find_package(Sophus REQUIRED)
 
 # ===================================================
-# Library
-file(GLOB REGULATORY_ELEMENT_SOURCE 3rd/regulatory_elements/lib/*cpp)
-ament_auto_add_library(cv_lsd SHARED
-  3rd/opencv_lsd/lsd/lsd.cpp)
-target_include_directories(cv_lsd PUBLIC include 3rd/opencv_lsd/)
-
-# ===================================================
 # Executable
 macro(ADD_EXE)
   cmake_parse_arguments(_ARG "" "TARGET" "SRC;LIB;INC" ${ARGN})
@@ -56,7 +49,7 @@ endmacro()
 
 ADD_EXE(TARGET undistort_node SRC src/undistort_node.cpp INC include)
 ADD_EXE(TARGET segment_filter_node SRC src/segment_filter_*.cpp INC include)
-ADD_EXE(TARGET lsd_node SRC src/lsd_*.cpp INC include LIB cv_lsd INC include)
+ADD_EXE(TARGET lsd_node SRC src/lsd_*.cpp INC include LIB INC include)
 ADD_EXE(TARGET graph_segment_node SRC src/graph_segment_*.cpp INC include)
 
 # ===================================================

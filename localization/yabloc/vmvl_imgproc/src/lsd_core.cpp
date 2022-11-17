@@ -1,5 +1,6 @@
 #include "vmvl_imgproc/lsd.hpp"
 
+#include <opencv4/opencv2/imgproc.hpp>
 #include <vml_common/cv_decompress.hpp>
 #include <vml_common/pub_sub.hpp>
 #include <vml_common/timer.hpp>
@@ -23,8 +24,7 @@ LineSegmentDetector::LineSegmentDetector()
   pub_image_lsd_ = create_publisher<Image>("lsd_image", 10);
   pub_cloud_ = create_publisher<PointCloud2>("lsd_cloud", 10);
 
-  lsd_ =
-    cv::lsd::createLineSegmentDetector(cv::lsd::LSD_REFINE_STD, 0.8, 0.6, 2.0, 22.5, 0, 0.7, 1024);
+  lsd_ = cv::createLineSegmentDetector(cv::LSD_REFINE_STD, 0.8, 0.6, 2.0, 22.5, 0, 0.7, 1024);
 }
 
 void LineSegmentDetector::imageCallback(const sensor_msgs::msg::Image & msg)

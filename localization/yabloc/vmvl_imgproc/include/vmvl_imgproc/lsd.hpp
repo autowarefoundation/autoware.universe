@@ -1,9 +1,8 @@
 #pragma once
 #include <eigen3/Eigen/Geometry>
 #include <eigen3/Eigen/StdVector>
-#include <lsd/lsd.hpp>
 #include <opencv4/opencv2/core/eigen.hpp>
-#include <opencv4/opencv2/opencv.hpp>
+#include <opencv4/opencv2/imgproc.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <sensor_msgs/msg/camera_info.hpp>
@@ -36,7 +35,7 @@ private:
   rclcpp::Publisher<Image>::SharedPtr pub_image_lsd_;
   rclcpp::Publisher<PointCloud2>::SharedPtr pub_cloud_;
 
-  cv::Ptr<cv::lsd::LineSegmentDetector> lsd_;
+  cv::Ptr<cv::LineSegmentDetector> lsd_;
 
   std::vector<cv::Mat> removeTooOuterElements(const cv::Mat & lines, const cv::Size & size) const;
   void imageCallback(const sensor_msgs::msg::Image & msg);
