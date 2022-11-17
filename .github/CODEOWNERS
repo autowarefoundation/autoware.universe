@@ -142,7 +142,6 @@ sensing/vehicle_velocity_converter/** ryu.yamamoto@tier4.jp
 simulator/dummy_perception_publisher/** yukihiro.saito@tier4.jp
 simulator/fault_injection/** keisuke.shima@tier4.jp
 simulator/simple_planning_simulator/** takamasa.horibe@tier4.jp
-system/ad_service_state_monitor/** kenji.miyake@tier4.jp
 system/bluetooth_monitor/** fumihito.ito@tier4.jp
 system/component_state_monitor/** isamu.takagi@tier4.jp
 system/default_ad_api/** isamu.takagi@tier4.jp
