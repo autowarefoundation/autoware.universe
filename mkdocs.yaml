@@ -1,0 +1,81 @@
+site_name: Autoware Universe Documentation
+site_url: https://autowarefoundation.github.io/autoware.universe
+repo_url: https://github.com/autowarefoundation/autoware.universe
+edit_uri: edit/main/
+docs_dir: .
+copyright: Copyright &copy; 2022 The Autoware Foundation
+
+theme:
+  name: material
+  features:
+    - navigation.expand
+    - navigation.indexes
+    - navigation.instant
+    - navigation.sections
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.top
+  favicon: docs/assets/images/autoware-foundation.png
+  icon:
+    logo: fontawesome/solid/car
+    repo: fontawesome/brands/github
+  language: en
+  palette:
+    - scheme: default
+      primary: white
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to dark mode
+    - scheme: slate
+      primary: grey
+      toggle:
+        icon: material/weather-night
+        name: Switch to light mode
+
+extra:
+  font:
+    text: Roboto
+    code: Roboto Mono
+  version:
+    provider: mike
+
+extra_css:
+  - docs/assets/css/extra.css
+  - https://use.fontawesome.com/releases/v5.15.4/css/all.css
+
+extra_javascript:
+  - https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS-MML_HTMLorMML
+
+plugins:
+  - awesome-pages
+  - exclude:
+      regex:
+        - ^(?!(.*/)?assets/).*\.(?!(.*\.)?md|(.*\.)?svg|(.*\.)?png|(.*\.)?gif|(.*\.)?jpg).*$
+        - ^(.*/)?[^.]*$
+  - macros
+  - same-dir
+  - search
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - codehilite:
+      guess_lang: false
+  - fontawesome_markdown
+  - footnotes
+  - md_in_html
+  - mdx_math
+  - mdx_truly_sane_lists:
+      nested_indent: 2
+  - plantuml_markdown:
+      server: http://www.plantuml.com/plantuml
+      format: svg
+  - pymdownx.arithmatex
+  - pymdownx.highlight
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - toc:
+      permalink: "#"

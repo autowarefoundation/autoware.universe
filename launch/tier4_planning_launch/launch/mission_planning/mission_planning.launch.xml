@@ -1,0 +1,9 @@
+<launch>
+  <group>
+    <include file="$(find-pkg-share mission_planner)/launch/mission_planner.launch.xml"/>
+  </group>
+
+  <group>
+    <include file="$(find-pkg-share mission_planner)/launch/goal_pose_visualizer.launch.xml"/>
+  </group>
+</launch>

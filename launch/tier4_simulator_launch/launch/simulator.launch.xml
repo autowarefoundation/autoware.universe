@@ -1,0 +1,114 @@
+<launch>
+  <arg name="tier4_simulator_launch_param_path" default="$(find-pkg-share tier4_simulator_launch)/config" description="tier4_simulator_launch parameter path"/>
+  <arg name="tier4_perception_launch_param_path" default="$(find-pkg-share tier4_perception_launch)/config" description="tier4_perception_launch parameter path"/>
+
+  <arg name="launch_dummy_perception"/>
+  <arg name="launch_dummy_vehicle"/>
+  <arg name="launch_dummy_localization"/>
+  <arg name="vehicle_info_param_file"/>
+
+  <arg name="perception/enable_detection_failure" default="true" description="enable to simulate detection failure when using dummy perception"/>
+  <arg name="perception/enable_object_recognition" default="false" description="enable object recognition"/>
+  <arg name="perception/enable_elevation_map" default="false" description="enable elevation map loader"/>
+  <arg name="perception/enable_traffic_light" default="false" description="enable traffic light"/>
+  <arg name="sensing/visible_range" default="300.0" description="visible range when using dummy perception"/>
+
+  <arg name="vehicle_model" description="vehicle model name"/>
+  <arg name="initial_engage_state" default="true" description="/vehicle/engage state after starting Autoware"/>
+
+  <let name="vehicle_model_pkg" value="$(find-pkg-share $(var vehicle_model)_description)"/>
+
+  <group if="$(var scenario_simulation)">
+    <include file="$(find-pkg-share fault_injection)/launch/fault_injection.launch.xml">
+      <arg name="config_file" value="$(var tier4_simulator_launch_param_path)/fault_injection.param.yaml"/>
+    </include>
+  </group>
+
+  <!-- Dummy Perception -->
+  <group if="$(var launch_dummy_perception)">
+    <include file="$(find-pkg-share dummy_perception_publisher)/launch/dummy_perception_publisher.launch.xml">
+      <arg name="real" value="$(var perception/enable_detection_failure)"/>
+      <arg name="use_object_recognition" value="$(var perception/enable_object_recognition)"/>
+      <arg name="visible_range" value="$(var sensing/visible_range)"/>
+    </include>
+  </group>
+  <group unless="$(var scenario_simulation)">
+    <!-- Occupancy Grid -->
+    <push-ros-namespace namespace="occupancy_grid_map"/>
+    <include file="$(find-pkg-share tier4_perception_launch)/launch/occupancy_grid_map/laserscan_based_occupancy_grid_map.launch.py">
+      <arg name="input_obstacle_pointcloud" value="true"/>
+      <arg name="input_obstacle_and_raw_pointcloud" value="false"/>
+      <arg name="input/obstacle_pointcloud" value="/perception/obstacle_segmentation/pointcloud"/>
+      <arg name="output" value="/perception/occupancy_grid_map/map"/>
+    </include>
+  </group>
+
+  <!-- perception module -->
+  <group>
+    <push-ros-namespace namespace="perception"/>
+    <!-- object recognition -->
+    <group if="$(var perception/enable_object_recognition)">
+      <push-ros-namespace namespace="object_recognition"/>
+      <!-- tracking module -->
+      <group>
+        <push-ros-namespace namespace="tracking"/>
+        <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/tracking/tracking.launch.xml"/>
+      </group>
+      <!-- prediction module -->
+      <group>
+        <push-ros-namespace namespace="prediction"/>
+        <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/prediction/prediction.launch.xml">
+          <arg name="use_vector_map" value="true"/>
+        </include>
+      </group>
+    </group>
+
+    <!-- publish empty objects instead of object recognition module -->
+    <group unless="$(var perception/enable_object_recognition)">
+      <push-ros-namespace namespace="object_recognition"/>
+      <node pkg="dummy_perception_publisher" exec="empty_objects_publisher" name="empty_objects_publisher" output="screen">
+        <remap from="~/output/objects" to="/perception/object_recognition/objects"/>
+      </node>
+    </group>
+
+    <group if="$(var perception/enable_elevation_map)">
+      <push-ros-namespace namespace="obstacle_segmentation/elevation_map"/>
+      <node pkg="elevation_map_loader" exec="elevation_map_loader" name="elevation_map_loader" output="screen">
+        <remap from="output/elevation_map" to="map"/>
+        <remap from="input/pointcloud_map" to="/map/pointcloud_map"/>
+        <remap from="input/vector_map" to="/map/vector_map"/>
+        <param name="use_lane_filter" value="false"/>
+        <param name="use_inpaint" value="true"/>
+        <param name="inpaint_radius" value="1.0"/>
+        <param name="param_file_path" value="$(var tier4_perception_launch_param_path)/obstacle_segmentation/ground_segmentation/elevation_map_parameters.yaml"/>
+        <param name="elevation_map_directory" value="$(find-pkg-share elevation_map_loader)/data/elevation_maps"/>
+        <param name="use_elevation_map_cloud_publisher" value="false"/>
+      </node>
+    </group>
+
+    <!-- traffic light module -->
+    <group if="$(var perception/enable_traffic_light)">
+      <push-ros-namespace namespace="traffic_light_recognition"/>
+      <include file="$(find-pkg-share tier4_perception_launch)/launch/traffic_light_recognition/traffic_light.launch.xml"/>
+    </group>
+  </group>
+
+  <!-- Dummy localization -->
+  <group if="$(var launch_dummy_localization)">
+    <include file="$(find-pkg-share pose_initializer)/launch/pose_initializer.launch.xml">
+      <arg name="gnss_enabled" value="false"/>
+      <arg name="ndt_enabled" value="false"/>
+      <arg name="stop_check_enabled" value="false"/>
+    </include>
+  </group>
+
+  <!-- Simulator model -->
+  <group if="$(var launch_dummy_vehicle)">
+    <arg name="simulator_model" default="$(var vehicle_model_pkg)/config/simulator_model.param.yaml" description="path to the file of simulator model"/>
+    <include file="$(find-pkg-share simple_planning_simulator)/launch/simple_planning_simulator.launch.py">
+      <arg name="vehicle_info_param_file" value="$(var vehicle_info_param_file)"/>
+      <arg name="simulator_model_param_file" value="$(var simulator_model)"/>
+      <arg name="initial_engage_state" value="$(var initial_engage_state)"/>
+    </include>
+  </group>
+</launch>
