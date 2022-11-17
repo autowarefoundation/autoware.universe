@@ -221,7 +221,7 @@ void GyroOdometer::callbackImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_m
   gyro.twist.twist.angular.x = transformed_angular_velocity.vector.x;
   gyro.twist.twist.angular.y = transformed_angular_velocity.vector.y;
   gyro.twist.twist.angular.z = transformed_angular_velocity.vector.z;
-  // TODO: The following assumes that the covariance does not change before and after the
+  // TODO(kminoda): The following assumes that the covariance does not change before and after the
   // transformation
   gyro.twist.covariance[3 * 6 + 3] = imu_msg_ptr->angular_velocity_covariance[0 * 3 + 0];
   gyro.twist.covariance[4 * 6 + 4] = imu_msg_ptr->angular_velocity_covariance[1 * 3 + 1];
