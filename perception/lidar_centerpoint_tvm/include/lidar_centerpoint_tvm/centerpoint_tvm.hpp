@@ -15,7 +15,6 @@
 #ifndef LIDAR_CENTERPOINT_TVM__CENTERPOINT_TVM_HPP_
 #define LIDAR_CENTERPOINT_TVM__CENTERPOINT_TVM_HPP_
 
-#include <common/types.hpp>
 #include <lidar_centerpoint_tvm/postprocess/generate_detected_boxes.hpp>
 #include <lidar_centerpoint_tvm/preprocess/voxel_generator.hpp>
 #include <lidar_centerpoint_tvm/visibility_control.hpp>
@@ -41,8 +40,6 @@ namespace perception
 {
 namespace lidar_centerpoint_tvm
 {
-using autoware::common::types::bool8_t;
-using autoware::common::types::float32_t;
 using tvm_utility::pipeline::TVMArrayContainer;
 using tvm_utility::pipeline::TVMArrayContainerVector;
 
@@ -51,9 +48,9 @@ struct MixedInputs
   // The number of non-empty voxel
   std::size_t num_voxels;
   // The voxel features (point info in each voxel) or pillar features.
-  std::vector<float32_t> features;
+  std::vector<float> features;
   // The number of points in each voxel.
-  std::vector<float32_t> num_points_per_voxel;
+  std::vector<float> num_points_per_voxel;
   // The index from voxel number to its 3D position
   std::vector<int32_t> coords;
 };
@@ -81,12 +78,12 @@ private:
   const int64_t encoder_in_feature_size;
   const int64_t datatype_bytes;
   const CenterPointConfig config_detail;
-  std::vector<float32_t> encoder_in_features;
+  std::vector<float> encoder_in_features;
   TVMArrayContainer output;
 };
 
 class LIDAR_CENTERPOINT_TVM_LOCAL VoxelEncoderPostProcessor
-: public tvm_utility::pipeline::PostProcessor<std::shared_ptr<std::vector<float32_t>>>
+: public tvm_utility::pipeline::PostProcessor<std::shared_ptr<std::vector<float>>>
 {
 public:
   /// \brief Constructor.
@@ -97,13 +94,13 @@ public:
   /// \brief Copy the inference result.
   /// \param[in] input The result of the voxel_encoder inference engine.
   /// \return The inferred data.
-  std::shared_ptr<std::vector<float32_t>> schedule(const TVMArrayContainerVector & input);
+  std::shared_ptr<std::vector<float>> schedule(const TVMArrayContainerVector & input);
 
 private:
   const int64_t max_voxel_size;
   const int64_t encoder_out_feature_size;
   const int64_t datatype_bytes;
-  std::shared_ptr<std::vector<float32_t>> pillar_features;
+  std::shared_ptr<std::vector<float>> pillar_features;
 };
 
 class LIDAR_CENTERPOINT_TVM_LOCAL BackboneNeckHeadPreProcessor
@@ -129,7 +126,7 @@ private:
   const int64_t input_width;
   const int64_t datatype_bytes;
   const CenterPointConfig config_detail;
-  std::vector<float32_t> spatial_features;
+  std::vector<float> spatial_features;
   TVMArrayContainer output;
 };
 
@@ -152,12 +149,12 @@ public:
 private:
   const int64_t datatype_bytes;
   const CenterPointConfig config_detail;
-  std::vector<float32_t> head_out_heatmap;
-  std::vector<float32_t> head_out_offset;
-  std::vector<float32_t> head_out_z;
-  std::vector<float32_t> head_out_dim;
-  std::vector<float32_t> head_out_rot;
-  std::vector<float32_t> head_out_vel;
+  std::vector<float> head_out_heatmap;
+  std::vector<float> head_out_offset;
+  std::vector<float> head_out_z;
+  std::vector<float> head_out_dim;
+  std::vector<float> head_out_rot;
+  std::vector<float> head_out_vel;
 };
 
 class LIDAR_CENTERPOINT_TVM_PUBLIC CenterPointTVM
@@ -171,7 +168,7 @@ public:
 
   ~CenterPointTVM();
 
-  bool8_t detect(
+  bool detect(
     const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg, const tf2_ros::Buffer & tf_buffer,
     std::vector<Box3D> & det_boxes3d);
 
@@ -207,9 +204,9 @@ protected:
 
   CenterPointConfig config_;
   std::size_t num_voxels_{0};
-  std::shared_ptr<std::vector<float32_t>> voxels_;
+  std::shared_ptr<std::vector<float>> voxels_;
   std::shared_ptr<std::vector<int32_t>> coordinates_;
-  std::shared_ptr<std::vector<float32_t>> num_points_per_voxel_;
+  std::shared_ptr<std::vector<float>> num_points_per_voxel_;
 };
 
 }  // namespace lidar_centerpoint_tvm

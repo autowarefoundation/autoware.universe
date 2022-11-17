@@ -31,9 +31,9 @@ namespace lidar_centerpoint_tvm
 {
 
 void generateFeatures_worker(
-  const std::vector<float32_t> & voxel_features, const std::vector<float32_t> & voxel_num_points,
+  const std::vector<float> & voxel_features, const std::vector<float> & voxel_num_points,
   const std::vector<int32_t> & coords, const std::size_t num_voxels,
-  const CenterPointConfig & config, std::vector<float32_t> & features, std::size_t thread_idx,
+  const CenterPointConfig & config, std::vector<float> & features, std::size_t thread_idx,
   std::size_t pillars_per_thread)
 {
   for (std::size_t idx = 0; idx < pillars_per_thread; idx++) {
@@ -41,7 +41,7 @@ void generateFeatures_worker(
     if (pillar_idx >= num_voxels) return;
 
     // voxel/pillar information
-    float32_t points_sum[3] = {0.0, 0.0, 0.0};  // sum of x, y, z in the voxel
+    float points_sum[3] = {0.0, 0.0, 0.0};  // sum of x, y, z in the voxel
     int32_t coordinate[3] = {
       coords[pillar_idx * 3], coords[pillar_idx * 3 + 1],
       coords[pillar_idx * 3 + 2]};                            // 3D position(z,y,x) of the voxel
@@ -58,12 +58,12 @@ void generateFeatures_worker(
     }
 
     // calculate voxel mean
-    float32_t mean[3] = {
+    float mean[3] = {
       points_sum[0] / points_count, points_sum[1] / points_count, points_sum[2] / points_count};
     // calculate offset
-    float32_t x_offset = coordinate[2] * config.voxel_size_x_ + config.offset_x_;
-    float32_t y_offset = coordinate[1] * config.voxel_size_y_ + config.offset_y_;
-    // float32_t z_offset = coordinate[0] * config.voxel_size_z_ + config.offset_z_;
+    float x_offset = coordinate[2] * config.voxel_size_x_ + config.offset_x_;
+    float y_offset = coordinate[1] * config.voxel_size_y_ + config.offset_y_;
+    // float z_offset = coordinate[0] * config.voxel_size_z_ + config.offset_z_;
 
     // build the encoder_in_features
     for (std::size_t i = 0; i < config.max_point_in_voxel_size_; i++) {
@@ -105,9 +105,9 @@ void generateFeatures_worker(
 }
 
 void generateFeatures(
-  const std::vector<float32_t> & voxel_features, const std::vector<float32_t> & voxel_num_points,
+  const std::vector<float> & voxel_features, const std::vector<float> & voxel_num_points,
   const std::vector<int32_t> & coords, const std::size_t num_voxels,
-  const CenterPointConfig & config, std::vector<float32_t> & features)
+  const CenterPointConfig & config, std::vector<float> & features)
 {
   // voxel_features (float): max_voxel_size*max_point_in_voxel_size*point_feature_size
   // voxel_num_points (int): max_voxel_size

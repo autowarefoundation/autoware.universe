@@ -15,7 +15,6 @@
 #ifndef LIDAR_CENTERPOINT_TVM__NODE_HPP_
 #define LIDAR_CENTERPOINT_TVM__NODE_HPP_
 
-#include <common/types.hpp>
 #include <lidar_centerpoint_tvm/centerpoint_tvm.hpp>
 #include <lidar_centerpoint_tvm/visibility_control.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -38,11 +37,6 @@ namespace perception
 {
 namespace lidar_centerpoint_tvm
 {
-
-using autoware::common::types::bool8_t;
-using autoware::common::types::float32_t;
-using autoware::common::types::float64_t;
-
 class LIDAR_CENTERPOINT_TVM_PUBLIC LidarCenterPointTVMNode : public rclcpp::Node
 {
 public:
@@ -57,10 +51,10 @@ private:
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_sub_;
   rclcpp::Publisher<autoware_auto_perception_msgs::msg::DetectedObjects>::SharedPtr objects_pub_;
 
-  float32_t score_threshold_{0.0};
+  float score_threshold_{0.0};
   std::vector<std::string> class_names_;
-  bool8_t rename_car_to_truck_and_bus_{false};
-  bool8_t has_twist_{false};
+  bool rename_car_to_truck_and_bus_{false};
+  bool has_twist_{false};
 
   std::unique_ptr<CenterPointTVM> detector_ptr_{nullptr};
 

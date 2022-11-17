@@ -35,16 +35,16 @@ namespace lidar_centerpoint_tvm
 
 struct is_score_greater
 {
-  explicit is_score_greater(float32_t t) : t_(t) {}
-  bool8_t operator()(const Box3D & b) { return b.score > t_; }
+  explicit is_score_greater(float t) : t_(t) {}
+  bool operator()(const Box3D & b) { return b.score > t_; }
 
 private:
-  float32_t t_{0.0};
+  float t_{0.0};
 };
 
 struct is_kept
 {
-  bool8_t operator()(const bool8_t keep) { return keep; }
+  bool operator()(const bool keep) { return keep; }
 };
 
 struct score_greater
@@ -52,12 +52,12 @@ struct score_greater
   bool operator()(const Box3D & lb, const Box3D & rb) { return lb.score > rb.score; }
 };
 
-inline float32_t sigmoid(float32_t x) { return 1.0f / (1.0f + expf(-x)); }
+inline float sigmoid(float x) { return 1.0f / (1.0f + expf(-x)); }
 
 void generateBoxes3D_worker(
-  const std::vector<float32_t> & out_heatmap, const std::vector<float32_t> & out_offset,
-  const std::vector<float32_t> & out_z, const std::vector<float32_t> & out_dim,
-  const std::vector<float32_t> & out_rot, const std::vector<float32_t> & out_vel,
+  const std::vector<float> & out_heatmap, const std::vector<float> & out_offset,
+  const std::vector<float> & out_z, const std::vector<float> & out_dim,
+  const std::vector<float> & out_rot, const std::vector<float> & out_vel,
   const CenterPointConfig & config, std::vector<Box3D> & boxes3d, std::size_t thread_idx,
   std::size_t grids_per_thread)
 {
@@ -75,30 +75,30 @@ void generateBoxes3D_worker(
     const auto xi = grid_idx % config.down_grid_size_x_;
 
     int32_t label = -1;
-    float32_t max_score = -1;
+    float max_score = -1;
     for (std::size_t ci = 0; ci < config.class_size_; ci++) {
-      float32_t score = sigmoid(out_heatmap[down_grid_size * ci + grid_idx]);
+      float score = sigmoid(out_heatmap[down_grid_size * ci + grid_idx]);
       if (score > max_score) {
         label = ci;
         max_score = score;
       }
     }
 
-    const float32_t offset_x = out_offset[down_grid_size * 0 + grid_idx];
-    const float32_t offset_y = out_offset[down_grid_size * 1 + grid_idx];
-    const float32_t x =
+    const float offset_x = out_offset[down_grid_size * 0 + grid_idx];
+    const float offset_y = out_offset[down_grid_size * 1 + grid_idx];
+    const float x =
       config.voxel_size_x_ * config.downsample_factor_ * (xi + offset_x) + config.range_min_x_;
-    const float32_t y =
+    const float y =
       config.voxel_size_y_ * config.downsample_factor_ * (yi + offset_y) + config.range_min_y_;
-    const float32_t z = out_z[grid_idx];
-    const float32_t w = out_dim[down_grid_size * 0 + grid_idx];
-    const float32_t l = out_dim[down_grid_size * 1 + grid_idx];
-    const float32_t h = out_dim[down_grid_size * 2 + grid_idx];
-    const float32_t yaw_sin = out_rot[down_grid_size * 0 + grid_idx];
-    const float32_t yaw_cos = out_rot[down_grid_size * 1 + grid_idx];
-    const float32_t yaw_norm = sqrtf(yaw_sin * yaw_sin + yaw_cos * yaw_cos);
-    const float32_t vel_x = out_vel[down_grid_size * 0 + grid_idx];
-    const float32_t vel_y = out_vel[down_grid_size * 1 + grid_idx];
+    const float z = out_z[grid_idx];
+    const float w = out_dim[down_grid_size * 0 + grid_idx];
+    const float l = out_dim[down_grid_size * 1 + grid_idx];
+    const float h = out_dim[down_grid_size * 2 + grid_idx];
+    const float yaw_sin = out_rot[down_grid_size * 0 + grid_idx];
+    const float yaw_cos = out_rot[down_grid_size * 1 + grid_idx];
+    const float yaw_norm = sqrtf(yaw_sin * yaw_sin + yaw_cos * yaw_cos);
+    const float vel_x = out_vel[down_grid_size * 0 + grid_idx];
+    const float vel_y = out_vel[down_grid_size * 1 + grid_idx];
 
     boxes3d[grid_idx].label = label;
     boxes3d[grid_idx].score = yaw_norm >= config.yaw_norm_threshold_ ? max_score : 0.f;
@@ -115,9 +115,9 @@ void generateBoxes3D_worker(
 }
 
 void generateDetectedBoxes3D(
-  const std::vector<float32_t> & out_heatmap, const std::vector<float32_t> & out_offset,
-  const std::vector<float32_t> & out_z, const std::vector<float32_t> & out_dim,
-  const std::vector<float32_t> & out_rot, const std::vector<float32_t> & out_vel,
+  const std::vector<float> & out_heatmap, const std::vector<float> & out_offset,
+  const std::vector<float> & out_z, const std::vector<float> & out_dim,
+  const std::vector<float> & out_rot, const std::vector<float> & out_vel,
   const CenterPointConfig & config, std::vector<Box3D> & det_boxes3d)
 {
   std::vector<std::thread> threadPool;
@@ -151,7 +151,7 @@ void generateDetectedBoxes3D(
   std::sort(det_boxes3d_nonms.begin(), det_boxes3d_nonms.end(), score_greater());
 
   // supress by NMS
-  std::vector<bool8_t> final_keep_mask(num_det_boxes3d);
+  std::vector<bool> final_keep_mask(num_det_boxes3d);
   const auto num_final_det_boxes3d =
     circleNMS(det_boxes3d_nonms, config.circle_nms_dist_threshold_, final_keep_mask);
 

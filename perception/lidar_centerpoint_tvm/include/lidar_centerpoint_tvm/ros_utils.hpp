@@ -15,7 +15,6 @@
 #ifndef LIDAR_CENTERPOINT_TVM__ROS_UTILS_HPP_
 #define LIDAR_CENTERPOINT_TVM__ROS_UTILS_HPP_
 
-#include <common/types.hpp>
 #include <lidar_centerpoint_tvm/utils.hpp>
 
 #include <autoware_auto_perception_msgs/msg/detected_object_kinematics.hpp>
@@ -32,18 +31,14 @@ namespace perception
 {
 namespace lidar_centerpoint_tvm
 {
-
-using autoware::common::types::bool8_t;
-using autoware::common::types::float32_t;
-
 void box3DToDetectedObject(
   const Box3D & box3d, const std::vector<std::string> & class_names,
-  const bool8_t rename_car_to_truck_and_bus, const bool8_t has_twist,
+  const bool rename_car_to_truck_and_bus, const bool has_twist,
   autoware_auto_perception_msgs::msg::DetectedObject & obj);
 
 uint8_t getSemanticType(const std::string & class_name);
 
-bool8_t isCarLikeVehicleLabel(const uint8_t label);
+bool isCarLikeVehicleLabel(const uint8_t label);
 
 }  // namespace lidar_centerpoint_tvm
 }  // namespace perception

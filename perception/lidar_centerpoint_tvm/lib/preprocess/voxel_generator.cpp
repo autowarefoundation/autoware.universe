@@ -42,15 +42,15 @@ VoxelGeneratorTemplate::VoxelGeneratorTemplate(
   recip_voxel_size_[2] = 1 / config.voxel_size_z_;
 }
 
-bool8_t VoxelGeneratorTemplate::enqueuePointCloud(
+bool VoxelGeneratorTemplate::enqueuePointCloud(
   const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg, const tf2_ros::Buffer & tf_buffer)
 {
   return pd_ptr_->enqueuePointCloud(input_pointcloud_msg, tf_buffer);
 }
 
 std::size_t VoxelGenerator::pointsToVoxels(
-  std::vector<float32_t> & voxels, std::vector<int32_t> & coordinates,
-  std::vector<float32_t> & num_points_per_voxel)
+  std::vector<float> & voxels, std::vector<int32_t> & coordinates,
+  std::vector<float> & num_points_per_voxel)
 {
   // voxels (float): (max_voxel_size * max_point_in_voxel_size * point_feature_size), point info in
   // each voxel coordinates (int): (max_voxel_size * point_dim_size), the index from voxel to its 3D
@@ -61,11 +61,11 @@ std::size_t VoxelGenerator::pointsToVoxels(
     grid_size, -1);  // the index from 3D position to the voxel id
 
   std::size_t voxel_cnt = 0;  // @return
-  std::vector<float32_t> point;
+  std::vector<float> point;
   point.resize(config_.point_feature_size_);
-  std::vector<float32_t> coord_zyx;  // record which grid the zyx coord of current point belong to
+  std::vector<float> coord_zyx;  // record which grid the zyx coord of current point belong to
   coord_zyx.resize(config_.point_dim_size_);
-  bool8_t out_of_range;
+  bool out_of_range;
   std::size_t point_cnt;
   int32_t c, coord_idx, voxel_idx;
   Eigen::Vector3f point_current, point_past;
@@ -75,10 +75,10 @@ std::size_t VoxelGenerator::pointsToVoxels(
     auto pc_msg = pc_cache_iter->pointcloud_msg;
     auto affine_past2current =
       pd_ptr_->getAffineWorldToCurrent() * pc_cache_iter->affine_past2world;
-    float32_t timelag = static_cast<float32_t>(
+    float timelag = static_cast<float>(
       pd_ptr_->getCurrentTimestamp() - rclcpp::Time(pc_msg.header.stamp).seconds());
 
-    for (sensor_msgs::PointCloud2ConstIterator<float32_t> x_iter(pc_msg, "x"), y_iter(pc_msg, "y"),
+    for (sensor_msgs::PointCloud2ConstIterator<float> x_iter(pc_msg, "x"), y_iter(pc_msg, "y"),
          z_iter(pc_msg, "z");
          x_iter != x_iter.end(); ++x_iter, ++y_iter, ++z_iter) {
       point_past << *x_iter, *y_iter, *z_iter;

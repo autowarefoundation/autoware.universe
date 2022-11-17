@@ -15,7 +15,6 @@
 #ifndef LIDAR_CENTERPOINT_TVM__PREPROCESS__GENERATE_FEATURES_HPP_
 #define LIDAR_CENTERPOINT_TVM__PREPROCESS__GENERATE_FEATURES_HPP_
 
-#include <common/types.hpp>
 #include <lidar_centerpoint_tvm/centerpoint_config.hpp>
 
 #include <vector>
@@ -26,14 +25,10 @@ namespace perception
 {
 namespace lidar_centerpoint_tvm
 {
-
-using autoware::common::types::bool8_t;
-using autoware::common::types::float32_t;
-
 void generateFeatures(
-  const std::vector<float32_t> & voxel_features, const std::vector<float32_t> & voxel_num_points,
+  const std::vector<float> & voxel_features, const std::vector<float> & voxel_num_points,
   const std::vector<int32_t> & coords, const std::size_t num_voxels,
-  const CenterPointConfig & config, std::vector<float32_t> & features);
+  const CenterPointConfig & config, std::vector<float> & features);
 
 }  // namespace lidar_centerpoint_tvm
 }  // namespace perception

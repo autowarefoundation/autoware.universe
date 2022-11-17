@@ -15,8 +15,6 @@
 #ifndef LIDAR_CENTERPOINT_TVM__CENTERPOINT_CONFIG_HPP_
 #define LIDAR_CENTERPOINT_TVM__CENTERPOINT_CONFIG_HPP_
 
-#include <common/types.hpp>
-
 #include <cstddef>
 #include <vector>
 
@@ -26,36 +24,31 @@ namespace perception
 {
 namespace lidar_centerpoint_tvm
 {
-
-using autoware::common::types::bool8_t;
-using autoware::common::types::float32_t;
-using autoware::common::types::float64_t;
-
 class CenterPointConfig
 {
 public:
   explicit CenterPointConfig(
-    const std::size_t class_size, const float32_t point_feature_size,
-    const std::size_t max_voxel_size, const std::vector<float64_t> & point_cloud_range,
-    const std::vector<float64_t> & voxel_size, const std::size_t downsample_factor,
-    const std::size_t encoder_in_feature_size, const float32_t score_threshold,
-    const float32_t circle_nms_dist_threshold, const float32_t yaw_norm_threshold)
+    const std::size_t class_size, const float point_feature_size,
+    const std::size_t max_voxel_size, const std::vector<double> & point_cloud_range,
+    const std::vector<double> & voxel_size, const std::size_t downsample_factor,
+    const std::size_t encoder_in_feature_size, const float score_threshold,
+    const float circle_nms_dist_threshold, const float yaw_norm_threshold)
   {
     class_size_ = class_size;
     point_feature_size_ = point_feature_size;
     max_voxel_size_ = max_voxel_size;
     if (point_cloud_range.size() == 6) {
-      range_min_x_ = static_cast<float32_t>(point_cloud_range[0]);
-      range_min_y_ = static_cast<float32_t>(point_cloud_range[1]);
-      range_min_z_ = static_cast<float32_t>(point_cloud_range[2]);
-      range_max_x_ = static_cast<float32_t>(point_cloud_range[3]);
-      range_max_y_ = static_cast<float32_t>(point_cloud_range[4]);
-      range_max_z_ = static_cast<float32_t>(point_cloud_range[5]);
+      range_min_x_ = static_cast<float>(point_cloud_range[0]);
+      range_min_y_ = static_cast<float>(point_cloud_range[1]);
+      range_min_z_ = static_cast<float>(point_cloud_range[2]);
+      range_max_x_ = static_cast<float>(point_cloud_range[3]);
+      range_max_y_ = static_cast<float>(point_cloud_range[4]);
+      range_max_z_ = static_cast<float>(point_cloud_range[5]);
     }
     if (voxel_size.size() == 3) {
-      voxel_size_x_ = static_cast<float32_t>(voxel_size[0]);
-      voxel_size_y_ = static_cast<float32_t>(voxel_size[1]);
-      voxel_size_z_ = static_cast<float32_t>(voxel_size[2]);
+      voxel_size_x_ = static_cast<float>(voxel_size[0]);
+      voxel_size_y_ = static_cast<float>(voxel_size[1]);
+      voxel_size_z_ = static_cast<float>(voxel_size[2]);
     }
     downsample_factor_ = downsample_factor;
     encoder_in_feature_size_ = encoder_in_feature_size;
@@ -88,15 +81,15 @@ public:
   std::size_t point_feature_size_{4};    // x, y, z and timelag
   std::size_t max_point_in_voxel_size_{32};
   std::size_t max_voxel_size_{40000};
-  float32_t range_min_x_{-89.6f};
-  float32_t range_min_y_{-89.6f};
-  float32_t range_min_z_{-3.0f};
-  float32_t range_max_x_{89.6f};
-  float32_t range_max_y_{89.6f};
-  float32_t range_max_z_{5.0f};
-  float32_t voxel_size_x_{0.32f};
-  float32_t voxel_size_y_{0.32f};
-  float32_t voxel_size_z_{8.0f};
+  float range_min_x_{-89.6f};
+  float range_min_y_{-89.6f};
+  float range_min_z_{-3.0f};
+  float range_max_x_{89.6f};
+  float range_max_y_{89.6f};
+  float range_max_z_{5.0f};
+  float voxel_size_x_{0.32f};
+  float voxel_size_y_{0.32f};
+  float voxel_size_z_{8.0f};
 
   // network params
   const std::size_t batch_size_{1};
@@ -111,17 +104,17 @@ public:
   const std::size_t head_out_vel_size_{2};
 
   // post-process params
-  float32_t score_threshold_{0.35f};
-  float32_t circle_nms_dist_threshold_{1.5f};
-  float32_t yaw_norm_threshold_{0.0f};
+  float score_threshold_{0.35f};
+  float circle_nms_dist_threshold_{1.5f};
+  float yaw_norm_threshold_{0.0f};
 
   // calculated params
   std::size_t grid_size_x_ = (range_max_x_ - range_min_x_) / voxel_size_x_;
   std::size_t grid_size_y_ = (range_max_y_ - range_min_y_) / voxel_size_y_;
   std::size_t grid_size_z_ = (range_max_z_ - range_min_z_) / voxel_size_z_;
-  float32_t offset_x_ = range_min_x_ + voxel_size_x_ / 2;
-  float32_t offset_y_ = range_min_y_ + voxel_size_y_ / 2;
-  float32_t offset_z_ = range_min_z_ + voxel_size_z_ / 2;
+  float offset_x_ = range_min_x_ + voxel_size_x_ / 2;
+  float offset_y_ = range_min_y_ + voxel_size_y_ / 2;
+  float offset_z_ = range_min_z_ + voxel_size_z_ / 2;
   std::size_t down_grid_size_x_ = grid_size_x_ / downsample_factor_;
   std::size_t down_grid_size_y_ = grid_size_y_ / downsample_factor_;
 };

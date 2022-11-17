@@ -53,7 +53,7 @@ boost::optional<geometry_msgs::msg::Transform> getTransform(
 Eigen::Affine3f transformToEigen(const geometry_msgs::msg::Transform & t)
 {
   Eigen::Affine3f a;
-  a.matrix() = tf2::transformToEigen(t).matrix().cast<float32_t>();
+  a.matrix() = tf2::transformToEigen(t).matrix().cast<float>();
   return a;
 }
 
@@ -72,7 +72,7 @@ PointCloudDensification::PointCloudDensification(const DensificationParam & para
 {
 }
 
-bool8_t PointCloudDensification::enqueuePointCloud(
+bool PointCloudDensification::enqueuePointCloud(
   const sensor_msgs::msg::PointCloud2 & pointcloud_msg, const tf2_ros::Buffer & tf_buffer)
 {
   const auto header = pointcloud_msg.header;

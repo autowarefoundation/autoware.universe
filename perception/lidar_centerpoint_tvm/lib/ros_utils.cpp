@@ -28,7 +28,7 @@ using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
 
 void box3DToDetectedObject(
   const Box3D & box3d, const std::vector<std::string> & class_names,
-  const bool8_t rename_car_to_truck_and_bus, const bool8_t has_twist,
+  const bool rename_car_to_truck_and_bus, const bool has_twist,
   autoware_auto_perception_msgs::msg::DetectedObject & obj)
 {
   // TODO(yukke42): the value of classification confidence of DNN, not probability.
@@ -45,8 +45,8 @@ void box3DToDetectedObject(
       rclcpp::get_logger("lidar_centerpoint"), "Unexpected label: UNKNOWN is set.");
   }
 
-  float32_t l = box3d.length;
-  float32_t w = box3d.width;
+  float l = box3d.length;
+  float w = box3d.width;
   if (classification.label == Label::CAR && rename_car_to_truck_and_bus) {
     // Note: object size is referred from multi_object_tracker
     if ((w * l > 2.2 * 5.5) && (w * l <= 2.5 * 7.9)) {
@@ -65,7 +65,7 @@ void box3DToDetectedObject(
 
   // pose and shape
   // mmdet3d yaw format to ros yaw format
-  float32_t yaw = -box3d.yaw - tier4_autoware_utils::pi / 2;
+  float yaw = -box3d.yaw - tier4_autoware_utils::pi / 2;
   obj.kinematics.pose_with_covariance.pose.position =
     tier4_autoware_utils::createPoint(box3d.x, box3d.y, box3d.z);
   obj.kinematics.pose_with_covariance.pose.orientation =
@@ -76,8 +76,8 @@ void box3DToDetectedObject(
 
   // twist
   if (has_twist) {
-    float32_t vel_x = box3d.vel_x;
-    float32_t vel_y = box3d.vel_y;
+    float vel_x = box3d.vel_x;
+    float vel_y = box3d.vel_y;
     geometry_msgs::msg::Twist twist;
     twist.linear.x = std::sqrt(std::pow(vel_x, 2) + std::pow(vel_y, 2));
     twist.angular.z = 2 * (std::atan2(vel_y, vel_x) - yaw);
@@ -107,7 +107,7 @@ uint8_t getSemanticType(const std::string & class_name)
   }
 }
 
-bool8_t isCarLikeVehicleLabel(const uint8_t label)
+bool isCarLikeVehicleLabel(const uint8_t label)
 {
   return label == Label::CAR || label == Label::TRUCK || label == Label::BUS ||
          label == Label::TRAILER;

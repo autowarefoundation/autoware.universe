@@ -31,9 +31,9 @@ namespace lidar_centerpoint_tvm
 {
 
 void scatterFeatures_worker(
-  const std::vector<float32_t> & pillar_features, const std::vector<int32_t> & coords,
+  const std::vector<float> & pillar_features, const std::vector<int32_t> & coords,
   const std::size_t num_pillars, const CenterPointConfig & config,
-  std::vector<float32_t> & scattered_features, std::size_t thread_idx,
+  std::vector<float> & scattered_features, std::size_t thread_idx,
   std::size_t pillars_per_thread)
 {
   // pillar_features: shape of max_num_pillars * encoder_out_feature_size
@@ -64,9 +64,9 @@ void scatterFeatures_worker(
 }
 
 void scatterFeatures(
-  const std::vector<float32_t> & pillar_features, const std::vector<int32_t> & coords,
+  const std::vector<float> & pillar_features, const std::vector<int32_t> & coords,
   const std::size_t num_pillars, const CenterPointConfig & config,
-  std::vector<float32_t> & scattered_features)
+  std::vector<float> & scattered_features)
 {
   std::vector<std::thread> threadPool;
   std::size_t pillars_per_thread = divup(config.max_voxel_size_, THREAD_NUM_SCATTER);

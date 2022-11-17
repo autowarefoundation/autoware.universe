@@ -15,7 +15,6 @@
 #ifndef LIDAR_CENTERPOINT_TVM__POSTPROCESS__GENERATE_DETECTED_BOXES_HPP_
 #define LIDAR_CENTERPOINT_TVM__POSTPROCESS__GENERATE_DETECTED_BOXES_HPP_
 
-#include <common/types.hpp>
 #include <lidar_centerpoint_tvm/centerpoint_config.hpp>
 #include <lidar_centerpoint_tvm/utils.hpp>
 
@@ -27,14 +26,10 @@ namespace perception
 {
 namespace lidar_centerpoint_tvm
 {
-
-using autoware::common::types::bool8_t;
-using autoware::common::types::float32_t;
-
 void generateDetectedBoxes3D(
-  const std::vector<float32_t> & out_heatmap, const std::vector<float32_t> & out_offset,
-  const std::vector<float32_t> & out_z, const std::vector<float32_t> & out_dim,
-  const std::vector<float32_t> & out_rot, const std::vector<float32_t> & out_vel,
+  const std::vector<float> & out_heatmap, const std::vector<float> & out_offset,
+  const std::vector<float> & out_z, const std::vector<float> & out_dim,
+  const std::vector<float> & out_rot, const std::vector<float> & out_vel,
   const CenterPointConfig & config, std::vector<Box3D> & det_boxes3d);
 
 }  // namespace lidar_centerpoint_tvm

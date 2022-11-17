@@ -15,7 +15,6 @@
 #ifndef LIDAR_CENTERPOINT_TVM__PREPROCESS__VOXEL_GENERATOR_HPP_
 #define LIDAR_CENTERPOINT_TVM__PREPROCESS__VOXEL_GENERATOR_HPP_
 
-#include <common/types.hpp>
 #include <lidar_centerpoint_tvm/centerpoint_config.hpp>
 #include <lidar_centerpoint_tvm/preprocess/pointcloud_densification.hpp>
 #include <lidar_centerpoint_tvm/visibility_control.hpp>
@@ -31,10 +30,6 @@ namespace perception
 {
 namespace lidar_centerpoint_tvm
 {
-
-using autoware::common::types::bool8_t;
-using autoware::common::types::float32_t;
-
 class LIDAR_CENTERPOINT_TVM_LOCAL VoxelGeneratorTemplate
 {
 public:
@@ -42,19 +37,19 @@ public:
     const DensificationParam & param, const CenterPointConfig & config);
 
   virtual std::size_t pointsToVoxels(
-    std::vector<float32_t> & voxels, std::vector<int32_t> & coordinates,
-    std::vector<float32_t> & num_points_per_voxel) = 0;
+    std::vector<float> & voxels, std::vector<int32_t> & coordinates,
+    std::vector<float> & num_points_per_voxel) = 0;
 
-  bool8_t enqueuePointCloud(
+  bool enqueuePointCloud(
     const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg, const tf2_ros::Buffer & tf_buffer);
 
 protected:
   std::unique_ptr<PointCloudDensification> pd_ptr_{nullptr};
 
   CenterPointConfig config_;
-  std::array<float32_t, 6> range_;
+  std::array<float, 6> range_;
   std::array<int32_t, 3> grid_size_;
-  std::array<float32_t, 3> recip_voxel_size_;
+  std::array<float, 3> recip_voxel_size_;
 };
 
 class LIDAR_CENTERPOINT_TVM_LOCAL VoxelGenerator : public VoxelGeneratorTemplate
@@ -71,8 +66,8 @@ public:
    * @return The number of non-empty voxel
    */
   std::size_t pointsToVoxels(
-    std::vector<float32_t> & voxels, std::vector<int32_t> & coordinates,
-    std::vector<float32_t> & num_points_per_voxel) override;
+    std::vector<float> & voxels, std::vector<int32_t> & coordinates,
+    std::vector<float> & num_points_per_voxel) override;
 };
 
 }  // namespace lidar_centerpoint_tvm

@@ -82,10 +82,10 @@ VoxelEncoderPostProcessor::VoxelEncoderPostProcessor(
   datatype_bytes(config.tvm_dtype_bits / 8)
 {
   pillar_features =
-    std::make_shared<std::vector<std::float32_t>>(max_voxel_size * encoder_out_feature_size, 0);
+    std::make_shared<std::vector<float>>(max_voxel_size * encoder_out_feature_size, 0);
 }
 
-std::vector<float32_t> VoxelEncoderPostProcessor::schedule(const TVMArrayContainerVector & input)
+std::vector<float> VoxelEncoderPostProcessor::schedule(const TVMArrayContainerVector & input)
 {
   TVMArrayCopyToBytes(
     input[0].getArray(), pillar_features->data(), pillar_features->size() * datatype_bytes);
@@ -203,12 +203,12 @@ void CenterPointTVM::initPtr()
     config_.max_voxel_size_ * config_.max_point_in_voxel_size_ * config_.point_feature_size_;
   const auto coordinates_size = config_.max_voxel_size_ * config_.point_dim_size_;
 
-  voxels_ = std::make_shared<std::vector<float32_t>>(voxels_size);
+  voxels_ = std::make_shared<std::vector<float>>(voxels_size);
   coordinates_ = std::make_shared<std::vector<int32_t>>(coordinates_size);
-  num_points_per_voxel_ = std::make_shared<std::vector<float32_t>>(config_.max_voxel_size_);
+  num_points_per_voxel_ = std::make_shared<std::vector<float>>(config_.max_voxel_size_);
 }
 
-bool8_t CenterPointTVM::detect(
+bool CenterPointTVM::detect(
   const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg, const tf2_ros::Buffer & tf_buffer,
   std::vector<Box3D> & det_boxes3d)
 {
@@ -236,10 +236,10 @@ bool8_t CenterPointTVM::detect(
   return true;
 }
 
-bool8_t CenterPointTVM::preprocess(
+bool CenterPointTVM::preprocess(
   const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg, const tf2_ros::Buffer & tf_buffer)
 {
-  bool8_t is_success = vg_ptr_->enqueuePointCloud(input_pointcloud_msg, tf_buffer);
+  bool is_success = vg_ptr_->enqueuePointCloud(input_pointcloud_msg, tf_buffer);
   if (!is_success) {
     return false;
   }

@@ -15,7 +15,6 @@
 #ifndef LIDAR_CENTERPOINT_TVM__POSTPROCESS__CIRCLE_NMS_HPP_
 #define LIDAR_CENTERPOINT_TVM__POSTPROCESS__CIRCLE_NMS_HPP_
 
-#include <common/types.hpp>
 #include <lidar_centerpoint_tvm/utils.hpp>
 
 #include <vector>
@@ -26,14 +25,10 @@ namespace perception
 {
 namespace lidar_centerpoint_tvm
 {
-
-using autoware::common::types::bool8_t;
-using autoware::common::types::float32_t;
-
 // Non-maximum suppression (NMS) uses the distance on the xy plane instead of
 // intersection over union (IoU) to suppress overlapped objects.
 std::size_t circleNMS(
-  std::vector<Box3D> & boxes3d, const float32_t dist_thresh, std::vector<bool8_t> & keep_mask);
+  std::vector<Box3D> & boxes3d, const float dist_thresh, std::vector<bool> & keep_mask);
 
 }  // namespace lidar_centerpoint_tvm
 }  // namespace perception

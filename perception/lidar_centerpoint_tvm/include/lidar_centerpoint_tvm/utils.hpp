@@ -15,8 +15,6 @@
 #ifndef LIDAR_CENTERPOINT_TVM__UTILS_HPP_
 #define LIDAR_CENTERPOINT_TVM__UTILS_HPP_
 
-#include <common/types.hpp>
-
 #include <cstddef>
 
 namespace autoware
@@ -25,23 +23,20 @@ namespace perception
 {
 namespace lidar_centerpoint_tvm
 {
-
-using autoware::common::types::float32_t;
-
 struct Box3D
 {
   // initializer not allowed for __shared__ variable
   int32_t label;
-  float32_t score;
-  float32_t x;
-  float32_t y;
-  float32_t z;
-  float32_t length;
-  float32_t width;
-  float32_t height;
-  float32_t yaw;
-  float32_t vel_x;
-  float32_t vel_y;
+  float score;
+  float x;
+  float y;
+  float z;
+  float length;
+  float width;
+  float height;
+  float yaw;
+  float vel_x;
+  float vel_y;
 };
 
 std::size_t divup(const std::size_t a, const std::size_t b);

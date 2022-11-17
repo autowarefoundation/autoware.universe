@@ -40,12 +40,12 @@ namespace lidar_centerpoint_tvm
 LidarCenterPointTVMNode::LidarCenterPointTVMNode(const rclcpp::NodeOptions & node_options)
 : Node("lidar_centerpoint_tvm", node_options), tf_buffer_(this->get_clock())
 {
-  const float32_t score_threshold =
-    static_cast<float32_t>(this->declare_parameter<float64_t>("score_threshold", 0.35));
-  const float32_t circle_nms_dist_threshold =
-    static_cast<float32_t>(this->declare_parameter<float64_t>("circle_nms_dist_threshold", 1.5));
-  const float32_t yaw_norm_threshold =
-    static_cast<float32_t>(this->declare_parameter<float64_t>("yaw_norm_threshold", 0.0));
+  const float score_threshold =
+    static_cast<float>(this->declare_parameter<double>("score_threshold", 0.35));
+  const float circle_nms_dist_threshold =
+    static_cast<float>(this->declare_parameter<double>("circle_nms_dist_threshold", 1.5));
+  const float yaw_norm_threshold =
+    static_cast<float>(this->declare_parameter<double>("yaw_norm_threshold", 0.0));
   const std::string densification_world_frame_id =
     this->declare_parameter("densification_world_frame_id", "map");
   const int32_t densification_num_past_frames =
@@ -60,8 +60,8 @@ LidarCenterPointTVMNode::LidarCenterPointTVMNode(const rclcpp::NodeOptions & nod
   const std::size_t max_voxel_size =
     static_cast<std::size_t>(this->declare_parameter<std::int64_t>("max_voxel_size"));
   const auto point_cloud_range =
-    this->declare_parameter<std::vector<float64_t>>("point_cloud_range");
-  const auto voxel_size = this->declare_parameter<std::vector<float64_t>>("voxel_size");
+    this->declare_parameter<std::vector<double>>("point_cloud_range");
+  const auto voxel_size = this->declare_parameter<std::vector<double>>("voxel_size");
   const std::size_t downsample_factor =
     static_cast<std::size_t>(this->declare_parameter<std::int64_t>("downsample_factor"));
   const std::size_t encoder_in_feature_size =
@@ -117,7 +117,7 @@ void LidarCenterPointTVMNode::pointCloudCallback(
   }
 
   std::vector<Box3D> det_boxes3d;
-  bool8_t is_success = detector_ptr_->detect(*input_pointcloud_msg, tf_buffer_, det_boxes3d);
+  bool is_success = detector_ptr_->detect(*input_pointcloud_msg, tf_buffer_, det_boxes3d);
   if (!is_success) {
     return;
   }
@@ -136,8 +136,8 @@ void LidarCenterPointTVMNode::pointCloudCallback(
 
   // add processing time for debug
   if (debug_publisher_ptr_ && stop_watch_ptr_) {
-    const float64_t cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
-    const float64_t processing_time_ms = stop_watch_ptr_->toc("processing_time", true);
+    const double cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
+    const double processing_time_ms = stop_watch_ptr_->toc("processing_time", true);
     debug_publisher_ptr_->publish<tier4_debug_msgs::msg::Float64Stamped>(
       "debug/cyclic_time_ms", cyclic_time_ms);
     debug_publisher_ptr_->publish<tier4_debug_msgs::msg::Float64Stamped>(

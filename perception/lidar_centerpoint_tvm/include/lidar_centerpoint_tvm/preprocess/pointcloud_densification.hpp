@@ -15,7 +15,6 @@
 #ifndef LIDAR_CENTERPOINT_TVM__PREPROCESS__POINTCLOUD_DENSIFICATION_HPP_
 #define LIDAR_CENTERPOINT_TVM__PREPROCESS__POINTCLOUD_DENSIFICATION_HPP_
 
-#include <common/types.hpp>
 #include <lidar_centerpoint_tvm/visibility_control.hpp>
 
 #include <tf2_ros/buffer.h>
@@ -36,11 +35,6 @@ namespace perception
 {
 namespace lidar_centerpoint_tvm
 {
-
-using autoware::common::types::bool8_t;
-using autoware::common::types::float32_t;
-using autoware::common::types::float64_t;
-
 class LIDAR_CENTERPOINT_TVM_LOCAL DensificationParam
 {
 public:
@@ -69,16 +63,16 @@ class LIDAR_CENTERPOINT_TVM_LOCAL PointCloudDensification
 public:
   explicit PointCloudDensification(const DensificationParam & param);
 
-  bool8_t enqueuePointCloud(
+  bool enqueuePointCloud(
     const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg, const tf2_ros::Buffer & tf_buffer);
 
-  float64_t getCurrentTimestamp() const { return current_timestamp_; }
+  double getCurrentTimestamp() const { return current_timestamp_; }
   Eigen::Affine3f getAffineWorldToCurrent() const { return affine_world2current_; }
   std::list<PointCloudWithTransform>::iterator getPointCloudCacheIter()
   {
     return pointcloud_cache_.begin();
   }
-  bool8_t isCacheEnd(std::list<PointCloudWithTransform>::iterator iter)
+  bool isCacheEnd(std::list<PointCloudWithTransform>::iterator iter)
   {
     return iter == pointcloud_cache_.end();
   }
@@ -88,7 +82,7 @@ private:
   void dequeue();
 
   DensificationParam param_;
-  float64_t current_timestamp_{0.0};
+  double current_timestamp_{0.0};
   Eigen::Affine3f affine_world2current_;
   std::list<PointCloudWithTransform> pointcloud_cache_;
 };
