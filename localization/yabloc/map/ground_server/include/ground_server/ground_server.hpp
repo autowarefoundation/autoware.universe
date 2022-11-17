@@ -4,12 +4,12 @@
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
+#include <ground_msgs/srv/ground.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <std_msgs/msg/float32.hpp>
 #include <std_msgs/msg/float32_multi_array.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
-#include <vmvl_msgs/srv/ground.hpp>
 
 #include <boost/circular_buffer.hpp>
 
@@ -26,7 +26,7 @@ class GroundServer : public rclcpp::Node
 public:
   using GroundPlane = vml_common::GroundPlane;
   using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
-  using Ground = vmvl_msgs::srv::Ground;
+  using Ground = ground_msgs::srv::Ground;
   using Pose = geometry_msgs::msg::Pose;
   using PoseStamped = geometry_msgs::msg::PoseStamped;
   using Float32 = std_msgs::msg::Float32;

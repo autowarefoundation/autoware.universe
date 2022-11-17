@@ -21,6 +21,17 @@
   <depend>vmvl_validation</depend>
   <depend>particle_initializer</depend>
 
+  <!--imgproc -->
+  <depend>dynamic_remover</depend>
+  <depend>graph_segment</depend>
+  <depend>lsd</depend>
+  <depend>segment_accumulator</depend>
+  <depend>segment_filter</depend>
+  <depend>undistort</depend>
+  <!--map -->
+  <depend>ground_server</depend>
+  <depend>ll2_decomposer</depend>
+
   <export>
     <build_type>ament_cmake</build_type>
   </export>

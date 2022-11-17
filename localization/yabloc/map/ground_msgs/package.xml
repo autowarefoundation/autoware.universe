@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>vmvl_msgs</name>
+  <name>ground_msgs</name>
   <version>0.1.0</version>
   <description>The vmvl_msgs package</description>
   <maintainer email="todo@todo.todo">todo</maintainer>

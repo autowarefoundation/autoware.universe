@@ -1,4 +1,4 @@
-#include "vmvl_map/ll2_util.hpp"
+#include "ll2_decomposer/from_bin_msg.hpp"
 
 #include <lanelet2_extension/regulatory_elements/detection_area.hpp>
 
