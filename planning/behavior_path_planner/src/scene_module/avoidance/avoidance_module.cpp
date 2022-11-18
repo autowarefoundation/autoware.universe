@@ -103,17 +103,14 @@ BT::NodeStatus AvoidanceModule::updateState()
   DebugData debug;
   const auto avoid_data = calcAvoidancePlanningData(debug);
   const bool has_avoidance_target = !avoid_data.target_objects.empty();
+
   if (!is_plan_running && !has_avoidance_target) {
+    current_state_ = BT::NodeStatus::SUCCESS;
+  } else if (!has_avoidance_target && parameters_->enable_update_path_when_object_is_gone) {
+    // if dynamic objects are removed on path, change current state to reset path
     current_state_ = BT::NodeStatus::SUCCESS;
   } else {
     current_state_ = BT::NodeStatus::RUNNING;
-  }
-
-  // if dynamic objects are removed on path, change current state and reset path
-  if (
-    planner_data_->dynamic_object->objects.size() == 0 &&
-    parameters_->enable_update_path_when_object_is_gone) {
-    current_state_ = BT::NodeStatus::SUCCESS;
   }
 
   DEBUG_PRINT(
