@@ -2,7 +2,7 @@
 #ifndef GNSS_PARTILCE_CORRECTOR__GNSS_PARTICLE_CORRECTOR_HPP_
 #define GNSS_PARTILCE_CORRECTOR__GNSS_PARTICLE_CORRECTOR_HPP_
 
-#include <eigen3/Eigen/StdVector>
+#include <Eigen/Core>
 #include <modularized_particle_filter/correction/abst_corrector.hpp>
 
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
@@ -11,7 +11,7 @@
 #include <ublox_msgs/msg/nav_pvt.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
-namespace modularized_particle_filter
+namespace pcdless::modularized_particle_filter
 {
 class GnssParticleCorrector : public AbstCorrector
 {
@@ -40,18 +40,18 @@ private:
 
   Eigen::Vector3f last_mean_position_;
 
-  void onUblox(const NavPVT::ConstSharedPtr ublox_msg);
-  void onPose(const PoseCovStamped::ConstSharedPtr pose_msg);
+  void on_ublox(const NavPVT::ConstSharedPtr ublox_msg);
+  void on_pose(const PoseCovStamped::ConstSharedPtr pose_msg);
 
-  ParticleArray weightParticles(
+  ParticleArray weight_particles(
     const ParticleArray & predicted_particles, const Eigen::Vector3f & pose, float sigma,
     float flat_radius);
 
-  float normalPdf(float x, float mu, float sigma);
-  float inverseNormalPdf(float prob, bool fixed) const;
+  float normal_pdf(float x, float mu, float sigma);
+  float inverse_normal_pdf(float prob, bool fixed) const;
 
-  void publishMarker(const Eigen::Vector3f & position, bool fixed);
+  void publish_marker(const Eigen::Vector3f & position, bool fixed);
 };
-}  // namespace modularized_particle_filter
+}  // namespace pcdless::modularized_particle_filter
 
 #endif  // GNSS_PARTILCE_CORRECTOR__GNSS_PARTICLE_CORRECTOR_HPP_
