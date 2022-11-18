@@ -6,7 +6,7 @@
 #include <opencv4/opencv2/imgproc.hpp>
 #include <pcdless_common/color.hpp>
 
-namespace modularized_particle_filter
+namespace pcdless::modularized_particle_filter
 {
 float Area::unit_length_ = -1;
 
@@ -21,9 +21,9 @@ HierarchicalCostMap::HierarchicalCostMap(rclcpp::Node * node)
   gamma_converter.reset(gamma);
 }
 
-cv::Point2i HierarchicalCostMap::toCvPoint(const Area & area, const Eigen::Vector2f p)
+cv::Point2i HierarchicalCostMap::to_cv_point(const Area & area, const Eigen::Vector2f p)
 {
-  Eigen::Vector2f relative = p - area.realScale();
+  Eigen::Vector2f relative = p - area.real_scale();
   float px = relative.x() / max_range_ * image_size_;
   float py = relative.y() / max_range_ * image_size_;
   return {static_cast<int>(px), static_cast<int>(py)};
@@ -37,11 +37,11 @@ cv::Vec3b HierarchicalCostMap::at3(const Eigen::Vector2f & position)
 
   Area key(position);
   if (cost_maps_.count(key) == 0) {
-    buildMap(key);
+    build_map(key);
   }
   map_accessed_[key] = true;
 
-  cv::Point2i tmp = toCvPoint(key, position);
+  cv::Point2i tmp = to_cv_point(key, position);
   return cost_maps_.at(key).at<cv::Vec3b>(tmp);
 }
 
@@ -53,11 +53,11 @@ cv::Vec2b HierarchicalCostMap::at2(const Eigen::Vector2f & position)
 
   Area key(position);
   if (cost_maps_.count(key) == 0) {
-    buildMap(key);
+    build_map(key);
   }
   map_accessed_[key] = true;
 
-  cv::Point2i tmp = toCvPoint(key, position);
+  cv::Point2i tmp = to_cv_point(key, position);
   cv::Vec3b value = cost_maps_.at(key).at<cv::Vec3b>(tmp);
   return {value[0], value[1]};
 }
@@ -66,25 +66,25 @@ float HierarchicalCostMap::at(const Eigen::Vector2f & position)
 {
   Area key(position);
   if (cost_maps_.count(key) == 0) {
-    buildMap(key);
+    build_map(key);
   }
   map_accessed_[key] = true;
 
-  cv::Point2i tmp = toCvPoint(key, position);
+  cv::Point2i tmp = to_cv_point(key, position);
   return cost_maps_.at(key).at<cv::Vec3b>(tmp)[0];
 }
 
-void HierarchicalCostMap::setUnmappedArea(const pcl::PointCloud<pcl::PointXYZ> & polygon)
+void HierarchicalCostMap::set_unmapped_area(const pcl::PointCloud<pcl::PointXYZ> & polygon)
 {
   unmapped_polygon_ = polygon;
 }
 
-void HierarchicalCostMap::setCloud(const pcl::PointCloud<pcl::PointNormal> & cloud)
+void HierarchicalCostMap::set_cloud(const pcl::PointCloud<pcl::PointNormal> & cloud)
 {
   cloud_ = cloud;
 }
 
-void HierarchicalCostMap::buildMap(const Area & area)
+void HierarchicalCostMap::build_map(const Area & area)
 {
   if (!cloud_.has_value()) return;
 
@@ -92,7 +92,7 @@ void HierarchicalCostMap::buildMap(const Area & area)
   cv::Mat orientation = cv::Mat::zeros(cv::Size(image_size_, image_size_), CV_8UC1);
 
   auto cvPoint = [this, area](const Eigen::Vector3f & p) -> cv::Point {
-    return this->toCvPoint(area, p.topRows(2));
+    return this->to_cv_point(area, p.topRows(2));
   };
 
   for (const auto pn : cloud_.value()) {
@@ -114,10 +114,10 @@ void HierarchicalCostMap::buildMap(const Area & area)
   distance.convertTo(distance, CV_8UC1, -2.55, 255);
 
   // channel-2
-  cv::Mat whole_orientation = directCostMap(orientation, image);
+  cv::Mat whole_orientation = direct_cost_map(orientation, image);
 
   // channel-3
-  cv::Mat available_area = createAvailableAreaImage(area);
+  cv::Mat available_area = create_available_area_image(area);
 
   cv::Mat directed_cost_map;
   cv::merge(
@@ -128,10 +128,10 @@ void HierarchicalCostMap::buildMap(const Area & area)
   generated_map_history_.push_back(area);
 
   RCLCPP_INFO_STREAM(
-    logger_, "successed to build map " << area(area) << " " << area.realScale().transpose());
+    logger_, "successed to build map " << area(area) << " " << area.real_scale().transpose());
 }
 
-HierarchicalCostMap::MarkerArray HierarchicalCostMap::showMapRange() const
+HierarchicalCostMap::MarkerArray HierarchicalCostMap::show_map_range() const
 {
   MarkerArray array_msg;
 
@@ -148,9 +148,9 @@ HierarchicalCostMap::MarkerArray HierarchicalCostMap::showMapRange() const
     marker.header.frame_id = "map";
     marker.id = id++;
     marker.type = Marker::LINE_STRIP;
-    marker.color = vml_common::Color(0, 0, 1.0f, 1.0f);
+    marker.color = common::Color(0, 0, 1.0f, 1.0f);
     marker.scale.x = 0.1;
-    Eigen::Vector2f xy = area.realScale();
+    Eigen::Vector2f xy = area.real_scale();
     marker.points.push_back(gpoint(xy.x(), xy.y()));
     marker.points.push_back(gpoint(xy.x() + area.unit_length_, xy.y()));
     marker.points.push_back(gpoint(xy.x() + area.unit_length_, xy.y() + area.unit_length_));
@@ -161,7 +161,7 @@ HierarchicalCostMap::MarkerArray HierarchicalCostMap::showMapRange() const
   return array_msg;
 }
 
-cv::Mat HierarchicalCostMap::getMapImage(const Pose & pose)
+cv::Mat HierarchicalCostMap::get_map_image(const Pose & pose)
 {
   if (generated_map_history_.empty())
     return cv::Mat::zeros(cv::Size(image_size_, image_size_), CV_8UC3);
@@ -196,7 +196,7 @@ cv::Mat HierarchicalCostMap::getMapImage(const Pose & pose)
   return rgb_image;
 }
 
-void HierarchicalCostMap::eraseObsolete()
+void HierarchicalCostMap::erase_obsolete()
 {
   if (cost_maps_.size() < max_map_count_) return;
 
@@ -212,7 +212,7 @@ void HierarchicalCostMap::eraseObsolete()
   map_accessed_.clear();
 }
 
-cv::Mat HierarchicalCostMap::createAvailableAreaImage(const Area & area)
+cv::Mat HierarchicalCostMap::create_available_area_image(const Area & area)
 {
   cv::Mat available_area = cv::Mat::zeros(cv::Size(image_size_, image_size_), CV_8UC1);
   if (unmapped_polygon_.empty()) return available_area;
@@ -220,11 +220,11 @@ cv::Mat HierarchicalCostMap::createAvailableAreaImage(const Area & area)
   // TODO: Need roughly check before drawContours because it will be heavy to repeat.
   std::vector<std::vector<cv::Point2i>> contours(1);
   for (const pcl::PointXYZ & p : unmapped_polygon_) {
-    contours.front().push_back(toCvPoint(area, {p.x, p.y}));
+    contours.front().push_back(to_cv_point(area, {p.x, p.y}));
   }
 
   cv::drawContours(available_area, contours, 0, cv::Scalar::all(1), -1);
   return available_area;
 }
 
-}  // namespace modularized_particle_filter
+}  // namespace pcdless::modularized_particle_filter

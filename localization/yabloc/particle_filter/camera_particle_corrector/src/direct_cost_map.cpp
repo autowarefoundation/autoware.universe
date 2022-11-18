@@ -1,8 +1,8 @@
 #include "camera_particle_corrector/direct_cost_map.hpp"
 
-namespace modularized_particle_filter
+namespace pcdless::modularized_particle_filter
 {
-cv::Mat directCostMap(const cv::Mat & cost_map, const cv::Mat & intensity)
+cv::Mat direct_cost_map(const cv::Mat & cost_map, const cv::Mat & intensity)
 {
   constexpr int MAX_INT = std::numeric_limits<int>::max();
 
@@ -62,7 +62,7 @@ cv::Mat directCostMap(const cv::Mat & cost_map, const cv::Mat & intensity)
   return dst;
 }
 
-cv::Mat visualizeDirectionMap(const cv::Mat & cost_map)
+cv::Mat visualize_direction_map(const cv::Mat & cost_map)
 {
   cv::Mat s = 255 * cv::Mat::ones(cost_map.size(), CV_8UC1);
   cv::Mat v = 255 * cv::Mat::ones(cost_map.size(), CV_8UC1);
@@ -80,7 +80,7 @@ cv::Mat visualizeDirectionMap(const cv::Mat & cost_map)
   return rgb;
 }
 
-}  // namespace modularized_particle_filter
+}  // namespace pcdless::modularized_particle_filter
 
 // #include <opencv4/opencv2/highgui.hpp>
 

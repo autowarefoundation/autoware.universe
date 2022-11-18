@@ -11,7 +11,7 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
-namespace modularized_particle_filter
+namespace pcdless::modularized_particle_filter
 {
 class CameraParticleCorrector : public modularized_particle_filter::AbstCorrector
 {
@@ -25,18 +25,18 @@ public:
   CameraParticleCorrector();
 
 private:
-  void onLsd(const PointCloud2 & msg);
-  void onLl2(const PointCloud2 & msg);
-  void onUnmappedArea(const PointCloud2 & msg);
-  void onPose(const PoseStamped & msg);
-  void onTimer();
+  void on_lsd(const PointCloud2 & msg);
+  void on_ll2(const PointCloud2 & msg);
+  void on_unmapped_area(const PointCloud2 & msg);
+  void on_pose(const PoseStamped & msg);
+  void on_timer();
 
-  float computeScore(const LineSegment & lsd_cloud, const Eigen::Vector3f & self_position);
+  float compute_score(const LineSegment & lsd_cloud, const Eigen::Vector3f & self_position);
 
-  pcl::PointCloud<pcl::PointXYZI> evaluateCloud(
+  pcl::PointCloud<pcl::PointXYZI> evaluate_cloud(
     const LineSegment & lsd_cloud, const Eigen::Vector3f & self_position);
 
-  LineSegment transformCloud(const LineSegment & src, const Eigen::Affine3f & transform) const;
+  LineSegment transform_cloud(const LineSegment & src, const Eigen::Affine3f & transform) const;
 
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_unmapped_area_;
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_lsd_;
@@ -57,4 +57,4 @@ private:
   Eigen::Vector3f last_mean_position_;
   std::optional<PoseStamped> latest_pose_{std::nullopt};
 };
-}  // namespace modularized_particle_filter
+}  // namespace pcdless::modularized_particle_filter

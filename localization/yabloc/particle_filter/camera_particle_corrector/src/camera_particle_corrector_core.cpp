@@ -7,7 +7,7 @@
 
 #include <pcl_conversions/pcl_conversions.h>
 
-namespace modularized_particle_filter
+namespace pcdless::modularized_particle_filter
 {
 
 CameraParticleCorrector::CameraParticleCorrector()
@@ -20,16 +20,16 @@ CameraParticleCorrector::CameraParticleCorrector()
 {
   using std::placeholders::_1;
 
-  auto lsd_callback = std::bind(&CameraParticleCorrector::onLsd, this, _1);
+  auto lsd_callback = std::bind(&CameraParticleCorrector::on_lsd, this, _1);
   sub_lsd_ = create_subscription<PointCloud2>("lsd_cloud", 10, lsd_callback);
 
-  auto ll2_callback = std::bind(&CameraParticleCorrector::onLl2, this, _1);
+  auto ll2_callback = std::bind(&CameraParticleCorrector::on_ll2, this, _1);
   sub_ll2_ = create_subscription<PointCloud2>("ll2_road_marking", 10, ll2_callback);
 
-  auto unmapped_area_callback = std::bind(&CameraParticleCorrector::onUnmappedArea, this, _1);
+  auto unmapped_area_callback = std::bind(&CameraParticleCorrector::on_unmapped_area, this, _1);
   sub_unmapped_area_ = create_subscription<PointCloud2>("ll2_polygon", 10, unmapped_area_callback);
 
-  auto pose_callback = std::bind(&CameraParticleCorrector::onPose, this, _1);
+  auto pose_callback = std::bind(&CameraParticleCorrector::on_pose, this, _1);
   sub_pose_ = create_subscription<PoseStamped>("particle_pose", 10, pose_callback);
 
   pub_image_ = create_publisher<Image>("match_image", 10);
@@ -37,26 +37,26 @@ CameraParticleCorrector::CameraParticleCorrector()
   pub_scored_cloud_ = create_publisher<PointCloud2>("scored_cloud", 10);
 
   // Timer callback
-  auto cb_timer = std::bind(&CameraParticleCorrector::onTimer, this);
+  auto cb_timer = std::bind(&CameraParticleCorrector::on_timer, this);
   timer_ =
     rclcpp::create_timer(this, this->get_clock(), rclcpp::Rate(5).period(), std::move(cb_timer));
 }
 
-void CameraParticleCorrector::onPose(const PoseStamped & msg) { latest_pose_ = msg; }
+void CameraParticleCorrector::on_pose(const PoseStamped & msg) { latest_pose_ = msg; }
 
-void CameraParticleCorrector::onUnmappedArea(const PointCloud2 & msg)
+void CameraParticleCorrector::on_unmapped_area(const PointCloud2 & msg)
 {
   // TODO: This does not handle multiple polygons
   pcl::PointCloud<pcl::PointXYZ> ll2_polygon;
   pcl::fromROSMsg(msg, ll2_polygon);
-  cost_map_.setUnmappedArea(ll2_polygon);
+  cost_map_.set_unmapped_area(ll2_polygon);
   RCLCPP_INFO_STREAM(get_logger(), "Set unmapped-area into Hierarchical cost map");
 }
 
-void CameraParticleCorrector::onLsd(const PointCloud2 & lsd_msg)
+void CameraParticleCorrector::on_lsd(const PointCloud2 & lsd_msg)
 {
   const rclcpp::Time stamp = lsd_msg.header.stamp;
-  std::optional<ParticleArray> opt_array = this->getSynchronizedParticleArray(stamp);
+  std::optional<ParticleArray> opt_array = this->get_synchronized_particle_array(stamp);
 
   if (!opt_array.has_value()) return;
 
@@ -76,33 +76,34 @@ void CameraParticleCorrector::onLsd(const PointCloud2 & lsd_msg)
   ParticleArray weighted_particles = opt_array.value();
 
   for (auto & particle : weighted_particles.particles) {
-    Eigen::Affine3f transform = vml_common::pose2Affine(particle.pose);
-    LineSegment transformed_lsd = transformCloud(lsd_cloud, transform);
+    Eigen::Affine3f transform = common::pose_to_affine(particle.pose);
+    LineSegment transformed_lsd = transform_cloud(lsd_cloud, transform);
 
-    float raw_score = computeScore(transformed_lsd, transform.translation());
+    float raw_score = compute_score(transformed_lsd, transform.translation());
     particle.weight = score_convert(raw_score);
   }
 
-  cost_map_.eraseObsolete();
+  cost_map_.erase_obsolete();
 
   // NOTE:
-  Pose mean_pose = modularized_particle_filter::meanPose(weighted_particles);
-  Eigen::Vector3f mean_position = vml_common::pose2Affine(mean_pose).translation();
+  Pose meaned_pose = mean_pose(weighted_particles);
+  Eigen::Vector3f mean_position = common::pose_to_affine(meaned_pose).translation();
   if ((mean_position - last_mean_position_).squaredNorm() > 1) {
-    this->setWeightedParticleArray(weighted_particles);
+    this->set_weighted_particle_array(weighted_particles);
     last_mean_position_ = mean_position;
   } else {
     RCLCPP_INFO_STREAM(get_logger(), "Skip weighting because almost same positon");
   }
 
-  pub_marker_->publish(cost_map_.showMapRange());
+  pub_marker_->publish(cost_map_.show_map_range());
 
   // DEBUG: just visualization
   {
-    Pose mean_pose = modularized_particle_filter::meanPose(weighted_particles);
-    Eigen::Affine3f transform = vml_common::pose2Affine(mean_pose);
-    LineSegment transformed_lsd = transformCloud(lsd_cloud, transform);
-    pcl::PointCloud<pcl::PointXYZI> cloud = evaluateCloud(transformed_lsd, transform.translation());
+    Pose meaned_pose = mean_pose(weighted_particles);
+    Eigen::Affine3f transform = common::pose_to_affine(meaned_pose);
+    LineSegment transformed_lsd = transform_cloud(lsd_cloud, transform);
+    pcl::PointCloud<pcl::PointXYZI> cloud =
+      evaluate_cloud(transformed_lsd, transform.translation());
 
     pcl::PointCloud<pcl::PointXYZRGB> rgb_cloud;
     float max_score = 0;
@@ -112,30 +113,30 @@ void CameraParticleCorrector::onLsd(const PointCloud2 & lsd_msg)
     for (const auto p : cloud) {
       pcl::PointXYZRGB rgb;
       rgb.getVector3fMap() = p.getVector3fMap();
-      rgb.rgba = vml_common::color_scale::blueRed(0.5 + p.intensity / max_score * 0.5);
+      rgb.rgba = common::color_scale::blue_red(0.5 + p.intensity / max_score * 0.5);
       rgb_cloud.push_back(rgb);
     }
 
-    vml_common::publishCloud(*pub_scored_cloud_, rgb_cloud, lsd_msg.header.stamp);
+    common::publish_cloud(*pub_scored_cloud_, rgb_cloud, lsd_msg.header.stamp);
   }
 }
 
-void CameraParticleCorrector::onTimer()
+void CameraParticleCorrector::on_timer()
 {
   if (latest_pose_.has_value())
-    vml_common::publishImage(
-      *pub_image_, cost_map_.getMapImage(latest_pose_->pose), latest_pose_->header.stamp);
+    common::publish_image(
+      *pub_image_, cost_map_.get_map_image(latest_pose_->pose), latest_pose_->header.stamp);
 }
 
-void CameraParticleCorrector::onLl2(const PointCloud2 & ll2_msg)
+void CameraParticleCorrector::on_ll2(const PointCloud2 & ll2_msg)
 {
   LineSegment ll2_cloud;
   pcl::fromROSMsg(ll2_msg, ll2_cloud);
-  cost_map_.setCloud(ll2_cloud);
+  cost_map_.set_cloud(ll2_cloud);
   RCLCPP_INFO_STREAM(get_logger(), "Set LL2 cloud into Hierarchical cost map");
 }
 
-float absCos(const Eigen::Vector3f & t, float deg)
+float abs_cos(const Eigen::Vector3f & t, float deg)
 {
   Eigen::Vector2f x(t.x(), t.y());
   Eigen::Vector2f y(std::cos(deg * M_PI / 180.0), std::sin(deg * M_PI / 180.0));
@@ -143,7 +144,7 @@ float absCos(const Eigen::Vector3f & t, float deg)
   return std::abs(x.dot(y));
 }
 
-float CameraParticleCorrector::computeScore(
+float CameraParticleCorrector::compute_score(
   const LineSegment & lsd_cloud, const Eigen::Vector3f & self_position)
 {
   float score = 0;
@@ -159,13 +160,13 @@ float CameraParticleCorrector::computeScore(
       float gain = std::exp(-far_weight_gain_ * squared_norm);
 
       cv::Vec2b v2 = cost_map_.at2(p.topRows(2));
-      score += gain * (absCos(t1, v2[1]) * v2[0] + score_offset_);
+      score += gain * (abs_cos(t1, v2[1]) * v2[0] + score_offset_);
     }
   }
   return score;
 }
 
-pcl::PointCloud<pcl::PointXYZI> CameraParticleCorrector::evaluateCloud(
+pcl::PointCloud<pcl::PointXYZI> CameraParticleCorrector::evaluate_cloud(
   const LineSegment & lsd_cloud, const Eigen::Vector3f & self_position)
 {
   pcl::PointCloud<pcl::PointXYZI> cloud;
@@ -181,7 +182,7 @@ pcl::PointCloud<pcl::PointXYZI> CameraParticleCorrector::evaluateCloud(
       float gain = std::exp(-far_weight_gain_ * squared_norm);
 
       cv::Vec2b v2 = cost_map_.at2(p.topRows(2));
-      float score = gain * (absCos(t1, v2[1]) * v2[0] + score_offset_);
+      float score = gain * (abs_cos(t1, v2[1]) * v2[0] + score_offset_);
 
       pcl::PointXYZI xyzi(score);
       xyzi.getVector3fMap() = p;
@@ -191,7 +192,7 @@ pcl::PointCloud<pcl::PointXYZI> CameraParticleCorrector::evaluateCloud(
   return cloud;
 }
 
-CameraParticleCorrector::LineSegment CameraParticleCorrector::transformCloud(
+CameraParticleCorrector::LineSegment CameraParticleCorrector::transform_cloud(
   const LineSegment & src, const Eigen::Affine3f & transform) const
 {
   LineSegment dst;
@@ -206,4 +207,4 @@ CameraParticleCorrector::LineSegment CameraParticleCorrector::transformCloud(
   return dst;
 }
 
-}  // namespace modularized_particle_filter
+}  // namespace pcdless::modularized_particle_filter

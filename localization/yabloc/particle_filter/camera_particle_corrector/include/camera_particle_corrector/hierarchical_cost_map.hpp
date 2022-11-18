@@ -11,21 +11,21 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
-namespace modularized_particle_filter
+namespace pcdless::modularized_particle_filter
 {
 struct Area
 {
   Area() {}
   Area(const Eigen::Vector2f & v)
   {
-    if (unit_length_ < 0) throwError();
+    if (unit_length_ < 0) throw_error();
     x = static_cast<long>(std::floor(v.x() / unit_length_));
     y = static_cast<long>(std::floor(v.y() / unit_length_));
   }
 
-  Eigen::Vector2f realScale() const { return {x * unit_length_, y * unit_length_}; };
+  Eigen::Vector2f real_scale() const { return {x * unit_length_, y * unit_length_}; };
 
-  void throwError() const
+  void throw_error() const
   {
     std::cerr << "Are::unit_length_ is not initialized" << std::endl;
     exit(EXIT_FAILURE);
@@ -57,18 +57,18 @@ public:
 
   HierarchicalCostMap(rclcpp::Node * node);
 
-  void setCloud(const pcl::PointCloud<pcl::PointNormal> & cloud);
-  void setUnmappedArea(const pcl::PointCloud<pcl::PointXYZ> & polygon);
+  void set_cloud(const pcl::PointCloud<pcl::PointNormal> & cloud);
+  void set_unmapped_area(const pcl::PointCloud<pcl::PointXYZ> & polygon);
 
   float at(const Eigen::Vector2f & position);
   cv::Vec2b at2(const Eigen::Vector2f & position);
   cv::Vec3b at3(const Eigen::Vector2f & position);
 
-  MarkerArray showMapRange() const;
+  MarkerArray show_map_range() const;
 
-  cv::Mat getMapImage(const Pose & pose);
+  cv::Mat get_map_image(const Pose & pose);
 
-  void eraseObsolete();
+  void erase_obsolete();
 
 private:
   const float max_range_;
@@ -76,7 +76,7 @@ private:
   const size_t max_map_count_;
   rclcpp::Logger logger_;
 
-  vml_common::GammaConverter gamma_converter{4.0f};
+  common::GammaConverter gamma_converter{4.0f};
 
   std::unordered_map<Area, bool, Area> map_accessed_;
 
@@ -85,9 +85,9 @@ private:
   pcl::PointCloud<pcl::PointXYZ> unmapped_polygon_;
   std::unordered_map<Area, cv::Mat, Area> cost_maps_;
 
-  cv::Point toCvPoint(const Area & are, const Eigen::Vector2f);
-  void buildMap(const Area & area);
+  cv::Point to_cv_point(const Area & are, const Eigen::Vector2f);
+  void build_map(const Area & area);
 
-  cv::Mat createAvailableAreaImage(const Area & area);
+  cv::Mat create_available_area_image(const Area & area);
 };
-}  // namespace modularized_particle_filter
+}  // namespace pcdless::modularized_particle_filter
