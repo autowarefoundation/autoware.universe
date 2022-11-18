@@ -10,6 +10,8 @@
 #include <pcl/point_cloud.h>
 #include <tf2_ros/transform_broadcaster.h>
 
+namespace pcdless::path_monitor
+{
 class Fix2Pose : public rclcpp::Node
 {
 public:
@@ -21,7 +23,7 @@ public:
     using std::placeholders::_1;
 
     // Subscriber
-    auto fix_cb = std::bind(&Fix2Pose::fixCallback, this, _1);
+    auto fix_cb = std::bind(&Fix2Pose::on_fix, this, _1);
     sub_fix_ = create_subscription<NavSatFix>("fix_topic", 10, fix_cb);
 
     // Publisher
@@ -42,7 +44,7 @@ private:
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_pose_stamped_;
   std::optional<geometry_msgs::msg::Pose> ground_pose_{std::nullopt};
 
-  void publishTf(const geometry_msgs::msg::PoseStamped & pose, const rclcpp::Time &)
+  void publish_tf(const geometry_msgs::msg::PoseStamped & pose, const rclcpp::Time &)
   {
     geometry_msgs::msg::TransformStamped t;
 
@@ -60,7 +62,7 @@ private:
     tf_broadcaster_->sendTransform(t);
   }
 
-  void callGroundService(const Eigen::Vector3f & xyz)
+  void call_ground_service(const Eigen::Vector3f & xyz)
   {
     auto request = std::make_shared<Ground::Request>();
     request->point.x = xyz.x();
@@ -72,10 +74,10 @@ private:
     auto result = client_->async_send_request(request, cb_ground);
   }
 
-  void fixCallback(const sensor_msgs::msg::NavSatFix & msg)
+  void on_fix(const sensor_msgs::msg::NavSatFix & msg)
   {
-    Eigen::Vector3d mgrs = vml_common::fix2Mgrs(msg);
-    callGroundService(mgrs.cast<float>());
+    Eigen::Vector3d mgrs = common::fix_to_mgrs(msg);
+    call_ground_service(mgrs.cast<float>());
 
     if (!ground_pose_.has_value()) return;
     float height = ground_pose_->position.z;
@@ -96,14 +98,15 @@ private:
 
     pub_pose_stamped_->publish(pose);
 
-    publishTf(pose, msg.header.stamp);
+    publish_tf(pose, msg.header.stamp);
   }
 };
 
+}  // namespace pcdless::path_monitor
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<Fix2Pose>());
+  rclcpp::spin(std::make_shared<pcdless::path_monitor::Fix2Pose>());
   rclcpp::shutdown();
   return 0;
 }

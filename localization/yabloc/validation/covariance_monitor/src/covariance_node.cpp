@@ -5,25 +5,25 @@
 #include <iomanip>
 #include <sstream>
 
-namespace vmvl_validation
+namespace pcdless::covariance_monitor
 {
 CovarianceMonitor::CovarianceMonitor() : Node("covariance_monitor")
 {
   using std::placeholders::_1, std::placeholders::_2;
-  auto cb_synchro = std::bind(&CovarianceMonitor::particleAndPose, this, _1, _2);
-  synchro_subscriber_ = std::make_shared<SynchroSubscriber<ParticleArray, PoseStamped>>(
+  auto cb_synchro = std::bind(&CovarianceMonitor::particle_and_pose, this, _1, _2);
+  synchro_subscriber_ = std::make_shared<common::SynchroSubscriber<ParticleArray, PoseStamped>>(
     this, "particles", "particle_pose");
-  synchro_subscriber_->setCallback(cb_synchro);
+  synchro_subscriber_->set_callback(cb_synchro);
 
   pub_diagnostic_ = create_publisher<String>("cov_diag", 10);
   pub_pose_cov_stamped_ = create_publisher<PoseCovStamped>("pose_with_cov", 10);
 }
 
-void CovarianceMonitor::particleAndPose(const ParticleArray & particles, const PoseStamped & pose)
+void CovarianceMonitor::particle_and_pose(const ParticleArray & particles, const PoseStamped & pose)
 {
   auto ori = pose.pose.orientation;
   Eigen::Quaternionf orientation(ori.w, ori.x, ori.y, ori.z);
-  Eigen::Vector3f std = computeStd(particles, orientation);
+  Eigen::Vector3f std = compute_std(particles, orientation);
 
   std::streamsize default_precision = std::cout.precision();
 
@@ -33,14 +33,14 @@ void CovarianceMonitor::particleAndPose(const ParticleArray & particles, const P
   ss << "std: " << std::fixed << std::setprecision(2) << std.x() << ", " << std.y() << ", "
      << std.z() << std::setprecision(default_precision) << std::endl;
 
-  publishPoseCovStamped(pose, std.cwiseAbs2());
+  publish_pose_cov_stamped(pose, std.cwiseAbs2());
 
   String msg;
   msg.data = ss.str();
   pub_diagnostic_->publish(msg);
 }
 
-void CovarianceMonitor::publishPoseCovStamped(
+void CovarianceMonitor::publish_pose_cov_stamped(
   const PoseStamped & pose, const Eigen::Vector3f & covariance)
 {
   PoseCovStamped msg;
@@ -52,7 +52,7 @@ void CovarianceMonitor::publishPoseCovStamped(
   pub_pose_cov_stamped_->publish(msg);
 }
 
-Eigen::Vector3f CovarianceMonitor::computeStd(
+Eigen::Vector3f CovarianceMonitor::compute_std(
   const ParticleArray & array, const Eigen::Quaternionf & orientation) const
 {
   if (array.particles.empty()) return Eigen::Vector3f::Zero();
@@ -60,14 +60,14 @@ Eigen::Vector3f CovarianceMonitor::computeStd(
   float invN = 1.f / array.particles.size();
   Eigen::Vector3f mean = Eigen::Vector3f::Zero();
   for (const Particle & p : array.particles) {
-    Eigen::Affine3f affine = vml_common::pose2Affine(p.pose);
+    Eigen::Affine3f affine = common::pose_to_affine(p.pose);
     mean += affine.translation();
   }
   mean *= invN;
 
   Eigen::Matrix3f sigma = Eigen::Matrix3f::Zero();
   for (const Particle & p : array.particles) {
-    Eigen::Affine3f affine = vml_common::pose2Affine(p.pose);
+    Eigen::Affine3f affine = common::pose_to_affine(p.pose);
     Eigen::Vector3f d = affine.translation() - mean;
     d = orientation.conjugate() * d;
     sigma += (d * d.transpose()) * invN;
@@ -76,12 +76,12 @@ Eigen::Vector3f CovarianceMonitor::computeStd(
   return sigma.diagonal().cwiseMax(1e-4f).cwiseSqrt();
 }
 
-}  // namespace vmvl_validation
+}  // namespace pcdless::covariance_monitor
 
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<vmvl_validation::CovarianceMonitor>());
+  rclcpp::spin(std::make_shared<pcdless::covariance_monitor::CovarianceMonitor>());
   rclcpp::shutdown();
   return 0;
 }

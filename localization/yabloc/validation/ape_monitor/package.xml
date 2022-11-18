@@ -11,10 +11,11 @@
 
   <depend>rclcpp</depend>
   <depend>std_msgs</depend>
-  <depend>pcdless_common</depend>
   <depend>rosbag2</depend>
   <depend>rosbag2_cpp</depend>
   <depend>nav_msgs</depend>
+
+  <depend>pcdless_common</depend>
   <depend>modularized_particle_filter_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>

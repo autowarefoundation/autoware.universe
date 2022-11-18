@@ -7,7 +7,7 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <std_msgs/msg/string.hpp>
 
-namespace vmvl_validation
+namespace pcdless::ape_monitor
 {
 class AbsolutePoseError : public rclcpp::Node
 {
@@ -32,8 +32,8 @@ private:
   rclcpp::Subscription<PoseCovStamped>::SharedPtr sub_pose_cov_stamped_;
   std::vector<Reference> references_;
 
-  Eigen::Vector2f computeApe(const Reference & ref, const PoseCovStamped & pose_cov) const;
-  void poseCallback(const PoseCovStamped & pose_cov);
-  void loadReferenceRosbag(const std::string & bag_file);
+  Eigen::Vector2f compute_ape(const Reference & ref, const PoseCovStamped & pose_cov) const;
+  void on_pose(const PoseCovStamped & pose_cov);
+  void load_reference_rosbag(const std::string & bag_file);
 };
-}  // namespace vmvl_validation
+}  // namespace pcdless::ape_monitor

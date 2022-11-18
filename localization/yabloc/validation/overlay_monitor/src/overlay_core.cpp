@@ -11,16 +11,16 @@
 
 #include <pcl_conversions/pcl_conversions.h>
 
-namespace vmvl_validation
+namespace pcdless::overlay
 {
 Overlay::Overlay() : Node("overlay"), tf_subscriber_(get_clock()), pose_buffer_{40}
 {
   using std::placeholders::_1;
 
   // Subscriber
-  auto cb_info = std::bind(&Overlay::infoCallback, this, _1);
-  auto cb_image = std::bind(&Overlay::imageCallback, this, _1);
-  auto cb_lsd = std::bind(&Overlay::lsdCallback, this, _1);
+  auto cb_info = std::bind(&Overlay::on_info, this, _1);
+  auto cb_image = std::bind(&Overlay::on_image, this, _1);
+  auto cb_lsd = std::bind(&Overlay::on_lsd, this, _1);
   auto cb_pose = [this](const PoseStamped & msg) -> void { pose_buffer_.push_back(msg); };
   auto cb_ground = [this](const Float32Array & msg) -> void { ground_plane_.set(msg); };
 
@@ -41,15 +41,15 @@ Overlay::Overlay() : Node("overlay"), tf_subscriber_(get_clock()), pose_buffer_{
   pub_image_ = create_publisher<sensor_msgs::msg::Image>("overlay_image", 10);
 }
 
-void Overlay::infoCallback(const CameraInfo & msg)
+void Overlay::on_info(const CameraInfo & msg)
 {
   info_ = msg;
   camera_extrinsic_ = tf_subscriber_(info_->header.frame_id, "base_link");
 }
 
-void Overlay::imageCallback(const sensor_msgs::msg::Image & msg)
+void Overlay::on_image(const sensor_msgs::msg::Image & msg)
 {
-  cv::Mat image = vml_common::decompress2CvMat(msg);
+  cv::Mat image = common::decompress_to_cv_mat(msg);
   const rclcpp::Time stamp = msg.header.stamp;
 
   // Search synchronized pose
@@ -69,10 +69,10 @@ void Overlay::imageCallback(const sensor_msgs::msg::Image & msg)
     get_logger(), "dt: " << min_dt << " image:" << stamp.nanoseconds()
                          << " latest_pose:" << latest_pose_stamp.nanoseconds());
 
-  drawOverlay(image, synched_pose.pose, stamp);
+  draw_overlay(image, synched_pose.pose, stamp);
 }
 
-void Overlay::lsdCallback(const PointCloud2 & msg)
+void Overlay::on_lsd(const PointCloud2 & msg)
 {
   const rclcpp::Time stamp = msg.header.stamp;
 
@@ -92,23 +92,23 @@ void Overlay::lsdCallback(const PointCloud2 & msg)
 
   LineSegments lsd_cloud;
   pcl::fromROSMsg(msg, lsd_cloud);
-  makeVisMarker(lsd_cloud, synched_pose.pose, stamp);
+  make_vis_marker(lsd_cloud, synched_pose.pose, stamp);
 }
 
-void Overlay::drawOverlay(const cv::Mat & image, const Pose & pose, const rclcpp::Time & stamp)
+void Overlay::draw_overlay(const cv::Mat & image, const Pose & pose, const rclcpp::Time & stamp)
 {
   if (ll2_cloud_.empty()) return;
 
   cv::Mat overlayed_image = cv::Mat::zeros(image.size(), CV_8UC3);
-  drawOverlayLineSegments(overlayed_image, pose, extractNaerLineSegments(pose, ll2_cloud_));
-  drawOverlayLineSegments(overlayed_image, pose, extractNaerLineSegments(pose, sign_board_));
+  draw_overlay_line_segments(overlayed_image, pose, extract_naer_line_segments(pose, ll2_cloud_));
+  draw_overlay_line_segments(overlayed_image, pose, extract_naer_line_segments(pose, sign_board_));
 
   cv::Mat show_image;
   cv::addWeighted(image, 0.8, overlayed_image, 0.8, 1, show_image);
-  vml_common::publishImage(*pub_image_, show_image, stamp);
+  common::publish_image(*pub_image_, show_image, stamp);
 }
 
-void Overlay::drawOverlayLineSegments(
+void Overlay::draw_overlay_line_segments(
   cv::Mat & image, const Pose & pose, const LineSegments & near_segments)
 {
   if (!camera_extrinsic_.has_value()) return;
@@ -116,7 +116,7 @@ void Overlay::drawOverlayLineSegments(
     Eigen::Map<Eigen::Matrix<double, 3, 3> >(info_->k.data()).cast<float>().transpose();
   Eigen::Affine3f T = camera_extrinsic_.value();
 
-  Eigen::Affine3f transform = ground_plane_.alignWithSlope(vml_common::pose2Affine(pose));
+  Eigen::Affine3f transform = ground_plane_.align_with_slope(common::pose_to_affine(pose));
 
   auto projectLineSegment =
     [K, T, transform](
@@ -154,7 +154,8 @@ void Overlay::drawOverlayLineSegments(
   }
 }
 
-void Overlay::makeVisMarker(const LineSegments & ls, const Pose & pose, const rclcpp::Time & stamp)
+void Overlay::make_vis_marker(
+  const LineSegments & ls, const Pose & pose, const rclcpp::Time & stamp)
 {
   Marker marker;
   marker.type = Marker::LINE_LIST;
@@ -181,7 +182,7 @@ void Overlay::makeVisMarker(const LineSegments & ls, const Pose & pose, const rc
   pub_vis_->publish(marker);
 }
 
-Overlay::LineSegments Overlay::extractNaerLineSegments(
+Overlay::LineSegments Overlay::extract_naer_line_segments(
   const Pose & pose, const LineSegments & linesegments)
 {
   Eigen::Vector3f pose_vector;
@@ -214,4 +215,4 @@ Overlay::LineSegments Overlay::extractNaerLineSegments(
   return near_linestrings;
 }
 
-}  // namespace vmvl_validation
+}  // namespace pcdless::overlay

@@ -18,7 +18,7 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
-namespace vmvl_validation
+namespace pcdless::overlay
 {
 class Overlay : public rclcpp::Node
 {
@@ -35,8 +35,8 @@ public:
   Overlay();
 
 private:
-  vml_common::StaticTfSubscriber tf_subscriber_;
-  vml_common::GroundPlane ground_plane_;
+  common::StaticTfSubscriber tf_subscriber_;
+  common::GroundPlane ground_plane_;
 
   rclcpp::Publisher<Image>::SharedPtr pub_image_;
   rclcpp::Subscription<PoseStamped>::SharedPtr sub_pose_;
@@ -54,16 +54,16 @@ private:
   LineSegments ll2_cloud_, sign_board_;
   boost::circular_buffer<PoseStamped> pose_buffer_;
 
-  void infoCallback(const CameraInfo & msg);
-  void imageCallback(const Image & msg);
-  void lsdCallback(const PointCloud2 & msg);
+  void on_info(const CameraInfo & msg);
+  void on_image(const Image & msg);
+  void on_lsd(const PointCloud2 & msg);
 
-  LineSegments extractNaerLineSegments(const Pose & pose, const LineSegments & linesegments);
+  LineSegments extract_naer_line_segments(const Pose & pose, const LineSegments & linesegments);
 
-  void drawOverlay(const cv::Mat & image, const Pose & pose, const rclcpp::Time & stamp);
-  void drawOverlayLineSegments(
+  void draw_overlay(const cv::Mat & image, const Pose & pose, const rclcpp::Time & stamp);
+  void draw_overlay_line_segments(
     cv::Mat & image, const Pose & pose, const LineSegments & linesegments);
 
-  void makeVisMarker(const LineSegments & ls, const Pose & pose, const rclcpp::Time & stamp);
+  void make_vis_marker(const LineSegments & ls, const Pose & pose, const rclcpp::Time & stamp);
 };
-}  // namespace vmvl_validation
+}  // namespace pcdless::overlay

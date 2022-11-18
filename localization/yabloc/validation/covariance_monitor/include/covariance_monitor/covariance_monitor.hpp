@@ -8,7 +8,7 @@
 #include <modularized_particle_filter_msgs/msg/particle_array.hpp>
 #include <std_msgs/msg/string.hpp>
 
-namespace vmvl_validation
+namespace pcdless::covariance_monitor
 {
 class CovarianceMonitor : public rclcpp::Node
 {
@@ -22,14 +22,14 @@ public:
   CovarianceMonitor();
 
 private:
-  SynchroSubscriber<ParticleArray, PoseStamped>::SharedPtr synchro_subscriber_;
+  common::SynchroSubscriber<ParticleArray, PoseStamped>::SharedPtr synchro_subscriber_;
   rclcpp::Publisher<String>::SharedPtr pub_diagnostic_;
   rclcpp::Publisher<PoseCovStamped>::SharedPtr pub_pose_cov_stamped_;
 
-  void particleAndPose(const ParticleArray & particles, const PoseStamped & pose);
-  Eigen::Vector3f computeStd(
+  void particle_and_pose(const ParticleArray & particles, const PoseStamped & pose);
+  Eigen::Vector3f compute_std(
     const ParticleArray & array, const Eigen::Quaternionf & orientation) const;
-  void publishPoseCovStamped(const PoseStamped & pose, const Eigen::Vector3f & covariance);
+  void publish_pose_cov_stamped(const PoseStamped & pose, const Eigen::Vector3f & covariance);
 };
 
-}  // namespace vmvl_validation
+}  // namespace pcdless::covariance_monitor

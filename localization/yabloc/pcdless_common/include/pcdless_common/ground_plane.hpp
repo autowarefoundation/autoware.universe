@@ -5,7 +5,7 @@
 
 #include <std_msgs/msg/float32_multi_array.hpp>
 
-namespace vml_common
+namespace pcdless::common
 {
 struct GroundPlane
 {
@@ -69,4 +69,4 @@ struct GroundPlane
     return array;
   }
 };
-}  // namespace vml_common
+}  // namespace pcdless::common

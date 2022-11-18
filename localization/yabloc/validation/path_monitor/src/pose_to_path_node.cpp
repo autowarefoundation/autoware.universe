@@ -5,7 +5,7 @@
 
 #include <boost/circular_buffer.hpp>
 
-namespace vmvl_trajectory
+namespace pcdless::path_monitor
 {
 class Pose2Path : public rclcpp::Node
 {
@@ -32,7 +32,7 @@ public:
       RCLCPP_INFO_STREAM(
         this->get_logger(), "subscribe: " << sub_topics.at(i) << " publish: " << pub_topics.at(i));
       std::function<void(const PoseStamped &)> func =
-        std::bind(&Pose2Path::poseCallback, this, std::placeholders::_1, i);
+        std::bind(&Pose2Path::on_pose, this, std::placeholders::_1, i);
       auto sub = this->create_subscription<PoseStamped>(sub_topics.at(i), 10, func);
       auto pub = this->create_publisher<Path>(pub_topics.at(i), 10);
       pub_sub_msg_.emplace_back(pub, sub);
@@ -61,7 +61,7 @@ private:
   };
   std::vector<PubSubMsg> pub_sub_msg_;
 
-  void poseCallback(const geometry_msgs::msg::PoseStamped & msg, int index)
+  void on_pose(const geometry_msgs::msg::PoseStamped & msg, int index)
   {
     auto & psm = pub_sub_msg_.at(index);
     if (!psm.buffer_.empty()) {
@@ -73,12 +73,12 @@ private:
     psm.publish(msg.header);
   }
 };
-}  // namespace vmvl_trajectory
+}  // namespace pcdless::path_monitor
 
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<vmvl_trajectory::Pose2Path>());
+  rclcpp::spin(std::make_shared<pcdless::path_monitor::Pose2Path>());
   rclcpp::shutdown();
   return 0;
 }

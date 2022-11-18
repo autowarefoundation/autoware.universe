@@ -2,7 +2,7 @@
 
 #include <eigen3/Eigen/Geometry>
 
-namespace vml_common
+namespace pcdless::common
 {
 geometry_msgs::msg::Pose affine_to_pose(const Eigen::Affine3f & affine)
 {
@@ -51,4 +51,4 @@ geometry_msgs::msg::Pose se3_to_pose(const Sophus::SE3f & se3f)
   pose.orientation.z = ori.z();
   return pose;
 }
-}  // namespace vml_common
+}  // namespace pcdless::common
