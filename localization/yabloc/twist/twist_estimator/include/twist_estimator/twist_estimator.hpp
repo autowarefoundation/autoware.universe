@@ -13,7 +13,7 @@
 
 #include <optional>
 
-namespace vmvl_trajectory
+namespace pcdless::twist_estimator
 {
 class TwistEstimator : public rclcpp::Node
 {
@@ -64,22 +64,22 @@ private:
   float last_wheel_vel_;
 
   bool scale_covariance_reset_flag{false};
-  void callbackTimer();
+  void on_timer();
 
-  void callbackImu(const Imu & msg);
-  void callbackTwistStamped(const TwistStamped & msg);
-  void callbackNavPVT(const NavPVT & msg);
+  void on_imu(const Imu & msg);
+  void on_twist_stamped(const TwistStamped & msg);
+  void on_navpvt(const NavPVT & msg);
 
   void predict();
-  void measureNavPvt(const Eigen::Vector3f & v);
-  void measureTwistStamped(const float vel);
+  void measure_navpvt(const Eigen::Vector3f & v);
+  void measure_twist_stamped(const float vel);
 
-  void publishTwist(const Imu & msg);
-  void publishDoppler(const NavPVT & msg);
-  void publishString();
+  void publish_twist(const Imu & msg);
+  void publish_doppler(const NavPVT & msg);
+  void publish_string();
 
-  Eigen::MatrixXf rectifyPositiveSemiDefinite(const Eigen::MatrixXf & matrix);
+  Eigen::MatrixXf rectify_positive_semi_definite(const Eigen::MatrixXf & matrix);
 
-  Eigen::Vector3f extractEnuVel(const NavPVT & msg) const;
+  Eigen::Vector3f extract_enu_vel(const NavPVT & msg) const;
 };
-}  // namespace vmvl_trajectory
+}  // namespace pcdless::twist_estimator

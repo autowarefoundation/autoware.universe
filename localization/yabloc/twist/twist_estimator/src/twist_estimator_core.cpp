@@ -5,7 +5,7 @@
 #include <Eigen/SVD>
 #include <sophus/geometry.hpp>
 
-namespace vmvl_trajectory
+namespace pcdless::twist_estimator
 {
 TwistEstimator::TwistEstimator()
 : Node("twist_estimaotr"),
@@ -17,9 +17,9 @@ TwistEstimator::TwistEstimator()
   using std::placeholders::_1;
   using namespace std::literals::chrono_literals;
 
-  auto cb_imu = std::bind(&TwistEstimator::callbackImu, this, _1);
-  auto cb_pvt = std::bind(&TwistEstimator::callbackNavPVT, this, _1);
-  auto cb_twist = std::bind(&TwistEstimator::callbackTwistStamped, this, _1);
+  auto cb_imu = std::bind(&TwistEstimator::on_imu, this, _1);
+  auto cb_pvt = std::bind(&TwistEstimator::on_navpvt, this, _1);
+  auto cb_twist = std::bind(&TwistEstimator::on_twist_stamped, this, _1);
 
   sub_imu_ = create_subscription<Imu>("/sensing/imu/tamagawa/imu_raw", 10, cb_imu);
   sub_twist_stamped_ = create_subscription<TwistStamped>("/vehicle/status/twist", 10, cb_twist);
@@ -36,14 +36,14 @@ TwistEstimator::TwistEstimator()
   cov_ = Eigen::Vector4f(81, 400, 1e-6f, 1e-5f).asDiagonal();
   cov_predict_ = Eigen::Vector4f(0.01, 100, 1e-4f, 1e-4f).asDiagonal();
 
-  auto cb_timer = std::bind(&TwistEstimator::callbackTimer, this);
+  auto cb_timer = std::bind(&TwistEstimator::on_timer, this);
   timer_ = rclcpp::create_timer(this, this->get_clock(), 3s, std::move(cb_timer));
 }
 
-void TwistEstimator::callbackTimer()
+void TwistEstimator::on_timer()
 {
   if (scale_covariance_reset_flag) {
-    cov_ = rectifyPositiveSemiDefinite(cov_);
+    cov_ = rectify_positive_semi_definite(cov_);
     cov_(1, 3) = 0;
     cov_(3, 1) = 0;
     RCLCPP_INFO_STREAM(get_logger(), "reset covariance because unreached GNSS");
@@ -51,7 +51,7 @@ void TwistEstimator::callbackTimer()
   scale_covariance_reset_flag = true;
 }
 
-void TwistEstimator::callbackImu(const Imu & raw_msg)
+void TwistEstimator::on_imu(const Imu & raw_msg)
 {
   if (!last_imu_stamp_.has_value()) {
     last_imu_stamp_ = raw_msg.header.stamp;
@@ -74,8 +74,8 @@ void TwistEstimator::callbackImu(const Imu & raw_msg)
   F(0, 2) = dt;
   cov_ = F * cov_ * F.transpose() + cov_predict_ * dt * dt;
 
-  publishTwist(msg);
-  publishString();
+  publish_twist(msg);
+  publish_string();
 
   if (std::abs(state_[VELOCITY]) > stop_vel_threshold_) return;
 
@@ -96,7 +96,7 @@ void TwistEstimator::callbackImu(const Imu & raw_msg)
   }
 }
 
-void TwistEstimator::publishTwist(const Imu & imu)
+void TwistEstimator::publish_twist(const Imu & imu)
 {
   TwistStamped msg;
   msg.header.stamp = imu.header.stamp;
@@ -120,7 +120,7 @@ void TwistEstimator::publishTwist(const Imu & imu)
   }
 }
 
-void TwistEstimator::callbackTwistStamped(const TwistStamped & msg)
+void TwistEstimator::on_twist_stamped(const TwistStamped & msg)
 {
   static bool first_subscirbe = true;
   if (first_subscirbe) {
@@ -150,7 +150,7 @@ void TwistEstimator::callbackTwistStamped(const TwistStamped & msg)
   cov_ = (Eigen::Matrix4f::Identity() - K * H) * cov_;
 }
 
-void TwistEstimator::callbackNavPVT(const NavPVT & msg)
+void TwistEstimator::on_navpvt(const NavPVT & msg)
 {
   switch (msg.flags) {
     case 131:
@@ -164,7 +164,7 @@ void TwistEstimator::callbackNavPVT(const NavPVT & msg)
       break;
   }
 
-  publishDoppler(msg);
+  publish_doppler(msg);
 
   if (rtk_enabled_) {
     if ((msg.flags != 131) && (msg.flags != 67)) {
@@ -175,7 +175,7 @@ void TwistEstimator::callbackNavPVT(const NavPVT & msg)
 
   static bool first_subscirbe = true;
   if (first_subscirbe) {
-    Eigen::Vector2f vel_xy = extractEnuVel(msg).topRows(2);
+    Eigen::Vector2f vel_xy = extract_enu_vel(msg).topRows(2);
     state_[ANGLE] = std::atan2(vel_xy.y(), vel_xy.x());
     RCLCPP_INFO_STREAM(get_logger(), "first navpvt subscription: " << state_[ANGLE]);
     first_subscirbe = false;
@@ -183,7 +183,7 @@ void TwistEstimator::callbackNavPVT(const NavPVT & msg)
   }
 
   // Compute error and jacobian
-  Eigen::Vector2f vel_xy = extractEnuVel(msg).topRows(2);
+  Eigen::Vector2f vel_xy = extract_enu_vel(msg).topRows(2);
   Eigen::Matrix2f R = Eigen::Rotation2D(state_[ANGLE]).toRotationMatrix();
   Eigen::Vector2f error = R * state_[VELOCITY] * Eigen::Vector2f::UnitX() - vel_xy;
 
@@ -203,7 +203,7 @@ void TwistEstimator::callbackNavPVT(const NavPVT & msg)
     }
   }
 
-  cov_ = rectifyPositiveSemiDefinite(cov_);
+  cov_ = rectify_positive_semi_definite(cov_);
 
   // Determain kalman gain
   Eigen::Matrix2f dR;
@@ -227,14 +227,14 @@ void TwistEstimator::callbackNavPVT(const NavPVT & msg)
   scale_covariance_reset_flag = false;
 }
 
-Eigen::Vector3f TwistEstimator::extractEnuVel(const NavPVT & msg) const
+Eigen::Vector3f TwistEstimator::extract_enu_vel(const NavPVT & msg) const
 {
   Eigen::Vector3f enu_vel;
   enu_vel << msg.vel_e * 1e-3, msg.vel_n * 1e-3, -msg.vel_d * 1e-3;
   return enu_vel;
 }
 
-void TwistEstimator::publishDoppler(const NavPVT & navpvt)
+void TwistEstimator::publish_doppler(const NavPVT & navpvt)
 {
   if (!last_imu_stamp_.has_value()) return;
 
@@ -242,7 +242,7 @@ void TwistEstimator::publishDoppler(const NavPVT & navpvt)
   msg.header.stamp = last_imu_stamp_.value();
   msg.header.frame_id = "base_link";
 
-  Eigen::Vector2f vel = extractEnuVel(navpvt).topRows(2);
+  Eigen::Vector2f vel = extract_enu_vel(navpvt).topRows(2);
   Eigen::Matrix2f R = Eigen::Rotation2D(state_[ANGLE]).toRotationMatrix();
   vel = R.transpose() * vel;
 
@@ -256,7 +256,7 @@ void TwistEstimator::publishDoppler(const NavPVT & navpvt)
   last_doppler_vel_ = vel;
 }
 
-void TwistEstimator::publishString()
+void TwistEstimator::publish_string()
 {
   std::stringstream ss;
   ss << "--- Twist Estimator Status ----" << std::endl;
@@ -285,7 +285,7 @@ void TwistEstimator::publishString()
   pub_string_->publish(msg);
 }
 
-Eigen::MatrixXf TwistEstimator::rectifyPositiveSemiDefinite(const Eigen::MatrixXf & matrix)
+Eigen::MatrixXf TwistEstimator::rectify_positive_semi_definite(const Eigen::MatrixXf & matrix)
 {
   Eigen::JacobiSVD<Eigen::MatrixXf> svd;
   svd.compute(matrix, Eigen::ComputeFullU | Eigen::ComputeFullV);
@@ -296,4 +296,4 @@ Eigen::MatrixXf TwistEstimator::rectifyPositiveSemiDefinite(const Eigen::MatrixX
   return U * S * U.transpose();
 }
 
-}  // namespace vmvl_trajectory
+}  // namespace pcdless::twist_estimator

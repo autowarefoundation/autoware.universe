@@ -4,6 +4,8 @@
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 
+namespace pcdless::velocity_converter
+{
 class PoseTwistFuser : public rclcpp::Node
 {
 public:
@@ -17,7 +19,7 @@ public:
 
     // Subscriber
     auto on_twist = [this](const TwistStamped & msg) -> void { this->latest_twist_stamped_ = msg; };
-    auto on_pose = std::bind(&PoseTwistFuser::onPose, this, _1);
+    auto on_pose = std::bind(&PoseTwistFuser::on_pose, this, _1);
     sub_twist_stamped_ = create_subscription<TwistStamped>("twist", 10, std::move(on_twist));
     sub_pose_stamped_ = create_subscription<PoseStamped>("pose", 10, std::move(on_pose));
 
@@ -31,7 +33,7 @@ private:
   rclcpp::Publisher<Odometry>::SharedPtr pub_odometry_;
   std::optional<TwistStamped> latest_twist_stamped_{std::nullopt};
 
-  void onPose(const PoseStamped & pose)
+  void on_pose(const PoseStamped & pose)
   {
     if (!latest_twist_stamped_.has_value()) return;
 
@@ -43,10 +45,12 @@ private:
   }
 };
 
+}  // namespace pcdless::velocity_converter
+
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<PoseTwistFuser>());
+  rclcpp::spin(std::make_shared<pcdless::velocity_converter::PoseTwistFuser>());
   rclcpp::shutdown();
   return 0;
 }

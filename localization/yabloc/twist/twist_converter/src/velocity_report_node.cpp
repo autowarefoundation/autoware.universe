@@ -3,7 +3,7 @@
 #include <autoware_auto_vehicle_msgs/msg/velocity_report.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 
-namespace vmvl_trajectory
+namespace pcdless::velocity_conveter
 {
 class VelocityReportDecoder : public rclcpp::Node
 {
@@ -16,7 +16,7 @@ public:
     using std::placeholders::_1;
 
     // Subscriber
-    auto cb_velocity = std::bind(&VelocityReportDecoder::velocityCallback, this, _1);
+    auto cb_velocity = std::bind(&VelocityReportDecoder::on_velocity, this, _1);
     sub_velocity_ =
       create_subscription<Velocity>("/vehicle/status/velocity_status", 10, cb_velocity);
 
@@ -28,7 +28,7 @@ private:
   rclcpp::Subscription<Velocity>::SharedPtr sub_velocity_;
   rclcpp::Publisher<TwistStamped>::SharedPtr pub_twist_stamped_;
 
-  void velocityCallback(const Velocity & msg)
+  void on_velocity(const Velocity & msg)
   {
     TwistStamped ts;
     ts.header = msg.header;
@@ -38,12 +38,12 @@ private:
     pub_twist_stamped_->publish(ts);
   }
 };
-}  // namespace vmvl_trajectory
+}  // namespace pcdless::velocity_conveter
 
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<vmvl_trajectory::VelocityReportDecoder>());
+  rclcpp::spin(std::make_shared<pcdless::velocity_conveter::VelocityReportDecoder>());
   rclcpp::shutdown();
   return 0;
 }
