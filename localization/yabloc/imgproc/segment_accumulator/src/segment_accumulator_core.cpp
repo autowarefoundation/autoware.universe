@@ -21,8 +21,7 @@ SegmentAccumulator::SegmentAccumulator()
   auto on_lsd = std::bind(&SegmentAccumulator::on_line_segments, this, _1);
   auto on_twist = std::bind(&SegmentAccumulator::on_twist, this, _1);
   sub_lsd_ = create_subscription<PointCloud2>("lsd_cloud", 10, on_lsd);
-  sub_twist_ =
-    create_subscription<TwistStamped>("/localization/trajectory/kalman/twist", 10, on_twist);
+  sub_twist_ = create_subscription<TwistStamped>("/localization/twist/kalman/twist", 10, on_twist);
 
   // Publisher
   pub_image_ = create_publisher<Image>("mapping_image", 10);

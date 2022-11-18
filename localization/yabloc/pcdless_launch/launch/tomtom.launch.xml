@@ -10,5 +10,5 @@
     <arg name="road_marking_labels" default="[zebra_marking, line_thin, line_thick, pedestrian_marking, stop_line, road_border, curbstone]" />
     <arg name="sign_board_labels" default="[traffic_sign, guard_rail]" />
 
-    <include file="$(find-pkg-share pcdless_launch)/launch/impl/run.launch.xml"/>
+    <include file="$(find-pkg-share pcdless_launch)/launch/pcdless.launch.xml"/>
 </launch>

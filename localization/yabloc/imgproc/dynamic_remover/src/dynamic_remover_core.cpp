@@ -28,8 +28,7 @@ DynamicRemover::DynamicRemover()
   // Subscriber
   auto on_twist = std::bind(&DynamicRemover::on_twist, this, _1);
   auto cb = std::bind(&DynamicRemover::on_synchro, this, _1, _2);
-  sub_twist_ =
-    create_subscription<TwistStamped>("/localization/trajectory/kalman/twist", 10, on_twist);
+  sub_twist_ = create_subscription<TwistStamped>("/localization/twist/kalman/twist", 10, on_twist);
   synchro_subscriber_.set_callback(std::move(cb));
 
   // Publisher

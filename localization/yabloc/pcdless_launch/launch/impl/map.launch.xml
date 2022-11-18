@@ -1,6 +1,5 @@
 <launch>
     <arg name="use_sim_time" default="true"/>
-    <arg name="force_zero_tilt" default="false"/>
 
     <arg name="input_particle_pose" default="/localization/pf/particle_pose"/>
     <arg name="output_height" default="height"/>
@@ -12,7 +11,7 @@
     <!-- ground server -->
     <node name="ground_server" pkg="ground_server" exec="ground_server_node" output="screen" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
-        <param name="force_zero_tilt" value="$(var force_zero_tilt)"/>
+        <param name="force_zero_tilt" value="false"/>
         <param name="K" value="50"/>
         <param name="R" value="10"/>
 

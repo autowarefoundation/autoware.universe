@@ -1,8 +1,7 @@
 <launch>
-    <arg name="reference_bags_path" default="$(env HOME)/Reference/05-20-wangansen/"/>
+    <arg name="reference_bags_path" default=""/>
 
-
-    <!-- image overlay -->
+    <!-- overlay monitor -->
     <arg name="input_particle_pose" default="/localization/pf/particle_pose"/>
     <arg name="input_ground" default="/localization/map/ground"/>
     <arg name="input_projected_lsd_cloud" default="/localization/imgproc/projected_lsd_cloud"/>
@@ -22,7 +21,7 @@
         <remap from="ll2_road_marking" to="$(var input_ll2_road_marking)"/>
     </node>
 
-    <!-- covariance visualizer -->
+    <!-- covariance monitor -->
     <arg name="input_particles" default="/localization/pf/predicted_particles"/>
     <arg name="output_cov_diag" default="cov_diag"/>
     <arg name="output_pose_with_cov" default="pose_with_cov"/>
@@ -34,7 +33,7 @@
         <remap from="pose_with_cov" to="$(var output_pose_with_cov)"/>
     </node>
 
-    <!-- ape checker -->
+    <!-- ape monitor-->
     <arg name="input_pose_with_cov" default="pose_with_cov"/>
     <arg name="output_ape_diag" default="ape_diag"/>
 
@@ -43,4 +42,19 @@
         <remap from="pose_with_cov" to="$(var input_pose_with_cov)"/>
         <remap from="ape_diag" to="$(var output_ape_diag)"/>
     </node>
+
+    <!-- fix to pose -->
+    <node name="fix_to_pose" pkg="path_monitor" exec="fix_to_pose" output="log" args="--ros-args --log-level warn">
+        <param name="use_sim_time" value="$(var use_sim_time)"/>
+        <remap from="pose" to="/sensing/gnss/ublox/pose"/>
+        <remap from="fix_topic" to="/sensing/gnss/ublox/nav_sat_fix"/>
+    </node>
+
+    <!-- pose to path -->
+    <node name="pose_to_path" pkg="path_monitor" exec="pose_to_path" output="log" args="--ros-args --log-level info">
+        <param name="use_sim_time" value="$(var use_sim_time)"/>
+        <param name="sub_topics" value="[/sensing/gnss/ublox/pose, /localization/pose_estimator/pose, /localization/particle_pose]"/>
+        <param name="pub_topics" value="[/sensing/gnss/ublox/path, /localization/pose_estimator/path, /localization/particle_path]"/>
+    </node>
+
 </launch>

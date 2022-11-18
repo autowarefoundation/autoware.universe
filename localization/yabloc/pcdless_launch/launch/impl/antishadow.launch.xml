@@ -1,14 +1,8 @@
 <launch>
     <arg name="use_sim_time" default="true"/>
-    <arg name="log_level" default="warn"/>
 
     <arg name="resized_image" default="/sensing/camera/undistorted/image_raw"/>
     <arg name="resized_info" default="/sensing/camera/undistorted/camera_info"/>
-
-    <arg name="min_segment_length" default="-1.0"/>
-    <arg name="max_segment_distance" default="-1.0"/>
-    <arg name="max_lateral_distance" default="-1.0"/>
-
 
     <!-- segment_accumulator -->
     <node name="accumulator" pkg="segment_accumulator" exec="segment_accumulator_node" output="screen" args="--ros-args --log-level warn">
@@ -29,7 +23,7 @@
     </node>
 
     <!-- corrector -->
-    <node name="antishadow_corrector" pkg="antishadow_corrector" exec="antishadow_corrector" output="screen" args="--ros-args --log-level info">
+    <node name="antishadow_corrector" pkg="antishadow_corrector" exec="antishadow_corrector" output="screen" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="visualize" value="true"/>
         <remap from="/localization/imgproc/predicted_particles" to="/localization/pf/predicted_particles"/>
