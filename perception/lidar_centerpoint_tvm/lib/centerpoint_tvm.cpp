@@ -85,7 +85,8 @@ VoxelEncoderPostProcessor::VoxelEncoderPostProcessor(
     std::make_shared<std::vector<float>>(max_voxel_size * encoder_out_feature_size, 0);
 }
 
-std::shared_ptr<std::vector<float>> VoxelEncoderPostProcessor::schedule(const TVMArrayContainerVector & input)
+std::shared_ptr<std::vector<float>> VoxelEncoderPostProcessor::schedule(
+  const TVMArrayContainerVector & input)
 {
   TVMArrayCopyToBytes(
     input[0].getArray(), pillar_features->data(), pillar_features->size() * datatype_bytes);
