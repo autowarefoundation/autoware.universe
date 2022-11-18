@@ -117,7 +117,7 @@ Several fields to check in `centerpoint_vs_centerpoint-tiny.launch.xml` before r
 Run
 
 ```bash
-ros2 launch tier4_perception_launch centerpoint_vs_centerpoint-tiny.launch.xml
+ros2 launch lidar_centerpoint centerpoint_vs_centerpoint-tiny.launch.xml
 ```
 
 Then you will see two rviz window show immediately. On the left is the result for lidar centerpoint tiny, and on the right is the result for lidar centerpoint.
