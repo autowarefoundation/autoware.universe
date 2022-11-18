@@ -10,9 +10,10 @@
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
 #include <pcl/pcl_base.h>
+#include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
-namespace vmvl_imgproc
+namespace pcdless::segment_filter
 {
 class SegmentFilter : public rclcpp::Node
 {
@@ -30,26 +31,26 @@ private:
   const float max_segment_distance_;
   const float max_lateral_distance_;
 
-  vml_common::CameraInfoSubscriber info_;
+  common::CameraInfoSubscriber info_;
+  common::SynchroSubscriber<PointCloud2, PointCloud2> synchro_subscriber_;
+  common::StaticTfSubscriber tf_subscriber_;
 
-  SynchroSubscriber<PointCloud2, PointCloud2> synchro_subscriber_;
-  vml_common::StaticTfSubscriber tf_subscriber_;
   rclcpp::Publisher<PointCloud2>::SharedPtr pub_cloud_;
   rclcpp::Publisher<Image>::SharedPtr pub_image_;
 
-  pcl::PointCloud<pcl::PointNormal> projectLines(
+  pcl::PointCloud<pcl::PointNormal> project_lines(
     const pcl::PointCloud<pcl::PointNormal> & lines, ProjectFunc project) const;
-  pcl::PointCloud<pcl::PointXYZ> projectMask(
+  pcl::PointCloud<pcl::PointXYZ> project_mask(
     const pcl::PointCloud<pcl::PointXYZ> & mask, ProjectFunc project) const;
 
-  pcl::PointIndices filtByMask(
+  pcl::PointIndices filt_by_mask(
     const pcl::PointCloud<pcl::PointXYZ> & mask, const pcl::PointCloud<pcl::PointNormal> & edges);
 
-  cv::Point2i toCvPoint(const Eigen::Vector3f & v) const;
+  cv::Point2i to_cv_point(const Eigen::Vector3f & v) const;
   void execute(const PointCloud2 & msg1, const PointCloud2 & msg2);
 
   // TODO: Rename function
-  bool isLowerElement(const pcl::PointNormal & pn, pcl::PointNormal & truncated_pn) const;
-  bool isNearElement(const pcl::PointNormal & pn, pcl::PointNormal & truncated_pn) const;
+  bool is_lower_element(const pcl::PointNormal & pn, pcl::PointNormal & truncated_pn) const;
+  bool is_near_element(const pcl::PointNormal & pn, pcl::PointNormal & truncated_pn) const;
 };
-}  // namespace vmvl_imgproc
+}  // namespace pcdless::segment_filter

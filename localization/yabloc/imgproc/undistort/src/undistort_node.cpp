@@ -14,6 +14,8 @@
 
 #include <optional>
 
+namespace pcdless::undistort
+{
 class UndistortNode : public rclcpp::Node
 {
 public:
@@ -33,8 +35,8 @@ public:
       qos = rclcpp::QoS(10).durability_volatile().best_effort();
     }
 
-    auto on_image = std::bind(&UndistortNode::onImage, this, _1);
-    auto on_info = std::bind(&UndistortNode::onInfo, this, _1);
+    auto on_image = std::bind(&UndistortNode::on_image, this, _1);
+    auto on_info = std::bind(&UndistortNode::on_info, this, _1);
     sub_image_ = create_subscription<CompressedImage>(
       "/sensing/camera/traffic_light/image_raw/compressed", qos, std::move(on_image));
     sub_info_ = create_subscription<CameraInfo>(
@@ -57,7 +59,7 @@ private:
 
   cv::Mat undistort_map_x, undistort_map_y;
 
-  void makeRemapLUT()
+  void make_remap_lut()
   {
     if (!info_.has_value()) return;
     cv::Mat K = cv::Mat(cv::Size(3, 3), CV_64FC1, (void *)(info_->k.data()));
@@ -84,13 +86,13 @@ private:
     scaled_info_->height = new_size.height;
   }
 
-  void onImage(const CompressedImage & msg)
+  void on_image(const CompressedImage & msg)
   {
     if (!info_.has_value()) return;
-    if (undistort_map_x.empty()) makeRemapLUT();
+    if (undistort_map_x.empty()) make_remap_lut();
 
-    Timer timer;
-    cv::Mat image = vml_common::decompress2CvMat(msg);
+    common::Timer timer;
+    cv::Mat image = common::decompress_to_cv_mat(msg);
 
     cv::Mat undistorted_image;
     cv::remap(image, undistorted_image, undistort_map_x, undistort_map_y, cv::INTER_LINEAR);
@@ -118,13 +120,14 @@ private:
     RCLCPP_INFO_STREAM(get_logger(), "image undistort: " << timer);
   }
 
-  void onInfo(const CameraInfo & msg) { info_ = msg; }
+  void on_info(const CameraInfo & msg) { info_ = msg; }
 };
+}  // namespace pcdless::undistort
 
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<UndistortNode>());
+  rclcpp::spin(std::make_shared<pcdless::undistort::UndistortNode>());
   rclcpp::shutdown();
   return 0;
 }
