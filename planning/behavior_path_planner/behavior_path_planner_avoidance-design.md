@@ -391,7 +391,7 @@ The avoidance specific parameter configuration file can be located at `src/autow
 ### Avoidance path generation
 
 | Name                                       | Unit   | Type   | Description                                                                                                                                      | Default value |
-| :----------------------------------------- | :----- | :----- | :----------------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
+| :----------------------------------------- | :----- | :----- |:-------------------------------------------------------------------------------------------------------------------------------------------------|:--------------|
 | resample_interval_for_planning             | [m]    | double | Path resample interval for avoidance planning path.                                                                                              | 0.3           |
 | resample_interval_for_output               | [m]    | double | Path resample interval for output path. Too short interval increases computational cost for latter modules.                                      | 4.0           |
 | lateral_collision_margin                   | [m]    | double | The lateral distance between ego and avoidance targets.                                                                                          | 1.0           |
@@ -411,6 +411,7 @@ The avoidance specific parameter configuration file can be located at `src/autow
 | avoidance_execution_lateral_threshold      | [m]    | double | The lateral distance deviation threshold between the current path and suggested avoidance point to execute avoidance. (\*2)                      | 0.499         |
 | enable_avoidance_over_same_direction       | [-]    | bool   | Extend avoidance trajectory to adjacent lanes that has same direction. If false, avoidance only happen in current lane.                          | true          |
 | enable_avoidance_over_opposite_direction   | [-]    | bool   | Extend avoidance trajectory to adjacent lanes that has opposite direction. `enable_avoidance_over_same_direction` must be `true` to take effects | true          |
+| enable_update_path_when_object_is_gone     | [-]    | bool   | Reset trajectory when avoided objects are gone. If false, shifted path points remain same even though the avoided objects are gone.              | false         |
 
 (\*2) If there are multiple vehicles in a row to be avoided, no new avoidance path will be generated unless their lateral margin difference exceeds this value.
 
