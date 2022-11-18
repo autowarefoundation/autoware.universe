@@ -1,5 +1,3 @@
-# This file is copied from component_state_monitor/config/topics.yaml.
-
 - module: map
   mode: [online, planning_simulation]
   type: launch

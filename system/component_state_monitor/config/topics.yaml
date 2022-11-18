@@ -1,5 +1,3 @@
-# This file needs to be copied to tier4_system_launch/config/component_state_monitor/topics.yaml.
-
 - module: map
   mode: [online, planning_simulation]
   type: launch
