@@ -19,7 +19,7 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
-namespace map
+namespace pcdless::ground_server
 {
 class GroundServer : public rclcpp::Node
 {
@@ -59,24 +59,24 @@ private:
 
   std::vector<int> last_near_point_indices_;
 
-  void onMap(const HADMapBin & msg);
-  void onPoseStamped(const PoseStamped & msg);
-  void onService(
+  void on_map(const HADMapBin & msg);
+  void on_pose_stamped(const PoseStamped & msg);
+  void on_service(
     const std::shared_ptr<Ground::Request> request, std::shared_ptr<Ground::Response> response);
 
-  GroundPlane estimateGround(const Point & point);
+  GroundPlane estimate_ground(const Point & point);
 
-  float estimateHeightSimply(const Point & point) const;
+  float estimate_height_simply(const Point & point) const;
 
-  void publishMarker(const GroundPlane & plane);
+  void publish_marker(const GroundPlane & plane);
 
-  std::vector<int> ransacEstimation(const std::vector<int> & indices_raw);
+  std::vector<int> ransac_estimation(const std::vector<int> & indices_raw);
 
-  void upsampleLineString(
+  void upsample_line_string(
     const lanelet::ConstPoint3d & from, const lanelet::ConstPoint3d & to,
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud);
 
-  pcl::PointCloud<pcl::PointXYZ> sampleFromPolygons(const lanelet::PolygonLayer & polygons);
+  pcl::PointCloud<pcl::PointXYZ> sample_from_polygons(const lanelet::PolygonLayer & polygons);
 };
 
-}  // namespace map
+}  // namespace pcdless::ground_server

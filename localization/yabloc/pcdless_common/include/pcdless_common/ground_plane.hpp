@@ -33,7 +33,7 @@ struct GroundPlane
 
   Eigen::Quaternionf align_with_slope(const Eigen::Quaternionf & q) const
   {
-    return Eigen::Quaternionf{alignWithSlope(q.toRotationMatrix())};
+    return Eigen::Quaternionf{align_with_slope(q.toRotationMatrix())};
   }
 
   Eigen::Matrix3f align_with_slope(const Eigen::Matrix3f & R) const
@@ -58,7 +58,7 @@ struct GroundPlane
   {
     Eigen::Matrix3f R = pose.rotation();
     Eigen::Vector3f t = pose.translation();
-    return Eigen::Translation3f(t) * alignWithSlope(R);
+    return Eigen::Translation3f(t) * align_with_slope(R);
   }
 
   Float32Array msg() const

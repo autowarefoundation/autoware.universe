@@ -6,9 +6,9 @@
 
 #include <lanelet2_io/io_handlers/Serialize.h>
 
-namespace map
+namespace pcdless::ll2_decomposer
 {
-lanelet::LaneletMapPtr fromBinMsg(const autoware_auto_mapping_msgs::msg::HADMapBin & msg)
+lanelet::LaneletMapPtr from_bin_msg(const autoware_auto_mapping_msgs::msg::HADMapBin & msg)
 {
   lanelet::LaneletMapPtr map = std::make_shared<lanelet::LaneletMap>();
 
@@ -25,4 +25,4 @@ lanelet::LaneletMapPtr fromBinMsg(const autoware_auto_mapping_msgs::msg::HADMapB
   return map;
 }
 
-}  // namespace map
+}  // namespace pcdless::ll2_decomposer

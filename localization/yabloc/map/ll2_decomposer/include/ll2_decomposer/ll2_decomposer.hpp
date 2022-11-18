@@ -10,7 +10,7 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
-namespace map
+namespace pcdless::ll2_decomposer
 {
 class Ll2Decomposer : public rclcpp::Node
 {
@@ -32,27 +32,27 @@ private:
   std::set<std::string> road_marking_labels_;
   std::set<std::string> sign_board_labels_;
 
-  pcl::PointNormal toPointNormal(
+  pcl::PointNormal to_point_normal(
     const lanelet::ConstPoint3d & from, const lanelet::ConstPoint3d & to) const;
 
-  pcl::PointCloud<pcl::PointNormal> splitLineStrings(
+  pcl::PointCloud<pcl::PointNormal> split_line_strings(
     const lanelet::ConstLineStrings3d & line_strings);
 
-  lanelet::ConstLineStrings3d extractSpecifiedLineString(
+  lanelet::ConstLineStrings3d extract_specified_line_string(
     const lanelet::LineStringLayer & line_strings, const std::set<std::string> & visible_labels);
-  lanelet::ConstPolygons3d extractSpecifiedPolygon(
+  lanelet::ConstPolygons3d extract_specified_polygon(
     const lanelet::PolygonLayer & polygon_layer, const std::set<std::string> & visible_labels);
 
-  void mapCallback(const HADMapBin & msg);
+  void on_map(const HADMapBin & msg);
 
-  MarkerArray makeSignMarkerMsg(
+  MarkerArray make_sign_marker_msg(
     const lanelet::LineStringLayer & line_string_layer, const std::set<std::string> & labels,
     const std::string & ns);
 
-  MarkerArray makePolygonMarkerMsg(
+  MarkerArray make_polygon_marker_msg(
     const lanelet::PolygonLayer & polygon_layer, const std::set<std::string> & labels,
     const std::string & ns);
 
-  void publishAdditionalMarker(const lanelet::LaneletMapPtr & lanelet_map);
+  void publish_additional_marker(const lanelet::LaneletMapPtr & lanelet_map);
 };
-}  // namespace map
+}  // namespace pcdless::ll2_decomposer

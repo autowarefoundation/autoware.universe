@@ -2,8 +2,8 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
-namespace map
+namespace pcdless::ground_server
 {
-pcl::PointCloud<pcl::PointXYZ> fillPointsInPolygon(
+pcl::PointCloud<pcl::PointXYZ> fill_points_in_polygon(
   const pcl::PointCloud<pcl::PointXYZ> & src_cloud);
 }

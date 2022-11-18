@@ -3,7 +3,7 @@
 
 #include <lanelet2_core/LaneletMap.h>
 
-namespace map
+namespace pcdless ::ll2_decomposer
 {
-lanelet::LaneletMapPtr fromBinMsg(const autoware_auto_mapping_msgs::msg::HADMapBin & msg);
+lanelet::LaneletMapPtr from_bin_msg(const autoware_auto_mapping_msgs::msg::HADMapBin & msg);
 }
