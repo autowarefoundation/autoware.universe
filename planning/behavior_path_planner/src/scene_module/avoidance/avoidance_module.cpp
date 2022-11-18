@@ -1865,7 +1865,7 @@ void AvoidanceModule::generateExtendedDrivableArea(ShiftedPath * shifted_path) c
 
     // 2.1 look for neighbour lane, where end line of the lane is connected to end line of the
     // original lane
-    for (const auto next_lane : next_lanes_from_intersection) {
+    for (const auto & next_lane : next_lanes_from_intersection) {
       if (current_lane.id() == next_lane.id()) {
         continue;
       }
