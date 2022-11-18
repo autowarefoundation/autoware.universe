@@ -13,9 +13,9 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
-namespace imgproc
+namespace pcdless::dynamic_remover
 {
-class Reprojector : public rclcpp::Node
+class DynamicRemover : public rclcpp::Node
 {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -23,7 +23,7 @@ public:
   using PointCloud2 = sensor_msgs::msg::PointCloud2;
   using TwistStamped = geometry_msgs::msg::TwistStamped;
 
-  Reprojector();
+  DynamicRemover();
 
 private:
   const float min_segment_length_;
@@ -32,8 +32,8 @@ private:
   const int search_iteration_max_;
   const size_t backward_frame_interval_;
 
-  vml_common::CameraInfoSubscriber info_;
-  vml_common::StaticTfSubscriber tf_subscriber_;
+  common::CameraInfoSubscriber info_;
+  common::StaticTfSubscriber tf_subscriber_;
 
   // Publisher
   rclcpp::Publisher<Image>::SharedPtr pub_old_image_;
@@ -43,7 +43,7 @@ private:
   rclcpp::Subscription<Image>::SharedPtr sub_image_;
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_lsd_;
   rclcpp::Subscription<TwistStamped>::SharedPtr sub_twist_;
-  SynchroSubscriber<Image, PointCloud2> synchro_subscriber_;
+  common::SynchroSubscriber<Image, PointCloud2> synchro_subscriber_;
 
   std::list<Image> image_list_;
   std::list<TwistStamped::ConstSharedPtr> twist_list_;
@@ -72,31 +72,31 @@ private:
   std::optional<Parameter> param_{std::nullopt};
 
   // Callback
-  void onSynchro(const Image & image_msg, const PointCloud2 & lsd_msg);
-  void onTwist(TwistStamped::ConstSharedPtr msg);
+  void on_synchro(const Image & image_msg, const PointCloud2 & lsd_msg);
+  void on_twist(TwistStamped::ConstSharedPtr msg);
 
-  std::vector<TransformPair> makeTransformPairs(
+  std::vector<TransformPair> make_transform_pairs(
     ProjectFunc func, pcl::PointCloud<pcl::PointNormal> & segments);
 
-  void popObsoleteMsg();
+  void pop_obsolete_msg();
 
-  std::unordered_map<size_t, GapResult> computeGap(
+  std::unordered_map<size_t, GapResult> compute_gap(
     const std::vector<TransformPair> & pairs, const cv::Mat & old_image, const cv::Mat & cur_image);
 
-  void visualizeAndPublish(
+  void visualize_and_publish(
     const std::vector<TransformPair> & pairs, const std::unordered_map<size_t, GapResult> & gap_map,
     const cv::Mat & old_image, const cv::Mat & cur_image);
 
-  void tryDefineParam();
-  ProjectFunc defineProjectionFunction(const Sophus::SE3f & odom);
+  void try_define_param();
+  ProjectFunc define_projection_function(const Sophus::SE3f & odom);
 
-  void publishCloud(
+  void publish_cloud(
     const pcl::PointCloud<pcl::PointNormal> & src,
     const std::unordered_map<size_t, GapResult> & gaps, const rclcpp::Time & stamp);
 
-  std::vector<cv::Point2i> line2Polygon(const cv::Point2f & from, const cv::Point2f & to) const;
+  std::vector<cv::Point2i> line_to_polygon(const cv::Point2f & from, const cv::Point2f & to) const;
 
-  Sophus::SE3f accumulateTravelDistance(
+  Sophus::SE3f accumulate_travel_distance(
     const rclcpp::Time & from_stamp, const rclcpp::Time & to_stamp) const;
 };
-}  // namespace imgproc
+}  // namespace pcdless::dynamic_remover

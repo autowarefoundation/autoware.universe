@@ -8,7 +8,7 @@ int main(int argc, char * argv[])
   google::InstallFailureSignalHandler();
 
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<imgproc::Reprojector>());
+  rclcpp::spin(std::make_shared<pcdless::dynamic_remover::DynamicRemover>());
   rclcpp::shutdown();
   return 0;
 }

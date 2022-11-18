@@ -26,10 +26,10 @@ public:
     sub1_ = std::make_shared<Sub1>(n, topic1);
     sub2_ = std::make_shared<Sub2>(n, topic2);
     syncronizer_ = std::make_shared<Synchronizer>(SyncPolicy(80), *sub1_, *sub2_);
-    syncronizer_->registerCallback(std::bind(&SynchroSubscriber::rawCallback, this, _1, _2));
+    syncronizer_->registerCallback(std::bind(&SynchroSubscriber::raw_callback, this, _1, _2));
   }
 
-  void set_sallback(const UserCallback & callback) { user_callback_ = callback; }
+  void set_callback(const UserCallback & callback) { user_callback_ = callback; }
 
 private:
   std::shared_ptr<Sub1> sub1_;

@@ -9,9 +9,9 @@
 
 #include <pcl_conversions/pcl_conversions.h>
 
-namespace imgproc
+namespace pcdless::dynamic_remover
 {
-Reprojector::Reprojector()
+DynamicRemover::DynamicRemover()
 : Node("reprojector"),
   min_segment_length_(declare_parameter<float>("min_segment_length", 0.5)),
   polygon_thick_(declare_parameter<int>("polygon_thic", 3)),
@@ -26,11 +26,11 @@ Reprojector::Reprojector()
   using std::placeholders::_2;
 
   // Subscriber
-  auto on_twist = std::bind(&Reprojector::onTwist, this, _1);
+  auto on_twist = std::bind(&DynamicRemover::on_twist, this, _1);
+  auto cb = std::bind(&DynamicRemover::on_synchro, this, _1, _2);
   sub_twist_ =
     create_subscription<TwistStamped>("/localization/trajectory/kalman/twist", 10, on_twist);
-  auto cb = std::bind(&Reprojector::onSynchro, this, _1, _2);
-  synchro_subscriber_.setCallback(std::move(cb));
+  synchro_subscriber_.set_callback(std::move(cb));
 
   // Publisher
   pub_cur_image_ = create_publisher<Image>("reprojected_image", 10);
@@ -38,15 +38,15 @@ Reprojector::Reprojector()
   pub_cloud_ = create_publisher<PointCloud2>("filtered_lsd", 10);
 }
 
-void Reprojector::onTwist(TwistStamped::ConstSharedPtr msg) { twist_list_.push_back(msg); }
+void DynamicRemover::on_twist(TwistStamped::ConstSharedPtr msg) { twist_list_.push_back(msg); }
 
-void Reprojector::tryDefineParam()
+void DynamicRemover::try_define_param()
 {
   if (param_.has_value()) return;
 
-  std::optional<Sophus::SE3f> extrinsic = tf_subscriber_.se3f(info_.getFrameId(), "base_link");
+  std::optional<Sophus::SE3f> extrinsic = tf_subscriber_.se3f(info_.get_frame_id(), "base_link");
   if (!extrinsic.has_value()) return;
-  if (info_.isCameraInfoNullOpt()) return;
+  if (info_.is_camera_info_nullopt()) return;
 
   const Eigen::Matrix3f K = info_.intrinsic();
   const Eigen::Matrix3f Kinv = K.inverse();
@@ -55,7 +55,7 @@ void Reprojector::tryDefineParam()
   RCLCPP_INFO_STREAM(get_logger(), "extrinsic & intrinsic are ready");
 }
 
-Reprojector::ProjectFunc Reprojector::defineProjectionFunction(const Sophus::SE3f & odom)
+DynamicRemover::ProjectFunc DynamicRemover::define_projection_function(const Sophus::SE3f & odom)
 {
   return [this, odom](const cv::Point2f & src) -> std::optional<cv::Point2f> {
     const Eigen::Vector3f t = param_->extrinsic_.translation();
@@ -83,53 +83,53 @@ Reprojector::ProjectFunc Reprojector::defineProjectionFunction(const Sophus::SE3
   };
 }
 
-void Reprojector::onSynchro(const Image & image_msg, const PointCloud2 & lsd_msg)
+void DynamicRemover::on_synchro(const Image & image_msg, const PointCloud2 & lsd_msg)
 {
-  Timer timer;
+  common::Timer timer;
 
   image_list_.push_back(image_msg);
   if (image_list_.size() < 2) return;
   const Image & old_image_msg = image_list_.front();
 
-  tryDefineParam();
+  try_define_param();
   if (!param_.has_value()) return;
 
   // Convert ROS messages to native messages
   pcl::PointCloud<pcl::PointNormal>::Ptr lsd{new pcl::PointCloud<pcl::PointNormal>()};
   pcl::fromROSMsg(lsd_msg, *lsd);
-  cv::Mat old_image = vml_common::decompress2CvMat(old_image_msg);
-  cv::Mat cur_image = vml_common::decompress2CvMat(image_msg);
+  cv::Mat old_image = common::decompress_to_cv_mat(old_image_msg);
+  cv::Mat cur_image = common::decompress_to_cv_mat(image_msg);
 
   // Accumulate travel distance
   const rclcpp::Time old_stamp{old_image_msg.header.stamp};
   const rclcpp::Time cur_stamp{image_msg.header.stamp};
-  Sophus::SE3f odom = accumulateTravelDistance(old_stamp, cur_stamp);
+  Sophus::SE3f odom = accumulate_travel_distance(old_stamp, cur_stamp);
   RCLCPP_INFO_STREAM(get_logger(), "relative position: " << odom.translation().transpose());
 
   // Define projection function from relative pose
-  ProjectFunc func = defineProjectionFunction(odom);
+  ProjectFunc func = define_projection_function(odom);
 
-  std::vector<TransformPair> pairs = makeTransformPairs(func, *lsd);
+  std::vector<TransformPair> pairs = make_transform_pairs(func, *lsd);
   RCLCPP_INFO_STREAM(get_logger(), "successfully transformed segments: " << pairs.size());
 
   // Search offsets to refine alignment
-  std::unordered_map<size_t, GapResult> gap_map = computeGap(pairs, old_image, cur_image);
+  std::unordered_map<size_t, GapResult> gap_map = compute_gap(pairs, old_image, cur_image);
   RCLCPP_INFO_STREAM(get_logger(), "successfully compute gap");
 
   // Visualize & publish
-  visualizeAndPublish(pairs, gap_map, old_image, cur_image);
+  visualize_and_publish(pairs, gap_map, old_image, cur_image);
   RCLCPP_INFO_STREAM(get_logger(), "publish");
 
   // Filt line segments using gap, then publish
-  publishCloud(*lsd, gap_map, cur_stamp);
+  publish_cloud(*lsd, gap_map, cur_stamp);
 
   // Pop
-  popObsoleteMsg();
+  pop_obsolete_msg();
 
   RCLCPP_INFO_STREAM(get_logger(), "whole time: " << timer);
 }
 
-void Reprojector::publishCloud(
+void DynamicRemover::publish_cloud(
   const pcl::PointCloud<pcl::PointNormal> & src, const std::unordered_map<size_t, GapResult> & gaps,
   const rclcpp::Time & stamp)
 {
@@ -139,10 +139,10 @@ void Reprojector::publishCloud(
       dst.push_back(src.at(id));
     }
   }
-  vml_common::publishCloud(*pub_cloud_, dst, stamp);
+  common::publish_cloud(*pub_cloud_, dst, stamp);
 }
 
-void Reprojector::visualizeAndPublish(
+void DynamicRemover::visualize_and_publish(
   const std::vector<TransformPair> & pairs, const std::unordered_map<size_t, GapResult> & gap_map,
   const cv::Mat & old_image, const cv::Mat & cur_image)
 {
@@ -171,11 +171,11 @@ void Reprojector::visualizeAndPublish(
       if (rect.contains(src)) draw_cur_image.at<cv::Vec3b>(src) = color;
     }
   }
-  vml_common::publishImage(*pub_old_image_, draw_old_image, get_clock()->now());
-  vml_common::publishImage(*pub_cur_image_, draw_cur_image, get_clock()->now());
+  common::publish_image(*pub_old_image_, draw_old_image, get_clock()->now());
+  common::publish_image(*pub_cur_image_, draw_cur_image, get_clock()->now());
 }
 
-std::unordered_map<size_t, Reprojector::GapResult> Reprojector::computeGap(
+std::unordered_map<size_t, DynamicRemover::GapResult> DynamicRemover::compute_gap(
   const std::vector<TransformPair> & pairs, const cv::Mat & old_image, const cv::Mat & cur_image)
 {
   std::vector<cv::Point2f> offset_bases = {{-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 0},
@@ -190,7 +190,7 @@ std::unordered_map<size_t, Reprojector::GapResult> Reprojector::computeGap(
   cv::Sobel(cur_edge, cur_edge, CV_8U, 1, 0);
   cv::Sobel(old_edge, old_edge, CV_8U, 1, 0);
 
-  auto compute_gap = [&](const TransformPair & pair, const cv::Point2f & offset) -> float {
+  auto lambda_compute_gap = [&](const TransformPair & pair, const cv::Point2f & offset) -> float {
     int gap = 0;
     int gap_cnt = 0;
 
@@ -221,7 +221,7 @@ std::unordered_map<size_t, Reprojector::GapResult> Reprojector::computeGap(
       cv::Point2f tmp_best_offset(0, 0);
 
       for (const auto & offset : offset_bases) {
-        int gap = compute_gap(pair, offset + best_offset);
+        int gap = lambda_compute_gap(pair, offset + best_offset);
         if (gap < tmp_best_gap) {
           tmp_best_gap = gap;
           tmp_best_offset = offset;
@@ -242,7 +242,7 @@ std::unordered_map<size_t, Reprojector::GapResult> Reprojector::computeGap(
   return gap_results;
 }
 
-std::vector<Reprojector::TransformPair> Reprojector::makeTransformPairs(
+std::vector<DynamicRemover::TransformPair> DynamicRemover::make_transform_pairs(
   ProjectFunc func, pcl::PointCloud<pcl::PointNormal> & segments)
 {
   std::vector<TransformPair> pairs;
@@ -252,7 +252,7 @@ std::vector<Reprojector::TransformPair> Reprojector::makeTransformPairs(
     TransformPair pair;
     pair.id = i;
 
-    std::vector<cv::Point2i> polygon = line2Polygon({ls.x, ls.y}, {ls.normal_x, ls.normal_y});
+    std::vector<cv::Point2i> polygon = line_to_polygon({ls.x, ls.y}, {ls.normal_x, ls.normal_y});
     for (const auto & p : polygon) {
       std::optional<cv::Point2f> opt = func(p);
 
@@ -271,7 +271,7 @@ std::vector<Reprojector::TransformPair> Reprojector::makeTransformPairs(
   return pairs;
 }
 
-std::vector<cv::Point2i> Reprojector::line2Polygon(
+std::vector<cv::Point2i> DynamicRemover::line_to_polygon(
   const cv::Point2f & from, const cv::Point2f & to) const
 {
   cv::Point2f upper_left, bottom_right;
@@ -294,7 +294,7 @@ std::vector<cv::Point2i> Reprojector::line2Polygon(
   return non_zero;
 }
 
-Sophus::SE3f Reprojector::accumulateTravelDistance(
+Sophus::SE3f DynamicRemover::accumulate_travel_distance(
   const rclcpp::Time & from_stamp, const rclcpp::Time & to_stamp) const
 {
   // TODO: Honestly, this accumulation does not provide accurate relative pose
@@ -319,7 +319,7 @@ Sophus::SE3f Reprojector::accumulateTravelDistance(
   return pose;
 }
 
-void Reprojector::popObsoleteMsg()
+void DynamicRemover::pop_obsolete_msg()
 {
   if (image_list_.size() < backward_frame_interval_) {
     return;
@@ -334,4 +334,4 @@ void Reprojector::popObsoleteMsg()
   }
 }
 
-}  // namespace imgproc
+}  // namespace pcdless::dynamic_remover
