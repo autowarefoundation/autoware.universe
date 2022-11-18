@@ -5,6 +5,8 @@
 #include <message_filters/sync_policies/approximate_time.h>
 #include <message_filters/time_synchronizer.h>
 
+namespace pcdless::common
+{
 template <typename Msg1, typename Msg2>
 class SynchroSubscriber
 {
@@ -27,7 +29,7 @@ public:
     syncronizer_->registerCallback(std::bind(&SynchroSubscriber::rawCallback, this, _1, _2));
   }
 
-  void setCallback(const UserCallback & callback) { user_callback_ = callback; }
+  void set_sallback(const UserCallback & callback) { user_callback_ = callback; }
 
 private:
   std::shared_ptr<Sub1> sub1_;
@@ -35,8 +37,10 @@ private:
   std::shared_ptr<message_filters::Synchronizer<SyncPolicy>> syncronizer_;
   std::optional<UserCallback> user_callback_{std::nullopt};
 
-  void rawCallback(const typename Msg1::ConstPtr & msg1, const typename Msg2::ConstPtr & msg2)
+  void raw_callback(const typename Msg1::ConstPtr & msg1, const typename Msg2::ConstPtr & msg2)
   {
     if (user_callback_.has_value()) user_callback_.value()(*msg1, *msg2);
   }
 };
+
+}  // namespace pcdless::common

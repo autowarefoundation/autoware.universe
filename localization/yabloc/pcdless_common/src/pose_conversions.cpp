@@ -4,7 +4,7 @@
 
 namespace vml_common
 {
-geometry_msgs::msg::Pose affine2Pose(const Eigen::Affine3f & affine)
+geometry_msgs::msg::Pose affine_to_pose(const Eigen::Affine3f & affine)
 {
   geometry_msgs::msg::Pose pose;
   Eigen::Vector3f pos = affine.translation();
@@ -19,7 +19,7 @@ geometry_msgs::msg::Pose affine2Pose(const Eigen::Affine3f & affine)
   return pose;
 }
 
-Eigen::Affine3f pose2Affine(const geometry_msgs::msg::Pose & pose)
+Eigen::Affine3f pose_to_affine(const geometry_msgs::msg::Pose & pose)
 {
   const auto pos = pose.position;
   const auto ori = pose.orientation;
@@ -28,7 +28,7 @@ Eigen::Affine3f pose2Affine(const geometry_msgs::msg::Pose & pose)
   return t * q;
 }
 
-Sophus::SE3f pose2Se3(const geometry_msgs::msg::Pose & pose)
+Sophus::SE3f pose_to_se3(const geometry_msgs::msg::Pose & pose)
 {
   auto ori = pose.orientation;
   auto pos = pose.position;
@@ -37,7 +37,7 @@ Sophus::SE3f pose2Se3(const geometry_msgs::msg::Pose & pose)
   return {q, t};
 }
 
-geometry_msgs::msg::Pose se32Pose(const Sophus::SE3f & se3f)
+geometry_msgs::msg::Pose se3_to_pose(const Sophus::SE3f & se3f)
 {
   geometry_msgs::msg::Pose pose;
   Eigen::Vector3f pos = se3f.translation();

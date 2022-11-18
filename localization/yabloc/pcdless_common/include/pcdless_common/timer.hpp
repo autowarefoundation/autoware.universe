@@ -1,7 +1,8 @@
 #pragma once
 #include <chrono>
 #include <ostream>
-
+namespace pcdless::common
+{
 class Timer
 {
 public:
@@ -9,13 +10,13 @@ public:
 
   void reset() { start = std::chrono::system_clock::now(); }
 
-  long milliSeconds() const
+  long milli_seconds() const
   {
     auto dur = std::chrono::system_clock::now() - start;
     return std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
   }
 
-  long microSeconds() const
+  long micro_seconds() const
   {
     auto dur = std::chrono::system_clock::now() - start;
     return std::chrono::duration_cast<std::chrono::microseconds>(dur).count();
@@ -30,3 +31,5 @@ public:
 private:
   std::chrono::time_point<std::chrono::system_clock> start;
 };
+
+}  // namespace pcdless::common

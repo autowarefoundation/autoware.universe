@@ -4,7 +4,7 @@
 #include <sensor_msgs/msg/compressed_image.hpp>
 #include <sensor_msgs/msg/image.hpp>
 
-namespace vml_common
+namespace pcdless::common
 {
 cv::Mat decompress2CvMat(const sensor_msgs::msg::Image & img);
 
@@ -13,4 +13,4 @@ sensor_msgs::msg::Image::ConstSharedPtr decompress2RosMsg(
 
 cv::Mat decompress2CvMat(const sensor_msgs::msg::CompressedImage & compressed_img);
 
-}  // namespace vml_common
+}  // namespace pcdless::common

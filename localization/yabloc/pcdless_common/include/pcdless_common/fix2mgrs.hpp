@@ -1,9 +1,9 @@
 #pragma once
-#include <Eigen/StdVector>
+#include <Eigen/Core>
 
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
 
-namespace vml_common
+namespace pcdless::common
 {
-Eigen::Vector3d fix2Mgrs(const sensor_msgs::msg::NavSatFix & msg);
+Eigen::Vector3d fix_to_mgrs(const sensor_msgs::msg::NavSatFix & msg);
 }

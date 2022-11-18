@@ -8,14 +8,14 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
-namespace vml_common
+namespace pcdless::common
 {
-void publishImage(
+void publish_image(
   rclcpp::Publisher<sensor_msgs::msg::Image> & publisher, const cv::Mat & image,
   const rclcpp::Time & stamp);
 
 template <typename PointT>
-void publishCloud(
+void publish_cloud(
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2> & publisher,
   const pcl::PointCloud<PointT> & cloud, const rclcpp::Time & stamp);
-}  // namespace vml_common
+}  // namespace pcdless::common

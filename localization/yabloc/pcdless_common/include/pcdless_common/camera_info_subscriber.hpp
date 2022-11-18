@@ -5,7 +5,7 @@
 #include <sensor_msgs/msg/camera_info.hpp>
 
 #include <optional>
-namespace vml_common
+namespace pcdless::common
 {
 class CameraInfoSubscriber
 {
@@ -14,18 +14,18 @@ public:
 
   CameraInfoSubscriber(rclcpp::Node * node);
 
-  bool isCameraInfoReady() const;
+  bool is_camera_info_ready() const;
 
-  bool isCameraInfoNullOpt() const;
+  bool is_camera_info_nullopt() const;
 
   Eigen::Matrix3f intrinsic() const;
 
   // This member function DOES NOT check isCameraInfoReady()
   // If it it not ready, throw bad optional access
-  std::string getFrameId() const;
+  std::string get_frame_id() const;
 
 private:
   rclcpp::Subscription<CameraInfo>::SharedPtr sub_info_;
   std::optional<CameraInfo> opt_info_;
 };
-}  // namespace vml_common
+}  // namespace pcdless::common

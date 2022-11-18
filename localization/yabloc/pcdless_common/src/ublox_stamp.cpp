@@ -2,9 +2,9 @@
 
 #include <time.h>
 
-namespace vml_common
+namespace pcdless::common
 {
-rclcpp::Time ubloxTime2Stamp(const ublox_msgs::msg::NavPVT & msg)
+rclcpp::Time ublox_time_to_stamp(const ublox_msgs::msg::NavPVT & msg)
 {
   // TODO: Day 31 may cause invalid convertion
   struct tm t;
@@ -34,7 +34,7 @@ rclcpp::Time ubloxTime2Stamp(const ublox_msgs::msg::NavPVT & msg)
   return stamp;
 }
 
-ublox_msgs::msg::NavPVT stamp2UbloxTime(const builtin_interfaces::msg::Time & stamp)
+ublox_msgs::msg::NavPVT stamp_to_ublox_time(const builtin_interfaces::msg::Time & stamp)
 {
   time_t t_of_day = stamp.sec;
   ublox_msgs::msg::NavPVT msg;
@@ -53,4 +53,4 @@ ublox_msgs::msg::NavPVT stamp2UbloxTime(const builtin_interfaces::msg::Time & st
   msg.nano = stamp.nanosec;
   return msg;
 }
-}  // namespace vml_common
+}  // namespace pcdless::common

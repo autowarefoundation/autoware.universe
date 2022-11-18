@@ -7,9 +7,9 @@
 
 #include <iostream>
 
-namespace vml_common
+namespace pcdless::common
 {
-cv::Mat decompressImage(const sensor_msgs::msg::CompressedImage & compressed_img)
+cv::Mat decompress_image(const sensor_msgs::msg::CompressedImage & compressed_img)
 {
   cv::Mat raw_image;
 
@@ -41,22 +41,22 @@ cv::Mat decompressImage(const sensor_msgs::msg::CompressedImage & compressed_img
   return raw_image;
 }
 
-cv::Mat decompress2CvMat(const sensor_msgs::msg::CompressedImage & compressed_img)
+cv::Mat decompress_to_cv_mat(const sensor_msgs::msg::CompressedImage & compressed_img)
 {
-  return decompressImage(compressed_img);
+  return decompress_image(compressed_img);
 }
 
-cv::Mat decompress2CvMat(const sensor_msgs::msg::Image & img)
+cv::Mat decompress_to_cv_mat(const sensor_msgs::msg::Image & img)
 {
   return cv_bridge::toCvCopy(std::make_shared<sensor_msgs::msg::Image>(img), img.encoding)->image;
 }
 
-sensor_msgs::msg::Image::ConstSharedPtr decompress2RosMsg(
+sensor_msgs::msg::Image::ConstSharedPtr decompress_to_ros_msg(
   const sensor_msgs::msg::CompressedImage & compressed_img)
 {
   cv_bridge::CvImage cv_image;
-  cv_image.image = decompressImage(compressed_img);
+  cv_image.image = decompress_image(compressed_img);
   cv_image.encoding = "bgr8";
   return cv_image.toImageMsg();
 }
-}  // namespace vml_common
+}  // namespace pcdless::common

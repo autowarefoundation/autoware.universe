@@ -3,9 +3,9 @@
 #include <cv_bridge/cv_bridge.h>
 #include <pcl_conversions/pcl_conversions.h>
 
-namespace vml_common
+namespace pcdless::common
 {
-void publishImage(
+void publish_image(
   rclcpp::Publisher<sensor_msgs::msg::Image> & publisher, const cv::Mat & image,
   const rclcpp::Time & stamp)
 {
@@ -18,7 +18,7 @@ void publishImage(
 }
 
 template <typename PointT>
-void publishCloud(
+void publish_cloud(
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2> & publisher,
   const pcl::PointCloud<PointT> & cloud, const rclcpp::Time & stamp)
 {
@@ -30,20 +30,20 @@ void publishCloud(
   publisher.publish(cloud_msg);
 }
 
-template void publishCloud<pcl::PointXYZ>(
+template void publish_cloud<pcl::PointXYZ>(
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2> &, const pcl::PointCloud<pcl::PointXYZ> &,
   const rclcpp::Time &);
 
-template void publishCloud<pcl::PointNormal>(
+template void publish_cloud<pcl::PointNormal>(
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2> &, const pcl::PointCloud<pcl::PointNormal> &,
   const rclcpp::Time &);
 
-template void publishCloud<pcl::PointXYZI>(
+template void publish_cloud<pcl::PointXYZI>(
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2> &, const pcl::PointCloud<pcl::PointXYZI> &,
   const rclcpp::Time &);
 
-template void publishCloud<pcl::PointXYZRGB>(
+template void publish_cloud<pcl::PointXYZRGB>(
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2> &, const pcl::PointCloud<pcl::PointXYZRGB> &,
   const rclcpp::Time &);
 
-}  // namespace vml_common
+}  // namespace pcdless::common

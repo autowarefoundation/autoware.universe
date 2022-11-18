@@ -3,7 +3,7 @@
 
 #include <std_msgs/msg/color_rgba.hpp>
 
-namespace vml_common
+namespace pcdless::common
 {
 
 struct Color
@@ -46,9 +46,9 @@ struct Color
 
 namespace color_scale
 {
-Color hsv2Rgb(float h, float s, float v);
+Color hsv_to_rgb(float h, float s, float v);
 Color rainbow(float value);
-Color blueRed(float value);
+Color blue_red(float value);
 }  // namespace color_scale
 
-}  // namespace vml_common
+}  // namespace pcdless::common

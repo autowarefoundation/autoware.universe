@@ -3,9 +3,9 @@
 #include <GeographicLib/MGRS.hpp>
 #include <GeographicLib/UTMUPS.hpp>
 
-namespace vml_common
+namespace pcdless::common
 {
-Eigen::Vector3d fix2Mgrs(const sensor_msgs::msg::NavSatFix & msg)
+Eigen::Vector3d fix_to_mgrs(const sensor_msgs::msg::NavSatFix & msg)
 {
   using namespace GeographicLib;
   double x, y;
@@ -21,4 +21,4 @@ Eigen::Vector3d fix2Mgrs(const sensor_msgs::msg::NavSatFix & msg)
   double local_y = std::stoi(mgrs.substr(5 + DIGIT, DIGIT)) * std::pow(10, 5 - DIGIT);
   return {local_x, local_y, 0};
 }
-}  // namespace vml_common
+}  // namespace pcdless::common

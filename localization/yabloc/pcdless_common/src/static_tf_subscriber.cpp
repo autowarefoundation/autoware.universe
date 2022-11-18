@@ -1,6 +1,6 @@
 #include "pcdless_common/static_tf_subscriber.hpp"
 
-namespace vml_common
+namespace pcdless::common
 {
 StaticTfSubscriber::StaticTfSubscriber(rclcpp::Clock::SharedPtr clock)
 {
@@ -43,4 +43,4 @@ std::optional<Eigen::Affine3f> StaticTfSubscriber::operator()(
   return extrinsic_;
 }
 
-}  // namespace vml_common
+}  // namespace pcdless::common

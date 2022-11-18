@@ -1,6 +1,6 @@
 #include "pcdless_common/color.hpp"
 
-namespace vml_common::color_scale
+namespace pcdless::common::color_scale
 {
 Color rainbow(float value)
 {
@@ -20,7 +20,7 @@ Color rainbow(float value)
   return {r, g, b};
 }
 
-Color hsv2Rgb(float h_, float s_, float v_)
+Color hsv_to_rgb(float h_, float s_, float v_)
 {
   const float h = std::clamp(h_, 0.f, 360.f);
   const float max = v_;
@@ -40,14 +40,14 @@ Color hsv2Rgb(float h_, float s_, float v_)
     return {max, min, (360 - h) / 60 * (max - min) + min};
 }
 
-Color blueRed(float value)
+Color blue_red(float value)
 {
   value = std::clamp(value, 0.0f, 1.0f);
   float h = (value < 0.5f) ? 0.f : 240.f;
   float s = std::abs(value - 0.5f) / 0.5f;
   float v = 1.0f;
-  return hsv2Rgb(h, s, v);
+  return hsv_to_rgb(h, s, v);
   // return {h, s, v};
 }
 
-}  // namespace vml_common::color_scale
+}  // namespace pcdless::common::color_scale

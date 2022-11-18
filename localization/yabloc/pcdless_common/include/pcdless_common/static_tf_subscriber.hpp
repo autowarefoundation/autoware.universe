@@ -1,5 +1,5 @@
 #pragma once
-#include <eigen3/Eigen/Geometry>
+#include <Eigen/Geometry>
 #include <sophus/geometry.hpp>
 
 #include <tf2_ros/buffer.h>
@@ -8,7 +8,7 @@
 #include <memory>
 #include <optional>
 
-namespace vml_common
+namespace pcdless::common
 {
 class StaticTfSubscriber
 {
@@ -26,4 +26,4 @@ private:
   std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
 };
 
-}  // namespace vml_common
+}  // namespace pcdless::common

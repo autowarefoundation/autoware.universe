@@ -1,6 +1,6 @@
 #include "pcdless_common/camera_info_subscriber.hpp"
 
-namespace vml_common
+namespace pcdless::common
 {
 CameraInfoSubscriber::CameraInfoSubscriber(rclcpp::Node * node)
 {
@@ -9,11 +9,11 @@ CameraInfoSubscriber::CameraInfoSubscriber(rclcpp::Node * node)
   sub_info_ = node->create_subscription<CameraInfo>("camera_info", qos, callback);
 }
 
-bool CameraInfoSubscriber::isCameraInfoReady() const { return opt_info_.has_value(); }
+bool CameraInfoSubscriber::is_camera_info_ready() const { return opt_info_.has_value(); }
 
-bool CameraInfoSubscriber::isCameraInfoNullOpt() const { return !(opt_info_.has_value()); }
+bool CameraInfoSubscriber::is_camera_info_nullopt() const { return !(opt_info_.has_value()); }
 
-std::string CameraInfoSubscriber::getFrameId() const { return opt_info_->header.frame_id; }
+std::string CameraInfoSubscriber::get_frame_id() const { return opt_info_->header.frame_id; }
 
 Eigen::Matrix3f CameraInfoSubscriber::intrinsic() const
 {
@@ -24,4 +24,4 @@ Eigen::Matrix3f CameraInfoSubscriber::intrinsic() const
   return Kd_t.cast<float>().transpose();
 }
 
-}  // namespace vml_common
+}  // namespace pcdless::common

@@ -1,7 +1,7 @@
 #pragma once
 #include <opencv4/opencv2/core.hpp>
 
-namespace vml_common
+namespace pcdless::common
 {
 class GammaConverter
 {
@@ -26,4 +26,4 @@ public:
 private:
   cv::Mat lut_;
 };
-}  // namespace vml_common
+}  // namespace pcdless::common

@@ -1,6 +1,6 @@
 #pragma once
+#include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Geometry>
-#include <eigen3/Eigen/StdVector>
 #include <sophus/geometry.hpp>
 
 #include <std_msgs/msg/float32_multi_array.hpp>
@@ -31,12 +31,12 @@ struct GroundPlane
 
   float height() const { return xyz.z(); }
 
-  Eigen::Quaternionf alignWithSlope(const Eigen::Quaternionf & q) const
+  Eigen::Quaternionf align_with_slope(const Eigen::Quaternionf & q) const
   {
     return Eigen::Quaternionf{alignWithSlope(q.toRotationMatrix())};
   }
 
-  Eigen::Matrix3f alignWithSlope(const Eigen::Matrix3f & R) const
+  Eigen::Matrix3f align_with_slope(const Eigen::Matrix3f & R) const
   {
     Eigen::Matrix3f R_;
     Eigen::Vector3f rz = this->normal;
@@ -49,12 +49,12 @@ struct GroundPlane
     return R_;
   }
 
-  Sophus::SE3f alignWithSlope(const Sophus::SE3f & pose) const
+  Sophus::SE3f align_with_slope(const Sophus::SE3f & pose) const
   {
-    return {alignWithSlope(pose.rotationMatrix()), pose.translation()};
+    return {align_with_slope(pose.rotationMatrix()), pose.translation()};
   }
 
-  Eigen::Affine3f alignWithSlope(const Eigen::Affine3f & pose) const
+  Eigen::Affine3f align_with_slope(const Eigen::Affine3f & pose) const
   {
     Eigen::Matrix3f R = pose.rotation();
     Eigen::Vector3f t = pose.translation();
