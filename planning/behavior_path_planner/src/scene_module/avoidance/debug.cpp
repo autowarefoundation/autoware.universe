@@ -100,6 +100,7 @@ MarkerArray createTargetObjectsMarkerArray(
   };
 
   MarkerArray msg;
+  msg.markers.reserve(objects.size() * 2);
 
   {
     auto marker = createDefaultMarker(
@@ -155,6 +156,7 @@ MarkerArray createOtherObjectsMarkerArray(
   };
 
   MarkerArray msg;
+  msg.markers.reserve(objects.size());
 
   {
     Marker marker = createDefaultMarker(
