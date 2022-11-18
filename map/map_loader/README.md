@@ -25,10 +25,10 @@ Please see [the description of `GetPartialPointCloudMap.srv`](https://github.com
 
 ### Parameters
 
-| Name                | Type   | Description                                                                       | Default value |
-| :------------------ | :----- | :-------------------------------------------------------------------------------- | :------------ |
-| enable_whole_load   | bool   | A flag to enable raw pointcloud map publishing                                    | true          |
-| enable_partial_load | bool   | A flag to enable partial pointcloud map server                                    | true          |
+| Name                | Type | Description                                    | Default value |
+| :------------------ | :--- | :--------------------------------------------- | :------------ |
+| enable_whole_load   | bool | A flag to enable raw pointcloud map publishing | true          |
+| enable_partial_load | bool | A flag to enable partial pointcloud map server | true          |
 
 ### Interfaces
 
