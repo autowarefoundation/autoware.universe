@@ -12,7 +12,7 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
-namespace modularized_particle_filter
+namespace pcdless::modularized_particle_filter
 {
 class ParticleInitializer : public rclcpp::Node
 {
@@ -38,16 +38,17 @@ private:
   pcl::KdTreeFLANN<pcl::PointXYZ>::Ptr kdtree_{nullptr};
   std::unordered_map<int, lanelet::Id> point_id_to_lanelet_id_;
 
-  void onInitialpose(const PoseCovStamped & initialpose);
-  void onMap(const HADMapBin & bin_map);
+  void on_initial_pose(const PoseCovStamped & initialpose);
+  void on_map(const HADMapBin & bin_map);
 
-  int searchNearestPointIndex(const Eigen::Vector3f & pos);
+  int search_nearest_point_index(const Eigen::Vector3f & pos);
 
-  void publishRangeMarker(const Eigen::Vector3f & pos, const Eigen::Vector3f & tangent);
-  void publishRectifiedInitialpose(
+  void publish_range_marker(const Eigen::Vector3f & pos, const Eigen::Vector3f & tangent);
+  void publish_rectified_initial_pose(
     const Eigen::Vector3f & pos, const Eigen::Vector3f & tangent,
     const PoseCovStamped & raw_initialpose);
 
-  Eigen::Vector3f tangentDirection(const lanelet::Lanelet & lane, const Eigen::Vector3f & position);
+  Eigen::Vector3f tangent_direction(
+    const lanelet::Lanelet & lane, const Eigen::Vector3f & position);
 };
-}  // namespace modularized_particle_filter
+}  // namespace pcdless::modularized_particle_filter

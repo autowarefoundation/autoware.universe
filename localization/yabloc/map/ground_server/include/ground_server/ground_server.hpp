@@ -24,7 +24,7 @@ namespace pcdless::ground_server
 class GroundServer : public rclcpp::Node
 {
 public:
-  using GroundPlane = vml_common::GroundPlane;
+  using GroundPlane = common::GroundPlane;
   using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
   using Ground = ground_msgs::srv::Ground;
   using Pose = geometry_msgs::msg::Pose;

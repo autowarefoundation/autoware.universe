@@ -5,6 +5,8 @@
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <ublox_msgs/msg/nav_pvt.hpp>
 
+namespace pcdless::particle_initializer
+{
 class GnssBasedPoseInitializer : public rclcpp::Node
 {
 public:
@@ -17,7 +19,7 @@ public:
     using std::placeholders::_1;
 
     // Subscriber
-    auto navpvt_cb = std::bind(&GnssBasedPoseInitializer::onNavpvt, this, _1);
+    auto navpvt_cb = std::bind(&GnssBasedPoseInitializer::on_navpvt, this, _1);
     sub_navpvt_ = create_subscription<NavPVT>("ublox_topic", 10, navpvt_cb);
 
     // Publisher
@@ -28,20 +30,20 @@ private:
   rclcpp::Subscription<ublox_msgs::msg::NavPVT>::SharedPtr sub_navpvt_;
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_pose_stamped_;
 
-  void onNavpvt(const NavPVT & msg)
+  void on_navpvt(const NavPVT & msg)
   {
     const int FIX_FLAG = NavPVT::CARRIER_PHASE_FIXED;
     const int FLOAT_FLAG = NavPVT::CARRIER_PHASE_FLOAT;
     if (!(msg.flags & FIX_FLAG) & !(msg.flags & FLOAT_FLAG)) return;
 
-    Eigen::Vector2f vel_xy = extractEnuVel(msg).topRows(2);
+    Eigen::Vector2f vel_xy = extract_enu_vel(msg).topRows(2);
     if (vel_xy.norm() < 5) return;
     float theta = std::atan2(vel_xy.y(), vel_xy.x());
 
-    Eigen::Vector3f position = ublox2Position(msg);
+    Eigen::Vector3f position = ublox_to_position(msg);
     geometry_msgs::msg::PoseStamped pose;
     pose.header.frame_id = "map";
-    pose.header.stamp = vml_common::ubloxTime2Stamp(msg);
+    pose.header.stamp = common::ublox_time_to_stamp(msg);
     pose.pose.position.x = position.x();
     pose.pose.position.y = position.y();
     pose.pose.position.z = 0;
@@ -50,27 +52,28 @@ private:
     pub_pose_stamped_->publish(pose);
   }
 
-  Eigen::Vector3f extractEnuVel(const NavPVT & msg) const
+  Eigen::Vector3f extract_enu_vel(const NavPVT & msg) const
   {
     Eigen::Vector3f enu_vel;
     enu_vel << msg.vel_e * 1e-3, msg.vel_n * 1e-3, -msg.vel_d * 1e-3;
     return enu_vel;
   }
 
-  Eigen::Vector3f ublox2Position(const NavPVT & msg)
+  Eigen::Vector3f ublox_to_position(const NavPVT & msg)
   {
     NavSatFix fix;
     fix.latitude = msg.lat * 1e-7f;
     fix.longitude = msg.lon * 1e-7f;
     fix.altitude = msg.height * 1e-3f;
-    return vml_common::fix2Mgrs(fix).cast<float>();
+    return common::fix_to_mgrs(fix).cast<float>();
   }
 };
+}  // namespace pcdless::particle_initializer
 
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<GnssBasedPoseInitializer>());
+  rclcpp::spin(std::make_shared<pcdless::particle_initializer::GnssBasedPoseInitializer>());
   rclcpp::shutdown();
   return 0;
 }

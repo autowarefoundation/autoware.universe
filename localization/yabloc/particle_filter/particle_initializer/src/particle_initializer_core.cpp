@@ -4,7 +4,7 @@
 
 #include <boost/range/adaptors.hpp>
 
-namespace modularized_particle_filter
+namespace pcdless::modularized_particle_filter
 {
 ParticleInitializer::ParticleInitializer()
 : Node("particle_initializer"),
@@ -18,14 +18,14 @@ ParticleInitializer::ParticleInitializer()
   pub_marker_ = create_publisher<Marker>("init/marker", 10);
 
   // Subscriber
-  auto on_initialpose = std::bind(&ParticleInitializer::onInitialpose, this, _1);
-  auto on_map = std::bind(&ParticleInitializer::onMap, this, _1);
+  auto on_initialpose = std::bind(&ParticleInitializer::on_initial_pose, this, _1);
+  auto on_map = std::bind(&ParticleInitializer::on_map, this, _1);
   sub_initialpose_ =
     create_subscription<PoseCovStamped>("initialpose", 10, std::move(on_initialpose));
   sub_map_ = create_subscription<HADMapBin>("map/vector_map", map_qos, std::move(on_map));
 }
 
-void ParticleInitializer::onInitialpose(const PoseCovStamped & initialpose)
+void ParticleInitializer::on_initial_pose(const PoseCovStamped & initialpose)
 {
   if (kdtree_ == nullptr) {
     RCLCPP_WARN_STREAM(get_logger(), "kdtree is nullptr");
@@ -36,7 +36,7 @@ void ParticleInitializer::onInitialpose(const PoseCovStamped & initialpose)
   Eigen::Vector3f pos_vec3f;
   pos_vec3f << position.x, position.y, position.z;
 
-  int nearest_index = searchNearestPointIndex(pos_vec3f);
+  int nearest_index = search_nearest_point_index(pos_vec3f);
   lanelet::Id id = lanelet::InvalId;
   if (nearest_index >= 0) id = point_id_to_lanelet_id_.at(nearest_index);
   if (id == lanelet::InvalId) return;
@@ -44,14 +44,14 @@ void ParticleInitializer::onInitialpose(const PoseCovStamped & initialpose)
   pos_vec3f = cloud_->at(nearest_index).getArray3fMap();
 
   const lanelet::Lanelet lane = *lanelet_map_->laneletLayer.find(id);
-  Eigen::Vector3f tangent = tangentDirection(lane, pos_vec3f);
-  publishRangeMarker(pos_vec3f, tangent);
-  publishRectifiedInitialpose(pos_vec3f, tangent, initialpose);
+  Eigen::Vector3f tangent = tangent_direction(lane, pos_vec3f);
+  publish_range_marker(pos_vec3f, tangent);
+  publish_rectified_initial_pose(pos_vec3f, tangent, initialpose);
 }
 
-void ParticleInitializer::onMap(const HADMapBin & bin_map)
+void ParticleInitializer::on_map(const HADMapBin & bin_map)
 {
-  lanelet_map_ = map::fromBinMsg(bin_map);
+  lanelet_map_ = ll2_decomposer::from_bin_msg(bin_map);
 
   cloud_ = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
 
@@ -74,7 +74,7 @@ void ParticleInitializer::onMap(const HADMapBin & bin_map)
   kdtree_->setInputCloud(cloud_);
 }
 
-int ParticleInitializer::searchNearestPointIndex(const Eigen::Vector3f & pos)
+int ParticleInitializer::search_nearest_point_index(const Eigen::Vector3f & pos)
 {
   pcl::PointXYZ query(pos.x(), pos.y(), pos.z());
   std::vector<int> indices;
@@ -93,7 +93,7 @@ int ParticleInitializer::searchNearestPointIndex(const Eigen::Vector3f & pos)
   return indices.front();
 }
 
-void ParticleInitializer::publishRangeMarker(
+void ParticleInitializer::publish_range_marker(
   const Eigen::Vector3f & pos, const Eigen::Vector3f & tangent)
 {
   Marker msg;
@@ -128,7 +128,7 @@ void ParticleInitializer::publishRangeMarker(
   pub_marker_->publish(msg);
 }
 
-Eigen::Vector3f ParticleInitializer::tangentDirection(
+Eigen::Vector3f ParticleInitializer::tangent_direction(
   const lanelet::Lanelet & lane, const Eigen::Vector3f & position)
 {
   auto castVec3f = [](const lanelet::ConstPoint3d & p) -> Eigen::Vector3f {
@@ -161,7 +161,7 @@ Eigen::Vector3f ParticleInitializer::tangentDirection(
   return (to - from).normalized();
 }
 
-void ParticleInitializer::publishRectifiedInitialpose(
+void ParticleInitializer::publish_rectified_initial_pose(
   const Eigen::Vector3f & pos, const Eigen::Vector3f & tangent,
   const PoseCovStamped & raw_initialpose)
 {
@@ -191,4 +191,4 @@ void ParticleInitializer::publishRectifiedInitialpose(
   pub_initialpose_->publish(msg);
 }
 
-}  // namespace modularized_particle_filter
+}  // namespace pcdless::modularized_particle_filter
