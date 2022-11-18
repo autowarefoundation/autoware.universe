@@ -16,6 +16,7 @@
 #define LIDAR_CENTERPOINT_TVM__UTILS_HPP_
 
 #include <cstddef>
+#include <cstdint>
 
 namespace autoware
 {

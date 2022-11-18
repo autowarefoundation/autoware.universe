@@ -17,6 +17,7 @@
 
 #include <lidar_centerpoint_tvm/centerpoint_config.hpp>
 
+#include <cstdint>
 #include <vector>
 
 namespace autoware
