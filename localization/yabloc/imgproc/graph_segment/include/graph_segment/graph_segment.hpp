@@ -5,7 +5,7 @@
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
-namespace imgproc
+namespace pcdless::graph_segment
 {
 class GraphSegment : public rclcpp::Node
 {
@@ -23,10 +23,10 @@ private:
   rclcpp::Publisher<Image>::SharedPtr pub_image_;
   cv::Ptr<cv::ximgproc::segmentation::GraphSegmentation> segmentation_;
 
-  void callbackImage(const Image & msg);
+  void on_image(const Image & msg);
   void execute(const PointCloud2 & msg1, const PointCloud2 & msg2);
-  void publishImage(
+  void publish_image(
     const cv::Mat & raw_image, const cv::Mat & segmentation, const rclcpp::Time & stamp,
     int target_class);
 };
-}  // namespace imgproc
+}  // namespace pcdless::graph_segment

@@ -4,7 +4,7 @@
 #include <pcdless_common/cv_decompress.hpp>
 #include <pcdless_common/pub_sub.hpp>
 
-namespace imgproc
+namespace pcdless::graph_segment
 {
 GraphSegment::GraphSegment()
 : Node("graph_segment"),
@@ -16,7 +16,7 @@ GraphSegment::GraphSegment()
   // Subscriber
   sub_image_ = create_subscription<Image>(
     "/sensing/camera/traffic_light/image_raw/compressed", 10,
-    std::bind(&GraphSegment::callbackImage, this, _1));
+    std::bind(&GraphSegment::on_image, this, _1));
 
   pub_cloud_ = create_publisher<PointCloud2>("graph_segmented", 10);
   pub_image_ = create_publisher<Image>("segmented_image", 10);
@@ -24,9 +24,9 @@ GraphSegment::GraphSegment()
   segmentation_ = cv::ximgproc::segmentation::createGraphSegmentation();
 }
 
-void GraphSegment::callbackImage(const Image & msg)
+void GraphSegment::on_image(const Image & msg)
 {
-  cv::Mat image = vml_common::decompress2CvMat(msg);
+  cv::Mat image = common::decompress_to_cv_mat(msg);
   cv::Mat resized;
   cv::resize(image, resized, cv::Size(), 0.5, 0.5);
 
@@ -84,12 +84,13 @@ void GraphSegment::callbackImage(const Image & msg)
     pcl::PointXYZ xyz(p.x, p.y, 0);
     cloud.push_back(xyz);
   }
-  vml_common::publishCloud(*pub_cloud_, cloud, msg.header.stamp);
 
-  publishImage(image, segmented, msg.header.stamp, target_class);
+  common::publish_cloud(*pub_cloud_, cloud, msg.header.stamp);
+
+  publish_image(image, segmented, msg.header.stamp, target_class);
 }
 
-void GraphSegment::publishImage(
+void GraphSegment::publish_image(
   const cv::Mat & raw_image, const cv::Mat & segmentation, const rclcpp::Time & stamp,
   int target_class)
 {
@@ -126,7 +127,7 @@ void GraphSegment::publishImage(
 
   cv::Mat show_image;
   cv::addWeighted(raw_image, 0.5, segmented_image, 0.8, 1.0, show_image);
-  vml_common::publishImage(*pub_image_, show_image, stamp);
+  common::publish_image(*pub_image_, show_image, stamp);
 }
 
-}  // namespace imgproc
+}  // namespace pcdless::graph_segment

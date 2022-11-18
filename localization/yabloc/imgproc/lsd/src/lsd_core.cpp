@@ -7,7 +7,7 @@
 
 #include <pcl_conversions/pcl_conversions.h>
 
-namespace imgproc
+namespace pcdless::lsd
 {
 LineSegmentDetector::LineSegmentDetector()
 : Node("line_detector"),
@@ -16,7 +16,7 @@ LineSegmentDetector::LineSegmentDetector()
   using std::placeholders::_1;
 
   // Subscriber
-  auto cb_image = std::bind(&LineSegmentDetector::imageCallback, this, _1);
+  auto cb_image = std::bind(&LineSegmentDetector::on_image, this, _1);
   sub_image_ =
     create_subscription<Image>("/sensing/camera/traffic_light/image_raw/compressed", 10, cb_image);
 
@@ -27,9 +27,9 @@ LineSegmentDetector::LineSegmentDetector()
   lsd_ = cv::createLineSegmentDetector(cv::LSD_REFINE_STD, 0.8, 0.6, 2.0, 22.5, 0, 0.7, 1024);
 }
 
-void LineSegmentDetector::imageCallback(const sensor_msgs::msg::Image & msg)
+void LineSegmentDetector::on_image(const sensor_msgs::msg::Image & msg)
 {
-  cv::Mat image = vml_common::decompress2CvMat(msg);
+  cv::Mat image = common::decompress_to_cv_mat(msg);
   execute(image, msg.header.stamp);
 }
 
@@ -40,16 +40,16 @@ void LineSegmentDetector::execute(const cv::Mat & image, const rclcpp::Time & st
 
   cv::Mat lines;
   {
-    Timer timer;
+    common::Timer timer;
     lsd_->detect(gray_image, lines);
     lsd_->drawSegments(gray_image, lines);
     RCLCPP_INFO_STREAM(this->get_logger(), "lsd: " << timer);
   }
 
-  vml_common::publishImage(*pub_image_lsd_, gray_image, stamp);
+  common::publish_image(*pub_image_lsd_, gray_image, stamp);
 
   pcl::PointCloud<pcl::PointNormal> line_cloud;
-  std::vector<cv::Mat> filtered_lines = removeTooOuterElements(lines, image.size());
+  std::vector<cv::Mat> filtered_lines = remove_too_outer_elements(lines, image.size());
 
   for (const cv::Mat & xy_xy : filtered_lines) {
     Eigen::Vector3f xy1, xy2;
@@ -60,10 +60,10 @@ void LineSegmentDetector::execute(const cv::Mat & image, const rclcpp::Time & st
     pn.getNormalVector3fMap() = xy2;
     line_cloud.push_back(pn);
   }
-  vml_common::publishCloud(*pub_cloud_, line_cloud, stamp);
+  common::publish_cloud(*pub_cloud_, line_cloud, stamp);
 }
 
-std::vector<cv::Mat> LineSegmentDetector::removeTooOuterElements(
+std::vector<cv::Mat> LineSegmentDetector::remove_too_outer_elements(
   const cv::Mat & lines, const cv::Size & size) const
 {
   std::vector<cv::Rect2i> rect_vector;
@@ -91,4 +91,4 @@ std::vector<cv::Mat> LineSegmentDetector::removeTooOuterElements(
   return filtered_lines;
 }
 
-}  // namespace imgproc
+}  // namespace pcdless::lsd

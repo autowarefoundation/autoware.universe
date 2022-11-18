@@ -1,6 +1,6 @@
 #pragma once
+#include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Geometry>
-#include <eigen3/Eigen/StdVector>
 #include <opencv4/opencv2/core/eigen.hpp>
 #include <opencv4/opencv2/imgproc.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -13,11 +13,9 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
-#include <chrono>
-#include <memory>
 #include <optional>
 
-namespace imgproc
+namespace pcdless::lsd
 {
 class LineSegmentDetector : public rclcpp::Node
 {
@@ -37,8 +35,9 @@ private:
 
   cv::Ptr<cv::LineSegmentDetector> lsd_;
 
-  std::vector<cv::Mat> removeTooOuterElements(const cv::Mat & lines, const cv::Size & size) const;
-  void imageCallback(const sensor_msgs::msg::Image & msg);
+  std::vector<cv::Mat> remove_too_outer_elements(
+    const cv::Mat & lines, const cv::Size & size) const;
+  void on_image(const sensor_msgs::msg::Image & msg);
   void execute(const cv::Mat & image, const rclcpp::Time & stamp);
 };
-}  // namespace imgproc
+}  // namespace pcdless::lsd

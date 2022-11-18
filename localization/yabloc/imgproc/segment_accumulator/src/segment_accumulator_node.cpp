@@ -3,7 +3,7 @@
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<imgproc::Mapping>());
+  rclcpp::spin(std::make_shared<pcdless::accumulator::SegmentAccumulator>());
   rclcpp::shutdown();
   return 0;
 }

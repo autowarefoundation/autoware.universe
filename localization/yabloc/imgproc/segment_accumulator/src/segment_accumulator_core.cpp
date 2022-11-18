@@ -5,21 +5,21 @@
 
 #include <pcl_conversions/pcl_conversions.h>
 
-namespace imgproc
+namespace pcdless::accumulator
 {
-Mapping::Mapping()
+SegmentAccumulator::SegmentAccumulator()
 : Node("reprojector"),
-  info_(this),
-  tf_subscriber_(this->get_clock()),
   min_segment_length_(declare_parameter<float>("min_segment_length", 0.5)),
   default_map_value_(declare_parameter<int>("default_map_value", 00)),
-  map_update_interval_(declare_parameter<float>("map_update_interval", 0.5))
+  map_update_interval_(declare_parameter<float>("map_update_interval", 0.5)),
+  info_(this),
+  tf_subscriber_(this->get_clock())
 {
   using std::placeholders::_1;
 
   // Subscriber
-  auto on_lsd = std::bind(&Mapping::onLineSegments, this, _1);
-  auto on_twist = std::bind(&Mapping::onTwist, this, _1);
+  auto on_lsd = std::bind(&SegmentAccumulator::on_line_segments, this, _1);
+  auto on_twist = std::bind(&SegmentAccumulator::on_twist, this, _1);
   sub_lsd_ = create_subscription<PointCloud2>("lsd_cloud", 10, on_lsd);
   sub_twist_ =
     create_subscription<TwistStamped>("/localization/trajectory/kalman/twist", 10, on_twist);
@@ -32,42 +32,42 @@ Mapping::Mapping()
     default_map_value_ * cv::Mat::ones(cv::Size(2 * IMAGE_RADIUS, 2 * IMAGE_RADIUS), CV_8UC1);
 }
 
-void Mapping::onTwist(TwistStamped::ConstSharedPtr msg) { twist_list_.push_back(msg); }
+void SegmentAccumulator::on_twist(TwistStamped::ConstSharedPtr msg) { twist_list_.push_back(msg); }
 
-cv::Point2f Mapping::cv_pt2(const Eigen::Vector3f & v) const
+cv::Point2f SegmentAccumulator::cv_pt2(const Eigen::Vector3f & v) const
 {
   return {-v.y() / METRIC_PER_PIXEL + IMAGE_RADIUS, -v.x() / METRIC_PER_PIXEL + IMAGE_RADIUS};
 }
 
-Eigen::Vector3f Mapping::eigen_vec3f(const cv::Point2f & p) const
+Eigen::Vector3f SegmentAccumulator::eigen_vec3f(const cv::Point2f & p) const
 {
   return {-(p.y - IMAGE_RADIUS) * METRIC_PER_PIXEL, -(p.x - IMAGE_RADIUS) * METRIC_PER_PIXEL, 0};
 }
 
-void Mapping::onLineSegments(const PointCloud2 & msg)
+void SegmentAccumulator::on_line_segments(const PointCloud2 & msg)
 {
   static std::optional<rclcpp::Time> last_stamp{std::nullopt};
 
   if (last_stamp.has_value()) {
-    Sophus::SE3f odom = accumulateTravelDistance(*last_stamp, msg.header.stamp).inverse();
+    Sophus::SE3f odom = accumulate_travel_distance(*last_stamp, msg.header.stamp).inverse();
     if (odom.translation().norm() < map_update_interval_) return;  // NOTE: Skip map update
 
-    transformImage(odom);
+    transform_image(odom);
   }
   last_stamp = msg.header.stamp;
 
   draw(msg);
-  popObsoleteMsg(*last_stamp);
+  pop_obsolete_msg(*last_stamp);
 
   cv::Mat color_image, histogram_3ch_image;
   cv::applyColorMap(histogram_image_, color_image, cv::COLORMAP_JET);
   cv::cvtColor(histogram_image_, histogram_3ch_image, cv::COLOR_GRAY2BGR);
 
-  vml_common::publishImage(*pub_image_, histogram_3ch_image, msg.header.stamp);
-  vml_common::publishImage(*pub_rgb_image_, color_image, msg.header.stamp);
+  common::publish_image(*pub_image_, histogram_3ch_image, msg.header.stamp);
+  common::publish_image(*pub_rgb_image_, color_image, msg.header.stamp);
 }
 
-void Mapping::transformImage(const Sophus::SE3f & odom)
+void SegmentAccumulator::transform_image(const Sophus::SE3f & odom)
 {
   // Transform histogram image
 
@@ -89,16 +89,17 @@ void Mapping::transformImage(const Sophus::SE3f & odom)
     cv::Scalar::all(default_map_value_));
 }
 
-void Mapping::draw(const PointCloud2 & cloud_msg)
+void SegmentAccumulator::draw(const PointCloud2 & cloud_msg)
 {
   pcl::PointCloud<pcl::PointNormal>::Ptr lsd{new pcl::PointCloud<pcl::PointNormal>()};
   pcl::fromROSMsg(cloud_msg, *lsd);
   RCLCPP_INFO_STREAM(get_logger(), "segments size:" << lsd->size());
 
   // Check intrinsic & extrinsic
-  std::optional<Eigen::Affine3f> camera_extrinsic = tf_subscriber_(info_.getFrameId(), "base_link");
+  std::optional<Eigen::Affine3f> camera_extrinsic =
+    tf_subscriber_(info_.get_frame_id(), "base_link");
   if (!camera_extrinsic.has_value()) return;
-  if (info_.isCameraInfoNullOpt()) return;
+  if (info_.is_camera_info_nullopt()) return;
   const Eigen::Matrix3f K = info_.intrinsic();
   const Eigen::Matrix3f Kinv = K.inverse();
 
@@ -148,7 +149,7 @@ void Mapping::draw(const PointCloud2 & cloud_msg)
   }
 }
 
-Sophus::SE3f Mapping::accumulateTravelDistance(
+Sophus::SE3f SegmentAccumulator::accumulate_travel_distance(
   const rclcpp::Time & from_stamp, const rclcpp::Time & to_stamp)
 {
   // TODO: Honestly, this accumulation does not provide accurate relative pose
@@ -174,7 +175,7 @@ Sophus::SE3f Mapping::accumulateTravelDistance(
   return pose;
 }
 
-void Mapping::popObsoleteMsg(const rclcpp::Time & oldest_stamp)
+void SegmentAccumulator::pop_obsolete_msg(const rclcpp::Time & oldest_stamp)
 {
   for (auto itr = twist_list_.begin(); itr != twist_list_.end();) {
     if (rclcpp::Time((*itr)->header.stamp) > oldest_stamp) break;
@@ -182,4 +183,4 @@ void Mapping::popObsoleteMsg(const rclcpp::Time & oldest_stamp)
   }
 }
 
-}  // namespace imgproc
+}  // namespace pcdless::accumulator
