@@ -216,7 +216,7 @@ void FusionNode<Msg, Obj>::subCallback(const typename Msg::ConstSharedPtr input_
 
   // if all camera fused, postprocess; else, publish the old Msg(if exists) and cache the current
   // Msg
-  if (std::count(is_fused_.begin(), is_fused_.end(), true) == int(rois_number_)) {
+  if (std::count(is_fused_.begin(), is_fused_.end(), true) == static_cast<int>(rois_number_)) {
     timer_->cancel();
     postprocess(*output_msg);
     publish(*output_msg);
@@ -290,7 +290,7 @@ void FusionNode<Msg, Obj>::roiCallback(
           timestamp_interval_ms - input_offset_ms_.at(roi_i));
       }
 
-      if (std::count(is_fused_.begin(), is_fused_.end(), true) == int(rois_number_)) {
+      if (std::count(is_fused_.begin(), is_fused_.end(), true) == static_cast<int>(rois_number_)) {
         timer_->cancel();
         postprocess(*(sub_stdpair_.second));
         publish(*(sub_stdpair_.second));
