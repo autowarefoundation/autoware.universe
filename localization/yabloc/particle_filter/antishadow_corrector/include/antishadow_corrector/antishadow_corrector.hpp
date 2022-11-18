@@ -11,7 +11,7 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
-namespace modularized_particle_filter
+namespace pcdless::modularized_particle_filter
 {
 class AntishadowCorrector : public modularized_particle_filter::AbstCorrector
 {
@@ -36,18 +36,18 @@ private:
   std::optional<Sophus::SE3f> latest_pose_{std::nullopt};
   Eigen::Vector3f last_mean_position_{0, 0, 0};
 
-  void onLsd(const Image & msg);
-  void onLl2(const PointCloud2 & msg);
-  void onPoseStamped(const PoseStamped & msg);
+  void on_lsd(const Image & msg);
+  void on_ll2(const PointCloud2 & msg);
+  void on_pose_stamped(const PoseStamped & msg);
 
-  LineSegments cropLineSegments(const LineSegments & src, const Sophus::SE3f & transform) const;
-  LineSegments transformCloud(const LineSegments & src, const Sophus::SE3f & transform) const;
-  float computeScore(const LineSegments & src, const cv::Mat & lsd_image) const;
+  LineSegments crop_line_segments(const LineSegments & src, const Sophus::SE3f & transform) const;
+  LineSegments transform_cloud(const LineSegments & src, const Sophus::SE3f & transform) const;
+  float compute_score(const LineSegments & src, const cv::Mat & lsd_image) const;
 
   cv::Point2f cv_pt2(const Eigen::Vector3f & v) const;
 
-  std::function<float(float)> defineNormalizeScore() const;
+  std::function<float(float)> define_normalize_score() const;
 
-  void printParticleStatistics(const ParticleArray & array) const;
+  void print_particle_statistics(const ParticleArray & array) const;
 };
-}  // namespace modularized_particle_filter
+}  // namespace pcdless::modularized_particle_filter

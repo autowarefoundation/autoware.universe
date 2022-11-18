@@ -7,7 +7,7 @@
 
 #include <pcl_conversions/pcl_conversions.h>
 
-namespace modularized_particle_filter
+namespace pcdless::modularized_particle_filter
 {
 AntishadowCorrector::AntishadowCorrector()
 : AbstCorrector("camera_particle_corrector"),
@@ -16,9 +16,9 @@ AntishadowCorrector::AntishadowCorrector()
   weight_min_(declare_parameter<float>("weight_min", 0.5))
 {
   using std::placeholders::_1;
-  auto lsd_callback = std::bind(&AntishadowCorrector::onLsd, this, _1);
-  auto ll2_callback = std::bind(&AntishadowCorrector::onLl2, this, _1);
-  auto pose_callback = std::bind(&AntishadowCorrector::onPoseStamped, this, _1);
+  auto lsd_callback = std::bind(&AntishadowCorrector::on_lsd, this, _1);
+  auto ll2_callback = std::bind(&AntishadowCorrector::on_ll2, this, _1);
+  auto pose_callback = std::bind(&AntishadowCorrector::on_pose_stamped, this, _1);
 
   sub_lsd_ = create_subscription<Image>("mapping_image", 10, lsd_callback);
   sub_ll2_ =
@@ -32,20 +32,20 @@ cv::Point2f AntishadowCorrector::cv_pt2(const Eigen::Vector3f & v) const
   return {-v.y() / METRIC_PER_PIXEL + IMAGE_RADIUS, -v.x() / METRIC_PER_PIXEL + IMAGE_RADIUS};
 }
 
-void AntishadowCorrector::onPoseStamped(const PoseStamped & msg)
+void AntishadowCorrector::on_pose_stamped(const PoseStamped & msg)
 {
-  latest_pose_ = vml_common::pose2Se3(msg.pose);
+  latest_pose_ = common::pose_to_se3(msg.pose);
 }
 
-void AntishadowCorrector::onLsd(const Image & msg)
+void AntishadowCorrector::on_lsd(const Image & msg)
 {
-  Timer timer;
+  common::Timer timer;
 
-  cv::Mat lsd_image = vml_common::decompress2CvMat(msg);
+  cv::Mat lsd_image = common::decompress_to_cv_mat(msg);
   cv::cvtColor(lsd_image, lsd_image, cv::COLOR_BGR2GRAY);  // NOTE: remove redundant channel
 
   const rclcpp::Time stamp = msg.header.stamp;
-  std::optional<ParticleArray> opt_array = this->getSynchronizedParticleArray(stamp);
+  std::optional<ParticleArray> opt_array = this->get_synchronized_particle_array(stamp);
   if (!opt_array.has_value()) return;
 
   const auto dt = (stamp - opt_array->header.stamp);
@@ -67,23 +67,23 @@ void AntishadowCorrector::onLsd(const Image & msg)
 
   ParticleArray weighted_particles = opt_array.value();
 
-  LineSegments cropped_ll2_cloud = cropLineSegments(ll2_cloud_, *latest_pose_);
+  LineSegments cropped_ll2_cloud = crop_line_segments(ll2_cloud_, *latest_pose_);
 
-  auto normalize = defineNormalizeScore();
+  auto normalize = define_normalize_score();
   for (auto & p : weighted_particles.particles) {
-    Sophus::SE3f pose = vml_common::pose2Se3(p.pose);
-    auto dst_cloud = transformCloud(cropped_ll2_cloud, pose.inverse());
-    float score = computeScore(dst_cloud, lsd_image);
+    Sophus::SE3f pose = common::pose_to_se3(p.pose);
+    auto dst_cloud = transform_cloud(cropped_ll2_cloud, pose.inverse());
+    float score = compute_score(dst_cloud, lsd_image);
     p.weight = normalize(score);
   }
 
-  printParticleStatistics(weighted_particles);
+  print_particle_statistics(weighted_particles);
 
   // NOTE: skip weighting if ego vehicle does not move enought
-  auto mean_pose = modularized_particle_filter::meanPose(weighted_particles);
-  Eigen::Vector3f mean_position = vml_common::pose2Affine(mean_pose).translation();
+  auto meaned_pose = mean_pose(weighted_particles);
+  Eigen::Vector3f mean_position = common::pose_to_affine(meaned_pose).translation();
   if ((mean_position - last_mean_position_).squaredNorm() > 1) {
-    this->setWeightedParticleArray(weighted_particles);
+    this->set_weighted_particle_array(weighted_particles);
     last_mean_position_ = mean_position;
   } else {
     RCLCPP_WARN_STREAM(get_logger(), "Skip weighting because almost same positon");
@@ -92,7 +92,7 @@ void AntishadowCorrector::onLsd(const Image & msg)
   RCLCPP_INFO_STREAM(get_logger(), "onLsd() " << timer);
 }
 
-void AntishadowCorrector::printParticleStatistics(const ParticleArray & array) const
+void AntishadowCorrector::print_particle_statistics(const ParticleArray & array) const
 {
   const int N = array.particles.size();
   std::vector<float> weights;
@@ -120,7 +120,7 @@ void AntishadowCorrector::printParticleStatistics(const ParticleArray & array) c
   std::cout << "sigma: " << sigma << std::endl;
 }
 
-float AntishadowCorrector::computeScore(const LineSegments & src, const cv::Mat & lsd_image) const
+float AntishadowCorrector::compute_score(const LineSegments & src, const cv::Mat & lsd_image) const
 {
   cv::Rect rect(0, 0, lsd_image.cols, lsd_image.rows);
 
@@ -143,13 +143,13 @@ float AntishadowCorrector::computeScore(const LineSegments & src, const cv::Mat 
   return score / pixel_count;
 }
 
-void AntishadowCorrector::onLl2(const PointCloud2 & ll2_msg)
+void AntishadowCorrector::on_ll2(const PointCloud2 & ll2_msg)
 {
   RCLCPP_INFO_STREAM(get_logger(), "LL2 cloud is subscribed");
   pcl::fromROSMsg(ll2_msg, ll2_cloud_);
 }
 
-AntishadowCorrector::LineSegments AntishadowCorrector::transformCloud(
+AntishadowCorrector::LineSegments AntishadowCorrector::transform_cloud(
   const LineSegments & src, const Sophus::SE3f & transform) const
 {
   LineSegments dst;
@@ -163,13 +163,13 @@ AntishadowCorrector::LineSegments AntishadowCorrector::transformCloud(
   return dst;
 }
 
-AntishadowCorrector::LineSegments AntishadowCorrector::cropLineSegments(
+AntishadowCorrector::LineSegments AntishadowCorrector::crop_line_segments(
   const LineSegments & src, const Sophus::SE3f & transform) const
 {
   Eigen::Vector3f pose_vector = transform.translation();
 
   // Compute distance between pose and linesegment of linestring
-  auto checkIntersection = [this, pose_vector](const pcl::PointNormal & pn) -> bool {
+  auto check_intersection = [this, pose_vector](const pcl::PointNormal & pn) -> bool {
     const float max_range = 40;
 
     const Eigen::Vector3f from = pn.getVector3fMap() - pose_vector;
@@ -188,14 +188,14 @@ AntishadowCorrector::LineSegments AntishadowCorrector::cropLineSegments(
 
   LineSegments dst;
   for (const pcl::PointNormal & pn : src) {
-    if (checkIntersection(pn)) {
+    if (check_intersection(pn)) {
       dst.push_back(pn);
     }
   }
   return dst;
 }
 
-std::function<float(float)> AntishadowCorrector::defineNormalizeScore() const
+std::function<float(float)> AntishadowCorrector::define_normalize_score() const
 {
   float k = -std::log(weight_min_);
 
@@ -206,4 +206,4 @@ std::function<float(float)> AntishadowCorrector::defineNormalizeScore() const
   };
 }
 
-}  // namespace modularized_particle_filter
+}  // namespace pcdless::modularized_particle_filter
