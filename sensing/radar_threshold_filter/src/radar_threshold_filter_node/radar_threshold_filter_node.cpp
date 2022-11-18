@@ -110,25 +110,24 @@ rcl_interfaces::msg::SetParametersResult RadarThresholdFilterNode::onSetParam(
   return result;
 }
 
-bool RadarThresholdFilterNode::isDataReady()
+bool RadarThresholdFilterNode::isDataReady(const RadarScan::ConstSharedPtr radar_msg)
 {
-  if (!radar_data_) {
+  if (!radar_msg) {
     RCLCPP_INFO_THROTTLE(get_logger(), *get_clock(), 1000, "waiting for radar msg...");
     return false;
   }
   return true;
 }
 
-void RadarThresholdFilterNode::onData(const RadarScan::ConstSharedPtr msg)
+void RadarThresholdFilterNode::onData(const RadarScan::ConstSharedPtr radar_msg)
 {
-  radar_data_ = msg;
-  if (!isDataReady()) {
+  if (!isDataReady(radar_msg)) {
     return;
   }
 
   RadarScan output;
-  output.header = radar_data_->header;
-  for (const auto & radar_return : radar_data_->returns) {
+  output.header = radar_msg->header;
+  for (const auto & radar_return : radar_msg->returns) {
     if (isWithinThreshold(radar_return)) {
       output.returns.push_back(radar_return);
     }

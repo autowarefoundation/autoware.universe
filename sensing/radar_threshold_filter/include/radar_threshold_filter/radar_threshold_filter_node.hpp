@@ -57,9 +57,6 @@ private:
   // Callback
   void onData(const RadarScan::ConstSharedPtr msg);
 
-  // Data Buffer
-  RadarScan::ConstSharedPtr radar_data_{};
-
   // Publisher
   rclcpp::Publisher<RadarScan>::SharedPtr pub_radar_{};
 
@@ -73,7 +70,7 @@ private:
 
   // Function
   bool isWithinThreshold(const RadarReturn & radar_return);
-  bool isDataReady();
+  bool isDataReady(const RadarScan::ConstSharedPtr radar_msg);
 };
 
 }  // namespace radar_threshold_filter
