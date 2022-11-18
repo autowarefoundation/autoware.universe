@@ -391,7 +391,7 @@ The avoidance specific parameter configuration file can be located at `src/autow
 ### Avoidance path generation
 
 | Name                                       | Unit   | Type   | Description                                                                                                                                      | Default value |
-| :----------------------------------------- | :----- | :----- |:-------------------------------------------------------------------------------------------------------------------------------------------------|:--------------|
+| :----------------------------------------- | :----- | :----- | :----------------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
 | resample_interval_for_planning             | [m]    | double | Path resample interval for avoidance planning path.                                                                                              | 0.3           |
 | resample_interval_for_output               | [m]    | double | Path resample interval for output path. Too short interval increases computational cost for latter modules.                                      | 4.0           |
 | lateral_collision_margin                   | [m]    | double | The lateral distance between ego and avoidance targets.                                                                                          | 1.0           |
