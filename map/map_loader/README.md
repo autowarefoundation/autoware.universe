@@ -29,7 +29,6 @@ Please see [the description of `GetPartialPointCloudMap.srv`](https://github.com
 | :------------------ | :----- | :-------------------------------------------------------------------------------- | :------------ |
 | enable_whole_load   | bool   | A flag to enable raw pointcloud map publishing                                    | true          |
 | enable_partial_load | bool   | A flag to enable partial pointcloud map server                                    | true          |
-| leaf_size           | double | Downsampling leaf size (only used when enable_downsampled_whole_load is set true) | 3.0           |
 
 ### Interfaces
 
