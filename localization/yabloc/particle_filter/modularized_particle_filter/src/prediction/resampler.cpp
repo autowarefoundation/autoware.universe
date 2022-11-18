@@ -2,24 +2,21 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include "modularized_particle_filter_msgs/msg/particle_array.hpp"
-
 #include <cmath>
 #include <numeric>
 
-namespace modularized_particle_filter
+namespace pcdless ::modularized_particle_filter
 {
-
 RetroactiveResampler::RetroactiveResampler(
   float resampling_interval_seconds, int number_of_particles, int max_history_num)
 : resampling_interval_seconds_(resampling_interval_seconds),
   number_of_particles_(number_of_particles),
   max_history_num_(max_history_num)
 {
-  initializeResampleHistory();
+  initialize_resample_history();
 }
 
-void RetroactiveResampler::initializeResampleHistory()
+void RetroactiveResampler::initialize_resample_history()
 {
   resampling_history_.resize(max_history_num_);
   for (int i = 0; i < max_history_num_; i++) {
@@ -31,7 +28,7 @@ void RetroactiveResampler::initializeResampleHistory()
   resampling_history_wp_ = 0;
 }
 
-RetroactiveResampler::OptParticleArray RetroactiveResampler::retroactiveWeighting(
+RetroactiveResampler::OptParticleArray RetroactiveResampler::retroactive_weighting(
   const ParticleArray & predicted_particles,
   const ParticleArray::ConstSharedPtr & weighted_particles)
 {
@@ -136,4 +133,4 @@ RetroactiveResampler::OptParticleArray RetroactiveResampler::resampling(
   return resampled_particles;
 }
 
-}  // namespace modularized_particle_filter
+}  // namespace pcdless::modularized_particle_filter

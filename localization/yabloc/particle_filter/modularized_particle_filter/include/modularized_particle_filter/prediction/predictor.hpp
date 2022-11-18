@@ -18,8 +18,7 @@
 #include <tf2_ros/transform_listener.h>
 
 #include <optional>
-
-namespace modularized_particle_filter
+namespace pcdless::modularized_particle_filter
 {
 class Predictor : public rclcpp::Node
 {
@@ -63,21 +62,20 @@ private:
   std::optional<TwistCovStamped> twist_opt_{std::nullopt};
 
   // Callback
-  void onGnssPose(const PoseStamped::ConstSharedPtr initialpose);
-  void onInitialPose(const PoseCovStamped::ConstSharedPtr initialpose);
+  void on_gnss_pose(const PoseStamped::ConstSharedPtr initialpose);
+  void on_initial_pose(const PoseCovStamped::ConstSharedPtr initialpose);
+  void on_twist(const TwistStamped::ConstSharedPtr twist);
+  void on_twist_cov(const TwistCovStamped::ConstSharedPtr twist_cov);
+  void on_weighted_particles(const ParticleArray::ConstSharedPtr weighted_particles);
+  void on_timer();
 
-  void onTwist(const TwistStamped::ConstSharedPtr twist);
-  void onTwistCov(const TwistCovStamped::ConstSharedPtr twist_cov);
-  void onWeightedParticles(const ParticleArray::ConstSharedPtr weighted_particles);
-  void onTimer();
+  void initialize_particles(const PoseCovStamped & initialpose);
 
-  void initializeParticles(const PoseCovStamped & initialpose);
+  void update_with_static_noise(ParticleArray & particle_array, const TwistCovStamped & twist);
+  void update_with_dynamic_noise(ParticleArray & particle_array, const TwistCovStamped & twist);
 
-  void updateWithStaticNoise(ParticleArray & particle_array, const TwistCovStamped & twist);
-  void updateWithDynamicNoise(ParticleArray & particle_array, const TwistCovStamped & twist);
-
-  void publishMeanPose(const geometry_msgs::msg::Pose & mean_pose, const rclcpp::Time & stamp);
+  void publish_mean_pose(const geometry_msgs::msg::Pose & mean_pose, const rclcpp::Time & stamp);
 };
 
-}  // namespace modularized_particle_filter
+}  // namespace pcdless::modularized_particle_filter
 #endif  // MODULARIZED_PARTICLE_FILTER__PREDICTION__PREDICTOR_HPP_

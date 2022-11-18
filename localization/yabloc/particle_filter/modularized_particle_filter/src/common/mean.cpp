@@ -1,6 +1,7 @@
 #include "modularized_particle_filter/common/mean.hpp"
 
 #include <eigen3/Eigen/Geometry>
+#include <pcdless_common/pose_conversions.hpp>
 #include <rclcpp/logger.hpp>
 #include <rclcpp/logging.hpp>
 
@@ -13,11 +14,11 @@
 #include <complex>
 #include <numeric>
 
-namespace modularized_particle_filter
+namespace pcdless::modularized_particle_filter
 {
 namespace
 {
-double meanRadian(const std::vector<double> & angles, const std::vector<double> & weights)
+double mean_radian(const std::vector<double> & angles, const std::vector<double> & weights)
 {
   std::complex<double> c{};
   for (int i{0}; i < static_cast<int>(angles.size()); i++) {
@@ -28,7 +29,7 @@ double meanRadian(const std::vector<double> & angles, const std::vector<double> 
 }
 }  // namespace
 
-geometry_msgs::msg::Pose meanPose(
+geometry_msgs::msg::Pose mean_pose(
   const modularized_particle_filter_msgs::msg::ParticleArray & particle_array)
 {
   using Pose = geometry_msgs::msg::Pose;
@@ -64,9 +65,9 @@ geometry_msgs::msg::Pose meanPose(
     normalized_weights.push_back(normalized_weight);
   }
 
-  const double mean_roll{meanRadian(rolls, normalized_weights)};
-  const double mean_pitch{meanRadian(pitches, normalized_weights)};
-  const double mean_yaw{meanRadian(yaws, normalized_weights)};
+  const double mean_roll{mean_radian(rolls, normalized_weights)};
+  const double mean_pitch{mean_radian(pitches, normalized_weights)};
+  const double mean_yaw{mean_radian(yaws, normalized_weights)};
 
   tf2::Quaternion q;
   q.setRPY(mean_roll, mean_pitch, mean_yaw);
@@ -74,36 +75,25 @@ geometry_msgs::msg::Pose meanPose(
   return mean_pose;
 }
 
-Eigen::Affine3f pose2Affine(const geometry_msgs::msg::Pose & pose)
-{
-  const auto pos = pose.position;
-  const auto ori = pose.orientation;
-  Eigen::Translation3f t(pos.x, pos.y, pos.z);
-  Eigen::Quaternionf q(ori.w, ori.x, ori.y, ori.z);
-  return t * q;
-}
-
-Eigen::Vector3f stdOfDistribution(
+Eigen::Vector3f std_of_distribution(
   const modularized_particle_filter_msgs::msg::ParticleArray & particle_array)
 {
   using Particle = modularized_particle_filter_msgs::msg::Particle;
-  using Pose = geometry_msgs::msg::Pose;
 
-  Pose mean_pose = meanPose(particle_array);
-  auto ori = mean_pose.orientation;
+  auto ori = mean_pose(particle_array).orientation;
   Eigen::Quaternionf orientation(ori.w, ori.x, ori.y, ori.z);
 
   float invN = 1.f / particle_array.particles.size();
   Eigen::Vector3f mean = Eigen::Vector3f::Zero();
   for (const Particle & p : particle_array.particles) {
-    Eigen::Affine3f affine = pose2Affine(p.pose);
+    Eigen::Affine3f affine = common::pose_to_affine(p.pose);
     mean += affine.translation();
   }
   mean *= invN;
 
   Eigen::Matrix3f sigma = Eigen::Matrix3f::Zero();
   for (const Particle & p : particle_array.particles) {
-    Eigen::Affine3f affine = pose2Affine(p.pose);
+    Eigen::Affine3f affine = common::pose_to_affine(p.pose);
     Eigen::Vector3f d = affine.translation() - mean;
     d = orientation.conjugate() * d;
     sigma += (d * d.transpose()) * invN;
@@ -112,7 +102,7 @@ Eigen::Vector3f stdOfDistribution(
   return sigma.diagonal().cwiseMax(1e-4f).cwiseSqrt();
 }
 
-float stdOfWeight(const modularized_particle_filter_msgs::msg::ParticleArray & particle_array)
+float std_of_weight(const modularized_particle_filter_msgs::msg::ParticleArray & particle_array)
 {
   using Particle = modularized_particle_filter_msgs::msg::Particle;
 
@@ -131,4 +121,4 @@ float stdOfWeight(const modularized_particle_filter_msgs::msg::ParticleArray & p
 
   return std::sqrt(sigma);
 }
-}  // namespace modularized_particle_filter
+}  // namespace pcdless::modularized_particle_filter

@@ -1,6 +1,6 @@
 #include "modularized_particle_filter/correction/abst_corrector.hpp"
 
-namespace modularized_particle_filter
+namespace pcdless::modularized_particle_filter
 {
 AbstCorrector::AbstCorrector(const std::string & node_name)
 : Node(node_name),
@@ -11,17 +11,17 @@ AbstCorrector::AbstCorrector(const std::string & node_name)
   using std::placeholders::_1;
   particle_pub_ = create_publisher<ParticleArray>("weighted_particles", 10);
   particle_sub_ = create_subscription<ParticleArray>(
-    "predicted_particles", 10, std::bind(&AbstCorrector::particleArrayCallback, this, _1));
+    "predicted_particles", 10, std::bind(&AbstCorrector::on_particle_array, this, _1));
 
   if (visualize_) visualizer_ = std::make_shared<ParticleVisualizer>(*this);
 }
 
-void AbstCorrector::particleArrayCallback(const ParticleArray & particle_array)
+void AbstCorrector::on_particle_array(const ParticleArray & particle_array)
 {
   particle_array_buffer_.push_back(particle_array);
 }
 
-std::optional<AbstCorrector::ParticleArray> AbstCorrector::getSynchronizedParticleArray(
+std::optional<AbstCorrector::ParticleArray> AbstCorrector::get_synchronized_particle_array(
   const rclcpp::Time & stamp)
 {
   auto itr = particle_array_buffer_.begin();
@@ -46,10 +46,10 @@ std::optional<AbstCorrector::ParticleArray> AbstCorrector::getSynchronizedPartic
   return *std::min_element(particle_array_buffer_.begin(), particle_array_buffer_.end(), comp);
 }
 
-void AbstCorrector::setWeightedParticleArray(const ParticleArray & particle_array)
+void AbstCorrector::set_weighted_particle_array(const ParticleArray & particle_array)
 {
   particle_pub_->publish(particle_array);
   if (visualize_) visualizer_->publish(particle_array);
 }
 
-}  // namespace modularized_particle_filter
+}  // namespace pcdless::modularized_particle_filter

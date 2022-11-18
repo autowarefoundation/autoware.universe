@@ -1,8 +1,8 @@
 #include "modularized_particle_filter/correction/correction_util.hpp"
-namespace modularized_particle_filter
-{
 
-std::optional<modularized_particle_filter_msgs::msg::ParticleArray> findSyncedParticles(
+namespace pcdless::modularized_particle_filter
+{
+std::optional<modularized_particle_filter_msgs::msg::ParticleArray> find_synced_particles(
   boost::circular_buffer<modularized_particle_filter_msgs::msg::ParticleArray> circular_buffer,
   rclcpp::Time time)
 {
@@ -21,4 +21,4 @@ std::optional<modularized_particle_filter_msgs::msg::ParticleArray> findSyncedPa
   }
   return std::nullopt;
 }
-}  // namespace modularized_particle_filter
+}  // namespace pcdless::modularized_particle_filter

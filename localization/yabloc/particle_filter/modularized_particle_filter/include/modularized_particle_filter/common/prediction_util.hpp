@@ -8,12 +8,14 @@
 #include <random>
 #include <vector>
 
+namespace pcdless
+{
 namespace modularized_particle_filter::util
 {
 std::random_device seed_gen;
 std::default_random_engine engine(seed_gen());
 
-Eigen::Vector2d nrand2d(const Eigen::Matrix2d cov)
+Eigen::Vector2d nrand_2d(const Eigen::Matrix2d cov)
 {
   Eigen::JacobiSVD<Eigen::Matrix2d> svd;
   svd.compute(cov, Eigen::ComputeFullU | Eigen::ComputeFullV);
@@ -34,7 +36,7 @@ T nrand(T std)
   return dist(engine);
 }
 
-double normalizeRadian(const double rad, const double min_rad = -M_PI)
+double normalize_radian(const double rad, const double min_rad = -M_PI)
 {
   const auto max_rad = min_rad + 2 * M_PI;
 
@@ -48,4 +50,5 @@ double normalizeRadian(const double rad, const double min_rad = -M_PI)
 }
 
 }  // namespace modularized_particle_filter::util
+}  // namespace pcdless
 #endif  // MODULARIZED_PARTICLE_FILTER__COMMON__PREDICTION_UTIL_HPP_

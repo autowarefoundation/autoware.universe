@@ -10,6 +10,8 @@
 
 #include <optional>
 
+namespace pcdless
+{
 namespace modularized_particle_filter
 {
 class AbstCorrector : public rclcpp::Node
@@ -29,14 +31,15 @@ protected:
   rclcpp::Publisher<ParticleArray>::SharedPtr particle_pub_;
   std::list<ParticleArray> particle_array_buffer_;
 
-  std::optional<ParticleArray> getSynchronizedParticleArray(const rclcpp::Time & stamp);
+  std::optional<ParticleArray> get_synchronized_particle_array(const rclcpp::Time & stamp);
   std::shared_ptr<ParticleVisualizer> visualizer_;
 
-  void setWeightedParticleArray(const ParticleArray & particle_array);
+  void set_weighted_particle_array(const ParticleArray & particle_array);
 
 private:
-  void particleArrayCallback(const ParticleArray & particle_array);
+  void on_particle_array(const ParticleArray & particle_array);
 };
 }  // namespace modularized_particle_filter
+}  // namespace pcdless
 
 #endif  // MODULARIZED_PARTICLE_FILTER__CORRECTION__ABST_CORRECTOR_HPP_

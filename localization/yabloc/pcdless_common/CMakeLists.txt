@@ -58,7 +58,7 @@ target_include_directories(
   include
 )
 
-ament_export_dependencies(PCL)
+ament_export_dependencies(PCL Sophus)
 
 # ===================================================
 ament_auto_package()

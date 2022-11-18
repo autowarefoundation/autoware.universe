@@ -1,9 +1,13 @@
+#include "pcdless_common/color.hpp"
+
 #include <rclcpp/rclcpp.hpp>
 
 #include <modularized_particle_filter_msgs/msg/particle_array.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
+namespace pcdless::modularized_particle_fitler
+{
 class ParticleVisualize : public rclcpp::Node
 {
 public:
@@ -17,7 +21,7 @@ public:
     using std::placeholders::_1;
     // Subscriber
     sub_particles_ = this->create_subscription<ParticleArray>(
-      "/particle_array", 10, std::bind(&ParticleVisualize::particlesCallback, this, _1));
+      "/particle_array", 10, std::bind(&ParticleVisualize::on_particles, this, _1));
 
     // Publisher
     pub_marker_array = this->create_publisher<MarkerArray>("/marker_array", 10);
@@ -27,7 +31,7 @@ private:
   rclcpp::Subscription<ParticleArray>::SharedPtr sub_particles_;
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_marker_array;
 
-  std_msgs::msg::ColorRGBA computeColor(float value) const
+  std_msgs::msg::ColorRGBA compute_color(float value) const
   {
     float r = 1.0f, g = 1.0f, b = 1.0f;
     // clang-format off
@@ -51,7 +55,7 @@ private:
     return rgba;
   }
 
-  void particlesCallback(const ParticleArray & msg)
+  void on_particles(const ParticleArray & msg)
   {
     visualization_msgs::msg::MarkerArray marker_array;
     auto minmax_weight = std::minmax_element(
@@ -61,7 +65,7 @@ private:
     float min = minmax_weight.first->weight;
     float max = minmax_weight.second->weight;
     max = std::max(max, min + 1e-7f);
-    auto boundWeight = [min, max](float raw) -> float { return (raw - min) / (max - min); };
+    auto bound_weight = [min, max](float raw) -> float { return (raw - min) / (max - min); };
 
     RCLCPP_INFO_STREAM(get_logger(), "min: " << min << " max: " << max);
     int id = 0;
@@ -74,7 +78,8 @@ private:
       marker.scale.x = 0.3;
       marker.scale.y = 0.1;
       marker.scale.z = 0.1;
-      marker.color = computeColor(boundWeight(p.weight));
+
+      marker.color = common::color_scale::rainbow(bound_weight(p.weight));
       marker.pose.orientation = p.pose.orientation;
       marker.pose.position.x = p.pose.position.x;
       marker.pose.position.y = p.pose.position.y;
@@ -84,12 +89,13 @@ private:
     pub_marker_array->publish(marker_array);
   }
 };
+}  // namespace pcdless::modularized_particle_fitler
 
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
 
-  rclcpp::spin(std::make_shared<ParticleVisualize>());
+  rclcpp::spin(std::make_shared<pcdless::modularized_particle_fitler::ParticleVisualize>());
   rclcpp::shutdown();
   return 0;
 }

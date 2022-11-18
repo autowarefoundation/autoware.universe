@@ -5,7 +5,8 @@
 
 #include <iostream>
 #include <optional>
-
+namespace pcdless
+{
 namespace modularized_particle_filter
 {
 class RetroactiveResampler
@@ -17,7 +18,7 @@ public:
   RetroactiveResampler(
     float resampling_interval_seconds, int number_of_particles, int max_history_num);
 
-  OptParticleArray retroactiveWeighting(
+  OptParticleArray retroactive_weighting(
     const ParticleArray & predicted_particles,
     const ParticleArray::ConstSharedPtr & weighted_particles);
 
@@ -44,8 +45,9 @@ private:
   // Working Pointer? I guess.
   int resampling_history_wp_;
 
-  void initializeResampleHistory();
+  void initialize_resample_history();
 };
 }  // namespace modularized_particle_filter
+}  // namespace pcdless
 
 #endif  // MODULARIZED_PARTICLE_FILTER__CORRECTION__RETROACTIVE_RESAMPLER_HPP_

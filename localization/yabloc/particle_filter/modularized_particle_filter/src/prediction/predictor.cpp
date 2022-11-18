@@ -4,7 +4,7 @@
 #include "modularized_particle_filter/common/prediction_util.hpp"
 #include "modularized_particle_filter/prediction/resampler.hpp"
 
-#include <eigen3/Eigen/StdVector>
+#include <Eigen/Core>
 
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
@@ -16,7 +16,7 @@
 #include <memory>
 #include <numeric>
 
-namespace modularized_particle_filter
+namespace pcdless::modularized_particle_filter
 {
 Predictor::Predictor()
 : Node("predictor"),
@@ -37,11 +37,11 @@ Predictor::Predictor()
 
   // Subscribers
   using std::placeholders::_1;
-  auto gnss_cb = std::bind(&Predictor::onGnssPose, this, _1);
-  auto initial_cb = std::bind(&Predictor::onInitialPose, this, _1);
-  auto twist_cb = std::bind(&Predictor::onTwist, this, _1);
-  auto twist_cov_cb = std::bind(&Predictor::onTwistCov, this, _1);
-  auto particle_cb = std::bind(&Predictor::onWeightedParticles, this, _1);
+  auto gnss_cb = std::bind(&Predictor::on_gnss_pose, this, _1);
+  auto initial_cb = std::bind(&Predictor::on_initial_pose, this, _1);
+  auto twist_cb = std::bind(&Predictor::on_twist, this, _1);
+  auto twist_cov_cb = std::bind(&Predictor::on_twist_cov, this, _1);
+  auto particle_cb = std::bind(&Predictor::on_weighted_particles, this, _1);
   auto height_cb = [this](std_msgs::msg::Float32 m) -> void { this->ground_height_ = m.data; };
 
   gnss_sub_ = create_subscription<PoseStamped>("initial_gnss_pose", 1, gnss_cb);
@@ -56,11 +56,11 @@ Predictor::Predictor()
   // Timer callback
   auto chrono_period = std::chrono::duration_cast<std::chrono::nanoseconds>(
     std::chrono::duration<double>(1.0f / prediction_rate));
-  auto cb_timer = std::bind(&Predictor::onTimer, this);
+  auto cb_timer = std::bind(&Predictor::on_timer, this);
   timer_ = rclcpp::create_timer(this, this->get_clock(), chrono_period, std::move(cb_timer));
 }
 
-void Predictor::onGnssPose(const PoseStamped::ConstSharedPtr pose)
+void Predictor::on_gnss_pose(const PoseStamped::ConstSharedPtr pose)
 {
   if (particle_array_opt_.has_value()) return;
   PoseCovStamped pose_cov;
@@ -69,15 +69,15 @@ void Predictor::onGnssPose(const PoseStamped::ConstSharedPtr pose)
   pose_cov.pose.covariance[6 * 0 + 0] = 0.25;
   pose_cov.pose.covariance[6 * 1 + 1] = 0.25;
   pose_cov.pose.covariance[6 * 5 + 5] = 0.04;
-  initializeParticles(pose_cov);
+  initialize_particles(pose_cov);
 }
 
-void Predictor::onInitialPose(const PoseCovStamped::ConstSharedPtr initialpose)
+void Predictor::on_initial_pose(const PoseCovStamped::ConstSharedPtr initialpose)
 {
-  initializeParticles(*initialpose);
+  initialize_particles(*initialpose);
 }
 
-void Predictor::initializeParticles(const PoseCovStamped & initialpose)
+void Predictor::initialize_particles(const PoseCovStamped & initialpose)
 {
   RCLCPP_INFO_STREAM(this->get_logger(), "initiposeCallback");
   modularized_particle_filter_msgs::msg::ParticleArray particle_array{};
@@ -97,12 +97,12 @@ void Predictor::initializeParticles(const PoseCovStamped & initialpose)
   for (size_t i{0}; i < particle_array.particles.size(); i++) {
     geometry_msgs::msg::Pose pose{initialpose.pose.pose};
 
-    Eigen::Vector2d noise = util::nrand2d(cov);
+    Eigen::Vector2d noise = util::nrand_2d(cov);
     pose.position.x += noise.x();
     pose.position.y += noise.y();
 
     float noised_yaw =
-      util::normalizeRadian(yaw + util::nrand(sqrt(initialpose.pose.covariance[6 * 5 + 5])));
+      util::normalize_radian(yaw + util::nrand(sqrt(initialpose.pose.covariance[6 * 5 + 5])));
     tf2::Quaternion q;
     q.setRPY(roll, pitch, noised_yaw);
     pose.orientation = tf2::toMsg(q);
@@ -118,7 +118,7 @@ void Predictor::initializeParticles(const PoseCovStamped & initialpose)
     std::make_shared<RetroactiveResampler>(resampling_interval_seconds_, number_of_particles_, 100);
 }
 
-void Predictor::onTwist(const TwistStamped::ConstSharedPtr twist)
+void Predictor::on_twist(const TwistStamped::ConstSharedPtr twist)
 {
   TwistCovStamped twist_covariance;
   twist_covariance.header = twist->header;
@@ -132,12 +132,12 @@ void Predictor::onTwist(const TwistStamped::ConstSharedPtr twist)
   twist_opt_ = twist_covariance;
 }
 
-void Predictor::onTwistCov(const TwistCovStamped::ConstSharedPtr twist_cov)
+void Predictor::on_twist_cov(const TwistCovStamped::ConstSharedPtr twist_cov)
 {
   twist_opt_ = *twist_cov;
 }
 
-void Predictor::updateWithDynamicNoise(
+void Predictor::update_with_dynamic_noise(
   ParticleArray & particle_array, const TwistCovStamped & twist)
 {
   rclcpp::Time current_time{this->now()};
@@ -178,7 +178,8 @@ void Predictor::updateWithDynamicNoise(
   }
 }
 
-void Predictor::updateWithStaticNoise(ParticleArray & particle_array, const TwistCovStamped & twist)
+void Predictor::update_with_static_noise(
+  ParticleArray & particle_array, const TwistCovStamped & twist)
 {
   rclcpp::Time current_time{this->now()};
   const float dt =
@@ -201,7 +202,7 @@ void Predictor::updateWithStaticNoise(ParticleArray & particle_array, const Twis
     const float vx{static_cast<float>(twist.twist.twist.linear.x) + util::nrand(stddev_vx)};
     const float wz{static_cast<float>(twist.twist.twist.angular.z) + util::nrand(stddev_wz)};
     tf2::Quaternion q;
-    q.setRPY(roll, pitch, util::normalizeRadian(yaw + wz * dt));
+    q.setRPY(roll, pitch, util::normalize_radian(yaw + wz * dt));
 
     pose.orientation = tf2::toMsg(q);
     pose.position.x += vx * std::cos(yaw) * dt;
@@ -212,7 +213,7 @@ void Predictor::updateWithStaticNoise(ParticleArray & particle_array, const Twis
   }
 }
 
-void Predictor::onTimer()
+void Predictor::on_timer()
 {
   if (!particle_array_opt_.has_value()) return;
   if (!twist_opt_.has_value()) return;
@@ -220,23 +221,23 @@ void Predictor::onTimer()
   TwistCovStamped twist{twist_opt_.value()};
 
   if (use_dynamic_noise_) {
-    updateWithDynamicNoise(particle_array, twist);
+    update_with_dynamic_noise(particle_array, twist);
   } else {
-    updateWithStaticNoise(particle_array, twist);
+    update_with_static_noise(particle_array, twist);
   }
 
   predicted_particles_pub_->publish(particle_array);
 
   rclcpp::Time current_time{this->now()};
-  geometry_msgs::msg::Pose mean_pose{meanPose(particle_array)};
-  publishMeanPose(mean_pose, current_time);
+  geometry_msgs::msg::Pose meaned_pose{mean_pose(particle_array)};
+  publish_mean_pose(meaned_pose, current_time);
 
   if (visualize_) visualizer_->publish(particle_array);
 
   particle_array_opt_ = particle_array;
 }
 
-void Predictor::onWeightedParticles(const ParticleArray::ConstSharedPtr weighted_particles_ptr)
+void Predictor::on_weighted_particles(const ParticleArray::ConstSharedPtr weighted_particles_ptr)
 {
   RCLCPP_INFO_STREAM(this->get_logger(), "weightedParticleCallback is called");
 
@@ -246,7 +247,7 @@ void Predictor::onWeightedParticles(const ParticleArray::ConstSharedPtr weighted
   ParticleArray particle_array{particle_array_opt_.value()};
 
   OptParticleArray retroactive_weighted_particles{
-    resampler_ptr_->retroactiveWeighting(particle_array, weighted_particles_ptr)};
+    resampler_ptr_->retroactive_weighting(particle_array, weighted_particles_ptr)};
   if (retroactive_weighted_particles.has_value()) {
     // TODO: Why do you copy only particles. Why do not copy all members including header and id
     particle_array.particles = retroactive_weighted_particles.value().particles;
@@ -259,7 +260,7 @@ void Predictor::onWeightedParticles(const ParticleArray::ConstSharedPtr weighted
   particle_array_opt_ = particle_array;
 }
 
-void Predictor::publishMeanPose(
+void Predictor::publish_mean_pose(
   const geometry_msgs::msg::Pose & mean_pose, const rclcpp::Time & stamp)
 {
   PoseStamped pose_stamped;
@@ -280,4 +281,4 @@ void Predictor::publishMeanPose(
   tf2_broadcaster_->sendTransform(transform);
 }
 
-}  // namespace modularized_particle_filter
+}  // namespace pcdless::modularized_particle_filter

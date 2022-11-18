@@ -1,6 +1,8 @@
 #include "modularized_particle_filter/common/visualize.hpp"
 
-namespace modularized_particle_filter
+#include <pcdless_common/color.hpp>
+
+namespace pcdless::modularized_particle_filter
 {
 ParticleVisualizer::ParticleVisualizer(rclcpp::Node & node)
 {
@@ -29,7 +31,7 @@ void ParticleVisualizer::publish(const ParticleArray & msg)
     marker.scale.x = 0.3;
     marker.scale.y = 0.1;
     marker.scale.z = 0.1;
-    marker.color = computeColor(boundWeight(p.weight));
+    marker.color = common::color_scale::rainbow(boundWeight(p.weight));
     marker.pose.orientation = p.pose.orientation;
     marker.pose.position.x = p.pose.position.x;
     marker.pose.position.y = p.pose.position.y;
@@ -39,28 +41,4 @@ void ParticleVisualizer::publish(const ParticleArray & msg)
 
   pub_marker_array_->publish(marker_array);
 }
-
-std_msgs::msg::ColorRGBA ParticleVisualizer::computeColor(float value)
-{
-  float r = 1.0f, g = 1.0f, b = 1.0f;
-  // clang-format off
-    value = std::clamp(value, 0.0f, 1.0f);
-    if (value < 0.25f) {
-      r = 0; g = 4 * (value);
-    } else if (value < 0.5f) {
-      r = 0; b = 1 + 4 * (0.25f - value);
-    } else if (value < 0.75f) {
-      r = 4 * (value - 0.5f); b = 0;
-    } else {
-      g = 1 + 4 * (0.75f - value); b = 0;
-    }
-  // clang-format on
-
-  std_msgs::msg::ColorRGBA rgba;
-  rgba.r = r;
-  rgba.g = g;
-  rgba.b = b;
-  rgba.a = 1.0f;
-  return rgba;
-}
-}  // namespace modularized_particle_filter
+}  // namespace pcdless::modularized_particle_filter
