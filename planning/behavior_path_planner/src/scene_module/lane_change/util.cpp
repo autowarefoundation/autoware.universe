@@ -634,9 +634,8 @@ std::vector<DrivableLanes> generateDrivableLanes(
   std::vector<DrivableLanes> drivable_lanes(current_lanes.size());
   for (size_t i = 0; i < current_lanes.size(); ++i) {
     const auto & current_lane = current_lanes.at(i);
-    DrivableLanes drivable_lane;
-    drivable_lane.left_lane = current_lane;
-    drivable_lane.right_lane = current_lane;
+    drivable_lanes.at(i).left_lane = current_lane;
+    drivable_lanes.at(i).right_lane = current_lane;
 
     const auto left_lane = route_handler.getLeftLanelet(current_lane);
     const auto right_lane = route_handler.getRightLanelet(current_lane);
@@ -646,12 +645,12 @@ std::vector<DrivableLanes> generateDrivableLanes(
 
     for (const auto & lc_lane : lane_change_lanes) {
       if (left_lane && lc_lane.id() == left_lane->id()) {
-        drivable_lane.left_lane = lc_lane;
+        drivable_lanes.at(i).left_lane = lc_lane;
         break;
       }
 
       if (right_lane && lc_lane.id() == right_lane->id()) {
-        drivable_lane.right_lane = lc_lane;
+        drivable_lanes.at(i).right_lane = lc_lane;
         break;
       }
     }
