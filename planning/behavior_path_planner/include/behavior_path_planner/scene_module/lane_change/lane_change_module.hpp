@@ -47,14 +47,26 @@ using marker_utils::CollisionCheckDebug;
 using tier4_planning_msgs::msg::LaneChangeDebugMsg;
 using tier4_planning_msgs::msg::LaneChangeDebugMsgArray;
 
+inline std::string toStr(const LaneChangeStates state)
+{
+  if (state == LaneChangeStates::Trying) {
+    return "Trying";
+  } else if (state == LaneChangeStates::Success) {
+    return "Success";
+  } else if (state == LaneChangeStates::Revert) {
+    return "Revert";
+  } else if (state == LaneChangeStates::Abort) {
+    return "Abort";
+  }
+  return "UNKNOWN";
+}
+
 class LaneChangeModule : public SceneModuleInterface
 {
 public:
   LaneChangeModule(
     const std::string & name, rclcpp::Node & node,
     std::shared_ptr<LaneChangeParameters> parameters);
-
-  BehaviorModuleOutput run() override;
 
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
@@ -103,6 +115,11 @@ private:
   LaneChangeStatus status_;
   PathShifter path_shifter_;
   mutable LaneChangeDebugMsgArray lane_change_debug_msg_array_;
+  LaneDepartureChecker lane_departure_checker_;
+  mutable LaneChangeStates current_lane_change_state_;
+  mutable std::shared_ptr<LaneChangePath> abort_path_;
+  PathWithLaneId prev_approved_path_;
+  mutable Pose abort_non_collision_pose_;
 
   double lane_change_lane_length_{200.0};
   double check_distance_{100.0};
@@ -111,8 +128,14 @@ private:
   RTCInterface rtc_interface_right_;
   UUID uuid_left_;
   UUID uuid_right_;
+  UUID candidate_uuid_;
+
+  bool is_abort_path_approved_ = false;
+  bool is_abort_approval_requested_ = false;
 
   bool is_activated_ = false;
+
+  void resetParameters();
 
   void waitApprovalLeft(const double start_distance, const double finish_distance)
   {
@@ -128,18 +151,49 @@ private:
     is_waiting_approval_ = true;
   }
 
+  void updateRegisteredRTCStatus(const LaneChangePath & path)
+  {
+    const auto start_distance_to_path_change = motion_utils::calcSignedArcLength(
+      path.path.points, planner_data_->self_pose->pose.position, path.shift_line.start.position);
+
+    const auto finish_distance_to_path_change = motion_utils::calcSignedArcLength(
+      path.path.points, planner_data_->self_pose->pose.position, path.shift_line.end.position);
+
+    const auto & start_idx = path.shift_line.start_idx;
+    const auto & end_idx = path.shift_line.end_idx;
+    const auto lateral_shift =
+      path.shifted_path.shift_length.at(end_idx) - path.shifted_path.shift_length.at(start_idx);
+
+    if (lateral_shift > 0.0) {
+      rtc_interface_left_.updateCooperateStatus(
+        uuid_left_, isExecutionReady(), start_distance_to_path_change,
+        finish_distance_to_path_change, clock_->now());
+      candidate_uuid_ = uuid_left_;
+    } else {
+      rtc_interface_right_.updateCooperateStatus(
+        uuid_right_, isExecutionReady(), start_distance_to_path_change,
+        finish_distance_to_path_change, clock_->now());
+      candidate_uuid_ = uuid_right_;
+    }
+
+    RCLCPP_WARN_STREAM(
+      getLogger(), "Direction is UNKNOWN, start_distance = " << start_distance_to_path_change);
+  }
+
   void updateRTCStatus(const CandidateOutput & candidate)
   {
     if (candidate.lateral_shift > 0.0) {
       rtc_interface_left_.updateCooperateStatus(
         uuid_left_, isExecutionReady(), candidate.start_distance_to_path_change,
         candidate.finish_distance_to_path_change, clock_->now());
+      candidate_uuid_ = uuid_left_;
       return;
     }
     if (candidate.lateral_shift < 0.0) {
       rtc_interface_right_.updateCooperateStatus(
         uuid_right_, isExecutionReady(), candidate.start_distance_to_path_change,
         candidate.finish_distance_to_path_change, clock_->now());
+      candidate_uuid_ = uuid_right_;
       return;
     }
 
@@ -154,6 +208,30 @@ private:
     rtc_interface_right_.clearCooperateStatus();
   }
 
+  void removeCandidateRTCStatus()
+  {
+    if (rtc_interface_left_.isRegistered(candidate_uuid_)) {
+      rtc_interface_left_.removeCooperateStatus(candidate_uuid_);
+    } else if (rtc_interface_right_.isRegistered(candidate_uuid_)) {
+      rtc_interface_right_.removeCooperateStatus(candidate_uuid_);
+    }
+  }
+
+  void removePreviousRTCStatusLeft()
+  {
+    if (rtc_interface_left_.isRegistered(uuid_left_)) {
+      rtc_interface_left_.removeCooperateStatus(uuid_left_);
+    }
+  }
+
+  void removePreviousRTCStatusRight()
+  {
+    if (rtc_interface_right_.isRegistered(uuid_right_)) {
+      rtc_interface_right_.removeCooperateStatus(uuid_right_);
+    }
+  }
+
+  lanelet::ConstLanelets get_original_lanes() const;
   PathWithLaneId getReferencePath() const;
   lanelet::ConstLanelets getLaneChangeLanes(
     const lanelet::ConstLanelets & current_lanes, const double lane_change_lane_length) const;
@@ -172,16 +250,18 @@ private:
   bool isValidPath(const PathWithLaneId & path) const;
   bool isNearEndOfLane() const;
   bool isCurrentSpeedLow() const;
-  bool isAbortConditionSatisfied() const;
+  bool isAbortConditionSatisfied();
   bool hasFinishedLaneChange() const;
-  void resetParameters();
-
+  bool isCancel() const;
+  bool isAbort() const;
   // getter
   Pose getEgoPose() const;
   Twist getEgoTwist() const;
   std_msgs::msg::Header getRouteHeader() const;
+  void resetPathIfAbort(PathWithLaneId & selected_path);
 
   // debug
+  void append_marker_array(const MarkerArray & marker_array) const;
   mutable std::unordered_map<std::string, CollisionCheckDebug> object_debug_;
   mutable std::vector<LaneChangePath> debug_valid_path_;
 

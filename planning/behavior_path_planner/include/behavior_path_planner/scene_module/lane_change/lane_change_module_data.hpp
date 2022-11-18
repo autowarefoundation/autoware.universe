@@ -38,7 +38,8 @@ struct LaneChangeParameters
   double abort_lane_change_angle_thresh{0.174533};
   double abort_lane_change_distance_thresh{0.3};
   double prepare_phase_ignore_target_speed_thresh{0.1};
-  bool enable_abort_lane_change{true};
+  bool enable_cancel_lane_change{true};
+  bool enable_abort_lane_change{false};
   bool enable_collision_check_at_prepare_phase{true};
   bool use_predicted_path_outside_lanelet{false};
   bool use_all_predicted_path{false};
@@ -59,6 +60,14 @@ struct LaneChangeStatus
   bool is_safe;
   double start_distance;
 };
+
+enum class LaneChangeStates {
+  Trying = 0,
+  Success,
+  Revert,
+  Abort,
+};
+
 }  // namespace behavior_path_planner
 
 #endif  // BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__LANE_CHANGE_MODULE_DATA_HPP_
