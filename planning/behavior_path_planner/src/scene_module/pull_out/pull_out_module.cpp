@@ -185,9 +185,8 @@ BehaviorModuleOutput PullOutModule::plan()
     path = status_.backward_path;
   }
 
-  const auto transformed_lanes = util::transformToLanelets(status_.lanes);
   const auto expanded_lanes = util::expandLanelets(
-    transformed_lanes, parameters_.drivable_area_left_bound_offset,
+    status_.lanes, parameters_.drivable_area_left_bound_offset,
     parameters_.drivable_area_right_bound_offset);
   path.drivable_area = util::generateDrivableArea(
     path, expanded_lanes, planner_data_->parameters.drivable_area_resolution,
@@ -279,16 +278,16 @@ BehaviorModuleOutput PullOutModule::planWaitingApproval()
   BehaviorModuleOutput output;
   const auto current_lanes = util::getExtendedCurrentLanes(planner_data_);
   const auto pull_out_lanes = pull_out_utils::getPullOutLanes(planner_data_);
-  auto lanes = current_lanes;
-  lanes.insert(lanes.end(), pull_out_lanes.begin(), pull_out_lanes.end());
+  const auto drivable_lanes =
+    util::generateDrivableLanesWithShoulderLanes(current_lanes, pull_out_lanes);
 
-  lanes = util::expandLanelets(
-    lanes, parameters_.drivable_area_left_bound_offset,
+  const auto expanded_lanes = util::expandLanelets(
+    drivable_lanes, parameters_.drivable_area_left_bound_offset,
     parameters_.drivable_area_right_bound_offset);
 
   auto candidate_path = status_.back_finished ? getCurrentPath() : status_.backward_path;
   candidate_path.drivable_area = util::generateDrivableArea(
-    candidate_path, lanes, planner_data_->parameters.drivable_area_resolution,
+    candidate_path, expanded_lanes, planner_data_->parameters.drivable_area_resolution,
     planner_data_->parameters.vehicle_length, planner_data_);
   auto stop_path = candidate_path;
   for (auto & p : stop_path.points) {
@@ -439,7 +438,7 @@ void PullOutModule::updatePullOutStatus()
 
   // combine road and shoulder lanes
   status_.lanes =
-    pull_out_utils::generateDrivableLanes(status_.current_lanes, status_.pull_out_lanes);
+    util::generateDrivableLanesWithShoulderLanes(status_.current_lanes, status_.pull_out_lanes);
 
   // search pull out start candidates backward
   std::vector<Pose> start_pose_candidates;
