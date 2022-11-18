@@ -2030,11 +2030,15 @@ lanelet::ConstLanelets getExtendedCurrentLanes(
 
   // Add next lane
   const auto next_lanes = route_handler->getNextLanelets(current_lanes.back());
-  current_lanes.push_back(next_lanes.front());
+  if (!next_lanes.empty()) {
+    current_lanes.push_back(next_lanes.front());
+  }
 
   // Add previous lane
   const auto prev_lanes = route_handler->getPreviousLanelets(current_lanes.front());
-  current_lanes.insert(current_lanes.begin(), prev_lanes.front());
+  if (!prev_lanes.empty()) {
+    current_lanes.insert(current_lanes.begin(), prev_lanes.front());
+  }
 
   return current_lanes;
 }
@@ -2346,6 +2350,7 @@ bool hasEnoughDistance(
 
   const auto rear_vehicle_velocity =
     (is_obj_in_front) ? ego_current_twist.linear : object_current_twist.linear;
+  debug.object_twist.linear = (is_obj_in_front) ? front_vehicle_velocity : rear_vehicle_velocity;
 
   const auto front_vehicle_accel = param.expected_front_deceleration;
   const auto rear_vehicle_accel = param.expected_rear_deceleration;
