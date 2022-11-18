@@ -21,7 +21,7 @@
     <node pkg="modularized_particle_filter" exec="predictor_node" name="predictor_node" output="screen" args="--ros-args --log-level warn">
         <remap from="twist" to="$(var predict_twist)" />
         <remap from="initialpose" to="$(var input_initialpose)" />
-        <remap from="initial_gnss_pose" to="/localization/pf/disabled/init_gnss_pose"/> 
+        <remap from="initial_gnss_pose" to="/localization/pf/initial_gnss_pose"/> 
 
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="use_dynamic_noise" value="true"/>

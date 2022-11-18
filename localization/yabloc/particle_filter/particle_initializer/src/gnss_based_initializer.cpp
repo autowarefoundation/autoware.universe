@@ -5,19 +5,19 @@
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <ublox_msgs/msg/nav_pvt.hpp>
 
-class PoseInitializer : public rclcpp::Node
+class GnssBasedPoseInitializer : public rclcpp::Node
 {
 public:
   using NavPVT = ublox_msgs::msg::NavPVT;
   using NavSatFix = sensor_msgs::msg::NavSatFix;
   using PoseStamped = geometry_msgs::msg::PoseStamped;
 
-  PoseInitializer() : Node("pose_initializer")
+  GnssBasedPoseInitializer() : Node("gnss_based_initializer")
   {
     using std::placeholders::_1;
 
     // Subscriber
-    auto navpvt_cb = std::bind(&PoseInitializer::navpvtCallback, this, _1);
+    auto navpvt_cb = std::bind(&GnssBasedPoseInitializer::onNavpvt, this, _1);
     sub_navpvt_ = create_subscription<NavPVT>("ublox_topic", 10, navpvt_cb);
 
     // Publisher
@@ -28,14 +28,14 @@ private:
   rclcpp::Subscription<ublox_msgs::msg::NavPVT>::SharedPtr sub_navpvt_;
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_pose_stamped_;
 
-  void navpvtCallback(const NavPVT & msg)
+  void onNavpvt(const NavPVT & msg)
   {
     const int FIX_FLAG = NavPVT::CARRIER_PHASE_FIXED;
     const int FLOAT_FLAG = NavPVT::CARRIER_PHASE_FLOAT;
     if (!(msg.flags & FIX_FLAG) & !(msg.flags & FLOAT_FLAG)) return;
 
-    // Compute error and jacobian
     Eigen::Vector2f vel_xy = extractEnuVel(msg).topRows(2);
+    if (vel_xy.norm() < 5) return;
     float theta = std::atan2(vel_xy.y(), vel_xy.x());
 
     Eigen::Vector3f position = ublox2Position(msg);
@@ -70,7 +70,7 @@ private:
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<PoseInitializer>());
+  rclcpp::spin(std::make_shared<GnssBasedPoseInitializer>());
   rclcpp::shutdown();
   return 0;
 }

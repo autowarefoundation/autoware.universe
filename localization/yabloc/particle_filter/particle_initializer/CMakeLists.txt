@@ -20,7 +20,7 @@ ament_auto_find_build_dependencies()
 find_package(Eigen3 REQUIRED)
 
 # PCL
-find_package(PCL REQUIRED COMPONENTS common)
+find_package(PCL REQUIRED COMPONENTS common kdtree)
 
 # ===================================================
 # Executable
@@ -31,6 +31,10 @@ ament_auto_add_executable(${TARGET}
 target_include_directories(${TARGET} PUBLIC include)
 target_include_directories(${TARGET} SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})
 target_link_libraries(${TARGET} ${PCL_LIBRARIES})
+
+set(TARGET gnss_based_pose_initializer)
+ament_auto_add_executable(${TARGET} src/gnss_based_initializer.cpp)
+target_include_directories(${TARGET} SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIRS})
 
 # ===================================================
 ament_auto_package()

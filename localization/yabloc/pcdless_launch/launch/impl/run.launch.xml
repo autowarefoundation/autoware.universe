@@ -20,9 +20,13 @@
         <group>
             <push-ros-namespace namespace="initializer"/>
             <node name="particle_initializer_node" pkg="particle_initializer" exec="particle_initializer_node" output="screen" args="--ros-args --log-level info">
-                <param name="cov_xx_yy" value="$(var initialpose_cov_xx_yy)" />
-                <remap from="initialpose" to="/initialpose" />
-                <remap from="map/vector_map" to="/map/vector_map" />
+                <param name="cov_xx_yy" value="$(var initialpose_cov_xx_yy)"/>
+                <remap from="initialpose" to="/initialpose"/>
+                <remap from="map/vector_map" to="/map/vector_map"/>
+            </node>
+            <node name="gnss_based_pose_initializer" pkg="particle_initializer" exec="gnss_based_pose_initializer" output="screen" args="--ros-args --log-level info">
+                <remap from="ublox_topic" to="/sensing/gnss/ublox/navpvt"/>
+                <remap from="pose" to="/localization/pf/initial_gnss_pose"/>
             </node>
         </group>
 
