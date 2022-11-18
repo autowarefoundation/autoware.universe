@@ -70,7 +70,6 @@ private:
 
   // Function
   bool isWithinThreshold(const RadarReturn & radar_return);
-  bool isDataReady(const RadarScan::ConstSharedPtr radar_msg);
 };
 
 }  // namespace radar_threshold_filter
