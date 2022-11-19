@@ -15,6 +15,8 @@
       threshold_time_object_is_moving: 1.0        # [s]
       object_check_forward_distance: 150.0        # [m]
       object_check_backward_distance: 2.0         # [m]
+      object_check_shiftable_ratio: 0.6           # [-]
+      object_check_min_road_shoulder_width: 0.5   # [m]
       object_envelope_buffer: 0.3                 # [m]
       lateral_collision_margin: 1.0               # [m]
       lateral_collision_safety_buffer: 0.7        # [m]
