@@ -244,7 +244,7 @@ void AvoidanceModule::fillAvoidanceTargetObjects(
     fillObjectMovingTime(object_data);
 
     if (object_data.move_time > parameters_->threshold_time_object_is_moving) {
-      avoidance_debug_array_false_and_push_back("MovingObject");
+      avoidance_debug_array_false_and_push_back(AvoidanceDebugFactor::MOVING_OBJECT);
       data.other_objects.push_back(object_data);
       continue;
     }
@@ -686,7 +686,7 @@ AvoidLineArray AvoidanceModule::calcRawShiftLinesFromObjects(const ObjectDataArr
     const auto is_object_on_right = isOnRight(o);
     const auto shift_length = getShiftLength(o, is_object_on_right, avoid_margin);
     if (isSameDirectionShift(is_object_on_right, shift_length)) {
-      avoidance_debug_array_false_and_push_back("IgnoreSameDirectionShift");
+      avoidance_debug_array_false_and_push_back(AvoidanceDebugFactor::SAME_DIRECTION_SHIFT);
       continue;
     }
 
