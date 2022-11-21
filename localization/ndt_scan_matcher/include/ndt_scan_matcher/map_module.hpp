@@ -19,9 +19,9 @@
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
+#include <multigrid_pclomp/ndt_omp.h>
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
-#include <multigrid_pclomp/ndt_omp.h>
 
 #include <memory>
 

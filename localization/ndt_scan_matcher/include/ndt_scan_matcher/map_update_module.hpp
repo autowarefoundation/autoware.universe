@@ -15,25 +15,26 @@
 #ifndef NDT_SCAN_MATCHER__MAP_UPDATE_MODULE_HPP_
 #define NDT_SCAN_MATCHER__MAP_UPDATE_MODULE_HPP_
 
-#include "ndt_scan_matcher/particle.hpp"
 #include "ndt_scan_matcher/debug.hpp"
+#include "ndt_scan_matcher/particle.hpp"
 #include "ndt_scan_matcher/tf2_listener_module.hpp"
 #include "ndt_scan_matcher/util_func.hpp"
 
 #include <rclcpp/rclcpp.hpp>
+#include <tier4_autoware_utils/ros/marker_helper.hpp>
+
+#include <autoware_map_msgs/srv/get_differential_point_cloud_map.hpp>
+#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <tier4_localization_msgs/srv/pose_with_covariance_stamped.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
-#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
-#include <autoware_map_msgs/srv/get_differential_point_cloud_map.hpp>
-
-#include <tier4_autoware_utils/ros/marker_helper.hpp>
-#include <multigrid_pclomp/ndt_omp.h>
 
 #include <fmt/format.h>
+#include <multigrid_pclomp/ndt_omp.h>
 #include <pcl_conversions/pcl_conversions.h>
 
-class MapUpdateModule {
+class MapUpdateModule
+{
   using PointSource = pcl::PointXYZ;
   using PointTarget = pcl::PointXYZ;
   using NormalDistributionsTransform =
@@ -43,8 +44,7 @@ public:
   MapUpdateModule(
     rclcpp::Node * node, std::mutex * ndt_ptr_mutex,
     std::shared_ptr<NormalDistributionsTransform> ndt_ptr,
-    std::shared_ptr<Tf2ListenerModule> tf2_listener_module,
-    std::string map_frame,
+    std::shared_ptr<Tf2ListenerModule> tf2_listener_module, std::string map_frame,
     rclcpp::CallbackGroup::SharedPtr main_callback_group,
     rclcpp::CallbackGroup::SharedPtr map_callback_group,
     std::shared_ptr<std::map<std::string, std::string>> state_ptr);
@@ -56,7 +56,8 @@ private:
   void callback_ekf_odom(nav_msgs::msg::Odometry::ConstSharedPtr odom_ptr);
   void map_update_timer_callback();
 
-  void update_ndt(const std::vector<autoware_map_msgs::msg::PointCloudMapCellWithID> & maps_to_add,
+  void update_ndt(
+    const std::vector<autoware_map_msgs::msg::PointCloudMapCellWithID> & maps_to_add,
     const std::vector<std::string> & map_ids_to_remove);
   void update_map(const geometry_msgs::msg::Point & position);
   bool should_update_map(const geometry_msgs::msg::Point & position) const;
@@ -74,7 +75,8 @@ private:
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr sensor_aligned_pose_pub_;
 
   rclcpp::Service<tier4_localization_msgs::srv::PoseWithCovarianceStamped>::SharedPtr service_;
-  rclcpp::Client<autoware_map_msgs::srv::GetDifferentialPointCloudMap>::SharedPtr pcd_loader_client_;
+  rclcpp::Client<autoware_map_msgs::srv::GetDifferentialPointCloudMap>::SharedPtr
+    pcd_loader_client_;
   rclcpp::TimerBase::SharedPtr map_update_timer_;
 
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr ekf_odom_sub_;

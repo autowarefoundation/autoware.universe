@@ -34,8 +34,8 @@
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <fmt/format.h>
-#include <pcl/point_types.h>
 #include <multigrid_pclomp/ndt_omp.h>
+#include <pcl/point_types.h>
 #include <tf2/transform_datatypes.h>
 
 #ifdef ROS_DISTRO_GALACTIC
