@@ -6,7 +6,6 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <geometry_msgs/msg/pose_array.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
@@ -15,7 +14,6 @@
 #include <std_msgs/msg/float32.hpp>
 
 #include <tf2_ros/transform_broadcaster.h>
-#include <tf2_ros/transform_listener.h>
 
 #include <optional>
 namespace pcdless::modularized_particle_filter

@@ -34,8 +34,10 @@ private:
   const float float_range_gain_;
   const float likelihood_min_weight_;
   const float likelihood_stdev_;
-  const float likelihood_flat_radius_;  //
-  const bool rtk_enabled_;              // If false, all ublox_msgs are assumed FLOAT
+  const float likelihood_flat_radius_;
+  const bool rtk_enabled_;  // If false, all ublox_msgs are assumed FLOAT
+  const float gain_;
+
   Float32 latest_height_;
 
   Eigen::Vector3f last_mean_position_;

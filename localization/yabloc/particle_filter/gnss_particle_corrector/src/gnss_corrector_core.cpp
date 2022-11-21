@@ -13,7 +13,8 @@ GnssParticleCorrector::GnssParticleCorrector()
   likelihood_min_weight_(declare_parameter("likelihood_min_weight", 0.01f)),
   likelihood_stdev_(declare_parameter("likelihood_stdev", 5.0f)),
   likelihood_flat_radius_(declare_parameter("likelihood_flat_radius", 1.0f)),
-  rtk_enabled_(declare_parameter("rtk_enabled", true))
+  rtk_enabled_(declare_parameter("rtk_enabled", true)),
+  gain_(declare_parameter("gain", 1.0f))
 {
   using std::placeholders::_1;
 
@@ -55,6 +56,17 @@ void GnssParticleCorrector::on_ublox(const NavPVT::ConstSharedPtr ublox_msg)
     if (!(ublox_msg->flags & FIX_FLAG) & !(ublox_msg->flags & FLOAT_FLAG)) return;
   }
 
+  NavSatFix fix;
+  fix.latitude = ublox_msg->lat * 1e-7f;
+  fix.longitude = ublox_msg->lon * 1e-7f;
+  fix.altitude = ublox_msg->height * 1e-3f;
+
+  const bool is_rtk_fixed = (ublox_msg->flags & FIX_FLAG);
+
+  const Eigen::Vector3f position = common::fix_to_mgrs(fix).cast<float>();
+
+  publish_marker(position, is_rtk_fixed);
+
   std::optional<ParticleArray> opt_particles = get_synchronized_particle_array(stamp);
   if (!opt_particles.has_value()) return;
 
@@ -63,15 +75,6 @@ void GnssParticleCorrector::on_ublox(const NavPVT::ConstSharedPtr ublox_msg)
     RCLCPP_WARN_STREAM(
       get_logger(), "Timestamp gap between gnss and particles is too large: " << dt.seconds());
   }
-
-  NavSatFix fix;
-  fix.latitude = ublox_msg->lat * 1e-7f;
-  fix.longitude = ublox_msg->lon * 1e-7f;
-  fix.altitude = ublox_msg->height * 1e-3f;
-
-  const bool is_rtk_fixed = (ublox_msg->flags & FIX_FLAG);
-
-  Eigen::Vector3f position = common::fix_to_mgrs(fix).cast<float>();
 
   float sigma = likelihood_stdev_;
   float flat_radius = likelihood_flat_radius_;
@@ -92,8 +95,6 @@ void GnssParticleCorrector::on_ublox(const NavPVT::ConstSharedPtr ublox_msg)
     RCLCPP_WARN_STREAM_THROTTLE(
       get_logger(), *get_clock(), 2000, "Skip weighting because almost same positon");
   }
-
-  publish_marker(position, is_rtk_fixed);
 }
 
 void GnssParticleCorrector::publish_marker(const Eigen::Vector3f & position, bool is_rtk_fixed)
@@ -145,9 +146,10 @@ GnssParticleCorrector::ParticleArray GnssParticleCorrector::weight_particles(
       predicted_particles.particles[i].pose.position.y - pose.y()))};
 
     if (distance < flat_radius)
-      weighted_particles.particles[i].weight = 1.0f;
+      weighted_particles.particles[i].weight = 1.0f * gain_;
     else
-      weighted_particles.particles[i].weight = normal_pdf(distance - flat_radius, 0.0, sigma);
+      weighted_particles.particles[i].weight =
+        gain_ * normal_pdf(distance - flat_radius, 0.0, sigma);
 
     weighted_particles.particles[i].weight =
       std::max(weighted_particles.particles[i].weight, likelihood_min_weight_);

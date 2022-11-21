@@ -5,15 +5,13 @@
 #include "modularized_particle_filter/prediction/resampler.hpp"
 
 #include <Eigen/Core>
+#include <sophus/geometry.hpp>
 
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include <tf2/utils.h>
-#include <tf2_ros/transform_broadcaster.h>
-#include <tf2_ros/transform_listener.h>
 
 #include <iostream>
-#include <memory>
 #include <numeric>
 
 namespace pcdless::modularized_particle_filter
@@ -54,10 +52,9 @@ Predictor::Predictor()
   if (visualize_) visualizer_ = std::make_shared<ParticleVisualizer>(*this);
 
   // Timer callback
-  auto chrono_period = std::chrono::duration_cast<std::chrono::nanoseconds>(
-    std::chrono::duration<double>(1.0f / prediction_rate));
   auto cb_timer = std::bind(&Predictor::on_timer, this);
-  timer_ = rclcpp::create_timer(this, this->get_clock(), chrono_period, std::move(cb_timer));
+  timer_ = rclcpp::create_timer(
+    this, this->get_clock(), rclcpp::Rate(prediction_rate).period(), std::move(cb_timer));
 }
 
 void Predictor::on_gnss_pose(const PoseStamped::ConstSharedPtr pose)
@@ -91,8 +88,6 @@ void Predictor::initialize_particles(const PoseCovStamped & initialpose)
   cov(1, 0) = initialpose.pose.covariance[6 * 1 + 0];
   cov(1, 1) = initialpose.pose.covariance[6 * 1 + 1];
 
-  const float roll{0.0f};
-  const float pitch{0.0f};
   const float yaw{static_cast<float>(tf2::getYaw(initialpose.pose.pose.orientation))};
   for (size_t i{0}; i < particle_array.particles.size(); i++) {
     geometry_msgs::msg::Pose pose{initialpose.pose.pose};
@@ -104,7 +99,7 @@ void Predictor::initialize_particles(const PoseCovStamped & initialpose)
     float noised_yaw =
       util::normalize_radian(yaw + util::nrand(sqrt(initialpose.pose.covariance[6 * 5 + 5])));
     tf2::Quaternion q;
-    q.setRPY(roll, pitch, noised_yaw);
+    q.setRPY(0, 0, noised_yaw);
     pose.orientation = tf2::toMsg(q);
 
     particle_array.particles[i].pose = pose;
@@ -137,6 +132,32 @@ void Predictor::on_twist_cov(const TwistCovStamped::ConstSharedPtr twist_cov)
   twist_opt_ = *twist_cov;
 }
 
+geometry_msgs::msg::Pose se3_to_pose_msg(const Sophus::SE3f & se3)
+{
+  const Eigen::Vector3f t = se3.translation();
+  const Eigen::Quaternionf q = se3.unit_quaternion();
+
+  geometry_msgs::msg::Pose pose;
+  pose.position.x = t.x();
+  pose.position.y = t.y();
+  pose.position.z = t.z();
+  pose.orientation.w = q.w();
+  pose.orientation.x = q.x();
+  pose.orientation.y = q.y();
+  pose.orientation.z = q.z();
+  return pose;
+}
+
+Sophus::SE3f pose_msg_to_se3(const geometry_msgs::msg::Pose & pose)
+{
+  auto pos = pose.position;
+  auto ori = pose.orientation;
+
+  Eigen::Vector3f t(pos.x, pos.y, pos.z);
+  Eigen::Quaternionf q(ori.w, ori.x, ori.y, ori.z);
+  return Sophus::SE3f(q, t);
+}
+
 void Predictor::update_with_dynamic_noise(
   ParticleArray & particle_array, const TwistCovStamped & twist)
 {
@@ -152,28 +173,34 @@ void Predictor::update_with_dynamic_noise(
   particle_array.header.stamp = current_time;
   const float linear_x = twist.twist.twist.linear.x;
   const float angular_z = twist.twist.twist.angular.z;
-  const float roll = 0.0f;
-  const float pitch = 0.0f;
   const float std_linear_x = std::sqrt(twist.twist.covariance[6 * 0 + 0]);
   const float std_angular_z = std::sqrt(twist.twist.covariance[6 * 5 + 5]);
 
-  const float gain_linear = std::clamp(std::sqrt(std::abs(linear_x)), 0.1f, 1.0f);
+  const float truncated_gain = std::clamp(std::sqrt(std::abs(linear_x)), 0.1f, 1.0f);
+  const float truncated_linear_std = std::clamp(std_linear_x * linear_x, 0.1f, 2.0f);
 
   using util::nrand;
   for (size_t i{0}; i < particle_array.particles.size(); i++) {
-    geometry_msgs::msg::Pose pose{particle_array.particles[i].pose};
+    // geometry_msgs::msg::Pose pose{particle_array.particles[i].pose};
+    // float yaw{static_cast<float>(tf2::getYaw(pose.orientation))};
+    // float vx{linear_x + nrand(truncated_linear_std)};
+    // float wz{angular_z + nrand(std_angular_z * truncated_gain)};
 
-    float yaw{static_cast<float>(tf2::getYaw(pose.orientation))};
-    float vx{linear_x + nrand(std_linear_x * gain_linear)};
-    float wz{angular_z + nrand(std_angular_z * gain_linear)};
+    Sophus::SE3f se3_pose = pose_msg_to_se3(particle_array.particles[i].pose);
+    Eigen::Matrix<float, 6, 1> noised_xi;
+    noised_xi.setZero();
+    noised_xi(0) = linear_x + nrand(truncated_linear_std);
+    noised_xi(5) = angular_z + nrand(std_angular_z * truncated_gain);
+    se3_pose *= Sophus::SE3f::exp(noised_xi * dt);
 
-    tf2::Quaternion q;
-    q.setRPY(roll, pitch, yaw + wz * dt);
-    pose.orientation = tf2::toMsg(q);
-    pose.position.x += vx * std::cos(yaw) * dt;
-    pose.position.y += vx * std::sin(yaw) * dt;
+    // tf2::Quaternion q;
+    // q.setRPY(0, 0, yaw + wz * dt);
+    // pose.orientation = tf2::toMsg(q);
+    // pose.position.x += vx * std::cos(yaw) * dt;
+    // pose.position.y += vx * std::sin(yaw) * dt;
+
+    geometry_msgs::msg::Pose pose = se3_to_pose_msg(se3_pose);
     pose.position.z = ground_height_;
-
     particle_array.particles[i].pose = pose;
   }
 }

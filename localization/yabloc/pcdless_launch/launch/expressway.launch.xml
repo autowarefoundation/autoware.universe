@@ -3,7 +3,7 @@
     <arg name="max_segment_distance" default="30.0" description="[m]"/>
     <arg name="rtk_enabled" default="true" description="GNSS-RTK is enabled?"/>
 
-    <arg name="static_linear_covariance" default="9.00"/>
+    <arg name="static_linear_covariance" default="0.04"/>
     <arg name="static_angular_covariance" default="0.0010"/>
     <arg name="static_scale_factor" default="1.009" description="if negative value, static_scale_factor is not used"/>
 
