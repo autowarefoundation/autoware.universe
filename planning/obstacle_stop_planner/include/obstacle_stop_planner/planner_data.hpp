@@ -70,6 +70,9 @@ struct NodeParam
 
   // yaw threshold for ego's nearest index
   double ego_nearest_yaw_threshold;
+
+  // set True to check predicted trajectory for obstacles
+  bool check_predicted_trajectory;
 };
 
 struct StopParam

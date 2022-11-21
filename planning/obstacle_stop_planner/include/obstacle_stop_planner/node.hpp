@@ -109,6 +109,8 @@ private:
 
   rclcpp::Subscription<ExpandStopRange>::SharedPtr sub_expand_stop_range_;
 
+  rclcpp::Subscription<Trajectory>::SharedPtr sub_predicted_trajectory_;
+
   rclcpp::Publisher<Trajectory>::SharedPtr pub_trajectory_;
 
   rclcpp::Publisher<DiagnosticStatus>::SharedPtr pub_stop_reason_;
@@ -124,6 +126,7 @@ private:
   tf2_ros::Buffer tf_buffer_{get_clock()};
   tf2_ros::TransformListener tf_listener_{tf_buffer_};
   PointCloud2::SharedPtr obstacle_ros_pointcloud_ptr_{nullptr};
+  Trajectory::ConstSharedPtr predicted_trajectory_ptr_{nullptr};
   PredictedObjects::ConstSharedPtr object_ptr_{nullptr};
   rclcpp::Time last_detect_time_collision_point_;
   rclcpp::Time last_detect_time_slowdown_point_;
@@ -188,8 +191,19 @@ private:
   void publishDebugData(
     const PlannerData & planner_data, const double current_acc, const double current_vel);
 
+  /**
+   * @brief It updates the PlannerData of trajectory with respect to PlannerData of predicted
+   * trajectory of controller.
+   */
+  void checkPredictedTrajectory(
+    PlannerData & trajectory_data, const PlannerData & predicted_trajectory_data,
+    const TrajectoryPoints & decimate_trajectory,
+    const TrajectoryPoints & decimate_predicted_trajectory);
+
   // Callback
   void onTrigger(const Trajectory::ConstSharedPtr input_msg);
+
+  void onPredictedTrajectory(const Trajectory::ConstSharedPtr input_msg);
 
   void onOdometry(const Odometry::ConstSharedPtr input_msg);
 

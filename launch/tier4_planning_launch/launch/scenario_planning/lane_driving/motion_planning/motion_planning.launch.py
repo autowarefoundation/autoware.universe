@@ -202,6 +202,10 @@ def launch_setup(context, *args, **kwargs):
             ("~/input/objects", "/perception/object_recognition/objects"),
             ("~/input/odometry", "/localization/kinematic_state"),
             ("~/input/trajectory", "obstacle_velocity_limiter/trajectory"),
+            (
+                "~/input/predicted_trajectory",
+                "/control/trajectory_follower/lateral/predicted_trajectory",
+            ),
         ],
         parameters=[
             nearest_search_param,

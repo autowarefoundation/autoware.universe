@@ -68,6 +68,7 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
     p.hunting_threshold = declare_parameter<double>("hunting_threshold");
     p.ego_nearest_dist_threshold = declare_parameter<double>("ego_nearest_dist_threshold");
     p.ego_nearest_yaw_threshold = declare_parameter<double>("ego_nearest_yaw_threshold");
+    p.check_predicted_trajectory = declare_parameter<bool>("check_predicted_trajectory");
   }
 
   {
@@ -174,6 +175,12 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
     std::bind(&ObstacleStopPlannerNode::onTrigger, this, std::placeholders::_1),
     createSubscriptionOptions(this));
 
+  if (node_param_.check_predicted_trajectory) {
+    sub_predicted_trajectory_ = create_subscription<Trajectory>(
+      "~/input/predicted_trajectory", 1,
+      std::bind(&ObstacleStopPlannerNode::onPredictedTrajectory, this, std::placeholders::_1));
+  }
+
   sub_odometry_ = this->create_subscription<Odometry>(
     "~/input/odometry", 1,
     std::bind(&ObstacleStopPlannerNode::onOdometry, this, std::placeholders::_1),
@@ -219,6 +226,13 @@ void ObstacleStopPlannerNode::onPointCloud(const PointCloud2::ConstSharedPtr inp
   obstacle_ros_pointcloud_ptr_->header = input_msg->header;
 }
 
+void ObstacleStopPlannerNode::onPredictedTrajectory(const Trajectory::ConstSharedPtr input_msg)
+{
+  std::lock_guard<std::mutex> lock(mutex_);
+
+  predicted_trajectory_ptr_ = input_msg;
+}
+
 void ObstacleStopPlannerNode::onTrigger(const Trajectory::ConstSharedPtr input_msg)
 {
   mutex_.lock();
@@ -229,6 +243,7 @@ void ObstacleStopPlannerNode::onTrigger(const Trajectory::ConstSharedPtr input_m
   const auto object_ptr = object_ptr_;
   const auto current_velocity_ptr = current_velocity_ptr_;
   const auto current_acceleration_ptr = current_acceleration_ptr_;
+  const auto predicted_trajectory_ptr = predicted_trajectory_ptr_;
   mutex_.unlock();
 
   {
@@ -276,34 +291,71 @@ void ObstacleStopPlannerNode::onTrigger(const Trajectory::ConstSharedPtr input_m
     return;
   }
 
-  PlannerData planner_data{};
+  PlannerData trajectory_data{};
 
-  getSelfPose(input_msg->header, tf_buffer_, planner_data.current_pose);
+  getSelfPose(input_msg->header, tf_buffer_, trajectory_data.current_pose);
 
   Trajectory output_trajectory = *input_msg;
   TrajectoryPoints output_trajectory_points =
     motion_utils::convertToTrajectoryPointArray(*input_msg);
 
+  // Search obstacles for trajectory
+
   // trim trajectory from self pose
   const auto base_trajectory = trimTrajectoryWithIndexFromSelfPose(
-    motion_utils::convertToTrajectoryPointArray(*input_msg), planner_data.current_pose,
-    planner_data.trajectory_trim_index);
+    motion_utils::convertToTrajectoryPointArray(*input_msg), trajectory_data.current_pose,
+    trajectory_data.trajectory_trim_index);
   // extend trajectory to consider obstacles after the goal
   const auto extend_trajectory = extendTrajectory(base_trajectory, stop_param.extend_distance);
   // decimate trajectory for calculation cost
   const auto decimate_trajectory = decimateTrajectory(
-    extend_trajectory, stop_param.step_length, planner_data.decimate_trajectory_index_map);
+    extend_trajectory, stop_param.step_length, trajectory_data.decimate_trajectory_index_map);
 
   // search obstacles within slow-down/collision area
   searchObstacle(
-    decimate_trajectory, output_trajectory_points, planner_data, input_msg->header, vehicle_info,
+    decimate_trajectory, output_trajectory_points, trajectory_data, input_msg->header, vehicle_info,
     stop_param, obstacle_ros_pointcloud_ptr);
+
+  // Search obstacles for predicted trajectory
+  if (
+    node_param_.check_predicted_trajectory && predicted_trajectory_ptr &&
+    !predicted_trajectory_ptr.get()->points.empty()) {
+    PlannerData predicted_trajectory_data{};
+    predicted_trajectory_data.current_pose = trajectory_data.current_pose;
+
+    TrajectoryPoints output_predicted_trajectory_points =
+      motion_utils::convertToTrajectoryPointArray(*predicted_trajectory_ptr);
+
+    // trim trajectory from self pose
+    const auto base_predicted_trajectory = trimTrajectoryWithIndexFromSelfPose(
+      motion_utils::convertToTrajectoryPointArray(*predicted_trajectory_ptr),
+      predicted_trajectory_data.current_pose, predicted_trajectory_data.trajectory_trim_index);
+    // extend trajectory to consider obstacles after the goal
+    const auto extend_predicted_trajectory =
+      extendTrajectory(base_predicted_trajectory, stop_param.extend_distance);
+    // decimate trajectory for calculation cost
+    const auto decimate_predicted_trajectory = decimateTrajectory(
+      extend_predicted_trajectory, stop_param.step_length,
+      predicted_trajectory_data.decimate_trajectory_index_map);
+
+    // search obstacles within slow-down/collision area
+    searchObstacle(
+      decimate_predicted_trajectory, output_predicted_trajectory_points, predicted_trajectory_data,
+      predicted_trajectory_ptr->header, vehicle_info, stop_param, obstacle_ros_pointcloud_ptr);
+
+    // Comparision and update PlannerData of trajectory wrt PlannerData of predicted trajectory
+    checkPredictedTrajectory(
+      trajectory_data, predicted_trajectory_data, decimate_trajectory,
+      decimate_predicted_trajectory);
+  }
+
   // insert slow-down-section/stop-point
   insertVelocity(
-    output_trajectory_points, planner_data, input_msg->header, vehicle_info, current_acc,
+    output_trajectory_points, trajectory_data, input_msg->header, vehicle_info, current_acc,
     current_vel, stop_param);
 
-  const auto no_slow_down_section = !planner_data.slow_down_require && !latest_slow_down_section_;
+  const auto no_slow_down_section =
+    !trajectory_data.slow_down_require && !latest_slow_down_section_;
   const auto no_hunting =
     (rclcpp::Time(input_msg->header.stamp) - last_detect_time_slowdown_point_).seconds() >
     node_param_.hunting_threshold;
@@ -312,15 +364,87 @@ void ObstacleStopPlannerNode::onTrigger(const Trajectory::ConstSharedPtr input_m
   }
 
   auto trajectory = motion_utils::convertToTrajectory(output_trajectory_points);
-  publishDebugData(planner_data, current_acc, current_vel);
+  publishDebugData(trajectory_data, current_acc, current_vel);
 
   trajectory.header = input_msg->header;
   pub_trajectory_->publish(trajectory);
 }
 
+void ObstacleStopPlannerNode::checkPredictedTrajectory(
+  PlannerData & trajectory_data, const PlannerData & predicted_trajectory_data,
+  const TrajectoryPoints & decimate_trajectory,
+  const TrajectoryPoints & decimate_predicted_trajectory)
+{
+  if (predicted_trajectory_data.found_collision_points) {
+    if (!trajectory_data.found_collision_points) {
+      trajectory_data.found_collision_points = true;
+      trajectory_data.nearest_collision_point = predicted_trajectory_data.nearest_collision_point;
+      trajectory_data.nearest_collision_point_time =
+        predicted_trajectory_data.nearest_collision_point_time;
+
+      // find the decimate_trajectory_collision_index
+      trajectory_data.decimate_trajectory_collision_index = motion_utils::findNearestIndex(
+        decimate_trajectory, getPoint(decimate_predicted_trajectory.at(
+                               predicted_trajectory_data.decimate_trajectory_collision_index)));
+      trajectory_data.stop_require = predicted_trajectory_data.stop_require;
+      trajectory_data.stop_reason_diag = predicted_trajectory_data.stop_reason_diag;
+
+    } else {
+      // check which one is closer to ego
+      const bool obs_at_predicted_trajectory_closer =
+        calcDistance2d(
+          predicted_trajectory_data.nearest_collision_point,
+          predicted_trajectory_data.current_pose) <
+        calcDistance2d(trajectory_data.nearest_collision_point, trajectory_data.current_pose);
+      if (obs_at_predicted_trajectory_closer) {
+        trajectory_data.nearest_collision_point = predicted_trajectory_data.nearest_collision_point;
+        trajectory_data.nearest_collision_point_time =
+          predicted_trajectory_data.nearest_collision_point_time;
+        // find the decimate_trajectory_collision_index
+        trajectory_data.decimate_trajectory_collision_index = motion_utils::findNearestIndex(
+          decimate_trajectory, getPoint(decimate_predicted_trajectory.at(
+                                 predicted_trajectory_data.decimate_trajectory_collision_index)));
+        trajectory_data.stop_require = predicted_trajectory_data.stop_require;
+        trajectory_data.stop_reason_diag = predicted_trajectory_data.stop_reason_diag;
+      }
+    }
+  }
+  if (predicted_trajectory_data.found_slow_down_points) {
+    if (!trajectory_data.found_slow_down_points) {
+      trajectory_data.found_slow_down_points = true;
+      trajectory_data.slow_down_require = predicted_trajectory_data.slow_down_require;
+      trajectory_data.nearest_slow_down_point = predicted_trajectory_data.nearest_slow_down_point;
+      trajectory_data.lateral_nearest_slow_down_point =
+        predicted_trajectory_data.lateral_nearest_slow_down_point;
+      trajectory_data.lateral_deviation = predicted_trajectory_data.lateral_deviation;
+      trajectory_data.decimate_trajectory_slow_down_index = motion_utils::findNearestIndex(
+        decimate_trajectory, getPoint(decimate_predicted_trajectory.at(
+                               predicted_trajectory_data.decimate_trajectory_slow_down_index)));
+    } else {
+      // check which one is closer to ego
+      const bool slow_down_at_predicted_trajectory_closer =
+        calcDistance2d(
+          predicted_trajectory_data.nearest_slow_down_point,
+          predicted_trajectory_data.current_pose) <
+        calcDistance2d(trajectory_data.nearest_slow_down_point, trajectory_data.current_pose);
+      if (slow_down_at_predicted_trajectory_closer) {
+        trajectory_data.nearest_slow_down_point = predicted_trajectory_data.nearest_slow_down_point;
+        trajectory_data.lateral_nearest_slow_down_point =
+          predicted_trajectory_data.lateral_nearest_slow_down_point;
+        // find the decimate_trajectory_collision_index
+        trajectory_data.decimate_trajectory_slow_down_index = motion_utils::findNearestIndex(
+          decimate_trajectory, getPoint(decimate_predicted_trajectory.at(
+                                 predicted_trajectory_data.decimate_trajectory_slow_down_index)));
+        trajectory_data.lateral_deviation = predicted_trajectory_data.lateral_deviation;
+        trajectory_data.slow_down_require = predicted_trajectory_data.slow_down_require;
+      }
+    }
+  }
+}
+
 void ObstacleStopPlannerNode::searchObstacle(
   const TrajectoryPoints & decimate_trajectory, TrajectoryPoints & output,
-  PlannerData & planner_data, const Header & trajectory_header, const VehicleInfo & vehicle_info,
+  PlannerData & trajectory_data, const Header & trajectory_header, const VehicleInfo & vehicle_info,
   const StopParam & stop_param, const PointCloud2::SharedPtr obstacle_ros_pointcloud_ptr)
 {
   // search candidate obstacle pointcloud
@@ -350,26 +474,26 @@ void ObstacleStopPlannerNode::searchObstacle(
       debug_ptr_->pushPolygon(
         one_step_move_slow_down_range_polygon, p_front.position.z, PolygonType::SlowDownRange);
 
-      planner_data.found_slow_down_points = withinPolygon(
+      trajectory_data.found_slow_down_points = withinPolygon(
         one_step_move_slow_down_range_polygon, slow_down_param_.slow_down_search_radius,
         prev_center_point, next_center_point, obstacle_candidate_pointcloud_ptr,
         slow_down_pointcloud_ptr);
 
       const auto found_first_slow_down_points =
-        planner_data.found_slow_down_points && !planner_data.slow_down_require;
+        trajectory_data.found_slow_down_points && !trajectory_data.slow_down_require;
 
       if (found_first_slow_down_points) {
         // found nearest slow down obstacle
-        planner_data.decimate_trajectory_slow_down_index = i;
-        planner_data.slow_down_require = true;
+        trajectory_data.decimate_trajectory_slow_down_index = i;
+        trajectory_data.slow_down_require = true;
         getNearestPoint(
-          *slow_down_pointcloud_ptr, p_front, &planner_data.nearest_slow_down_point,
-          &planner_data.nearest_collision_point_time);
+          *slow_down_pointcloud_ptr, p_front, &trajectory_data.nearest_slow_down_point,
+          &trajectory_data.nearest_collision_point_time);
         getLateralNearestPoint(
-          *slow_down_pointcloud_ptr, p_front, &planner_data.lateral_nearest_slow_down_point,
-          &planner_data.lateral_deviation);
+          *slow_down_pointcloud_ptr, p_front, &trajectory_data.lateral_nearest_slow_down_point,
+          &trajectory_data.lateral_deviation);
 
-        debug_ptr_->pushObstaclePoint(planner_data.nearest_slow_down_point, PointType::SlowDown);
+        debug_ptr_->pushObstaclePoint(trajectory_data.nearest_slow_down_point, PointType::SlowDown);
         debug_ptr_->pushPolygon(
           one_step_move_slow_down_range_polygon, p_front.position.z, PolygonType::SlowDown);
 
@@ -392,21 +516,21 @@ void ObstacleStopPlannerNode::searchObstacle(
       PointCloud::Ptr collision_pointcloud_ptr(new PointCloud);
       collision_pointcloud_ptr->header = obstacle_candidate_pointcloud_ptr->header;
 
-      planner_data.found_collision_points = withinPolygon(
+      trajectory_data.found_collision_points = withinPolygon(
         one_step_move_vehicle_polygon, stop_param.stop_search_radius, prev_center_point,
         next_center_point, slow_down_pointcloud_ptr, collision_pointcloud_ptr);
 
-      if (planner_data.found_collision_points) {
-        planner_data.decimate_trajectory_collision_index = i;
+      if (trajectory_data.found_collision_points) {
+        trajectory_data.decimate_trajectory_collision_index = i;
         getNearestPoint(
-          *collision_pointcloud_ptr, p_front, &planner_data.nearest_collision_point,
-          &planner_data.nearest_collision_point_time);
+          *collision_pointcloud_ptr, p_front, &trajectory_data.nearest_collision_point,
+          &trajectory_data.nearest_collision_point_time);
 
-        debug_ptr_->pushObstaclePoint(planner_data.nearest_collision_point, PointType::Stop);
+        debug_ptr_->pushObstaclePoint(trajectory_data.nearest_collision_point, PointType::Stop);
         debug_ptr_->pushPolygon(
           one_step_move_vehicle_polygon, p_front.position.z, PolygonType::Collision);
 
-        planner_data.stop_require = planner_data.found_collision_points;
+        trajectory_data.stop_require = trajectory_data.found_collision_points;
 
         mutex_.lock();
         const auto object_ptr = object_ptr_;
@@ -414,12 +538,12 @@ void ObstacleStopPlannerNode::searchObstacle(
         mutex_.unlock();
 
         acc_controller_->insertAdaptiveCruiseVelocity(
-          decimate_trajectory, planner_data.decimate_trajectory_collision_index,
-          planner_data.current_pose, planner_data.nearest_collision_point,
-          planner_data.nearest_collision_point_time, object_ptr, current_velocity_ptr,
-          &planner_data.stop_require, &output, trajectory_header);
+          decimate_trajectory, trajectory_data.decimate_trajectory_collision_index,
+          trajectory_data.current_pose, trajectory_data.nearest_collision_point,
+          trajectory_data.nearest_collision_point_time, object_ptr, current_velocity_ptr,
+          &trajectory_data.stop_require, &output, trajectory_header);
 
-        if (planner_data.stop_require) {
+        if (trajectory_data.stop_require) {
           last_detect_time_collision_point_ = trajectory_header.stamp;
         }
 
@@ -430,7 +554,7 @@ void ObstacleStopPlannerNode::searchObstacle(
 }
 
 void ObstacleStopPlannerNode::insertVelocity(
-  TrajectoryPoints & output, PlannerData & planner_data, const Header & trajectory_header,
+  TrajectoryPoints & output, PlannerData & trajectory_data, const Header & trajectory_header,
   const VehicleInfo & vehicle_info, const double current_acc, const double current_vel,
   const StopParam & stop_param)
 {
@@ -439,19 +563,19 @@ void ObstacleStopPlannerNode::insertVelocity(
     (rclcpp::Time(trajectory_header.stamp) - last_detect_time_collision_point_).seconds() >
     node_param_.hunting_threshold;
 
-  if (planner_data.stop_require) {
+  if (trajectory_data.stop_require) {
     // insert stop point
     const auto traj_end_idx = output.size() - 1;
-    const auto idx = planner_data.decimate_trajectory_index_map.at(
-                       planner_data.decimate_trajectory_collision_index) +
-                     planner_data.trajectory_trim_index;
+    const auto idx = trajectory_data.decimate_trajectory_index_map.at(
+                       trajectory_data.decimate_trajectory_collision_index) +
+                     trajectory_data.trajectory_trim_index;
     const auto index_with_dist_remain = findNearestFrontIndex(
       std::min(idx, traj_end_idx), output,
       createPoint(
-        planner_data.nearest_collision_point.x, planner_data.nearest_collision_point.y, 0));
+        trajectory_data.nearest_collision_point.x, trajectory_data.nearest_collision_point.y, 0));
 
     if (index_with_dist_remain) {
-      const auto vehicle_idx = std::min(planner_data.trajectory_trim_index, traj_end_idx);
+      const auto vehicle_idx = std::min(trajectory_data.trajectory_trim_index, traj_end_idx);
       const auto dist_baselink_to_obstacle =
         calcSignedArcLength(output, vehicle_idx, index_with_dist_remain.get().first);
 
@@ -463,7 +587,7 @@ void ObstacleStopPlannerNode::insertVelocity(
         index_with_dist_remain.get().first, output, index_with_dist_remain.get().second,
         stop_param);
 
-      const auto & ego_pose = planner_data.current_pose;
+      const auto & ego_pose = trajectory_data.current_pose;
       const size_t ego_seg_idx = findFirstNearestIndexWithSoftConstraints(
         output, ego_pose, node_param_.ego_nearest_dist_threshold,
         node_param_.ego_nearest_yaw_threshold);
@@ -487,7 +611,7 @@ void ObstacleStopPlannerNode::insertVelocity(
       }();
       const auto is_stopped = current_vel < 0.01;
 
-      const auto & ego_pos = planner_data.current_pose.position;
+      const auto & ego_pos = trajectory_data.current_pose.position;
       if (stop_point_distance < stop_param_.hold_stop_margin_distance && is_stopped) {
         const auto ego_pos_on_path = calcLongitudinalOffsetPose(output, ego_pos, 0.0);
 
@@ -498,7 +622,7 @@ void ObstacleStopPlannerNode::insertVelocity(
             node_param_.ego_nearest_yaw_threshold);
           current_stop_pos.point.pose = ego_pos_on_path.get();
 
-          insertStopPoint(current_stop_pos, output, planner_data.stop_reason_diag);
+          insertStopPoint(current_stop_pos, output, trajectory_data.stop_reason_diag);
           latest_stop_point_ = current_stop_pos;
 
           debug_ptr_->pushPose(getPose(stop_point.point), PoseType::TargetStop);
@@ -506,7 +630,7 @@ void ObstacleStopPlannerNode::insertVelocity(
         }
 
       } else {
-        insertStopPoint(stop_point, output, planner_data.stop_reason_diag);
+        insertStopPoint(stop_point, output, trajectory_data.stop_reason_diag);
         latest_stop_point_ = stop_point;
 
         debug_ptr_->pushPose(getPose(stop_point.point), PoseType::TargetStop);
@@ -519,7 +643,7 @@ void ObstacleStopPlannerNode::insertVelocity(
       latest_stop_point_.get().index = findFirstNearestSegmentIndexWithSoftConstraints(
         output, getPose(latest_stop_point_.get().point), node_param_.ego_nearest_dist_threshold,
         node_param_.ego_nearest_yaw_threshold);
-      insertStopPoint(latest_stop_point_.get(), output, planner_data.stop_reason_diag);
+      insertStopPoint(latest_stop_point_.get(), output, trajectory_data.stop_reason_diag);
       debug_ptr_->pushPose(getPose(latest_stop_point_.get().point), PoseType::TargetStop);
       debug_ptr_->pushPose(getPose(latest_stop_point_.get().point), PoseType::Stop);
     }
@@ -529,18 +653,18 @@ void ObstacleStopPlannerNode::insertVelocity(
     (rclcpp::Time(trajectory_header.stamp) - last_detect_time_slowdown_point_).seconds() >
     node_param_.hunting_threshold;
 
-  if (planner_data.slow_down_require) {
+  if (trajectory_data.slow_down_require) {
     // insert slow down point
     const auto traj_end_idx = output.size() - 1;
-    const auto idx = planner_data.decimate_trajectory_index_map.at(
-      planner_data.decimate_trajectory_slow_down_index);
+    const auto idx = trajectory_data.decimate_trajectory_index_map.at(
+      trajectory_data.decimate_trajectory_slow_down_index);
     const auto index_with_dist_remain = findNearestFrontIndex(
       std::min(idx, traj_end_idx), output,
       createPoint(
-        planner_data.nearest_slow_down_point.x, planner_data.nearest_slow_down_point.y, 0));
+        trajectory_data.nearest_slow_down_point.x, trajectory_data.nearest_slow_down_point.y, 0));
 
     if (index_with_dist_remain) {
-      const auto vehicle_idx = std::min(planner_data.trajectory_trim_index, traj_end_idx);
+      const auto vehicle_idx = std::min(trajectory_data.trajectory_trim_index, traj_end_idx);
       const auto dist_baselink_to_obstacle =
         calcSignedArcLength(output, vehicle_idx, index_with_dist_remain.get().first);
 
@@ -548,7 +672,7 @@ void ObstacleStopPlannerNode::insertVelocity(
         DebugValues::TYPE::SLOWDOWN_OBSTACLE_DISTANCE,
         dist_baselink_to_obstacle + index_with_dist_remain.get().second - base_link2front);
       const auto slow_down_section = createSlowDownSection(
-        index_with_dist_remain.get().first, output, planner_data.lateral_deviation,
+        index_with_dist_remain.get().first, output, trajectory_data.lateral_deviation,
         index_with_dist_remain.get().second, dist_baselink_to_obstacle, vehicle_info, current_acc,
         current_vel);
 
@@ -573,8 +697,9 @@ void ObstacleStopPlannerNode::insertVelocity(
     const auto & p_start = latest_slow_down_section_.get().start_point.pose.position;
     const auto & p_end = latest_slow_down_section_.get().end_point.pose.position;
     const auto reach_slow_down_start_point =
-      isInFrontOfTargetPoint(planner_data.current_pose, p_start);
-    const auto reach_slow_down_end_point = isInFrontOfTargetPoint(planner_data.current_pose, p_end);
+      isInFrontOfTargetPoint(trajectory_data.current_pose, p_start);
+    const auto reach_slow_down_end_point =
+      isInFrontOfTargetPoint(trajectory_data.current_pose, p_end);
     const auto is_in_slow_down_section = reach_slow_down_start_point && !reach_slow_down_end_point;
     const auto index_with_dist_remain = findNearestFrontIndex(0, output, p_end);
 
@@ -607,7 +732,7 @@ void ObstacleStopPlannerNode::insertVelocity(
     }
   }
 
-  pub_stop_reason_->publish(planner_data.stop_reason_diag);
+  pub_stop_reason_->publish(trajectory_data.stop_reason_diag);
 }
 
 void ObstacleStopPlannerNode::onExpandStopRange(const ExpandStopRange::ConstSharedPtr input_msg)
@@ -949,18 +1074,18 @@ void ObstacleStopPlannerNode::resetExternalVelocityLimit(
 }
 
 void ObstacleStopPlannerNode::publishDebugData(
-  const PlannerData & planner_data, const double current_acc, const double current_vel)
+  const PlannerData & trajectory_data, const double current_acc, const double current_vel)
 {
   debug_ptr_->setDebugValues(DebugValues::TYPE::CURRENT_VEL, current_vel);
   debug_ptr_->setDebugValues(DebugValues::TYPE::CURRENT_ACC, current_acc);
   debug_ptr_->setDebugValues(
-    DebugValues::TYPE::FLAG_FIND_SLOW_DOWN_OBSTACLE, planner_data.slow_down_require);
+    DebugValues::TYPE::FLAG_FIND_SLOW_DOWN_OBSTACLE, trajectory_data.slow_down_require);
   debug_ptr_->setDebugValues(
-    DebugValues::TYPE::FLAG_FIND_COLLISION_OBSTACLE, planner_data.stop_require);
+    DebugValues::TYPE::FLAG_FIND_COLLISION_OBSTACLE, trajectory_data.stop_require);
   debug_ptr_->setDebugValues(DebugValues::TYPE::FLAG_EXTERNAL, set_velocity_limit_);
 
   const auto now_adaptive_cruise =
-    !planner_data.stop_require && planner_data.found_collision_points;
+    !trajectory_data.stop_require && trajectory_data.found_collision_points;
   debug_ptr_->setDebugValues(DebugValues::TYPE::FLAG_ADAPTIVE_CRUISE, now_adaptive_cruise);
 
   debug_ptr_->publish();

@@ -13,14 +13,15 @@
 
 ### Input topics
 
-| Name                        | Type                                            | Description         |
-| --------------------------- | ----------------------------------------------- | ------------------- |
-| `~/input/pointcloud`        | sensor_msgs::PointCloud2                        | obstacle pointcloud |
-| `~/input/trajectory`        | autoware_auto_planning_msgs::Trajectory         | trajectory          |
-| `~/input/vector_map`        | autoware_auto_mapping_msgs::HADMapBin           | vector map          |
-| `~/input/odometry`          | nav_msgs::Odometry                              | vehicle velocity    |
-| `~/input/dynamic_objects`   | autoware_auto_perception_msgs::PredictedObjects | dynamic objects     |
-| `~/input/expand_stop_range` | tier4_planning_msgs::msg::ExpandStopRange       | expand stop range   |
+| Name                           | Type                                            | Description          |
+| ------------------------------ | ----------------------------------------------- | -------------------- |
+| `~/input/pointcloud`           | sensor_msgs::PointCloud2                        | obstacle pointcloud  |
+| `~/input/trajectory`           | autoware_auto_planning_msgs::Trajectory         | trajectory           |
+| `~/input/vector_map`           | autoware_auto_mapping_msgs::HADMapBin           | vector map           |
+| `~/input/odometry`             | nav_msgs::Odometry                              | vehicle velocity     |
+| `~/input/dynamic_objects`      | autoware_auto_perception_msgs::PredictedObjects | dynamic objects      |
+| `~/input/expand_stop_range`    | tier4_planning_msgs::msg::ExpandStopRange       | expand stop range    |
+| `~/input/predicted_trajectory` | autoware_auto_planning_msgs::Trajectory         | predicted trajectory |
 
 ### Output topics
 
@@ -31,11 +32,12 @@
 
 ### Common Parameter
 
-| Parameter           | Type   | Description                                                                            |
-| ------------------- | ------ | -------------------------------------------------------------------------------------- |
-| `enable_slow_down`  | bool   | enable slow down planner [-]                                                           |
-| `max_velocity`      | double | max velocity [m/s]                                                                     |
-| `hunting_threshold` | double | even if the obstacle disappears, the stop judgment continues for hunting_threshold [s] |
+| Parameter                    | Type   | Description                                                                            |
+| ---------------------------- | ------ | -------------------------------------------------------------------------------------- |
+| `enable_slow_down`           | bool   | enable slow down planner [-]                                                           |
+| `max_velocity`               | double | max velocity [m/s]                                                                     |
+| `hunting_threshold`          | double | even if the obstacle disappears, the stop judgment continues for hunting_threshold [s] |
+| `check_predicted_trajectory` | bool   | if it is "True", planner will take into account predicted trajectory of controller [-] |
 
 ## Obstacle Stop Planner
 

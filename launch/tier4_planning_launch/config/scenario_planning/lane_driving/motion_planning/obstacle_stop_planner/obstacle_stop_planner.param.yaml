@@ -4,6 +4,7 @@
     lowpass_gain: 0.9                        # gain parameter for low pass filter [-]
     max_velocity: 20.0                       # max velocity [m/s]
     enable_slow_down: False                  # whether to use slow down planner [-]
+    check_predicted_trajectory: False        # if it is "True", planner will take into account predicted trajectory of controller [-]
 
     stop_planner:
       # params for stop position
