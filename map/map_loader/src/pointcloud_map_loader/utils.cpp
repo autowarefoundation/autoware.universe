@@ -21,26 +21,26 @@ bool sphereAndBoxOverlapExists(
   const pcl::PointXYZ box_max_point)
 {
   // Collision detection with x-axis plane
-  if (box_min_point.x - radius <= center.x && center.x <= box_max_point.x + radius &&
-     box_min_point.y <= center.y && center.y <= box_max_point.y &&
-     box_min_point.z <= center.z && center.z <= box_max_point.z)
-  {
+  if (
+    box_min_point.x - radius <= center.x && center.x <= box_max_point.x + radius &&
+    box_min_point.y <= center.y && center.y <= box_max_point.y && box_min_point.z <= center.z &&
+    center.z <= box_max_point.z) {
     return true;
   }
 
   // Collision detection with y-axis plane
-  if (box_min_point.x <= center.x && center.x <= box_max_point.x &&
-     box_min_point.y - radius <= center.y && center.y <= box_max_point.y + radius &&
-     box_min_point.z <= center.z && center.z <= box_max_point.z) 
-  {
+  if (
+    box_min_point.x <= center.x && center.x <= box_max_point.x &&
+    box_min_point.y - radius <= center.y && center.y <= box_max_point.y + radius &&
+    box_min_point.z <= center.z && center.z <= box_max_point.z) {
     return true;
   }
 
   // Collision detection with z-axis plane
-  if (box_min_point.x <= center.x && center.x <= box_max_point.x &&
-     box_min_point.y <= center.y && center.y <= box_max_point.y &&
-     box_min_point.z - radius <= center.z && center.z <= box_max_point.z + radius) 
-  {
+  if (
+    box_min_point.x <= center.x && center.x <= box_max_point.x && box_min_point.y <= center.y &&
+    center.y <= box_max_point.y && box_min_point.z - radius <= center.z &&
+    center.z <= box_max_point.z + radius) {
     return true;
   }
 
