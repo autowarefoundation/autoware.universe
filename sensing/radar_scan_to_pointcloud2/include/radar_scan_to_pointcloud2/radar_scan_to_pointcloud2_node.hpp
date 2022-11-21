@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef RADAR_SCAN_TO_POINTCLOUD2__RADAR_SCAN_TO_POINTCLOUD2_NODE_HPP__
-#define RADAR_SCAN_TO_POINTCLOUD2__RADAR_SCAN_TO_POINTCLOUD2_NODE_HPP__
+#ifndef RADAR_SCAN_TO_POINTCLOUD2__RADAR_SCAN_TO_POINTCLOUD2_NODE_HPP_
+#define RADAR_SCAN_TO_POINTCLOUD2__RADAR_SCAN_TO_POINTCLOUD2_NODE_HPP_
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -62,4 +62,4 @@ private:
 
 }  // namespace radar_scan_to_pointcloud2
 
-#endif  // RADAR_SCAN_TO_POINTCLOUD2__RADAR_SCAN_TO_POINTCLOUD2_NODE_HPP__
+#endif  // RADAR_SCAN_TO_POINTCLOUD2__RADAR_SCAN_TO_POINTCLOUD2_NODE_HPP_
