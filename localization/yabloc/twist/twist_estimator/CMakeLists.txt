@@ -49,6 +49,7 @@ macro(ADD_EXE)
 endmacro()
 
 ADD_EXE(TARGET twist_estimator_node SRC src/twist_estimator_*.cpp INC include)
+ADD_EXE(TARGET twist_visualizer_node SRC src/twist_visualizer_*.cpp INC include)
 
 # ===================================================
 ament_auto_package()
