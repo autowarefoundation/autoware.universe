@@ -17,32 +17,45 @@
 #include <fmt/format.h>
 
 bool sphereAndBoxOverlapExists(
-  const geometry_msgs::msg::Point position, const double radius, const pcl::PointXYZ position_min,
-  const pcl::PointXYZ position_max)
+  const geometry_msgs::msg::Point center, const double radius, const pcl::PointXYZ box_min_point,
+  const pcl::PointXYZ box_max_point)
 {
-  if (
-    (position_min.x - radius <= position.x && position.x <= position_max.x + radius &&
-     position_min.y <= position.y && position.y <= position_max.y && position_min.z <= position.z &&
-     position.z <= position_max.z) ||
-    (position_min.x <= position.x && position.x <= position_max.x &&
-     position_min.y - radius <= position.y && position.y <= position_max.y + radius &&
-     position_min.z <= position.z && position.z <= position_max.z) ||
-    (position_min.x <= position.x && position.x <= position_max.x && position_min.y <= position.y &&
-     position.y <= position_max.y && position_min.z - radius <= position.z &&
-     position.z <= position_max.z + radius)) {
+  // Collision detection with x-axis plane
+  if (box_min_point.x - radius <= center.x && center.x <= box_max_point.x + radius &&
+     box_min_point.y <= center.y && center.y <= box_max_point.y &&
+     box_min_point.z <= center.z && center.z <= box_max_point.z)
+  {
     return true;
   }
-  double r2 = std::pow(radius, 2.0);
-  double minx2 = std::pow(position.x - position_min.x, 2.0);
-  double maxx2 = std::pow(position.x - position_max.x, 2.0);
-  double miny2 = std::pow(position.y - position_min.y, 2.0);
-  double maxy2 = std::pow(position.y - position_max.y, 2.0);
-  double minz2 = std::pow(position.z - position_min.z, 2.0);
-  double maxz2 = std::pow(position.z - position_max.z, 2.0);
+
+  // Collision detection with y-axis plane
+  if (box_min_point.x <= center.x && center.x <= box_max_point.x &&
+     box_min_point.y - radius <= center.y && center.y <= box_max_point.y + radius &&
+     box_min_point.z <= center.z && center.z <= box_max_point.z) 
+  {
+    return true;
+  }
+
+  // Collision detection with z-axis plane
+  if (box_min_point.x <= center.x && center.x <= box_max_point.x &&
+     box_min_point.y <= center.y && center.y <= box_max_point.y &&
+     box_min_point.z - radius <= center.z && center.z <= box_max_point.z + radius) 
+  {
+    return true;
+  }
+
+  // Collision detection with box edges
+  const double dx0 = center.x - box_min_point.x;
+  const double dx1 = center.x - box_max_point.x;
+  const double dy0 = center.y - box_min_point.y;
+  const double dy1 = center.y - box_max_point.y;
+  const double dz0 = center.z - box_min_point.z;
+  const double dz1 = center.z - box_max_point.z;
   if (
-    minx2 + miny2 + minz2 <= r2 || minx2 + miny2 + maxz2 <= r2 || minx2 + maxy2 + minz2 <= r2 ||
-    minx2 + maxy2 + maxz2 <= r2 || maxx2 + miny2 + minz2 <= r2 || maxx2 + miny2 + maxz2 <= r2 ||
-    maxx2 + maxy2 + minz2 <= r2 || maxx2 + maxy2 + maxz2 <= r2) {
+    std::hypot(dx0, dy0, dz0) <= radius || std::hypot(dx1, dy0, dz0) <= radius ||
+    std::hypot(dx0, dy1, dz0) <= radius || std::hypot(dx0, dy0, dz1) <= radius ||
+    std::hypot(dx0, dy1, dz1) <= radius || std::hypot(dx1, dy0, dz1) <= radius ||
+    std::hypot(dx1, dy1, dz0) <= radius || std::hypot(dx1, dy1, dz1) <= radius) {
     return true;
   }
   return false;
@@ -52,8 +65,8 @@ bool isGridWithinQueriedArea(
   const autoware_map_msgs::msg::AreaInfo area, const PCDFileMetadata metadata)
 {
   // Currently, the area load only supports spherical area
-  geometry_msgs::msg::Point position = area.center;
+  geometry_msgs::msg::Point center = area.center;
   double radius = area.radius;
-  bool res = sphereAndBoxOverlapExists(position, radius, metadata.min, metadata.max);
+  bool res = sphereAndBoxOverlapExists(center, radius, metadata.min, metadata.max);
   return res;
 }
