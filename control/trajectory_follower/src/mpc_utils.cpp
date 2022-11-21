@@ -110,7 +110,6 @@ bool resampleMPCTrajectoryByDistance(
   output->yaw = interpolation::spline(input_arclength, input.yaw, output_arclength);
   output->vx = interpolation::lerp(input_arclength, input.vx, output_arclength);
   output->k = interpolation::spline(input_arclength, input.k, output_arclength);
-  output->smooth_k = interpolation::spline(input_arclength, input.smooth_k, output_arclength);
   output->relative_time =
     interpolation::lerp(input_arclength, input.relative_time, output_arclength);
 
@@ -140,7 +139,6 @@ bool linearInterpMPCTrajectory(
     !linearInterpolate(in_index, in_traj_yaw, out_index, out_traj->yaw) ||
     !linearInterpolate(in_index, in_traj.vx, out_index, out_traj->vx) ||
     !linearInterpolate(in_index, in_traj.k, out_index, out_traj->k) ||
-    !linearInterpolate(in_index, in_traj.smooth_k, out_index, out_traj->smooth_k) ||
     !linearInterpolate(in_index, in_traj.relative_time, out_index, out_traj->relative_time)) {
     std::cerr << "linearInterpMPCTrajectory error!" << std::endl;
     return false;
@@ -177,40 +175,25 @@ void calcTrajectoryYawFromXY(MPCTrajectory * traj, const bool is_forward_shift)
   }
 }
 
-bool calcTrajectoryCurvature(
-  const size_t curvature_smoothing_num_traj, const size_t curvature_smoothing_num_ref_steer,
-  MPCTrajectory * traj)
+bool calcTrajectoryCurvature(MPCTrajectory * traj)
 {
-  if (!traj) {
+  if (traj->x.empty()) {
     return false;
   }
 
-  traj->k = calcTrajectoryCurvature(curvature_smoothing_num_traj, *traj);
-  traj->smooth_k = calcTrajectoryCurvature(curvature_smoothing_num_ref_steer, *traj);
-  return true;
-}
-
-std::vector<double> calcTrajectoryCurvature(
-  const size_t curvature_smoothing_num, const MPCTrajectory & traj)
-{
-  std::vector<double> curvature_vec(traj.x.size());
-
-  /* calculate curvature by circle fitting from three points */
-  geometry_msgs::msg::Point p1, p2, p3;
-  const size_t max_smoothing_num =
-    static_cast<size_t>(std::floor(0.5 * (static_cast<double>(traj.x.size() - 1))));
-  const size_t L = std::min(curvature_smoothing_num, max_smoothing_num);
-
   std::vector<double> arclength{};
-  calcMPCTrajectoryArclength(traj, &arclength);
+  calcMPCTrajectoryArclength(*traj, &arclength);
 
-  for (size_t i = 0; i < traj.x.size() - 1; ++i) {
-    const double curvature = (traj.yaw[i + 1] - traj.yaw[i]) / (arclength[i + 1] - arclength[i]);
+  std::vector<double> curvature_vec(traj->x.size());
+  for (size_t i = 0; i < traj->x.size() - 1; ++i) {
+    const double curvature = (traj->yaw[i + 1] - traj->yaw[i]) / (arclength[i + 1] - arclength[i]);
     curvature_vec.at(i) = curvature;
   }
-  curvature_vec.at(traj.x.size() - 1) = curvature_vec.at(traj.x.size() - 2);
+  curvature_vec.at(traj->x.size() - 1) = curvature_vec.at(traj->x.size() - 2);
 
-  return curvature_vec;
+  traj->k = curvature_vec;
+
+  return true;
 }
 
 bool convertToMPCTrajectory(
@@ -225,7 +208,7 @@ bool convertToMPCTrajectory(
     const double vx = p.longitudinal_velocity_mps;
     const double k = 0.0;
     const double t = 0.0;
-    output.push_back(x, y, z, yaw, vx, k, k, t);
+    output.push_back(x, y, z, yaw, vx, k, t);
   }
   calcMPCTrajectoryTime(output);
   return true;

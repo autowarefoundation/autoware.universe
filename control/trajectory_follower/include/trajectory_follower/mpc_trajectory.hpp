@@ -45,7 +45,6 @@ public:
   std::vector<double> yaw;            //!< @brief yaw pose yaw vector
   std::vector<double> vx;             //!< @brief vx velocity vx vector
   std::vector<double> k;              //!< @brief k curvature k vector
-  std::vector<double> smooth_k;       //!< @brief k smoothed-curvature k vector
   std::vector<double> relative_time;  //!< @brief relative_time duration time from start point
 
   /**
@@ -53,7 +52,7 @@ public:
    */
   void push_back(
     const double & xp, const double & yp, const double & zp, const double & yawp,
-    const double & vxp, const double & kp, const double & smooth_kp, const double & tp);
+    const double & vxp, const double & kp, const double & tp);
   /**
    * @brief clear for all values
    */

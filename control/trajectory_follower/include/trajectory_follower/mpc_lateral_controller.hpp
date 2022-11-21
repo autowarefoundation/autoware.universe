@@ -89,11 +89,6 @@ private:
   bool m_enable_path_smoothing;
   //!< @brief param of moving average filter for path smoothing
   int m_path_filter_moving_ave_num;
-  //!< @brief point-to-point index distance for curvature calculation for trajectory  //NOLINT
-  int m_curvature_smoothing_num_traj;
-  //!< @brief point-to-point index distance for curvature calculation for reference steer command
-  //!< //NOLINT
-  int m_curvature_smoothing_num_ref_steer;
   //!< @brief path resampling interval [m]
   double m_traj_resample_dist;
 

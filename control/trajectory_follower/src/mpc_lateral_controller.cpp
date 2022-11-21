@@ -57,9 +57,6 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node) : node_{&node}
   m_mpc.m_ctrl_period = node_->get_parameter("ctrl_period").as_double();
   m_enable_path_smoothing = node_->declare_parameter<bool>("enable_path_smoothing");
   m_path_filter_moving_ave_num = node_->declare_parameter<int>("path_filter_moving_ave_num");
-  m_curvature_smoothing_num_traj = node_->declare_parameter<int>("curvature_smoothing_num_traj");
-  m_curvature_smoothing_num_ref_steer =
-    node_->declare_parameter<int>("curvature_smoothing_num_ref_steer");
   m_traj_resample_dist = node_->declare_parameter<double>("traj_resample_dist");
   m_mpc.m_admissible_position_error = node_->declare_parameter<double>("admissible_position_error");
   m_mpc.m_admissible_yaw_error_rad = node_->declare_parameter<double>("admissible_yaw_error_rad");
@@ -300,8 +297,7 @@ void MpcLateralController::setTrajectory(
   }
 
   m_mpc.setReferenceTrajectory(
-    *msg, m_traj_resample_dist, m_enable_path_smoothing, m_path_filter_moving_ave_num,
-    m_curvature_smoothing_num_traj, m_curvature_smoothing_num_ref_steer);
+    *msg, m_traj_resample_dist, m_enable_path_smoothing, m_path_filter_moving_ave_num);
 
   // update trajectory buffer to check the trajectory shape change.
   m_trajectory_buffer.push_back(*m_current_trajectory_ptr);

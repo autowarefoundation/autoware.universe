@@ -119,16 +119,13 @@ bool MPC::calculateMPC(
     const double yaw = traj.yaw[i] + yaw_error;
     const double vx = traj.vx[i];
     const double k = traj.k[i];
-    const double smooth_k = traj.smooth_k[i];
     const double relative_time = traj.relative_time[i];
-    mpc_predicted_traj.push_back(x, y, z, yaw, vx, k, smooth_k, relative_time);
+    mpc_predicted_traj.push_back(x, y, z, yaw, vx, k, relative_time);
   }
   trajectory_follower::MPCUtils::convertToAutowareTrajectory(mpc_predicted_traj, predicted_traj);
 
   /* prepare diagnostic message */
   const double nearest_k = reference_trajectory.k[static_cast<size_t>(mpc_data.nearest_idx)];
-  const double nearest_smooth_k =
-    reference_trajectory.smooth_k[static_cast<size_t>(mpc_data.nearest_idx)];
   const double steer_cmd = ctrl_cmd.steering_tire_angle;
   const double wb = m_vehicle_model_ptr->getWheelbase();
 
@@ -143,7 +140,7 @@ bool MPC::calculateMPC(
   // [2] feedforward steering value
   append_diag_data(mpc_matrix.Uref_ex(0));
   // [3] feedforward steering value raw
-  append_diag_data(std::atan(nearest_smooth_k * wb));
+  append_diag_data(std::atan(nearest_k * wb));
   // [4] current steering angle
   append_diag_data(mpc_data.steer);
   // [5] lateral error
@@ -163,14 +160,12 @@ bool MPC::calculateMPC(
   // [12] angvel from measured steer
   append_diag_data(current_velocity * tan(mpc_data.steer) / wb);
   // [13] angvel from path curvature
-  append_diag_data(current_velocity * nearest_smooth_k);
-  // [14] nearest path curvature (used for feedforward)
-  append_diag_data(nearest_smooth_k);
-  // [15] nearest path curvature (not smoothed)
+  append_diag_data(current_velocity * nearest_k);
+  // [14] nearest path curvature
   append_diag_data(nearest_k);
-  // [16] predicted steer
+  // [15] predicted steer
   append_diag_data(mpc_data.predicted_steer);
-  // [17] angvel from predicted steer
+  // [16] angvel from predicted steer
   append_diag_data(current_velocity * tan(mpc_data.predicted_steer) / wb);
 
   return true;
@@ -179,8 +174,7 @@ bool MPC::calculateMPC(
 void MPC::setReferenceTrajectory(
   const autoware_auto_planning_msgs::msg::Trajectory & trajectory_msg,
   const double traj_resample_dist, const bool enable_path_smoothing,
-  const int path_filter_moving_ave_num, const int curvature_smoothing_num_traj,
-  const int curvature_smoothing_num_ref_steer)
+  const int path_filter_moving_ave_num)
 {
   trajectory_follower::MPCTrajectory mpc_traj_raw;        // received raw trajectory
   trajectory_follower::MPCTrajectory mpc_traj_resampled;  // resampled trajectory
@@ -223,9 +217,7 @@ void MPC::setReferenceTrajectory(
   trajectory_follower::MPCUtils::convertEulerAngleToMonotonic(&mpc_traj_smoothed.yaw);
 
   /* calculate curvature */
-  trajectory_follower::MPCUtils::calcTrajectoryCurvature(
-    static_cast<size_t>(curvature_smoothing_num_traj),
-    static_cast<size_t>(curvature_smoothing_num_ref_steer), &mpc_traj_smoothed);
+  trajectory_follower::MPCUtils::calcTrajectoryCurvature(&mpc_traj_smoothed);
 
   /* add end point with vel=0 on traj for mpc prediction */
   {
@@ -234,9 +226,7 @@ void MPC::setReferenceTrajectory(
     const double t_end = t.relative_time.back() + t_ext;
     const double v_end = 0.0;
     t.vx.back() = v_end;  // set for end point
-    t.push_back(
-      t.x.back(), t.y.back(), t.z.back(), t.yaw.back(), v_end, t.k.back(), t.smooth_k.back(),
-      t_end);
+    t.push_back(t.x.back(), t.y.back(), t.z.back(), t.yaw.back(), v_end, t.k.back(), t_end);
   }
 
   if (!mpc_traj_smoothed.size()) {
@@ -506,7 +496,7 @@ trajectory_follower::MPCTrajectory MPC::applyVelocityDynamicsFilter(
   output.vx.back() = v_end;  // set for end point
   output.push_back(
     output.x.back(), output.y.back(), output.z.back(), output.yaw.back(), v_end, output.k.back(),
-    output.smooth_k.back(), t_end);
+    t_end);
   return output;
 }
 
@@ -556,7 +546,6 @@ MPCMatrix MPC::generateMPCMatrix(
     const double ref_vx_squared = ref_vx * ref_vx;
 
     const double ref_k = reference_trajectory.k[static_cast<size_t>(i)] * sign_vx;
-    const double ref_smooth_k = reference_trajectory.smooth_k[static_cast<size_t>(i)] * sign_vx;
 
     /* get discrete state matrix A, B, C, W */
     m_vehicle_model_ptr->setVelocity(ref_vx);
@@ -602,7 +591,6 @@ MPCMatrix MPC::generateMPCMatrix(
     m.R1ex.block(idx_u_i, idx_u_i, DIM_U, DIM_U) = R_adaptive;
 
     /* get reference input (feed-forward) */
-    m_vehicle_model_ptr->setCurvature(ref_smooth_k);
     m_vehicle_model_ptr->calculateReferenceInput(Uref);
     if (std::fabs(Uref(0, 0)) < DEG2RAD * m_param.zero_ff_steer_deg) {
       Uref(0, 0) = 0.0;  // ignore curvature noise

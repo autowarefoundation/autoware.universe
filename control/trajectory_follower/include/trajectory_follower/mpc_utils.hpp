@@ -141,23 +141,17 @@ TRAJECTORY_FOLLOWER_PUBLIC void calcTrajectoryYawFromXY(
 /**
  * @brief Calculate path curvature by 3-points circle fitting with smoothing num (use nearest 3
  * points when num = 1)
- * @param [in] curvature_smoothing_num_traj index distance for 3 points for curvature calculation
- * @param [in] curvature_smoothing_num_ref_steer index distance for 3 points for smoothed curvature
  * calculation
  * @param [inout] traj object trajectory
  */
-TRAJECTORY_FOLLOWER_PUBLIC bool calcTrajectoryCurvature(
-  const size_t curvature_smoothing_num_traj, const size_t curvature_smoothing_num_ref_steer,
-  MPCTrajectory * traj);
+TRAJECTORY_FOLLOWER_PUBLIC bool calcTrajectoryCurvature(MPCTrajectory * traj);
 /**
  * @brief Calculate path curvature by 3-points circle fitting with smoothing num (use nearest 3
  * points when num = 1)
- * @param [in] curvature_smoothing_num index distance for 3 points for curvature calculation
  * @param [in] traj input trajectory
  * @return vector of curvatures at each point of the given trajectory
  */
-TRAJECTORY_FOLLOWER_PUBLIC std::vector<double> calcTrajectoryCurvature(
-  const size_t curvature_smoothing_num, const MPCTrajectory & traj);
+TRAJECTORY_FOLLOWER_PUBLIC std::vector<double> calcTrajectoryCurvature(const MPCTrajectory & traj);
 /**
  * @brief calculate nearest pose on MPCTrajectory with linear interpolation
  * @param [in] traj reference trajectory
