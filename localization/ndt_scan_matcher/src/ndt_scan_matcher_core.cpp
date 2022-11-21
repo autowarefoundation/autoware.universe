@@ -113,8 +113,8 @@ NDTScanMatcher::NDTScanMatcher()
   ndt_params.step_size = this->declare_parameter<double>("step_size");
   ndt_params.resolution = this->declare_parameter<double>("resolution");
   ndt_params.max_iterations = this->declare_parameter<int>("max_iterations");
-  int search_method = this->declare_parameter<int>("neighborhood_search_method");
-  ndt_params.search_method = static_cast<pclomp::NeighborSearchMethod>(search_method);
+  // int search_method = this->declare_parameter<int>("neighborhood_search_method");
+  // ndt_params.search_method = static_cast<pclomp::NeighborSearchMethod>(search_method);
   ndt_params.num_threads = this->declare_parameter<int>("num_threads");
   ndt_params.num_threads = std::max(ndt_params.num_threads, 1);
   ndt_params.regularization_scale_factor =

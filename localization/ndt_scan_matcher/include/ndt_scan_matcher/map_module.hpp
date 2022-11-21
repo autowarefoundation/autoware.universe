@@ -21,7 +21,7 @@
 
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
-#include <pclomp/ndt_omp.h>
+#include <multigrid_pclomp/ndt_omp.h>
 
 #include <memory>
 
