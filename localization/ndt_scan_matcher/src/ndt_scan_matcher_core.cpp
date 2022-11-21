@@ -192,6 +192,11 @@ NDTScanMatcher::NDTScanMatcher()
   nearest_voxel_transformation_likelihood_pub_ =
     this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>(
       "nearest_voxel_transformation_likelihood", 10);
+  no_ground_transform_probability_pub_ =
+    this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("no_ground_transform_probability", 10);
+  no_ground_nearest_voxel_transformation_likelihood_pub_ =
+    this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>(
+      "no_ground_nearest_voxel_transformation_likelihood", 10);
   iteration_num_pub_ =
     this->create_publisher<tier4_debug_msgs::msg::Int32Stamped>("iteration_num", 10);
   initial_to_result_distance_pub_ =
@@ -396,7 +401,6 @@ void NDTScanMatcher::callback_points(
     ndt_ptr_->calculateTransformationProbability(*no_ground_points_mapTF_ptr);
   const float no_ground_nearest_voxel_transformation_likelihood =
     ndt_ptr_->calculateNearestVoxelTransformationLikelihood(*no_ground_points_mapTF_ptr);
-
   // perform several validations
   /*****************************************************************************
   The reason the add 2 to the ndt_ptr_->getMaximumIterations() is that there are bugs in
@@ -418,7 +422,7 @@ void NDTScanMatcher::callback_points(
       transformation_msg_array, oscillation_threshold_, inversion_vector_threshold_);
   }
   bool is_ok_converged_param = validate_converged_param(
-    no_ground_transform_probability, no_ground_nearest_voxel_transformation_likelihood);
+    ndt_result.transform_probability, ndt_result.nearest_voxel_transformation_likelihood);
   bool is_converged = is_ok_iteration_num && is_ok_converged_param;
   static size_t skipping_publish_num = 0;
   if (is_converged) {
@@ -432,8 +436,13 @@ void NDTScanMatcher::callback_points(
   initial_pose_with_covariance_pub_->publish(interpolator.get_current_pose());
   exe_time_pub_->publish(make_float32_stamped(sensor_ros_time, exe_time));
   transform_probability_pub_->publish(
-    make_float32_stamped(sensor_ros_time, no_ground_transform_probability));
+    make_float32_stamped(sensor_ros_time, ndt_result.transform_probability));
   nearest_voxel_transformation_likelihood_pub_->publish(
+    make_float32_stamped(sensor_ros_time, ndt_result.nearest_voxel_transformation_likelihood));
+  //de-ground points NDT matching score
+  no_ground_transform_probability_pub_->publish(
+    make_float32_stamped(sensor_ros_time, no_ground_transform_probability));
+  no_ground_nearest_voxel_transformation_likelihood_pub_->publish(
     make_float32_stamped(sensor_ros_time, no_ground_nearest_voxel_transformation_likelihood));
   iteration_num_pub_->publish(make_int32_stamped(sensor_ros_time, ndt_result.iteration_num));
   publish_tf(sensor_ros_time, result_pose_msg);
@@ -448,9 +457,9 @@ void NDTScanMatcher::callback_points(
     *sensor_points_baselinkTF_ptr, *sensor_points_mapTF_ptr, ndt_result.pose);
   publish_point_cloud(sensor_ros_time, map_frame_, sensor_points_mapTF_ptr);
 
-  (*state_ptr_)["transform_probability"] = std::to_string(no_ground_transform_probability);
+  (*state_ptr_)["transform_probability"] = std::to_string(ndt_result.transform_probability);
   (*state_ptr_)["nearest_voxel_transformation_likelihood"] =
-    std::to_string(no_ground_nearest_voxel_transformation_likelihood);
+    std::to_string(ndt_result.nearest_voxel_transformation_likelihood);
   (*state_ptr_)["iteration_num"] = std::to_string(ndt_result.iteration_num);
   (*state_ptr_)["skipping_publish_num"] = std::to_string(skipping_publish_num);
   if (is_local_optimal_solution_oscillation) {
