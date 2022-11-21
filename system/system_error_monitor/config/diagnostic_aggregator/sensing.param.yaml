@@ -9,7 +9,7 @@
           path: node_alive_monitoring
           analyzers:
             topic_status:
-              type: diagnostic_aggregator/GenericAnalyzer
+              type: diagnostic_aggregator/DiscardAnalyzer
               path: topic_status
               contains: [": sensing_topic_status"]
               timeout: 1.0
