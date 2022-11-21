@@ -1,0 +1,11 @@
+<launch>
+  <arg name="input/radar" default="input/radar"/>
+  <arg name="output/pointcloud" default="output/pointcloud"/>
+  <arg name="intensity_value_mode" default="amplitude"/>
+
+  <node pkg="radar_scan_to_pointcloud2" exec="radar_scan_to_pointcloud2_node" name="radar_scan_to_pointcloud2" output="screen">
+    <remap from="~/input/radar" to="$(var input/radar)"/>
+    <remap from="~/output/pointcloud" to="$(var output/pointcloud)"/>
+    <param name="intensity_value_mode" value="$(var intensity_value_mode)"/>
+  </node>
+</launch>
