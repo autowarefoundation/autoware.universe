@@ -32,7 +32,7 @@
     </group>
     <!-- remove ground module -->
     <include file="$(find-pkg-share ground_segmentation)/launch/scan_ground_filter.launch.py">
-      <arg name="input/pointcloud" value="$(var input/orign_pointcloud)"/>
+      <arg name="input/pointcloud" value="$(var input/origin_pointcloud)"/>
     </include>
     <!-- pose_estimator module -->
     <group>
