@@ -219,6 +219,7 @@ void MPC::setReferenceTrajectory(
 
   /* calculate yaw angle */
   trajectory_follower::MPCUtils::calcTrajectoryYawFromXY(&mpc_traj_smoothed, m_is_forward_shift);
+  mpc_traj_smoothed.yaw.back() = mpc_traj_raw.yaw.back();
   trajectory_follower::MPCUtils::convertEulerAngleToMonotonic(&mpc_traj_smoothed.yaw);
 
   /* calculate curvature */
