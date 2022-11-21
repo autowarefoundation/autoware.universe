@@ -75,6 +75,9 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
       create_publisher<MarkerArray>("~/drivable_area_boundary", 1);
   }
 
+  left_bound_publisher_ = create_publisher<Marker>("~/left_bound", 1);
+  right_bound_publisher_ = create_publisher<Marker>("~/right_bound", 1);
+
   // subscriber
   velocity_subscriber_ = create_subscription<Odometry>(
     "~/input/odometry", 1, std::bind(&BehaviorPathPlannerNode::onVelocity, this, _1),
@@ -605,6 +608,25 @@ void BehaviorPathPlannerNode::run()
 
   // path handling
   const auto path = getPath(output, planner_data);
+
+  // drivable lanes
+  auto left_marker = tier4_autoware_utils::createDefaultMarker(
+    "map", rclcpp::Clock{RCL_ROS_TIME}.now(), "left_bound", 0L, Marker::LINE_STRIP,
+    tier4_autoware_utils::createMarkerScale(0.7, 0.3, 0.3),
+    tier4_autoware_utils::createMarkerColor(0.4, 0.7, 1.0, 0.999));
+  for (const auto lb : path->left_bound) {
+    left_marker.points.push_back(lb.position);
+  }
+  left_bound_publisher_->publish(left_marker);
+
+  auto right_marker = tier4_autoware_utils::createDefaultMarker(
+    "map", rclcpp::Clock{RCL_ROS_TIME}.now(), "right_bound", 0L, Marker::LINE_STRIP,
+    tier4_autoware_utils::createMarkerScale(0.7, 0.3, 0.3),
+    tier4_autoware_utils::createMarkerColor(0.4, 0.7, 1.0, 0.999));
+  for (const auto rb : path->right_bound) {
+    right_marker.points.push_back(rb.position);
+  }
+  right_bound_publisher_->publish(right_marker);
 
   // update planner data
   planner_data_->prev_output_path = path;

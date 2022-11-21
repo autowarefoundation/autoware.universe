@@ -1347,6 +1347,35 @@ OccupancyGrid generateDrivableArea(
   return occupancy_grid;
 }
 
+void generateDrivableArea(PathWithLaneId & path, const std::vector<DrivableLanes> & lanes)
+{
+  std::vector<geometry_msgs::msg::Pose> left_bound;
+  std::vector<geometry_msgs::msg::Pose> right_bound;
+
+  // Insert Position
+  for (const auto & lane : lanes) {
+    const auto & left_lane = lane.left_lane;
+    const auto & right_lane = lane.right_lane;
+    for (const auto & lp : left_lane.leftBound()) {
+      geometry_msgs::msg::Pose left_pose;
+      left_pose.position = lanelet::utils::conversion::toGeomMsgPt(lp);
+      left_bound.push_back(left_pose);
+    }
+    for (const auto & rp : right_lane.rightBound()) {
+      geometry_msgs::msg::Pose right_pose;
+      right_pose.position = lanelet::utils::conversion::toGeomMsgPt(rp);
+      right_bound.push_back(right_pose);
+    }
+  }
+
+  // Insert Orientation
+  motion_utils::insertOrientation(left_bound, true);
+  motion_utils::insertOrientation(right_bound, true);
+
+  path.left_bound = left_bound;
+  path.right_bound = right_bound;
+}
+
 double getDistanceToEndOfLane(const Pose & current_pose, const lanelet::ConstLanelets & lanelets)
 {
   const auto & arc_coordinates = lanelet::utils::getArcCoordinates(lanelets, current_pose);
