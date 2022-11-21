@@ -101,15 +101,18 @@ RadarScanToPointcloud2Node::RadarScanToPointcloud2Node(const rclcpp::NodeOptions
     std::bind(&RadarScanToPointcloud2Node::onSetParam, this, _1));
 
   // Node Parameter
-  node_param_.intensity_value_mode =
-    declare_parameter<std::string>("intensity_value_mode", "amplitude");
+  node_param_.publish_amplitude_pointcloud =
+    declare_parameter<bool>("publish_amplitude_pointcloud", true);
+  node_param_.publish_doppler_pointcloud =
+    declare_parameter<bool>("publish_doppler_pointcloud", false);
 
   // Subscriber
   sub_radar_ = create_subscription<RadarScan>(
     "~/input/radar", rclcpp::QoS{1}, std::bind(&RadarScanToPointcloud2Node::onData, this, _1));
 
   // Publisher
-  pub_pointcloud_ = create_publisher<PointCloud2>("~/output/pointcloud", 1);
+  pub_amplitude_pointcloud_ = create_publisher<PointCloud2>("~/output/amplitude_pointcloud", 1);
+  pub_doppler_pointcloud_ = create_publisher<PointCloud2>("~/output/doppler_pointcloud", 1);
 }
 
 rcl_interfaces::msg::SetParametersResult RadarScanToPointcloud2Node::onSetParam(
@@ -119,7 +122,8 @@ rcl_interfaces::msg::SetParametersResult RadarScanToPointcloud2Node::onSetParam(
 
   try {
     auto & p = node_param_;
-    update_param(params, "intensity_value_mode", p.intensity_value_mode);
+    update_param(params, "publish_amplitude_pointcloud", p.publish_amplitude_pointcloud);
+    update_param(params, "publish_doppler_pointcloud", p.publish_doppler_pointcloud);
   } catch (const rclcpp::exceptions::InvalidParameterTypeException & e) {
     result.successful = false;
     result.reason = e.what();
@@ -132,15 +136,14 @@ rcl_interfaces::msg::SetParametersResult RadarScanToPointcloud2Node::onSetParam(
 
 void RadarScanToPointcloud2Node::onData(const RadarScan::ConstSharedPtr radar_msg)
 {
-  sensor_msgs::msg::PointCloud2 output;
-  if (node_param_.intensity_value_mode == "amplitude") {
-    output = toAmplitudePointcloud2(*radar_msg);
-  } else if (node_param_.intensity_value_mode == "doppler_velocity") {
-    output = toDopplerPointcloud2(*radar_msg);
-  } else {
-    RCLCPP_ERROR_THROTTLE(get_logger(), *get_clock(), 1000, "Error intensity value mode.");
+  if (node_param_.publish_amplitude_pointcloud) {
+    amplitude_pointcloud = toAmplitudePointcloud2(*radar_msg);
+    pub_amplitude_pointcloud_->publish(amplitude_pointcloud);
   }
-  pub_pointcloud_->publish(output);
+  if (node_param_.publish_doppler_pointcloud) {
+    doppler_pointcloud = toDopplerPointcloud2(*radar_msg);
+    pub_doppler_pointcloud_->publish(doppler_pointcloud);
+  }
 }
 
 }  // namespace radar_scan_to_pointcloud2
