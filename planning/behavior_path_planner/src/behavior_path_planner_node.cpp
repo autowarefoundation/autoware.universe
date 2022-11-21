@@ -734,7 +734,7 @@ PathWithLaneId::SharedPtr BehaviorPathPlannerNode::getPathCandidate(
 
   if (isForcedCandidatePath()) {
     for (auto & path_point : path_candidate->points) {
-      path_point.point.longitudinal_velocity_mps = 1.0;
+      path_point.point.longitudinal_velocity_mps = 0.0;
     }
   }
 
