@@ -485,7 +485,6 @@ BehaviorModuleOutput PullOverModule::plan()
 
   setDebugData();
 
-  // update steering factor
   const uint16_t steering_factor_direction = std::invoke([this]() {
     const auto turn_signal = calcTurnSignalInfo();
     if (turn_signal.turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {
@@ -495,6 +494,7 @@ BehaviorModuleOutput PullOverModule::plan()
     }
     return SteeringFactor::STRAIGHT;
   });
+
   // TODO(tkhmy) add handle status TRYING
   steering_factor_interface_ptr_->updateSteeringFactor(
     {status_.pull_over_path.start_pose, modified_goal_pose_},
@@ -516,6 +516,8 @@ CandidateOutput PullOverModule::planCandidate() const { return CandidateOutput{}
 
 BehaviorModuleOutput PullOverModule::planWaitingApproval()
 {
+  updateOccupancyGrid();
+  BehaviorModuleOutput out;
   plan();  // update status_
   out.path = std::make_shared<PathWithLaneId>(getReferencePath());
   out.path_candidate = status_.is_safe ? std::make_shared<PathWithLaneId>(getFullPath()) : out.path;
