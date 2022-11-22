@@ -26,7 +26,7 @@
 | `~/input/emergency/hazard_lights_cmd`       | `autoware_auto_vehicle_msgs::msg::HazardLightsCommand`     | hazard lights command from emergency handler                         |
 | `~/input/emergency/gear_cmd`                | `autoware_auto_vehicle_msgs::msg::GearCommand`             | gear command from emergency handler                                  |
 | `~/input/engage`                            | `autoware_auto_vehicle_msgs::msg::Engage`                  | engage signal                                                        |
-| `~/input/operation_mode`                    | `tier4_system_msgs::msg::OperationMode`                    | operation mode of Autoware                                           |
+| `~/input/operation_mode`                    | `autoware_adapi_v1_msgs::msg::OperationModeState`          | operation mode of Autoware                                           |
 
 ### Output
 
@@ -66,4 +66,6 @@
 
 ## Assumptions / Known limits
 
-TBD.
+The parameter `use_external_emergency_stop` (true by default) enables an emergency stop request from external modules.
+This feature requires a `~/input/external_emergency_stop_heartbeat` topic for health monitoring of the external module, and the vehicle_cmd_gate module will not start without the topic.
+The `use_external_emergency_stop` parameter must be false when the "external emergency stop" function is not used.

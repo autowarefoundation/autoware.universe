@@ -18,7 +18,6 @@
 #include "behavior_path_planner/scene_module/pull_over/geometric_pull_over.hpp"
 #include "behavior_path_planner/scene_module/pull_over/goal_searcher.hpp"
 #include "behavior_path_planner/scene_module/pull_over/pull_over_parameters.hpp"
-#include "behavior_path_planner/scene_module/pull_over/pull_over_path.hpp"
 #include "behavior_path_planner/scene_module/pull_over/shift_pull_over.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 #include "behavior_path_planner/scene_module/utils/geometric_parallel_parking.hpp"
@@ -60,7 +59,7 @@ struct PUllOverStatus
   std::shared_ptr<PathWithLaneId> prev_stop_path{nullptr};
   lanelet::ConstLanelets current_lanes{};
   lanelet::ConstLanelets pull_over_lanes{};
-  lanelet::ConstLanelets lanes{};  // current + pull_over
+  std::vector<DrivableLanes> lanes{};  // current + pull_over
   bool has_decided_path{false};
   bool is_safe{false};
   bool prev_is_safe{false};
@@ -89,6 +88,11 @@ public:
   void onExit() override;
 
   void setParameters(const PullOverParameters & parameters);
+
+  void acceptVisitor(
+    [[maybe_unused]] const std::shared_ptr<SceneModuleVisitor> & visitor) const override
+  {
+  }
 
 private:
   PullOverParameters parameters_;

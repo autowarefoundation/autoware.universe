@@ -45,6 +45,9 @@ struct SideShiftParameters
   double drivable_area_width;
   double drivable_area_height;
   double shift_request_time_limit;
+  // drivable area expansion
+  double drivable_area_right_bound_offset;
+  double drivable_area_left_bound_offset;
 };
 
 class SideShiftModule : public SceneModuleInterface
@@ -66,6 +69,11 @@ public:
   void onExit() override;
 
   void setParameters(const SideShiftParameters & parameters);
+
+  void acceptVisitor(
+    [[maybe_unused]] const std::shared_ptr<SceneModuleVisitor> & visitor) const override
+  {
+  }
 
 private:
   rclcpp::Subscription<LateralOffset>::SharedPtr lateral_offset_subscriber_;

@@ -256,6 +256,7 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
   prediction_sampling_time_interval_ = declare_parameter("prediction_sampling_delta_time", 0.5);
   min_velocity_for_map_based_prediction_ =
     declare_parameter("min_velocity_for_map_based_prediction", 1.0);
+  min_crosswalk_user_velocity_ = declare_parameter("min_crosswalk_user_velocity", 1.0);
   dist_threshold_for_searching_lanelet_ =
     declare_parameter("dist_threshold_for_searching_lanelet", 3.0);
   delta_yaw_threshold_for_searching_lanelet_ =
@@ -274,8 +275,7 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
   reference_path_resolution_ = declare_parameter("reference_path_resolution", 0.5);
 
   path_generator_ = std::make_shared<PathGenerator>(
-    prediction_time_horizon_, prediction_sampling_time_interval_,
-    min_velocity_for_map_based_prediction_);
+    prediction_time_horizon_, prediction_sampling_time_interval_, min_crosswalk_user_velocity_);
 
   sub_objects_ = this->create_subscription<TrackedObjects>(
     "/perception/object_recognition/tracking/objects", 1,
@@ -528,7 +528,7 @@ PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
 
     if (hasPotentialToReach(
           object, entry_point.first, std::numeric_limits<double>::max(),
-          min_velocity_for_map_based_prediction_)) {
+          min_crosswalk_user_velocity_)) {
       PredictedPath predicted_path =
         path_generator_->generatePathToTargetPoint(object, entry_point.first);
       predicted_path.confidence = 1.0;
@@ -537,7 +537,7 @@ PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
 
     if (hasPotentialToReach(
           object, entry_point.second, std::numeric_limits<double>::max(),
-          min_velocity_for_map_based_prediction_)) {
+          min_crosswalk_user_velocity_)) {
       PredictedPath predicted_path =
         path_generator_->generatePathToTargetPoint(object, entry_point.second);
       predicted_path.confidence = 1.0;
@@ -555,7 +555,7 @@ PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
 
       if (hasPotentialToReach(
             object, entry_point.first, prediction_time_horizon_ * 2.0,
-            min_velocity_for_map_based_prediction_)) {
+            min_crosswalk_user_velocity_)) {
         PredictedPath predicted_path =
           path_generator_->generatePathToTargetPoint(object, entry_point.first);
         predicted_path.confidence = 1.0;
@@ -564,7 +564,7 @@ PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
 
       if (hasPotentialToReach(
             object, entry_point.second, prediction_time_horizon_ * 2.0,
-            min_velocity_for_map_based_prediction_)) {
+            min_crosswalk_user_velocity_)) {
         PredictedPath predicted_path =
           path_generator_->generatePathToTargetPoint(object, entry_point.second);
         predicted_path.confidence = 1.0;
@@ -577,11 +577,9 @@ PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
       const auto entry_point = getCrosswalkEntryPoint(crosswalk);
 
       const auto reachable_first = hasPotentialToReach(
-        object, entry_point.first, prediction_time_horizon_,
-        min_velocity_for_map_based_prediction_);
+        object, entry_point.first, prediction_time_horizon_, min_crosswalk_user_velocity_);
       const auto reachable_second = hasPotentialToReach(
-        object, entry_point.second, prediction_time_horizon_,
-        min_velocity_for_map_based_prediction_);
+        object, entry_point.second, prediction_time_horizon_, min_crosswalk_user_velocity_);
 
       if (!reachable_first && !reachable_second) {
         continue;
@@ -589,7 +587,7 @@ PredictedObject MapBasedPredictionNode::getPredictedObjectAsCrosswalkUser(
 
       const auto reachable_crosswalk = isReachableEntryPoint(
         object, entry_point, lanelet_map_ptr_, prediction_time_horizon_,
-        min_velocity_for_map_based_prediction_);
+        min_crosswalk_user_velocity_);
 
       if (!reachable_crosswalk) {
         continue;
@@ -847,44 +845,33 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
   const TrackedObject & object, const LaneletsData & current_lanelets_data,
   const double object_detected_time)
 {
-  const double delta_horizon = 1.0;
   const double obj_vel = std::fabs(object.kinematics.twist_with_covariance.twist.linear.x);
 
   std::vector<PredictedRefPath> all_ref_paths;
   for (const auto & current_lanelet_data : current_lanelets_data) {
+    // parameter for lanelet::routing::PossiblePathsParams
+    const double search_dist = prediction_time_horizon_ * obj_vel +
+                               lanelet::utils::getLaneletLength3d(current_lanelet_data.lanelet);
+    lanelet::routing::PossiblePathsParams possible_params{search_dist, {}, 0, false, true};
+
     // Step1. Get the path
     // Step1.1 Get the left lanelet
     lanelet::routing::LaneletPaths left_paths;
     auto opt_left = routing_graph_ptr_->left(current_lanelet_data.lanelet);
     if (!!opt_left) {
-      for (double horizon = prediction_time_horizon_; horizon > 0; horizon -= delta_horizon) {
-        const double search_dist = horizon * obj_vel + 10.0;
-        lanelet::routing::LaneletPaths tmp_paths =
-          routing_graph_ptr_->possiblePaths(*opt_left, search_dist, 0, false);
-        addValidPath(tmp_paths, left_paths);
-      }
+      left_paths = routing_graph_ptr_->possiblePaths(*opt_left, possible_params);
     }
 
     // Step1.2 Get the right lanelet
     lanelet::routing::LaneletPaths right_paths;
     auto opt_right = routing_graph_ptr_->right(current_lanelet_data.lanelet);
     if (!!opt_right) {
-      for (double horizon = prediction_time_horizon_; horizon > 0; horizon -= delta_horizon) {
-        const double search_dist = horizon * obj_vel + 10.0;
-        lanelet::routing::LaneletPaths tmp_paths =
-          routing_graph_ptr_->possiblePaths(*opt_right, search_dist, 0, false);
-        addValidPath(tmp_paths, right_paths);
-      }
+      right_paths = routing_graph_ptr_->possiblePaths(*opt_right, possible_params);
     }
 
     // Step1.3 Get the centerline
-    lanelet::routing::LaneletPaths center_paths;
-    for (double horizon = prediction_time_horizon_; horizon > 0; horizon -= delta_horizon) {
-      const double search_dist = horizon * obj_vel + 10.0;
-      lanelet::routing::LaneletPaths tmp_paths =
-        routing_graph_ptr_->possiblePaths(current_lanelet_data.lanelet, search_dist, 0, false);
-      addValidPath(tmp_paths, center_paths);
-    }
+    lanelet::routing::LaneletPaths center_paths =
+      routing_graph_ptr_->possiblePaths(current_lanelet_data.lanelet, possible_params);
 
     // Skip calculations if all paths are empty
     if (left_paths.empty() && right_paths.empty() && center_paths.empty()) {
@@ -910,26 +897,6 @@ std::vector<PredictedRefPath> MapBasedPredictionNode::getPredictedReferencePath(
   }
 
   return all_ref_paths;
-}
-
-void MapBasedPredictionNode::addValidPath(
-  const lanelet::routing::LaneletPaths & candidate_paths,
-  lanelet::routing::LaneletPaths & valid_paths)
-{
-  // Check if candidate paths are already in the valid paths
-  for (const auto & candidate_path : candidate_paths) {
-    bool already_searched = false;
-    for (const auto & valid_path : valid_paths) {
-      for (const auto & llt : valid_path) {
-        if (candidate_path.back().id() == llt.id()) {
-          already_searched = true;
-        }
-      }
-    }
-    if (!already_searched) {
-      valid_paths.push_back(candidate_path);
-    }
-  }
 }
 
 Maneuver MapBasedPredictionNode::predictObjectManeuver(

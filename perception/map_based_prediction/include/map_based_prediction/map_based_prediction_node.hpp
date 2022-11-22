@@ -125,6 +125,7 @@ private:
   double prediction_time_horizon_;
   double prediction_sampling_time_interval_;
   double min_velocity_for_map_based_prediction_;
+  double min_crosswalk_user_velocity_;
   double debug_accumulated_time_;
   double dist_threshold_for_searching_lanelet_;
   double delta_yaw_threshold_for_searching_lanelet_;
@@ -172,9 +173,6 @@ private:
   Maneuver predictObjectManeuver(
     const TrackedObject & object, const LaneletData & current_lanelet,
     const double object_detected_time);
-  void addValidPath(
-    const lanelet::routing::LaneletPaths & candidate_paths,
-    lanelet::routing::LaneletPaths & valid_paths);
   geometry_msgs::msg::Pose compensateTimeDelay(
     const geometry_msgs::msg::Pose & delayed_pose, const geometry_msgs::msg::Twist & twist,
     const double dt) const;

@@ -17,6 +17,7 @@
 #include "behavior_path_planner/path_utilities.hpp"
 #include "behavior_path_planner/scene_module/lane_change/util.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
+#include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
 #include "behavior_path_planner/turn_signal_decider.hpp"
 #include "behavior_path_planner/utilities.hpp"
 
@@ -24,6 +25,7 @@
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
+#include "tier4_planning_msgs/msg/detail/lane_change_debug_msg_array__struct.hpp"
 #include <autoware_auto_perception_msgs/msg/object_classification.hpp>
 #include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
 
@@ -153,6 +155,7 @@ BT::NodeStatus LaneChangeModule::updateState()
   }
 
   if (hasFinishedLaneChange()) {
+    lane_change_debug_msg_array_.lane_change_info.clear();
     current_state_ = BT::NodeStatus::SUCCESS;
     return current_state_;
   }
@@ -167,14 +170,16 @@ BehaviorModuleOutput LaneChangeModule::plan()
   // Generate drivable area
   {
     const auto & common_parameters = planner_data_->parameters;
-    lanelet::ConstLanelets lanes;
-    lanes.reserve(status_.current_lanes.size() + status_.lane_change_lanes.size());
-    lanes.insert(lanes.end(), status_.current_lanes.begin(), status_.current_lanes.end());
-    lanes.insert(lanes.end(), status_.lane_change_lanes.begin(), status_.lane_change_lanes.end());
+    const auto & route_handler = planner_data_->route_handler;
+    const auto drivable_lanes = lane_change_utils::generateDrivableLanes(
+      *route_handler, status_.current_lanes, status_.lane_change_lanes);
+    const auto expanded_lanes = util::expandLanelets(
+      drivable_lanes, parameters_->drivable_area_left_bound_offset,
+      parameters_->drivable_area_right_bound_offset);
 
     const double & resolution = common_parameters.drivable_area_resolution;
     path.drivable_area = util::generateDrivableArea(
-      path, lanes, resolution, common_parameters.vehicle_length, planner_data_);
+      path, expanded_lanes, resolution, common_parameters.vehicle_length, planner_data_);
   }
 
   if (isAbortConditionSatisfied()) {
@@ -323,8 +328,13 @@ PathWithLaneId LaneChangeModule::getReferencePath() const
     *route_handler, reference_path, current_lanes, parameters_->lane_change_prepare_duration,
     lane_change_buffer);
 
+  const auto drivable_lanes = util::generateDrivableLanes(current_lanes);
+  const auto expanded_lanes = util::expandLanelets(
+    drivable_lanes, parameters_->drivable_area_left_bound_offset,
+    parameters_->drivable_area_right_bound_offset);
+
   reference_path.drivable_area = util::generateDrivableArea(
-    reference_path, current_lanes, common_parameters.drivable_area_resolution,
+    reference_path, expanded_lanes, common_parameters.drivable_area_resolution,
     common_parameters.vehicle_length, planner_data_);
 
   return reference_path;
@@ -407,6 +417,20 @@ std::pair<bool, bool> LaneChangeModule::getSafePath(
       valid_paths, current_lanes, check_lanes, planner_data_->dynamic_object, current_pose,
       current_twist, common_parameters, *parameters_, &safe_path, object_debug_);
 
+    LaneChangeDebugMsgArray debug_msg_array;
+    debug_msg_array.lane_change_info.reserve(object_debug_.size());
+    for (const auto & [uuid, debug_data] : object_debug_) {
+      LaneChangeDebugMsg debug_msg;
+      debug_msg.object_id = uuid;
+      debug_msg.allow_lane_change = debug_data.allow_lane_change;
+      debug_msg.is_front = debug_data.is_front;
+      debug_msg.relative_distance = debug_data.relative_to_ego;
+      debug_msg.failed_reason = debug_data.failed_reason;
+      debug_msg.velocity = util::l2Norm(debug_data.object_twist.linear);
+      debug_msg_array.lane_change_info.push_back(debug_msg);
+    }
+
+    lane_change_debug_msg_array_ = debug_msg_array;
     if (parameters_->publish_debug_marker) {
       setObjectDebugVisualization();
     } else {
@@ -574,4 +598,21 @@ void LaneChangeModule::setObjectDebugVisualization() const
   add(showAllValidLaneChangePath(debug_valid_path_, "lane_change_valid_paths"));
 }
 
+std::shared_ptr<LaneChangeDebugMsgArray> LaneChangeModule::get_debug_msg_array() const
+{
+  lane_change_debug_msg_array_.header.stamp = clock_->now();
+  return std::make_shared<LaneChangeDebugMsgArray>(lane_change_debug_msg_array_);
+}
+
+void LaneChangeModule::acceptVisitor(const std::shared_ptr<SceneModuleVisitor> & visitor) const
+{
+  if (visitor) {
+    visitor->visitLaneChangeModule(this);
+  }
+}
+
+void SceneModuleVisitor::visitLaneChangeModule(const LaneChangeModule * module) const
+{
+  lane_change_visitor_ = module->get_debug_msg_array();
+}
 }  // namespace behavior_path_planner
