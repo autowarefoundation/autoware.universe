@@ -46,6 +46,24 @@ def create_topic_monitor_node(row):
     return IncludeLaunchDescription(include, launch_arguments=arguments)
 
 
+def create_dummy_topic_monitor(group, module):
+    package = FindPackageShare("topic_state_monitor")
+    include = PathJoinSubstitution([package, "launch/topic_state_monitor.launch.xml"])
+    arguments = {
+        "diag_name": f"{module}_topic_status",
+        "node_name_suffix": f"component_state_monitor_{group}_{module}",
+        "topic": f"/system/component_state_monitor/component/{group}/{module}",
+        "topic_type": "tier4_system_msgs/msg/ModeChangeAvailable",
+        "best_effort": False,
+        "transient_local": True,
+        "warn_rate": 0.0,
+        "error_rate": 0.0,
+        "timeout": 0.0,
+    }
+    arguments = [(k, str(v)) for k, v in arguments.items()]
+    return IncludeLaunchDescription(include, launch_arguments=arguments)
+
+
 def launch_setup(context, *args, **kwargs):
     # create topic monitors
     mode = LaunchConfiguration("mode").perform(context)
@@ -57,6 +75,19 @@ def launch_setup(context, *args, **kwargs):
     for row in rows:
         topic_monitor_param[row["type"]][row["module"]].append(create_topic_monitor_name(row))
     topic_monitor_param = {name: dict(module) for name, module in topic_monitor_param.items()}
+
+    # create dummy diagnostics for node alive monitoring
+    modules = (
+        "sensing",
+        "perception",
+        "map",
+        "localization",
+        "planning",
+        "control",
+        "vehicle",
+        "system",
+    )
+    topic_monitor_nodes.extend(create_dummy_topic_monitor("launch", module) for module in modules)
 
     # create component
     component = ComposableNode(
