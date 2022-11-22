@@ -25,8 +25,7 @@ double norm_xy(const T p1, const U p2)
 MapUpdateModule::MapUpdateModule(
   rclcpp::Node * node, std::mutex * ndt_ptr_mutex,
   std::shared_ptr<NormalDistributionsTransform> ndt_ptr,
-  std::shared_ptr<Tf2ListenerModule> tf2_listener_module,
-  std::string map_frame,
+  std::shared_ptr<Tf2ListenerModule> tf2_listener_module, std::string map_frame,
   rclcpp::CallbackGroup::SharedPtr main_callback_group,
   rclcpp::CallbackGroup::SharedPtr map_callback_group,
   std::shared_ptr<std::map<std::string, std::string>> state_ptr)
@@ -40,8 +39,7 @@ MapUpdateModule::MapUpdateModule(
   dml_update_map_distance_(node->declare_parameter<double>("dml_update_map_distance")),
   dml_loading_radius_(node->declare_parameter<double>("dml_loading_radius"))
 {
-  initial_estimate_particles_num_ =
-    node->declare_parameter<int>("initial_estimate_particles_num");
+  initial_estimate_particles_num_ = node->declare_parameter<int>("initial_estimate_particles_num");
 
   sensor_aligned_pose_pub_ =
     node->create_publisher<sensor_msgs::msg::PointCloud2>("debug/monte_carlo_points_aligned", 10);
@@ -52,17 +50,17 @@ MapUpdateModule::MapUpdateModule(
   auto main_sub_opt = rclcpp::SubscriptionOptions();
   main_sub_opt.callback_group = main_callback_group;
 
-  ekf_odom_sub_ =
-    node->create_subscription<nav_msgs::msg::Odometry>(
-      "ekf_odom", 100,
-      std::bind(&MapUpdateModule::callback_ekf_odom, this, std::placeholders::_1), main_sub_opt);
+  ekf_odom_sub_ = node->create_subscription<nav_msgs::msg::Odometry>(
+    "ekf_odom", 100, std::bind(&MapUpdateModule::callback_ekf_odom, this, std::placeholders::_1),
+    main_sub_opt);
 
-  loaded_pcd_pub_ =
-    node->create_publisher<sensor_msgs::msg::PointCloud2>("debug/loaded_pointcloud_map", rclcpp::QoS{1}.transient_local());
+  loaded_pcd_pub_ = node->create_publisher<sensor_msgs::msg::PointCloud2>(
+    "debug/loaded_pointcloud_map", rclcpp::QoS{1}.transient_local());
 
   service_ = node->create_service<tier4_localization_msgs::srv::PoseWithCovarianceStamped>(
     "ndt_align_srv",
-    std::bind(&MapUpdateModule::service_ndt_align, this, std::placeholders::_1, std::placeholders::_2),
+    std::bind(
+      &MapUpdateModule::service_ndt_align, this, std::placeholders::_1, std::placeholders::_2),
     rclcpp::ServicesQoS().get_rmw_qos_profile(), map_callback_group);
 
   pcd_loader_client_ = node->create_client<autoware_map_msgs::srv::GetDifferentialPointCloudMap>(
@@ -74,10 +72,11 @@ MapUpdateModule::MapUpdateModule(
   current_position_ptr_ = nullptr;
 
   double map_update_dt = 1.0;
-  auto period_ns =
-    std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<double>(map_update_dt));
+  auto period_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
+    std::chrono::duration<double>(map_update_dt));
   map_update_timer_ = rclcpp::create_timer(
-    node, clock_, period_ns, std::bind(&MapUpdateModule::map_update_timer_callback, this), map_callback_group);
+    node, clock_, period_ns, std::bind(&MapUpdateModule::map_update_timer_callback, this),
+    map_callback_group);
 }
 
 void MapUpdateModule::service_ndt_align(
@@ -114,16 +113,20 @@ void MapUpdateModule::service_ndt_align(
   res->success = true;
   res->pose_with_covariance.pose.covariance = req->pose_with_covariance.pose.covariance;
 
-  last_update_position_ptr_ = std::make_shared<geometry_msgs::msg::Point>(res->pose_with_covariance.pose.pose.position);
+  last_update_position_ptr_ =
+    std::make_shared<geometry_msgs::msg::Point>(res->pose_with_covariance.pose.pose.position);
 }
 
 void MapUpdateModule::callback_ekf_odom(nav_msgs::msg::Odometry::ConstSharedPtr odom_ptr)
 {
   current_position_ptr_ = std::make_shared<geometry_msgs::msg::Point>(odom_ptr->pose.pose.position);
-  
-  if (last_update_position_ptr_ == nullptr) {return;}
+
+  if (last_update_position_ptr_ == nullptr) {
+    return;
+  }
   double distance = norm_xy(*current_position_ptr_, *last_update_position_ptr_);
-  double LIDAR_CROP_DISTANCE = 100; // TODO (koji minoda): parametrize before merge!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  double LIDAR_CROP_DISTANCE =
+    100;  // TODO (koji minoda): parametrize before merge!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   if (distance + LIDAR_CROP_DISTANCE > dml_loading_radius_) {
     RCLCPP_ERROR_STREAM_THROTTLE(logger_, *clock_, 1, "Dynamic map loading is not keeping up.");
   }
@@ -135,8 +138,7 @@ void MapUpdateModule::map_update_timer_callback()
   if (last_update_position_ptr_ == nullptr) return;
 
   // continue only if we should update the map
-  if (should_update_map(*current_position_ptr_))
-  {
+  if (should_update_map(*current_position_ptr_)) {
     RCLCPP_INFO(logger_, "Start updating NDT map (timer_callback)");
     update_map(*current_position_ptr_);
     *last_update_position_ptr_ = *current_position_ptr_;
@@ -162,7 +164,7 @@ void MapUpdateModule::update_map(const geometry_msgs::msg::Point & position)
   auto result{pcd_loader_client_->async_send_request(
     request,
     [this](const rclcpp::Client<autoware_map_msgs::srv::GetDifferentialPointCloudMap>::SharedFuture
-            response) {
+             response) {
       (void)response;
       std::lock_guard<std::mutex> lock{pcd_loader_client_mutex_};
       value_ready_ = true;
@@ -178,7 +180,9 @@ void MapUpdateModule::update_ndt(
   const std::vector<autoware_map_msgs::msg::PointCloudMapCellWithID> & maps_to_add,
   const std::vector<std::string> & map_ids_to_remove)
 {
-  RCLCPP_INFO(logger_, "Update map (Add: %d, Remove: %d)", int(maps_to_add.size()), int(map_ids_to_remove.size()));
+  RCLCPP_INFO(
+    logger_, "Update map (Add: %d, Remove: %d)", int(maps_to_add.size()),
+    int(map_ids_to_remove.size()));
   if ((int(maps_to_add.size()) == 0) & (int(map_ids_to_remove.size()) == 0)) {
     RCLCPP_INFO(logger_, "Skip map update");
     return;
@@ -189,21 +193,23 @@ void MapUpdateModule::update_ndt(
   backup_ndt.setInputSource(ndt_ptr_->getInputSource());
 
   // Add pcd
-  for (const auto & map_to_add: maps_to_add) {
+  for (const auto & map_to_add : maps_to_add) {
     pcl::shared_ptr<pcl::PointCloud<PointTarget>> map_points_ptr(new pcl::PointCloud<PointTarget>);
     pcl::fromROSMsg(map_to_add.pointcloud, *map_points_ptr);
     backup_ndt.addTarget(map_points_ptr, map_to_add.cell_id);
   }
 
   // Remove pcd
-  for (const std::string map_id_to_remove: map_ids_to_remove) {
+  for (const std::string map_id_to_remove : map_ids_to_remove) {
     backup_ndt.removeTarget(map_id_to_remove);
   }
 
   backup_ndt.createVoxelKdtree();
 
   const auto exe_end_time = std::chrono::system_clock::now();
-  const double exe_time = std::chrono::duration_cast<std::chrono::microseconds>(exe_end_time - exe_start_time).count() / 1000.0;
+  const double exe_time =
+    std::chrono::duration_cast<std::chrono::microseconds>(exe_end_time - exe_start_time).count() /
+    1000.0;
   RCLCPP_INFO(logger_, "Time duration for creating new ndt_ptr: %f [ms]", exe_time);
 
   // swap
