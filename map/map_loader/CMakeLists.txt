@@ -51,6 +51,19 @@ if(BUILD_TESTING)
     test/data/
     DESTINATION share/${PROJECT_NAME}/test/data/
   )
+
+  function(add_testcase filepath)
+    get_filename_component(filename ${filepath} NAME)
+    string(REGEX REPLACE ".cpp" "" test_name ${filename})
+    ament_add_gmock(${test_name} ${filepath})
+    target_include_directories(${test_name} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(${test_name} fmt pointcloud_map_loader_node)
+    ament_target_dependencies(${test_name} ${${PROJECT_NAME}_FOUND_BUILD_DEPENDS})
+  endfunction()
+
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
+  add_testcase(test/test_sphere_box_overlap.cpp)
 endif()
 
 install(PROGRAMS
