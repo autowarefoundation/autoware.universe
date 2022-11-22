@@ -27,7 +27,6 @@ MapUpdateModule::MapUpdateModule(
   std::shared_ptr<NormalDistributionsTransform> ndt_ptr,
   std::shared_ptr<Tf2ListenerModule> tf2_listener_module, std::string map_frame,
   rclcpp::CallbackGroup::SharedPtr main_callback_group,
-  rclcpp::CallbackGroup::SharedPtr map_callback_group,
   std::shared_ptr<std::map<std::string, std::string>> state_ptr)
 : ndt_ptr_(ndt_ptr),
   ndt_ptr_mutex_(ndt_ptr_mutex),
@@ -50,6 +49,8 @@ MapUpdateModule::MapUpdateModule(
   auto main_sub_opt = rclcpp::SubscriptionOptions();
   main_sub_opt.callback_group = main_callback_group;
 
+  map_callback_group_ = node->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+
   ekf_odom_sub_ = node->create_subscription<nav_msgs::msg::Odometry>(
     "ekf_odom", 100, std::bind(&MapUpdateModule::callback_ekf_odom, this, std::placeholders::_1),
     main_sub_opt);
@@ -61,7 +62,7 @@ MapUpdateModule::MapUpdateModule(
     "ndt_align_srv",
     std::bind(
       &MapUpdateModule::service_ndt_align, this, std::placeholders::_1, std::placeholders::_2),
-    rclcpp::ServicesQoS().get_rmw_qos_profile(), map_callback_group);
+    rclcpp::ServicesQoS().get_rmw_qos_profile(), map_callback_group_);
 
   pcd_loader_client_ = node->create_client<autoware_map_msgs::srv::GetDifferentialPointCloudMap>(
     "pcd_loader_service", rmw_qos_profile_services_default);
@@ -76,7 +77,7 @@ MapUpdateModule::MapUpdateModule(
     std::chrono::duration<double>(map_update_dt));
   map_update_timer_ = rclcpp::create_timer(
     node, clock_, period_ns, std::bind(&MapUpdateModule::map_update_timer_callback, this),
-    map_callback_group);
+    map_callback_group_);
 }
 
 void MapUpdateModule::service_ndt_align(

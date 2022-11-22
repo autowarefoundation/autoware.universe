@@ -46,7 +46,6 @@ public:
     std::shared_ptr<NormalDistributionsTransform> ndt_ptr,
     std::shared_ptr<Tf2ListenerModule> tf2_listener_module, std::string map_frame,
     rclcpp::CallbackGroup::SharedPtr main_callback_group,
-    rclcpp::CallbackGroup::SharedPtr map_callback_group,
     std::shared_ptr<std::map<std::string, std::string>> state_ptr);
 
 private:
@@ -82,6 +81,7 @@ private:
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr ekf_odom_sub_;
 
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr map_points_sub_;
+  rclcpp::CallbackGroup::SharedPtr map_callback_group_;
 
   std::shared_ptr<NormalDistributionsTransform> ndt_ptr_;
   std::mutex * ndt_ptr_mutex_;
