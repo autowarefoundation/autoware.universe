@@ -1829,6 +1829,12 @@ bool checkLaneIsInIntersection(
     if (get_signed_distance > min_lane_change_distance) {
       return false;
     }
+
+    auto backlanelet_length = lanelet::utils::getLaneletLength2d(lanelet_sequence.back());
+    if (backlanelet_length > min_lane_change_distance) 
+    {
+      return false;
+    }
   }
   // if you come to here, basically either back lane is goal, or back lane to goal is not enough
   // distance
