@@ -44,8 +44,9 @@ bool update_param(
 
 pcl::PointXYZI getPointXYZI(const radar_msgs::msg::RadarReturn & radar, float intensity)
 {
-  const float x = radar.range * std::cos(radar.azimuth) * std::cos(radar.elevation);
-  const float y = radar.range * std::sin(radar.azimuth) * std::cos(radar.elevation);
+  const float r_xy = radar.range * std::cos(radar.elevation);
+  const float x = r_xy * std::cos(radar.azimuth);
+  const float y = r_xy * std::sin(radar.azimuth);
   const float z = radar.range * std::sin(radar.elevation);
   return pcl::PointXYZI{x, y, z, intensity};
 }
