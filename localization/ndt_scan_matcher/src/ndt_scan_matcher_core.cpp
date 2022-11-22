@@ -213,8 +213,9 @@ NDTScanMatcher::NDTScanMatcher()
   tf2_listener_module_ = std::make_shared<Tf2ListenerModule>(this);
 
   if (use_dynamic_map_loading_) {
-    map_update_module_ = std::make_unique<MapUpdateModule>(this, &ndt_ptr_mtx_, ndt_ptr_, tf2_listener_module_,
-      map_frame_, main_callback_group, state_ptr_);
+    map_update_module_ = std::make_unique<MapUpdateModule>(
+      this, &ndt_ptr_mtx_, ndt_ptr_, tf2_listener_module_, map_frame_, main_callback_group,
+      state_ptr_);
   } else {
     map_module_ = std::make_unique<MapModule>(this, &ndt_ptr_mtx_, ndt_ptr_, main_callback_group);
     pose_init_module_ = std::make_unique<PoseInitializationModule>(
