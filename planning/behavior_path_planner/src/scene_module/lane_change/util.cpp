@@ -627,4 +627,48 @@ void get_turn_signal_info(
   turn_signal_info->desired_end_point = lane_change_path.turn_signal_info.desired_end_point;
 }
 
+std::vector<DrivableLanes> generateDrivableLanes(
+  const RouteHandler & route_handler, const lanelet::ConstLanelets & current_lanes,
+  const lanelet::ConstLanelets & lane_change_lanes)
+{
+  size_t current_lc_idx = 0;
+  std::vector<DrivableLanes> drivable_lanes(current_lanes.size());
+  for (size_t i = 0; i < current_lanes.size(); ++i) {
+    const auto & current_lane = current_lanes.at(i);
+    drivable_lanes.at(i).left_lane = current_lane;
+    drivable_lanes.at(i).right_lane = current_lane;
+
+    const auto left_lane = route_handler.getLeftLanelet(current_lane);
+    const auto right_lane = route_handler.getRightLanelet(current_lane);
+    if (!left_lane && !right_lane) {
+      continue;
+    }
+
+    for (size_t lc_idx = current_lc_idx; lc_idx < lane_change_lanes.size(); ++lc_idx) {
+      const auto & lc_lane = lane_change_lanes.at(lc_idx);
+      if (left_lane && lc_lane.id() == left_lane->id()) {
+        drivable_lanes.at(i).left_lane = lc_lane;
+        current_lc_idx = lc_idx;
+        break;
+      }
+
+      if (right_lane && lc_lane.id() == right_lane->id()) {
+        drivable_lanes.at(i).right_lane = lc_lane;
+        current_lc_idx = lc_idx;
+        break;
+      }
+    }
+  }
+
+  for (size_t i = current_lc_idx + 1; i < lane_change_lanes.size(); ++i) {
+    const auto & lc_lane = lane_change_lanes.at(i);
+    DrivableLanes drivable_lane;
+    drivable_lane.left_lane = lc_lane;
+    drivable_lane.right_lane = lc_lane;
+    drivable_lanes.push_back(drivable_lane);
+  }
+
+  return drivable_lanes;
+}
+
 }  // namespace behavior_path_planner::lane_change_utils
