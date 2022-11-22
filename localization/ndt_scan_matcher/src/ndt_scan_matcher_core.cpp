@@ -95,6 +95,8 @@ NDTScanMatcher::NDTScanMatcher()
   oscillation_threshold_(10),
   regularization_enabled_(declare_parameter("regularization_enabled", false))
 {
+  use_dynamic_map_loading_ = this->declare_parameter<bool>("use_dynamic_map_loading");
+
   (*state_ptr_)["state"] = "Initializing";
   is_activated_ = false;
 
@@ -113,8 +115,6 @@ NDTScanMatcher::NDTScanMatcher()
   ndt_params.step_size = this->declare_parameter<double>("step_size");
   ndt_params.resolution = this->declare_parameter<double>("resolution");
   ndt_params.max_iterations = this->declare_parameter<int>("max_iterations");
-  // int search_method = this->declare_parameter<int>("neighborhood_search_method");
-  // ndt_params.search_method = static_cast<pclomp::NeighborSearchMethod>(search_method);
   ndt_params.num_threads = this->declare_parameter<int>("num_threads");
   ndt_params.num_threads = std::max(ndt_params.num_threads, 1);
   ndt_params.regularization_scale_factor =
@@ -211,10 +211,16 @@ NDTScanMatcher::NDTScanMatcher()
   diagnostic_thread_.detach();
 
   tf2_listener_module_ = std::make_shared<Tf2ListenerModule>(this);
-  map_module_ = std::make_unique<MapModule>(this, &ndt_ptr_mtx_, ndt_ptr_, main_callback_group);
-  pose_init_module_ = std::make_unique<PoseInitializationModule>(
-    this, &ndt_ptr_mtx_, ndt_ptr_, tf2_listener_module_, map_frame_, main_callback_group,
-    state_ptr_);
+
+  if (use_dynamic_map_loading_) {
+    map_update_module_ = std::make_unique<MapUpdateModule>(this, &ndt_ptr_mtsx_, ndt_ptr_, tf2_listener_module_,
+      map_frame_, main_callback_group, map_callback_group, state_ptr);
+  } else {
+    map_module_ = std::make_unique<MapModule>(this, &ndt_ptr_mtx_, ndt_ptr_, main_callback_group);
+    pose_init_module_ = std::make_unique<PoseInitializationModule>(
+      this, &ndt_ptr_mtx_, ndt_ptr_, tf2_listener_module_, map_frame_, main_callback_group,
+      state_ptr_);
+  }
 }
 
 void NDTScanMatcher::timer_diagnostic()

@@ -19,6 +19,7 @@
 
 #include "ndt_scan_matcher/map_module.hpp"
 #include "ndt_scan_matcher/pose_initialization_module.hpp"
+#include "ndt_scan_matcher/map_update_module.hpp"
 #include "ndt_scan_matcher/tf2_listener_module.hpp"
 
 #include <rclcpp/rclcpp.hpp>
@@ -195,6 +196,9 @@ private:
   std::shared_ptr<Tf2ListenerModule> tf2_listener_module_;
   std::unique_ptr<MapModule> map_module_;
   std::unique_ptr<PoseInitializationModule> pose_init_module_;
+  std::unique_ptr<MapUpdateModule> map_update_module_;
+
+  bool use_dynamic_map_loading_;
 };
 
 #endif  // NDT_SCAN_MATCHER__NDT_SCAN_MATCHER_CORE_HPP_
