@@ -57,7 +57,7 @@ if(BUILD_TESTING)
     string(REGEX REPLACE ".cpp" "" test_name ${filename})
     ament_add_gmock(${test_name} ${filepath})
     target_include_directories(${test_name} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-    target_link_libraries(${test_name} pointcloud_map_loader_node)
+    target_link_libraries(${test_name} ${${PROJECT_NAME}_LIBRARIES})
     ament_target_dependencies(${test_name} ${${PROJECT_NAME}_FOUND_BUILD_DEPENDS})
   endfunction()
 
