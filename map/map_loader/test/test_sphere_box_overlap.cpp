@@ -26,7 +26,7 @@ TEST(SphereAndBoxOverlapExists, NoOverlap1)
   center.z = 0.0;
 
   const double radius = 4.0 - 0.1;
-  
+
   pcl::PointXYZ p_min;
   p_min.x = -1.0;
   p_min.y = -1.0;
@@ -51,7 +51,7 @@ TEST(SphereAndBoxOverlapExists, NoOverlap2)
   center.z = 0.0;
 
   const double radius = std::sqrt(2) - 0.1;
-  
+
   pcl::PointXYZ p_min;
   p_min.x = -1.0;
   p_min.y = -1.0;
@@ -76,7 +76,7 @@ TEST(SphereAndBoxOverlapExists, Overlap1)
   center.z = 0.0;
 
   const double radius = 0.5;
-  
+
   pcl::PointXYZ p_min;
   p_min.x = -1.0;
   p_min.y = -1.0;
@@ -101,7 +101,7 @@ TEST(SphereAndBoxOverlapExists, Overlap2)
   center.z = 5.0;
 
   const double radius = 4 + 0.1;
-  
+
   pcl::PointXYZ p_min;
   p_min.x = -1.0;
   p_min.y = -1.0;
@@ -126,7 +126,7 @@ TEST(SphereAndBoxOverlapExists, Overlap3)
   center.z = 2.0;
 
   const double radius = std::sqrt(3) + 0.1;
-  
+
   pcl::PointXYZ p_min;
   p_min.x = -1.0;
   p_min.y = -1.0;
@@ -140,4 +140,3 @@ TEST(SphereAndBoxOverlapExists, Overlap3)
   bool result = sphereAndBoxOverlapExists(center, radius, p_min, p_max);
   EXPECT_TRUE(result);
 }
-
