@@ -2743,7 +2743,7 @@ TurnSignalInfo AvoidanceModule::calcTurnSignalInfo(const ShiftedPath & path) con
   }
 
   TurnSignalInfo turn_signal_info{};
-  if(parameters_->turn_signal_on_swerving){
+  if (parameters_->turn_signal_on_swerving) {
     if (segment_shift_length > 0.0) {
       turn_signal_info.turn_signal.command = TurnIndicatorsCommand::ENABLE_LEFT;
     } else {
@@ -2752,7 +2752,6 @@ TurnSignalInfo AvoidanceModule::calcTurnSignalInfo(const ShiftedPath & path) con
   } else {
     turn_signal_info.turn_signal.command = TurnIndicatorsCommand::DISABLE;
   }
-
 
   if (ego_front_to_shift_start > 0.0) {
     turn_signal_info.desired_start_point = planner_data_->self_pose->pose;
