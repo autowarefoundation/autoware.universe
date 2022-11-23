@@ -52,7 +52,7 @@ struct PullOutStatus
   PathWithLaneId backward_path;
   lanelet::ConstLanelets current_lanes;
   lanelet::ConstLanelets pull_out_lanes;
-  lanelet::ConstLanelets lanes;
+  std::vector<DrivableLanes> lanes;
   std::vector<uint64_t> lane_follow_lane_ids;
   std::vector<uint64_t> pull_out_lane_ids;
   bool is_safe = false;
@@ -79,6 +79,11 @@ public:
 
   void setParameters(const PullOutParameters & parameters) { parameters_ = parameters; }
   void resetStatus();
+
+  void acceptVisitor(
+    [[maybe_unused]] const std::shared_ptr<SceneModuleVisitor> & visitor) const override
+  {
+  }
 
 private:
   PullOutParameters parameters_;
