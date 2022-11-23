@@ -285,7 +285,7 @@ bool BigVehicleTracker::measureWithPose(
   Eigen::Vector2d offset;
   autoware_auto_perception_msgs::msg::DetectedObject offset_object;
   utils::calcAnchorPointOffset(
-    last_input_bounding_box_.width, last_input_bounding_box_.length, nearest_corner_index_, object,
+    bounding_box_.width, bounding_box_.length, nearest_corner_index_, object, measurement_yaw,
     offset_object, offset);
   std::cout << "MOT_offset: " << offset.x() << " " << offset.y()
             << " closest_corner: " << nearest_corner_index_ << " "
@@ -417,7 +417,9 @@ bool BigVehicleTracker::measure(
             << std::endl;
 
   const int nearest_index = utils::getNearestCornerSurfaceFromObject(object, self_transform);
-  const Eigen::Vector2d tracking_point = utils::getTrackingPointFromObject(object, nearest_index);
+  // const Eigen::Vector2d tracking_point = utils::getTrackingPointFromObject(object,
+  // nearest_index); double past_width = bounding_box_.width;
+  double past_length = bounding_box_.length;
 
   measureWithPose(object);
   measureWithShape(object);
@@ -427,21 +429,19 @@ bool BigVehicleTracker::measure(
   Eigen::MatrixXd P_t(ekf_params_.dim_x, ekf_params_.dim_x);
   ekf_.getX(X_t);
   ekf_.getP(P_t);
-  double rotate_angle = X_t(IDX::YAW);  // need to fix reverted from object
   double measurement_yaw = tier4_autoware_utils::normalizeRadian(
     tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation));
-  while (M_PI_2 <= measurement_yaw - rotate_angle) {
-    rotate_angle = rotate_angle + M_PI;
-  }
-  while (M_PI_2 <= rotate_angle - measurement_yaw) {
-    rotate_angle = rotate_angle - M_PI;
-  }
-  const Eigen::Vector2d offset_position = utils::recoverFromTrackingPoint(
-    X_t(IDX::X), X_t(IDX::Y), rotate_angle, bounding_box_.width, bounding_box_.length,
-    nearest_index, tracking_point);
-  X_t(IDX::X) = offset_position.x();
-  X_t(IDX::Y) = offset_position.y();
-  // ekf_.init(X_t, P_t);
+  // const Eigen::Vector2d offset_position = utils::recoverFromTrackingPoint(
+  //   X_t(IDX::X), X_t(IDX::Y), rotate_angle, bounding_box_.width, bounding_box_.length,
+  //   nearest_index, tracking_point);
+  const Eigen::Vector2d offset_position = utils::keepNearestFrontOrRearSurface(
+    X_t(IDX::X), X_t(IDX::Y), past_length, bounding_box_.length, measurement_yaw, X_t(IDX::YAW),
+    nearest_index);
+  X_t(IDX::X) += offset_position.x();
+  X_t(IDX::Y) += offset_position.y();
+  ekf_.init(X_t, P_t);
+  std::cout << "postprocess offset: " << offset_position.x() << ", " << offset_position.y()
+            << std::endl;
 
   /* calc nearest corner index*/
   setNearestCornerSurfaceIndex(self_transform);  // this index is used in next measure step
