@@ -67,6 +67,8 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   hazard_signal_publisher_ = create_publisher<HazardLightsCommand>("~/output/hazard_lights_cmd", 1);
   debug_avoidance_msg_array_publisher_ =
     create_publisher<AvoidanceDebugMsgArray>("~/debug/avoidance_debug_message_array", 1);
+  debug_lane_change_msg_array_publisher_ =
+    create_publisher<LaneChangeDebugMsgArray>("~/debug/lane_change_debug_message_array", 1);
 
   if (planner_data_->parameters.visualize_drivable_area_for_shared_linestrings_lanelet) {
     debug_drivable_area_lanelets_publisher_ =
@@ -272,8 +274,10 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
 
   p.threshold_distance_object_is_on_center = dp("threshold_distance_object_is_on_center", 1.0);
   p.threshold_speed_object_is_stopped = dp("threshold_speed_object_is_stopped", 1.0);
+  p.threshold_time_object_is_moving = dp("threshold_time_object_is_moving", 1.0);
   p.object_check_forward_distance = dp("object_check_forward_distance", 150.0);
   p.object_check_backward_distance = dp("object_check_backward_distance", 2.0);
+  p.object_envelope_buffer = dp("object_envelope_buffer", 0.1);
   p.lateral_collision_margin = dp("lateral_collision_margin", 2.0);
   p.lateral_collision_safety_buffer = dp("lateral_collision_safety_buffer", 0.5);
 
@@ -647,8 +651,7 @@ void BehaviorPathPlannerNode::run()
     publish_steering_factor(turn_signal);
   }
 
-  // for debug
-  debug_avoidance_msg_array_publisher_->publish(bt_manager_->getAvoidanceDebugMsgArray());
+  publishSceneModuleDebugMsg();
 
   if (planner_data->parameters.visualize_drivable_area_for_shared_linestrings_lanelet) {
     const auto drivable_area_lines = marker_utils::createFurthestLineStringMarkerArray(
@@ -688,6 +691,22 @@ void BehaviorPathPlannerNode::publish_steering_factor(const TurnIndicatorsComman
     steering_factor_interface_ptr_->clearSteeringFactors();
   }
   steering_factor_interface_ptr_->publishSteeringFactor(get_clock()->now());
+}
+
+void BehaviorPathPlannerNode::publishSceneModuleDebugMsg()
+{
+  {
+    const auto debug_messages_data_ptr = bt_manager_->getAllSceneModuleDebugMsgData();
+    const auto avoidance_debug_message = debug_messages_data_ptr->getAvoidanceModuleDebugMsg();
+    if (avoidance_debug_message) {
+      debug_avoidance_msg_array_publisher_->publish(*avoidance_debug_message);
+    }
+
+    const auto lane_change_debug_message = debug_messages_data_ptr->getLaneChangeModuleDebugMsg();
+    if (lane_change_debug_message) {
+      debug_lane_change_msg_array_publisher_->publish(*lane_change_debug_message);
+    }
+  }
 }
 
 PathWithLaneId::SharedPtr BehaviorPathPlannerNode::getPath(
