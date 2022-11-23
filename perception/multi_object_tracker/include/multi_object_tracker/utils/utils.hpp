@@ -149,7 +149,7 @@ inline int getNearestCornerSurface(
  * @return int index
  */
 inline int getNearestCornerSurfaceFromObject(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object,
+  const autoware_auto_perception_msgs::msg::DetectedObject & object, const double & yaw,
   const geometry_msgs::msg::Transform & self_transform)
 {
   // only work for BBOX shape
@@ -157,10 +157,10 @@ inline int getNearestCornerSurfaceFromObject(
     return false;
   }
 
-  double x, y, yaw, width, length;
+  double x, y, width, length;
   x = object.kinematics.pose_with_covariance.pose.position.x;
   y = object.kinematics.pose_with_covariance.pose.position.y;
-  yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
+  // yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
   width = object.shape.dimensions.y;
   length = object.shape.dimensions.x;
 
@@ -301,15 +301,32 @@ inline void calcAnchorPointOffset(
   w_n = input_object.shape.dimensions.y;
 
   // if surface
-  if (indx < 4) {
-    const double sign[4][2] = {{1, 0}, {0, -1}, {-1, 0}, {0, 1}};
-    offset(0, 0) = sign[indx][0] * (l_n - l) / 2.0;
-    offset(1, 0) = sign[indx][1] * (w_n - w) / 2.0;
-  } else {
-    // corner
-    const double sign[4][2] = {{1, -1}, {-1, -1}, {-1, 1}, {1, 1}};
-    offset(0, 0) = sign[indx - 4][0] * (l_n - l) / 2.0;
-    offset(1, 0) = sign[indx - 4][1] * (w_n - w) / 2.0;
+  if (indx == BBOX_IDX::FRONT_SURFACE) {
+    offset(0, 0) = (l_n - l) / 2.0;  // move forward
+    offset(1, 0) = 0;
+  } else if (indx == BBOX_IDX::RIGHT_SURFACE) {
+    offset(0, 0) = 0;
+    offset(1, 0) = -(w_n - w) / 2.0;  // move right
+  } else if (indx == BBOX_IDX::REAR_SURFACE) {
+    offset(0, 0) = -(l_n - l) / 2.0;  // move backward
+    offset(1, 0) = 0;
+  } else if (indx == BBOX_IDX::LEFT_SURFACE) {
+    offset(0, 0) = 0;
+    offset(1, 0) = (w_n - w) / 2.0;  // move left
+  }
+  // if corner
+  if (indx == BBOX_IDX::FRONT_R_CORNER) {
+    offset(0, 0) = (l_n - l) / 2.0;   // move forward
+    offset(1, 0) = -(w_n - w) / 2.0;  // move right
+  } else if (indx == BBOX_IDX::REAR_R_CORNER) {
+    offset(0, 0) = -(l_n - l) / 2.0;  // move backward
+    offset(1, 0) = -(w_n - w) / 2.0;  // move right
+  } else if (indx == BBOX_IDX::REAR_L_CORNER) {
+    offset(0, 0) = -(l_n - l) / 2.0;  // move backward
+    offset(1, 0) = (w_n - w) / 2.0;   // move left
+  } else if (indx == BBOX_IDX::FRONT_L_CORNER) {
+    offset(0, 0) = (l_n - l) / 2.0;  // move forward
+    offset(1, 0) = (w_n - w) / 2.0;  // move left
   }
 
   // const double yaw = tf2::getYaw(input_object.kinematics.pose_with_covariance.pose.orientation);

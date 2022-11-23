@@ -255,26 +255,10 @@ bool BigVehicleTracker::measureWithPose(
       enable_velocity_measurement = true;
     }
   }
-  // to check if detection orientation is reverted from tracker
-  double orientation_reverted = 0;
 
   // pos x, pos y, yaw, vx depending on pose measurement
   const int dim_y = enable_velocity_measurement ? 4 : 3;
-  double measurement_yaw = tier4_autoware_utils::normalizeRadian(
-    tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation));
-  {
-    Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);
-    ekf_.getX(X_t);
-    // Fixed measurement_yaw to be in the range of +-90 degrees of X_t(IDX::YAW)
-    while (M_PI_2 <= X_t(IDX::YAW) - measurement_yaw) {
-      measurement_yaw = measurement_yaw + M_PI;
-      orientation_reverted += 1;
-    }
-    while (M_PI_2 <= measurement_yaw - X_t(IDX::YAW)) {
-      measurement_yaw = measurement_yaw - M_PI;
-      orientation_reverted += 1;
-    }
-  }
+  double measurement_yaw = getMeasurementYaw(object);  // get sign-solved yaw angle
 
   if (last_input_bounding_box_.length == -1) {
     last_input_bounding_box_ = {
@@ -347,9 +331,7 @@ bool BigVehicleTracker::measureWithPose(
   Eigen::MatrixXd P_t(ekf_params_.dim_x, ekf_params_.dim_x);
   ekf_.getX(X_t);
   ekf_.getP(P_t);
-  double rotate_angle =
-    X_t(IDX::YAW) +
-    orientation_reverted * M_PI;  // to include the situation that detection orientation is reverted
+  double rotate_angle = X_t(IDX::YAW);
   const Eigen::Matrix2d Ryaw = Eigen::Rotation2Dd(rotate_angle).toRotationMatrix();
   const Eigen::Vector2d rotated_offset = Ryaw * offset;
   X_t(IDX::X) -= rotated_offset.x();
@@ -409,36 +391,25 @@ bool BigVehicleTracker::measure(
       logger_, "There is a large gap between predicted time and measurement time. (%f)",
       (time - last_update_time_).seconds());
   }
-  std::cout << "object offset: "
-            << object.kinematics.pose_with_covariance.pose.position.x - self_transform.translation.x
-            << " "
-            << object.kinematics.pose_with_covariance.pose.position.y - self_transform.translation.y
-            << " yaw: " << tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation)
-            << std::endl;
 
-  const int nearest_index = utils::getNearestCornerSurfaceFromObject(object, self_transform);
-  // const Eigen::Vector2d tracking_point = utils::getTrackingPointFromObject(object,
-  // nearest_index); double past_width = bounding_box_.width;
-  double past_length = bounding_box_.length;
+  double measurement_yaw = getMeasurementYaw(object);
+  const int nearest_index =
+    utils::getNearestCornerSurfaceFromObject(object, measurement_yaw, self_transform);
+  const double length_before_update = bounding_box_.length;
 
   measureWithPose(object);
   measureWithShape(object);
 
-  // refinement
+  // post-processing: bounding box refinements
   Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);
   Eigen::MatrixXd P_t(ekf_params_.dim_x, ekf_params_.dim_x);
   ekf_.getX(X_t);
   ekf_.getP(P_t);
-  double measurement_yaw = tier4_autoware_utils::normalizeRadian(
-    tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation));
-  // const Eigen::Vector2d offset_position = utils::recoverFromTrackingPoint(
-  //   X_t(IDX::X), X_t(IDX::Y), rotate_angle, bounding_box_.width, bounding_box_.length,
-  //   nearest_index, tracking_point);
   const Eigen::Vector2d offset_position = utils::keepNearestFrontOrRearSurface(
-    X_t(IDX::X), X_t(IDX::Y), past_length, bounding_box_.length, measurement_yaw, X_t(IDX::YAW),
-    nearest_index);
-  X_t(IDX::X) += offset_position.x();
-  X_t(IDX::Y) += offset_position.y();
+    X_t(IDX::X), X_t(IDX::Y), length_before_update, bounding_box_.length, measurement_yaw,
+    X_t(IDX::YAW), nearest_index);
+  X_t(IDX::X) = offset_position.x();
+  X_t(IDX::Y) = offset_position.y();
   ekf_.init(X_t, P_t);
   std::cout << "postprocess offset: " << offset_position.x() << ", " << offset_position.y()
             << std::endl;
@@ -539,4 +510,23 @@ void BigVehicleTracker::setNearestCornerSurfaceIndex(
   nearest_corner_index_ = utils::getNearestCornerSurface(
     X_t(IDX::X), X_t(IDX::Y), X_t(IDX::YAW), bounding_box_.width, bounding_box_.length,
     self_transform);
+}
+
+double BigVehicleTracker::getMeasurementYaw(
+  const autoware_auto_perception_msgs::msg::DetectedObject & object)
+{
+  double measurement_yaw = tier4_autoware_utils::normalizeRadian(
+    tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation));
+  {
+    Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);
+    ekf_.getX(X_t);
+    // Fixed measurement_yaw to be in the range of +-90 degrees of X_t(IDX::YAW)
+    while (M_PI_2 <= X_t(IDX::YAW) - measurement_yaw) {
+      measurement_yaw = measurement_yaw + M_PI;
+    }
+    while (M_PI_2 <= measurement_yaw - X_t(IDX::YAW)) {
+      measurement_yaw = measurement_yaw - M_PI;
+    }
+  }
+  return measurement_yaw;
 }
