@@ -2,6 +2,7 @@
 
 #include <pcdless_common/cv_decompress.hpp>
 #include <pcdless_common/pub_sub.hpp>
+#include <pcdless_common/timer.hpp>
 
 #include <pcl_conversions/pcl_conversions.h>
 
@@ -43,17 +44,55 @@ Eigen::Vector3f SegmentAccumulator::eigen_vec3f(const cv::Point2f & p) const
   return {-(p.y - IMAGE_RADIUS) * METRIC_PER_PIXEL, -(p.x - IMAGE_RADIUS) * METRIC_PER_PIXEL, 0};
 }
 
+void SegmentAccumulator::define_project_function()
+{
+  std::optional<Eigen::Affine3f> camera_extrinsic =
+    tf_subscriber_(info_.get_frame_id(), "base_link");
+  if (!camera_extrinsic.has_value()) return;
+  if (info_.is_camera_info_nullopt()) return;
+  const Eigen::Matrix3f K = info_.intrinsic();
+  const Eigen::Matrix3f Kinv = K.inverse();
+
+  const Eigen::Vector3f t = camera_extrinsic->translation();
+  const Eigen::Quaternionf q(camera_extrinsic->rotation());
+
+  project_func_ = [Kinv, q, t](const Eigen::Vector3f & u) -> std::optional<Eigen::Vector3f> {
+    Eigen::Vector3f u3(u.x(), u.y(), 1);
+    Eigen::Vector3f u_bearing = (q * Kinv * u3).normalized();
+    if (u_bearing.z() > -0.01) return std::nullopt;
+    float u_distance = -t.z() / u_bearing.z();
+    Eigen::Vector3f v;
+    v.x() = t.x() + u_bearing.x() * u_distance;
+    v.y() = t.y() + u_bearing.y() * u_distance;
+    v.z() = 0;
+    return v;
+  };
+
+  init_visible_are_polygon();
+}
+
 void SegmentAccumulator::on_line_segments(const PointCloud2 & msg)
 {
+  common::Timer timer;
   static std::optional<rclcpp::Time> last_stamp{std::nullopt};
 
   if (last_stamp.has_value()) {
     Sophus::SE3f odom = accumulate_travel_distance(*last_stamp, msg.header.stamp).inverse();
-    if (odom.translation().norm() < map_update_interval_) return;  // NOTE: Skip map update
+    if (odom.translation().norm() < map_update_interval_) {
+      RCLCPP_INFO_STREAM(
+        get_logger(),
+        "skip accumulation due to not enought travel distance: " << odom.translation().norm());
+      return;  // NOTE: Skip map update
+    }
 
     transform_image(odom);
   }
   last_stamp = msg.header.stamp;
+
+  if (!project_func_) {
+    define_project_function();
+    if (!project_func_) return;
+  }
 
   draw(msg);
   pop_obsolete_msg(*last_stamp);
@@ -64,6 +103,8 @@ void SegmentAccumulator::on_line_segments(const PointCloud2 & msg)
 
   common::publish_image(*pub_image_, histogram_3ch_image, msg.header.stamp);
   common::publish_image(*pub_rgb_image_, color_image, msg.header.stamp);
+
+  RCLCPP_INFO_STREAM(get_logger(), "line accumulation: " << timer);
 }
 
 void SegmentAccumulator::transform_image(const Sophus::SE3f & odom)
@@ -92,35 +133,15 @@ void SegmentAccumulator::draw(const PointCloud2 & cloud_msg)
 {
   pcl::PointCloud<pcl::PointNormal>::Ptr lsd{new pcl::PointCloud<pcl::PointNormal>()};
   pcl::fromROSMsg(cloud_msg, *lsd);
-  RCLCPP_INFO_STREAM(get_logger(), "segments size:" << lsd->size());
 
   // Check intrinsic & extrinsic
-  std::optional<Eigen::Affine3f> camera_extrinsic =
-    tf_subscriber_(info_.get_frame_id(), "base_link");
-  if (!camera_extrinsic.has_value()) return;
-  if (info_.is_camera_info_nullopt()) return;
-  const Eigen::Matrix3f K = info_.intrinsic();
-  const Eigen::Matrix3f Kinv = K.inverse();
-
-  const Eigen::Vector3f t = camera_extrinsic->translation();
-  const Eigen::Quaternionf q(camera_extrinsic->rotation());
-  auto project_func = [Kinv, q, t](const Eigen::Vector3f & u) -> std::optional<Eigen::Vector3f> {
-    Eigen::Vector3f u3(u.x(), u.y(), 1);
-    Eigen::Vector3f u_bearing = (q * Kinv * u3).normalized();
-    if (u_bearing.z() > -0.01) return std::nullopt;
-    float u_distance = -t.z() / u_bearing.z();
-    Eigen::Vector3f v;
-    v.x() = t.x() + u_bearing.x() * u_distance;
-    v.y() = t.y() + u_bearing.y() * u_distance;
-    v.z() = 0;
-    return v;
-  };
+  common::Timer timer;
 
   // Project segment on ground
   cv::Mat increment_image = cv::Mat::zeros(histogram_image_.size(), CV_8UC1);
   for (const auto & ls : *lsd) {
-    std::optional<Eigen::Vector3f> opt1 = project_func(ls.getVector3fMap());
-    std::optional<Eigen::Vector3f> opt2 = project_func(ls.getNormalVector3fMap());
+    std::optional<Eigen::Vector3f> opt1 = project_func_(ls.getVector3fMap());
+    std::optional<Eigen::Vector3f> opt2 = project_func_(ls.getNormalVector3fMap());
     if (!opt1.has_value()) continue;
     if (!opt2.has_value()) continue;
     float length = (opt1.value() - opt2.value()).norm();
@@ -130,22 +151,25 @@ void SegmentAccumulator::draw(const PointCloud2 & cloud_msg)
   }
   histogram_image_ += increment_image;
 
-  // Decrease beflief in unsee area
+  // Decrease beflief in visible area
   {
-    std::vector<cv::Point2i> points;
-    auto project = [this, &points, project_func](const Eigen::Vector3f & u) -> void {
-      std::optional<Eigen::Vector3f> p = project_func(u);
-      points.push_back(cv_pt2(*p));
-    };
-    project({0, 270, 1});
-    project({800, 270, 1});
-    project({800, 516, 1});
-    project({0, 516, 1});
-
     cv::Mat decrease_image = cv::Mat::zeros(histogram_image_.size(), CV_8UC1);
-    cv::fillPoly(decrease_image, points, cv::Scalar::all(10), 8, 0);
+    cv::fillPoly(decrease_image, visible_area_polygon_, cv::Scalar::all(10), 8, 0);
     histogram_image_ -= decrease_image;
   }
+}
+
+void SegmentAccumulator::init_visible_are_polygon()
+{
+  visible_area_polygon_.clear();
+  auto project = [this](const Eigen::Vector3f & u) -> void {
+    std::optional<Eigen::Vector3f> p = project_func_(u);
+    this->visible_area_polygon_.push_back(cv_pt2(*p));
+  };
+  project({0, 270, 1});
+  project({800, 270, 1});
+  project({800, 516, 1});
+  project({0, 516, 1});
 }
 
 Sophus::SE3f SegmentAccumulator::accumulate_travel_distance(
