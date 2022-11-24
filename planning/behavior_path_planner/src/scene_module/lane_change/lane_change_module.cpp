@@ -530,7 +530,7 @@ bool LaneChangeModule::isAbortConditionSatisfied()
   // abort only if velocity is low or vehicle pose is close enough
   if (!is_path_safe) {
     // check vehicle velocity thresh
-    current_lane_change_state_ = LaneChangeStates::Revert;
+    current_lane_change_state_ = LaneChangeStates::Cancel;
     const bool is_velocity_low =
       util::l2Norm(current_twist.linear) < parameters_->abort_lane_change_velocity_thresh;
     const bool is_within_original_lane =
@@ -582,7 +582,7 @@ bool LaneChangeModule::isAbort() const
 
 bool LaneChangeModule::isCancel() const
 {
-  return current_lane_change_state_ == LaneChangeStates::Revert;
+  return current_lane_change_state_ == LaneChangeStates::Cancel;
 }
 
 bool LaneChangeModule::hasFinishedLaneChange() const

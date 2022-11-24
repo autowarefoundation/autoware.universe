@@ -64,7 +64,7 @@ struct LaneChangeStatus
 enum class LaneChangeStates {
   Trying = 0,
   Success,
-  Revert,
+  Cancel,
   Abort,
 };
 

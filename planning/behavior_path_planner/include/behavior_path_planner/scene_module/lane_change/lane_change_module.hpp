@@ -53,8 +53,8 @@ inline std::string toStr(const LaneChangeStates state)
     return "Trying";
   } else if (state == LaneChangeStates::Success) {
     return "Success";
-  } else if (state == LaneChangeStates::Revert) {
-    return "Revert";
+  } else if (state == LaneChangeStates::Cancel) {
+    return "Cancel";
   } else if (state == LaneChangeStates::Abort) {
     return "Abort";
   }
