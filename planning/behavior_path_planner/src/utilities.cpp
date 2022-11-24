@@ -1102,6 +1102,107 @@ bool containsGoal(const lanelet::ConstLanelets & lanes, const lanelet::Id & goal
   return false;
 }
 
+lanelet::ConstLanelets transformToLanelets(const DrivableLanes & drivable_lanes)
+{
+  lanelet::ConstLanelets lanes;
+
+  const auto has_same_lane = [&](const auto & lane) {
+    if (lanes.empty()) return false;
+    const auto has_same = [&](const auto & ll) { return ll.id() == lane.id(); };
+    return std::find_if(lanes.begin(), lanes.end(), has_same) != lanes.end();
+  };
+
+  lanes.push_back(drivable_lanes.right_lane);
+  if (!has_same_lane(drivable_lanes.left_lane)) {
+    lanes.push_back(drivable_lanes.left_lane);
+  }
+
+  for (const auto & ml : drivable_lanes.middle_lanes) {
+    if (!has_same_lane(ml)) {
+      lanes.push_back(ml);
+    }
+  }
+
+  return lanes;
+}
+
+lanelet::ConstLanelets transformToLanelets(const std::vector<DrivableLanes> & drivable_lanes)
+{
+  lanelet::ConstLanelets lanes;
+
+  for (const auto & drivable_lane : drivable_lanes) {
+    const auto transformed_lane = transformToLanelets(drivable_lane);
+    lanes.insert(lanes.end(), transformed_lane.begin(), transformed_lane.end());
+  }
+
+  return lanes;
+}
+
+boost::optional<lanelet::ConstLanelet> getRightLanelet(
+  const lanelet::ConstLanelet & current_lane, const lanelet::ConstLanelets & shoulder_lanes)
+{
+  for (const auto & shoulder_lane : shoulder_lanes) {
+    if (shoulder_lane.leftBound().id() == current_lane.rightBound().id()) {
+      return shoulder_lane;
+    }
+  }
+
+  return {};
+}
+
+boost::optional<lanelet::ConstLanelet> getLeftLanelet(
+  const lanelet::ConstLanelet & current_lane, const lanelet::ConstLanelets & shoulder_lanes)
+{
+  for (const auto & shoulder_lane : shoulder_lanes) {
+    if (shoulder_lane.rightBound().id() == current_lane.leftBound().id()) {
+      return shoulder_lane;
+    }
+  }
+
+  return {};
+}
+
+std::vector<DrivableLanes> generateDrivableLanes(const lanelet::ConstLanelets & lanes)
+{
+  std::vector<DrivableLanes> drivable_lanes(lanes.size());
+  for (size_t i = 0; i < lanes.size(); ++i) {
+    drivable_lanes.at(i).left_lane = lanes.at(i);
+    drivable_lanes.at(i).right_lane = lanes.at(i);
+  }
+  return drivable_lanes;
+}
+
+std::vector<DrivableLanes> generateDrivableLanesWithShoulderLanes(
+  const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & shoulder_lanes)
+{
+  std::vector<DrivableLanes> drivable_lanes;
+  for (const auto & current_lane : current_lanes) {
+    DrivableLanes drivable_lane;
+
+    const auto right_lane = getRightLanelet(current_lane, shoulder_lanes);
+    const auto left_lane = getLeftLanelet(current_lane, shoulder_lanes);
+
+    if (right_lane && left_lane) {
+      drivable_lane.right_lane = *right_lane;
+      drivable_lane.left_lane = *left_lane;
+      drivable_lane.middle_lanes.push_back(current_lane);
+    } else if (right_lane) {
+      drivable_lane.right_lane = *right_lane;
+      drivable_lane.left_lane = current_lane;
+    } else if (left_lane) {
+      drivable_lane.right_lane = current_lane;
+      drivable_lane.left_lane = *left_lane;
+    } else {
+      drivable_lane.right_lane = current_lane;
+      drivable_lane.left_lane = current_lane;
+    }
+
+    drivable_lanes.push_back(drivable_lane);
+  }
+
+  return drivable_lanes;
+}
+
 // input lanes must be in sequence
 // NOTE: lanes in the path argument is used to calculate the size of the drivable area to cover
 // designated forward and backward length by getPathScope function.
@@ -1109,9 +1210,10 @@ bool containsGoal(const lanelet::ConstLanelets & lanes, const lanelet::Id & goal
 //       This is because lanes argument has multiple parallel lanes which makes hard to calculate
 //       the size of the drivable area
 OccupancyGrid generateDrivableArea(
-  const PathWithLaneId & path, const lanelet::ConstLanelets & lanes, const double resolution,
+  const PathWithLaneId & path, const std::vector<DrivableLanes> & lanes, const double resolution,
   const double vehicle_length, const std::shared_ptr<const PlannerData> planner_data)
 {
+  const auto transformed_lanes = util::transformToLanelets(lanes);
   const auto & params = planner_data->parameters;
   const auto route_handler = planner_data->route_handler;
   const auto current_pose = planner_data->self_pose;
@@ -1143,10 +1245,10 @@ OccupancyGrid generateDrivableArea(
       drivable_lanes.end(), lanes_before_current_pose.begin(), lanes_before_current_pose.end());
 
     // 2. add lanes
-    drivable_lanes.insert(drivable_lanes.end(), lanes.begin(), lanes.end());
+    drivable_lanes.insert(drivable_lanes.end(), transformed_lanes.begin(), transformed_lanes.end());
 
     // 3. add succeeding lanes after goal
-    if (containsGoal(lanes, route_handler->getGoalLaneId())) {
+    if (containsGoal(transformed_lanes, route_handler->getGoalLaneId())) {
       const auto lanes_after_goal = route_handler->getLanesAfterGoal(vehicle_length);
       drivable_lanes.insert(drivable_lanes.end(), lanes_after_goal.begin(), lanes_after_goal.end());
     }
@@ -1656,13 +1758,19 @@ std::shared_ptr<PathWithLaneId> generateCenterLinePath(
   lanelet::ConstLanelets lanelet_sequence = route_handler->getLaneletSequence(
     current_lane, pose->pose, p.backward_path_length, p.forward_path_length);
 
+  std::vector<DrivableLanes> drivable_lanes(lanelet_sequence.size());
+  for (size_t i = 0; i < lanelet_sequence.size(); ++i) {
+    drivable_lanes.at(i).left_lane = lanelet_sequence.at(i);
+    drivable_lanes.at(i).right_lane = lanelet_sequence.at(i);
+  }
+
   *centerline_path = getCenterLinePath(
     *route_handler, lanelet_sequence, pose->pose, p.backward_path_length, p.forward_path_length, p);
 
   centerline_path->header = route_handler->getRouteHeader();
 
   centerline_path->drivable_area = util::generateDrivableArea(
-    *centerline_path, lanelet_sequence, p.drivable_area_resolution, p.vehicle_length, planner_data);
+    *centerline_path, drivable_lanes, p.drivable_area_resolution, p.vehicle_length, planner_data);
 
   return centerline_path;
 }
@@ -1695,19 +1803,19 @@ lanelet::ConstLineStrings3d getDrivableAreaForAllSharedLinestringLanelets(
   return linestring_shared;
 }
 
-lanelet::ConstLanelets expandLanelets(
-  const lanelet::ConstLanelets & lanelets, const double left_bound_offset,
+std::vector<DrivableLanes> expandLanelets(
+  const std::vector<DrivableLanes> & drivable_lanes, const double left_bound_offset,
   const double right_bound_offset, const std::vector<std::string> & types_to_skip)
 {
-  if (left_bound_offset == 0.0 && right_bound_offset == 0.0) return lanelets;
+  if (left_bound_offset == 0.0 && right_bound_offset == 0.0) return drivable_lanes;
 
-  lanelet::ConstLanelets expanded_lanelets{};
-  expanded_lanelets.reserve(lanelets.size());
-  for (const auto & lanelet : lanelets) {
+  std::vector<DrivableLanes> expanded_drivable_lanes{};
+  expanded_drivable_lanes.reserve(drivable_lanes.size());
+  for (const auto & lanes : drivable_lanes) {
     const std::string l_type =
-      lanelet.leftBound().attributeOr(lanelet::AttributeName::Type, "none");
+      lanes.left_lane.leftBound().attributeOr(lanelet::AttributeName::Type, "none");
     const std::string r_type =
-      lanelet.rightBound().attributeOr(lanelet::AttributeName::Type, "none");
+      lanes.right_lane.rightBound().attributeOr(lanelet::AttributeName::Type, "none");
 
     const bool l_skip =
       std::find(types_to_skip.begin(), types_to_skip.end(), l_type) != types_to_skip.end();
@@ -1716,9 +1824,21 @@ lanelet::ConstLanelets expandLanelets(
     const double l_offset = l_skip ? 0.0 : left_bound_offset;
     const double r_offset = r_skip ? 0.0 : -right_bound_offset;
 
-    expanded_lanelets.push_back(lanelet::utils::getExpandedLanelet(lanelet, l_offset, r_offset));
+    DrivableLanes expanded_lanes;
+    if (lanes.left_lane.id() == lanes.right_lane.id()) {
+      expanded_lanes.left_lane =
+        lanelet::utils::getExpandedLanelet(lanes.left_lane, l_offset, r_offset);
+      expanded_lanes.right_lane =
+        lanelet::utils::getExpandedLanelet(lanes.right_lane, l_offset, r_offset);
+    } else {
+      expanded_lanes.left_lane = lanelet::utils::getExpandedLanelet(lanes.left_lane, l_offset, 0.0);
+      expanded_lanes.right_lane =
+        lanelet::utils::getExpandedLanelet(lanes.right_lane, 0.0, r_offset);
+    }
+    expanded_lanes.middle_lanes = lanes.middle_lanes;
+    expanded_drivable_lanes.push_back(expanded_lanes);
   }
-  return expanded_lanelets;
+  return expanded_drivable_lanes;
 }
 
 PredictedObjects filterObjectsByVelocity(const PredictedObjects & objects, double lim_v)
@@ -1918,44 +2038,6 @@ PathWithLaneId setDecelerationVelocity(
   return reference_path;
 }
 
-PathWithLaneId setDecelerationVelocity(
-  const RouteHandler & route_handler, const PathWithLaneId & input,
-  const lanelet::ConstLanelets & lanelet_sequence, const double distance_after_pullover,
-  const double pullover_distance_min, const double distance_before_pull_over,
-  const double deceleration_interval, Pose goal_pose)
-{
-  auto reference_path = input;
-  const auto pullover_buffer =
-    distance_after_pullover + pullover_distance_min + distance_before_pull_over;
-  const auto arclength_goal_pose =
-    lanelet::utils::getArcCoordinates(lanelet_sequence, goal_pose).length;
-  const auto arclength_pull_over_start = arclength_goal_pose - pullover_buffer;
-  const auto arclength_path_front =
-    lanelet::utils::getArcCoordinates(lanelet_sequence, reference_path.points.front().point.pose)
-      .length;
-
-  if (
-    route_handler.isDeadEndLanelet(lanelet_sequence.back()) &&
-    pullover_distance_min > std::numeric_limits<double>::epsilon()) {
-    for (auto & point : reference_path.points) {
-      const auto arclength =
-        lanelet::utils::getArcCoordinates(lanelet_sequence, point.point.pose).length;
-      const double distance_to_pull_over_start =
-        std::max(0.0, arclength_pull_over_start - arclength);
-      point.point.longitudinal_velocity_mps = std::min(
-        point.point.longitudinal_velocity_mps,
-        static_cast<float>(distance_to_pull_over_start / deceleration_interval) *
-          point.point.longitudinal_velocity_mps);
-    }
-  }
-
-  double distance_to_pull_over_start =
-    std::max(0.0, arclength_pull_over_start - arclength_path_front);
-  const auto stop_point = util::insertStopPoint(distance_to_pull_over_start, &reference_path);
-
-  return reference_path;
-}
-
 // TODO(murooka) remove calcSignedArcLength using findNearestSegmentIndex inside the
 // function
 PathWithLaneId setDecelerationVelocity(
@@ -1980,7 +2062,8 @@ PathWithLaneId setDecelerationVelocity(
 
   const auto stop_point_length =
     motion_utils::calcSignedArcLength(reference_path.points, 0, target_pose.position) + buffer;
-  if (target_velocity == 0.0 && stop_point_length > 0) {
+  constexpr double eps{0.01};
+  if (std::abs(target_velocity) < eps && stop_point_length > 0.0) {
     const auto stop_point = util::insertStopPoint(stop_point_length, &reference_path);
   }
 
@@ -2065,14 +2148,16 @@ lanelet::ConstLanelets getExtendedCurrentLanes(
     current_lane, current_pose, common_parameters.backward_path_length,
     common_parameters.forward_path_length);
 
-  // Add next_lanes
-  for (const auto & next_lane : route_handler->getNextLanelets(current_lanes.back())) {
-    current_lanes.push_back(next_lane);
+  // Add next lane
+  const auto next_lanes = route_handler->getNextLanelets(current_lanes.back());
+  if (!next_lanes.empty()) {
+    current_lanes.push_back(next_lanes.front());
   }
 
-  // Add previous lanes
-  for (const auto & prev_lane : route_handler->getPreviousLanelets(current_lanes.front())) {
-    current_lanes.insert(current_lanes.begin(), prev_lane);
+  // Add previous lane
+  const auto prev_lanes = route_handler->getPreviousLanelets(current_lanes.front());
+  if (!prev_lanes.empty()) {
+    current_lanes.insert(current_lanes.begin(), prev_lanes.front());
   }
 
   return current_lanes;
@@ -2385,6 +2470,7 @@ bool hasEnoughDistance(
 
   const auto rear_vehicle_velocity =
     (is_obj_in_front) ? ego_current_twist.linear : object_current_twist.linear;
+  debug.object_twist.linear = (is_obj_in_front) ? front_vehicle_velocity : rear_vehicle_velocity;
 
   const auto front_vehicle_accel = param.expected_front_deceleration;
   const auto rear_vehicle_accel = param.expected_rear_deceleration;

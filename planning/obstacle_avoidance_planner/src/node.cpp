@@ -264,6 +264,9 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
     vehicle_param_.wheelbase = vehicle_info.wheel_base_m;
     vehicle_param_.rear_overhang = vehicle_info.rear_overhang_m;
     vehicle_param_.front_overhang = vehicle_info.front_overhang_m;
+    vehicle_param_.right_overhang = vehicle_info.right_overhang_m;
+    vehicle_param_.left_overhang = vehicle_info.left_overhang_m;
+    vehicle_param_.wheel_tread = vehicle_info.wheel_tread_m;
   }
 
   {  // option parameter
@@ -1001,7 +1004,7 @@ bool ObstacleAvoidancePlanner::checkReplan(const PlannerData & planner_data)
     return true;
   }
 
-  if (isPathGoalChanged(planner_data)) {
+  if (isPathGoalChanged(p)) {
     RCLCPP_INFO(get_logger(), "Replan with resetting optimization since path goal was changed.");
     resetPrevOptimization();
     return true;
@@ -1077,7 +1080,7 @@ bool ObstacleAvoidancePlanner::isPathGoalChanged(const PlannerData & planner_dat
 {
   const auto & p = planner_data;
 
-  if (prev_path_points_ptr_) {
+  if (!prev_path_points_ptr_) {
     return false;
   }
 

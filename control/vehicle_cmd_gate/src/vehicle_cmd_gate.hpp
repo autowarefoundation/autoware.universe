@@ -20,9 +20,10 @@
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <std_srvs/srv/trigger.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
+#include <autoware_adapi_v1_msgs/msg/mrm_state.hpp>
+#include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
 #include <autoware_auto_system_msgs/msg/emergency_state.hpp>
 #include <autoware_auto_vehicle_msgs/msg/engage.hpp>
@@ -31,13 +32,14 @@
 #include <autoware_auto_vehicle_msgs/msg/steering_report.hpp>
 #include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include <std_srvs/srv/trigger.hpp>
 #include <tier4_control_msgs/msg/gate_mode.hpp>
 #include <tier4_debug_msgs/msg/bool_stamped.hpp>
 #include <tier4_external_api_msgs/msg/emergency.hpp>
 #include <tier4_external_api_msgs/msg/heartbeat.hpp>
 #include <tier4_external_api_msgs/srv/engage.hpp>
 #include <tier4_external_api_msgs/srv/set_emergency.hpp>
-#include <tier4_system_msgs/msg/operation_mode.hpp>
+#include <tier4_system_msgs/msg/mrm_behavior_status.hpp>
 #include <tier4_vehicle_msgs/msg/vehicle_emergency_stamped.hpp>
 
 #include <memory>
@@ -45,8 +47,9 @@
 namespace vehicle_cmd_gate
 {
 
+using autoware_adapi_v1_msgs::msg::MrmState;
+using autoware_adapi_v1_msgs::msg::OperationModeState;
 using autoware_auto_control_msgs::msg::AckermannControlCommand;
-using autoware_auto_system_msgs::msg::EmergencyState;
 using autoware_auto_vehicle_msgs::msg::GearCommand;
 using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
 using autoware_auto_vehicle_msgs::msg::SteeringReport;
@@ -55,7 +58,7 @@ using tier4_control_msgs::msg::GateMode;
 using tier4_external_api_msgs::msg::Emergency;
 using tier4_external_api_msgs::msg::Heartbeat;
 using tier4_external_api_msgs::srv::SetEmergency;
-using tier4_system_msgs::msg::OperationMode;
+using tier4_system_msgs::msg::MrmBehaviorStatus;
 using tier4_vehicle_msgs::msg::VehicleEmergencyStamped;
 
 using diagnostic_msgs::msg::DiagnosticStatus;
@@ -90,25 +93,26 @@ private:
   rclcpp::Publisher<HazardLightsCommand>::SharedPtr hazard_light_cmd_pub_;
   rclcpp::Publisher<GateMode>::SharedPtr gate_mode_pub_;
   rclcpp::Publisher<EngageMsg>::SharedPtr engage_pub_;
-  rclcpp::Publisher<OperationMode>::SharedPtr operation_mode_pub_;
+  rclcpp::Publisher<OperationModeState>::SharedPtr operation_mode_pub_;
 
   // Subscription
-  rclcpp::Subscription<EmergencyState>::SharedPtr emergency_state_sub_;
   rclcpp::Subscription<Heartbeat>::SharedPtr external_emergency_stop_heartbeat_sub_;
   rclcpp::Subscription<GateMode>::SharedPtr gate_mode_sub_;
   rclcpp::Subscription<SteeringReport>::SharedPtr steer_sub_;
-  rclcpp::Subscription<OperationMode>::SharedPtr operation_mode_sub_;
+  rclcpp::Subscription<OperationModeState>::SharedPtr operation_mode_sub_;
+  rclcpp::Subscription<MrmState>::SharedPtr mrm_state_sub_;
 
   void onGateMode(GateMode::ConstSharedPtr msg);
-  void onEmergencyState(EmergencyState::ConstSharedPtr msg);
   void onExternalEmergencyStopHeartbeat(Heartbeat::ConstSharedPtr msg);
   void onSteering(SteeringReport::ConstSharedPtr msg);
+  void onMrmState(MrmState::ConstSharedPtr msg);
 
   bool is_engaged_;
   bool is_system_emergency_ = false;
   bool is_external_emergency_stop_ = false;
   double current_steer_ = 0;
   GateMode current_gate_mode_;
+  MrmState current_mrm_state_;
 
   // Heartbeat
   std::shared_ptr<rclcpp::Time> emergency_state_heartbeat_received_time_;
@@ -214,7 +218,7 @@ private:
   AckermannControlCommand filterControlCommand(const AckermannControlCommand & msg);
 
   // filtering on transition
-  OperationMode current_operation_mode_;
+  OperationModeState current_operation_mode_;
   VehicleCmdFilter filter_on_transition_;
 
   // Pause interface for API
