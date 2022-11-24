@@ -14,12 +14,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import argparse
+import os
+import time
 
 import open3d as o3d
+import rclpy
+from rclpy.node import Node
 
 
-def main(pcd_path, detections_path):
+def main(args=None):
+
+    rclpy.init(args=args)
+
+    node = Node("lidar_centerpoint_visualizer")
+    node.declare_parameter("pcd_path", rclpy.Parameter.Type.STRING)
+    node.declare_parameter("detections_path", rclpy.Parameter.Type.STRING)
+
+    pcd_path = node.get_parameter("pcd_path").get_parameter_value().string_value
+    detections_path = node.get_parameter("detections_path").get_parameter_value().string_value
+
+    while not os.path.exists(pcd_path) and not os.path.exists(detections_path):
+        time.sleep(1.0)
+
+        if not rclpy.ok():
+            rclpy.shutdown()
+            return
 
     mesh = o3d.io.read_triangle_mesh(detections_path)
     pcd = o3d.io.read_point_cloud(pcd_path)
@@ -31,16 +50,9 @@ def main(pcd_path, detections_path):
 
     o3d.visualization.draw_geometries([mesh_frame, pcd, detection_lines])
 
+    rclpy.shutdown()
+
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-pcd_path", type=str, required=True, help="path of the pointcloud in pcd format"
-    )
-    parser.add_argument(
-        "-detections_path", type=str, required=True, help="path of the detections in mesh format"
-    )
-    args = parser.parse_args()
-
-    main(args.pcd_path, args.detections_path)
+    main()

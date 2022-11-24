@@ -69,6 +69,7 @@ SingleInferenceLidarCenterPointNode::SingleInferenceLidarCenterPointNode(
   const auto min_area_matrix = this->declare_parameter<std::vector<double>>("min_area_matrix");
   const auto max_area_matrix = this->declare_parameter<std::vector<double>>("max_area_matrix");
   const auto pcd_path = this->declare_parameter<std::string>("pcd_path");
+  const auto detections_path = this->declare_parameter<std::string>("detections_path");
 
   detection_class_remapper_.setParameters(
     allow_remapping_by_area_matrix, min_area_matrix, max_area_matrix);
@@ -95,7 +96,7 @@ SingleInferenceLidarCenterPointNode::SingleInferenceLidarCenterPointNode(
   detector_ptr_ =
     std::make_unique<CenterPointTRT>(encoder_param, head_param, densification_param, config);
 
-  detect(pcd_path);
+  detect(pcd_path, detections_path);
   exit(0);
 }
 
@@ -148,7 +149,8 @@ std::vector<Eigen::Vector3d> SingleInferenceLidarCenterPointNode::getVertices(
   return vertices;
 }
 
-void SingleInferenceLidarCenterPointNode::detect(const std::string & pcd_path)
+void SingleInferenceLidarCenterPointNode::detect(
+  const std::string & pcd_path, const std::string & detections_path)
 {
   sensor_msgs::msg::PointCloud2 msg;
   pcl::PointCloud<pcl::PointXYZ>::Ptr pc_ptr(new pcl::PointCloud<pcl::PointXYZ>());
@@ -173,13 +175,11 @@ void SingleInferenceLidarCenterPointNode::detect(const std::string & pcd_path)
 
   detection_class_remapper_.mapClasses(output_msg);
 
-  std::string output_path = pcd_path.substr(0, pcd_path.find_last_of(".")) + ".ply";
-
-  dumpDetectionsAsMesh(output_msg, output_path);
+  dumpDetectionsAsMesh(output_msg, detections_path);
 
   RCLCPP_INFO(
     rclcpp::get_logger("single_inference_lidar_centerpoint"),
-    "The detection results were saved as meshes in %s", output_path.c_str());
+    "The detection results were saved as meshes in %s", detections_path.c_str());
 }
 
 void SingleInferenceLidarCenterPointNode::dumpDetectionsAsMesh(

@@ -8,6 +8,7 @@
   <arg name="yaw_norm_threshold" default="0.0"/>
   <arg name="has_twist" default="false"/>
   <arg name="pcd_path" default="test.pcd"/>
+  <arg name="detections_path" default="test.ply"/>
 
   <node pkg="lidar_centerpoint" exec="single_inference_lidar_centerpoint_node" name="lidar_centerpoint" output="screen">
     <param name="score_threshold" value="$(var score_threshold)"/>
@@ -24,5 +25,11 @@
     <param from="$(var class_remapper_param_path)"/>
 
     <param name="pcd_path" value="$(var pcd_path)"/>
+    <param name="detections_path" value="$(var detections_path)"/>
+  </node>
+
+  <node pkg="lidar_centerpoint" exec="lidar_centerpoint_visualizer.py" name="lidar_centerpoint_visualizer" output="screen">
+    <param name="pcd_path" value="$(var pcd_path)"/>
+    <param name="detections_path" value="$(var detections_path)"/>
   </node>
 </launch>

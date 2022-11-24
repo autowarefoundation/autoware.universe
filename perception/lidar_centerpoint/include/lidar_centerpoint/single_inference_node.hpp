@@ -38,7 +38,7 @@ public:
   explicit SingleInferenceLidarCenterPointNode(const rclcpp::NodeOptions & node_options);
 
 private:
-  void detect(const std::string & pcd_path);
+  void detect(const std::string & pcd_path, const std::string & detections_path);
   std::vector<Eigen::Vector3d> getVertices(
     const autoware_auto_perception_msgs::msg::Shape & shape, const Eigen::Affine3d & pose) const;
   void dumpDetectionsAsMesh(

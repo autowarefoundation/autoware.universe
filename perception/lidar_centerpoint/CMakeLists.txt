@@ -193,6 +193,13 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL)
     EXECUTABLE single_inference_lidar_centerpoint_node
   )
 
+  install(PROGRAMS
+    scripts/lidar_centerpoint_visualizer.py
+    DESTINATION lib/${PROJECT_NAME}
+  )
+
+  ament_export_dependencies(ament_cmake_python)
+
   ament_auto_package(
     INSTALL_TO_SHARE
       launch
