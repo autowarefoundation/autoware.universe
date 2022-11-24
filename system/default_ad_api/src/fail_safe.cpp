@@ -12,24 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "interface.hpp"
+#include "fail_safe.hpp"
 
 namespace default_ad_api
 {
 
-InterfaceNode::InterfaceNode(const rclcpp::NodeOptions & options) : Node("interface", options)
+FailSafeNode::FailSafeNode(const rclcpp::NodeOptions & options) : Node("fail_safe", options)
 {
-  const auto on_interface_version = [](auto, auto res) {
-    res->major = 1;
-    res->minor = 0;
-    res->patch = 0;
-  };
-
   const auto adaptor = component_interface_utils::NodeAdaptor(this);
-  adaptor.init_srv(srv_, on_interface_version);
+  adaptor.init_pub(pub_mrm_state_);
+  adaptor.init_sub(sub_mrm_state_, this, &FailSafeNode::on_state);
+
+  prev_state_.state = MrmState::UNKNOWN;
+}
+
+void FailSafeNode::on_state(const MrmState::ConstSharedPtr msg)
+{
+  prev_state_.stamp = msg->stamp;
+  if (prev_state_ != *msg) {
+    prev_state_ = *msg;
+    pub_mrm_state_->publish(*msg);
+  }
 }
 
 }  // namespace default_ad_api
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(default_ad_api::InterfaceNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(default_ad_api::FailSafeNode)
