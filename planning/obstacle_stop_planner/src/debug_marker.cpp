@@ -400,10 +400,11 @@ VelocityFactorArray ObstacleStopPlannerDebugNode::makeVelocityFactorArray()
   velocity_factor_array.header.stamp = node_->now();
 
   if (stop_pose_ptr_) {
+    using distance_type = VelocityFactor::_distance_type;
     VelocityFactor velocity_factor;
     velocity_factor.type = VelocityFactor::ROUTE_OBSTACLE;
     velocity_factor.pose = *stop_pose_ptr_;
-    velocity_factor.distance = 0.0;  // TODO(Takagi, Isamu)
+    velocity_factor.distance = std::numeric_limits<distance_type>::quiet_NaN();
     velocity_factor.status = VelocityFactor::UNKNOWN;
     velocity_factor.detail = std::string();
     velocity_factor_array.factors.push_back(velocity_factor);
