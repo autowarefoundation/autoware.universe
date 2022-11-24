@@ -176,21 +176,21 @@ std::vector<double> generateArclength(const size_t num_points, const double inte
 
 TEST(resample_vector_pose, resample_by_same_interval)
 {
-  using motion_utils::resamplePoseVector;
   using geometry_msgs::msg::Pose;
+  using motion_utils::resamplePoseVector;
 
   std::vector<Pose> path(10);
-  for(size_t i=0; i<10; ++i) {
-    path.at(i) = createPose(i*1.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+  for (size_t i = 0; i < 10; ++i) {
+    path.at(i) = createPose(i * 1.0, 0.0, 0.0, 0.0, 0.0, 0.0);
   }
 
   // same interval
   {
     const auto resampled_path = resamplePoseVector(path, 1.0);
     EXPECT_EQ(path.size(), resampled_path.size());
-    for(size_t i=0; i<path.size(); ++i) {
-      const auto& p = resampled_path.at(i);
-      const auto& ans_p = path.at(i);
+    for (size_t i = 0; i < path.size(); ++i) {
+      const auto & p = resampled_path.at(i);
+      const auto & ans_p = path.at(i);
       EXPECT_NEAR(p.position.x, ans_p.position.x, epsilon);
       EXPECT_NEAR(p.position.y, ans_p.position.y, epsilon);
       EXPECT_NEAR(p.position.z, ans_p.position.z, epsilon);
@@ -204,9 +204,9 @@ TEST(resample_vector_pose, resample_by_same_interval)
   // random
   {
     const auto resampled_path = resamplePoseVector(path, 0.5);
-    for(size_t i=0; i<path.size(); ++i) {
-      const auto& p = resampled_path.at(i);
-      EXPECT_NEAR(p.position.x, 0.5*i, epsilon);
+    for (size_t i = 0; i < path.size(); ++i) {
+      const auto & p = resampled_path.at(i);
+      EXPECT_NEAR(p.position.x, 0.5 * i, epsilon);
       EXPECT_NEAR(p.position.y, 0.0, epsilon);
       EXPECT_NEAR(p.position.z, 0.0, epsilon);
       EXPECT_NEAR(p.orientation.x, 0.0, epsilon);
@@ -215,7 +215,6 @@ TEST(resample_vector_pose, resample_by_same_interval)
       EXPECT_NEAR(p.orientation.w, 1.0, epsilon);
     }
   }
-
 }
 
 TEST(resample_path_with_lane_id, resample_path_by_vector)
