@@ -76,7 +76,6 @@ private:
   NodeParam node_param_{};
 
   // Function
-
   bool isStaticPointcloud(
     const RadarReturn & radar_return, const Odometry::ConstSharedPtr & odom_msg,
     geometry_msgs::msg::TransformStamped::ConstSharedPtr transform);
