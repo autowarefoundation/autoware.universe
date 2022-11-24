@@ -82,10 +82,19 @@ void DistortionCorrectorComponent::onImu(const sensor_msgs::msg::Imu::ConstShare
     return;
   }
 
+  tf2::Transform tf2_imu_link_to_base_link{};
+  getTransform(base_link_frame_, imu_msg->header.frame_id, &tf2_imu_link_to_base_link);
+  geometry_msgs::msg::TransformStamped::SharedPtr tf_base2imu_ptr =
+    std::make_shared<geometry_msgs::msg::TransformStamped>();
+  tf_base2imu_ptr->transform.rotation = tf2::toMsg(tf2_imu_link_to_base_link.getRotation());
+
   geometry_msgs::msg::Vector3Stamped angular_velocity;
-  angular_velocity.header = imu_msg->header;
   angular_velocity.vector = imu_msg->angular_velocity;
-  angular_velocity_queue_.push_back(angular_velocity);
+
+  geometry_msgs::msg::Vector3Stamped transformed_angular_velocity;
+  tf2::doTransform(angular_velocity, transformed_angular_velocity, *tf_base2imu_ptr);
+  transformed_angular_velocity.header = imu_msg->header;
+  angular_velocity_queue_.push_back(transformed_angular_velocity);
 
   while (!angular_velocity_queue_.empty()) {
     // for replay rosbag
