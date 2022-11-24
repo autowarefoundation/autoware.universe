@@ -61,12 +61,13 @@ void ImuCorrector::callbackImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_m
 
   geometry_msgs::msg::TransformStamped::ConstSharedPtr tf_base2imu_ptr;
   try {
-    tf_base2imu_ptr = transform_listener_->getLatestTransform(
-      output_frame_, imu_msg.header.frame_id);
+    tf_base2imu_ptr =
+      transform_listener_->getLatestTransform(output_frame_, imu_msg.header.frame_id);
   } catch (tf2::TransformException & ex) {
     RCLCPP_WARN(this->get_logger(), "%s", ex.what());
     RCLCPP_ERROR(
-      this->get_logger(), "Please publish TF %s to %s", output_frame_.c_str(), (imu_msg.header.frame_id).c_str());
+      this->get_logger(), "Please publish TF %s to %s", output_frame_.c_str(),
+      (imu_msg.header.frame_id).c_str());
     return;
   }
 
@@ -92,7 +93,6 @@ void ImuCorrector::callbackImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_m
 
   imu_pub_->publish(imu_msg);
 }
-
 
 }  // namespace imu_corrector
 
