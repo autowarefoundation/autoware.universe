@@ -28,6 +28,7 @@ private:
   const float score_min_;
   const float score_max_;
   const float weight_min_;
+  const bool print_statistics_;
 
   rclcpp::Subscription<Image>::SharedPtr sub_lsd_;
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_ll2_;

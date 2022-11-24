@@ -15,6 +15,14 @@ bool CameraInfoSubscriber::is_camera_info_nullopt() const { return !(opt_info_.h
 
 std::string CameraInfoSubscriber::get_frame_id() const { return opt_info_->header.frame_id; }
 
+Eigen::Vector2i CameraInfoSubscriber::size() const
+{
+  if (!opt_info_.has_value()) {
+    throw std::runtime_error("camera_info is not ready but it's accessed");
+  }
+  return {opt_info_->width, opt_info_->height};
+}
+
 Eigen::Matrix3f CameraInfoSubscriber::intrinsic() const
 {
   if (!opt_info_.has_value()) {

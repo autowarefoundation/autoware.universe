@@ -13,7 +13,8 @@ AntishadowCorrector::AntishadowCorrector()
 : AbstCorrector("camera_particle_corrector"),
   score_min_(declare_parameter<float>("score_min", 70)),
   score_max_(declare_parameter<float>("score_max", 128)),
-  weight_min_(declare_parameter<float>("weight_min", 0.5))
+  weight_min_(declare_parameter<float>("weight_min", 0.5)),
+  print_statistics_(declare_parameter<bool>("print_statistics", false))
 {
   using std::placeholders::_1;
   auto lsd_callback = std::bind(&AntishadowCorrector::on_lsd, this, _1);
@@ -77,7 +78,7 @@ void AntishadowCorrector::on_lsd(const Image & msg)
     p.weight = normalize(score);
   }
 
-  print_particle_statistics(weighted_particles);
+  if (print_statistics_) print_particle_statistics(weighted_particles);
 
   // NOTE: skip weighting if ego vehicle does not move enought
   auto meaned_pose = mean_pose(weighted_particles);
@@ -139,7 +140,7 @@ float AntishadowCorrector::compute_score(const LineSegments & src, const cv::Mat
       pixel_count++;
     }
   }
-
+  if (pixel_count == 0) return 0;
   return score / pixel_count;
 }
 
@@ -199,10 +200,15 @@ std::function<float(float)> AntishadowCorrector::define_normalize_score() const
 {
   float k = -std::log(weight_min_);
 
-  return [this, k](float score) -> float {
-    score = std::clamp(score, this->score_min_, this->score_max_);
-    float r = (score - score_min_) / (score_max_ - score_min_);
-    return this->weight_min_ * std::exp(k * r);
+  return [this, k](float raw_score) -> float {
+    float clamped_score = std::clamp(raw_score, this->score_min_, this->score_max_);
+    float r = (clamped_score - score_min_) / (score_max_ - score_min_);
+    float weight = this->weight_min_ * std::exp(k * r);
+
+    if (!std::isfinite(weight)) {
+      throw std::runtime_error("invalid weight is yielded from " + std::to_string(raw_score));
+    }
+    return weight;
   };
 }
 

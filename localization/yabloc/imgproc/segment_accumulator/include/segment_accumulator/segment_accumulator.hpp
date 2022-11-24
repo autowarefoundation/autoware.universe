@@ -41,7 +41,8 @@ private:
   common::CameraInfoSubscriber info_;
   common::StaticTfSubscriber tf_subscriber_;
 
-  std::function<std::optional<Eigen::Vector3f>(const Eigen::Vector3f & u)> project_func_{nullptr};
+  std::function<std::optional<Eigen::Vector3f>(const Eigen::Vector3f & u)> back_project_func_{
+    nullptr};
 
   std::vector<cv::Point2i> visible_area_polygon_;
   std::list<TwistStamped::ConstSharedPtr> twist_list_;
@@ -57,7 +58,6 @@ private:
   void draw(const PointCloud2 & cloud_msg);
 
   void define_project_function();
-  void init_visible_are_polygon();
 
   Sophus::SE3f accumulate_travel_distance(
     const rclcpp::Time & from_stamp, const rclcpp::Time & to_stamp);

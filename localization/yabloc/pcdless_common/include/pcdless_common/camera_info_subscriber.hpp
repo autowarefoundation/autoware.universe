@@ -18,6 +18,8 @@ public:
 
   bool is_camera_info_nullopt() const;
 
+  Eigen::Vector2i size() const;
+
   Eigen::Matrix3f intrinsic() const;
 
   // This member function DOES NOT check isCameraInfoReady()
