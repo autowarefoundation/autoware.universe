@@ -38,11 +38,13 @@ bool update_param(
 
 pcl::PointXYZI getPointXYZI(const radar_msgs::msg::RadarReturn & radar, float intensity)
 {
+  pcl::PointXYZI point;
   const float r_xy = radar.range * std::cos(radar.elevation);
-  const float x = r_xy * std::cos(radar.azimuth);
-  const float y = r_xy * std::sin(radar.azimuth);
-  const float z = radar.range * std::sin(radar.elevation);
-  return pcl::PointXYZI{x, y, z, intensity};
+  point.x = r_xy * std::cos(radar.azimuth);
+  point.y = r_xy * std::sin(radar.azimuth);
+  point.z = radar.range * std::sin(radar.elevation);
+  point.intensity = intensity;
+  return point;
 }
 
 pcl::PointCloud<pcl::PointXYZI> toAmplitudePCL(const radar_msgs::msg::RadarScan & radar_scan)
