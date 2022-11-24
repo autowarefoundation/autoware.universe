@@ -509,7 +509,8 @@ bool LaneChangeModule::isAbortConditionSatisfied() const
       common_parameters.ego_nearest_yaw_threshold);
     return lane_change_utils::isLaneChangePathSafe(
       path.path, current_lanes, check_lanes, dynamic_objects, current_pose, current_seg_idx,
-      current_twist, common_parameters, *parameters_, debug_data, false,
+      current_twist, common_parameters, *parameters_, common_parameters.front_abort_deceleration,
+      common_parameters.front_abort_deceleration, debug_data, false,
       status_.lane_change_path.acceleration);
   });
 
