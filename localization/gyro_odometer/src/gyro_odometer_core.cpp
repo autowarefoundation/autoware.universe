@@ -25,8 +25,7 @@
 #include <string>
 
 GyroOdometer::GyroOdometer()
-: Node("gyro_odometer"),
-  message_timeout_sec_(declare_parameter("message_timeout_sec", 0.2))
+: Node("gyro_odometer"), message_timeout_sec_(declare_parameter("message_timeout_sec", 0.2))
 {
   vehicle_twist_with_cov_sub_ = create_subscription<geometry_msgs::msg::TwistWithCovarianceStamped>(
     "vehicle/twist_with_covariance", rclcpp::QoS{100},

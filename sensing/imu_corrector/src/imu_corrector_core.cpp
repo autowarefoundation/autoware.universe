@@ -82,7 +82,6 @@ void ImuCorrector::callbackImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_m
   imu_pub_->publish(imu_msg);
 }
 
-
 bool ImuCorrector::getTransform(
   const std::string & target_frame, const std::string & source_frame,
   const geometry_msgs::msg::TransformStamped::SharedPtr transform_stamped_ptr)
@@ -123,7 +122,6 @@ bool ImuCorrector::getTransform(
   }
   return true;
 }
-
 
 }  // namespace imu_corrector
 
