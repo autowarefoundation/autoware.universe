@@ -269,7 +269,7 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
         planning_utils::concatVector(stop_factor_conflict, stop_factor_stuck);
       planning_utils::appendStopReason(stop_factor, stop_reason);
 
-      const auto & stop_pose = path->points.at(stop_line_idx_stop).point.pose;
+      const auto & stop_pose = path->points.at(stop_line_idx_final).point.pose;
       velocity_factor_.set(
         path->points, planner_data_->current_pose.pose, stop_pose, VelocityFactor::UNKNOWN);
     }

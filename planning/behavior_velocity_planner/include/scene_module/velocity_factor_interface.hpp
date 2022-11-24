@@ -49,10 +49,11 @@ public:
     const T & points, const Pose & curr_pose, const Pose & stop_pose,
     const VelocityFactorStatus status, const std::string detail = "")
   {
+    const auto & curr_point = curr_pose.position;
+    const auto & stop_point = stop_pose.position;
     velocity_factor_.type = type_;
     velocity_factor_.pose = stop_pose;
-    velocity_factor_.distance =
-      motion_utils::calcSignedArcLength(points, curr_pose.position, stop_pose.position);
+    velocity_factor_.distance = motion_utils::calcSignedArcLength(points, curr_point, stop_point);
     velocity_factor_.status = status;
     velocity_factor_.detail = detail;
   }
