@@ -107,7 +107,8 @@ void TrtYoloXNode::onImage(const sensor_msgs::msg::Image::ConstSharedPtr msg)
       .probability(yolox_object.score));
     if (label_map_[yolox_object.type] == "CAR") {
       object.object.classification.front().label = Label::CAR;
-    } else if (label_map_[yolox_object.type] == "PEDESTRIAN") {
+    } else if (label_map_[yolox_object.type] == "PEDESTRIAN" ||
+               label_map_[yolox_object.type] == "PERSON") {
       object.object.classification.front().label = Label::PEDESTRIAN;
     } else if (label_map_[yolox_object.type] == "BUS") {
       object.object.classification.front().label = Label::BUS;
