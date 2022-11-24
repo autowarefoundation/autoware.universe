@@ -154,9 +154,10 @@ std::vector<DrivableLanes> generateDrivableLanes(
 
 std::optional<LaneChangePath> getAbortPaths(
   const std::shared_ptr<const PlannerData> & planner_data, const LaneChangePath & selected_path,
-  const Pose & ego_lerp_pose_before_collision, ShiftLine & shift);
-double getLateralShift(const LaneChangePath & path);
+  const Pose & ego_lerp_pose_before_collision, const BehaviorPathPlannerParameters & common_param,
+  const LaneChangeParameters & lane_change_param);
 
+double getLateralShift(const LaneChangePath & path);
 }  // namespace behavior_path_planner::lane_change_utils
 
 #endif  // BEHAVIOR_PATH_PLANNER__SCENE_MODULE__LANE_CHANGE__UTIL_HPP_

@@ -62,10 +62,10 @@ struct LaneChangeStatus
 };
 
 enum class LaneChangeStates {
-  Trying = 0,
-  Success,
+  Normal = 0,
   Cancel,
   Abort,
+  Stop,
 };
 
 }  // namespace behavior_path_planner

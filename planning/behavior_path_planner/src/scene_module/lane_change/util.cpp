@@ -771,7 +771,9 @@ std::vector<DrivableLanes> generateDrivableLanes(
 
 std::optional<LaneChangePath> getAbortPaths(
   const std::shared_ptr<const PlannerData> & planner_data, const LaneChangePath & selected_path,
-  [[maybe_unused]] const Pose & ego_pose_before_collision, ShiftLine & shift)
+  [[maybe_unused]] const Pose & ego_pose_before_collision,
+  const BehaviorPathPlannerParameters & common_param,
+  [[maybe_unused]] const LaneChangeParameters & lane_change_param)
 {
   const auto & route_handler = planner_data->route_handler;
   const auto current_speed = util::l2Norm(planner_data->self_odometry->twist.twist.linear);
@@ -796,45 +798,28 @@ std::optional<LaneChangePath> getAbortPaths(
     resampled_selected_path.points, selected_path.shift_line.end, ego_nearest_dist_threshold,
     ego_nearest_yaw_threshold);
 
-  [[maybe_unused]] const auto pose_idx_min =
-    [&](const double accel, const double jerk, const double param_time, const double min_dist) {
-      if (ego_pose_idx > lane_changing_end_pose_idx) {
-        return ego_pose_idx;
+  const auto pose_idx_min = [&](
+                              const double accel, const double jerk, const double param_time,
+                              const double min_dist, const double max_dist) {
+    if (ego_pose_idx > lane_changing_end_pose_idx) {
+      return ego_pose_idx;
+    }
+    const double turning_point_dist =
+      std::clamp(std::invoke(abort_point_dist, accel, jerk, param_time), min_dist, max_dist);
+    const auto & points = resampled_selected_path.points;
+    double sum{0.0};
+    size_t idx{0};
+    for (idx = ego_pose_idx; idx < lane_changing_end_pose_idx; ++idx) {
+      sum += tier4_autoware_utils::calcDistance2d(points.at(idx), points.at(idx + 1));
+      if (sum > turning_point_dist) {
+        break;
       }
-      const double turning_point_dist =
-        std::min(std::invoke(abort_point_dist, accel, jerk, param_time), min_dist);
-      const auto & points = resampled_selected_path.points;
-      double sum{0.0};
-      size_t idx{0};
-      for (idx = ego_pose_idx; idx < lane_changing_end_pose_idx; ++idx) {
-        sum += tier4_autoware_utils::calcDistance2d(points.at(idx), points.at(idx + 1));
-        if (sum > turning_point_dist) {
-          break;
-        }
-      }
-      return idx;
-    };
+    }
+    return idx;
+  };
 
-  [[maybe_unused]] const auto pose_idx_max =
-    [&](const double accel, const double jerk, const double param_time, const double min_dist) {
-      if (ego_pose_idx > lane_changing_end_pose_idx) {
-        return ego_pose_idx;
-      }
-      const double turning_point_dist =
-        std::max(std::invoke(abort_point_dist, accel, jerk, param_time), min_dist);
-      const auto & points = resampled_selected_path.points;
-      double sum{0.0};
-      size_t idx{0};
-      for (idx = ego_pose_idx; idx < lane_changing_end_pose_idx; ++idx) {
-        sum += tier4_autoware_utils::calcDistance2d(points.at(idx), points.at(idx + 1));
-        if (sum > turning_point_dist) {
-          break;
-        }
-      }
-      return idx;
-    };
-  const auto abort_start_idx = pose_idx_min(0.0, 0.5, 3.0, 6.0);
-  const auto abort_end_idx = pose_idx_max(0.0, 0.5, 6.0, 12.0);
+  const auto abort_start_idx = pose_idx_min(0.0, 0.5, 3.0, 4.0, 6.0);
+  const auto abort_end_idx = pose_idx_min(0.0, 0.5, 6.0, 12.0, 16.0);
   if (abort_start_idx >= abort_end_idx) {
     return std::nullopt;
   }
@@ -844,15 +829,17 @@ std::optional<LaneChangePath> getAbortPaths(
   const auto abort_end_pose = resampled_selected_path.points.at(abort_end_idx).point.pose;
   const auto arc_position = lanelet::utils::getArcCoordinates(reference_lanelets, abort_end_pose);
   const PathWithLaneId reference_lane_segment = std::invoke([&]() {
-    constexpr double minimum_lane_change_length{17.0};
+    const double minimum_lane_change_length =
+      common_param.backward_length_buffer_for_end_of_lane + common_param.minimum_lane_change_length;
 
-    double s_start = arc_position.length;
-    double s_end =
+    const double s_start = arc_position.length;
+    const double s_end =
       lanelet::utils::getLaneletLength2d(reference_lanelets) - minimum_lane_change_length;
 
     PathWithLaneId ref = route_handler->getCenterLinePath(reference_lanelets, s_start, s_end);
-    ref.points.back().point.longitudinal_velocity_mps =
-      std::min(ref.points.back().point.longitudinal_velocity_mps, 5.6f);
+    ref.points.back().point.longitudinal_velocity_mps = std::min(
+      ref.points.back().point.longitudinal_velocity_mps,
+      static_cast<float>(lane_change_param.minimum_lane_change_velocity));
     return ref;
   });
 
@@ -862,7 +849,6 @@ std::optional<LaneChangePath> getAbortPaths(
   shift_line.end_shift_length = -arc_position.distance;
   shift_line.start_idx = abort_start_idx;
   shift_line.end_idx = abort_end_idx;
-  shift = shift_line;
 
   PathShifter path_shifter;
   path_shifter.setPath(resampled_selected_path);
@@ -888,7 +874,6 @@ std::optional<LaneChangePath> getAbortPaths(
   auto abort_path = selected_path;
   abort_path.shifted_path = shifted_path;
   abort_path.path = start_to_abort_end_pose;
-  abort_path.prev_path = resampled_selected_path;
   abort_path.shift_line = shift_line;
   return std::optional<LaneChangePath>{abort_path};
 }

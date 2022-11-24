@@ -47,16 +47,16 @@ using marker_utils::CollisionCheckDebug;
 using tier4_planning_msgs::msg::LaneChangeDebugMsg;
 using tier4_planning_msgs::msg::LaneChangeDebugMsgArray;
 
-inline std::string toStr(const LaneChangeStates state)
+inline std::string_view toStr(const LaneChangeStates state)
 {
-  if (state == LaneChangeStates::Trying) {
-    return "Trying";
-  } else if (state == LaneChangeStates::Success) {
-    return "Success";
+  if (state == LaneChangeStates::Normal) {
+    return "Normal";
   } else if (state == LaneChangeStates::Cancel) {
     return "Cancel";
   } else if (state == LaneChangeStates::Abort) {
     return "Abort";
+  } else if (state == LaneChangeStates::Stop) {
+    return "Stop";
   }
   return "UNKNOWN";
 }
@@ -252,8 +252,9 @@ private:
   bool isCurrentSpeedLow() const;
   bool isAbortConditionSatisfied();
   bool hasFinishedLaneChange() const;
-  bool isCancel() const;
-  bool isAbort() const;
+  bool isCancelState() const;
+  bool isAbortState() const;
+  bool isStopState() const;
   // getter
   Pose getEgoPose() const;
   Twist getEgoTwist() const;

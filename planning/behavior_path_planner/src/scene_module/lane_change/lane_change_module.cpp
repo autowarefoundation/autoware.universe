@@ -65,7 +65,7 @@ void LaneChangeModule::onEntry()
 {
   RCLCPP_DEBUG(getLogger(), "LANE_CHANGE onEntry");
   current_state_ = BT::NodeStatus::SUCCESS;
-  current_lane_change_state_ = LaneChangeStates::Trying;
+  current_lane_change_state_ = LaneChangeStates::Normal;
   updateLaneChangeStatus();
 }
 
@@ -117,7 +117,7 @@ BT::NodeStatus LaneChangeModule::updateState()
   }
 
   if (isAbortConditionSatisfied()) {
-    if ((isNearEndOfLane() && isCurrentSpeedLow()) || isAbort()) {
+    if ((isNearEndOfLane() && isCurrentSpeedLow()) || isAbortState()) {
       current_state_ = BT::NodeStatus::RUNNING;
       return current_state_;
     }
@@ -144,10 +144,10 @@ BehaviorModuleOutput LaneChangeModule::plan()
 
   RCLCPP_INFO(
     getLogger(), "[plan] current_lane_change_state_ = %s",
-    toStr(current_lane_change_state_).c_str());
+    toStr(current_lane_change_state_).data());
   PathWithLaneId selected_path = status_.lane_change_path.path;
   PathWithLaneId path;
-  if (!isAbort()) {
+  if (!isAbortState()) {
     path = util::resamplePathWithSpline(selected_path, resample_interval);
     if (!isValidPath(path)) {
       status_.is_safe = false;
@@ -216,7 +216,7 @@ CandidateOutput LaneChangeModule::planCandidate() const
     getSafePath(lane_change_lanes, check_distance_, selected_path);
   selected_path.path.header = planner_data_->route_handler->getRouteHeader();
 
-  if (isAbort()) {
+  if (isAbortState()) {
     selected_path = *abort_path_;
   }
 
@@ -238,7 +238,7 @@ CandidateOutput LaneChangeModule::planCandidate() const
 BehaviorModuleOutput LaneChangeModule::planWaitingApproval()
 {
   BehaviorModuleOutput out;
-  if (!isAbort()) {
+  if (!isAbortState()) {
     const auto lane_keeping_path = getReferencePath();
     prev_approved_path_ = lane_keeping_path;
     out.path = std::make_shared<PathWithLaneId>(lane_keeping_path);
@@ -482,12 +482,12 @@ bool LaneChangeModule::isAbortConditionSatisfied()
 
   // check abort enable flag
   if (!parameters_->enable_cancel_lane_change) {
-    current_lane_change_state_ = LaneChangeStates::Success;
+    current_lane_change_state_ = LaneChangeStates::Normal;
     return false;
   }
 
   if (!is_activated_) {
-    current_lane_change_state_ = LaneChangeStates::Success;
+    current_lane_change_state_ = LaneChangeStates::Normal;
     return false;
   }
 
@@ -560,27 +560,29 @@ bool LaneChangeModule::isAbortConditionSatisfied()
       "DANGER!!! Path is not safe anymore, but it is too late to abort! Please be cautious");
     current_lane_change_state_ = LaneChangeStates::Abort;
 
-    ShiftLine shift_line;
-    const auto abort_path =
-      lane_change_utils::getAbortPaths(planner_data_, path, ego_pose_before_collision, shift_line);
+    const auto abort_path = lane_change_utils::getAbortPaths(
+      planner_data_, path, ego_pose_before_collision, common_parameters, *parameters_);
     abort_non_collision_pose_ = ego_pose_before_collision;
 
     if (abort_path) {
       if (isWaitingApproval()) {
         abort_path_ = std::make_shared<LaneChangePath>(*abort_path);
       }
+      return true;
     }
+
+    current_lane_change_state_ = LaneChangeStates::Stop;
     return true;
   }
 
   return false;
 }
-bool LaneChangeModule::isAbort() const
+bool LaneChangeModule::isAbortState() const
 {
-  return (current_lane_change_state_ == LaneChangeStates::Abort);
+  return (current_lane_change_state_ == LaneChangeStates::Abort) && abort_path_;
 }
 
-bool LaneChangeModule::isCancel() const
+bool LaneChangeModule::isCancelState() const
 {
   return current_lane_change_state_ == LaneChangeStates::Cancel;
 }
@@ -715,7 +717,7 @@ void LaneChangeModule::resetParameters()
 {
   is_abort_path_approved_ = false;
   is_abort_approval_requested_ = false;
-  current_lane_change_state_ = LaneChangeStates::Trying;
+  current_lane_change_state_ = LaneChangeStates::Normal;
   abort_path_.reset();
 
   clearWaitingApproval();
