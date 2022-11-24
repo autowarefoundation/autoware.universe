@@ -32,8 +32,7 @@ std::array<double, 9> transformCovariance(const std::array<double, 9> & cov)
 }
 
 geometry_msgs::msg::Vector3 transformVector3(
-  const geometry_msgs::msg::Vector3 & vec,
-  const geometry_msgs::msg::TransformStamped & transform)
+  const geometry_msgs::msg::Vector3 & vec, const geometry_msgs::msg::TransformStamped & transform)
 {
   geometry_msgs::msg::Vector3Stamped vec_stamped;
   vec_stamped.vector = vec;
@@ -41,7 +40,7 @@ geometry_msgs::msg::Vector3 transformVector3(
   geometry_msgs::msg::Vector3Stamped vec_stamped_transformed;
   tf2::doTransform(vec_stamped, vec_stamped_transformed, transform);
   return vec_stamped_transformed.vector;
-} 
+}
 
 namespace imu_corrector
 {
@@ -55,9 +54,12 @@ ImuCorrector::ImuCorrector(const rclcpp::NodeOptions & node_options)
   angular_velocity_offset_y_imu_link_ = declare_parameter<double>("angular_velocity_offset_y", 0.0);
   angular_velocity_offset_z_imu_link_ = declare_parameter<double>("angular_velocity_offset_z", 0.0);
 
-  angular_velocity_stddev_xx_imu_link_ = declare_parameter<double>("angular_velocity_stddev_xx", 0.03);
-  angular_velocity_stddev_yy_imu_link_ = declare_parameter<double>("angular_velocity_stddev_yy", 0.03);
-  angular_velocity_stddev_zz_imu_link_ = declare_parameter<double>("angular_velocity_stddev_zz", 0.03);
+  angular_velocity_stddev_xx_imu_link_ =
+    declare_parameter<double>("angular_velocity_stddev_xx", 0.03);
+  angular_velocity_stddev_yy_imu_link_ =
+    declare_parameter<double>("angular_velocity_stddev_yy", 0.03);
+  angular_velocity_stddev_zz_imu_link_ =
+    declare_parameter<double>("angular_velocity_stddev_zz", 0.03);
 
   accel_stddev_imu_link_ = declare_parameter<double>("accel_stddev", 10000.0);
 
@@ -104,15 +106,18 @@ void ImuCorrector::callbackImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_m
   sensor_msgs::msg::Imu imu_msg_base_link;
   imu_msg_base_link.header.stamp = imu_msg_ptr->header.stamp;
   imu_msg_base_link.header.frame_id = output_frame_;
-  imu_msg_base_link.linear_acceleration = transformVector3(imu_msg.linear_acceleration, *tf_base2imu_ptr);
-  imu_msg_base_link.linear_acceleration_covariance = transformCovariance(imu_msg.linear_acceleration_covariance);
+  imu_msg_base_link.linear_acceleration =
+    transformVector3(imu_msg.linear_acceleration, *tf_base2imu_ptr);
+  imu_msg_base_link.linear_acceleration_covariance =
+    transformCovariance(imu_msg.linear_acceleration_covariance);
   imu_msg_base_link.angular_velocity = transformVector3(imu_msg.angular_velocity, *tf_base2imu_ptr);
-  imu_msg_base_link.angular_velocity_covariance = transformCovariance(imu_msg.angular_velocity_covariance);
+  imu_msg_base_link.angular_velocity_covariance =
+    transformCovariance(imu_msg.angular_velocity_covariance);
 
   imu_pub_->publish(imu_msg_base_link);
 }
 
-}// namespace imu_corrector
+}  // namespace imu_corrector
 
 #include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(imu_corrector::ImuCorrector)
