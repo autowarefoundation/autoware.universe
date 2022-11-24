@@ -1,0 +1,21 @@
+<launch>
+  <!-- input/output -->
+  <arg name="input_path" default="/planning/scenario_planning/lane_driving/behavior_planning/path"/>
+  <arg name="input_dynamic_objects" default="/perception/object_recognition/objects"/>
+  <arg name="input_map" default="/map/vector_map"/>
+  <arg name="output_path" default="~/output/path"/>
+  <arg name="output_debug_markers" default="~/output/debug_markers"/>
+
+  <arg name="param_path" default="$(find-pkg-share drivable_area_expander)/config/drivable_area_expander.param.yaml"/>
+  <arg name="vehicle_info_param_file" default="$(find-pkg-share vehicle_info_util)/config/vehicle_info.param.yaml"/>
+
+  <node launch-prefix="konsole -e gdb -ex run --args" pkg="drivable_area_expander" exec="drivable_area_expander" name="drivable_area_expander" output="screen">
+    <param from="$(var param_path)"/>
+    <param from="$(var vehicle_info_param_file)"/>
+    <remap from="~/input/path" to="$(var input_path)"/>
+    <remap from="~/input/dynamic_objects" to="$(var input_dynamic_objects)"/>
+    <remap from="~/input/map" to="$(var input_map)"/>
+    <remap from="~/output/path" to="$(var output_path)"/>
+    <remap from="~/output/debug_markers" to="$(var output_debug_markers)"/>
+  </node>
+</launch>
