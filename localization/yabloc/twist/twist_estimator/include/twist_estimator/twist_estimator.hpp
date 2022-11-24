@@ -52,7 +52,7 @@ private:
   Eigen::Vector4f state_;  // rotation, velocity, bias, scale
   Eigen::Matrix4f cov_;
   const bool upside_down;
-  const bool rtk_enabled_;
+  const bool ignore_less_than_float_;
   const float stop_vel_threshold_;
   const float static_scale_factor_;
 

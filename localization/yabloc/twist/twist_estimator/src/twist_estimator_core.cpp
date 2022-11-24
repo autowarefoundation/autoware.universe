@@ -10,7 +10,7 @@ namespace pcdless::twist_estimator
 TwistEstimator::TwistEstimator()
 : Node("twist_estimaotr"),
   upside_down(true),
-  rtk_enabled_(declare_parameter("rtk_enabled", true)),
+  ignore_less_than_float_(declare_parameter("ignore_less_than_float", true)),
   stop_vel_threshold_(declare_parameter("stop_vel_threshold", 0.05f)),
   static_scale_factor_(declare_parameter("static_scale_factor", -1.f))
 {
@@ -166,7 +166,7 @@ void TwistEstimator::on_navpvt(const NavPVT & msg)
 
   publish_doppler(msg);
 
-  if (rtk_enabled_) {
+  if (ignore_less_than_float_) {
     if ((msg.flags != 131) && (msg.flags != 67)) {
       RCLCPP_WARN_STREAM_THROTTLE(get_logger(), *get_clock(), 2000, "GNSS is unreliable!");
       return;

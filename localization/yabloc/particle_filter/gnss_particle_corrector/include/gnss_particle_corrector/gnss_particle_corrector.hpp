@@ -2,6 +2,8 @@
 #ifndef GNSS_PARTILCE_CORRECTOR__GNSS_PARTICLE_CORRECTOR_HPP_
 #define GNSS_PARTILCE_CORRECTOR__GNSS_PARTICLE_CORRECTOR_HPP_
 
+#include "gnss_particle_corrector/weight_manager.hpp"
+
 #include <Eigen/Core>
 #include <modularized_particle_filter/correction/abst_corrector.hpp>
 
@@ -31,12 +33,8 @@ private:
   rclcpp::Subscription<PoseCovStamped>::SharedPtr pose_sub_;
   rclcpp::Publisher<MarkerArray>::SharedPtr marker_pub_;
 
-  const float float_range_gain_;
-  const float likelihood_min_weight_;
-  const float likelihood_stdev_;
-  const float likelihood_flat_radius_;
-  const bool rtk_enabled_;  // If false, all ublox_msgs are assumed FLOAT
-  const float gain_;
+  const bool ignore_less_than_float_;
+  const WeightManager weight_manager_;
 
   Float32 latest_height_;
 
@@ -46,11 +44,7 @@ private:
   void on_pose(const PoseCovStamped::ConstSharedPtr pose_msg);
 
   ParticleArray weight_particles(
-    const ParticleArray & predicted_particles, const Eigen::Vector3f & pose, float sigma,
-    float flat_radius);
-
-  float normal_pdf(float x, float mu, float sigma);
-  float inverse_normal_pdf(float prob, bool fixed) const;
+    const ParticleArray & predicted_particles, const Eigen::Vector3f & pose, bool is_rtk_fixed);
 
   void publish_marker(const Eigen::Vector3f & position, bool fixed);
 };

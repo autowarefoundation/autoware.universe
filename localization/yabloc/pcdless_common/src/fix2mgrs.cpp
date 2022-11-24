@@ -5,6 +5,15 @@
 
 namespace pcdless::common
 {
+Eigen::Vector3d ublox_to_mgrs(const ublox_msgs::msg::NavPVT & msg)
+{
+  sensor_msgs::msg::NavSatFix fix;
+  fix.latitude = msg.lat * 1e-7f;
+  fix.longitude = msg.lon * 1e-7f;
+  fix.altitude = msg.height * 1e-3f;
+  return fix_to_mgrs(fix);
+}
+
 Eigen::Vector3d fix_to_mgrs(const sensor_msgs::msg::NavSatFix & msg)
 {
   using namespace GeographicLib;

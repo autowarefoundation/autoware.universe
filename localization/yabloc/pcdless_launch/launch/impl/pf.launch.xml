@@ -68,12 +68,8 @@
     <!-- gnss correction -->
     <node name="gnss_particle_corrector" pkg="gnss_particle_corrector" exec="gnss_particle_corrector" output="screen" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
-        <param name="likelihood_min_weight" value="0.1"/>
-        <param name="likelihood_flat_radius" value="2.0"/>
-        <param name="likelihood_stddev" value="4.0"/>
-        <param name="rtk_enabled" value="$(var rtk_enabled)"/>
+        <param name="ignore_less_than_float" value="$(var ignore_less_than_float)"/>
 
-        <param name="gain" value="1.5"/>
 
         <remap from="input/navpvt" to="/sensing/gnss/ublox/navpvt"/>
         <remap from="input/height" to="/localization/map/height"/>

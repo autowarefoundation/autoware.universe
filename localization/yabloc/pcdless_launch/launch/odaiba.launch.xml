@@ -1,7 +1,7 @@
 <launch>
     <arg name="min_segment_length" default="1.5" description="[m]"/>
     <arg name="max_segment_distance" default="30.0" description="[m]"/>
-    <arg name="rtk_enabled" default="true" description="GNSS-RTK is enabled?"/>
+    <arg name="ignore_less_than_float" default="true" description="GNSS-RTK is enabled?"/>
 
     <arg name="static_linear_covariance" default="0.04"/>
     <arg name="static_angular_covariance" default="0.0009"/>

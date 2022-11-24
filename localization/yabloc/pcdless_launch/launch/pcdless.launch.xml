@@ -10,7 +10,7 @@
     <arg name="max_segment_distance" default="50.0"/>
     <arg name="max_lateral_distance" default="10.0"/>
     <arg name="initialpose_cov_xx_yy" default="[16.0,0.25]"/>
-    <arg name="rtk_enabled" default="true"/>
+    <arg name="ignore_less_than_float" default="true"/>
 
     <group>
         <push-ros-namespace namespace="localization"/>

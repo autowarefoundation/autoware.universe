@@ -9,12 +9,8 @@ namespace pcdless::modularized_particle_filter
 {
 GnssParticleCorrector::GnssParticleCorrector()
 : AbstCorrector("gnss_particle_corrector"),
-  float_range_gain_(declare_parameter("float_range_gain", 5.0f)),
-  likelihood_min_weight_(declare_parameter("likelihood_min_weight", 0.01f)),
-  likelihood_stdev_(declare_parameter("likelihood_stdev", 5.0f)),
-  likelihood_flat_radius_(declare_parameter("likelihood_flat_radius", 1.0f)),
-  rtk_enabled_(declare_parameter("rtk_enabled", true)),
-  gain_(declare_parameter("gain", 1.0f))
+  ignore_less_than_float_(declare_parameter("ignore_less_than_float", true)),
+  weight_manager_(this)
 {
   using std::placeholders::_1;
 
@@ -40,60 +36,50 @@ void GnssParticleCorrector::on_pose(const PoseCovStamped::ConstSharedPtr pose_ms
   Eigen::Vector3f position_vec3f;
   position_vec3f << position.x, position.y, position.z;
 
-  ParticleArray weighted_particles{weight_particles(
-    opt_particles.value(), position_vec3f, likelihood_stdev_, likelihood_flat_radius_)};
+  ParticleArray weighted_particles{weight_particles(opt_particles.value(), position_vec3f, true)};
   set_weighted_particle_array(weighted_particles);
 }
 
 void GnssParticleCorrector::on_ublox(const NavPVT::ConstSharedPtr ublox_msg)
 {
   const rclcpp::Time stamp = common::ublox_time_to_stamp(*ublox_msg);
+  const Eigen::Vector3f gnss_position = common::ublox_to_mgrs(*ublox_msg).cast<float>();
 
+  // Check measurement certainty
   const int FIX_FLAG = ublox_msgs::msg::NavPVT::CARRIER_PHASE_FIXED;
   const int FLOAT_FLAG = ublox_msgs::msg::NavPVT::CARRIER_PHASE_FLOAT;
-
-  if (rtk_enabled_) {
-    if (!(ublox_msg->flags & FIX_FLAG) & !(ublox_msg->flags & FLOAT_FLAG)) return;
+  const bool is_rtk_fixed = (ublox_msg->flags & FIX_FLAG);
+  if (ignore_less_than_float_) {
+    if (!(ublox_msg->flags & FIX_FLAG) & !(ublox_msg->flags & FLOAT_FLAG)) {
+      return;
+    }
   }
 
-  NavSatFix fix;
-  fix.latitude = ublox_msg->lat * 1e-7f;
-  fix.longitude = ublox_msg->lon * 1e-7f;
-  fix.altitude = ublox_msg->height * 1e-3f;
-
-  const bool is_rtk_fixed = (ublox_msg->flags & FIX_FLAG);
-
-  const Eigen::Vector3f position = common::fix_to_mgrs(fix).cast<float>();
-
-  publish_marker(position, is_rtk_fixed);
+  publish_marker(gnss_position, is_rtk_fixed);
 
   std::optional<ParticleArray> opt_particles = get_synchronized_particle_array(stamp);
   if (!opt_particles.has_value()) return;
-
   auto dt = (stamp - rclcpp::Time(opt_particles->header.stamp));
   if (std::abs(dt.seconds()) > 0.1) {
     RCLCPP_WARN_STREAM(
       get_logger(), "Timestamp gap between gnss and particles is too large: " << dt.seconds());
   }
 
-  float sigma = likelihood_stdev_;
-  float flat_radius = likelihood_flat_radius_;
-  if (!is_rtk_fixed) {
-    sigma *= float_range_gain_;
-    flat_radius *= float_range_gain_;
-  }
-
   ParticleArray weighted_particles{
-    weight_particles(opt_particles.value(), position, sigma, flat_radius)};
+    weight_particles(opt_particles.value(), gnss_position, is_rtk_fixed)};
 
-  geometry_msgs::msg::Pose meaned_pose = mean_pose(weighted_particles);
-  Eigen::Vector3f mean_position = common::pose_to_affine(meaned_pose).translation();
-  if ((mean_position - last_mean_position_).squaredNorm() > 1) {
-    this->set_weighted_particle_array(weighted_particles);
-    last_mean_position_ = mean_position;
-  } else {
-    RCLCPP_WARN_STREAM_THROTTLE(
-      get_logger(), *get_clock(), 2000, "Skip weighting because almost same positon");
+  // Compute travel distance from last update position
+  // If the distance is too short, skip weighting
+  {
+    geometry_msgs::msg::Pose meaned_pose = mean_pose(weighted_particles);
+    Eigen::Vector3f mean_position = common::pose_to_affine(meaned_pose).translation();
+    if ((mean_position - last_mean_position_).squaredNorm() > 1) {
+      this->set_weighted_particle_array(weighted_particles);
+      last_mean_position_ = mean_position;
+    } else {
+      RCLCPP_WARN_STREAM_THROTTLE(
+        get_logger(), *get_clock(), 2000, "Skip weighting because almost same positon");
+    }
   }
 }
 
@@ -124,56 +110,28 @@ void GnssParticleCorrector::publish_marker(const Eigen::Vector3f & position, boo
     marker.pose.position.y = position.y();
     marker.pose.position.z = latest_height_.data;
 
-    float prob = (1 - likelihood_min_weight_) * i / 4 + likelihood_min_weight_;
+    float prob = i / 4.0f;
     marker.color = common::color_scale::rainbow(prob);
-    marker.color.a = 0.3f;
+    marker.color.a = 0.5f;
     marker.scale.x = 0.1;
-    drawCircle(marker.points, inverse_normal_pdf(prob, is_rtk_fixed));
+    drawCircle(marker.points, weight_manager_.inverse_normal_pdf(prob, is_rtk_fixed));
     array_msg.markers.push_back(marker);
   }
   marker_pub_->publish(array_msg);
 }
 
 GnssParticleCorrector::ParticleArray GnssParticleCorrector::weight_particles(
-  const ParticleArray & predicted_particles, const Eigen::Vector3f & pose, float sigma,
-  float flat_radius)
+  const ParticleArray & predicted_particles, const Eigen::Vector3f & pose, bool is_rtk_fixed)
 {
   ParticleArray weighted_particles{predicted_particles};
 
-  for (int i{0}; i < static_cast<int>(predicted_particles.particles.size()); i++) {
-    float distance{static_cast<float>(std::hypot(
-      predicted_particles.particles[i].pose.position.x - pose.x(),
-      predicted_particles.particles[i].pose.position.y - pose.y()))};
-
-    if (distance < flat_radius)
-      weighted_particles.particles[i].weight = 1.0f * gain_;
-    else
-      weighted_particles.particles[i].weight =
-        gain_ * normal_pdf(distance - flat_radius, 0.0, sigma);
-
-    weighted_particles.particles[i].weight =
-      std::max(weighted_particles.particles[i].weight, likelihood_min_weight_);
+  for (auto & particle : weighted_particles.particles) {
+    float distance = static_cast<float>(
+      std::hypot(particle.pose.position.x - pose.x(), particle.pose.position.y - pose.y()));
+    particle.weight = weight_manager_.normal_pdf(distance, is_rtk_fixed);
   }
 
   return weighted_particles;
-}
-
-float GnssParticleCorrector::normal_pdf(float x, float mu, float sigma)
-{
-  // NOTE: This is not exact normal distribution because of no scale factor depending on sigma
-  float a = (x - mu) / sigma;
-  return std::exp(-0.5f * a * a);
-}
-
-float GnssParticleCorrector::inverse_normal_pdf(float prob, bool is_rtk_fixed) const
-{
-  float gain = (is_rtk_fixed) ? 1 : float_range_gain_;
-
-  if (prob > 1 - 1e-6f) return gain * likelihood_flat_radius_;
-  if (prob < likelihood_min_weight_)
-    return gain * likelihood_flat_radius_ +
-           likelihood_stdev_ * std::sqrt(-2.f * std::log(likelihood_min_weight_));
-  return gain * likelihood_flat_radius_ + likelihood_stdev_ * std::sqrt(-2.f * std::log(prob));
 }
 
 }  // namespace pcdless::modularized_particle_filter

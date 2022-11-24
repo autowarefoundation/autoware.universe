@@ -5,7 +5,7 @@
     <arg name="resized_info" default="/sensing/camera/undistorted/camera_info"/>
 
     <!-- segment_accumulator -->
-    <node name="accumulator" pkg="segment_accumulator" exec="segment_accumulator_node" output="screen" args="--ros-args --log-level warn">
+    <node name="accumulator" pkg="segment_accumulator" exec="segment_accumulator_node" output="screen" args="--ros-args --log-level info">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="default_map_value" value="10"/>
         <remap from="$(var src_image)" to="$(var resized_image)"/>
@@ -29,7 +29,8 @@
         <remap from="/localization/imgproc/predicted_particles" to="/localization/pf/predicted_particles"/>
         <remap from="/localization/imgproc/weighted_particles" to="/localization/pf/weighted_particles"/>
         <param name="score_min" value="00.0" />
-        <param name="score_max" value="50.0" />
+        <param name="score_max" value="70.0" />
+        <param name="print_statistics" value="true" />
     </node>
 
 </launch>
