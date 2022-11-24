@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef RADAR_STATIC_POINTCLOUD_FILTER__RADAR_STATIC_POINTCLOUD_FILTER_NODE_HPP__
-#define RADAR_STATIC_POINTCLOUD_FILTER__RADAR_STATIC_POINTCLOUD_FILTER_NODE_HPP__
+#ifndef RADAR_STATIC_POINTCLOUD_FILTER__RADAR_STATIC_POINTCLOUD_FILTER_NODE_HPP_
+#define RADAR_STATIC_POINTCLOUD_FILTER__RADAR_STATIC_POINTCLOUD_FILTER_NODE_HPP_
 
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
@@ -83,4 +83,4 @@ private:
 };
 }  // namespace radar_static_pointcloud_filter
 
-#endif  // RADAR_STATIC_POINTCLOUD_FILTER__RADAR_STATIC_POINTCLOUD_FILTER_NODE_HPP__
+#endif  // RADAR_STATIC_POINTCLOUD_FILTER__RADAR_STATIC_POINTCLOUD_FILTER_NODE_HPP_
