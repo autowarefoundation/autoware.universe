@@ -14,10 +14,10 @@
 #ifndef IMU_CORRECTOR__IMU_CORRECTOR_CORE_HPP_
 #define IMU_CORRECTOR__IMU_CORRECTOR_CORE_HPP_
 
+#include "tier4_autoware_utils/ros/transform_listener.hpp"
+
 #include <rclcpp/rclcpp.hpp>
-
 #include <sensor_msgs/msg/imu.hpp>
-
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
@@ -46,8 +46,7 @@ private:
   double angular_velocity_stddev_yy_;
   double angular_velocity_stddev_zz_;
 
-  tf2_ros::Buffer tf_buffer_;
-  tf2_ros::TransformListener tf_listener_;
+  std::shared_ptr<tier4_autoware_utils::TransformListener> transform_listener_;
 
   std::string output_frame_;
 };

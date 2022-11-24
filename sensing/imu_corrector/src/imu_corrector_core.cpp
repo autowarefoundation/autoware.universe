@@ -20,10 +20,10 @@ namespace imu_corrector
 {
 ImuCorrector::ImuCorrector(const rclcpp::NodeOptions & node_options)
 : Node("imu_corrector", node_options),
-  tf_buffer_(this->get_clock()),
-  tf_listener_(tf_buffer_),
   output_frame_(declare_parameter<std::string>("base_link", "base_link"))
 {
+  transform_listener_ = std::make_shared<tier4_autoware_utils::TransformListener>(this);
+
   angular_velocity_offset_x_ = declare_parameter<double>("angular_velocity_offset_x", 0.0);
   angular_velocity_offset_y_ = declare_parameter<double>("angular_velocity_offset_y", 0.0);
   angular_velocity_offset_z_ = declare_parameter<double>("angular_velocity_offset_z", 0.0);
@@ -55,9 +55,20 @@ void ImuCorrector::callbackImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_m
   imu_msg.angular_velocity_covariance[IDX::Z_Z] =
     angular_velocity_stddev_zz_ * angular_velocity_stddev_zz_;
 
-  geometry_msgs::msg::TransformStamped::SharedPtr tf_base2imu_ptr =
-    std::make_shared<geometry_msgs::msg::TransformStamped>();
-  getTransform(output_frame_, imu_msg.header.frame_id, tf_base2imu_ptr);
+  // geometry_msgs::msg::TransformStamped::SharedPtr tf_base2imu_ptr =
+  //   std::make_shared<geometry_msgs::msg::TransformStamped>();
+  // getTransform(output_frame_, imu_msg.header.frame_id, tf_base2imu_ptr);
+
+  geometry_msgs::msg::TransformStamped::ConstSharedPtr tf_base2imu_ptr;
+  try {
+    tf_base2imu_ptr = transform_listener_->getLatestTransform(
+      output_frame_, imu_msg.header.frame_id);
+  } catch (tf2::TransformException & ex) {
+    RCLCPP_WARN(this->get_logger(), "%s", ex.what());
+    RCLCPP_ERROR(
+      this->get_logger(), "Please publish TF %s to %s", output_frame_.c_str(), (imu_msg.header.frame_id).c_str());
+    return;
+  }
 
   geometry_msgs::msg::Vector3Stamped acceleration;
   acceleration.header = imu_msg.header;
@@ -82,46 +93,6 @@ void ImuCorrector::callbackImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_m
   imu_pub_->publish(imu_msg);
 }
 
-bool ImuCorrector::getTransform(
-  const std::string & target_frame, const std::string & source_frame,
-  const geometry_msgs::msg::TransformStamped::SharedPtr transform_stamped_ptr)
-{
-  if (target_frame == source_frame) {
-    transform_stamped_ptr->header.stamp = this->get_clock()->now();
-    transform_stamped_ptr->header.frame_id = target_frame;
-    transform_stamped_ptr->child_frame_id = source_frame;
-    transform_stamped_ptr->transform.translation.x = 0.0;
-    transform_stamped_ptr->transform.translation.y = 0.0;
-    transform_stamped_ptr->transform.translation.z = 0.0;
-    transform_stamped_ptr->transform.rotation.x = 0.0;
-    transform_stamped_ptr->transform.rotation.y = 0.0;
-    transform_stamped_ptr->transform.rotation.z = 0.0;
-    transform_stamped_ptr->transform.rotation.w = 1.0;
-    return true;
-  }
-
-  try {
-    *transform_stamped_ptr =
-      tf_buffer_.lookupTransform(target_frame, source_frame, tf2::TimePointZero);
-  } catch (tf2::TransformException & ex) {
-    RCLCPP_WARN(this->get_logger(), "%s", ex.what());
-    RCLCPP_ERROR(
-      this->get_logger(), "Please publish TF %s to %s", target_frame.c_str(), source_frame.c_str());
-
-    transform_stamped_ptr->header.stamp = this->get_clock()->now();
-    transform_stamped_ptr->header.frame_id = target_frame;
-    transform_stamped_ptr->child_frame_id = source_frame;
-    transform_stamped_ptr->transform.translation.x = 0.0;
-    transform_stamped_ptr->transform.translation.y = 0.0;
-    transform_stamped_ptr->transform.translation.z = 0.0;
-    transform_stamped_ptr->transform.rotation.x = 0.0;
-    transform_stamped_ptr->transform.rotation.y = 0.0;
-    transform_stamped_ptr->transform.rotation.z = 0.0;
-    transform_stamped_ptr->transform.rotation.w = 1.0;
-    return false;
-  }
-  return true;
-}
 
 }  // namespace imu_corrector
 
