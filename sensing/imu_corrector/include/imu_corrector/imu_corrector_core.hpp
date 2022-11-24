@@ -17,6 +17,8 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <sensor_msgs/msg/imu.hpp>
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
 
 namespace imu_corrector
 {
@@ -27,6 +29,9 @@ public:
 
 private:
   void callbackImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg_ptr);
+  bool getTransform(
+    const std::string & target_frame, const std::string & source_frame,
+    const geometry_msgs::msg::TransformStamped::SharedPtr transform_stamped_ptr);
 
   rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;
 
@@ -39,6 +44,11 @@ private:
   double angular_velocity_stddev_xx_;
   double angular_velocity_stddev_yy_;
   double angular_velocity_stddev_zz_;
+
+  tf2_ros::Buffer tf_buffer_;
+  tf2_ros::TransformListener tf_listener_;
+
+  std::string output_frame_;
 };
 }  // namespace imu_corrector
 
