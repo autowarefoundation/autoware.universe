@@ -128,10 +128,16 @@ rcl_interfaces::msg::SetParametersResult RadarStaticPointcloudFilterNode::onSetP
 void RadarStaticPointcloudFilterNode::onData(
   const RadarScan::ConstSharedPtr radar_msg, const Odometry::ConstSharedPtr odom_msg)
 {
-  geometry_msgs::msg::TransformStamped::ConstSharedPtr transform_ =
-    transform_listener_->getTransform(
+  geometry_msgs::msg::TransformStamped::ConstSharedPtr transform;
+
+  try {
+    transform = transform_listener_->getTransform(
       odom_msg->header.frame_id, radar_msg->header.frame_id, odom_msg->header.stamp,
       rclcpp::Duration::from_seconds(0.01));
+  } catch (tf2::TransformException & ex) {
+    RCLCPP_INFO(this->get_logger(), "Could not transform");
+    return;
+  }
 
   RadarScan static_radar_{};
   RadarScan dynamic_radar_{};
@@ -139,7 +145,7 @@ void RadarStaticPointcloudFilterNode::onData(
   dynamic_radar_.header = radar_msg->header;
 
   for (const auto & radar_return : radar_msg->returns) {
-    if (isStaticPointcloud(radar_return, odom_msg, transform_)) {
+    if (isStaticPointcloud(radar_return, odom_msg, transform)) {
       static_radar_.returns.emplace_back(radar_return);
     } else {
       dynamic_radar_.returns.emplace_back(radar_return);
