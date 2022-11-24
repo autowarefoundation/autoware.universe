@@ -86,7 +86,7 @@ public:
     const Pose & start_checkpoint, const Pose & goal_checkpoint,
     lanelet::ConstLanelets * path_lanelets) const;
   std::vector<HADMapSegment> createMapSegments(const lanelet::ConstLanelets & path_lanelets) const;
-  bool isRouteLooped(const RouteSections & route_sections) const;
+  static bool isRouteLooped(const RouteSections & route_sections);
 
   // for goal
   bool isInGoalRouteSection(const lanelet::ConstLanelet & lanelet) const;
@@ -123,6 +123,7 @@ public:
   boost::optional<lanelet::ConstLanelet> getLeftLanelet(
     const lanelet::ConstLanelet & lanelet) const;
   lanelet::ConstLanelets getNextLanelets(const lanelet::ConstLanelet & lanelet) const;
+  lanelet::ConstLanelets getPreviousLanelets(const lanelet::ConstLanelet & lanelet) const;
 
   /**
    * @brief Check if opposite-direction lane is available at the right side of the lanelet
@@ -144,19 +145,23 @@ public:
    * @brief Searches and return all lanelet on the left that shares same linestring
    * @param the lanelet of interest
    * @param (optional) flag to include the lane with opposite direction
+   * @param (optional) flag to invert the opposite lanelet
    * @return vector of lanelet that is connected via share linestring
    */
   lanelet::ConstLanelets getAllLeftSharedLinestringLanelets(
-    const lanelet::ConstLanelet & lane, const bool & include_opposite) const noexcept;
+    const lanelet::ConstLanelet & lane, const bool & include_opposite,
+    const bool & invert_opposite = false) const noexcept;
 
   /**
    * @brief Searches and return all lanelet on the right that shares same linestring
    * @param the lanelet of interest
    * @param (optional) flag to include the lane with opposite direction
+   * @param (optional) flag to invert the opposite lanelet
    * @return vector of lanelet that is connected via share linestring
    */
   lanelet::ConstLanelets getAllRightSharedLinestringLanelets(
-    const lanelet::ConstLanelet & lane, const bool & include_opposite) const noexcept;
+    const lanelet::ConstLanelet & lane, const bool & include_opposite,
+    const bool & invert_opposite = false) const noexcept;
 
   /**
    * @brief Searches and return all lanelet (left and right) that shares same linestring
@@ -164,11 +169,12 @@ public:
    * @param (optional) flag to search only right side
    * @param (optional) flag to search only left side
    * @param (optional) flag to include the lane with opposite direction
+   * @param (optional) flag to invert the opposite lanelet
    * @return vector of lanelet that is connected via share linestring
    */
   lanelet::ConstLanelets getAllSharedLineStringLanelets(
     const lanelet::ConstLanelet & current_lane, bool is_right = true, bool is_left = true,
-    bool is_opposite = true) const noexcept;
+    bool is_opposite = true, const bool & invert_opposite = false) const noexcept;
 
   /**
    * @brief Searches the furthest linestring to the right side of the lanelet
@@ -222,7 +228,7 @@ public:
   bool getClosestLaneletWithinRoute(
     const Pose & search_pose, lanelet::ConstLanelet * closest_lanelet) const;
   lanelet::ConstLanelet getLaneletsFromId(const lanelet::Id id) const;
-  lanelet::ConstLanelets getLaneletsFromIds(const lanelet::Ids ids) const;
+  lanelet::ConstLanelets getLaneletsFromIds(const lanelet::Ids & ids) const;
   lanelet::ConstLanelets getLaneletSequence(
     const lanelet::ConstLanelet & lanelet, const Pose & current_pose,
     const double backward_distance, const double forward_distance) const;
@@ -247,12 +253,12 @@ public:
     bool use_exact = true) const;
   bool getLaneChangeTarget(
     const lanelet::ConstLanelets & lanelets, lanelet::ConstLanelet * target_lanelet) const;
-  bool getPullOverTarget(
+  static bool getPullOverTarget(
     const lanelet::ConstLanelets & lanelets, const Pose & goal_pose,
-    lanelet::ConstLanelet * target_lanelet) const;
-  bool getPullOutStartLane(
+    lanelet::ConstLanelet * target_lanelet);
+  static bool getPullOutStartLane(
     const lanelet::ConstLanelets & lanelets, const Pose & pose, const double vehicle_width,
-    lanelet::ConstLanelet * target_lanelet) const;
+    lanelet::ConstLanelet * target_lanelet);
   double getLaneChangeableDistance(
     const Pose & current_pose, const LaneChangeDirection & direction) const;
   lanelet::ConstPolygon3d getIntersectionAreaById(const lanelet::Id id) const;

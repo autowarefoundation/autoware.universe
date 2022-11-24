@@ -67,6 +67,8 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   hazard_signal_publisher_ = create_publisher<HazardLightsCommand>("~/output/hazard_lights_cmd", 1);
   debug_avoidance_msg_array_publisher_ =
     create_publisher<AvoidanceDebugMsgArray>("~/debug/avoidance_debug_message_array", 1);
+  debug_lane_change_msg_array_publisher_ =
+    create_publisher<LaneChangeDebugMsgArray>("~/debug/lane_change_debug_message_array", 1);
 
   if (planner_data_->parameters.visualize_drivable_area_for_shared_linestrings_lanelet) {
     debug_drivable_area_lanelets_publisher_ =
@@ -144,9 +146,14 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
 
   // turn signal decider
   {
-    double intersection_search_distance{declare_parameter("intersection_search_distance", 30.0)};
+    const double turn_signal_intersection_search_distance =
+      planner_data_->parameters.turn_signal_intersection_search_distance;
+    const double turn_signal_intersection_angle_threshold_deg =
+      planner_data_->parameters.turn_signal_intersection_angle_threshold_deg;
+    const double turn_signal_search_time = planner_data_->parameters.turn_signal_search_time;
     turn_signal_decider_.setParameters(
-      planner_data_->parameters.base_link2front, intersection_search_distance);
+      planner_data_->parameters.base_link2front, turn_signal_intersection_search_distance,
+      turn_signal_search_time, turn_signal_intersection_angle_threshold_deg);
   }
 
   steering_factor_interface_ptr_ = std::make_unique<SteeringFactorInterface>(this, "intersection");
@@ -205,9 +212,15 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   p.drivable_lane_margin = declare_parameter<double>("drivable_lane_margin");
   p.drivable_area_margin = declare_parameter<double>("drivable_area_margin");
   p.refine_goal_search_radius_range = declare_parameter("refine_goal_search_radius_range", 7.5);
-  p.turn_light_on_threshold_dis_lat = declare_parameter("turn_light_on_threshold_dis_lat", 0.3);
-  p.turn_light_on_threshold_dis_long = declare_parameter("turn_light_on_threshold_dis_long", 10.0);
-  p.turn_light_on_threshold_time = declare_parameter("turn_light_on_threshold_time", 3.0);
+  p.turn_signal_intersection_search_distance =
+    declare_parameter("turn_signal_intersection_search_distance", 30.0);
+  p.turn_signal_intersection_angle_threshold_deg =
+    declare_parameter("turn_signal_intersection_angle_threshold_deg", 15.0);
+  p.turn_signal_minimum_search_distance =
+    declare_parameter("turn_signal_minimum_search_distance", 10.0);
+  p.turn_signal_search_time = declare_parameter("turn_signal_search_time", 3.0);
+  p.turn_signal_shift_length_threshold =
+    declare_parameter("turn_signal_shift_length_threshold", 0.3);
   p.path_interval = declare_parameter<double>("path_interval");
   p.visualize_drivable_area_for_shared_linestrings_lanelet =
     declare_parameter("visualize_drivable_area_for_shared_linestrings_lanelet", true);
@@ -238,6 +251,8 @@ SideShiftParameters BehaviorPathPlannerNode::getSideShiftParam()
   p.min_shifting_distance = dp("min_shifting_distance", 5.0);
   p.min_shifting_speed = dp("min_shifting_speed", 5.56);
   p.shift_request_time_limit = dp("shift_request_time_limit", 1.0);
+  p.drivable_area_right_bound_offset = dp("drivable_area_right_bound_offset", 0.0);
+  p.drivable_area_left_bound_offset = dp("drivable_area_left_bound_offset", 0.0);
 
   return p;
 }
@@ -259,8 +274,10 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
 
   p.threshold_distance_object_is_on_center = dp("threshold_distance_object_is_on_center", 1.0);
   p.threshold_speed_object_is_stopped = dp("threshold_speed_object_is_stopped", 1.0);
+  p.threshold_time_object_is_moving = dp("threshold_time_object_is_moving", 1.0);
   p.object_check_forward_distance = dp("object_check_forward_distance", 150.0);
   p.object_check_backward_distance = dp("object_check_backward_distance", 2.0);
+  p.object_envelope_buffer = dp("object_envelope_buffer", 0.1);
   p.lateral_collision_margin = dp("lateral_collision_margin", 2.0);
   p.lateral_collision_safety_buffer = dp("lateral_collision_safety_buffer", 0.5);
 
@@ -300,6 +317,9 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
   p.avoid_motorcycle = dp("target_object.motorcycle", false);
   p.avoid_pedestrian = dp("target_object.pedestrian", false);
 
+  p.drivable_area_right_bound_offset = dp("drivable_area_right_bound_offset", 0.0);
+  p.drivable_area_left_bound_offset = dp("drivable_area_left_bound_offset", 0.0);
+
   p.avoidance_execution_lateral_threshold = dp("avoidance_execution_lateral_threshold", 0.499);
 
   return p;
@@ -308,9 +328,10 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
 LaneFollowingParameters BehaviorPathPlannerNode::getLaneFollowingParam()
 {
   LaneFollowingParameters p{};
-  p.expand_drivable_area = declare_parameter("lane_following.expand_drivable_area", false);
-  p.right_bound_offset = declare_parameter("lane_following.right_bound_offset", 0.5);
-  p.left_bound_offset = declare_parameter("lane_following.left_bound_offset", 0.5);
+  p.drivable_area_right_bound_offset =
+    declare_parameter("lane_following.drivable_area_right_bound_offset", 0.0);
+  p.drivable_area_left_bound_offset =
+    declare_parameter("lane_following.drivable_area_left_bound_offset", 0.0);
   p.lane_change_prepare_duration =
     declare_parameter("lane_following.lane_change_prepare_duration", 2.0);
   return p;
@@ -341,6 +362,8 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
   p.use_predicted_path_outside_lanelet = dp("use_predicted_path_outside_lanelet", true);
   p.use_all_predicted_path = dp("use_all_predicted_path", true);
   p.publish_debug_marker = dp("publish_debug_marker", false);
+  p.drivable_area_right_bound_offset = dp("drivable_area_right_bound_offset", 0.0);
+  p.drivable_area_left_bound_offset = dp("drivable_area_left_bound_offset", 0.0);
 
   // validation of parameters
   if (p.lane_change_sampling_num < 1) {
@@ -382,9 +405,13 @@ PullOverParameters BehaviorPathPlannerNode::getPullOverParam()
   p.forward_goal_search_length = dp("forward_goal_search_length", 20.0);
   p.backward_goal_search_length = dp("backward_goal_search_length", 20.0);
   p.goal_search_interval = dp("goal_search_interval", 5.0);
-  p.goal_to_obstacle_margin = dp("goal_to_obstacle_margin", 2.0);
+  p.longitudinal_margin = dp("longitudinal_margin", 3.0);
+  p.max_lateral_offset = dp("max_lateral_offset", 1.0);
+  p.lateral_offset_interval = dp("lateral_offset_interval", 0.25);
   // occupancy grid map
   p.use_occupancy_grid = dp("use_occupancy_grid", true);
+  p.use_occupancy_grid_for_longitudinal_margin =
+    dp("use_occupancy_grid_for_longitudinal_margin", false);
   p.occupancy_grid_collision_check_margin = dp("occupancy_grid_collision_check_margin", 0.0);
   p.theta_size = dp("theta_size", 360);
   p.obstacle_threshold = dp("obstacle_threshold", 90);
@@ -426,6 +453,9 @@ PullOverParameters BehaviorPathPlannerNode::getPullOverParam()
   p.enable_collision_check_at_prepare_phase = dp("enable_collision_check_at_prepare_phase", true);
   p.use_predicted_path_outside_lanelet = dp("use_predicted_path_outside_lanelet", true);
   p.use_all_predicted_path = dp("use_all_predicted_path", false);
+  // drivable area
+  p.drivable_area_right_bound_offset = dp("drivable_area_right_bound_offset", 0.0);
+  p.drivable_area_left_bound_offset = dp("drivable_area_left_bound_offset", 0.0);
   // debug
   p.print_debug_info = dp("print_debug_info", false);
 
@@ -485,6 +515,9 @@ PullOutParameters BehaviorPathPlannerNode::getPullOutParam()
   p.max_back_distance = dp("max_back_distance", 15.0);
   p.backward_search_resolution = dp("backward_search_resolution", 2.0);
   p.backward_path_update_duration = dp("backward_path_update_duration", 3.0);
+  // drivable area
+  p.drivable_area_right_bound_offset = dp("drivable_area_right_bound_offset", 0.0);
+  p.drivable_area_left_bound_offset = dp("drivable_area_left_bound_offset", 0.0);
 
   // validation of parameters
   if (p.pull_out_sampling_num < 1) {
@@ -606,10 +639,8 @@ void BehaviorPathPlannerNode::run()
       turn_signal.command = TurnIndicatorsCommand::DISABLE;
       hazard_signal.command = output.turn_signal_info.hazard_signal.command;
     } else {
-      const size_t ego_seg_idx = findEgoSegmentIndex(path->points);
-      turn_signal = turn_signal_decider_.getTurnSignal(
-        *path, planner_data->self_pose->pose, ego_seg_idx, *(planner_data->route_handler),
-        output.turn_signal_info.turn_signal, output.turn_signal_info.signal_distance);
+      turn_signal =
+        turn_signal_decider_.getTurnSignal(planner_data, *path, output.turn_signal_info);
       hazard_signal.command = HazardLightsCommand::DISABLE;
     }
     turn_signal.stamp = get_clock()->now();
@@ -620,8 +651,7 @@ void BehaviorPathPlannerNode::run()
     publish_steering_factor(turn_signal);
   }
 
-  // for debug
-  debug_avoidance_msg_array_publisher_->publish(bt_manager_->getAvoidanceDebugMsgArray());
+  publishSceneModuleDebugMsg();
 
   if (planner_data->parameters.visualize_drivable_area_for_shared_linestrings_lanelet) {
     const auto drivable_area_lines = marker_utils::createFurthestLineStringMarkerArray(
@@ -661,6 +691,22 @@ void BehaviorPathPlannerNode::publish_steering_factor(const TurnIndicatorsComman
     steering_factor_interface_ptr_->clearSteeringFactors();
   }
   steering_factor_interface_ptr_->publishSteeringFactor(get_clock()->now());
+}
+
+void BehaviorPathPlannerNode::publishSceneModuleDebugMsg()
+{
+  {
+    const auto debug_messages_data_ptr = bt_manager_->getAllSceneModuleDebugMsgData();
+    const auto avoidance_debug_message = debug_messages_data_ptr->getAvoidanceModuleDebugMsg();
+    if (avoidance_debug_message) {
+      debug_avoidance_msg_array_publisher_->publish(*avoidance_debug_message);
+    }
+
+    const auto lane_change_debug_message = debug_messages_data_ptr->getLaneChangeModuleDebugMsg();
+    if (lane_change_debug_message) {
+      debug_lane_change_msg_array_publisher_->publish(*lane_change_debug_message);
+    }
+  }
 }
 
 PathWithLaneId::SharedPtr BehaviorPathPlannerNode::getPath(

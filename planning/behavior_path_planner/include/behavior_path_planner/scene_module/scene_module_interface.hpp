@@ -16,9 +16,11 @@
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SCENE_MODULE_INTERFACE_HPP_
 
 #include "behavior_path_planner/data_manager.hpp"
+#include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
 #include "behavior_path_planner/utilities.hpp"
 
 #include <behavior_path_planner/steering_factor_interface.hpp>
+#include <behavior_path_planner/turn_signal_decider.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <route_handler/route_handler.hpp>
 #include <rtc_interface/rtc_interface.hpp>
@@ -52,23 +54,6 @@ using tier4_planning_msgs::msg::AvoidanceDebugMsgArray;
 using unique_identifier_msgs::msg::UUID;
 using visualization_msgs::msg::MarkerArray;
 using PlanResult = PathWithLaneId::SharedPtr;
-
-struct TurnSignalInfo
-{
-  TurnSignalInfo()
-  {
-    turn_signal.command = TurnIndicatorsCommand::NO_COMMAND;
-    hazard_signal.command = HazardLightsCommand::NO_COMMAND;
-  }
-
-  // desired turn signal
-  TurnIndicatorsCommand turn_signal;
-  HazardLightsCommand hazard_signal;
-
-  // TODO(Horibe) replace with point. Distance should be calculates in turn_signal_decider.
-  // distance to the turn signal trigger point (to choose nearest signal for multiple requests)
-  double signal_distance{std::numeric_limits<double>::max()};
-};
 
 struct BehaviorModuleOutput
 {
@@ -241,14 +226,24 @@ public:
 
   std::shared_ptr<const PlannerData> planner_data_;
 
-  AvoidanceDebugMsgArray::SharedPtr getAvoidanceDebugMsgArray()
-  {
-    if (debug_avoidance_msg_array_ptr_) {
-      debug_avoidance_msg_array_ptr_->header.stamp = clock_->now();
-    }
-    return debug_avoidance_msg_array_ptr_;
-  }
   bool isWaitingApproval() const { return is_waiting_approval_; }
+
+  virtual void lockRTCCommand()
+  {
+    if (!rtc_interface_ptr_) {
+      return;
+    }
+    rtc_interface_ptr_->lockCommandUpdate();
+  }
+
+  virtual void unlockRTCCommand()
+  {
+    if (!rtc_interface_ptr_) {
+      return;
+    }
+    rtc_interface_ptr_->unlockCommandUpdate();
+  }
+  virtual void acceptVisitor(const std::shared_ptr<SceneModuleVisitor> & visitor) const = 0;
 
 private:
   std::string name_;
@@ -257,7 +252,6 @@ private:
 protected:
   rclcpp::Clock::SharedPtr clock_;
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_debug_marker_;
-  mutable AvoidanceDebugMsgArray::SharedPtr debug_avoidance_msg_array_ptr_{};
   mutable MarkerArray debug_marker_;
 
   std::shared_ptr<RTCInterface> rtc_interface_ptr_;

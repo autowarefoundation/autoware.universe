@@ -24,7 +24,7 @@
 
 namespace marker_utils::avoidance_marker
 {
-using behavior_path_planner::AvoidPoint;
+using behavior_path_planner::AvoidLine;
 using behavior_path_planner::util::shiftPose;
 using tier4_autoware_utils::createDefaultMarker;
 using tier4_autoware_utils::createMarkerColor;
@@ -32,21 +32,21 @@ using tier4_autoware_utils::createMarkerScale;
 using tier4_autoware_utils::createPoint;
 using visualization_msgs::msg::Marker;
 
-MarkerArray createAvoidPointMarkerArray(
-  const AvoidPointArray & shift_points, std::string && ns, const float & r, const float & g,
+MarkerArray createAvoidLineMarkerArray(
+  const AvoidLineArray & shift_lines, std::string && ns, const float & r, const float & g,
   const float & b, const double & w)
 {
-  AvoidPointArray shift_points_local = shift_points;
-  if (shift_points_local.empty()) {
-    shift_points_local.push_back(AvoidPoint());
+  AvoidLineArray shift_lines_local = shift_lines;
+  if (shift_lines_local.empty()) {
+    shift_lines_local.push_back(AvoidLine());
   }
 
   int32_t id{0};
   const auto current_time = rclcpp::Clock{RCL_ROS_TIME}.now();
   MarkerArray msg;
 
-  for (const auto & sp : shift_points_local) {
-    // ROS_ERROR("sp: s = (%f, %f), g = (%f, %f)", sp.start.x, sp.start.y, sp.end.x, sp.end.y);
+  for (const auto & sl : shift_lines_local) {
+    // ROS_ERROR("sl: s = (%f, %f), g = (%f, %f)", sl.start.x, sl.start.y, sl.end.x, sl.end.y);
     Marker basic_marker = createDefaultMarker(
       "map", current_time, ns, 0L, Marker::CUBE, createMarkerScale(0.5, 0.5, 0.5),
       createMarkerColor(r, g, b, 0.9));
@@ -55,16 +55,16 @@ MarkerArray createAvoidPointMarkerArray(
       // start point
       auto marker_s = basic_marker;
       marker_s.id = id++;
-      marker_s.pose = sp.start;
+      marker_s.pose = sl.start;
       // shiftPose(&marker_s.pose, current_shift);  // old
-      shiftPose(&marker_s.pose, sp.start_length);
+      shiftPose(&marker_s.pose, sl.start_shift_length);
       msg.markers.push_back(marker_s);
 
       // end point
       auto marker_e = basic_marker;
       marker_e.id = id++;
-      marker_e.pose = sp.end;
-      shiftPose(&marker_e.pose, sp.length);
+      marker_e.pose = sl.end;
+      shiftPose(&marker_e.pose, sl.end_shift_length);
       msg.markers.push_back(marker_e);
 
       // start-to-end line
@@ -82,23 +82,93 @@ MarkerArray createAvoidPointMarkerArray(
   return msg;
 }
 
-MarkerArray createAvoidanceObjectsMarkerArray(
+MarkerArray createTargetObjectsMarkerArray(
   const behavior_path_planner::ObjectDataArray & objects, std::string && ns)
 {
   const auto normal_color = tier4_autoware_utils::createMarkerColor(0.9, 0.0, 0.0, 0.8);
   const auto disappearing_color = tier4_autoware_utils::createMarkerColor(0.9, 0.5, 0.9, 0.6);
 
-  Marker marker = createDefaultMarker(
-    "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, 0L, Marker::CUBE,
-    createMarkerScale(3.0, 1.5, 1.5), normal_color);
-  int32_t i{0};
+  const auto uuid_to_id = [](const unique_identifier_msgs::msg::UUID & object_id) {
+    int32_t ret = 0;
+
+    for (size_t i = 0; i < sizeof(int32_t) / sizeof(int8_t); ++i) {
+      ret <<= sizeof(int8_t);
+      ret |= object_id.uuid.at(i);
+    }
+
+    return ret;
+  };
+
   MarkerArray msg;
-  for (const auto & object : objects) {
-    marker.id = ++i;
-    marker.pose = object.object.kinematics.initial_pose_with_covariance.pose;
-    marker.scale = tier4_autoware_utils::createMarkerScale(3.0, 1.5, 1.5);
-    marker.color = std::fabs(object.lost_time) < 1e-2 ? normal_color : disappearing_color;
-    msg.markers.push_back(marker);
+  msg.markers.reserve(objects.size() * 2);
+
+  {
+    auto marker = createDefaultMarker(
+      "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, 0L, Marker::CUBE,
+      createMarkerScale(3.0, 1.5, 1.5), normal_color);
+    for (const auto & object : objects) {
+      marker.id = uuid_to_id(object.object.object_id);
+      marker.pose = object.object.kinematics.initial_pose_with_covariance.pose;
+      marker.scale = tier4_autoware_utils::createMarkerScale(3.0, 1.5, 1.5);
+      marker.color = std::fabs(object.lost_time) < 1e-2 ? normal_color : disappearing_color;
+      msg.markers.push_back(marker);
+    }
+  }
+
+  {
+    for (const auto & object : objects) {
+      const auto pos = object.object.kinematics.initial_pose_with_covariance.pose.position;
+
+      {
+        auto marker = createDefaultMarker(
+          "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns + "_envelope_polygon", 0L,
+          Marker::LINE_STRIP, createMarkerScale(0.1, 0.0, 0.0),
+          createMarkerColor(1.0, 1.0, 1.0, 0.999));
+
+        for (const auto & p : object.envelope_poly.outer()) {
+          marker.points.push_back(createPoint(p.x(), p.y(), pos.z));
+        }
+
+        marker.points.push_back(marker.points.front());
+        marker.id = uuid_to_id(object.object.object_id);
+        msg.markers.push_back(marker);
+      }
+    }
+  }
+
+  return msg;
+}
+
+MarkerArray createOtherObjectsMarkerArray(
+  const behavior_path_planner::ObjectDataArray & objects, std::string && ns)
+{
+  const auto normal_color = tier4_autoware_utils::createMarkerColor(0.0, 1.0, 0.0, 0.8);
+
+  const auto uuid_to_id = [](const unique_identifier_msgs::msg::UUID & object_id) {
+    int32_t ret = 0;
+
+    for (size_t i = 0; i < sizeof(int32_t) / sizeof(int8_t); ++i) {
+      ret <<= sizeof(int8_t);
+      ret |= object_id.uuid.at(i);
+    }
+
+    return ret;
+  };
+
+  MarkerArray msg;
+  msg.markers.reserve(objects.size());
+
+  {
+    Marker marker = createDefaultMarker(
+      "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, 0L, Marker::CUBE,
+      createMarkerScale(3.0, 1.5, 1.5), normal_color);
+    for (const auto & object : objects) {
+      marker.id = uuid_to_id(object.object.object_id);
+      marker.pose = object.object.kinematics.initial_pose_with_covariance.pose;
+      marker.scale = tier4_autoware_utils::createMarkerScale(3.0, 1.5, 1.5);
+      marker.color = normal_color;
+      msg.markers.push_back(marker);
+    }
   }
 
   return msg;
@@ -162,30 +232,30 @@ MarkerArray createOverhangFurthestLineStringMarkerArray(
 }
 }  // namespace marker_utils::avoidance_marker
 
-std::string toStrInfo(const behavior_path_planner::ShiftPointArray & sp_arr)
+std::string toStrInfo(const behavior_path_planner::ShiftLineArray & sl_arr)
 {
-  if (sp_arr.empty()) {
+  if (sl_arr.empty()) {
     return "point is empty";
   }
   std::stringstream ss;
-  for (const auto & sp : sp_arr) {
-    ss << std::endl << toStrInfo(sp);
+  for (const auto & sl : sl_arr) {
+    ss << std::endl << toStrInfo(sl);
   }
   return ss.str();
 }
 
-std::string toStrInfo(const behavior_path_planner::ShiftPoint & sp)
+std::string toStrInfo(const behavior_path_planner::ShiftLine & sl)
 {
-  const auto & ps = sp.start.position;
-  const auto & pe = sp.end.position;
+  const auto & ps = sl.start.position;
+  const auto & pe = sl.end.position;
   std::stringstream ss;
-  ss << "shift length: " << sp.length << ", start_idx: " << sp.start_idx
-     << ", end_idx: " << sp.end_idx << ", start: (" << ps.x << ", " << ps.y << "), end: (" << pe.x
+  ss << "shift length: " << sl.end_shift_length << ", start_idx: " << sl.start_idx
+     << ", end_idx: " << sl.end_idx << ", start: (" << ps.x << ", " << ps.y << "), end: (" << pe.x
      << ", " << pe.y << ")";
   return ss.str();
 }
 
-std::string toStrInfo(const behavior_path_planner::AvoidPointArray & ap_arr)
+std::string toStrInfo(const behavior_path_planner::AvoidLineArray & ap_arr)
 {
   if (ap_arr.empty()) {
     return "point is empty";
@@ -196,7 +266,7 @@ std::string toStrInfo(const behavior_path_planner::AvoidPointArray & ap_arr)
   }
   return ss.str();
 }
-std::string toStrInfo(const behavior_path_planner::AvoidPoint & ap)
+std::string toStrInfo(const behavior_path_planner::AvoidLine & ap)
 {
   std::stringstream pids;
   for (const auto pid : ap.parent_ids) {
@@ -205,11 +275,11 @@ std::string toStrInfo(const behavior_path_planner::AvoidPoint & ap)
   const auto & ps = ap.start.position;
   const auto & pe = ap.end.position;
   std::stringstream ss;
-  ss << "id = " << ap.id << ", shift length: " << ap.length << ", start_idx: " << ap.start_idx
-     << ", end_idx: " << ap.end_idx << ", start_dist = " << ap.start_longitudinal
-     << ", end_dist = " << ap.end_longitudinal << ", start_length: " << ap.start_length
-     << ", start: (" << ps.x << ", " << ps.y << "), end: (" << pe.x << ", " << pe.y
-     << "), relative_length: " << ap.getRelativeLength() << ", grad = " << ap.getGradient()
-     << ", parent_ids = [" << pids.str() << "]";
+  ss << "id = " << ap.id << ", shift length: " << ap.end_shift_length
+     << ", start_idx: " << ap.start_idx << ", end_idx: " << ap.end_idx
+     << ", start_dist = " << ap.start_longitudinal << ", end_dist = " << ap.end_longitudinal
+     << ", start_shift_length: " << ap.start_shift_length << ", start: (" << ps.x << ", " << ps.y
+     << "), end: (" << pe.x << ", " << pe.y << "), relative_length: " << ap.getRelativeLength()
+     << ", grad = " << ap.getGradient() << ", parent_ids = [" << pids.str() << "]";
   return ss.str();
 }

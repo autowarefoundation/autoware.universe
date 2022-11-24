@@ -15,6 +15,7 @@
 #ifndef EKF_LOCALIZER__EKF_LOCALIZER_HPP_
 #define EKF_LOCALIZER__EKF_LOCALIZER_HPP_
 
+#include "ekf_localizer/hyper_parameters.hpp"
 #include "ekf_localizer/warning.hpp"
 
 #include <kalman_filter/kalman_filter.hpp>
@@ -30,6 +31,7 @@
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include <std_srvs/srv/set_bool.hpp>
 #include <tier4_debug_msgs/msg/float64_multi_array_stamped.hpp>
 #include <tier4_debug_msgs/msg/float64_stamped.hpp>
 
@@ -148,6 +150,8 @@ private:
   rclcpp::TimerBase::SharedPtr timer_control_;
   //!< @brief last predict time
   std::shared_ptr<const rclcpp::Time> last_predict_time_;
+  //!< @brief trigger_node service
+  rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr service_trigger_node_;
 
   //!< @brief timer to send transform
   rclcpp::TimerBase::SharedPtr timer_tf_;
@@ -159,39 +163,15 @@ private:
   Simple1DFilter roll_filter_;
   Simple1DFilter pitch_filter_;
 
+  const HyperParameters params_;
+
+  double ekf_rate_;
+  double ekf_dt_;
+
   /* parameters */
-  bool show_debug_info_;
-  double ekf_rate_;                  //!< @brief  EKF predict rate
-  double ekf_dt_;                    //!< @brief  = 1 / ekf_rate_
-  double tf_rate_;                   //!< @brief  tf publish rate
-  bool enable_yaw_bias_estimation_;  //!< @brief for LiDAR mount error.
-                                     //!< if true,publish /estimate_yaw_bias
-  std::string pose_frame_id_;
 
-  int dim_x_;              //!< @brief  dimension of EKF state
-  int extend_state_step_;  //!< @brief  for time delay compensation
+  int dim_x_;     //!< @brief  dimension of EKF state
   int dim_x_ex_;  //!< @brief  dimension of extended EKF state (dim_x_ * extended_state_step)
-
-  /* Pose */
-  double pose_additional_delay_;          //!< @brief  compensated pose delay time =
-                                          //!< (pose.header.stamp - now) + additional_delay [s]
-  double pose_measure_uncertainty_time_;  //!< @brief  added for measurement covariance
-  double pose_rate_;  //!< @brief  pose rate [s], used for covariance calculation
-  //!< @brief  the mahalanobis distance threshold to ignore pose measurement
-  double pose_gate_dist_;
-
-  /* twist */
-  double twist_additional_delay_;  //!< @brief  compensated delay = (twist.header.stamp - now)
-                                   //!< + additional_delay [s]
-  double twist_rate_;              //!< @brief  rate [s], used for covariance calculation
-  //!< @brief  measurement is ignored if the mahalanobis distance is larger than this value.
-  double twist_gate_dist_;
-
-  /* process noise standard deviation */
-  double proc_stddev_yaw_c_;       //!< @brief  yaw process noise
-  double proc_stddev_yaw_bias_c_;  //!< @brief  yaw bias process noise
-  double proc_stddev_vx_c_;        //!< @brief  vx process noise
-  double proc_stddev_wz_c_;        //!< @brief  wz process noise
 
   /* process noise variance for discrete model */
   double proc_cov_yaw_d_;       //!< @brief  discrete yaw process noise
@@ -199,7 +179,7 @@ private:
   double proc_cov_vx_d_;        //!< @brief  discrete process noise in d_vx=0
   double proc_cov_wz_d_;        //!< @brief  discrete process noise in d_wz=0
 
-  bool is_initialized_;
+  bool is_activated_;
 
   /* for model prediction */
   std::queue<TwistInfo> current_twist_info_queue_;    //!< @brief current measured pose
@@ -210,9 +190,6 @@ private:
   geometry_msgs::msg::TwistStamped current_ekf_twist_;  //!< @brief current estimated twist
   std::array<double, 36ul> current_pose_covariance_;
   std::array<double, 36ul> current_twist_covariance_;
-
-  int pose_smoothing_steps_;
-  int twist_smoothing_steps_;
 
   /**
    * @brief computes update & prediction of EKF for each ekf_dt_[s] time
@@ -288,7 +265,17 @@ private:
    */
   void showCurrentX();
 
+  /**
+   * @brief update simple1DFilter
+   */
   void updateSimple1DFilters(const geometry_msgs::msg::PoseWithCovarianceStamped & pose);
+
+  /**
+   * @brief trigger node
+   */
+  void serviceTriggerNode(
+    const std_srvs::srv::SetBool::Request::SharedPtr req,
+    std_srvs::srv::SetBool::Response::SharedPtr res);
 
   tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch_;
 

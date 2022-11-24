@@ -16,8 +16,8 @@
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__PULL_OVER__PULL_OVER_MODULE_HPP_
 
 #include "behavior_path_planner/scene_module/pull_over/geometric_pull_over.hpp"
+#include "behavior_path_planner/scene_module/pull_over/goal_searcher.hpp"
 #include "behavior_path_planner/scene_module/pull_over/pull_over_parameters.hpp"
-#include "behavior_path_planner/scene_module/pull_over/pull_over_path.hpp"
 #include "behavior_path_planner/scene_module/pull_over/shift_pull_over.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 #include "behavior_path_planner/scene_module/utils/geometric_parallel_parking.hpp"
@@ -29,6 +29,7 @@
 #include <autoware_auto_vehicle_msgs/msg/hazard_lights_command.hpp>
 
 #include <deque>
+#include <limits>
 #include <memory>
 #include <string>
 #include <utility>
@@ -58,23 +59,12 @@ struct PUllOverStatus
   std::shared_ptr<PathWithLaneId> prev_stop_path{nullptr};
   lanelet::ConstLanelets current_lanes{};
   lanelet::ConstLanelets pull_over_lanes{};
-  lanelet::ConstLanelets lanes{};  // current + pull_over
+  std::vector<DrivableLanes> lanes{};  // current + pull_over
   bool has_decided_path{false};
   bool is_safe{false};
   bool prev_is_safe{false};
   bool has_decided_velocity{false};
   bool has_requested_approval{false};
-};
-
-struct GoalCandidate
-{
-  Pose goal_pose{};
-  double distance_from_original_goal{0.0};
-
-  bool operator<(const GoalCandidate & other) const noexcept
-  {
-    return distance_from_original_goal < other.distance_from_original_goal;
-  }
 };
 
 class PullOverModule : public SceneModuleInterface
@@ -99,10 +89,16 @@ public:
 
   void setParameters(const PullOverParameters & parameters);
 
+  void acceptVisitor(
+    [[maybe_unused]] const std::shared_ptr<SceneModuleVisitor> & visitor) const override
+  {
+  }
+
 private:
   PullOverParameters parameters_;
 
   std::vector<std::shared_ptr<PullOverPlannerBase>> pull_over_planners_;
+  std::shared_ptr<GoalSearcherBase> goal_searcher_;
 
   PullOverPath shift_parking_path_;
   vehicle_info_util::VehicleInfo vehicle_info_;
@@ -125,6 +121,7 @@ private:
   tier4_autoware_utils::LinearRing2d vehicle_footprint_;
   std::unique_ptr<rclcpp::Time> last_received_time_;
   std::unique_ptr<rclcpp::Time> last_approved_time_;
+  std::unique_ptr<Pose> last_approved_pose_;
 
   void incrementPathIndex();
   PathWithLaneId getCurrentPath() const;
@@ -144,15 +141,9 @@ private:
   bool hasFinishedCurrentPath();
   bool hasFinishedPullOver();
   void updateOccupancyGrid();
-  void researchGoal();
   void resetStatus();
-  bool checkCollisionWithLongitudinalDistance(
-    const Pose & ego_pose, const PredictedObjects & dynamic_objects) const;
-  bool checkCollisionWithPose(const Pose & pose) const;
 
-  // turn signal
-  std::pair<HazardLightsCommand, double> getHazardInfo() const;
-  std::pair<TurnIndicatorsCommand, double> getTurnInfo() const;
+  TurnSignalInfo calcTurnSignalInfo() const;
 
   // debug
   void setDebugData();

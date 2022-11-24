@@ -5,11 +5,16 @@
   <version>0.0.0</version>
   <description>The component_interface_specs package</description>
   <maintainer email="isamu.takagi@tier4.jp">Takagi, Isamu</maintainer>
+  <maintainer email="makoto.yabuta@tier4.jp">yabuta</maintainer>
+  <maintainer email="kahhooi.tan@tier4.jp">Kah Hooi Tan</maintainer>
+  <maintainer email="kenji.miyake@tier4.jp">Kenji Miyake</maintainer>
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
   <build_depend>autoware_cmake</build_depend>
+
+  <depend>autoware_adapi_v1_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>

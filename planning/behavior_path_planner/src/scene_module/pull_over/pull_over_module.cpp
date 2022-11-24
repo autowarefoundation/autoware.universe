@@ -33,6 +33,7 @@
 #include <vector>
 
 using motion_utils::calcSignedArcLength;
+using motion_utils::findFirstNearestSegmentIndexWithSoftConstraints;
 using nav_msgs::msg::OccupancyGrid;
 using tier4_autoware_utils::calcDistance2d;
 using tier4_autoware_utils::calcOffsetPose;
@@ -63,15 +64,24 @@ PullOverModule::PullOverModule(
       node, parameters, lane_departure_checker_, occupancy_grid_map_));
   }
   if (parameters_.enable_arc_forward_parking) {
-    const bool is_forward = true;
+    constexpr bool is_forward = true;
     pull_over_planners_.push_back(std::make_shared<GeometricPullOver>(
-      node, parameters, getGeometricPullOverParameters(), occupancy_grid_map_, is_forward));
+      node, parameters, getGeometricPullOverParameters(), lane_departure_checker_,
+      occupancy_grid_map_, is_forward));
   }
   if (parameters_.enable_arc_backward_parking) {
-    const bool is_forward = false;
+    constexpr bool is_forward = false;
     pull_over_planners_.push_back(std::make_shared<GeometricPullOver>(
-      node, parameters, getGeometricPullOverParameters(), occupancy_grid_map_, is_forward));
+      node, parameters, getGeometricPullOverParameters(), lane_departure_checker_,
+      occupancy_grid_map_, is_forward));
   }
+
+  // set selected goal searcher
+  // currently there is only one goal_searcher_type
+  const auto & vehicle_footprint =
+    createVehicleFootprint(vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo());
+  goal_searcher_ =
+    std::make_shared<GoalSearcher>(parameters, vehicle_footprint, occupancy_grid_map_);
 
   // for collision check with objects
   vehicle_footprint_ = createVehicleFootprint(vehicle_info_);
@@ -248,7 +258,7 @@ Pose PullOverModule::calcRefinedGoal() const
   const Pose center_pose =
     lanelet::utils::getClosestCenterPose(closest_shoulder_lanelet, goal_pose.position);
 
-  const double distance_to_left_bound = util::getDistanceToShoulderBoundary(
+  const double distance_to_left_bound = util::getSignedDistanceFromShoulderLeftBoundary(
     planner_data_->route_handler->getShoulderLanelets(), center_pose);
   const double offset_from_center_line = distance_to_left_bound +
                                          planner_data_->parameters.vehicle_width / 2 +
@@ -256,33 +266,6 @@ Pose PullOverModule::calcRefinedGoal() const
   const Pose refined_goal_pose = calcOffsetPose(center_pose, 0, -offset_from_center_line, 0);
 
   return refined_goal_pose;
-}
-
-void PullOverModule::researchGoal()
-{
-  // Find goals in pull over areas.
-  goal_candidates_.clear();
-  for (double dx = -parameters_.backward_goal_search_length;
-       dx <= parameters_.forward_goal_search_length; dx += parameters_.goal_search_interval) {
-    const Pose search_pose = calcOffsetPose(refined_goal_pose_, dx, 0, 0);
-    if (checkCollisionWithPose(search_pose)) {
-      continue;
-    }
-
-    const auto objects_in_shoulder_lane =
-      util::filterObjectsByLanelets(*(planner_data_->dynamic_object), status_.pull_over_lanes);
-    if (checkCollisionWithLongitudinalDistance(search_pose, objects_in_shoulder_lane)) {
-      continue;
-    }
-
-    GoalCandidate goal_candidate;
-    goal_candidate.goal_pose = search_pose;
-    goal_candidate.distance_from_original_goal =
-      std::abs(inverseTransformPose(search_pose, refined_goal_pose_).position.x);
-    goal_candidates_.push_back(goal_candidate);
-  }
-  // Sort with distance from original goal
-  std::sort(goal_candidates_.begin(), goal_candidates_.end());
 }
 
 BT::NodeStatus PullOverModule::updateState()
@@ -322,75 +305,10 @@ bool PullOverModule::isLongEnoughToParkingStart(
   return *dist_to_parking_start_pose > current_to_stop_distance;
 }
 
-bool PullOverModule::checkCollisionWithLongitudinalDistance(
-  const Pose & ego_pose, const PredictedObjects & dynamic_objects) const
-{
-  if (parameters_.use_occupancy_grid) {
-    bool check_out_of_range = false;
-    const double offset = std::max(
-      parameters_.goal_to_obstacle_margin - parameters_.occupancy_grid_collision_check_margin, 0.0);
-
-    // check forward collision
-    const Pose ego_pose_moved_forward = calcOffsetPose(ego_pose, offset, 0, 0);
-    const Pose forward_pose_grid_coords =
-      global2local(occupancy_grid_map_->getMap(), ego_pose_moved_forward);
-    const auto forward_idx = pose2index(
-      occupancy_grid_map_->getMap(), forward_pose_grid_coords,
-      occupancy_grid_map_->getParam().theta_size);
-    if (occupancy_grid_map_->detectCollision(forward_idx, check_out_of_range)) {
-      return true;
-    }
-
-    // check backward collision
-    const Pose ego_pose_moved_backward = calcOffsetPose(ego_pose, -offset, 0, 0);
-    const Pose backward_pose_grid_coords =
-      global2local(occupancy_grid_map_->getMap(), ego_pose_moved_backward);
-    const auto backward_idx = pose2index(
-      occupancy_grid_map_->getMap(), backward_pose_grid_coords,
-      occupancy_grid_map_->getParam().theta_size);
-    if (occupancy_grid_map_->detectCollision(backward_idx, check_out_of_range)) {
-      return true;
-    }
-  }
-
-  if (parameters_.use_object_recognition) {
-    if (
-      util::calcLongitudinalDistanceFromEgoToObjects(
-        ego_pose, planner_data_->parameters.base_link2front,
-        planner_data_->parameters.base_link2rear,
-        dynamic_objects) < parameters_.goal_to_obstacle_margin) {
-      return true;
-    }
-  }
-  return false;
-}
-
-bool PullOverModule::checkCollisionWithPose(const Pose & pose) const
-{
-  if (parameters_.use_occupancy_grid) {
-    const Pose pose_grid_coords = global2local(occupancy_grid_map_->getMap(), pose);
-    const auto idx = pose2index(
-      occupancy_grid_map_->getMap(), pose_grid_coords, occupancy_grid_map_->getParam().theta_size);
-    const bool check_out_of_range = false;
-    if (occupancy_grid_map_->detectCollision(idx, check_out_of_range)) {
-      return true;
-    }
-  }
-
-  if (parameters_.use_object_recognition) {
-    if (util::checkCollisionBetweenFootprintAndObjects(
-          vehicle_footprint_, pose, *(planner_data_->dynamic_object),
-          parameters_.object_recognition_collision_check_margin)) {
-      return true;
-    }
-  }
-  return false;
-}
-
 bool PullOverModule::planWithEfficientPath()
 {
   for (const auto & planner : pull_over_planners_) {
-    for (const auto goal_candidate : goal_candidates_) {
+    for (const auto & goal_candidate : goal_candidates_) {
       planner->setPlannerData(planner_data_);
       const auto pull_over_path = planner->plan(goal_candidate.goal_pose);
       if (!pull_over_path) {
@@ -408,7 +326,7 @@ bool PullOverModule::planWithEfficientPath()
 
 bool PullOverModule::planWithCloseGoal()
 {
-  for (const auto goal_candidate : goal_candidates_) {
+  for (const auto & goal_candidate : goal_candidates_) {
     for (const auto & planner : pull_over_planners_) {
       planner->setPlannerData(planner_data_);
       const auto pull_over_path = planner->plan(goal_candidate.goal_pose);
@@ -427,19 +345,18 @@ bool PullOverModule::planWithCloseGoal()
 
 BehaviorModuleOutput PullOverModule::plan()
 {
+  const auto & current_pose = planner_data_->self_pose->pose;
+
   status_.current_lanes = util::getExtendedCurrentLanes(planner_data_);
   status_.pull_over_lanes = pull_over_utils::getPullOverLanes(*(planner_data_->route_handler));
-  status_.lanes = lanelet::ConstLanelets{};
-  status_.lanes.insert(
-    status_.lanes.end(), status_.current_lanes.begin(), status_.current_lanes.end());
-  status_.lanes.insert(
-    status_.lanes.end(), status_.pull_over_lanes.begin(), status_.pull_over_lanes.end());
+  status_.lanes =
+    util::generateDrivableLanesWithShoulderLanes(status_.current_lanes, status_.pull_over_lanes);
 
   // Check if it needs to decide path
   if (status_.is_safe) {
     const auto dist_to_parking_start_pose = calcSignedArcLength(
-      getCurrentPath().points, planner_data_->self_pose->pose,
-      status_.pull_over_path.start_pose.position, std::numeric_limits<double>::max(), M_PI_2);
+      getCurrentPath().points, current_pose, status_.pull_over_path.start_pose.position,
+      std::numeric_limits<double>::max(), M_PI_2);
 
     if (*dist_to_parking_start_pose < parameters_.decide_path_distance) {
       status_.has_decided_path = true;
@@ -460,6 +377,7 @@ BehaviorModuleOutput PullOverModule::plan()
       // When it is approved again after path is decided
       clearWaitingApproval();
       last_approved_time_ = std::make_unique<rclcpp::Time>(clock_->now());
+      last_approved_pose_ = std::make_unique<Pose>(current_pose);
 
       // decide velocity to guarantee turn signal lighting time
       if (!status_.has_decided_velocity) {
@@ -478,7 +396,7 @@ BehaviorModuleOutput PullOverModule::plan()
       // if using arc_path and finishing current_path, get next path
       // enough time for turn signal
       const bool has_passed_enough_time = (clock_->now() - *last_approved_time_).seconds() >
-                                          planner_data_->parameters.turn_light_on_threshold_time;
+                                          planner_data_->parameters.turn_signal_search_time;
 
       if (hasFinishedCurrentPath() && has_passed_enough_time) {
         incrementPathIndex();
@@ -487,7 +405,10 @@ BehaviorModuleOutput PullOverModule::plan()
 
   } else {  // Replan shift -> arc forward -> arc backward path with each goal candidate.
     // Research goal when enabling research and final path has not been decided
-    if (parameters_.enable_goal_research) researchGoal();
+    if (parameters_.enable_goal_research) {
+      goal_searcher_->setPlannerData(planner_data_);
+      goal_candidates_ = goal_searcher_->search(refined_goal_pose_);
+    }
 
     // plan paths with several goals and planner
     if (parameters_.search_priority == "efficient_path") {
@@ -518,8 +439,11 @@ BehaviorModuleOutput PullOverModule::plan()
   for (size_t i = status_.current_path_idx; i < status_.pull_over_path.partial_paths.size(); ++i) {
     auto & path = status_.pull_over_path.partial_paths.at(i);
     const auto p = planner_data_->parameters;
+    const auto lane = util::expandLanelets(
+      status_.lanes, parameters_.drivable_area_left_bound_offset,
+      parameters_.drivable_area_right_bound_offset);
     path.drivable_area = util::generateDrivableArea(
-      path, status_.lanes, p.drivable_area_resolution, p.vehicle_length, planner_data_);
+      path, lane, p.drivable_area_resolution, p.vehicle_length, planner_data_);
   }
 
   BehaviorModuleOutput output;
@@ -534,6 +458,11 @@ BehaviorModuleOutput PullOverModule::plan()
     if (status_.prev_is_safe || status_.prev_stop_path == nullptr) {
       output.path = std::make_shared<PathWithLaneId>(generateStopPath());
       status_.prev_stop_path = output.path;
+      // set stop path as pull over path
+      PullOverPath pull_over_path{};
+      status_.pull_over_path = pull_over_path;
+      status_.pull_over_path.path = *output.path;
+      status_.pull_over_path.partial_paths.push_back(*output.path);
     } else {  // not_safe -> not_safe: use previous stop path
       output.path = status_.prev_stop_path;
     }
@@ -542,16 +471,7 @@ BehaviorModuleOutput PullOverModule::plan()
 
   // set hazard and turn signal
   if (status_.has_decided_path) {
-    const auto hazard_info = getHazardInfo();
-    const auto turn_info = getTurnInfo();
-
-    if (hazard_info.first.command == HazardLightsCommand::ENABLE) {
-      output.turn_signal_info.hazard_signal.command = hazard_info.first.command;
-      output.turn_signal_info.signal_distance = hazard_info.second;
-    } else {
-      output.turn_signal_info.turn_signal.command = turn_info.first.command;
-      output.turn_signal_info.signal_distance = turn_info.second;
-    }
+    output.turn_signal_info = calcTurnSignalInfo();
   }
 
   const auto distance_to_path_change = calcDistanceToPathChange();
@@ -568,9 +488,10 @@ BehaviorModuleOutput PullOverModule::plan()
   }
 
   const uint16_t steering_factor_direction = std::invoke([this]() {
-    if (getTurnInfo().first.command == TurnIndicatorsCommand::ENABLE_LEFT) {
+    const auto turn_signal = calcTurnSignalInfo();
+    if (turn_signal.turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {
       return SteeringFactor::LEFT;
-    } else if (getTurnInfo().first.command == TurnIndicatorsCommand::ENABLE_RIGHT) {
+    } else if (turn_signal.turn_signal.command == TurnIndicatorsCommand::ENABLE_RIGHT) {
       return SteeringFactor::RIGHT;
     }
     return SteeringFactor::STRAIGHT;
@@ -599,18 +520,18 @@ BehaviorModuleOutput PullOverModule::planWaitingApproval()
 {
   updateOccupancyGrid();
   BehaviorModuleOutput out;
-  const auto path = *(plan().path);
-  out.path_candidate = std::make_shared<PathWithLaneId>(path);
+  plan();  // update status_
   out.path = std::make_shared<PathWithLaneId>(getReferencePath());
-  out.path_candidate = std::make_shared<PathWithLaneId>(getFullPath());
+  out.path_candidate = status_.is_safe ? std::make_shared<PathWithLaneId>(getFullPath()) : out.path;
 
   const auto distance_to_path_change = calcDistanceToPathChange();
   updateRTCStatus(distance_to_path_change.first, distance_to_path_change.second);
 
   const uint16_t steering_factor_direction = std::invoke([this]() {
-    if (getTurnInfo().first.command == TurnIndicatorsCommand::ENABLE_LEFT) {
+    const auto turn_signal = calcTurnSignalInfo();
+    if (turn_signal.turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {
       return SteeringFactor::LEFT;
-    } else if (getTurnInfo().first.command == TurnIndicatorsCommand::ENABLE_RIGHT) {
+    } else if (turn_signal.turn_signal.command == TurnIndicatorsCommand::ENABLE_RIGHT) {
       return SteeringFactor::RIGHT;
     }
     return SteeringFactor::STRAIGHT;
@@ -652,44 +573,50 @@ PathWithLaneId PullOverModule::getReferencePath() const
   if (status_.current_lanes.empty()) {
     return PathWithLaneId{};
   }
-  const auto arc_coordinates =
+
+  // generate reference path
+  const auto s_current =
+    lanelet::utils::getArcCoordinates(status_.current_lanes, current_pose).length;
+  const double s_start = std::max(0.0, s_current - common_parameters.backward_path_length);
+  const double s_end = s_current + common_parameters.forward_path_length;
+  auto reference_path =
+    route_handler->getCenterLinePath(status_.current_lanes, s_start, s_end, true);
+
+  // if not approved, stop parking start position or goal search start position.
+  const auto refined_goal_arc_coordinates =
     lanelet::utils::getArcCoordinates(status_.current_lanes, refined_goal_pose_);
   const Pose search_start_pose = calcOffsetPose(
-    refined_goal_pose_, -parameters_.backward_goal_search_length, -arc_coordinates.distance, 0);
-  // if not approved, stop parking start position or goal search start position.
+    refined_goal_pose_, -parameters_.backward_goal_search_length,
+    -refined_goal_arc_coordinates.distance, 0);
   const Pose stop_pose = status_.is_safe ? status_.pull_over_path.start_pose : search_start_pose;
 
-  // generate center line path to stop_pose
-  const auto arc_position_stop_pose =
-    lanelet::utils::getArcCoordinates(status_.current_lanes, stop_pose);
-  const double s_forward = arc_position_stop_pose.length;
-  const auto arc_position_current_pose =
-    lanelet::utils::getArcCoordinates(status_.current_lanes, current_pose);
-  const double s_backward =
-    std::max(0.0, arc_position_current_pose.length - common_parameters.backward_path_length);
-
-  // stop pose is behind current pose
-  if (s_forward < s_backward) {
+  // if stop pose is behind current pose, stop as soon as possible
+  const size_t ego_idx = findEgoIndex(reference_path.points);
+  const size_t stop_idx = findFirstNearestSegmentIndexWithSoftConstraints(
+    reference_path.points, stop_pose, common_parameters.ego_nearest_dist_threshold,
+    common_parameters.ego_nearest_yaw_threshold);
+  const double ego_to_stop_distance = calcSignedArcLength(
+    reference_path.points, current_pose.position, ego_idx, stop_pose.position, stop_idx);
+  if (ego_to_stop_distance < 0.0) {
     return generateStopPath();
   }
 
-  PathWithLaneId reference_path =
-    route_handler->getCenterLinePath(status_.current_lanes, s_backward, s_forward, true);
-  reference_path.header = route_handler->getRouteHeader();
-
   // slow down for turn signal, insert stop point to stop_pose
   reference_path = util::setDecelerationVelocityForTurnSignal(
-    reference_path, stop_pose, planner_data_->parameters.turn_light_on_threshold_time);
+    reference_path, stop_pose, planner_data_->parameters.turn_signal_search_time);
 
   // slow down before the search area.
-  if (stop_pose != search_start_pose) {
-    reference_path = util::setDecelerationVelocity(
-      reference_path, parameters_.pull_over_velocity, search_start_pose,
-      -calcMinimumShiftPathDistance(), parameters_.deceleration_interval);
-  }
+  reference_path = util::setDecelerationVelocity(
+    reference_path, parameters_.pull_over_velocity, search_start_pose,
+    -calcMinimumShiftPathDistance(), parameters_.deceleration_interval);
+
+  const auto drivable_lanes = util::generateDrivableLanes(status_.current_lanes);
+  const auto lanes = util::expandLanelets(
+    drivable_lanes, parameters_.drivable_area_left_bound_offset,
+    parameters_.drivable_area_right_bound_offset);
 
   reference_path.drivable_area = util::generateDrivableArea(
-    reference_path, status_.current_lanes, common_parameters.drivable_area_resolution,
+    reference_path, lanes, common_parameters.drivable_area_resolution,
     common_parameters.vehicle_length, planner_data_);
 
   return reference_path;
@@ -700,36 +627,46 @@ PathWithLaneId PullOverModule::generateStopPath() const
   const auto & route_handler = planner_data_->route_handler;
   const auto & current_pose = planner_data_->self_pose->pose;
   const auto & common_parameters = planner_data_->parameters;
-
   const double current_vel = planner_data_->self_odometry->twist.twist.linear.x;
-  auto stop_path = util::getCenterLinePath(
-    *route_handler, status_.current_lanes, current_pose, common_parameters.backward_path_length,
-    common_parameters.forward_path_length, common_parameters);
 
+  const auto s_current =
+    lanelet::utils::getArcCoordinates(status_.current_lanes, current_pose).length;
+  const double s_start = std::max(0.0, s_current - common_parameters.backward_path_length);
+  const double s_end = s_current + common_parameters.forward_path_length;
+  auto stop_path = route_handler->getCenterLinePath(status_.current_lanes, s_start, s_end, true);
+
+  // set deceleration velocity
+  const size_t ego_idx = findEgoIndex(stop_path.points);
   const double current_to_stop_distance =
     std::pow(current_vel, 2) / parameters_.maximum_deceleration / 2;
-  const double arclength_current_pose =
-    lanelet::utils::getArcCoordinates(status_.current_lanes, current_pose).length;
+  motion_utils::insertStopPoint(current_pose, current_to_stop_distance, stop_path.points);
 
   for (auto & point : stop_path.points) {
-    const double arclength =
-      lanelet::utils::getArcCoordinates(status_.current_lanes, point.point.pose).length;
-    const double arclength_current_to_point = arclength - arclength_current_pose;
-    if (0.0 < arclength_current_to_point) {
-      point.point.longitudinal_velocity_mps = std::clamp(
+    auto & p = point.point;
+    const size_t target_idx = findFirstNearestSegmentIndexWithSoftConstraints(
+      stop_path.points, p.pose, common_parameters.ego_nearest_dist_threshold,
+      common_parameters.ego_nearest_yaw_threshold);
+    const double distance_to_target = calcSignedArcLength(
+      stop_path.points, current_pose.position, ego_idx, p.pose.position, target_idx);
+    if (0.0 < distance_to_target) {
+      p.longitudinal_velocity_mps = std::clamp(
         static_cast<float>(
-          current_vel * (current_to_stop_distance - arclength_current_to_point) /
-          current_to_stop_distance),
-        0.0f, point.point.longitudinal_velocity_mps);
+          current_vel * (current_to_stop_distance - distance_to_target) / current_to_stop_distance),
+        0.0f, p.longitudinal_velocity_mps);
     } else {
-      point.point.longitudinal_velocity_mps =
-        std::min(point.point.longitudinal_velocity_mps, static_cast<float>(current_vel));
+      p.longitudinal_velocity_mps =
+        std::min(p.longitudinal_velocity_mps, static_cast<float>(current_vel));
     }
   }
 
+  const auto drivable_lanes = util::generateDrivableLanes(status_.current_lanes);
+  const auto lanes = util::expandLanelets(
+    drivable_lanes, parameters_.drivable_area_left_bound_offset,
+    parameters_.drivable_area_right_bound_offset);
+
   stop_path.drivable_area = util::generateDrivableArea(
-    stop_path, status_.current_lanes, common_parameters.drivable_area_resolution,
-    common_parameters.vehicle_length, planner_data_);
+    stop_path, lanes, common_parameters.drivable_area_resolution, common_parameters.vehicle_length,
+    planner_data_);
 
   return stop_path;
 }
@@ -772,8 +709,8 @@ double PullOverModule::calcMinimumShiftPathDistance() const
   const double distance_before_pull_over = parameters_.before_pull_over_straight_distance;
   const auto & route_handler = planner_data_->route_handler;
 
-  double distance_to_left_bound =
-    util::getDistanceToShoulderBoundary(route_handler->getShoulderLanelets(), current_pose);
+  double distance_to_left_bound = util::getSignedDistanceFromShoulderLeftBoundary(
+    route_handler->getShoulderLanelets(), current_pose);
   double offset_from_center_line = distance_to_left_bound +
                                    planner_data_->parameters.vehicle_width / 2 +
                                    parameters_.margin_from_boundary;
@@ -840,50 +777,36 @@ bool PullOverModule::hasFinishedPullOver()
   return car_is_on_goal && isStopped();
 }
 
-std::pair<HazardLightsCommand, double> PullOverModule::getHazardInfo() const
+TurnSignalInfo PullOverModule::calcTurnSignalInfo() const
 {
-  HazardLightsCommand hazard_signal{};
+  TurnSignalInfo turn_signal{};  // output
 
-  const auto arc_position_goal_pose =
-    lanelet::utils::getArcCoordinates(status_.pull_over_lanes, modified_goal_pose_);
-  const auto arc_position_current_pose =
-    lanelet::utils::getArcCoordinates(status_.pull_over_lanes, planner_data_->self_pose->pose);
-  const double distance_to_goal = arc_position_goal_pose.length - arc_position_current_pose.length;
+  const auto & current_pose = planner_data_->self_pose->pose;
+  const auto & start_pose = status_.pull_over_path.start_pose;
+  const auto & end_pose = status_.pull_over_path.end_pose;
+  const auto & full_path = getFullPath();
 
-  const double velocity = std::abs(planner_data_->self_odometry->twist.twist.linear.x);
-  if (
-    (distance_to_goal < parameters_.hazard_on_threshold_distance &&
-     velocity < parameters_.hazard_on_threshold_velocity) ||
-    status_.planner->getPlannerType() == PullOverPlannerType::ARC_BACKWARD) {
-    hazard_signal.command = HazardLightsCommand::ENABLE;
-    const double distance_from_front_to_goal =
-      distance_to_goal - planner_data_->parameters.base_link2front;
-    return std::make_pair(hazard_signal, distance_from_front_to_goal);
+  // calc TurnIndicatorsCommand
+  {
+    const double distance_to_end =
+      calcSignedArcLength(full_path.points, current_pose.position, end_pose.position);
+    const bool is_before_end_pose = distance_to_end >= 0.0;
+    turn_signal.turn_signal.command =
+      is_before_end_pose ? TurnIndicatorsCommand::ENABLE_LEFT : TurnIndicatorsCommand::NO_COMMAND;
   }
 
-  return std::make_pair(hazard_signal, std::numeric_limits<double>::max());
-}
+  // calc desired/required start/end point
+  {
+    // ego decelerates so that current pose is the point `turn_light_on_threshold_time` seconds
+    // before starting pull_over
+    turn_signal.desired_start_point =
+      last_approved_pose_ && status_.has_decided_path ? *last_approved_pose_ : current_pose;
+    turn_signal.desired_end_point = end_pose;
+    turn_signal.required_start_point = start_pose;
+    turn_signal.required_end_point = end_pose;
+  }
 
-std::pair<TurnIndicatorsCommand, double> PullOverModule::getTurnInfo() const
-{
-  std::pair<TurnIndicatorsCommand, double> turn_info{};
-
-  const double distance_from_vehicle_front = std::invoke([&]() {
-    const auto arc_position_current_pose =
-      lanelet::utils::getArcCoordinates(status_.current_lanes, planner_data_->self_pose->pose);
-    const auto arc_position_end_pose =
-      lanelet::utils::getArcCoordinates(status_.current_lanes, status_.pull_over_path.end_pose);
-    return arc_position_end_pose.length - arc_position_current_pose.length -
-           planner_data_->parameters.base_link2front;
-  });
-
-  TurnIndicatorsCommand turn_signal{};
-  const bool is_before_parking_end = distance_from_vehicle_front >= 0.0;
-  turn_signal.command =
-    is_before_parking_end ? TurnIndicatorsCommand::ENABLE_LEFT : TurnIndicatorsCommand::NO_COMMAND;
-  turn_info.first = turn_signal;
-  turn_info.second = distance_from_vehicle_front;
-  return turn_info;
+  return turn_signal;
 }
 
 void PullOverModule::setDebugData()
@@ -892,18 +815,18 @@ void PullOverModule::setDebugData()
 
   using marker_utils::createPathMarkerArray;
   using marker_utils::createPoseMarkerArray;
+  using tier4_autoware_utils::createMarkerColor;
 
   const auto add = [this](const MarkerArray & added) {
     tier4_autoware_utils::appendMarkerArray(added, &debug_marker_);
   };
 
-  // Visualize pull over areas
   if (parameters_.enable_goal_research) {
+    // Visualize pull over areas
     const Pose start_pose =
       calcOffsetPose(refined_goal_pose_, -parameters_.backward_goal_search_length, 0, 0);
     const Pose end_pose =
       calcOffsetPose(refined_goal_pose_, parameters_.forward_goal_search_length, 0, 0);
-    // marker_array.markers.push_back(createParkingAreaMarker(start_pose, end_pose, 0));
     const auto header = planner_data_->route_handler->getRouteHeader();
     const auto color = status_.has_decided_path ? createMarkerColor(1.0, 1.0, 0.0, 0.999)  // yellow
                                                 : createMarkerColor(0.0, 1.0, 0.0, 0.999);  // green
@@ -911,6 +834,9 @@ void PullOverModule::setDebugData()
     debug_marker_.markers.push_back(pull_over_utils::createPullOverAreaMarker(
       start_pose, end_pose, 0, header, p.base_link2front, p.base_link2rear, p.vehicle_width,
       color));
+
+    // Visualize goal candidates
+    add(pull_over_utils::createGoalCandidatesMarkerArray(goal_candidates_, color));
   }
 
   // Visualize path and related pose

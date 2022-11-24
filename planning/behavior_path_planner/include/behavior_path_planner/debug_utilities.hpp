@@ -35,7 +35,7 @@ namespace marker_utils
 using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_perception_msgs::msg::PredictedPath;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
-using behavior_path_planner::ShiftPointArray;
+using behavior_path_planner::ShiftLineArray;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Polygon;
 using geometry_msgs::msg::Pose;
@@ -52,6 +52,7 @@ struct CollisionCheckDebug
   std::size_t lane_id{0};
   Pose current_pose{};
   Twist current_twist{};
+  Twist object_twist{};
   Pose expected_ego_pose{};
   Pose expected_obj_pose{};
   Pose relative_to_ego{};
@@ -89,9 +90,9 @@ MarkerArray createPathMarkerArray(
   const PathWithLaneId & path, std::string && ns, const int64_t & lane_id, const float & r,
   const float & g, const float & b);
 
-MarkerArray createShiftPointMarkerArray(
-  const ShiftPointArray & shift_points, const double & base_shift, std::string && ns,
-  const float & r, const float & g, const float & b, const float & w);
+MarkerArray createShiftLineMarkerArray(
+  const ShiftLineArray & shift_lines, const double & base_shift, std::string && ns, const float & r,
+  const float & g, const float & b, const float & w);
 
 MarkerArray createShiftLengthMarkerArray(
   const std::vector<double> & shift_distance,

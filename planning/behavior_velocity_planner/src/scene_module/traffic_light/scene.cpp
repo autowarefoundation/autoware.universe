@@ -452,7 +452,7 @@ bool TrafficLightModule::getHighestConfidenceTrafficSignal(
   }
   if (!found) {
     RCLCPP_WARN_THROTTLE(
-      logger_, *clock_, 1000 /* ms */, "cannot find traffic light lamp state (%s).",
+      logger_, *clock_, 5000 /* ms */, "cannot find traffic light lamp state (%s).",
       reason.c_str());
     return false;
   }
@@ -489,8 +489,9 @@ autoware_auto_planning_msgs::msg::PathWithLaneId TrafficLightModule::insertStopP
   if (debug_data_.highest_confidence_traffic_light_point != std::nullopt) {
     stop_factor.stop_factor_points = std::vector<geometry_msgs::msg::Point>{
       debug_data_.highest_confidence_traffic_light_point.value()};
-    planning_utils::appendStopReason(stop_factor, stop_reason);
   }
+  planning_utils::appendStopReason(stop_factor, stop_reason);
+
   return modified_path;
 }
 

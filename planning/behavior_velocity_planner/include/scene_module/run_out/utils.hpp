@@ -62,6 +62,9 @@ struct VehicleParam
   float base_to_front;
   float base_to_rear;
   float width;
+  float wheel_tread;
+  double right_overhang;
+  double left_overhang;
 };
 
 struct DetectionArea
@@ -82,6 +85,7 @@ struct StateParam
   float stop_thresh;
   float stop_time_thresh;
   float disable_approach_dist;
+  float keep_approach_duration;
 };
 
 struct SlowDownLimit

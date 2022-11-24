@@ -52,7 +52,7 @@ struct PullOutStatus
   PathWithLaneId backward_path;
   lanelet::ConstLanelets current_lanes;
   lanelet::ConstLanelets pull_out_lanes;
-  lanelet::ConstLanelets lanes;
+  std::vector<DrivableLanes> lanes;
   std::vector<uint64_t> lane_follow_lane_ids;
   std::vector<uint64_t> pull_out_lane_ids;
   bool is_safe = false;
@@ -80,6 +80,11 @@ public:
   void setParameters(const PullOutParameters & parameters) { parameters_ = parameters; }
   void resetStatus();
 
+  void acceptVisitor(
+    [[maybe_unused]] const std::shared_ptr<SceneModuleVisitor> & visitor) const override
+  {
+  }
+
 private:
   PullOutParameters parameters_;
   vehicle_info_util::VehicleInfo vehicle_info_;
@@ -87,15 +92,13 @@ private:
   std::vector<std::shared_ptr<PullOutPlannerBase>> pull_out_planners_;
   PullOutStatus status_;
 
-  std::vector<Pose> backed_pose_candidates_;
-  PoseStamped backed_pose_;
   std::deque<nav_msgs::msg::Odometry::ConstSharedPtr> odometry_buffer_;
 
   std::unique_ptr<rclcpp::Time> last_route_received_time_;
   std::unique_ptr<rclcpp::Time> last_pull_out_start_update_time_;
+  std::unique_ptr<Pose> last_approved_pose_;
 
   std::shared_ptr<PullOutPlannerBase> getCurrentPlanner() const;
-  lanelet::ConstLanelets getCurrentLanes() const;
   PathWithLaneId getFullPath() const;
   ParallelParkingParameters getGeometricPullOutParameters() const;
   std::vector<Pose> searchBackedPoses();
@@ -103,7 +106,7 @@ private:
   std::shared_ptr<LaneDepartureChecker> lane_departure_checker_;
 
   // turn signal
-  TurnSignalInfo calcTurnSignalInfo(const Pose start_pose, const Pose end_pose) const;
+  TurnSignalInfo calcTurnSignalInfo() const;
 
   void incrementPathIndex();
   PathWithLaneId getCurrentPath() const;
@@ -112,7 +115,7 @@ private:
   void planWithPriorityOnShortBackDistance(
     const std::vector<Pose> & start_pose_candidates, const Pose & goal_pose);
   void updatePullOutStatus();
-  static bool isInLane(
+  static bool isOverlappedWithLane(
     const lanelet::ConstLanelet & candidate_lanelet,
     const tier4_autoware_utils::LinearRing2d & vehicle_footprint);
   bool hasFinishedPullOut() const;
