@@ -90,6 +90,32 @@ std::vector<geometry_msgs::msg::Pose> resamplePoseVector(
   return resampled_points;
 }
 
+std::vector<geometry_msgs::msg::Pose> resamplePoseVector(
+  const std::vector<geometry_msgs::msg::Pose> & points,
+  const double resample_interval, const bool use_lerp_for_xy,
+  const bool use_lerp_for_z)
+{
+  const double input_length = motion_utils::calcArcLength(points);
+
+  std::vector<double> resampling_arclength;
+  for (double s = 0.0; s < input_length; s += resample_interval) {
+    resampling_arclength.push_back(s);
+  }
+  if (resampling_arclength.empty()) {
+    std::cerr << "[motion_utils]: resampling arclength is empty" << std::endl;
+    return points;
+  }
+
+  // Insert terminal point
+  if (input_length - resampling_arclength.back() < motion_utils::overlap_threshold) {
+    resampling_arclength.back() = input_length;
+  } else {
+    resampling_arclength.push_back(input_length);
+  }
+
+  return resamplePoseVector(points, resampling_arclength, use_lerp_for_xy, use_lerp_for_z);
+}
+
 autoware_auto_planning_msgs::msg::PathWithLaneId resamplePath(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & input_path,
   const std::vector<double> & resampled_arclength, const bool use_lerp_for_xy,
@@ -180,6 +206,8 @@ autoware_auto_planning_msgs::msg::PathWithLaneId resamplePath(
   autoware_auto_planning_msgs::msg::PathWithLaneId resampled_path;
   resampled_path.header = input_path.header;
   resampled_path.drivable_area = input_path.drivable_area;
+  resampled_path.left_bound = input_path.left_bound;
+  resampled_path.right_bound = input_path.right_bound;
   resampled_path.points.resize(interpolated_pose.size());
   for (size_t i = 0; i < resampled_path.points.size(); ++i) {
     autoware_auto_planning_msgs::msg::PathPoint path_point;

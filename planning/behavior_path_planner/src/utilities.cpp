@@ -1347,33 +1347,119 @@ OccupancyGrid generateDrivableArea(
   return occupancy_grid;
 }
 
-void generateDrivableArea(PathWithLaneId & path, const std::vector<DrivableLanes> & lanes)
+void generateDrivableArea(PathWithLaneId & path, const std::vector<DrivableLanes> & lanes, const double vehicle_length, const std::shared_ptr<const PlannerData> planner_data)
 {
   std::vector<geometry_msgs::msg::Pose> left_bound;
   std::vector<geometry_msgs::msg::Pose> right_bound;
 
+  // extract data
+  const auto transformed_lanes = util::transformToLanelets(lanes);
+  const auto current_pose = planner_data->self_pose;
+  const auto route_handler = planner_data->route_handler;
+  const auto & param = planner_data->parameters;
+  const double& dist_threshold = std::numeric_limits<double>::max();
+  const double& yaw_threshold = param.ego_nearest_yaw_threshold;
+  constexpr double interval_threshold = 0.01;
+
   // Insert Position
   for (const auto & lane : lanes) {
     const auto & left_lane = lane.left_lane;
-    const auto & right_lane = lane.right_lane;
     for (const auto & lp : left_lane.leftBound()) {
-      geometry_msgs::msg::Pose left_pose;
-      left_pose.position = lanelet::utils::conversion::toGeomMsgPt(lp);
-      left_bound.push_back(left_pose);
+      geometry_msgs::msg::Pose current_pose;
+      current_pose.position = lanelet::utils::conversion::toGeomMsgPt(lp);
+      if(left_bound.empty()) {
+        left_bound.push_back(current_pose);
+      } else if(tier4_autoware_utils::calcDistance2d(current_pose, left_bound.back()) > interval_threshold) {
+        left_bound.push_back(current_pose);
+      }
     }
+
+    const auto & right_lane = lane.right_lane;
     for (const auto & rp : right_lane.rightBound()) {
-      geometry_msgs::msg::Pose right_pose;
-      right_pose.position = lanelet::utils::conversion::toGeomMsgPt(rp);
-      right_bound.push_back(right_pose);
+      geometry_msgs::msg::Pose current_pose;
+      current_pose.position = lanelet::utils::conversion::toGeomMsgPt(rp);
+      if(right_bound.empty()) {
+        right_bound.push_back(current_pose);
+      } else if(tier4_autoware_utils::calcDistance2d(current_pose, right_bound.back()) > interval_threshold) {
+        right_bound.push_back(current_pose);
+      }
     }
   }
 
-  // Insert Orientation
+  // Insert point after goal
+  if (containsGoal(transformed_lanes, route_handler->getGoalLaneId())) {
+    const auto lanes_after_goal = route_handler->getLanesAfterGoal(vehicle_length);
+    for(const auto& lane : lanes_after_goal) {
+
+      for(const auto& lp : lane.leftBound()) {
+        geometry_msgs::msg::Pose current_pose;
+        current_pose.position = lanelet::utils::conversion::toGeomMsgPt(lp);
+        if(left_bound.empty()) {
+          left_bound.push_back(current_pose);
+        } else if(tier4_autoware_utils::calcDistance2d(current_pose, left_bound.back()) > interval_threshold) {
+          left_bound.push_back(current_pose);
+        }
+      }
+
+      for(const auto& rp : lane.rightBound()) {
+        geometry_msgs::msg::Pose current_pose;
+        current_pose.position = lanelet::utils::conversion::toGeomMsgPt(rp);
+        if(right_bound.empty()) {
+          right_bound.push_back(current_pose);
+        } else if(tier4_autoware_utils::calcDistance2d(current_pose, right_bound.back()) > interval_threshold) {
+          right_bound.push_back(current_pose);
+        }
+      }
+    }
+  }
+
+  // Give Orientation
   motion_utils::insertOrientation(left_bound, true);
   motion_utils::insertOrientation(right_bound, true);
 
-  path.left_bound = left_bound;
-  path.right_bound = right_bound;
+  // Resample
+  const auto resampled_left_bound = motion_utils::resamplePoseVector(left_bound, 1.0, true);
+  const auto resampled_right_bound = motion_utils::resamplePoseVector(right_bound, 1.0, true);
+
+  // Get Closest segment for the start point
+  const auto left_start_segment_idx = motion_utils::findNearestSegmentIndex(resampled_left_bound, current_pose->pose, dist_threshold, yaw_threshold);
+  const auto right_start_segment_idx = motion_utils::findNearestSegmentIndex(resampled_right_bound, current_pose->pose, dist_threshold, yaw_threshold);
+  const size_t left_start_idx = left_start_segment_idx ? left_start_segment_idx.get() : 0;
+  const size_t right_start_idx = right_start_segment_idx ? right_start_segment_idx.get() : 0;
+
+  // Get Closest segment for the goal point
+  const auto& goal_pose =  path.points.back().point.pose;
+  const auto left_goal_segment_idx = motion_utils::findNearestSegmentIndex(resampled_left_bound, goal_pose, dist_threshold, yaw_threshold);
+  const auto right_goal_segment_idx = motion_utils::findNearestSegmentIndex(resampled_right_bound, goal_pose, dist_threshold, yaw_threshold);
+  size_t left_goal_idx = resampled_left_bound.size()-1;
+  size_t right_goal_idx = resampled_right_bound.size()-1;
+  if(left_goal_segment_idx) {
+    const auto extended_pose = motion_utils::calcLongitudinalOffsetPose(resampled_left_bound, left_goal_segment_idx.get()+1, vehicle_length);
+    if(extended_pose) {
+      const auto extended_idx = motion_utils::findNearestSegmentIndex(resampled_left_bound, extended_pose.get(), dist_threshold, yaw_threshold);
+      left_goal_idx = extended_idx ? extended_idx.get() : left_goal_idx;
+    }
+  }
+
+  if(right_goal_segment_idx) {
+    const auto extended_pose = motion_utils::calcLongitudinalOffsetPose(resampled_right_bound, right_goal_segment_idx.get()+1, vehicle_length);
+    if(extended_pose) {
+      const auto extended_idx = motion_utils::findNearestSegmentIndex(resampled_right_bound, extended_pose.get(), dist_threshold, yaw_threshold);
+      right_goal_idx = extended_idx ? extended_idx.get() : right_goal_idx;
+    }
+  }
+
+  // Store Data
+  path.left_bound.clear();
+  path.right_bound.clear();
+  path.left_bound.reserve(left_goal_idx - left_start_idx);
+  path.right_bound.reserve(right_goal_idx -right_start_idx);
+  for(size_t i=left_start_idx; i<= left_goal_idx; ++i) {
+    path.left_bound.push_back(resampled_left_bound.at(i).position);
+  }
+  for(size_t i=right_start_idx; i<= right_goal_idx; ++i) {
+    path.right_bound.push_back(resampled_right_bound.at(i).position);
+  }
 }
 
 double getDistanceToEndOfLane(const Pose & current_pose, const lanelet::ConstLanelets & lanelets)

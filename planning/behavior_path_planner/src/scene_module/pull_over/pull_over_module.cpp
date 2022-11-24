@@ -444,6 +444,7 @@ BehaviorModuleOutput PullOverModule::plan()
       parameters_.drivable_area_right_bound_offset);
     path.drivable_area = util::generateDrivableArea(
       path, lane, p.drivable_area_resolution, p.vehicle_length, planner_data_);
+    util::generateDrivableArea(path, lane, p.vehicle_length, planner_data_);
   }
 
   BehaviorModuleOutput output;
@@ -618,6 +619,7 @@ PathWithLaneId PullOverModule::getReferencePath() const
   reference_path.drivable_area = util::generateDrivableArea(
     reference_path, lanes, common_parameters.drivable_area_resolution,
     common_parameters.vehicle_length, planner_data_);
+  util::generateDrivableArea(reference_path, lanes, common_parameters.vehicle_length, planner_data_);
 
   return reference_path;
 }
@@ -667,6 +669,7 @@ PathWithLaneId PullOverModule::generateStopPath() const
   stop_path.drivable_area = util::generateDrivableArea(
     stop_path, lanes, common_parameters.drivable_area_resolution, common_parameters.vehicle_length,
     planner_data_);
+  util::generateDrivableArea(stop_path, lanes, common_parameters.vehicle_length, planner_data_);
 
   return stop_path;
 }

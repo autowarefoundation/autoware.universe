@@ -612,19 +612,19 @@ void BehaviorPathPlannerNode::run()
   // drivable lanes
   auto left_marker = tier4_autoware_utils::createDefaultMarker(
     "map", rclcpp::Clock{RCL_ROS_TIME}.now(), "left_bound", 0L, Marker::LINE_STRIP,
-    tier4_autoware_utils::createMarkerScale(0.7, 0.3, 0.3),
+    tier4_autoware_utils::createMarkerScale(0.1, 0.1, 0.1),
     tier4_autoware_utils::createMarkerColor(0.4, 0.7, 1.0, 0.999));
   for (const auto lb : path->left_bound) {
-    left_marker.points.push_back(lb.position);
+    left_marker.points.push_back(lb);
   }
   left_bound_publisher_->publish(left_marker);
 
   auto right_marker = tier4_autoware_utils::createDefaultMarker(
     "map", rclcpp::Clock{RCL_ROS_TIME}.now(), "right_bound", 0L, Marker::LINE_STRIP,
-    tier4_autoware_utils::createMarkerScale(0.7, 0.3, 0.3),
+    tier4_autoware_utils::createMarkerScale(0.1, 0.1, 0.1),
     tier4_autoware_utils::createMarkerColor(0.4, 0.7, 1.0, 0.999));
   for (const auto rb : path->right_bound) {
-    right_marker.points.push_back(rb.position);
+    right_marker.points.push_back(rb);
   }
   right_bound_publisher_->publish(right_marker);
 
