@@ -15,11 +15,9 @@
 #ifndef TENSORRT_YOLOX__TENSORRT_YOLOX_HPP_
 #define TENSORRT_YOLOX__TENSORRT_YOLOX_HPP_
 
-#include "cuda_utils/cuda_unique_ptr.hpp"
 #include <cuda_utils/cuda_unique_ptr.hpp>
 #include <cuda_utils/stream_unique_ptr.hpp>
 #include <opencv2/opencv.hpp>
-
 #include <tensorrt_common/tensorrt_common.hpp>
 
 #include <memory>
@@ -57,10 +55,8 @@ class TrtYoloX
 {
 public:
   TrtYoloX(
-    const std::string & model_path, const std::string & precision,
-    const int num_class = 8,
-    const float score_threshold = 0.3,
-    const float nms_threshold = 0.7,
+    const std::string & model_path, const std::string & precision, const int num_class = 8,
+    const float score_threshold = 0.3, const float nms_threshold = 0.7,
     const std::string & cache_dir = "",
     const tensorrt_common::BatchConfig & batch_config = {1, 1, 1},
     const size_t max_workspace_size = (1 << 30));
@@ -73,12 +69,10 @@ private:
   bool feedforwardAndDecode(const std::vector<cv::Mat> & images, ObjectArrays & objects);
   void decodeOutputs(float * prob, ObjectArray & objects, float scale, cv::Size & img_size) const;
   void generateGridsAndStride(
-    const int target_w, const int target_h,
-    std::vector<int> & strides,
+    const int target_w, const int target_h, std::vector<int> & strides,
     std::vector<GridAndStride> & grid_strides) const;
   void generateYoloxProposals(
-    std::vector<GridAndStride> grid_strides,
-    float * feat_blob, float prob_threshold,
+    std::vector<GridAndStride> grid_strides, float * feat_blob, float prob_threshold,
     ObjectArray & objects) const;
   void qsortDescentInplace(ObjectArray & faceobjects, int left, int right) const;
   inline void qsortDescentInplace(ObjectArray & objects) const
@@ -96,8 +90,7 @@ private:
     return inter.area();
   }
   void nmsSortedBboxes(
-    const ObjectArray & faceobjects, std::vector<int> & picked,
-    float nms_threshold) const;
+    const ObjectArray & faceobjects, std::vector<int> & picked, float nms_threshold) const;
 
   std::unique_ptr<tensorrt_common::TrtCommon> trt_common_;
 

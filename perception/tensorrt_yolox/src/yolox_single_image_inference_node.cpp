@@ -15,7 +15,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <tensorrt_yolox/tensorrt_yolox.hpp>
 
-#if(defined(_MSC_VER) or (defined(__GNUC__) and (7 <= __GNUC_MAJOR__)))
+#if (defined(_MSC_VER) or (defined(__GNUC__) and (7 <= __GNUC_MAJOR__)))
 #include <filesystem>
 namespace fs = ::std::filesystem;
 #else
@@ -41,10 +41,8 @@ public:
     auto p = fs::path(image_path);
     const auto ext = p.extension().string();
     p.replace_extension("");
-    const auto output_image_path = declare_parameter(
-      "output_image_path",
-      p.string() + "_detect" + ext
-    );
+    const auto output_image_path =
+      declare_parameter("output_image_path", p.string() + "_detect" + ext);
 
     auto trt_yolox = std::make_unique<tensorrt_yolox::TrtYoloX>(model_path, precision);
     auto image = cv::imread(image_path);

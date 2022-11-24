@@ -20,21 +20,21 @@
 #ifndef CUDA_UTILS__CUDA_UNIQUE_PTR_HPP_
 #define CUDA_UTILS__CUDA_UNIQUE_PTR_HPP_
 
+#include "cuda_utils/cuda_check_error.hpp"
+
 #include <memory>
 #include <type_traits>
-
-#include "cuda_utils/cuda_check_error.hpp"
 
 namespace cuda_utils
 {
 struct CudaDeleter
 {
-  void operator()(void * p) const {CHECK_CUDA_ERROR(::cudaFree(p));}
+  void operator()(void * p) const { CHECK_CUDA_ERROR(::cudaFree(p)); }
 };
-template<typename T>
+template <typename T>
 using CudaUniquePtr = std::unique_ptr<T, CudaDeleter>;
 
-template<typename T>
+template <typename T>
 typename std::enable_if_t<std::is_array<T>::value, CudaUniquePtr<T>> make_unique(
   const std::size_t n)
 {
@@ -44,7 +44,7 @@ typename std::enable_if_t<std::is_array<T>::value, CudaUniquePtr<T>> make_unique
   return CudaUniquePtr<T>{p};
 }
 
-template<typename T>
+template <typename T>
 CudaUniquePtr<T> make_unique()
 {
   T * p;
@@ -52,22 +52,27 @@ CudaUniquePtr<T> make_unique()
   return CudaUniquePtr<T>{p};
 }
 
-struct CudaDeleterHost {
-  void operator()(void *p) const { CHECK_CUDA_ERROR(::cudaFreeHost(p)); }
+struct CudaDeleterHost
+{
+  void operator()(void * p) const { CHECK_CUDA_ERROR(::cudaFreeHost(p)); }
 };
-template <typename T> using CudaUniquePtrHost = std::unique_ptr<T, CudaDeleterHost>;
+template <typename T>
+using CudaUniquePtrHost = std::unique_ptr<T, CudaDeleterHost>;
 
 template <typename T>
-typename std::enable_if_t<std::is_array<T>::value, CudaUniquePtrHost<T>>
-make_unique_host(const std::size_t n, unsigned int flag) {
+typename std::enable_if_t<std::is_array<T>::value, CudaUniquePtrHost<T>> make_unique_host(
+  const std::size_t n, unsigned int flag)
+{
   using U = typename std::remove_extent_t<T>;
-  U *p;
+  U * p;
   CHECK_CUDA_ERROR(::cudaHostAlloc(reinterpret_cast<void **>(&p), sizeof(U) * n, flag));
   return CudaUniquePtrHost<T>{p};
 }
 
-template <typename T> CudaUniquePtrHost<T> make_unique_host(unsigned int flag=cudaHostAllocDefault) {
-  T *p;
+template <typename T>
+CudaUniquePtrHost<T> make_unique_host(unsigned int flag = cudaHostAllocDefault)
+{
+  T * p;
   CHECK_CUDA_ERROR(::cudaHostAlloc(reinterpret_cast<void **>(&p), sizeof(T), flag));
   return CudaUniquePtrHost<T>{p};
 }

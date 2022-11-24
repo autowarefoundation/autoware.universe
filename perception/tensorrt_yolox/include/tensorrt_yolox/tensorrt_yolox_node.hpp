@@ -20,9 +20,9 @@
 #include <rclcpp/rclcpp.hpp>
 #include <tensorrt_yolox/tensorrt_yolox.hpp>
 
-#include <tier4_perception_msgs/msg/detected_objects_with_feature.hpp>
 #include <sensor_msgs/msg/image.hpp>
 #include <std_msgs/msg/header.hpp>
+#include <tier4_perception_msgs/msg/detected_objects_with_feature.hpp>
 
 #include <cv_bridge/cv_bridge.h>
 
@@ -48,8 +48,7 @@ private:
   bool readLabelFile(const std::string & label_path);
 
   image_transport::Publisher image_pub_;
-  rclcpp::Publisher<tier4_perception_msgs::msg::DetectedObjectsWithFeature>::SharedPtr
-    objects_pub_;
+  rclcpp::Publisher<tier4_perception_msgs::msg::DetectedObjectsWithFeature>::SharedPtr objects_pub_;
 
   image_transport::Subscriber image_sub_;
 

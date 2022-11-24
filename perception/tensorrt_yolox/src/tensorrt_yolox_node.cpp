@@ -28,7 +28,7 @@ TrtYoloXNode::TrtYoloXNode(const rclcpp::NodeOptions & node_options)
 : Node("tensorrt_yolox", node_options)
 {
   using std::placeholders::_1;
-  using namespace std::chrono_literals;
+  using std::chrono_literals::operator""ms;
 
   std::string model_path = declare_parameter("model_path", "");
   std::string label_path = declare_parameter("label_path", "");
@@ -45,15 +45,12 @@ TrtYoloXNode::TrtYoloXNode(const rclcpp::NodeOptions & node_options)
     rclcpp::shutdown();
   }
   trt_yolox_ = std::make_unique<tensorrt_yolox::TrtYoloX>(
-    model_path, precision,
-    label_map_.size(), score_threshold,
-    nms_threshold);
+    model_path, precision, label_map_.size(), score_threshold, nms_threshold);
 
-  timer_ = rclcpp::create_timer(
-    this, get_clock(), 100ms, std::bind(&TrtYoloXNode::onConnect, this));
+  timer_ =
+    rclcpp::create_timer(this, get_clock(), 100ms, std::bind(&TrtYoloXNode::onConnect, this));
 
-  objects_pub_ =
-    this->create_publisher<tier4_perception_msgs::msg::DetectedObjectsWithFeature>(
+  objects_pub_ = this->create_publisher<tier4_perception_msgs::msg::DetectedObjectsWithFeature>(
     "~/out/objects", 1);
   image_pub_ = image_transport::create_publisher(this, "~/out/image");
 }
@@ -61,16 +58,15 @@ TrtYoloXNode::TrtYoloXNode(const rclcpp::NodeOptions & node_options)
 void TrtYoloXNode::onConnect()
 {
   using std::placeholders::_1;
-  if (objects_pub_->get_subscription_count() == 0 &&
+  if (
+    objects_pub_->get_subscription_count() == 0 &&
     objects_pub_->get_intra_process_subscription_count() == 0 &&
-    image_pub_.getNumSubscribers() == 0)
-  {
+    image_pub_.getNumSubscribers() == 0) {
     image_sub_.shutdown();
   } else if (!image_sub_) {
     image_sub_ = image_transport::create_subscription(
       this, "~/in/image", std::bind(&TrtYoloXNode::onImage, this, _1), "raw",
-      rmw_qos_profile_sensor_data
-    );
+      rmw_qos_profile_sensor_data);
   }
 }
 
@@ -101,14 +97,13 @@ void TrtYoloXNode::onImage(const sensor_msgs::msg::Image::ConstSharedPtr msg)
     object.feature.roi.y_offset = yolox_object.y_offset;
     object.feature.roi.width = yolox_object.width;
     object.feature.roi.height = yolox_object.height;
-    object.object.classification.emplace_back(
-      autoware_auto_perception_msgs::build<Label>()
-      .label(Label::UNKNOWN)
-      .probability(yolox_object.score));
+    object.object.classification.emplace_back(autoware_auto_perception_msgs::build<Label>()
+                                                .label(Label::UNKNOWN)
+                                                .probability(yolox_object.score));
     if (label_map_[yolox_object.type] == "CAR") {
       object.object.classification.front().label = Label::CAR;
-    } else if (label_map_[yolox_object.type] == "PEDESTRIAN" ||
-               label_map_[yolox_object.type] == "PERSON") {
+    } else if (
+      label_map_[yolox_object.type] == "PEDESTRIAN" || label_map_[yolox_object.type] == "PERSON") {
       object.object.classification.front().label = Label::PEDESTRIAN;
     } else if (label_map_[yolox_object.type] == "BUS") {
       object.object.classification.front().label = Label::BUS;
@@ -146,7 +141,8 @@ bool TrtYoloXNode::readLabelFile(const std::string & label_path)
   int label_index{};
   std::string label;
   while (getline(label_file, label)) {
-    std::transform(label.begin(), label.end(), label.begin(), [](auto c){return std::toupper(c);});
+    std::transform(
+      label.begin(), label.end(), label.begin(), [](auto c) { return std::toupper(c); });
     label_map_.insert({label_index, label});
     ++label_index;
   }

@@ -21,18 +21,19 @@
 #define CUDA_UTILS__CUDA_CHECK_ERROR_HPP_
 
 #include <cuda_runtime_api.h>
-#include <stdexcept>
+
 #include <sstream>
+#include <stdexcept>
 
 namespace cuda_utils
 {
-template<typename F, typename N>
+template <typename F, typename N>
 void cuda_check_error(const ::cudaError_t e, F && f, N && n)
 {
   if (e != ::cudaSuccess) {
     std::stringstream s;
-    s << ::cudaGetErrorName(e) << " (" << e << ")@" << f <<
-      "#L" << n << ": " << ::cudaGetErrorString(e);
+    s << ::cudaGetErrorName(e) << " (" << e << ")@" << f << "#L" << n << ": "
+      << ::cudaGetErrorString(e);
     throw std::runtime_error{s.str()};
   }
 }

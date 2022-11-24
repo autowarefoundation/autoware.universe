@@ -15,8 +15,8 @@
 #include <tensorrt_common/tensorrt_common.hpp>
 
 #include <NvInferPlugin.h>
-
 #include <dlfcn.h>
+
 #include <fstream>
 #include <functional>
 #include <memory>
@@ -29,8 +29,7 @@ namespace tensorrt_common
 TrtCommon::TrtCommon(
   const std::string & model_path, const std::string & precision,
   std::unique_ptr<nvinfer1::IInt8EntropyCalibrator2> calibrator,
-  const tensorrt_common::BatchConfig & batch_config,
-  const size_t max_workspace_size,
+  const tensorrt_common::BatchConfig & batch_config, const size_t max_workspace_size,
   const std::vector<std::string> & plugin_paths)
 : model_file_path_(model_path),
   calibrator_(std::move(calibrator)),
@@ -95,15 +94,13 @@ bool TrtCommon::loadEngine(const std::string & engine_file_path)
   std::stringstream engine_buffer;
   engine_buffer << engine_file.rdbuf();
   std::string engine_str = engine_buffer.str();
-  engine_ = TrtUniquePtr<nvinfer1::ICudaEngine>(
-    runtime_->deserializeCudaEngine(
-      reinterpret_cast<const void *>(engine_str.data()), engine_str.size()));
+  engine_ = TrtUniquePtr<nvinfer1::ICudaEngine>(runtime_->deserializeCudaEngine(
+    reinterpret_cast<const void *>(engine_str.data()), engine_str.size()));
   return true;
 }
 
 bool TrtCommon::buildEngineFromOnnx(
-  const std::string & onnx_file_path,
-  const std::string & output_engine_file_path)
+  const std::string & onnx_file_path, const std::string & output_engine_file_path)
 {
   auto builder = TrtUniquePtr<nvinfer1::IBuilder>(nvinfer1::createInferBuilder(logger_));
   if (!builder) {
@@ -138,8 +135,7 @@ bool TrtCommon::buildEngineFromOnnx(
 
   auto parser = TrtUniquePtr<nvonnxparser::IParser>(nvonnxparser::createParser(*network, logger_));
   if (!parser->parseFromFile(
-      onnx_file_path.c_str(), static_cast<int>(nvinfer1::ILogger::Severity::kERROR)))
-  {
+        onnx_file_path.c_str(), static_cast<int>(nvinfer1::ILogger::Severity::kERROR))) {
     return false;
   }
 
@@ -173,11 +169,8 @@ bool TrtCommon::buildEngineFromOnnx(
     logger_.log(nvinfer1::ILogger::Severity::kERROR, "Fail to create host memory");
     return false;
   }
-  engine_ =
-    TrtUniquePtr<nvinfer1::ICudaEngine>(
-    runtime_->deserializeCudaEngine(
-      plan->data(),
-      plan->size()));
+  engine_ = TrtUniquePtr<nvinfer1::ICudaEngine>(
+    runtime_->deserializeCudaEngine(plan->data(), plan->size()));
 #else
   engine_ = TrtUniquePtr<nvinfer1::ICudaEngine>(builder->buildEngineWithConfig(*network, *config));
 #endif
@@ -207,26 +200,21 @@ bool TrtCommon::buildEngineFromOnnx(
   return true;
 }
 
-bool TrtCommon::isInitialized() {return is_initialized_;}
+bool TrtCommon::isInitialized() { return is_initialized_; }
 
 nvinfer1::Dims TrtCommon::getBindingDimensions(const int32_t index) const
 {
   return context_->getBindingDimensions(index);
 }
 
-int32_t TrtCommon::getNbBindings()
-{
-  return engine_->getNbBindings();
-}
+int32_t TrtCommon::getNbBindings() { return engine_->getNbBindings(); }
 
 bool TrtCommon::setBindingDimensions(const int32_t index, const nvinfer1::Dims & dimensions) const
 {
   return context_->setBindingDimensions(index, dimensions);
 }
 
-bool TrtCommon::enqueueV2(
-  void ** bindings, cudaStream_t stream,
-  cudaEvent_t * input_consumed)
+bool TrtCommon::enqueueV2(void ** bindings, cudaStream_t stream, cudaEvent_t * input_consumed)
 {
   return context_->enqueueV2(bindings, stream, input_consumed);
 }
