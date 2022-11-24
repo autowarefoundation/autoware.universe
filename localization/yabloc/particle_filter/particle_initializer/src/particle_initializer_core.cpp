@@ -1,9 +1,5 @@
 #include "particle_initializer/particle_initializer.hpp"
 
-#include <ll2_decomposer/from_bin_msg.hpp>
-
-#include <boost/range/adaptors.hpp>
-
 namespace pcdless::modularized_particle_filter
 {
 ParticleInitializer::ParticleInitializer()
@@ -11,7 +7,6 @@ ParticleInitializer::ParticleInitializer()
   cov_xx_yy_{declare_parameter("cov_xx_yy", std::vector<double>{4.0, 0.25}).data()}
 {
   using std::placeholders::_1;
-  const rclcpp::QoS map_qos = rclcpp::QoS(10).transient_local().reliable();
 
   // Publisher
   pub_initialpose_ = create_publisher<PoseCovStamped>("rectified/initialpose", 10);
@@ -19,78 +14,23 @@ ParticleInitializer::ParticleInitializer()
 
   // Subscriber
   auto on_initialpose = std::bind(&ParticleInitializer::on_initial_pose, this, _1);
-  auto on_map = std::bind(&ParticleInitializer::on_map, this, _1);
   sub_initialpose_ =
     create_subscription<PoseCovStamped>("initialpose", 10, std::move(on_initialpose));
-  sub_map_ = create_subscription<HADMapBin>("map/vector_map", map_qos, std::move(on_map));
 }
 
 void ParticleInitializer::on_initial_pose(const PoseCovStamped & initialpose)
 {
-  if (kdtree_ == nullptr) {
-    RCLCPP_WARN_STREAM(get_logger(), "kdtree is nullptr");
-    return;
-  }
-
   auto position = initialpose.pose.pose.position;
   Eigen::Vector3f pos_vec3f;
   pos_vec3f << position.x, position.y, position.z;
 
-  int nearest_index = search_nearest_point_index(pos_vec3f);
-  lanelet::Id id = lanelet::InvalId;
-  if (nearest_index >= 0) id = point_id_to_lanelet_id_.at(nearest_index);
-  if (id == lanelet::InvalId) return;
+  auto orientation = initialpose.pose.pose.orientation;
+  float theta = 2 * std::atan2(orientation.z, orientation.w);
+  Eigen::Vector3f tangent;
+  tangent << std::cos(theta), std::sin(theta), 0;
 
-  pos_vec3f = cloud_->at(nearest_index).getArray3fMap();
-
-  const lanelet::Lanelet lane = *lanelet_map_->laneletLayer.find(id);
-  Eigen::Vector3f tangent = tangent_direction(lane, pos_vec3f);
   publish_range_marker(pos_vec3f, tangent);
   publish_rectified_initial_pose(pos_vec3f, tangent, initialpose);
-}
-
-void ParticleInitializer::on_map(const HADMapBin & bin_map)
-{
-  lanelet_map_ = ll2_decomposer::from_bin_msg(bin_map);
-
-  cloud_ = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
-
-  auto toPointXYZ = [](const lanelet::ConstPoint3d & p) -> pcl::PointXYZ {
-    pcl::PointXYZ xyz;
-    xyz.x = p.x();
-    xyz.y = p.y();
-    xyz.z = p.z();
-    return xyz;
-  };
-
-  for (const lanelet::Lanelet & lane : lanelet_map_->laneletLayer) {
-    for (const lanelet::ConstPoint3d & p : lane.centerline3d()) {
-      cloud_->push_back(toPointXYZ(p));
-      point_id_to_lanelet_id_[cloud_->size()] = lane.id();
-    }
-  }
-
-  kdtree_ = pcl::make_shared<pcl::KdTreeFLANN<pcl::PointXYZ>>();
-  kdtree_->setInputCloud(cloud_);
-}
-
-int ParticleInitializer::search_nearest_point_index(const Eigen::Vector3f & pos)
-{
-  pcl::PointXYZ query(pos.x(), pos.y(), pos.z());
-  std::vector<int> indices;
-  std::vector<float> distances;
-  kdtree_->nearestKSearch(query, 1, indices, distances);
-
-  pcl::PointXYZ xyz = cloud_->at(indices.front());
-  Eigen::Vector3f ref = xyz.getVector3fMap();
-  float xy_distance = (ref - pos).topRows(2).norm();
-
-  if (xy_distance > (3 * 3)) {
-    RCLCPP_WARN_STREAM(get_logger(), "nearest neighbor is too far " << xy_distance);
-    RCLCPP_WARN_STREAM(get_logger(), ref.transpose() << "   " << pos.transpose());
-    return -1;
-  }
-  return indices.front();
 }
 
 void ParticleInitializer::publish_range_marker(
@@ -126,39 +66,6 @@ void ParticleInitializer::publish_range_marker(
   msg.points.push_back(cast2gp(pos + tangent + binormal));
 
   pub_marker_->publish(msg);
-}
-
-Eigen::Vector3f ParticleInitializer::tangent_direction(
-  const lanelet::Lanelet & lane, const Eigen::Vector3f & position)
-{
-  auto castVec3f = [](const lanelet::ConstPoint3d & p) -> Eigen::Vector3f {
-    Eigen::Vector3d vec_3d(p.x(), p.y(), p.z());
-    return vec_3d.cast<float>();
-  };
-
-  float min_distance = std::numeric_limits<float>::max();
-  size_t min_index = -1;
-  auto centerline = lane.centerline3d();
-
-  for (const auto & e : centerline | boost::adaptors::indexed(0)) {
-    const lanelet::ConstPoint3d & p = e.value();
-    float dp = (castVec3f(p) - position).norm();
-    if (dp < min_distance) {
-      min_distance = dp;
-      min_index = e.index();
-    }
-  }
-
-  Eigen::Vector3f from, to;
-  if (min_index == centerline.size() - 1) {
-    from = castVec3f(*std::next(centerline.begin(), min_index - 1));
-    to = castVec3f(*std::next(centerline.begin(), min_index));
-  } else {
-    from = castVec3f(*std::next(centerline.begin(), min_index));
-    to = castVec3f(*std::next(centerline.begin(), min_index + 1));
-  }
-
-  return (to - from).normalized();
 }
 
 void ParticleInitializer::publish_rectified_initial_pose(
