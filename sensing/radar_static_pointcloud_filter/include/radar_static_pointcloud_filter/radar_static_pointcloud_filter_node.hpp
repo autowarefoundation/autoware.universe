@@ -57,9 +57,6 @@ private:
   using Sync = message_filters::Synchronizer<SyncPolicy>;
   typename std::shared_ptr<Sync> sync_ptr_;
 
-  // Data buffer
-  geometry_msgs::msg::TransformStamped::ConstSharedPtr transform_;
-
   // Callback
   void onData(const RadarScan::ConstSharedPtr radar_msg, const Odometry::ConstSharedPtr odom_msg);
 

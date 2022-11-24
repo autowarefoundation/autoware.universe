@@ -128,9 +128,10 @@ rcl_interfaces::msg::SetParametersResult RadarStaticPointcloudFilterNode::onSetP
 void RadarStaticPointcloudFilterNode::onData(
   const RadarScan::ConstSharedPtr radar_msg, const Odometry::ConstSharedPtr odom_msg)
 {
-  transform_ = transform_listener_->getTransform(
-    odom_msg->header.frame_id, radar_msg->header.frame_id, odom_msg->header.stamp,
-    rclcpp::Duration::from_seconds(0.02));
+  geometry_msgs::msg::TransformStamped::ConstSharedPtr transform_ =
+    transform_listener_->getTransform(
+      odom_msg->header.frame_id, radar_msg->header.frame_id, odom_msg->header.stamp,
+      rclcpp::Duration::from_seconds(0.01));
 
   RadarScan static_radar_{};
   RadarScan dynamic_radar_{};
