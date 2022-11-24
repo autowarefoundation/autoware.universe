@@ -57,8 +57,8 @@ FusionNode<Msg, ObjType>::FusionNode(
   }
 
   // Set parameters
-  match_threshold_ms_ = static_cast<double>(declare_parameter("match_threshold_ms", 50));
-  timeout_ms_ = static_cast<double>(declare_parameter("timeout_ms", 0.1));
+  match_threshold_ms_ = declare_parameter<double>("match_threshold_ms");
+  timeout_ms_ = declare_parameter<double>("timeout_ms");
 
   input_offset_ms_ = declare_parameter("input_offset_ms", std::vector<double>{});
   if (!input_offset_ms_.empty() && rois_number_ != input_offset_ms_.size()) {
