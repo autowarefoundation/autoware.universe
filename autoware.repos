@@ -49,10 +49,6 @@ repositories:
     type: git
     url: https://github.com/tier4/sensor_component_description.git
     version: main
-  description/sensor/aip_description:
-    type: git
-    url: https://github.com/tier4/aip_description.iv.git
-    version: main
   description/vehicle/lexus_description:
     type: git
     url: https://github.com/tier4/lexus_description.iv.git
