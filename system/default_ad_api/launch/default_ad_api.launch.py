@@ -36,6 +36,7 @@ def generate_launch_description():
         create_api_node("localization", "LocalizationNode"),
         create_api_node("motion", "MotionNode", parameters=[{"require_accept_start": False}]),
         create_api_node("operation_mode", "OperationModeNode"),
+        create_api_node("planning", "PlanningNode"),
         create_api_node("routing", "RoutingNode"),
     ]
     container = ComposableNodeContainer(

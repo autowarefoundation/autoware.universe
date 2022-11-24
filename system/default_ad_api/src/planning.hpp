@@ -16,6 +16,8 @@
 #define PLANNING_HPP_
 
 #include <autoware_ad_api_specs/planning.hpp>
+#include <component_interface_specs/localization.hpp>
+#include <component_interface_specs/planning.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <vector>
@@ -36,11 +38,17 @@ private:
   using SteeringFactorArray = autoware_adapi_v1_msgs::msg::SteeringFactorArray;
   Pub<autoware_ad_api::planning::VelocityFactors> pub_velocity_factors_;
   Pub<autoware_ad_api::planning::SteeringFactors> pub_steering_factors_;
+  Sub<localization_interface::KinematicState> sub_kinematic_state_;
+  Sub<planning_interface::Trajectory> sub_trajectory_;
   std::vector<rclcpp::Subscription<VelocityFactorArray>::SharedPtr> sub_velocity_factors_;
   std::vector<rclcpp::Subscription<SteeringFactorArray>::SharedPtr> sub_steering_factors_;
   std::vector<VelocityFactorArray::ConstSharedPtr> velocity_factors_;
   std::vector<SteeringFactorArray::ConstSharedPtr> steering_factors_;
   rclcpp::TimerBase::SharedPtr timer_;
+
+  double stop_judge_distance_;
+  localization_interface::KinematicState::Message::ConstSharedPtr kinematic_state_;
+  planning_interface::Trajectory::Message::ConstSharedPtr trajectory_;
 };
 
 }  // namespace default_ad_api

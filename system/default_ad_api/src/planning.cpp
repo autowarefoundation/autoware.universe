@@ -14,6 +14,8 @@
 
 #include "planning.hpp"
 
+#include <motion_utils/motion_utils.hpp>
+
 #include <string>
 #include <vector>
 
@@ -28,9 +30,21 @@ void concat(std::vector<T> & v1, const std::vector<T> & v2)
 
 PlanningNode::PlanningNode(const rclcpp::NodeOptions & options) : Node("planning", options)
 {
+  // TODO(Takagi, Isamu): remove default value
+  stop_judge_distance_ = declare_parameter<double>("stop_judge_distance", 1.0);
+
   const auto adaptor = component_interface_utils::NodeAdaptor(this);
   adaptor.init_pub(pub_velocity_factors_);
   adaptor.init_pub(pub_steering_factors_);
+  adaptor.init_sub(
+    sub_kinematic_state_,
+    [this](const localization_interface::KinematicState::Message::ConstSharedPtr msg) {
+      kinematic_state_ = msg;
+    });
+  adaptor.init_sub(
+    sub_trajectory_, [this](const planning_interface::Trajectory::Message::ConstSharedPtr msg) {
+      trajectory_ = msg;
+    });
 
   std::vector<std::string> velocity_factor_topics = {
     "/planning/velocity_factors/blind_spot",
@@ -79,6 +93,7 @@ PlanningNode::PlanningNode(const rclcpp::NodeOptions & options) : Node("planning
 
   const auto rate = rclcpp::Rate(5);
   timer_ = rclcpp::create_timer(this, get_clock(), rate.period(), [this]() {
+    using autoware_adapi_v1_msgs::msg::VelocityFactor;
     VelocityFactorArray velocity;
     SteeringFactorArray steering;
     velocity.header.stamp = now();
@@ -93,6 +108,21 @@ PlanningNode::PlanningNode(const rclcpp::NodeOptions & options) : Node("planning
     for (const auto & factor : steering_factors_) {
       if (factor) {
         concat(steering.factors, factor->factors);
+      }
+    }
+    for (auto & factor : velocity.factors) {
+      if (kinematic_state_ && trajectory_ && std::isnan(factor.distance)) {
+        const auto & curr_point = kinematic_state_->pose.pose.position;
+        const auto & stop_point = factor.pose.position;
+        const auto & points = trajectory_->points;
+        factor.distance = motion_utils::calcSignedArcLength(points, curr_point, stop_point);
+      }
+      if ((factor.status == VelocityFactor::UNKNOWN) && (!std::isnan(factor.distance))) {
+        if (factor.distance < stop_judge_distance_) {
+          factor.status = VelocityFactor::STOPPED;
+        } else {
+          factor.status = VelocityFactor::APPROACHING;
+        }
       }
     }
     pub_velocity_factors_->publish(velocity);
