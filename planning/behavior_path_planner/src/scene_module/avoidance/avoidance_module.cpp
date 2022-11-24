@@ -127,12 +127,13 @@ bool AvoidanceModule::isAvoidancePlanRunning() const
   const bool has_shift_line = (path_shifter_.getShiftLinesSize() > 0);
   return has_base_offset || has_shift_line;
 }
-bool AvoidanceModule::isAvoidanceManeuverRunning() const
+bool AvoidanceModule::isAvoidanceManeuverRunning()
 {
   const auto path_idx = avoidance_data_.ego_closest_path_index;
 
-  for (const auto & al : init_raw_shift_lines_) {
-    if (path_idx > al.start_idx) {
+  for (const auto & al : registered_raw_shift_lines_) {
+    if (path_idx > al.start_idx || is_avoidance_maneuver_starts) {
+      is_avoidance_maneuver_starts = true;
       return true;
     }
   }
@@ -546,7 +547,6 @@ void AvoidanceModule::registerRawShiftLines(const AvoidLineArray & future)
     }
   }
 
-  init_raw_shift_lines_ = registered_raw_shift_lines_;
   DEBUG_PRINT("registered object size: %lu -> %lu", old_size, registered_raw_shift_lines_.size());
 }
 
@@ -2683,6 +2683,7 @@ void AvoidanceModule::initVariables()
   registered_raw_shift_lines_ = {};
   current_raw_shift_lines_ = {};
   original_unique_id = 0;
+  is_avoidance_maneuver_starts = false;
 }
 
 bool AvoidanceModule::isTargetObjectType(const PredictedObject & object) const
