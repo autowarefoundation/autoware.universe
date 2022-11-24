@@ -19,12 +19,6 @@
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
 
-using namespace std::literals;
-using std::chrono::duration;
-using std::chrono::duration_cast;
-using std::chrono::nanoseconds;
-using std::placeholders::_1;
-
 namespace
 {
 template <class T>
@@ -97,6 +91,8 @@ using sensor_msgs::msg::PointCloud2;
 RadarScanToPointcloud2Node::RadarScanToPointcloud2Node(const rclcpp::NodeOptions & node_options)
 : Node("radar_scan_to_pointcloud2", node_options)
 {
+  using std::placeholders::_1;
+
   // Parameter Server
   set_param_res_ = this->add_on_set_parameters_callback(
     std::bind(&RadarScanToPointcloud2Node::onSetParam, this, _1));
