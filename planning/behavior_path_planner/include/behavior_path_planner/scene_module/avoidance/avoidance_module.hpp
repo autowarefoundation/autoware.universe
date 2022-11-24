@@ -209,11 +209,13 @@ private:
   // for raw_shift_line registration
   AvoidLineArray registered_raw_shift_lines_;
   AvoidLineArray current_raw_shift_lines_;
+  AvoidLineArray init_raw_shift_lines_;
   void registerRawShiftLines(const AvoidLineArray & future_registered);
   void updateRegisteredRawShiftLines();
 
   // -- for state management --
   bool isAvoidancePlanRunning() const;
+  bool isAvoidanceManeuverRunning() const;
 
   // -- for pre-processing --
   void initVariables();
