@@ -70,9 +70,8 @@ std::vector<geometry_msgs::msg::Pose> resamplePoseVector(
  * @return resampled path(poses)
  */
 std::vector<geometry_msgs::msg::Pose> resamplePoseVector(
-  const std::vector<geometry_msgs::msg::Pose> & points,
-  const double resampled_interval, const bool use_lerp_for_xy = false,
-  const bool use_lerp_for_z = true);
+  const std::vector<geometry_msgs::msg::Pose> & points, const double resampled_interval,
+  const bool use_lerp_for_xy = false, const bool use_lerp_for_z = true);
 
 /**
  * @brief A resampling function for a path with lane id. Note that in a default setting, position xy

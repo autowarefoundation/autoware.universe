@@ -91,9 +91,8 @@ std::vector<geometry_msgs::msg::Pose> resamplePoseVector(
 }
 
 std::vector<geometry_msgs::msg::Pose> resamplePoseVector(
-  const std::vector<geometry_msgs::msg::Pose> & points,
-  const double resample_interval, const bool use_lerp_for_xy,
-  const bool use_lerp_for_z)
+  const std::vector<geometry_msgs::msg::Pose> & points, const double resample_interval,
+  const bool use_lerp_for_xy, const bool use_lerp_for_z)
 {
   const double input_length = motion_utils::calcArcLength(points);
 

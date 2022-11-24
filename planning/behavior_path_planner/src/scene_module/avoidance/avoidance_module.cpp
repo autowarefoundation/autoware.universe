@@ -1903,7 +1903,9 @@ void AvoidanceModule::generateExtendedDrivableArea(ShiftedPath * shifted_path) c
     shifted_path->path.drivable_area = util::generateDrivableArea(
       shifted_path->path, drivable_lanes, p.drivable_area_resolution, p.vehicle_length,
       planner_data_);
-    generateDrivableArea(shifted_path->path, drivable_lanes, p.vehicle_length, planner_data_, avoidance_data_.target_objects);
+    generateDrivableArea(
+      shifted_path->path, drivable_lanes, p.vehicle_length, planner_data_,
+      avoidance_data_.target_objects);
   }
 }
 

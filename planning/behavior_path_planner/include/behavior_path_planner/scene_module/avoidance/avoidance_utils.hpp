@@ -26,10 +26,11 @@ namespace behavior_path_planner
 {
 using behavior_path_planner::PlannerData;
 
-struct PolygonPoint {
-    geometry_msgs::msg::Point point;
-    double lat_dist_to_bound;
-    double lon_dist;
+struct PolygonPoint
+{
+  geometry_msgs::msg::Point point;
+  double lat_dist_to_bound;
+  double lon_dist;
 };
 
 bool isOnRight(const ObjectData & obj);
@@ -81,15 +82,21 @@ std::vector<std::string> getUuidStr(const ObjectDataArray & objs);
 Polygon2d createEnvelopePolygon(
   const ObjectData & object_data, const Pose & closest_pose, const double envelope_buffer);
 
-std::vector<Point> getEdgePoints(const Polygon2d& object_polygon, const double threshold);
+std::vector<Point> getEdgePoints(const Polygon2d & object_polygon, const double threshold);
 
-std::vector<PolygonPoint> getEdgePoints(const std::vector<Point>& bound, const std::vector<Point>& edge_points, const double lat_dist_to_path, size_t& start_segment_idx, size_t& end_segment_idx);
+std::vector<PolygonPoint> getEdgePoints(
+  const std::vector<Point> & bound, const std::vector<Point> & edge_points,
+  const double lat_dist_to_path, size_t & start_segment_idx, size_t & end_segment_idx);
 
-std::vector<PolygonPoint> sortPolygonPoints(const std::vector<PolygonPoint>& points);
+std::vector<PolygonPoint> sortPolygonPoints(const std::vector<PolygonPoint> & points);
 
-std::vector<Point> updateBoundary(const std::vector<Point> & original_bound, const std::vector<PolygonPoint> & points, const size_t start_segment_idx, const size_t end_segment_idx);
+std::vector<Point> updateBoundary(
+  const std::vector<Point> & original_bound, const std::vector<PolygonPoint> & points,
+  const size_t start_segment_idx, const size_t end_segment_idx);
 
-void generateDrivableArea(PathWithLaneId & path, const std::vector<DrivableLanes> & lanes, const double vehicle_length, const std::shared_ptr<const PlannerData> planner_data, const ObjectDataArray& objects);
+void generateDrivableArea(
+  PathWithLaneId & path, const std::vector<DrivableLanes> & lanes, const double vehicle_length,
+  const std::shared_ptr<const PlannerData> planner_data, const ObjectDataArray & objects);
 }  // namespace behavior_path_planner
 
 #endif  // BEHAVIOR_PATH_PLANNER__SCENE_MODULE__AVOIDANCE__AVOIDANCE_UTILS_HPP_
