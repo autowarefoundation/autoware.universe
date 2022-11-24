@@ -55,10 +55,6 @@ void ImuCorrector::callbackImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_m
   imu_msg.angular_velocity_covariance[IDX::Z_Z] =
     angular_velocity_stddev_zz_ * angular_velocity_stddev_zz_;
 
-  // geometry_msgs::msg::TransformStamped::SharedPtr tf_base2imu_ptr =
-  //   std::make_shared<geometry_msgs::msg::TransformStamped>();
-  // getTransform(output_frame_, imu_msg.header.frame_id, tf_base2imu_ptr);
-
   geometry_msgs::msg::TransformStamped::ConstSharedPtr tf_base2imu_ptr;
   try {
     tf_base2imu_ptr =
