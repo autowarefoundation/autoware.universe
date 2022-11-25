@@ -5,6 +5,7 @@
   <version>0.0.0</version>
   <description>radar_fusion_to_detected_object</description>
   <maintainer email="satoshi.tanaka@tier4.jp">Satoshi Tanaka</maintainer>
+  <maintainer email="shunsuke.miura@tier4.jp">Shunsuke Miura</maintainer>
   <license>Apache License 2.0</license>
   <author email="satoshi.tanaka@tier4.jp">Satoshi Tanaka</author>
 
