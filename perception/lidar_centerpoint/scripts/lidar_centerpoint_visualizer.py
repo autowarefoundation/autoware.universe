@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # Copyright 2022 TIER IV, Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
