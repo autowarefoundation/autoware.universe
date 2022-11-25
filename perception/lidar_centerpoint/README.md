@@ -62,7 +62,7 @@ ros2 launch lidar_centerpoint single_inference_lidar_centerpoint.launch.xml pcd_
 ```
 
 `lidar_centerpoint` generated a `ply` file with the same name which contains the detections as meshes.
-These detections can be visualized by most 3D tools, but we also provide a small script to visualize the detections alonsgside the input pointcloud.
+These detections can be visualized by most 3D tools, but we also provide a small script to visualize the detections alongside the input pointcloud.
 
 ```bash
 python3 scripts/visualize_resuls.py -pcd_path test_pointcloud.pcd -detections_path test_pointcloud.ply
