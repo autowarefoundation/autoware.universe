@@ -5,7 +5,9 @@
   <version>0.1.0</version>
   <description>front_vehicle_velocity_estimator</description>
   <maintainer email="satoshi.tanaka@tier4.jp">Satoshi Tanaka</maintainer>
+  <maintainer email="shunsuke.miura@tier4.jp">Shunsuke Miura</maintainer>
   <license>Apache License 2.0</license>
+  <author email="satoshi.tanaka@tier4.jp">Satoshi Tanaka</author>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
