@@ -222,7 +222,8 @@ visualization_msgs::msg::MarkerArray DefaultPlanner::visualize_debug_footprint(
 bool DefaultPlanner::check_goal_footprint(
   const lanelet::ConstLanelet & current_lanelet,
   const lanelet::ConstLanelet & combined_prev_lanelet,
-  const tier4_autoware_utils::LinearRing2d & goal_footprint, double & next_lane_length)
+  const tier4_autoware_utils::LinearRing2d & goal_footprint, double & next_lane_length,
+  const double search_margin)
 {
   std::vector<tier4_autoware_utils::Point2d> points_intersection;
 
@@ -233,7 +234,7 @@ bool DefaultPlanner::check_goal_footprint(
     return true;
   }
   points_intersection.clear();
-
+  
   // check if goal footprint is in between many lanelets
   for (const auto & next_lane : routing_graph_ptr_->following(current_lanelet)) {
     next_lane_length += lanelet::utils::getLaneletLength2d(next_lane);
@@ -243,7 +244,7 @@ bool DefaultPlanner::check_goal_footprint(
     lanelet::ConstLanelet combined_lanelets = combine_lanelets(lanelets);
 
     // if next lanelet length longer than vehicle longitudinal offset
-    if (vehicle_info_.max_longitudinal_offset_m < next_lane_length) {
+    if (vehicle_info_.max_longitudinal_offset_m + search_margin < next_lane_length) {
       next_lane_length -= lanelet::utils::getLaneletLength2d(next_lane);
       boost::geometry::intersection(
         goal_footprint, combined_lanelets.polygon2d().basicPolygon(), points_intersection);
@@ -258,6 +259,7 @@ bool DefaultPlanner::check_goal_footprint(
         return true;
       }
     }
+    next_lane_length = 0.0;
   }
   return false;
 }
