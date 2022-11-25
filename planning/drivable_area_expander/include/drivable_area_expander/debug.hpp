@@ -44,7 +44,8 @@ visualization_msgs::msg::Marker makePolygonMarker(const polygon_t & polygon, con
 /// @param[in] marker_z z-value to use for markers
 /// @return marker array
 visualization_msgs::msg::MarkerArray makeDebugMarkers(
-  const polygon_t & footprint, const multilinestring_t & uncrossable_lines, const double marker_z);
+  const multipolygon_t & footprint, const multilinestring_t & uncrossable_lines,
+  const multipolygon_t & predicted_paths, const double marker_z);
 
 }  // namespace drivable_area_expander
 #endif  // DRIVABLE_AREA_EXPANDER__DEBUG_HPP_

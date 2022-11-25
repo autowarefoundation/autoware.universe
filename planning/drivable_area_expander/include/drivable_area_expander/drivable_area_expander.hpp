@@ -27,21 +27,32 @@
 
 namespace drivable_area_expander
 {
-// TODO(Maxime): move to other file
-polygon_t rotatePolygon(const polygon_t & polygon, const double angle);
-polygon_t translatePolygon(const polygon_t & polygon, const double x, const double y);
-/// @brief create the footprint polygon from a path
-/// @param[in] path the path for which to create a footprint
-/// @param[in] params expansion parameters defining how to create the footprint
-/// @return polygon footprint of the path
-polygon_t createPathFootprint(const Path & path, const ExpansionParameters & params);
-/// @brief make the given footprint "drivable" in the given drivable_area
+/// @brief build a drivable area expanded with a footprint but not crossing some lines and predicted
+/// paths
 /// @param[in] drivable_area input drivable_area
-/// @param[in] footprint polygon to make drivable
+/// @param[in] footprint polygons to make drivable
+/// @param[in] predicted_paths polygons to make undrivable
+/// @param[in] uncrossable_lines lines beyond which not to extend the drivable area
+/// @param[in] origin ego position
 /// @return expanded drivable area
-OccupancyGrid expandDrivableArea(const OccupancyGrid & drivable_area, const polygon_t & footprint);
+OccupancyGrid buildExpandedDrivableArea(
+  const OccupancyGrid & drivable_area, const multipolygon_t & footprint,
+  const multipolygon_t & predicted_paths, const multilinestring_t & uncrossable_lines,
+  const point_t & origin);
 
-linestring_t createMaxExpansionLines(const Path & path, const double max_expansion_distance);
+/// @brief create polygons from the predicted paths of the given objects
+/// @param[in] predicted_objects predicted objects
+/// @param[in] params expansion parameters
+/// @return the objects' predicted paths polygons
+multipolygon_t createPredictedPathPolygons(
+  const autoware_auto_perception_msgs::msg::PredictedObjects & predicted_objects,
+  const ExpansionParameters & params);
+
+/// @brief create lines around the path
+/// @param[in] path input path
+/// @param[in] max_expansion_distance maximum distance from the path
+/// @return line around the path with the given distance
+linestring_t createMaxExpansionLine(const Path & path, const double max_expansion_distance);
 }  // namespace drivable_area_expander
 
 #endif  // DRIVABLE_AREA_EXPANDER__DRIVABLE_AREA_EXPANDER_HPP_

@@ -109,15 +109,18 @@ void DrivableAreaExpanderNode::onPath(const Path::ConstSharedPtr msg)
   const auto downsampled_path_points =
     downsamplePath(input_path, *ego_idx, end_idx, preprocessing_params_.downsample_factor);
   auto path_footprint = createPathFootprint(downsampled_path_points, expansion_params_);
-  multilinestring_t uncrossable_lines = {
-    createMaxExpansionLines(input_path, expansion_params_.max_expansion_distance)};
-  uncrossable_lines.insert(
-    uncrossable_lines.end(), uncrossable_lines_.begin(), uncrossable_lines_.end());
-  // pruneFootprint(path_footprint, uncrossable_lines);
-  // const auto predicted_path_polygons = expansion_params_.avoid_dynamic_objects ?
-  // createPredictedPathPolygons(*dynamic_objects_ptr_) : {};
+  const auto max_expansion_line =
+    createMaxExpansionLine(input_path, expansion_params_.max_expansion_distance);
+  auto uncrossable_lines = uncrossable_lines_;
+  uncrossable_lines.push_back(max_expansion_line);
+  const auto predicted_paths =
+    createPredictedPathPolygons(*dynamic_objects_ptr_, expansion_params_);
+  const point_t origin = {
+    downsampled_path_points.points.front().pose.position.x,
+    downsampled_path_points.points.front().pose.position.y};
 
-  input_path.drivable_area = expandDrivableArea(input_path.drivable_area, path_footprint);
+  input_path.drivable_area = buildExpandedDrivableArea(
+    input_path.drivable_area, path_footprint, predicted_paths, uncrossable_lines, origin);
   pub_path_->publish(input_path);
 
   const auto t_end = std::chrono::system_clock::now();
@@ -128,7 +131,8 @@ void DrivableAreaExpanderNode::onPath(const Path::ConstSharedPtr msg)
 
   if (pub_debug_markers_->get_subscription_count() > 0) {
     const auto z = msg->points.empty() ? 0.0 : msg->points.front().pose.position.z;
-    pub_debug_markers_->publish(makeDebugMarkers(path_footprint, uncrossable_lines, z));
+    pub_debug_markers_->publish(
+      makeDebugMarkers(path_footprint, uncrossable_lines, predicted_paths, z));
   }
 }
 

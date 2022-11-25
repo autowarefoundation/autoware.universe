@@ -28,21 +28,17 @@ TEST(TestFootprint, rotatePolygon)
   {
     const auto rot = rotatePolygon(poly, M_PI_2);
     ASSERT_EQ(rot.outer().size(), poly.outer().size());
-    std::cout << boost::geometry::wkt(rot) << std::endl;
   }
   {
     const auto rot = rotatePolygon(poly, M_PI);
     ASSERT_EQ(rot.outer().size(), poly.outer().size());
-    std::cout << boost::geometry::wkt(rot) << std::endl;
   }
   {
     const auto rot = rotatePolygon(poly, M_PI_2 * 3);
     ASSERT_EQ(rot.outer().size(), poly.outer().size());
-    std::cout << boost::geometry::wkt(rot) << std::endl;
   }
   {
     const auto rot = rotatePolygon(poly, 2 * M_PI);
     ASSERT_EQ(rot.outer().size(), poly.outer().size());
-    std::cout << boost::geometry::wkt(rot) << std::endl;
   }
 }

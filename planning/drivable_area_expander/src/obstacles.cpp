@@ -28,68 +28,69 @@
 
 namespace drivable_area_expander
 {
-/*
-polygon_t createObjectPolygon(
-const geometry_msgs::msg::Pose & pose, const geometry_msgs::msg::Vector3 & dimensions,
-const double buffer)
+polygon_t rotatePolygon(const polygon_t & polygon, const double angle)
 {
-// rename
-const auto x = pose.position.x;
-const auto y = pose.position.y;
-const auto h = dimensions.x + buffer;
-const auto w = dimensions.y + buffer;
-const auto yaw = tf2::getYaw(pose.orientation);
-
-// create base polygon
-polygon_t obj_poly;
-boost::geometry::exterior_ring(obj_poly) = boost::assign::list_of<point_t>(h / 2.0, w / 2.0)(
-  -h / 2.0, w / 2.0)(-h / 2.0, -w / 2.0)(h / 2.0, -w / 2.0)(h / 2.0, w / 2.0);
-
-// rotate polygon(yaw)
-boost::geometry::strategy::transform::rotate_transformer<boost::geometry::radian, double, 2, 2>
-  rotate(-yaw);  // anti-clockwise -> :clockwise rotation
-polygon_t rotate_obj_poly;
-boost::geometry::transform(obj_poly, rotate_obj_poly, rotate);
-
-// translate polygon(x, y)
-boost::geometry::strategy::transform::translate_transformer<double, 2, 2> translate(x, y);
-polygon_t translate_obj_poly;
-boost::geometry::transform(rotate_obj_poly, translate_obj_poly, translate);
-return translate_obj_poly;
+  polygon_t rotated_polygon;
+  const boost::geometry::strategy::transform::rotate_transformer<
+    boost::geometry::radian, double, 2, 2>
+    rotation(-angle);
+  boost::geometry::transform(polygon, rotated_polygon, rotation);
+  return rotated_polygon;
 }
 
-multipolygon_t createObjectPolygons(
-const autoware_auto_perception_msgs::msg::PredictedObjects & objects, const double buffer,
-const double min_velocity)
+polygon_t translatePolygon(const polygon_t & polygon, const double x, const double y)
 {
-multipolygon_t polygons;
-for (const auto & object : objects.objects) {
-  if (
-    object.kinematics.initial_twist_with_covariance.twist.linear.x >= min_velocity ||
-    object.kinematics.initial_twist_with_covariance.twist.linear.x <= -min_velocity) {
-    polygons.push_back(createObjectPolygon(
-      object.kinematics.initial_pose_with_covariance.pose, object.shape.dimensions, buffer));
+  polygon_t translated_polygon;
+  const boost::geometry::strategy::transform::translate_transformer<double, 2, 2> translation(x, y);
+  boost::geometry::transform(polygon, translated_polygon, translation);
+  return translated_polygon;
+}
+
+template <class T>
+multipolygon_t createFootprintPolygons(
+  const T & path, const double front, const double rear, const double left, const double right)
+{
+  multipolygon_t footprint;
+  polygon_t base_polygon;
+  base_polygon.outer() = {
+    point_t{front, left}, point_t{front, right}, point_t{rear, right}, point_t{rear, left}};
+  base_polygon.outer().push_back(base_polygon.outer().front());
+  for (const auto & p : path) {
+    const auto & pose = getPose(p);
+    const auto angle = tf2::getYaw(pose.orientation);
+    const auto polygon =
+      translatePolygon(rotatePolygon(base_polygon, angle), pose.position.x, pose.position.y);
+    footprint.push_back(polygon);
   }
-}
-return polygons;
+  return footprint;
 }
 
-void addSensorObstacles(
-Obstacles & obstacles, const OccupancyGrid & occupancy_grid, const PointCloud & pointcloud,
-const ObstacleMasks & masks, tier4_autoware_utils::TransformListener & transform_listener,
-const std::string & target_frame, const ObstacleParameters & obstacle_params)
+multipolygon_t createPathFootprint(const Path & path, const ExpansionParameters & params)
 {
-if (obstacle_params.dynamic_source == ObstacleParameters::OCCUPANCYGRID) {
-  auto grid_map = convertToGridMap(occupancy_grid);
-  threshold(grid_map, obstacle_params.occupancy_grid_threshold);
-  maskPolygons(grid_map, masks);
-  const auto obstacle_lines = extractObstacles(grid_map, occupancy_grid);
-  obstacles.lines.insert(obstacles.lines.end(), obstacle_lines.begin(), obstacle_lines.end());
-} else if (obstacle_params.dynamic_source == ObstacleParameters::POINTCLOUD) {
-  auto pcd = transformPointCloud(pointcloud, transform_listener, target_frame);
-  filterPointCloud(pcd, masks);
-  obstacles.points = extractObstacles(pcd);
+  const auto left = params.vehicle_left_offset_ + params.extra_footprint_offset;
+  const auto right = params.vehicle_right_offset_ - params.extra_footprint_offset;
+  const auto rear = params.vehicle_rear_offset_ - params.extra_footprint_offset;
+  const auto front = params.vehicle_front_offset_ + params.extra_footprint_offset;
+  return createFootprintPolygons(path.points, front, rear, left, right);
 }
+
+multipolygon_t createObjectFootprints(
+  const autoware_auto_perception_msgs::msg::PredictedObjects & objects, const double buffer,
+  double min_velocity)
+{
+  multipolygon_t footprints;
+  for (const auto & object : objects.objects) {
+    if (std::abs(object.kinematics.initial_twist_with_covariance.twist.linear.x >= min_velocity)) {
+      const auto front = object.shape.dimensions.x / 2 + buffer;
+      const auto rear = -front;
+      const auto left = object.shape.dimensions.y / 2 + buffer;
+      const auto right = -left;
+      for (const auto & path : object.kinematics.predicted_paths) {
+        const auto footprint = createFootprintPolygons(path.path, front, rear, left, right);
+        footprints.insert(footprints.end(), footprint.begin(), footprint.end());
+      }
+    }
+  }
+  return footprints;
 }
-*/
 }  // namespace drivable_area_expander

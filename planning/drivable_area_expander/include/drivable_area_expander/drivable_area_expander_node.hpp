@@ -68,8 +68,6 @@ private:
   // parameters
   PreprocessingParameters preprocessing_params_;
   ExpansionParameters expansion_params_;
-  double vehicle_lateral_offset_;
-  double vehicle_front_offset_;
 
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
 
