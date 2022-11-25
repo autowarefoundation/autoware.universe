@@ -70,8 +70,8 @@ struct BehaviorPathPlannerParameters
   double expected_front_deceleration;  // brake parameter under normal lane change
   double expected_rear_deceleration;   // brake parameter under normal lane change
 
-  double front_abort_deceleration;  // hard brake parameter for abort
-  double rear_abort_deceleration;   // hard brake parameter for abort
+  double expected_front_deceleration_for_abort;  // hard brake parameter for abort
+  double expected_rear_deceleration_for_abort;   // hard brake parameter for abort
 
   double rear_vehicle_reaction_time;
   double rear_vehicle_safety_time_margin;
