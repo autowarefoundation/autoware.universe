@@ -45,7 +45,7 @@ We also assume that $n\sim\mathcal{N}(0, \sigma^2)$.
 | `angular_velocity_stddev_xx` | double | roll rate standard deviation imu_link [rad/s]    |
 | `angular_velocity_stddev_yy` | double | pitch rate standard deviation imu_link [rad/s]   |
 | `angular_velocity_stddev_zz` | double | yaw rate standard deviation imu_link [rad/s]     |
-| `accelaration_stddev`        | double | accelaration standard deviation imu_link [m/s^2] |
+| `acceleration_stddev`        | double | acceleration standard deviation imu_link [m/s^2] |
 
 ## Assumptions / Known limits
 
