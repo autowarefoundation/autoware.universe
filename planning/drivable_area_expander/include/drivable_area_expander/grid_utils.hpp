@@ -24,10 +24,29 @@
 namespace drivable_area_expander
 {
 
+grid_map::GridMap makeFootprintGridMap(
+  const grid_map::GridMap & base_map, const multipolygon_t & footprint,
+  const multipolygon_t & predicted_paths, const multilinestring_t & uncrossable_lines,
+  const point_t & origin);
+
 /// @brief mask gridmap cells that are inside the given polygons
 /// @param[in, out] grid_map the grid map to modify
-/// @param[in] polygons the polygons to mask from the grid map
-void maskPolygon(grid_map::GridMap & grid_map, const polygon_t & polygon);
+/// @param[in] polygons the polygons in which to assign the value
+/// @param[in] value value to assign to the masked cells
+void maskPolygons(grid_map::GridMap & grid_map, const multipolygon_t & polygons, const float value);
+
+/// @brief mask gridmap cells that are along the given linestring
+/// @param[in, out] grid_map the grid map to modify
+/// @param[in] linestrings the lines along which to assign the value
+/// @param[in] value value to assign to the masked cells
+void maskLines(
+  grid_map::GridMap & grid_map, const multilinestring_t & linestrings, const float value);
+
+/// @brief mask gridmap cells that are not connected to the origin and make them undrivable
+/// @details connected means that there is a path in the gridmap full of drivable cell
+/// @param[in, out] grid_map the grid map to modify
+/// @param[in] origin origin point
+void maskUnconnected(grid_map::GridMap & grid_map, const point_t & origin);
 
 /// @brief convert an OccupancyGrid to a GridMap object
 /// @param[in] occupancy_grid grid to convert
