@@ -4,6 +4,7 @@
   <version>0.1.0</version>
   <description>radar_scan_to_pointcloud2</description>
   <maintainer email="satoshi.tanaka@tier4.jp">Satoshi Tanaka</maintainer>
+  <maintainer email="shunsuke.miura@tier4.jp">Shunsuke Miura</maintainer>
   <author email="satoshi.tanaka@tier4.jp">Satoshi Tanaka</author>
   <license>Apache License 2.0</license>
 
