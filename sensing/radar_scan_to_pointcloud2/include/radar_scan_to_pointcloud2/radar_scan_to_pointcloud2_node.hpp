@@ -22,8 +22,6 @@
 
 #include <chrono>
 #include <memory>
-#include <string>
-#include <vector>
 
 namespace radar_scan_to_pointcloud2
 {
