@@ -198,6 +198,9 @@ bool lerpByTimeStamp(const PredictedPath & path, const double t, Pose * lerped_p
 
 bool calcObjectPolygon(const PredictedObject & object, Polygon2d * object_polygon);
 
+bool calcObjectPolygon(
+  const Shape & object_shape, const Pose & object_pose, Polygon2d * object_polygon);
+
 PredictedPath resamplePredictedPath(
   const PredictedPath & input_path, const double resolution, const double duration);
 
@@ -425,13 +428,13 @@ std::vector<PredictedPath> getPredictedPathFromObj(
 Pose projectCurrentPoseToTarget(const Pose & desired_object, const Pose & target_object);
 
 bool getEgoExpectedPoseAndConvertToPolygon(
-  const Pose & current_pose, const PredictedPath & pred_path, Pose & expected_pose,
+  const Pose & current_pose, const PredictedPath & pred_path,
   tier4_autoware_utils::Polygon2d & ego_polygon, const double & check_current_time,
-  const VehicleInfo & ego_info);
+  const VehicleInfo & ego_info, Pose & expected_pose, std::string & failed_reason);
 
 bool getObjectExpectedPoseAndConvertToPolygon(
-  const PredictedPath & pred_path, const PredictedObject & object, Pose & expected_pose,
-  Polygon2d & obj_polygon, const double & check_current_time);
+  const PredictedPath & pred_path, const PredictedObject & object, Polygon2d & obj_polygon,
+  const double & check_current_time, Pose & expected_pose, std::string & failed_reason);
 
 bool isObjectFront(const Pose & ego_pose, const Pose & obj_pose);
 
@@ -453,7 +456,8 @@ bool isLongitudinalDistanceEnough(
 bool hasEnoughDistance(
   const Pose & expected_ego_pose, const Twist & ego_current_twist,
   const Pose & expected_object_pose, const Twist & object_current_twist,
-  const BehaviorPathPlannerParameters & param, CollisionCheckDebug & debug);
+  const BehaviorPathPlannerParameters & param, const double front_decel, const double rear_decel,
+  CollisionCheckDebug & debug);
 
 bool isLateralDistanceEnough(
   const double & relative_lateral_distance, const double & lateral_distance_threshold);
@@ -461,17 +465,17 @@ bool isLateralDistanceEnough(
 bool isSafeInLaneletCollisionCheck(
   const Pose & ego_current_pose, const Twist & ego_current_twist,
   const PredictedPath & ego_predicted_path, const VehicleInfo & ego_info,
-  const double & check_start_time, const double & check_end_time,
-  const double & check_time_resolution, const PredictedObject & target_object,
-  const PredictedPath & target_object_path, const BehaviorPathPlannerParameters & common_parameters,
-  CollisionCheckDebug & debug);
+  const double check_start_time, const double check_end_time, const double check_time_resolution,
+  const PredictedObject & target_object, const PredictedPath & target_object_path,
+  const BehaviorPathPlannerParameters & common_parameters, const double front_decel,
+  const double rear_decel, CollisionCheckDebug & debug);
 
 bool isSafeInFreeSpaceCollisionCheck(
   const Pose & ego_current_pose, const Twist & ego_current_twist,
   const PredictedPath & ego_predicted_path, const VehicleInfo & ego_info,
-  const double & check_start_time, const double & check_end_time,
-  const double & check_time_resolution, const PredictedObject & target_object,
-  const BehaviorPathPlannerParameters & common_parameters, CollisionCheckDebug & debug);
+  const double check_start_time, const double check_end_time, const double check_time_resolution,
+  const PredictedObject & target_object, const BehaviorPathPlannerParameters & common_parameters,
+  const double front_decel, const double rear_decel, CollisionCheckDebug & debug);
 }  // namespace behavior_path_planner::util
 
 #endif  // BEHAVIOR_PATH_PLANNER__UTILITIES_HPP_
