@@ -16,26 +16,26 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 import launch
+from launch.actions import DeclareLaunchArgument
+from launch.actions import OpaqueFunction
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
+from launch_ros.substitutions import FindPackageShare
+from launch.substitutions import LaunchConfiguration
 import yaml
 
 
-def generate_launch_description():
-    param_path = os.path.join(
-        get_package_share_directory("mrm_comfortable_stop_operator"),
-        "config/mrm_comfortable_stop_operator.config.yaml",
-    )
-
-    with open(param_path, "r") as f:
-        param = yaml.safe_load(f)["/**"]["ros__parameters"]
+def launch_setup(context, *args, **kwargs):
+    config_file_path = LaunchConfiguration("config_file").perform(context)
+    with open(config_file_path, "r") as f:
+        params = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     component = ComposableNode(
         package="mrm_comfortable_stop_operator",
         plugin="mrm_comfortable_stop_operator::MrmComfortableStopOperator",
         name="mrm_comfortable_stop_operator",
         parameters=[
-            param,
+            params,
         ],
         remappings=[
             ("~/input/mrm/comfortable_stop/operate", "/system/mrm/comfortable_stop/operate"),
@@ -56,8 +56,17 @@ def generate_launch_description():
         output="screen",
     )
 
+    return [container]
+
+def generate_launch_description():
+    launch_arguments = [
+        DeclareLaunchArgument(
+            "config_file",
+            default_value=[FindPackageShare("mrm_comfortable_stop_operator"), "/config/mrm_comfortable_stop_operator.param.yaml"],
+            description="path to the parameter file of mrm_comfortable_stop_operator"
+        )
+    ]
+
     return launch.LaunchDescription(
-        [
-            container,
-        ]
+        launch_arguments + [OpaqueFunction(function=launch_setup)]
     )
