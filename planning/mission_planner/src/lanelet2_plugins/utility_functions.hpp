@@ -47,7 +47,8 @@ bool exists(const std::vector<T> & vectors, const T & item)
 
 tier4_autoware_utils::LinearRing2d create_vehicle_footprint(
   const vehicle_info_util::VehicleInfo & vehicle_info);
-
+tier4_autoware_utils::Polygon2d convert_linear_ring_to_polygon(
+  tier4_autoware_utils::LinearRing2d footprint);
 void set_color(std_msgs::msg::ColorRGBA * cl, double r, double g, double b, double a);
 void insert_marker_array(
   visualization_msgs::msg::MarkerArray * a1, const visualization_msgs::msg::MarkerArray & a2);

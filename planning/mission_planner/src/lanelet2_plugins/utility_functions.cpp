@@ -14,6 +14,7 @@
 
 #include "utility_functions.hpp"
 
+#include <boost/geometry.hpp>
 #include <lanelet2_core/geometry/Lanelet.h>
 
 #include <unordered_set>
@@ -22,6 +23,12 @@
 bool exists(const std::unordered_set<lanelet::Id> & set, const lanelet::Id & id)
 {
   return set.find(id) != set.end();
+}
+
+void appendPointToPolygon(
+  tier4_autoware_utils::Polygon2d & polygon, const tier4_autoware_utils::Point2d point)
+{
+  boost::geometry::append(polygon.outer(), point);
 }
 
 tier4_autoware_utils::LinearRing2d create_vehicle_footprint(
@@ -39,6 +46,18 @@ tier4_autoware_utils::LinearRing2d create_vehicle_footprint(
   footprint.push_back(Point2d{i.min_longitudinal_offset_m, i.max_lateral_offset_m});
 
   return footprint;
+}
+tier4_autoware_utils::Polygon2d convert_linear_ring_to_polygon(
+  tier4_autoware_utils::LinearRing2d footprint)
+{
+  tier4_autoware_utils::Polygon2d footprint_polygon;
+  appendPointToPolygon(footprint_polygon, footprint[0]);
+  appendPointToPolygon(footprint_polygon, footprint[1]);
+  appendPointToPolygon(footprint_polygon, footprint[2]);
+  appendPointToPolygon(footprint_polygon, footprint[3]);
+  boost::geometry::correct(footprint_polygon);
+  return footprint_polygon;
+
 }
 void set_color(std_msgs::msg::ColorRGBA * cl, double r, double g, double b, double a)
 {

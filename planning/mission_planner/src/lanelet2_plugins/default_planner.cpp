@@ -195,7 +195,7 @@ PlannerPlugin::MarkerArray DefaultPlanner::visualize(const LaneletRoute & route)
 }
 
 visualization_msgs::msg::MarkerArray DefaultPlanner::visualize_debug_footprint(
-  tier4_autoware_utils::LinearRing2d goal_footprint_) const
+  tier4_autoware_utils::LinearRing2d goal_footprint) const
 {
   visualization_msgs::msg::MarkerArray msg;
   auto marker = tier4_autoware_utils::createDefaultMarker(
@@ -205,13 +205,13 @@ visualization_msgs::msg::MarkerArray DefaultPlanner::visualize_debug_footprint(
   marker.lifetime = rclcpp::Duration::from_seconds(2.5);
 
   marker.points.push_back(
-    tier4_autoware_utils::createPoint(goal_footprint_[0][0], goal_footprint_[0][1], 0.0));
+    tier4_autoware_utils::createPoint(goal_footprint[0][0], goal_footprint[0][1], 0.0));
   marker.points.push_back(
-    tier4_autoware_utils::createPoint(goal_footprint_[1][0], goal_footprint_[1][1], 0.0));
+    tier4_autoware_utils::createPoint(goal_footprint[1][0], goal_footprint[1][1], 0.0));
   marker.points.push_back(
-    tier4_autoware_utils::createPoint(goal_footprint_[2][0], goal_footprint_[2][1], 0.0));
+    tier4_autoware_utils::createPoint(goal_footprint[2][0], goal_footprint[2][1], 0.0));
   marker.points.push_back(
-    tier4_autoware_utils::createPoint(goal_footprint_[3][0], goal_footprint_[3][1], 0.0));
+    tier4_autoware_utils::createPoint(goal_footprint[3][0], goal_footprint[3][1], 0.0));
   marker.points.push_back(marker.points.front());
 
   msg.markers.push_back(marker);
@@ -222,7 +222,7 @@ visualization_msgs::msg::MarkerArray DefaultPlanner::visualize_debug_footprint(
 bool DefaultPlanner::check_goal_footprint(
   const lanelet::ConstLanelet & current_lanelet,
   const lanelet::ConstLanelet & combined_prev_lanelet,
-  const tier4_autoware_utils::LinearRing2d & goal_footprint, double & next_lane_length,
+  const tier4_autoware_utils::Polygon2d & goal_footprint, double & next_lane_length,
   const double search_margin)
 {
   std::vector<tier4_autoware_utils::Point2d> points_intersection;
@@ -274,10 +274,11 @@ bool DefaultPlanner::is_goal_valid(
   }
 
   const auto local_vehicle_footprint = create_vehicle_footprint(vehicle_info_);
-  tier4_autoware_utils::LinearRing2d goal_footprint_ =
+  tier4_autoware_utils::LinearRing2d goal_footprint =
     transformVector(local_vehicle_footprint, tier4_autoware_utils::pose2transform(goal));
+  pub_goal_footprint_marker_->publish(visualize_debug_footprint(goal_footprint));
+  const auto polygon_footprint = convert_linear_ring_to_polygon(goal_footprint);
 
-  pub_goal_footprint_marker_->publish(visualize_debug_footprint(goal_footprint_));
 
   double next_lane_length = 0.0;
   // combine calculated route lanelets
@@ -286,7 +287,7 @@ bool DefaultPlanner::is_goal_valid(
   // check if goal footprint exceeds lane and isn't in parking_lot
   if (
     !check_goal_footprint(
-      closest_lanelet, combined_prev_lanelet, goal_footprint_, next_lane_length) &&
+      closest_lanelet, combined_prev_lanelet, polygon_footprint, next_lane_length) &&
     !is_in_parking_lot(
       lanelet::utils::query::getAllParkingLots(lanelet_map_ptr_),
       lanelet::utils::conversion::toLaneletPoint(goal.position))) {
