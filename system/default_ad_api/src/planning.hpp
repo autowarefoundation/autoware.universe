@@ -18,8 +18,10 @@
 #include <autoware_ad_api_specs/planning.hpp>
 #include <component_interface_specs/localization.hpp>
 #include <component_interface_specs/planning.hpp>
+#include <motion_utils/motion_utils.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <memory>
 #include <vector>
 
 // This file should be included after messages.
@@ -38,17 +40,25 @@ private:
   using SteeringFactorArray = autoware_adapi_v1_msgs::msg::SteeringFactorArray;
   Pub<autoware_ad_api::planning::VelocityFactors> pub_velocity_factors_;
   Pub<autoware_ad_api::planning::SteeringFactors> pub_steering_factors_;
-  Sub<localization_interface::KinematicState> sub_kinematic_state_;
   Sub<planning_interface::Trajectory> sub_trajectory_;
+  Sub<localization_interface::KinematicState> sub_kinematic_state_;
   std::vector<rclcpp::Subscription<VelocityFactorArray>::SharedPtr> sub_velocity_factors_;
   std::vector<rclcpp::Subscription<SteeringFactorArray>::SharedPtr> sub_steering_factors_;
   std::vector<VelocityFactorArray::ConstSharedPtr> velocity_factors_;
   std::vector<SteeringFactorArray::ConstSharedPtr> steering_factors_;
   rclcpp::TimerBase::SharedPtr timer_;
 
-  double stop_judge_distance_;
-  localization_interface::KinematicState::Message::ConstSharedPtr kinematic_state_;
-  planning_interface::Trajectory::Message::ConstSharedPtr trajectory_;
+  using Trajectory = planning_interface::Trajectory::Message;
+  using KinematicState = localization_interface::KinematicState::Message;
+  void on_trajectory(const Trajectory::ConstSharedPtr msg);
+  void on_kinematic_state(const KinematicState::ConstSharedPtr msg);
+  void on_timer();
+
+  double stop_distance_;
+  double stop_duration_;
+  Trajectory::ConstSharedPtr trajectory_;
+  KinematicState::ConstSharedPtr kinematic_state_;
+  std::unique_ptr<motion_utils::VehicleStopCheckerBase> stop_checker_;
 };
 
 }  // namespace default_ad_api

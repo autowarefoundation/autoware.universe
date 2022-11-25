@@ -14,8 +14,7 @@
 
 #include "planning.hpp"
 
-#include <motion_utils/motion_utils.hpp>
-
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -31,20 +30,16 @@ void concat(std::vector<T> & v1, const std::vector<T> & v2)
 PlanningNode::PlanningNode(const rclcpp::NodeOptions & options) : Node("planning", options)
 {
   // TODO(Takagi, Isamu): remove default value
-  stop_judge_distance_ = declare_parameter<double>("stop_judge_distance", 1.0);
+  stop_distance_ = declare_parameter<double>("stop_distance", 1.0);
+  stop_duration_ = declare_parameter<double>("stop_duration", 1.0);
+  stop_checker_ =
+    std::make_unique<motion_utils::VehicleStopCheckerBase>(this, stop_duration_ + 1.0);
 
   const auto adaptor = component_interface_utils::NodeAdaptor(this);
   adaptor.init_pub(pub_velocity_factors_);
   adaptor.init_pub(pub_steering_factors_);
-  adaptor.init_sub(
-    sub_kinematic_state_,
-    [this](const localization_interface::KinematicState::Message::ConstSharedPtr msg) {
-      kinematic_state_ = msg;
-    });
-  adaptor.init_sub(
-    sub_trajectory_, [this](const planning_interface::Trajectory::Message::ConstSharedPtr msg) {
-      trajectory_ = msg;
-    });
+  adaptor.init_sub(sub_kinematic_state_, this, &PlanningNode::on_kinematic_state);
+  adaptor.init_sub(sub_trajectory_, this, &PlanningNode::on_trajectory);
 
   std::vector<std::string> velocity_factor_topics = {
     "/planning/velocity_factors/blind_spot",
@@ -92,42 +87,60 @@ PlanningNode::PlanningNode(const rclcpp::NodeOptions & options) : Node("planning
   steering_factors_.resize(steering_factor_topics.size());
 
   const auto rate = rclcpp::Rate(5);
-  timer_ = rclcpp::create_timer(this, get_clock(), rate.period(), [this]() {
-    using autoware_adapi_v1_msgs::msg::VelocityFactor;
-    VelocityFactorArray velocity;
-    SteeringFactorArray steering;
-    velocity.header.stamp = now();
-    steering.header.stamp = now();
-    velocity.header.frame_id = "map";
-    steering.header.frame_id = "map";
-    for (const auto & factor : velocity_factors_) {
-      if (factor) {
-        concat(velocity.factors, factor->factors);
+  timer_ = rclcpp::create_timer(this, get_clock(), rate.period(), [this]() { on_timer(); });
+}
+
+void PlanningNode::on_trajectory(const Trajectory::ConstSharedPtr msg) { trajectory_ = msg; }
+
+void PlanningNode::on_kinematic_state(const KinematicState::ConstSharedPtr msg)
+{
+  kinematic_state_ = msg;
+
+  geometry_msgs::msg::TwistStamped twist;
+  twist.header = msg->header;
+  twist.twist = msg->twist.twist;
+  stop_checker_->addTwist(twist);
+}
+
+void PlanningNode::on_timer()
+{
+  using autoware_adapi_v1_msgs::msg::VelocityFactor;
+  VelocityFactorArray velocity;
+  SteeringFactorArray steering;
+  velocity.header.stamp = now();
+  steering.header.stamp = now();
+  velocity.header.frame_id = "map";
+  steering.header.frame_id = "map";
+
+  for (const auto & factor : velocity_factors_) {
+    if (factor) {
+      concat(velocity.factors, factor->factors);
+    }
+  }
+  for (const auto & factor : steering_factors_) {
+    if (factor) {
+      concat(steering.factors, factor->factors);
+    }
+  }
+
+  for (auto & factor : velocity.factors) {
+    if (kinematic_state_ && trajectory_ && std::isnan(factor.distance)) {
+      const auto & curr_point = kinematic_state_->pose.pose.position;
+      const auto & stop_point = factor.pose.position;
+      const auto & points = trajectory_->points;
+      factor.distance = motion_utils::calcSignedArcLength(points, curr_point, stop_point);
+    }
+    if ((factor.status == VelocityFactor::UNKNOWN) && (!std::isnan(factor.distance))) {
+      if (factor.distance < stop_distance_ && stop_checker_->isVehicleStopped(stop_duration_)) {
+        factor.status = VelocityFactor::STOPPED;
+      } else {
+        factor.status = VelocityFactor::APPROACHING;
       }
     }
-    for (const auto & factor : steering_factors_) {
-      if (factor) {
-        concat(steering.factors, factor->factors);
-      }
-    }
-    for (auto & factor : velocity.factors) {
-      if (kinematic_state_ && trajectory_ && std::isnan(factor.distance)) {
-        const auto & curr_point = kinematic_state_->pose.pose.position;
-        const auto & stop_point = factor.pose.position;
-        const auto & points = trajectory_->points;
-        factor.distance = motion_utils::calcSignedArcLength(points, curr_point, stop_point);
-      }
-      if ((factor.status == VelocityFactor::UNKNOWN) && (!std::isnan(factor.distance))) {
-        if (factor.distance < stop_judge_distance_) {
-          factor.status = VelocityFactor::STOPPED;
-        } else {
-          factor.status = VelocityFactor::APPROACHING;
-        }
-      }
-    }
-    pub_velocity_factors_->publish(velocity);
-    pub_steering_factors_->publish(steering);
-  });
+  }
+
+  pub_velocity_factors_->publish(velocity);
+  pub_steering_factors_->publish(steering);
 }
 
 }  // namespace default_ad_api
