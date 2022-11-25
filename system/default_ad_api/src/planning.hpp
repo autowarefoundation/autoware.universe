@@ -48,6 +48,7 @@ private:
   std::vector<SteeringFactorArray::ConstSharedPtr> steering_factors_;
   rclcpp::TimerBase::SharedPtr timer_;
 
+  using VehicleStopChecker = motion_utils::VehicleStopCheckerBase;
   using Trajectory = planning_interface::Trajectory::Message;
   using KinematicState = localization_interface::KinematicState::Message;
   void on_trajectory(const Trajectory::ConstSharedPtr msg);
@@ -56,9 +57,9 @@ private:
 
   double stop_distance_;
   double stop_duration_;
+  std::unique_ptr<VehicleStopChecker> stop_checker_;
   Trajectory::ConstSharedPtr trajectory_;
   KinematicState::ConstSharedPtr kinematic_state_;
-  std::unique_ptr<motion_utils::VehicleStopCheckerBase> stop_checker_;
 };
 
 }  // namespace default_ad_api
