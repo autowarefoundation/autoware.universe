@@ -35,6 +35,13 @@ polygon_t translatePolygon(const polygon_t & polygon, const double x, const doub
 /// @param[in] params expansion parameters defining how to create the footprint
 /// @return polygon footprint of the path
 polygon_t createPathFootprint(const Path & path, const ExpansionParameters & params);
+/// @brief make the given footprint "drivable" in the given drivable_area
+/// @param[in] drivable_area input drivable_area
+/// @param[in] footprint polygon to make drivable
+/// @return expanded drivable area
+OccupancyGrid expandDrivableArea(const OccupancyGrid & drivable_area, const polygon_t & footprint);
+
+linestring_t createMaxExpansionLines(const Path & path, const double max_expansion_distance);
 }  // namespace drivable_area_expander
 
 #endif  // DRIVABLE_AREA_EXPANDER__DRIVABLE_AREA_EXPANDER_HPP_

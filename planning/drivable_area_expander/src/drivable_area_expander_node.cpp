@@ -105,28 +105,30 @@ void DrivableAreaExpanderNode::onPath(const Path::ConstSharedPtr msg)
   const auto ego_idx = motion_utils::findNearestIndex(msg->points, current_pose_ptr->pose);
   if (!validInputs(ego_idx)) return;
   auto input_path = *msg;
-  auto grid_map = convertToGridMap(input_path.drivable_area);
   const auto end_idx = calculateEndIndex(input_path, *ego_idx, preprocessing_params_.max_length);
   const auto downsampled_path_points =
     downsamplePath(input_path, *ego_idx, end_idx, preprocessing_params_.downsample_factor);
-  const auto path_footprint = createPathFootprint(downsampled_path_points, expansion_params_);
-  /*
-  // remove footprint beyond uncrossable lines
-  expandDrivableArea(grid_map, path_footprint);
-  if(expansion_params_.avoid_dynamic_objects)
-    maskDynamicObjects(grid_map, *dynamic_objects_ptr_);
-  input_path.drivable_area = convertToOccupancyGrid(grid_map);
+  auto path_footprint = createPathFootprint(downsampled_path_points, expansion_params_);
+  multilinestring_t uncrossable_lines = {
+    createMaxExpansionLines(input_path, expansion_params_.max_expansion_distance)};
+  uncrossable_lines.insert(
+    uncrossable_lines.end(), uncrossable_lines_.begin(), uncrossable_lines_.end());
+  // pruneFootprint(path_footprint, uncrossable_lines);
+  // const auto predicted_path_polygons = expansion_params_.avoid_dynamic_objects ?
+  // createPredictedPathPolygons(*dynamic_objects_ptr_) : {};
+
+  input_path.drivable_area = expandDrivableArea(input_path.drivable_area, path_footprint);
   pub_path_->publish(input_path);
-  */
 
   const auto t_end = std::chrono::system_clock::now();
   const auto runtime = std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start);
+  // TODO(Maxime): remove before merging
   std::cout << "[RUNTIME] " << runtime.count() << "us" << std::endl;
   pub_runtime_->publish(std_msgs::msg::Int64().set__data(runtime.count()));
 
   if (pub_debug_markers_->get_subscription_count() > 0) {
     const auto z = msg->points.empty() ? 0.0 : msg->points.front().pose.position.z;
-    pub_debug_markers_->publish(makeDebugMarkers(path_footprint, uncrossable_lines_, z));
+    pub_debug_markers_->publish(makeDebugMarkers(path_footprint, uncrossable_lines, z));
   }
 }
 
