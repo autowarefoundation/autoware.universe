@@ -134,13 +134,13 @@ double calcAlignedAdaptiveCruise(
   return object_vel * std::cos(object_yaw - traj_yaw);
 }
 
-double calcObjectMaxLength(const autoware_auto_perception_msgs::msg::Shape & shape)
+double calcObjectMaxLength(const Shape & shape)
 {
-  if (shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+  if (shape.type == Shape::BOUNDING_BOX) {
     return std::hypot(shape.dimensions.x / 2.0, shape.dimensions.y / 2.0);
-  } else if (shape.type == autoware_auto_perception_msgs::msg::Shape::CYLINDER) {
+  } else if (shape.type == Shape::CYLINDER) {
     return shape.dimensions.x / 2.0;
-  } else if (shape.type == autoware_auto_perception_msgs::msg::Shape::POLYGON) {
+  } else if (shape.type == Shape::POLYGON) {
     double max_length_to_point = 0.0;
     for (const auto rel_point : shape.footprint.points) {
       const double length_to_point = std::hypot(rel_point.x, rel_point.y);
@@ -192,6 +192,9 @@ Trajectory extendTrajectory(
 
 namespace motion_planning
 {
+using visualization_msgs::msg::Marker;
+using visualization_msgs::msg::MarkerArray;
+
 ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions & node_options)
 : Node("obstacle_cruise_planner", node_options),
   self_pose_listener_(this),
@@ -223,11 +226,13 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
   clear_vel_limit_pub_ = create_publisher<VelocityLimitClearCommand>(
     "~/output/clear_velocity_limit", rclcpp::QoS{1}.transient_local());
   debug_calculation_time_pub_ = create_publisher<Float32Stamped>("~/debug/calculation_time", 1);
-  debug_cruise_wall_marker_pub_ =
-    create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/cruise/virtual_wall", 1);
-  debug_stop_wall_marker_pub_ =
-    create_publisher<visualization_msgs::msg::MarkerArray>("~/virtual_wall", 1);
-  debug_marker_pub_ = create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/marker", 1);
+  debug_cruise_wall_marker_pub_ = create_publisher<MarkerArray>("~/debug/cruise/virtual_wall", 1);
+  debug_stop_wall_marker_pub_ = create_publisher<MarkerArray>("~/virtual_wall", 1);
+  debug_marker_pub_ = create_publisher<MarkerArray>("~/debug/marker", 1);
+  debug_stop_planning_info_pub_ =
+    create_publisher<Float32MultiArrayStamped>("~/debug/stop_planning_info", 1);
+  debug_cruise_planning_info_pub_ =
+    create_publisher<Float32MultiArrayStamped>("~/debug/cruise_planning_info", 1);
 
   // longitudinal_info
   const auto longitudinal_info = [&]() {
@@ -273,6 +278,7 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
   }();
 
   is_showing_debug_info_ = declare_parameter<bool>("common.is_showing_debug_info");
+  disable_stop_planning_ = declare_parameter<bool>("common.disable_stop_planning");
 
   {  // Obstacle filtering parameters
     obstacle_filtering_param_.rough_detection_area_expand_width =
@@ -456,6 +462,9 @@ rcl_interfaces::msg::SetParametersResult ObstacleCruisePlannerNode::onParam(
     is_showing_debug_info_, min_behavior_stop_margin_, nearest_dist_deviation_threshold_,
     nearest_yaw_deviation_threshold_);
 
+  tier4_autoware_utils::updateParam<bool>(
+    parameters, "common.disable_stop_planning", disable_stop_planning_);
+
   // obstacle_filtering
   tier4_autoware_utils::updateParam<double>(
     parameters, "obstacle_filtering.rough_detection_area_expand_width",
@@ -572,7 +581,8 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
   trajectory_pub_->publish(output_traj);
 
   // publish debug data
-  publishDebugData(debug_data);
+  publishDebugMarker(debug_data);
+  publishDebugInfo();
 
   // publish and print calculation time
   const double calculation_time = stop_watch_.toc(__func__);
@@ -610,9 +620,10 @@ ObstacleCruisePlannerData ObstacleCruisePlannerNode::createStopData(
   planner_data.current_vel = current_vel;
   planner_data.current_acc = current_accel;
   planner_data.is_driving_forward = is_driving_forward;
+
   for (const auto & obstacle : obstacles) {
     // consider all target obstacles when driving backward
-    if (!planner_data.is_driving_forward || obstacle.has_stopped) {
+    if (!disable_stop_planning_ && (!planner_data.is_driving_forward || obstacle.has_stopped)) {
       planner_data.target_obstacles.push_back(obstacle);
     }
   }
@@ -651,7 +662,7 @@ ObstacleCruisePlannerData ObstacleCruisePlannerNode::createCruiseData(
   planner_data.current_acc = current_accel;
   planner_data.is_driving_forward = is_driving_forward;
   for (const auto & obstacle : obstacles) {
-    if (planner_data.is_driving_forward && !obstacle.has_stopped) {
+    if (disable_stop_planning_ || (planner_data.is_driving_forward && !obstacle.has_stopped)) {
       planner_data.target_obstacles.push_back(obstacle);
     }
   }
@@ -1024,11 +1035,11 @@ void ObstacleCruisePlannerNode::publishVelocityLimit(
   }
 }
 
-void ObstacleCruisePlannerNode::publishDebugData(const DebugData & debug_data) const
+void ObstacleCruisePlannerNode::publishDebugMarker(const DebugData & debug_data) const
 {
   stop_watch_.tic(__func__);
 
-  visualization_msgs::msg::MarkerArray debug_marker;
+  MarkerArray debug_marker;
   const auto current_time = now();
 
   // obstacles to cruise
@@ -1055,7 +1066,7 @@ void ObstacleCruisePlannerNode::publishDebugData(const DebugData & debug_data) c
 
   {  // footprint polygons
     auto marker = tier4_autoware_utils::createDefaultMarker(
-      "map", current_time, "detection_polygons", 0, visualization_msgs::msg::Marker::LINE_LIST,
+      "map", current_time, "detection_polygons", 0, Marker::LINE_LIST,
       tier4_autoware_utils::createMarkerScale(0.01, 0.0, 0.0),
       tier4_autoware_utils::createMarkerColor(0.0, 1.0, 0.0, 0.999));
 
@@ -1077,7 +1088,7 @@ void ObstacleCruisePlannerNode::publishDebugData(const DebugData & debug_data) c
   {  // collision points
     for (size_t i = 0; i < debug_data.collision_points.size(); ++i) {
       auto marker = tier4_autoware_utils::createDefaultMarker(
-        "map", current_time, "collision_points", i, visualization_msgs::msg::Marker::SPHERE,
+        "map", current_time, "collision_points", i, Marker::SPHERE,
         tier4_autoware_utils::createMarkerScale(0.25, 0.25, 0.25),
         tier4_autoware_utils::createMarkerColor(1.0, 0.0, 0.0, 0.999));
       marker.pose.position = debug_data.collision_points.at(i);
@@ -1087,7 +1098,7 @@ void ObstacleCruisePlannerNode::publishDebugData(const DebugData & debug_data) c
 
   debug_marker_pub_->publish(debug_marker);
 
-  // wall for cruise and stop
+  // virtual wall for cruise and stop
   debug_cruise_wall_marker_pub_->publish(debug_data.cruise_wall_marker);
   debug_stop_wall_marker_pub_->publish(debug_data.stop_wall_marker);
 
@@ -1098,6 +1109,19 @@ void ObstacleCruisePlannerNode::publishDebugData(const DebugData & debug_data) c
     __func__, calculation_time);
 }
 
+void ObstacleCruisePlannerNode::publishDebugInfo() const
+{
+  const auto current_time = now();
+
+  // stop
+  const auto stop_debug_msg = planner_ptr_->getStopPlanningDebugMessage(current_time);
+  debug_stop_planning_info_pub_->publish(stop_debug_msg);
+
+  // cruise
+  const auto cruise_debug_msg = planner_ptr_->getCruisePlanningDebugMessage(current_time);
+  debug_cruise_planning_info_pub_->publish(cruise_debug_msg);
+}
+
 void ObstacleCruisePlannerNode::publishCalculationTime(const double calculation_time) const
 {
   Float32Stamped calculation_time_msg;
@@ -1106,5 +1130,6 @@ void ObstacleCruisePlannerNode::publishCalculationTime(const double calculation_
   debug_calculation_time_pub_->publish(calculation_time_msg);
 }
 }  // namespace motion_planning
+
 #include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(motion_planning::ObstacleCruisePlannerNode)

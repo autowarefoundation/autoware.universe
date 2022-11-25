@@ -104,6 +104,7 @@ bool JerkFilteredSmoother::apply(
   };
 
   auto opt_resampled_trajectory = resample(filtered);
+  const auto input_resampled_trajectory = resample(input);
 
   // Set debug trajectories
   debug_trajectories.resize(3);
@@ -143,9 +144,14 @@ bool JerkFilteredSmoother::apply(
   const std::vector<double> interval_dist_arr =
     trajectory_utils::calcTrajectoryIntervalDistance(opt_resampled_trajectory);
 
-  std::vector<double> v_max_arr(N, 0.0);
+  std::vector<double> v_max_arr_opt(N, 0.0);
   for (size_t i = 0; i < N; ++i) {
-    v_max_arr.at(i) = opt_resampled_trajectory.at(i).longitudinal_velocity_mps;
+    v_max_arr_opt.at(i) = opt_resampled_trajectory.at(i).longitudinal_velocity_mps;
+  }
+
+  std::vector<double> v_max_arr_input(N, 0.0);
+  for (size_t i = 0; i < N; ++i) {
+    v_max_arr_input.at(i) = input_resampled_trajectory.at(i).longitudinal_velocity_mps;
   }
 
   /*
@@ -190,7 +196,7 @@ bool JerkFilteredSmoother::apply(
   constexpr double ZERO_VEL_THR_FOR_DT_CALC = 0.3;
   const double smooth_weight = smoother_param_.jerk_weight;
   for (size_t i = 0; i < N - 1; ++i) {
-    const double ref_vel = v_max_arr.at(i);
+    const double ref_vel = v_max_arr_opt.at(i);
     const double interval_dist = std::max(interval_dist_arr.at(i), 0.0001);
     const double w_x_ds_inv = (1.0 / interval_dist) * ref_vel;
     P(IDX_A0 + i, IDX_A0 + i) += smooth_weight * w_x_ds_inv * w_x_ds_inv * interval_dist;
@@ -200,7 +206,7 @@ bool JerkFilteredSmoother::apply(
   }
 
   for (size_t i = 0; i < N; ++i) {
-    const double v_max = std::max(v_max_arr.at(i), 0.1);
+    const double v_max = std::max(v_max_arr_input.at(i), 0.1);
     q.at(IDX_B0 + i) =
       -1.0 / (v_max * v_max);  // |v_max_i^2 - b_i|/v_max^2 -> minimize (-bi) * ds / v_max^2
     if (i < N - 1) {
@@ -231,7 +237,7 @@ bool JerkFilteredSmoother::apply(
   for (size_t i = 0; i < N; ++i, ++constr_idx) {
     A(constr_idx, IDX_B0 + i) = 1.0;       // b_i
     A(constr_idx, IDX_DELTA0 + i) = -1.0;  // -delta_i
-    upper_bound[constr_idx] = v_max_arr.at(i) * v_max_arr.at(i);
+    upper_bound[constr_idx] = v_max_arr_input.at(i) * v_max_arr_input.at(i);
     lower_bound[constr_idx] = 0.0;
   }
 
@@ -241,7 +247,7 @@ bool JerkFilteredSmoother::apply(
     A(constr_idx, IDX_SIGMA0 + i) = -1.0;  // -sigma_i
 
     constexpr double stop_vel = 1e-3;
-    if (v_max_arr.at(i) < stop_vel) {
+    if (v_max_arr_input.at(i) < stop_vel) {
       // Stop Point
       upper_bound[constr_idx] = a_stop_decel;
       lower_bound[constr_idx] = a_stop_decel;
@@ -254,7 +260,7 @@ bool JerkFilteredSmoother::apply(
   // Soft Constraint Jerk Limit: jerk_min < pseudo_jerk[i] * ref_vel[i] - gamma[i] < jerk_max
   // -> jerk_min * ds < (a[i+1] - a[i]) * ref_vel[i] - gamma[i] * ds < jerk_max * ds
   for (size_t i = 0; i < N - 1; ++i, ++constr_idx) {
-    const double ref_vel = std::max(v_max_arr.at(i), ZERO_VEL_THR_FOR_DT_CALC);
+    const double ref_vel = std::max(v_max_arr_opt.at(i), ZERO_VEL_THR_FOR_DT_CALC);
     const double ds = interval_dist_arr.at(i);
     A(constr_idx, IDX_A0 + i) = -ref_vel;     // -a[i] * ref_vel
     A(constr_idx, IDX_A0 + i + 1) = ref_vel;  //  a[i+1] * ref_vel

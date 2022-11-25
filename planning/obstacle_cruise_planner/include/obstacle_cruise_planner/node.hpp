@@ -100,7 +100,8 @@ private:
     const PredictedObject & predicted_object, const Trajectory & traj,
     const bool is_driving_forward);
   void publishVelocityLimit(const boost::optional<VelocityLimit> & vel_limit);
-  void publishDebugData(const DebugData & debug_data) const;
+  void publishDebugMarker(const DebugData & debug_data) const;
+  void publishDebugInfo() const;
   void publishCalculationTime(const double calculation_time) const;
 
   bool isCruiseObstacle(const uint8_t label);
@@ -128,6 +129,8 @@ private:
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_marker_pub_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_cruise_wall_marker_pub_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_stop_wall_marker_pub_;
+  rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr debug_stop_planning_info_pub_;
+  rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr debug_cruise_planning_info_pub_;
   rclcpp::Publisher<Float32Stamped>::SharedPtr debug_calculation_time_pub_;
 
   // subscriber
@@ -195,6 +198,7 @@ private:
   bool need_to_clear_vel_limit_{false};
 
   bool is_driving_forward_{true};
+  bool disable_stop_planning_{false};
 
   std::vector<TargetObstacle> prev_target_obstacles_;
 };
