@@ -58,15 +58,11 @@ In addition to its use as a standard ROS node, `lidar_centerpoint` can also be u
 To do so, execute the following launcher, where `pcd_path` is the path of the pointcloud to be used for inference.
 
 ```bash
-ros2 launch lidar_centerpoint single_inference_lidar_centerpoint.launch.xml pcd_path:=test_pointcloud.pcd
+ros2 launch lidar_centerpoint single_inference_lidar_centerpoint.launch.xml pcd_path:=test_pointcloud.pcd detections_path:=test_detections.ply
 ```
 
-`lidar_centerpoint` generated a `ply` file with the same name which contains the detections as meshes.
-These detections can be visualized by most 3D tools, but we also provide a small script to visualize the detections alonsgside the input pointcloud.
-
-```bash
-python3 scripts/visualize_resuls.py -pcd_path test_pointcloud.pcd -detections_path test_pointcloud.ply
-```
+`lidar_centerpoint` generates a `ply` file in the provided `detections_path`, which contains the detections as triangle meshes.
+These detections can be visualized by most 3D tools, but we also integrate a visualization UI using `Open3D` which is launched alongside `lidar_centerpoint`.
 
 ### Changelog
 
