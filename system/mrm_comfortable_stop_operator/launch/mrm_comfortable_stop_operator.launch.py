@@ -18,10 +18,10 @@ from ament_index_python.packages import get_package_share_directory
 import launch
 from launch.actions import DeclareLaunchArgument
 from launch.actions import OpaqueFunction
+from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
 from launch_ros.substitutions import FindPackageShare
-from launch.substitutions import LaunchConfiguration
 import yaml
 
 
@@ -58,15 +58,17 @@ def launch_setup(context, *args, **kwargs):
 
     return [container]
 
+
 def generate_launch_description():
     launch_arguments = [
         DeclareLaunchArgument(
             "config_file",
-            default_value=[FindPackageShare("mrm_comfortable_stop_operator"), "/config/mrm_comfortable_stop_operator.param.yaml"],
-            description="path to the parameter file of mrm_comfortable_stop_operator"
+            default_value=[
+                FindPackageShare("mrm_comfortable_stop_operator"),
+                "/config/mrm_comfortable_stop_operator.param.yaml",
+            ],
+            description="path to the parameter file of mrm_comfortable_stop_operator",
         )
     ]
 
-    return launch.LaunchDescription(
-        launch_arguments + [OpaqueFunction(function=launch_setup)]
-    )
+    return launch.LaunchDescription(launch_arguments + [OpaqueFunction(function=launch_setup)])
