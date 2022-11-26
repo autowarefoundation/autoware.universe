@@ -24,7 +24,12 @@
 namespace drivable_area_expander
 {
 
-grid_map::GridMap makeFootprintGridMap(
+/// @brief expand the grid map with a footprint and restrict the expansion with a predicted path and
+/// uncrossable lines
+/// @param[in, out] grid_map the grid map to modify
+/// @param[in] polygons the polygons in which to assign the value
+/// @param[in] value value to assign to the masked cells
+grid_map::GridMap expandGridMap(
   const grid_map::GridMap & base_map, const multipolygon_t & footprint,
   const multipolygon_t & predicted_paths, const multilinestring_t & uncrossable_lines,
   const point_t & origin);

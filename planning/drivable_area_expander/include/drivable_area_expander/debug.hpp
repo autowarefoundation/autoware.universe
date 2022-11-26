@@ -41,6 +41,7 @@ visualization_msgs::msg::Marker makePolygonMarker(const polygon_t & polygon, con
 /// @brief make debug marker array
 /// @param[in] footprint footprint polygon
 /// @param[in] uncrossable_lines uncrossable lines
+/// @param[in] predicted_paths predicted paths
 /// @param[in] marker_z z-value to use for markers
 /// @return marker array
 visualization_msgs::msg::MarkerArray makeDebugMarkers(

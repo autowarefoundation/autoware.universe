@@ -57,8 +57,7 @@ inline const geometry_msgs::msg::Pose & getPose(const geometry_msgs::msg::Pose &
   return pose;
 };
 /// @brief wrapper to extract a pose from a PathPoint
-inline const geometry_msgs::msg::Pose & getPose(
-  const autoware_auto_planning_msgs::msg::PathPoint & path_point)
+inline const geometry_msgs::msg::Pose & getPose(const PathPoint & path_point)
 {
   return path_point.pose;
 }

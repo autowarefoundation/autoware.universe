@@ -15,7 +15,6 @@
 #ifndef DRIVABLE_AREA_EXPANDER__DRIVABLE_AREA_EXPANDER_NODE_HPP_
 #define DRIVABLE_AREA_EXPANDER__DRIVABLE_AREA_EXPANDER_NODE_HPP_
 
-#include "drivable_area_expander/obstacles.hpp"
 #include "drivable_area_expander/parameters.hpp"
 #include "drivable_area_expander/types.hpp"
 
@@ -34,9 +33,6 @@
 #include <lanelet2_core/LaneletMap.h>
 
 #include <memory>
-#include <optional>
-#include <set>
-#include <string>
 #include <vector>
 
 namespace drivable_area_expander

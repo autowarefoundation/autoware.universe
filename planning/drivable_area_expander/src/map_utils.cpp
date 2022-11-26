@@ -31,14 +31,11 @@ multilinestring_t extractUncrossableLines(
 {
   multilinestring_t lines;
   linestring_t line;
-  linestring_t simplified_line;  // TODO(Maxime): remove ? make it a parameter ?
   for (const auto & ls : lanelet_map.lineStringLayer) {
     if (hasTypes(ls, uncrossable_types)) {
       line.clear();
-      simplified_line.clear();
       for (const auto & p : ls) line.push_back(point_t{p.x(), p.y()});
-      boost::geometry::simplify(line, simplified_line, 0.5);
-      lines.push_back(simplified_line);
+      lines.push_back(line);
     }
   }
   return lines;
