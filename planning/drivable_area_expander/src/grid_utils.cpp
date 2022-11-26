@@ -15,16 +15,14 @@
 #include "drivable_area_expander/grid_utils.hpp"
 
 #include "drivable_area_expander/types.hpp"
-#include "grid_map_core/TypeDefs.hpp"
-#include "grid_map_core/iterators/LineIterator.hpp"
 
 #include <grid_map_core/Polygon.hpp>
-#include <grid_map_core/iterators/GridMapIterator.hpp>
-#include <grid_map_cv/GridMapCvConverter.hpp>
+#include <grid_map_core/TypeDefs.hpp>
+#include <grid_map_core/iterators/LineIterator.hpp>
 #include <grid_map_ros/GridMapRosConverter.hpp>
 #include <grid_map_utils/polygon_iterator.hpp>
 
-#include "nav_msgs/msg/detail/occupancy_grid__struct.hpp"
+#include <nav_msgs/msg/occupancy_grid.hpp>
 
 #include <deque>
 
@@ -37,7 +35,7 @@ constexpr auto drivable = 0;
 
 namespace drivable_area_expander
 {
-grid_map::GridMap makeFootprintGridMap(
+grid_map::GridMap expandGridMap(
   const grid_map::GridMap & base_map, const multipolygon_t & footprint,
   const multipolygon_t & predicted_paths, const multilinestring_t & uncrossable_lines,
   const point_t & origin)
@@ -73,8 +71,10 @@ void maskLines(
     for (auto i = 0lu; i + 1 < line.size(); ++i) {
       const grid_map::Position start(line[i].x(), line[i].y());
       const grid_map::Position end(line[i + 1].x(), line[i + 1].y());
-      for (grid_map::LineIterator iterator(grid_map, start, end); !iterator.isPastEnd(); ++iterator)
-        layer((*iterator).x(), (*iterator).y()) = value;
+      if (grid_map.isInside(start) || grid_map.isInside(end)) {
+        for (grid_map::LineIterator iter(grid_map, start, end); !iter.isPastEnd(); ++iter)
+          layer((*iter).x(), (*iter).y()) = value;
+      }
     }
   }
 }

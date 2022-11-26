@@ -35,7 +35,7 @@ OccupancyGrid buildExpandedDrivableArea(
 {
   const auto grid_map = convertToGridMap(drivable_area);
   const auto footprint_grid_map =
-    makeFootprintGridMap(grid_map, footprint, predicted_paths, uncrossable_lines, origin);
+    expandGridMap(grid_map, footprint, predicted_paths, uncrossable_lines, origin);
   return convertToOccupancyGrid(footprint_grid_map);
 }
 
