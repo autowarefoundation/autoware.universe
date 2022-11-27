@@ -42,7 +42,11 @@ bool tryToReuseTrajectory(
     }
   }
 
-  if (min_dist > max_deviation || traj_to_reuse.longitudinal_velocities[closest_idx] == 0.0) {
+  // TODO(Maxime CLEMENT): make this a parameter
+  constexpr auto min_reuse_velocity = 0.25;
+  if (
+    min_dist > max_deviation ||
+    traj_to_reuse.longitudinal_velocities[closest_idx] < min_reuse_velocity) {
     return false;
   }
 

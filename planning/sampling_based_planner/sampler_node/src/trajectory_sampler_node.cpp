@@ -443,6 +443,7 @@ void TrajectorySamplerNode::objectsCallback(
 void TrajectorySamplerNode::publishTrajectory(
   const sampler_common::Trajectory & trajectory, const std::string & frame_id)
 {
+  if (trajectory.points.size() < 2) return;
   tf2::Quaternion q;  // to convert yaw angle to Quaternion orientation
   autoware_auto_planning_msgs::msg::Trajectory traj_msg;
   traj_msg.header.frame_id = frame_id;
@@ -464,12 +465,6 @@ void TrajectorySamplerNode::publishTrajectory(
     const auto & next = trajectory.points[i + 1];
     const auto dist_to_next =
       std::hypot(next.x() - trajectory.points[i].x(), next.y() - trajectory.points[i].y());
-    if (dist_to_next > 100.0) {
-      RCLCPP_WARN(
-        get_logger(), "Weird point (%lu/%lu) at dist %2.2f. Ignore remaining points", i,
-        trajectory.points.size(), dist_to_next);
-      break;
-    }
   }
   trajectory_pub_->publish(traj_msg);
 }

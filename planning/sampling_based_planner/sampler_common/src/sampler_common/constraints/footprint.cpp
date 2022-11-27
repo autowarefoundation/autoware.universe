@@ -65,9 +65,9 @@ Polygon buildFootprintPolygon(const Path & path, const Constraints & constraints
 {
   Polygon footprint;
 
-  if (path.points.size() == 1 && !path.yaws.empty())
+  if (path.points.empty() || path.yaws.empty()) return footprint;
+  if (path.points.size() == 1)
     return buildFootprintPolygon(path.points.front(), path.yaws.front(), constraints);
-  if (path.points.empty()) return footprint;
 
   // Using the method from Section IV.A of A. Artuñedoet al.: Real-Time Motion Planning Approach for
   // Automated Driving in Urban Environments
