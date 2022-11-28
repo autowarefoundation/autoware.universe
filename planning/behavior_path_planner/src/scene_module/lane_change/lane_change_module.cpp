@@ -155,7 +155,7 @@ BehaviorModuleOutput LaneChangeModule::plan()
     }
     generateExtendedDrivableArea(path);
     prev_approved_path_ = path;
-    if(is_abort_condition_satisfied_){
+    if (is_abort_condition_satisfied_) {
       const auto stop_point = util::insertStopPoint(0.1, &path);
     }
   } else {
