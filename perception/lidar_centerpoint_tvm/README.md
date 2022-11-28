@@ -51,7 +51,7 @@ The `L-fit` method of fitting a bounding box to a cluster is used for that.
 
 ### Limitation and Known Issue
 
-Due to an accurary issue of `centerpoint` model, `vulkan` cannot be used at the moment.
+Due to an accuracy issue of `centerpoint` model, `vulkan` cannot be used at the moment.
 As for 'llvm' backend, real-time performance cannot be achieved.
 
 ## Reference

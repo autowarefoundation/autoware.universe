@@ -12,8 +12,8 @@ set(${PROJECT_NAME}_BACKEND llvm CACHE STRING "${PROJECT_NAME} neural network ba
 set(MODEL_NAME_ENCODER centerpoint_encoder)
 
 # Get neural network.
-set(NN_DEPENDENCY_ENCOER "")
-get_neural_network(${MODEL_NAME_ENCODER} ${${PROJECT_NAME}_BACKEND} NN_DEPENDENCY_ENCOER)
+set(NN_DEPENDENCY_ENCODER "")
+get_neural_network(${MODEL_NAME_ENCODER} ${${PROJECT_NAME}_BACKEND} NN_DEPENDENCY_ENCODER)
 
 set(MODEL_NAME_BACKBONE centerpoint_backbone)
 
@@ -21,7 +21,7 @@ set(MODEL_NAME_BACKBONE centerpoint_backbone)
 set(NN_DEPENDENCY_BACKBONE "")
 get_neural_network(${MODEL_NAME_BACKBONE} ${${PROJECT_NAME}_BACKEND} NN_DEPENDENCY_BACKBONE)
 
-if((NOT NN_DEPENDENCY_ENCOER STREQUAL "") AND (NOT NN_DEPENDENCY_BACKBONE STREQUAL ""))
+if((NOT NN_DEPENDENCY_ENCODER STREQUAL "") AND (NOT NN_DEPENDENCY_BACKBONE STREQUAL ""))
   ## centerpoint_tvm ##
   ament_auto_add_library(${PROJECT_NAME} SHARED
     data/models/${MODEL_NAME_ENCODER}/inference_engine_tvm_config.hpp
@@ -37,7 +37,7 @@ if((NOT NN_DEPENDENCY_ENCOER STREQUAL "") AND (NOT NN_DEPENDENCY_BACKBONE STREQU
     lib/postprocess/generate_detected_boxes.cpp
   )
 
-  add_dependencies(${PROJECT_NAME} ${NN_DEPENDENCY_ENCOER})
+  add_dependencies(${PROJECT_NAME} ${NN_DEPENDENCY_ENCODER})
   add_dependencies(${PROJECT_NAME} ${NN_DEPENDENCY_BACKBONE})
 
   target_compile_options(${PROJECT_NAME} PRIVATE "-Wno-sign-conversion" "-Wno-conversion")
