@@ -52,11 +52,6 @@
 #include <tf2_sensor_msgs/tf2_sensor_msgs.hpp>
 #endif
 
-#include <message_filters/subscriber.h>
-#include <message_filters/sync_policies/approximate_time.h>
-#include <message_filters/sync_policies/exact_time.h>
-#include <message_filters/synchronizer.h>
-
 #include <array>
 #include <deque>
 #include <map>
@@ -65,6 +60,7 @@
 #include <string>
 #include <thread>
 #include <vector>
+
 enum class ConvergedParamType {
   TRANSFORM_PROBABILITY = 0,
   NEAREST_VOXEL_TRANSFORMATION_LIKELIHOOD = 1
@@ -88,9 +84,7 @@ private:
     const std_srvs::srv::SetBool::Request::SharedPtr req,
     std_srvs::srv::SetBool::Response::SharedPtr res);
 
-  void callback_points(
-    sensor_msgs::msg::PointCloud2::ConstSharedPtr sensorpoints_msg_ptr,
-    sensor_msgs::msg::PointCloud2::ConstSharedPtr no_ground_points_msg_ptr);
+  void callback_sensor_points(sensor_msgs::msg::PointCloud2::ConstSharedPtr pointcloud2_msg_ptr);
   void callback_initial_pose(
     geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose_conv_msg_ptr);
   void callback_regularization_pose(
@@ -113,7 +107,7 @@ private:
     const bool is_converged);
   void publish_point_cloud(
     const rclcpp::Time & sensor_ros_time, const std::string & frame_id,
-    const std::shared_ptr<const pcl::PointCloud<PointSource>> & sensor_points_mapTF_ptr);
+    const pcl::shared_ptr<pcl::PointCloud<PointSource>> & sensor_points_mapTF_ptr);
   void publish_marker(
     const rclcpp::Time & sensor_ros_time, const std::vector<geometry_msgs::msg::Pose> & pose_array);
   void publish_initial_to_result_distances(
@@ -122,6 +116,8 @@ private:
     const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_old_msg,
     const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_new_msg);
 
+  void remove_ground_point_cloud(const pcl::shared_ptr<pcl::PointCloud<PointSource>> & sensor_points_mapTF_ptr,
+    const pcl::shared_ptr<pcl::PointCloud<PointSource>> & no_ground_points_mapTF_ptr);
   bool validate_num_iteration(const int iter_num, const int max_iter_num);
   bool validate_score(
     const double score, const double score_threshold, const std::string score_name);
@@ -135,12 +131,12 @@ private:
   void timer_diagnostic();
 
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr initial_pose_sub_;
-  std::shared_ptr<message_filters::Subscriber<sensor_msgs::msg::PointCloud2>> sensor_points_sub_;
-  std::shared_ptr<message_filters::Subscriber<sensor_msgs::msg::PointCloud2>> no_ground_points_sub_;
+  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sensor_points_sub_;
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
     regularization_pose_sub_;
 
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr sensor_aligned_pose_pub_;
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr no_ground_aligned_pose_pub_;
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr ndt_pose_pub_;
   rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
     ndt_pose_with_covariance_pub_;
@@ -206,10 +202,8 @@ private:
   std::unique_ptr<MapModule> map_module_;
   std::unique_ptr<PoseInitializationModule> pose_init_module_;
 
-  using SyncPolicy = message_filters::sync_policies::ExactTime<
-    sensor_msgs::msg::PointCloud2, sensor_msgs::msg::PointCloud2>;
-  using Sync = message_filters::Synchronizer<SyncPolicy>;
-  typename std::shared_ptr<Sync> sync_ptr_;
+  bool use_no_ground_pointcloud_;
+  double outlier_threshold_ = 1.0;
 };
 
 #endif  // NDT_SCAN_MATCHER__NDT_SCAN_MATCHER_CORE_HPP_

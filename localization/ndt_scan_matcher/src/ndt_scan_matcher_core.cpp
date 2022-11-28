@@ -35,6 +35,12 @@
 #include <iomanip>
 #include <thread>
 
+#include <pcl/ModelCoefficients.h>
+#include <pcl/sample_consensus/method_types.h>
+#include <pcl/sample_consensus/model_types.h>
+#include <pcl/segmentation/sac_segmentation.h>
+#include <pcl/filters/extract_indices.h>
+
 tier4_debug_msgs::msg::Float32Stamped make_float32_stamped(
   const builtin_interfaces::msg::Time & stamp, const float data)
 {
@@ -93,7 +99,9 @@ NDTScanMatcher::NDTScanMatcher()
   initial_pose_distance_tolerance_m_(10.0),
   inversion_vector_threshold_(-0.9),
   oscillation_threshold_(10),
-  regularization_enabled_(declare_parameter("regularization_enabled", false))
+  regularization_enabled_(declare_parameter("regularization_enabled", false)),
+  use_no_ground_pointcloud_(declare_parameter("use_no_ground_pointcloud", false)),
+  outlier_threshold_(declare_parameter("outlier_threshold", 1.0))
 {
   (*state_ptr_)["state"] = "Initializing";
   is_activated_ = false;
@@ -164,14 +172,9 @@ NDTScanMatcher::NDTScanMatcher()
     "ekf_pose_with_covariance", 100,
     std::bind(&NDTScanMatcher::callback_initial_pose, this, std::placeholders::_1),
     initial_pose_sub_opt);
-  sensor_points_sub_ = std::make_shared<message_filters::Subscriber<sensor_msgs::msg::PointCloud2>>(
-    this, "points_raw", rclcpp::SensorDataQoS().get_rmw_qos_profile());
-  no_ground_points_sub_ =
-    std::make_shared<message_filters::Subscriber<sensor_msgs::msg::PointCloud2>>(
-      this, "points_no_ground", rclcpp::SensorDataQoS().get_rmw_qos_profile());
-  sync_ptr_ = std::make_shared<Sync>(SyncPolicy(10), *sensor_points_sub_, *no_ground_points_sub_);
-  sync_ptr_->registerCallback(std::bind(
-    &NDTScanMatcher::callback_points, this, std::placeholders::_1, std::placeholders::_2));
+  sensor_points_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
+    "points_raw", rclcpp::SensorDataQoS().keep_last(points_queue_size),
+    std::bind(&NDTScanMatcher::callback_sensor_points, this, std::placeholders::_1), main_sub_opt);
   regularization_pose_sub_ =
     this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
       "regularization_pose_with_covariance", 100,
@@ -179,6 +182,8 @@ NDTScanMatcher::NDTScanMatcher()
 
   sensor_aligned_pose_pub_ =
     this->create_publisher<sensor_msgs::msg::PointCloud2>("points_aligned", 10);
+  no_ground_aligned_pose_pub_=
+    this->create_publisher<sensor_msgs::msg::PointCloud2>("points_aligned_no_ground", 10);
   ndt_pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("ndt_pose", 10);
   ndt_pose_with_covariance_pub_ =
     this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
@@ -318,9 +323,8 @@ void NDTScanMatcher::callback_regularization_pose(
   regularization_pose_msg_ptr_array_.push_back(pose_conv_msg_ptr);
 }
 
-void NDTScanMatcher::callback_points(
-  sensor_msgs::msg::PointCloud2::ConstSharedPtr sensor_points_sensorTF_msg_ptr,
-  sensor_msgs::msg::PointCloud2::ConstSharedPtr no_ground_points_sensorTF_msg_ptr)
+void NDTScanMatcher::callback_sensor_points(
+  sensor_msgs::msg::PointCloud2::ConstSharedPtr sensor_points_sensorTF_msg_ptr)
 {
   // mutex ndt_ptr_
   std::lock_guard<std::mutex> lock(ndt_ptr_mtx_);
@@ -383,24 +387,8 @@ void NDTScanMatcher::callback_points(
     transformation_msg_array.push_back(pose_ros);
   }
 
-  // use no_ground pointcloud count score
-  // preprocess de-ground pointcloud
-  pcl::shared_ptr<pcl::PointCloud<PointSource>> no_ground_points_sensorTF_ptr(
-    new pcl::PointCloud<PointSource>);
-  pcl::shared_ptr<pcl::PointCloud<PointSource>> no_ground_points_baselinkTF_ptr(
-    new pcl::PointCloud<PointSource>);
-  pcl::fromROSMsg(*no_ground_points_sensorTF_msg_ptr, *no_ground_points_sensorTF_ptr);
-  transform_sensor_measurement(
-    sensor_frame, base_frame_, no_ground_points_sensorTF_ptr, no_ground_points_baselinkTF_ptr);
-  // transform poitcloud pose
-  auto no_ground_points_mapTF_ptr = std::make_shared<pcl::PointCloud<PointSource>>();
-  pcl::transformPointCloud(
-    *no_ground_points_baselinkTF_ptr, *no_ground_points_mapTF_ptr, ndt_result.pose);
-  // calculate score
-  const float no_ground_transform_probability =
-    ndt_ptr_->calculateTransformationProbability(*no_ground_points_mapTF_ptr);
-  const float no_ground_nearest_voxel_transformation_likelihood =
-    ndt_ptr_->calculateNearestVoxelTransformationLikelihood(*no_ground_points_mapTF_ptr);
+  // use no_ground pointcloud calculate score
+  
   // perform several validations
   /*****************************************************************************
   The reason the add 2 to the ndt_ptr_->getMaximumIterations() is that there are bugs in
@@ -439,11 +427,6 @@ void NDTScanMatcher::callback_points(
     make_float32_stamped(sensor_ros_time, ndt_result.transform_probability));
   nearest_voxel_transformation_likelihood_pub_->publish(
     make_float32_stamped(sensor_ros_time, ndt_result.nearest_voxel_transformation_likelihood));
-  //de-ground points NDT matching score
-  no_ground_transform_probability_pub_->publish(
-    make_float32_stamped(sensor_ros_time, no_ground_transform_probability));
-  no_ground_nearest_voxel_transformation_likelihood_pub_->publish(
-    make_float32_stamped(sensor_ros_time, no_ground_nearest_voxel_transformation_likelihood));
   iteration_num_pub_->publish(make_int32_stamped(sensor_ros_time, ndt_result.iteration_num));
   publish_tf(sensor_ros_time, result_pose_msg);
   publish_pose(sensor_ros_time, result_pose_msg, is_converged);
@@ -452,10 +435,36 @@ void NDTScanMatcher::callback_points(
     sensor_ros_time, result_pose_msg, interpolator.get_current_pose(), interpolator.get_old_pose(),
     interpolator.get_new_pose());
 
-  auto sensor_points_mapTF_ptr = std::make_shared<pcl::PointCloud<PointSource>>();
+  pcl::shared_ptr<pcl::PointCloud<PointSource>> sensor_points_mapTF_ptr(
+    new pcl::PointCloud<PointSource>);
   pcl::transformPointCloud(
     *sensor_points_baselinkTF_ptr, *sensor_points_mapTF_ptr, ndt_result.pose);
   publish_point_cloud(sensor_ros_time, map_frame_, sensor_points_mapTF_ptr);
+
+  //whether use de-grounded points calculate score
+  if(use_no_ground_pointcloud_)
+  {
+    //remove ground
+    pcl::shared_ptr<pcl::PointCloud<PointSource>> no_ground_points_mapTF_ptr(
+    new pcl::PointCloud<PointSource>);
+    remove_ground_point_cloud(sensor_points_mapTF_ptr,no_ground_points_mapTF_ptr);
+    //pub remove-ground points
+    sensor_msgs::msg::PointCloud2 no_ground_points_mapTF_msg;
+    pcl::toROSMsg(*no_ground_points_mapTF_ptr, no_ground_points_mapTF_msg);
+    no_ground_points_mapTF_msg.header.stamp = sensor_ros_time;
+    no_ground_points_mapTF_msg.header.frame_id = map_frame_;
+    no_ground_aligned_pose_pub_->publish(no_ground_points_mapTF_msg);
+    //calculate score
+    const float no_ground_transform_probability = ndt_ptr_-> 
+      calculateTransformationProbability(*no_ground_points_mapTF_ptr);
+    const float no_ground_nearest_voxel_transformation_likelihood = ndt_ptr_-> 
+      calculateNearestVoxelTransformationLikelihood(*no_ground_points_mapTF_ptr);
+    //pub score
+    no_ground_transform_probability_pub_->publish(
+      make_float32_stamped(sensor_ros_time, no_ground_transform_probability));
+    no_ground_nearest_voxel_transformation_likelihood_pub_->publish(
+      make_float32_stamped(sensor_ros_time, no_ground_nearest_voxel_transformation_likelihood));
+  }
 
   (*state_ptr_)["transform_probability"] = std::to_string(ndt_result.transform_probability);
   (*state_ptr_)["nearest_voxel_transformation_likelihood"] =
@@ -519,7 +528,7 @@ void NDTScanMatcher::publish_pose(
 
 void NDTScanMatcher::publish_point_cloud(
   const rclcpp::Time & sensor_ros_time, const std::string & frame_id,
-  const std::shared_ptr<const pcl::PointCloud<PointSource>> & sensor_points_mapTF_ptr)
+  const pcl::shared_ptr<pcl::PointCloud<PointSource>> & sensor_points_mapTF_ptr)
 {
   sensor_msgs::msg::PointCloud2 sensor_points_mapTF_msg;
   pcl::toROSMsg(*sensor_points_mapTF_ptr, sensor_points_mapTF_msg);
@@ -578,6 +587,26 @@ void NDTScanMatcher::publish_initial_to_result_distances(
     norm(initial_pose_new_msg.pose.pose.position, result_pose_msg.position);
   initial_to_result_distance_new_pub_->publish(
     make_float32_stamped(sensor_ros_time, initial_to_result_distance_new));
+}
+
+void NDTScanMatcher::remove_ground_point_cloud(
+  const pcl::shared_ptr<pcl::PointCloud<PointSource>> & sensor_points_mapTF_ptr,
+  const pcl::shared_ptr<pcl::PointCloud<PointSource>> & no_ground_points_mapTF_ptr)
+{
+  pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
+  pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
+  pcl::SACSegmentation<PointSource> seg;
+  seg.setOptimizeCoefficients(true);
+  seg.setModelType(pcl::SACMODEL_PLANE);
+  seg.setMethodType(pcl::SAC_RANSAC);
+  seg.setDistanceThreshold(outlier_threshold_);
+  seg.setInputCloud(sensor_points_mapTF_ptr);
+  seg.segment(*inliers, *coefficients);
+  pcl::ExtractIndices<PointSource> extract;
+	extract.setInputCloud(sensor_points_mapTF_ptr);
+	extract.setIndices(inliers);
+	extract.setNegative(true);
+	extract.filter(*no_ground_points_mapTF_ptr);
 }
 
 bool NDTScanMatcher::validate_num_iteration(const int iter_num, const int max_iter_num)
