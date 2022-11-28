@@ -91,9 +91,9 @@ void ImuCorrector::callbackImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_m
   imu_msg.linear_acceleration_covariance[COV_IDX::Z_Z] =
     accel_stddev_imu_link_ * accel_stddev_imu_link_;
 
-  geometry_msgs::msg::TransformStamped::ConstSharedPtr tf_base2imu_ptr =
-    transform_listener_->getLatestTransform(output_frame_, imu_msg.header.frame_id);
-  if (!tf_base2imu_ptr) {
+  geometry_msgs::msg::TransformStamped::ConstSharedPtr tf_imu2base_ptr =
+    transform_listener_->getLatestTransform(imu_msg.header.frame_id, output_frame_);
+  if (!tf_imu2base_ptr) {
     RCLCPP_ERROR(
       this->get_logger(), "Please publish TF %s to %s", output_frame_.c_str(),
       (imu_msg.header.frame_id).c_str());
@@ -104,10 +104,10 @@ void ImuCorrector::callbackImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_m
   imu_msg_base_link.header.stamp = imu_msg_ptr->header.stamp;
   imu_msg_base_link.header.frame_id = output_frame_;
   imu_msg_base_link.linear_acceleration =
-    transformVector3(imu_msg.linear_acceleration, *tf_base2imu_ptr);
+    transformVector3(imu_msg.linear_acceleration, *tf_imu2base_ptr);
   imu_msg_base_link.linear_acceleration_covariance =
     transformCovariance(imu_msg.linear_acceleration_covariance);
-  imu_msg_base_link.angular_velocity = transformVector3(imu_msg.angular_velocity, *tf_base2imu_ptr);
+  imu_msg_base_link.angular_velocity = transformVector3(imu_msg.angular_velocity, *tf_imu2base_ptr);
   imu_msg_base_link.angular_velocity_covariance =
     transformCovariance(imu_msg.angular_velocity_covariance);
 
