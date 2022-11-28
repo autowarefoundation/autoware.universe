@@ -387,8 +387,6 @@ void NDTScanMatcher::callback_sensor_points(
     transformation_msg_array.push_back(pose_ros);
   }
 
-  // use no_ground pointcloud calculate score
-  
   // perform several validations
   /*****************************************************************************
   The reason the add 2 to the ndt_ptr_->getMaximumIterations() is that there are bugs in
