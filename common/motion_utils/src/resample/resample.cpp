@@ -349,6 +349,8 @@ autoware_auto_planning_msgs::msg::Path resamplePath(
   autoware_auto_planning_msgs::msg::Path resampled_path;
   resampled_path.header = input_path.header;
   resampled_path.drivable_area = input_path.drivable_area;
+  resampled_path.left_bound = input_path.left_bound;
+  resampled_path.right_bound = resampled_path.right_bound;
   resampled_path.points.resize(interpolated_pose.size());
   for (size_t i = 0; i < resampled_path.points.size(); ++i) {
     autoware_auto_planning_msgs::msg::PathPoint path_point;
