@@ -141,18 +141,18 @@ void RadarStaticPointcloudFilterNode::onData(
 
   RadarScan static_radar{};
   RadarScan dynamic_radar{};
-  static_radar_.header = radar_msg->header;
-  dynamic_radar_.header = radar_msg->header;
+  static_radar.header = radar_msg->header;
+  dynamic_radar.header = radar_msg->header;
 
   for (const auto & radar_return : radar_msg->returns) {
     if (isStaticPointcloud(radar_return, odom_msg, transform)) {
-      static_radar_.returns.emplace_back(radar_return);
+      static_radar.returns.emplace_back(radar_return);
     } else {
-      dynamic_radar_.returns.emplace_back(radar_return);
+      dynamic_radar.returns.emplace_back(radar_return);
     }
   }
-  pub_static_radar_->publish(static_radar_);
-  pub_dynamic_radar_->publish(dynamic_radar_);
+  pub_static_radar_->publish(static_radar);
+  pub_dynamic_radar_->publish(dynamic_radar);
 }
 
 bool RadarStaticPointcloudFilterNode::isStaticPointcloud(
