@@ -40,6 +40,7 @@
       max_dist_for_extending_end_point: 0.0001 # minimum delta dist thres for extending last point [m]
 
       enable_clipping_fixed_traj: false
+      non_fixed_trajectory_length: 5.0 # length of the trajectory merging optimized mpt trajectory to original(not optimized) trajectory
 
     object:  # avoiding object
       max_avoiding_objects_velocity_ms: 0.5 # maximum velocity for avoiding objects [m/s]
