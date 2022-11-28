@@ -81,8 +81,24 @@ rcl_interfaces::msg::SetParametersResult DrivableAreaExpanderNode::onParameter(
       expansion_params_.avoid_dynamic_objects = parameter.as_bool();
     } else if (parameter.get_name() == ExpansionParameters::AVOID_LINESTRING_TYPES_PARAM) {
       expansion_params_.avoid_linestring_types = parameter.as_string_array();
-    } else if (parameter.get_name() == ExpansionParameters::EXTRA_FOOTPRINT_OFFSET_PARAM) {
-      expansion_params_.extra_footprint_offset = parameter.as_double();
+      uncrossable_lines_ =
+        extractUncrossableLines(*lanelet_map_ptr_, expansion_params_.avoid_linestring_types);
+    } else if (parameter.get_name() == ExpansionParameters::EGO_EXTRA_OFFSET_FRONT) {
+      expansion_params_.ego_extra_front_offset = parameter.as_double();
+    } else if (parameter.get_name() == ExpansionParameters::EGO_EXTRA_OFFSET_REAR) {
+      expansion_params_.ego_extra_rear_offset = parameter.as_double();
+    } else if (parameter.get_name() == ExpansionParameters::EGO_EXTRA_OFFSET_LEFT) {
+      expansion_params_.ego_extra_left_offset = parameter.as_double();
+    } else if (parameter.get_name() == ExpansionParameters::EGO_EXTRA_OFFSET_RIGHT) {
+      expansion_params_.ego_extra_right_offset = parameter.as_double();
+    } else if (parameter.get_name() == ExpansionParameters::DYN_OBJECTS_EXTRA_OFFSET_FRONT) {
+      expansion_params_.dynamic_objects_extra_front_offset = parameter.as_double();
+    } else if (parameter.get_name() == ExpansionParameters::DYN_OBJECTS_EXTRA_OFFSET_REAR) {
+      expansion_params_.dynamic_objects_extra_rear_offset = parameter.as_double();
+    } else if (parameter.get_name() == ExpansionParameters::DYN_OBJECTS_EXTRA_OFFSET_LEFT) {
+      expansion_params_.dynamic_objects_extra_left_offset = parameter.as_double();
+    } else if (parameter.get_name() == ExpansionParameters::DYN_OBJECTS_EXTRA_OFFSET_RIGHT) {
+      expansion_params_.dynamic_objects_extra_right_offset = parameter.as_double();
     } else if (parameter.get_name() == ExpansionParameters::MAX_EXP_DIST_PARAM) {
       expansion_params_.max_expansion_distance = parameter.as_double();
     } else {

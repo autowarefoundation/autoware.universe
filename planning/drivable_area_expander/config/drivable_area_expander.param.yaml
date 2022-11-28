@@ -5,9 +5,20 @@
       downsample_factor: 1  # factor by which to downsample the input path for faster calculation
 
     expansion:
-      extra_footprint_offset: 0.5  # [m] extra distance to add around the ego footprint
-      max_expansion_distance: 0.0  # [m] maximum distance by which the drivable area can be expended
-      avoid_dynamic_objects: true  # if true, the drivable area is not expanded in the predicted path of dynamic objects
+      ego:
+        extra_footprint_offset:
+          front: 0.5  # [m] extra length to add to the front of the ego footprint
+          rear: 0.5   # [m] extra length to add to the rear of the ego footprint
+          left: 0.5   # [m] extra length to add to the left of the ego footprint
+          right: 0.5  # [m] extra lenght to add to the rear of the ego footprint
+      dynamic_objects:
+        avoid: true  # if true, the drivable area is not expanded in the predicted path of dynamic objects
+        extra_footprint_offset:
+          front: 0.5  # [m] extra length to add to the front of the ego footprint
+          rear: 0.5   # [m] extra length to add to the rear of the ego footprint
+          left: 0.5   # [m] extra length to add to the left of the ego footprint
+          right: 0.5  # [m] extra lenght to add to the rear of the ego footprint
+      max_distance: 0.0  # [m] maximum distance by which the drivable area can be expended
       avoid_linestring_types:  # linestring types in the lanelet maps that will not be crossed when expanding the drivable area
         - guard_rail
         - road_border

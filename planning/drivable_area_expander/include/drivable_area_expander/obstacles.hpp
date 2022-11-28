@@ -79,11 +79,10 @@ multipolygon_t createPathFootprint(const Path & path, const ExpansionParameters 
 
 /// @brief create polygons from the predicted paths of an object
 /// @param [in] objects objects from which to create polygons
-/// @param [in] buffer buffer to add to the objects dimensions
-/// @param [in] min_velocity objects with velocity lower will be ignored
+/// @param[in] params expansion parameters containing extra offsets to add to the dynamic objects
 /// @return polygons of the object's predicted paths
 multipolygon_t createObjectFootprints(
-  const autoware_auto_perception_msgs::msg::PredictedObjects & objects, const double buffer,
-  double min_velocity);
+  const autoware_auto_perception_msgs::msg::PredictedObjects & objects,
+  const ExpansionParameters & params);
 }  // namespace drivable_area_expander
 #endif  // DRIVABLE_AREA_EXPANDER__OBSTACLES_HPP_

@@ -45,7 +45,7 @@ multipolygon_t createPredictedPathPolygons(
 {
   multipolygon_t predicted_path_polygons;
   if (params.avoid_dynamic_objects) {
-    predicted_path_polygons = createObjectFootprints(predicted_objects, 0.0, 0.0);
+    predicted_path_polygons = createObjectFootprints(predicted_objects, params);
   }
   return predicted_path_polygons;
 }
