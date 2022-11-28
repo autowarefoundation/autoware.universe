@@ -800,11 +800,12 @@ std::optional<LaneChangePath> getAbortPaths(
 
   const auto pose_idx_min = [&](
                               const double accel, const double jerk, const double param_time,
-                              const double min_dist, const double max_dist) {
+                              const double min_dist, const double max_dist,
+                              double & turning_point_dist) {
     if (ego_pose_idx > lane_changing_end_pose_idx) {
       return ego_pose_idx;
     }
-    const double turning_point_dist =
+    turning_point_dist =
       std::clamp(std::invoke(abort_point_dist, accel, jerk, param_time), min_dist, max_dist);
     const auto & points = resampled_selected_path.points;
     double sum{0.0};
@@ -818,8 +819,10 @@ std::optional<LaneChangePath> getAbortPaths(
     return idx;
   };
 
-  const auto abort_start_idx = pose_idx_min(0.0, 0.5, 3.0, 4.0, 6.0);
-  const auto abort_end_idx = pose_idx_min(0.0, 0.5, 6.0, 12.0, 16.0);
+  double abort_start_dist{0.0};
+  const auto abort_start_idx = pose_idx_min(0.0, 0.5, 3.0, 4.0, 6.0, abort_start_dist);
+  double abort_end_dist{0.0};
+  const auto abort_end_idx = pose_idx_min(0.0, 0.5, 6.0, 12.0, 16.0, abort_end_dist);
   if (abort_start_idx >= abort_end_idx) {
     return std::nullopt;
   }
@@ -853,6 +856,8 @@ std::optional<LaneChangePath> getAbortPaths(
   PathShifter path_shifter;
   path_shifter.setPath(resampled_selected_path);
   path_shifter.addShiftLine(shift_line);
+  const auto lateral_jerk = path_shifter.calcJerkFromLatLonDistance(
+    shift_line.end_shift_length, abort_start_dist, current_speed);
 
   ShiftedPath shifted_path;
   // offset front side
