@@ -155,7 +155,7 @@ BehaviorModuleOutput LaneChangeModule::plan()
     }
     generateExtendedDrivableArea(path);
     prev_approved_path_ = path;
-    if (is_abort_condition_satisfied_ && (isNearEndOfLane() && isCurrentSpeedLow())) {
+    if(is_abort_condition_satisfied_){
       const auto stop_point = util::insertStopPoint(0.1, &path);
     }
   } else {
@@ -537,27 +537,26 @@ bool LaneChangeModule::isAbortConditionSatisfied()
 
     current_lane_change_state_ = LaneChangeStates::Cancel;
 
-    // const bool is_velocity_low =
-    //   util::l2Norm(current_twist.linear) < parameters_->abort_lane_change_velocity_thresh;
+    const bool is_velocity_low =
+      util::l2Norm(current_twist.linear) < parameters_->abort_lane_change_velocity_thresh;
 
     const bool is_within_original_lane =
       lane_change_utils::isEgoWithinOriginalLane(current_lanes, current_pose, common_parameters);
 
-    if (is_within_original_lane) {
+    if (is_velocity_low && is_within_original_lane) {
       return true;
     }
 
-    // const bool is_distance_small =
-    //   lane_change_utils::isEgoDistanceNearToCenterline(closest_lanelet, current_pose,
-    //   *parameters_);
+    const bool is_distance_small =
+      lane_change_utils::isEgoDistanceNearToCenterline(closest_lanelet, current_pose, *parameters_);
 
     // check angle thresh from original lane
-    // const bool is_angle_diff_small = lane_change_utils::isEgoHeadingAngleLessThanThreshold(
-    //   closest_lanelet, current_pose, *parameters_);
+    const bool is_angle_diff_small = lane_change_utils::isEgoHeadingAngleLessThanThreshold(
+      closest_lanelet, current_pose, *parameters_);
 
-    // if (is_angle_diff_small) {
-    //   return true;
-    // }
+    if (is_distance_small && is_angle_diff_small) {
+      return true;
+    }
 
     if (!parameters_->enable_abort_lane_change) {
       return true;
