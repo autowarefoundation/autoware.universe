@@ -141,7 +141,7 @@ NormalVehicleTracker::NormalVehicleTracker(
   ekf_.init(X, P);
 
   /* calc nearest corner index*/
-  setNearestCornerSurfaceIndex(self_transform);  // this index is used in next measure step
+  setNearestCornerOrSurfaceIndex(self_transform);  // this index is used in next measure step
 }
 
 bool NormalVehicleTracker::predict(const rclcpp::Time & time)
@@ -243,11 +243,13 @@ bool NormalVehicleTracker::measureWithPose(
     r_cov_y = ekf_params_.r_cov_y;
   }
 
+  // extract current state
+  Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);  // predicted state
+  ekf_.getX(X_t);
+
   // Decide dimension of measurement vector
   bool enable_velocity_measurement = false;
   if (object.kinematics.has_twist) {
-    Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);  // predicted state
-    ekf_.getX(X_t);
     const double predicted_vx = X_t(IDX::VX);
     const double observed_vx = object.kinematics.twist_with_covariance.twist.linear.x;
 
@@ -256,37 +258,32 @@ bool NormalVehicleTracker::measureWithPose(
       enable_velocity_measurement = true;
     }
   }
-  //
-  double orientation_reverted = 0;
+
   // pos x, pos y, yaw, vx depending on pose output
   const int dim_y = enable_velocity_measurement ? 4 : 3;
   double measurement_yaw = tier4_autoware_utils::normalizeRadian(
     tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation));
   {
-    Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);
-    ekf_.getX(X_t);
     // Fixed measurement_yaw to be in the range of +-90 degrees of X_t(IDX::YAW)
     while (M_PI_2 <= X_t(IDX::YAW) - measurement_yaw) {
       measurement_yaw = measurement_yaw + M_PI;
-      orientation_reverted += 1;
     }
     while (M_PI_2 <= measurement_yaw - X_t(IDX::YAW)) {
       measurement_yaw = measurement_yaw - M_PI;
-      orientation_reverted += 1;
     }
   }
 
+  // save input object shape
   if (last_input_bounding_box_.length == -1) {
     last_input_bounding_box_ = {
       object.shape.dimensions.x, object.shape.dimensions.y, object.shape.dimensions.z};
   }
 
-  /* get offseted measurement*/
-  Eigen::Vector2d offset;
+  /* get offset measurement*/
   autoware_auto_perception_msgs::msg::DetectedObject offset_object;
   utils::calcAnchorPointOffset(
-    bounding_box_.width, bounding_box_.length, nearest_corner_index_, object, measurement_yaw,
-    offset_object, offset);
+    last_input_bounding_box_.width, last_input_bounding_box_.length, last_nearest_corner_index_,
+    object, X_t(IDX::YAW), offset_object, tracking_offset_);
 
   /* Set measurement matrix and noise covariance*/
   Eigen::MatrixXd Y(dim_y, 1);
@@ -338,21 +335,6 @@ bool NormalVehicleTracker::measureWithPose(
   if (!ekf_.update(Y, C, R)) {
     RCLCPP_WARN(logger_, "Cannot update");
   }
-
-  /* fix offset value */
-  // This is trying to do ekf_.setX(X_new) with ekf_.init()
-  Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);
-  Eigen::MatrixXd P_t(ekf_params_.dim_x, ekf_params_.dim_x);
-  ekf_.getX(X_t);
-  ekf_.getP(P_t);
-  double rotate_angle =
-    X_t(IDX::YAW) +
-    orientation_reverted * M_PI;  // to include the situation that detection orientation is reverted
-  const Eigen::Matrix2d Ryaw = Eigen::Rotation2Dd(rotate_angle).toRotationMatrix();
-  const Eigen::Vector2d rotated_offset = Ryaw * offset;
-  X_t(IDX::X) -= rotated_offset.x();
-  X_t(IDX::Y) -= rotated_offset.y();
-  ekf_.init(X_t, P_t);
 
   // normalize yaw and limit vx, wz
   {
@@ -409,10 +391,6 @@ bool NormalVehicleTracker::measure(
       (time - last_update_time_).seconds());
   }
 
-  // const int nearest_index = utils::getNearestCornerSurfaceFromObject(object, self_transform);
-  // const Eigen::Vector2d tracking_point = utils::getTrackingPointFromObject(object,
-  // nearest_index);
-
   measureWithPose(object);
   measureWithShape(object);
 
@@ -421,18 +399,9 @@ bool NormalVehicleTracker::measure(
   Eigen::MatrixXd P_t(ekf_params_.dim_x, ekf_params_.dim_x);
   ekf_.getX(X_t);
   ekf_.getP(P_t);
-  // double rotate_angle = X_t(IDX::YAW);  // need to fix reverted from object
-  // double measurement_yaw = tier4_autoware_utils::normalizeRadian(
-  //   tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation));
-  // const Eigen::Vector2d offset_position = utils::recoverFromTrackingPoint(
-  //   X_t(IDX::X), X_t(IDX::Y), rotate_angle, bounding_box_.width, bounding_box_.length,
-  //   nearest_index, tracking_point);
-  // X_t(IDX::X) = offset_position.x();
-  // X_t(IDX::Y) = offset_position.y();
-  // // ekf_.init(X_t, P_t);
 
   /* calc nearest corner index*/
-  setNearestCornerSurfaceIndex(self_transform);  // this index is used in next measure step
+  setNearestCornerOrSurfaceIndex(self_transform);  // this index is used in next measure step
 
   return true;
 }
@@ -457,6 +426,14 @@ bool NormalVehicleTracker::getTrackedObject(
 
   auto & pose_with_cov = object.kinematics.pose_with_covariance;
   auto & twist_with_cov = object.kinematics.twist_with_covariance;
+
+  // recover bounding box from tracking point
+  const double dl = bounding_box_.length - last_input_bounding_box_.length;
+  const double dw = bounding_box_.width - last_input_bounding_box_.width;
+  const Eigen::Vector2d recovered_pose = utils::recoverFromTrackingPoint(
+    X_t(IDX::X), X_t(IDX::Y), X_t(IDX::YAW), dw, dl, last_nearest_corner_index_, tracking_offset_);
+  X_t(IDX::X) = recovered_pose.x();
+  X_t(IDX::Y) = recovered_pose.y();
 
   // position
   pose_with_cov.pose.position.x = X_t(IDX::X);
@@ -518,12 +495,12 @@ bool NormalVehicleTracker::getTrackedObject(
   return true;
 }
 
-void NormalVehicleTracker::setNearestCornerSurfaceIndex(
+void NormalVehicleTracker::setNearestCornerOrSurfaceIndex(
   const geometry_msgs::msg::Transform & self_transform)
 {
   Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);
   ekf_.getX(X_t);
-  nearest_corner_index_ = utils::getNearestCornerSurface(
+  last_nearest_corner_index_ = utils::getNearestCornerOrSurface(
     X_t(IDX::X), X_t(IDX::Y), X_t(IDX::YAW), bounding_box_.width, bounding_box_.length,
     self_transform);
 }

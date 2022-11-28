@@ -140,7 +140,7 @@ BigVehicleTracker::BigVehicleTracker(
   ekf_.init(X, P);
 
   /* calc nearest corner index*/
-  setNearestCornerSurfaceIndex(self_transform);  // this index is used in next measure step
+  setNearestCornerOrSurfaceIndex(self_transform);  // this index is used in next measure step
 }
 
 bool BigVehicleTracker::predict(const rclcpp::Time & time)
@@ -259,22 +259,24 @@ bool BigVehicleTracker::measureWithPose(
   // pos x, pos y, yaw, vx depending on pose measurement
   const int dim_y = enable_velocity_measurement ? 4 : 3;
   double measurement_yaw = getMeasurementYaw(object);  // get sign-solved yaw angle
+  Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);           // predicted state
+  ekf_.getX(X_t);
 
+  // save last input bounding box
   if (last_input_bounding_box_.length == -1) {
     last_input_bounding_box_ = {
       object.shape.dimensions.x, object.shape.dimensions.y, object.shape.dimensions.z};
   }
 
-  /* get offseted measurement*/
-  Eigen::Vector2d offset;
+  /* get offset measurement*/
   autoware_auto_perception_msgs::msg::DetectedObject offset_object;
   utils::calcAnchorPointOffset(
-    bounding_box_.width, bounding_box_.length, nearest_corner_index_, object, measurement_yaw,
-    offset_object, offset);
-  std::cout << "MOT_offset: " << offset.x() << " " << offset.y()
-            << " closest_corner: " << nearest_corner_index_ << " "
-            << object.kinematics.pose_with_covariance.pose.position.x << " "
-            << object.kinematics.pose_with_covariance.pose.position.y << std::endl;
+    last_input_bounding_box_.width, last_input_bounding_box_.length, last_nearest_corner_index_,
+    object, X_t(IDX::YAW), offset_object, tracking_offset_);
+  // std::cout << "MOT_offset: " << tracking_offset_.x() << " " << tracking_offset_.y()
+  //           << " closest_corner: " << last_nearest_corner_index_ << " "
+  //           << object.kinematics.pose_with_covariance.pose.position.x << " "
+  //           << object.kinematics.pose_with_covariance.pose.position.y << std::endl;
 
   /* Set measurement matrix */
   Eigen::MatrixXd Y(dim_y, 1);
@@ -324,19 +326,6 @@ bool BigVehicleTracker::measureWithPose(
   if (!ekf_.update(Y, C, R)) {
     RCLCPP_WARN(logger_, "Cannot update");
   }
-
-  /* fix offset value */
-  // This is trying to do ekf_.setX(X_new) with ekf_.init()
-  Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);
-  Eigen::MatrixXd P_t(ekf_params_.dim_x, ekf_params_.dim_x);
-  ekf_.getX(X_t);
-  ekf_.getP(P_t);
-  double rotate_angle = X_t(IDX::YAW);
-  const Eigen::Matrix2d Ryaw = Eigen::Rotation2Dd(rotate_angle).toRotationMatrix();
-  const Eigen::Vector2d rotated_offset = Ryaw * offset;
-  X_t(IDX::X) -= rotated_offset.x();
-  X_t(IDX::Y) -= rotated_offset.y();
-  ekf_.init(X_t, P_t);
 
   // normalize yaw and limit vx, wz
   {
@@ -392,30 +381,11 @@ bool BigVehicleTracker::measure(
       (time - last_update_time_).seconds());
   }
 
-  double measurement_yaw = getMeasurementYaw(object);
-  const int nearest_index =
-    utils::getNearestCornerSurfaceFromObject(object, measurement_yaw, self_transform);
-  const double length_before_update = bounding_box_.length;
-
   measureWithPose(object);
   measureWithShape(object);
 
-  // post-processing: bounding box refinements
-  Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);
-  Eigen::MatrixXd P_t(ekf_params_.dim_x, ekf_params_.dim_x);
-  ekf_.getX(X_t);
-  ekf_.getP(P_t);
-  const Eigen::Vector2d offset_position = utils::keepNearestFrontOrRearSurface(
-    X_t(IDX::X), X_t(IDX::Y), length_before_update, bounding_box_.length, measurement_yaw,
-    X_t(IDX::YAW), nearest_index);
-  X_t(IDX::X) = offset_position.x();
-  X_t(IDX::Y) = offset_position.y();
-  ekf_.init(X_t, P_t);
-  std::cout << "postprocess offset: " << offset_position.x() << ", " << offset_position.y()
-            << std::endl;
-
   /* calc nearest corner index*/
-  setNearestCornerSurfaceIndex(self_transform);  // this index is used in next measure step
+  setNearestCornerOrSurfaceIndex(self_transform);  // this index is used in next measure step
 
   return true;
 }
@@ -438,8 +408,17 @@ bool BigVehicleTracker::getTrackedObject(
   tmp_ekf_for_no_update.getX(X_t);
   tmp_ekf_for_no_update.getP(P);
 
+  /*  put predicted pose and twist to output object  */
   auto & pose_with_cov = object.kinematics.pose_with_covariance;
   auto & twist_with_cov = object.kinematics.twist_with_covariance;
+
+  // recover bounding box from tracking point
+  const double dl = bounding_box_.length - last_input_bounding_box_.length;
+  const double dw = bounding_box_.width - last_input_bounding_box_.width;
+  const Eigen::Vector2d recovered_pose = utils::recoverFromTrackingPoint(
+    X_t(IDX::X), X_t(IDX::Y), X_t(IDX::YAW), dw, dl, last_nearest_corner_index_, tracking_offset_);
+  X_t(IDX::X) = recovered_pose.x();
+  X_t(IDX::Y) = recovered_pose.y();
 
   // position
   pose_with_cov.pose.position.x = X_t(IDX::X);
@@ -502,12 +481,12 @@ bool BigVehicleTracker::getTrackedObject(
   return true;
 }
 
-void BigVehicleTracker::setNearestCornerSurfaceIndex(
+void BigVehicleTracker::setNearestCornerOrSurfaceIndex(
   const geometry_msgs::msg::Transform & self_transform)
 {
   Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);
   ekf_.getX(X_t);
-  nearest_corner_index_ = utils::getNearestCornerSurface(
+  last_nearest_corner_index_ = utils::getNearestCornerOrSurface(
     X_t(IDX::X), X_t(IDX::Y), X_t(IDX::YAW), bounding_box_.width, bounding_box_.length,
     self_transform);
 }

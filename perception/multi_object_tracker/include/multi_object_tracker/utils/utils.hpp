@@ -86,6 +86,11 @@ enum BBOX_IDX {
   INSIDE = -1
 };
 
+/**
+ * @brief check if object label belongs to "large vehicle"
+ * @param label: input object label
+ * @return True if object label means large vehicle
+ */
 inline bool isLargeVehicleLabel(const uint8_t label)
 {
   using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
@@ -93,24 +98,28 @@ inline bool isLargeVehicleLabel(const uint8_t label)
 }
 
 /**
- * @brief Get the Nearest Corner or Surface from detected object
+ * @brief Determine the Nearest Corner or Surface of detected object observed from ego vehicle
  *
- * @param object
+ * @param x: object x coordinate in map frame
+ * @param y: object y coordinate in map frame
+ * @param yaw: object yaw orientation in map frame
+ * @param width: object bounding box width
+ * @param length: object bounding box length
+ * @param self_transform: Ego vehicle position in map frame
  * @return int index
  */
-inline int getNearestCornerSurface(
+inline int getNearestCornerOrSurface(
   const double x, const double y, const double yaw, const double width, const double length,
   const geometry_msgs::msg::Transform & self_transform)
 {
-  double x0, y0, xl, yl;
   // get local vehicle pose
-  x0 = self_transform.translation.x;
-  y0 = self_transform.translation.y;
+  const double x0 = self_transform.translation.x;
+  const double y0 = self_transform.translation.y;
 
   // localize self vehicle pose to object coordinate
   // R.T (X0-X)
-  xl = std::cos(yaw) * (x0 - x) + std::sin(yaw) * (y0 - y);
-  yl = -std::sin(yaw) * (x0 - x) + std::cos(yaw) * (y0 - y);
+  const double xl = std::cos(yaw) * (x0 - x) + std::sin(yaw) * (y0 - y);
+  const double yl = -std::sin(yaw) * (x0 - x) + std::cos(yaw) * (y0 - y);
 
   // Determine Index
   //     x+ (front)
@@ -144,11 +153,12 @@ inline int getNearestCornerSurface(
 
 /**
  * @brief Get the Nearest Corner or Surface from detected object
- *
- * @param object
- * @return int index
+ * @param object: input object
+ * @param yaw: object yaw angle (after solved front and back uncertainty)
+ * @param self_transform
+ * @return nearest corner or surface index
  */
-inline int getNearestCornerSurfaceFromObject(
+inline int getNearestCornerOrSurfaceFromObject(
   const autoware_auto_perception_msgs::msg::DetectedObject & object, const double & yaw,
   const geometry_msgs::msg::Transform & self_transform)
 {
@@ -157,136 +167,101 @@ inline int getNearestCornerSurfaceFromObject(
     return false;
   }
 
+  // extract necessary information from input object
   double x, y, width, length;
   x = object.kinematics.pose_with_covariance.pose.position.x;
   y = object.kinematics.pose_with_covariance.pose.position.y;
-  // yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
+  // yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation); //not use raw yaw
+  // now
   width = object.shape.dimensions.y;
   length = object.shape.dimensions.x;
 
-  return getNearestCornerSurface(x, y, yaw, width, length, self_transform);
-}
-
-inline Eigen::Vector2d getTrackingPoint(
-  const double x, const double y, const double yaw, const double w, const double l, const int indx)
-{
-  const Eigen::Vector2d center{x, y};
-  Eigen::Matrix2d Rot = Eigen::Rotation2Dd(yaw).toRotationMatrix();
-  Eigen::Vector2d tracking_point;
-  // front tracking point
-  if (
-    indx == BBOX_IDX::FRONT_L_CORNER || indx == BBOX_IDX::FRONT_R_CORNER ||
-    indx == BBOX_IDX::FRONT_SURFACE) {
-    Eigen::Vector2d offset_vec{l / 2.0, 0.0};
-    tracking_point = center + Rot * offset_vec;
-  } else if (
-    indx == BBOX_IDX::REAR_L_CORNER || indx == BBOX_IDX::REAR_R_CORNER ||
-    indx == BBOX_IDX::REAR_SURFACE) {
-    // rear tracking point
-    Eigen::Vector2d offset_vec{-l / 2.0, 0.0};
-    tracking_point = center + Rot * offset_vec;
-  } else {
-    // side
-    tracking_point = center;
-  }
-  return tracking_point;
+  return getNearestCornerOrSurface(x, y, yaw, width, length, self_transform);
 }
 
 /**
- * @brief Get tracking point for post processing
+ * @brief Calc bounding box center offset caused by shape change
+ * @param dw: width update [m] =  w_new - w_old
+ * @param dl: length update [m] = l_new - l_old
+ * @param indx: nearest corner index
+ * @return 2d offset vector caused by shape change
  */
-inline Eigen::Vector2d getTrackingPointFromObject(
-  const autoware_auto_perception_msgs::msg::DetectedObject & object, const int indx)
+inline Eigen::Vector2d calcOffsetVectorFromShapeChange(
+  const double dw, const double dl, const int indx)
 {
-  double x, y, yaw, w, l;
-  x = object.kinematics.pose_with_covariance.pose.position.x;
-  y = object.kinematics.pose_with_covariance.pose.position.y;
-  yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
-  w = object.shape.dimensions.y;
-  l = object.shape.dimensions.x;
-
-  return getTrackingPoint(x, y, yaw, w, l, indx);
-}
-
-/**
- * @brief post processing to recover tracking point
- * @note x,y,yaw,w,l : tracking result to be fixed
- * @note indx: closest surface of corner index of
- */
-inline Eigen::Vector2d recoverFromTrackingPoint(
-  const double x, const double y, const double yaw, const double w, const double l, const int indx,
-  const Eigen::Vector2d & tracking_point)
-{
-  const Eigen::Vector2d center{x, y};
-  const Eigen::Matrix2d Rinv = Eigen::Rotation2Dd(-yaw).toRotationMatrix();
-
-  const Eigen::Vector2d tracker_localized_tracking_point = Rinv * (tracking_point - center);
-  Eigen::Vector2d longitude_offset{0, 0};
-  // front tracking point
-  if (
-    indx == BBOX_IDX::FRONT_L_CORNER || indx == BBOX_IDX::FRONT_R_CORNER ||
-    indx == BBOX_IDX::FRONT_SURFACE) {
-    longitude_offset(0) = tracker_localized_tracking_point.x() - l / 2.0;
-  } else if (
-    indx == BBOX_IDX::REAR_L_CORNER || indx == BBOX_IDX::REAR_R_CORNER ||
-    indx == BBOX_IDX::REAR_SURFACE) {
-    // rear tracking point
-    longitude_offset(0) = tracker_localized_tracking_point.x() + l / 2.0;
-  } else {
-    // side
-    longitude_offset(0) = 0.0;
+  Eigen::Vector2d offset;
+  // if surface
+  if (indx == BBOX_IDX::FRONT_SURFACE) {
+    offset(0, 0) = dl / 2.0;  // move forward
+    offset(1, 0) = 0;
+  } else if (indx == BBOX_IDX::RIGHT_SURFACE) {
+    offset(0, 0) = 0;
+    offset(1, 0) = -dw / 2.0;  // move right
+  } else if (indx == BBOX_IDX::REAR_SURFACE) {
+    offset(0, 0) = -dl / 2.0;  // move backward
+    offset(1, 0) = 0;
+  } else if (indx == BBOX_IDX::LEFT_SURFACE) {
+    offset(0, 0) = 0;
+    offset(1, 0) = dw / 2.0;  // move left
   }
-
-  const Eigen::Vector2d offset = Rinv.transpose() * longitude_offset;
-
+  // if corner
+  if (indx == BBOX_IDX::FRONT_R_CORNER) {
+    offset(0, 0) = dl / 2.0;   // move forward
+    offset(1, 0) = -dw / 2.0;  // move right
+  } else if (indx == BBOX_IDX::REAR_R_CORNER) {
+    offset(0, 0) = -dl / 2.0;  // move backward
+    offset(1, 0) = -dw / 2.0;  // move right
+  } else if (indx == BBOX_IDX::REAR_L_CORNER) {
+    offset(0, 0) = -dl / 2.0;  // move backward
+    offset(1, 0) = dw / 2.0;   // move left
+  } else if (indx == BBOX_IDX::FRONT_L_CORNER) {
+    offset(0, 0) = dl / 2.0;  // move forward
+    offset(1, 0) = dw / 2.0;  // move left
+  }
   return offset;
 }
 
-inline Eigen::Vector2d keepNearestFrontOrRearSurface(
-  const double x, const double y, const double l_before, const double l_after,
-  const double input_yaw, double estimate_yaw, const double indx)
+/**
+ * @brief post-processing to recover bounding box center from tracking point and offset vector
+ * @param x: x of tracking point estimated with ekf
+ * @param y: y of tracking point estimated with ekf
+ * @param yaw: yaw of tracking point estimated with ekf
+ * @param dw: diff of width: w_estimated - w_input
+ * @param dl: diff of length: l_estimated - l_input
+ * @param indx: closest corner or surface index
+ * @param tracking_offset: tracking offset between bounding box center and tracking point
+ */
+inline Eigen::Vector2d recoverFromTrackingPoint(
+  const double x, const double y, const double yaw, const double dw, const double dl,
+  const int indx, const Eigen::Vector2d & tracking_offset)
 {
-  const Eigen::Vector2d center{x, y};
-  // fix front or back revert
-  while (M_PI_2 <= input_yaw - estimate_yaw) {
-    estimate_yaw = estimate_yaw + M_PI;
-  }
-  while (M_PI_2 <= estimate_yaw - input_yaw) {
-    estimate_yaw = estimate_yaw - M_PI;
-  }
-  Eigen::Matrix2d Rot = Eigen::Rotation2Dd(estimate_yaw).toRotationMatrix();
+  const Eigen::Vector2d tracking_point{x, y};
+  const Eigen::Matrix2d R = Eigen::Rotation2Dd(yaw).toRotationMatrix();
 
-  Eigen::Vector2d tracking_point;
-  // front tracking point
-  if (
-    indx == BBOX_IDX::FRONT_L_CORNER || indx == BBOX_IDX::FRONT_R_CORNER ||
-    indx == BBOX_IDX::FRONT_SURFACE) {
-    Eigen::Vector2d offset_vec{(l_after - l_before) / 2.0, 0.0};
-    tracking_point = center + Rot * offset_vec;
-  } else if (
-    indx == BBOX_IDX::REAR_L_CORNER || indx == BBOX_IDX::REAR_R_CORNER ||
-    indx == BBOX_IDX::REAR_SURFACE) {
-    // rear tracking point
-    Eigen::Vector2d offset_vec{-(l_after - l_before) / 2.0, 0.0};
-    tracking_point = center + Rot * offset_vec;
-  } else {
-    // side
-    tracking_point = center;
-  }
-  return tracking_point;
+  const Eigen::Vector2d shape_change_offset = calcOffsetVectorFromShapeChange(dw, dl, indx);
+
+  Eigen::Vector2d output_center = tracking_point - R * tracking_offset - R * shape_change_offset;
+
+  return output_center;
 }
 
 /**
- * @brief Calc offset from center to anchor pointGet the Nearest Corner or Surface from detected
- * object
- *
- * @param object
- * @return int index
+ * @brief Convert input object center to tracking point based on nearest corner information
+ * 1. update anchor offset vector, 2. offset input bbox based on tracking_offset vector and
+ * prediction yaw angle
+ * @param w: last input bounding box width
+ * @param l: last input bounding box length
+ * @param indx: last input bounding box closest corner index
+ * @param input_object: input object bounding box
+ * @param yaw: current yaw estimation
+ * @param offset_object: output tracking measurement to feed ekf
+ * @return nearest corner index(int)
  */
 inline void calcAnchorPointOffset(
   const double w, const double l, const int indx,
   const autoware_auto_perception_msgs::msg::DetectedObject & input_object, const double & yaw,
-  autoware_auto_perception_msgs::msg::DetectedObject & offset_object, Eigen::Vector2d & offset)
+  autoware_auto_perception_msgs::msg::DetectedObject & offset_object,
+  Eigen::Vector2d & tracking_offset)
 {
   // copy value
   offset_object = input_object;
@@ -300,39 +275,13 @@ inline void calcAnchorPointOffset(
   l_n = input_object.shape.dimensions.x;
   w_n = input_object.shape.dimensions.y;
 
-  // if surface
-  if (indx == BBOX_IDX::FRONT_SURFACE) {
-    offset(0, 0) = (l_n - l) / 2.0;  // move forward
-    offset(1, 0) = 0;
-  } else if (indx == BBOX_IDX::RIGHT_SURFACE) {
-    offset(0, 0) = 0;
-    offset(1, 0) = -(w_n - w) / 2.0;  // move right
-  } else if (indx == BBOX_IDX::REAR_SURFACE) {
-    offset(0, 0) = -(l_n - l) / 2.0;  // move backward
-    offset(1, 0) = 0;
-  } else if (indx == BBOX_IDX::LEFT_SURFACE) {
-    offset(0, 0) = 0;
-    offset(1, 0) = (w_n - w) / 2.0;  // move left
-  }
-  // if corner
-  if (indx == BBOX_IDX::FRONT_R_CORNER) {
-    offset(0, 0) = (l_n - l) / 2.0;   // move forward
-    offset(1, 0) = -(w_n - w) / 2.0;  // move right
-  } else if (indx == BBOX_IDX::REAR_R_CORNER) {
-    offset(0, 0) = -(l_n - l) / 2.0;  // move backward
-    offset(1, 0) = -(w_n - w) / 2.0;  // move right
-  } else if (indx == BBOX_IDX::REAR_L_CORNER) {
-    offset(0, 0) = -(l_n - l) / 2.0;  // move backward
-    offset(1, 0) = (w_n - w) / 2.0;   // move left
-  } else if (indx == BBOX_IDX::FRONT_L_CORNER) {
-    offset(0, 0) = (l_n - l) / 2.0;  // move forward
-    offset(1, 0) = (w_n - w) / 2.0;  // move left
-  }
+  // update offset
+  const Eigen::Vector2d offset = calcOffsetVectorFromShapeChange(w_n - w, l_n - l, indx);
+  tracking_offset += offset;
 
-  // const double yaw = tf2::getYaw(input_object.kinematics.pose_with_covariance.pose.orientation);
-  Eigen::Matrix2d R = Eigen::Rotation2Dd(yaw).toRotationMatrix();
-  Eigen::Vector2d rotated_offset = R * offset;
-
+  // offset input object
+  const Eigen::Matrix2d R = Eigen::Rotation2Dd(yaw).toRotationMatrix();
+  const Eigen::Vector2d rotated_offset = R * tracking_offset;
   offset_object.kinematics.pose_with_covariance.pose.position.x += rotated_offset.x();
   offset_object.kinematics.pose_with_covariance.pose.position.y += rotated_offset.y();
 }

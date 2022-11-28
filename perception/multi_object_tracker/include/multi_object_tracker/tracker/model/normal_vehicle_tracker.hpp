@@ -28,6 +28,7 @@ class NormalVehicleTracker : public Tracker
 private:
   autoware_auto_perception_msgs::msg::DetectedObject object_;
   rclcpp::Logger logger_;
+  int last_nearest_corner_index_ = -1;
 
 private:
   KalmanFilter ekf_;
@@ -39,7 +40,6 @@ private:
     VX = 3,
     WZ = 4,
   };
-  int nearest_corner_index_ = -1;
 
   struct EkfParams
   {
@@ -74,6 +74,7 @@ private:
   };
   BoundingBox bounding_box_;
   BoundingBox last_input_bounding_box_;
+  Eigen::Vector2d tracking_offset_;
 
 public:
   NormalVehicleTracker(
@@ -90,7 +91,7 @@ public:
   bool getTrackedObject(
     const rclcpp::Time & time,
     autoware_auto_perception_msgs::msg::TrackedObject & object) const override;
-  void setNearestCornerSurfaceIndex(const geometry_msgs::msg::Transform & self_transform);
+  void setNearestCornerOrSurfaceIndex(const geometry_msgs::msg::Transform & self_transform);
   virtual ~NormalVehicleTracker() {}
 };
 
