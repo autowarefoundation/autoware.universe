@@ -73,7 +73,6 @@ private:
 
   std::string target_frame_;
   std::deque<geometry_msgs::msg::PoseStamped::ConstSharedPtr> history_;
-  std::unique_ptr<rviz_rendering::BillboardLine> lines_;
   rclcpp::Time last_stamp_;
 
   // pose history

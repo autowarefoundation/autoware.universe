@@ -103,7 +103,6 @@ void PoseHistoryFootprint::updateVisualization()
 void PoseHistoryFootprint::onInitialize()
 {
   MFDClass::onInitialize();
-  lines_ = std::make_unique<rviz_rendering::BillboardLine>(scene_manager_, scene_node_);
 
   trajectory_footprint_manual_object_ = scene_manager_->createManualObject();
   trajectory_footprint_manual_object_->setDynamic(true);
@@ -121,7 +120,6 @@ void PoseHistoryFootprint::unsubscribe()
   MFDClass::unsubscribe();
 
   history_.clear();
-  lines_->clear();
 }
 
 void PoseHistoryFootprint::processMessage(
