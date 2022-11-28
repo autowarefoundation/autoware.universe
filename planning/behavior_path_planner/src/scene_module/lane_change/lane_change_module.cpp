@@ -171,6 +171,7 @@ BehaviorModuleOutput LaneChangeModule::plan()
   if (!isSafe()) {
     current_state_ = BT::NodeStatus::SUCCESS;  // for breaking loop
   }
+  updateSteeringFactorPtr(output);
 
   return output;
 }
