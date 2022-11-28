@@ -139,8 +139,8 @@ void RadarStaticPointcloudFilterNode::onData(
     return;
   }
 
-  RadarScan static_radar_{};
-  RadarScan dynamic_radar_{};
+  RadarScan static_radar{};
+  RadarScan dynamic_radar{};
   static_radar_.header = radar_msg->header;
   dynamic_radar_.header = radar_msg->header;
 
