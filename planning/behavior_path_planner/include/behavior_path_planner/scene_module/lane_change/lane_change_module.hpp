@@ -132,6 +132,7 @@ private:
 
   bool is_abort_path_approved_ = false;
   bool is_abort_approval_requested_ = false;
+  bool is_abort_condition_satisfied_ = false;
 
   bool is_activated_ = false;
 

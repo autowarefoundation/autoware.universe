@@ -155,6 +155,9 @@ BehaviorModuleOutput LaneChangeModule::plan()
     }
     generateExtendedDrivableArea(path);
     prev_approved_path_ = path;
+    if(is_abort_condition_satisfied_){
+      const auto stop_point = util::insertStopPoint(0.1, &path);
+    }
   } else {
     resetPathIfAbort(selected_path);
     path = util::resamplePathWithSpline(selected_path, resample_interval);
@@ -478,8 +481,8 @@ bool LaneChangeModule::isAbortConditionSatisfied()
   const auto current_twist = getEgoTwist();
   const auto & dynamic_objects = planner_data_->dynamic_object;
   const auto & common_parameters = planner_data_->parameters;
-
   const auto & current_lanes = status_.current_lanes;
+  is_abort_condition_satisfied_ = false;
 
   // check abort enable flag
   if (!parameters_->enable_cancel_lane_change) {
@@ -530,12 +533,16 @@ bool LaneChangeModule::isAbortConditionSatisfied()
 
   // abort only if velocity is low or vehicle pose is close enough
   if (!is_path_safe) {
-    // check vehicle velocity thresh
+    is_abort_condition_satisfied_ = true;
+
     current_lane_change_state_ = LaneChangeStates::Cancel;
+
     const bool is_velocity_low =
       util::l2Norm(current_twist.linear) < parameters_->abort_lane_change_velocity_thresh;
+
     const bool is_within_original_lane =
       lane_change_utils::isEgoWithinOriginalLane(current_lanes, current_pose, common_parameters);
+
     if (is_velocity_low && is_within_original_lane) {
       return true;
     }
@@ -559,10 +566,12 @@ bool LaneChangeModule::isAbortConditionSatisfied()
     RCLCPP_WARN_STREAM_THROTTLE(
       getLogger(), clock, 1000,
       "DANGER!!! Path is not safe anymore, but it is too late to abort! Please be cautious");
+
     current_lane_change_state_ = LaneChangeStates::Abort;
 
     const auto abort_path = lane_change_utils::getAbortPaths(
       planner_data_, path, ego_pose_before_collision, common_parameters, *parameters_);
+
     abort_non_collision_pose_ = ego_pose_before_collision;
 
     if (abort_path) {
@@ -573,6 +582,7 @@ bool LaneChangeModule::isAbortConditionSatisfied()
     }
 
     current_lane_change_state_ = LaneChangeStates::Stop;
+
     return true;
   }
 
