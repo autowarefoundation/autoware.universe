@@ -15,6 +15,7 @@
 #include "drivable_area_expander/obstacles.hpp"
 
 #include "drivable_area_expander/grid_utils.hpp"
+#include "drivable_area_expander/parameters.hpp"
 
 #include <boost/assign.hpp>
 #include <boost/geometry.hpp>
@@ -67,28 +68,26 @@ multipolygon_t createFootprintPolygons(
 
 multipolygon_t createPathFootprint(const Path & path, const ExpansionParameters & params)
 {
-  const auto left = params.vehicle_left_offset_ + params.extra_footprint_offset;
-  const auto right = params.vehicle_right_offset_ - params.extra_footprint_offset;
-  const auto rear = params.vehicle_rear_offset_ - params.extra_footprint_offset;
-  const auto front = params.vehicle_front_offset_ + params.extra_footprint_offset;
+  const auto left = params.ego_left_offset + params.ego_extra_left_offset;
+  const auto right = params.ego_right_offset - params.ego_extra_right_offset;
+  const auto rear = params.ego_rear_offset - params.ego_extra_rear_offset;
+  const auto front = params.ego_front_offset + params.ego_extra_front_offset;
   return createFootprintPolygons(path.points, front, rear, left, right);
 }
 
 multipolygon_t createObjectFootprints(
-  const autoware_auto_perception_msgs::msg::PredictedObjects & objects, const double buffer,
-  double min_velocity)
+  const autoware_auto_perception_msgs::msg::PredictedObjects & objects,
+  const ExpansionParameters & params)
 {
   multipolygon_t footprints;
   for (const auto & object : objects.objects) {
-    if (std::abs(object.kinematics.initial_twist_with_covariance.twist.linear.x >= min_velocity)) {
-      const auto front = object.shape.dimensions.x / 2 + buffer;
-      const auto rear = -front;
-      const auto left = object.shape.dimensions.y / 2 + buffer;
-      const auto right = -left;
-      for (const auto & path : object.kinematics.predicted_paths) {
-        const auto footprint = createFootprintPolygons(path.path, front, rear, left, right);
-        footprints.insert(footprints.end(), footprint.begin(), footprint.end());
-      }
+    const auto front = object.shape.dimensions.x / 2 + params.dynamic_objects_extra_front_offset;
+    const auto rear = -object.shape.dimensions.x / 2 - params.dynamic_objects_extra_rear_offset;
+    const auto left = object.shape.dimensions.y / 2 + params.dynamic_objects_extra_left_offset;
+    const auto right = -object.shape.dimensions.y / 2 - params.dynamic_objects_extra_right_offset;
+    for (const auto & path : object.kinematics.predicted_paths) {
+      const auto footprint = createFootprintPolygons(path.path, front, rear, left, right);
+      footprints.insert(footprints.end(), footprint.begin(), footprint.end());
     }
   }
   return footprints;

@@ -27,34 +27,63 @@ namespace drivable_area_expander
 
 struct ExpansionParameters
 {
-  static constexpr auto MAX_EXP_DIST_PARAM = "expansion.max_expansion_distance";
-  static constexpr auto EXTRA_FOOTPRINT_OFFSET_PARAM = "expansion.extra_footprint_offset";
-  static constexpr auto AVOID_DYN_OBJECTS_PARAM = "expansion.avoid_dynamic_objects";
+  static constexpr auto MAX_EXP_DIST_PARAM = "expansion.max_distance";
+  static constexpr auto EGO_EXTRA_OFFSET_FRONT = "expansion.ego.extra_footprint_offset.front";
+  static constexpr auto EGO_EXTRA_OFFSET_REAR = "expansion.ego.extra_footprint_offset.rear";
+  static constexpr auto EGO_EXTRA_OFFSET_LEFT = "expansion.ego.extra_footprint_offset.left";
+  static constexpr auto EGO_EXTRA_OFFSET_RIGHT = "expansion.ego.extra_footprint_offset.right";
+  static constexpr auto DYN_OBJECTS_EXTRA_OFFSET_FRONT =
+    "expansion.dynamic_objects.extra_footprint_offset.front";
+  static constexpr auto DYN_OBJECTS_EXTRA_OFFSET_REAR =
+    "expansion.dynamic_objects.extra_footprint_offset.rear";
+  static constexpr auto DYN_OBJECTS_EXTRA_OFFSET_LEFT =
+    "expansion.dynamic_objects.extra_footprint_offset.left";
+  static constexpr auto DYN_OBJECTS_EXTRA_OFFSET_RIGHT =
+    "expansion.dynamic_objects.extra_footprint_offset.right";
+  static constexpr auto AVOID_DYN_OBJECTS_PARAM = "expansion.dynamic_objects.avoid";
   static constexpr auto AVOID_LINESTRING_TYPES_PARAM = "expansion.avoid_linestring_types";
 
   double max_expansion_distance{};
-  double extra_footprint_offset{};
   std::vector<std::string> avoid_linestring_types{};
   bool avoid_dynamic_objects{};
-  double vehicle_left_offset_;
-  double vehicle_right_offset_;
-  double vehicle_rear_offset_;
-  double vehicle_front_offset_;
+  double ego_left_offset;
+  double ego_right_offset;
+  double ego_rear_offset;
+  double ego_front_offset;
+  double ego_extra_left_offset;
+  double ego_extra_right_offset;
+  double ego_extra_rear_offset;
+  double ego_extra_front_offset;
+  double dynamic_objects_extra_left_offset;
+  double dynamic_objects_extra_right_offset;
+  double dynamic_objects_extra_rear_offset;
+  double dynamic_objects_extra_front_offset;
 
   ExpansionParameters() = default;
   explicit ExpansionParameters(rclcpp::Node & node)
   {
     max_expansion_distance = node.declare_parameter<double>(MAX_EXP_DIST_PARAM);
-    extra_footprint_offset = node.declare_parameter<double>(EXTRA_FOOTPRINT_OFFSET_PARAM);
+    ego_extra_front_offset = node.declare_parameter<double>(EGO_EXTRA_OFFSET_FRONT);
+    ego_extra_rear_offset = node.declare_parameter<double>(EGO_EXTRA_OFFSET_REAR);
+    ego_extra_left_offset = node.declare_parameter<double>(EGO_EXTRA_OFFSET_LEFT);
+    ego_extra_right_offset = node.declare_parameter<double>(EGO_EXTRA_OFFSET_RIGHT);
+    dynamic_objects_extra_front_offset =
+      node.declare_parameter<double>(DYN_OBJECTS_EXTRA_OFFSET_FRONT);
+    dynamic_objects_extra_rear_offset =
+      node.declare_parameter<double>(DYN_OBJECTS_EXTRA_OFFSET_REAR);
+    dynamic_objects_extra_left_offset =
+      node.declare_parameter<double>(DYN_OBJECTS_EXTRA_OFFSET_LEFT);
+    dynamic_objects_extra_right_offset =
+      node.declare_parameter<double>(DYN_OBJECTS_EXTRA_OFFSET_RIGHT);
     avoid_linestring_types =
       node.declare_parameter<std::vector<std::string>>(AVOID_LINESTRING_TYPES_PARAM);
     avoid_dynamic_objects = node.declare_parameter<bool>(AVOID_DYN_OBJECTS_PARAM);
 
     const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo();
-    vehicle_left_offset_ = vehicle_info.vehicle_width_m / 2.0;
-    vehicle_right_offset_ = -vehicle_info.vehicle_width_m / 2.0;
-    vehicle_rear_offset_ = -vehicle_info.rear_overhang_m;
-    vehicle_front_offset_ = vehicle_info.wheel_base_m + vehicle_info.front_overhang_m;
+    ego_left_offset = vehicle_info.vehicle_width_m / 2.0;
+    ego_right_offset = -vehicle_info.vehicle_width_m / 2.0;
+    ego_rear_offset = -vehicle_info.rear_overhang_m;
+    ego_front_offset = vehicle_info.wheel_base_m + vehicle_info.front_overhang_m;
   }
 };
 
