@@ -559,8 +559,7 @@ AvoidLineArray AvoidanceModule::calcRawShiftLinesFromObjects(const ObjectDataArr
   const auto & vehicle_width = planner_data_->parameters.vehicle_width;
   const auto & road_shoulder_safety_margin = parameters_->road_shoulder_safety_margin;
 
-  const auto avoid_margin =
-    lat_collision_safety_buffer + lat_collision_margin + 0.5 * vehicle_width;
+  auto avoid_margin = lat_collision_safety_buffer + lat_collision_margin + 0.5 * vehicle_width;
 
   AvoidLineArray avoid_lines;
   std::vector<AvoidanceDebugMsg> avoidance_debug_msg_array;
@@ -583,9 +582,16 @@ AvoidLineArray AvoidanceModule::calcRawShiftLinesFromObjects(const ObjectDataArr
     avoidance_debug_msg.to_furthest_linestring_distance = o.to_road_shoulder_distance;
     avoidance_debug_msg.max_shift_length = max_allowable_lateral_distance;
 
-    if (max_allowable_lateral_distance <= avoid_margin) {
-      avoidance_debug_array_false_and_push_back(AvoidanceDebugFactor::INSUFFICIENT_LATERAL_MARGIN);
-      continue;
+    auto const min_safety_lateral_distance = lat_collision_safety_buffer + 0.5 * vehicle_width;
+
+    if (max_allowable_lateral_distance < avoid_margin) {
+      if (max_allowable_lateral_distance >= min_safety_lateral_distance) {
+        avoid_margin = max_allowable_lateral_distance;
+      } else {
+        avoidance_debug_array_false_and_push_back(
+          AvoidanceDebugFactor::INSUFFICIENT_LATERAL_MARGIN);
+        continue;
+      }
     }
 
     const auto is_object_on_right = isOnRight(o);
@@ -1815,7 +1821,7 @@ void AvoidanceModule::generateExtendedDrivableArea(ShiftedPath * shifted_path) c
 
     // get left side lane
     const lanelet::ConstLanelets all_left_lanelets =
-      route_handler->getAllLeftSharedLinestringLanelets(current_lane, enable_opposite);
+      route_handler->getAllLeftSharedLinestringLanelets(current_lane, enable_opposite, true);
     if (!all_left_lanelets.empty()) {
       current_drivable_lanes.left_lane = all_left_lanelets.back();  // leftmost lanelet
 
@@ -1826,7 +1832,7 @@ void AvoidanceModule::generateExtendedDrivableArea(ShiftedPath * shifted_path) c
 
     // get right side lane
     const lanelet::ConstLanelets all_right_lanelets =
-      route_handler->getAllRightSharedLinestringLanelets(current_lane, enable_opposite);
+      route_handler->getAllRightSharedLinestringLanelets(current_lane, enable_opposite, true);
     if (!all_right_lanelets.empty()) {
       current_drivable_lanes.right_lane = all_right_lanelets.back();  // rightmost lanelet
       if (current_drivable_lanes.left_lane.id() != current_lane.id()) {
