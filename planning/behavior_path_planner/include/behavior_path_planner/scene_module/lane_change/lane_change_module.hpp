@@ -244,6 +244,7 @@ private:
   void generateExtendedDrivableArea(PathWithLaneId & path);
   void updateOutputTurnSignal(BehaviorModuleOutput & output);
   void updateSteeringFactorPtr(const BehaviorModuleOutput & output);
+  bool isApprovedPathSafe(Pose & ego_pose_before_collision) const;
 
   void updateSteeringFactorPtr(
     const CandidateOutput & output, const LaneChangePath & selected_path) const;
@@ -253,9 +254,9 @@ private:
   bool isCurrentSpeedLow() const;
   bool isAbortConditionSatisfied();
   bool hasFinishedLaneChange() const;
-  bool isCancelState() const;
-  bool isAbortState() const;
   bool isStopState() const;
+  bool isAbortState() const;
+
   // getter
   Pose getEgoPose() const;
   Twist getEgoTwist() const;

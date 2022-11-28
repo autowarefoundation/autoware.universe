@@ -155,7 +155,9 @@ BehaviorModuleOutput LaneChangeModule::plan()
     }
     generateExtendedDrivableArea(path);
     prev_approved_path_ = path;
-    if (is_abort_condition_satisfied_ && (isNearEndOfLane() && isCurrentSpeedLow())) {
+    if (
+      (is_abort_condition_satisfied_ && isNearEndOfLane() && isCurrentSpeedLow()) ||
+      isStopState()) {
       const auto stop_point = util::insertStopPoint(0.1, &path);
     }
   } else {
@@ -476,12 +478,7 @@ bool LaneChangeModule::isCurrentSpeedLow() const
 
 bool LaneChangeModule::isAbortConditionSatisfied()
 {
-  const auto & route_handler = planner_data_->route_handler;
-  const auto current_pose = getEgoPose();
-  const auto current_twist = getEgoTwist();
-  const auto & dynamic_objects = planner_data_->dynamic_object;
   const auto & common_parameters = planner_data_->parameters;
-  const auto & current_lanes = status_.current_lanes;
   is_abort_condition_satisfied_ = false;
 
   // check abort enable flag
@@ -496,40 +493,10 @@ bool LaneChangeModule::isAbortConditionSatisfied()
   }
 
   // find closest lanelet in original lane
-  lanelet::ConstLanelet closest_lanelet{};
-  auto clock{rclcpp::Clock{RCL_ROS_TIME}};
-  if (!lanelet::utils::query::getClosestLanelet(current_lanes, current_pose, &closest_lanelet)) {
-    RCLCPP_ERROR_THROTTLE(
-      getLogger(), clock, 1000,
-      "Failed to find closest lane! Lane change aborting function is not working!");
-    return false;
-  }
-
-  const auto path = status_.lane_change_path;
-  // check if lane change path is still safe
   Pose ego_pose_before_collision;
-  const bool is_path_safe =
-    std::invoke([this, &route_handler, &dynamic_objects, &path, &current_lanes, &current_pose,
-                 &current_twist, &common_parameters, &ego_pose_before_collision]() {
-      constexpr double check_distance = 100.0;
-      // get lanes used for detection
-      const double check_distance_with_path =
-        check_distance + path.preparation_length + path.lane_change_length;
-      const auto check_lanes = route_handler->getCheckTargetLanesFromPath(
-        path.path, status_.lane_change_lanes, check_distance_with_path);
+  const auto is_path_safe = isApprovedPathSafe(ego_pose_before_collision);
 
-      std::unordered_map<std::string, CollisionCheckDebug> debug_data;
-
-      const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-        path.path.points, current_pose, common_parameters.ego_nearest_dist_threshold,
-        common_parameters.ego_nearest_yaw_threshold);
-      return lane_change_utils::isLaneChangePathSafe(
-        path.path, current_lanes, check_lanes, dynamic_objects, current_pose, current_seg_idx,
-        current_twist, common_parameters, *parameters_,
-        common_parameters.expected_front_deceleration_for_abort,
-        common_parameters.expected_rear_deceleration_for_abort, ego_pose_before_collision,
-        debug_data, false, status_.lane_change_path.acceleration);
-    });
+  // check if lane change path is still safe
 
   // abort only if velocity is low or vehicle pose is close enough
   if (!is_path_safe) {
@@ -537,11 +504,8 @@ bool LaneChangeModule::isAbortConditionSatisfied()
 
     current_lane_change_state_ = LaneChangeStates::Cancel;
 
-    // const bool is_velocity_low =
-    //   util::l2Norm(current_twist.linear) < parameters_->abort_lane_change_velocity_thresh;
-
-    const bool is_within_original_lane =
-      lane_change_utils::isEgoWithinOriginalLane(current_lanes, current_pose, common_parameters);
+    const bool is_within_original_lane = lane_change_utils::isEgoWithinOriginalLane(
+      status_.current_lanes, getEgoPose(), common_parameters);
 
     if (is_within_original_lane) {
       return true;
@@ -571,7 +535,8 @@ bool LaneChangeModule::isAbortConditionSatisfied()
     current_lane_change_state_ = LaneChangeStates::Abort;
 
     const auto abort_path = lane_change_utils::getAbortPaths(
-      planner_data_, path, ego_pose_before_collision, common_parameters, *parameters_);
+      planner_data_, status_.lane_change_path, ego_pose_before_collision, common_parameters,
+      *parameters_);
 
     abort_non_collision_pose_ = ego_pose_before_collision;
 
@@ -594,9 +559,9 @@ bool LaneChangeModule::isAbortState() const
   return (current_lane_change_state_ == LaneChangeStates::Abort) && abort_path_;
 }
 
-bool LaneChangeModule::isCancelState() const
+bool LaneChangeModule::isStopState() const
 {
-  return current_lane_change_state_ == LaneChangeStates::Cancel;
+  return current_lane_change_state_ == LaneChangeStates::Stop;
 }
 
 bool LaneChangeModule::hasFinishedLaneChange() const
@@ -712,6 +677,36 @@ void LaneChangeModule::generateExtendedDrivableArea(PathWithLaneId & path)
     shorten_lanes, parameters_->drivable_area_left_bound_offset,
     parameters_->drivable_area_right_bound_offset);
   util::generateDrivableArea(path, expanded_lanes, common_parameters.vehicle_length, planner_data_);
+}
+
+bool LaneChangeModule::isApprovedPathSafe(Pose & ego_pose_before_collision) const
+{
+  const auto current_pose = getEgoPose();
+  const auto current_twist = getEgoTwist();
+  const auto & dynamic_objects = planner_data_->dynamic_object;
+  const auto & current_lanes = status_.current_lanes;
+  const auto & common_parameters = planner_data_->parameters;
+  const auto & route_handler = planner_data_->route_handler;
+  const auto path = status_.lane_change_path;
+
+  constexpr double check_distance = 100.0;
+  // get lanes used for detection
+  const double check_distance_with_path =
+    check_distance + path.preparation_length + path.lane_change_length;
+  const auto check_lanes = route_handler->getCheckTargetLanesFromPath(
+    path.path, status_.lane_change_lanes, check_distance_with_path);
+
+  std::unordered_map<std::string, CollisionCheckDebug> debug_data;
+
+  const size_t current_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+    path.path.points, current_pose, common_parameters.ego_nearest_dist_threshold,
+    common_parameters.ego_nearest_yaw_threshold);
+  return lane_change_utils::isLaneChangePathSafe(
+    path.path, current_lanes, check_lanes, dynamic_objects, current_pose, current_seg_idx,
+    current_twist, common_parameters, *parameters_,
+    common_parameters.expected_front_deceleration_for_abort,
+    common_parameters.expected_rear_deceleration_for_abort, ego_pose_before_collision, debug_data,
+    false, status_.lane_change_path.acceleration);
 }
 
 void LaneChangeModule::updateOutputTurnSignal(BehaviorModuleOutput & output)
