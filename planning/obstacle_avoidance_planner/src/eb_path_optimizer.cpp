@@ -142,17 +142,19 @@ EBPathOptimizer::getOptimizedTrajectory(
   }
 
   // clip interpolated points with the length of path
-  if (path.points.empty()) {
-    return boost::none;
-  }
-  const auto interpolated_poses =
-    points_utils::convertToPosesWithYawEstimation(interpolated_points);
-  const auto interpolated_points_end_seg_idx =
-    motion_utils::findNearestSegmentIndex(interpolated_poses, path.points.back().pose, 3.0, 0.785);
-  if (interpolated_points_end_seg_idx) {
-    interpolated_points = std::vector<geometry_msgs::msg::Point>(
-      interpolated_points.begin(),
-      interpolated_points.begin() + interpolated_points_end_seg_idx.get());
+  if (traj_param_.enable_clipping_fixed_traj) {
+    if (path.points.size() < 2) {
+      return boost::none;
+    }
+    const auto interpolated_poses =
+      points_utils::convertToPosesWithYawEstimation(interpolated_points);
+    const auto interpolated_points_end_seg_idx = motion_utils::findNearestSegmentIndex(
+      interpolated_poses, path.points.back().pose, 3.0, 0.785);
+    if (interpolated_points_end_seg_idx) {
+      interpolated_points = std::vector<geometry_msgs::msg::Point>(
+        interpolated_points.begin(),
+        interpolated_points.begin() + interpolated_points_end_seg_idx.get());
+    }
   }
 
   debug_data.interpolated_points = interpolated_points;
