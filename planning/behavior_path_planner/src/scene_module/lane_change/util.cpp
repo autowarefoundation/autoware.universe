@@ -778,6 +778,7 @@ std::optional<LaneChangePath> getAbortPaths(
   const auto & route_handler = planner_data->route_handler;
   const auto current_speed = util::l2Norm(planner_data->self_odometry->twist.twist.linear);
   const auto current_pose = planner_data->self_pose->pose;
+  const auto current_lanes = selected_path.reference_lanelets;
 
   const auto abort_point_dist =
     [&](const double param_accel, const double param_jerk, const double param_time) {
@@ -805,14 +806,15 @@ std::optional<LaneChangePath> getAbortPaths(
     if (ego_pose_idx > lane_changing_end_pose_idx) {
       return ego_pose_idx;
     }
-    turning_point_dist =
+    const auto desired_distance =
       std::clamp(std::invoke(abort_point_dist, accel, jerk, param_time), min_dist, max_dist);
     const auto & points = resampled_selected_path.points;
-    double sum{0.0};
     size_t idx{0};
     for (idx = ego_pose_idx; idx < lane_changing_end_pose_idx; ++idx) {
-      sum += tier4_autoware_utils::calcDistance2d(points.at(idx), points.at(idx + 1));
-      if (sum > turning_point_dist) {
+      const auto dist_to_ego =
+        util::getSignedDistance(current_pose, points.at(idx).point.pose, current_lanes);
+      turning_point_dist = dist_to_ego;
+      if (dist_to_ego > desired_distance) {
         break;
       }
     }
@@ -842,7 +844,14 @@ std::optional<LaneChangePath> getAbortPaths(
   const auto abort_return_idx = pose_idx_min(
     abort_expected_deceleration, abort_longitudinal_jerk, abort_return_duration,
     abort_return_min_longitudinal_thresh, abort_return_max_longitudinal_thresh, abort_return_dist);
+
   if (abort_start_idx >= abort_return_idx) {
+    return std::nullopt;
+  }
+
+  if (!hasEnoughDistanceToLaneChangeAfterAbort(
+        *route_handler, current_lanes, current_pose, abort_return_dist, common_param,
+        lane_change_param)) {
     return std::nullopt;
   }
 
@@ -915,4 +924,40 @@ double getLateralShift(const LaneChangePath & path)
   return path.shifted_path.shift_length.at(end_idx) - path.shifted_path.shift_length.at(start_idx);
 }
 
+bool hasEnoughDistanceToLaneChangeAfterAbort(
+  const RouteHandler & route_handler, const lanelet::ConstLanelets & current_lanes,
+  const Pose & current_pose, const double abort_return_dist,
+  const BehaviorPathPlannerParameters & common_param,
+  const LaneChangeParameters & lane_change_param)
+{
+  const auto minimum_lane_change_distance = lane_change_param.minimum_lane_change_prepare_distance +
+                                            common_param.minimum_lane_change_length +
+                                            common_param.backward_length_buffer_for_end_of_lane;
+  const auto abort_plus_lane_change_distance = abort_return_dist + minimum_lane_change_distance;
+  if (abort_plus_lane_change_distance > util::getDistanceToEndOfLane(current_pose, current_lanes)) {
+    return false;
+  }
+
+  if (
+    abort_plus_lane_change_distance >
+    util::getDistanceToNextIntersection(current_pose, current_lanes)) {
+    return false;
+  }
+
+  if (
+    route_handler.isInGoalRouteSection(current_lanes.back()) &&
+    abort_plus_lane_change_distance >
+      util::getSignedDistance(current_pose, route_handler.getGoalPose(), current_lanes)) {
+    return false;
+  }
+
+  if (
+    abort_plus_lane_change_distance >
+    util::getDistanceToCrosswalk(
+      current_pose, current_lanes, *route_handler.getOverallGraphPtr())) {
+    return false;
+  }
+
+  return true;
+}
 }  // namespace behavior_path_planner::lane_change_utils
