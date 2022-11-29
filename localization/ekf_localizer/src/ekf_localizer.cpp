@@ -397,28 +397,6 @@ void EKFLocalizer::initEKF()
   ekf_.init(X, P, params_.extend_state_step);
 }
 
-/*  == Nonlinear model ==
- *
- * x_{k+1}   = x_k + vx_k * cos(yaw_k + b_k) * dt
- * y_{k+1}   = y_k + vx_k * sin(yaw_k + b_k) * dt
- * yaw_{k+1} = yaw_k + (wz_k) * dt
- * b_{k+1}   = b_k
- * vx_{k+1}  = vz_k
- * wz_{k+1}  = wz_k
- *
- * (b_k : yaw_bias_k)
- */
-
-/*  == Linearized model ==
- *
- * A = [ 1, 0, -vx*sin(yaw+b)*dt, -vx*sin(yaw+b)*dt, cos(yaw+b)*dt,  0]
- *     [ 0, 1,  vx*cos(yaw+b)*dt,  vx*cos(yaw+b)*dt, sin(yaw+b)*dt,  0]
- *     [ 0, 0,                 1,                 0,             0, dt]
- *     [ 0, 0,                 0,                 1,             0,  0]
- *     [ 0, 0,                 0,                 0,             1,  0]
- *     [ 0, 0,                 0,                 0,             0,  1]
- */
-
 /*
  * measurementUpdatePose
  */
