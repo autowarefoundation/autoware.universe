@@ -838,18 +838,19 @@ std::optional<LaneChangePath> getAbortPaths(
     lane_change_param.abort_return_max_longitudinal_thresh;
   const auto abort_return_duration = lane_change_param.abort_return_duration;
 
-  double abort_end_dist{0.0};
-  const auto abort_end_idx = pose_idx_min(
+  double abort_return_dist{0.0};
+  const auto abort_return_idx = pose_idx_min(
     abort_expected_deceleration, abort_longitudinal_jerk, abort_return_duration,
-    abort_return_min_longitudinal_thresh, abort_return_max_longitudinal_thresh, abort_end_dist);
-  if (abort_start_idx >= abort_end_idx) {
+    abort_return_min_longitudinal_thresh, abort_return_max_longitudinal_thresh, abort_return_dist);
+  if (abort_start_idx >= abort_return_idx) {
     return std::nullopt;
   }
 
   const auto reference_lanelets = selected_path.reference_lanelets;
   const auto abort_start_pose = resampled_selected_path.points.at(abort_start_idx).point.pose;
-  const auto abort_end_pose = resampled_selected_path.points.at(abort_end_idx).point.pose;
-  const auto arc_position = lanelet::utils::getArcCoordinates(reference_lanelets, abort_end_pose);
+  const auto abort_return_pose = resampled_selected_path.points.at(abort_return_idx).point.pose;
+  const auto arc_position =
+    lanelet::utils::getArcCoordinates(reference_lanelets, abort_return_pose);
   const PathWithLaneId reference_lane_segment = std::invoke([&]() {
     const double minimum_lane_change_length =
       common_param.backward_length_buffer_for_end_of_lane + common_param.minimum_lane_change_length;
@@ -867,10 +868,10 @@ std::optional<LaneChangePath> getAbortPaths(
 
   ShiftLine shift_line;
   shift_line.start = abort_start_pose;
-  shift_line.end = abort_end_pose;
+  shift_line.end = abort_return_pose;
   shift_line.end_shift_length = -arc_position.distance;
   shift_line.start_idx = abort_start_idx;
-  shift_line.end_idx = abort_end_idx;
+  shift_line.end_idx = abort_return_idx;
 
   PathShifter path_shifter;
   path_shifter.setPath(resampled_selected_path);
@@ -891,17 +892,17 @@ std::optional<LaneChangePath> getAbortPaths(
       "failed to generate shifted path.");
   }
 
-  PathWithLaneId start_to_abort_end_pose;
-  start_to_abort_end_pose.points.insert(
-    start_to_abort_end_pose.points.end(), shifted_path.path.points.begin(),
-    shifted_path.path.points.begin() + abort_end_idx);
-  start_to_abort_end_pose.points.insert(
-    start_to_abort_end_pose.points.end(), reference_lane_segment.points.begin(),
+  PathWithLaneId start_to_abort_return_pose;
+  start_to_abort_return_pose.points.insert(
+    start_to_abort_return_pose.points.end(), shifted_path.path.points.begin(),
+    shifted_path.path.points.begin() + abort_return_idx);
+  start_to_abort_return_pose.points.insert(
+    start_to_abort_return_pose.points.end(), reference_lane_segment.points.begin(),
     reference_lane_segment.points.end());
 
   auto abort_path = selected_path;
   abort_path.shifted_path = shifted_path;
-  abort_path.path = start_to_abort_end_pose;
+  abort_path.path = start_to_abort_return_pose;
   abort_path.shift_line = shift_line;
   return std::optional<LaneChangePath>{abort_path};
 }
