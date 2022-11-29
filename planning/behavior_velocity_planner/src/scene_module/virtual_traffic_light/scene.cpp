@@ -252,12 +252,6 @@ bool VirtualTrafficLightModule::modifyPathVelocity(PathWithLaneId * path, StopRe
   setInfrastructureCommand({});
   *stop_reason = planning_utils::initializeStopReason(StopReason::VIRTUAL_TRAFFIC_LIGHT);
 
-  // if (command_.type == "intersection_coordination") {
-  //   velocity_factor->detail = "intersection_coordination";
-  // } else if (command_.type == "eva_beacon_system") {
-  //   velocity_factor->detail = "eva_beacon_system";
-  // }
-
   module_data_ = {};
 
   // Copy data
@@ -585,7 +579,8 @@ void VirtualTrafficLightModule::insertStopVelocityAtStopLine(
   // Set StopReason
   setStopReason(stop_pose, stop_reason);
   velocity_factor_.set(
-    path->points, planner_data_->current_pose.pose, stop_pose, VelocityFactor::UNKNOWN);
+    path->points, planner_data_->current_pose.pose, stop_pose, VelocityFactor::UNKNOWN,
+    command_.type);
 
   // Set data for visualization
   module_data_.stop_head_pose_at_stop_line =
