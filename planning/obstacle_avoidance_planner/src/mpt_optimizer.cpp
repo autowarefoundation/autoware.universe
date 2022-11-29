@@ -299,7 +299,7 @@ boost::optional<MPTOptimizer::MPTTrajs> MPTOptimizer::getModelPredictiveTrajecto
   // NOTE: Sometimes optimization failed without failed status.
   //       Therefore, we have to check if optimization was solved correctly by the result.
   constexpr double max_lateral_deviation = 3.0;
-  for (const double lateral_error : debug_data_ptr->lateral_errors) {
+  for (const double lateral_error : debug_data.lateral_errors) {
     if (max_lateral_deviation < std::abs(lateral_error)) {
       return boost::none;
     }
