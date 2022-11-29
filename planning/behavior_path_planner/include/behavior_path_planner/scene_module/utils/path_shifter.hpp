@@ -73,6 +73,16 @@ public:
   void setPath(const PathWithLaneId & path);
 
   /**
+   * @brief  Set velocity used to apply a lateral acceleration limit.
+   */
+  void setVelocity(const double velocity);
+
+  /**
+   * @brief  Set acceleration limit
+   */
+  void setLateralAccelerationLimit(const double acc);
+
+  /**
    * @brief  Add shift point. You don't have to care about the start/end_idx.
    */
   void addShiftLine(const ShiftLine & point);
@@ -133,6 +143,9 @@ public:
     return 4.0 * std::pow(0.5 * l / j, 1.0 / 3.0) * v;
   }
 
+  static double calcShiftTimeFromJerkAndJerk(
+    const double lateral, const double jerk, const double acc);
+
   static double calcJerkFromLatLonDistance(
     const double lateral, const double longitudinal, const double velocity)
   {
@@ -180,7 +193,7 @@ public:
 
   /**
    * @brief  Calculate the theoretical lateral jerk by spline shifting for current shift_lines_.
-   * @return Jerk array. THe size is same as the shift points.
+   * @return Jerk array. The size is same as the shift points.
    */
   std::vector<double> calcLateralJerk() const;
 
@@ -194,12 +207,24 @@ private:
   // The amount of shift length to the entire path.
   double base_offset_{0.0};
 
+  // Used to apply a lateral acceleration limit
+  double velocity_{0.0};
+
+  // lateral acceleration limit considered in the path planning
+  double acc_limit_{-1.0};
+
   // Logger
   mutable rclcpp::Logger logger_{
     rclcpp::get_logger("behavior_path_planner").get_child("path_shifter")};
 
   // Clock
   mutable rclcpp::Clock clock_{RCL_ROS_TIME};
+
+  std::pair<std::vector<double>, std::vector<double>> calcBaseLengths(
+    const double arclength, const double shift_length, const bool offset_back) const;
+
+  std::pair<std::vector<double>, std::vector<double>> getBaseLengthsWithoutAccelLimit(
+    const double arclength, const double shift_length, const bool offset_back) const;
 
   /**
    * @brief Calculate path index for shift_lines and set is_index_aligned_ to true.

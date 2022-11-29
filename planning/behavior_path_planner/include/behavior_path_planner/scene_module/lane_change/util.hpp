@@ -53,18 +53,17 @@ double getExpectedVelocityWhenDecelerate(
   const double & current_velocity, const double & expected_acceleration,
   const double & lane_change_prepare_duration);
 
-double getDistanceWhenDecelerate(
-  const double & velocity, const double & expected_acceleration, const double & duration,
-  const double & minimum_distance);
+std::pair<double, double> calcLaneChangingSpeedAndDistanceWhenDecelerate(
+  const double velocity, const double shift_length, const double expected_acceleration,
+  const double minimum_lane_change_length, const LaneChangeParameters & params);
 
 std::optional<LaneChangePath> constructCandidatePath(
   const PathWithLaneId & prepare_segment, const PathWithLaneId & lane_changing_segment,
   const PathWithLaneId & target_lane_reference_path, const ShiftLine & shift_line,
   const lanelet::ConstLanelets & original_lanelets, const lanelet::ConstLanelets & target_lanelets,
   const double & acceleration, const double & prepare_distance, const double & prepare_duration,
-  const double & prepare_speed, const double & minimum_prepare_distance,
-  const double & lane_change_distance, const double & lane_changing_duration,
-  const double & minimum_lane_change_velocity);
+  const double & prepare_speed, const double & lane_change_distance,
+  const double & lane_changing_speed, const LaneChangeParameters & params);
 
 LaneChangePaths getLaneChangePaths(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & original_lanelets,
@@ -127,8 +126,7 @@ PathWithLaneId getLaneChangePathLaneChangingSegment(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & target_lanelets,
   const Pose & current_pose, const double & forward_path_length, const double & prepare_distance,
   const double & lane_change_distance, const double & minimum_lane_change_length,
-  const double & lane_change_distance_buffer, const double & lane_changing_duration,
-  const double & minimum_lane_change_velocity);
+  const double & lane_change_distance_buffer, const double & lane_changing_speed);
 bool isEgoWithinOriginalLane(
   const lanelet::ConstLanelets & current_lanes, const Pose & current_pose,
   const BehaviorPathPlannerParameters & common_param);

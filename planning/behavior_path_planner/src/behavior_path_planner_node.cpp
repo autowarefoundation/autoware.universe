@@ -367,7 +367,10 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
 
   LaneChangeParameters p{};
   p.lane_change_prepare_duration = dp("lane_change_prepare_duration", 2.0);
-  p.lane_changing_duration = dp("lane_changing_duration", 4.0);
+  p.lane_changing_safety_check_duration = dp("lane_changing_safety_check_duration", 4.0);
+  p.lane_changing_lateral_jerk = dp("lane_changing_lateral_jerk", 0.5);
+  p.lane_changing_lateral_acc = dp("lane_changing_lateral_acc", 0.5);
+  p.minimum_lane_change_prepare_distance = dp("minimum_lane_change_prepare_distance", 4.0);
   p.lane_change_finish_judge_buffer = dp("lane_change_finish_judge_buffer", 3.0);
   p.minimum_lane_change_velocity = dp("minimum_lane_change_velocity", 5.6);
   p.prediction_time_resolution = dp("prediction_time_resolution", 0.5);
