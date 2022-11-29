@@ -258,9 +258,21 @@ PlannerPlugin::HADMapRoute DefaultPlanner::plan(const RoutePoints & points)
     const auto start_check_point = points.at(i - 1);
     const auto goal_check_point = points.at(i);
     lanelet::ConstLanelets path_lanelets;
-    if (!route_handler_.planPathLaneletsBetweenCheckpoints(
-          start_check_point, goal_check_point, &path_lanelets)) {
-      return route_msg;
+    lanelet::ConstLanelets prev_lanes;
+    if(check_goal_position(start_check_point,goal_check_point,prev_lanes))
+    {
+        path_lanelets = plan_route_with_prevlanes(prev_lanes,start_check_point);
+        if(path_lanelets.empty())
+        {
+          return route_msg;
+        }
+    }
+    else
+    {
+      if (!route_handler_.planPathLaneletsBetweenCheckpoints(
+            start_check_point, goal_check_point, &path_lanelets)) {
+        return route_msg;
+      }
     }
     // create local route sections
     route_handler_.setRouteLanelets(path_lanelets);
@@ -294,6 +306,74 @@ geometry_msgs::msg::Pose DefaultPlanner::refine_goal_height(
   Pose refined_goal = goal;
   refined_goal.position.z = goal_height;
   return refined_goal;
+}
+
+bool DefaultPlanner::check_goal_position(Pose start_pose,Pose goal_pose,lanelet::ConstLanelets & prev_lanes)
+{
+  lanelet::ConstLanelet current_lane,goal_lane;
+  if(!lanelet::utils::query::getClosestLanelet(road_lanelets_, start_pose, &current_lane))
+  {
+    return false;    
+  }
+  if(!lanelet::utils::query::getClosestLanelet(road_lanelets_, goal_pose, &goal_lane))
+  {
+    return false;
+  }
+  if(current_lane.id()==goal_lane.id())
+  {
+    const auto start_pose_length = lanelet::utils::getArcCoordinates({current_lane}, start_pose);
+    const auto goal_pose_length = lanelet::utils::getArcCoordinates({current_lane}, goal_pose);
+    if((goal_pose_length.length-start_pose_length.length)>0.0)
+    {
+      return false;
+    }
+    prev_lanes = routing_graph_ptr_->previous(current_lane);
+    if(prev_lanes.empty())
+    {
+      return false;
+    }
+    return true;
+  }
+  return false;
+}
+
+lanelet::ConstLanelets DefaultPlanner::plan_route_with_prevlanes(lanelet::ConstLanelets prev_lanes,Pose start_pose)
+{
+  double min_length = std::numeric_limits<double>::max();
+  lanelet::ConstLanelets path_lanelets;
+  lanelet::ConstLanelets fine_lanelets;
+  using geometry_msgs::msg::Pose;
+  Pose target_pose{};
+  
+  for(size_t i=0;i<prev_lanes.size();i++)
+  {
+    auto goal_lane = prev_lanes.at(i);  
+    const lanelet::ConstLineString2d lanelet_centerline = goal_lane.centerline2d();
+    target_pose.orientation.w = 1;
+    for (const auto & point : lanelet_centerline) 
+    {
+      target_pose.position.x=point.x();
+      target_pose.position.y=point.y();
+      lanelet::ConstLanelet check_lane;
+      lanelet::utils::query::getClosestLanelet(road_lanelets_, target_pose, &check_lane);
+      if(check_lane.id()==goal_lane.id())
+      {
+        break;
+      }
+    }
+
+    if(!route_handler_.planPathLaneletsBetweenCheckpoints(start_pose, target_pose, &path_lanelets))
+    {  
+      continue;
+    }
+    auto path_length = lanelet::utils::getLaneletLength2d(path_lanelets);
+    if (min_length > path_length)
+    {
+      fine_lanelets = path_lanelets;
+      min_length = path_length;
+    }
+  }
+  return fine_lanelets;
 }
 
 }  // namespace mission_planner::lanelet2

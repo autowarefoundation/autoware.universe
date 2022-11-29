@@ -172,6 +172,29 @@ void RouteHandler::setRoute(const HADMapRoute & route_msg)
     is_route_msg_ready_ = true;
     is_handler_ready_ = false;
     setLaneletsFromRouteMsg();
+    const auto goal_pose = getGoalPose();
+    const auto start_pose = route_msg_.start_pose;
+    lanelet::ConstLanelet start_lanelet;
+    if(getStartLanelet(&start_lanelet))
+    {
+      if(lanelet::utils::isInLanelet(goal_pose, start_lanelet, 0.01))
+      {
+        const auto start_pose_length = lanelet::utils::getArcCoordinates({start_lanelet}, start_pose);
+        const auto goal_pose_length = lanelet::utils::getArcCoordinates({start_lanelet}, goal_pose);
+        if((goal_pose_length-start_pose_length)>0.0)
+        {
+          is_loop_plan_=false;
+        }
+        else
+        {
+          is_loop_plan_=true;
+        }
+      }
+      else
+      {
+        is_loop_plan_=false; 
+      }
+    }
   } else {
     RCLCPP_ERROR(
       logger_,
@@ -396,6 +419,27 @@ bool RouteHandler::getGoalLanelet(lanelet::ConstLanelet * goal_lanelet) const
   return false;
 }
 
+lanelet::Id RouteHandler::getStartLaneId() const
+{
+  if (route_msg_.segments.empty()) {
+    return lanelet::InvalId;
+  } else {
+    return route_msg_.segments.front().preferred_primitive_id;
+  }
+}
+
+bool RouteHandler::getStartLanelet(lanelet::ConstLanelet * start_lanelet) const
+{
+  const lanelet::Id start_lane_id = getStartLaneId();
+  for (const auto & llt : route_lanelets_) {
+    if (llt.id() == start_lane_id) {
+      *start_lanelet = llt;
+      return true;
+    }
+  }
+  return false;
+}
+
 bool RouteHandler::isInGoalRouteSection(const lanelet::ConstLanelet & lanelet) const
 {
   if (route_msg_.segments.empty()) {
@@ -444,6 +488,32 @@ lanelet::ConstLanelets RouteHandler::getLaneletSequenceAfter(
     current_lanelet = next_lanelet;
     length +=
       static_cast<double>(boost::geometry::length(next_lanelet.centerline().basicLineString()));
+  }
+
+  if(is_loop_plan_)
+  {
+    lanelet::ConstLanelet goal_lanelet;
+    lanelet::ConstLanelet start_lanelet;
+    if(getGoalLanelet(&goal_lanelet) && getStartLanelet(&start_lanelet))
+    {
+      if(lanelet_sequence_forward.size()!=0)
+      {
+        if(lanelet_sequence_forward.back().id() == goal_lanelet.id())
+        {
+          if(length<min_length)
+          {
+            lanelet_sequence_forward.push_back(start_lanelet);
+          }
+        }
+      }
+      else
+      {
+        if(lanelet.id() == goal_lanelet.id())
+        {
+          lanelet_sequence_forward.push_back(start_lanelet);
+        }
+      } 
+    }
   }
 
   return lanelet_sequence_forward;

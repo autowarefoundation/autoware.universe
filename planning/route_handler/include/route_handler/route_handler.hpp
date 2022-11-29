@@ -93,6 +93,8 @@ public:
   Pose getGoalPose() const;
   lanelet::Id getGoalLaneId() const;
   bool getGoalLanelet(lanelet::ConstLanelet * goal_lanelet) const;
+    lanelet::Id getStartLaneId() const;
+  bool getStartLanelet(lanelet::ConstLanelet * start_lanelet) const;
   std::vector<lanelet::ConstLanelet> getLanesBeforePose(
     const geometry_msgs::msg::Pose & pose, const double vehicle_length) const;
   std::vector<lanelet::ConstLanelet> getLanesAfterGoal(const double vehicle_length) const;
@@ -277,6 +279,7 @@ private:
   bool is_route_msg_ready_{false};
   bool is_map_msg_ready_{false};
   bool is_handler_ready_{false};
+  bool is_loop_plan_{false};
 
   // non-const methods
   void setLaneletsFromRouteMsg();

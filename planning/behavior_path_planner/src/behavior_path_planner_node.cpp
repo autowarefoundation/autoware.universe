@@ -852,15 +852,26 @@ PathWithLaneId BehaviorPathPlannerNode::modifyPathForSmoothGoalConnection(
   const PathWithLaneId & path) const
 {
   const auto goal = planner_data_->route_handler->getGoalPose();
-  const auto goal_lane_id = planner_data_->route_handler->getGoalLaneId();
+  auto goal_lane_id = planner_data_->route_handler->getGoalLaneId();
 
-  Pose refined_goal{};
+  Pose refined_goal;
   {
     lanelet::ConstLanelet goal_lanelet;
+    lanelet::ConstLanelet start_lanelet;
+    
     if (planner_data_->route_handler->getGoalLanelet(&goal_lanelet)) {
       refined_goal = util::refineGoal(goal, goal_lanelet);
     } else {
       refined_goal = goal;
+    }
+
+    if(planner_data_->route_handler->getStartLanelet(&start_lanelet))
+    {
+      if(lanelet::utils::isInLanelet(goal, start_lanelet, 0.01))
+      {
+        refined_goal = util::refineGoal(goal, start_lanelet);
+        goal_lane_id = start_lanelet.id(); 
+      }
     }
   }
 

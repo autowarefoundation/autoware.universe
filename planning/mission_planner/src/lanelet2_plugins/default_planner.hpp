@@ -57,6 +57,8 @@ private:
   void map_callback(const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg);
   bool is_goal_valid(const geometry_msgs::msg::Pose & goal) const;
   Pose refine_goal_height(const Pose & goal, const RouteSections & route_sections);
+  bool check_goal_position(Pose start_pose,Pose goal_pose,lanelet::ConstLanelets & prev_lanes);
+  lanelet::ConstLanelets plan_route_with_prevlanes(lanelet::ConstLanelets prev_lanes,Pose start_pose);
 };
 
 }  // namespace mission_planner::lanelet2
