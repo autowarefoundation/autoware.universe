@@ -50,7 +50,6 @@
     <remap from="~/input/occupancy_grid" to="/sensing/lidar/occupancy_grid"/>
     <remap from="~/output/path" to="path"/>
     <remap from="~/output/stop_reasons" to="/planning/scenario_planning/status/stop_reasons"/>
-    <remap from="~/output/stop_reason2" to="/planning/scenario_planning/status/stop_reason2"/>
     <remap from="~/output/infrastructure_commands" to="/planning/scenario_planning/status/infrastructure_commands"/>
     <remap from="~/output/traffic_signal" to="debug/traffic_signal"/>
 
