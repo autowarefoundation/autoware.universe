@@ -2189,6 +2189,26 @@ lanelet::ConstLanelets getCurrentLanes(const std::shared_ptr<const PlannerData> 
     common_parameters.forward_path_length);
 }
 
+lanelet::ConstLanelets extendLanes(
+  const std::shared_ptr<RouteHandler> route_handler, const lanelet::ConstLanelets & lanes)
+{
+  auto extended_lanes = lanes;
+
+  // Add next lane
+  const auto next_lanes = route_handler->getNextLanelets(extended_lanes.back());
+  if (!next_lanes.empty()) {
+    extended_lanes.push_back(next_lanes.front());
+  }
+
+  // Add previous lane
+  const auto prev_lanes = route_handler->getPreviousLanelets(extended_lanes.front());
+  if (!prev_lanes.empty()) {
+    extended_lanes.insert(extended_lanes.begin(), prev_lanes.front());
+  }
+
+  return extended_lanes;
+}
+
 lanelet::ConstLanelets getExtendedCurrentLanes(
   const std::shared_ptr<const PlannerData> & planner_data)
 {
@@ -2206,23 +2226,11 @@ lanelet::ConstLanelets getExtendedCurrentLanes(
   }
 
   // For current_lanes with desired length
-  auto current_lanes = route_handler->getLaneletSequence(
+  const auto current_lanes = route_handler->getLaneletSequence(
     current_lane, current_pose, common_parameters.backward_path_length,
     common_parameters.forward_path_length);
 
-  // Add next lane
-  const auto next_lanes = route_handler->getNextLanelets(current_lanes.back());
-  if (!next_lanes.empty()) {
-    current_lanes.push_back(next_lanes.front());
-  }
-
-  // Add previous lane
-  const auto prev_lanes = route_handler->getPreviousLanelets(current_lanes.front());
-  if (!prev_lanes.empty()) {
-    current_lanes.insert(current_lanes.begin(), prev_lanes.front());
-  }
-
-  return current_lanes;
+  return extendLanes(route_handler, current_lanes);
 }
 
 lanelet::ConstLanelets calcLaneAroundPose(
@@ -2512,7 +2520,8 @@ bool isLongitudinalDistanceEnough(
 bool hasEnoughDistance(
   const Pose & expected_ego_pose, const Twist & ego_current_twist,
   const Pose & expected_object_pose, const Twist & object_current_twist,
-  const BehaviorPathPlannerParameters & param, CollisionCheckDebug & debug)
+  const BehaviorPathPlannerParameters & param, const double front_decel, const double rear_decel,
+  CollisionCheckDebug & debug)
 {
   const auto front_vehicle_pose =
     projectCurrentPoseToTarget(expected_ego_pose, expected_object_pose);
@@ -2533,16 +2542,12 @@ bool hasEnoughDistance(
     (is_obj_in_front) ? ego_current_twist.linear : object_current_twist.linear;
   debug.object_twist.linear = (is_obj_in_front) ? front_vehicle_velocity : rear_vehicle_velocity;
 
-  const auto front_vehicle_accel = param.expected_front_deceleration;
-  const auto rear_vehicle_accel = param.expected_rear_deceleration;
-
   const auto front_vehicle_stop_threshold = frontVehicleStopDistance(
-    util::l2Norm(front_vehicle_velocity), front_vehicle_accel,
-    std::fabs(front_vehicle_pose.position.x));
+    util::l2Norm(front_vehicle_velocity), front_decel, std::fabs(front_vehicle_pose.position.x));
 
   const auto rear_vehicle_stop_threshold = std::max(
     rearVehicleStopDistance(
-      util::l2Norm(rear_vehicle_velocity), rear_vehicle_accel, param.rear_vehicle_reaction_time,
+      util::l2Norm(rear_vehicle_velocity), rear_decel, param.rear_vehicle_reaction_time,
       param.rear_vehicle_safety_time_margin),
     param.longitudinal_distance_min_threshold);
 
@@ -2558,10 +2563,10 @@ bool isLateralDistanceEnough(
 bool isSafeInLaneletCollisionCheck(
   const Pose & ego_current_pose, const Twist & ego_current_twist,
   const PredictedPath & ego_predicted_path, const VehicleInfo & ego_info,
-  const double & check_start_time, const double & check_end_time,
-  const double & check_time_resolution, const PredictedObject & target_object,
-  const PredictedPath & target_object_path, const BehaviorPathPlannerParameters & common_parameters,
-  CollisionCheckDebug & debug)
+  const double check_start_time, const double check_end_time, const double check_time_resolution,
+  const PredictedObject & target_object, const PredictedPath & target_object_path,
+  const BehaviorPathPlannerParameters & common_parameters, const double front_decel,
+  const double rear_decel, CollisionCheckDebug & debug)
 {
   const auto lerp_path_reserve = (check_end_time - check_start_time) / check_time_resolution;
   if (lerp_path_reserve > 1e-3) {
@@ -2597,7 +2602,7 @@ bool isSafeInLaneletCollisionCheck(
     const auto & object_twist = target_object.kinematics.initial_twist_with_covariance.twist;
     if (!util::hasEnoughDistance(
           expected_ego_pose, ego_current_twist, expected_obj_pose, object_twist, common_parameters,
-          debug)) {
+          front_decel, rear_decel, debug)) {
       debug.failed_reason = "not_enough_longitudinal";
       return false;
     }
@@ -2608,9 +2613,9 @@ bool isSafeInLaneletCollisionCheck(
 bool isSafeInFreeSpaceCollisionCheck(
   const Pose & ego_current_pose, const Twist & ego_current_twist,
   const PredictedPath & ego_predicted_path, const VehicleInfo & ego_info,
-  const double & check_start_time, const double & check_end_time,
-  const double & check_time_resolution, const PredictedObject & target_object,
-  const BehaviorPathPlannerParameters & common_parameters, CollisionCheckDebug & debug)
+  const double check_start_time, const double check_end_time, const double check_time_resolution,
+  const PredictedObject & target_object, const BehaviorPathPlannerParameters & common_parameters,
+  const double front_decel, const double rear_decel, CollisionCheckDebug & debug)
 {
   tier4_autoware_utils::Polygon2d obj_polygon;
   if (!util::calcObjectPolygon(target_object, &obj_polygon)) {
@@ -2641,11 +2646,57 @@ bool isSafeInFreeSpaceCollisionCheck(
     if (!util::hasEnoughDistance(
           expected_ego_pose, ego_current_twist,
           target_object.kinematics.initial_pose_with_covariance.pose, object_twist,
-          common_parameters, debug)) {
+          common_parameters, front_decel, rear_decel, debug)) {
       debug.failed_reason = "not_enough_longitudinal";
       return false;
     }
   }
   return true;
 }
+
+bool checkPathRelativeAngle(const PathWithLaneId & path, const double angle_threshold)
+{
+  // We need at least three points to compute relative angle
+  constexpr size_t relative_angle_points_num = 3;
+  if (path.points.size() < relative_angle_points_num) {
+    return true;
+  }
+
+  for (size_t p1_id = 0; p1_id <= path.points.size() - relative_angle_points_num; ++p1_id) {
+    // Get Point1
+    const auto & p1 = path.points.at(p1_id).point.pose.position;
+
+    // Get Point2
+    const auto & p2 = path.points.at(p1_id + 1).point.pose.position;
+
+    // Get Point3
+    const auto & p3 = path.points.at(p1_id + 2).point.pose.position;
+
+    // ignore invert driving direction
+    if (
+      path.points.at(p1_id).point.longitudinal_velocity_mps < 0 ||
+      path.points.at(p1_id + 1).point.longitudinal_velocity_mps < 0 ||
+      path.points.at(p1_id + 2).point.longitudinal_velocity_mps < 0) {
+      continue;
+    }
+
+    // convert to p1 coordinate
+    const double x3 = p3.x - p1.x;
+    const double x2 = p2.x - p1.x;
+    const double y3 = p3.y - p1.y;
+    const double y2 = p2.y - p1.y;
+
+    // calculate relative angle of vector p3 based on p1p2 vector
+    const double th = std::atan2(y2, x2);
+    const double th2 =
+      std::atan2(-x3 * std::sin(th) + y3 * std::cos(th), x3 * std::cos(th) + y3 * std::sin(th));
+    if (std::abs(th2) > angle_threshold) {
+      // invalid angle
+      return false;
+    }
+  }
+
+  return true;
+}
+
 }  // namespace behavior_path_planner::util
