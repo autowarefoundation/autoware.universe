@@ -97,8 +97,7 @@ private:
 
   void updateInfrastructureCommand();
 
-  void setStopReason(
-    const geometry_msgs::msg::Pose & stop_pose, tier4_planning_msgs::msg::StopReason * stop_reason);
+  void setStopReason(const Pose & stop_pose, StopReason * stop_reason);
 
   void setVelocityFactor(
     const geometry_msgs::msg::Pose & stop_pose,

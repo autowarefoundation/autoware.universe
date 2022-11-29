@@ -45,16 +45,18 @@ void TrafficLightModuleManager::modifyPathVelocity(
 {
   visualization_msgs::msg::MarkerArray debug_marker_array;
   visualization_msgs::msg::MarkerArray virtual_wall_marker_array;
-  tier4_planning_msgs::msg::StopReasonArray stop_reason_array;
-  autoware_adapi_v1_msgs::msg::VelocityFactorArray velocity_factor_array;
-  stop_reason_array.header.frame_id = "map";
-  stop_reason_array.header.stamp = path->header.stamp;
-  velocity_factor_array.header.frame_id = "map";
-  velocity_factor_array.header.stamp = clock_->now();
 
   autoware_auto_perception_msgs::msg::LookingTrafficSignal tl_state;
   tl_state.header.stamp = path->header.stamp;
   tl_state.is_module_running = false;
+
+  autoware_adapi_v1_msgs::msg::VelocityFactorArray velocity_factor_array;
+  velocity_factor_array.header.frame_id = "map";
+  velocity_factor_array.header.stamp = clock_->now();
+
+  tier4_planning_msgs::msg::StopReasonArray stop_reason_array;
+  stop_reason_array.header.frame_id = "map";
+  stop_reason_array.header.stamp = path->header.stamp;
 
   first_stop_path_point_index_ = static_cast<int>(path->points.size() - 1);
   first_ref_stop_path_point_index_ = static_cast<int>(path->points.size() - 1);
