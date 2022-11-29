@@ -108,7 +108,8 @@ bool ObstacleStopPlannerDebugNode::pushPolyhedron(
   return pushPolyhedron(eigen_polyhedron, type);
 }
 
-bool ObstacleStopPlannerDebugNode::pushPolyhedron(const std::vector<Eigen::Vector3d> & polyhedron, const PolygonType & type)
+bool ObstacleStopPlannerDebugNode::pushPolyhedron(
+  const std::vector<Eigen::Vector3d> & polyhedron, const PolygonType & type)
 {
   switch (type) {
     case PolygonType::Vehicle:
@@ -265,25 +266,25 @@ MarkerArray ObstacleStopPlannerDebugNode::makeVisualizationMarker()
 
     for (size_t i = 0; i < vehicle_polyhedrons_.size(); ++i) {
       for (size_t j = 0; j < vehicle_polyhedrons_.at(i).size(); ++j) {
-          const auto & p = vehicle_polyhedrons_.at(i).at(j);
-          marker.points.push_back(createPoint(p.x(), p.y(), p.z()));
+        const auto & p = vehicle_polyhedrons_.at(i).at(j);
+        marker.points.push_back(createPoint(p.x(), p.y(), p.z()));
       }
     }
 
     for (size_t i = 0; i < vehicle_polyhedrons_.size(); ++i) {
-      for (size_t j = 0; j < vehicle_polyhedrons_.at(i).size()-2; ++j) {
-          const auto & p = vehicle_polyhedrons_.at(i).at(j);
-          marker.points.push_back(createPoint(p.x(), p.y(), p.z()));
-          const auto & p1 = vehicle_polyhedrons_.at(i).at(j+2);
-          marker.points.push_back(createPoint(p1.x(), p1.y(), p1.z()));
+      for (size_t j = 0; j < vehicle_polyhedrons_.at(i).size() - 2; ++j) {
+        const auto & p = vehicle_polyhedrons_.at(i).at(j);
+        marker.points.push_back(createPoint(p.x(), p.y(), p.z()));
+        const auto & p1 = vehicle_polyhedrons_.at(i).at(j + 2);
+        marker.points.push_back(createPoint(p1.x(), p1.y(), p1.z()));
       }
       const auto & p = vehicle_polyhedrons_.at(i).at(1);
       marker.points.push_back(createPoint(p.x(), p.y(), p.z()));
-      const auto & p1 = vehicle_polyhedrons_.at(i).at(vehicle_polyhedrons_.at(i).size()-1);
+      const auto & p1 = vehicle_polyhedrons_.at(i).at(vehicle_polyhedrons_.at(i).size() - 1);
       marker.points.push_back(createPoint(p1.x(), p1.y(), p1.z()));
       const auto & p2 = vehicle_polyhedrons_.at(i).at(0);
       marker.points.push_back(createPoint(p2.x(), p2.y(), p2.z()));
-      const auto & p3 = vehicle_polyhedrons_.at(i).at(vehicle_polyhedrons_.at(i).size()-2);
+      const auto & p3 = vehicle_polyhedrons_.at(i).at(vehicle_polyhedrons_.at(i).size() - 2);
       marker.points.push_back(createPoint(p3.x(), p3.y(), p3.z()));
     }
 
@@ -297,25 +298,25 @@ MarkerArray ObstacleStopPlannerDebugNode::makeVisualizationMarker()
 
     for (size_t i = 0; i < collision_polyhedrons_.size(); ++i) {
       for (size_t j = 0; j < collision_polyhedrons_.at(i).size(); ++j) {
-          const auto & p = collision_polyhedrons_.at(i).at(j);
-          marker.points.push_back(createPoint(p.x(), p.y(), p.z()));
+        const auto & p = collision_polyhedrons_.at(i).at(j);
+        marker.points.push_back(createPoint(p.x(), p.y(), p.z()));
       }
     }
 
     for (size_t i = 0; i < collision_polyhedrons_.size(); ++i) {
-      for (size_t j = 0; j < collision_polyhedrons_.at(i).size()-2; ++j) {
-          const auto & p = collision_polyhedrons_.at(i).at(j);
-          marker.points.push_back(createPoint(p.x(), p.y(), p.z()));
-          const auto & p1 = collision_polyhedrons_.at(i).at(j+2);
-          marker.points.push_back(createPoint(p1.x(), p1.y(), p1.z()));
+      for (size_t j = 0; j < collision_polyhedrons_.at(i).size() - 2; ++j) {
+        const auto & p = collision_polyhedrons_.at(i).at(j);
+        marker.points.push_back(createPoint(p.x(), p.y(), p.z()));
+        const auto & p1 = collision_polyhedrons_.at(i).at(j + 2);
+        marker.points.push_back(createPoint(p1.x(), p1.y(), p1.z()));
       }
       const auto & p = collision_polyhedrons_.at(i).at(1);
       marker.points.push_back(createPoint(p.x(), p.y(), p.z()));
-      const auto & p1 = collision_polyhedrons_.at(i).at(collision_polyhedrons_.at(i).size()-1);
+      const auto & p1 = collision_polyhedrons_.at(i).at(collision_polyhedrons_.at(i).size() - 1);
       marker.points.push_back(createPoint(p1.x(), p1.y(), p1.z()));
       const auto & p2 = collision_polyhedrons_.at(i).at(0);
       marker.points.push_back(createPoint(p2.x(), p2.y(), p2.z()));
-      const auto & p3 = collision_polyhedrons_.at(i).at(collision_polyhedrons_.at(i).size()-2);
+      const auto & p3 = collision_polyhedrons_.at(i).at(collision_polyhedrons_.at(i).size() - 2);
       marker.points.push_back(createPoint(p3.x(), p3.y(), p3.z()));
     }
 

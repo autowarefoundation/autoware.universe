@@ -64,7 +64,8 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
   {
     auto & p = node_param_;
     p.enable_slow_down = declare_parameter<bool>("enable_slow_down");
-    p.enable_z_axis_obstacle_filtering = declare_parameter<bool>("enable_z_axis_obstacle_filtering");
+    p.enable_z_axis_obstacle_filtering =
+      declare_parameter<bool>("enable_z_axis_obstacle_filtering");
     p.max_velocity = declare_parameter<double>("max_velocity");
     p.hunting_threshold = declare_parameter<double>("hunting_threshold");
     p.ego_nearest_dist_threshold = declare_parameter<double>("ego_nearest_dist_threshold");
@@ -211,8 +212,7 @@ void ObstacleStopPlannerNode::onPointCloud(const PointCloud2::ConstSharedPtr inp
   PointCloud::Ptr no_height_filtered_pointcloud_ptr(new PointCloud);
 
   pcl::fromROSMsg(*input_msg, *pointcloud_ptr);
-  if(!node_param_.enable_z_axis_obstacle_filtering)
-  {
+  if (!node_param_.enable_z_axis_obstacle_filtering) {
     for (const auto & point : pointcloud_ptr->points) {
       no_height_pointcloud_ptr->push_back(pcl::PointXYZ(point.x, point.y, 0.0));
     }
@@ -220,9 +220,7 @@ void ObstacleStopPlannerNode::onPointCloud(const PointCloud2::ConstSharedPtr inp
     filter.setLeafSize(0.05f, 0.05f, 100000.0f);
     filter.filter(*no_height_filtered_pointcloud_ptr);
     pcl::toROSMsg(*no_height_filtered_pointcloud_ptr, *obstacle_ros_pointcloud_ptr_);
-  }
-  else
-  {
+  } else {
     pcl::toROSMsg(*pointcloud_ptr, *obstacle_ros_pointcloud_ptr_);
   }
   obstacle_ros_pointcloud_ptr_->header = input_msg->header;
@@ -359,12 +357,12 @@ void ObstacleStopPlannerNode::searchObstacle(
       debug_ptr_->pushPolygon(
         one_step_move_slow_down_range_polygon, p_front.position.z, PolygonType::SlowDownRange);
 
-      if(node_param_.enable_z_axis_obstacle_filtering) {
+      if (node_param_.enable_z_axis_obstacle_filtering) {
         planner_data.found_slow_down_points = withinPolyhedron(
           one_step_move_slow_down_range_polygon, slow_down_param_.slow_down_search_radius,
           prev_center_point, next_center_point, obstacle_candidate_pointcloud_ptr,
-          slow_down_pointcloud_ptr,
-          p_front.position.z, p_front.position.z+vehicle_info.vehicle_height_m);
+          slow_down_pointcloud_ptr, p_front.position.z,
+          p_front.position.z + vehicle_info.vehicle_height_m);
       } else {
         planner_data.found_slow_down_points = withinPolygon(
           one_step_move_slow_down_range_polygon, slow_down_param_.slow_down_search_radius,
@@ -401,11 +399,10 @@ void ObstacleStopPlannerNode::searchObstacle(
       // create one step polygon for vehicle
       createOneStepPolygon(
         p_front, p_back, one_step_move_vehicle_polygon, vehicle_info, stop_param.lateral_margin);
-      if(node_param_.enable_z_axis_obstacle_filtering) {
+      if (node_param_.enable_z_axis_obstacle_filtering) {
         debug_ptr_->pushPolyhedron(
-          one_step_move_vehicle_polygon,
-          decimate_trajectory.at(i).pose.position.z,
-          decimate_trajectory.at(i).pose.position.z+vehicle_info.vehicle_height_m,
+          one_step_move_vehicle_polygon, decimate_trajectory.at(i).pose.position.z,
+          decimate_trajectory.at(i).pose.position.z + vehicle_info.vehicle_height_m,
           PolygonType::Vehicle);
       } else {
         debug_ptr_->pushPolygon(
@@ -416,14 +413,14 @@ void ObstacleStopPlannerNode::searchObstacle(
       PointCloud::Ptr collision_pointcloud_ptr(new PointCloud);
       collision_pointcloud_ptr->header = obstacle_candidate_pointcloud_ptr->header;
 
-      if(node_param_.enable_z_axis_obstacle_filtering) {
+      if (node_param_.enable_z_axis_obstacle_filtering) {
         auto before_size = collision_pointcloud_ptr->size();
         planner_data.found_collision_points = withinPolyhedron(
           one_step_move_vehicle_polygon, stop_param.stop_search_radius, prev_center_point,
-          next_center_point, slow_down_pointcloud_ptr, collision_pointcloud_ptr,
-          p_front.position.z, p_front.position.z+vehicle_info.vehicle_height_m);
+          next_center_point, slow_down_pointcloud_ptr, collision_pointcloud_ptr, p_front.position.z,
+          p_front.position.z + vehicle_info.vehicle_height_m);
         auto after_size = collision_pointcloud_ptr->size();
-        if((after_size-before_size) > 0) {
+        if ((after_size - before_size) > 0) {
           auto obstacle_ros_pointcloud_debug_ptr = std::make_shared<PointCloud2>();
           pcl::toROSMsg(*collision_pointcloud_ptr, *obstacle_ros_pointcloud_debug_ptr);
           obstacle_ros_pointcloud_debug_ptr->header.frame_id = trajectory_header.frame_id;
@@ -441,12 +438,10 @@ void ObstacleStopPlannerNode::searchObstacle(
           *collision_pointcloud_ptr, p_front, &planner_data.nearest_collision_point,
           &planner_data.nearest_collision_point_time);
 
-        if(node_param_.enable_z_axis_obstacle_filtering) {
+        if (node_param_.enable_z_axis_obstacle_filtering) {
           debug_ptr_->pushPolyhedron(
-            one_step_move_vehicle_polygon,
-            p_front.position.z,
-            p_front.position.z+vehicle_info.vehicle_height_m,
-            PolygonType::Collision);
+            one_step_move_vehicle_polygon, p_front.position.z,
+            p_front.position.z + vehicle_info.vehicle_height_m, PolygonType::Collision);
         } else {
           debug_ptr_->pushObstaclePoint(planner_data.nearest_collision_point, PointType::Stop);
           debug_ptr_->pushPolygon(
