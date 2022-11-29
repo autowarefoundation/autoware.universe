@@ -109,8 +109,7 @@ std::vector<frenet_planner::Trajectory> generateFrenetTrajectories(
   const auto gen_fn = initial_configuration.velocity < 1.0
                         ? frenet_planner::generateLowVelocityTrajectories
                         : frenet_planner::generateTrajectories;
-  const auto base_length =
-    std::accumulate(base_traj.intervals.begin(), base_traj.intervals.end(), 0.0);
+  const auto base_length = base_traj.lengths.empty() ? 0.0 : base_traj.lengths.back();
   const auto base_duration = base_traj.times.empty() ? 0.0 : base_traj.times.back();
   const auto sampling_parameters = prepareSamplingParameters(
     initial_configuration, path, base_length, base_duration, path_spline, params);

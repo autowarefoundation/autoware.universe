@@ -33,8 +33,7 @@ void calculateCurvatureCost(Path & path, const Constraints & constraints)
 }
 void calculateLengthCost(Path & path, const Constraints & constraints)
 {
-  const auto length = std::accumulate(path.intervals.begin(), path.intervals.end(), 0.0);
-  path.cost -= constraints.soft.length_weight * length;
+  if (!path.lengths.empty()) path.cost -= constraints.soft.length_weight * path.lengths.back();
 }
 
 void calculateCost(

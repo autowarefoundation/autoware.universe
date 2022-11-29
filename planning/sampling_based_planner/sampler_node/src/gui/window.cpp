@@ -334,15 +334,9 @@ void MainWindow::plotCandidate(const sampler_common::Trajectory & trajectory)
   ui_->cand_acc->graph(0)->setData(
     QVector<double>::fromStdVector(trajectory.times),
     QVector<double>::fromStdVector(trajectory.longitudinal_accelerations));
-  // TODO(Maxime CLEMENT): rename jerk to curvature
-  xs.clear();
-  auto s = 0.0;
-  for (auto i : trajectory.intervals) {
-    xs.push_back(s);
-    s += i;
-  }
-  xs.push_back(s);
-  ui_->cand_jerk->graph(0)->setData(xs, QVector<double>::fromStdVector(trajectory.curvatures));
+  ui_->cand_jerk->graph(0)->setData(
+    QVector<double>::fromStdVector(trajectory.lengths),
+    QVector<double>::fromStdVector(trajectory.curvatures));
 
   ui_->cand_pos->rescaleAxes();
   ui_->cand_pos->replot();

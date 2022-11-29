@@ -9,7 +9,7 @@
         control_points_ratio: 0.3
         smoothing_weight: 0.001
     postprocessing:
-      desired_traj_behind_length: 5.0 # [m] desired trajectory length behind the current ego position
+      desired_traj_behind_length: 0.0 # [m] desired trajectory length behind the current ego position
     constraints:
       hard:
         max_curvature: 0.2  # [1/m]
@@ -32,7 +32,7 @@
       resolution: 0.2
       minimum_committed_length: 5.0
       reuse_max_length_max: 25.0
-      reuse_samples: 5
+      reuse_samples: 0
       reuse_max_deviation: 1.5
       target_lengths: [20.0, 40.0, 60.0]
       frenet:

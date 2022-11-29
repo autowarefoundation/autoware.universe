@@ -51,23 +51,20 @@ bool tryToReuseTrajectory(
   }
 
   size_t end_index = closest_idx;
-  double distance = 0.0;
   double duration = 0.0;
   for (size_t i = closest_idx; i < traj_to_reuse.points.size() - 2; ++i) {
     duration += traj_to_reuse.times[i];
-    distance += traj_to_reuse.intervals[i];
-    if (duration > max_reuse_duration || distance > max_reuse_length) {
+    if (duration > max_reuse_duration || traj_to_reuse.lengths[i] > max_reuse_length) {
       end_index = i;
       break;
     }
   }
   size_t start_index = closest_idx;
-  distance = 0.0;
-  while (start_index > 0 && distance < 5.0) {  // TODO(Maxime CLEMENT): from param
+  while (start_index > 0 &&
+         traj_to_reuse.lengths[start_index] < 5.0) {  // TODO(Maxime CLEMENT): from param
     const auto & p1 = traj_to_reuse.points[start_index];
     --start_index;
     const auto & p2 = traj_to_reuse.points[start_index];
-    distance += boost::geometry::distance(p1, p2);
   }
   reusable_traj = *traj_to_reuse.subset(start_index, end_index);
   constraints::checkHardConstraints(reusable_traj, constraints);

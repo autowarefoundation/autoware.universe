@@ -89,7 +89,7 @@ Trajectory generateCandidate(
     initial_state.position.d, initial_state.lateral_velocity, initial_state.lateral_acceleration,
     target_state.position.d, target_state.lateral_velocity, target_state.lateral_acceleration,
     duration);
-  for (double t = time_resolution; t <= duration; t += time_resolution) {
+  for (double t = 0.0; t <= duration; t += time_resolution) {
     trajectory.times.push_back(t);
     trajectory.frenet_points.emplace_back(
       trajectory.longitudinal_polynomial->position(t), trajectory.lateral_polynomial->position(t));
@@ -142,9 +142,9 @@ void calculateCartesian(const sampler_common::transform::Spline2D & reference, P
 {
   if (!path.frenet_points.empty()) {
     path.points.reserve(path.frenet_points.size());
-    path.yaws.reserve(path.frenet_points.size() - 1);
-    path.intervals.reserve(path.frenet_points.size() - 1);
-    path.curvatures.reserve(path.frenet_points.size() - 2);
+    path.yaws.reserve(path.frenet_points.size());
+    path.lengths.reserve(path.frenet_points.size());
+    path.curvatures.reserve(path.frenet_points.size());
     // Calculate cartesian positions
     for (const auto & fp : path.frenet_points) {
       path.points.push_back(reference.cartesian(fp));
@@ -152,18 +152,21 @@ void calculateCartesian(const sampler_common::transform::Spline2D & reference, P
     // TODO(Maxime CLEMENT): more precise calculations are proposed in Appendix I of the paper:
     // Optimal path Generation for Dynamic Street Scenarios in a Frenet Frame (Werling2010)
     // Calculate cartesian yaw and interval values
+    path.lengths = {0.0};
     for (auto it = path.points.begin(); it != std::prev(path.points.end()); ++it) {
       const auto dx = std::next(it)->x() - it->x();
       const auto dy = std::next(it)->y() - it->y();
       path.yaws.push_back(std::atan2(dy, dx));
-      path.intervals.push_back(std::hypot(dx, dy));
+      path.lengths.push_back(path.lengths.back() + std::hypot(dx, dy));
     }
-    // Calculate curvatures, velocities, accelerations
+    path.yaws.push_back(path.yaws.back());
+    // Calculate curvatures
     for (size_t i = 1; i < path.yaws.size(); ++i) {
       const auto dyaw =
         autoware::motion::motion_common::calcYawDeviation(path.yaws[i], path.yaws[i - 1]);
-      path.curvatures.push_back(dyaw / path.intervals[i - 1]);
+      path.curvatures.push_back(dyaw / (path.lengths[i - 1], path.lengths[i]));
     }
+    path.curvatures.push_back(path.curvatures.back());
   }
 }
 void calculateCartesian(
@@ -171,8 +174,8 @@ void calculateCartesian(
 {
   if (!trajectory.frenet_points.empty()) {
     trajectory.points.reserve(trajectory.frenet_points.size());
-    trajectory.yaws.reserve(trajectory.frenet_points.size() - 1);
-    trajectory.intervals.reserve(trajectory.frenet_points.size() - 1);
+    trajectory.yaws.reserve(trajectory.frenet_points.size());
+    trajectory.lengths.reserve(trajectory.frenet_points.size());
     trajectory.curvatures.reserve(trajectory.frenet_points.size());
     // Calculate cartesian positions
     for (const auto & fp : trajectory.frenet_points) {
@@ -184,15 +187,16 @@ void calculateCartesian(
     for (auto it = trajectory.points.begin(); it != std::prev(trajectory.points.end()); ++it) {
       const auto dx = std::next(it)->x() - it->x();
       const auto dy = std::next(it)->y() - it->y();
-      trajectory.intervals.push_back(std::hypot(dx, dy));
+      trajectory.lengths.push_back(trajectory.lengths.back() + std::hypot(dx, dy));
       trajectory.yaws.push_back(std::atan2(dy, dx));
     }
+    trajectory.yaws.push_back(trajectory.yaws.back());
     // Calculate curvatures, velocities, accelerations
     trajectory.curvatures.push_back(0.0);
     for (size_t i = 1; i < trajectory.yaws.size(); ++i) {
       const auto dyaw = autoware::motion::motion_common::calcYawDeviation(
         trajectory.yaws[i], trajectory.yaws[i - 1]);
-      const auto curvature = dyaw / trajectory.intervals[i];
+      const auto curvature = dyaw / (trajectory.lengths[i] - trajectory.lengths[i - 1]);
       trajectory.curvatures.push_back(curvature);
     }
     for (const auto time : trajectory.times) {

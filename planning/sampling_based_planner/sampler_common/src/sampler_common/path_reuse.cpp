@@ -51,8 +51,7 @@ bool tryToReusePath(
   size_t end_index = start_index;
   double distance = 0.0;
   for (size_t i = start_index; i < path_to_reuse.points.size() - 2; ++i) {
-    distance += path_to_reuse.intervals[i];
-    if (distance > max_reuse_length) {
+    if (path_to_reuse.lengths[i] > max_reuse_length) {
       end_index = i;
       break;
     }
@@ -64,11 +63,10 @@ bool tryToReusePath(
   reusable_path.reserve(end_index);
   copy(path_to_reuse.points, reusable_path.points);
   copy(path_to_reuse.curvatures, reusable_path.curvatures);
-  copy(path_to_reuse.intervals, reusable_path.intervals);
-  // TODO(Maxime CLEMENT): jerk not yet computed
-  // copy(path_to_reuse.jerks, reusable_path.jerks);
+  copy(path_to_reuse.lengths, reusable_path.lengths);
+  copy(path_to_reuse.jerks, reusable_path.jerks);
   copy(path_to_reuse.yaws, reusable_path.yaws);
-  copy(path_to_reuse.intervals, reusable_path.intervals);
+  copy(path_to_reuse.lengths, reusable_path.lengths);
 
   constraints::checkHardConstraints(reusable_path, constraints);
   // TODO(Maxime CLEMENT): points become empty when all paths are invalid but this should be

@@ -16,6 +16,7 @@
 #define SAMPLER_COMMON__STRUCTURES_HPP_
 
 #include <eigen3/Eigen/Core>
+#include <interpolation/linear_interpolation.hpp>
 
 #include <boost/geometry/core/cs.hpp>
 #include <boost/geometry/geometries/multi_polygon.hpp>
@@ -23,6 +24,7 @@
 #include <boost/geometry/geometries/polygon.hpp>
 
 #include <memory>
+#include <numeric>
 #include <vector>
 
 namespace sampler_common
@@ -75,7 +77,7 @@ struct Path
   std::vector<double> curvatures{};
   std::vector<double> yaws{};
   std::vector<double> jerks{};
-  std::vector<double> intervals{};  // TODO(Maxime CLEMENT): unnecessary ?
+  std::vector<double> lengths{};
   ConstraintResults constraint_results{};
   double cost{};
 
@@ -88,7 +90,7 @@ struct Path
     curvatures.clear();
     yaws.clear();
     jerks.clear();
-    intervals.clear();
+    lengths.clear();
     constraint_results.clear();
     cost = 0.0;
   }
@@ -99,7 +101,7 @@ struct Path
     curvatures.reserve(size);
     yaws.reserve(size);
     jerks.reserve(size);
-    intervals.reserve(size);
+    lengths.reserve(size);
   }
 
   [[nodiscard]] Path extend(const Path & path) const
@@ -115,10 +117,9 @@ struct Path
     extended_path.yaws.insert(extended_path.yaws.end(), path.yaws.begin(), path.yaws.end());
     extended_path.jerks.insert(extended_path.jerks.end(), jerks.begin(), jerks.end());
     extended_path.jerks.insert(extended_path.jerks.end(), path.jerks.begin(), path.jerks.end());
-    extended_path.intervals.insert(
-      extended_path.intervals.end(), intervals.begin(), intervals.end());
-    extended_path.intervals.insert(
-      extended_path.intervals.end(), path.intervals.begin(), path.intervals.end());
+    extended_path.lengths.insert(extended_path.lengths.end(), lengths.begin(), lengths.end());
+    extended_path.lengths.insert(
+      extended_path.lengths.end(), path.lengths.begin(), path.lengths.end());
     // TODO(Maxime CLEMENT): direct copy from the 2nd path. might need to be improved
     extended_path.cost = path.cost;
     extended_path.constraint_results = path.constraint_results;
@@ -138,9 +139,8 @@ struct Path
     };
     copy_subset(points, subpath->points);
     copy_subset(curvatures, subpath->curvatures);
-    copy_subset(intervals, subpath->intervals);
     copy_subset(yaws, subpath->yaws);
-    copy_subset(intervals, subpath->intervals);
+    copy_subset(lengths, subpath->lengths);
     // TODO(Maxime CLEMENT): jerk not yet computed
     return subpath;
   };
@@ -232,6 +232,42 @@ struct Trajectory : Path
       subtraj->duration += t;
     }
     return subtraj;
+  }
+
+  [[nodiscard]] Trajectory resample(const double fixed_interval) const
+  {
+    Trajectory t;
+    if (lengths.empty() || fixed_interval <= 0.0) return t;
+
+    const auto new_size = static_cast<size_t>(lengths.back() / fixed_interval + 1);
+    t.times.reserve(new_size);
+    t.lengths.reserve(new_size);
+    for (auto i = 0lu; i < new_size; ++i)
+      t.lengths.push_back(static_cast<double>(i) * fixed_interval);
+    t.times = interpolation::lerp(lengths, times, t.lengths);
+    std::vector<double> xs;
+    std::vector<double> ys;
+    xs.reserve(points.size());
+    ys.reserve(points.size());
+    for (const auto p : points) {
+      xs.push_back(p.x());
+      ys.push_back(p.y());
+    }
+    const auto new_xs = interpolation::lerp(times, xs, t.times);
+    const auto new_ys = interpolation::lerp(times, ys, t.times);
+    for (auto i = 0lu; i < new_xs.size(); ++i) t.points.emplace_back(new_xs[i], new_ys[i]);
+    t.curvatures = interpolation::lerp(times, curvatures, t.times);
+    t.jerks = interpolation::lerp(times, jerks, t.times);
+    t.yaws = interpolation::lerp(times, yaws, t.times);
+    t.times = interpolation::lerp(times, times, t.times);
+    t.longitudinal_velocities = interpolation::lerp(times, longitudinal_velocities, t.times);
+    t.longitudinal_accelerations = interpolation::lerp(times, longitudinal_accelerations, t.times);
+    t.lateral_velocities = interpolation::lerp(times, lateral_velocities, t.times);
+    t.lateral_accelerations = interpolation::lerp(times, lateral_accelerations, t.times);
+    t.duration = duration;
+    t.constraint_results = constraint_results;
+    t.cost = cost;
+    return t;
   }
 };
 

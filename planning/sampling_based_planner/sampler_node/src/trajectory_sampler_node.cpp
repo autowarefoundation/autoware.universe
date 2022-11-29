@@ -519,13 +519,14 @@ sampler_common::Trajectory TrajectorySamplerNode::prependTrajectory(
   const sampler_common::transform::Spline2D & reference,
   const sampler_common::Configuration & current_state) const
 {
-  if (trajectory.points.empty()) return {};
+  if (trajectory.points.empty() || params_.postprocessing.desired_traj_behind_length == 0.0)
+    return trajectory;
   // only prepend if the trajectory starts from the current pose
   if (
     !params_.preprocessing.force_zero_deviation &&
     (trajectory.points.front().x() != current_state.pose.x() ||
      trajectory.points.front().y() != current_state.pose.y())) {
-    std::cout << "[prependTrajectory] no prepend when 1st traj point is current pose\n";
+    std::cout << "[prependTrajectory] no prepend when 1st traj point is not current pose\n";
     return trajectory;
   }
   const auto current_frenet = reference.frenet(trajectory.points.front());
@@ -561,7 +562,7 @@ sampler_common::Trajectory TrajectorySamplerNode::prependTrajectory(
     if (params_.preprocessing.force_zero_heading)
       trajectory_to_prepend.yaws.push_back(reference.yaw(s));
     trajectory_to_prepend.curvatures.push_back(reference.curvature(s));
-    trajectory_to_prepend.intervals.push_back(resolution);
+    trajectory_to_prepend.lengths.push_back(s - ss.front());
     trajectory_to_prepend.longitudinal_velocities.push_back(
       trajectory.longitudinal_velocities.front());
     trajectory_to_prepend.lateral_velocities.push_back(trajectory.lateral_velocities.front());
