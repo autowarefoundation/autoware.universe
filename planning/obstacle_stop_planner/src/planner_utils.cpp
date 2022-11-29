@@ -428,7 +428,7 @@ rclcpp::SubscriptionOptions createSubscriptionOptions(rclcpp::Node * node_ptr)
 bool withinPolygon(
   const std::vector<cv::Point2d> & cv_polygon, const double radius, const Point2d & prev_point,
   const Point2d & next_point, PointCloud::Ptr candidate_points_ptr,
-  PointCloud::Ptr within_points_ptr, double vehicle_height)
+  PointCloud::Ptr within_points_ptr)
 {
   Polygon2d boost_polygon;
   bool find_within_points = false;
@@ -441,7 +441,31 @@ bool withinPolygon(
     Point2d point(candidate_points_ptr->at(j).x, candidate_points_ptr->at(j).y);
     if (bg::distance(prev_point, point) < radius || bg::distance(next_point, point) < radius) {
       if (bg::within(point, boost_polygon)) {
-        if (candidate_points_ptr->at(j).z < vehicle_height) {
+          within_points_ptr->push_back(candidate_points_ptr->at(j));
+          find_within_points = true;
+      }
+    }
+  }
+  return find_within_points;
+}
+
+bool withinPolyhedron(
+  const std::vector<cv::Point2d> & cv_polygon, const double radius, const Point2d & prev_point,
+  const Point2d & next_point, PointCloud::Ptr candidate_points_ptr,
+  PointCloud::Ptr within_points_ptr, double z_min, double z_max)
+{
+  Polygon2d boost_polygon;
+  bool find_within_points = false;
+  for (const auto & point : cv_polygon) {
+    boost_polygon.outer().push_back(bg::make<Point2d>(point.x, point.y));
+  }
+  boost_polygon.outer().push_back(bg::make<Point2d>(cv_polygon.front().x, cv_polygon.front().y));
+
+  for (size_t j = 0; j < candidate_points_ptr->size(); ++j) {
+    Point2d point(candidate_points_ptr->at(j).x, candidate_points_ptr->at(j).y);
+    if (bg::distance(prev_point, point) < radius || bg::distance(next_point, point) < radius) {
+      if (bg::within(point, boost_polygon)) {
+        if (candidate_points_ptr->at(j).z < z_max && candidate_points_ptr->at(j).z > z_min) {
           within_points_ptr->push_back(candidate_points_ptr->at(j));
           find_within_points = true;
         }

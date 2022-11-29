@@ -117,6 +117,8 @@ private:
 
   rclcpp::Publisher<VelocityLimit>::SharedPtr pub_velocity_limit_;
 
+  rclcpp::Publisher<PointCloud2>::SharedPtr pub_point_cloud_;
+
   std::unique_ptr<AdaptiveCruiseController> acc_controller_;
   std::shared_ptr<ObstacleStopPlannerDebugNode> debug_ptr_;
   boost::optional<StopPoint> latest_stop_point_{boost::none};
@@ -124,6 +126,7 @@ private:
   tf2_ros::Buffer tf_buffer_{get_clock()};
   tf2_ros::TransformListener tf_listener_{tf_buffer_};
   PointCloud2::SharedPtr obstacle_ros_pointcloud_ptr_{nullptr};
+  PointCloud2::SharedPtr obstacle_ros_pointcloud_debug_ptr_{nullptr};
   PredictedObjects::ConstSharedPtr object_ptr_{nullptr};
   rclcpp::Time last_detect_time_collision_point_;
   rclcpp::Time last_detect_time_slowdown_point_;

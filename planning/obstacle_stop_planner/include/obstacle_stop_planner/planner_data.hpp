@@ -59,6 +59,9 @@ struct NodeParam
   // set True, slow down for obstacle beside the path
   bool enable_slow_down;
 
+  // set True, filter obstacles in z axis
+  bool enable_z_axis_obstacle_filtering;
+
   // max velocity [m/s]
   double max_velocity;
 

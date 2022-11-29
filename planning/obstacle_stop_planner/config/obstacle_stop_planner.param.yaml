@@ -3,6 +3,7 @@
     hunting_threshold: 0.5                   # even if the obstacle disappears, the stop judgment continues for hunting_threshold [s]
     max_velocity: 20.0                       # max velocity [m/s]
     enable_slow_down: False                  # whether to use slow down planner [-]
+    enable_z_axis_obstacle_filtering: True
 
     stop_planner:
       # params for stop position
