@@ -136,7 +136,7 @@ private:
     regularization_pose_sub_;
 
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr sensor_aligned_pose_pub_;
-  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr no_ground_aligned_pose_pub_;
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr no_ground_points_aligned_pose_pub_;
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr ndt_pose_pub_;
   rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
     ndt_pose_with_covariance_pub_;
@@ -203,7 +203,7 @@ private:
   std::unique_ptr<PoseInitializationModule> pose_init_module_;
 
   bool use_no_ground_pointcloud_;
-  double outlier_threshold_ = 1.0;
+  double ground_removal_outlier_threshold_ = 1.0;
 };
 
 #endif  // NDT_SCAN_MATCHER__NDT_SCAN_MATCHER_CORE_HPP_

@@ -67,7 +67,7 @@
     regularization_scale_factor: 0.01
 
     # whether use de-grounded pointcloud calculate score
-    use_no_ground_pointcloud: true
+    use_no_ground_pointcloud: false
     
     # RANSAC param
-    outlier_threshold: 1.0
+    ground_removal_outlier_threshold: 1.0

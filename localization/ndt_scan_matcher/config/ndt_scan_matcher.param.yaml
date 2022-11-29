@@ -65,3 +65,9 @@
 
     # Regularization scale factor
     regularization_scale_factor: 0.01
+
+    # whether use de-grounded pointcloud calculate score
+    use_no_ground_pointcloud: false
+    
+    # RANSAC param
+    ground_removal_outlier_threshold: 1.0

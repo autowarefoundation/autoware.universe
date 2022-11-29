@@ -101,7 +101,7 @@ NDTScanMatcher::NDTScanMatcher()
   oscillation_threshold_(10),
   regularization_enabled_(declare_parameter("regularization_enabled", false)),
   use_no_ground_pointcloud_(declare_parameter("use_no_ground_pointcloud", false)),
-  outlier_threshold_(declare_parameter("outlier_threshold", 1.0))
+  ground_removal_outlier_threshold_(declare_parameter("ground_removal_outlier_threshold", 1.0))
 {
   (*state_ptr_)["state"] = "Initializing";
   is_activated_ = false;
@@ -182,7 +182,7 @@ NDTScanMatcher::NDTScanMatcher()
 
   sensor_aligned_pose_pub_ =
     this->create_publisher<sensor_msgs::msg::PointCloud2>("points_aligned", 10);
-  no_ground_aligned_pose_pub_=
+  no_ground_points_aligned_pose_pub_=
     this->create_publisher<sensor_msgs::msg::PointCloud2>("points_aligned_no_ground", 10);
   ndt_pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("ndt_pose", 10);
   ndt_pose_with_covariance_pub_ =
@@ -451,7 +451,7 @@ void NDTScanMatcher::callback_sensor_points(
     pcl::toROSMsg(*no_ground_points_mapTF_ptr, no_ground_points_mapTF_msg);
     no_ground_points_mapTF_msg.header.stamp = sensor_ros_time;
     no_ground_points_mapTF_msg.header.frame_id = map_frame_;
-    no_ground_aligned_pose_pub_->publish(no_ground_points_mapTF_msg);
+    no_ground_points_aligned_pose_pub_->publish(no_ground_points_mapTF_msg);
     //calculate score
     const float no_ground_transform_probability = ndt_ptr_-> 
       calculateTransformationProbability(*no_ground_points_mapTF_ptr);
@@ -597,7 +597,7 @@ void NDTScanMatcher::remove_ground_point_cloud(
   seg.setOptimizeCoefficients(true);
   seg.setModelType(pcl::SACMODEL_PLANE);
   seg.setMethodType(pcl::SAC_RANSAC);
-  seg.setDistanceThreshold(outlier_threshold_);
+  seg.setDistanceThreshold(ground_removal_outlier_threshold_);
   seg.setInputCloud(sensor_points_mapTF_ptr);
   seg.segment(*inliers, *coefficients);
   pcl::ExtractIndices<PointSource> extract;
