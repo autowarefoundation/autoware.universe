@@ -25,6 +25,7 @@ namespace behavior_path_planner
 {
 struct LaneChangeParameters
 {
+  // trajectory generation
   double lane_change_prepare_duration{2.0};
   double lane_changing_safety_check_duration{4.0};
   double lane_changing_lateral_jerk{0.5};
@@ -34,19 +35,40 @@ struct LaneChangeParameters
   double prediction_time_resolution{0.5};
   double maximum_deceleration{1.0};
   int lane_change_sampling_num{10};
+
+  // collision check
+  bool enable_collision_check_at_prepare_phase{true};
+  double prepare_phase_ignore_target_speed_thresh{0.1};
+  bool use_predicted_path_outside_lanelet{false};
+  bool use_all_predicted_path{false};
+
+  // abort
+  bool enable_cancel_lane_change{true};
+  bool enable_abort_lane_change{false};
+
   double abort_lane_change_velocity_thresh{0.5};
   double abort_lane_change_angle_thresh{0.174533};
   double abort_lane_change_distance_thresh{0.3};
-  double prepare_phase_ignore_target_speed_thresh{0.1};
-  bool enable_cancel_lane_change{true};
-  bool enable_abort_lane_change{false};
-  bool enable_collision_check_at_prepare_phase{true};
-  bool use_predicted_path_outside_lanelet{false};
-  bool use_all_predicted_path{false};
-  bool publish_debug_marker{false};
+
+  double abort_begin_min_longitudinal_thresh{4.0};
+  double abort_begin_max_longitudinal_thresh{6.0};
+  double abort_begin_duration{3.0};
+
+  double abort_return_min_longitudinal_thresh{12.0};
+  double abort_return_max_longitudinal_thresh{16.0};
+  double abort_return_duration{6.0};
+
+  double abort_expected_deceleration{0.1};
+  double abort_longitudinal_jerk{0.5};
+
+  double abort_max_lateral_jerk{5.0};
+
   // drivable area expansion
   double drivable_area_right_bound_offset{0.0};
   double drivable_area_left_bound_offset{0.0};
+
+  // debug marker
+  bool publish_debug_marker{false};
 };
 
 struct LaneChangeStatus
