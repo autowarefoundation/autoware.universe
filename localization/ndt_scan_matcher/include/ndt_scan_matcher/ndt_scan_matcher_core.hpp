@@ -202,7 +202,7 @@ private:
   std::unique_ptr<MapModule> map_module_;
   std::unique_ptr<PoseInitializationModule> pose_init_module_;
 
-  bool use_no_ground_pointcloud_;
+  bool estimate_scores_for_degrounded_scan_;
   double ground_removal_outlier_threshold_ = 1.0;
 };
 

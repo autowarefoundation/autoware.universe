@@ -100,7 +100,7 @@ NDTScanMatcher::NDTScanMatcher()
   inversion_vector_threshold_(-0.9),
   oscillation_threshold_(10),
   regularization_enabled_(declare_parameter("regularization_enabled", false)),
-  use_no_ground_pointcloud_(declare_parameter("use_no_ground_pointcloud", false)),
+  estimate_scores_for_degrounded_scan_(declare_parameter("estimate_scores_for_degrounded_scan", false)),
   ground_removal_outlier_threshold_(declare_parameter("ground_removal_outlier_threshold", 1.0))
 {
   (*state_ptr_)["state"] = "Initializing";
@@ -440,7 +440,7 @@ void NDTScanMatcher::callback_sensor_points(
   publish_point_cloud(sensor_ros_time, map_frame_, sensor_points_mapTF_ptr);
 
   //whether use de-grounded points calculate score
-  if(use_no_ground_pointcloud_)
+  if(estimate_scores_for_degrounded_scan_)
   {
     //remove ground
     pcl::shared_ptr<pcl::PointCloud<PointSource>> no_ground_points_mapTF_ptr(
