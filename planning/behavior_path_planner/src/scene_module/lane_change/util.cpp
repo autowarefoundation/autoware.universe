@@ -782,7 +782,7 @@ std::optional<LaneChangePath> getAbortPaths(
   const auto abort_point_dist =
     [&](const double param_accel, const double param_jerk, const double param_time) {
       return current_speed * param_time + (-param_accel) * std::pow(param_time, 2) / 2. -
-             param_jerk * std::pow(param_jerk, 3) / 6.;
+             param_jerk * std::pow(param_time, 3) / 6.;
     };
 
   const auto ego_nearest_dist_threshold = planner_data->parameters.ego_nearest_dist_threshold;
