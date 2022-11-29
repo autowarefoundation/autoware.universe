@@ -284,6 +284,15 @@ boost::optional<MPTOptimizer::MPTTrajs> MPTOptimizer::getModelPredictiveTrajecto
     fixed_ref_points, non_fixed_ref_points, optimized_control_variables.get(), mpt_matrix,
     debug_data_ptr);
 
+  // NOTE: Sometimes optimization failed without failed status.
+  //       Therefore, we have to check if optimization was solved correctly by the result.
+  constexpr double max_lateral_deviation = 3.0;
+  for (const double lateral_error : debug_data_ptr->lateral_errors) {
+    if (max_lateral_deviation < std::abs(lateral_error)) {
+      return boost::none;
+    }
+  }
+
   auto full_optimized_ref_points = fixed_ref_points;
   full_optimized_ref_points.insert(
     full_optimized_ref_points.end(), non_fixed_ref_points.begin(), non_fixed_ref_points.end());
