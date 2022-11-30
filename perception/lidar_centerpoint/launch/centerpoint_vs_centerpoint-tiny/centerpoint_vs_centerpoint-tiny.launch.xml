@@ -2,8 +2,6 @@
 <launch>
   <arg name="rviz_path" default="$(find-pkg-share lidar_centerpoint)/launch/centerpoint_vs_centerpoint-tiny/rviz"/>
   <arg name="input/pointcloud" default="/sensing/lidar/concatenated/pointcloud"/>
-  <arg name="output/objects" default="objects"/>
-  <arg name="lidar_detection_model" default="centerpoint" description="options: `centerpoint`, `apollo`"/>
   <arg name="score_threshold" default="0.35"/>
   <arg name="rviz_config1" default="$(var rviz_path)/ceternpoint_tiny.rviz" description="rviz config"/>
   <arg name="rviz_config2" default="$(var rviz_path)/ceternpoint.rviz" description="rviz config"/>
@@ -21,7 +19,6 @@
     <group>
       <include file="$(find-pkg-share lidar_centerpoint)/launch/lidar_centerpoint.launch.xml">
         <arg name="input/pointcloud" value="$(var input/pointcloud)"/>
-        <arg name="output/objects" value="objects"/>
         <arg name="score_threshold" value="$(var score_threshold)"/>
         <arg name="model_name" value="centerpoint"/>
         <arg name="model_path" value="$(find-pkg-share lidar_centerpoint)/data"/>
@@ -36,7 +33,6 @@
     <group>
       <include file="$(find-pkg-share lidar_centerpoint)/launch/lidar_centerpoint.launch.xml">
         <arg name="input/pointcloud" value="$(var input/pointcloud)"/>
-        <arg name="output/objects" value="objects"/>
         <arg name="score_threshold" value="$(var score_threshold)"/>
         <arg name="model_name" value="centerpoint_tiny"/>
         <arg name="model_path" value="$(find-pkg-share lidar_centerpoint)/data"/>
