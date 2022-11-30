@@ -36,12 +36,14 @@ geometry_msgs::msg::TwistWithCovarianceStamped get_twist_from_velocity_buffer(
   }
 
   int n = static_cast<int>(velocity_buffer.size());
+  double original_velocity_covariance = 0;
   for (const auto & vel : velocity_buffer) {
     twist_with_cov.twist.twist.linear.x += vel.twist.twist.linear.x;
-    twist_with_cov.twist.covariance[0] += vel.twist.covariance[0];
+    original_velocity_covariance += vel.twist.covariance[0];
   }
   twist_with_cov.twist.twist.linear.x /= n;
-  twist_with_cov.twist.covariance[0] /= n * n;  // Central limit theorem
+  original_velocity_covariance /= n;
+  twist_with_cov.twist.covariance[0] = original_velocity_covariance / n;  // Central limit theorem
   return twist_with_cov;
 }
 
@@ -57,20 +59,25 @@ geometry_msgs::msg::TwistWithCovarianceStamped get_twist_from_gyro_buffer(
   }
 
   int n = static_cast<int>(gyro_buffer.size());
+  geometry_msgs::msg::Vector3 original_gyro_covariance;
   for (const auto & gyro : gyro_buffer) {
     twist_with_cov.twist.twist.angular.x += gyro.twist.twist.angular.x;
     twist_with_cov.twist.twist.angular.y += gyro.twist.twist.angular.y;
     twist_with_cov.twist.twist.angular.z += gyro.twist.twist.angular.z;
-    twist_with_cov.twist.covariance[3 * 6 + 3] += gyro.twist.covariance[3 * 6 + 3];
-    twist_with_cov.twist.covariance[4 * 6 + 4] += gyro.twist.covariance[4 * 6 + 4];
-    twist_with_cov.twist.covariance[5 * 6 + 5] += gyro.twist.covariance[5 * 6 + 5];
+    original_gyro_covariance.x += gyro.twist.covariance[3 * 6 + 3];
+    original_gyro_covariance.y += gyro.twist.covariance[4 * 6 + 4];
+    original_gyro_covariance.z += gyro.twist.covariance[5 * 6 + 5];
   }
   twist_with_cov.twist.twist.angular.x /= n;
   twist_with_cov.twist.twist.angular.y /= n;
   twist_with_cov.twist.twist.angular.z /= n;
-  twist_with_cov.twist.covariance[3 * 6 + 3] /= n * n;  // Central limit theorem
-  twist_with_cov.twist.covariance[4 * 6 + 4] /= n * n;
-  twist_with_cov.twist.covariance[5 * 6 + 5] /= n * n;
+  original_gyro_covariance.x /= n;
+  original_gyro_covariance.y /= n;
+  original_gyro_covariance.z /= n;
+
+  twist_with_cov.twist.covariance[3 * 6 + 3] = original_gyro_covariance.x / n;  // Central limit theorem
+  twist_with_cov.twist.covariance[4 * 6 + 4] = original_gyro_covariance.y / n;
+  twist_with_cov.twist.covariance[5 * 6 + 5] = original_gyro_covariance.z / n;
   return twist_with_cov;
 }
 
