@@ -385,8 +385,8 @@ The shift points are modified by a filtering process in order to get the expecte
 If `enable_update_path_when_object_is_gone` parameter is true, Avoidance Module takes different actions according to the situations as follows:
 
 - If vehicle stops: If there is any object in the path of the vehicle, the avoidance path is generated. If this object goes away while the vehicle is stopping, the avoidance path will cancelled.
-- If vehcile is in motion, but avoidance maneuver doesn't started: If there is any object in the path of the vehicle, the avoidance path is generated. If this object goes away while the vehicle is not started avoidance maneuver, the avoidance path will cancelled.
-- If vehcile is in motion, avoidance maneuver started: If there is any object in the path of the vehicle, the avoidance path is generated,but if this object goes away while the vehicle is started avoidance maneuver, the avoidance path will not cancelled.
+- If vehicle is in motion, but avoidance maneuver doesn't started: If there is any object in the path of the vehicle, the avoidance path is generated. If this object goes away while the vehicle is not started avoidance maneuver, the avoidance path will cancelled.
+- If vehicle is in motion, avoidance maneuver started: If there is any object in the path of the vehicle, the avoidance path is generated,but if this object goes away while the vehicle is started avoidance maneuver, the avoidance path will not cancelled.
 
 If `enable_update_path_when_object_is_gone` parameter is false, Avoidance Module doesn't revert generated avoidance path even if path objects are gone.
 
