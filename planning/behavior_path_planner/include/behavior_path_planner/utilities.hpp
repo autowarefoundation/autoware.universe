@@ -198,6 +198,9 @@ bool lerpByTimeStamp(const PredictedPath & path, const double t, Pose * lerped_p
 
 bool calcObjectPolygon(const PredictedObject & object, Polygon2d * object_polygon);
 
+bool calcObjectPolygon(
+  const Shape & object_shape, const Pose & object_pose, Polygon2d * object_polygon);
+
 PredictedPath resamplePredictedPath(
   const PredictedPath & input_path, const double resolution, const double duration);
 
@@ -276,6 +279,15 @@ PredictedObjects filterObjectsByVelocity(
   const PredictedObjects & objects, double min_v, double max_v);
 
 // drivable area generation
+lanelet::ConstLanelets transformToLanelets(const DrivableLanes & drivable_lanes);
+lanelet::ConstLanelets transformToLanelets(const std::vector<DrivableLanes> & drivable_lanes);
+boost::optional<lanelet::ConstLanelet> getRightLanelet(
+  const lanelet::ConstLanelet & current_lane, const lanelet::ConstLanelets & shoulder_lanes);
+boost::optional<lanelet::ConstLanelet> getLeftLanelet(
+  const lanelet::ConstLanelet & current_lane, const lanelet::ConstLanelets & shoulder_lanes);
+std::vector<DrivableLanes> generateDrivableLanes(const lanelet::ConstLanelets & current_lanes);
+std::vector<DrivableLanes> generateDrivableLanesWithShoulderLanes(
+  const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & shoulder_lanes);
 
 void occupancyGridToImage(const OccupancyGrid & occupancy_grid, cv::Mat * cv_image);
 
@@ -285,7 +297,7 @@ cv::Point toCVPoint(
   const Point & geom_point, const double width_m, const double height_m, const double resolution);
 
 OccupancyGrid generateDrivableArea(
-  const PathWithLaneId & path, const lanelet::ConstLanelets & lanes, const double resolution,
+  const PathWithLaneId & path, const std::vector<DrivableLanes> & lanes, const double resolution,
   const double vehicle_length, const std::shared_ptr<const PlannerData> planner_data);
 
 lanelet::ConstLineStrings3d getDrivableAreaForAllSharedLinestringLanelets(
@@ -293,14 +305,14 @@ lanelet::ConstLineStrings3d getDrivableAreaForAllSharedLinestringLanelets(
 
 /**
  * @brief Expand the borders of the given lanelets
- * @param [in] lanelets lanelets to expand
+ * @param [in] drivable_lanes lanelets to expand
  * @param [in] left_bound_offset [m] expansion distance of the left bound
  * @param [in] right_bound_offset [m] expansion distance of the right bound
  * @param [in] types_to_skip linestring types that will not be expanded
  * @return expanded lanelets
  */
-lanelet::ConstLanelets expandLanelets(
-  const lanelet::ConstLanelets & lanelets, const double left_bound_offset,
+std::vector<DrivableLanes> expandLanelets(
+  const std::vector<DrivableLanes> & drivable_lanes, const double left_bound_offset,
   const double right_bound_offset, const std::vector<std::string> & types_to_skip = {});
 
 // goal management
@@ -392,6 +404,9 @@ std::uint8_t getHighestProbLabel(const std::vector<ObjectClassification> & class
 
 lanelet::ConstLanelets getCurrentLanes(const std::shared_ptr<const PlannerData> & planner_data);
 
+lanelet::ConstLanelets extendLanes(
+  const std::shared_ptr<RouteHandler> route_handler, const lanelet::ConstLanelets & lanes);
+
 lanelet::ConstLanelets getExtendedCurrentLanes(
   const std::shared_ptr<const PlannerData> & planner_data);
 
@@ -416,13 +431,13 @@ std::vector<PredictedPath> getPredictedPathFromObj(
 Pose projectCurrentPoseToTarget(const Pose & desired_object, const Pose & target_object);
 
 bool getEgoExpectedPoseAndConvertToPolygon(
-  const Pose & current_pose, const PredictedPath & pred_path, Pose & expected_pose,
+  const Pose & current_pose, const PredictedPath & pred_path,
   tier4_autoware_utils::Polygon2d & ego_polygon, const double & check_current_time,
-  const VehicleInfo & ego_info);
+  const VehicleInfo & ego_info, Pose & expected_pose, std::string & failed_reason);
 
 bool getObjectExpectedPoseAndConvertToPolygon(
-  const PredictedPath & pred_path, const PredictedObject & object, Pose & expected_pose,
-  Polygon2d & obj_polygon, const double & check_current_time);
+  const PredictedPath & pred_path, const PredictedObject & object, Polygon2d & obj_polygon,
+  const double & check_current_time, Pose & expected_pose, std::string & failed_reason);
 
 bool isObjectFront(const Pose & ego_pose, const Pose & obj_pose);
 
@@ -444,7 +459,8 @@ bool isLongitudinalDistanceEnough(
 bool hasEnoughDistance(
   const Pose & expected_ego_pose, const Twist & ego_current_twist,
   const Pose & expected_object_pose, const Twist & object_current_twist,
-  const BehaviorPathPlannerParameters & param, CollisionCheckDebug & debug);
+  const BehaviorPathPlannerParameters & param, const double front_decel, const double rear_decel,
+  CollisionCheckDebug & debug);
 
 bool isLateralDistanceEnough(
   const double & relative_lateral_distance, const double & lateral_distance_threshold);
@@ -452,17 +468,19 @@ bool isLateralDistanceEnough(
 bool isSafeInLaneletCollisionCheck(
   const Pose & ego_current_pose, const Twist & ego_current_twist,
   const PredictedPath & ego_predicted_path, const VehicleInfo & ego_info,
-  const double & check_start_time, const double & check_end_time,
-  const double & check_time_resolution, const PredictedObject & target_object,
-  const PredictedPath & target_object_path, const BehaviorPathPlannerParameters & common_parameters,
-  CollisionCheckDebug & debug);
+  const double check_start_time, const double check_end_time, const double check_time_resolution,
+  const PredictedObject & target_object, const PredictedPath & target_object_path,
+  const BehaviorPathPlannerParameters & common_parameters, const double front_decel,
+  const double rear_decel, CollisionCheckDebug & debug);
 
 bool isSafeInFreeSpaceCollisionCheck(
   const Pose & ego_current_pose, const Twist & ego_current_twist,
   const PredictedPath & ego_predicted_path, const VehicleInfo & ego_info,
-  const double & check_start_time, const double & check_end_time,
-  const double & check_time_resolution, const PredictedObject & target_object,
-  const BehaviorPathPlannerParameters & common_parameters, CollisionCheckDebug & debug);
+  const double check_start_time, const double check_end_time, const double check_time_resolution,
+  const PredictedObject & target_object, const BehaviorPathPlannerParameters & common_parameters,
+  const double front_decel, const double rear_decel, CollisionCheckDebug & debug);
+
+bool checkPathRelativeAngle(const PathWithLaneId & path, const double angle_threshold);
 }  // namespace behavior_path_planner::util
 
 #endif  // BEHAVIOR_PATH_PLANNER__UTILITIES_HPP_
