@@ -13,12 +13,8 @@ jobs:
       fail-fast: false
       matrix:
         rosdistro:
-          - galactic
           - humble
         include:
-          - rosdistro: galactic
-            container: ros:galactic
-            build-depends-repos: build_depends.repos
           - rosdistro: humble
             container: ros:humble
             build-depends-repos: build_depends.humble.repos
