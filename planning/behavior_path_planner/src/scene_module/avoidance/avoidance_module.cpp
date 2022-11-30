@@ -2381,7 +2381,9 @@ boost::optional<AvoidLineArray> AvoidanceModule::findNewShiftLine(
     }
 
     // new shift points must exist in front of Ego
-    if (candidate.start_longitudinal < 0.0) {
+    // this value should be larger than -eps consider path shifter calculation error.
+    const double eps = 0.01;
+    if (candidate.start_longitudinal < -eps) {
       continue;
     }
 
@@ -2743,11 +2745,14 @@ TurnSignalInfo AvoidanceModule::calcTurnSignalInfo(const ShiftedPath & path) con
   }
 
   TurnSignalInfo turn_signal_info{};
-
-  if (segment_shift_length > 0.0) {
-    turn_signal_info.turn_signal.command = TurnIndicatorsCommand::ENABLE_LEFT;
+  if (parameters_->turn_signal_on_swerving) {
+    if (segment_shift_length > 0.0) {
+      turn_signal_info.turn_signal.command = TurnIndicatorsCommand::ENABLE_LEFT;
+    } else {
+      turn_signal_info.turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
+    }
   } else {
-    turn_signal_info.turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
+    turn_signal_info.turn_signal.command = TurnIndicatorsCommand::DISABLE;
   }
 
   if (ego_front_to_shift_start > 0.0) {
