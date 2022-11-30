@@ -7,7 +7,7 @@ autoware_package()
 find_package(CUDA)
 
 if(NOT ${CUDA_FOUND})
-  message(WARNING "cuda is not found, so The cuda_utils package won't be built.")
+  message(WARNING "cuda is not found, so the cuda_utils package won't be built.")
   return()
 endif()
 
