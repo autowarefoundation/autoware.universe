@@ -17,7 +17,7 @@ If the node receives no route information, it looks at a radius of 200 meters an
 | -------------------- | ----------------------------------------- | ----------------------- |
 | `~input/vector_map`  | autoware_auto_mapping_msgs::HADMapBin     | vector map              |
 | `~input/camera_info` | sensor_msgs::CameraInfo                   | target camera parameter |
-| `~input/route`       | autoware_auto_planning_msgs::LaneletRoute | optional: route         |
+| `~input/route`       | autoware_planning_msgs::LaneletRoute | optional: route         |
 
 ## Output topics
 
