@@ -31,8 +31,7 @@ geometry_msgs::msg::TwistWithCovarianceStamped get_twist_from_velocity_buffer(
 {
   geometry_msgs::msg::TwistWithCovarianceStamped twist_with_cov;
   if (velocity_buffer.empty()) {
-    twist_with_cov.twist.covariance[0 * 6 + 0] = 100000.0;
-    return twist_with_cov;
+    throw std::domain_error("Should not receive an empty vector");
   }
 
   int n = static_cast<int>(velocity_buffer.size());
@@ -52,10 +51,7 @@ geometry_msgs::msg::TwistWithCovarianceStamped get_twist_from_gyro_buffer(
 {
   geometry_msgs::msg::TwistWithCovarianceStamped twist_with_cov;
   if (gyro_buffer.empty()) {
-    twist_with_cov.twist.covariance[3 * 6 + 3] = 100000.0;
-    twist_with_cov.twist.covariance[4 * 6 + 4] = 100000.0;
-    twist_with_cov.twist.covariance[5 * 6 + 5] = 100000.0;
-    return twist_with_cov;
+    throw std::domain_error("Should not receive an empty vector");
   }
 
   int n = static_cast<int>(gyro_buffer.size());
@@ -150,7 +146,7 @@ void GyroOdometer::timerCallback()
   }
 
   if (is_imu_arrived_) {
-    if (vel_buffer_.empty()) is_valid = false;
+    if (gyro_buffer_.empty()) is_valid = false;
     const double imu_dt = std::abs((this->now() - latest_imu_timestamp_).seconds());
     if (imu_dt > message_timeout_sec_) {
       std::string error_msg = fmt::format(
