@@ -275,12 +275,12 @@ private:
    */
   void initSimple1DFilters(const geometry_msgs::msg::PoseWithCovarianceStamped & pose);
 
-    /**
-     * @brief trigger node
-     */
-    void serviceTriggerNode(
-      const std_srvs::srv::SetBool::Request::SharedPtr req,
-      std_srvs::srv::SetBool::Response::SharedPtr res);
+  /**
+   * @brief trigger node
+   */
+  void serviceTriggerNode(
+    const std_srvs::srv::SetBool::Request::SharedPtr req,
+    std_srvs::srv::SetBool::Response::SharedPtr res);
 
   tier4_autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch_;
 
