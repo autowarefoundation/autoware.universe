@@ -5,14 +5,6 @@ find_package(autoware_cmake REQUIRED)
 autoware_package()
 
 find_package(OpenCV REQUIRED)
-find_package(CUDA REQUIRED)
-find_package(CUDNN REQUIRED)
-find_package(TENSORRT REQUIRED)
-if(NOT (${CUDA_FOUND} AND ${CUDNN_FOUND} AND ${TENSORRT_FOUND}))
-  message(WARNING "cuda, cudnn, tensorrt libraries are not found")
-  return()
-endif()
-
 find_package(OpenMP)
 if(OpenMP_FOUND)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
@@ -59,56 +51,6 @@ endfunction()
 
 download(yolox-tiny.onnx 97028baf73ce55e115599c9c60651b08)
 download(label.txt 9ceadca8b72b6169ee6aabb861fe3e1e)
-
-# The following libraries, which are named cuda_utils and tensorrt_common,
-# are planned to be independent packages
-##########
-# [lib]　cuda_utils
-install(
-  DIRECTORY lib/include/cuda_utils/
-  DESTINATION include/cuda_utils
-)
-
-# ament_export_include_directories(lib/include)
-ament_export_dependencies(CUDA)
-
-##########
-# [lib] tensorrt_common
-cuda_add_library(tensorrt_common SHARED
-  lib/src/tensorrt_common/tensorrt_common.cpp
-)
-
-ament_target_dependencies(tensorrt_common
-  rclcpp
-)
-
-target_include_directories(tensorrt_common
-  PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/lib/include>
-  $<INSTALL_INTERFACE:include>
-  ${TENSORRT_INCLUDE_DIRS}
-)
-
-target_link_libraries(tensorrt_common
-  ${TENSORRT_LIBRARIES}
-  stdc++fs
-)
-
-target_compile_definitions(tensorrt_common PRIVATE
-  TENSORRT_VERSION_MAJOR=${TENSORRT_VERSION_MAJOR}
-)
-
-list(APPEND tensorrt_common_LIBRARIES "tensorrt_common")
-
-# ament_export_include_directories(lib/include)
-ament_export_dependencies(cudnn_cmake_module)
-ament_export_dependencies(CUDNN)
-ament_export_dependencies(tensorrt_cmake_module)
-ament_export_dependencies(TENSORRT)
-
-include_directories(
-  lib/include
-)
 
 ##########
 # tensorrt_yolox
