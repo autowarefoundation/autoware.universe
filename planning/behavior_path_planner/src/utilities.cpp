@@ -962,6 +962,8 @@ PathWithLaneId removeOverlappingPoints(const PathWithLaneId & input_path)
     }
   }
   filtered_path.drivable_area = input_path.drivable_area;
+  filtered_path.left_bound = input_path.left_bound;
+  filtered_path.right_bound = input_path.right_bound;
   return filtered_path;
 }
 
@@ -1085,6 +1087,8 @@ bool setGoal(
     }
 
     output_ptr->drivable_area = input.drivable_area;
+    output_ptr->left_bound = input.left_bound;
+    output_ptr->right_bound = input.right_bound;
     return true;
   } catch (std::out_of_range & ex) {
     RCLCPP_ERROR_STREAM(
@@ -1698,6 +1702,8 @@ Path convertToPathFromPathWithLaneId(const PathWithLaneId & path_with_lane_id)
   Path path;
   path.header = path_with_lane_id.header;
   path.drivable_area = path_with_lane_id.drivable_area;
+  path.left_bound = path_with_lane_id.left_bound;
+  path.right_bound = path_with_lane_id.right_bound;
   path.points.reserve(path_with_lane_id.points.size());
   for (const auto & pt_with_lane_id : path_with_lane_id.points) {
     path.points.push_back(pt_with_lane_id.point);
@@ -1965,6 +1971,8 @@ std::shared_ptr<PathWithLaneId> generateCenterLinePath(
 
   centerline_path->drivable_area = util::generateDrivableArea(
     *centerline_path, drivable_lanes, p.drivable_area_resolution, p.vehicle_length, planner_data);
+
+  util::generateDrivableArea(*centerline_path, drivable_lanes, p.vehicle_length, planner_data);
 
   return centerline_path;
 }

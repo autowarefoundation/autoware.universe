@@ -601,3 +601,83 @@ void logOSQPSolutionStatus(const int solution_status, const std::string & msg)
   }
 }
 }  // namespace utils
+
+namespace
+{
+bool isOutsideDrivableArea(
+  const geometry_msgs::msg::Point & point,
+  const std::vector<geometry_msgs::msg::Point> & left_bound,
+  const std::vector<geometry_msgs::msg::Point> & right_bound)
+{
+  if (left_bound.empty() || right_bound.empty()) {
+    return false;
+  }
+
+  // ignore point in front of the front line
+  const std::vector<geometry_msgs::msg::Point> front_bound = {
+    left_bound.front(), right_bound.front()};
+  const double lat_dist_to_front_bound = motion_utils::calcLateralOffset(front_bound, point);
+  if (lat_dist_to_front_bound > 0.0) {
+    return false;
+  }
+
+  // left bound check
+  const double lat_dist_to_left_bound = motion_utils::calcLateralOffset(left_bound, point);
+  if (lat_dist_to_left_bound > 0.0) {
+    std::cerr << "left side is out of the drivable area" << std::endl;
+    return true;
+  }
+
+  // right bound check
+  const double lat_dist_to_right_bound = motion_utils::calcLateralOffset(right_bound, point);
+  if (lat_dist_to_right_bound < 0.0) {
+    std::cerr << "right side is out of the drivable area" << std::endl;
+    return true;
+  }
+
+  return false;
+}
+}  // namespace
+
+namespace drivable_area_utils
+{
+bool isOutsideDrivableAreaFromRectangleFootprint(
+  const autoware_auto_planning_msgs::msg::TrajectoryPoint & traj_point,
+  const std::vector<geometry_msgs::msg::Point> left_bound,
+  const std::vector<geometry_msgs::msg::Point> right_bound, const VehicleParam & vehicle_param)
+{
+  if (left_bound.empty() || right_bound.empty()) {
+    return false;
+  }
+
+  const double base_to_right = (vehicle_param.wheel_tread / 2.0) + vehicle_param.right_overhang;
+  const double base_to_left = (vehicle_param.wheel_tread / 2.0) + vehicle_param.left_overhang;
+
+  const double base_to_front = vehicle_param.length - vehicle_param.rear_overhang;
+  const double base_to_rear = vehicle_param.rear_overhang;
+
+  const auto top_left_pos =
+    tier4_autoware_utils::calcOffsetPose(traj_point.pose, base_to_front, -base_to_left, 0.0)
+      .position;
+  const auto top_right_pos =
+    tier4_autoware_utils::calcOffsetPose(traj_point.pose, base_to_front, base_to_right, 0.0)
+      .position;
+  const auto bottom_right_pos =
+    tier4_autoware_utils::calcOffsetPose(traj_point.pose, -base_to_rear, base_to_right, 0.0)
+      .position;
+  const auto bottom_left_pos =
+    tier4_autoware_utils::calcOffsetPose(traj_point.pose, -base_to_rear, -base_to_left, 0.0)
+      .position;
+
+  const bool out_top_left = isOutsideDrivableArea(top_left_pos, left_bound, right_bound);
+  const bool out_top_right = isOutsideDrivableArea(top_right_pos, left_bound, right_bound);
+  const bool out_bottom_left = isOutsideDrivableArea(bottom_left_pos, left_bound, right_bound);
+  const bool out_bottom_right = isOutsideDrivableArea(bottom_right_pos, left_bound, right_bound);
+
+  if (out_top_left || out_top_right || out_bottom_left || out_bottom_right) {
+    return true;
+  }
+
+  return false;
+}
+}  // namespace drivable_area_utils

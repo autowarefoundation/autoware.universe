@@ -36,7 +36,6 @@ using VehicleBounds = std::vector<Bounds>;
 using SequentialBounds = std::vector<Bounds>;
 
 using BoundsCandidates = std::vector<Bounds>;
-using SequentialBoundsCandidates = std::vector<BoundsCandidates>;
 
 struct CVMaps
 {
@@ -171,7 +170,7 @@ struct DebugData
   std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> extended_fixed_traj;
   std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> extended_non_fixed_traj;
 
-  SequentialBoundsCandidates sequential_bounds_candidates;
+  BoundsCandidates bounds_candidates;
 };
 
 struct Trajectories

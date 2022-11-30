@@ -266,7 +266,7 @@ private:
 
   Trajectory generateTrajectory(const PlannerData & planner_data);
 
-  Trajectories optimizeTrajectory(const PlannerData & planner_data, const CVMaps & cv_maps);
+  Trajectories optimizeTrajectory(const PlannerData & planner_data);
 
   Trajectories getPrevTrajs(const std::vector<PathPoint> & path_points) const;
 
@@ -274,8 +274,7 @@ private:
     const std::vector<PathPoint> & path_points, std::vector<TrajectoryPoint> & traj_points) const;
 
   void insertZeroVelocityOutsideDrivableArea(
-    const PlannerData & planner_data, std::vector<TrajectoryPoint> & traj_points,
-    const CVMaps & cv_maps);
+    const PlannerData & planner_data, std::vector<TrajectoryPoint> & traj_points);
 
   void publishDebugDataInOptimization(
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & traj_points);
