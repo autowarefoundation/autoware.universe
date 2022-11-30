@@ -143,6 +143,7 @@ void GyroOdometer::timerCallback()
   } else {
     RCLCPP_WARN_THROTTLE(
       this->get_logger(), *this->get_clock(), 1000, "Twist msg is not subscribed");
+    is_valid = false;
   }
 
   if (is_imu_arrived_) {
@@ -156,6 +157,7 @@ void GyroOdometer::timerCallback()
     }
   } else {
     RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Imu msg is not subscribed");
+    is_valid = false;
   }
   if (!is_valid) return;
 
