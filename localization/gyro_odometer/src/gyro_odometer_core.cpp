@@ -278,23 +278,3 @@ bool GyroOdometer::getTransform(
   }
   return true;
 }
-
-void GyroOdometer::checkTimeout(
-  const std::vector<geometry_msgs::msg::TwistWithCovarianceStamped> & velocity_buffer,
-  const std::vector<geometry_msgs::msg::TwistWithCovarianceStamped> & gyro_buffer) const
-{
-  const double velocity_dt =
-    std::abs((this->now() - velocity_buffer.front().header.stamp).seconds());
-  if (velocity_dt > message_timeout_sec_) {
-    std::string error_msg = fmt::format(
-      "Twist msg is timeout. twist_dt: {}[sec], tolerance {}[sec]", velocity_dt,
-      message_timeout_sec_);
-    throw std::domain_error(error_msg);
-  }
-  const double imu_dt = std::abs((this->now() - gyro_buffer.front().header.stamp).seconds());
-  if (imu_dt > message_timeout_sec_) {
-    std::string error_msg = fmt::format(
-      "Imu msg is timeout. imu_dt: {}[sec], tolerance {}[sec]", imu_dt, message_timeout_sec_);
-    throw std::domain_error(error_msg);
-  }
-}
