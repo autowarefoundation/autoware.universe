@@ -102,7 +102,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   vector_map_subscriber_ = create_subscription<HADMapBin>(
     "~/input/vector_map", qos_transient_local, std::bind(&BehaviorPathPlannerNode::onMap, this, _1),
     createSubscriptionOptions(this));
-  route_subscriber_ = create_subscription<HADMapRoute>(
+  route_subscriber_ = create_subscription<LaneletRoute>(
     "~/input/route", qos_transient_local, std::bind(&BehaviorPathPlannerNode::onRoute, this, _1),
     createSubscriptionOptions(this));
 
@@ -328,6 +328,8 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
   p.drivable_area_left_bound_offset = dp("drivable_area_left_bound_offset", 0.0);
 
   p.avoidance_execution_lateral_threshold = dp("avoidance_execution_lateral_threshold", 0.499);
+
+  p.turn_signal_on_swerving = dp("turn_signal_on_swerving", true);
 
   return p;
 }
@@ -833,7 +835,7 @@ void BehaviorPathPlannerNode::onMap(const HADMapBin::ConstSharedPtr msg)
   std::lock_guard<std::mutex> lock(mutex_pd_);
   planner_data_->route_handler->setMap(*msg);
 }
-void BehaviorPathPlannerNode::onRoute(const HADMapRoute::ConstSharedPtr msg)
+void BehaviorPathPlannerNode::onRoute(const LaneletRoute::ConstSharedPtr msg)
 {
   std::lock_guard<std::mutex> lock(mutex_pd_);
   const bool is_first_time = !(planner_data_->route_handler->isHandlerReady());
