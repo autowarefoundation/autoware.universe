@@ -1,67 +1,25 @@
-# GNU global tags
-GTAGS
-GRTAGS
-GSYMS
-GPATH
-
-# Python byte-compile file
-__pycache__/
-*.py[co]
-
-# editor backup files
-*~
-\#*\#
-
-# backup files
-*.bak
-
-# Eclipse
-.cproject
-.project
-.pydevproject
-.settings/
+# Vim
+*.swp
+*.swo
 
 # Visual Studio Code
 .vscode/
 *.code-workspace
 
-# CLion
-.idea/
-cmake-build-debug/
-
-# ROSBag files
-*.bag
-
-# Environments
-.env
-.venv
-env/
-venv/
-ENV/
-
-# Autoware Resources
-*.pcd
-*.bag
-*.csv
-
-/.metadata/
-
 # colcon
 build/
 install/
 log/
+/src/
 
-# catkin
-build/
-devel/
-install/
-logs/
-.catkin_tools/
+# Python
+*.pyc
 
-# cspell
-.cspell.json
+# Jetbrains
+.idea/
 
-# temporary ignored packages
-src/**/COLCON_IGNORE
+# rviz Screen Capture
+capture/
 
-# Don't ignore src/ because full-text search won't work.
+# CodeChecker
+.codechecker/
