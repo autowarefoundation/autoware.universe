@@ -273,7 +273,7 @@ private:
   /**
    * @brief initialize simple1DFilter
    */
-  void initSimple1DFilters(const geometry_msgs::msg::PoseWithCovarianceStamped & pose)
+  void initSimple1DFilters(const geometry_msgs::msg::PoseWithCovarianceStamped & pose);
 
     /**
      * @brief trigger node
