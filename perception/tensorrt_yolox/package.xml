@@ -16,6 +16,8 @@
   <buildtool_export_depend>cudnn_cmake_module</buildtool_export_depend>
   <buildtool_export_depend>tensorrt_cmake_module</buildtool_export_depend>
 
+  <build_depend>autoware_cmake</build_depend>
+
   <depend>autoware_auto_perception_msgs</depend>
   <depend>cv_bridge</depend>
   <depend>image_transport</depend>
