@@ -135,7 +135,7 @@ void GyroOdometer::timerCallback()
 {
   bool is_valid = true;
   if (is_velocity_arrived_) {
-    is_valid &= !vel_buffer_.empty();
+    if (vel_buffer_.empty()) is_valid = false;
     const double velocity_dt = std::abs((this->now() - latest_vel_timestamp_).seconds());
     if (velocity_dt > message_timeout_sec_) {
       std::string error_msg = fmt::format(
@@ -150,7 +150,7 @@ void GyroOdometer::timerCallback()
   }
 
   if (is_imu_arrived_) {
-    is_valid &= !vel_buffer_.empty();
+    if (vel_buffer_.empty()) is_valid = false;
     const double imu_dt = std::abs((this->now() - latest_imu_timestamp_).seconds());
     if (imu_dt > message_timeout_sec_) {
       std::string error_msg = fmt::format(
