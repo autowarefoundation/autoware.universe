@@ -35,7 +35,8 @@ private:
   rclcpp::Logger logger_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_pointcloud_map_;
 
-  sensor_msgs::msg::PointCloud2 loadPCDFiles(const std::vector<std::string> & pcd_paths) const;
+  sensor_msgs::msg::PointCloud2 loadPCDFiles(
+    const std::vector<std::string> & pcd_paths, const boost::optional<float> leaf_size) const;
 };
 
 #endif  // POINTCLOUD_MAP_LOADER__POINTCLOUD_MAP_LOADER_MODULE_HPP_

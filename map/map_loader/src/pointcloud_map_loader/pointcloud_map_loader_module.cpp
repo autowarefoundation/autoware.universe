@@ -67,7 +67,7 @@ PointcloudMapLoaderModule::PointcloudMapLoaderModule(
 }
 
 sensor_msgs::msg::PointCloud2 PointcloudMapLoaderModule::loadPCDFiles(
-  const std::vector<std::string> & pcd_paths) const
+  const std::vector<std::string> & pcd_paths, const boost::optional<float> leaf_size) const
 {
   sensor_msgs::msg::PointCloud2 whole_pcd;
   sensor_msgs::msg::PointCloud2 partial_pcd;
@@ -82,6 +82,10 @@ sensor_msgs::msg::PointCloud2 PointcloudMapLoaderModule::loadPCDFiles(
 
     if (pcl::io::loadPCDFile(path, partial_pcd) == -1) {
       RCLCPP_ERROR_STREAM(logger_, "PCD load failed: " << path);
+    }
+
+    if (leaf_size) {
+      partial_pcd = downsample(partial_pcd, leaf_size.get());
     }
 
     if (whole_pcd.width == 0) {
