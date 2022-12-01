@@ -243,7 +243,7 @@ std::vector<double> SplineInterpolation::getSplineInterpolatedValues(
       ++j;
     }
 
-    const double & ds = query_key - base_keys_.at(j);
+    const double ds = query_key - base_keys_.at(j);
     res.push_back(d.at(j) + (c.at(j) + (b.at(j) + a.at(j) * ds) * ds) * ds);
   }
 
@@ -292,7 +292,7 @@ std::vector<double> SplineInterpolation::getSplineInterpolatedDiffValues(
       ++j;
     }
 
-    const double & ds = query_key - base_keys_.at(j);
+    const double ds = query_key - base_keys_.at(j);
     res.push_back(c.at(j) + (2.0 * b.at(j) + 3.0 * a.at(j) * ds) * ds);
   }
 

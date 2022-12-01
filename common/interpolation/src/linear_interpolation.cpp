@@ -26,7 +26,7 @@ double lerp(const double src_val, const double dst_val, const double ratio)
 
 std::vector<double> lerp(
   const std::vector<double> & base_keys, const std::vector<double> & base_values,
-  const std::vector<double> & query_keys, const bool & extrapolate_end_points)
+  const std::vector<double> & query_keys, const bool extrapolate_end_points)
 {
   // throw exception for invalid arguments
   const auto validated_query_keys =
@@ -56,7 +56,7 @@ std::vector<double> lerp(
 
 double lerp(
   const std::vector<double> & base_keys, const std::vector<double> & base_values, double query_key,
-  const bool & extrapolate_end_points)
+  const bool extrapolate_end_points)
 {
   return lerp(base_keys, base_values, std::vector<double>{query_key}, extrapolate_end_points)
     .front();
