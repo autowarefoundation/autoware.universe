@@ -181,7 +181,7 @@ void RouteHandler::setRoute(const HADMapRoute & route_msg)
       {
         const auto start_pose_length = lanelet::utils::getArcCoordinates({start_lanelet}, start_pose);
         const auto goal_pose_length = lanelet::utils::getArcCoordinates({start_lanelet}, goal_pose);
-        if((goal_pose_length-start_pose_length)>0.0)
+        if((goal_pose_length.length-start_pose_length.length)>0.0)
         {
           is_loop_plan_=false;
         }
@@ -445,6 +445,17 @@ bool RouteHandler::isInGoalRouteSection(const lanelet::ConstLanelet & lanelet) c
   if (route_msg_.segments.empty()) {
     return false;
   }
+  if(is_loop_plan_)
+  {
+    if(!lanelet::utils::isInLanelet(route_msg_.goal_pose,lanelet,0.01))
+    {
+      return false;
+    }
+    else
+    {
+      return true;
+    }
+  }
   return exists(route_msg_.segments.back().primitives, lanelet.id());
 }
 
@@ -628,6 +639,16 @@ lanelet::ConstLanelets RouteHandler::getLaneletSequence(
     return lanelet::ConstLanelets{};
   });
 
+  if(is_loop_plan_&&(lanelet.id()==getStartLaneId()))
+  {
+    auto goal_pose =  getGoalPose();
+    auto arc_start = lanelet::utils::getArcCoordinates({lanelet}, current_pose);
+    auto arc_target = lanelet::utils::getArcCoordinates({lanelet}, goal_pose);
+    if(arc_target.length>arc_start.length-1.0)
+    {
+      lanelet_sequence_forward={};
+    }
+  }
   // loop check
   if (!lanelet_sequence_forward.empty() && !lanelet_sequence_backward.empty()) {
     if (lanelet_sequence_backward.back().id() == lanelet_sequence_forward.front().id()) {

@@ -1778,6 +1778,14 @@ PathWithLaneId getCenterLinePath(
   if (route_handler.isInGoalRouteSection(lanelet_sequence.back())) {
     const auto goal_arc_coordinates =
       lanelet::utils::getArcCoordinates(lanelet_sequence, route_handler.getGoalPose());
+    if(lanelet_sequence.size()>1 && (lanelet_sequence.back().id() == lanelet_sequence.front().id()))
+    {
+      lanelet::ConstLanelets lanelets;
+      lanelets = lanelet_sequence;
+      lanelets.pop_back();
+      auto length = lanelet::utils::getLaneletLength2d(lanelets);
+      goal_arc_coordinates.length += length;
+    }
     s_forward = std::min(s_forward, goal_arc_coordinates.length - lane_change_buffer);
   }
 
