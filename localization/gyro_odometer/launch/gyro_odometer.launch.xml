@@ -11,6 +11,7 @@
 
   <arg name="output_frame" default="base_link" description="output frame id"/>
   <arg name="message_timeout_sec" default="0.2" description="delay tolerance time for message"/>
+  <arg name="output_rate" default="50.0" description="output rate for twist"/>
 
   <node pkg="gyro_odometer" exec="gyro_odometer" name="gyro_odometer" output="screen">
     <remap from="vehicle/twist_with_covariance" to="$(var input_vehicle_twist_with_covariance_topic)"/>
@@ -25,5 +26,6 @@
 
     <param name="output_frame" value="$(var output_frame)"/>
     <param name="message_timeout_sec" value="$(var message_timeout_sec)"/>
+    <param name="output_rate" value="$(var output_rate)"/>
   </node>
 </launch>
