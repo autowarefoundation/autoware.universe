@@ -146,10 +146,20 @@ BehaviorModuleOutput LaneChangeModule::plan()
 {
   constexpr double resample_interval{1.0};
   auto path = util::resamplePathWithSpline(status_.lane_change_path.path, resample_interval);
-  if (!isValidPath(path)) {
-    status_.is_safe = false;
-    return BehaviorModuleOutput{};
+
+  // Validate path
+  {
+    auto clipped_path = path;
+    const auto & p = planner_data_->parameters;
+    const size_t current_seg_idx = findEgoSegmentIndex(clipped_path.points);
+    util::clipPathLength(clipped_path, current_seg_idx, p.forward_path_length, 0.0);
+
+    if (!isValidPath(clipped_path)) {
+      status_.is_safe = false;
+      return BehaviorModuleOutput{};
+    }
   }
+
   generateExtendedDrivableArea(path);
 
   if (isAbortConditionSatisfied()) {
