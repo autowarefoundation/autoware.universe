@@ -25,11 +25,11 @@ double lerp(const double src_val, const double dst_val, const double ratio);
 
 std::vector<double> lerp(
   const std::vector<double> & base_keys, const std::vector<double> & base_values,
-  const std::vector<double> & query_keys, bool const & extrapolate_end_points = false);
+  const std::vector<double> & query_keys, const bool & extrapolate_end_points = false);
 
 double lerp(
   const std::vector<double> & base_keys, const std::vector<double> & base_values,
-  const double query_key, bool const & extrapolate_end_points = false);
+  const double query_key, const bool & extrapolate_end_points = false);
 
 }  // namespace interpolation
 

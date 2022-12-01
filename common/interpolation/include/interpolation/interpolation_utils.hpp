@@ -71,10 +71,10 @@ inline bool isStrictlyMonotonic(const std::vector<double> & x)
     std::adjacent_find(x.begin(), x.end(), std::less_equal<>());
 
   // if cannot find <= or >= conditions, the vector is strictly monotonic.
-  bool const is_strictly_increasing = is_strictly_increasing_it == x.cend();
-  bool const is_strictly_decreasing = is_strictly_decreasing_it == x.cend();
+  const bool is_strictly_increasing = is_strictly_increasing_it == x.cend();
+  const bool is_strictly_decreasing = is_strictly_decreasing_it == x.cend();
 
-  bool const is_monotonic = (is_strictly_increasing && !is_strictly_decreasing) ||
+  const bool is_monotonic = (is_strictly_increasing && !is_strictly_decreasing) ||
                             (!is_strictly_increasing && is_strictly_decreasing);
 
   return is_monotonic;
