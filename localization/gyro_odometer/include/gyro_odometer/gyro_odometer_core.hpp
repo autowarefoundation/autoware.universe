@@ -15,12 +15,13 @@
 #ifndef GYRO_ODOMETER__GYRO_ODOMETER_CORE_HPP_
 #define GYRO_ODOMETER__GYRO_ODOMETER_CORE_HPP_
 
+#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
+
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
 #include <sensor_msgs/msg/imu.hpp>
-#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
 #include <tf2/transform_datatypes.h>
 #ifdef ROS_DISTRO_GALACTIC
@@ -31,8 +32,8 @@
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
-#include <string>
 #include <deque>
+#include <string>
 
 class GyroOdometer : public rclcpp::Node
 {

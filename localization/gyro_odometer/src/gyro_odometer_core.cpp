@@ -49,16 +49,14 @@ geometry_msgs::msg::TwistWithCovarianceStamped concatGyroAndOdometer(
   geometry_msgs::msg::Vector3 gyro_mean{};
   double vx_covariance_original = 0;
   geometry_msgs::msg::Vector3 gyro_covariance_original{};
-  for (const auto & vehicle_twist : vehicle_twist_queue)
-  {
+  for (const auto & vehicle_twist : vehicle_twist_queue) {
     vx_mean += vehicle_twist.twist.twist.linear.x;
     vx_covariance_original += vehicle_twist.twist.covariance[0 * 6 + 0];
   }
   vx_mean /= vehicle_twist_queue.size();
   vx_covariance_original /= vehicle_twist_queue.size();
 
-  for (const auto & gyro : gyro_queue)
-  {
+  for (const auto & gyro : gyro_queue) {
     gyro_mean.x += gyro.angular_velocity.x;
     gyro_mean.y += gyro.angular_velocity.y;
     gyro_mean.z += gyro.angular_velocity.z;
@@ -74,7 +72,7 @@ geometry_msgs::msg::TwistWithCovarianceStamped concatGyroAndOdometer(
   gyro_covariance_original.z /= gyro_queue.size();
 
   geometry_msgs::msg::TwistWithCovarianceStamped twist_with_cov;
-  // twist_with_cov.header = 
+  // twist_with_cov.header =
   twist_with_cov.twist.twist.linear.x = vx_mean;
   twist_with_cov.twist.twist.angular = gyro_mean;
   twist_with_cov.twist.covariance[0 * 6 + 0] = vx_covariance_original / vehicle_twist_queue.size();
@@ -138,8 +136,8 @@ void GyroOdometer::callbackVehicleTwist(
 
   vehicle_twist_queue_.push_back(*vehicle_twist_ptr);
   if (!gyro_queue_.empty()) {
-    const geometry_msgs::msg::TwistWithCovarianceStamped twist_with_cov_raw = concatGyroAndOdometer(
-      vehicle_twist_queue_, gyro_queue_);
+    const geometry_msgs::msg::TwistWithCovarianceStamped twist_with_cov_raw =
+      concatGyroAndOdometer(vehicle_twist_queue_, gyro_queue_);
     publishData(twist_with_cov_raw);
     vehicle_twist_queue_.clear();
     gyro_queue_.clear();
@@ -182,19 +180,21 @@ void GyroOdometer::callbackImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_m
   sensor_msgs::msg::Imu gyro_base_link;
   gyro_base_link.header = imu_msg_ptr->header;
   gyro_base_link.angular_velocity = transformed_angular_velocity.vector;
-  gyro_base_link.angular_velocity_covariance = transformCovariance(imu_msg_ptr->angular_velocity_covariance);
+  gyro_base_link.angular_velocity_covariance =
+    transformCovariance(imu_msg_ptr->angular_velocity_covariance);
 
   gyro_queue_.push_back(gyro_base_link);
   if (!vehicle_twist_queue_.empty()) {
-    const geometry_msgs::msg::TwistWithCovarianceStamped twist_with_cov_raw = concatGyroAndOdometer(
-      vehicle_twist_queue_, gyro_queue_);
+    const geometry_msgs::msg::TwistWithCovarianceStamped twist_with_cov_raw =
+      concatGyroAndOdometer(vehicle_twist_queue_, gyro_queue_);
     publishData(twist_with_cov_raw);
     vehicle_twist_queue_.clear();
     gyro_queue_.clear();
   }
 }
 
-void GyroOdometer::publishData(const geometry_msgs::msg::TwistWithCovarianceStamped & twist_with_cov_raw)
+void GyroOdometer::publishData(
+  const geometry_msgs::msg::TwistWithCovarianceStamped & twist_with_cov_raw)
 {
   geometry_msgs::msg::TwistStamped twist_raw;
   twist_raw.header = twist_with_cov_raw.header;
