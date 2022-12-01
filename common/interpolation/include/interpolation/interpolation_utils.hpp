@@ -100,6 +100,10 @@ inline std::vector<double> validateKeys(
     throw std::invalid_argument("Either base_keys or query_keys is not sorted.");
   }
 
+  if (extrapolate_end_points) {
+    return query_keys;
+  }
+
   // When query_keys is out of base_keys (This function does not allow extrapolation when
   // extrapolation boolean is false).
   if (constexpr double epsilon = 1e-3; (query_keys.front() < base_keys.front() - epsilon ||
@@ -111,16 +115,11 @@ inline std::vector<double> validateKeys(
 
   // NOTE: Due to calculation error of double, a query key may be slightly out of base keys.
   //       Therefore, query keys are cropped here.
+  auto validated_query_keys = query_keys;
+  validated_query_keys.front() = std::max(validated_query_keys.front(), base_keys.front());
+  validated_query_keys.back() = std::min(validated_query_keys.back(), base_keys.back());
 
-  if (!extrapolate_end_points) {
-    auto validated_query_keys = query_keys;
-    validated_query_keys.front() = std::max(validated_query_keys.front(), base_keys.front());
-    validated_query_keys.back() = std::min(validated_query_keys.back(), base_keys.back());
-
-    return validated_query_keys;
-  }
-
-  return query_keys;
+  return validated_query_keys;
 }
 
 template <class T>
@@ -144,38 +143,6 @@ void validateKeysAndValues(
     throw std::invalid_argument("The size of base_keys and base_values are not the same.");
   }
 }
-
-/**
- * Linear extrapolation
- * */
-template <typename T, typename std::enable_if_t<std::is_floating_point_v<T>> * = nullptr>
-void lerp_extrapolate(
-  std::vector<T> const & base_keys, std::vector<T> const & base_values, T const & query_key,
-  T & query_value)
-{
-  if (query_key < base_keys[0]) {
-    const auto & t0 = base_keys[0];
-    const auto & t1 = base_keys[1];
-
-    const auto & y0 = base_values[0];
-    const auto & y1 = base_values[1];
-
-    const auto & ratio = (t0 - query_key) / (t1 - t0);
-    query_value = y0 - ratio * (y1 - y0);
-  }
-
-  if (query_key > base_keys.back()) {
-    const auto & tn = base_keys.rbegin()[0];
-    const auto & tn_1 = base_keys.rbegin()[1];
-
-    const auto & yn = base_values.rbegin()[0];
-    const auto & yn_1 = base_values.rbegin()[1];
-
-    const auto & ratio = (query_key - tn) / (tn - tn_1);
-    query_value = yn + ratio * (yn - yn_1);  // extrapolation and lerp have different semantics.
-  }
-}
-
 }  // namespace interpolation_utils
 
 #endif  // INTERPOLATION__INTERPOLATION_UTILS_HPP_

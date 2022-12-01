@@ -38,14 +38,7 @@ std::vector<double> lerp(
   size_t key_index = 0;
 
   for (const auto query_key : validated_query_keys) {
-    if ((query_key < base_keys.front() || query_key > base_keys.back()) && extrapolate_end_points) {
-      double extrapolated_value{};
-      interpolation_utils::lerp_extrapolate(base_keys, base_values, query_key, extrapolated_value);
-      query_values.emplace_back(extrapolated_value);
-      continue;
-    }
-
-    while (base_keys.at(key_index + 1) < query_key) {
+    while (base_keys.at(key_index + 1) < query_key && key_index != base_keys.size() - 2) {
       ++key_index;
     }
 
