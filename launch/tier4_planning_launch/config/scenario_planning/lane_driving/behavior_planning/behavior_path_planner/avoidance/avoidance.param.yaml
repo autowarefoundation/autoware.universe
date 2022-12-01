@@ -12,8 +12,10 @@
 
       threshold_distance_object_is_on_center: 1.0 # [m]
       threshold_speed_object_is_stopped: 1.0      # [m/s]
+      threshold_time_object_is_moving: 1.0        # [s]
       object_check_forward_distance: 150.0        # [m]
       object_check_backward_distance: 2.0         # [m]
+      object_envelope_buffer: 0.3                 # [m]
       lateral_collision_margin: 1.0               # [m]
       lateral_collision_safety_buffer: 0.7        # [m]
 
@@ -32,7 +34,8 @@
       nominal_lateral_jerk: 0.2   # [m/s3]
       max_lateral_jerk: 1.0       # [m/s3]
 
-      object_hold_max_count: 20
+      # For detection loss compensation
+      object_last_seen_threshold: 2.0   # [s]
 
       # For prevention of large acceleration while avoidance
       min_avoidance_speed_for_acc_prevention: 3.0  # [m/s]
@@ -45,6 +48,8 @@
       # not enabled yet
       longitudinal_collision_margin_min_distance: 0.0          # [m]
       longitudinal_collision_margin_time: 0.0
+
+      turn_signal_on_swerving: true # turn signal on while swerving
 
       # avoidance is performed for the object type with true
       target_object:

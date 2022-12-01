@@ -53,26 +53,26 @@ PullOverModule::PullOverModule(
   goal_pose_pub_ =
     node.create_publisher<PoseStamped>("/planning/scenario_planning/modified_goal", 1);
 
-  LaneDepartureChecker lane_departure_checker_{};
-  lane_departure_checker_.setVehicleInfo(vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo());
+  LaneDepartureChecker lane_departure_checker{};
+  lane_departure_checker.setVehicleInfo(vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo());
 
   occupancy_grid_map_ = std::make_shared<OccupancyGridBasedCollisionDetector>();
 
   // set enabled planner
   if (parameters_.enable_shift_parking) {
     pull_over_planners_.push_back(std::make_shared<ShiftPullOver>(
-      node, parameters, lane_departure_checker_, occupancy_grid_map_));
+      node, parameters, lane_departure_checker, occupancy_grid_map_));
   }
   if (parameters_.enable_arc_forward_parking) {
     constexpr bool is_forward = true;
     pull_over_planners_.push_back(std::make_shared<GeometricPullOver>(
-      node, parameters, getGeometricPullOverParameters(), lane_departure_checker_,
+      node, parameters, getGeometricPullOverParameters(), lane_departure_checker,
       occupancy_grid_map_, is_forward));
   }
   if (parameters_.enable_arc_backward_parking) {
     constexpr bool is_forward = false;
     pull_over_planners_.push_back(std::make_shared<GeometricPullOver>(
-      node, parameters, getGeometricPullOverParameters(), lane_departure_checker_,
+      node, parameters, getGeometricPullOverParameters(), lane_departure_checker,
       occupancy_grid_map_, is_forward));
   }
 
@@ -184,7 +184,6 @@ void PullOverModule::onExit()
   steering_factor_interface_ptr_->clearSteeringFactors();
 
   // A child node must never return IDLE
-  // https://github.com/BehaviorTree/BehaviorTree.CPP/blob/master/include/behaviortree_cpp_v3/basic_types.h#L34
   current_state_ = BT::NodeStatus::SUCCESS;
 }
 
@@ -349,11 +348,8 @@ BehaviorModuleOutput PullOverModule::plan()
 
   status_.current_lanes = util::getExtendedCurrentLanes(planner_data_);
   status_.pull_over_lanes = pull_over_utils::getPullOverLanes(*(planner_data_->route_handler));
-  status_.lanes = lanelet::ConstLanelets{};
-  status_.lanes.insert(
-    status_.lanes.end(), status_.current_lanes.begin(), status_.current_lanes.end());
-  status_.lanes.insert(
-    status_.lanes.end(), status_.pull_over_lanes.begin(), status_.pull_over_lanes.end());
+  status_.lanes =
+    util::generateDrivableLanesWithShoulderLanes(status_.current_lanes, status_.pull_over_lanes);
 
   // Check if it needs to decide path
   if (status_.is_safe) {
@@ -446,7 +442,7 @@ BehaviorModuleOutput PullOverModule::plan()
       status_.lanes, parameters_.drivable_area_left_bound_offset,
       parameters_.drivable_area_right_bound_offset);
     path.drivable_area = util::generateDrivableArea(
-      path, status_.lanes, p.drivable_area_resolution, p.vehicle_length, planner_data_);
+      path, lane, p.drivable_area_resolution, p.vehicle_length, planner_data_);
   }
 
   BehaviorModuleOutput output;
@@ -613,8 +609,9 @@ PathWithLaneId PullOverModule::getReferencePath() const
     reference_path, parameters_.pull_over_velocity, search_start_pose,
     -calcMinimumShiftPathDistance(), parameters_.deceleration_interval);
 
+  const auto drivable_lanes = util::generateDrivableLanes(status_.current_lanes);
   const auto lanes = util::expandLanelets(
-    status_.current_lanes, parameters_.drivable_area_left_bound_offset,
+    drivable_lanes, parameters_.drivable_area_left_bound_offset,
     parameters_.drivable_area_right_bound_offset);
 
   reference_path.drivable_area = util::generateDrivableArea(
@@ -661,8 +658,9 @@ PathWithLaneId PullOverModule::generateStopPath() const
     }
   }
 
+  const auto drivable_lanes = util::generateDrivableLanes(status_.current_lanes);
   const auto lanes = util::expandLanelets(
-    status_.current_lanes, parameters_.drivable_area_left_bound_offset,
+    drivable_lanes, parameters_.drivable_area_left_bound_offset,
     parameters_.drivable_area_right_bound_offset);
 
   stop_path.drivable_area = util::generateDrivableArea(
