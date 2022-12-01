@@ -20,6 +20,7 @@
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
 #include <sensor_msgs/msg/imu.hpp>
+#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
 #include <tf2/transform_datatypes.h>
 #ifdef ROS_DISTRO_GALACTIC
@@ -31,23 +32,28 @@
 #include <tf2_ros/transform_listener.h>
 
 #include <string>
+#include <deque>
 
 class GyroOdometer : public rclcpp::Node
 {
+private:
+  using COV_IDX = tier4_autoware_utils::xyz_covariance_index::XYZ_COV_IDX;
+
 public:
   GyroOdometer();
   ~GyroOdometer();
 
 private:
-  void callbackTwistWithCovariance(
-    const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr twist_with_cov_msg_ptr);
+  void callbackVehicleTwist(
+    const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr vehicle_twist_msg_ptr);
   void callbackImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg_ptr);
   bool getTransform(
     const std::string & target_frame, const std::string & source_frame,
     const geometry_msgs::msg::TransformStamped::SharedPtr transform_stamped_ptr);
+  void publishData(const geometry_msgs::msg::TwistWithCovarianceStamped & twist_with_cov_raw);
 
   rclcpp::Subscription<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr
-    vehicle_twist_with_cov_sub_;
+    vehicle_twist_sub_;
   rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;
 
   rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr twist_raw_pub_;
@@ -64,8 +70,12 @@ private:
   std::string output_frame_;
   double message_timeout_sec_;
 
-  geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr twist_with_cov_msg_ptr_;
-  sensor_msgs::msg::Imu::ConstSharedPtr imu_msg_ptr_;
+  // geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr twist_with_cov_msg_ptr_;
+  // sensor_msgs::msg::Imu::ConstSharedPtr imu_msg_ptr_;
+  bool vehicle_twist_arrived_;
+  bool imu_arrived_;
+  std::deque<geometry_msgs::msg::TwistWithCovarianceStamped> vehicle_twist_queue_;
+  std::deque<sensor_msgs::msg::Imu> gyro_queue_;
 };
 
 #endif  // GYRO_ODOMETER__GYRO_ODOMETER_CORE_HPP_
