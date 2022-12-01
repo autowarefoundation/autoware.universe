@@ -107,24 +107,39 @@ inline sampler_common::Polygon createObjPolygon(
   return translate_obj_poly;
 }
 
-inline std::vector<sampler_common::Polygon> predictedObjectsToPolygons(
-  const autoware_auto_perception_msgs::msg::PredictedObjects & objects)
+inline sampler_common::Polygon predictedObjectToPolygon(
+  const autoware_auto_perception_msgs::msg::PredictedObject & object)
 {
-  std::vector<sampler_common::Polygon> polygons;
-  polygons.reserve(objects.objects.size());
-  for (const auto & object : objects.objects) {
-    auto & polygon = polygons.emplace_back();
-    if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::POLYGON) {
-      for (const auto & polygon_point : object.shape.footprint.points) {
-        polygon.outer().push_back({polygon_point.x, polygon_point.y});
-      }
-    } else {
-      polygon = createObjPolygon(
-        object.kinematics.initial_pose_with_covariance.pose, object.shape.dimensions);
+  sampler_common::Polygon polygon;
+  if (object.shape.type == autoware_auto_perception_msgs::msg::Shape::POLYGON) {
+    for (const auto & polygon_point : object.shape.footprint.points) {
+      polygon.outer().push_back({polygon_point.x, polygon_point.y});
     }
-    // TODO(Maxime CLEMENT): extend the polygon with its predicted path
+    polygon.outer().push_back(polygon.outer().front());
+  } else {
+    polygon = createObjPolygon(
+      object.kinematics.initial_pose_with_covariance.pose, object.shape.dimensions);
   }
-  return polygons;
+  return polygon;
+}
+
+inline std::vector<sampler_common::DynamicObstacle> predictedObjectToDynamicObstacles(
+  const autoware_auto_perception_msgs::msg::PredictedObject & object)
+{
+  std::vector<sampler_common::DynamicObstacle> dynamic_obstacles;
+  dynamic_obstacles.reserve(object.kinematics.predicted_paths.size());
+  const auto & dimensions = object.shape.dimensions;
+  // TODO(Maxime): select only the most likely predicted path ?
+  for (const auto & predicted_path : object.kinematics.predicted_paths) {
+    sampler_common::DynamicObstacle obs;
+    obs.time_step = predicted_path.time_step.sec + predicted_path.time_step.nanosec / 1e9;
+    obs.footprint_per_time.reserve(predicted_path.path.size());
+    for (const auto & pose : predicted_path.path) {
+      obs.footprint_per_time.push_back(createObjPolygon(pose, dimensions));
+    }
+    dynamic_obstacles.push_back(obs);
+  }
+  return dynamic_obstacles;
 }
 }  // namespace sampler_node::utils
 

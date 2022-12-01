@@ -30,7 +30,7 @@
 
 namespace sampler_common::constraints
 {
-inline bool satisfyMinMax(const std::vector<double> & values, const double min, const double max)
+bool satisfyMinMax(const std::vector<double> & values, const double min, const double max)
 {
   for (const auto value : values) {
     if (value < min || value > max) return false;
@@ -39,7 +39,7 @@ inline bool satisfyMinMax(const std::vector<double> & values, const double min, 
 }
 
 // TODO(Maxime CLEMENT): remove if unused
-inline bool collideWithPolygons(const Path & path, const std::vector<Polygon> & polygons)
+bool collideWithPolygons(const Path & path, const std::vector<Polygon> & polygons)
 {
   for (const auto & polygon : polygons) {
     for (const auto & point : path.points) {
@@ -52,7 +52,7 @@ inline bool collideWithPolygons(const Path & path, const std::vector<Polygon> & 
   return false;
 }
 
-inline bool collideWithPolygons(const Polygon & footprint, const MultiPolygon & polygons)
+bool collideWithPolygons(const Polygon & footprint, const MultiPolygon & polygons)
 {
   for (const auto & footprint_point : footprint.outer()) {
     if (boost::geometry::within(footprint_point, polygons)) {
@@ -62,7 +62,7 @@ inline bool collideWithPolygons(const Polygon & footprint, const MultiPolygon & 
   return false;
 }
 
-inline bool withinPolygons(const Path & path, const std::vector<Polygon> & polygons)
+bool withinPolygons(const Path & path, const std::vector<Polygon> & polygons)
 {
   for (const auto & point : path.points) {
     bool within_at_least_one_poly = false;
@@ -77,12 +77,24 @@ inline bool withinPolygons(const Path & path, const std::vector<Polygon> & polyg
   return true;
 }
 
-inline bool withinPolygons(const Polygon & footprint, const Polygon & polygons)
+bool withinPolygons(const Polygon & footprint, const Polygon & polygons)
 {
   return boost::geometry::within(footprint, polygons);
 }
 
-inline bool belowCollisionDistance(
+bool collideOverTime(const Trajectory & traj, const Constraints & constraints)
+{
+  for (const auto & obs : constraints.dynamic_obstacles) {
+    const auto t = traj.resampleTime(obs.time_step);
+    for (auto i = 0lu; i < std::min(t.points.size(), obs.footprint_per_time.size()); ++i) {
+      const auto ego_footprint = buildFootprintPolygon(t.points[i], t.yaws[i], constraints);
+      if (boost::geometry::intersects(ego_footprint, obs.footprint_per_time[i])) return true;
+    }
+  }
+  return false;
+}
+
+bool belowCollisionDistance(
   const Polygon & footprint, const MultiPolygon & polygons, const double min_dist)
 {
   for (const auto & polygon : polygons) {
@@ -113,6 +125,7 @@ void checkHardConstraints(Trajectory & traj, const Constraints & constraints)
 {
   Path & path = traj;
   checkHardConstraints(path, constraints);
+  if (collideOverTime(traj, constraints)) traj.constraint_results.collision = false;
   checkVelocityConstraints(traj, constraints);
 }
 
@@ -123,9 +136,13 @@ void checkVelocityConstraints(Trajectory & traj, const Constraints & constraints
         constraints.hard.max_velocity)) {
     traj.constraint_results.velocity = false;
   }
-  if (!satisfyMinMax(
-        traj.longitudinal_accelerations, constraints.hard.min_acceleration,
-        constraints.hard.max_acceleration)) {
+  if (
+    !satisfyMinMax(
+      traj.longitudinal_accelerations, constraints.hard.min_acceleration,
+      constraints.hard.max_acceleration) ||
+    !satisfyMinMax(
+      traj.lateral_accelerations, constraints.hard.min_acceleration,
+      constraints.hard.max_acceleration)) {
     traj.constraint_results.acceleration = false;
   }
 }

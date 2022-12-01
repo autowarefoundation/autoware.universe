@@ -65,7 +65,7 @@ public:
   void setConstraints(const sampler_common::Constraints & constraints)
   {
     this->constraints_ = constraints;
-    to_update_[Tab::inputs] = true;
+    to_update_[Tab::pruning] = true;
   }
   // void setParameters();
   void setOutputs(
@@ -119,6 +119,10 @@ public:
     }
     if (to_update_[Tab::frenet]) {
       to_update_[Tab::frenet] = false;
+    }
+    if (to_update_[Tab::pruning]) {
+      window_.plotObstacles(constraints_);
+      to_update_[Tab::pruning] = false;
     }
     window_.update();
   }

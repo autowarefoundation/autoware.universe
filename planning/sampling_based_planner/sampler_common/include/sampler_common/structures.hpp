@@ -208,7 +208,7 @@ struct Trajectory : Path
         traj.points[offset].x() - points.back().x(), traj.points[offset].y() - points.back().y());
       const auto v = std::max(
         std::max(longitudinal_velocities.back(), traj.longitudinal_velocities[offset]), 0.1);
-      time_offset = ds / v;
+      time_offset = std::abs(ds / v);
     }
     const auto ext = [&](auto & dest, const auto & first, const auto & second) {
       dest.insert(dest.end(), first.begin(), first.end());
@@ -253,13 +253,14 @@ struct Trajectory : Path
   [[nodiscard]] Trajectory resample(const double fixed_interval) const
   {
     Trajectory t;
-    if (lengths.empty() || fixed_interval <= 0.0) return t;
+    if (lengths.size() < 2 || fixed_interval <= 0.0) return *this;
 
-    const auto new_size = static_cast<size_t>(lengths.back() / fixed_interval + 1);
+    const auto new_size =
+      static_cast<size_t>((lengths.back() - lengths.front()) / fixed_interval) + 1;
     t.times.reserve(new_size);
     t.lengths.reserve(new_size);
     for (auto i = 0lu; i < new_size; ++i)
-      t.lengths.push_back(static_cast<double>(i) * fixed_interval);
+      t.lengths.push_back(lengths.front() + static_cast<double>(i) * fixed_interval);
     t.times = interpolation::lerp(lengths, times, t.lengths);
     std::vector<double> xs;
     std::vector<double> ys;
@@ -284,6 +285,47 @@ struct Trajectory : Path
     t.cost = cost;
     return t;
   }
+
+  [[nodiscard]] Trajectory resampleTime(const double fixed_interval) const
+  {
+    Trajectory t;
+    if (times.size() < 2 || fixed_interval <= 0.0) return *this;
+
+    const auto new_size = static_cast<size_t>((times.back() - times.front()) / fixed_interval) + 1;
+    t.times.reserve(new_size);
+    t.lengths.reserve(new_size);
+    for (auto i = 0lu; i < new_size; ++i)
+      t.times.push_back(times.front() + static_cast<double>(i) * fixed_interval);
+    t.lengths = interpolation::lerp(times, lengths, t.times);
+    std::vector<double> xs;
+    std::vector<double> ys;
+    xs.reserve(points.size());
+    ys.reserve(points.size());
+    for (const auto p : points) {
+      xs.push_back(p.x());
+      ys.push_back(p.y());
+    }
+    const auto new_xs = interpolation::lerp(times, xs, t.times);
+    const auto new_ys = interpolation::lerp(times, ys, t.times);
+    for (auto i = 0lu; i < new_xs.size(); ++i) t.points.emplace_back(new_xs[i], new_ys[i]);
+    t.curvatures = interpolation::lerp(times, curvatures, t.times);
+    t.jerks = interpolation::lerp(times, jerks, t.times);
+    t.yaws = interpolation::lerp(times, yaws, t.times);
+    t.longitudinal_velocities = interpolation::lerp(times, longitudinal_velocities, t.times);
+    t.longitudinal_accelerations = interpolation::lerp(times, longitudinal_accelerations, t.times);
+    t.lateral_velocities = interpolation::lerp(times, lateral_velocities, t.times);
+    t.lateral_accelerations = interpolation::lerp(times, lateral_accelerations, t.times);
+    t.duration = duration;
+    t.constraint_results = constraint_results;
+    t.cost = cost;
+    return t;
+  }
+};
+
+struct DynamicObstacle
+{
+  std::vector<Polygon> footprint_per_time;
+  double time_step;  // [s] time step between each footprint
 };
 
 struct Constraints
@@ -322,6 +364,7 @@ struct Constraints
   MultiPolygon obstacle_polygons;
   MultiPolygon drivable_polygons;
   MultiPolygon prefered_polygons;
+  std::vector<DynamicObstacle> dynamic_obstacles;
 };
 }  // namespace sampler_common
 

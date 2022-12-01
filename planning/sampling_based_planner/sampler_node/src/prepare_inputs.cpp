@@ -48,25 +48,21 @@ void prepareConstraints(
   [[maybe_unused]] const lanelet::Ids & prefered_ids,
   const nav_msgs::msg::OccupancyGrid & drivable_area)
 {
-  constraints.obstacle_polygons = sampler_common::MultiPolygon();
-  for (auto & dynamic_obstacle_polygon : utils::predictedObjectsToPolygons(predicted_objects)) {
-    boost::geometry::correct(dynamic_obstacle_polygon);
-    constraints.obstacle_polygons.push_back(dynamic_obstacle_polygon);
+  constraints.obstacle_polygons.clear();
+  constraints.dynamic_obstacles.clear();
+  for (const auto & object : predicted_objects.objects) {
+    // TODO(Maxime): parameter to differentiate static/dynamic obstacles ?
+    if (object.kinematics.initial_twist_with_covariance.twist.linear.x > 0.1) {
+      for (const auto & dyn_obs : utils::predictedObjectToDynamicObstacles(object))
+        constraints.dynamic_obstacles.push_back(dyn_obs);
+    } else {
+      constraints.obstacle_polygons.push_back(utils::predictedObjectToPolygon(object));
+    }
   }
-
   constraints.drivable_polygons = utils::occupancyGridToPolygons(drivable_area);
   constraints.prefered_polygons = constraints.drivable_polygons;
 }
 
-// TODO(Maxime CLEMENT):
-// - Implement some strategies so generate the target s and target velocity
-//  - determine if we should decel/accel/keep.
-//  - use some min_decel profile from the min_velocity points to determine the "latest time to
-//  slowdown" points.
-//    1 - find all pairs of min (t, v)
-//    2 - for each pair calculate the fn: t' -> v' where (v'-v)/(t-t') = max_decel * t
-//    3 - keep the (t, v)
-// - Implement a fn: target_s, current_vel, current_accel --> target_duration
 frenet_planner::SamplingParameters prepareSamplingParameters(
   const sampler_common::Configuration & initial_configuration,
   const autoware_auto_planning_msgs::msg::Path & path, const double base_length,

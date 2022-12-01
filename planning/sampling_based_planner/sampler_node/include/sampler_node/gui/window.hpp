@@ -56,6 +56,8 @@ private:
   //// Pruning tab
   QCPBars * pruning_nb_violations_bars_;
   QCPItemStraightLine * pruning_nb_violations_max_line_;
+  //// Obstacles tab
+  std::vector<QCPCurve *> obstacle_polygons_;
   // Cached data
   std::vector<sampler_common::Trajectory> candidates_;
 
@@ -78,6 +80,7 @@ public:
   void fillCandidatesTable(const std::vector<sampler_common::Trajectory> & candidates);
   void plotNbViolatedConstraints(const std::vector<sampler_common::Trajectory> & candidates);
   void plotCandidate(const sampler_common::Trajectory & trajectory);
+  void plotObstacles(const sampler_common::Constraints & constraints);
 
 private slots:
 };

@@ -348,4 +348,32 @@ void MainWindow::plotCandidate(const sampler_common::Trajectory & trajectory)
   ui_->cand_jerk->replot();
 }
 
+void MainWindow::plotObstacles(const sampler_common::Constraints & constraints)
+{
+  for (auto plottable : obstacle_polygons_) ui_->obstacles_tab_plot->removePlottable(plottable);
+  obstacle_polygons_.clear();
+  QVector<double> xs;
+  QVector<double> ys;
+  auto * graph = ui_->obstacles_tab_plot;
+  for (const auto & obs : constraints.dynamic_obstacles) {
+    for (const auto & poly : obs.footprint_per_time) {
+      xs.clear();
+      ys.clear();
+      xs.reserve(static_cast<int>(poly.outer().size()));
+      ys.reserve(static_cast<int>(poly.outer().size()));
+      for (const auto & p : poly.outer()) {
+        xs.push_back(p.x());
+        ys.push_back(p.y());
+      }
+      auto * curve = new QCPCurve(graph->xAxis, graph->yAxis);
+      curve->setPen(Qt::PenStyle::NoPen);
+      curve->setBrush(QBrush(QColor(0, 0, 0, 50)));
+      curve->setData(xs, ys);
+      obstacle_polygons_.push_back(curve);
+    }
+  }
+  ui_->obstacles_tab_plot->rescaleAxes();
+  ui_->obstacles_tab_plot->replot();
+}
+
 }  // namespace sampler_node::gui

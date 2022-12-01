@@ -320,6 +320,7 @@ void TrajectorySamplerNode::pathCallback(
   prepareConstraints(
     params_.constraints, *in_objects_ptr_, *lanelet_map_ptr_, drivable_ids_, prefered_ids_,
     msg->drivable_area);
+  gui_.setConstraints(params_.constraints);
 
   auto trajectories = generateCandidateTrajectories(
     planning_configuration, prev_traj_, path_spline, *msg, gui_, params_);

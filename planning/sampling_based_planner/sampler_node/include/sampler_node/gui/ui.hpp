@@ -74,6 +74,9 @@ public:
   QWidget * pruning_tab;
   QCustomPlot * pruning_tab_plot;
   QVBoxLayout * pruning_tab_layout;
+  QWidget * obstacles_tab;
+  QCustomPlot * obstacles_tab_plot;
+  QVBoxLayout * obstacles_tab_layout;
   QWidget * selection_tab;
   QWidget * perf_tab;
   QMenuBar * menubar;
@@ -213,9 +216,18 @@ public:
     pruning_tab_layout = new QVBoxLayout(pruning_tab);
     pruning_tab_plot = new QCustomPlot(pruning_tab);
     pruning_tab_layout->addWidget(pruning_tab_plot);
+
+    obstacles_tab = new QWidget();
+    obstacles_tab->setObjectName(QString::fromUtf8("obstacles_tab"));
+    tabWidget->addTab(obstacles_tab, QString());
+    obstacles_tab_layout = new QVBoxLayout(obstacles_tab);
+    obstacles_tab_plot = new QCustomPlot(obstacles_tab);
+    obstacles_tab_layout->addWidget(obstacles_tab_plot);
+
     selection_tab = new QWidget();
     selection_tab->setObjectName(QString::fromUtf8("selection_tab"));
     tabWidget->addTab(selection_tab, QString());
+
     perf_tab = new QWidget();
     perf_tab->setObjectName(QString::fromUtf8("perf_tab"));
     tabWidget->addTab(perf_tab, QString());
@@ -235,7 +247,7 @@ public:
 
     retranslateUi(MainWindow);
 
-    tabWidget->setCurrentIndex(2);
+    tabWidget->setCurrentIndex(0);
 
     QMetaObject::connectSlotsByName(MainWindow);
   }  // setupUi
@@ -259,6 +271,9 @@ public:
       QApplication::translate("MainWindow", "Bezier Sampler", nullptr));
     tabWidget->setTabText(
       tabWidget->indexOf(pruning_tab), QApplication::translate("MainWindow", "Pruning", nullptr));
+    tabWidget->setTabText(
+      tabWidget->indexOf(obstacles_tab),
+      QApplication::translate("MainWindow", "Obstacles", nullptr));
     tabWidget->setTabText(
       tabWidget->indexOf(selection_tab),
       QApplication::translate("MainWindow", "Selection", nullptr));

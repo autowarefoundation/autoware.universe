@@ -21,6 +21,7 @@
 
 namespace sampler_common::constraints
 {
+
 /// @brief Check if the path satisfies the hard constraints
 void checkHardConstraints(Path & path, const Constraints & constraints);
 /// @brief Check if the trajectory satisfies the hard constraints
