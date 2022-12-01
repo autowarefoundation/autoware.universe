@@ -237,7 +237,7 @@ LaneChangePaths getLaneChangePaths(
 
     const PathWithLaneId target_lane_reference_path = getReferencePathFromTargetLane(
       route_handler, target_lanelets, lane_changing_start_pose, prepare_distance,
-      lane_changing_distance, forward_path_length);
+      lane_changing_distance, forward_path_length, lane_changing_speed);
 
     const ShiftLine shift_line = getLaneChangeShiftLine(
       prepare_segment_reference, lane_changing_segment_reference, target_lanelets,
@@ -490,8 +490,8 @@ bool isLaneChangePathSafe(
 
 PathWithLaneId getReferencePathFromTargetLane(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & target_lanes,
-  const Pose & lane_changing_start_pose, const double & prepare_distance,
-  const double & lane_changing_distance, const double & forward_path_length)
+  const Pose & lane_changing_start_pose, const double prepare_distance,
+  const double lane_changing_distance, const double forward_path_length, const double current_speed)
 {
   const ArcCoordinates lane_change_start_arc_position =
     lanelet::utils::getArcCoordinates(target_lanes, lane_changing_start_pose);
@@ -525,38 +525,32 @@ PathWithLaneId getReferencePathFromTargetLane(
   }
 
   const auto min_speed = 1.0;
-  const auto deceleration = -1.0;
   const auto dt = 0.5;
 
   double sum_interval{0.0};
-  double prev_speed = 0.0;
-  double sum_duration = dt;
+  double prev_speed = current_speed;
   size_t ref_point_idx = 0;
   const auto path = util::convertToGeometryPointArray(lane_changing_reference_path);
 
   while (sum_interval < lane_changing_distance) {
-    const auto current_speed = prev_speed + deceleration * sum_duration;
-
     const auto traveled_dist = std::invoke([&]() {
       constexpr auto max_interval_resolution = 1.0;
-      double dist = (current_speed < min_speed)
-                      ? (min_speed * dt)
-                      : (current_speed * dt + 0.5 * deceleration * std::pow(dt, 2));
-      return std::max(dist, max_interval_resolution);
+      const double dist = (prev_speed < min_speed) ? (min_speed * dt) : (prev_speed * dt);
+      return std::min(dist, max_interval_resolution);
     });
 
     sum_interval += traveled_dist;
     const auto lerped_pose = util::lerpByLength(lane_changing_reference_path.points, sum_interval);
+    std::cerr << tier4_autoware_utils::calcDistance2d(lerped_pose, interpolated_path.points.back())
+              << '\n';
 
-    if (sum_interval > sum_segments.at(ref_point_idx) && ref_point_idx < sum_segments.size()) {
+    if (sum_interval > sum_segments.at(ref_point_idx)) {
       ++ref_point_idx;
     }
+
     PathPointWithLaneId pt = ref_points.at(ref_point_idx);
     pt.point.pose.position = lerped_pose;
     interpolated_path.points.push_back(pt);
-
-    prev_speed = current_speed;
-    sum_duration += dt;
   }
 
   PathWithLaneId path_back;
