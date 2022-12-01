@@ -502,13 +502,12 @@ PathWithLaneId getReferencePathFromTargetLane(
       lanelet::utils::getArcCoordinates(target_lanes, route_handler.getGoalPose());
     s_end = std::min(s_end, goal_arc_coordinates.length);
   }
-  const auto lane_changing_reference_path = route_handler.getCenterLinePath(target_lanes, s_start, s_end);
+  const auto lane_changing_reference_path =
+    route_handler.getCenterLinePath(target_lanes, s_start, s_end);
 
   const auto & ref_points = lane_changing_reference_path.points;
 
   PathPointWithLaneId ref_back_pose;
-  PathWithLaneId interpolated_path;
-  interpolated_path.points.push_back(ref_points.front());
   std::vector<double> sum_segments{0.0};
 
   for (size_t idx = 1; idx < ref_points.size() - 1; ++idx) {
@@ -528,28 +527,26 @@ PathWithLaneId getReferencePathFromTargetLane(
   const auto dt = 0.5;
 
   double sum_interval{0.0};
-  double prev_speed = current_speed;
   size_t ref_point_idx = 0;
   const auto path = util::convertToGeometryPointArray(lane_changing_reference_path);
+
+  PathWithLaneId interpolated_path;
+  interpolated_path.points.push_back(ref_points.front());
 
   while (sum_interval < lane_changing_distance) {
     const auto traveled_dist = std::invoke([&]() {
       constexpr auto max_interval_resolution = 1.0;
-      const double dist = (prev_speed < min_speed) ? (min_speed * dt) : (prev_speed * dt);
+      const double dist = (current_speed < min_speed) ? (min_speed * dt) : (current_speed * dt);
       return std::min(dist, max_interval_resolution);
     });
 
     sum_interval += traveled_dist;
-    const auto lerped_pose = util::lerpByLength(lane_changing_reference_path.points, sum_interval);
-    std::cerr << tier4_autoware_utils::calcDistance2d(lerped_pose, interpolated_path.points.back())
-              << '\n';
-
     if (sum_interval > sum_segments.at(ref_point_idx)) {
       ++ref_point_idx;
     }
 
     PathPointWithLaneId pt = ref_points.at(ref_point_idx);
-    pt.point.pose.position = lerped_pose;
+    pt.point.pose.position = util::lerpByLength(lane_changing_reference_path.points, sum_interval);
     interpolated_path.points.push_back(pt);
   }
 
