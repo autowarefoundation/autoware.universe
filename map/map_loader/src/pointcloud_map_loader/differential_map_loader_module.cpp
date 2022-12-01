@@ -19,9 +19,10 @@ DifferentialMapLoaderModule::DifferentialMapLoaderModule(
 : logger_(node->get_logger()), all_pcd_file_metadata_dict_(pcd_file_metadata_dict)
 {
   get_differential_pcd_maps_service_ = node->create_service<GetDifferentialPointCloudMap>(
-    "service/get_differential_pcd_map", std::bind(
-                                     &DifferentialMapLoaderModule::onServiceGetDifferentialPointCloudMap,
-                                     this, std::placeholders::_1, std::placeholders::_2));
+    "service/get_differential_pcd_map",
+    std::bind(
+      &DifferentialMapLoaderModule::onServiceGetDifferentialPointCloudMap, this,
+      std::placeholders::_1, std::placeholders::_2));
 }
 
 void DifferentialMapLoaderModule::differentialAreaLoad(
@@ -69,7 +70,8 @@ bool DifferentialMapLoaderModule::onServiceGetDifferentialPointCloudMap(
   return true;
 }
 
-autoware_map_msgs::msg::PointCloudMapCellWithID DifferentialMapLoaderModule::loadPointCloudMapCellWithID(
+autoware_map_msgs::msg::PointCloudMapCellWithID
+DifferentialMapLoaderModule::loadPointCloudMapCellWithID(
   const std::string path, const std::string map_id) const
 {
   sensor_msgs::msg::PointCloud2 pcd;

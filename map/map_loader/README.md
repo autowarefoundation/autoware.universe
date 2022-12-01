@@ -33,10 +33,10 @@ Please see [the description of `GetDifferentialPointCloudMap.srv`](https://githu
 
 ### Parameters
 
-| Name                | Type | Description                                    | Default value |
-| :------------------ | :--- | :--------------------------------------------- | :------------ |
-| enable_whole_load   | bool | A flag to enable raw pointcloud map publishing | true          |
-| enable_partial_load | bool | A flag to enable partial pointcloud map server | true          |
+| Name                     | Type | Description                                         | Default value |
+| :----------------------- | :--- | :-------------------------------------------------- | :------------ |
+| enable_whole_load        | bool | A flag to enable raw pointcloud map publishing      | true          |
+| enable_partial_load      | bool | A flag to enable partial pointcloud map server      | true          |
 | enable_differential_load | bool | A flag to enable differential pointcloud map server | true          |
 
 ### Interfaces
