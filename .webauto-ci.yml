@@ -7,7 +7,7 @@ version: 2
 artifacts:
   - name: main
     build:
-      type: tier4/iv/main/amd64/v2
+      type: tier4/universe/main/amd64/v1
 
 simulations:
   - name: planning_sim_v2
@@ -38,3 +38,10 @@ simulations:
         type: simulator/standard1/amd64/medium
         cpu: 8
         memory: 16384
+
+release:
+  components:
+    - name: autoware
+      deployment:
+        type: rootfs
+        artifact: main

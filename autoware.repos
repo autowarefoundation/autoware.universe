@@ -59,11 +59,6 @@ repositories:
     url: git@github.com:tier4/autoware_ecu_system_setup.git
     version: main
   # vendor
-  # After https://github.com/ANYbotics/grid_map/pull/323 is merged, use upstream.
-  vendor/grid_map:
-    type: git
-    url: https://github.com/tier4/grid_map.git
-    version: 657cc055eb90a042057738a85a5651c03e42b1bb
   vendor/pacmod_interface:
     type: git
     url: https://github.com/tier4/pacmod_interface.git
@@ -79,7 +74,7 @@ repositories:
   vendor/ublox:
     type: git
     url: https://github.com/tier4/ublox.git
-    version: ba21bbbad702e99074f706a7b868db79968e1dfd
+    version: tier4/rolling
   vendor/lidar-driver:
     type: git
     url: git@github.com:tier4/lidar_driver.git
@@ -104,10 +99,6 @@ repositories:
     type: git
     url: https://github.com/tier4/ars408_driver.git
     version: main
-  vendor/diagnostics:
-    type: git
-    url: https://github.com/tier4/diagnostics.git
-    version: da6cdbe674dd7bf1e71ee6fb73825e3e43644f0c
   vendor/spinnaker:
     type: git
     url: https://github.com/tier4/spinnaker.git
