@@ -212,14 +212,6 @@ void PathShifter::applySplineShifter(ShiftedPath * shifted_path, const bool offs
 
     // TODO(Watanabe) write docs.
     // These points are defined to achieve the constant-jerk shifting (see the header description).
-
-    // const std::vector<double> base_distance = {
-    //   0.0, shifting_arclength / 4.0, shifting_arclength * 3.0 / 4.0, shifting_arclength};
-    // const auto base_length =
-    //   offset_back
-    //     ? std::vector<double>{0.0, delta_shift / 12.0, delta_shift * 11.0 / 12.0, delta_shift}
-    //     : std::vector<double>{delta_shift, delta_shift * 11.0 / 12.0, delta_shift / 12.0, 0.0};
-
     const auto [base_distance, base_length] =
       calcBaseLengths(shifting_arclength, delta_shift, offset_back);
 
