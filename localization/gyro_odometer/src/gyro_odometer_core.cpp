@@ -72,12 +72,12 @@ geometry_msgs::msg::TwistWithCovarianceStamped concatGyroAndOdometer(
   gyro_covariance_original.z /= gyro_queue.size();
 
   geometry_msgs::msg::TwistWithCovarianceStamped twist_with_cov;
-  const rclcpp::Time latest_vehicle_twist_stamp = vehicle_twist_queue.back().header.stamp;
-  const rclcpp::Time latest_imu_stamp = gyro_queue.back().header.stamp;
+  const auto latest_vehicle_twist_stamp = rclcpp::Time(vehicle_twist_queue.back().header.stamp);
+  const auto latest_imu_stamp = rclcpp::Time(gyro_queue.back().header.stamp);
   if (latest_vehicle_twist_stamp < latest_imu_stamp) {
-    twist_with_cov.header = latest_imu_stamp;
+    twist_with_cov.header.stamp = latest_imu_stamp;
   } else {
-    twist_with_cov.header = latest_vehicle_twist_stamp;
+    twist_with_cov.header.stamp = latest_vehicle_twist_stamp;
   }
   twist_with_cov.twist.twist.linear.x = vx_mean;
   twist_with_cov.twist.twist.angular = gyro_mean;
