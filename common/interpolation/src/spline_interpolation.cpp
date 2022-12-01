@@ -229,7 +229,7 @@ std::vector<double> SplineInterpolation::getSplineInterpolatedValues(
   const std::vector<double> & query_keys) const
 {
   // throw exceptions for invalid arguments
-  interpolation_utils::validateKeys(base_keys_, query_keys);
+  const auto validated_query_keys = interpolation_utils::validateKeys(base_keys_, query_keys);
 
   const auto & a = multi_spline_coef_.a;
   const auto & b = multi_spline_coef_.b;
@@ -238,7 +238,7 @@ std::vector<double> SplineInterpolation::getSplineInterpolatedValues(
 
   std::vector<double> res;
   size_t j = 0;
-  for (const auto & query_key : query_keys) {
+  for (const auto & query_key : validated_query_keys) {
     while (base_keys_.at(j + 1) < query_key) {
       ++j;
     }
@@ -279,7 +279,7 @@ std::vector<double> SplineInterpolation::getSplineInterpolatedDiffValues(
   const std::vector<double> & query_keys) const
 {
   // throw exceptions for invalid arguments
-  interpolation_utils::validateKeys(base_keys_, query_keys);
+  const auto validated_query_keys = interpolation_utils::validateKeys(base_keys_, query_keys);
 
   const auto & a = multi_spline_coef_.a;
   const auto & b = multi_spline_coef_.b;
@@ -287,7 +287,7 @@ std::vector<double> SplineInterpolation::getSplineInterpolatedDiffValues(
 
   std::vector<double> res;
   size_t j = 0;
-  for (const auto & query_key : query_keys) {
+  for (const auto & query_key : validated_query_keys) {
     while (base_keys_.at(j + 1) < query_key) {
       ++j;
     }
