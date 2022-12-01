@@ -50,7 +50,6 @@ LaneChangeModule::LaneChangeModule(
   uuid_right_{generateUUID()}
 {
   steering_factor_interface_ptr_ = std::make_unique<SteeringFactorInterface>(&node, "lane_change");
-  lane_departure_checker_.setVehicleInfo(vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo());
 }
 
 BehaviorModuleOutput LaneChangeModule::run()
@@ -148,16 +147,9 @@ BehaviorModuleOutput LaneChangeModule::plan()
   auto path = util::resamplePathWithSpline(status_.lane_change_path.path, resample_interval);
 
   // Validate path
-  {
-    auto clipped_path = path;
-    const auto & p = planner_data_->parameters;
-    const size_t current_seg_idx = findEgoSegmentIndex(clipped_path.points);
-    util::clipPathLength(clipped_path, current_seg_idx, p.forward_path_length, 0.0);
-
-    if (!isValidPath(clipped_path)) {
-      status_.is_safe = false;
-      return BehaviorModuleOutput{};
-    }
+  if (!isValidPath(path)) {
+    status_.is_safe = false;
+    return BehaviorModuleOutput{};
   }
 
   generateExtendedDrivableArea(path);
@@ -397,9 +389,20 @@ bool LaneChangeModule::isValidPath(const PathWithLaneId & path) const
     drivable_lanes, parameters_->drivable_area_left_bound_offset,
     parameters_->drivable_area_right_bound_offset);
   const auto lanelets = util::transformToLanelets(expanded_lanes);
-  if (lane_departure_checker_.checkPathWillLeaveLane(lanelets, path)) {
-    RCLCPP_WARN_STREAM_THROTTLE(getLogger(), *clock_, 1000, "path is out of lanes");
-    return false;
+
+  // check path points are in any lanelets
+  for (const auto & point : path.points) {
+    bool is_in_lanelet = false;
+    for (const auto & lanelet : lanelets) {
+      if (lanelet::utils::isInLanelet(point.point.pose, lanelet)) {
+        is_in_lanelet = true;
+        break;
+      }
+    }
+    if (!is_in_lanelet) {
+      RCLCPP_WARN_STREAM_THROTTLE(getLogger(), *clock_, 1000, "path is out of lanes");
+      return false;
+    }
   }
 
   // check relative angle
