@@ -234,7 +234,7 @@ bool DefaultPlanner::check_goal_footprint(
     return true;
   }
   points_intersection.clear();
-  
+
   // check if goal footprint is in between many lanelets
   for (const auto & next_lane : routing_graph_ptr_->following(current_lanelet)) {
     next_lane_length += lanelet::utils::getLaneletLength2d(next_lane);
@@ -254,12 +254,12 @@ bool DefaultPlanner::check_goal_footprint(
       points_intersection.clear();
     } else {  // if next lanelet length shorter than vehicle longitudinal offset -> recursive call
       if (!check_goal_footprint(next_lane, combined_lanelets, goal_footprint, next_lane_length)) {
+        next_lane_length -= lanelet::utils::getLaneletLength2d(next_lane);
         continue;
       } else {
         return true;
       }
     }
-    next_lane_length = 0.0;
   }
   return false;
 }
@@ -279,12 +279,11 @@ bool DefaultPlanner::is_goal_valid(
   pub_goal_footprint_marker_->publish(visualize_debug_footprint(goal_footprint));
   const auto polygon_footprint = convert_linear_ring_to_polygon(goal_footprint);
 
-
   double next_lane_length = 0.0;
   // combine calculated route lanelets
   lanelet::ConstLanelet combined_prev_lanelet = combine_lanelets(path_lanelets);
 
-  // check if goal footprint exceeds lane and isn't in parking_lot
+  // check if goal footprint exceeds lane when the goal isn't in parking_lot
   if (
     !check_goal_footprint(
       closest_lanelet, combined_prev_lanelet, polygon_footprint, next_lane_length) &&
@@ -356,14 +355,17 @@ PlannerPlugin::LaneletRoute DefaultPlanner::plan(const RoutePoints & points)
   LaneletRoute route_msg;
   RouteSections route_sections;
 
-  lanelet::ConstLanelets path_lanelets;
+  lanelet::ConstLanelets all_route_lanelets;
   for (std::size_t i = 1; i < points.size(); i++) {
     const auto start_check_point = points.at(i - 1);
     const auto goal_check_point = points.at(i);
-    path_lanelets.clear();
+    lanelet::ConstLanelets path_lanelets;
     if (!route_handler_.planPathLaneletsBetweenCheckpoints(
           start_check_point, goal_check_point, &path_lanelets)) {
       return route_msg;
+    }
+    for (const auto & lane : path_lanelets) {
+      all_route_lanelets.push_back(lane);
     }
     // create local route sections
     route_handler_.setRouteLanelets(path_lanelets);
@@ -371,7 +373,7 @@ PlannerPlugin::LaneletRoute DefaultPlanner::plan(const RoutePoints & points)
     route_sections = combine_consecutive_route_sections(route_sections, local_route_sections);
   }
 
-  if (!is_goal_valid(points.back(), path_lanelets)) {
+  if (!is_goal_valid(points.back(), all_route_lanelets)) {
     RCLCPP_WARN(logger, "Goal is not valid! Please check position and angle of goal_pose");
     return route_msg;
   }
