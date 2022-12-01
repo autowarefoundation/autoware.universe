@@ -59,7 +59,7 @@ inline std::vector<double> solveTridiagonalMatrixAlgorithm(const TDMACoef & tdma
     q.push_back(d[0] / b[0]);
 
     for (size_t i = 1; i < num_row; ++i) {
-      const double den = b[i] + a[i - 1] * p[i - 1];
+      double const den = b[i] + a[i - 1] * p[i - 1];
       p.push_back(-c[i - 1] / den);
       q.push_back((d[i] - a[i - 1] * q[i - 1]) / den);
     }
@@ -103,7 +103,7 @@ std::vector<double> splineByAkima(
   // calculate m
   std::vector<double> m_values;
   for (size_t i = 0; i < base_keys.size() - 1; ++i) {
-    const double m_val =
+    double const m_val =
       (base_values.at(i + 1) - base_values.at(i)) / (base_keys.at(i + 1) - base_keys.at(i));
     m_values.push_back(m_val);
   }
@@ -120,20 +120,20 @@ std::vector<double> splineByAkima(
       continue;
     }
     if (i == 1 || i == base_keys.size() - 2) {
-      const double s_val = (m_values.at(i - 1) + m_values.at(i)) / 2.0;
+      double const s_val = (m_values.at(i - 1) + m_values.at(i)) / 2.0;
       s_values.push_back(s_val);
       continue;
     }
 
-    const double denom = std::abs(m_values.at(i + 1) - m_values.at(i)) +
+    double const denom = std::abs(m_values.at(i + 1) - m_values.at(i)) +
                          std::abs(m_values.at(i - 1) - m_values.at(i - 2));
     if (std::abs(denom) < epsilon) {
-      const double s_val = (m_values.at(i - 1) + m_values.at(i)) / 2.0;
+      double const s_val = (m_values.at(i - 1) + m_values.at(i)) / 2.0;
       s_values.push_back(s_val);
       continue;
     }
 
-    const double s_val = (std::abs(m_values.at(i + 1) - m_values.at(i)) * m_values.at(i - 1) +
+    double const s_val = (std::abs(m_values.at(i + 1) - m_values.at(i)) * m_values.at(i - 1) +
                           std::abs(m_values.at(i - 1) - m_values.at(i - 2)) * m_values.at(i)) /
                          denom;
     s_values.push_back(s_val);
@@ -165,7 +165,7 @@ std::vector<double> splineByAkima(
       ++j;
     }
 
-    const double ds = query_key - base_keys.at(j);
+    double const ds = query_key - base_keys.at(j);
     res.push_back(d.at(j) + (c.at(j) + (b.at(j) + a.at(j) * ds) * ds) * ds);
   }
   return res;
@@ -243,14 +243,14 @@ std::vector<double> SplineInterpolation::getSplineInterpolatedValues(
       ++j;
     }
 
-    const double & ds = query_key - base_keys_.at(j);
+    double const & ds = query_key - base_keys_.at(j);
     res.push_back(d.at(j) + (c.at(j) + (b.at(j) + a.at(j) * ds) * ds) * ds);
   }
 
   return res;
 }
 
-double SplineInterpolation::interpolatePoint(const double & query_key) const
+double SplineInterpolation::interpolatePoint(double const & query_key) const
 {
   if (base_keys_.empty()) {
     throw std::domain_error("The base keys are not available, please initialize the keys.");
@@ -262,15 +262,15 @@ double SplineInterpolation::interpolatePoint(const double & query_key) const
   const auto & d = multi_spline_coef_.d;
 
   // Binary search the minimum element in the base_key in such way that : query_key <= base_key[i]
-  auto const lower_bound_it = std::lower_bound(base_keys_.cbegin(), base_keys_.cend(), query_key);
+  const auto lower_bound_it = std::lower_bound(base_keys_.cbegin(), base_keys_.cend(), query_key);
 
   // k1 is the index query_key <=base_keys[k1]
-  auto const & k1 = std::distance(base_keys_.cbegin(), lower_bound_it);
-  auto const & k0 = k1 == 0 ? k1 : k1 - 1;  // if upper bound coincides with the first element
+  const auto & k1 = std::distance(base_keys_.cbegin(), lower_bound_it);
+  const auto & k0 = k1 == 0 ? k1 : k1 - 1;  // if upper bound coincides with the first element
 
   // Get the interpolated value
-  const double ds = query_key - base_keys_.at(k0);
-  auto const & query_value = d.at(k0) + (c.at(k0) + (b.at(k0) + a.at(k0) * ds) * ds) * ds;
+  double const ds = query_key - base_keys_.at(k0);
+  const auto & query_value = d.at(k0) + (c.at(k0) + (b.at(k0) + a.at(k0) * ds) * ds) * ds;
 
   return query_value;
 }
@@ -292,7 +292,7 @@ std::vector<double> SplineInterpolation::getSplineInterpolatedDiffValues(
       ++j;
     }
 
-    const double & ds = query_key - base_keys_.at(j);
+    double const & ds = query_key - base_keys_.at(j);
     res.push_back(c.at(j) + (2.0 * b.at(j) + 3.0 * a.at(j) * ds) * ds);
   }
 
