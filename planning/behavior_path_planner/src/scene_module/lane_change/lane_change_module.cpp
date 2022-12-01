@@ -146,12 +146,10 @@ BehaviorModuleOutput LaneChangeModule::plan()
   constexpr double resample_interval{1.0};
   auto path = util::resamplePathWithSpline(status_.lane_change_path.path, resample_interval);
 
-  // Validate path
   if (!isValidPath(path)) {
     status_.is_safe = false;
     return BehaviorModuleOutput{};
   }
-
   generateExtendedDrivableArea(path);
 
   if (isAbortConditionSatisfied()) {
