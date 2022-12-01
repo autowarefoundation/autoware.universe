@@ -135,7 +135,7 @@ TEST(spline_interpolation, spline_single_point)
     const auto query_values = spline.getSplineInterpolatedValues(query_keys);
 
     for (size_t i = 0; i < query_values.size(); ++i) {
-      auto query_value_i = spline.interpolatePoint(query_keys.at(i));
+      auto query_value_i = spline.getSplineInterpolatedValue(query_keys.at(i));
       EXPECT_NEAR(query_values.at(i), query_value_i, epsilon);
       std::cout << query_values.at(i) << ", " << query_value_i << "\n";
     }
@@ -152,7 +152,7 @@ TEST(spline_interpolation, spline_single_point)
     const auto query_values = spline.getSplineInterpolatedValues(query_keys);
 
     for (size_t i = 0; i < query_values.size(); ++i) {
-      auto query_value_i = spline.interpolatePoint(query_keys.at(i));
+      auto query_value_i = spline.getSplineInterpolatedValue(query_keys.at(i));
       EXPECT_NEAR(query_values.at(i), query_value_i, epsilon);
       std::cout << query_values.at(i) << ", " << query_value_i << "\n";
     }
@@ -169,7 +169,7 @@ TEST(spline_interpolation, spline_single_point)
     const auto query_values = spline.getSplineInterpolatedValues(query_keys);
 
     for (size_t i = 0; i < query_values.size(); ++i) {
-      auto query_value_i = spline.interpolatePoint(query_keys.at(i));
+      auto query_value_i = spline.getSplineInterpolatedValue(query_keys.at(i));
       EXPECT_NEAR(query_values.at(i), query_value_i, epsilon);
       std::cout << query_values.at(i) << ", " << query_value_i << "\n";
     }
@@ -187,7 +187,7 @@ TEST(spline_interpolation, spline_single_point)
     const auto query_values = spline.getSplineInterpolatedValues(query_keys);
 
     for (size_t i = 0; i < query_values.size(); ++i) {
-      auto query_value_i = spline.interpolatePoint(query_keys.at(i));
+      auto query_value_i = spline.getSplineInterpolatedValue(query_keys.at(i));
       EXPECT_NEAR(query_value_i, ans.at(i), epsilon);
       std::cout << ans.at(i) << ", " << query_value_i << "\n";
     }
@@ -205,7 +205,7 @@ TEST(spline_interpolation, spline_single_point)
     const auto query_values = spline.getSplineInterpolatedValues(query_keys);
 
     for (size_t i = 0; i < query_values.size(); ++i) {
-      auto query_value_i = spline.interpolatePoint(query_keys.at(i));
+      auto query_value_i = spline.getSplineInterpolatedValue(query_keys.at(i));
       EXPECT_NEAR(query_value_i, ans.at(i), epsilon);
     }
   }
@@ -222,7 +222,7 @@ TEST(spline_interpolation, spline_single_point)
     const auto query_values = spline.getSplineInterpolatedValues(query_keys);
 
     for (size_t i = 0; i < query_values.size(); ++i) {
-      auto query_value_i = spline.interpolatePoint(query_keys.at(i));
+      auto query_value_i = spline.getSplineInterpolatedValue(query_keys.at(i));
       EXPECT_NEAR(query_value_i, ans.at(i), epsilon);
     }
   }
@@ -239,7 +239,7 @@ TEST(spline_interpolation, spline_single_point)
     const auto query_values = spline.getSplineInterpolatedValues(query_keys);
 
     for (size_t i = 0; i < query_values.size(); ++i) {
-      auto query_value_i = spline.interpolatePoint(query_keys.at(i));
+      auto query_value_i = spline.getSplineInterpolatedValue(query_keys.at(i));
       EXPECT_NEAR(query_value_i, ans.at(i), epsilon);
     }
   }
@@ -256,7 +256,7 @@ TEST(spline_interpolation, spline_single_point)
     const auto query_values = spline.getSplineInterpolatedValues(query_keys);
 
     for (size_t i = 0; i < query_values.size(); ++i) {
-      auto query_value_i = spline.interpolatePoint(query_keys.at(i));
+      auto query_value_i = spline.getSplineInterpolatedValue(query_keys.at(i));
       EXPECT_NEAR(query_value_i, ans.at(i), epsilon);
     }
   }

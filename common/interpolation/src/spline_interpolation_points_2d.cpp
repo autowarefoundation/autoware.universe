@@ -127,8 +127,8 @@ geometry_msgs::msg::Point SplineInterpolationPoints2d::getSplineInterpolatedPoin
     whole_s = base_s_vec_.back();
   }
 
-  const double x = spline_x_.getSplineInterpolatedValues({whole_s}).at(0);
-  const double y = spline_y_.getSplineInterpolatedValues({whole_s}).at(0);
+  const double x = spline_x_.getSplineInterpolatedValue(whole_s);
+  const double y = spline_y_.getSplineInterpolatedValue(whole_s);
 
   geometry_msgs::msg::Point geom_point;
   geom_point.x = x;
@@ -150,8 +150,8 @@ double SplineInterpolationPoints2d::getSplineInterpolatedYaw(const size_t idx, c
     whole_s = base_s_vec_.back();
   }
 
-  const double diff_x = spline_x_.getSplineInterpolatedDiffValues({whole_s}).at(0);
-  const double diff_y = spline_y_.getSplineInterpolatedDiffValues({whole_s}).at(0);
+  const double diff_x = spline_x_.getSplineInterpolatedDiffValues({whole_s}).front();
+  const double diff_y = spline_y_.getSplineInterpolatedDiffValues({whole_s}).front();
 
   return std::atan2(diff_y, diff_x);
 }

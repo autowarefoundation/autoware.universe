@@ -250,7 +250,7 @@ std::vector<double> SplineInterpolation::getSplineInterpolatedValues(
   return res;
 }
 
-double SplineInterpolation::interpolatePoint(double const & query_key) const
+double SplineInterpolation::getSplineInterpolatedValue(const double query_key) const
 {
   if (base_keys_.empty()) {
     throw std::domain_error("The base keys are not available, please initialize the keys.");
