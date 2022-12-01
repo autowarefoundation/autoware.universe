@@ -30,11 +30,11 @@ Please see [the description of `GetPartialPointCloudMap.srv`](https://github.com
 
 ### Parameters
 
-| Name                | Type | Description                                    | Default value |
-| :------------------ | :--- | :--------------------------------------------- | :------------ |
-| enable_whole_load   | bool | A flag to enable raw pointcloud map publishing | true          |
-| enable_downsampled_whole_load | bool   | A flag to enable downsampled pointcloud map publishing                            | true          |
-| enable_partial_load | bool | A flag to enable partial pointcloud map server | true          |
+| Name                          | Type  | Description                                                                       | Default value |
+| :---------------------------- | :---- | :-------------------------------------------------------------------------------- | :------------ |
+| enable_whole_load             | bool  | A flag to enable raw pointcloud map publishing                                    | true          |
+| enable_downsampled_whole_load | bool  | A flag to enable downsampled pointcloud map publishing                            | true          |
+| enable_partial_load           | bool  | A flag to enable partial pointcloud map server                                    | true          |
 | leaf_size                     | float | Downsampling leaf size (only used when enable_downsampled_whole_load is set true) | 3.0           |
 
 ### Interfaces
