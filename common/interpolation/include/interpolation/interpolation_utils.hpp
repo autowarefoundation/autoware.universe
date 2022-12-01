@@ -24,7 +24,6 @@
 
 namespace interpolation_utils
 {
-constexpr double EPS = std::numeric_limits<double>::epsilon();
 
 template <class T, typename std::enable_if_t<std::is_floating_point_v<T>, bool> * = nullptr>
 bool isEqual(T a, T b)
