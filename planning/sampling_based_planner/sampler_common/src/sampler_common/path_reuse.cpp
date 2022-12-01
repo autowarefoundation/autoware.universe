@@ -63,10 +63,11 @@ bool tryToReusePath(
   reusable_path.reserve(end_index);
   copy(path_to_reuse.points, reusable_path.points);
   copy(path_to_reuse.curvatures, reusable_path.curvatures);
-  copy(path_to_reuse.lengths, reusable_path.lengths);
   copy(path_to_reuse.jerks, reusable_path.jerks);
   copy(path_to_reuse.yaws, reusable_path.yaws);
   copy(path_to_reuse.lengths, reusable_path.lengths);
+  const auto first_length = reusable_path.lengths.front();
+  for (auto & l : reusable_path.lengths) l -= first_length;
 
   constraints::checkHardConstraints(reusable_path, constraints);
   // TODO(Maxime CLEMENT): points become empty when all paths are invalid but this should be

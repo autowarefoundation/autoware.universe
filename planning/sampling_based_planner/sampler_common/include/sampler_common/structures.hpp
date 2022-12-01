@@ -23,6 +23,7 @@
 #include <boost/geometry/geometries/point_xy.hpp>
 #include <boost/geometry/geometries/polygon.hpp>
 
+#include <algorithm>
 #include <memory>
 #include <numeric>
 #include <vector>
@@ -107,19 +108,29 @@ struct Path
   [[nodiscard]] Path extend(const Path & path) const
   {
     Path extended_path;
-    extended_path.points.insert(extended_path.points.end(), points.begin(), points.end());
-    extended_path.points.insert(extended_path.points.end(), path.points.begin(), path.points.end());
-    extended_path.curvatures.insert(
-      extended_path.curvatures.end(), curvatures.begin(), curvatures.end());
-    extended_path.curvatures.insert(
-      extended_path.curvatures.end(), path.curvatures.begin(), path.curvatures.end());
-    extended_path.yaws.insert(extended_path.yaws.end(), yaws.begin(), yaws.end());
-    extended_path.yaws.insert(extended_path.yaws.end(), path.yaws.begin(), path.yaws.end());
-    extended_path.jerks.insert(extended_path.jerks.end(), jerks.begin(), jerks.end());
-    extended_path.jerks.insert(extended_path.jerks.end(), path.jerks.begin(), path.jerks.end());
+    auto offset = 0l;
+    auto length_offset = 0.0;
+    if (!points.empty() && !path.points.empty()) {
+      if (
+        points.back().x() == path.points.front().x() &&
+        points.back().y() == path.points.front().y()) {
+        offset = 1l;
+      }
+      length_offset = std::hypot(
+        path.points[offset].x() - points.back().x(), path.points[offset].y() - points.back().y());
+    }
+    const auto ext = [&](auto & dest, const auto & first, const auto & second) {
+      dest.insert(dest.end(), first.begin(), first.end());
+      dest.insert(dest.end(), std::next(second.begin(), offset), second.end());
+    };
+    ext(extended_path.points, points, path.points);
+    ext(extended_path.curvatures, curvatures, path.curvatures);
+    ext(extended_path.yaws, yaws, path.yaws);
+    ext(extended_path.jerks, jerks, path.jerks);
     extended_path.lengths.insert(extended_path.lengths.end(), lengths.begin(), lengths.end());
-    extended_path.lengths.insert(
-      extended_path.lengths.end(), path.lengths.begin(), path.lengths.end());
+    const auto last_base_length = lengths.empty() ? 0.0 : lengths.back() + length_offset;
+    for (size_t i = offset; i < path.lengths.size(); ++i)
+      extended_path.lengths.push_back(last_base_length + path.lengths[i]);
     // TODO(Maxime CLEMENT): direct copy from the 2nd path. might need to be improved
     extended_path.cost = path.cost;
     extended_path.constraint_results = path.constraint_results;
@@ -131,7 +142,6 @@ struct Path
   [[nodiscard]] virtual Path * subset(const size_t from_idx, const size_t to_idx) const
   {
     auto * subpath = new Path();
-    assert(to_idx >= from_idx);
     subpath->reserve(to_idx - from_idx);
 
     const auto copy_subset = [&](const auto & from, auto & to) {
@@ -141,7 +151,11 @@ struct Path
     copy_subset(curvatures, subpath->curvatures);
     copy_subset(yaws, subpath->yaws);
     copy_subset(lengths, subpath->lengths);
-    // TODO(Maxime CLEMENT): jerk not yet computed
+    copy_subset(jerks, subpath->jerks);
+    if (!subpath->lengths.empty()) {
+      const auto first_length = subpath->lengths.front();
+      for (auto & l : subpath->lengths) l -= first_length;
+    }
     return subpath;
   };
 };
@@ -183,32 +197,34 @@ struct Trajectory : Path
   [[nodiscard]] Trajectory extend(const Trajectory & traj) const
   {
     Trajectory extended_traj(Path::extend(traj));
-    extended_traj.longitudinal_velocities.insert(
-      extended_traj.longitudinal_velocities.end(), longitudinal_velocities.begin(),
-      longitudinal_velocities.end());
-    extended_traj.longitudinal_velocities.insert(
-      extended_traj.longitudinal_velocities.end(), traj.longitudinal_velocities.begin(),
-      traj.longitudinal_velocities.end());
-    extended_traj.longitudinal_accelerations.insert(
-      extended_traj.longitudinal_accelerations.end(), longitudinal_accelerations.begin(),
-      longitudinal_accelerations.end());
-    extended_traj.longitudinal_accelerations.insert(
-      extended_traj.longitudinal_accelerations.end(), traj.longitudinal_accelerations.begin(),
-      traj.longitudinal_accelerations.end());
-    extended_traj.lateral_velocities.insert(
-      extended_traj.lateral_velocities.end(), lateral_velocities.begin(), lateral_velocities.end());
-    extended_traj.lateral_velocities.insert(
-      extended_traj.lateral_velocities.end(), traj.lateral_velocities.begin(),
-      traj.lateral_velocities.end());
-    extended_traj.lateral_accelerations.insert(
-      extended_traj.lateral_accelerations.end(), lateral_accelerations.begin(),
-      lateral_accelerations.end());
-    extended_traj.lateral_accelerations.insert(
-      extended_traj.lateral_accelerations.end(), traj.lateral_accelerations.begin(),
-      traj.lateral_accelerations.end());
+    auto offset = 0l;
+    auto time_offset = 0.0;
+    if (!points.empty() && !traj.points.empty()) {
+      if (
+        points.back().x() == traj.points.front().x() &&
+        points.back().y() == traj.points.front().y())
+        offset = 1l;
+      const auto ds = std::hypot(
+        traj.points[offset].x() - points.back().x(), traj.points[offset].y() - points.back().y());
+      const auto v = std::max(
+        std::max(longitudinal_velocities.back(), traj.longitudinal_velocities[offset]), 0.1);
+      time_offset = ds / v;
+    }
+    const auto ext = [&](auto & dest, const auto & first, const auto & second) {
+      dest.insert(dest.end(), first.begin(), first.end());
+      dest.insert(dest.end(), std::next(second.begin(), offset), second.end());
+    };
+    ext(
+      extended_traj.longitudinal_velocities, longitudinal_velocities, traj.longitudinal_velocities);
+    ext(
+      extended_traj.longitudinal_accelerations, longitudinal_accelerations,
+      traj.longitudinal_accelerations);
+    ext(extended_traj.lateral_velocities, lateral_velocities, traj.lateral_velocities);
+    ext(extended_traj.lateral_accelerations, lateral_accelerations, traj.lateral_accelerations);
     extended_traj.times.insert(extended_traj.times.end(), times.begin(), times.end());
-    const auto last_base_time = times.empty() ? 0.0 : times.back();
-    for (const auto t : traj.times) extended_traj.times.push_back(last_base_time + t);
+    const auto last_base_time = times.empty() ? 0.0 : times.back() + time_offset;
+    for (size_t i = offset; i < traj.times.size(); ++i)
+      extended_traj.times.push_back(last_base_time + traj.times[i]);
     extended_traj.duration = duration + traj.duration;
     return extended_traj;
   }
@@ -225,11 +241,11 @@ struct Trajectory : Path
     copy_subset(longitudinal_accelerations, subtraj->longitudinal_accelerations);
     copy_subset(lateral_velocities, subtraj->lateral_velocities);
     copy_subset(lateral_accelerations, subtraj->lateral_accelerations);
-    // copy(jerks, subtraj->jerks);
     copy_subset(times, subtraj->times);
-    subtraj->duration = 0;
-    for (const auto t : subtraj->times) {
-      subtraj->duration += t;
+    if (!subtraj->times.empty()) {
+      const auto first_time = subtraj->times.front();
+      for (auto & l : subtraj->times) l -= first_time;
+      subtraj->duration = subtraj->times.back();
     }
     return subtraj;
   }
@@ -259,7 +275,6 @@ struct Trajectory : Path
     t.curvatures = interpolation::lerp(times, curvatures, t.times);
     t.jerks = interpolation::lerp(times, jerks, t.times);
     t.yaws = interpolation::lerp(times, yaws, t.times);
-    t.times = interpolation::lerp(times, times, t.times);
     t.longitudinal_velocities = interpolation::lerp(times, longitudinal_velocities, t.times);
     t.longitudinal_accelerations = interpolation::lerp(times, longitudinal_accelerations, t.times);
     t.lateral_velocities = interpolation::lerp(times, lateral_velocities, t.times);

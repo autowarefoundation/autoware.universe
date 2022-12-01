@@ -20,6 +20,7 @@
 #include "sampler_node/prepare_inputs.hpp"
 
 #include <interpolation/linear_interpolation.hpp>
+#include <motion_common/trajectory_common.hpp>
 
 #include <algorithm>
 #include <iterator>
@@ -121,8 +122,13 @@ std::vector<frenet_planner::Trajectory> generateFrenetTrajectories(
     path_spline.frenet({path.points.back().pose.position.x, path.points.back().pose.position.y}).s -
     params.sampling.resolution;
   initial_frenet_state.position = path_spline.frenet(initial_configuration.pose);
-  initial_frenet_state.longitudinal_velocity = initial_configuration.velocity;
-  initial_frenet_state.longitudinal_acceleration = initial_configuration.acceleration;
+  const auto dyaw = autoware::motion::motion_common::calcYawDeviation(
+    initial_configuration.heading, path_spline.yaw(initial_frenet_state.position.s));
+  initial_frenet_state.longitudinal_velocity = std::cos(dyaw) * initial_configuration.velocity;
+  initial_frenet_state.lateral_velocity = std::sin(dyaw) * initial_configuration.velocity;
+  initial_frenet_state.longitudinal_acceleration =
+    std::cos(dyaw) * initial_configuration.acceleration;
+  initial_frenet_state.lateral_acceleration = std::sin(dyaw) * initial_configuration.acceleration;
   auto trajectories = gen_fn(path_spline, initial_frenet_state, sampling_parameters);
   // Stopping trajectories
   bool can_stop = initial_frenet_state.longitudinal_velocity > 0.1;

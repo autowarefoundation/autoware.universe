@@ -444,27 +444,26 @@ void TrajectorySamplerNode::publishTrajectory(
   const sampler_common::Trajectory & trajectory, const std::string & frame_id)
 {
   if (trajectory.points.size() < 2) return;
+  const auto t = trajectory.resample(0.1);
   tf2::Quaternion q;  // to convert yaw angle to Quaternion orientation
   autoware_auto_planning_msgs::msg::Trajectory traj_msg;
   traj_msg.header.frame_id = frame_id;
   traj_msg.header.stamp = now();
   autoware_auto_planning_msgs::msg::TrajectoryPoint point;
-  for (size_t i = 0; i + 1 < trajectory.points.size(); ++i) {
-    point.pose.position.x = trajectory.points[i].x();
-    point.pose.position.y = trajectory.points[i].y();
-    q.setRPY(0, 0, trajectory.yaws[i]);
+  for (size_t i = 0; i + 1 < t.points.size(); ++i) {
+    point.pose.position.x = t.points[i].x();
+    point.pose.position.y = t.points[i].y();
+    q.setRPY(0, 0, t.yaws[i]);
     point.pose.orientation = tf2::toMsg(q);
-    point.longitudinal_velocity_mps = static_cast<float>(trajectory.longitudinal_velocities[i]);
-    point.acceleration_mps2 = static_cast<float>(trajectory.longitudinal_accelerations[i]);
-    point.lateral_velocity_mps = static_cast<float>(trajectory.lateral_velocities[i]);
-    point.heading_rate_rps =
-      static_cast<float>(point.longitudinal_velocity_mps * trajectory.curvatures[i]);
+    point.longitudinal_velocity_mps = static_cast<float>(t.longitudinal_velocities[i]);
+    point.acceleration_mps2 = static_cast<float>(t.longitudinal_accelerations[i]);
+    point.lateral_velocity_mps = static_cast<float>(t.lateral_velocities[i]);
+    point.heading_rate_rps = static_cast<float>(point.longitudinal_velocity_mps * t.curvatures[i]);
     point.front_wheel_angle_rad = 0.0f;
     point.rear_wheel_angle_rad = 0.0f;
     traj_msg.points.push_back(point);
-    const auto & next = trajectory.points[i + 1];
-    const auto dist_to_next =
-      std::hypot(next.x() - trajectory.points[i].x(), next.y() - trajectory.points[i].y());
+    const auto & next = t.points[i + 1];
+    const auto dist_to_next = std::hypot(next.x() - t.points[i].x(), next.y() - t.points[i].y());
   }
   trajectory_pub_->publish(traj_msg);
 }
