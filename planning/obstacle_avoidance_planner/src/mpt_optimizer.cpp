@@ -301,6 +301,9 @@ boost::optional<MPTOptimizer::MPTTrajs> MPTOptimizer::getModelPredictiveTrajecto
   constexpr double max_lateral_deviation = 3.0;
   for (const double lateral_error : debug_data.lateral_errors) {
     if (max_lateral_deviation < std::abs(lateral_error)) {
+      RCLCPP_ERROR(
+        rclcpp::get_logger("mpt_optimizer"),
+        "return boost::none since lateral deviation is too large.");
       return boost::none;
     }
   }
