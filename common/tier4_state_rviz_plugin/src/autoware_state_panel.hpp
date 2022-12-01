@@ -48,7 +48,6 @@ public Q_SLOTS:  // NOLINT for Qt
   void onClickAutowareEngage();
   void onClickVelocityLimit();
   void onClickGateMode();
-  void onClickPathChangeApproval();
   void onClickEmergencyButton();
 
 protected:
@@ -75,7 +74,6 @@ protected:
 
   rclcpp::Publisher<tier4_planning_msgs::msg::VelocityLimit>::SharedPtr pub_velocity_limit_;
   rclcpp::Publisher<tier4_control_msgs::msg::GateMode>::SharedPtr pub_gate_mode_;
-  rclcpp::Publisher<tier4_planning_msgs::msg::Approval>::SharedPtr pub_path_change_approval_;
 
   QLabel * gate_mode_label_ptr_;
   QLabel * selector_mode_label_ptr_;
@@ -85,7 +83,6 @@ protected:
   QPushButton * engage_button_ptr_;
   QPushButton * velocity_limit_button_ptr_;
   QPushButton * gate_mode_button_ptr_;
-  QPushButton * path_change_approval_button_ptr_;
   QSpinBox * pub_velocity_limit_input_;
   QPushButton * emergency_button_ptr_;
 

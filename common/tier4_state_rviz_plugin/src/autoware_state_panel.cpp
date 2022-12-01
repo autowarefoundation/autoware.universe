@@ -85,10 +85,6 @@ AutowareStatePanel::AutowareStatePanel(QWidget * parent) : rviz_common::Panel(pa
   gate_mode_button_ptr_ = new QPushButton("Gate Mode");
   connect(gate_mode_button_ptr_, SIGNAL(clicked()), SLOT(onClickGateMode()));
 
-  // Path Change Approval Button
-  path_change_approval_button_ptr_ = new QPushButton("Path Change Approval");
-  connect(path_change_approval_button_ptr_, SIGNAL(clicked()), SLOT(onClickPathChangeApproval()));
-
   // Velocity Limit
   velocity_limit_button_ptr_ = new QPushButton("Send Velocity Limit");
   pub_velocity_limit_input_ = new QSpinBox();
@@ -113,8 +109,6 @@ AutowareStatePanel::AutowareStatePanel(QWidget * parent) : rviz_common::Panel(pa
   v_layout->addWidget(engage_button_ptr_);
   v_layout->addLayout(engage_status_layout);
   gate_mode_path_change_approval_layout->addWidget(gate_mode_button_ptr_);
-  gate_mode_path_change_approval_layout->addWidget(path_change_approval_button_ptr_);
-  v_layout->addLayout(gate_mode_path_change_approval_layout);
   velocity_limit_layout->addWidget(velocity_limit_button_ptr_);
   velocity_limit_layout->addWidget(pub_velocity_limit_input_);
   velocity_limit_layout->addWidget(new QLabel("  [km/h]"));
@@ -159,11 +153,6 @@ void AutowareStatePanel::onInitialize()
 
   pub_gate_mode_ = raw_node_->create_publisher<tier4_control_msgs::msg::GateMode>(
     "/control/gate_mode_cmd", rclcpp::QoS{1}.transient_local());
-
-  pub_path_change_approval_ = raw_node_->create_publisher<tier4_planning_msgs::msg::Approval>(
-    "/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/"
-    "path_change_approval",
-    rclcpp::QoS{1}.transient_local());
 }
 
 void AutowareStatePanel::onGateMode(const tier4_control_msgs::msg::GateMode::ConstSharedPtr msg)
@@ -335,14 +324,6 @@ void AutowareStatePanel::onClickGateMode()
   RCLCPP_INFO(raw_node_->get_logger(), "data : %d", data);
   pub_gate_mode_->publish(
     tier4_control_msgs::build<tier4_control_msgs::msg::GateMode>().data(data));
-}
-
-void AutowareStatePanel::onClickPathChangeApproval()
-{
-  pub_path_change_approval_->publish(
-    tier4_planning_msgs::build<tier4_planning_msgs::msg::Approval>()
-      .stamp(raw_node_->now())
-      .approval(true));
 }
 }  // namespace rviz_plugins
 
