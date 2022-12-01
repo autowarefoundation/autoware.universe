@@ -33,10 +33,6 @@
       pre-commands: |
         sd "GITHUB_TOKEN" "REPO_TOKEN" {source}
 
-    - source: .github/workflows/build-humble.yaml
-      pre-commands: |
-        sd "GITHUB_TOKEN" "REPO_TOKEN" {source}
-
     - source: .github/workflows/load-env.yaml
 
     - source: .github/workflows/setup-universe.yaml
