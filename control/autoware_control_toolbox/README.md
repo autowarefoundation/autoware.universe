@@ -182,7 +182,7 @@ ss_sys.print_discrete_system();
 
 ### Curve Fitting and Interpolation Modules
 
-[See ...](documentation/SplineModules.md)
+[See ...](documentation/B-SplineModules.md)
 
 References :
 
