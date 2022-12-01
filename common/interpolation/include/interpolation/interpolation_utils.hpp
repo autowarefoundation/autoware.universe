@@ -38,10 +38,10 @@ inline bool isIncreasing(const std::vector<double> & x)
     throw std::invalid_argument("The vector x is empty.");
   }
 
-  // x(i) <= x(i+1) condition check
-  const auto & is_increasing_it = std::adjacent_find(x.begin(), x.end(), std::greater_equal<>());
+  // x(i) <= x(i+1) condition check (increasing sequence)
+  const auto & iterator = std::adjacent_find(x.begin(), x.end(), std::greater_equal<>());
 
-  return is_increasing_it == x.cend();
+  return iterator == x.cend();
 }
 
 // Strictly increasing and monotonic
@@ -51,10 +51,10 @@ inline bool isNotDecreasing(const std::vector<double> & x)
     throw std::invalid_argument("The vector x is empty.");
   }
 
-  // x(i) < x(i+1) condition check ( x(i) == x(i+1) is allowed)
-  const auto & is_strictly_increasing_it = std::adjacent_find(x.begin(), x.end(), std::greater<>());
+  // x(i) < x(i+1) condition check ( x(i) == x(i+1) is allowed).
+  const auto & iterator = std::adjacent_find(x.begin(), x.end(), std::greater<>());
 
-  return is_strictly_increasing_it == x.cend();
+  return iterator == x.cend();
 }
 
 inline bool isStrictlyMonotonic(const std::vector<double> & x)
@@ -64,14 +64,14 @@ inline bool isStrictlyMonotonic(const std::vector<double> & x)
   }
 
   // x(i) <= or >= x(i+1) condition check
-  const auto is_strictly_increasing_it =
+  const auto is_strictly_increasing_iterator =
     std::adjacent_find(x.begin(), x.end(), std::greater_equal<>());
-  const auto is_strictly_decreasing_it =
+  const auto is_strictly_decreasing_iterator =
     std::adjacent_find(x.begin(), x.end(), std::less_equal<>());
 
   // if cannot find <= or >= conditions, the vector is strictly monotonic.
-  const bool is_strictly_increasing = is_strictly_increasing_it == x.cend();
-  const bool is_strictly_decreasing = is_strictly_decreasing_it == x.cend();
+  const bool is_strictly_increasing = is_strictly_increasing_iterator == x.cend();
+  const bool is_strictly_decreasing = is_strictly_decreasing_iterator == x.cend();
 
   const bool is_monotonic = (is_strictly_increasing && !is_strictly_decreasing) ||
                             (!is_strictly_increasing && is_strictly_decreasing);
