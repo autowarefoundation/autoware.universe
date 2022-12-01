@@ -11,28 +11,28 @@
   <group>
     <node_container pkg="rclcpp_components" exec="component_container_mt" name="system_monitor_container" namespace="system_monitor" output="screen">
       <composable_node pkg="system_monitor" plugin="CPUMonitor" name="cpu_monitor">
-        <param from="$(var cpu_monitor_config_file)" />
+        <param from="$(var cpu_monitor_config_file)"/>
       </composable_node>
       <composable_node pkg="system_monitor" plugin="MemMonitor" name="mem_monitor">
-        <param from="$(var mem_monitor_config_file)" />
+        <param from="$(var mem_monitor_config_file)"/>
       </composable_node>
       <composable_node pkg="system_monitor" plugin="NetMonitor" name="net_monitor">
-        <param from="$(var net_monitor_config_file)" />
+        <param from="$(var net_monitor_config_file)"/>
       </composable_node>
       <composable_node pkg="system_monitor" plugin="NTPMonitor" name="ntp_monitor">
-        <param from="$(var ntp_monitor_config_file)" />
+        <param from="$(var ntp_monitor_config_file)"/>
       </composable_node>
       <composable_node pkg="system_monitor" plugin="ProcessMonitor" name="process_monitor">
-        <param from="$(var process_monitor_config_file)" />
+        <param from="$(var process_monitor_config_file)"/>
       </composable_node>
       <composable_node pkg="system_monitor" plugin="HddMonitor" name="hdd_monitor">
-        <param from="$(var hdd_monitor_config_file)" />
+        <param from="$(var hdd_monitor_config_file)"/>
       </composable_node>
       <composable_node pkg="system_monitor" plugin="GPUMonitor" name="gpu_monitor">
-        <param from="$(var gpu_monitor_config_file)" />
+        <param from="$(var gpu_monitor_config_file)"/>
       </composable_node>
       <composable_node pkg="system_monitor" plugin="VoltageMonitor" name="voltage_monitor">
-        <param from="$(var voltage_monitor_config_file)" />
+        <param from="$(var voltage_monitor_config_file)"/>
       </composable_node>
     </node_container>
   </group>
