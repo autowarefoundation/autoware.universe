@@ -20,10 +20,10 @@ jobs:
         uses: autowarefoundation/autoware-github-actions/sync-branches@v1
         with:
           token: ${{ steps.generate-token.outputs.token }}
-          base-branch: tier4/universe
+          base-branch: main
           sync-pr-branch: sync-upstream
           sync-target-repository: https://github.com/tier4/pilot-auto.git
-          sync-target-branch: tier4/universe
+          sync-target-branch: main
           pr-title: "chore: sync upstream"
           pr-labels: |
             bot

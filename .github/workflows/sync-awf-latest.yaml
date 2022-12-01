@@ -23,7 +23,7 @@ jobs:
           base-branch: awf-latest
           sync-pr-branch: sync-awf-latest
           sync-target-repository: https://github.com/tier4/pilot-auto
-          sync-target-branch: tier4/universe
+          sync-target-branch: main
           pr-title: "chore: sync awf-latest"
           pr-labels: |
             bot
