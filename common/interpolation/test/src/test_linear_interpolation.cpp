@@ -122,6 +122,7 @@ TEST(linear_interpolation, lerp_vector_extrapolation)
   const auto query_values =
     interpolation::lerp(base_keys, base_values, query_keys, extrapolate_endpoints);
 
+  std::cout << "Test " << std::endl;
   for (size_t i = 0; i < query_values.size(); ++i) {
     EXPECT_DOUBLE_EQ(query_values.at(i), ans.at(i));
   }

@@ -111,11 +111,16 @@ inline std::vector<double> validateKeys(
 
   // NOTE: Due to calculation error of double, a query key may be slightly out of base keys.
   //       Therefore, query keys are cropped here.
-  auto validated_query_keys = query_keys;
-  validated_query_keys.front() = std::max(validated_query_keys.front(), base_keys.front());
-  validated_query_keys.back() = std::min(validated_query_keys.back(), base_keys.back());
 
-  return validated_query_keys;
+  if (!extrapolate_end_points) {
+    auto validated_query_keys = query_keys;
+    validated_query_keys.front() = std::max(validated_query_keys.front(), base_keys.front());
+    validated_query_keys.back() = std::min(validated_query_keys.back(), base_keys.back());
+
+    return validated_query_keys;
+  }
+
+  return query_keys;
 }
 
 template <class T>
