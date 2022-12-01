@@ -29,14 +29,15 @@ std::vector<double> lerp(
   const std::vector<double> & query_keys, bool const & extrapolate_end_points)
 {
   // throw exception for invalid arguments
-  interpolation_utils::validateKeys(base_keys, query_keys, extrapolate_end_points);
+  const auto validated_query_keys =
+    interpolation_utils::validateKeys(base_keys, query_keys, extrapolate_end_points);
   interpolation_utils::validateKeysAndValues(base_keys, base_values);
 
   // calculate linear interpolation
   std::vector<double> query_values;
   size_t key_index = 0;
 
-  for (const auto query_key : query_keys) {
+  for (const auto query_key : validated_query_keys) {
     if ((query_key < base_keys.front() || query_key > base_keys.back()) && extrapolate_end_points) {
       double extrapolated_value{};
       interpolation_utils::lerp_extrapolate(base_keys, base_values, query_key, extrapolated_value);

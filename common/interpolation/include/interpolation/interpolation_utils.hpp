@@ -80,7 +80,7 @@ inline bool isStrictlyMonotonic(const std::vector<double> & x)
   return is_monotonic;
 }
 
-inline void validateKeys(
+inline std::vector<double> validateKeys(
   const std::vector<double> & base_keys, const std::vector<double> & query_keys,
   const bool & extrapolate_end_points = false)
 {
@@ -102,12 +102,20 @@ inline void validateKeys(
 
   // When query_keys is out of base_keys (This function does not allow extrapolation when
   // extrapolation boolean is false  // ).
+  constexpr double epsilon = 1e-3;
   if (
-    (query_keys.front() < base_keys.front() || base_keys.back() < query_keys.back()) &&
+    (query_keys.front() < base_keys.front() - epsilon ||
+     base_keys.back() < query_keys.back() + epsilon) &&
     !extrapolate_end_points) {
     throw std::invalid_argument(
       "The query_keys is out of the range of base_keys, consider to extrapolate option");
   }
+
+  auto validated_query_keys = query_keys;
+  validated_query_keys.front() = std::max(validated_query_keys.front(), base_keys.front());
+  validated_query_keys.back() = std::min(validated_query_keys.back(), base_keys.back());
+
+  return validated_query_keys;
 }
 
 template <class T>
