@@ -25,6 +25,5 @@
 
     <param name="output_frame" value="$(var output_frame)"/>
     <param name="message_timeout_sec" value="$(var message_timeout_sec)"/>
-    <param name="use_sim_time" value="true"/>
   </node>
 </launch>
