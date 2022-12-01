@@ -102,15 +102,15 @@ inline std::vector<double> validateKeys(
 
   // When query_keys is out of base_keys (This function does not allow extrapolation when
   // extrapolation boolean is false  // ).
-  constexpr double epsilon = 1e-3;
-  if (
-    (query_keys.front() < base_keys.front() - epsilon ||
-     base_keys.back() + epsilon < query_keys.back()) &&
-    !extrapolate_end_points) {
+  if (constexpr double epsilon = 1e-3; (query_keys.front() < base_keys.front() - epsilon ||
+                                        base_keys.back() + epsilon < query_keys.back()) &&
+                                       !extrapolate_end_points) {
     throw std::invalid_argument(
       "The query_keys is out of the range of base_keys, consider to extrapolate option");
   }
 
+  // NOTE: Due to calculation error of double, a query key may be slightly out of base keys.
+  //       Therefore, query keys are cropped here.
   auto validated_query_keys = query_keys;
   validated_query_keys.front() = std::max(validated_query_keys.front(), base_keys.front());
   validated_query_keys.back() = std::min(validated_query_keys.back(), base_keys.back());
