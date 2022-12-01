@@ -51,6 +51,7 @@ PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & opt
     getPcdPaths(declare_parameter<std::vector<std::string>>("pcd_paths_or_directory"));
   bool enable_whole_load = declare_parameter<bool>("enable_whole_load");
   bool enable_partial_load = declare_parameter<bool>("enable_partial_load");
+  bool enable_differential_load = declare_parameter<bool>("enable_differential_load");
 
   if (enable_whole_load) {
     std::string publisher_name = "output/pointcloud_map";
@@ -60,6 +61,11 @@ PointCloudMapLoaderNode::PointCloudMapLoaderNode(const rclcpp::NodeOptions & opt
   if (enable_partial_load) {
     pcd_metadata_dict_ = generatePCDMetadata(pcd_paths);
     partial_map_loader_ = std::make_unique<PartialMapLoaderModule>(this, pcd_metadata_dict_);
+  }
+
+  if (enable_differential_load) {
+    differential_map_loader_ =
+      std::make_unique<DifferentialMapLoaderModule>(this, pcd_metadata_dict_);
   }
 }
 
