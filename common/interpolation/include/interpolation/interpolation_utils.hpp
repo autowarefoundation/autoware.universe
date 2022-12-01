@@ -105,7 +105,7 @@ inline std::vector<double> validateKeys(
   constexpr double epsilon = 1e-3;
   if (
     (query_keys.front() < base_keys.front() - epsilon ||
-     base_keys.back() < query_keys.back() + epsilon) &&
+     base_keys.back() + epsilon < query_keys.back()) &&
     !extrapolate_end_points) {
     throw std::invalid_argument(
       "The query_keys is out of the range of base_keys, consider to extrapolate option");
