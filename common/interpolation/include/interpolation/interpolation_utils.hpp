@@ -29,7 +29,7 @@ constexpr double EPS = std::numeric_limits<double>::epsilon();
 template <class T, typename std::enable_if_t<std::is_floating_point_v<T>, bool> * = nullptr>
 bool isEqual(T a, T b)
 {
-  return abs(a - b) < std::numeric_limits<T>::epsilon();
+  return std::abs(a - b) < std::numeric_limits<T>::epsilon();
 }
 
 // Strictly monotonic increasing
@@ -65,9 +65,9 @@ inline bool isStrictlyMonotonic(const std::vector<double> & x)
   }
 
   // x(i) <= or >= x(i+1) condition check
-  auto const & is_strictly_increasing_it =
+  auto const is_strictly_increasing_it =
     std::adjacent_find(x.begin(), x.end(), std::greater_equal<>());
-  auto const & is_strictly_decreasing_it =
+  auto const is_strictly_decreasing_it =
     std::adjacent_find(x.begin(), x.end(), std::less_equal<>());
 
   // if cannot find <= or >= conditions, the vector is strictly monotonic.
@@ -82,7 +82,7 @@ inline bool isStrictlyMonotonic(const std::vector<double> & x)
 
 inline std::vector<double> validateKeys(
   const std::vector<double> & base_keys, const std::vector<double> & query_keys,
-  const bool & extrapolate_end_points = false)
+  const bool extrapolate_end_points = false)
 {
   // when vectors are empty
   if (base_keys.empty() || query_keys.empty()) {
@@ -101,7 +101,7 @@ inline std::vector<double> validateKeys(
   }
 
   // When query_keys is out of base_keys (This function does not allow extrapolation when
-  // extrapolation boolean is false  // ).
+  // extrapolation boolean is false).
   if (constexpr double epsilon = 1e-3; (query_keys.front() < base_keys.front() - epsilon ||
                                         base_keys.back() + epsilon < query_keys.back()) &&
                                        !extrapolate_end_points) {

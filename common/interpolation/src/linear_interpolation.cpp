@@ -65,38 +65,7 @@ double lerp(
   const std::vector<double> & base_keys, const std::vector<double> & base_values, double query_key,
   bool const & extrapolate_end_points)
 {
-  // throw exception for invalid arguments
-  interpolation_utils::validateKeys(
-    base_keys, std::vector<double>{query_key}, extrapolate_end_points);
-  interpolation_utils::validateKeysAndValues(base_keys, base_values);
-
-  if ((query_key < base_keys.front() || query_key > base_keys.back()) && extrapolate_end_points) {
-    double extrapolated_value{};
-    interpolation_utils::lerp_extrapolate(base_keys, base_values, query_key, extrapolated_value);
-
-    return extrapolated_value;
-  }
-
-  // Binary search the minimum element in the base_key in such way that : query_key <= base_key[i]
-  auto const lower_bound_it = std::lower_bound(base_keys.cbegin(), base_keys.cend(), query_key);
-
-  if (lower_bound_it == base_keys.cend()) {
-    throw std::domain_error("In LERP scalar : the query key is out of the range.");
-  }
-
-  // k1 is the index query_key <=base_keys[k1]
-  auto const & k1 = std::distance(base_keys.cbegin(), lower_bound_it);
-  auto const & k0 = k1 == 0 ? k1 : k1 - 1;  // if upper bound coincides with the first element
-
-  // if k0 and k1 are the first index of the base_key
-  if (k0 == k1) {
-    return base_values[k0];
-  }
-
-  auto const & ratio = (query_key - base_keys.at(k0)) / (base_keys.at(k1) - base_keys.at(k0));
-
-  // Get terminal data items.
-  auto const & query_value = base_values.at(k0) + ratio * (base_values.at(k1) - base_values.at(k0));
-  return query_value;
+  return lerp(base_keys, base_values, std::vector<double>{query_key}, extrapolate_end_points)
+    .front();
 }
 }  // namespace interpolation

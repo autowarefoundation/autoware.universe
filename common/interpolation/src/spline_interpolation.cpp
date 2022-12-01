@@ -269,7 +269,7 @@ double SplineInterpolation::interpolatePoint(const double & query_key) const
   auto const & k0 = k1 == 0 ? k1 : k1 - 1;  // if upper bound coincides with the first element
 
   // Get the interpolated value
-  const double & ds = query_key - base_keys_.at(k0);
+  const double ds = query_key - base_keys_.at(k0);
   auto const & query_value = d.at(k0) + (c.at(k0) + (b.at(k0) + a.at(k0) * ds) * ds) * ds;
 
   return query_value;
