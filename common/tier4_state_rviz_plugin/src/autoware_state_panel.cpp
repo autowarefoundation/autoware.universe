@@ -209,6 +209,10 @@ void AutowareStatePanel::onOperationMode(const OperationModeState::ConstSharedPt
       break;
   }
 
+  if (msg->is_in_transition) {
+    operation_mode_label_ptr_->setText(operation_mode_label_ptr_->text() + "\n(TRANSITION)");
+  }
+
   // Control Mode
   if (msg->is_autoware_control_enabled) {
     control_mode_label_ptr_->setText("Enable");
