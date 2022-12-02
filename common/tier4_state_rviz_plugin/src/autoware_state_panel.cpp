@@ -100,7 +100,6 @@ QGroupBox * AutowareStatePanel::makeOperationModeGroup()
 
   group->setLayout(grid);
   return group;
-
 }
 
 QGroupBox * AutowareStatePanel::makeControlModeGroup()
