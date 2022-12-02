@@ -16,6 +16,7 @@
 #define GYRO_ODOMETER__GYRO_ODOMETER_CORE_HPP_
 
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
+#include "tier4_autoware_utils/ros/transform_listener.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -29,8 +30,6 @@
 #else
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
-#include <tf2_ros/buffer.h>
-#include <tf2_ros/transform_listener.h>
 
 #include <deque>
 #include <string>
@@ -48,9 +47,6 @@ private:
   void callbackVehicleTwist(
     const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr vehicle_twist_msg_ptr);
   void callbackImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg_ptr);
-  bool getTransform(
-    const std::string & target_frame, const std::string & source_frame,
-    const geometry_msgs::msg::TransformStamped::SharedPtr transform_stamped_ptr);
   void publishData(const geometry_msgs::msg::TwistWithCovarianceStamped & twist_with_cov_raw);
 
   rclcpp::Subscription<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr
@@ -65,8 +61,7 @@ private:
   rclcpp::Publisher<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr
     twist_with_covariance_pub_;
 
-  tf2_ros::Buffer tf_buffer_;
-  tf2_ros::TransformListener tf_listener_;
+  std::shared_ptr<tier4_autoware_utils::TransformListener> transform_listener_;
 
   std::string output_frame_;
   double message_timeout_sec_;

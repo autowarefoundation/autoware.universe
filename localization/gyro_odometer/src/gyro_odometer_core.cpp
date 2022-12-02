@@ -93,13 +93,13 @@ geometry_msgs::msg::TwistWithCovarianceStamped concatGyroAndOdometer(
 
 GyroOdometer::GyroOdometer()
 : Node("gyro_odometer"),
-  tf_buffer_(this->get_clock()),
-  tf_listener_(tf_buffer_),
   output_frame_(declare_parameter("base_link", "base_link")),
   message_timeout_sec_(declare_parameter("message_timeout_sec", 0.2)),
   vehicle_twist_arrived_(false),
   imu_arrived_(false)
 {
+  transform_listener_ = std::make_shared<tier4_autoware_utils::TransformListener>(this);
+
   vehicle_twist_sub_ = create_subscription<geometry_msgs::msg::TwistWithCovarianceStamped>(
     "vehicle/twist_with_covariance", rclcpp::QoS{100},
     std::bind(&GyroOdometer::callbackVehicleTwist, this, std::placeholders::_1));
@@ -171,9 +171,14 @@ void GyroOdometer::callbackImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_m
     return;
   }
 
-  geometry_msgs::msg::TransformStamped::SharedPtr tf_imu2base_ptr =
-    std::make_shared<geometry_msgs::msg::TransformStamped>();
-  getTransform(output_frame_, imu_msg_ptr->header.frame_id, tf_imu2base_ptr);
+  geometry_msgs::msg::TransformStamped::ConstSharedPtr tf_imu2base_ptr =
+    transform_listener_->getLatestTransform(imu_msg_ptr->header.frame_id, output_frame_);
+  if (!tf_imu2base_ptr) {
+    RCLCPP_ERROR(
+      this->get_logger(), "Please publish TF %s to %s", output_frame_.c_str(),
+      (imu_msg_ptr->header.frame_id).c_str());
+    return;
+  }
 
   geometry_msgs::msg::Vector3Stamped angular_velocity;
   angular_velocity.header = imu_msg_ptr->header;
@@ -226,45 +231,4 @@ void GyroOdometer::publishData(
 
   twist_pub_->publish(twist);
   twist_with_covariance_pub_->publish(twist_with_covariance);
-}
-
-bool GyroOdometer::getTransform(
-  const std::string & target_frame, const std::string & source_frame,
-  const geometry_msgs::msg::TransformStamped::SharedPtr transform_stamped_ptr)
-{
-  if (target_frame == source_frame) {
-    transform_stamped_ptr->header.stamp = this->get_clock()->now();
-    transform_stamped_ptr->header.frame_id = target_frame;
-    transform_stamped_ptr->child_frame_id = source_frame;
-    transform_stamped_ptr->transform.translation.x = 0.0;
-    transform_stamped_ptr->transform.translation.y = 0.0;
-    transform_stamped_ptr->transform.translation.z = 0.0;
-    transform_stamped_ptr->transform.rotation.x = 0.0;
-    transform_stamped_ptr->transform.rotation.y = 0.0;
-    transform_stamped_ptr->transform.rotation.z = 0.0;
-    transform_stamped_ptr->transform.rotation.w = 1.0;
-    return true;
-  }
-
-  try {
-    *transform_stamped_ptr =
-      tf_buffer_.lookupTransform(target_frame, source_frame, tf2::TimePointZero);
-  } catch (tf2::TransformException & ex) {
-    RCLCPP_WARN(this->get_logger(), "%s", ex.what());
-    RCLCPP_ERROR(
-      this->get_logger(), "Please publish TF %s to %s", target_frame.c_str(), source_frame.c_str());
-
-    transform_stamped_ptr->header.stamp = this->get_clock()->now();
-    transform_stamped_ptr->header.frame_id = target_frame;
-    transform_stamped_ptr->child_frame_id = source_frame;
-    transform_stamped_ptr->transform.translation.x = 0.0;
-    transform_stamped_ptr->transform.translation.y = 0.0;
-    transform_stamped_ptr->transform.translation.z = 0.0;
-    transform_stamped_ptr->transform.rotation.x = 0.0;
-    transform_stamped_ptr->transform.rotation.y = 0.0;
-    transform_stamped_ptr->transform.rotation.z = 0.0;
-    transform_stamped_ptr->transform.rotation.w = 1.0;
-    return false;
-  }
-  return true;
 }
