@@ -115,7 +115,6 @@ private:
   LaneChangeStatus status_;
   PathShifter path_shifter_;
   mutable LaneChangeDebugMsgArray lane_change_debug_msg_array_;
-  LaneDepartureChecker lane_departure_checker_;
   mutable LaneChangeStates current_lane_change_state_;
   mutable std::shared_ptr<LaneChangePath> abort_path_;
   PathWithLaneId prev_approved_path_;
