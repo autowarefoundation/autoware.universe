@@ -1,11 +1,17 @@
 <launch>
-  <arg name="respawn_rosbridge" default="true"/>
-  <arg name="launch_path_distance_calculator" default="false"/>
+  <!-- AD API options -->
   <arg name="launch_default_ad_api" default="true"/>
   <arg name="launch_rviz_adaptors" default="true"/>
-  <!-- external api adaptor -->
+
+  <!-- external api options -->
+  <arg name="launch_path_distance_calculator" default="false"/>
   <arg name="launch_calibration_status_api" default="false"/>
   <arg name="launch_start_api" default="true"/>
+
+  <!-- rosbridge options -->
+  <arg name="rosbridge_enabled" default="false"/>
+  <arg name="rosbridge_respawn" default="true"/>
+  <arg name="rosbridge_max_message_size" default="1000000000" />
 
   <!-- AD API -->
   <group>
@@ -36,10 +42,10 @@
   </group>
 
   <!-- rosbridge -->
-  <!-- TODO: respawn will work once https://github.com/ros2/launch/pull/569 is released. I'll delete this comment when it's done. -->
-  <group>
+  <group if="$(var rosbridge_enabled)">
     <include file="$(find-pkg-share rosbridge_server)/launch/rosbridge_websocket_launch.xml">
-      <arg name="respawn" value="$(var respawn_rosbridge)"/>
+      <arg name="respawn" value="$(var rosbridge_respawn)"/>
+      <arg name="max_message_size" value="$(var rosbridge_max_message_size)"/>
     </include>
   </group>
 </launch>
