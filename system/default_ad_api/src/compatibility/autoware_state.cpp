@@ -84,7 +84,7 @@ std::unordered_map<std::pair<Value, Value>, Value, PairHash> matrix =
   {{State::DRIVING           , State::WAITING_FOR_ENGAGE}, State::WAITING_FOR_ENGAGE},
   {{State::DRIVING           , State::DRIVING           }, State::DRIVING           },
   {{State::DRIVING           , State::ARRIVED_GOAL      }, State::ARRIVED_GOAL      },
-  {{State::ARRIVED_GOAL      , State::INITIALIZING      }, State::DRIVING           },
+  {{State::ARRIVED_GOAL      , State::INITIALIZING      }, State::ARRIVED_GOAL      },
   {{State::ARRIVED_GOAL      , State::WAITING_FOR_ROUTE }, State::WAITING_FOR_ROUTE },
   {{State::ARRIVED_GOAL      , State::PLANNING          }, State::WAITING_FOR_ROUTE },
   {{State::ARRIVED_GOAL      , State::WAITING_FOR_ENGAGE}, State::WAITING_FOR_ROUTE },
