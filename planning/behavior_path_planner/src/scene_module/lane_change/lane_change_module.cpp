@@ -142,9 +142,6 @@ BehaviorModuleOutput LaneChangeModule::plan()
   is_activated_ = isActivated();
   constexpr double resample_interval{1.0};
 
-  RCLCPP_INFO(
-    getLogger(), "[plan] current_lane_change_state_ = %s",
-    toStr(current_lane_change_state_).data());
   PathWithLaneId selected_path = status_.lane_change_path.path;
   PathWithLaneId path;
 
@@ -489,7 +486,8 @@ bool LaneChangeModule::isAbortConditionSatisfied()
     return false;
   }
 
-  const auto is_path_safe = isApprovedPathSafe(abort_non_collision_pose_);
+  Pose ego_pose_before_collision;
+  const auto is_path_safe = isApprovedPathSafe(ego_pose_before_collision);
 
   if (!is_path_safe) {
     current_lane_change_state_ = LaneChangeStates::Cancel;
@@ -514,7 +512,7 @@ bool LaneChangeModule::isAbortConditionSatisfied()
     }
 
     const auto found_abort_path = lane_change_utils::getAbortPaths(
-      planner_data_, status_.lane_change_path, abort_non_collision_pose_, common_parameters,
+      planner_data_, status_.lane_change_path, ego_pose_before_collision, common_parameters,
       *parameters_);
 
     if (!found_abort_path) {
@@ -536,12 +534,25 @@ bool LaneChangeModule::isAbortConditionSatisfied()
 
 bool LaneChangeModule::isAbortState() const
 {
-  return (current_lane_change_state_ == LaneChangeStates::Abort) && abort_path_;
+  if ((current_lane_change_state_ == LaneChangeStates::Abort) && abort_path_) {
+    auto clock{rclcpp::Clock{RCL_ROS_TIME}};
+    RCLCPP_WARN_STREAM_THROTTLE(
+      getLogger(), clock, 1000,
+      "DANGER!!! Lane change transition to ABORT state, return path will be computed!");
+    return true;
+  }
+  return false;
 }
 
 bool LaneChangeModule::isStopState() const
 {
-  return current_lane_change_state_ == LaneChangeStates::Stop;
+  if (current_lane_change_state_ == LaneChangeStates::Stop) {
+    auto clock{rclcpp::Clock{RCL_ROS_TIME}};
+    RCLCPP_WARN_STREAM_THROTTLE(
+      getLogger(), clock, 1000, "DANGER!!! Lane change transition to STOP state!");
+    return true;
+  }
+  return false;
 }
 
 bool LaneChangeModule::hasFinishedLaneChange() const

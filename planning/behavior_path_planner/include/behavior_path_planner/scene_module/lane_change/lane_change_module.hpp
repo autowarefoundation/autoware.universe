@@ -47,20 +47,6 @@ using marker_utils::CollisionCheckDebug;
 using tier4_planning_msgs::msg::LaneChangeDebugMsg;
 using tier4_planning_msgs::msg::LaneChangeDebugMsgArray;
 
-inline std::string_view toStr(const LaneChangeStates state)
-{
-  if (state == LaneChangeStates::Normal) {
-    return "Normal";
-  } else if (state == LaneChangeStates::Cancel) {
-    return "Cancel";
-  } else if (state == LaneChangeStates::Abort) {
-    return "Abort";
-  } else if (state == LaneChangeStates::Stop) {
-    return "Stop";
-  }
-  return "UNKNOWN";
-}
-
 class LaneChangeModule : public SceneModuleInterface
 {
 public:
@@ -115,25 +101,22 @@ private:
   LaneChangeStatus status_;
   PathShifter path_shifter_;
   mutable LaneChangeDebugMsgArray lane_change_debug_msg_array_;
-  mutable LaneChangeStates current_lane_change_state_;
-  mutable std::shared_ptr<LaneChangePath> abort_path_;
+  LaneChangeStates current_lane_change_state_;
+  std::shared_ptr<LaneChangePath> abort_path_;
   PathWithLaneId prev_approved_path_;
-  mutable Pose abort_non_collision_pose_;
 
   double lane_change_lane_length_{200.0};
   double check_distance_{100.0};
+  bool is_abort_path_approved_{false};
+  bool is_abort_approval_requested_{false};
+  bool is_abort_condition_satisfied_{false};
+  bool is_activated_ = false;
 
   RTCInterface rtc_interface_left_;
   RTCInterface rtc_interface_right_;
   UUID uuid_left_;
   UUID uuid_right_;
   UUID candidate_uuid_;
-
-  bool is_abort_path_approved_ = false;
-  bool is_abort_approval_requested_ = false;
-  bool is_abort_condition_satisfied_ = false;
-
-  bool is_activated_ = false;
 
   void resetParameters();
 
@@ -263,11 +246,9 @@ private:
   void resetPathIfAbort(PathWithLaneId & selected_path);
 
   // debug
-  void append_marker_array(const MarkerArray & marker_array) const;
+  void setObjectDebugVisualization() const;
   mutable std::unordered_map<std::string, CollisionCheckDebug> object_debug_;
   mutable std::vector<LaneChangePath> debug_valid_path_;
-
-  void setObjectDebugVisualization() const;
 };
 }  // namespace behavior_path_planner
 
