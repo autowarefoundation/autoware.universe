@@ -35,7 +35,7 @@ AutowareStatePanel::AutowareStatePanel(QWidget * parent) : rviz_common::Panel(pa
 {
   // Gear
   auto * gear_prefix_label_ptr = new QLabel("GEAR: ");
-  gear_prefix_label_ptr->setAlignment(Qt::AlignRight);
+  gear_prefix_label_ptr->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
   gear_label_ptr_ = new QLabel("INIT");
   gear_label_ptr_->setAlignment(Qt::AlignCenter);
   auto * gear_layout = new QHBoxLayout;
