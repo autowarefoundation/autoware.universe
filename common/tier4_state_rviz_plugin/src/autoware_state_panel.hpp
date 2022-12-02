@@ -93,7 +93,7 @@ protected:
   rclcpp::Client<ChangeOperationMode>::SharedPtr client_enable_autoware_control_;
   rclcpp::Client<ChangeOperationMode>::SharedPtr client_enable_direct_control_;
 
-  // Functions
+  //// Functions
   void onOperationMode(const OperationModeState::ConstSharedPtr msg);
   void changeOperationMode(const rclcpp::Client<ChangeOperationMode>::SharedPtr client);
 
