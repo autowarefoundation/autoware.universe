@@ -14,9 +14,8 @@ GraphSegment::GraphSegment()
   using std::placeholders::_1;
 
   // Subscriber
-  sub_image_ = create_subscription<Image>(
-    "/sensing/camera/traffic_light/image_raw/compressed", 10,
-    std::bind(&GraphSegment::on_image, this, _1));
+  sub_image_ =
+    create_subscription<Image>("src_image", 10, std::bind(&GraphSegment::on_image, this, _1));
 
   pub_cloud_ = create_publisher<PointCloud2>("graph_segmented", 10);
   pub_image_ = create_publisher<Image>("segmented_image", 10);

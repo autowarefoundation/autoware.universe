@@ -37,10 +37,8 @@ public:
 
     auto on_image = std::bind(&UndistortNode::on_image, this, _1);
     auto on_info = std::bind(&UndistortNode::on_info, this, _1);
-    sub_image_ = create_subscription<CompressedImage>(
-      "/sensing/camera/traffic_light/image_raw/compressed", qos, std::move(on_image));
-    sub_info_ = create_subscription<CameraInfo>(
-      "/sensing/camera/traffic_light/camera_info", qos, std::move(on_info));
+    sub_image_ = create_subscription<CompressedImage>("src_image", qos, std::move(on_image));
+    sub_info_ = create_subscription<CameraInfo>("src_info", qos, std::move(on_info));
 
     pub_info_ = create_publisher<CameraInfo>("/sensing/camera/undistorted/camera_info", 10);
     pub_image_ = create_publisher<Image>("/sensing/camera/undistorted/image_raw", 10);

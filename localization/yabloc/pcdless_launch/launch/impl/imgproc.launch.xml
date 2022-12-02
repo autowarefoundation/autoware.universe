@@ -10,7 +10,10 @@
     <arg name="max_segment_distance" default="-1.0"/>
     <arg name="max_lateral_distance" default="-1.0"/>
 
+    <arg name="target_height_ratio" default="0.85"/>
+
     <arg name="truncate_pixel_threshold" default="-1" description="For robustness verification, if positive value is given, line segments are truncated."/>
+
 
     <!-- undistort & resize -->
     <arg name="override_extrinsic" default="false" description="Value for overriding the camera's frame_id. Use when another static_tf is to be read."/>
@@ -20,6 +23,9 @@
             <param name="width" value="800"/>
             <param name="override_frame_id" value="override_camera_frame"/>
             <param name="use_sensor_qos" value="$(var use_sensor_qos)"/>
+
+            <remap from="src_image" to="$(var src_image)"/>
+            <remap from="src_info" to="$(var src_info)"/>
         </node>
         <node name="override_static_tf" pkg="tf2_ros" exec="static_transform_publisher" args="--x 1.121  --y -0.056 --z 1.974 --roll -1.551 --pitch 0.006 --yaw -1.580 --frame-id  base_link --child-frame-id override_camera_frame"/>
     </group>
@@ -29,6 +35,9 @@
             <param name="width" value="800"/>
             <param name="override_frame_id" value=""/>
             <param name="use_sensor_qos" value="$(var use_sensor_qos)"/>
+
+            <remap from="src_image" to="$(var src_image)"/>
+            <remap from="src_info" to="$(var src_info)"/>
         </node>
     </group>
 
@@ -39,8 +48,7 @@
 
     <node name="lsd" pkg="lsd" exec="lsd_node" output="screen" args="--ros-args --log-level warn">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
-        <remap from="$(var src_image)" to="$(var resized_image)"/>
-        <remap from="$(var src_info)" to="$(var resized_info)"/>
+        <remap from="src_image" to="$(var resized_image)"/>
 
         <remap from="lsd_image" to="$(var output_lsd_image)"/>
         <remap from="lsd_cloud" to="$(var output_lsd_cloud)"/>
@@ -50,10 +58,10 @@
     <arg name="output_graph_segmented" default="graph_segmented"/>
     <arg name="output_segmented_image" default="segmented_image"/>
     <node name="graph_segment" pkg="graph_segment" exec="graph_segment_node" output="screen" args="--ros-args --log-level info">
-        <remap from="$(var src_image)" to="$(var resized_image)"/>
-        <remap from="$(var src_info)" to="$(var resized_info)"/>
+        <remap from="src_image" to="$(var resized_image)"/>
         <remap from="graph_segmented" to="$(var output_graph_segmented)"/>
         <remap from="segmented_image" to="$(var output_segmented_image)"/>
+        <param name="target_height_ratio" value="$(var target_height_ratio)"/>
     </node>
 
     <!-- segment fitler -->

@@ -17,8 +17,7 @@ LineSegmentDetector::LineSegmentDetector()
 
   // Subscriber
   auto cb_image = std::bind(&LineSegmentDetector::on_image, this, _1);
-  sub_image_ =
-    create_subscription<Image>("/sensing/camera/traffic_light/image_raw/compressed", 10, cb_image);
+  sub_image_ = create_subscription<Image>("src_image", 10, cb_image);
 
   // Publisher
   pub_image_lsd_ = create_publisher<Image>("lsd_image", 10);
