@@ -1830,7 +1830,7 @@ bool checkLaneIsInIntersection(
       return false;
     }
 
-    auto back_lanelet_length = lanelet::utils::getLaneletLength2d(lanelet_sequence.back());
+    const auto back_lanelet_length = lanelet::utils::getLaneletLength2d(lanelet_sequence.back());
     if (back_lanelet_length > min_lane_change_distance) 
     {
       return false;
