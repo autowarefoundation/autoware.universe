@@ -81,6 +81,8 @@ geometry_msgs::msg::TwistWithCovarianceStamped concatGyroAndOdometer(
   }
   twist_with_cov.twist.twist.linear.x = vx_mean;
   twist_with_cov.twist.twist.angular = gyro_mean;
+
+  // Reduce the covariances according to the number of observed data
   twist_with_cov.twist.covariance[0 * 6 + 0] = vx_covariance_original / vehicle_twist_queue.size();
   twist_with_cov.twist.covariance[1 * 6 + 1] = 100000.0;
   twist_with_cov.twist.covariance[2 * 6 + 2] = 100000.0;
