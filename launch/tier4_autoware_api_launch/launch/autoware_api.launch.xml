@@ -14,14 +14,12 @@
     <include file="$(find-pkg-share ad_api_adaptors)/launch/rviz_adaptors.launch.xml" if="$(var launch_rviz_adaptors)"/>
   </group>
 
-  <!-- autoware api adaptor -->
+  <!-- RTC controller -->
   <group>
-    <push-ros-namespace namespace="autoware_api"/>
-    <!--
-    <node_container pkg="rclcpp_components" exec="component_container_mt" name="autoware_iv_adaptor" namespace="external">
-        <composable_node pkg="autoware_iv_external_api_adaptor" plugin="external_api::RTCController" name="rtc_controller"/>
+    <push-ros-namespace namespace="autoware_api/external"/>
+    <node_container pkg="rclcpp_components" exec="component_container_mt" name="autoware_iv_adaptor" namespace="">
+      <composable_node pkg="autoware_iv_external_api_adaptor" plugin="external_api::RTCController" name="rtc_controller"/>
     </node_container>
-    -->
   </group>
 
   <!-- rosbridge -->
