@@ -88,8 +88,8 @@ protected:
 
   //// Control Mode
   QLabel * control_mode_label_ptr_{nullptr};
-  QPushButton * autoware_control_button_ptr_{nullptr};
-  QPushButton * direct_control_button_ptr_{nullptr};
+  QPushButton * enable_button_ptr_{nullptr};
+  QPushButton * disable_button_ptr_{nullptr};
   rclcpp::Client<ChangeOperationMode>::SharedPtr client_enable_autoware_control_;
   rclcpp::Client<ChangeOperationMode>::SharedPtr client_enable_direct_control_;
 

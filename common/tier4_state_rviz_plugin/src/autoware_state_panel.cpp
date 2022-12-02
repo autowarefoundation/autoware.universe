@@ -104,7 +104,7 @@ QGroupBox * AutowareStatePanel::makeOperationModeGroup()
 
 QGroupBox * AutowareStatePanel::makeControlModeGroup()
 {
-  auto * group = new QGroupBox("ControlMode");
+  auto * group = new QGroupBox("AutowareControl");
   auto * grid = new QGridLayout;
 
   control_mode_label_ptr_ = new QLabel("INIT");
@@ -112,15 +112,15 @@ QGroupBox * AutowareStatePanel::makeControlModeGroup()
   control_mode_label_ptr_->setStyleSheet("border:1px solid black;");
   grid->addWidget(control_mode_label_ptr_, 0, 0);
 
-  autoware_control_button_ptr_ = new QPushButton("Autoware");
-  autoware_control_button_ptr_->setCheckable(true);
-  connect(autoware_control_button_ptr_, SIGNAL(clicked()), SLOT(onClickAutowareControl()));
-  grid->addWidget(autoware_control_button_ptr_, 0, 1);
+  enable_button_ptr_ = new QPushButton("Enable");
+  enable_button_ptr_->setCheckable(true);
+  connect(enable_button_ptr_, SIGNAL(clicked()), SLOT(onClickAutowareControl()));
+  grid->addWidget(enable_button_ptr_, 0, 1);
 
-  direct_control_button_ptr_ = new QPushButton("Direct");
-  direct_control_button_ptr_->setCheckable(true);
-  connect(direct_control_button_ptr_, SIGNAL(clicked()), SLOT(onClickDirectControl()));
-  grid->addWidget(direct_control_button_ptr_, 0, 2);
+  disable_button_ptr_ = new QPushButton("Disable");
+  disable_button_ptr_->setCheckable(true);
+  connect(disable_button_ptr_, SIGNAL(clicked()), SLOT(onClickDirectControl()));
+  grid->addWidget(disable_button_ptr_, 0, 2);
 
   group->setLayout(grid);
   return group;
@@ -211,10 +211,10 @@ void AutowareStatePanel::onOperationMode(const OperationModeState::ConstSharedPt
 
   // Control Mode
   if (msg->is_autoware_control_enabled) {
-    control_mode_label_ptr_->setText("Autoware");
+    control_mode_label_ptr_->setText("Enable");
     control_mode_label_ptr_->setStyleSheet("background-color: #00FF00;");
   } else {
-    control_mode_label_ptr_->setText("Direct");
+    control_mode_label_ptr_->setText("Disable");
     control_mode_label_ptr_->setStyleSheet("background-color: #FFFF00;");
   }
 
@@ -228,8 +228,8 @@ void AutowareStatePanel::onOperationMode(const OperationModeState::ConstSharedPt
   changeButtonState(
     remote_button_ptr_, msg->is_remote_mode_available, msg->mode, OperationModeState::REMOTE);
 
-  changeButtonState(autoware_control_button_ptr_, !msg->is_autoware_control_enabled);
-  changeButtonState(direct_control_button_ptr_, msg->is_autoware_control_enabled);
+  changeButtonState(enable_button_ptr_, !msg->is_autoware_control_enabled);
+  changeButtonState(disable_button_ptr_, msg->is_autoware_control_enabled);
 }
 
 void AutowareStatePanel::onShift(
