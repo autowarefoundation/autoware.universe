@@ -4,3 +4,7 @@
 [submodule "Sophus"]
 	path = standalone/Sophus
 	url = https://github.com/strasdat/Sophus.git
+[submodule "standalone/septentrio_gnss_driver"]
+	path = standalone/septentrio_gnss_driver
+	url = https://github.com/tier4/septentrio_gnss_driver.git
+	branch = tier4/ros2
