@@ -139,7 +139,6 @@ QGroupBox * AutowareStatePanel::makeRoutingGroup()
   auto * group = new QGroupBox("Routing");
   auto * grid = new QGridLayout;
 
-
   routing_label_ptr_ = new QLabel("INIT");
   routing_label_ptr_->setAlignment(Qt::AlignCenter);
   routing_label_ptr_->setStyleSheet("border:1px solid black;");
@@ -159,7 +158,6 @@ QGroupBox * AutowareStatePanel::makeLocalizationGroup()
   auto * group = new QGroupBox("Localization");
   auto * grid = new QGridLayout;
 
-
   localization_label_ptr_ = new QLabel("INIT");
   localization_label_ptr_->setAlignment(Qt::AlignCenter);
   localization_label_ptr_->setStyleSheet("border:1px solid black;");
@@ -173,7 +171,6 @@ QGroupBox * AutowareStatePanel::makeMotionGroup()
 {
   auto * group = new QGroupBox("Motion");
   auto * grid = new QGridLayout;
-
 
   motion_label_ptr_ = new QLabel("INIT");
   motion_label_ptr_->setAlignment(Qt::AlignCenter);
@@ -252,46 +249,48 @@ void AutowareStatePanel::onInitialize()
 
 void AutowareStatePanel::onOperationMode(const OperationModeState::ConstSharedPtr msg)
 {
-  auto changeButtonState = [](
+  auto changeButtonState = [this](
                              QPushButton * button, const bool is_desired_mode_available,
                              const uint8_t current_mode = OperationModeState::UNKNOWN,
                              const uint8_t desired_mode = OperationModeState::STOP) {
     if (is_desired_mode_available && current_mode != desired_mode) {
-      button->setChecked(false);
-      button->setEnabled(true);
+      activateButton(button);
     } else {
-      button->setChecked(true);
-      button->setEnabled(false);
+      deactivateButton(button);
     }
   };
 
+  QString text = "";
+  QString style_sheet = "";
   // Operation Mode
   switch (msg->mode) {
     case OperationModeState::AUTONOMOUS:
-      operation_mode_label_ptr_->setText("AUTONOMOUS");
-      operation_mode_label_ptr_->setStyleSheet("background-color: #00FF00;");
+      text = "AUTONOMOUS";
+      style_sheet = "background-color: #00FF00;";
       break;
 
     case OperationModeState::LOCAL:
-      operation_mode_label_ptr_->setText("LOCAL");
-      operation_mode_label_ptr_->setStyleSheet("background-color: #FFFF00;");
+      text = "LOCAL";
+      style_sheet = "background-color: #FFFF00;";
       break;
 
     case OperationModeState::REMOTE:
-      operation_mode_label_ptr_->setText("REMOTE");
-      operation_mode_label_ptr_->setStyleSheet("background-color: #FFFF00;");
+      text = "REMOTE";
+      style_sheet = "background-color: #FFFF00;";
       break;
 
     case OperationModeState::STOP:
-      operation_mode_label_ptr_->setText("STOP");
-      operation_mode_label_ptr_->setStyleSheet("background-color: #FFA500;");
+      text = "STOP";
+      style_sheet = "background-color: #FFA500;";
       break;
 
     default:
-      operation_mode_label_ptr_->setText("UNKNOWN");
-      operation_mode_label_ptr_->setStyleSheet("background-color: #FF0000;");
+      text = "UNKNOWN";
+      style_sheet = "background-color: #FF0000;";
       break;
   }
+
+  setupLabel(operation_mode_label_ptr_, text, style_sheet);
 
   if (msg->is_in_transition) {
     operation_mode_label_ptr_->setText(operation_mode_label_ptr_->text() + "\n(TRANSITION)");
@@ -299,11 +298,9 @@ void AutowareStatePanel::onOperationMode(const OperationModeState::ConstSharedPt
 
   // Control Mode
   if (msg->is_autoware_control_enabled) {
-    control_mode_label_ptr_->setText("Enable");
-    control_mode_label_ptr_->setStyleSheet("background-color: #00FF00;");
+    setupLabel(control_mode_label_ptr_, "Enable", "background-color: #00FF00;");
   } else {
-    control_mode_label_ptr_->setText("Disable");
-    control_mode_label_ptr_->setStyleSheet("background-color: #FFFF00;");
+    setupLabel(control_mode_label_ptr_, "Disable", "background-color: #FFFF00;");
   }
 
   // Button
@@ -322,40 +319,41 @@ void AutowareStatePanel::onOperationMode(const OperationModeState::ConstSharedPt
 
 void AutowareStatePanel::onRoute(const RouteState::ConstSharedPtr msg)
 {
+  QString text = "";
+  QString style_sheet = "";
   switch (msg->state) {
     case RouteState::UNSET:
-      routing_label_ptr_->setText("UNSET");
-      routing_label_ptr_->setStyleSheet("background-color: #FFFF00;");
+      text = "UNSET";
+      style_sheet = "background-color: #FFFF00;";
       break;
 
     case RouteState::SET:
-      routing_label_ptr_->setText("SET");
-      routing_label_ptr_->setStyleSheet("background-color: #00FF00;");
+      text = "SET";
+      style_sheet = "background-color: #00FF00;";
       break;
 
     case RouteState::ARRIVED:
-      routing_label_ptr_->setText("ARRIVED");
-      routing_label_ptr_->setStyleSheet("background-color: #FFA500;");
+      text = "ARRIVED";
+      style_sheet = "background-color: #FFA500;";
       break;
 
     case RouteState::CHANGING:
-      routing_label_ptr_->setText("CHANGING");
-      routing_label_ptr_->setStyleSheet("background-color: #FFFF00;");
+      text = "CHANGING";
+      style_sheet = "background-color: #FFFF00;";
       break;
 
     default:
-      routing_label_ptr_->setText("UNKNOWN");
-      routing_label_ptr_->setStyleSheet("background-color: #FF0000;");
+      text = "UNKNOWN";
+      style_sheet = "background-color: #FF0000;";
       break;
   }
 
-  if (msg->state == RouteState::SET)
-  {
-    clear_route_button_ptr_->setChecked(false);
-    clear_route_button_ptr_->setEnabled(true);
+  setupLabel(routing_label_ptr_, text, style_sheet);
+
+  if (msg->state == RouteState::SET) {
+    activateButton(clear_route_button_ptr_);
   } else {
-    clear_route_button_ptr_->setChecked(true);
-    clear_route_button_ptr_->setEnabled(false);
+    deactivateButton(clear_route_button_ptr_);
   }
 }
 
@@ -385,8 +383,7 @@ void AutowareStatePanel::onLocalization(const LocalizationInitializationState::C
       break;
   }
 
-  localization_label_ptr_->setText(text);
-  localization_label_ptr_->setStyleSheet(style_sheet);
+  setupLabel(localization_label_ptr_, text, style_sheet);
 }
 
 void AutowareStatePanel::onMotion(const MotionState::ConstSharedPtr msg)
@@ -415,15 +412,12 @@ void AutowareStatePanel::onMotion(const MotionState::ConstSharedPtr msg)
       break;
   }
 
-  motion_label_ptr_->setText(text);
-  motion_label_ptr_->setStyleSheet(style_sheet);
+  setupLabel(motion_label_ptr_, text, style_sheet);
 
   if (msg->state == MotionState::STARTING) {
-    accept_start_button_ptr_->setChecked(false);
-    accept_start_button_ptr_->setEnabled(true);
+    activateButton(accept_start_button_ptr_);
   } else {
-    accept_start_button_ptr_->setChecked(true);
-    accept_start_button_ptr_->setEnabled(false);
+    deactivateButton(accept_start_button_ptr_);
   }
 }
 
@@ -466,76 +460,40 @@ void AutowareStatePanel::onClickVelocityLimit()
   pub_velocity_limit_->publish(*velocity_limit);
 }
 
-void AutowareStatePanel::onClickAutonomous() { changeOperationMode(client_change_to_autonomous_); }
-void AutowareStatePanel::onClickStop() { changeOperationMode(client_change_to_stop_); }
-void AutowareStatePanel::onClickLocal() { changeOperationMode(client_change_to_local_); }
-void AutowareStatePanel::onClickRemote() { changeOperationMode(client_change_to_remote_); }
+void AutowareStatePanel::onClickAutonomous()
+{
+  callServiceWithoutResponse<ChangeOperationMode>(client_change_to_autonomous_);
+}
+void AutowareStatePanel::onClickStop()
+{
+  callServiceWithoutResponse<ChangeOperationMode>(client_change_to_stop_);
+}
+void AutowareStatePanel::onClickLocal()
+{
+  callServiceWithoutResponse<ChangeOperationMode>(client_change_to_local_);
+}
+void AutowareStatePanel::onClickRemote()
+{
+  callServiceWithoutResponse<ChangeOperationMode>(client_change_to_remote_);
+}
 void AutowareStatePanel::onClickAutowareControl()
 {
-  changeOperationMode(client_enable_autoware_control_);
+  callServiceWithoutResponse<ChangeOperationMode>(client_enable_autoware_control_);
 }
 void AutowareStatePanel::onClickDirectControl()
 {
-  changeOperationMode(client_enable_direct_control_);
-}
-
-void AutowareStatePanel::changeOperationMode(
-  const rclcpp::Client<ChangeOperationMode>::SharedPtr client)
-{
-  auto req = std::make_shared<ChangeOperationMode::Request>();
-
-  RCLCPP_INFO(raw_node_->get_logger(), "client request");
-
-  if (!client->service_is_ready()) {
-    RCLCPP_INFO(raw_node_->get_logger(), "client is unavailable");
-    return;
-  }
-
-  client->async_send_request(req, [this](rclcpp::Client<ChangeOperationMode>::SharedFuture result) {
-    RCLCPP_INFO(
-      raw_node_->get_logger(), "Status: %d, %s", result.get()->status.code,
-      result.get()->status.message.c_str());
-  });
+  callServiceWithoutResponse<ChangeOperationMode>(client_enable_direct_control_);
 }
 
 void AutowareStatePanel::onClickClearRoute()
 {
-  auto req = std::make_shared<ClearRoute::Request>();
-
-  RCLCPP_INFO(raw_node_->get_logger(), "client request");
-
-  if (!client_clear_route_->service_is_ready()) {
-    RCLCPP_INFO(raw_node_->get_logger(), "client is unavailable");
-    return;
-  }
-
-  client_clear_route_->async_send_request(
-    req, [this](rclcpp::Client<ClearRoute>::SharedFuture result) {
-      RCLCPP_INFO(
-        raw_node_->get_logger(), "Status: %d, %s", result.get()->status.code,
-        result.get()->status.message.c_str());
-    });
+  callServiceWithoutResponse<ClearRoute>(client_clear_route_);
 }
 
 void AutowareStatePanel::onClickAcceptStart()
 {
-  auto req = std::make_shared<AcceptStart::Request>();
-
-  RCLCPP_INFO(raw_node_->get_logger(), "client request");
-
-  if (!client_accept_start_->service_is_ready()) {
-    RCLCPP_INFO(raw_node_->get_logger(), "client is unavailable");
-    return;
-  }
-
-  client_accept_start_->async_send_request(
-    req, [this](rclcpp::Client<AcceptStart>::SharedFuture result) {
-      RCLCPP_INFO(
-        raw_node_->get_logger(), "Status: %d, %s", result.get()->status.code,
-        result.get()->status.message.c_str());
-    });
+  callServiceWithoutResponse<AcceptStart>(client_accept_start_);
 }
-
 
 void AutowareStatePanel::onClickEmergencyButton()
 {
