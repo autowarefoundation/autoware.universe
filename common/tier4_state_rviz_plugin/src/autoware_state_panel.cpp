@@ -266,27 +266,27 @@ void AutowareStatePanel::onOperationMode(const OperationModeState::ConstSharedPt
   switch (msg->mode) {
     case OperationModeState::AUTONOMOUS:
       text = "AUTONOMOUS";
-      style_sheet = "background-color: #00FF00;";
+      style_sheet = "background-color: #00FF00;";  // green
       break;
 
     case OperationModeState::LOCAL:
       text = "LOCAL";
-      style_sheet = "background-color: #FFFF00;";
+      style_sheet = "background-color: #FFFF00;";  // yellow
       break;
 
     case OperationModeState::REMOTE:
       text = "REMOTE";
-      style_sheet = "background-color: #FFFF00;";
+      style_sheet = "background-color: #FFFF00;";  // yellow
       break;
 
     case OperationModeState::STOP:
       text = "STOP";
-      style_sheet = "background-color: #FFA500;";
+      style_sheet = "background-color: #FFA500;";  // orange
       break;
 
     default:
       text = "UNKNOWN";
-      style_sheet = "background-color: #FF0000;";
+      style_sheet = "background-color: #FF0000;";  // red
       break;
   }
 
@@ -298,9 +298,9 @@ void AutowareStatePanel::onOperationMode(const OperationModeState::ConstSharedPt
 
   // Control Mode
   if (msg->is_autoware_control_enabled) {
-    setupLabel(control_mode_label_ptr_, "Enable", "background-color: #00FF00;");
+    setupLabel(control_mode_label_ptr_, "Enable", "background-color: #00FF00;");  // green
   } else {
-    setupLabel(control_mode_label_ptr_, "Disable", "background-color: #FFFF00;");
+    setupLabel(control_mode_label_ptr_, "Disable", "background-color: #FFFF00;");  // yellow
   }
 
   // Button
@@ -324,27 +324,27 @@ void AutowareStatePanel::onRoute(const RouteState::ConstSharedPtr msg)
   switch (msg->state) {
     case RouteState::UNSET:
       text = "UNSET";
-      style_sheet = "background-color: #FFFF00;";
+      style_sheet = "background-color: #FFFF00;";  // yellow
       break;
 
     case RouteState::SET:
       text = "SET";
-      style_sheet = "background-color: #00FF00;";
+      style_sheet = "background-color: #00FF00;";  // green
       break;
 
     case RouteState::ARRIVED:
       text = "ARRIVED";
-      style_sheet = "background-color: #FFA500;";
+      style_sheet = "background-color: #FFA500;";  // orange
       break;
 
     case RouteState::CHANGING:
       text = "CHANGING";
-      style_sheet = "background-color: #FFFF00;";
+      style_sheet = "background-color: #FFFF00;";  // yellow
       break;
 
     default:
       text = "UNKNOWN";
-      style_sheet = "background-color: #FF0000;";
+      style_sheet = "background-color: #FF0000;";  // red
       break;
   }
 
