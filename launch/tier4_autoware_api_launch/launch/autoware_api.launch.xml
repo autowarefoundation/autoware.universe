@@ -3,11 +3,6 @@
   <arg name="launch_default_ad_api" default="true"/>
   <arg name="launch_rviz_adaptors" default="true"/>
 
-  <!-- external api options -->
-  <arg name="launch_path_distance_calculator" default="false"/>
-  <arg name="launch_calibration_status_api" default="false"/>
-  <arg name="launch_start_api" default="true"/>
-
   <!-- rosbridge options -->
   <arg name="rosbridge_enabled" default="false"/>
   <arg name="rosbridge_respawn" default="true"/>
@@ -19,26 +14,12 @@
     <include file="$(find-pkg-share ad_api_adaptors)/launch/rviz_adaptors.launch.xml" if="$(var launch_rviz_adaptors)"/>
   </group>
 
-  <!-- awapi (deprecated) -->
+  <!-- RTC controller -->
   <group>
-    <include file="$(find-pkg-share awapi_awiv_adapter)/launch/awapi_awiv_adapter.launch.xml"/>
-  </group>
-
-  <!-- autoware api adaptor -->
-  <group>
-    <push-ros-namespace namespace="autoware_api"/>
-    <include file="$(find-pkg-share tier4_autoware_api_launch)/launch/include/external_api_adaptor.launch.py">
-      <arg name="launch_calibration_status_api" value="$(var launch_calibration_status_api)"/>
-      <arg name="launch_start_api" value="$(var launch_start_api)"/>
-    </include>
-    <include file="$(find-pkg-share tier4_autoware_api_launch)/launch/include/internal_api_adaptor.launch.py"/>
-    <include file="$(find-pkg-share tier4_autoware_api_launch)/launch/include/internal_api_relay.launch.xml"/>
-  </group>
-
-  <!-- autoware api utils -->
-  <group>
-    <push-ros-namespace namespace="autoware_api/utils"/>
-    <include file="$(find-pkg-share path_distance_calculator)/launch/path_distance_calculator.launch.xml" if="$(var launch_path_distance_calculator)"/>
+    <push-ros-namespace namespace="autoware_api/external"/>
+    <node_container pkg="rclcpp_components" exec="component_container_mt" name="autoware_iv_adaptor" namespace="">
+      <composable_node pkg="autoware_iv_external_api_adaptor" plugin="external_api::RTCController" name="rtc_controller"/>
+    </node_container>
   </group>
 
   <!-- rosbridge -->
