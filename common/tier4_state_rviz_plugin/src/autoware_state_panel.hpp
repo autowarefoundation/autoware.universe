@@ -27,6 +27,8 @@
 
 #include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
 #include <autoware_adapi_v1_msgs/srv/change_operation_mode.hpp>
+#include <autoware_adapi_v1_msgs/msg/route_state.hpp>
+#include <autoware_adapi_v1_msgs/srv/clear_route.hpp>
 #include <autoware_auto_vehicle_msgs/msg/gear_report.hpp>
 #include <tier4_external_api_msgs/msg/emergency.hpp>
 #include <tier4_external_api_msgs/srv/set_emergency.hpp>
@@ -38,6 +40,8 @@ class AutowareStatePanel : public rviz_common::Panel
 {
   using OperationModeState = autoware_adapi_v1_msgs::msg::OperationModeState;
   using ChangeOperationMode = autoware_adapi_v1_msgs::srv::ChangeOperationMode;
+  using RouteState = autoware_adapi_v1_msgs::msg::RouteState;
+  using ClearRoute = autoware_adapi_v1_msgs::srv::ClearRoute;
 
   Q_OBJECT
 
@@ -52,6 +56,7 @@ public Q_SLOTS:  // NOLINT for Qt
   void onClickRemote();
   void onClickAutowareControl();
   void onClickDirectControl();
+  void onClickClearRoute();
   void onClickVelocityLimit();
   void onClickEmergencyButton();
 
@@ -59,6 +64,7 @@ protected:
   // Layout
   QGroupBox * makeOperationModeGroup();
   QGroupBox * makeControlModeGroup();
+  QGroupBox * makeRoutingGroup();
 
   void onShift(const autoware_auto_vehicle_msgs::msg::GearReport::ConstSharedPtr msg);
   void onEmergencyStatus(const tier4_external_api_msgs::msg::Emergency::ConstSharedPtr msg);
@@ -96,6 +102,15 @@ protected:
   //// Functions
   void onOperationMode(const OperationModeState::ConstSharedPtr msg);
   void changeOperationMode(const rclcpp::Client<ChangeOperationMode>::SharedPtr client);
+
+  // Routing
+  QLabel * routing_label_ptr_{nullptr};
+  QPushButton * clear_route_button_ptr_{nullptr};
+
+  rclcpp::Subscription<RouteState>::SharedPtr sub_route_;
+  rclcpp::Client<ClearRoute>::SharedPtr client_clear_route_;
+
+  void onRoute(const RouteState::ConstSharedPtr msg);
 
   QPushButton * velocity_limit_button_ptr_;
   QLabel * gear_label_ptr_;

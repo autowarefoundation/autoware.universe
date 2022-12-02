@@ -59,6 +59,7 @@ AutowareStatePanel::AutowareStatePanel(QWidget * parent) : rviz_common::Panel(pa
   auto * velocity_limit_layout = new QHBoxLayout();
   v_layout->addWidget(makeOperationModeGroup());
   v_layout->addWidget(makeControlModeGroup());
+  v_layout->addWidget(makeRoutingGroup());
   v_layout->addLayout(gear_layout);
   velocity_limit_layout->addWidget(velocity_limit_button_ptr_);
   velocity_limit_layout->addWidget(pub_velocity_limit_input_);
@@ -126,6 +127,26 @@ QGroupBox * AutowareStatePanel::makeControlModeGroup()
   return group;
 }
 
+QGroupBox * AutowareStatePanel::makeRoutingGroup()
+{
+  auto * group = new QGroupBox("Routing");
+  auto * grid = new QGridLayout;
+
+
+  routing_label_ptr_ = new QLabel("INIT");
+  routing_label_ptr_->setAlignment(Qt::AlignCenter);
+  routing_label_ptr_->setStyleSheet("border:1px solid black;");
+  grid->addWidget(routing_label_ptr_, 0, 0);
+
+  clear_route_button_ptr_ = new QPushButton("Clear Route");
+  clear_route_button_ptr_->setCheckable(true);
+  connect(clear_route_button_ptr_, SIGNAL(clicked()), SLOT(onClickClearRoute()));
+  grid->addWidget(clear_route_button_ptr_, 0, 2, 0, 2);
+
+  group->setLayout(grid);
+  return group;
+}
+
 void AutowareStatePanel::onInitialize()
 {
   raw_node_ = this->getDisplayContext()->getRosNodeAbstraction().lock()->get_raw_node();
@@ -152,6 +173,14 @@ void AutowareStatePanel::onInitialize()
 
   client_enable_direct_control_ = raw_node_->create_client<ChangeOperationMode>(
     "/api/operation_mode/disable_autoware_control", rmw_qos_profile_services_default);
+
+  // Routing
+  sub_route_ = raw_node_->create_subscription<RouteState>(
+    "/api/routing/state", rclcpp::QoS{1}.transient_local(),
+    std::bind(&AutowareStatePanel::onRoute, this, _1));
+
+  client_clear_route_ = raw_node_->create_client<ClearRoute>(
+    "/api/routing/clear_route", rmw_qos_profile_services_default);
 
   sub_gear_ = raw_node_->create_subscription<autoware_auto_vehicle_msgs::msg::GearReport>(
     "/vehicle/status/gear_status", 10, std::bind(&AutowareStatePanel::onShift, this, _1));
@@ -236,6 +265,36 @@ void AutowareStatePanel::onOperationMode(const OperationModeState::ConstSharedPt
   changeButtonState(disable_button_ptr_, msg->is_autoware_control_enabled);
 }
 
+void AutowareStatePanel::onRoute(const RouteState::ConstSharedPtr msg)
+{
+  switch (msg->state) {
+    case RouteState::UNSET:
+      routing_label_ptr_->setText("UNSET");
+      routing_label_ptr_->setStyleSheet("background-color: #FFFF00;");
+      break;
+
+    case RouteState::SET:
+      routing_label_ptr_->setText("SET");
+      routing_label_ptr_->setStyleSheet("background-color: #00FF00;");
+      break;
+
+    case RouteState::ARRIVED:
+      routing_label_ptr_->setText("ARRIVED");
+      routing_label_ptr_->setStyleSheet("background-color: #FFA500;");
+      break;
+
+    case RouteState::CHANGING:
+      routing_label_ptr_->setText("CHANGING");
+      routing_label_ptr_->setStyleSheet("background-color: #FFFF00;");
+      break;
+
+    default:
+      routing_label_ptr_->setText("UNKNOWN");
+      routing_label_ptr_->setStyleSheet("background-color: #FF0000;");
+      break;
+  }
+}
+
 void AutowareStatePanel::onShift(
   const autoware_auto_vehicle_msgs::msg::GearReport::ConstSharedPtr msg)
 {
@@ -305,6 +364,25 @@ void AutowareStatePanel::changeOperationMode(
       raw_node_->get_logger(), "Status: %d, %s", result.get()->status.code,
       result.get()->status.message.c_str());
   });
+}
+
+void AutowareStatePanel::onClickClearRoute()
+{
+  auto req = std::make_shared<ClearRoute::Request>();
+
+  RCLCPP_INFO(raw_node_->get_logger(), "client request");
+
+  if (!client_clear_route_->service_is_ready()) {
+    RCLCPP_INFO(raw_node_->get_logger(), "client is unavailable");
+    return;
+  }
+
+  client_clear_route_->async_send_request(
+    req, [this](rclcpp::Client<ClearRoute>::SharedFuture result) {
+      RCLCPP_INFO(
+        raw_node_->get_logger(), "Status: %d, %s", result.get()->status.code,
+        result.get()->status.message.c_str());
+    });
 }
 
 void AutowareStatePanel::onClickEmergencyButton()
