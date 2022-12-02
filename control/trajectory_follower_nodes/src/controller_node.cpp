@@ -14,7 +14,8 @@
 
 #include "trajectory_follower_nodes/controller_node.hpp"
 
-#include "pure_pursuit/pure_pursuit_lateral_controller.hpp"
+// TODO(murooka) revert pure_pursuit later
+// #include "pure_pursuit/pure_pursuit_lateral_controller.hpp"
 #include "trajectory_follower/mpc_lateral_controller.hpp"
 #include "trajectory_follower/pid_longitudinal_controller.hpp"
 
@@ -47,10 +48,10 @@ Controller::Controller(const rclcpp::NodeOptions & node_options) : Node("control
       lateral_controller_ = std::make_shared<trajectory_follower::MpcLateralController>(*this);
       break;
     }
-    case LateralControllerMode::PURE_PURSUIT: {
-      lateral_controller_ = std::make_shared<pure_pursuit::PurePursuitLateralController>(*this);
-      break;
-    }
+    // case LateralControllerMode::PURE_PURSUIT: {
+    //   lateral_controller_ = std::make_shared<pure_pursuit::PurePursuitLateralController>(*this);
+    //   break;
+    // }
     default:
       throw std::domain_error("[LateralController] invalid algorithm");
   }
@@ -93,7 +94,7 @@ Controller::LateralControllerMode Controller::getLateralControllerMode(
   const std::string & controller_mode) const
 {
   if (controller_mode == "mpc_follower") return LateralControllerMode::MPC;
-  if (controller_mode == "pure_pursuit") return LateralControllerMode::PURE_PURSUIT;
+  // if (controller_mode == "pure_pursuit") return LateralControllerMode::PURE_PURSUIT;
 
   return LateralControllerMode::INVALID;
 }
@@ -108,22 +109,22 @@ Controller::LongitudinalControllerMode Controller::getLongitudinalControllerMode
 
 void Controller::onTrajectory(const autoware_auto_planning_msgs::msg::Trajectory::SharedPtr msg)
 {
-  input_data_.current_trajectory_ptr = msg;
+  current_trajectory_ptr_ = msg;
 }
 
 void Controller::onOdometry(const nav_msgs::msg::Odometry::SharedPtr msg)
 {
-  input_data_.current_odometry_ptr = msg;
+  current_odometry_ptr_ = msg;
 }
 
 void Controller::onSteering(const autoware_auto_vehicle_msgs::msg::SteeringReport::SharedPtr msg)
 {
-  input_data_.current_steering_ptr = msg;
+  current_steering_ptr_ = msg;
 }
 
 void Controller::onAccel(const geometry_msgs::msg::AccelWithCovarianceStamped::SharedPtr msg)
 {
-  input_data_.current_accel_ptr = msg;
+  current_accel_ptr_ = msg;
 }
 
 bool Controller::isTimeOut()
@@ -144,31 +145,80 @@ bool Controller::isTimeOut()
   return false;
 }
 
+boost::optional<trajectory_follower::InputData> Controller::createInputData() const
+{
+  if (
+    !current_trajectory_ptr_ || !current_odometry_ptr_ || !current_steering_ptr_ ||
+    !current_accel_ptr_) {
+    // RCL
+    return {};
+  }
+
+  trajectory_follower::InputData input_data;
+  input_data.current_trajectory = *current_trajectory_ptr_;
+  input_data.current_odometry = *current_odometry_ptr_;
+  input_data.current_steering = *current_steering_ptr_;
+  input_data.current_accel = *current_accel_ptr_;
+
+  return input_data;
+}
+
+void Controller::initialize(const trajectory_follower::InputData & input_data)
+{
+  const bool is_lat_initialized = lateral_controller_->initialize(input_data);
+  if (!is_lat_initialized) {
+    // RCL
+    return;
+  }
+
+  const bool is_lon_initialized = longitudinal_controller_->initialize(input_data);
+  if (!is_lon_initialized) {
+    // RCL
+    return;
+  }
+
+  is_initialized_ = true;
+}
+
 void Controller::callbackTimerControl()
 {
   // Since the longitudinal uses the convergence information of the steer
   // with the current trajectory, it is necessary to run the lateral first.
   // TODO(kosuke55): Do not depend on the order of execution.
-  lateral_controller_->setInputData(input_data_);  // trajectory, odometry, steering
-  const auto lat_out = lateral_controller_->run();
-  lateral_output_ = lat_out ? lat_out : lateral_output_;  // use previous value if none.
-  if (!lateral_output_) return;
 
-  longitudinal_controller_->sync(lateral_output_->sync_data);
-  longitudinal_controller_->setInputData(input_data_);  // trajectory, odometry
-  const auto lon_out = longitudinal_controller_->run();
-  longitudinal_output_ = lon_out ? lon_out : longitudinal_output_;  // use previous value if none.
-  if (!longitudinal_output_) return;
+  // 1. create input data
+  const auto input_data = createInputData();
+  if (!input_data) {
+    return;
+  }
 
-  lateral_controller_->sync(longitudinal_output_->sync_data);
+  // 2. check if controllers are ready
+  if (!lateral_controller_->isReady() || !longitudinal_controller_->isReady()) {
+    return;
+  }
+
+  // 3. check if controllers are initialized
+  if (!is_initialized_) {
+    initialize(*input_data);
+    return;
+  }
+
+  // 4. run controllers
+  const auto lat_out = lateral_controller_->run(*input_data);
+  const auto lon_out = longitudinal_controller_->run(*input_data);
+
+  // 5. sync with each other controllers
+  longitudinal_controller_->sync(lat_out.sync_data);
+  lateral_controller_->sync(lon_out.sync_data);
 
   // TODO(Horibe): Think specification. This comes from the old implementation.
   if (isTimeOut()) return;
 
+  // 6. publish control command
   autoware_auto_control_msgs::msg::AckermannControlCommand out;
   out.stamp = this->now();
-  out.lateral = lateral_output_->control_cmd;
-  out.longitudinal = longitudinal_output_->control_cmd;
+  out.lateral = lat_out.control_cmd;
+  out.longitudinal = lon_out.control_cmd;
   control_cmd_pub_->publish(out);
 
   publishDebugMarker();

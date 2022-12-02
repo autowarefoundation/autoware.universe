@@ -25,11 +25,11 @@
   <depend>autoware_auto_system_msgs</depend>
   <depend>autoware_auto_vehicle_msgs</depend>
   <depend>motion_utils</depend>
-  <depend>pure_pursuit</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>trajectory_follower</depend>
   <depend>vehicle_info_util</depend>
+  <!-- <depend>pure_pursuit</depend> TODO(murooka) revert this later-->
 
   <exec_depend>ros2launch</exec_depend>
 
