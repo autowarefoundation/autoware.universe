@@ -167,7 +167,45 @@ size_t findNearestIndexWithSoftYawConstraints(
                               : motion_utils::findNearestIndex(points_with_yaw, pose.position);
 }
 
-boost::optional<Eigen::Vector2d> intersects(
+bool intersects(
+  const Eigen::Vector2d & start_point1, const Eigen::Vector2d & end_point1,
+  const Eigen::Vector2d & start_point2, const Eigen::Vector2d & end_point2)
+{
+  using Point = boost::geometry::model::d2::point_xy<double>;
+  using Line = boost::geometry::model::linestring<Point>;
+
+  const Line line1 =
+    boost::assign::list_of<Point>(start_point1(0), start_point1(1))(end_point1(0), end_point1(1));
+  const Line line2 =
+    boost::assign::list_of<Point>(start_point2(0), start_point2(1))(end_point2(0), end_point2(1));
+
+  return boost::geometry::intersects(line1, line2);
+}
+
+size_t intersects(
+  std::vector<ReferencePoint> & ref_points, const std::vector<geometry_msgs::msg::Point> & bound)
+{
+  for (size_t i = 0; i < ref_points.size() - 1; ++i) {
+    const auto curr_ref_position = convertRefPointsToPose(ref_points.at(i)).position;
+    const auto next_ref_position = convertRefPointsToPose(ref_points.at(i + 1)).position;
+    const Eigen::Vector2d curr_ref_point = {curr_ref_position.x, curr_ref_position.y};
+    const Eigen::Vector2d next_ref_point = {next_ref_position.x, next_ref_position.y};
+
+    for (size_t bound_idx = 0; bound_idx < bound.size() - 1; ++bound_idx) {
+      const auto curr_bound_position = bound.at(bound_idx);
+      const auto next_bound_position = bound.at(bound_idx + 1);
+      const Eigen::Vector2d curr_bound_point = {curr_bound_position.x, curr_bound_position.y};
+      const Eigen::Vector2d next_bound_point = {next_bound_position.x, next_bound_position.y};
+      if (intersects(curr_ref_point, next_ref_point, curr_bound_point, next_bound_point)) {
+        return i;
+      }
+    }
+  }
+
+  return 0;
+}
+
+boost::optional<Eigen::Vector2d> intersection(
   const Eigen::Vector2d & start_point1, const Eigen::Vector2d & end_point1,
   const Eigen::Vector2d & start_point2, const Eigen::Vector2d & end_point2)
 {
@@ -190,7 +228,7 @@ boost::optional<Eigen::Vector2d> intersects(
 }
 
 double calcLateralDistToBound(
-  const Eigen::Vector2d & current_point, const Eigen::Vector2d & side_point,
+  const Eigen::Vector2d & current_point, const Eigen::Vector2d & edge_point,
   const std::vector<geometry_msgs::msg::Point> & bound, const bool is_right_bound = false)
 {
   for (size_t i = 0; i < bound.size() - 1; ++i) {
@@ -198,17 +236,14 @@ double calcLateralDistToBound(
     const Eigen::Vector2d next_bound_point = {bound.at(i + 1).x, bound.at(i + 1).y};
 
     const auto intersects_point =
-      intersects(current_point, side_point, current_bound_point, next_bound_point);
+      intersection(current_point, edge_point, current_bound_point, next_bound_point);
     if (intersects_point) {
       const double dist = (*intersects_point - current_point).norm();
       return is_right_bound ? -dist : dist;
     }
   }
 
-  geometry_msgs::msg::Point current_point_position;
-  current_point_position.x = current_point(0);
-  current_point_position.y = current_point(1);
-  return -motion_utils::calcLateralOffset(bound, current_point_position);
+  return is_right_bound ? -5.0 : 5.0;
 }
 }  // namespace
 
@@ -1382,32 +1417,46 @@ void MPTOptimizer::calcBounds(
   stop_watch_.tic(__func__);
 
   if (left_bound.empty() || right_bound.empty()) {
-    std::cerr << "[ObstacleAvoidancePlanner]: Boundary is empty in calculating Bounds" << std::endl;
+    std::cerr << "[ObstacleAvoidancePlanner]: Boundary is empty when calculating bounds"
+              << std::endl;
     return;
   }
+
+  const double min_soft_road_clearance =
+    vehicle_param_.width /
+    2.0;  // + mpt_param_.soft_clearance_from_road + mpt_param_.extra_desired_clearance_from_road;
+
+  const size_t left_cross_idx = intersects(ref_points, left_bound);
+  const size_t right_cross_idx = intersects(ref_points, right_bound);
+  const size_t ref_cross_idx = std::max(left_cross_idx, right_cross_idx);
+  std::cerr << "ref_cross_idx: " << ref_cross_idx << std::endl;
 
   // search bounds candidate for each ref points
   debug_data.bounds_candidates.clear();
   for (size_t i = 0; i < ref_points.size() - 1; ++i) {
-    const auto current_ref_pose = convertRefPointsToPose(ref_points.at(i));
-    const auto next_ref_pose = convertRefPointsToPose(ref_points.at(i + 1));
-    const Eigen::Vector2d current_ref_point = {
-      current_ref_pose.position.x, current_ref_pose.position.y};
-    const Eigen::Vector2d next_ref_point = {next_ref_pose.position.x, next_ref_pose.position.y};
+    const auto curr_ref_position = convertRefPointsToPose(ref_points.at(i)).position;
+    const auto next_ref_position = convertRefPointsToPose(ref_points.at(i + 1)).position;
+    const Eigen::Vector2d current_ref_point = {curr_ref_position.x, curr_ref_position.y};
+    const Eigen::Vector2d next_ref_point = {next_ref_position.x, next_ref_position.y};
     const Eigen::Vector2d current_to_next_vec = next_ref_point - current_ref_point;
     const Eigen::Vector2d left_normal_vec = {-current_to_next_vec(1), current_to_next_vec(0)};
     const Eigen::Vector2d right_normal_vec = {current_to_next_vec(1), -current_to_next_vec(0)};
 
     const Eigen::Vector2d left_point = current_ref_point + left_normal_vec.normalized() * 5.0;
     const Eigen::Vector2d right_point = current_ref_point + right_normal_vec.normalized() * 5.0;
-    const double lat_dist_to_left_bound =
-      calcLateralDistToBound(current_ref_point, left_point, left_bound);
-    const double lat_dist_to_right_bound =
-      calcLateralDistToBound(current_ref_point, right_point, right_bound, true);
+    const double lat_dist_to_left_bound = std::min(
+      calcLateralDistToBound(current_ref_point, left_point, left_bound) - min_soft_road_clearance,
+      5.0);
+    const double lat_dist_to_right_bound = std::max(
+      calcLateralDistToBound(current_ref_point, right_point, right_bound, true) +
+        min_soft_road_clearance,
+      -5.0);
+    /*
     std::cerr << "ref_idx: " << i << "  lat_dist_to_left_bound: " << lat_dist_to_left_bound
               << std::endl;
     std::cerr << "ref_idx: " << i << "  lat_dist_to_right_bound: " << lat_dist_to_right_bound
               << std::endl;
+    */
 
     ref_points.at(i).bounds = Bounds{
       lat_dist_to_right_bound, lat_dist_to_left_bound, CollisionType::NO_COLLISION,

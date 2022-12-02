@@ -604,6 +604,31 @@ void logOSQPSolutionStatus(const int solution_status, const std::string & msg)
 
 namespace
 {
+geometry_msgs::msg::Point getStartPoint(
+  const std::vector<geometry_msgs::msg::Point> & bound, const geometry_msgs::msg::Point & point)
+{
+  const size_t segment_idx = motion_utils::findNearestSegmentIndex(bound, point);
+  const Eigen::Vector2d first_to_target{
+    point.x - bound.at(segment_idx).x, point.y - bound.at(segment_idx).y};
+  const Eigen::Vector2d first_to_second{
+    bound.at(segment_idx + 1).x - bound.at(segment_idx).x,
+    bound.at(segment_idx + 1).y - bound.at(segment_idx).y};
+  const double length = first_to_target.dot(first_to_second.normalized());
+  std::cerr << "length: " << length << std::endl;
+
+  if (length < 0.0) {
+    return bound.front();
+  }
+
+  const auto first_point = motion_utils::calcLongitudinalOffsetPoint(bound, segment_idx, length);
+
+  if (first_point) {
+    return *first_point;
+  }
+
+  return bound.front();
+}
+
 bool isOutsideDrivableArea(
   const geometry_msgs::msg::Point & point,
   const std::vector<geometry_msgs::msg::Point> & left_bound,
@@ -613,9 +638,12 @@ bool isOutsideDrivableArea(
     return false;
   }
 
+  const auto left_start_point = getStartPoint(left_bound, right_bound.front());
+  const auto right_start_point = getStartPoint(right_bound, left_bound.front());
+  std::cerr << "-----------------" << std::endl;
+
   // ignore point in front of the front line
-  const std::vector<geometry_msgs::msg::Point> front_bound = {
-    left_bound.front(), right_bound.front()};
+  const std::vector<geometry_msgs::msg::Point> front_bound = {left_start_point, right_start_point};
   const double lat_dist_to_front_bound = motion_utils::calcLateralOffset(front_bound, point);
   if (lat_dist_to_front_bound > 0.0) {
     return false;
@@ -623,14 +651,16 @@ bool isOutsideDrivableArea(
 
   // left bound check
   const double lat_dist_to_left_bound = motion_utils::calcLateralOffset(left_bound, point);
-  if (lat_dist_to_left_bound > 0.0) {
+  if (lat_dist_to_left_bound > 0.1) {
+    std::cerr << "left violation value: " << lat_dist_to_left_bound << std::endl;
     std::cerr << "left side is out of the drivable area" << std::endl;
     return true;
   }
 
   // right bound check
   const double lat_dist_to_right_bound = motion_utils::calcLateralOffset(right_bound, point);
-  if (lat_dist_to_right_bound < 0.0) {
+  if (lat_dist_to_right_bound < -0.1) {
+    std::cerr << "right violation value: " << lat_dist_to_right_bound << std::endl;
     std::cerr << "right side is out of the drivable area" << std::endl;
     return true;
   }
