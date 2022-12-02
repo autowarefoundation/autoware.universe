@@ -59,7 +59,14 @@ AutowareStatePanel::AutowareStatePanel(QWidget * parent) : rviz_common::Panel(pa
   auto * velocity_limit_layout = new QHBoxLayout();
   v_layout->addWidget(makeOperationModeGroup());
   v_layout->addWidget(makeControlModeGroup());
-  v_layout->addWidget(makeRoutingGroup());
+  {
+    auto * h_layout = new QHBoxLayout();
+    h_layout->addWidget(makeRoutingGroup());
+    h_layout->addWidget(makeLocalizationGroup());
+    h_layout->addWidget(makeMotionGroup());
+    v_layout->addLayout(h_layout);
+  }
+
   v_layout->addLayout(gear_layout);
   velocity_limit_layout->addWidget(velocity_limit_button_ptr_);
   velocity_limit_layout->addWidget(pub_velocity_limit_input_);
@@ -141,7 +148,42 @@ QGroupBox * AutowareStatePanel::makeRoutingGroup()
   clear_route_button_ptr_ = new QPushButton("Clear Route");
   clear_route_button_ptr_->setCheckable(true);
   connect(clear_route_button_ptr_, SIGNAL(clicked()), SLOT(onClickClearRoute()));
-  grid->addWidget(clear_route_button_ptr_, 0, 2, 0, 2);
+  grid->addWidget(clear_route_button_ptr_, 1, 0);
+
+  group->setLayout(grid);
+  return group;
+}
+
+QGroupBox * AutowareStatePanel::makeLocalizationGroup()
+{
+  auto * group = new QGroupBox("Localization");
+  auto * grid = new QGridLayout;
+
+
+  localization_label_ptr_ = new QLabel("INIT");
+  localization_label_ptr_->setAlignment(Qt::AlignCenter);
+  localization_label_ptr_->setStyleSheet("border:1px solid black;");
+  grid->addWidget(localization_label_ptr_, 0, 0);
+
+  group->setLayout(grid);
+  return group;
+}
+
+QGroupBox * AutowareStatePanel::makeMotionGroup()
+{
+  auto * group = new QGroupBox("Motion");
+  auto * grid = new QGridLayout;
+
+
+  motion_label_ptr_ = new QLabel("INIT");
+  motion_label_ptr_->setAlignment(Qt::AlignCenter);
+  motion_label_ptr_->setStyleSheet("border:1px solid black;");
+  grid->addWidget(motion_label_ptr_, 0, 0);
+
+  accept_start_button_ptr_ = new QPushButton("Accept Start");
+  accept_start_button_ptr_->setCheckable(true);
+  connect(accept_start_button_ptr_, SIGNAL(clicked()), SLOT(onClickAcceptStart()));
+  grid->addWidget(accept_start_button_ptr_, 1, 0);
 
   group->setLayout(grid);
   return group;
@@ -181,6 +223,19 @@ void AutowareStatePanel::onInitialize()
 
   client_clear_route_ = raw_node_->create_client<ClearRoute>(
     "/api/routing/clear_route", rmw_qos_profile_services_default);
+
+  // Localization
+  sub_localization_ = raw_node_->create_subscription<LocalizationInitializationState>(
+    "/api/localization/initialization_state", rclcpp::QoS{1}.transient_local(),
+    std::bind(&AutowareStatePanel::onLocalization, this, _1));
+
+  // Motion
+  sub_motion_ = raw_node_->create_subscription<MotionState>(
+    "/api/motion/state", rclcpp::QoS{1}.transient_local(),
+    std::bind(&AutowareStatePanel::onMotion, this, _1));
+
+  client_accept_start_ = raw_node_->create_client<AcceptStart>(
+    "/api/motion/accept_start", rmw_qos_profile_services_default);
 
   sub_gear_ = raw_node_->create_subscription<autoware_auto_vehicle_msgs::msg::GearReport>(
     "/vehicle/status/gear_status", 10, std::bind(&AutowareStatePanel::onShift, this, _1));
@@ -293,6 +348,83 @@ void AutowareStatePanel::onRoute(const RouteState::ConstSharedPtr msg)
       routing_label_ptr_->setStyleSheet("background-color: #FF0000;");
       break;
   }
+
+  if (msg->state == RouteState::SET)
+  {
+    clear_route_button_ptr_->setChecked(false);
+    clear_route_button_ptr_->setEnabled(true);
+  } else {
+    clear_route_button_ptr_->setChecked(true);
+    clear_route_button_ptr_->setEnabled(false);
+  }
+}
+
+void AutowareStatePanel::onLocalization(const LocalizationInitializationState::ConstSharedPtr msg)
+{
+  QString text = "";
+  QString style_sheet = "";
+  switch (msg->state) {
+    case LocalizationInitializationState::UNINITIALIZED:
+      text = "UNINITIALIZED";
+      style_sheet = "background-color: #FFFF00;";  // yellow
+      break;
+
+    case LocalizationInitializationState::INITIALIZING:
+      text = "INITIALIZING";
+      style_sheet = "background-color: #FFA500;";  // orange
+      break;
+
+    case LocalizationInitializationState::INITIALIZED:
+      text = "INITIALIZED";
+      style_sheet = "background-color: #00FF00;";  // green
+      break;
+
+    default:
+      text = "UNKNOWN";
+      style_sheet = "background-color: #FF0000;";  // red
+      break;
+  }
+
+  localization_label_ptr_->setText(text);
+  localization_label_ptr_->setStyleSheet(style_sheet);
+}
+
+void AutowareStatePanel::onMotion(const MotionState::ConstSharedPtr msg)
+{
+  QString text = "";
+  QString style_sheet = "";
+  switch (msg->state) {
+    case MotionState::STARTING:
+      text = "STARTING";
+      style_sheet = "background-color: #FFFF00;";  // yellow
+      break;
+
+    case MotionState::STOPPED:
+      text = "STOPPED";
+      style_sheet = "background-color: #FFA500;";  // orange
+      break;
+
+    case MotionState::MOVING:
+      text = "MOVING";
+      style_sheet = "background-color: #00FF00;";  // green
+      break;
+
+    default:
+      text = "UNKNOWN";
+      style_sheet = "background-color: #FF0000;";  // red
+      break;
+  }
+
+  motion_label_ptr_->setText(text);
+  motion_label_ptr_->setStyleSheet(style_sheet);
+
+  if (msg->state == MotionState::STARTING) {
+    accept_start_button_ptr_->setChecked(false);
+    accept_start_button_ptr_->setEnabled(true);
+  } else {
+    accept_start_button_ptr_->setChecked(true);
+    accept_start_button_ptr_->setEnabled(false);
+  }
 }
 
 void AutowareStatePanel::onShift(
@@ -384,6 +516,26 @@ void AutowareStatePanel::onClickClearRoute()
         result.get()->status.message.c_str());
     });
 }
+
+void AutowareStatePanel::onClickAcceptStart()
+{
+  auto req = std::make_shared<AcceptStart::Request>();
+
+  RCLCPP_INFO(raw_node_->get_logger(), "client request");
+
+  if (!client_accept_start_->service_is_ready()) {
+    RCLCPP_INFO(raw_node_->get_logger(), "client is unavailable");
+    return;
+  }
+
+  client_accept_start_->async_send_request(
+    req, [this](rclcpp::Client<AcceptStart>::SharedFuture result) {
+      RCLCPP_INFO(
+        raw_node_->get_logger(), "Status: %d, %s", result.get()->status.code,
+        result.get()->status.message.c_str());
+    });
+}
+
 
 void AutowareStatePanel::onClickEmergencyButton()
 {
