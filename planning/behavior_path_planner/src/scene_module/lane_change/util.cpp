@@ -14,6 +14,7 @@
 
 #include "behavior_path_planner/scene_module/lane_change/util.hpp"
 
+#include "behavior_path_planner/path_utilities.hpp"
 #include "behavior_path_planner/scene_module/utils/path_shifter.hpp"
 #include "behavior_path_planner/utilities.hpp"
 
@@ -237,7 +238,7 @@ LaneChangePaths getLaneChangePaths(
 
     const PathWithLaneId target_lane_reference_path = getReferencePathFromTargetLane(
       route_handler, target_lanelets, lane_changing_start_pose, prepare_distance,
-      lane_changing_distance, forward_path_length, lane_changing_speed);
+      lane_changing_distance, forward_path_length);
 
     const ShiftLine shift_line = getLaneChangeShiftLine(
       prepare_segment_reference, lane_changing_segment_reference, target_lanelets,
@@ -491,7 +492,7 @@ bool isLaneChangePathSafe(
 PathWithLaneId getReferencePathFromTargetLane(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & target_lanes,
   const Pose & lane_changing_start_pose, const double prepare_distance,
-  const double lane_changing_distance, const double forward_path_length, const double current_speed)
+  const double lane_changing_distance, const double forward_path_length)
 {
   const ArcCoordinates lane_change_start_arc_position =
     lanelet::utils::getArcCoordinates(target_lanes, lane_changing_start_pose);
@@ -505,56 +506,9 @@ PathWithLaneId getReferencePathFromTargetLane(
   const auto lane_changing_reference_path =
     route_handler.getCenterLinePath(target_lanes, s_start, s_end);
 
-  const auto & ref_points = lane_changing_reference_path.points;
+  constexpr double resample_interval{1.0};
 
-  PathPointWithLaneId ref_back_pose;
-  std::vector<double> sum_segments{0.0};
-
-  for (size_t idx = 1; idx < ref_points.size() - 1; ++idx) {
-    const auto pt0 = ref_points.at(idx - 1);
-    const auto pt1 = ref_points.at(idx);
-
-    ref_back_pose = pt1;
-    const auto sum_segment = sum_segments.back() + tier4_autoware_utils::calcDistance2d(pt0, pt1);
-    sum_segments.push_back(sum_segment);
-
-    if (sum_segment > lane_changing_distance) {
-      break;
-    }
-  }
-
-  const auto min_speed = 1.0;
-  const auto dt = 0.5;
-
-  double sum_interval{0.0};
-  size_t ref_point_idx = 0;
-  const auto path = util::convertToGeometryPointArray(lane_changing_reference_path);
-
-  PathWithLaneId interpolated_path;
-  interpolated_path.points.push_back(ref_points.front());
-
-  while (sum_interval < lane_changing_distance) {
-    const auto traveled_dist = std::invoke([&]() {
-      constexpr auto max_interval_resolution = 1.0;
-      const double dist = (current_speed < min_speed) ? (min_speed * dt) : (current_speed * dt);
-      return std::min(dist, max_interval_resolution);
-    });
-
-    sum_interval += traveled_dist;
-    if (sum_interval > sum_segments.at(ref_point_idx)) {
-      ++ref_point_idx;
-    }
-
-    PathPointWithLaneId pt = ref_points.at(ref_point_idx);
-    pt.point.pose.position = util::lerpByLength(lane_changing_reference_path.points, sum_interval);
-    interpolated_path.points.push_back(pt);
-  }
-
-  PathWithLaneId path_back;
-  path_back.points.insert(
-    path_back.points.end(), ref_points.begin() + ref_point_idx - 1, ref_points.end());
-
-  return combineReferencePath(interpolated_path, path_back);
+  return util::resamplePathWithSpline(lane_changing_reference_path, resample_interval);
 }
 
 PathWithLaneId getReferencePathFromTargetLane(
