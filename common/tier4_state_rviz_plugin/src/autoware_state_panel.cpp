@@ -181,7 +181,7 @@ void AutowareStatePanel::onOperationMode(const OperationModeState::ConstSharedPt
     }
   };
 
-  // Gate Mode
+  // Operation Mode
   switch (msg->mode) {
     case OperationModeState::AUTONOMOUS:
       operation_mode_label_ptr_->setText("AUTONOMOUS");
