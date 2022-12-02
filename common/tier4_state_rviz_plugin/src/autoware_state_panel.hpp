@@ -74,11 +74,11 @@ protected:
 
   // Operation Mode
   //// Gate Mode
-  QLabel * operation_mode_label_ptr_;
-  QPushButton * stop_button_ptr_;
-  QPushButton * auto_button_ptr_;
-  QPushButton * local_button_ptr_;
-  QPushButton * remote_button_ptr_;
+  QLabel * operation_mode_label_ptr_{nullptr};
+  QPushButton * stop_button_ptr_{nullptr};
+  QPushButton * auto_button_ptr_{nullptr};
+  QPushButton * local_button_ptr_{nullptr};
+  QPushButton * remote_button_ptr_{nullptr};
 
   rclcpp::Subscription<OperationModeState>::SharedPtr sub_operation_mode_;
   rclcpp::Client<ChangeOperationMode>::SharedPtr client_change_to_autonomous_;
@@ -87,9 +87,9 @@ protected:
   rclcpp::Client<ChangeOperationMode>::SharedPtr client_change_to_remote_;
 
   //// Control Mode
-  QLabel * control_mode_label_ptr_;
-  QPushButton * autoware_control_button_ptr_;
-  QPushButton * direct_control_button_ptr_;
+  QLabel * control_mode_label_ptr_{nullptr};
+  QPushButton * autoware_control_button_ptr_{nullptr};
+  QPushButton * direct_control_button_ptr_{nullptr};
   rclcpp::Client<ChangeOperationMode>::SharedPtr client_enable_autoware_control_;
   rclcpp::Client<ChangeOperationMode>::SharedPtr client_enable_direct_control_;
 
