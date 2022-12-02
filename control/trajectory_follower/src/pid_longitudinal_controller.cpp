@@ -351,12 +351,6 @@ rcl_interfaces::msg::SetParametersResult PidLongitudinalController::paramCallbac
   return result;
 }
 
-bool PidLongitudinalController::initialize([[maybe_unused]] const InputData & input_data)
-{
-  // No need to initialize
-  return true;
-}
-
 bool PidLongitudinalController::isReady() { return true; }
 
 LongitudinalOutput PidLongitudinalController::run(InputData const & input_data)

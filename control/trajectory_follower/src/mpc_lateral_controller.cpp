@@ -173,13 +173,6 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node) : node_{&node}
 
 MpcLateralController::~MpcLateralController() {}
 
-bool MpcLateralController::initialize(const InputData & input_data)
-{
-  // is_steer_converged in LateralSyncData must be initialized for longitudinal cotnroller
-  run(input_data);
-  return true;
-}
-
 LateralOutput MpcLateralController::run(InputData const & input_data)
 {
   // set input data

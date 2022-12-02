@@ -237,7 +237,6 @@ private:
    */
   void setTrajectory(const autoware_auto_planning_msgs::msg::Trajectory msg);
 
-  bool initialize(const InputData & input_data) override;
   bool isReady() override;
 
   /**

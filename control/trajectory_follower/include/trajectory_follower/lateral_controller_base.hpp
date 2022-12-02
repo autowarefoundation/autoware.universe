@@ -40,7 +40,6 @@ struct LateralOutput
 class LateralControllerBase
 {
 public:
-  virtual bool initialize(const InputData & input_data) = 0;
   virtual bool isReady() = 0;
   virtual LateralOutput run(InputData const & input_data) = 0;
   void sync(LongitudinalSyncData const & longitudinal_sync_data)

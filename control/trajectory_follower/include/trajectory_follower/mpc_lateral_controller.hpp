@@ -139,7 +139,6 @@ private:
   //!< initialize timer to work in real, simulation, and replay
   void initTimer(double period_s);
 
-  bool initialize(const InputData & input_data) override;
   bool isReady() override;
 
   /**

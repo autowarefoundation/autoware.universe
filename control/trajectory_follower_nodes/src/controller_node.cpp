@@ -165,27 +165,21 @@ boost::optional<trajectory_follower::InputData> Controller::createInputData() co
 
 void Controller::initialize(const trajectory_follower::InputData & input_data)
 {
-  const bool is_lat_initialized = lateral_controller_->initialize(input_data);
-  if (!is_lat_initialized) {
-    // RCL
-    return;
-  }
+  // NOTE: How to initialize the controller depends on the lateral and longitudinal controller
+  // algorithm.
+  //       Currently, just run and sync are implemented since the longitudinal controller has to get
+  //       sync_data from the lateral controller before publishing control command.
+  const auto lat_out = lateral_controller_->run(input_data);
+  const auto lon_out = longitudinal_controller_->run(input_data);
 
-  const bool is_lon_initialized = longitudinal_controller_->initialize(input_data);
-  if (!is_lon_initialized) {
-    // RCL
-    return;
-  }
+  longitudinal_controller_->sync(lat_out.sync_data);
+  lateral_controller_->sync(lon_out.sync_data);
 
   is_initialized_ = true;
 }
 
 void Controller::callbackTimerControl()
 {
-  // Since the longitudinal uses the convergence information of the steer
-  // with the current trajectory, it is necessary to run the lateral first.
-  // TODO(kosuke55): Do not depend on the order of execution.
-
   // 1. create input data
   const auto input_data = createInputData();
   if (!input_data) {
