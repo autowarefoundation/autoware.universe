@@ -103,7 +103,6 @@ protected:
   QSpinBox * pub_velocity_limit_input_;
   QPushButton * emergency_button_ptr_;
 
-  bool current_engage_{false};
   bool current_emergency_{false};
 };
 
