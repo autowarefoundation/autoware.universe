@@ -78,6 +78,17 @@ std::string getModuleName(const uint8_t module_type)
   return "NONE";
 }
 
+bool isPathChangeModule(const uint8_t module_type)
+{
+  if (
+    module_type == Module::LANE_CHANGE_LEFT || module_type == Module::LANE_CHANGE_RIGHT ||
+    module_type == Module::AVOIDANCE_LEFT || module_type == Module::AVOIDANCE_RIGHT ||
+    module_type == Module::PULL_OVER || module_type == Module::PULL_OUT) {
+    return true;
+  }
+  return false;
+}
+
 std::string to_string(const unique_identifier_msgs::msg::UUID & uuid)
 {
   std::stringstream ss;
@@ -87,11 +98,23 @@ std::string to_string(const unique_identifier_msgs::msg::UUID & uuid)
   return ss.str();
 }
 
+UUID RTCReplayerNode::onPathChangeRequest(const uint8_t module)
+{
+  UUID uuid;
+  // send coop request
+  for (auto status : cooperate_statuses_ptr_->statuses) {
+    if (!isPathChangeModule(status.module.type) && status.module.type != module) continue;
+      uuid = status.uuid;
+  }
+  return uuid;
+}
+
 RTCReplayerNode::RTCReplayerNode(const rclcpp::NodeOptions & node_options)
 : Node("rtc_replayer_node", node_options)
 {
   sub_statuses_ = create_subscription<CooperateStatusArray>(
     "/debug/rtc_status", 1, std::bind(&RTCReplayerNode::onCooperateStatus, this, _1));
+  sub_statuses_planning_ = create_subscription<CooperateStatusArray>("/api/external/get/rtc_status", 1, [this](const CooperateStatusArray::SharedPtr msg) { cooperate_statuses_ptr_ = msg;});
   client_rtc_commands_ = create_client<CooperateCommands>(
     "/api/external/set/rtc_commands", rmw_qos_profile_services_default);
 }
@@ -99,6 +122,8 @@ RTCReplayerNode::RTCReplayerNode(const rclcpp::NodeOptions & node_options)
 void RTCReplayerNode::onCooperateStatus(const CooperateStatusArray::ConstSharedPtr msg)
 {
   if (msg->statuses.empty()) return;
+  if (!cooperate_statuses_ptr_) return;
+  if (cooperate_statuses_ptr_->statuses.empty()) return;
   CooperateCommands::Request::SharedPtr request = std::make_shared<CooperateCommands::Request>();
   for (auto status : msg->statuses) {
     const auto cmd_status = status.command_status.type;
@@ -113,6 +138,9 @@ void RTCReplayerNode::onCooperateStatus(const CooperateStatusArray::ConstSharedP
       cc.uuid = status.uuid;
       cc.module = status.module;
       request->stamp = status.stamp;
+      if (isPathChangeModule(cc.module.type)) {
+        cc.uuid = onPathChangeRequest(cc.module.type);
+      }
       request->commands.emplace_back(cc);
       std::cerr << "uuid: " << uuid_string << " module: " << getModuleName(cc.module.type)
                 << " status: " << getModuleStatus(cmd_status) << std::endl;

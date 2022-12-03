@@ -48,10 +48,13 @@ public:
 
 private:
   void onCooperateStatus(const CooperateStatusArray::ConstSharedPtr msg);
+  UUID onPathChangeRequest(const uint8_t module);
 
   rclcpp::Subscription<CooperateStatusArray>::SharedPtr sub_statuses_;
+  rclcpp::Subscription<CooperateStatusArray>::SharedPtr sub_statuses_planning_;
   rclcpp::Client<CooperateCommands>::SharedPtr client_rtc_commands_;
   std::map<std::string, uint8_t> prev_cmd_status_;
+  CooperateStatusArray::SharedPtr cooperate_statuses_ptr_;
 };
 
 }  // namespace rtc_replayer
