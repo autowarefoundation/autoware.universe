@@ -80,6 +80,7 @@ private:
   rclcpp::Publisher<autoware_auto_planning_msgs::msg::Trajectory>::SharedPtr m_pub_predicted_traj;
   //!< @brief topic publisher for control debug values
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32MultiArrayStamped>::SharedPtr m_pub_debug_values;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr m_pub_debug_marker;
   //!< @brief subscription for transform messages
   rclcpp::Subscription<tf2_msgs::msg::TFMessage>::SharedPtr m_tf_sub;
   rclcpp::Subscription<tf2_msgs::msg::TFMessage>::SharedPtr m_tf_static_sub;
@@ -132,6 +133,9 @@ private:
   // ego nearest index search
   double m_ego_nearest_dist_threshold;
   double m_ego_nearest_yaw_threshold;
+
+  // debug marker
+  visualization_msgs::msg::MarkerArray m_debug_marker_array;
 
   //!< initialize timer to work in real, simulation, and replay
   void initTimer(double period_s);
@@ -187,7 +191,7 @@ private:
   /**
    * @brief check ego car is in stopped state
    */
-  bool isStoppedState() const;
+  bool isStoppedState();
 
   /**
    * @brief check if the trajectory has valid value
@@ -196,7 +200,7 @@ private:
 
   bool isTrajectoryShapeChanged() const;
 
-  bool isSteerConverged(const autoware_auto_control_msgs::msg::AckermannLateralCommand & cmd) const;
+  bool isSteerConverged(const autoware_auto_control_msgs::msg::AckermannLateralCommand & cmd);
 
   rclcpp::Node::OnSetParametersCallbackHandle::SharedPtr m_set_param_res;
 
