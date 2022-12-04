@@ -21,7 +21,7 @@ Currently, this algorithm can sometimes give unnatural (not wrong) blinkers in a
 ## Parameters for turn signal decider
 
 | Name                                            | Unit | Type   | Description                                                                  | Default value |
-|:------------------------------------------------|:-----| :----- | :--------------------------------------------------------------------------- | :------------ |
+| :---------------------------------------------- | :--- | :----- | :--------------------------------------------------------------------------- | :------------ |
 | turn_signal_intersection_search_distance        | [m]  | double | constant search distance to decide activation of blinkers at intersections   | 30            |
 | turn_signal_intersection_angle_threshold_degree | deg  | double | angle threshold to determined the end point of intersection required section | 15            |
 | turn_signal_minimum_search_distance             | [m]  | double | minimum search distance for avoidance and lane change                        | 10            |
