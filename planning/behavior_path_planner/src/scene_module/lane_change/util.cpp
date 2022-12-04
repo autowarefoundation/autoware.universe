@@ -205,6 +205,9 @@ LaneChangePaths getLaneChangePaths(
   const auto & maximum_deceleration = parameter.maximum_deceleration;
   const auto & lane_change_sampling_num = parameter.lane_change_sampling_num;
 
+  const int num_to_preferred_lane =
+    std::abs(route_handler.getNumLaneToPreferredLane(target_lanelets.back()));
+
   // get velocity
   const double current_velocity = util::l2Norm(twist.linear);
   const double acceleration_resolution = std::abs(maximum_deceleration) / lane_change_sampling_num;
@@ -307,16 +310,15 @@ LaneChangePaths getLaneChangePaths(
 
 LaneChangePaths selectValidPaths(
   const LaneChangePaths & paths, const lanelet::ConstLanelets & current_lanes,
-  const lanelet::ConstLanelets & target_lanes,
-  const lanelet::routing::RoutingGraphContainer & overall_graphs, const Pose & current_pose,
-  const bool isInGoalRouteSection, const Pose & goal_pose)
+  const lanelet::ConstLanelets & target_lanes, const RouteHandler & route_handler,
+  const Pose & current_pose, const Pose & goal_pose, const double minimum_lane_change_length)
 {
   LaneChangePaths available_paths;
 
   for (const auto & path : paths) {
     if (hasEnoughDistance(
-          path, current_lanes, target_lanes, current_pose, isInGoalRouteSection, goal_pose,
-          overall_graphs)) {
+          path, current_lanes, target_lanes, current_pose, goal_pose, route_handler,
+          minimum_lane_change_length)) {
       available_paths.push_back(path);
     }
   }
@@ -359,31 +361,40 @@ bool selectSafePath(
 bool hasEnoughDistance(
   const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes,
   [[maybe_unused]] const lanelet::ConstLanelets & target_lanes, const Pose & current_pose,
-  const bool isInGoalRouteSection, const Pose & goal_pose,
-  const lanelet::routing::RoutingGraphContainer & overall_graphs)
+  const Pose & goal_pose, const RouteHandler & route_handler,
+  const double minimum_lane_change_length)
 {
   const double & lane_change_prepare_distance = path.preparation_length;
   const double & lane_changing_distance = path.lane_change_length;
   const double lane_change_total_distance = lane_change_prepare_distance + lane_changing_distance;
+  const int num = std::abs(route_handler.getNumLaneToPreferredLane(target_lanes.back()));
+  const auto overall_graphs = route_handler.getOverallGraphPtr();
 
-  if (lane_change_total_distance > util::getDistanceToEndOfLane(current_pose, current_lanes)) {
+  const double lane_change_required_distance =
+    static_cast<double>(num) * minimum_lane_change_length;
+
+  if (
+    lane_change_total_distance + lane_change_required_distance >
+    util::getDistanceToEndOfLane(current_pose, current_lanes)) {
     return false;
   }
 
   if (
-    lane_change_total_distance > util::getDistanceToNextIntersection(current_pose, current_lanes)) {
+    lane_change_total_distance + lane_change_required_distance >
+    util::getDistanceToNextIntersection(current_pose, current_lanes)) {
     return false;
   }
 
   if (
-    isInGoalRouteSection &&
-    lane_change_total_distance > util::getSignedDistance(current_pose, goal_pose, current_lanes)) {
+    route_handler.isInGoalRouteSection(current_lanes.back()) &&
+    lane_change_total_distance + lane_change_required_distance >
+      util::getSignedDistance(current_pose, goal_pose, current_lanes)) {
     return false;
   }
 
   if (
-    lane_change_total_distance >
-    util::getDistanceToCrosswalk(current_pose, current_lanes, overall_graphs)) {
+    lane_change_total_distance + lane_change_required_distance >
+    util::getDistanceToCrosswalk(current_pose, current_lanes, *overall_graphs)) {
     return false;
   }
 

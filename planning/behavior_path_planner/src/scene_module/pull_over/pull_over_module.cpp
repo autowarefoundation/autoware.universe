@@ -582,6 +582,7 @@ BehaviorModuleOutput PullOverModule::planWaitingApproval()
   path_candidate_ = status_.is_safe
                       ? std::make_shared<PathWithLaneId>(status_.pull_over_path.getFullPath())
                       : out.path;
+
   const auto distance_to_path_change = calcDistanceToPathChange();
   updateRTCStatus(distance_to_path_change.first, distance_to_path_change.second);
 
