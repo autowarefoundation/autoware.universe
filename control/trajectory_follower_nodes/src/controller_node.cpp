@@ -14,8 +14,7 @@
 
 #include "trajectory_follower_nodes/controller_node.hpp"
 
-// TODO(murooka) revert pure_pursuit later
-// #include "pure_pursuit/pure_pursuit_lateral_controller.hpp"
+#include "pure_pursuit/pure_pursuit_lateral_controller.hpp"
 #include "trajectory_follower/mpc_lateral_controller.hpp"
 #include "trajectory_follower/pid_longitudinal_controller.hpp"
 
@@ -48,10 +47,10 @@ Controller::Controller(const rclcpp::NodeOptions & node_options) : Node("control
       lateral_controller_ = std::make_shared<trajectory_follower::MpcLateralController>(*this);
       break;
     }
-    // case LateralControllerMode::PURE_PURSUIT: {
-    //   lateral_controller_ = std::make_shared<pure_pursuit::PurePursuitLateralController>(*this);
-    //   break;
-    // }
+    case LateralControllerMode::PURE_PURSUIT: {
+      lateral_controller_ = std::make_shared<pure_pursuit::PurePursuitLateralController>(*this);
+      break;
+    }
     default:
       throw std::domain_error("[LateralController] invalid algorithm");
   }
@@ -94,7 +93,7 @@ Controller::LateralControllerMode Controller::getLateralControllerMode(
   const std::string & controller_mode) const
 {
   if (controller_mode == "mpc_follower") return LateralControllerMode::MPC;
-  // if (controller_mode == "pure_pursuit") return LateralControllerMode::PURE_PURSUIT;
+  if (controller_mode == "pure_pursuit") return LateralControllerMode::PURE_PURSUIT;
 
   return LateralControllerMode::INVALID;
 }
