@@ -139,7 +139,7 @@ private:
   //!< initialize timer to work in real, simulation, and replay
   void initTimer(double period_s);
 
-  bool isReady() override;
+  bool isReady(const InputData & input_data) override;
 
   /**
    * @brief compute control command for path follow with a constant control period
@@ -149,7 +149,7 @@ private:
   /**
    * @brief set m_current_trajectory with received message
    */
-  void setTrajectory(const autoware_auto_planning_msgs::msg::Trajectory);
+  void setTrajectory(const autoware_auto_planning_msgs::msg::Trajectory & msg);
 
   /**
    * @brief check if the received data is valid.

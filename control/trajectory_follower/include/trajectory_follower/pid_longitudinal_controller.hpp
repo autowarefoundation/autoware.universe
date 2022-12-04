@@ -223,21 +223,21 @@ private:
    * @brief set current and previous velocity with received message
    * @param [in] msg current state message
    */
-  void setKinematicState(const nav_msgs::msg::Odometry msg);
+  void setKinematicState(const nav_msgs::msg::Odometry & msg);
 
   /**
    * @brief set current acceleration with received message
    * @param [in] msg trajectory message
    */
-  void setCurrentAcceleration(const geometry_msgs::msg::AccelWithCovarianceStamped msg);
+  void setCurrentAcceleration(const geometry_msgs::msg::AccelWithCovarianceStamped & msg);
 
   /**
    * @brief set reference trajectory with received message
    * @param [in] msg trajectory message
    */
-  void setTrajectory(const autoware_auto_planning_msgs::msg::Trajectory msg);
+  void setTrajectory(const autoware_auto_planning_msgs::msg::Trajectory & msg);
 
-  bool isReady() override;
+  bool isReady(const InputData & input_data) override;
 
   /**
    * @brief compute control command, and publish periodically

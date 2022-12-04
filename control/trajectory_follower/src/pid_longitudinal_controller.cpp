@@ -199,19 +199,19 @@ PidLongitudinalController::PidLongitudinalController(rclcpp::Node & node)
   setupDiagnosticUpdater();
 }
 
-void PidLongitudinalController::setKinematicState(const nav_msgs::msg::Odometry msg)
+void PidLongitudinalController::setKinematicState(const nav_msgs::msg::Odometry & msg)
 {
   m_current_kinematic_state = msg;
 }
 
 void PidLongitudinalController::setCurrentAcceleration(
-  const geometry_msgs::msg::AccelWithCovarianceStamped msg)
+  const geometry_msgs::msg::AccelWithCovarianceStamped & msg)
 {
   m_current_accel = msg;
 }
 
 void PidLongitudinalController::setTrajectory(
-  const autoware_auto_planning_msgs::msg::Trajectory msg)
+  const autoware_auto_planning_msgs::msg::Trajectory & msg)
 {
   if (!trajectory_follower::longitudinal_utils::isValidTrajectory(msg)) {
     RCLCPP_ERROR_THROTTLE(
@@ -351,7 +351,10 @@ rcl_interfaces::msg::SetParametersResult PidLongitudinalController::paramCallbac
   return result;
 }
 
-bool PidLongitudinalController::isReady() { return true; }
+bool PidLongitudinalController::isReady([[maybe_unused]] const InputData & input_data)
+{
+  return true;
+}
 
 LongitudinalOutput PidLongitudinalController::run(InputData const & input_data)
 {

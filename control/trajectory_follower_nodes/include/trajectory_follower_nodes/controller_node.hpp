@@ -70,7 +70,6 @@ private:
   rclcpp::TimerBase::SharedPtr timer_control_;
   double timeout_thr_sec_;
   boost::optional<LongitudinalOutput> longitudinal_output_{boost::none};
-  boost::optional<LateralOutput> lateral_output_{boost::none};
 
   bool is_initialized_{false};
 
@@ -103,14 +102,14 @@ private:
   /**
    * @brief compute control command, and publish periodically
    */
-  boost::optional<trajectory_follower::InputData> createInputData() const;
+  boost::optional<trajectory_follower::InputData> createInputData(rclcpp::Clock & clock) const;
   void initialize(const trajectory_follower::InputData & input_data);
   void callbackTimerControl();
   void onTrajectory(const autoware_auto_planning_msgs::msg::Trajectory::SharedPtr);
   void onOdometry(const nav_msgs::msg::Odometry::SharedPtr msg);
   void onSteering(const autoware_auto_vehicle_msgs::msg::SteeringReport::SharedPtr msg);
   void onAccel(const geometry_msgs::msg::AccelWithCovarianceStamped::SharedPtr msg);
-  bool isTimeOut();
+  bool isTimeOut(const LongitudinalOutput & lon_out, const LateralOutput & lat_out);
   LateralControllerMode getLateralControllerMode(const std::string & algorithm_name) const;
   LongitudinalControllerMode getLongitudinalControllerMode(
     const std::string & algorithm_name) const;

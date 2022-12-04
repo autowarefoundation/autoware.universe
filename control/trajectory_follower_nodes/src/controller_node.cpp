@@ -127,16 +127,18 @@ void Controller::onAccel(const geometry_msgs::msg::AccelWithCovarianceStamped::S
   current_accel_ptr_ = msg;
 }
 
-bool Controller::isTimeOut()
+bool Controller::isTimeOut(
+  const trajectory_follower::LongitudinalOutput & lon_out,
+  const trajectory_follower::LateralOutput & lat_out)
 {
   const auto now = this->now();
-  if ((now - lateral_output_->control_cmd.stamp).seconds() > timeout_thr_sec_) {
+  if ((now - lat_out.control_cmd.stamp).seconds() > timeout_thr_sec_) {
     RCLCPP_ERROR_THROTTLE(
       get_logger(), *get_clock(), 5000 /*ms*/,
       "Lateral control command too old, control_cmd will not be published.");
     return true;
   }
-  if ((now - longitudinal_output_->control_cmd.stamp).seconds() > timeout_thr_sec_) {
+  if ((now - lon_out.control_cmd.stamp).seconds() > timeout_thr_sec_) {
     RCLCPP_ERROR_THROTTLE(
       get_logger(), *get_clock(), 5000 /*ms*/,
       "Longitudinal control command too old, control_cmd will not be published.");
@@ -145,12 +147,26 @@ bool Controller::isTimeOut()
   return false;
 }
 
-boost::optional<trajectory_follower::InputData> Controller::createInputData() const
+boost::optional<trajectory_follower::InputData> Controller::createInputData(
+  rclcpp::Clock & clock) const
 {
-  if (
-    !current_trajectory_ptr_ || !current_odometry_ptr_ || !current_steering_ptr_ ||
-    !current_accel_ptr_) {
-    // RCL
+  if (!current_trajectory_ptr_) {
+    RCLCPP_INFO_THROTTLE(get_logger(), clock, 5000, "Waiting for trajectory.");
+    return {};
+  }
+
+  if (!current_odometry_ptr_) {
+    RCLCPP_INFO_THROTTLE(get_logger(), clock, 5000, "Waiting for current odometry.");
+    return {};
+  }
+
+  if (!current_steering_ptr_) {
+    RCLCPP_INFO_THROTTLE(get_logger(), clock, 5000, "Waiting for current steering.");
+    return {};
+  }
+
+  if (!current_accel_ptr_) {
+    RCLCPP_INFO_THROTTLE(get_logger(), clock, 5000, "Waiting for current accel.");
     return {};
   }
 
@@ -181,19 +197,28 @@ void Controller::initialize(const trajectory_follower::InputData & input_data)
 void Controller::callbackTimerControl()
 {
   // 1. create input data
-  const auto input_data = createInputData();
+  const auto input_data = createInputData(*get_clock());
   if (!input_data) {
+    RCLCPP_INFO_THROTTLE(
+      get_logger(), *get_clock(), 5000, "Control is skipped since input data is not ready.");
     return;
   }
 
   // 2. check if controllers are ready
-  if (!lateral_controller_->isReady() || !longitudinal_controller_->isReady()) {
+  if (
+    !lateral_controller_->isReady(*input_data) || !longitudinal_controller_->isReady(*input_data)) {
+    RCLCPP_INFO_THROTTLE(
+      get_logger(), *get_clock(), 5000,
+      "Control is skipped since lateral and/or longitudinal controllers are not ready to run.");
     return;
   }
 
   // 3. check if controllers are initialized
   if (!is_initialized_) {
     initialize(*input_data);
+    RCLCPP_INFO(
+      get_logger(),
+      "Control is skipped since lateral and longitudinal controllers are being initialized.");
     return;
   }
 
@@ -206,7 +231,7 @@ void Controller::callbackTimerControl()
   lateral_controller_->sync(lon_out.sync_data);
 
   // TODO(Horibe): Think specification. This comes from the old implementation.
-  if (isTimeOut()) return;
+  if (isTimeOut(lon_out, lat_out)) return;
 
   // 6. publish control command
   autoware_auto_control_msgs::msg::AckermannControlCommand out;

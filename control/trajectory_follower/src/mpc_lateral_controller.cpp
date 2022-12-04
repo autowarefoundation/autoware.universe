@@ -241,26 +241,32 @@ bool MpcLateralController::isSteerConverged(
   return is_converged;
 }
 
-bool MpcLateralController::isReady()
+bool MpcLateralController::isReady(const InputData & input_data)
 {
+  setTrajectory(input_data.current_trajectory);
+  m_current_kinematic_state = input_data.current_odometry;
+  m_current_steering = input_data.current_steering;
+
   if (!m_mpc.hasVehicleModel()) {
-    RCLCPP_DEBUG(node_->get_logger(), "MPC does not have a vehicle model");
+    RCLCPP_INFO_THROTTLE(
+      node_->get_logger(), *node_->get_clock(), 5000, "MPC does not have a vehicle model");
     return false;
   }
   if (!m_mpc.hasQPSolver()) {
-    RCLCPP_DEBUG(node_->get_logger(), "MPC does not have a QP solver");
+    RCLCPP_INFO_THROTTLE(
+      node_->get_logger(), *node_->get_clock(), 5000, "MPC does not have a QP solver");
     return false;
   }
-
   if (m_mpc.m_ref_traj.size() == 0) {
-    RCLCPP_DEBUG(node_->get_logger(), "trajectory size is zero.");
+    RCLCPP_INFO_THROTTLE(
+      node_->get_logger(), *node_->get_clock(), 5000, "trajectory size is zero.");
     return false;
   }
 
   return true;
 }
 
-void MpcLateralController::setTrajectory(const autoware_auto_planning_msgs::msg::Trajectory msg)
+void MpcLateralController::setTrajectory(const autoware_auto_planning_msgs::msg::Trajectory & msg)
 {
   m_current_trajectory = msg;
 

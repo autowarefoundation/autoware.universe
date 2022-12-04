@@ -39,7 +39,7 @@ struct LongitudinalOutput
 class LongitudinalControllerBase
 {
 public:
-  virtual bool isReady() = 0;
+  virtual bool isReady(const InputData & input_data) = 0;
   virtual LongitudinalOutput run(InputData const & input_data) = 0;
   void sync(LateralSyncData const & lateral_sync_data) { lateral_sync_data_ = lateral_sync_data; }
 
