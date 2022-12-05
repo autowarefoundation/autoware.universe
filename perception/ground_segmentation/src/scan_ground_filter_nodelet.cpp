@@ -194,7 +194,7 @@ void ScanGroundFilterComponent::initializeFirstGndGrids(
 }
 
 void ScanGroundFilterComponent::checkContinuousGndGrid(
-  PointRef & p, const std::vector<GridCenter> & gnd_grids_list, PointsCentroid & gnd_cluster)
+  PointRef & p, const std::vector<GridCenter> & gnd_grids_list)
 {
   float next_gnd_z = 0.0f;
   float curr_gnd_slope_rad = 0.0f;
@@ -234,14 +234,13 @@ void ScanGroundFilterComponent::checkContinuousGndGrid(
   if (
     abs(p.orig_point->z - next_gnd_z) <= non_ground_height_threshold_ + gnd_z_local_thresh ||
     abs(local_slope) <= local_slope_max_angle_rad_) {
-    gnd_cluster.addPoint(p.radius, p.orig_point->z);
     p.point_state = PointLabel::GROUND;
   } else if (p.orig_point->z - next_gnd_z > non_ground_height_threshold_ + gnd_z_local_thresh) {
     p.point_state = PointLabel::NON_GROUND;
   }
 }
 void ScanGroundFilterComponent::checkDiscontinuousGndGrid(
-  PointRef & p, const std::vector<GridCenter> & gnd_grids_list, PointsCentroid & gnd_cluster)
+  PointRef & p, const std::vector<GridCenter> & gnd_grids_list)
 {
   float tmp_delta_max_z = p.orig_point->z - gnd_grids_list.back().max_height;
   float tmp_delta_avg_z = p.orig_point->z - gnd_grids_list.back().avg_height;
@@ -252,7 +251,6 @@ void ScanGroundFilterComponent::checkDiscontinuousGndGrid(
     abs(local_slope) < local_slope_max_angle_rad_ ||
     abs(tmp_delta_avg_z) < non_ground_height_threshold_ ||
     abs(tmp_delta_max_z) < non_ground_height_threshold_) {
-    gnd_cluster.addPoint(p.radius, p.orig_point->z);
     p.point_state = PointLabel::GROUND;
   } else if (local_slope > global_slope_max_angle_rad_) {
     p.point_state = PointLabel::NON_GROUND;
@@ -260,16 +258,28 @@ void ScanGroundFilterComponent::checkDiscontinuousGndGrid(
 }
 
 void ScanGroundFilterComponent::checkBreakGndGrid(
-  PointRef & p, const std::vector<GridCenter> & gnd_grids_list, PointsCentroid & gnd_cluster)
+  PointRef & p, const std::vector<GridCenter> & gnd_grids_list)
 {
   float tmp_delta_avg_z = p.orig_point->z - gnd_grids_list.back().avg_height;
   float tmp_delta_radius = p.radius - gnd_grids_list.back().radius;
   float local_slope = std::atan(tmp_delta_avg_z / tmp_delta_radius);
   if (abs(local_slope) < global_slope_max_angle_rad_) {
-    gnd_cluster.addPoint(p.radius, p.orig_point->z);
     p.point_state = PointLabel::GROUND;
   } else if (local_slope > global_slope_max_angle_rad_) {
     p.point_state = PointLabel::NON_GROUND;
+  }
+}
+void ScanGroundFilterComponent::recheckGroundCluster(
+  PointsCentroid & gnd_cluster, const float non_ground_threshold,
+  pcl::PointIndices & non_ground_indices)
+{
+  float aver_gnd_height = gnd_cluster.getAverageHeight();
+  pcl::PointIndices gnd_indices = gnd_cluster.getIndices();
+  std::vector<float> height_list = gnd_cluster.getHeightList();
+  for (size_t i = 0; i < height_list.size(); i++) {
+    if (height_list.at(i) >= aver_gnd_height + non_ground_threshold) {
+      non_ground_indices.indices.push_back(gnd_indices.indices.at(i));
+    }
   }
 }
 void ScanGroundFilterComponent::classifyPointCloudGridScan(
@@ -317,7 +327,7 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
       if (
         !initialized_first_gnd_grid && abs(global_slope_p) < global_slope_max_angle_rad_ &&
         abs(p->orig_point->z) < non_ground_height_threshold_local) {
-        ground_cluster.addPoint(p->radius, p->orig_point->z);
+        ground_cluster.addPoint(p->radius, p->orig_point->z, p->orig_index);
         p->point_state = PointLabel::GROUND;
         initialized_first_gnd_grid = static_cast<bool>(p->grid_id - prev_p->grid_id);
         prev_p = p;
@@ -346,6 +356,7 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
       // move to new grid
       if (p->grid_id > prev_p->grid_id && ground_cluster.getAverageRadius() > 0.0) {
         // check if the prev grid have ground point cloud
+        recheckGroundCluster(ground_cluster, non_ground_height_threshold_, out_no_ground_indices);
         curr_gnd_grid.radius = ground_cluster.getAverageRadius();
         curr_gnd_grid.avg_height = ground_cluster.getAverageHeight();
         curr_gnd_grid.max_height = ground_cluster.getMaxHeight();
@@ -382,17 +393,17 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
       if (
         p->grid_id < next_gnd_grid_id_thresh &&
         p->radius - gnd_grids.back().radius < gnd_grid_continual_thresh_ * p->grid_size) {
-        checkContinuousGndGrid(*p, gnd_grids, ground_cluster);
+        checkContinuousGndGrid(*p, gnd_grids);
 
-      } else if (
-        p->radius - gnd_grids.back().radius < gnd_grid_continual_thresh_ * p->grid_size ||
-        p->radius < grid_mode_switch_radius_ * 2.0f) {
-        checkDiscontinuousGndGrid(*p, gnd_grids, ground_cluster);
+      } else if (p->radius - gnd_grids.back().radius < gnd_grid_continual_thresh_ * p->grid_size) {
+        checkDiscontinuousGndGrid(*p, gnd_grids);
       } else {
-        checkBreakGndGrid(*p, gnd_grids, ground_cluster);
+        checkBreakGndGrid(*p, gnd_grids);
       }
       if (p->point_state == PointLabel::NON_GROUND) {
         out_no_ground_indices.indices.push_back(p->orig_index);
+      } else if (p->point_state == PointLabel::GROUND) {
+        ground_cluster.addPoint(p->radius, p->orig_point->z, p->orig_index);
       }
       prev_p = p;
     }
