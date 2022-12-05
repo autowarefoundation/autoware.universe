@@ -1,8 +1,12 @@
 #include "graph_segment/graph_segment.hpp"
 
+#include <opencv4/opencv2/highgui.hpp>
 #include <opencv4/opencv2/imgproc.hpp>
 #include <pcdless_common/cv_decompress.hpp>
 #include <pcdless_common/pub_sub.hpp>
+#include <pcdless_common/timer.hpp>
+
+#include <queue>
 
 namespace pcdless::graph_segment
 {
@@ -20,7 +24,123 @@ GraphSegment::GraphSegment()
   pub_cloud_ = create_publisher<PointCloud2>("graph_segmented", 10);
   pub_image_ = create_publisher<Image>("segmented_image", 10);
 
-  segmentation_ = cv::ximgproc::segmentation::createGraphSegmentation();
+  const double sigma = declare_parameter<double>("sigma", 0.5);
+  const float k = declare_parameter<float>("k", 300);
+  const int min_size = declare_parameter<double>("min_size", 100);
+  segmentation_ = cv::ximgproc::segmentation::createGraphSegmentation(sigma, k, min_size);
+}
+
+struct Histogram
+{
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  Histogram(int bin = 10) : bin(bin) { data = Eigen::MatrixXf::Zero(3, bin); }
+
+  Eigen::MatrixXf eval() const
+  {
+    float sum = data.sum();
+    if (sum < 1e-6f) throw std::runtime_error("invalid division");
+    return data / sum;
+  }
+
+  void add(const cv::Vec3b & rgb)
+  {
+    for (int ch = 0; ch < 3; ++ch) {
+      int index = std::clamp(static_cast<int>(rgb[ch] * bin / 255.f), 0, bin - 1);
+      data(ch, index) += 1.0f;
+    }
+  }
+  const int bin;
+  Eigen::MatrixXf data;
+};
+
+void search_roadlink_areas(
+  const cv::Mat & rgb_image, const cv::Mat & segmented, int best_roadlike_class)
+{
+  std::unordered_map<int, Histogram> histogram_map;
+  std::unordered_map<int, int> count_map;
+
+  for (int h = 0; h < rgb_image.rows; h++) {
+    const int * seg_ptr = segmented.ptr<int>(h);
+    const cv::Vec3b * rgb_ptr = rgb_image.ptr<cv::Vec3b>(h);
+
+    for (int w = 0; w < rgb_image.cols; w++) {
+      int key = seg_ptr[w];
+      cv::Vec3b rgb = rgb_ptr[w];
+      if (count_map.count(key) == 0) {
+        count_map[key] = 1;
+        histogram_map[key].add(rgb);
+      } else {
+        count_map[key]++;
+        histogram_map[key].add(rgb);
+      }
+    }
+  }
+
+  struct KeyAndArea
+  {
+    KeyAndArea(int key, int count) : key(key), count(count) {}
+    int key;
+    int count;
+  };
+
+  auto compare = [](KeyAndArea a, KeyAndArea b) { return a.count < b.count; };
+  std::priority_queue<KeyAndArea, std::vector<KeyAndArea>, decltype(compare)> key_queue{compare};
+  for (auto [key, count] : count_map) {
+    key_queue.push({key, count});
+  }
+
+  Eigen::MatrixXf ref_histogram = histogram_map.at(best_roadlike_class).eval();
+
+  auto eval_equality = [](const Eigen::MatrixXf & a, const Eigen::MatrixXf & b) -> float {
+    float score = 0;
+    for (int c = 0; c < a.cols(); c++) {
+      for (int r = 0; r < a.rows(); r++) {
+        score += std::min(a(r, c), b(r, c));
+      }
+    }
+    return score;
+  };
+  auto eval_equality2 = [](const Eigen::MatrixXf & a, const Eigen::MatrixXf & b) -> float {
+    float score = 0;
+    for (int c = 0; c < a.cols(); c++) {
+      for (int r = 0; r < a.rows(); r++) {
+        score += std::sqrt(a(r, c) * b(r, c));
+      }
+    }
+    return score;
+  };
+
+  std::cout << "histogram equality " << std::endl;
+
+  int index = 0;
+  std::set<int> acceptable_keys;
+  while (!key_queue.empty()) {
+    KeyAndArea key = key_queue.top();
+    key_queue.pop();
+
+    Eigen::MatrixXf query = histogram_map.at(key.key).eval();
+    float score = eval_equality2(ref_histogram, query);
+    std::cout << " " << score;
+
+    if (score > 0.8) acceptable_keys.insert(key.key);
+    if (++index > 10) break;
+  }
+  std::cout << std::endl;
+
+  // Visualilze
+  cv::Mat new_segmented = rgb_image.clone();
+  for (int h = 0; h < rgb_image.rows; h++) {
+    const int * seg_ptr = segmented.ptr<int>(h);
+    cv::Vec3b * rgb_ptr = new_segmented.ptr<cv::Vec3b>(h);
+
+    for (int w = 0; w < rgb_image.cols; w++) {
+      int key = seg_ptr[w];
+      if (acceptable_keys.count(key)) rgb_ptr[w] = cv::Vec3b(0, 255, 255);
+      if (key == best_roadlike_class) rgb_ptr[w] = cv::Vec3b(0, 0, 255);
+    }
+  }
+  cv::imshow("new_segmented", new_segmented);
+  cv::waitKey(10);
 }
 
 void GraphSegment::on_image(const Image & msg)
@@ -29,8 +149,10 @@ void GraphSegment::on_image(const Image & msg)
   cv::Mat resized;
   cv::resize(image, resized, cv::Size(), 0.5, 0.5);
 
+  common::Timer timer;
   cv::Mat segmented;
   segmentation_->processImage(resized, segmented);
+  RCLCPP_INFO_STREAM(get_logger(), "segmentation time: " << timer);
 
   int target_class = -1;
   {
@@ -51,6 +173,8 @@ void GraphSegment::on_image(const Image & msg)
         if (rect.contains(cv::Point2i{w, h})) candidates.insert(key);
       }
     }
+
+    // Search best area
     int max_area = 0;
     int max_area_id = -1;
     for (int c : candidates) {
@@ -86,7 +210,10 @@ void GraphSegment::on_image(const Image & msg)
 
   common::publish_cloud(*pub_cloud_, cloud, msg.header.stamp);
 
+  search_roadlink_areas(resized, segmented, target_class);
+
   publish_image(image, segmented, msg.header.stamp, target_class);
+  RCLCPP_INFO_STREAM(get_logger(), "total processing time: " << timer);
 }
 
 void GraphSegment::publish_image(
