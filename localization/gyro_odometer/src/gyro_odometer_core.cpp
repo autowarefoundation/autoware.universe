@@ -85,12 +85,16 @@ geometry_msgs::msg::TwistWithCovarianceStamped concatGyroAndOdometer(
 
   // From a statistical point of view, here we reduce the covariances according to the number of
   // observed data
-  twist_with_cov.twist.covariance[COV_IDX_XYZRPY::X_X] = vx_covariance_original / vehicle_twist_queue.size();
+  twist_with_cov.twist.covariance[COV_IDX_XYZRPY::X_X] =
+    vx_covariance_original / vehicle_twist_queue.size();
   twist_with_cov.twist.covariance[COV_IDX_XYZRPY::Y_Y] = 100000.0;
   twist_with_cov.twist.covariance[COV_IDX_XYZRPY::Z_Z] = 100000.0;
-  twist_with_cov.twist.covariance[COV_IDX_XYZRPY::ROLL_ROLL] = gyro_covariance_original.x / gyro_queue.size();
-  twist_with_cov.twist.covariance[COV_IDX_XYZRPY::PITCH_PITCH] = gyro_covariance_original.y / gyro_queue.size();
-  twist_with_cov.twist.covariance[COV_IDX_XYZRPY::YAW_YAW] = gyro_covariance_original.z / gyro_queue.size();
+  twist_with_cov.twist.covariance[COV_IDX_XYZRPY::ROLL_ROLL] =
+    gyro_covariance_original.x / gyro_queue.size();
+  twist_with_cov.twist.covariance[COV_IDX_XYZRPY::PITCH_PITCH] =
+    gyro_covariance_original.y / gyro_queue.size();
+  twist_with_cov.twist.covariance[COV_IDX_XYZRPY::YAW_YAW] =
+    gyro_covariance_original.z / gyro_queue.size();
 
   return twist_with_cov;
 }
@@ -214,7 +218,8 @@ void GyroOdometer::callbackImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_m
   gyro_queue_.push_back(gyro_base_link);
 
   if (vehicle_twist_queue_.empty()) return;
-  const double twist_dt = std::abs((this->now() - vehicle_twist_queue_.back().header.stamp).seconds());
+  const double twist_dt =
+    std::abs((this->now() - vehicle_twist_queue_.back().header.stamp).seconds());
   if (twist_dt > message_timeout_sec_) {
     const std::string error_msg = fmt::format(
       "Twist msg is timeout. twist_dt: {}[sec], tolerance {}[sec]", twist_dt, message_timeout_sec_);
@@ -237,7 +242,8 @@ void GyroOdometer::callbackImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_m
 //   const double twist_dt = std::abs((this->now() - vehicle_twist_timestamp).seconds());
 //   if (twist_dt > message_timeout_sec_) {
 //     const std::string error_msg = fmt::format(
-//       "Twist msg is timeout. twist_dt: {}[sec], tolerance {}[sec]", twist_dt, message_timeout_sec_);
+//       "Twist msg is timeout. twist_dt: {}[sec], tolerance {}[sec]", twist_dt,
+//       message_timeout_sec_);
 //     throw std::domain_error(error_msg);
 //   }
 
