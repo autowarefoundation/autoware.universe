@@ -86,6 +86,7 @@ private:
     float radius_avg;
     float height_avg;
     float height_max;
+    float height_min;
     uint32_t point_num;
     uint16_t grid_id;
     pcl::PointIndices pcl_indices;
@@ -103,6 +104,7 @@ private:
       radius_avg = 0.0f;
       height_avg = 0.0f;
       height_max = 0.0f;
+      height_min = 10.0f;
       point_num = 0;
       grid_id = 0;
       pcl_indices.indices.clear();
@@ -117,6 +119,7 @@ private:
       radius_avg = radius_sum / point_num;
       height_avg = height_sum / point_num;
       height_max = height_max < height ? height : height_max;
+      height_min = height_min > height ? height : height_min;
     }
     void addPoint(const float radius, const float height, const uint index)
     {
@@ -128,6 +131,7 @@ private:
       radius_avg = radius_sum / point_num;
       height_avg = height_sum / point_num;
       height_max = height_max < height ? height : height_max;
+      height_min = height_min > height ? height : height_min;
     }
 
     float getAverageSlope() { return std::atan2(height_avg, radius_avg); }
@@ -137,6 +141,8 @@ private:
     float getAverageRadius() { return radius_avg; }
 
     float getMaxHeight() { return height_max; }
+
+    float getMinHeight() { return height_min; }
 
     uint16_t getGridId() { return grid_id; }
 

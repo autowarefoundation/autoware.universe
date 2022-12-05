@@ -273,11 +273,11 @@ void ScanGroundFilterComponent::recheckGroundCluster(
   PointsCentroid & gnd_cluster, const float non_ground_threshold,
   pcl::PointIndices & non_ground_indices)
 {
-  float aver_gnd_height = gnd_cluster.getAverageHeight();
+  float min_gnd_height = gnd_cluster.getMinHeight();
   pcl::PointIndices gnd_indices = gnd_cluster.getIndices();
   std::vector<float> height_list = gnd_cluster.getHeightList();
   for (size_t i = 0; i < height_list.size(); i++) {
-    if (height_list.at(i) >= aver_gnd_height + non_ground_threshold) {
+    if (height_list.at(i) >= min_gnd_height + non_ground_threshold) {
       non_ground_indices.indices.push_back(gnd_indices.indices.at(i));
     }
   }
