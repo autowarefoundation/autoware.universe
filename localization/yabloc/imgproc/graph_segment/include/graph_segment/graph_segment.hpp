@@ -19,12 +19,15 @@ private:
   const int target_candidate_box_width_;
 
   rclcpp::Subscription<Image>::SharedPtr sub_image_;
-  rclcpp::Publisher<PointCloud2>::SharedPtr pub_cloud_;
-  rclcpp::Publisher<Image>::SharedPtr pub_image_;
+  rclcpp::Publisher<Image>::SharedPtr pub_mask_image_;
+  rclcpp::Publisher<Image>::SharedPtr pub_debug_image_;
   cv::Ptr<cv::ximgproc::segmentation::GraphSegmentation> segmentation_;
 
   void on_image(const Image & msg);
-  void execute(const PointCloud2 & msg1, const PointCloud2 & msg2);
+
+  std::set<int> search_similar_areas(
+    const cv::Mat & rgb_image, const cv::Mat & segmented, int best_roadlike_class);
+
   void publish_image(
     const cv::Mat & raw_image, const cv::Mat & segmentation, const rclcpp::Time & stamp,
     int target_class);

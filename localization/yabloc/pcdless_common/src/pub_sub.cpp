@@ -12,7 +12,15 @@ void publish_image(
   cv_bridge::CvImage raw_image;
   raw_image.header.stamp = stamp;
   raw_image.header.frame_id = "map";
-  raw_image.encoding = "bgr8";
+  if (image.channels() == 3)
+    raw_image.encoding = "bgr8";
+  else
+    raw_image.encoding = "mono8";
+
+  if (image.depth() != CV_8U) {
+    throw std::runtime_error("publish_image can publish only CV_8U");
+  }
+
   raw_image.image = image;
   publisher.publish(*raw_image.toImageMsg());
 }
