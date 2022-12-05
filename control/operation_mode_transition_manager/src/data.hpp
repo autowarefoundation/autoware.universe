@@ -58,7 +58,6 @@ struct Transition
 
 struct EngageAcceptableParam
 {
-  bool check_engage_condition = true;  // if false, the vehicle is engaged without any checks.
   bool allow_autonomous_in_stopped = true;
   double dist_threshold = 2.0;
   double speed_upper_threshold = 10.0;
