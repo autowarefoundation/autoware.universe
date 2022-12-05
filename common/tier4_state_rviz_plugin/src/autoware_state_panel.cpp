@@ -291,7 +291,7 @@ void AutowareStatePanel::onOperationMode(const OperationModeState::ConstSharedPt
   }
 
   if (msg->is_in_transition) {
-    text +="\n(TRANSITION)";
+    text += "\n(TRANSITION)";
   }
 
   updateLabel(operation_mode_label_ptr_, text, style_sheet);
