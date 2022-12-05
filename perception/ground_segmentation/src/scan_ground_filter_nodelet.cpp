@@ -178,7 +178,7 @@ void ScanGroundFilterComponent::initializeFirstGndGrids(
   const float h, const float r, const uint16_t id, std::vector<GridCenter> & gnd_grids)
 {
   GridCenter curr_gnd_grid;
-  for (int ind_grid = id - 1 - gnd_grid_buffer_size_; ind_grid < id - 1; ind_grid++) {
+  for (int ind_grid = id - 1 - gnd_grid_buffer_size_; ind_grid < id - 1; ++ind_grid) {
     float ind_gnd_z = ind_grid - id + 1 + gnd_grid_buffer_size_;
     ind_gnd_z *= h / static_cast<float>(gnd_grid_buffer_size_);
 
@@ -203,7 +203,7 @@ void ScanGroundFilterComponent::checkContinuousGndGrid(
   float gnd_buff_radius = 0.0f;
 
   for (auto it = gnd_grids_list.end() - gnd_grid_buffer_size_ - 1; it < gnd_grids_list.end() - 1;
-       it++) {
+       ++it) {
     gnd_buff_radius += it->radius;
     gnd_buff_z_mean += it->avg_height;
     gnd_buff_z_max += it->max_height;
@@ -273,10 +273,10 @@ void ScanGroundFilterComponent::recheckGroundCluster(
   PointsCentroid & gnd_cluster, const float non_ground_threshold,
   pcl::PointIndices & non_ground_indices)
 {
-  float min_gnd_height = gnd_cluster.getMinHeight();
+  const float min_gnd_height = gnd_cluster.getMinHeight();
   pcl::PointIndices gnd_indices = gnd_cluster.getIndices();
   std::vector<float> height_list = gnd_cluster.getHeightList();
-  for (size_t i = 0; i < height_list.size(); i++) {
+  for (size_t i = 0; i < height_list.size(); ++i) {
     if (height_list.at(i) >= min_gnd_height + non_ground_threshold) {
       non_ground_indices.indices.push_back(gnd_indices.indices.at(i));
     }
@@ -287,7 +287,7 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
   pcl::PointIndices & out_no_ground_indices)
 {
   out_no_ground_indices.indices.clear();
-  for (size_t i = 0; i < in_radial_ordered_clouds.size(); i++) {
+  for (size_t i = 0; i < in_radial_ordered_clouds.size(); ++i) {
     PointsCentroid ground_cluster;
     ground_cluster.initialize();
     std::vector<GridCenter> gnd_grids;
@@ -306,7 +306,7 @@ void ScanGroundFilterComponent::classifyPointCloudGridScan(
     bool initialized_first_gnd_grid = false;
     bool prev_list_init = false;
 
-    for (size_t j = 0; j < in_radial_ordered_clouds[i].size(); j++) {
+    for (size_t j = 0; j < in_radial_ordered_clouds[i].size(); ++j) {
       p = &in_radial_ordered_clouds[i][j];
       float global_slope_p = std::atan(p->orig_point->z / p->radius);
       float non_ground_height_threshold_local = non_ground_height_threshold_;
@@ -422,7 +422,7 @@ void ScanGroundFilterComponent::classifyPointCloud(
 
   // point classification algorithm
   // sweep through each radial division
-  for (size_t i = 0; i < in_radial_ordered_clouds.size(); i++) {
+  for (size_t i = 0; i < in_radial_ordered_clouds.size(); ++i) {
     float prev_gnd_radius = 0.0f;
     float prev_gnd_slope = 0.0f;
     float points_distance = 0.0f;
@@ -431,7 +431,7 @@ void ScanGroundFilterComponent::classifyPointCloud(
     PointLabel prev_point_label = PointLabel::INIT;
     pcl::PointXYZ prev_gnd_point(0, 0, 0);
     // loop through each point in the radial div
-    for (size_t j = 0; j < in_radial_ordered_clouds[i].size(); j++) {
+    for (size_t j = 0; j < in_radial_ordered_clouds[i].size(); ++j) {
       const float global_slope_max_angle = global_slope_max_angle_rad_;
       const float local_slope_max_angle = local_slope_max_angle_rad_;
       auto * p = &in_radial_ordered_clouds[i][j];
