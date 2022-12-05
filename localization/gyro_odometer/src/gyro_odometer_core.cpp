@@ -236,25 +236,6 @@ void GyroOdometer::callbackImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_m
   gyro_queue_.clear();
 }
 
-// void GyroOdometer::checkTimeStamp(
-//   const rclcpp::Time & imu_timestamp, const rclcpp::Time & vehicle_twist_timestamp) const
-// {
-//   const double twist_dt = std::abs((this->now() - vehicle_twist_timestamp).seconds());
-//   if (twist_dt > message_timeout_sec_) {
-//     const std::string error_msg = fmt::format(
-//       "Twist msg is timeout. twist_dt: {}[sec], tolerance {}[sec]", twist_dt,
-//       message_timeout_sec_);
-//     throw std::domain_error(error_msg);
-//   }
-
-//   const double imu_dt = std::abs((this->now() - imu_timestamp).seconds());
-//   if (imu_dt > message_timeout_sec_) {
-//     const std::string error_msg = fmt::format(
-//       "Imu msg is timeout. imu_dt: {}[sec], tolerance {}[sec]", imu_dt, message_timeout_sec_);
-//     throw std::domain_error(error_msg);
-//   }
-// }
-
 void GyroOdometer::publishData(
   const geometry_msgs::msg::TwistWithCovarianceStamped & twist_with_cov_raw)
 {
