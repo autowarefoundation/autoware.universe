@@ -197,6 +197,7 @@ void RRTStar::extend()
 
 void RRTStar::deleteNodeUsingBranchAndBound()
 {
+  // cspell: ignore Karaman
   // ref : III.B of Karaman et al. ICRA 2011
   if (!isSolutionFound()) {
     return;
