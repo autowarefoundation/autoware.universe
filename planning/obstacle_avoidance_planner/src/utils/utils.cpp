@@ -608,13 +608,12 @@ geometry_msgs::msg::Point getStartPoint(
   const std::vector<geometry_msgs::msg::Point> & bound, const geometry_msgs::msg::Point & point)
 {
   const size_t segment_idx = motion_utils::findNearestSegmentIndex(bound, point);
-  const Eigen::Vector2d first_to_target{
-    point.x - bound.at(segment_idx).x, point.y - bound.at(segment_idx).y};
+  const auto & curr_seg_point = bound.at(segment_idx);
+  const auto & next_seg_point = bound.at(segment_idx);
+  const Eigen::Vector2d first_to_target{point.x - curr_seg_point.x, point.y - curr_seg_point.y};
   const Eigen::Vector2d first_to_second{
-    bound.at(segment_idx + 1).x - bound.at(segment_idx).x,
-    bound.at(segment_idx + 1).y - bound.at(segment_idx).y};
+    next_seg_point.x - curr_seg_point.x, next_seg_point.y - curr_seg_point.y};
   const double length = first_to_target.dot(first_to_second.normalized());
-  std::cerr << "length: " << length << std::endl;
 
   if (length < 0.0) {
     return bound.front();
@@ -640,12 +639,11 @@ bool isOutsideDrivableArea(
 
   const auto left_start_point = getStartPoint(left_bound, right_bound.front());
   const auto right_start_point = getStartPoint(right_bound, left_bound.front());
-  std::cerr << "-----------------" << std::endl;
 
   // ignore point in front of the front line
   const std::vector<geometry_msgs::msg::Point> front_bound = {left_start_point, right_start_point};
   const double lat_dist_to_front_bound = motion_utils::calcLateralOffset(front_bound, point);
-  if (lat_dist_to_front_bound > 0.0) {
+  if (lat_dist_to_front_bound > 0.1) {
     return false;
   }
 
