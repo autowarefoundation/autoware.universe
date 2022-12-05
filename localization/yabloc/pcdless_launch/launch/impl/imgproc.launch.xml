@@ -81,4 +81,12 @@
         <remap from="projected_lsd_cloud" to="$(var output_projected_lsd_cloud)"/>
         <remap from="projected_image" to="$(var output_projected_image)"/>
     </node>
+
+    <node name="hsv_extractor" pkg="hsv_extractor" exec="hsv_extractor_node" output="screen" args="--ros-args --log-level info">
+        <param name="use_sim_time" value="$(var use_sim_time)"/>
+        <param name="saturation_gain" value="1.3"/>
+        <param name="threshold" value="220"/>
+        <remap from="src_image" to="$(var resized_image)"/>
+    </node>
+
 </launch>
