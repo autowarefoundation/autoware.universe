@@ -294,13 +294,13 @@ void AutowareStatePanel::onOperationMode(const OperationModeState::ConstSharedPt
     text +="\n(TRANSITION)";
   }
 
-  setupLabel(operation_mode_label_ptr_, text, style_sheet);
+  updateLabel(operation_mode_label_ptr_, text, style_sheet);
 
   // Control Mode
   if (msg->is_autoware_control_enabled) {
-    setupLabel(control_mode_label_ptr_, "Enable", "background-color: #00FF00;");  // green
+    updateLabel(control_mode_label_ptr_, "Enable", "background-color: #00FF00;");  // green
   } else {
-    setupLabel(control_mode_label_ptr_, "Disable", "background-color: #FFFF00;");  // yellow
+    updateLabel(control_mode_label_ptr_, "Disable", "background-color: #FFFF00;");  // yellow
   }
 
   // Button
@@ -348,7 +348,7 @@ void AutowareStatePanel::onRoute(const RouteState::ConstSharedPtr msg)
       break;
   }
 
-  setupLabel(routing_label_ptr_, text, style_sheet);
+  updateLabel(routing_label_ptr_, text, style_sheet);
 
   if (msg->state == RouteState::SET) {
     activateButton(clear_route_button_ptr_);
@@ -383,7 +383,7 @@ void AutowareStatePanel::onLocalization(const LocalizationInitializationState::C
       break;
   }
 
-  setupLabel(localization_label_ptr_, text, style_sheet);
+  updateLabel(localization_label_ptr_, text, style_sheet);
 }
 
 void AutowareStatePanel::onMotion(const MotionState::ConstSharedPtr msg)
@@ -412,7 +412,7 @@ void AutowareStatePanel::onMotion(const MotionState::ConstSharedPtr msg)
       break;
   }
 
-  setupLabel(motion_label_ptr_, text, style_sheet);
+  updateLabel(motion_label_ptr_, text, style_sheet);
 
   if (msg->state == MotionState::STARTING) {
     activateButton(accept_start_button_ptr_);

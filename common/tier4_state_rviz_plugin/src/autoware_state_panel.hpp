@@ -164,7 +164,7 @@ protected:
     });
   }
 
-  static void setupLabel(QLabel * label, QString text, QString style_sheet)
+  static void updateLabel(QLabel * label, QString text, QString style_sheet)
   {
     label->setText(text);
     label->setStyleSheet(style_sheet);
