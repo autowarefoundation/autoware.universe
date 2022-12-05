@@ -411,8 +411,6 @@ Trajectory CollisionFreeOptimizerNode::pathCallback(const Path::ConstSharedPtr p
 
   // cv_maps
   const auto predicted_objects = PredictedObjects{}.objects;
-  const CVMaps cv_maps =
-    costmap_generator_ptr_->getMaps(false, *path_ptr, predicted_objects, traj_param_, debug_data_);
 
   const size_t initial_target_index = 3;
   auto target_pose = resampled_path.points.at(initial_target_index).pose;  // TODO(murooka)
@@ -424,8 +422,8 @@ Trajectory CollisionFreeOptimizerNode::pathCallback(const Path::ConstSharedPtr p
                     .pose;
 
     const auto mpt_trajs = mpt_optimizer_ptr_->getModelPredictiveTrajectory(
-      false, resampled_traj_points, resampled_path.points, prev_optimal_trajs_ptr_, cv_maps,
-      target_pose, 0.0, debug_data_);
+      false, resampled_traj_points, resampled_path.points, resampled_path.left_bound,
+      resampled_path.right_bound, prev_optimal_trajs_ptr_, target_pose, 0.0, debug_data_);
     if (!mpt_trajs) {
       break;
     }
