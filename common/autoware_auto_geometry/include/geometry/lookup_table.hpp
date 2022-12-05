@@ -114,7 +114,7 @@ void check_table_lookup_invariants(const std::vector<T> & domain, const std::vec
 /// \throw std::domain_error If range is not the same size as domain
 /// \throw std::domain_error If domain is not sorted
 /// \throw std::domain_error If value is not finite (NAN or INF)
-/// \tparam T The type of the function, must be interpolatable
+/// \tparam T The type of the function, must be interpolable
 template <typename T>
 T lookup_1d(const std::vector<T> & domain, const std::vector<T> & range, const T value)
 {
@@ -125,7 +125,7 @@ T lookup_1d(const std::vector<T> & domain, const std::vector<T> & range, const T
 
 /// A class wrapping a 1D lookup table. Intended for more frequent lookups. Error checking is pushed
 /// into the constructor and not done in the lookup function call
-/// \tparam T The type of the function, must be interpolatable
+/// \tparam T The type of the function, must be interpolable
 template <typename T>
 class LookupTable1D
 {
