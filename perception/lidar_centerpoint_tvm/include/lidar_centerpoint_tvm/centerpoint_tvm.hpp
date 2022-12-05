@@ -183,6 +183,7 @@ protected:
   using IET = tvm_utility::pipeline::InferenceEngineTVM;
   using VE_PostPT = VoxelEncoderPostProcessor;
   using BNH_PostPT = BackboneNeckHeadPostProcessor;
+  using LIE = tvm_utility::pipeline::LightIE;
 
   tvm_utility::pipeline::InferenceEngineTVMConfig config_ve;
   tvm_utility::pipeline::InferenceEngineTVMConfig config_bnh;
@@ -198,6 +199,8 @@ protected:
   std::shared_ptr<IET> BNH_IE;
   std::shared_ptr<BNH_PostPT> BNH_PostP;
   std::shared_ptr<tvm_utility::pipeline::Pipeline<BNH_PrePT, IET, BNH_PostPT>> bnh_pipeline;
+
+  std::shared_ptr<LIE> scatter_ie;
 
   // Variables
   std::unique_ptr<VoxelGeneratorTemplate> vg_ptr_{nullptr};

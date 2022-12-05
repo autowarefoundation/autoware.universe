@@ -280,9 +280,11 @@ public:
     get_output = runtime_mod.GetFunction("get_output");
 
     for (auto & output_config : config.network_outputs) {
-      output_.push_back(TVMArrayContainer(
+      TVMArrayContainer output(
         output_config.second, config.tvm_dtype_code, config.tvm_dtype_bits, config.tvm_dtype_lanes,
-        config.tvm_device_type, config.tvm_device_id));
+        config.tvm_device_type, config.tvm_device_id);
+      Init(output);
+      output_.push_back(output);
     }
   }
 
@@ -342,6 +344,52 @@ private:
   const std::array<char8_t, 3> version_up_to{2, 1, 0};
 };
 
+class TVMScriptIE : public InferenceEngine
+{
+public:
+  explicit TVMScriptIE(InferenceEngineTVMConfig config, const std::string & pkg_name
+    const std::string & function_name)
+  : config_(config)
+  {
+    // Get full network path
+    std::string network_module_path = "/home/xinyuwang/adehome/tvm_latest/tvm_example/scatter.so";
+
+    // Load compiled functions
+    std::ifstream module(network_module_path);
+    if (!module.good()) {
+      throw std::runtime_error(
+        "File " + network_module_path + " specified in config.hpp not found");
+    }
+    module.close();
+    tvm::runtime::Module runtime_mod = tvm::runtime::Module::LoadFromFile(network_module_path);
+
+    // Create tvm runtime module
+    // tvm::runtime::Module runtime_mod = (*tvm::runtime::Registry::Get("tvm.graph_executor.create"))(
+    //   json_data, mod, static_cast<uint32_t>(config.tvm_device_type), config.tvm_device_id);
+
+    // DLDevice dev{config.tvm_device_type, config.tvm_device_id};
+
+    f = runtime_mod.GetFunction(function_name);
+
+    for (auto & output_config : config.network_outputs) {
+      output_.push_back(TVMArrayContainer(
+        output_config.second, config.tvm_dtype_code, config.tvm_dtype_bits, config.tvm_dtype_lanes,
+        config.tvm_device_type, config.tvm_device_id));
+    }
+  }
+
+  TVMArrayContainerVector schedule(const TVMArrayContainerVector & input)
+  {
+    f(input[0].getArray(), input[1].getArray(), output_[0].getArray());
+
+    return output_;
+  }
+
+private:
+  InferenceEngineTVMConfig config_;
+  TVMArrayContainerVector output_;
+  tvm::runtime::PackedFunc f;
+};
 }  // namespace pipeline
 }  // namespace tvm_utility
 #endif  // TVM_UTILITY__PIPELINE_HPP_
