@@ -102,24 +102,21 @@ def generate_launch_description():
     add_launch_arg(
         "crop_box_filter_measurement_range_param_path",
         [
-            LaunchConfiguration("tier4_localization_launch_param_path"),
-            "/crop_box_filter_measurement_range.param.yaml",
+            LaunchConfiguration("localization_crop_box_filter_measurement_range_param_path"),
         ],
         "path to the parameter file of crop_box_filter_measurement_range",
     )
     add_launch_arg(
         "voxel_grid_downsample_filter_param_path",
         [
-            LaunchConfiguration("tier4_localization_launch_param_path"),
-            "/voxel_grid_filter.param.yaml",
+            LaunchConfiguration("localization_voxel_grid_filter_param_path"),
         ],
         "path to the parameter file of voxel_grid_downsample_filter",
     )
     add_launch_arg(
         "random_downsample_filter_param_path",
         [
-            LaunchConfiguration("tier4_localization_launch_param_path"),
-            "/random_downsample_filter.param.yaml",
+            LaunchConfiguration("localization_random_downsample_filter_param_path"),
         ],
         "path to the parameter file of random_downsample_filter",
     )
