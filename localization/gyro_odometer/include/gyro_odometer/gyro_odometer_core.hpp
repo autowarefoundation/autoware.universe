@@ -48,6 +48,8 @@ private:
     const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr vehicle_twist_msg_ptr);
   void callbackImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg_ptr);
   void publishData(const geometry_msgs::msg::TwistWithCovarianceStamped & twist_with_cov_raw);
+  // void checkTimeStamp(
+  //   const rclcpp::Time & imu_timestamp, const rclcpp::Time & vehicle_twist_timestamp) const;
 
   rclcpp::Subscription<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr
     vehicle_twist_sub_;
