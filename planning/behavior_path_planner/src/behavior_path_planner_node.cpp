@@ -105,7 +105,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   vector_map_subscriber_ = create_subscription<HADMapBin>(
     "~/input/vector_map", qos_transient_local, std::bind(&BehaviorPathPlannerNode::onMap, this, _1),
     createSubscriptionOptions(this));
-  route_subscriber_ = create_subscription<HADMapRoute>(
+  route_subscriber_ = create_subscription<LaneletRoute>(
     "~/input/route", qos_transient_local, std::bind(&BehaviorPathPlannerNode::onRoute, this, _1),
     createSubscriptionOptions(this));
 
@@ -281,12 +281,15 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
   p.detection_area_left_expand_dist = dp("detection_area_left_expand_dist", 1.0);
   p.enable_avoidance_over_same_direction = dp("enable_avoidance_over_same_direction", true);
   p.enable_avoidance_over_opposite_direction = dp("enable_avoidance_over_opposite_direction", true);
+  p.enable_update_path_when_object_is_gone = dp("enable_update_path_when_object_is_gone", false);
 
   p.threshold_distance_object_is_on_center = dp("threshold_distance_object_is_on_center", 1.0);
   p.threshold_speed_object_is_stopped = dp("threshold_speed_object_is_stopped", 1.0);
   p.threshold_time_object_is_moving = dp("threshold_time_object_is_moving", 1.0);
   p.object_check_forward_distance = dp("object_check_forward_distance", 150.0);
   p.object_check_backward_distance = dp("object_check_backward_distance", 2.0);
+  p.object_check_shiftable_ratio = dp("object_check_shiftable_ratio", 1.0);
+  p.object_check_min_road_shoulder_width = dp("object_check_min_road_shoulder_width", 0.5);
   p.object_envelope_buffer = dp("object_envelope_buffer", 0.1);
   p.lateral_collision_margin = dp("lateral_collision_margin", 2.0);
   p.lateral_collision_safety_buffer = dp("lateral_collision_safety_buffer", 0.5);
@@ -331,6 +334,8 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
   p.drivable_area_left_bound_offset = dp("drivable_area_left_bound_offset", 0.0);
 
   p.avoidance_execution_lateral_threshold = dp("avoidance_execution_lateral_threshold", 0.499);
+
+  p.turn_signal_on_swerving = dp("turn_signal_on_swerving", true);
 
   return p;
 }
@@ -640,19 +645,11 @@ void BehaviorPathPlannerNode::run()
   planner_data_->prev_output_path = path;
   mutex_pd_.unlock();
 
-  PathWithLaneId clipped_path;
-  const auto module_status_ptr_vec = bt_manager_->getModulesStatus();
-  if (skipSmoothGoalConnection(module_status_ptr_vec)) {
-    clipped_path = *path;
-  } else {
-    clipped_path = modifyPathForSmoothGoalConnection(*path);
-  }
+  const size_t target_idx = findEgoIndex(path->points);
+  util::clipPathLength(*path, target_idx, planner_data_->parameters);
 
-  const size_t target_idx = findEgoIndex(clipped_path.points);
-  util::clipPathLength(clipped_path, target_idx, planner_data_->parameters);
-
-  if (!clipped_path.points.empty()) {
-    path_publisher_->publish(clipped_path);
+  if (!path->points.empty()) {
+    path_publisher_->publish(*path);
   } else {
     RCLCPP_ERROR_THROTTLE(
       get_logger(), *get_clock(), 5000, "behavior path output is empty! Stop publish.");
@@ -750,8 +747,16 @@ PathWithLaneId::SharedPtr BehaviorPathPlannerNode::getPath(
   RCLCPP_DEBUG(
     get_logger(), "BehaviorTreeManager: output is %s.", bt_output.path ? "FOUND" : "NOT FOUND");
 
+  PathWithLaneId connected_path;
+  const auto module_status_ptr_vec = bt_manager_->getModulesStatus();
+  if (skipSmoothGoalConnection(module_status_ptr_vec)) {
+    connected_path = *path;
+  } else {
+    connected_path = modifyPathForSmoothGoalConnection(*path);
+  }
+
   const auto resampled_path =
-    util::resamplePathWithSpline(*path, planner_data_->parameters.path_interval);
+    util::resamplePathWithSpline(connected_path, planner_data_->parameters.path_interval);
   return std::make_shared<PathWithLaneId>(resampled_path);
 }
 
@@ -855,7 +860,7 @@ void BehaviorPathPlannerNode::onMap(const HADMapBin::ConstSharedPtr msg)
   std::lock_guard<std::mutex> lock(mutex_pd_);
   planner_data_->route_handler->setMap(*msg);
 }
-void BehaviorPathPlannerNode::onRoute(const HADMapRoute::ConstSharedPtr msg)
+void BehaviorPathPlannerNode::onRoute(const LaneletRoute::ConstSharedPtr msg)
 {
   std::lock_guard<std::mutex> lock(mutex_pd_);
   const bool is_first_time = !(planner_data_->route_handler->isHandlerReady());
@@ -903,18 +908,8 @@ PathWithLaneId BehaviorPathPlannerNode::modifyPathForSmoothGoalConnection(
   const auto goal = planner_data_->route_handler->getGoalPose();
   const auto goal_lane_id = planner_data_->route_handler->getGoalLaneId();
 
-  Pose refined_goal{};
-  {
-    lanelet::ConstLanelet goal_lanelet;
-    if (planner_data_->route_handler->getGoalLanelet(&goal_lanelet)) {
-      refined_goal = util::refineGoal(goal, goal_lanelet);
-    } else {
-      refined_goal = goal;
-    }
-  }
-
   auto refined_path = util::refinePathForGoal(
-    planner_data_->parameters.refine_goal_search_radius_range, M_PI * 0.5, path, refined_goal,
+    planner_data_->parameters.refine_goal_search_radius_range, M_PI * 0.5, path, goal,
     goal_lane_id);
   refined_path.header.frame_id = "map";
   refined_path.header.stamp = this->now();
