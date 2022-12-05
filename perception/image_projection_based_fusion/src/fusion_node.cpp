@@ -115,7 +115,8 @@ FusionNode<Msg, ObjType>::FusionNode(
     stop_watch_ptr_->tic("cyclic_time");
     stop_watch_ptr_->tic("processing_time");
   }
-
+  // cspell: ignore minx, maxx, miny, maxy, minz, maxz
+  // FIXME: use min_x instead of minx
   filter_scope_minx_ = declare_parameter("filter_scope_minx", -100);
   filter_scope_maxx_ = declare_parameter("filter_scope_maxx", 100);
   filter_scope_miny_ = declare_parameter("filter_scope_miny", -100);

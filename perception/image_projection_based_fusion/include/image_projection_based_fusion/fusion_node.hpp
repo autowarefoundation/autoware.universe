@@ -40,6 +40,8 @@
 #include <utility>
 #include <vector>
 
+// cspell: ignore minx, maxx, miny, maxy, minz, maxz
+
 namespace image_projection_based_fusion
 {
 using autoware_auto_perception_msgs::msg::DetectedObject;
