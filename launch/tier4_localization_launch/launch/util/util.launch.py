@@ -95,11 +95,6 @@ def generate_launch_description():
         launch_arguments.append(arg)
 
     add_launch_arg(
-        "tier4_localization_launch_param_path",
-        [FindPackageShare("tier4_localization_launch"), "/config"],
-        "tier4_localization_launch param path",
-    )
-    add_launch_arg(
         "crop_box_filter_measurement_range_param_path",
         [
             LaunchConfiguration("localization_crop_box_filter_measurement_range_param_path"),
