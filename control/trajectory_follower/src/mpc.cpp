@@ -187,7 +187,8 @@ void MPC::setReferenceTrajectory(
   trajectory_follower::MPCTrajectory mpc_traj_smoothed;   // smooth filtered trajectory
 
   /* resampling */
-  trajectory_follower::MPCUtils::convertToMPCTrajectory(trajectory_msg, mpc_traj_raw);
+  trajectory_follower::MPCUtils::convertToMPCTrajectory(
+    trajectory_msg, m_param.min_vel, mpc_traj_raw);
   if (!trajectory_follower::MPCUtils::resampleMPCTrajectoryByDistance(
         mpc_traj_raw, traj_resample_dist, &mpc_traj_resampled)) {
     RCLCPP_WARN(m_logger, "[setReferenceTrajectory] spline error when resampling by distance");
@@ -498,7 +499,7 @@ trajectory_follower::MPCTrajectory MPC::applyVelocityDynamicsFilter(
 
   trajectory_follower::MPCTrajectory output = input;
   trajectory_follower::MPCUtils::dynamicSmoothingVelocity(
-    static_cast<size_t>(nearest_idx), v0, acc_lim, tau, output);
+    static_cast<size_t>(nearest_idx), v0, acc_lim, tau, m_param.min_vel, output);
   const double t_ext = 100.0;  // extra time to prevent mpc calculation failure due to short time
   const double t_end = output.relative_time.back() + t_ext;
   const double v_end = 0.0;

@@ -224,7 +224,8 @@ std::vector<double> calcTrajectoryCurvature(
 }
 
 bool convertToMPCTrajectory(
-  const autoware_auto_planning_msgs::msg::Trajectory & input, MPCTrajectory & output)
+  const autoware_auto_planning_msgs::msg::Trajectory & input, const double min_vel,
+  MPCTrajectory & output)
 {
   output.clear();
   for (const autoware_auto_planning_msgs::msg::TrajectoryPoint & p : input.points) {
@@ -237,7 +238,7 @@ bool convertToMPCTrajectory(
     const double t = 0.0;
     output.push_back(x, y, z, yaw, vx, k, k, t);
   }
-  calcMPCTrajectoryTime(output);
+  calcMPCTrajectoryTime(min_vel, output);
   return true;
 }
 
@@ -259,7 +260,7 @@ bool convertToAutowareTrajectory(
   return true;
 }
 
-bool calcMPCTrajectoryTime(MPCTrajectory & traj)
+bool calcMPCTrajectoryTime(const double min_vel, MPCTrajectory & traj)
 {
   double t = 0.0;
   traj.relative_time.clear();
@@ -269,7 +270,7 @@ bool calcMPCTrajectoryTime(MPCTrajectory & traj)
     const double dy = traj.y.at(i + 1) - traj.y.at(i);
     const double dz = traj.z.at(i + 1) - traj.z.at(i);
     const double dist = std::sqrt(dx * dx + dy * dy + dz * dz);
-    const double v = std::max(std::fabs(traj.vx.at(i)), 0.1);
+    const double v = std::max(std::fabs(traj.vx.at(i)), min_vel);
     t += (dist / v);
     traj.relative_time.push_back(t);
   }
@@ -278,7 +279,7 @@ bool calcMPCTrajectoryTime(MPCTrajectory & traj)
 
 void dynamicSmoothingVelocity(
   const size_t start_idx, const double start_vel, const double acc_lim, const double tau,
-  MPCTrajectory & traj)
+  const double min_vel, MPCTrajectory & traj)
 {
   double curr_v = start_vel;
   traj.vx.at(start_idx) = start_vel;
@@ -292,7 +293,7 @@ void dynamicSmoothingVelocity(
     curr_v = curr_v + dv;
     traj.vx.at(i) = curr_v;
   }
-  calcMPCTrajectoryTime(traj);
+  calcMPCTrajectoryTime(min_vel, traj);
 }
 
 bool calcNearestPoseInterp(

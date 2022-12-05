@@ -69,6 +69,8 @@ struct MPCParam
   double velocity_time_constant;
   //!< @brief minimum prediction dist for low velocity
   double min_prediction_length;
+  //!< @brief minimum velocity for relative time
+  double min_vel;
   //!< @brief time constant for steer model
   double steer_tau;
   // for weight matrix Q

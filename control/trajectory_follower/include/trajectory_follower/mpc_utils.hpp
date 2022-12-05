@@ -75,11 +75,13 @@ TRAJECTORY_FOLLOWER_PUBLIC double calcLateralError(
 /**
  * @brief convert the given Trajectory msg to a MPCTrajectory object
  * @param [in] input trajectory to convert
+ * @param [in] min_vel minimum velocity for relative time
  * @param [out] output resulting MPCTrajectory
  * @return true if the conversion was successful
  */
 TRAJECTORY_FOLLOWER_PUBLIC bool convertToMPCTrajectory(
-  const autoware_auto_planning_msgs::msg::Trajectory & input, MPCTrajectory & output);
+  const autoware_auto_planning_msgs::msg::Trajectory & input, const double min_vel,
+  MPCTrajectory & output);
 /**
  * @brief convert the given MPCTrajectory to a Trajectory msg
  * @param [in] input MPCTrajectory to convert
@@ -116,21 +118,23 @@ TRAJECTORY_FOLLOWER_PUBLIC bool linearInterpMPCTrajectory(
   const std::vector<double> & out_index, MPCTrajectory * out_traj);
 /**
  * @brief fill the relative_time field of the given MPCTrajectory
+ * @param [in] min_vel minimum velocity for relative time
  * @param [in] traj MPCTrajectory for which to fill in the relative_time
  * @return true if the calculation was successful
  */
-TRAJECTORY_FOLLOWER_PUBLIC bool calcMPCTrajectoryTime(MPCTrajectory & traj);
+TRAJECTORY_FOLLOWER_PUBLIC bool calcMPCTrajectoryTime(const double min_vel, MPCTrajectory & traj);
 /**
  * @brief recalculate the velocity field (vx) of the MPCTrajectory with dynamic smoothing
  * @param [in] start_idx index of the trajectory point from which to start smoothing
  * @param [in] start_vel initial velocity to set at the start_idx
  * @param [in] acc_lim limit on the acceleration
  * @param [in] tau constant to control the smoothing (high-value = very smooth)
+ * @param [in] min_vel minimum velocity for relative time
  * @param [inout] traj MPCTrajectory for which to calculate the smoothed velocity
  */
 TRAJECTORY_FOLLOWER_PUBLIC void dynamicSmoothingVelocity(
   const size_t start_idx, const double start_vel, const double acc_lim, const double tau,
-  MPCTrajectory & traj);
+  const double min_vel, MPCTrajectory & traj);
 /**
  * @brief calculate yaw angle in MPCTrajectory from xy vector
  * @param [inout] traj object trajectory
