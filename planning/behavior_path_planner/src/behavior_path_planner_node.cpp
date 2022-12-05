@@ -278,12 +278,15 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
   p.detection_area_left_expand_dist = dp("detection_area_left_expand_dist", 1.0);
   p.enable_avoidance_over_same_direction = dp("enable_avoidance_over_same_direction", true);
   p.enable_avoidance_over_opposite_direction = dp("enable_avoidance_over_opposite_direction", true);
+  p.enable_update_path_when_object_is_gone = dp("enable_update_path_when_object_is_gone", false);
 
   p.threshold_distance_object_is_on_center = dp("threshold_distance_object_is_on_center", 1.0);
   p.threshold_speed_object_is_stopped = dp("threshold_speed_object_is_stopped", 1.0);
   p.threshold_time_object_is_moving = dp("threshold_time_object_is_moving", 1.0);
   p.object_check_forward_distance = dp("object_check_forward_distance", 150.0);
   p.object_check_backward_distance = dp("object_check_backward_distance", 2.0);
+  p.object_check_shiftable_ratio = dp("object_check_shiftable_ratio", 1.0);
+  p.object_check_min_road_shoulder_width = dp("object_check_min_road_shoulder_width", 0.5);
   p.object_envelope_buffer = dp("object_envelope_buffer", 0.1);
   p.lateral_collision_margin = dp("lateral_collision_margin", 2.0);
   p.lateral_collision_safety_buffer = dp("lateral_collision_safety_buffer", 0.5);
@@ -620,19 +623,11 @@ void BehaviorPathPlannerNode::run()
   planner_data_->prev_output_path = path;
   mutex_pd_.unlock();
 
-  PathWithLaneId clipped_path;
-  const auto module_status_ptr_vec = bt_manager_->getModulesStatus();
-  if (skipSmoothGoalConnection(module_status_ptr_vec)) {
-    clipped_path = *path;
-  } else {
-    clipped_path = modifyPathForSmoothGoalConnection(*path);
-  }
+  const size_t target_idx = findEgoIndex(path->points);
+  util::clipPathLength(*path, target_idx, planner_data_->parameters);
 
-  const size_t target_idx = findEgoIndex(clipped_path.points);
-  util::clipPathLength(clipped_path, target_idx, planner_data_->parameters);
-
-  if (!clipped_path.points.empty()) {
-    path_publisher_->publish(clipped_path);
+  if (!path->points.empty()) {
+    path_publisher_->publish(*path);
   } else {
     RCLCPP_ERROR_THROTTLE(
       get_logger(), *get_clock(), 5000, "behavior path output is empty! Stop publish.");
@@ -730,8 +725,16 @@ PathWithLaneId::SharedPtr BehaviorPathPlannerNode::getPath(
   RCLCPP_DEBUG(
     get_logger(), "BehaviorTreeManager: output is %s.", bt_output.path ? "FOUND" : "NOT FOUND");
 
+  PathWithLaneId connected_path;
+  const auto module_status_ptr_vec = bt_manager_->getModulesStatus();
+  if (skipSmoothGoalConnection(module_status_ptr_vec)) {
+    connected_path = *path;
+  } else {
+    connected_path = modifyPathForSmoothGoalConnection(*path);
+  }
+
   const auto resampled_path =
-    util::resamplePathWithSpline(*path, planner_data_->parameters.path_interval);
+    util::resamplePathWithSpline(connected_path, planner_data_->parameters.path_interval);
   return std::make_shared<PathWithLaneId>(resampled_path);
 }
 

@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV, Inc. All rights reserved.
+// Copyright 2022 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,54 +12,73 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef TRAJECTORY_FOOTPRINT__DISPLAY_HPP_
-#define TRAJECTORY_FOOTPRINT__DISPLAY_HPP_
+#ifndef POSE_HISTORY_FOOTPRINT__DISPLAY_HPP_
+#define POSE_HISTORY_FOOTPRINT__DISPLAY_HPP_
 
-#include <rclcpp/rclcpp.hpp>
-#include <rviz_common/display_context.hpp>
-#include <rviz_common/frame_manager_iface.hpp>
 #include <rviz_common/message_filter_display.hpp>
-#include <rviz_common/properties/bool_property.hpp>
-#include <rviz_common/properties/color_property.hpp>
-#include <rviz_common/properties/float_property.hpp>
-#include <rviz_common/properties/parse_color.hpp>
-#include <rviz_common/validate_floats.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
-#include <autoware_auto_planning_msgs/msg/trajectory.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
 
-#include <OgreBillboardSet.h>
-#include <OgreManualObject.h>
-#include <OgreMaterialManager.h>
-#include <OgreSceneManager.h>
-#include <OgreSceneNode.h>
-
+#include <deque>
 #include <memory>
+#include <string>
+
+namespace rviz_rendering
+{
+class BillboardLine;
+}  // namespace rviz_rendering
+namespace rviz_common::properties
+{
+class ColorProperty;
+class FloatProperty;
+class IntProperty;
+class BoolProperty;
+}  // namespace rviz_common::properties
 
 namespace rviz_plugins
 {
+
 using vehicle_info_util::VehicleInfo;
 using vehicle_info_util::VehicleInfoUtil;
 
-class AutowareTrajectoryFootprintDisplay
-: public rviz_common::MessageFilterDisplay<autoware_auto_planning_msgs::msg::Trajectory>
+class PoseHistoryFootprint
+: public rviz_common::MessageFilterDisplay<geometry_msgs::msg::PoseStamped>
 {
   Q_OBJECT
 
 public:
-  AutowareTrajectoryFootprintDisplay();
-  virtual ~AutowareTrajectoryFootprintDisplay();
+  PoseHistoryFootprint();
+  ~PoseHistoryFootprint() override;
+  PoseHistoryFootprint(const PoseHistoryFootprint &) = delete;
+  PoseHistoryFootprint(const PoseHistoryFootprint &&) = delete;
+  PoseHistoryFootprint & operator=(const PoseHistoryFootprint &) = delete;
+  PoseHistoryFootprint & operator=(const PoseHistoryFootprint &&) = delete;
 
+protected:
   void onInitialize() override;
-  void reset() override;
+  void onEnable() override;
+  void onDisable() override;
+  void updateFootprint();
 
 private Q_SLOTS:
   void updateVisualization();
   void updateVehicleInfo();
 
-protected:
-  void processMessage(
-    const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr msg_ptr) override;
+private:
+  void subscribe() override;
+  void unsubscribe() override;
+  void processMessage(const geometry_msgs::msg::PoseStamped::ConstSharedPtr message) override;
+  void updateHistory(const geometry_msgs::msg::PoseStamped::ConstSharedPtr message);
+
+  std::string target_frame_;
+  std::deque<geometry_msgs::msg::PoseStamped::ConstSharedPtr> history_;
+  rclcpp::Time last_stamp_;
+
+  // pose history
+  rviz_common::properties::IntProperty * property_buffer_size_;
+
+  // trajectory footprint
   Ogre::ManualObject * trajectory_footprint_manual_object_;
   rviz_common::properties::BoolProperty * property_trajectory_footprint_view_;
   rviz_common::properties::ColorProperty * property_trajectory_footprint_color_;
@@ -68,13 +87,7 @@ protected:
   rviz_common::properties::FloatProperty * property_vehicle_width_;
   rviz_common::properties::FloatProperty * property_rear_overhang_;
   rviz_common::properties::FloatProperty * property_offset_;
-
-  Ogre::ManualObject * trajectory_point_manual_object_;
-  rviz_common::properties::BoolProperty * property_trajectory_point_view_;
-  rviz_common::properties::ColorProperty * property_trajectory_point_color_;
-  rviz_common::properties::FloatProperty * property_trajectory_point_alpha_;
-  rviz_common::properties::FloatProperty * property_trajectory_point_radius_;
-  rviz_common::properties::FloatProperty * property_trajectory_point_offset_;
+  rviz_common::properties::FloatProperty * property_interval_;
 
   struct VehicleFootprintInfo
   {
@@ -87,11 +100,9 @@ protected:
   std::shared_ptr<VehicleInfo> vehicle_info_;
   std::shared_ptr<VehicleFootprintInfo> vehicle_footprint_info_;
 
-private:
-  autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr last_msg_ptr_;
-  bool validateFloats(const autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr & msg_ptr);
+  geometry_msgs::msg::PoseStamped::ConstSharedPtr last_msg_ptr_;
 };
 
 }  // namespace rviz_plugins
 
-#endif  // TRAJECTORY_FOOTPRINT__DISPLAY_HPP_
+#endif  // POSE_HISTORY_FOOTPRINT__DISPLAY_HPP_
