@@ -45,6 +45,7 @@ AutonomousMode::AutonomousMode(rclcpp::Node * node)
   // params for mode change available
   {
     auto & p = engage_acceptable_param_;
+    p.check_engage_condition = node->declare_parameter<bool>("check_engage_condition");
     p.allow_autonomous_in_stopped =
       node->declare_parameter<bool>("engage_acceptable_limits.allow_autonomous_in_stopped");
     p.dist_threshold = node->declare_parameter<double>("engage_acceptable_limits.dist_threshold");
@@ -180,12 +181,18 @@ std::pair<bool, bool> AutonomousMode::hasDangerLateralAcceleration()
 
 bool AutonomousMode::isModeChangeAvailable()
 {
+  const auto & param = engage_acceptable_param_;
+  if (!param.check_engage_condition) {
+    RCLCPP_INFO(logger_, "check_engage_condition is false. Engage is accepted.");
+    debug_info_.is_all_ok = true;
+    return true;
+  }
+
   constexpr auto dist_max = 100.0;
   constexpr auto yaw_max = M_PI_4;
 
   const auto current_speed = kinematics_.twist.twist.linear.x;
   const auto target_control_speed = control_cmd_.longitudinal.speed;
-  const auto & param = engage_acceptable_param_;
 
   if (trajectory_.points.size() < 2) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
