@@ -24,7 +24,6 @@
 #include <QSpinBox>
 #include <rclcpp/rclcpp.hpp>
 #include <rviz_common/panel.hpp>
-#include <memory>
 
 #include <autoware_adapi_v1_msgs/msg/localization_initialization_state.hpp>
 #include <autoware_adapi_v1_msgs/msg/motion_state.hpp>
@@ -37,6 +36,8 @@
 #include <tier4_external_api_msgs/msg/emergency.hpp>
 #include <tier4_external_api_msgs/srv/set_emergency.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit.hpp>
+
+#include <memory>
 
 namespace rviz_plugins
 {
