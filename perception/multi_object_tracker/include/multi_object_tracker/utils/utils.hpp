@@ -83,7 +83,8 @@ enum BBOX_IDX {
   REAR_R_CORNER = 5,
   REAR_L_CORNER = 6,
   FRONT_L_CORNER = 7,
-  INSIDE = -1
+  INSIDE = 8,
+  INVALID = -1
 };
 
 /**
@@ -164,7 +165,7 @@ inline int getNearestCornerOrSurfaceFromObject(
 {
   // only work for BBOX shape
   if (object.shape.type != autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
-    return false;
+    return BBOX_IDX::INVALID;
   }
 
   // extract necessary information from input object
@@ -218,7 +219,7 @@ inline Eigen::Vector2d calcOffsetVectorFromShapeChange(
     offset(0, 0) = dl / 2.0;  // move forward
     offset(1, 0) = dw / 2.0;  // move left
   }
-  return offset;
+  return offset;  // do nothing if indx == INVALID or INSIDE
 }
 
 /**
