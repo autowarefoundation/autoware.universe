@@ -22,7 +22,7 @@ else()
   endif()
 endif()
 
-find_package(PCL REQUIRED)
+find_package(PCL REQUIRED COMPONENTS common io registration)
 include_directories(${PCL_INCLUDE_DIRS})
 
 ament_auto_add_executable(ndt_scan_matcher

@@ -35,11 +35,6 @@
 #include <iomanip>
 #include <thread>
 
-#include <pcl/ModelCoefficients.h>
-#include <pcl/sample_consensus/method_types.h>
-#include <pcl/sample_consensus/model_types.h>
-#include <pcl/segmentation/sac_segmentation.h>
-#include <pcl/filters/extract_indices.h>
 
 tier4_debug_msgs::msg::Float32Stamped make_float32_stamped(
   const builtin_interfaces::msg::Time & stamp, const float data)
@@ -101,7 +96,7 @@ NDTScanMatcher::NDTScanMatcher()
   oscillation_threshold_(10),
   regularization_enabled_(declare_parameter("regularization_enabled", false)),
   estimate_scores_for_degrounded_scan_(declare_parameter("estimate_scores_for_degrounded_scan", false)),
-  ground_removal_outlier_threshold_(declare_parameter("ground_removal_outlier_threshold", 1.0))
+  ground_removal_z_threshold_(declare_parameter("ground_removal_z_threshold", 0.8))
 {
   (*state_ptr_)["state"] = "Initializing";
   is_activated_ = false;
@@ -445,7 +440,13 @@ void NDTScanMatcher::callback_sensor_points(
     //remove ground
     pcl::shared_ptr<pcl::PointCloud<PointSource>> no_ground_points_mapTF_ptr(
     new pcl::PointCloud<PointSource>);
-    remove_ground_point_cloud(sensor_points_mapTF_ptr,no_ground_points_mapTF_ptr);
+    for(std::size_t i=0;i< sensor_points_mapTF_ptr->size();i++)
+    {
+      if(sensor_points_mapTF_ptr->points[i].z - matrix4f_to_pose(ndt_result.pose).position.z> ground_removal_z_threshold_)
+      {
+        no_ground_points_mapTF_ptr->points.push_back(sensor_points_mapTF_ptr->points[i]);
+      }
+    }
     //pub remove-ground points
     sensor_msgs::msg::PointCloud2 no_ground_points_mapTF_msg;
     pcl::toROSMsg(*no_ground_points_mapTF_ptr, no_ground_points_mapTF_msg);
@@ -585,26 +586,6 @@ void NDTScanMatcher::publish_initial_to_result_distances(
     norm(initial_pose_new_msg.pose.pose.position, result_pose_msg.position);
   initial_to_result_distance_new_pub_->publish(
     make_float32_stamped(sensor_ros_time, initial_to_result_distance_new));
-}
-
-void NDTScanMatcher::remove_ground_point_cloud(
-  const pcl::shared_ptr<pcl::PointCloud<PointSource>> & sensor_points_mapTF_ptr,
-  const pcl::shared_ptr<pcl::PointCloud<PointSource>> & no_ground_points_mapTF_ptr)
-{
-  pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
-  pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
-  pcl::SACSegmentation<PointSource> seg;
-  seg.setOptimizeCoefficients(true);
-  seg.setModelType(pcl::SACMODEL_PLANE);
-  seg.setMethodType(pcl::SAC_RANSAC);
-  seg.setDistanceThreshold(ground_removal_outlier_threshold_);
-  seg.setInputCloud(sensor_points_mapTF_ptr);
-  seg.segment(*inliers, *coefficients);
-  pcl::ExtractIndices<PointSource> extract;
-	extract.setInputCloud(sensor_points_mapTF_ptr);
-	extract.setIndices(inliers);
-	extract.setNegative(true);
-	extract.filter(*no_ground_points_mapTF_ptr);
 }
 
 bool NDTScanMatcher::validate_num_iteration(const int iter_num, const int max_iter_num)

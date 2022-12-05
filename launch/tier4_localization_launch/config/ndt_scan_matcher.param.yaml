@@ -69,5 +69,5 @@
     # A flag for using scan matching score based on de-grounded LiDAR scan
     estimate_scores_for_degrounded_scan: false
     
-    # RANSAC param
-    ground_removal_outlier_threshold: 1.0
+    # If lidar_point.z - base_link.z <= this threshold , will be removed
+    ground_removal_z_threshold: 0.8

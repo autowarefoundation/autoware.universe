@@ -116,8 +116,6 @@ private:
     const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_old_msg,
     const geometry_msgs::msg::PoseWithCovarianceStamped & initial_pose_new_msg);
 
-  void remove_ground_point_cloud(const pcl::shared_ptr<pcl::PointCloud<PointSource>> & sensor_points_mapTF_ptr,
-    const pcl::shared_ptr<pcl::PointCloud<PointSource>> & no_ground_points_mapTF_ptr);
   bool validate_num_iteration(const int iter_num, const int max_iter_num);
   bool validate_score(
     const double score, const double score_threshold, const std::string score_name);
@@ -203,7 +201,7 @@ private:
   std::unique_ptr<PoseInitializationModule> pose_init_module_;
 
   bool estimate_scores_for_degrounded_scan_;
-  double ground_removal_outlier_threshold_ = 1.0;
+  double ground_removal_z_threshold_ = 1.0;
 };
 
 #endif  // NDT_SCAN_MATCHER__NDT_SCAN_MATCHER_CORE_HPP_
