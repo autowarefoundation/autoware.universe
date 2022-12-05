@@ -16,6 +16,7 @@
 #define OBSTACLE_VELOCITY_LIMITER__PARAMETERS_HPP_
 
 #include <obstacle_velocity_limiter/types.hpp>
+// cspell: ignore multipolygon, multilinestring
 #include <rclcpp/node.hpp>
 
 #include <tf2/utils.h>
