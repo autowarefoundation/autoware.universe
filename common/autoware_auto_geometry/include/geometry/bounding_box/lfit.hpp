@@ -176,7 +176,7 @@ private:
 /// \param[in] end An iterator pointing to one past the last point in the point list
 /// \param[in] size The number of points in the point list
 /// \return A bounding box that minimizes the LFit residual
-/// \tparam IT An iterator type dereferencable into a point with float members x and y
+/// \tparam IT An iterator type dereferenceable into a point with float members x and y
 template <typename IT>
 BoundingBox lfit_bounding_box_2d_impl(const IT begin, const IT end, const std::size_t size)
 {
@@ -235,7 +235,7 @@ BoundingBox lfit_bounding_box_2d_impl(const IT begin, const IT end, const std::s
 /// \param[in] hint An iterator pointing to the point whose normal will be used to sort the list
 /// \return A pair where the first element is an iterator pointing to the nearest point, and the
 ///         second element is the size of the list
-/// \tparam IT An iterator type dereferencable into a point with float members x and y
+/// \tparam IT An iterator type dereferenceable into a point with float members x and y
 /// \throw std::domain_error If the number of points is too few
 template <typename IT, typename PointT>
 BoundingBox lfit_bounding_box_2d(
@@ -258,7 +258,7 @@ BoundingBox lfit_bounding_box_2d(
 /// \return An oriented bounding box in x-y. This bounding box has no height information
 /// \param[in] begin An iterator pointing to the first point in a point list
 /// \param[in] end An iterator pointing to one past the last point in the point list
-/// \tparam IT An iterator type dereferencable into a point with float members x and y
+/// \tparam IT An iterator type dereferenceable into a point with float members x and y
 template <typename IT>
 BoundingBox lfit_bounding_box_2d(const IT begin, const IT end)
 {

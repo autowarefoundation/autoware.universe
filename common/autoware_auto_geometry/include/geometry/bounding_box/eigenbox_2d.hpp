@@ -54,7 +54,7 @@ struct Covariance2d
 /// \brief Compute 2d covariance matrix of a list of points using Welford's online algorithm
 /// \param[in] begin An iterator pointing to the first point in a point list
 /// \param[in] end An iterator pointing to one past the last point in the point list
-/// \tparam IT An iterator type dereferencable into a point with float members x and y
+/// \tparam IT An iterator type dereferenceable into a point with float members x and y
 /// \return A 2d covariance matrix for all points in the list
 template <typename IT>
 Covariance2d covariance_2d(const IT begin, const IT end)
@@ -142,7 +142,7 @@ std::pair<float32_t, float32_t> eig_2d(const Covariance2d & cov, PointT & eigvec
 }
 
 /// \brief Given eigenvectors, compute support (furthest) point in each direction
-/// \tparam IT An iterator type dereferencable into a point with float members x and y
+/// \tparam IT An iterator type dereferenceable into a point with float members x and y
 /// \tparam PointT type of a point with float members x and y
 /// \param[in] begin An iterator pointing to the first point in a point list
 /// \param[in] end An iterator pointing to one past the last point in the point list
@@ -184,7 +184,7 @@ bool8_t compute_supports(
 }
 
 /// \brief Compute bounding box given a pair of basis directions
-/// \tparam IT An iterator type dereferencable into a point with float members x and y
+/// \tparam IT An iterator type dereferenceable into a point with float members x and y
 /// \tparam PointT Point type of the lists, must have float members x and y
 /// \param[in] ax1 First basis direction, assumed to be normal to ax2
 /// \param[in] ax2 Second basis direction, assumed to be normal to ax1, assumed to be ccw wrt ax1
@@ -211,7 +211,7 @@ BoundingBox compute_bounding_box(
 ///        modify the list. The resulting bounding box is not necessarily minimum in any way
 /// \param[in] begin An iterator pointing to the first point in a point list
 /// \param[in] end An iterator pointing to one past the last point in the point list
-/// \tparam IT An iterator type dereferencable into a point with float members x and y
+/// \tparam IT An iterator type dereferenceable into a point with float members x and y
 /// \return An oriented bounding box in x-y. This bounding box has no height information
 template <typename IT>
 BoundingBox eigenbox_2d(const IT begin, const IT end)

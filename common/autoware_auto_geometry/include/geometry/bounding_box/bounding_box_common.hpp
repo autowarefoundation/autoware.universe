@@ -132,7 +132,7 @@ finalize_box(const decltype(BoundingBox::corners) & corners, BoundingBox & box);
 
 /// \brief given support points and two orthogonal directions, compute corners of bounding box
 /// \tparam PointT Type of a point, must have float members x and y`
-/// \tparam IT An iterator dereferencable into PointT
+/// \tparam IT An iterator dereferenceable into PointT
 /// \param[out] corners Gets filled with corner points of bounding box
 /// \param[in] supports Iterators referring to support points of current bounding box
 ///                     e.g. bounding box is touching these points
