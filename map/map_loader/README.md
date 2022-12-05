@@ -42,8 +42,8 @@ Please see [the description of `GetDifferentialPointCloudMap.srv`](https://githu
 | :---------------------------- | :---- | :-------------------------------------------------------------------------------- | :------------ |
 | enable_whole_load             | bool  | A flag to enable raw pointcloud map publishing                                    | true          |
 | enable_downsampled_whole_load | bool  | A flag to enable downsampled pointcloud map publishing                            | false         |
-| enable_partial_load           | bool  | A flag to enable partial pointcloud map server                                    | false          |
-| enable_differential_load      | bool  | A flag to enable differential pointcloud map server                               | false          |
+| enable_partial_load           | bool  | A flag to enable partial pointcloud map server                                    | false         |
+| enable_differential_load      | bool  | A flag to enable differential pointcloud map server                               | false         |
 | leaf_size                     | float | Downsampling leaf size (only used when enable_downsampled_whole_load is set true) | 3.0           |
 
 ### Interfaces
