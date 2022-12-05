@@ -42,7 +42,7 @@ SpeedBumpModule::SpeedBumpModule(
   passed_slow_start_point_(false)
 {
   // Read speed bump height [m] from map
-  auto const speed_bump_height =
+  const auto speed_bump_height =
     static_cast<float>(speed_bump_reg_elem_.speedBump().attributeOr("height", 0.5));
 
   // If slow_down_speed is specified on speed_bump annotation use it instead of calculating it
@@ -57,9 +57,9 @@ SpeedBumpModule::SpeedBumpModule(
     p1.y = planner_param_.speed_calculation_max_speed;
     p2.y = planner_param_.speed_calculation_min_speed;
 
-    auto const & constants = getLinearEquation(p1, p2);
-    auto const & m = constants.first;
-    auto const & b = constants.second;
+    const auto & constants = getLinearEquation(p1, p2);
+    const auto & m = constants.first;
+    const auto & b = constants.second;
 
     // Calculate the speed [m/s] for speed bump
     speed_bump_slow_down_speed_ = std::clamp(

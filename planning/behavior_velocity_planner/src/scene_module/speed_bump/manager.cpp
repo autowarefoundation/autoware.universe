@@ -30,7 +30,7 @@ namespace behavior_velocity_planner
 using lanelet::autoware::SpeedBump;
 
 SpeedBumpModuleManager::SpeedBumpModuleManager(rclcpp::Node & node)
-: SceneModuleManagerInterfaceWithRTC(node, getModuleName())
+: SceneModuleManagerInterface(node, getModuleName())
 {
   std::string ns(getModuleName());
   planner_param_.slow_start_margin = node.declare_parameter(ns + ".slow_start_margin", 1.0);
@@ -55,14 +55,12 @@ void SpeedBumpModuleManager::launchNewModules(
   for (const auto & speed_bump_with_lane_id : planning_utils::getRegElemMapOnPath<SpeedBump>(
          path, planner_data_->route_handler_->getLaneletMapPtr(),
          planner_data_->current_pose.pose)) {
-    // Use lanelet_id to unregister module when the route is changed
     const auto lane_id = speed_bump_with_lane_id.second.id();
     const auto module_id = speed_bump_with_lane_id.first->id();
     if (!isModuleRegistered(module_id)) {
       registerModule(std::make_shared<SpeedBumpModule>(
         module_id, lane_id, *speed_bump_with_lane_id.first, planner_param_,
         logger_.get_child("speed_bump_module"), clock_));
-      generateUUID(module_id);
     }
   }
 }

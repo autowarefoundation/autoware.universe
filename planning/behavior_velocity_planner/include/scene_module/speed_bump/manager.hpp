@@ -26,7 +26,7 @@
 
 namespace behavior_velocity_planner
 {
-class SpeedBumpModuleManager : public SceneModuleManagerInterfaceWithRTC
+class SpeedBumpModuleManager : public SceneModuleManagerInterface
 {
 public:
   explicit SpeedBumpModuleManager(rclcpp::Node & node);
