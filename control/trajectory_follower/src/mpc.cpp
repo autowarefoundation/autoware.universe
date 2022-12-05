@@ -218,6 +218,38 @@ void MPC::setReferenceTrajectory(
     }
   }
 
+  /* extend terminal points */
+  {
+    // set original raw termianl yaw
+    auto & traj = mpc_traj_smoothed;
+    traj.yaw.back() = mpc_traj_raw.yaw.back();
+
+    // get terminal pose
+    autoware_auto_planning_msgs::msg::Trajectory autoware_traj;
+    autoware::motion::control::trajectory_follower::MPCUtils::convertToAutowareTrajectory(
+      traj, autoware_traj);
+    auto extended_pose = autoware_traj.points.back().pose;
+
+    constexpr double extend_dist = 10.0;
+    const double extend_interval = traj_resample_dist;
+    const size_t num_extended_point = static_cast<size_t>(extend_dist / extend_interval);
+    for (size_t i = 0; i < num_extended_point; ++i) {
+      const double x_offset = m_is_forward_shift ? extend_interval : -extend_interval;
+      extended_pose = tier4_autoware_utils::calcOffsetPose(extended_pose, x_offset, 0.0, 0.0);
+      const double x = extended_pose.position.x;
+      const double y = extended_pose.position.y;
+      const double z = extended_pose.position.z;
+      // calc relative time
+      const double dx = x - traj.x.back();
+      const double dy = y - traj.y.back();
+      const double dz = z - traj.z.back();
+      const double dist = std::sqrt(dx * dx + dy * dy + dz * dz);
+      const double t = traj.relative_time.back() + dist / m_param.min_vel;
+      traj.push_back(
+        x, y, z, traj.yaw.back(), m_param.min_vel, traj.k.back(), traj.smooth_k.back(), t);
+    }
+  }
+
   /* calculate yaw angle */
   trajectory_follower::MPCUtils::calcTrajectoryYawFromXY(&mpc_traj_smoothed, m_is_forward_shift);
   trajectory_follower::MPCUtils::convertEulerAngleToMonotonic(&mpc_traj_smoothed.yaw);

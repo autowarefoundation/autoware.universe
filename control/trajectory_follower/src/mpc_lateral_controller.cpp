@@ -283,6 +283,8 @@ void MpcLateralController::setTrajectory(
 {
   if (!msg) return;
 
+  m_current_trajectory_ptr = msg;
+
   if (!m_current_kinematic_state_ptr) {
     RCLCPP_DEBUG(node_->get_logger(), "Current kinematic state is not received yet.");
     return;
@@ -298,22 +300,9 @@ void MpcLateralController::setTrajectory(
     return;
   }
 
-  // consider the terminal yaw
-  m_current_trajectory_ptr = std::make_shared<autoware_auto_planning_msgs::msg::Trajectory>(*msg);
-  auto extended_point = msg->points.back();
-  constexpr double extend_dist = 10.0;
-  constexpr double extend_interval = 1.0;
-  const size_t num_extended_point = static_cast<size_t>(extend_dist / extend_interval);
-  for (size_t i = 0; i < num_extended_point; ++i) {
-    extended_point.pose =
-      tier4_autoware_utils::calcOffsetPose(extended_point.pose, extend_interval, 0.0, 0.0);
-    m_current_trajectory_ptr->points.push_back(extended_point);
-  }
-
   m_mpc.setReferenceTrajectory(
-    *m_current_trajectory_ptr, m_traj_resample_dist, m_enable_path_smoothing,
-    m_path_filter_moving_ave_num, m_curvature_smoothing_num_traj,
-    m_curvature_smoothing_num_ref_steer);
+    *msg, m_traj_resample_dist, m_enable_path_smoothing, m_path_filter_moving_ave_num,
+    m_curvature_smoothing_num_traj, m_curvature_smoothing_num_ref_steer);
 
   // update trajectory buffer to check the trajectory shape change.
   m_trajectory_buffer.push_back(*m_current_trajectory_ptr);
