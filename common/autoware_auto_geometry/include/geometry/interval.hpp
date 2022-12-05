@@ -256,8 +256,8 @@ bool Interval<T>::abs_eq(const Interval & i1, const Interval & i2, const T & eps
   const auto both_non_empty = !Interval::empty(i1) && !Interval::empty(i2);
 
   const auto mins_equal = comp::abs_eq(Interval::min(i1), Interval::min(i2), eps);
-  const auto maxs_equal = comp::abs_eq(Interval::max(i1), Interval::max(i2), eps);
-  const auto both_non_empty_equal = both_non_empty && mins_equal && maxs_equal;
+  const auto maxes_equal = comp::abs_eq(Interval::max(i1), Interval::max(i2), eps);
+  const auto both_non_empty_equal = both_non_empty && mins_equal && maxes_equal;
 
   return both_empty || both_non_empty_equal;
 }
