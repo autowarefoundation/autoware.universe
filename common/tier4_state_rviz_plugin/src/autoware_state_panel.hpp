@@ -24,6 +24,7 @@
 #include <QSpinBox>
 #include <rclcpp/rclcpp.hpp>
 #include <rviz_common/panel.hpp>
+#include <memory>
 
 #include <autoware_adapi_v1_msgs/msg/localization_initialization_state.hpp>
 #include <autoware_adapi_v1_msgs/msg/motion_state.hpp>
