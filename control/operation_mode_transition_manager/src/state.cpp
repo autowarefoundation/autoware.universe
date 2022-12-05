@@ -83,8 +83,6 @@ void AutonomousMode::update(bool transition)
 bool AutonomousMode::isModeChangeCompleted()
 {
   if (!check_engage_condition_) {
-    RCLCPP_INFO(
-      logger_, "check_engage_condition is false. Mode change completion check is ignored.");
     return true;
   }
 
@@ -189,7 +187,6 @@ std::pair<bool, bool> AutonomousMode::hasDangerLateralAcceleration()
 bool AutonomousMode::isModeChangeAvailable()
 {
   if (!check_engage_condition_) {
-    RCLCPP_INFO(logger_, "check_engage_condition is false. Engage is accepted.");
     debug_info_.is_all_ok = true;
     return true;
   }
