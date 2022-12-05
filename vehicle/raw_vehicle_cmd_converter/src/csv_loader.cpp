@@ -51,8 +51,7 @@ bool CSVLoader::readCSV(Table & result, const char delim)
   return true;
 }
 
-bool CSVLoader::validateMap(
-  const Map & map, [[maybe_unused]] const bool is_row_decent, const bool is_col_decent)
+bool CSVLoader::validateMap(const Map & map, const bool is_col_decent)
 {
   std::pair<size_t, size_t> invalid_index_pair;
   bool is_invalid = false;
