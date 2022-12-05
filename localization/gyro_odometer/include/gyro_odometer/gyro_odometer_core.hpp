@@ -32,8 +32,8 @@
 #endif
 
 #include <deque>
-#include <string>
 #include <memory>
+#include <string>
 
 class GyroOdometer : public rclcpp::Node
 {
