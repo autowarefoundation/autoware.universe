@@ -1263,34 +1263,15 @@ std::vector<DrivableLanes> generateDrivableLanesWithShoulderLanes(
 size_t getOverlappedLaneletId(const std::vector<DrivableLanes> & lanes)
 {
   auto overlaps = [](const DrivableLanes & lanes, const DrivableLanes & target_lanes) {
-    const auto & left_poly = lanes.left_lane.polygon2d().basicPolygon();
-    const auto & right_poly = lanes.right_lane.polygon2d().basicPolygon();
-    const auto & target_left_poly = target_lanes.left_lane.polygon2d().basicPolygon();
-    const auto & target_right_poly = target_lanes.right_lane.polygon2d().basicPolygon();
+    const auto lanelets = transformToLanelets(lanes);
+    const auto target_lanelets = transformToLanelets(target_lanes);
 
-    // Check left polygon
-    if (boost::geometry::overlaps(left_poly, target_left_poly)) {
-      return true;
-    }
-    if (boost::geometry::overlaps(left_poly, target_right_poly)) {
-      return true;
-    }
-    for (const auto & target_lane : target_lanes.middle_lanes) {
-      if (boost::geometry::overlaps(left_poly, target_lane.polygon2d().basicPolygon())) {
-        return true;
-      }
-    }
-
-    // Check right polygon
-    if (boost::geometry::overlaps(right_poly, target_left_poly)) {
-      return true;
-    }
-    if (boost::geometry::overlaps(right_poly, target_right_poly)) {
-      return true;
-    }
-    for (const auto & target_lane : target_lanes.middle_lanes) {
-      if (boost::geometry::overlaps(right_poly, target_lane.polygon2d().basicPolygon())) {
-        return true;
+    for (const auto & lanelet : lanelets) {
+      for (const auto & target_lanelet : target_lanelets) {
+        if (boost::geometry::overlaps(
+              lanelet.polygon2d().basicPolygon(), target_lanelet.polygon2d().basicPolygon())) {
+          return true;
+        }
       }
     }
 
