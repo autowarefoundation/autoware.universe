@@ -322,8 +322,21 @@ void TrajectorySamplerNode::pathCallback(
     msg->drivable_area);
   gui_.setConstraints(params_.constraints);
 
-  auto trajectories = generateCandidateTrajectories(
-    planning_configuration, prev_traj_, path_spline, *msg, gui_, params_);
+  sampler_common::updateTrajectoryTime(prev_traj_, planning_configuration);
+  auto reusable_trajectories =
+    sampler_common::calculateReusableTrajectories(prev_traj_, {0.0, 2.0, 4.0});
+  std::vector<sampler_common::Trajectory> trajectories;
+  for (auto & reusable_traj : reusable_trajectories) {
+    sampler_common::constraints::checkHardConstraints(
+      reusable_traj.trajectory, params_.constraints);
+    if (!reusable_traj.trajectory.constraint_results.isValid()) break;
+    auto trajs = generateCandidateTrajectories(
+      reusable_traj.planning_configuration, reusable_traj.trajectory, path_spline, *msg, gui_,
+      params_);
+    trajectories.insert(
+      trajectories.end(), std::make_move_iterator(trajs.begin()),
+      std::make_move_iterator(trajs.end()));
+  }
   for (auto & trajectory : trajectories) {
     sampler_common::constraints::checkHardConstraints(trajectory, params_.constraints);
     sampler_common::constraints::calculateCost(trajectory, params_.constraints, path_spline);
@@ -332,14 +345,15 @@ void TrajectorySamplerNode::pathCallback(
   if (selected_trajectory_idx) {
     const auto & selected_trajectory = trajectories[*selected_trajectory_idx];
     // Make the trajectory nicer for the controller
-    auto final_trajectory = prependTrajectory(selected_trajectory, path_spline, *current_state);
+    auto final_trajectory =
+      selected_trajectory;  // prependTrajectory(selected_trajectory, path_spline, *current_state);
+    // TODO(Maxime CLEMENT): 0.25m/s is the min engage velocity. Should be a parameter.
     constexpr auto min_engage_vel = 0.25;
     if (
       final_trajectory.longitudinal_velocities.size() > 1lu &&
       *std::max_element(
         final_trajectory.longitudinal_velocities.begin(),
         final_trajectory.longitudinal_velocities.end()) > min_engage_vel) {
-      // TODO(Maxime CLEMENT): 0.25m/s is the min engage velocity. Should be a parameter.
       for (auto i = 0lu; i < final_trajectory.longitudinal_velocities.size() &&
                          final_trajectory.longitudinal_velocities[i] < min_engage_vel;
            ++i)
@@ -350,12 +364,6 @@ void TrajectorySamplerNode::pathCallback(
     if (!final_trajectory.points.empty()) publishTrajectory(final_trajectory, msg->header.frame_id);
     prev_traj_ = selected_trajectory;
   } else {
-    /*
-    RCLCPP_WARN(
-      get_logger(), "All candidates rejected: out=%d coll=%d curv=%d vel=%d acc=%d",
-      debug.violations.outside, debug.violations.collision, debug.violations.curvature,
-      debug.violations.velocity, debug.violations.acceleration);
-    */
     if (
       fallback_traj_ptr_ &&
       (now() - fallback_traj_ptr_->header.stamp).seconds() < fallback_timeout_) {
@@ -451,7 +459,7 @@ void TrajectorySamplerNode::publishTrajectory(
   traj_msg.header.frame_id = frame_id;
   traj_msg.header.stamp = now();
   autoware_auto_planning_msgs::msg::TrajectoryPoint point;
-  for (size_t i = 0; i + 1 < t.points.size(); ++i) {
+  for (size_t i = 0; i < t.points.size(); ++i) {
     point.pose.position.x = t.points[i].x();
     point.pose.position.y = t.points[i].y();
     q.setRPY(0, 0, t.yaws[i]);
@@ -463,8 +471,6 @@ void TrajectorySamplerNode::publishTrajectory(
     point.front_wheel_angle_rad = 0.0f;
     point.rear_wheel_angle_rad = 0.0f;
     traj_msg.points.push_back(point);
-    const auto & next = t.points[i + 1];
-    const auto dist_to_next = std::hypot(next.x() - t.points[i].x(), next.y() - t.points[i].y());
   }
   trajectory_pub_->publish(traj_msg);
 }
@@ -519,8 +525,25 @@ sampler_common::Trajectory TrajectorySamplerNode::prependTrajectory(
   const sampler_common::transform::Spline2D & reference,
   const sampler_common::Configuration & current_state) const
 {
-  if (trajectory.points.empty() || params_.postprocessing.desired_traj_behind_length == 0.0)
-    return trajectory;
+  if (
+    params_.postprocessing.desired_traj_behind_length == 0.0 && !trajectory.times.empty() &&
+    trajectory.times.front() > 0.0) {
+    sampler_common::Trajectory t;
+    t.points = {current_state.pose};
+    t.times = {0.0};
+    t.lengths = {0.0};
+    const auto & vels = trajectory.longitudinal_velocities;
+    t.longitudinal_velocities = {vels.empty() ? current_state.velocity : vels.front()};
+    t.longitudinal_accelerations = {current_state.acceleration};
+    t.curvatures = {current_state.curvature};
+    t.yaws = {current_state.heading};
+    t.lateral_velocities = {0.0};
+    t.lateral_accelerations = {0.0};
+    t.jerks = {0.0};
+    return t.extend(trajectory);
+  }
+  // TODO(Maxime): fix reuse/prepend logic. Following code is broken
+  if (trajectory.points.empty()) return trajectory;
   // only prepend if the trajectory starts from the current pose
   if (
     !params_.preprocessing.force_zero_deviation &&
@@ -556,6 +579,7 @@ sampler_common::Trajectory TrajectorySamplerNode::prependTrajectory(
       ss.push_back(s);
     }
   }
+  const auto first_vel = trajectory.longitudinal_velocities.front();
   for (const auto s : ss) {
     if (params_.preprocessing.force_zero_deviation)
       trajectory_to_prepend.points.push_back(reference.cartesian(s));
@@ -563,12 +587,15 @@ sampler_common::Trajectory TrajectorySamplerNode::prependTrajectory(
       trajectory_to_prepend.yaws.push_back(reference.yaw(s));
     trajectory_to_prepend.curvatures.push_back(reference.curvature(s));
     trajectory_to_prepend.lengths.push_back(s - ss.front());
-    trajectory_to_prepend.longitudinal_velocities.push_back(
-      trajectory.longitudinal_velocities.front());
+    trajectory_to_prepend.longitudinal_velocities.push_back(first_vel);
     trajectory_to_prepend.lateral_velocities.push_back(trajectory.lateral_velocities.front());
     trajectory_to_prepend.longitudinal_accelerations.push_back(
       trajectory.longitudinal_accelerations.front());
     trajectory_to_prepend.lateral_accelerations.push_back(trajectory.lateral_accelerations.front());
+    if (first_vel == 0.0)
+      trajectory_to_prepend.times.push_back(-(current_frenet.s - s));
+    else
+      trajectory_to_prepend.times.push_back(-(current_frenet.s - s) / first_vel);
   }
   return trajectory_to_prepend.extend(trajectory);
 }

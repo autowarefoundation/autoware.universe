@@ -190,7 +190,7 @@ inline void calculateTargets(
         sp.target_duration =
           (2 * distance) / (sp.target_state.longitudinal_velocity + initial_configuration.velocity);
       }
-      std::cout << sp << std::endl;
+      // std::cout << sp << std::endl;
       for (const auto d : params.sampling.frenet.manual.target_lateral_positions) {
         sp.target_state.position.d = d;
         sampling_parameters.parameters.push_back(sp);

@@ -85,7 +85,7 @@ bool withinPolygons(const Polygon & footprint, const Polygon & polygons)
 bool collideOverTime(const Trajectory & traj, const Constraints & constraints)
 {
   for (const auto & obs : constraints.dynamic_obstacles) {
-    const auto t = traj.resampleTime(obs.time_step);
+    const auto t = traj.resampleTimeFromZero(obs.time_step);
     for (auto i = 0lu; i < std::min(t.points.size(), obs.footprint_per_time.size()); ++i) {
       const auto ego_footprint = buildFootprintPolygon(t.points[i], t.yaws[i], constraints);
       if (boost::geometry::intersects(ego_footprint, obs.footprint_per_time[i])) return true;

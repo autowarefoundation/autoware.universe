@@ -112,7 +112,7 @@ Trajectory generateLowVelocityCandidate(
     initial_state.position.d, initial_state.lateral_velocity, initial_state.lateral_acceleration,
     target_state.position.d, target_state.lateral_velocity, target_state.lateral_acceleration,
     delta_s);
-  for (double t = time_resolution; t <= duration; t += time_resolution) {
+  for (double t = 0.0; t <= duration; t += time_resolution) {
     trajectory.times.push_back(t);
     const auto s = trajectory.longitudinal_polynomial->position(t);
     const auto ds = s - initial_state.position.s;
@@ -212,7 +212,7 @@ void calculateCartesian(
       const auto s_vel = trajectory.longitudinal_polynomial->velocity(time);
       const auto s_acc = trajectory.longitudinal_polynomial->acceleration(time);
       const auto d_vel = trajectory.lateral_polynomial->velocity(time);
-      const auto d_acc = trajectory.lateral_polynomial->acceleration(time);
+      // const auto d_acc = trajectory.lateral_polynomial->acceleration(time);
       const auto cos_dyaw = std::cos(dyaws[i]);
       const auto tan_dyaw = std::tan(dyaws[i]);
       trajectory.longitudinal_velocities.push_back(

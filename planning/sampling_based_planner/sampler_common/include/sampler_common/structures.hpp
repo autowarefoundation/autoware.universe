@@ -24,6 +24,7 @@
 #include <boost/geometry/geometries/polygon.hpp>
 
 #include <algorithm>
+#include <iostream>
 #include <memory>
 #include <numeric>
 #include <vector>
@@ -199,6 +200,7 @@ struct Trajectory : Path
     Trajectory extended_traj(Path::extend(traj));
     auto offset = 0l;
     auto time_offset = 0.0;
+    // TODO(Maxime): remove these checks
     if (!points.empty() && !traj.points.empty()) {
       if (
         points.back().x() == traj.points.front().x() &&
@@ -225,7 +227,10 @@ struct Trajectory : Path
     const auto last_base_time = times.empty() ? 0.0 : times.back() + time_offset;
     for (size_t i = offset; i < traj.times.size(); ++i)
       extended_traj.times.push_back(last_base_time + traj.times[i]);
-    extended_traj.duration = duration + traj.duration;
+    std::cout << "[EXTEND] times: ";
+    for (const auto t : extended_traj.times) std::printf("%2.1f ", t);
+    std::cout << std::endl;
+    if (!extended_traj.times.empty()) extended_traj.duration = extended_traj.times.back();
     return extended_traj;
   }
 
@@ -242,11 +247,6 @@ struct Trajectory : Path
     copy_subset(lateral_velocities, subtraj->lateral_velocities);
     copy_subset(lateral_accelerations, subtraj->lateral_accelerations);
     copy_subset(times, subtraj->times);
-    if (!subtraj->times.empty()) {
-      const auto first_time = subtraj->times.front();
-      for (auto & l : subtraj->times) l -= first_time;
-      subtraj->duration = subtraj->times.back();
-    }
     return subtraj;
   }
 
@@ -286,16 +286,18 @@ struct Trajectory : Path
     return t;
   }
 
-  [[nodiscard]] Trajectory resampleTime(const double fixed_interval) const
+  [[nodiscard]] Trajectory resampleTimeFromZero(const double fixed_interval) const
   {
     Trajectory t;
-    if (times.size() < 2 || fixed_interval <= 0.0) return *this;
+    if (times.size() < 2 || times.back() < 0.0 || fixed_interval <= 0.0) return *this;
 
-    const auto new_size = static_cast<size_t>((times.back() - times.front()) / fixed_interval) + 1;
+    const auto min_time = 0;
+    const auto max_time = times.back();
+    const auto new_size = static_cast<size_t>((max_time - min_time) / fixed_interval) + 1;
     t.times.reserve(new_size);
     t.lengths.reserve(new_size);
     for (auto i = 0lu; i < new_size; ++i)
-      t.times.push_back(times.front() + static_cast<double>(i) * fixed_interval);
+      t.times.push_back(static_cast<double>(i) * fixed_interval);
     t.lengths = interpolation::lerp(times, lengths, t.times);
     std::vector<double> xs;
     std::vector<double> ys;

@@ -16,7 +16,6 @@
 
 #include "frenet_planner/frenet_planner.hpp"
 #include "frenet_planner/structures.hpp"
-#include "sampler_common/trajectory_reuse.hpp"
 #include "sampler_node/prepare_inputs.hpp"
 
 #include <interpolation/linear_interpolation.hpp>
@@ -31,73 +30,31 @@ namespace sampler_node
 {
 std::vector<sampler_common::Trajectory> generateCandidateTrajectories(
   const sampler_common::Configuration & initial_configuration,
-  const sampler_common::Trajectory & previous_trajectory,
+  const sampler_common::Trajectory & base_trajectory,
   const sampler_common::transform::Spline2D & path_spline,
   const autoware_auto_planning_msgs::msg::Path & path_msg, gui::GUI & gui,
   const Parameters & params)
 {
-  const auto reuse_length_step =
-    params.sampling.reuse_max_length_max / params.sampling.reuse_samples;
-
   std::vector<sampler_common::Trajectory> trajectories;
-  sampler_common::Trajectory base_trajectory;
-  const auto move_to_trajectories = [&](auto & trajs_to_move) {
-    trajectories.insert(
-      trajectories.end(), std::make_move_iterator(trajs_to_move.begin()),
-      std::make_move_iterator(trajs_to_move.end()));
-  };
+  (void)gui;
 
   if (params.sampling.enable_frenet) {
-    auto frenet_trajs = generateFrenetTrajectories(
+    const auto frenet_trajectories = generateFrenetTrajectories(
       initial_configuration, base_trajectory, path_msg, path_spline, params);
-    gui.setFrenetTrajectories(frenet_trajs);
-    move_to_trajectories(frenet_trajs);
+    // gui.setFrenetTrajectories(trajectories_from_prev_trajectory, base_trajectory);
+    for (const auto & trajectory : frenet_trajectories) {
+      auto t = base_trajectory.extend(trajectory);
+      trajectories.push_back(t);
+    }
   }
   if (params.sampling.enable_bezier) {
-    // TODO(Maxime CLEMENT): add frenet velocity profiles to the bezier paths
-    // const auto bezier_paths =
-    //   generateBezierPaths(initial_configuration, base_path, path_msg, path_spline, params);
-    // move_to_paths(bezier_paths);
-  }
-
-  for (auto reuse_max_length = reuse_length_step;
-       reuse_max_length <= params.sampling.reuse_max_length_max;
-       reuse_max_length += reuse_length_step) {
-    // TODO(Maxime CLEMENT): change to a clearer flow: 1-generate base_traj 2-check valid base traj
-    // 3-calc initial config
-    if (sampler_common::tryToReuseTrajectory(
-          previous_trajectory, initial_configuration.pose, std::numeric_limits<double>::max(),
-          reuse_max_length, params.sampling.reuse_max_deviation, params.constraints,
-          base_trajectory)) {
-      const auto cost_mult = 1.0 - 0.3 * reuse_length_step / params.sampling.reuse_max_length_max;
-      sampler_common::Configuration end_of_reused_trajectory;
-      end_of_reused_trajectory.pose = base_trajectory.points.back();
-      end_of_reused_trajectory.heading = base_trajectory.yaws.back();
-      end_of_reused_trajectory.curvature = base_trajectory.curvatures.back();
-      end_of_reused_trajectory.velocity = base_trajectory.longitudinal_velocities.back();
-      end_of_reused_trajectory.acceleration = base_trajectory.longitudinal_accelerations.back();
-      if (params.sampling.enable_frenet) {
-        const auto trajectories_from_prev_trajectory = generateFrenetTrajectories(
-          end_of_reused_trajectory, base_trajectory, path_msg, path_spline, params);
-        gui.setFrenetTrajectories(trajectories_from_prev_trajectory, base_trajectory);
-        for (const auto & trajectory : trajectories_from_prev_trajectory) {
-          trajectories.push_back(base_trajectory.extend(trajectory));
-          trajectories.back().cost *= cost_mult;
-        }
-      }
-      if (params.sampling.enable_bezier) {
-        //  const auto trajectories_from_prev_trajectory =
-        //    generateBeziertrajectories(end_of_reused_trajectory, base_trajectory, path_msg,
-        //    path_spline, params);
-        //  for (const auto & trajectory : trajectories_from_prev_trajectory) {
-        //    trajectories.push_back(base_trajectory.extend(trajectory));
-        //    trajectories.back().cost *= cost_mult;
-        //  }
-      }
-    } else {
-      // If we fail to reuse length L from the previous path, all lengths > L will also fail.
-      break;
-    }
+    //  const auto trajectories_from_prev_trajectory =
+    //    generateBeziertrajectories(end_of_reused_trajectory, base_trajectory, path_msg,
+    //    path_spline, params);
+    //  for (const auto & trajectory : trajectories_from_prev_trajectory) {
+    //    trajectories.push_back(base_trajectory.extend(trajectory));
+    //    trajectories.back().cost *= cost_mult;
+    //  }
   }
   return trajectories;
 }
@@ -164,7 +121,7 @@ std::vector<frenet_planner::Trajectory> generateFrenetTrajectories(
       sp.target_state.longitudinal_velocity = 0.0;
       sp.target_state.lateral_velocity = 0.0;
       sp.target_state.lateral_acceleration = 0.0;
-      const auto delta_s = final_s - initial_frenet_state.position.s;
+      // const auto delta_s = final_s - initial_frenet_state.position.s;
       constexpr auto min_decel_duration = 1.0;
       const auto max_decel_duration =
         -initial_frenet_state.longitudinal_velocity / params.constraints.hard.min_acceleration;
@@ -190,8 +147,8 @@ std::vector<frenet_planner::Trajectory> generateFrenetTrajectories(
         }
       }
     }
-    auto stopping_trajectories =
-      gen_fn(path_spline, initial_frenet_state, stopping_sampling_parameters);
+    auto stopping_trajectories = frenet_planner::generateLowVelocityTrajectories(
+      path_spline, initial_frenet_state, stopping_sampling_parameters);
     std::cout << "\t Additional " << stopping_trajectories.size() << " stopping trajectories"
               << std::endl;
     for (auto & traj : stopping_trajectories) traj.cost += 1000.0;
