@@ -136,15 +136,15 @@ public:
   details::BinRange bin_range(const details::Index3 & ref, const float radius) const
   {
     // Compute distance in units of voxels
-    const Index iradius = static_cast<Index>(std::ceil(radius / m_side_length));
+    const Index i_radius = static_cast<Index>(std::ceil(radius / m_side_length));
     // Dumb ternary because potentially unsigned Index type
-    const Index x_min = (ref.x > iradius) ? (ref.x - iradius) : 0U;
-    const Index y_min = (ref.y > iradius) ? (ref.y - iradius) : 0U;
-    const Index z_min = (ref.z > iradius) ? (ref.z - iradius) : 0U;
+    const Index x_min = (ref.x > i_radius) ? (ref.x - iradius) : 0U;
+    const Index y_min = (ref.y > i_radius) ? (ref.y - iradius) : 0U;
+    const Index z_min = (ref.z > i_radius) ? (ref.z - iradius) : 0U;
     // In 2D mode, m_max_z should be 0, same with ref.z
-    const Index x_max = std::min(ref.x + iradius, m_max_x_idx);
-    const Index y_max = std::min(ref.y + iradius, m_max_y_idx);
-    const Index z_max = std::min(ref.z + iradius, m_max_z_idx);
+    const Index x_max = std::min(ref.x + i_radius, m_max_x_idx);
+    const Index y_max = std::min(ref.y + i_radius, m_max_y_idx);
+    const Index z_max = std::min(ref.z + i_radius, m_max_z_idx);
     // return bottom-left portion of cube and top-right portion of cube
     return {{x_min, y_min, z_min}, {x_max, y_max, z_max}};
   }
