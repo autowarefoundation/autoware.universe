@@ -41,6 +41,36 @@ namespace perception
 namespace lidar_centerpoint_tvm
 {
 
+TVMScatterIE::TVMScatterIE(tvm_utility::pipeline::InferenceEngineTVMConfig config,
+  const std::string & pkg_name, const std::string & function_name)
+: config_(config)
+{
+  std::string network_module_path = "/home/xinyuwang/adehome/tvm_latest/tvm_example/scatter.so";
+
+  std::ifstream module(network_module_path);
+  if (!module.good()) {
+    throw std::runtime_error(
+      "File " + network_module_path + " specified in config.hpp not found");
+  }
+  module.close();
+  tvm::runtime::Module runtime_mod = tvm::runtime::Module::LoadFromFile(network_module_path);
+
+  f = runtime_mod.GetFunction(function_name);
+
+  for (auto & output_config : config.network_outputs) {
+    output_.push_back(TVMArrayContainer(
+      output_config.second, config.tvm_dtype_code, config.tvm_dtype_bits, config.tvm_dtype_lanes,
+      config.tvm_device_type, config.tvm_device_id));
+  }
+}
+
+TVMArrayContainerVector TVMScatterIE::schedule(const TVMArrayContainerVector & input)
+{
+  f(input[0].getArray(), coords.getArray(), output_[0].getArray());
+
+  return output_;
+}
+
 VoxelEncoderPreProcessor::VoxelEncoderPreProcessor(
   const tvm_utility::pipeline::InferenceEngineTVMConfig & config,
   const CenterPointConfig & config_mod)
@@ -73,61 +103,6 @@ TVMArrayContainerVector VoxelEncoderPreProcessor::schedule(const MixedInputs & v
   TVMArrayCopyFromBytes(
     output.getArray(), encoder_in_features.data(),
     max_voxel_size * max_point_in_voxel_size * encoder_in_feature_size * datatype_bytes);
-
-  return {output};
-}
-
-VoxelEncoderPostProcessor::VoxelEncoderPostProcessor(
-  const tvm_utility::pipeline::InferenceEngineTVMConfig & config)
-: max_voxel_size(config.network_outputs[0].second[0]),
-  encoder_out_feature_size(config.network_outputs[0].second[2]),
-  datatype_bytes(config.tvm_dtype_bits / 8)
-{
-  pillar_features =
-    std::make_shared<std::vector<float>>(max_voxel_size * encoder_out_feature_size, 0);
-}
-
-std::shared_ptr<std::vector<float>> VoxelEncoderPostProcessor::schedule(
-  const TVMArrayContainerVector & input)
-{
-  TVMArrayCopyToBytes(
-    input[0].getArray(), pillar_features->data(), pillar_features->size() * datatype_bytes);
-
-  return pillar_features;
-}
-
-BackboneNeckHeadPreProcessor::BackboneNeckHeadPreProcessor(
-  const tvm_utility::pipeline::InferenceEngineTVMConfig & config,
-  const CenterPointConfig & config_mod)
-: input_channels(config.network_inputs[0].second[1]),
-  input_height(config.network_inputs[0].second[2]),
-  input_width(config.network_inputs[0].second[3]),
-  datatype_bytes(config.tvm_dtype_bits / 8),
-  config_detail(config_mod)
-{
-  spatial_features.resize(input_channels * input_height * input_width);
-  // Allocate input variable
-  std::vector<int64_t> shape_x{1, input_channels, input_height, input_width};
-  TVMArrayContainer x{
-    shape_x,
-    config.tvm_dtype_code,
-    config.tvm_dtype_bits,
-    config.tvm_dtype_lanes,
-    config.tvm_device_type,
-    config.tvm_device_id};
-  output = x;
-}
-
-TVMArrayContainerVector BackboneNeckHeadPreProcessor::schedule(const MixedInputs & pillar_inputs)
-{
-  // do scatter to convert pillar_features to spatial_features
-  scatterFeatures(
-    pillar_inputs.features, pillar_inputs.coords, pillar_inputs.num_voxels, config_detail,
-    spatial_features);
-
-  TVMArrayCopyFromBytes(
-    output.getArray(), spatial_features.data(),
-    input_channels * input_height * input_width * datatype_bytes);
 
   return {output};
 }
@@ -186,18 +161,13 @@ CenterPointTVM::CenterPointTVM(
   config_bnh(config_bk),
   VE_PreP(std::make_shared<VE_PrePT>(config_en, config)),
   VE_IE(std::make_shared<IET>(config_en, "lidar_centerpoint_tvm")),
-  VE_PostP(std::make_shared<VE_PostPT>(config_en)),
-  ve_pipeline(std::make_shared<tvm_utility::pipeline::Pipeline<VE_PrePT, IET, VE_PostPT>>(
-    *VE_PreP, *VE_IE, *VE_PostP)),
-  BNH_PreP(std::make_shared<BNH_PrePT>(config_bk, config)),
+  scatter_ie(std::make_shared<TSE>(config_scatter, "lidar_centerpoint_tvm", "scatter")),
   BNH_IE(std::make_shared<IET>(config_bk, "lidar_centerpoint_tvm")),
   BNH_PostP(std::make_shared<BNH_PostPT>(config_bk, config)),
-  bnh_pipeline(std::make_shared<tvm_utility::pipeline::Pipeline<BNH_PrePT, IET, BNH_PostPT>>(
-    *BNH_PreP, *BNH_IE, *BNH_PostP)),
+  TSP(VE_PreP, VE_IE, std::static_pointer_cast<IE,TSE>(scatter_ie), BNH_IE, BNH_PostP),
   config_(config)
 {
   vg_ptr_ = std::make_unique<VoxelGenerator>(densification_param, config_);
-  scatter_ie = std::make_shared<LIE>(config_scatter, "lidar_centerpoint_tvm", "scatter");
   initPtr();
 }
 
@@ -212,6 +182,13 @@ void CenterPointTVM::initPtr()
   voxels_ = std::make_shared<std::vector<float>>(voxels_size);
   coordinates_ = std::make_shared<std::vector<int32_t>>(coordinates_size);
   num_points_per_voxel_ = std::make_shared<std::vector<float>>(config_.max_voxel_size_);
+  std::vector<int64_t> shape_coords{config_scatter.network_inputs[1].second[0], config_scatter.network_inputs[1].second[1]};
+  coords_tvm_ = TVMArrayContainer(shape_coords,
+    kDLInt,
+    config_scatter.tvm_dtype_bits,
+    config_scatter.tvm_dtype_lanes,
+    config_scatter.tvm_device_type,
+    config_scatter.tvm_device_id);
 }
 
 bool CenterPointTVM::detect(
@@ -229,35 +206,36 @@ bool CenterPointTVM::detect(
   }
 
   MixedInputs voxel_inputs{num_voxels_, *voxels_, *num_points_per_voxel_, *coordinates_};
-  auto ve_output = ve_pipeline->schedule(voxel_inputs);
+  auto bnh_output = TSP->schedule(voxel_inputs);
+  // auto ve_output = ve_pipeline->schedule(voxel_inputs);
 
-  std::size_t spatial_features_size = 32*560*560;
+  // std::size_t spatial_features_size = 32*560*560;
 
-  std::vector<float> spatial_features_cpp(spatial_features_size, 0);
-  scatterFeatures(
-  *ve_output, *coordinates_, num_voxels_, config_, spatial_features_cpp);
+  // std::vector<float> spatial_features_cpp(spatial_features_size, 0);
+  // scatterFeatures(
+  // *ve_output, *coordinates_, num_voxels_, config_, spatial_features_cpp);
 
-  TVMArrayContainerVector scatter_in_vector;
-  TVMArrayContainer pillar_in(config_scatter.network_inputs[0].second, config_scatter.tvm_dtype_code, config_scatter.tvm_dtype_bits,
-  config_scatter.tvm_dtype_lanes, config_scatter.tvm_device_type, config_scatter.tvm_device_id);
-  TVMArrayContainer coords_in(config_scatter.network_inputs[1].second, kDLInt, config_scatter.tvm_dtype_bits,
-  config_scatter.tvm_dtype_lanes, config_scatter.tvm_device_type, config_scatter.tvm_device_id);
+  // TVMArrayContainerVector scatter_in_vector;
+  // TVMArrayContainer pillar_in(config_scatter.network_inputs[0].second, config_scatter.tvm_dtype_code, config_scatter.tvm_dtype_bits,
+  // config_scatter.tvm_dtype_lanes, config_scatter.tvm_device_type, config_scatter.tvm_device_id);
+  // TVMArrayContainer coords_in(config_scatter.network_inputs[1].second, kDLInt, config_scatter.tvm_dtype_bits,
+  // config_scatter.tvm_dtype_lanes, config_scatter.tvm_device_type, config_scatter.tvm_device_id);
 
-  std::vector<float> spatial_features_tvm(spatial_features_size, 0);
-  TVMArrayCopyFromBytes(
-    pillar_in.getArray(), ve_output->data(),
-    ve_output->size() * sizeof(float));
-  TVMArrayCopyFromBytes(
-    coords_in.getArray(), coordinates_->data(),
-    coordinates_->size() * sizeof(int32_t));
-  scatter_in_vector.push_back(pillar_in);
-  scatter_in_vector.push_back(coords_in);
+  // std::vector<float> spatial_features_tvm(spatial_features_size, 0);
+  // TVMArrayCopyFromBytes(
+  //   pillar_in.getArray(), ve_output->data(),
+  //   ve_output->size() * sizeof(float));
+  // TVMArrayCopyFromBytes(
+  //   coords_in.getArray(), coordinates_->data(),
+  //   coordinates_->size() * sizeof(int32_t));
+  // scatter_in_vector.push_back(pillar_in);
+  // scatter_in_vector.push_back(coords_in);
 
-  auto scatter_out_vector = scatter_ie->schedule(scatter_in_vector);
+  // auto scatter_out_vector = scatter_ie->schedule(scatter_in_vector);
 
-  TVMArrayCopyToBytes(
-    scatter_out_vector[0].getArray(), spatial_features_tvm.data(),
-    spatial_features_size * sizeof(float));
+  // TVMArrayCopyToBytes(
+  //   scatter_out_vector[0].getArray(), spatial_features_tvm.data(),
+  //   spatial_features_size * sizeof(float));
   
   // std::size_t count = 0;
   // std::vector<std::size_t> idx;
@@ -269,8 +247,8 @@ bool CenterPointTVM::detect(
   // }
   // std::cerr << "spatial feature diff : " << count  << std::endl;
 
-  MixedInputs pillar_inputs{num_voxels_, *ve_output, *num_points_per_voxel_, *coordinates_};
-  auto bnh_output = bnh_pipeline->schedule(pillar_inputs);
+  // MixedInputs pillar_inputs{num_voxels_, *ve_output, *num_points_per_voxel_, *coordinates_};
+  // auto bnh_output = bnh_pipeline->schedule(pillar_inputs);
 
   det_boxes3d = bnh_output;
   if (det_boxes3d.size() == 0) {
@@ -291,6 +269,12 @@ bool CenterPointTVM::preprocess(
   if (num_voxels_ == 0) {
     return false;
   }
+
+  TVMArrayCopyFromBytes(
+    coords_tvm_.getArray(), coordinates_->data(),
+    coordinates_->size() * sizeof(int32_t));
+  
+  scatter_ie->set_coords(coords_tvm_);
 
   return true;
 }

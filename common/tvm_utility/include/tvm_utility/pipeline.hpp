@@ -344,52 +344,56 @@ private:
   const std::array<char8_t, 3> version_up_to{2, 1, 0};
 };
 
-class TVMScriptIE : public InferenceEngine
+template <class PreProcessorType, class InferenceEngineType,
+  class InferenceEngine, class InferenceEngineType, class PostProcessorType>
+class TowStagePipeline
 {
+  using InputType = decltype(std::declval<PreProcessorType>().input_type_indicator_);
+  using OutputType = decltype(std::declval<PostProcessorType>().output_type_indicator_);
+
 public:
-  explicit TVMScriptIE(InferenceEngineTVMConfig config, const std::string & pkg_name
-    const std::string & function_name)
-  : config_(config)
+  /**
+   * @brief Construct a new Pipeline object
+   *
+   * @param pre_processor a PreProcessor object
+   * @param post_processor a PostProcessor object
+   * @param inference_engine a InferenceEngine object
+   */
+  TowStagePipeline(
+    std::shared_ptr<PreProcessorType> pre_processor, std::shared_ptr<InferenceEngineType> inference_engine_1,
+    std::shared_ptr<InferenceEngine> tvm_script_engine, std::shared_ptr<InferenceEngineType> inference_engine_2,
+    std::shared_ptr<PostProcessorType> post_processor)
+  : pre_processor_(pre_processor),
+    inference_engine_1_(inference_engine_1),
+    tvm_script_engine_(tvm_script_engine),
+    inference_engine_2_(inference_engine_2),
+    post_processor_(post_processor)
   {
-    // Get full network path
-    std::string network_module_path = "/home/xinyuwang/adehome/tvm_latest/tvm_example/scatter.so";
-
-    // Load compiled functions
-    std::ifstream module(network_module_path);
-    if (!module.good()) {
-      throw std::runtime_error(
-        "File " + network_module_path + " specified in config.hpp not found");
-    }
-    module.close();
-    tvm::runtime::Module runtime_mod = tvm::runtime::Module::LoadFromFile(network_module_path);
-
-    // Create tvm runtime module
-    // tvm::runtime::Module runtime_mod = (*tvm::runtime::Registry::Get("tvm.graph_executor.create"))(
-    //   json_data, mod, static_cast<uint32_t>(config.tvm_device_type), config.tvm_device_id);
-
-    // DLDevice dev{config.tvm_device_type, config.tvm_device_id};
-
-    f = runtime_mod.GetFunction(function_name);
-
-    for (auto & output_config : config.network_outputs) {
-      output_.push_back(TVMArrayContainer(
-        output_config.second, config.tvm_dtype_code, config.tvm_dtype_bits, config.tvm_dtype_lanes,
-        config.tvm_device_type, config.tvm_device_id));
-    }
   }
 
-  TVMArrayContainerVector schedule(const TVMArrayContainerVector & input)
+  /**
+   * @brief run the pipeline. Return asynchronously in a callback.
+   *
+   * @param input The data to push into the pipeline
+   * @return The pipeline output
+   */
+  OutputType schedule(const InputType & input)
   {
-    f(input[0].getArray(), input[1].getArray(), output_[0].getArray());
-
-    return output_;
+    auto input_tensor = pre_processor_->schedule(input);
+    auto output_infer_1 = inference_engine_1_->schedule(input_tensor);
+    auto output_tvm_script = tvm_script_engine_->schedule(output_infer_1);
+    auto output_infer_2 = inference_engine_2_->schedule(output_tvm_script);
+    return post_processor_->schedule(output_infer_2);
   }
 
 private:
-  InferenceEngineTVMConfig config_;
-  TVMArrayContainerVector output_;
-  tvm::runtime::PackedFunc f;
+  std::shared_ptr<PreProcessorType> pre_processor_;
+  std::shared_ptr<InferenceEngineType> inference_engine_1_;
+  std::shared_ptr<InferenceEngine> tvm_script_engine_;
+  std::shared_ptr<InferenceEngineType> inference_engine_2_;
+  std::shared_ptr<PostProcessorType> post_processor_;
 };
+
 }  // namespace pipeline
 }  // namespace tvm_utility
 #endif  // TVM_UTILITY__PIPELINE_HPP_
