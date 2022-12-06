@@ -44,9 +44,6 @@ private:
   pcl::PointCloud<pcl::PointXYZ> project_mask(
     const pcl::PointCloud<pcl::PointXYZ> & mask, ProjectFunc project) const;
 
-  pcl::PointIndices filt_by_mask(
-    const pcl::PointCloud<pcl::PointXYZ> & mask, const pcl::PointCloud<pcl::PointNormal> & edges);
-
   pcl::PointIndices filt_by_mask2(
     const cv::Mat & mask, const pcl::PointCloud<pcl::PointNormal> & edges);
 

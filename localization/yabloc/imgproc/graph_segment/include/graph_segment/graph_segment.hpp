@@ -28,8 +28,9 @@ private:
   std::set<int> search_similar_areas(
     const cv::Mat & rgb_image, const cv::Mat & segmented, int best_roadlike_class);
 
-  void publish_image(
-    const cv::Mat & raw_image, const cv::Mat & segmentation, const rclcpp::Time & stamp,
-    int target_class);
+  int search_most_road_like_class(const cv::Mat & segmented) const;
+
+  void draw_and_publish_image(
+    const cv::Mat & raw_image, const cv::Mat & debug_image, const rclcpp::Time & stamp);
 };
 }  // namespace pcdless::graph_segment

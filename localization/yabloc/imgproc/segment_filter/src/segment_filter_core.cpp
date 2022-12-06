@@ -6,7 +6,6 @@
 #include <pcdless_common/cv_decompress.hpp>
 #include <pcdless_common/pub_sub.hpp>
 
-#include <pcl/filters/extract_indices.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
@@ -77,25 +76,15 @@ void SegmentFilter::execute(const PointCloud2 & lsd_msg, const Image & segment_m
 
   pcl::PointIndices indices = filt_by_mask2(mask_image, *lsd);
 
-  // pcl::PointCloud<pcl::PointXYZ>::Ptr projected_mask{new pcl::PointCloud<pcl::PointXYZ>()};
   pcl::PointCloud<pcl::PointNormal>::Ptr projected_lines{new pcl::PointCloud<pcl::PointNormal>()};
-  // *projected_mask = project_mask(*mask, project_func);
   pcl::PointCloud<pcl::PointNormal> reliable_edges;
   reliable_edges = project_lines(*lsd, project_func, indices);
 
   std::cout << "reliable_edges " << reliable_edges.size() << std::endl;
-  // Here, "reliable" means having overlap in the mask area.
 
   // Extract reliable point's indices
   // pcl::PointIndices indices = filt_by_mask(*projected_mask, *projected_lines);
 
-  // // Publish point cloud
-  // pcl::ExtractIndices<pcl::PointNormal> extract;
-  // pcl::PointIndicesPtr indices_ptr = pcl::make_shared<pcl::PointIndices>(indices);
-  // extract.setIndices(indices_ptr);
-  // extract.setInputCloud(projected_lines);
-  // pcl::PointCloud<pcl::PointNormal> reliable_edges;
-  // extract.filter(reliable_edges);
   common::publish_cloud(*pub_cloud_, reliable_edges, stamp);
 
   // Draw image
@@ -177,6 +166,9 @@ std::set<ushort> get_unique_pixel_value(cv::Mat & image)
   // `image` is a set of ushort.
   // The purpose is to find the unduplicated set of values contained in `image`.
   // For example, if `image` is {0,1,2,0,1,2,3}, this function returns {0,1,2,3}.
+
+  if (image.depth() != CV_16U) throw std::runtime_error("image's depth must be ushort");
+
   auto begin = image.begin<ushort>();
   auto last = std::unique(begin, image.end<ushort>());
   std::sort(begin, last);
@@ -242,43 +234,6 @@ pcl::PointCloud<pcl::PointNormal> SegmentFilter::project_lines(
   return projected_points;
 }
 
-pcl::PointIndices SegmentFilter::filt_by_mask(
-  const pcl::PointCloud<pcl::PointXYZ> & mask, const pcl::PointCloud<pcl::PointNormal> & edges)
-{
-  // Create line image and assign different color to each segment.
-  cv::Mat line_image = cv::Mat::zeros(cv::Size{image_size_, image_size_}, CV_16UC1);
-  for (size_t i = 0; i < edges.size(); i++) {
-    auto & pn = edges.at(i);
-    cv::Point2i p1 = to_cv_point(pn.getVector3fMap());
-    cv::Point2i p2 = to_cv_point(pn.getNormalVector3fMap());
-    cv::Scalar color = cv::Scalar::all(i + 1);
-    cv::line(line_image, p1, p2, color, 1, cv::LineTypes::LINE_4);
-  }
-
-  // Create mask image
-  cv::Mat mask_image = cv::Mat::zeros(cv::Size{image_size_, image_size_}, CV_16UC1);
-  std::vector<std::vector<cv::Point2i>> projected_hull(1);
-  for (const auto p : mask) projected_hull.front().push_back(to_cv_point(p.getVector3fMap()));
-  auto max_color = cv::Scalar::all(std::numeric_limits<u_short>::max());
-  cv::drawContours(mask_image, projected_hull, 0, max_color, -1);
-
-  // TODO: Using boost::geometry is more intuitive.
-  // https://boostjp.github.io/tips/geometry.html#disjoint
-
-  // And operator
-  cv::Mat masked_line;
-  cv::bitwise_and(mask_image, line_image, masked_line);
-  std::set<ushort> pixel_values = get_unique_pixel_value(masked_line);
-
-  // Extract edges within masks
-  pcl::PointIndices reliable_indices;
-  for (size_t i = 0; i < edges.size(); i++) {
-    if (pixel_values.count(i + 1) != 0) reliable_indices.indices.push_back(i);
-  }
-
-  return reliable_indices;
-}
-
 pcl::PointIndices SegmentFilter::filt_by_mask2(
   const cv::Mat & mask, const pcl::PointCloud<pcl::PointNormal> & edges)
 {
@@ -301,17 +256,11 @@ pcl::PointIndices SegmentFilter::filt_by_mask2(
   // TODO: Using boost::geometry is more intuitive.
   // https://boostjp.github.io/tips/geometry.html#disjoint
 
-  // cv::Mat debug_image;
-  // cv::hconcat(mask_image, line_image, debug_image);
-  // cv::imshow("debug", debug_image);
-  // cv::waitKey(10);
-
   // And operator
   cv::Mat masked_line;
   cv::bitwise_and(mask_image, line_image, masked_line);
   std::set<ushort> pixel_values = get_unique_pixel_value(masked_line);
 
-  std::cout << "pixel values " << pixel_values.size() << std::endl;
   // Extract edges within masks
   pcl::PointIndices reliable_indices;
   for (size_t i = 0; i < edges.size(); i++) {
