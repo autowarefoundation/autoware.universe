@@ -101,7 +101,8 @@ Covariance2d covariance_2d(const IT begin, const IT end)
 /// \return A pairt of eigenvalues: The first is the larger eigenvalue
 /// \throw std::runtime error if you would get degenerate covariance
 template <typename PointT>
-std::pair<float32_t, float32_t> eig_2d(const Covariance2d & cov, PointT & eig_vec1, PointT & eig_vec2)
+std::pair<float32_t, float32_t> eig_2d(
+  const Covariance2d & cov, PointT & eig_vec1, PointT & eig_vec2)
 {
   const float32_t tr_2 = (cov.xx + cov.yy) * 0.5F;
   const float32_t det = (cov.xx * cov.yy) - (cov.xy * cov.xy);
