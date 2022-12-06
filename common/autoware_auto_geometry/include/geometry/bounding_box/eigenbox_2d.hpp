@@ -94,13 +94,13 @@ Covariance2d covariance_2d(const IT begin, const IT end)
 
 /// \brief Compute eigenvectors and eigenvalues
 /// \param[in] cov 2d Covariance matrix
-/// \param[out] eigvec1 First eigenvector
-/// \param[out] eigvec2 Second eigenvector
+/// \param[out] eig_vec1 First eigenvector
+/// \param[out] eig_vec2 Second eigenvector
 /// \tparam PointT Point type that has at least float members x and y
 /// \return A pairt of eigenvalues: The first is the larger eigenvalue
 /// \throw std::runtime error if you would get degenerate covariance
 template <typename PointT>
-std::pair<float32_t, float32_t> eig_2d(const Covariance2d & cov, PointT & eigvec1, PointT & eigvec2)
+std::pair<float32_t, float32_t> eig_2d(const Covariance2d & cov, PointT & eig_vec1, PointT & eig_vec2)
 {
   const float32_t tr_2 = (cov.xx + cov.yy) * 0.5F;
   const float32_t det = (cov.xx * cov.yy) - (cov.xy * cov.xy);
@@ -121,21 +121,21 @@ std::pair<float32_t, float32_t> eig_2d(const Covariance2d & cov, PointT & eigvec
   // are persistent against further calculations.
   // (e.g. taking cross product of two eigen vectors)
   if (fabsf(cov.xy * cov.xy) > std::numeric_limits<float32_t>::epsilon()) {
-    xr_(eigvec1) = cov.xy;
-    yr_(eigvec1) = ret.first - cov.xx;
-    xr_(eigvec2) = cov.xy;
-    yr_(eigvec2) = ret.second - cov.xx;
+    xr_(eig_vec1) = cov.xy;
+    yr_(eig_vec1) = ret.first - cov.xx;
+    xr_(eig_vec2) = cov.xy;
+    yr_(eig_vec2) = ret.second - cov.xx;
   } else {
     if (cov.xx > cov.yy) {
-      xr_(eigvec1) = 1.0F;
-      yr_(eigvec1) = 0.0F;
-      xr_(eigvec2) = 0.0F;
-      yr_(eigvec2) = 1.0F;
+      xr_(eig_vec1) = 1.0F;
+      yr_(eig_vec1) = 0.0F;
+      xr_(eig_vec2) = 0.0F;
+      yr_(eig_vec2) = 1.0F;
     } else {
-      xr_(eigvec1) = 0.0F;
-      yr_(eigvec1) = 1.0F;
-      xr_(eigvec2) = 1.0F;
-      yr_(eigvec2) = 0.0F;
+      xr_(eig_vec1) = 0.0F;
+      yr_(eig_vec1) = 1.0F;
+      xr_(eig_vec2) = 1.0F;
+      yr_(eig_vec2) = 0.0F;
     }
   }
   return ret;
