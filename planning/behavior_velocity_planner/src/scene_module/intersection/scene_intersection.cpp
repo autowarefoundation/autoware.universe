@@ -188,11 +188,10 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
 
   /* calculate final stop lines */
   bool is_entry_prohibited = false;
-  const double detect_length =
+  const double ignore_length =
     planner_param_.stuck_vehicle_detect_dist + planner_data_->vehicle_info_.vehicle_length_m;
   const auto stuck_vehicle_detect_area = generateEgoIntersectionLanePolygon(
-    lanelet_map_ptr, *path, closest_idx, stuck_line_idx, detect_length,
-    planner_param_.stuck_vehicle_detect_dist);
+    lanelet_map_ptr, *path, closest_idx, planner_param_.stuck_vehicle_detect_dist, ignore_length);
   const bool is_stuck = checkStuckVehicleInIntersection(objects_ptr, stuck_vehicle_detect_area);
   int stop_line_idx_final = stuck_line_idx;
   int pass_judge_line_idx_final = stuck_line_idx;
@@ -318,8 +317,13 @@ bool IntersectionModule::checkCollision(
   using lanelet::utils::getPolygonFromArcLength;
 
   /* generate ego-lane polygon */
-  const auto ego_poly =
-    generateEgoIntersectionLanePolygon(lanelet_map_ptr, path, closest_idx, closest_idx, 0.0, 0.0);
+  const auto ego_lane_poly = lanelet_map_ptr->laneletLayer.get(module_id_).polygon2d();
+  Polygon2d ego_poly{};
+  for (const auto & p : ego_lane_poly) {
+    ego_poly.outer().emplace_back(p.x(), p.y());
+  }
+  // const auto ego_poly =
+  //  generateEgoIntersectionLanePolygon(lanelet_map_ptr, path, closest_idx, closest_idx, 0.0, 0.0);
   lanelet::ConstLanelets ego_lane_with_next_lane = getEgoLaneWithNextLane(lanelet_map_ptr, path);
   lanelet::ConstLanelet closest_lanelet;
   lanelet::utils::query::getClosestLanelet(
@@ -479,7 +483,7 @@ bool IntersectionModule::checkCollision(
 Polygon2d IntersectionModule::generateEgoIntersectionLanePolygon(
   lanelet::LaneletMapConstPtr lanelet_map_ptr,
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
-  const int start_idx, const double extra_dist, const double ignore_dist) const
+  const double extra_dist, const double ignore_dist) const
 {
   using lanelet::utils::getArcCoordinates;
   using lanelet::utils::getLaneletLength3d;
@@ -488,15 +492,14 @@ Polygon2d IntersectionModule::generateEgoIntersectionLanePolygon(
 
   lanelet::ConstLanelets ego_lane_with_next_lane = getEgoLaneWithNextLane(lanelet_map_ptr, path);
 
-  const auto start_arc_coords = getArcCoordinates(
-    ego_lane_with_next_lane, tier4_autoware_utils::getPose(path.points.at(start_idx).point));
+  const double intersection_exit_length = getLaneletLength3d(ego_lane_with_next_lane.front());
 
   const auto closest_arc_coords = getArcCoordinates(
     ego_lane_with_next_lane, tier4_autoware_utils::getPose(path.points.at(closest_idx).point));
 
-  const double start_arc_length = start_arc_coords.length + ignore_dist < closest_arc_coords.length
-                                    ? closest_arc_coords.length
-                                    : start_arc_coords.length + ignore_dist;
+  const double start_arc_length = intersection_exit_length - ignore_dist > closest_arc_coords.length
+                                    ? intersection_exit_length - ignore_dist
+                                    : closest_arc_coords.length;
 
   const double end_arc_length = getLaneletLength3d(ego_lane_with_next_lane.front()) + extra_dist;
 
