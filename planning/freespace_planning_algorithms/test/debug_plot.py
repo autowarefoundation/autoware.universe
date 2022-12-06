@@ -153,12 +153,12 @@ def plot_problem(pd: ProblemDescription, ax, meta_info):
     X, Y = np.meshgrid(x_lin, y_lin)
     ax.contourf(X, Y, arr, cmap="Greys")
 
-    vmodel = VehicleModel.from_problem_description(pd)
-    vmodel.plot_pose(pd.start, ax, "green")
-    vmodel.plot_pose(pd.goal, ax, "red")
+    vehicle_model = VehicleModel.from_problem_description(pd)
+    vehicle_model.plot_pose(pd.start, ax, "green")
+    vehicle_model.plot_pose(pd.goal, ax, "red")
 
     for pose in pd.trajectory.poses:
-        vmodel.plot_pose(pose, ax, "blue", 0.5)
+        vehicle_model.plot_pose(pose, ax, "blue", 0.5)
 
     text = "elapsed : {0} [msec]".format(int(round(pd.elapsed_time.data)))
     ax.text(0.3, 0.3, text, fontsize=15, color="red")
