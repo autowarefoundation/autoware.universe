@@ -304,8 +304,8 @@ private:
     const float64_t dmax = static_cast<float64_t>(max);
     const float64_t dmin = static_cast<float64_t>(min);
     const float64_t width = (dmax - dmin) * static_cast<float64_t>(m_side_length_inv);
-    constexpr float64_t fltmax = static_cast<float64_t>(std::numeric_limits<float32_t>::max());
-    if (fltmax <= width) {
+    constexpr float64_t flt_max = static_cast<float64_t>(std::numeric_limits<float32_t>::max());
+    if (flt_max <= width) {
       throw std::domain_error("SpatialHash::Config: voxel size approaching floating point limit");
     }
     return static_cast<Index>(width);
