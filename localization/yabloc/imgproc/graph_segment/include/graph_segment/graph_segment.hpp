@@ -17,6 +17,7 @@ public:
 private:
   const float target_height_ratio_;
   const int target_candidate_box_width_;
+  const float similarity_score_threshold_;
 
   rclcpp::Subscription<Image>::SharedPtr sub_image_;
   rclcpp::Publisher<Image>::SharedPtr pub_mask_image_;

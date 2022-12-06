@@ -73,45 +73,31 @@ void SegmentFilter::execute(const PointCloud2 & lsd_msg, const Image & segment_m
     return v;
   };
 
-  pcl::PointIndices indices = filt_by_mask2(mask_image, *lsd);
+  std::set<int> indices = filt_by_mask(mask_image, *lsd);
 
   pcl::PointCloud<pcl::PointNormal>::Ptr projected_lines{new pcl::PointCloud<pcl::PointNormal>()};
-  pcl::PointCloud<pcl::PointNormal> reliable_edges;
-  reliable_edges = project_lines(*lsd, project_func, indices);
-
-  std::cout << "reliable_edges " << reliable_edges.size() << std::endl;
-
-  // Extract reliable point's indices
-  // pcl::PointIndices indices = filt_by_mask(*projected_mask, *projected_lines);
-
-  common::publish_cloud(*pub_cloud_, reliable_edges, stamp);
+  pcl::PointCloud<pcl::PointNormal> valid_edges = project_lines(*lsd, project_func, indices);
+  pcl::PointCloud<pcl::PointNormal> invalid_edges =
+    project_lines(*lsd, project_func, indices, true);
+  common::publish_cloud(*pub_cloud_, valid_edges, stamp);
 
   // Draw image
-  cv::Mat reliable_line_image = cv::Mat::zeros(cv::Size{image_size_, image_size_}, CV_8UC3);
+  cv::Mat projected_image = cv::Mat::zeros(cv::Size{image_size_, image_size_}, CV_8UC3);
   {
-    // // Draw mask areas
-    // std::vector<cv::Point2i> contour;
-    // std::vector<std::vector<cv::Point2i>> contours(1);
-    // for (const auto p : projected_mask->points)
-    //   contours.front().push_back(to_cv_point(p.getVector3fMap()));
-    // cv::drawContours(reliable_line_image, contours, 0, cv::Scalar(0, 155, 155), -1);
-
     // Draw lines
-    // std::unordered_set<int> reliable_set;
-    // for (int index : indices.indices) reliable_set.insert(index);
-    for (size_t i = 0; i < reliable_edges.size(); i++) {
-      auto & pn = reliable_edges.at(i);
+    for (auto & pn : valid_edges) {
       cv::Point2i p1 = to_cv_point(pn.getVector3fMap());
       cv::Point2i p2 = to_cv_point(pn.getNormalVector3fMap());
-      // if (reliable_set.count(i) == 0)
-      //   cv::line(reliable_line_image, p1, p2, cv::Scalar(255, 255, 255), 2,
-      //   cv::LineTypes::LINE_8);
-      // else
-      cv::line(reliable_line_image, p1, p2, cv::Scalar(100, 100, 255), 5, cv::LineTypes::LINE_8);
+      cv::line(projected_image, p1, p2, cv::Scalar(100, 100, 255), 4, cv::LineTypes::LINE_8);
+    }
+    for (auto & pn : invalid_edges) {
+      cv::Point2i p1 = to_cv_point(pn.getVector3fMap());
+      cv::Point2i p2 = to_cv_point(pn.getNormalVector3fMap());
+      cv::line(projected_image, p1, p2, cv::Scalar(200, 200, 200), 3, cv::LineTypes::LINE_8);
     }
   }
 
-  common::publish_image(*pub_image_, reliable_line_image, stamp);
+  common::publish_image(*pub_image_, projected_image, stamp);
 }
 
 bool SegmentFilter::is_near_element(
@@ -152,26 +138,20 @@ std::set<ushort> get_unique_pixel_value(cv::Mat & image)
   return std::set<ushort>(begin, last);
 }
 
-pcl::PointCloud<pcl::PointXYZ> SegmentFilter::project_mask(
-  const pcl::PointCloud<pcl::PointXYZ> & points, ProjectFunc project) const
-{
-  pcl::PointCloud<pcl::PointXYZ> projected_points;
-  for (const auto & p : points) {
-    std::optional<Eigen::Vector3f> opt = project(p.getVector3fMap());
-    if (!opt.has_value()) continue;
-    pcl::PointXYZ xyz(opt->x(), opt->y(), opt->z());
-    projected_points.push_back(xyz);
-  }
-  return projected_points;
-}
-
 pcl::PointCloud<pcl::PointNormal> SegmentFilter::project_lines(
   const pcl::PointCloud<pcl::PointNormal> & points, ProjectFunc project,
-  const pcl::PointIndices & indices) const
+  const std::set<int> & indices, bool negative) const
 {
   pcl::PointCloud<pcl::PointNormal> projected_points;
-  for (int index : indices.indices) {
+  for (int index = 0; index < points.size(); ++index) {
+    if (negative) {
+      if (indices.count(index) > 0) continue;
+    } else {
+      if (indices.count(index) == 0) continue;
+    }
+
     const auto & pn = points.at(index);
+
     pcl::PointNormal truncated_pn = pn;
 
     std::optional<Eigen::Vector3f> opt1 = project(truncated_pn.getVector3fMap());
@@ -208,7 +188,7 @@ pcl::PointCloud<pcl::PointNormal> SegmentFilter::project_lines(
   return projected_points;
 }
 
-pcl::PointIndices SegmentFilter::filt_by_mask2(
+std::set<int> SegmentFilter::filt_by_mask(
   const cv::Mat & mask, const pcl::PointCloud<pcl::PointNormal> & edges)
 {
   // Create line image and assign different color to each segment.
@@ -236,9 +216,9 @@ pcl::PointIndices SegmentFilter::filt_by_mask2(
   std::set<ushort> pixel_values = get_unique_pixel_value(masked_line);
 
   // Extract edges within masks
-  pcl::PointIndices reliable_indices;
+  std::set<int> reliable_indices;
   for (size_t i = 0; i < edges.size(); i++) {
-    if (pixel_values.count(i + 1) != 0) reliable_indices.indices.push_back(i);
+    if (pixel_values.count(i + 1) != 0) reliable_indices.insert(i);
   }
 
   return reliable_indices;

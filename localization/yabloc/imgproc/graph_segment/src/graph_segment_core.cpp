@@ -14,7 +14,8 @@ namespace pcdless::graph_segment
 GraphSegment::GraphSegment()
 : Node("graph_segment"),
   target_height_ratio_(declare_parameter<float>("target_height_ratio", 0.85)),
-  target_candidate_box_width_(declare_parameter<int>("target_candidate_box_width", 15))
+  target_candidate_box_width_(declare_parameter<int>("target_candidate_box_width", 15)),
+  similarity_score_threshold_(declare_parameter<float>("similarity_score_threshold", 0.8))
 {
   using std::placeholders::_1;
 
@@ -69,7 +70,8 @@ std::set<int> GraphSegment::search_similar_areas(
 
   Eigen::MatrixXf ref_histogram = histogram_map.at(best_roadlike_class).eval();
 
-  std::cout << "histogram equality " << std::endl;
+  std::stringstream debug_ss;
+  debug_ss << "histogram equality ";
 
   int index = 0;
   std::set<int> acceptable_keys;
@@ -79,27 +81,25 @@ std::set<int> GraphSegment::search_similar_areas(
 
     Eigen::MatrixXf query = histogram_map.at(key.key).eval();
     float score = Histogram::eval_histogram_intersection(ref_histogram, query);
-    std::cout << " " << score;
+    debug_ss << " " << score;
 
-    if (score > 0.8) acceptable_keys.insert(key.key);
+    if (score > similarity_score_threshold_) acceptable_keys.insert(key.key);
     if (++index > 10) break;
   }
-  std::cout << std::endl;
+  RCLCPP_INFO_STREAM(get_logger(), debug_ss.str());
 
-  // Visualilze
-  cv::Mat new_segmented = rgb_image.clone();
-  for (int h = 0; h < rgb_image.rows; h++) {
-    const int * seg_ptr = segmented.ptr<int>(h);
-    cv::Vec3b * rgb_ptr = new_segmented.ptr<cv::Vec3b>(h);
+  // // DEBUG: Visualilze
+  // cv::Mat new_segmented = rgb_image.clone();
+  // for (int h = 0; h < rgb_image.rows; h++) {
+  //   const int * seg_ptr = segmented.ptr<int>(h);
+  //   cv::Vec3b * rgb_ptr = new_segmented.ptr<cv::Vec3b>(h);
 
-    for (int w = 0; w < rgb_image.cols; w++) {
-      int key = seg_ptr[w];
-      if (acceptable_keys.count(key)) rgb_ptr[w] = cv::Vec3b(0, 0, 255);
-      if (key == best_roadlike_class) rgb_ptr[w] = cv::Vec3b(0, 255, 255);
-    }
-  }
-  // cv::imshow("new_segmented", new_segmented);
-  // cv::waitKey(10);
+  //   for (int w = 0; w < rgb_image.cols; w++) {
+  //     int key = seg_ptr[w];
+  //     if (acceptable_keys.count(key)) rgb_ptr[w] = cv::Vec3b(0, 0, 255);
+  //     if (key == best_roadlike_class) rgb_ptr[w] = cv::Vec3b(0, 255, 255);
+  //   }
+  // }
 
   return acceptable_keys;
 }

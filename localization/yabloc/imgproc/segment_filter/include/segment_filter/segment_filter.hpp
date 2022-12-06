@@ -39,12 +39,9 @@ private:
 
   pcl::PointCloud<pcl::PointNormal> project_lines(
     const pcl::PointCloud<pcl::PointNormal> & lines, ProjectFunc project,
-    const pcl::PointIndices & indices) const;
-  pcl::PointCloud<pcl::PointXYZ> project_mask(
-    const pcl::PointCloud<pcl::PointXYZ> & mask, ProjectFunc project) const;
+    const std::set<int> & indices, bool negative = false) const;
 
-  pcl::PointIndices filt_by_mask2(
-    const cv::Mat & mask, const pcl::PointCloud<pcl::PointNormal> & edges);
+  std::set<int> filt_by_mask(const cv::Mat & mask, const pcl::PointCloud<pcl::PointNormal> & edges);
 
   cv::Point2i to_cv_point(const Eigen::Vector3f & v) const;
   void execute(const PointCloud2 & msg1, const Image & msg2);

@@ -6,9 +6,8 @@ Panels:
       Expanded:
         - /VectorMap1/Namespaces1
         - /TF1/Frames1
-        - /Overlay1
       Splitter Ratio: 0.46451613306999207
-    Tree Height: 362
+    Tree Height: 1188
   - Class: rviz_common/Selection
     Name: Selection
   - Class: rviz_common/Tool Properties
@@ -26,7 +25,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: ""
+    SyncSource: PointCloud2
   - Class: initialpose_plugins/InitialPosePanel
     Name: InitialPosePanel
     last_initial_pose.t: 1666233785722535518
@@ -219,6 +218,55 @@ Visualization Manager:
       Show Names: false
       Tree:
         map:
+          particle_filter:
+            base_link:
+              livox_front_left_base_link:
+                livox_front_left:
+                  {}
+              livox_front_right_base_link:
+                livox_front_right:
+                  {}
+              sensor_kit_base_link:
+                camera0/camera_link:
+                  camera0/camera_optical_link:
+                    {}
+                camera1/camera_link:
+                  camera1/camera_optical_link:
+                    {}
+                camera2/camera_link:
+                  camera2/camera_optical_link:
+                    {}
+                camera3/camera_link:
+                  camera3/camera_optical_link:
+                    {}
+                camera4/camera_link:
+                  camera4/camera_optical_link:
+                    {}
+                camera5/camera_link:
+                  camera5/camera_optical_link:
+                    {}
+                gnss_link:
+                  {}
+                tamagawa/imu_link:
+                  {}
+                traffic_light_left_camera/camera_link:
+                  traffic_light_left_camera/camera_optical_link:
+                    {}
+                traffic_light_right_camera/camera_link:
+                  traffic_light_right_camera/camera_optical_link:
+                    {}
+                velodyne_left_base_link:
+                  velodyne_left:
+                    {}
+                velodyne_right_base_link:
+                  velodyne_right:
+                    {}
+                velodyne_top_base_link:
+                  velodyne_top:
+                    {}
+              velodyne_rear_base_link:
+                velodyne_rear:
+                  {}
           viewer:
             {}
       Update Interval: 0
@@ -228,66 +276,66 @@ Visualization Manager:
         - Alpha: 0.30000001192092896
           Class: rviz_plugins/Image
           Enabled: true
-          Height: 400
+          Height: 500
           Image Topic Style: true
           Left: 0
           Name: Overlay
           Top: 0
           Topic: /localization/validation/overlay_image
           Value: true
-          Width: 400
+          Width: 500
         - Alpha: 0.30000001192092896
           Class: rviz_plugins/Image
           Enabled: true
-          Height: 300
+          Height: 500
           Image Topic Style: true
-          Left: 300
+          Left: 500
           Name: ProjectedLSD
-          Top: 400
+          Top: 500
           Topic: /localization/imgproc/projected_image
           Value: true
-          Width: 300
+          Width: 500
         - Alpha: 0.30000001192092896
           Class: rviz_plugins/Image
           Enabled: true
-          Height: 300
+          Height: 500
           Image Topic Style: true
           Left: 0
           Name: LSD
-          Top: 400
+          Top: 500
           Topic: /localization/imgproc/lsd_image
           Value: true
-          Width: 300
+          Width: 500
         - Alpha: 0.10000000149011612
           Class: rviz_plugins/Image
           Enabled: true
-          Height: 400
+          Height: 500
           Image Topic Style: true
-          Left: 400
+          Left: 500
           Name: Mapping
           Top: 0
-          Topic: /localization/imgproc/rgb_mapping_image
+          Topic: /localization/imgproc/segmented_image
           Value: true
-          Width: 400
+          Width: 500
       Enabled: true
       Name: Overlay
     - Class: rviz_default_plugins/MarkerArray
-      Enabled: false
+      Enabled: true
       Name: Particles
       Namespaces:
-        {}
+        "": true
       Topic:
         Depth: 5
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /localization/pf/predicted_particles_marker
-      Value: false
+      Value: true
     - Class: rviz_default_plugins/MarkerArray
       Enabled: true
       Name: GnssEffectRange
       Namespaces:
-        {}
+        "": true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -356,7 +404,7 @@ Visualization Manager:
       Enabled: false
       Name: Status
     - Class: rviz_default_plugins/MarkerArray
-      Enabled: true
+      Enabled: false
       Name: MarkerArray
       Namespaces:
         {}
@@ -366,6 +414,40 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /localization/imgproc/particles_marker_array
+      Value: false
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz_default_plugins/PointCloud2
+      Color: 255; 255; 255
+      Color Transformer: RGB8
+      Decay Time: 0
+      Enabled: true
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Max Intensity: 4096
+      Min Color: 0; 0; 0
+      Min Intensity: 0
+      Name: PointCloud2
+      Position Transformer: XYZ
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.009999999776482582
+      Style: Points
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /localization/pf/scored_cloud
+      Use Fixed Frame: true
+      Use rainbow: true
       Value: true
   Enabled: true
   Global Options:
@@ -412,7 +494,7 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: -4.180000305175781
+      Angle: -7.230001449584961
       Class: rviz_default_plugins/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
@@ -422,11 +504,11 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 17.781509399414062
+      Scale: 24.550724029541016
       Target Frame: base_link
       Value: TopDownOrtho (rviz_default_plugins)
-      X: -1.0342031717300415
-      Y: -12.385319709777832
+      X: 1.5905036926269531
+      Y: 18.79573631286621
     Saved:
       - Angle: -0.07999999076128006
         Class: rviz_default_plugins/TopDownOrtho
@@ -460,15 +542,13 @@ Visualization Manager:
         Y: 0
 Window Geometry:
   Displays:
-    collapsed: true
-  Height: 1043
-  Hide Left Dock: true
+    collapsed: false
+  Height: 1536
+  Hide Left Dock: false
   Hide Right Dock: true
   InitialPosePanel:
     collapsed: false
-  PlayerPanel:
-    collapsed: false
-  QMainWindow State: 000000ff00000000fd0000000400000000000001d300000369fc020000000cfb000000100044006900730070006c006100790073000000003e00000369000000ca00fffffffb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000c00430061006d006500720061000000033e000002610000000000000000fb0000000a0049006d00610067006500000001f8000001ba0000000000000000fb0000000a0049006d00610067006501000003ae000001f10000000000000000fb0000000a0049006d00610067006501000002080000019f000000000000000000000001000002d100000369fc0200000003fb0000000a00560069006500770073000000003e00000369000000a600fffffffb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000007800000006efc0100000004fb000000160050006c006100790065007200500061006e0065006c0000000000000000850000007800fffffffb0000000800540069006d006501000000000000050d0000027100fffffffb000000200049006e0069007400690061006c0050006f0073006500500061006e0065006c01000005130000026d0000011700fffffffb0000000800540069006d00650100000000000004500000000000000000000007800000034300000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000400000000000001d300000530fc020000000cfb000000100044006900730070006c006100790073010000003e00000530000000ca00fffffffb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000c00430061006d006500720061000000033e000002610000000000000000fb0000000a0049006d00610067006500000001f8000001ba0000000000000000fb0000000a0049006d00610067006501000003ae000001f10000000000000000fb0000000a0049006d00610067006501000002080000019f000000000000000000000001000002d100000369fc0200000003fb0000000a00560069006500770073000000003e00000369000000a600fffffffb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000009b60000006efc0100000004fb000000160050006c006100790065007200500061006e0065006c0000000000000000850000000000000000fb0000000800540069006d006501000000000000068b0000027100fffffffb000000200049006e0069007400690061006c0050006f0073006500500061006e0065006c0100000691000003250000015600fffffffb0000000800540069006d00650100000000000004500000000000000000000007dd0000053000000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
@@ -477,6 +557,6 @@ Window Geometry:
     collapsed: false
   Views:
     collapsed: true
-  Width: 1920
-  X: 2560
-  Y: 0
+  Width: 2486
+  X: 0
+  Y: 27
