@@ -207,11 +207,11 @@ BoundingBox lfit_bounding_box_2d_impl(const IT begin, const IT end, const std::s
     }
   }
   // can recover best corner point, but don't care, need to cover all points
-  const auto inorm = 1.0F / norm_2d(best_normal);
-  if (!std::isnormal(inorm)) {
+  const auto inv_norm = 1.0F / norm_2d(best_normal);
+  if (!std::isnormal(inv_norm)) {
     throw std::runtime_error{"LFit: Abnormal norm"};
   }
-  best_normal = times_2d(best_normal, inorm);
+  best_normal = times_2d(best_normal, inv_norm);
   auto best_tangent = get_normal(best_normal);
   // find extreme points
   Point4<IT> supports;
