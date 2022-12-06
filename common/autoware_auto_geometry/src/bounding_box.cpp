@@ -18,6 +18,7 @@
 #include <geometry/bounding_box/bounding_box_common.hpp>
 #include <geometry/bounding_box/eigenbox_2d.hpp>
 #include <geometry/bounding_box/lfit.hpp>
+// cspell: ignore lfit
 #include <geometry/bounding_box/rotating_calipers.hpp>
 
 #include <geometry_msgs/msg/point32.hpp>

@@ -18,6 +18,8 @@
 /// \brief This file implements 2D pca on a linked list of points to estimate an oriented
 ///        bounding box
 
+// cspell: ignore LFIT, lfit
+
 #ifndef GEOMETRY__BOUNDING_BOX__LFIT_HPP_
 #define GEOMETRY__BOUNDING_BOX__LFIT_HPP_
 
