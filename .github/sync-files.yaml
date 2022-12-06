@@ -16,6 +16,7 @@
     - source: .github/workflows/sync-files.yaml
     - source: .clang-format
     - source: .clang-tidy
+    - source: .gitignore
     - source: .markdownlint.yaml
     - source: .pre-commit-config.yaml
     - source: .pre-commit-config-ansible.yaml
@@ -32,9 +33,7 @@
       pre-commands: |
         sd "GITHUB_TOKEN" "REPO_TOKEN" {source}
 
-    - source: .github/workflows/build-humble.yaml
-      pre-commands: |
-        sd "GITHUB_TOKEN" "REPO_TOKEN" {source}
+    - source: .github/workflows/load-env.yaml
 
     - source: .github/workflows/setup-universe.yaml
       dest: .github/workflows/setup-local-dev-env.yaml
@@ -69,11 +68,11 @@
       pre-commands: |
         latest_hash=$(git ls-remote --heads https://github.com/autowarefoundation/autoware.git refs/heads/main | awk '{print $1}')
         sd "\z" \
-          "
+        "
           - name: https://github.com/autowarefoundation/autoware.git#/ansible
             type: git
             version: $latest_hash
-          " {source}
+        " {source}
 
     # Docker
     - source: docker/README.md

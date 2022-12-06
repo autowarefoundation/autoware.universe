@@ -6,7 +6,7 @@ repositories:
   vendor/lidartag:
     type: git
     url: git@github.com:tier4/LiDARTag.git
-    version: galactic
+    version: humble
   vendor/lidartag_msgs:
     type: git
     url: git@github.com:tier4/LiDARTag_msgs.git
