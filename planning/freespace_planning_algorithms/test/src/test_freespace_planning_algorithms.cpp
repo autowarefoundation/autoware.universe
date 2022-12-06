@@ -238,6 +238,7 @@ enum AlgorithmType {
   RRTSTAR_UPDATE,
   RRTSTAR_INFORMED_UPDATE,
 };
+// cspell: ignore fpalgos
 std::unordered_map<AlgorithmType, std::string> rosbag_dir_prefix_table(
   {{ASTAR_SINGLE, "fpalgos-astar_single"},
    {ASTAR_MULTI, "fpalgos-astar_multi"},
