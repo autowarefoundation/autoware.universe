@@ -209,7 +209,9 @@ def launch_setup(context, *args, **kwargs):
             vehicle_info_param,
             {
                 "use_emergency_handling": LaunchConfiguration("use_emergency_handling"),
-                "check_external_emergency_heartbeat": LaunchConfiguration("check_external_emergency_heartbeat"),
+                "check_external_emergency_heartbeat": LaunchConfiguration(
+                    "check_external_emergency_heartbeat"
+                ),
                 "use_start_request": LaunchConfiguration("use_start_request"),
             },
         ],

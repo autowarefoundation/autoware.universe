@@ -128,7 +128,8 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
   // Parameter
   update_period_ = 1.0 / declare_parameter("update_rate", 10.0);
   use_emergency_handling_ = declare_parameter("use_emergency_handling", false);
-  check_external_emergency_heartbeat_ = declare_parameter("check_external_emergency_heartbeat", false);
+  check_external_emergency_heartbeat_ =
+    declare_parameter("check_external_emergency_heartbeat", false);
   system_emergency_heartbeat_timeout_ =
     declare_parameter("system_emergency_heartbeat_timeout", 0.5);
   external_emergency_stop_heartbeat_timeout_ =
