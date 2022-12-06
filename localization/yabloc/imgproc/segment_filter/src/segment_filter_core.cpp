@@ -16,7 +16,6 @@ SegmentFilter::SegmentFilter()
 : Node("segment_filter"),
   image_size_(declare_parameter<int>("image_size", 800)),
   max_range_(declare_parameter<float>("max_range", 20.f)),
-  truncate_pixel_threshold_(declare_parameter<int>("truncate_pixel_threshold", -1)),
   min_segment_length_(declare_parameter<float>("min_segment_length", -1)),
   max_segment_distance_(declare_parameter<float>("max_segment_distance", -1)),
   max_lateral_distance_(declare_parameter<float>("max_lateral_distance", -1)),
@@ -138,29 +137,6 @@ bool SegmentFilter::is_near_element(
   return true;
 }
 
-bool SegmentFilter::is_lower_element(
-  const pcl::PointNormal & pn, pcl::PointNormal & truncated_pn) const
-{
-  float lower_px = std::max(pn.y, pn.normal_y);
-  float higher_px = std::min(pn.y, pn.normal_y);
-  if (lower_px < truncate_pixel_threshold_) return false;
-  if (higher_px > truncate_pixel_threshold_) {
-    truncated_pn = pn;
-    return true;
-  }
-
-  truncated_pn = pn;
-  Eigen::Vector3f t = pn.getVector3fMap() - pn.getNormalVector3fMap();
-  float not_zero_ty = t.y() > 0 ? std::max(t.y(), 1e-3f) : std::min(t.y(), -1e-3f);
-  float lambda = (truncate_pixel_threshold_ - pn.y) / not_zero_ty;
-  Eigen::Vector3f m = pn.getVector3fMap() + lambda * t;
-  if (pn.y < pn.normal_y)
-    truncated_pn.getVector3fMap() = m;
-  else
-    truncated_pn.getNormalVector3fMap() = m;
-  return true;
-}
-
 std::set<ushort> get_unique_pixel_value(cv::Mat & image)
 {
   // `image` is a set of ushort.
@@ -197,8 +173,6 @@ pcl::PointCloud<pcl::PointNormal> SegmentFilter::project_lines(
   for (int index : indices.indices) {
     const auto & pn = points.at(index);
     pcl::PointNormal truncated_pn = pn;
-    if (truncate_pixel_threshold_ > 0)
-      if (!is_lower_element(pn, truncated_pn)) continue;
 
     std::optional<Eigen::Vector3f> opt1 = project(truncated_pn.getVector3fMap());
     std::optional<Eigen::Vector3f> opt2 = project(truncated_pn.getNormalVector3fMap());

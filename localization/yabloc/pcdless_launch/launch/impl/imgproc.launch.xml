@@ -12,7 +12,6 @@
 
     <arg name="target_height_ratio" default="0.85"/>
 
-    <arg name="truncate_pixel_threshold" default="-1" description="For robustness verification, if positive value is given, line segments are truncated."/>
 
 
     <!-- undistort & resize -->
@@ -70,7 +69,6 @@
     <arg name="output_projected_lsd_cloud" default="projected_lsd_cloud"/>
     <arg name="output_projected_image" default="projected_image"/>
     <node name="segment_filter" pkg="segment_filter" exec="segment_filter_node" output="screen" args="--ros-args --log-level info">
-        <param name="truncate_pixel_threshold" value="$(var truncate_pixel_threshold)" />
         <param name="min_segment_length" value="$(var min_segment_length)"/>
         <param name="max_segment_distance" value="$(var max_segment_distance)"/>
         <param name="max_lateral_distance" value="$(var max_lateral_distance)"/>

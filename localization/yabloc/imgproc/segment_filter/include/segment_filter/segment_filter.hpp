@@ -26,7 +26,6 @@ private:
   using ProjectFunc = std::function<std::optional<Eigen::Vector3f>(const Eigen::Vector3f &)>;
   const int image_size_;
   const float max_range_;
-  const int truncate_pixel_threshold_;
   const float min_segment_length_;
   const float max_segment_distance_;
   const float max_lateral_distance_;
@@ -51,7 +50,6 @@ private:
   void execute(const PointCloud2 & msg1, const Image & msg2);
 
   // TODO: Rename function
-  bool is_lower_element(const pcl::PointNormal & pn, pcl::PointNormal & truncated_pn) const;
   bool is_near_element(const pcl::PointNormal & pn, pcl::PointNormal & truncated_pn) const;
 };
 }  // namespace pcdless::segment_filter

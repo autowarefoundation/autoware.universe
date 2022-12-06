@@ -28,7 +28,6 @@ public:
   LineSegmentDetector();
 
 private:
-  const int truncate_pixel_threshold_;
   rclcpp::Subscription<Image>::SharedPtr sub_image_;
   rclcpp::Publisher<Image>::SharedPtr pub_image_lsd_;
   rclcpp::Publisher<PointCloud2>::SharedPtr pub_cloud_;

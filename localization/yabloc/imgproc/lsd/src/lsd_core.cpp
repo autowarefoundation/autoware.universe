@@ -9,9 +9,7 @@
 
 namespace pcdless::lsd
 {
-LineSegmentDetector::LineSegmentDetector()
-: Node("line_detector"),
-  truncate_pixel_threshold_(declare_parameter<int>("truncate_pixel_threshold", -1))
+LineSegmentDetector::LineSegmentDetector() : Node("line_detector")
 {
   using std::placeholders::_1;
 
