@@ -119,8 +119,8 @@ float32_t solve_lfit(const LFitWs & ws, PointT & dir)
                        ws.m22d - (((ws.m12b * ws.m12b) * pi) + ((ws.m12d * ws.m12d) * qi)),
                        ws.m22b - (((ws.m12a * ws.m12b) * pi) + ((ws.m12c * ws.m12d) * qi)), 0UL};
   PointT eig1;
-  const auto eigv = eig_2d(M, eig1, dir);
-  return eigv.second;
+  const auto eig_v = eig_2d(M, eig1, dir);
+  return eig_v.second;
 }
 
 /// \brief Increments L fit M matrix with information in the point

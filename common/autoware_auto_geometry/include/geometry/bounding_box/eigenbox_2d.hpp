@@ -223,7 +223,7 @@ BoundingBox eigenbox_2d(const IT begin, const IT end)
   using PointT = details::base_type<decltype(*begin)>;
   PointT eig1;
   PointT eig2;
-  const auto eigv = details::eig_2d(cov, eig1, eig2);
+  const auto eig_v = details::eig_2d(cov, eig1, eig2);
 
   // find extreme points
   details::Point4<IT> supports;
@@ -233,7 +233,7 @@ BoundingBox eigenbox_2d(const IT begin, const IT end)
     std::swap(eig1, eig2);
   }
   BoundingBox bbox = details::compute_bounding_box(eig1, eig2, supports);
-  bbox.value = eigv.first;
+  bbox.value = eig_v.first;
 
   return bbox;
 }
