@@ -78,8 +78,6 @@ bool IntersectionModule::modifyPathVelocity(
   *stop_reason =
     planning_utils::initializeStopReason(tier4_planning_msgs::msg::StopReason::INTERSECTION);
 
-  debug_data_.path_raw = *path;
-
   StateMachine::State current_state = state_machine_.getState();
   RCLCPP_DEBUG(
     logger_, "lane_id = %ld, state = %s", lane_id_, StateMachine::toString(current_state).c_str());
