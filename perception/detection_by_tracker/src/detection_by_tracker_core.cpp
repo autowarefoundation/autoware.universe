@@ -159,6 +159,17 @@ DetectionByTracker::DetectionByTracker(const rclcpp::NodeOptions & node_options)
 
   ignore_unknown_tracker_ = declare_parameter<bool>("ignore_unknown_tracker", true);
 
+  // set max search distance for each object
+  using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
+  max_search_distance_for_merger_[Label::UNKNOWN] = 5.0;
+  max_search_distance_for_merger_[Label::CAR] = 5.0;
+  max_search_distance_for_merger_[Label::TRUCK] = 8.0;
+  max_search_distance_for_merger_[Label::BUS] = 8.0;
+  max_search_distance_for_merger_[Label::TRAILER] = 8.0;
+  max_search_distance_for_merger_[Label::MOTORCYCLE] = 2.0;
+  max_search_distance_for_merger_[Label::BICYCLE] = 1.0;
+  max_search_distance_for_merger_[Label::PEDESTRIAN] = 1.0;
+
   shape_estimator_ = std::make_shared<ShapeEstimator>(true, true);
   cluster_ = std::make_shared<euclidean_cluster::VoxelGridBasedEuclideanCluster>(
     false, 10, 10000, 0.7, 0.3, 0);
@@ -357,13 +368,15 @@ void DetectionByTracker::mergeOverSegmentedObjects(
   tier4_perception_msgs::msg::DetectedObjectsWithFeature & out_objects)
 {
   constexpr float precision_threshold = 0.5;
-  constexpr float max_search_range = 5.0;
   out_objects.header = in_cluster_objects.header;
   out_no_found_tracked_objects.header = tracked_objects.header;
 
   for (const auto & tracked_object : tracked_objects.objects) {
     const auto & label = tracked_object.classification.front().label;
     if (ignore_unknown_tracker_ && (label == Label::UNKNOWN)) continue;
+
+    // change search range according to label type
+    const float max_search_range = max_search_distance_for_merger_[label];
 
     // extend shape
     autoware_auto_perception_msgs::msg::DetectedObject extended_tracked_object = tracked_object;
@@ -383,6 +396,8 @@ void DetectionByTracker::mergeOverSegmentedObjects(
       const float precision =
         perception_utils::get2dPrecision(initial_object.object, extended_tracked_object);
       if (precision < precision_threshold) {
+        if (tracked_object.classification.front().label)
+          std::cout << "Rejected by Perception Threshold:" << precision << std::endl;
         continue;
       }
       pcl::PointCloud<pcl::PointXYZ> pcl_cluster;
