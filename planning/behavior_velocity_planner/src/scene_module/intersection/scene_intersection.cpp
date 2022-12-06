@@ -55,7 +55,10 @@ IntersectionModule::IntersectionModule(
   const int64_t module_id, const int64_t lane_id, std::shared_ptr<const PlannerData> planner_data,
   const PlannerParam & planner_param, const rclcpp::Logger logger,
   const rclcpp::Clock::SharedPtr clock)
-: SceneModuleInterface(module_id, logger, clock), lane_id_(lane_id), is_go_out_(false)
+: SceneModuleInterface(module_id, logger, clock),
+  lane_id_(lane_id),
+  is_go_out_(false),
+  last_module_state_(IntersectionModuleState::NONE)
 {
   planner_param_ = planner_param;
 

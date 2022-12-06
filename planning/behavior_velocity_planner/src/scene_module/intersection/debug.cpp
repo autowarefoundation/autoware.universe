@@ -195,17 +195,31 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createVirtualWallMarker
 
   const auto now = this->clock_->now();
   const auto state = state_machine_.getState();
+  const bool created_virtual_wall_marker =
+    (last_module_state_ == IntersectionModuleState::STOP ||
+     last_module_state_ == IntersectionModuleState::SLOW_DOWN);
+  const bool delete_stop_virtual_wall =
+    (state == StateMachine::State::GO && created_virtual_wall_marker);
 
   if (debug_data_.stop_required) {
     appendMarkerArray(
       motion_utils::createStopVirtualWallMarker(
         debug_data_.stop_wall_pose, "intersection", now, module_id_),
       &wall_marker, now);
+    last_module_state_ = IntersectionModuleState::STOP;
   } else if (state == StateMachine::State::STOP) {
     appendMarkerArray(
       motion_utils::createStopVirtualWallMarker(
         debug_data_.slow_wall_pose, "intersection", now, module_id_),
       &wall_marker, now);
+    last_module_state_ = IntersectionModuleState::SLOW_DOWN;
+  } else if (delete_stop_virtual_wall) {
+    // delete marker
+    appendMarkerArray(
+      motion_utils::createDeletedStopVirtualWallMarker(now, module_id_), &wall_marker, now);
+    last_module_state_ = IntersectionModuleState::GO;
+  } else {
+    last_module_state_ = IntersectionModuleState::GO;
   }
   return wall_marker;
 }

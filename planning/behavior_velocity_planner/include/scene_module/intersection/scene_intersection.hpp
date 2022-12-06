@@ -25,6 +25,7 @@
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <geometry_msgs/msg/point.hpp>
+#include <motion_utils/motion_utils.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_routing/RoutingGraph.h>
@@ -113,10 +114,18 @@ public:
   visualization_msgs::msg::MarkerArray createVirtualWallMarkerArray() override;
 
 private:
+  enum class IntersectionModuleState {
+    NONE = 0,
+    STOP,
+    SLOW_DOWN,
+    GO,
+  };
+
   int64_t lane_id_;
   std::string turn_direction_;
   bool has_traffic_light_;
   bool is_go_out_;
+  IntersectionModuleState last_module_state_;
 
   // Parameter
   PlannerParam planner_param_;
