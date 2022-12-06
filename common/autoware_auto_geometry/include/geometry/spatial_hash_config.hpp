@@ -110,6 +110,8 @@ public:
     }
     // small fudging to prevent weird boundary effects
     // (e.g (x=x_max, y) rolls index over to (x=0, y+1)
+    // cspell: ignore FEPS
+    // FEPS means "Float EPSilon"
     constexpr auto FEPS = std::numeric_limits<float32_t>::epsilon();
     // lint -e{1938} read only access is fine NOLINT
     m_max_x -= FEPS;

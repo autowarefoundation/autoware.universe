@@ -147,6 +147,9 @@ void append_intersection_points(
           std::min(point_adapter::y_(edge2.first), point_adapter::y_(edge2.second)),
           std::max(point_adapter::y_(edge2.first), point_adapter::y_(edge2.second))};
 
+        // cspell: ignore feps
+        // feps means "Float EPSilon"
+
         // The accumulated floating point error depends on the magnitudes of each end of the
         // intervals. Hence the upper bound of the absolute magnitude should be taken into account
         // while computing the epsilon.

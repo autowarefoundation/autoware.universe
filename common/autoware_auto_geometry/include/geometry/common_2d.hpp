@@ -273,6 +273,8 @@ inline T intersection_2d(const T & pt, const T & u, const T & q, const T & v)
 {
   const float32_t num = cross_2d(minus_2d(pt, q), u);
   float32_t den = cross_2d(v, u);
+  // cspell: ignore FEPS
+  // FEPS means "Float EPSilon"
   constexpr auto FEPS = std::numeric_limits<float32_t>::epsilon();
   if (fabsf(den) < FEPS) {
     if (fabsf(num) < FEPS) {
