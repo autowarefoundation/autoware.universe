@@ -24,6 +24,8 @@
 #include <unordered_map>
 #include <unordered_set>
 
+// cspell: ignore rsspace
+// In this case, RSSpace means "Reeds Shepp state Space"
 namespace rrtstar_core
 {
 CSpace::CSpace(
