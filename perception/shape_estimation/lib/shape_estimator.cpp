@@ -92,8 +92,10 @@ bool ShapeEstimator::applyFilter(
     filter_ptr.reset(new CarFilter);
   } else if (label == Label::BUS) {
     filter_ptr.reset(new BusFilter);
-  } else if (label == Label::TRUCK || label == Label::TRAILER) {
+  } else if (label == Label::TRUCK) {
     filter_ptr.reset(new TruckFilter);
+  } else if (label == Label::TRAILER) {
+    filter_ptr.reset(new TrailerFilter);
   } else {
     filter_ptr.reset(new NoFilter);
   }
