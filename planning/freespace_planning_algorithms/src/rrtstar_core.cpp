@@ -447,14 +447,14 @@ void RRTStar::reconnect(const NodeSharedPtr & node_new, const NodeSharedPtr & no
   // node_reconnect_parent -> #nil;
 
   // update cost of all descendents of node_reconnect
-  std::queue<NodeSharedPtr> bfqueue;
-  bfqueue.push(node_reconnect);
-  while (!bfqueue.empty()) {
-    const auto node = bfqueue.front();
-    bfqueue.pop();
+  std::queue<NodeSharedPtr> bf_queue;
+  bf_queue.push(node_reconnect);
+  while (!bf_queue.empty()) {
+    const auto node = bf_queue.front();
+    bf_queue.pop();
     for (const auto & child : node->childs) {
       child->cost_from_start = *node->cost_from_start + *child->cost_to_parent;
-      bfqueue.push(child);
+      bf_queue.push(child);
     }
   }
 }
