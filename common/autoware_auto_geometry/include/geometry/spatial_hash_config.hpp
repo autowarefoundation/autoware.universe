@@ -283,8 +283,8 @@ protected:
   float32_t idx_distance(const Index ref_idx, const Index query_idx) const
   {
     /// Not using fabs because Index is (possibly) unsigned
-    const Index idist = (ref_idx >= query_idx) ? (ref_idx - query_idx) : (query_idx - ref_idx);
-    float32_t dist = static_cast<float32_t>(idist) - 1.0F;
+    const Index i_dist = (ref_idx >= query_idx) ? (ref_idx - query_idx) : (query_idx - ref_idx);
+    float32_t dist = static_cast<float32_t>(i_dist) - 1.0F;
     return std::max(dist, 0.0F);
   }
 
