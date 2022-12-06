@@ -61,7 +61,7 @@ TrtYoloX::TrtYoloX(
       break;
     default:
       std::stringstream s;
-      s << "\"" << model_path << "\" is unsuppoerted format";
+      s << "\"" << model_path << "\" is unsupported format";
       std::runtime_error{s.str()};
   }
 
