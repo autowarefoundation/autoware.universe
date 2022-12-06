@@ -18,7 +18,7 @@
 #define TEST_BOUNDING_BOX_HPP_
 
 #include "geometry/bounding_box/lfit.hpp"
-// cspell: ignore LFIT, lfit
+// cspell: ignore lfit
 #include "geometry/bounding_box/rotating_calipers.hpp"
 
 #include <geometry_msgs/msg/point32.hpp>
@@ -53,6 +53,8 @@ protected:
     box = autoware::common::geometry::bounding_box::minimum_perimeter_bounding_box(points);
     // apex_test_tools::memory_test::stop();
   }
+
+  // cspell: ignore eigenbox
   template <typename IT>
   void eigenbox(const IT begin, const IT end)
   {

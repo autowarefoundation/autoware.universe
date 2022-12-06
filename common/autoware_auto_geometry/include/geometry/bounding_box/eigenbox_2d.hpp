@@ -18,6 +18,7 @@
 /// \brief This file implements 2D pca on a linked list of points to estimate an oriented
 ///        bounding box
 
+// cspell: ignore eigenbox, EIGENBOX
 #ifndef GEOMETRY__BOUNDING_BOX__EIGENBOX_2D_HPP_
 #define GEOMETRY__BOUNDING_BOX__EIGENBOX_2D_HPP_
 
