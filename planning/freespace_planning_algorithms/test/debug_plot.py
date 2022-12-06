@@ -91,6 +91,8 @@ class VehicleModel:
     def from_problem_description(cls, pd: ProblemDescription) -> "VehicleModel":
         return cls(pd.vehicle_length.data, pd.vehicle_width.data, pd.vehicle_base2back.data)
 
+    # cspell: ignore nparr
+    # nparr means "numpy array" (maybe)
     def get_vertices(self, pose: Pose) -> np.ndarray:
         x, y, yaw = self.pose_msg_to_nparr(pose)
 
