@@ -71,7 +71,7 @@ void maskLines(
     for (auto i = 0lu; i + 1 < line.size(); ++i) {
       const grid_map::Position start(line[i].x(), line[i].y());
       const grid_map::Position end(line[i + 1].x(), line[i + 1].y());
-      if (grid_map.isInside(start) || grid_map.isInside(end)) {
+      if (grid_map.isInside(start) && grid_map.isInside(end)) {
         for (grid_map::LineIterator iter(grid_map, start, end); !iter.isPastEnd(); ++iter)
           layer((*iter).x(), (*iter).y()) = value;
       }
