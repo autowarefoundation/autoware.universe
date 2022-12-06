@@ -89,6 +89,7 @@ private:
     cv::Rect_<float> inter = a_rect & b_rect;
     return inter.area();
   }
+  // cspell: ignore Bboxes
   void nmsSortedBboxes(
     const ObjectArray & faceobjects, std::vector<int> & picked, float nms_threshold) const;
 

@@ -227,6 +227,7 @@ void TrtYoloX::decodeOutputs(
   qsortDescentInplace(proposals);
 
   std::vector<int> picked;
+  // cspell: ignore Bboxes
   nmsSortedBboxes(proposals, picked, nms_threshold_);
 
   int count = static_cast<int>(picked.size());
