@@ -33,7 +33,7 @@
 
 namespace
 {
-using RouteSections = std::vector<autoware_auto_mapping_msgs::msg::HADMapSegment>;
+using RouteSections = std::vector<autoware_planning_msgs::msg::LaneletSegment>;
 RouteSections combine_consecutive_route_sections(
   const RouteSections & route_sections1, const RouteSections & route_sections2)
 {
@@ -110,15 +110,21 @@ void DefaultPlanner::initialize(rclcpp::Node * node)
 {
   is_graph_ready_ = false;
   node_ = node;
-  map_subscriber_ = node_->create_subscription<autoware_auto_mapping_msgs::msg::HADMapBin>(
+  map_subscriber_ = node_->create_subscription<HADMapBin>(
     "input/vector_map", rclcpp::QoS{10}.transient_local(),
     std::bind(&DefaultPlanner::map_callback, this, std::placeholders::_1));
 }
 
+void DefaultPlanner::initialize(rclcpp::Node * node, const HADMapBin::ConstSharedPtr msg)
+{
+  is_graph_ready_ = false;
+  node_ = node;
+  map_callback(msg);
+}
+
 bool DefaultPlanner::ready() const { return is_graph_ready_; }
 
-void DefaultPlanner::map_callback(
-  const autoware_auto_mapping_msgs::msg::HADMapBin::ConstSharedPtr msg)
+void DefaultPlanner::map_callback(const HADMapBin::ConstSharedPtr msg)
 {
   route_handler_.setMap(*msg);
   lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
@@ -130,7 +136,7 @@ void DefaultPlanner::map_callback(
   is_graph_ready_ = true;
 }
 
-PlannerPlugin::MarkerArray DefaultPlanner::visualize(const HADMapRoute & route) const
+PlannerPlugin::MarkerArray DefaultPlanner::visualize(const LaneletRoute & route) const
 {
   lanelet::ConstLanelets route_lanelets;
   lanelet::ConstLanelets end_lanelets;
@@ -141,7 +147,7 @@ PlannerPlugin::MarkerArray DefaultPlanner::visualize(const HADMapRoute & route) 
     for (const auto & lane_id : route_section.primitives) {
       auto lanelet = lanelet_map_ptr_->laneletLayer.get(lane_id.id);
       route_lanelets.push_back(lanelet);
-      if (route_section.preferred_primitive_id == lane_id.id) {
+      if (route_section.preferred_primitive.id == lane_id.id) {
         goal_lanelets.push_back(lanelet);
       } else {
         end_lanelets.push_back(lanelet);
@@ -233,7 +239,7 @@ bool DefaultPlanner::is_goal_valid(const geometry_msgs::msg::Pose & goal) const
   return false;
 }
 
-PlannerPlugin::HADMapRoute DefaultPlanner::plan(const RoutePoints & points)
+PlannerPlugin::LaneletRoute DefaultPlanner::plan(const RoutePoints & points)
 {
   const auto logger = node_->get_logger();
 
@@ -246,7 +252,7 @@ PlannerPlugin::HADMapRoute DefaultPlanner::plan(const RoutePoints & points)
     logger, "start planning route with check points: " << std::endl
                                                        << log_ss.str());
 
-  autoware_auto_planning_msgs::msg::HADMapRoute route_msg;
+  LaneletRoute route_msg;
   RouteSections route_sections;
 
   if (!is_goal_valid(points.back())) {
@@ -286,7 +292,7 @@ PlannerPlugin::HADMapRoute DefaultPlanner::plan(const RoutePoints & points)
 geometry_msgs::msg::Pose DefaultPlanner::refine_goal_height(
   const Pose & goal, const RouteSections & route_sections)
 {
-  const auto goal_lane_id = route_sections.back().preferred_primitive_id;
+  const auto goal_lane_id = route_sections.back().preferred_primitive.id;
   lanelet::Lanelet goal_lanelet = lanelet_map_ptr_->laneletLayer.get(goal_lane_id);
   const auto goal_lanelet_pt = lanelet::utils::conversion::toLaneletPoint(goal.position);
   const auto goal_height = project_goal_to_map(goal_lanelet, goal_lanelet_pt);

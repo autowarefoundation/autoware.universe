@@ -17,6 +17,7 @@
 
 #include "behavior_path_planner/scene_module/avoidance/avoidance_module_data.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
+#include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
 #include "behavior_path_planner/scene_module/utils/path_shifter.hpp"
 
 #include <rclcpp/rclcpp.hpp>
@@ -25,6 +26,7 @@
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
 #include <tier4_planning_msgs/msg/avoidance_debug_msg.hpp>
+#include <tier4_planning_msgs/msg/avoidance_debug_msg_array.hpp>
 
 #include <memory>
 #include <string>
@@ -49,6 +51,7 @@ public:
   void onEntry() override;
   void onExit() override;
   void updateData() override;
+  void acceptVisitor(const std::shared_ptr<SceneModuleVisitor> & visitor) const override;
 
   void publishRTCStatus() override
   {
@@ -78,6 +81,7 @@ public:
     rtc_interface_left_.unlockCommandUpdate();
     rtc_interface_right_.unlockCommandUpdate();
   }
+  std::shared_ptr<AvoidanceDebugMsgArray> get_debug_msg_array() const;
 
 private:
   struct RegisteredShiftLine
@@ -188,6 +192,15 @@ private:
     }
   }
 
+  /**
+   * object pre-process
+   */
+  void fillAvoidanceTargetObjects(AvoidancePlanningData & data, DebugData & debug) const;
+  void fillObjectEnvelopePolygon(const Pose & closest_pose, ObjectData & object_data) const;
+  void fillObjectMovingTime(ObjectData & object_data) const;
+  void compensateDetectionLost(
+    ObjectDataArray & target_objects, ObjectDataArray & other_objects) const;
+
   // data used in previous planning
   ShiftedPath prev_output_;
   ShiftedPath prev_linear_shift_path_;  // used for shift point check
@@ -200,18 +213,16 @@ private:
   void updateRegisteredRawShiftLines();
 
   // -- for state management --
+  bool is_avoidance_maneuver_starts;
+  bool isAvoidanceManeuverRunning();
   bool isAvoidancePlanRunning() const;
 
   // -- for pre-processing --
   void initVariables();
   AvoidancePlanningData calcAvoidancePlanningData(DebugData & debug) const;
-  ObjectDataArray calcAvoidanceTargetObjects(
-    const lanelet::ConstLanelets & lanelets, const PathWithLaneId & reference_path,
-    DebugData & debug) const;
 
   ObjectDataArray registered_objects_;
   void updateRegisteredObject(const ObjectDataArray & objects);
-  void CompensateDetectionLost(ObjectDataArray & objects) const;
 
   // -- for shift point generation --
   AvoidLineArray calcShiftLines(AvoidLineArray & current_raw_shift_lines, DebugData & debug) const;
@@ -283,7 +294,9 @@ private:
 
   // debug
   mutable DebugData debug_data_;
-  void setDebugData(const PathShifter & shifter, const DebugData & debug);
+  mutable std::shared_ptr<AvoidanceDebugMsgArray> debug_msg_ptr_;
+  void setDebugData(
+    const AvoidancePlanningData & data, const PathShifter & shifter, const DebugData & debug) const;
   void updateAvoidanceDebugData(std::vector<AvoidanceDebugMsg> & avoidance_debug_msg_array) const;
   mutable std::vector<AvoidanceDebugMsg> debug_avoidance_initializer_for_shift_line_;
   mutable rclcpp::Time debug_avoidance_initializer_for_shift_line_time_;
@@ -313,6 +326,11 @@ private:
   double getCurrentBaseShift() const { return path_shifter_.getBaseOffset(); }
   double getCurrentShift() const;
   double getCurrentLinearShift() const;
+
+  /**
+   * avoidance module misc data
+   */
+  mutable ObjectDataArray stopped_objects_;
 };
 
 }  // namespace behavior_path_planner

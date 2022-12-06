@@ -59,7 +59,7 @@ struct PUllOverStatus
   std::shared_ptr<PathWithLaneId> prev_stop_path{nullptr};
   lanelet::ConstLanelets current_lanes{};
   lanelet::ConstLanelets pull_over_lanes{};
-  lanelet::ConstLanelets lanes{};  // current + pull_over
+  std::vector<DrivableLanes> lanes{};  // current + pull_over
   bool has_decided_path{false};
   bool is_safe{false};
   bool prev_is_safe{false};
@@ -89,6 +89,11 @@ public:
 
   void setParameters(const PullOverParameters & parameters);
 
+  void acceptVisitor(
+    [[maybe_unused]] const std::shared_ptr<SceneModuleVisitor> & visitor) const override
+  {
+  }
+
 private:
   PullOverParameters parameters_;
 
@@ -112,7 +117,6 @@ private:
   GeometricParallelParking parallel_parking_planner_;
   ParallelParkingParameters parallel_parking_parameters_;
   std::deque<nav_msgs::msg::Odometry::ConstSharedPtr> odometry_buffer_;
-  std::shared_ptr<LaneDepartureChecker> lane_departure_checker_;
   tier4_autoware_utils::LinearRing2d vehicle_footprint_;
   std::unique_ptr<rclcpp::Time> last_received_time_;
   std::unique_ptr<rclcpp::Time> last_approved_time_;

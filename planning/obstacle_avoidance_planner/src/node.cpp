@@ -264,6 +264,9 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
     vehicle_param_.wheelbase = vehicle_info.wheel_base_m;
     vehicle_param_.rear_overhang = vehicle_info.rear_overhang_m;
     vehicle_param_.front_overhang = vehicle_info.front_overhang_m;
+    vehicle_param_.right_overhang = vehicle_info.right_overhang_m;
+    vehicle_param_.left_overhang = vehicle_info.left_overhang_m;
+    vehicle_param_.wheel_tread = vehicle_info.wheel_tread_m;
   }
 
   {  // option parameter
@@ -312,6 +315,11 @@ ObstacleAvoidancePlanner::ObstacleAvoidancePlanner(const rclcpp::NodeOptions & n
       declare_parameter<int>("common.num_fix_points_for_extending");
     traj_param_.max_dist_for_extending_end_point =
       declare_parameter<double>("common.max_dist_for_extending_end_point");
+    traj_param_.non_fixed_trajectory_length =
+      declare_parameter<double>("common.non_fixed_trajectory_length");
+
+    traj_param_.enable_clipping_fixed_traj =
+      declare_parameter<bool>("common.enable_clipping_fixed_traj");
 
     // object
     traj_param_.max_avoiding_ego_velocity_ms =
@@ -1409,10 +1417,9 @@ std::vector<TrajectoryPoint> ObstacleAvoidancePlanner::getExtendedTrajectory(
   }
 
   auto extended_traj_points = [&]() -> std::vector<TrajectoryPoint> {
-    constexpr double non_fixed_traj_length = 5.0;  // TODO(murooka) may be better to tune
     const size_t non_fixed_begin_path_idx = opt_end_path_idx.get();
-    const size_t non_fixed_end_path_idx =
-      points_utils::findForwardIndex(path_points, non_fixed_begin_path_idx, non_fixed_traj_length);
+    const size_t non_fixed_end_path_idx = points_utils::findForwardIndex(
+      path_points, non_fixed_begin_path_idx, traj_param_.non_fixed_trajectory_length);
 
     if (
       non_fixed_begin_path_idx == path_points.size() - 1 ||
