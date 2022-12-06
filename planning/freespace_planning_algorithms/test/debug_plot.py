@@ -120,16 +120,16 @@ class VehicleModel:
         z = quaternion.z
         w = quaternion.w
 
-        sinr_cosp = 2 * (w * x + y * z)
-        cosr_cosp = 1 - 2 * (x * x + y * y)
-        roll = atan2(sinr_cosp, cosr_cosp)
+        sin_roll_cos_pitch = 2 * (w * x + y * z)
+        cos_roll_cos_pitch = 1 - 2 * (x * x + y * y)
+        roll = atan2(sin_roll_cos_pitch, cos_roll_cos_pitch)
 
-        sinp = 2 * (w * y - z * x)
-        pitch = asin(sinp)
+        sin_pitch = 2 * (w * y - z * x)
+        pitch = asin(sin_pitch)
 
-        siny_cosp = 2 * (w * z + x * y)
-        cosy_cosp = 1 - 2 * (y * y + z * z)
-        yaw = atan2(siny_cosp, cosy_cosp)
+        sin_yaw_cos_pitch = 2 * (w * z + x * y)
+        cos_yaw_cos_pitch = 1 - 2 * (y * y + z * z)
+        yaw = atan2(sin_yaw_cos_pitch, cos_yaw_cos_pitch)
         return roll, pitch, yaw
 
     @staticmethod
