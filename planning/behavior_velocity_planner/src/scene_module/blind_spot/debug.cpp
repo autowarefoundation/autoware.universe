@@ -77,10 +77,18 @@ visualization_msgs::msg::MarkerArray BlindSpotModule::createVirtualWallMarkerArr
   const auto now = this->clock_->now();
 
   if (!isActivated() && !is_over_pass_judge_line_) {
+    created_virtual_wall_marker_ = true;
     appendMarkerArray(
       motion_utils::createStopVirtualWallMarker(
         debug_data_.virtual_wall_pose, "blind_spot", now, module_id_),
       &wall_marker, now);
+  } else {
+    if (created_virtual_wall_marker_){
+      // delete marker
+      appendMarkerArray(
+        motion_utils::createDeletedStopVirtualWallMarker(now, module_id_), &wall_marker, now);
+    }
+    created_virtual_wall_marker_ = false;
   }
   return wall_marker;
 }

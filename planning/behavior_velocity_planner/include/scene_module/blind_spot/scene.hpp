@@ -88,6 +88,7 @@ private:
   TurnDirection turn_direction_;
   bool has_traffic_light_;
   bool is_over_pass_judge_line_;
+  bool created_virtual_wall_marker_;
 
   // Parameter
   PlannerParam planner_param_;
