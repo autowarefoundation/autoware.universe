@@ -711,9 +711,9 @@ void BehaviorPathPlannerNode::publish_bounds(const PathWithLaneId & path)
   constexpr double scale_x = 0.1;
   constexpr double scale_y = 0.1;
   constexpr double scale_z = 0.1;
-  constexpr double color_r = 0.0 / 256;
-  constexpr double color_g = 148 / 256;
-  constexpr double color_b = 205 / 256;
+  constexpr double color_r = 0.0 / 256.0;
+  constexpr double color_g = 148.0 / 256.0;
+  constexpr double color_b = 205.0 / 256.0;
   constexpr double color_a = 0.999;
 
   auto left_marker = tier4_autoware_utils::createDefaultMarker(
