@@ -16,7 +16,6 @@
 
 #include "motion_utils/trajectory/trajectory.hpp"
 #include "obstacle_avoidance_planner/common_structs.hpp"
-#include "obstacle_avoidance_planner/costmap_generator.hpp"
 #include "obstacle_avoidance_planner/eb_path_optimizer.hpp"
 #include "obstacle_avoidance_planner/mpt_optimizer.hpp"
 #include "opencv2/core.hpp"
@@ -191,7 +190,6 @@ private:
   double max_delta_time_sec_for_replan_;
 
   // core algorithm
-  std::unique_ptr<CostmapGenerator> costmap_generator_ptr_;
   std::unique_ptr<EBPathOptimizer> eb_path_optimizer_ptr_;
   std::unique_ptr<MPTOptimizer> mpt_optimizer_ptr_;
 

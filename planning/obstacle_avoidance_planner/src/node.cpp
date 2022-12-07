@@ -16,7 +16,6 @@
 
 #include "interpolation/spline_interpolation_points_2d.hpp"
 #include "motion_utils/motion_utils.hpp"
-#include "obstacle_avoidance_planner/utils/cv_utils.hpp"
 #include "obstacle_avoidance_planner/utils/debug_utils.hpp"
 #include "obstacle_avoidance_planner/utils/utils.hpp"
 #include "rclcpp/time.hpp"
@@ -846,8 +845,6 @@ void ObstacleAvoidancePlanner::onEnableAvoidance(
 void ObstacleAvoidancePlanner::resetPlanning()
 {
   RCLCPP_WARN(get_logger(), "[ObstacleAvoidancePlanner] Reset planning");
-
-  costmap_generator_ptr_ = std::make_unique<CostmapGenerator>();
 
   eb_path_optimizer_ptr_ = std::make_unique<EBPathOptimizer>(
     is_showing_debug_info_, traj_param_, eb_param_, vehicle_param_);

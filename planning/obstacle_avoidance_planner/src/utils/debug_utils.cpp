@@ -15,7 +15,6 @@
 #include "obstacle_avoidance_planner/utils/debug_utils.hpp"
 
 #include "obstacle_avoidance_planner/mpt_optimizer.hpp"
-#include "obstacle_avoidance_planner/utils/cv_utils.hpp"
 #include "obstacle_avoidance_planner/utils/utils.hpp"
 #include "tf2/utils.h"
 
@@ -812,20 +811,5 @@ visualization_msgs::msg::MarkerArray getDebugVisualizationWallMarker(
       &vis_marker_array);
   }
   return vis_marker_array;
-}
-
-nav_msgs::msg::OccupancyGrid getDebugCostmap(
-  const cv::Mat & clearance_map, const nav_msgs::msg::OccupancyGrid & occupancy_grid)
-{
-  if (clearance_map.empty()) return nav_msgs::msg::OccupancyGrid();
-
-  cv::Mat tmp;
-  clearance_map.copyTo(tmp);
-  cv::normalize(tmp, tmp, 0, 255, cv::NORM_MINMAX, CV_8UC1);
-  nav_msgs::msg::OccupancyGrid clearance_map_in_og = occupancy_grid;
-  tmp.forEach<unsigned char>([&](const unsigned char & value, const int * position) -> void {
-    cv_utils::putOccupancyGridValue(clearance_map_in_og, position[0], position[1], value);
-  });
-  return clearance_map_in_og;
 }
 }  // namespace debug_utils

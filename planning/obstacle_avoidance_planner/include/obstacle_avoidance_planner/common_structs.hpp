@@ -37,15 +37,6 @@ using SequentialBounds = std::vector<Bounds>;
 
 using BoundsCandidates = std::vector<Bounds>;
 
-struct CVMaps
-{
-  cv::Mat drivable_area;
-  cv::Mat clearance_map;
-  cv::Mat only_objects_clearance_map;
-  cv::Mat area_with_objects_map;
-  nav_msgs::msg::MapMetaData map_info;
-};
-
 struct QPParam
 {
   int max_iteration;

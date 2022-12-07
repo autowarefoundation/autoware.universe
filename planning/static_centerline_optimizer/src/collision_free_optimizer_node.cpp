@@ -371,8 +371,6 @@ void CollisionFreeOptimizerNode::resetPlanning()
 {
   RCLCPP_WARN(get_logger(), "[ObstacleAvoidancePlanner] Reset planning");
 
-  costmap_generator_ptr_ = std::make_unique<CostmapGenerator>();
-
   eb_path_optimizer_ptr_ = std::make_unique<EBPathOptimizer>(
     is_showing_debug_info_, traj_param_, eb_param_, vehicle_param_);
 
@@ -391,7 +389,7 @@ void CollisionFreeOptimizerNode::resetPrevOptimization()
 
 Trajectory CollisionFreeOptimizerNode::pathCallback(const Path::ConstSharedPtr path_ptr)
 {
-  if (path_ptr->points.empty() || path_ptr->drivable_area.data.empty()) {
+  if (path_ptr->points.empty()) {
     return Trajectory{};
   }
 
