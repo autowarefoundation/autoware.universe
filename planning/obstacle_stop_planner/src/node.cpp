@@ -334,6 +334,7 @@ void ObstacleStopPlannerNode::searchObstacle(
 
   updateObstacleHistory(now);
 
+  const auto object_ptr = object_ptr_;
   for (size_t i = 0; i < decimate_trajectory.size() - 1; ++i) {
     // create one step circle center for vehicle
     const auto & p_front = decimate_trajectory.at(i).pose;
@@ -344,38 +345,69 @@ void ObstacleStopPlannerNode::searchObstacle(
     const Point2d next_center_point(next_center_pose.position.x, next_center_pose.position.y);
 
     if (node_param_.enable_slow_down) {
-      std::vector<cv::Point2d> one_step_move_slow_down_range_polygon;
-      // create one step polygon for slow_down range
-      createOneStepPolygon(
-        p_front, p_back, one_step_move_slow_down_range_polygon, vehicle_info,
-        slow_down_param_.lateral_margin);
-      debug_ptr_->pushPolygon(
-        one_step_move_slow_down_range_polygon, p_front.position.z, PolygonType::SlowDownRange);
+        for (const auto & obj :object_ptr->objects ) {
+            if (obj.classification.front().label == autoware_auto_perception_msgs::msg::ObjectClassification::PEDESTRIAN) {
+                std::vector<cv::Point2d> one_step_move_slow_down_range_polygon;
+                // create one step polygon for slow_down range
+                createOneStepPolygon(
+                        p_front, p_back, one_step_move_slow_down_range_polygon, vehicle_info,
+                        slow_down_param_.lateral_margin);
+                debug_ptr_->pushPolygon(
+                        one_step_move_slow_down_range_polygon, p_front.position.z, PolygonType::SlowDownRange);
 
-      planner_data.found_slow_down_points = withinPolygon(
-        one_step_move_slow_down_range_polygon, slow_down_param_.slow_down_search_radius,
-        prev_center_point, next_center_point, obstacle_candidate_pointcloud_ptr,
-        slow_down_pointcloud_ptr);
+                planner_data.found_slow_down_points = withinPolygon(
+                        one_step_move_slow_down_range_polygon, slow_down_param_.slow_down_search_radius,
+                        prev_center_point, next_center_point, obstacle_candidate_pointcloud_ptr,
+                        slow_down_pointcloud_ptr);
 
-      const auto found_first_slow_down_points =
-        planner_data.found_slow_down_points && !planner_data.slow_down_require;
+                const auto found_first_slow_down_points =
+                        planner_data.found_slow_down_points && !planner_data.slow_down_require;
 
-      if (found_first_slow_down_points) {
-        // found nearest slow down obstacle
-        planner_data.decimate_trajectory_slow_down_index = i;
-        planner_data.slow_down_require = true;
-        getNearestPoint(
-          *slow_down_pointcloud_ptr, p_front, &planner_data.nearest_slow_down_point,
-          &planner_data.nearest_collision_point_time);
-        getLateralNearestPoint(
-          *slow_down_pointcloud_ptr, p_front, &planner_data.lateral_nearest_slow_down_point,
-          &planner_data.lateral_deviation);
+                if (found_first_slow_down_points) {
+                    // found nearest slow down obstacle
+                    planner_data.decimate_trajectory_slow_down_index = i;
+                    planner_data.slow_down_require = true;
+                    getNearestPoint(
+                            *slow_down_pointcloud_ptr, p_front, &planner_data.nearest_slow_down_point,
+                            &planner_data.nearest_collision_point_time);
+                    getLateralNearestPoint(
+                            *slow_down_pointcloud_ptr, p_front, &planner_data.lateral_nearest_slow_down_point,
+                            &planner_data.lateral_deviation);
 
         debug_ptr_->pushObstaclePoint(planner_data.nearest_slow_down_point, PointType::SlowDown);
         debug_ptr_->pushPolygon(
           one_step_move_slow_down_range_polygon, p_front.position.z, PolygonType::SlowDown);
+
+        last_detect_time_slowdown_point_ = trajectory_header.stamp;
       }
 
+                planner_data.found_slow_down_points = withinPolygon(
+                        one_step_move_slow_down_range_polygon, slow_down_param_.slow_down_search_radius,
+                        prev_center_point, next_center_point, obstacle_candidate_pointcloud_ptr,
+                        slow_down_pointcloud_ptr);
+
+                const auto found_first_slow_down_points =
+                        planner_data.found_slow_down_points && !planner_data.slow_down_require;
+
+                if (found_first_slow_down_points) {
+                    // found nearest slow down obstacle
+                    planner_data.decimate_trajectory_slow_down_index = i;
+                    planner_data.slow_down_require = true;
+                    getNearestPoint(
+                            *slow_down_pointcloud_ptr, p_front, &planner_data.nearest_slow_down_point,
+                            &planner_data.nearest_collision_point_time);
+                    getLateralNearestPoint(
+                            *slow_down_pointcloud_ptr, p_front, &planner_data.lateral_nearest_slow_down_point,
+                            &planner_data.lateral_deviation);
+
+                    debug_ptr_->pushObstaclePoint(planner_data.nearest_slow_down_point, PointType::SlowDown);
+                    debug_ptr_->pushPolygon(
+                            one_step_move_slow_down_range_polygon, p_front.position.z, PolygonType::SlowDown);
+
+                    last_detect_time_slowdown_point_ = trajectory_header.stamp;
+                }
+            }
+        }
     } else {
       slow_down_pointcloud_ptr = obstacle_candidate_pointcloud_ptr;
     }
@@ -411,14 +443,10 @@ void ObstacleStopPlannerNode::searchObstacle(
     }
   }
 
-  for (size_t i = 0; i < decimate_trajectory.size() - 1; ++i) {
-    // create one step circle center for vehicle
-    const auto & p_front = decimate_trajectory.at(i).pose;
-    const auto & p_back = decimate_trajectory.at(i + 1).pose;
-    const auto prev_center_pose = getVehicleCenterFromBase(p_front, vehicle_info);
-    const Point2d prev_center_point(prev_center_pose.position.x, prev_center_pose.position.y);
-    const auto next_center_pose = getVehicleCenterFromBase(p_back, vehicle_info);
-    const Point2d next_center_point(next_center_pose.position.x, next_center_pose.position.y);
+        mutex_.lock();
+        const auto object_ptr = object_ptr_;
+        const auto current_velocity_ptr = current_velocity_ptr_;
+        mutex_.unlock();
 
     std::vector<cv::Point2d> one_step_move_vehicle_polygon;
     // create one step polygon for vehicle
