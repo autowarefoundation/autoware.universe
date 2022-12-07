@@ -844,6 +844,12 @@ bool AccelBrakeMapCalibrator::updateFourCellAroundOffset(
     brake_map_value_.size() - 1,
     std::vector<Eigen::MatrixXd>(
       accel_map_value_.at(0).size() - 1, Eigen::MatrixXd::Identity(4, 4) * covariance_));
+  static Eigen::MatrixXd accel_data_mean_mat_ = Eigen::MatrixXd::Constant(accel_map_value_.size(),accel_map_value_.at(0).size(),map_offset_);
+  static Eigen::MatrixXd brake_data_mean_mat_ = Eigen::MatrixXd::Constant(brake_map_value_.size(),brake_map_value_.at(0).size(),map_offset_);
+  static Eigen::MatrixXd accel_data_covariance_mat_ = Eigen::MatrixXd::Constant(accel_map_value_.size(),accel_map_value_.at(0).size(),covariance_);
+  static Eigen::MatrixXd brake_data_covariance_mat_ = Eigen::MatrixXd::Constant(brake_map_value_.size(),brake_map_value_.at(0).size(),covariance_);
+  static Eigen::MatrixXd accel_data_weighted_num_ = Eigen::MatrixXd::Constant(accel_map_value_.size(),accel_map_value_.at(0).size(),1);
+  static Eigen::MatrixXd brake_data_weighted_num_ = Eigen::MatrixXd::Constant(brake_map_value_.size(),brake_map_value_.at(0).size(),1);
 
   auto & update_map_value = accel_mode ? update_accel_map_value_ : update_brake_map_value_;
   const auto & map_value = accel_mode ? accel_map_value_ : brake_map_value_;
@@ -851,10 +857,12 @@ bool AccelBrakeMapCalibrator::updateFourCellAroundOffset(
   const auto & pedal_index_ = accel_mode ? accel_pedal_index_ : brake_pedal_index_;
   const auto & vel_index = accel_mode ? accel_vel_index : brake_vel_index;
   const auto & vel_index_ = accel_mode ? accel_vel_index_ : brake_vel_index_;
-  const auto & delayed_pedal =
-    accel_mode ? delayed_accel_pedal_ptr_->data : delayed_brake_pedal_ptr_->data;
+  const auto & delayed_pedal = accel_mode ? delayed_accel_pedal_ptr_->data : delayed_brake_pedal_ptr_->data;
   auto & map_offset_vec = accel_mode ? accel_map_offset_vec_ : brake_map_offset_vec_;
   auto & covariance_mat = accel_mode ? accel_covariance_mat_ : brake_covariance_mat_;
+  auto & data_mean_mat = accel_mode ? accel_data_mean_mat_ : brake_data_mean_mat_;
+  auto & data_covariance_mat = accel_mode ? accel_data_covariance_mat_ : brake_data_covariance_mat_;
+  auto & data_weighted_num = accel_mode ? accel_data_weighted_num_ : brake_data_weighted_num_;
 
   const double zll = update_map_value.at(pedal_index + 0).at(vel_index + 0);
   const double zhl = update_map_value.at(pedal_index + 1).at(vel_index + 0);
@@ -874,6 +882,24 @@ bool AccelBrakeMapCalibrator::updateFourCellAroundOffset(
   Eigen::Vector4d theta(4);
   theta << zll, zhl, zlh, zhh;
 
+  Eigen::Vector4d weighted_sum(4);
+  weighted_sum << data_weighted_num(pedal_index + 0,vel_index + 0),
+  data_weighted_num(pedal_index + 1,vel_index + 0),
+  data_weighted_num(pedal_index + 0,vel_index + 1),
+  data_weighted_num(pedal_index + 1,vel_index + 1);
+
+  Eigen::Vector4d sigma(4);
+  sigma << data_covariance_mat(pedal_index + 0,vel_index + 0),
+  data_covariance_mat(pedal_index + 1,vel_index + 0),
+  data_covariance_mat(pedal_index + 0,vel_index + 1),
+  data_covariance_mat(pedal_index + 1,vel_index + 1);
+
+  Eigen::Vector4d mean(4);
+  mean << data_mean_mat(pedal_index + 0,vel_index + 0),
+  data_mean_mat(pedal_index + 1,vel_index + 0),
+  data_mean_mat(pedal_index + 0,vel_index + 1),
+  data_mean_mat(pedal_index + 1,vel_index + 1);
+
   const int vel_idx_l = vel_index + 0;
   const int vel_idx_h = vel_index + 1;
   const int ped_idx_l = pedal_index + 0;
@@ -884,6 +910,8 @@ bool AccelBrakeMapCalibrator::updateFourCellAroundOffset(
   map_offset(1) = map_offset_vec.at(ped_idx_h).at(vel_idx_l);
   map_offset(2) = map_offset_vec.at(ped_idx_l).at(vel_idx_h);
   map_offset(3) = map_offset_vec.at(ped_idx_h).at(vel_idx_h);
+
+  Eigen::VectorXd updated_map_offset(4);
 
   Eigen::MatrixXd covariance = covariance_mat.at(ped_idx_l).at(vel_idx_l);
 
@@ -899,13 +927,35 @@ bool AccelBrakeMapCalibrator::updateFourCellAroundOffset(
   double eta_hat = phiT * theta;
 
   const double error_map_offset = measured_acc - eta_hat;
-  map_offset = map_offset + G * error_map_offset;
+  updated_map_offset = map_offset + G * error_map_offset;
+
+  for(int i=0;i<4;i++){
+    const double pre_mean=mean(i);
+    mean(i)=(weighted_sum(i)*pre_mean+error_map_offset)/(weighted_sum(i)+1);
+    sigma(i)=(weighted_sum(i)*(sigma(i)+pre_mean*pre_mean)+error_map_offset*error_map_offset)/(weighted_sum(i)+1)-mean(i)*mean(i);
+    weighted_sum(i)=weighted_sum(i)+1;
+  }
 
   /* input calculated result and update map */
-  map_offset_vec.at(ped_idx_l).at(vel_idx_l) = map_offset(0);
-  map_offset_vec.at(ped_idx_h).at(vel_idx_l) = map_offset(1);
-  map_offset_vec.at(ped_idx_l).at(vel_idx_h) = map_offset(2);
-  map_offset_vec.at(ped_idx_h).at(vel_idx_h) = map_offset(3);
+  map_offset_vec.at(ped_idx_l).at(vel_idx_l) = updated_map_offset(0);
+  map_offset_vec.at(ped_idx_h).at(vel_idx_l) = updated_map_offset(1);
+  map_offset_vec.at(ped_idx_l).at(vel_idx_h) = updated_map_offset(2);
+  map_offset_vec.at(ped_idx_h).at(vel_idx_h) = updated_map_offset(3);
+
+  data_covariance_mat(ped_idx_l,vel_idx_l) = sigma(0);
+  data_covariance_mat(ped_idx_h,vel_idx_l) = sigma(1);
+  data_covariance_mat(ped_idx_l,vel_idx_h) = sigma(2);
+  data_covariance_mat(ped_idx_h,vel_idx_h) = sigma(3);
+
+  data_weighted_num(ped_idx_l,vel_idx_l) = weighted_sum(0);
+  data_weighted_num(ped_idx_h,vel_idx_l) = weighted_sum(1);
+  data_weighted_num(ped_idx_l,vel_idx_h) = weighted_sum(2);
+  data_weighted_num(ped_idx_h,vel_idx_h) = weighted_sum(3);
+
+  data_mean_mat(ped_idx_l,vel_idx_l) = mean(0);
+  data_mean_mat(ped_idx_h,vel_idx_l) = mean(1);
+  data_mean_mat(ped_idx_l,vel_idx_h) = mean(2);
+  data_mean_mat(ped_idx_h,vel_idx_h) = mean(3);
 
   covariance_mat.at(ped_idx_l).at(vel_idx_l) = covariance;
 
