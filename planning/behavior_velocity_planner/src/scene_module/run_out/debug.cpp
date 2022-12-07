@@ -165,13 +165,26 @@ visualization_msgs::msg::MarkerArray RunOutDebug::createVirtualWallMarkerArray()
 {
   visualization_msgs::msg::MarkerArray wall_marker;
   rclcpp::Time now = node_.now();
-  size_t id = 0;
+
+  size_t id_to_create = 0;
+  size_t id_to_delete = 0;
+
+  for (const auto & p : stopped_pose_) {
+    const bool stopped_pose_is_in_stop_pose = std::any_of(
+      stop_pose_.begin(), stop_pose_.end(), [&](const auto & elem) { return elem == p; });
+    if (!stopped_pose_is_in_stop_pose) {
+      appendMarkerArray(
+        motion_utils::createDeletedStopVirtualWallMarker(now, id_to_delete++), &wall_marker, now);
+    }
+    id_to_delete++;
+  }
 
   for (const auto & p : stop_pose_) {
     appendMarkerArray(
-      motion_utils::createStopVirtualWallMarker(p, "run_out", now, id++), &wall_marker);
+      motion_utils::createStopVirtualWallMarker(p, "run_out", now, id_to_create++), &wall_marker);
   }
 
+  stopped_pose_ = stop_pose_;
   stop_pose_.clear();
 
   return wall_marker;

@@ -122,6 +122,7 @@ private:
   std::vector<geometry_msgs::msg::Point> collision_points_;
   std::vector<geometry_msgs::msg::Point> nearest_collision_point_;
   std::vector<geometry_msgs::msg::Pose> stop_pose_;
+  std::vector<geometry_msgs::msg::Pose> stopped_pose_;
   std::vector<std::vector<geometry_msgs::msg::Point>> predicted_vehicle_polygons_;
   std::vector<std::vector<geometry_msgs::msg::Point>> predicted_obstacle_polygons_;
   std::vector<std::vector<geometry_msgs::msg::Point>> collision_obstacle_polygons_;
