@@ -167,14 +167,30 @@ visualization_msgs::msg::MarkerArray NoStoppingAreaModule::createVirtualWallMark
   visualization_msgs::msg::MarkerArray wall_marker;
   const auto now = clock_->now();
 
-  auto id = module_id_;
+  auto id_to_create = module_id_;
+  auto id_to_delete = module_id_;
+
+  for (const auto & p : debug_data_.stopped_poses) {
+    const bool stopped_pose_is_in_stop_pose = std::any_of(
+      debug_data_.stop_poses.begin(), debug_data_.stop_poses.end(),
+      [&](const auto & elem) { return elem == p; });
+    if (!stopped_pose_is_in_stop_pose) {
+      appendMarkerArray(
+        motion_utils::createDeletedStopVirtualWallMarker(now, id_to_delete++), &wall_marker, now);
+    }
+    id_to_delete++;
+  }
+
   for (const auto & p : debug_data_.stop_poses) {
     const auto p_front =
       tier4_autoware_utils::calcOffsetPose(p, debug_data_.base_link2front, 0.0, 0.0);
     appendMarkerArray(
-      motion_utils::createStopVirtualWallMarker(p_front, "no_stopping_area", now, id++),
+      motion_utils::createStopVirtualWallMarker(p_front, "no_stopping_area", now, id_to_create++),
       &wall_marker, now);
   }
+
+  debug_data_.stopped_poses = debug_data_.stop_poses;
+
   return wall_marker;
 }
 }  // namespace behavior_velocity_planner

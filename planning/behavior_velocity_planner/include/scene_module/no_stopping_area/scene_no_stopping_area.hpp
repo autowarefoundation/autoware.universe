@@ -52,6 +52,7 @@ public:
   {
     double base_link2front;
     std::vector<geometry_msgs::msg::Pose> stop_poses;
+    std::vector<geometry_msgs::msg::Pose> stopped_poses;
     geometry_msgs::msg::Pose first_stop_pose;
     std::vector<geometry_msgs::msg::Point> stuck_points;
     geometry_msgs::msg::Polygon stuck_vehicle_detect_area;
