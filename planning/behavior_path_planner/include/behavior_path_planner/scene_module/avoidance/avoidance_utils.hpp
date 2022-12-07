@@ -96,7 +96,8 @@ std::vector<Point> updateBoundary(
 
 void generateDrivableArea(
   PathWithLaneId & path, const std::vector<DrivableLanes> & lanes, const double vehicle_length,
-  const std::shared_ptr<const PlannerData> planner_data, const ObjectDataArray & objects);
+  const std::shared_ptr<const PlannerData> planner_data, const ObjectDataArray & objects,
+  const bool enable_bound_clipping);
 }  // namespace behavior_path_planner
 
 #endif  // BEHAVIOR_PATH_PLANNER__SCENE_MODULE__AVOIDANCE__AVOIDANCE_UTILS_HPP_

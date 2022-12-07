@@ -335,6 +335,8 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
   p.drivable_area_right_bound_offset = dp("drivable_area_right_bound_offset", 0.0);
   p.drivable_area_left_bound_offset = dp("drivable_area_left_bound_offset", 0.0);
 
+  p.enable_bound_clipping = dp("enable_bound_clipping", false);
+
   p.avoidance_execution_lateral_threshold = dp("avoidance_execution_lateral_threshold", 0.499);
 
   return p;

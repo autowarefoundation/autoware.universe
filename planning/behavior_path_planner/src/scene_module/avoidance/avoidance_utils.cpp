@@ -456,10 +456,11 @@ std::vector<Point> updateBoundary(
 
 void generateDrivableArea(
   PathWithLaneId & path, const std::vector<DrivableLanes> & lanes, const double vehicle_length,
-  const std::shared_ptr<const PlannerData> planner_data, const ObjectDataArray & objects)
+  const std::shared_ptr<const PlannerData> planner_data, const ObjectDataArray & objects,
+  const bool enable_bound_clipping)
 {
   util::generateDrivableArea(path, lanes, vehicle_length, planner_data);
-  if (objects.empty()) {
+  if (objects.empty() || !enable_bound_clipping) {
     return;
   }
 

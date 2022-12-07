@@ -2017,7 +2017,7 @@ void AvoidanceModule::generateExtendedDrivableArea(ShiftedPath * shifted_path) c
     const auto & p = planner_data_->parameters;
     generateDrivableArea(
       shifted_path->path, drivable_lanes, p.vehicle_length, planner_data_,
-      avoidance_data_.target_objects);
+      avoidance_data_.target_objects, parameters_->enable_bound_clipping);
   }
 }
 
