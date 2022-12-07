@@ -344,8 +344,9 @@ private:
   const std::array<char8_t, 3> version_up_to{2, 1, 0};
 };
 
-template <class PreProcessorType, class InferenceEngineType,
-  class InferenceEngine, class InferenceEngineType, class PostProcessorType>
+template <
+  class PreProcessorType, class InferenceEngineType, class InferenceEngine,
+  class InferenceEngineType, class PostProcessorType>
 class TowStagePipeline
 {
   using InputType = decltype(std::declval<PreProcessorType>().input_type_indicator_);
@@ -360,8 +361,10 @@ public:
    * @param inference_engine a InferenceEngine object
    */
   TowStagePipeline(
-    std::shared_ptr<PreProcessorType> pre_processor, std::shared_ptr<InferenceEngineType> inference_engine_1,
-    std::shared_ptr<InferenceEngine> tvm_script_engine, std::shared_ptr<InferenceEngineType> inference_engine_2,
+    std::shared_ptr<PreProcessorType> pre_processor,
+    std::shared_ptr<InferenceEngineType> inference_engine_1,
+    std::shared_ptr<InferenceEngine> tvm_script_engine,
+    std::shared_ptr<InferenceEngineType> inference_engine_2,
     std::shared_ptr<PostProcessorType> post_processor)
   : pre_processor_(pre_processor),
     inference_engine_1_(inference_engine_1),

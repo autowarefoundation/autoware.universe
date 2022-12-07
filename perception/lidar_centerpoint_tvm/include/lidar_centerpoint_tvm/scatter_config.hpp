@@ -14,40 +14,31 @@
 
 #include "tvm_utility/pipeline.hpp"
 
-
 namespace scatter_config
 {
 
-static const tvm_utility::pipeline::InferenceEngineTVMConfig config {
-  {
-    2,
-    1,
-    0
-  },  // modelzoo_version
+static const tvm_utility::pipeline::InferenceEngineTVMConfig config{
+  {2, 1, 0},  // modelzoo_version
 
   "scatter",  // network_name
-  "llvm",  // network_backend
+  "llvm",     // network_backend
 
-  "./",  //network_module_path
+  "./",  // network_module_path
   "./",  // network_graph_path
   "./",  // network_params_path
 
   kDLFloat,  // tvm_dtype_code
-  32,  // tvm_dtype_bits
-  1,  // tvm_dtype_lanes
+  32,        // tvm_dtype_bits
+  1,         // tvm_dtype_lanes
 
   kDLCPU,  // tvm_device_type
-  0,  // tvm_device_id
+  0,       // tvm_device_id
 
-  {
-    {"pillar_features", {40000, 1, 32}},
-    {"coords", {40000, 3}},
-    {"spatial_features", {1, 32, 560, 560}}
-  },  // network_inputs
+  {{"pillar_features", {40000, 1, 32}},
+   {"coords", {40000, 3}},
+   {"spatial_features", {1, 32, 560, 560}}},  // network_inputs
 
-  {
-    {"spatial_features", {1, 32, 560, 560}}
-  }   // network_outputs
+  {{"spatial_features", {1, 32, 560, 560}}}  // network_outputs
 };
 
-}  // namespace model_zoo
+}  // namespace scatter_config

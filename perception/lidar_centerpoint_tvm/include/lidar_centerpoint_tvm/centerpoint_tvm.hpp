@@ -55,14 +55,15 @@ struct MixedInputs
   std::vector<int32_t> coords;
 };
 
-class LIDAR_CENTERPOINT_TVM_LOCAL TVMScatterIE
-: public tvm_utility::pipeline::InferenceEngine
+class LIDAR_CENTERPOINT_TVM_LOCAL TVMScatterIE : public tvm_utility::pipeline::InferenceEngine
 {
 public:
-  explicit TVMScatterIE(tvm_utility::pipeline::InferenceEngineTVMConfig config,
-    const std::string & pkg_name, const std::string & function_name);
+  explicit TVMScatterIE(
+    tvm_utility::pipeline::InferenceEngineTVMConfig config, const std::string & pkg_name,
+    const std::string & function_name);
   TVMArrayContainerVector schedule(const TVMArrayContainerVector & input);
   void set_coords(TVMArrayContainerVector coords) { coords_ = coords; };
+
 private:
   tvm_utility::pipeline::InferenceEngineTVMConfig config_;
   TVMArrayContainer coords_;
