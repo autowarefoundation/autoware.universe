@@ -869,9 +869,7 @@ void ObstacleAvoidancePlanner::onPath(const Path::SharedPtr path_ptr)
 {
   stop_watch_.tic(__func__);
 
-  if (
-    path_ptr->points.empty() || path_ptr->drivable_area.data.empty() || !current_twist_ptr_ ||
-    !objects_ptr_) {
+  if (path_ptr->points.empty() || !current_twist_ptr_ || !objects_ptr_) {
     return;
   }
 
@@ -1614,25 +1612,6 @@ void ObstacleAvoidancePlanner::publishDebugDataInMain(const Path & path) const
     const auto debug_extended_non_fixed_traj =
       createTrajectory(debug_data_.extended_non_fixed_traj, path.header);
     debug_extended_non_fixed_traj_pub_->publish(debug_extended_non_fixed_traj);
-  }
-
-  {  // publish clearance map
-    stop_watch_.tic("publishClearanceMap");
-
-    if (is_publishing_area_with_objects_) {  // false
-      debug_area_with_objects_pub_->publish(
-        debug_utils::getDebugCostmap(debug_data_.area_with_objects_map, path.drivable_area));
-    }
-    if (is_publishing_object_clearance_map_) {  // false
-      debug_object_clearance_map_pub_->publish(
-        debug_utils::getDebugCostmap(debug_data_.only_object_clearance_map, path.drivable_area));
-    }
-    if (is_publishing_clearance_map_) {  // true
-      debug_clearance_map_pub_->publish(
-        debug_utils::getDebugCostmap(debug_data_.clearance_map, path.drivable_area));
-    }
-    debug_data_.msg_stream << "    getDebugCostMap * 3:= " << stop_watch_.toc("publishClearanceMap")
-                           << " [ms]\n";
   }
 
   debug_data_.msg_stream << "  " << __func__ << ":= " << stop_watch_.toc(__func__) << " [ms]\n";
