@@ -96,7 +96,7 @@ NDTScanMatcher::NDTScanMatcher()
   oscillation_threshold_(10),
   regularization_enabled_(declare_parameter("regularization_enabled", false)),
   estimate_scores_for_degrounded_scan_(declare_parameter("estimate_scores_for_degrounded_scan", false)),
-  ground_removal_z_threshold_(declare_parameter("ground_removal_z_threshold", 0.8))
+  z_margin_for_ground_removal_(declare_parameter("z_margin_for_ground_removal", 0.8))
 {
   (*state_ptr_)["state"] = "Initializing";
   is_activated_ = false;
@@ -442,7 +442,7 @@ void NDTScanMatcher::callback_sensor_points(
     new pcl::PointCloud<PointSource>);
     for(std::size_t i=0;i< sensor_points_mapTF_ptr->size();i++)
     {
-      if(sensor_points_mapTF_ptr->points[i].z - matrix4f_to_pose(ndt_result.pose).position.z> ground_removal_z_threshold_)
+      if(sensor_points_mapTF_ptr->points[i].z - matrix4f_to_pose(ndt_result.pose).position.z> z_margin_for_ground_removal_)
       {
         no_ground_points_mapTF_ptr->points.push_back(sensor_points_mapTF_ptr->points[i]);
       }

@@ -201,7 +201,7 @@ private:
   std::unique_ptr<PoseInitializationModule> pose_init_module_;
 
   bool estimate_scores_for_degrounded_scan_;
-  double ground_removal_z_threshold_ = 1.0;
+  double z_margin_for_ground_removal_ = 1.0;
 };
 
 #endif  // NDT_SCAN_MATCHER__NDT_SCAN_MATCHER_CORE_HPP_
