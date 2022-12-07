@@ -221,6 +221,8 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   p.turn_signal_search_time = declare_parameter("turn_signal_search_time", 3.0);
   p.turn_signal_shift_length_threshold =
     declare_parameter("turn_signal_shift_length_threshold", 0.3);
+  p.turn_signal_on_swerving = declare_parameter("turn_signal_on_swerving", true);
+
   p.path_interval = declare_parameter<double>("path_interval");
   p.visualize_drivable_area_for_shared_linestrings_lanelet =
     declare_parameter("visualize_drivable_area_for_shared_linestrings_lanelet", true);
@@ -285,6 +287,8 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
   p.threshold_time_object_is_moving = dp("threshold_time_object_is_moving", 1.0);
   p.object_check_forward_distance = dp("object_check_forward_distance", 150.0);
   p.object_check_backward_distance = dp("object_check_backward_distance", 2.0);
+  p.object_check_shiftable_ratio = dp("object_check_shiftable_ratio", 1.0);
+  p.object_check_min_road_shoulder_width = dp("object_check_min_road_shoulder_width", 0.5);
   p.object_envelope_buffer = dp("object_envelope_buffer", 0.1);
   p.lateral_collision_margin = dp("lateral_collision_margin", 2.0);
   p.lateral_collision_safety_buffer = dp("lateral_collision_safety_buffer", 0.5);
@@ -329,8 +333,6 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
   p.drivable_area_left_bound_offset = dp("drivable_area_left_bound_offset", 0.0);
 
   p.avoidance_execution_lateral_threshold = dp("avoidance_execution_lateral_threshold", 0.499);
-
-  p.turn_signal_on_swerving = dp("turn_signal_on_swerving", true);
 
   return p;
 }
