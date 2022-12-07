@@ -158,8 +158,20 @@ bool SpeedBumpModule::applySlowDownSpeed(PathWithLaneId & output)
   } else if (slow_end_point_range > 0) {
     state_ = State::INSIDE;
 
-    // insert constant ego speed until the end of the speed bump
-    for (auto & p : output.points) {
+    // insert slow_end_point
+    const double overlap_threshold = 5e-2;
+    const size_t p_slow_end_base_idx =
+      motion_utils::findNearestSegmentIndex(output.points, p_slow_end.get());
+    const auto p_slow_end_idx = motion_utils::insertTargetPoint(
+      p_slow_end_base_idx, p_slow_end.get(), output.points, overlap_threshold);
+
+    if (!p_slow_end_idx) {
+      return false;
+    }
+
+    // insert constant ego speed until slow_end_point
+    for (size_t i = 0; i <= p_slow_end_idx.get(); ++i) {
+      auto & p = output.points.at(i);
       const auto & original_velocity = p.point.longitudinal_velocity_mps;
       p.point.longitudinal_velocity_mps = std::min(original_velocity, speed_bump_slow_down_speed_);
     }
