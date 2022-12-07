@@ -79,6 +79,7 @@ private:
   rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr update_map_occ_pub_;
   rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr original_map_raw_pub_;
   rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr update_map_raw_pub_;
+  rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr offset_covariance_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32MultiArrayStamped>::SharedPtr debug_pub_;
   rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr data_count_pub_;
   rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr data_count_with_self_pose_pub_;
@@ -184,6 +185,8 @@ private:
   std::vector<std::vector<double>> brake_map_value_;
   std::vector<std::vector<double>> update_accel_map_value_;
   std::vector<std::vector<double>> update_brake_map_value_;
+  std::vector<std::vector<double>> accel_offset_covariance_value_;
+  std::vector<std::vector<double>> brake_offset_covariance_value_;
   std::vector<std::vector<std::vector<double>>> map_value_data_;
   std::vector<double> accel_vel_index_;
   std::vector<double> brake_vel_index_;
@@ -296,6 +299,9 @@ private:
   void publishMap(
     const std::vector<std::vector<double>> accel_map_value,
     const std::vector<std::vector<double>> brake_map_value, const std::string publish_type);
+  void publishOffsetCovMap(
+    const std::vector<std::vector<double>> accel_map_value,
+    const std::vector<std::vector<double>> brake_map_value);
   void publishCountMap();
   void publishIndex();
   bool writeMapToCSV(

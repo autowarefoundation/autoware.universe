@@ -144,6 +144,14 @@ AccelBrakeMapCalibrator::AccelBrakeMapCalibrator(const rclcpp::NodeOptions & nod
   for (auto & m : update_brake_map_value_) {
     m.resize(brake_map_value_.at(0).size());
   }
+  accel_offset_covariance_value_.resize((accel_map_value_.size()));
+  brake_offset_covariance_value_.resize((brake_map_value_.size()));
+  for (auto & m : accel_offset_covariance_value_) {
+    m.resize(accel_map_value_.at(0).size());
+  }
+  for (auto & m : brake_offset_covariance_value_) {
+    m.resize(brake_map_value_.at(0).size());
+  }
   map_value_data_.resize(accel_map_value_.size() + brake_map_value_.size() - 1);
   for (auto & m : map_value_data_) {
     m.resize(accel_map_value_.at(0).size());
@@ -181,6 +189,8 @@ AccelBrakeMapCalibrator::AccelBrakeMapCalibrator(const rclcpp::NodeOptions & nod
     "/accel_brake_map_calibrator/output/updated_map_error", durable_qos);
   map_error_ratio_pub_ = create_publisher<tier4_debug_msgs::msg::Float32Stamped>(
     "/accel_brake_map_calibrator/output/map_error_ratio", durable_qos);
+  offset_covariance_pub_ = create_publisher<std_msgs::msg::Float32MultiArray>(
+    "/accel_brake_map_calibrator/debug/offset_covariance", durable_qos);
 
   // subscriber
   using std::placeholders::_1;
@@ -320,6 +330,7 @@ void AccelBrakeMapCalibrator::timerCallback()
   /* publish map  & debug_values*/
   publishMap(accel_map_value_, brake_map_value_, "original");
   publishMap(update_accel_map_value_, update_brake_map_value_, "update");
+  publishOffsetCovMap(accel_offset_covariance_value_,brake_offset_covariance_value_);
   publishCountMap();
   publishIndex();
   publishUpdateSuggestFlag();
@@ -852,6 +863,7 @@ bool AccelBrakeMapCalibrator::updateFourCellAroundOffset(
   static Eigen::MatrixXd brake_data_weighted_num_ = Eigen::MatrixXd::Constant(brake_map_value_.size(),brake_map_value_.at(0).size(),1);
 
   auto & update_map_value = accel_mode ? update_accel_map_value_ : update_brake_map_value_;
+  auto & offset_covariance_value = accel_mode ? accel_offset_covariance_value_ : brake_offset_covariance_value_;
   const auto & map_value = accel_mode ? accel_map_value_ : brake_map_value_;
   const auto & pedal_index = accel_mode ? accel_pedal_index : brake_pedal_index;
   const auto & pedal_index_ = accel_mode ? accel_pedal_index_ : brake_pedal_index_;
@@ -968,6 +980,10 @@ bool AccelBrakeMapCalibrator::updateFourCellAroundOffset(
   update_map_value.at(pedal_index + 1).at(vel_index + 1) =
     map_value.at(pedal_index + 1).at(vel_index + 1) + map_offset(3);
 
+  offset_covariance_value.at(pedal_index + 0).at(vel_index + 0)=sigma(0);
+  offset_covariance_value.at(pedal_index + 1).at(vel_index + 1)=sigma(1);
+  offset_covariance_value.at(pedal_index + 0).at(vel_index + 0)=sigma(2);
+  offset_covariance_value.at(pedal_index + 1).at(vel_index + 1)=sigma(3);
   return true;
 }
 
@@ -1390,6 +1406,43 @@ void AccelBrakeMapCalibrator::publishMap(
   } else {
     update_map_raw_pub_->publish(float_map);
   }
+}
+
+void AccelBrakeMapCalibrator::publishOffsetCovMap(
+  const std::vector<std::vector<double>> accel_map_value,
+  const std::vector<std::vector<double>> brake_map_value)
+{
+  if (accel_map_value.at(0).size() != brake_map_value.at(0).size()) {
+    RCLCPP_ERROR_STREAM(
+      rclcpp::get_logger("accel_brake_map_calibrator"),
+      "Invalid map. The number of velocity index of accel map and brake map is different.");
+    return;
+  }
+  const double h = accel_map_value.size() + brake_map_value.size() -
+                   1;  // pedal (accel_map_value(0) and brake_map_value(0) is same.)
+  const double w = accel_map_value.at(0).size();  // velocity
+
+  // publish raw map
+  std_msgs::msg::Float32MultiArray float_map;
+
+  float_map.layout.dim.push_back(std_msgs::msg::MultiArrayDimension());
+  float_map.layout.dim.push_back(std_msgs::msg::MultiArrayDimension());
+  float_map.layout.dim[0].label = "height";
+  float_map.layout.dim[1].label = "width";
+  float_map.layout.dim[0].size = h;
+  float_map.layout.dim[1].size = w;
+  float_map.layout.dim[0].stride = h * w;
+  float_map.layout.dim[1].stride = w;
+  float_map.layout.data_offset = 0;
+  std::vector<float> vec(h * w, 0);
+  for (int i = 0; i < h; i++) {
+    for (int j = 0; j < w; j++) {
+      vec[i * w + j] = static_cast<float>(
+        getMapColumnFromUnifiedIndex(accel_map_value_, brake_map_value_, i).at(j));
+    }
+  }
+  float_map.data = vec;
+  offset_covariance_pub_->publish(float_map);
 }
 
 void AccelBrakeMapCalibrator::publishFloat32(const std::string publish_type, const double val)
