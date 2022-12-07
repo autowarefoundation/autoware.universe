@@ -182,8 +182,21 @@ private:
   PostProcessorType post_processor_{};
 };
 
-// Each node should be specified with a string name and a shape
-using NetworkNode = std::pair<std::string, std::vector<int64_t>>;
+// NetworkNode
+typedef struct
+{
+  // Node name
+  std::string node_name;
+
+  // Network data type configurations
+  DLDataTypeCode tvm_dtype_code;
+  int32_t tvm_dtype_bits;
+  int32_t tvm_dtype_lanes;
+
+  // Shape info
+  std::vector<int64_t> node_shape;
+} NetworkNode;
+
 typedef struct
 {
   // Network info
@@ -195,11 +208,6 @@ typedef struct
   std::string network_module_path;
   std::string network_graph_path;
   std::string network_params_path;
-
-  // Network data type configurations
-  DLDataTypeCode tvm_dtype_code;
-  int32_t tvm_dtype_bits;
-  int32_t tvm_dtype_lanes;
 
   // Inference hardware configuration
   DLDeviceType tvm_device_type;
