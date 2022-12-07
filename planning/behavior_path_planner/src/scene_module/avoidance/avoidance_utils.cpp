@@ -463,6 +463,9 @@ void generateDrivableArea(
     return;
   }
 
+  // path.left_bound = motion_utils::resamplePointVector(path.left_bound, 1.0, true);
+  // path.right_bound = motion_utils::resamplePointVector(path.right_bound, 1.0, true);
+
   // path.left_bound = motion_utils::resamplePoseVector(path.left_bound, 1.0, true);
   // path.right_bound = motion_utils::resamplePoseVector(path.right_bound, 1.0, true);
   for (const auto & object : objects) {

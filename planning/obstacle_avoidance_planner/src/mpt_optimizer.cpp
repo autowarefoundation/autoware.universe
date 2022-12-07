@@ -1431,10 +1431,14 @@ void MPTOptimizer::calcBounds(
   }
 
   // Terminal Boundary
-  const double lat_dist_to_left_bound = -motion_utils::calcLateralOffset(
-    left_bound, convertRefPointsToPose(ref_points.back()).position);
-  const double lat_dist_to_right_bound = -motion_utils::calcLateralOffset(
-    right_bound, convertRefPointsToPose(ref_points.back()).position);
+  const double lat_dist_to_left_bound =
+    -motion_utils::calcLateralOffset(
+      left_bound, convertRefPointsToPose(ref_points.back()).position) -
+    min_soft_road_clearance;
+  const double lat_dist_to_right_bound =
+    -motion_utils::calcLateralOffset(
+      right_bound, convertRefPointsToPose(ref_points.back()).position) +
+    min_soft_road_clearance;
   ref_points.back().bounds = Bounds{
     lat_dist_to_right_bound, lat_dist_to_left_bound, CollisionType::NO_COLLISION,
     CollisionType::NO_COLLISION};
