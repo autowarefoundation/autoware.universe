@@ -125,6 +125,8 @@ private:
   std::string turn_direction_;
   bool has_traffic_light_;
   bool is_go_out_;
+
+  // last module state in last update
   IntersectionModuleState last_module_state_;
 
   // Parameter

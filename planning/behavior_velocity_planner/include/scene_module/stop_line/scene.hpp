@@ -100,6 +100,9 @@ private:
   // State machine
   State state_;
 
+  // State in last update
+  State last_state_;
+
   // Parameter
   PlannerParam planner_param_;
 
