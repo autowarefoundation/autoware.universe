@@ -459,11 +459,12 @@ void generateDrivableArea(
   const std::shared_ptr<const PlannerData> planner_data, const ObjectDataArray & objects)
 {
   util::generateDrivableArea(path, lanes, vehicle_length, planner_data);
-
   if (objects.empty()) {
     return;
   }
 
+  // path.left_bound = motion_utils::resamplePoseVector(path.left_bound, 1.0, true);
+  // path.right_bound = motion_utils::resamplePoseVector(path.right_bound, 1.0, true);
   for (const auto & object : objects) {
     const auto & obj_pose = object.object.kinematics.initial_pose_with_covariance.pose;
     const auto & obj_poly = object.envelope_poly;

@@ -189,6 +189,11 @@ private:
   void publish_steering_factor(const TurnIndicatorsCommand & turn_signal);
 
   /**
+   * @brief publish left and right bound
+   */
+  void publish_bounds(const PathWithLaneId & path);
+
+  /**
    * @brief publish debug messages
    */
   void publishSceneModuleDebugMsg();

@@ -622,28 +622,12 @@ void BehaviorPathPlannerNode::run()
   // path handling
   const auto path = getPath(output, planner_data);
 
-  // drivable lanes
-  auto left_marker = tier4_autoware_utils::createDefaultMarker(
-    "map", rclcpp::Clock{RCL_ROS_TIME}.now(), "left_bound", 0L, Marker::LINE_STRIP,
-    tier4_autoware_utils::createMarkerScale(0.1, 0.1, 0.1),
-    tier4_autoware_utils::createMarkerColor(0.4, 0.7, 1.0, 0.999));
-  for (const auto lb : path->left_bound) {
-    left_marker.points.push_back(lb);
-  }
-  left_bound_publisher_->publish(left_marker);
-
-  auto right_marker = tier4_autoware_utils::createDefaultMarker(
-    "map", rclcpp::Clock{RCL_ROS_TIME}.now(), "right_bound", 0L, Marker::LINE_STRIP,
-    tier4_autoware_utils::createMarkerScale(0.1, 0.1, 0.1),
-    tier4_autoware_utils::createMarkerColor(0.4, 0.7, 1.0, 0.999));
-  for (const auto rb : path->right_bound) {
-    right_marker.points.push_back(rb);
-  }
-  right_bound_publisher_->publish(right_marker);
-
   // update planner data
   planner_data_->prev_output_path = path;
   mutex_pd_.unlock();
+
+  // publish drivable bounds
+  publish_bounds(*path);
 
   const size_t target_idx = findEgoIndex(path->points);
   util::clipPathLength(*path, target_idx, planner_data_->parameters);
@@ -718,6 +702,35 @@ void BehaviorPathPlannerNode::publish_steering_factor(const TurnIndicatorsComman
     steering_factor_interface_ptr_->clearSteeringFactors();
   }
   steering_factor_interface_ptr_->publishSteeringFactor(get_clock()->now());
+}
+
+void BehaviorPathPlannerNode::publish_bounds(const PathWithLaneId & path)
+{
+  constexpr double scale_x = 0.1;
+  constexpr double scale_y = 0.1;
+  constexpr double scale_z = 0.1;
+  constexpr double color_r = 0.4;
+  constexpr double color_g = 0.7;
+  constexpr double color_b = 1.0;
+  constexpr double color_a = 0.999;
+
+  auto left_marker = tier4_autoware_utils::createDefaultMarker(
+    "map", rclcpp::Clock{RCL_ROS_TIME}.now(), "left_bound", 0L, Marker::LINE_STRIP,
+    tier4_autoware_utils::createMarkerScale(scale_x, scale_y, scale_z),
+    tier4_autoware_utils::createMarkerColor(color_r, color_g, color_b, color_a));
+  for (const auto lb : path.left_bound) {
+    left_marker.points.push_back(lb);
+  }
+  left_bound_publisher_->publish(left_marker);
+
+  auto right_marker = tier4_autoware_utils::createDefaultMarker(
+    "map", rclcpp::Clock{RCL_ROS_TIME}.now(), "right_bound", 0L, Marker::LINE_STRIP,
+    tier4_autoware_utils::createMarkerScale(scale_x, scale_y, scale_z),
+    tier4_autoware_utils::createMarkerColor(color_r, color_g, color_b, color_a));
+  for (const auto rb : path.right_bound) {
+    right_marker.points.push_back(rb);
+  }
+  right_bound_publisher_->publish(right_marker);
 }
 
 void BehaviorPathPlannerNode::publishSceneModuleDebugMsg()
