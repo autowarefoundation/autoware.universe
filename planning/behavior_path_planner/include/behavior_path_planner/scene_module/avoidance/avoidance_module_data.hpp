@@ -35,6 +35,7 @@ namespace behavior_path_planner
 using autoware_auto_perception_msgs::msg::PredictedObject;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 
+using tier4_autoware_utils::Point2d;
 using tier4_autoware_utils::Polygon2d;
 using tier4_planning_msgs::msg::AvoidanceDebugMsgArray;
 
@@ -64,6 +65,9 @@ struct AvoidanceParameters
   // to use this, enable_avoidance_over_same_direction need to be set to true.
   bool enable_avoidance_over_opposite_direction{true};
 
+  // enable update path when if detected objects on planner data is gone.
+  bool enable_update_path_when_object_is_gone{false};
+
   // Vehicles whose distance to the center of the path is
   // less than this will not be considered for avoidance.
   double threshold_distance_object_is_on_center;
@@ -76,6 +80,12 @@ struct AvoidanceParameters
 
   // continue to detect backward vehicles as avoidance targets until they are this distance away
   double object_check_backward_distance;
+
+  // use in judge whether the vehicle is parking object on road shoulder
+  double object_check_shiftable_ratio;
+
+  // minimum road shoulder width. maybe 0.5 [m]
+  double object_check_min_road_shoulder_width;
 
   // object's enveloped polygon
   double object_envelope_buffer;
@@ -196,6 +206,9 @@ struct ObjectData  // avoidance target
   // lateral distance to the closest footprint, in Frenet coordinate
   double overhang_dist;
 
+  // lateral shiftable ratio
+  double shiftable_ratio{0.0};
+
   // count up when object disappeared. Removed when it exceeds threshold.
   rclcpp::Time last_seen;
   double lost_time{0.0};
@@ -212,6 +225,9 @@ struct ObjectData  // avoidance target
 
   // envelope polygon
   Polygon2d envelope_poly{};
+
+  // envelope polygon centroid
+  Point2d centroid{};
 
   // lateral distance from overhang to the road shoulder
   double to_road_shoulder_distance{0.0};
