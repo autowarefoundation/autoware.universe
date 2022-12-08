@@ -265,11 +265,10 @@ bool calcMPCTrajectoryTime(MPCTrajectory & traj)
   traj.relative_time.clear();
   traj.relative_time.push_back(t);
   for (size_t i = 0; i < traj.x.size() - 1; ++i) {
-    const double dx = traj.x.at(i + 1) - traj.x.at(i);
-    const double dy = traj.y.at(i + 1) - traj.y.at(i);
-    const double dz = traj.z.at(i + 1) - traj.z.at(i);
-    const double dist = std::sqrt(dx * dx + dy * dy + dz * dz);
-    const double v = std::max(std::fabs(traj.vx.at(i)), 0.1);
+    const double dist = std::hypot(
+      traj.x.at(i + 1) - traj.x.at(i), traj.y.at(i + 1) - traj.y.at(i),
+      traj.z.at(i + 1) - traj.z.at(i));
+    const double v = std::max(std::fabs(traj.vx.at(i)), min_vel);
     t += (dist / v);
     traj.relative_time.push_back(t);
   }

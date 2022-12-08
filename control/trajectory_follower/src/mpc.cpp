@@ -217,7 +217,10 @@ void MPC::setReferenceTrajectory(
     }
   }
 
-  /* extend terminal points */
+  /* extend terminal points.
+   * the original trajectory cannot take into account the pose from the position alone
+   * due to smoothing, etc.
+   */
   {
     // set original raw termianl yaw
     auto & traj = mpc_traj_smoothed;
@@ -238,11 +241,7 @@ void MPC::setReferenceTrajectory(
       const double x = extended_pose.position.x;
       const double y = extended_pose.position.y;
       const double z = extended_pose.position.z;
-      // calc relative time
-      const double dx = x - traj.x.back();
-      const double dy = y - traj.y.back();
-      const double dz = z - traj.z.back();
-      const double dist = std::sqrt(dx * dx + dy * dy + dz * dz);
+      const double dist = std::hypot(x - traj.x.back(), y - traj.y.back(), z - traj.z.back());
       const double t = traj.relative_time.back() + dist / m_param.min_vel;
       traj.push_back(
         x, y, z, traj.yaw.back(), m_param.min_vel, traj.k.back(), traj.smooth_k.back(), t);
