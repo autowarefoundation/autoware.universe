@@ -5,7 +5,7 @@
     <arg name="resized_info" default="/sensing/camera/undistorted/camera_info"/>
 
     <!-- segment_accumulator -->
-    <node name="accumulator" pkg="segment_accumulator" exec="segment_accumulator_node" output="screen" args="--ros-args --log-level warn">
+    <node name="accumulator" pkg="segment_accumulator" exec="segment_accumulator_node" output="screen" args="--ros-args --log-level info">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="default_map_value" value="10"/>
         <remap from="$(var src_image)" to="$(var resized_image)"/>

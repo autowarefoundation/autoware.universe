@@ -17,7 +17,8 @@ SegmentAccumulator::SegmentAccumulator()
   default_map_value_(declare_parameter<int>("default_map_value", 00)),
   map_update_interval_(declare_parameter<float>("map_update_interval", 0.5)),
   info_(this),
-  tf_subscriber_(this->get_clock())
+  tf_subscriber_(this->get_clock()),
+  cost_map_(this)
 {
   using std::placeholders::_1;
 
@@ -143,6 +144,14 @@ void SegmentAccumulator::on_line_segments(const PointCloud2 & msg)
   RCLCPP_INFO_STREAM(get_logger(), "line accumulation: " << timer);
 }
 
+float abs_cos(const Eigen::Vector3f & t, float deg)
+{
+  Eigen::Vector2f x(t.x(), t.y());
+  Eigen::Vector2f y(std::cos(deg * M_PI / 180.0), std::sin(deg * M_PI / 180.0));
+  x.normalize();
+  return std::abs(x.dot(y));
+}
+
 SegmentAccumulator::LineSegments::Ptr SegmentAccumulator::filt_line_segments_by_ll2(
   const LineSegments::Ptr & lines)
 {
@@ -150,33 +159,35 @@ SegmentAccumulator::LineSegments::Ptr SegmentAccumulator::filt_line_segments_by_
     return lines;
   }
 
-  LineSegments near_ll2 = common::extract_near_line_segments(ll2_cloud_, *latest_pose_);
-  cv::Mat ll2_image = 255 * cv::Mat::ones(500, 500, CV_8UC1);
+  // LineSegments near_ll2 = common::extract_near_line_segments(ll2_cloud_, *latest_pose_);
+  // cv::Mat ll2_image = 255 * cv::Mat::ones(500, 500, CV_8UC1);
+  // // Draw LL2 cost map
+  // {
+  //   for (const pcl::PointNormal & pn : near_ll2) {
+  //     Eigen::Vector3f p1 = latest_pose_->inverse() * pn.getVector3fMap();
+  //     Eigen::Vector3f p2 = latest_pose_->inverse() * pn.getNormalVector3fMap();
+  //     cv::line(ll2_image, cv_pt2(p1), cv_pt2(p2), cv::Scalar::all(0));
+  //   }
 
-  // Draw LL2 cost map
-  {
-    for (const pcl::PointNormal & pn : near_ll2) {
-      Eigen::Vector3f p1 = latest_pose_->inverse() * pn.getVector3fMap();
-      Eigen::Vector3f p2 = latest_pose_->inverse() * pn.getNormalVector3fMap();
-      cv::line(ll2_image, cv_pt2(p1), cv_pt2(p2), cv::Scalar::all(0));
-    }
+  //   cv::distanceTransform(ll2_image, ll2_image, cv::DIST_L2, 3);
+  //   cv::threshold(ll2_image, ll2_image, 100, 100, cv::THRESH_TRUNC);
+  //   ll2_image.convertTo(ll2_image, CV_8UC1, -2.55, 255);
+  //   ll2_image = gamma_converter(ll2_image);
+  // }
 
-    cv::distanceTransform(ll2_image, ll2_image, cv::DIST_L2, 3);
-    cv::threshold(ll2_image, ll2_image, 100, 100, cv::THRESH_TRUNC);
-    ll2_image.convertTo(ll2_image, CV_8UC1, -2.55, 255);
-    ll2_image = gamma_converter(ll2_image);
-  }
-
-  // Visualize
-  {
-    cv::Mat rgb_ll2_image;
-    cv::applyColorMap(ll2_image, rgb_ll2_image, cv::COLORMAP_JET);
-    cv::imshow("debug", rgb_ll2_image);
-    cv::waitKey(10);
-  }
+  // // Visualize
+  // {
+  //   cv::Mat rgb_ll2_image;
+  //   cv::applyColorMap(ll2_image, rgb_ll2_image, cv::COLORMAP_JET);
+  //   cv::imshow("debug", rgb_ll2_image);
+  //   cv::waitKey(10);
+  // }
 
   // Filt valid segments
   LineSegments::Ptr filted = pcl::make_shared<LineSegments>();
+  cv::Mat debug_image = cv::Mat::zeros(512, 800, CV_8UC3);
+
+  const Sophus::SE3f pose = latest_pose_.value();
   {
     for (const auto & line : *lines) {
       std::optional<Eigen::Vector3f> opt1 = back_project_func_(line.getVector3fMap());
@@ -190,13 +201,31 @@ SegmentAccumulator::LineSegments::Ptr SegmentAccumulator::filt_line_segments_by_
       float score = 0;
       int count = 0;
       for (float distance = 0; distance < length; distance += 0.1f) {
-        score += ll2_image.at<unsigned char>(cv_pt2(*opt1 + tangent * distance));
+        Eigen::Vector3f px = pose * (*opt1 + tangent * distance);
+        cv::Vec2b v2 = cost_map_.at2(px.topRows(2));
+        float cos = abs_cos(pose.so3() * tangent, v2[1]);
+        score += (cos * v2[0]);
         count++;
       }
 
-      if (score / count > 128) filted->push_back(line);
+      cv::Point2i p1(line.x, line.y);
+      cv::Point2i p2(line.normal_x, line.normal_y);
+
+      if (score / count > 80) {
+        filted->push_back(line);
+        cv::line(debug_image, p1, p2, cv::Scalar(255, 0, 0), 2);
+      } else {
+        cv::line(debug_image, p1, p2, cv::Scalar(0, 0, 255), 1);
+      }
     }
   }
+  // cv::Mat map_image = cost_map_.get_map_image(common::se3_to_pose(pose));
+  cv::imshow("debug", debug_image);
+  // cv::imshow("map", map_image);
+  cv::waitKey(10);
+
+  cost_map_.erase_obsolete();
+  RCLCPP_INFO_STREAM(get_logger(), "raw: " << lines->size() << " filt: " << filted->size());
 
   return filted;
 }
@@ -285,6 +314,7 @@ void SegmentAccumulator::on_ll2(const PointCloud2 & ll2_msg)
 {
   RCLCPP_INFO_STREAM(get_logger(), "LL2 cloud is subscribed");
   pcl::fromROSMsg(ll2_msg, ll2_cloud_);
+  cost_map_.set_cloud(ll2_cloud_);
 }
 
 void SegmentAccumulator::on_pose_stamped(const PoseStamped & msg)

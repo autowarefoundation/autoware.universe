@@ -2,6 +2,7 @@
 #include <opencv4/opencv2/opencv.hpp>
 #include <pcdless_common/camera_info_subscriber.hpp>
 #include <pcdless_common/gamma_converter.hpp>
+#include <pcdless_common/hierarchical_cost_map.hpp>
 #include <pcdless_common/static_tf_subscriber.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -56,6 +57,7 @@ private:
 
   std::optional<Sophus::SE3f> latest_pose_{std::nullopt};
   common::GammaConverter gamma_converter{6.0f};
+  common::HierarchicalCostMap cost_map_;
 
   void on_ll2(const PointCloud2 & msg);
   void on_pose_stamped(const PoseStamped & msg);
