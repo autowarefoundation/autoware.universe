@@ -53,26 +53,26 @@ PullOverModule::PullOverModule(
   goal_pose_pub_ =
     node.create_publisher<PoseStamped>("/planning/scenario_planning/modified_goal", 1);
 
-  LaneDepartureChecker lane_departure_checker_{};
-  lane_departure_checker_.setVehicleInfo(vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo());
+  LaneDepartureChecker lane_departure_checker{};
+  lane_departure_checker.setVehicleInfo(vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo());
 
   occupancy_grid_map_ = std::make_shared<OccupancyGridBasedCollisionDetector>();
 
   // set enabled planner
   if (parameters_.enable_shift_parking) {
     pull_over_planners_.push_back(std::make_shared<ShiftPullOver>(
-      node, parameters, lane_departure_checker_, occupancy_grid_map_));
+      node, parameters, lane_departure_checker, occupancy_grid_map_));
   }
   if (parameters_.enable_arc_forward_parking) {
     constexpr bool is_forward = true;
     pull_over_planners_.push_back(std::make_shared<GeometricPullOver>(
-      node, parameters, getGeometricPullOverParameters(), lane_departure_checker_,
+      node, parameters, getGeometricPullOverParameters(), lane_departure_checker,
       occupancy_grid_map_, is_forward));
   }
   if (parameters_.enable_arc_backward_parking) {
     constexpr bool is_forward = false;
     pull_over_planners_.push_back(std::make_shared<GeometricPullOver>(
-      node, parameters, getGeometricPullOverParameters(), lane_departure_checker_,
+      node, parameters, getGeometricPullOverParameters(), lane_departure_checker,
       occupancy_grid_map_, is_forward));
   }
 
@@ -184,7 +184,6 @@ void PullOverModule::onExit()
   steering_factor_interface_ptr_->clearSteeringFactors();
 
   // A child node must never return IDLE
-  // https://github.com/BehaviorTree/BehaviorTree.CPP/blob/master/include/behaviortree_cpp_v3/basic_types.h#L34
   current_state_ = BT::NodeStatus::SUCCESS;
 }
 
@@ -439,8 +438,9 @@ BehaviorModuleOutput PullOverModule::plan()
   for (size_t i = status_.current_path_idx; i < status_.pull_over_path.partial_paths.size(); ++i) {
     auto & path = status_.pull_over_path.partial_paths.at(i);
     const auto p = planner_data_->parameters;
+    const auto shorten_lanes = util::cutOverlappedLanes(path, status_.lanes);
     const auto lane = util::expandLanelets(
-      status_.lanes, parameters_.drivable_area_left_bound_offset,
+      shorten_lanes, parameters_.drivable_area_left_bound_offset,
       parameters_.drivable_area_right_bound_offset);
     path.drivable_area = util::generateDrivableArea(
       path, lane, p.drivable_area_resolution, p.vehicle_length, planner_data_);
@@ -611,8 +611,9 @@ PathWithLaneId PullOverModule::getReferencePath() const
     -calcMinimumShiftPathDistance(), parameters_.deceleration_interval);
 
   const auto drivable_lanes = util::generateDrivableLanes(status_.current_lanes);
+  const auto shorten_lanes = util::cutOverlappedLanes(reference_path, drivable_lanes);
   const auto lanes = util::expandLanelets(
-    drivable_lanes, parameters_.drivable_area_left_bound_offset,
+    shorten_lanes, parameters_.drivable_area_left_bound_offset,
     parameters_.drivable_area_right_bound_offset);
 
   reference_path.drivable_area = util::generateDrivableArea(
@@ -660,8 +661,9 @@ PathWithLaneId PullOverModule::generateStopPath() const
   }
 
   const auto drivable_lanes = util::generateDrivableLanes(status_.current_lanes);
+  const auto shorten_lanes = util::cutOverlappedLanes(stop_path, drivable_lanes);
   const auto lanes = util::expandLanelets(
-    drivable_lanes, parameters_.drivable_area_left_bound_offset,
+    shorten_lanes, parameters_.drivable_area_left_bound_offset,
     parameters_.drivable_area_right_bound_offset);
 
   stop_path.drivable_area = util::generateDrivableArea(

@@ -22,14 +22,20 @@
     turn_signal_minimum_search_distance: 10.0
     turn_signal_search_time: 3.0
     turn_signal_shift_length_threshold: 0.3
+    turn_signal_on_swerving: true
 
     path_interval: 2.0
 
     visualize_drivable_area_for_shared_linestrings_lanelet: true
 
-    lateral_distance_max_threshold: 5.0
+    lateral_distance_max_threshold: 2.0
     longitudinal_distance_min_threshold: 3.0
+
     expected_front_deceleration: -1.0
     expected_rear_deceleration: -1.0
+
+    expected_front_deceleration_for_abort: -2.0
+    expected_rear_deceleration_for_abort: -2.5
+
     rear_vehicle_reaction_time: 2.0
     rear_vehicle_safety_time_margin: 2.0
