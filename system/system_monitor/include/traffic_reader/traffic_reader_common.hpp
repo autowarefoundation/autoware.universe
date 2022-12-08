@@ -29,7 +29,7 @@
 namespace traffic_reader_service
 {
 
-static constexpr char SOCKET_PATH[] = "/tmp/traffic_reader";
+static constexpr char socket_path[] = "/tmp/traffic_reader";
 
 enum Request {
   NONE = 0,

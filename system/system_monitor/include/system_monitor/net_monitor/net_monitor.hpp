@@ -36,13 +36,11 @@
 /**
  * @brief Bytes information
  */
-typedef struct bytes
+struct Bytes
 {
-  unsigned int rx_bytes;  //!< @brief total bytes received
-  unsigned int tx_bytes;  //!< @brief total bytes transmitted
-
-  bytes() : rx_bytes(0), tx_bytes(0) {}
-} bytes;
+  unsigned int rx_bytes{0};  //!< @brief total bytes received
+  unsigned int tx_bytes{0};  //!< @brief total bytes transmitted
+};
 
 class NetMonitor : public rclcpp::Node
 {
@@ -52,10 +50,11 @@ public:
    * @param [in] options Options associated with this node.
    */
   explicit NetMonitor(const rclcpp::NodeOptions & options);
+
   /**
    * @brief destructor
    */
-  ~NetMonitor();
+  ~NetMonitor() override;
 
   /**
    * @brief Shutdown nl80211 object
@@ -176,40 +175,21 @@ protected:
    */
   struct NetworkInfo
   {
-    int mtu_errno;               //!< @brief errno set by ioctl() with SIOCGIFMTU
-    int ethtool_errno;           //!< @brief errno set by ioctl() with SIOCETHTOOL
-    bool is_running;             //!< @brief resource allocated flag
-    std::string interface_name;  //!< @brief interface name
-    float speed;                 //!< @brief network capacity
-    int mtu;                     //!< @brief MTU
-    float rx_traffic;            //!< @brief traffic received
-    float tx_traffic;            //!< @brief traffic transmitted
-    float rx_usage;              //!< @brief network capacity usage rate received
-    float tx_usage;              //!< @brief network capacity usage rate transmitted
-    unsigned int rx_bytes;       //!< @brief total bytes received
-    unsigned int rx_errors;      //!< @brief bad packets received
-    unsigned int tx_bytes;       //!< @brief total bytes transmitted
-    unsigned int tx_errors;      //!< @brief packet transmit problems
-    unsigned int collisions;     //!< @brief number of collisions during packet transmissions
-
-    NetworkInfo()
-    : mtu_errno(0),
-      ethtool_errno(0),
-      is_running(false),
-      interface_name(""),
-      speed(0.0),
-      mtu(0),
-      rx_traffic(0.0),
-      tx_traffic(0.0),
-      rx_usage(0.0),
-      tx_usage(0.0),
-      rx_bytes(0),
-      rx_errors(0),
-      tx_bytes(0),
-      tx_errors(0),
-      collisions(0)
-    {
-    }
+    int mtu_errno{0};                //!< @brief errno set by ioctl() with SIOCGIFMTU
+    int ethtool_errno{0};            //!< @brief errno set by ioctl() with SIOCETHTOOL
+    bool is_running{false};          //!< @brief resource allocated flag
+    std::string interface_name{""};  //!< @brief interface name
+    float speed{0.0};                //!< @brief network capacity
+    int mtu{0};                      //!< @brief MTU
+    float rx_traffic{0.0};           //!< @brief traffic received
+    float tx_traffic{0.0};           //!< @brief traffic transmitted
+    float rx_usage{0.0};             //!< @brief network capacity usage rate received
+    float tx_usage{0.0};             //!< @brief network capacity usage rate transmitted
+    unsigned int rx_bytes{0};        //!< @brief total bytes received
+    unsigned int rx_errors{0};       //!< @brief bad packets received
+    unsigned int tx_bytes{0};        //!< @brief total bytes transmitted
+    unsigned int tx_errors{0};       //!< @brief packet transmit problems
+    unsigned int collisions{0};      //!< @brief number of collisions during packet transmissions
   };
 
   /**
@@ -220,7 +200,7 @@ protected:
    * @param [out] error_str error string
    * @return result of determining whether it is a supported network
    */
-  bool is_supported_network(
+  static bool is_supported_network(
     const NetworkInfo & net_info, int index, diagnostic_updater::DiagnosticStatusWrapper & stat,
     std::string & error_str);
 
@@ -240,7 +220,7 @@ protected:
   rclcpp::TimerBase::SharedPtr timer_;   //!< @brief timer to get Network information
 
   char hostname_[HOST_NAME_MAX + 1];        //!< @brief host name
-  std::map<std::string, bytes> bytes_;      //!< @brief list of bytes
+  std::map<std::string, Bytes> bytes_;      //!< @brief list of bytes
   rclcpp::Time last_update_time_;           //!< @brief last update time
   std::vector<std::string> device_params_;  //!< @brief list of devices
   NL80211 nl80211_;                         //!< @brief 802.11 netlink-based interface
@@ -250,14 +230,12 @@ protected:
   /**
    * @brief CRC errors information
    */
-  typedef struct crc_errors
+  struct CrcErrors
   {
-    std::deque<unsigned int> errors_queue;  //!< @brief queue that holds count of CRC errors
-    unsigned int last_rx_crc_errors;  //!< @brief rx_crc_error at the time of the last monitoring
-
-    crc_errors() : last_rx_crc_errors(0) {}
-  } crc_errors;
-  std::map<std::string, crc_errors> crc_errors_;  //!< @brief list of CRC errors
+    std::deque<unsigned int> errors_queue{};  //!< @brief queue that holds count of CRC errors
+    unsigned int last_rx_crc_errors{0};  //!< @brief rx_crc_error at the time of the last monitoring
+  };
+  std::map<std::string, CrcErrors> crc_errors_;  //!< @brief list of CRC errors
 
   std::deque<unsigned int>
     reassembles_failed_queue_;  //!< @brief queue that holds count of IP packet reassembles failed

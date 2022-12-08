@@ -14,10 +14,11 @@
 
 #include <traffic_reader/traffic_reader_service.hpp>
 
-#include <errno.h>
 #include <getopt.h>
-#include <string.h>
 #include <syslog.h>
+
+#include <cerrno>
+#include <cstring>
 
 /**
  * @brief print usage
@@ -40,7 +41,7 @@ int main(int argc, char ** argv)
   // Parse command-line options
   int c = 0;
   int option_index = 0;
-  std::string socket_path = traffic_reader_service::SOCKET_PATH;
+  std::string socket_path = traffic_reader_service::socket_path;
 
   while ((c = getopt_long(argc, argv, "hs:", long_options, &option_index)) != -1) {
     switch (c) {
@@ -64,7 +65,7 @@ int main(int argc, char ** argv)
   }
 
   // Open connection to system logger
-  openlog(nullptr, LOG_PID, LOG_DAEMON);
+  openlog(nullptr, LOG_PID, LOG_DAEMON);  // NOLINT [hicpp-signed-bitwise]
 
   // Initialize traffic-reader service
   traffic_reader_service::TrafficReaderService service(socket_path);

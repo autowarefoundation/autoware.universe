@@ -48,9 +48,11 @@
 NetMonitor::NetMonitor(const rclcpp::NodeOptions & options)
 : Node("net_monitor", options),
   updater_(this),
+  hostname_(),
   last_update_time_{0, 0, this->get_clock()->get_clock_type()},
   device_params_(
     declare_parameter<std::vector<std::string>>("devices", std::vector<std::string>())),
+  getifaddrs_errno_(0),
   last_reassembles_failed_(0),
   monitor_program_(declare_parameter<std::string>("monitor_program", "greengrass")),
   crc_error_check_duration_(declare_parameter<int>("crc_error_check_duration", 1)),
@@ -59,7 +61,7 @@ NetMonitor::NetMonitor(const rclcpp::NodeOptions & options)
     declare_parameter<int>("reassembles_failed_check_duration", 1)),
   reassembles_failed_check_count_(declare_parameter<int>("reassembles_failed_check_count", 1)),
   reassembles_failed_column_index_(0),
-  socket_path_(declare_parameter("socket_path", traffic_reader_service::SOCKET_PATH)),
+  socket_path_(declare_parameter("socket_path", traffic_reader_service::socket_path)),
   socket_(-1)
 {
   using namespace std::literals::chrono_literals;
@@ -103,8 +105,8 @@ void NetMonitor::update_network_info_list()
     return;
   }
 
-  const struct ifaddrs * ifa;
-  struct ifaddrs * ifas = nullptr;
+  const struct ifaddrs * ifa{};
+  struct ifaddrs * ifas{nullptr};
 
   rclcpp::Duration duration = this->now() - last_update_time_;
 
@@ -135,10 +137,10 @@ void NetMonitor::update_network_info_list()
       continue;
     }
 
-    int fd;
-    struct ifreq ifrm;
-    struct ifreq ifrc;
-    struct ethtool_cmd edata;
+    int fd{0};
+    struct ifreq ifrm{};
+    struct ifreq ifrc{};
+    struct ethtool_cmd edata{};
 
     net_info_list_.emplace_back();
     auto & net_info = net_info_list_.back();
@@ -147,7 +149,7 @@ void NetMonitor::update_network_info_list()
 
     // Get MTU information
     fd = socket(AF_INET, SOCK_DGRAM, 0);
-    strncpy(ifrm.ifr_name, ifa->ifa_name, IFNAMSIZ - 1);
+    strncpy(ifrm.ifr_name, ifa->ifa_name, IFNAMSIZ - 1);  // NOLINT [cppcoreguidelines-pro-type-union-access]
     if (ioctl(fd, SIOCGIFMTU, &ifrm) < 0) {
       net_info.mtu_errno = errno;
       close(fd);
@@ -155,8 +157,8 @@ void NetMonitor::update_network_info_list()
     }
 
     // Get network capacity
-    strncpy(ifrc.ifr_name, ifa->ifa_name, IFNAMSIZ - 1);
-    ifrc.ifr_data = (caddr_t)&edata;
+    strncpy(ifrc.ifr_name, ifa->ifa_name, IFNAMSIZ - 1);  // NOLINT [cppcoreguidelines-pro-type-union-access]
+    ifrc.ifr_data = (caddr_t)&edata;  
     edata.cmd = ETHTOOL_GSET;
     if (ioctl(fd, SIOCETHTOOL, &ifrc) < 0) {
       // possibly wireless connection, get bitrate(MBit/s)
@@ -172,7 +174,7 @@ void NetMonitor::update_network_info_list()
 
     net_info.is_running = (ifa->ifa_flags & IFF_RUNNING);
 
-    auto * stats = (struct rtnl_link_stats *)ifa->ifa_data;
+    auto * stats = static_cast<struct rtnl_link_stats *>(ifa->ifa_data);
     if (bytes_.find(net_info.interface_name) != bytes_.end()) {
       net_info.rx_traffic =
         toMbit(stats->rx_bytes - bytes_[net_info.interface_name].rx_bytes) / duration.seconds();
@@ -182,7 +184,7 @@ void NetMonitor::update_network_info_list()
       net_info.tx_usage = net_info.tx_traffic / net_info.speed;
     }
 
-    net_info.mtu = ifrm.ifr_mtu;
+    net_info.mtu = ifrm.ifr_mtu;  // NOLINT [cppcoreguidelines-pro-type-union-access]
     net_info.rx_bytes = stats->rx_bytes;
     net_info.rx_errors = stats->rx_errors;
     net_info.tx_bytes = stats->tx_bytes;
@@ -195,7 +197,7 @@ void NetMonitor::update_network_info_list()
     bytes_[net_info.interface_name].tx_bytes = stats->tx_bytes;
 
     // Get the count of CRC errors
-    crc_errors & crc_ers = crc_errors_[net_info.interface_name];
+    CrcErrors & crc_ers = crc_errors_[net_info.interface_name];
     crc_ers.errors_queue.push_back(stats->rx_crc_errors - crc_ers.last_rx_crc_errors);
     while (crc_ers.errors_queue.size() > crc_error_check_duration_) {
       crc_ers.errors_queue.pop_front();
@@ -297,7 +299,7 @@ void NetMonitor::check_crc_error(diagnostic_updater::DiagnosticStatusWrapper & s
       continue;
     }
 
-    crc_errors & crc_ers = crc_errors_[net_info.interface_name];
+    CrcErrors & crc_ers = crc_errors_[net_info.interface_name];
     unsigned int unit_rx_crc_errors = 0;
 
     for (auto errors : crc_ers.errors_queue) {
@@ -696,6 +698,7 @@ void NetMonitor::close_connection()
 {
   // Close the file descriptor FD
   close(socket_);
+  socket_ = -1;
 }
 
 #include <rclcpp_components/register_node_macro.hpp>

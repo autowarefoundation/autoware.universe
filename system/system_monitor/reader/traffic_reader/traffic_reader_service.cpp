@@ -63,7 +63,7 @@ bool TrafficReaderService::initialize()
   }
 
   // Give permission to other users to access to socket
-  if (chmod(socket_path_.c_str(), S_IRWXU | S_IRWXG | S_IRWXO) != 0) {
+  if (chmod(socket_path_.c_str(), S_IRWXU | S_IRWXG | S_IRWXO) != 0) {  // NOLINT [hicpp-signed-bitwise]
     syslog(LOG_ERR, "Failed to give permission to unix domain socket. %s\n", strerror(errno));
     return false;
   }
@@ -79,7 +79,11 @@ bool TrafficReaderService::initialize()
   return true;
 }
 
-void TrafficReaderService::shutdown() { close(socket_); }
+void TrafficReaderService::shutdown()
+{
+  close(socket_);
+  socket_ = -1;
+}
 
 void TrafficReaderService::run()
 {
@@ -254,7 +258,7 @@ void TrafficReaderService::execute_nethogs()
   is_err >> os.rdbuf();
 
   // Remove new line from output
-  std::string message = os.str().c_str();
+  std::string message = os.str();
   message.erase(std::remove(message.begin(), message.end(), '\n'), message.cend());
   syslog(LOG_INFO, "%s\n", message.c_str());
 

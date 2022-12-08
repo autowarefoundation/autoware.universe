@@ -70,14 +70,14 @@ protected:
    * @param[in] line nethogs output
    * @return Command line of process
    */
-  std::string get_command_line(const std::string & line);
+  static std::string get_command_line(const std::string & line);
 
   /**
    * @brief Get command line of process from PID
    * @param[in] pid PID
    * @return Command line of process
    */
-  std::string get_command_line_with_pid(pid_t pid);
+  static std::string get_command_line_with_pid(pid_t pid);
 
   /**
    * @brief Return result of nethogs
@@ -90,7 +90,6 @@ protected:
   void execute_nethogs();
 
   std::string socket_path_;                //!< @brief Path of UNIX domain socket
-  int port_;                               //!< @brief Port number to access l2ping service
   int socket_;                             //!< @brief Socket to communicate with ros node
   int connection_;                         //!< @brief Accepted socket for the incoming connection
   std::thread thread_;                     //!< @brief Thread to run nethogs
