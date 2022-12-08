@@ -14,10 +14,13 @@ Include `localization.launch.xml` in other launch files as follows.
 
 ```xml
   <include file="$(find-pkg-share tier4_localization_launch)/launch/localization.launch.xml">
-    <arg name="parameter_configuration" value="YOUR_PARAMETER_CONFIGURATION"/>
+    <arg name="pkg_A_param_path" value="YOUR_PARAMETER_CONFIGURATION"/>
+    ...
   </include>
 ```
 
+TBD
+<!-- 
 Note that you need to provide a parameter configuration file in the argument to specify which parameters to load. See [`autoware.launch.xml` in `autowarefoundation/autoware_launch`](https://github.com/autowarefoundation/autoware_launch/blob/main/autoware_launch/launch/autoware.launch.xml) for example.
 
 The parameter configuration file should look like as follows.
@@ -29,4 +32,4 @@ The parameter configuration file should look like as follows.
   ...
 </launch>
 
-```
+``` -->
