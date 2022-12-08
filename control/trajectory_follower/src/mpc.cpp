@@ -242,9 +242,8 @@ void MPC::setReferenceTrajectory(
       const double y = extended_pose.position.y;
       const double z = extended_pose.position.z;
       const double dist = std::hypot(x - traj.x.back(), y - traj.y.back(), z - traj.z.back());
-      const double t = traj.relative_time.back() + dist / m_param.min_vel;
-      traj.push_back(
-        x, y, z, traj.yaw.back(), m_param.min_vel, traj.k.back(), traj.smooth_k.back(), t);
+      const double t = traj.relative_time.back() + dist / extend_vel;
+      traj.push_back(x, y, z, traj.yaw.back(), extend_vel, traj.k.back(), traj.smooth_k.back(), t);
     }
   }
 

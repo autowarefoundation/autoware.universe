@@ -268,7 +268,7 @@ bool calcMPCTrajectoryTime(MPCTrajectory & traj)
     const double dist = std::hypot(
       traj.x.at(i + 1) - traj.x.at(i), traj.y.at(i + 1) - traj.y.at(i),
       traj.z.at(i + 1) - traj.z.at(i));
-    const double v = std::max(std::fabs(traj.vx.at(i)), min_vel);
+    const double v = std::max(std::fabs(traj.vx.at(i)), 0.1);
     t += (dist / v);
     traj.relative_time.push_back(t);
   }
