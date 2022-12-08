@@ -149,19 +149,56 @@ SegmentAccumulator::LineSegments::Ptr SegmentAccumulator::filt_line_segments_by_
   if (!latest_pose_.has_value()) {
     return lines;
   }
+
   LineSegments near_ll2 = common::extract_near_line_segments(ll2_cloud_, *latest_pose_);
+  cv::Mat ll2_image = 255 * cv::Mat::ones(500, 500, CV_8UC1);
 
-  cv::Mat debug_image = cv::Mat::zeros(500, 500, CV_8UC3);
-  for (const pcl::PointNormal & pn : near_ll2) {
-    Eigen::Vector3f p1 = latest_pose_->inverse() * pn.getVector3fMap();
-    Eigen::Vector3f p2 = latest_pose_->inverse() * pn.getNormalVector3fMap();
+  // Draw LL2 cost map
+  {
+    for (const pcl::PointNormal & pn : near_ll2) {
+      Eigen::Vector3f p1 = latest_pose_->inverse() * pn.getVector3fMap();
+      Eigen::Vector3f p2 = latest_pose_->inverse() * pn.getNormalVector3fMap();
+      cv::line(ll2_image, cv_pt2(p1), cv_pt2(p2), cv::Scalar::all(0));
+    }
 
-    cv::line(debug_image, cv_pt2(p1), cv_pt2(p2), cv::Scalar(0, 255, 255));
+    cv::distanceTransform(ll2_image, ll2_image, cv::DIST_L2, 3);
+    cv::threshold(ll2_image, ll2_image, 100, 100, cv::THRESH_TRUNC);
+    ll2_image.convertTo(ll2_image, CV_8UC1, -2.55, 255);
+    ll2_image = gamma_converter(ll2_image);
   }
-  cv::imshow("debug", debug_image);
-  cv::waitKey(10);
 
-  return lines;
+  // Visualize
+  {
+    cv::Mat rgb_ll2_image;
+    cv::applyColorMap(ll2_image, rgb_ll2_image, cv::COLORMAP_JET);
+    cv::imshow("debug", rgb_ll2_image);
+    cv::waitKey(10);
+  }
+
+  // Filt valid segments
+  LineSegments::Ptr filted = pcl::make_shared<LineSegments>();
+  {
+    for (const auto & line : *lines) {
+      std::optional<Eigen::Vector3f> opt1 = back_project_func_(line.getVector3fMap());
+      std::optional<Eigen::Vector3f> opt2 = back_project_func_(line.getNormalVector3fMap());
+      if (!opt1.has_value()) continue;
+      if (!opt2.has_value()) continue;
+      float length = (opt1.value() - opt2.value()).norm();
+      if (length < min_segment_length_) continue;
+
+      Eigen::Vector3f tangent = (*opt2 - *opt1).normalized();
+      float score = 0;
+      int count = 0;
+      for (float distance = 0; distance < length; distance += 0.1f) {
+        score += ll2_image.at<unsigned char>(cv_pt2(*opt1 + tangent * distance));
+        count++;
+      }
+
+      if (score / count > 128) filted->push_back(line);
+    }
+  }
+
+  return filted;
 }
 
 void SegmentAccumulator::transform_image(const Sophus::SE3f & odom)

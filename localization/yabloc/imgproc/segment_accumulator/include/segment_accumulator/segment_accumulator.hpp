@@ -1,6 +1,7 @@
 #pragma once
 #include <opencv4/opencv2/opencv.hpp>
 #include <pcdless_common/camera_info_subscriber.hpp>
+#include <pcdless_common/gamma_converter.hpp>
 #include <pcdless_common/static_tf_subscriber.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -54,6 +55,7 @@ private:
   std::list<TwistStamped::ConstSharedPtr> twist_list_;
 
   std::optional<Sophus::SE3f> latest_pose_{std::nullopt};
+  common::GammaConverter gamma_converter{6.0f};
 
   void on_ll2(const PointCloud2 & msg);
   void on_pose_stamped(const PoseStamped & msg);
