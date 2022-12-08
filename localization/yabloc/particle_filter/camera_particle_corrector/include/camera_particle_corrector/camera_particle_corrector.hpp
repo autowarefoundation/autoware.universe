@@ -36,8 +36,6 @@ private:
   pcl::PointCloud<pcl::PointXYZI> evaluate_cloud(
     const LineSegment & lsd_cloud, const Eigen::Vector3f & self_position);
 
-  LineSegment transform_cloud(const LineSegment & src, const Eigen::Affine3f & transform) const;
-
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_unmapped_area_;
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_lsd_;
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_ll2_;

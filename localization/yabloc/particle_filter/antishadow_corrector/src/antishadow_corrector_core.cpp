@@ -6,6 +6,7 @@
 #include <pcdless_common/pose_conversions.hpp>
 #include <pcdless_common/timer.hpp>
 
+#include <pcl/common/transforms.h>
 #include <pcl_conversions/pcl_conversions.h>
 
 namespace pcdless::modularized_particle_filter
@@ -74,7 +75,8 @@ void AntishadowCorrector::on_lsd(const Image & msg)
   auto normalize = define_normalize_score();
   for (auto & p : weighted_particles.particles) {
     Sophus::SE3f pose = common::pose_to_se3(p.pose);
-    auto dst_cloud = transform_cloud(cropped_ll2_cloud, pose.inverse());
+    LineSegments dst_cloud;
+    pcl::transformPointCloudWithNormals(cropped_ll2_cloud, dst_cloud, pose.ivnerse().matrix());
     float score = compute_score(dst_cloud, lsd_image);
     p.weight = normalize(score);
   }
@@ -149,20 +151,6 @@ void AntishadowCorrector::on_ll2(const PointCloud2 & ll2_msg)
 {
   RCLCPP_INFO_STREAM(get_logger(), "LL2 cloud is subscribed");
   pcl::fromROSMsg(ll2_msg, ll2_cloud_);
-}
-
-AntishadowCorrector::LineSegments AntishadowCorrector::transform_cloud(
-  const LineSegments & src, const Sophus::SE3f & transform) const
-{
-  LineSegments dst;
-  dst.reserve(src.size());
-  for (const pcl::PointNormal & pn : src) {
-    pcl::PointNormal dst_pn;
-    dst_pn.getVector3fMap() = transform * pn.getVector3fMap();
-    dst_pn.getNormalVector3fMap() = transform * pn.getNormalVector3fMap();
-    dst.push_back(dst_pn);
-  }
-  return dst;
 }
 
 std::function<float(float)> AntishadowCorrector::define_normalize_score() const

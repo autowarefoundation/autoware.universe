@@ -5,6 +5,7 @@
 #include <pcdless_common/pose_conversions.hpp>
 #include <pcdless_common/pub_sub.hpp>
 
+#include <pcl/common/transforms.h>
 #include <pcl_conversions/pcl_conversions.h>
 
 namespace pcdless::modularized_particle_filter
@@ -77,7 +78,8 @@ void CameraParticleCorrector::on_lsd(const PointCloud2 & lsd_msg)
 
   for (auto & particle : weighted_particles.particles) {
     Eigen::Affine3f transform = common::pose_to_affine(particle.pose);
-    LineSegment transformed_lsd = transform_cloud(lsd_cloud, transform);
+    LineSegment transformed_lsd;
+    pcl::transformPointCloudWithNormals(lsd_cloud, transformed_lsd, transform.matrix());
 
     float raw_score = compute_score(transformed_lsd, transform.translation());
     particle.weight = score_convert(raw_score);
@@ -101,7 +103,9 @@ void CameraParticleCorrector::on_lsd(const PointCloud2 & lsd_msg)
   {
     Pose meaned_pose = mean_pose(weighted_particles);
     Eigen::Affine3f transform = common::pose_to_affine(meaned_pose);
-    LineSegment transformed_lsd = transform_cloud(lsd_cloud, transform);
+    LineSegment transformed_lsd;
+    pcl::transformPointCloudWithNormals(lsd_cloud, transformed_lsd, transform.matrix());
+
     pcl::PointCloud<pcl::PointXYZI> cloud =
       evaluate_cloud(transformed_lsd, transform.translation());
 
@@ -191,20 +195,4 @@ pcl::PointCloud<pcl::PointXYZI> CameraParticleCorrector::evaluate_cloud(
   }
   return cloud;
 }
-
-CameraParticleCorrector::LineSegment CameraParticleCorrector::transform_cloud(
-  const LineSegment & src, const Eigen::Affine3f & transform) const
-{
-  LineSegment dst;
-  dst.reserve(src.size());
-  for (const pcl::PointNormal & pn : src) {
-    pcl::PointNormal dst_pn;
-    dst_pn.getVector3fMap() = transform * pn.getVector3fMap();
-    dst_pn.getNormalVector3fMap() = transform * pn.getNormalVector3fMap();
-    dst.push_back(dst_pn);
-  }
-
-  return dst;
-}
-
 }  // namespace pcdless::modularized_particle_filter

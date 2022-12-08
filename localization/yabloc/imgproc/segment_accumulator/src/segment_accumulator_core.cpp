@@ -151,7 +151,6 @@ SegmentAccumulator::LineSegments::Ptr SegmentAccumulator::filt_line_segments_by_
   }
   LineSegments near_ll2 = common::extract_near_line_segments(ll2_cloud_, *latest_pose_);
 
-  // TODO: use transform_cloud() in antishadow_corrector.cpp
   cv::Mat debug_image = cv::Mat::zeros(500, 500, CV_8UC3);
   for (const pcl::PointNormal & pn : near_ll2) {
     Eigen::Vector3f p1 = latest_pose_->inverse() * pn.getVector3fMap();
