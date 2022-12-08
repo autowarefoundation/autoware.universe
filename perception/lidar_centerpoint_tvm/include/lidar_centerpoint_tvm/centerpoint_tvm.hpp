@@ -165,7 +165,8 @@ protected:
   std::shared_ptr<BNH_PostPT> BNH_PostP;
 
   std::shared_ptr<TSE> scatter_ie;
-  std::shared_ptr<tvm_utility::pipeline::TowStagePipeline<VE_PrePT, IET, TSE, BNH_PostPT>> TSP_pipeline;
+  std::shared_ptr<tvm_utility::pipeline::TowStagePipeline<VE_PrePT, IET, TSE, BNH_PostPT>>
+    TSP_pipeline;
 
   // Variables
   std::unique_ptr<VoxelGeneratorTemplate> vg_ptr_{nullptr};

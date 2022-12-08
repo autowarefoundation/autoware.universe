@@ -46,8 +46,8 @@ TVMScatterIE::TVMScatterIE(
   const std::string & function_name)
 : config_(config)
 {
-  std::string network_module_path = ament_index_cpp::get_package_share_directory(pkg_name) +
-                                 "/models/" + config.network_name + "/";
+  std::string network_module_path =
+    ament_index_cpp::get_package_share_directory(pkg_name) + "/models/" + config.network_name + "/";
   network_module_path = "/home/xinyuwang/adehome/tvm_latest/tvm_example/scatter.so";
 
   std::ifstream module(network_module_path);
