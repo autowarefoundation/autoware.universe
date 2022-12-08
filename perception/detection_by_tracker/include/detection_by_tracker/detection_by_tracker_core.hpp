@@ -80,8 +80,11 @@ private:
   std::shared_ptr<euclidean_cluster::EuclideanClusterInterface> cluster_;
   std::shared_ptr<Debugger> debugger_;
   std::map<uint8_t, int> max_search_distance_for_merger_;
+  std::map<uint8_t, int> max_search_distance_for_divider_;
 
   bool ignore_unknown_tracker_;
+
+  void setMaxSearchRange();
 
   void onObjects(
     const tier4_perception_msgs::msg::DetectedObjectsWithFeature::ConstSharedPtr input_msg);
