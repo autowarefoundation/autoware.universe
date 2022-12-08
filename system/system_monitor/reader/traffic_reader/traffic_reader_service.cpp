@@ -33,8 +33,8 @@ namespace bp = boost::process;
 namespace traffic_reader_service
 {
 
-TrafficReaderService::TrafficReaderService(const std::string & socket_path)
-: socket_path_(socket_path), socket_(-1), connection_(-1), stop_(false)
+TrafficReaderService::TrafficReaderService(std::string socket_path)
+: socket_path_(std::move(socket_path)), socket_(-1), connection_(-1), stop_(false)
 {
 }
 
@@ -63,8 +63,8 @@ bool TrafficReaderService::initialize()
   }
 
   // Give permission to other users to access to socket
-  if (chmod(socket_path_.c_str(), S_IRWXU | S_IRWXG | S_IRWXO) != 0) {  // NOLINT
-                                                                        // [hicpp-signed-bitwise]
+  // NOLINTNEXTLINE [hicpp-signed-bitwise]
+  if (chmod(socket_path_.c_str(), S_IRWXU | S_IRWXG | S_IRWXO) != 0) {
     syslog(LOG_ERR, "Failed to give permission to unix domain socket. %s\n", strerror(errno));
     return false;
   }

@@ -34,7 +34,7 @@ public:
    * @brief Constructor
    * @param[in] socket_path Path of UNIX domain socket
    */
-  explicit TrafficReaderService(const std::string & socket_path);
+  explicit TrafficReaderService(std::string socket_path);
 
   /**
    * @brief Initialization
