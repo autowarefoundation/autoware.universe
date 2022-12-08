@@ -47,6 +47,8 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/pose_conversions.cpp
   src/static_tf_subscriber.cpp
   src/extract_line_segments.cpp
+  src/direct_cost_map.cpp
+  src/hierarchical_cost_map.cpp
   src/color.cpp)
 target_link_libraries(${PROJECT_NAME} Geographic ${PCL_LIBRARIES} Sophus::Sophus)
 target_include_directories(

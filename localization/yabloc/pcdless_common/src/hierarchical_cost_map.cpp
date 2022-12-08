@@ -1,12 +1,12 @@
-#include "camera_particle_corrector/hierarchical_cost_map.hpp"
+#include "pcdless_common/hierarchical_cost_map.hpp"
 
-#include "camera_particle_corrector/direct_cost_map.hpp"
+#include "pcdless_common/direct_cost_map.hpp"
 
 #include <opencv4/opencv2/highgui.hpp>
 #include <opencv4/opencv2/imgproc.hpp>
 #include <pcdless_common/color.hpp>
 
-namespace pcdless::modularized_particle_filter
+namespace pcdless::common
 {
 float Area::unit_length_ = -1;
 
@@ -227,4 +227,4 @@ cv::Mat HierarchicalCostMap::create_available_area_image(const Area & area)
   return available_area;
 }
 
-}  // namespace pcdless::modularized_particle_filter
+}  // namespace pcdless::common

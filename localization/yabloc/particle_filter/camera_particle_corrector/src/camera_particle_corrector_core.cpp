@@ -5,7 +5,6 @@
 #include <pcdless_common/pose_conversions.hpp>
 #include <pcdless_common/pub_sub.hpp>
 
-#include <pcl/common/transforms.h>
 #include <pcl_conversions/pcl_conversions.h>
 
 namespace pcdless::modularized_particle_filter
@@ -54,6 +53,22 @@ void CameraParticleCorrector::on_unmapped_area(const PointCloud2 & msg)
   RCLCPP_INFO_STREAM(get_logger(), "Set unmapped-area into Hierarchical cost map");
 }
 
+pcl::PointCloud<pcl::PointNormal> transform_linesegments(
+  const pcl::PointCloud<pcl::PointNormal> & src, const Sophus::SE3f & transform)
+{
+  pcl::PointCloud<pcl::PointNormal> dst;
+  for (const pcl::PointNormal & line : src) {
+    Eigen::Vector3f p1 = line.getVector3fMap();
+    Eigen::Vector3f p2 = line.getNormalVector3fMap();
+
+    pcl::PointNormal transformed;
+    transformed.getVector3fMap() = transform * p1;
+    transformed.getNormalVector3fMap() = transform * p2;
+    dst.push_back(transformed);
+  }
+  return dst;
+}
+
 void CameraParticleCorrector::on_lsd(const PointCloud2 & lsd_msg)
 {
   const rclcpp::Time stamp = lsd_msg.header.stamp;
@@ -77,9 +92,8 @@ void CameraParticleCorrector::on_lsd(const PointCloud2 & lsd_msg)
   ParticleArray weighted_particles = opt_array.value();
 
   for (auto & particle : weighted_particles.particles) {
-    Eigen::Affine3f transform = common::pose_to_affine(particle.pose);
-    LineSegment transformed_lsd;
-    pcl::transformPointCloudWithNormals(lsd_cloud, transformed_lsd, transform.matrix());
+    Sophus::SE3f transform = common::pose_to_se3(particle.pose);
+    LineSegment transformed_lsd = transform_linesegments(lsd_cloud, transform);
 
     float raw_score = compute_score(transformed_lsd, transform.translation());
     particle.weight = score_convert(raw_score);
@@ -102,9 +116,8 @@ void CameraParticleCorrector::on_lsd(const PointCloud2 & lsd_msg)
   // DEBUG: just visualization
   {
     Pose meaned_pose = mean_pose(weighted_particles);
-    Eigen::Affine3f transform = common::pose_to_affine(meaned_pose);
-    LineSegment transformed_lsd;
-    pcl::transformPointCloudWithNormals(lsd_cloud, transformed_lsd, transform.matrix());
+    Sophus::SE3f transform = common::pose_to_se3(meaned_pose);
+    LineSegment transformed_lsd = transform_linesegments(lsd_cloud, transform);
 
     pcl::PointCloud<pcl::PointXYZI> cloud =
       evaluate_cloud(transformed_lsd, transform.translation());

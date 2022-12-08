@@ -1,8 +1,8 @@
 #pragma once
-#include "camera_particle_corrector/hierarchical_cost_map.hpp"
 
 #include <modularized_particle_filter/correction/abst_corrector.hpp>
 #include <opencv4/opencv2/core.hpp>
+#include <pcdless_common/hierarchical_cost_map.hpp>
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <sensor_msgs/msg/image.hpp>
@@ -50,7 +50,7 @@ private:
   const float max_raw_score_;
   const float min_prob_;
   const float far_weight_gain_;
-  HierarchicalCostMap cost_map_;
+  common::HierarchicalCostMap cost_map_;
 
   Eigen::Vector3f last_mean_position_;
   std::optional<PoseStamped> latest_pose_{std::nullopt};
