@@ -11,7 +11,7 @@
 
   <build_depend>autoware_cmake</build_depend>
 
-  <depend>motion_common</depend>
+  <depend>autoware_auto_common</depend>
   <depend>sampler_common</depend>
 
   <test_depend>ament_cmake_ros</test_depend>

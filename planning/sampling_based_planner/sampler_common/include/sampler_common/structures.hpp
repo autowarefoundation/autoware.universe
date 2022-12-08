@@ -227,9 +227,6 @@ struct Trajectory : Path
     const auto last_base_time = times.empty() ? 0.0 : times.back() + time_offset;
     for (size_t i = offset; i < traj.times.size(); ++i)
       extended_traj.times.push_back(last_base_time + traj.times[i]);
-    std::cout << "[EXTEND] times: ";
-    for (const auto t : extended_traj.times) std::printf("%2.1f ", t);
-    std::cout << std::endl;
     if (!extended_traj.times.empty()) extended_traj.duration = extended_traj.times.back();
     return extended_traj;
   }

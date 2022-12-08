@@ -18,8 +18,10 @@
 #include "frenet_planner/structures.hpp"
 #include "sampler_node/prepare_inputs.hpp"
 
+#include <helper_functions/angle_utils.hpp>
 #include <interpolation/linear_interpolation.hpp>
-#include <motion_common/trajectory_common.hpp>
+
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include <algorithm>
 #include <iterator>
@@ -43,8 +45,7 @@ std::vector<sampler_common::Trajectory> generateCandidateTrajectories(
       initial_configuration, base_trajectory, path_msg, path_spline, params);
     // gui.setFrenetTrajectories(trajectories_from_prev_trajectory, base_trajectory);
     for (const auto & trajectory : frenet_trajectories) {
-      auto t = base_trajectory.extend(trajectory);
-      trajectories.push_back(t);
+      trajectories.push_back(base_trajectory.extend(trajectory));
     }
   }
   if (params.sampling.enable_bezier) {
@@ -79,8 +80,8 @@ std::vector<frenet_planner::Trajectory> generateFrenetTrajectories(
     path_spline.frenet({path.points.back().pose.position.x, path.points.back().pose.position.y}).s -
     params.sampling.resolution;
   initial_frenet_state.position = path_spline.frenet(initial_configuration.pose);
-  const auto dyaw = autoware::motion::motion_common::calcYawDeviation(
-    initial_configuration.heading, path_spline.yaw(initial_frenet_state.position.s));
+  const auto dyaw = autoware::common::helper_functions::wrap_angle(
+    initial_configuration.heading - path_spline.yaw(initial_frenet_state.position.s));
   initial_frenet_state.longitudinal_velocity = std::cos(dyaw) * initial_configuration.velocity;
   initial_frenet_state.lateral_velocity = std::sin(dyaw) * initial_configuration.velocity;
   initial_frenet_state.longitudinal_acceleration =

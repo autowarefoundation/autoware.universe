@@ -18,7 +18,7 @@
 
 #include <frenet_planner/polynomials.hpp>
 #include <frenet_planner/structures.hpp>
-#include <motion_common/trajectory_common.hpp>
+#include <helper_functions/angle_utils.hpp>
 #include <sampler_common/structures.hpp>
 #include <sampler_common/transform/spline_transform.hpp>
 
@@ -163,7 +163,7 @@ void calculateCartesian(const sampler_common::transform::Spline2D & reference, P
     // Calculate curvatures
     for (size_t i = 1; i < path.yaws.size(); ++i) {
       const auto dyaw =
-        autoware::motion::motion_common::calcYawDeviation(path.yaws[i], path.yaws[i - 1]);
+        autoware::common::helper_functions::wrap_angle(path.yaws[i] - path.yaws[i - 1]);
       path.curvatures.push_back(dyaw / (path.lengths[i - 1], path.lengths[i]));
     }
     path.curvatures.push_back(path.curvatures.back());
@@ -194,8 +194,8 @@ void calculateCartesian(
     trajectory.yaws.push_back(trajectory.yaws.back());
     std::vector<double> dyaws(trajectory.points.size(), 0.0);
     for (size_t i = 1; i < dyaws.size(); ++i)
-      dyaws[i] = autoware::motion::motion_common::calcYawDeviation(
-        trajectory.yaws[i], trajectory.yaws[i - 1]);
+      dyaws[i] =
+        autoware::common::helper_functions::wrap_angle(trajectory.yaws[i] - trajectory.yaws[i - 1]);
     // Calculate curvatures
     trajectory.curvatures.push_back(0.0);
     for (size_t i = 1; i < trajectory.yaws.size(); ++i) {

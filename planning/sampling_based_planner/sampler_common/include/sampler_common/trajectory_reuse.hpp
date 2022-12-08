@@ -35,18 +35,21 @@ inline void updateTrajectoryTime(
 {
   const auto closest_iter = std::min_element(
     trajectory.points.begin(), trajectory.points.end(), [&](const auto & p1, const auto & p2) {
-      return boost::geometry::distance(p1, current_configuration.pose) <
+      return boost::geometry::distance(p1, current_configuration.pose) <=
              boost::geometry::distance(p2, current_configuration.pose);
     });
-  const auto zero_idx = std::distance(trajectory.points.begin(), closest_iter);
-  const auto time_offset = trajectory.times[zero_idx];
-  for (auto & t : trajectory.times) t -= time_offset;
+  if (closest_iter != trajectory.points.end()) {
+    const auto zero_idx = std::distance(trajectory.points.begin(), closest_iter);
+    const auto time_offset = trajectory.times[zero_idx];
+    for (auto & t : trajectory.times) t -= time_offset;
+  }
 }
 
 inline std::vector<ReusableTrajectory> calculateReusableTrajectories(
   const Trajectory & trajectory, const std::vector<double> & target_times)
 {
   std::vector<ReusableTrajectory> reusable_trajectories;
+  if (trajectory.points.empty() || target_times.empty()) return reusable_trajectories;
   reusable_trajectories.reserve(target_times.size());
   ReusableTrajectory reusable;
   for (const auto t : target_times) {

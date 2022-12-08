@@ -67,8 +67,9 @@ void calculateCost(
   trajectory.cost +=
     (deviation / trajectory.points.size()) * constraints.soft.lateral_deviation_weight;
   // jerk
-  const auto avg_jerk = std::accumulate(trajectory.jerks.begin(), trajectory.jerks.end(), 0.0) /
-                        trajectory.jerks.size();
+  auto jerk_sum = 0.0;
+  for (const auto jerk : trajectory.jerks) jerk_sum += std::abs(jerk);
+  const auto avg_jerk = jerk_sum / trajectory.jerks.size();
   trajectory.cost += avg_jerk * constraints.soft.jerk_weight;
 }
 }  // namespace sampler_common::constraints

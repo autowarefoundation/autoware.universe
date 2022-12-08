@@ -21,7 +21,6 @@
 #include "sampler_node/parameters.hpp"
 
 #include <interpolation/linear_interpolation.hpp>
-#include <motion_common/trajectory_common.hpp>
 
 #include <autoware_auto_planning_msgs/msg/path.hpp>
 
@@ -54,8 +53,9 @@ inline VelocityExtremum findVelocityExtremum(
       extremum.max = vel;
       extremum.max_s = arc_length;
     }
-    arc_length += autoware::common::geometry::distance_2d(
-      path.points[i - 1].pose.position, path.points[i].pose.position);
+    const auto & p1 = path.points[i - 1].pose.position;
+    const auto & p2 = path.points[i].pose.position;
+    arc_length += std::hypot(p1.x - p2.x, p1.y - p2.y);
     if (arc_length > max_distance) break;
   }
   if (extremum.min_s == extremum.max_s) {  // only one velocity value in the Path
@@ -111,8 +111,7 @@ inline void calculateTargets(
   const double base_length, const double base_duration)
 {
   const auto start_s = path_spline.frenet(initial_configuration.pose).s;
-  const auto final_s =
-    path_spline.frenet({path.points.back().pose.position.x, path.points.back().pose.position.y}).s;
+  const auto final_s = path_spline.lastS();
   frenet_planner::SamplingParameter sp;
   if (params.sampling.frenet.manual.enable) {
     for (const auto target_lat_pos : params.sampling.frenet.manual.target_lateral_positions) {
@@ -165,7 +164,7 @@ inline void calculateTargets(
       const auto distance =
         interpolation::lerp(velocity_extremum.min_s, velocity_extremum.max_s, ratio);
       if (distance < params.sampling.resolution) continue;
-      sp.target_state.position.s = start_s + distance;
+      sp.target_state.position.s = std::min(final_s, start_s + distance);
       const auto confortable_target_vel = std::sqrt(
         initial_configuration.velocity * initial_configuration.velocity +
         2 * params.sampling.confortable_acceleration * distance);

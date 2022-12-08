@@ -32,12 +32,9 @@
 #include <rclcpp/utilities.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
 
+#include <geometry_msgs/msg/quaternion.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
-#ifdef ROS_DISTRO_GALACTIC
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-#else
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
-#endif
 
 #include <boost/geometry/algorithms/distance.hpp>
 
@@ -323,13 +320,14 @@ void TrajectorySamplerNode::pathCallback(
   gui_.setConstraints(params_.constraints);
 
   sampler_common::updateTrajectoryTime(prev_traj_, planning_configuration);
+  const auto max_reuse_time = prev_traj_.times.empty() ? 0.0 : prev_traj_.times.back();
+  std::vector<double> reusable_times;
+  for (auto t = 1.0; t < max_reuse_time && t <= 5.0; t += 2.0) reusable_times.push_back(t);
   auto reusable_trajectories =
-    sampler_common::calculateReusableTrajectories(prev_traj_, {0.0, 2.0, 4.0});
-  std::vector<sampler_common::Trajectory> trajectories;
+    sampler_common::calculateReusableTrajectories(prev_traj_, reusable_times);
+  auto trajectories =
+    generateCandidateTrajectories(planning_configuration, {}, path_spline, *msg, gui_, params_);
   for (auto & reusable_traj : reusable_trajectories) {
-    sampler_common::constraints::checkHardConstraints(
-      reusable_traj.trajectory, params_.constraints);
-    if (!reusable_traj.trajectory.constraint_results.isValid()) break;
     auto trajs = generateCandidateTrajectories(
       reusable_traj.planning_configuration, reusable_traj.trajectory, path_spline, *msg, gui_,
       params_);

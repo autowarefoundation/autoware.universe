@@ -10,20 +10,11 @@ find_package(Eigen3 REQUIRED)
 ament_auto_add_library(bezier_sampler SHARED
   src/bezier.cpp
   src/bezier_sampling.cpp
-  src/path_splitting.cpp
-  src/constraint_checker.cpp
 )
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
-
-  ament_add_gtest(test_bezier_sampler
-    test/test_constraint_checker.cpp
-  )
-  target_link_libraries(test_bezier_sampler
-    bezier_sampler
-  )
 endif()
 
 ament_auto_package(
