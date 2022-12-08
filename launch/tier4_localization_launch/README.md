@@ -21,6 +21,7 @@ Include `localization.launch.xml` in other launch files as follows.
 Note that you need to provide a parameter configuration file in the argument to specify which parameters to load. See [`autoware.launch.xml` in `autowarefoundation/autoware_launch`](https://github.com/autowarefoundation/autoware_launch/blob/main/autoware_launch/launch/autoware.launch.xml) for example.
 
 The parameter configuration file should look like as follows.
+
 ```xml
 <?xml version="1.0"?>
 <launch>
