@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef TRAFFIC_READER__SERVICE__TRAFFIC_READER_SERVICE_HPP_
-#define TRAFFIC_READER__SERVICE__TRAFFIC_READER_SERVICE_HPP_
+#ifndef TRAFFIC_READER__TRAFFIC_READER_SERVICE_HPP_
+#define TRAFFIC_READER__TRAFFIC_READER_SERVICE_HPP_
 
 #include "traffic_reader/traffic_reader_common.hpp"
 
@@ -103,4 +103,4 @@ protected:
 
 }  // namespace traffic_reader_service
 
-#endif  // TRAFFIC_READER__SERVICE__TRAFFIC_READER_SERVICE_HPP_
+#endif  // TRAFFIC_READER__TRAFFIC_READER_SERVICE_HPP_
