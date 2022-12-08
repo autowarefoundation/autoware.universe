@@ -438,7 +438,6 @@ void MpcLateralController::declareMPCparameters()
     node_->declare_parameter<double>("mpc_velocity_time_constant");
   m_mpc.m_param.min_prediction_length =
     node_->declare_parameter<double>("mpc_min_prediction_length");
-  m_mpc.m_param.min_vel = node_->declare_parameter<double>("mpc_min_vel");
 }
 
 rcl_interfaces::msg::SetParametersResult MpcLateralController::paramCallback(
