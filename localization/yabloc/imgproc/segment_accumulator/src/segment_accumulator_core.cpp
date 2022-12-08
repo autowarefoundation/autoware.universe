@@ -2,6 +2,8 @@
 
 #include <opencv2/highgui.hpp>
 #include <pcdless_common/cv_decompress.hpp>
+#include <pcdless_common/extract_line_segments.hpp>
+#include <pcdless_common/pose_conversions.hpp>
 #include <pcdless_common/pub_sub.hpp>
 #include <pcdless_common/timer.hpp>
 
@@ -22,6 +24,12 @@ SegmentAccumulator::SegmentAccumulator()
   // Subscriber
   auto on_lsd = std::bind(&SegmentAccumulator::on_line_segments, this, _1);
   auto on_twist = std::bind(&SegmentAccumulator::on_twist, this, _1);
+  auto on_ll2 = std::bind(&SegmentAccumulator::on_ll2, this, _1);
+  auto on_pose = std::bind(&SegmentAccumulator::on_pose_stamped, this, _1);
+
+  sub_ll2_ = create_subscription<PointCloud2>("/localization/map/ll2_road_marking", 10, on_ll2);
+  sub_pose_stamped_ =
+    create_subscription<PoseStamped>("/localization/pf/particle_pose", 10, on_pose);
   sub_lsd_ = create_subscription<PointCloud2>("lsd_cloud", 10, on_lsd);
   sub_twist_ = create_subscription<TwistStamped>("/localization/twist/kalman/twist", 10, on_twist);
 
@@ -118,7 +126,11 @@ void SegmentAccumulator::on_line_segments(const PointCloud2 & msg)
     if (!back_project_func_) return;
   }
 
-  draw(msg);
+  pcl::PointCloud<pcl::PointNormal>::Ptr lsd{new pcl::PointCloud<pcl::PointNormal>()};
+  pcl::fromROSMsg(msg, *lsd);
+
+  LineSegments::Ptr filted_segments = filt_line_segments_by_ll2(lsd);
+  draw(filted_segments);
   pop_obsolete_msg(*last_stamp);
 
   cv::Mat color_image, histogram_3ch_image;
@@ -129,6 +141,28 @@ void SegmentAccumulator::on_line_segments(const PointCloud2 & msg)
   common::publish_image(*pub_rgb_image_, color_image, msg.header.stamp);
 
   RCLCPP_INFO_STREAM(get_logger(), "line accumulation: " << timer);
+}
+
+SegmentAccumulator::LineSegments::Ptr SegmentAccumulator::filt_line_segments_by_ll2(
+  const LineSegments::Ptr & lines)
+{
+  if (!latest_pose_.has_value()) {
+    return lines;
+  }
+  LineSegments near_ll2 = common::extract_near_line_segments(ll2_cloud_, *latest_pose_);
+
+  // TODO: use transform_cloud() in antishadow_corrector.cpp
+  cv::Mat debug_image = cv::Mat::zeros(500, 500, CV_8UC3);
+  for (const pcl::PointNormal & pn : near_ll2) {
+    Eigen::Vector3f p1 = latest_pose_->inverse() * pn.getVector3fMap();
+    Eigen::Vector3f p2 = latest_pose_->inverse() * pn.getNormalVector3fMap();
+
+    cv::line(debug_image, cv_pt2(p1), cv_pt2(p2), cv::Scalar(0, 255, 255));
+  }
+  cv::imshow("debug", debug_image);
+  cv::waitKey(10);
+
+  return lines;
 }
 
 void SegmentAccumulator::transform_image(const Sophus::SE3f & odom)
@@ -153,14 +187,11 @@ void SegmentAccumulator::transform_image(const Sophus::SE3f & odom)
     cv::Scalar::all(default_map_value_));
 }
 
-void SegmentAccumulator::draw(const PointCloud2 & cloud_msg)
+void SegmentAccumulator::draw(const LineSegments::Ptr & line_segments)
 {
-  pcl::PointCloud<pcl::PointNormal>::Ptr lsd{new pcl::PointCloud<pcl::PointNormal>()};
-  pcl::fromROSMsg(cloud_msg, *lsd);
-
   // Project segment on ground
   cv::Mat increment_image = cv::Mat::zeros(histogram_image_.size(), CV_8UC1);
-  for (const auto & ls : *lsd) {
+  for (const auto & ls : *line_segments) {
     std::optional<Eigen::Vector3f> opt1 = back_project_func_(ls.getVector3fMap());
     std::optional<Eigen::Vector3f> opt2 = back_project_func_(ls.getNormalVector3fMap());
     if (!opt1.has_value()) continue;
@@ -212,6 +243,17 @@ void SegmentAccumulator::pop_obsolete_msg(const rclcpp::Time & oldest_stamp)
     if (rclcpp::Time((*itr)->header.stamp) > oldest_stamp) break;
     itr = twist_list_.erase(itr);
   }
+}
+
+void SegmentAccumulator::on_ll2(const PointCloud2 & ll2_msg)
+{
+  RCLCPP_INFO_STREAM(get_logger(), "LL2 cloud is subscribed");
+  pcl::fromROSMsg(ll2_msg, ll2_cloud_);
+}
+
+void SegmentAccumulator::on_pose_stamped(const PoseStamped & msg)
+{
+  latest_pose_ = common::pose_to_se3(msg.pose);
 }
 
 }  // namespace pcdless::accumulator

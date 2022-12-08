@@ -6,6 +6,7 @@
 #include <opencv4/opencv2/highgui.hpp>
 #include <opencv4/opencv2/imgproc.hpp>
 #include <pcdless_common/cv_decompress.hpp>
+#include <pcdless_common/extract_line_segments.hpp>
 #include <pcdless_common/pose_conversions.hpp>
 #include <pcdless_common/pub_sub.hpp>
 
@@ -100,8 +101,12 @@ void Overlay::draw_overlay(const cv::Mat & image, const Pose & pose, const rclcp
   if (ll2_cloud_.empty()) return;
 
   cv::Mat overlayed_image = cv::Mat::zeros(image.size(), CV_8UC3);
-  draw_overlay_line_segments(overlayed_image, pose, extract_naer_line_segments(pose, ll2_cloud_));
-  draw_overlay_line_segments(overlayed_image, pose, extract_naer_line_segments(pose, sign_board_));
+
+  using common::extract_near_line_segments;
+  draw_overlay_line_segments(
+    overlayed_image, pose, extract_near_line_segments(ll2_cloud_, common::pose_to_se3(pose), 60));
+  draw_overlay_line_segments(
+    overlayed_image, pose, extract_near_line_segments(sign_board_, common::pose_to_se3(pose), 60));
 
   cv::Mat show_image;
   cv::addWeighted(image, 0.8, overlayed_image, 0.8, 1, show_image);
@@ -180,39 +185,6 @@ void Overlay::make_vis_marker(
     marker.points.push_back(p2);
   }
   pub_vis_->publish(marker);
-}
-
-Overlay::LineSegments Overlay::extract_naer_line_segments(
-  const Pose & pose, const LineSegments & linesegments)
-{
-  Eigen::Vector3f pose_vector;
-  pose_vector << pose.position.x, pose.position.y, pose.position.z;
-
-  // Compute distance between pose and linesegment of linestring
-  auto checkIntersection = [this, pose_vector](const pcl::PointNormal & pn) -> bool {
-    const float max_range = 80;
-
-    const Eigen::Vector3f from = pn.getVector3fMap() - pose_vector;
-    const Eigen::Vector3f to = pn.getNormalVector3fMap() - pose_vector;
-
-    Eigen::Vector3f tangent = to - from;
-    if (tangent.squaredNorm() < 1e-3f) {
-      return from.norm() < 1.42 * max_range;
-    }
-
-    float inner = from.dot(tangent);
-    float mu = std::clamp(inner / tangent.squaredNorm(), -1.0f, 0.0f);
-    Eigen::Vector3f nearest = from - tangent * mu;
-    return nearest.norm() < 1.42 * max_range;
-  };
-
-  LineSegments near_linestrings;
-  for (const pcl::PointNormal & pn : linesegments) {
-    if (checkIntersection(pn)) {
-      near_linestrings.push_back(pn);
-    }
-  }
-  return near_linestrings;
 }
 
 }  // namespace pcdless::overlay

@@ -41,7 +41,6 @@ private:
   void on_ll2(const PointCloud2 & msg);
   void on_pose_stamped(const PoseStamped & msg);
 
-  LineSegments crop_line_segments(const LineSegments & src, const Sophus::SE3f & transform) const;
   LineSegments transform_cloud(const LineSegments & src, const Sophus::SE3f & transform) const;
   float compute_score(const LineSegments & src, const cv::Mat & lsd_image) const;
 

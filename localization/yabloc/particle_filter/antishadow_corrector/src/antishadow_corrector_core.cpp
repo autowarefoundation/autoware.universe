@@ -2,6 +2,7 @@
 
 #include <opencv4/opencv2/imgproc.hpp>
 #include <pcdless_common/cv_decompress.hpp>
+#include <pcdless_common/extract_line_segments.hpp>
 #include <pcdless_common/pose_conversions.hpp>
 #include <pcdless_common/timer.hpp>
 
@@ -68,7 +69,7 @@ void AntishadowCorrector::on_lsd(const Image & msg)
 
   ParticleArray weighted_particles = opt_array.value();
 
-  LineSegments cropped_ll2_cloud = crop_line_segments(ll2_cloud_, *latest_pose_);
+  LineSegments cropped_ll2_cloud = common::extract_near_line_segments(ll2_cloud_, *latest_pose_);
 
   auto normalize = define_normalize_score();
   for (auto & p : weighted_particles.particles) {
@@ -160,38 +161,6 @@ AntishadowCorrector::LineSegments AntishadowCorrector::transform_cloud(
     dst_pn.getVector3fMap() = transform * pn.getVector3fMap();
     dst_pn.getNormalVector3fMap() = transform * pn.getNormalVector3fMap();
     dst.push_back(dst_pn);
-  }
-  return dst;
-}
-
-AntishadowCorrector::LineSegments AntishadowCorrector::crop_line_segments(
-  const LineSegments & src, const Sophus::SE3f & transform) const
-{
-  Eigen::Vector3f pose_vector = transform.translation();
-
-  // Compute distance between pose and linesegment of linestring
-  auto check_intersection = [this, pose_vector](const pcl::PointNormal & pn) -> bool {
-    const float max_range = 40;
-
-    const Eigen::Vector3f from = pn.getVector3fMap() - pose_vector;
-    const Eigen::Vector3f to = pn.getNormalVector3fMap() - pose_vector;
-
-    Eigen::Vector3f tangent = to - from;
-    if (tangent.squaredNorm() < 1e-3f) {
-      return from.norm() < 1.42 * max_range;
-    }
-
-    float inner = from.dot(tangent);
-    float mu = std::clamp(inner / tangent.squaredNorm(), -1.0f, 0.0f);
-    Eigen::Vector3f nearest = from - tangent * mu;
-    return nearest.norm() < 1.42 * max_range;
-  };
-
-  LineSegments dst;
-  for (const pcl::PointNormal & pn : src) {
-    if (check_intersection(pn)) {
-      dst.push_back(pn);
-    }
   }
   return dst;
 }

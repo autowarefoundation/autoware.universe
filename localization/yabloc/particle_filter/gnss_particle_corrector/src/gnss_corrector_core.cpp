@@ -70,19 +70,18 @@ void GnssParticleCorrector::on_ublox(const NavPVT::ConstSharedPtr ublox_msg)
 
   {
     Eigen::Matrix3f sigma = modularized_particle_filter::std_of_distribution(*opt_particles);
-    auto inv_sigma = sigma.completeOrthogonalDecomposition().pseudoInverse();
-    std::cout << "inv_sigma " << inv_sigma << std::endl;
+    Eigen::Matrix3f inv_sigma = sigma.completeOrthogonalDecomposition().pseudoInverse();
 
     Eigen::Vector3f meaned_position = common::pose_to_affine(meaned_pose).translation();
     Eigen::Vector3f diff = gnss_position - meaned_position;
     diff.z() = 0;
 
     float mahalanobis_distance = std::sqrt(diff.dot(inv_sigma * diff));
-    std::cout << "mahalanobis: " << mahalanobis_distance << std::endl;
+    RCLCPP_INFO_STREAM(get_logger(), "mahalanobis: " << mahalanobis_distance);
 
     if (mahalanobis_distance > mahalanobis_distance_threshold_) {
       RCLCPP_WARN_STREAM(
-        get_logger(), "mahalanobis_distance is too large: " << mahalanobis_distance << ">"
+        get_logger(), "Mahalanobis distance is too large: " << mahalanobis_distance << ">"
                                                             << mahalanobis_distance_threshold_);
       return;
     }

@@ -58,8 +58,6 @@ private:
   void on_image(const Image & msg);
   void on_lsd(const PointCloud2 & msg);
 
-  LineSegments extract_naer_line_segments(const Pose & pose, const LineSegments & linesegments);
-
   void draw_overlay(const cv::Mat & image, const Pose & pose, const rclcpp::Time & stamp);
   void draw_overlay_line_segments(
     cv::Mat & image, const Pose & pose, const LineSegments & linesegments);
