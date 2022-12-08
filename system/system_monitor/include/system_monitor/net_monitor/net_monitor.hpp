@@ -178,7 +178,7 @@ protected:
     int mtu_errno{0};                //!< @brief errno set by ioctl() with SIOCGIFMTU
     int ethtool_errno{0};            //!< @brief errno set by ioctl() with SIOCETHTOOL
     bool is_running{false};          //!< @brief resource allocated flag
-    std::string interface_name{""};  //!< @brief interface name
+    std::string interface_name{};    //!< @brief interface name
     float speed{0.0};                //!< @brief network capacity
     int mtu{0};                      //!< @brief MTU
     float rx_traffic{0.0};           //!< @brief traffic received

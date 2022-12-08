@@ -102,7 +102,7 @@ void TrafficReaderService::run()
 
     // Receive messages from a socket
     char buffer[1024]{};
-    int ret = recv(connection_, buffer, sizeof(buffer) - 1, 0);
+    ssize_t ret = recv(connection_, buffer, sizeof(buffer), 0);
     if (ret < 0) {
       syslog(LOG_ERR, "Failed to recv. %s\n", strerror(errno));
       close(connection_);
@@ -186,7 +186,7 @@ void TrafficReaderService::get_result()
   archive & result_;
 
   //  Write N bytes of BUF to FD
-  int ret = write(connection_, out_stream.str().c_str(), out_stream.str().length());
+  ssize_t ret = write(connection_, out_stream.str().c_str(), out_stream.str().length());
   if (ret < 0) {
     syslog(LOG_ERR, "Failed to write N bytes of BUF to FD. %s\n", strerror(errno));
   }

@@ -149,7 +149,9 @@ void NetMonitor::update_network_info_list()
 
     // Get MTU information
     fd = socket(AF_INET, SOCK_DGRAM, 0);
-    strncpy(ifrm.ifr_name, ifa->ifa_name, IFNAMSIZ - 1);  // NOLINT [cppcoreguidelines-pro-type-union-access]
+    strncpy(
+      ifrm.ifr_name, ifa->ifa_name,
+      IFNAMSIZ - 1);  // NOLINT [cppcoreguidelines-pro-type-union-access]
     if (ioctl(fd, SIOCGIFMTU, &ifrm) < 0) {
       net_info.mtu_errno = errno;
       close(fd);
@@ -157,8 +159,10 @@ void NetMonitor::update_network_info_list()
     }
 
     // Get network capacity
-    strncpy(ifrc.ifr_name, ifa->ifa_name, IFNAMSIZ - 1);  // NOLINT [cppcoreguidelines-pro-type-union-access]
-    ifrc.ifr_data = (caddr_t)&edata;  
+    strncpy(
+      ifrc.ifr_name, ifa->ifa_name,
+      IFNAMSIZ - 1);                  // NOLINT [cppcoreguidelines-pro-type-union-access]
+    ifrc.ifr_data = (caddr_t)&edata;  // NOLINT [cppcoreguidelines-pro-type-union-access]
     edata.cmd = ETHTOOL_GSET;
     if (ioctl(fd, SIOCETHTOOL, &ifrc) < 0) {
       // possibly wireless connection, get bitrate(MBit/s)
@@ -658,7 +662,7 @@ bool NetMonitor::send_data_with_parameters(
   archive & parameters;
   archive & program_name;
 
-  int ret = write(socket_, out_stream.str().c_str(), out_stream.str().length());
+  ssize_t ret = write(socket_, out_stream.str().c_str(), out_stream.str().length());
   if (ret < 0) {
     RCLCPP_ERROR(get_logger(), "Failed to write N bytes of BUF to FD. %s", strerror(errno));
     return false;
@@ -672,7 +676,7 @@ void NetMonitor::receive_data(traffic_reader_service::Result & result)
   char buffer[10240]{};
   uint8_t request_id = traffic_reader_service::Request::NONE;
 
-  int ret = recv(socket_, buffer, sizeof(buffer) - 1, 0);
+  ssize_t ret = recv(socket_, buffer, sizeof(buffer), 0);
   if (ret < 0) {
     RCLCPP_ERROR(get_logger(), "Failed to recv. %s", strerror(errno));
     return;
