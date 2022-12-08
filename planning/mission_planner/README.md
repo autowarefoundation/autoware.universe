@@ -59,6 +59,16 @@ The ROS message of route section contains following three elements for each rout
 - `preferred_primitive`: Preferred lane to follow towards the goal.
 - `primitives`: All neighbor lanes in the same direction including the preferred lane.
 
+## Goal Validation
+
+The mission planner has control mechanism to validate the given goal pose and create a route. If goal pose angle between goal pose lanelet and goal pose' yaw is greater than `goal_angle_threshold` parameter, the goal is rejected.
+Another control mechanism is the creation of a footprint of the goal pose according to the dimensions of the vehicle and checking whether this footprint is within the lanelets. If goal footprint exceeds lanelets, then the goal is rejected.
+
+At the image below, there are sample goal pose validation cases.
+
+![goal_footprints](./media/goal_footprints.svg)
+
+
 ## Implementation
 
 ### Mission Planner

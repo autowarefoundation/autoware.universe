@@ -34,6 +34,8 @@ tier4_autoware_utils::Polygon2d convert_linear_ring_to_polygon(
   boost::geometry::append(footprint_polygon.outer(), footprint[1]);
   boost::geometry::append(footprint_polygon.outer(), footprint[2]);
   boost::geometry::append(footprint_polygon.outer(), footprint[3]);
+  boost::geometry::append(footprint_polygon.outer(), footprint[4]);
+  boost::geometry::append(footprint_polygon.outer(), footprint[5]);
   boost::geometry::correct(footprint_polygon);
   return footprint_polygon;
 }
