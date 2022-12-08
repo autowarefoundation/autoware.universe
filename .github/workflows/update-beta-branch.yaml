@@ -22,7 +22,7 @@ jobs:
       - name: Search beta branch
         id: search-beta-branch
         run: |
-          branch_names=$(git branch -a | grep 'remotes/origin/beta/' | sed -E 's|.*(beta/.*)|\1|g')
+          branch_names=$(git branch -a | grep -E 'remotes/origin/beta/v[0-9]+(\.[0-9]+)*$' | sed -E 's|.*(beta/.*)|\1|g')
           if [ -n "$branch_names" ]; then
             branch_names_json=$(printf '"%s", ' $branch_names)
             branch_names_json="[${branch_names_json%, }]"
