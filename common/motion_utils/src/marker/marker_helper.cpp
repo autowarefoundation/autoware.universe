@@ -16,6 +16,7 @@
 
 #include <string>
 
+using tier4_autoware_utils::appendMarkerArray;
 using tier4_autoware_utils::createDefaultMarker;
 using tier4_autoware_utils::createDeletedDefaultMarker;
 using tier4_autoware_utils::createMarkerColor;
@@ -128,4 +129,22 @@ visualization_msgs::msg::MarkerArray createDeletedDeadLineVirtualWallMarker(
 {
   return createDeletedVirtualWallMarkerArray("dead_line_", now, id);
 }
+
+visualization_msgs::msg::MarkerArray createDeletedStopVirtualWallMarkerFromStopPoses(
+  const std::vector<Pose> & stop_poses, const std::vector<Pose> & stopped_poses,
+  const rclcpp::Time & now, int32_t id)
+{
+  visualization_msgs::msg::MarkerArray wall_marker_to_delete;
+  for (const auto & p : stopped_poses) {
+    const bool stopped_pose_is_in_stop_pose = std::any_of(
+      stop_poses.begin(), stop_poses.end(), [&](const auto & elem) { return elem == p; });
+    if (!stopped_pose_is_in_stop_pose) {
+      appendMarkerArray(
+        motion_utils::createDeletedStopVirtualWallMarker(now, id++), &wall_marker_to_delete, now);
+    }
+    id++;
+  }
+  return wall_marker_to_delete;
+}
+
 }  // namespace motion_utils

@@ -18,20 +18,23 @@
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
 #include <string>
+#include <vector>
 
 namespace motion_utils
 {
+using geometry_msgs::msg::Pose;
+
 visualization_msgs::msg::MarkerArray createStopVirtualWallMarker(
-  const geometry_msgs::msg::Pose & pose, const std::string & module_name, const rclcpp::Time & now,
-  const int32_t id, const double longitudinal_offset = 0.0);
+  const Pose & pose, const std::string & module_name, const rclcpp::Time & now, const int32_t id,
+  const double longitudinal_offset = 0.0);
 
 visualization_msgs::msg::MarkerArray createSlowDownVirtualWallMarker(
-  const geometry_msgs::msg::Pose & pose, const std::string & module_name, const rclcpp::Time & now,
-  const int32_t id, const double longitudinal_offset = 0.0);
+  const Pose & pose, const std::string & module_name, const rclcpp::Time & now, const int32_t id,
+  const double longitudinal_offset = 0.0);
 
 visualization_msgs::msg::MarkerArray createDeadLineVirtualWallMarker(
-  const geometry_msgs::msg::Pose & pose, const std::string & module_name, const rclcpp::Time & now,
-  const int32_t id, const double longitudinal_offset = 0.0);
+  const Pose & pose, const std::string & module_name, const rclcpp::Time & now, const int32_t id,
+  const double longitudinal_offset = 0.0);
 
 visualization_msgs::msg::MarkerArray createDeletedStopVirtualWallMarker(
   const rclcpp::Time & now, const int32_t id);
@@ -41,6 +44,11 @@ visualization_msgs::msg::MarkerArray createDeletedSlowDownVirtualWallMarker(
 
 visualization_msgs::msg::MarkerArray createDeletedDeadLineVirtualWallMarker(
   const rclcpp::Time & now, const int32_t id);
+
+visualization_msgs::msg::MarkerArray createDeletedStopVirtualWallMarkerFromStopPoses(
+  const std::vector<Pose> & stop_poses, const std::vector<Pose> & stopped_poses,
+  const rclcpp::Time & now, int32_t id);
+
 }  // namespace motion_utils
 
 #endif  // MOTION_UTILS__MARKER__MARKER_HELPER_HPP_
