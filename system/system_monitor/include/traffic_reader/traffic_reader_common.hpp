@@ -17,8 +17,8 @@
  * @brief traffic reader definitions
  */
 
-#ifndef TRAFFIC_READER__TRAFFIC_READER_HPP_
-#define TRAFFIC_READER__TRAFFIC_READER_HPP_
+#ifndef TRAFFIC_READER__TRAFFIC_READER_COMMON_HPP_
+#define TRAFFIC_READER__TRAFFIC_READER_COMMON_HPP_
 
 #include <boost/serialization/serialization.hpp>
 #include <boost/serialization/string.hpp>
@@ -64,4 +64,4 @@ struct Result
 
 }  // namespace traffic_reader_service
 
-#endif  // TRAFFIC_READER__TRAFFIC_READER_HPP_
+#endif  // TRAFFIC_READER__TRAFFIC_READER_COMMON_HPP_
