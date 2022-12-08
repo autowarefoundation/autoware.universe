@@ -68,7 +68,6 @@ At the image below, there are sample goal pose validation cases.
 
 ![goal_footprints](./media/goal_footprints.svg)
 
-
 ## Implementation
 
 ### Mission Planner

@@ -61,7 +61,7 @@ lanelet::ConstLanelet combine_lanelets(const lanelet::ConstLanelets & lanelets)
   lanelet::Points3d centers;
   std::vector<uint64_t> bound_ids;
 
-  for (const auto &llt : lanelets) {
+  for (const auto & llt : lanelets) {
     if (llt.id() != 0) {
       bound_ids.push_back(llt.leftBound().id());
       bound_ids.push_back(llt.rightBound().id());
