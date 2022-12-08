@@ -331,7 +331,7 @@ bool NormalVehicleTracker::measureWithPose(
     }
   }
 
-  // update
+  // ekf update: this tracks tracking point
   if (!ekf_.update(Y, C, R)) {
     RCLCPP_WARN(logger_, "Cannot update");
   }

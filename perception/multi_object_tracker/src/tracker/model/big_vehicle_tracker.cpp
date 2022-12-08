@@ -273,10 +273,6 @@ bool BigVehicleTracker::measureWithPose(
   utils::calcAnchorPointOffset(
     last_input_bounding_box_.width, last_input_bounding_box_.length, last_nearest_corner_index_,
     object, X_t(IDX::YAW), offset_object, tracking_offset_);
-  // std::cout << "MOT_offset: " << tracking_offset_.x() << " " << tracking_offset_.y()
-  //           << " closest_corner: " << last_nearest_corner_index_ << " "
-  //           << object.kinematics.pose_with_covariance.pose.position.x << " "
-  //           << object.kinematics.pose_with_covariance.pose.position.y << std::endl;
 
   /* Set measurement matrix */
   Eigen::MatrixXd Y(dim_y, 1);
@@ -323,6 +319,7 @@ bool BigVehicleTracker::measureWithPose(
     }
   }
 
+  /* ekf tracks constant tracking point */
   if (!ekf_.update(Y, C, R)) {
     RCLCPP_WARN(logger_, "Cannot update");
   }

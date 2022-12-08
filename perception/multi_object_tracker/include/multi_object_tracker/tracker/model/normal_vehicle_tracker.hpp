@@ -28,7 +28,7 @@ class NormalVehicleTracker : public Tracker
 private:
   autoware_auto_perception_msgs::msg::DetectedObject object_;
   rclcpp::Logger logger_;
-  int last_nearest_corner_index_ = -1;
+  int last_nearest_corner_index_;
 
 private:
   KalmanFilter ekf_;
