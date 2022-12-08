@@ -65,6 +65,7 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node) : node_{&node}
   m_mpc.m_admissible_yaw_error_rad = node_->declare_parameter<double>("admissible_yaw_error_rad");
   m_mpc.m_use_steer_prediction = node_->declare_parameter<bool>("use_steer_prediction");
   m_mpc.m_param.steer_tau = node_->declare_parameter<double>("vehicle_model_steer_tau");
+  m_enable_traj_extending = node_->declare_parameter<bool>("enable_traj_extending");
 
   /* stop state parameters */
   m_stop_state_entry_ego_speed = node_->declare_parameter<double>("stop_state_entry_ego_speed");
@@ -302,7 +303,7 @@ void MpcLateralController::setTrajectory(
 
   m_mpc.setReferenceTrajectory(
     *msg, m_traj_resample_dist, m_enable_path_smoothing, m_path_filter_moving_ave_num,
-    m_curvature_smoothing_num_traj, m_curvature_smoothing_num_ref_steer);
+    m_curvature_smoothing_num_traj, m_curvature_smoothing_num_ref_steer, m_enable_traj_extending);
 
   // update trajectory buffer to check the trajectory shape change.
   m_trajectory_buffer.push_back(*m_current_trajectory_ptr);

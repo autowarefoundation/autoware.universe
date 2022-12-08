@@ -180,7 +180,7 @@ void MPC::setReferenceTrajectory(
   const autoware_auto_planning_msgs::msg::Trajectory & trajectory_msg,
   const double traj_resample_dist, const bool enable_path_smoothing,
   const int path_filter_moving_ave_num, const int curvature_smoothing_num_traj,
-  const int curvature_smoothing_num_ref_steer)
+  const int curvature_smoothing_num_ref_steer, const bool enable_traj_extending)
 {
   trajectory_follower::MPCTrajectory mpc_traj_raw;        // received raw trajectory
   trajectory_follower::MPCTrajectory mpc_traj_resampled;  // resampled trajectory
@@ -221,7 +221,7 @@ void MPC::setReferenceTrajectory(
    * the original trajectory cannot take into account the pose from the position alone
    * due to smoothing, etc.
    */
-  {
+  if (enable_traj_extending) {
     // set original raw termianl yaw
     auto & traj = mpc_traj_smoothed;
     traj.yaw.back() = mpc_traj_raw.yaw.back();
@@ -233,6 +233,7 @@ void MPC::setReferenceTrajectory(
     auto extended_pose = autoware_traj.points.back().pose;
 
     constexpr double extend_dist = 10.0;
+    constexpr double extend_vel = 10.0;
     const double extend_interval = traj_resample_dist;
     const size_t num_extended_point = static_cast<size_t>(extend_dist / extend_interval);
     for (size_t i = 0; i < num_extended_point; ++i) {
