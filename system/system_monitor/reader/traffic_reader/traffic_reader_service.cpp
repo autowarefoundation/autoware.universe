@@ -196,7 +196,7 @@ void TrafficReaderService::executeNethogs()
   std::stringstream command;
   command << "nethogs -t";
 
-  for (const auto device : devices_) {
+  for (const auto & device : devices_) {
     command << " " << device;
   }
 
