@@ -175,21 +175,21 @@ protected:
    */
   struct NetworkInfo
   {
-    int mtu_errno{0};                //!< @brief errno set by ioctl() with SIOCGIFMTU
-    int ethtool_errno{0};            //!< @brief errno set by ioctl() with SIOCETHTOOL
-    bool is_running{false};          //!< @brief resource allocated flag
-    std::string interface_name{};    //!< @brief interface name
-    float speed{0.0};                //!< @brief network capacity
-    int mtu{0};                      //!< @brief MTU
-    float rx_traffic{0.0};           //!< @brief traffic received
-    float tx_traffic{0.0};           //!< @brief traffic transmitted
-    float rx_usage{0.0};             //!< @brief network capacity usage rate received
-    float tx_usage{0.0};             //!< @brief network capacity usage rate transmitted
-    unsigned int rx_bytes{0};        //!< @brief total bytes received
-    unsigned int rx_errors{0};       //!< @brief bad packets received
-    unsigned int tx_bytes{0};        //!< @brief total bytes transmitted
-    unsigned int tx_errors{0};       //!< @brief packet transmit problems
-    unsigned int collisions{0};      //!< @brief number of collisions during packet transmissions
+    int mtu_errno{0};              //!< @brief errno set by ioctl() with SIOCGIFMTU
+    int ethtool_errno{0};          //!< @brief errno set by ioctl() with SIOCETHTOOL
+    bool is_running{false};        //!< @brief resource allocated flag
+    std::string interface_name{};  //!< @brief interface name
+    float speed{0.0};              //!< @brief network capacity
+    int mtu{0};                    //!< @brief MTU
+    float rx_traffic{0.0};         //!< @brief traffic received
+    float tx_traffic{0.0};         //!< @brief traffic transmitted
+    float rx_usage{0.0};           //!< @brief network capacity usage rate received
+    float tx_usage{0.0};           //!< @brief network capacity usage rate transmitted
+    unsigned int rx_bytes{0};      //!< @brief total bytes received
+    unsigned int rx_errors{0};     //!< @brief bad packets received
+    unsigned int tx_bytes{0};      //!< @brief total bytes transmitted
+    unsigned int tx_errors{0};     //!< @brief packet transmit problems
+    unsigned int collisions{0};    //!< @brief number of collisions during packet transmissions
   };
 
   /**

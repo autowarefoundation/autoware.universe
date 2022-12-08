@@ -138,9 +138,15 @@ void NetMonitor::update_network_info_list()
     }
 
     int fd{0};
-    struct ifreq ifrm{};
-    struct ifreq ifrc{};
-    struct ethtool_cmd edata{};
+    struct ifreq ifrm
+    {
+    };
+    struct ifreq ifrc
+    {
+    };
+    struct ethtool_cmd edata
+    {
+    };
 
     net_info_list_.emplace_back();
     auto & net_info = net_info_list_.back();
