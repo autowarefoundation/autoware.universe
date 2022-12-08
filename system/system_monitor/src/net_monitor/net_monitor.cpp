@@ -138,15 +138,9 @@ void NetMonitor::update_network_info_list()
     }
 
     int fd{0};
-    struct ifreq ifrm
-    {
-    };
-    struct ifreq ifrc
-    {
-    };
-    struct ethtool_cmd edata
-    {
-    };
+    struct ifreq ifrm = {};
+    struct ifreq ifrc = {};
+    struct ethtool_cmd edata = {};
 
     net_info_list_.emplace_back();
     auto & net_info = net_info_list_.back();
@@ -155,9 +149,8 @@ void NetMonitor::update_network_info_list()
 
     // Get MTU information
     fd = socket(AF_INET, SOCK_DGRAM, 0);
-    strncpy(
-      ifrm.ifr_name, ifa->ifa_name,
-      IFNAMSIZ - 1);  // NOLINT [cppcoreguidelines-pro-type-union-access]
+    // NOLINTNEXTLINE [cppcoreguidelines-pro-type-union-access]
+    strncpy(ifrm.ifr_name, ifa->ifa_name, IFNAMSIZ - 1);
     if (ioctl(fd, SIOCGIFMTU, &ifrm) < 0) {
       net_info.mtu_errno = errno;
       close(fd);
@@ -165,9 +158,8 @@ void NetMonitor::update_network_info_list()
     }
 
     // Get network capacity
-    strncpy(
-      ifrc.ifr_name, ifa->ifa_name,
-      IFNAMSIZ - 1);  // NOLINT [cppcoreguidelines-pro-type-union-access]
+    // NOLINTNEXTLINE [cppcoreguidelines-pro-type-union-access]
+    strncpy(ifrc.ifr_name, ifa->ifa_name, IFNAMSIZ - 1);
     ifrc.ifr_data = (caddr_t)&edata;
 
     edata.cmd = ETHTOOL_GSET;
@@ -650,7 +642,7 @@ bool NetMonitor::send_data(traffic_reader_service::Request request)
   boost::archive::text_oarchive archive(out_stream);
   archive & request;
 
-  int ret = write(socket_, out_stream.str().c_str(), out_stream.str().length());
+  ssize_t ret = write(socket_, out_stream.str().c_str(), out_stream.str().length());
   if (ret < 0) {
     RCLCPP_ERROR(get_logger(), "Failed to write N bytes of BUF to FD. %s", strerror(errno));
     return false;
