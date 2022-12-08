@@ -101,8 +101,7 @@ private:
   rclcpp::Publisher<Path>::SharedPtr path_candidate_publisher_;
   rclcpp::Publisher<TurnIndicatorsCommand>::SharedPtr turn_signal_publisher_;
   rclcpp::Publisher<HazardLightsCommand>::SharedPtr hazard_signal_publisher_;
-  rclcpp::Publisher<Marker>::SharedPtr left_bound_publisher_;
-  rclcpp::Publisher<Marker>::SharedPtr right_bound_publisher_;
+  rclcpp::Publisher<MarkerArray>::SharedPtr bound_publisher_;
   rclcpp::TimerBase::SharedPtr timer_;
 
   std::shared_ptr<PlannerData> planner_data_;
