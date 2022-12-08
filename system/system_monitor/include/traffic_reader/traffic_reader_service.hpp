@@ -57,37 +57,37 @@ protected:
    * @brief Handle message
    * @param[in] buffer Pointer to data received
    */
-  void handleMessage(const char * buffer);
+  void handle_message(const char * buffer);
 
   /**
    * @brief Start nethogs
    * @param[in] archive Archive object for loading
    */
-  void startNethogs(boost::archive::text_iarchive & archive);
+  void start_nethogs(boost::archive::text_iarchive & archive);
 
   /**
    * @brief Get command line of process from nethogs output
    * @param[in] line nethogs output
    * @return Command line of process
    */
-  std::string getCommandLine(const std::string & line);
+  std::string get_command_line(const std::string & line);
 
   /**
    * @brief Get command line of process from PID
    * @param[in] pid PID
    * @return Command line of process
    */
-  std::string getCommandLineWithPid(pid_t pid);
+  std::string get_command_line_with_pid(pid_t pid);
 
   /**
    * @brief Return result of nethogs
    */
-  void getResult();
+  void get_result();
 
   /**
    * @brief Execute nethogs
    */
-  void executeNethogs();
+  void execute_nethogs();
 
   std::string socket_path_;                //!< @brief Path of UNIX domain socket
   int port_;                               //!< @brief Port number to access l2ping service

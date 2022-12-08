@@ -112,13 +112,13 @@ void TrafficReaderService::run()
     }
 
     // Handle message
-    handleMessage(buffer);
+    handle_message(buffer);
 
     close(connection_);
   }
 }
 
-void TrafficReaderService::handleMessage(const char * buffer)
+void TrafficReaderService::handle_message(const char * buffer)
 {
   uint8_t request_id = Request::NONE;
 
@@ -135,10 +135,10 @@ void TrafficReaderService::handleMessage(const char * buffer)
 
   switch (request_id) {
     case Request::START_NETHOGS:
-      startNethogs(archive);
+      start_nethogs(archive);
       break;
     case Request::GET_RESULT:
-      getResult();
+      get_result();
       break;
     default:
       syslog(LOG_WARNING, "Unknown message. %d\n", request_id);
@@ -146,7 +146,7 @@ void TrafficReaderService::handleMessage(const char * buffer)
   }
 }
 
-void TrafficReaderService::startNethogs(boost::archive::text_iarchive & archive)
+void TrafficReaderService::start_nethogs(boost::archive::text_iarchive & archive)
 {
   syslog(LOG_INFO, "Starting nethogs...\n");
 
@@ -170,10 +170,10 @@ void TrafficReaderService::startNethogs(boost::archive::text_iarchive & archive)
 
   // Run nethogs
   stop_ = false;
-  thread_ = std::thread(&TrafficReaderService::executeNethogs, this);
+  thread_ = std::thread(&TrafficReaderService::execute_nethogs, this);
 }
 
-void TrafficReaderService::getResult()
+void TrafficReaderService::get_result()
 {
   // Inform ros node
   std::ostringstream out_stream;
@@ -191,7 +191,7 @@ void TrafficReaderService::getResult()
 /**
  * @brief thread function to execute nethogs
  */
-void TrafficReaderService::executeNethogs()
+void TrafficReaderService::execute_nethogs()
 {
   std::stringstream command;
   command << "nethogs -t";
@@ -239,7 +239,7 @@ void TrafficReaderService::executeNethogs()
       continue;
     }
 
-    std::string command_line = getCommandLine(line);
+    std::string command_line = get_command_line(line);
     if (!command_line.empty()) {
       // Add nethogs output and command line
       if (program_name_ == "*" || command_line.find(program_name_) != std::string::npos) {
@@ -262,7 +262,7 @@ void TrafficReaderService::executeNethogs()
   result_.output = message;
 }
 
-std::string TrafficReaderService::getCommandLine(const std::string & line)
+std::string TrafficReaderService::get_command_line(const std::string & line)
 {
   std::vector<std::string> tag_tokens;
   std::vector<std::string> slash_tokens;
@@ -276,13 +276,13 @@ std::string TrafficReaderService::getCommandLine(const std::string & line)
   boost::split(
     slash_tokens, tag_tokens[0].c_str(), boost::is_any_of("/"), boost::token_compress_on);
   if (slash_tokens.size() >= 3) {
-    return getCommandLineWithPid(std::atoi(slash_tokens[slash_tokens.size() - 2].c_str()));
+    return get_command_line_with_pid(std::atoi(slash_tokens[slash_tokens.size() - 2].c_str()));
   }
 
   return "";
 }
 
-std::string TrafficReaderService::getCommandLineWithPid(pid_t pid)
+std::string TrafficReaderService::get_command_line_with_pid(pid_t pid)
 {
   std::ifstream file(fmt::format("/proc/{}/cmdline", pid));
 

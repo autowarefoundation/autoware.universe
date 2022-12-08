@@ -71,7 +71,7 @@ protected:
    * @note NOLINT syntax is needed since diagnostic_updater asks for a non-const reference
    * to pass diagnostic message updated in this function to diagnostic publish calls.
    */
-  void checkUsage(
+  void check_usage(
     diagnostic_updater::DiagnosticStatusWrapper & stat);  // NOLINT(runtime/references)
 
   /**
@@ -80,7 +80,7 @@ protected:
    * @note NOLINT syntax is needed since diagnostic_updater asks for a non-const reference
    * to pass diagnostic message updated in this function to diagnostic publish calls.
    */
-  void monitorTraffic(
+  void monitor_traffic(
     diagnostic_updater::DiagnosticStatusWrapper & stat);  // NOLINT(runtime/references)
 
   /**
@@ -89,7 +89,7 @@ protected:
    * @note NOLINT syntax is needed since diagnostic_updater asks for a non-const reference
    * to pass diagnostic message updated in this function to diagnostic publish calls.
    */
-  void checkCrcError(
+  void check_crc_error(
     diagnostic_updater::DiagnosticStatusWrapper & stat);  // NOLINT(runtime/references)
 
   /**
@@ -98,7 +98,7 @@ protected:
    * @note NOLINT syntax is needed since diagnostic_updater asks for a non-const reference
    * to pass diagnostic message updated in this function to diagnostic publish calls.
    */
-  void checkReassemblesFailed(
+  void check_reassembles_failed(
     diagnostic_updater::DiagnosticStatusWrapper & stat);  // NOLINT(runtime/references)
 
   /**
@@ -106,48 +106,48 @@ protected:
    * @param [in] ifa_name interface name
    * @return wireless speed
    */
-  float getWirelessSpeed(const char * ifa_name);
+  float get_wireless_speed(const char * ifa_name);
 
   /**
    * @brief timer callback
    */
-  void onTimer();
+  void on_timer();
 
   /**
    * @brief update Network information list
    */
-  void updateNetworkInfoList();
+  void update_network_info_list();
 
   /**
    * @brief check NetMonitor General Infomation
    * @param [out] stat diagnostic message passed directly to diagnostic publish calls
    * @return check result
    */
-  bool checkGeneralInfo(diagnostic_updater::DiagnosticStatusWrapper & stat);
+  bool check_general_info(diagnostic_updater::DiagnosticStatusWrapper & stat);
 
   /**
    * @brief Send request to start nethogs
    */
-  void sendStartNethogsRequest();
+  void send_start_nethogs_request();
 
   /**
    * @brief Get result of nethogs
    * @param [out] result result of nethogs
    */
-  void getNethogsResult(traffic_reader_service::Result & result);
+  void get_nethogs_result(traffic_reader_service::Result & result);
 
   /**
    * @brief Connect to traffic-reader service
    * @return true on success, false on error
    */
-  bool connectService();
+  bool connect_service();
 
   /**
    * @brief Send data to traffic-reader service
    * @param [in] request Request to traffic-reader service
    * @return true on success, false on error
    */
-  bool sendData(traffic_reader_service::Request request);
+  bool send_data(traffic_reader_service::Request request);
 
   /**
    * @brief Send data to traffic-reader service with parameters
@@ -156,7 +156,7 @@ protected:
    * @param[in] program_name Filter by program name
    * @return true on success, false on error
    */
-  bool sendDataWithParameters(
+  bool send_data_with_parameters(
     traffic_reader_service::Request request, std::vector<std::string> & parameters,
     std::string & program_name);
 
@@ -164,12 +164,12 @@ protected:
    * @brief Receive data from traffic-reader service
    * @param [out] result Status from traffic-reader service
    */
-  void receiveData(traffic_reader_service::Result & result);
+  void receive_data(traffic_reader_service::Result & result);
 
   /**
    * @brief Close connection with traffic-reader service
    */
-  void closeConnection();
+  void close_connection();
 
   /**
    * @brief Network information
@@ -220,21 +220,21 @@ protected:
    * @param [out] error_str error string
    * @return result of determining whether it is a supported network
    */
-  bool isSupportedNetwork(
+  bool is_supported_network(
     const NetworkInfo & net_info, int index, diagnostic_updater::DiagnosticStatusWrapper & stat,
     std::string & error_str);
 
   /**
    * @brief search column index of IP packet reassembles failed in /proc/net/snmp
    */
-  void searchReassemblesFailedColumnIndex();
+  void search_reassembles_failed_column_index();
 
   /**
    * @brief get IP packet reassembles failed
    * @param [out] reassembles_failed IP packet reassembles failed
    * @return execution result
    */
-  bool getReassemblesFailed(uint64_t & reassembles_failed);
+  bool get_reassembles_failed(uint64_t & reassembles_failed);
 
   diagnostic_updater::Updater updater_;  //!< @brief Updater class which advertises to /diagnostics
   rclcpp::TimerBase::SharedPtr timer_;   //!< @brief timer to get Network information

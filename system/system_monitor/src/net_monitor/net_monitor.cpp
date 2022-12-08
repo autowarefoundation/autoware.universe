@@ -70,32 +70,32 @@ NetMonitor::NetMonitor(const rclcpp::NodeOptions & options)
 
   gethostname(hostname_, sizeof(hostname_));
   updater_.setHardwareID(hostname_);
-  updater_.add("Network Usage", this, &NetMonitor::checkUsage);
-  updater_.add("Network Traffic", this, &NetMonitor::monitorTraffic);
-  updater_.add("Network CRC Error", this, &NetMonitor::checkCrcError);
-  updater_.add("IP Packet Reassembles Failed", this, &NetMonitor::checkReassemblesFailed);
+  updater_.add("Network Usage", this, &NetMonitor::check_usage);
+  updater_.add("Network Traffic", this, &NetMonitor::monitor_traffic);
+  updater_.add("Network CRC Error", this, &NetMonitor::check_crc_error);
+  updater_.add("IP Packet Reassembles Failed", this, &NetMonitor::check_reassembles_failed);
 
   nl80211_.init();
 
-  searchReassemblesFailedColumnIndex();
+  search_reassembles_failed_column_index();
 
   // get Network information for the first time
-  updateNetworkInfoList();
+  update_network_info_list();
 
   // Send request to start nethogs
-  sendStartNethogsRequest();
+  send_start_nethogs_request();
 
-  timer_ = rclcpp::create_timer(this, get_clock(), 1s, std::bind(&NetMonitor::onTimer, this));
+  timer_ = rclcpp::create_timer(this, get_clock(), 1s, std::bind(&NetMonitor::on_timer, this));
 }
 
 NetMonitor::~NetMonitor() { shutdown_nl80211(); }
 
 void NetMonitor::shutdown_nl80211() { nl80211_.shutdown(); }
 
-void NetMonitor::onTimer() { updateNetworkInfoList(); }
+void NetMonitor::on_timer() { update_network_info_list(); }
 
 // cspell: ignore ifas, ifrm, ifrc
-void NetMonitor::updateNetworkInfoList()
+void NetMonitor::update_network_info_list()
 {
   net_info_list_.clear();
 
@@ -208,12 +208,12 @@ void NetMonitor::updateNetworkInfoList()
   last_update_time_ = this->now();
 }
 
-void NetMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
+void NetMonitor::check_usage(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
   // Remember start time to measure elapsed time
   const auto t_start = SystemMonitorUtility::startMeasurement();
 
-  if (!checkGeneralInfo(stat)) {
+  if (!check_general_info(stat)) {
     return;
   }
 
@@ -224,7 +224,7 @@ void NetMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
   std::vector<std::string> interface_names;
 
   for (const auto & net_info : net_info_list_) {
-    if (!isSupportedNetwork(net_info, index, stat, error_str)) {
+    if (!is_supported_network(net_info, index, stat, error_str)) {
       ++index;
       interface_names.push_back(net_info.interface_name);
       continue;
@@ -278,12 +278,12 @@ void NetMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
   SystemMonitorUtility::stopMeasurement(t_start, stat);
 }
 
-void NetMonitor::checkCrcError(diagnostic_updater::DiagnosticStatusWrapper & stat)
+void NetMonitor::check_crc_error(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
   // Remember start time to measure elapsed time
   const auto t_start = SystemMonitorUtility::startMeasurement();
 
-  if (!checkGeneralInfo(stat)) {
+  if (!check_general_info(stat)) {
     return;
   }
 
@@ -292,7 +292,7 @@ void NetMonitor::checkCrcError(diagnostic_updater::DiagnosticStatusWrapper & sta
   std::string error_str;
 
   for (const auto & net_info : net_info_list_) {
-    if (!isSupportedNetwork(net_info, index, stat, error_str)) {
+    if (!is_supported_network(net_info, index, stat, error_str)) {
       ++index;
       continue;
     }
@@ -326,7 +326,7 @@ void NetMonitor::checkCrcError(diagnostic_updater::DiagnosticStatusWrapper & sta
   SystemMonitorUtility::stopMeasurement(t_start, stat);
 }
 
-bool NetMonitor::checkGeneralInfo(diagnostic_updater::DiagnosticStatusWrapper & stat)
+bool NetMonitor::check_general_info(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
   if (device_params_.empty()) {
     stat.summary(DiagStatus::ERROR, "invalid device parameter");
@@ -341,7 +341,7 @@ bool NetMonitor::checkGeneralInfo(diagnostic_updater::DiagnosticStatusWrapper & 
   return true;
 }
 
-bool NetMonitor::isSupportedNetwork(
+bool NetMonitor::is_supported_network(
   const NetworkInfo & net_info, int index, diagnostic_updater::DiagnosticStatusWrapper & stat,
   std::string & error_str)
 {
@@ -377,14 +377,14 @@ bool NetMonitor::isSupportedNetwork(
 
 #include <boost/algorithm/string.hpp>  // workaround for build errors
 
-void NetMonitor::monitorTraffic(diagnostic_updater::DiagnosticStatusWrapper & stat)
+void NetMonitor::monitor_traffic(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
   // Remember start time to measure elapsed time
   const auto t_start = SystemMonitorUtility::startMeasurement();
 
   // Get result of nethogs
   traffic_reader_service::Result result;
-  getNethogsResult(result);
+  get_nethogs_result(result);
 
   // traffic_reader result to output
   if (result.error_code != EXIT_SUCCESS) {
@@ -421,7 +421,7 @@ void NetMonitor::monitorTraffic(diagnostic_updater::DiagnosticStatusWrapper & st
   SystemMonitorUtility::stopMeasurement(t_start, stat);
 }
 
-void NetMonitor::checkReassemblesFailed(diagnostic_updater::DiagnosticStatusWrapper & stat)
+void NetMonitor::check_reassembles_failed(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
   // Remember start time to measure elapsed time
   const auto t_start = SystemMonitorUtility::startMeasurement();
@@ -431,7 +431,7 @@ void NetMonitor::checkReassemblesFailed(diagnostic_updater::DiagnosticStatusWrap
   uint64_t total_reassembles_failed = 0;
   uint64_t unit_reassembles_failed = 0;
 
-  if (getReassemblesFailed(total_reassembles_failed)) {
+  if (get_reassembles_failed(total_reassembles_failed)) {
     reassembles_failed_queue_.push_back(total_reassembles_failed - last_reassembles_failed_);
     while (reassembles_failed_queue_.size() > reassembles_failed_check_duration_) {
       reassembles_failed_queue_.pop_front();
@@ -466,7 +466,7 @@ void NetMonitor::checkReassemblesFailed(diagnostic_updater::DiagnosticStatusWrap
   SystemMonitorUtility::stopMeasurement(t_start, stat);
 }
 
-void NetMonitor::searchReassemblesFailedColumnIndex()
+void NetMonitor::search_reassembles_failed_column_index()
 {
   std::ifstream ifs("/proc/net/snmp");
   if (!ifs) {
@@ -507,7 +507,7 @@ void NetMonitor::searchReassemblesFailedColumnIndex()
   }
 }
 
-bool NetMonitor::getReassemblesFailed(uint64_t & reassembles_failed)
+bool NetMonitor::get_reassembles_failed(uint64_t & reassembles_failed)
 {
   if (reassembles_failed_column_index_ == 0) {
     RCLCPP_WARN(
@@ -552,11 +552,11 @@ bool NetMonitor::getReassemblesFailed(uint64_t & reassembles_failed)
   return true;
 }
 
-void NetMonitor::sendStartNethogsRequest()
+void NetMonitor::send_start_nethogs_request()
 {
   // Connect to boot/shutdown service
-  if (!connectService()) {
-    closeConnection();
+  if (!connect_service()) {
+    close_connection();
     return;
   }
 
@@ -566,7 +566,7 @@ void NetMonitor::sendStartNethogsRequest()
   std::vector<std::string> interface_names;
 
   for (const auto & net_info : net_info_list_) {
-    if (!isSupportedNetwork(net_info, index, stat, error_str)) {
+    if (!is_supported_network(net_info, index, stat, error_str)) {
       ++index;
       interface_names.push_back(net_info.interface_name);
       continue;
@@ -577,38 +577,38 @@ void NetMonitor::sendStartNethogsRequest()
   }
 
   // Send data to traffic-reader service
-  if (!sendDataWithParameters(
+  if (!send_data_with_parameters(
         traffic_reader_service::START_NETHOGS, interface_names, monitor_program_)) {
-    closeConnection();
+    close_connection();
     return;
   }
 
   // Close connection with traffic-reader service
-  closeConnection();
+  close_connection();
 }
 
-void NetMonitor::getNethogsResult(traffic_reader_service::Result & result)
+void NetMonitor::get_nethogs_result(traffic_reader_service::Result & result)
 {
   // Connect to traffic-reader service
-  if (!connectService()) {
-    closeConnection();
+  if (!connect_service()) {
+    close_connection();
     return;
   }
 
   // Send data to traffic-reader service
-  if (!sendData(traffic_reader_service::Request::GET_RESULT)) {
-    closeConnection();
+  if (!send_data(traffic_reader_service::Request::GET_RESULT)) {
+    close_connection();
     return;
   }
 
   // Receive data from traffic-reader service
-  receiveData(result);
+  receive_data(result);
 
   // Close connection with traffic-reader service
-  closeConnection();
+  close_connection();
 }
 
-bool NetMonitor::connectService()
+bool NetMonitor::connect_service()
 {
   // Create a new socket
   socket_ = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -631,7 +631,7 @@ bool NetMonitor::connectService()
   return true;
 }
 
-bool NetMonitor::sendData(traffic_reader_service::Request request)
+bool NetMonitor::send_data(traffic_reader_service::Request request)
 {
   std::ostringstream out_stream;
   boost::archive::text_oarchive archive(out_stream);
@@ -646,7 +646,7 @@ bool NetMonitor::sendData(traffic_reader_service::Request request)
   return true;
 }
 
-bool NetMonitor::sendDataWithParameters(
+bool NetMonitor::send_data_with_parameters(
   traffic_reader_service::Request request, std::vector<std::string> & parameters,
   std::string & program_name)
 {
@@ -665,7 +665,7 @@ bool NetMonitor::sendDataWithParameters(
   return true;
 }
 
-void NetMonitor::receiveData(traffic_reader_service::Result & result)
+void NetMonitor::receive_data(traffic_reader_service::Result & result)
 {
   char buffer[10240]{};
   uint8_t request_id = traffic_reader_service::Request::NONE;
@@ -692,7 +692,7 @@ void NetMonitor::receiveData(traffic_reader_service::Result & result)
   }
 }
 
-void NetMonitor::closeConnection()
+void NetMonitor::close_connection()
 {
   // Close the file descriptor FD
   close(socket_);
