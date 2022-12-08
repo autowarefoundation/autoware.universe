@@ -10,6 +10,7 @@ namespace pcdless::modularized_particle_filter
 GnssParticleCorrector::GnssParticleCorrector()
 : AbstCorrector("gnss_particle_corrector"),
   ignore_less_than_float_(declare_parameter("ignore_less_than_float", true)),
+  mahalanobis_distance_threshold_(declare_parameter("mahalanobis_distance_threshold", 20)),
   weight_manager_(this)
 {
   using std::placeholders::_1;
@@ -65,17 +66,38 @@ void GnssParticleCorrector::on_ublox(const NavPVT::ConstSharedPtr ublox_msg)
       get_logger(), "Timestamp gap between gnss and particles is too large: " << dt.seconds());
   }
 
+  const geometry_msgs::msg::Pose meaned_pose = mean_pose(opt_particles.value());
+
+  {
+    Eigen::Matrix3f sigma = modularized_particle_filter::std_of_distribution(*opt_particles);
+    auto inv_sigma = sigma.completeOrthogonalDecomposition().pseudoInverse();
+    std::cout << "inv_sigma " << inv_sigma << std::endl;
+
+    Eigen::Vector3f meaned_position = common::pose_to_affine(meaned_pose).translation();
+    Eigen::Vector3f diff = gnss_position - meaned_position;
+    diff.z() = 0;
+
+    float mahalanobis_distance = std::sqrt(diff.dot(inv_sigma * diff));
+    std::cout << "mahalanobis: " << mahalanobis_distance << std::endl;
+
+    if (mahalanobis_distance > mahalanobis_distance_threshold_) {
+      RCLCPP_WARN_STREAM(
+        get_logger(), "mahalanobis_distance is too large: " << mahalanobis_distance << ">"
+                                                            << mahalanobis_distance_threshold_);
+      return;
+    }
+  }
+
   ParticleArray weighted_particles{
     weight_particles(opt_particles.value(), gnss_position, is_rtk_fixed)};
 
   // Compute travel distance from last update position
   // If the distance is too short, skip weighting
   {
-    geometry_msgs::msg::Pose meaned_pose = mean_pose(weighted_particles);
-    Eigen::Vector3f mean_position = common::pose_to_affine(meaned_pose).translation();
-    if ((mean_position - last_mean_position_).squaredNorm() > 1) {
+    Eigen::Vector3f meaned_position = common::pose_to_affine(meaned_pose).translation();
+    if ((meaned_position - last_mean_position_).squaredNorm() > 1) {
       this->set_weighted_particle_array(weighted_particles);
-      last_mean_position_ = mean_position;
+      last_mean_position_ = meaned_position;
     } else {
       RCLCPP_WARN_STREAM_THROTTLE(
         get_logger(), *get_clock(), 2000, "Skip weighting because almost same positon");

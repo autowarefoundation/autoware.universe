@@ -30,7 +30,7 @@
         <remap from="/localization/imgproc/weighted_particles" to="/localization/pf/weighted_particles"/>
         <param name="score_min" value="00.0" />
         <param name="score_max" value="70.0" />
-        <param name="print_statistics" value="true" />
+        <param name="print_statistics" value="false" />
     </node>
 
 </launch>

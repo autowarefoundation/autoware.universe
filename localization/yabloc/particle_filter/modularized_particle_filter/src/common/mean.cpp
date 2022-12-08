@@ -75,31 +75,29 @@ geometry_msgs::msg::Pose mean_pose(
   return mean_pose;
 }
 
-Eigen::Vector3f std_of_distribution(
-  const modularized_particle_filter_msgs::msg::ParticleArray & particle_array)
+Eigen::Matrix3f std_of_distribution(
+  const modularized_particle_filter_msgs::msg::ParticleArray & array)
 {
   using Particle = modularized_particle_filter_msgs::msg::Particle;
-
-  auto ori = mean_pose(particle_array).orientation;
+  auto ori = mean_pose(array).orientation;
   Eigen::Quaternionf orientation(ori.w, ori.x, ori.y, ori.z);
-
-  float invN = 1.f / particle_array.particles.size();
+  float invN = 1.f / array.particles.size();
   Eigen::Vector3f mean = Eigen::Vector3f::Zero();
-  for (const Particle & p : particle_array.particles) {
+  for (const Particle & p : array.particles) {
     Eigen::Affine3f affine = common::pose_to_affine(p.pose);
     mean += affine.translation();
   }
   mean *= invN;
 
   Eigen::Matrix3f sigma = Eigen::Matrix3f::Zero();
-  for (const Particle & p : particle_array.particles) {
+  for (const Particle & p : array.particles) {
     Eigen::Affine3f affine = common::pose_to_affine(p.pose);
     Eigen::Vector3f d = affine.translation() - mean;
     d = orientation.conjugate() * d;
     sigma += (d * d.transpose()) * invN;
   }
 
-  return sigma.diagonal().cwiseMax(1e-4f).cwiseSqrt();
+  return sigma;
 }
 
 float std_of_weight(const modularized_particle_filter_msgs::msg::ParticleArray & particle_array)

@@ -28,13 +28,14 @@ public:
   GnssParticleCorrector();
 
 private:
+  const bool ignore_less_than_float_;
+  const float mahalanobis_distance_threshold_;
+  const WeightManager weight_manager_;
+
   rclcpp::Subscription<Float32>::SharedPtr height_sub_;
   rclcpp::Subscription<NavPVT>::SharedPtr ublox_sub_;
   rclcpp::Subscription<PoseCovStamped>::SharedPtr pose_sub_;
   rclcpp::Publisher<MarkerArray>::SharedPtr marker_pub_;
-
-  const bool ignore_less_than_float_;
-  const WeightManager weight_manager_;
 
   Float32 latest_height_;
 

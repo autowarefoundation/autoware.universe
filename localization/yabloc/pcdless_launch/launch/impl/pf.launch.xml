@@ -66,7 +66,7 @@
     </node>
 
     <!-- gnss correction -->
-    <node name="gnss_particle_corrector" pkg="gnss_particle_corrector" exec="gnss_particle_corrector" output="screen" args="--ros-args --log-level warn">
+    <node name="gnss_particle_corrector" pkg="gnss_particle_corrector" exec="gnss_particle_corrector" output="screen" args="--ros-args --log-level info">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="ignore_less_than_float" value="$(var ignore_less_than_float)"/>
 

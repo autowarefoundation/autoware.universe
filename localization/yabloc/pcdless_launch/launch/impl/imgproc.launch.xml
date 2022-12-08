@@ -56,7 +56,7 @@
     <!-- graph based segmentation -->
     <arg name="output_graph_segmented" default="graph_segmented"/>
     <arg name="output_segmented_image" default="segmented_image"/>
-    <node name="graph_segment" pkg="graph_segment" exec="graph_segment_node" output="screen" args="--ros-args --log-level info">
+    <node name="graph_segment" pkg="graph_segment" exec="graph_segment_node" output="screen" args="--ros-args --log-level warn">
         <remap from="src_image" to="$(var resized_image)"/>
         <remap from="graph_segmented" to="$(var output_graph_segmented)"/>
         <remap from="segmented_image" to="$(var output_segmented_image)"/>

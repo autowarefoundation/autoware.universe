@@ -13,7 +13,7 @@ namespace modularized_particle_filter
 geometry_msgs::msg::Pose mean_pose(
   const modularized_particle_filter_msgs::msg::ParticleArray & particle_array);
 
-Eigen::Vector3f std_of_distribution(
+Eigen::Matrix3f std_of_distribution(
   const modularized_particle_filter_msgs::msg::ParticleArray & particle_array);
 
 float std_of_weight(const modularized_particle_filter_msgs::msg::ParticleArray & particle_array);
