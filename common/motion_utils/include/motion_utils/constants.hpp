@@ -17,7 +17,7 @@
 
 namespace motion_utils
 {
-constexpr double overlap_threshold = 0.1;
+constexpr double overlap_threshold = 0.2;
 }  // namespace motion_utils
 
 #endif  // MOTION_UTILS__CONSTANTS_HPP_

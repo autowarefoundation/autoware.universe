@@ -67,10 +67,11 @@ PathWithLaneId resamplePathWithSpline(
     transformed_path.at(i) = path.points.at(i).point;
   }
 
-  constexpr double epsilon = 0.2;
   const auto has_almost_same_value = [&](const auto & vec, const auto x) {
     if (vec.empty()) return false;
-    const auto has_close = [&](const auto v) { return std::abs(v - x) < epsilon; };
+    const auto has_close = [&](const auto v) {
+      return std::abs(v - x) < motion_utils::overlap_threshold;
+    };
     return std::find_if(vec.begin(), vec.end(), has_close) != vec.end();
   };
 
