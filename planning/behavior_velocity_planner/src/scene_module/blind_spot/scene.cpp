@@ -63,6 +63,7 @@ BlindSpotModule::BlindSpotModule(
   turn_direction_(TurnDirection::INVALID),
   is_over_pass_judge_line_(false)
 {
+  velocity_factor_.init(VelocityFactor::REAR_CHECK);
   planner_param_ = planner_param;
 
   const auto & assigned_lanelet =
@@ -83,7 +84,6 @@ bool BlindSpotModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
   *stop_reason = planning_utils::initializeStopReason(StopReason::BLIND_SPOT);
 
   const auto input_path = *path;
-  debug_data_.path_raw = input_path;
 
   StateMachine::State current_state = state_machine_.getState();
   RCLCPP_DEBUG(
@@ -184,6 +184,8 @@ bool BlindSpotModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
     stop_factor.stop_pose = debug_data_.stop_point_pose;
     stop_factor.stop_factor_points = planning_utils::toRosPoints(debug_data_.conflicting_targets);
     planning_utils::appendStopReason(stop_factor, stop_reason);
+    velocity_factor_.set(
+      path->points, planner_data_->current_pose.pose, stop_pose, VelocityFactor::UNKNOWN);
   } else {
     *path = input_path;  // reset path
   }
@@ -235,7 +237,6 @@ bool BlindSpotModule::generateStopLine(
   if (!splineInterpolate(*path, interval, path_ip, logger_)) {
     return false;
   }
-  debug_data_.spline_path = path_ip;
 
   /* generate stop point */
   int stop_idx_ip = 0;  // stop point index for interpolated path.

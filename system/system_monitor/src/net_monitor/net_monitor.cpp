@@ -161,8 +161,9 @@ void NetMonitor::update_network_info_list()
     // Get network capacity
     strncpy(
       ifrc.ifr_name, ifa->ifa_name,
-      IFNAMSIZ - 1);                  // NOLINT [cppcoreguidelines-pro-type-union-access]
-    ifrc.ifr_data = (caddr_t)&edata;  // NOLINT [cppcoreguidelines-pro-type-union-access]
+      IFNAMSIZ - 1);  // NOLINT [cppcoreguidelines-pro-type-union-access]
+    ifrc.ifr_data = (caddr_t)&edata;
+
     edata.cmd = ETHTOOL_GSET;
     if (ioctl(fd, SIOCETHTOOL, &ifrc) < 0) {
       // possibly wireless connection, get bitrate(MBit/s)

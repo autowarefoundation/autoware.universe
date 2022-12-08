@@ -63,7 +63,8 @@ bool TrafficReaderService::initialize()
   }
 
   // Give permission to other users to access to socket
-  if (chmod(socket_path_.c_str(), S_IRWXU | S_IRWXG | S_IRWXO) != 0) {  // NOLINT [hicpp-signed-bitwise]
+  if (chmod(socket_path_.c_str(), S_IRWXU | S_IRWXG | S_IRWXO) != 0) {  // NOLINT
+                                                                        // [hicpp-signed-bitwise]
     syslog(LOG_ERR, "Failed to give permission to unix domain socket. %s\n", strerror(errno));
     return false;
   }
