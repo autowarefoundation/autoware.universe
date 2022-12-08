@@ -154,8 +154,6 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node) : node_{&node}
     "~/output/predicted_trajectory", 1);
   m_pub_debug_values = node_->create_publisher<tier4_debug_msgs::msg::Float32MultiArrayStamped>(
     "~/output/lateral_diagnostic", 1);
-  m_pub_debug_marker =
-    node_->create_publisher<visualization_msgs::msg::MarkerArray>("~/output/debug_marker", 1);
 
   // TODO(Frederik.Beaujean) ctor is too long, should factor out parameter declarations
   declareMPCparameters();
@@ -182,7 +180,6 @@ boost::optional<LateralOutput> MpcLateralController::run()
   autoware_auto_control_msgs::msg::AckermannLateralCommand ctrl_cmd;
   autoware_auto_planning_msgs::msg::Trajectory predicted_traj;
   tier4_debug_msgs::msg::Float32MultiArrayStamped debug_values;
-  m_debug_marker_array.markers.clear();
 
   if (!m_is_ctrl_cmd_prev_initialized) {
     m_ctrl_cmd_prev = getInitialControlCommand();
@@ -210,9 +207,7 @@ boost::optional<LateralOutput> MpcLateralController::run()
     }
     // Use previous command value as previous raw steer command
     m_mpc.m_raw_steer_cmd_prev = m_ctrl_cmd_prev.steering_tire_angle;
-    const auto output = createLateralOutput(m_ctrl_cmd_prev);
-    m_pub_debug_marker->publish(m_debug_marker_array);
-    return output;
+    return createLateralOutput(m_ctrl_cmd_prev);
   }
 
   if (!is_mpc_solved) {
@@ -223,9 +218,7 @@ boost::optional<LateralOutput> MpcLateralController::run()
   }
 
   m_ctrl_cmd_prev = ctrl_cmd;
-  const auto output = createLateralOutput(ctrl_cmd);
-  m_pub_debug_marker->publish(m_debug_marker_array);
-  return output;
+  return createLateralOutput(ctrl_cmd);
 }
 
 void MpcLateralController::setInputData(InputData const & input_data)
@@ -236,30 +229,17 @@ void MpcLateralController::setInputData(InputData const & input_data)
 }
 
 bool MpcLateralController::isSteerConverged(
-  const autoware_auto_control_msgs::msg::AckermannLateralCommand & cmd)
+  const autoware_auto_control_msgs::msg::AckermannLateralCommand & cmd) const
 {
-  bool is_converged = false;
-  std::stringstream ss;
   // wait for a while to propagate the trajectory shape to the output command when the trajectory
   // shape is changed.
   if (!m_has_received_first_trajectory || isTrajectoryShapeChanged()) {
-    ss << "is trajectory shape changed (not converged)";
-  } else {
-    is_converged = std::abs(cmd.steering_tire_angle - m_current_steering_ptr->steering_tire_angle) <
-                   static_cast<float>(m_converged_steer_rad);
-    ss << "cmd: " << cmd.steering_tire_angle
-       << " current: " << m_current_steering_ptr->steering_tire_angle
-       << (is_converged ? " (converged)" : " (not converged)");
+    return false;
   }
 
-  // create debug marker for converged
-  auto marker = tier4_autoware_utils::createDefaultMarker(
-    "map", node_->now(), "steer_converged", 0, visualization_msgs::msg::Marker::TEXT_VIEW_FACING,
-    tier4_autoware_utils::createMarkerScale(0.0, 0.0, 1.0),
-    tier4_autoware_utils::createMarkerColor(1.0, 1.0, 1.0, 0.99));
-  marker.pose = m_current_kinematic_state_ptr->pose.pose;
-  marker.text = ss.str();
-  m_debug_marker_array.markers.push_back(marker);
+  const bool is_converged =
+    std::abs(cmd.steering_tire_angle - m_current_steering_ptr->steering_tire_angle) <
+    static_cast<float>(m_converged_steer_rad);
 
   return is_converged;
 }
@@ -358,7 +338,7 @@ MpcLateralController::getInitialControlCommand() const
   return cmd;
 }
 
-bool MpcLateralController::isStoppedState()
+bool MpcLateralController::isStoppedState() const
 {
   // If the nearest index is not found, return false
   if (m_current_trajectory_ptr->points.empty()) {
