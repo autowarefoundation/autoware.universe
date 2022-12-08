@@ -1,0 +1,106 @@
+// Copyright 2022 The Autoware Contributors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#ifndef TRAFFIC_READER__SERVICE__TRAFFIC_READER_SERVICE_HPP_
+#define TRAFFIC_READER__SERVICE__TRAFFIC_READER_SERVICE_HPP_
+
+#include "traffic_reader/traffic_reader_common.hpp"
+
+#include <boost/archive/text_iarchive.hpp>
+
+#include <mutex>
+#include <string>
+#include <thread>
+#include <vector>
+
+namespace traffic_reader_service
+{
+
+class TrafficReaderService
+{
+public:
+  /**
+   * @brief Constructor
+   * @param[in] socket_path Path of UNIX domain socket
+   */
+  explicit TrafficReaderService(const std::string & socket_path);
+
+  /**
+   * @brief Initialization
+   * @return true on success, false on error
+   */
+  bool initialize();
+
+  /**
+   * @brief Shutdown
+   */
+  void shutdown();
+
+  /**
+   * @brief Main loop
+   */
+  void run();
+
+protected:
+  /**
+   * @brief Handle message
+   * @param[in] buffer Pointer to data received
+   */
+  void handleMessage(const char * buffer);
+
+  /**
+   * @brief Start nethogs
+   * @param[in] archive Archive object for loading
+   */
+  void startNethogs(boost::archive::text_iarchive & archive);
+
+  /**
+   * @brief Get command line of process from nethogs output
+   * @param[in] line nethogs output
+   * @return Command line of process
+   */
+  std::string getCommandLine(const std::string & line);
+
+  /**
+   * @brief Get command line of process from PID
+   * @param[in] pid PID
+   * @return Command line of process
+   */
+  std::string getCommandLineWithPid(pid_t pid);
+
+  /**
+   * @brief Return result of nethogs
+   */
+  void getResult();
+
+  /**
+   * @brief Execute nethogs
+   */
+  void executeNethogs();
+
+  std::string socket_path_;                //!< @brief Path of UNIX domain socket
+  int port_;                               //!< @brief Port number to access l2ping service
+  int socket_;                             //!< @brief Socket to communicate with ros node
+  int connection_;                         //!< @brief Accepted socket for the incoming connection
+  std::thread thread_;                     //!< @brief Thread to run nethogs
+  std::mutex mutex_;                       //!< @brief Mutex guard for the flag
+  bool stop_;                              //!< @brief Flag to stop thread
+  std::vector<std::string> devices_;       //!< @brief List of devices
+  std::string program_name_;               //!< @brief Filter by program name
+  traffic_reader_service::Result result_;  //!< @brief Result of nethogs
+};
+
+}  // namespace traffic_reader_service
+
+#endif  // TRAFFIC_READER__SERVICE__TRAFFIC_READER_SERVICE_HPP_

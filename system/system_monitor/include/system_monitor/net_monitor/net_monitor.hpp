@@ -21,6 +21,7 @@
 #define SYSTEM_MONITOR__NET_MONITOR__NET_MONITOR_HPP_
 
 #include "system_monitor/net_monitor/nl80211.hpp"
+#include "traffic_reader/traffic_reader_common.hpp"
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
 
@@ -125,6 +126,52 @@ protected:
   bool checkGeneralInfo(diagnostic_updater::DiagnosticStatusWrapper & stat);
 
   /**
+   * @brief Send request to start nethogs
+   */
+  void sendStartNethogsRequest();
+
+  /**
+   * @brief Get result of nethogs
+   * @param [out] result result of nethogs
+   */
+  void getNethogsResult(traffic_reader_service::Result & result);
+
+  /**
+   * @brief Connect to traffic-reader service
+   * @return true on success, false on error
+   */
+  bool connectService();
+
+  /**
+   * @brief Send data to traffic-reader service
+   * @param [in] request Request to traffic-reader service
+   * @return true on success, false on error
+   */
+  bool sendData(traffic_reader_service::Request request);
+
+  /**
+   * @brief Send data to traffic-reader service with parameters
+   * @param [in] request Request to traffic-reader service
+   * @param [in] parameters List of parameters
+   * @param[in] program_name Filter by program name
+   * @return true on success, false on error
+   */
+  bool sendDataWithParameters(
+    traffic_reader_service::Request request, std::vector<std::string> & parameters,
+    std::string & program_name);
+
+  /**
+   * @brief Receive data from traffic-reader service
+   * @param [out] result Status from traffic-reader service
+   */
+  void receiveData(traffic_reader_service::Result & result);
+
+  /**
+   * @brief Close connection with traffic-reader service
+   */
+  void closeConnection();
+
+  /**
    * @brief Network information
    */
   struct NetworkInfo
@@ -218,8 +265,6 @@ protected:
                                       //!< last monitoring
 
   std::string monitor_program_;             //!< @brief nethogs monitor program name
-  bool nethogs_all_;                        //!< @brief nethogs result all mode
-  int traffic_reader_port_;                 //!< @brief port number to connect to traffic_reader
   unsigned int crc_error_check_duration_;   //!< @brief CRC error check duration
   unsigned int crc_error_count_threshold_;  //!< @brief CRC error count threshold
   unsigned int
@@ -228,6 +273,9 @@ protected:
     reassembles_failed_check_count_;  //!< @brief IP packet reassembles failed check count threshold
   unsigned int reassembles_failed_column_index_;  //!< @brief column index of IP Reassembles failed
                                                   //!< in /proc/net/snmp
+
+  std::string socket_path_;  //!< @brief Path of UNIX domain socket
+  int socket_;               //!< @brief Socket to communicate with traffic-reader service
 
   /**
    * @brief Network usage status messages

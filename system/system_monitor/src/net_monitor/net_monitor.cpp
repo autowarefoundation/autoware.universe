@@ -21,9 +21,10 @@
 
 #include "system_monitor/system_monitor_utility.hpp"
 
-#include <traffic_reader/traffic_reader.hpp>
+#include <traffic_reader/traffic_reader_common.hpp>
 
 #include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
 #include <boost/range/algorithm.hpp>
 // #include <boost/algorithm/string.hpp>   // workaround for build errors
 
@@ -35,6 +36,8 @@
 #include <net/if.h>
 #include <netinet/in.h>
 #include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <sys/un.h>
 
 #include <algorithm>
 #include <fstream>
@@ -50,21 +53,19 @@ NetMonitor::NetMonitor(const rclcpp::NodeOptions & options)
     declare_parameter<std::vector<std::string>>("devices", std::vector<std::string>())),
   last_reassembles_failed_(0),
   monitor_program_(declare_parameter<std::string>("monitor_program", "greengrass")),
-  traffic_reader_port_(declare_parameter<int>("traffic_reader_port", TRAFFIC_READER_PORT)),
   crc_error_check_duration_(declare_parameter<int>("crc_error_check_duration", 1)),
   crc_error_count_threshold_(declare_parameter<int>("crc_error_count_threshold", 1)),
   reassembles_failed_check_duration_(
     declare_parameter<int>("reassembles_failed_check_duration", 1)),
   reassembles_failed_check_count_(declare_parameter<int>("reassembles_failed_check_count", 1)),
-  reassembles_failed_column_index_(0)
+  reassembles_failed_column_index_(0),
+  socket_path_(declare_parameter("socket_path", traffic_reader_service::SOCKET_PATH)),
+  socket_(-1)
 {
   using namespace std::literals::chrono_literals;
 
   if (monitor_program_.empty()) {
-    monitor_program_ = GET_ALL_STR;
-    nethogs_all_ = true;
-  } else {
-    nethogs_all_ = false;
+    monitor_program_ = "*";
   }
 
   gethostname(hostname_, sizeof(hostname_));
@@ -80,6 +81,9 @@ NetMonitor::NetMonitor(const rclcpp::NodeOptions & options)
 
   // get Network information for the first time
   updateNetworkInfoList();
+
+  // Send request to start nethogs
+  sendStartNethogsRequest();
 
   timer_ = rclcpp::create_timer(this, get_clock(), 1s, std::bind(&NetMonitor::onTimer, this));
 }
@@ -378,107 +382,21 @@ void NetMonitor::monitorTraffic(diagnostic_updater::DiagnosticStatusWrapper & st
   // Remember start time to measure elapsed time
   const auto t_start = SystemMonitorUtility::startMeasurement();
 
-  // Create a new socket
-  int sock = socket(AF_INET, SOCK_STREAM, 0);
-  if (sock < 0) {
-    stat.summary(DiagStatus::ERROR, "socket error");
-    stat.add("socket", strerror(errno));
-    return;
-  }
-
-  // Specify the receiving timeouts until reporting an error
-  struct timeval tv;
-  tv.tv_sec = 10;
-  tv.tv_usec = 0;
-  int ret = setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
-  if (ret < 0) {
-    stat.summary(DiagStatus::ERROR, "setsockopt error");
-    stat.add("setsockopt", strerror(errno));
-    close(sock);
-    return;
-  }
-
-  // Connect the socket referred to by the file descriptor
-  sockaddr_in addr;
-  memset(&addr, 0, sizeof(sockaddr_in));
-  addr.sin_family = AF_INET;
-  addr.sin_port = htons(traffic_reader_port_);
-  addr.sin_addr.s_addr = htonl(INADDR_ANY);
-  ret = connect(sock, (struct sockaddr *)&addr, sizeof(addr));
-  if (ret < 0) {
-    stat.summary(DiagStatus::ERROR, "connect error");
-    stat.add("connect", strerror(errno));
-    close(sock);
-    return;
-  }
-
-  // Write list of devices to FD
-  ret = write(sock, monitor_program_.c_str(), monitor_program_.length());
-  if (ret < 0) {
-    stat.summary(DiagStatus::ERROR, "write error");
-    stat.add("write", strerror(errno));
-    RCLCPP_ERROR(get_logger(), "write error");
-    close(sock);
-    return;
-  }
-
-  // Receive messages from a socket
-  std::string rcv_str;
-  char buf[16 * 1024 + 1];
-  do {
-    ret = recv(sock, buf, sizeof(buf) - 1, 0);
-    if (ret < 0) {
-      stat.summary(DiagStatus::ERROR, "recv error");
-      stat.add("recv", strerror(errno));
-      close(sock);
-      return;
-    }
-    if (ret > 0) {
-      buf[ret] = '\0';
-      rcv_str += std::string(buf);
-    }
-  } while (ret > 0);
-
-  // Close the file descriptor FD
-  ret = close(sock);
-  if (ret < 0) {
-    stat.summary(DiagStatus::ERROR, "close error");
-    stat.add("close", strerror(errno));
-    return;
-  }
-
-  // No data received
-  if (rcv_str.length() == 0) {
-    stat.summary(DiagStatus::ERROR, "recv error");
-    stat.add("recv", "No data received");
-    return;
-  }
-
-  // Restore  information list
-  TrafficReaderResult result;
-  try {
-    std::istringstream iss(rcv_str);
-    boost::archive::text_iarchive oa(iss);
-    oa >> result;
-  } catch (const std::exception & e) {
-    stat.summary(DiagStatus::ERROR, "recv error");
-    stat.add("recv", e.what());
-    return;
-  }
+  // Get result of nethogs
+  traffic_reader_service::Result result;
+  getNethogsResult(result);
 
   // traffic_reader result to output
-  if (result.error_code_ != 0) {
+  if (result.error_code != EXIT_SUCCESS) {
     stat.summary(DiagStatus::ERROR, "traffic_reader error");
-    stat.add("error", result.str_);
+    stat.add("error", result.output);
   } else {
     stat.summary(DiagStatus::OK, "OK");
 
-    if (result.str_.length() == 0) {
-      stat.add("nethogs: result", "nothing");
-    } else if (nethogs_all_) {
-      stat.add("nethogs: all (KB/sec):", result.str_);
+    if (result.output.empty()) {
+      stat.add("nethogs: result", fmt::format("No data monitored: {}", monitor_program_));
     } else {
-      std::stringstream lines{result.str_};
+      std::stringstream lines{result.output};
       std::string line;
       std::vector<std::string> list;
       int idx = 0;
@@ -488,14 +406,14 @@ void NetMonitor::monitorTraffic(diagnostic_updater::DiagnosticStatusWrapper & st
         }
         boost::split(list, line, boost::is_any_of("\t"), boost::token_compress_on);
         if (list.size() >= 3) {
-          stat.add(fmt::format("nethogs {}: PROGRAM", idx), list[0].c_str());
-          stat.add(fmt::format("nethogs {}: SENT (KB/sec)", idx), list[1].c_str());
-          stat.add(fmt::format("nethogs {}: RECEIVED (KB/sec)", idx), list[2].c_str());
+          stat.add(fmt::format("nethogs {}: program", idx), list[3].c_str());
+          stat.add(fmt::format("nethogs {}: sent (KB/s)", idx), list[1].c_str());
+          stat.add(fmt::format("nethogs {}: received (KB/sec)", idx), list[2].c_str());
         } else {
           stat.add(fmt::format("nethogs {}: result", idx), line);
         }
         idx++;
-      }  // while
+      }
     }
   }
 
@@ -632,6 +550,152 @@ bool NetMonitor::getReassemblesFailed(uint64_t & reassembles_failed)
   reassembles_failed = std::stoull(value_list[reassembles_failed_column_index_]);
 
   return true;
+}
+
+void NetMonitor::sendStartNethogsRequest()
+{
+  // Connect to boot/shutdown service
+  if (!connectService()) {
+    closeConnection();
+    return;
+  }
+
+  int index = 0;
+  std::string error_str;
+  diagnostic_updater::DiagnosticStatusWrapper stat;
+  std::vector<std::string> interface_names;
+
+  for (const auto & net_info : net_info_list_) {
+    if (!isSupportedNetwork(net_info, index, stat, error_str)) {
+      ++index;
+      interface_names.push_back(net_info.interface_name);
+      continue;
+    }
+    ++index;
+
+    interface_names.push_back(net_info.interface_name);
+  }
+
+  // Send data to traffic-reader service
+  if (!sendDataWithParameters(
+        traffic_reader_service::START_NETHOGS, interface_names, monitor_program_)) {
+    closeConnection();
+    return;
+  }
+
+  // Close connection with traffic-reader service
+  closeConnection();
+}
+
+void NetMonitor::getNethogsResult(traffic_reader_service::Result & result)
+{
+  // Connect to traffic-reader service
+  if (!connectService()) {
+    closeConnection();
+    return;
+  }
+
+  // Send data to traffic-reader service
+  if (!sendData(traffic_reader_service::Request::GET_RESULT)) {
+    closeConnection();
+    return;
+  }
+
+  // Receive data from traffic-reader service
+  receiveData(result);
+
+  // Close connection with traffic-reader service
+  closeConnection();
+}
+
+bool NetMonitor::connectService()
+{
+  // Create a new socket
+  socket_ = socket(AF_UNIX, SOCK_STREAM, 0);
+  if (socket_ < 0) {
+    RCLCPP_ERROR(get_logger(), "Failed to create a new socket. %s", strerror(errno));
+    return false;
+  }
+
+  sockaddr_un addr = {};
+  addr.sun_family = AF_UNIX;
+  strncpy(addr.sun_path, socket_path_.c_str(), sizeof(addr.sun_path) - 1);
+
+  int ret = connect(socket_, (struct sockaddr *)&addr, sizeof(addr));
+  if (ret < 0) {
+    RCLCPP_ERROR(get_logger(), "Failed to connect. %s", strerror(errno));
+    close(socket_);
+    return false;
+  }
+
+  return true;
+}
+
+bool NetMonitor::sendData(traffic_reader_service::Request request)
+{
+  std::ostringstream out_stream;
+  boost::archive::text_oarchive archive(out_stream);
+  archive & request;
+
+  int ret = write(socket_, out_stream.str().c_str(), out_stream.str().length());
+  if (ret < 0) {
+    RCLCPP_ERROR(get_logger(), "Failed to write N bytes of BUF to FD. %s", strerror(errno));
+    return false;
+  }
+
+  return true;
+}
+
+bool NetMonitor::sendDataWithParameters(
+  traffic_reader_service::Request request, std::vector<std::string> & parameters,
+  std::string & program_name)
+{
+  std::ostringstream out_stream;
+  boost::archive::text_oarchive archive(out_stream);
+  archive & request;
+  archive & parameters;
+  archive & program_name;
+
+  int ret = write(socket_, out_stream.str().c_str(), out_stream.str().length());
+  if (ret < 0) {
+    RCLCPP_ERROR(get_logger(), "Failed to write N bytes of BUF to FD. %s", strerror(errno));
+    return false;
+  }
+
+  return true;
+}
+
+void NetMonitor::receiveData(traffic_reader_service::Result & result)
+{
+  char buffer[10240]{};
+  uint8_t request_id = traffic_reader_service::Request::NONE;
+
+  int ret = recv(socket_, buffer, sizeof(buffer) - 1, 0);
+  if (ret < 0) {
+    RCLCPP_ERROR(get_logger(), "Failed to recv. %s", strerror(errno));
+    return;
+  }
+  // No data received
+  if (ret == 0) {
+    RCLCPP_ERROR(get_logger(), "No data received.");
+    return;
+  }
+
+  // Restore device status list
+  try {
+    std::istringstream in_stream(buffer);
+    boost::archive::text_iarchive archive(in_stream);
+    archive >> request_id;
+    archive >> result;
+  } catch (const std::exception & e) {
+    RCLCPP_ERROR(get_logger(), "Failed to restore message. %s\n", e.what());
+  }
+}
+
+void NetMonitor::closeConnection()
+{
+  // Close the file descriptor FD
+  close(socket_);
 }
 
 #include <rclcpp_components/register_node_macro.hpp>
