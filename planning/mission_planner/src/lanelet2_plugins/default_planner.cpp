@@ -212,6 +212,10 @@ visualization_msgs::msg::MarkerArray DefaultPlanner::visualize_debug_footprint(
     tier4_autoware_utils::createPoint(goal_footprint[2][0], goal_footprint[2][1], 0.0));
   marker.points.push_back(
     tier4_autoware_utils::createPoint(goal_footprint[3][0], goal_footprint[3][1], 0.0));
+  marker.points.push_back(
+    tier4_autoware_utils::createPoint(goal_footprint[4][0], goal_footprint[4][1], 0.0));
+  marker.points.push_back(
+    tier4_autoware_utils::createPoint(goal_footprint[5][0], goal_footprint[5][1], 0.0));
   marker.points.push_back(marker.points.front());
 
   msg.markers.push_back(marker);
@@ -273,7 +277,7 @@ bool DefaultPlanner::is_goal_valid(
     return false;
   }
 
-  const auto local_vehicle_footprint = create_vehicle_footprint(vehicle_info_);
+  const auto local_vehicle_footprint = vehicle_info_.createFootprint();
   tier4_autoware_utils::LinearRing2d goal_footprint =
     transformVector(local_vehicle_footprint, tier4_autoware_utils::pose2transform(goal));
   pub_goal_footprint_marker_->publish(visualize_debug_footprint(goal_footprint));

@@ -25,22 +25,7 @@ bool exists(const std::unordered_set<lanelet::Id> & set, const lanelet::Id & id)
 {
   return set.find(id) != set.end();
 }
-tier4_autoware_utils::LinearRing2d create_vehicle_footprint(
-  const vehicle_info_util::VehicleInfo & vehicle_info)
-{
-  using tier4_autoware_utils::LinearRing2d;
-  using tier4_autoware_utils::Point2d;
 
-  const auto & i = vehicle_info;
-
-  LinearRing2d footprint;
-  footprint.push_back(Point2d{i.max_longitudinal_offset_m, i.max_lateral_offset_m});
-  footprint.push_back(Point2d{i.max_longitudinal_offset_m, i.min_lateral_offset_m});
-  footprint.push_back(Point2d{i.min_longitudinal_offset_m, i.min_lateral_offset_m});
-  footprint.push_back(Point2d{i.min_longitudinal_offset_m, i.max_lateral_offset_m});
-
-  return footprint;
-}
 tier4_autoware_utils::Polygon2d convert_linear_ring_to_polygon(
   tier4_autoware_utils::LinearRing2d footprint)
 {
@@ -52,6 +37,7 @@ tier4_autoware_utils::Polygon2d convert_linear_ring_to_polygon(
   boost::geometry::correct(footprint_polygon);
   return footprint_polygon;
 }
+
 void set_color(std_msgs::msg::ColorRGBA * cl, double r, double g, double b, double a)
 {
   cl->r = r;
@@ -71,21 +57,29 @@ lanelet::ConstLanelet combine_lanelets(const lanelet::ConstLanelets & lanelets)
   lanelet::Points3d lefts;
   lanelet::Points3d rights;
   lanelet::Points3d centers;
+  std::vector<uint64_t> bound_ids;
+
+  for (const auto &llt : lanelets) {
+    if (llt.id() != 0) {
+      bound_ids.push_back(llt.leftBound().id());
+      bound_ids.push_back(llt.rightBound().id());
+    }
+  }
+
   for (const auto & llt : lanelets) {
-    for (const auto & pt : llt.leftBound()) {
-      lefts.push_back(lanelet::Point3d(pt));
+    if (std::count(bound_ids.begin(), bound_ids.end(), llt.leftBound().id()) < 2) {
+      for (const auto & pt : llt.leftBound()) {
+        lefts.push_back(lanelet::Point3d(pt));
+      }
     }
-    for (const auto & pt : llt.rightBound()) {
-      rights.push_back(lanelet::Point3d(pt));
-    }
-    for (const auto & pt : llt.centerline()) {
-      centers.push_back(lanelet::Point3d(pt));
+    if (std::count(bound_ids.begin(), bound_ids.end(), llt.rightBound().id()) < 2) {
+      for (const auto & pt : llt.rightBound()) {
+        rights.push_back(lanelet::Point3d(pt));
+      }
     }
   }
   const auto left_bound = lanelet::LineString3d(lanelet::InvalId, lefts);
   const auto right_bound = lanelet::LineString3d(lanelet::InvalId, rights);
-  const auto center_line = lanelet::LineString3d(lanelet::InvalId, centers);
   auto combined_lanelet = lanelet::Lanelet(lanelet::InvalId, left_bound, right_bound);
-  combined_lanelet.setCenterline(center_line);
   return std::move(combined_lanelet);
 }
