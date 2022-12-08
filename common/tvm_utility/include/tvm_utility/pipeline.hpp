@@ -280,11 +280,9 @@ public:
     get_output = runtime_mod.GetFunction("get_output");
 
     for (auto & output_config : config.network_outputs) {
-      TVMArrayContainer output(
+      output_.push_back(TVMArrayContainer(
         output_config.second, config.tvm_dtype_code, config.tvm_dtype_bits, config.tvm_dtype_lanes,
-        config.tvm_device_type, config.tvm_device_id);
-      Init(output);
-      output_.push_back(output);
+        config.tvm_device_type, config.tvm_device_id));
     }
   }
 
@@ -345,8 +343,8 @@ private:
 };
 
 template <
-  class PreProcessorType, class InferenceEngineType, class InferenceEngine,
-  class InferenceEngineType, class PostProcessorType>
+  class PreProcessorType, class InferenceEngineType, class TVMScriptEngineType,
+  class PostProcessorType>
 class TowStagePipeline
 {
   using InputType = decltype(std::declval<PreProcessorType>().input_type_indicator_);
@@ -363,7 +361,7 @@ public:
   TowStagePipeline(
     std::shared_ptr<PreProcessorType> pre_processor,
     std::shared_ptr<InferenceEngineType> inference_engine_1,
-    std::shared_ptr<InferenceEngine> tvm_script_engine,
+    std::shared_ptr<TVMScriptEngineType> tvm_script_engine,
     std::shared_ptr<InferenceEngineType> inference_engine_2,
     std::shared_ptr<PostProcessorType> post_processor)
   : pre_processor_(pre_processor),
@@ -392,7 +390,7 @@ public:
 private:
   std::shared_ptr<PreProcessorType> pre_processor_;
   std::shared_ptr<InferenceEngineType> inference_engine_1_;
-  std::shared_ptr<InferenceEngine> tvm_script_engine_;
+  std::shared_ptr<TVMScriptEngineType> tvm_script_engine_;
   std::shared_ptr<InferenceEngineType> inference_engine_2_;
   std::shared_ptr<PostProcessorType> post_processor_;
 };

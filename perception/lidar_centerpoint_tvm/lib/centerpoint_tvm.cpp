@@ -46,7 +46,9 @@ TVMScatterIE::TVMScatterIE(
   const std::string & function_name)
 : config_(config)
 {
-  std::string network_module_path = "/home/xinyuwang/adehome/tvm_latest/tvm_example/scatter.so";
+  std::string network_module_path = ament_index_cpp::get_package_share_directory(pkg_name) +
+                                 "/models/" + config.network_name + "/";
+  network_module_path = "/home/xinyuwang/adehome/tvm_latest/tvm_example/scatter.so";
 
   std::ifstream module(network_module_path);
   if (!module.good()) {
@@ -66,7 +68,7 @@ TVMScatterIE::TVMScatterIE(
 
 TVMArrayContainerVector TVMScatterIE::schedule(const TVMArrayContainerVector & input)
 {
-  f(input[0].getArray(), coords.getArray(), output_[0].getArray());
+  f(input[0].getArray(), coords_.getArray(), output_[0].getArray());
 
   return output_;
 }
@@ -161,10 +163,10 @@ CenterPointTVM::CenterPointTVM(
   config_bnh(config_bk),
   VE_PreP(std::make_shared<VE_PrePT>(config_en, config)),
   VE_IE(std::make_shared<IET>(config_en, "lidar_centerpoint_tvm")),
-  scatter_ie(std::make_shared<TSE>(config_scatter, "lidar_centerpoint_tvm", "scatter")),
   BNH_IE(std::make_shared<IET>(config_bk, "lidar_centerpoint_tvm")),
   BNH_PostP(std::make_shared<BNH_PostPT>(config_bk, config)),
-  TSP(VE_PreP, VE_IE, std::static_pointer_cast<IE, TSE>(scatter_ie), BNH_IE, BNH_PostP),
+  scatter_ie(std::make_shared<TSE>(config_scatter, "lidar_centerpoint_tvm", "scatter")),
+  TSP_pipeline(std::make_shared<TSP>(VE_PreP, VE_IE, scatter_ie, BNH_IE, BNH_PostP)),
   config_(config)
 {
   vg_ptr_ = std::make_unique<VoxelGenerator>(densification_param, config_);
@@ -204,7 +206,7 @@ bool CenterPointTVM::detect(
   }
 
   MixedInputs voxel_inputs{num_voxels_, *voxels_, *num_points_per_voxel_, *coordinates_};
-  auto bnh_output = TSP->schedule(voxel_inputs);
+  auto bnh_output = TSP_pipeline->schedule(voxel_inputs);
   // auto ve_output = ve_pipeline->schedule(voxel_inputs);
 
   // std::size_t spatial_features_size = 32*560*560;

@@ -62,7 +62,7 @@ public:
     tvm_utility::pipeline::InferenceEngineTVMConfig config, const std::string & pkg_name,
     const std::string & function_name);
   TVMArrayContainerVector schedule(const TVMArrayContainerVector & input);
-  void set_coords(TVMArrayContainerVector coords) { coords_ = coords; };
+  void set_coords(TVMArrayContainer coords) { coords_ = coords; };
 
 private:
   tvm_utility::pipeline::InferenceEngineTVMConfig config_;
@@ -150,7 +150,8 @@ protected:
   using IE = tvm_utility::pipeline::InferenceEngine;
   using IET = tvm_utility::pipeline::InferenceEngineTVM;
   using BNH_PostPT = BackboneNeckHeadPostProcessor;
-  using TSE = tvm_utility::pipeline::TVMScatterIE;
+  using TSE = TVMScatterIE;
+  using TSP = tvm_utility::pipeline::TowStagePipeline<VE_PrePT, IET, TSE, BNH_PostPT>;
 
   tvm_utility::pipeline::InferenceEngineTVMConfig config_ve;
   tvm_utility::pipeline::InferenceEngineTVMConfig config_bnh;
@@ -164,7 +165,7 @@ protected:
   std::shared_ptr<BNH_PostPT> BNH_PostP;
 
   std::shared_ptr<TSE> scatter_ie;
-  std::shared_ptr<tvm_utility::pipeline::TowStagePipeline<VE_PrePT, IET, TSE, IET, BNH_PostPT>> TSP;
+  std::shared_ptr<tvm_utility::pipeline::TowStagePipeline<VE_PrePT, IET, TSE, BNH_PostPT>> TSP_pipeline;
 
   // Variables
   std::unique_ptr<VoxelGeneratorTemplate> vg_ptr_{nullptr};
