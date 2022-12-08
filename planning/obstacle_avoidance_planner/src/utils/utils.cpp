@@ -637,29 +637,26 @@ bool isOutsideDrivableArea(
     return false;
   }
 
+  constexpr double min_dist = 0.1;
   const auto left_start_point = getStartPoint(left_bound, right_bound.front());
   const auto right_start_point = getStartPoint(right_bound, left_bound.front());
 
   // ignore point in front of the front line
   const std::vector<geometry_msgs::msg::Point> front_bound = {left_start_point, right_start_point};
   const double lat_dist_to_front_bound = motion_utils::calcLateralOffset(front_bound, point);
-  if (lat_dist_to_front_bound > 0.1) {
+  if (lat_dist_to_front_bound > min_dist) {
     return false;
   }
 
   // left bound check
   const double lat_dist_to_left_bound = motion_utils::calcLateralOffset(left_bound, point);
-  if (lat_dist_to_left_bound > 0.1) {
-    std::cerr << "left violation value: " << lat_dist_to_left_bound << std::endl;
-    std::cerr << "left side is out of the drivable area" << std::endl;
+  if (lat_dist_to_left_bound > min_dist) {
     return true;
   }
 
   // right bound check
   const double lat_dist_to_right_bound = motion_utils::calcLateralOffset(right_bound, point);
-  if (lat_dist_to_right_bound < -0.1) {
-    std::cerr << "right violation value: " << lat_dist_to_right_bound << std::endl;
-    std::cerr << "right side is out of the drivable area" << std::endl;
+  if (lat_dist_to_right_bound < -min_dist) {
     return true;
   }
 

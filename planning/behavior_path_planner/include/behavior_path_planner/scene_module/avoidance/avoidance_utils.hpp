@@ -82,13 +82,16 @@ std::vector<std::string> getUuidStr(const ObjectDataArray & objs);
 Polygon2d createEnvelopePolygon(
   const ObjectData & object_data, const Pose & closest_pose, const double envelope_buffer);
 
-std::vector<Point> getEdgePoints(const Polygon2d & object_polygon, const double threshold);
+void getEdgePoints(
+  const Polygon2d & object_polygon, const double threshold, std::vector<Point> & edge_points);
 
-std::vector<PolygonPoint> getEdgePoints(
+void getEdgePoints(
   const std::vector<Point> & bound, const std::vector<Point> & edge_points,
-  const double lat_dist_to_path, size_t & start_segment_idx, size_t & end_segment_idx);
+  const double lat_dist_to_path, std::vector<PolygonPoint> & edge_points_data,
+  size_t & start_segment_idx, size_t & end_segment_idx);
 
-std::vector<PolygonPoint> sortPolygonPoints(const std::vector<PolygonPoint> & points);
+void sortPolygonPoints(
+  const std::vector<PolygonPoint> & points, std::vector<PolygonPoint> & sorted_points);
 
 std::vector<Point> updateBoundary(
   const std::vector<Point> & original_bound, const std::vector<PolygonPoint> & points,
