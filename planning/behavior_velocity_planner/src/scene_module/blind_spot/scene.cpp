@@ -64,6 +64,7 @@ BlindSpotModule::BlindSpotModule(
   is_over_pass_judge_line_(false),
   created_virtual_wall_marker_(false)
 {
+  velocity_factor_.init(VelocityFactor::REAR_CHECK);
   planner_param_ = planner_param;
 
   const auto & assigned_lanelet =
@@ -184,6 +185,8 @@ bool BlindSpotModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
     stop_factor.stop_pose = debug_data_.stop_point_pose;
     stop_factor.stop_factor_points = planning_utils::toRosPoints(debug_data_.conflicting_targets);
     planning_utils::appendStopReason(stop_factor, stop_reason);
+    velocity_factor_.set(
+      path->points, planner_data_->current_pose.pose, stop_pose, VelocityFactor::UNKNOWN);
   } else {
     *path = input_path;  // reset path
   }
