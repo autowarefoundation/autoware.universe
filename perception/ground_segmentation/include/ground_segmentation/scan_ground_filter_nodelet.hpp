@@ -125,13 +125,7 @@ private:
     {
       pcl_indices.indices.push_back(index);
       height_list.push_back(height);
-      radius_sum += radius;
-      height_sum += height;
-      ++point_num;
-      radius_avg = radius_sum / point_num;
-      height_avg = height_sum / point_num;
-      height_max = height_max < height ? height : height_max;
-      height_min = height_min > height ? height : height_min;
+      addPoint(radius, height);
     }
 
     float getAverageSlope() { return std::atan2(height_avg, radius_avg); }
