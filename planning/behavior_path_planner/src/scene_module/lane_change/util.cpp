@@ -238,8 +238,7 @@ LaneChangePaths getLaneChangePaths(
 
     const PathWithLaneId target_lane_reference_path = getReferencePathFromTargetLane(
       route_handler, target_lanelets, lane_changing_start_pose, prepare_distance,
-      lane_changing_distance, forward_path_length,
-      std::max(lane_changing_speed, minimum_lane_change_velocity));
+      lane_changing_distance, forward_path_length, lane_changing_speed);
 
     const ShiftLine shift_line = getLaneChangeShiftLine(
       prepare_segment_reference, lane_changing_segment_reference, target_lanelets,
@@ -511,7 +510,7 @@ PathWithLaneId getReferencePathFromTargetLane(
   constexpr auto min_resampling_points{30.0};
   constexpr auto resampling_dt{0.2};
   const auto resample_interval =
-    std::min(lane_changing_distance / min_resampling_points, lane_changing_speed * resampling_dt);
+    std::max(lane_changing_distance / min_resampling_points, lane_changing_speed * resampling_dt);
   return util::resamplePathWithSpline(lane_changing_reference_path, resample_interval);
 }
 
