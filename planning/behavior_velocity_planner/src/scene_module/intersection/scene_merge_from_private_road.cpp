@@ -39,17 +39,15 @@ MergeFromPrivateRoadModule::MergeFromPrivateRoadModule(
   const rclcpp::Clock::SharedPtr clock)
 : SceneModuleInterface(module_id, logger, clock), lane_id_(lane_id)
 {
+  velocity_factor_.init(VelocityFactor::MERGE);
   planner_param_ = planner_param;
   state_machine_.setState(StateMachine::State::STOP);
 }
 
-bool MergeFromPrivateRoadModule::modifyPathVelocity(
-  autoware_auto_planning_msgs::msg::PathWithLaneId * path,
-  tier4_planning_msgs::msg::StopReason * stop_reason)
+bool MergeFromPrivateRoadModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason)
 {
   debug_data_ = DebugData();
-  *stop_reason = planning_utils::initializeStopReason(
-    tier4_planning_msgs::msg::StopReason::MERGE_FROM_PRIVATE_ROAD);
+  *stop_reason = planning_utils::initializeStopReason(StopReason::MERGE_FROM_PRIVATE_ROAD);
 
   const auto input_path = *path;
   debug_data_.path_raw = input_path;
@@ -114,6 +112,9 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(
     stop_factor.stop_pose = debug_data_.stop_point_pose;
     stop_factor.stop_factor_points.emplace_back(debug_data_.first_collision_point);
     planning_utils::appendStopReason(stop_factor, stop_reason);
+    const auto & stop_pose = path->points.at(stop_line_idx).point.pose;
+    velocity_factor_.set(
+      path->points, planner_data_->current_pose.pose, stop_pose, VelocityFactor::UNKNOWN);
 
     const double signed_arc_dist_to_stop_point = motion_utils::calcSignedArcLength(
       path->points, current_pose.pose.position, path->points.at(stop_line_idx).point.pose.position);

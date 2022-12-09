@@ -65,7 +65,7 @@ void LaneFollowingModule::onEntry()
 void LaneFollowingModule::onExit()
 {
   initParam();
-  current_state_ = BT::NodeStatus::IDLE;
+  current_state_ = BT::NodeStatus::SUCCESS;
   RCLCPP_DEBUG(getLogger(), "LANE_FOLLOWING onExit");
 }
 
@@ -137,8 +137,10 @@ PathWithLaneId LaneFollowingModule::getReferencePath() const
       lane_change_buffer);
   }
 
+  const auto shorten_lanes = util::cutOverlappedLanes(reference_path, drivable_lanes);
+
   const auto expanded_lanes = util::expandLanelets(
-    drivable_lanes, parameters_.drivable_area_left_bound_offset,
+    shorten_lanes, parameters_.drivable_area_left_bound_offset,
     parameters_.drivable_area_right_bound_offset);
 
   reference_path.drivable_area = util::generateDrivableArea(

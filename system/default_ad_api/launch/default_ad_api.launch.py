@@ -30,6 +30,7 @@ def create_api_node(node_name, class_name, **kwargs):
 
 def generate_launch_description():
     components = [
+        create_api_node("autoware_state", "AutowareStateNode"),
         create_api_node("fail_safe", "FailSafeNode"),
         create_api_node("interface", "InterfaceNode"),
         create_api_node("localization", "LocalizationNode"),
@@ -45,6 +46,7 @@ def generate_launch_description():
         composable_node_descriptions=components,
     )
     web_server = Node(
+        namespace="default_ad_api",
         package="default_ad_api",
         name="web_server",
         executable="web_server.py",
