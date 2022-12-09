@@ -57,7 +57,6 @@ TEST(Trajectory, resample)
   t.lateral_velocities = {0.0, 1.5};
   t.lateral_accelerations = {0.0, 3.0};
   t.curvatures = {0.0, 0.9};
-  t.duration = 2.0;
 
   Trajectory t2 = t.resample(0.5);
   ASSERT_EQ(t2.points.size(), 3lu);
@@ -99,7 +98,6 @@ TEST(Trajectory, resample)
   EXPECT_NEAR(t2.lateral_accelerations[0], 0.0, eps);
   EXPECT_NEAR(t2.lateral_accelerations[1], 1.5, eps);
   EXPECT_NEAR(t2.lateral_accelerations[2], 3.0, eps);
-  EXPECT_EQ(t.duration, t2.duration);
 }
 
 TEST(Trajectory, resampleTime)
@@ -119,7 +117,6 @@ TEST(Trajectory, resampleTime)
   t.lateral_velocities = {0.0, 1.5};
   t.lateral_accelerations = {0.0, 3.0};
   t.curvatures = {0.0, 0.9};
-  t.duration = 2.0;
 
   Trajectory t2 = t.resampleTimeFromZero(0.5);
   ASSERT_EQ(t2.points.size(), 3lu);
@@ -161,5 +158,4 @@ TEST(Trajectory, resampleTime)
   EXPECT_NEAR(t2.lateral_accelerations[0], 0.0, eps);
   EXPECT_NEAR(t2.lateral_accelerations[1], 1.5, eps);
   EXPECT_NEAR(t2.lateral_accelerations[2], 3.0, eps);
-  EXPECT_EQ(t.duration, t2.duration);
 }

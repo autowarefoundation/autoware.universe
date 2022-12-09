@@ -107,6 +107,8 @@ TrajectorySamplerNode::TrajectorySamplerNode(const rclcpp::NodeOptions & node_op
     declare_parameter<double>("constraints.hard.min_acceleration");
   params_.constraints.hard.max_velocity =
     declare_parameter<double>("constraints.hard.max_velocity");
+  params_.constraints.hard.max_yaw_rate =
+    declare_parameter<double>("constraints.hard.max_yaw_rate");
   params_.constraints.hard.min_velocity =
     declare_parameter<double>("constraints.hard.min_velocity");
   params_.constraints.hard.collision_distance_buffer =
@@ -122,15 +124,15 @@ TrajectorySamplerNode::TrajectorySamplerNode(const rclcpp::NodeOptions & node_op
     declare_parameter<double>("constraints.soft.curvature_weight");
   params_.constraints.soft.velocity_weight =
     declare_parameter<double>("constraints.soft.velocity_weight");
+  params_.constraints.soft.yaw_rate_weight =
+    declare_parameter<double>("constraints.soft.yaw_rate_weight");
   params_.sampling.enable_frenet = declare_parameter<bool>("sampling.enable_frenet");
   params_.sampling.enable_bezier = declare_parameter<bool>("sampling.enable_bezier");
   params_.sampling.resolution = declare_parameter<double>("sampling.resolution");
-  params_.sampling.minimum_committed_length =
-    declare_parameter<double>("sampling.minimum_committed_length");
-  params_.sampling.reuse_max_length_max =
-    declare_parameter<double>("sampling.reuse_max_length_max");
-  params_.sampling.reuse_samples = declare_parameter<int>("sampling.reuse_samples");
-  params_.sampling.reuse_max_deviation = declare_parameter<double>("sampling.reuse_max_deviation");
+  params_.preprocessing.reuse_times =
+    declare_parameter<std::vector<double>>("preprocessing.reuse_times");
+  params_.preprocessing.reuse_max_deviation =
+    declare_parameter<double>("preprocessing.reuse_max_deviation");
   params_.sampling.target_lengths =
     declare_parameter<std::vector<double>>("sampling.target_lengths");
   params_.sampling.frenet.manual.enable = declare_parameter<bool>("sampling.frenet.manual.enable");
@@ -169,8 +171,8 @@ TrajectorySamplerNode::TrajectorySamplerNode(const rclcpp::NodeOptions & node_op
     declare_parameter<double>("preprocessing.smooth_reference_trajectory.control_points_ratio");
   params_.preprocessing.smooth_weight =
     declare_parameter<double>("preprocessing.smooth_reference_trajectory.smoothing_weight");
-  params_.postprocessing.desired_traj_behind_length =
-    declare_parameter<double>("postprocessing.desired_traj_behind_length");
+  params_.preprocessing.desired_traj_behind_length =
+    declare_parameter<double>("preprocessing.desired_traj_behind_length");
 
   // const auto half_wheel_tread = vehicle_info_.wheel_tread_m / 2.0;
   const auto left_offset = vehicle_info_.vehicle_width_m / 2.0;
@@ -208,6 +210,8 @@ rcl_interfaces::msg::SetParametersResult TrajectorySamplerNode::onParameter(
       params_.constraints.hard.min_acceleration = parameter.as_double();
     } else if (parameter.get_name() == "constraints.hard.max_velocity") {
       params_.constraints.hard.max_velocity = parameter.as_double();
+    } else if (parameter.get_name() == "constraints.hard.max_yaw_rate") {
+      params_.constraints.hard.max_yaw_rate = parameter.as_double();
     } else if (parameter.get_name() == "constraints.hard.collision_distance_buffer") {
       params_.constraints.hard.collision_distance_buffer = parameter.as_double();
     } else if (parameter.get_name() == "constraints.hard.min_velocity") {
@@ -222,6 +226,8 @@ rcl_interfaces::msg::SetParametersResult TrajectorySamplerNode::onParameter(
       params_.constraints.soft.length_weight = parameter.as_double();
     } else if (parameter.get_name() == "constraints.soft.velocity_weight") {
       params_.constraints.soft.velocity_weight = parameter.as_double();
+    } else if (parameter.get_name() == "constraints.soft.yaw_rate_weight") {
+      params_.constraints.soft.yaw_rate_weight = parameter.as_double();
     } else if (parameter.get_name() == "constraints.soft.curvature_weight") {
       params_.constraints.soft.curvature_weight = parameter.as_double();
     } else if (parameter.get_name() == "sampling.enable_frenet") {
@@ -230,14 +236,10 @@ rcl_interfaces::msg::SetParametersResult TrajectorySamplerNode::onParameter(
       params_.sampling.enable_bezier = parameter.as_bool();
     } else if (parameter.get_name() == "sampling.resolution") {
       params_.sampling.resolution = parameter.as_double();
-    } else if (parameter.get_name() == "sampling.minimum_committed_length") {
-      params_.sampling.minimum_committed_length = parameter.as_double();
-    } else if (parameter.get_name() == "sampling.reuse_max_length_max") {
-      params_.sampling.reuse_max_length_max = parameter.as_double();
-    } else if (parameter.get_name() == "sampling.reuse_samples") {
-      params_.sampling.reuse_samples = parameter.as_int();
-    } else if (parameter.get_name() == "sampling.reuse_max_deviation") {
-      params_.sampling.reuse_max_deviation = parameter.as_double();
+    } else if (parameter.get_name() == "preprocessing.reuse_times") {
+      params_.preprocessing.reuse_times = parameter.as_double_array();
+    } else if (parameter.get_name() == "preprocessing.reuse_max_deviation") {
+      params_.preprocessing.reuse_max_deviation = parameter.as_double();
     } else if (parameter.get_name() == "sampling.target_lengths") {
       params_.sampling.target_lengths = parameter.as_double_array();
     } else if (parameter.get_name() == "sampling.frenet.manual.enable") {
@@ -288,8 +290,8 @@ rcl_interfaces::msg::SetParametersResult TrajectorySamplerNode::onParameter(
     } else if (
       parameter.get_name() == "preprocessing.smooth_reference_trajectory.smoothing_weight") {
       params_.preprocessing.smooth_weight = parameter.as_double();
-    } else if (parameter.get_name() == "postprocessing.desired_traj_behind_length") {
-      params_.postprocessing.desired_traj_behind_length = parameter.as_double();
+    } else if (parameter.get_name() == "preprocessing.desired_traj_behind_length") {
+      params_.preprocessing.desired_traj_behind_length = parameter.as_double();
     } else {
       RCLCPP_WARN(get_logger(), "Unknown parameter %s", parameter.get_name().c_str());
       result.successful = false;
@@ -301,6 +303,7 @@ rcl_interfaces::msg::SetParametersResult TrajectorySamplerNode::onParameter(
 void TrajectorySamplerNode::pathCallback(
   const autoware_auto_planning_msgs::msg::Path::ConstSharedPtr msg)
 {
+  const auto calc_begin = std::chrono::steady_clock::now();
   const auto current_state = getCurrentEgoConfiguration();
   // TODO(Maxime CLEMENT): move to "validInputs(current_state, msg)"
   if (msg->points.size() < 2 || msg->drivable_area.data.empty() || !current_state) {
@@ -310,7 +313,6 @@ void TrajectorySamplerNode::pathCallback(
       current_state.has_value(), !msg->drivable_area.data.empty(), msg->points.size());
     return;
   }
-  const auto calc_begin = std::chrono::steady_clock::now();
 
   const auto path_spline = preparePathSpline(*msg, params_);
   const auto planning_configuration = getPlanningConfiguration(*current_state, path_spline);
@@ -319,12 +321,11 @@ void TrajectorySamplerNode::pathCallback(
     msg->drivable_area);
   gui_.setConstraints(params_.constraints);
 
-  sampler_common::updateTrajectoryTime(prev_traj_, planning_configuration);
-  const auto max_reuse_time = prev_traj_.times.empty() ? 0.0 : prev_traj_.times.back();
-  std::vector<double> reusable_times;
-  for (auto t = 1.0; t < max_reuse_time && t <= 5.0; t += 2.0) reusable_times.push_back(t);
-  auto reusable_trajectories =
-    sampler_common::calculateReusableTrajectories(prev_traj_, reusable_times);
+  const auto updated_prev_traj = updatePreviousTrajectory(
+    prev_traj_, planning_configuration, params_.preprocessing.reuse_max_deviation,
+    params_.preprocessing.desired_traj_behind_length);
+  auto reusable_trajectories = sampler_common::calculateReusableTrajectories(
+    updated_prev_traj, params_.preprocessing.reuse_times);
   auto trajectories =
     generateCandidateTrajectories(planning_configuration, {}, path_spline, *msg, gui_, params_);
   for (auto & reusable_traj : reusable_trajectories) {
@@ -342,24 +343,24 @@ void TrajectorySamplerNode::pathCallback(
   const auto selected_trajectory_idx = selectBestTrajectory(trajectories);
   if (selected_trajectory_idx) {
     const auto & selected_trajectory = trajectories[*selected_trajectory_idx];
+    auto output_trajectory = selected_trajectory;
     // Make the trajectory nicer for the controller
-    auto final_trajectory =
-      selected_trajectory;  // prependTrajectory(selected_trajectory, path_spline, *current_state);
     // TODO(Maxime CLEMENT): 0.25m/s is the min engage velocity. Should be a parameter.
     constexpr auto min_engage_vel = 0.25;
     if (
-      final_trajectory.longitudinal_velocities.size() > 1lu &&
+      output_trajectory.longitudinal_velocities.size() > 1lu &&
       *std::max_element(
-        final_trajectory.longitudinal_velocities.begin(),
-        final_trajectory.longitudinal_velocities.end()) > min_engage_vel) {
-      for (auto i = 0lu; i < final_trajectory.longitudinal_velocities.size() &&
-                         final_trajectory.longitudinal_velocities[i] < min_engage_vel;
+        output_trajectory.longitudinal_velocities.begin(),
+        output_trajectory.longitudinal_velocities.end()) > min_engage_vel) {
+      for (auto i = 0lu; i < output_trajectory.longitudinal_velocities.size() &&
+                         output_trajectory.longitudinal_velocities[i] < min_engage_vel;
            ++i)
-        final_trajectory.longitudinal_velocities[i] = min_engage_vel;
+        output_trajectory.longitudinal_velocities[i] = min_engage_vel;
       std::cout << "[prependTrajectory] updated first velocity points to "
-                << final_trajectory.longitudinal_velocities.front() << "m/s\n";
+                << output_trajectory.longitudinal_velocities.front() << "m/s\n";
     }
-    if (!final_trajectory.points.empty()) publishTrajectory(final_trajectory, msg->header.frame_id);
+    if (!output_trajectory.points.empty())
+      publishTrajectory(output_trajectory, msg->header.frame_id);
     prev_traj_ = selected_trajectory;
   } else {
     if (
@@ -524,7 +525,7 @@ sampler_common::Trajectory TrajectorySamplerNode::prependTrajectory(
   const sampler_common::Configuration & current_state) const
 {
   if (
-    params_.postprocessing.desired_traj_behind_length == 0.0 && !trajectory.times.empty() &&
+    params_.preprocessing.desired_traj_behind_length == 0.0 && !trajectory.times.empty() &&
     trajectory.times.front() > 0.0) {
     sampler_common::Trajectory t;
     t.points = {current_state.pose};
@@ -553,7 +554,7 @@ sampler_common::Trajectory TrajectorySamplerNode::prependTrajectory(
   const auto current_frenet = reference.frenet(trajectory.points.front());
   const auto resolution = params_.sampling.resolution;
   sampler_common::Trajectory trajectory_to_prepend;
-  const auto first_s = current_frenet.s - params_.postprocessing.desired_traj_behind_length;
+  const auto first_s = current_frenet.s - params_.preprocessing.desired_traj_behind_length;
   const auto min_s =
     std::max(resolution, first_s);  // avoid s=0 where the reference spline may diverge
   std::vector<double> ss;

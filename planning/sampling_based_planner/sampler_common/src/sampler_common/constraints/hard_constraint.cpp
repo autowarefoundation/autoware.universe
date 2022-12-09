@@ -145,5 +145,13 @@ void checkVelocityConstraints(Trajectory & traj, const Constraints & constraints
       constraints.hard.max_acceleration)) {
     traj.constraint_results.acceleration = false;
   }
+  // yaw rate // TODO(Maxime): move to other function
+  for (auto i = 0lu; i + 1 < traj.curvatures.size(); ++i) {
+    const auto yaw_rate = (traj.yaws[i + 1] - traj.yaws[i]) / (traj.times[i + 1] - traj.times[i]);
+    if (yaw_rate > constraints.hard.max_yaw_rate) {
+      traj.constraint_results.yaw_rate = false;
+      break;
+    }
+  }
 }
 }  // namespace sampler_common::constraints

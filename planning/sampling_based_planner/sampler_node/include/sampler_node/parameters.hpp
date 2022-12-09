@@ -28,10 +28,6 @@ struct Parameters
     bool enable_frenet{};
     bool enable_bezier{};
     double resolution{};
-    double minimum_committed_length{};
-    double reuse_max_length_max{};
-    int reuse_samples{};
-    double reuse_max_deviation{};
     std::vector<double> target_lengths{};
     double confortable_acceleration = 1.0;  // TODO(Maxime CLEMENT): read from param file
     struct
@@ -60,14 +56,13 @@ struct Parameters
   {
     bool force_zero_deviation{};
     bool force_zero_heading{};
+    double desired_traj_behind_length{};
+    std::vector<double> reuse_times{};
+    double reuse_max_deviation{};
     bool smooth_reference{};
     double control_points_ratio{};
     double smooth_weight{};
   } preprocessing{};
-  struct
-  {
-    double desired_traj_behind_length{};
-  } postprocessing{};
 };
 
 #endif  // SAMPLER_NODE__PARAMETERS_HPP_

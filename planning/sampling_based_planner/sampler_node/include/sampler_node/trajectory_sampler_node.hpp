@@ -123,6 +123,48 @@ private:
     const sampler_common::transform::Spline2D & reference,
     const sampler_common::Configuration & current_state) const;
 
+  /// @brief update a trajectory such that the given configuration corresponds to t=0 and length=0
+  /// @param [in] trajectory trajectory to update
+  /// @param [in] current_configuration the configuration to use as t=0 and length=0
+  /// @param [in] max_deviation [m] reset the trajectory if the given configuration is further that
+  /// this distance
+  /// @param [in] max_behind [m] maximum distance behind the given configuration to leave in the
+  /// trajectory
+  inline sampler_common::Trajectory updatePreviousTrajectory(
+    sampler_common::Trajectory trajectory,
+    const sampler_common::Configuration & current_configuration, const double max_deviation,
+    const double max_behind)
+  {
+    // reset trajectory if velocity is 0.0 // TODO(Maxime): make this optional ?
+    // if(std::abs(current_configuration.velocity) < 0.01) return {};
+    const auto closest_iter = std::min_element(
+      trajectory.points.begin(), trajectory.points.end(), [&](const auto & p1, const auto & p2) {
+        return boost::geometry::distance(p1, current_configuration.pose) <=
+               boost::geometry::distance(p2, current_configuration.pose);
+      });
+    if (
+      closest_iter == trajectory.points.end() ||
+      boost::geometry::distance(*closest_iter, current_configuration.pose) > max_deviation)
+      return {};
+
+    const auto current_idx = std::distance(trajectory.points.begin(), closest_iter);
+    auto zero_vel_idx = current_idx;
+    for (; zero_vel_idx < trajectory.longitudinal_velocities.size() &&
+           trajectory.longitudinal_velocities[zero_vel_idx] > 0.1;
+         ++zero_vel_idx)
+      ;
+    const auto time_offset = trajectory.times[current_idx];
+    const auto length_offset = trajectory.lengths[current_idx];
+    for (auto & t : trajectory.times) t -= time_offset;
+    for (auto & l : trajectory.lengths) l -= length_offset;
+    auto max_behind_idx = current_idx;
+    for (; max_behind_idx > 0 && trajectory.lengths[max_behind_idx] <= -max_behind;
+         --max_behind_idx)
+      ;
+    if (zero_vel_idx <= max_behind_idx) return {};
+    return *trajectory.subset(max_behind_idx, zero_vel_idx);
+  }
+
 public:
   explicit TrajectorySamplerNode(const rclcpp::NodeOptions & node_options);
 };

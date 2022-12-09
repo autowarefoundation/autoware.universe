@@ -128,7 +128,7 @@ void Plotter::plotFrenetTrajectories(const std::vector<frenet_planner::Trajector
     QVector<double> ds;
     QVector<double> ts;
     constexpr double time_resolution = 0.1;
-    for (double t = 0; t <= trajectory.duration; t += time_resolution) {
+    for (const auto t : trajectory.times) {
       ts.push_back(t);
       ss.push_back(trajectory.longitudinal_polynomial->position(t));
       ds.push_back(trajectory.lateral_polynomial->position(t));

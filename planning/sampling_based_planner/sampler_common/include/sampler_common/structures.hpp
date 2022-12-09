@@ -44,13 +44,17 @@ struct ConstraintResults
   bool drivable_area = true;
   bool velocity = true;
   bool acceleration = true;
+  bool yaw_rate = true;
 
   [[nodiscard]] bool isValid() const
   {
-    return collision && curvature && drivable_area && velocity && acceleration;
+    return collision && curvature && drivable_area && velocity && acceleration && yaw_rate;
   }
 
-  void clear() { collision = curvature = drivable_area = velocity = acceleration = true; }
+  void clear()
+  {
+    collision = curvature = drivable_area = velocity = acceleration = yaw_rate = true;
+  }
 };
 struct FrenetPoint
 {
@@ -168,7 +172,6 @@ struct Trajectory : Path
   std::vector<double> lateral_velocities{};
   std::vector<double> lateral_accelerations{};
   std::vector<double> times{};
-  double duration = 0.0;
 
   Trajectory() = default;
   ~Trajectory() override = default;
@@ -182,7 +185,6 @@ struct Trajectory : Path
     lateral_velocities.clear();
     lateral_accelerations.clear();
     times.clear();
-    duration = 0.0;
   }
 
   void reserve(const size_t size) override
@@ -227,7 +229,6 @@ struct Trajectory : Path
     const auto last_base_time = times.empty() ? 0.0 : times.back() + time_offset;
     for (size_t i = offset; i < traj.times.size(); ++i)
       extended_traj.times.push_back(last_base_time + traj.times[i]);
-    if (!extended_traj.times.empty()) extended_traj.duration = extended_traj.times.back();
     return extended_traj;
   }
 
@@ -277,7 +278,6 @@ struct Trajectory : Path
     t.longitudinal_accelerations = interpolation::lerp(times, longitudinal_accelerations, t.times);
     t.lateral_velocities = interpolation::lerp(times, lateral_velocities, t.times);
     t.lateral_accelerations = interpolation::lerp(times, lateral_accelerations, t.times);
-    t.duration = duration;
     t.constraint_results = constraint_results;
     t.cost = cost;
     return t;
@@ -314,7 +314,6 @@ struct Trajectory : Path
     t.longitudinal_accelerations = interpolation::lerp(times, longitudinal_accelerations, t.times);
     t.lateral_velocities = interpolation::lerp(times, lateral_velocities, t.times);
     t.lateral_accelerations = interpolation::lerp(times, lateral_accelerations, t.times);
-    t.duration = duration;
     t.constraint_results = constraint_results;
     t.cost = cost;
     return t;
@@ -338,6 +337,7 @@ struct Constraints
     double velocity_weight;
     double jerk_weight;
     double curvature_weight;
+    double yaw_rate_weight;
   } soft{};
   struct
   {
@@ -352,6 +352,7 @@ struct Constraints
     double min_curvature;
     double max_curvature;
     double collision_distance_buffer;
+    double max_yaw_rate;
   } hard{};
   struct
   {

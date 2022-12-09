@@ -4,20 +4,22 @@
     preprocessing:
       force_zero_initial_deviation: False # if true, initial planning starts from the reference path
       force_zero_initial_heading: False # if true, initial planning starts with a heading aligned with the reference path
+      reuse_times: [1.0, 2.0, 3.0]  # [s] times from which
+      reuse_max_deviation: 1.5  # [m] maximum distance from the current ego pose for a trajectory to be reused
+      desired_traj_behind_length: 5.0 # [m] desired trajectory length behind the current ego position
       smooth_reference_trajectory:
         enable: False # if true, the reference trajectory is smoothed before being used for planning
         control_points_ratio: 0.3
         smoothing_weight: 0.001
-    postprocessing:
-      desired_traj_behind_length: 0.0 # [m] desired trajectory length behind the current ego position
     constraints:
       hard:
         max_curvature: 0.2  # [1/m]
         min_curvature: -0.2  # [1/m]
         max_acceleration: 2.0  # [m/s²]
         min_acceleration: -2.0  # [m/s²]
-        max_velocity: 3.0  # [m/s]
+        max_velocity: 10.0  # [m/s]
         min_velocity: -0.5  # [m/s]
+        max_yaw_rate: 0.5 # rad/s
         collision_distance_buffer: 1.0 # [m]
       soft:
         lateral_deviation_weight: 0.1
@@ -26,14 +28,11 @@
         length_weight: 1.0
         curvature_weight: 1.0
         velocity_weight: -1.0
+        yaw_rate_weight: 1.0
     sampling:
       enable_frenet: True
       enable_bezier: True
       resolution: 0.2
-      minimum_committed_length: 5.0
-      reuse_max_length_max: 25.0
-      reuse_samples: 2
-      reuse_max_deviation: 1.5
       target_lengths: [20.0, 40.0, 60.0]
       frenet:
         manual:  # use combinations of the values defined below as target states to generate candidate trajectories

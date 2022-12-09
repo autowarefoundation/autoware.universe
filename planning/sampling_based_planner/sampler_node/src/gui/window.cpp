@@ -121,24 +121,17 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow(parent), ui_(new Ui::Main
     new QCPBars(ui_->pruning_tab_plot->xAxis, ui_->pruning_tab_plot->yAxis);
   pruning_nb_violations_bars_->setName("Hard constraints violations");
   // prepare x axis with country labels:
-  QVector<QString> labels;
-  labels << "Invalid"
-         << "Collision"
-         << "Drivable Area"
-         << "Velocity"
-         << "Acceleration"
-         << "Curvature";
+  const QVector<QString> labels(
+    {"Invalid", "Collision", "Drivable Area", "Velocity", "Acceleration", "Curvature", "Yaw Rate"});
   QVector<double> ticks;
-  for (double i = 0.0; i < labels.size(); ++i) {
-    ticks << i;
-  }
+  for (double i = 0.0; i < labels.size(); ++i) ticks << i;
   QSharedPointer<QCPAxisTickerText> ticker(new QCPAxisTickerText);
   ticker->addTicks(ticks, labels);
   ui_->pruning_tab_plot->xAxis->setTicker(ticker);
   ui_->pruning_tab_plot->xAxis->setTickLabelRotation(60);
   ui_->pruning_tab_plot->xAxis->setSubTicks(false);
   ui_->pruning_tab_plot->xAxis->grid()->setVisible(false);
-  ui_->pruning_tab_plot->xAxis->setRange(-1.0, 6.0);
+  ui_->pruning_tab_plot->xAxis->setRange(-1.0, static_cast<double>(labels.size()));
   ui_->pruning_tab_plot->yAxis->setLabel("Number of violations");
   pruning_nb_violations_max_line_ = new QCPItemStraightLine(ui_->pruning_tab_plot);
 }
@@ -300,8 +293,8 @@ void MainWindow::fillCandidatesTable(const std::vector<sampler_common::Trajector
 void MainWindow::plotNbViolatedConstraints(
   const std::vector<sampler_common::Trajectory> & candidates)
 {
-  QVector<double> nb_violations;
-  nb_violations << 0.0 << 0.0 << 0.0 << 0.0 << 0.0 << 0.0;
+  const QVector<double> indexes({0, 1, 2, 3, 4, 5, 6});
+  QVector<double> nb_violations(indexes.size(), 0.0);
   for (const auto & traj : candidates) {
     if (!traj.constraint_results.isValid()) ++nb_violations[0];
     if (!traj.constraint_results.collision) ++nb_violations[1];
@@ -309,8 +302,9 @@ void MainWindow::plotNbViolatedConstraints(
     if (!traj.constraint_results.velocity) ++nb_violations[3];
     if (!traj.constraint_results.acceleration) ++nb_violations[4];
     if (!traj.constraint_results.curvature) ++nb_violations[5];
+    if (!traj.constraint_results.yaw_rate) ++nb_violations[6];
   }
-  pruning_nb_violations_bars_->setData({0, 1, 2, 3, 4, 5}, nb_violations);
+  pruning_nb_violations_bars_->setData(indexes, nb_violations);
   pruning_nb_violations_max_line_->point1->setCoords(0, candidates.size());
   pruning_nb_violations_max_line_->point2->setCoords(nb_violations.size(), candidates.size());
   ui_->pruning_tab_plot->yAxis->setRange(0.0, candidates.size() + candidates.size() * 0.05);

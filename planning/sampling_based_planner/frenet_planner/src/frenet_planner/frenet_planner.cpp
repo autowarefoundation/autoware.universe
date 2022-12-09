@@ -16,6 +16,7 @@
 
 #include "frenet_planner/frenet_planner.hpp"
 
+#include <frenet_planner/conversions.hpp>
 #include <frenet_planner/polynomials.hpp>
 #include <frenet_planner/structures.hpp>
 #include <helper_functions/angle_utils.hpp>
@@ -80,7 +81,6 @@ Trajectory generateCandidate(
   const double time_resolution)
 {
   Trajectory trajectory;
-  trajectory.duration = duration;
   trajectory.longitudinal_polynomial = Polynomial(
     initial_state.position.s, initial_state.longitudinal_velocity,
     initial_state.longitudinal_acceleration, target_state.position.s,
@@ -102,7 +102,6 @@ Trajectory generateLowVelocityCandidate(
   const double time_resolution)
 {
   Trajectory trajectory;
-  trajectory.duration = duration;
   trajectory.longitudinal_polynomial = Polynomial(
     initial_state.position.s, initial_state.longitudinal_velocity,
     initial_state.longitudinal_acceleration, target_state.position.s,
@@ -174,34 +173,25 @@ void calculateCartesian(
 {
   if (!trajectory.frenet_points.empty()) {
     trajectory.points.reserve(trajectory.frenet_points.size());
-    trajectory.yaws.reserve(trajectory.frenet_points.size());
-    trajectory.lengths.reserve(trajectory.frenet_points.size());
-    trajectory.curvatures.reserve(trajectory.frenet_points.size());
     // Calculate cartesian positions
-    for (const auto & fp : trajectory.frenet_points) {
+    for (const auto & fp : trajectory.frenet_points)
       trajectory.points.push_back(reference.cartesian(fp));
-    }
-    // TODO(Maxime CLEMENT): more precise calculations are proposed in Appendix I of the paper:
-    // Optimal trajectory Generation for Dynamic Street Scenarios in a Frenet Frame (Werling2010)
-    // Calculate cartesian yaw and interval values
-    trajectory.lengths.push_back(0.0);
-    for (auto it = trajectory.points.begin(); it != std::prev(trajectory.points.end()); ++it) {
-      const auto dx = std::next(it)->x() - it->x();
-      const auto dy = std::next(it)->y() - it->y();
-      trajectory.lengths.push_back(trajectory.lengths.back() + std::hypot(dx, dy));
-      trajectory.yaws.push_back(std::atan2(dy, dx));
-    }
-    trajectory.yaws.push_back(trajectory.yaws.back());
-    std::vector<double> dyaws(trajectory.points.size(), 0.0);
-    for (size_t i = 1; i < dyaws.size(); ++i)
-      dyaws[i] =
-        autoware::common::helper_functions::wrap_angle(trajectory.yaws[i] - trajectory.yaws[i - 1]);
+    calculateLengthsAndYaws(trajectory);
+    std::vector<double> dyaws;
+    dyaws.reserve(trajectory.yaws.size());
+    for (size_t i = 0; i + 1 < trajectory.yaws.size(); ++i)
+      dyaws.push_back(autoware::common::helper_functions::wrap_angle(
+        trajectory.yaws[i + 1] - trajectory.yaws[i]));
+    dyaws.push_back(0.0);
     // Calculate curvatures
-    trajectory.curvatures.push_back(0.0);
     for (size_t i = 1; i < trajectory.yaws.size(); ++i) {
-      const auto curvature = dyaws[i] / (trajectory.lengths[i] - trajectory.lengths[i - 1]);
+      const auto curvature = trajectory.lengths[i] == trajectory.lengths[i - 1]
+                               ? 0.0
+                               : dyaws[i] / (trajectory.lengths[i] - trajectory.lengths[i - 1]);
       trajectory.curvatures.push_back(curvature);
     }
+    const auto last_curvature = trajectory.curvatures.empty() ? 0.0 : trajectory.curvatures.back();
+    trajectory.curvatures.push_back(last_curvature);
     // Calculate velocities, accelerations, jerk
     for (size_t i = 0; i < trajectory.times.size(); ++i) {
       const auto time = trajectory.times[i];
@@ -218,10 +208,7 @@ void calculateCartesian(
       trajectory.longitudinal_velocities.push_back(
         std::sqrt(curvd * curvd * s_vel * s_vel + d_vel * d_vel));
       trajectory.lateral_velocities.push_back(curvd * std::tan(dyaws[i]));
-      if (i == 0) {
-        trajectory.longitudinal_accelerations.push_back(0.0);
-        trajectory.lateral_accelerations.push_back(0.0);
-      } else {
+      if (i > 0lu) {
         const auto ds = s - trajectory.frenet_points[i - 1].s;
         const auto ddyaw = (dyaws[i] - dyaws[i - 1]) / ds;
         const auto dcurv =
@@ -238,6 +225,13 @@ void calculateCartesian(
       }
       trajectory.jerks.push_back(
         trajectory.longitudinal_polynomial->jerk(time) + trajectory.lateral_polynomial->jerk(time));
+    }
+    if (trajectory.longitudinal_accelerations.empty()) {
+      trajectory.longitudinal_accelerations.push_back(0.0);
+      trajectory.lateral_accelerations.push_back(0.0);
+    } else {
+      trajectory.longitudinal_accelerations.push_back(trajectory.longitudinal_accelerations.back());
+      trajectory.lateral_accelerations.push_back(trajectory.lateral_accelerations.back());
     }
   }
 }

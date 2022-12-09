@@ -30,21 +30,6 @@ struct ReusableTrajectory
   Configuration planning_configuration;  // planning configuration at the end of the trajectory
 };
 
-inline void updateTrajectoryTime(
-  Trajectory & trajectory, const Configuration & current_configuration)
-{
-  const auto closest_iter = std::min_element(
-    trajectory.points.begin(), trajectory.points.end(), [&](const auto & p1, const auto & p2) {
-      return boost::geometry::distance(p1, current_configuration.pose) <=
-             boost::geometry::distance(p2, current_configuration.pose);
-    });
-  if (closest_iter != trajectory.points.end()) {
-    const auto zero_idx = std::distance(trajectory.points.begin(), closest_iter);
-    const auto time_offset = trajectory.times[zero_idx];
-    for (auto & t : trajectory.times) t -= time_offset;
-  }
-}
-
 inline std::vector<ReusableTrajectory> calculateReusableTrajectories(
   const Trajectory & trajectory, const std::vector<double> & target_times)
 {
@@ -55,6 +40,7 @@ inline std::vector<ReusableTrajectory> calculateReusableTrajectories(
   for (const auto t : target_times) {
     auto to_idx = 0lu;
     while (to_idx + 1 < trajectory.times.size() && trajectory.times[to_idx] < t) ++to_idx;
+    if (to_idx == 0) continue;
 
     reusable.trajectory = *trajectory.subset(0, to_idx);
     reusable.planning_configuration.pose = reusable.trajectory.points.back();

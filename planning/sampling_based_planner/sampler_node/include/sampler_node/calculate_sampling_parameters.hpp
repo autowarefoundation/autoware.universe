@@ -159,7 +159,7 @@ inline void calculateTargets(
     const auto max_vel = std::min(velocity_extremum.max, params.constraints.hard.max_velocity);
     const auto samples = params.sampling.frenet.calc.target_longitudinal_velocity_samples;
     for (auto i = 0; i < samples; ++i) {
-      const auto ratio = static_cast<double>(i) / (samples - 1.0);
+      const auto ratio = samples == 1 ? 1.0 : static_cast<double>(i) / (samples - 1.0);
       const auto target_vel = interpolation::lerp(min_vel, max_vel, ratio);
       const auto distance =
         interpolation::lerp(velocity_extremum.min_s, velocity_extremum.max_s, ratio);
