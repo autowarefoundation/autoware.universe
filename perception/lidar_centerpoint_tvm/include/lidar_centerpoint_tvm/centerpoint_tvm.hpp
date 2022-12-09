@@ -147,7 +147,6 @@ protected:
     const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg, const tf2_ros::Buffer & tf_buffer);
 
   using VE_PrePT = VoxelEncoderPreProcessor;
-  using IE = tvm_utility::pipeline::InferenceEngine;
   using IET = tvm_utility::pipeline::InferenceEngineTVM;
   using BNH_PostPT = BackboneNeckHeadPostProcessor;
   using TSE = TVMScatterIE;
