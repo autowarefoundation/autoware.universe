@@ -34,7 +34,11 @@
 #include <string>
 #include <vector>
 
-#define toMbit(X) (static_cast<float>(X) / 1000000 * 8)
+template <typename T>
+constexpr auto to_mbit(T value)
+{
+  return (static_cast<double>(value) / 1000000 * 8);
+}
 
 /**
  * @brief Bytes information
@@ -57,9 +61,29 @@ public:
   explicit NetMonitor(const rclcpp::NodeOptions & options);
 
   /**
-   * @brief destructor
+   * @brief Destructor
    */
   ~NetMonitor() override;
+
+  /**
+   * @brief Copy constructor
+   */
+  NetMonitor(const NetMonitor &) = delete;
+
+  /**
+   * @brief Copy assignment operator
+   */
+  NetMonitor & operator=(const NetMonitor &) = delete;
+
+  /**
+   * @brief Move constructor
+   */
+  NetMonitor(const NetMonitor &&) = delete;
+
+  /**
+   * @brief Move assignment operator
+   */
+  NetMonitor & operator=(const NetMonitor &&) = delete;
 
   /**
    * @brief Shutdown nl80211 object
@@ -184,12 +208,12 @@ protected:
     int ethtool_errno{0};          //!< @brief errno set by ioctl() with SIOCETHTOOL
     bool is_running{false};        //!< @brief resource allocated flag
     std::string interface_name{};  //!< @brief interface name
-    float speed{0.0};              //!< @brief network capacity
+    double speed{0.0};             //!< @brief network capacity
     int mtu{0};                    //!< @brief MTU
-    float rx_traffic{0.0};         //!< @brief traffic received
-    float tx_traffic{0.0};         //!< @brief traffic transmitted
-    float rx_usage{0.0};           //!< @brief network capacity usage rate received
-    float tx_usage{0.0};           //!< @brief network capacity usage rate transmitted
+    double rx_traffic{0.0};        //!< @brief traffic received
+    double tx_traffic{0.0};        //!< @brief traffic transmitted
+    double rx_usage{0.0};          //!< @brief network capacity usage rate received
+    double tx_usage{0.0};          //!< @brief network capacity usage rate transmitted
     unsigned int rx_bytes{0};      //!< @brief total bytes received
     unsigned int rx_errors{0};     //!< @brief bad packets received
     unsigned int tx_bytes{0};      //!< @brief total bytes transmitted

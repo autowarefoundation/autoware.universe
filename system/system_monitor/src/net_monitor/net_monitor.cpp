@@ -164,7 +164,7 @@ void NetMonitor::update_network_info_list()
     // Get network capacity
     // NOLINTNEXTLINE [cppcoreguidelines-pro-type-union-access]
     strncpy(ifrc.ifr_name, ifa->ifa_name, IFNAMSIZ - 1);
-    ifrc.ifr_data = (caddr_t)&edata;
+    ifrc.ifr_data = (caddr_t)&edata;  // NOLINT [cppcoreguidelines-pro-type-cstyle-cast]
 
     edata.cmd = ETHTOOL_GSET;
     if (ioctl(fd, SIOCETHTOOL, &ifrc) < 0) {
@@ -184,9 +184,9 @@ void NetMonitor::update_network_info_list()
     auto * stats = static_cast<struct rtnl_link_stats *>(ifa->ifa_data);
     if (bytes_.find(net_info.interface_name) != bytes_.end()) {
       net_info.rx_traffic =
-        toMbit(stats->rx_bytes - bytes_[net_info.interface_name].rx_bytes) / duration.seconds();
+        to_mbit(stats->rx_bytes - bytes_[net_info.interface_name].rx_bytes) / duration.seconds();
       net_info.tx_traffic =
-        toMbit(stats->tx_bytes - bytes_[net_info.interface_name].tx_bytes) / duration.seconds();
+        to_mbit(stats->tx_bytes - bytes_[net_info.interface_name].tx_bytes) / duration.seconds();
       net_info.rx_usage = net_info.rx_traffic / net_info.speed;
       net_info.tx_usage = net_info.tx_traffic / net_info.speed;
     }
