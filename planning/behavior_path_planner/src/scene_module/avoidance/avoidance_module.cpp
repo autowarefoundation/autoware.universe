@@ -2007,14 +2007,16 @@ void AvoidanceModule::generateExtendedDrivableArea(ShiftedPath * shifted_path) c
     drivable_lanes.push_back(current_drivable_lanes);
   }
 
-  drivable_lanes = util::expandLanelets(
-    drivable_lanes, parameters_->drivable_area_left_bound_offset,
+  const auto shorten_lanes = util::cutOverlappedLanes(shifted_path->path, drivable_lanes);
+
+  const auto extended_lanes = util::expandLanelets(
+    shorten_lanes, parameters_->drivable_area_left_bound_offset,
     parameters_->drivable_area_right_bound_offset, {"road_border"});
 
   {
     const auto & p = planner_data_->parameters;
     shifted_path->path.drivable_area = util::generateDrivableArea(
-      shifted_path->path, drivable_lanes, p.drivable_area_resolution, p.vehicle_length,
+      shifted_path->path, extended_lanes, p.drivable_area_resolution, p.vehicle_length,
       planner_data_);
   }
 }
@@ -2852,8 +2854,10 @@ TurnSignalInfo AvoidanceModule::calcTurnSignalInfo(const ShiftedPath & path) con
     return {};
   }
 
+  bool turn_signal_on_swerving = planner_data_->parameters.turn_signal_on_swerving;
+
   TurnSignalInfo turn_signal_info{};
-  if (parameters_->turn_signal_on_swerving) {
+  if (turn_signal_on_swerving) {
     if (segment_shift_length > 0.0) {
       turn_signal_info.turn_signal.command = TurnIndicatorsCommand::ENABLE_LEFT;
     } else {
