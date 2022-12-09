@@ -29,6 +29,7 @@
 #include <geometry_msgs/msg/polygon.hpp>
 #include <geometry_msgs/msg/vector3.hpp>
 
+#include <algorithm>
 #include <cmath>
 #include <tuple>
 #include <vector>
@@ -285,6 +286,59 @@ inline void calcAnchorPointOffset(
   const Eigen::Vector2d rotated_offset = R * tracking_offset;
   offset_object.kinematics.pose_with_covariance.pose.position.x += rotated_offset.x();
   offset_object.kinematics.pose_with_covariance.pose.position.y += rotated_offset.y();
+}
+
+/**
+ * @brief convert convex hull shape object to bounding box object
+ * @param input_object: input convex hull objects
+ * @param output_object: output bounding box objects
+ */
+inline void convertConvexHullToBoundingBox(
+  const autoware_auto_perception_msgs::msg::DetectedObject & input_object,
+  autoware_auto_perception_msgs::msg::DetectedObject & output_object)
+{
+  const Eigen::Vector2d center{
+    input_object.kinematics.pose_with_covariance.pose.position.x,
+    input_object.kinematics.pose_with_covariance.pose.position.y};
+  const auto yaw = tf2::getYaw(input_object.kinematics.pose_with_covariance.pose.orientation);
+  const Eigen::Matrix2d Rinv = Eigen::Rotation2Dd(-yaw).toRotationMatrix();
+
+  double max_x = 0;
+  double max_y = 0;
+  double min_x = 0;
+  double min_y = 0;
+  double max_z = 0;
+
+  // look for bounding box boundary
+  for (size_t i = 0; i < input_object.shape.footprint.points.size(); ++i) {
+    Eigen::Vector2d vertex{
+      input_object.shape.footprint.points.at(i).x, input_object.shape.footprint.points.at(i).y};
+
+    const Eigen::Vector2d local_vertex = Rinv * (vertex - center);
+    max_x = std::max(max_x, local_vertex.x());
+    max_y = std::max(max_y, local_vertex.y());
+    min_x = std::min(min_x, local_vertex.x());
+    min_y = std::min(min_y, local_vertex.y());
+
+    max_z = std::max(max_z, static_cast<double>(input_object.shape.footprint.points.at(i).z));
+  }
+
+  // calc bounding box state
+  const double length = max_x - min_x;
+  const double width = max_y - min_y;
+  const double height = max_z;
+  const Eigen::Vector2d new_local_center{(max_x + min_x) / 2.0, (max_y + min_y) / 2.0};
+  const Eigen::Vector2d new_center = center + Rinv.transpose() * new_local_center;
+
+  // set output paramters
+  output_object = input_object;
+  output_object.kinematics.pose_with_covariance.pose.position.x = new_center.x();
+  output_object.kinematics.pose_with_covariance.pose.position.y = new_center.y();
+
+  output_object.shape.type = autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX;
+  output_object.shape.dimensions.x = length;
+  output_object.shape.dimensions.y = width;
+  output_object.shape.dimensions.z = height;
 }
 
 }  // namespace utils
