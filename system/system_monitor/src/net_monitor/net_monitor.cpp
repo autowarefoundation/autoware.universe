@@ -675,24 +675,17 @@ bool NetMonitor::send_data_with_parameters(
 
 void NetMonitor::receive_data(traffic_reader_service::Result & result)
 {
-  char buffer[10240]{};
   uint8_t request_id = traffic_reader_service::Request::NONE;
 
-  size_t length = 0;
-  while (1) {
-    // Read data from socket
-    boost::system::error_code error_code;
-    length +=
-      socket_->read_some(boost::asio::buffer(buffer + length, sizeof(buffer) - length), error_code);
+  // Read data from socket
+  char buffer[10240]{};
+  boost::system::error_code error_code;
+  socket_->read_some(boost::asio::buffer(buffer, sizeof(buffer)), error_code);
 
-    if (error_code) {
-      RCLCPP_ERROR(
-        get_logger(), "Failed to read data from socket. %s\n", error_code.message().c_str());
-      return;
-    }
-    if (buffer[length] == '\0') {
-      break;
-    }
+  if (error_code) {
+    RCLCPP_ERROR(
+      get_logger(), "Failed to read data from socket. %s\n", error_code.message().c_str());
+    return;
   }
 
   // Restore device status list

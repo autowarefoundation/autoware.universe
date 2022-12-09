@@ -78,25 +78,14 @@ void TrafficReaderService::run()
       continue;
     }
 
-    // Receive messages from a socket
+    // Read data from socket
     char buffer[1024]{};
-    boost::system::error_code error;
+    socket_->read_some(boost::asio::buffer(buffer, sizeof(buffer)), error_code);
 
-    size_t length = 0;
-    while (1) {
-      // Read data from socket
-      boost::system::error_code error_code;
-      length += socket_->read_some(
-        boost::asio::buffer(buffer + length, sizeof(buffer) - length), error_code);
-
-      if (error_code) {
-        syslog(LOG_ERR, "Failed to read data from socket. %s\n", error_code.message().c_str());
-        socket_->close();
-        continue;
-      }
-      if (buffer[length] == '\0') {
-        break;
-      }
+    if (error_code) {
+      syslog(LOG_ERR, "Failed to read data from socket. %s\n", error_code.message().c_str());
+      socket_->close();
+      continue;
     }
 
     // Handle message
