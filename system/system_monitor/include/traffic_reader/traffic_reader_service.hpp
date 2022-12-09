@@ -18,7 +18,9 @@
 #include "traffic_reader/traffic_reader_common.hpp"
 
 #include <boost/archive/text_iarchive.hpp>
+#include <boost/asio.hpp>
 
+#include <memory>
 #include <mutex>
 #include <string>
 #include <thread>
@@ -26,6 +28,8 @@
 
 namespace traffic_reader_service
 {
+
+namespace local = boost::asio::local;
 
 class TrafficReaderService
 {
@@ -89,15 +93,16 @@ protected:
    */
   void execute_nethogs();
 
-  std::string socket_path_;                //!< @brief Path of UNIX domain socket
-  int socket_;                             //!< @brief Socket to communicate with ros node
-  int connection_;                         //!< @brief Accepted socket for the incoming connection
-  std::thread thread_;                     //!< @brief Thread to run nethogs
-  std::mutex mutex_;                       //!< @brief Mutex guard for the flag
-  bool stop_;                              //!< @brief Flag to stop thread
-  std::vector<std::string> devices_;       //!< @brief List of devices
-  std::string program_name_;               //!< @brief Filter by program name
-  traffic_reader_service::Result result_;  //!< @brief Result of nethogs
+  std::string socket_path_;             //!< @brief Path of UNIX domain socket
+  boost::asio::io_service io_service_;  //!< @brief Core I/O functionality
+  std::unique_ptr<local::stream_protocol::acceptor> acceptor_;  //!< @brief UNIX domain acceptor
+  std::unique_ptr<local::stream_protocol::socket> socket_;      //!< @brief UNIX domain socket
+  std::thread thread_;                                          //!< @brief Thread to run nethogs
+  std::mutex mutex_;                                            //!< @brief Mutex guard for the flag
+  bool stop_;                                                   //!< @brief Flag to stop thread
+  std::vector<std::string> devices_;                            //!< @brief List of devices
+  std::string program_name_;                                    //!< @brief Filter by program name
+  traffic_reader_service::Result result_;                       //!< @brief Result of nethogs
 };
 
 }  // namespace traffic_reader_service

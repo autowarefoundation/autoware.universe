@@ -25,9 +25,12 @@
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
 
+#include <boost/asio.hpp>
+
 #include <climits>
 #include <deque>
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -41,6 +44,8 @@ struct Bytes
   unsigned int rx_bytes{0};  //!< @brief total bytes received
   unsigned int tx_bytes{0};  //!< @brief total bytes transmitted
 };
+
+namespace local = boost::asio::local;
 
 class NetMonitor : public rclcpp::Node
 {
@@ -252,8 +257,10 @@ protected:
   unsigned int reassembles_failed_column_index_;  //!< @brief column index of IP Reassembles failed
                                                   //!< in /proc/net/snmp
 
-  std::string socket_path_;  //!< @brief Path of UNIX domain socket
-  int socket_;               //!< @brief Socket to communicate with traffic-reader service
+  std::string socket_path_;             //!< @brief Path of UNIX domain socket
+  boost::asio::io_service io_service_;  //!< @brief Core I/O functionality
+  std::unique_ptr<local::stream_protocol::acceptor> acceptor_;  //!< @brief UNIX domain acceptor
+  std::unique_ptr<local::stream_protocol::socket> socket_;      //!< @brief UNIX domain socket
 
   /**
    * @brief Network usage status messages

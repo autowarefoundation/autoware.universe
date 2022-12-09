@@ -19,22 +19,19 @@
 
 #include <traffic_reader/traffic_reader_service.hpp>
 
-#include <boost/algorithm/string.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/process.hpp>
 
 #include <fmt/format.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
 #include <syslog.h>
 
-namespace bp = boost::process;
+namespace process = boost::process;
 
 namespace traffic_reader_service
 {
 
 TrafficReaderService::TrafficReaderService(std::string socket_path)
-: socket_path_(std::move(socket_path)), socket_(-1), connection_(-1), stop_(false)
+: socket_path_(std::move(socket_path)), stop_(false)
 {
 }
 
@@ -43,22 +40,14 @@ bool TrafficReaderService::initialize()
   // Remove previous binding
   remove(socket_path_.c_str());
 
-  // Create a new socket
-  socket_ = socket(AF_UNIX, SOCK_STREAM, 0);
-  if (socket_ < 0) {
-    syslog(LOG_ERR, "Failed to create a new socket. %s\n", strerror(errno));
-    return false;
-  }
+  local::stream_protocol::endpoint endpoint(socket_path_);
+  acceptor_ = std::make_unique<local::stream_protocol::acceptor>(io_service_, endpoint);
 
-  sockaddr_un addr = {};
-  addr.sun_family = AF_UNIX;
-  strncpy(addr.sun_path, socket_path_.c_str(), sizeof(addr.sun_path) - 1);
-
-  // Give the socket FD the unix domain socket
-  int ret = bind(socket_, (struct sockaddr *)&addr, sizeof(addr));
-  if (ret < 0) {
-    syslog(LOG_ERR, "Failed to give the socket FD the unix domain socket. %s\n", strerror(errno));
-    shutdown();
+  // Run I/O service processing loop
+  boost::system::error_code error_code;
+  io_service_.run(error_code);
+  if (error_code) {
+    syslog(LOG_ERR, "Failed to run I/O service. %s\n", error_code.message().c_str());
     return false;
   }
 
@@ -69,57 +58,51 @@ bool TrafficReaderService::initialize()
     return false;
   }
 
-  // Prepare to accept connections on socket FD
-  ret = listen(socket_, 5);
-  if (ret < 0) {
-    syslog(LOG_ERR, "Failed to prepare to accept connections on socket FD. %s\n", strerror(errno));
-    shutdown();
-    return false;
-  }
-
   return true;
 }
 
-void TrafficReaderService::shutdown()
-{
-  close(socket_);
-  socket_ = -1;
-}
+void TrafficReaderService::shutdown() { io_service_.stop(); }
 
 void TrafficReaderService::run()
 {
-  sockaddr_un client = {};
-  socklen_t len = sizeof(client);
-
   while (true) {
-    // Await a connection on socket FD
-    connection_ = accept(socket_, reinterpret_cast<sockaddr *>(&client), &len);
-    if (connection_ < 0) {
-      syslog(
-        LOG_ERR, "Failed to prepare to accept connections on socket FD. %s\n", strerror(errno));
-      close(connection_);
+    socket_ = std::make_unique<local::stream_protocol::socket>(io_service_);
+
+    // Accept a new connection
+    boost::system::error_code error_code;
+    acceptor_->accept(*socket_, error_code);
+
+    if (error_code) {
+      syslog(LOG_ERR, "Failed to accept new connection. %s\n", error_code.message().c_str());
+      socket_->close();
       continue;
     }
 
     // Receive messages from a socket
     char buffer[1024]{};
-    ssize_t ret = recv(connection_, buffer, sizeof(buffer), 0);
-    if (ret < 0) {
-      syslog(LOG_ERR, "Failed to recv. %s\n", strerror(errno));
-      close(connection_);
-      continue;
-    }
-    // No data received
-    if (ret == 0) {
-      syslog(LOG_ERR, "No data received.\n");
-      close(connection_);
-      continue;
+    boost::system::error_code error;
+
+    size_t length = 0;
+    while (1) {
+      // Read data from socket
+      boost::system::error_code error_code;
+      length += socket_->read_some(
+        boost::asio::buffer(buffer + length, sizeof(buffer) - length), error_code);
+
+      if (error_code) {
+        syslog(LOG_ERR, "Failed to read data from socket. %s\n", error_code.message().c_str());
+        socket_->close();
+        continue;
+      }
+      if (buffer[length] == '\0') {
+        break;
+      }
     }
 
     // Handle message
     handle_message(buffer);
 
-    close(connection_);
+    socket_->close();
   }
 }
 
@@ -186,10 +169,13 @@ void TrafficReaderService::get_result()
   archive & Request::GET_RESULT;
   archive & result_;
 
-  //  Write N bytes of BUF to FD
-  ssize_t ret = write(connection_, out_stream.str().c_str(), out_stream.str().length());
-  if (ret < 0) {
-    syslog(LOG_ERR, "Failed to write N bytes of BUF to FD. %s\n", strerror(errno));
+  // Write data to socket
+  boost::system::error_code error_code;
+  socket_->write_some(
+    boost::asio::buffer(out_stream.str().c_str(), out_stream.str().length()), error_code);
+
+  if (error_code) {
+    syslog(LOG_ERR, "Failed to write data to socket. %s\n", error_code.message().c_str());
   }
 }
 
@@ -207,11 +193,11 @@ void TrafficReaderService::execute_nethogs()
 
   syslog(LOG_INFO, "%s\n", command.str().c_str());
 
-  bp::ipstream is_out;
-  bp::ipstream is_err;
+  process::ipstream is_out;
+  process::ipstream is_error;
   std::string line;
 
-  boost::process::child c(command.str(), bp::std_out > is_out, bp::std_err > is_err);
+  boost::process::child c(command.str(), process::std_out > is_out, process::std_err > is_error);
 
   // Output format of `nethogs -t [device(s)]`
   //
@@ -255,11 +241,11 @@ void TrafficReaderService::execute_nethogs()
 
   c.terminate();
 
-  std::ostringstream os;
-  is_err >> os.rdbuf();
+  std::ostringstream out_stream;
+  is_error >> out_stream.rdbuf();
 
   // Remove new line from output
-  std::string message = os.str();
+  std::string message = out_stream.str();
   message.erase(std::remove(message.begin(), message.end(), '\n'), message.cend());
   syslog(LOG_INFO, "%s\n", message.c_str());
 

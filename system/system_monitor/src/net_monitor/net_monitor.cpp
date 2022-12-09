@@ -36,8 +36,6 @@
 #include <net/if.h>
 #include <netinet/in.h>
 #include <sys/ioctl.h>
-#include <sys/socket.h>
-#include <sys/un.h>
 
 #include <algorithm>
 #include <fstream>
@@ -61,8 +59,7 @@ NetMonitor::NetMonitor(const rclcpp::NodeOptions & options)
     declare_parameter<int>("reassembles_failed_check_duration", 1)),
   reassembles_failed_check_count_(declare_parameter<int>("reassembles_failed_check_count", 1)),
   reassembles_failed_column_index_(0),
-  socket_path_(declare_parameter("socket_path", traffic_reader_service::socket_path)),
-  socket_(-1)
+  socket_path_(declare_parameter("socket_path", traffic_reader_service::socket_path))
 {
   using namespace std::literals::chrono_literals;
 
@@ -83,6 +80,13 @@ NetMonitor::NetMonitor(const rclcpp::NodeOptions & options)
 
   // get Network information for the first time
   update_network_info_list();
+
+  // Run I/O service processing loop
+  boost::system::error_code error_code;
+  io_service_.run(error_code);
+  if (error_code) {
+    RCLCPP_WARN(get_logger(), "Failed to run I/O service. %s", error_code.message().c_str());
+  }
 
   // Send request to start nethogs
   send_start_nethogs_request();
@@ -582,11 +586,8 @@ void NetMonitor::send_start_nethogs_request()
   }
 
   // Send data to traffic-reader service
-  if (!send_data_with_parameters(
-        traffic_reader_service::START_NETHOGS, interface_names, monitor_program_)) {
-    close_connection();
-    return;
-  }
+  send_data_with_parameters(
+    traffic_reader_service::START_NETHOGS, interface_names, monitor_program_);
 
   // Close connection with traffic-reader service
   close_connection();
@@ -615,21 +616,15 @@ void NetMonitor::get_nethogs_result(traffic_reader_service::Result & result)
 
 bool NetMonitor::connect_service()
 {
-  // Create a new socket
-  socket_ = socket(AF_UNIX, SOCK_STREAM, 0);
-  if (socket_ < 0) {
-    RCLCPP_ERROR(get_logger(), "Failed to create a new socket. %s", strerror(errno));
-    return false;
-  }
+  local::stream_protocol::endpoint endpoint(socket_path_);
+  socket_ = std::make_unique<local::stream_protocol::socket>(io_service_);
 
-  sockaddr_un addr = {};
-  addr.sun_family = AF_UNIX;
-  strncpy(addr.sun_path, socket_path_.c_str(), sizeof(addr.sun_path) - 1);
+  // Connect socket
+  boost::system::error_code error_code;
+  socket_->connect(endpoint, error_code);
 
-  int ret = connect(socket_, (struct sockaddr *)&addr, sizeof(addr));
-  if (ret < 0) {
-    RCLCPP_ERROR(get_logger(), "Failed to connect. %s", strerror(errno));
-    close(socket_);
+  if (error_code) {
+    RCLCPP_ERROR(get_logger(), "Failed to connect socket. %s", error_code.message().c_str());
     return false;
   }
 
@@ -642,9 +637,13 @@ bool NetMonitor::send_data(traffic_reader_service::Request request)
   boost::archive::text_oarchive archive(out_stream);
   archive & request;
 
-  ssize_t ret = write(socket_, out_stream.str().c_str(), out_stream.str().length());
-  if (ret < 0) {
-    RCLCPP_ERROR(get_logger(), "Failed to write N bytes of BUF to FD. %s", strerror(errno));
+  // Write data to socket
+  boost::system::error_code error_code;
+  socket_->write_some(
+    boost::asio::buffer(out_stream.str().c_str(), out_stream.str().length()), error_code);
+
+  if (error_code) {
+    RCLCPP_ERROR(get_logger(), "Failed to write data to socket. %s", error_code.message().c_str());
     return false;
   }
 
@@ -661,9 +660,13 @@ bool NetMonitor::send_data_with_parameters(
   archive & parameters;
   archive & program_name;
 
-  ssize_t ret = write(socket_, out_stream.str().c_str(), out_stream.str().length());
-  if (ret < 0) {
-    RCLCPP_ERROR(get_logger(), "Failed to write N bytes of BUF to FD. %s", strerror(errno));
+  // Write data to socket
+  boost::system::error_code error_code;
+  socket_->write_some(
+    boost::asio::buffer(out_stream.str().c_str(), out_stream.str().length()), error_code);
+
+  if (error_code) {
+    RCLCPP_ERROR(get_logger(), "Failed to write data to socket. %s", error_code.message().c_str());
     return false;
   }
 
@@ -675,15 +678,21 @@ void NetMonitor::receive_data(traffic_reader_service::Result & result)
   char buffer[10240]{};
   uint8_t request_id = traffic_reader_service::Request::NONE;
 
-  ssize_t ret = recv(socket_, buffer, sizeof(buffer), 0);
-  if (ret < 0) {
-    RCLCPP_ERROR(get_logger(), "Failed to recv. %s", strerror(errno));
-    return;
-  }
-  // No data received
-  if (ret == 0) {
-    RCLCPP_ERROR(get_logger(), "No data received.");
-    return;
+  size_t length = 0;
+  while (1) {
+    // Read data from socket
+    boost::system::error_code error_code;
+    length +=
+      socket_->read_some(boost::asio::buffer(buffer + length, sizeof(buffer) - length), error_code);
+
+    if (error_code) {
+      RCLCPP_ERROR(
+        get_logger(), "Failed to read data from socket. %s\n", error_code.message().c_str());
+      return;
+    }
+    if (buffer[length] == '\0') {
+      break;
+    }
   }
 
   // Restore device status list
@@ -699,9 +708,8 @@ void NetMonitor::receive_data(traffic_reader_service::Result & result)
 
 void NetMonitor::close_connection()
 {
-  // Close the file descriptor FD
-  close(socket_);
-  socket_ = -1;
+  // Close socket
+  socket_->close();
 }
 
 #include <rclcpp_components/register_node_macro.hpp>
