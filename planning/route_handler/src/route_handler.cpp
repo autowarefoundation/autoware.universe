@@ -34,13 +34,13 @@
 
 namespace
 {
-using autoware_auto_mapping_msgs::msg::MapPrimitive;
 using autoware_auto_planning_msgs::msg::Path;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
+using autoware_planning_msgs::msg::LaneletPrimitive;
 using geometry_msgs::msg::Pose;
 using lanelet::utils::to2D;
 
-bool exists(const std::vector<MapPrimitive> & primitives, const int64_t & id)
+bool exists(const std::vector<LaneletPrimitive> & primitives, const int64_t & id)
 {
   for (const auto & p : primitives) {
     if (p.id == id) {
@@ -165,7 +165,7 @@ bool RouteHandler::isRouteLooped(const RouteSections & route_sections)
   return false;
 }
 
-void RouteHandler::setRoute(const HADMapRoute & route_msg)
+void RouteHandler::setRoute(const LaneletRoute & route_msg)
 {
   if (!isRouteLooped(route_msg.segments)) {
     route_msg_ = route_msg;
@@ -304,7 +304,7 @@ void RouteHandler::setLaneletsFromRouteMsg()
       const auto id = primitive.id;
       const auto & llt = lanelet_map_ptr_->laneletLayer.get(id);
       route_lanelets_.push_back(llt);
-      if (id == route_section.preferred_primitive_id) {
+      if (id == route_section.preferred_primitive.id) {
         preferred_lanelets_.push_back(llt);
       }
     }
@@ -381,7 +381,7 @@ lanelet::Id RouteHandler::getGoalLaneId() const
     return lanelet::InvalId;
   }
 
-  return route_msg_.segments.back().preferred_primitive_id;
+  return route_msg_.segments.back().preferred_primitive.id;
 }
 
 bool RouteHandler::getGoalLanelet(lanelet::ConstLanelet * goal_lanelet) const
@@ -892,7 +892,8 @@ lanelet::Lanelets RouteHandler::getRightOppositeLanelets(
 }
 
 lanelet::ConstLanelets RouteHandler::getAllLeftSharedLinestringLanelets(
-  const lanelet::ConstLanelet & lane, const bool & include_opposite) const noexcept
+  const lanelet::ConstLanelet & lane, const bool & include_opposite,
+  const bool & invert_opposite) const noexcept
 {
   lanelet::ConstLanelets linestring_shared;
   auto lanelet_at_left = getLeftLanelet(lane);
@@ -907,10 +908,18 @@ lanelet::ConstLanelets RouteHandler::getAllLeftSharedLinestringLanelets(
   }
 
   if (!lanelet_at_left_opposite.empty() && include_opposite) {
-    linestring_shared.push_back(lanelet_at_left_opposite.front());
+    if (invert_opposite) {
+      linestring_shared.push_back(lanelet_at_left_opposite.front().invert());
+    } else {
+      linestring_shared.push_back(lanelet_at_left_opposite.front());
+    }
     auto lanelet_at_right = getRightLanelet(lanelet_at_left_opposite.front());
     while (lanelet_at_right) {
-      linestring_shared.push_back(lanelet_at_right.get());
+      if (invert_opposite) {
+        linestring_shared.push_back(lanelet_at_right.get().invert());
+      } else {
+        linestring_shared.push_back(lanelet_at_right.get());
+      }
       lanelet_at_right = getRightLanelet(lanelet_at_right.get());
     }
   }
@@ -918,7 +927,8 @@ lanelet::ConstLanelets RouteHandler::getAllLeftSharedLinestringLanelets(
 }
 
 lanelet::ConstLanelets RouteHandler::getAllRightSharedLinestringLanelets(
-  const lanelet::ConstLanelet & lane, const bool & include_opposite) const noexcept
+  const lanelet::ConstLanelet & lane, const bool & include_opposite,
+  const bool & invert_opposite) const noexcept
 {
   lanelet::ConstLanelets linestring_shared;
   auto lanelet_at_right = getRightLanelet(lane);
@@ -933,10 +943,18 @@ lanelet::ConstLanelets RouteHandler::getAllRightSharedLinestringLanelets(
   }
 
   if (!lanelet_at_right_opposite.empty() && include_opposite) {
-    linestring_shared.push_back(lanelet_at_right_opposite.front());
+    if (invert_opposite) {
+      linestring_shared.push_back(lanelet_at_right_opposite.front().invert());
+    } else {
+      linestring_shared.push_back(lanelet_at_right_opposite.front());
+    }
     auto lanelet_at_left = getLeftLanelet(lanelet_at_right_opposite.front());
     while (lanelet_at_left) {
-      linestring_shared.push_back(lanelet_at_left.get());
+      if (invert_opposite) {
+        linestring_shared.push_back(lanelet_at_left.get().invert());
+      } else {
+        linestring_shared.push_back(lanelet_at_left.get());
+      }
       lanelet_at_left = getLeftLanelet(lanelet_at_left.get());
     }
   }
@@ -944,20 +962,20 @@ lanelet::ConstLanelets RouteHandler::getAllRightSharedLinestringLanelets(
 }
 
 lanelet::ConstLanelets RouteHandler::getAllSharedLineStringLanelets(
-  const lanelet::ConstLanelet & current_lane, bool is_right, bool is_left,
-  bool is_opposite) const noexcept
+  const lanelet::ConstLanelet & current_lane, bool is_right, bool is_left, bool is_opposite,
+  const bool & invert_opposite) const noexcept
 {
   lanelet::ConstLanelets shared{current_lane};
 
   if (is_right) {
     const lanelet::ConstLanelets all_right_lanelets =
-      getAllRightSharedLinestringLanelets(current_lane, is_opposite);
+      getAllRightSharedLinestringLanelets(current_lane, is_opposite, invert_opposite);
     shared.insert(shared.end(), all_right_lanelets.begin(), all_right_lanelets.end());
   }
 
   if (is_left) {
     const lanelet::ConstLanelets all_left_lanelets =
-      getAllLeftSharedLinestringLanelets(current_lane, is_opposite);
+      getAllLeftSharedLinestringLanelets(current_lane, is_opposite, invert_opposite);
     shared.insert(shared.end(), all_left_lanelets.begin(), all_left_lanelets.end());
   }
 
@@ -979,6 +997,17 @@ lanelet::Lanelets RouteHandler::getLeftOppositeLanelets(const lanelet::ConstLane
   }
 
   return opposite_lanelets;
+}
+
+lanelet::ConstLanelet RouteHandler::getMostLeftLanelet(const lanelet::ConstLanelet & lanelet) const
+{
+  // recursively compute the width of the lanes
+  const auto & same = getLeftLanelet(lanelet);
+
+  if (same) {
+    return getMostLeftLanelet(same.get());
+  }
+  return lanelet;
 }
 
 lanelet::ConstLineString3d RouteHandler::getRightMostSameDirectionLinestring(
@@ -1650,12 +1679,12 @@ bool RouteHandler::planPathLaneletsBetweenCheckpoints(
   return true;
 }
 
-std::vector<HADMapSegment> RouteHandler::createMapSegments(
+std::vector<LaneletSegment> RouteHandler::createMapSegments(
   const lanelet::ConstLanelets & path_lanelets) const
 {
   const auto main_path = getMainLanelets(path_lanelets);
 
-  std::vector<HADMapSegment> route_sections;
+  std::vector<LaneletSegment> route_sections;
 
   if (main_path.empty()) {
     return route_sections;
@@ -1663,12 +1692,12 @@ std::vector<HADMapSegment> RouteHandler::createMapSegments(
 
   route_sections.reserve(main_path.size());
   for (const auto & main_llt : main_path) {
-    HADMapSegment route_section_msg;
+    LaneletSegment route_section_msg;
     const lanelet::ConstLanelets route_section_lanelets = getNeighborsWithinRoute(main_llt);
-    route_section_msg.preferred_primitive_id = main_llt.id();
+    route_section_msg.preferred_primitive.id = main_llt.id();
     route_section_msg.primitives.reserve(route_section_lanelets.size());
     for (const auto & section_llt : route_section_lanelets) {
-      MapPrimitive p;
+      LaneletPrimitive p;
       p.id = section_llt.id();
       p.primitive_type = "lane";
       route_section_msg.primitives.push_back(p);
