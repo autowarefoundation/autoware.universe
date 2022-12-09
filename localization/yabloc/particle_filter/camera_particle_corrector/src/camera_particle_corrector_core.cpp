@@ -4,6 +4,7 @@
 #include <pcdless_common/color.hpp>
 #include <pcdless_common/pose_conversions.hpp>
 #include <pcdless_common/pub_sub.hpp>
+#include <pcdless_common/transform_linesegments.hpp>
 
 #include <pcl_conversions/pcl_conversions.h>
 
@@ -53,22 +54,6 @@ void CameraParticleCorrector::on_unmapped_area(const PointCloud2 & msg)
   RCLCPP_INFO_STREAM(get_logger(), "Set unmapped-area into Hierarchical cost map");
 }
 
-pcl::PointCloud<pcl::PointNormal> transform_linesegments(
-  const pcl::PointCloud<pcl::PointNormal> & src, const Sophus::SE3f & transform)
-{
-  pcl::PointCloud<pcl::PointNormal> dst;
-  for (const pcl::PointNormal & line : src) {
-    Eigen::Vector3f p1 = line.getVector3fMap();
-    Eigen::Vector3f p2 = line.getNormalVector3fMap();
-
-    pcl::PointNormal transformed;
-    transformed.getVector3fMap() = transform * p1;
-    transformed.getNormalVector3fMap() = transform * p2;
-    dst.push_back(transformed);
-  }
-  return dst;
-}
-
 void CameraParticleCorrector::on_lsd(const PointCloud2 & lsd_msg)
 {
   const rclcpp::Time stamp = lsd_msg.header.stamp;
@@ -90,6 +75,8 @@ void CameraParticleCorrector::on_lsd(const PointCloud2 & lsd_msg)
   };
 
   ParticleArray weighted_particles = opt_array.value();
+
+  using common::transform_linesegments;
 
   for (auto & particle : weighted_particles.particles) {
     Sophus::SE3f transform = common::pose_to_se3(particle.pose);

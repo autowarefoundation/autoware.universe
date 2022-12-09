@@ -5,6 +5,7 @@
 #include <pcdless_common/extract_line_segments.hpp>
 #include <pcdless_common/pose_conversions.hpp>
 #include <pcdless_common/timer.hpp>
+#include <pcdless_common/transform_linesegments.hpp>
 
 #include <pcl_conversions/pcl_conversions.h>
 
@@ -37,22 +38,6 @@ cv::Point2f AntishadowCorrector::cv_pt2(const Eigen::Vector3f & v) const
 void AntishadowCorrector::on_pose_stamped(const PoseStamped & msg)
 {
   latest_pose_ = common::pose_to_se3(msg.pose);
-}
-
-pcl::PointCloud<pcl::PointNormal> transform_linesegments(
-  const pcl::PointCloud<pcl::PointNormal> & src, const Sophus::SE3f & transform)
-{
-  pcl::PointCloud<pcl::PointNormal> dst;
-  for (const pcl::PointNormal & line : src) {
-    Eigen::Vector3f p1 = line.getVector3fMap();
-    Eigen::Vector3f p2 = line.getNormalVector3fMap();
-
-    pcl::PointNormal transformed;
-    transformed.getVector3fMap() = transform * p1;
-    transformed.getNormalVector3fMap() = transform * p2;
-    dst.push_back(transformed);
-  }
-  return dst;
 }
 
 void AntishadowCorrector::on_lsd(const Image & msg)
@@ -90,7 +75,7 @@ void AntishadowCorrector::on_lsd(const Image & msg)
   auto normalize = define_normalize_score();
   for (auto & p : weighted_particles.particles) {
     Sophus::SE3f pose = common::pose_to_se3(p.pose);
-    LineSegments dst_cloud = transform_linesegments(cropped_ll2_cloud, pose.inverse());
+    LineSegments dst_cloud = common::transform_linesegments(cropped_ll2_cloud, pose.inverse());
     float score = compute_score(dst_cloud, lsd_image);
     p.weight = normalize(score);
   }
