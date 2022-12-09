@@ -4,9 +4,12 @@ from autoware_adapi_v1_msgs.msg import SteeringFactor
 from autoware_adapi_v1_msgs.msg import SteeringFactorArray
 from autoware_adapi_v1_msgs.msg import VelocityFactor
 from autoware_adapi_v1_msgs.msg import VelocityFactorArray
+from geometry_msgs.msg import Pose
+import numpy
 import rclpy
 import rclpy.duration
 import rclpy.node
+import tf_transformations
 from visualization_msgs.msg import Marker
 from visualization_msgs.msg import MarkerArray
 
@@ -58,6 +61,7 @@ steering_status_color = {
 class PlanningFactorVisualizer(rclpy.node.Node):
     def __init__(self):
         super().__init__("planning_factor_visualizer")
+        self.front_offset = self.declare_parameter("front_offset", 0.0).value
         self.pub_velocity = self.create_publisher(MarkerArray, "/visualizer/velocity_factors", 1)
         self.pub_steering = self.create_publisher(MarkerArray, "/visualizer/steering_factors", 1)
         self.sub_velocity = self.create_subscription(VelocityFactorArray, "/api/planning/velocity_factors", self.on_velocity_factor, 1)  # fmt: skip
@@ -85,8 +89,21 @@ class PlanningFactorVisualizer(rclpy.node.Node):
             markers.markers.append(self.create_text(index2, msg.header, factor.pose[1], text))
         self.pub_steering.publish(markers)
 
-    @staticmethod
-    def create_wall(index, header, pose, color):
+    def offset_pose(self, pose):
+        q = pose.orientation
+        q = numpy.array([q.x, q.y, q.z, q.w])
+        p = numpy.array([self.front_offset, 0, 0, 1])
+        r = tf_transformations.quaternion_matrix(q)
+        x = numpy.dot(r, p)
+        result = Pose()
+        result.position.x = pose.position.x + x[0]
+        result.position.y = pose.position.y + x[1]
+        result.position.z = pose.position.z + x[2]
+        result.orientation = pose.orientation
+        return result
+
+    def create_wall(self, index, header, pose, color):
+        pose = self.offset_pose(pose)
         marker = Marker()
         marker.ns = "wall"
         marker.id = index
@@ -107,8 +124,8 @@ class PlanningFactorVisualizer(rclpy.node.Node):
         marker.color.b = color[2]
         return marker
 
-    @staticmethod
-    def create_text(index, header, pose, text):
+    def create_text(self, index, header, pose, text):
+        pose = self.offset_pose(pose)
         marker = Marker()
         marker.ns = "type"
         marker.id = index
@@ -130,10 +147,12 @@ class PlanningFactorVisualizer(rclpy.node.Node):
 
 
 def main(args=None):
-    rclpy.init(args=args)
-    node = PlanningFactorVisualizer()
-    rclpy.spin(node)
-    rclpy.shutdown()
+    try:
+        rclpy.init(args=args)
+        rclpy.spin(PlanningFactorVisualizer())
+        rclpy.shutdown()
+    except KeyboardInterrupt:
+        pass
 
 
 if __name__ == "__main__":
