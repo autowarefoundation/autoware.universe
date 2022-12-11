@@ -99,6 +99,7 @@ void PullOutModule::onExit()
 {
   clearWaitingApproval();
   removeRTCStatus();
+  publishPathCandidate();
   steering_factor_interface_ptr_->clearSteeringFactors();
   current_state_ = BT::NodeStatus::SUCCESS;
   RCLCPP_DEBUG(getLogger(), "PULL_OUT onExit");
@@ -295,7 +296,7 @@ BehaviorModuleOutput PullOutModule::planWaitingApproval()
 
   output.path = std::make_shared<PathWithLaneId>(stop_path);
   output.turn_signal_info = calcTurnSignalInfo();
-  output.path_candidate = std::make_shared<PathWithLaneId>(candidate_path);
+  publishPathCandidate(candidate_path);
 
   const uint16_t steering_factor_direction = std::invoke([&output]() {
     if (output.turn_signal_info.turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {

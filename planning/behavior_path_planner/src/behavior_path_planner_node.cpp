@@ -61,7 +61,6 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
 
   // publisher
   path_publisher_ = create_publisher<PathWithLaneId>("~/output/path", 1);
-  path_candidate_publisher_ = create_publisher<Path>("~/output/path_candidate", 1);
   turn_signal_publisher_ =
     create_publisher<TurnIndicatorsCommand>("~/output/turn_indicators_cmd", 1);
   hazard_signal_publisher_ = create_publisher<HazardLightsCommand>("~/output/hazard_lights_cmd", 1);
@@ -648,9 +647,6 @@ void BehaviorPathPlannerNode::run()
       get_logger(), *get_clock(), 5000, "behavior path output is empty! Stop publish.");
   }
 
-  const auto path_candidate = getPathCandidate(output, planner_data);
-  path_candidate_publisher_->publish(util::toPath(*path_candidate));
-
   publishSceneModuleDebugMsg();
 
   if (planner_data->parameters.visualize_drivable_area_for_shared_linestrings_lanelet) {
@@ -785,46 +781,6 @@ PathWithLaneId::SharedPtr BehaviorPathPlannerNode::getPath(
   const auto resampled_path =
     util::resamplePathWithSpline(connected_path, planner_data_->parameters.path_interval);
   return std::make_shared<PathWithLaneId>(resampled_path);
-}
-
-PathWithLaneId::SharedPtr BehaviorPathPlannerNode::getPathCandidate(
-  const BehaviorModuleOutput & bt_output, const std::shared_ptr<PlannerData> planner_data)
-{
-  auto path_candidate =
-    bt_output.path_candidate ? bt_output.path_candidate : std::make_shared<PathWithLaneId>();
-
-  if (isForcedCandidatePath()) {
-    for (auto & path_point : path_candidate->points) {
-      path_point.point.longitudinal_velocity_mps = 0.0;
-    }
-  }
-
-  path_candidate->header = planner_data->route_handler->getRouteHeader();
-  path_candidate->header.stamp = this->now();
-  RCLCPP_DEBUG(
-    get_logger(), "BehaviorTreeManager: path candidate is %s.",
-    bt_output.path_candidate ? "FOUND" : "NOT FOUND");
-  return path_candidate;
-}
-
-bool BehaviorPathPlannerNode::isForcedCandidatePath() const
-{
-  const auto & module_status_ptr_vec = bt_manager_->getModulesStatus();
-  for (const auto & module_status_ptr : module_status_ptr_vec) {
-    if (!module_status_ptr) {
-      continue;
-    }
-    if (module_status_ptr->module_name != "LaneChange") {
-      continue;
-    }
-    const auto & is_waiting_approval = module_status_ptr->is_waiting_approval;
-    const auto & is_execution_ready = module_status_ptr->is_execution_ready;
-    if (is_waiting_approval && !is_execution_ready) {
-      return true;
-    }
-    break;
-  }
-  return false;
 }
 
 bool BehaviorPathPlannerNode::skipSmoothGoalConnection(

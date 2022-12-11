@@ -2366,7 +2366,7 @@ BehaviorModuleOutput AvoidanceModule::planWaitingApproval()
     clearWaitingApproval();
     removeCandidateRTCStatus();
   }
-  out.path_candidate = std::make_shared<PathWithLaneId>(candidate.path_candidate);
+  publishPathCandidate(candidate);
   return out;
 }
 
@@ -2759,6 +2759,7 @@ void AvoidanceModule::onExit()
   current_state_ = BT::NodeStatus::SUCCESS;
   clearWaitingApproval();
   removeRTCStatus();
+  publishPathCandidate();
   steering_factor_interface_ptr_->clearSteeringFactors();
 }
 

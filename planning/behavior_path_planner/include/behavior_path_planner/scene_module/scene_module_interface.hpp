@@ -16,6 +16,7 @@
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SCENE_MODULE_INTERFACE_HPP_
 
 #include "behavior_path_planner/data_manager.hpp"
+#include "behavior_path_planner/path_utilities.hpp"
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
 #include "behavior_path_planner/utilities.hpp"
 
@@ -45,6 +46,7 @@
 namespace behavior_path_planner
 {
 using autoware_adapi_v1_msgs::msg::SteeringFactor;
+using autoware_auto_planning_msgs::msg::Path;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
 using autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand;
@@ -61,9 +63,6 @@ struct BehaviorModuleOutput
 
   // path planed by module
   PlanResult path{};
-
-  // path candidate planed by module
-  PlanResult path_candidate{};
 
   TurnSignalInfo turn_signal_info{};
 };
@@ -95,6 +94,7 @@ public:
 
     const auto ns = std::string("~/debug/") + module_ns;
     pub_debug_marker_ = node.create_publisher<MarkerArray>(ns, 20);
+    pub_path_candidate_ = node.create_publisher<Path>("/planning/path_candidate/" + module_ns, 1);
   }
 
   virtual ~SceneModuleInterface() = default;
@@ -130,7 +130,7 @@ public:
     BehaviorModuleOutput out;
     out.path = util::generateCenterLinePath(planner_data_);
     const auto candidate = planCandidate();
-    out.path_candidate = std::make_shared<PathWithLaneId>(candidate.path_candidate);
+    publishPathCandidate(candidate);
     return out;
   }
 
@@ -252,6 +252,7 @@ private:
 protected:
   rclcpp::Clock::SharedPtr clock_;
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_debug_marker_;
+  rclcpp::Publisher<Path>::SharedPtr pub_path_candidate_;
   mutable MarkerArray debug_marker_;
 
   std::shared_ptr<RTCInterface> rtc_interface_ptr_;
@@ -279,6 +280,40 @@ protected:
   void waitApproval() { is_waiting_approval_ = true; }
 
   void clearWaitingApproval() { is_waiting_approval_ = false; }
+
+  void publishPathCandidate(const CandidateOutput & candidate) const
+  {
+    auto path_candidate = util::toPath(candidate.path_candidate);
+    if (!isExecutionReady()) {
+      for (auto & point : path_candidate.points) {
+        point.longitudinal_velocity_mps = 0.0;
+      }
+    }
+    path_candidate.header = planner_data_->route_handler->getRouteHeader();
+    path_candidate.header.stamp = clock_->now();
+    pub_path_candidate_->publish(path_candidate);
+  }
+
+  void publishPathCandidate(const PathWithLaneId & candidate) const
+  {
+    auto path_candidate = util::toPath(candidate);
+    if (!isExecutionReady()) {
+      for (auto & point : path_candidate.points) {
+        point.longitudinal_velocity_mps = 0.0;
+      }
+    }
+    path_candidate.header = planner_data_->route_handler->getRouteHeader();
+    path_candidate.header.stamp = clock_->now();
+    pub_path_candidate_->publish(path_candidate);
+  }
+
+  void publishPathCandidate() const
+  {
+    Path path_candidate{};
+    path_candidate.header = planner_data_->route_handler->getRouteHeader();
+    path_candidate.header.stamp = clock_->now();
+    pub_path_candidate_->publish(path_candidate);
+  }
 
   static UUID generateUUID()
   {

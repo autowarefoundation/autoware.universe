@@ -98,7 +98,6 @@ private:
   rclcpp::Subscription<PredictedObjects>::SharedPtr perception_subscriber_;
   rclcpp::Subscription<OccupancyGrid>::SharedPtr occupancy_grid_subscriber_;
   rclcpp::Publisher<PathWithLaneId>::SharedPtr path_publisher_;
-  rclcpp::Publisher<Path>::SharedPtr path_candidate_publisher_;
   rclcpp::Publisher<TurnIndicatorsCommand>::SharedPtr turn_signal_publisher_;
   rclcpp::Publisher<HazardLightsCommand>::SharedPtr hazard_signal_publisher_;
   rclcpp::Publisher<MarkerArray>::SharedPtr bound_publisher_;
@@ -161,12 +160,6 @@ private:
     const BehaviorModuleOutput & bt_out, const std::shared_ptr<PlannerData> planner_data);
 
   /**
-   * @brief extract path candidate from behavior tree output
-   */
-  PathWithLaneId::SharedPtr getPathCandidate(
-    const BehaviorModuleOutput & bt_out, const std::shared_ptr<PlannerData> planner_data);
-
-  /**
    * @brief skip smooth goal connection
    */
   bool skipSmoothGoalConnection(
@@ -183,11 +176,6 @@ private:
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_drivable_area_lanelets_publisher_;
   rclcpp::Publisher<AvoidanceDebugMsgArray>::SharedPtr debug_avoidance_msg_array_publisher_;
   rclcpp::Publisher<LaneChangeDebugMsgArray>::SharedPtr debug_lane_change_msg_array_publisher_;
-
-  /**
-   * @brief check path if it is unsafe or forced
-   */
-  bool isForcedCandidatePath() const;
 
   /**
    * @brief publish steering factor from intersection

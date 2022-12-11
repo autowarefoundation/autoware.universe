@@ -181,6 +181,7 @@ void PullOverModule::onExit()
   RCLCPP_DEBUG(getLogger(), "PULL_OVER onExit");
   clearWaitingApproval();
   removeRTCStatus();
+  publishPathCandidate();
   steering_factor_interface_ptr_->clearSteeringFactors();
 
   // A child node must never return IDLE
@@ -449,7 +450,7 @@ BehaviorModuleOutput PullOverModule::plan()
   // safe: use pull over path
   if (status_.is_safe) {
     output.path = std::make_shared<PathWithLaneId>(getCurrentPath());
-    output.path_candidate = std::make_shared<PathWithLaneId>(getFullPath());
+    publishPathCandidate(getFullPath());
   } else {
     RCLCPP_WARN_THROTTLE(
       getLogger(), *clock_, 5000, "Not found safe pull_over path. Stop in road lane.");
@@ -521,7 +522,11 @@ BehaviorModuleOutput PullOverModule::planWaitingApproval()
   BehaviorModuleOutput out;
   plan();  // update status_
   out.path = std::make_shared<PathWithLaneId>(getReferencePath());
-  out.path_candidate = status_.is_safe ? std::make_shared<PathWithLaneId>(getFullPath()) : out.path;
+  if (status_.is_safe) {
+    publishPathCandidate(getFullPath());
+  } else {
+    publishPathCandidate(*(out.path));
+  }
 
   const auto distance_to_path_change = calcDistanceToPathChange();
   updateRTCStatus(distance_to_path_change.first, distance_to_path_change.second);
