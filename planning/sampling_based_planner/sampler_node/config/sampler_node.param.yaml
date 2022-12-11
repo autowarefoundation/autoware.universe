@@ -12,15 +12,16 @@
         control_points_ratio: 0.3
         smoothing_weight: 0.001
     constraints:
+      collision_distance_buffer: 2.0 # [m] extra distance to use for checking collisions with obstacles
+      static_dynamic_obstacle_velocity_threshold: 0.1 # [m/s] minimum velocity for an object to be considered dynamic
       hard:
         max_curvature: 0.2  # [1/m]
         min_curvature: -0.2  # [1/m]
         max_acceleration: 2.0  # [m/s²]
         min_acceleration: -2.0  # [m/s²]
-        max_velocity: 10.0  # [m/s]
+        max_velocity: 5.0  # [m/s]
         min_velocity: -0.5  # [m/s]
         max_yaw_rate: 0.5 # rad/s
-        collision_distance_buffer: 1.0 # [m]
       soft:
         lateral_deviation_weight: 0.1
         longitudinal_deviation_weight: 1.0
@@ -41,7 +42,7 @@
           target_longitudinal_position_offsets: [15.0, 20.0, 25.0, 30.0, 35.0, 40.0]  # added to the current ego position
           target_longitudinal_velocities: [0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0]
           target_longitudinal_accelerations: [0.0]
-          target_lateral_positions: [-2.0, -1.5, -1.0, -0.5, 0.0, 0.5, 1.0, 1.5, 2.0]
+          target_lateral_positions: [-0.5, 0.0, 0.5]
           target_lateral_velocities: [0.0]
           target_lateral_accelerations: [0.0]
         calc:  # automatically calculate target states from the problem inputs

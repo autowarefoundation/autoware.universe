@@ -351,7 +351,6 @@ struct Constraints
     double max_jerk;
     double min_curvature;
     double max_curvature;
-    double collision_distance_buffer;
     double max_yaw_rate;
   } hard{};
   struct
@@ -365,6 +364,9 @@ struct Constraints
   MultiPolygon drivable_polygons;
   MultiPolygon prefered_polygons;
   std::vector<DynamicObstacle> dynamic_obstacles;
+
+  double collision_distance_buffer;
+  double static_dynamic_obstacle_velocity_threshold;
 };
 }  // namespace sampler_common
 

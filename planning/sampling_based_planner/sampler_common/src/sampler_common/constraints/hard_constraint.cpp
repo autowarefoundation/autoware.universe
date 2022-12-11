@@ -108,7 +108,7 @@ void checkHardConstraints(Path & path, const Constraints & constraints)
   const Polygon footprint = buildFootprintPolygon(path, constraints);
   if (!footprint.outer().empty()) {
     if (belowCollisionDistance(
-          footprint, constraints.obstacle_polygons, constraints.hard.collision_distance_buffer)) {
+          footprint, constraints.obstacle_polygons, constraints.collision_distance_buffer)) {
       path.constraint_results.collision = false;
     }
     if (collideWithPolygons(footprint, constraints.drivable_polygons)) {

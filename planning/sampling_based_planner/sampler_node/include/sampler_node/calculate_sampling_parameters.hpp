@@ -189,6 +189,9 @@ inline void calculateTargets(
         sp.target_duration =
           (2 * distance) / (sp.target_state.longitudinal_velocity + initial_configuration.velocity);
       }
+      const auto min_stop_time =
+        std::abs(initial_configuration.velocity / params.constraints.hard.max_acceleration);
+      if (sp.target_duration < min_stop_time) continue;
       // std::cout << sp << std::endl;
       for (const auto d : params.sampling.frenet.manual.target_lateral_positions) {
         sp.target_state.position.d = d;

@@ -136,7 +136,7 @@ private:
     const double max_behind)
   {
     // reset trajectory if velocity is 0.0 // TODO(Maxime): make this optional ?
-    // if(std::abs(current_configuration.velocity) < 0.01) return {};
+    if (std::abs(current_configuration.velocity) < 0.01) return {};
     const auto closest_iter = std::min_element(
       trajectory.points.begin(), trajectory.points.end(), [&](const auto & p1, const auto & p2) {
         return boost::geometry::distance(p1, current_configuration.pose) <=

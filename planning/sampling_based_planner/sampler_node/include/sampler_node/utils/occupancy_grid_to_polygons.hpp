@@ -124,11 +124,13 @@ inline sampler_common::Polygon predictedObjectToPolygon(
 }
 
 inline std::vector<sampler_common::DynamicObstacle> predictedObjectToDynamicObstacles(
-  const autoware_auto_perception_msgs::msg::PredictedObject & object)
+  const autoware_auto_perception_msgs::msg::PredictedObject & object, const double extra_offset)
 {
   std::vector<sampler_common::DynamicObstacle> dynamic_obstacles;
   dynamic_obstacles.reserve(object.kinematics.predicted_paths.size());
-  const auto & dimensions = object.shape.dimensions;
+  auto dimensions = object.shape.dimensions;
+  dimensions.x += extra_offset;
+  dimensions.y += extra_offset;
   // TODO(Maxime): select only the most likely predicted path ?
   for (const auto & predicted_path : object.kinematics.predicted_paths) {
     sampler_common::DynamicObstacle obs;

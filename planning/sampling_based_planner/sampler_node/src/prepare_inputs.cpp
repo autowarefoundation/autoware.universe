@@ -53,8 +53,11 @@ void prepareConstraints(
   constraints.dynamic_obstacles.clear();
   for (const auto & object : predicted_objects.objects) {
     // TODO(Maxime): parameter to differentiate static/dynamic obstacles ?
-    if (object.kinematics.initial_twist_with_covariance.twist.linear.x > 0.1) {
-      for (const auto & dyn_obs : utils::predictedObjectToDynamicObstacles(object))
+    if (
+      object.kinematics.initial_twist_with_covariance.twist.linear.x >
+      constraints.static_dynamic_obstacle_velocity_threshold) {
+      for (const auto & dyn_obs :
+           utils::predictedObjectToDynamicObstacles(object, constraints.collision_distance_buffer))
         constraints.dynamic_obstacles.push_back(dyn_obs);
     } else {
       constraints.obstacle_polygons.push_back(utils::predictedObjectToPolygon(object));
