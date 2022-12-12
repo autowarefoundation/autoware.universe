@@ -44,6 +44,7 @@ private:
 
   Eigen::Vector3f last_mean_position_;
   std::optional<PoseStamped> latest_pose_{std::nullopt};
+  std::function<float(float)> score_converter_;
 
   void on_lsd(const PointCloud2 & msg);
   void on_ll2(const PointCloud2 & msg);
@@ -51,8 +52,12 @@ private:
   void on_pose(const PoseStamped & msg);
   void on_timer();
 
+  std::pair<LineSegments, LineSegments> split_linesegments(const PointCloud2 & msg);
+
   float compute_score(const LineSegments & lsd_cloud, const Eigen::Vector3f & self_position);
   pcl::PointCloud<pcl::PointXYZI> evaluate_cloud(
     const LineSegments & lsd_cloud, const Eigen::Vector3f & self_position);
+
+  LineSegments filt(const LineSegments & lines, const LineSegments & reliable);
 };
 }  // namespace pcdless::modularized_particle_filter

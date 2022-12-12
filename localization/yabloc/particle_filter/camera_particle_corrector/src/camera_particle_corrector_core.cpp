@@ -4,6 +4,7 @@
 #include <pcdless_common/color.hpp>
 #include <pcdless_common/pose_conversions.hpp>
 #include <pcdless_common/pub_sub.hpp>
+#include <pcdless_common/timer.hpp>
 #include <pcdless_common/transform_linesegments.hpp>
 
 #include <pcl_conversions/pcl_conversions.h>
@@ -40,6 +41,11 @@ CameraParticleCorrector::CameraParticleCorrector()
   auto on_timer = std::bind(&CameraParticleCorrector::on_timer, this);
   timer_ =
     rclcpp::create_timer(this, this->get_clock(), rclcpp::Rate(5).period(), std::move(on_timer));
+
+  score_converter_ = [this, k = -std::log(min_prob_) / 2.f](float raw) -> float {
+    raw = std::clamp(raw, -this->max_raw_score_, this->max_raw_score_);
+    return this->min_prob_ * std::exp(k * (raw / this->max_raw_score_ + 1));
+  };
 }
 
 void CameraParticleCorrector::on_pose(const PoseStamped & msg) { latest_pose_ = msg; }
@@ -53,8 +59,29 @@ void CameraParticleCorrector::on_unmapped_area(const PointCloud2 & msg)
   RCLCPP_INFO_STREAM(get_logger(), "Set unmapped-area into Hierarchical cost map");
 }
 
+std::pair<CameraParticleCorrector::LineSegments, CameraParticleCorrector::LineSegments>
+CameraParticleCorrector::split_linesegments(const PointCloud2 & msg)
+{
+  LineSegments all_lsd_cloud;
+  pcl::fromROSMsg(msg, all_lsd_cloud);
+  LineSegments lsd_cloud, iffy_lsd_cloud;
+  {
+    for (const auto & p : all_lsd_cloud) {
+      if (p.label == 0)
+        iffy_lsd_cloud.push_back(p);
+      else
+        lsd_cloud.push_back(p);
+    }
+  }
+
+  filt(iffy_lsd_cloud, lsd_cloud);
+
+  return {lsd_cloud, iffy_lsd_cloud};
+}
+
 void CameraParticleCorrector::on_lsd(const PointCloud2 & lsd_msg)
 {
+  common::Timer timer;
   const rclcpp::Time stamp = lsd_msg.header.stamp;
   std::optional<ParticleArray> opt_array = this->get_synchronized_particle_array(stamp);
   if (!opt_array.has_value()) {
@@ -67,27 +94,19 @@ void CameraParticleCorrector::on_lsd(const PointCloud2 & lsd_msg)
     RCLCPP_WARN_STREAM(get_logger(), text << dt.seconds());
   }
 
-  LineSegments lsd_cloud;
-  pcl::fromROSMsg(lsd_msg, lsd_cloud);
-
-  auto score_convert = [this, k = -std::log(min_prob_) / 2.f](float raw) -> float {
-    raw = std::clamp(raw, -this->max_raw_score_, this->max_raw_score_);
-    return this->min_prob_ * std::exp(k * (raw / this->max_raw_score_ + 1));
-  };
+  auto [lsd_cloud, iffy_lsd_cloud] = split_linesegments(lsd_msg);
 
   ParticleArray weighted_particles = opt_array.value();
-
   for (auto & particle : weighted_particles.particles) {
     Sophus::SE3f transform = common::pose_to_se3(particle.pose);
     LineSegments transformed_lsd = common::transform_linesegments(lsd_cloud, transform);
 
     float raw_score = compute_score(transformed_lsd, transform.translation());
-    particle.weight = score_convert(raw_score);
+    particle.weight = score_converter_(raw_score);
   }
 
-  cost_map_.erase_obsolete();
+  cost_map_.erase_obsolete();  // NOTE:
 
-  // NOTE:
   Pose meaned_pose = mean_pose(weighted_particles);
   Eigen::Vector3f mean_position = common::pose_to_affine(meaned_pose).translation();
   if ((mean_position - last_mean_position_).squaredNorm() > 1) {
@@ -121,6 +140,8 @@ void CameraParticleCorrector::on_lsd(const PointCloud2 & lsd_msg)
     }
     common::publish_cloud(*pub_scored_cloud_, rgb_cloud, lsd_msg.header.stamp);
   }
+
+  RCLCPP_INFO_STREAM(get_logger(), "on_lsd: " << timer);
 }
 
 void CameraParticleCorrector::on_timer()
@@ -150,21 +171,21 @@ float CameraParticleCorrector::compute_score(
   const LineSegments & lsd_cloud, const Eigen::Vector3f & self_position)
 {
   float score = 0;
-  for (const LineSegment & pn1 : lsd_cloud) {
-    if (pn1.label == 0) continue;
+  for (const LineSegment & pn : lsd_cloud) {
+    if (pn.label == 0) continue;
 
-    Eigen::Vector3f t1 = (pn1.getNormalVector3fMap() - pn1.getVector3fMap()).normalized();
-    float l1 = (pn1.getVector3fMap() - pn1.getNormalVector3fMap()).norm();
+    const Eigen::Vector3f tangent = (pn.getNormalVector3fMap() - pn.getVector3fMap()).normalized();
+    const float length = (pn.getVector3fMap() - pn.getNormalVector3fMap()).norm();
 
-    for (float distance = 0; distance < l1; distance += 0.1f) {
-      Eigen::Vector3f p = pn1.getVector3fMap() + t1 * distance;
+    for (float distance = 0; distance < length; distance += 0.1f) {
+      Eigen::Vector3f p = pn.getVector3fMap() + tangent * distance;
 
       // NOTE: Close points are prioritized
       float squared_norm = (p - self_position).topRows(2).squaredNorm();
       float gain = std::exp(-far_weight_gain_ * squared_norm);
 
       cv::Vec2b v2 = cost_map_.at2(p.topRows(2));
-      score += gain * (abs_cos(t1, v2[1]) * v2[0] + score_offset_);
+      score += gain * (abs_cos(tangent, v2[1]) * v2[0] + score_offset_);
     }
   }
   return score;
@@ -174,21 +195,21 @@ pcl::PointCloud<pcl::PointXYZI> CameraParticleCorrector::evaluate_cloud(
   const LineSegments & lsd_cloud, const Eigen::Vector3f & self_position)
 {
   pcl::PointCloud<pcl::PointXYZI> cloud;
-  for (const LineSegment & pn1 : lsd_cloud) {
-    if (pn1.label == 0) continue;
+  for (const LineSegment & pn : lsd_cloud) {
+    if (pn.label == 0) continue;
 
-    Eigen::Vector3f t1 = (pn1.getNormalVector3fMap() - pn1.getVector3fMap()).normalized();
-    float l1 = (pn1.getVector3fMap() - pn1.getNormalVector3fMap()).norm();
+    Eigen::Vector3f tangent = (pn.getNormalVector3fMap() - pn.getVector3fMap()).normalized();
+    float length = (pn.getVector3fMap() - pn.getNormalVector3fMap()).norm();
 
-    for (float distance = 0; distance < l1; distance += 0.1f) {
-      Eigen::Vector3f p = pn1.getVector3fMap() + t1 * distance;
+    for (float distance = 0; distance < length; distance += 0.1f) {
+      Eigen::Vector3f p = pn.getVector3fMap() + tangent * distance;
 
       // NOTE: Close points are prioritized
       float squared_norm = (p - self_position).topRows(2).squaredNorm();
       float gain = std::exp(-far_weight_gain_ * squared_norm);
 
       cv::Vec2b v2 = cost_map_.at2(p.topRows(2));
-      float score = gain * (abs_cos(t1, v2[1]) * v2[0] + score_offset_);
+      float score = gain * (abs_cos(tangent, v2[1]) * v2[0] + score_offset_);
 
       pcl::PointXYZI xyzi(score);
       xyzi.getVector3fMap() = p;
