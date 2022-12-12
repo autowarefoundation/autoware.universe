@@ -1,13 +1,10 @@
 #include "segment_filter/segment_filter.hpp"
 
 #include <opencv4/opencv2/core.hpp>
-#include <opencv4/opencv2/highgui.hpp>
 #include <opencv4/opencv2/imgproc.hpp>
 #include <pcdless_common/cv_decompress.hpp>
 #include <pcdless_common/pub_sub.hpp>
 
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
 
 namespace pcdless::segment_filter
@@ -29,6 +26,7 @@ SegmentFilter::SegmentFilter()
   synchro_subscriber_.set_callback(std::move(cb));
 
   pub_cloud_ = create_publisher<PointCloud2>("projected_lsd_cloud", 10);
+  pub_middle_cloud_ = create_publisher<PointCloud2>("projected_middle_cloud", 10);
   pub_image_ = create_publisher<Image>("projected_image", 10);
 }
 
@@ -40,28 +38,22 @@ cv::Point2i SegmentFilter::to_cv_point(const Eigen::Vector3f & v) const
   return pt;
 }
 
-void SegmentFilter::execute(const PointCloud2 & lsd_msg, const Image & segment_msg)
+bool SegmentFilter::define_project_func()
 {
-  const rclcpp::Time stamp = lsd_msg.header.stamp;
-  cv::Mat mask_image;
-  pcl::PointCloud<pcl::PointNormal>::Ptr lsd{new pcl::PointCloud<pcl::PointNormal>()};
-  mask_image = common::decompress_to_cv_mat(segment_msg);
-  pcl::fromROSMsg(lsd_msg, *lsd);
+  if (project_func_) return true;
 
-  if (info_.is_camera_info_nullopt()) return;
-
-  Eigen::Matrix3f K = info_.intrinsic();
-  Eigen::Matrix3f Kinv = K.inverse();
+  if (info_.is_camera_info_nullopt()) return false;
+  Eigen::Matrix3f Kinv = info_.intrinsic().inverse();
 
   std::optional<Eigen::Affine3f> camera_extrinsic =
     tf_subscriber_(info_.get_frame_id(), "base_link");
-  if (!camera_extrinsic.has_value()) return;
+  if (!camera_extrinsic.has_value()) return false;
+
   const Eigen::Vector3f t = camera_extrinsic->translation();
   const Eigen::Quaternionf q(camera_extrinsic->rotation());
 
   // TODO: This will take into account ground tilt and camera vibration someday.
-  ProjectFunc project_func = [Kinv, q,
-                              t](const Eigen::Vector3f & u) -> std::optional<Eigen::Vector3f> {
+  project_func_ = [Kinv, q, t](const Eigen::Vector3f & u) -> std::optional<Eigen::Vector3f> {
     Eigen::Vector3f u3(u.x(), u.y(), 1);
     Eigen::Vector3f u_bearing = (q * Kinv * u3).normalized();
     if (u_bearing.z() > -0.01) return std::nullopt;
@@ -72,14 +64,27 @@ void SegmentFilter::execute(const PointCloud2 & lsd_msg, const Image & segment_m
     v.z() = 0;
     return v;
   };
+  return true;
+}
 
-  std::set<int> indices = filt_by_mask(mask_image, *lsd);
+void SegmentFilter::execute(const PointCloud2 & lsd_msg, const Image & segment_msg)
+{
+  if (!define_project_func()) {
+    using namespace std::literals::chrono_literals;
+    RCLCPP_INFO_STREAM_THROTTLE(
+      get_logger(), *get_clock(), (1000ms).count(), "project_func cannot be defined");
+    return;
+  }
 
-  pcl::PointCloud<pcl::PointNormal>::Ptr projected_lines{new pcl::PointCloud<pcl::PointNormal>()};
-  pcl::PointCloud<pcl::PointNormal> valid_edges = project_lines(*lsd, project_func, indices);
-  pcl::PointCloud<pcl::PointNormal> invalid_edges =
-    project_lines(*lsd, project_func, indices, true);
-  common::publish_cloud(*pub_cloud_, valid_edges, stamp);
+  const rclcpp::Time stamp = lsd_msg.header.stamp;
+
+  pcl::PointCloud<pcl::PointNormal>::Ptr lsd{new pcl::PointCloud<pcl::PointNormal>()};
+  cv::Mat mask_image = common::decompress_to_cv_mat(segment_msg);
+  pcl::fromROSMsg(lsd_msg, *lsd);
+
+  const std::set<int> indices = filt_by_mask(mask_image, *lsd);
+  pcl::PointCloud<pcl::PointNormal> valid_edges = project_lines(*lsd, indices);
+  pcl::PointCloud<pcl::PointNormal> invalid_edges = project_lines(*lsd, indices, true);
 
   // Draw image
   cv::Mat projected_image = cv::Mat::zeros(cv::Size{image_size_, image_size_}, CV_8UC3);
@@ -98,6 +103,7 @@ void SegmentFilter::execute(const PointCloud2 & lsd_msg, const Image & segment_m
   }
 
   common::publish_image(*pub_image_, projected_image, stamp);
+  common::publish_cloud(*pub_cloud_, valid_edges, stamp);
 }
 
 bool SegmentFilter::is_near_element(
@@ -139,8 +145,8 @@ std::set<ushort> get_unique_pixel_value(cv::Mat & image)
 }
 
 pcl::PointCloud<pcl::PointNormal> SegmentFilter::project_lines(
-  const pcl::PointCloud<pcl::PointNormal> & points, ProjectFunc project,
-  const std::set<int> & indices, bool negative) const
+  const pcl::PointCloud<pcl::PointNormal> & points, const std::set<int> & indices,
+  bool negative) const
 {
   pcl::PointCloud<pcl::PointNormal> projected_points;
   for (int index = 0; index < points.size(); ++index) {
@@ -154,8 +160,8 @@ pcl::PointCloud<pcl::PointNormal> SegmentFilter::project_lines(
 
     pcl::PointNormal truncated_pn = pn;
 
-    std::optional<Eigen::Vector3f> opt1 = project(truncated_pn.getVector3fMap());
-    std::optional<Eigen::Vector3f> opt2 = project(truncated_pn.getNormalVector3fMap());
+    std::optional<Eigen::Vector3f> opt1 = project_func_(truncated_pn.getVector3fMap());
+    std::optional<Eigen::Vector3f> opt2 = project_func_(truncated_pn.getNormalVector3fMap());
     if (!opt1.has_value()) continue;
     if (!opt2.has_value()) continue;
 

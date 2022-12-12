@@ -35,18 +35,23 @@ private:
   common::StaticTfSubscriber tf_subscriber_;
 
   rclcpp::Publisher<PointCloud2>::SharedPtr pub_cloud_;
+  rclcpp::Publisher<PointCloud2>::SharedPtr pub_middle_cloud_;
   rclcpp::Publisher<Image>::SharedPtr pub_image_;
 
+  ProjectFunc project_func_ = nullptr;
+
+  // Return true if success to define or already defined
+  bool define_project_func();
+
   pcl::PointCloud<pcl::PointNormal> project_lines(
-    const pcl::PointCloud<pcl::PointNormal> & lines, ProjectFunc project,
-    const std::set<int> & indices, bool negative = false) const;
+    const pcl::PointCloud<pcl::PointNormal> & lines, const std::set<int> & indices,
+    bool negative = false) const;
 
   std::set<int> filt_by_mask(const cv::Mat & mask, const pcl::PointCloud<pcl::PointNormal> & edges);
 
   cv::Point2i to_cv_point(const Eigen::Vector3f & v) const;
   void execute(const PointCloud2 & msg1, const Image & msg2);
 
-  // TODO: Rename function
   bool is_near_element(const pcl::PointNormal & pn, pcl::PointNormal & truncated_pn) const;
 };
 }  // namespace pcdless::segment_filter
