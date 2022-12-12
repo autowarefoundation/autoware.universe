@@ -13,9 +13,12 @@
 # limitations under the License.
 
 import launch
+from launch.actions import DeclareLaunchArgument
+from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.actions import Node
 from launch_ros.descriptions import ComposableNode
+from launch_ros.parameter_descriptions import ParameterFile
 
 
 def create_api_node(node_name, class_name, **kwargs):
@@ -24,7 +27,7 @@ def create_api_node(node_name, class_name, **kwargs):
         name=node_name,
         package="default_ad_api",
         plugin="default_ad_api::" + class_name,
-        **kwargs,
+        parameters=[ParameterFile(LaunchConfiguration("config"))],
     )
 
 
@@ -51,4 +54,5 @@ def generate_launch_description():
         name="web_server",
         executable="web_server.py",
     )
-    return launch.LaunchDescription([container, web_server])
+    argument = DeclareLaunchArgument("config")
+    return launch.LaunchDescription([argument, container, web_server])

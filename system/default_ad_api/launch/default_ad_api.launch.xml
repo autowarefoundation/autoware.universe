@@ -1,0 +1,5 @@
+<launch>
+  <include file="$(find-pkg-share default_ad_api)/launch/default_ad_api.launch.py">
+    <arg name="config" value="$(find-pkg-share default_ad_api)/config/default_ad_api.param.yaml"/>
+  </include>
+</launch>
