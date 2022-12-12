@@ -132,12 +132,13 @@ void CameraParticleCorrector::on_lsd(const PointCloud2 & lsd_msg)
       this->set_weighted_particle_array(weighted_particles);
       last_mean_position_ = mean_position;
     } else {
-      RCLCPP_INFO_STREAM(get_logger(), "Skip weighting because almost same positon");
+      using namespace std::literals::chrono_literals;
+      RCLCPP_INFO_STREAM_THROTTLE(
+        get_logger(), *get_clock(), (1000ms).count(), "Skip weighting because almost same positon");
     }
   }
 
   pub_marker_->publish(cost_map_.show_map_range());
-  RCLCPP_INFO_STREAM(get_logger(), "weight computation: " << timer);
 
   // DEBUG: just visualization
   {
@@ -163,7 +164,7 @@ void CameraParticleCorrector::on_lsd(const PointCloud2 & lsd_msg)
     for (const auto p : iffy_cloud) {
       pcl::PointXYZRGB rgb;
       rgb.getVector3fMap() = p.getVector3fMap();
-      rgb.rgba = common::Color(0, 1.0, 0, 1.0f);
+      rgb.rgba = common::Color(0, 1.0, 0, 0.5f);
       rgb_cloud.push_back(rgb);
     }
 
