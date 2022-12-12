@@ -9,7 +9,7 @@
 
   <!-- AD API -->
   <group>
-    <include file="$(find-pkg-share default_ad_api)/launch/default_ad_api.launch.py" if="$(var launch_default_ad_api)"/>
+    <include file="$(find-pkg-share default_ad_api)/launch/default_ad_api.launch.xml" if="$(var launch_default_ad_api)"/>
     <include file="$(find-pkg-share ad_api_adaptors)/launch/rviz_adaptors.launch.xml" if="$(var launch_rviz_adaptors)"/>
   </group>
 
