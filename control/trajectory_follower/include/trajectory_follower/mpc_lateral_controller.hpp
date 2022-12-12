@@ -97,7 +97,7 @@ private:
   //!< @brief path resampling interval [m]
   double m_traj_resample_dist;
 
-  //!< @brief flag of traj extending for ternimal yaw
+  //!< @brief flag of traj extending for terminal yaw
   bool m_enable_traj_extending;
 
   /* parameters for stop state */
