@@ -20,6 +20,7 @@ class SegmentFilter : public rclcpp::Node
 public:
   using PointCloud2 = sensor_msgs::msg::PointCloud2;
   using Image = sensor_msgs::msg::Image;
+
   SegmentFilter();
 
 private:

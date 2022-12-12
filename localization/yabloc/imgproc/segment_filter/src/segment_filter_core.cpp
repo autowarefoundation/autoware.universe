@@ -26,7 +26,6 @@ SegmentFilter::SegmentFilter()
   synchro_subscriber_.set_callback(std::move(cb));
 
   pub_cloud_ = create_publisher<PointCloud2>("projected_lsd_cloud", 10);
-  pub_middle_cloud_ = create_publisher<PointCloud2>("projected_middle_cloud", 10);
   pub_image_ = create_publisher<Image>("projected_image", 10);
 }
 
@@ -83,13 +82,33 @@ void SegmentFilter::execute(const PointCloud2 & lsd_msg, const Image & segment_m
   pcl::fromROSMsg(lsd_msg, *lsd);
 
   const std::set<int> indices = filt_by_mask(mask_image, *lsd);
+
   pcl::PointCloud<pcl::PointNormal> valid_edges = project_lines(*lsd, indices);
   pcl::PointCloud<pcl::PointNormal> invalid_edges = project_lines(*lsd, indices, true);
 
-  // Draw image
-  cv::Mat projected_image = cv::Mat::zeros(cv::Size{image_size_, image_size_}, CV_8UC3);
+  // Line segments
   {
-    // Draw lines
+    pcl::PointCloud<pcl::PointXYZLNormal> combined_edges;
+    for (const auto & pn : valid_edges) {
+      pcl::PointXYZLNormal pln;
+      pln.getVector3fMap() = pn.getVector3fMap();
+      pln.getNormalVector3fMap() = pn.getNormalVector3fMap();
+      pln.label = 255;
+      combined_edges.push_back(pln);
+    }
+    for (const auto & pn : invalid_edges) {
+      pcl::PointXYZLNormal pln;
+      pln.getVector3fMap() = pn.getVector3fMap();
+      pln.getNormalVector3fMap() = pn.getNormalVector3fMap();
+      pln.label = 0;
+      combined_edges.push_back(pln);
+    }
+    common::publish_cloud(*pub_cloud_, combined_edges, stamp);
+  }
+
+  // Image
+  {
+    cv::Mat projected_image = cv::Mat::zeros(cv::Size{image_size_, image_size_}, CV_8UC3);
     for (auto & pn : valid_edges) {
       cv::Point2i p1 = to_cv_point(pn.getVector3fMap());
       cv::Point2i p2 = to_cv_point(pn.getNormalVector3fMap());
@@ -100,10 +119,8 @@ void SegmentFilter::execute(const PointCloud2 & lsd_msg, const Image & segment_m
       cv::Point2i p2 = to_cv_point(pn.getNormalVector3fMap());
       cv::line(projected_image, p1, p2, cv::Scalar(200, 200, 200), 3, cv::LineTypes::LINE_8);
     }
+    common::publish_image(*pub_image_, projected_image, stamp);
   }
-
-  common::publish_image(*pub_image_, projected_image, stamp);
-  common::publish_cloud(*pub_cloud_, valid_edges, stamp);
 }
 
 bool SegmentFilter::is_near_element(
@@ -156,9 +173,7 @@ pcl::PointCloud<pcl::PointNormal> SegmentFilter::project_lines(
       if (indices.count(index) == 0) continue;
     }
 
-    const auto & pn = points.at(index);
-
-    pcl::PointNormal truncated_pn = pn;
+    pcl::PointNormal truncated_pn = points.at(index);
 
     std::optional<Eigen::Vector3f> opt1 = project_func_(truncated_pn.getVector3fMap());
     std::optional<Eigen::Vector3f> opt2 = project_func_(truncated_pn.getNormalVector3fMap());
