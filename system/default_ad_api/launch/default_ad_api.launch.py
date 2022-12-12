@@ -37,7 +37,7 @@ def generate_launch_description():
         create_api_node("fail_safe", "FailSafeNode"),
         create_api_node("interface", "InterfaceNode"),
         create_api_node("localization", "LocalizationNode"),
-        create_api_node("motion", "MotionNode", parameters=[{"require_accept_start": False}]),
+        create_api_node("motion", "MotionNode"),
         create_api_node("operation_mode", "OperationModeNode"),
         create_api_node("routing", "RoutingNode"),
     ]
