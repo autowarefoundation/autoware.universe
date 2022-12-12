@@ -780,12 +780,6 @@ std::optional<LaneChangePath> getAbortPaths(
   const auto current_pose = planner_data->self_pose->pose;
   const auto current_lanes = selected_path.reference_lanelets;
 
-  const auto abort_point_dist =
-    [&](const double param_accel, const double param_jerk, const double param_time) {
-      return current_speed * param_time + (-param_accel) * std::pow(param_time, 2) / 2. -
-             param_jerk * std::pow(param_time, 3) / 6.;
-    };
-
   const auto ego_nearest_dist_threshold = planner_data->parameters.ego_nearest_dist_threshold;
   const auto ego_nearest_yaw_threshold = planner_data->parameters.ego_nearest_yaw_threshold;
 
@@ -799,14 +793,12 @@ std::optional<LaneChangePath> getAbortPaths(
     ego_nearest_yaw_threshold);
 
   const auto pose_idx_min = [&](
-                              const double accel, const double jerk, const double param_time,
-                              const double min_dist, const double max_dist,
+                              const double param_time, const double min_dist, const double max_dist,
                               double & turning_point_dist) {
     if (ego_pose_idx > lane_changing_end_pose_idx) {
       return ego_pose_idx;
     }
-    const auto desired_distance =
-      std::clamp(std::invoke(abort_point_dist, accel, jerk, param_time), min_dist, max_dist);
+    const auto desired_distance = std::clamp(current_speed * param_time, min_dist, max_dist);
     const auto & points = resampled_selected_path.points;
     size_t idx{0};
     for (idx = ego_pose_idx; idx < lane_changing_end_pose_idx; ++idx) {
@@ -820,8 +812,6 @@ std::optional<LaneChangePath> getAbortPaths(
     return idx;
   };
 
-  const auto abort_expected_deceleration = lane_change_param.abort_expected_deceleration;
-  const auto abort_longitudinal_jerk = lane_change_param.abort_longitudinal_jerk;
   const auto abort_begin_min_longitudinal_thresh =
     lane_change_param.abort_begin_min_longitudinal_thresh;
   const auto abort_begin_max_longitudinal_thresh =
@@ -830,8 +820,8 @@ std::optional<LaneChangePath> getAbortPaths(
 
   double abort_start_dist{0.0};
   const auto abort_start_idx = pose_idx_min(
-    abort_expected_deceleration, abort_longitudinal_jerk, abort_begin_duration,
-    abort_begin_min_longitudinal_thresh, abort_begin_max_longitudinal_thresh, abort_start_dist);
+    abort_begin_duration, abort_begin_min_longitudinal_thresh, abort_begin_max_longitudinal_thresh,
+    abort_start_dist);
 
   const auto abort_return_min_longitudinal_thresh =
     lane_change_param.abort_return_min_longitudinal_thresh;
@@ -841,8 +831,8 @@ std::optional<LaneChangePath> getAbortPaths(
 
   double abort_return_dist{0.0};
   const auto abort_return_idx = pose_idx_min(
-    abort_expected_deceleration, abort_longitudinal_jerk, abort_return_duration,
-    abort_return_min_longitudinal_thresh, abort_return_max_longitudinal_thresh, abort_return_dist);
+    abort_return_duration, abort_return_min_longitudinal_thresh,
+    abort_return_max_longitudinal_thresh, abort_return_dist);
 
   if (abort_start_idx >= abort_return_idx) {
     return std::nullopt;
