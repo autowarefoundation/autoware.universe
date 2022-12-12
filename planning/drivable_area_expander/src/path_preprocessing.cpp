@@ -26,25 +26,23 @@
 namespace drivable_area_expander
 {
 
-size_t calculateStartIndex(const Path & path, const size_t ego_idx)
+size_t calculateStartIndex(const Path & path, const size_t ego_idx, const double backward_length)
 {
-  auto dist = 0.0;
+  auto length = 0.0;
   auto idx = ego_idx;
-  while (idx + 1 < path.points.size()) {
-    dist += tier4_autoware_utils::calcDistance2d(path.points[idx], path.points[idx + 1]);
-    ++idx;
+  while (idx >= 0 && length < backward_length) {
+    length += tier4_autoware_utils::calcDistance2d(path.points[idx], path.points[idx + 1]);
+    --idx;
   }
   return idx;
 }
 
-size_t calculateEndIndex(const Path & path, const size_t start_idx, const double max_length)
+size_t calculateEndIndex(const Path & path, const size_t start_idx, const double forward_length)
 {
   auto length = 0.0;
   auto idx = start_idx;
-  while (idx + 1 < path.points.size() && length < max_length) {
-    const auto length_d =
-      tier4_autoware_utils::calcDistance2d(path.points[idx], path.points[idx + 1]);
-    length += length_d;
+  while (idx + 1 < path.points.size() && length < forward_length) {
+    length += tier4_autoware_utils::calcDistance2d(path.points[idx], path.points[idx + 1]);
     ++idx;
   }
   return idx;

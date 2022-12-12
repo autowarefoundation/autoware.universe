@@ -1,7 +1,8 @@
 /**:
   ros__parameters:
     preprocessing:
-      max_length: 50.0  # [m] maximum path length used for drivable area expansion
+      backward_length: 5.0  # [m] path length behind the current ego pose used for drivable area expansion
+      forward_length: 50.0  # [m] path length ahead of the current ego pose used for drivable area expansion
       downsample_factor: 1  # factor by which to downsample the input path for faster calculation
 
     expansion:
