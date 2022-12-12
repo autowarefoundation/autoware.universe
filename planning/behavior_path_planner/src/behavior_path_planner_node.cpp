@@ -207,6 +207,9 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   p.backward_length_buffer_for_end_of_pull_out =
     declare_parameter("backward_length_buffer_for_end_of_pull_out", 5.0);
   p.minimum_lane_change_length = declare_parameter("minimum_lane_change_length", 8.0);
+  p.minimum_lane_change_prepare_distance =
+    declare_parameter("minimum_lane_change_prepare_distance", 2.0);
+
   p.minimum_pull_over_length = declare_parameter("minimum_pull_over_length", 15.0);
   p.drivable_area_resolution = declare_parameter<double>("drivable_area_resolution");
   p.drivable_lane_forward_length = declare_parameter<double>("drivable_lane_forward_length");
@@ -363,7 +366,6 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
   LaneChangeParameters p{};
   p.lane_change_prepare_duration = dp("lane_change_prepare_duration", 2.0);
   p.lane_changing_duration = dp("lane_changing_duration", 4.0);
-  p.minimum_lane_change_prepare_distance = dp("minimum_lane_change_prepare_distance", 4.0);
   p.lane_change_finish_judge_buffer = dp("lane_change_finish_judge_buffer", 3.0);
   p.minimum_lane_change_velocity = dp("minimum_lane_change_velocity", 5.6);
   p.prediction_time_resolution = dp("prediction_time_resolution", 0.5);
@@ -926,8 +928,18 @@ PathWithLaneId BehaviorPathPlannerNode::modifyPathForSmoothGoalConnection(
   const auto goal = planner_data_->route_handler->getGoalPose();
   const auto goal_lane_id = planner_data_->route_handler->getGoalLaneId();
 
+  Pose refined_goal{};
+  {
+    lanelet::ConstLanelet goal_lanelet;
+    if (planner_data_->route_handler->getGoalLanelet(&goal_lanelet)) {
+      refined_goal = util::refineGoal(goal, goal_lanelet);
+    } else {
+      refined_goal = goal;
+    }
+  }
+
   auto refined_path = util::refinePathForGoal(
-    planner_data_->parameters.refine_goal_search_radius_range, M_PI * 0.5, path, goal,
+    planner_data_->parameters.refine_goal_search_radius_range, M_PI * 0.5, path, refined_goal,
     goal_lane_id);
   refined_path.header.frame_id = "map";
   refined_path.header.stamp = this->now();
