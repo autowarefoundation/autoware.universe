@@ -133,12 +133,6 @@ PathWithLaneId getLaneChangePathLaneChangingSegment(
 bool isEgoWithinOriginalLane(
   const lanelet::ConstLanelets & current_lanes, const Pose & current_pose,
   const BehaviorPathPlannerParameters & common_param);
-bool isEgoDistanceNearToCenterline(
-  const lanelet::ConstLanelet & closest_lanelet, const Pose & current_pose,
-  const LaneChangeParameters & lane_change_param);
-bool isEgoHeadingAngleLessThanThreshold(
-  const lanelet::ConstLanelet & closest_lanelet, const Pose & current_pose,
-  const LaneChangeParameters & lane_change_param);
 
 TurnSignalInfo calc_turn_signal_info(
   const PathWithLaneId & prepare_path, const double prepare_velocity,

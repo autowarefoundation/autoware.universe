@@ -46,22 +46,8 @@ struct LaneChangeParameters
   bool enable_cancel_lane_change{true};
   bool enable_abort_lane_change{false};
 
-  double abort_lane_change_velocity_thresh{0.5};
-  double abort_lane_change_angle_thresh{0.174533};
-  double abort_lane_change_distance_thresh{0.3};
-
-  double abort_begin_min_longitudinal_thresh{4.0};
-  double abort_begin_max_longitudinal_thresh{6.0};
-  double abort_begin_duration{3.0};
-
-  double abort_return_min_longitudinal_thresh{12.0};
-  double abort_return_max_longitudinal_thresh{16.0};
-  double abort_return_duration{6.0};
-
-  double abort_expected_deceleration{0.1};
-  double abort_longitudinal_jerk{0.5};
-
-  double abort_max_lateral_jerk{5.0};
+  double abort_delta_time{3.0};
+  double abort_max_lateral_jerk{10.0};
 
   // drivable area expansion
   double drivable_area_right_bound_offset{0.0};

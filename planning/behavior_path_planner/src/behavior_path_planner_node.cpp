@@ -403,23 +403,8 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
   p.enable_cancel_lane_change = dp("enable_cancel_lane_change", true);
   p.enable_abort_lane_change = dp("enable_abort_lane_change", false);
 
-  p.abort_lane_change_velocity_thresh = dp("abort_lane_change_velocity_thresh", 0.5);
-  p.abort_lane_change_angle_thresh =
-    dp("abort_lane_change_angle_thresh", tier4_autoware_utils::deg2rad(10.0));
-  p.abort_lane_change_distance_thresh = dp("abort_lane_change_distance_thresh", 0.3);
-
-  p.abort_begin_min_longitudinal_thresh = dp("abort_begin_min_longitudinal_thresh", 4.0);
-  p.abort_begin_max_longitudinal_thresh = dp("abort_begin_max_longitudinal_thresh", 6.0);
-  p.abort_begin_duration = dp("abort_begin_duration", 3.0);
-
-  p.abort_return_min_longitudinal_thresh = dp("abort_return_min_longitudinal_thresh", 12.0);
-  p.abort_return_max_longitudinal_thresh = dp("abort_return_max_longitudinal_thresh", 16.0);
-  p.abort_return_duration = dp("abort_return_duration", 6.0);
-
-  p.abort_expected_deceleration = dp("abort_expected_deceleration", 0.1);
-  p.abort_longitudinal_jerk = dp("abort_longitudinal_jerk", 0.5);
-
-  p.abort_max_lateral_jerk = dp("abort_max_lateral_jerk", 5.0);
+  p.abort_delta_time = dp("abort_delta_time", 3.0);
+  p.abort_max_lateral_jerk = dp("abort_max_lateral_jerk", 10.0);
 
   // drivable area expansion
   p.drivable_area_right_bound_offset = dp("drivable_area_right_bound_offset", 0.0);
@@ -444,19 +429,10 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
     exit(EXIT_FAILURE);
   }
 
-  if (p.abort_expected_deceleration < 0.0) {
+  if (p.abort_delta_time < 1.0) {
     RCLCPP_FATAL_STREAM(
-      get_logger(), "abort_expected_deceleration cannot be negative value. Given parameter: "
-                      << p.maximum_deceleration << std::endl
-                      << "Terminating the program...");
-    exit(EXIT_FAILURE);
-  }
-
-  if (p.abort_return_duration <= p.abort_begin_duration) {
-    RCLCPP_FATAL_STREAM(
-      get_logger(), "abort_return_duration must be more than abort_begin_duration: "
-                      << p.maximum_deceleration << std::endl
-                      << "Terminating the program...");
+      get_logger(), "abort_delta_time: " << p.abort_delta_time << ", is too short.\n"
+                                         << "Terminating the program...");
     exit(EXIT_FAILURE);
   }
 

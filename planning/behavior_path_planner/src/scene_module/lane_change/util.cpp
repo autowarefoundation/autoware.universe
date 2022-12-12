@@ -665,26 +665,6 @@ bool isEgoWithinOriginalLane(
     lanelet::utils::to2D(lane_poly).basicPolygon());
 }
 
-bool isEgoDistanceNearToCenterline(
-  const lanelet::ConstLanelet & closest_lanelet, const Pose & current_pose,
-  const LaneChangeParameters & lane_change_param)
-{
-  const auto centerline2d = lanelet::utils::to2D(closest_lanelet.centerline()).basicLineString();
-  lanelet::BasicPoint2d vehicle_pose2d(current_pose.position.x, current_pose.position.y);
-  const double distance = lanelet::geometry::distance2d(centerline2d, vehicle_pose2d);
-  return distance < lane_change_param.abort_lane_change_distance_thresh;
-}
-
-bool isEgoHeadingAngleLessThanThreshold(
-  const lanelet::ConstLanelet & closest_lanelet, const Pose & current_pose,
-  const LaneChangeParameters & lane_change_param)
-{
-  const double lane_angle = lanelet::utils::getLaneletAngle(closest_lanelet, current_pose.position);
-  const double vehicle_yaw = tf2::getYaw(current_pose.orientation);
-  const double yaw_diff = tier4_autoware_utils::normalizeRadian(lane_angle - vehicle_yaw);
-  return std::abs(yaw_diff) < lane_change_param.abort_lane_change_angle_thresh;
-}
-
 TurnSignalInfo calc_turn_signal_info(
   const PathWithLaneId & prepare_path, const double prepare_velocity,
   const double min_prepare_distance, const double prepare_duration, const ShiftLine & shift_line,
@@ -789,16 +769,15 @@ std::optional<LaneChangePath> getAbortPaths(
     resampled_selected_path.points, current_pose, ego_nearest_dist_threshold,
     ego_nearest_yaw_threshold);
   const auto lane_changing_end_pose_idx = motion_utils::findFirstNearestIndexWithSoftConstraints(
-    resampled_selected_path.points, selected_path.shift_line.end, ego_nearest_dist_threshold,
-    ego_nearest_yaw_threshold);
+    resampled_selected_path.points, resampled_selected_path.points.back().point.pose,
+    ego_nearest_dist_threshold, ego_nearest_yaw_threshold);
 
-  const auto pose_idx_min = [&](
-                              const double param_time, const double min_dist, const double max_dist,
-                              double & turning_point_dist) {
+  const auto pose_idx_min = [&](const double param_time, double & turning_point_dist) {
     if (ego_pose_idx > lane_changing_end_pose_idx) {
       return ego_pose_idx;
     }
-    const auto desired_distance = std::clamp(current_speed * param_time, min_dist, max_dist);
+
+    const auto desired_distance = std::max(2.77, current_speed) * param_time;
     const auto & points = resampled_selected_path.points;
     size_t idx{0};
     for (idx = ego_pose_idx; idx < lane_changing_end_pose_idx; ++idx) {
@@ -812,34 +791,25 @@ std::optional<LaneChangePath> getAbortPaths(
     return idx;
   };
 
-  const auto abort_begin_min_longitudinal_thresh =
-    lane_change_param.abort_begin_min_longitudinal_thresh;
-  const auto abort_begin_max_longitudinal_thresh =
-    lane_change_param.abort_begin_max_longitudinal_thresh;
-  const auto abort_begin_duration = lane_change_param.abort_begin_duration;
+  const auto abort_delta_time = lane_change_param.abort_delta_time;
 
   double abort_start_dist{0.0};
-  const auto abort_start_idx = pose_idx_min(
-    abort_begin_duration, abort_begin_min_longitudinal_thresh, abort_begin_max_longitudinal_thresh,
-    abort_start_dist);
-
-  const auto abort_return_min_longitudinal_thresh =
-    lane_change_param.abort_return_min_longitudinal_thresh;
-  const auto abort_return_max_longitudinal_thresh =
-    lane_change_param.abort_return_max_longitudinal_thresh;
-  const auto abort_return_duration = lane_change_param.abort_return_duration;
+  const auto abort_start_idx = pose_idx_min(abort_delta_time, abort_start_dist);
 
   double abort_return_dist{0.0};
-  const auto abort_return_idx = pose_idx_min(
-    abort_return_duration, abort_return_min_longitudinal_thresh,
-    abort_return_max_longitudinal_thresh, abort_return_dist);
+  const auto abort_return_idx = pose_idx_min(abort_delta_time * 2, abort_return_dist);
 
   if (abort_start_idx >= abort_return_idx) {
+    std::cerr << "idx issue, start idx " << abort_start_idx << " return index " << abort_return_idx
+              << '\n';
+    std::cerr << "idx issue, abort_start_dist " << abort_start_dist << " return dist "
+              << abort_return_dist << '\n';
     return std::nullopt;
   }
 
   if (!hasEnoughDistanceToLaneChangeAfterAbort(
         *route_handler, current_lanes, current_pose, abort_return_dist, common_param)) {
+    std::cerr << "distance issue\n";
     return std::nullopt;
   }
 
