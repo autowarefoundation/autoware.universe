@@ -415,7 +415,6 @@ def launch_setup(context, *args, **kwargs):
         name="drivable_area_expander",
         executable="drivable_area_expander",
         namespace="",
-        prefix="konsole -e gdb -ex run --args",
         remappings=[
             ("~/input/map", LaunchConfiguration("map_topic_name")),
             ("~/input/path", "unexpanded_path"),

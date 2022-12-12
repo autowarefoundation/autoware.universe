@@ -9,7 +9,7 @@
   <arg name="param_path" default="$(find-pkg-share drivable_area_expander)/config/drivable_area_expander.param.yaml"/>
   <arg name="vehicle_info_param_file" default="$(find-pkg-share vehicle_info_util)/config/vehicle_info.param.yaml"/>
 
-  <node launch-prefix="konsole -e gdb -ex run --args" pkg="drivable_area_expander" exec="drivable_area_expander" name="drivable_area_expander" output="screen">
+  <node pkg="drivable_area_expander" exec="drivable_area_expander" name="drivable_area_expander" output="screen">
     <param from="$(var param_path)"/>
     <param from="$(var vehicle_info_param_file)"/>
     <remap from="~/input/path" to="$(var input_path)"/>
