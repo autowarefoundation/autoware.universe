@@ -90,16 +90,19 @@ struct ExpansionParameters
 struct PreprocessingParameters
 {
   static constexpr auto DOWNSAMPLING_PARAM = "preprocessing.downsample_factor";
-  static constexpr auto MAX_LENGTH_PARAM = "preprocessing.max_length";
+  static constexpr auto BACKWARD_LENGTH_PARAM = "preprocessing.backward_length";
+  static constexpr auto FORWARD_LENGTH_PARAM = "preprocessing.forward_length";
 
   int downsample_factor{};
-  double max_length{};
+  double backward_length{};
+  double forward_length{};
 
   PreprocessingParameters() = default;
   explicit PreprocessingParameters(rclcpp::Node & node)
   {
     downsample_factor = node.declare_parameter<int>(DOWNSAMPLING_PARAM);
-    max_length = node.declare_parameter<double>(MAX_LENGTH_PARAM);
+    backward_length = node.declare_parameter<double>(BACKWARD_LENGTH_PARAM);
+    forward_length = node.declare_parameter<double>(FORWARD_LENGTH_PARAM);
   }
   bool updateDownsampleFactor(const int new_downsample_factor)
   {

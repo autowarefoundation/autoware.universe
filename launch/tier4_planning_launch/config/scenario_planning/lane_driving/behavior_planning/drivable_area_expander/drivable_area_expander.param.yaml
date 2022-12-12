@@ -1,23 +1,24 @@
 /**:
   ros__parameters:
     preprocessing:
-      max_length: 50.0  # [m] maximum path length used for drivable area expansion
+      backward_length: 5.0  # [m] path length behind the current ego pose used for drivable area expansion
+      forward_length: 50.0  # [m] path length ahead of the current ego pose used for drivable area expansion
       downsample_factor: 1  # factor by which to downsample the input path for faster calculation
 
     expansion:
       ego:
         extra_footprint_offset:
-          front: 1.0  # [m] extra length to add to the front of the ego footprint
-          rear: 0.0   # [m] extra length to add to the rear of the ego footprint
-          left: 0.0   # [m] extra length to add to the left of the ego footprint
-          right: 0.0  # [m] extra lenght to add to the rear of the ego footprint
+          front: 0.5  # [m] extra length to add to the front of the ego footprint
+          rear: 0.5   # [m] extra length to add to the rear of the ego footprint
+          left: 0.5   # [m] extra length to add to the left of the ego footprint
+          right: 0.5  # [m] extra lenght to add to the rear of the ego footprint
       dynamic_objects:
         avoid: true  # if true, the drivable area is not expanded in the predicted path of dynamic objects
         extra_footprint_offset:
-          front: 0.0  # [m] extra length to add to the front of the ego footprint
-          rear: 0.0   # [m] extra length to add to the rear of the ego footprint
-          left: 0.0   # [m] extra length to add to the left of the ego footprint
-          right: 0.0  # [m] extra lenght to add to the rear of the ego footprint
+          front: 0.5  # [m] extra length to add to the front of the ego footprint
+          rear: 0.5   # [m] extra length to add to the rear of the ego footprint
+          left: 0.5   # [m] extra length to add to the left of the ego footprint
+          right: 0.5  # [m] extra lenght to add to the rear of the ego footprint
       max_distance: 0.0  # [m] maximum distance by which the drivable area can be expended
       avoid_linestring_types:  # linestring types in the lanelet maps that will not be crossed when expanding the drivable area
         - guard_rail

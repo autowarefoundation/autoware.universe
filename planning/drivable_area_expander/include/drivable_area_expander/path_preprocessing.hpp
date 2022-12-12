@@ -19,12 +19,19 @@
 
 namespace drivable_area_expander
 {
-/// @brief calculate path index that is ahead of the given index by the given distance
+/// @brief calculate path index that is behind of ego index by the given length
 /// @param[in] path path
-/// @param[in] start_idx starting index
-/// @param[in] max_length maximum length from start_idx to the returned index
-/// @return path index ahead of the start_idx by at most the given length and duration
-size_t calculateEndIndex(const Path & path, const size_t start_idx, const double max_length);
+/// @param[in] ego_idx ego index
+/// @param[in] backward_length maximum backward length from ego_idx to the returned index
+/// @return path index behind of the ego_idx by at most the given length
+size_t calculateStartIndex(const Path & path, const size_t ego_idx, const double backward_length);
+
+/// @brief calculate path index that is ahead of the ego index by the given distance
+/// @param[in] path path
+/// @param[in] ego_idx starting index
+/// @param[in] forward_length maximum length from ego_idx to the returned index
+/// @return path index ahead of the ego_idx by at most the given length
+size_t calculateEndIndex(const Path & path, const size_t ego_idx, const double forward_length);
 
 /// @brief downsample a path, reducing its number of points by the given factor
 /// @param[in] path input path

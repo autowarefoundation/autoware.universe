@@ -69,8 +69,10 @@ rcl_interfaces::msg::SetParametersResult DrivableAreaExpanderNode::onParameter(
   result.successful = true;
   for (const auto & parameter : parameters) {
     // Preprocessing parameters
-    if (parameter.get_name() == PreprocessingParameters::MAX_LENGTH_PARAM) {
-      preprocessing_params_.max_length = parameter.as_double();
+    if (parameter.get_name() == PreprocessingParameters::FORWARD_LENGTH_PARAM) {
+      preprocessing_params_.forward_length = parameter.as_double();
+    } else if (parameter.get_name() == PreprocessingParameters::BACKWARD_LENGTH_PARAM) {
+      preprocessing_params_.backward_length = parameter.as_double();
     } else if (parameter.get_name() == PreprocessingParameters::DOWNSAMPLING_PARAM) {
       if (!preprocessing_params_.updateDownsampleFactor(parameter.as_int())) {
         result.successful = false;
@@ -121,9 +123,12 @@ void DrivableAreaExpanderNode::onPath(const Path::ConstSharedPtr msg)
   const auto ego_idx = motion_utils::findNearestIndex(msg->points, current_pose_ptr->pose);
   if (!validInputs(ego_idx)) return;
   auto input_path = *msg;
-  const auto end_idx = calculateEndIndex(input_path, *ego_idx, preprocessing_params_.max_length);
+  const auto start_idx =
+    calculateStartIndex(input_path, *ego_idx, preprocessing_params_.backward_length);
+  const auto end_idx =
+    calculateEndIndex(input_path, *ego_idx, preprocessing_params_.forward_length);
   const auto downsampled_path_points =
-    downsamplePath(input_path, *ego_idx, end_idx, preprocessing_params_.downsample_factor);
+    downsamplePath(input_path, start_idx, end_idx, preprocessing_params_.downsample_factor);
   auto path_footprint = createPathFootprint(downsampled_path_points, expansion_params_);
   const auto max_expansion_line =
     createMaxExpansionLine(input_path, expansion_params_.max_expansion_distance);
