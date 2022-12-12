@@ -36,9 +36,10 @@
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"
 #include "nav_msgs/msg/odometry.hpp"
-#include "tier4_debug_msgs/msg/float32_stamped.hpp"         // temporary
-#include "tier4_planning_msgs/msg/stop_speed_exceeded.hpp"  // temporary
-#include "tier4_planning_msgs/msg/velocity_limit.hpp"       // temporary
+#include "tier4_debug_msgs/msg/float32_stamped.hpp"             // temporary
+#include "tier4_planning_msgs/msg/acceleration_constraint.hpp"  // temporary
+#include "tier4_planning_msgs/msg/stop_speed_exceeded.hpp"      // temporary
+#include "tier4_planning_msgs/msg/velocity_limit.hpp"           // temporary
 
 #include <iostream>
 #include <memory>
@@ -55,9 +56,10 @@ using TrajectoryPoints = std::vector<TrajectoryPoint>;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::PoseStamped;
 using nav_msgs::msg::Odometry;
-using tier4_debug_msgs::msg::Float32Stamped;        // temporary
-using tier4_planning_msgs::msg::StopSpeedExceeded;  // temporary
-using tier4_planning_msgs::msg::VelocityLimit;      // temporary
+using tier4_debug_msgs::msg::Float32Stamped;             // temporary
+using tier4_planning_msgs::msg::AccelerationConstraint;  // temporary
+using tier4_planning_msgs::msg::StopSpeedExceeded;       // temporary
+using tier4_planning_msgs::msg::VelocityLimit;           // temporary
 
 struct Motion
 {
@@ -76,11 +78,14 @@ private:
   rclcpp::Subscription<Odometry>::SharedPtr sub_current_odometry_;
   rclcpp::Subscription<Trajectory>::SharedPtr sub_current_trajectory_;
   rclcpp::Subscription<VelocityLimit>::SharedPtr sub_external_velocity_limit_;
+  rclcpp::Subscription<AccelerationConstraint>::SharedPtr sub_external_acceleration_constraint_;
 
   PoseStamped::ConstSharedPtr current_pose_ptr_;   // current vehicle pose
   Odometry::ConstSharedPtr current_odometry_ptr_;  // current odometry
   VelocityLimit::ConstSharedPtr external_velocity_limit_ptr_{
-    nullptr};                                     // external velocity limit message
+    nullptr};  // external velocity limit message
+  AccelerationConstraint::ConstSharedPtr external_acceleration_constraint_ptr_{
+    nullptr};                                     // external acceleration constraint message
   Trajectory::ConstSharedPtr base_traj_raw_ptr_;  // current base_waypoints
   double max_velocity_with_deceleration_;         // maximum velocity with deceleration
                                                   // for external velocity limit
@@ -160,6 +165,8 @@ private:
   void onCurrentTrajectory(const Trajectory::ConstSharedPtr msg);
 
   void onExternalVelocityLimit(const VelocityLimit::ConstSharedPtr msg);
+
+  void onExternalAccelerationConstraint(const AccelerationConstraint::ConstSharedPtr msg);
 
   void calcExternalVelocityLimit();
 

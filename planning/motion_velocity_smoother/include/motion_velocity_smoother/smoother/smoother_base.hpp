@@ -23,6 +23,7 @@
 #include "vehicle_info_util/vehicle_info_util.hpp"
 
 #include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"
+#include "tier4_planning_msgs/msg/acceleration_constraint.hpp"
 
 #include "boost/optional.hpp"
 
@@ -33,6 +34,7 @@ namespace motion_velocity_smoother
 {
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
+using tier4_planning_msgs::msg::AccelerationConstraint;
 using vehicle_info_util::VehicleInfoUtil;
 
 class SmootherBase
@@ -64,8 +66,10 @@ public:
   explicit SmootherBase(rclcpp::Node & node);
   virtual ~SmootherBase() = default;
   virtual bool apply(
-    const double initial_vel, const double initial_acc, const TrajectoryPoints & input,
-    TrajectoryPoints & output, std::vector<TrajectoryPoints> & debug_trajectories) = 0;
+    const double v0, const double a0,
+    const AccelerationConstraint::ConstSharedPtr & external_acceleration_constraint_ptr,
+    const TrajectoryPoints & input, TrajectoryPoints & output,
+    std::vector<TrajectoryPoints> & debug_trajectories) = 0;
 
   virtual TrajectoryPoints resampleTrajectory(
     const TrajectoryPoints & input, const double v0, const geometry_msgs::msg::Pose & current_pose,

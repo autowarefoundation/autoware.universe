@@ -95,6 +95,9 @@ MotionVelocitySmootherNode::MotionVelocitySmootherNode(const rclcpp::NodeOptions
   sub_external_velocity_limit_ = create_subscription<VelocityLimit>(
     "~/input/external_velocity_limit_mps", 1,
     std::bind(&MotionVelocitySmootherNode::onExternalVelocityLimit, this, _1));
+  sub_external_acceleration_constraint_ = create_subscription<AccelerationConstraint>(
+    "~/input/external_acceleration_constraint", 1,
+    std::bind(&MotionVelocitySmootherNode::onExternalAccelerationConstraint, this, _1));
 
   // parameter update
   set_param_res_ = this->add_on_set_parameters_callback(
@@ -291,6 +294,12 @@ void MotionVelocitySmootherNode::onCurrentOdometry(const Odometry::ConstSharedPt
 void MotionVelocitySmootherNode::onExternalVelocityLimit(const VelocityLimit::ConstSharedPtr msg)
 {
   external_velocity_limit_ptr_ = msg;
+}
+
+void MotionVelocitySmootherNode::onExternalAccelerationConstraint(
+  const AccelerationConstraint::ConstSharedPtr msg)
+{
+  external_acceleration_constraint_ptr_ = msg;
 }
 
 void MotionVelocitySmootherNode::calcExternalVelocityLimit()
@@ -577,7 +586,8 @@ bool MotionVelocitySmootherNode::smoothVelocity(
 
   std::vector<TrajectoryPoints> debug_trajectories;
   if (!smoother_->apply(
-        initial_motion.vel, initial_motion.acc, clipped, traj_smoothed, debug_trajectories)) {
+        initial_motion.vel, initial_motion.acc, external_acceleration_constraint_ptr_, clipped,
+        traj_smoothed, debug_trajectories)) {
     RCLCPP_WARN(get_logger(), "Fail to solve optimization.");
   }
 

@@ -52,7 +52,9 @@ void JerkFilteredSmoother::setParam(const Param & smoother_param)
 JerkFilteredSmoother::Param JerkFilteredSmoother::getParam() const { return smoother_param_; }
 
 bool JerkFilteredSmoother::apply(
-  const double v0, const double a0, const TrajectoryPoints & input, TrajectoryPoints & output,
+  const double v0, const double a0,
+  const AccelerationConstraint::ConstSharedPtr & external_acceleration_constraint_ptr,
+  const TrajectoryPoints & input, TrajectoryPoints & output,
   std::vector<TrajectoryPoints> & debug_trajectories)
 {
   output = input;
@@ -90,12 +92,16 @@ bool JerkFilteredSmoother::apply(
     forwardJerkFilter(v0, std::max(a0, a_min), a_max, a_stop_accel, j_max, input);
   const auto backward_filtered = backwardJerkFilter(
     input.back().longitudinal_velocity_mps, a_stop_decel, a_min, a_stop_decel, j_min, input);
-  const auto filtered =
+  const auto merge_filtered =
     mergeFilteredTrajectory(v0, a0, a_min, j_min, forward_filtered, backward_filtered);
+
+  // target acc filter
+  const auto acc_filtered =
+    accelerationConstraintFilter(v0, a0, external_acceleration_constraint_ptr, a_max, a_min, input);
 
   // Resample TrajectoryPoints for Optimization
   // TODO(planning/control team) deal with overlapped lanes with the same direction
-  const auto initial_traj_pose = filtered.front().pose;
+  const auto initial_traj_pose = merge_filtered.front().pose;
 
   const auto resample = [&](const auto & trajectory) {
     return resampling::resampleTrajectory(
@@ -103,13 +109,32 @@ bool JerkFilteredSmoother::apply(
       std::numeric_limits<double>::max(), base_param_.resample_param);
   };
 
-  auto opt_resampled_trajectory = resample(filtered);
+  const auto resampled_merge_filtered = resample(merge_filtered);
+  const auto resampled_acc_filtered = resample(acc_filtered);
+
+  // apply acceleration constraint
+  auto opt_resampled_trajectory = resampled_merge_filtered;
+  for (size_t i = 0; i < opt_resampled_trajectory.size(); ++i) {
+    if (resampled_acc_filtered.size() <= i) {
+      break;
+    }
+
+    if (
+      opt_resampled_trajectory.at(i).longitudinal_velocity_mps <
+      resampled_acc_filtered.at(i).longitudinal_velocity_mps) {
+      break;
+    }
+
+    opt_resampled_trajectory.at(i).longitudinal_velocity_mps = std::min(
+      opt_resampled_trajectory.at(i).longitudinal_velocity_mps,
+      resampled_acc_filtered.at(i).longitudinal_velocity_mps);
+  }
 
   // Set debug trajectories
   debug_trajectories.resize(3);
   debug_trajectories[0] = resample(forward_filtered);
   debug_trajectories[1] = resample(backward_filtered);
-  debug_trajectories[2] = resample(filtered);
+  debug_trajectories[2] = resample(merge_filtered);  // TODO(murooka)
 
   // Ensure terminal velocity is zero
   opt_resampled_trajectory.back().longitudinal_velocity_mps = 0.0;
@@ -451,6 +476,47 @@ TrajectoryPoints JerkFilteredSmoother::mergeFilteredTrajectory(
                      : backward_filtered.at(i);
   }
   return merged;
+}
+
+TrajectoryPoints JerkFilteredSmoother::accelerationConstraintFilter(
+  const double v0, const double a0,
+  const AccelerationConstraint::ConstSharedPtr & external_acceleration_constraint_ptr,
+  const double a_max, const double a_min, const TrajectoryPoints & input) const
+{
+  auto output = input;
+  if (!external_acceleration_constraint_ptr) {
+    return output;
+  }
+
+  const double a_target = external_acceleration_constraint_ptr->target_acceleration;
+  const double j_max = external_acceleration_constraint_ptr->max_jerk;
+  const double j_min = external_acceleration_constraint_ptr->min_jerk;
+
+  double current_vel = v0;
+  double current_acc = a0;
+
+  const double jerk = a0 < a_target ? j_max : j_min;
+
+  for (size_t i = 1; i < input.size(); ++i) {
+    const double ds = tier4_autoware_utils::calcDistance2d(input.at(i), input.at(i - 1));
+
+    const double tmp = ds * 2.0 * current_acc + current_vel * current_vel;
+
+    double next_vel = 0.0;
+    double next_acc = 0.0;
+    if (0 < tmp) {
+      next_vel = std::sqrt(tmp);
+      const double dt = 2.0 * ds / (current_vel + next_vel);
+      next_acc = std::clamp(current_acc + jerk * dt, a_min, a_max);
+    }
+
+    output.at(i).longitudinal_velocity_mps = next_vel;
+    output.at(i).acceleration_mps2 = next_acc;
+
+    current_vel = next_vel;
+    current_acc = next_acc;
+  }
+  return output;
 }
 
 TrajectoryPoints JerkFilteredSmoother::resampleTrajectory(

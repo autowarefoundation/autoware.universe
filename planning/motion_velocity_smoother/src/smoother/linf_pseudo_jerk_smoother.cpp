@@ -46,8 +46,10 @@ void LinfPseudoJerkSmoother::setParam(const Param & smoother_param)
 LinfPseudoJerkSmoother::Param LinfPseudoJerkSmoother::getParam() const { return smoother_param_; }
 
 bool LinfPseudoJerkSmoother::apply(
-  const double initial_vel, const double initial_acc, const TrajectoryPoints & input,
-  TrajectoryPoints & output, std::vector<TrajectoryPoints> & debug_trajectories)
+  const double initial_vel, const double initial_acc,
+  const AccelerationConstraint::ConstSharedPtr & external_acceleration_constraint_ptr,
+  const TrajectoryPoints & input, TrajectoryPoints & output,
+  std::vector<TrajectoryPoints> & debug_trajectories)
 {
   debug_trajectories.clear();
 

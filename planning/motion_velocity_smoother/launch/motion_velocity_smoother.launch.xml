@@ -8,7 +8,7 @@
   <arg name="output_trajectory" default="/planning/scenario_planning/trajectory"/>
 
   <!-- debug flags -->
-  <arg name="publish_debug_trajs" default="false"/>
+  <arg name="publish_debug_trajs" default="true"/>
   <arg name="smoother_type" default="JerkFiltered"/>
   <!-- Analytical, JerkFiltered, L2, or Linf -->
 
@@ -25,6 +25,7 @@
     <remap from="~/input/trajectory" to="$(var input_trajectory)"/>
     <remap from="~/output/trajectory" to="$(var output_trajectory)"/>
     <remap from="~/input/external_velocity_limit_mps" to="/planning/scenario_planning/max_velocity"/>
+    <remap from="~/input/external_acceleration_constraint_mps" to="/planning/scenario_planning/target_acceleration"/>
     <!-- Topic for setting maximum speed from the outside (input topic) -->
     <remap from="~/output/current_velocity_limit_mps" to="/planning/scenario_planning/current_max_velocity"/>
     <!-- Topic for displaying the set maximum speed (output topic) -->

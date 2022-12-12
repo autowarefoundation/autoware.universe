@@ -100,8 +100,10 @@ AnalyticalJerkConstrainedSmoother::Param AnalyticalJerkConstrainedSmoother::getP
 }
 
 bool AnalyticalJerkConstrainedSmoother::apply(
-  const double initial_vel, const double initial_acc, const TrajectoryPoints & input,
-  TrajectoryPoints & output, [[maybe_unused]] std::vector<TrajectoryPoints> & debug_trajectories)
+  const double initial_vel, const double initial_acc,
+  const AccelerationConstraint::ConstSharedPtr & external_acceleration_constraint_ptr,
+  const TrajectoryPoints & input, TrajectoryPoints & output,
+  [[maybe_unused]] std::vector<TrajectoryPoints> & debug_trajectories)
 {
   RCLCPP_DEBUG(logger_, "-------------------- Start --------------------");
 

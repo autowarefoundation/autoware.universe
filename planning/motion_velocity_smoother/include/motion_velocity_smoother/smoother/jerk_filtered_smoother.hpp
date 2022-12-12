@@ -43,8 +43,10 @@ public:
   explicit JerkFilteredSmoother(rclcpp::Node & node);
 
   bool apply(
-    const double initial_vel, const double initial_acc, const TrajectoryPoints & input,
-    TrajectoryPoints & output, std::vector<TrajectoryPoints> & debug_trajectories) override;
+    const double v0, const double a0,
+    const AccelerationConstraint::ConstSharedPtr & external_acceleration_constraint_ptr,
+    const TrajectoryPoints & input, TrajectoryPoints & output,
+    std::vector<TrajectoryPoints> & debug_trajectories) override;
 
   TrajectoryPoints resampleTrajectory(
     const TrajectoryPoints & input, [[maybe_unused]] const double v0,
@@ -68,6 +70,10 @@ private:
   TrajectoryPoints mergeFilteredTrajectory(
     const double v0, const double a0, const double a_min, const double j_min,
     const TrajectoryPoints & forward_filtered, const TrajectoryPoints & backward_filtered) const;
+  TrajectoryPoints accelerationConstraintFilter(
+    const double v0, const double a0,
+    const AccelerationConstraint::ConstSharedPtr & external_acceleration_constraint_ptr,
+    const double a_max, const double a_min, const TrajectoryPoints & input) const;
 };
 }  // namespace motion_velocity_smoother
 

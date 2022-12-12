@@ -68,8 +68,10 @@ public:
   explicit AnalyticalJerkConstrainedSmoother(rclcpp::Node & node);
 
   bool apply(
-    const double initial_vel, const double initial_acc, const TrajectoryPoints & input,
-    TrajectoryPoints & output, std::vector<TrajectoryPoints> & debug_trajectories) override;
+    const double initial_vel, const double initial_acc,
+    const AccelerationConstraint::ConstSharedPtr & external_acceleration_constraint_ptr,
+    const TrajectoryPoints & input, TrajectoryPoints & output,
+    std::vector<TrajectoryPoints> & debug_trajectories) override;
 
   TrajectoryPoints resampleTrajectory(
     const TrajectoryPoints & input, [[maybe_unused]] const double v0,
