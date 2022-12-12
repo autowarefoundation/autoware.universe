@@ -24,6 +24,7 @@ CameraParticleCorrector::CameraParticleCorrector()
 
   // Publication
   pub_image_ = create_publisher<Image>("match_image", 10);
+  pub_map_image_ = create_publisher<Image>("cost_map_image", 10);
   pub_marker_ = create_publisher<MarkerArray>("cost_map_range", 10);
   pub_scored_cloud_ = create_publisher<PointCloud2>("scored_cloud", 10);
 
@@ -64,19 +65,34 @@ CameraParticleCorrector::split_linesegments(const PointCloud2 & msg)
 {
   LineSegments all_lsd_cloud;
   pcl::fromROSMsg(msg, all_lsd_cloud);
-  LineSegments lsd_cloud, iffy_lsd_cloud;
+  LineSegments reliable_cloud, iffy_cloud;
   {
     for (const auto & p : all_lsd_cloud) {
       if (p.label == 0)
-        iffy_lsd_cloud.push_back(p);
+        iffy_cloud.push_back(p);
       else
-        lsd_cloud.push_back(p);
+        reliable_cloud.push_back(p);
     }
   }
 
-  filt(iffy_lsd_cloud, lsd_cloud);
+  auto [good_cloud, bad_cloud] = filt(iffy_cloud);
+  {
+    cv::Mat debug_image = cv::Mat::zeros(800, 800, CV_8UC3);
+    auto draw = [&debug_image](LineSegments & cloud, cv::Scalar color) -> void {
+      for (const auto & line : cloud) {
+        const Eigen::Vector3f p1 = line.getVector3fMap();
+        const Eigen::Vector3f p2 = line.getNormalVector3fMap();
+        cv::line(debug_image, cv2pt(p1), cv2pt(p2), color, 2);
+      }
+    };
 
-  return {lsd_cloud, iffy_lsd_cloud};
+    draw(reliable_cloud, cv::Scalar(0, 0, 255));
+    draw(good_cloud, cv::Scalar(0, 255, 0));
+    draw(bad_cloud, cv::Scalar(100, 100, 100));
+    common::publish_image(*pub_image_, debug_image, msg.header.stamp);
+  }
+
+  return {reliable_cloud, good_cloud};
 }
 
 void CameraParticleCorrector::on_lsd(const PointCloud2 & lsd_msg)
@@ -100,32 +116,38 @@ void CameraParticleCorrector::on_lsd(const PointCloud2 & lsd_msg)
   for (auto & particle : weighted_particles.particles) {
     Sophus::SE3f transform = common::pose_to_se3(particle.pose);
     LineSegments transformed_lsd = common::transform_linesegments(lsd_cloud, transform);
-
+    LineSegments transformed_iffy_lsd = common::transform_linesegments(iffy_lsd_cloud, transform);
+    transformed_lsd += transformed_iffy_lsd;
     float raw_score = compute_score(transformed_lsd, transform.translation());
     particle.weight = score_converter_(raw_score);
   }
 
   cost_map_.erase_obsolete();  // NOTE:
 
-  Pose meaned_pose = mean_pose(weighted_particles);
-  Eigen::Vector3f mean_position = common::pose_to_affine(meaned_pose).translation();
-  if ((mean_position - last_mean_position_).squaredNorm() > 1) {
-    this->set_weighted_particle_array(weighted_particles);
-    last_mean_position_ = mean_position;
-  } else {
-    RCLCPP_INFO_STREAM(get_logger(), "Skip weighting because almost same positon");
+  {
+    // Check travel distance and publish weights if it is enough long
+    Pose meaned_pose = mean_pose(weighted_particles);
+    Eigen::Vector3f mean_position = common::pose_to_affine(meaned_pose).translation();
+    if ((mean_position - last_mean_position_).squaredNorm() > 1) {
+      this->set_weighted_particle_array(weighted_particles);
+      last_mean_position_ = mean_position;
+    } else {
+      RCLCPP_INFO_STREAM(get_logger(), "Skip weighting because almost same positon");
+    }
   }
 
   pub_marker_->publish(cost_map_.show_map_range());
+  RCLCPP_INFO_STREAM(get_logger(), "weight computation: " << timer);
 
   // DEBUG: just visualization
   {
     Pose meaned_pose = mean_pose(weighted_particles);
     Sophus::SE3f transform = common::pose_to_se3(meaned_pose);
-    LineSegments transformed_lsd = common::transform_linesegments(lsd_cloud, transform);
 
     pcl::PointCloud<pcl::PointXYZI> cloud =
-      evaluate_cloud(transformed_lsd, transform.translation());
+      evaluate_cloud(common::transform_linesegments(lsd_cloud, transform), transform.translation());
+    pcl::PointCloud<pcl::PointXYZI> iffy_cloud = evaluate_cloud(
+      common::transform_linesegments(iffy_lsd_cloud, transform), transform.translation());
 
     pcl::PointCloud<pcl::PointXYZRGB> rgb_cloud;
     float max_score = 0;
@@ -138,6 +160,13 @@ void CameraParticleCorrector::on_lsd(const PointCloud2 & lsd_msg)
       rgb.rgba = common::color_scale::blue_red(0.5 + p.intensity / max_score * 0.5);
       rgb_cloud.push_back(rgb);
     }
+    for (const auto p : iffy_cloud) {
+      pcl::PointXYZRGB rgb;
+      rgb.getVector3fMap() = p.getVector3fMap();
+      rgb.rgba = common::Color(0, 1.0, 0, 1.0f);
+      rgb_cloud.push_back(rgb);
+    }
+
     common::publish_cloud(*pub_scored_cloud_, rgb_cloud, lsd_msg.header.stamp);
   }
 
@@ -148,7 +177,7 @@ void CameraParticleCorrector::on_timer()
 {
   if (latest_pose_.has_value())
     common::publish_image(
-      *pub_image_, cost_map_.get_map_image(latest_pose_->pose), latest_pose_->header.stamp);
+      *pub_map_image_, cost_map_.get_map_image(latest_pose_->pose), latest_pose_->header.stamp);
 }
 
 void CameraParticleCorrector::on_ll2(const PointCloud2 & ll2_msg)
@@ -172,8 +201,6 @@ float CameraParticleCorrector::compute_score(
 {
   float score = 0;
   for (const LineSegment & pn : lsd_cloud) {
-    if (pn.label == 0) continue;
-
     const Eigen::Vector3f tangent = (pn.getNormalVector3fMap() - pn.getVector3fMap()).normalized();
     const float length = (pn.getVector3fMap() - pn.getNormalVector3fMap()).norm();
 
@@ -185,7 +212,11 @@ float CameraParticleCorrector::compute_score(
       float gain = std::exp(-far_weight_gain_ * squared_norm);
 
       cv::Vec2b v2 = cost_map_.at2(p.topRows(2));
-      score += gain * (abs_cos(tangent, v2[1]) * v2[0] + score_offset_);
+      if (pn.label == 0) {
+        score += 0.5 * (abs_cos(tangent, v2[1]) * v2[0] + score_offset_);
+      } else {
+        score += gain * (abs_cos(tangent, v2[1]) * v2[0] + score_offset_);
+      }
     }
   }
   return score;
@@ -196,8 +227,6 @@ pcl::PointCloud<pcl::PointXYZI> CameraParticleCorrector::evaluate_cloud(
 {
   pcl::PointCloud<pcl::PointXYZI> cloud;
   for (const LineSegment & pn : lsd_cloud) {
-    if (pn.label == 0) continue;
-
     Eigen::Vector3f tangent = (pn.getNormalVector3fMap() - pn.getVector3fMap()).normalized();
     float length = (pn.getVector3fMap() - pn.getNormalVector3fMap()).norm();
 

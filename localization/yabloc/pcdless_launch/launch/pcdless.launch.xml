@@ -50,14 +50,14 @@
         </group>
 
         <!-- anti_shadow -->
-        <group>
+        <!-- <group>
             <push-ros-namespace namespace="imgproc"/>
             <include file="$(find-pkg-share pcdless_launch)/launch/impl/antishadow.launch.xml">
                 <arg name="use_sim_time" value="$(var use_sim_time)" />
                 <arg name="resized_image" value="$(var resized_image)"/>
                 <arg name="resized_info" value="$(var resized_info)"/>
             </include>
-        </group>
+        </group> -->
 
         <!-- twist -->
         <group>

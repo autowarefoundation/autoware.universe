@@ -13,6 +13,9 @@
 
 namespace pcdless::modularized_particle_filter
 {
+cv::Point2f cv2pt(const Eigen::Vector3f v);
+float abs_cos(const Eigen::Vector3f & t, float deg);
+
 class CameraParticleCorrector : public modularized_particle_filter::AbstCorrector
 {
 public:
@@ -39,6 +42,7 @@ private:
   rclcpp::TimerBase::SharedPtr timer_;
 
   rclcpp::Publisher<Image>::SharedPtr pub_image_;
+  rclcpp::Publisher<Image>::SharedPtr pub_map_image_;
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_marker_;
   rclcpp::Publisher<PointCloud2>::SharedPtr pub_scored_cloud_;
 
@@ -58,6 +62,6 @@ private:
   pcl::PointCloud<pcl::PointXYZI> evaluate_cloud(
     const LineSegments & lsd_cloud, const Eigen::Vector3f & self_position);
 
-  LineSegments filt(const LineSegments & lines, const LineSegments & reliable);
+  std::pair<LineSegments, LineSegments> filt(const LineSegments & lines);
 };
 }  // namespace pcdless::modularized_particle_filter
