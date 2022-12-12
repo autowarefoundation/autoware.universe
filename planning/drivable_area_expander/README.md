@@ -1,4 +1,4 @@
-# Drivablea Area Expander
+# Drivable Area Expander
 
 ## Purpose
 
