@@ -789,8 +789,7 @@ std::optional<LaneChangePath> getAbortPaths(
   const auto ego_nearest_dist_threshold = planner_data->parameters.ego_nearest_dist_threshold;
   const auto ego_nearest_yaw_threshold = planner_data->parameters.ego_nearest_yaw_threshold;
 
-  constexpr double resample_path{1.0};
-  auto resampled_selected_path = util::resamplePathWithSpline(selected_path.path, resample_path);
+  auto resampled_selected_path = selected_path.path;
 
   const auto ego_pose_idx = motion_utils::findFirstNearestIndexWithSoftConstraints(
     resampled_selected_path.points, current_pose, ego_nearest_dist_threshold,
@@ -850,8 +849,7 @@ std::optional<LaneChangePath> getAbortPaths(
   }
 
   if (!hasEnoughDistanceToLaneChangeAfterAbort(
-        *route_handler, current_lanes, current_pose, abort_return_dist, common_param,
-        lane_change_param)) {
+        *route_handler, current_lanes, current_pose, abort_return_dist, common_param)) {
     return std::nullopt;
   }
 
@@ -927,10 +925,9 @@ double getLateralShift(const LaneChangePath & path)
 bool hasEnoughDistanceToLaneChangeAfterAbort(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & current_lanes,
   const Pose & current_pose, const double abort_return_dist,
-  const BehaviorPathPlannerParameters & common_param,
-  const LaneChangeParameters & lane_change_param)
+  const BehaviorPathPlannerParameters & common_param)
 {
-  const auto minimum_lane_change_distance = lane_change_param.minimum_lane_change_prepare_distance +
+  const auto minimum_lane_change_distance = common_param.minimum_lane_change_prepare_distance +
                                             common_param.minimum_lane_change_length +
                                             common_param.backward_length_buffer_for_end_of_lane;
   const auto abort_plus_lane_change_distance = abort_return_dist + minimum_lane_change_distance;

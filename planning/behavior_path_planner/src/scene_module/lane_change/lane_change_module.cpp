@@ -140,13 +140,12 @@ BehaviorModuleOutput LaneChangeModule::plan()
 
   auto path = status_.lane_change_path.path;
   is_activated_ = isActivated();
-  constexpr double resample_interval{1.0};
 
   PathWithLaneId selected_path = status_.lane_change_path.path;
   PathWithLaneId path;
 
   if (!isAbortState()) {
-    path = util::resamplePathWithSpline(selected_path, resample_interval);
+    path = selected_path;
     if (!isValidPath(path)) {
       status_.is_safe = false;
       return BehaviorModuleOutput{};
@@ -160,7 +159,7 @@ BehaviorModuleOutput LaneChangeModule::plan()
     }
   } else {
     resetPathIfAbort(selected_path);
-    path = util::resamplePathWithSpline(selected_path, resample_interval);
+    path = selected_path;
     generateExtendedDrivableArea(path);
   }
 
@@ -501,10 +500,9 @@ bool LaneChangeModule::isAbortConditionSatisfied()
     }
 
     // check abort enable flag
-    auto clock{rclcpp::Clock{RCL_ROS_TIME}};
     RCLCPP_WARN_STREAM_THROTTLE(
-      getLogger(), clock, 1000,
-      "DANGER!!! Path is not safe anymore, but it is too late to cancel! Please be cautious");
+      getLogger(), *clock_, 1000,
+      "DANGER!!! Path is not safe anymore, but it is too late to CANCEL! Please be cautious");
 
     if (!parameters_->enable_abort_lane_change) {
       current_lane_change_state_ = LaneChangeStates::Stop;
@@ -515,7 +513,7 @@ bool LaneChangeModule::isAbortConditionSatisfied()
       planner_data_, status_.lane_change_path, ego_pose_before_collision, common_parameters,
       *parameters_);
 
-    if (!found_abort_path) {
+    if (!found_abort_path && !is_abort_path_approved_) {
       current_lane_change_state_ = LaneChangeStates::Stop;
       return true;
     }
@@ -535,9 +533,8 @@ bool LaneChangeModule::isAbortConditionSatisfied()
 bool LaneChangeModule::isAbortState() const
 {
   if ((current_lane_change_state_ == LaneChangeStates::Abort) && abort_path_) {
-    auto clock{rclcpp::Clock{RCL_ROS_TIME}};
     RCLCPP_WARN_STREAM_THROTTLE(
-      getLogger(), clock, 1000,
+      getLogger(), *clock_, 1000,
       "DANGER!!! Lane change transition to ABORT state, return path will be computed!");
     return true;
   }
@@ -547,9 +544,8 @@ bool LaneChangeModule::isAbortState() const
 bool LaneChangeModule::isStopState() const
 {
   if (current_lane_change_state_ == LaneChangeStates::Stop) {
-    auto clock{rclcpp::Clock{RCL_ROS_TIME}};
     RCLCPP_WARN_STREAM_THROTTLE(
-      getLogger(), clock, 1000, "DANGER!!! Lane change transition to STOP state!");
+      getLogger(), *clock_, 1000, "DANGER!!! Lane change transition to STOP state!");
     return true;
   }
   return false;
