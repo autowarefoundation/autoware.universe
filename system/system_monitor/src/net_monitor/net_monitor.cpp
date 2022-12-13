@@ -79,7 +79,7 @@ NetMonitor::NetMonitor(const rclcpp::NodeOptions & options)
   search_reassembles_failed_column_index();
 
   // get Network information for the first time
-  update_network_info_list();
+  update_network_list();
 
   // Run I/O service processing loop
   boost::system::error_code error_code;
@@ -98,123 +98,147 @@ NetMonitor::~NetMonitor() { shutdown_nl80211(); }
 
 void NetMonitor::shutdown_nl80211() { nl80211_.shutdown(); }
 
-void NetMonitor::on_timer() { update_network_info_list(); }
+void NetMonitor::on_timer() { update_network_list(); }
 
-// cspell: ignore ifas, ifrm, ifrc
-void NetMonitor::update_network_info_list()
+void NetMonitor::update_network_list()
 {
-  net_info_list_.clear();
-
-  if (device_params_.empty()) {
-    return;
-  }
-
-  const struct ifaddrs * ifa{};
-  struct ifaddrs * ifas{nullptr};
-
   rclcpp::Duration duration = this->now() - last_update_time_;
 
+  struct ifaddrs * interfaces = {};
+
   // Get network interfaces
-  getifaddrs_errno_ = 0;
-  if (getifaddrs(&ifas) < 0) {
-    getifaddrs_errno_ = errno;
+  if (getifaddrs(&interfaces) < 0) {
     return;
   }
 
-  for (ifa = ifas; ifa; ifa = ifa->ifa_next) {
+  for (const auto * interface = interfaces; interface; interface = interface->ifa_next) {
     // Skip no addr
-    if (!ifa->ifa_addr) {
+    if (!interface->ifa_addr) {
       continue;
     }
     // Skip loopback
-    if (ifa->ifa_flags & IFF_LOOPBACK) {
+    if (interface->ifa_flags & IFF_LOOPBACK) {
       continue;
     }
     // Skip non AF_PACKET
-    if (ifa->ifa_addr->sa_family != AF_PACKET) {
-      continue;
-    }
-    // Skip device not specified
-    if (
-      boost::find(device_params_, ifa->ifa_name) == device_params_.end() &&
-      boost::find(device_params_, "*") == device_params_.end()) {
+    if (interface->ifa_addr->sa_family != AF_PACKET) {
       continue;
     }
 
-    int fd{0};
-    struct ifreq ifrm = {};
-    struct ifreq ifrc = {};
-    struct ethtool_cmd edata = {};
+    NetworkInfomation network{};
+    network.interface_name = interface->ifa_name;
+    network.is_running = (interface->ifa_flags & IFF_RUNNING);
 
-    net_info_list_.emplace_back();
-    auto & net_info = net_info_list_.back();
+    // Update network information using socket
+    update_network_information_by_socket(network);
 
-    net_info.interface_name = std::string(ifa->ifa_name);
+    // Update network information using routing netlink stats
+    update_network_information_by_routing_netlink(network, interface->ifa_data, duration);
 
-    // Get MTU information
-    fd = socket(AF_INET, SOCK_DGRAM, 0);
-    // NOLINTNEXTLINE [cppcoreguidelines-pro-type-union-access]
-    strncpy(ifrm.ifr_name, ifa->ifa_name, IFNAMSIZ - 1);
-    if (ioctl(fd, SIOCGIFMTU, &ifrm) < 0) {
-      net_info.mtu_errno = errno;
-      close(fd);
-      continue;
-    }
-
-    // Get network capacity
-    // NOLINTNEXTLINE [cppcoreguidelines-pro-type-union-access]
-    strncpy(ifrc.ifr_name, ifa->ifa_name, IFNAMSIZ - 1);
-    ifrc.ifr_data = (caddr_t)&edata;  // NOLINT [cppcoreguidelines-pro-type-cstyle-cast]
-
-    edata.cmd = ETHTOOL_GSET;
-    if (ioctl(fd, SIOCETHTOOL, &ifrc) < 0) {
-      // possibly wireless connection, get bitrate(MBit/s)
-      net_info.speed = nl80211_.getBitrate(ifa->ifa_name);
-      if (net_info.speed <= 0) {
-        net_info.ethtool_errno = errno;
-        close(fd);
-        continue;
-      }
-    } else {
-      net_info.speed = edata.speed;
-    }
-
-    net_info.is_running = (ifa->ifa_flags & IFF_RUNNING);
-
-    auto * stats = static_cast<struct rtnl_link_stats *>(ifa->ifa_data);
-    if (bytes_.find(net_info.interface_name) != bytes_.end()) {
-      net_info.rx_traffic =
-        to_mbit(stats->rx_bytes - bytes_[net_info.interface_name].rx_bytes) / duration.seconds();
-      net_info.tx_traffic =
-        to_mbit(stats->tx_bytes - bytes_[net_info.interface_name].tx_bytes) / duration.seconds();
-      net_info.rx_usage = net_info.rx_traffic / net_info.speed;
-      net_info.tx_usage = net_info.tx_traffic / net_info.speed;
-    }
-
-    net_info.mtu = ifrm.ifr_mtu;  // NOLINT [cppcoreguidelines-pro-type-union-access]
-    net_info.rx_bytes = stats->rx_bytes;
-    net_info.rx_errors = stats->rx_errors;
-    net_info.tx_bytes = stats->tx_bytes;
-    net_info.tx_errors = stats->tx_errors;
-    net_info.collisions = stats->collisions;
-
-    close(fd);
-
-    bytes_[net_info.interface_name].rx_bytes = stats->rx_bytes;
-    bytes_[net_info.interface_name].tx_bytes = stats->tx_bytes;
-
-    // Get the count of CRC errors
-    CrcErrors & crc_ers = crc_errors_[net_info.interface_name];
-    crc_ers.errors_queue.push_back(stats->rx_crc_errors - crc_ers.last_rx_crc_errors);
-    while (crc_ers.errors_queue.size() > crc_error_check_duration_) {
-      crc_ers.errors_queue.pop_front();
-    }
-    crc_ers.last_rx_crc_errors = stats->rx_crc_errors;
+    network_list_[interface->ifa_name] = network;
   }
 
-  freeifaddrs(ifas);
+  freeifaddrs(interfaces);
 
   last_update_time_ = this->now();
+}
+
+void NetMonitor::update_network_information_by_socket(NetworkInfomation & network)
+{
+  // Get MTU information
+  int fd = socket(AF_INET, SOCK_DGRAM, 0);
+
+  // Update MTU information
+  update_mtu(network, fd);
+
+  // Update network capacity
+  update_network_capacity(network, fd);
+
+  close(fd);
+}
+
+void NetMonitor::update_mtu(NetworkInfomation & network, int fd)
+{
+  struct ifreq request = {};
+
+  // NOLINTNEXTLINE [cppcoreguidelines-pro-type-union-access]
+  strncpy(request.ifr_name, network.interface_name.c_str(), IFNAMSIZ - 1);
+  if (ioctl(fd, SIOCGIFMTU, &request) < 0) {
+    network.mtu_errno = errno;
+    return;
+  }
+
+  network.mtu = request.ifr_mtu;  // NOLINT [cppcoreguidelines-pro-type-union-access]
+}
+
+void NetMonitor::update_network_capacity(NetworkInfomation & network, int fd)
+{
+  struct ifreq request = {};
+  struct ethtool_cmd ether_request = {};
+
+  // NOLINTNEXTLINE [cppcoreguidelines-pro-type-union-access]
+  strncpy(request.ifr_name, network.interface_name.c_str(), IFNAMSIZ - 1);
+  request.ifr_data = (caddr_t)&ether_request;  // NOLINT [cppcoreguidelines-pro-type-cstyle-cast]
+
+  ether_request.cmd = ETHTOOL_GSET;
+  if (ioctl(fd, SIOCETHTOOL, &request) >= 0) {
+    network.speed = ether_request.speed;
+    return;
+  }
+
+  // Possibly wireless connection, get bitrate(MBit/s)
+  int ret = nl80211_.getBitrate(network.interface_name.c_str());
+  if (ret <= 0) {
+    network.ethtool_errno = errno;
+  } else {
+    network.speed = ret;
+  }
+}
+
+void NetMonitor::update_network_information_by_routing_netlink(
+  NetworkInfomation & network, void * data, const rclcpp::Duration & duration)
+{
+  auto * stats = static_cast<struct rtnl_link_stats *>(data);
+
+  update_traffic(network, stats, duration);
+
+  update_crc_error(network, stats);
+}
+
+void NetMonitor::update_traffic(
+  NetworkInfomation & network, const struct rtnl_link_stats * stats,
+  const rclcpp::Duration & duration)
+{
+  network.rx_bytes = stats->rx_bytes;
+  network.rx_errors = stats->rx_errors;
+  network.tx_bytes = stats->tx_bytes;
+  network.tx_errors = stats->tx_errors;
+  network.collisions = stats->collisions;
+
+  // Calculate traffic and usage if interface is entried in bytes
+  const auto bytes_entry = bytes_.find(network.interface_name);
+  if (bytes_entry != bytes_.end()) {
+    network.rx_traffic =
+      to_mbit(stats->rx_bytes - bytes_entry->second.rx_bytes) / duration.seconds();
+    network.tx_traffic =
+      to_mbit(stats->tx_bytes - bytes_entry->second.tx_bytes) / duration.seconds();
+    network.rx_usage = network.rx_traffic / network.speed;
+    network.tx_usage = network.tx_traffic / network.speed;
+  }
+
+  bytes_[network.interface_name].rx_bytes = stats->rx_bytes;
+  bytes_[network.interface_name].tx_bytes = stats->tx_bytes;
+}
+
+void NetMonitor::update_crc_error(NetworkInfomation & network, const struct rtnl_link_stats * stats)
+{
+  // Get the count of CRC errors
+  CrcErrors & crc_errors = crc_errors_[network.interface_name];
+  crc_errors.errors_queue.push_back(stats->rx_crc_errors - crc_errors.last_rx_crc_errors);
+  while (crc_errors.errors_queue.size() > crc_error_check_duration_) {
+    crc_errors.errors_queue.pop_front();
+  }
+  crc_errors.last_rx_crc_errors = stats->rx_crc_errors;
 }
 
 void NetMonitor::check_usage(diagnostic_updater::DiagnosticStatusWrapper & stat)
@@ -232,32 +256,34 @@ void NetMonitor::check_usage(diagnostic_updater::DiagnosticStatusWrapper & stat)
   std::string error_str;
   std::vector<std::string> interface_names;
 
-  for (const auto & net_info : net_info_list_) {
-    if (!is_supported_network(net_info, index, stat, error_str)) {
+  for (const auto & network : network_list_) {
+    if (!is_supported_network(network.second, index, stat, error_str)) {
       ++index;
-      interface_names.push_back(net_info.interface_name);
+      interface_names.push_back(network.second.interface_name);
       continue;
     }
 
-    level = net_info.is_running ? DiagStatus::OK : DiagStatus::ERROR;
+    level = network.second.is_running ? DiagStatus::OK : DiagStatus::ERROR;
 
     stat.add(fmt::format("Network {}: status", index), usage_dict_.at(level));
-    stat.add(fmt::format("Network {}: interface name", index), net_info.interface_name);
-    stat.addf(fmt::format("Network {}: rx_usage", index), "%.2f%%", net_info.rx_usage * 1e+2);
-    stat.addf(fmt::format("Network {}: tx_usage", index), "%.2f%%", net_info.tx_usage * 1e+2);
-    stat.addf(fmt::format("Network {}: rx_traffic", index), "%.2f MBit/s", net_info.rx_traffic);
-    stat.addf(fmt::format("Network {}: tx_traffic", index), "%.2f MBit/s", net_info.tx_traffic);
-    stat.addf(fmt::format("Network {}: capacity", index), "%.1f MBit/s", net_info.speed);
-    stat.add(fmt::format("Network {}: mtu", index), net_info.mtu);
-    stat.add(fmt::format("Network {}: rx_bytes", index), net_info.rx_bytes);
-    stat.add(fmt::format("Network {}: rx_errors", index), net_info.rx_errors);
-    stat.add(fmt::format("Network {}: tx_bytes", index), net_info.tx_bytes);
-    stat.add(fmt::format("Network {}: tx_errors", index), net_info.tx_errors);
-    stat.add(fmt::format("Network {}: collisions", index), net_info.collisions);
+    stat.add(fmt::format("Network {}: interface name", index), network.second.interface_name);
+    stat.addf(fmt::format("Network {}: rx_usage", index), "%.2f%%", network.second.rx_usage * 1e+2);
+    stat.addf(fmt::format("Network {}: tx_usage", index), "%.2f%%", network.second.tx_usage * 1e+2);
+    stat.addf(
+      fmt::format("Network {}: rx_traffic", index), "%.2f MBit/s", network.second.rx_traffic);
+    stat.addf(
+      fmt::format("Network {}: tx_traffic", index), "%.2f MBit/s", network.second.tx_traffic);
+    stat.addf(fmt::format("Network {}: capacity", index), "%.1f MBit/s", network.second.speed);
+    stat.add(fmt::format("Network {}: mtu", index), network.second.mtu);
+    stat.add(fmt::format("Network {}: rx_bytes", index), network.second.rx_bytes);
+    stat.add(fmt::format("Network {}: rx_errors", index), network.second.rx_errors);
+    stat.add(fmt::format("Network {}: tx_bytes", index), network.second.tx_bytes);
+    stat.add(fmt::format("Network {}: tx_errors", index), network.second.tx_errors);
+    stat.add(fmt::format("Network {}: collisions", index), network.second.collisions);
 
     ++index;
 
-    interface_names.push_back(net_info.interface_name);
+    interface_names.push_back(network.second.interface_name);
   }
 
   // Check if specified device exists
@@ -300,21 +326,21 @@ void NetMonitor::check_crc_error(diagnostic_updater::DiagnosticStatusWrapper & s
   int index = 0;
   std::string error_str;
 
-  for (const auto & net_info : net_info_list_) {
-    if (!is_supported_network(net_info, index, stat, error_str)) {
+  for (const auto & network : network_list_) {
+    if (!is_supported_network(network.second, index, stat, error_str)) {
       ++index;
       continue;
     }
 
-    CrcErrors & crc_ers = crc_errors_[net_info.interface_name];
+    CrcErrors & crc_errors = crc_errors_[network.second.interface_name];
     unsigned int unit_rx_crc_errors = 0;
 
-    for (auto errors : crc_ers.errors_queue) {
+    for (auto errors : crc_errors.errors_queue) {
       unit_rx_crc_errors += errors;
     }
 
-    stat.add(fmt::format("Network {}: interface name", index), net_info.interface_name);
-    stat.add(fmt::format("Network {}: total rx_crc_errors", index), crc_ers.last_rx_crc_errors);
+    stat.add(fmt::format("Network {}: interface name", index), network.second.interface_name);
+    stat.add(fmt::format("Network {}: total rx_crc_errors", index), crc_errors.last_rx_crc_errors);
     stat.add(fmt::format("Network {}: rx_crc_errors per unit time", index), unit_rx_crc_errors);
 
     if (unit_rx_crc_errors >= crc_error_count_threshold_) {
@@ -351,34 +377,34 @@ bool NetMonitor::check_general_info(diagnostic_updater::DiagnosticStatusWrapper 
 }
 
 bool NetMonitor::is_supported_network(
-  const NetworkInfo & net_info, int index, diagnostic_updater::DiagnosticStatusWrapper & stat,
+  const NetworkInfomation & network, int index, diagnostic_updater::DiagnosticStatusWrapper & stat,
   std::string & error_str)
 {
   // MTU information
-  if (net_info.mtu_errno != 0) {
-    if (net_info.mtu_errno == ENOTSUP) {
+  if (network.mtu_errno != 0) {
+    if (network.mtu_errno == ENOTSUP) {
       stat.add(fmt::format("Network {}: status", index), "Not Supported");
     } else {
       stat.add(fmt::format("Network {}: status", index), "Error");
       error_str = "ioctl error";
     }
 
-    stat.add(fmt::format("Network {}: interface name", index), net_info.interface_name);
-    stat.add("ioctl(SIOCGIFMTU)", strerror(net_info.mtu_errno));
+    stat.add(fmt::format("Network {}: interface name", index), network.interface_name);
+    stat.add("ioctl(SIOCGIFMTU)", strerror(network.mtu_errno));
     return false;
   }
 
   // network capacity
-  if (net_info.speed <= 0) {
-    if (net_info.ethtool_errno == ENOTSUP) {
+  if (network.speed <= 0) {
+    if (network.ethtool_errno == ENOTSUP) {
       stat.add(fmt::format("Network {}: status", index), "Not Supported");
     } else {
       stat.add(fmt::format("Network {}: status", index), "Error");
       error_str = "ioctl error";
     }
 
-    stat.add(fmt::format("Network {}: interface name", index), net_info.interface_name);
-    stat.add("ioctl(SIOCETHTOOL)", strerror(net_info.ethtool_errno));
+    stat.add(fmt::format("Network {}: interface name", index), network.interface_name);
+    stat.add("ioctl(SIOCETHTOOL)", strerror(network.ethtool_errno));
     return false;
   }
   return true;
@@ -574,15 +600,15 @@ void NetMonitor::send_start_nethogs_request()
   diagnostic_updater::DiagnosticStatusWrapper stat;
   std::vector<std::string> interface_names;
 
-  for (const auto & net_info : net_info_list_) {
-    if (!is_supported_network(net_info, index, stat, error_str)) {
+  for (const auto & network : network_list_) {
+    if (!is_supported_network(network.second, index, stat, error_str)) {
       ++index;
-      interface_names.push_back(net_info.interface_name);
+      interface_names.push_back(network.second.interface_name);
       continue;
     }
     ++index;
 
-    interface_names.push_back(net_info.interface_name);
+    interface_names.push_back(network.second.interface_name);
   }
 
   // Send data to traffic-reader service

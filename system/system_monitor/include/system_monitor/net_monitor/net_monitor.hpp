@@ -41,12 +41,43 @@ constexpr auto to_mbit(T value)
 }
 
 /**
+ * @brief Network information
+ */
+struct NetworkInfomation
+{
+  int mtu_errno;               //!< @brief errno set by ioctl() with SIOCGIFMTU
+  int ethtool_errno;           //!< @brief errno set by ioctl() with SIOCETHTOOL
+  bool is_running;             //!< @brief resource allocated flag
+  std::string interface_name;  //!< @brief interface name
+  double speed;                //!< @brief network capacity
+  int mtu;                     //!< @brief MTU
+  double rx_traffic;           //!< @brief traffic received
+  double tx_traffic;           //!< @brief traffic transmitted
+  double rx_usage;             //!< @brief network capacity usage rate received
+  double tx_usage;             //!< @brief network capacity usage rate transmitted
+  unsigned int rx_bytes;       //!< @brief total bytes received
+  unsigned int rx_errors;      //!< @brief bad packets received
+  unsigned int tx_bytes;       //!< @brief total bytes transmitted
+  unsigned int tx_errors;      //!< @brief packet transmit problems
+  unsigned int collisions;     //!< @brief number of collisions during packet transmissions
+};
+
+/**
  * @brief Bytes information
  */
 struct Bytes
 {
-  unsigned int rx_bytes{0};  //!< @brief total bytes received
-  unsigned int tx_bytes{0};  //!< @brief total bytes transmitted
+  unsigned int rx_bytes;  //!< @brief total bytes received
+  unsigned int tx_bytes;  //!< @brief total bytes transmitted
+};
+
+/**
+ * @brief CRC errors information
+ */
+struct CrcErrors
+{
+  std::deque<unsigned int> errors_queue{};  //!< @brief queue that holds count of CRC errors
+  unsigned int last_rx_crc_errors{0};  //!< @brief rx_crc_error at the time of the last monitoring
 };
 
 namespace local = boost::asio::local;
@@ -92,6 +123,13 @@ public:
 
 protected:
   using DiagStatus = diagnostic_msgs::msg::DiagnosticStatus;
+
+  /**
+   * @brief check NetMonitor General Infomation
+   * @param [out] stat diagnostic message passed directly to diagnostic publish calls
+   * @return check result
+   */
+  bool check_general_info(diagnostic_updater::DiagnosticStatusWrapper & stat);
 
   /**
    * @brief check CPU usage
@@ -145,13 +183,16 @@ protected:
    * @brief update Network information list
    */
   void update_network_info_list();
-
-  /**
-   * @brief check NetMonitor General Infomation
-   * @param [out] stat diagnostic message passed directly to diagnostic publish calls
-   * @return check result
-   */
-  bool check_general_info(diagnostic_updater::DiagnosticStatusWrapper & stat);
+  void update_network_list();
+  void update_network_information_by_socket(NetworkInfomation & network);
+  void update_mtu(NetworkInfomation & network, int fd);
+  void update_network_capacity(NetworkInfomation & network, int fd);
+  void update_network_information_by_routing_netlink(
+    NetworkInfomation & network, void * data, const rclcpp::Duration & duration);
+  void update_traffic(
+    NetworkInfomation & network, const struct rtnl_link_stats * stats,
+    const rclcpp::Duration & duration);
+  void update_crc_error(NetworkInfomation & network, const struct rtnl_link_stats * stats);
 
   /**
    * @brief Send request to start nethogs
@@ -200,38 +241,16 @@ protected:
   void close_connection();
 
   /**
-   * @brief Network information
-   */
-  struct NetworkInfo
-  {
-    int mtu_errno{0};              //!< @brief errno set by ioctl() with SIOCGIFMTU
-    int ethtool_errno{0};          //!< @brief errno set by ioctl() with SIOCETHTOOL
-    bool is_running{false};        //!< @brief resource allocated flag
-    std::string interface_name{};  //!< @brief interface name
-    double speed{0.0};             //!< @brief network capacity
-    int mtu{0};                    //!< @brief MTU
-    double rx_traffic{0.0};        //!< @brief traffic received
-    double tx_traffic{0.0};        //!< @brief traffic transmitted
-    double rx_usage{0.0};          //!< @brief network capacity usage rate received
-    double tx_usage{0.0};          //!< @brief network capacity usage rate transmitted
-    unsigned int rx_bytes{0};      //!< @brief total bytes received
-    unsigned int rx_errors{0};     //!< @brief bad packets received
-    unsigned int tx_bytes{0};      //!< @brief total bytes transmitted
-    unsigned int tx_errors{0};     //!< @brief packet transmit problems
-    unsigned int collisions{0};    //!< @brief number of collisions during packet transmissions
-  };
-
-  /**
    * @brief determine if it is a supported network
-   * @param [in] net_info network infomation
+   * @param [in] network Network infomation
    * @param [in] index index of network infomation index
    * @param [out] stat diagnostic message passed directly to diagnostic publish calls
    * @param [out] error_str error string
    * @return result of determining whether it is a supported network
    */
   static bool is_supported_network(
-    const NetworkInfo & net_info, int index, diagnostic_updater::DiagnosticStatusWrapper & stat,
-    std::string & error_str);
+    const NetworkInfomation & network, int index,
+    diagnostic_updater::DiagnosticStatusWrapper & stat, std::string & error_str);
 
   /**
    * @brief search column index of IP packet reassembles failed in /proc/net/snmp
@@ -254,16 +273,9 @@ protected:
   std::vector<std::string> device_params_;  //!< @brief list of devices
   NL80211 nl80211_;                         //!< @brief 802.11 netlink-based interface
   int getifaddrs_errno_;                    //!< @brief errno set by getifaddrs()
-  std::vector<NetworkInfo> net_info_list_;  //!< @brief list of Network information
+  // std::vector<NetworkInfo> net_info_list_;  //!< @brief list of Network information
+  std::map<std::string, NetworkInfomation> network_list_;
 
-  /**
-   * @brief CRC errors information
-   */
-  struct CrcErrors
-  {
-    std::deque<unsigned int> errors_queue{};  //!< @brief queue that holds count of CRC errors
-    unsigned int last_rx_crc_errors{0};  //!< @brief rx_crc_error at the time of the last monitoring
-  };
   std::map<std::string, CrcErrors> crc_errors_;  //!< @brief list of CRC errors
 
   std::deque<unsigned int>
