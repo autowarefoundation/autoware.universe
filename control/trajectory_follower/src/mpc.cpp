@@ -220,8 +220,8 @@ void MPC::setReferenceTrajectory(
   /* extend terminal points
    * Note: The current MPC does not properly take into account the attitude angle at the end of the
    * path. By extending the end of the path in the attitude direction, the MPC can consider the
-   * attitude angle well, resulting in improved control performance. If the trajecoty is
-   * well-defined considring the end point attitude angle, this feature is not necessary.
+   * attitude angle well, resulting in improved control performance. If the trajectory is
+   * well-defined considering the end point attitude angle, this feature is not necessary.
    */
   if (extend_trajectory_for_end_yaw_control) {
     trajectory_follower::MPCUtils::extendTrajectoryInYawDirection(
