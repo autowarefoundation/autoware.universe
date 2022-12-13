@@ -157,10 +157,6 @@ struct Path
     copy_subset(yaws, subpath->yaws);
     copy_subset(lengths, subpath->lengths);
     copy_subset(jerks, subpath->jerks);
-    if (!subpath->lengths.empty()) {
-      const auto first_length = subpath->lengths.front();
-      for (auto & l : subpath->lengths) l -= first_length;
-    }
     return subpath;
   };
 };

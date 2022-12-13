@@ -12,7 +12,7 @@
         control_points_ratio: 0.3
         smoothing_weight: 0.001
     constraints:
-      collision_distance_buffer: 2.0 # [m] extra distance to use for checking collisions with obstacles
+      collision_distance_buffer: 4.0 # [m] extra distance to use for checking collisions with obstacles
       static_dynamic_obstacle_velocity_threshold: 0.1 # [m/s] minimum velocity for an object to be considered dynamic
       hard:
         max_curvature: 0.2  # [1/m]

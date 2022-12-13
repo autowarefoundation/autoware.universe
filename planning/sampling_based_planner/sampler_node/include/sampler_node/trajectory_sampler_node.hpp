@@ -148,21 +148,13 @@ private:
       return {};
 
     const auto current_idx = std::distance(trajectory.points.begin(), closest_iter);
-    auto zero_vel_idx = current_idx;
-    for (; zero_vel_idx < trajectory.longitudinal_velocities.size() &&
-           trajectory.longitudinal_velocities[zero_vel_idx] > 0.1;
-         ++zero_vel_idx)
-      ;
     const auto time_offset = trajectory.times[current_idx];
     const auto length_offset = trajectory.lengths[current_idx];
     for (auto & t : trajectory.times) t -= time_offset;
     for (auto & l : trajectory.lengths) l -= length_offset;
-    auto max_behind_idx = current_idx;
-    for (; max_behind_idx > 0 && trajectory.lengths[max_behind_idx] <= -max_behind;
-         --max_behind_idx)
-      ;
-    if (zero_vel_idx <= max_behind_idx) return {};
-    return *trajectory.subset(max_behind_idx, zero_vel_idx);
+    auto behind_idx = current_idx;
+    while (behind_idx > 0 && trajectory.lengths[behind_idx] > -max_behind) --behind_idx;
+    return *trajectory.subset(behind_idx, trajectory.points.size());
   }
 
 public:
