@@ -153,5 +153,19 @@ void checkVelocityConstraints(Trajectory & traj, const Constraints & constraints
       break;
     }
   }
+  // not going too fast at the end of the path
+  if (!traj.longitudinal_velocities.empty()) {
+    const auto dist_to_stop = constraints.distance_to_end - traj.lengths.back();
+    if (dist_to_stop > 0.0) {
+      const auto acc_to_stop =
+        (traj.longitudinal_velocities.back() * traj.longitudinal_velocities.back()) /
+        (2 * dist_to_stop);
+      std::cout << dist_to_stop << " = " << constraints.distance_to_end << " - "
+                << traj.lengths.back() << std::endl;
+      std::cout << "\t" << acc_to_stop << std::endl;
+      if (-acc_to_stop < constraints.hard.min_acceleration)
+        traj.constraint_results.velocity = false;
+    }
+  }
 }
 }  // namespace sampler_common::constraints

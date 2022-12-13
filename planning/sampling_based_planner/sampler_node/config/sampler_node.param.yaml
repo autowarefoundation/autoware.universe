@@ -34,7 +34,6 @@
       enable_frenet: True
       enable_bezier: True
       resolution: 0.2
-      target_lengths: [20.0, 40.0, 60.0]
       frenet:
         manual:  # use combinations of the values defined below as target states to generate candidate trajectories
           enable: False

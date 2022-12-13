@@ -43,6 +43,7 @@ class GUI
   sampler_common::transform::Spline2D reference_path_;
   sampler_common::Constraints constraints_;
   std::vector<sampler_common::Trajectory> candidates_;
+  std::vector<frenet_planner::Trajectory> frenet_candidates_;
   std::optional<size_t> selected_id_;
   std::optional<sampler_common::Trajectory> previous_selected_;
   //
@@ -84,13 +85,9 @@ public:
     (void)id;
     to_update_[Tab::candidates];
   }
-  void setFrenetTrajectories(
-    const std::vector<frenet_planner::Trajectory> & trajectories,
-    const sampler_common::Trajectory & base = {})
+  void addFrenetTrajectories(const std::vector<frenet_planner::Trajectory> & trajectories)
   {
-    // TODO(Maxime CLEMENT): GUI for frenet trajectories
-    (void)trajectories;
-    (void)base;
+    frenet_candidates_.insert(frenet_candidates_.end(), trajectories.begin(), trajectories.end());
     to_update_[Tab::frenet] = true;
   }
   void setPerformances(
@@ -118,6 +115,7 @@ public:
       to_update_[Tab::candidates] = false;
     }
     if (to_update_[Tab::frenet]) {
+      window_.plotFrenetCandidates(frenet_candidates_);
       to_update_[Tab::frenet] = false;
     }
     if (to_update_[Tab::pruning]) {
@@ -125,6 +123,7 @@ public:
       to_update_[Tab::pruning] = false;
     }
     window_.update();
+    frenet_candidates_.clear();
   }
 };
 }  // namespace sampler_node::gui

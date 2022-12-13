@@ -154,8 +154,8 @@ inline void calculateTargets(
     sp.target_state.lateral_acceleration = 0.0;
     // TODO(Maxime CLEMENT): don't hardcode 50m here
     const auto velocity_extremum = findVelocityExtremum(path, 50.0);
-    const auto min_vel =
-      std::min(velocity_extremum.min, params.constraints.hard.max_velocity / 2.0);
+    const auto min_vel = 0.0;
+    // std::min(velocity_extremum.min, params.constraints.hard.max_velocity / 2.0);
     const auto max_vel = std::min(velocity_extremum.max, params.constraints.hard.max_velocity);
     const auto samples = params.sampling.frenet.calc.target_longitudinal_velocity_samples;
     for (auto i = 0; i < samples; ++i) {
@@ -170,7 +170,7 @@ inline void calculateTargets(
         2 * params.sampling.confortable_acceleration * distance);
       sp.target_state.longitudinal_velocity = std::min(target_vel, confortable_target_vel);
       if (sp.target_state.longitudinal_velocity == 0.0 && initial_configuration.velocity == 0.0) {
-        // assuming bang band velocity profile
+        // assuming bang bang velocity profile
         const auto dist_to_max_vel =
           (max_vel * max_vel) / (2 * params.sampling.confortable_acceleration);
         if (dist_to_max_vel * 2.0 > distance) {

@@ -100,8 +100,8 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow(parent), ui_(new Ui::Main
   ui_->input_velocity->yAxis->setLabel("velocity (m/s)");
 
   // Candidates tab
-  ui_->candidates_table->setColumnCount(3);
-  ui_->candidates_table->setHorizontalHeaderLabels({"id", "valid", "cost"});
+  ui_->candidates_table->setColumnCount(4);
+  ui_->candidates_table->setHorizontalHeaderLabels({"id", "valid", "cost", "tag"});
   ui_->cand_pos->addGraph();
   ui_->cand_pos->xAxis->setScaleRatio(ui_->cand_pos->yAxis);
   cand_pos_curve_ = new QCPCurve(ui_->cand_pos->xAxis, ui_->cand_pos->yAxis);
@@ -115,6 +115,19 @@ MainWindow::MainWindow(QWidget * parent) : QMainWindow(parent), ui_(new Ui::Main
     const auto id = ui_->candidates_table->item(row, 0)->text().toInt();
     plotCandidate(candidates_[id]);
   });
+
+  // Frenet tab
+  /*
+  ui_->frenet_table->setColumnCount(3);
+  ui_->frenet_table->setHorizontalHeaderLabels({"id", "parameters", "tag"});
+  connect(ui_->frenet_table, &QTableWidget::cellClicked, [&](int row, int col) {
+    (void)col;
+    const auto id = ui_->frenet_table->item(row, 0)->text().toInt();
+    // plotFrenet(frenet_candidates_[id]); TODO(Maxime): allow plotting of only one curve
+  });
+  ui_->frenet_s->addGraph();
+  ui_->frenet_d->addGraph();
+  */
 
   // Pruning tab
   pruning_nb_violations_bars_ =
@@ -286,6 +299,7 @@ void MainWindow::fillCandidatesTable(const std::vector<sampler_common::Trajector
     auto * item = new QTableWidgetItem();
     item->setData(Qt::ItemDataRole::DisplayRole, qVariantFromValue(candidate.cost));
     table->setItem(i, 2, item);
+    table->setItem(i, 3, new QTableWidgetItem(tr("%1").arg(QString::fromStdString(candidate.tag))));
   }
   table->setSortingEnabled(true);
 }
@@ -368,6 +382,16 @@ void MainWindow::plotObstacles(const sampler_common::Constraints & constraints)
   }
   ui_->obstacles_tab_plot->rescaleAxes();
   ui_->obstacles_tab_plot->replot();
+}
+
+void MainWindow::plotFrenetCandidates(
+  const std::vector<frenet_planner::Trajectory> & frenet_candidates)
+{
+  frenet_candidates_ = frenet_candidates;
+
+  for (const auto & candidate : frenet_candidates) {
+    // TODO(Maxime): plot frenet candidates
+  }
 }
 
 }  // namespace sampler_node::gui

@@ -135,8 +135,6 @@ TrajectorySamplerNode::TrajectorySamplerNode(const rclcpp::NodeOptions & node_op
     declare_parameter<std::vector<double>>("preprocessing.reuse_times");
   params_.preprocessing.reuse_max_deviation =
     declare_parameter<double>("preprocessing.reuse_max_deviation");
-  params_.sampling.target_lengths =
-    declare_parameter<std::vector<double>>("sampling.target_lengths");
   params_.sampling.frenet.manual.enable = declare_parameter<bool>("sampling.frenet.manual.enable");
   params_.sampling.frenet.manual.target_durations =
     declare_parameter<std::vector<double>>("sampling.frenet.manual.target_durations");
@@ -244,8 +242,6 @@ rcl_interfaces::msg::SetParametersResult TrajectorySamplerNode::onParameter(
       params_.preprocessing.reuse_times = parameter.as_double_array();
     } else if (parameter.get_name() == "preprocessing.reuse_max_deviation") {
       params_.preprocessing.reuse_max_deviation = parameter.as_double();
-    } else if (parameter.get_name() == "sampling.target_lengths") {
-      params_.sampling.target_lengths = parameter.as_double_array();
     } else if (parameter.get_name() == "sampling.frenet.manual.enable") {
       params_.sampling.frenet.manual.enable = parameter.as_bool();
     } else if (parameter.get_name() == "sampling.frenet.manual.target_durations") {
@@ -323,6 +319,7 @@ void TrajectorySamplerNode::pathCallback(
   prepareConstraints(
     params_.constraints, *in_objects_ptr_, *lanelet_map_ptr_, drivable_ids_, prefered_ids_,
     msg->drivable_area);
+  params_.constraints.distance_to_end = path_spline.lastS() - planning_configuration.frenet.s;
   gui_.setConstraints(params_.constraints);
 
   const auto updated_prev_traj = updatePreviousTrajectory(
@@ -341,8 +338,11 @@ void TrajectorySamplerNode::pathCallback(
       std::make_move_iterator(trajs.end()));
   }
   for (auto & trajectory : trajectories) {
-    sampler_common::constraints::checkHardConstraints(trajectory, params_.constraints);
-    sampler_common::constraints::calculateCost(trajectory, params_.constraints, path_spline);
+    auto resampled_traj = trajectory.resampleTimeFromZero(0.1);
+    sampler_common::constraints::checkHardConstraints(resampled_traj, params_.constraints);
+    trajectory.constraint_results = resampled_traj.constraint_results;
+    sampler_common::constraints::calculateCost(resampled_traj, params_.constraints, path_spline);
+    trajectory.cost = resampled_traj.cost;
   }
   const auto selected_trajectory_idx = selectBestTrajectory(trajectories);
   if (selected_trajectory_idx) {
@@ -512,14 +512,14 @@ sampler_common::Configuration TrajectorySamplerNode::getPlanningConfiguration(
   sampler_common::Configuration state,
   const sampler_common::transform::Spline2D & path_spline) const
 {
-  const auto current_frenet = path_spline.frenet(state.pose);
+  state.frenet = path_spline.frenet(state.pose);
   if (params_.preprocessing.force_zero_deviation) {
-    state.pose = path_spline.cartesian(current_frenet.s);
+    state.pose = path_spline.cartesian(state.frenet.s);
   }
   if (params_.preprocessing.force_zero_heading) {
-    state.heading = path_spline.yaw(current_frenet.s);
+    state.heading = path_spline.yaw(state.frenet.s);
   }
-  state.curvature = path_spline.curvature(current_frenet.s);
+  state.curvature = path_spline.curvature(state.frenet.s);
   return state;
 }
 

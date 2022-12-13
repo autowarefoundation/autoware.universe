@@ -39,7 +39,9 @@ inline std::vector<ReusableTrajectory> calculateReusableTrajectories(
   ReusableTrajectory reusable;
   for (const auto t : target_times) {
     auto to_idx = 0lu;
-    while (to_idx + 1 < trajectory.times.size() && trajectory.times[to_idx] < t) ++to_idx;
+    while (to_idx + 1 < trajectory.times.size() && trajectory.times[to_idx] < t &&
+           trajectory.longitudinal_velocities[to_idx] > 0.1)
+      ++to_idx;
     if (to_idx == 0) continue;
 
     reusable.trajectory = *trajectory.subset(0, to_idx);

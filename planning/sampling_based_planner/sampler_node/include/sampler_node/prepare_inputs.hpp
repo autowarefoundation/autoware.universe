@@ -46,15 +46,6 @@ void prepareConstraints(
   const lanelet::Ids & prefered_ids, const nav_msgs::msg::OccupancyGrid & drivable_area);
 /// @brief prepare sampling parameters to generate trajectories in Frenet frame
 frenet_planner::SamplingParameters prepareSamplingParameters(
-  const frenet_planner::FrenetState & initial_state,
-  const autoware_auto_planning_msgs::msg::Path & path, const double base_duration,
-  const sampler_common::transform::Spline2D & path_spline, const Parameters & params);
-/// @brief prepare sampling parameters to generate paths in Frenet frame
-frenet_planner::SamplingParameters prepareSamplingParameters(
-  const sampler_common::State & initial_state, const autoware_auto_planning_msgs::msg::Path & path,
-  const double base_length, const sampler_common::transform::Spline2D & path_spline,
-  const Parameters & params);
-frenet_planner::SamplingParameters prepareSamplingParameters(
   const sampler_common::Configuration & initial_configuration,
   const autoware_auto_planning_msgs::msg::Path & path, const double base_length,
   const double base_duration, const sampler_common::transform::Spline2D & path_spline,

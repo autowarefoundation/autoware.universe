@@ -28,7 +28,6 @@ struct Parameters
     bool enable_frenet{};
     bool enable_bezier{};
     double resolution{};
-    std::vector<double> target_lengths{};
     double confortable_acceleration = 1.0;  // TODO(Maxime CLEMENT): read from param file
     struct
     {

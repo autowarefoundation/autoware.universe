@@ -27,6 +27,7 @@
 #include <iostream>
 #include <memory>
 #include <numeric>
+#include <string>
 #include <vector>
 
 namespace sampler_common
@@ -59,8 +60,8 @@ struct ConstraintResults
 struct FrenetPoint
 {
   FrenetPoint(double s_, double d_) : s(s_), d(d_) {}
-  double s;
-  double d;
+  double s = 0.0;
+  double d = 0.0;
 };
 
 struct State
@@ -72,6 +73,7 @@ struct State
 
 struct Configuration : State
 {
+  FrenetPoint frenet{0.0, 0.0};
   double velocity{};
   double acceleration{};
 };
@@ -86,6 +88,7 @@ struct Path
   std::vector<double> lengths{};
   ConstraintResults constraint_results{};
   double cost{};
+  std::string tag{};  // string tag used for debugging
 
   Path() = default;
   virtual ~Path() = default;
@@ -98,6 +101,7 @@ struct Path
     jerks.clear();
     lengths.clear();
     constraint_results.clear();
+    tag = "";
     cost = 0.0;
   }
 
@@ -139,6 +143,7 @@ struct Path
     // TODO(Maxime CLEMENT): direct copy from the 2nd path. might need to be improved
     extended_path.cost = path.cost;
     extended_path.constraint_results = path.constraint_results;
+    extended_path.tag = path.tag;
     return extended_path;
   }
 
@@ -361,6 +366,8 @@ struct Constraints
   MultiPolygon prefered_polygons;
   std::vector<DynamicObstacle> dynamic_obstacles;
 
+  double distance_to_end;  // [m] current distance along the reference path between ego and the end
+                           // of the path
   double collision_distance_buffer;
   double static_dynamic_obstacle_velocity_threshold;
 };

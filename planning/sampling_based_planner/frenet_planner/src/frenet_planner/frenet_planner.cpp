@@ -39,7 +39,11 @@ std::vector<Trajectory> generateTrajectories(
     auto trajectory = generateCandidate(
       initial_state, parameter.target_state, parameter.target_duration,
       sampling_parameters.resolution);
+    trajectory.sampling_parameter = parameter;
     calculateCartesian(reference_spline, trajectory);
+    std::stringstream ss;
+    ss << parameter;
+    trajectory.tag = ss.str();
     trajectories.push_back(trajectory);
   }
   return trajectories;
@@ -56,6 +60,9 @@ std::vector<Trajectory> generateLowVelocityTrajectories(
       initial_state, parameter.target_state, parameter.target_duration,
       sampling_parameters.resolution);
     calculateCartesian(reference_spline, trajectory);
+    std::stringstream ss;
+    ss << parameter;
+    trajectory.tag = ss.str();
     trajectories.push_back(trajectory);
   }
   return trajectories;

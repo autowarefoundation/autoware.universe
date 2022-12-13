@@ -53,6 +53,7 @@ private:
   //// Candidate tab
   QCPCurve * cand_pos_curve_;
   QCPCurve * cand_path_curve_;
+  //// Frenet tab
   //// Pruning tab
   QCPBars * pruning_nb_violations_bars_;
   QCPItemStraightLine * pruning_nb_violations_max_line_;
@@ -60,6 +61,7 @@ private:
   std::vector<QCPCurve *> obstacle_polygons_;
   // Cached data
   std::vector<sampler_common::Trajectory> candidates_;
+  std::vector<frenet_planner::Trajectory> frenet_candidates_;
 
 public:
   enum Tab { selected = 0, inputs, candidates, frenet, bezier, pruning, selection, perf, SIZE };
@@ -81,6 +83,7 @@ public:
   void plotNbViolatedConstraints(const std::vector<sampler_common::Trajectory> & candidates);
   void plotCandidate(const sampler_common::Trajectory & trajectory);
   void plotObstacles(const sampler_common::Constraints & constraints);
+  void plotFrenetCandidates(const std::vector<frenet_planner::Trajectory> & frenet_candidates);
 
 private slots:
 };

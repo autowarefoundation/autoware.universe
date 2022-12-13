@@ -147,6 +147,8 @@ public:
     gridLayout->addWidget(input_occ_grid, 1, 1, 1, 1);
 
     tabWidget->addTab(input_tab, QString());
+
+    // Candidates tab
     candidates_tab = new QWidget();
     candidates_tab->setObjectName(QString::fromUtf8("candidates_tab"));
     verticalLayout_9 = new QVBoxLayout(candidates_tab);
@@ -190,8 +192,9 @@ public:
     verticalLayout_10->addWidget(splitter);
 
     verticalLayout_9->addWidget(candidates_tab_widget);
-
     tabWidget->addTab(candidates_tab, QString());
+
+    // Frenet tab
     frenet_tab = new QWidget();
     frenet_tab->setObjectName(QString::fromUtf8("frenet_tab"));
     frenet_tab_layout = new QVBoxLayout(frenet_tab);
@@ -207,6 +210,8 @@ public:
     frenet_tab_layout->addWidget(frenet_d);
 
     tabWidget->addTab(frenet_tab, QString());
+
+    // Bézier tab
     bezier_tab = new QWidget();
     bezier_tab->setObjectName(QString::fromUtf8("bezier_tab"));
     tabWidget->addTab(bezier_tab, QString());
@@ -217,6 +222,7 @@ public:
     pruning_tab_plot = new QCustomPlot(pruning_tab);
     pruning_tab_layout->addWidget(pruning_tab_plot);
 
+    // Obstacle tab
     obstacles_tab = new QWidget();
     obstacles_tab->setObjectName(QString::fromUtf8("obstacles_tab"));
     tabWidget->addTab(obstacles_tab, QString());
@@ -224,10 +230,12 @@ public:
     obstacles_tab_plot = new QCustomPlot(obstacles_tab);
     obstacles_tab_layout->addWidget(obstacles_tab_plot);
 
+    // Selection tab
     selection_tab = new QWidget();
     selection_tab->setObjectName(QString::fromUtf8("selection_tab"));
     tabWidget->addTab(selection_tab, QString());
 
+    // Performance tab
     perf_tab = new QWidget();
     perf_tab->setObjectName(QString::fromUtf8("perf_tab"));
     tabWidget->addTab(perf_tab, QString());
@@ -237,6 +245,7 @@ public:
     verticalLayout_2->addLayout(verticalLayout);
 
     MainWindow->setCentralWidget(centralwidget);
+    // Menu and status bars
     menubar = new QMenuBar(MainWindow);
     menubar->setObjectName(QString::fromUtf8("menubar"));
     menubar->setGeometry(QRect(0, 0, 801, 21));

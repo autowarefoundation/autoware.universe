@@ -26,6 +26,16 @@
 
 namespace frenet_planner
 {
+
+struct FrenetState
+{
+  sampler_common::FrenetPoint position = {0, 0};
+  double lateral_velocity{};
+  double longitudinal_velocity{};
+  double lateral_acceleration{};
+  double longitudinal_acceleration{};
+};
+
 struct Path : sampler_common::Path
 {
   std::vector<sampler_common::FrenetPoint> frenet_points{};
@@ -73,11 +83,18 @@ struct Path : sampler_common::Path
   };
 };
 
+struct SamplingParameter
+{
+  double target_duration{};
+  FrenetState target_state;
+};
+
 struct Trajectory : sampler_common::Trajectory
 {
   std::vector<sampler_common::FrenetPoint> frenet_points{};
   std::optional<Polynomial> lateral_polynomial{};
   std::optional<Polynomial> longitudinal_polynomial{};
+  SamplingParameter sampling_parameter;
 
   Trajectory() = default;
   explicit Trajectory(const sampler_common::Trajectory & traj) : sampler_common::Trajectory(traj) {}
@@ -123,24 +140,11 @@ struct Trajectory : sampler_common::Trajectory
   };
 };
 
-struct FrenetState
-{
-  sampler_common::FrenetPoint position = {0, 0};
-  double lateral_velocity{};
-  double longitudinal_velocity{};
-  double lateral_acceleration{};
-  double longitudinal_acceleration{};
-};
-
-struct SamplingParameter
-{
-  double target_duration{};
-  FrenetState target_state;
-};
 inline std::ostream & operator<<(std::ostream & os, const SamplingParameter & sp)
 {
   const auto & s = sp.target_state;
-  return os << "[T=" << sp.target_duration << ", s=" << s.position.s << ", d=" << s.position.d
+  return os << "["
+            << "T=" << sp.target_duration << ", s=" << s.position.s << ", d=" << s.position.d
             << ", s'=" << s.longitudinal_velocity << ", d'=" << s.lateral_velocity
             << ", s\"=" << s.longitudinal_acceleration << ", d\"=" << s.lateral_acceleration << "]";
 }

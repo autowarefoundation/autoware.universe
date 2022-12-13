@@ -43,7 +43,7 @@ std::vector<sampler_common::Trajectory> generateCandidateTrajectories(
   if (params.sampling.enable_frenet) {
     const auto frenet_trajectories = generateFrenetTrajectories(
       initial_configuration, base_trajectory, path_msg, path_spline, params);
-    // gui.setFrenetTrajectories(trajectories_from_prev_trajectory, base_trajectory);
+    gui.addFrenetTrajectories(frenet_trajectories);
     for (const auto & trajectory : frenet_trajectories) {
       trajectories.push_back(base_trajectory.extend(trajectory));
     }
@@ -90,9 +90,8 @@ std::vector<frenet_planner::Trajectory> generateFrenetTrajectories(
   auto trajectories = gen_fn(path_spline, initial_frenet_state, sampling_parameters);
   // Stopping trajectories
   bool can_stop = initial_frenet_state.longitudinal_velocity > 0.1;
-  bool close_to_end =
-    (final_s - initial_frenet_state.position.s) <
-    *std::min(params.sampling.target_lengths.begin(), params.sampling.target_lengths.end());
+  // TODO(Maxime): find better condition to target the last path point
+  bool close_to_end = (final_s - initial_frenet_state.position.s) < 50.0;
   if (can_stop) {
     frenet_planner::SamplingParameters stopping_sampling_parameters;
     stopping_sampling_parameters.resolution = params.sampling.resolution;
@@ -119,6 +118,7 @@ std::vector<frenet_planner::Trajectory> generateFrenetTrajectories(
     }
     if (close_to_end) {
       sp.target_state.position.s = final_s;
+      sp.target_state.position.d = 0.0;
       sp.target_state.longitudinal_velocity = 0.0;
       sp.target_state.lateral_velocity = 0.0;
       sp.target_state.lateral_acceleration = 0.0;
@@ -126,7 +126,7 @@ std::vector<frenet_planner::Trajectory> generateFrenetTrajectories(
       constexpr auto min_decel_duration = 1.0;
       const auto max_decel_duration =
         -initial_frenet_state.longitudinal_velocity / params.constraints.hard.min_acceleration;
-      constexpr auto decel_samples = 5;
+      constexpr auto decel_samples = 10;
       std::vector<double> durations = {min_decel_duration};
       if (max_decel_duration > min_decel_duration) {
         durations.push_back(max_decel_duration);
@@ -152,8 +152,9 @@ std::vector<frenet_planner::Trajectory> generateFrenetTrajectories(
       path_spline, initial_frenet_state, stopping_sampling_parameters);
     std::cout << "\t Additional " << stopping_trajectories.size() << " stopping trajectories"
               << std::endl;
-    for (auto & traj : stopping_trajectories) traj.cost += 1000.0;
-    if (close_to_end) return stopping_trajectories;
+    for (auto & traj : stopping_trajectories) {
+      traj.tag += " stopping";
+    }
     trajectories.insert(
       trajectories.end(), stopping_trajectories.begin(), stopping_trajectories.end());
   }
