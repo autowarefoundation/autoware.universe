@@ -63,7 +63,6 @@ else:
 print("plot type = " + PLOT_TYPE)
 
 
-
 class TrajectoryVisualizer(Node):
     def __init__(self):
 
@@ -260,7 +259,9 @@ class TrajectoryVisualizer(Node):
             [], [], label="4-2: opt external_velocity_limited", marker="", ls="--"
         )
         (self.im7,) = self.ax1.plot([], [], label="4-3: opt lat_acc_filtered", marker=".", ls="--")
-        (self.im71,) = self.ax1.plot([], [], label="4-4: opt steer_rate_filtered", marker="", ls="-.")
+        (self.im71,) = self.ax1.plot(
+            [], [], label="4-4: opt steer_rate_filtered", marker="", ls="-."
+        )
         (self.im8,) = self.ax1.plot([], [], label="4-5: opt time_resampled", marker="*", ls="--")
         (self.im9,) = self.ax1.plot([], [], label="4-6: opt final", marker="", ls="-")
         (self.im10,) = self.ax1.plot(
