@@ -25,6 +25,7 @@ GnssParticleCorrector::GnssParticleCorrector()
 
   // Publisher
   marker_pub_ = create_publisher<MarkerArray>("gnss/range_marker", 10);
+  direction_pub_ = create_publisher<PoseStamped>("gnss/direction", 10);
 }
 
 void GnssParticleCorrector::on_pose(const PoseCovStamped::ConstSharedPtr pose_msg)
@@ -39,6 +40,13 @@ void GnssParticleCorrector::on_pose(const PoseCovStamped::ConstSharedPtr pose_ms
 
   ParticleArray weighted_particles{weight_particles(opt_particles.value(), position_vec3f, true)};
   set_weighted_particle_array(weighted_particles);
+}
+
+Eigen::Vector3f extract_enu_vel(const GnssParticleCorrector::NavPVT & msg)
+{
+  Eigen::Vector3f enu_vel;
+  enu_vel << msg.vel_e * 1e-3, msg.vel_n * 1e-3, -msg.vel_d * 1e-3;
+  return enu_vel;
 }
 
 void GnssParticleCorrector::on_ublox(const NavPVT::ConstSharedPtr ublox_msg)
@@ -58,6 +66,26 @@ void GnssParticleCorrector::on_ublox(const NavPVT::ConstSharedPtr ublox_msg)
 
   publish_marker(gnss_position, is_rtk_fixed);
 
+  const Eigen::Vector3f doppler = extract_enu_vel(*ublox_msg);
+  const float theta = std::atan2(doppler.y(), doppler.x());
+
+  // Doppler
+  {
+    if (doppler.norm() > 1) {
+      PoseStamped pose;
+      pose.header.frame_id = "map";
+      pose.header.stamp = stamp;
+      pose.pose.position.x = gnss_position.x();
+      pose.pose.position.y = gnss_position.y();
+      pose.pose.position.z = 0;
+      pose.pose.orientation.w = std::cos(theta / 2);
+      pose.pose.orientation.z = std::sin(theta / 2);
+      pose.pose.orientation.x = 0;
+      pose.pose.orientation.y = 0;
+      direction_pub_->publish(pose);
+    }
+  }
+
   std::optional<ParticleArray> opt_particles = get_synchronized_particle_array(stamp);
   if (!opt_particles.has_value()) return;
   auto dt = (stamp - rclcpp::Time(opt_particles->header.stamp));
@@ -68,6 +96,7 @@ void GnssParticleCorrector::on_ublox(const NavPVT::ConstSharedPtr ublox_msg)
 
   const geometry_msgs::msg::Pose meaned_pose = mean_pose(opt_particles.value());
 
+  // Check validity of GNSS measurement by mahalanobis distance
   {
     Eigen::Matrix3f sigma = modularized_particle_filter::std_of_distribution(*opt_particles);
     Eigen::Matrix3f inv_sigma = sigma.completeOrthogonalDecomposition().pseudoInverse();
@@ -87,8 +116,8 @@ void GnssParticleCorrector::on_ublox(const NavPVT::ConstSharedPtr ublox_msg)
     }
   }
 
-  ParticleArray weighted_particles{
-    weight_particles(opt_particles.value(), gnss_position, is_rtk_fixed)};
+  ParticleArray weighted_particles =
+    weight_particles(opt_particles.value(), gnss_position, is_rtk_fixed);
 
   // Compute travel distance from last update position
   // If the distance is too short, skip weighting

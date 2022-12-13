@@ -164,7 +164,7 @@ void CameraParticleCorrector::on_lsd(const PointCloud2 & lsd_msg)
     for (const auto p : iffy_cloud) {
       pcl::PointXYZRGB rgb;
       rgb.getVector3fMap() = p.getVector3fMap();
-      rgb.rgba = common::Color(0, 1.0, 0, 0.5f);
+      rgb.rgba = common::Color(0, 0.8, 0, 0.5f);
       rgb_cloud.push_back(rgb);
     }
 
@@ -214,7 +214,7 @@ float CameraParticleCorrector::compute_score(
 
       cv::Vec2b v2 = cost_map_.at2(p.topRows(2));
       if (pn.label == 0) {
-        score += 0.5 * (abs_cos(tangent, v2[1]) * v2[0] + score_offset_);
+        score += 0.5 * gain * (abs_cos(tangent, v2[1]) * v2[0] + score_offset_);
       } else {
         score += gain * (abs_cos(tangent, v2[1]) * v2[0] + score_offset_);
       }

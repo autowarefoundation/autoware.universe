@@ -7,6 +7,7 @@
 #include <Eigen/Core>
 #include <modularized_particle_filter/correction/abst_corrector.hpp>
 
+#include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
 #include <std_msgs/msg/float32.hpp>
@@ -18,6 +19,7 @@ namespace pcdless::modularized_particle_filter
 class GnssParticleCorrector : public AbstCorrector
 {
 public:
+  using PoseStamped = geometry_msgs::msg::PoseStamped;
   using PoseCovStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
   using NavSatFix = sensor_msgs::msg::NavSatFix;
   using NavPVT = ublox_msgs::msg::NavPVT;
@@ -36,9 +38,9 @@ private:
   rclcpp::Subscription<NavPVT>::SharedPtr ublox_sub_;
   rclcpp::Subscription<PoseCovStamped>::SharedPtr pose_sub_;
   rclcpp::Publisher<MarkerArray>::SharedPtr marker_pub_;
+  rclcpp::Publisher<PoseStamped>::SharedPtr direction_pub_;
 
   Float32 latest_height_;
-
   Eigen::Vector3f last_mean_position_;
 
   void on_ublox(const NavPVT::ConstSharedPtr ublox_msg);
