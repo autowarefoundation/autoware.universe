@@ -16,7 +16,6 @@
 #define BEHAVIOR_PATH_PLANNER__SCENE_MODULE__SCENE_MODULE_INTERFACE_HPP_
 
 #include "behavior_path_planner/data_manager.hpp"
-#include "behavior_path_planner/path_utilities.hpp"
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
 #include "behavior_path_planner/utilities.hpp"
 
@@ -130,7 +129,7 @@ public:
     BehaviorModuleOutput out;
     out.path = util::generateCenterLinePath(planner_data_);
     const auto candidate = planCandidate();
-    publishPathCandidate(candidate);
+    path_candidate_ = std::make_shared<PathWithLaneId>(candidate.path_candidate);
     return out;
   }
 
@@ -228,6 +227,15 @@ public:
 
   bool isWaitingApproval() const { return is_waiting_approval_; }
 
+  PlanResult getPathCandidate() const { return path_candidate_; }
+
+  void publishPathCandidate(const Path & path_candidate) const
+  {
+    pub_path_candidate_->publish(path_candidate);
+  }
+
+  void resetPathCandidate() { path_candidate_.reset(); }
+
   virtual void lockRTCCommand()
   {
     if (!rtc_interface_ptr_) {
@@ -259,6 +267,7 @@ protected:
   std::unique_ptr<SteeringFactorInterface> steering_factor_interface_ptr_;
   UUID uuid_;
   bool is_waiting_approval_;
+  PlanResult path_candidate_;
 
   void updateRTCStatus(const double start_distance, const double finish_distance)
   {
@@ -280,40 +289,6 @@ protected:
   void waitApproval() { is_waiting_approval_ = true; }
 
   void clearWaitingApproval() { is_waiting_approval_ = false; }
-
-  void publishPathCandidate(const CandidateOutput & candidate) const
-  {
-    auto path_candidate = util::toPath(candidate.path_candidate);
-    if (!isExecutionReady()) {
-      for (auto & point : path_candidate.points) {
-        point.longitudinal_velocity_mps = 0.0;
-      }
-    }
-    path_candidate.header = planner_data_->route_handler->getRouteHeader();
-    path_candidate.header.stamp = clock_->now();
-    pub_path_candidate_->publish(path_candidate);
-  }
-
-  void publishPathCandidate(const PathWithLaneId & candidate) const
-  {
-    auto path_candidate = util::toPath(candidate);
-    if (!isExecutionReady()) {
-      for (auto & point : path_candidate.points) {
-        point.longitudinal_velocity_mps = 0.0;
-      }
-    }
-    path_candidate.header = planner_data_->route_handler->getRouteHeader();
-    path_candidate.header.stamp = clock_->now();
-    pub_path_candidate_->publish(path_candidate);
-  }
-
-  void publishPathCandidate() const
-  {
-    Path path_candidate{};
-    path_candidate.header = planner_data_->route_handler->getRouteHeader();
-    path_candidate.header.stamp = clock_->now();
-    pub_path_candidate_->publish(path_candidate);
-  }
 
   static UUID generateUUID()
   {

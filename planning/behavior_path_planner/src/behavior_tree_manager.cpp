@@ -14,6 +14,7 @@
 
 #include "behavior_path_planner/behavior_tree_manager.hpp"
 
+#include "behavior_path_planner/path_utilities.hpp"
 #include "behavior_path_planner/scene_module/scene_module_bt_node_interface.hpp"
 #include "behavior_path_planner/scene_module/scene_module_interface.hpp"
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
@@ -98,6 +99,8 @@ BehaviorModuleOutput BehaviorTreeManager::run(const std::shared_ptr<PlannerData>
 
   RCLCPP_DEBUG(logger_, "BehaviorPathPlanner::run end status = %s", BT::toStr(res).c_str());
 
+  publishPathCandidate();
+
   std::for_each(scene_modules_.begin(), scene_modules_.end(), [](const auto & m) {
     m->publishDebugMarker();
     if (!m->isExecutionRequested()) {
@@ -125,6 +128,43 @@ BT::NodeStatus BehaviorTreeManager::checkForceApproval(const std::string & name)
   }
 
   return approval.module_name == name ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE;
+}
+
+void BehaviorTreeManager::publishPathCandidate()
+{
+  const bool is_running = std::any_of(
+    scene_modules_.begin(), scene_modules_.end(),
+    [](const auto & module) { return module->current_state_ == BT::NodeStatus::RUNNING; });
+
+  for (auto & module : scene_modules_) {
+    if (is_running && (module->current_state_ != BT::NodeStatus::RUNNING)) {
+      module->resetPathCandidate();
+    }
+    module->publishPathCandidate(
+      convertToPath(module->getPathCandidate(), module->isExecutionReady()));
+  }
+}
+
+Path BehaviorTreeManager::convertToPath(
+  const std::shared_ptr<PathWithLaneId> & path_candidate_ptr, const bool is_ready)
+{
+  Path output;
+  output.header = current_planner_data_->route_handler->getRouteHeader();
+  output.header.stamp = clock_.now();
+
+  if (!path_candidate_ptr) {
+    return output;
+  }
+
+  output = util::toPath(*path_candidate_ptr);
+
+  if (!is_ready) {
+    for (auto & point : output.points) {
+      point.longitudinal_velocity_mps = 0.0;
+    }
+  }
+
+  return output;
 }
 
 void BehaviorTreeManager::resetBehaviorTree() { bt_tree_.haltTree(); }
