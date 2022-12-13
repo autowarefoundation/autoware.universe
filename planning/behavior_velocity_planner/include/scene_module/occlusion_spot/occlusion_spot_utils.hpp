@@ -127,8 +127,10 @@ struct PlannerParam
   double angle_thr;  // [rad]
 
   // vehicle info
-  double half_vehicle_width;  // [m]  half vehicle_width from vehicle info
-  double baselink_to_front;   // [m]  wheel_base + front_overhang
+  double baselink_to_front;  // [m]  wheel_base + front_overhang
+  double wheel_tread;        // [m]  wheel_tread from vehicle info
+  double right_overhang;     // [m]  right_overhang from vehicle info
+  double left_overhang;      // [m]  left_overhang from vehicle info
 
   Velocity v;
   DetectionArea detection_area;
@@ -188,8 +190,6 @@ struct DebugData
   std::vector<geometry_msgs::msg::Point> parked_vehicle_point;
   std::vector<PossibleCollisionInfo> possible_collisions;
   std::vector<geometry_msgs::msg::Point> occlusion_points;
-  PathWithLaneId path_raw;
-  PathWithLaneId path_interpolated;
   void resetData()
   {
     close_partition.clear();

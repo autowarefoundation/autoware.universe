@@ -6,6 +6,7 @@
     backward_length_buffer_for_end_of_pull_over: 5.0
     backward_length_buffer_for_end_of_pull_out: 5.0
     minimum_lane_change_length: 12.0
+    minimum_lane_change_prepare_distance: 2.0 # [m]
     minimum_pull_over_length: 16.0
 
     drivable_area_resolution: 0.1
@@ -22,14 +23,20 @@
     turn_signal_minimum_search_distance: 10.0
     turn_signal_search_time: 3.0
     turn_signal_shift_length_threshold: 0.3
+    turn_signal_on_swerving: true
 
     path_interval: 2.0
 
     visualize_drivable_area_for_shared_linestrings_lanelet: true
 
-    lateral_distance_max_threshold: 5.0
+    lateral_distance_max_threshold: 2.0
     longitudinal_distance_min_threshold: 3.0
+
     expected_front_deceleration: -1.0
     expected_rear_deceleration: -1.0
+
+    expected_front_deceleration_for_abort: -2.0
+    expected_rear_deceleration_for_abort: -2.5
+
     rear_vehicle_reaction_time: 2.0
     rear_vehicle_safety_time_margin: 2.0

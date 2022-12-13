@@ -49,6 +49,7 @@ NoStoppingAreaModule::NoStoppingAreaModule(
   no_stopping_area_reg_elem_(no_stopping_area_reg_elem),
   planner_param_(planner_param)
 {
+  velocity_factor_.init(VelocityFactor::NO_STOPPING_AREA);
   state_machine_.setState(StateMachine::State::GO);
   state_machine_.setMarginTime(planner_param_.state_clear_time);
 }
@@ -107,9 +108,7 @@ boost::optional<LineString2d> NoStoppingAreaModule::getStopLineGeometry2d(
   return {};
 }
 
-bool NoStoppingAreaModule::modifyPathVelocity(
-  autoware_auto_planning_msgs::msg::PathWithLaneId * path,
-  tier4_planning_msgs::msg::StopReason * stop_reason)
+bool NoStoppingAreaModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason)
 {
   // Store original path
   const auto original_path = *path;
@@ -121,8 +120,8 @@ bool NoStoppingAreaModule::modifyPathVelocity(
   // Reset data
   debug_data_ = DebugData();
   debug_data_.base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
-  *stop_reason =
-    planning_utils::initializeStopReason(tier4_planning_msgs::msg::StopReason::NO_STOPPING_AREA);
+  *stop_reason = planning_utils::initializeStopReason(StopReason::NO_STOPPING_AREA);
+
   // Get stop line geometry
   const auto stop_line = getStopLineGeometry2d(original_path, planner_param_.stop_line_margin);
   if (!stop_line) {
@@ -195,6 +194,9 @@ bool NoStoppingAreaModule::modifyPathVelocity(
       stop_factor.stop_pose = stop_point->second;
       stop_factor.stop_factor_points = debug_data_.stuck_points;
       planning_utils::appendStopReason(stop_factor, stop_reason);
+      velocity_factor_.set(
+        path->points, planner_data_->current_pose.pose, stop_point->second,
+        VelocityFactor::UNKNOWN);
     }
 
     // Create legacy StopReason

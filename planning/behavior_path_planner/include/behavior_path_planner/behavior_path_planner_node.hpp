@@ -28,19 +28,22 @@
 
 #include <tier4_autoware_utils/ros/self_pose_listener.hpp>
 
+#include "tier4_planning_msgs/msg/detail/lane_change_debug_msg_array__struct.hpp"
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
-#include <autoware_auto_planning_msgs/msg/had_map_route.hpp>
 #include <autoware_auto_planning_msgs/msg/path.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_auto_vehicle_msgs/msg/hazard_lights_command.hpp>
 #include <autoware_auto_vehicle_msgs/msg/turn_indicators_command.hpp>
+#include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <tier4_planning_msgs/msg/approval.hpp>
 #include <tier4_planning_msgs/msg/avoidance_debug_msg_array.hpp>
+#include <tier4_planning_msgs/msg/lane_change_debug_msg_array.hpp>
 #include <tier4_planning_msgs/msg/path_change_module.hpp>
 #include <tier4_planning_msgs/msg/scenario.hpp>
+#include <visualization_msgs/msg/marker.hpp>
 
 #include <memory>
 #include <mutex>
@@ -64,19 +67,21 @@ namespace behavior_path_planner
 using ApprovalMsg = tier4_planning_msgs::msg::Approval;
 using autoware_auto_mapping_msgs::msg::HADMapBin;
 using autoware_auto_perception_msgs::msg::PredictedObjects;
-using autoware_auto_planning_msgs::msg::HADMapRoute;
 using autoware_auto_planning_msgs::msg::Path;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
 using autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand;
+using autoware_planning_msgs::msg::LaneletRoute;
 using geometry_msgs::msg::TwistStamped;
 using nav_msgs::msg::OccupancyGrid;
 using nav_msgs::msg::Odometry;
 using rcl_interfaces::msg::SetParametersResult;
 using steering_factor_interface::SteeringFactorInterface;
 using tier4_planning_msgs::msg::AvoidanceDebugMsgArray;
+using tier4_planning_msgs::msg::LaneChangeDebugMsgArray;
 using tier4_planning_msgs::msg::PathChangeModule;
 using tier4_planning_msgs::msg::Scenario;
+using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
 
 class BehaviorPathPlannerNode : public rclcpp::Node
@@ -85,7 +90,7 @@ public:
   explicit BehaviorPathPlannerNode(const rclcpp::NodeOptions & node_options);
 
 private:
-  rclcpp::Subscription<HADMapRoute>::SharedPtr route_subscriber_;
+  rclcpp::Subscription<LaneletRoute>::SharedPtr route_subscriber_;
   rclcpp::Subscription<HADMapBin>::SharedPtr vector_map_subscriber_;
   rclcpp::Subscription<Odometry>::SharedPtr velocity_subscriber_;
   rclcpp::Subscription<AccelWithCovarianceStamped>::SharedPtr acceleration_subscriber_;
@@ -96,6 +101,7 @@ private:
   rclcpp::Publisher<Path>::SharedPtr path_candidate_publisher_;
   rclcpp::Publisher<TurnIndicatorsCommand>::SharedPtr turn_signal_publisher_;
   rclcpp::Publisher<HazardLightsCommand>::SharedPtr hazard_signal_publisher_;
+  rclcpp::Publisher<MarkerArray>::SharedPtr bound_publisher_;
   rclcpp::TimerBase::SharedPtr timer_;
 
   std::shared_ptr<PlannerData> planner_data_;
@@ -133,7 +139,7 @@ private:
   void onExternalApproval(const ApprovalMsg::ConstSharedPtr msg);
   void onForceApproval(const PathChangeModule::ConstSharedPtr msg);
   void onMap(const HADMapBin::ConstSharedPtr map_msg);
-  void onRoute(const HADMapRoute::ConstSharedPtr route_msg);
+  void onRoute(const LaneletRoute::ConstSharedPtr route_msg);
   SetParametersResult onSetParam(const std::vector<rclcpp::Parameter> & parameters);
 
   /**
@@ -169,6 +175,8 @@ private:
   // debug
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_drivable_area_lanelets_publisher_;
   rclcpp::Publisher<AvoidanceDebugMsgArray>::SharedPtr debug_avoidance_msg_array_publisher_;
+  rclcpp::Publisher<LaneChangeDebugMsgArray>::SharedPtr debug_lane_change_msg_array_publisher_;
+
   /**
    * @brief check path if it is unsafe or forced
    */
@@ -178,6 +186,16 @@ private:
    * @brief publish steering factor from intersection
    */
   void publish_steering_factor(const TurnIndicatorsCommand & turn_signal);
+
+  /**
+   * @brief publish left and right bound
+   */
+  void publish_bounds(const PathWithLaneId & path);
+
+  /**
+   * @brief publish debug messages
+   */
+  void publishSceneModuleDebugMsg();
 
   template <class T>
   size_t findEgoIndex(const std::vector<T> & points) const

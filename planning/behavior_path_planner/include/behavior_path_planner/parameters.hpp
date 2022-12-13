@@ -25,6 +25,8 @@ struct BehaviorPathPlannerParameters
   double backward_length_buffer_for_end_of_pull_over;
   double backward_length_buffer_for_end_of_pull_out;
   double minimum_lane_change_length;
+  double minimum_lane_change_prepare_distance;
+
   double minimum_pull_over_length;
   double minimum_pull_out_length;
   double drivable_area_resolution;
@@ -41,6 +43,7 @@ struct BehaviorPathPlannerParameters
   double turn_signal_search_time;
   double turn_signal_minimum_search_distance;
   double turn_signal_shift_length_threshold;
+  bool turn_signal_on_swerving;
 
   double path_interval;
 
@@ -66,8 +69,13 @@ struct BehaviorPathPlannerParameters
   // collision check
   double lateral_distance_max_threshold;
   double longitudinal_distance_min_threshold;
-  double expected_front_deceleration;
-  double expected_rear_deceleration;
+
+  double expected_front_deceleration;  // brake parameter under normal lane change
+  double expected_rear_deceleration;   // brake parameter under normal lane change
+
+  double expected_front_deceleration_for_abort;  // hard brake parameter for abort
+  double expected_rear_deceleration_for_abort;   // hard brake parameter for abort
+
   double rear_vehicle_reaction_time;
   double rear_vehicle_safety_time_margin;
 };

@@ -137,6 +137,7 @@ CrosswalkModule::CrosswalkModule(
   crosswalk_(std::move(crosswalk)),
   planner_param_(planner_param)
 {
+  velocity_factor_.init(VelocityFactor::CROSSWALK);
   passed_safety_slow_point_ = false;
 }
 
@@ -218,9 +219,15 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
   if (nearest_stop_point) {
     insertDecelPointWithDebugInfo(nearest_stop_point.get(), 0.0, *path);
     planning_utils::appendStopReason(stop_factor, stop_reason);
+    velocity_factor_.set(
+      path->points, planner_data_->current_pose.pose, stop_factor.stop_pose,
+      VelocityFactor::UNKNOWN);
   } else if (rtc_stop_point) {
     insertDecelPointWithDebugInfo(rtc_stop_point.get(), 0.0, *path);
     planning_utils::appendStopReason(stop_factor_rtc, stop_reason);
+    velocity_factor_.set(
+      path->points, planner_data_->current_pose.pose, stop_factor_rtc.stop_pose,
+      VelocityFactor::UNKNOWN);
   }
 
   RCLCPP_INFO_EXPRESSION(
@@ -403,7 +410,9 @@ boost::optional<geometry_msgs::msg::Point> CrosswalkModule::findNearestStopPoint
         dist_ego2cp - base_link2front < planner_param_.stop_position_threshold ||
         p_stop_line.get().first - base_link2front < planner_param_.stop_position_threshold;
 
-      const auto is_yielding_now = planner_data_->isVehicleStopped(0.1) && reached_stop_point;
+      const auto is_yielding_now =
+        planner_data_->isVehicleStopped(planner_param_.ego_yield_query_stop_duration) &&
+        reached_stop_point;
       if (!is_yielding_now) {
         continue;
       }

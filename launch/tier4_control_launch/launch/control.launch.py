@@ -171,7 +171,6 @@ def launch_setup(context, *args, **kwargs):
         plugin="vehicle_cmd_gate::VehicleCmdGate",
         name="vehicle_cmd_gate",
         remappings=[
-            ("input/emergency_state", "/system/emergency/emergency_state"),
             ("input/steering", "/vehicle/status/steering_status"),
             ("input/operation_mode", "/system/operation_mode/state"),
             ("input/auto/control_cmd", "/control/trajectory_follower/control_cmd"),
@@ -209,7 +208,9 @@ def launch_setup(context, *args, **kwargs):
             vehicle_info_param,
             {
                 "use_emergency_handling": LaunchConfiguration("use_emergency_handling"),
-                "use_external_emergency_stop": LaunchConfiguration("use_external_emergency_stop"),
+                "check_external_emergency_heartbeat": LaunchConfiguration(
+                    "check_external_emergency_heartbeat"
+                ),
                 "use_start_request": LaunchConfiguration("use_start_request"),
             },
         ],
@@ -374,7 +375,7 @@ def generate_launch_description():
 
     # vehicle cmd gate
     add_launch_arg("use_emergency_handling", "false", "use emergency handling")
-    add_launch_arg("use_external_emergency_stop", "true", "use external emergency stop")
+    add_launch_arg("check_external_emergency_heartbeat", "true", "use external emergency stop")
     add_launch_arg("use_start_request", "false", "use start request service")
 
     # external cmd selector

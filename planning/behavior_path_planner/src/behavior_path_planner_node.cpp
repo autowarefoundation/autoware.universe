@@ -67,11 +67,15 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   hazard_signal_publisher_ = create_publisher<HazardLightsCommand>("~/output/hazard_lights_cmd", 1);
   debug_avoidance_msg_array_publisher_ =
     create_publisher<AvoidanceDebugMsgArray>("~/debug/avoidance_debug_message_array", 1);
+  debug_lane_change_msg_array_publisher_ =
+    create_publisher<LaneChangeDebugMsgArray>("~/debug/lane_change_debug_message_array", 1);
 
   if (planner_data_->parameters.visualize_drivable_area_for_shared_linestrings_lanelet) {
     debug_drivable_area_lanelets_publisher_ =
       create_publisher<MarkerArray>("~/drivable_area_boundary", 1);
   }
+
+  bound_publisher_ = create_publisher<MarkerArray>("~/debug/bound", 1);
 
   // subscriber
   velocity_subscriber_ = create_subscription<Odometry>(
@@ -100,7 +104,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   vector_map_subscriber_ = create_subscription<HADMapBin>(
     "~/input/vector_map", qos_transient_local, std::bind(&BehaviorPathPlannerNode::onMap, this, _1),
     createSubscriptionOptions(this));
-  route_subscriber_ = create_subscription<HADMapRoute>(
+  route_subscriber_ = create_subscription<LaneletRoute>(
     "~/input/route", qos_transient_local, std::bind(&BehaviorPathPlannerNode::onRoute, this, _1),
     createSubscriptionOptions(this));
 
@@ -203,6 +207,9 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   p.backward_length_buffer_for_end_of_pull_out =
     declare_parameter("backward_length_buffer_for_end_of_pull_out", 5.0);
   p.minimum_lane_change_length = declare_parameter("minimum_lane_change_length", 8.0);
+  p.minimum_lane_change_prepare_distance =
+    declare_parameter("minimum_lane_change_prepare_distance", 2.0);
+
   p.minimum_pull_over_length = declare_parameter("minimum_pull_over_length", 15.0);
   p.drivable_area_resolution = declare_parameter<double>("drivable_area_resolution");
   p.drivable_lane_forward_length = declare_parameter<double>("drivable_lane_forward_length");
@@ -219,17 +226,26 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   p.turn_signal_search_time = declare_parameter("turn_signal_search_time", 3.0);
   p.turn_signal_shift_length_threshold =
     declare_parameter("turn_signal_shift_length_threshold", 0.3);
+  p.turn_signal_on_swerving = declare_parameter("turn_signal_on_swerving", true);
+
   p.path_interval = declare_parameter<double>("path_interval");
   p.visualize_drivable_area_for_shared_linestrings_lanelet =
     declare_parameter("visualize_drivable_area_for_shared_linestrings_lanelet", true);
   p.ego_nearest_dist_threshold = declare_parameter<double>("ego_nearest_dist_threshold");
   p.ego_nearest_yaw_threshold = declare_parameter<double>("ego_nearest_yaw_threshold");
 
-  p.lateral_distance_max_threshold = declare_parameter("lateral_distance_max_threshold", 3.0);
+  p.lateral_distance_max_threshold = declare_parameter("lateral_distance_max_threshold", 2.0);
   p.longitudinal_distance_min_threshold =
     declare_parameter("longitudinal_distance_min_threshold", 3.0);
-  p.expected_front_deceleration = declare_parameter("expected_front_deceleration", -1.0);
+
+  p.expected_front_deceleration = declare_parameter("expected_front_deceleration", -0.5);
   p.expected_rear_deceleration = declare_parameter("expected_rear_deceleration", -1.0);
+
+  p.expected_front_deceleration_for_abort =
+    declare_parameter("expected_front_deceleration_for_abort", -2.0);
+  p.expected_rear_deceleration_for_abort =
+    declare_parameter("expected_rear_deceleration_for_abort", -2.5);
+
   p.rear_vehicle_reaction_time = declare_parameter("rear_vehicle_reaction_time", 2.0);
   p.rear_vehicle_safety_time_margin = declare_parameter("rear_vehicle_safety_time_margin", 2.0);
   return p;
@@ -269,11 +285,16 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
   p.detection_area_left_expand_dist = dp("detection_area_left_expand_dist", 1.0);
   p.enable_avoidance_over_same_direction = dp("enable_avoidance_over_same_direction", true);
   p.enable_avoidance_over_opposite_direction = dp("enable_avoidance_over_opposite_direction", true);
+  p.enable_update_path_when_object_is_gone = dp("enable_update_path_when_object_is_gone", false);
 
   p.threshold_distance_object_is_on_center = dp("threshold_distance_object_is_on_center", 1.0);
   p.threshold_speed_object_is_stopped = dp("threshold_speed_object_is_stopped", 1.0);
+  p.threshold_time_object_is_moving = dp("threshold_time_object_is_moving", 1.0);
   p.object_check_forward_distance = dp("object_check_forward_distance", 150.0);
   p.object_check_backward_distance = dp("object_check_backward_distance", 2.0);
+  p.object_check_shiftable_ratio = dp("object_check_shiftable_ratio", 1.0);
+  p.object_check_min_road_shoulder_width = dp("object_check_min_road_shoulder_width", 0.5);
+  p.object_envelope_buffer = dp("object_envelope_buffer", 0.1);
   p.lateral_collision_margin = dp("lateral_collision_margin", 2.0);
   p.lateral_collision_safety_buffer = dp("lateral_collision_safety_buffer", 0.5);
 
@@ -316,6 +337,8 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
   p.drivable_area_right_bound_offset = dp("drivable_area_right_bound_offset", 0.0);
   p.drivable_area_left_bound_offset = dp("drivable_area_left_bound_offset", 0.0);
 
+  p.enable_bound_clipping = dp("enable_bound_clipping", false);
+
   p.avoidance_execution_lateral_threshold = dp("avoidance_execution_lateral_threshold", 0.499);
 
   return p;
@@ -343,9 +366,8 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
   LaneChangeParameters p{};
   p.lane_change_prepare_duration = dp("lane_change_prepare_duration", 2.0);
   p.lane_changing_duration = dp("lane_changing_duration", 4.0);
-  p.minimum_lane_change_prepare_distance = dp("minimum_lane_change_prepare_distance", 4.0);
   p.lane_change_finish_judge_buffer = dp("lane_change_finish_judge_buffer", 3.0);
-  p.minimum_lane_change_velocity = dp("minimum_lane_change_velocity", 8.3);
+  p.minimum_lane_change_velocity = dp("minimum_lane_change_velocity", 5.6);
   p.prediction_time_resolution = dp("prediction_time_resolution", 0.5);
   p.maximum_deceleration = dp("maximum_deceleration", 1.0);
   p.lane_change_sampling_num = dp("lane_change_sampling_num", 10);
@@ -353,6 +375,7 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
   p.abort_lane_change_angle_thresh =
     dp("abort_lane_change_angle_thresh", tier4_autoware_utils::deg2rad(10.0));
   p.abort_lane_change_distance_thresh = dp("abort_lane_change_distance_thresh", 0.3);
+  p.prepare_phase_ignore_target_speed_thresh = dp("prepare_phase_ignore_target_speed_thresh", 0.1);
   p.enable_abort_lane_change = dp("enable_abort_lane_change", true);
   p.enable_collision_check_at_prepare_phase = dp("enable_collision_check_at_prepare_phase", true);
   p.use_predicted_path_outside_lanelet = dp("use_predicted_path_outside_lanelet", true);
@@ -606,19 +629,14 @@ void BehaviorPathPlannerNode::run()
   planner_data_->prev_output_path = path;
   mutex_pd_.unlock();
 
-  PathWithLaneId clipped_path;
-  const auto module_status_ptr_vec = bt_manager_->getModulesStatus();
-  if (skipSmoothGoalConnection(module_status_ptr_vec)) {
-    clipped_path = *path;
-  } else {
-    clipped_path = modifyPathForSmoothGoalConnection(*path);
-  }
+  // publish drivable bounds
+  publish_bounds(*path);
 
-  const size_t target_idx = findEgoIndex(clipped_path.points);
-  util::clipPathLength(clipped_path, target_idx, planner_data_->parameters);
+  const size_t target_idx = findEgoIndex(path->points);
+  util::clipPathLength(*path, target_idx, planner_data_->parameters);
 
-  if (!clipped_path.points.empty()) {
-    path_publisher_->publish(clipped_path);
+  if (!path->points.empty()) {
+    path_publisher_->publish(*path);
   } else {
     RCLCPP_ERROR_THROTTLE(
       get_logger(), *get_clock(), 5000, "behavior path output is empty! Stop publish.");
@@ -647,8 +665,7 @@ void BehaviorPathPlannerNode::run()
     publish_steering_factor(turn_signal);
   }
 
-  // for debug
-  debug_avoidance_msg_array_publisher_->publish(bt_manager_->getAvoidanceDebugMsgArray());
+  publishSceneModuleDebugMsg();
 
   if (planner_data->parameters.visualize_drivable_area_for_shared_linestrings_lanelet) {
     const auto drivable_area_lines = marker_utils::createFurthestLineStringMarkerArray(
@@ -690,6 +707,55 @@ void BehaviorPathPlannerNode::publish_steering_factor(const TurnIndicatorsComman
   steering_factor_interface_ptr_->publishSteeringFactor(get_clock()->now());
 }
 
+void BehaviorPathPlannerNode::publish_bounds(const PathWithLaneId & path)
+{
+  constexpr double scale_x = 0.1;
+  constexpr double scale_y = 0.1;
+  constexpr double scale_z = 0.1;
+  constexpr double color_r = 0.0 / 256.0;
+  constexpr double color_g = 148.0 / 256.0;
+  constexpr double color_b = 205.0 / 256.0;
+  constexpr double color_a = 0.999;
+
+  const auto current_time = path.header.stamp;
+  auto left_marker = tier4_autoware_utils::createDefaultMarker(
+    "map", current_time, "left_bound", 0L, Marker::LINE_STRIP,
+    tier4_autoware_utils::createMarkerScale(scale_x, scale_y, scale_z),
+    tier4_autoware_utils::createMarkerColor(color_r, color_g, color_b, color_a));
+  for (const auto lb : path.left_bound) {
+    left_marker.points.push_back(lb);
+  }
+
+  auto right_marker = tier4_autoware_utils::createDefaultMarker(
+    "map", current_time, "right_bound", 0L, Marker::LINE_STRIP,
+    tier4_autoware_utils::createMarkerScale(scale_x, scale_y, scale_z),
+    tier4_autoware_utils::createMarkerColor(color_r, color_g, color_b, color_a));
+  for (const auto rb : path.right_bound) {
+    right_marker.points.push_back(rb);
+  }
+
+  MarkerArray msg;
+  msg.markers.push_back(left_marker);
+  msg.markers.push_back(right_marker);
+  bound_publisher_->publish(msg);
+}
+
+void BehaviorPathPlannerNode::publishSceneModuleDebugMsg()
+{
+  {
+    const auto debug_messages_data_ptr = bt_manager_->getAllSceneModuleDebugMsgData();
+    const auto avoidance_debug_message = debug_messages_data_ptr->getAvoidanceModuleDebugMsg();
+    if (avoidance_debug_message) {
+      debug_avoidance_msg_array_publisher_->publish(*avoidance_debug_message);
+    }
+
+    const auto lane_change_debug_message = debug_messages_data_ptr->getLaneChangeModuleDebugMsg();
+    if (lane_change_debug_message) {
+      debug_lane_change_msg_array_publisher_->publish(*lane_change_debug_message);
+    }
+  }
+}
+
 PathWithLaneId::SharedPtr BehaviorPathPlannerNode::getPath(
   const BehaviorModuleOutput & bt_output, const std::shared_ptr<PlannerData> planner_data)
 {
@@ -701,8 +767,16 @@ PathWithLaneId::SharedPtr BehaviorPathPlannerNode::getPath(
   RCLCPP_DEBUG(
     get_logger(), "BehaviorTreeManager: output is %s.", bt_output.path ? "FOUND" : "NOT FOUND");
 
+  PathWithLaneId connected_path;
+  const auto module_status_ptr_vec = bt_manager_->getModulesStatus();
+  if (skipSmoothGoalConnection(module_status_ptr_vec)) {
+    connected_path = *path;
+  } else {
+    connected_path = modifyPathForSmoothGoalConnection(*path);
+  }
+
   const auto resampled_path =
-    util::resamplePathWithSpline(*path, planner_data_->parameters.path_interval);
+    util::resamplePathWithSpline(connected_path, planner_data_->parameters.path_interval);
   return std::make_shared<PathWithLaneId>(resampled_path);
 }
 
@@ -714,7 +788,7 @@ PathWithLaneId::SharedPtr BehaviorPathPlannerNode::getPathCandidate(
 
   if (isForcedCandidatePath()) {
     for (auto & path_point : path_candidate->points) {
-      path_point.point.longitudinal_velocity_mps = 1.0;
+      path_point.point.longitudinal_velocity_mps = 0.0;
     }
   }
 
@@ -806,7 +880,7 @@ void BehaviorPathPlannerNode::onMap(const HADMapBin::ConstSharedPtr msg)
   std::lock_guard<std::mutex> lock(mutex_pd_);
   planner_data_->route_handler->setMap(*msg);
 }
-void BehaviorPathPlannerNode::onRoute(const HADMapRoute::ConstSharedPtr msg)
+void BehaviorPathPlannerNode::onRoute(const LaneletRoute::ConstSharedPtr msg)
 {
   std::lock_guard<std::mutex> lock(mutex_pd_);
   const bool is_first_time = !(planner_data_->route_handler->isHandlerReady());

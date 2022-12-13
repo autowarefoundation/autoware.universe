@@ -23,7 +23,12 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include "tier4_planning_msgs/msg/detail/lane_change_debug_msg_array__struct.hpp"
+#include "tier4_planning_msgs/msg/lane_change_debug_msg.hpp"
+#include "tier4_planning_msgs/msg/lane_change_debug_msg_array.hpp"
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
+#include <geometry_msgs/msg/pose.hpp>
+#include <geometry_msgs/msg/twist.hpp>
 
 #include <tf2/utils.h>
 
@@ -36,7 +41,11 @@
 namespace behavior_path_planner
 {
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
+using geometry_msgs::msg::Pose;
+using geometry_msgs::msg::Twist;
 using marker_utils::CollisionCheckDebug;
+using tier4_planning_msgs::msg::LaneChangeDebugMsg;
+using tier4_planning_msgs::msg::LaneChangeDebugMsgArray;
 
 class LaneChangeModule : public SceneModuleInterface
 {
@@ -55,6 +64,10 @@ public:
   CandidateOutput planCandidate() const override;
   void onEntry() override;
   void onExit() override;
+
+  std::shared_ptr<LaneChangeDebugMsgArray> get_debug_msg_array() const;
+  void acceptVisitor(
+    [[maybe_unused]] const std::shared_ptr<SceneModuleVisitor> & visitor) const override;
 
   void publishRTCStatus() override
   {
@@ -89,6 +102,7 @@ private:
   std::shared_ptr<LaneChangeParameters> parameters_;
   LaneChangeStatus status_;
   PathShifter path_shifter_;
+  mutable LaneChangeDebugMsgArray lane_change_debug_msg_array_;
 
   double lane_change_lane_length_{200.0};
   double check_distance_{100.0};
@@ -148,16 +162,30 @@ private:
     LaneChangePath & safe_path) const;
 
   void updateLaneChangeStatus();
+  void generateExtendedDrivableArea(PathWithLaneId & path);
+  void updateOutputTurnSignal(BehaviorModuleOutput & output);
+  void updateSteeringFactorPtr(const BehaviorModuleOutput & output);
 
+  void updateSteeringFactorPtr(
+    const CandidateOutput & output, const LaneChangePath & selected_path) const;
   bool isSafe() const;
+  bool isValidPath(const PathWithLaneId & path) const;
   bool isNearEndOfLane() const;
   bool isCurrentSpeedLow() const;
   bool isAbortConditionSatisfied() const;
   bool hasFinishedLaneChange() const;
+  void resetParameters();
 
-  void setObjectDebugVisualization() const;
+  // getter
+  Pose getEgoPose() const;
+  Twist getEgoTwist() const;
+  std_msgs::msg::Header getRouteHeader() const;
+
+  // debug
   mutable std::unordered_map<std::string, CollisionCheckDebug> object_debug_;
   mutable std::vector<LaneChangePath> debug_valid_path_;
+
+  void setObjectDebugVisualization() const;
 };
 }  // namespace behavior_path_planner
 
