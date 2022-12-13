@@ -176,8 +176,11 @@ void TwistEstimator::on_navpvt(const NavPVT & msg)
   static bool first_subscirbe = true;
   if (first_subscirbe) {
     Eigen::Vector2f vel_xy = extract_enu_vel(msg).topRows(2);
+    if (vel_xy.norm() < 1) return;
+
     state_[ANGLE] = std::atan2(vel_xy.y(), vel_xy.x());
-    RCLCPP_INFO_STREAM(get_logger(), "first navpvt subscription: " << state_[ANGLE]);
+    RCLCPP_INFO_STREAM(
+      get_logger(), "first navpvt subscription: " << state_[ANGLE] << " at " << vel_xy.norm());
     first_subscirbe = false;
     return;
   }

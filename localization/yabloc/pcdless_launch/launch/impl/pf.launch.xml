@@ -69,6 +69,7 @@
     <node name="gnss_particle_corrector" pkg="gnss_particle_corrector" exec="gnss_particle_corrector" output="screen" args="--ros-args --log-level info">
         <param name="use_sim_time" value="$(var use_sim_time)"/>
         <param name="ignore_less_than_float" value="$(var ignore_less_than_float)"/>
+        <param name="for_fixed/max_weight" value="5.0"/>
 
 
         <remap from="input/navpvt" to="/sensing/gnss/ublox/navpvt"/>
