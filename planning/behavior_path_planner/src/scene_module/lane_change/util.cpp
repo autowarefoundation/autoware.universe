@@ -17,7 +17,6 @@
 #include "behavior_path_planner/path_utilities.hpp"
 #include "behavior_path_planner/scene_module/utils/path_shifter.hpp"
 #include "behavior_path_planner/utilities.hpp"
-#include "behavior_path_planner/path_utilities.hpp"
 
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
@@ -97,9 +96,6 @@ std::pair<double, double> calcLaneChangingSpeedAndDistanceWhenDecelerate(
   const auto lane_changing_distance =
     std::max(lane_changing_average_speed * required_time, minimum_lane_change_length);
 
-  std::cerr << "lane change dist calc: required_time = " << required_time
-            << ", lane_changing_average_speed = " << lane_changing_average_speed
-            << ", shift_length = " << shift_length << ", decel: " << acceleration << std::endl;
   return {lane_changing_average_speed, lane_changing_distance};
 }
 
@@ -111,12 +107,8 @@ std::optional<LaneChangePath> constructCandidatePath(
   const double & prepare_speed, const double & lane_change_distance,
   const double & lane_changing_speed, const LaneChangeParameters & params)
 {
-  constexpr double RESAMPLE_INTERVAL{1.0};
-  const auto resampled_reference_path =
-    util::resamplePathWithSpline(target_lane_reference_path, RESAMPLE_INTERVAL);
-
   PathShifter path_shifter;
-  path_shifter.setPath(resampled_reference_path);
+  path_shifter.setPath(target_lane_reference_path);
   path_shifter.addShiftLine(shift_line);
   ShiftedPath shifted_path;
 

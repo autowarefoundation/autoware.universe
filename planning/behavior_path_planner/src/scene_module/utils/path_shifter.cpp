@@ -40,9 +40,10 @@ std::string toStr(const behavior_path_planner::ShiftLine & p)
          ", end idx = " + std::to_string(p.end_idx) +
          ", length = " + std::to_string(p.end_shift_length);
 }
-std::string toStr(const std::vector<double> &v) {
+std::string toStr(const std::vector<double> & v)
+{
   std::stringstream ss;
-  for (const auto &p : v) {
+  for (const auto & p : v) {
     ss << p << ", ";
   }
   return ss.str();
@@ -62,15 +63,9 @@ void PathShifter::setPath(const PathWithLaneId & path)
   updateShiftLinesIndices(shift_lines_);
   sortShiftLinesAlongPath(shift_lines_);
 }
-void PathShifter::setVelocity(const double velocity)
-{
-  velocity_ = velocity;
-}
+void PathShifter::setVelocity(const double velocity) { velocity_ = velocity; }
 
-void PathShifter::setLateralAccelerationLimit(const double acc)
-{
-  acc_limit_ = acc;
-}
+void PathShifter::setLateralAccelerationLimit(const double acc) { acc_limit_ = acc; }
 
 void PathShifter::addShiftLine(const ShiftLine & line)
 {
@@ -216,7 +211,8 @@ void PathShifter::applySplineShifter(ShiftedPath * shifted_path, const bool offs
       calcBaseLengths(shifting_arclength, delta_shift, offset_back);
 
     RCLCPP_INFO(
-      logger_, "base_distance = %s, base_length = %s", toStr(base_distance).c_str(), toStr(base_length).c_str());
+      logger_, "base_distance = %s, base_length = %s", toStr(base_distance).c_str(),
+      toStr(base_length).c_str());
 
     std::vector<double> query_distance, query_length;
 
@@ -326,9 +322,11 @@ std::pair<std::vector<double>, std::vector<double>> PathShifter::calcBaseLengths
 
   RCLCPP_WARN(
     logger_,
-    "arclength = %f, shift_length = %f, tj = %f, ta = %f, T = %f, jerk = %f, amax = %f, base_lon = %s, "
+    "arclength = %f, shift_length = %f, tj = %f, ta = %f, T = %f, jerk = %f, amax = %f, base_lon = "
+    "%s, "
     "base_lat = %s",
-    arclength, shift_length, tj, ta, T, jerk, amax, toStr(base_lon).c_str(), toStr(base_lat).c_str());
+    arclength, shift_length, tj, ta, T, jerk, amax, toStr(base_lon).c_str(),
+    toStr(base_lat).c_str());
 
   return {base_lon, base_lat};
 }
