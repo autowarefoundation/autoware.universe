@@ -16,6 +16,7 @@
 
 #include "frenet_planner/frenet_planner.hpp"
 
+#include <eigen3/Eigen/Eigen>
 #include <frenet_planner/conversions.hpp>
 #include <frenet_planner/polynomials.hpp>
 #include <frenet_planner/structures.hpp>
@@ -202,6 +203,20 @@ void calculateCartesian(
     // Calculate velocities, accelerations, jerk
     for (size_t i = 0; i < trajectory.times.size(); ++i) {
       const auto time = trajectory.times[i];
+      const auto s_vel = trajectory.longitudinal_polynomial->velocity(time);
+      const auto s_acc = trajectory.longitudinal_polynomial->acceleration(time);
+      const auto d_vel = trajectory.lateral_polynomial->velocity(time);
+      const auto d_acc = trajectory.lateral_polynomial->acceleration(time);
+      Eigen::Rotation2D rotation(dyaws[i]);
+      Eigen::Vector2d vel_vector{s_vel, d_vel};
+      Eigen::Vector2d acc_vector{s_acc, d_acc};
+      const auto vel = rotation * vel_vector;
+      const auto acc = rotation * acc_vector;
+      trajectory.longitudinal_velocities.push_back(vel.x());
+      trajectory.lateral_velocities.push_back(vel.y());
+      trajectory.longitudinal_accelerations.push_back(acc.x());
+      trajectory.lateral_accelerations.push_back(acc.y());
+      /*
       const auto s = trajectory.frenet_points[i].s;
       const auto d = trajectory.frenet_points[i].d;
       const auto curvature = reference.curvature(s);
@@ -230,6 +245,7 @@ void calculateCartesian(
           -dcurvd_curvdd * tan_dyaw +
           curvd / (cos_dyaw * cos_dyaw) * (curvature * (curvd / cos_dyaw) - curvature));
       }
+      */
       trajectory.jerks.push_back(
         trajectory.longitudinal_polynomial->jerk(time) + trajectory.lateral_polynomial->jerk(time));
     }
@@ -237,8 +253,10 @@ void calculateCartesian(
       trajectory.longitudinal_accelerations.push_back(0.0);
       trajectory.lateral_accelerations.push_back(0.0);
     } else {
+      /*
       trajectory.longitudinal_accelerations.push_back(trajectory.longitudinal_accelerations.back());
       trajectory.lateral_accelerations.push_back(trajectory.lateral_accelerations.back());
+      */
     }
   }
 }
