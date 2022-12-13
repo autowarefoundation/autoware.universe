@@ -1186,7 +1186,6 @@ void generateDrivableArea(
       if (has_same_lane(lane) || has_overlap(lane)) {
         continue;
       }
-      std::cerr << "after goal id: " << lane.id() << std::endl;
       addLeftBoundPoints(lane);
       addRightBoundPoints(lane);
     }
@@ -1212,11 +1211,6 @@ void generateDrivableArea(
   const size_t right_start_idx =
     findNearestSegmentIndexFromLateralDistance(right_bound, right_start_pose);
 
-  std::cerr << "front_left_start_idx: " << front_left_start_idx << std::endl;
-  std::cerr << "front_right_start_idx: " << front_right_start_idx << std::endl;
-  std::cerr << "left_start_idx: " << left_start_idx << std::endl;
-  std::cerr << "right_start_idx: " << right_start_idx << std::endl;
-
   // Get Closest segment for the goal point
   const auto goal_pose = path.points.empty() ? current_pose->pose : path.points.back().point.pose;
   const size_t goal_left_start_idx =
@@ -1232,20 +1226,9 @@ void generateDrivableArea(
   const size_t right_goal_idx =
     findNearestSegmentIndexFromLateralDistance(right_bound, right_goal_pose);
 
-  std::cerr << "goal_left_start_idx: " << goal_left_start_idx << std::endl;
-  std::cerr << "goal_right_start_idx: " << goal_right_start_idx << std::endl;
-  std::cerr << "left_goal_idx: " << left_goal_idx << std::endl;
-  std::cerr << "right_goal_idx: " << right_goal_idx << std::endl;
-
-  for (const auto & transformed_lane : transformed_lanes) {
-    std::cerr << "id: " << transformed_lane.id() << std::endl;
-  }
-
   // Store Data
   path.left_bound.clear();
   path.right_bound.clear();
-  path.left_bound.reserve(left_goal_idx - left_start_idx);
-  path.right_bound.reserve(right_goal_idx - right_start_idx);
 
   // Insert a start point
   path.left_bound.push_back(left_start_pose.position);
