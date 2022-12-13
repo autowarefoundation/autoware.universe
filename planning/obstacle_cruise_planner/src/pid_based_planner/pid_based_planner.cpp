@@ -82,6 +82,9 @@ PIDBasedPlanner::PIDBasedPlanner(
     velocity_limit_based_planner_param_.enable_jerk_limit_to_output_acc =
       node.declare_parameter<bool>(
         "pid_based_planner.velocity_limit_based_planner.enable_jerk_limit_to_output_acc");
+
+    velocity_limit_based_planner_param_.disable_target_acceleration =
+      node.declare_parameter<bool>("pid_based_planner.velocity_limit_based_planner.disable_target_acceleration");
   }
 
   {  // velocity insertion based planner
@@ -139,6 +142,7 @@ PIDBasedPlanner::PIDBasedPlanner(
   lpf_dist_to_obstacle_ptr_ = std::make_shared<LowpassFilter1d>(0.5);
   lpf_obstacle_vel_ptr_ = std::make_shared<LowpassFilter1d>(0.5);
   lpf_error_cruise_dist_ptr_ = std::make_shared<LowpassFilter1d>(0.5);
+  lpf_output_vel_ptr_ = std::make_shared<LowpassFilter1d>(0.5);
   lpf_output_acc_ptr_ = std::make_shared<LowpassFilter1d>(0.5);
   lpf_output_jerk_ptr_ = std::make_shared<LowpassFilter1d>(0.5);
 }
@@ -324,6 +328,7 @@ Trajectory PIDBasedPlanner::planCruise(
   prev_target_acc_ = {};
   lpf_normalized_error_cruise_dist_ptr_->reset();
   lpf_output_acc_ptr_->reset();
+  lpf_output_vel_ptr_->reset();
   lpf_output_jerk_ptr_->reset();
 
   // delete marker
@@ -357,10 +362,15 @@ VelocityLimit PIDBasedPlanner::doCruiseWithVelocityLimit(
   }();
 
   const double positive_target_vel =
-    std::max(min_cruise_target_vel_, planner_data.current_vel + additional_vel);
+    lpf_output_vel_ptr_->filter(
+                                std::max(min_cruise_target_vel_, planner_data.current_vel + additional_vel));
 
   // calculate target acceleration
   const double target_acc = [&]() {
+    if (p.disable_target_acceleration) {
+      return min_accel_during_cruise_;
+    }
+
     double target_acc = p.vel_to_acc_weight * additional_vel;
 
     // apply acc limit
@@ -629,6 +639,10 @@ void PIDBasedPlanner::updateParam(const std::vector<rclcpp::Parameter> & paramet
     tier4_autoware_utils::updateParam<bool>(
       parameters, "pid_based_planner.velocity_limit_based_planner.enable_jerk_limit_to_output_acc",
       p.enable_jerk_limit_to_output_acc);
+
+    tier4_autoware_utils::updateParam<bool>(
+      parameters, "pid_based_planner.velocity_limit_based_planner.disable_target_acceleration",
+      p.disable_target_acceleration);
   }
 
   {  // velocity insertion based planner
