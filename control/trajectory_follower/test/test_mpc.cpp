@@ -84,7 +84,7 @@ protected:
   int curvature_smoothing_num_ref_steer = 35;
   bool enable_path_smoothing = true;
   bool use_steer_prediction = true;
-  bool enable_traj_extending = true;
+  bool extend_trajectory_for_end_yaw_control = true;
 
   void SetUp() override
   {
@@ -177,7 +177,7 @@ protected:
     mpc.setReferenceTrajectory(
       dummy_straight_trajectory, traj_resample_dist, enable_path_smoothing,
       path_filter_moving_ave_num, curvature_smoothing_num_traj, curvature_smoothing_num_ref_steer,
-      enable_traj_extending);
+      extend_trajectory_for_end_yaw_control);
   }
 };  // class MPCTest
 
@@ -236,7 +236,7 @@ TEST_F(MPCTest, InitializeAndCalculateRightTurn)
   mpc.setReferenceTrajectory(
     dummy_right_turn_trajectory, traj_resample_dist, enable_path_smoothing,
     path_filter_moving_ave_num, curvature_smoothing_num_traj, curvature_smoothing_num_ref_steer,
-    enable_traj_extending);
+    extend_trajectory_for_end_yaw_control);
 
   // Calculate MPC
   AckermannLateralCommand ctrl_cmd;
@@ -255,7 +255,7 @@ TEST_F(MPCTest, OsqpCalculate)
   mpc.setReferenceTrajectory(
     dummy_straight_trajectory, traj_resample_dist, enable_path_smoothing,
     path_filter_moving_ave_num, curvature_smoothing_num_traj, curvature_smoothing_num_ref_steer,
-    enable_traj_extending);
+    extend_trajectory_for_end_yaw_control);
 
   const std::string vehicle_model_type = "kinematics";
   std::shared_ptr<trajectory_follower::VehicleModelInterface> vehicle_model_ptr =
@@ -287,7 +287,7 @@ TEST_F(MPCTest, OsqpCalculateRightTurn)
   mpc.setReferenceTrajectory(
     dummy_right_turn_trajectory, traj_resample_dist, enable_path_smoothing,
     path_filter_moving_ave_num, curvature_smoothing_num_traj, curvature_smoothing_num_ref_steer,
-    enable_traj_extending);
+    extend_trajectory_for_end_yaw_control);
 
   const std::string vehicle_model_type = "kinematics";
   std::shared_ptr<trajectory_follower::VehicleModelInterface> vehicle_model_ptr =
@@ -333,7 +333,7 @@ TEST_F(MPCTest, KinematicsNoDelayCalculate)
   mpc.setReferenceTrajectory(
     dummy_straight_trajectory, traj_resample_dist, enable_path_smoothing,
     path_filter_moving_ave_num, curvature_smoothing_num_traj, curvature_smoothing_num_ref_steer,
-    enable_traj_extending);
+    extend_trajectory_for_end_yaw_control);
   // Calculate MPC
   AckermannLateralCommand ctrl_cmd;
   Trajectory pred_traj;
@@ -351,7 +351,7 @@ TEST_F(MPCTest, KinematicsNoDelayCalculateRightTurn)
   mpc.setReferenceTrajectory(
     dummy_right_turn_trajectory, traj_resample_dist, enable_path_smoothing,
     path_filter_moving_ave_num, curvature_smoothing_num_traj, curvature_smoothing_num_ref_steer,
-    enable_traj_extending);
+    extend_trajectory_for_end_yaw_control);
 
   const std::string vehicle_model_type = "kinematics_no_delay";
   std::shared_ptr<trajectory_follower::VehicleModelInterface> vehicle_model_ptr =

@@ -98,7 +98,7 @@ private:
   double m_traj_resample_dist;
 
   //!< @brief flag of traj extending for terminal yaw
-  bool m_enable_traj_extending;
+  bool m_extend_trajectory_for_end_yaw_control;
 
   /* parameters for stop state */
   double m_stop_state_entry_ego_speed;

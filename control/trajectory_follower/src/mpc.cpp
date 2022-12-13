@@ -180,7 +180,7 @@ void MPC::setReferenceTrajectory(
   const autoware_auto_planning_msgs::msg::Trajectory & trajectory_msg,
   const double traj_resample_dist, const bool enable_path_smoothing,
   const int path_filter_moving_ave_num, const int curvature_smoothing_num_traj,
-  const int curvature_smoothing_num_ref_steer, const bool enable_traj_extending)
+  const int curvature_smoothing_num_ref_steer, const bool extend_trajectory_for_end_yaw_control)
 {
   trajectory_follower::MPCTrajectory mpc_traj_raw;        // received raw trajectory
   trajectory_follower::MPCTrajectory mpc_traj_resampled;  // resampled trajectory
@@ -217,35 +217,15 @@ void MPC::setReferenceTrajectory(
     }
   }
 
-  /* extend terminal points.
-   * the original trajectory cannot take into account the pose from the position alone
-   * due to smoothing, etc.
+  /* extend terminal points
+   * Note: The current MPC does not properly take into account the attitude angle at the end of the
+   * path. By extending the end of the path in the attitude direction, the MPC can consider the
+   * attitude angle well, resulting in improved control performance. If the trajecoty is
+   * well-defined considring the end point attitude angle, this feature is not necessary.
    */
-  if (enable_traj_extending) {
-    // set original raw termianl yaw
-    auto & traj = mpc_traj_smoothed;
-    traj.yaw.back() = mpc_traj_raw.yaw.back();
-
-    // get terminal pose
-    autoware_auto_planning_msgs::msg::Trajectory autoware_traj;
-    autoware::motion::control::trajectory_follower::MPCUtils::convertToAutowareTrajectory(
-      traj, autoware_traj);
-    auto extended_pose = autoware_traj.points.back().pose;
-
-    constexpr double extend_dist = 10.0;
-    constexpr double extend_vel = 10.0;
-    const double extend_interval = traj_resample_dist;
-    const size_t num_extended_point = static_cast<size_t>(extend_dist / extend_interval);
-    for (size_t i = 0; i < num_extended_point; ++i) {
-      const double x_offset = m_is_forward_shift ? extend_interval : -extend_interval;
-      extended_pose = tier4_autoware_utils::calcOffsetPose(extended_pose, x_offset, 0.0, 0.0);
-      const double x = extended_pose.position.x;
-      const double y = extended_pose.position.y;
-      const double z = extended_pose.position.z;
-      const double dist = std::hypot(x - traj.x.back(), y - traj.y.back(), z - traj.z.back());
-      const double t = traj.relative_time.back() + dist / extend_vel;
-      traj.push_back(x, y, z, traj.yaw.back(), extend_vel, traj.k.back(), traj.smooth_k.back(), t);
-    }
+  if (extend_trajectory_for_end_yaw_control) {
+    trajectory_follower::MPCUtils::extendTrajectoryInYawDirection(
+      mpc_traj_raw.yaw.back(), traj_resample_dist, m_is_forward_shift, mpc_traj_smoothed);
   }
 
   /* calculate yaw angle */
