@@ -422,11 +422,9 @@ void extendTrajectoryInYawDirection(
   const size_t num_extended_point = static_cast<size_t>(extend_dist / interval);
   for (size_t i = 0; i < num_extended_point; ++i) {
     extended_pose = tier4_autoware_utils::calcOffsetPose(extended_pose, x_offset, 0.0, 0.0);
-    const double x = extended_pose.position.x;
-    const double y = extended_pose.position.y;
-    const double z = extended_pose.position.z;
-    const double t = traj.relative_time.back() + dt;
-    traj.push_back(x, y, z, traj.yaw.back(), extend_vel, traj.k.back(), traj.smooth_k.back(), t);
+    traj.push_back(
+      extended_pose.position.x, extended_pose.position.y, extended_pose.position.z, traj.yaw.back(),
+      extend_vel, traj.k.back(), traj.smooth_k.back(), traj.relative_time.back() + dt);
   }
 }
 
