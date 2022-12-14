@@ -26,7 +26,7 @@
 
 MapHeightFitter::MapHeightFitter() : Node("map_height_fitter"), tf2_listener_(tf2_buffer_)
 {
-  partial_map_load_enabled_ = declare_parameter<bool>("partial_map_load_enabled");
+  partial_map_load_enabled_ = declare_parameter<bool>("partial_map_load_enabled", false);
 
   const auto durable_qos = rclcpp::QoS(1).transient_local();
   using std::placeholders::_1;
@@ -39,10 +39,9 @@ MapHeightFitter::MapHeightFitter() : Node("map_height_fitter"), tf2_listener_(tf
     sub_map_ = create_subscription<sensor_msgs::msg::PointCloud2>(
       "pointcloud_map", durable_qos, std::bind(&MapHeightFitter::on_map, this, _1));
   } else {
-    // callback_group_services_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+    callback_group_service_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
     cli_get_partial_pcd_ = create_client<autoware_map_msgs::srv::GetPartialPointCloudMap>(
-      // "client_partial_map_load", rmw_qos_profile_default, callback_group_services_);
-      "client_partial_map_load", rmw_qos_profile_default);
+      "client_partial_map_load", rmw_qos_profile_default, callback_group_service_);
     while (!cli_get_partial_pcd_->wait_for_service(std::chrono::seconds(1)) && rclcpp::ok()) {
       RCLCPP_INFO(this->get_logger(), "Waiting for pcd loader service...");
     }
@@ -88,7 +87,7 @@ double MapHeightFitter::get_ground_height(const tf2::Vector3 & point) const
 void MapHeightFitter::get_partial_point_cloud_map(const geometry_msgs::msg::Point & point)
 {
   if (!cli_get_partial_pcd_) {
-    throw std::runtime_error{"Partial map loading is not enabled"};
+    throw std::runtime_error{"Partial map loading in pointcloud_map_loader is not enabled"};
   }
   const auto req = std::make_shared<autoware_map_msgs::srv::GetPartialPointCloudMap::Request>();
   req->area.center = point;
@@ -123,8 +122,9 @@ void MapHeightFitter::get_partial_point_cloud_map(const geometry_msgs::msg::Poin
   }
 
   map_frame_ = res.get()->header.frame_id;
-  // map_cloud_ = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
+  map_cloud_ = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
   pcl::fromROSMsg(pcd_msg, *map_cloud_);
+
 }
 
 void MapHeightFitter::on_fit(
