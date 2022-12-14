@@ -25,6 +25,7 @@ using visualization_msgs::msg::MarkerArray;
 
 namespace
 {
+
 inline visualization_msgs::msg::MarkerArray createVirtualWallMarkerArray(
   const geometry_msgs::msg::Pose & vehicle_front_pose, const std::string & module_name,
   const std::string & ns_prefix, const rclcpp::Time & now, const int32_t id,
@@ -131,12 +132,12 @@ visualization_msgs::msg::MarkerArray createDeletedDeadLineVirtualWallMarker(
   return createDeletedVirtualWallMarkerArray("dead_line_", now, id);
 }
 
-visualization_msgs::msg::MarkerArray createDeletedStopVirtualWallMarkerFromStopPoses(
-  const std::vector<Pose> & stop_poses, const std::vector<Pose> & stopped_poses,
+visualization_msgs::msg::MarkerArray createVirtualWallMarkerFromPreviousPoses(
+  const std::vector<Pose> & stop_poses, const std::vector<Pose> & previous_virtual_wall_poses,
   const rclcpp::Time & now, int32_t id)
 {
   visualization_msgs::msg::MarkerArray wall_marker_to_delete;
-  for (const auto & p : stopped_poses) {
+  for (const auto & p : previous_virtual_wall_poses) {
     const bool stopped_pose_is_in_stop_pose = std::any_of(
       stop_poses.begin(), stop_poses.end(), [&](const auto & elem) { return elem == p; });
     if (!stopped_pose_is_in_stop_pose) {
@@ -147,25 +148,21 @@ visualization_msgs::msg::MarkerArray createDeletedStopVirtualWallMarkerFromStopP
   }
   return wall_marker_to_delete;
 }
-visualization_msgs::msg::MarkerArray VirtualWallMarkerCreator::base(
+visualization_msgs::msg::MarkerArray VirtualWallMarkerCreator::handleVirtualWallMaker(
   const std::vector<Pose> & poses, const std::string & module_name, const rclcpp::Time & now,
-  int32_t id,
-  std::function<MarkerArray(
-    const geometry_msgs::msg::Pose & pose, const std::string & module_name,
-    const rclcpp::Time & now, const int32_t id, const double longitudinal_offset)>
-    function_create_wall_marker,
-  std::function<MarkerArray(const rclcpp::Time & now, const int32_t id)>
-    function_delete_wall_marker,
-  std::vector<geometry_msgs::msg::Pose> & previous_poses, const double longitudinal_offset)
+  int32_t id, create_wall_function function_create_wall_marker,
+  delete_wall_function function_delete_wall_marker,
+  std::vector<geometry_msgs::msg::Pose> & previous_virtual_wall_poses,
+  const double longitudinal_offset)
 {
   size_t id_to_create = id;
   size_t id_to_delete = id;
   visualization_msgs::msg::MarkerArray wall_marker;
   for (const auto & p : poses) {
-    const bool previous_pose_is_in_stop_pose =
+    const bool previous_stop_pose_is_in_stop_pose =
       std::any_of(poses.begin(), poses.end(), [&](const auto & elem) { return elem == p; });
 
-    if (!previous_pose_is_in_stop_pose) {
+    if (!previous_stop_pose_is_in_stop_pose) {
       appendMarkerArray(function_delete_wall_marker(now, id_to_delete++), &wall_marker, now);
     } else {
       id_to_delete++;
@@ -177,7 +174,7 @@ visualization_msgs::msg::MarkerArray VirtualWallMarkerCreator::base(
       function_create_wall_marker(p, module_name, now, id_to_create++, longitudinal_offset),
       &wall_marker);
   }
-  previous_poses = poses;
+  previous_virtual_wall_poses = poses;
   return wall_marker;
 }
 
@@ -185,14 +182,39 @@ visualization_msgs::msg::MarkerArray VirtualWallMarkerCreator::createStopVirtual
   const std::vector<Pose> & stop_poses, const std::string & module_name, const rclcpp::Time & now,
   int32_t id, const double longitudinal_offset = 0.0)
 {
-  std::function<MarkerArray(
-    const geometry_msgs::msg::Pose & pose, const std::string & module_name,
-    const rclcpp::Time & now, const int32_t id, const double longitudinal_offset)>
-    f1 = motion_utils::createStopVirtualWallMarker;
+  create_wall_function f1 = motion_utils::createStopVirtualWallMarker;
+  delete_wall_function f2 = motion_utils::createDeletedStopVirtualWallMarker;
 
-  std::function<MarkerArray(const rclcpp::Time & now, const int32_t id)> f2 =
-    motion_utils::createDeletedStopVirtualWallMarker;
-
-  return base(stop_poses, module_name, now, id, f1, f2, previous_stop_pose_, longitudinal_offset);
+  return handleVirtualWallMaker(
+    stop_poses, module_name, now, id, f1, f2, previous_stop_pose_, longitudinal_offset);
 }
+
+visualization_msgs::msg::MarkerArray VirtualWallMarkerCreator::createSlowDownVirtualWallMarker(
+  const std::vector<Pose> & stop_poses, const std::string & module_name, const rclcpp::Time & now,
+  int32_t id, const double longitudinal_offset = 0.0)
+{
+  create_wall_function f1 = motion_utils::createSlowDownVirtualWallMarker;
+
+  delete_wall_function f2 = motion_utils::createDeletedSlowDownVirtualWallMarker;
+
+  return handleVirtualWallMaker(
+    stop_poses, module_name, now, id, f1, f2, previous_slow_down_pose_, longitudinal_offset);
+}
+
+// visualization_msgs::msg::MarkerArray VirtualWallMarkerCreator::createDeadLineVirtualWallMarker(
+//   const std::vector<Pose> & stop_poses, const std::string & module_name, const rclcpp::Time &
+//   now, int32_t id, const double longitudinal_offset = 0.0)
+// {
+//   std::function<MarkerArray(
+//     const geometry_msgs::msg::Pose & pose, const std::string & module_name,
+//     const rclcpp::Time & now, const int32_t id, const double longitudinal_offset)>
+//     f1 = motion_utils::createDeadLineVirtualWallMarker;
+
+//   std::function<MarkerArray(const rclcpp::Time & now, const int32_t id)> f2 =
+//     motion_utils::createDeletedDeadLineVirtualWallMarker;
+
+//   return base(
+//     stop_poses, module_name, now, id, f1, f2, previous_dead_line_pose_, longitudinal_offset);
+// }
+
 }  // namespace motion_utils
