@@ -112,9 +112,10 @@ public:
 
   void parse_yaml()
   {
-    //get_package_share_directory("tier4_perception_launch") would cause ci error
+    // get_package_share_directory("tier4_perception_launch") would cause ci error
     const auto share_dir = ament_index_cpp::get_package_share_directory("ground_segmentation");
-    const auto tier4_perception_launch_share_dir = share_dir + "/../../../tier4_perception_launch/share/tier4_perception_launch";
+    const auto tier4_perception_launch_share_dir =
+      share_dir + "/../../../tier4_perception_launch/share/tier4_perception_launch";
     const auto config_path =
       tier4_perception_launch_share_dir +
       "/config/obstacle_segmentation/ground_segmentation/ground_segmentation.param.yaml";
