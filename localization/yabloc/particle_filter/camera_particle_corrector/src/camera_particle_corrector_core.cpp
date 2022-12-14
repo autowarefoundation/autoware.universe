@@ -37,6 +37,10 @@ CameraParticleCorrector::CameraParticleCorrector()
   sub_ll2_ = create_subscription<PointCloud2>("ll2_road_marking", 10, on_ll2);
   sub_unmapped_area_ = create_subscription<PointCloud2>("ll2_polygon", 10, on_unmapped_area);
   sub_pose_ = create_subscription<PoseStamped>("particle_pose", 10, on_pose);
+  sub_switch_ = create_subscription<Bool>("/switch", 10, [this](Bool::ConstSharedPtr msg) -> void {
+    RCLCPP_WARN_STREAM(this->get_logger(), "SWITCH " << int(msg->data));
+    this->enable_weights_ = msg->data;
+  });
 
   // Timer callback
   auto on_timer = std::bind(&CameraParticleCorrector::on_timer, this);
@@ -129,7 +133,9 @@ void CameraParticleCorrector::on_lsd(const PointCloud2 & lsd_msg)
     Pose meaned_pose = mean_pose(weighted_particles);
     Eigen::Vector3f mean_position = common::pose_to_affine(meaned_pose).translation();
     if ((mean_position - last_mean_position_).squaredNorm() > 1) {
-      this->set_weighted_particle_array(weighted_particles);
+      if (enable_weights_) {
+        this->set_weighted_particle_array(weighted_particles);
+      }
       last_mean_position_ = mean_position;
     } else {
       using namespace std::literals::chrono_literals;

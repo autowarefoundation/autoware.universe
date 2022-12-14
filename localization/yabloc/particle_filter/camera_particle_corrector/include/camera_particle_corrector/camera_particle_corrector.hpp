@@ -7,6 +7,7 @@
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include <std_msgs/msg/bool.hpp>
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -26,6 +27,7 @@ public:
   using Image = sensor_msgs::msg::Image;
   using MarkerArray = visualization_msgs::msg::MarkerArray;
   using Pose = geometry_msgs::msg::Pose;
+  using Bool = std_msgs::msg::Bool;
   CameraParticleCorrector();
 
 private:
@@ -39,6 +41,7 @@ private:
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_lsd_;
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_ll2_;
   rclcpp::Subscription<PoseStamped>::SharedPtr sub_pose_;
+  rclcpp::Subscription<Bool>::SharedPtr sub_switch_;
   rclcpp::TimerBase::SharedPtr timer_;
 
   rclcpp::Publisher<Image>::SharedPtr pub_image_;
@@ -49,6 +52,8 @@ private:
   Eigen::Vector3f last_mean_position_;
   std::optional<PoseStamped> latest_pose_{std::nullopt};
   std::function<float(float)> score_converter_;
+
+  bool enable_weights_{true};
 
   void on_lsd(const PointCloud2 & msg);
   void on_ll2(const PointCloud2 & msg);
