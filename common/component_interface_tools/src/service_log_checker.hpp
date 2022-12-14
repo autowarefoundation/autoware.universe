@@ -19,6 +19,8 @@
 
 #include <tier4_system_msgs/msg/service_log.hpp>
 
+#include <string>
+
 class ServiceLogChecker : public rclcpp::Node
 {
 public:
@@ -28,6 +30,7 @@ private:
   using ServiceLog = tier4_system_msgs::msg::ServiceLog;
   rclcpp::Subscription<ServiceLog>::SharedPtr sub_;
   void on_service_log(const ServiceLog::ConstSharedPtr msg);
+  void set_error(const ServiceLog & msg, const std::string & log);
 };
 
 #endif  // SERVICE_LOG_CHECKER_HPP_
