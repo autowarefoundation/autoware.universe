@@ -17,10 +17,10 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware_map_msgs/srv/get_partial_point_cloud_map.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <tier4_localization_msgs/srv/pose_with_covariance_stamped.hpp>
-#include <autoware_map_msgs/srv/get_partial_point_cloud_map.hpp>
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>

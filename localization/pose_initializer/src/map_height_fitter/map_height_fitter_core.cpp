@@ -94,20 +94,21 @@ void MapHeightFitter::get_partial_point_cloud_map(const geometry_msgs::msg::Poin
   req->area.radius = 50;
 
   RCLCPP_INFO(this->get_logger(), "Send request to map_loader");
-  auto res {
-    cli_get_partial_pcd_->async_send_request(
-      req,
-      [](rclcpp::Client<autoware_map_msgs::srv::GetPartialPointCloudMap>::SharedFuture){})
-  };
+  auto res{cli_get_partial_pcd_->async_send_request(
+    req, [](rclcpp::Client<autoware_map_msgs::srv::GetPartialPointCloudMap>::SharedFuture) {})};
 
   std::future_status status = res.wait_for(std::chrono::seconds(0));
   while (status != std::future_status::ready) {
     RCLCPP_INFO(this->get_logger(), "waiting response");
-    if (!rclcpp::ok()) {return;}
+    if (!rclcpp::ok()) {
+      return;
+    }
     status = res.wait_for(std::chrono::seconds(1));
   }
 
-  RCLCPP_INFO(this->get_logger(), "Loaded partial pcd map from map_loader (grid size: %d)", int(res.get()->new_pointcloud_with_ids.size()));
+  RCLCPP_INFO(
+    this->get_logger(), "Loaded partial pcd map from map_loader (grid size: %d)",
+    int(res.get()->new_pointcloud_with_ids.size()));
 
   sensor_msgs::msg::PointCloud2 pcd_msg;
   for (const auto & pcd_with_id : res.get()->new_pointcloud_with_ids) {
@@ -116,15 +117,14 @@ void MapHeightFitter::get_partial_point_cloud_map(const geometry_msgs::msg::Poin
     } else {
       pcd_msg.width += pcd_with_id.pointcloud.width;
       pcd_msg.row_step += pcd_with_id.pointcloud.row_step;
-      pcd_msg.data.insert(pcd_msg.data.end(),
-        pcd_with_id.pointcloud.data.begin(), pcd_with_id.pointcloud.data.end());
+      pcd_msg.data.insert(
+        pcd_msg.data.end(), pcd_with_id.pointcloud.data.begin(), pcd_with_id.pointcloud.data.end());
     }
   }
 
   map_frame_ = res.get()->header.frame_id;
   map_cloud_ = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
   pcl::fromROSMsg(pcd_msg, *map_cloud_);
-
 }
 
 void MapHeightFitter::on_fit(
@@ -159,4 +159,3 @@ void MapHeightFitter::on_fit(
   res->pose_with_covariance.pose.pose.position.y = point.getY();
   res->pose_with_covariance.pose.pose.position.z = point.getZ();
 }
-
