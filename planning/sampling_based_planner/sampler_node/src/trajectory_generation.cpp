@@ -72,8 +72,8 @@ std::vector<frenet_planner::Trajectory> generateFrenetTrajectories(
   const auto base_duration = base_traj.times.empty() ? 0.0 : base_traj.times.back();
   const auto sampling_parameters = prepareSamplingParameters(
     initial_configuration, path, base_length, base_duration, path_spline, params);
-  std::cout << "Frenet Generation with " << sampling_parameters.parameters.size()
-            << " parameters\n";
+  // std::cout << "Frenet Generation with " << sampling_parameters.parameters.size()
+            // << " parameters\n";
 
   frenet_planner::FrenetState initial_frenet_state;
   const auto final_s =
@@ -150,8 +150,8 @@ std::vector<frenet_planner::Trajectory> generateFrenetTrajectories(
     }
     auto stopping_trajectories = frenet_planner::generateLowVelocityTrajectories(
       path_spline, initial_frenet_state, stopping_sampling_parameters);
-    std::cout << "\t Additional " << stopping_trajectories.size() << " stopping trajectories"
-              << std::endl;
+    // std::cout << "\t Additional " << stopping_trajectories.size() << " stopping trajectories"
+    //           << std::endl;
     for (auto & traj : stopping_trajectories) {
       traj.tag += " stopping";
     }

@@ -360,8 +360,8 @@ void TrajectorySamplerNode::pathCallback(
                          output_trajectory.longitudinal_velocities[i] < min_engage_vel;
            ++i)
         output_trajectory.longitudinal_velocities[i] = min_engage_vel;
-      std::cout << "[prependTrajectory] updated first velocity points to "
-                << output_trajectory.longitudinal_velocities.front() << "m/s\n";
+      // std::cout << "[prependTrajectory] updated first velocity points to "
+      //          << output_trajectory.longitudinal_velocities.front() << "m/s\n";
     }
     if (!output_trajectory.points.empty())
       publishTrajectory(output_trajectory, msg->header.frame_id);
@@ -392,6 +392,8 @@ void TrajectorySamplerNode::pathCallback(
     std::chrono::duration_cast<std::chrono::milliseconds>(calc_end - calc_begin).count();
   const auto gui_time_ms =
     std::chrono::duration_cast<std::chrono::milliseconds>(gui_end - gui_begin).count();
+  std::printf(" runtime = %2.2fms | gui time = %2.2fms", calc_time_ms, gui_time_ms);
+  std::cout << std::endl;
   gui_.setPerformances(trajectories.size(), calc_time_ms, gui_time_ms);
 }
 
