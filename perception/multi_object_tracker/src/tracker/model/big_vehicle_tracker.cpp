@@ -134,8 +134,16 @@ BigVehicleTracker::BigVehicleTracker(
       object.shape.dimensions.x, object.shape.dimensions.y, object.shape.dimensions.z};
     last_input_bounding_box_ = bounding_box_;
   } else {
-    bounding_box_ = {7.0, 2.0, 2.0};
-    last_input_bounding_box_ = {-1, -1, -1};
+    // past defalut value
+    // bounding_box_ = {7.0, 2.0, 2.0};
+    autoware_auto_perception_msgs::msg::DetectedObject bbox_object;
+    utils::convertConvexHullToBoundingBox(object, bbox_object);
+    bounding_box_ = {
+      bbox_object.shape.dimensions.x, bbox_object.shape.dimensions.y,
+      bbox_object.shape.dimensions.z};
+    last_input_bounding_box_ = {
+      bbox_object.shape.dimensions.x, bbox_object.shape.dimensions.y,
+      bbox_object.shape.dimensions.z};
   }
   ekf_.init(X, P);
 
@@ -262,17 +270,19 @@ bool BigVehicleTracker::measureWithPose(
   Eigen::MatrixXd X_t(ekf_params_.dim_x, 1);           // predicted state
   ekf_.getX(X_t);
 
-  // save last input bounding box
-  if (last_input_bounding_box_.length == -1) {
-    last_input_bounding_box_ = {
-      object.shape.dimensions.x, object.shape.dimensions.y, object.shape.dimensions.z};
+  // convert to boundingbox if input is convex shape
+  autoware_auto_perception_msgs::msg::DetectedObject bbox_object;
+  if (object.shape.type != autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
+    utils::convertConvexHullToBoundingBox(object, bbox_object);
+  } else {
+    bbox_object = object;
   }
 
   /* get offset measurement*/
   autoware_auto_perception_msgs::msg::DetectedObject offset_object;
   utils::calcAnchorPointOffset(
     last_input_bounding_box_.width, last_input_bounding_box_.length, last_nearest_corner_index_,
-    object, X_t(IDX::YAW), offset_object, tracking_offset_);
+    bbox_object, X_t(IDX::YAW), offset_object, tracking_offset_);
 
   /* Set measurement matrix */
   Eigen::MatrixXd Y(dim_y, 1);
@@ -350,15 +360,23 @@ bool BigVehicleTracker::measureWithPose(
 bool BigVehicleTracker::measureWithShape(
   const autoware_auto_perception_msgs::msg::DetectedObject & object)
 {
+  autoware_auto_perception_msgs::msg::DetectedObject bbox_object;
+
+  // if input is convex shape convert it to bbox shape
   if (object.shape.type != autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
-    return false;
+    utils::convertConvexHullToBoundingBox(object, bbox_object);
+  } else {
+    bbox_object = object;
   }
+
   constexpr float gain = 0.9;
-  bounding_box_.length = gain * bounding_box_.length + (1.0 - gain) * object.shape.dimensions.x;
-  bounding_box_.width = gain * bounding_box_.width + (1.0 - gain) * object.shape.dimensions.y;
-  bounding_box_.height = gain * bounding_box_.height + (1.0 - gain) * object.shape.dimensions.z;
+  bounding_box_.length =
+    gain * bounding_box_.length + (1.0 - gain) * bbox_object.shape.dimensions.x;
+  bounding_box_.width = gain * bounding_box_.width + (1.0 - gain) * bbox_object.shape.dimensions.y;
+  bounding_box_.height =
+    gain * bounding_box_.height + (1.0 - gain) * bbox_object.shape.dimensions.z;
   last_input_bounding_box_ = {
-    object.shape.dimensions.x, object.shape.dimensions.y, object.shape.dimensions.z};
+    bbox_object.shape.dimensions.x, bbox_object.shape.dimensions.y, bbox_object.shape.dimensions.z};
   return true;
 }
 
