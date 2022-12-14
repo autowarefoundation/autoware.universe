@@ -148,7 +148,7 @@ visualization_msgs::msg::MarkerArray createVirtualWallMarkerFromPreviousPoses(
   }
   return wall_marker_to_delete;
 }
-visualization_msgs::msg::MarkerArray VirtualWallMarkerCreator::handleVirtualWallMaker(
+visualization_msgs::msg::MarkerArray VirtualWallMarkerCreator::handleVirtualWallMarker(
   const std::vector<Pose> & poses, const std::string & module_name, const rclcpp::Time & now,
   int32_t id, create_wall_function function_create_wall_marker,
   delete_wall_function function_delete_wall_marker,
@@ -180,25 +180,25 @@ visualization_msgs::msg::MarkerArray VirtualWallMarkerCreator::handleVirtualWall
 
 visualization_msgs::msg::MarkerArray VirtualWallMarkerCreator::createStopVirtualWallMarker(
   const std::vector<Pose> & stop_poses, const std::string & module_name, const rclcpp::Time & now,
-  int32_t id, const double longitudinal_offset = 0.0)
+  int32_t id, const double longitudinal_offset)
 {
   create_wall_function f1 = motion_utils::createStopVirtualWallMarker;
   delete_wall_function f2 = motion_utils::createDeletedStopVirtualWallMarker;
 
-  return handleVirtualWallMaker(
-    stop_poses, module_name, now, id, f1, f2, previous_stop_pose_, longitudinal_offset);
+  return handleVirtualWallMarker(
+    stop_poses, module_name, now, id, f1, f2, previous_stop_poses_, longitudinal_offset);
 }
 
 visualization_msgs::msg::MarkerArray VirtualWallMarkerCreator::createSlowDownVirtualWallMarker(
   const std::vector<Pose> & stop_poses, const std::string & module_name, const rclcpp::Time & now,
-  int32_t id, const double longitudinal_offset = 0.0)
+  int32_t id, const double longitudinal_offset)
 {
   create_wall_function f1 = motion_utils::createSlowDownVirtualWallMarker;
 
   delete_wall_function f2 = motion_utils::createDeletedSlowDownVirtualWallMarker;
 
-  return handleVirtualWallMaker(
-    stop_poses, module_name, now, id, f1, f2, previous_slow_down_pose_, longitudinal_offset);
+  return handleVirtualWallMarker(
+    stop_poses, module_name, now, id, f1, f2, previous_slow_down_poses_, longitudinal_offset);
 }
 
 // visualization_msgs::msg::MarkerArray VirtualWallMarkerCreator::createDeadLineVirtualWallMarker(
