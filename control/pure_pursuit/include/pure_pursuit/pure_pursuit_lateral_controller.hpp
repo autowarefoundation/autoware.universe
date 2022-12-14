@@ -105,7 +105,6 @@ public:
 
 private:
   rclcpp::Node::SharedPtr node_;
-  tier4_autoware_utils::SelfPoseListener self_pose_listener_;
   boost::optional<std::vector<TrajectoryPoint>> output_tp_array_;
   autoware_auto_planning_msgs::msg::Trajectory::SharedPtr trajectory_resampled_;
   autoware_auto_planning_msgs::msg::Trajectory::ConstSharedPtr trajectory_;

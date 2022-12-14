@@ -57,7 +57,7 @@ enum TYPE {
 namespace pure_pursuit
 {
 PurePursuitLateralController::PurePursuitLateralController(rclcpp::Node & node)
-: node_{&node}, self_pose_listener_(&node), tf_buffer_(node_->get_clock()), tf_listener_(tf_buffer_)
+: node_{&node}, tf_buffer_(node_->get_clock()), tf_listener_(tf_buffer_)
 {
   pure_pursuit_ = std::make_unique<PurePursuit>();
 
@@ -112,12 +112,6 @@ bool PurePursuitLateralController::isDataReady()
   if (!trajectory_) {
     RCLCPP_WARN_THROTTLE(
       node_->get_logger(), *node_->get_clock(), 5000, "waiting for trajectory...");
-    return false;
-  }
-
-  if (!current_pose_) {
-    RCLCPP_WARN_THROTTLE(
-      node_->get_logger(), *node_->get_clock(), 5000, "waiting for current_pose...");
     return false;
   }
 
@@ -298,7 +292,7 @@ void PurePursuitLateralController::averageFilterTrajectory(
 boost::optional<Trajectory> PurePursuitLateralController::generatePredictedTrajectory()
 {
   const auto closest_idx_result =
-    motion_utils::findNearestIndex(*output_tp_array_, current_pose_->pose, 3.0, M_PI_4);
+    motion_utils::findNearestIndex(*output_tp_array_, current_odometry_->pose.pose, 3.0, M_PI_4);
 
   if (!closest_idx_result) {
     return boost::none;
@@ -319,7 +313,7 @@ boost::optional<Trajectory> PurePursuitLateralController::generatePredictedTraje
       // For first point, use the odometry for velocity, and use the current_pose for prediction.
 
       TrajectoryPoint p;
-      p.pose = current_pose_->pose;
+      p.pose = current_odometry_->pose.pose;
       p.longitudinal_velocity_mps = current_odometry_->twist.twist.linear.x;
       predicted_trajectory.points.push_back(p);
 
@@ -367,7 +361,6 @@ boost::optional<Trajectory> PurePursuitLateralController::generatePredictedTraje
 
 boost::optional<LateralOutput> PurePursuitLateralController::run()
 {
-  current_pose_ = self_pose_listener_.getCurrentPose();
   if (!isDataReady()) {
     return boost::none;
   }
@@ -407,7 +400,7 @@ bool PurePursuitLateralController::calcIsSteerConverged(const AckermannLateralCo
 boost::optional<AckermannLateralCommand> PurePursuitLateralController::generateOutputControlCmd()
 {
   // Generate the control command
-  const auto pp_output = calcTargetCurvature(true, current_pose_->pose);
+  const auto pp_output = calcTargetCurvature(true, current_odometry_->pose.pose);
   AckermannLateralCommand output_cmd;
 
   if (pp_output) {
@@ -447,7 +440,7 @@ void PurePursuitLateralController::publishDebugMarker() const
 
   marker_array.markers.push_back(createNextTargetMarker(debug_data_.next_target));
   marker_array.markers.push_back(
-    createTrajectoryCircleMarker(debug_data_.next_target, current_pose_->pose));
+    createTrajectoryCircleMarker(debug_data_.next_target, current_odometry_->pose.pose));
 
   pub_debug_marker_->publish(marker_array);
 }
