@@ -15,11 +15,13 @@
 #ifndef SERVICE_LOG_CHECKER_HPP_
 #define SERVICE_LOG_CHECKER_HPP_
 
+#include <diagnostic_updater/diagnostic_updater.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <tier4_system_msgs/msg/service_log.hpp>
 
 #include <string>
+#include <unordered_map>
 
 class ServiceLogChecker : public rclcpp::Node
 {
@@ -29,8 +31,12 @@ public:
 private:
   using ServiceLog = tier4_system_msgs::msg::ServiceLog;
   rclcpp::Subscription<ServiceLog>::SharedPtr sub_;
+  diagnostic_updater::Updater diagnostics_;
   void on_service_log(const ServiceLog::ConstSharedPtr msg);
+  void set_success(const ServiceLog & msg);
   void set_error(const ServiceLog & msg, const std::string & log);
+  void update_diagnostics(diagnostic_updater::DiagnosticStatusWrapper & stat);
+  std::unordered_map<std::string, std::string> errors_;
 };
 
 #endif  // SERVICE_LOG_CHECKER_HPP_

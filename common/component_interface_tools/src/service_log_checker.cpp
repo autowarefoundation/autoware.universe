@@ -22,10 +22,13 @@
 #define FMT_HEADER_ONLY
 #include <fmt/format.h>
 
-ServiceLogChecker::ServiceLogChecker() : Node("service_log_checker")
+ServiceLogChecker::ServiceLogChecker() : Node("service_log_checker"), diagnostics_(this)
 {
   sub_ = create_subscription<ServiceLog>(
     "/service_log", 50, std::bind(&ServiceLogChecker::on_service_log, this, std::placeholders::_1));
+
+  diagnostics_.setHardwareID(get_name());
+  diagnostics_.add("response_status", this, &ServiceLogChecker::update_diagnostics);
 }
 
 void ServiceLogChecker::on_service_log(const ServiceLog::ConstSharedPtr msg)
@@ -38,10 +41,10 @@ void ServiceLogChecker::on_service_log(const ServiceLog::ConstSharedPtr msg)
 
     // Ignore service errors.
     if (msg->type == ServiceLog::ERROR_UNREADY) {
-      return set_error(*msg, "is not ready");
+      return set_error(*msg, "not ready");
     }
     if (msg->type == ServiceLog::ERROR_TIMEOUT) {
-      return set_error(*msg, "timed out");
+      return set_error(*msg, "timeout");
     }
 
     // Ignore version API because it doesn't have response status.
@@ -52,7 +55,7 @@ void ServiceLogChecker::on_service_log(const ServiceLog::ConstSharedPtr msg)
     // Parse response data.
     const auto status = YAML::Load(msg->yaml)["status"];
     if (!status) {
-      return set_error(*msg, "has no status");
+      return set_error(*msg, "no response status");
     }
 
     // Check response status.
@@ -60,16 +63,39 @@ void ServiceLogChecker::on_service_log(const ServiceLog::ConstSharedPtr msg)
     if (!success) {
       const auto message = status["message"].as<std::string>();
       const auto code = status["code"].as<uint16_t>();
-      return set_error(*msg, fmt::format("failed with code {}: '{}'", code, message));
+      return set_error(*msg, fmt::format("status code {} '{}'", code, message));
     }
   } catch (const YAML::Exception & error) {
-    return set_error(*msg, fmt::format("has invalid data: '{}'", error.what()));
+    return set_error(*msg, fmt::format("invalid data: '{}'", error.what()));
   }
+
+  set_success(*msg);
+}
+
+void ServiceLogChecker::set_success(const ServiceLog & msg)
+{
+  errors_.erase(fmt::format("{} ({})", msg.name, msg.node));
 }
 
 void ServiceLogChecker::set_error(const ServiceLog & msg, const std::string & log)
 {
-  RCLCPP_ERROR_STREAM(get_logger(), fmt::format("{} {} ({})", msg.name, log, msg.node));
+  errors_[fmt::format("{} ({})", msg.name, msg.node)] = log;
+  RCLCPP_ERROR_STREAM(get_logger(), fmt::format("{}: {} ({})", msg.name, log, msg.node));
+}
+
+void ServiceLogChecker::update_diagnostics(diagnostic_updater::DiagnosticStatusWrapper & stat)
+{
+  using diagnostic_msgs::msg::DiagnosticStatus;
+
+  for (const auto & error : errors_) {
+    stat.add(error.first, error.second);
+  }
+
+  if (errors_.empty()) {
+    stat.summary(DiagnosticStatus::OK, "OK");
+  } else {
+    stat.summary(DiagnosticStatus::ERROR, "ERROR");
+  }
 }
 
 int main(int argc, char ** argv)
