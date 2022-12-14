@@ -201,7 +201,7 @@ void MapUpdateModule::update_ndt(
   }
 
   // Remove pcd
-  for (const std::string map_id_to_remove : map_ids_to_remove) {
+  for (const std::string & map_id_to_remove : map_ids_to_remove) {
     backup_ndt.removeTarget(map_id_to_remove);
   }
 
