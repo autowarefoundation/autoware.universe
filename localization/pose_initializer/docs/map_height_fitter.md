@@ -7,18 +7,17 @@ Use this service as preprocessing for `pose_initializer` when using a initial po
 This service replaces the Z value of the input pose with the lowest point of the map point cloud within a cylinder of XY-radius.
 If no point is found in this range, returns the input pose without changes.
 
-
-Note that this package supports partial map loading interface, which is disabled by default. The interface is intended to be enabled when 
-the pointcloud map is too large to handle. By using the interface, the node will request for a partial map around the requested position 
+Note that this package supports partial map loading interface, which is disabled by default. The interface is intended to be enabled when
+the pointcloud map is too large to handle. By using the interface, the node will request for a partial map around the requested position
 instead of loading whole map by subscription interface.
 
 ## Interfaces
 
 ### Parameters
 
-| Name                  | Type | Description                                                                              |    |
-| --------------------- | ---- | ---------------------------------------------------------------------------------------- | ---- |
-| `partial_map_load_enabled`  | bool | If true, use partial map load interface. If false, use topic subscription interaface. | false |
+| Name                       | Type | Description                                                                           |       |
+| -------------------------- | ---- | ------------------------------------------------------------------------------------- | ----- |
+| `partial_map_load_enabled` | bool | If true, use partial map load interface. If false, use topic subscription interaface. | false |
 
 ### Services
 
@@ -34,6 +33,6 @@ instead of loading whole map by subscription interface.
 
 ### Clients
 
-| Name                  | Type                          | Description    |
-| --------------------- | ----------------------------- | -------------- |
+| Name                              | Type                                            | Description                                  |
+| --------------------------------- | ----------------------------------------------- | -------------------------------------------- |
 | `/map/get_partial_pointcloud_map` | autoware_map_msgs::srv::GetPartialPointCloudMap | client for requesting partial pointcloud map |
