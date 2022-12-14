@@ -1,24 +1,20 @@
-## [WIP] Path Generation
+## Path Generation
 
 This document explains how to generate path for lane change and avoidance, etc by path_shifer.
 
+### Overview
 
-### Brief
+The purpose of the path generation for lane change and avoidance is to smoothly shift the reference path, such as the center line, in the lateral direction. This is achieved by using a constant-jerk profile as in the figure below. More details on how it is used can be found in [README](./README).
 
-You can see how this path generation is used in the [README](./README) for lane change and avoidance, etc. The basic concept of the path generation is to shift the reference path in the lateral direction with smooth curves. It is assumed that the path shifting from the reference path is done with the following profiles.
-
-
+The figure below explains how the application of a constant lateral jerk $l^{'''}(s)$ can be used to induce lateral shifting. In order to comply with the limits on lateral acceleration and velocity, zero-jerk time is employed in the figure ($T_a$ and $T_v$). In each interval where constant jerk is applied, the shift position $l(s)$ can be characterized by a third-degree polynomial. Therefore the shift length from the reference path can then be calculated by combining spline curves.
 
 <p align="center">
   <img src="./image/path_shifter.png" width="800">
 </p>
 
-This figure explains the constant lateral jerk $l^{'''}(s)$ is applied to induce the lateral shifting. To take into account the limits of lateral acceleration and lateral velocity, zero-jerk time is employed in the figure. In each interval with constant jerk, the shift position $l(s)$ is characterized by a polynomial of the third degree.
-
-
 ### Mathematical Derivation
 
-From simple integral operation, the following analytical equations are derived. They describes the distance $l(t)$ in each time under jerk, acceleration and velocity constraint.
+By applying simple integral operations, the following analytical equations can be derived to describe the shift distance $l(t)$ at each time under lateral jerk, acceleration, and velocity constraints.
 
 ```math
 \begin{align}
@@ -32,46 +28,64 @@ l_7&= 2 j T_j^3 + 3 j T_a T_j^2 + j T_a^2 T_j + j(T_a + T_j)T_j T_v
 \end{align}
 ```
 
-These equations are used to decide a path shape. Furthermore, from these basic equations, the following expression are derived.
+These equations are used to determine the shape of a path. Additionally, by applying further mathematical operations to these basic equations, the following expressions can be derived.
 
-#### Maximum Acceeration Computation
+#### Calculation of Maximum Acceleration from transition time and final shift length
 
-```
-  const auto T = arclength / speed;
-  const auto L = std::abs(shift_length);
-  const auto amax = 8.0 * L / (T * T);
+In the case where there are no limitations on lateral velocity and lateral acceleration, the maximum lateral acceleration during the shifting can be calculated as follows. The constant-jerk time is given by $T_j = T_{\rm total}/4$ because of its symmetric property. Since $T_a=T_v=0$, the final shift length $L=l_7=2jT_j^3$ can be determined using the above equation. The maximum lateral acceleration is then given by $a_{\rm max} =jT_j$. This results in the following expression for the maximum lateral acceleration:
+
+```math
+\begin{align}
+a_{\rm max}  = \frac{8L}{T_{\rm total}^2}
+\end{align}
 ```
 
 #### Calculation of Ta, Tj and jerk from acceleration limit
 
+In the case where there are no limitations on lateral velocity, the constant-jerk and acceleration times, as well as the required jerk can be calculated from the acceleration limit, total time, and final shift length as follows. Since $T_v=0$, the final shift length is given by:
+
+```math
+\begin{align}
+L = l_7 = 2 j T_j^3 + 3 j T_a T_j^2 + j T_a^2 T_j
+\end{align}
 ```
-  const auto tj = T / 2.0 - 2.0 * L / (acc_limit_ * T);
-  const auto ta = 4.0 * L / (acc_limit_ * T) - T / 2.0;
-  const auto jerk = (2.0 * acc_limit_ * acc_limit_ * T) / (acc_limit_ * T * T - 4.0 * L);
+
+Additionally, the velocity profile reveals the following relations:
+
+```math
+\begin{align}
+a_{\rm lim} &= j T_j\\
+T_{\rm total} &= 4T_j + 2T_a
+\end{align}
 ```
 
-#### Required Time from Jerk and Acceleration Constraint
+By solving these three equations, the following can be obtained:
 
+```math
+\begin{align}
+T_j&=\frac{T_{\rm total}}{2} - \frac{2L}{a_{\rm lim} T_{\rm total}}\\[10pt]
+T_a&=\frac{4L}{a_{\rm lim} T_{\rm total}} - \frac{T_{\rm total}}{2}\\[10pt]
+jerk&=\frac{2a_{\rm lim} ^2T_{\rm total}}{a_{\rm lim} T_{\rm total}^2-4L}
+\end{align}
 ```
-  const double j = std::abs(jerk);
-  const double a = std::abs(acc);
-  const double l = std::abs(lateral);
-  if (j < 1.0e-8 || a < 1.0e-8) {
-    return 1.0e10;  // TODO(Horibe) maybe invalid arg?
-  }
 
-  // time with constant jerk
-  double tj = a / j;
+where $T_j$ is the constant-jerk time, $T_a$ is the constant acceleration time, $j$ is the required jerk, $a_{\rm lim}$ is the acceleration limit, and $L$ is the final shift length.
 
-  // time with constant acceleration (zero jerk)
-  double ta = (std::sqrt(a * a + 4.0 * j * j * l / a) - 3.0 * a) / (2.0 * j);
+#### Calculation of Required Time from Jerk and Acceleration Constraint
 
-  if (ta < 0.0) {
-    // it will not hit the acceleration limit this time
-    tj = std::pow(l / (2.0 * j), 1.0 / 3.0);
-    ta = 0.0;
-  }
+In the case where there are no limitations on lateral velocity, the total time required for shifting can be calculated from the jerk and acceleration limits and the final shift length as follows. By solving the two equations given above:
 
-  const double t_total = 4.0 * tj + 2.0 * ta;
-  return t_total;
+```math
+L = l_7 = 2 j T_j^3 + 3 j T_a T_j^2 + j T_a^2 T_j,\quad a_{\rm lim} = j T_j
 ```
+
+we obtain the following expresions:
+
+```math
+\begin{align}
+T_j &= \frac{a_{\rm lim}}{j}\\[10pt]
+T_a &= \frac{1}{2}\sqrt{\frac{a_{\rm lim}}{j}^2 + \frac{4L}{a_{\rm lim}}} - \frac{3a_{\rm lim}}{2j}
+\end{align}
+```
+
+The total time required for shifting can then be calculated as $T_{\rm total}=4T_j+2T_a$.
