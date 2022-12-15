@@ -16,7 +16,6 @@
 #define BEHAVIOR_PATH_PLANNER__BEHAVIOR_TREE_MANAGER_HPP_
 
 #include "behavior_path_planner/data_manager.hpp"
-#include "behavior_path_planner/path_utilities.hpp"
 #include "behavior_path_planner/scene_module/scene_module_bt_node_interface.hpp"
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
 
@@ -52,6 +51,10 @@ public:
   BehaviorModuleOutput run(const std::shared_ptr<PlannerData> & data);
   std::vector<std::shared_ptr<SceneModuleStatus>> getModulesStatus();
   std::shared_ptr<SceneModuleVisitor> getAllSceneModuleDebugMsgData();
+  std::vector<std::shared_ptr<SceneModuleInterface>> getSceneModules() const
+  {
+    return scene_modules_;
+  }
 
   AvoidanceDebugMsgArray getAvoidanceDebugMsgArray();
 
@@ -69,10 +72,6 @@ private:
   BT::Blackboard::Ptr blackboard_;
 
   BT::NodeStatus checkForceApproval(const std::string & name);
-
-  void publishPathCandidate();
-  Path convertToPath(
-    const std::shared_ptr<PathWithLaneId> & path_candidate_ptr, const bool is_ready);
 
   // For Groot monitoring
   std::unique_ptr<BT::PublisherZMQ> groot_monitor_;

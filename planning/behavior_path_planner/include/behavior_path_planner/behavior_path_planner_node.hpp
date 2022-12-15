@@ -45,6 +45,7 @@
 #include <tier4_planning_msgs/msg/scenario.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 
+#include <map>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -102,6 +103,8 @@ private:
   rclcpp::Publisher<HazardLightsCommand>::SharedPtr hazard_signal_publisher_;
   rclcpp::Publisher<MarkerArray>::SharedPtr bound_publisher_;
   rclcpp::TimerBase::SharedPtr timer_;
+
+  std::map<std::string, rclcpp::Publisher<Path>::SharedPtr> path_candidate_publishers_;
 
   std::shared_ptr<PlannerData> planner_data_;
   std::shared_ptr<BehaviorTreeManager> bt_manager_;
@@ -191,6 +194,18 @@ private:
    * @brief publish debug messages
    */
   void publishSceneModuleDebugMsg();
+
+  /**
+   * @brief publish path candidate
+   */
+  void publishPathCandidate(
+    const std::vector<std::shared_ptr<SceneModuleInterface>> & scene_modules);
+
+  /**
+   * @brief convert path with lane id to path for publish path candidate
+   */
+  Path convertToPath(
+    const std::shared_ptr<PathWithLaneId> & path_candidate_ptr, const bool is_ready);
 
   template <class T>
   size_t findEgoIndex(const std::vector<T> & points) const

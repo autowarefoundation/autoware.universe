@@ -226,20 +226,7 @@ public:
 
   bool isWaitingApproval() const { return is_waiting_approval_; }
 
-  void createPathCandidatePublisher(const std::string & name_space, rclcpp::Node & node)
-  {
-    std::string module_ns;
-    module_ns.resize(name().size());
-    std::transform(name().begin(), name().end(), module_ns.begin(), tolower);
-    pub_path_candidate_ = node.create_publisher<Path>(name_space + module_ns, 1);
-  }
-
   PlanResult getPathCandidate() const { return path_candidate_; }
-
-  void publishPathCandidate(const Path & path_candidate) const
-  {
-    pub_path_candidate_->publish(path_candidate);
-  }
 
   void resetPathCandidate() { path_candidate_.reset(); }
 

@@ -121,30 +121,32 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
 
     auto side_shift_module =
       std::make_shared<SideShiftModule>("SideShift", *this, getSideShiftParam());
-    side_shift_module->createPathCandidatePublisher(path_candidate_name_space, *this);
     bt_manager_->registerSceneModule(side_shift_module);
 
     auto avoidance_module =
       std::make_shared<AvoidanceModule>("Avoidance", *this, avoidance_param_ptr);
-    avoidance_module->createPathCandidatePublisher(path_candidate_name_space, *this);
+    path_candidate_publishers_.emplace(
+      "Avoidance", create_publisher<Path>(path_candidate_name_space + "avoidance", 1));
     bt_manager_->registerSceneModule(avoidance_module);
 
     auto lane_following_module =
       std::make_shared<LaneFollowingModule>("LaneFollowing", *this, getLaneFollowingParam());
-    lane_following_module->createPathCandidatePublisher(path_candidate_name_space, *this);
     bt_manager_->registerSceneModule(lane_following_module);
 
     auto lane_change_module =
       std::make_shared<LaneChangeModule>("LaneChange", *this, lane_change_param_ptr);
-    lane_change_module->createPathCandidatePublisher(path_candidate_name_space, *this);
+    path_candidate_publishers_.emplace(
+      "LaneChange", create_publisher<Path>(path_candidate_name_space + "lane_change", 1));
     bt_manager_->registerSceneModule(lane_change_module);
 
     auto pull_over_module = std::make_shared<PullOverModule>("PullOver", *this, getPullOverParam());
-    pull_over_module->createPathCandidatePublisher(path_candidate_name_space, *this);
+    path_candidate_publishers_.emplace(
+      "PullOver", create_publisher<Path>(path_candidate_name_space + "pull_over", 1));
     bt_manager_->registerSceneModule(pull_over_module);
 
     auto pull_out_module = std::make_shared<PullOutModule>("PullOut", *this, getPullOutParam());
-    pull_out_module->createPathCandidatePublisher(path_candidate_name_space, *this);
+    path_candidate_publishers_.emplace(
+      "PullOut", create_publisher<Path>(path_candidate_name_space + "pull_out", 1));
     bt_manager_->registerSceneModule(pull_out_module);
 
     bt_manager_->createBehaviorTree();
@@ -635,6 +637,9 @@ void BehaviorPathPlannerNode::run()
   // path handling
   const auto path = getPath(output, planner_data);
 
+  // publish path candidates
+  publishPathCandidate(bt_manager_->getSceneModules());
+
   // update planner data
   planner_data_->prev_output_path = path;
 
@@ -764,6 +769,47 @@ void BehaviorPathPlannerNode::publishSceneModuleDebugMsg()
       debug_lane_change_msg_array_publisher_->publish(*lane_change_debug_message);
     }
   }
+}
+
+void BehaviorPathPlannerNode::publishPathCandidate(
+  const std::vector<std::shared_ptr<SceneModuleInterface>> & scene_modules)
+{
+  const bool is_running = std::any_of(
+    scene_modules.begin(), scene_modules.end(),
+    [](const auto & module) { return module->current_state_ == BT::NodeStatus::RUNNING; });
+
+  for (auto & module : scene_modules) {
+    if (path_candidate_publishers_.count(module->name()) == 0) {
+      continue;
+    }
+    if (is_running && (module->current_state_ != BT::NodeStatus::RUNNING)) {
+      module->resetPathCandidate();
+    }
+    path_candidate_publishers_.at(module->name())
+      ->publish(convertToPath(module->getPathCandidate(), module->isExecutionReady()));
+  }
+}
+
+Path BehaviorPathPlannerNode::convertToPath(
+  const std::shared_ptr<PathWithLaneId> & path_candidate_ptr, const bool is_ready)
+{
+  Path output;
+  output.header = planner_data_->route_handler->getRouteHeader();
+  output.header.stamp = this->now();
+
+  if (!path_candidate_ptr) {
+    return output;
+  }
+
+  output = util::toPath(*path_candidate_ptr);
+
+  if (!is_ready) {
+    for (auto & point : output.points) {
+      point.longitudinal_velocity_mps = 0.0;
+    }
+  }
+
+  return output;
 }
 
 PathWithLaneId::SharedPtr BehaviorPathPlannerNode::getPath(
