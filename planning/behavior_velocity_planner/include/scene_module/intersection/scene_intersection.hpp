@@ -15,6 +15,7 @@
 #ifndef SCENE_MODULE__INTERSECTION__SCENE_INTERSECTION_HPP_
 #define SCENE_MODULE__INTERSECTION__SCENE_INTERSECTION_HPP_
 
+#include <motion_utils/motion_utils.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <scene_module/scene_module_interface.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
@@ -25,7 +26,6 @@
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path_with_lane_id.hpp>
 #include <geometry_msgs/msg/point.hpp>
-#include <motion_utils/motion_utils.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_routing/RoutingGraph.h>

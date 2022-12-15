@@ -83,7 +83,7 @@ visualization_msgs::msg::MarkerArray BlindSpotModule::createVirtualWallMarkerArr
         debug_data_.virtual_wall_pose, "blind_spot", now, module_id_),
       &wall_marker, now);
   } else {
-    if (created_virtual_wall_marker_){
+    if (created_virtual_wall_marker_) {
       // delete marker
       appendMarkerArray(
         motion_utils::createDeletedStopVirtualWallMarker(now, module_id_), &wall_marker, now);

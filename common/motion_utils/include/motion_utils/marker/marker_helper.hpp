@@ -77,8 +77,6 @@ private:
     const std::vector<Pose> & stop_pose, const std::string & module_name, const rclcpp::Time & now,
     int32_t id, const double longitudinal_offset = 0.0);
 
-
-
   std::vector<Pose> previous_stop_poses_;
   std::vector<Pose> previous_slow_down_poses_;
 };
