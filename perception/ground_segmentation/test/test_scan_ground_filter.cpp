@@ -112,13 +112,8 @@ public:
 
   void parse_yaml()
   {
-    // get_package_share_directory("tier4_perception_launch") would cause ci error
     const auto share_dir = ament_index_cpp::get_package_share_directory("ground_segmentation");
-    const auto tier4_perception_launch_share_dir =
-      share_dir + "/../../../tier4_perception_launch/share/tier4_perception_launch";
-    const auto config_path =
-      tier4_perception_launch_share_dir +
-      "/config/obstacle_segmentation/ground_segmentation/ground_segmentation.param.yaml";
+    const auto config_path = share_dir + "/config/ground_segmentation.param.yaml";
     std::cout << "config_path:" << config_path << std::endl;
     YAML::Node config = YAML::LoadFile(config_path);
     auto params = config["/**"]["ros__parameters"]["common_ground_filter"]["parameters"];

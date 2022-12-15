@@ -60,6 +60,7 @@ rclcpp_components_register_node(ground_segmentation
 ament_auto_package(INSTALL_TO_SHARE
   launch
   test/data
+  config
 )
 
 # Resolve system dependency on yaml-cpp, which apparently does not
