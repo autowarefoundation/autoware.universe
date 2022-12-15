@@ -110,13 +110,20 @@ private:
   tier4_autoware_utils::SelfPoseListener self_pose_listener_{this};
   Scenario::SharedPtr current_scenario_{nullptr};
 
+  HADMapBin::ConstSharedPtr map_ptr_{nullptr};
+  LaneletRoute::ConstSharedPtr route_ptr_{nullptr};
+  bool has_received_map_{false};
+  bool has_received_route_{false};
+
   TurnSignalDecider turn_signal_decider_;
 
-  std::mutex mutex_pd_;  // mutex for planner_data_
   std::mutex mutex_bt_;  // mutex for bt_manager_
 
   // setup
   bool isDataReady();
+
+  // update planner data
+  void updatePlannerData();
 
   // parameters
   std::shared_ptr<AvoidanceParameters> avoidance_param_ptr;

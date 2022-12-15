@@ -564,17 +564,20 @@ bool BehaviorPathPlannerNode::isDataReady()
 {
   const auto missing = [this](const auto & name) {
     RCLCPP_INFO_SKIPFIRST_THROTTLE(get_logger(), *get_clock(), 5000, "waiting for %s", name);
-    mutex_pd_.unlock();
     return false;
   };
 
-  mutex_pd_.lock();  // for planner_data_
   if (!current_scenario_) {
     return missing("scenario_topic");
   }
 
-  if (!planner_data_->route_handler->isHandlerReady()) {
+  // if (!planner_data_->route_handler->isHandlerReady()) {
+  if (!route_ptr_) {
     return missing("route");
+  }
+
+  if (!map_ptr_) {
+    return missing("map");
   }
 
   if (!planner_data_->dynamic_object) {
@@ -594,8 +597,29 @@ bool BehaviorPathPlannerNode::isDataReady()
     return missing("self_pose");
   }
 
-  mutex_pd_.unlock();
   return true;
+}
+
+void BehaviorPathPlannerNode::updatePlannerData()
+{
+  // update planner data (pose, map and route)
+  planner_data_->self_pose = self_pose_listener_.getCurrentPose();
+  if (has_received_map_) {
+    planner_data_->route_handler->setMap(*map_ptr_);
+    has_received_map_ = false;
+  }
+
+  const bool is_first_time = !(planner_data_->route_handler->isHandlerReady());
+  if (has_received_route_) {
+    planner_data_->route_handler->setRoute(*route_ptr_);
+    has_received_route_ = false;
+  }
+  // Reset behavior tree when new route is received,
+  // so that the each modules do not have to care about the "route jump".
+  if (!is_first_time) {
+    RCLCPP_DEBUG(get_logger(), "new route is received. reset behavior tree.");
+    bt_manager_->resetBehaviorTree();
+  }
 }
 
 void BehaviorPathPlannerNode::run()
@@ -606,22 +630,17 @@ void BehaviorPathPlannerNode::run()
 
   RCLCPP_DEBUG(get_logger(), "----- BehaviorPathPlannerNode start -----");
   mutex_bt_.lock();  // for bt_manager_
-  mutex_pd_.lock();  // for planner_data_
 
   // behavior_path_planner runs only in LANE DRIVING scenario.
   if (current_scenario_->current_scenario != Scenario::LANEDRIVING) {
     mutex_bt_.unlock();  // for bt_manager_
-    mutex_pd_.unlock();  // for planner_data_
     return;
   }
 
-  // update planner data
-  planner_data_->self_pose = self_pose_listener_.getCurrentPose();
+  updatePlannerData();
 
+  // create local planner data
   const auto planner_data = std::make_shared<PlannerData>(*planner_data_);
-
-  // unlock planner data
-  mutex_pd_.unlock();
 
   // run behavior planner
   const auto output = bt_manager_->run(planner_data);
@@ -844,34 +863,28 @@ bool BehaviorPathPlannerNode::skipSmoothGoalConnection(
 
 void BehaviorPathPlannerNode::onVelocity(const Odometry::ConstSharedPtr msg)
 {
-  std::lock_guard<std::mutex> lock(mutex_pd_);
   planner_data_->self_odometry = msg;
 }
 void BehaviorPathPlannerNode::onAcceleration(const AccelWithCovarianceStamped::ConstSharedPtr msg)
 {
-  std::lock_guard<std::mutex> lock(mutex_pd_);
   planner_data_->self_acceleration = msg;
 }
 void BehaviorPathPlannerNode::onPerception(const PredictedObjects::ConstSharedPtr msg)
 {
-  std::lock_guard<std::mutex> lock(mutex_pd_);
   planner_data_->dynamic_object = msg;
 }
 void BehaviorPathPlannerNode::onOccupancyGrid(const OccupancyGrid::ConstSharedPtr msg)
 {
-  std::lock_guard<std::mutex> lock(mutex_pd_);
   planner_data_->occupancy_grid = msg;
 }
 void BehaviorPathPlannerNode::onExternalApproval(const ApprovalMsg::ConstSharedPtr msg)
 {
-  std::lock_guard<std::mutex> lock(mutex_pd_);
   planner_data_->approval.is_approved.data = msg->approval;
   // TODO(wep21): Replace msg stamp after {stamp: now} is implemented in ros2 topic pub
   planner_data_->approval.is_approved.stamp = this->now();
 }
 void BehaviorPathPlannerNode::onForceApproval(const PathChangeModule::ConstSharedPtr msg)
 {
-  std::lock_guard<std::mutex> lock(mutex_pd_);
   auto getModuleName = [](PathChangeModuleId module) {
     if (module.type == PathChangeModuleId::FORCE_LANE_CHANGE) {
       return "ForceLaneChange";
@@ -884,22 +897,13 @@ void BehaviorPathPlannerNode::onForceApproval(const PathChangeModule::ConstShare
 }
 void BehaviorPathPlannerNode::onMap(const HADMapBin::ConstSharedPtr msg)
 {
-  std::lock_guard<std::mutex> lock(mutex_pd_);
-  planner_data_->route_handler->setMap(*msg);
+  map_ptr_ = msg;
+  has_received_map_ = true;
 }
 void BehaviorPathPlannerNode::onRoute(const LaneletRoute::ConstSharedPtr msg)
 {
-  std::lock_guard<std::mutex> lock(mutex_pd_);
-  const bool is_first_time = !(planner_data_->route_handler->isHandlerReady());
-
-  planner_data_->route_handler->setRoute(*msg);
-
-  // Reset behavior tree when new route is received,
-  // so that the each modules do not have to care about the "route jump".
-  if (!is_first_time) {
-    RCLCPP_DEBUG(get_logger(), "new route is received. reset behavior tree.");
-    bt_manager_->resetBehaviorTree();
-  }
+  route_ptr_ = msg;
+  has_received_route_ = true;
 }
 
 SetParametersResult BehaviorPathPlannerNode::onSetParam(
