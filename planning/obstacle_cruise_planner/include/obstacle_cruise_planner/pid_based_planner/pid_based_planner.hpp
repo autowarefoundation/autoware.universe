@@ -44,9 +44,9 @@ public:
     }
 
     TargetObstacle obstacle;
+    double error_cruise_dist;
     double dist_to_obstacle;
     double target_dist_to_obstacle;
-    double error_cruise_dist;
   };
 
   PIDBasedPlanner(

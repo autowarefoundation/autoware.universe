@@ -201,8 +201,6 @@ private:
 
   std::vector<TargetObstacle> prev_target_obstacles_;
 
-  double calcCurrentAccel() const;
-
   std::shared_ptr<LowpassFilter1d> lpf_acc_ptr_;
 };
 }  // namespace motion_planning

@@ -235,7 +235,6 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
     create_publisher<Float32MultiArrayStamped>("~/debug/cruise_planning_info", 1);
 
   // longitudinal_info
-  std::cerr << "======================== po1 ==========================" << std::endl;
   const auto longitudinal_info = [&]() {
     const double max_accel = declare_parameter<double>("normal.max_acc");
     const double min_accel = declare_parameter<double>("normal.min_acc");
@@ -245,8 +244,6 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
     const double limit_min_accel = declare_parameter<double>("limit.min_acc");
     const double limit_max_jerk = declare_parameter<double>("limit.max_jerk");
     const double limit_min_jerk = declare_parameter<double>("limit.min_jerk");
-
-    std::cerr << "======================== po11 ==========================" << std::endl;
 
     const double min_ego_accel_for_rss = declare_parameter<double>("common.min_ego_accel_for_rss");
     const double min_object_accel_for_rss =
@@ -258,7 +255,6 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
 
     lpf_acc_ptr_ = std::make_shared<LowpassFilter1d>(0.2);
 
-    std::cerr << "======================== po12 ==========================" << std::endl;
     return LongitudinalInfo{
       max_accel,
       min_accel,
@@ -354,7 +350,6 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
     }
   }
 
-  std::cerr << "======================== po3.5 ==========================" << std::endl;
   {  // planning algorithm
     const std::string planning_algorithm_param =
       declare_parameter<std::string>("common.planning_algorithm");
@@ -384,7 +379,6 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
       nearest_yaw_deviation_threshold_);
   }
 
-  std::cerr << "======================== po4 ==========================" << std::endl;
   {  // cruise obstacle type
     if (declare_parameter<bool>("common.cruise_obstacle_type.unknown")) {
       cruise_obstacle_types_.push_back(ObjectClassification::UNKNOWN);
@@ -438,7 +432,6 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
       stop_obstacle_types_.push_back(ObjectClassification::PEDESTRIAN);
     }
   }
-  std::cerr << "======================== po5 ==========================" << std::endl;
   // wait for first self pose
   self_pose_listener_.waitForFirstPose();
 
