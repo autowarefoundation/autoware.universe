@@ -39,11 +39,27 @@ class DrawGraph(Node):
             CalibData, "/accel_brake_map_calibrator/get_data_service", self.get_data_callback
         )
 
-        package_path = get_package_share_directory("accel_brake_map_calibrator")
         default_map_path = get_package_share_directory("raw_vehicle_cmd_converter")
+        self.declare_parameter(
+            "/accel_brake_map_calibrator/csv_default_map_dir", default_map_path + "/data/default/"
+        )
+        self.default_map_dir = (
+            self.get_parameter("/accel_brake_map_calibrator/csv_default_map_dir")
+            .get_parameter_value()
+            .string_value
+        )
 
-        self.default_map_dir = default_map_path + "/data/default/"
-        self.calibrated_map_dir = package_path + "/config/"
+        package_path = get_package_share_directory("accel_brake_map_calibrator")
+        self.declare_parameter(
+            "/accel_brake_map_calibrator/csv_calibrated_map_dir", package_path + "/config/"
+        )
+        self.calibrated_map_dir = (
+            self.get_parameter("/accel_brake_map_calibrator/csv_calibrated_map_dir")
+            .get_parameter_value()
+            .string_value
+        )
+
+        self.calibration_method = "each_cell"
         self.log_file = package_path + "/config/log.csv"
 
         config_file = package_path + "/config/accel_brake_map_calibrator.param.yaml"
@@ -71,6 +87,7 @@ class DrawGraph(Node):
         # debug
         self.get_logger().info("default map dir: {}".format(self.default_map_dir))
         self.get_logger().info("calibrated map dir: {}".format(self.calibrated_map_dir))
+        self.get_logger().info("calibrated method: {}".format(self.calibration_method))
         self.get_logger().info("log file :{}".format(self.log_file))
         self.get_logger().info("min_vel_thr : {}".format(self.min_vel_thr))
         self.get_logger().info("vel_diff_thr : {}".format(self.vel_diff_thr))
@@ -123,6 +140,7 @@ class DrawGraph(Node):
             self.vel_diff_thr,
             CF.PEDAL_LIST,
             self.pedal_diff_thr,
+            self.calibration_method,
         )
 
         count_map, average_map, stddev_map = CalcUtils.create_stat_map(data)
