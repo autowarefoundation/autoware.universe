@@ -9,7 +9,10 @@ If no point is found in this range, returns the input pose without changes.
 
 Note that this package supports partial map loading interface, which is disabled by default. The interface is intended to be enabled when
 the pointcloud map is too large to handle. By using the interface, the node will request for a partial map around the requested position
-instead of loading whole map by subscription interface.
+instead of loading whole map by subscription interface. To use this interface,
+
+1. Set `enable_partial_map_load` in this node to `true`
+2. Set `enable_partial_load` in `pointcloud_map_loader` to `true`
 
 ## Interfaces
 
