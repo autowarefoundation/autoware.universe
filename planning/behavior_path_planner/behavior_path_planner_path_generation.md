@@ -90,8 +90,6 @@ T_a &= \frac{1}{2}\sqrt{\frac{a_{\rm lim}}{j}^2 + \frac{4L}{a_{\rm lim}}} - \fra
 
 The total time required for shifting can then be calculated as $T_{\rm total}=4T_j+2T_a$.
 
-
 ### Limitation
-
 
 - Since $T_v$ is zero in almost all cases of lane change and avoidance, $T_v$ is not considered in the current implementation.
