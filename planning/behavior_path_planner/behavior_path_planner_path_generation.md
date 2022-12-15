@@ -12,6 +12,8 @@ The figure below explains how the application of a constant lateral jerk $l^{'''
   <img src="./image/path_shifter.png" width="800">
 </p>
 
+Note that, due to the rarity of the $T_v$ in almost all cases of lane change and avoidance, $T_v$ is not considered in the current implementation.
+
 ### Mathematical Derivation
 
 By applying simple integral operations, the following analytical equations can be derived to describe the shift distance $l(t)$ at each time under lateral jerk, acceleration, and velocity constraints.
