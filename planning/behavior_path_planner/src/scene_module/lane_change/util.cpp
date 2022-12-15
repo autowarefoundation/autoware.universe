@@ -777,7 +777,8 @@ std::optional<LaneChangePath> getAbortPaths(
       return ego_pose_idx;
     }
 
-    const auto desired_distance = std::max(2.77, current_speed) * param_time;
+    constexpr auto min_speed = 2.77;
+    const auto desired_distance = std::max(min_speed, current_speed) * param_time;
     const auto & points = resampled_selected_path.points;
     size_t idx{0};
     for (idx = ego_pose_idx; idx < lane_changing_end_pose_idx; ++idx) {
