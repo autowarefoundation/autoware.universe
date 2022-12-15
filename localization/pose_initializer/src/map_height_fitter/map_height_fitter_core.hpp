@@ -44,7 +44,7 @@ private:
   rclcpp::Client<autoware_map_msgs::srv::GetPartialPointCloudMap>::SharedPtr cli_get_partial_pcd_;
   rclcpp::Service<RequestHeightFitting>::SharedPtr srv_fit_;
 
-  bool partial_map_load_enabled_;
+  bool enable_partial_map_load_;
   rclcpp::CallbackGroup::SharedPtr callback_group_service_;
 
   void on_map(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg);

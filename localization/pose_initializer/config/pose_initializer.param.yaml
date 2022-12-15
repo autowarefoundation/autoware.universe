@@ -24,4 +24,5 @@
       ]
 
     # use partial map loading for large maps
-    partial_map_load_enabled: false
+    # Note: You also need to enable partial_map_loading interface in pointcloud_map_loader to use this functionality
+    enable_partial_map_load: true

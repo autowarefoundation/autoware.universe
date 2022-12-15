@@ -26,7 +26,7 @@
 
 MapHeightFitter::MapHeightFitter() : Node("map_height_fitter"), tf2_listener_(tf2_buffer_)
 {
-  partial_map_load_enabled_ = declare_parameter<bool>("partial_map_load_enabled", false);
+  enable_partial_map_load_ = declare_parameter<bool>("enable_partial_map_load", false);
 
   const auto durable_qos = rclcpp::QoS(1).transient_local();
   using std::placeholders::_1;
@@ -35,7 +35,7 @@ MapHeightFitter::MapHeightFitter() : Node("map_height_fitter"), tf2_listener_(tf
   srv_fit_ = create_service<RequestHeightFitting>(
     "fit_map_height", std::bind(&MapHeightFitter::on_fit, this, _1, _2));
 
-  if (!partial_map_load_enabled_) {
+  if (!enable_partial_map_load_) {
     sub_map_ = create_subscription<sensor_msgs::msg::PointCloud2>(
       "pointcloud_map", durable_qos, std::bind(&MapHeightFitter::on_map, this, _1));
   } else {
@@ -43,7 +43,7 @@ MapHeightFitter::MapHeightFitter() : Node("map_height_fitter"), tf2_listener_(tf
     cli_get_partial_pcd_ = create_client<autoware_map_msgs::srv::GetPartialPointCloudMap>(
       "client_partial_map_load", rmw_qos_profile_default, callback_group_service_);
     while (!cli_get_partial_pcd_->wait_for_service(std::chrono::seconds(1)) && rclcpp::ok()) {
-      RCLCPP_INFO(this->get_logger(), "Waiting for pcd loader service...");
+      RCLCPP_INFO(this->get_logger(), "Cannot find partial map loading interface. Please check the setting in pointcloud_map_loader to see if the interface is enabled.");
     }
   }
 }
@@ -136,7 +136,7 @@ void MapHeightFitter::on_fit(
   std::string req_frame = req->pose_with_covariance.header.frame_id;
   res->success = false;
 
-  if (partial_map_load_enabled_) {
+  if (enable_partial_map_load_) {
     get_partial_point_cloud_map(req->pose_with_covariance.pose.pose.position);
   }
 
