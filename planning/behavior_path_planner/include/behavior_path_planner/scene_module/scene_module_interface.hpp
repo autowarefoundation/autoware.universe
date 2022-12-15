@@ -93,7 +93,6 @@ public:
 
     const auto ns = std::string("~/debug/") + module_ns;
     pub_debug_marker_ = node.create_publisher<MarkerArray>(ns, 20);
-    pub_path_candidate_ = node.create_publisher<Path>("/planning/path_candidate/" + module_ns, 1);
   }
 
   virtual ~SceneModuleInterface() = default;
@@ -226,6 +225,14 @@ public:
   std::shared_ptr<const PlannerData> planner_data_;
 
   bool isWaitingApproval() const { return is_waiting_approval_; }
+
+  void createPathCandidatePublisher(const std::string & name_space, rclcpp::Node & node)
+  {
+    std::string module_ns;
+    module_ns.resize(name().size());
+    std::transform(name().begin(), name().end(), module_ns.begin(), tolower);
+    pub_path_candidate_ = node.create_publisher<Path>(name_space + module_ns, 1);
+  }
 
   PlanResult getPathCandidate() const { return path_candidate_; }
 
