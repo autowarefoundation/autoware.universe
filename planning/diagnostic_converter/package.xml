@@ -12,6 +12,9 @@
 
   <depend>diagnostic_msgs</depend>
   <depend>openscenario_msgs</depend>
+  <depend>scenario_simulator_v2_msgs</depend>
+  <depend>openscenario_interpreter</depend>
+  
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
 

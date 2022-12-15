@@ -12,9 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "diagnostic_converter/converter_node.hpp"
+#include "converter_node.hpp"
 
-#include "openscenario_msgs/msg/parameter_type.hpp"
 
 namespace diagnostic_converter
 {

@@ -18,7 +18,7 @@
 #include <string>
 #include <vector>
 
-#include "diagnostic_converter/converter_node.hpp"
+#include "converter_node.hpp"
 #include "diagnostic_msgs/msg/diagnostic_array.hpp"
 #include "diagnostic_msgs/msg/diagnostic_status.hpp"
 #include "diagnostic_msgs/msg/key_value.hpp"

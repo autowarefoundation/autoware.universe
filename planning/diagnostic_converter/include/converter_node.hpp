@@ -18,9 +18,11 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <memory>
 
 #include "diagnostic_msgs/msg/diagnostic_array.hpp"
-#include "openscenario_msgs/msg/parameter_declaration.hpp"
+#include <openscenario_interpreter/syntax/parameter_declarations.hpp>
+#include <scenario_simulator_v2_msgs/msg/user_defined_value.hpp>
 #include "rclcpp/rclcpp.hpp"
 
 namespace diagnostic_converter
@@ -28,7 +30,7 @@ namespace diagnostic_converter
 using diagnostic_msgs::msg::DiagnosticArray;
 using diagnostic_msgs::msg::DiagnosticStatus;
 using diagnostic_msgs::msg::KeyValue;
-using openscenario_msgs::msg::ParameterDeclaration;
+using openscenario_interpreter::syntax::ParameterDeclaration;
 
 /**
  * @brief Node for converting from DiagnosticArray to ParameterDeclaration
