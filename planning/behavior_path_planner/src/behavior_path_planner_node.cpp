@@ -571,7 +571,6 @@ bool BehaviorPathPlannerNode::isDataReady()
     return missing("scenario_topic");
   }
 
-  // if (!planner_data_->route_handler->isHandlerReady()) {
   if (!route_ptr_) {
     return missing("route");
   }
