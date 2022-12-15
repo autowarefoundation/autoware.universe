@@ -1248,8 +1248,8 @@ void generateDrivableArea(
   // idx
 
   // Get Closest segment for the goal point
-  const auto goal_pose = path.points.empty() ? current_pose->pose :
-  path.points.back().point.pose; const size_t goal_left_start_idx =
+  const auto goal_pose = path.points.empty() ? current_pose->pose : path.points.back().point.pose;
+  const size_t goal_left_start_idx =
     findNearestSegmentIndexFromLateralDistance(left_bound, goal_pose);
   const size_t goal_right_start_idx =
     findNearestSegmentIndexFromLateralDistance(right_bound, goal_pose);
@@ -1268,8 +1268,8 @@ void generateDrivableArea(
   // std::reverse(reversed_right_bound.begin(), reversed_right_bound.end());
 
   // // Get Closest segment for the goal point
-  // const auto goal_pose = path.points.empty() ? current_pose->pose : path.points.back().point.pose;
-  // const size_t reversed_goal_left_start_idx =
+  // const auto goal_pose = path.points.empty() ? current_pose->pose :
+  // path.points.back().point.pose; const size_t reversed_goal_left_start_idx =
   //   findNearestSegmentIndexFromLateralDistance(reversed_left_bound, goal_pose);
   // const size_t reversed_goal_right_start_idx =
   //   findNearestSegmentIndexFromLateralDistance(reversed_right_bound, goal_pose);

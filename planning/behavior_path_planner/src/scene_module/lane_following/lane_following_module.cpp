@@ -88,8 +88,10 @@ PathWithLaneId LaneFollowingModule::getReferencePath() const
   // Set header
   reference_path.header = route_handler->getRouteHeader();
 
-  const auto current_lanelet_point = lanelet_route_ptr->getClosestLaneletPointWithinRoute(current_pose);
-  const auto current_lanelet_path = lanelet_route_ptr->getStraightPath(current_lanelet_point, p.backward_path_length, p.forward_path_length);
+  const auto current_lanelet_point =
+    lanelet_route_ptr->getClosestLaneletPointWithinRoute(current_pose);
+  const auto current_lanelet_path = lanelet_route_ptr->getStraightPath(
+    current_lanelet_point, p.backward_path_length, p.forward_path_length);
 
   if (current_lanelet_path.empty()) {
     return reference_path;
