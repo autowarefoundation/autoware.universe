@@ -1,10 +1,10 @@
 ## Path Generation
 
-This document explains how to generate path for lane change and avoidance, etc by path_shifer.
+This document explains how the path is ganerated for lane change and avoidance, etc.
 
 ### Overview
 
-The purpose of the path generation for lane change and avoidance is to smoothly shift the reference path, such as the center line, in the lateral direction. This is achieved by using a constant-jerk profile as in the figure below. More details on how it is used can be found in [README](./README).
+The base idea of the path generation in lane change and avoidance is to smoothly shift the reference path, such as the center line, in the lateral direction. This is achieved by using a constant-jerk profile as in the figure below. More details on how it is used can be found in [README](./README). It is assumed that the reference path is smooth enough for this algorithm.
 
 The figure below explains how the application of a constant lateral jerk $l^{'''}(s)$ can be used to induce lateral shifting. In order to comply with the limits on lateral acceleration and velocity, zero-jerk time is employed in the figure ( $T_a$ and $T_v$ ). In each interval where constant jerk is applied, the shift position $l(s)$ can be characterized by a third-degree polynomial. Therefore the shift length from the reference path can then be calculated by combining spline curves.
 
