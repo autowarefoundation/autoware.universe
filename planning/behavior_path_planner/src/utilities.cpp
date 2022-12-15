@@ -1237,9 +1237,9 @@ void generateDrivableArea(
     calcLongitudinalOffsetStartPose(left_bound, front_pose, front_left_start_idx, -front_length);
   const auto right_start_pose =
     calcLongitudinalOffsetStartPose(right_bound, front_pose, front_right_start_idx, -front_length);
-  const int left_start_idx =
+  const size_t left_start_idx =
     findNearestSegmentIndexFromLateralDistance(left_bound, left_start_pose);
-  const int right_start_idx =
+  const size_t right_start_idx =
     findNearestSegmentIndexFromLateralDistance(right_bound, right_start_pose);
 
   // FIXME(vrichard) The logic below does not work when goal is behind start pose on the same
@@ -1247,43 +1247,43 @@ void generateDrivableArea(
   // way to fix that would be to use LaneletPath to do the heavy lifting so we never have to use any
   // idx
 
-  // // Get Closest segment for the goal point
-  // const auto goal_pose = path.points.empty() ? current_pose->pose :
-  // path.points.back().point.pose; const size_t goal_left_start_idx =
-  //   findNearestSegmentIndexFromLateralDistance(left_bound, goal_pose);
-  // const size_t goal_right_start_idx =
-  //   findNearestSegmentIndexFromLateralDistance(right_bound, goal_pose);
-  // const auto left_goal_pose =
-  //   calcLongitudinalOffsetGoalPose(left_bound, goal_pose, goal_left_start_idx, vehicle_length);
-  // const auto right_goal_pose =
-  //   calcLongitudinalOffsetGoalPose(right_bound, goal_pose, goal_right_start_idx, vehicle_length);
-  // const size_t left_goal_idx =
-  //   findNearestSegmentIndexFromLateralDistance(left_bound, left_goal_pose);
-  // const size_t right_goal_idx =
-  //   findNearestSegmentIndexFromLateralDistance(right_bound, right_goal_pose);
-
-  auto reversed_left_bound = left_bound;
-  std::reverse(reversed_left_bound.begin(), reversed_left_bound.end());
-  auto reversed_right_bound = right_bound;
-  std::reverse(reversed_right_bound.begin(), reversed_right_bound.end());
-
   // Get Closest segment for the goal point
-  const auto goal_pose = path.points.empty() ? current_pose->pose : path.points.back().point.pose;
-  const size_t reversed_goal_left_start_idx =
-    findNearestSegmentIndexFromLateralDistance(reversed_left_bound, goal_pose);
-  const size_t reversed_goal_right_start_idx =
-    findNearestSegmentIndexFromLateralDistance(reversed_right_bound, goal_pose);
-  const auto left_goal_pose = calcLongitudinalOffsetGoalPose(
-    reversed_left_bound, goal_pose, reversed_goal_left_start_idx, vehicle_length);
-  const auto right_goal_pose = calcLongitudinalOffsetGoalPose(
-    reversed_right_bound, goal_pose, reversed_goal_right_start_idx, vehicle_length);
-  const size_t reversed_left_goal_idx =
-    findNearestSegmentIndexFromLateralDistance(reversed_left_bound, left_goal_pose);
-  const size_t reversed_right_goal_idx =
-    findNearestSegmentIndexFromLateralDistance(reversed_right_bound, right_goal_pose);
+  const auto goal_pose = path.points.empty() ? current_pose->pose :
+  path.points.back().point.pose; const size_t goal_left_start_idx =
+    findNearestSegmentIndexFromLateralDistance(left_bound, goal_pose);
+  const size_t goal_right_start_idx =
+    findNearestSegmentIndexFromLateralDistance(right_bound, goal_pose);
+  const auto left_goal_pose =
+    calcLongitudinalOffsetGoalPose(left_bound, goal_pose, goal_left_start_idx, vehicle_length);
+  const auto right_goal_pose =
+    calcLongitudinalOffsetGoalPose(right_bound, goal_pose, goal_right_start_idx, vehicle_length);
+  const size_t left_goal_idx =
+    findNearestSegmentIndexFromLateralDistance(left_bound, left_goal_pose);
+  const size_t right_goal_idx =
+    findNearestSegmentIndexFromLateralDistance(right_bound, right_goal_pose);
 
-  const int left_goal_idx = (int)left_bound.size() - 1 - reversed_left_goal_idx;
-  const int right_goal_idx = (int)right_bound.size() - 1 - reversed_right_goal_idx;
+  // auto reversed_left_bound = left_bound;
+  // std::reverse(reversed_left_bound.begin(), reversed_left_bound.end());
+  // auto reversed_right_bound = right_bound;
+  // std::reverse(reversed_right_bound.begin(), reversed_right_bound.end());
+
+  // // Get Closest segment for the goal point
+  // const auto goal_pose = path.points.empty() ? current_pose->pose : path.points.back().point.pose;
+  // const size_t reversed_goal_left_start_idx =
+  //   findNearestSegmentIndexFromLateralDistance(reversed_left_bound, goal_pose);
+  // const size_t reversed_goal_right_start_idx =
+  //   findNearestSegmentIndexFromLateralDistance(reversed_right_bound, goal_pose);
+  // const auto left_goal_pose = calcLongitudinalOffsetGoalPose(
+  //   reversed_left_bound, goal_pose, reversed_goal_left_start_idx, vehicle_length);
+  // const auto right_goal_pose = calcLongitudinalOffsetGoalPose(
+  //   reversed_right_bound, goal_pose, reversed_goal_right_start_idx, vehicle_length);
+  // const size_t reversed_left_goal_idx =
+  //   findNearestSegmentIndexFromLateralDistance(reversed_left_bound, left_goal_pose);
+  // const size_t reversed_right_goal_idx =
+  //   findNearestSegmentIndexFromLateralDistance(reversed_right_bound, right_goal_pose);
+
+  // const int left_goal_idx = (int)left_bound.size() - 1 - reversed_left_goal_idx;
+  // const int right_goal_idx = (int)right_bound.size() - 1 - reversed_right_goal_idx;
 
   // Store Data
   path.left_bound.clear();
@@ -1294,14 +1294,14 @@ void generateDrivableArea(
   path.right_bound.push_back(right_start_pose.position);
 
   // Insert middle points
-  for (int i = left_start_idx + 1; i <= left_goal_idx; ++i) {
+  for (size_t i = left_start_idx + 1; i <= left_goal_idx; ++i) {
     const auto & next_point = left_bound.at(i).position;
     const double dist = tier4_autoware_utils::calcDistance2d(path.left_bound.back(), next_point);
     if (dist > overlap_threshold) {
       path.left_bound.push_back(next_point);
     }
   }
-  for (int i = right_start_idx + 1; i <= right_goal_idx; ++i) {
+  for (size_t i = right_start_idx + 1; i <= right_goal_idx; ++i) {
     const auto & next_point = right_bound.at(i).position;
     const double dist = tier4_autoware_utils::calcDistance2d(path.right_bound.back(), next_point);
     if (dist > overlap_threshold) {
