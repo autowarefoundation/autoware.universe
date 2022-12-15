@@ -50,6 +50,22 @@ using tier4_autoware_utils::calcDistance2d;
 using tier4_autoware_utils::calcLateralDeviation;
 using tier4_planning_msgs::msg::AvoidanceDebugFactor;
 
+namespace
+{
+
+AvoidLine getNotStraightShiftLine(const AvoidLineArray & shift_lines)
+{
+  for (const auto & sl : shift_lines) {
+    if (fabs(sl.getRelativeLength()) > 0.01) {
+      return sl;
+    }
+  }
+
+  return {};
+}
+
+}  // namespace
+
 AvoidanceModule::AvoidanceModule(
   const std::string & name, rclcpp::Node & node, std::shared_ptr<AvoidanceParameters> parameters)
 : SceneModuleInterface{name, node},
@@ -503,6 +519,51 @@ void AvoidanceModule::fillObjectMovingTime(ObjectData & object_data) const
   }
 }
 
+void AvoidanceModule::fillAvoidancePath(AvoidancePlanningData & data, DebugData & debug) const
+{
+  constexpr double AVOIDING_SHIFT_THR = 0.1;
+  data.avoiding_now = std::abs(getCurrentShift()) > AVOIDING_SHIFT_THR;
+
+  auto path_shifter = path_shifter_;
+
+  /**
+   * STEP 1
+   * Create raw shift points from target object. The lateral margin between the ego and the target
+   * object varies depending on the relative speed between the ego and the target object.
+   */
+  data.unapproved_raw_sl = calcRawShiftLinesFromObjects(data.target_objects);
+
+  /**
+   * STEP 2
+   * Modify the raw shift points. (Merging, Trimming)
+   */
+  const auto processed_raw_sp = applyPreProcessToRawShiftLines(data.unapproved_raw_sl, debug);
+
+  /**
+   * STEP 3
+   * Find new shift point
+   */
+  data.unapproved_new_sl = findNewShiftLine(processed_raw_sp, path_shifter);
+
+  /**
+   * STEP 4
+   * If there are new shift points, these shift points are registered in path_shifter.
+   */
+  if (!data.unapproved_new_sl.empty()) {
+    addNewShiftLines(path_shifter, data.unapproved_new_sl);
+  }
+
+  /**
+   * STEP 5
+   * Generate avoidance path.
+   */
+  data.candidate_path = generateAvoidancePath(path_shifter);
+
+  {
+    debug.current_raw_shift = data.unapproved_raw_sl;
+  }
+}
+
 /**
  * updateRegisteredRawShiftLines
  *
@@ -535,16 +596,9 @@ void AvoidanceModule::updateRegisteredRawShiftLines()
   debug_data_.registered_raw_shift = registered_raw_shift_lines_;
 }
 
-AvoidLineArray AvoidanceModule::calcShiftLines(
+AvoidLineArray AvoidanceModule::applyPreProcessToRawShiftLines(
   AvoidLineArray & current_raw_shift_lines, DebugData & debug) const
 {
-  /**
-   * Generate raw_shift_lines (shift length, avoidance start point, end point, return point, etc)
-   * for each object. These raw shift points are merged below to compute appropriate shift points.
-   */
-  current_raw_shift_lines = calcRawShiftLinesFromObjects(avoidance_data_.target_objects);
-  debug.current_raw_shift = current_raw_shift_lines;
-
   /**
    * Use all registered points. For the current points, if the similar one of the current
    * points are already registered, will not use it.
@@ -2217,13 +2271,9 @@ boost::optional<AvoidLine> AvoidanceModule::calcIntersectionShiftLine(
 
 BehaviorModuleOutput AvoidanceModule::plan()
 {
-  DEBUG_PRINT("AVOIDANCE plan");
+  const auto & data = avoidance_data_;
 
   resetPathCandidate();
-
-  const auto shift_lines = calcShiftLines(current_raw_shift_lines_, debug_data_);
-
-  const auto new_shift_lines = findNewShiftLine(shift_lines, path_shifter_);
 
   /**
    * Has new shift point?
@@ -2234,26 +2284,20 @@ BehaviorModuleOutput AvoidanceModule::plan()
    *       Yes -> clear WAIT_APPROVAL state.
    *       No  -> do nothing.
    */
-  if (new_shift_lines) {
-    debug_data_.new_shift_lines = *new_shift_lines;
-    DEBUG_PRINT("new_shift_lines size = %lu", new_shift_lines->size());
-    printShiftLines(*new_shift_lines, "new_shift_lines");
-    int i = new_shift_lines->size() - 1;
-    for (; i > 0; i--) {
-      if (fabs(new_shift_lines->at(i).getRelativeLength()) < 0.01) {
-        continue;
-      } else {
-        break;
-      }
-    }
-    if (new_shift_lines->at(i).getRelativeLength() > 0.0) {
+  if (!data.unapproved_new_sl.empty()) {
+    debug_data_.new_shift_lines = data.unapproved_new_sl;
+    DEBUG_PRINT("new_shift_lines size = %lu", data.unapproved_new_sl.size());
+    printShiftLines(data.unapproved_new_sl, "new_shift_lines");
+
+    const auto sl = getNotStraightShiftLine(data.unapproved_new_sl);
+    if (sl.getRelativeLength() > 0.0) {
       removePreviousRTCStatusRight();
-    } else if (new_shift_lines->at(i).getRelativeLength() < 0.0) {
+    } else if (sl.getRelativeLength() < 0.0) {
       removePreviousRTCStatusLeft();
     } else {
       RCLCPP_WARN_STREAM(getLogger(), "Direction is UNKNOWN");
     }
-    addShiftLineIfApproved(*new_shift_lines);
+    addShiftLineIfApproved(data.unapproved_new_sl);
   } else if (isWaitingApproval()) {
     clearWaitingApproval();
     removeCandidateRTCStatus();
@@ -2304,35 +2348,22 @@ BehaviorModuleOutput AvoidanceModule::plan()
 
 CandidateOutput AvoidanceModule::planCandidate() const
 {
-  DEBUG_PRINT("AVOIDANCE planCandidate start");
+  const auto & data = avoidance_data_;
+
   CandidateOutput output;
 
-  auto path_shifter = path_shifter_;
-  auto debug_data = debug_data_;
-  auto current_raw_shift_lines = current_raw_shift_lines_;
+  auto shifted_path = data.candidate_path;
 
-  const auto shift_lines = calcShiftLines(current_raw_shift_lines, debug_data);
-  const auto new_shift_lines = findNewShiftLine(shift_lines, path_shifter);
-  if (new_shift_lines) {
-    addNewShiftLines(path_shifter, *new_shift_lines);
-  }
+  if (!data.unapproved_new_sl.empty()) {  // clip from shift start index for visualize
+    clipByMinStartIdx(data.unapproved_new_sl, shifted_path.path);
 
-  auto shifted_path = generateAvoidancePath(path_shifter);
+    const auto sl = getNotStraightShiftLine(data.unapproved_new_sl);
+    const auto sl_front = data.unapproved_new_sl.front();
+    const auto sl_back = data.unapproved_new_sl.back();
 
-  if (new_shift_lines) {  // clip from shift start index for visualize
-    clipByMinStartIdx(*new_shift_lines, shifted_path.path);
-
-    int i = new_shift_lines->size() - 1;
-    for (; i > 0; i--) {
-      if (fabs(new_shift_lines->at(i).getRelativeLength()) < 0.01) {
-        continue;
-      } else {
-        break;
-      }
-    }
-    output.lateral_shift = new_shift_lines->at(i).getRelativeLength();
-    output.start_distance_to_path_change = new_shift_lines->front().start_longitudinal;
-    output.finish_distance_to_path_change = new_shift_lines->back().end_longitudinal;
+    output.lateral_shift = sl.getRelativeLength();
+    output.start_distance_to_path_change = sl_front.start_longitudinal;
+    output.finish_distance_to_path_change = sl_back.end_longitudinal;
 
     const uint16_t steering_factor_direction = std::invoke([&output]() {
       if (output.lateral_shift > 0.0) {
@@ -2341,7 +2372,7 @@ CandidateOutput AvoidanceModule::planCandidate() const
       return SteeringFactor::RIGHT;
     });
     steering_factor_interface_ptr_->updateSteeringFactor(
-      {new_shift_lines->front().start, new_shift_lines->back().end},
+      {sl_front.start, sl_back.end},
       {output.start_distance_to_path_change, output.finish_distance_to_path_change},
       SteeringFactor::AVOIDANCE_PATH_CHANGE, steering_factor_direction, SteeringFactor::APPROACHING,
       "");
@@ -2379,23 +2410,19 @@ void AvoidanceModule::addShiftLineIfApproved(const AvoidLineArray & shift_lines)
     const size_t prev_size = path_shifter_.getShiftLinesSize();
     addNewShiftLines(path_shifter_, shift_lines);
 
+    current_raw_shift_lines_ = avoidance_data_.unapproved_raw_sl;
+
     // register original points for consistency
     registerRawShiftLines(shift_lines);
 
-    int i = shift_lines.size() - 1;
-    for (; i > 0; i--) {
-      if (fabs(shift_lines.at(i).getRelativeLength()) < 0.01) {
-        continue;
-      } else {
-        break;
-      }
-    }
+    const auto sl = getNotStraightShiftLine(shift_lines);
+    const auto sl_front = shift_lines.front();
+    const auto sl_back = shift_lines.back();
 
-    if (shift_lines.at(i).getRelativeLength() > 0.0) {
-      left_shift_array_.push_back({uuid_left_, shift_lines.front().start, shift_lines.back().end});
-    } else if (shift_lines.at(i).getRelativeLength() < 0.0) {
-      right_shift_array_.push_back(
-        {uuid_right_, shift_lines.front().start, shift_lines.back().end});
+    if (sl.getRelativeLength() > 0.0) {
+      left_shift_array_.push_back({uuid_left_, sl_front.start, sl_back.end});
+    } else if (sl.getRelativeLength() < 0.0) {
+      right_shift_array_.push_back({uuid_right_, sl_front.start, sl_back.end});
     }
 
     uuid_left_ = generateUUID();
@@ -2448,7 +2475,7 @@ void AvoidanceModule::addNewShiftLines(
   path_shifter.setShiftLines(future);
 }
 
-boost::optional<AvoidLineArray> AvoidanceModule::findNewShiftLine(
+AvoidLineArray AvoidanceModule::findNewShiftLine(
   const AvoidLineArray & candidates, const PathShifter & shifter) const
 {
   (void)shifter;
@@ -2641,6 +2668,8 @@ void AvoidanceModule::updateData()
   if (prev_reference_.points.empty()) {
     prev_reference_ = avoidance_data_.reference_path;
   }
+
+  fillAvoidancePath(avoidance_data_, debug_data_);
 }
 
 /*

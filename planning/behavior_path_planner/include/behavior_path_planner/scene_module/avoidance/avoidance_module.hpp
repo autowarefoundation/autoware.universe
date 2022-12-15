@@ -200,6 +200,7 @@ private:
   void fillObjectMovingTime(ObjectData & object_data) const;
   void compensateDetectionLost(
     ObjectDataArray & target_objects, ObjectDataArray & other_objects) const;
+  void fillAvoidancePath(AvoidancePlanningData & data, DebugData & debug) const;
 
   // data used in previous planning
   ShiftedPath prev_output_;
@@ -225,7 +226,8 @@ private:
   void updateRegisteredObject(const ObjectDataArray & objects);
 
   // -- for shift point generation --
-  AvoidLineArray calcShiftLines(AvoidLineArray & current_raw_shift_lines, DebugData & debug) const;
+  AvoidLineArray applyPreProcessToRawShiftLines(
+    AvoidLineArray & current_raw_shift_points, DebugData & debug) const;
 
   // shift point generation: generator
   double getShiftLength(
@@ -268,7 +270,7 @@ private:
   void fillAdditionalInfoFromLongitudinal(AvoidLineArray & shift_lines) const;
 
   // -- for new shift point approval --
-  boost::optional<AvoidLineArray> findNewShiftLine(
+  AvoidLineArray findNewShiftLine(
     const AvoidLineArray & shift_lines, const PathShifter & shifter) const;
   void addShiftLineIfApproved(const AvoidLineArray & point);
   void addNewShiftLines(PathShifter & path_shifter, const AvoidLineArray & shift_lines) const;
