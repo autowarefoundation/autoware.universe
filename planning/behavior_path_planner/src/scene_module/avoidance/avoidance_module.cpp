@@ -221,10 +221,15 @@ void AvoidanceModule::fillAvoidanceTargetObjects(
 
   const auto lanelet_route_ptr = rh->getLaneletRoutePtr();
 
-  const auto current_lanelet_point = lanelet_route_ptr->getClosestLaneletPointWithinRoute(planner_data_->self_pose->pose);
-  const auto optional_route_arc_length = lanelet_route_ptr->getRouteArcLength(current_lanelet_point);
+  const auto current_lanelet_point =
+    lanelet_route_ptr->getClosestLaneletPointWithinRoute(planner_data_->self_pose->pose);
+  const auto optional_route_arc_length =
+    lanelet_route_ptr->getRouteArcLength(current_lanelet_point);
 
-  const double dist_to_goal = optional_route_arc_length? lanelet_route_ptr->getMainPath().length() - *optional_route_arc_length: std::numeric_limits<double>::max();
+  const double dist_to_goal =
+    optional_route_arc_length
+      ? lanelet_route_ptr->getMainPath().length() - *optional_route_arc_length
+      : std::numeric_limits<double>::max();
 
   lanelet::ConstLineStrings3d debug_linestring;
   debug_linestring.clear();
@@ -300,11 +305,12 @@ void AvoidanceModule::fillAvoidanceTargetObjects(
     object_data.overhang_dist = calcEnvelopeOverhangDistance(
       object_data, object_closest_pose, object_data.overhang_pose.position);
 
-    auto overhang_lanelet_point = lanelet_route_ptr->getClosestLaneletPointWithinRoute(object_closest_pose);
+    auto overhang_lanelet_point =
+      lanelet_route_ptr->getClosestLaneletPointWithinRoute(object_closest_pose);
     if (!overhang_lanelet_point.isValid()) {
       continue;
     }
-    const lanelet::ConstLanelet& overhang_lanelet = overhang_lanelet_point.lanelet();
+    const lanelet::ConstLanelet & overhang_lanelet = overhang_lanelet_point.lanelet();
 
     if (overhang_lanelet.id()) {
       object_data.overhang_lanelet = overhang_lanelet;
@@ -1967,10 +1973,11 @@ void AvoidanceModule::generateExtendedDrivableArea(PathWithLaneId & path) const
         if (!lane.hasAttribute("turn_direction")) {
           return lanelet::ConstLanelets{};
         }
-      
+
         // get previous lane, and return false if previous lane does not exist
         // FIXME(vrichard) is startOf(lane) ok ?
-        const lanelet::ConstLanelets prev_lanes = lanelet_route_ptr->getPreviousLanelets(route_handler::LaneletPoint::startOf(lane), true);
+        const lanelet::ConstLanelets prev_lanes =
+          lanelet_route_ptr->getPreviousLanelets(route_handler::LaneletPoint::startOf(lane), true);
         if (prev_lanes.empty()) {
           return lanelet::ConstLanelets{};
         }
@@ -1978,7 +1985,8 @@ void AvoidanceModule::generateExtendedDrivableArea(PathWithLaneId & path) const
         lanelet::ConstLanelets next_lanes;
         for (const auto & prev_lane : prev_lanes) {
           // FIXME(vrichard) is endOf(prev_lane) ok ?
-          const auto next_lanes_from_prev = lanelet_route_ptr->getFollowingLanelets(route_handler::LaneletPoint::endOf(prev_lane), false);
+          const auto next_lanes_from_prev = lanelet_route_ptr->getFollowingLanelets(
+            route_handler::LaneletPoint::endOf(prev_lane), false);
           next_lanes.reserve(next_lanes.size() + next_lanes_from_prev.size());
           next_lanes.insert(
             next_lanes.end(), next_lanes_from_prev.begin(), next_lanes_from_prev.end());
@@ -2133,8 +2141,7 @@ PathWithLaneId AvoidanceModule::calcCenterLinePath(
 
   const route_handler::LaneletPath current_lanelet_path = util::calcLaneletPathAroundPose(
     route_handler, pose.pose, p.forward_path_length, backward_length);
-  centerline_path = util::getCenterLinePath(
-    *route_handler, current_lanelet_path, p);
+  centerline_path = util::getCenterLinePath(*route_handler, current_lanelet_path, p);
 
   // for debug: check if the path backward distance is same as the desired length.
   // {

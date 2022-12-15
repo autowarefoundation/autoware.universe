@@ -89,36 +89,46 @@ PathWithLaneId LaneFollowingModule::getReferencePath() const
   reference_path.header = route_handler->getRouteHeader();
 
   auto current_lanelet_point = lanelet_route_ptr->getClosestLaneletPointWithinRoute(current_pose);
-  // auto current_lanelet_path = lanelet_route_ptr->getStraightPath(current_lanelet_point, p.backward_path_length, p.forward_path_length);
-  auto current_lanelet_path = lanelet_route_ptr->getStraightPathFrom(current_lanelet_point, p.forward_path_length);
-  current_lanelet_path = lanelet_route_ptr->extendPath(current_lanelet_path, p.backward_path_length, 0., false, route_handler::OverlapRemovalStrategy::KEEP_START);
+  // auto current_lanelet_path = lanelet_route_ptr->getStraightPath(current_lanelet_point,
+  // p.backward_path_length, p.forward_path_length);
+  auto current_lanelet_path =
+    lanelet_route_ptr->getStraightPathFrom(current_lanelet_point, p.forward_path_length);
+  current_lanelet_path = lanelet_route_ptr->extendPath(
+    current_lanelet_path, p.backward_path_length, 0., false,
+    route_handler::OverlapRemovalStrategy::KEEP_START);
 
   if (current_lanelet_path.empty()) {
     return reference_path;
   }
 
-  lanelet::ConstLanelets current_lanes = behavior_path_planner::util::getPathLanelets(current_lanelet_path);
+  lanelet::ConstLanelets current_lanes =
+    behavior_path_planner::util::getPathLanelets(current_lanelet_path);
   const auto drivable_lanes = util::generateDrivableLanes(current_lanes);
 
   // FIXME(vrichard) I don't understand what we are trying to do here:
   // 1. we generate a path within [-backward, forward]
   // 2. we extend back to [-(backward+extra_margin), forward]
-  // 3. we generate centerline path from the extended path (still [-(backward+extra_margin), forward])
+  // 3. we generate centerline path from the extended path (still [-(backward+extra_margin),
+  // forward])
   // 4. we clip the centerline to [-backward, forward]
   // What is the point of extending the path backward if we don't care about the extended part ??
-  // If it is required to generate a better centerline, then the centerline generation function should take care of this for us. 
+  // If it is required to generate a better centerline, then the centerline generation function
+  // should take care of this for us.
 
   // calculate path with backward margin to avoid end points' instability by spline interpolation
   constexpr double extra_margin = 10.0;
-  auto current_lanelet_path_with_backward_margin = lanelet_route_ptr->extendPath(current_lanelet_path, extra_margin, 0., false, route_handler::OverlapRemovalStrategy::KEEP_START);
+  auto current_lanelet_path_with_backward_margin = lanelet_route_ptr->extendPath(
+    current_lanelet_path, extra_margin, 0., false,
+    route_handler::OverlapRemovalStrategy::KEEP_START);
 
   if (current_lanelet_path_with_backward_margin.empty()) {
     // FIXME(vrichard) better than nothing?
     current_lanelet_path_with_backward_margin = current_lanelet_path;
   }
 
-  reference_path = util::getCenterLinePath(*route_handler, current_lanelet_path_with_backward_margin, p);
-  
+  reference_path =
+    util::getCenterLinePath(*route_handler, current_lanelet_path_with_backward_margin, p);
+
   // clip backward length
   const size_t current_seg_idx = findEgoSegmentIndex(reference_path.points);
   util::clipPathLength(
@@ -126,22 +136,23 @@ PathWithLaneId LaneFollowingModule::getReferencePath() const
 
   {
     // NOTE(vrichard) always has value since current_lanelet_point is built within the route.
-    const auto optional_num_lane_change = lanelet_route_ptr->getNumLaneChangeToPreferredLane(current_lanelet_point);
+    const auto optional_num_lane_change =
+      lanelet_route_ptr->getNumLaneChangeToPreferredLane(current_lanelet_point);
     const int num_lane_change = std::abs(*optional_num_lane_change);
     double optional_lengths{0.0};
     const auto isInIntersection = util::checkLaneIsInIntersection(
       *route_handler, reference_path, current_lanes, p, num_lane_change, optional_lengths);
     if (isInIntersection) {
-      reference_path = util::getCenterLinePath(
-        *route_handler, current_lanelet_path, p, optional_lengths);
+      reference_path =
+        util::getCenterLinePath(*route_handler, current_lanelet_path, p, optional_lengths);
     }
 
     const double lane_change_buffer =
       util::calcLaneChangeBuffer(p, num_lane_change, optional_lengths);
 
     reference_path = util::setDecelerationVelocity(
-      *route_handler, reference_path, current_lanelet_path, parameters_.lane_change_prepare_duration,
-      lane_change_buffer);
+      *route_handler, reference_path, current_lanelet_path,
+      parameters_.lane_change_prepare_duration, lane_change_buffer);
   }
 
   // const auto shorten_lanes = util::cutOverlappedLanes(reference_path, drivable_lanes);

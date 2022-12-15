@@ -1193,13 +1193,15 @@ void generateDrivableArea(
 
   // Insert points after goal
   const auto lanelet_route_ptr = route_handler->getLaneletRoutePtr();
-  const auto goal_lanelet_point = lanelet_route_ptr->getClosestLaneletPointWithinRoute(route_handler->getGoalPose());
-  if (
-    checkHasSameLane(transformed_lanes, goal_lanelet_point.lanelet())) {
-    const auto path_beyond_goal = lanelet_route_ptr->getStraightPathFrom(goal_lanelet_point, 2*vehicle_length, false, route_handler::OverlapRemovalStrategy::KEEP_END);
+  const auto goal_lanelet_point =
+    lanelet_route_ptr->getClosestLaneletPointWithinRoute(route_handler->getGoalPose());
+  if (checkHasSameLane(transformed_lanes, goal_lanelet_point.lanelet())) {
+    const auto path_beyond_goal = lanelet_route_ptr->getStraightPathFrom(
+      goal_lanelet_point, 2 * vehicle_length, false,
+      route_handler::OverlapRemovalStrategy::KEEP_END);
     const auto next_lanes_after_goal = lanelet_route_ptr->getFollowingLanelets(goal_lanelet_point);
-    if (path_beyond_goal.size() > 1) { // skip goal lanelet
-      for (auto it = path_beyond_goal.begin()+1; it != path_beyond_goal.end(); ++it) {
+    if (path_beyond_goal.size() > 1) {  // skip goal lanelet
+      for (auto it = path_beyond_goal.begin() + 1; it != path_beyond_goal.end(); ++it) {
         const auto & lane = it->lanelet();
         // If lane is already in the transformed lanes, ignore it
         if (checkHasSameLane(transformed_lanes, lane)) {
@@ -1208,8 +1210,8 @@ void generateDrivableArea(
         // Check if overlapped
         const bool is_overlapped =
           (checkHasSameLane(next_lanes_after_goal, lane)
-            ? has_overlap(lane, goal_lanelet_point.lanelet().id())
-            : has_overlap(lane));
+             ? has_overlap(lane, goal_lanelet_point.lanelet().id())
+             : has_overlap(lane));
         if (is_overlapped) {
           continue;
         }
@@ -1240,13 +1242,14 @@ void generateDrivableArea(
   const int right_start_idx =
     findNearestSegmentIndexFromLateralDistance(right_bound, right_start_pose);
 
-  // FIXME(vrichard) The logic below does not work when goal is behind start pose on the same lanelet
-  // A quick hack is to search goal indices from the end of the left/right bound
-  // The correct way to fix that would be to use LaneletPath to do the heavy lifting so we never have to use any idx
+  // FIXME(vrichard) The logic below does not work when goal is behind start pose on the same
+  // lanelet A quick hack is to search goal indices from the end of the left/right bound The correct
+  // way to fix that would be to use LaneletPath to do the heavy lifting so we never have to use any
+  // idx
 
   // // Get Closest segment for the goal point
-  // const auto goal_pose = path.points.empty() ? current_pose->pose : path.points.back().point.pose;
-  // const size_t goal_left_start_idx =
+  // const auto goal_pose = path.points.empty() ? current_pose->pose :
+  // path.points.back().point.pose; const size_t goal_left_start_idx =
   //   findNearestSegmentIndexFromLateralDistance(left_bound, goal_pose);
   // const size_t goal_right_start_idx =
   //   findNearestSegmentIndexFromLateralDistance(right_bound, goal_pose);
@@ -1270,10 +1273,10 @@ void generateDrivableArea(
     findNearestSegmentIndexFromLateralDistance(reversed_left_bound, goal_pose);
   const size_t reversed_goal_right_start_idx =
     findNearestSegmentIndexFromLateralDistance(reversed_right_bound, goal_pose);
-  const auto left_goal_pose =
-    calcLongitudinalOffsetGoalPose(reversed_left_bound, goal_pose, reversed_goal_left_start_idx, vehicle_length);
-  const auto right_goal_pose =
-    calcLongitudinalOffsetGoalPose(reversed_right_bound, goal_pose, reversed_goal_right_start_idx, vehicle_length);
+  const auto left_goal_pose = calcLongitudinalOffsetGoalPose(
+    reversed_left_bound, goal_pose, reversed_goal_left_start_idx, vehicle_length);
+  const auto right_goal_pose = calcLongitudinalOffsetGoalPose(
+    reversed_right_bound, goal_pose, reversed_goal_right_start_idx, vehicle_length);
   const size_t reversed_left_goal_idx =
     findNearestSegmentIndexFromLateralDistance(reversed_left_bound, left_goal_pose);
   const size_t reversed_right_goal_idx =
@@ -1684,12 +1687,12 @@ std::shared_ptr<PathWithLaneId> generateCenterLinePath(
   const auto & pose = planner_data->self_pose;
 
   const auto lanelet_route_ptr = route_handler->getLaneletRoutePtr();
-  
+
   const auto current_point = lanelet_route_ptr->getClosestLaneletPointWithinRoute(pose->pose);
   const auto current_path = lanelet_route_ptr->getStraightPath(
     current_point, p.backward_path_length, p.forward_path_length);
 
-  const route_handler::LaneletSections &sections = current_path.sections();
+  const route_handler::LaneletSections & sections = current_path.sections();
   std::vector<DrivableLanes> drivable_lanes(sections.size());
   for (size_t i = 0; i < sections.size(); ++i) {
     drivable_lanes.at(i).left_lane = sections.at(i).lanelet();
@@ -1714,8 +1717,8 @@ lanelet::ConstLineStrings3d getDrivableAreaForAllSharedLinestringLanelets(
   const auto & route_handler = planner_data->route_handler;
   const auto & ego_pose = planner_data->self_pose->pose;
 
-   const auto lanelet_route_ptr = route_handler->getLaneletRoutePtr();
-  
+  const auto lanelet_route_ptr = route_handler->getLaneletRoutePtr();
+
   const auto current_point = lanelet_route_ptr->getClosestLaneletPointWithinRoute(ego_pose);
   const auto current_path = lanelet_route_ptr->getStraightPath(
     current_point, p.backward_path_length, p.forward_path_length);
@@ -1723,7 +1726,8 @@ lanelet::ConstLineStrings3d getDrivableAreaForAllSharedLinestringLanelets(
   lanelet::ConstLineStrings3d linestring_shared;
   for (const auto & section : current_path) {
     // FIXME(vrichard) furthest_line may cover more than the section. Is that a problem?
-    lanelet::ConstLineStrings3d furthest_line = route_handler->getFurthestLinestring(section.lanelet());
+    lanelet::ConstLineStrings3d furthest_line =
+      route_handler->getFurthestLinestring(section.lanelet());
     linestring_shared.insert(linestring_shared.end(), furthest_line.begin(), furthest_line.end());
   }
 
@@ -1807,22 +1811,26 @@ PathWithLaneId getCenterLinePath(
   const auto lanelet_route_ptr = route_handler.getLaneletRoutePtr();
 
   // check if we need to change lane at the end of the path
-  // NOTE(vrichard) This assume the given path is straight 
+  // NOTE(vrichard) This assume the given path is straight
   // NOTE(vrichard) This assume the given path is within route boundaries.
   // If the path has been extended beyond goal we can't know how many lane changes are required.
-  auto optional_num_lane_change = lanelet_route_ptr->getNumLaneChangeToPreferredLane(
-    lanelet_path.getGoalPoint());
-  const int num_lane_change = optional_num_lane_change? std::abs(*optional_num_lane_change): 0;
+  auto optional_num_lane_change =
+    lanelet_route_ptr->getNumLaneChangeToPreferredLane(lanelet_path.getGoalPoint());
+  const int num_lane_change = optional_num_lane_change ? std::abs(*optional_num_lane_change) : 0;
 
   // Need to make sure we have enough room to change lane before a dead end or the route goal
-  const double lane_change_buffer = calcLaneChangeBuffer(parameter, num_lane_change, optional_length);
+  const double lane_change_buffer =
+    calcLaneChangeBuffer(parameter, num_lane_change, optional_length);
 
-  const double remaining_forward_length_within_route = lanelet_route_ptr->getRemainingForwardLengthWithinRoute(lanelet_path.getGoalPoint(), lane_change_buffer);
+  const double remaining_forward_length_within_route =
+    lanelet_route_ptr->getRemainingForwardLengthWithinRoute(
+      lanelet_path.getGoalPoint(), lane_change_buffer);
 
   route_handler::LaneletPath reduced_path = lanelet_path;
   if (lane_change_buffer > remaining_forward_length_within_route) {
     // Need to leave enough margin after the end of the path
-    reduced_path = lanelet_path.shrink(0., lane_change_buffer - remaining_forward_length_within_route);
+    reduced_path =
+      lanelet_path.shrink(0., lane_change_buffer - remaining_forward_length_within_route);
   }
 
   return route_handler.getCenterLinePath(reduced_path, true);
@@ -1847,17 +1855,20 @@ bool checkLaneIsInIntersection(
   const auto lanelet_route_ptr = route_handler.getLaneletRoutePtr();
 
   const auto & path_points = reference_path.points;
-  const auto curr_path = lanelet_route_ptr->getPathFromLanelets(lanelet_sequence,
-    path_points.front().point.pose, path_points.back().point.pose);
+  const auto curr_path = lanelet_route_ptr->getPathFromLanelets(
+    lanelet_sequence, path_points.front().point.pose, path_points.back().point.pose);
 
   if (curr_path.empty()) {
     return false;
   }
 
   const double min_lane_change_distance =
-    num_lane_change * (parameter.minimum_lane_change_length + parameter.backward_length_buffer_for_end_of_lane);
+    num_lane_change *
+    (parameter.minimum_lane_change_length + parameter.backward_length_buffer_for_end_of_lane);
 
-  const double remaining_distance_after_path_end = lanelet_route_ptr->getRemainingForwardLengthWithinRoute(curr_path.getGoalPoint(), min_lane_change_distance);
+  const double remaining_distance_after_path_end =
+    lanelet_route_ptr->getRemainingForwardLengthWithinRoute(
+      curr_path.getGoalPoint(), min_lane_change_distance);
   if (remaining_distance_after_path_end >= min_lane_change_distance) {
     return false;
   }
@@ -1872,14 +1883,16 @@ bool checkLaneIsInIntersection(
     if (prev_lane == lanelet_sequence.crend()) {
       return false;
     }
-    const auto lanes = lanelet_route_ptr->getFollowingLanelets(
-      route_handler::LaneletPoint::endOf(*prev_lane));
+    const auto lanes =
+      lanelet_route_ptr->getFollowingLanelets(route_handler::LaneletPoint::endOf(*prev_lane));
     const auto is_neighbor_with_turn_direction = std::any_of(
       lanes.cbegin(), lanes.cend(),
       [](const lanelet::ConstLanelet & lane) { return lane.hasAttribute("turn_direction"); });
 
     if (is_neighbor_with_turn_direction) {
-      const double remaining_forward_distance = lanelet_route_ptr->getRemainingForwardLengthWithinRoute(route_handler::LaneletPoint::endOf(*find_intersection_iter), min_lane_change_distance);
+      const double remaining_forward_distance =
+        lanelet_route_ptr->getRemainingForwardLengthWithinRoute(
+          route_handler::LaneletPoint::endOf(*find_intersection_iter), min_lane_change_distance);
 
       if (remaining_forward_distance >= min_lane_change_distance) {
         return false;
@@ -1933,7 +1946,8 @@ PathWithLaneId setDecelerationVelocity(
   const auto lanelet_route_ptr = route_handler.getLaneletRoutePtr();
 
   const double buffer_length = std::fabs(lane_change_buffer);
-  const double remaining_forward_length = lanelet_route_ptr->getRemainingForwardLengthWithinRoute(lanelet_path.getGoalPoint(), buffer_length);
+  const double remaining_forward_length = lanelet_route_ptr->getRemainingForwardLengthWithinRoute(
+    lanelet_path.getGoalPoint(), buffer_length);
 
   if (
     remaining_forward_length < buffer_length &&
@@ -1944,7 +1958,8 @@ PathWithLaneId setDecelerationVelocity(
     for (auto & point : reference_path.points) {
       const auto projected_point = lanelet_path.getClosestLaneletPointWithinPath(point.point.pose);
       const auto point_arc_length = *lanelet_path.getPathArcLength(projected_point);
-      const double distance_to_end = std::max(0., path_length + remaining_forward_length - buffer_length - point_arc_length);
+      const double distance_to_end =
+        std::max(0., path_length + remaining_forward_length - buffer_length - point_arc_length);
       point.point.longitudinal_velocity_mps = std::min(
         point.point.longitudinal_velocity_mps,
         static_cast<float>(distance_to_end / lane_change_prepare_duration));
@@ -2034,27 +2049,29 @@ route_handler::LaneletPath getCurrentPath(const std::shared_ptr<const PlannerDat
   const auto current_point = lanelet_route_ptr->getClosestLaneletPointWithinRoute(current_pose);
 
   // For current path with desired length
-  return lanelet_route_ptr->getStraightPath(current_point, common_parameters.backward_path_length, common_parameters.forward_path_length);
+  return lanelet_route_ptr->getStraightPath(
+    current_point, common_parameters.backward_path_length, common_parameters.forward_path_length);
 }
 
-lanelet::ConstLanelets getPathLanelets(const route_handler::LaneletPath &path) {
+lanelet::ConstLanelets getPathLanelets(const route_handler::LaneletPath & path)
+{
   lanelet::ConstLanelets lanelets;
   lanelets.reserve(path.size());
-  for (const auto & section: path) {
+  for (const auto & section : path) {
     lanelets.push_back(section.lanelet());
   }
   return lanelets;
 }
 
-// TODO(vrichard) this is a bad design: what if the next lanelet is tiny? What if the extended path overlap?
-// It would make more sense to use extendPath() with a backward and forward distance
+// TODO(vrichard) this is a bad design: what if the next lanelet is tiny? What if the extended path
+// overlap? It would make more sense to use extendPath() with a backward and forward distance
 lanelet::ConstLanelets extendLanes(
   const std::shared_ptr<RouteHandler> route_handler, const lanelet::ConstLanelets & lanes)
 {
   if (lanes.empty()) {
     return {};
   }
-  
+
   auto extended_lanes = lanes;
 
   const auto lanelet_route_ptr = route_handler->getLaneletRoutePtr();
@@ -2068,7 +2085,7 @@ lanelet::ConstLanelets extendLanes(
 
   // Add previous lane
   const auto prev_lanes = lanelet_route_ptr->getPreviousLanelets(
-        route_handler::LaneletPoint::startOf(extended_lanes.front()), false);
+    route_handler::LaneletPoint::startOf(extended_lanes.front()), false);
   if (!prev_lanes.empty()) {
     extended_lanes.insert(extended_lanes.begin(), prev_lanes.front());
   }
@@ -2090,8 +2107,7 @@ lanelet::ConstLanelets getExtendedCurrentLanes(
 
   // For current_lanes with desired length
   const auto current_path = lanelet_route_ptr->getStraightPath(
-                           current_point, common_parameters.backward_path_length,
-                           common_parameters.forward_path_length);
+    current_point, common_parameters.backward_path_length, common_parameters.forward_path_length);
   const auto current_lanes = util::getPathLanelets(current_path);
 
   return extendLanes(route_handler, current_lanes);
@@ -2106,7 +2122,8 @@ route_handler::LaneletPath calcLaneletPathAroundPose(
 
   // For current_lanes with desired length
   const auto current_point = lanelet_route_ptr->getClosestLaneletPointWithinRoute(pose);
-  auto current_path = lanelet_route_ptr->getStraightPath(current_point, backward_length, forward_length);
+  auto current_path =
+    lanelet_route_ptr->getStraightPath(current_point, backward_length, forward_length);
 
   return current_path;
 }

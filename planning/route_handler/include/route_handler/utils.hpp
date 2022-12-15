@@ -19,12 +19,12 @@
 
 #include <lanelet2_routing/RoutingGraph.h>
 
-namespace route_handler::utils {
+namespace route_handler::utils
+{
 
 bool validatePath(
-  const LaneletPath & lanelet_path, 
-  const lanelet::routing::RoutingGraphPtr routing_graph_ptr);
+  const LaneletPath & lanelet_path, const lanelet::routing::RoutingGraphPtr routing_graph_ptr);
 
-} // namespace route_handler::utils
+}  // namespace route_handler::utils
 
 #endif  // ROUTE_HANDLER__UTILS_HPP_

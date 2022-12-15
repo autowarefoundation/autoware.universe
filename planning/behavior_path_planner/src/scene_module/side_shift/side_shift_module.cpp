@@ -186,16 +186,16 @@ void SideShiftModule::updateData()
   const auto & route_handler = planner_data_->route_handler;
   const auto & p = planner_data_->parameters;
 
-
   const auto lanelet_route_ptr = route_handler->getLaneletRoutePtr();
 
-
   // For current_lanes with desired length
-  const auto current_lanelet_point = lanelet_route_ptr->getClosestLaneletPointWithinRoute(reference_pose.pose);
+  const auto current_lanelet_point =
+    lanelet_route_ptr->getClosestLaneletPointWithinRoute(reference_pose.pose);
   const auto current_lanelet_path = lanelet_route_ptr->getStraightPath(
     current_lanelet_point, p.backward_path_length, p.forward_path_length);
 
-  // NOTE(vrichard) lanelet list is only used to generate the drivable area, so it is fine to work on the lanelets instead of sections
+  // NOTE(vrichard) lanelet list is only used to generate the drivable area, so it is fine to work
+  // on the lanelets instead of sections
   current_lanelets_ = behavior_path_planner::util::getPathLanelets(current_lanelet_path);
 
   const size_t nearest_idx = findEgoIndex(path_shifter_.getReferencePath().points);

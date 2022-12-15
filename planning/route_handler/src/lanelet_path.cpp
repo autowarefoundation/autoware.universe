@@ -13,16 +13,19 @@
 // limitations under the License.
 
 #include "route_handler/lanelet_path.hpp"
+
 #include "lanelet2_core/geometry/Point.h"
 #include "route_handler/lanelet_point.hpp"
 #include "route_handler/lanelet_section.hpp"
 
 #include <lanelet2_extension/utility/query.hpp>
+
 #include <lanelet2_core/geometry/Lanelet.h>
 
 #include <algorithm>
 
-namespace internal {
+namespace internal
+{
 
 using route_handler::LaneletPoint;
 using route_handler::LaneletSection;
@@ -30,8 +33,7 @@ using route_handler::LaneletSections;
 
 // helper for building path section
 LaneletSections buildSections(
-  const lanelet::ConstLanelets & lanelets,
-  const LaneletPoint & start_point,
+  const lanelet::ConstLanelets & lanelets, const LaneletPoint & start_point,
   const LaneletPoint & goal_point)
 {
   if (lanelets.empty()) {
@@ -43,11 +45,11 @@ LaneletSections buildSections(
   auto goal_it = std::find(lanelets.rbegin(), lanelets.rend(), goal_point.lanelet());
 
   if (start_it == lanelets.end() || goal_it == lanelets.rend()) {
-    return {}; // points are not in the list
+    return {};  // points are not in the list
   }
 
   if (start_it > goal_it.base()) {
-    return {}; // goal lanelet is before start
+    return {};  // goal lanelet is before start
   }
 
   LaneletSections sections;
@@ -56,7 +58,7 @@ LaneletSections buildSections(
 
   if (nb_sections == 1) {
     // special case: only 1 lanelet -> start and goal are part of the same section
-    LaneletSection section {*start_it, {start_point.arc_length()}, {goal_point.arc_length()}};
+    LaneletSection section{*start_it, {start_point.arc_length()}, {goal_point.arc_length()}};
     if (section.isValid()) {
       sections.push_back(section);
     }
@@ -75,12 +77,12 @@ LaneletSections buildSections(
   sections.push_back(section);
 
   // middle sections
-  for (auto llt_it = start_it+1; llt_it != goal_it.base()-1; ++llt_it) {
+  for (auto llt_it = start_it + 1; llt_it != goal_it.base() - 1; ++llt_it) {
     section = LaneletSection{*llt_it};
     if (!section.isValid()) {
       return {};
     }
-    sections.push_back(section); // whole lanelet
+    sections.push_back(section);  // whole lanelet
   }
 
   // goal section
@@ -93,7 +95,7 @@ LaneletSections buildSections(
   return sections;
 }
 
-} // namespace internal
+}  // namespace internal
 
 namespace route_handler
 {
@@ -102,10 +104,7 @@ LaneletPath::LaneletPath(const LaneletPoint & point)
 {
   if (point.isValid()) {
     sections_.clear();
-    sections_.push_back(LaneletSection{
-      point.lanelet(),
-      point.arc_length(),
-      point.arc_length()});
+    sections_.push_back(LaneletSection{point.lanelet(), point.arc_length(), point.arc_length()});
   }
 }
 
@@ -118,17 +117,13 @@ LaneletPath::LaneletPath(const LaneletSection & section)
 }
 
 LaneletPath::LaneletPath(
-  const lanelet::ConstLanelets & lanelets, 
-  const LaneletPoint & start_point, 
+  const lanelet::ConstLanelets & lanelets, const LaneletPoint & start_point,
   const LaneletPoint & goal_point)
 {
   sections_ = internal::buildSections(lanelets, start_point, goal_point);
 }
 
-bool LaneletPath::isPoint() const
-{
-  return sections_.size() == 1 && sections_.front().isPoint();
-}
+bool LaneletPath::isPoint() const { return sections_.size() == 1 && sections_.front().isPoint(); }
 
 double LaneletPath::length() const
 {
@@ -142,9 +137,9 @@ double LaneletPath::length() const
 
 bool LaneletPath::contains(const LaneletPoint & point) const
 {
-  return std::any_of(sections_.begin(), sections_.end(),
-    [&](const LaneletSection& section) { return section.contains(point); }
-  );
+  return std::any_of(sections_.begin(), sections_.end(), [&](const LaneletSection & section) {
+    return section.contains(point);
+  });
 }
 
 bool LaneletPath::validate() const
@@ -160,25 +155,24 @@ bool LaneletPath::validate() const
 
   // checking sections
   if (sections_.front().end_arc_length() != sections_.front().lanelet_length()) {
-    return false; // first section is not connected with others
+    return false;  // first section is not connected with others
   }
-  for (auto it = sections_.begin()+1; it != sections_.end()-1; ++it) {
+  for (auto it = sections_.begin() + 1; it != sections_.end() - 1; ++it) {
     if (!it->coversWholeLanelet()) {
-      return false; // middle section not connected with previous or next
+      return false;  // middle section not connected with previous or next
     }
   }
   if (sections_.back().start_arc_length() != 0.) {
-    return false; // last section is not connected with others
+    return false;  // last section is not connected with others
   }
 
   // checking loops
   for (auto it = sections_.begin(); it != sections_.end(); ++it) {
     // all section pairs within the path should be disjoint (not even 1 point in common)
-    if (std::any_of(sections_.begin(), it,
-      [&](const auto & section) {
-        return LaneletSection::intersect(section, *it).isValid();
-      })) {
-      return false; // found loop
+    if (std::any_of(sections_.begin(), it, [&](const auto & section) {
+          return LaneletSection::intersect(section, *it).isValid();
+        })) {
+      return false;  // found loop
     }
   }
 
@@ -207,11 +201,11 @@ LaneletPoint LaneletPath::getPointAt(const double path_arc_length) const
   if (sections_.empty()) {
     return {};
   }
-  
+
   double remaining_distance = path_arc_length;
-  for (auto & section: sections_) {
+  for (auto & section : sections_) {
     if (remaining_distance <= section.length()) {
-      return section.getPointAt(remaining_distance); 
+      return section.getPointAt(remaining_distance);
     }
     remaining_distance -= section.length();
   }
@@ -226,12 +220,11 @@ std::optional<double> LaneletPath::getPathArcLength(const LaneletPoint & point) 
   }
 
   // find section containing the point
-  const auto section_it = std::find_if(sections_.begin(), sections_.end(),
-    [&](const LaneletSection& section) { 
-      return section.contains(point); 
-    });
+  const auto section_it = std::find_if(
+    sections_.begin(), sections_.end(),
+    [&](const LaneletSection & section) { return section.contains(point); });
   if (section_it == sections_.end()) {
-    return {}; // not on the path
+    return {};  // not on the path
   }
 
   double path_arc_length = 0.;
@@ -248,7 +241,7 @@ LaneletPoint LaneletPath::getClosestLaneletPointWithinPath(
 {
   lanelet::ConstLanelets path_lanelets;
   path_lanelets.reserve(sections_.size());
-  for (const auto& section: sections_) {
+  for (const auto & section : sections_) {
     path_lanelets.push_back(section.lanelet());
   }
 
@@ -268,12 +261,13 @@ std::vector<lanelet::BasicPoint3d> LaneletPath::getCenterline() const
 
   constexpr double eps = 1.0e-3;
   std::vector<lanelet::BasicPoint3d> centerline;
-  for (const auto& section: sections_) {
+  for (const auto & section : sections_) {
     const auto section_centerline = section.getCenterline();
-    if (!centerline.empty() && !section_centerline.empty() &&
+    if (
+      !centerline.empty() && !section_centerline.empty() &&
       lanelet::geometry::distance3d(centerline.back(), section_centerline.front()) < eps) {
       // skip first point
-      centerline.insert(centerline.end(), section_centerline.begin()+1, section_centerline.end());
+      centerline.insert(centerline.end(), section_centerline.begin() + 1, section_centerline.end());
     } else {
       centerline.insert(centerline.end(), section_centerline.begin(), section_centerline.end());
     }
@@ -289,12 +283,13 @@ std::vector<lanelet::BasicPoint3d> LaneletPath::getLeftBound() const
 
   constexpr double eps = 1.0e-3;
   std::vector<lanelet::BasicPoint3d> left_bound;
-  for (const auto& section: sections_) {
+  for (const auto & section : sections_) {
     const auto section_left_bound = section.getLeftBound();
-    if (!left_bound.empty() && !section_left_bound.empty() &&
+    if (
+      !left_bound.empty() && !section_left_bound.empty() &&
       lanelet::geometry::distance3d(left_bound.back(), section_left_bound.front()) < eps) {
       // skip first point
-      left_bound.insert(left_bound.end(), section_left_bound.begin()+1, section_left_bound.end());
+      left_bound.insert(left_bound.end(), section_left_bound.begin() + 1, section_left_bound.end());
     } else {
       left_bound.insert(left_bound.end(), section_left_bound.begin(), section_left_bound.end());
     }
@@ -310,12 +305,14 @@ std::vector<lanelet::BasicPoint3d> LaneletPath::getRightBound() const
 
   constexpr double eps = 1.0e-3;
   std::vector<lanelet::BasicPoint3d> right_bound;
-  for (const auto& section: sections_) {
+  for (const auto & section : sections_) {
     const auto section_right_bound = section.getRightBound();
-    if (!right_bound.empty() && !section_right_bound.empty() &&
+    if (
+      !right_bound.empty() && !section_right_bound.empty() &&
       lanelet::geometry::distance3d(right_bound.back(), section_right_bound.front()) < eps) {
       // skip first point
-      right_bound.insert(right_bound.end(), section_right_bound.begin()+1, section_right_bound.end());
+      right_bound.insert(
+        right_bound.end(), section_right_bound.begin() + 1, section_right_bound.end());
     } else {
       right_bound.insert(right_bound.end(), section_right_bound.begin(), section_right_bound.end());
     }
@@ -324,34 +321,32 @@ std::vector<lanelet::BasicPoint3d> LaneletPath::getRightBound() const
 }
 
 bool LaneletPath::split(
-    const LaneletPoint & split_point,
-    LaneletPath * path_before,
-    LaneletPath * path_after) const
+  const LaneletPoint & split_point, LaneletPath * path_before, LaneletPath * path_after) const
 {
   if (sections_.empty()) {
     return false;
   }
 
   // find split point location in the path
-  auto split_section_it = std::find_if(sections_.begin(), sections_.end(),
-    [&](const LaneletSection& section) { 
-      return section.contains(split_point); 
-    });
+  auto split_section_it = std::find_if(
+    sections_.begin(), sections_.end(),
+    [&](const LaneletSection & section) { return section.contains(split_point); });
   if (split_section_it == sections_.end()) {
-    return false; // not on the path
+    return false;  // not on the path
   }
 
   // split the section
   LaneletSection section_before;
   LaneletSection section_after;
   if (!split_section_it->split(split_point, &section_before, &section_after)) {
-    return false; // should not happen
+    return false;  // should not happen
   }
 
   // extract path before split point
   if (path_before) {
     path_before->sections_.clear();
-    path_before->sections_.insert(path_before->sections_.end(), sections_.begin(), split_section_it);
+    path_before->sections_.insert(
+      path_before->sections_.end(), sections_.begin(), split_section_it);
     path_before->sections_.push_back(section_before);
   }
 
@@ -359,25 +354,26 @@ bool LaneletPath::split(
   if (path_after) {
     path_after->sections_.clear();
     path_after->sections_.push_back(section_after);
-    path_after->sections_.insert(path_after->sections_.end(), split_section_it+1, sections_.end());
+    path_after->sections_.insert(
+      path_after->sections_.end(), split_section_it + 1, sections_.end());
   }
 
   return true;
 }
 
 LaneletPath LaneletPath::concatenate(
-  const LaneletPath & first_path, 
-  const LaneletPath & second_path,
+  const LaneletPath & first_path, const LaneletPath & second_path,
   const OverlapRemovalStrategy overlap_removal_strategy)
 {
   if (first_path.sections_.empty() || second_path.sections_.empty()) {
-    return {}; // invalid paths
+    return {};  // invalid paths
   }
 
   // try to connect both ends
-  LaneletSection joint_section = LaneletSection::concatenate(first_path.sections_.back(), second_path.sections_.front());
+  LaneletSection joint_section =
+    LaneletSection::concatenate(first_path.sections_.back(), second_path.sections_.front());
   if (!joint_section.isValid()) {
-    return {}; // paths are not connected
+    return {};  // paths are not connected
   }
 
   LaneletSections concatenated_sections;
@@ -386,9 +382,7 @@ LaneletPath LaneletPath::concatenate(
   // add first path sections except last
   if (!first_path.sections_.empty()) {
     concatenated_sections.insert(
-      concatenated_sections.end(),
-      first_path.sections_.begin(),
-      first_path.sections_.end()-1);
+      concatenated_sections.end(), first_path.sections_.begin(), first_path.sections_.end() - 1);
   }
 
   // add joint section
@@ -397,9 +391,7 @@ LaneletPath LaneletPath::concatenate(
   // add second path sections except first
   if (!second_path.sections_.empty()) {
     concatenated_sections.insert(
-      concatenated_sections.end(),
-      second_path.sections_.begin()+1,
-      second_path.sections_.end());
+      concatenated_sections.end(), second_path.sections_.begin() + 1, second_path.sections_.end());
   }
 
   LaneletPath concatenated_path{concatenated_sections};
@@ -411,8 +403,7 @@ LaneletPath LaneletPath::concatenate(
 }
 
 LaneletPath LaneletPath::truncate(
-  const LaneletPoint & start_point,
-  const LaneletPoint & goal_point) const
+  const LaneletPoint & start_point, const LaneletPoint & goal_point) const
 {
   if (sections_.empty()) {
     return {};
@@ -435,9 +426,7 @@ LaneletPath LaneletPath::truncate(
   return truncated_path;
 }
 
-LaneletPath LaneletPath::shrink(
-  const double front_margin,
-  const double back_margin) const
+LaneletPath LaneletPath::shrink(const double front_margin, const double back_margin) const
 {
   const auto start_point = getPointAt(front_margin);
   const auto goal_point = getPointAt(length() - back_margin);
@@ -458,8 +447,7 @@ LaneletSections LaneletPath::getOverlappedSections() const
   return overlapping_sections;
 }
 
-LaneletPath LaneletPath::fixOverlap(
-  const OverlapRemovalStrategy overlap_removal_strategy) const
+LaneletPath LaneletPath::fixOverlap(const OverlapRemovalStrategy overlap_removal_strategy) const
 {
   if (sections_.empty()) {
     return {};
@@ -473,53 +461,54 @@ LaneletPath LaneletPath::fixOverlap(
   LaneletSections overlapped_sections = getOverlappedSections();
 
   if (overlapped_sections.empty()) {
-    return *this; // nothing to fix
+    return *this;  // nothing to fix
   }
 
   // Unless something is really wrong with the path, overlapped sections should form a path
   LaneletPath overlapped_path = LaneletPath{overlapped_sections};
-  
-  // But just to make sure... 
+
+  // But just to make sure...
   if (!overlapped_path.validate()) {
     std::cerr << "Found overlapped sections do not form a valid path" << std::endl;
     return {};
   }
 
   // extract path with only the non-overlapped section
-  LaneletPath path_without_overlap = truncate(overlapped_path.getGoalPoint(), overlapped_path.getStartPoint());
+  LaneletPath path_without_overlap =
+    truncate(overlapped_path.getGoalPoint(), overlapped_path.getStartPoint());
   if (path_without_overlap.empty()) {
     std::cerr << "Failed to extract non-overlapped path" << std::endl;
   }
 
-  // overlapped path must be trimmed slightly, otherwise the fixed path will be a perfect loop (start=goal) 
+  // overlapped path must be trimmed slightly, otherwise the fixed path will be a perfect loop
+  // (start=goal)
   constexpr double eps = 1.e-3;
   LaneletPath fixed_path;
   switch (overlap_removal_strategy) {
     case OverlapRemovalStrategy::DO_NOTHING:
-      return *this; // unreachable
+      return *this;  // unreachable
     case OverlapRemovalStrategy::DISCARD:
       fixed_path = path_without_overlap;
       break;
-    case OverlapRemovalStrategy::KEEP_START:
-    {
+    case OverlapRemovalStrategy::KEEP_START: {
       // shrink to prevent loops
       overlapped_path = overlapped_path.shrink(eps, 0.);
       // add the overlapped section at the beginning
-      LaneletPath extended_path = LaneletPath::concatenate(overlapped_path, path_without_overlap, OverlapRemovalStrategy::DO_NOTHING);
+      LaneletPath extended_path = LaneletPath::concatenate(
+        overlapped_path, path_without_overlap, OverlapRemovalStrategy::DO_NOTHING);
       fixed_path = extended_path;
       break;
     }
-    case OverlapRemovalStrategy::KEEP_END:
-    {
+    case OverlapRemovalStrategy::KEEP_END: {
       // shrink to prevent loops
       overlapped_path = overlapped_path.shrink(0., eps);
       // add the overlapped section at the end
-      LaneletPath extended_path = LaneletPath::concatenate(path_without_overlap, overlapped_path, OverlapRemovalStrategy::DO_NOTHING);
+      LaneletPath extended_path = LaneletPath::concatenate(
+        path_without_overlap, overlapped_path, OverlapRemovalStrategy::DO_NOTHING);
       fixed_path = extended_path;
       break;
     }
-    case OverlapRemovalStrategy::SPLIT:
-    {
+    case OverlapRemovalStrategy::SPLIT: {
       // split overlapped path in the middle
       LaneletPoint split_point = overlapped_path.getPointAt(overlapped_path.length() / 2.);
       LaneletPath overlapped_first_half;
@@ -532,8 +521,10 @@ LaneletPath LaneletPath::fixOverlap(
       overlapped_first_half = overlapped_first_half.shrink(eps, 0.);
       overlapped_second_half = overlapped_second_half.shrink(0., eps);
       // extend both sides of the path
-      LaneletPath extended_path = LaneletPath::concatenate(overlapped_first_half, path_without_overlap, OverlapRemovalStrategy::DO_NOTHING);
-      extended_path = LaneletPath::concatenate(extended_path, overlapped_second_half, OverlapRemovalStrategy::DO_NOTHING);
+      LaneletPath extended_path = LaneletPath::concatenate(
+        overlapped_first_half, path_without_overlap, OverlapRemovalStrategy::DO_NOTHING);
+      extended_path = LaneletPath::concatenate(
+        extended_path, overlapped_second_half, OverlapRemovalStrategy::DO_NOTHING);
       fixed_path = extended_path;
       break;
     }

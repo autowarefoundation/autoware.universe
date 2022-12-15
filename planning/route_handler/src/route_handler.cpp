@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "route_handler/route_handler.hpp"
+
 #include "route_handler/lanelet_route_builder.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
@@ -20,6 +21,7 @@
 #include <lanelet2_extension/utility/route_checker.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/rclcpp.hpp>
+
 #include "geometry_msgs/msg/pose.hpp"
 
 #include <lanelet2_core/LaneletMap.h>
@@ -155,14 +157,14 @@ void RouteHandler::setMap(const HADMapBin & map_msg)
 bool RouteHandler::setRoute(const LaneletRouteMsg & route_msg)
 {
   route_msg_ = route_msg;
-  
+
   start_pose_ = geometry_msgs::msg::Pose{};
   goal_pose_ = geometry_msgs::msg::Pose{};
   lanelet_route_ptr_ = nullptr;
 
   is_route_msg_ready_ = true;
   is_handler_ready_ = false;
-  
+
   buildRouteFromMsg();
 
   return true;
@@ -212,7 +214,6 @@ bool RouteHandler::buildRoute(const Pose & start, const Pose & goal)
   return true;
 }
 
-
 // lanelet::Id RouteHandler::getGoalLaneId() const
 // {
 //   if (route_msg_.segments.empty()) {
@@ -222,7 +223,6 @@ bool RouteHandler::buildRoute(const Pose & start, const Pose & goal)
 //   return route_msg_.segments.back().preferred_primitive.id;
 // }
 
-
 bool RouteHandler::isRouteMsgValid(const LaneletRouteMsg & route_msg) const
 {
   if (route_msg.segments.empty()) {
@@ -230,9 +230,9 @@ bool RouteHandler::isRouteMsgValid(const LaneletRouteMsg & route_msg) const
   }
 
   if (!is_map_msg_ready_) {
-    return false; // can't tell
+    return false;  // can't tell
   }
-  
+
   // The simplest way is to try and build the route from it
   LaneletRouteBuilder builder(lanelet_map_ptr_, routing_graph_ptr_);
   LaneletRoutePtr lanelet_route_ptr = builder.buildFromLaneletRouteMsg(route_msg);
@@ -260,7 +260,6 @@ lanelet::ConstLanelets RouteHandler::getLaneletsFromIds(const lanelet::Ids & ids
   return lanelets;
 }
 
-
 lanelet::ConstPolygon3d RouteHandler::getIntersectionAreaById(const lanelet::Id id) const
 {
   if (!is_map_msg_ready_) {
@@ -286,7 +285,8 @@ lanelet::ConstPolygon3d RouteHandler::getIntersectionAreaById(const lanelet::Id 
 //   }
 
 //   LaneletPath lanelet_path =
-//     lanelet_route_ptr_->getStraightPath(lanelet_point, backward_distance, forward_distance, true);
+//     lanelet_route_ptr_->getStraightPath(lanelet_point, backward_distance, forward_distance,
+//     true);
 
 //   return lanelet_path;
 // }
@@ -485,7 +485,8 @@ bool RouteHandler::getPullOutStartLane(
 //   return routing_graph_ptr_->previous(lanelet);
 // }
 
-// lanelet::ConstLanelets RouteHandler::getLaneletsFromPoint(const lanelet::ConstPoint3d & point) const
+// lanelet::ConstLanelets RouteHandler::getLaneletsFromPoint(const lanelet::ConstPoint3d & point)
+// const
 // {
 //   return lanelet::utils::findUsagesInLanelets(*lanelet_map_ptr_, point);
 // }
@@ -796,14 +797,15 @@ bool RouteHandler::getNextLaneChangeTarget(
   }
 
   for (const auto & section : lanelet_path) {
-    const std::optional<int> optional_num = lanelet_route_ptr_->getNumLaneChangeToPreferredLane(section.getStartPoint());
+    const std::optional<int> optional_num =
+      lanelet_route_ptr_->getNumLaneChangeToPreferredLane(section.getStartPoint());
     if (!optional_num) {
-      continue; // TODO(vrichard) Is it ok?
+      continue;  // TODO(vrichard) Is it ok?
     }
 
     const int num = *optional_num;
     if (num == 0) {
-      continue; // already on the preferred section
+      continue;  // already on the preferred section
     }
 
     if (num < 0) {
@@ -840,18 +842,17 @@ bool RouteHandler::getNextLaneChangeTarget(
 //     lanelet::utils::query::getAllNeighborsRight(routing_graph_ptr_, lanelet_point.lanelet());
 //   for (const auto & right_llt : right_lanes) {
 //     num--;
-//     const auto right_point = LaneletPoint::fromProjection(right_llt, lanelet_point.toBasicPoint2d());
-//     if (preferred_path.contains(right_point)) {
+//     const auto right_point = LaneletPoint::fromProjection(right_llt,
+//     lanelet_point.toBasicPoint2d()); if (preferred_path.contains(right_point)) {
 //       return num;
 //     }
 //   }
 
-//   const auto & left_lanes = lanelet::utils::query::getAllNeighborsLeft(routing_graph_ptr_, lanelet_point.lanelet());
-//   num = 0;
-//   for (const auto & left_llt : left_lanes) {
+//   const auto & left_lanes = lanelet::utils::query::getAllNeighborsLeft(routing_graph_ptr_,
+//   lanelet_point.lanelet()); num = 0; for (const auto & left_llt : left_lanes) {
 //     num++;
-//     const auto left_point = LaneletPoint::fromProjection(left_llt, lanelet_point.toBasicPoint2d());
-//     if (preferred_path.contains(left_point)) {
+//     const auto left_point = LaneletPoint::fromProjection(left_llt,
+//     lanelet_point.toBasicPoint2d()); if (preferred_path.contains(left_point)) {
 //       return num;
 //     }
 //   }
@@ -903,7 +904,7 @@ PathWithLaneId RouteHandler::getCenterLinePath(
   }
 
   for (const auto & section : lanelet_path) {
-    const auto& llt = section.lanelet();
+    const auto & llt = section.lanelet();
     const lanelet::traffic_rules::SpeedLimitInformation limit = traffic_rules_ptr_->speedLimit(llt);
     const lanelet::ConstLineString3d centerline = llt.centerline();
 

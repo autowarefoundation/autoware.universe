@@ -289,11 +289,12 @@ bool GeometricParallelParking::planPullOut(
     // get road center line path from departing end to goal, and combine after the second arc path
     PathWithLaneId road_center_line_path;
     {
-      // const double s_start = getArcCoordinates(road_lanes, *end_pose).length + 1.0;  // need buffer?
-      // const double s_end = getArcCoordinates(road_lanes, goal_pose).length;
+      // const double s_start = getArcCoordinates(road_lanes, *end_pose).length + 1.0;  // need
+      // buffer? const double s_end = getArcCoordinates(road_lanes, goal_pose).length;
       const auto lanelet_route_ptr = planner_data_->route_handler->getLaneletRoutePtr();
       const auto path = lanelet_route_ptr->getPathFromLanelets(road_lanes, *end_pose, goal_pose);
-      const auto buffered_path = path.truncate(path.getPointAt(1.0), path.getGoalPoint()); // need buffer?
+      const auto buffered_path =
+        path.truncate(path.getPointAt(1.0), path.getGoalPoint());  // need buffer?
       road_center_line_path = planner_data_->route_handler->getCenterLinePath(buffered_path, true);
     }
     auto paths = arc_paths;
@@ -338,16 +339,18 @@ boost::optional<Pose> GeometricParallelParking::calcStartPose(
 
 PathWithLaneId GeometricParallelParking::generateStraightPath(const Pose & start_pose)
 {
-  // FIXME(vrichard) use getCurrentPath and extendPath instead 
+  // FIXME(vrichard) use getCurrentPath and extendPath instead
   // get straight path before parking.
   const auto current_lanes = util::getExtendedCurrentLanes(planner_data_);
   // const auto start_arc_position = lanelet::utils::getArcCoordinates(current_lanes, start_pose);
 
   const Pose current_pose = planner_data_->self_pose->pose;
-  // const auto current_arc_position = lanelet::utils::getArcCoordinates(current_lanes, current_pose);
+  // const auto current_arc_position = lanelet::utils::getArcCoordinates(current_lanes,
+  // current_pose);
 
   const auto lanelet_route_ptr = planner_data_->route_handler->getLaneletRoutePtr();
-  const auto lanelet_path = lanelet_route_ptr->getPathFromLanelets(current_lanes, current_pose, start_pose);
+  const auto lanelet_path =
+    lanelet_route_ptr->getPathFromLanelets(current_lanes, current_pose, start_pose);
 
   auto path_msg = planner_data_->route_handler->getCenterLinePath(lanelet_path, true);
   path_msg.header = planner_data_->route_handler->getRouteHeader();

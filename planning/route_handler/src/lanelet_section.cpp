@@ -13,22 +13,25 @@
 // limitations under the License.
 
 #include "route_handler/lanelet_section.hpp"
+
 #include "lanelet2_core/geometry/LineString.h"
 #include "lanelet2_core/primitives/LineString.h"
 #include "lanelet2_core/primitives/Point.h"
 #include "route_handler/lanelet_point.hpp"
 
-#include <lanelet2_core/primitives/Lanelet.h>
 #include <lanelet2_core/geometry/Lanelet.h>
+#include <lanelet2_core/primitives/Lanelet.h>
 
 namespace route_handler
 {
 
 using lanelet::utils::to2D;
 
-namespace {
+namespace
+{
 
-lanelet::BasicPoint3d get3DPointFrom2DArcLength(const lanelet::ConstLineString3d & line, const double s)
+lanelet::BasicPoint3d get3DPointFrom2DArcLength(
+  const lanelet::ConstLineString3d & line, const double s)
 {
   if (line.empty()) {
     return {};
@@ -48,14 +51,15 @@ lanelet::BasicPoint3d get3DPointFrom2DArcLength(const lanelet::ConstLineString3d
   return {};
 }
 
-std::vector<lanelet::BasicPoint3d> truncateLine(const lanelet::ConstLineString3d & line, const double s_start, const double s_end)  {
+std::vector<lanelet::BasicPoint3d> truncateLine(
+  const lanelet::ConstLineString3d & line, const double s_start, const double s_end)
+{
   std::vector<lanelet::BasicPoint3d> truncated_line;
-  // interpolate 3d points from 2d 
+  // interpolate 3d points from 2d
   double s = 0;
   for (size_t i = 0; i < line.size(); i++) {
     const auto & pt = line[i];
-    const lanelet::BasicPoint3d next_pt =
-      (i + 1 < line.size()) ? line[i + 1] : line[i];
+    const lanelet::BasicPoint3d next_pt = (i + 1 < line.size()) ? line[i + 1] : line[i];
     const double distance = lanelet::geometry::distance2d(to2D(pt), to2D(next_pt));
 
     if (s < s_start && s + distance > s_start) {
@@ -74,14 +78,14 @@ std::vector<lanelet::BasicPoint3d> truncateLine(const lanelet::ConstLineString3d
   return truncated_line;
 }
 
-} // namespace
+}  // namespace
 
-LaneletSection::LaneletSection(const LaneletPoint &point)
+LaneletSection::LaneletSection(const LaneletPoint & point)
 {
   if (!point.isValid()) {
     return;
   }
-  
+
   lanelet_ = point.lanelet();
   lanelet_length_ = point.lanelet_length();
   start_arc_length_ = point.arc_length();
@@ -89,21 +93,21 @@ LaneletSection::LaneletSection(const LaneletPoint &point)
 }
 
 LaneletSection::LaneletSection(
-  const lanelet::ConstLanelet & lanelet,
-  const std::optional<double> optional_start_arc_length,
+  const lanelet::ConstLanelet & lanelet, const std::optional<double> optional_start_arc_length,
   const std::optional<double> optional_end_arc_length)
 {
   if (lanelet.id() == lanelet::InvalId) {
-    return; // invalid lanelet
+    return;  // invalid lanelet
   }
   double lanelet_length = lanelet::geometry::length2d(lanelet);
-  double clamped_start_arc_length = optional_start_arc_length ?
-    std::clamp(*optional_start_arc_length, 0., lanelet_length) : 0.;
-  double clamped_end_arc_length = optional_end_arc_length ?
-    std::clamp(*optional_end_arc_length, 0., lanelet_length) : lanelet_length;
+  double clamped_start_arc_length =
+    optional_start_arc_length ? std::clamp(*optional_start_arc_length, 0., lanelet_length) : 0.;
+  double clamped_end_arc_length = optional_end_arc_length
+                                    ? std::clamp(*optional_end_arc_length, 0., lanelet_length)
+                                    : lanelet_length;
 
   if (clamped_start_arc_length > clamped_end_arc_length) {
-    return; // invalid section
+    return;  // invalid section
   }
 
   lanelet_ = lanelet;
@@ -117,7 +121,8 @@ bool LaneletSection::isValid() const
   return lanelet_.id() != lanelet::InvalId && start_arc_length_ <= end_arc_length_;
 }
 
-bool LaneletSection::isPoint() const {
+bool LaneletSection::isPoint() const
+{
   if (!isValid()) {
     return false;
   }
@@ -140,7 +145,7 @@ double LaneletSection::length() const
   return end_arc_length_ - start_arc_length_;
 }
 
-bool LaneletSection::contains(const LaneletPoint& point) const
+bool LaneletSection::contains(const LaneletPoint & point) const
 {
   if (!isValid()) {
     return false;
@@ -148,8 +153,7 @@ bool LaneletSection::contains(const LaneletPoint& point) const
   if (point.lanelet() != lanelet_) {
     return false;
   }
-  return point.arc_length() >= start_arc_length_
-      && point.arc_length() <= end_arc_length_;
+  return point.arc_length() >= start_arc_length_ && point.arc_length() <= end_arc_length_;
 }
 
 LaneletPoint LaneletSection::getStartPoint() const
@@ -192,7 +196,7 @@ std::vector<lanelet::BasicPoint3d> LaneletSection::getCenterline() const
   const double s_start = start_arc_length_;
   const double s_end = end_arc_length_;
 
-  // interpolate 3d points from 2d 
+  // interpolate 3d points from 2d
   const auto centerline = truncateLine(target_line, s_start, s_end);
   return centerline;
 }
@@ -204,51 +208,53 @@ std::vector<lanelet::BasicPoint3d> LaneletSection::getLeftBound() const
   }
 
   const auto & target_line = lanelet_.leftBound();
-  const auto target_start = start_arc_length_ == 0 ?
-    to2D(target_line.front()) : getStartPoint().toBasicPoint2d();
-  const auto target_end = end_arc_length_ == lanelet_length_ ?
-    to2D(target_line.back()) : getEndPoint().toBasicPoint2d();
+  const auto target_start =
+    start_arc_length_ == 0 ? to2D(target_line.front()) : getStartPoint().toBasicPoint2d();
+  const auto target_end =
+    end_arc_length_ == lanelet_length_ ? to2D(target_line.back()) : getEndPoint().toBasicPoint2d();
 
-  const double s_start = lanelet::geometry::toArcCoordinates(lanelet_.leftBound2d(), target_start).length;
-  const double s_end = lanelet::geometry::toArcCoordinates(lanelet_.leftBound2d(), target_end).length;
+  const double s_start =
+    lanelet::geometry::toArcCoordinates(lanelet_.leftBound2d(), target_start).length;
+  const double s_end =
+    lanelet::geometry::toArcCoordinates(lanelet_.leftBound2d(), target_end).length;
 
   if (s_start > s_end) {
     return {};
   }
 
-  // interpolate 3d points from 2d 
+  // interpolate 3d points from 2d
   const auto left_bound = truncateLine(target_line, s_start, s_end);
   return left_bound;
 }
 
 std::vector<lanelet::BasicPoint3d> LaneletSection::getRightBound() const
 {
- if (!isValid()) {
+  if (!isValid()) {
     return {};
   }
 
   const auto & target_line = lanelet_.rightBound();
-  const auto target_start = start_arc_length_ == 0 ?
-    to2D(target_line.front()) : getStartPoint().toBasicPoint2d();
-  const auto target_end = end_arc_length_ == lanelet_length_ ?
-    to2D(target_line.back()) : getEndPoint().toBasicPoint2d();
+  const auto target_start =
+    start_arc_length_ == 0 ? to2D(target_line.front()) : getStartPoint().toBasicPoint2d();
+  const auto target_end =
+    end_arc_length_ == lanelet_length_ ? to2D(target_line.back()) : getEndPoint().toBasicPoint2d();
 
-  const double s_start = lanelet::geometry::toArcCoordinates(lanelet_.rightBound2d(), target_start).length;
-  const double s_end = lanelet::geometry::toArcCoordinates(lanelet_.rightBound2d(), target_end).length;
+  const double s_start =
+    lanelet::geometry::toArcCoordinates(lanelet_.rightBound2d(), target_start).length;
+  const double s_end =
+    lanelet::geometry::toArcCoordinates(lanelet_.rightBound2d(), target_end).length;
 
   if (s_start > s_end) {
     return {};
   }
 
-  // interpolate 3d points from 2d 
+  // interpolate 3d points from 2d
   const auto right_bound = truncateLine(target_line, s_start, s_end);
   return right_bound;
 }
 
-
 bool LaneletSection::split(
-  const LaneletPoint & split_point,
-  LaneletSection * section_before,
+  const LaneletPoint & split_point, LaneletSection * section_before,
   LaneletSection * section_after) const
 {
   if (!isValid()) {
@@ -258,7 +264,7 @@ bool LaneletSection::split(
     return false;
   }
 
-  if (section_before) { 
+  if (section_before) {
     *section_before = LaneletSection{lanelet_, start_arc_length_, split_point.arc_length()};
   }
   if (section_after) {
@@ -269,34 +275,33 @@ bool LaneletSection::split(
 }
 
 LaneletSection LaneletSection::concatenate(
-  const LaneletSection &first_section, 
-  const LaneletSection &second_section)
+  const LaneletSection & first_section, const LaneletSection & second_section)
 {
   if (!first_section.isValid() || !second_section.isValid()) {
     return {};
   }
   if (first_section.lanelet_ != second_section.lanelet_) {
-    return {}; // not same lanelet
+    return {};  // not same lanelet
   }
   if (first_section.end_arc_length_ != second_section.start_arc_length_) {
-    return {}; // not connected
+    return {};  // not connected
   }
-  return LaneletSection{first_section.lanelet_, first_section.start_arc_length_, second_section.end_arc_length_};
+  return LaneletSection{
+    first_section.lanelet_, first_section.start_arc_length_, second_section.end_arc_length_};
 }
 
 LaneletSection LaneletSection::intersect(
-  const LaneletSection & section_A,
-  const LaneletSection & section_B)
+  const LaneletSection & section_A, const LaneletSection & section_B)
 {
   if (!section_A.isValid() || !section_B.isValid()) {
     return {};
   }
   if (section_A.lanelet_ != section_B.lanelet_) {
-    return {}; // not same lanelet
+    return {};  // not same lanelet
   }
   double intersection_start = std::max(section_A.start_arc_length_, section_B.start_arc_length_);
   double intersection_end = std::min(section_A.end_arc_length_, section_B.end_arc_length_);
   return LaneletSection{section_A.lanelet_, intersection_start, intersection_end};
 }
 
-} // namespace route_handler
+}  // namespace route_handler

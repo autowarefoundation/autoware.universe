@@ -55,7 +55,8 @@ TurnIndicatorsCommand TurnSignalDecider::getTurnSignal(
     return turn_signal_info.turn_signal;
   }
 
-  const PathWithLaneId extended_path = util::getCenterLinePath(route_handler, current_lanelet_path, planner_data->parameters);
+  const PathWithLaneId extended_path =
+    util::getCenterLinePath(route_handler, current_lanelet_path, planner_data->parameters);
 
   if (extended_path.points.empty()) {
     return turn_signal_info.turn_signal;

@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "route_handler/lanelet_point.hpp"
+
 #include "lanelet2_core/primitives/Point.h"
 #include "route_handler/lanelet_section.hpp"
 
@@ -52,7 +53,8 @@ LaneletPoint LaneletPoint::fromProjection(
   if (lanelet.id() == lanelet::InvalId) {
     return LaneletPoint{};
   }
-  const double arc_length = lanelet::geometry::toArcCoordinates(lanelet.centerline2d(), point).length;
+  const double arc_length =
+    lanelet::geometry::toArcCoordinates(lanelet.centerline2d(), point).length;
   return LaneletPoint(lanelet, arc_length);
 }
 
@@ -93,10 +95,7 @@ geometry_msgs::msg::Point LaneletPoint::toPointMsg() const
   return point_msg;
 }
 
-bool LaneletPoint::isValid() const
-{
-  return lanelet_.id() != lanelet::InvalId;
-}
+bool LaneletPoint::isValid() const { return lanelet_.id() != lanelet::InvalId; }
 
 LaneletSection LaneletPoint::forwardSection() const
 {
@@ -104,7 +103,7 @@ LaneletSection LaneletPoint::forwardSection() const
     return {};
   }
 
-  return LaneletSection {lanelet_, arc_length_, {}};
+  return LaneletSection{lanelet_, arc_length_, {}};
 }
 
 LaneletSection LaneletPoint::backwardSection() const
@@ -113,7 +112,7 @@ LaneletSection LaneletPoint::backwardSection() const
     return {};
   }
 
-  return LaneletSection {lanelet_, {}, arc_length_};
+  return LaneletSection{lanelet_, {}, arc_length_};
 }
 
 }  // namespace route_handler

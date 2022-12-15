@@ -61,7 +61,7 @@ public:
     const lanelet::ConstLanelet & lanelet, const geometry_msgs::msg::Pose & pose);
   //! @brief Project the point on the lanelet centerline.
   //! @return projection result as LaneletPoint.
-  
+
   //! @brief Conversion to lanelet::BasicPoint2d.
   [[nodiscard]] lanelet::BasicPoint2d toBasicPoint2d() const;
   //! @brief Conversion to geometry_msgs::msg::Point.

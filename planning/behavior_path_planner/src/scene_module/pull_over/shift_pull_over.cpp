@@ -19,6 +19,7 @@
 
 #include <lanelet2_extension/utility/query.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
+
 #include <lanelet2_core/geometry/Lanelet.h>
 
 #include <memory>
@@ -64,10 +65,10 @@ boost::optional<PullOverPath> ShiftPullOver::plan(const Pose & goal_pose)
     const double s_end = s_start + std::numeric_limits<double>::epsilon();
 
     const auto whole_lanes_shoulder_path = lanelet_route_ptr->getPathFromLanelets(shoulder_lanes);
-    const auto shoulder_path = whole_lanes_shoulder_path.truncate(whole_lanes_shoulder_path.getPointAt(s_start), whole_lanes_shoulder_path.getPointAt(s_end));
+    const auto shoulder_path = whole_lanes_shoulder_path.truncate(
+      whole_lanes_shoulder_path.getPointAt(s_start), whole_lanes_shoulder_path.getPointAt(s_end));
 
-    const auto shoulder_lane_path =
-      route_handler->getCenterLinePath(shoulder_path, true);
+    const auto shoulder_lane_path = route_handler->getCenterLinePath(shoulder_path, true);
     return shoulder_lane_path.points.front().point.pose;
   });
 
@@ -123,7 +124,8 @@ PathWithLaneId ShiftPullOver::generateRoadLaneReferencePath(
   const auto lanelet_route_ptr = route_handler->getLaneletRoutePtr();
 
   const auto whole_lanes_road_path = lanelet_route_ptr->getPathFromLanelets(road_lanes);
-  const auto road_path = whole_lanes_road_path.truncate(whole_lanes_road_path.getPointAt(s_start), whole_lanes_road_path.getPointAt(s_end));
+  const auto road_path = whole_lanes_road_path.truncate(
+    whole_lanes_road_path.getPointAt(s_start), whole_lanes_road_path.getPointAt(s_end));
 
   auto road_lane_reference_path = route_handler->getCenterLinePath(road_path);
   // resample road straight path and shift source path respectively
@@ -163,11 +165,9 @@ PathWithLaneId ShiftPullOver::generateShoulderLaneReferencePath(
 
   const auto whole_lanes_shoulder_path = lanelet_route_ptr->getPathFromLanelets(shoulder_lanes);
   const auto shoulder_path = whole_lanes_shoulder_path.truncate(
-    whole_lanes_shoulder_path.getPointAt(s_start), 
-  whole_lanes_shoulder_path.getPointAt(s_end));
+    whole_lanes_shoulder_path.getPointAt(s_start), whole_lanes_shoulder_path.getPointAt(s_end));
 
-  auto shoulder_lane_reference_path =
-    route_handler->getCenterLinePath(shoulder_path);
+  auto shoulder_lane_reference_path = route_handler->getCenterLinePath(shoulder_path);
   // offset to goal line
   for (auto & p : shoulder_lane_reference_path.points) {
     p.point.pose =
@@ -312,12 +312,14 @@ bool ShiftPullOver::hasEnoughDistance(
   }
 
   const auto lanelet_route_ptr = planner_data_->route_handler->getLaneletRoutePtr();
-  const auto current_lanelet_point = lanelet_route_ptr->getClosestLaneletPointWithinRoute(current_pose);
-  const double current_route_arc_length = *lanelet_route_ptr->getRouteArcLength(current_lanelet_point);  
-  // TODO(vrichard) what is the goal_pose here? if it the route goal pose, then distance to goal is simply:
-  // lanelet_route_ptr->getMainPath().length() - current_route_arc_length
+  const auto current_lanelet_point =
+    lanelet_route_ptr->getClosestLaneletPointWithinRoute(current_pose);
+  const double current_route_arc_length =
+    *lanelet_route_ptr->getRouteArcLength(current_lanelet_point);
+  // TODO(vrichard) what is the goal_pose here? if it the route goal pose, then distance to goal is
+  // simply: lanelet_route_ptr->getMainPath().length() - current_route_arc_length
   const auto goal_lanelet_point = lanelet_route_ptr->getClosestLaneletPointWithinRoute(goal_pose);
-  const double goal_route_arc_length = * lanelet_route_ptr->getRouteArcLength(goal_lanelet_point);
+  const double goal_route_arc_length = *lanelet_route_ptr->getRouteArcLength(goal_lanelet_point);
   const double distance_to_route_goal = goal_route_arc_length - current_route_arc_length;
 
   if (road_lane_dist_to_goal > distance_to_route_goal) {

@@ -933,7 +933,7 @@ SetParametersResult BehaviorPathPlannerNode::onSetParam(
 PathWithLaneId BehaviorPathPlannerNode::modifyPathForSmoothGoalConnection(
   const PathWithLaneId & path) const
 {
-  const auto& route_handler = planner_data_->route_handler;
+  const auto & route_handler = planner_data_->route_handler;
 
   const auto lanelet_route_ptr = route_handler->getLaneletRoutePtr();
 
@@ -943,7 +943,8 @@ PathWithLaneId BehaviorPathPlannerNode::modifyPathForSmoothGoalConnection(
 
   Pose refined_goal{};
   {
-    const auto goal_point = planner_data_->route_handler->getLaneletRoutePtr()->getClosestLaneletPointWithinRoute(goal);
+    const auto goal_point =
+      planner_data_->route_handler->getLaneletRoutePtr()->getClosestLaneletPointWithinRoute(goal);
     if (goal_point.isValid()) {
       refined_goal = util::refineGoal(goal, goal_point.lanelet());
     } else {

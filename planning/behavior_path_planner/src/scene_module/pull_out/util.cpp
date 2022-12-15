@@ -58,7 +58,8 @@ PathWithLaneId getBackwardPath(
   PathWithLaneId backward_path;
   {
     const auto lanelet_route_ptr = route_handler.getLaneletRoutePtr();
-    const auto backward_shoulder_path = lanelet_route_ptr->getPathFromLanelets(shoulder_lanes, backed_pose, current_pose);
+    const auto backward_shoulder_path =
+      lanelet_route_ptr->getPathFromLanelets(shoulder_lanes, backed_pose, current_pose);
 
     // forward center line path
     backward_path = route_handler.getCenterLinePath(backward_shoulder_path, true);

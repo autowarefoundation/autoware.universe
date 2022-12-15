@@ -16,6 +16,7 @@
 
 #include "behavior_path_planner/path_utilities.hpp"
 #include "behavior_path_planner/scene_module/pull_out/util.hpp"
+
 #include <route_handler/lanelet_path.hpp>
 
 #include <memory>
@@ -153,8 +154,11 @@ std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
       const double s_start = arc_position.length - backward_path_length;
       double s_end = arc_position.length + before_pull_out_straight_distance;
       s_end = std::max(s_end, s_start + std::numeric_limits<double>::epsilon());
-      const auto whole_shoulder_lanelets_path = lanelet_route_ptr->getPathFromLanelets(shoulder_lanes);
-      const auto shoulder_path = whole_shoulder_lanelets_path.truncate(whole_shoulder_lanelets_path.getPointAt(s_start), whole_shoulder_lanelets_path.getPointAt(s_end));
+      const auto whole_shoulder_lanelets_path =
+        lanelet_route_ptr->getPathFromLanelets(shoulder_lanes);
+      const auto shoulder_path = whole_shoulder_lanelets_path.truncate(
+        whole_shoulder_lanelets_path.getPointAt(s_start),
+        whole_shoulder_lanelets_path.getPointAt(s_end));
       shoulder_reference_path = route_handler.getCenterLinePath(shoulder_path);
 
       // lateral shift to start_pose
@@ -180,7 +184,8 @@ std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
       const double s_end = s_start + std::numeric_limits<double>::epsilon();
 
       const auto whole_road_lanelets_path = lanelet_route_ptr->getPathFromLanelets(road_lanes);
-      const auto road_path = whole_road_lanelets_path.truncate(whole_road_lanelets_path.getPointAt(s_start), whole_road_lanelets_path.getPointAt(s_end));
+      const auto road_path = whole_road_lanelets_path.truncate(
+        whole_road_lanelets_path.getPointAt(s_start), whole_road_lanelets_path.getPointAt(s_end));
       const auto path = route_handler.getCenterLinePath(road_path, true);
       return path.points.front();
     }();

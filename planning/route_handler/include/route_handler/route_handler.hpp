@@ -90,10 +90,13 @@ public:
   // for routing
   lanelet::routing::RoutingGraphPtr getRoutingGraphPtr() const { return routing_graph_ptr_; }
   lanelet::traffic_rules::TrafficRulesPtr getTrafficRulesPtr() const { return traffic_rules_ptr_; }
-  std::shared_ptr<const lanelet::routing::RoutingGraphContainer> getOverallGraphPtr() const { return overall_graphs_ptr_; }
+  std::shared_ptr<const lanelet::routing::RoutingGraphContainer> getOverallGraphPtr() const
+  {
+    return overall_graphs_ptr_;
+  }
   lanelet::LaneletMapPtr getLaneletMapPtr() const { return lanelet_map_ptr_; }
   LaneletRoutePtr getLaneletRoutePtr() const { return lanelet_route_ptr_; }
-  
+
   // for lanelet
   lanelet::ConstLanelet getLaneletsFromId(const lanelet::Id id) const;
   lanelet::ConstPolygon3d getIntersectionAreaById(const lanelet::Id id) const;
@@ -278,8 +281,7 @@ public:
   //   const lanelet::ConstLanelet & prev_lane, const lanelet::ConstLanelet & next_lane) const;
 
   // for path centerline
-  PathWithLaneId getCenterLinePath(
-    const LaneletPath & lanelet_path, bool use_exact = true) const;
+  PathWithLaneId getCenterLinePath(const LaneletPath & lanelet_path, bool use_exact = true) const;
 
 private:
   // MUST

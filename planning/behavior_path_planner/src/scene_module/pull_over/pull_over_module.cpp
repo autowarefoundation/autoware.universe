@@ -201,18 +201,21 @@ bool PullOverModule::isExecutionRequested() const
 
   const auto lanelet_route_ptr = planner_data_->route_handler->getLaneletRoutePtr();
 
-  const auto current_lanelet_point = lanelet_route_ptr->getClosestLaneletPointWithinRoute(current_pose);
-  const auto optional_route_arc_length = lanelet_route_ptr->getRouteArcLength(current_lanelet_point);
+  const auto current_lanelet_point =
+    lanelet_route_ptr->getClosestLaneletPointWithinRoute(current_pose);
+  const auto optional_route_arc_length =
+    lanelet_route_ptr->getRouteArcLength(current_lanelet_point);
 
   if (!optional_route_arc_length) {
-    return false; // not on the route!!
+    return false;  // not on the route!!
   }
 
   const double route_arc_length = *optional_route_arc_length;
-  const double self_to_goal_arc_length = lanelet_route_ptr->getMainPath().length() - route_arc_length;
+  const double self_to_goal_arc_length =
+    lanelet_route_ptr->getMainPath().length() - route_arc_length;
 
   if (self_to_goal_arc_length > parameters_.request_length) {
-    return false; // route goal is still far
+    return false;  // route goal is still far
   }
 
   // check if goal_pose is in shoulder lane
@@ -589,10 +592,8 @@ PathWithLaneId PullOverModule::getReferencePath() const
   const double s_end = s_current + common_parameters.forward_path_length;
   const auto whole_lanelets_path = lanelet_route_ptr->getPathFromLanelets(status_.current_lanes);
   const auto lanelet_path = whole_lanelets_path.truncate(
-    whole_lanelets_path.getPointAt(s_start),
-    whole_lanelets_path.getPointAt(s_end));
-  auto reference_path =
-    route_handler->getCenterLinePath(lanelet_path, true);
+    whole_lanelets_path.getPointAt(s_start), whole_lanelets_path.getPointAt(s_end));
+  auto reference_path = route_handler->getCenterLinePath(lanelet_path, true);
 
   // if not approved, stop parking start position or goal search start position.
   const auto refined_goal_arc_coordinates =
@@ -652,9 +653,8 @@ PathWithLaneId PullOverModule::generateStopPath() const
 
   const auto whole_lanelets_path = lanelet_route_ptr->getPathFromLanelets(status_.current_lanes);
   const auto lanelet_path = whole_lanelets_path.truncate(
-    whole_lanelets_path.getPointAt(s_start),
-    whole_lanelets_path.getPointAt(s_end));
-  
+    whole_lanelets_path.getPointAt(s_start), whole_lanelets_path.getPointAt(s_end));
+
   auto stop_path = route_handler->getCenterLinePath(lanelet_path, true);
 
   // set deceleration velocity

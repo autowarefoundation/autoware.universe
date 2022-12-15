@@ -18,7 +18,8 @@
 #include <memory>
 #include <vector>
 
-namespace route_handler {
+namespace route_handler
+{
 
 // forward declaration
 class LaneletPath;
@@ -38,6 +39,6 @@ using LaneletSections = std::vector<LaneletSection>;
 //! - SPLIT: overlapped section is split and shared evenly among the to the start and end section
 enum class OverlapRemovalStrategy { DO_NOTHING, DISCARD, KEEP_START, KEEP_END, SPLIT };
 
-} // namespace route_handler
+}  // namespace route_handler
 
-#endif // ROUTE_HANDLER__FORWARD_HPP_
+#endif  // ROUTE_HANDLER__FORWARD_HPP_

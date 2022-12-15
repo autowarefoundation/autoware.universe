@@ -249,14 +249,13 @@ PathWithLaneId LaneChangeModule::getReferencePath() const
     return reference_path;
   }
 
-  reference_path = util::getCenterLinePath(
-    *route_handler, current_path, common_parameters);
-  
-  const auto optional_num_lane_change = lanelet_route_ptr->getNumLaneChangeToPreferredLane(
-    current_path.getGoalPoint());
+  reference_path = util::getCenterLinePath(*route_handler, current_path, common_parameters);
+
+  const auto optional_num_lane_change =
+    lanelet_route_ptr->getNumLaneChangeToPreferredLane(current_path.getGoalPoint());
 
   if (!optional_num_lane_change) {
-    return reference_path; // end of the path is outside the route!
+    return reference_path;  // end of the path is outside the route!
   }
 
   const int num_lane_change = std::abs(*optional_num_lane_change);
@@ -265,8 +264,8 @@ PathWithLaneId LaneChangeModule::getReferencePath() const
     *route_handler, reference_path, current_lanes, common_parameters, num_lane_change,
     optional_lengths);
   if (is_in_intersection) {
-    reference_path = util::getCenterLinePath(
-      *route_handler, current_path, common_parameters, optional_lengths);
+    reference_path =
+      util::getCenterLinePath(*route_handler, current_path, common_parameters, optional_lengths);
   }
 
   const double lane_change_buffer =
@@ -309,16 +308,16 @@ lanelet::ConstLanelets LaneChangeModule::getLaneChangeLanes(
   const double lane_change_prepare_length =
     std::max(current_twist.linear.x * lane_change_prepare_duration, minimum_lane_change_length);
   const auto current_point = current_path.getClosestLaneletPointWithinPath(current_pose);
-  route_handler::LaneletPath lane_change_prepare_path = current_path.truncate(current_point, current_path.getPointAt(lane_change_prepare_length));
+  route_handler::LaneletPath lane_change_prepare_path =
+    current_path.truncate(current_point, current_path.getPointAt(lane_change_prepare_length));
 
   lanelet::ConstLanelet lane_change_lane;
   if (route_handler->getNextLaneChangeTarget(lane_change_prepare_path, &lane_change_lane)) {
     route_handler::LaneletPoint lane_change_lanelet_pose =
       route_handler::LaneletPoint::fromProjection(lane_change_lane, current_pose);
-    const auto lane_change_path =
-      lanelet_route_ptr->getStraightPath(
-          lane_change_lanelet_pose, lane_change_lane_length, lane_change_lane_length);
-    lane_change_lanes =  behavior_path_planner::util::getPathLanelets(lane_change_path);
+    const auto lane_change_path = lanelet_route_ptr->getStraightPath(
+      lane_change_lanelet_pose, lane_change_lane_length, lane_change_lane_length);
+    lane_change_lanes = behavior_path_planner::util::getPathLanelets(lane_change_path);
   } else {
     lane_change_lanes.clear();
   }

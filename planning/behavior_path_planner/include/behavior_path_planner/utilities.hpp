@@ -404,7 +404,7 @@ route_handler::LaneletPath getCurrentPath(const std::shared_ptr<const PlannerDat
 
 // TODO(vrichard)
 // [[deprecated("Planner modules should never need to access path internal lanelets")]]
-lanelet::ConstLanelets getPathLanelets(const route_handler::LaneletPath &path);
+lanelet::ConstLanelets getPathLanelets(const route_handler::LaneletPath & path);
 
 // TODO(vrichard)
 // [[deprecated("Use LaneletRoute::extendPath() instead")]]

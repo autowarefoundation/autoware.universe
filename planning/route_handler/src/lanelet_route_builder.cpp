@@ -13,15 +13,16 @@
 // limitations under the License.
 
 #include "route_handler/lanelet_route_builder.hpp"
+
 #include "route_handler/utils.hpp"
 
 #include <lanelet2_extension/utility/query.hpp>
 
 #include <algorithm>
 #include <iostream>
+#include <limits>
 #include <memory>
 #include <unordered_set>
-#include <limits>
 
 namespace route_handler
 {
@@ -49,11 +50,10 @@ LaneletRouteBuilder::LaneletRouteBuilder(
 }
 
 LaneletRoutePtr LaneletRouteBuilder::buildFromStartGoalPose(
-  const geometry_msgs::msg::Pose & start_pose, 
-  const geometry_msgs::msg::Pose & goal_pose) const
+  const geometry_msgs::msg::Pose & start_pose, const geometry_msgs::msg::Pose & goal_pose) const
 {
   LaneletRoutePtr lanelet_route_ptr = std::make_shared<LaneletRoute>();
-  lanelet_route_ptr->routing_graph_ptr_ = routing_graph_ptr_; 
+  lanelet_route_ptr->routing_graph_ptr_ = routing_graph_ptr_;
 
   // get shortest lanelet route from start to pose
   const lanelet::Optional<lanelet::routing::Route> optional_route =
@@ -61,9 +61,10 @@ LaneletRoutePtr LaneletRouteBuilder::buildFromStartGoalPose(
 
   if (!optional_route) {
     RCLCPP_ERROR_STREAM(
-      logger_, "Failed to find a proper path!"<< std::endl
-            << "start pose: " << toString(start_pose) << std::endl
-            << "goal pose: " << toString(goal_pose) << std::endl);
+      logger_, "Failed to find a proper path!"
+                 << std::endl
+                 << "start pose: " << toString(start_pose) << std::endl
+                 << "goal pose: " << toString(goal_pose) << std::endl);
     return {};
   }
 
@@ -72,8 +73,8 @@ LaneletRoutePtr LaneletRouteBuilder::buildFromStartGoalPose(
   if (shortest_path.empty()) {
     RCLCPP_ERROR_STREAM(
       logger_, "Generated an empty path!" << std::endl
-            << "start pose: " << toString(start_pose) << std::endl
-            << "goal pose: " << toString(goal_pose) << std::endl);
+                                          << "start pose: " << toString(start_pose) << std::endl
+                                          << "goal pose: " << toString(goal_pose) << std::endl);
     return {};
   }
 
@@ -97,8 +98,8 @@ LaneletRoutePtr LaneletRouteBuilder::buildFromStartGoalPose(
   if (!updateMainPath(lanelet_route_ptr.get(), start_point, goal_point)) {
     RCLCPP_ERROR_STREAM(
       logger_, "Failed to create main path!" << std::endl
-            << "start pose: " << toString(start_pose) << std::endl
-            << "goal pose: " << toString(goal_pose) << std::endl);
+                                             << "start pose: " << toString(start_pose) << std::endl
+                                             << "goal pose: " << toString(goal_pose) << std::endl);
     return {};
   }
 
@@ -109,7 +110,7 @@ LaneletRoutePtr LaneletRouteBuilder::buildFromLaneletRouteMsg(
   const LaneletRouteMsg & route_msg) const
 {
   LaneletRoutePtr lanelet_route_ptr = std::make_shared<LaneletRoute>();
-  lanelet_route_ptr->routing_graph_ptr_ = routing_graph_ptr_; 
+  lanelet_route_ptr->routing_graph_ptr_ = routing_graph_ptr_;
 
   if (route_msg.segments.empty()) {
     return {};
@@ -129,12 +130,14 @@ LaneletRoutePtr LaneletRouteBuilder::buildFromLaneletRouteMsg(
     RCLCPP_ERROR(logger_, "Failed to find starting lanelet");
     return {};
   };
-  const LaneletPoint start_point = LaneletPoint::fromProjection(start_lanelet, route_msg.start_pose.position);
+  const LaneletPoint start_point =
+    LaneletPoint::fromProjection(start_lanelet, route_msg.start_pose.position);
 
   // But goal pose lanelet is always the last preferred lanelet
   const auto goal_lanelet =
     lanelet_map_ptr_->laneletLayer.get(route_msg.segments.back().preferred_primitive.id);
-  const LaneletPoint goal_point = LaneletPoint::fromProjection(goal_lanelet, route_msg.goal_pose.position);
+  const LaneletPoint goal_point =
+    LaneletPoint::fromProjection(goal_lanelet, route_msg.goal_pose.position);
 
   if (!updateStartGoalSegments(lanelet_route_ptr.get(), start_point, goal_point)) {
     return {};
@@ -162,11 +165,12 @@ LaneletRoutePtr LaneletRouteBuilder::buildFromLaneletRouteMsg(
     return {};
   }
 
-  LaneletPoint start_point_on_first_preferred_lanelet = LaneletPoint::fromProjection(preferred_lanelets.front(), start_point.toBasicPoint2d());
-  LaneletPath main_path {preferred_lanelets, start_point_on_first_preferred_lanelet, goal_point};
+  LaneletPoint start_point_on_first_preferred_lanelet =
+    LaneletPoint::fromProjection(preferred_lanelets.front(), start_point.toBasicPoint2d());
+  LaneletPath main_path{preferred_lanelets, start_point_on_first_preferred_lanelet, goal_point};
 
   if (!utils::validatePath(main_path, routing_graph_ptr_)) {
-    return {}; // path is broken
+    return {};  // path is broken
   }
 
   lanelet_route_ptr->main_path_ = main_path;
@@ -175,8 +179,7 @@ LaneletRoutePtr LaneletRouteBuilder::buildFromLaneletRouteMsg(
 }
 
 lanelet::Optional<lanelet::routing::Route> LaneletRouteBuilder::getShortestRoute(
-  const geometry_msgs::msg::Pose & start_pose, 
-  const geometry_msgs::msg::Pose & goal_pose) const
+  const geometry_msgs::msg::Pose & start_pose, const geometry_msgs::msg::Pose & goal_pose) const
 {
   const lanelet::ConstLanelets all_lanelets = lanelet::utils::query::laneletLayer(lanelet_map_ptr_);
   const lanelet::ConstLanelets road_lanelets = lanelet::utils::query::roadLanelets(all_lanelets);
@@ -243,8 +246,7 @@ lanelet::Optional<lanelet::routing::Route> LaneletRouteBuilder::getShortestRoute
 }
 
 bool LaneletRouteBuilder::updateStartGoalSegments(
-  LaneletRoute * lanelet_route_ptr,
-  const LaneletPoint & start_point,
+  LaneletRoute * lanelet_route_ptr, const LaneletPoint & start_point,
   const LaneletPoint & goal_point) const
 {
   lanelet_route_ptr->start_segments_.clear();
@@ -265,13 +267,15 @@ bool LaneletRouteBuilder::updateStartGoalSegments(
   if (!lanelet::utils::contains(start_lanelets, goal_point.lanelet())) {
     // simple case: start and goal lanelets are disjoints
     // start and goal segments are expanded on the full lanelets
-    for (const auto &llt: start_lanelets) {
+    for (const auto & llt : start_lanelets) {
       lanelet_route_ptr->start_segments_.push_back(LaneletSection{llt});
-      lanelet_route_ptr->start_line_.push_back(LaneletPoint::fromProjection(llt, start_point.toBasicPoint2d()));
+      lanelet_route_ptr->start_line_.push_back(
+        LaneletPoint::fromProjection(llt, start_point.toBasicPoint2d()));
     }
-    for (const auto &llt: goal_lanelets) {
+    for (const auto & llt : goal_lanelets) {
       lanelet_route_ptr->goal_segments_.push_back(LaneletSection{llt});
-      lanelet_route_ptr->goal_line_.push_back(LaneletPoint::fromProjection(llt, goal_point.toBasicPoint2d()));
+      lanelet_route_ptr->goal_line_.push_back(
+        LaneletPoint::fromProjection(llt, goal_point.toBasicPoint2d()));
     }
     return true;
   }
@@ -279,10 +283,10 @@ bool LaneletRouteBuilder::updateStartGoalSegments(
   // start_lanelets == goal_lanelets
 
   // check if goal is behind start, on the same lanelet or a neighbor lanelet
-  const LaneletPoint projected_goal_on_start_lanelet = LaneletPoint::fromProjection(
-    start_point.lanelet(), goal_point.toBasicPoint2d());
-  const LaneletPoint projected_start_on_goal_lanelet = LaneletPoint::fromProjection(
-    goal_point.lanelet(), start_point.toBasicPoint2d());
+  const LaneletPoint projected_goal_on_start_lanelet =
+    LaneletPoint::fromProjection(start_point.lanelet(), goal_point.toBasicPoint2d());
+  const LaneletPoint projected_start_on_goal_lanelet =
+    LaneletPoint::fromProjection(goal_point.lanelet(), start_point.toBasicPoint2d());
 
   // unless the start and goal pose are very close, or the lanelet shape is totally weird, goal
   // should be clearly behind start point, whichever lanelet is used as reference.
@@ -303,13 +307,15 @@ bool LaneletRouteBuilder::updateStartGoalSegments(
 
   if (!is_goal_behind_start) {
     // simple case: start and goal segments are the same and expand on the full lanes
-    for (const auto &llt: start_lanelets) {
+    for (const auto & llt : start_lanelets) {
       lanelet_route_ptr->start_segments_.push_back(LaneletSection{llt});
-      lanelet_route_ptr->start_line_.push_back(LaneletPoint::fromProjection(llt, start_point.toBasicPoint2d()));
+      lanelet_route_ptr->start_line_.push_back(
+        LaneletPoint::fromProjection(llt, start_point.toBasicPoint2d()));
     }
-    for (const auto &llt: goal_lanelets) {
+    for (const auto & llt : goal_lanelets) {
       lanelet_route_ptr->goal_segments_.push_back(LaneletSection{llt});
-      lanelet_route_ptr->goal_line_.push_back(LaneletPoint::fromProjection(llt, goal_point.toBasicPoint2d()));
+      lanelet_route_ptr->goal_line_.push_back(
+        LaneletPoint::fromProjection(llt, goal_point.toBasicPoint2d()));
     }
     return true;
   }
@@ -318,7 +324,7 @@ bool LaneletRouteBuilder::updateStartGoalSegments(
   // the start/goal lanes must be split so that the two segments are disjoint
 
   // reminder: start_lanelets == goal_lanelets
-  for (const auto& llt: start_lanelets) {
+  for (const auto & llt : start_lanelets) {
     auto projected_start_point = LaneletPoint::fromProjection(llt, start_point.toBasicPoint2d());
     auto projected_goal_point = LaneletPoint::fromProjection(llt, goal_point.toBasicPoint2d());
 
@@ -332,7 +338,8 @@ bool LaneletRouteBuilder::updateStartGoalSegments(
     }
 
     // split the lanelet in the middle of projected start and goal pose
-    LaneletPoint split_point {llt, (projected_start_point.arc_length() + projected_goal_point.arc_length()) / 2.0};
+    LaneletPoint split_point{
+      llt, (projected_start_point.arc_length() + projected_goal_point.arc_length()) / 2.0};
     LaneletSection section_before;
     LaneletSection section_after;
     LaneletSection full_section = LaneletSection{llt};
@@ -451,8 +458,7 @@ lanelet::ConstLanelets LaneletRouteBuilder::getRouteLanelets(
 }
 
 bool LaneletRouteBuilder::updateMainPath(
-  LaneletRoute * lanelet_route_ptr,
-  const LaneletPoint & start_point [[maybe_unused]],
+  LaneletRoute * lanelet_route_ptr, const LaneletPoint & start_point [[maybe_unused]],
   const LaneletPoint & goal_point) const
 {
   // main path is built by exploring the route straight backward from the goal point
@@ -471,8 +477,9 @@ bool LaneletRouteBuilder::updateMainPath(
 
 outer:
   while (!lanelet_route_ptr->isOnFirstSegment(curr_point)) {
-    // as long as we have not reached the starting segment, lane change to a neighbor lane and keep moving straight backward
-    // Note: by construction, curr_point points to the beginning of a lanelet
+    // as long as we have not reached the starting segment, lane change to a neighbor lane and keep
+    // moving straight backward Note: by construction, curr_point points to the beginning of a
+    // lanelet
 
     // check right neighbors
     auto right_relations =
@@ -481,13 +488,13 @@ outer:
       // try with a lane change to a right neighbor
       const LaneletPoint right_point = LaneletPoint::endOf(right);
       straight_path = lanelet_route_ptr->getStraightPathUpTo(right_point, backward_distance);
-      if (straight_path.size() < 2) { // path contains at least the point
+      if (straight_path.size() < 2) {  // path contains at least the point
         continue;
       }
       // all path sections except the last are preferred lanelets
-      main_sections.insert(main_sections.begin(), straight_path.begin(), straight_path.end()-1);
+      main_sections.insert(main_sections.begin(), straight_path.begin(), straight_path.end() - 1);
       curr_point = straight_path.getStartPoint();
-      goto outer; // keep exploring down this path
+      goto outer;  // keep exploring down this path
     }
 
     // check left neighbors
@@ -497,21 +504,21 @@ outer:
       // try with a lane change to a left neighbor
       const LaneletPoint left_point = LaneletPoint::endOf(left);
       straight_path = lanelet_route_ptr->getStraightPathUpTo(left_point, backward_distance);
-      if (straight_path.size() < 2) { // path contains at least the point
+      if (straight_path.size() < 2) {  // path contains at least the point
         continue;
       }
       // all path sections except the last are preferred lanelets
-      main_sections.insert(main_sections.begin(), straight_path.begin(), straight_path.end()-1);
+      main_sections.insert(main_sections.begin(), straight_path.begin(), straight_path.end() - 1);
       curr_point = straight_path.getStartPoint();
-      goto outer; // keep exploring down this path
+      goto outer;  // keep exploring down this path
     }
 
     // reached a dead end which is not start. Should not happen
     RCLCPP_ERROR(logger_, "Reached a dead end while building the main path.");
     return false;
   }
-  
-  LaneletPath main_path {main_sections};
+
+  LaneletPath main_path{main_sections};
   if (!utils::validatePath(main_path, lanelet_route_ptr->routing_graph_ptr_)) {
     RCLCPP_ERROR(logger_, "Has built a broken main path");
     return false;

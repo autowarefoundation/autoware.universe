@@ -502,13 +502,15 @@ PathWithLaneId getReferencePathFromTargetLane(
   const double & s_start = lane_change_start_arc_position.length;
   double s_end = s_start + prepare_distance + lane_changing_distance + forward_path_length;
   // FIXME(vrichard) This assumes goal could not be on any previous lanelet...
-  if (lanelet_route_ptr->isOnLastSegment(route_handler::LaneletPoint::startOf(target_lanes.back()))) {
+  if (lanelet_route_ptr->isOnLastSegment(
+        route_handler::LaneletPoint::startOf(target_lanes.back()))) {
     const auto goal_arc_coordinates =
       lanelet::utils::getArcCoordinates(target_lanes, route_handler.getGoalPose());
     s_end = std::min(s_end, goal_arc_coordinates.length);
   }
   const auto whole_lanelets_path = lanelet_route_ptr->getPathFromLanelets(target_lanes);
-  const auto truncated_path = whole_lanelets_path.truncate(whole_lanelets_path.getPointAt(s_start), whole_lanelets_path.getPointAt(s_end));
+  const auto truncated_path = whole_lanelets_path.truncate(
+    whole_lanelets_path.getPointAt(s_start), whole_lanelets_path.getPointAt(s_end));
   const auto lane_changing_reference_path = route_handler.getCenterLinePath(truncated_path);
 
   constexpr auto min_resampling_points{30.0};
@@ -533,13 +535,15 @@ PathWithLaneId getReferencePathFromTargetLane(
   const double & s_start = lane_change_start_arc_position.length;
   double s_end = lane_change_end_arc_position.length;
   // FIXME(vrichard) This assumes goal could not be on any previous lanelet...
-  if (lanelet_route_ptr->isOnLastSegment(route_handler::LaneletPoint::startOf(target_lanes.back()))) {
+  if (lanelet_route_ptr->isOnLastSegment(
+        route_handler::LaneletPoint::startOf(target_lanes.back()))) {
     const auto goal_arc_coordinates =
       lanelet::utils::getArcCoordinates(target_lanes, route_handler.getGoalPose());
     s_end = std::min(s_end, goal_arc_coordinates.length);
   }
   const auto whole_lanelets_path = lanelet_route_ptr->getPathFromLanelets(target_lanes);
-  const auto truncated_path = whole_lanelets_path.truncate(whole_lanelets_path.getPointAt(s_start), whole_lanelets_path.getPointAt(s_end));
+  const auto truncated_path = whole_lanelets_path.truncate(
+    whole_lanelets_path.getPointAt(s_start), whole_lanelets_path.getPointAt(s_end));
   return route_handler.getCenterLinePath(truncated_path);
 }
 
@@ -581,11 +585,9 @@ PathWithLaneId getLaneChangePathPrepareSegment(
   const auto lanelet_path_ptr = route_handler.getLaneletRoutePtr();
   const auto whole_lanelets_path = lanelet_path_ptr->getPathFromLanelets(original_lanelets);
   const auto truncated_path = whole_lanelets_path.truncate(
-    whole_lanelets_path.getPointAt(s_start),
-    whole_lanelets_path.getPointAt(s_end));
+    whole_lanelets_path.getPointAt(s_start), whole_lanelets_path.getPointAt(s_end));
 
-  PathWithLaneId prepare_segment =
-    route_handler.getCenterLinePath(truncated_path);
+  PathWithLaneId prepare_segment = route_handler.getCenterLinePath(truncated_path);
 
   prepare_segment.points.back().point.longitudinal_velocity_mps = std::min(
     prepare_segment.points.back().point.longitudinal_velocity_mps,
@@ -607,7 +609,7 @@ PathWithLaneId getLaneChangePathLaneChangingSegment(
   }
 
   const auto lanelet_route_ptr = route_handler.getLaneletRoutePtr();
-  
+
   const ArcCoordinates arc_position =
     lanelet::utils::getArcCoordinates(target_lanelets, current_pose);
   const double lane_length = lanelet::utils::getLaneletLength2d(target_lanelets);
@@ -630,11 +632,9 @@ PathWithLaneId getLaneChangePathLaneChangingSegment(
 
   const auto whole_lanelets_path = lanelet_route_ptr->getPathFromLanelets(target_lanelets);
   const auto target_path = whole_lanelets_path.truncate(
-    whole_lanelets_path.getPointAt(s_start),
-    whole_lanelets_path.getPointAt(s_end));
+    whole_lanelets_path.getPointAt(s_start), whole_lanelets_path.getPointAt(s_end));
 
-  PathWithLaneId lane_changing_segment =
-    route_handler.getCenterLinePath(target_path);
+  PathWithLaneId lane_changing_segment = route_handler.getCenterLinePath(target_path);
   for (auto & point : lane_changing_segment.points) {
     point.point.longitudinal_velocity_mps = std::min(
       point.point.longitudinal_velocity_mps,
