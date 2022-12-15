@@ -637,9 +637,6 @@ void BehaviorPathPlannerNode::run()
   // path handling
   const auto path = getPath(output, planner_data);
 
-  // publish path candidates
-  publishPathCandidate(bt_manager_->getSceneModules());
-
   // update planner data
   planner_data_->prev_output_path = path;
 
@@ -658,6 +655,8 @@ void BehaviorPathPlannerNode::run()
     RCLCPP_ERROR_THROTTLE(
       get_logger(), *get_clock(), 5000, "behavior path output is empty! Stop publish.");
   }
+
+  publishPathCandidate(bt_manager_->getSceneModules());
 
   publishSceneModuleDebugMsg();
 

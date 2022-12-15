@@ -45,7 +45,6 @@
 namespace behavior_path_planner
 {
 using autoware_adapi_v1_msgs::msg::SteeringFactor;
-using autoware_auto_planning_msgs::msg::Path;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using autoware_auto_vehicle_msgs::msg::HazardLightsCommand;
 using autoware_auto_vehicle_msgs::msg::TurnIndicatorsCommand;
@@ -254,7 +253,6 @@ private:
 protected:
   rclcpp::Clock::SharedPtr clock_;
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_debug_marker_;
-  rclcpp::Publisher<Path>::SharedPtr pub_path_candidate_;
   mutable MarkerArray debug_marker_;
 
   std::shared_ptr<RTCInterface> rtc_interface_ptr_;
