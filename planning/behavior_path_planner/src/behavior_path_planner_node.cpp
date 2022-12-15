@@ -611,13 +611,14 @@ void BehaviorPathPlannerNode::updatePlannerData()
   const bool is_first_time = !(planner_data_->route_handler->isHandlerReady());
   if (has_received_route_) {
     planner_data_->route_handler->setRoute(*route_ptr_);
+    // Reset behavior tree when new route is received,
+    // so that the each modules do not have to care about the "route jump".
+    if (!is_first_time) {
+      RCLCPP_DEBUG(get_logger(), "new route is received. reset behavior tree.");
+      bt_manager_->resetBehaviorTree();
+    }
+
     has_received_route_ = false;
-  }
-  // Reset behavior tree when new route is received,
-  // so that the each modules do not have to care about the "route jump".
-  if (!is_first_time) {
-    RCLCPP_DEBUG(get_logger(), "new route is received. reset behavior tree.");
-    bt_manager_->resetBehaviorTree();
   }
 }
 
