@@ -28,7 +28,7 @@ l_7&= 2 j T_j^3 + 3 j T_a T_j^2 + j T_a^2 T_j + j(T_a + T_j)T_j T_v
 \end{align}
 ```
 
-These equations are used to determine the shape of a path. Additionally, by applying further mathematical operations to these basic equations, the following expressions can be derived.
+These equations are used to determine the shape of a path. Additionally, by applying further mathematical operations to these basic equations, the expressions of the following subsections can be derived.
 
 #### Calculation of Maximum Acceleration from transition time and final shift length
 
