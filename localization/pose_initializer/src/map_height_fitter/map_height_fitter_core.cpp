@@ -43,7 +43,10 @@ MapHeightFitter::MapHeightFitter() : Node("map_height_fitter"), tf2_listener_(tf
     cli_get_partial_pcd_ = create_client<autoware_map_msgs::srv::GetPartialPointCloudMap>(
       "client_partial_map_load", rmw_qos_profile_default, callback_group_service_);
     while (!cli_get_partial_pcd_->wait_for_service(std::chrono::seconds(1)) && rclcpp::ok()) {
-      RCLCPP_INFO(this->get_logger(), "Cannot find partial map loading interface. Please check the setting in pointcloud_map_loader to see if the interface is enabled.");
+      RCLCPP_INFO(
+        this->get_logger(),
+        "Cannot find partial map loading interface. Please check the setting in "
+        "pointcloud_map_loader to see if the interface is enabled.");
     }
   }
 }

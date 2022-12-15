@@ -15,9 +15,9 @@ instead of loading whole map by subscription interface.
 
 ### Parameters
 
-| Name                  | Type | Description                                                                              |    |
-| --------------------- | ---- | ---------------------------------------------------------------------------------------- | ---- |
-| `enable_partial_map_load`  | bool | If true, use partial map load interface. If false, use topic subscription interaface. | false |
+| Name                      | Type | Description                                                                           |       |
+| ------------------------- | ---- | ------------------------------------------------------------------------------------- | ----- |
+| `enable_partial_map_load` | bool | If true, use partial map load interface. If false, use topic subscription interaface. | false |
 
 ### Services
 
