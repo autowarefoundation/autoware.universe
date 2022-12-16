@@ -193,7 +193,6 @@ void MapUpdateModule::update_ndt(
   }
   const auto exe_start_time = std::chrono::system_clock::now();
 
-  // ToDo (kminoda): Here the NDT is copied during the new map loading phase, which should ideally be done beforehand.
   NormalDistributionsTransform backup_ndt = *ndt_ptr_;
   backup_ndt.setInputSource(ndt_ptr_->getInputSource());
 
@@ -219,6 +218,7 @@ void MapUpdateModule::update_ndt(
 
   // swap
   (*ndt_ptr_mutex_).lock();
+  // ToDo (kminoda): Here negligible NDT copy occurs during the new map loading phase, which should ideally be done beforehand.
   *ndt_ptr_ = backup_ndt;
   (*ndt_ptr_mutex_).unlock();
 
