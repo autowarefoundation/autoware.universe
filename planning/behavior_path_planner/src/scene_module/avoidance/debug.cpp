@@ -75,20 +75,57 @@ MarkerArray createObjectInfoMarkerArray(const ObjectDataArray & objects, std::st
     createMarkerScale(0.5, 0.5, 0.5), createMarkerColor(1.0, 1.0, 0.0, 1.0));
 
   for (const auto & object : objects) {
-    marker.id = uuidToInt32(object.object.object_id);
-    marker.pose = object.object.kinematics.initial_pose_with_covariance.pose;
-    std::ostringstream string_stream;
-    string_stream << std::fixed << std::setprecision(2);
-    string_stream << "ratio:" << object.shiftable_ratio << " [-]\n"
-                  << "lateral: " << object.lateral << " [-]";
-    marker.text = string_stream.str();
-    msg.markers.push_back(marker);
+    {
+      marker.id = uuidToInt32(object.object.object_id);
+      marker.pose = object.object.kinematics.initial_pose_with_covariance.pose;
+      std::ostringstream string_stream;
+      string_stream << std::fixed << std::setprecision(2);
+      string_stream << "ratio:" << object.shiftable_ratio << " [-]\n"
+                    << "lateral: " << object.lateral << " [-]";
+      marker.text = string_stream.str();
+      msg.markers.push_back(marker);
+    }
+
+    {
+      marker.id = uuidToInt32(object.object.object_id);
+      marker.pose.position.z += 2.0;
+      std::ostringstream string_stream;
+      string_stream << object.reason;
+      marker.text = string_stream.str();
+      marker.color = createMarkerColor(1.0, 1.0, 1.0, 0.999);
+      marker.scale = createMarkerScale(0.6, 0.6, 0.6);
+      marker.ns = ns + "_reason";
+      msg.markers.push_back(marker);
+    }
   }
 
   return msg;
 }
 
 }  // namespace
+
+MarkerArray createEgoStatusMarkerArray(
+  const AvoidancePlanningData & data, const Pose & p_ego, std::string && ns)
+{
+  MarkerArray msg;
+
+  auto marker = createDefaultMarker(
+    "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, 0L, Marker::TEXT_VIEW_FACING,
+    createMarkerScale(0.5, 0.5, 0.5), createMarkerColor(1.0, 1.0, 1.0, 0.999));
+  marker.pose = p_ego;
+
+  {
+    std::ostringstream string_stream;
+    string_stream << std::fixed << std::setprecision(2) << std::boolalpha;
+    string_stream << "avoid_now:" << data.avoiding_now << ","
+                  << "safe:" << data.safe;
+    marker.text = string_stream.str();
+
+    msg.markers.push_back(marker);
+  }
+
+  return msg;
+}
 
 MarkerArray createAvoidLineMarkerArray(
   const AvoidLineArray & shift_lines, std::string && ns, const float & r, const float & g,
@@ -190,6 +227,26 @@ MarkerArray createOtherObjectsMarkerArray(
       createMarkerColor(0.0, 1.0, 0.0, 0.8)),
     &msg);
 
+  appendMarkerArray(createObjectInfoMarkerArray(objects, ns + "_info"), &msg);
+
+  return msg;
+}
+
+MarkerArray createUnsafeObjectsMarkerArray(const ObjectDataArray & objects, std::string && ns)
+{
+  return createObjectsCubeMarkerArray(
+    objects, ns + "_cube", createMarkerScale(3.2, 1.7, 2.0), createMarkerColor(0.0, 0.0, 1.0, 0.8));
+}
+
+MarkerArray createUnavoidableObjectsMarkerArray(const ObjectDataArray & objects, std::string && ns)
+{
+  MarkerArray msg;
+
+  appendMarkerArray(
+    createObjectsCubeMarkerArray(
+      objects, ns + "_cube", createMarkerScale(3.2, 1.7, 2.0),
+      createMarkerColor(1.0, 0.0, 1.0, 0.9)),
+    &msg);
   appendMarkerArray(createObjectInfoMarkerArray(objects, ns + "_info"), &msg);
 
   return msg;
