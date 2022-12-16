@@ -48,7 +48,7 @@ struct DrivalbleLanes
 
 The image of the sorted drivable lanes is depicted in the following picture.
 
-![drivable_lanes](./image/drivable_area/sorted_lanes.drawio.svg)
+![sorted_lanes](./image/drivable_area/sorted_lanes.drawio.svg)
 
 Note that, the order of drivable lanes become
 
@@ -58,4 +58,6 @@ drivable_lanes = {DrivableLane1, DrivableLanes2, DrivableLanes3, DrivableLanes4,
 
 ### Drivable Area Generation
 
-In this section, a drivable area is created using drivable lanes arranged in the order in which vehicles pass by. We created `left_bound` from left boundary of the leftmost lanelet and `right_bound` from right boundary
+In this section, a drivable area is created using drivable lanes arranged in the order in which vehicles pass by. We created `left_bound` from left boundary of the leftmost lanelet and `right_bound` from right boundary of the rightmost lanelet. The image of the created drivable area will be the following blue lines
+
+![drivable_lines](./image/drivable_area/drivable_lines.drawio.svg)
