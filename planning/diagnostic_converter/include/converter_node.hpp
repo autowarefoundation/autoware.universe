@@ -21,7 +21,7 @@
 #include <memory>
 
 #include "diagnostic_msgs/msg/diagnostic_array.hpp"
-#include <openscenario_interpreter/syntax/parameter_declarations.hpp>
+// #include <openscenario_interpreter/syntax/parameter_declarations.hpp>
 #include <scenario_simulator_v2_msgs/msg/user_defined_value.hpp>
 #include "rclcpp/rclcpp.hpp"
 
@@ -30,10 +30,11 @@ namespace diagnostic_converter
 using diagnostic_msgs::msg::DiagnosticArray;
 using diagnostic_msgs::msg::DiagnosticStatus;
 using diagnostic_msgs::msg::KeyValue;
-using openscenario_interpreter::syntax::ParameterDeclaration;
+// using openscenario_interpreter::syntax::ParameterDeclaration;
+using scenario_simulator_v2_msgs::msg::UserDefinedValue;
 
 /**
- * @brief Node for converting from DiagnosticArray to ParameterDeclaration
+ * @brief Node for converting from DiagnosticArray to UserDefinedValue
  */
 class DiagnosticConverter : public rclcpp::Node
 {
@@ -41,22 +42,22 @@ public:
   explicit DiagnosticConverter(const rclcpp::NodeOptions & node_options);
 
   /**
-   * @brief callback for DiagnosticArray msgs that publishes equivalent ParameterDeclaration msgs
+   * @brief callback for DiagnosticArray msgs that publishes equivalent UserDefinedValue msgs
    * @param [in] diag_msg received diagnostic message
    */
   void onDiagnostic(
     const DiagnosticArray::ConstSharedPtr diag_msg, const size_t diag_idx,
     const std::string & topic);
 
-  ParameterDeclaration createParameterDeclaration(const KeyValue & key_value) const;
+  UserDefinedValue createUserDefinedValue(const KeyValue & key_value) const;
 
-  rclcpp::Publisher<ParameterDeclaration>::SharedPtr getPublisher(
+  rclcpp::Publisher<UserDefinedValue>::SharedPtr getPublisher(
     const std::string & topic, const size_t pub_idx);
 
 private:
   // ROS
   std::vector<rclcpp::Subscription<DiagnosticArray>::SharedPtr> diagnostics_sub_;
-  std::vector<std::unordered_map<std::string, rclcpp::Publisher<ParameterDeclaration>::SharedPtr>>
+  std::vector<std::unordered_map<std::string, rclcpp::Publisher<UserDefinedValue>::SharedPtr>>
     params_pub_;
 };
 }  // namespace diagnostic_converter

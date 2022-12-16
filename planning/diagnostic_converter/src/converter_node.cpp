@@ -43,27 +43,27 @@ void DiagnosticConverter::onDiagnostic(
     std::string status_topic = base_topic + (status.name.empty() ? "" : "_" + status.name);
     for (const auto & key_value : status.values) {
       getPublisher(status_topic + "_" + key_value.key, diag_idx)
-        ->publish(createParameterDeclaration(key_value));
+        ->publish(createUserDefinedValue(key_value));
     }
   }
 }
 
-ParameterDeclaration DiagnosticConverter::createParameterDeclaration(
+UserDefinedValue DiagnosticConverter::createUserDefinedValue(
   const KeyValue & key_value) const
 {
-  ParameterDeclaration param_msg;
-  param_msg.parameter_type.data = openscenario_msgs::msg::ParameterType::DOUBLE;
-  param_msg.name = key_value.key;
+  UserDefinedValue param_msg;
+  param_msg.type.data = scenario_simulator_v2_msgs::msg::UserDefinedValueType::DOUBLE;
+  // param_msg.name = key_value.key;
   param_msg.value = key_value.value;
   return param_msg;
 }
 
-rclcpp::Publisher<ParameterDeclaration>::SharedPtr DiagnosticConverter::getPublisher(
+rclcpp::Publisher<UserDefinedValue>::SharedPtr DiagnosticConverter::getPublisher(
   const std::string & topic, const size_t pub_idx)
 {
   auto & pubs = params_pub_[pub_idx];
   if (pubs.count(topic) == 0) {
-    pubs[topic] = create_publisher<ParameterDeclaration>(topic, 1);
+    pubs[topic] = create_publisher<UserDefinedValue>(topic, 1);
   }
   return pubs.at(topic);
 }

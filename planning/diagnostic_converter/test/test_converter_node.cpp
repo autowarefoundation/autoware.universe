@@ -12,24 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "converter_node.hpp"
+#include "rclcpp/rclcpp.hpp"
+
+#include "diagnostic_msgs/msg/diagnostic_array.hpp"
+#include "diagnostic_msgs/msg/diagnostic_status.hpp"
+#include "diagnostic_msgs/msg/key_value.hpp"
+#include <scenario_simulator_v2_msgs/msg/user_defined_value.hpp>
+
 #include <gtest/gtest.h>
 
 #include <memory>
 #include <string>
 #include <vector>
 
-#include "converter_node.hpp"
-#include "diagnostic_msgs/msg/diagnostic_array.hpp"
-#include "diagnostic_msgs/msg/diagnostic_status.hpp"
-#include "diagnostic_msgs/msg/key_value.hpp"
-#include "openscenario_msgs/msg/parameter_declaration.hpp"
-#include "rclcpp/rclcpp.hpp"
-
 using ConverterNode = diagnostic_converter::DiagnosticConverter;
 using diagnostic_msgs::msg::DiagnosticArray;
 using diagnostic_msgs::msg::DiagnosticStatus;
 using diagnostic_msgs::msg::KeyValue;
-using openscenario_msgs::msg::ParameterDeclaration;
+using scenario_simulator_v2_msgs::msg::UserDefinedValue;
 
 void waitForMsg(
   bool & flag, const rclcpp::Node::SharedPtr node1, const rclcpp::Node::SharedPtr node2)
@@ -42,10 +43,10 @@ void waitForMsg(
   flag = false;
 }
 
-std::function<void(ParameterDeclaration::ConstSharedPtr)> generateCallback(
-  bool & flag, ParameterDeclaration & msg)
+std::function<void(UserDefinedValue::ConstSharedPtr)> generateCallback(
+  bool & flag, UserDefinedValue & msg)
 {
-  return [&](ParameterDeclaration::ConstSharedPtr received_msg) {
+  return [&](UserDefinedValue::ConstSharedPtr received_msg) {
     flag = true;
     msg = *received_msg;
   };
@@ -62,13 +63,13 @@ TEST(ConverterNode, ConvertDiagnostics)
   options.append_parameter_override("diagnostic_topics", rclcpp::ParameterValue(input_topics));
   auto node = std::make_shared<ConverterNode>(options);
 
-  {  // Simple case with 1 resulting ParameterDeclaration
+  {  // Simple case with 1 resulting UserDefinedValue
     bool msg_received = false;
-    ParameterDeclaration param;
+    UserDefinedValue param;
     // DiagnosticArray publishers
     const auto diag_pub = dummy_node->create_publisher<DiagnosticArray>(input_topics[0], 1);
-    // ParameterDeclaration subscribers
-    const auto param_sub_a = dummy_node->create_subscription<ParameterDeclaration>(
+    // UserDefinedValue subscribers
+    const auto param_sub_a = dummy_node->create_subscription<UserDefinedValue>(
       input_topics[0] + "_a", 1, generateCallback(msg_received, param));
     DiagnosticArray diag;
     DiagnosticStatus status;
@@ -78,28 +79,28 @@ TEST(ConverterNode, ConvertDiagnostics)
     diag.status.push_back(status);
     diag_pub->publish(diag);
     waitForMsg(msg_received, node, dummy_node);
-    EXPECT_EQ(param.name, "a");
+    // EXPECT_EQ(param.name, "a");
     EXPECT_EQ(param.value, "1");
   }
-  {  // Case with multiple ParameterDeclaration converted from one DiagnosticArray
+  {  // Case with multiple UserDefinedValue converted from one DiagnosticArray
     bool msg_received_xa = false;
     bool msg_received_xb = false;
     bool msg_received_ya = false;
     bool msg_received_yb = false;
-    ParameterDeclaration param_xa;
-    ParameterDeclaration param_xb;
-    ParameterDeclaration param_ya;
-    ParameterDeclaration param_yb;
+    UserDefinedValue param_xa;
+    UserDefinedValue param_xb;
+    UserDefinedValue param_ya;
+    UserDefinedValue param_yb;
     // DiagnosticArray publishers
     const auto diag_pub = dummy_node->create_publisher<DiagnosticArray>(input_topics[1], 1);
-    // ParameterDeclaration subscribers
-    const auto param_sub_xa = dummy_node->create_subscription<ParameterDeclaration>(
+    // UserDefinedValue subscribers
+    const auto param_sub_xa = dummy_node->create_subscription<UserDefinedValue>(
       input_topics[1] + "_x_a", 1, generateCallback(msg_received_xa, param_xa));
-    const auto param_sub_xb = dummy_node->create_subscription<ParameterDeclaration>(
+    const auto param_sub_xb = dummy_node->create_subscription<UserDefinedValue>(
       input_topics[1] + "_x_b", 1, generateCallback(msg_received_xb, param_xb));
-    const auto param_sub_ya = dummy_node->create_subscription<ParameterDeclaration>(
+    const auto param_sub_ya = dummy_node->create_subscription<UserDefinedValue>(
       input_topics[1] + "_y_a", 1, generateCallback(msg_received_ya, param_ya));
-    const auto param_sub_yb = dummy_node->create_subscription<ParameterDeclaration>(
+    const auto param_sub_yb = dummy_node->create_subscription<UserDefinedValue>(
       input_topics[1] + "_y_b", 1, generateCallback(msg_received_yb, param_yb));
     DiagnosticArray diag;
     DiagnosticStatus status_x;
@@ -114,16 +115,16 @@ TEST(ConverterNode, ConvertDiagnostics)
     diag.status.push_back(status_y);
     diag_pub->publish(diag);
     waitForMsg(msg_received_xa, node, dummy_node);
-    EXPECT_EQ(param_xa.name, "a");
+    // EXPECT_EQ(param_xa.name, "a");
     EXPECT_EQ(param_xa.value, "1");
     waitForMsg(msg_received_xb, node, dummy_node);
-    EXPECT_EQ(param_xb.name, "b");
+    // EXPECT_EQ(param_xb.name, "b");
     EXPECT_EQ(param_xb.value, "10");
     waitForMsg(msg_received_ya, node, dummy_node);
-    EXPECT_EQ(param_ya.name, "a");
+    // EXPECT_EQ(param_ya.name, "a");
     EXPECT_EQ(param_ya.value, "9");
     waitForMsg(msg_received_yb, node, dummy_node);
-    EXPECT_EQ(param_yb.name, "b");
+    // EXPECT_EQ(param_yb.name, "b");
     EXPECT_EQ(param_yb.value, "6");
   }
 
