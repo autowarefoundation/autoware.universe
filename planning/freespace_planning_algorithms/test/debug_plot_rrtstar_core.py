@@ -27,6 +27,7 @@ import numpy as np
 
 # cspell: ignore ndim, ndata, linewidth
 
+
 @dataclass
 class Node:
     idx: int
