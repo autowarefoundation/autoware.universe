@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef CONVERTER_NODE__CONVERTER_NODE_HPP_
-#define CONVERTER_NODE__CONVERTER_NODE_HPP_
+#ifndef CONVERTER_NODE_HPP_
+#define CONVERTER_NODE_HPP_
+
+#include "rclcpp/rclcpp.hpp"
 
 #include "diagnostic_msgs/msg/diagnostic_array.hpp"
+#include <scenario_simulator_v2_msgs/msg/user_defined_value.hpp>
 
 #include <memory>
 #include <string>
 #include <unordered_map>
-#include "rclcpp/rclcpp.hpp"
-
-#include <scenario_simulator_v2_msgs/msg/user_defined_value.hpp>
 
 namespace diagnostic_converter
 {
@@ -60,4 +60,4 @@ private:
 };
 }  // namespace diagnostic_converter
 
-#endif  // CONVERTER_NODE__CONVERTER_NODE_HPP_
+#endif  // CONVERTER_NODE_HPP_

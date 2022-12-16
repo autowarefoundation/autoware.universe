@@ -10,8 +10,6 @@
     <remap from="~/input/objects" to="$(var input/objects)"/>
     <remap from="~/metrics" to="/diagnostic/planning_evaluator/metrics"/>
   </node>
-  
-  <node name="diagnostic_converter" exec="diagnostic_converter" pkg="diagnostic_converter" output="screen">
-  </node>
 
+  <node name="diagnostic_converter" exec="diagnostic_converter" pkg="diagnostic_converter" output="screen"/>
 </launch>
