@@ -70,25 +70,6 @@ bool LaneletRoute::isOnLastSegment(const LaneletPoint & lanelet_point) const
   });
 }
 
-bool LaneletRoute::isPathStraight(const LaneletPath & lanelet_path) const
-{
-  if (lanelet_path.empty()) {
-    return false;
-  }
-
-  // check if all sections are directly connected to each other
-  auto prev_it = lanelet_path.begin();
-  auto curr_it = prev_it + 1;
-  while (curr_it != lanelet_path.end()) {
-    const lanelet::ConstLanelets following_lanelets =
-      routing_graph_ptr_->following(prev_it->lanelet());
-    if (!lanelet::utils::contains(following_lanelets, curr_it->lanelet())) {
-      return false;  // the next lanelet in the path does not follow current one
-    }
-  }
-  return true;
-}
-
 double LaneletRoute::getRemainingBackwardLengthWithinRoute(
   const LaneletPoint & lanelet_point, const double max_search_distance) const
 {

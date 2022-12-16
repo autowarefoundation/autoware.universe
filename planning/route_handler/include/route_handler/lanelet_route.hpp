@@ -68,9 +68,6 @@ public:
 
   // utils
 
-  //! @brief Whether the path is straight (contains no lane change)
-  [[nodiscard]] bool isPathStraight(const LaneletPath & lanelet_path) const;
-
   //! @brief Get remaining backward distance from given point within the route boundaries.
   //! Max search distance can be set to fasten search. It is typically used if we just need to know
   //! if there is "enough" distance left to the end of the route boundaries.

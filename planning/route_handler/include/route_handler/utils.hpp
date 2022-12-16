@@ -22,8 +22,15 @@
 namespace route_handler::utils
 {
 
+//! @brief Whether the path is valid (well-formed, no loop, no gap, etc.)
 bool validatePath(
-  const LaneletPath & lanelet_path, const lanelet::routing::RoutingGraphPtr routing_graph_ptr);
+  const LaneletPath & lanelet_path, 
+  const lanelet::routing::RoutingGraphPtr routing_graph_ptr);
+
+//! @brief Whether the path is straight (contains no lane change)
+bool isPathStraight(
+  const LaneletPath & lanelet_path,
+  const lanelet::routing::RoutingGraphPtr routing_graph_ptr);
 
 }  // namespace route_handler::utils
 
