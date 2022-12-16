@@ -781,8 +781,9 @@ PathWithLaneId::SharedPtr BehaviorPathPlannerNode::getPath(
     connected_path = modifyPathForSmoothGoalConnection(*path);
   }
 
-  const auto resampled_path =
-    util::resamplePathWithSpline(connected_path, planner_data_->parameters.path_interval, true);
+  const auto resampled_path = util::resamplePathWithSpline(
+    connected_path, planner_data_->parameters.path_interval,
+    keepInputPoints(module_status_ptr_vec));
   return std::make_shared<PathWithLaneId>(resampled_path);
 }
 
@@ -827,6 +828,21 @@ bool BehaviorPathPlannerNode::isForcedCandidatePath() const
 }
 
 bool BehaviorPathPlannerNode::skipSmoothGoalConnection(
+  const std::vector<std::shared_ptr<SceneModuleStatus>> & statuses) const
+{
+  const auto target_module = "PullOver";
+
+  for (auto & status : statuses) {
+    if (status->is_waiting_approval || status->status == BT::NodeStatus::RUNNING) {
+      if (target_module == status->module_name) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+bool BehaviorPathPlannerNode::keepInputPoints(
   const std::vector<std::shared_ptr<SceneModuleStatus>> & statuses) const
 {
   const auto target_module = "PullOver";
