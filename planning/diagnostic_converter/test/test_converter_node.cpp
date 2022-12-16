@@ -79,7 +79,6 @@ TEST(ConverterNode, ConvertDiagnostics)
     diag.status.push_back(status);
     diag_pub->publish(diag);
     waitForMsg(msg_received, node, dummy_node);
-    // EXPECT_EQ(param.name, "a");
     EXPECT_EQ(param.value, "1");
   }
   {  // Case with multiple UserDefinedValue converted from one DiagnosticArray
@@ -115,16 +114,12 @@ TEST(ConverterNode, ConvertDiagnostics)
     diag.status.push_back(status_y);
     diag_pub->publish(diag);
     waitForMsg(msg_received_xa, node, dummy_node);
-    // EXPECT_EQ(param_xa.name, "a");
     EXPECT_EQ(param_xa.value, "1");
     waitForMsg(msg_received_xb, node, dummy_node);
-    // EXPECT_EQ(param_xb.name, "b");
     EXPECT_EQ(param_xb.value, "10");
     waitForMsg(msg_received_ya, node, dummy_node);
-    // EXPECT_EQ(param_ya.name, "a");
     EXPECT_EQ(param_ya.value, "9");
     waitForMsg(msg_received_yb, node, dummy_node);
-    // EXPECT_EQ(param_yb.name, "b");
     EXPECT_EQ(param_yb.value, "6");
   }
 

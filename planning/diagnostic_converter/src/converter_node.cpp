@@ -53,7 +53,6 @@ UserDefinedValue DiagnosticConverter::createUserDefinedValue(
 {
   UserDefinedValue param_msg;
   param_msg.type.data = scenario_simulator_v2_msgs::msg::UserDefinedValueType::DOUBLE;
-  // param_msg.name = key_value.key;
   param_msg.value = key_value.value;
   return param_msg;
 }

@@ -30,7 +30,6 @@ namespace diagnostic_converter
 using diagnostic_msgs::msg::DiagnosticArray;
 using diagnostic_msgs::msg::DiagnosticStatus;
 using diagnostic_msgs::msg::KeyValue;
-// using openscenario_interpreter::syntax::ParameterDeclaration;
 using scenario_simulator_v2_msgs::msg::UserDefinedValue;
 
 /**
