@@ -135,7 +135,10 @@ void MapUpdateModule::callback_ekf_odom(nav_msgs::msg::Odometry::ConstSharedPtr 
 
 void MapUpdateModule::map_update_timer_callback()
 {
-  if (current_position_ptr_ == nullptr) return;
+  if (current_position_ptr_ == nullptr) {
+    RCLCPP_ERROR_STREAM_THROTTLE(logger_, *clock_, 1, "Cannot find the reference position for map update. Please check if the EKF odometry is provided to NDT.");
+    return;
+  }
   if (last_update_position_ptr_ == nullptr) return;
 
   // continue only if we should update the map
@@ -190,6 +193,7 @@ void MapUpdateModule::update_ndt(
   }
   const auto exe_start_time = std::chrono::system_clock::now();
 
+  // ToDo (kminoda): Here the NDT is copied during the new map loading phase, which should ideally be done beforehand.
   NormalDistributionsTransform backup_ndt = *ndt_ptr_;
   backup_ndt.setInputSource(ndt_ptr_->getInputSource());
 
@@ -219,10 +223,6 @@ void MapUpdateModule::update_ndt(
   (*ndt_ptr_mutex_).unlock();
 
   publish_partial_pcd_map();
-
-  // // TODO (koji minoda): Any way to simplify this copy part?
-  // using T = NormalDistributionsTransformOMPMultiVoxel<PointSource, PointTarget>;
-  // backup_ndt_ptr_ = std::make_shared<T>(*std::dynamic_pointer_cast<T>(ndt_ptr_));
 }
 
 geometry_msgs::msg::PoseWithCovarianceStamped MapUpdateModule::align_using_monte_carlo(
