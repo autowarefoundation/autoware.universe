@@ -61,7 +61,7 @@
     # Regularization switch
     regularization_enabled: false
 
-    # Regularization scale factor
+    # regularization scale factor
     regularization_scale_factor: 0.01
 
     # Dynamic map loading distance
