@@ -22,12 +22,12 @@ Currently, when clipping left bound or right bound, it can clip the bound more t
 
 ## Parameters for drivable area generation
 
-| Name                          | Unit | Type   | Description                                                                | Default value |
-| :---------------------------- | :--- | :----- | :------------------------------------------------------------------------- | :------------ |
-| drivable_lane_forward_length  | [m]  | double | length of the forward lane from the ego covered by the drivable area       | 50.0          |
-| drivable_lane_backward_length | [m]  | double | length of the backward lane from the ego covered by the drivable area      | 5.0           |
-| drivable_lane_margin          | [m]  | double | forward and backward lane margin from the ego covered by the drivable area | 3.0           |
-| drivable_area_margin          | [m]  | double | margin of width and height of the drivable area                            | 6.0           |
+| Name                             | Unit | Type   | Description                                 | Default value |
+| :------------------------------- | :--- | :----- | :------------------------------------------ | :------------ |
+| drivable_area_right_bound_offset | [m]  | double | right offset length to expand drivable area | 5.0           |
+| drivable_area_left_bound_offset  | [m]  | double | left offset length to expand drivable area  | 5.0           |
+
+Note that default values can be varied by the module. Please refer to the `config/drivable_area_expansion.yaml` file.
 
 ## Inner-workings / Algorithms
 
