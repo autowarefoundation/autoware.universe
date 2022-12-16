@@ -14,7 +14,6 @@
 
 #include "converter_node.hpp"
 
-
 namespace diagnostic_converter
 {
 DiagnosticConverter::DiagnosticConverter(const rclcpp::NodeOptions & node_options)
@@ -23,9 +22,7 @@ DiagnosticConverter::DiagnosticConverter(const rclcpp::NodeOptions & node_option
   using std::placeholders::_1;
 
   size_t sub_counter = 0;
-  std::vector<std::string> diagnostic_topics;
-  declare_parameter<std::vector<std::string>>("diagnostic_topics", std::vector<std::string>());
-  get_parameter<std::vector<std::string>>("diagnostic_topics", diagnostic_topics);
+  std::vector<std::string> diagnostic_topics = {"/diagnostic/planning_evaluator/metrics"};
   for (const std::string & diagnostic_topic : diagnostic_topics) {
     // std::function required with multiple arguments https://answers.ros.org/question/289207
     const std::function<void(const DiagnosticArray::ConstSharedPtr)> fn =
@@ -48,8 +45,7 @@ void DiagnosticConverter::onDiagnostic(
   }
 }
 
-UserDefinedValue DiagnosticConverter::createUserDefinedValue(
-  const KeyValue & key_value) const
+UserDefinedValue DiagnosticConverter::createUserDefinedValue(const KeyValue & key_value) const
 {
   UserDefinedValue param_msg;
   param_msg.type.data = scenario_simulator_v2_msgs::msg::UserDefinedValueType::DOUBLE;

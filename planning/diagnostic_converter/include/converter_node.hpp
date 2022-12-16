@@ -15,15 +15,14 @@
 #ifndef CONVERTER_NODE__CONVERTER_NODE_HPP_
 #define CONVERTER_NODE__CONVERTER_NODE_HPP_
 
+#include "diagnostic_msgs/msg/diagnostic_array.hpp"
+
 #include <memory>
 #include <string>
 #include <unordered_map>
-#include <memory>
-
-#include "diagnostic_msgs/msg/diagnostic_array.hpp"
-// #include <openscenario_interpreter/syntax/parameter_declarations.hpp>
-#include <scenario_simulator_v2_msgs/msg/user_defined_value.hpp>
 #include "rclcpp/rclcpp.hpp"
+
+#include <scenario_simulator_v2_msgs/msg/user_defined_value.hpp>
 
 namespace diagnostic_converter
 {
