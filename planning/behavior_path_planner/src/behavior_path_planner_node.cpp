@@ -601,13 +601,18 @@ bool BehaviorPathPlannerNode::isDataReady()
 
 void BehaviorPathPlannerNode::updatePlannerData()
 {
-  // update planner data (pose, map and route)
+  const std::lock_guard<std::mutex> lock(mutex_pd_);
+
+  // update self
   planner_data_->self_pose = self_pose_listener_.getCurrentPose();
+
+  // update map
   if (has_received_map_) {
     planner_data_->route_handler->setMap(*map_ptr_);
     has_received_map_ = false;
   }
 
+  // update route
   const bool is_first_time = !(planner_data_->route_handler->isHandlerReady());
   if (has_received_route_) {
     planner_data_->route_handler->setRoute(*route_ptr_);
