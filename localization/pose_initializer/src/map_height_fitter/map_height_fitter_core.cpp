@@ -23,6 +23,7 @@
 #endif
 
 #include <algorithm>
+#include <memory>
 
 MapHeightFitter::MapHeightFitter() : Node("map_height_fitter"), tf2_listener_(tf2_buffer_)
 {
@@ -111,7 +112,7 @@ void MapHeightFitter::get_partial_point_cloud_map(const geometry_msgs::msg::Poin
 
   RCLCPP_INFO(
     this->get_logger(), "Loaded partial pcd map from map_loader (grid size: %d)",
-    int(res.get()->new_pointcloud_with_ids.size()));
+    static_cast<int>(res.get()->new_pointcloud_with_ids.size()));
 
   sensor_msgs::msg::PointCloud2 pcd_msg;
   for (const auto & pcd_with_id : res.get()->new_pointcloud_with_ids) {
