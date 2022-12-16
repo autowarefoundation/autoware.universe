@@ -221,12 +221,12 @@ void AutowareDrivableAreaDisplay::subscribeToUpdateTopic()
   try {
     rclcpp::SubscriptionOptions sub_opts;
     sub_opts.event_callbacks.message_lost_callback = [&](rclcpp::QOSMessageLostInfo & info) {
-      std::ostringstream sstm;
-      sstm << "Some messages were lost:\n>\tNumber of new lost messages: "
+      std::ostringstream ss;
+      ss << "Some messages were lost:\n>\tNumber of new lost messages: "
            << info.total_count_change
            << " \n>\tTotal number of messages lost: " << info.total_count;
       setStatus(
-        rviz_common::properties::StatusProperty::Warn, "Update Topic", QString(sstm.str().c_str()));
+        rviz_common::properties::StatusProperty::Warn, "Update Topic", QString(ss.str().c_str()));
     };
 
     update_subscription_ =
