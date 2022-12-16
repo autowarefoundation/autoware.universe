@@ -136,7 +136,10 @@ void MapUpdateModule::callback_ekf_odom(nav_msgs::msg::Odometry::ConstSharedPtr 
 void MapUpdateModule::map_update_timer_callback()
 {
   if (current_position_ptr_ == nullptr) {
-    RCLCPP_ERROR_STREAM_THROTTLE(logger_, *clock_, 1, "Cannot find the reference position for map update. Please check if the EKF odometry is provided to NDT.");
+    RCLCPP_ERROR_STREAM_THROTTLE(
+      logger_, *clock_, 1,
+      "Cannot find the reference position for map update. Please check if the EKF odometry is "
+      "provided to NDT.");
     return;
   }
   if (last_update_position_ptr_ == nullptr) return;
@@ -218,7 +221,8 @@ void MapUpdateModule::update_ndt(
 
   // swap
   (*ndt_ptr_mutex_).lock();
-  // ToDo (kminoda): Here negligible NDT copy occurs during the new map loading phase, which should ideally be done beforehand.
+  // ToDo (kminoda): Here negligible NDT copy occurs during the new map loading phase, which should
+  // ideally be done beforehand.
   *ndt_ptr_ = backup_ndt;
   (*ndt_ptr_mutex_).unlock();
 
