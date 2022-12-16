@@ -1,15 +1,15 @@
 
 #include "route_handler/utils.hpp"
 
-#include <algorithm>
 #include <lanelet2_extension/utility/query.hpp>
+
+#include <algorithm>
 
 namespace route_handler::utils
 {
 
 bool validatePath(
-  const LaneletPath & lanelet_path, 
-  const lanelet::routing::RoutingGraphPtr routing_graph_ptr)
+  const LaneletPath & lanelet_path, const lanelet::routing::RoutingGraphPtr routing_graph_ptr)
 {
   // LaneletPath internal validation
   if (!lanelet_path.validate()) {
@@ -47,10 +47,8 @@ bool validatePath(
   return true;
 }
 
-
 bool isPathStraight(
-  const LaneletPath & lanelet_path,
-  const lanelet::routing::RoutingGraphPtr routing_graph_ptr)
+  const LaneletPath & lanelet_path, const lanelet::routing::RoutingGraphPtr routing_graph_ptr)
 {
   if (lanelet_path.empty()) {
     return false;
@@ -68,6 +66,5 @@ bool isPathStraight(
   }
   return true;
 }
-
 
 }  // namespace route_handler::utils
