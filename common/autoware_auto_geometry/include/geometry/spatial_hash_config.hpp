@@ -138,9 +138,9 @@ public:
     // Compute distance in units of voxels
     const Index i_radius = static_cast<Index>(std::ceil(radius / m_side_length));
     // Dumb ternary because potentially unsigned Index type
-    const Index x_min = (ref.x > i_radius) ? (ref.x - iradius) : 0U;
-    const Index y_min = (ref.y > i_radius) ? (ref.y - iradius) : 0U;
-    const Index z_min = (ref.z > i_radius) ? (ref.z - iradius) : 0U;
+    const Index x_min = (ref.x > i_radius) ? (ref.x - i_radius) : 0U;
+    const Index y_min = (ref.y > i_radius) ? (ref.y - i_radius) : 0U;
+    const Index z_min = (ref.z > i_radius) ? (ref.z - i_radius) : 0U;
     // In 2D mode, m_max_z should be 0, same with ref.z
     const Index x_max = std::min(ref.x + i_radius, m_max_x_idx);
     const Index y_max = std::min(ref.y + i_radius, m_max_y_idx);
