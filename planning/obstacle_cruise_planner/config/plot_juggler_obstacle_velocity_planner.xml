@@ -1,90 +1,141 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <root>
  <tabbed_widget parent="main_window" name="Main Window">
-  <Tab containers="1" tab_name="cruise plan">
+  <Tab containers="1" tab_name="cruise control tuning">
    <Container>
-    <DockSplitter count="2" orientation="-" sizes="0.5;0.5">
-     <DockSplitter count="2" orientation="|" sizes="0.500348;0.499652">
+    <DockSplitter sizes="0.5;0.5" orientation="-" count="2">
+     <DockSplitter sizes="0.502436;0.497564" orientation="|" count="2">
       <DockArea name="...">
-       <plot mode="TimeSeries" flip_x="false" style="Lines" flip_y="false">
-        <range top="5.083771" bottom="-0.123994" left="1671088419.761797" right="1671088439.678846"/>
+       <plot style="Lines" flip_x="false" flip_y="false" mode="TimeSeries">
+        <range top="11.699403" left="1671241492.000810" bottom="-0.285351" right="1671241591.993255"/>
         <limitY/>
         <curve color="#d62728" name="ego vel"/>
         <curve color="#ff7f0e" name="target vel"/>
+        <curve color="#1ac938" name="filtered obstacle vel"/>
        </plot>
       </DockArea>
       <DockArea name="...">
-       <plot mode="TimeSeries" flip_x="false" style="Lines" flip_y="false">
-        <range top="0.556375" bottom="-0.377148" left="1671088419.761797" right="1671088439.678846"/>
+       <plot style="Lines" flip_x="false" flip_y="false" mode="TimeSeries">
+        <range top="88.400260" left="1671241492.000810" bottom="-2.156104" right="1671241591.993255"/>
         <limitY/>
-        <curve color="#1ac938" name="ego acc"/>
+        <curve color="#17becf" name="target dist to obstacle"/>
+        <curve color="#1f77b4" name="filtered dist to obstacle"/>
        </plot>
       </DockArea>
      </DockSplitter>
-     <DockSplitter count="2" orientation="|" sizes="0.500348;0.499652">
+     <DockSplitter sizes="0.502436;0.497564" orientation="|" count="2">
       <DockArea name="...">
-       <plot mode="TimeSeries" flip_x="false" style="Lines" flip_y="false">
-        <range top="0.100000" bottom="-0.100000" left="1671088419.761797" right="1671088439.678846"/>
+       <plot style="Lines" flip_x="false" flip_y="false" mode="TimeSeries">
+        <range top="1.043373" left="1671241492.000810" bottom="-1.358752" right="1671241591.993255"/>
         <limitY/>
-        <curve color="#f14cc1" name="target cruise dist"/>
-        <curve color="#17becf" name="filtered cruise dist"/>
+        <curve color="#1f77b4" name="ego acc"/>
        </plot>
       </DockArea>
       <DockArea name="...">
-       <plot mode="TimeSeries" flip_x="false" style="Lines" flip_y="false">
-        <range top="0.100000" bottom="-0.100000" left="1671088419.761797" right="1671088439.678846"/>
+       <plot style="Lines" flip_x="false" flip_y="false" mode="TimeSeries">
+        <range top="28.029870" left="1671241492.000810" bottom="-13.632897" right="1671241591.993255"/>
         <limitY/>
-        <curve color="#9467bd" name="raw error cruise dist"/>
-        <curve color="#17becf" name="filtered error cruise dist"/>
+        <curve color="#17becf" name="filtered error dist to obstacle"/>
        </plot>
       </DockArea>
      </DockSplitter>
     </DockSplitter>
    </Container>
   </Tab>
-  <Tab containers="1" tab_name="cruise tune">
+  <Tab containers="1" tab_name="cruise filter tuning">
    <Container>
-    <DockSplitter count="2" orientation="-" sizes="0.5;0.5">
-     <DockSplitter count="2" orientation="|" sizes="0.500348;0.499652">
+    <DockSplitter sizes="0.5;0.5" orientation="-" count="2">
+     <DockSplitter sizes="0.502436;0.497564" orientation="|" count="2">
       <DockArea name="...">
-       <plot mode="TimeSeries" flip_x="false" style="Lines" flip_y="false">
-        <range top="0.100000" bottom="-0.100000" left="1671088419.761955" right="1671088439.678846"/>
+       <plot style="Lines" flip_x="false" flip_y="false" mode="TimeSeries">
+        <range top="88.400260" left="1671241492.000967" bottom="-2.156104" right="1671241591.993255"/>
         <limitY/>
-        <curve color="#9467bd" name="raw cruise dist"/>
-        <curve color="#17becf" name="filtered cruise dist"/>
+        <curve color="#9467bd" name="raw dist to obstacle"/>
+        <curve color="#1f77b4" name="filtered dist to obstacle"/>
        </plot>
       </DockArea>
       <DockArea name="...">
-       <plot mode="TimeSeries" flip_x="false" style="Lines" flip_y="false">
-        <range top="0.100000" bottom="-0.100000" left="1671088419.761955" right="1671088439.678846"/>
+       <plot style="Lines" flip_x="false" flip_y="false" mode="TimeSeries">
+        <range top="4.952809" left="1671241492.000967" bottom="-0.120800" right="1671241591.993255"/>
         <limitY/>
         <curve color="#bcbd22" name="raw obstacle vel"/>
         <curve color="#1f77b4" name="filtered obstacle vel"/>
        </plot>
       </DockArea>
      </DockSplitter>
-     <DockArea name="...">
-      <plot mode="TimeSeries" flip_x="false" style="Lines" flip_y="false">
-       <range top="1.000000" bottom="0.000000" left="0.000000" right="1.000000"/>
-       <limitY/>
-      </plot>
-     </DockArea>
+     <DockSplitter sizes="0.502436;0.497564" orientation="|" count="2">
+      <DockArea name="...">
+       <plot style="Lines" flip_x="false" flip_y="false" mode="TimeSeries">
+        <range top="28.049725" left="1671241492.000967" bottom="-14.446949" right="1671241591.993255"/>
+        <limitY/>
+        <curve color="#ff7f0e" name="raw error dist to obstacle"/>
+        <curve color="#f14cc1" name="filtered error dist to obstacle"/>
+       </plot>
+      </DockArea>
+      <DockArea name="...">
+       <plot style="Lines" flip_x="false" flip_y="false" mode="TimeSeries">
+        <range top="1.000000" left="0.000000" bottom="0.000000" right="1.000000"/>
+        <limitY/>
+       </plot>
+      </DockArea>
+     </DockSplitter>
     </DockSplitter>
    </Container>
   </Tab>
-  <Tab containers="1" tab_name="tab3">
+  <Tab containers="1" tab_name="stop control tuning">
    <Container>
-    <DockSplitter count="1" orientation="-" sizes="1">
+    <DockSplitter sizes="0.5;0.5" orientation="-" count="2">
+     <DockSplitter sizes="0.502436;0.497564" orientation="|" count="2">
+      <DockArea name="...">
+       <plot style="Lines" flip_x="false" flip_y="false" mode="TimeSeries">
+        <range top="11.699403" left="1671241492.000810" bottom="-0.285351" right="1671241591.993255"/>
+        <limitY/>
+        <curve color="#9467bd" name="ego vel"/>
+       </plot>
+      </DockArea>
+      <DockArea name="...">
+       <plot style="Lines" flip_x="false" flip_y="false" mode="TimeSeries">
+        <range top="88.400260" left="1671241492.000810" bottom="-2.156104" right="1671241591.993255"/>
+        <limitY/>
+        <curve color="#ff7f0e" name="raw dist to obstacle"/>
+        <curve color="#f14cc1" name="raw dist to stop"/>
+       </plot>
+      </DockArea>
+     </DockSplitter>
+     <DockSplitter sizes="0.502436;0.497564" orientation="|" count="2">
+      <DockArea name="...">
+       <plot style="Lines" flip_x="false" flip_y="false" mode="TimeSeries">
+        <range top="1.043373" left="1671241492.000810" bottom="-1.358752" right="1671241591.993255"/>
+        <limitY/>
+        <curve color="#1f77b4" name="ego acc"/>
+       </plot>
+      </DockArea>
+      <DockArea name="...">
+       <plot style="Lines" flip_x="false" flip_y="false" mode="TimeSeries">
+        <range top="4.957550" left="1671241492.000810" bottom="-0.315179" right="1671241591.993255"/>
+        <limitY/>
+        <curve color="#d62728" name="raw obstacle vel"/>
+        <curve color="#1ac938" name="raw stop obstacle vel"/>
+       </plot>
+      </DockArea>
+     </DockSplitter>
+    </DockSplitter>
+   </Container>
+  </Tab>
+  <Tab containers="1" tab_name="calculation_time">
+   <Container>
+    <DockSplitter sizes="1" orientation="-" count="1">
      <DockArea name="...">
-      <plot mode="TimeSeries" flip_x="false" style="Lines" flip_y="false">
-       <range top="1.000000" bottom="0.000000" left="0.000000" right="1.000000"/>
+      <plot style="Lines" flip_x="false" flip_y="false" mode="TimeSeries">
+       <range top="16.774800" left="1671241492.001075" bottom="0.991200" right="1671241591.993279"/>
        <limitY/>
+       <curve color="#1f77b4" name="/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/debug/calculation_time/data"/>
       </plot>
      </DockArea>
     </DockSplitter>
    </Container>
   </Tab>
-  <currentTabIndex index="2"/>
+  <currentTabIndex index="0"/>
  </tabbed_widget>
  <use_relative_time_offset enabled="0"/>
  <!-- - - - - - - - - - - - - - - -->
@@ -93,6 +144,7 @@
   <plugin ID="DataLoad CSV">
    <default delimiter="0" time_axis=""/>
   </plugin>
+  <plugin ID="DataLoad MCAP"/>
   <plugin ID="DataLoad ROS2 bags">
    <use_header_stamp value="false"/>
    <discard_large_arrays value="true"/>
@@ -104,6 +156,7 @@
    <discard_large_arrays value="true"/>
    <max_array_size value="true"/>
    <selected_topics>
+    <topic name="/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/debug/calculation_time"/>
     <topic name="/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/debug/cruise_planning_info"/>
     <topic name="/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/debug/stop_planning_info"/>
    </selected_topics>
@@ -125,15 +178,10 @@
  <previouslyLoaded_Streamer name="ROS2 Topic Subscriber"/>
  <!-- - - - - - - - - - - - - - - -->
  <customMathEquations>
-  <snippet name="filtered error cruise dist">
+  <snippet name="filtered error dist to obstacle">
    <global></global>
    <function>return value</function>
    <linked_source>/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/debug/cruise_planning_info/data.9</linked_source>
-  </snippet>
-  <snippet name="raw error cruise dist">
-   <global></global>
-   <function>return value</function>
-   <linked_source>/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/debug/cruise_planning_info/data.8</linked_source>
   </snippet>
   <snippet name="target vel">
    <global></global>
@@ -145,10 +193,15 @@
    <function>return value</function>
    <linked_source>/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/debug/cruise_planning_info/data.1</linked_source>
   </snippet>
-  <snippet name="target cruise dist">
+  <snippet name="target dist to obstacle">
    <global></global>
    <function>return value</function>
    <linked_source>/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/debug/stop_planning_info/data.7</linked_source>
+  </snippet>
+  <snippet name="raw error dist to obstacle">
+   <global></global>
+   <function>return value</function>
+   <linked_source>/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/debug/cruise_planning_info/data.8</linked_source>
   </snippet>
   <snippet name="ego vel">
    <global></global>
@@ -165,15 +218,28 @@
    <function>return value</function>
    <linked_source>/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/debug/cruise_planning_info/data.5</linked_source>
   </snippet>
-  <snippet name="filtered cruise dist">
+  <snippet name="filtered dist to obstacle">
    <global></global>
    <function>return value</function>
    <linked_source>/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/debug/cruise_planning_info/data.4</linked_source>
   </snippet>
-  <snippet name="raw cruise dist">
+  <snippet name="raw dist to obstacle">
    <global></global>
    <function>return value</function>
    <linked_source>/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/debug/cruise_planning_info/data.3</linked_source>
+  </snippet>
+  <snippet name="raw stop obstacle vel">
+   <global></global>
+   <function>return value</function>
+   <linked_source>/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/debug/stop_planning_info/data.4</linked_source>
+   <additional_sources>
+    <v1>/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/debug/cruise_planning_info/data.6</v1>
+   </additional_sources>
+  </snippet>
+  <snippet name="raw dist to stop">
+   <global></global>
+   <function>return value</function>
+   <linked_source>/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/debug/stop_planning_info/data.3</linked_source>
   </snippet>
  </customMathEquations>
  <snippets/>
