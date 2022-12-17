@@ -1,136 +1,116 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <root>
  <tabbed_widget parent="main_window" name="Main Window">
-  <Tab tab_name="cruise" containers="1">
+  <Tab containers="1" tab_name="cruise plan">
    <Container>
-    <DockSplitter sizes="1" orientation="-" count="1">
-     <DockSplitter sizes="0.5;0.5" orientation="|" count="2">
-      <DockSplitter sizes="0.500564;0.499436" orientation="-" count="2">
-       <DockArea name="...">
-        <plot flip_y="false" mode="TimeSeries" flip_x="false" style="Lines">
-         <range bottom="-68.642152" left="1648801093.897904" right="1648801193.801909" top="94.063676"/>
-         <limitY/>
-         <curve name="/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/debug/stop_planning_debug_info/data.10" color="#1ac938"/>
-         <curve name="/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/debug/stop_planning_debug_info/data.12" color="#17becf"/>
-         <curve name="/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/debug/stop_planning_debug_info/data.16" color="#d62728"/>
-        </plot>
-       </DockArea>
-       <DockArea name="...">
-        <plot flip_y="false" mode="TimeSeries" flip_x="false" style="Lines">
-         <range bottom="-1.341975" left="1648801093.897904" right="1648801193.801909" top="1.170411"/>
-         <limitY/>
-         <curve name="/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/debug/stop_planning_debug_info/data.1" color="#f14cc1"/>
-         <curve name="/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/debug/stop_planning_debug_info/data.14" color="#1f77b4"/>
-        </plot>
-       </DockArea>
-      </DockSplitter>
-      <DockSplitter sizes="0.500564;0.499436" orientation="-" count="2">
-       <DockArea name="...">
-        <plot flip_y="false" mode="TimeSeries" flip_x="false" style="Lines">
-         <range bottom="-0.293676" left="1648801093.897904" right="1648801193.801909" top="12.040726"/>
-         <limitY/>
-         <curve name="/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/debug/stop_planning_debug_info/data.0" color="#ff7f0e"/>
-         <curve name="/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/debug/stop_planning_debug_info/data.11" color="#9467bd"/>
-         <curve name="/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/debug/stop_planning_debug_info/data.13" color="#bcbd22"/>
-        </plot>
-       </DockArea>
-       <DockArea name="...">
-        <plot flip_y="false" mode="TimeSeries" flip_x="false" style="Lines">
-         <range bottom="-0.100000" left="1648801093.897904" right="1648801193.801909" top="0.100000"/>
-         <limitY/>
-         <curve name="/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/debug/stop_planning_debug_info/data.15" color="#1ac938"/>
-         <curve name="/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/debug/stop_planning_debug_info/data.2" color="#ff7f0e"/>
-        </plot>
-       </DockArea>
-      </DockSplitter>
+    <DockSplitter count="2" orientation="-" sizes="0.5;0.5">
+     <DockSplitter count="2" orientation="|" sizes="0.500348;0.499652">
+      <DockArea name="...">
+       <plot mode="TimeSeries" flip_x="false" style="Lines" flip_y="false">
+        <range top="5.083771" bottom="-0.123994" left="1671088419.761797" right="1671088439.678846"/>
+        <limitY/>
+        <curve color="#d62728" name="ego vel"/>
+        <curve color="#ff7f0e" name="target vel"/>
+       </plot>
+      </DockArea>
+      <DockArea name="...">
+       <plot mode="TimeSeries" flip_x="false" style="Lines" flip_y="false">
+        <range top="0.556375" bottom="-0.377148" left="1671088419.761797" right="1671088439.678846"/>
+        <limitY/>
+        <curve color="#1ac938" name="ego acc"/>
+       </plot>
+      </DockArea>
+     </DockSplitter>
+     <DockSplitter count="2" orientation="|" sizes="0.500348;0.499652">
+      <DockArea name="...">
+       <plot mode="TimeSeries" flip_x="false" style="Lines" flip_y="false">
+        <range top="0.100000" bottom="-0.100000" left="1671088419.761797" right="1671088439.678846"/>
+        <limitY/>
+        <curve color="#f14cc1" name="target cruise dist"/>
+        <curve color="#17becf" name="filtered cruise dist"/>
+       </plot>
+      </DockArea>
+      <DockArea name="...">
+       <plot mode="TimeSeries" flip_x="false" style="Lines" flip_y="false">
+        <range top="0.100000" bottom="-0.100000" left="1671088419.761797" right="1671088439.678846"/>
+        <limitY/>
+        <curve color="#9467bd" name="raw error cruise dist"/>
+        <curve color="#17becf" name="filtered error cruise dist"/>
+       </plot>
+      </DockArea>
      </DockSplitter>
     </DockSplitter>
    </Container>
   </Tab>
-  <Tab tab_name="stop" containers="1">
+  <Tab containers="1" tab_name="cruise tune">
    <Container>
-    <DockSplitter sizes="1" orientation="-" count="1">
-     <DockSplitter sizes="0.5;0.5" orientation="|" count="2">
-      <DockSplitter sizes="0.500564;0.499436" orientation="-" count="2">
-       <DockArea name="...">
-        <plot flip_y="false" mode="TimeSeries" flip_x="false" style="Lines">
-         <range bottom="-4.440820" left="1648801040.096838" right="1648801140.095224" top="182.073633"/>
-         <limitY/>
-         <curve name="/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/debug/stop_planning_debug_info/data.3" color="#17becf"/>
-         <curve name="/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/debug/stop_planning_debug_info/data.5" color="#1f77b4"/>
-         <curve name="/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/debug/stop_planning_debug_info/data.9" color="#d62728"/>
-        </plot>
-       </DockArea>
-       <DockArea name="...">
-        <plot flip_y="false" mode="TimeSeries" flip_x="false" style="Lines">
-         <range bottom="-1.411967" left="1648801040.096838" right="1648801140.095224" top="1.117231"/>
-         <limitY/>
-         <curve name="/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/debug/stop_planning_debug_info/data.1" color="#f14cc1"/>
-         <curve name="/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/debug/stop_planning_debug_info/data.7" color="#1ac938"/>
-        </plot>
-       </DockArea>
-      </DockSplitter>
-      <DockSplitter sizes="0.500564;0.499436" orientation="-" count="2">
-       <DockArea name="...">
-        <plot flip_y="false" mode="TimeSeries" flip_x="false" style="Lines">
-         <range bottom="-0.364903" left="1648801040.096838" right="1648801140.095224" top="12.034235"/>
-         <limitY/>
-         <curve name="/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/debug/stop_planning_debug_info/data.0" color="#ff7f0e"/>
-         <curve name="/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/debug/stop_planning_debug_info/data.4" color="#bcbd22"/>
-         <curve name="/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/debug/stop_planning_debug_info/data.6" color="#d62728"/>
-        </plot>
-       </DockArea>
-       <DockArea name="...">
-        <plot flip_y="false" mode="TimeSeries" flip_x="false" style="Lines">
-         <range bottom="-0.025000" left="1648801040.096752" right="1648801140.095134" top="1.025000"/>
-         <limitY/>
-         <curve name="/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/output/stop_speed_exceeded/stop_speed_exceeded" color="#f14cc1"/>
-        </plot>
-       </DockArea>
-      </DockSplitter>
+    <DockSplitter count="2" orientation="-" sizes="0.5;0.5">
+     <DockSplitter count="2" orientation="|" sizes="0.500348;0.499652">
+      <DockArea name="...">
+       <plot mode="TimeSeries" flip_x="false" style="Lines" flip_y="false">
+        <range top="0.100000" bottom="-0.100000" left="1671088419.761955" right="1671088439.678846"/>
+        <limitY/>
+        <curve color="#9467bd" name="raw cruise dist"/>
+        <curve color="#17becf" name="filtered cruise dist"/>
+       </plot>
+      </DockArea>
+      <DockArea name="...">
+       <plot mode="TimeSeries" flip_x="false" style="Lines" flip_y="false">
+        <range top="0.100000" bottom="-0.100000" left="1671088419.761955" right="1671088439.678846"/>
+        <limitY/>
+        <curve color="#bcbd22" name="raw obstacle vel"/>
+        <curve color="#1f77b4" name="filtered obstacle vel"/>
+       </plot>
+      </DockArea>
      </DockSplitter>
-    </DockSplitter>
-   </Container>
-  </Tab>
-  <Tab tab_name="others" containers="1">
-   <Container>
-    <DockSplitter sizes="1" orientation="-" count="1">
      <DockArea name="...">
-      <plot flip_y="false" mode="TimeSeries" flip_x="false" style="Lines">
-       <range bottom="-0.000303" left="1648801009.699198" right="1648801109.621976" top="0.051201"/>
+      <plot mode="TimeSeries" flip_x="false" style="Lines" flip_y="false">
+       <range top="1.000000" bottom="0.000000" left="0.000000" right="1.000000"/>
        <limitY/>
-       <curve name="/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/debug/calculation_time/data" color="#9467bd"/>
       </plot>
      </DockArea>
     </DockSplitter>
    </Container>
   </Tab>
-  <currentTabIndex index="0"/>
+  <Tab containers="1" tab_name="tab3">
+   <Container>
+    <DockSplitter count="1" orientation="-" sizes="1">
+     <DockArea name="...">
+      <plot mode="TimeSeries" flip_x="false" style="Lines" flip_y="false">
+       <range top="1.000000" bottom="0.000000" left="0.000000" right="1.000000"/>
+       <limitY/>
+      </plot>
+     </DockArea>
+    </DockSplitter>
+   </Container>
+  </Tab>
+  <currentTabIndex index="2"/>
  </tabbed_widget>
  <use_relative_time_offset enabled="0"/>
  <!-- - - - - - - - - - - - - - - -->
  <!-- - - - - - - - - - - - - - - -->
  <Plugins>
   <plugin ID="DataLoad CSV">
-   <default time_axis="" delimiter="0"/>
+   <default delimiter="0" time_axis=""/>
   </plugin>
   <plugin ID="DataLoad ROS2 bags">
    <use_header_stamp value="false"/>
    <discard_large_arrays value="true"/>
    <max_array_size value="100"/>
-   <boolean_strings_to_number value="true"/>
-   <remove_suffix_from_strings value="true"/>
   </plugin>
   <plugin ID="DataLoad ULog"/>
   <plugin ID="ROS2 Topic Subscriber">
-   <use_header_stamp value="false"/>
-   <discard_large_arrays value="false"/>
-   <max_array_size value="10"/>
-   <boolean_strings_to_number value="true"/>
-   <remove_suffix_from_strings value="true"/>
+   <use_header_stamp value="true"/>
+   <discard_large_arrays value="true"/>
+   <max_array_size value="true"/>
+   <selected_topics>
+    <topic name="/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/debug/cruise_planning_info"/>
+    <topic name="/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/debug/stop_planning_info"/>
+   </selected_topics>
   </plugin>
   <plugin ID="UDP Server"/>
   <plugin ID="WebSocket Server"/>
+  <plugin ID="ZMQ Subscriber"/>
   <plugin ID="Fast Fourier Transform"/>
   <plugin ID="Quaternion to RPY"/>
   <plugin ID="Reactive Script Editor">
@@ -144,7 +124,58 @@
  <previouslyLoaded_Datafiles/>
  <previouslyLoaded_Streamer name="ROS2 Topic Subscriber"/>
  <!-- - - - - - - - - - - - - - - -->
- <customMathEquations/>
+ <customMathEquations>
+  <snippet name="filtered error cruise dist">
+   <global></global>
+   <function>return value</function>
+   <linked_source>/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/debug/cruise_planning_info/data.9</linked_source>
+  </snippet>
+  <snippet name="raw error cruise dist">
+   <global></global>
+   <function>return value</function>
+   <linked_source>/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/debug/cruise_planning_info/data.8</linked_source>
+  </snippet>
+  <snippet name="target vel">
+   <global></global>
+   <function>return value</function>
+   <linked_source>/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/debug/cruise_planning_info/data.12</linked_source>
+  </snippet>
+  <snippet name="ego acc">
+   <global></global>
+   <function>return value</function>
+   <linked_source>/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/debug/cruise_planning_info/data.1</linked_source>
+  </snippet>
+  <snippet name="target cruise dist">
+   <global></global>
+   <function>return value</function>
+   <linked_source>/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/debug/stop_planning_info/data.7</linked_source>
+  </snippet>
+  <snippet name="ego vel">
+   <global></global>
+   <function>return value</function>
+   <linked_source>/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/debug/cruise_planning_info/data.0</linked_source>
+  </snippet>
+  <snippet name="filtered obstacle vel">
+   <global></global>
+   <function>return value</function>
+   <linked_source>/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/debug/cruise_planning_info/data.6</linked_source>
+  </snippet>
+  <snippet name="raw obstacle vel">
+   <global></global>
+   <function>return value</function>
+   <linked_source>/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/debug/cruise_planning_info/data.5</linked_source>
+  </snippet>
+  <snippet name="filtered cruise dist">
+   <global></global>
+   <function>return value</function>
+   <linked_source>/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/debug/cruise_planning_info/data.4</linked_source>
+  </snippet>
+  <snippet name="raw cruise dist">
+   <global></global>
+   <function>return value</function>
+   <linked_source>/planning/scenario_planning/lane_driving/motion_planning/obstacle_cruise_planner/debug/cruise_planning_info/data.3</linked_source>
+  </snippet>
+ </customMathEquations>
  <snippets/>
  <!-- - - - - - - - - - - - - - - -->
 </root>
