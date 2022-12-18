@@ -112,10 +112,7 @@ public:
   virtual bool hasObstacleOnTrajectory(const geometry_msgs::msg::PoseArray & trajectory) const;
   const PlannerWaypoints & getWaypoints() const
   {
-    if (waypoints_.waypoints.size()) {
-      return waypoints_;
-    }
-    throw std::runtime_error("waypoints has length 0. Did you check that problem solved?");
+    return waypoints_;
   }
 
   virtual ~AbstractPlanningAlgorithm() {}
