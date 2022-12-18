@@ -85,8 +85,7 @@ OptimizationBasedPlanner::OptimizationBasedPlanner(
   optimized_sv_pub_ = node.create_publisher<Trajectory>("~/optimized_sv_trajectory", 1);
   optimized_st_graph_pub_ = node.create_publisher<Trajectory>("~/optimized_st_graph", 1);
   boundary_pub_ = node.create_publisher<Trajectory>("~/boundary", 1);
-  debug_wall_marker_pub_ =
-    node.create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/wall_marker", 1);
+  debug_wall_marker_pub_ = node.create_publisher<MarkerArray>("~/debug/wall_marker", 1);
 }
 
 Trajectory OptimizationBasedPlanner::generateCruiseTrajectory(
@@ -437,7 +436,7 @@ boost::optional<SBoundaries> OptimizationBasedPlanner::getSBoundaries(
       planner_data.traj.points, planner_data.current_pose.position, min_slow_down_point_length);
 
     if (marker_pose) {
-      visualization_msgs::msg::MarkerArray wall_msg;
+      MarkerArray wall_msg;
 
       if (obj.has_stopped) {
         const auto markers = motion_utils::createStopVirtualWallMarker(
@@ -590,8 +589,7 @@ bool OptimizationBasedPlanner::checkOnTrajectory(
 }
 
 boost::optional<double> OptimizationBasedPlanner::calcTrajectoryLengthFromCurrentPose(
-  const autoware_auto_planning_msgs::msg::Trajectory & traj,
-  const geometry_msgs::msg::Pose & current_pose)
+  const Trajectory & traj, const geometry_msgs::msg::Pose & current_pose)
 {
   const auto traj_length = motion_utils::calcSignedArcLength(
     traj.points, current_pose, traj.points.size() - 1, nearest_dist_deviation_threshold_,

@@ -41,8 +41,7 @@ visualization_msgs::msg::Marker getObjectMarker(
 }
 
 boost::optional<geometry_msgs::msg::Pose> calcForwardPose(
-  const autoware_auto_planning_msgs::msg::Trajectory & traj, const size_t start_idx,
-  const double target_length)
+  const Trajectory & traj, const size_t start_idx, const double target_length)
 {
   if (traj.points.empty()) {
     return {};
@@ -77,8 +76,8 @@ boost::optional<geometry_msgs::msg::Pose> calcForwardPose(
 }
 
 boost::optional<geometry_msgs::msg::Pose> getCurrentObjectPoseFromPredictedPath(
-  const autoware_auto_perception_msgs::msg::PredictedPath & predicted_path,
-  const rclcpp::Time & obj_base_time, const rclcpp::Time & current_time)
+  const PredictedPath & predicted_path, const rclcpp::Time & obj_base_time,
+  const rclcpp::Time & current_time)
 {
   const double rel_time = (current_time - obj_base_time).seconds();
   if (rel_time < 0.0) {
@@ -89,8 +88,8 @@ boost::optional<geometry_msgs::msg::Pose> getCurrentObjectPoseFromPredictedPath(
 }
 
 boost::optional<geometry_msgs::msg::Pose> getCurrentObjectPoseFromPredictedPaths(
-  const std::vector<autoware_auto_perception_msgs::msg::PredictedPath> & predicted_paths,
-  const rclcpp::Time & obj_base_time, const rclcpp::Time & current_time)
+  const std::vector<PredictedPath> & predicted_paths, const rclcpp::Time & obj_base_time,
+  const rclcpp::Time & current_time)
 {
   if (predicted_paths.empty()) {
     return boost::none;
@@ -98,19 +97,14 @@ boost::optional<geometry_msgs::msg::Pose> getCurrentObjectPoseFromPredictedPaths
   // Get the most reliable path
   const auto predicted_path = std::max_element(
     predicted_paths.begin(), predicted_paths.end(),
-    [](
-      const autoware_auto_perception_msgs::msg::PredictedPath & a,
-      const autoware_auto_perception_msgs::msg::PredictedPath & b) {
-      return a.confidence < b.confidence;
-    });
+    [](const PredictedPath & a, const PredictedPath & b) { return a.confidence < b.confidence; });
 
   return getCurrentObjectPoseFromPredictedPath(*predicted_path, obj_base_time, current_time);
 }
 
 geometry_msgs::msg::PoseStamped getCurrentObjectPose(
-  const autoware_auto_perception_msgs::msg::PredictedObject & predicted_object,
-  const std_msgs::msg::Header & obj_header, const rclcpp::Time & current_time,
-  const bool use_prediction)
+  const PredictedObject & predicted_object, const std_msgs::msg::Header & obj_header,
+  const rclcpp::Time & current_time, const bool use_prediction)
 {
   if (!use_prediction) {
     geometry_msgs::msg::PoseStamped current_pose;
@@ -119,7 +113,7 @@ geometry_msgs::msg::PoseStamped getCurrentObjectPose(
     return current_pose;
   }
 
-  std::vector<autoware_auto_perception_msgs::msg::PredictedPath> predicted_paths;
+  std::vector<PredictedPath> predicted_paths;
   for (const auto & path : predicted_object.kinematics.predicted_paths) {
     predicted_paths.push_back(path);
   }
@@ -143,8 +137,7 @@ geometry_msgs::msg::PoseStamped getCurrentObjectPose(
 }
 
 boost::optional<TargetObstacle> getClosestStopObstacle(
-  const autoware_auto_planning_msgs::msg::Trajectory & traj,
-  const std::vector<TargetObstacle> & target_obstacles)
+  const Trajectory & traj, const std::vector<TargetObstacle> & target_obstacles)
 {
   if (target_obstacles.empty()) {
     return boost::none;

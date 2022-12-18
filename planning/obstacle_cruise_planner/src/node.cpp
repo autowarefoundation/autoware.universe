@@ -29,7 +29,7 @@
 
 namespace
 {
-VelocityLimitClearCommand createVelocityLimitClearCommandMsg(const rclcpp::Time & current_time)
+VelocityLimitClearCommand createVelocityLimitClearCommandMessage(const rclcpp::Time & current_time)
 {
   VelocityLimitClearCommand msg;
   msg.stamp = current_time;
@@ -192,13 +192,9 @@ Trajectory extendTrajectory(
 
 namespace motion_planning
 {
-using visualization_msgs::msg::Marker;
-using visualization_msgs::msg::MarkerArray;
-
 ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions & node_options)
 : Node("obstacle_cruise_planner", node_options),
   self_pose_listener_(this),
-  in_objects_ptr_(nullptr),
   vehicle_info_(vehicle_info_util::VehicleInfoUtil(*this).getVehicleInfo())
 {
   using std::placeholders::_1;
@@ -211,13 +207,14 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
     "/planning/scenario_planning/trajectory", rclcpp::QoS{1},
     std::bind(&ObstacleCruisePlannerNode::onSmoothedTrajectory, this, _1));
   objects_sub_ = create_subscription<PredictedObjects>(
-    "~/input/objects", rclcpp::QoS{1}, std::bind(&ObstacleCruisePlannerNode::onObjects, this, _1));
+    "~/input/objects", rclcpp::QoS{1},
+    [this](const PredictedObjects::ConstSharedPtr msg) { in_objects_ptr_ = msg; });
   odom_sub_ = create_subscription<Odometry>(
     "~/input/odometry", rclcpp::QoS{1},
-    std::bind(&ObstacleCruisePlannerNode::onOdometry, this, std::placeholders::_1));
+    [this](const Odometry::ConstSharedPtr msg) { current_odom_ptr_ = msg; });
   acc_sub_ = create_subscription<AccelWithCovarianceStamped>(
     "~/input/acceleration", rclcpp::QoS{1},
-    std::bind(&ObstacleCruisePlannerNode::onAccel, this, std::placeholders::_1));
+    [this](const AccelWithCovarianceStamped::ConstSharedPtr msg) { current_accel_ptr_ = msg; });
 
   // publisher
   trajectory_pub_ = create_publisher<Trajectory>("~/output/trajectory", 1);
@@ -516,25 +513,6 @@ rcl_interfaces::msg::SetParametersResult ObstacleCruisePlannerNode::onParam(
   return result;
 }
 
-void ObstacleCruisePlannerNode::onObjects(const PredictedObjects::ConstSharedPtr msg)
-{
-  in_objects_ptr_ = msg;
-}
-
-void ObstacleCruisePlannerNode::onOdometry(const Odometry::ConstSharedPtr msg)
-{
-  current_twist_ptr_ = std::make_unique<geometry_msgs::msg::TwistStamped>();
-  current_twist_ptr_->header = msg->header;
-  current_twist_ptr_->twist = msg->twist.twist;
-}
-
-void ObstacleCruisePlannerNode::onAccel(const AccelWithCovarianceStamped::ConstSharedPtr msg)
-{
-  current_accel_ptr_ = std::make_unique<geometry_msgs::msg::AccelStamped>();
-  current_accel_ptr_->header = msg->header;
-  current_accel_ptr_->accel = msg->accel.accel;
-}
-
 void ObstacleCruisePlannerNode::onSmoothedTrajectory(const Trajectory::ConstSharedPtr msg)
 {
   planner_ptr_->setSmoothedTrajectory(msg);
@@ -545,9 +523,10 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
   const auto current_pose_ptr = self_pose_listener_.getCurrentPose();
 
   // check if subscribed variables are ready
-  if (msg->points.empty() || !current_twist_ptr_ || !in_objects_ptr_ || !current_pose_ptr) {
+  if (msg->points.empty() || !current_odom_ptr_ || !in_objects_ptr_ || !current_pose_ptr) {
     return;
   }
+  const double current_vel = current_odom_ptr_->twist.twist.linear.x;
 
   stop_watch_.tic(__func__);
 
@@ -555,9 +534,8 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
   DebugData debug_data;
   const auto is_driving_forward = motion_utils::isDrivingForwardWithTwist(msg->points);
   is_driving_forward_ = is_driving_forward ? is_driving_forward.get() : is_driving_forward_;
-  const auto target_obstacles = getTargetObstacles(
-    *msg, current_pose_ptr->pose, current_twist_ptr_->twist.linear.x, is_driving_forward_,
-    debug_data);
+  const auto target_obstacles =
+    getTargetObstacles(*msg, current_pose_ptr->pose, current_vel, is_driving_forward_, debug_data);
 
   // create data for stop
   const auto stop_data =
@@ -610,8 +588,8 @@ ObstacleCruisePlannerData ObstacleCruisePlannerNode::createStopData(
   const std::vector<TargetObstacle> & obstacles, const bool is_driving_forward)
 {
   const auto current_time = now();
-  const double current_vel = current_twist_ptr_->twist.linear.x;
-  const double current_accel = current_accel_ptr_->accel.linear.x;
+  const double current_vel = current_odom_ptr_->twist.twist.linear.x;
+  const double current_accel = current_accel_ptr_->accel.accel.linear.x;
 
   // create planner_stop data
   ObstacleCruisePlannerData planner_data;
@@ -651,8 +629,8 @@ ObstacleCruisePlannerData ObstacleCruisePlannerNode::createCruiseData(
   const std::vector<TargetObstacle> & obstacles, const bool is_driving_forward)
 {
   const auto current_time = now();
-  const double current_vel = current_twist_ptr_->twist.linear.x;
-  const double current_accel = current_accel_ptr_->accel.linear.x;
+  const double current_vel = current_odom_ptr_->twist.twist.linear.x;
+  const double current_accel = current_accel_ptr_->accel.accel.linear.x;
 
   // create planner_stop data
   ObstacleCruisePlannerData planner_data;
@@ -1029,7 +1007,7 @@ void ObstacleCruisePlannerNode::publishVelocityLimit(
     need_to_clear_vel_limit_ = true;
   } else {
     if (need_to_clear_vel_limit_) {
-      const auto clear_vel_limit_msg = createVelocityLimitClearCommandMsg(now());
+      const auto clear_vel_limit_msg = createVelocityLimitClearCommandMessage(now());
       clear_vel_limit_pub_->publish(clear_vel_limit_msg);
       need_to_clear_vel_limit_ = false;
     }

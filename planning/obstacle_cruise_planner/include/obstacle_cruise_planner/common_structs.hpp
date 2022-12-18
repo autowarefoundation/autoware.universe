@@ -15,24 +15,15 @@
 #ifndef OBSTACLE_CRUISE_PLANNER__COMMON_STRUCTS_HPP_
 #define OBSTACLE_CRUISE_PLANNER__COMMON_STRUCTS_HPP_
 
+#include "obstacle_cruise_planner/type_alias.hpp"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
 #include <rclcpp/rclcpp.hpp>
-
-#include "autoware_auto_perception_msgs/msg/predicted_objects.hpp"
-#include "autoware_auto_planning_msgs/msg/trajectory.hpp"
-#include "geometry_msgs/msg/point_stamped.hpp"
-#include "visualization_msgs/msg/marker_array.hpp"
 
 #include <boost/optional.hpp>
 
 #include <string>
 #include <vector>
-
-using autoware_auto_perception_msgs::msg::ObjectClassification;
-using autoware_auto_perception_msgs::msg::PredictedObject;
-using autoware_auto_perception_msgs::msg::PredictedPath;
-using autoware_auto_perception_msgs::msg::Shape;
 
 namespace
 {
@@ -85,7 +76,7 @@ struct TargetObstacle
 struct ObstacleCruisePlannerData
 {
   rclcpp::Time current_time;
-  autoware_auto_planning_msgs::msg::Trajectory traj;
+  Trajectory traj;
   geometry_msgs::msg::Pose current_pose;
   double current_vel;
   double current_acc;
@@ -115,8 +106,8 @@ struct DebugData
   std::vector<PredictedObject> intentionally_ignored_obstacles;
   std::vector<TargetObstacle> obstacles_to_stop;
   std::vector<TargetObstacle> obstacles_to_cruise;
-  visualization_msgs::msg::MarkerArray stop_wall_marker;
-  visualization_msgs::msg::MarkerArray cruise_wall_marker;
+  MarkerArray stop_wall_marker;
+  MarkerArray cruise_wall_marker;
   std::vector<tier4_autoware_utils::Polygon2d> detection_polygons;
   std::vector<geometry_msgs::msg::Point> collision_points;
 };

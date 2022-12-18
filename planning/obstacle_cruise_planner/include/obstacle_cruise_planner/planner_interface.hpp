@@ -18,30 +18,14 @@
 #include "motion_utils/motion_utils.hpp"
 #include "obstacle_cruise_planner/common_structs.hpp"
 #include "obstacle_cruise_planner/stop_planning_debug_info.hpp"
+#include "obstacle_cruise_planner/type_alias.hpp"
 #include "obstacle_cruise_planner/utils.hpp"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
-#include "vehicle_info_util/vehicle_info_util.hpp"
-
-#include "autoware_adapi_v1_msgs/msg/velocity_factor_array.hpp"
-#include "autoware_auto_planning_msgs/msg/trajectory.hpp"
-#include "tier4_planning_msgs/msg/stop_reason_array.hpp"
-#include "tier4_planning_msgs/msg/stop_speed_exceeded.hpp"
-#include "tier4_planning_msgs/msg/velocity_limit.hpp"
-#include "visualization_msgs/msg/marker_array.hpp"
 
 #include <boost/optional.hpp>
 
 #include <memory>
 #include <vector>
-
-using autoware_adapi_v1_msgs::msg::VelocityFactor;
-using autoware_adapi_v1_msgs::msg::VelocityFactorArray;
-using autoware_auto_perception_msgs::msg::ObjectClassification;
-using autoware_auto_planning_msgs::msg::Trajectory;
-using autoware_auto_planning_msgs::msg::TrajectoryPoint;
-using tier4_debug_msgs::msg::Float32MultiArrayStamped;
-using tier4_planning_msgs::msg::StopSpeedExceeded;
-using tier4_planning_msgs::msg::VelocityLimit;
 
 class PlannerInterface
 {
@@ -53,8 +37,7 @@ public:
     vehicle_info_(vehicle_info),
     ego_nearest_param_(ego_nearest_param)
   {
-    stop_reasons_pub_ =
-      node.create_publisher<tier4_planning_msgs::msg::StopReasonArray>("~/output/stop_reasons", 1);
+    stop_reasons_pub_ = node.create_publisher<StopReasonArray>("~/output/stop_reasons", 1);
     velocity_factors_pub_ =
       node.create_publisher<VelocityFactorArray>("/planning/velocity_factors/obstacle_cruise", 1);
     stop_speed_exceeded_pub_ =
@@ -126,7 +109,7 @@ protected:
   double nearest_yaw_deviation_threshold_;
 
   // Publishers
-  rclcpp::Publisher<tier4_planning_msgs::msg::StopReasonArray>::SharedPtr stop_reasons_pub_;
+  rclcpp::Publisher<StopReasonArray>::SharedPtr stop_reasons_pub_;
   rclcpp::Publisher<VelocityFactorArray>::SharedPtr velocity_factors_pub_;
   rclcpp::Publisher<StopSpeedExceeded>::SharedPtr stop_speed_exceeded_pub_;
 
