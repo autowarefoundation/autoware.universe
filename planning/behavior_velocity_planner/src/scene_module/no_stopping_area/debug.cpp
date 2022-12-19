@@ -168,7 +168,7 @@ visualization_msgs::msg::MarkerArray NoStoppingAreaModule::createVirtualWallMark
   const auto now = clock_->now();
 
   auto id_to_create = module_id_;
-  auto id_to_delete = module_id_;
+  // auto id_to_delete = module_id_;
 
   // for (const auto & p : debug_data_.stopped_poses) {
   //   const bool stopped_pose_is_in_stop_pose = std::any_of(
@@ -181,10 +181,10 @@ visualization_msgs::msg::MarkerArray NoStoppingAreaModule::createVirtualWallMark
   //   }
   //   id_to_delete++;
   // }
-  appendMarkerArray(
-    motion_utils::createDeletedStopVirtualWallMarkerFromStopPoses(
-      debug_data_.stop_poses, debug_data_.stopped_poses, now, id_to_delete),
-    &wall_marker, now);
+  // appendMarkerArray(
+  //   motion_utils::createDeletedStopVirtualWallMarkerFromStopPoses(
+  //     debug_data_.stop_poses, debug_data_.stopped_poses, now, id_to_delete),
+  //   &wall_marker, now);
 
   for (const auto & p : debug_data_.stop_poses) {
     const auto p_front =

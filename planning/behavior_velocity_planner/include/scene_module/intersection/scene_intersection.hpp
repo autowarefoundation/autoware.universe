@@ -113,20 +113,11 @@ public:
   visualization_msgs::msg::MarkerArray createVirtualWallMarkerArray() override;
 
 private:
-  enum class IntersectionModuleState {
-    NONE = 0,
-    STOP,
-    SLOW_DOWN,
-    GO,
-  };
 
   int64_t lane_id_;
   std::string turn_direction_;
   bool has_traffic_light_;
   bool is_go_out_;
-
-  // last module state in last update
-  IntersectionModuleState last_module_state_;
 
   // Parameter
   PlannerParam planner_param_;

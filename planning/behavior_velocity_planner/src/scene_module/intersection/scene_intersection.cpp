@@ -57,8 +57,7 @@ IntersectionModule::IntersectionModule(
   const rclcpp::Clock::SharedPtr clock)
 : SceneModuleInterface(module_id, logger, clock),
   lane_id_(lane_id),
-  is_go_out_(false),
-  last_module_state_(IntersectionModuleState::NONE)
+  is_go_out_(false)
 {
   velocity_factor_.init(VelocityFactor::INTERSECTION);
   planner_param_ = planner_param;
