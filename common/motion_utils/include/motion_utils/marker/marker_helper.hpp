@@ -16,6 +16,7 @@
 #define MOTION_UTILS__MARKER__MARKER_HELPER_HPP_
 
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
+#include "motion_utils/resample/resample_utils.hpp"
 
 #include <functional>
 #include <string>
