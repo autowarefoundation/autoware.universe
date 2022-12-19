@@ -75,8 +75,6 @@ void TrtYoloXNode::onConnect()
 
 void TrtYoloXNode::onImage(const sensor_msgs::msg::Image::ConstSharedPtr msg)
 {
-  // using Label = autoware_auto_perception_msgs::msg::ObjectClassification;
-
   tier4_perception_msgs::msg::DetectedObjectsWithFeature out_objects;
 
   cv_bridge::CvImagePtr in_image_ptr;
