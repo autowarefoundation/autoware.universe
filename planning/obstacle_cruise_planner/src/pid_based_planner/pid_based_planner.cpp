@@ -83,8 +83,8 @@ PIDBasedPlanner::PIDBasedPlanner(
       node.declare_parameter<bool>(
         "pid_based_planner.velocity_limit_based_planner.enable_jerk_limit_to_output_acc");
 
-    velocity_limit_based_planner_param_.disable_target_acceleration =
-      node.declare_parameter<bool>("pid_based_planner.velocity_limit_based_planner.disable_target_acceleration");
+    velocity_limit_based_planner_param_.disable_target_acceleration = node.declare_parameter<bool>(
+      "pid_based_planner.velocity_limit_based_planner.disable_target_acceleration");
   }
 
   {  // velocity insertion based planner
@@ -304,10 +304,12 @@ Trajectory PIDBasedPlanner::planCruise(
                                       : std::abs(vehicle_info_.min_longitudinal_offset_m);
       const double dist_to_rss_wall =
         std::min(error_cruise_dist + abs_ego_offset, dist_to_obstacle + abs_ego_offset);
+      const size_t wall_idx = obstacle_cruise_utils::getIndexWithLongitudinalOffset(
+        planner_data.traj.points, dist_to_rss_wall, ego_idx);
 
       const auto markers = motion_utils::createSlowDownVirtualWallMarker(
-        planner_data.traj.points.at(ego_idx).pose, "obstacle cruise", planner_data.current_time, 0,
-        dist_to_rss_wall);
+        planner_data.traj.points.at(wall_idx).pose, "obstacle cruise", planner_data.current_time,
+        0);
       tier4_autoware_utils::appendMarkerArray(markers, &debug_data.cruise_wall_marker);
 
       // cruise obstalce
@@ -361,9 +363,8 @@ VelocityLimit PIDBasedPlanner::doCruiseWithVelocityLimit(
     return pid_output_vel;
   }();
 
-  const double positive_target_vel =
-    lpf_output_vel_ptr_->filter(
-                                std::max(min_cruise_target_vel_, planner_data.current_vel + additional_vel));
+  const double positive_target_vel = lpf_output_vel_ptr_->filter(
+    std::max(min_cruise_target_vel_, planner_data.current_vel + additional_vel));
 
   // calculate target acceleration
   const double target_acc = [&]() {
