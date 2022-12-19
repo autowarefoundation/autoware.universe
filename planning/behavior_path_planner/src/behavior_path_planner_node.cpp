@@ -768,19 +768,11 @@ void BehaviorPathPlannerNode::publishSceneModuleDebugMsg()
 void BehaviorPathPlannerNode::publishPathCandidate(
   const std::vector<std::shared_ptr<SceneModuleInterface>> & scene_modules)
 {
-  const bool is_running = std::any_of(
-    scene_modules.begin(), scene_modules.end(),
-    [](const auto & module) { return module->current_state_ == BT::NodeStatus::RUNNING; });
-
   for (auto & module : scene_modules) {
-    if (path_candidate_publishers_.count(module->name()) == 0) {
-      continue;
+    if (path_candidate_publishers_.count(module->name()) != 0) {
+      path_candidate_publishers_.at(module->name())
+        ->publish(convertToPath(module->getPathCandidate(), module->isExecutionReady()));
     }
-    if (is_running && (module->current_state_ != BT::NodeStatus::RUNNING)) {
-      module->resetPathCandidate();
-    }
-    path_candidate_publishers_.at(module->name())
-      ->publish(convertToPath(module->getPathCandidate(), module->isExecutionReady()));
   }
 }
 
