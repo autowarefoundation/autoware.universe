@@ -842,6 +842,7 @@ bool BehaviorPathPlannerNode::skipSmoothGoalConnection(
   return false;
 }
 
+// This is a temporary process until motion planning can take the terminal pose into account
 bool BehaviorPathPlannerNode::keepInputPoints(
   const std::vector<std::shared_ptr<SceneModuleStatus>> & statuses) const
 {
