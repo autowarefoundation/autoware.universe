@@ -75,6 +75,8 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
       create_publisher<MarkerArray>("~/drivable_area_boundary", 1);
   }
 
+  bound_publisher_ = create_publisher<MarkerArray>("~/debug/bound", 1);
+
   // subscriber
   velocity_subscriber_ = create_subscription<Odometry>(
     "~/input/odometry", 1, std::bind(&BehaviorPathPlannerNode::onVelocity, this, _1),
@@ -205,12 +207,10 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   p.backward_length_buffer_for_end_of_pull_out =
     declare_parameter("backward_length_buffer_for_end_of_pull_out", 5.0);
   p.minimum_lane_change_length = declare_parameter("minimum_lane_change_length", 8.0);
+  p.minimum_lane_change_prepare_distance =
+    declare_parameter("minimum_lane_change_prepare_distance", 2.0);
+
   p.minimum_pull_over_length = declare_parameter("minimum_pull_over_length", 15.0);
-  p.drivable_area_resolution = declare_parameter<double>("drivable_area_resolution");
-  p.drivable_lane_forward_length = declare_parameter<double>("drivable_lane_forward_length");
-  p.drivable_lane_backward_length = declare_parameter<double>("drivable_lane_backward_length");
-  p.drivable_lane_margin = declare_parameter<double>("drivable_lane_margin");
-  p.drivable_area_margin = declare_parameter<double>("drivable_area_margin");
   p.refine_goal_search_radius_range = declare_parameter("refine_goal_search_radius_range", 7.5);
   p.turn_signal_intersection_search_distance =
     declare_parameter("turn_signal_intersection_search_distance", 30.0);
@@ -332,6 +332,8 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
   p.drivable_area_right_bound_offset = dp("drivable_area_right_bound_offset", 0.0);
   p.drivable_area_left_bound_offset = dp("drivable_area_left_bound_offset", 0.0);
 
+  p.enable_bound_clipping = dp("enable_bound_clipping", false);
+
   p.avoidance_execution_lateral_threshold = dp("avoidance_execution_lateral_threshold", 0.499);
 
   return p;
@@ -359,7 +361,6 @@ LaneChangeParameters BehaviorPathPlannerNode::getLaneChangeParam()
   LaneChangeParameters p{};
   p.lane_change_prepare_duration = dp("lane_change_prepare_duration", 2.0);
   p.lane_changing_duration = dp("lane_changing_duration", 4.0);
-  p.minimum_lane_change_prepare_distance = dp("minimum_lane_change_prepare_distance", 4.0);
   p.lane_change_finish_judge_buffer = dp("lane_change_finish_judge_buffer", 3.0);
   p.minimum_lane_change_velocity = dp("minimum_lane_change_velocity", 5.6);
   p.prediction_time_resolution = dp("prediction_time_resolution", 0.5);
@@ -612,7 +613,11 @@ void BehaviorPathPlannerNode::run()
   // update planner data
   planner_data_->self_pose = self_pose_listener_.getCurrentPose();
 
-  const auto planner_data = planner_data_;
+  const auto planner_data = std::make_shared<PlannerData>(*planner_data_);
+
+  // unlock planner data
+  mutex_pd_.unlock();
+
   // run behavior planner
   const auto output = bt_manager_->run(planner_data);
 
@@ -621,7 +626,12 @@ void BehaviorPathPlannerNode::run()
 
   // update planner data
   planner_data_->prev_output_path = path;
-  mutex_pd_.unlock();
+
+  // compute turn signal
+  computeTurnSignal(planner_data, *path, output);
+
+  // publish drivable bounds
+  publish_bounds(*path);
 
   const size_t target_idx = findEgoIndex(path->points);
   util::clipPathLength(*path, target_idx, planner_data_->parameters);
@@ -636,26 +646,6 @@ void BehaviorPathPlannerNode::run()
   const auto path_candidate = getPathCandidate(output, planner_data);
   path_candidate_publisher_->publish(util::toPath(*path_candidate));
 
-  // for turn signal
-  {
-    TurnIndicatorsCommand turn_signal;
-    HazardLightsCommand hazard_signal;
-    if (output.turn_signal_info.hazard_signal.command == HazardLightsCommand::ENABLE) {
-      turn_signal.command = TurnIndicatorsCommand::DISABLE;
-      hazard_signal.command = output.turn_signal_info.hazard_signal.command;
-    } else {
-      turn_signal =
-        turn_signal_decider_.getTurnSignal(planner_data, *path, output.turn_signal_info);
-      hazard_signal.command = HazardLightsCommand::DISABLE;
-    }
-    turn_signal.stamp = get_clock()->now();
-    hazard_signal.stamp = get_clock()->now();
-    turn_signal_publisher_->publish(turn_signal);
-    hazard_signal_publisher_->publish(hazard_signal);
-
-    publish_steering_factor(turn_signal);
-  }
-
   publishSceneModuleDebugMsg();
 
   if (planner_data->parameters.visualize_drivable_area_for_shared_linestrings_lanelet) {
@@ -666,6 +656,27 @@ void BehaviorPathPlannerNode::run()
 
   mutex_bt_.unlock();
   RCLCPP_DEBUG(get_logger(), "----- behavior path planner end -----\n\n");
+}
+
+void BehaviorPathPlannerNode::computeTurnSignal(
+  const std::shared_ptr<PlannerData> planner_data, const PathWithLaneId & path,
+  const BehaviorModuleOutput & output)
+{
+  TurnIndicatorsCommand turn_signal;
+  HazardLightsCommand hazard_signal;
+  if (output.turn_signal_info.hazard_signal.command == HazardLightsCommand::ENABLE) {
+    turn_signal.command = TurnIndicatorsCommand::DISABLE;
+    hazard_signal.command = output.turn_signal_info.hazard_signal.command;
+  } else {
+    turn_signal = turn_signal_decider_.getTurnSignal(planner_data, path, output.turn_signal_info);
+    hazard_signal.command = HazardLightsCommand::DISABLE;
+  }
+  turn_signal.stamp = get_clock()->now();
+  hazard_signal.stamp = get_clock()->now();
+  turn_signal_publisher_->publish(turn_signal);
+  hazard_signal_publisher_->publish(hazard_signal);
+
+  publish_steering_factor(turn_signal);
 }
 
 void BehaviorPathPlannerNode::publish_steering_factor(const TurnIndicatorsCommand & turn_signal)
@@ -696,6 +707,39 @@ void BehaviorPathPlannerNode::publish_steering_factor(const TurnIndicatorsComman
     steering_factor_interface_ptr_->clearSteeringFactors();
   }
   steering_factor_interface_ptr_->publishSteeringFactor(get_clock()->now());
+}
+
+void BehaviorPathPlannerNode::publish_bounds(const PathWithLaneId & path)
+{
+  constexpr double scale_x = 0.1;
+  constexpr double scale_y = 0.1;
+  constexpr double scale_z = 0.1;
+  constexpr double color_r = 0.0 / 256.0;
+  constexpr double color_g = 148.0 / 256.0;
+  constexpr double color_b = 205.0 / 256.0;
+  constexpr double color_a = 0.999;
+
+  const auto current_time = path.header.stamp;
+  auto left_marker = tier4_autoware_utils::createDefaultMarker(
+    "map", current_time, "left_bound", 0L, Marker::LINE_STRIP,
+    tier4_autoware_utils::createMarkerScale(scale_x, scale_y, scale_z),
+    tier4_autoware_utils::createMarkerColor(color_r, color_g, color_b, color_a));
+  for (const auto lb : path.left_bound) {
+    left_marker.points.push_back(lb);
+  }
+
+  auto right_marker = tier4_autoware_utils::createDefaultMarker(
+    "map", current_time, "right_bound", 0L, Marker::LINE_STRIP,
+    tier4_autoware_utils::createMarkerScale(scale_x, scale_y, scale_z),
+    tier4_autoware_utils::createMarkerColor(color_r, color_g, color_b, color_a));
+  for (const auto rb : path.right_bound) {
+    right_marker.points.push_back(rb);
+  }
+
+  MarkerArray msg;
+  msg.markers.push_back(left_marker);
+  msg.markers.push_back(right_marker);
+  bound_publisher_->publish(msg);
 }
 
 void BehaviorPathPlannerNode::publishSceneModuleDebugMsg()
@@ -886,8 +930,18 @@ PathWithLaneId BehaviorPathPlannerNode::modifyPathForSmoothGoalConnection(
   const auto goal = planner_data_->route_handler->getGoalPose();
   const auto goal_lane_id = planner_data_->route_handler->getGoalLaneId();
 
+  Pose refined_goal{};
+  {
+    lanelet::ConstLanelet goal_lanelet;
+    if (planner_data_->route_handler->getGoalLanelet(&goal_lanelet)) {
+      refined_goal = util::refineGoal(goal, goal_lanelet);
+    } else {
+      refined_goal = goal;
+    }
+  }
+
   auto refined_path = util::refinePathForGoal(
-    planner_data_->parameters.refine_goal_search_radius_range, M_PI * 0.5, path, goal,
+    planner_data_->parameters.refine_goal_search_radius_range, M_PI * 0.5, path, refined_goal,
     goal_lane_id);
   refined_path.header.frame_id = "map";
   refined_path.header.stamp = this->now();
