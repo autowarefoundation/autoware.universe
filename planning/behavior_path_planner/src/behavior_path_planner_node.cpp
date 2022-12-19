@@ -211,11 +211,6 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
     declare_parameter("minimum_lane_change_prepare_distance", 2.0);
 
   p.minimum_pull_over_length = declare_parameter("minimum_pull_over_length", 15.0);
-  p.drivable_area_resolution = declare_parameter<double>("drivable_area_resolution");
-  p.drivable_lane_forward_length = declare_parameter<double>("drivable_lane_forward_length");
-  p.drivable_lane_backward_length = declare_parameter<double>("drivable_lane_backward_length");
-  p.drivable_lane_margin = declare_parameter<double>("drivable_lane_margin");
-  p.drivable_area_margin = declare_parameter<double>("drivable_area_margin");
   p.refine_goal_search_radius_range = declare_parameter("refine_goal_search_radius_range", 7.5);
   p.turn_signal_intersection_search_distance =
     declare_parameter("turn_signal_intersection_search_distance", 30.0);
@@ -618,7 +613,11 @@ void BehaviorPathPlannerNode::run()
   // update planner data
   planner_data_->self_pose = self_pose_listener_.getCurrentPose();
 
-  const auto planner_data = planner_data_;
+  const auto planner_data = std::make_shared<PlannerData>(*planner_data_);
+
+  // unlock planner data
+  mutex_pd_.unlock();
+
   // run behavior planner
   const auto output = bt_manager_->run(planner_data);
 
@@ -627,7 +626,9 @@ void BehaviorPathPlannerNode::run()
 
   // update planner data
   planner_data_->prev_output_path = path;
-  mutex_pd_.unlock();
+
+  // compute turn signal
+  computeTurnSignal(planner_data, *path, output);
 
   // publish drivable bounds
   publish_bounds(*path);
@@ -645,26 +646,6 @@ void BehaviorPathPlannerNode::run()
   const auto path_candidate = getPathCandidate(output, planner_data);
   path_candidate_publisher_->publish(util::toPath(*path_candidate));
 
-  // for turn signal
-  {
-    TurnIndicatorsCommand turn_signal;
-    HazardLightsCommand hazard_signal;
-    if (output.turn_signal_info.hazard_signal.command == HazardLightsCommand::ENABLE) {
-      turn_signal.command = TurnIndicatorsCommand::DISABLE;
-      hazard_signal.command = output.turn_signal_info.hazard_signal.command;
-    } else {
-      turn_signal =
-        turn_signal_decider_.getTurnSignal(planner_data, *path, output.turn_signal_info);
-      hazard_signal.command = HazardLightsCommand::DISABLE;
-    }
-    turn_signal.stamp = get_clock()->now();
-    hazard_signal.stamp = get_clock()->now();
-    turn_signal_publisher_->publish(turn_signal);
-    hazard_signal_publisher_->publish(hazard_signal);
-
-    publish_steering_factor(turn_signal);
-  }
-
   publishSceneModuleDebugMsg();
 
   if (planner_data->parameters.visualize_drivable_area_for_shared_linestrings_lanelet) {
@@ -675,6 +656,27 @@ void BehaviorPathPlannerNode::run()
 
   mutex_bt_.unlock();
   RCLCPP_DEBUG(get_logger(), "----- behavior path planner end -----\n\n");
+}
+
+void BehaviorPathPlannerNode::computeTurnSignal(
+  const std::shared_ptr<PlannerData> planner_data, const PathWithLaneId & path,
+  const BehaviorModuleOutput & output)
+{
+  TurnIndicatorsCommand turn_signal;
+  HazardLightsCommand hazard_signal;
+  if (output.turn_signal_info.hazard_signal.command == HazardLightsCommand::ENABLE) {
+    turn_signal.command = TurnIndicatorsCommand::DISABLE;
+    hazard_signal.command = output.turn_signal_info.hazard_signal.command;
+  } else {
+    turn_signal = turn_signal_decider_.getTurnSignal(planner_data, path, output.turn_signal_info);
+    hazard_signal.command = HazardLightsCommand::DISABLE;
+  }
+  turn_signal.stamp = get_clock()->now();
+  hazard_signal.stamp = get_clock()->now();
+  turn_signal_publisher_->publish(turn_signal);
+  hazard_signal_publisher_->publish(hazard_signal);
+
+  publish_steering_factor(turn_signal);
 }
 
 void BehaviorPathPlannerNode::publish_steering_factor(const TurnIndicatorsCommand & turn_signal)
