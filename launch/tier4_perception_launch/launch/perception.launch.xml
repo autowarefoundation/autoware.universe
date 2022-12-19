@@ -101,8 +101,7 @@
       <!-- tracking module -->
       <group>
         <push-ros-namespace namespace="tracking"/>
-        <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/tracking/tracking.launch.xml">
-        </include>
+        <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/tracking/tracking.launch.xml"/>
       </group>
       <!-- prediction module -->
       <group>

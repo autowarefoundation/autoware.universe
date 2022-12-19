@@ -328,7 +328,9 @@ class GroundSegmentationPipeline:
                         "inpaint_radius": 1.0,
                         "param_file_path": PathJoinSubstitution(
                             [
-                                LaunchConfiguration("obstacle_segmentation_ground_segmentation_elevation_map_param_path"),
+                                LaunchConfiguration(
+                                    "obstacle_segmentation_ground_segmentation_elevation_map_param_path"
+                                ),
                             ]
                         ),
                         "elevation_map_directory": PathJoinSubstitution(
