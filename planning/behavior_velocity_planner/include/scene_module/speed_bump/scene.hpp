@@ -17,6 +17,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include <scene_module/scene_module_interface.hpp>
+#include <scene_module/speed_bump/util.hpp>
 
 #include <utility>
 #include <vector>
@@ -24,13 +25,10 @@
 namespace behavior_velocity_planner
 {
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
-using geometry_msgs::msg::Point32;
 
 class SpeedBumpModule : public SceneModuleInterface
 {
 public:
-  enum class State { SLOW_DOWN, INSIDE, OUT };
-
   struct DebugData
   {
     double base_link2front;
@@ -71,24 +69,13 @@ private:
   // Parameter
   PlannerParam planner_param_;
 
-  // State
-  State state_;
-
   // Debug
   DebugData debug_data_;
 
-  std::vector<geometry_msgs::msg::Point> path_intersects_;
+  bool applySlowDownSpeed(
+    PathWithLaneId & output, const float speed_bump_speed,
+    const PathPolygonIntersectionStatus & path_polygon_intersection_status);
 
-  bool applySlowDownSpeed(PathWithLaneId & output);
-
-  void insertDecelPointWithDebugInfo(
-    const geometry_msgs::msg::Point & slow_point, const float target_velocity,
-    PathWithLaneId & output);
-
-  // returns m and b consts for y=mx+b
-  static std::pair<float, float> getLinearEquation(const Point32 & p1, const Point32 & p2);
-
-  bool passed_slow_start_point_;
   float speed_bump_slow_down_speed_;
 };
 

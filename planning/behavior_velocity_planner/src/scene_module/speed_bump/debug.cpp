@@ -66,7 +66,7 @@ visualization_msgs::msg::MarkerArray createSpeedBumpMarkers(
   if (!debug_data.slow_end_points.empty()) {
     auto marker = createDefaultMarker(
       "map", now, "slow end point", uid, Marker::POINTS, createMarkerScale(0.25, 0.25, 0.0),
-      createMarkerColor(0.0, 1.0, 1.0, 0.999));
+      createMarkerColor(0.2, 0.8, 1.0, 0.999));
     for (const auto & p : debug_data.slow_end_points) {
       marker.points.push_back(createPoint(p.x, p.y, p.z));
     }
@@ -77,7 +77,7 @@ visualization_msgs::msg::MarkerArray createSpeedBumpMarkers(
   if (!debug_data.path_polygon_intersection_points.empty()) {
     auto marker = createDefaultMarker(
       "map", now, "path_polygon intersection points", uid, Marker::POINTS,
-      createMarkerScale(0.25, 0.25, 0.0), createMarkerColor(0.9, 0.9, 0.9, 0.999));
+      createMarkerScale(0.25, 0.25, 0.0), createMarkerColor(1.0, 0.0, 0.0, 0.999));
     for (const auto & p : debug_data.path_polygon_intersection_points) {
       marker.points.push_back(createPoint(p.x, p.y, p.z));
     }
