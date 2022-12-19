@@ -450,11 +450,6 @@ Trajectory PIDBasedPlanner::doCruiseWithTrajectory(
     return target_jerk_ratio;
   }();
 
-  /*
-  const double target_acc = vel_to_acc_weight_ * additional_vel;
-  const double target_acc_with_acc_limit =
-    std::clamp(target_acc, min_accel_during_cruise_, longitudinal_info_.max_accel);
-  */
   cruise_planning_debug_info_.set(
     CruisePlanningDebugInfo::TYPE::CRUISE_TARGET_ACCELERATION, target_acc);
   cruise_planning_debug_info_.set(

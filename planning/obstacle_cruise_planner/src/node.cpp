@@ -624,7 +624,8 @@ std::vector<TargetObstacle> ObstacleCruisePlannerNode::filterObstacles(
 
   std::vector<TargetObstacle> target_obstacles;
   for (const auto & predicted_object : predicted_objects.objects) {
-    const auto object_id = toHexString(predicted_object.object_id).substr(0, 4);
+    const auto object_id =
+      tier4_autoware_utils::toHexString(predicted_object.object_id).substr(0, 4);
 
     // filter object whose label is not cruised or stopped
     const bool is_target_obstacle = isStopObstacle(predicted_object.classification.front().label) ||
@@ -849,7 +850,7 @@ void ObstacleCruisePlannerNode::checkConsistency(
   const auto predicted_object_itr = std::find_if(
     predicted_objects.objects.begin(), predicted_objects.objects.end(),
     [&](PredictedObject predicted_object) {
-      return obstacle_cruise_utils::toHexString(predicted_object.object_id) ==
+      return tier4_autoware_utils::toHexString(predicted_object.object_id) ==
              prev_closest_obstacle_ptr_->uuid;
     });
 

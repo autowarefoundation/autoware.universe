@@ -25,18 +25,6 @@
 #include <string>
 #include <vector>
 
-namespace
-{
-std::string toHexString(const unique_identifier_msgs::msg::UUID & id)
-{
-  std::stringstream ss;
-  for (auto i = 0; i < 16; ++i) {
-    ss << std::hex << std::setfill('0') << std::setw(2) << +id.uuid[i];
-  }
-  return ss.str();
-}
-}  // namespace
-
 struct TargetObstacle
 {
   TargetObstacle(
@@ -50,7 +38,7 @@ struct TargetObstacle
     velocity_reliable = true;
     velocity = aligned_velocity;
     classification = object.classification.at(0);
-    uuid = toHexString(object.object_id);
+    uuid = tier4_autoware_utils::toHexString(object.object_id);
 
     predicted_paths.clear();
     for (const auto & path : object.kinematics.predicted_paths) {

@@ -154,13 +154,4 @@ boost::optional<TargetObstacle> getClosestStopObstacle(
   }
   return closest_stop_obstacle;
 }
-
-std::string toHexString(const unique_identifier_msgs::msg::UUID & id)
-{
-  std::stringstream ss;
-  for (auto i = 0; i < 16; ++i) {
-    ss << std::hex << std::setfill('0') << std::setw(2) << +id.uuid[i];
-  }
-  return ss.str();
-}
 }  // namespace obstacle_cruise_utils

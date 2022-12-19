@@ -52,8 +52,6 @@ geometry_msgs::msg::PoseStamped getCurrentObjectPose(
 boost::optional<TargetObstacle> getClosestStopObstacle(
   const Trajectory & traj, const std::vector<TargetObstacle> & target_obstacles);
 
-std::string toHexString(const unique_identifier_msgs::msg::UUID & id);
-
 template <class T>
 size_t getIndexWithLongitudinalOffset(
   const T & points, const double longitudinal_offset, boost::optional<size_t> start_idx)
