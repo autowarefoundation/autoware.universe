@@ -152,13 +152,16 @@ std::array<double, 3> convertHexStringToDecimal(const std::string & hex_str_colo
   return std::array<double, 3>{r / 255.0, g / 255.0, b / 255.0};
 }
 
+// FIXME(vrichard) with LaneletPath it is very similar to LaneletRoute::isPathStraight()
 std::vector<unsigned int> check_lanelet_connection(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & route_lanelets)
 {
   std::vector<unsigned int> unconnected_lane_ids;
+  const auto lanelet_route_ptr = route_handler.getLaneletRoutePtr();
 
   for (size_t i = 0; i < route_lanelets.size() - 1; ++i) {
-    const auto next_lanelets = route_handler.getNextLanelets(route_lanelets.at(i));
+    const auto next_lanelets = lanelet_route_ptr->getFollowingLanelets(
+      route_handler::LaneletPoint::endOf(route_lanelets.at(i)));
 
     const bool is_connected =
       std::find_if(next_lanelets.begin(), next_lanelets.end(), [&](const auto & next_lanelet) {

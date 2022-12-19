@@ -20,6 +20,7 @@
 
 #include <lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <route_handler/lanelet_path.hpp>
 #include <tier4_autoware_utils/geometry/boost_geometry.hpp>
 
 #include <boost/geometry/algorithms/dispatch/distance.hpp>
@@ -53,16 +54,15 @@ PathWithLaneId getBackwardPath(
 {
   const auto current_pose_arc_coords =
     lanelet::utils::getArcCoordinates(shoulder_lanes, current_pose);
-  const auto backed_pose_arc_coords =
-    lanelet::utils::getArcCoordinates(shoulder_lanes, backed_pose);
-
-  const double s_start = backed_pose_arc_coords.length;
-  const double s_end = current_pose_arc_coords.length;
 
   PathWithLaneId backward_path;
   {
+    const auto lanelet_route_ptr = route_handler.getLaneletRoutePtr();
+    const auto backward_shoulder_path =
+      lanelet_route_ptr->getPathFromLanelets(shoulder_lanes, backed_pose, current_pose);
+
     // forward center line path
-    backward_path = route_handler.getCenterLinePath(shoulder_lanes, s_start, s_end, true);
+    backward_path = route_handler.getCenterLinePath(backward_shoulder_path, true);
 
     // backward center line path
     std::reverse(backward_path.points.begin(), backward_path.points.end());

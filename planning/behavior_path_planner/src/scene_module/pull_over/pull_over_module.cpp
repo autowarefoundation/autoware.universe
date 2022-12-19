@@ -193,24 +193,34 @@ bool PullOverModule::isExecutionRequested() const
   if (current_state_ == BT::NodeStatus::RUNNING) {
     return true;
   }
-  const auto & current_lanes = util::getCurrentLanes(planner_data_);
+  const auto & current_path = util::getCurrentPath(planner_data_);
   const auto & current_pose = planner_data_->self_pose->pose;
-  const auto & goal_pose = planner_data_->route_handler->getGoalPose();
 
-  // check if goal_pose is far
-  const bool is_in_goal_route_section =
-    planner_data_->route_handler->isInGoalRouteSection(current_lanes.back());
-  // current_lanes does not have the goal
-  if (!is_in_goal_route_section) {
+  if (current_path.empty()) {
     return false;
   }
+
+  const auto lanelet_route_ptr = planner_data_->route_handler->getLaneletRoutePtr();
+
+  const auto current_lanelet_point =
+    lanelet_route_ptr->getClosestLaneletPointWithinRoute(current_pose);
+  const auto optional_route_arc_length =
+    lanelet_route_ptr->getRouteArcLength(current_lanelet_point);
+
+  if (!optional_route_arc_length) {
+    return false;  // not on the route!!
+  }
+
+  const double route_arc_length = *optional_route_arc_length;
   const double self_to_goal_arc_length =
-    util::getSignedDistance(current_pose, goal_pose, current_lanes);
+    lanelet_route_ptr->getMainPath().length() - route_arc_length;
+
   if (self_to_goal_arc_length > parameters_.request_length) {
-    return false;
+    return false;  // route goal is still far
   }
 
   // check if goal_pose is in shoulder lane
+  const auto & goal_pose = planner_data_->route_handler->getGoalPose();
   bool goal_is_in_shoulder_lane = false;
   lanelet::Lanelet closest_shoulder_lanelet;
   if (lanelet::utils::query::getClosestLanelet(
@@ -576,13 +586,17 @@ PathWithLaneId PullOverModule::getReferencePath() const
     return PathWithLaneId{};
   }
 
+  const auto lanelet_route_ptr = route_handler->getLaneletRoutePtr();
+
   // generate reference path
   const auto s_current =
     lanelet::utils::getArcCoordinates(status_.current_lanes, current_pose).length;
   const double s_start = std::max(0.0, s_current - common_parameters.backward_path_length);
   const double s_end = s_current + common_parameters.forward_path_length;
-  auto reference_path =
-    route_handler->getCenterLinePath(status_.current_lanes, s_start, s_end, true);
+  const auto whole_lanelets_path = lanelet_route_ptr->getPathFromLanelets(status_.current_lanes);
+  const auto lanelet_path = whole_lanelets_path.truncate(
+    whole_lanelets_path.getPointAt(s_start), whole_lanelets_path.getPointAt(s_end));
+  auto reference_path = route_handler->getCenterLinePath(lanelet_path, true);
 
   // if not approved, stop parking start position or goal search start position.
   const auto refined_goal_arc_coordinates =
@@ -630,11 +644,21 @@ PathWithLaneId PullOverModule::generateStopPath() const
   const auto & common_parameters = planner_data_->parameters;
   const double current_vel = planner_data_->self_odometry->twist.twist.linear.x;
 
+  if (!route_handler->isHandlerReady()) {
+    return PathWithLaneId{};
+  }
+  const auto lanelet_route_ptr = route_handler->getLaneletRoutePtr();
+
   const auto s_current =
     lanelet::utils::getArcCoordinates(status_.current_lanes, current_pose).length;
   const double s_start = std::max(0.0, s_current - common_parameters.backward_path_length);
   const double s_end = s_current + common_parameters.forward_path_length;
-  auto stop_path = route_handler->getCenterLinePath(status_.current_lanes, s_start, s_end, true);
+
+  const auto whole_lanelets_path = lanelet_route_ptr->getPathFromLanelets(status_.current_lanes);
+  const auto lanelet_path = whole_lanelets_path.truncate(
+    whole_lanelets_path.getPointAt(s_start), whole_lanelets_path.getPointAt(s_end));
+
+  auto stop_path = route_handler->getCenterLinePath(lanelet_path, true);
 
   // set deceleration velocity
   const size_t ego_idx = findEgoIndex(stop_path.points);

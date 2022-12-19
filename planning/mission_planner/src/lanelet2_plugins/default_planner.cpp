@@ -363,17 +363,13 @@ PlannerPlugin::LaneletRoute DefaultPlanner::plan(const RoutePoints & points)
   for (std::size_t i = 1; i < points.size(); i++) {
     const auto start_check_point = points.at(i - 1);
     const auto goal_check_point = points.at(i);
-    lanelet::ConstLanelets path_lanelets;
-    if (!route_handler_.planPathLaneletsBetweenCheckpoints(
-          start_check_point, goal_check_point, &path_lanelets)) {
+    if (!route_handler_.buildRoute(start_check_point, goal_check_point)) {
       return route_msg;
     }
-    for (const auto & lane : path_lanelets) {
-      all_route_lanelets.push_back(lane);
+    for (const auto & section : route_handler_.getLaneletRoutePtr()->getMainPath()) {
+      all_route_lanelets.push_back(section.lanelet());
     }
-    // create local route sections
-    route_handler_.setRouteLanelets(path_lanelets);
-    const auto local_route_sections = route_handler_.createMapSegments(path_lanelets);
+    const auto local_route_sections = route_handler_.getLaneletRoutePtr()->toLaneletSegmentMsgs();
     route_sections = combine_consecutive_route_sections(route_sections, local_route_sections);
   }
 
@@ -382,30 +378,37 @@ PlannerPlugin::LaneletRoute DefaultPlanner::plan(const RoutePoints & points)
     return route_msg;
   }
 
-  if (route_handler_.isRouteLooped(route_sections)) {
-    RCLCPP_WARN(logger, "Loop detected within route!");
-    return route_msg;
-  }
-
   const auto refined_goal = refine_goal_height(points.back(), route_sections);
   RCLCPP_DEBUG(logger, "Goal Pose Z : %lf", refined_goal.position.z);
 
   // The header is assigned by mission planner.
-  route_msg.start_pose = points.front();
-  route_msg.goal_pose = refined_goal;
-  route_msg.segments = route_sections;
+  LaneletRoute tmp;
+  tmp.start_pose = points.front();
+  tmp.goal_pose = refined_goal;
+  tmp.segments = route_sections;
+
+  if (!route_handler_.isRouteMsgValid(tmp)) {
+    RCLCPP_WARN(logger, "Loop detected within route!");
+    return route_msg;
+  }
+
+  route_msg = std::move(tmp);
+
   return route_msg;
 }
 
 geometry_msgs::msg::Pose DefaultPlanner::refine_goal_height(
   const Pose & goal, const RouteSections & route_sections)
 {
+  Pose refined_goal = goal;
+  if (route_sections.empty()) {
+    return refined_goal;
+  }
   const auto goal_lane_id = route_sections.back().preferred_primitive.id;
   lanelet::Lanelet goal_lanelet = lanelet_map_ptr_->laneletLayer.get(goal_lane_id);
   const auto goal_lanelet_pt = lanelet::utils::conversion::toLaneletPoint(goal.position);
   const auto goal_height = project_goal_to_map(goal_lanelet, goal_lanelet_pt);
 
-  Pose refined_goal = goal;
   refined_goal.position.z = goal_height;
   return refined_goal;
 }

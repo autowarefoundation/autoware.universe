@@ -17,6 +17,7 @@
 #include "behavior_path_planner/debug_utilities.hpp"
 #include "behavior_path_planner/path_utilities.hpp"
 #include "behavior_path_planner/scene_module/avoidance/avoidance_module.hpp"
+#include "behavior_path_planner/utilities.hpp"
 
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 #include <vehicle_info_util/vehicle_info_util.hpp>
@@ -944,14 +945,20 @@ SetParametersResult BehaviorPathPlannerNode::onSetParam(
 PathWithLaneId BehaviorPathPlannerNode::modifyPathForSmoothGoalConnection(
   const PathWithLaneId & path) const
 {
-  const auto goal = planner_data_->route_handler->getGoalPose();
-  const auto goal_lane_id = planner_data_->route_handler->getGoalLaneId();
+  const auto & route_handler = planner_data_->route_handler;
+
+  const auto lanelet_route_ptr = route_handler->getLaneletRoutePtr();
+
+  // TODO(vrichard) is that what we really want to do?
+  const auto goal = route_handler->getGoalPose();
+  const auto goal_lane_id = lanelet_route_ptr->getMainPath().back().lanelet().id();
 
   Pose refined_goal{};
   {
-    lanelet::ConstLanelet goal_lanelet;
-    if (planner_data_->route_handler->getGoalLanelet(&goal_lanelet)) {
-      refined_goal = util::refineGoal(goal, goal_lanelet);
+    const auto goal_point =
+      planner_data_->route_handler->getLaneletRoutePtr()->getClosestLaneletPointWithinRoute(goal);
+    if (goal_point.isValid()) {
+      refined_goal = util::refineGoal(goal, goal_point.lanelet());
     } else {
       refined_goal = goal;
     }

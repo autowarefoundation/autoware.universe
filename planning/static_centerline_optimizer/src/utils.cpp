@@ -75,10 +75,13 @@ PathWithLaneId get_path_with_lane_id(
   const geometry_msgs::msg::Pose & start_pose, const double ego_nearest_dist_threshold,
   const double ego_nearest_yaw_threshold)
 {
+  const auto lanelet_route_ptr = route_handler.getLaneletRoutePtr();
+
   // get center line
-  constexpr double s_start = 0.0;
-  constexpr double s_end = std::numeric_limits<double>::max();
-  auto path_with_lane_id = route_handler.getCenterLinePath(lanelets, s_start, s_end);
+  // constexpr double s_start = 0.0;
+  // constexpr double s_end = std::numeric_limits<double>::max();
+  const auto whole_lanelets_path = lanelet_route_ptr->getPathFromLanelets(lanelets);
+  auto path_with_lane_id = route_handler.getCenterLinePath(whole_lanelets_path);
   path_with_lane_id.header.frame_id = "map";
 
   // create planner data

@@ -19,6 +19,7 @@
 #include "behavior_path_planner/scene_module/avoidance/debug.hpp"
 #include "behavior_path_planner/scene_module/scene_module_visitor.hpp"
 #include "behavior_path_planner/utilities.hpp"
+#include "route_handler/lanelet_path.hpp"
 
 #include <lanelet2_extension/utility/message_conversion.hpp>
 #include <lanelet2_extension/utility/utilities.hpp>
@@ -176,9 +177,11 @@ AvoidancePlanningData AvoidanceModule::calcAvoidancePlanningData(DebugData & deb
     calcSignedArcLength(data.reference_path.points, getEgoPosition(), 0));
 
   // lanelet info
-  data.current_lanelets = util::calcLaneAroundPose(
+  const auto current_lanelet_path = util::calcLaneletPathAroundPose(
     planner_data_->route_handler, reference_pose.pose,
     planner_data_->parameters.forward_path_length, planner_data_->parameters.backward_path_length);
+
+  data.current_lanelets = behavior_path_planner::util::getPathLanelets(current_lanelet_path);
 
   // target objects for avoidance
   fillAvoidanceTargetObjects(data, debug);
@@ -215,9 +218,17 @@ void AvoidanceModule::fillAvoidanceTargetObjects(
 
   // for goal
   const auto & rh = planner_data_->route_handler;
-  const auto dist_to_goal =
-    rh->isInGoalRouteSection(expanded_lanelets.back())
-      ? calcSignedArcLength(path_points, ego_pos, rh->getGoalPose().position)
+
+  const auto lanelet_route_ptr = rh->getLaneletRoutePtr();
+
+  const auto current_lanelet_point =
+    lanelet_route_ptr->getClosestLaneletPointWithinRoute(planner_data_->self_pose->pose);
+  const auto optional_route_arc_length =
+    lanelet_route_ptr->getRouteArcLength(current_lanelet_point);
+
+  const double dist_to_goal =
+    optional_route_arc_length
+      ? lanelet_route_ptr->getMainPath().length() - *optional_route_arc_length
       : std::numeric_limits<double>::max();
 
   lanelet::ConstLineStrings3d debug_linestring;
@@ -294,10 +305,12 @@ void AvoidanceModule::fillAvoidanceTargetObjects(
     object_data.overhang_dist = calcEnvelopeOverhangDistance(
       object_data, object_closest_pose, object_data.overhang_pose.position);
 
-    lanelet::ConstLanelet overhang_lanelet;
-    if (!rh->getClosestLaneletWithinRoute(object_closest_pose, &overhang_lanelet)) {
+    auto overhang_lanelet_point =
+      lanelet_route_ptr->getClosestLaneletPointWithinRoute(object_closest_pose);
+    if (!overhang_lanelet_point.isValid()) {
       continue;
     }
+    const lanelet::ConstLanelet & overhang_lanelet = overhang_lanelet_point.lanelet();
 
     if (overhang_lanelet.id()) {
       object_data.overhang_lanelet = overhang_lanelet;
@@ -1916,6 +1929,8 @@ void AvoidanceModule::generateExtendedDrivableArea(PathWithLaneId & path) const
   const auto & enable_opposite = parameters_->enable_avoidance_over_opposite_direction;
   std::vector<DrivableLanes> drivable_lanes;
 
+  const auto lanelet_route_ptr = route_handler->getLaneletRoutePtr();
+
   for (const auto & current_lane : current_lanes) {
     DrivableLanes current_drivable_lanes;
     current_drivable_lanes.left_lane = current_lane;
@@ -1954,20 +1969,24 @@ void AvoidanceModule::generateExtendedDrivableArea(PathWithLaneId & path) const
     // 2. when there are multiple turning lanes whose previous lanelet is the same in
     // intersection
     const lanelet::ConstLanelets next_lanes_from_intersection = std::invoke(
-      [&route_handler](const lanelet::ConstLanelet & lane) {
+      [&lanelet_route_ptr](const lanelet::ConstLanelet & lane) {
         if (!lane.hasAttribute("turn_direction")) {
           return lanelet::ConstLanelets{};
         }
 
         // get previous lane, and return false if previous lane does not exist
-        lanelet::ConstLanelets prev_lanes;
-        if (!route_handler->getPreviousLaneletsWithinRoute(lane, &prev_lanes)) {
+        // FIXME(vrichard) is startOf(lane) ok ?
+        const lanelet::ConstLanelets prev_lanes =
+          lanelet_route_ptr->getPreviousLanelets(route_handler::LaneletPoint::startOf(lane), true);
+        if (prev_lanes.empty()) {
           return lanelet::ConstLanelets{};
         }
 
         lanelet::ConstLanelets next_lanes;
         for (const auto & prev_lane : prev_lanes) {
-          const auto next_lanes_from_prev = route_handler->getNextLanelets(prev_lane);
+          // FIXME(vrichard) is endOf(prev_lane) ok ?
+          const auto next_lanes_from_prev = lanelet_route_ptr->getFollowingLanelets(
+            route_handler::LaneletPoint::endOf(prev_lane), false);
           next_lanes.reserve(next_lanes.size() + next_lanes_from_prev.size());
           next_lanes.insert(
             next_lanes.end(), next_lanes_from_prev.begin(), next_lanes_from_prev.end());
@@ -2120,10 +2139,9 @@ PathWithLaneId AvoidanceModule::calcCenterLinePath(
     "p.backward_path_length = %f, longest_dist_to_shift_line = %f, backward_length = %f",
     p.backward_path_length, longest_dist_to_shift_line, backward_length);
 
-  const lanelet::ConstLanelets current_lanes =
-    util::calcLaneAroundPose(route_handler, pose.pose, p.forward_path_length, backward_length);
-  centerline_path = util::getCenterLinePath(
-    *route_handler, current_lanes, pose.pose, backward_length, p.forward_path_length, p);
+  const route_handler::LaneletPath current_lanelet_path = util::calcLaneletPathAroundPose(
+    route_handler, pose.pose, p.forward_path_length, backward_length);
+  centerline_path = util::getCenterLinePath(*route_handler, current_lanelet_path, p);
 
   // for debug: check if the path backward distance is same as the desired length.
   // {

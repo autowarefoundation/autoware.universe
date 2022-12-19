@@ -489,23 +489,29 @@ bool isLaneChangePathSafe(
   return true;
 }
 
+// TODO(vrichard) use LaneletPath instead
 PathWithLaneId getReferencePathFromTargetLane(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & target_lanes,
   const Pose & lane_changing_start_pose, const double prepare_distance,
   const double lane_changing_distance, const double forward_path_length,
   const double lane_changing_speed)
 {
+  const auto lanelet_route_ptr = route_handler.getLaneletRoutePtr();
   const ArcCoordinates lane_change_start_arc_position =
     lanelet::utils::getArcCoordinates(target_lanes, lane_changing_start_pose);
   const double & s_start = lane_change_start_arc_position.length;
   double s_end = s_start + prepare_distance + lane_changing_distance + forward_path_length;
-  if (route_handler.isInGoalRouteSection(target_lanes.back())) {
+  // FIXME(vrichard) This assumes goal could not be on any previous lanelet...
+  if (lanelet_route_ptr->isOnLastSegment(
+        route_handler::LaneletPoint::startOf(target_lanes.back()))) {
     const auto goal_arc_coordinates =
       lanelet::utils::getArcCoordinates(target_lanes, route_handler.getGoalPose());
     s_end = std::min(s_end, goal_arc_coordinates.length);
   }
-  const auto lane_changing_reference_path =
-    route_handler.getCenterLinePath(target_lanes, s_start, s_end);
+  const auto whole_lanelets_path = lanelet_route_ptr->getPathFromLanelets(target_lanes);
+  const auto truncated_path = whole_lanelets_path.truncate(
+    whole_lanelets_path.getPointAt(s_start), whole_lanelets_path.getPointAt(s_end));
+  const auto lane_changing_reference_path = route_handler.getCenterLinePath(truncated_path);
 
   constexpr auto min_resampling_points{30.0};
   constexpr auto resampling_dt{0.2};
@@ -514,10 +520,12 @@ PathWithLaneId getReferencePathFromTargetLane(
   return util::resamplePathWithSpline(lane_changing_reference_path, resample_interval);
 }
 
+// TODO(vrichard) use LaneletPath instead
 PathWithLaneId getReferencePathFromTargetLane(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & target_lanes,
   const Pose & in_target_front_pose, const Pose & in_target_end_pose)
 {
+  const auto lanelet_route_ptr = route_handler.getLaneletRoutePtr();
   const ArcCoordinates lane_change_start_arc_position =
     lanelet::utils::getArcCoordinates(target_lanes, in_target_front_pose);
 
@@ -526,12 +534,17 @@ PathWithLaneId getReferencePathFromTargetLane(
 
   const double & s_start = lane_change_start_arc_position.length;
   double s_end = lane_change_end_arc_position.length;
-  if (route_handler.isInGoalRouteSection(target_lanes.back())) {
+  // FIXME(vrichard) This assumes goal could not be on any previous lanelet...
+  if (lanelet_route_ptr->isOnLastSegment(
+        route_handler::LaneletPoint::startOf(target_lanes.back()))) {
     const auto goal_arc_coordinates =
       lanelet::utils::getArcCoordinates(target_lanes, route_handler.getGoalPose());
     s_end = std::min(s_end, goal_arc_coordinates.length);
   }
-  return route_handler.getCenterLinePath(target_lanes, s_start, s_end);
+  const auto whole_lanelets_path = lanelet_route_ptr->getPathFromLanelets(target_lanes);
+  const auto truncated_path = whole_lanelets_path.truncate(
+    whole_lanelets_path.getPointAt(s_start), whole_lanelets_path.getPointAt(s_end));
+  return route_handler.getCenterLinePath(truncated_path);
 }
 
 ShiftLine getLaneChangeShiftLine(
@@ -569,8 +582,12 @@ PathWithLaneId getLaneChangePathPrepareSegment(
   const double s_start = arc_position.length - backward_path_length;
   const double s_end = arc_position.length + prepare_distance;
 
-  PathWithLaneId prepare_segment =
-    route_handler.getCenterLinePath(original_lanelets, s_start, s_end);
+  const auto lanelet_path_ptr = route_handler.getLaneletRoutePtr();
+  const auto whole_lanelets_path = lanelet_path_ptr->getPathFromLanelets(original_lanelets);
+  const auto truncated_path = whole_lanelets_path.truncate(
+    whole_lanelets_path.getPointAt(s_start), whole_lanelets_path.getPointAt(s_end));
+
+  PathWithLaneId prepare_segment = route_handler.getCenterLinePath(truncated_path);
 
   prepare_segment.points.back().point.longitudinal_velocity_mps = std::min(
     prepare_segment.points.back().point.longitudinal_velocity_mps,
@@ -591,10 +608,13 @@ PathWithLaneId getLaneChangePathLaneChangingSegment(
     return PathWithLaneId();
   }
 
+  const auto lanelet_route_ptr = route_handler.getLaneletRoutePtr();
+
   const ArcCoordinates arc_position =
     lanelet::utils::getArcCoordinates(target_lanelets, current_pose);
   const double lane_length = lanelet::utils::getLaneletLength2d(target_lanelets);
-  const int num = std::abs(route_handler.getNumLaneToPreferredLane(target_lanelets.back()));
+  const int num = std::abs(*lanelet_route_ptr->getNumLaneChangeToPreferredLane(
+    route_handler::LaneletPoint::endOf(target_lanelets.back())));
 
   const double s_start = std::invoke([&arc_position, &prepare_distance, &lane_change_distance,
                                       &lane_length, &num, &minimum_lane_change_length]() {
@@ -610,8 +630,11 @@ PathWithLaneId getLaneChangePathLaneChangingSegment(
     return std::max(s_end, s_start + std::numeric_limits<double>::epsilon());
   });
 
-  PathWithLaneId lane_changing_segment =
-    route_handler.getCenterLinePath(target_lanelets, s_start, s_end);
+  const auto whole_lanelets_path = lanelet_route_ptr->getPathFromLanelets(target_lanelets);
+  const auto target_path = whole_lanelets_path.truncate(
+    whole_lanelets_path.getPointAt(s_start), whole_lanelets_path.getPointAt(s_end));
+
+  PathWithLaneId lane_changing_segment = route_handler.getCenterLinePath(target_path);
   for (auto & point : lane_changing_segment.points) {
     point.point.longitudinal_velocity_mps = std::min(
       point.point.longitudinal_velocity_mps,

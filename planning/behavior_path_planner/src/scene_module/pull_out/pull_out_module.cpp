@@ -487,13 +487,22 @@ std::vector<Pose> PullOutModule::searchBackedPoses()
 {
   const auto current_pose = planner_data_->self_pose->pose;
 
+  const auto lanelet_route_ptr = planner_data_->route_handler->getLaneletRoutePtr();
+
   // get backward shoulder path
   const auto arc_position_pose =
     lanelet::utils::getArcCoordinates(status_.pull_out_lanes, current_pose);
   const double check_distance = parameters_.max_back_distance + 30.0;  // buffer
-  auto backward_shoulder_path = planner_data_->route_handler->getCenterLinePath(
-    status_.pull_out_lanes, arc_position_pose.length - check_distance,
-    arc_position_pose.length + check_distance);
+
+  lanelet::ConstLanelet current_llt;
+  if (!lanelet::utils::query::getClosestLanelet(
+        status_.pull_out_lanes, current_pose, &current_llt)) {
+    return {};
+  }
+  const auto current_point = route_handler::LaneletPoint::fromProjection(current_llt, current_pose);
+  const auto pull_out_path =
+    lanelet_route_ptr->getStraightPath(current_point, check_distance, check_distance, false);
+  auto backward_shoulder_path = planner_data_->route_handler->getCenterLinePath(pull_out_path);
 
   // lateral shift to current_pose
   const double distance_from_center_line = arc_position_pose.distance;
