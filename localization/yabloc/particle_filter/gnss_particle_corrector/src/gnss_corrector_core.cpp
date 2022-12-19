@@ -16,12 +16,12 @@ GnssParticleCorrector::GnssParticleCorrector()
   using std::placeholders::_1;
 
   // Subscriber
-  auto cb_pose = std::bind(&GnssParticleCorrector::on_pose, this, _1);
-  auto cb_ublox = std::bind(&GnssParticleCorrector::on_ublox, this, _1);
-  auto cb_height = [this](const Float32 & height) { this->latest_height_ = height; };
-  ublox_sub_ = create_subscription<NavPVT>("input/navpvt", 10, cb_ublox);
-  pose_sub_ = create_subscription<PoseCovStamped>("input/pose_with_covariance", 10, cb_pose);
-  height_sub_ = create_subscription<Float32>("input/height", 10, cb_height);
+  auto on_pose = std::bind(&GnssParticleCorrector::on_pose, this, _1);
+  auto on_ublox = std::bind(&GnssParticleCorrector::on_ublox, this, _1);
+  auto on_height = [this](const Float32 & height) { this->latest_height_ = height; };
+  ublox_sub_ = create_subscription<NavPVT>("input/navpvt", 10, on_ublox);
+  pose_sub_ = create_subscription<PoseCovStamped>("input/pose_with_covariance", 10, on_pose);
+  height_sub_ = create_subscription<Float32>("input/height", 10, on_height);
 
   // Publisher
   marker_pub_ = create_publisher<MarkerArray>("gnss/range_marker", 10);
@@ -69,7 +69,7 @@ void GnssParticleCorrector::on_ublox(const NavPVT::ConstSharedPtr ublox_msg)
   const Eigen::Vector3f doppler = extract_enu_vel(*ublox_msg);
   const float theta = std::atan2(doppler.y(), doppler.x());
 
-  // Doppler
+  // visualize doppler velocity
   {
     if (doppler.norm() > 1) {
       PoseStamped pose;
@@ -118,6 +118,9 @@ void GnssParticleCorrector::on_ublox(const NavPVT::ConstSharedPtr ublox_msg)
 
   ParticleArray weighted_particles =
     weight_particles(opt_particles.value(), gnss_position, is_rtk_fixed);
+
+  // NOTE: Not sure whether the correction using orientation is effective.
+  // add_weight_by_orientation(weighted_particles, doppler);
 
   // Compute travel distance from last update position
   // If the distance is too short, skip weighting
@@ -182,6 +185,28 @@ GnssParticleCorrector::ParticleArray GnssParticleCorrector::weight_particles(
   }
 
   return weighted_particles;
+}
+
+void GnssParticleCorrector::add_weight_by_orientation(
+  ParticleArray & weighted_particles, const Eigen::Vector3f & velocity)
+{
+  if (velocity.norm() < 1) return;
+
+  const float theta = std::atan2(velocity.x(), velocity.y());
+  const Eigen::Quaternionf measured(std::cos(theta / 2), 0, 0, std::sin(theta / 2));
+
+  auto pdf = [](float x) -> float {
+    constexpr float k = 3.0f;  // TODO:
+    return k * std::exp(-x * x);
+  };
+
+  for (auto & particle : weighted_particles.particles) {
+    auto ori = particle.pose.orientation;
+    Eigen::Quaternionf q(ori.w, ori.x, ori.y, ori.z);
+
+    float d = (q.conjugate() * measured).norm();
+    particle.weight *= pdf(d);
+  }
 }
 
 }  // namespace pcdless::modularized_particle_filter

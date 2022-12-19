@@ -49,6 +49,10 @@ private:
   ParticleArray weight_particles(
     const ParticleArray & predicted_particles, const Eigen::Vector3f & pose, bool is_rtk_fixed);
 
+  // unstable feature
+  void add_weight_by_orientation(
+    ParticleArray & weighted_particles, const Eigen::Vector3f & velocity);
+
   void publish_marker(const Eigen::Vector3f & position, bool fixed);
 };
 }  // namespace pcdless::modularized_particle_filter
