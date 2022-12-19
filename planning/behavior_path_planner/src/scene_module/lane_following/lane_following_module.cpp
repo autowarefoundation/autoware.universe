@@ -128,21 +128,21 @@ PathWithLaneId LaneFollowingModule::getReferencePath() const
         p, optional_lengths);
     }
 
-    const double buffer = p.backward_length_buffer_for_end_of_lane;
     const double lane_change_buffer =
-      num_lane_change * (p.minimum_lane_change_length + buffer) + optional_lengths;
+      util::calcLaneChangeBuffer(p, num_lane_change, optional_lengths);
 
     reference_path = util::setDecelerationVelocity(
       *route_handler, reference_path, current_lanes, parameters_.lane_change_prepare_duration,
       lane_change_buffer);
   }
 
+  const auto shorten_lanes = util::cutOverlappedLanes(reference_path, drivable_lanes);
+
   const auto expanded_lanes = util::expandLanelets(
-    drivable_lanes, parameters_.drivable_area_left_bound_offset,
+    shorten_lanes, parameters_.drivable_area_left_bound_offset,
     parameters_.drivable_area_right_bound_offset);
 
-  reference_path.drivable_area = util::generateDrivableArea(
-    reference_path, expanded_lanes, p.drivable_area_resolution, p.vehicle_length, planner_data_);
+  util::generateDrivableArea(reference_path, expanded_lanes, p.vehicle_length, planner_data_);
 
   return reference_path;
 }

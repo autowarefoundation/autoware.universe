@@ -17,10 +17,12 @@
 
 #include "motion_utils/motion_utils.hpp"
 #include "obstacle_cruise_planner/common_structs.hpp"
+#include "obstacle_cruise_planner/stop_planning_debug_info.hpp"
 #include "obstacle_cruise_planner/utils.hpp"
 #include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
 
+#include "autoware_adapi_v1_msgs/msg/velocity_factor_array.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 #include "tier4_planning_msgs/msg/stop_reason_array.hpp"
 #include "tier4_planning_msgs/msg/stop_speed_exceeded.hpp"
@@ -32,9 +34,12 @@
 #include <memory>
 #include <vector>
 
+using autoware_adapi_v1_msgs::msg::VelocityFactor;
+using autoware_adapi_v1_msgs::msg::VelocityFactorArray;
 using autoware_auto_perception_msgs::msg::ObjectClassification;
 using autoware_auto_planning_msgs::msg::Trajectory;
 using autoware_auto_planning_msgs::msg::TrajectoryPoint;
+using tier4_debug_msgs::msg::Float32MultiArrayStamped;
 using tier4_planning_msgs::msg::StopSpeedExceeded;
 using tier4_planning_msgs::msg::VelocityLimit;
 
@@ -50,6 +55,8 @@ public:
   {
     stop_reasons_pub_ =
       node.create_publisher<tier4_planning_msgs::msg::StopReasonArray>("~/output/stop_reasons", 1);
+    velocity_factors_pub_ =
+      node.create_publisher<VelocityFactorArray>("/planning/velocity_factors/obstacle_cruise", 1);
     stop_speed_exceeded_pub_ =
       node.create_publisher<StopSpeedExceeded>("~/output/stop_speed_exceeded", 1);
   }
@@ -100,6 +107,16 @@ public:
     smoothed_trajectory_ptr_ = traj;
   }
 
+  Float32MultiArrayStamped getStopPlanningDebugMessage(const rclcpp::Time & current_time) const
+  {
+    return stop_planning_debug_info_.convertToMessage(current_time);
+  }
+  virtual Float32MultiArrayStamped getCruisePlanningDebugMessage(
+    [[maybe_unused]] const rclcpp::Time & current_time) const
+  {
+    return Float32MultiArrayStamped{};
+  }
+
 protected:
   // Parameters
   bool is_showing_debug_info_{false};
@@ -110,12 +127,16 @@ protected:
 
   // Publishers
   rclcpp::Publisher<tier4_planning_msgs::msg::StopReasonArray>::SharedPtr stop_reasons_pub_;
+  rclcpp::Publisher<VelocityFactorArray>::SharedPtr velocity_factors_pub_;
   rclcpp::Publisher<StopSpeedExceeded>::SharedPtr stop_speed_exceeded_pub_;
 
   // Vehicle Parameters
   vehicle_info_util::VehicleInfo vehicle_info_;
 
   EgoNearestParam ego_nearest_param_;
+
+  // debug info
+  StopPlanningDebugInfo stop_planning_debug_info_;
 
   // TODO(shimizu) remove these parameters
   Trajectory::ConstSharedPtr smoothed_trajectory_ptr_;

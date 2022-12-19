@@ -1902,7 +1902,7 @@ double AvoidanceModule::getLeftShiftBound() const
 // TODO(murooka) freespace during turning in intersection where there is no neighbour lanes
 // NOTE: Assume that there is no situation where there is an object in the middle lane of more than
 // two lanes since which way to avoid is not obvious
-void AvoidanceModule::generateExtendedDrivableArea(ShiftedPath * shifted_path) const
+void AvoidanceModule::generateExtendedDrivableArea(PathWithLaneId & path) const
 {
   const auto has_same_lane =
     [](const lanelet::ConstLanelets lanes, const lanelet::ConstLanelet & lane) {
@@ -2007,15 +2007,17 @@ void AvoidanceModule::generateExtendedDrivableArea(ShiftedPath * shifted_path) c
     drivable_lanes.push_back(current_drivable_lanes);
   }
 
-  drivable_lanes = util::expandLanelets(
-    drivable_lanes, parameters_->drivable_area_left_bound_offset,
+  const auto shorten_lanes = util::cutOverlappedLanes(path, drivable_lanes);
+
+  const auto extended_lanes = util::expandLanelets(
+    shorten_lanes, parameters_->drivable_area_left_bound_offset,
     parameters_->drivable_area_right_bound_offset, {"road_border"});
 
   {
     const auto & p = planner_data_->parameters;
-    shifted_path->path.drivable_area = util::generateDrivableArea(
-      shifted_path->path, drivable_lanes, p.drivable_area_resolution, p.vehicle_length,
-      planner_data_);
+    generateDrivableArea(
+      path, drivable_lanes, p.vehicle_length, planner_data_, avoidance_data_.target_objects,
+      parameters_->enable_bound_clipping);
   }
 }
 
@@ -2259,9 +2261,6 @@ BehaviorModuleOutput AvoidanceModule::plan()
   auto avoidance_path = generateAvoidancePath(path_shifter_);
   debug_data_.output_shift = avoidance_path.shift_length;
 
-  // Drivable area generation.
-  generateExtendedDrivableArea(&avoidance_path);
-
   // modify max speed to prevent acceleration in avoidance maneuver.
   modifyPathVelocityToPreventAccelerationOnAvoidance(avoidance_path);
 
@@ -2290,6 +2289,9 @@ BehaviorModuleOutput AvoidanceModule::plan()
 
   const size_t ego_idx = findEgoIndex(output.path->points);
   util::clipPathLength(*output.path, ego_idx, planner_data_->parameters);
+
+  // Drivable area generation.
+  generateExtendedDrivableArea(*output.path);
 
   DEBUG_PRINT("exit plan(): set prev output (back().lat = %f)", prev_output_.shift_length.back());
 

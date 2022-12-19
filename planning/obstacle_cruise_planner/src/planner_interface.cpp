@@ -72,6 +72,26 @@ tier4_planning_msgs::msg::StopReasonArray makeEmptyStopReasonArray(
   return stop_reason_array;
 }
 
+VelocityFactorArray makeVelocityFactorArray(
+  const rclcpp::Time & time, const std::optional<geometry_msgs::msg::Pose> pose = std::nullopt)
+{
+  VelocityFactorArray velocity_factor_array;
+  velocity_factor_array.header.frame_id = "map";
+  velocity_factor_array.header.stamp = time;
+
+  if (pose) {
+    using distance_type = VelocityFactor::_distance_type;
+    VelocityFactor velocity_factor;
+    velocity_factor.type = VelocityFactor::ROUTE_OBSTACLE;
+    velocity_factor.pose = pose.value();
+    velocity_factor.distance = std::numeric_limits<distance_type>::quiet_NaN();
+    velocity_factor.status = VelocityFactor::UNKNOWN;
+    velocity_factor.detail = std::string();
+    velocity_factor_array.factors.push_back(velocity_factor);
+  }
+  return velocity_factor_array;
+}
+
 double calcMinimumDistanceToStop(
   const double initial_vel, const double max_acc, const double min_acc)
 {
@@ -86,12 +106,19 @@ double calcMinimumDistanceToStop(
 Trajectory PlannerInterface::generateStopTrajectory(
   const ObstacleCruisePlannerData & planner_data, DebugData & debug_data)
 {
+  stop_planning_debug_info_.reset();
+  stop_planning_debug_info_.set(
+    StopPlanningDebugInfo::TYPE::EGO_VELOCITY, planner_data.current_vel);
+  stop_planning_debug_info_.set(
+    StopPlanningDebugInfo::TYPE::EGO_VELOCITY, planner_data.current_acc);
+
   const double abs_ego_offset = planner_data.is_driving_forward
                                   ? std::abs(vehicle_info_.max_longitudinal_offset_m)
                                   : std::abs(vehicle_info_.min_longitudinal_offset_m);
 
   if (planner_data.target_obstacles.empty()) {
     stop_reasons_pub_->publish(makeEmptyStopReasonArray(planner_data.current_time));
+    velocity_factors_pub_->publish(makeVelocityFactorArray(planner_data.current_time));
 
     // delete marker
     const auto markers =
@@ -207,12 +234,23 @@ Trajectory PlannerInterface::generateStopTrajectory(
     const auto stop_reasons_msg =
       makeStopReasonArray(planner_data.current_time, stop_pose, *closest_stop_obstacle);
     stop_reasons_pub_->publish(stop_reasons_msg);
+    velocity_factors_pub_->publish(makeVelocityFactorArray(planner_data.current_time, stop_pose));
 
     // Publish if ego vehicle collides with the obstacle with a limit acceleration
     const auto stop_speed_exceeded_msg =
       createStopSpeedExceededMsg(planner_data.current_time, will_collide_with_obstacle);
     stop_speed_exceeded_pub_->publish(stop_speed_exceeded_msg);
   }
+
+  // stop_planning_debug_info_.set(StopPlanningDebugInfo::TYPE::STOP_CURRENT_OBSTACLE_DISTANCE, //
+  // TODO(murooka)
+  stop_planning_debug_info_.set(
+    StopPlanningDebugInfo::TYPE::STOP_CURRENT_OBSTACLE_VELOCITY, closest_stop_obstacle->velocity);
+
+  stop_planning_debug_info_.set(
+    StopPlanningDebugInfo::TYPE::STOP_TARGET_OBSTACLE_DISTANCE, feasible_margin_from_obstacle);
+  stop_planning_debug_info_.set(StopPlanningDebugInfo::TYPE::STOP_TARGET_VELOCITY, 0.0);
+  stop_planning_debug_info_.set(StopPlanningDebugInfo::TYPE::STOP_TARGET_ACCELERATION, 0.0);
 
   return output_traj;
 }

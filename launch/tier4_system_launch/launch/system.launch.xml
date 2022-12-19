@@ -20,7 +20,13 @@
         <arg name="ntp_monitor_config_file" value="$(var system_monitor_ntp_monitor_param_path)"/>
         <arg name="process_monitor_config_file" value="$(var system_monitor_process_monitor_param_path)"/>
         <arg name="gpu_monitor_config_file" value="$(var system_monitor_gpu_monitor_param_path)"/>
+        <arg name="voltage_monitor_config_file" value="$(var system_monitor_voltage_monitor_param_path)"/>
       </include>
+    </group>
+
+    <!-- Service Log Checker -->
+    <group>
+      <include file="$(find-pkg-share component_interface_tools)/launch/service_log_checker.launch.xml"/>
     </group>
 
     <!-- Component State Monitor -->
