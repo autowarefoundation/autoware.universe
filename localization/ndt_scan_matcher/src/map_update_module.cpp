@@ -222,7 +222,8 @@ void MapUpdateModule::update_ndt(
   // swap
   (*ndt_ptr_mutex_).lock();
   // ToDo (kminoda): Here negligible NDT copy occurs during the new map loading phase, which should
-  // ideally be avoided. But I will leave this for now since I cannot come up with a solution other than using pointer of pointer.
+  // ideally be avoided. But I will leave this for now since I cannot come up with a solution other
+  // than using pointer of pointer.
   *ndt_ptr_ = backup_ndt;
   (*ndt_ptr_mutex_).unlock();
 
