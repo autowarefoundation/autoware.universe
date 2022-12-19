@@ -897,11 +897,13 @@ void BehaviorPathPlannerNode::onForceApproval(const PathChangeModule::ConstShare
 }
 void BehaviorPathPlannerNode::onMap(const HADMapBin::ConstSharedPtr msg)
 {
+  const std::lock_guard<std::mutex> lock(mutex_pd_);
   map_ptr_ = msg;
   has_received_map_ = true;
 }
 void BehaviorPathPlannerNode::onRoute(const LaneletRoute::ConstSharedPtr msg)
 {
+  const std::lock_guard<std::mutex> lock(mutex_pd_);
   route_ptr_ = msg;
   has_received_route_ = true;
 }

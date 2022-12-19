@@ -117,8 +117,8 @@ private:
 
   TurnSignalDecider turn_signal_decider_;
 
-  std::mutex mutex_bt_;  // mutex for bt_manager_
   std::mutex mutex_pd_;  // mutex for planer_data_
+  std::mutex mutex_bt_;  // mutex for bt_manager_
 
   // setup
   bool isDataReady();
