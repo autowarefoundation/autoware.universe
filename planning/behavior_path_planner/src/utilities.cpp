@@ -2578,19 +2578,27 @@ bool checkPathRelativeAngle(const PathWithLaneId & path, const double angle_thre
   return true;
 }
 
-double calcTotalLaneChangeDistanceWithBuffer(const BehaviorPathPlannerParameters & common_param)
+double calcTotalLaneChangeDistance(
+  const BehaviorPathPlannerParameters & common_param, const bool include_buffer)
 {
   const double minimum_lane_change_distance =
     common_param.minimum_lane_change_prepare_distance + common_param.minimum_lane_change_length;
+  const double min_vel_distance =
+    common_param.minimum_lane_change_prepare_distance +
+    common_param.lane_changing_duration * common_param.minimum_lane_change_velocity;
+
+  if (!include_buffer) {
+    return std::max(min_vel_distance, minimum_lane_change_distance);
+  }
+
   const double end_of_lane_buffer = common_param.backward_length_buffer_for_end_of_lane;
-  return minimum_lane_change_distance + end_of_lane_buffer;
+  return std::max(min_vel_distance, minimum_lane_change_distance) + end_of_lane_buffer;
 }
 
 double calcLaneChangeBuffer(
   const BehaviorPathPlannerParameters & common_param, const int num_lane_change,
   const double length_to_intersection)
 {
-  return num_lane_change * calcTotalLaneChangeDistanceWithBuffer(common_param) +
-         length_to_intersection;
+  return num_lane_change * calcTotalLaneChangeDistance(common_param) + length_to_intersection;
 }
 }  // namespace behavior_path_planner::util
