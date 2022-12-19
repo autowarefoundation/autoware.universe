@@ -62,6 +62,14 @@ class VirtualWallMarkerCreator
 public:
   virtual ~VirtualWallMarkerCreator() = default;
 
+   visualization_msgs::msg::MarkerArray createStopVirtualWallMarker(
+    const std::vector<Pose> & stop_pose, const std::string & module_name, const rclcpp::Time & now,
+    int32_t id, const double longitudinal_offset = 0.0);
+
+  visualization_msgs::msg::MarkerArray createSlowDownVirtualWallMarker(
+    const std::vector<Pose> & stop_pose, const std::string & module_name, const rclcpp::Time & now,
+    int32_t id, const double longitudinal_offset = 0.0);
+
 private:
   visualization_msgs::msg::MarkerArray handleVirtualWallMarker(
     const std::vector<Pose> & poses, const std::string & module_name, const rclcpp::Time & now,
@@ -69,13 +77,7 @@ private:
     delete_wall_function function_delete_wall_marker,
     std::vector<geometry_msgs::msg::Pose> & previous_poses, const double longitudinal_offset = 0.0);
 
-  visualization_msgs::msg::MarkerArray createStopVirtualWallMarker(
-    const std::vector<Pose> & stop_pose, const std::string & module_name, const rclcpp::Time & now,
-    int32_t id, const double longitudinal_offset = 0.0);
 
-  visualization_msgs::msg::MarkerArray createSlowDownVirtualWallMarker(
-    const std::vector<Pose> & stop_pose, const std::string & module_name, const rclcpp::Time & now,
-    int32_t id, const double longitudinal_offset = 0.0);
 
   std::vector<Pose> previous_stop_poses_;
   std::vector<Pose> previous_slow_down_poses_;

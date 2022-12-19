@@ -194,7 +194,6 @@ visualization_msgs::msg::MarkerArray VirtualWallMarkerCreator::createSlowDownVir
   int32_t id, const double longitudinal_offset)
 {
   create_wall_function f1 = motion_utils::createSlowDownVirtualWallMarker;
-
   delete_wall_function f2 = motion_utils::createDeletedSlowDownVirtualWallMarker;
 
   return handleVirtualWallMarker(

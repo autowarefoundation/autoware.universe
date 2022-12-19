@@ -192,15 +192,13 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createVirtualWallMarker
   const auto state = state_machine_.getState();
 
   if (debug_data_.stop_required) {
-    appendMarkerArray(
-      motion_utils::createStopVirtualWallMarker(
-        debug_data_.stop_wall_pose, "intersection", now, module_id_),
-      &wall_marker, now);
+    const std::vector<Pose> & pose = {debug_data_.stop_wall_pose};
+    virtual_wall_marker_creator_->createSlowDownVirtualWallMarker(
+      pose, "intersection", now, module_id_);
   } else if (state == StateMachine::State::STOP) {
-    appendMarkerArray(
-      motion_utils::createStopVirtualWallMarker(
-        debug_data_.slow_wall_pose, "intersection", now, module_id_),
-      &wall_marker, now);
+    const std::vector<Pose> & pose = {debug_data_.slow_wall_pose};
+    virtual_wall_marker_creator_->createSlowDownVirtualWallMarker(
+      pose, "intersection", now, module_id_);
   }
   return wall_marker;
 }
