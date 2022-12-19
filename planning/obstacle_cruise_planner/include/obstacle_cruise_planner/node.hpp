@@ -80,8 +80,6 @@ private:
 
   bool is_showing_debug_info_;
   double min_behavior_stop_margin_;
-  double nearest_dist_deviation_threshold_;
-  double nearest_yaw_deviation_threshold_;
   double obstacle_velocity_threshold_from_cruise_to_stop_;
   double obstacle_velocity_threshold_from_stop_to_cruise_;
 
@@ -103,14 +101,10 @@ private:
   rclcpp::Publisher<Float32Stamped>::SharedPtr debug_calculation_time_pub_;
 
   // subscriber
-  rclcpp::Subscription<Trajectory>::SharedPtr trajectory_sub_;
-  rclcpp::Subscription<Trajectory>::SharedPtr smoothed_trajectory_sub_;
+  rclcpp::Subscription<Trajectory>::SharedPtr traj_sub_;
   rclcpp::Subscription<PredictedObjects>::SharedPtr objects_sub_;
   rclcpp::Subscription<Odometry>::SharedPtr odom_sub_;
   rclcpp::Subscription<AccelWithCovarianceStamped>::SharedPtr acc_sub_;
-
-  // self pose listener
-  tier4_autoware_utils::SelfPoseListener self_pose_listener_;
 
   // data for callback functions
   PredictedObjects::ConstSharedPtr in_objects_ptr_{nullptr};
@@ -164,13 +158,12 @@ private:
   ObstacleFilteringParam obstacle_filtering_param_;
 
   bool need_to_clear_vel_limit_{false};
+  EgoNearestParam ego_nearest_param_;
 
   bool is_driving_forward_{true};
   bool disable_stop_planning_{false};
 
   std::vector<TargetObstacle> prev_target_obstacles_;
-
-  std::shared_ptr<LowpassFilter1d> lpf_acc_ptr_;
 };
 }  // namespace motion_planning
 

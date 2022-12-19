@@ -30,8 +30,6 @@
 
 namespace obstacle_cruise_utils
 {
-bool isVehicle(const uint8_t label);
-
 Marker getObjectMarker(
   const geometry_msgs::msg::Pose & obstacle_pose, size_t idx, const std::string & ns,
   const double r, const double g, const double b);

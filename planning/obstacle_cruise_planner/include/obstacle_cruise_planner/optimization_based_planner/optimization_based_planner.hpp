@@ -94,6 +94,11 @@ private:
   rclcpp::Publisher<Trajectory>::SharedPtr optimized_st_graph_pub_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_wall_marker_pub_;
 
+  // Subscriber
+  rclcpp::Subscription<Trajectory>::SharedPtr smoothed_traj_sub_;
+
+  Trajectory::ConstSharedPtr smoothed_trajectory_ptr_{nullptr};
+
   // Resampling Parameter
   double dense_resampling_time_interval_;
   double sparse_resampling_time_interval_;

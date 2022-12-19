@@ -462,14 +462,14 @@ Trajectory PIDBasedPlanner::doCruiseWithTrajectory(
 
   // set target longitudinal motion
   const auto prev_traj_closest_point = [&]() -> TrajectoryPoint {
-    if (smoothed_trajectory_ptr_) {
-      return motion_utils::calcInterpolatedPoint(
-        *smoothed_trajectory_ptr_, planner_data.current_pose, nearest_dist_deviation_threshold_,
-        nearest_yaw_deviation_threshold_);
-    }
+    // if (smoothed_trajectory_ptr_) {
+    //   return motion_utils::calcInterpolatedPoint(
+    //     *smoothed_trajectory_ptr_, planner_data.current_pose, nearest_dist_deviation_threshold_,
+    //     nearest_yaw_deviation_threshold_);
+    // }
     return motion_utils::calcInterpolatedPoint(
-      prev_traj_, planner_data.current_pose, nearest_dist_deviation_threshold_,
-      nearest_yaw_deviation_threshold_);
+      prev_traj_, planner_data.current_pose, ego_nearest_param_.dist_threshold,
+      ego_nearest_param_.yaw_threshold);
   }();
   const double v0 = prev_traj_closest_point.longitudinal_velocity_mps;
   const double a0 = prev_traj_closest_point.acceleration_mps2;
@@ -580,9 +580,7 @@ Trajectory PIDBasedPlanner::getAccelerationLimitedTrajectory(
   }
 
   auto acc_limited_traj = traj;
-  const size_t ego_seg_idx = motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-    acc_limited_traj.points, start_pose, nearest_dist_deviation_threshold_,
-    nearest_yaw_deviation_threshold_);
+  const size_t ego_seg_idx = findEgoIndex(acc_limited_traj, start_pose);
   double sum_dist = 0.0;
   for (size_t i = ego_seg_idx; i < acc_limited_traj.points.size(); ++i) {
     if (i != ego_seg_idx) {

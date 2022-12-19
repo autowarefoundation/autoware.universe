@@ -144,8 +144,8 @@ Trajectory PlannerInterface::generateStopTrajectory(
     planner_data.traj.points, 0, closest_stop_obstacle->collision_points.front().point);
 
   const auto negative_dist_to_ego = motion_utils::calcSignedArcLength(
-    planner_data.traj.points, planner_data.current_pose, 0, nearest_dist_deviation_threshold_,
-    nearest_yaw_deviation_threshold_);
+    planner_data.traj.points, planner_data.current_pose, 0, ego_nearest_param_.dist_threshold,
+    ego_nearest_param_.yaw_threshold);
   if (!negative_dist_to_ego) {
     // delete marker
     const auto markers =
@@ -160,9 +160,7 @@ Trajectory PlannerInterface::generateStopTrajectory(
   // we set closest_obstacle_stop_distance to closest_behavior_stop_distance
   const double margin_from_obstacle = [&]() {
     const size_t nearest_segment_idx =
-      motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-        planner_data.traj.points, planner_data.current_pose, nearest_dist_deviation_threshold_,
-        nearest_yaw_deviation_threshold_);
+      findEgoSegmentIndex(planner_data.traj, planner_data.current_pose);
     const auto closest_behavior_stop_idx =
       motion_utils::searchZeroVelocityIndex(planner_data.traj.points, nearest_segment_idx + 1);
 
@@ -264,7 +262,7 @@ double PlannerInterface::calcDistanceToCollisionPoint(
 
   const auto dist_to_collision_point = motion_utils::calcSignedArcLength(
     planner_data.traj.points, planner_data.current_pose, collision_point,
-    nearest_dist_deviation_threshold_, nearest_yaw_deviation_threshold_);
+    ego_nearest_param_.dist_threshold, ego_nearest_param_.yaw_threshold);
 
   if (dist_to_collision_point) {
     return dist_to_collision_point.get() - offset;

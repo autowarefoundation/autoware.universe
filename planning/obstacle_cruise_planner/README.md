@@ -4,30 +4,29 @@
 
 The `obstacle_cruise_planner` package has following modules.
 
-- obstacle stop planning
-  - inserting a stop point in the trajectory when there is a static obstacle on the trajectory.
-- adaptive cruise planning
-  - sending an external velocity limit to `motion_velocity_smoother` when there is a dynamic obstacle to cruise on the trajectory
+- Stop planning
+  - stop when there is a static obstacle near the trajectory.
+- Cruise planning
+  - slow down when there is a dynamic obstacle to cruise near the trajectory
 
 ## Interfaces
 
 ### Input topics
 
-| Name                          | Type                                            | Description                       |
-| ----------------------------- | ----------------------------------------------- | --------------------------------- |
-| `~/input/trajectory`          | autoware_auto_planning_msgs::Trajectory         | input trajectory                  |
-| `~/input/smoothed_trajectory` | autoware_auto_planning_msgs::Trajectory         | trajectory with smoothed velocity |
-| `~/input/objects`             | autoware_auto_perception_msgs::PredictedObjects | dynamic objects                   |
-| `~/input/odometry`            | nav_msgs::msg::Odometry                         | ego odometry                      |
+| Name                 | Type                                            | Description      |
+| -------------------- | ----------------------------------------------- | ---------------- |
+| `~/input/trajectory` | autoware_auto_planning_msgs::Trajectory         | input trajectory |
+| `~/input/objects`    | autoware_auto_perception_msgs::PredictedObjects | dynamic objects  |
+| `~/input/odometry`   | nav_msgs::msg::Odometry                         | ego odometry     |
 
 ### Output topics
 
-| Name                           | Type                                           | Description                           |
-| ------------------------------ | ---------------------------------------------- | ------------------------------------- |
-| `~output/trajectory`           | autoware_auto_planning_msgs::Trajectory        | output trajectory                     |
-| `~output/velocity_limit`       | tier4_planning_msgs::VelocityLimit             | velocity limit for cruising           |
-| `~output/clear_velocity_limit` | tier4_planning_msgs::VelocityLimitClearCommand | clear command for velocity limit      |
-| `~output/stop_reasons`         | tier4_planning_msgs::StopReasonArray           | reasons that make the vehicle to stop |
+| Name                            | Type                                           | Description                           |
+| ------------------------------- | ---------------------------------------------- | ------------------------------------- |
+| `~/output/trajectory`           | autoware_auto_planning_msgs::Trajectory        | output trajectory                     |
+| `~/output/velocity_limit`       | tier4_planning_msgs::VelocityLimit             | velocity limit for cruising           |
+| `~/output/clear_velocity_limit` | tier4_planning_msgs::VelocityLimitClearCommand | clear command for velocity limit      |
+| `~/output/stop_reasons`         | tier4_planning_msgs::StopReasonArray           | reasons that make the vehicle to stop |
 
 ## Design
 

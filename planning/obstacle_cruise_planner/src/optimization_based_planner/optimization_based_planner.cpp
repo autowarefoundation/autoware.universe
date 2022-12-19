@@ -39,6 +39,10 @@ OptimizationBasedPlanner::OptimizationBasedPlanner(
   const vehicle_info_util::VehicleInfo & vehicle_info, const EgoNearestParam & ego_nearest_param)
 : PlannerInterface(node, longitudinal_info, vehicle_info, ego_nearest_param)
 {
+  smoothed_traj_sub_ = node.create_subscription<Trajectory>(
+    "/planning/scenario_planning/trajectory", rclcpp::QoS{1},
+    [this](const Trajectory::ConstSharedPtr msg) { smoothed_trajectory_ptr_ = msg; });
+
   // parameter
   dense_resampling_time_interval_ =
     node.declare_parameter<double>("optimization_based_planner.dense_resampling_time_interval");
@@ -283,8 +287,8 @@ std::tuple<double, double> OptimizationBasedPlanner::calcInitialMotion(
   const auto & input_traj = planner_data.traj;
   const double vehicle_speed{std::abs(current_vel)};
   const auto current_closest_point = motion_utils::calcInterpolatedPoint(
-    input_traj, planner_data.current_pose, nearest_dist_deviation_threshold_,
-    nearest_yaw_deviation_threshold_);
+    input_traj, planner_data.current_pose, ego_nearest_param_.dist_threshold,
+    ego_nearest_param_.yaw_threshold);
   const double target_vel{std::abs(current_closest_point.longitudinal_velocity_mps)};
 
   double initial_vel{};
@@ -300,11 +304,11 @@ std::tuple<double, double> OptimizationBasedPlanner::calcInitialMotion(
   TrajectoryPoint prev_output_closest_point;
   if (smoothed_trajectory_ptr_) {
     prev_output_closest_point = motion_utils::calcInterpolatedPoint(
-      *smoothed_trajectory_ptr_, current_pose, nearest_dist_deviation_threshold_,
-      nearest_yaw_deviation_threshold_);
+      *smoothed_trajectory_ptr_, current_pose, ego_nearest_param_.dist_threshold,
+      ego_nearest_param_.yaw_threshold);
   } else {
     prev_output_closest_point = motion_utils::calcInterpolatedPoint(
-      prev_traj, current_pose, nearest_dist_deviation_threshold_, nearest_yaw_deviation_threshold_);
+      prev_traj, current_pose, ego_nearest_param_.dist_threshold, ego_nearest_param_.yaw_threshold);
   }
 
   // when velocity tracking deviation is large
@@ -327,8 +331,8 @@ std::tuple<double, double> OptimizationBasedPlanner::calcInitialMotion(
   if (vehicle_speed < engage_vel_thr) {
     if (target_vel >= engage_velocity_) {
       const auto stop_dist = motion_utils::calcDistanceToForwardStopPoint(
-        input_traj.points, current_pose, nearest_dist_deviation_threshold_,
-        nearest_yaw_deviation_threshold_);
+        input_traj.points, current_pose, ego_nearest_param_.dist_threshold,
+        ego_nearest_param_.yaw_threshold);
       if ((stop_dist && *stop_dist > stop_dist_to_prohibit_engage_) || !stop_dist) {
         initial_vel = engage_velocity_;
         initial_acc = engage_acceleration_;
@@ -362,8 +366,8 @@ bool OptimizationBasedPlanner::checkHasReachedGoal(const ObstacleCruisePlannerDa
 {
   // If goal is close and current velocity is low, we don't optimize trajectory
   const auto closest_stop_dist = motion_utils::calcDistanceToForwardStopPoint(
-    planner_data.traj.points, planner_data.current_pose, nearest_dist_deviation_threshold_,
-    nearest_yaw_deviation_threshold_);
+    planner_data.traj.points, planner_data.current_pose, ego_nearest_param_.dist_threshold,
+    ego_nearest_param_.yaw_threshold);
   if (closest_stop_dist && *closest_stop_dist < 0.5 && planner_data.current_vel < 0.6) {
     return true;
   }
@@ -592,15 +596,15 @@ boost::optional<double> OptimizationBasedPlanner::calcTrajectoryLengthFromCurren
   const Trajectory & traj, const geometry_msgs::msg::Pose & current_pose)
 {
   const auto traj_length = motion_utils::calcSignedArcLength(
-    traj.points, current_pose, traj.points.size() - 1, nearest_dist_deviation_threshold_,
-    nearest_yaw_deviation_threshold_);
+    traj.points, current_pose, traj.points.size() - 1, ego_nearest_param_.dist_threshold,
+    ego_nearest_param_.yaw_threshold);
 
   if (!traj_length) {
     return {};
   }
 
   const auto dist_to_closest_stop_point = motion_utils::calcDistanceToForwardStopPoint(
-    traj.points, current_pose, nearest_dist_deviation_threshold_, nearest_yaw_deviation_threshold_);
+    traj.points, current_pose, ego_nearest_param_.dist_threshold, ego_nearest_param_.yaw_threshold);
   if (dist_to_closest_stop_point) {
     return std::min(traj_length.get(), dist_to_closest_stop_point.get());
   }

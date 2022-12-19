@@ -12,8 +12,6 @@
       safe_distance_margin : 6.0 # This is also used as a stop margin [m]
       terminal_safe_distance_margin : 3.0 # Stop margin at the goal. This value cannot exceed safe distance margin. [m]
 
-      nearest_dist_deviation_threshold: 3.0 # [m] for finding nearest index
-      nearest_yaw_deviation_threshold: 1.57 # [rad] for finding nearest index
       min_behavior_stop_margin: 3.0 # [m]
       obstacle_velocity_threshold_from_cruise_to_stop : 3.0 # stop planning is executed to the obstacle whose velocity is less than this value [m/s]
       obstacle_velocity_threshold_from_stop_to_cruise : 3.5 # stop planning is executed to the obstacle whose velocity is less than this value [m/s]

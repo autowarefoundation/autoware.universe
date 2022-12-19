@@ -86,6 +86,50 @@ struct ObstacleCruisePlannerData
 
 struct LongitudinalInfo
 {
+  explicit LongitudinalInfo(rclcpp::Node & node)
+  {
+    max_accel = node.declare_parameter<double>("normal.max_acc");
+    min_accel = node.declare_parameter<double>("normal.min_acc");
+    max_jerk = node.declare_parameter<double>("normal.max_jerk");
+    min_jerk = node.declare_parameter<double>("normal.min_jerk");
+    limit_max_accel = node.declare_parameter<double>("limit.max_acc");
+    limit_min_accel = node.declare_parameter<double>("limit.min_acc");
+    limit_max_jerk = node.declare_parameter<double>("limit.max_jerk");
+    limit_min_jerk = node.declare_parameter<double>("limit.min_jerk");
+
+    idling_time = node.declare_parameter<double>("common.idling_time");
+    min_ego_accel_for_rss = node.declare_parameter<double>("common.min_ego_accel_for_rss");
+    min_object_accel_for_rss = node.declare_parameter<double>("common.min_object_accel_for_rss");
+
+    safe_distance_margin = node.declare_parameter<double>("common.safe_distance_margin");
+    terminal_safe_distance_margin =
+      node.declare_parameter<double>("common.terminal_safe_distance_margin");
+  }
+
+  void onParam(const std::vector<rclcpp::Parameter> & parameters)
+  {
+    tier4_autoware_utils::updateParam<double>(parameters, "normal.max_accel", max_accel);
+    tier4_autoware_utils::updateParam<double>(parameters, "normal.min_accel", min_accel);
+    tier4_autoware_utils::updateParam<double>(parameters, "normal.max_jerk", max_jerk);
+    tier4_autoware_utils::updateParam<double>(parameters, "normal.min_jerk", min_jerk);
+    tier4_autoware_utils::updateParam<double>(parameters, "limit.max_accel", limit_max_accel);
+    tier4_autoware_utils::updateParam<double>(parameters, "limit.min_accel", limit_min_accel);
+    tier4_autoware_utils::updateParam<double>(parameters, "limit.max_jerk", limit_max_jerk);
+    tier4_autoware_utils::updateParam<double>(parameters, "limit.min_jerk", limit_min_jerk);
+
+    tier4_autoware_utils::updateParam<double>(parameters, "common.idling_time", idling_time);
+    tier4_autoware_utils::updateParam<double>(
+      parameters, "common.min_ego_accel_for_rss", min_ego_accel_for_rss);
+    tier4_autoware_utils::updateParam<double>(
+      parameters, "common.min_object_accel_for_rss", min_object_accel_for_rss);
+
+    tier4_autoware_utils::updateParam<double>(
+      parameters, "common.safe_distance_margin", safe_distance_margin);
+    tier4_autoware_utils::updateParam<double>(
+      parameters, "common.terminal_safe_distance_margin", terminal_safe_distance_margin);
+  }
+
+  // common parameter
   double max_accel;
   double min_accel;
   double max_jerk;
@@ -94,9 +138,13 @@ struct LongitudinalInfo
   double limit_min_accel;
   double limit_max_jerk;
   double limit_min_jerk;
+
+  // rss parameter
   double idling_time;
   double min_ego_accel_for_rss;
   double min_object_accel_for_rss;
+
+  // distance margin
   double safe_distance_margin;
   double terminal_safe_distance_margin;
 };
@@ -114,10 +162,13 @@ struct DebugData
 
 struct EgoNearestParam
 {
-  EgoNearestParam(const double arg_dist_threshold, const double arg_yaw_threshold)
-  : dist_threshold(arg_dist_threshold), yaw_threshold(arg_yaw_threshold)
+  EgoNearestParam() = default;
+  explicit EgoNearestParam(rclcpp::Node & node)
   {
+    dist_threshold = node.declare_parameter<double>("ego_nearest_dist_threshold");
+    yaw_threshold = node.declare_parameter<double>("ego_nearest_yaw_threshold");
   }
+
   double dist_threshold;
   double yaw_threshold;
 };
