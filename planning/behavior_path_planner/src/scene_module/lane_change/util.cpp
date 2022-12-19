@@ -758,65 +758,70 @@ std::optional<LaneChangePath> getAbortPaths(
   const auto & route_handler = planner_data->route_handler;
   const auto current_speed = util::l2Norm(planner_data->self_odometry->twist.twist.linear);
   const auto current_pose = planner_data->self_pose->pose;
-  const auto current_lanes = selected_path.reference_lanelets;
+  const auto reference_lanelets = selected_path.reference_lanelets;
 
   const auto ego_nearest_dist_threshold = planner_data->parameters.ego_nearest_dist_threshold;
   const auto ego_nearest_yaw_threshold = planner_data->parameters.ego_nearest_yaw_threshold;
+  const double minimum_lane_change_length = util::calcLaneChangeBuffer(common_param, 1, 0.0);
 
-  auto resampled_selected_path = selected_path.path;
+  const auto & lane_changing_path = selected_path.path;
+  const auto lane_changing_end_pose_idx = std::invoke([&]() {
+    constexpr double s_start = 0.0;
+    const double s_end =
+      lanelet::utils::getLaneletLength2d(reference_lanelets) - minimum_lane_change_length;
+
+    const auto ref = route_handler->getCenterLinePath(reference_lanelets, s_start, s_end);
+    return motion_utils::findFirstNearestIndexWithSoftConstraints(
+      lane_changing_path.points, ref.points.back().point.pose, ego_nearest_dist_threshold,
+      ego_nearest_yaw_threshold);
+  });
 
   const auto ego_pose_idx = motion_utils::findFirstNearestIndexWithSoftConstraints(
-    resampled_selected_path.points, current_pose, ego_nearest_dist_threshold,
-    ego_nearest_yaw_threshold);
-  const auto lane_changing_end_pose_idx = motion_utils::findFirstNearestIndexWithSoftConstraints(
-    resampled_selected_path.points, resampled_selected_path.points.back().point.pose,
-    ego_nearest_dist_threshold, ego_nearest_yaw_threshold);
+    lane_changing_path.points, current_pose, ego_nearest_dist_threshold, ego_nearest_yaw_threshold);
 
-  const auto pose_idx_min = [&](const double param_time, double & turning_point_dist) {
+  const auto get_abort_idx_and_distance = [&](const double param_time) {
+    double turning_point_dist{0.0};
     if (ego_pose_idx > lane_changing_end_pose_idx) {
-      return ego_pose_idx;
+      return std::make_pair(ego_pose_idx, turning_point_dist);
     }
 
-    constexpr auto min_speed = 2.77;
+    constexpr auto min_speed{2.77};
     const auto desired_distance = std::max(min_speed, current_speed) * param_time;
-    const auto & points = resampled_selected_path.points;
+    const auto & points = lane_changing_path.points;
     size_t idx{0};
     for (idx = ego_pose_idx; idx < lane_changing_end_pose_idx; ++idx) {
       const auto dist_to_ego =
-        util::getSignedDistance(current_pose, points.at(idx).point.pose, current_lanes);
+        util::getSignedDistance(current_pose, points.at(idx).point.pose, reference_lanelets);
       turning_point_dist = dist_to_ego;
       if (dist_to_ego > desired_distance) {
         break;
       }
     }
-    return idx;
+    return std::make_pair(idx, turning_point_dist);
   };
 
   const auto abort_delta_time = lane_change_param.abort_delta_time;
-
-  double abort_start_dist{0.0};
-  const auto abort_start_idx = pose_idx_min(abort_delta_time, abort_start_dist);
-
-  double abort_return_dist{0.0};
-  const auto abort_return_idx = pose_idx_min(abort_delta_time * 2, abort_return_dist);
+  const auto [abort_start_idx, abort_start_dist] = get_abort_idx_and_distance(abort_delta_time);
+  const auto [abort_return_idx, abort_return_dist] =
+    get_abort_idx_and_distance(abort_delta_time * 2);
 
   if (abort_start_idx >= abort_return_idx) {
-    std::cerr << "idx issue, start idx " << abort_start_idx << " return index " << abort_return_idx
-              << '\n';
-    std::cerr << "idx issue, abort_start_dist " << abort_start_dist << " return dist "
-              << abort_return_dist << '\n';
+    RCLCPP_ERROR_STREAM(
+      rclcpp::get_logger("behavior_path_planner").get_child("lane_change").get_child("util"),
+      "abort start idx and return idx is equal. can't compute abort path.");
     return std::nullopt;
   }
 
   if (!hasEnoughDistanceToLaneChangeAfterAbort(
-        *route_handler, current_lanes, current_pose, abort_return_dist, common_param)) {
-    std::cerr << "distance issue\n";
+        *route_handler, reference_lanelets, current_pose, abort_return_dist, common_param)) {
+    RCLCPP_ERROR_STREAM(
+      rclcpp::get_logger("behavior_path_planner").get_child("lane_change").get_child("util"),
+      "insufficient distance to abort.");
     return std::nullopt;
   }
 
-  const auto reference_lanelets = selected_path.reference_lanelets;
-  const auto abort_start_pose = resampled_selected_path.points.at(abort_start_idx).point.pose;
-  const auto abort_return_pose = resampled_selected_path.points.at(abort_return_idx).point.pose;
+  const auto abort_start_pose = lane_changing_path.points.at(abort_start_idx).point.pose;
+  const auto abort_return_pose = lane_changing_path.points.at(abort_return_idx).point.pose;
   const auto arc_position =
     lanelet::utils::getArcCoordinates(reference_lanelets, abort_return_pose);
   const PathWithLaneId reference_lane_segment = std::invoke([&]() {
@@ -842,7 +847,7 @@ std::optional<LaneChangePath> getAbortPaths(
   shift_line.end_idx = abort_return_idx;
 
   PathShifter path_shifter;
-  path_shifter.setPath(resampled_selected_path);
+  path_shifter.setPath(lane_changing_path);
   path_shifter.addShiftLine(shift_line);
   const auto lateral_jerk = behavior_path_planner::PathShifter::calcJerkFromLatLonDistance(
     shift_line.end_shift_length, abort_start_dist, current_speed);
@@ -857,7 +862,7 @@ std::optional<LaneChangePath> getAbortPaths(
   if (!path_shifter.generate(&shifted_path)) {
     RCLCPP_ERROR_STREAM(
       rclcpp::get_logger("behavior_path_planner").get_child("lane_change").get_child("util"),
-      "failed to generate shifted path.");
+      "failed to generate abort shifted path.");
   }
 
   PathWithLaneId start_to_abort_return_pose;
