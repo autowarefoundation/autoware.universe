@@ -23,25 +23,16 @@
 
 #include <traffic_reader/traffic_reader_common.hpp>
 
+#include <boost/algorithm/string.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
-#include <boost/range/algorithm.hpp>
-// #include <boost/algorithm/string.hpp>   // workaround for build errors
 
+#define FMT_HEADER_ONLY
 #include <fmt/format.h>
 #include <ifaddrs.h>
 #include <linux/ethtool.h>
 #include <linux/if_link.h>
 #include <linux/sockios.h>
-#include <net/if.h>
-#include <netinet/in.h>
-#include <sys/ioctl.h>
-
-#include <algorithm>
-#include <fstream>
-#include <iostream>
-#include <string>
-#include <vector>
 
 NetMonitor::NetMonitor(const rclcpp::NodeOptions & options)
 : Node("net_monitor", options),
@@ -50,36 +41,30 @@ NetMonitor::NetMonitor(const rclcpp::NodeOptions & options)
   last_update_time_{0, 0, this->get_clock()->get_clock_type()},
   device_params_(
     declare_parameter<std::vector<std::string>>("devices", std::vector<std::string>())),
-  getifaddrs_errno_(0),
-  last_reassembles_failed_(0),
+  getifaddrs_error_code_(0),
   monitor_program_(declare_parameter<std::string>("monitor_program", "greengrass")),
+  socket_path_(declare_parameter("socket_path", traffic_reader_service::socket_path)),
   crc_error_check_duration_(declare_parameter<int>("crc_error_check_duration", 1)),
   crc_error_count_threshold_(declare_parameter<int>("crc_error_count_threshold", 1)),
+  last_reassembles_failed_(0),
   reassembles_failed_check_duration_(
     declare_parameter<int>("reassembles_failed_check_duration", 1)),
   reassembles_failed_check_count_(declare_parameter<int>("reassembles_failed_check_count", 1)),
-  reassembles_failed_column_index_(0),
-  socket_path_(declare_parameter("socket_path", traffic_reader_service::socket_path))
+  reassembles_failed_column_index_(0)
 {
-  using namespace std::literals::chrono_literals;
-
   if (monitor_program_.empty()) {
     monitor_program_ = "*";
   }
 
   gethostname(hostname_, sizeof(hostname_));
   updater_.setHardwareID(hostname_);
+  updater_.add("Network Connection", this, &NetMonitor::check_connection);
   updater_.add("Network Usage", this, &NetMonitor::check_usage);
   updater_.add("Network Traffic", this, &NetMonitor::monitor_traffic);
   updater_.add("Network CRC Error", this, &NetMonitor::check_crc_error);
   updater_.add("IP Packet Reassembles Failed", this, &NetMonitor::check_reassembles_failed);
 
   nl80211_.init();
-
-  search_reassembles_failed_column_index();
-
-  // get Network information for the first time
-  update_network_list();
 
   // Run I/O service processing loop
   boost::system::error_code error_code;
@@ -88,26 +73,302 @@ NetMonitor::NetMonitor(const rclcpp::NodeOptions & options)
     RCLCPP_WARN(get_logger(), "Failed to run I/O service. %s", error_code.message().c_str());
   }
 
+  // Update list of network information
+  update_network_list();
+  using namespace std::literals::chrono_literals;
+  timer_ = rclcpp::create_timer(this, get_clock(), 1s, std::bind(&NetMonitor::on_timer, this));
+
+  // Get column index of IP packet reassembles failed from `/proc/net/snmp`
+  get_reassembles_failed_column_index();
+
   // Send request to start nethogs
   send_start_nethogs_request();
-
-  timer_ = rclcpp::create_timer(this, get_clock(), 1s, std::bind(&NetMonitor::on_timer, this));
 }
 
 NetMonitor::~NetMonitor() { shutdown_nl80211(); }
 
+void NetMonitor::check_connection(diagnostic_updater::DiagnosticStatusWrapper & status)
+{
+  // Remember start time to measure elapsed time
+  const auto t_start = SystemMonitorUtility::startMeasurement();
+
+  if (device_params_.empty()) {
+    status.summary(DiagStatus::ERROR, "invalid device parameter");
+    return;
+  }
+  if (getifaddrs_error_code_ != 0) {
+    status.summary(DiagStatus::ERROR, "getifaddrs error");
+    status.add("getifaddrs", strerror(getifaddrs_error_code_));
+    return;
+  }
+
+  int index = 0;
+  int whole_level = DiagStatus::OK;
+  std::string error_message;
+
+  for (const auto & network : network_list_) {
+    if (network.is_invalid) {
+      make_invalid_diagnostic_status(network, index, status, error_message);
+    } else {
+      status.add(fmt::format("Network {}: status", index), connection_messages_.at(DiagStatus::OK));
+      status.add(fmt::format("Network {}: name", index), network.interface_name);
+    }
+    ++index;
+  }
+
+  // Check if specified device exists
+  for (const auto & device : device_params_) {
+    // Skip if device not specified
+    if (device == "*") continue;
+
+    // Check if device exists in detected networks
+    const auto object = std::find_if(
+      network_list_.begin(), network_list_.end(),
+      [&device](const auto & network) { return network.interface_name == device; });
+
+    if (object == network_list_.end()) {
+      whole_level = std::max(whole_level, static_cast<int>(DiagStatus::WARN));
+      error_message = "no such device";
+      status.add(
+        fmt::format("Network {}: status", index), connection_messages_.at(DiagStatus::WARN));
+      status.add(fmt::format("Network {}: name", index), device);
+    }
+
+    ++index;
+  }
+
+  if (!error_message.empty()) {
+    status.summary(whole_level, error_message);
+  } else {
+    status.summary(whole_level, connection_messages_.at(whole_level));
+  }
+
+  // Measure elapsed time since start time and report
+  SystemMonitorUtility::stopMeasurement(t_start, status);
+}
+
+void NetMonitor::check_usage(diagnostic_updater::DiagnosticStatusWrapper & status)
+{
+  // Remember start time to measure elapsed time
+  const auto t_start = SystemMonitorUtility::startMeasurement();
+
+  int level = DiagStatus::OK;
+  int index = 0;
+  std::string error_str;
+  std::vector<std::string> interface_names;
+
+  for (const auto & network : network_list_) {
+    // Skip if network is not supported
+    if (network.is_invalid) continue;
+
+    level = network.is_running ? DiagStatus::OK : DiagStatus::ERROR;
+
+    status.add(fmt::format("Network {}: status", index), usage_messages_.at(level));
+    status.add(fmt::format("Network {}: interface name", index), network.interface_name);
+    status.addf(fmt::format("Network {}: rx_usage", index), "%.2f%%", network.rx_usage * 1e+2);
+    status.addf(fmt::format("Network {}: tx_usage", index), "%.2f%%", network.tx_usage * 1e+2);
+    status.addf(fmt::format("Network {}: rx_traffic", index), "%.2f MBit/s", network.rx_traffic);
+    status.addf(fmt::format("Network {}: tx_traffic", index), "%.2f MBit/s", network.tx_traffic);
+    status.addf(fmt::format("Network {}: capacity", index), "%.1f MBit/s", network.speed);
+    status.add(fmt::format("Network {}: mtu", index), network.mtu);
+    status.add(fmt::format("Network {}: rx_bytes", index), network.rx_bytes);
+    status.add(fmt::format("Network {}: rx_errors", index), network.rx_errors);
+    status.add(fmt::format("Network {}: tx_bytes", index), network.tx_bytes);
+    status.add(fmt::format("Network {}: tx_errors", index), network.tx_errors);
+    status.add(fmt::format("Network {}: collisions", index), network.collisions);
+
+    ++index;
+  }
+
+  status.summary(DiagStatus::OK, "OK");
+
+  // Measure elapsed time since start time and report
+  SystemMonitorUtility::stopMeasurement(t_start, status);
+}
+
+void NetMonitor::check_crc_error(diagnostic_updater::DiagnosticStatusWrapper & status)
+{
+  // Remember start time to measure elapsed time
+  const auto t_start = SystemMonitorUtility::startMeasurement();
+
+  int whole_level = DiagStatus::OK;
+  int index = 0;
+  std::string error_message;
+
+  for (const auto & network : network_list_) {
+    // Skip if network is not supported
+    if (network.is_invalid) continue;
+
+    CrcErrors & crc_errors = crc_errors_[network.interface_name];
+    unsigned int unit_rx_crc_errors = 0;
+
+    for (auto errors : crc_errors.errors_queue) {
+      unit_rx_crc_errors += errors;
+    }
+
+    status.add(fmt::format("Network {}: interface name", index), network.interface_name);
+    status.add(
+      fmt::format("Network {}: total rx_crc_errors", index), crc_errors.last_rx_crc_errors);
+    status.add(fmt::format("Network {}: rx_crc_errors per unit time", index), unit_rx_crc_errors);
+
+    if (unit_rx_crc_errors >= crc_error_count_threshold_) {
+      whole_level = std::max(whole_level, static_cast<int>(DiagStatus::WARN));
+      error_message = "CRC error";
+    }
+
+    ++index;
+  }
+
+  if (!error_message.empty()) {
+    status.summary(whole_level, error_message);
+  } else {
+    status.summary(whole_level, "OK");
+  }
+
+  // Measure elapsed time since start time and report
+  SystemMonitorUtility::stopMeasurement(t_start, status);
+}
+
+void NetMonitor::monitor_traffic(diagnostic_updater::DiagnosticStatusWrapper & status)
+{
+  // Remember start time to measure elapsed time
+  const auto t_start = SystemMonitorUtility::startMeasurement();
+
+  // Get result of nethogs
+  traffic_reader_service::Result result;
+  get_nethogs_result(result);
+
+  // traffic_reader result to output
+  if (result.error_code != EXIT_SUCCESS) {
+    status.summary(DiagStatus::ERROR, "traffic_reader error");
+    status.add("error", result.output);
+  } else {
+    status.summary(DiagStatus::OK, "OK");
+
+    if (result.output.empty()) {
+      status.add("nethogs: result", fmt::format("No data monitored: {}", monitor_program_));
+    } else {
+      std::stringstream lines{result.output};
+      std::string line;
+      std::vector<std::string> list;
+      int index = 0;
+      while (std::getline(lines, line)) {
+        if (line.empty()) continue;
+
+        boost::split(list, line, boost::is_any_of("\t"), boost::token_compress_on);
+        if (list.size() >= 3) {
+          status.add(fmt::format("nethogs {}: program", index), list[3].c_str());
+          status.add(fmt::format("nethogs {}: sent (KB/s)", index), list[1].c_str());
+          status.add(fmt::format("nethogs {}: received (KB/sec)", index), list[2].c_str());
+        } else {
+          status.add(fmt::format("nethogs {}: result", index), line);
+        }
+        ++index;
+      }
+    }
+  }
+
+  // Measure elapsed time since start time and report
+  SystemMonitorUtility::stopMeasurement(t_start, status);
+}
+
+void NetMonitor::check_reassembles_failed(diagnostic_updater::DiagnosticStatusWrapper & status)
+{
+  // Remember start time to measure elapsed time
+  const auto t_start = SystemMonitorUtility::startMeasurement();
+
+  int whole_level = DiagStatus::OK;
+  std::string error_message;
+  uint64_t total_reassembles_failed = 0;
+  uint64_t unit_reassembles_failed = 0;
+
+  if (get_reassembles_failed(total_reassembles_failed)) {
+    reassembles_failed_queue_.push_back(total_reassembles_failed - last_reassembles_failed_);
+    while (reassembles_failed_queue_.size() > reassembles_failed_check_duration_) {
+      reassembles_failed_queue_.pop_front();
+    }
+
+    for (auto reassembles_failed : reassembles_failed_queue_) {
+      unit_reassembles_failed += reassembles_failed;
+    }
+
+    status.add(fmt::format("total packet reassembles failed"), total_reassembles_failed);
+    status.add(fmt::format("packet reassembles failed per unit time"), unit_reassembles_failed);
+
+    if (unit_reassembles_failed >= reassembles_failed_check_count_) {
+      whole_level = std::max(whole_level, static_cast<int>(DiagStatus::WARN));
+      error_message = "reassembles failed";
+    }
+
+    last_reassembles_failed_ = total_reassembles_failed;
+  } else {
+    reassembles_failed_queue_.push_back(0);
+    whole_level = std::max(whole_level, static_cast<int>(DiagStatus::ERROR));
+    error_message = "failed to read /proc/net/snmp";
+  }
+
+  if (!error_message.empty()) {
+    status.summary(whole_level, error_message);
+  } else {
+    status.summary(whole_level, "OK");
+  }
+
+  // Measure elapsed time since start time and report
+  SystemMonitorUtility::stopMeasurement(t_start, status);
+}
+
+void NetMonitor::on_timer()
+{
+  // Update list of network information
+  update_network_list();
+}
+
 void NetMonitor::shutdown_nl80211() { nl80211_.shutdown(); }
 
-void NetMonitor::on_timer() { update_network_list(); }
+void NetMonitor::make_invalid_diagnostic_status(
+  const NetworkInfomation & network, int index,
+  diagnostic_updater::DiagnosticStatusWrapper & status, std::string & error_message)
+{
+  // MTU information
+  if (network.mtu_error_code != 0) {
+    if (network.mtu_error_code == ENOTSUP) {
+      status.add(fmt::format("Network {}: status", index), "Not Supported");
+      // Assume no error, no error message
+    } else {
+      status.add(fmt::format("Network {}: status", index), "Error");
+      error_message = "ioctl error";
+    }
+
+    status.add(fmt::format("Network {}: interface name", index), network.interface_name);
+    status.add("ioctl(SIOCGIFMTU)", strerror(network.mtu_error_code));
+    return;
+  }
+
+  // network capacity
+  if (network.speed <= 0) {
+    if (network.ethtool_error_code == ENOTSUP) {
+      status.add(fmt::format("Network {}: status", index), "Not Supported");
+      // Assume no error, no error message
+    } else {
+      status.add(fmt::format("Network {}: status", index), "Error");
+      error_message = "ioctl error";
+    }
+
+    status.add(fmt::format("Network {}: interface name", index), network.interface_name);
+    status.add("ioctl(SIOCETHTOOL)", strerror(network.ethtool_error_code));
+  }
+}
 
 void NetMonitor::update_network_list()
 {
   rclcpp::Duration duration = this->now() - last_update_time_;
 
   struct ifaddrs * interfaces = {};
+  network_list_.clear();
 
   // Get network interfaces
   if (getifaddrs(&interfaces) < 0) {
+    getifaddrs_error_code_ = errno;
     return;
   }
 
@@ -124,6 +385,13 @@ void NetMonitor::update_network_list()
     if (interface->ifa_addr->sa_family != AF_PACKET) {
       continue;
     }
+    // Skip device not specified
+    const auto object = std::find_if(
+      device_params_.begin(), device_params_.end(),
+      [&interface](const auto & device) { return device == "*" || device == interface->ifa_name; });
+    if (object == device_params_.end()) {
+      continue;
+    }
 
     NetworkInfomation network{};
     network.interface_name = interface->ifa_name;
@@ -135,7 +403,7 @@ void NetMonitor::update_network_list()
     // Update network information using routing netlink stats
     update_network_information_by_routing_netlink(network, interface->ifa_data, duration);
 
-    network_list_[interface->ifa_name] = network;
+    network_list_.emplace_back(network);
   }
 
   freeifaddrs(interfaces);
@@ -157,21 +425,22 @@ void NetMonitor::update_network_information_by_socket(NetworkInfomation & networ
   close(fd);
 }
 
-void NetMonitor::update_mtu(NetworkInfomation & network, int fd)
+void NetMonitor::update_mtu(NetworkInfomation & network, int socket)
 {
   struct ifreq request = {};
 
   // NOLINTNEXTLINE [cppcoreguidelines-pro-type-union-access]
   strncpy(request.ifr_name, network.interface_name.c_str(), IFNAMSIZ - 1);
-  if (ioctl(fd, SIOCGIFMTU, &request) < 0) {
-    network.mtu_errno = errno;
+  if (ioctl(socket, SIOCGIFMTU, &request) < 0) {
+    network.is_invalid = true;
+    network.mtu_error_code = errno;
     return;
   }
 
   network.mtu = request.ifr_mtu;  // NOLINT [cppcoreguidelines-pro-type-union-access]
 }
 
-void NetMonitor::update_network_capacity(NetworkInfomation & network, int fd)
+void NetMonitor::update_network_capacity(NetworkInfomation & network, int socket)
 {
   struct ifreq request = {};
   struct ethtool_cmd ether_request = {};
@@ -181,7 +450,7 @@ void NetMonitor::update_network_capacity(NetworkInfomation & network, int fd)
   request.ifr_data = (caddr_t)&ether_request;  // NOLINT [cppcoreguidelines-pro-type-cstyle-cast]
 
   ether_request.cmd = ETHTOOL_GSET;
-  if (ioctl(fd, SIOCETHTOOL, &request) >= 0) {
+  if (ioctl(socket, SIOCETHTOOL, &request) >= 0) {
     network.speed = ether_request.speed;
     return;
   }
@@ -189,7 +458,8 @@ void NetMonitor::update_network_capacity(NetworkInfomation & network, int fd)
   // Possibly wireless connection, get bitrate(MBit/s)
   int ret = nl80211_.getBitrate(network.interface_name.c_str());
   if (ret <= 0) {
-    network.ethtool_errno = errno;
+    network.is_invalid = true;
+    network.ethtool_error_code = errno;
   } else {
     network.speed = ret;
   }
@@ -241,267 +511,7 @@ void NetMonitor::update_crc_error(NetworkInfomation & network, const struct rtnl
   crc_errors.last_rx_crc_errors = stats->rx_crc_errors;
 }
 
-void NetMonitor::check_usage(diagnostic_updater::DiagnosticStatusWrapper & stat)
-{
-  // Remember start time to measure elapsed time
-  const auto t_start = SystemMonitorUtility::startMeasurement();
-
-  if (!check_general_info(stat)) {
-    return;
-  }
-
-  int level = DiagStatus::OK;
-  int whole_level = DiagStatus::OK;
-  int index = 0;
-  std::string error_str;
-  std::vector<std::string> interface_names;
-
-  for (const auto & network : network_list_) {
-    if (!is_supported_network(network.second, index, stat, error_str)) {
-      ++index;
-      interface_names.push_back(network.second.interface_name);
-      continue;
-    }
-
-    level = network.second.is_running ? DiagStatus::OK : DiagStatus::ERROR;
-
-    stat.add(fmt::format("Network {}: status", index), usage_dict_.at(level));
-    stat.add(fmt::format("Network {}: interface name", index), network.second.interface_name);
-    stat.addf(fmt::format("Network {}: rx_usage", index), "%.2f%%", network.second.rx_usage * 1e+2);
-    stat.addf(fmt::format("Network {}: tx_usage", index), "%.2f%%", network.second.tx_usage * 1e+2);
-    stat.addf(
-      fmt::format("Network {}: rx_traffic", index), "%.2f MBit/s", network.second.rx_traffic);
-    stat.addf(
-      fmt::format("Network {}: tx_traffic", index), "%.2f MBit/s", network.second.tx_traffic);
-    stat.addf(fmt::format("Network {}: capacity", index), "%.1f MBit/s", network.second.speed);
-    stat.add(fmt::format("Network {}: mtu", index), network.second.mtu);
-    stat.add(fmt::format("Network {}: rx_bytes", index), network.second.rx_bytes);
-    stat.add(fmt::format("Network {}: rx_errors", index), network.second.rx_errors);
-    stat.add(fmt::format("Network {}: tx_bytes", index), network.second.tx_bytes);
-    stat.add(fmt::format("Network {}: tx_errors", index), network.second.tx_errors);
-    stat.add(fmt::format("Network {}: collisions", index), network.second.collisions);
-
-    ++index;
-
-    interface_names.push_back(network.second.interface_name);
-  }
-
-  // Check if specified device exists
-  for (const auto & device : device_params_) {
-    // Skip if all devices specified
-    if (device == "*") {
-      continue;
-    }
-    // Skip if device already appended
-    if (boost::find(interface_names, device) != interface_names.end()) {
-      continue;
-    }
-
-    stat.add(fmt::format("Network {}: status", index), "No Such Device");
-    stat.add(fmt::format("Network {}: interface name", index), device);
-    error_str = "no such device";
-    ++index;
-  }
-
-  if (!error_str.empty()) {
-    stat.summary(DiagStatus::ERROR, error_str);
-  } else {
-    stat.summary(whole_level, usage_dict_.at(whole_level));
-  }
-
-  // Measure elapsed time since start time and report
-  SystemMonitorUtility::stopMeasurement(t_start, stat);
-}
-
-void NetMonitor::check_crc_error(diagnostic_updater::DiagnosticStatusWrapper & stat)
-{
-  // Remember start time to measure elapsed time
-  const auto t_start = SystemMonitorUtility::startMeasurement();
-
-  if (!check_general_info(stat)) {
-    return;
-  }
-
-  int whole_level = DiagStatus::OK;
-  int index = 0;
-  std::string error_str;
-
-  for (const auto & network : network_list_) {
-    if (!is_supported_network(network.second, index, stat, error_str)) {
-      ++index;
-      continue;
-    }
-
-    CrcErrors & crc_errors = crc_errors_[network.second.interface_name];
-    unsigned int unit_rx_crc_errors = 0;
-
-    for (auto errors : crc_errors.errors_queue) {
-      unit_rx_crc_errors += errors;
-    }
-
-    stat.add(fmt::format("Network {}: interface name", index), network.second.interface_name);
-    stat.add(fmt::format("Network {}: total rx_crc_errors", index), crc_errors.last_rx_crc_errors);
-    stat.add(fmt::format("Network {}: rx_crc_errors per unit time", index), unit_rx_crc_errors);
-
-    if (unit_rx_crc_errors >= crc_error_count_threshold_) {
-      whole_level = std::max(whole_level, static_cast<int>(DiagStatus::WARN));
-      error_str = "CRC error";
-    }
-
-    ++index;
-  }
-
-  if (!error_str.empty()) {
-    stat.summary(whole_level, error_str);
-  } else {
-    stat.summary(whole_level, "OK");
-  }
-
-  // Measure elapsed time since start time and report
-  SystemMonitorUtility::stopMeasurement(t_start, stat);
-}
-
-bool NetMonitor::check_general_info(diagnostic_updater::DiagnosticStatusWrapper & stat)
-{
-  if (device_params_.empty()) {
-    stat.summary(DiagStatus::ERROR, "invalid device parameter");
-    return false;
-  }
-
-  if (getifaddrs_errno_ != 0) {
-    stat.summary(DiagStatus::ERROR, "getifaddrs error");
-    stat.add("getifaddrs", strerror(getifaddrs_errno_));
-    return false;
-  }
-  return true;
-}
-
-bool NetMonitor::is_supported_network(
-  const NetworkInfomation & network, int index, diagnostic_updater::DiagnosticStatusWrapper & stat,
-  std::string & error_str)
-{
-  // MTU information
-  if (network.mtu_errno != 0) {
-    if (network.mtu_errno == ENOTSUP) {
-      stat.add(fmt::format("Network {}: status", index), "Not Supported");
-    } else {
-      stat.add(fmt::format("Network {}: status", index), "Error");
-      error_str = "ioctl error";
-    }
-
-    stat.add(fmt::format("Network {}: interface name", index), network.interface_name);
-    stat.add("ioctl(SIOCGIFMTU)", strerror(network.mtu_errno));
-    return false;
-  }
-
-  // network capacity
-  if (network.speed <= 0) {
-    if (network.ethtool_errno == ENOTSUP) {
-      stat.add(fmt::format("Network {}: status", index), "Not Supported");
-    } else {
-      stat.add(fmt::format("Network {}: status", index), "Error");
-      error_str = "ioctl error";
-    }
-
-    stat.add(fmt::format("Network {}: interface name", index), network.interface_name);
-    stat.add("ioctl(SIOCETHTOOL)", strerror(network.ethtool_errno));
-    return false;
-  }
-  return true;
-}
-
-#include <boost/algorithm/string.hpp>  // workaround for build errors
-
-void NetMonitor::monitor_traffic(diagnostic_updater::DiagnosticStatusWrapper & stat)
-{
-  // Remember start time to measure elapsed time
-  const auto t_start = SystemMonitorUtility::startMeasurement();
-
-  // Get result of nethogs
-  traffic_reader_service::Result result;
-  get_nethogs_result(result);
-
-  // traffic_reader result to output
-  if (result.error_code != EXIT_SUCCESS) {
-    stat.summary(DiagStatus::ERROR, "traffic_reader error");
-    stat.add("error", result.output);
-  } else {
-    stat.summary(DiagStatus::OK, "OK");
-
-    if (result.output.empty()) {
-      stat.add("nethogs: result", fmt::format("No data monitored: {}", monitor_program_));
-    } else {
-      std::stringstream lines{result.output};
-      std::string line;
-      std::vector<std::string> list;
-      int idx = 0;
-      while (std::getline(lines, line)) {
-        if (line.empty()) {
-          continue;
-        }
-        boost::split(list, line, boost::is_any_of("\t"), boost::token_compress_on);
-        if (list.size() >= 3) {
-          stat.add(fmt::format("nethogs {}: program", idx), list[3].c_str());
-          stat.add(fmt::format("nethogs {}: sent (KB/s)", idx), list[1].c_str());
-          stat.add(fmt::format("nethogs {}: received (KB/sec)", idx), list[2].c_str());
-        } else {
-          stat.add(fmt::format("nethogs {}: result", idx), line);
-        }
-        idx++;
-      }
-    }
-  }
-
-  // Measure elapsed time since start time and report
-  SystemMonitorUtility::stopMeasurement(t_start, stat);
-}
-
-void NetMonitor::check_reassembles_failed(diagnostic_updater::DiagnosticStatusWrapper & stat)
-{
-  // Remember start time to measure elapsed time
-  const auto t_start = SystemMonitorUtility::startMeasurement();
-
-  int whole_level = DiagStatus::OK;
-  std::string error_str;
-  uint64_t total_reassembles_failed = 0;
-  uint64_t unit_reassembles_failed = 0;
-
-  if (get_reassembles_failed(total_reassembles_failed)) {
-    reassembles_failed_queue_.push_back(total_reassembles_failed - last_reassembles_failed_);
-    while (reassembles_failed_queue_.size() > reassembles_failed_check_duration_) {
-      reassembles_failed_queue_.pop_front();
-    }
-
-    for (auto reassembles_failed : reassembles_failed_queue_) {
-      unit_reassembles_failed += reassembles_failed;
-    }
-
-    stat.add(fmt::format("total packet reassembles failed"), total_reassembles_failed);
-    stat.add(fmt::format("packet reassembles failed per unit time"), unit_reassembles_failed);
-
-    if (unit_reassembles_failed >= reassembles_failed_check_count_) {
-      whole_level = std::max(whole_level, static_cast<int>(DiagStatus::WARN));
-      error_str = "reassembles failed";
-    }
-
-    last_reassembles_failed_ = total_reassembles_failed;
-  } else {
-    reassembles_failed_queue_.push_back(0);
-    whole_level = std::max(whole_level, static_cast<int>(DiagStatus::ERROR));
-    error_str = "failed to read /proc/net/snmp";
-  }
-
-  if (!error_str.empty()) {
-    stat.summary(whole_level, error_str);
-  } else {
-    stat.summary(whole_level, "OK");
-  }
-
-  // Measure elapsed time since start time and report
-  SystemMonitorUtility::stopMeasurement(t_start, stat);
-}
-
-void NetMonitor::search_reassembles_failed_column_index()
+void NetMonitor::get_reassembles_failed_column_index()
 {
   std::ifstream ifs("/proc/net/snmp");
   if (!ifs) {
@@ -509,45 +519,43 @@ void NetMonitor::search_reassembles_failed_column_index()
     return;
   }
 
+  // Find column index of 'ReasmFails'
+  std::string line;
+  if (!std::getline(ifs, line)) {
+    RCLCPP_WARN(get_logger(), "Failed to get header of /proc/net/snmp.");
+    return;
+  }
+
   // /proc/net/snmp
   // Ip: Forwarding DefaultTTL InReceives ... ReasmTimeout ReasmReqds ReasmOKs ReasmFails ...
-  // Ip: 2          64         5636471397 ... 135          2303339    216166   270        ...
-  std::string line;
+  // Ip: 2          64         5636471397 ... 135          2303339    216166   270        ..
+  std::vector<std::string> header_list;
+  boost::split(header_list, line, boost::is_space());
 
-  // Find column index of 'ReasmFails'
-  if (!std::getline(ifs, line)) {
-    RCLCPP_WARN(get_logger(), "Failed to get /proc/net/snmp first line.");
+  if (header_list.empty()) {
+    RCLCPP_WARN(get_logger(), "Failed to get header list of /proc/net/snmp.");
     return;
   }
-
-  std::vector<std::string> title_list;
-  boost::split(title_list, line, boost::is_space());
-
-  if (title_list.empty()) {
-    RCLCPP_WARN(get_logger(), "/proc/net/snmp first line is empty.");
-    return;
-  }
-  if (title_list[0] != "Ip:") {
+  if (header_list[0] != "Ip:") {
     RCLCPP_WARN(
-      get_logger(), "/proc/net/snmp line title column is invalid. : %s", title_list[0].c_str());
+      get_logger(), "Header column is invalid in /proc/net/snmp. %s", header_list[0].c_str());
     return;
   }
 
   int index = 0;
-  for (auto itr = title_list.begin(); itr != title_list.end(); ++itr, ++index) {
-    if (*itr == "ReasmFails") {
+  for (const auto & header : header_list) {
+    if (header == "ReasmFails") {
       reassembles_failed_column_index_ = index;
       break;
     }
+    ++index;
   }
 }
 
 bool NetMonitor::get_reassembles_failed(uint64_t & reassembles_failed)
 {
   if (reassembles_failed_column_index_ == 0) {
-    RCLCPP_WARN(
-      get_logger(), "reassembles failed column index is invalid. : %d",
-      reassembles_failed_column_index_);
+    RCLCPP_WARN(get_logger(), "Column index is invalid. : %d", reassembles_failed_column_index_);
     return false;
   }
 
@@ -559,15 +567,15 @@ bool NetMonitor::get_reassembles_failed(uint64_t & reassembles_failed)
 
   std::string line;
 
-  // Skip title row
+  // Skip header row
   if (!std::getline(ifs, line)) {
-    RCLCPP_WARN(get_logger(), "Failed to get /proc/net/snmp first line.");
+    RCLCPP_WARN(get_logger(), "Failed to get header of /proc/net/snmp.");
     return false;
   }
 
   // Find a value of 'ReasmFails'
   if (!std::getline(ifs, line)) {
-    RCLCPP_WARN(get_logger(), "Failed to get /proc/net/snmp second line.");
+    RCLCPP_WARN(get_logger(), "Failed to get a line of /proc/net/snmp.");
     return false;
   }
 
@@ -595,20 +603,14 @@ void NetMonitor::send_start_nethogs_request()
     return;
   }
 
-  int index = 0;
-  std::string error_str;
   diagnostic_updater::DiagnosticStatusWrapper stat;
   std::vector<std::string> interface_names;
 
   for (const auto & network : network_list_) {
-    if (!is_supported_network(network.second, index, stat, error_str)) {
-      ++index;
-      interface_names.push_back(network.second.interface_name);
-      continue;
-    }
-    ++index;
+    // Skip if network is not supported
+    if (network.is_invalid) continue;
 
-    interface_names.push_back(network.second.interface_name);
+    interface_names.push_back(network.interface_name);
   }
 
   // Send data to traffic-reader service
