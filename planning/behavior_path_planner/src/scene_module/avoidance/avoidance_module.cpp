@@ -43,6 +43,7 @@
 
 namespace behavior_path_planner
 {
+using motion_utils::calcLongitudinalOffsetPose;
 using motion_utils::calcSignedArcLength;
 using motion_utils::findNearestIndex;
 using motion_utils::findNearestSegmentIndex;
@@ -647,10 +648,47 @@ void AvoidanceModule::fillShiftLine(AvoidancePlanningData & data, DebugData & de
       getLogger(), *clock_, 5000, "avoiding now. could not transit yield maneuver!!!");
   }
 
-  {
-    debug.output_shift = data.candidate_path.shift_length;
-    debug.current_raw_shift = data.unapproved_raw_sl;
-    debug.new_shift_lines = data.unapproved_new_sl;
+  fillDebugData(data, debug);
+}
+
+void AvoidanceModule::fillDebugData(const AvoidancePlanningData & data, DebugData & debug) const
+{
+  debug.output_shift = data.candidate_path.shift_length;
+  debug.current_raw_shift = data.unapproved_raw_sl;
+  debug.new_shift_lines = data.unapproved_new_sl;
+
+  if (data.target_objects.empty()) {
+    return;
+  }
+
+  if (data.avoiding_now) {
+    return;
+  }
+
+  if (data.unapproved_new_sl.empty()) {
+    return;
+  }
+
+  const auto o_front = data.target_objects.front();
+  const auto & base_link2front = planner_data_->parameters.base_link2front;
+  const auto & vehicle_width = planner_data_->parameters.vehicle_width;
+
+  const auto avoid_margin = parameters_->lateral_collision_safety_buffer +
+                            parameters_->lateral_collision_margin + 0.5 * vehicle_width;
+
+  const auto variable =
+    getSharpAvoidanceDistance(getShiftLength(o_front, isOnRight(o_front), avoid_margin));
+  const auto constant = getNominalPrepareDistance() +
+                        parameters_->longitudinal_collision_safety_buffer + base_link2front;
+  const auto total_avoid_distance = variable + constant;
+
+  const auto opt_feasible_bound = calcLongitudinalOffsetPose(
+    data.reference_path.points, getEgoPosition(), o_front.longitudinal - total_avoid_distance);
+
+  if (opt_feasible_bound) {
+    debug.feasible_bound = opt_feasible_bound.get();
+  } else {
+    debug.feasible_bound = getPose(data.reference_path.points.front());
   }
 }
 
@@ -2833,11 +2871,6 @@ BehaviorModuleOutput AvoidanceModule::plan()
     prev_linear_shift_path_ = toShiftedPath(avoidance_data_.reference_path);
     path_shifter_.generate(&prev_linear_shift_path_, true, SHIFT_TYPE::LINEAR);
     prev_reference_ = avoidance_data_.reference_path;
-    if (parameters_->publish_debug_marker) {
-      setDebugData(avoidance_data_, path_shifter_, debug_data_);
-    } else {
-      debug_marker_.markers.clear();
-    }
   }
 
   BehaviorModuleOutput output;
@@ -2850,6 +2883,12 @@ BehaviorModuleOutput AvoidanceModule::plan()
 
   avoidance_data_.state = updateEgoState(data);
   updateEgoBehavior(data, avoidance_path);
+
+  if (parameters_->publish_debug_marker) {
+    setDebugData(avoidance_data_, path_shifter_, debug_data_);
+  } else {
+    debug_marker_.markers.clear();
+  }
 
   output.path = std::make_shared<PathWithLaneId>(avoidance_path.path);
 
@@ -3400,8 +3439,15 @@ void AvoidanceModule::setDebugData(
   using marker_utils::avoidance_marker::createUnavoidableObjectsMarkerArray;
   using marker_utils::avoidance_marker::createUnsafeObjectsMarkerArray;
   using marker_utils::avoidance_marker::makeOverhangToRoadShoulderMarkerArray;
+  using motion_utils::createDeadLineVirtualWallMarker;
+  using motion_utils::createSlowDownVirtualWallMarker;
+  using motion_utils::createStopVirtualWallMarker;
+  using tier4_autoware_utils::appendMarkerArray;
+  using tier4_autoware_utils::calcOffsetPose;
 
   debug_marker_.markers.clear();
+  const auto & base_link2front = planner_data_->parameters.base_link2front;
+  const auto current_time = rclcpp::Clock{RCL_ROS_TIME}.now();
 
   const auto add = [this](const MarkerArray & added) {
     tier4_autoware_utils::appendMarkerArray(added, &debug_marker_);
@@ -3426,6 +3472,24 @@ void AvoidanceModule::setDebugData(
   add(createPathMarkerArray(path, "centerline_resampled", 0, 0.0, 0.9, 0.5));
   add(createPathMarkerArray(prev_linear_shift_path_.path, "prev_linear_shift", 0, 0.5, 0.4, 0.6));
   add(createPoseMarkerArray(data.reference_pose, "reference_pose", 0, 0.9, 0.3, 0.3));
+
+  if (debug.stop_pose) {
+    const auto p_front = calcOffsetPose(debug.stop_pose.get(), base_link2front, 0.0, 0.0);
+    appendMarkerArray(
+      createStopVirtualWallMarker(p_front, "avoidance stop", current_time, 0L), &debug_marker_);
+  }
+
+  if (debug.slow_pose) {
+    const auto p_front = calcOffsetPose(debug.slow_pose.get(), base_link2front, 0.0, 0.0);
+    appendMarkerArray(
+      createSlowDownVirtualWallMarker(p_front, "avoidance slow", current_time, 0L), &debug_marker_);
+  }
+
+  if (debug.feasible_bound) {
+    const auto p_front = calcOffsetPose(debug.feasible_bound.get(), base_link2front, 0.0, 0.0);
+    appendMarkerArray(
+      createDeadLineVirtualWallMarker(p_front, "feasible bound", current_time, 0L), &debug_marker_);
+  }
 
   add(createSafetyCheckMarkerArray(data.state, getEgoPose(), debug));
 

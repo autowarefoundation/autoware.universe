@@ -202,11 +202,17 @@ private:
    * object pre-process
    */
   void fillAvoidanceTargetObjects(AvoidancePlanningData & data, DebugData & debug) const;
+
   void fillObjectEnvelopePolygon(const Pose & closest_pose, ObjectData & object_data) const;
+
   void fillObjectMovingTime(ObjectData & object_data) const;
+
   void compensateDetectionLost(
     ObjectDataArray & target_objects, ObjectDataArray & other_objects) const;
+
   void fillShiftLine(AvoidancePlanningData & data, DebugData & debug) const;
+
+  void fillDebugData(const AvoidancePlanningData & data, DebugData & debug) const;
 
   // data used in previous planning
   ShiftedPath prev_output_;
