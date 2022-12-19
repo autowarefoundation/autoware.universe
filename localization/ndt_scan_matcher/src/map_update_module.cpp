@@ -67,7 +67,7 @@ MapUpdateModule::MapUpdateModule(
   pcd_loader_client_ = node->create_client<autoware_map_msgs::srv::GetDifferentialPointCloudMap>(
     "pcd_loader_service", rmw_qos_profile_services_default);
   while (!pcd_loader_client_->wait_for_service(std::chrono::seconds(1)) && rclcpp::ok()) {
-    RCLCPP_INFO(logger_, "Waiting for pcd loader service...");
+    RCLCPP_INFO(logger_, "Waiting for pcd loader service. Check if the enable_differential_load in pointcloud_map_loader is set `true`.");
   }
   last_update_position_ptr_ = nullptr;
   current_position_ptr_ = nullptr;
