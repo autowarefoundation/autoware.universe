@@ -11,6 +11,43 @@
 
 namespace pcdless::modularized_particle_filter
 {
+namespace
+{
+struct FastCosSin
+{
+  FastCosSin(int bin = 90)
+  {
+    for (int i = 0; i < bin + 1; ++i) {
+      cos_.push_back(std::cos(i * M_PI / 180.f));
+    }
+  }
+  float cos(float deg) const
+  {
+    while (deg < 0) {
+      deg += 360;
+    }
+    while (deg > 360) {
+      deg -= 360;
+    }
+    if (deg < 90) {
+      return cos_.at(int(deg));
+    } else if (deg < 180) {
+      return -cos_.at(int(180 - deg));
+    } else if (deg < 270) {
+      return -cos_.at(int(deg - 180));
+    } else {
+      return cos_.at(int(360 - deg));
+    }
+  }
+
+  float sin(float deg) const { return cos(deg - 90.f); }
+
+private:
+  std::vector<float> cos_;
+};
+
+FastCosSin fast_math;
+}  // namespace
 
 CameraParticleCorrector::CameraParticleCorrector()
 : AbstCorrector("camera_particle_corrector"),
@@ -115,35 +152,40 @@ void CameraParticleCorrector::on_lsd(const PointCloud2 & lsd_msg)
   }
 
   auto [lsd_cloud, iffy_lsd_cloud] = split_linesegments(lsd_msg);
-
   ParticleArray weighted_particles = opt_array.value();
-  for (auto & particle : weighted_particles.particles) {
-    Sophus::SE3f transform = common::pose_to_se3(particle.pose);
-    LineSegments transformed_lsd = common::transform_linesegments(lsd_cloud, transform);
-    LineSegments transformed_iffy_lsd = common::transform_linesegments(iffy_lsd_cloud, transform);
-    transformed_lsd += transformed_iffy_lsd;
-    float raw_score = compute_score(transformed_lsd, transform.translation());
-    particle.weight = score_converter_(raw_score);
-  }
 
-  cost_map_.erase_obsolete();  // NOTE:
-
+  bool publish_weighted_particles = true;
   {
     // Check travel distance and publish weights if it is enough long
     Pose meaned_pose = mean_pose(weighted_particles);
     Eigen::Vector3f mean_position = common::pose_to_affine(meaned_pose).translation();
     if ((mean_position - last_mean_position_).squaredNorm() > 1) {
-      if (enable_weights_) {
-        this->set_weighted_particle_array(weighted_particles);
-      }
       last_mean_position_ = mean_position;
     } else {
       using namespace std::literals::chrono_literals;
+      publish_weighted_particles = false;
       RCLCPP_INFO_STREAM_THROTTLE(
         get_logger(), *get_clock(), (1000ms).count(), "Skip weighting because almost same positon");
     }
   }
 
+  if (publish_weighted_particles) {
+    for (auto & particle : weighted_particles.particles) {
+      Sophus::SE3f transform = common::pose_to_se3(particle.pose);
+      LineSegments transformed_lsd = common::transform_linesegments(lsd_cloud, transform);
+      LineSegments transformed_iffy_lsd = common::transform_linesegments(iffy_lsd_cloud, transform);
+      transformed_lsd += transformed_iffy_lsd;
+
+      float raw_score = compute_score(transformed_lsd, transform.translation());
+      particle.weight = score_converter_(raw_score);
+    }
+
+    if (enable_weights_) {
+      this->set_weighted_particle_array(weighted_particles);
+    }
+  }
+
+  cost_map_.erase_obsolete();  // NOTE:
   pub_marker_->publish(cost_map_.show_map_range());
 
   // DEBUG: just visualization
@@ -177,7 +219,11 @@ void CameraParticleCorrector::on_lsd(const PointCloud2 & lsd_msg)
     common::publish_cloud(*pub_scored_cloud_, rgb_cloud, lsd_msg.header.stamp);
   }
 
-  RCLCPP_INFO_STREAM(get_logger(), "on_lsd: " << timer);
+  if (timer.milli_seconds() > 80) {
+    RCLCPP_WARN_STREAM(get_logger(), "on_lsd: " << timer);
+  } else {
+    RCLCPP_INFO_STREAM(get_logger(), "on_lsd: " << timer);
+  }
 }
 
 void CameraParticleCorrector::on_timer()
@@ -197,8 +243,9 @@ void CameraParticleCorrector::on_ll2(const PointCloud2 & ll2_msg)
 
 float abs_cos(const Eigen::Vector3f & t, float deg)
 {
+  // NOTE: use pre-computed table for std::cos & std::sin
   Eigen::Vector2f x(t.x(), t.y());
-  Eigen::Vector2f y(std::cos(deg * M_PI / 180.0), std::sin(deg * M_PI / 180.0));
+  Eigen::Vector2f y(fast_math.cos(deg), fast_math.sin(deg));
   x.normalize();
   return std::abs(x.dot(y));
 }
@@ -216,7 +263,7 @@ float CameraParticleCorrector::compute_score(
 
       // NOTE: Close points are prioritized
       float squared_norm = (p - self_position).topRows(2).squaredNorm();
-      float gain = std::exp(-far_weight_gain_ * squared_norm);
+      float gain = exp(-far_weight_gain_ * squared_norm);
 
       cv::Vec2b v2 = cost_map_.at2(p.topRows(2));
       if (pn.label == 0) {

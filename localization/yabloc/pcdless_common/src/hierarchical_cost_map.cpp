@@ -71,7 +71,8 @@ float HierarchicalCostMap::at(const Eigen::Vector2f & position)
   map_accessed_[key] = true;
 
   cv::Point2i tmp = to_cv_point(key, position);
-  return cost_maps_.at(key).at<cv::Vec3b>(tmp)[0];
+  // return cost_maps_.at(key).at<cv::Vec3b>(tmp)[0];
+  return cost_maps_.at(key).ptr<cv::Vec3b>(tmp.y)[tmp.x][0];
 }
 
 void HierarchicalCostMap::set_unmapped_area(const pcl::PointCloud<pcl::PointXYZ> & polygon)
