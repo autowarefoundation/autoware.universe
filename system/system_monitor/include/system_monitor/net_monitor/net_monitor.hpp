@@ -182,7 +182,7 @@ protected:
    * @param [out] network Network information
    * @param [in] socket File descriptor to socket
    */
-  void update_mtu(NetworkInfomation & network, int socket);
+  static void update_mtu(NetworkInfomation & network, int socket);
 
   /**
    * @brief Update network information about network capacity

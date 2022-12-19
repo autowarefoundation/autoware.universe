@@ -456,7 +456,7 @@ void NetMonitor::update_network_capacity(NetworkInfomation & network, int socket
   }
 
   // Possibly wireless connection, get bitrate(MBit/s)
-  int ret = nl80211_.getBitrate(network.interface_name.c_str());
+  float ret = nl80211_.getBitrate(network.interface_name.c_str());
   if (ret <= 0) {
     network.is_invalid = true;
     network.ethtool_error_code = errno;
