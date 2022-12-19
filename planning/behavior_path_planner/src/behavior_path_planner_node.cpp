@@ -602,7 +602,7 @@ bool BehaviorPathPlannerNode::isDataReady()
   return true;
 }
 
-void BehaviorPathPlannerNode::updatePlannerData()
+std::shared_ptr<PlannerData> BehaviorPathPlannerNode::createLatestPlannerData()
 {
   const std::lock_guard<std::mutex> lock(mutex_pd_);
 
@@ -628,6 +628,8 @@ void BehaviorPathPlannerNode::updatePlannerData()
 
     has_received_route_ = false;
   }
+
+  return std::make_shared<PlannerData>(*planner_data_);
 }
 
 void BehaviorPathPlannerNode::run()
@@ -645,10 +647,8 @@ void BehaviorPathPlannerNode::run()
     return;
   }
 
-  updatePlannerData();
-
-  // create local planner data
-  const auto planner_data = std::make_shared<PlannerData>(*planner_data_);
+  // create latest planner data
+  const auto planner_data = createLatestPlannerData();
 
   // run behavior planner
   const auto output = bt_manager_->run(planner_data);
@@ -863,28 +863,34 @@ bool BehaviorPathPlannerNode::skipSmoothGoalConnection(
 
 void BehaviorPathPlannerNode::onVelocity(const Odometry::ConstSharedPtr msg)
 {
+  const std::lock_guard<std::mutex> lock(mutex_pd_);
   planner_data_->self_odometry = msg;
 }
 void BehaviorPathPlannerNode::onAcceleration(const AccelWithCovarianceStamped::ConstSharedPtr msg)
 {
+  const std::lock_guard<std::mutex> lock(mutex_pd_);
   planner_data_->self_acceleration = msg;
 }
 void BehaviorPathPlannerNode::onPerception(const PredictedObjects::ConstSharedPtr msg)
 {
+  const std::lock_guard<std::mutex> lock(mutex_pd_);
   planner_data_->dynamic_object = msg;
 }
 void BehaviorPathPlannerNode::onOccupancyGrid(const OccupancyGrid::ConstSharedPtr msg)
 {
+  const std::lock_guard<std::mutex> lock(mutex_pd_);
   planner_data_->occupancy_grid = msg;
 }
 void BehaviorPathPlannerNode::onExternalApproval(const ApprovalMsg::ConstSharedPtr msg)
 {
+  const std::lock_guard<std::mutex> lock(mutex_pd_);
   planner_data_->approval.is_approved.data = msg->approval;
   // TODO(wep21): Replace msg stamp after {stamp: now} is implemented in ros2 topic pub
   planner_data_->approval.is_approved.stamp = this->now();
 }
 void BehaviorPathPlannerNode::onForceApproval(const PathChangeModule::ConstSharedPtr msg)
 {
+  const std::lock_guard<std::mutex> lock(mutex_pd_);
   auto getModuleName = [](PathChangeModuleId module) {
     if (module.type == PathChangeModuleId::FORCE_LANE_CHANGE) {
       return "ForceLaneChange";

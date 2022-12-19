@@ -126,7 +126,7 @@ private:
   bool isDataReady();
 
   // update planner data
-  void updatePlannerData();
+  std::shared_ptr<PlannerData> createLatestPlannerData();
 
   // parameters
   std::shared_ptr<AvoidanceParameters> avoidance_param_ptr;
