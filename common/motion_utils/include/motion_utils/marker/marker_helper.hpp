@@ -15,8 +15,8 @@
 #ifndef MOTION_UTILS__MARKER__MARKER_HELPER_HPP_
 #define MOTION_UTILS__MARKER__MARKER_HELPER_HPP_
 
-#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 #include "motion_utils/resample/resample_utils.hpp"
+#include "tier4_autoware_utils/tier4_autoware_utils.hpp"
 
 #include <functional>
 #include <string>
@@ -63,7 +63,7 @@ class VirtualWallMarkerCreator
 public:
   virtual ~VirtualWallMarkerCreator() = default;
 
-   visualization_msgs::msg::MarkerArray createStopVirtualWallMarker(
+  visualization_msgs::msg::MarkerArray createStopVirtualWallMarker(
     const std::vector<Pose> & stop_pose, const std::string & module_name, const rclcpp::Time & now,
     int32_t id, const double longitudinal_offset = 0.0);
 
@@ -77,8 +77,6 @@ private:
     int32_t id, create_wall_function function_create_wall_marker,
     delete_wall_function function_delete_wall_marker,
     std::vector<geometry_msgs::msg::Pose> & previous_poses, const double longitudinal_offset = 0.0);
-
-
 
   std::vector<Pose> previous_stop_poses_;
   std::vector<Pose> previous_slow_down_poses_;

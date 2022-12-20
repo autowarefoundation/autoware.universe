@@ -174,7 +174,7 @@ private:
 
   // Debug
   DebugData debug_data_;
-  
+
   std::unique_ptr<motion_utils::VirtualWallMarkerCreator> virtual_wall_marker_creator_;
 };
 }  // namespace behavior_velocity_planner

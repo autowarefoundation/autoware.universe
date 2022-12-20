@@ -113,7 +113,6 @@ public:
   visualization_msgs::msg::MarkerArray createVirtualWallMarkerArray() override;
 
 private:
-
   int64_t lane_id_;
   std::string turn_direction_;
   bool has_traffic_light_;
