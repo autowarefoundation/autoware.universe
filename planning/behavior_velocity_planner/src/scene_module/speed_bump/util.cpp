@@ -113,19 +113,6 @@ PathPolygonIntersectionStatus getPathPolygonIntersectionStatus(
   return polygon_intersection_status;
 }
 
-std::vector<geometry_msgs::msg::Point> intersectionStatusToIntersectionPoints(
-  const PathPolygonIntersectionStatus & status)
-{
-  std::vector<geometry_msgs::msg::Point> intersection_points;
-  if (status.first_intersection_point) {
-    intersection_points.push_back(*status.first_intersection_point);
-  }
-  if (status.second_intersection_point) {
-    intersection_points.push_back(*status.second_intersection_point);
-  }
-  return intersection_points;
-}
-
 bool isNoRelation(const PathPolygonIntersectionStatus & status)
 {
   return (

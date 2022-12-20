@@ -93,8 +93,7 @@ bool SpeedBumpModule::modifyPathVelocity(
   const auto & path_polygon_intersection_status =
     getPathPolygonIntersectionStatus(ego_path, speed_bump_polygon, ego_pos, 2);
 
-  debug_data_.path_polygon_intersection_points =
-    intersectionStatusToIntersectionPoints(path_polygon_intersection_status);
+  debug_data_.path_polygon_intersection_status = path_polygon_intersection_status;
 
   for (const auto & p : speed_bump_reg_elem_.speedBump().basicPolygon()) {
     debug_data_.speed_bump_polygon.push_back(createPoint(p.x(), p.y(), ego_pos.z));

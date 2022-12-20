@@ -55,9 +55,6 @@ PathPolygonIntersectionStatus getPathPolygonIntersectionStatus(
   const PathWithLaneId & ego_path, const lanelet::BasicPolygon2d & polygon,
   const geometry_msgs::msg::Point & ego_pos, const size_t max_num);
 
-std::vector<geometry_msgs::msg::Point> intersectionStatusToIntersectionPoints(
-  const PathPolygonIntersectionStatus & status);
-
 bool isNoRelation(const PathPolygonIntersectionStatus & status);
 
 bool insertConstSpeedToPathSection(

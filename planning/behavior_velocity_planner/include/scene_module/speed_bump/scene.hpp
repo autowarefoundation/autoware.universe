@@ -32,9 +32,9 @@ public:
   struct DebugData
   {
     double base_link2front;
+    PathPolygonIntersectionStatus path_polygon_intersection_status;
     std::vector<geometry_msgs::msg::Pose> slow_start_poses;
     std::vector<geometry_msgs::msg::Point> slow_end_points;
-    std::vector<geometry_msgs::msg::Point> path_polygon_intersection_points;
     std::vector<geometry_msgs::msg::Point> speed_bump_polygon;
   };
 

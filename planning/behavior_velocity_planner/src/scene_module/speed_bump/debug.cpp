@@ -74,14 +74,19 @@ visualization_msgs::msg::MarkerArray createSpeedBumpMarkers(
   }
 
   // Path - polygon intersection points
-  if (!debug_data.path_polygon_intersection_points.empty()) {
+  {
     auto marker = createDefaultMarker(
       "map", now, "path_polygon intersection points", uid, Marker::POINTS,
       createMarkerScale(0.25, 0.25, 0.0), createMarkerColor(1.0, 0.0, 0.0, 0.999));
-    for (const auto & p : debug_data.path_polygon_intersection_points) {
-      marker.points.push_back(createPoint(p.x, p.y, p.z));
+    const auto & p_first = debug_data.path_polygon_intersection_status.first_intersection_point;
+    if (p_first) {
+      marker.points.push_back(createPoint(p_first->x, p_first->y, p_first->z));
     }
-    msg.markers.push_back(marker);
+    const auto & p_second = debug_data.path_polygon_intersection_status.second_intersection_point;
+    if (p_second) {
+      marker.points.push_back(createPoint(p_second->x, p_second->y, p_second->z));
+    }
+    if (!marker.points.empty()) msg.markers.push_back(marker);
   }
 
   return msg;
