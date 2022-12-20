@@ -89,4 +89,4 @@ To debug the issue, the maximum drivable area boundary can be visualized.
 
 ![drivable_area_boundary_marker2](./image/drivable_area/drivable_area_boundary_marker_example2.png)
 
-The boundary can be visualize by adding the marker from `/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/drivable_area_boundary`
+The maximum drivable area can be visualize by adding the marker from `/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/maximum_drivable_area`
