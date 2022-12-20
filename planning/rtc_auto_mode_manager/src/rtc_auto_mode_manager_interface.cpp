@@ -31,8 +31,6 @@ Module getModuleType(const std::string & module_name)
     module.type = Module::NO_STOPPING_AREA;
   } else if (module_name == "occlusion_spot") {
     module.type = Module::OCCLUSION_SPOT;
-  } else if (module_name == "stop_line") {
-    module.type = Module::NONE;
   } else if (module_name == "traffic_light") {
     module.type = Module::TRAFFIC_LIGHT;
   } else if (module_name == "virtual_traffic_light") {
@@ -49,6 +47,8 @@ Module getModuleType(const std::string & module_name)
     module.type = Module::PULL_OVER;
   } else if (module_name == "pull_out") {
     module.type = Module::PULL_OUT;
+  } else {
+    module.type = Module::NONE;
   }
   return module;
 }
