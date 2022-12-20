@@ -64,12 +64,16 @@ public:
   virtual ~VirtualWallMarkerCreator() = default;
 
   visualization_msgs::msg::MarkerArray createStopVirtualWallMarker(
-    const std::vector<Pose> & stop_pose, const std::string & module_name, const rclcpp::Time & now,
+    const std::vector<Pose> & stop_poses, const std::string & module_name, const rclcpp::Time & now,
     int32_t id, const double longitudinal_offset = 0.0);
 
   visualization_msgs::msg::MarkerArray createSlowDownVirtualWallMarker(
-    const std::vector<Pose> & stop_pose, const std::string & module_name, const rclcpp::Time & now,
-    int32_t id, const double longitudinal_offset = 0.0);
+    const std::vector<Pose> & slow_down_poses, const std::string & module_name,
+    const rclcpp::Time & now, int32_t id, const double longitudinal_offset = 0.0);
+
+  visualization_msgs::msg::MarkerArray createDeadLineVirtualWallMarker(
+    const std::vector<Pose> & dead_line_poses, const std::string & module_name,
+    const rclcpp::Time & now, int32_t id, const double longitudinal_offset = 0.0);
 
 private:
   visualization_msgs::msg::MarkerArray handleVirtualWallMarker(
@@ -80,6 +84,7 @@ private:
 
   std::vector<Pose> previous_stop_poses_;
   std::vector<Pose> previous_slow_down_poses_;
+  std::vector<Pose> previous_dead_line_poses_;
 };
 }  // namespace motion_utils
 
