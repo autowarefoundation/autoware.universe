@@ -16,7 +16,6 @@
 
 #include "drivable_area_expander/debug.hpp"
 #include "drivable_area_expander/drivable_area_expander.hpp"
-#include "drivable_area_expander/grid_utils.hpp"
 #include "drivable_area_expander/map_utils.hpp"
 #include "drivable_area_expander/parameters.hpp"
 #include "drivable_area_expander/path_preprocessing.hpp"
@@ -140,8 +139,9 @@ void DrivableAreaExpanderNode::onPath(const Path::ConstSharedPtr msg)
     downsampled_path_points.points.front().pose.position.x,
     downsampled_path_points.points.front().pose.position.y};
 
-  input_path.drivable_area = buildExpandedDrivableArea(
-    input_path.drivable_area, path_footprint, predicted_paths, uncrossable_lines, origin);
+  const auto diff_ls = expandDrivableArea(
+    input_path.left_bound, input_path.right_bound, path_footprint, predicted_paths,
+    uncrossable_lines, origin);
   pub_path_->publish(input_path);
 
   const auto t_end = std::chrono::system_clock::now();
@@ -152,8 +152,28 @@ void DrivableAreaExpanderNode::onPath(const Path::ConstSharedPtr msg)
 
   if (pub_debug_markers_->get_subscription_count() > 0) {
     const auto z = msg->points.empty() ? 0.0 : msg->points.front().pose.position.z;
-    pub_debug_markers_->publish(
-      makeDebugMarkers(path_footprint, uncrossable_lines, predicted_paths, z));
+    auto debug_markers = makeDebugMarkers(path_footprint, uncrossable_lines, predicted_paths, z);
+    visualization_msgs::msg::Marker m;
+    m.header.frame_id = "map";
+    m.type = visualization_msgs::msg::Marker::LINE_STRIP;
+    m.scale.x = 0.1;
+    m.color.a = 1.0;
+    m.color.r = 1.0;
+    for (const auto & ls : diff_ls) {
+      Point point;
+      for (const auto & p : ls) {
+        point.x = p.x();
+        point.y = p.y();
+        point.z = msg->points.front().pose.position.z;
+        m.points.push_back(point);
+      }
+      m.ns = "diff" + std::to_string(m.id);
+      debug_markers.markers.push_back(m);
+      m.id += 1;
+      m.color.b += 0.05;
+      m.color.g += 0.05;
+    }
+    pub_debug_markers_->publish(debug_markers);
   }
 }
 

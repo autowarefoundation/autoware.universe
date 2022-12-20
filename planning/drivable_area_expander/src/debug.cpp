@@ -56,7 +56,7 @@ visualization_msgs::msg::Marker makePolygonMarker(const polygon_t & polygon, con
 }
 
 visualization_msgs::msg::MarkerArray makeDebugMarkers(
-  const multipolygon_t & footprints, const multilinestring_t & uncrossable_lines,
+  const polygon_t & footprint, const multilinestring_t & uncrossable_lines,
   const multipolygon_t & predicted_paths, const double marker_z)
 {
   visualization_msgs::msg::MarkerArray debug_markers;
@@ -69,12 +69,10 @@ visualization_msgs::msg::MarkerArray makeDebugMarkers(
     marker.color.a = 0.5;
     debug_markers.markers.push_back(marker);
   }
-  auto foot_id = 0lu;
-  for (const auto & footprint : footprints) {
+  {
     auto marker = makePolygonMarker(footprint, marker_z);
     marker.color.g = 1.0;
     marker.color.a = 0.5;
-    marker.id = foot_id++;
     marker.ns = "path_footprint";
     debug_markers.markers.push_back(marker);
   }
@@ -90,16 +88,10 @@ visualization_msgs::msg::MarkerArray makeDebugMarkers(
 
   static auto prev_max_line_id = 0lu;
   static auto prev_max_pred_id = 0lu;
-  static auto prev_max_foot_id = 0lu;
   visualization_msgs::msg::Marker marker;
   marker.action = visualization_msgs::msg::Marker::DELETE;
   marker.ns = "uncrossable_lines";
   for (auto delete_id = line_id; delete_id < prev_max_line_id; ++delete_id) {
-    marker.id = delete_id;
-    debug_markers.markers.push_back(marker);
-  }
-  marker.ns = "path_footprint";
-  for (auto delete_id = pred_id; delete_id < prev_max_foot_id; ++delete_id) {
     marker.id = delete_id;
     debug_markers.markers.push_back(marker);
   }

@@ -14,7 +14,6 @@
 
 #include "drivable_area_expander/obstacles.hpp"
 
-#include "drivable_area_expander/grid_utils.hpp"
 #include "drivable_area_expander/parameters.hpp"
 
 #include <boost/assign.hpp>
@@ -48,10 +47,11 @@ polygon_t translatePolygon(const polygon_t & polygon, const double x, const doub
 }
 
 template <class T>
-multipolygon_t createFootprintPolygons(
+polygon_t createFootprintPolygon(
   const T & path, const double front, const double rear, const double left, const double right)
 {
-  multipolygon_t footprint;
+  polygon_t footprint;
+  multipolygon_t merge;
   polygon_t base_polygon;
   base_polygon.outer() = {
     point_t{front, left}, point_t{front, right}, point_t{rear, right}, point_t{rear, left}};
@@ -61,18 +61,20 @@ multipolygon_t createFootprintPolygons(
     const auto angle = tf2::getYaw(pose.orientation);
     const auto polygon =
       translatePolygon(rotatePolygon(base_polygon, angle), pose.position.x, pose.position.y);
-    footprint.push_back(polygon);
+    boost::geometry::union_(footprint, polygon, merge);
+    footprint = merge.front();
+    merge.clear();
   }
   return footprint;
 }
 
-multipolygon_t createPathFootprint(const Path & path, const ExpansionParameters & params)
+polygon_t createPathFootprint(const Path & path, const ExpansionParameters & params)
 {
   const auto left = params.ego_left_offset + params.ego_extra_left_offset;
   const auto right = params.ego_right_offset - params.ego_extra_right_offset;
   const auto rear = params.ego_rear_offset - params.ego_extra_rear_offset;
   const auto front = params.ego_front_offset + params.ego_extra_front_offset;
-  return createFootprintPolygons(path.points, front, rear, left, right);
+  return createFootprintPolygon(path.points, front, rear, left, right);
 }
 
 multipolygon_t createObjectFootprints(
@@ -86,8 +88,8 @@ multipolygon_t createObjectFootprints(
     const auto left = object.shape.dimensions.y / 2 + params.dynamic_objects_extra_left_offset;
     const auto right = -object.shape.dimensions.y / 2 - params.dynamic_objects_extra_right_offset;
     for (const auto & path : object.kinematics.predicted_paths) {
-      const auto footprint = createFootprintPolygons(path.path, front, rear, left, right);
-      footprints.insert(footprints.end(), footprint.begin(), footprint.end());
+      const auto footprint = createFootprintPolygon(path.path, front, rear, left, right);
+      footprints.push_back(footprint);
     }
   }
   return footprints;

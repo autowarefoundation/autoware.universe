@@ -22,7 +22,6 @@ if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
   ament_add_ros_isolated_gtest(test_${PROJECT_NAME}
-    test/test_grid_utils.cpp
     test/test_footprint.cpp
   )
   target_link_libraries(test_${PROJECT_NAME}

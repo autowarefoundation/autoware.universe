@@ -20,14 +20,14 @@
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_auto_planning_msgs/msg/path.hpp>
 #include <autoware_auto_planning_msgs/msg/path_point.hpp>
-#include <nav_msgs/msg/occupancy_grid.hpp>
+#include <geometry_msgs/msg/point.hpp>
 
 namespace drivable_area_expander
 {
 using autoware_auto_perception_msgs::msg::PredictedObjects;
 using autoware_auto_planning_msgs::msg::Path;
 using autoware_auto_planning_msgs::msg::PathPoint;
-using nav_msgs::msg::OccupancyGrid;
+using geometry_msgs::msg::Point;
 
 using point_t = tier4_autoware_utils::Point2d;
 using multipoint_t = tier4_autoware_utils::MultiPoint2d;
