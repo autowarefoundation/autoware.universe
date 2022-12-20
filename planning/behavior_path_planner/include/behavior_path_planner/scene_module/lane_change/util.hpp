@@ -57,8 +57,9 @@ double getExpectedVelocityWhenDecelerate(
   const double & lane_change_prepare_duration);
 
 std::pair<double, double> calcLaneChangingSpeedAndDistanceWhenDecelerate(
-  const double velocity, const double shift_length, const double expected_acceleration,
-  const double minimum_lane_change_length, const LaneChangeParameters & params);
+  const double velocity, const double shift_length, const double deceleration,
+  const double min_total_lc_len, const BehaviorPathPlannerParameters & com_param,
+  const LaneChangeParameters & lc_param);
 
 std::optional<LaneChangePath> constructCandidatePath(
   const PathWithLaneId & prepare_segment, const PathWithLaneId & lane_changing_segment,

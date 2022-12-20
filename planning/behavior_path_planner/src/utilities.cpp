@@ -2583,16 +2583,8 @@ double calcTotalLaneChangeDistance(
 {
   const double minimum_lane_change_distance =
     common_param.minimum_lane_change_prepare_distance + common_param.minimum_lane_change_length;
-  const double min_vel_distance =
-    common_param.minimum_lane_change_prepare_distance +
-    common_param.lane_changing_duration * common_param.minimum_lane_change_velocity;
-
-  if (!include_buffer) {
-    return std::max(min_vel_distance, minimum_lane_change_distance);
-  }
-
   const double end_of_lane_buffer = common_param.backward_length_buffer_for_end_of_lane;
-  return std::max(min_vel_distance, minimum_lane_change_distance) + end_of_lane_buffer;
+  return minimum_lane_change_distance + end_of_lane_buffer * static_cast<double>(include_buffer);
 }
 
 double calcLaneChangeBuffer(
