@@ -12,7 +12,7 @@ Please see `<exec_depend>` in `package.xml`.
 
 You can include as follows in `*.launch.xml` to use `map.launch.py`.
 
-Note that you should provide parameter paths as `PACKAGE_param_path`. The list of parameter paths you should provide is written at the top of `perception.launch.xml`.
+Note that you should provide parameter paths as `PACKAGE_param_path`. The list of parameter paths you should provide is written at the top of `map.launch.xml`.
 
 ```xml
 <arg name="map_path" description="point cloud and lanelet2 map directory path"/>
