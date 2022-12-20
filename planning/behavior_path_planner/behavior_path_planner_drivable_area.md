@@ -56,8 +56,23 @@ Note that, the order of drivable lanes become
 drivable_lanes = {DrivableLane1, DrivableLanes2, DrivableLanes3, DrivableLanes4, DrivableLanes5}
 ```
 
+### Drivable Area Expansion
+
+Each module can expand the drivable area based on parameters. It expands right bound and left bound of target lanes. This enables large vehicles to pass narrow curve. The image of this process can be described as
+
+![expanded_lanes](./image/drivable_area/expanded_lanes.drawio.svg)
+
+Note that we only expand right bound of the rightmost lane and left bound of the leftmost lane.
+
 ### Drivable Area Generation
 
-In this section, a drivable area is created using drivable lanes arranged in the order in which vehicles pass by. We created `left_bound` from left boundary of the leftmost lanelet and `right_bound` from right boundary of the rightmost lanelet. The image of the created drivable area will be the following blue lines
+In this section, a drivable area is created using drivable lanes arranged in the order in which vehicles pass by. We created `left_bound` from left boundary of the leftmost lanelet and `right_bound` from right boundary of the rightmost lanelet. The image of the created drivable area will be the following blue lines. Note that the drivable area is defined in the `Path` and `PathWithLaneId` messages as
+
+```plantuml
+std::vector<geometry_msgs::msg::Point> left_bound;
+std::vector<geometry_msgs::msg::Point> right_bound;
+```
+
+and each point of right bound and left bound has a position in the absolute coordinate system.
 
 ![drivable_lines](./image/drivable_area/drivable_lines.drawio.svg)
