@@ -72,13 +72,13 @@ private:
   bool getTlrIdFromLabel(const std::vector<std::string> & labels, int & tlr_id);
 
   // variables
-  std::shared_ptr<image_transport::ImageTransport> image_transport_;
   image_transport::SubscriberFilter image_sub_;
   message_filters::Subscriber<autoware_auto_perception_msgs::msg::TrafficLightRoiArray> roi_sub_;
   std::mutex connect_mutex_;
   rclcpp::Publisher<autoware_auto_perception_msgs::msg::TrafficLightRoiArray>::SharedPtr
     output_roi_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr exe_time_pub_;
+  std::shared_ptr<image_transport::Publisher> debug_image_pub_;
   rclcpp::TimerBase::SharedPtr timer_;
 
   typedef message_filters::sync_policies::ExactTime<
@@ -93,6 +93,7 @@ private:
   typedef message_filters::Synchronizer<ApproximateSyncPolicy> ApproximateSync;
   std::shared_ptr<ApproximateSync> approximate_sync_;
 
+  bool will_debug_visualize_;
   bool is_approximate_sync_;
   double score_thresh_;
 

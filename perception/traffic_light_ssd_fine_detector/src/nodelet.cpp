@@ -48,6 +48,7 @@ TrafficLightSSDFineDetectorNodelet::TrafficLightSSDFineDetectorNodelet(
   const std::string onnx_file = this->declare_parameter<std::string>("onnx_file");
   const std::string label_file = this->declare_parameter<std::string>("label_file");
   const std::string mode = this->declare_parameter("mode", "FP32");
+  will_debug_visualize_ = this->declare_parameter("will_debug_visualize", false);
 
   fs::path engine_path{onnx_file};
   engine_path.replace_extension("engine");
@@ -106,6 +107,11 @@ TrafficLightSSDFineDetectorNodelet::TrafficLightSSDFineDetectorNodelet(
   } else {
     sync_.reset(new Sync(SyncPolicy(10), image_sub_, roi_sub_));
     sync_->registerCallback(std::bind(&TrafficLightSSDFineDetectorNodelet::callback, this, _1, _2));
+  }
+  if(will_debug_visualize_){
+    debug_image_pub_ =
+      std::make_shared<image_transport::Publisher>(image_transport::create_publisher(
+        this, "~/debug/image_inference", rclcpp::QoS{1}.get_rmw_qos_profile()));
   }
 }
 
@@ -207,6 +213,21 @@ void TrafficLightSSDFineDetectorNodelet::callback(
     num_rois -= num_infer;
     ++batch_count;
   }
+
+  if (will_debug_visualize_) {
+    // Draw bounding box
+    for (const auto & roi : out_rois.rois) {
+      cv::rectangle(
+        original_image, cv::Point(roi.roi.x_offset, roi.roi.y_offset),
+        cv::Point(roi.roi.x_offset + roi.roi.width, roi.roi.y_offset + roi.roi.height),
+        cv::Scalar(0, 0, 255), 2);
+    }
+    // Publish debug image
+    auto msg_img_debug =
+      cv_bridge::CvImage(in_image_msg->header, "rgb8", original_image).toImageMsg();
+    debug_image_pub_->publish(msg_img_debug);
+  }
+
   out_rois.header = in_roi_msg->header;
   output_roi_pub_->publish(out_rois);
   const auto exe_end_time = high_resolution_clock::now();
