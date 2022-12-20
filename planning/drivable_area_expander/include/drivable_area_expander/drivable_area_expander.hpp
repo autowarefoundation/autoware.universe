@@ -20,7 +20,6 @@
 #include "drivable_area_expander/types.hpp"
 
 #include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
-#include <nav_msgs/msg/occupancy_grid.hpp>
 
 #include <string>
 #include <vector>
@@ -29,14 +28,14 @@ namespace drivable_area_expander
 {
 /// @brief build a drivable area expanded with a footprint but not crossing some lines and predicted
 /// paths
-/// @param[in] drivable_area input drivable_area
-/// @param[in] footprint polygons to make drivable
+/// @param[inout] left_bound left drivable area bound to expand
+/// @param[inout] right_bound right drivable area bound to expand
+/// @param[in] footprint polygon to make drivable
 /// @param[in] predicted_paths polygons to make undrivable
 /// @param[in] uncrossable_lines lines beyond which not to extend the drivable area
 /// @param[in] origin ego position
-/// @return expanded drivable area
-OccupancyGrid buildExpandedDrivableArea(
-  const OccupancyGrid & drivable_area, const multipolygon_t & footprint,
+multilinestring_t expandDrivableArea(
+  std::vector<Point> & left_bound, std::vector<Point> & right_bound, const polygon_t & footprint,
   const multipolygon_t & predicted_paths, const multilinestring_t & uncrossable_lines,
   const point_t & origin);
 
