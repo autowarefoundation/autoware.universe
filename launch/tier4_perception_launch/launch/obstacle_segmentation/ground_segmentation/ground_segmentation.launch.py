@@ -33,7 +33,7 @@ class GroundSegmentationPipeline:
         self.context = context
         self.vehicle_info = self.get_vehicle_info()
         ground_segmentation_param_path = os.path.join(
-            LaunchConfiguration("obstacle_segmentation_ground_segmentation_param_path"),
+            LaunchConfiguration("obstacle_segmentation_ground_segmentation_param_path").perform(context),
         )
         with open(ground_segmentation_param_path, "r") as f:
             self.ground_segmentation_param = yaml.safe_load(f)["/**"]["ros__parameters"]
@@ -328,9 +328,7 @@ class GroundSegmentationPipeline:
                         "inpaint_radius": 1.0,
                         "param_file_path": PathJoinSubstitution(
                             [
-                                LaunchConfiguration(
-                                    "obstacle_segmentation_ground_segmentation_elevation_map_param_path"
-                                ),
+                                LaunchConfiguration("obstacle_segmentation_ground_segmentation_elevation_map_param_path").perform(context),
                             ]
                         ),
                         "elevation_map_directory": PathJoinSubstitution(
