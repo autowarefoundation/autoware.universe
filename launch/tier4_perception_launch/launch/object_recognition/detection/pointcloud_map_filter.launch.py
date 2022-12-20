@@ -29,7 +29,9 @@ import yaml
 class PointcloudMapFilterPipeline:
     def __init__(self, context):
         pointcloud_map_filter_param_path = os.path.join(
-            LaunchConfiguration("object_recognition_detection_pointcloud_map_filter_param_path").perform(context),
+            LaunchConfiguration(
+                "object_recognition_detection_pointcloud_map_filter_param_path"
+            ).perform(context),
         )
         with open(pointcloud_map_filter_param_path, "r") as f:
             self.pointcloud_map_filter_param = yaml.safe_load(f)["/**"]["ros__parameters"]
