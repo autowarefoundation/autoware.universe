@@ -509,9 +509,52 @@ PathWithLaneId getReferencePathFromTargetLane(
 
   constexpr auto min_resampling_points{30.0};
   constexpr auto resampling_dt{0.2};
-  const auto resample_interval =
+  const auto & ref_points = lane_changing_reference_path.points;
+
+  PathPointWithLaneId ref_back_pose;
+  std::vector<double> sum_segments{0.0};
+
+  for (size_t idx = 1; idx < ref_points.size() - 1; ++idx) {
+    const auto pt0 = ref_points.at(idx - 1);
+    const auto pt1 = ref_points.at(idx);
+
+    ref_back_pose = pt1;
+    const auto sum_segment = sum_segments.back() + tier4_autoware_utils::calcDistance2d(pt0, pt1);
+    sum_segments.push_back(sum_segment);
+
+    if (sum_segment > lane_changing_distance) {
+      break;
+    }
+  }
+
+  double sum_interval{0.0};
+  size_t ref_point_idx = 0;
+  const auto path = util::convertToGeometryPointArray(lane_changing_reference_path);
+
+  PathWithLaneId interpolated_path;
+  interpolated_path.points.push_back(ref_points.front());
+
+  const auto traveled_dist =
     std::max(lane_changing_distance / min_resampling_points, lane_changing_speed * resampling_dt);
-  return util::resamplePathWithSpline(lane_changing_reference_path, resample_interval);
+  while (sum_interval < lane_changing_distance) {
+    sum_interval += traveled_dist;
+    if (sum_interval > sum_segments.at(ref_point_idx)) {
+      ++ref_point_idx;
+    }
+
+    PathPointWithLaneId pt = ref_points.at(ref_point_idx);
+    pt.point.pose.position = util::lerpByLength(lane_changing_reference_path.points, sum_interval);
+    interpolated_path.points.push_back(pt);
+    if (ref_point_idx > sum_segments.size() - 1) {
+      break;
+    }
+  }
+
+  PathWithLaneId path_back;
+  path_back.points.insert(
+    path_back.points.end(), ref_points.begin() + ref_point_idx - 1, ref_points.end());
+
+  return combineReferencePath(interpolated_path, path_back);
 }
 
 PathWithLaneId getReferencePathFromTargetLane(
