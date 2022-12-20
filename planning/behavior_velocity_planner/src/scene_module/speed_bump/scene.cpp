@@ -111,9 +111,8 @@ bool SpeedBumpModule::applySlowDownSpeed(
     return false;
   }
 
+  // decide slow_start_point index
   size_t slow_start_point_idx{};
-  size_t slow_end_point_idx{};
-
   // if first intersection point exists
   if (path_polygon_intersection_status.first_intersection_point) {
     // calculate & insert slow_start_point position wrt the first intersection point between
@@ -128,18 +127,21 @@ bool SpeedBumpModule::applySlowDownSpeed(
       slow_start_point_idx = *slow_start_point_idx_candidate;
       debug_data_.slow_start_poses.push_back(output.points.at(slow_start_point_idx).point.pose);
     } else if (calcSignedArcLength(output.points, src_point, 0) > slow_start_margin_to_base_link) {
-      // There is first intersection point but slow_start_margin_to_base_link offset point can not
-      // be inserted because it is behind the first path point
+      // There is first intersection point but slow_start_point can not be inserted because it is
+      // behind the first path point (assign virtual slow_start_point_idx)
       slow_start_point_idx = 0;
     } else {
       return false;
     }
   } else if (
-    path_polygon_intersection_status.is_path_inside_of_polygon ||
-    path_polygon_intersection_status.second_intersection_point) {
+    path_polygon_intersection_status.second_intersection_point ||
+    path_polygon_intersection_status.is_path_inside_of_polygon) {
+    // assign virtual slow_start_point_idx
     slow_start_point_idx = 0;
   }
 
+  // decide slow_end_point index
+  size_t slow_end_point_idx{};
   // if second intersection point exists
   if (path_polygon_intersection_status.second_intersection_point) {
     // calculate & insert slow_end_point position wrt the second intersection point between path
@@ -156,15 +158,16 @@ bool SpeedBumpModule::applySlowDownSpeed(
     } else if (
       calcSignedArcLength(output.points, src_point, output.points.size() - 1) <
       slow_end_margin_to_base_link) {
-      // There is second intersection point but slow_end_margin_to_base_link offset point can not
-      // be inserted because it is in front of the last path point
+      // There is second intersection point but slow_end_point can not be inserted because it is in
+      // front of the last path point (assign virtual slow_end_point_idx)
       slow_end_point_idx = output.points.size() - 1;
     } else {
       return false;
     }
   } else if (
-    path_polygon_intersection_status.is_path_inside_of_polygon ||
-    path_polygon_intersection_status.first_intersection_point) {
+    path_polygon_intersection_status.first_intersection_point ||
+    path_polygon_intersection_status.is_path_inside_of_polygon) {
+    // assign virtual slow_end_point_idx
     slow_end_point_idx = output.points.size() - 1;
   }
 
