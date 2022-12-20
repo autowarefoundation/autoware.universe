@@ -10,7 +10,10 @@ Please see `<exec_depend>` in `package.xml`.
 
 ## Usage
 
+Note that you should provide parameter paths as `PACKAGE_param_path`. The list of parameter paths you should provide is written at the top of `planning.launch.xml`.
+
 ```xml
 <include file="$(find-pkg-share tier4_planning_launch)/launch/planning.launch.xml">
+  <arg name="PACKAGE_param_path" value="..." />
 </include>
 ```
