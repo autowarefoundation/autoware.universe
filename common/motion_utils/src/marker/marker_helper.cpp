@@ -144,19 +144,18 @@ visualization_msgs::msg::MarkerArray VirtualWallMarkerCreator::handleVirtualWall
   visualization_msgs::msg::MarkerArray wall_marker;
 
   for (const auto & p : previous_stop_poses_) {
-    std::vector<Pose> points;
-    points.push_back(p);
     const bool previous_stop_pose_is_in_stop_pose =
       std::any_of(poses.begin(), poses.end(), [&](const geometry_msgs::msg::Pose & elem) {
-        points.push_back(elem);
-        return resample_utils::validate_points_duplication(points);
+        std::vector<Pose> poses;
+        poses.push_back(p);
+        poses.push_back(elem);
+        return resample_utils::validate_points_duplication(poses);
       });
 
     if (!previous_stop_pose_is_in_stop_pose) {
-      appendMarkerArray(function_delete_wall_marker(now, id_to_delete++), &wall_marker, now);
-    } else {
-      id_to_delete++;
+      appendMarkerArray(function_delete_wall_marker(now, id_to_delete), &wall_marker, now);
     }
+    id_to_delete++;
   }
 
   for (const auto & p : poses) {
