@@ -12,25 +12,11 @@ Please see `<exec_depend>` in `package.xml`.
 
 Include `localization.launch.xml` in other launch files as follows.
 
+Note that you should provide parameter paths as `PACKAGE_param_path`. The list of parameter paths you should provide is written at the top of `perception.launch.xml`.
+
 ```xml
   <include file="$(find-pkg-share tier4_localization_launch)/launch/localization.launch.xml">
-    <arg name="pkg_A_param_path" value="YOUR_PARAMETER_CONFIGURATION"/>
+    <arg name="PACKAGE_param_path" value="..."/>
     ...
   </include>
 ```
-
-TBD
-
-<!--
-Note that you need to provide a parameter configuration file in the argument to specify which parameters to load. See [`autoware.launch.xml` in `autowarefoundation/autoware_launch`](https://github.com/autowarefoundation/autoware_launch/blob/main/autoware_launch/launch/autoware.launch.xml) for example.
-
-The parameter configuration file should look like as follows.
-
-```xml
-<?xml version="1.0"?>
-<launch>
-  <arg name="package_A_param_path" default="$(find-pkg-share autoware_launch)/config/*/package_A.param.yaml"/>
-  ...
-</launch>
-
-``` -->
