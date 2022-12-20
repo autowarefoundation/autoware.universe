@@ -52,7 +52,6 @@ public:
   {
     double base_link2front;
     std::vector<geometry_msgs::msg::Pose> stop_poses;
-    std::vector<geometry_msgs::msg::Pose> stopped_poses;
     geometry_msgs::msg::Pose first_stop_pose;
     std::vector<geometry_msgs::msg::Point> stuck_points;
     geometry_msgs::msg::Polygon stuck_vehicle_detect_area;
@@ -175,6 +174,8 @@ private:
 
   // Debug
   DebugData debug_data_;
+  
+  std::unique_ptr<motion_utils::VirtualWallMarkerCreator> virtual_wall_marker_creator_;
 };
 }  // namespace behavior_velocity_planner
 
