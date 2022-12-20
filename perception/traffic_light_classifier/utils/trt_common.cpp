@@ -81,8 +81,8 @@ void TrtCommon::setup()
   output_dims_ = engine_->getTensorShape(output_name_.c_str());
 #else
   // Deprecated since 8.5
-  input_dims_ = engine_->getBindingDimensions(engine_->getBindingIndex(input_name_.c_str());
-  output_dims_ = engine_->getBindingDimensions(engine_->getBindingIndex(output_name_.c_str());
+  input_dims_ = engine_->getBindingDimensions(engine_->getBindingIndex(input_name_.c_str()));
+  output_dims_ = engine_->getBindingDimensions(engine_->getBindingIndex(output_name_.c_str()));
 #endif
 
   is_initialized_ = true;
