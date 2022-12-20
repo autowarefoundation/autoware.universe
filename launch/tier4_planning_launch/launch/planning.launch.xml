@@ -13,6 +13,8 @@
   <!-- common -->
   <arg name="common_param_path"/>
   <arg name="nearest_search_param_path"/>
+  <!-- rtc -->
+  <arg name="rtc_auto_mode_manager_param_path"/>
   <!-- behavior path planner -->
   <arg name="side_shift_param_path"/>
   <arg name="avoidance_param_path"/>
