@@ -79,6 +79,8 @@ struct NodeParam
 
   // voxel grid z parameter for filtering pointcloud [m]
   double voxel_grid_z;
+
+  bool is_it_predicted_object;
 };
 
 struct StopParam
