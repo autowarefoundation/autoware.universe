@@ -31,7 +31,7 @@ Note that default values can be varied by the module. Please refer to the `confi
 
 ## Inner-workings / Algorithms
 
-This section gives details of the generation of the drivable area(`left_bound` and `right_bound`).
+This section gives details of the generation of the drivable area (`left_bound` and `right_bound`).
 
 ### Drivable Lanes Generation
 
