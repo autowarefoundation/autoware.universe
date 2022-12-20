@@ -1,5 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
+  <!-- Parameter files -->
+  <arg name="component_state_monitor_topic_path"/>
+  <arg name="emergency_handler_param_path"/>
+  <arg name="mrm_comfortable_stop_operator_param_path"/>
+  <arg name="mrm_emergency_stop_operator_param_path"/>
+  <arg name="system_error_monitor_param_path"/>
+  <arg name="system_error_monitor_planning_simulator_param_path"/>
+  <arg name="diagnostic_aggregator_vehicle_param_path"/>
+  <arg name="system_monitor_cpu_monitor_param_path"/>
+  <arg name="system_monitor_gpu_monitor_param_path"/>
+  <arg name="system_monitor_hdd_monitor_param_path"/>
+  <arg name="system_monitor_mem_monitor_param_path"/>
+  <arg name="system_monitor_net_monitor_param_path"/>
+  <arg name="system_monitor_ntp_monitor_param_path"/>
+  <arg name="system_monitor_process_monitor_param_path"/>
+  <arg name="system_monitor_voltage_monitor_param_path"/>
+
   <arg name="launch_system_monitor" default="true" description="launch system monitor"/>
   <arg name="run_mode" default="online" description="options: online, planning_simulation"/>
   <arg name="sensor_model" description="sensor model name"/>
