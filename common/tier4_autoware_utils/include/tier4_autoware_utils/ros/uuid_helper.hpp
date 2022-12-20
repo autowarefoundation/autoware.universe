@@ -1,4 +1,4 @@
-// Copyright 2022 The Autoware Contributors
+// Copyright 2022 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,17 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "map_height_fitter_core.hpp"
+#ifndef TIER4_AUTOWARE_UTILS__ROS__UUID_HELPER_HPP_
+#define TIER4_AUTOWARE_UTILS__ROS__UUID_HELPER_HPP_
 
-#include <memory>
+#include <unique_identifier_msgs/msg/uuid.hpp>
 
-int main(int argc, char ** argv)
+#include <string>
+
+namespace tier4_autoware_utils
 {
-  rclcpp::init(argc, argv);
-  rclcpp::executors::MultiThreadedExecutor executor;
-  auto node = std::make_shared<MapHeightFitter>();
-  executor.add_node(node);
-  executor.spin();
-  executor.remove_node(node);
-  rclcpp::shutdown();
+inline std::string toHexString(const unique_identifier_msgs::msg::UUID & id)
+{
+  std::stringstream ss;
+  for (auto i = 0; i < 16; ++i) {
+    ss << std::hex << std::setfill('0') << std::setw(2) << +id.uuid[i];
+  }
+  return ss.str();
 }
+}  // namespace tier4_autoware_utils
+
+#endif  // TIER4_AUTOWARE_UTILS__ROS__UUID_HELPER_HPP_
