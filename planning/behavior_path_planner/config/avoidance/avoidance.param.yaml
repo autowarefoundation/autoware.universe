@@ -11,6 +11,7 @@
       enable_avoidance_over_opposite_direction: true
       enable_update_path_when_object_is_gone: false
       enable_safety_check: false
+      enable_yield_maneuver: false
 
       # For target object filtering
       threshold_speed_object_is_stopped: 1.0      # [m/s]
@@ -30,11 +31,13 @@
       safety_check_time_horizon: 10.0             # [s]
       safety_check_idling_time: 1.5               # [s]
       safety_check_accel_for_rss: 2.5             # [m/ss]
+      safety_check_hysteresis_factor: 2.0         # [-]
 
       # For lateral margin
       object_envelope_buffer: 0.3                 # [m]
       lateral_collision_margin: 1.0               # [m]
       lateral_collision_safety_buffer: 0.7        # [m]
+      lateral_passable_safety_buffer: 0.5         # [m]
 
       # For longitudinal margin
       longitudinal_collision_margin_buffer: 0.0   # [m]
@@ -71,6 +74,13 @@
       # not enabled yet
       longitudinal_collision_margin_min_distance: 0.0          # [m]
       longitudinal_collision_margin_time: 0.0
+
+      # For yield maneuver
+      yield_velocity: 2.78                        # [m/s]
+
+      # For stop maneuver
+      stop_min_distance: 10.0                     # [m]
+      stop_max_distance: 20.0                     # [m]
 
       # avoidance is performed for the object type with true
       target_object:

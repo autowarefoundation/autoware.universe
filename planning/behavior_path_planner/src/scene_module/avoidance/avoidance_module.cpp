@@ -201,6 +201,9 @@ AvoidancePlanningData AvoidanceModule::calcAvoidancePlanningData(DebugData & deb
     planner_data_->route_handler, reference_pose, planner_data_->parameters.forward_path_length,
     planner_data_->parameters.backward_path_length);
 
+  // keep avoidance state
+  data.state = avoidance_data_.state;
+
   // target objects for avoidance
   fillAvoidanceTargetObjects(data, debug);
 
@@ -291,6 +294,21 @@ void AvoidanceModule::fillAvoidanceTargetObjects(
     // Calc moving time.
     fillObjectMovingTime(object_data);
 
+    // Calc lateral deviation from path to target object.
+    object_data.lateral = calcLateralDeviation(object_closest_pose, object_pose.position);
+    avoidance_debug_msg.lateral_distance_from_centerline = object_data.lateral;
+
+    // Find the footprint point closest to the path, set to object_data.overhang_distance.
+    object_data.overhang_dist = calcEnvelopeOverhangDistance(
+      object_data, object_closest_pose, object_data.overhang_pose.position);
+
+    // Check whether the the ego should avoid the object.
+    const auto & vehicle_width = planner_data_->parameters.vehicle_width;
+    const auto safety_margin = 0.5 * vehicle_width + parameters_->lateral_passable_safety_buffer;
+    object_data.avoid_required =
+      (isOnRight(object_data) && std::abs(object_data.overhang_dist) < safety_margin) ||
+      (!isOnRight(object_data) && object_data.overhang_dist < safety_margin);
+
     if (object_data.move_time > parameters_->threshold_time_object_is_moving) {
       avoidance_debug_array_false_and_push_back(AvoidanceDebugFactor::MOVING_OBJECT);
       object_data.reason = AvoidanceDebugFactor::MOVING_OBJECT;
@@ -328,14 +346,6 @@ void AvoidanceModule::fillAvoidanceTargetObjects(
       data.other_objects.push_back(object_data);
       continue;
     }
-
-    // Calc lateral deviation from path to target object.
-    object_data.lateral = calcLateralDeviation(object_closest_pose, object_pose.position);
-    avoidance_debug_msg.lateral_distance_from_centerline = object_data.lateral;
-
-    // Find the footprint point closest to the path, set to object_data.overhang_distance.
-    object_data.overhang_dist = calcEnvelopeOverhangDistance(
-      object_data, object_closest_pose, object_data.overhang_pose.position);
 
     lanelet::ConstLanelet overhang_lanelet;
     if (!rh->getClosestLaneletWithinRoute(object_closest_pose, &overhang_lanelet)) {
@@ -574,6 +584,9 @@ void AvoidanceModule::fillShiftLine(AvoidancePlanningData & data, DebugData & de
    * Find new shift point
    */
   data.unapproved_new_sl = findNewShiftLine(processed_raw_sp, path_shifter);
+  const auto found_new_sl = data.unapproved_new_sl.size() > 0;
+  const auto registered = path_shifter.getShiftLines().size() > 0;
+  data.found_avoidance_path = found_new_sl || registered;
 
   /**
    * STEP 4
@@ -595,12 +608,95 @@ void AvoidanceModule::fillShiftLine(AvoidancePlanningData & data, DebugData & de
    * check that there is a certain amount of margin in the lateral and longitudinal direction.
    */
   data.safe = isSafePath(path_shifter, candidate_path, debug);
-  data.candidate_path = candidate_path;
+
+  if (data.safe) {
+    data.safe_new_sl = data.unapproved_new_sl;
+    data.candidate_path = candidate_path;
+  }
+
+  /**
+   * Check whether the ego should avoid the front object. When the ego follows reference path,
+   * if the lateral distance is smaller than minimum margin, the ego should avoid the object.
+   */
+  if (!data.target_objects.empty()) {
+    const auto o_front = data.target_objects.front();
+    data.avoid_required = o_front.avoid_required;
+  }
+
+  /**
+   * If the avoidance path is not safe in situation where the ego should avoid object, the ego
+   * stops in front of the front object with the necessary distance to avoid the object.
+   */
+  if (!data.safe && data.avoid_required) {
+    data.yield_required = data.found_avoidance_path && data.avoid_required;
+    data.candidate_path = toShiftedPath(data.reference_path);
+    RCLCPP_WARN_THROTTLE(
+      getLogger(), *clock_, 5000, "not found safe avoidance path. transit yield maneuver...");
+  }
+
+  /**
+   * TODO(Satoshi OTA) Think yield maneuver in the middle of avoidance.
+   * Even if it is determined that a yield is necessary, the yield maneuver is not executed
+   * if the avoidance has already been initiated.
+   */
+  if (!data.safe && data.avoiding_now) {
+    data.yield_required = false;
+    data.safe = true;  // OVERWRITE SAFETY JUDGE
+    data.safe_new_sl = data.unapproved_new_sl;
+    RCLCPP_WARN_THROTTLE(
+      getLogger(), *clock_, 5000, "avoiding now. could not transit yield maneuver!!!");
+  }
 
   {
     debug.output_shift = data.candidate_path.shift_length;
     debug.current_raw_shift = data.unapproved_raw_sl;
     debug.new_shift_lines = data.unapproved_new_sl;
+  }
+}
+
+AvoidanceState AvoidanceModule::updateEgoState(const AvoidancePlanningData & data) const
+{
+  if (!data.avoid_required) {
+    return AvoidanceState::NOT_AVOID;
+  }
+
+  if (!data.found_avoidance_path) {
+    return AvoidanceState::AVOID_PATH_NOT_READY;
+  }
+
+  if (data.yield_required && parameters_->enable_yield_maneuver) {
+    return AvoidanceState::YIELD;
+  }
+
+  if (isWaitingApproval() && path_shifter_.getShiftLines().empty()) {
+    return AvoidanceState::AVOID_PATH_READY;
+  }
+
+  return AvoidanceState::AVOID_EXECUTE;
+}
+
+void AvoidanceModule::updateEgoBehavior(
+  const AvoidancePlanningData & data, [[maybe_unused]] ShiftedPath & path)
+{
+  switch (data.state) {
+    case AvoidanceState::NOT_AVOID: {
+      break;
+    }
+    case AvoidanceState::YIELD: {
+      removeAllRegisteredShiftPoints(path_shifter_);
+      break;
+    }
+    case AvoidanceState::AVOID_PATH_NOT_READY: {
+      break;
+    }
+    case AvoidanceState::AVOID_PATH_READY: {
+      break;
+    }
+    case AvoidanceState::AVOID_EXECUTE: {
+      break;
+    }
+    default:
+      throw std::domain_error("invalid behaivor");
   }
 }
 
@@ -2162,11 +2258,16 @@ bool AvoidanceModule::isEnoughMargin(
 
   const auto v_obj_lon = getLongitudinalVelocity(p_ref, p_obj.get(), v_obj);
 
+  double hysteresis_factor = 1.0;
+  if (avoidance_data_.state == AvoidanceState::YIELD) {
+    hysteresis_factor = parameters_->safety_check_hysteresis_factor;
+  }
+
   const auto shift_length = calcLateralDeviation(p_ref, getPoint(p_ego));
   const auto lateral_distance = std::abs(object.overhang_dist - shift_length) - 0.5 * vehicle_width;
   const auto lateral_margin = getLateralMarginFromVelocity(std::abs(v_ego_lon - v_obj_lon));
 
-  if (lateral_distance > lateral_margin) {
+  if (lateral_distance > lateral_margin * hysteresis_factor) {
     return true;
   }
 
@@ -2190,7 +2291,7 @@ bool AvoidanceModule::isEnoughMargin(
     margin_data.base_link2rear = base_link2rear;
   }
 
-  if (longitudinal_distance > longitudinal_margin) {
+  if (longitudinal_distance > longitudinal_margin * hysteresis_factor) {
     return true;
   }
 
@@ -2693,12 +2794,12 @@ BehaviorModuleOutput AvoidanceModule::plan()
    *       Yes -> clear WAIT_APPROVAL state.
    *       No  -> do nothing.
    */
-  if (!data.unapproved_new_sl.empty()) {
-    debug_data_.new_shift_lines = data.unapproved_new_sl;
-    DEBUG_PRINT("new_shift_lines size = %lu", data.unapproved_new_sl.size());
-    printShiftLines(data.unapproved_new_sl, "new_shift_lines");
+  if (!data.safe_new_sl.empty()) {
+    debug_data_.new_shift_lines = data.safe_new_sl;
+    DEBUG_PRINT("new_shift_lines size = %lu", data.safe_new_sl.size());
+    printShiftLines(data.safe_new_sl, "new_shift_lines");
 
-    const auto sl = getNonStraightShiftLine(data.unapproved_new_sl);
+    const auto sl = getNonStraightShiftLine(data.safe_new_sl);
     if (sl.getRelativeLength() > 0.0) {
       removePreviousRTCStatusRight();
     } else if (sl.getRelativeLength() < 0.0) {
@@ -2706,7 +2807,7 @@ BehaviorModuleOutput AvoidanceModule::plan()
     } else {
       RCLCPP_WARN_STREAM(getLogger(), "Direction is UNKNOWN");
     }
-    addShiftLineIfApproved(data.unapproved_new_sl);
+    addShiftLineIfApproved(data.safe_new_sl);
   } else if (isWaitingApproval()) {
     clearWaitingApproval();
     removeCandidateRTCStatus();
@@ -2740,6 +2841,10 @@ BehaviorModuleOutput AvoidanceModule::plan()
     avoidance_path.path =
       util::resamplePathWithSpline(avoidance_path.path, parameters_->resample_interval_for_output);
   }
+
+  avoidance_data_.state = updateEgoState(data);
+  updateEgoBehavior(data, avoidance_path);
+
   output.path = std::make_shared<PathWithLaneId>(avoidance_path.path);
 
   const size_t ego_idx = findEgoIndex(output.path->points);
@@ -2763,12 +2868,12 @@ CandidateOutput AvoidanceModule::planCandidate() const
 
   auto shifted_path = data.candidate_path;
 
-  if (!data.unapproved_new_sl.empty()) {  // clip from shift start index for visualize
-    clipByMinStartIdx(data.unapproved_new_sl, shifted_path.path);
+  if (!data.safe_new_sl.empty()) {  // clip from shift start index for visualize
+    clipByMinStartIdx(data.safe_new_sl, shifted_path.path);
 
-    const auto sl = getNonStraightShiftLine(data.unapproved_new_sl);
-    const auto sl_front = data.unapproved_new_sl.front();
-    const auto sl_back = data.unapproved_new_sl.back();
+    const auto sl = getNonStraightShiftLine(data.safe_new_sl);
+    const auto sl_front = data.safe_new_sl.front();
+    const auto sl_back = data.safe_new_sl.back();
 
     output.lateral_shift = sl.getRelativeLength();
     output.start_distance_to_path_change = sl_front.start_longitudinal;
@@ -2998,12 +3103,6 @@ ShiftedPath AvoidanceModule::generateAvoidancePath(PathShifter & path_shifter) c
   }
 
   return shifted_path;
-}
-
-void AvoidanceModule::postProcess(PathShifter & path_shifter) const
-{
-  const size_t nearest_idx = findEgoIndex(path_shifter.getReferencePath().points);
-  path_shifter.removeBehindShiftLineAndSetBaseOffset(nearest_idx);
 }
 
 void AvoidanceModule::updateData()
@@ -3290,6 +3389,7 @@ void AvoidanceModule::setDebugData(
   using marker_utils::avoidance_marker::createOtherObjectsMarkerArray;
   using marker_utils::avoidance_marker::createOverhangFurthestLineStringMarkerArray;
   using marker_utils::avoidance_marker::createPredictedVehiclePositions;
+  using marker_utils::avoidance_marker::createSafetyCheckMarkerArray;
   using marker_utils::avoidance_marker::createTargetObjectsMarkerArray;
   using marker_utils::avoidance_marker::createUnavoidableObjectsMarkerArray;
   using marker_utils::avoidance_marker::createUnsafeObjectsMarkerArray;
@@ -3320,6 +3420,8 @@ void AvoidanceModule::setDebugData(
   add(createPathMarkerArray(path, "centerline_resampled", 0, 0.0, 0.9, 0.5));
   add(createPathMarkerArray(prev_linear_shift_path_.path, "prev_linear_shift", 0, 0.5, 0.4, 0.6));
   add(createPoseMarkerArray(data.reference_pose, "reference_pose", 0, 0.9, 0.3, 0.3));
+
+  add(createSafetyCheckMarkerArray(data.state, getEgoPose(), debug));
 
   add(createLaneletsAreaMarkerArray(*debug.current_lanelets, "current_lanelet", 0.0, 1.0, 0.0));
   add(createLaneletsAreaMarkerArray(*debug.expanded_lanelets, "expanded_lanelet", 0.8, 0.8, 0.0));

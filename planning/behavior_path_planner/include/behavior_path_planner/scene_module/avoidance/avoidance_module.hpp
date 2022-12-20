@@ -289,9 +289,6 @@ private:
   std::shared_ptr<double> ego_velocity_starting_avoidance_ptr_;
   void modifyPathVelocityToPreventAccelerationOnAvoidance(ShiftedPath & shifted_path);
 
-  // clean up shifter
-  void postProcess(PathShifter & shifter) const;
-
   // turn signal
   TurnSignalInfo calcTurnSignalInfo(const ShiftedPath & path) const;
 
@@ -315,6 +312,25 @@ private:
     const double v_ego, const double v_obj, const bool is_front_object) const;
 
   ObjectDataArray getAdjacentLaneObjects(const lanelet::ConstLanelets & adjacent_lanes) const;
+
+  // ========= plan ======================
+
+  AvoidanceState updateEgoState(const AvoidancePlanningData & data) const;
+
+  void updateEgoBehavior(const AvoidancePlanningData & data, ShiftedPath & path);
+
+  void removeAllRegisteredShiftPoints(PathShifter & path_shifter)
+  {
+    current_raw_shift_lines_.clear();
+    registered_raw_shift_lines_.clear();
+    path_shifter.setShiftLines(ShiftLineArray{});
+  }
+
+  void postProcess(PathShifter & path_shifter) const
+  {
+    const size_t nearest_idx = findEgoIndex(path_shifter.getReferencePath().points);
+    path_shifter.removeBehindShiftLineAndSetBaseOffset(nearest_idx);
+  }
 
   // ========= safety check ==============
 

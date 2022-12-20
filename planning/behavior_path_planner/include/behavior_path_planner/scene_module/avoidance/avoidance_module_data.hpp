@@ -73,6 +73,9 @@ struct AvoidanceParameters
   // enable safety check. if avoidance path is NOT safe, the ego will execute yield maneuver
   bool enable_safety_check{false};
 
+  // enable yield maneuver.
+  bool enable_yield_maneuver{false};
+
   // Vehicles whose distance to the center of the path is
   // less than this will not be considered for avoidance.
   double threshold_distance_object_is_on_center;
@@ -108,6 +111,9 @@ struct AvoidanceParameters
   // don't ever set this value to 0
   double lateral_collision_safety_buffer{0.5};
 
+  // if object overhang is less than this value, the ego stops behind the object.
+  double lateral_passable_safety_buffer{0.5};
+
   // margin between object back and end point of avoid shift point
   double longitudinal_collision_safety_buffer{0.0};
 
@@ -133,6 +139,9 @@ struct AvoidanceParameters
 
   // use in RSS calculation
   double safety_check_accel_for_rss;
+
+  // transit hysteresis (unsafe to safe)
+  double safety_check_hysteresis_factor;
 
   // start avoidance after this time to avoid sudden path change
   double prepare_time;
@@ -268,6 +277,9 @@ struct ObjectData  // avoidance target
   // lateral distance from overhang to the road shoulder
   double to_road_shoulder_distance{0.0};
 
+  // if lateral margin is NOT enough, the ego must avoid the object.
+  bool avoid_required{false};
+
   // unavoidable reason
   std::string reason{""};
 };
@@ -302,10 +314,24 @@ struct AvoidLine : public ShiftLine
 using AvoidLineArray = std::vector<AvoidLine>;
 
 /*
+ * avoidance state
+ */
+enum class AvoidanceState {
+  NOT_AVOID = 0,
+  AVOID_EXECUTE,
+  YIELD,
+  AVOID_PATH_READY,
+  AVOID_PATH_NOT_READY,
+};
+
+/*
  * Common data for avoidance planning
  */
 struct AvoidancePlanningData
 {
+  // ego final state
+  AvoidanceState state{AvoidanceState::NOT_AVOID};
+
   // un-shifted pose (for current lane detection)
   Pose reference_pose;
 
@@ -337,9 +363,18 @@ struct AvoidancePlanningData
   // new shift point
   AvoidLineArray unapproved_new_sl{};
 
+  // safe shift point
+  AvoidLineArray safe_new_sl{};
+
   bool safe{false};
 
   bool avoiding_now{false};
+
+  bool avoid_required{false};
+
+  bool yield_required{false};
+
+  bool found_avoidance_path{false};
 };
 
 /*
