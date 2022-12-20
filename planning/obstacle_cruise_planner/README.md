@@ -175,7 +175,7 @@ This includes not only cruising a front vehicle, but also reacting a cut-in and 
 The safe distance is calculated dynamically based on the Responsibility-Sensitive Safety (RSS) by the following equation.
 
 $$
-d_rss = v_{ego} t_{idling} + \frac{1}{2} a_{ego} t_{idling}^2 + \frac{v_{ego}^2}{2 a_{ego}} - \frac{v_{obstacle}^2}{2 a_{obstacle}},
+d_{rss} = v_{ego} t_{idling} + \frac{1}{2} a_{ego} t_{idling}^2 + \frac{v_{ego}^2}{2 a_{ego}} - \frac{v_{obstacle}^2}{2 a_{obstacle}},
 $$
 
 assuming that $d_rss$ is the calculated safe distance, $t_{idling}$ is the idling time for the ego to detect the front vehicle's deceleration, $v_{ego}$ is the ego's current velocity, $v_{obstacle}$ is the front obstacle's current velocity, $a_{ego}$ is the ego's acceleration, and $a_{obstacle}$ is the obstacle's acceleration.
@@ -190,22 +190,22 @@ These values are parameterized as follows. Other common values such as ego's min
 The detailed formulation is as follows.
 
 $$
-d_error = d - d_rss
-d_normalized = lpf(d_error / d_obstacle)
-d_quad_normalized = sign(d_normalized) *d_normalized* d_normalized
-v_pid = pid(d_quad_normalized)
-v_additional = v_pid > 0 ? v_pid * w_acc : v_pid
-v_target = v_target = max(v_ego + v_additional, v_min_cruise)
+d_{error} = d - d_{rss} \\
+d_{normalized} = lpf(d_{error} / d_{obstacle}) \\
+d_{quad, normalized} = sign(d_{normalized}) *d_{normalized}*d_{normalized} \\
+v_{pid} = pid(d_{quad, normalized}) \\
+v_{add} = v_{pid} > 0 ? v_{pid}* w_{acc} : v_{pid} \\
+v_{target} = max(v_{ego} + v_{add}, v_{min, cruise})
 $$
 
-| Variable       | Description                             |
-| -------------- | --------------------------------------- |
-| `d`            | actual distane to obstacle              |
-| `d_rss`        | ideal distance to obstacle based on RSS |
-| `lpf(val)`     | apply low-pass filter to `val`          |
-| `v_min_cruise` | `min_cruise_target_vel`                 |
-| `w_acc`        | `output_ratio_during_accel`             |
-| `pid(val)`     | apply pid to `val`                      |
+| Variable          | Description                             |
+| ----------------- | --------------------------------------- |
+| `d`               | actual distane to obstacle              |
+| `d_{rss}`         | ideal distance to obstacle based on RSS |
+| `v_{min, cruise}` | `min_cruise_target_vel`                 |
+| `w_{acc}`         | `output_ratio_during_accel`             |
+| `lpf(val)`        | apply low-pass filter to `val`          |
+| `pid(val)`        | apply pid to `val`                      |
 
 ## Implementation
 
