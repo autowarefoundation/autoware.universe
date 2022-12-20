@@ -377,7 +377,8 @@ Polygon2d convertCylindricalObjectToGeometryPolygon(
   return object_polygon;
 }
 
-Polygon2d convertPolygonObjectToGeometryPolygon(const Pose & current_pose, const autoware_auto_perception_msgs::msg::Shape & obj_shape)
+Polygon2d convertPolygonObjectToGeometryPolygon(
+  const Pose & current_pose, const autoware_auto_perception_msgs::msg::Shape & obj_shape)
 {
   Polygon2d object_polygon;
   tf2::Transform tf_map2obj;
@@ -401,13 +402,12 @@ void ObstacleStopPlannerNode::searchObstacle(
 {
   const auto object_ptr = object_ptr_;
   Polygon2d object_polygon{};
-  if (node_param_.is_it_predicted_object){
+  if (node_param_.is_it_predicted_object) {
     if (object_ptr->objects.empty()) {
       return;
     }
     for (const auto & obj : object_ptr->objects) {
       if (obj.shape.type == autoware_auto_perception_msgs::msg::Shape::CYLINDER) {
-
         object_polygon = convertCylindricalObjectToGeometryPolygon(
           obj.kinematics.initial_pose_with_covariance.pose, obj.shape);
 
@@ -515,7 +515,6 @@ void ObstacleStopPlannerNode::searchObstacle(
       break;
     }
   }
-
 }
 
 void ObstacleStopPlannerNode::insertVelocity(
