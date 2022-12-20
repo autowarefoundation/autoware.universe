@@ -58,7 +58,7 @@ PathPolygonIntersectionStatus getPathPolygonIntersectionStatus(
 bool isNoRelation(const PathPolygonIntersectionStatus & status);
 
 bool insertConstSpeedToPathSection(
-  std::vector<PathPointWithLaneId> & output, const size_t start_idx, const size_t finish_idx,
+  std::vector<PathPointWithLaneId> & output, const size_t start_idx, const size_t end_idx,
   const float speed);
 
 boost::optional<size_t> insertPointWithOffset(

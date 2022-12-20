@@ -121,17 +121,17 @@ bool isNoRelation(const PathPolygonIntersectionStatus & status)
 }
 
 bool insertConstSpeedToPathSection(
-  std::vector<PathPointWithLaneId> & output, const size_t start_idx, const size_t finish_idx,
+  std::vector<PathPointWithLaneId> & output, const size_t start_idx, const size_t end_idx,
   const float speed)
 {
-  if (start_idx > finish_idx) {
+  if (start_idx > end_idx) {
     return false;
   }
 
   const size_t start_idx_clamped = std::min(start_idx, output.size() - 1);
-  const size_t finish_idx_clamped = std::min(finish_idx, output.size() - 1);
+  const size_t end_idx_clamped = std::min(end_idx, output.size() - 1);
 
-  for (size_t i = start_idx_clamped; i <= finish_idx_clamped; ++i) {
+  for (size_t i = start_idx_clamped; i <= end_idx_clamped; ++i) {
     auto & p = output.at(i);
     const auto & original_velocity = p.point.longitudinal_velocity_mps;
     p.point.longitudinal_velocity_mps = std::min(original_velocity, speed);
