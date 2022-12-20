@@ -15,7 +15,7 @@ the reference path.
 ### Module Parameters
 
 | Parameter           | Type   | Description                                               |
-|---------------------|--------|-----------------------------------------------------------|
+| ------------------- | ------ | --------------------------------------------------------- |
 | `slow_start_margin` | double | [m] margin for ego vehicle to slow down before speed_bump |
 | `slow_end_margin`   | double | [m] margin for ego vehicle to accelerate after speed_bump |
 | `print_debug_info`  | bool   | whether debug info will be printed or not                 |
@@ -25,7 +25,7 @@ the reference path.
 - limits for speed bump height and slow down speed to create a linear equation
 
 | Parameter    | Type   | Description                                       |
-|--------------|--------|---------------------------------------------------|
+| ------------ | ------ | ------------------------------------------------- |
 | `min_height` | double | [m] minimum height assumption of the speed bump   |
 | `max_height` | double | [m] maximum height assumption of the speed bump   |
 | `min_speed`  | double | [m/s] minimum speed assumption of slow down speed |
