@@ -158,12 +158,15 @@ boost::optional<size_t> insertPointWithOffset(
   return target_point_idx;
 }
 
-std::pair<float, float> getLinearEquation(const Point32 & p1, const Point32 & p2)
+float calcSlowDownSpeed(const Point32 & p1, const Point32 & p2, const float speed_bump_height)
 {
   const float m = (p1.y - p2.y) / (p1.x - p2.x);
   const float b = p1.y - (m * p1.x);
 
-  return std::make_pair(m, b);
+  // y=mx+b
+  auto speed = m * speed_bump_height + b;
+
+  return std::clamp(speed, p2.y, p1.y);
 }
 
 }  // namespace behavior_velocity_planner

@@ -56,14 +56,8 @@ SpeedBumpModule::SpeedBumpModule(
     p1.y = planner_param_.speed_calculation_max_speed;
     p2.y = planner_param_.speed_calculation_min_speed;
 
-    const auto & constants = getLinearEquation(p1, p2);
-    const auto & m = constants.first;
-    const auto & b = constants.second;
-
     // Calculate the speed [m/s] for speed bump
-    speed_bump_slow_down_speed_ = std::clamp(
-      m * speed_bump_height + b, planner_param_.speed_calculation_min_speed,
-      planner_param_.speed_calculation_max_speed);
+    speed_bump_slow_down_speed_ = calcSlowDownSpeed(p1, p2, speed_bump_height);
   }
 
   if (planner_param_.print_debug_info) {

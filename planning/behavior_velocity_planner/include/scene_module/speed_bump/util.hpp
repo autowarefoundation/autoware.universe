@@ -65,8 +65,8 @@ boost::optional<size_t> insertPointWithOffset(
   const geometry_msgs::msg::Point & src_point, const double longitudinal_offset,
   std::vector<PathPointWithLaneId> & output, const double overlap_threshold = 1e-3);
 
-// returns m and b consts for y=mx+b0
-std::pair<float, float> getLinearEquation(const Point32 & p1, const Point32 & p2);
+// returns y (speed) for y=mx+b
+float calcSlowDownSpeed(const Point32 & p1, const Point32 & p2, const float speed_bump_height);
 
 }  // namespace behavior_velocity_planner
 
