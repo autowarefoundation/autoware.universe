@@ -210,7 +210,7 @@ void PathShifter::applySplineShifter(ShiftedPath * shifted_path, const bool offs
     const auto [base_distance, base_length] =
       calcBaseLengths(shifting_arclength, delta_shift, offset_back);
 
-    RCLCPP_INFO(
+    RCLCPP_DEBUG(
       logger_, "base_distance = %s, base_length = %s", toStr(base_distance).c_str(),
       toStr(base_length).c_str());
 
@@ -280,7 +280,7 @@ std::pair<std::vector<double>, std::vector<double>> PathShifter::calcBaseLengths
 
   if (amax < acc_limit_) {
     // no need to consider acceleration limit
-    RCLCPP_INFO(logger_, "No need to consider acc limit. max: %f, limit: %f", amax, acc_limit_);
+    RCLCPP_DEBUG(logger_, "No need to consider acc limit. max: %f, limit: %f", amax, acc_limit_);
     return getBaseLengthsWithoutAccelLimit(arclength, shift_length, offset_back);
   }
 
