@@ -12,7 +12,7 @@ Our drivable area has several assumptions.
 
 - Drivable Area should have all of the necessary area but should not represent unnecessary area for current behaviors. For example, when ego vehicle is in `follow lane` mode, drivable area should not contain adjacent lanes.
 
-- When generating a drivable area, lanes need to be arranged in the order in which cars pass by(More details can be found in following sections).
+- When generating a drivable area, lanes need to be arranged in the order in which cars pass by (More details can be found in following sections).
 
 - Both left and right bounds should cover the front of the path and the end of the path.
 
