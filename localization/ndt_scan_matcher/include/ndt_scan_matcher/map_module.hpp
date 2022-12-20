@@ -19,7 +19,7 @@
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
-#include <multigrid_pclomp/ndt_omp.h>
+#include <multigrid_pclomp/multigrid_ndt_omp.h>
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
 
@@ -30,7 +30,7 @@ class MapModule
   using PointSource = pcl::PointXYZ;
   using PointTarget = pcl::PointXYZ;
   using NormalDistributionsTransform =
-    pclomp::NormalDistributionsTransform<PointSource, PointTarget>;
+    pclomp::MultiGridNormalDistributionsTransform<PointSource, PointTarget>;
 
 public:
   MapModule(

@@ -30,7 +30,7 @@
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <fmt/format.h>
-#include <multigrid_pclomp/ndt_omp.h>
+#include <multigrid_pclomp/multigrid_ndt_omp.h>
 #include <pcl_conversions/pcl_conversions.h>
 
 class MapUpdateModule
@@ -38,7 +38,7 @@ class MapUpdateModule
   using PointSource = pcl::PointXYZ;
   using PointTarget = pcl::PointXYZ;
   using NormalDistributionsTransform =
-    pclomp::NormalDistributionsTransform<PointSource, PointTarget>;
+    pclomp::MultiGridNormalDistributionsTransform<PointSource, PointTarget>;
 
 public:
   MapUpdateModule(

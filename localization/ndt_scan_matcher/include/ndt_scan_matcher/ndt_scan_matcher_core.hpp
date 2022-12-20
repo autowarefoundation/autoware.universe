@@ -35,7 +35,7 @@
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <fmt/format.h>
-#include <multigrid_pclomp/ndt_omp.h>
+#include <multigrid_pclomp/multigrid_ndt_omp.h>
 #include <pcl/point_types.h>
 #include <tf2/transform_datatypes.h>
 
@@ -72,7 +72,7 @@ class NDTScanMatcher : public rclcpp::Node
   using PointSource = pcl::PointXYZ;
   using PointTarget = pcl::PointXYZ;
   using NormalDistributionsTransform =
-    pclomp::NormalDistributionsTransform<PointSource, PointTarget>;
+    pclomp::MultiGridNormalDistributionsTransform<PointSource, PointTarget>;
 
 public:
   NDTScanMatcher();
