@@ -273,22 +273,21 @@ bool DefaultPlanner::is_goal_valid(
 {
   const auto logger = node_->get_logger();
 
+  const auto goal_lanelet_pt = lanelet::utils::conversion::toLaneletPoint(goal.position);
+
   // check if goal is in shoulder lanelet
   lanelet::Lanelet closest_shoulder_lanelet;
-  if (!lanelet::utils::query::getClosestLanelet(
+  if (lanelet::utils::query::getClosestLanelet(
         shoulder_lanelets_, goal, &closest_shoulder_lanelet)) {
-    return false;
-  }
-  // check if goal pose is in shoulder lane
-  const auto goal_lanelet_pt = lanelet::utils::conversion::toLaneletPoint(goal.position);
-  if (is_in_lane(closest_shoulder_lanelet, goal_lanelet_pt)) {
-    const auto lane_yaw = lanelet::utils::getLaneletAngle(closest_shoulder_lanelet, goal.position);
-    const auto goal_yaw = tf2::getYaw(goal.orientation);
-    const auto angle_diff = tier4_autoware_utils::normalizeRadian(lane_yaw - goal_yaw);
-
-    const double th_angle = tier4_autoware_utils::deg2rad(param_.goal_angle_threshold_deg);
-    if (std::abs(angle_diff) < th_angle) {
-      return true;
+    if (is_in_lane(closest_shoulder_lanelet, goal_lanelet_pt)) {
+      const auto lane_yaw =
+        lanelet::utils::getLaneletAngle(closest_shoulder_lanelet, goal.position);
+      const auto goal_yaw = tf2::getYaw(goal.orientation);
+      const auto angle_diff = tier4_autoware_utils::normalizeRadian(lane_yaw - goal_yaw);
+      const double th_angle = tier4_autoware_utils::deg2rad(param_.goal_angle_threshold_deg);
+      if (std::abs(angle_diff) < th_angle) {
+        return true;
+      }
     }
   }
 
