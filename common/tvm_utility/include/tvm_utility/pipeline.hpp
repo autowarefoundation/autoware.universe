@@ -286,8 +286,8 @@ public:
 
     for (auto & output_config : config.network_outputs) {
       output_.push_back(TVMArrayContainer(
-        output_config.second, config.tvm_dtype_code, config.tvm_dtype_bits, config.tvm_dtype_lanes,
-        config.tvm_device_type, config.tvm_device_id));
+        output_config.node_shape, output_config.tvm_dtype_code, output_config.tvm_dtype_bits,
+        output_config.tvm_dtype_lanes, output_config.tvm_device_type, output_config.tvm_device_id));
     }
   }
 
@@ -298,7 +298,7 @@ public:
       if (input[index].getArray() == nullptr) {
         throw std::runtime_error("input variable is null");
       }
-      set_input(config_.network_inputs[index].first.c_str(), input[index].getArray());
+      set_input(config_.network_inputs[index].node_name.c_str(), input[index].getArray());
     }
 
     // Execute the inference
