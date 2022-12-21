@@ -70,6 +70,7 @@ struct PlannerData
   geometry_msgs::msg::PoseStamped current_pose;
 
   // msgs from callbacks that are used for data-ready
+  geometry_msgs::msg::PoseStamped::ConstSharedPtr current_odometry;
   geometry_msgs::msg::TwistStamped::ConstSharedPtr current_velocity;
   geometry_msgs::msg::AccelWithCovarianceStamped::ConstSharedPtr current_acceleration;
   static constexpr double velocity_buffer_time_sec = 10.0;

@@ -111,7 +111,7 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
     createSubscriptionOptions(this));
   sub_vehicle_odometry_ = this->create_subscription<nav_msgs::msg::Odometry>(
     "~/input/vehicle_odometry", 1,
-    std::bind(&BehaviorVelocityPlannerNode::onVehicleVelocity, this, _1),
+    std::bind(&BehaviorVelocityPlannerNode::onOdometry, this, _1),
     createSubscriptionOptions(this));
   sub_acceleration_ = this->create_subscription<geometry_msgs::msg::AccelWithCovarianceStamped>(
     "~/input/accel", 1, std::bind(&BehaviorVelocityPlannerNode::onAcceleration, this, _1),
@@ -296,10 +296,14 @@ void BehaviorVelocityPlannerNode::onNoGroundPointCloud(
   }
 }
 
-void BehaviorVelocityPlannerNode::onVehicleVelocity(
+void BehaviorVelocityPlannerNode::onOdometry(
   const nav_msgs::msg::Odometry::ConstSharedPtr msg)
 {
   std::lock_guard<std::mutex> lock(mutex_);
+
+  auto current_odometry = std::make_shared<geometry_msgs::msg::PoseStamped>();
+  current_odometry->header = msg->header;
+  current_odometry->pose = msg->pose.pose;
 
   auto current_velocity = std::make_shared<geometry_msgs::msg::TwistStamped>();
   current_velocity->header = msg->header;
