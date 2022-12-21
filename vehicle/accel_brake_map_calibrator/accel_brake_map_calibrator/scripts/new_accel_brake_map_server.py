@@ -66,7 +66,9 @@ class DrawGraph(Node):
         )
         if self.calibration_method is None:
             self.calibration_method = "each_cell"
-        elif not ((self.calibration_method == "each_cell") | (self.calibration_method == "four_cell")):
+        elif not (
+            (self.calibration_method == "each_cell") | (self.calibration_method == "four_cell")
+        ):
             print("invalid method.")
             self.calibration_method = "each_cell"
 
