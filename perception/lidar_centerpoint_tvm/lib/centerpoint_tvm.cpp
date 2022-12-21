@@ -15,8 +15,8 @@
 #include "lidar_centerpoint_tvm/centerpoint_tvm.hpp"
 
 #include <centerpoint_backbone/inference_engine_tvm_config.hpp>
-#include <centerpoint_encoder/inference_engine_tvm_config.hpp>
 #include <centerpoint_backbone/preprocessing_inference_engine_tvm_config.hpp>
+#include <centerpoint_encoder/inference_engine_tvm_config.hpp>
 #include <lidar_centerpoint_tvm/centerpoint_config.hpp>
 #include <lidar_centerpoint_tvm/network/scatter.hpp>
 #include <lidar_centerpoint_tvm/preprocess/generate_features.hpp>
@@ -47,8 +47,8 @@ TVMScatterIE::TVMScatterIE(
   const std::string & function_name)
 : config_(config)
 {
-  std::string network_prefix = ament_index_cpp::get_package_share_directory(pkg_name) +
-                                 "/models/" + config.network_name + "/";
+  std::string network_prefix =
+    ament_index_cpp::get_package_share_directory(pkg_name) + "/models/" + config.network_name + "/";
   std::string network_module_path = network_prefix + config.network_module_path;
   // network_module_path = "/home/xinyuwang/adehome/tvm_latest/tvm_example/scatter.so";
 
@@ -142,7 +142,8 @@ std::vector<Box3D> BackboneNeckHeadPostProcessor::schedule(const TVMArrayContain
     input[0].getArray(), head_out_heatmap.data(), head_out_heatmap.size() * output_datatype_bytes);
   TVMArrayCopyToBytes(
     input[1].getArray(), head_out_offset.data(), head_out_offset.size() * output_datatype_bytes);
-  TVMArrayCopyToBytes(input[2].getArray(), head_out_z.data(), head_out_z.size() * output_datatype_bytes);
+  TVMArrayCopyToBytes(
+    input[2].getArray(), head_out_z.data(), head_out_z.size() * output_datatype_bytes);
   TVMArrayCopyToBytes(
     input[3].getArray(), head_out_dim.data(), head_out_dim.size() * output_datatype_bytes);
   TVMArrayCopyToBytes(
@@ -189,8 +190,10 @@ void CenterPointTVM::initPtr()
   std::vector<int64_t> shape_coords{
     config_scatter.network_inputs[1].node_shape[0], config_scatter.network_inputs[1].node_shape[1]};
   coords_tvm_ = TVMArrayContainer(
-    shape_coords, config_scatter.network_inputs[1].tvm_dtype_code, config_scatter.network_inputs[1].tvm_dtype_bits,
-    config_scatter.network_inputs[1].tvm_dtype_lanes, config_scatter.tvm_device_type, config_scatter.tvm_device_id);
+    shape_coords, config_scatter.network_inputs[1].tvm_dtype_code,
+    config_scatter.network_inputs[1].tvm_dtype_bits,
+    config_scatter.network_inputs[1].tvm_dtype_lanes, config_scatter.tvm_device_type,
+    config_scatter.tvm_device_id);
 }
 
 bool CenterPointTVM::detect(
