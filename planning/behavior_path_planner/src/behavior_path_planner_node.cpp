@@ -591,11 +591,6 @@ bool BehaviorPathPlannerNode::isDataReady()
     return missing("self_acceleration");
   }
 
-  planner_data_->self_pose = self_pose_listener_.getCurrentPose();
-  if (!planner_data_->self_pose) {
-    return missing("self_pose");
-  }
-
   mutex_pd_.unlock();
   return true;
 }
