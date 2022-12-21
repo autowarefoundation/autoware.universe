@@ -536,6 +536,7 @@ TEST_F(FakeNodeFixture, longitudinal_not_check_steer_converged)
 
 TEST_F(FakeNodeFixture, longitudinal_check_steer_converged)
 {
+  // set enable_keep_stopped_until_steer_convergence true
   const auto node_options = makeNodeOptions(true);
   ControllerTester tester(this, node_options);
 

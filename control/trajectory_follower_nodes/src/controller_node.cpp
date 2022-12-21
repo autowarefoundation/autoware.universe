@@ -178,21 +178,6 @@ boost::optional<trajectory_follower::InputData> Controller::createInputData(
   return input_data;
 }
 
-void Controller::initialize(const trajectory_follower::InputData & input_data)
-{
-  // NOTE: How to initialize the controller depends on the lateral and longitudinal controller
-  // algorithm.
-  //       Currently, just run and sync are implemented since the longitudinal controller has to get
-  //       sync_data from the lateral controller before publishing control command.
-  const auto lat_out = lateral_controller_->run(input_data);
-  const auto lon_out = longitudinal_controller_->run(input_data);
-
-  longitudinal_controller_->sync(lat_out.sync_data);
-  lateral_controller_->sync(lon_out.sync_data);
-
-  is_initialized_ = true;
-}
-
 void Controller::callbackTimerControl()
 {
   // 1. create input data
@@ -212,37 +197,30 @@ void Controller::callbackTimerControl()
     return;
   }
 
-  // 3. check if controllers are initialized
-  if (!is_initialized_) {
-    initialize(*input_data);
-    RCLCPP_INFO(
-      get_logger(),
-      "Control is skipped since lateral and longitudinal controllers are being initialized.");
-    return;
-  }
-
-  // 4. run controllers
+  // 3. run controllers
   const auto lat_out = lateral_controller_->run(*input_data);
   const auto lon_out = longitudinal_controller_->run(*input_data);
 
-  // 5. sync with each other controllers
+  // 4. sync with each other controllers
   longitudinal_controller_->sync(lat_out.sync_data);
   lateral_controller_->sync(lon_out.sync_data);
 
   // TODO(Horibe): Think specification. This comes from the old implementation.
   if (isTimeOut(lon_out, lat_out)) return;
 
-  // 6. publish control command
+  // 5. publish control command
   autoware_auto_control_msgs::msg::AckermannControlCommand out;
   out.stamp = this->now();
   out.lateral = lat_out.control_cmd;
   out.longitudinal = lon_out.control_cmd;
   control_cmd_pub_->publish(out);
 
-  publishDebugMarker();
+  publishDebugMarker(*input_data, lat_out);
 }
 
-void Controller::publishDebugMarker() const
+void Controller::publishDebugMarker(
+  const trajectory_follower::InputData & input_data,
+  const trajectory_follower::LateralOutput & lat_out) const
 {
   visualization_msgs::msg::MarkerArray debug_marker_array{};
 
@@ -252,14 +230,14 @@ void Controller::publishDebugMarker() const
       "map", this->now(), "steer_converged", 0, visualization_msgs::msg::Marker::TEXT_VIEW_FACING,
       tier4_autoware_utils::createMarkerScale(0.0, 0.0, 1.0),
       tier4_autoware_utils::createMarkerColor(1.0, 1.0, 1.0, 0.99));
-    marker.pose = input_data_.current_odometry_ptr->pose.pose;
+    marker.pose = input_data.current_odometry.pose.pose;
 
     std::stringstream ss;
-    const double current = input_data_.current_steering_ptr->steering_tire_angle;
-    const double cmd = lateral_output_->control_cmd.steering_tire_angle;
+    const double current = input_data.current_steering.steering_tire_angle;
+    const double cmd = lat_out.control_cmd.steering_tire_angle;
     const double diff = current - cmd;
     ss << "current:" << current << " cmd:" << cmd << " diff:" << diff
-       << (lateral_output_->sync_data.is_steer_converged ? " (converged)" : " (not converged)");
+       << (lat_out.sync_data.is_steer_converged ? " (converged)" : " (not converged)");
     marker.text = ss.str();
 
     debug_marker_array.markers.push_back(marker);

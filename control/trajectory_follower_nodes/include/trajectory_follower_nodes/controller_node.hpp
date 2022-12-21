@@ -71,8 +71,6 @@ private:
   double timeout_thr_sec_;
   boost::optional<LongitudinalOutput> longitudinal_output_{boost::none};
 
-  bool is_initialized_{false};
-
   std::shared_ptr<trajectory_follower::LongitudinalControllerBase> longitudinal_controller_;
   std::shared_ptr<trajectory_follower::LateralControllerBase> lateral_controller_;
 
@@ -103,7 +101,6 @@ private:
    * @brief compute control command, and publish periodically
    */
   boost::optional<trajectory_follower::InputData> createInputData(rclcpp::Clock & clock) const;
-  void initialize(const trajectory_follower::InputData & input_data);
   void callbackTimerControl();
   void onTrajectory(const autoware_auto_planning_msgs::msg::Trajectory::SharedPtr);
   void onOdometry(const nav_msgs::msg::Odometry::SharedPtr msg);
@@ -113,7 +110,9 @@ private:
   LateralControllerMode getLateralControllerMode(const std::string & algorithm_name) const;
   LongitudinalControllerMode getLongitudinalControllerMode(
     const std::string & algorithm_name) const;
-  void publishDebugMarker() const;
+  void publishDebugMarker(
+    const trajectory_follower::InputData & input_data,
+    const trajectory_follower::LateralOutput & lat_out) const;
 };
 }  // namespace trajectory_follower_nodes
 }  // namespace control
