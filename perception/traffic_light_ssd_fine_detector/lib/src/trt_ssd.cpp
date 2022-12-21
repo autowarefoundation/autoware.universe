@@ -164,35 +164,70 @@ void Net::save(const std::string & path)
   file.write(reinterpret_cast<const char *>(plan_->data()), plan_->size());
 }
 
-void Net::infer(std::vector<void *> & buffers, const int batch_size)
+void Net::infer([[maybe_unused]] std::vector<void *> & buffers, const int batch_size)
 {
   if (!context_) {
     throw std::runtime_error("Fail to create context");
   }
-  auto input_dims = engine_->getBindingDimensions(0);
+
+#if (NV_TENSORRT_MAJOR * 10000) + (NV_TENSORRT_MINOR * 100) + NV_TENSOR_PATCH >= 80500
+  const auto input_dims = engine_->getTensorShape(engine_->getIOTensorName(0));
+  context_->setInputShape(
+    engine_->getIOTensorName(0),
+    nvinfer1::Dims4(batch_size, input_dims.d[1], input_dims.d[2], input_dims.d[3]));
+  context_->enqueueV3(stream_);
+#else
+  // Deprecated since 8.5
+  const auto input_dims = engine_->getBindingDimensions(0);
   context_->setBindingDimensions(
     0, nvinfer1::Dims4(batch_size, input_dims.d[1], input_dims.d[2], input_dims.d[3]));
   context_->enqueueV2(buffers.data(), stream_, nullptr);
+#endif
   cudaStreamSynchronize(stream_);
 }
 
 std::vector<int> Net::getInputSize()
 {
-  auto dims = engine_->getBindingDimensions(0);
+#if (NV_TENSORRT_MAJOR * 10000) + (NV_TENSORRT_MINOR * 100) + NV_TENSOR_PATCH >= 80500
+  const auto dims = engine_->getTensorShape(engine_->getIOTensorName(0));
+#else
+  // Deprecated since 8.5
+  const auto dims = engine_->getBindingDimensions(0);
+#endif
   return {dims.d[1], dims.d[2], dims.d[3]};
 }
 
 std::vector<int> Net::getOutputScoreSize()
 {
-  auto dims = engine_->getBindingDimensions(1);
+#if (NV_TENSORRT_MAJOR * 10000) + (NV_TENSORRT_MINOR * 100) + NV_TENSOR_PATCH >= 80500
+  const auto dims = engine_->getTensorShape(engine_->getIOTensorName(1));
+#else
+  // Deprecated since 8.5
+  const auto dims = engine_->getBindingDimensions(1);
+#endif
   return {dims.d[1], dims.d[2]};
 }
 
 int Net::getMaxBatchSize()
 {
+#if (NV_TENSORRT_MAJOR * 10000) + (NV_TENSORRT_MINOR * 100) + NV_TENSOR_PATCH >= 80500
+  return engine_
+    ->getProfileShape(engine_->getIOTensorName(0), 0, nvinfer1::OptProfileSelector::kMAX)
+    .d[0];
+#else
+  // Deprecated since 8.5
   return engine_->getProfileDimensions(0, 0, nvinfer1::OptProfileSelector::kMAX).d[0];
+#endif
 }
 
-int Net::getMaxDetections() { return engine_->getBindingDimensions(1).d[1]; }
+int Net::getMaxDetections()
+{
+#if (NV_TENSORRT_MAJOR * 10000) + (NV_TENSORRT_MINOR * 100) + NV_TENSOR_PATCH >= 80500
+  return engine_->getTensorShape(engine_->getIOTensorName(1)).d[1];
+#else
+  // Deprecated since 8.5
+  return engine_->getBindingDimensions(1).d[1];
+#endif
+}
 
 }  // namespace ssd

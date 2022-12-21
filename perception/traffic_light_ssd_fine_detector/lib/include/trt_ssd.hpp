@@ -72,7 +72,7 @@ public:
   void save(const std::string & path);
 
   // Infer using pre-allocated GPU buffers {data, scores, boxes}
-  void infer(std::vector<void *> & buffers, const int batch_size);
+  void infer([[maybe_unused]] std::vector<void *> & buffers, const int batch_size);
 
   // Get (c, h, w) size of the fixed input
   std::vector<int> getInputSize();
