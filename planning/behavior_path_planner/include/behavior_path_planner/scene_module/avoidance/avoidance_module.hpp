@@ -206,7 +206,7 @@ private:
   void fillObjectMovingTime(ObjectData & object_data) const;
   void compensateDetectionLost(
     ObjectDataArray & target_objects, ObjectDataArray & other_objects) const;
-  void fillAvoidancePath(AvoidancePlanningData & data, DebugData & debug) const;
+  void fillShiftLine(AvoidancePlanningData & data, DebugData & debug) const;
 
   // data used in previous planning
   ShiftedPath prev_output_;

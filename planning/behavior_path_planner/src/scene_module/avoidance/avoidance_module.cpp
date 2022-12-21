@@ -519,7 +519,7 @@ void AvoidanceModule::fillObjectMovingTime(ObjectData & object_data) const
   }
 }
 
-void AvoidanceModule::fillAvoidancePath(AvoidancePlanningData & data, DebugData & debug) const
+void AvoidanceModule::fillShiftLine(AvoidancePlanningData & data, DebugData & debug) const
 {
   constexpr double AVOIDING_SHIFT_THR = 0.1;
   data.avoiding_now = std::abs(getCurrentShift()) > AVOIDING_SHIFT_THR;
@@ -2613,7 +2613,7 @@ void AvoidanceModule::updateData()
     prev_reference_ = avoidance_data_.reference_path;
   }
 
-  fillAvoidancePath(avoidance_data_, debug_data_);
+  fillShiftLine(avoidance_data_, debug_data_);
 }
 
 /*
