@@ -174,8 +174,7 @@ bool BlindSpotModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
   /* set stop speed */
   setSafe(state_machine_.getState() != StateMachine::State::STOP);
   setDistance(motion_utils::calcSignedArcLength(
-    path->points, current_pose.position,
-    path->points.at(stop_line_idx).point.pose.position));
+    path->points, current_pose.position, path->points.at(stop_line_idx).point.pose.position));
   if (!isActivated()) {
     constexpr double stop_vel = 0.0;
     planning_utils::setVelocityFromIndex(stop_line_idx, stop_vel, path);
