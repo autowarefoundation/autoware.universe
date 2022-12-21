@@ -66,8 +66,6 @@ struct PlannerData
     system_delay = node.declare_parameter("system_delay", 0.50);
     delay_response_time = node.declare_parameter("delay_response_time", 0.50);
   }
-  // tf
-  geometry_msgs::msg::PoseStamped current_pose;
 
   // msgs from callbacks that are used for data-ready
   geometry_msgs::msg::PoseStamped::ConstSharedPtr current_odometry;

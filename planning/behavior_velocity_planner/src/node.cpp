@@ -63,17 +63,6 @@ namespace behavior_velocity_planner
 {
 namespace
 {
-geometry_msgs::msg::PoseStamped transform2pose(
-  const geometry_msgs::msg::TransformStamped & transform)
-{
-  geometry_msgs::msg::PoseStamped pose;
-  pose.header = transform.header;
-  pose.pose.position.x = transform.transform.translation.x;
-  pose.pose.position.y = transform.transform.translation.y;
-  pose.pose.position.z = transform.transform.translation.z;
-  pose.pose.orientation = transform.transform.rotation;
-  return pose;
-}
 
 autoware_auto_planning_msgs::msg::Path to_path(
   const autoware_auto_planning_msgs::msg::PathWithLaneId & path_with_id)
@@ -214,12 +203,6 @@ bool BehaviorVelocityPlannerNode::isDataReady(
   const PlannerData planner_data, rclcpp::Clock clock) const
 {
   const auto & d = planner_data;
-
-  // from tf
-  if (d.current_pose.header.frame_id == "") {
-    RCLCPP_INFO_THROTTLE(get_logger(), clock, 3000, "Frame id of current pose is missing");
-    return false;
-  }
 
   // from callbacks
   if (!d.current_velocity) {
@@ -407,16 +390,6 @@ void BehaviorVelocityPlannerNode::onTrigger(
   const autoware_auto_planning_msgs::msg::PathWithLaneId::ConstSharedPtr input_path_msg)
 {
   mutex_.lock();  // for planner_data_
-
-  // Check ready
-  try {
-    planner_data_.current_pose =
-      transform2pose(tf_buffer_.lookupTransform("map", "base_link", tf2::TimePointZero));
-  } catch (tf2::TransformException & e) {
-    RCLCPP_INFO(get_logger(), "waiting for transform from `map` to `base_link`");
-    mutex_.unlock();
-    return;
-  }
 
   if (!isDataReady(planner_data_, *get_clock())) {
     mutex_.unlock();
