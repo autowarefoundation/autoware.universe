@@ -147,10 +147,10 @@ AccelBrakeMapCalibrator::AccelBrakeMapCalibrator(const rclcpp::NodeOptions & nod
   accel_offset_covariance_value_.resize((accel_map_value_.size()));
   brake_offset_covariance_value_.resize((brake_map_value_.size()));
   for (auto & m : accel_offset_covariance_value_) {
-    m.resize(accel_map_value_.at(0).size());
+    m.resize(accel_map_value_.at(0).size(),covariance_);
   }
   for (auto & m : brake_offset_covariance_value_) {
-    m.resize(brake_map_value_.at(0).size());
+    m.resize(brake_map_value_.at(0).size(),covariance_);
   }
   map_value_data_.resize(accel_map_value_.size() + brake_map_value_.size() - 1);
   for (auto & m : map_value_data_) {
@@ -984,6 +984,7 @@ bool AccelBrakeMapCalibrator::updateFourCellAroundOffset(
   offset_covariance_value.at(pedal_index + 1).at(vel_index + 1)=sigma(1);
   offset_covariance_value.at(pedal_index + 0).at(vel_index + 0)=sigma(2);
   offset_covariance_value.at(pedal_index + 1).at(vel_index + 1)=sigma(3);
+
   return true;
 }
 
@@ -1438,7 +1439,7 @@ void AccelBrakeMapCalibrator::publishOffsetCovMap(
   for (int i = 0; i < h; i++) {
     for (int j = 0; j < w; j++) {
       vec[i * w + j] = static_cast<float>(
-        getMapColumnFromUnifiedIndex(accel_map_value_, brake_map_value_, i).at(j));
+        getMapColumnFromUnifiedIndex(accel_map_value, brake_map_value, i).at(j));
     }
   }
   float_map.data = vec;
