@@ -17,7 +17,10 @@ Note that you should provide parameter paths as `PACKAGE_param_path`. The list o
 ```xml
 <include file="$(find-pkg-share tier4_control_launch)/launch/control.launch.py">
   <!-- options for lateral_controller_mode: mpc_follower, pure_pursuit -->
-  <arg name="PACKAGE_param_path" value="..." />
+  <!-- Parameter files -->
+  <arg name="FOO_NODE_param_path" value="..."/>
+  <arg name="BAR_NODE_param_path" value="..."/>
+  ...
   <arg name="lateral_controller_mode" value="mpc_follower" />
 </include>
 ```
