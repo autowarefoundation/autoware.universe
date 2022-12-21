@@ -156,7 +156,10 @@ void TrafficReaderService::get_result()
   std::ostringstream out_stream;
   boost::archive::text_oarchive archive(out_stream);
   archive & Request::GET_RESULT;
-  archive & result_;
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    archive & result_;
+  }
 
   // Write data to socket
   boost::system::error_code error_code;
@@ -238,8 +241,11 @@ void TrafficReaderService::execute_nethogs()
   message.erase(std::remove(message.begin(), message.end(), '\n'), message.cend());
   syslog(LOG_INFO, "%s\n", message.c_str());
 
-  result_.error_code = c.exit_code();
-  result_.output = message;
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    result_.error_code = c.exit_code();
+    result_.output = message;
+  }
 }
 
 std::string TrafficReaderService::get_command_line(const std::string & line)
