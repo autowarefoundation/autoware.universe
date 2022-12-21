@@ -19,7 +19,9 @@ Note that you should provide parameter paths as `PACKAGE_param_path`. The list o
     <!-- options for mode: camera_lidar_fusion, lidar, camera -->
     <arg name="mode" value="lidar" />
 
-    <arg name="PACKAGE_param_path" value="..." />
+    <!-- Parameter files -->
+    <arg name="FOO_param_path" value="..."/>
+    <arg name="BAR_param_path" value="..."/>
     ...
   </include>
 ```
