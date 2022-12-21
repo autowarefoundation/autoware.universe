@@ -318,7 +318,7 @@ void ObstacleStopPlannerNode::onTrigger(const Trajectory::ConstSharedPtr input_m
     planner_data.trajectory_trim_index);
 
   // extend trajectory to consider obstacles after the goal
-  if(stop_param.enable_stop_behind_goal_for_obstacle) {
+  if (stop_param.enable_stop_behind_goal_for_obstacle) {
     base_trajectory = extendTrajectory(base_trajectory, vehicle_info.max_longitudinal_offset_m);
   }
   // decimate trajectory for calculation cost
