@@ -94,7 +94,7 @@ perception/image_projection_based_fusion/** yukihiro.saito@tier4.jp yusuke.muram
 perception/lidar_apollo_instance_segmentation/** yukihiro.saito@tier4.jp @autowarefoundation/autoware-global-codeowners
 perception/lidar_apollo_segmentation_tvm/** ambroise.vincent@arm.com @autowarefoundation/autoware-global-codeowners
 perception/lidar_apollo_segmentation_tvm_nodes/** ambroise.vincent@arm.com @autowarefoundation/autoware-global-codeowners
-perception/lidar_centerpoint/** yusuke.muramatsu@tier4.jp kenzo.lobos@tier4.jp @autowarefoundation/autoware-global-codeowners
+perception/lidar_centerpoint/** yusuke.muramatsu@tier4.jp @autowarefoundation/autoware-global-codeowners
 perception/lidar_centerpoint_tvm/** carl.liu@autocore.ai xinyu.wang@tier4.jp @autowarefoundation/autoware-global-codeowners
 perception/map_based_prediction/** yutaka.shimizu@tier4.jp @autowarefoundation/autoware-global-codeowners
 perception/multi_object_tracker/** jilada.eccleston@tier4.jp yukihiro.saito@tier4.jp @autowarefoundation/autoware-global-codeowners
