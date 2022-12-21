@@ -10,7 +10,7 @@ Please see `<exec_depend>` in `package.xml`.
 
 ## Usage
 
-Note that you should provide parameter paths as `PACKAGE_param_path`. The list of parameter paths you should provide is written at the top of `ssytem.launch.xml`.
+Note that you should provide parameter paths as `PACKAGE_param_path`. The list of parameter paths you should provide is written at the top of `system.launch.xml`.
 
 ```xml
   <include file="$(find-pkg-share tier4_system_launch)/launch/system.launch.xml">
