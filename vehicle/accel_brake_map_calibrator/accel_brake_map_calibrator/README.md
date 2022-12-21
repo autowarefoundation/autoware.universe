@@ -182,7 +182,9 @@ ros2 run accel_brake_map_calibrator actuation_cmd_publisher.py
 
 ![actuation_cmd_publisher_util](./media/actuation_cmd_publisher_util.png)
 
-## Calibration method
+## Calibration Method
+
+Two algorithms are selectable for the acceleration map update, [update_offset_four_cell_around](#update_offset_each_cell) and [update_offset_each_cell](update_offset_each_cell). Please see the link for datails.
 
 ### Data Preprocessing
 
@@ -203,6 +205,7 @@ Before calibration, missing or unusable data (e.g., too large handle angles) mus
 Update by Recursive Least Squares(RLS) method using data close enough to each grid.
 
 **Advantage** : Only data close enough to each grid is used for calibration, allowing accurate updates at each point.
+
 **Disadvantage** : Calibration is time-consuming due to a large amount of data to be excluded.
 
 #### Parameters
@@ -238,9 +241,11 @@ $$
 Update the offsets by RLS in four grids around newly obtained data. By considering linear interpolation, the update takes into account appropriate weights. Therefore, there is no need to remove data by thresholding.
 
 **Advantage** : No data is wasted because updates are performed on the 4 grids around the data with appropriate weighting.
-**Disadvantage** : Accuracy may be degraded due to extreme bias of the data. For example, if data $z(k)$ is biased near $Z_{RR}$ in Fig. 2, updating is performed at the four surrounding points ($Z_{RR}$, $Z_{RL}$, $Z_{LR}$, and $Z_{LL}$), but accuracy at $Z_{LL}$ is not expected.
+**Disadvantage** : Accuracy may be degraded due to extreme bias of the data. For example, if data $z(k)$ is biased near $Z_{RR}$ in Fig. 2, updating is performed at the four surrounding points ( $Z_{RR}$, $Z_{RL}$, $Z_{LR}$, and $Z_{LL}$), but accuracy at $Z_{LL}$ is not expected.
 
-![2D_LookUp_Table](./media/fourcell_RLS.png)
+<p align="center">
+  <img src="./media/fourcell_RLS.png" width="600">
+</p>
 
 #### Implementation
 
