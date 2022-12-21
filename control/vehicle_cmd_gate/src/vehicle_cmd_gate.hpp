@@ -119,7 +119,6 @@ private:
   MrmState current_mrm_state_;
   GearReport::ConstSharedPtr current_gear_ptr_;
 
-
   // Heartbeat
   std::shared_ptr<rclcpp::Time> emergency_state_heartbeat_received_time_;
   bool is_emergency_state_heartbeat_timeout_ = false;
