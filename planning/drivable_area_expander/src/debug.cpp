@@ -56,8 +56,9 @@ visualization_msgs::msg::Marker makePolygonMarker(const polygon_t & polygon, con
 }
 
 visualization_msgs::msg::MarkerArray makeDebugMarkers(
-  const multipolygon_t & footprint, const multipolygon_t & filtered_footprint, const multilinestring_t & uncrossable_lines,
-  const multipolygon_t & predicted_paths, const double marker_z)
+  const multipolygon_t & footprint, const multipolygon_t & filtered_footprint,
+  const multilinestring_t & uncrossable_lines, const multipolygon_t & predicted_paths,
+  const double marker_z)
 {
   visualization_msgs::msg::MarkerArray debug_markers;
   auto line_id = 0lu;
@@ -82,6 +83,8 @@ visualization_msgs::msg::MarkerArray makeDebugMarkers(
   for (const auto & poly : filtered_footprint) {
     auto marker = makePolygonMarker(poly, marker_z);
     marker.color.g = 1.0;
+    marker.color.b = 0.2;
+    marker.color.r = 0.2;
     marker.color.a = 0.5;
     marker.id = ffoot_id++;
     marker.ns = "filtered_path_footprint";

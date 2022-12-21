@@ -199,12 +199,14 @@ def launch_setup(context, *args, **kwargs):
         extra_arguments=[{"use_intra_process_comms": LaunchConfiguration("use_intra_process")}],
     )
 
+    # TODO(Maxime): use same style as the other nodes
+    import os
+
+    from ament_index_python import get_package_share_directory
+
     drivable_area_expander_param_path = os.path.join(
-        LaunchConfiguration("tier4_planning_launch_param_path").perform(context),
-        "scenario_planning",
-        "lane_driving",
-        "behavior_planning",
-        "drivable_area_expander",
+        get_package_share_directory("drivable_area_expander"),
+        "config",
         "drivable_area_expander.param.yaml",
     )
     with open(drivable_area_expander_param_path, "r") as f:
@@ -224,7 +226,7 @@ def launch_setup(context, *args, **kwargs):
         ],
         parameters=[
             drivable_area_expander_param,
-            vehicle_info_param,
+            vehicle_param,
         ],
         prefix="konsole -e gdb -ex run --args",
     )
