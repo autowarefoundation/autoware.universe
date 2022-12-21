@@ -101,7 +101,8 @@ public:
 
     TVMArrayCopyFromBytes(
       output.getArray(), image_3f.data,
-      network_input_width * network_input_height * network_input_depth * network_input_datatype_bytes);
+      network_input_width * network_input_height * network_input_depth *
+        network_input_datatype_bytes);
 
     return {output};
   }
@@ -170,7 +171,8 @@ public:
       network_output_width * network_output_height * network_output_depth, 0);
     TVMArrayCopyToBytes(
       input[0].getArray(), infer.data(),
-      network_output_width * network_output_height * network_output_depth * network_output_datatype_bytes);
+      network_output_width * network_output_height * network_output_depth *
+        network_output_datatype_bytes);
 
     // Utility function to return data from y given index
     auto get_output_data = [this, infer, n_classes, n_anchors, n_coords](
