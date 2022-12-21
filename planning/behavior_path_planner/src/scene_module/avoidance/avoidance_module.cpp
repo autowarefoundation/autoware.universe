@@ -53,7 +53,7 @@ using tier4_planning_msgs::msg::AvoidanceDebugFactor;
 namespace
 {
 
-AvoidLine getNotStraightShiftLine(const AvoidLineArray & shift_lines)
+AvoidLine getNonStraightShiftLine(const AvoidLineArray & shift_lines)
 {
   for (const auto & sl : shift_lines) {
     if (fabs(sl.getRelativeLength()) > 0.01) {
@@ -2277,7 +2277,7 @@ BehaviorModuleOutput AvoidanceModule::plan()
     DEBUG_PRINT("new_shift_lines size = %lu", data.unapproved_new_sl.size());
     printShiftLines(data.unapproved_new_sl, "new_shift_lines");
 
-    const auto sl = getNotStraightShiftLine(data.unapproved_new_sl);
+    const auto sl = getNonStraightShiftLine(data.unapproved_new_sl);
     if (sl.getRelativeLength() > 0.0) {
       removePreviousRTCStatusRight();
     } else if (sl.getRelativeLength() < 0.0) {
@@ -2345,7 +2345,7 @@ CandidateOutput AvoidanceModule::planCandidate() const
   if (!data.unapproved_new_sl.empty()) {  // clip from shift start index for visualize
     clipByMinStartIdx(data.unapproved_new_sl, shifted_path.path);
 
-    const auto sl = getNotStraightShiftLine(data.unapproved_new_sl);
+    const auto sl = getNonStraightShiftLine(data.unapproved_new_sl);
     const auto sl_front = data.unapproved_new_sl.front();
     const auto sl_back = data.unapproved_new_sl.back();
 
@@ -2403,7 +2403,7 @@ void AvoidanceModule::addShiftLineIfApproved(const AvoidLineArray & shift_lines)
     // register original points for consistency
     registerRawShiftLines(shift_lines);
 
-    const auto sl = getNotStraightShiftLine(shift_lines);
+    const auto sl = getNonStraightShiftLine(shift_lines);
     const auto sl_front = shift_lines.front();
     const auto sl_back = shift_lines.back();
 
