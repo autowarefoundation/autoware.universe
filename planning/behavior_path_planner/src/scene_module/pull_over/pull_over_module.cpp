@@ -643,7 +643,7 @@ PathWithLaneId PullOverModule::generateEmergencyStopPath()
   const double s_end = s_current + common_parameters.forward_path_length;
   auto stop_path = route_handler->getCenterLinePath(status_.current_lanes, s_start, s_end, true);
 
-  // calc minimun stop distance under maximum deceleration
+  // calc minimum stop distance under maximum deceleration
   const double min_stop_distance = std::pow(current_vel, 2) / parameters_.maximum_deceleration / 2;
 
   // set stop point
