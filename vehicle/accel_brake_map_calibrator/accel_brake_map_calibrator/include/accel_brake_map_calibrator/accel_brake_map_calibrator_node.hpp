@@ -288,6 +288,17 @@ private:
   bool isTimeout(const builtin_interfaces::msg::Time & stamp, const double timeout_sec);
   bool isTimeout(const DataStampedPtr & data_stamped, const double timeout_sec);
 
+  /* for covariance calculation */
+  // mean value on each cell (counting methoud depends on the update algorithm)
+  Eigen::MatrixXd accel_data_mean_mat_;
+  Eigen::MatrixXd brake_data_mean_mat_;
+  // calculated vairiance on each cell
+  Eigen::MatrixXd accel_data_covariance_mat_;
+  Eigen::MatrixXd brake_data_covariance_mat_;
+  // number of data on each cell (counting methoud depends on the update algorithm)
+  Eigen::MatrixXd accel_data_num_;
+  Eigen::MatrixXd brake_data_num_;
+
   nav_msgs::msg::OccupancyGrid getOccMsg(
     const std::string frame_id, const double height, const double width, const double resolution,
     const std::vector<int8_t> & map_value);
