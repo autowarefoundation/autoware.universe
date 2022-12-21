@@ -168,7 +168,9 @@ visualization_msgs::msg::MarkerArray RunOutDebug::createVirtualWallMarkerArray()
 
   size_t id = 0;
 
-  virtual_wall_marker_creator_->createStopVirtualWallMarker(stop_pose_, "run_out", now, id);
+  appendMarkerArray(
+    virtual_wall_marker_creator_->createStopVirtualWallMarker(stop_pose_, "run_out", now, id),
+    &wall_marker, now);
 
   stop_pose_.clear();
 

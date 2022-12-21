@@ -18,6 +18,7 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 namespace behavior_velocity_planner
 {
 using autoware_auto_planning_msgs::msg::Trajectory;
@@ -122,7 +123,6 @@ private:
   std::vector<geometry_msgs::msg::Point> collision_points_;
   std::vector<geometry_msgs::msg::Point> nearest_collision_point_;
   std::vector<geometry_msgs::msg::Pose> stop_pose_;
-  std::vector<geometry_msgs::msg::Pose> stopped_pose_;
   std::vector<std::vector<geometry_msgs::msg::Point>> predicted_vehicle_polygons_;
   std::vector<std::vector<geometry_msgs::msg::Point>> predicted_obstacle_polygons_;
   std::vector<std::vector<geometry_msgs::msg::Point>> collision_obstacle_polygons_;
@@ -131,6 +131,7 @@ private:
   DebugValues debug_values_;
   AccelReason accel_reason_;
   double height_{0};
+  std::unique_ptr<motion_utils::VirtualWallMarkerCreator> virtual_wall_marker_creator_;
 };
 
 }  // namespace behavior_velocity_planner

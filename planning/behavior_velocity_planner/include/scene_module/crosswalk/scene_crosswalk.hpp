@@ -42,6 +42,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <memory>
 
 namespace behavior_velocity_planner
 {
@@ -174,6 +175,8 @@ private:
 
   // whether ego passed safety_slow_point
   bool passed_safety_slow_point_;
+
+  std::unique_ptr<motion_utils::VirtualWallMarkerCreator> virtual_wall_marker_creator_;
 };
 }  // namespace behavior_velocity_planner
 

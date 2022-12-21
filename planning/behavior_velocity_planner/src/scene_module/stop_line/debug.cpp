@@ -98,29 +98,17 @@ visualization_msgs::msg::MarkerArray StopLineModule::createVirtualWallMarkerArra
 {
   const auto now = this->clock_->now();
   visualization_msgs::msg::MarkerArray wall_marker;
-  const bool created_virtual_wall_marker = (state_ == State::APPROACH || state_ == State::STOPPED);
 
   if (!debug_data_.stop_pose) {
-    last_state_ = State::START;
-    if (created_virtual_wall_marker) {
-      // delete marker
-      appendMarkerArray(
-        motion_utils::createDeletedStopVirtualWallMarker(now, module_id_), &wall_marker, now);
-    }
     return wall_marker;
   }
   const auto p_front = tier4_autoware_utils::calcOffsetPose(
     *debug_data_.stop_pose, debug_data_.base_link2front, 0.0, 0.0);
   if (state_ == State::APPROACH || state_ == State::STOPPED) {
-    last_state_ = state_;
     appendMarkerArray(
-      motion_utils::createStopVirtualWallMarker(p_front, "stopline", now, module_id_), &wall_marker,
-      now);
-  } else {
-    last_state_ = State::START;
-    // delete marker
-    appendMarkerArray(
-      motion_utils::createDeletedStopVirtualWallMarker(now, module_id_), &wall_marker, now);
+      virtual_wall_marker_creator_->createStopVirtualWallMarker(
+        {p_front}, "stopline", now, module_id_),
+      &wall_marker, now);
   }
 
   return wall_marker;

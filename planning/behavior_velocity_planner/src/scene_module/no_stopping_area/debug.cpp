@@ -175,8 +175,10 @@ visualization_msgs::msg::MarkerArray NoStoppingAreaModule::createVirtualWallMark
       tier4_autoware_utils::calcOffsetPose(p, debug_data_.base_link2front, 0.0, 0.0);
     stop_poses.push_back(p_front);
   }
-  virtual_wall_marker_creator_->createStopVirtualWallMarker(
-    stop_poses, "no_stopping_area", now, id);
+  appendMarkerArray(
+    virtual_wall_marker_creator_->createStopVirtualWallMarker(
+      stop_poses, "no_stopping_area", now, id),
+    &wall_marker, now);
 
   return wall_marker;
 }

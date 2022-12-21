@@ -61,8 +61,7 @@ BlindSpotModule::BlindSpotModule(
 : SceneModuleInterface(module_id, logger, clock),
   lane_id_(lane_id),
   turn_direction_(TurnDirection::INVALID),
-  is_over_pass_judge_line_(false),
-  created_virtual_wall_marker_(false)
+  is_over_pass_judge_line_(false)
 {
   velocity_factor_.init(VelocityFactor::REAR_CHECK);
   planner_param_ = planner_param;
