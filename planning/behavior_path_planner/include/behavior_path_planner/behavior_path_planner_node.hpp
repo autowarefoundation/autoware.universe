@@ -131,7 +131,7 @@ private:
   PullOutParameters getPullOutParam();
 
   // callback
-  void onOdometry(const Odometry::ConstSharedPtr msg);
+  void onOdometry(const Odometry::SharedPtr msg);
   void onAcceleration(const AccelWithCovarianceStamped::ConstSharedPtr msg);
   void onPerception(const PredictedObjects::ConstSharedPtr msg);
   void onOccupancyGrid(const OccupancyGrid::ConstSharedPtr msg);

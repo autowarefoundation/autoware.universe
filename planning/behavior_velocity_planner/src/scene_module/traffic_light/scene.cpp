@@ -238,7 +238,7 @@ bool TrafficLightModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   stop_line_point_msg.x = stop_line_point.x();
   stop_line_point_msg.y = stop_line_point.y();
   const double signed_arc_length_to_stop_point = motion_utils::calcSignedArcLength(
-    input_path.points, self_pose.pose.position, stop_line_point_msg);
+    input_path.points, self_pose->pose.position, stop_line_point_msg);
   setDistance(signed_arc_length_to_stop_point);
 
   // Check state

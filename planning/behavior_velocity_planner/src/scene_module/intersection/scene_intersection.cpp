@@ -139,7 +139,7 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
 
   /* calc closest index */
   const auto closest_idx_opt =
-    motion_utils::findNearestIndex(path->points, current_odometry->pose, 3.0, M_PI_4);
+    motion_utils::findNearestIndex(path->points, current_pose, 3.0, M_PI_4);
   if (!closest_idx_opt) {
     RCLCPP_WARN_SKIPFIRST_THROTTLE(
       logger_, *clock_, 1000 /* ms */, "motion_utils::findNearestIndex fail");
@@ -184,7 +184,7 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
       path->points.at(closest_idx).point.pose.position);
     const double eps = 1e-1;  // NOTE: check if sufficiently over the stuck stopline
     const bool is_over_stuck_stopline =
-      util::isOverTargetIndex(*path, closest_idx, current_odometry->pose, stuck_line_idx) &&
+      util::isOverTargetIndex(*path, closest_idx, current_pose, stuck_line_idx) &&
       dist_stuck_stopline > eps;
     if (is_stuck && !is_over_stuck_stopline) {
       stop_line_idx_final = stuck_line_idx;
@@ -205,10 +205,10 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
   }
 
   const bool is_over_pass_judge_line =
-    util::isOverTargetIndex(*path, closest_idx, current_odometry->pose, pass_judge_line_idx_final);
+    util::isOverTargetIndex(*path, closest_idx, current_pose, pass_judge_line_idx_final);
   const bool is_before_keep_detection_line = stop_lines_idx_opt.has_value()
                                                ? util::isBeforeTargetIndex(
-                                                   *path, closest_idx, current_odometry->pose,
+                                                   *path, closest_idx, current_pose,
                                                    stop_lines_idx_opt.value().keep_detection_line)
                                                : false;
   const bool keep_detection =
