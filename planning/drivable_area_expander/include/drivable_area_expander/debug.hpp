@@ -39,13 +39,14 @@ visualization_msgs::msg::Marker makeLinestringMarker(const linestring_t & ls, co
 visualization_msgs::msg::Marker makePolygonMarker(const polygon_t & polygon, const double z);
 
 /// @brief make debug marker array
-/// @param[in] footprint footprint polygon
+/// @param[in] footprint ego footprint polygon
+/// @param[in] filtered_footprint filtered ego footprint polygon
 /// @param[in] uncrossable_lines uncrossable lines
 /// @param[in] predicted_paths predicted paths
 /// @param[in] marker_z z-value to use for markers
 /// @return marker array
 visualization_msgs::msg::MarkerArray makeDebugMarkers(
-  const polygon_t & footprint, const multilinestring_t & uncrossable_lines,
+  const multipolygon_t & footprint, const multipolygon_t & filtered_footprint, const multilinestring_t & uncrossable_lines,
   const multipolygon_t & predicted_paths, const double marker_z);
 
 }  // namespace drivable_area_expander

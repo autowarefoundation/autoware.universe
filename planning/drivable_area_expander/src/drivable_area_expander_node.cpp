@@ -135,13 +135,9 @@ void DrivableAreaExpanderNode::onPath(const Path::ConstSharedPtr msg)
   uncrossable_lines.push_back(max_expansion_line);
   const auto predicted_paths =
     createPredictedPathPolygons(*dynamic_objects_ptr_, expansion_params_);
-  const point_t origin = {
-    downsampled_path_points.points.front().pose.position.x,
-    downsampled_path_points.points.front().pose.position.y};
+  const auto filtered_footprint = filterFootprint(path_footprint, predicted_paths, uncrossable_lines);
 
-  const auto diff_ls = expandDrivableArea(
-    input_path.left_bound, input_path.right_bound, path_footprint, predicted_paths,
-    uncrossable_lines, origin);
+  const auto diff_ls = expandDrivableArea(input_path.left_bound, input_path.right_bound, filtered_footprint);
   pub_path_->publish(input_path);
 
   const auto t_end = std::chrono::system_clock::now();
@@ -152,7 +148,7 @@ void DrivableAreaExpanderNode::onPath(const Path::ConstSharedPtr msg)
 
   if (pub_debug_markers_->get_subscription_count() > 0) {
     const auto z = msg->points.empty() ? 0.0 : msg->points.front().pose.position.z;
-    auto debug_markers = makeDebugMarkers(path_footprint, uncrossable_lines, predicted_paths, z);
+    auto debug_markers = makeDebugMarkers(path_footprint, filtered_footprint, uncrossable_lines, predicted_paths, z);
     visualization_msgs::msg::Marker m;
     m.header.frame_id = "map";
     m.type = visualization_msgs::msg::Marker::LINE_STRIP;
