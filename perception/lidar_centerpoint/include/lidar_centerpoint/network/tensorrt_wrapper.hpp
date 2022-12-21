@@ -64,6 +64,7 @@ public:
     const std::string & onnx_path, const std::string & engine_path, const std::string & precision);
 
   unique_ptr<nvinfer1::IExecutionContext> context_ = nullptr;
+  unique_ptr<nvinfer1::ICudaEngine> engine_ = nullptr;
 
 protected:
   virtual bool setProfile(
@@ -86,7 +87,6 @@ private:
 
   unique_ptr<nvinfer1::IRuntime> runtime_ = nullptr;
   unique_ptr<nvinfer1::IHostMemory> plan_ = nullptr;
-  unique_ptr<nvinfer1::ICudaEngine> engine_ = nullptr;
 };
 
 }  // namespace centerpoint
