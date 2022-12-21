@@ -16,7 +16,9 @@ Note that you should provide parameter paths as `PACKAGE_param_path`. The list o
 
 ```xml
   <include file="$(find-pkg-share tier4_localization_launch)/launch/localization.launch.xml">
-    <arg name="PACKAGE_param_path" value="..."/>
+    <!-- Parameter files -->
+    <arg name="FOO_param_path" value="..."/>
+    <arg name="BAR_param_path" value="..."/>
     ...
   </include>
 ```
