@@ -144,7 +144,7 @@ private:
   std::vector<float> preprocess(
     const cv::Mat & in_img, const int c, const int h, const int w) const;
   // Infer using pre-allocated GPU buffers {data, scores, boxes}
-  void infer(std::vector<void *> & buffers, const int batch_size);
+  void infer([[maybe_unused]] std::vector<void *> & buffers, const int batch_size);
 };
 
 bool set_cuda_device(int gpu_id)
