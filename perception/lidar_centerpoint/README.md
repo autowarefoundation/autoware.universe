@@ -52,6 +52,12 @@ We trained the models using <https://github.com/open-mmlab/mmdetection3d>.
 
 You can download the onnx format of trained models by clicking on the links below.
 
+- [Centerpoint](download_link)
+- [Centerpoint tiny](download_link)
+
+`Centerpoint` was trained in `Nuscenes` (~110k lidar frames) [8] and Tier IV's internal database (~11k lidar frames) for 60 epochs.
+`Centerpoint tiny` was trained in `Argoverse2` (~28k lidar frames) [9] and Tier IV's internal database (~11k lidar frames) for 20 epochs.
+
 ## Standalone inference and visualization
 
 In addition to its use as a standard ROS node, `lidar_centerpoint` can also be used to perform inferences in an isolated manner.
@@ -118,6 +124,10 @@ Example:
 [6] <https://github.com/yukkysaito/autoware_perception>
 
 [7] <https://github.com/NVIDIA-AI-IOT/CUDA-PointPillars>
+
+[8] <https://www.nuscenes.org/nuscenes>
+
+[9] <https://www.argoverse.org/av2.html>
 
 ## (Optional) Future extensions / Unimplemented parts
 
