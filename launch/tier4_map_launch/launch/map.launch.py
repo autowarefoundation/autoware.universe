@@ -161,7 +161,10 @@ def generate_launch_description():
     ),
     add_launch_arg(
         "pointcloud_map_loader_param_path",
-        "",
+        [
+            FindPackageShare("map_loader"),
+            "/config/pointcloud_map_loader.param.yaml",
+        ],
         "path to pointcloud_map_loader param file",
     ),
     add_launch_arg("use_intra_process", "false", "use ROS2 component container communication"),
