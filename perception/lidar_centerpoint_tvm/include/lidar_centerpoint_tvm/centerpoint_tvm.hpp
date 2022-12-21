@@ -92,7 +92,7 @@ private:
   const int64_t max_voxel_size;
   const int64_t max_point_in_voxel_size;
   const int64_t encoder_in_feature_size;
-  const int64_t datatype_bytes;
+  const int64_t input_datatype_bytes;
   const CenterPointConfig config_detail;
   std::vector<float> encoder_in_features;
   TVMArrayContainer output;
@@ -115,7 +115,7 @@ public:
   std::vector<Box3D> schedule(const TVMArrayContainerVector & input);
 
 private:
-  const int64_t datatype_bytes;
+  const int64_t output_datatype_bytes;
   const CenterPointConfig config_detail;
   std::vector<float> head_out_heatmap;
   std::vector<float> head_out_offset;
