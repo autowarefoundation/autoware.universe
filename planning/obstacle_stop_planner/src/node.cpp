@@ -168,6 +168,8 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
   pub_obstacle_pointcloud_ =
     this->create_publisher<sensor_msgs::msg::PointCloud2>("~/debug/obstacle_pointcloud", 1);
 
+  marker_publisher_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("~/output/bnk_marker", 1);
+
   // Subscribers
   sub_point_cloud_ = this->create_subscription<PointCloud2>(
     "~/input/pointcloud", rclcpp::SensorDataQoS(),
@@ -410,16 +412,75 @@ void ObstacleStopPlannerNode::searchObstacle(
       if (obj.shape.type == autoware_auto_perception_msgs::msg::Shape::CYLINDER) {
         object_polygon = convertCylindricalObjectToGeometryPolygon(
           obj.kinematics.initial_pose_with_covariance.pose, obj.shape);
+        visualization_msgs::msg::Marker marker;
+        visualization_msgs::msg::MarkerArray marker_array;
+        for (const auto & point : object_polygon.outer()) {
+          std::cout << "point: " << point.x() << ", " << point.y() << std::endl;
+
+          marker.header.frame_id = "map";
+          marker.id = point.count();
+          marker.scale.x = 0.1;
+          marker.color.r = 1.0;
+          marker.color.g = 0.0;
+          marker.color.b = 0.0;
+          marker.color.a = 1.0;
+          marker.lifetime = rclcpp::Duration::from_nanoseconds(100000);
+          marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
+          marker.action = visualization_msgs::msg::Marker::ADD;
+
+          geometry_msgs::msg::Point p;
+          p.x = point.x();
+          p.y = point.y();
+          marker.points.push_back(p);
+          marker_array.markers.push_back(marker);
+          std::cout << "end" << std::endl;
+        }
+        marker_publisher_->publish(marker_array);
+        std::cout << object_polygon.outer().size() << std::endl;
 
       } else if (obj.shape.type == autoware_auto_perception_msgs::msg::Shape::BOUNDING_BOX) {
         const double & length_m = obj.shape.dimensions.x / 2;
         const double & width_m = obj.shape.dimensions.y / 2;
         object_polygon = convertBoundingBoxObjectToGeometryPolygon(
           obj.kinematics.initial_pose_with_covariance.pose, length_m, length_m, width_m);
+        visualization_msgs::msg::Marker marker;
+        visualization_msgs::msg::MarkerArray marker_array;
+        for (const auto & point : object_polygon.outer()) {
+          std::cout << "point: " << point.x() << ", " << point.y() << std::endl;
+
+          marker.header.frame_id = "map";
+          marker.id = point.count();
+          marker.scale.x = 0.1;
+          marker.color.r = 0.0;
+          marker.color.g = 1.0;
+          marker.color.b = 0.0;
+          marker.color.a = 1.0;
+          marker.lifetime = rclcpp::Duration::from_nanoseconds(100000);
+          marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
+          marker.action = visualization_msgs::msg::Marker::ADD;
+
+          geometry_msgs::msg::Point p;
+          p.x = point.x();
+          p.y = point.y();
+          marker.points.push_back(p);
+          marker_array.markers.push_back(marker);
+          std::cout << "end" << std::endl;
+        }
+        marker_publisher_->publish(marker_array);
+
+        std::cout << object_polygon.outer().size() << std::endl;
+
 
       } else if (obj.shape.type == autoware_auto_perception_msgs::msg::Shape::POLYGON) {
         object_polygon = convertPolygonObjectToGeometryPolygon(
           obj.kinematics.initial_pose_with_covariance.pose, obj.shape);
+
+        for (const auto & point : object_polygon.outer()) {
+          std::cout << "point: " << point.x() << ", " << point.y() << std::endl;
+
+        }
+        std::cout << object_polygon.outer().size() << std::endl;
+
 
       } else {
         RCLCPP_WARN_THROTTLE(
