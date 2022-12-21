@@ -93,7 +93,7 @@ GoalCandidates GoalSearcher::search(const Pose & original_goal_pose)
         continue;
       }
 
-      // if finding obejcts or detecting lane departure
+      // if finding objects or detecting lane departure
       // shift search_pose in lateral direction one more
       // for avoiding them on other path points.
       if (dy > 0 && dy < max_lateral_offset) {
