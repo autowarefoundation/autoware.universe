@@ -115,9 +115,8 @@ PathPolygonIntersectionStatus getPathPolygonIntersectionStatus(
 
 bool isNoRelation(const PathPolygonIntersectionStatus & status)
 {
-  return (
-    !status.is_path_inside_of_polygon && !status.first_intersection_point &&
-    !status.second_intersection_point);
+  return !status.is_path_inside_of_polygon && !status.first_intersection_point &&
+         !status.second_intersection_point;
 }
 
 bool insertConstSpeedToPathSection(
