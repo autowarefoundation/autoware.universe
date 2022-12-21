@@ -26,18 +26,19 @@
 
 namespace drivable_area_expander
 {
-/// @brief build a drivable area expanded with a footprint but not crossing some lines and predicted
-/// paths
+
+/// @brief filter the footprint polygons such that it does not cross the given predicted paths and uncrossable lines
+/// @param[in] footprint ego footprints to filter
+/// @param[in] predicted_paths predicted footprints of dynamic objects
+/// @param[in] uncrossable_lines lines that should not be crossed by the ego footprint
+/// @return the filtered polygons
+multipolygon_t filterFootprint(const multipolygon_t & footprint, const multipolygon_t & predicted_paths, const multilinestring_t & uncrossable_lines);
+
+/// @brief expand the given drivable area with the given footprint
 /// @param[inout] left_bound left drivable area bound to expand
 /// @param[inout] right_bound right drivable area bound to expand
 /// @param[in] footprint polygon to make drivable
-/// @param[in] predicted_paths polygons to make undrivable
-/// @param[in] uncrossable_lines lines beyond which not to extend the drivable area
-/// @param[in] origin ego position
-multilinestring_t expandDrivableArea(
-  std::vector<Point> & left_bound, std::vector<Point> & right_bound, const polygon_t & footprint,
-  const multipolygon_t & predicted_paths, const multilinestring_t & uncrossable_lines,
-  const point_t & origin);
+multilinestring_t expandDrivableArea(std::vector<Point> & left_bound, std::vector<Point> & right_bound, const multipolygon_t & footprint);
 
 /// @brief create polygons from the predicted paths of the given objects
 /// @param[in] predicted_objects predicted objects

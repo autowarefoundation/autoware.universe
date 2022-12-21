@@ -47,11 +47,10 @@ polygon_t translatePolygon(const polygon_t & polygon, const double x, const doub
 }
 
 template <class T>
-polygon_t createFootprintPolygon(
+multipolygon_t createFootprintPolygon(
   const T & path, const double front, const double rear, const double left, const double right)
 {
-  polygon_t footprint;
-  multipolygon_t merge;
+  multipolygon_t footprint;
   polygon_t base_polygon;
   base_polygon.outer() = {
     point_t{front, left}, point_t{front, right}, point_t{rear, right}, point_t{rear, left}};
@@ -61,14 +60,12 @@ polygon_t createFootprintPolygon(
     const auto angle = tf2::getYaw(pose.orientation);
     const auto polygon =
       translatePolygon(rotatePolygon(base_polygon, angle), pose.position.x, pose.position.y);
-    boost::geometry::union_(footprint, polygon, merge);
-    footprint = merge.front();
-    merge.clear();
+    footprint.push_back(polygon);
   }
   return footprint;
 }
 
-polygon_t createPathFootprint(const Path & path, const ExpansionParameters & params)
+multipolygon_t createPathFootprint(const Path & path, const ExpansionParameters & params)
 {
   const auto left = params.ego_left_offset + params.ego_extra_left_offset;
   const auto right = params.ego_right_offset - params.ego_extra_right_offset;
@@ -89,7 +86,7 @@ multipolygon_t createObjectFootprints(
     const auto right = -object.shape.dimensions.y / 2 - params.dynamic_objects_extra_right_offset;
     for (const auto & path : object.kinematics.predicted_paths) {
       const auto footprint = createFootprintPolygon(path.path, front, rear, left, right);
-      footprints.push_back(footprint);
+      footprints.insert(footprints.end(), footprint.begin(), footprint.end());
     }
   }
   return footprints;

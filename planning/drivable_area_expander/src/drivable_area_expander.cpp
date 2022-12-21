@@ -27,33 +27,36 @@
 
 namespace drivable_area_expander
 {
-multilinestring_t expandDrivableArea(
-  std::vector<Point> & left_bound, std::vector<Point> & right_bound, const polygon_t & footprint,
-  const multipolygon_t & predicted_paths, const multilinestring_t & uncrossable_lines,
-  const point_t & origin)
+multipolygon_t filterFootprint(const multipolygon_t & footprint, const multipolygon_t & predicted_paths, const multilinestring_t & uncrossable_lines) {
+  multipolygon_t filtered_footprints;
+  // TODO(Maxime): crop rather than discard
+  for(const auto & f : footprint)
+    if(!boost::geometry::intersects(f, uncrossable_lines) && boost::geometry::disjoint(f, predicted_paths))
+      filtered_footprints.push_back(f);
+  return filtered_footprints;
+}
+
+multilinestring_t expandDrivableArea(std::vector<Point> & left_bound, std::vector<Point> & right_bound, const multipolygon_t & footprint)
 {
   const auto to_point = [](const auto & p) { return point_t{p.x, p.y}; };
-  polygon_t poly;
-  poly.outer().reserve(left_bound.size() + right_bound.size() + 1);
-  for (const auto & p : left_bound) poly.outer().push_back(to_point(p));
+  polygon_t original_da_poly;
+  original_da_poly.outer().reserve(left_bound.size() + right_bound.size() + 1);
+  for (const auto & p : left_bound) original_da_poly.outer().push_back(to_point(p));
   for (auto it = right_bound.rbegin(); it != right_bound.rend(); ++it)
-    poly.outer().push_back(to_point(*it));
-  poly.outer().push_back(poly.outer().front());
-  // cut uncrossable lines
-  // TODO(Maxime)
-  // extend with footprint
-  multilinestring_t debug_ls;
-  multipolygon_t drivable_area_poly;
-  boost::geometry::union_(poly, footprint, drivable_area_poly);
-  // remove predicted_paths
-  multipolygon_t diffs;
-  boost::geometry::difference(drivable_area_poly.front(), predicted_paths, diffs);
-  for (const auto & diff : diffs) {
-    if (boost::geometry::within(origin, diff)) drivable_area_poly = {diff};
+    original_da_poly.outer().push_back(to_point(*it));
+  original_da_poly.outer().push_back(original_da_poly.outer().front());
+  // extend with filtered footprint
+  multipolygon_t unions;
+  auto extended_da_poly = original_da_poly;
+  for(const auto & f : footprint) {
+    unions.clear();
+    boost::geometry::union_(extended_da_poly, f, unions);
+    // assume that the footprints are not disjoint from the original drivable area
+    extended_da_poly = unions.front();
   }
-  // TODO(Maxime): extract left/right bound from drivable_area_poly
-  // left_bound.clear();
-  // right_bound.clear();
+  // TODO(Maxime): extract left/right bound from da_poly
+  left_bound.clear();
+  right_bound.clear();
   // TODO(Maxime): what about the z value ?
   Point point;
   /*
@@ -68,11 +71,10 @@ multilinestring_t expandDrivableArea(
     right_bound.push_back(point);
   }
   */
-  for (const auto & poly : drivable_area_poly) {
-    linestring_t ls;
-    for (const auto & p : poly.outer()) ls.push_back(p);
-    debug_ls.push_back(ls);
-  }
+  multilinestring_t debug_ls;
+  linestring_t ls;
+  for (const auto & p : extended_da_poly.outer()) ls.push_back(p);
+  debug_ls.push_back(ls);
   return debug_ls;
 }
 

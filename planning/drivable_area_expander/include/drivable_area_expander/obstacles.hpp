@@ -68,14 +68,14 @@ inline const geometry_msgs::msg::Pose & getPose(const PathPoint & path_point)
 /// @return polygon footprint of the path
 /// @tparam path type (sequence of PathPoint or sequence of Pose)
 template <class T>
-polygon_t createFootprintPolygon(
+multipolygon_t createFootprintPolygon(
   const T & path, const double front, const double rear, const double left, const double right);
 
 /// @brief create the footprint polygon from a path
 /// @param[in] path the path for which to create a footprint
 /// @param[in] params expansion parameters defining how to create the footprint
 /// @return polygon footprint of the path
-polygon_t createPathFootprint(const Path & path, const ExpansionParameters & params);
+multipolygon_t createPathFootprint(const Path & path, const ExpansionParameters & params);
 
 /// @brief create polygons from the predicted paths of an object
 /// @param [in] objects objects from which to create polygons
