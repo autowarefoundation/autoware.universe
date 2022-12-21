@@ -35,6 +35,7 @@ class DrawGraph(Node):
 
     def __init__(self):
         super().__init__("plot_server")
+
         self.srv = self.create_service(
             CalibData, "/accel_brake_map_calibrator/get_data_service", self.get_data_callback
         )
@@ -59,7 +60,16 @@ class DrawGraph(Node):
             .string_value
         )
 
-        self.calibration_method = "each_cell"
+        self.declare_parameter("calibration_method", "each_cell")
+        self.calibration_method = (
+            self.get_parameter("calibration_method").get_parameter_value().string_value
+        )
+        if self.calibration_method is None:
+            self.calibration_method = "each_cell"
+        elif not ((self.calibration_method == "each_cell") | (self.calibration_method == "four_cell")):
+            print("invalid method.")
+            self.calibration_method = "each_cell"
+
         self.log_file = package_path + "/config/log.csv"
 
         config_file = package_path + "/config/accel_brake_map_calibrator.param.yaml"
