@@ -16,9 +16,9 @@
 
 #include "scene_module/run_out/dynamic_obstacle.hpp"
 
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
 namespace behavior_velocity_planner
 {
 using autoware_auto_planning_msgs::msg::Trajectory;

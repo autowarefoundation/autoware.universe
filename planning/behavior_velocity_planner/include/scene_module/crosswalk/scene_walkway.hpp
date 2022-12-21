@@ -28,9 +28,9 @@
 #include <lanelet2_routing/RoutingGraph.h>
 #include <lanelet2_routing/RoutingGraphContainer.h>
 
+#include <memory>
 #include <utility>
 #include <vector>
-#include <memory>
 
 namespace behavior_velocity_planner
 {
