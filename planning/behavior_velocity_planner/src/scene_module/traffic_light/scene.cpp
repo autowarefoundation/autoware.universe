@@ -214,7 +214,7 @@ bool TrafficLightModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
 
   const auto input_path = *path;
 
-  const auto & self_pose = planner_data_->current_pose;
+  const auto & self_pose = planner_data_->current_odometry;
 
   // Get lanelet2 traffic lights and stop lines.
   lanelet::ConstLineString3d lanelet_stop_lines = *(traffic_light_reg_elem_.stopLine());
@@ -489,7 +489,7 @@ autoware_auto_planning_msgs::msg::PathWithLaneId TrafficLightModule::insertStopP
       debug_data_.highest_confidence_traffic_light_point.value()};
   }
   velocity_factor_.set(
-    modified_path.points, planner_data_->current_pose.pose, target_point_with_lane_id.point.pose,
+    modified_path.points, planner_data_->current_odometry->pose, target_point_with_lane_id.point.pose,
     VelocityFactor::UNKNOWN);
   planning_utils::appendStopReason(stop_factor, stop_reason);
 
