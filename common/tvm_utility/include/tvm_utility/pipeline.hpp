@@ -287,7 +287,7 @@ public:
     for (auto & output_config : config.network_outputs) {
       output_.push_back(TVMArrayContainer(
         output_config.node_shape, output_config.tvm_dtype_code, output_config.tvm_dtype_bits,
-        output_config.tvm_dtype_lanes, output_config.tvm_device_type, output_config.tvm_device_id));
+        output_config.tvm_dtype_lanes, config.tvm_device_type, config.tvm_device_id));
     }
   }
 

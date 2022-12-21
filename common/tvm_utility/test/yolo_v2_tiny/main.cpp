@@ -57,8 +57,8 @@ public:
       config.network_inputs[0].tvm_dtype_code,
       config.network_inputs[0].tvm_dtype_bits,
       config.network_inputs[0].tvm_dtype_lanes,
-      config.network_inputs[0].tvm_device_type,
-      config.network_inputs[0].tvm_device_id};
+      config.tvm_device_type,
+      config.tvm_device_id};
 
     output = x;
   }
