@@ -1670,7 +1670,7 @@ lanelet::ConstLineStrings3d getMaximumDrivableArea(
 {
   const auto & p = planner_data->parameters;
   const auto & route_handler = planner_data->route_handler;
-  const auto & ego_pose = planner_data->self_pose->pose;
+  const auto & ego_pose = planner_data->self_odometry->pose.pose;
 
   lanelet::ConstLanelet current_lane;
   if (!route_handler->getClosestLaneletWithinRoute(ego_pose, &current_lane)) {
@@ -1997,7 +1997,7 @@ std::uint8_t getHighestProbLabel(const std::vector<ObjectClassification> & class
 lanelet::ConstLanelets getCurrentLanes(const std::shared_ptr<const PlannerData> & planner_data)
 {
   const auto & route_handler = planner_data->route_handler;
-  const auto current_pose = planner_data->self_pose->pose;
+  const auto current_pose = planner_data->self_odometry->pose.pose;
   const auto & common_parameters = planner_data->parameters;
 
   lanelet::ConstLanelet current_lane;
@@ -2037,7 +2037,7 @@ lanelet::ConstLanelets getExtendedCurrentLanes(
   const std::shared_ptr<const PlannerData> & planner_data)
 {
   const auto & route_handler = planner_data->route_handler;
-  const auto current_pose = planner_data->self_pose->pose;
+  const auto current_pose = planner_data->self_odometry->pose.pose;
   const auto common_parameters = planner_data->parameters;
   const auto routing_graph_ptr = route_handler->getRoutingGraphPtr();
 

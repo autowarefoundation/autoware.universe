@@ -134,7 +134,7 @@ private:
   PullOutParameters getPullOutParam();
 
   // callback
-  void onVelocity(const Odometry::ConstSharedPtr msg);
+  void onOdometry(const Odometry::ConstSharedPtr msg);
   void onAcceleration(const AccelWithCovarianceStamped::ConstSharedPtr msg);
   void onPerception(const PredictedObjects::ConstSharedPtr msg);
   void onOccupancyGrid(const OccupancyGrid::ConstSharedPtr msg);
@@ -214,7 +214,7 @@ private:
   {
     const auto & p = planner_data_;
     return motion_utils::findFirstNearestIndexWithSoftConstraints(
-      points, p->self_pose->pose, p->parameters.ego_nearest_dist_threshold,
+      points, p->self_odometry->pose.pose, p->parameters.ego_nearest_dist_threshold,
       p->parameters.ego_nearest_yaw_threshold);
   }
 
@@ -223,7 +223,7 @@ private:
   {
     const auto & p = planner_data_;
     return motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      points, p->self_pose->pose, p->parameters.ego_nearest_dist_threshold,
+      points, p->self_odometry->pose.pose, p->parameters.ego_nearest_dist_threshold,
       p->parameters.ego_nearest_yaw_threshold);
   }
 };

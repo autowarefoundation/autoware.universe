@@ -100,7 +100,7 @@ bool GeometricParallelParking::isParking() const { return current_path_idx_ > 0;
 
 bool GeometricParallelParking::isEnoughDistanceToStart(const Pose & start_pose) const
 {
-  const Pose current_pose = planner_data_->self_pose->pose;
+  const Pose current_pose = planner_data_->self_odometry->pose.pose;
   const Pose current_to_start =
     inverseTransformPose(start_pose, current_pose);  // todo: arc length is better
 
@@ -340,7 +340,7 @@ PathWithLaneId GeometricParallelParking::generateStraightPath(const Pose & start
   const auto current_lanes = util::getExtendedCurrentLanes(planner_data_);
   const auto start_arc_position = lanelet::utils::getArcCoordinates(current_lanes, start_pose);
 
-  const Pose current_pose = planner_data_->self_pose->pose;
+  const Pose current_pose = planner_data_->self_odometry->pose.pose;
   const auto current_arc_position = lanelet::utils::getArcCoordinates(current_lanes, current_pose);
 
   auto path = planner_data_->route_handler->getCenterLinePath(

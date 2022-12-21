@@ -298,7 +298,7 @@ protected:
   {
     const auto & p = planner_data_;
     return motion_utils::findFirstNearestIndexWithSoftConstraints(
-      points, p->self_pose->pose, p->parameters.ego_nearest_dist_threshold,
+      points, p->self_odometry->pose.pose, p->parameters.ego_nearest_dist_threshold,
       p->parameters.ego_nearest_yaw_threshold);
   }
 
@@ -307,7 +307,7 @@ protected:
   {
     const auto & p = planner_data_;
     return motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      points, p->self_pose->pose, p->parameters.ego_nearest_dist_threshold,
+      points, p->self_odometry->pose.pose, p->parameters.ego_nearest_dist_threshold,
       p->parameters.ego_nearest_yaw_threshold);
   }
 

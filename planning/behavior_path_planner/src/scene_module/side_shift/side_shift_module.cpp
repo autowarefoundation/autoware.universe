@@ -149,7 +149,7 @@ BT::NodeStatus SideShiftModule::updateState()
     current_state_ = BT::NodeStatus::SUCCESS;
   } else {
     const auto & current_lanes = util::getCurrentLanes(planner_data_);
-    const auto & current_pose = planner_data_->self_pose->pose;
+    const auto & current_pose = planner_data_->self_odometry->pose.pose;
     const auto & inserted_shift_line_start_pose = inserted_shift_line_.start;
     const auto & inserted_shift_line_end_pose = inserted_shift_line_.end;
     const double self_to_shift_line_start_arc_length =
@@ -354,7 +354,7 @@ double SideShiftModule::getClosestShiftLength() const
     return 0.0;
   }
 
-  const auto ego_point = planner_data_->self_pose->pose.position;
+  const auto ego_point = planner_data_->self_odometry->pose.pose.position;
   const auto closest = motion_utils::findNearestIndex(prev_output_.path.points, ego_point);
   return prev_output_.shift_length.at(closest);
 }

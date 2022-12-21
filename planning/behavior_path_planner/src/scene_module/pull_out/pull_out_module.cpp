@@ -120,7 +120,7 @@ bool PullOutModule::isExecutionRequested() const
   // Create vehicle footprint
   const auto local_vehicle_footprint = createVehicleFootprint(vehicle_info_);
   const auto vehicle_footprint = transformVector(
-    local_vehicle_footprint, tier4_autoware_utils::pose2transform(planner_data_->self_pose->pose));
+    local_vehicle_footprint, tier4_autoware_utils::pose2transform(planner_data_->self_odometry->pose.pose));
 
   // Check if ego is not out of lanes
   const auto current_lanes = util::getExtendedCurrentLanes(planner_data_);
@@ -134,7 +134,7 @@ bool PullOutModule::isExecutionRequested() const
   // Check if any of the footprint points are in the shoulder lane
   lanelet::Lanelet closest_shoulder_lanelet;
   if (!lanelet::utils::query::getClosestLanelet(
-        planner_data_->route_handler->getShoulderLanelets(), planner_data_->self_pose->pose,
+        planner_data_->route_handler->getShoulderLanelets(), planner_data_->self_odometry->pose.pose,
         &closest_shoulder_lanelet)) {
     return false;
   }
@@ -168,7 +168,7 @@ BehaviorModuleOutput PullOutModule::plan()
     clearWaitingApproval();
     resetPathCandidate();
     // save current_pose when approved for start_point of turn_signal for backward driving
-    last_approved_pose_ = std::make_unique<Pose>(planner_data_->self_pose->pose);
+    last_approved_pose_ = std::make_unique<Pose>(planner_data_->self_odometry->pose.pose);
   }
 
   BehaviorModuleOutput output;
@@ -208,10 +208,10 @@ BehaviorModuleOutput PullOutModule::plan()
 
   if (status_.back_finished) {
     const double start_distance = motion_utils::calcSignedArcLength(
-      path.points, planner_data_->self_pose->pose.position,
+      path.points, planner_data_->self_odometry->pose.pose.position,
       status_.pull_out_path.start_pose.position);
     const double finish_distance = motion_utils::calcSignedArcLength(
-      path.points, planner_data_->self_pose->pose.position,
+      path.points, planner_data_->self_odometry->pose.pose.position,
       status_.pull_out_path.end_pose.position);
     updateRTCStatus(start_distance, finish_distance);
     // TODO(tkhmy) add handle status TRYING
@@ -221,7 +221,7 @@ BehaviorModuleOutput PullOutModule::plan()
       SteeringFactor::TURNING, "");
   } else {
     const double distance = motion_utils::calcSignedArcLength(
-      path.points, planner_data_->self_pose->pose.position,
+      path.points, planner_data_->self_odometry->pose.pose.position,
       status_.pull_out_path.start_pose.position);
     updateRTCStatus(0.0, distance);
     // TODO(tkhmy) add handle status TRYING
@@ -310,10 +310,10 @@ BehaviorModuleOutput PullOutModule::planWaitingApproval()
 
   if (status_.back_finished) {
     const double start_distance = motion_utils::calcSignedArcLength(
-      candidate_path.points, planner_data_->self_pose->pose.position,
+      candidate_path.points, planner_data_->self_odometry->pose.pose.position,
       status_.pull_out_path.start_pose.position);
     const double finish_distance = motion_utils::calcSignedArcLength(
-      candidate_path.points, planner_data_->self_pose->pose.position,
+      candidate_path.points, planner_data_->self_odometry->pose.pose.position,
       status_.pull_out_path.end_pose.position);
     updateRTCStatus(start_distance, finish_distance);
     steering_factor_interface_ptr_->updateSteeringFactor(
@@ -322,7 +322,7 @@ BehaviorModuleOutput PullOutModule::planWaitingApproval()
       SteeringFactor::APPROACHING, "");
   } else {
     const double distance = motion_utils::calcSignedArcLength(
-      candidate_path.points, planner_data_->self_pose->pose.position,
+      candidate_path.points, planner_data_->self_odometry->pose.pose.position,
       status_.pull_out_path.start_pose.position);
     updateRTCStatus(0.0, distance);
     steering_factor_interface_ptr_->updateSteeringFactor(
@@ -431,7 +431,7 @@ void PullOutModule::planWithPriorityOnShortBackDistance(
 void PullOutModule::updatePullOutStatus()
 {
   const auto & route_handler = planner_data_->route_handler;
-  const auto & current_pose = planner_data_->self_pose->pose;
+  const auto & current_pose = planner_data_->self_odometry->pose.pose;
   const auto & goal_pose = planner_data_->route_handler->getGoalPose();
 
   status_.current_lanes = util::getExtendedCurrentLanes(planner_data_);
@@ -485,7 +485,7 @@ void PullOutModule::updatePullOutStatus()
 // make this class?
 std::vector<Pose> PullOutModule::searchBackedPoses()
 {
-  const auto current_pose = planner_data_->self_pose->pose;
+  const auto current_pose = planner_data_->self_odometry->pose.pose;
 
   // get backward shoulder path
   const auto arc_position_pose =
@@ -543,7 +543,7 @@ bool PullOutModule::hasFinishedPullOut() const
   }
 
   // check ego car is close enough to goal pose
-  const auto current_pose = planner_data_->self_pose->pose;
+  const auto current_pose = planner_data_->self_odometry->pose.pose;
   const auto arclength_current =
     lanelet::utils::getArcCoordinates(status_.current_lanes, current_pose);
   const auto arclength_pull_out_end =
@@ -557,7 +557,7 @@ bool PullOutModule::hasFinishedPullOut() const
 void PullOutModule::checkBackFinished()
 {
   // check ego car is close enough to pull out start pose
-  const auto current_pose = planner_data_->self_pose->pose;
+  const auto current_pose = planner_data_->self_odometry->pose.pose;
   const auto distance =
     tier4_autoware_utils::calcDistance2d(current_pose, status_.pull_out_start_pose);
 
@@ -604,7 +604,7 @@ bool PullOutModule::hasFinishedCurrentPath()
 {
   const auto current_path = getCurrentPath();
   const auto current_path_end = current_path.points.back();
-  const auto self_pose = planner_data_->self_pose->pose;
+  const auto self_pose = planner_data_->self_odometry->pose.pose;
   const bool is_near_target = tier4_autoware_utils::calcDistance2d(current_path_end, self_pose) <
                               parameters_.th_arrived_distance;
 
@@ -614,7 +614,7 @@ bool PullOutModule::hasFinishedCurrentPath()
 TurnSignalInfo PullOutModule::calcTurnSignalInfo() const
 {
   TurnSignalInfo turn_signal{};  // output
-  const auto & current_pose = planner_data_->self_pose->pose;
+  const auto & current_pose = planner_data_->self_odometry->pose.pose;
 
   // turn on hazard light when backward driving
   if (!status_.back_finished) {

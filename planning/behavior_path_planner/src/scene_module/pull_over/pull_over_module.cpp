@@ -194,7 +194,7 @@ bool PullOverModule::isExecutionRequested() const
     return true;
   }
   const auto & current_lanes = util::getCurrentLanes(planner_data_);
-  const auto & current_pose = planner_data_->self_pose->pose;
+  const auto & current_pose = planner_data_->self_odometry->pose.pose;
   const auto & goal_pose = planner_data_->route_handler->getGoalPose();
 
   // check if goal_pose is far
@@ -232,7 +232,7 @@ bool PullOverModule::isExecutionRequested() const
 
   // check if self pose is NOT in shoulder lane
   bool self_is_in_shoulder_lane = false;
-  const auto self_pose = planner_data_->self_pose->pose;
+  const auto self_pose = planner_data_->self_odometry->pose.pose;
   if (lanelet::utils::query::getClosestLanelet(
         planner_data_->route_handler->getShoulderLanelets(), self_pose,
         &closest_shoulder_lanelet)) {
@@ -284,7 +284,7 @@ bool PullOverModule::isLongEnoughToParkingStart(
   const PathWithLaneId & path, const Pose & parking_start_pose) const
 {
   const auto dist_to_parking_start_pose = calcSignedArcLength(
-    path.points, planner_data_->self_pose->pose, parking_start_pose.position,
+    path.points, planner_data_->self_odometry->pose.pose, parking_start_pose.position,
     std::numeric_limits<double>::max(), M_PI_2);
   if (!dist_to_parking_start_pose) return false;
 
@@ -345,7 +345,7 @@ bool PullOverModule::planWithCloseGoal()
 
 BehaviorModuleOutput PullOverModule::plan()
 {
-  const auto & current_pose = planner_data_->self_pose->pose;
+  const auto & current_pose = planner_data_->self_odometry->pose.pose;
 
   resetPathCandidate();
 
@@ -552,10 +552,10 @@ std::pair<double, double> PullOverModule::calcDistanceToPathChange() const
 {
   const auto & full_path = getFullPath();
   const auto dist_to_parking_start_pose = calcSignedArcLength(
-    full_path.points, planner_data_->self_pose->pose, status_.pull_over_path.start_pose.position,
+    full_path.points, planner_data_->self_odometry->pose.pose, status_.pull_over_path.start_pose.position,
     std::numeric_limits<double>::max(), M_PI_2);
   const double dist_to_parking_finish_pose = calcSignedArcLength(
-    full_path.points, planner_data_->self_pose->pose.position, modified_goal_pose_.position);
+    full_path.points, planner_data_->self_odometry->pose.pose.position, modified_goal_pose_.position);
   const double start_distance_to_path_change =
     dist_to_parking_start_pose ? *dist_to_parking_start_pose : std::numeric_limits<double>::max();
   return {start_distance_to_path_change, dist_to_parking_finish_pose};
@@ -569,7 +569,7 @@ void PullOverModule::setParameters(const PullOverParameters & parameters)
 PathWithLaneId PullOverModule::getReferencePath() const
 {
   const auto & route_handler = planner_data_->route_handler;
-  const auto & current_pose = planner_data_->self_pose->pose;
+  const auto & current_pose = planner_data_->self_odometry->pose.pose;
   const auto & common_parameters = planner_data_->parameters;
 
   if (status_.current_lanes.empty()) {
@@ -626,7 +626,7 @@ PathWithLaneId PullOverModule::getReferencePath() const
 PathWithLaneId PullOverModule::generateStopPath() const
 {
   const auto & route_handler = planner_data_->route_handler;
-  const auto & current_pose = planner_data_->self_pose->pose;
+  const auto & current_pose = planner_data_->self_odometry->pose.pose;
   const auto & common_parameters = planner_data_->parameters;
   const double current_vel = planner_data_->self_odometry->twist.twist.linear.x;
 
@@ -704,7 +704,7 @@ double PullOverModule::calcMinimumShiftPathDistance() const
 {
   const double maximum_jerk = parameters_.maximum_lateral_jerk;
   const double pull_over_velocity = parameters_.pull_over_velocity;
-  const auto current_pose = planner_data_->self_pose->pose;
+  const auto current_pose = planner_data_->self_odometry->pose.pose;
   const double distance_after_pull_over = parameters_.after_pull_over_straight_distance;
   const double distance_before_pull_over = parameters_.before_pull_over_straight_distance;
   const auto & route_handler = planner_data_->route_handler;
@@ -727,7 +727,7 @@ double PullOverModule::calcMinimumShiftPathDistance() const
 bool PullOverModule::isLongEnough(
   const lanelet::ConstLanelets & lanelets, const Pose & goal_pose, const double buffer) const
 {
-  const auto current_pose = planner_data_->self_pose->pose;
+  const auto current_pose = planner_data_->self_odometry->pose.pose;
   const double distance_to_goal =
     std::abs(util::getSignedDistance(current_pose, goal_pose, lanelets));
 
@@ -760,7 +760,7 @@ bool PullOverModule::isStopped()
 bool PullOverModule::hasFinishedCurrentPath()
 {
   const auto & current_path_end = getCurrentPath().points.back();
-  const auto & self_pose = planner_data_->self_pose->pose;
+  const auto & self_pose = planner_data_->self_odometry->pose.pose;
   const bool is_near_target = tier4_autoware_utils::calcDistance2d(current_path_end, self_pose) <
                               parameters_.th_arrived_distance;
 
@@ -770,7 +770,7 @@ bool PullOverModule::hasFinishedCurrentPath()
 bool PullOverModule::hasFinishedPullOver()
 {
   // check ego car is close enough to goal pose
-  const auto current_pose = planner_data_->self_pose->pose;
+  const auto current_pose = planner_data_->self_odometry->pose.pose;
   const bool car_is_on_goal =
     calcDistance2d(current_pose, modified_goal_pose_) < parameters_.th_arrived_distance;
 
@@ -781,7 +781,7 @@ TurnSignalInfo PullOverModule::calcTurnSignalInfo() const
 {
   TurnSignalInfo turn_signal{};  // output
 
-  const auto & current_pose = planner_data_->self_pose->pose;
+  const auto & current_pose = planner_data_->self_odometry->pose.pose;
   const auto & start_pose = status_.pull_over_path.start_pose;
   const auto & end_pose = status_.pull_over_path.end_pose;
   const auto & full_path = getFullPath();
@@ -851,7 +851,7 @@ void PullOverModule::setDebugData()
 
 void PullOverModule::printParkingPositionError() const
 {
-  const auto current_pose = planner_data_->self_pose->pose;
+  const auto current_pose = planner_data_->self_odometry->pose.pose;
   const double real_shoulder_to_map_shoulder = 0.0;
 
   const Pose goal_to_ego = inverseTransformPose(current_pose, modified_goal_pose_);

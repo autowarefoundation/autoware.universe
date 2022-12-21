@@ -78,7 +78,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
 
   // subscriber
   velocity_subscriber_ = create_subscription<Odometry>(
-    "~/input/odometry", 1, std::bind(&BehaviorPathPlannerNode::onVelocity, this, _1),
+    "~/input/odometry", 1, std::bind(&BehaviorPathPlannerNode::onOdometry, this, _1),
     createSubscriptionOptions(this));
   acceleration_subscriber_ = create_subscription<AccelWithCovarianceStamped>(
     "~/input/accel", 1, std::bind(&BehaviorPathPlannerNode::onAcceleration, this, _1),
@@ -617,9 +617,6 @@ void BehaviorPathPlannerNode::run()
     return;
   }
 
-  // update planner data
-  planner_data_->self_pose = self_pose_listener_.getCurrentPose();
-
   const auto planner_data = std::make_shared<PlannerData>(*planner_data_);
 
   // unlock planner data
@@ -856,7 +853,7 @@ bool BehaviorPathPlannerNode::keepInputPoints(
   return false;
 }
 
-void BehaviorPathPlannerNode::onVelocity(const Odometry::ConstSharedPtr msg)
+void BehaviorPathPlannerNode::onOdometry(const Odometry::ConstSharedPtr msg)
 {
   std::lock_guard<std::mutex> lock(mutex_pd_);
   planner_data_->self_odometry = msg;
