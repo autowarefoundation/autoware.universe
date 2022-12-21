@@ -43,7 +43,6 @@ using behavior_path_planner::util::removeOverlappingPoints;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::PoseArray;
-using geometry_msgs::msg::PoseStamped;
 using geometry_msgs::msg::Transform;
 using geometry_msgs::msg::TransformStamped;
 using lanelet::utils::getArcCoordinates;

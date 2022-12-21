@@ -146,7 +146,7 @@ AvoidancePlanningData AvoidanceModule::calcAvoidancePlanningData(DebugData & deb
 
   // reference pose
   const auto reference_pose = getUnshiftedEgoPose(prev_output_);
-  data.reference_pose = reference_pose.pose;
+  data.reference_pose = reference_pose;
 
   // center line path (output of this function must have size > 1)
   const auto center_path = calcCenterLinePath(planner_data_, reference_pose);
@@ -177,8 +177,8 @@ AvoidancePlanningData AvoidanceModule::calcAvoidancePlanningData(DebugData & deb
 
   // lanelet info
   data.current_lanelets = util::calcLaneAroundPose(
-    planner_data_->route_handler, reference_pose.pose,
-    planner_data_->parameters.forward_path_length, planner_data_->parameters.backward_path_length);
+    planner_data_->route_handler, reference_pose, planner_data_->parameters.forward_path_length,
+    planner_data_->parameters.backward_path_length);
 
   // target objects for avoidance
   fillAvoidanceTargetObjects(data, debug);
@@ -1744,7 +1744,7 @@ void AvoidanceModule::addReturnShiftLineFromEgo(
     // avoidance points: No, shift points: No -> set the ego position to the last shift point
     // so that the return-shift will be generated from ego position.
     if (!has_candidate_point && !has_registered_point) {
-      last_sl.end = getEgoPose().pose;
+      last_sl.end = getEgoPose();
       last_sl.end_idx = avoidance_data_.ego_closest_path_index;
       last_sl.end_shift_length = getCurrentBaseShift();
     }
@@ -1780,7 +1780,7 @@ void AvoidanceModule::addReturnShiftLineFromEgo(
     // set the return-shift from ego.
     DEBUG_PRINT(
       "return shift already exists, but they are all candidates. Add return shift for overwrite.");
-    last_sl.end = getEgoPose().pose;
+    last_sl.end = getEgoPose();
     last_sl.end_idx = avoidance_data_.ego_closest_path_index;
     last_sl.end_shift_length = current_base_shift;
   }
@@ -2090,7 +2090,7 @@ void AvoidanceModule::modifyPathVelocityToPreventAccelerationOnAvoidance(Shifted
 
 // TODO(Horibe) clean up functions: there is a similar code in util as well.
 PathWithLaneId AvoidanceModule::calcCenterLinePath(
-  const std::shared_ptr<const PlannerData> & planner_data, const PoseStamped & pose) const
+  const std::shared_ptr<const PlannerData> & planner_data, const Pose & pose) const
 {
   const auto & p = planner_data->parameters;
   const auto & route_handler = planner_data->route_handler;
@@ -2121,9 +2121,9 @@ PathWithLaneId AvoidanceModule::calcCenterLinePath(
     p.backward_path_length, longest_dist_to_shift_line, backward_length);
 
   const lanelet::ConstLanelets current_lanes =
-    util::calcLaneAroundPose(route_handler, pose.pose, p.forward_path_length, backward_length);
+    util::calcLaneAroundPose(route_handler, pose, p.forward_path_length, backward_length);
   centerline_path = util::getCenterLinePath(
-    *route_handler, current_lanes, pose.pose, backward_length, p.forward_path_length, p);
+    *route_handler, current_lanes, pose, backward_length, p.forward_path_length, p);
 
   // for debug: check if the path backward distance is same as the desired length.
   // {
@@ -2544,11 +2544,14 @@ double AvoidanceModule::getSharpAvoidanceEgoSpeed() const
   return std::max(getEgoSpeed(), parameters_->min_sharp_avoidance_speed);
 }
 
-Point AvoidanceModule::getEgoPosition() const { return planner_data_->self_pose->pose.position; }
+Point AvoidanceModule::getEgoPosition() const
+{
+  return planner_data_->self_odometry->pose.pose.position;
+}
 
-PoseStamped AvoidanceModule::getEgoPose() const { return *(planner_data_->self_pose); }
+Pose AvoidanceModule::getEgoPose() const { return planner_data_->self_odometry->pose.pose; }
 
-PoseStamped AvoidanceModule::getUnshiftedEgoPose(const ShiftedPath & prev_path) const
+Pose AvoidanceModule::getUnshiftedEgoPose(const ShiftedPath & prev_path) const
 {
   const auto ego_pose = getEgoPose();
 
@@ -2557,13 +2560,13 @@ PoseStamped AvoidanceModule::getUnshiftedEgoPose(const ShiftedPath & prev_path) 
   }
 
   // un-shifted fot current ideal pose
-  const auto closest = findNearestIndex(prev_path.path.points, ego_pose.pose.position);
+  const auto closest = findNearestIndex(prev_path.path.points, ego_pose.position);
 
-  PoseStamped unshifted_pose = ego_pose;
-  unshifted_pose.pose.orientation = prev_path.path.points.at(closest).point.pose.orientation;
+  Pose unshifted_pose = ego_pose;
+  unshifted_pose.orientation = prev_path.path.points.at(closest).point.pose.orientation;
 
-  util::shiftPose(&unshifted_pose.pose, -prev_path.shift_length.at(closest));
-  unshifted_pose.pose.orientation = ego_pose.pose.orientation;
+  util::shiftPose(&unshifted_pose, -prev_path.shift_length.at(closest));
+  unshifted_pose.orientation = ego_pose.orientation;
 
   return unshifted_pose;
 }
@@ -2871,7 +2874,7 @@ TurnSignalInfo AvoidanceModule::calcTurnSignalInfo(const ShiftedPath & path) con
   }
 
   if (ego_front_to_shift_start > 0.0) {
-    turn_signal_info.desired_start_point = planner_data_->self_pose->pose;
+    turn_signal_info.desired_start_point = planner_data_->self_odometry->pose.pose;
   } else {
     turn_signal_info.desired_start_point = blinker_start_pose;
   }

@@ -27,7 +27,6 @@
 namespace behavior_path_planner
 {
 using geometry_msgs::msg::Point;
-using geometry_msgs::msg::PoseStamped;
 
 SideShiftModule::SideShiftModule(
   const std::string & name, rclcpp::Node & node, const SideShiftParameters & parameters)
@@ -172,8 +171,9 @@ BT::NodeStatus SideShiftModule::updateState()
 
 void SideShiftModule::updateData()
 {
-  const auto reference_pose = prev_output_.shift_length.empty() ? *planner_data_->self_pose
-                                                                : getUnshiftedEgoPose(prev_output_);
+  const auto reference_pose = prev_output_.shift_length.empty()
+                                ? planner_data_->self_odometry->pose.pose
+                                : getUnshiftedEgoPose(prev_output_);
   const auto centerline_path = calcCenterLinePath(planner_data_, reference_pose);
 
   constexpr double resample_interval = 1.0;
@@ -185,14 +185,14 @@ void SideShiftModule::updateData()
   const auto & p = planner_data_->parameters;
 
   lanelet::ConstLanelet current_lane;
-  if (!route_handler->getClosestLaneletWithinRoute(reference_pose.pose, &current_lane)) {
+  if (!route_handler->getClosestLaneletWithinRoute(reference_pose, &current_lane)) {
     RCLCPP_ERROR_THROTTLE(
       getLogger(), *clock_, 5000, "failed to find closest lanelet within route!!!");
   }
 
   // For current_lanes with desired length
   current_lanelets_ = route_handler->getLaneletSequence(
-    current_lane, reference_pose.pose, p.backward_path_length, p.forward_path_length);
+    current_lane, reference_pose, p.backward_path_length, p.forward_path_length);
 
   const size_t nearest_idx = findEgoIndex(path_shifter_.getReferencePath().points);
   path_shifter_.removeBehindShiftLineAndSetBaseOffset(nearest_idx);
@@ -383,7 +383,7 @@ void SideShiftModule::adjustDrivableArea(ShiftedPath * path) const
 }
 
 // NOTE: this function is ported from avoidance.
-PoseStamped SideShiftModule::getUnshiftedEgoPose(const ShiftedPath & prev_path) const
+Pose SideShiftModule::getUnshiftedEgoPose(const ShiftedPath & prev_path) const
 {
   const auto ego_pose = getEgoPose();
   if (prev_path.path.points.empty()) {
@@ -391,20 +391,19 @@ PoseStamped SideShiftModule::getUnshiftedEgoPose(const ShiftedPath & prev_path) 
   }
 
   // un-shifted fot current ideal pose
-  const auto closest =
-    motion_utils::findNearestIndex(prev_path.path.points, ego_pose.pose.position);
+  const auto closest = motion_utils::findNearestIndex(prev_path.path.points, ego_pose.position);
 
-  PoseStamped unshifted_pose = ego_pose;
+  Pose unshifted_pose = ego_pose;
 
-  util::shiftPose(&unshifted_pose.pose, -prev_path.shift_length.at(closest));
-  unshifted_pose.pose.orientation = ego_pose.pose.orientation;
+  util::shiftPose(&unshifted_pose, -prev_path.shift_length.at(closest));
+  unshifted_pose.orientation = ego_pose.orientation;
 
   return unshifted_pose;
 }
 
 // NOTE: this function is ported from avoidance.
 PathWithLaneId SideShiftModule::calcCenterLinePath(
-  const std::shared_ptr<const PlannerData> & planner_data, const PoseStamped & pose) const
+  const std::shared_ptr<const PlannerData> & planner_data, const Pose & pose) const
 {
   const auto & p = planner_data->parameters;
   const auto & route_handler = planner_data->route_handler;
@@ -429,9 +428,9 @@ PathWithLaneId SideShiftModule::calcCenterLinePath(
     p.backward_path_length, longest_dist_to_shift_line, backward_length);
 
   const lanelet::ConstLanelets current_lanes =
-    util::calcLaneAroundPose(route_handler, pose.pose, p.forward_path_length, backward_length);
+    util::calcLaneAroundPose(route_handler, pose, p.forward_path_length, backward_length);
   centerline_path = util::getCenterLinePath(
-    *route_handler, current_lanes, pose.pose, backward_length, p.forward_path_length, p);
+    *route_handler, current_lanes, pose, backward_length, p.forward_path_length, p);
 
   centerline_path.header = route_handler->getRouteHeader();
 

@@ -305,7 +305,7 @@ private:
   // =====================================
 
   PathWithLaneId calcCenterLinePath(
-    const std::shared_ptr<const PlannerData> & planner_data, const PoseStamped & pose) const;
+    const std::shared_ptr<const PlannerData> & planner_data, const Pose & pose) const;
 
   // TODO(Horibe): think later.
   // for unique ID
@@ -321,8 +321,8 @@ private:
 
   double getEgoSpeed() const;
   Point getEgoPosition() const;
-  PoseStamped getEgoPose() const;
-  PoseStamped getUnshiftedEgoPose(const ShiftedPath & prev_path) const;
+  Pose getEgoPose() const;
+  Pose getUnshiftedEgoPose(const ShiftedPath & prev_path) const;
   double getCurrentBaseShift() const { return path_shifter_.getBaseOffset(); }
   double getCurrentShift() const;
   double getCurrentLinearShift() const;
