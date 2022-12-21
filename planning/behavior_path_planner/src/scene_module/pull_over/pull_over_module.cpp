@@ -552,10 +552,11 @@ std::pair<double, double> PullOverModule::calcDistanceToPathChange() const
 {
   const auto & full_path = getFullPath();
   const auto dist_to_parking_start_pose = calcSignedArcLength(
-    full_path.points, planner_data_->self_odometry->pose.pose, status_.pull_over_path.start_pose.position,
-    std::numeric_limits<double>::max(), M_PI_2);
+    full_path.points, planner_data_->self_odometry->pose.pose,
+    status_.pull_over_path.start_pose.position, std::numeric_limits<double>::max(), M_PI_2);
   const double dist_to_parking_finish_pose = calcSignedArcLength(
-    full_path.points, planner_data_->self_odometry->pose.pose.position, modified_goal_pose_.position);
+    full_path.points, planner_data_->self_odometry->pose.pose.position,
+    modified_goal_pose_.position);
   const double start_distance_to_path_change =
     dist_to_parking_start_pose ? *dist_to_parking_start_pose : std::numeric_limits<double>::max();
   return {start_distance_to_path_change, dist_to_parking_finish_pose};

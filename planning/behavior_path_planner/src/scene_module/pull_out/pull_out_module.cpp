@@ -120,7 +120,8 @@ bool PullOutModule::isExecutionRequested() const
   // Create vehicle footprint
   const auto local_vehicle_footprint = createVehicleFootprint(vehicle_info_);
   const auto vehicle_footprint = transformVector(
-    local_vehicle_footprint, tier4_autoware_utils::pose2transform(planner_data_->self_odometry->pose.pose));
+    local_vehicle_footprint,
+    tier4_autoware_utils::pose2transform(planner_data_->self_odometry->pose.pose));
 
   // Check if ego is not out of lanes
   const auto current_lanes = util::getExtendedCurrentLanes(planner_data_);
@@ -134,8 +135,8 @@ bool PullOutModule::isExecutionRequested() const
   // Check if any of the footprint points are in the shoulder lane
   lanelet::Lanelet closest_shoulder_lanelet;
   if (!lanelet::utils::query::getClosestLanelet(
-        planner_data_->route_handler->getShoulderLanelets(), planner_data_->self_odometry->pose.pose,
-        &closest_shoulder_lanelet)) {
+        planner_data_->route_handler->getShoulderLanelets(),
+        planner_data_->self_odometry->pose.pose, &closest_shoulder_lanelet)) {
     return false;
   }
   if (!isOverlappedWithLane(closest_shoulder_lanelet, vehicle_footprint)) {
