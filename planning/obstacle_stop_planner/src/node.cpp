@@ -100,7 +100,7 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
       declare_parameter<double>(ns + "detection_area.unknown_lateral_margin");
     p.extend_distance = declare_parameter<double>(ns + "detection_area.extend_distance");
     p.enable_stop_behind_goal_for_obstacle =
-      declare_parameter<double>(ns + "detection_area.enable_stop_behind_goal_for_obstacle");
+      declare_parameter<bool>(ns + "detection_area.enable_stop_behind_goal_for_obstacle");
     p.step_length = declare_parameter<double>(ns + "detection_area.step_length");
 
     // apply offset
