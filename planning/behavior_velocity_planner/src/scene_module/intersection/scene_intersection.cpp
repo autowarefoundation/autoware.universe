@@ -206,11 +206,11 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
 
   const bool is_over_pass_judge_line =
     util::isOverTargetIndex(*path, closest_idx, current_odometry->pose, pass_judge_line_idx_final);
-  const bool is_before_keep_detection_line =
-    stop_lines_idx_opt.has_value()
-      ? util::isBeforeTargetIndex(
-          *path, closest_idx, current_odometry->pose, stop_lines_idx_opt.value().keep_detection_line)
-      : false;
+  const bool is_before_keep_detection_line = stop_lines_idx_opt.has_value()
+                                               ? util::isBeforeTargetIndex(
+                                                   *path, closest_idx, current_odometry->pose,
+                                                   stop_lines_idx_opt.value().keep_detection_line)
+                                               : false;
   const bool keep_detection =
     is_before_keep_detection_line && std::fabs(current_vel) < planner_param_.keep_detection_vel_thr;
 

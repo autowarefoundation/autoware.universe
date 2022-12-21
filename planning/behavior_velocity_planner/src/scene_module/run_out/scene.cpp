@@ -164,8 +164,8 @@ Polygons2d RunOutModule::createDetectionAreaPolygon(const PathWithLaneId & smoot
   Polygons2d detection_area_poly;
   const size_t ego_seg_idx = findEgoSegmentIndex(smoothed_path.points);
   planning_utils::createDetectionAreaPolygons(
-    detection_area_poly, smoothed_path, planner_data_->current_odometry->pose, ego_seg_idx, da_range,
-    p.dynamic_obstacle.max_vel_kmph / 3.6);
+    detection_area_poly, smoothed_path, planner_data_->current_odometry->pose, ego_seg_idx,
+    da_range, p.dynamic_obstacle.max_vel_kmph / 3.6);
 
   for (const auto & poly : detection_area_poly) {
     debug_ptr_->pushDetectionAreaPolygons(poly);

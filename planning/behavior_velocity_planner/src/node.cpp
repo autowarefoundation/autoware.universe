@@ -99,8 +99,7 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
     std::bind(&BehaviorVelocityPlannerNode::onNoGroundPointCloud, this, _1),
     createSubscriptionOptions(this));
   sub_vehicle_odometry_ = this->create_subscription<nav_msgs::msg::Odometry>(
-    "~/input/vehicle_odometry", 1,
-    std::bind(&BehaviorVelocityPlannerNode::onOdometry, this, _1),
+    "~/input/vehicle_odometry", 1, std::bind(&BehaviorVelocityPlannerNode::onOdometry, this, _1),
     createSubscriptionOptions(this));
   sub_acceleration_ = this->create_subscription<geometry_msgs::msg::AccelWithCovarianceStamped>(
     "~/input/accel", 1, std::bind(&BehaviorVelocityPlannerNode::onAcceleration, this, _1),
@@ -279,8 +278,7 @@ void BehaviorVelocityPlannerNode::onNoGroundPointCloud(
   }
 }
 
-void BehaviorVelocityPlannerNode::onOdometry(
-  const nav_msgs::msg::Odometry::ConstSharedPtr msg)
+void BehaviorVelocityPlannerNode::onOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg)
 {
   std::lock_guard<std::mutex> lock(mutex_);
 

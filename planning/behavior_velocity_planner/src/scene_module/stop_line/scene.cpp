@@ -73,8 +73,8 @@ bool StopLineModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop
     path->points, stop_pose.position, stop_point_idx);
   const size_t current_seg_idx = findEgoSegmentIndex(path->points);
   const double signed_arc_dist_to_stop_point = motion_utils::calcSignedArcLength(
-    path->points, planner_data_->current_odometry->pose.position, current_seg_idx, stop_pose.position,
-    stop_line_seg_idx);
+    path->points, planner_data_->current_odometry->pose.position, current_seg_idx,
+    stop_pose.position, stop_line_seg_idx);
   switch (state_) {
     case State::APPROACH: {
       // Insert stop pose
@@ -91,7 +91,8 @@ bool StopLineModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop
         stop_factor.stop_factor_points.push_back(getCenterOfStopLine(stop_line_));
         planning_utils::appendStopReason(stop_factor, stop_reason);
         velocity_factor_.set(
-          path->points, planner_data_->current_odometry->pose, stop_pose, VelocityFactor::APPROACHING);
+          path->points, planner_data_->current_odometry->pose, stop_pose,
+          VelocityFactor::APPROACHING);
       }
 
       // Move to stopped state if stopped

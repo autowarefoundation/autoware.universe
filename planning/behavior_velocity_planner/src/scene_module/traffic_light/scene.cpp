@@ -489,8 +489,8 @@ autoware_auto_planning_msgs::msg::PathWithLaneId TrafficLightModule::insertStopP
       debug_data_.highest_confidence_traffic_light_point.value()};
   }
   velocity_factor_.set(
-    modified_path.points, planner_data_->current_odometry->pose, target_point_with_lane_id.point.pose,
-    VelocityFactor::UNKNOWN);
+    modified_path.points, planner_data_->current_odometry->pose,
+    target_point_with_lane_id.point.pose, VelocityFactor::UNKNOWN);
   planning_utils::appendStopReason(stop_factor, stop_reason);
 
   return modified_path;
