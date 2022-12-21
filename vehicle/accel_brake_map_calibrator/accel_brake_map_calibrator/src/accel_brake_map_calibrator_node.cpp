@@ -991,10 +991,10 @@ bool AccelBrakeMapCalibrator::updateFourCellAroundOffset(
   update_map_value.at(pedal_index + 1).at(vel_index + 1) =
     map_value.at(pedal_index + 1).at(vel_index + 1) + map_offset(3);
 
-  offset_covariance_value.at(pedal_index + 0).at(vel_index + 0) = sigma(0);
-  offset_covariance_value.at(pedal_index + 1).at(vel_index + 1) = sigma(1);
-  offset_covariance_value.at(pedal_index + 0).at(vel_index + 0) = sigma(2);
-  offset_covariance_value.at(pedal_index + 1).at(vel_index + 1) = sigma(3);
+  offset_covariance_value.at(pedal_index + 0).at(vel_index + 0) = std::sqrt(sigma(0));
+  offset_covariance_value.at(pedal_index + 1).at(vel_index + 1) = std::sqrt(sigma(1));
+  offset_covariance_value.at(pedal_index + 0).at(vel_index + 0) = std::sqrt(sigma(2));
+  offset_covariance_value.at(pedal_index + 1).at(vel_index + 1) = std::sqrt(sigma(3));
 
   return true;
 }
