@@ -22,7 +22,11 @@ Note that you should provide parameter paths as `PACKAGE_param_path`. The list o
 <include file="$(find-pkg-share tier4_map_launch)/launch/map.launch.py">
   <arg name="lanelet2_map_path" value="$(var map_path)/$(var lanelet2_map_file)" />
   <arg name="pointcloud_map_path" value="$(var map_path)/$(var pointcloud_map_file)"/>
-  <arg name="PACKAGE_param_path" value="..."/>
+
+  <!-- Parameter files -->
+  <arg name="FOO_param_path" value="..."/>
+  <arg name="BAR_param_path" value="..."/>
+  ...
 </include>
 ```
 
