@@ -368,7 +368,6 @@ The Pull Out module is activated when ego-vehicle is stationary and footprint of
 | th_stopped_time_sec               | [s]   | double | time threshold for arrival of path termination                       | 1.0           |
 | collision_check_margin            | [m]   | double | Obstacle collision check margin                                      | 1.0           |
 | collision_check_distance_from_end | [m]   | double | collision check distance from end point. currently only for pull out | 15.0          |
-| pull_out_finish_judge_buffer      | [m]   | double | threshold for finish judgment distance from pull out end point       | 0.0           |
 
 #### **Safe check with obstacles in shoulder lane**
 

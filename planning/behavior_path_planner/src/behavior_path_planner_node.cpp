@@ -512,7 +512,6 @@ PullOutParameters BehaviorPathPlannerNode::getPullOutParam()
   p.th_stopped_time = dp("th_stopped_time", 1.0);
   p.collision_check_margin = dp("collision_check_margin", 1.0);
   p.collision_check_distance_from_end = dp("collision_check_distance_from_end", 3.0);
-  p.pull_out_finish_judge_buffer = dp("pull_out_finish_judge_buffer", 1.0);
   // shift pull out
   p.enable_shift_pull_out = dp("enable_shift_pull_out", true);
   p.shift_pull_out_velocity = dp("shift_pull_out_velocity", 8.3);

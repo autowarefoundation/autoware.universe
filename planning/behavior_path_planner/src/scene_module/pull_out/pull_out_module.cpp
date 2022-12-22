@@ -583,8 +583,7 @@ bool PullOutModule::hasFinishedPullOut() const
     lanelet::utils::getArcCoordinates(status_.current_lanes, status_.pull_out_path.end_pose);
 
   // has passed pull out end point
-  return arclength_current.length - arclength_pull_out_end.length >
-         parameters_.pull_out_finish_judge_buffer;
+  return arclength_current.length - arclength_pull_out_end.length > 0.0;
 }
 
 void PullOutModule::checkBackFinished()
@@ -666,7 +665,7 @@ TurnSignalInfo PullOutModule::calcTurnSignalInfo() const
   // pull out path does not overlap
   const double distance_from_end = motion_utils::calcSignedArcLength(
     path.points, status_.pull_out_path.end_pose.position, current_pose.position);
-  if (distance_from_end < parameters_.pull_out_finish_judge_buffer) {
+  if (distance_from_end < 0.0) {
     turn_signal.turn_signal.command = TurnIndicatorsCommand::ENABLE_RIGHT;
   } else {
     turn_signal.turn_signal.command = TurnIndicatorsCommand::DISABLE;
