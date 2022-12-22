@@ -52,6 +52,8 @@ MarkerArray createAvoidLineMarkerArray(
   const AvoidLineArray & shift_points, std::string && ns, const float & r, const float & g,
   const float & b, const double & w);
 
+MarkerArray createPredictedVehiclePositions(const PathWithLaneId & path, std::string && ns);
+
 MarkerArray createTargetObjectsMarkerArray(const ObjectDataArray & objects, std::string && ns);
 
 MarkerArray createOtherObjectsMarkerArray(const ObjectDataArray & objects, std::string && ns);
