@@ -16,7 +16,6 @@
   <depend>rclcpp_components</depend>
   <depend>scenario_simulator_v2_msgs</depend>
 
-
   <test_depend>ament_cmake_clang_format</test_depend>
   <test_depend>ament_cmake_copyright</test_depend>
   <test_depend>ament_cmake_gtest</test_depend>
