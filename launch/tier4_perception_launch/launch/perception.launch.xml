@@ -8,6 +8,11 @@
   <arg name="obstacle_segmentation_ground_segmentation_param_path"/>
   <arg name="obstacle_segmentation_ground_segmentation_elevation_map_param_path"/>
 
+  <!-- centerpoint model configs -->
+  <arg name="centerpoint_model_name" default="centerpoint_tiny" description="options: `centerpoint` or `centerpoint_tiny`"/>
+  <arg name="centerpoint_model_path" default="$(find-pkg-share lidar_centerpoint)/data"/>
+  <arg name="centerpoint_model_param_path" default="$(find-pkg-share lidar_centerpoint)/config/$(var centerpoint_model_name).param.yaml"/>
+
   <!-- common parameters -->
   <arg name="input/pointcloud" default="/sensing/lidar/concatenated/pointcloud" description="The topic will be used in the detection module"/>
   <arg name="mode" default="camera_lidar_fusion" description="options: `camera_lidar_radar_fusion`, `camera_lidar_fusion`, `lidar_radar_fusion`, `lidar` or `radar`"/>
