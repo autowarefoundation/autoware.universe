@@ -100,7 +100,7 @@ std::shared_ptr<DetectedObjectsWithFeature> ApolloLidarSegmentationPostProcessor
   std::vector<float32_t> feature(output_channels * output_width * output_height, 0);
   TVMArrayCopyToBytes(
     input[0].getArray(), feature.data(),
-    output_channels * output_width * output_height * datatype_bytes);
+    output_channels * output_width * output_height * output_datatype_bytes);
   cluster2d_->cluster(
     feature.data(), pc_ptr_, valid_idx, objectness_thresh_, true /*use all grids for clustering*/);
   auto object_array = cluster2d_->getObjects(score_threshold_, height_thresh_, min_pts_num_);
