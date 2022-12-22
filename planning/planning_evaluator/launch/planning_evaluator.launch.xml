@@ -19,5 +19,4 @@
   <group if="$(var scenario_simulation)">
     <node name="diagnostic_converter" exec="diagnostic_converter" pkg="diagnostic_converter" output="screen"/>
   </group>
-
 </launch>
