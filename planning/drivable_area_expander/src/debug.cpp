@@ -56,8 +56,8 @@ visualization_msgs::msg::Marker makePolygonMarker(const polygon_t & polygon, con
 }
 
 visualization_msgs::msg::MarkerArray makeDebugMarkers(
-  const multipolygon_t & footprint, const multipolygon_t & filtered_footprint,
-  const multilinestring_t & uncrossable_lines, const multipolygon_t & predicted_paths,
+  const std::vector<Footprint> & footprints, const multipolygon_t & filtered_footprints,
+  const multilinestring_t & uncrossable_lines, const std::vector<Footprint> & predicted_paths,
   const double marker_z)
 {
   visualization_msgs::msg::MarkerArray debug_markers;
@@ -71,7 +71,8 @@ visualization_msgs::msg::MarkerArray makeDebugMarkers(
     debug_markers.markers.push_back(marker);
   }
   auto foot_id = 0lu;
-  for (const auto & poly : footprint) {
+  for (const auto & f : footprints) {
+    const auto & poly = f.footprint;
     auto marker = makePolygonMarker(poly, marker_z);
     marker.color.g = 1.0;
     marker.color.a = 0.5;
@@ -80,7 +81,7 @@ visualization_msgs::msg::MarkerArray makeDebugMarkers(
     debug_markers.markers.push_back(marker);
   }
   auto ffoot_id = 0lu;
-  for (const auto & poly : filtered_footprint) {
+  for (const auto & poly : filtered_footprints) {
     auto marker = makePolygonMarker(poly, marker_z);
     marker.color.g = 1.0;
     marker.color.b = 0.2;
@@ -91,7 +92,8 @@ visualization_msgs::msg::MarkerArray makeDebugMarkers(
     debug_markers.markers.push_back(marker);
   }
   auto pred_id = 0lu;
-  for (const auto & poly : predicted_paths) {
+  for (const auto & f : predicted_paths) {
+    const auto & poly = f.footprint;
     auto marker = makePolygonMarker(poly, marker_z);
     marker.color.b = 1.0;
     marker.color.a = 0.5;

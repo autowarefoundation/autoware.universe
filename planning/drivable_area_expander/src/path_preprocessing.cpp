@@ -30,9 +30,9 @@ size_t calculateStartIndex(const Path & path, const size_t ego_idx, const double
 {
   auto length = 0.0;
   auto idx = ego_idx;
-  while (idx >= 0 && length < backward_length) {
-    length += tier4_autoware_utils::calcDistance2d(path.points[idx], path.points[idx + 1]);
+  while (idx > 0 && length < backward_length) {
     --idx;
+    length += tier4_autoware_utils::calcDistance2d(path.points[idx + 1], path.points[idx]);
   }
   return idx;
 }

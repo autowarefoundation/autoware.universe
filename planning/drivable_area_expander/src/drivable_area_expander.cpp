@@ -28,16 +28,30 @@
 namespace drivable_area_expander
 {
 multipolygon_t filterFootprint(
-  const multipolygon_t & footprint, const multipolygon_t & predicted_paths,
+  const std::vector<Footprint> & footprints, const std::vector<Footprint> & predicted_paths,
   const multilinestring_t & uncrossable_lines)
 {
   multipolygon_t filtered_footprints;
-  // TODO(Maxime): crop rather than discard
-  for (const auto & f : footprint)
-    if (
-      !boost::geometry::intersects(f, uncrossable_lines) &&
-      boost::geometry::disjoint(f, predicted_paths))
-      filtered_footprints.push_back(f);
+  multipolygon_t cuts;
+  for (const auto & f : footprints) {
+    cuts.clear();
+    polygon_t filtered_footprint;
+    // TODO(Maxime): properly cut with lines. Make them into polygon using the path as the other
+    // side ?
+    if (!boost::geometry::intersects(f.footprint, uncrossable_lines))
+      filtered_footprint = f.footprint;
+    for (const auto & p : predicted_paths) {
+      cuts.clear();
+      boost::geometry::difference(filtered_footprint, p.footprint, cuts);
+      for (const auto & cut : cuts) {
+        if (boost::geometry::within(f.origin, cut)) {
+          filtered_footprint = cut;
+          break;
+        }
+      }
+    }
+    if (!filtered_footprint.outer().empty()) filtered_footprints.push_back(filtered_footprint);
+  }
   return filtered_footprints;
 }
 
@@ -58,7 +72,7 @@ multilinestring_t expandDrivableArea(
   for (const auto & f : footprint) {
     unions.clear();
     boost::geometry::union_(extended_da_poly, f, unions);
-    // assume that the footprints are not disjoint from the original drivable area
+    // assumes that the footprints are not disjoint from the original drivable area
     extended_da_poly = unions.front();
   }
   // TODO(Maxime): extract left/right bound from da_poly
@@ -106,25 +120,28 @@ multilinestring_t expandDrivableArea(
   if (lf_idx < lb_idx) {
     if (lf_idx < rb_idx && rb_idx < lb_idx) {  // [..., left front, ... right front, ..., right
                                                // back, ..., left back, ...]
-      for (int i = lf_idx; i >= 0; --i) left_indexes.push_back(i);
-      for (int i = extended_da_poly.outer().size() - 1; i >= lb_idx; --i) left_indexes.push_back(i);
+      for (int i = lf_idx; i >= 0; --i) left_indexes.push_back(static_cast<size_t>(i));
+      for (int i = extended_da_poly.outer().size() - 1; i >= static_cast<int>(lb_idx); --i)
+        left_indexes.push_back(static_cast<size_t>(i));
       for (auto i = rf_idx; i <= rb_idx; ++i) right_indexes.push_back(i);
     } else {  // [..., right front, left front, ... left back, ..., right back, ..., ]
       for (auto i = lf_idx; i <= lb_idx; ++i) left_indexes.push_back(i);
-      for (int i = rf_idx; i >= 0; --i) right_indexes.push_back(i);
-      for (int i = extended_da_poly.outer().size() - 1; i >= rb_idx; --i)
-        right_indexes.push_back(i);
+      for (int i = rf_idx; i >= 0; --i) right_indexes.push_back(static_cast<size_t>(i));
+      for (int i = extended_da_poly.outer().size() - 1; i >= static_cast<int>(rb_idx); --i)
+        right_indexes.push_back(static_cast<size_t>(i));
     }
   } else {                                     // lb_idx < lf_idx
     if (lb_idx < rb_idx && rb_idx < lf_idx) {  // [ ..., left back, ..., right back , ..., right
                                                // front, ..., left front, ...]
       for (auto i = lf_idx; i < extended_da_poly.outer().size(); ++i) left_indexes.push_back(i);
-      for (auto i = 0; i <= lb_idx; ++i) left_indexes.push_back(i);
-      for (int i = rf_idx; i >= rb_idx; --i) right_indexes.push_back(i);
+      for (auto i = 0lu; i <= lb_idx; ++i) left_indexes.push_back(i);
+      for (int i = rf_idx; i >= static_cast<int>(rb_idx); --i)
+        right_indexes.push_back(static_cast<size_t>(i));
     } else {  // [ ..., right back, ..., left back, ..., left front, ..., right front, ...]
-      for (int i = lf_idx; i >= lb_idx; --i) left_indexes.push_back(i);
+      for (int i = lf_idx; i >= static_cast<int>(lb_idx); --i)
+        left_indexes.push_back(static_cast<size_t>(i));
       for (auto i = rf_idx; i < extended_da_poly.outer().size(); ++i) right_indexes.push_back(i);
-      for (auto i = 0; i <= rb_idx; ++i) right_indexes.push_back(i);
+      for (auto i = 0lu; i <= rb_idx; ++i) right_indexes.push_back(i);
     }
   }
   // TODO(Maxime): what about the z value ?
@@ -150,15 +167,31 @@ multilinestring_t expandDrivableArea(
   return {debug_left_ls, debug_right_ls};
 }
 
-multipolygon_t createPredictedPathPolygons(
+std::vector<Footprint> createPathFootprints(const Path & path, const ExpansionParameters & params)
+{
+  const auto left = params.ego_left_offset + params.ego_extra_left_offset;
+  const auto right = params.ego_right_offset - params.ego_extra_right_offset;
+  const auto rear = params.ego_rear_offset - params.ego_extra_rear_offset;
+  const auto front = params.ego_front_offset + params.ego_extra_front_offset;
+  polygon_t base_footprint;
+  base_footprint.outer() = {
+    point_t{front, left}, point_t{front, right}, point_t{rear, right}, point_t{rear, left},
+    point_t{front, left}};
+  std::vector<Footprint> footprints;
+  footprints.reserve(path.points.size());
+  for (const auto & point : path.points)
+    footprints.push_back(createFootprint(point.pose, base_footprint));
+  return footprints;
+}
+
+std::vector<Footprint> createPredictedPathFootprints(
   const autoware_auto_perception_msgs::msg::PredictedObjects & predicted_objects,
   const ExpansionParameters & params)
 {
-  multipolygon_t predicted_path_polygons;
-  if (params.avoid_dynamic_objects) {
-    predicted_path_polygons = createObjectFootprints(predicted_objects, params);
-  }
-  return predicted_path_polygons;
+  if (params.avoid_dynamic_objects)
+    return createObjectFootprints(predicted_objects, params);
+  else
+    return {};
 }
 
 linestring_t createMaxExpansionLine(const Path & path, const double max_expansion_distance)

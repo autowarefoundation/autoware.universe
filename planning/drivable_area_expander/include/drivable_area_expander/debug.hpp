@@ -39,15 +39,16 @@ visualization_msgs::msg::Marker makeLinestringMarker(const linestring_t & ls, co
 visualization_msgs::msg::Marker makePolygonMarker(const polygon_t & polygon, const double z);
 
 /// @brief make debug marker array
-/// @param[in] footprint ego footprint polygon
-/// @param[in] filtered_footprint filtered ego footprint polygon
+/// @param[in] footprints ego footprint polygon
+/// @param[in] filtered_footprints filtered ego footprint polygon
 /// @param[in] uncrossable_lines uncrossable lines
 /// @param[in] predicted_paths predicted paths
 /// @param[in] marker_z z-value to use for markers
 /// @return marker array
 visualization_msgs::msg::MarkerArray makeDebugMarkers(
-  const multipolygon_t & footprint, const multipolygon_t & filtered_footprint, const multilinestring_t & uncrossable_lines,
-  const multipolygon_t & predicted_paths, const double marker_z);
+  const std::vector<Footprint> & footprints, const multipolygon_t & filtered_footprints,
+  const multilinestring_t & uncrossable_lines, const std::vector<Footprint> & predicted_paths,
+  const double marker_z);
 
 }  // namespace drivable_area_expander
 #endif  // DRIVABLE_AREA_EXPANDER__DEBUG_HPP_
