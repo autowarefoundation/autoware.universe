@@ -111,7 +111,7 @@ class DrawGraph(Node):
 
     def get_data_callback(self, request, response):
         # read csv
-        # If log file doesn't exsist, return empty data
+        # If log file doesn't exist, return empty data
         if not Path(self.log_file).exists():
             response.graph_image = []
             self.get_logger().info("svg data is empty")
