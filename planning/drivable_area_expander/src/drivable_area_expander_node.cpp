@@ -128,15 +128,15 @@ void DrivableAreaExpanderNode::onPath(const Path::ConstSharedPtr msg)
     calculateEndIndex(input_path, *ego_idx, preprocessing_params_.forward_length);
   const auto downsampled_path_points =
     downsamplePath(input_path, start_idx, end_idx, preprocessing_params_.downsample_factor);
-  auto path_footprint = createPathFootprint(downsampled_path_points, expansion_params_);
+  auto path_footprints = createPathFootprints(downsampled_path_points, expansion_params_);
   const auto max_expansion_line =
     createMaxExpansionLine(input_path, expansion_params_.max_expansion_distance);
   auto uncrossable_lines = uncrossable_lines_;
   uncrossable_lines.push_back(max_expansion_line);
   const auto predicted_paths =
-    createPredictedPathPolygons(*dynamic_objects_ptr_, expansion_params_);
+    createPredictedPathFootprints(*dynamic_objects_ptr_, expansion_params_);
   const auto filtered_footprint =
-    filterFootprint(path_footprint, predicted_paths, uncrossable_lines);
+    filterFootprint(path_footprints, predicted_paths, uncrossable_lines);
 
   const auto diff_ls =
     expandDrivableArea(input_path.left_bound, input_path.right_bound, filtered_footprint);
@@ -151,7 +151,7 @@ void DrivableAreaExpanderNode::onPath(const Path::ConstSharedPtr msg)
   if (pub_debug_markers_->get_subscription_count() > 0) {
     const auto z = msg->points.empty() ? 0.0 : msg->points.front().pose.position.z;
     auto debug_markers =
-      makeDebugMarkers(path_footprint, filtered_footprint, uncrossable_lines, predicted_paths, z);
+      makeDebugMarkers(path_footprints, filtered_footprint, uncrossable_lines, predicted_paths, z);
     visualization_msgs::msg::Marker m;
     m.header.frame_id = "map";
     m.type = visualization_msgs::msg::Marker::LINE_STRIP;

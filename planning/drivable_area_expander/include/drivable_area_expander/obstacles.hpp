@@ -51,37 +51,17 @@ polygon_t rotatePolygon(const polygon_t & polygon, const double angle);
 /// @return translated polygon
 polygon_t translatePolygon(const polygon_t & polygon, const double x, const double y);
 
-/// @brief wrapper to extract a pose
-inline const geometry_msgs::msg::Pose & getPose(const geometry_msgs::msg::Pose & pose)
-{
-  return pose;
-};
-/// @brief wrapper to extract a pose from a PathPoint
-inline const geometry_msgs::msg::Pose & getPose(const PathPoint & path_point)
-{
-  return path_point.pose;
-}
+/// @brief create the footprint of a pose and its base footprint
+/// @param[in] pose the origin pose of the footprint
+/// @param[in] base_footprint the base axis-aligned footprint
+/// @return footprint
+Footprint createFootprint(const geometry_msgs::msg::Pose & pose, const polygon_t base_footprint);
 
-/// @brief create the footprint polygon from a path
-/// @param[in] path the path for which to create a footprint
-/// @param[in] params expansion parameters defining how to create the footprint
-/// @return polygon footprint of the path
-/// @tparam path type (sequence of PathPoint or sequence of Pose)
-template <class T>
-multipolygon_t createFootprintPolygon(
-  const T & path, const double front, const double rear, const double left, const double right);
-
-/// @brief create the footprint polygon from a path
-/// @param[in] path the path for which to create a footprint
-/// @param[in] params expansion parameters defining how to create the footprint
-/// @return polygon footprint of the path
-multipolygon_t createPathFootprint(const Path & path, const ExpansionParameters & params);
-
-/// @brief create polygons from the predicted paths of an object
+/// @brief create footprints of the predicted paths of an object
 /// @param [in] objects objects from which to create polygons
 /// @param[in] params expansion parameters containing extra offsets to add to the dynamic objects
-/// @return polygons of the object's predicted paths
-multipolygon_t createObjectFootprints(
+/// @return footprints of the object's predicted paths
+std::vector<Footprint> createObjectFootprints(
   const autoware_auto_perception_msgs::msg::PredictedObjects & objects,
   const ExpansionParameters & params);
 }  // namespace drivable_area_expander
