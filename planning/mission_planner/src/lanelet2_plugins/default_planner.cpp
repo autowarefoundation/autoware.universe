@@ -127,6 +127,14 @@ void DefaultPlanner::initialize(rclcpp::Node * node, const HADMapBin::ConstShare
 {
   is_graph_ready_ = false;
   node_ = node;
+
+  const auto durable_qos = rclcpp::QoS(1).transient_local();
+  pub_goal_footprint_marker_ =
+    node_->create_publisher<MarkerArray>("debug/goal_footprint", durable_qos);
+
+  vehicle_info_ = vehicle_info_util::VehicleInfoUtil(*node_).getVehicleInfo();
+  param_.goal_angle_threshold_deg = node_->declare_parameter("goal_angle_threshold_deg", 45.0);
+
   map_callback(msg);
 }
 
