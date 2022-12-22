@@ -31,11 +31,6 @@ struct BehaviorPathPlannerParameters
   double minimum_pull_out_length;
   double drivable_area_resolution;
 
-  double drivable_lane_forward_length;
-  double drivable_lane_backward_length;
-  double drivable_lane_margin;
-  double drivable_area_margin;
-
   double refine_goal_search_radius_range;
 
   double turn_signal_intersection_search_distance;
@@ -63,8 +58,8 @@ struct BehaviorPathPlannerParameters
   double base_link2front;
   double base_link2rear;
 
-  // drivable area visualization
-  bool visualize_drivable_area_for_shared_linestrings_lanelet;
+  // maximum drivable area visualization
+  bool visualize_maximum_drivable_area;
 
   // collision check
   double lateral_distance_max_threshold;

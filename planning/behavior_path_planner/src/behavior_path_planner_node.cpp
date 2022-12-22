@@ -61,7 +61,6 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
 
   // publisher
   path_publisher_ = create_publisher<PathWithLaneId>("~/output/path", 1);
-  path_candidate_publisher_ = create_publisher<Path>("~/output/path_candidate", 1);
   turn_signal_publisher_ =
     create_publisher<TurnIndicatorsCommand>("~/output/turn_indicators_cmd", 1);
   hazard_signal_publisher_ = create_publisher<HazardLightsCommand>("~/output/hazard_lights_cmd", 1);
@@ -70,9 +69,9 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   debug_lane_change_msg_array_publisher_ =
     create_publisher<LaneChangeDebugMsgArray>("~/debug/lane_change_debug_message_array", 1);
 
-  if (planner_data_->parameters.visualize_drivable_area_for_shared_linestrings_lanelet) {
-    debug_drivable_area_lanelets_publisher_ =
-      create_publisher<MarkerArray>("~/drivable_area_boundary", 1);
+  if (planner_data_->parameters.visualize_maximum_drivable_area) {
+    debug_maximum_drivable_area_publisher_ =
+      create_publisher<MarkerArray>("~/maximum_drivable_area", 1);
   }
 
   bound_publisher_ = create_publisher<MarkerArray>("~/debug/bound", 1);
@@ -115,6 +114,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     std::bind(&BehaviorPathPlannerNode::onSetParam, this, std::placeholders::_1));
   // behavior tree manager
   {
+    const std::string path_candidate_name_space = "/planning/path_candidate/";
     mutex_bt_.lock();
 
     bt_manager_ = std::make_shared<BehaviorTreeManager>(*this, getBehaviorTreeManagerParam());
@@ -125,6 +125,8 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
 
     auto avoidance_module =
       std::make_shared<AvoidanceModule>("Avoidance", *this, avoidance_param_ptr);
+    path_candidate_publishers_.emplace(
+      "Avoidance", create_publisher<Path>(path_candidate_name_space + "avoidance", 1));
     bt_manager_->registerSceneModule(avoidance_module);
 
     auto lane_following_module =
@@ -133,12 +135,18 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
 
     auto lane_change_module =
       std::make_shared<LaneChangeModule>("LaneChange", *this, lane_change_param_ptr);
+    path_candidate_publishers_.emplace(
+      "LaneChange", create_publisher<Path>(path_candidate_name_space + "lane_change", 1));
     bt_manager_->registerSceneModule(lane_change_module);
 
     auto pull_over_module = std::make_shared<PullOverModule>("PullOver", *this, getPullOverParam());
+    path_candidate_publishers_.emplace(
+      "PullOver", create_publisher<Path>(path_candidate_name_space + "pull_over", 1));
     bt_manager_->registerSceneModule(pull_over_module);
 
     auto pull_out_module = std::make_shared<PullOutModule>("PullOut", *this, getPullOutParam());
+    path_candidate_publishers_.emplace(
+      "PullOut", create_publisher<Path>(path_candidate_name_space + "pull_out", 1));
     bt_manager_->registerSceneModule(pull_out_module);
 
     bt_manager_->createBehaviorTree();
@@ -211,11 +219,6 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
     declare_parameter("minimum_lane_change_prepare_distance", 2.0);
 
   p.minimum_pull_over_length = declare_parameter("minimum_pull_over_length", 15.0);
-  p.drivable_area_resolution = declare_parameter<double>("drivable_area_resolution");
-  p.drivable_lane_forward_length = declare_parameter<double>("drivable_lane_forward_length");
-  p.drivable_lane_backward_length = declare_parameter<double>("drivable_lane_backward_length");
-  p.drivable_lane_margin = declare_parameter<double>("drivable_lane_margin");
-  p.drivable_area_margin = declare_parameter<double>("drivable_area_margin");
   p.refine_goal_search_radius_range = declare_parameter("refine_goal_search_radius_range", 7.5);
   p.turn_signal_intersection_search_distance =
     declare_parameter("turn_signal_intersection_search_distance", 30.0);
@@ -229,8 +232,7 @@ BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
   p.turn_signal_on_swerving = declare_parameter("turn_signal_on_swerving", true);
 
   p.path_interval = declare_parameter<double>("path_interval");
-  p.visualize_drivable_area_for_shared_linestrings_lanelet =
-    declare_parameter("visualize_drivable_area_for_shared_linestrings_lanelet", true);
+  p.visualize_maximum_drivable_area = declare_parameter("visualize_maximum_drivable_area", true);
   p.ego_nearest_dist_threshold = declare_parameter<double>("ego_nearest_dist_threshold");
   p.ego_nearest_yaw_threshold = declare_parameter<double>("ego_nearest_yaw_threshold");
 
@@ -447,7 +449,6 @@ PullOverParameters BehaviorPathPlannerNode::getPullOverParam()
   p.pull_over_velocity = dp("pull_over_velocity", 8.3);
   p.pull_over_minimum_velocity = dp("pull_over_minimum_velocity", 0.3);
   p.after_pull_over_straight_distance = dp("after_pull_over_straight_distance", 3.0);
-  p.before_pull_over_straight_distance = dp("before_pull_over_straight_distance", 3.0);
   // parallel parking
   p.enable_arc_forward_parking = dp("enable_arc_forward_parking", true);
   p.enable_arc_backward_parking = dp("enable_arc_backward_parking", true);
@@ -510,12 +511,11 @@ PullOutParameters BehaviorPathPlannerNode::getPullOutParam()
   p.th_stopped_velocity = dp("th_stopped_velocity", 0.01);
   p.th_stopped_time = dp("th_stopped_time", 1.0);
   p.collision_check_margin = dp("collision_check_margin", 1.0);
-  p.pull_out_finish_judge_buffer = dp("pull_out_finish_judge_buffer", 1.0);
+  p.collision_check_distance_from_end = dp("collision_check_distance_from_end", 3.0);
   // shift pull out
   p.enable_shift_pull_out = dp("enable_shift_pull_out", true);
   p.shift_pull_out_velocity = dp("shift_pull_out_velocity", 8.3);
   p.pull_out_sampling_num = dp("pull_out_sampling_num", 4);
-  p.before_pull_out_straight_distance = dp("before_pull_out_straight_distance", 3.0);
   p.minimum_shift_pull_out_distance = dp("minimum_shift_pull_out_distance", 20.0);
   p.maximum_lateral_jerk = dp("maximum_lateral_jerk", 3.0);
   p.minimum_lateral_jerk = dp("minimum_lateral_jerk", 1.0);
@@ -648,15 +648,14 @@ void BehaviorPathPlannerNode::run()
       get_logger(), *get_clock(), 5000, "behavior path output is empty! Stop publish.");
   }
 
-  const auto path_candidate = getPathCandidate(output, planner_data);
-  path_candidate_publisher_->publish(util::toPath(*path_candidate));
+  publishPathCandidate(bt_manager_->getSceneModules());
 
   publishSceneModuleDebugMsg();
 
-  if (planner_data->parameters.visualize_drivable_area_for_shared_linestrings_lanelet) {
-    const auto drivable_area_lines = marker_utils::createFurthestLineStringMarkerArray(
-      util::getDrivableAreaForAllSharedLinestringLanelets(planner_data));
-    debug_drivable_area_lanelets_publisher_->publish(drivable_area_lines);
+  if (planner_data->parameters.visualize_maximum_drivable_area) {
+    const auto maximum_drivable_area =
+      marker_utils::createFurthestLineStringMarkerArray(util::getMaximumDrivableArea(planner_data));
+    debug_maximum_drivable_area_publisher_->publish(maximum_drivable_area);
   }
 
   mutex_bt_.unlock();
@@ -763,6 +762,42 @@ void BehaviorPathPlannerNode::publishSceneModuleDebugMsg()
   }
 }
 
+void BehaviorPathPlannerNode::publishPathCandidate(
+  const std::vector<std::shared_ptr<SceneModuleInterface>> & scene_modules)
+{
+  for (auto & module : scene_modules) {
+    if (path_candidate_publishers_.count(module->name()) != 0) {
+      path_candidate_publishers_.at(module->name())
+        ->publish(convertToPath(module->getPathCandidate(), module->isExecutionReady()));
+    }
+  }
+}
+
+Path BehaviorPathPlannerNode::convertToPath(
+  const std::shared_ptr<PathWithLaneId> & path_candidate_ptr, const bool is_ready)
+{
+  Path output;
+  output.header = planner_data_->route_handler->getRouteHeader();
+  output.header.stamp = this->now();
+
+  if (!path_candidate_ptr) {
+    return output;
+  }
+
+  output = util::toPath(*path_candidate_ptr);
+  // header is replaced by the input one, so it is substituted again
+  output.header = planner_data_->route_handler->getRouteHeader();
+  output.header.stamp = this->now();
+
+  if (!is_ready) {
+    for (auto & point : output.points) {
+      point.longitudinal_velocity_mps = 0.0;
+    }
+  }
+
+  return output;
+}
+
 PathWithLaneId::SharedPtr BehaviorPathPlannerNode::getPath(
   const BehaviorModuleOutput & bt_output, const std::shared_ptr<PlannerData> planner_data)
 {
@@ -782,52 +817,29 @@ PathWithLaneId::SharedPtr BehaviorPathPlannerNode::getPath(
     connected_path = modifyPathForSmoothGoalConnection(*path);
   }
 
-  const auto resampled_path =
-    util::resamplePathWithSpline(connected_path, planner_data_->parameters.path_interval);
+  const auto resampled_path = util::resamplePathWithSpline(
+    connected_path, planner_data_->parameters.path_interval,
+    keepInputPoints(module_status_ptr_vec));
   return std::make_shared<PathWithLaneId>(resampled_path);
 }
 
-PathWithLaneId::SharedPtr BehaviorPathPlannerNode::getPathCandidate(
-  const BehaviorModuleOutput & bt_output, const std::shared_ptr<PlannerData> planner_data)
+bool BehaviorPathPlannerNode::skipSmoothGoalConnection(
+  const std::vector<std::shared_ptr<SceneModuleStatus>> & statuses) const
 {
-  auto path_candidate =
-    bt_output.path_candidate ? bt_output.path_candidate : std::make_shared<PathWithLaneId>();
+  const auto target_module = "PullOver";
 
-  if (isForcedCandidatePath()) {
-    for (auto & path_point : path_candidate->points) {
-      path_point.point.longitudinal_velocity_mps = 0.0;
+  for (auto & status : statuses) {
+    if (status->is_waiting_approval || status->status == BT::NodeStatus::RUNNING) {
+      if (target_module == status->module_name) {
+        return true;
+      }
     }
-  }
-
-  path_candidate->header = planner_data->route_handler->getRouteHeader();
-  path_candidate->header.stamp = this->now();
-  RCLCPP_DEBUG(
-    get_logger(), "BehaviorTreeManager: path candidate is %s.",
-    bt_output.path_candidate ? "FOUND" : "NOT FOUND");
-  return path_candidate;
-}
-
-bool BehaviorPathPlannerNode::isForcedCandidatePath() const
-{
-  const auto & module_status_ptr_vec = bt_manager_->getModulesStatus();
-  for (const auto & module_status_ptr : module_status_ptr_vec) {
-    if (!module_status_ptr) {
-      continue;
-    }
-    if (module_status_ptr->module_name != "LaneChange") {
-      continue;
-    }
-    const auto & is_waiting_approval = module_status_ptr->is_waiting_approval;
-    const auto & is_execution_ready = module_status_ptr->is_execution_ready;
-    if (is_waiting_approval && !is_execution_ready) {
-      return true;
-    }
-    break;
   }
   return false;
 }
 
-bool BehaviorPathPlannerNode::skipSmoothGoalConnection(
+// This is a temporary process until motion planning can take the terminal pose into account
+bool BehaviorPathPlannerNode::keepInputPoints(
   const std::vector<std::shared_ptr<SceneModuleStatus>> & statuses) const
 {
   const auto target_module = "PullOver";
