@@ -55,8 +55,8 @@ You can download the onnx format of trained models by clicking on the links belo
 - [Centerpoint](download_link)
 - [Centerpoint tiny](download_link)
 
-`Centerpoint` was trained in `Nuscenes` (~110k lidar frames) [8] and Tier IV's internal database (~11k lidar frames) for 60 epochs.
-`Centerpoint tiny` was trained in `Argoverse2` (~28k lidar frames) [9] and Tier IV's internal database (~11k lidar frames) for 20 epochs.
+`Centerpoint` was trained in `nuScenes` (~110k lidar frames) [8] and TIER IV's internal database (~11k lidar frames) for 60 epochs.
+`Centerpoint tiny` was trained in `Argoverse 2` (~28k lidar frames) [9] and TIER IV's internal database (~11k lidar frames) for 20 epochs.
 
 ## Standalone inference and visualization
 
