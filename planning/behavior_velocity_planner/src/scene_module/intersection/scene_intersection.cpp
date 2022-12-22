@@ -198,8 +198,10 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
     closest_idx, stuck_vehicle_detect_area);
 
   /* calculate final stop lines */
-  int stop_line_idx_final = -1;
-  int pass_judge_line_idx_final = -1;
+  int stop_line_idx_final =
+    stop_lines_idx_opt.has_value() ? stop_lines_idx_opt.value().stop_line : -1;
+  int pass_judge_line_idx_final =
+    stop_lines_idx_opt.has_value() ? stop_lines_idx_opt.value().pass_judge_line : -1;
   if (external_go) {
     is_entry_prohibited = false;
   } else if (external_stop) {
