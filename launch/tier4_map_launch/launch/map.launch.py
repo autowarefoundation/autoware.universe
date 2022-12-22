@@ -164,6 +164,7 @@ def generate_launch_description():
         [
             FindPackageShare("tier4_map_launch"),
             "/config/pointcloud_map_loader.param.yaml",
+            # ToDo(kminoda): This file should eventually be removed as well as the other components
         ],
         "path to pointcloud_map_loader param file",
     ),

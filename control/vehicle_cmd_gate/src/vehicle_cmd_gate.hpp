@@ -25,7 +25,6 @@
 #include <autoware_adapi_v1_msgs/msg/mrm_state.hpp>
 #include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
 #include <autoware_auto_control_msgs/msg/ackermann_control_command.hpp>
-#include <autoware_auto_system_msgs/msg/emergency_state.hpp>
 #include <autoware_auto_vehicle_msgs/msg/engage.hpp>
 #include <autoware_auto_vehicle_msgs/msg/gear_command.hpp>
 #include <autoware_auto_vehicle_msgs/msg/hazard_lights_command.hpp>
@@ -160,7 +159,7 @@ private:
   // Parameter
   double update_period_;
   bool use_emergency_handling_;
-  bool use_external_emergency_stop_;
+  bool check_external_emergency_heartbeat_;
   double system_emergency_heartbeat_timeout_;
   double external_emergency_stop_heartbeat_timeout_;
   double stop_hold_acceleration_;
