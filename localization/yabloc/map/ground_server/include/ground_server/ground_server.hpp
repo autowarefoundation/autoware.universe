@@ -1,4 +1,5 @@
 #pragma once
+#include <ground_server/kalman_filter.hpp>
 #include <pcdless_common/ground_plane.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -58,6 +59,8 @@ private:
   boost::circular_buffer<Eigen::Vector3f> vector_buffer_;
 
   std::vector<int> last_near_point_indices_;
+
+  KalmanFilter kalman_;
 
   void on_map(const HADMapBin & msg);
   void on_pose_stamped(const PoseStamped & msg);
