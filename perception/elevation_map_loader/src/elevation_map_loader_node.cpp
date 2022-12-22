@@ -50,7 +50,7 @@ ElevationMapLoaderNode::ElevationMapLoaderNode(const rclcpp::NodeOptions & optio
 : Node("elevation_map_loader", options)
 {
   layer_name_ = this->declare_parameter("map_layer_name", std::string("elevation"));
-  std::string param_file_path = this->declare_parameter("param_file_path", "path_default");
+  this->param_file_path = this->declare_parameter("param_file_path", "path_default");
   map_frame_ = this->declare_parameter("map_frame", "map");
   use_inpaint_ = this->declare_parameter("use_inpaint", true);
   inpaint_radius_ = this->declare_parameter("inpaint_radius", 0.3);
@@ -66,11 +66,6 @@ ElevationMapLoaderNode::ElevationMapLoaderNode(const rclcpp::NodeOptions & optio
   lane_filter_.voxel_size_x_ = declare_parameter("lane_filter_voxel_size_x", 0.04);
   lane_filter_.voxel_size_y_ = declare_parameter("lane_filter_voxel_size_y", 0.04);
   lane_filter_.voxel_size_z_ = declare_parameter("lane_filter_voxel_size_z", 0.04);
-
-  auto grid_map_logger = rclcpp::get_logger("grid_map_logger");
-  grid_map_logger.set_level(rclcpp::Logger::Level::Error);
-  grid_map_pcl_loader_ = pcl::make_shared<grid_map::GridMapPclLoader>(grid_map_logger);
-  grid_map_pcl_loader_->loadParameters(param_file_path);
 
   rclcpp::QoS durable_qos{1};
   durable_qos.transient_local();
@@ -153,9 +148,11 @@ void ElevationMapLoaderNode::onPointcloudMap(
   const sensor_msgs::msg::PointCloud2::ConstSharedPtr pointcloud_map)
 {
   RCLCPP_INFO(this->get_logger(), "subscribe pointcloud_map");
-  pcl::PointCloud<pcl::PointXYZ> map_pcl;
-  pcl::fromROSMsg<pcl::PointXYZ>(*pointcloud_map, map_pcl);
-  data_manager_.map_pcl_ptr_ = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>(map_pcl);
+  {
+    pcl::PointCloud<pcl::PointXYZ> map_pcl;
+    pcl::fromROSMsg<pcl::PointXYZ>(*pointcloud_map, map_pcl);
+    data_manager_.map_pcl_ptr_ = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>(map_pcl);
+  }
   if (data_manager_.isInitialized()) {
     publish();
   }
@@ -177,6 +174,11 @@ void ElevationMapLoaderNode::onVectorMap(
 
 void ElevationMapLoaderNode::createElevationMap()
 {
+  auto grid_map_logger = rclcpp::get_logger("grid_map_logger");
+  grid_map_logger.set_level(rclcpp::Logger::Level::Error);
+  pcl::shared_ptr<grid_map::GridMapPclLoader> grid_map_pcl_loader_ =
+    pcl::make_shared<grid_map::GridMapPclLoader>(grid_map_logger);
+  grid_map_pcl_loader_->loadParameters(this->param_file_path);
   if (lane_filter_.use_lane_filter_) {
     const auto convex_hull = getConvexHull(data_manager_.map_pcl_ptr_);
     lanelet::ConstLanelets intersected_lanelets =
@@ -187,7 +189,7 @@ void ElevationMapLoaderNode::createElevationMap()
   } else {
     grid_map_pcl_loader_->setInputCloud(data_manager_.map_pcl_ptr_);
   }
-  createElevationMapFromPointcloud();
+  createElevationMapFromPointcloud(grid_map_pcl_loader_);
   elevation_map_ = grid_map_pcl_loader_->getGridMap();
   if (use_inpaint_) {
     inpaintElevationMap(inpaint_radius_);
@@ -195,7 +197,8 @@ void ElevationMapLoaderNode::createElevationMap()
   saveElevationMap();
 }
 
-void ElevationMapLoaderNode::createElevationMapFromPointcloud()
+void ElevationMapLoaderNode::createElevationMapFromPointcloud(
+  const pcl::shared_ptr<grid_map::GridMapPclLoader> & grid_map_pcl_loader_)
 {
   const auto start = std::chrono::high_resolution_clock::now();
   grid_map_pcl_loader_->preProcessInputCloud();
