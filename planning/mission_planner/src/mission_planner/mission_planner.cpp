@@ -26,23 +26,21 @@
 namespace
 {
 
-using autoware_auto_mapping_msgs::msg::HADMapSegment;
-using autoware_auto_mapping_msgs::msg::MapPrimitive;
-using autoware_planning_msgs::msg::VectorMapPrimitive;
-using autoware_planning_msgs::msg::VectorMapSegment;
+using autoware_planning_msgs::msg::LaneletPrimitive;
+using autoware_planning_msgs::msg::LaneletSegment;
 
-MapPrimitive convert(const VectorMapPrimitive & p)
+LaneletPrimitive convert(const LaneletPrimitive & p)
 {
-  MapPrimitive primitive;
+  LaneletPrimitive primitive;
   primitive.id = p.id;
   primitive.primitive_type = p.primitive_type;
   return primitive;
 }
 
-HADMapSegment convert(const VectorMapSegment & s)
+LaneletSegment convert(const LaneletSegment & s)
 {
-  HADMapSegment segment;
-  segment.preferred_primitive_id = s.preferred_primitive.id;
+  LaneletSegment segment;
+  segment.preferred_primitive.id = s.preferred_primitive.id;
   segment.primitives.push_back(convert(s.preferred_primitive));
   for (const auto & p : s.primitives) {
     segment.primitives.push_back(convert(p));
@@ -119,7 +117,7 @@ void MissionPlanner::change_route()
   // TODO(Takagi, Isamu): publish an empty route here
 }
 
-void MissionPlanner::change_route(const HADMapRoute & route)
+void MissionPlanner::change_route(const LaneletRoute & route)
 {
   // TODO(Takagi, Isamu): replace when modified goal is always published
   // arrival_checker_.reset_goal();
@@ -139,23 +137,21 @@ void MissionPlanner::change_state(RouteState::Message::_state_type state)
   pub_state_->publish(state_);
 }
 
+// NOTE: The route services should be mutually exclusive by callback group.
 void MissionPlanner::on_clear_route(
   const ClearRoute::Service::Request::SharedPtr, const ClearRoute::Service::Response::SharedPtr res)
 {
-  // NOTE: The route services should be mutually exclusive by callback group.
-  RCLCPP_INFO_STREAM(get_logger(), "ClearRoute");
-
   change_route();
   change_state(RouteState::Message::UNSET);
   res->status.success = true;
 }
 
+// NOTE: The route services should be mutually exclusive by callback group.
 void MissionPlanner::on_set_route(
   const SetRoute::Service::Request::SharedPtr req, const SetRoute::Service::Response::SharedPtr res)
 {
   using ResponseCode = autoware_adapi_v1_msgs::srv::SetRoute::Response;
 
-  // NOTE: The route services should be mutually exclusive by callback group.
   if (state_.state != RouteState::Message::UNSET) {
     throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_ROUTE_EXISTS, "The route is already set.");
@@ -171,7 +167,7 @@ void MissionPlanner::on_set_route(
   pose.pose = req->goal;
 
   // Convert route.
-  HADMapRoute route;
+  LaneletRoute route;
   route.header.stamp = req->header.stamp;
   route.header.frame_id = map_frame_;
   route.start_pose = odometry_->pose.pose;
@@ -186,13 +182,13 @@ void MissionPlanner::on_set_route(
   res->status.success = true;
 }
 
+// NOTE: The route services should be mutually exclusive by callback group.
 void MissionPlanner::on_set_route_points(
   const SetRoutePoints::Service::Request::SharedPtr req,
   const SetRoutePoints::Service::Response::SharedPtr res)
 {
   using ResponseCode = autoware_adapi_v1_msgs::srv::SetRoutePoints::Response;
 
-  // NOTE: The route services should be mutually exclusive by callback group.
   if (state_.state != RouteState::Message::UNSET) {
     throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_ROUTE_EXISTS, "The route is already set.");
@@ -221,7 +217,7 @@ void MissionPlanner::on_set_route_points(
   points.push_back(transform_pose(pose).pose);
 
   // Plan route.
-  HADMapRoute route = planner_->plan(points);
+  LaneletRoute route = planner_->plan(points);
   if (route.segments.empty()) {
     throw component_interface_utils::ServiceException(
       ResponseCode::ERROR_PLANNER_FAILED, "The planned route is empty.");

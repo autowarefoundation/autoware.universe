@@ -39,14 +39,16 @@ WalkwayModule::WalkwayModule(
   state_(State::APPROACH),
   planner_param_(planner_param)
 {
+  velocity_factor_.init(VelocityFactor::SIDEWALK);
 }
 
 boost::optional<std::pair<double, geometry_msgs::msg::Point>> WalkwayModule::getStopLine(
-  const PathWithLaneId & ego_path) const
+  const PathWithLaneId & ego_path, bool & exist_stopline_in_map) const
 {
   const auto & ego_pos = planner_data_->current_pose.pose.position;
 
   const auto stop_line = getStopLineFromMap(module_id_, planner_data_, "crosswalk_id");
+  exist_stopline_in_map = static_cast<bool>(stop_line);
   if (stop_line) {
     const auto intersects = getLinestringIntersects(
       ego_path, lanelet::utils::to2D(stop_line.get()).basicLineString(), ego_pos, 2);
@@ -95,13 +97,15 @@ bool WalkwayModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_
   }
 
   if (state_ == State::APPROACH) {
-    const auto p_stop_line = getStopLine(input);
+    bool exist_stopline_in_map;
+    const auto p_stop_line = getStopLine(input, exist_stopline_in_map);
     if (!p_stop_line) {
       return false;
     }
 
     const auto & p_stop = p_stop_line.get().second;
-    const auto margin = planner_param_.stop_line_distance + base_link2front;
+    const auto stop_line_distance = exist_stopline_in_map ? 0.0 : planner_param_.stop_line_distance;
+    const auto margin = stop_line_distance + base_link2front;
     const auto stop_pose = calcLongitudinalOffsetPose(input.points, p_stop, -margin);
 
     if (!stop_pose) {
@@ -118,6 +122,8 @@ bool WalkwayModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_
     stop_factor.stop_pose = stop_pose.get();
     stop_factor.stop_factor_points.push_back(path_intersects_.front());
     planning_utils::appendStopReason(stop_factor, stop_reason);
+    velocity_factor_.set(
+      path->points, planner_data_->current_pose.pose, stop_pose.get(), VelocityFactor::UNKNOWN);
 
     // use arc length to identify if ego vehicle is in front of walkway stop or not.
     const double signed_arc_dist_to_stop_point =
@@ -146,7 +152,6 @@ bool WalkwayModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_
     if (planner_data_->isVehicleStopped()) {
       state_ = State::SURPASSED;
     }
-  } else if (state_ == State::SURPASSED) {
   }
 
   return true;

@@ -19,6 +19,7 @@
 #include <tvm_utility/pipeline.hpp>
 
 #include <memory>
+#include <string>
 #include <vector>
 
 using autoware::common::types::bool8_t;
@@ -85,9 +86,6 @@ ApolloLidarSegmentationPostProcessor::ApolloLidarSegmentationPostProcessor(
   score_threshold_(score_threshold),
   height_thresh_(height_thresh),
   min_pts_num_(min_pts_num),
-  inferred_data(std::shared_ptr<float32_t>(
-    new float32_t[output_channels * output_width * output_height],
-    std::default_delete<float32_t[]>())),
   pc_ptr_(pc_ptr),
   cluster2d_(std::make_shared<Cluster2D>(output_width, output_height, range))
 {
@@ -99,9 +97,12 @@ std::shared_ptr<DetectedObjectsWithFeature> ApolloLidarSegmentationPostProcessor
   pcl::PointIndices valid_idx;
   valid_idx.indices.resize(pc_ptr_->size());
   std::iota(valid_idx.indices.begin(), valid_idx.indices.end(), 0);
+  std::vector<float32_t> feature(output_channels * output_width * output_height, 0);
+  TVMArrayCopyToBytes(
+    input[0].getArray(), feature.data(),
+    output_channels * output_width * output_height * datatype_bytes);
   cluster2d_->cluster(
-    static_cast<float32_t *>(input[0].getArray()->data), pc_ptr_, valid_idx, objectness_thresh_,
-    true /*use all grids for clustering*/);
+    feature.data(), pc_ptr_, valid_idx, objectness_thresh_, true /*use all grids for clustering*/);
   auto object_array = cluster2d_->getObjects(score_threshold_, height_thresh_, min_pts_num_);
 
   return object_array;
@@ -191,6 +192,13 @@ std::shared_ptr<const DetectedObjectsWithFeature> ApolloLidarSegmentation::detec
   }
 
   return output;
+}
+
+const std::string & ApolloLidarSegmentation::network_name() const { return config.network_name; }
+
+tvm_utility::Version ApolloLidarSegmentation::version_check() const
+{
+  return IE->version_check(model_version_from);
 }
 }  // namespace lidar_apollo_segmentation_tvm
 }  // namespace perception

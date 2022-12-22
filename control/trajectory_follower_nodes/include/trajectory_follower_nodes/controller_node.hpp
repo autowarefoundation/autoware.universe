@@ -17,8 +17,6 @@
 
 #include "eigen3/Eigen/Core"
 #include "eigen3/Eigen/Geometry"
-#include "motion_common/motion_common.hpp"
-#include "motion_common/trajectory_common.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tf2/utils.h"
 #include "tf2_ros/buffer.h"
@@ -35,7 +33,6 @@
 #include "autoware_auto_control_msgs/msg/ackermann_control_command.hpp"
 #include "autoware_auto_control_msgs/msg/longitudinal_command.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
-#include "autoware_auto_system_msgs/msg/float32_multi_array_diagnostic.hpp"
 #include "autoware_auto_vehicle_msgs/msg/vehicle_odometry.hpp"
 #include "geometry_msgs/msg/accel_stamped.hpp"
 #include "geometry_msgs/msg/accel_with_covariance_stamped.hpp"
@@ -58,10 +55,8 @@ using trajectory_follower::LateralOutput;
 using trajectory_follower::LongitudinalOutput;
 namespace trajectory_follower_nodes
 {
-using autoware::common::types::bool8_t;
-using autoware::common::types::float64_t;
+
 namespace trajectory_follower = ::autoware::motion::control::trajectory_follower;
-namespace motion_common = ::autoware::motion::motion_common;
 
 /// \classController
 /// \brief The node class used for generating longitudinal control commands (velocity/acceleration)
@@ -87,6 +82,7 @@ private:
   rclcpp::Subscription<geometry_msgs::msg::AccelWithCovarianceStamped>::SharedPtr sub_accel_;
   rclcpp::Publisher<autoware_auto_control_msgs::msg::AckermannControlCommand>::SharedPtr
     control_cmd_pub_;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_marker_pub_;
 
   enum class LateralControllerMode {
     INVALID = 0,
@@ -110,6 +106,7 @@ private:
   LateralControllerMode getLateralControllerMode(const std::string & algorithm_name) const;
   LongitudinalControllerMode getLongitudinalControllerMode(
     const std::string & algorithm_name) const;
+  void publishDebugMarker() const;
 };
 }  // namespace trajectory_follower_nodes
 }  // namespace control

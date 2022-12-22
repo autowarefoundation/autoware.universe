@@ -52,8 +52,6 @@ using autoware_auto_perception_msgs::msg::TrafficLight;
 using autoware_auto_planning_msgs::msg::PathWithLaneId;
 using tier4_api_msgs::msg::CrosswalkStatus;
 using tier4_autoware_utils::StopWatch;
-using tier4_planning_msgs::msg::StopFactor;
-using tier4_planning_msgs::msg::StopReason;
 
 class CrosswalkModule : public SceneModuleInterface
 {
@@ -81,6 +79,7 @@ public:
     double stop_object_velocity;
     double min_object_velocity;
     double max_yield_timeout;
+    double ego_yield_query_stop_duration;
     // param for input data
     double external_input_timeout;
     double tl_state_timeout;

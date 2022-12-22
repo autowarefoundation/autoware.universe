@@ -24,13 +24,71 @@
 
 namespace marker_utils::avoidance_marker
 {
+
 using behavior_path_planner::AvoidLine;
 using behavior_path_planner::util::shiftPose;
+using tier4_autoware_utils::appendMarkerArray;
 using tier4_autoware_utils::createDefaultMarker;
 using tier4_autoware_utils::createMarkerColor;
 using tier4_autoware_utils::createMarkerScale;
 using tier4_autoware_utils::createPoint;
 using visualization_msgs::msg::Marker;
+
+namespace
+{
+
+int32_t uuidToInt32(const unique_identifier_msgs::msg::UUID & uuid)
+{
+  int32_t ret = 0;
+
+  for (size_t i = 0; i < sizeof(int32_t) / sizeof(int8_t); ++i) {
+    ret <<= sizeof(int8_t);
+    ret |= uuid.uuid.at(i);
+  }
+
+  return ret;
+}
+
+MarkerArray createObjectsCubeMarkerArray(
+  const ObjectDataArray & objects, std::string && ns, const Vector3 & scale,
+  const ColorRGBA & color)
+{
+  MarkerArray msg;
+
+  auto marker = createDefaultMarker(
+    "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, 0L, Marker::CUBE, scale, color);
+  for (const auto & object : objects) {
+    marker.id = uuidToInt32(object.object.object_id);
+    marker.pose = object.object.kinematics.initial_pose_with_covariance.pose;
+    msg.markers.push_back(marker);
+  }
+
+  return msg;
+}
+
+MarkerArray createObjectInfoMarkerArray(const ObjectDataArray & objects, std::string && ns)
+{
+  MarkerArray msg;
+
+  Marker marker = createDefaultMarker(
+    "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, 0L, Marker::TEXT_VIEW_FACING,
+    createMarkerScale(0.5, 0.5, 0.5), createMarkerColor(1.0, 1.0, 0.0, 1.0));
+
+  for (const auto & object : objects) {
+    marker.id = uuidToInt32(object.object.object_id);
+    marker.pose = object.object.kinematics.initial_pose_with_covariance.pose;
+    std::ostringstream string_stream;
+    string_stream << std::fixed << std::setprecision(2);
+    string_stream << "ratio:" << object.shiftable_ratio << " [-]\n"
+                  << "lateral: " << object.lateral << " [-]";
+    marker.text = string_stream.str();
+    msg.markers.push_back(marker);
+  }
+
+  return msg;
+}
+
+}  // namespace
 
 MarkerArray createAvoidLineMarkerArray(
   const AvoidLineArray & shift_lines, std::string && ns, const float & r, const float & g,
@@ -82,24 +140,57 @@ MarkerArray createAvoidLineMarkerArray(
   return msg;
 }
 
-MarkerArray createAvoidanceObjectsMarkerArray(
+MarkerArray createTargetObjectsMarkerArray(
   const behavior_path_planner::ObjectDataArray & objects, std::string && ns)
 {
-  const auto normal_color = tier4_autoware_utils::createMarkerColor(0.9, 0.0, 0.0, 0.8);
-  const auto disappearing_color = tier4_autoware_utils::createMarkerColor(0.9, 0.5, 0.9, 0.6);
-
-  Marker marker = createDefaultMarker(
-    "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, 0L, Marker::CUBE,
-    createMarkerScale(3.0, 1.5, 1.5), normal_color);
-  int32_t i{0};
   MarkerArray msg;
-  for (const auto & object : objects) {
-    marker.id = ++i;
-    marker.pose = object.object.kinematics.initial_pose_with_covariance.pose;
-    marker.scale = tier4_autoware_utils::createMarkerScale(3.0, 1.5, 1.5);
-    marker.color = std::fabs(object.lost_time) < 1e-2 ? normal_color : disappearing_color;
-    msg.markers.push_back(marker);
+  msg.markers.reserve(objects.size() * 3);
+
+  appendMarkerArray(
+    createObjectsCubeMarkerArray(
+      objects, ns + "_cube", createMarkerScale(3.0, 1.5, 1.5),
+      createMarkerColor(1.0, 0.0, 0.0, 0.8)),
+    &msg);
+
+  appendMarkerArray(createObjectInfoMarkerArray(objects, ns + "_info"), &msg);
+
+  {
+    for (const auto & object : objects) {
+      const auto pos = object.object.kinematics.initial_pose_with_covariance.pose.position;
+
+      {
+        auto marker = createDefaultMarker(
+          "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns + "_envelope_polygon", 0L,
+          Marker::LINE_STRIP, createMarkerScale(0.1, 0.0, 0.0),
+          createMarkerColor(1.0, 1.0, 1.0, 0.999));
+
+        for (const auto & p : object.envelope_poly.outer()) {
+          marker.points.push_back(createPoint(p.x(), p.y(), pos.z));
+        }
+
+        marker.points.push_back(marker.points.front());
+        marker.id = uuidToInt32(object.object.object_id);
+        msg.markers.push_back(marker);
+      }
+    }
   }
+
+  return msg;
+}
+
+MarkerArray createOtherObjectsMarkerArray(
+  const behavior_path_planner::ObjectDataArray & objects, std::string && ns)
+{
+  MarkerArray msg;
+  msg.markers.reserve(objects.size() * 2);
+
+  appendMarkerArray(
+    createObjectsCubeMarkerArray(
+      objects, ns + "_cube", createMarkerScale(3.0, 1.5, 1.5),
+      createMarkerColor(0.0, 1.0, 0.0, 0.8)),
+    &msg);
+
+  appendMarkerArray(createObjectInfoMarkerArray(objects, ns + "_info"), &msg);
 
   return msg;
 }

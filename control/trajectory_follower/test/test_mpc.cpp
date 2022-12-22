@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "common/types.hpp"
 #include "gtest/gtest.h"
 #include "trajectory_follower/mpc.hpp"
 #include "trajectory_follower/qp_solver/qp_solver_osqp.hpp"
@@ -22,9 +21,9 @@
 #include "autoware_auto_control_msgs/msg/ackermann_lateral_command.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory.hpp"
 #include "autoware_auto_planning_msgs/msg/trajectory_point.hpp"
-#include "autoware_auto_system_msgs/msg/float32_multi_array_diagnostic.hpp"
 #include "autoware_auto_vehicle_msgs/msg/steering_report.hpp"
 #include "geometry_msgs/msg/pose.hpp"
+#include "tier4_debug_msgs/msg/float32_multi_array_stamped.hpp"
 
 #ifdef ROS_DISTRO_GALACTIC
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
@@ -38,8 +37,7 @@
 
 namespace
 {
-using autoware::common::types::bool8_t;
-using autoware::common::types::float64_t;
+
 namespace trajectory_follower = ::autoware::motion::control::trajectory_follower;
 typedef autoware_auto_planning_msgs::msg::Trajectory Trajectory;
 typedef autoware_auto_planning_msgs::msg::TrajectoryPoint TrajectoryPoint;
@@ -47,7 +45,7 @@ typedef autoware_auto_vehicle_msgs::msg::SteeringReport SteeringReport;
 typedef geometry_msgs::msg::Pose Pose;
 typedef geometry_msgs::msg::PoseStamped PoseStamped;
 typedef autoware_auto_control_msgs::msg::AckermannLateralCommand AckermannLateralCommand;
-typedef autoware_auto_system_msgs::msg::Float32MultiArrayDiagnostic Float32MultiArrayDiagnostic;
+typedef tier4_debug_msgs::msg::Float32MultiArrayStamped Float32MultiArrayStamped;
 
 class MPCTest : public ::testing::Test
 {
@@ -59,33 +57,34 @@ protected:
   SteeringReport neutral_steer;
   Pose pose_zero;
   PoseStamped::SharedPtr pose_zero_ptr;
-  float64_t default_velocity = 1.0;
+  double default_velocity = 1.0;
   rclcpp::Logger logger = rclcpp::get_logger("mpc_test_logger");
   // Vehicle model parameters
-  float64_t wheelbase = 2.7;
-  float64_t steer_limit = 1.0;
-  float64_t steer_tau = 0.1;
-  float64_t mass_fl = 600.0;
-  float64_t mass_fr = 600.0;
-  float64_t mass_rl = 600.0;
-  float64_t mass_rr = 600.0;
-  float64_t cf = 155494.663;
-  float64_t cr = 155494.663;
+  double wheelbase = 2.7;
+  double steer_limit = 1.0;
+  double steer_tau = 0.1;
+  double mass_fl = 600.0;
+  double mass_fr = 600.0;
+  double mass_rl = 600.0;
+  double mass_rr = 600.0;
+  double cf = 155494.663;
+  double cr = 155494.663;
   // Filters parameter
-  float64_t steering_lpf_cutoff_hz = 3.0;
-  float64_t error_deriv_lpf_cutoff_hz = 5.0;
+  double steering_lpf_cutoff_hz = 3.0;
+  double error_deriv_lpf_cutoff_hz = 5.0;
   // Test Parameters
-  float64_t admissible_position_error = 5.0;
-  float64_t admissible_yaw_error_rad = M_PI_2;
-  float64_t steer_lim = 0.610865;      // 35 degrees
-  float64_t steer_rate_lim = 2.61799;  // 150 degrees
-  float64_t ctrl_period = 0.03;
-  float64_t traj_resample_dist = 0.1;
-  int64_t path_filter_moving_ave_num = 35;
-  int64_t curvature_smoothing_num_traj = 1;
-  int64_t curvature_smoothing_num_ref_steer = 35;
-  bool8_t enable_path_smoothing = true;
-  bool8_t use_steer_prediction = true;
+  double admissible_position_error = 5.0;
+  double admissible_yaw_error_rad = M_PI_2;
+  double steer_lim = 0.610865;      // 35 degrees
+  double steer_rate_lim = 2.61799;  // 150 degrees
+  double ctrl_period = 0.03;
+  double traj_resample_dist = 0.1;
+  int path_filter_moving_ave_num = 35;
+  int curvature_smoothing_num_traj = 1;
+  int curvature_smoothing_num_ref_steer = 35;
+  bool enable_path_smoothing = true;
+  bool use_steer_prediction = true;
+  bool extend_trajectory_for_end_yaw_control = true;
 
   void SetUp() override
   {
@@ -177,7 +176,8 @@ protected:
     // Init trajectory
     mpc.setReferenceTrajectory(
       dummy_straight_trajectory, traj_resample_dist, enable_path_smoothing,
-      path_filter_moving_ave_num, curvature_smoothing_num_traj, curvature_smoothing_num_ref_steer);
+      path_filter_moving_ave_num, curvature_smoothing_num_traj, curvature_smoothing_num_ref_steer,
+      extend_trajectory_for_end_yaw_control);
   }
 };  // class MPCTest
 
@@ -206,7 +206,7 @@ TEST_F(MPCTest, InitializeAndCalculate)
   // Calculate MPC
   AckermannLateralCommand ctrl_cmd;
   Trajectory pred_traj;
-  Float32MultiArrayDiagnostic diag;
+  Float32MultiArrayStamped diag;
   ASSERT_TRUE(
     mpc.calculateMPC(neutral_steer, default_velocity, pose_zero, ctrl_cmd, pred_traj, diag));
   EXPECT_EQ(ctrl_cmd.steering_tire_angle, 0.0f);
@@ -235,12 +235,13 @@ TEST_F(MPCTest, InitializeAndCalculateRightTurn)
   initializeMPC(mpc);
   mpc.setReferenceTrajectory(
     dummy_right_turn_trajectory, traj_resample_dist, enable_path_smoothing,
-    path_filter_moving_ave_num, curvature_smoothing_num_traj, curvature_smoothing_num_ref_steer);
+    path_filter_moving_ave_num, curvature_smoothing_num_traj, curvature_smoothing_num_ref_steer,
+    extend_trajectory_for_end_yaw_control);
 
   // Calculate MPC
   AckermannLateralCommand ctrl_cmd;
   Trajectory pred_traj;
-  Float32MultiArrayDiagnostic diag;
+  Float32MultiArrayStamped diag;
   ASSERT_TRUE(
     mpc.calculateMPC(neutral_steer, default_velocity, pose_zero, ctrl_cmd, pred_traj, diag));
   EXPECT_LT(ctrl_cmd.steering_tire_angle, 0.0f);
@@ -253,7 +254,8 @@ TEST_F(MPCTest, OsqpCalculate)
   initializeMPC(mpc);
   mpc.setReferenceTrajectory(
     dummy_straight_trajectory, traj_resample_dist, enable_path_smoothing,
-    path_filter_moving_ave_num, curvature_smoothing_num_traj, curvature_smoothing_num_ref_steer);
+    path_filter_moving_ave_num, curvature_smoothing_num_traj, curvature_smoothing_num_ref_steer,
+    extend_trajectory_for_end_yaw_control);
 
   const std::string vehicle_model_type = "kinematics";
   std::shared_ptr<trajectory_follower::VehicleModelInterface> vehicle_model_ptr =
@@ -270,7 +272,7 @@ TEST_F(MPCTest, OsqpCalculate)
   // Calculate MPC
   AckermannLateralCommand ctrl_cmd;
   Trajectory pred_traj;
-  Float32MultiArrayDiagnostic diag;
+  Float32MultiArrayStamped diag;
   // with OSQP this function returns false despite finding correct solutions
   EXPECT_FALSE(
     mpc.calculateMPC(neutral_steer, default_velocity, pose_zero, ctrl_cmd, pred_traj, diag));
@@ -284,7 +286,8 @@ TEST_F(MPCTest, OsqpCalculateRightTurn)
   initializeMPC(mpc);
   mpc.setReferenceTrajectory(
     dummy_right_turn_trajectory, traj_resample_dist, enable_path_smoothing,
-    path_filter_moving_ave_num, curvature_smoothing_num_traj, curvature_smoothing_num_ref_steer);
+    path_filter_moving_ave_num, curvature_smoothing_num_traj, curvature_smoothing_num_ref_steer,
+    extend_trajectory_for_end_yaw_control);
 
   const std::string vehicle_model_type = "kinematics";
   std::shared_ptr<trajectory_follower::VehicleModelInterface> vehicle_model_ptr =
@@ -301,7 +304,7 @@ TEST_F(MPCTest, OsqpCalculateRightTurn)
   // Calculate MPC
   AckermannLateralCommand ctrl_cmd;
   Trajectory pred_traj;
-  Float32MultiArrayDiagnostic diag;
+  Float32MultiArrayStamped diag;
   ASSERT_TRUE(
     mpc.calculateMPC(neutral_steer, default_velocity, pose_zero, ctrl_cmd, pred_traj, diag));
   EXPECT_LT(ctrl_cmd.steering_tire_angle, 0.0f);
@@ -329,11 +332,12 @@ TEST_F(MPCTest, KinematicsNoDelayCalculate)
   // Init trajectory
   mpc.setReferenceTrajectory(
     dummy_straight_trajectory, traj_resample_dist, enable_path_smoothing,
-    path_filter_moving_ave_num, curvature_smoothing_num_traj, curvature_smoothing_num_ref_steer);
+    path_filter_moving_ave_num, curvature_smoothing_num_traj, curvature_smoothing_num_ref_steer,
+    extend_trajectory_for_end_yaw_control);
   // Calculate MPC
   AckermannLateralCommand ctrl_cmd;
   Trajectory pred_traj;
-  Float32MultiArrayDiagnostic diag;
+  Float32MultiArrayStamped diag;
   ASSERT_TRUE(
     mpc.calculateMPC(neutral_steer, default_velocity, pose_zero, ctrl_cmd, pred_traj, diag));
   EXPECT_EQ(ctrl_cmd.steering_tire_angle, 0.0f);
@@ -346,7 +350,8 @@ TEST_F(MPCTest, KinematicsNoDelayCalculateRightTurn)
   initializeMPC(mpc);
   mpc.setReferenceTrajectory(
     dummy_right_turn_trajectory, traj_resample_dist, enable_path_smoothing,
-    path_filter_moving_ave_num, curvature_smoothing_num_traj, curvature_smoothing_num_ref_steer);
+    path_filter_moving_ave_num, curvature_smoothing_num_traj, curvature_smoothing_num_ref_steer,
+    extend_trajectory_for_end_yaw_control);
 
   const std::string vehicle_model_type = "kinematics_no_delay";
   std::shared_ptr<trajectory_follower::VehicleModelInterface> vehicle_model_ptr =
@@ -365,7 +370,7 @@ TEST_F(MPCTest, KinematicsNoDelayCalculateRightTurn)
   // Calculate MPC
   AckermannLateralCommand ctrl_cmd;
   Trajectory pred_traj;
-  Float32MultiArrayDiagnostic diag;
+  Float32MultiArrayStamped diag;
   ASSERT_TRUE(
     mpc.calculateMPC(neutral_steer, default_velocity, pose_zero, ctrl_cmd, pred_traj, diag));
   EXPECT_LT(ctrl_cmd.steering_tire_angle, 0.0f);
@@ -392,7 +397,7 @@ TEST_F(MPCTest, DynamicCalculate)
   // Calculate MPC
   AckermannLateralCommand ctrl_cmd;
   Trajectory pred_traj;
-  Float32MultiArrayDiagnostic diag;
+  Float32MultiArrayStamped diag;
   ASSERT_TRUE(
     mpc.calculateMPC(neutral_steer, default_velocity, pose_zero, ctrl_cmd, pred_traj, diag));
   EXPECT_EQ(ctrl_cmd.steering_tire_angle, 0.0f);
@@ -418,7 +423,7 @@ TEST_F(MPCTest, MultiSolveWithBuffer)
   // Calculate MPC
   AckermannLateralCommand ctrl_cmd;
   Trajectory pred_traj;
-  Float32MultiArrayDiagnostic diag;
+  Float32MultiArrayStamped diag;
   ASSERT_TRUE(
     mpc.calculateMPC(neutral_steer, default_velocity, pose_zero, ctrl_cmd, pred_traj, diag));
   EXPECT_EQ(ctrl_cmd.steering_tire_angle, 0.0f);
@@ -462,7 +467,7 @@ TEST_F(MPCTest, FailureCases)
   pose_far.position.y = pose_zero.position.y - admissible_position_error - 1.0;
   AckermannLateralCommand ctrl_cmd;
   Trajectory pred_traj;
-  Float32MultiArrayDiagnostic diag;
+  Float32MultiArrayStamped diag;
   EXPECT_FALSE(
     mpc.calculateMPC(neutral_steer, default_velocity, pose_far, ctrl_cmd, pred_traj, diag));
 
