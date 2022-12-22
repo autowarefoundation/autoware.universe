@@ -229,11 +229,10 @@ void AvoidanceModule::fillAvoidanceTargetObjects(
     planner_data_, data.current_lanelets, parameters_->detection_area_left_expand_dist,
     parameters_->detection_area_right_expand_dist * (-1.0));
 
-  PredictedObjects far_objects;
-  const auto lane_filtered_objects =
-    filterObjectsByLanelets(*planner_data_->dynamic_object, expanded_lanelets, far_objects);
+  const auto [object_within_target_lane, object_outside_target_lane] =
+    util::separateObjectsByLanelets(*planner_data_->dynamic_object, expanded_lanelets);
 
-  for (const auto & object : far_objects.objects) {
+  for (const auto & object : object_outside_target_lane.objects) {
     ObjectData other_object;
     other_object.object = object;
     other_object.reason = "OutOfTargetArea";
@@ -241,7 +240,7 @@ void AvoidanceModule::fillAvoidanceTargetObjects(
   }
 
   DEBUG_PRINT("dynamic_objects size = %lu", planner_data_->dynamic_object->objects.size());
-  DEBUG_PRINT("lane_filtered_objects size = %lu", lane_filtered_objects.objects.size());
+  DEBUG_PRINT("lane_filtered_objects size = %lu", object_within_target_lane.objects.size());
 
   // for goal
   const auto & rh = planner_data_->route_handler;
@@ -255,7 +254,7 @@ void AvoidanceModule::fillAvoidanceTargetObjects(
   // for filtered objects
   ObjectDataArray target_objects;
   std::vector<AvoidanceDebugMsg> avoidance_debug_msg_array;
-  for (const auto & object : lane_filtered_objects.objects) {
+  for (const auto & object : object_within_target_lane.objects) {
     const auto & object_pose = object.kinematics.initial_pose_with_covariance.pose;
     AvoidanceDebugMsg avoidance_debug_msg;
     const auto avoidance_debug_array_false_and_push_back =
