@@ -2002,19 +2002,22 @@ bool AvoidanceModule::isSafePath(
   const auto check_lanes =
     getAdjacentLane(path_shifter, forward_check_distance, backward_check_distance);
 
-  PathWithLaneId smoothed_path;
-  if (!util::applyVelocitySmoothing(
-        planner_data_, shifted_path.path, forward_check_distance, smoothed_path)) {
-    // TODO(Satoshi OTA)  Think later the process in the case of failed to velocity smoothing.
-    RCLCPP_WARN(
-      rclcpp::get_logger("behavior_path_planner").get_child("avoidance"),
-      "failed velocity smoothing.");
-    return true;
+  auto path_with_current_velocity = shifted_path.path;
+  path_with_current_velocity = util::resamplePathWithSpline(path_with_current_velocity, 0.5);
+
+  const size_t ego_idx = findEgoIndex(path_with_current_velocity.points);
+  util::clipPathLength(path_with_current_velocity, ego_idx, forward_check_distance, 0.0);
+
+  constexpr double MIN_EGO_VEL_IN_PREDICTION = 1.38;  // 5km/h
+  for (auto & p : path_with_current_velocity.points) {
+    p.point.longitudinal_velocity_mps = std::max(getEgoSpeed(), MIN_EGO_VEL_IN_PREDICTION);
   }
 
-  smoothed_path = util::resamplePathWithSpline(smoothed_path, 0.5);
+  {
+    debug_data_.path_with_planned_velocity = path_with_current_velocity;
+  }
 
-  return isSafePath(smoothed_path, check_lanes, debug);
+  return isSafePath(path_with_current_velocity, check_lanes, debug);
 }
 
 bool AvoidanceModule::isSafePath(
@@ -3278,6 +3281,7 @@ void AvoidanceModule::setDebugData(
   using marker_utils::avoidance_marker::createEgoStatusMarkerArray;
   using marker_utils::avoidance_marker::createOtherObjectsMarkerArray;
   using marker_utils::avoidance_marker::createOverhangFurthestLineStringMarkerArray;
+  using marker_utils::avoidance_marker::createPredictedVehiclePositions;
   using marker_utils::avoidance_marker::createTargetObjectsMarkerArray;
   using marker_utils::avoidance_marker::createUnavoidableObjectsMarkerArray;
   using marker_utils::avoidance_marker::createUnsafeObjectsMarkerArray;
@@ -3300,6 +3304,8 @@ void AvoidanceModule::setDebugData(
     };
 
   add(createEgoStatusMarkerArray(data, getEgoPose(), "ego_status"));
+  add(createPredictedVehiclePositions(
+    debug.path_with_planned_velocity, "predicted_vehicle_positions"));
 
   const auto & path = data.reference_path;
   add(createPathMarkerArray(debug.center_line, "centerline", 0, 0.0, 0.5, 0.9));

@@ -413,6 +413,9 @@ struct DebugData
 
   bool exist_adjacent_objects{false};
 
+  // future pose
+  PathWithLaneId path_with_planned_velocity;
+
   // margin
   MarginDataArray margin_data_array;
 
