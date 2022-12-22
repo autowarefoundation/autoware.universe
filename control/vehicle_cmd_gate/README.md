@@ -21,7 +21,6 @@
 | `~/input/external/gear_cmd`                 | `autoware_auto_vehicle_msgs::msg::GearCommand`             | gear command from external                                           |
 | `~/input/external_emergency_stop_heartbeat` | `tier4_external_api_msgs::msg::Heartbeat`                  | heartbeat                                                            |
 | `~/input/gate_mode`                         | `tier4_control_msgs::msg::GateMode`                        | gate mode (AUTO or EXTERNAL)                                         |
-| `~/input/emergency_state`                   | `autoware_auto_system_msgs::msg::EmergencyState`           | used to detect the emergency situation of the vehicle                |
 | `~/input/emergency/control_cmd`             | `autoware_auto_control_msgs::msg::AckermannControlCommand` | command for lateral and longitudinal velocity from emergency handler |
 | `~/input/emergency/hazard_lights_cmd`       | `autoware_auto_vehicle_msgs::msg::HazardLightsCommand`     | hazard lights command from emergency handler                         |
 | `~/input/emergency/gear_cmd`                | `autoware_auto_vehicle_msgs::msg::GearCommand`             | gear command from emergency handler                                  |
@@ -48,7 +47,7 @@
 | ------------------------------------------- | ------ | --------------------------------------------------------------------------- |
 | `update_period`                             | double | update period                                                               |
 | `use_emergency_handling`                    | bool   | true when emergency handler is used                                         |
-| `use_external_emergency_stop`               | bool   | true when external emergency stop information is used                       |
+| `check_external_emergency_heartbeat`        | bool   | true when checking heartbeat for emergency stop                             |
 | `system_emergency_heartbeat_timeout`        | double | timeout for system emergency                                                |
 | `external_emergency_stop_heartbeat_timeout` | double | timeout for external emergency                                              |
 | `stop_hold_acceleration`                    | double | longitudinal acceleration cmd when vehicle should stop                      |
@@ -66,6 +65,6 @@
 
 ## Assumptions / Known limits
 
-The parameter `use_external_emergency_stop` (true by default) enables an emergency stop request from external modules.
+The parameter `check_external_emergency_heartbeat` (true by default) enables an emergency stop request from external modules.
 This feature requires a `~/input/external_emergency_stop_heartbeat` topic for health monitoring of the external module, and the vehicle_cmd_gate module will not start without the topic.
-The `use_external_emergency_stop` parameter must be false when the "external emergency stop" function is not used.
+The `check_external_emergency_heartbeat` parameter must be false when the "external emergency stop" function is not used.

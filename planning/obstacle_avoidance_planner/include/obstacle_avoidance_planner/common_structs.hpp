@@ -36,16 +36,6 @@ using VehicleBounds = std::vector<Bounds>;
 using SequentialBounds = std::vector<Bounds>;
 
 using BoundsCandidates = std::vector<Bounds>;
-using SequentialBoundsCandidates = std::vector<BoundsCandidates>;
-
-struct CVMaps
-{
-  cv::Mat drivable_area;
-  cv::Mat clearance_map;
-  cv::Mat only_objects_clearance_map;
-  cv::Mat area_with_objects_map;
-  nav_msgs::msg::MapMetaData map_info;
-};
 
 struct QPParam
 {
@@ -171,7 +161,7 @@ struct DebugData
   std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> extended_fixed_traj;
   std::vector<autoware_auto_planning_msgs::msg::TrajectoryPoint> extended_non_fixed_traj;
 
-  SequentialBoundsCandidates sequential_bounds_candidates;
+  BoundsCandidates bounds_candidates;
 };
 
 struct Trajectories
@@ -206,9 +196,11 @@ struct TrajectoryParam
   double acceleration_for_non_deceleration_range;
   int num_fix_points_for_extending;
   double max_dist_for_extending_end_point;
+  double non_fixed_trajectory_length;
 
   double ego_nearest_dist_threshold;
   double ego_nearest_yaw_threshold;
+  bool enable_clipping_fixed_traj;
 };
 
 struct MPTParam

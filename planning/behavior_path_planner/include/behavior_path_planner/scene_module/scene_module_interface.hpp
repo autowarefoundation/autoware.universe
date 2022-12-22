@@ -62,9 +62,6 @@ struct BehaviorModuleOutput
   // path planed by module
   PlanResult path{};
 
-  // path candidate planed by module
-  PlanResult path_candidate{};
-
   TurnSignalInfo turn_signal_info{};
 };
 
@@ -87,7 +84,7 @@ public:
     clock_{node.get_clock()},
     uuid_(generateUUID()),
     is_waiting_approval_{false},
-    current_state_{BT::NodeStatus::IDLE}
+    current_state_{BT::NodeStatus::SUCCESS}
   {
     std::string module_ns;
     module_ns.resize(name.size());
@@ -130,7 +127,7 @@ public:
     BehaviorModuleOutput out;
     out.path = util::generateCenterLinePath(planner_data_);
     const auto candidate = planCandidate();
-    out.path_candidate = std::make_shared<PathWithLaneId>(candidate.path_candidate);
+    path_candidate_ = std::make_shared<PathWithLaneId>(candidate.path_candidate);
     return out;
   }
 
@@ -228,6 +225,10 @@ public:
 
   bool isWaitingApproval() const { return is_waiting_approval_; }
 
+  PlanResult getPathCandidate() const { return path_candidate_; }
+
+  void resetPathCandidate() { path_candidate_.reset(); }
+
   virtual void lockRTCCommand()
   {
     if (!rtc_interface_ptr_) {
@@ -258,6 +259,7 @@ protected:
   std::unique_ptr<SteeringFactorInterface> steering_factor_interface_ptr_;
   UUID uuid_;
   bool is_waiting_approval_;
+  PlanResult path_candidate_;
 
   void updateRTCStatus(const double start_distance, const double finish_distance)
   {

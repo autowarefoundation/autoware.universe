@@ -5,6 +5,9 @@
   <version>0.0.0</version>
   <description>The tier4_autoware_api_launch package</description>
   <maintainer email="isamu.takagi@tier4.jp">Takagi, Isamu</maintainer>
+  <maintainer email="makoto.yabuta@tier4.jp">yabuta</maintainer>
+  <maintainer email="kahhooi.tan@tier4.jp">Kah Hooi Tan</maintainer>
+  <maintainer email="kenji.miyake@tier4.jp">Kenji Miyake</maintainer>
   <maintainer email="ryohsuke.mitsudome@tier4.jp">Ryohsuke Mitsudome</maintainer>
   <license>Apache License 2.0</license>
 
@@ -18,6 +21,7 @@
   <exec_depend>awapi_awiv_adapter</exec_depend>
   <exec_depend>default_ad_api</exec_depend>
   <exec_depend>path_distance_calculator</exec_depend>
+  <exec_depend>rosbridge_server</exec_depend>
   <exec_depend>topic_tools</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>

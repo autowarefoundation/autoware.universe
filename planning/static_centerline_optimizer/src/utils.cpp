@@ -85,17 +85,14 @@ PathWithLaneId get_path_with_lane_id(
   auto planner_data = std::make_shared<behavior_path_planner::PlannerData>();
   planner_data->route_handler = std::make_shared<RouteHandler>(route_handler);
   planner_data->self_pose = convert_to_pose_stamped(start_pose);
-  planner_data->parameters.drivable_lane_forward_length = std::numeric_limits<double>::max();
-  planner_data->parameters.drivable_lane_backward_length = std::numeric_limits<double>::min();
-  planner_data->parameters.drivable_lane_margin = 5.0;
   planner_data->parameters.ego_nearest_dist_threshold = ego_nearest_dist_threshold;
   planner_data->parameters.ego_nearest_yaw_threshold = ego_nearest_yaw_threshold;
 
   // generate drivable area and store it in path with lane id
-  constexpr double drivable_area_resolution = 0.1;
   constexpr double vehicle_length = 0.0;
-  path_with_lane_id.drivable_area = behavior_path_planner::util::generateDrivableArea(
-    path_with_lane_id, lanelets, drivable_area_resolution, vehicle_length, planner_data);
+  const auto drivable_lanes = behavior_path_planner::util::generateDrivableLanes(lanelets);
+  behavior_path_planner::util::generateDrivableArea(
+    path_with_lane_id, drivable_lanes, vehicle_length, planner_data);
 
   return path_with_lane_id;
 }

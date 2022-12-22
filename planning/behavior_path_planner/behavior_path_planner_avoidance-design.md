@@ -380,6 +380,16 @@ The shift points are modified by a filtering process in order to get the expecte
 - Similar gradient removal: Connect two shift points with a straight line, and remove the shift points in between if their shift amount is in the vicinity of the straight line.
 - Remove momentary returns: For shift points that reduce the avoidance width (for going back to the center line), if there is enough long distance in the longitudinal direction, remove them.
 
+##### Avoidance Cancelling
+
+If `enable_update_path_when_object_is_gone` parameter is true, Avoidance Module takes different actions according to the situations as follows:
+
+- If vehicle stops: If there is any object in the path of the vehicle, the avoidance path is generated. If this object goes away while the vehicle is stopping, the avoidance path will cancelled.
+- If vehicle is in motion, but avoidance maneuver doesn't started: If there is any object in the path of the vehicle, the avoidance path is generated. If this object goes away while the vehicle is not started avoidance maneuver, the avoidance path will cancelled.
+- If vehicle is in motion, avoidance maneuver started: If there is any object in the path of the vehicle, the avoidance path is generated,but if this object goes away while the vehicle is started avoidance maneuver, the avoidance path will not cancelled.
+
+If `enable_update_path_when_object_is_gone` parameter is false, Avoidance Module doesn't revert generated avoidance path even if path objects are gone.
+
 #### How to keep the consistency of the planning
 
 TODO
@@ -411,6 +421,8 @@ The avoidance specific parameter configuration file can be located at `src/autow
 | avoidance_execution_lateral_threshold      | [m]    | double | The lateral distance deviation threshold between the current path and suggested avoidance point to execute avoidance. (\*2)                      | 0.499         |
 | enable_avoidance_over_same_direction       | [-]    | bool   | Extend avoidance trajectory to adjacent lanes that has same direction. If false, avoidance only happen in current lane.                          | true          |
 | enable_avoidance_over_opposite_direction   | [-]    | bool   | Extend avoidance trajectory to adjacent lanes that has opposite direction. `enable_avoidance_over_same_direction` must be `true` to take effects | true          |
+| enable_update_path_when_object_is_gone     | [-]    | bool   | Reset trajectory when avoided objects are gone. If false, shifted path points remain same even though the avoided objects are gone.              | false         |
+| enable_bound_clipping                      | `true` | bool   | Enable clipping left and right bound of drivable area when obstacles are in the drivable area                                                    | false         |
 
 (\*2) If there are multiple vehicles in a row to be avoided, no new avoidance path will be generated unless their lateral margin difference exceeds this value.
 
@@ -501,25 +513,3 @@ To print the debug message, just run the following
 ```bash
 ros2 topic echo /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/debug/avoidance_debug_message_array
 ```
-
-### Visualizing drivable area boundary
-
-Sometimes, the developers might get a different result between two maps that may look identical during visual inspection.
-
-For example, in the same area, one can perform avoidance and another cannot. This might be related to the drivable area issues due to the non-compliance vector map design from the user.
-
-To debug the issue, the drivable area boundary can be visualized.
-
-![drivable_area_boundary_marker1](./image/avoidance_design/drivable_area_boundary_marker_example1.png)
-
-![drivable_area_boundary_marker2](./image/avoidance_design/drivable_area_boundary_marker_example2.png)
-
-The boundary can be visualize by adding the marker from `/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/drivable_area_boundary`
-
-### Visualizing drivable area
-
-The drivable area can be visualize by adding the drivable area plugin
-
-![drivable_area_plugin](./image/drivable_area_plugin.png)
-
-and then add `/planning/scenario_planning/lane_driving/behavior_planning/path` as the topic.

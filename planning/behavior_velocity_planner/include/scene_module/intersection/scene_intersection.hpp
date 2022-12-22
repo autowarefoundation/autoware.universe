@@ -46,7 +46,6 @@ public:
   struct DebugData
   {
     bool stop_required;
-    autoware_auto_planning_msgs::msg::PathWithLaneId path_raw;
 
     geometry_msgs::msg::Pose slow_wall_pose;
     geometry_msgs::msg::Pose stop_wall_pose;
@@ -107,9 +106,7 @@ public:
    * @brief plan go-stop velocity at traffic crossing with collision check between reference path
    * and object predicted path
    */
-  bool modifyPathVelocity(
-    autoware_auto_planning_msgs::msg::PathWithLaneId * path,
-    tier4_planning_msgs::msg::StopReason * stop_reason) override;
+  bool modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason) override;
 
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
   visualization_msgs::msg::MarkerArray createVirtualWallMarkerArray() override;
@@ -169,7 +166,7 @@ private:
   Polygon2d generateEgoIntersectionLanePolygon(
     lanelet::LaneletMapConstPtr lanelet_map_ptr,
     const autoware_auto_planning_msgs::msg::PathWithLaneId & path, const int closest_idx,
-    const int start_idx, const double extra_dist, const double ignore_dist) const;
+    const double extra_dist, const double ignore_dist) const;
 
   /**
    * @brief Modify objects predicted path. remove path point if the time exceeds timer_thr.
