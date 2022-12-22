@@ -45,8 +45,8 @@ protected:
     const double image_height, const Eigen::Affine3d & object2camera_affine,
     const Eigen::Matrix4d & camera_projection);
 
-  void calcFusedObjectOnImage(
-    const ::std::vector<DetectedObject> & objects,
+  void fuseObjectsOnImage(
+    const std::vector<DetectedObject> & objects,
     const std::vector<DetectedObjectWithFeature> & image_rois,
     const std::map<std::size_t, sensor_msgs::msg::RegionOfInterest> & object_roi_map);
 
@@ -57,9 +57,10 @@ protected:
 private:
   struct
   {
-    double passthrough_lower_bound_probability_threshold_{0.0f};
-    bool use_probability_{false};
-    double iou_threshold_{0.0f};
+    double passthrough_lower_bound_probability_threshold_{};
+    double iou_threshold_{};
+    bool use_roi_probability_{};
+    double roi_probability_threshold_{};
   } fusion_params_;
 
   std::vector<bool> passthrough_object_flags_, fused_object_flags_, ignored_object_flags_;

@@ -25,7 +25,8 @@ RoiDetectedObjectFusionNode::RoiDetectedObjectFusionNode(const rclcpp::NodeOptio
 {
   fusion_params_.passthrough_lower_bound_probability_threshold_ =
     declare_parameter<double>("passthrough_lower_bound_probability_threshold");
-  fusion_params_.use_probability_ = declare_parameter<bool>("use_probability");
+  fusion_params_.use_roi_probability_ = declare_parameter<bool>("use_roi_probability");
+  fusion_params_.roi_probability_threshold_ = declare_parameter<bool>("roi_probability_threshold");
   fusion_params_.iou_threshold_ = declare_parameter<double>("iou_threshold");
 }
 
@@ -72,7 +73,7 @@ void RoiDetectedObjectFusionNode::fuseOnSingleImage(
   const auto object_roi_map = generateDetectedObjectRoIs(
     input_object_msg.objects, static_cast<double>(camera_info.width),
     static_cast<double>(camera_info.height), object2camera_affine, camera_projection);
-  calcFusedObjectOnImage(input_object_msg.objects, input_roi_msg.feature_objects, object_roi_map);
+  fuseObjectsOnImage(input_object_msg.objects, input_roi_msg.feature_objects, object_roi_map);
 
   if (debugger_) {
     debugger_->image_rois_.reserve(input_roi_msg.feature_objects.size());
@@ -164,33 +165,38 @@ std::map<std::size_t, RegionOfInterest> RoiDetectedObjectFusionNode::generateDet
   return object_roi_map;
 }
 
-void RoiDetectedObjectFusionNode::calcFusedObjectOnImage(
-  const std::vector<DetectedObject> & objects,
+void RoiDetectedObjectFusionNode::fuseObjectsOnImage(
+  const std::vector<DetectedObject> & objects __attribute__((unused)),
   const std::vector<DetectedObjectWithFeature> & image_rois,
   const std::map<std::size_t, sensor_msgs::msg::RegionOfInterest> & object_roi_map)
 {
   for (const auto & object_pair : object_roi_map) {
-    const auto obj_i = object_pair.first;
+    const auto & obj_i = object_pair.first;
     if (fused_object_flags_.at(obj_i)) {
       continue;
     }
 
-    double roi_prob = 0.0;
-    double max_iou = 0.0;
-    const auto & object_roi = object_pair.second;
+    float roi_prob = 0.0f;
+    float max_iou = 0.0f;
     for (const auto & image_roi : image_rois) {
+      const auto & object_roi = object_pair.second;
       const double iou = calcIoU(object_roi, image_roi.feature.roi);
       if (iou > max_iou) {
         max_iou = iou;
-        // NOTE(yukke42): The existence_probability of rois from tensorrt_yolo is ZERO.
-        roi_prob = image_roi.object.classification.front().probability;
+        roi_prob = image_roi.object.existence_probability;
       }
     }
 
-    const auto obj_prob = objects.at(obj_i).existence_probability;
-    const bool is_fused_with_prob = !fusion_params_.use_probability_ || obj_prob <= roi_prob;
-    if (max_iou > fusion_params_.iou_threshold_ && is_fused_with_prob) {
-      fused_object_flags_.at(obj_i) = true;
+    if (max_iou > fusion_params_.iou_threshold_) {
+      if (fusion_params_.use_roi_probability_) {
+        if (roi_prob > fusion_params_.roi_probability_threshold_) {
+          fused_object_flags_.at(obj_i) = true;
+        } else {
+          ignored_object_flags_.at(obj_i) = true;
+        }
+      } else {
+        fused_object_flags_.at(obj_i) = true;
+      }
     } else {
       ignored_object_flags_.at(obj_i) = true;
     }
@@ -222,9 +228,9 @@ bool RoiDetectedObjectFusionNode::out_of_scope(const DetectedObject & obj)
 
 void RoiDetectedObjectFusionNode::publish(const DetectedObjects & output_msg)
 {
-  // if (pub_ptr_->get_subscription_count() < 1) {
-  //   return;
-  // }
+  if (pub_ptr_->get_subscription_count() < 1) {
+    return;
+  }
 
   DetectedObjects output_objects_msg, debug_fused_objects_msg, debug_ignored_objects_msg;
   output_objects_msg.header = output_msg.header;
