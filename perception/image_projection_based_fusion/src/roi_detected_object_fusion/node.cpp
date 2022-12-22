@@ -27,11 +27,6 @@ RoiDetectedObjectFusionNode::RoiDetectedObjectFusionNode(const rclcpp::NodeOptio
     declare_parameter<double>("passthrough_lower_bound_probability_threshold");
   fusion_params_.use_probability_ = declare_parameter<bool>("use_probability");
   fusion_params_.iou_threshold_ = declare_parameter<double>("iou_threshold");
-
-  {
-    using tier4_autoware_utils::DebugPublisher;
-    debug_publisher_ptr_ = std::make_unique<DebugPublisher>(this, "roi_detected_object_fusion");
-  }
 }
 
 void RoiDetectedObjectFusionNode::preprocess(DetectedObjects & output_msg)
@@ -250,9 +245,8 @@ void RoiDetectedObjectFusionNode::publish(const DetectedObjects & output_msg)
 
   pub_ptr_->publish(output_objects_msg);
 
-  debug_publisher_ptr_->publish<DetectedObjects>("debug/fused_objects", debug_fused_objects_msg);
-  debug_publisher_ptr_->publish<DetectedObjects>(
-    "debug/ignored_objects", debug_ignored_objects_msg);
+  debug_publisher_->publish<DetectedObjects>("debug/fused_objects", debug_fused_objects_msg);
+  debug_publisher_->publish<DetectedObjects>("debug/ignored_objects", debug_ignored_objects_msg);
 }
 
 }  // namespace image_projection_based_fusion

@@ -63,8 +63,6 @@ private:
   } fusion_params_;
 
   std::vector<bool> passthrough_object_flags_, fused_object_flags_, ignored_object_flags_;
-
-  std::unique_ptr<tier4_autoware_utils::DebugPublisher> debug_publisher_ptr_{nullptr};
 };
 
 }  // namespace image_projection_based_fusion
