@@ -16,6 +16,7 @@
 #define IMAGE_PROJECTION_BASED_FUSION__ROI_DETECTED_OBJECT_FUSION__NODE_HPP_
 
 #include "image_projection_based_fusion/fusion_node.hpp"
+#include "tier4_autoware_utils/ros/debug_publisher.hpp"
 
 #include <map>
 #include <memory>

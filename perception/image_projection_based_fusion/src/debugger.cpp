@@ -58,9 +58,6 @@ Debugger::Debugger(
       image_transport::create_publisher(node_ptr, "~/debug/image_raw" + std::to_string(img_i));
     image_pubs_.push_back(pub);
     image_buffers_.at(img_i).set_capacity(image_buffer_size_);
-
-    publisher_ = std::make_unique<tier4_autoware_utils::DebugPublisher>(
-      node_ptr, "image_projection_based_fusion");
   }
 }
 

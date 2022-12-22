@@ -17,8 +17,6 @@
 
 #define EIGEN_MPL2_ONLY
 
-#include "tier4_autoware_utils/ros/debug_publisher.hpp"
-
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <image_transport/image_transport.hpp>
@@ -50,8 +48,6 @@ public:
   std::vector<RegionOfInterest> image_rois_;
   std::vector<RegionOfInterest> obstacle_rois_;
   std::vector<Eigen::Vector2d> obstacle_points_;
-
-  std::unique_ptr<tier4_autoware_utils::DebugPublisher> publisher_;
 
 private:
   void imageCallback(
