@@ -6,7 +6,10 @@ The `roi_detected_object_fusion` is a package to overwrite labels of detected ob
 
 ## Inner-workings / Algorithms
 
-The detected objects are projected onto image planes, and then if the ROIs of detected objects (3D ROIs) and from a 2D detector (2D ROIs) are overlapped, the labels of detected objects are overwritten with that of 2D ROIs. Intersection over Union (IoU) is used to determine if there are overlaps between them.
+The algorithm is shown below and see `Parameters` for the meaning of each parameter :
+
+1. If `existence_probability` of detected objects is greater than the threshold, they passthrough without doing anything.
+2. The rest of detected objects are projected onto image planes, and if ROIs are overlapped with them, they are output as fused objects. Intersection over Union (IoU) is used to determine if there are overlaps between them.
 
 The `DetectedObject` has three shape and the polygon vertices of a object are as below:
 
@@ -27,23 +30,26 @@ The `DetectedObject` has three shape and the polygon vertices of a object are as
 
 ### Output
 
-| Name                 | Type                                                  | Description                                       |
-| -------------------- | ----------------------------------------------------- | ------------------------------------------------- |
-| `output`             | `autoware_auto_perception_msgs::msg::DetectedObjects` | detected objects                                  |
-| `output/image_rawID` | `sensor_msgs::msg::Image`                             | images for visualization, `ID` is between 0 and 7 |
+| Name                    | Type                                                  | Description                                       |
+| ----------------------- | ----------------------------------------------------- | ------------------------------------------------- |
+| `output`                | `autoware_auto_perception_msgs::msg::DetectedObjects` | detected objects                                  |
+| `output/image_rawID`    | `sensor_msgs::msg::Image`                             | images for visualization, `ID` is between 0 and 7 |
+| `debug/fused_objects`   | `autoware_auto_perception_msgs::msg::DetectedObjects` | fused detected objects                            |
+| `debug/ignored_objects` | `autoware_auto_perception_msgs::msg::DetectedObjects` | not fused detected objects                        |
 
 ## Parameters
 
 ### Core Parameters
 
-| Name            | Type  | Description                                                                    |
-| --------------- | ----- | ------------------------------------------------------------------------------ |
-| `use_iou_x`     | bool  | calculate IoU only along x-axis                                                |
-| `use_iou_y`     | bool  | calculate IoU only along y-axis                                                |
-| `use_iou`       | bool  | calculate IoU both along x-axis and y-axis                                     |
-| `iou_threshold` | float | the IoU threshold to overwrite a label of a detected object with that of a roi |
-| `rois_number`   | int   | the number of input rois                                                       |
-| `debug_mode`    | bool  | If `true`, subscribe and publish images for visualization.                     |
+| Name                                            | Type   | Description                                                                                               |
+| ----------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------------- |
+| `rois_number`                                   | int    | the number of input rois                                                                                  |
+| `debug_mode`                                    | bool   | If `true`, subscribe and publish images for visualization.                                                |
+| `use_iou`                                       | bool   | calculate IoU both along x-axis and y-axis                                                                |
+| `iou_threshold`                                 | double | the IoU threshold to                                                                                      |
+| `passthrough_lower_bound_probability_threshold` | double | If `existence_probability` of detected objects is greater than the threshold, they passthrough as outputs |
+| `use_roi_probability`                           | float  | use `existence_probability` of ROIs to match with detected objects                                        |
+| `roi_probability_threshold`                     | double | If `existence_probability` of ROIs is greater than the threshold, matched detected objects are output     |
 
 ## Assumptions / Known limits
 
