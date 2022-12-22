@@ -39,11 +39,6 @@ struct GoalCandidate
 
   bool operator<(const GoalCandidate & other) const noexcept
   {
-    // compare in order of decreasing lateral offset.
-    // if (std::abs(lateral_offset - other.lateral_offset) > std::numeric_limits<double>::epsilon())
-    // {
-    //   return lateral_offset < other.lateral_offset;
-    // }
     return distance_from_original_goal < other.distance_from_original_goal;
   }
 };
