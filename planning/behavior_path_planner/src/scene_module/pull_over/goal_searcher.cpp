@@ -250,7 +250,6 @@ void GoalSearcher::createAreaPolygons(std::vector<Pose> original_search_poses)
 
 BasicPolygons2d GoalSearcher::getNoStoppingAreaPolygons(const lanelet::ConstLanelets & lanes) const
 {
-  // std::vector<lanelet::BasicPolygon2d> polys{}
   BasicPolygons2d area_polygons{};
   for (const auto & ll : lanes) {
     for (const auto & reg_elem : ll.regulatoryElementsAs<NoStoppingArea>()) {
