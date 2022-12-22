@@ -35,6 +35,8 @@ using geometry_msgs::msg::Pose;
 using nav_msgs::msg::OccupancyGrid;
 using tier4_planning_msgs::msg::LateralOffset;
 
+enum class SideShiftStatus { STOP = 0, BEFORE_SHIFT, SHIFTING, AFTER_SHIFT };
+
 struct SideShiftParameters
 {
   double time_to_start_shifting;
@@ -89,7 +91,7 @@ private:
 
   ShiftLine calcShiftLine() const;
 
-  bool addShiftLine();
+  void replaceShiftLine();
 
   // const methods
   void publishPath(const PathWithLaneId & path) const;
@@ -102,8 +104,17 @@ private:
   lanelet::ConstLanelets current_lanelets_;
   SideShiftParameters parameters_;
 
-  // Current lateral offset to shift the reference path.
-  double lateral_offset_{0.0};
+  // Requested lateral offset to shift the reference path.
+  double requested_lateral_offset_{0.0};
+
+  // Inserted lateral offset to shift the reference path.
+  double inserted_lateral_offset_{0.0};
+
+  // Inserted shift lines in the path
+  ShiftLine inserted_shift_line_;
+
+  // Shift status
+  SideShiftStatus shift_status_;
 
   // Flag to check lateral offset change is requested
   bool lateral_offset_change_request_{false};

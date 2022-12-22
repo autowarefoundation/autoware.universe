@@ -43,7 +43,7 @@ The following modules are currently supported:
 
 ### input
 
-- /planning/mission_planning/route [`autoware_auto_planning_msgs/HADMapRoute`] : Current route from start to goal.
+- /planning/mission_planning/route [`autoware_planning_msgs/LaneletRoute`] : Current route from start to goal.
 - /map/vector_map [autoware_auto_mapping_msgs/HADMapBin] : Map information.
 - /perception/object_recognition/objects [`autoware_auto_perception_msgs/PredictedObjects`] : dynamic objects from perception module.
 - /perception/occupancy_grid_map/map [nav_msgs/msg/OccupancyGrid] : occupancy grid map from perception module. This is used for only Pull Over module
@@ -54,29 +54,7 @@ The following modules are currently supported:
 
 ## Inner-workings / Algorithms
 
-### Drivable Area Generation
-
-Drivable lanes are quantized and drawn on an image as a drivable area, whose resolution is `drivable_area_resolution`.
-To prevent the quantization from causing instability to the planning modules, drivable area's pose follows the rules below.
-
-- Drivable area is generated in the map coordinate.
-- Its position is quantized with `drivable_area_resolution`.
-- Its orientation is 0.
-
-The size of the drivable area changes dynamically to realize both decreasing the computation cost and covering enough lanes to follow.
-For the second purpose, the drivable area covers a certain length forward and backward lanes with some margins defined by parameters.
-
-#### Parameters for drivable area generation
-
-| Name                          | Unit | Type   | Description                                                                | Default value |
-| :---------------------------- | :--- | :----- | :------------------------------------------------------------------------- | :------------ |
-| drivable_area_resolution      | [m]  | double | resolution of the image of the drivable area                               | 0.1           |
-| drivable_lane_forward_length  | [m]  | double | length of the forward lane from the ego covered by the drivable area       | 50.0          |
-| drivable_lane_backward_length | [m]  | double | length of the backward lane from the ego covered by the drivable area      | 5.0           |
-| drivable_lane_margin          | [m]  | double | forward and backward lane margin from the ego covered by the drivable area | 3.0           |
-| drivable_area_margin          | [m]  | double | margin of width and height of the drivable area                            | 6.0           |
-
-#### Parameters for drivable area expansion
+### Parameters for drivable area expansion
 
 Optionally, the drivable area can be expanded by a static distance.
 Expansion parameters are defined for each module of the `behavior_path_planner` and should be prefixed accordingly (see `config/drivable_area_expansion.yaml` for an example).

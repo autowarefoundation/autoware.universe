@@ -45,7 +45,8 @@ Path convert_to_path(const PathWithLaneId & path_with_lane_id)
 {
   Path path;
   path.header = path_with_lane_id.header;
-  path.drivable_area = path_with_lane_id.drivable_area;
+  path.left_bound = path_with_lane_id.left_bound;
+  path.right_bound = path_with_lane_id.right_bound;
   for (const auto & point : path_with_lane_id.points) {
     path.points.push_back(point.point);
   }
@@ -54,11 +55,11 @@ Path convert_to_path(const PathWithLaneId & path_with_lane_id)
 }
 
 [[maybe_unused]] lanelet::ConstLanelets get_lanelets_from_route(
-  const RouteHandler & route_handler, const HADMapRoute & route)
+  const RouteHandler & route_handler, const LaneletRoute & route)
 {
   lanelet::ConstLanelets lanelets;
   for (const auto & segment : route.segments) {
-    const auto & target_lanelet_id = segment.preferred_primitive_id;
+    const auto & target_lanelet_id = segment.preferred_primitive.id;
     const auto target_lanelet = route_handler.getLaneletsFromId(target_lanelet_id);
     lanelets.push_back(target_lanelet);
   }
@@ -66,11 +67,11 @@ Path convert_to_path(const PathWithLaneId & path_with_lane_id)
   return lanelets;
 }
 
-std::vector<unsigned int> get_lane_ids_from_route(const HADMapRoute & route)
+std::vector<unsigned int> get_lane_ids_from_route(const LaneletRoute & route)
 {
   std::vector<unsigned int> lane_ids;
   for (const auto & segment : route.segments) {
-    const auto & target_lanelet_id = segment.preferred_primitive_id;
+    const auto & target_lanelet_id = segment.preferred_primitive.id;
     lane_ids.push_back(target_lanelet_id);
   }
 

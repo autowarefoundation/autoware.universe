@@ -181,10 +181,10 @@ void PullOverModule::onExit()
   RCLCPP_DEBUG(getLogger(), "PULL_OVER onExit");
   clearWaitingApproval();
   removeRTCStatus();
+  resetPathCandidate();
   steering_factor_interface_ptr_->clearSteeringFactors();
 
   // A child node must never return IDLE
-  // https://github.com/BehaviorTree/BehaviorTree.CPP/blob/master/include/behaviortree_cpp_v3/basic_types.h#L34
   current_state_ = BT::NodeStatus::SUCCESS;
 }
 
@@ -347,6 +347,8 @@ BehaviorModuleOutput PullOverModule::plan()
 {
   const auto & current_pose = planner_data_->self_pose->pose;
 
+  resetPathCandidate();
+
   status_.current_lanes = util::getExtendedCurrentLanes(planner_data_);
   status_.pull_over_lanes = pull_over_utils::getPullOverLanes(*(planner_data_->route_handler));
   status_.lanes =
@@ -439,18 +441,18 @@ BehaviorModuleOutput PullOverModule::plan()
   for (size_t i = status_.current_path_idx; i < status_.pull_over_path.partial_paths.size(); ++i) {
     auto & path = status_.pull_over_path.partial_paths.at(i);
     const auto p = planner_data_->parameters;
+    const auto shorten_lanes = util::cutOverlappedLanes(path, status_.lanes);
     const auto lane = util::expandLanelets(
-      status_.lanes, parameters_.drivable_area_left_bound_offset,
+      shorten_lanes, parameters_.drivable_area_left_bound_offset,
       parameters_.drivable_area_right_bound_offset, parameters_.drivable_area_types_to_skip);
-    path.drivable_area = util::generateDrivableArea(
-      path, lane, p.drivable_area_resolution, p.vehicle_length, planner_data_);
+    util::generateDrivableArea(path, lane, p.vehicle_length, planner_data_);
   }
 
   BehaviorModuleOutput output;
   // safe: use pull over path
   if (status_.is_safe) {
     output.path = std::make_shared<PathWithLaneId>(getCurrentPath());
-    output.path_candidate = std::make_shared<PathWithLaneId>(getFullPath());
+    path_candidate_ = std::make_shared<PathWithLaneId>(getFullPath());
   } else {
     RCLCPP_WARN_THROTTLE(
       getLogger(), *clock_, 5000, "Not found safe pull_over path. Stop in road lane.");
@@ -522,7 +524,7 @@ BehaviorModuleOutput PullOverModule::planWaitingApproval()
   BehaviorModuleOutput out;
   plan();  // update status_
   out.path = std::make_shared<PathWithLaneId>(getReferencePath());
-  out.path_candidate = status_.is_safe ? std::make_shared<PathWithLaneId>(getFullPath()) : out.path;
+  path_candidate_ = status_.is_safe ? std::make_shared<PathWithLaneId>(getFullPath()) : out.path;
 
   const auto distance_to_path_change = calcDistanceToPathChange();
   updateRTCStatus(distance_to_path_change.first, distance_to_path_change.second);
@@ -611,13 +613,12 @@ PathWithLaneId PullOverModule::getReferencePath() const
     -calcMinimumShiftPathDistance(), parameters_.deceleration_interval);
 
   const auto drivable_lanes = util::generateDrivableLanes(status_.current_lanes);
+  const auto shorten_lanes = util::cutOverlappedLanes(reference_path, drivable_lanes);
   const auto lanes = util::expandLanelets(
-    drivable_lanes, parameters_.drivable_area_left_bound_offset,
+    shorten_lanes, parameters_.drivable_area_left_bound_offset,
     parameters_.drivable_area_right_bound_offset, parameters_.drivable_area_types_to_skip);
-
-  reference_path.drivable_area = util::generateDrivableArea(
-    reference_path, lanes, common_parameters.drivable_area_resolution,
-    common_parameters.vehicle_length, planner_data_);
+  util::generateDrivableArea(
+    reference_path, lanes, common_parameters.vehicle_length, planner_data_);
 
   return reference_path;
 }
@@ -660,13 +661,12 @@ PathWithLaneId PullOverModule::generateStopPath() const
   }
 
   const auto drivable_lanes = util::generateDrivableLanes(status_.current_lanes);
+  const auto shorten_lanes = util::cutOverlappedLanes(stop_path, drivable_lanes);
   const auto lanes = util::expandLanelets(
-    drivable_lanes, parameters_.drivable_area_left_bound_offset,
+    shorten_lanes, parameters_.drivable_area_left_bound_offset,
     parameters_.drivable_area_right_bound_offset, parameters_.drivable_area_types_to_skip);
 
-  stop_path.drivable_area = util::generateDrivableArea(
-    stop_path, lanes, common_parameters.drivable_area_resolution, common_parameters.vehicle_length,
-    planner_data_);
+  util::generateDrivableArea(stop_path, lanes, common_parameters.vehicle_length, planner_data_);
 
   return stop_path;
 }
