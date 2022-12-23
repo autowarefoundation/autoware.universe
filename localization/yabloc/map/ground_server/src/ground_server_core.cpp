@@ -20,8 +20,7 @@ GroundServer::GroundServer()
 : Node("ground_server"),
   force_zero_tilt_(declare_parameter("force_zero_tilt", false)),
   R(declare_parameter("R", 20)),
-  K(declare_parameter("K", 50)),
-  vector_buffer_(50)
+  K(declare_parameter("K", 50))
 {
   using std::placeholders::_1;
   using std::placeholders::_2;
@@ -51,15 +50,13 @@ void GroundServer::on_initial_pose(const PoseCovStamped & msg)
   }
 
   const Point point = msg.pose.pose.position;
-  kalman_.initialize(estimate_height_simply(point), Eigen::Vector3f::UnitZ());
+  height_filter_.initialize(estimate_height_simply(point));
 }
 
 void GroundServer::on_pose_stamped(const PoseStamped & msg)
 {
   if (kdtree_ == nullptr) return;
-  kalman_.predict(msg.header.stamp);
   GroundPlane ground_plane = estimate_ground(msg.pose.position);
-
   // Publish value msg
   Float32 data;
   data.data = ground_plane.height();
@@ -83,7 +80,9 @@ void GroundServer::on_pose_stamped(const PoseStamped & msg)
   // Publish nearest point cloud for debug
   {
     pcl::PointCloud<pcl::PointXYZ> near_cloud;
-    for (int index : last_near_point_indices_) near_cloud.push_back(cloud_->at(index));
+    for (int index : last_indices_) {
+      near_cloud.push_back(cloud_->at(index));
+    }
     if (!near_cloud.empty()) common::publish_cloud(*pub_near_cloud_, near_cloud, msg.header.stamp);
   }
 }
@@ -170,37 +169,17 @@ std::vector<int> GroundServer::estimate_inliers_by_ransac(const std::vector<int>
 
 GroundServer::GroundPlane GroundServer::estimate_ground(const Point & point)
 {
-  auto [predicted_z, predicted_rotation] = kalman_.get_estimate();
+  const float predicted_z = height_filter_.get_estimate();
   const pcl::PointXYZ xyz(point.x, point.y, predicted_z);
 
-  std::vector<int> knn_indices;
-  {
-    std::vector<float> distances;
-    kdtree_->nearestKSearch(xyz, K, knn_indices, distances);
-  }
+  std::vector<int> raw_indices;
+  std::vector<float> distances;
+  kdtree_->nearestKSearch(xyz, K, raw_indices, distances);
 
-  std::vector<int> predicted_indices;
-  {
-    std::vector<float> distances;
-    std::vector<int> radius_indices;
-    kdtree_->radiusSearch(xyz, R, radius_indices, distances);
-
-    // TODO: use predicted_rotation
-    Eigen::Affine3f affine =
-      Eigen::Translation3f(point.x, point.y, point.z) * Eigen::AngleAxisf::Identity();
-    pcl::CropBox<pcl::PointXYZ> crop;
-    crop.setIndices(std::make_shared<pcl::Indices>(radius_indices));
-    crop.setMin(Eigen::Vector4f(-R, -R, -1, 0));
-    crop.setMax(Eigen::Vector4f(R, R, 1, 0));
-    crop.setTransform(affine);
-    crop.setInputCloud(cloud_);
-    crop.filter(predicted_indices);
-  }
-
-  std::vector<int> raw_indices = merge_indices(knn_indices, predicted_indices);
   std::vector<int> indices = estimate_inliers_by_ransac(raw_indices);
+
   if (indices.empty()) indices = raw_indices;
-  last_near_point_indices_ = indices;
+  last_indices_ = indices;
 
   // Estimate normal vector using covariance matrix around the target point
   Eigen::Matrix3f covariance;
@@ -208,38 +187,33 @@ GroundServer::GroundPlane GroundServer::estimate_ground(const Point & point)
   pcl::compute3DCentroid(*cloud_, indices, centroid);
   pcl::computeCovarianceMatrix(*cloud_, indices, centroid, covariance);
 
-  // NOTE: I forgot why I dont use coefficients computeed by SACSegmentation
+  // NOTE: I forgot why I don't use coefficients computeed by SACSegmentation
   Eigen::Vector4f plane_parameter;
   float curvature;
   pcl::solvePlaneParameters(covariance, centroid, plane_parameter, curvature);
-  Eigen::Vector3f normal = plane_parameter.topRows(3);
-  if (normal.z() < 0) normal = -normal;
+  Eigen::Vector3f normal = plane_parameter.topRows(3).normalized();
 
   {
+    // Reverse if it is upside down
+    if (normal.z() < 0) normal = -normal;
+
     // Remove NaN
     if (!normal.allFinite()) {
       normal = Eigen::Vector3f::UnitZ();
       RCLCPP_WARN_STREAM(get_logger(), "Reject NaN tilt");
     }
-    // Remove too large tilt
+    // Remove too large tilt (0.707 = cos(45deg))
     if ((normal.dot(Eigen::Vector3f::UnitZ())) < 0.707) {
       normal = Eigen::Vector3f::UnitZ();
       RCLCPP_WARN_STREAM(get_logger(), "Reject too large tilt of ground");
     }
   }
 
-  // Smoothing (moving averaging)
-  vector_buffer_.push_back(normal);
-  Eigen::Vector3f mean = Eigen::Vector3f::Zero();
-  for (const Eigen::Vector3f & v : vector_buffer_) mean += v;
-  mean /= vector_buffer_.size();
+  const Eigen::Vector3f filt_normal = normal_filter_.update(normal);
 
   GroundPlane plane;
-  plane.xyz.x() = point.x;
-  plane.xyz.y() = point.y;
-  plane.normal = mean.normalized();
-
-  if (force_zero_tilt_) plane.normal = Eigen::Vector3f::UnitZ();
+  plane.xyz = Eigen::Vector3f(point.x, point.y, predicted_z);
+  plane.normal = filt_normal;
 
   // Compute z value by intersection of estimated plane and orthogonal line
   {
@@ -250,6 +224,9 @@ GroundServer::GroundPlane GroundServer::estimate_ground(const Point & point)
     plane.xyz.z() = (inner - px_nx - py_ny) / plane.normal.z();
   }
 
+  height_filter_.update(plane.xyz.z());
+
+  if (force_zero_tilt_) plane.normal = Eigen::Vector3f::UnitZ();
   return plane;
 }
 

@@ -42,6 +42,10 @@ template void publish_cloud<pcl::PointXYZ>(
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2> &, const pcl::PointCloud<pcl::PointXYZ> &,
   const rclcpp::Time &);
 
+template void publish_cloud<pcl::PointXYZL>(
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2> &, const pcl::PointCloud<pcl::PointXYZL> &,
+  const rclcpp::Time &);
+
 template void publish_cloud<pcl::PointNormal>(
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2> &, const pcl::PointCloud<pcl::PointNormal> &,
   const rclcpp::Time &);

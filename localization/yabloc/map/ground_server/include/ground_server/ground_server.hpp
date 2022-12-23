@@ -1,5 +1,7 @@
 #pragma once
-#include <ground_server/kalman_filter.hpp>
+#include "ground_server/filter/low_pass_filter.hpp"
+#include "ground_server/filter/moving_averaging.hpp"
+
 #include <pcdless_common/ground_plane.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -12,8 +14,6 @@
 #include <std_msgs/msg/float32_multi_array.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
-
-#include <boost/circular_buffer.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 #include <pcl/features/normal_3d.h>
@@ -64,11 +64,11 @@ private:
   pcl::KdTreeFLANN<pcl::PointXYZ>::Ptr kdtree_{nullptr};
 
   // Smoother
-  boost::circular_buffer<Eigen::Vector3f> vector_buffer_;
-  KalmanFilter kalman_;
+  MovingAveraging normal_filter_;
+  LowPassFilter height_filter_;
 
   // For debug
-  std::vector<int> last_near_point_indices_;
+  std::vector<int> last_indices_;
 
   // Callback
   void on_map(const HADMapBin & msg);
