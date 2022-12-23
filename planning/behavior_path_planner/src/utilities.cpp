@@ -552,52 +552,6 @@ std::vector<size_t> filterObjectIndicesByLanelets(
   return indices;
 }
 
-// works with random lanelets
-std::vector<size_t> filterObjectIndicesByLanelets(
-  const PredictedObjects & objects, const lanelet::ConstLanelets & target_lanelets)
-{
-  std::vector<size_t> indices;
-  if (target_lanelets.empty()) {
-    return {};
-  }
-
-  for (size_t i = 0; i < objects.objects.size(); i++) {
-    // create object polygon
-    const auto & obj = objects.objects.at(i);
-    // create object polygon
-    Polygon2d obj_polygon;
-    if (!calcObjectPolygon(obj, &obj_polygon)) {
-      RCLCPP_ERROR_STREAM(
-        rclcpp::get_logger("behavior_path_planner").get_child("utilities"),
-        "Failed to calcObjectPolygon...!!!");
-      continue;
-    }
-
-    for (const auto & llt : target_lanelets) {
-      // create lanelet polygon
-      const auto polygon2d = llt.polygon2d().basicPolygon();
-      if (polygon2d.empty()) {
-        // no lanelet polygon
-        continue;
-      }
-      Polygon2d lanelet_polygon;
-      lanelet_polygon.outer().reserve(polygon2d.size() + 1);
-      for (const auto & lanelet_point : polygon2d) {
-        lanelet_polygon.outer().emplace_back(lanelet_point.x(), lanelet_point.y());
-      }
-
-      lanelet_polygon.outer().push_back(lanelet_polygon.outer().front());
-
-      // check the object does not intersect the lanelet
-      if (!boost::geometry::disjoint(lanelet_polygon, obj_polygon)) {
-        indices.push_back(i);
-        break;
-      }
-    }
-  }
-  return indices;
-}
-
 std::pair<std::vector<size_t>, std::vector<size_t>> separateObjectIndicesByLanelets(
   const PredictedObjects & objects, const lanelet::ConstLanelets & target_lanelets)
 {
@@ -648,18 +602,6 @@ std::pair<std::vector<size_t>, std::vector<size_t>> separateObjectIndicesByLanel
   }
 
   return std::make_pair(target_indices, other_indices);
-}
-
-PredictedObjects filterObjectsByLanelets(
-  const PredictedObjects & objects, const lanelet::ConstLanelets & target_lanelets)
-{
-  PredictedObjects filtered_objects;
-  const auto indices = filterObjectIndicesByLanelets(objects, target_lanelets);
-  filtered_objects.objects.reserve(indices.size());
-  for (const size_t i : indices) {
-    filtered_objects.objects.push_back(objects.objects.at(i));
-  }
-  return filtered_objects;
 }
 
 std::pair<PredictedObjects, PredictedObjects> separateObjectsByLanelets(

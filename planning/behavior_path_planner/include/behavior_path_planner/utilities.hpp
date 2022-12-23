@@ -261,22 +261,12 @@ std::vector<size_t> filterObjectIndicesByLanelets(
   const double start_arc_length, const double end_arc_length);
 
 /**
- * @brief Get index of the obstacles inside the lanelets
- * @return Indices corresponding to the obstacle inside the lanelets
- */
-std::vector<size_t> filterObjectIndicesByLanelets(
-  const PredictedObjects & objects, const lanelet::ConstLanelets & target_lanelets);
-
-/**
  * @brief Separate index of the obstacles into two part based on whether the object is within
  * lanelet.
  * @return Indices of objects pair. first objects are in the lanelet, and second others are out of
  * lanelet.
  */
 std::pair<std::vector<size_t>, std::vector<size_t>> separateObjectIndicesByLanelets(
-  const PredictedObjects & objects, const lanelet::ConstLanelets & target_lanelets);
-
-PredictedObjects filterObjectsByLanelets(
   const PredictedObjects & objects, const lanelet::ConstLanelets & target_lanelets);
 
 /**
