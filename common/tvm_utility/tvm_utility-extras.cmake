@@ -50,7 +50,6 @@ function(get_neural_network MODEL_NAME MODEL_BACKEND DEPENDENCY)
         COPYONLY
       )
     endif()
-    set(DOWNLOAD_DIR "")
     set(SOURCE_DIR "${DATA_PATH}/user/${MODEL_NAME}")
     set(INSTALL_DIRECTORY "${DATA_PATH}/user/${MODEL_NAME}")
   else()
@@ -70,15 +69,17 @@ function(get_neural_network MODEL_NAME MODEL_BACKEND DEPENDENCY)
     set(DOWNLOAD_DIR "${DATA_PATH}/downloads")
     set(SOURCE_DIR "${DATA_PATH}/models/${MODEL_NAME}")
     set(INSTALL_DIRECTORY "${DATA_PATH}/models/${MODEL_NAME}")
+    file(DOWNLOAD ${URL} "${DOWNLOAD_DIR}/${ARCHIVE_NAME}")
+    file(ARCHIVE_EXTRACT INPUT "${DOWNLOAD_DIR}/${ARCHIVE_NAME}" DESTINATION "${SOURCE_DIR}")
+    if(EXISTS "${DATA_PATH}/models/${MODEL_NAME}/preprocessing_inference_engine_tvm_config.hpp")
+      set(PREPROCESSING "${DATA_PATH}/models/${MODEL_NAME}/preprocessing_inference_engine_tvm_config.hpp")
+    endif()
+
   endif()
-  if(EXISTS "${DATA_PATH}/models/${MODEL_NAME}/preprocessing_inference_engine_tvm_config.hpp")
-    set(PREPROCESSING "${DATA_PATH}/models/${MODEL_NAME}/preprocessing_inference_engine_tvm_config.hpp")
-  endif()
+
   include(ExternalProject)
   externalproject_add(${EXTERNALPROJECT_NAME}
-    DOWNLOAD_DIR ${DOWNLOAD_DIR}
     SOURCE_DIR ${SOURCE_DIR}
-    URL ${URL}
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ""
     BUILD_BYPRODUCTS "${DATA_PATH}/models/${MODEL_NAME}/inference_engine_tvm_config.hpp"
