@@ -228,7 +228,6 @@ def launch_setup(context, *args, **kwargs):
             drivable_area_expander_param,
             vehicle_param,
         ],
-        prefix="konsole -e gdb -ex run --args",
     )
 
     container = ComposableNodeContainer(
