@@ -66,6 +66,7 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
     p.enable_slow_down = declare_parameter<bool>("enable_slow_down");
     p.enable_z_axis_obstacle_filtering =
       declare_parameter<bool>("enable_z_axis_obstacle_filtering");
+    p.z_axis_filtering_buffer = declare_parameter<double>("z_axis_filtering_buffer");
     p.max_velocity = declare_parameter<double>("max_velocity");
     p.hunting_threshold = declare_parameter<double>("hunting_threshold");
     p.ego_nearest_dist_threshold = declare_parameter<double>("ego_nearest_dist_threshold");
@@ -343,6 +344,9 @@ void ObstacleStopPlannerNode::searchObstacle(
     // create one step circle center for vehicle
     const auto & p_front = decimate_trajectory.at(i).pose;
     const auto & p_back = decimate_trajectory.at(i + 1).pose;
+    const auto z_axis_min = p_front.position.z;
+    const auto z_axis_max =
+      p_front.position.z + vehicle_info.vehicle_height_m + node_param_.z_axis_filtering_buffer;
     const auto prev_center_pose = getVehicleCenterFromBase(p_front, vehicle_info);
     const Point2d prev_center_point(prev_center_pose.position.x, prev_center_pose.position.y);
     const auto next_center_pose = getVehicleCenterFromBase(p_back, vehicle_info);
@@ -361,8 +365,7 @@ void ObstacleStopPlannerNode::searchObstacle(
         planner_data.found_slow_down_points = withinPolyhedron(
           one_step_move_slow_down_range_polygon, slow_down_param_.slow_down_search_radius,
           prev_center_point, next_center_point, obstacle_candidate_pointcloud_ptr,
-          slow_down_pointcloud_ptr, p_front.position.z,
-          p_front.position.z + vehicle_info.vehicle_height_m);
+          slow_down_pointcloud_ptr, z_axis_min, z_axis_max);
       } else {
         planner_data.found_slow_down_points = withinPolygon(
           one_step_move_slow_down_range_polygon, slow_down_param_.slow_down_search_radius,
@@ -401,12 +404,10 @@ void ObstacleStopPlannerNode::searchObstacle(
         p_front, p_back, one_step_move_vehicle_polygon, vehicle_info, stop_param.lateral_margin);
       if (node_param_.enable_z_axis_obstacle_filtering) {
         debug_ptr_->pushPolyhedron(
-          one_step_move_vehicle_polygon, decimate_trajectory.at(i).pose.position.z,
-          decimate_trajectory.at(i).pose.position.z + vehicle_info.vehicle_height_m,
-          PolygonType::Vehicle);
+          one_step_move_vehicle_polygon, z_axis_min, z_axis_max, PolygonType::Vehicle);
       } else {
         debug_ptr_->pushPolygon(
-          one_step_move_vehicle_polygon, decimate_trajectory.at(i).pose.position.z,
+          one_step_move_vehicle_polygon, p_front.position.z,
           PolygonType::Vehicle);
       }
 
@@ -417,8 +418,8 @@ void ObstacleStopPlannerNode::searchObstacle(
         auto before_size = collision_pointcloud_ptr->size();
         planner_data.found_collision_points = withinPolyhedron(
           one_step_move_vehicle_polygon, stop_param.stop_search_radius, prev_center_point,
-          next_center_point, slow_down_pointcloud_ptr, collision_pointcloud_ptr, p_front.position.z,
-          p_front.position.z + vehicle_info.vehicle_height_m);
+          next_center_point, slow_down_pointcloud_ptr, collision_pointcloud_ptr, z_axis_min,
+          z_axis_max);
         auto after_size = collision_pointcloud_ptr->size();
         if ((after_size - before_size) > 0) {
           auto obstacle_ros_pointcloud_debug_ptr = std::make_shared<PointCloud2>();
@@ -440,8 +441,7 @@ void ObstacleStopPlannerNode::searchObstacle(
 
         if (node_param_.enable_z_axis_obstacle_filtering) {
           debug_ptr_->pushPolyhedron(
-            one_step_move_vehicle_polygon, p_front.position.z,
-            p_front.position.z + vehicle_info.vehicle_height_m, PolygonType::Collision);
+            one_step_move_vehicle_polygon, z_axis_min, z_axis_max, PolygonType::Collision);
         } else {
           debug_ptr_->pushObstaclePoint(planner_data.nearest_collision_point, PointType::Stop);
           debug_ptr_->pushPolygon(
