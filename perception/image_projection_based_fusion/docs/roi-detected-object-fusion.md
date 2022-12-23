@@ -21,21 +21,21 @@ The `DetectedObject` has three shape and the polygon vertices of a object are as
 
 ### Input
 
-| Name                  | Type                                                     | Description                                                                        |
-| --------------------- | -------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| `input`               | `autoware_auto_perception_msgs::msg::DetectedObjects`    | detected objects                                                                   |
-| `input/camera_infoID` | `sensor_msgs::msg::CameraInfo`                           | camera information to project 3d points onto image planes, `ID` is between 0 and 7 |
-| `input/roisID`        | `tier4_perception_msgs::msg::DetectedObjectsWithFeature` | ROIs from each image, `ID` is between 0 and 7                                      |
-| `input/image_rawID`   | `sensor_msgs::msg::Image`                                | images for visualization, `ID` is between 0 and 7                                  |
+| Name                     | Type                                                     | Description                                                |
+| ------------------------ | -------------------------------------------------------- | ---------------------------------------------------------- |
+| `input`                  | `autoware_auto_perception_msgs::msg::DetectedObjects`    | input detected objects                                     |
+| `input/camera_info[0-7]` | `sensor_msgs::msg::CameraInfo`                           | camera information to project 3d points onto image planes. |
+| `input/rois[0-7]`        | `tier4_perception_msgs::msg::DetectedObjectsWithFeature` | ROIs from each image.                                      |
+| `input/image_raw[0-7]`   | `sensor_msgs::msg::Image`                                | images for visualization.                                  |
 
 ### Output
 
-| Name                    | Type                                                  | Description                                       |
-| ----------------------- | ----------------------------------------------------- | ------------------------------------------------- |
-| `output`                | `autoware_auto_perception_msgs::msg::DetectedObjects` | detected objects                                  |
-| `output/image_rawID`    | `sensor_msgs::msg::Image`                             | images for visualization, `ID` is between 0 and 7 |
-| `debug/fused_objects`   | `autoware_auto_perception_msgs::msg::DetectedObjects` | fused detected objects                            |
-| `debug/ignored_objects` | `autoware_auto_perception_msgs::msg::DetectedObjects` | not fused detected objects                        |
+| Name                      | Type                                                  | Description                |
+| ------------------------- | ----------------------------------------------------- | -------------------------- |
+| `output`                  | `autoware_auto_perception_msgs::msg::DetectedObjects` | detected objects           |
+| `~/debug/image_raw[0-7]`  | `sensor_msgs::msg::Image`                             | images for visualization,  |
+| `~/debug/fused_objects`   | `autoware_auto_perception_msgs::msg::DetectedObjects` | fused detected objects     |
+| `~/debug/ignored_objects` | `autoware_auto_perception_msgs::msg::DetectedObjects` | not fused detected objects |
 
 ## Parameters
 
