@@ -62,7 +62,7 @@ public:
     tvm_utility::pipeline::InferenceEngineTVMConfig config, const std::string & pkg_name,
     const std::string & function_name);
   TVMArrayContainerVector schedule(const TVMArrayContainerVector & input);
-  void set_coords(TVMArrayContainer coords) { coords_ = coords; };
+  void set_coords(TVMArrayContainer coords) { coords_ = coords; }
 
 private:
   tvm_utility::pipeline::InferenceEngineTVMConfig config_;
