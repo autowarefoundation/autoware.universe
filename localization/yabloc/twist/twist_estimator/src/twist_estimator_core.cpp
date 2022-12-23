@@ -12,7 +12,8 @@ TwistEstimator::TwistEstimator()
   upside_down(true),
   ignore_less_than_float_(declare_parameter("ignore_less_than_float", true)),
   stop_vel_threshold_(declare_parameter("stop_vel_threshold", 0.05f)),
-  static_scale_factor_(declare_parameter("static_scale_factor", -1.f))
+  static_scale_factor_(declare_parameter("static_scale_factor", -1.f)),
+  static_gyro_bias_(declare_parameter("static_gyro_bias", 10.f))
 {
   using std::placeholders::_1;
   using namespace std::literals::chrono_literals;
@@ -101,7 +102,12 @@ void TwistEstimator::publish_twist(const Imu & imu)
   TwistStamped msg;
   msg.header.stamp = imu.header.stamp;
   msg.header.frame_id = "base_link";
-  msg.twist.angular.z = imu.angular_velocity.z + state_[BIAS];
+
+  if (std::abs(static_gyro_bias_) > 1)
+    msg.twist.angular.z = imu.angular_velocity.z + state_[BIAS];
+  else
+    msg.twist.angular.z = imu.angular_velocity.z + static_gyro_bias_;
+
   msg.twist.linear.x = state_[VELOCITY];
 
   if (static_scale_factor_ > 0) {

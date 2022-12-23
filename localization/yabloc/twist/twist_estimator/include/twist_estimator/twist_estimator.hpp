@@ -55,6 +55,7 @@ private:
   const bool ignore_less_than_float_;
   const float stop_vel_threshold_;
   const float static_scale_factor_;
+  const float static_gyro_bias_;
 
   Eigen::Matrix4f cov_predict_;
   int last_rtk_quality_{0};
