@@ -50,7 +50,6 @@ TVMScatterIE::TVMScatterIE(
   std::string network_prefix =
     ament_index_cpp::get_package_share_directory(pkg_name) + "/models/" + config.network_name + "/";
   std::string network_module_path = network_prefix + config.network_module_path;
-  // network_module_path = "/home/xinyuwang/adehome/tvm_latest/tvm_example/scatter.so";
 
   std::ifstream module(network_module_path);
   if (!module.good()) {
