@@ -662,7 +662,7 @@ PathWithLaneId PullOverModule::generateEmergencyStopPath()
       common_parameters.ego_nearest_yaw_threshold);
     const double distance_to_target = calcSignedArcLength(
       stop_path.points, current_pose.position, ego_idx, p.pose.position, target_idx);
-    if (0.0 < distance_to_target) {
+    if (0.0 < distance_to_target && 0.01 < current_vel) {
       p.longitudinal_velocity_mps = std::clamp(
         static_cast<float>(
           current_vel * (min_stop_distance - distance_to_target) / min_stop_distance),
