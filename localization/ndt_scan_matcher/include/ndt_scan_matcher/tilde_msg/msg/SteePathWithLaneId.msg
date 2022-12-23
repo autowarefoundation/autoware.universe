@@ -1,2 +1,0 @@
-autoware_auto_planning_msgs/PathWithLaneId body
-SteeSource[] sources

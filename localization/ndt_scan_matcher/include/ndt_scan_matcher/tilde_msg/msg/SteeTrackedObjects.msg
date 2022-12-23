@@ -1,2 +1,0 @@
-autoware_auto_perception_msgs/TrackedObjects body
-SteeSource[] sources

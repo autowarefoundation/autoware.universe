@@ -1,2 +1,0 @@
-autoware_auto_control_msgs/LongitudinalCommand body
-SteeSource[] sources
