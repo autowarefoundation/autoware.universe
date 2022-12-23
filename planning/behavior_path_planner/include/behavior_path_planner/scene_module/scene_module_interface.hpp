@@ -107,7 +107,6 @@ public:
    * @brief If the module plan customized reference path while waiting approval, it should output
    * SUCCESS. Otherwise, it should output FAILURE to check execution request of next module.
    */
-
   virtual BT::NodeStatus getNodeStatusWhileWaitingApproval() const
   {
     return BT::NodeStatus::FAILURE;
