@@ -31,15 +31,25 @@ multipolygon_t filterFootprint(
   const std::vector<Footprint> & footprints, const std::vector<Footprint> & predicted_paths,
   const multilinestring_t & uncrossable_lines)
 {
+  namespace strategy = boost::geometry::strategy::buffer;
   multipolygon_t filtered_footprints;
+  polygon_t filtered_footprint;
   multipolygon_t cuts;
+  multipolygon_t uncrossable_polys;
+  boost::geometry::buffer(
+    uncrossable_lines, uncrossable_polys, strategy::distance_symmetric<double>(0.1),
+    strategy::side_straight(), strategy::join_miter(), strategy::end_flat(),
+    strategy::point_square());
   for (const auto & f : footprints) {
+    filtered_footprint = f.footprint;
     cuts.clear();
-    polygon_t filtered_footprint;
-    // TODO(Maxime): properly cut with lines. Make them into polygon using the path as the other
-    // side ?
-    if (!boost::geometry::intersects(f.footprint, uncrossable_lines))
-      filtered_footprint = f.footprint;
+    boost::geometry::difference(filtered_footprint, uncrossable_polys, cuts);
+    for (const auto & cut : cuts) {
+      if (boost::geometry::within(f.origin, cut)) {
+        filtered_footprint = cut;
+        break;
+      }
+    }
     for (const auto & p : predicted_paths) {
       cuts.clear();
       boost::geometry::difference(filtered_footprint, p.footprint, cuts);
@@ -75,7 +85,6 @@ multilinestring_t expandDrivableArea(
     // assumes that the footprints are not disjoint from the original drivable area
     extended_da_poly = unions.front();
   }
-  // TODO(Maxime): extract left/right bound from da_poly
   const auto left_front = to_point(left_bound.front());
   const auto right_front = to_point(right_bound.front());
   const auto left_back = to_point(left_bound.back());
