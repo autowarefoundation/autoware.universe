@@ -1,0 +1,2 @@
+autoware_auto_control_msgs/AckermannLateralCommand body
+SteeSource[] sources

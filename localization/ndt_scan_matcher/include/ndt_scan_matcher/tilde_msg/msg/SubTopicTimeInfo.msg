@@ -1,0 +1,5 @@
+string topic_name
+builtin_interfaces/Time sub_time
+builtin_interfaces/Time sub_time_steady
+bool has_header_stamp
+builtin_interfaces/Time header_stamp

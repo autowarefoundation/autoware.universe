@@ -1,0 +1,3 @@
+string topic
+builtin_interfaces/Time stamp
+builtin_interfaces/Time first_subscription_steady_time
