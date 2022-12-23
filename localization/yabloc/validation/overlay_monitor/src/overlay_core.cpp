@@ -91,6 +91,8 @@ void Overlay::on_lsd(const PointCloud2 & msg)
   if (min_dt > 0.1) return;
   auto latest_pose_stamp = rclcpp::Time(pose_buffer_.back().header.stamp);
 
+  std::vector<int> a;
+
   LineSegments lsd_cloud;
   pcl::fromROSMsg(msg, lsd_cloud);
   make_vis_marker(lsd_cloud, synched_pose.pose, stamp);
@@ -129,8 +131,9 @@ void Overlay::draw_overlay_line_segments(
       const Eigen::Vector3f & p2) -> std::tuple<bool, cv::Point2i, cv::Point2i> {
     Eigen::Vector3f from_camera1 = K * T.inverse() * transform.inverse() * p1;
     Eigen::Vector3f from_camera2 = K * T.inverse() * transform.inverse() * p2;
-    bool p1_is_visible = from_camera1.z() > 1e-3f;
-    bool p2_is_visible = from_camera2.z() > 1e-3f;
+    constexpr float EPSILON = 0.1f;
+    bool p1_is_visible = from_camera1.z() > EPSILON;
+    bool p2_is_visible = from_camera2.z() > EPSILON;
     if ((!p1_is_visible) && (!p2_is_visible)) return {false, cv::Point2i{}, cv::Point2i{}};
 
     Eigen::Vector3f uv1, uv2;
@@ -141,7 +144,7 @@ void Overlay::draw_overlay_line_segments(
       return {true, cv::Point2i(uv1.x(), uv1.y()), cv::Point2i(uv2.x(), uv2.y())};
 
     Eigen::Vector3f tangent = from_camera2 - from_camera1;
-    float mu = (1e-3f - from_camera1.z()) / (tangent.z());
+    float mu = (EPSILON - from_camera1.z()) / (tangent.z());
     if (!p1_is_visible) {
       from_camera1 = from_camera1 + mu * tangent;
       uv1 = from_camera1 / from_camera1.z();
