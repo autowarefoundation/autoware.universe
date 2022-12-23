@@ -16,7 +16,6 @@
 #define TVM_UTILITY__PIPELINE_HPP_
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
-#include <common/types.hpp>
 
 #include <tvm_vendor/dlpack/dlpack.h>
 #include <tvm_vendor/tvm/runtime/c_runtime_api.h>
@@ -29,8 +28,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-
-using autoware::common::types::char8_t;
 
 namespace tvm_utility
 {
@@ -185,12 +182,25 @@ private:
   PostProcessorType post_processor_{};
 };
 
-// Each node should be specified with a string name and a shape
-using NetworkNode = std::pair<std::string, std::vector<int64_t>>;
+// NetworkNode
+typedef struct
+{
+  // Node name
+  std::string node_name;
+
+  // Network data type configurations
+  DLDataTypeCode tvm_dtype_code;
+  int32_t tvm_dtype_bits;
+  int32_t tvm_dtype_lanes;
+
+  // Shape info
+  std::vector<int64_t> node_shape;
+} NetworkNode;
+
 typedef struct
 {
   // Network info
-  std::array<char8_t, 3> modelzoo_version;
+  std::array<char, 3> modelzoo_version;
   std::string network_name;
   std::string network_backend;
 
@@ -198,11 +208,6 @@ typedef struct
   std::string network_module_path;
   std::string network_graph_path;
   std::string network_params_path;
-
-  // Network data type configurations
-  DLDataTypeCode tvm_dtype_code;
-  int32_t tvm_dtype_bits;
-  int32_t tvm_dtype_lanes;
 
   // Inference hardware configuration
   DLDeviceType tvm_device_type;
@@ -281,8 +286,8 @@ public:
 
     for (auto & output_config : config.network_outputs) {
       output_.push_back(TVMArrayContainer(
-        output_config.second, config.tvm_dtype_code, config.tvm_dtype_bits, config.tvm_dtype_lanes,
-        config.tvm_device_type, config.tvm_device_id));
+        output_config.node_shape, output_config.tvm_dtype_code, output_config.tvm_dtype_bits,
+        output_config.tvm_dtype_lanes, config.tvm_device_type, config.tvm_device_id));
     }
   }
 
@@ -293,7 +298,7 @@ public:
       if (input[index].getArray() == nullptr) {
         throw std::runtime_error("input variable is null");
       }
-      set_input(config_.network_inputs[index].first.c_str(), input[index].getArray());
+      set_input(config_.network_inputs[index].node_name.c_str(), input[index].getArray());
     }
 
     // Execute the inference
@@ -315,7 +320,7 @@ public:
    * @param[in] version_from Earliest supported model version.
    * @return The version status.
    */
-  Version version_check(const std::array<char8_t, 3> & version_from) const
+  Version version_check(const std::array<char, 3> & version_from) const
   {
     auto x{config_.modelzoo_version[0]};
     auto y{config_.modelzoo_version[1]};
@@ -339,7 +344,7 @@ private:
   tvm::runtime::PackedFunc execute;
   tvm::runtime::PackedFunc get_output;
   // Latest supported model version.
-  const std::array<char8_t, 3> version_up_to{2, 1, 0};
+  const std::array<char, 3> version_up_to{2, 1, 0};
 };
 
 template <

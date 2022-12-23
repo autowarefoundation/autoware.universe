@@ -63,6 +63,8 @@ OcclusionSpotModule::OcclusionSpotModule(
   const rclcpp::Clock::SharedPtr clock)
 : SceneModuleInterface(module_id, logger, clock), param_(planner_param)
 {
+  velocity_factor_.init(VelocityFactor::UNKNOWN);
+
   if (param_.detection_method == utils::DETECTION_METHOD::OCCUPANCY_GRID) {
     debug_data_.detection_type = "occupancy";
     //! occupancy grid limitation( 100 * 100 )
@@ -185,10 +187,6 @@ bool OcclusionSpotModule::modifyPathVelocity(
   // these debug topics needs computation resource
   debug_data_.z = path->points.front().point.pose.position.z;
   debug_data_.possible_collisions = possible_collisions;
-  if (param_.is_show_occlusion) {
-    debug_data_.path_interpolated = path_interpolated;
-    debug_data_.path_raw.points = clipped_path.points;
-  }
   DEBUG_PRINT(show_time, "total [ms]: ", stop_watch_.toc("total_processing_time", true));
   return true;
 }

@@ -50,6 +50,9 @@
       min_avoidance_speed_for_acc_prevention: 3.0  # [m/s]
       max_avoidance_acceleration: 0.5  # [m/s2]
 
+      # bound clipping for objects
+      enable_bound_clipping: false
+
       # for debug
       publish_debug_marker: false
       print_debug_info: false
@@ -57,8 +60,6 @@
       # not enabled yet
       longitudinal_collision_margin_min_distance: 0.0          # [m]
       longitudinal_collision_margin_time: 0.0
-
-      turn_signal_on_swerving: true # turn signal on while swerving
 
       # avoidance is performed for the object type with true
       target_object:

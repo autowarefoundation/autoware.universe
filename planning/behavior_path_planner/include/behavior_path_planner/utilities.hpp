@@ -66,8 +66,8 @@ using geometry_msgs::msg::PoseArray;
 using geometry_msgs::msg::PoseStamped;
 using geometry_msgs::msg::Twist;
 using geometry_msgs::msg::Vector3;
-using nav_msgs::msg::OccupancyGrid;
 using route_handler::RouteHandler;
+using tier4_autoware_utils::LinearRing2d;
 using tier4_autoware_utils::LineString2d;
 using tier4_autoware_utils::Point2d;
 using tier4_autoware_utils::Polygon2d;
@@ -289,18 +289,15 @@ std::vector<DrivableLanes> generateDrivableLanes(const lanelet::ConstLanelets & 
 std::vector<DrivableLanes> generateDrivableLanesWithShoulderLanes(
   const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & shoulder_lanes);
 
-void occupancyGridToImage(const OccupancyGrid & occupancy_grid, cv::Mat * cv_image);
+boost::optional<size_t> getOverlappedLaneletId(const std::vector<DrivableLanes> & lanes);
+std::vector<DrivableLanes> cutOverlappedLanes(
+  PathWithLaneId & path, const std::vector<DrivableLanes> & lanes);
 
-void imageToOccupancyGrid(const cv::Mat & cv_image, OccupancyGrid * occupancy_grid);
+void generateDrivableArea(
+  PathWithLaneId & path, const std::vector<DrivableLanes> & lanes, const double vehicle_length,
+  const std::shared_ptr<const PlannerData> planner_data, const bool is_driving_forward = true);
 
-cv::Point toCVPoint(
-  const Point & geom_point, const double width_m, const double height_m, const double resolution);
-
-OccupancyGrid generateDrivableArea(
-  const PathWithLaneId & path, const std::vector<DrivableLanes> & lanes, const double resolution,
-  const double vehicle_length, const std::shared_ptr<const PlannerData> planner_data);
-
-lanelet::ConstLineStrings3d getDrivableAreaForAllSharedLinestringLanelets(
+lanelet::ConstLineStrings3d getMaximumDrivableArea(
   const std::shared_ptr<const PlannerData> & planner_data);
 
 /**
@@ -362,6 +359,9 @@ PathPointWithLaneId insertStopPoint(double length, PathWithLaneId * path);
 
 double getSignedDistanceFromShoulderLeftBoundary(
   const lanelet::ConstLanelets & shoulder_lanelets, const Pose & pose);
+std::optional<double> getSignedDistanceFromShoulderLeftBoundary(
+  const lanelet::ConstLanelets & shoulder_lanelets, const LinearRing2d & footprint,
+  const Pose & vehicle_pose);
 double getSignedDistanceFromRightBoundary(
   const lanelet::ConstLanelets & lanelets, const Pose & pose);
 
@@ -481,6 +481,12 @@ bool isSafeInFreeSpaceCollisionCheck(
   const double front_decel, const double rear_decel, CollisionCheckDebug & debug);
 
 bool checkPathRelativeAngle(const PathWithLaneId & path, const double angle_threshold);
+
+double calcTotalLaneChangeDistanceWithBuffer(const BehaviorPathPlannerParameters & common_param);
+
+double calcLaneChangeBuffer(
+  const BehaviorPathPlannerParameters & common_param, const int num_lane_change,
+  const double length_to_intersection);
 }  // namespace behavior_path_planner::util
 
 #endif  // BEHAVIOR_PATH_PLANNER__UTILITIES_HPP_

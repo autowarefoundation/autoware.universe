@@ -179,11 +179,12 @@ struct AvoidanceParameters
   double drivable_area_right_bound_offset;
   double drivable_area_left_bound_offset;
 
+  // clip left and right bounds for objects
+  bool enable_bound_clipping{false};
+
   // debug
   bool publish_debug_marker = false;
   bool print_debug_info = false;
-
-  bool turn_signal_on_swerving = true;
 };
 
 struct ObjectData  // avoidance target
@@ -285,11 +286,22 @@ struct AvoidancePlanningData
   // current driving lanelet
   lanelet::ConstLanelets current_lanelets;
 
+  // output path
+  ShiftedPath candidate_path;
+
   // avoidance target objects
   ObjectDataArray target_objects;
 
   // the others
   ObjectDataArray other_objects;
+
+  // raw shift point
+  AvoidLineArray unapproved_raw_sl{};
+
+  // new shift point
+  AvoidLineArray unapproved_new_sl{};
+
+  bool avoiding_now{false};
 };
 
 /*
