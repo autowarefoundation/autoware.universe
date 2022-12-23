@@ -1,7 +1,31 @@
 #include "ground_server/polygon_operation.hpp"
 
+#include <rclcpp/logging.hpp>
+
 namespace pcdless::ground_server
 {
+pcl::PointCloud<pcl::PointXYZ> sample_from_polygons(const lanelet::PolygonLayer & polygons)
+{
+  // NOTE: Under constraction
+  pcl::PointCloud<pcl::PointXYZ> raw_cloud;
+
+  if (polygons.size() >= 2) {
+    RCLCPP_FATAL_STREAM(
+      rclcpp::get_logger("polygon"), "current ground server does not handle multi polygons");
+  }
+
+  for (const lanelet::ConstPolygon3d & polygon : polygons) {
+    for (const lanelet::ConstPoint3d & p : polygon) {
+      pcl::PointXYZ xyz;
+      xyz.x = p.x();
+      xyz.y = p.y();
+      xyz.z = p.z();
+      raw_cloud.push_back(xyz);
+    }
+  }
+  return fill_points_in_polygon(raw_cloud);
+}
+
 void push_back_line(
   pcl::PointCloud<pcl::PointXYZ> & dst_cloud, const pcl::PointXYZ & from, const pcl::PointXYZ & to)
 {

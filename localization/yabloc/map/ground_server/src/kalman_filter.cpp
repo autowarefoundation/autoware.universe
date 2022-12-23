@@ -2,18 +2,21 @@
 
 namespace pcdless::ground_server
 {
-KalmanFilter::KalmanFilter()
-{
-  rotation_ = Sophus::SO3f();
-  height_ = 0;
+KalmanFilter::KalmanFilter() {}
 
-  cov_rotation_ = 0.01f * Eigen::Matrix3f::Identity();
-  cov_height_ = 0.5f * Eigen::Matrix<float, 1, 1>::Identity();
+std::pair<float, Eigen::Matrix3f> KalmanFilter::get_estimate() const
+{
+  return {height_, rotation_.matrix()};
 }
 
-std::pair<float, Eigen::Vector3f> KalmanFilter::get_estimate() const
+void KalmanFilter::initialize(const float & height, const Eigen::Vector3f &)
 {
-  return {height_, rotation_ * Eigen::Vector3f::UnitZ()};
+  height_ = height;
+  rotation_ = Sophus::SO3f();
+  cov_rotation_ = 0.01f * Eigen::Matrix3f::Identity();
+  cov_height_ = 0.5f * Eigen::Matrix<float, 1, 1>::Identity();
+
+  initialized = true;
 }
 
 void KalmanFilter::predict(const rclcpp::Time & stamp)
@@ -23,15 +26,16 @@ void KalmanFilter::predict(const rclcpp::Time & stamp)
     cov_height_ += 0.1 * Eigen::Matrix<float, 1, 1>::Identity() * dt;
     cov_rotation_ += Eigen::Vector3f(0.01, 0.01, 0.01).asDiagonal() * dt;
   }
+
   last_stamp_ = stamp;
 }
 
 void KalmanFilter::measure(const float height, const Eigen::Vector3f & normal)
 {
   if (!initialized) {
-    height_ = height;
-    initialized = true;
+    throw std::runtime_error("kalman filte is not initialized yet");
   }
+
   // height correction
   {
     constexpr float noise_height = 0.2f;

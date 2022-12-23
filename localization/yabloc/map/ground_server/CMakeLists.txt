@@ -38,6 +38,7 @@ set(TARGET ground_server_node)
 ament_auto_add_executable(${TARGET}
   src/ground_server_core.cpp
   src/ground_server_node.cpp
+  src/kalman_filter.cpp
   src/polygon_operation.cpp)
 target_include_directories(${TARGET} PUBLIC include)
 target_include_directories(${TARGET} SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})

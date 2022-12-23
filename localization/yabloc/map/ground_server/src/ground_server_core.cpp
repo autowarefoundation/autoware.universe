@@ -1,12 +1,14 @@
 #include "ground_server/ground_server.hpp"
 #include "ground_server/polygon_operation.hpp"
-#include "ll2_decomposer/from_bin_msg.hpp"
+#include "ground_server/util.hpp"
 
 #include <Eigen/Eigenvalues>
+#include <ll2_decomposer/from_bin_msg.hpp>
 #include <pcdless_common/color.hpp>
 #include <pcdless_common/pub_sub.hpp>
 
 #include <pcl/ModelCoefficients.h>
+#include <pcl/filters/crop_box.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/sample_consensus/method_types.h>
 #include <pcl/sample_consensus/model_types.h>
@@ -30,6 +32,7 @@ GroundServer::GroundServer()
   auto on_service = std::bind(&GroundServer::on_service, this, _1, _2);
 
   service_ = create_service<Ground>("ground", on_service);
+
   sub_map_ = create_subscription<HADMapBin>("/map/vector_map", map_qos, on_map);
   sub_pose_stamped_ = create_subscription<PoseStamped>("particle_pose", 10, on_pose);
 
@@ -40,9 +43,21 @@ GroundServer::GroundServer()
   pub_near_cloud_ = create_publisher<PointCloud2>("near_cloud", 10);
 }
 
+void GroundServer::on_initial_pose(const PoseCovStamped & msg)
+{
+  if (kdtree_ == nullptr) {
+    RCLCPP_FATAL_STREAM(get_logger(), "ground height is not initialized because map is empty");
+    return;
+  }
+
+  const Point point = msg.pose.pose.position;
+  kalman_.initialize(estimate_height_simply(point), Eigen::Vector3f::UnitZ());
+}
+
 void GroundServer::on_pose_stamped(const PoseStamped & msg)
 {
   if (kdtree_ == nullptr) return;
+  kalman_.predict(msg.header.stamp);
   GroundPlane ground_plane = estimate_ground(msg.pose.position);
 
   // Publish value msg
@@ -59,8 +74,6 @@ void GroundServer::on_pose_stamped(const PoseStamped & msg)
     ss << "height: " << ground_plane.height() << std::endl;
     float cos = ground_plane.normal.dot(Eigen::Vector3f::UnitZ());
     ss << "tilt: " << std::acos(cos) * 180 / 3.14 << " deg" << std::endl;
-    float raw_cos = vector_buffer_.back().dot(Eigen::Vector3f::UnitZ());
-    ss << "raw tilt: " << std::acos(raw_cos) * 180 / 3.14 << " deg" << std::endl;
 
     String string_msg;
     string_msg.data = ss.str();
@@ -73,42 +86,6 @@ void GroundServer::on_pose_stamped(const PoseStamped & msg)
     for (int index : last_near_point_indices_) near_cloud.push_back(cloud_->at(index));
     if (!near_cloud.empty()) common::publish_cloud(*pub_near_cloud_, near_cloud, msg.header.stamp);
   }
-}
-
-void GroundServer::upsample_line_string(
-  const lanelet::ConstPoint3d & from, const lanelet::ConstPoint3d & to,
-  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud)
-{
-  Eigen::Vector3f f(from.x(), from.y(), from.z());
-  Eigen::Vector3f t(to.x(), to.y(), to.z());
-  float length = (t - f).norm();
-  Eigen::Vector3f d = (t - f).normalized();
-  for (float l = 0; l < length; l += 0.5f) {
-    pcl::PointXYZ xyz;
-    xyz.getVector3fMap() = (f + l * d);
-    cloud->push_back(xyz);
-  }
-};
-
-pcl::PointCloud<pcl::PointXYZ> GroundServer::sample_from_polygons(
-  const lanelet::PolygonLayer & polygons)
-{
-  pcl::PointCloud<pcl::PointXYZ> raw_cloud;
-
-  if (polygons.size() >= 2) {
-    RCLCPP_FATAL_STREAM(get_logger(), "current ground server does not handle multi polygons");
-  }
-
-  for (const lanelet::ConstPolygon3d & polygon : polygons) {
-    for (const lanelet::ConstPoint3d & p : polygon) {
-      pcl::PointXYZ xyz;
-      xyz.x = p.x();
-      xyz.y = p.y();
-      xyz.z = p.z();
-      raw_cloud.push_back(xyz);
-    }
-  }
-  return fill_points_in_polygon(raw_cloud);
 }
 
 void GroundServer::on_map(const HADMapBin & msg)
@@ -136,8 +113,9 @@ void GroundServer::on_map(const HADMapBin & msg)
     }
   }
 
-  if (lanelet_map->polygonLayer.size() > 0)
-    *upsampled_cloud += sample_from_polygons(lanelet_map->polygonLayer);
+  // NOTE: Under construction
+  // if (lanelet_map->polygonLayer.size() > 0)
+  //   *upsampled_cloud += sample_from_polygons(lanelet_map->polygonLayer);
 
   cloud_ = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
   // Voxel
@@ -150,32 +128,26 @@ void GroundServer::on_map(const HADMapBin & msg)
   kdtree_->setInputCloud(cloud_);
 }
 
-std::vector<int> merge_indices(const std::vector<int> & indices1, const std::vector<int> & indices2)
-{
-  std::unordered_set<int> set;
-  for (int i : indices1) set.insert(i);
-  for (int i : indices2) set.insert(i);
-
-  std::vector<int> indices;
-  indices.assign(set.begin(), set.end());
-  return indices;
-}
-
 float GroundServer::estimate_height_simply(const geometry_msgs::msg::Point & point) const
 {
-  // Return the height of the nearest point
-  // NOTE: Sometimes it might offer not accurate height
-  std::vector<int> k_indices;
-  std::vector<float> distances;
-  pcl::PointXYZ p;
-  p.x = point.x;
-  p.y = point.y;
-  p.z = 0;
-  kdtree_->nearestKSearch(p, 1, k_indices, distances);
-  return cloud_->at(k_indices.front()).z;
+  // NOTE: Sometimes it might give not-accurate height
+  constexpr float sq_radius = 3.0 * 3.0;
+  const float x = point.x;
+  const float y = point.y;
+
+  float height = std::numeric_limits<float>::infinity();
+  for (const auto & p : cloud_->points) {
+    const float dx = x - p.x;
+    const float dy = y - p.y;
+    const float sd = (dx * dx) + (dy * dy);
+    if (sd < sq_radius) {
+      height = std::min(height, static_cast<float>(p.z));
+    }
+  }
+  return std::isfinite(height) ? height : 0;
 }
 
-std::vector<int> GroundServer::ransac_estimation(const std::vector<int> & indices_raw)
+std::vector<int> GroundServer::estimate_inliers_by_ransac(const std::vector<int> & indices_raw)
 {
   pcl::PointIndicesPtr indices(new pcl::PointIndices);
   indices->indices = indices_raw;
@@ -198,17 +170,35 @@ std::vector<int> GroundServer::ransac_estimation(const std::vector<int> & indice
 
 GroundServer::GroundPlane GroundServer::estimate_ground(const Point & point)
 {
-  std::vector<int> k_indices, r_indices;
-  std::vector<float> distances;
-  pcl::PointXYZ xyz;
-  xyz.x = point.x;
-  xyz.y = point.y;
-  xyz.z = estimate_height_simply(point);
-  kdtree_->nearestKSearch(xyz, K, k_indices, distances);
-  kdtree_->radiusSearch(xyz, R, r_indices, distances);
+  auto [predicted_z, predicted_rotation] = kalman_.get_estimate();
+  const pcl::PointXYZ xyz(point.x, point.y, predicted_z);
 
-  std::vector<int> raw_indices = merge_indices(k_indices, r_indices);
-  std::vector<int> indices = ransac_estimation(raw_indices);
+  std::vector<int> knn_indices;
+  {
+    std::vector<float> distances;
+    kdtree_->nearestKSearch(xyz, K, knn_indices, distances);
+  }
+
+  std::vector<int> predicted_indices;
+  {
+    std::vector<float> distances;
+    std::vector<int> radius_indices;
+    kdtree_->radiusSearch(xyz, R, radius_indices, distances);
+
+    // TODO: use predicted_rotation
+    Eigen::Affine3f affine =
+      Eigen::Translation3f(point.x, point.y, point.z) * Eigen::AngleAxisf::Identity();
+    pcl::CropBox<pcl::PointXYZ> crop;
+    crop.setIndices(std::make_shared<pcl::Indices>(radius_indices));
+    crop.setMin(Eigen::Vector4f(-R, -R, -1, 0));
+    crop.setMax(Eigen::Vector4f(R, R, 1, 0));
+    crop.setTransform(affine);
+    crop.setInputCloud(cloud_);
+    crop.filter(predicted_indices);
+  }
+
+  std::vector<int> raw_indices = merge_indices(knn_indices, predicted_indices);
+  std::vector<int> indices = estimate_inliers_by_ransac(raw_indices);
   if (indices.empty()) indices = raw_indices;
   last_near_point_indices_ = indices;
 
@@ -218,21 +208,24 @@ GroundServer::GroundPlane GroundServer::estimate_ground(const Point & point)
   pcl::compute3DCentroid(*cloud_, indices, centroid);
   pcl::computeCovarianceMatrix(*cloud_, indices, centroid, covariance);
 
+  // NOTE: I forgot why I dont use coefficients computeed by SACSegmentation
   Eigen::Vector4f plane_parameter;
   float curvature;
   pcl::solvePlaneParameters(covariance, centroid, plane_parameter, curvature);
   Eigen::Vector3f normal = plane_parameter.topRows(3);
   if (normal.z() < 0) normal = -normal;
 
-  // Remove NaN
-  if (!normal.allFinite()) {
-    normal = Eigen::Vector3f::UnitZ();
-    RCLCPP_WARN_STREAM(get_logger(), "Reject NaN tilt");
-  }
-  // Remove too large tilt
-  if ((normal.dot(Eigen::Vector3f::UnitZ())) < 0.707) {
-    normal = Eigen::Vector3f::UnitZ();
-    RCLCPP_WARN_STREAM(get_logger(), "Reject too large tilt of ground");
+  {
+    // Remove NaN
+    if (!normal.allFinite()) {
+      normal = Eigen::Vector3f::UnitZ();
+      RCLCPP_WARN_STREAM(get_logger(), "Reject NaN tilt");
+    }
+    // Remove too large tilt
+    if ((normal.dot(Eigen::Vector3f::UnitZ())) < 0.707) {
+      normal = Eigen::Vector3f::UnitZ();
+      RCLCPP_WARN_STREAM(get_logger(), "Reject too large tilt of ground");
+    }
   }
 
   // Smoothing (moving averaging)
@@ -248,6 +241,7 @@ GroundServer::GroundPlane GroundServer::estimate_ground(const Point & point)
 
   if (force_zero_tilt_) plane.normal = Eigen::Vector3f::UnitZ();
 
+  // Compute z value by intersection of estimated plane and orthogonal line
   {
     Eigen::Vector3f center = centroid.topRows(3);
     float inner = center.dot(plane.normal);

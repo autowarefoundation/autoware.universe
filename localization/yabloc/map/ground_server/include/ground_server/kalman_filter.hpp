@@ -15,11 +15,13 @@ public:
 
   KalmanFilter();
 
+  void initialize(const float & height, const Eigen::Vector3f & normal);
+
   void predict(const rclcpp::Time & stamp);
 
-  void measure(const float hegith, const Eigen::Vector3f & normal);
+  void measure(const float height, const Eigen::Vector3f & normal);
 
-  std::pair<float, Eigen::Vector3f> get_estimate() const;
+  std::pair<float, Eigen::Matrix3f> get_estimate() const;
 
 private:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW

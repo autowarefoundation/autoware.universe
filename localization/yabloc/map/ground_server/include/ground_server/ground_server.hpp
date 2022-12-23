@@ -5,6 +5,7 @@
 
 #include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <ground_msgs/srv/ground.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <std_msgs/msg/float32.hpp>
@@ -28,10 +29,13 @@ public:
   using GroundPlane = common::GroundPlane;
   using HADMapBin = autoware_auto_mapping_msgs::msg::HADMapBin;
   using Ground = ground_msgs::srv::Ground;
+
   using Pose = geometry_msgs::msg::Pose;
   using PoseStamped = geometry_msgs::msg::PoseStamped;
+  using PoseCovStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
+
   using Float32 = std_msgs::msg::Float32;
-  using Float32Array = std_msgs::msg::Float32MultiArray;
+  using Float32Array = std_msgs::msg::Float32MultiArray;  // TODO: define new msg
   using Marker = visualization_msgs::msg::Marker;
   using String = std_msgs::msg::String;
   using PointCloud2 = sensor_msgs::msg::PointCloud2;
@@ -43,10 +47,13 @@ private:
   const float R;
   const int K;
 
+  // Service
   rclcpp::Service<Ground>::SharedPtr service_;
-
+  // Subscriber
   rclcpp::Subscription<HADMapBin>::SharedPtr sub_map_;
   rclcpp::Subscription<PoseStamped>::SharedPtr sub_pose_stamped_;
+  rclcpp::Subscription<PoseCovStamped>::SharedPtr sub_initial_pose_;
+  // Publisher
   rclcpp::Publisher<Float32>::SharedPtr pub_ground_height_;
   rclcpp::Publisher<Float32Array>::SharedPtr pub_ground_plane_;
   rclcpp::Publisher<Marker>::SharedPtr pub_marker_;
@@ -56,30 +63,32 @@ private:
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_{nullptr};
   pcl::KdTreeFLANN<pcl::PointXYZ>::Ptr kdtree_{nullptr};
 
+  // Smoother
   boost::circular_buffer<Eigen::Vector3f> vector_buffer_;
-
-  std::vector<int> last_near_point_indices_;
-
   KalmanFilter kalman_;
 
+  // For debug
+  std::vector<int> last_near_point_indices_;
+
+  // Callback
   void on_map(const HADMapBin & msg);
+  void on_initial_pose(const PoseCovStamped & msg);
   void on_pose_stamped(const PoseStamped & msg);
   void on_service(
     const std::shared_ptr<Ground::Request> request, std::shared_ptr<Ground::Response> response);
 
+  // Body
   GroundPlane estimate_ground(const Point & point);
 
+  // Return inlier indices which are belong to a plane
+  // Sometimes, this return empty indices due to RANSAC failure
+  std::vector<int> estimate_inliers_by_ransac(const std::vector<int> & indices_raw);
+
+  // Return the lowest point's height around given point
   float estimate_height_simply(const Point & point) const;
 
+  // Visualize estimated ground as plane
   void publish_marker(const GroundPlane & plane);
-
-  std::vector<int> ransac_estimation(const std::vector<int> & indices_raw);
-
-  void upsample_line_string(
-    const lanelet::ConstPoint3d & from, const lanelet::ConstPoint3d & to,
-    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud);
-
-  pcl::PointCloud<pcl::PointXYZ> sample_from_polygons(const lanelet::PolygonLayer & polygons);
 };
 
 }  // namespace pcdless::ground_server
