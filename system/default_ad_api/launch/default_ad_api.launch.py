@@ -13,27 +13,41 @@
 # limitations under the License.
 
 import launch
+from launch.actions import DeclareLaunchArgument
+from launch.substitutions import LaunchConfiguration
+from launch.substitutions import PathJoinSubstitution
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.actions import Node
 from launch_ros.descriptions import ComposableNode
+from launch_ros.parameter_descriptions import ParameterFile
+from launch_ros.substitutions import FindPackageShare
 
 
-def _create_api_node(node_name, class_name, **kwargs):
+def create_api_node(node_name, class_name, **kwargs):
     return ComposableNode(
         namespace="default_ad_api/node",
         name=node_name,
         package="default_ad_api",
         plugin="default_ad_api::" + class_name,
-        **kwargs
+        parameters=[ParameterFile(LaunchConfiguration("config"))],
     )
+
+
+def get_default_config():
+    path = FindPackageShare("default_ad_api")
+    path = PathJoinSubstitution([path, "config/default_ad_api.param.yaml"])
+    return path
 
 
 def generate_launch_description():
     components = [
-        _create_api_node("interface", "InterfaceNode"),
-        _create_api_node("localization", "LocalizationNode"),
-        _create_api_node("motion", "MotionNode", parameters=[{"require_accept_start": False}]),
-        _create_api_node("routing", "RoutingNode"),
+        create_api_node("autoware_state", "AutowareStateNode"),
+        create_api_node("fail_safe", "FailSafeNode"),
+        create_api_node("interface", "InterfaceNode"),
+        create_api_node("localization", "LocalizationNode"),
+        create_api_node("motion", "MotionNode"),
+        create_api_node("operation_mode", "OperationModeNode"),
+        create_api_node("routing", "RoutingNode"),
     ]
     container = ComposableNodeContainer(
         namespace="default_ad_api",
@@ -43,8 +57,10 @@ def generate_launch_description():
         composable_node_descriptions=components,
     )
     web_server = Node(
+        namespace="default_ad_api",
         package="default_ad_api",
         name="web_server",
         executable="web_server.py",
     )
-    return launch.LaunchDescription([container, web_server])
+    argument = DeclareLaunchArgument("config", default_value=get_default_config())
+    return launch.LaunchDescription([argument, container, web_server])

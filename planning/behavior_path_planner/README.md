@@ -43,7 +43,7 @@ The following modules are currently supported:
 
 ### input
 
-- /planning/mission_planning/route [`autoware_auto_planning_msgs/HADMapRoute`] : Current route from start to goal.
+- /planning/mission_planning/route [`autoware_planning_msgs/LaneletRoute`] : Current route from start to goal.
 - /map/vector_map [autoware_auto_mapping_msgs/HADMapBin] : Map information.
 - /perception/object_recognition/objects [`autoware_auto_perception_msgs/PredictedObjects`] : dynamic objects from perception module.
 - /perception/occupancy_grid_map/map [nav_msgs/msg/OccupancyGrid] : occupancy grid map from perception module. This is used for only Pull Over module
@@ -53,28 +53,6 @@ The following modules are currently supported:
 - path_change_force [`tier4_planning_msgs::PathChangeModule`] : (For remote control)
 
 ## Inner-workings / Algorithms
-
-### Drivable Area Generation
-
-Drivable lanes are quantized and drawn on an image as a drivable area, whose resolution is `drivable_area_resolution`.
-To prevent the quantization from causing instability to the planning modules, drivable area's pose follows the rules below.
-
-- Drivable area is generated in the map coordinate.
-- Its position is quantized with `drivable_area_resolution`.
-- Its orientation is 0.
-
-The size of the drivable area changes dynamically to realize both decreasing the computation cost and covering enough lanes to follow.
-For the second purpose, the drivable area covers a certain length forward and backward lanes with some margins defined by parameters.
-
-#### Parameters for drivable area generation
-
-| Name                          | Unit | Type   | Description                                                                | Default value |
-| :---------------------------- | :--- | :----- | :------------------------------------------------------------------------- | :------------ |
-| drivable_area_resolution      | [m]  | double | resolution of the image of the drivable area                               | 0.1           |
-| drivable_lane_forward_length  | [m]  | double | length of the forward lane from the ego covered by the drivable area       | 50.0          |
-| drivable_lane_backward_length | [m]  | double | length of the backward lane from the ego covered by the drivable area      | 5.0           |
-| drivable_lane_margin          | [m]  | double | forward and backward lane margin from the ego covered by the drivable area | 3.0           |
-| drivable_area_margin          | [m]  | double | margin of width and height of the drivable area                            | 6.0           |
 
 ### Behavior Tree
 
@@ -293,15 +271,14 @@ The lateral jerk is searched for among the predetermined minimum and maximum val
 
 ###### Parameters for shift parking
 
-| Name                               | Unit   | Type   | Description                                                                                              | Default value |
-| :--------------------------------- | :----- | :----- | :------------------------------------------------------------------------------------------------------- | :------------ |
-| enable_shift_parking               | [-]    | bool   | flag whether to enable shift parking                                                                     | true          |
-| pull_over_sampling_num             | [-]    | int    | Number of samplings in the minimum to maximum range of lateral_jerk                                      | 4             |
-| maximum_lateral_jerk               | [m/s3] | double | maximum lateral jerk                                                                                     | 2.0           |
-| minimum_lateral_jerk               | [m/s3] | double | minimum lateral jerk                                                                                     | 0.5           |
-| deceleration_interval              | [m]    | double | distance of deceleration section                                                                         | 15.0          |
-| after_pull_over_straight_distance  | [m]    | double | straight line distance after pull over end point                                                         | 5.0           |
-| before_pull_over_straight_distance | [m]    | double | straight line distance before pull over end point. a safe path should have a distance that includes this | 5.0           |
+| Name                              | Unit   | Type   | Description                                                         | Default value |
+| :-------------------------------- | :----- | :----- | :------------------------------------------------------------------ | :------------ |
+| enable_shift_parking              | [-]    | bool   | flag whether to enable shift parking                                | true          |
+| pull_over_sampling_num            | [-]    | int    | Number of samplings in the minimum to maximum range of lateral_jerk | 4             |
+| maximum_lateral_jerk              | [m/s3] | double | maximum lateral jerk                                                | 2.0           |
+| minimum_lateral_jerk              | [m/s3] | double | minimum lateral jerk                                                | 0.5           |
+| deceleration_interval             | [m]    | double | distance of deceleration section                                    | 15.0          |
+| after_pull_over_straight_distance | [m]    | double | straight line distance after pull over end point                    | 5.0           |
 
 ##### **geometric parallel parking**
 
@@ -384,13 +361,13 @@ The Pull Out module is activated when ego-vehicle is stationary and footprint of
 
 #### General parameters for pull_out
 
-| Name                         | Unit  | Type   | Description                                                    | Default value |
-| :--------------------------- | :---- | :----- | :------------------------------------------------------------- | :------------ |
-| th_arrived_distance_m        | [m]   | double | distance threshold for arrival of path termination             | 1.0           |
-| th_stopped_velocity_mps      | [m/s] | double | velocity threshold for arrival of path termination             | 0.01          |
-| th_stopped_time_sec          | [s]   | double | time threshold for arrival of path termination                 | 1.0           |
-| collision_check_margin       | [m]   | double | Obstacle collision check margin                                | 1.0           |
-| pull_out_finish_judge_buffer | [m]   | double | threshold for finish judgment distance from pull out end point | 1.0           |
+| Name                              | Unit  | Type   | Description                                                          | Default value |
+| :-------------------------------- | :---- | :----- | :------------------------------------------------------------------- | :------------ |
+| th_arrived_distance_m             | [m]   | double | distance threshold for arrival of path termination                   | 1.0           |
+| th_stopped_velocity_mps           | [m/s] | double | velocity threshold for arrival of path termination                   | 0.01          |
+| th_stopped_time_sec               | [s]   | double | time threshold for arrival of path termination                       | 1.0           |
+| collision_check_margin            | [m]   | double | Obstacle collision check margin                                      | 1.0           |
+| collision_check_distance_from_end | [m]   | double | collision check distance from end point. currently only for pull out | 15.0          |
 
 #### **Safe check with obstacles in shoulder lane**
 
@@ -418,15 +395,14 @@ Pull out distance is calculated by the speed, lateral deviation, and the lateral
 
 ###### parameters for shift pull out
 
-| Name                              | Unit   | Type   | Description                                                                                                          | Default value |
-| :-------------------------------- | :----- | :----- | :------------------------------------------------------------------------------------------------------------------- | :------------ |
-| enable_shift_pull_out             | -      | bool   | flag whether to enable shift pull out                                                                                | true          |
-| shift_pull_out_velocity           | [m/s]  | double | velocity of shift pull out                                                                                           | 2.0           |
-| pull_out_sampling_num             | -      | int    | Number of samplings in the minimum to maximum range of lateral_jerk                                                  | 4             |
-| before_pull_out_straight_distance | [m]    | double | distance before pull out start point                                                                                 | 0.0           |
-| maximum_lateral_jerk              | [m/s3] | double | maximum lateral jerk                                                                                                 | 2.0           |
-| minimum_lateral_jerk              | [m/s3] | double | minimum lateral jerk                                                                                                 | 0.5           |
-| minimum_shift_pull_out_distance   | [m]    | double | minimum shift pull out distance. if calculated pull out distance is shorter than this, use this for path generation. | 20.0          |
+| Name                            | Unit   | Type   | Description                                                                                                          | Default value |
+| :------------------------------ | :----- | :----- | :------------------------------------------------------------------------------------------------------------------- | :------------ |
+| enable_shift_pull_out           | -      | bool   | flag whether to enable shift pull out                                                                                | true          |
+| shift_pull_out_velocity         | [m/s]  | double | velocity of shift pull out                                                                                           | 2.0           |
+| pull_out_sampling_num           | -      | int    | Number of samplings in the minimum to maximum range of lateral_jerk                                                  | 4             |
+| maximum_lateral_jerk            | [m/s3] | double | maximum lateral jerk                                                                                                 | 2.0           |
+| minimum_lateral_jerk            | [m/s3] | double | minimum lateral jerk                                                                                                 | 0.5           |
+| minimum_shift_pull_out_distance | [m]    | double | minimum shift pull out distance. if calculated pull out distance is shorter than this, use this for path generation. | 20.0          |
 
 ##### **geometric pull out**
 

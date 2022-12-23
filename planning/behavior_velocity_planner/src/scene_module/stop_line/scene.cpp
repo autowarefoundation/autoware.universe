@@ -33,20 +33,18 @@ StopLineModule::StopLineModule(
   stop_line_(stop_line),
   state_(State::APPROACH)
 {
+  velocity_factor_.init(VelocityFactor::STOP_SIGN);
   planner_param_ = planner_param;
 }
 
-bool StopLineModule::modifyPathVelocity(
-  autoware_auto_planning_msgs::msg::PathWithLaneId * path,
-  tier4_planning_msgs::msg::StopReason * stop_reason)
+bool StopLineModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason)
 {
   debug_data_ = DebugData();
   if (path->points.empty()) return true;
   const auto base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
   debug_data_.base_link2front = base_link2front;
   first_stop_path_point_index_ = static_cast<int>(path->points.size()) - 1;
-  *stop_reason =
-    planning_utils::initializeStopReason(tier4_planning_msgs::msg::StopReason::STOP_LINE);
+  *stop_reason = planning_utils::initializeStopReason(StopReason::STOP_LINE);
 
   const LineString2d stop_line = planning_utils::extendLine(
     stop_line_[0], stop_line_[1], planner_data_->stop_line_extend_length);
@@ -92,6 +90,8 @@ bool StopLineModule::modifyPathVelocity(
         stop_factor.stop_pose = stop_pose;
         stop_factor.stop_factor_points.push_back(getCenterOfStopLine(stop_line_));
         planning_utils::appendStopReason(stop_factor, stop_reason);
+        velocity_factor_.set(
+          path->points, planner_data_->current_pose.pose, stop_pose, VelocityFactor::APPROACHING);
       }
 
       // Move to stopped state if stopped
@@ -136,6 +136,8 @@ bool StopLineModule::modifyPathVelocity(
         stop_factor.stop_pose = ego_pos_on_path.pose;
         stop_factor.stop_factor_points.push_back(getCenterOfStopLine(stop_line_));
         planning_utils::appendStopReason(stop_factor, stop_reason);
+        velocity_factor_.set(
+          path->points, planner_data_->current_pose.pose, stop_pose, VelocityFactor::STOPPED);
       }
 
       const auto elapsed_time = (clock_->now() - *stopped_time_).seconds();

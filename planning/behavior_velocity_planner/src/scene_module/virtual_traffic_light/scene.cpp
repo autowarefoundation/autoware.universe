@@ -194,6 +194,8 @@ VirtualTrafficLightModule::VirtualTrafficLightModule(
   lane_(lane),
   planner_param_(planner_param)
 {
+  velocity_factor_.init(VelocityFactor::V2I_GATE_CONTROL_ENTER);
+
   // Get map data
   const auto instrument = reg_elem_.getVirtualTrafficLight();
   const auto instrument_bottom_line = toAutowarePoints(instrument);
@@ -244,14 +246,12 @@ VirtualTrafficLightModule::VirtualTrafficLightModule(
   logger_ = logger_.get_child((map_data_.instrument_type + "_" + map_data_.instrument_id).c_str());
 }
 
-bool VirtualTrafficLightModule::modifyPathVelocity(
-  autoware_auto_planning_msgs::msg::PathWithLaneId * path,
-  tier4_planning_msgs::msg::StopReason * stop_reason)
+bool VirtualTrafficLightModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason)
 {
   // Initialize
   setInfrastructureCommand({});
-  *stop_reason = planning_utils::initializeStopReason(
-    tier4_planning_msgs::msg::StopReason::VIRTUAL_TRAFFIC_LIGHT);
+  *stop_reason = planning_utils::initializeStopReason(StopReason::VIRTUAL_TRAFFIC_LIGHT);
+
   module_data_ = {};
 
   // Copy data
@@ -578,6 +578,9 @@ void VirtualTrafficLightModule::insertStopVelocityAtStopLine(
 
   // Set StopReason
   setStopReason(stop_pose, stop_reason);
+  velocity_factor_.set(
+    path->points, planner_data_->current_pose.pose, stop_pose, VelocityFactor::UNKNOWN,
+    command_.type);
 
   // Set data for visualization
   module_data_.stop_head_pose_at_stop_line =
@@ -610,6 +613,8 @@ void VirtualTrafficLightModule::insertStopVelocityAtEndLine(
 
   // Set StopReason
   setStopReason(stop_pose, stop_reason);
+  velocity_factor_.set(
+    path->points, planner_data_->current_pose.pose, stop_pose, VelocityFactor::UNKNOWN);
 
   // Set data for visualization
   module_data_.stop_head_pose_at_end_line =

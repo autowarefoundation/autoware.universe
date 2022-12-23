@@ -33,6 +33,8 @@ RunOutModule::RunOutModule(
   debug_ptr_(debug_ptr),
   state_machine_(std::make_unique<run_out_utils::StateMachine>(planner_param.state_param))
 {
+  velocity_factor_.init(VelocityFactor::UNKNOWN);
+
   if (planner_param.run_out.use_partition_lanelet) {
     const lanelet::LaneletMapConstPtr & ll = planner_data->route_handler_->getLaneletMapPtr();
     planning_utils::getAllPartitionLanelets(ll, partition_lanelets_);
@@ -45,8 +47,7 @@ void RunOutModule::setPlannerParam(const PlannerParam & planner_param)
 }
 
 bool RunOutModule::modifyPathVelocity(
-  autoware_auto_planning_msgs::msg::PathWithLaneId * path,
-  [[maybe_unused]] tier4_planning_msgs::msg::StopReason * stop_reason)
+  PathWithLaneId * path, [[maybe_unused]] StopReason * stop_reason)
 {
   // timer starts
   const auto t1_modify_path = std::chrono::system_clock::now();
