@@ -79,7 +79,7 @@ private:
   const int64_t input_channels;
   const int64_t input_width;
   const int64_t input_height;
-  const int64_t datatype_bytes;
+  const int64_t input_datatype_bytes;
   const std::shared_ptr<FeatureGenerator> feature_generator;
   TVMArrayContainer output;
 };
@@ -115,12 +115,11 @@ private:
   const int64_t output_channels;
   const int64_t output_width;
   const int64_t output_height;
-  const int64_t datatype_bytes;
+  const int64_t output_datatype_bytes;
   const float32_t objectness_thresh_;
   const float32_t score_threshold_;
   const float32_t height_thresh_;
   const int32_t min_pts_num_;
-  const std::shared_ptr<float32_t> inferred_data;
   const pcl::PointCloud<pcl::PointXYZI>::ConstPtr pc_ptr_;
   const std::shared_ptr<Cluster2D> cluster2d_;
 };

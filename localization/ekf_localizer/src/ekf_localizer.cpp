@@ -151,7 +151,24 @@ void EKFLocalizer::timerCallback()
   /* predict model in EKF */
   stop_watch_.tic();
   DEBUG_INFO(get_logger(), "------------------------- start prediction -------------------------");
-  predictKinematicsModel();
+
+  const Eigen::MatrixXd X_curr = ekf_.getLatestX();
+  DEBUG_PRINT_MAT(X_curr.transpose());
+
+  const Eigen::MatrixXd P_curr = ekf_.getLatestP();
+
+  const double dt = ekf_dt_;
+
+  const Vector6d X_next = predictNextState(X_curr, dt);
+  const Matrix6d A = createStateTransitionMatrix(X_curr, dt);
+  const Matrix6d Q = processNoiseCovariance(proc_cov_yaw_d_, proc_cov_vx_d_, proc_cov_wz_d_);
+
+  ekf_.predictWithDelay(X_next, A, Q);
+
+  // debug
+  const Eigen::MatrixXd X_result = ekf_.getLatestX();
+  DEBUG_PRINT_MAT(X_result.transpose());
+  DEBUG_PRINT_MAT((X_result - X_curr).transpose());
   DEBUG_INFO(get_logger(), "[EKF] predictKinematicsModel calc time = %f [ms]", stop_watch_.toc());
   DEBUG_INFO(get_logger(), "------------------------- end prediction -------------------------\n");
 
@@ -334,7 +351,7 @@ void EKFLocalizer::callbackInitialPose(
 
   ekf_.init(X, P, params_.extend_state_step);
 
-  updateSimple1DFilters(*initialpose);
+  initSimple1DFilters(*initialpose);
 }
 
 /*
@@ -378,52 +395,6 @@ void EKFLocalizer::initEKF()
   P(IDX::WZ, IDX::WZ) = 50.0;    // for wz
 
   ekf_.init(X, P, params_.extend_state_step);
-}
-
-/*
- * predictKinematicsModel
- */
-void EKFLocalizer::predictKinematicsModel()
-{
-  /*  == Nonlinear model ==
-   *
-   * x_{k+1}   = x_k + vx_k * cos(yaw_k + b_k) * dt
-   * y_{k+1}   = y_k + vx_k * sin(yaw_k + b_k) * dt
-   * yaw_{k+1} = yaw_k + (wz_k) * dt
-   * b_{k+1}   = b_k
-   * vx_{k+1}  = vz_k
-   * wz_{k+1}  = wz_k
-   *
-   * (b_k : yaw_bias_k)
-   */
-
-  /*  == Linearized model ==
-   *
-   * A = [ 1, 0, -vx*sin(yaw+b)*dt, -vx*sin(yaw+b)*dt, cos(yaw+b)*dt,  0]
-   *     [ 0, 1,  vx*cos(yaw+b)*dt,  vx*cos(yaw+b)*dt, sin(yaw+b)*dt,  0]
-   *     [ 0, 0,                 1,                 0,             0, dt]
-   *     [ 0, 0,                 0,                 1,             0,  0]
-   *     [ 0, 0,                 0,                 0,             1,  0]
-   *     [ 0, 0,                 0,                 0,             0,  1]
-   */
-
-  const Eigen::MatrixXd X_curr = ekf_.getLatestX();
-  DEBUG_PRINT_MAT(X_curr.transpose());
-
-  const Eigen::MatrixXd P_curr = ekf_.getLatestP();
-
-  const double dt = ekf_dt_;
-
-  const Vector6d X_next = predictNextState(X_curr, dt);
-  const Matrix6d A = createStateTransitionMatrix(X_curr, dt);
-  const Matrix6d Q = processNoiseCovariance(proc_cov_yaw_d_, proc_cov_vx_d_, proc_cov_wz_d_);
-
-  ekf_.predictWithDelay(X_next, A, Q);
-
-  // debug
-  const Eigen::MatrixXd X_result = ekf_.getLatestX();
-  DEBUG_PRINT_MAT(X_result.transpose());
-  DEBUG_PRINT_MAT((X_result - X_curr).transpose());
 }
 
 /*
@@ -679,6 +650,25 @@ void EKFLocalizer::updateSimple1DFilters(const geometry_msgs::msg::PoseWithCovar
   z_filter_.update(z, z_dev, pose.header.stamp);
   roll_filter_.update(roll, roll_dev, pose.header.stamp);
   pitch_filter_.update(pitch, pitch_dev, pose.header.stamp);
+}
+
+void EKFLocalizer::initSimple1DFilters(const geometry_msgs::msg::PoseWithCovarianceStamped & pose)
+{
+  double z = pose.pose.pose.position.z;
+  double roll = 0.0, pitch = 0.0, yaw_tmp = 0.0;
+
+  tf2::Quaternion q_tf;
+  tf2::fromMsg(pose.pose.pose.orientation, q_tf);
+  tf2::Matrix3x3(q_tf).getRPY(roll, pitch, yaw_tmp);
+
+  using COV_IDX = tier4_autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
+  double z_dev = pose.pose.covariance[COV_IDX::Z_Z];
+  double roll_dev = pose.pose.covariance[COV_IDX::ROLL_ROLL];
+  double pitch_dev = pose.pose.covariance[COV_IDX::PITCH_PITCH];
+
+  z_filter_.init(z, z_dev, pose.header.stamp);
+  roll_filter_.init(roll, roll_dev, pose.header.stamp);
+  pitch_filter_.init(pitch, pitch_dev, pose.header.stamp);
 }
 
 /**

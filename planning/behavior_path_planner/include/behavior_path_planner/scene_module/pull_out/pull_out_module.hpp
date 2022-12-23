@@ -52,7 +52,7 @@ struct PullOutStatus
   PathWithLaneId backward_path;
   lanelet::ConstLanelets current_lanes;
   lanelet::ConstLanelets pull_out_lanes;
-  lanelet::ConstLanelets lanes;
+  std::vector<DrivableLanes> lanes;
   std::vector<uint64_t> lane_follow_lane_ids;
   std::vector<uint64_t> pull_out_lane_ids;
   bool is_safe = false;
@@ -71,6 +71,10 @@ public:
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
   BT::NodeStatus updateState() override;
+  BT::NodeStatus getNodeStatusWhileWaitingApproval() const override
+  {
+    return BT::NodeStatus::SUCCESS;
+  }
   BehaviorModuleOutput plan() override;
   BehaviorModuleOutput planWaitingApproval() override;
   CandidateOutput planCandidate() const override;
@@ -114,6 +118,7 @@ private:
     const std::vector<Pose> & start_pose_candidates, const Pose & goal_pose);
   void planWithPriorityOnShortBackDistance(
     const std::vector<Pose> & start_pose_candidates, const Pose & goal_pose);
+  void generateStopPath();
   void updatePullOutStatus();
   static bool isOverlappedWithLane(
     const lanelet::ConstLanelet & candidate_lanelet,

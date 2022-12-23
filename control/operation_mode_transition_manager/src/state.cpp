@@ -14,6 +14,8 @@
 
 #include "state.hpp"
 
+#include "util.hpp"
+
 #include <motion_utils/motion_utils.hpp>
 #include <tier4_autoware_utils/tier4_autoware_utils.hpp>
 
@@ -41,6 +43,12 @@ AutonomousMode::AutonomousMode(rclcpp::Node * node)
 
   sub_trajectory_ = node->create_subscription<Trajectory>(
     "trajectory", 1, [this](const Trajectory::SharedPtr msg) { trajectory_ = *msg; });
+
+  check_engage_condition_ = node->declare_parameter<bool>("check_engage_condition");
+  nearest_dist_deviation_threshold_ =
+    node->declare_parameter<double>("nearest_dist_deviation_threshold");
+  nearest_yaw_deviation_threshold_ =
+    node->declare_parameter<double>("nearest_yaw_deviation_threshold");
 
   // params for mode change available
   {
@@ -80,8 +88,17 @@ void AutonomousMode::update(bool transition)
 
 bool AutonomousMode::isModeChangeCompleted()
 {
-  constexpr auto dist_max = 5.0;
-  constexpr auto yaw_max = M_PI_4;
+  if (!check_engage_condition_) {
+    return true;
+  }
+
+  const auto current_speed = kinematics_.twist.twist.linear.x;
+  const auto & param = engage_acceptable_param_;
+
+  // Engagement completes quickly if the vehicle is stopped.
+  if (param.allow_autonomous_in_stopped && std::abs(current_speed) < 0.01) {
+    return true;
+  }
 
   const auto unstable = [this]() {
     stable_start_time_.reset();
@@ -93,8 +110,9 @@ bool AutonomousMode::isModeChangeCompleted()
     return unstable();
   }
 
-  const auto closest_idx =
-    findNearestIndex(trajectory_.points, kinematics_.pose.pose, dist_max, yaw_max);
+  const auto closest_idx = findNearestIndex(
+    trajectory_.points, kinematics_.pose.pose, nearest_dist_deviation_threshold_,
+    nearest_yaw_deviation_threshold_);
   if (!closest_idx) {
     RCLCPP_INFO(logger_, "Not stable yet: closest point not found");
     return unstable();
@@ -180,8 +198,10 @@ std::pair<bool, bool> AutonomousMode::hasDangerLateralAcceleration()
 
 bool AutonomousMode::isModeChangeAvailable()
 {
-  constexpr auto dist_max = 100.0;
-  constexpr auto yaw_max = M_PI_4;
+  if (!check_engage_condition_) {
+    setAllOk(debug_info_);
+    return true;
+  }
 
   const auto current_speed = kinematics_.twist.twist.linear.x;
   const auto target_control_speed = control_cmd_.longitudinal.speed;
@@ -194,8 +214,9 @@ bool AutonomousMode::isModeChangeAvailable()
     return false;
   }
 
-  const auto closest_idx =
-    findNearestIndex(trajectory_.points, kinematics_.pose.pose, dist_max, yaw_max);
+  const auto closest_idx = findNearestIndex(
+    trajectory_.points, kinematics_.pose.pose, nearest_dist_deviation_threshold_,
+    nearest_yaw_deviation_threshold_);
   if (!closest_idx) {
     RCLCPP_INFO(logger_, "Engage unavailable: closest point not found");
     debug_info_ = DebugInfo{};  // all false

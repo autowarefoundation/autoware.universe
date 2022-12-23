@@ -238,12 +238,7 @@ bool BehaviorVelocityPlannerNode::isDataReady(
     RCLCPP_INFO_THROTTLE(get_logger(), clock, 3000, "Waiting for pointcloud");
     return false;
   }
-  if (!d.route_handler_) {
-    RCLCPP_INFO_THROTTLE(
-      get_logger(), clock, 3000, "Waiting for the initialization of route_handler");
-    return false;
-  }
-  if (!d.route_handler_->isMapMsgReady()) {
+  if (!map_ptr_) {
     RCLCPP_INFO_THROTTLE(get_logger(), clock, 3000, "Waiting for the initialization of map");
     return false;
   }
@@ -344,8 +339,8 @@ void BehaviorVelocityPlannerNode::onLaneletMap(
 {
   std::lock_guard<std::mutex> lock(mutex_);
 
-  // Load map
-  planner_data_.route_handler_ = std::make_shared<route_handler::RouteHandler>(*msg);
+  map_ptr_ = msg;
+  has_received_map_ = true;
 }
 
 void BehaviorVelocityPlannerNode::onTrafficSignals(
@@ -419,6 +414,18 @@ void BehaviorVelocityPlannerNode::onTrigger(
     return;
   }
 
+  // Load map and check route handler
+  if (has_received_map_) {
+    planner_data_.route_handler_ = std::make_shared<route_handler::RouteHandler>(*map_ptr_);
+    has_received_map_ = false;
+  }
+  if (!planner_data_.route_handler_) {
+    RCLCPP_INFO_THROTTLE(
+      get_logger(), *get_clock(), 3000, "Waiting for the initialization of route_handler");
+    mutex_.unlock();
+    return;
+  }
+
   // NOTE: planner_data must not be referenced for multithreading
   const auto planner_data = planner_data_;
   mutex_.unlock();
@@ -454,7 +461,8 @@ autoware_auto_planning_msgs::msg::Path BehaviorVelocityPlannerNode::generatePath
     output_path_msg = to_path(*input_path_msg);
     output_path_msg.header.frame_id = "map";
     output_path_msg.header.stamp = this->now();
-    output_path_msg.drivable_area = input_path_msg->drivable_area;
+    output_path_msg.left_bound = input_path_msg->left_bound;
+    output_path_msg.right_bound = input_path_msg->right_bound;
     return output_path_msg;
   }
 
@@ -475,7 +483,8 @@ autoware_auto_planning_msgs::msg::Path BehaviorVelocityPlannerNode::generatePath
   output_path_msg.header.stamp = this->now();
 
   // TODO(someone): This must be updated in each scene module, but copy from input message for now.
-  output_path_msg.drivable_area = input_path_msg->drivable_area;
+  output_path_msg.left_bound = input_path_msg->left_bound;
+  output_path_msg.right_bound = input_path_msg->right_bound;
 
   return output_path_msg;
 }
