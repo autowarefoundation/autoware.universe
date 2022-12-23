@@ -407,8 +407,7 @@ void ObstacleStopPlannerNode::searchObstacle(
           one_step_move_vehicle_polygon, z_axis_min, z_axis_max, PolygonType::Vehicle);
       } else {
         debug_ptr_->pushPolygon(
-          one_step_move_vehicle_polygon, p_front.position.z,
-          PolygonType::Vehicle);
+          one_step_move_vehicle_polygon, p_front.position.z, PolygonType::Vehicle);
       }
 
       PointCloud::Ptr collision_pointcloud_ptr(new PointCloud);
