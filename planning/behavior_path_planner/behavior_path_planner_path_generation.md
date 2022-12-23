@@ -81,7 +81,7 @@ In the case where there are no limitations on lateral velocity, the total time r
 L = l_7 = 2 j T_j^3 + 3 j T_a T_j^2 + j T_a^2 T_j,\quad a_{\rm lim} = j T_j
 ```
 
-we obtain the following expresions:
+we obtain the following expressions:
 
 ```math
 \begin{align}
