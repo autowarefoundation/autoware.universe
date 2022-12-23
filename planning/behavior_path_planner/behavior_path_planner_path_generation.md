@@ -1,6 +1,6 @@
 ## Path Generation
 
-This document explains how the path is ganerated for lane change and avoidance, etc. The implementation can be found in [path_shifter.hpp](https://github.com/autowarefoundation/autoware.universe/blob/main/planning/behavior_path_planner/include/behavior_path_planner/scene_module/utils/path_shifter.hpp).
+This document explains how the path is generated for lane change and avoidance, etc. The implementation can be found in [path_shifter.hpp](https://github.com/autowarefoundation/autoware.universe/blob/main/planning/behavior_path_planner/include/behavior_path_planner/scene_module/utils/path_shifter.hpp).
 
 ### Overview
 
