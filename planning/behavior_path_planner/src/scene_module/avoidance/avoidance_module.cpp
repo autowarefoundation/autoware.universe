@@ -2030,7 +2030,7 @@ bool AvoidanceModule::isSafePath(
     std::vector<std::pair<PathPointWithLaneId, double>> ret{};
 
     float travel_time = 0.0;
-    ret.emplace_back(std::make_pair(path.points.front(), travel_time));
+    ret.emplace_back(path.points.front(), travel_time);
 
     for (size_t i = 1; i < path.points.size(); ++i) {
       const auto & p1 = path.points.at(i - 1);
@@ -2041,7 +2041,7 @@ bool AvoidanceModule::isSafePath(
 
       travel_time += ds / v;
 
-      ret.emplace_back(std::make_pair(p2, travel_time));
+      ret.emplace_back(p2, travel_time);
     }
 
     return ret;
