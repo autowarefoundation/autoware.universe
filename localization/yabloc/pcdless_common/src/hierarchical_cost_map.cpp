@@ -75,6 +75,19 @@ float HierarchicalCostMap::at(const Eigen::Vector2f & position)
   return cost_maps_.at(key).ptr<cv::Vec3b>(tmp.y)[tmp.x][0];
 }
 
+void HierarchicalCostMap::set_height(float height)
+{
+  if (height_) {
+    if (std::abs(*height_ - height) > 2) {
+      generated_map_history_.clear();
+      cost_maps_.clear();
+      map_accessed_.clear();
+    }
+  }
+
+  height_ = height;
+}
+
 void HierarchicalCostMap::set_unmapped_area(const pcl::PointCloud<pcl::PointXYZ> & polygon)
 {
   unmapped_polygon_ = polygon;
@@ -96,7 +109,13 @@ void HierarchicalCostMap::build_map(const Area & area)
     return this->to_cv_point(area, p.topRows(2));
   };
 
+  // TODO: We can speed up by skipping too far linesegments
   for (const auto pn : cloud_.value()) {
+    if (height_) {
+      if (std::abs(pn.z - *height_) > 2) continue;
+      if (std::abs(pn.normal_z - *height_) > 2) continue;
+    }
+
     cv::Point2i from = cvPoint(pn.getVector3fMap());
     cv::Point2i to = cvPoint(pn.getNormalVector3fMap());
 

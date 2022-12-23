@@ -70,11 +70,14 @@ public:
 
   void erase_obsolete();
 
+  void set_height(float height);
+
 private:
   const float max_range_;
   const float image_size_;
   const size_t max_map_count_;
   rclcpp::Logger logger_;
+  std::optional<float> height_{std::nullopt};
 
   common::GammaConverter gamma_converter{4.0f};
 

@@ -94,6 +94,7 @@ void CameraParticleCorrector::on_pose(const PoseStamped & msg) { latest_pose_ = 
 
 void CameraParticleCorrector::on_unmapped_area(const PointCloud2 & msg)
 {
+  // NOTE: Under construction
   // TODO: This does not handle multiple polygons
   pcl::PointCloud<pcl::PointXYZ> ll2_polygon;
   pcl::fromROSMsg(msg, ll2_polygon);
@@ -155,9 +156,9 @@ void CameraParticleCorrector::on_lsd(const PointCloud2 & lsd_msg)
   ParticleArray weighted_particles = opt_array.value();
 
   bool publish_weighted_particles = true;
+  const Pose meaned_pose = mean_pose(weighted_particles);
   {
     // Check travel distance and publish weights if it is enough long
-    Pose meaned_pose = mean_pose(weighted_particles);
     Eigen::Vector3f mean_position = common::pose_to_affine(meaned_pose).translation();
     if ((mean_position - last_mean_position_).squaredNorm() > 1) {
       last_mean_position_ = mean_position;
@@ -168,6 +169,8 @@ void CameraParticleCorrector::on_lsd(const PointCloud2 & lsd_msg)
         get_logger(), *get_clock(), (1000ms).count(), "Skip weighting because almost same positon");
     }
   }
+
+  cost_map_.set_height(meaned_pose.position.z);
 
   if (publish_weighted_particles) {
     for (auto & particle : weighted_particles.particles) {
