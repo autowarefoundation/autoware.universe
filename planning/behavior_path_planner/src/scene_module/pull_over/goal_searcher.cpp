@@ -44,7 +44,6 @@ GoalCandidates GoalSearcher::search(const Pose & original_goal_pose)
   GoalCandidates goal_candidates{};
 
   const auto & route_handler = planner_data_->route_handler;
-  const double vehicle_width = planner_data_->parameters.vehicle_width;
   const double forward_length = parameters_.forward_goal_search_length;
   const double backward_length = parameters_.backward_goal_search_length;
   const double margin_from_boundary = parameters_.margin_from_boundary;
@@ -79,7 +78,6 @@ GoalCandidates GoalSearcher::search(const Pose & original_goal_pose)
     original_search_poses.push_back(original_search_pose);  // for createAreaPolygon
     Pose search_pose{};
     // search goal_pose in lateral direction
-    bool found_lateral_no_collision_pose = false;
     double lateral_offset = 0.0;
     for (double dy = 0; dy <= max_lateral_offset; dy += lateral_offset_interval) {
       lateral_offset = dy;
@@ -96,40 +94,15 @@ GoalCandidates GoalSearcher::search(const Pose & original_goal_pose)
         continue;
       }
 
-      if (checkCollision(search_pose)) {
-        continue;
-      }
-
-      // if finding objects or detecting lane departure
-      // shift search_pose in lateral direction one more
-      // for avoiding them on other path points.
-      if (dy > 0 && dy < max_lateral_offset) {
-        search_pose = calcOffsetPose(search_pose, 0, -lateral_offset_interval, 0);
-      }
-
-      found_lateral_no_collision_pose = true;
-      break;
+      GoalCandidate goal_candidate{};
+      goal_candidate.goal_pose = search_pose;
+      goal_candidate.lateral_offset = lateral_offset;
+      goal_candidate.id = goal_id;
+      // use longitudinal_distance as distance_from_original_goal
+      goal_candidate.distance_from_original_goal = std::abs(motion_utils::calcSignedArcLength(
+        center_line_path.points, original_goal_pose.position, search_pose.position));
+      goal_candidates.push_back(goal_candidate);
     }
-    if (!found_lateral_no_collision_pose) {
-      continue;
-    }
-
-    constexpr bool filter_inside = true;
-    const auto target_objects = pull_over_utils::filterObjectsByLateralDistance(
-      search_pose, vehicle_width, shoulder_lane_objects,
-      parameters_.object_recognition_collision_check_margin, filter_inside);
-    if (checkCollisionWithLongitudinalDistance(search_pose, target_objects)) {
-      continue;
-    }
-
-    GoalCandidate goal_candidate{};
-    goal_candidate.goal_pose = search_pose;
-    goal_candidate.lateral_offset = lateral_offset;
-    goal_candidate.id = goal_id;
-    // use longitudinal_distance as distance_from_original_goal
-    goal_candidate.distance_from_original_goal = std::abs(motion_utils::calcSignedArcLength(
-      center_line_path.points, original_goal_pose.position, search_pose.position));
-    goal_candidates.push_back(goal_candidate);
   }
   createAreaPolygons(original_search_poses);
 
