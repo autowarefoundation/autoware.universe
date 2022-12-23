@@ -276,11 +276,11 @@ std::pair<std::vector<double>, std::vector<double>> PathShifter::calcBaseLengths
 
   const auto T = arclength / speed;
   const auto L = std::abs(shift_length);
-  const auto amax = 8.0 * L / (T * T);
+  const auto a_max = 8.0 * L / (T * T);
 
-  if (amax < acc_limit_) {
+  if (a_max < acc_limit_) {
     // no need to consider acceleration limit
-    RCLCPP_DEBUG(logger_, "No need to consider acc limit. max: %f, limit: %f", amax, acc_limit_);
+    RCLCPP_DEBUG(logger_, "No need to consider acc limit. max: %f, limit: %f", a_max, acc_limit_);
     return getBaseLengthsWithoutAccelLimit(arclength, shift_length, offset_back);
   }
 
@@ -292,14 +292,14 @@ std::pair<std::vector<double>, std::vector<double>> PathShifter::calcBaseLengths
     // no need to consider acceleration limit
     RCLCPP_WARN(
       logger_,
-      "Acc limit is too small to be applied. Tj: %f, Ta: %f, j: %f, amax: %f, acc_limit: %f", tj,
-      ta, jerk, amax, acc_limit_);
+      "Acc limit is too small to be applied. Tj: %f, Ta: %f, j: %f, a_max: %f, acc_limit: %f", tj,
+      ta, jerk, a_max, acc_limit_);
     return getBaseLengthsWithoutAccelLimit(arclength, shift_length, offset_back);
   }
 
   const auto tj3 = tj * tj * tj;
-  const auto ta2tj = ta * ta * tj;
-  const auto tatj2 = ta * tj * tj;
+  const auto ta2_tj = ta * ta * tj;
+  const auto ta_tj2 = ta * tj * tj;
 
   const auto s1 = tj * speed;
   const auto s2 = s1 + ta * speed;
@@ -310,11 +310,11 @@ std::pair<std::vector<double>, std::vector<double>> PathShifter::calcBaseLengths
 
   const auto sign = shift_length > 0.0 ? 1.0 : -1.0;
   const auto l1 = sign * (1.0 / 6.0 * jerk * tj3);
-  const auto l2 = sign * (1.0 / 6.0 * jerk * tj3 + 0.5 * jerk * tatj2 + 0.5 * jerk * ta2tj);
-  const auto l3 = sign * (jerk * tj3 + 1.5 * jerk * tatj2 + 0.5 * jerk * ta2tj);  // = l4
-  const auto l5 = sign * (11.0 / 6.0 * jerk * tj3 + 2.5 * jerk * tatj2 + 0.5 * jerk * ta2tj);
-  const auto l6 = sign * (11.0 / 6.0 * jerk * tj3 + 3.0 * jerk * tatj2 + jerk * ta2tj);
-  const auto l7 = sign * (2.0 * jerk * tj3 + 3.0 * jerk * tatj2 + jerk * ta2tj);
+  const auto l2 = sign * (1.0 / 6.0 * jerk * tj3 + 0.5 * jerk * ta_tj2 + 0.5 * jerk * ta2_tj);
+  const auto l3 = sign * (jerk * tj3 + 1.5 * jerk * ta_tj2 + 0.5 * jerk * ta2_tj);  // = l4
+  const auto l5 = sign * (11.0 / 6.0 * jerk * tj3 + 2.5 * jerk * ta_tj2 + 0.5 * jerk * ta2_tj);
+  const auto l6 = sign * (11.0 / 6.0 * jerk * tj3 + 3.0 * jerk * ta_tj2 + jerk * ta2_tj);
+  const auto l7 = sign * (2.0 * jerk * tj3 + 3.0 * jerk * ta_tj2 + jerk * ta2_tj);
 
   std::vector<double> base_lon = {0.0, s1, s2, s3, s5, s6, s7};
   std::vector<double> base_lat = {0.0, l1, l2, l3, l5, l6, l7};
