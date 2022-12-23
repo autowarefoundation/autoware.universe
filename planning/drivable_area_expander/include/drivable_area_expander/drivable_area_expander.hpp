@@ -31,10 +31,11 @@ namespace drivable_area_expander
 /// @param[in] footprints ego footprints to filter
 /// @param[in] predicted_paths predicted footprints of dynamic objects
 /// @param[in] uncrossable_lines lines that should not be crossed by the ego footprint
+/// @param[in] dist_from_uncrossable_lines extra distance to keep away from the uncrossable lines
 /// @return the filtered footprint polygons
 multipolygon_t filterFootprint(
   const std::vector<Footprint> & footprints, const std::vector<Footprint> & predicted_paths,
-  const multilinestring_t & uncrossable_lines);
+  const multilinestring_t & uncrossable_lines, const double dist_from_uncrossable_lines);
 
 /// @brief expand the given drivable area with the given footprint
 /// @param[inout] left_bound left drivable area bound to expand

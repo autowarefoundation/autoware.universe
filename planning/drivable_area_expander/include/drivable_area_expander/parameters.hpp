@@ -42,10 +42,12 @@ struct ExpansionParameters
     "expansion.dynamic_objects.extra_footprint_offset.right";
   static constexpr auto AVOID_DYN_OBJECTS_PARAM = "expansion.dynamic_objects.avoid";
   static constexpr auto AVOID_LINESTRING_TYPES_PARAM = "expansion.avoid_linestring_types";
+  static constexpr auto AVOID_LINESTRING_DIST_PARAM = "expansion.avoid_linestring_distance";
 
   double max_expansion_distance{};
   std::vector<std::string> avoid_linestring_types{};
   bool avoid_dynamic_objects{};
+  double avoid_linestring_dist{};
   double ego_left_offset;
   double ego_right_offset;
   double ego_rear_offset;
@@ -78,6 +80,7 @@ struct ExpansionParameters
     avoid_linestring_types =
       node.declare_parameter<std::vector<std::string>>(AVOID_LINESTRING_TYPES_PARAM);
     avoid_dynamic_objects = node.declare_parameter<bool>(AVOID_DYN_OBJECTS_PARAM);
+    avoid_linestring_dist = node.declare_parameter<double>(AVOID_LINESTRING_DIST_PARAM);
 
     const auto vehicle_info = vehicle_info_util::VehicleInfoUtil(node).getVehicleInfo();
     ego_left_offset = vehicle_info.vehicle_width_m / 2.0;

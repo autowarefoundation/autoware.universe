@@ -84,6 +84,8 @@ rcl_interfaces::msg::SetParametersResult DrivableAreaExpanderNode::onParameter(
       expansion_params_.avoid_linestring_types = parameter.as_string_array();
       uncrossable_lines_ =
         extractUncrossableLines(*lanelet_map_ptr_, expansion_params_.avoid_linestring_types);
+    } else if (parameter.get_name() == ExpansionParameters::AVOID_LINESTRING_DIST_PARAM) {
+      expansion_params_.avoid_linestring_dist = parameter.as_double();
     } else if (parameter.get_name() == ExpansionParameters::EGO_EXTRA_OFFSET_FRONT) {
       expansion_params_.ego_extra_front_offset = parameter.as_double();
     } else if (parameter.get_name() == ExpansionParameters::EGO_EXTRA_OFFSET_REAR) {
@@ -135,8 +137,8 @@ void DrivableAreaExpanderNode::onPath(const Path::ConstSharedPtr msg)
   uncrossable_lines.push_back(max_expansion_line);
   const auto predicted_paths =
     createPredictedPathFootprints(*dynamic_objects_ptr_, expansion_params_);
-  const auto filtered_footprint =
-    filterFootprint(path_footprints, predicted_paths, uncrossable_lines);
+  const auto filtered_footprint = filterFootprint(
+    path_footprints, predicted_paths, uncrossable_lines, expansion_params_.avoid_linestring_dist);
 
   const auto diff_ls =
     expandDrivableArea(input_path.left_bound, input_path.right_bound, filtered_footprint);

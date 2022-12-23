@@ -29,7 +29,7 @@ namespace drivable_area_expander
 {
 multipolygon_t filterFootprint(
   const std::vector<Footprint> & footprints, const std::vector<Footprint> & predicted_paths,
-  const multilinestring_t & uncrossable_lines)
+  const multilinestring_t & uncrossable_lines, const double dist_from_uncrossable_lines)
 {
   namespace strategy = boost::geometry::strategy::buffer;
   multipolygon_t filtered_footprints;
@@ -37,7 +37,8 @@ multipolygon_t filterFootprint(
   multipolygon_t cuts;
   multipolygon_t uncrossable_polys;
   boost::geometry::buffer(
-    uncrossable_lines, uncrossable_polys, strategy::distance_symmetric<double>(0.1),
+    uncrossable_lines, uncrossable_polys,
+    strategy::distance_symmetric<double>(std::max(dist_from_uncrossable_lines, 0.01)),
     strategy::side_straight(), strategy::join_miter(), strategy::end_flat(),
     strategy::point_square());
   for (const auto & f : footprints) {

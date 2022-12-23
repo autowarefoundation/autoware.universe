@@ -23,3 +23,4 @@
       avoid_linestring_types:  # linestring types in the lanelet maps that will not be crossed when expanding the drivable area
         - guard_rail
         - road_border
+      avoid_linestring_distance: 0.0  # [m] distance to keep between the drivable area and the linestrings to avoid
