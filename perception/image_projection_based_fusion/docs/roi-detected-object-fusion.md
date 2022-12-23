@@ -41,15 +41,15 @@ The `DetectedObject` has three shape and the polygon vertices of a object are as
 
 ### Core Parameters
 
-| Name                                            | Type   | Description                                                                                               |
-| ----------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------------- |
-| `rois_number`                                   | int    | the number of input rois                                                                                  |
-| `debug_mode`                                    | bool   | If `true`, subscribe and publish images for visualization.                                                |
-| `use_iou`                                       | bool   | calculate IoU both along x-axis and y-axis                                                                |
-| `iou_threshold`                                 | double | the IoU threshold to                                                                                      |
-| `passthrough_lower_bound_probability_threshold` | double | If `existence_probability` of detected objects is greater than the threshold, they passthrough as outputs |
-| `use_roi_probability`                           | float  | use `existence_probability` of ROIs to match with detected objects                                        |
-| `roi_probability_threshold`                     | double | If `existence_probability` of ROIs is greater than the threshold, matched detected objects are output     |
+| Name                                            | Type   | Description                                                                                                  |
+| ----------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------ |
+| `rois_number`                                   | int    | the number of input rois                                                                                     |
+| `debug_mode`                                    | bool   | If `true`, subscribe and publish images for visualization.                                                   |
+| `use_iou`                                       | bool   | calculate IoU both along x-axis and y-axis                                                                   |
+| `min_iou_threshold`                             | double | If the iou between detected objects and rois is greater than threshold, the objects are classified as fused. |
+| `passthrough_lower_bound_probability_threshold` | double | If `existence_probability` of detected objects is greater than the threshold, they passthrough as outputs    |
+| `use_roi_probability`                           | float  | use `existence_probability` of ROIs to match with detected objects                                           |
+| `roi_probability_threshold`                     | double | If `existence_probability` of ROIs is greater than the threshold, matched detected objects are output        |
 
 ## Assumptions / Known limits
 

@@ -27,7 +27,7 @@ RoiDetectedObjectFusionNode::RoiDetectedObjectFusionNode(const rclcpp::NodeOptio
     declare_parameter<double>("passthrough_lower_bound_probability_threshold");
   fusion_params_.use_roi_probability_ = declare_parameter<bool>("use_roi_probability");
   fusion_params_.roi_probability_threshold_ = declare_parameter<bool>("roi_probability_threshold");
-  fusion_params_.iou_threshold_ = declare_parameter<double>("iou_threshold");
+  fusion_params_.min_iou_threshold_ = declare_parameter<double>("min_iou_threshold");
 }
 
 void RoiDetectedObjectFusionNode::preprocess(DetectedObjects & output_msg)
@@ -187,7 +187,7 @@ void RoiDetectedObjectFusionNode::fuseObjectsOnImage(
       }
     }
 
-    if (max_iou > fusion_params_.iou_threshold_) {
+    if (max_iou > fusion_params_.min_iou_threshold_) {
       if (fusion_params_.use_roi_probability_) {
         if (roi_prob > fusion_params_.roi_probability_threshold_) {
           fused_object_flags_.at(obj_i) = true;

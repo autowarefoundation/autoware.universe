@@ -58,7 +58,7 @@ private:
   struct
   {
     double passthrough_lower_bound_probability_threshold_{};
-    double iou_threshold_{};
+    double min_iou_threshold_{};
     bool use_roi_probability_{};
     double roi_probability_threshold_{};
   } fusion_params_;
