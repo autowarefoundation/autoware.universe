@@ -24,5 +24,5 @@ if(BUILD_TESTING)
 endif()
 
 ament_auto_package(INSTALL_TO_SHARE
-  # config
-  )
+  param
+ )

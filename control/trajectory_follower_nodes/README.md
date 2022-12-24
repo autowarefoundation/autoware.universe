@@ -8,12 +8,13 @@ Generate control commands to follow a given Trajectory.
 
 This is a node of the functionalities implemented in the controller class derived from [trajectory_follower](../../trajectory_follower/README.md#trajectory-follower) package. It has instances of those functionalities, gives them input data to perform calculations, and publishes control commands.
 
-By default, the controller instance from the `Controller` class as follows is used.
+By default, the controller instance with the `Controller` class as follows is used.
 
+```plantuml
 @startuml
-package trajectory*follower {
+package trajectory_follower {
 abstract class LateralControllerBase {
-longitudinal_sync_data*
+longitudinal_sync_data_
 
     virtual isReady(InputData)
     virtual run(InputData)
@@ -22,7 +23,7 @@ longitudinal_sync_data*
 
 }
 abstract class LongitudinalControllerBase {
-lateral*sync_data*
+lateral_sync_data_
 
     virtual isReady(InputData)
     virtual run(InputData)
@@ -63,10 +64,10 @@ run(InputData) override
 }
 }
 
-package trajectory*follower_nodes {
+package trajectory_follower_nodes {
 class Controller {
-longitudinal_controller*
-lateral*controller*
+longitudinal_controller_
+lateral_controller_
 onTimer()
 createInputData(): InputData
 }
@@ -76,8 +77,10 @@ MPCLateralController --|> LateralControllerBase
 PurePursuitLateralController --|> LateralControllerBase
 PIDLongitudinalController --|> LongitudinalControllerBase
 
-LateralSyncData --_LateralControllerBase
-LongitudinalSyncData --_ LongitudinalControllerBase
+LateralSyncData --> LongitudinalControllerBase
+LateralSyncData --> LateralControllerBase
+LongitudinalSyncData --> LongitudinalControllerBase
+LongitudinalSyncData --> LateralControllerBase
 InputData ..> LateralControllerBase
 InputData ..> LongitudinalControllerBase
 
@@ -85,12 +88,16 @@ LateralControllerBase --o Controller
 LongitudinalControllerBase --o Controller
 InputData ..> Controller
 @enduml
+```
 
-The process flow is as follows.
+The process flow of `Controller` class is as follows.
 
 ```cpp
 // 1. create input data
 const auto input_data = createInputData(*get_clock());
+if (!input_data) {
+  return;
+}
 
 // 2. check if controllers are ready
 const bool is_lat_ready = lateral_controller_->isReady(*input_data);

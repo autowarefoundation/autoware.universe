@@ -49,6 +49,10 @@ rclcpp::NodeOptions makeNodeOptions(const bool enable_keep_stopped_until_steer_c
 {
   // Pass default parameter file to the node
   const auto share_dir = ament_index_cpp::get_package_share_directory("trajectory_follower_nodes");
+  const auto longitudinal_share_dir =
+    ament_index_cpp::get_package_share_directory("pid_longitudinal_controller");
+  const auto lateral_share_dir =
+    ament_index_cpp::get_package_share_directory("mpc_lateral_controller");
   rclcpp::NodeOptions node_options;
   node_options.append_parameter_override("ctrl_period", 0.03);
   node_options.append_parameter_override("timeout_thr_sec", 0.5);
@@ -56,9 +60,10 @@ rclcpp::NodeOptions makeNodeOptions(const bool enable_keep_stopped_until_steer_c
     "enable_keep_stopped_until_steer_convergence",
     enable_keep_stopped_until_steer_convergence);  // longitudinal
   node_options.arguments(
-    {"--ros-args", "--params-file", share_dir + "/param/lateral_controller_defaults.param.yaml",
-     "--params-file", share_dir + "/param/longitudinal_controller_defaults.param.yaml",
-     "--params-file", share_dir + "/param/test_vehicle_info.param.yaml", "--params-file",
+    {"--ros-args", "--params-file",
+     lateral_share_dir + "/param/lateral_controller_defaults.param.yaml", "--params-file",
+     longitudinal_share_dir + "/param/longitudinal_controller_defaults.param.yaml", "--params-file",
+     share_dir + "/param/test_vehicle_info.param.yaml", "--params-file",
      share_dir + "/param/test_nearest_search.param.yaml"});
 
   return node_options;
