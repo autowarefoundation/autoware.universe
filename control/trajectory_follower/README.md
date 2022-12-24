@@ -8,13 +8,8 @@ This is the design document for the `trajectory_follower` package.
 <!-- Things to consider:
     - Why did we implement this feature? -->
 
-This package provides the library code used by the nodes of the `trajectory_follower_nodes` package.
-Mainly, it implements two algorithms:
-
-- Model-Predictive Control (MPC) for the computation of lateral steering commands.
-  - [trajectory_follower-mpc-design](mpc_lateral_controller-design.md)
-- PID control for the computation of velocity and acceleration commands.
-  - [trajectory_follower-pid-design](pid_longitudinal_controller-design.md)
+This package provides the interface of longitudinal and lateral controllers used by the node of the `trajectory_follower_nodes` package.
+We can implement a detailed controller by deriving `LongitudinalControllerBase` and `LateralControllerBase`.
 
 ## Design
 
@@ -23,14 +18,14 @@ Mainly, it implements two algorithms:
 There are lateral and longitudinal base interface classes and each algorithm inherits from this class to implement.
 The interface class has the following base functions.
 
-- `setInputData()`: Input the data subscribed in [Trajectory Follower Nodes](../../trajectory_follower_nodes/design/trajectory_follower-design.md). This must be implemented with the inherited algorithm and the used data must be selected.
-- `run()`: Compute control commands and return to [Trajectory Follower Nodes](../../trajectory_follower_nodes/design/trajectory_follower-design.md). This must be implemented by inherited algorithms.
-- `syncData()`: Input the result of running the other controller.
+- `isReady()`: Check if the control is ready to compute.
+- `run()`: Compute control commands and return to [Trajectory Follower Nodes](../../trajectory_follower_nodes/README.md). This must be implemented by inherited algorithms.
+- `sync()`: Input the result of running the other controller.
   - steer angle convergence
     - allow keeping stopped until steer is converged.
   - velocity convergence(currently not used)
 
-See [the Design of Trajectory Follower Nodes](../../trajectory_follower_nodes/design/trajectory_follower-design.md#Design) for how these functions work in the node.
+See [the Design of Trajectory Follower Nodes](../../trajectory_follower_nodes/README.md#Design) for how these functions work in the node.
 
 ## Separated lateral (steering) and longitudinal (velocity) controls
 
