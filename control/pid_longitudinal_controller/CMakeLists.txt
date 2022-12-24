@@ -23,6 +23,7 @@ if(BUILD_TESTING)
   target_link_libraries(${TEST_LONGITUDINAL_CONTROLLER_EXE} ${PID_LON_CON_LIB})
 endif()
 
-ament_auto_package(INSTALL_TO_SHARE
+ament_auto_package(
+  INSTALL_TO_SHARE
   param
- )
+)
