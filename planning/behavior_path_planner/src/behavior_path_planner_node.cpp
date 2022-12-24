@@ -291,6 +291,12 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
   p.enable_safety_check = dp("enable_safety_check", false);
   p.enable_yield_maneuver = dp("enable_yield_maneuver", false);
 
+  p.hard_constraints = dp("hard_constraints", false);
+  p.nominal_deceleration = dp("nominal_deceleration", -1.0);
+  p.nominal_jerk = dp("nominal_jerk", 0.5);
+  p.max_deceleration = dp("max_deceleration", -2.0);
+  p.max_jerk = dp("max_jerk", 1.0);
+
   p.threshold_distance_object_is_on_center = dp("threshold_distance_object_is_on_center", 1.0);
   p.threshold_speed_object_is_stopped = dp("threshold_speed_object_is_stopped", 1.0);
   p.threshold_time_object_is_moving = dp("threshold_time_object_is_moving", 1.0);
@@ -313,6 +319,7 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
 
   p.yield_clear_hysteresis_time_horizon = dp("yield_clear_hysteresis_time_horizon", 10.0);
   p.yield_clear_hysteresis_longitudinal = dp("yield_clear_hysteresis_longitudinal", 10.0);
+  p.yield_velocity = dp("yield_velocity", 2.78);
 
   p.prepare_time = dp("prepare_time", 3.0);
   p.min_prepare_distance = dp("min_prepare_distance", 10.0);
@@ -337,6 +344,9 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
 
   p.min_avoidance_speed_for_acc_prevention = dp("min_avoidance_speed_for_acc_prevention", 3.0);
   p.max_avoidance_acceleration = dp("max_avoidance_acceleration", 0.5);
+
+  p.stop_min_distance = dp("stop_min_distance", 10.0);
+  p.stop_max_distance = dp("stop_max_distance", 20.0);
 
   p.publish_debug_marker = dp("publish_debug_marker", false);
   p.print_debug_info = dp("print_debug_info", false);

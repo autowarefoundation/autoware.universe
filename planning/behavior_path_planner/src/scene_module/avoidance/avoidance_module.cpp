@@ -675,28 +675,33 @@ AvoidanceState AvoidanceModule::updateEgoState(const AvoidancePlanningData & dat
   return AvoidanceState::AVOID_EXECUTE;
 }
 
-void AvoidanceModule::updateEgoBehavior(
-  const AvoidancePlanningData & data, [[maybe_unused]] ShiftedPath & path)
+void AvoidanceModule::updateEgoBehavior(const AvoidancePlanningData & data, ShiftedPath & path)
 {
   switch (data.state) {
     case AvoidanceState::NOT_AVOID: {
       break;
     }
     case AvoidanceState::YIELD: {
+      insertYieldVelocity(path);
+      insertWaitPoint(parameters_->hard_constraints, path);
       removeAllRegisteredShiftPoints(path_shifter_);
       break;
     }
     case AvoidanceState::AVOID_PATH_NOT_READY: {
+      insertPrepareVelocity(false, path);
+      insertWaitPoint(parameters_->hard_constraints, path);
       break;
     }
     case AvoidanceState::AVOID_PATH_READY: {
+      insertPrepareVelocity(true, path);
+      insertWaitPoint(parameters_->hard_constraints, path);
       break;
     }
     case AvoidanceState::AVOID_EXECUTE: {
       break;
     }
     default:
-      throw std::domain_error("invalid behaivor");
+      throw std::domain_error("invalid behavior");
   }
 }
 
@@ -837,6 +842,7 @@ double AvoidanceModule::getShiftLength(
   return is_object_on_right ? std::min(shift_length, getLeftShiftBound())
                             : std::max(shift_length, getRightShiftBound());
 }
+
 /**
  * calcRawShiftLinesFromObjects
  *
@@ -3476,6 +3482,139 @@ void AvoidanceModule::updateAvoidanceDebugData(
         debug_avoidance_initializer_for_shift_line_.end());
     }
   }
+}
+
+boost::optional<double> AvoidanceModule::getFeasibleDecelDistance(
+  const double target_velocity) const
+{
+  const auto & a_now = planner_data_->self_acceleration->accel.accel.linear.x;
+  const auto & a_lim = parameters_->max_deceleration;
+  const auto & j_lim = parameters_->max_jerk;
+  return calcDecelDistWithJerkAndAccConstraints(
+    getEgoSpeed(), target_velocity, a_now, a_lim, j_lim, -1.0 * j_lim);
+}
+
+boost::optional<double> AvoidanceModule::getMildDecelDistance(const double target_velocity) const
+{
+  const auto & a_now = planner_data_->self_acceleration->accel.accel.linear.x;
+  const auto & a_lim = parameters_->nominal_deceleration;
+  const auto & j_lim = parameters_->nominal_jerk;
+  return calcDecelDistWithJerkAndAccConstraints(
+    getEgoSpeed(), target_velocity, a_now, a_lim, j_lim, -1.0 * j_lim);
+}
+
+void AvoidanceModule::insertWaitPoint(const bool hard_constraints, ShiftedPath & shifted_path) const
+{
+  const auto & p = parameters_;
+  const auto & data = avoidance_data_;
+  const auto & base_link2front = planner_data_->parameters.base_link2front;
+  const auto & vehicle_width = planner_data_->parameters.vehicle_width;
+
+  if (data.target_objects.empty()) {
+    return;
+  }
+
+  if (data.avoiding_now) {
+    return;
+  }
+
+  //         D5
+  //      |<---->|                               D4
+  //      |<----------------------------------------------------------------------->|
+  // +-----------+            D1                 D2                      D3         +-----------+
+  // |           |        |<------->|<------------------------->|<----------------->|           |
+  // |    ego    |======= x ======= x ========================= x ==================|    obj    |
+  // |           |    stop_point  avoid                       avoid                 |           |
+  // +-----------+                start                        end                  +-----------+
+  //
+  // D1: p.min_prepare_distance
+  // D2: min_avoid_distance
+  // D3: longitudinal_avoid_margin_front (margin + D5)
+  // D4: o_front.longitudinal
+  // D5: base_link2front
+
+  const auto o_front = data.target_objects.front();
+
+  const auto avoid_margin =
+    p->lateral_collision_safety_buffer + p->lateral_collision_margin + 0.5 * vehicle_width;
+  const auto variable =
+    getMinimumAvoidanceDistance(getShiftLength(o_front, isOnRight(o_front), avoid_margin));
+  const auto constant =
+    p->min_prepare_distance + p->longitudinal_collision_safety_buffer + base_link2front;
+  const auto start_longitudinal =
+    o_front.longitudinal -
+    std::clamp(variable + constant, p->stop_min_distance, p->stop_max_distance);
+
+  if (!hard_constraints) {
+    insertDecelPoint(
+      getEgoPosition(), start_longitudinal, 0.0, shifted_path.path, debug_data_.stop_pose);
+    return;
+  }
+
+  const auto stop_distance = getMildDecelDistance(0.0);
+
+  if (!stop_distance) {
+    return;
+  }
+
+  const auto insert_distance = std::max(start_longitudinal, stop_distance.get());
+
+  insertDecelPoint(
+    getEgoPosition(), insert_distance, 0.0, shifted_path.path, debug_data_.stop_pose);
+}
+
+void AvoidanceModule::insertYieldVelocity(ShiftedPath & shifted_path) const
+{
+  const auto & p = parameters_;
+  const auto & data = avoidance_data_;
+
+  if (data.target_objects.empty()) {
+    return;
+  }
+
+  if (data.avoiding_now) {
+    return;
+  }
+
+  const auto decel_distance = getMildDecelDistance(p->yield_velocity);
+
+  if (!decel_distance) {
+    return;
+  }
+
+  insertDecelPoint(
+    getEgoPosition(), decel_distance.get(), p->yield_velocity, shifted_path.path,
+    debug_data_.slow_pose);
+}
+
+void AvoidanceModule::insertPrepareVelocity(const bool avoidable, ShiftedPath & shifted_path) const
+{
+  const auto & data = avoidance_data_;
+
+  if (data.target_objects.empty()) {
+    return;
+  }
+
+  if (data.target_objects.front().reason != AvoidanceDebugFactor::TOO_LARGE_JERK) {
+    return;
+  }
+
+  if (data.avoiding_now) {
+    return;
+  }
+
+  if (avoidable) {
+    return;
+  }
+
+  const auto decel_distance = getFeasibleDecelDistance(0.0);
+
+  if (!decel_distance) {
+    return;
+  }
+
+  insertDecelPoint(
+    getEgoPosition(), decel_distance.get(), 0.0, shifted_path.path, debug_data_.slow_pose);
 }
 
 std::shared_ptr<AvoidanceDebugMsgArray> AvoidanceModule::get_debug_msg_array() const

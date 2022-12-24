@@ -231,16 +231,16 @@ private:
   ObjectDataArray registered_objects_;
   void updateRegisteredObject(const ObjectDataArray & objects);
 
-  // -- for shift point generation --
-  AvoidLineArray applyPreProcessToRawShiftLines(
-    AvoidLineArray & current_raw_shift_points, DebugData & debug) const;
-
-  // shift point generation: generator
-  double getShiftLength(
-    const ObjectData & object, const bool & is_object_on_right, const double & avoid_margin) const;
+  // ========= shift line generator ======
 
   AvoidLineArray calcRawShiftLinesFromObjects(
     const AvoidancePlanningData & data, DebugData & debug) const;
+
+  AvoidLineArray applyPreProcessToRawShiftLines(
+    AvoidLineArray & current_raw_shift_points, DebugData & debug) const;
+
+  double getShiftLength(
+    const ObjectData & object, const bool & is_object_on_right, const double & avoid_margin) const;
 
   // shift point generation: combiner
   AvoidLineArray combineRawShiftLinesWithUniqueCheck(
@@ -319,6 +319,12 @@ private:
 
   void updateEgoBehavior(const AvoidancePlanningData & data, ShiftedPath & path);
 
+  void insertWaitPoint(const bool hard_constraints, ShiftedPath & shifted_path) const;
+
+  void insertPrepareVelocity(const bool avoidable, ShiftedPath & shifted_path) const;
+
+  void insertYieldVelocity(ShiftedPath & shifted_path) const;
+
   void removeAllRegisteredShiftPoints(PathShifter & path_shifter)
   {
     current_raw_shift_lines_.clear();
@@ -331,6 +337,10 @@ private:
     const size_t nearest_idx = findEgoIndex(path_shifter.getReferencePath().points);
     path_shifter.removeBehindShiftLineAndSetBaseOffset(nearest_idx);
   }
+
+  boost::optional<double> getFeasibleDecelDistance(const double target_velocity) const;
+
+  boost::optional<double> getMildDecelDistance(const double target_velocity) const;
 
   // ========= safety check ==============
 
@@ -366,6 +376,13 @@ private:
     return std::max(getEgoSpeed(), parameters_->min_sharp_avoidance_speed);
   }
 
+  float getMinimumAvoidanceEgoSpeed() const { return parameters_->target_velocity_matrix.front(); }
+
+  float getMaximumAvoidanceEgoSpeed() const
+  {
+    return parameters_->target_velocity_matrix.at(parameters_->col_size - 1);
+  }
+
   double getNominalPrepareDistance() const
   {
     const auto & p = parameters_;
@@ -379,7 +396,16 @@ private:
   {
     const auto & p = parameters_;
     const auto distance_by_jerk = PathShifter::calcLongitudinalDistFromJerk(
-      shift_length, parameters_->nominal_lateral_jerk, getNominalAvoidanceEgoSpeed());
+      shift_length, p->nominal_lateral_jerk, getNominalAvoidanceEgoSpeed());
+
+    return std::max(p->min_avoidance_distance, distance_by_jerk);
+  }
+
+  double getMinimumAvoidanceDistance(const double shift_length) const
+  {
+    const auto & p = parameters_;
+    const auto distance_by_jerk = path_shifter_.calcLongitudinalDistFromJerk(
+      shift_length, p->nominal_lateral_jerk, getMinimumAvoidanceEgoSpeed());
 
     return std::max(p->min_avoidance_distance, distance_by_jerk);
   }
@@ -388,7 +414,7 @@ private:
   {
     const auto & p = parameters_;
     const auto distance_by_jerk = PathShifter::calcLongitudinalDistFromJerk(
-      shift_length, parameters_->max_lateral_jerk, getSharpAvoidanceEgoSpeed());
+      shift_length, p->max_lateral_jerk, getSharpAvoidanceEgoSpeed());
 
     return std::max(p->min_avoidance_distance, distance_by_jerk);
   }

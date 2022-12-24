@@ -153,7 +153,7 @@ MarkerArray createEgoStatusMarkerArray(
         marker.color = createMarkerColor(0.0, 1.0, 0.0, 0.999);
         break;
       default:
-        throw std::domain_error("invalid behaivor");
+        throw std::domain_error("invalid behavior");
     }
     marker.text = string_stream.str();
     marker.pose.position.z += 2.0;

@@ -54,6 +54,14 @@
       max_right_shift_length: 5.0
       max_left_shift_length: 5.0
 
+      # For longitudinal constraints
+      hard_constraints: false
+      nominal_deceleration: -1.0                  # [m/ss]
+      nominal_jerk: 1.0                           # [m/sss]
+      max_deceleration: -1.0                      # [m/ss]
+      max_jerk: 1.0                               # [m/sss]
+
+      # For lateral constraints
       nominal_lateral_jerk: 0.2   # [m/s3]
       max_lateral_jerk: 1.0       # [m/s3]
 
