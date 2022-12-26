@@ -125,14 +125,14 @@ There are two sources of the slope information, which can be switched by a param
 
 ### Input
 
-Set the following from the [controller_node](../../pid_longitudinal_controller_nodes/design/pid_longitudinal_controller-design.md)
+Set the following from the [controller_node](../../trajectory_follower_node/design/pid_longitudinal_controller-design.md)
 
 - `autoware_auto_planning_msgs/Trajectory` : reference trajectory to follow.
 - `nav_msgs/Odometry`: current odometry
 
 ### Output
 
-Return LongitudinalOutput which contains the following to [controller_node](../../pid_longitudinal_controller_nodes/design/pid_longitudinal_controller-design.md)
+Return LongitudinalOutput which contains the following to [controller_node](../../trajectory_follower_node/design/pid_longitudinal_controller-design.md)
 
 - `autoware_auto_control_msgs/LongitudinalCommand`: command to control the longitudinal motion of the vehicle. It contains the target velocity and target acceleration.
 - LongitudinalSyncData

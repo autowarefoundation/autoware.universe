@@ -30,7 +30,7 @@
 #include "tf2/utils.h"
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
-#include "trajectory_follower/lateral_controller_base.hpp"
+#include "trajectory_follower_base/lateral_controller_base.hpp"
 #include "vehicle_info_util/vehicle_info_util.hpp"
 
 #include "autoware_auto_control_msgs/msg/ackermann_lateral_command.hpp"
