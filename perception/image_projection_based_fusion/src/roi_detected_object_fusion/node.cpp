@@ -23,11 +23,11 @@ namespace image_projection_based_fusion
 RoiDetectedObjectFusionNode::RoiDetectedObjectFusionNode(const rclcpp::NodeOptions & options)
 : FusionNode<DetectedObjects, DetectedObject>("roi_detected_object_fusion", options)
 {
-  fusion_params_.passthrough_lower_bound_probability_threshold_ =
+  fusion_params_.passthrough_lower_bound_probability_threshold =
     declare_parameter<double>("passthrough_lower_bound_probability_threshold");
-  fusion_params_.use_roi_probability_ = declare_parameter<bool>("use_roi_probability");
-  fusion_params_.roi_probability_threshold_ = declare_parameter<bool>("roi_probability_threshold");
-  fusion_params_.min_iou_threshold_ = declare_parameter<double>("min_iou_threshold");
+  fusion_params_.use_roi_probability = declare_parameter<bool>("use_roi_probability");
+  fusion_params_.roi_probability_threshold = declare_parameter<bool>("roi_probability_threshold");
+  fusion_params_.min_iou_threshold = declare_parameter<double>("min_iou_threshold");
 }
 
 void RoiDetectedObjectFusionNode::preprocess(DetectedObjects & output_msg)
@@ -41,7 +41,7 @@ void RoiDetectedObjectFusionNode::preprocess(DetectedObjects & output_msg)
   for (std::size_t obj_i = 0; obj_i < output_msg.objects.size(); ++obj_i) {
     if (
       output_msg.objects.at(obj_i).existence_probability >
-      fusion_params_.passthrough_lower_bound_probability_threshold_) {
+      fusion_params_.passthrough_lower_bound_probability_threshold) {
       passthrough_object_flags_.at(obj_i) = true;
     }
   }
@@ -187,9 +187,9 @@ void RoiDetectedObjectFusionNode::fuseObjectsOnImage(
       }
     }
 
-    if (max_iou > fusion_params_.min_iou_threshold_) {
-      if (fusion_params_.use_roi_probability_) {
-        if (roi_prob > fusion_params_.roi_probability_threshold_) {
+    if (max_iou > fusion_params_.min_iou_threshold) {
+      if (fusion_params_.use_roi_probability) {
+        if (roi_prob > fusion_params_.roi_probability_threshold) {
           fused_object_flags_.at(obj_i) = true;
         } else {
           ignored_object_flags_.at(obj_i) = true;

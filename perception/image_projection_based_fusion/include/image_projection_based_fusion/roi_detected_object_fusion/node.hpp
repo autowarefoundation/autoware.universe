@@ -57,10 +57,10 @@ protected:
 private:
   struct
   {
-    double passthrough_lower_bound_probability_threshold_{};
-    double min_iou_threshold_{};
-    bool use_roi_probability_{};
-    double roi_probability_threshold_{};
+    double passthrough_lower_bound_probability_threshold{};
+    double min_iou_threshold{};
+    bool use_roi_probability{};
+    double roi_probability_threshold{};
   } fusion_params_;
 
   std::vector<bool> passthrough_object_flags_, fused_object_flags_, ignored_object_flags_;
