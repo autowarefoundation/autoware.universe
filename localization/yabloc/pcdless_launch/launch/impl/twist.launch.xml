@@ -2,6 +2,7 @@
     <arg name="use_sim_time" default="true"/>
     <arg name="ignore_less_than_float" default="true"/>
     <arg name="static_scale_factor" default="-1.0" description="if negative value, static_scale_factor is not used"/>
+    <arg name="static_gyro_bias" default="10.0" description="if larger than 1, static_gyro_bias is not used"/>
 
     <!-- twist estimator -->
     <group>
@@ -17,6 +18,7 @@
             <param name="use_sim_time" value="$(var use_sim_time)"/>
             <param name="ignore_less_than_float" value="$(var ignore_less_than_float)"/>
             <param name="static_scale_factor" value="$(var static_scale_factor)"/>
+            <param name="static_gyro_bias" value="$(var static_gyro_bias)"/>
 
             <remap from="twist" to="$(var output_twist)"/>
             <remap from="doppler" to="$(var output_doppler)"/>
