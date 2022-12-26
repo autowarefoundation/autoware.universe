@@ -123,16 +123,14 @@ void DrivableAreaExpanderNode::onPath(const Path::ConstSharedPtr msg)
   }
   const auto ego_idx = motion_utils::findNearestIndex(msg->points, current_pose_ptr->pose);
   if (!validInputs(ego_idx)) return;
-  auto input_path = *msg;
-  const auto start_idx =
-    calculateStartIndex(input_path, *ego_idx, preprocessing_params_.backward_length);
-  const auto end_idx =
-    calculateEndIndex(input_path, *ego_idx, preprocessing_params_.forward_length);
+  auto path = *msg;
+  const auto start_idx = calculateStartIndex(path, *ego_idx, preprocessing_params_.backward_length);
+  const auto end_idx = calculateEndIndex(path, *ego_idx, preprocessing_params_.forward_length);
   const auto downsampled_path_points =
-    downsamplePath(input_path, start_idx, end_idx, preprocessing_params_.downsample_factor);
+    downsamplePath(path, start_idx, end_idx, preprocessing_params_.downsample_factor);
   auto path_footprints = createPathFootprints(downsampled_path_points, expansion_params_);
   const auto max_expansion_line =
-    createMaxExpansionLine(input_path, expansion_params_.max_expansion_distance);
+    createMaxExpansionLine(path, expansion_params_.max_expansion_distance);
   auto uncrossable_lines = uncrossable_lines_;
   uncrossable_lines.push_back(max_expansion_line);
   const auto predicted_paths =
@@ -140,9 +138,8 @@ void DrivableAreaExpanderNode::onPath(const Path::ConstSharedPtr msg)
   const auto filtered_footprint = filterFootprint(
     path_footprints, predicted_paths, uncrossable_lines, expansion_params_.avoid_linestring_dist);
 
-  const auto diff_ls =
-    expandDrivableArea(input_path.left_bound, input_path.right_bound, filtered_footprint);
-  pub_path_->publish(input_path);
+  expandDrivableArea(path.left_bound, path.right_bound, filtered_footprint);
+  pub_path_->publish(path);
 
   const auto t_end = std::chrono::system_clock::now();
   const auto runtime = std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start);
@@ -152,29 +149,9 @@ void DrivableAreaExpanderNode::onPath(const Path::ConstSharedPtr msg)
 
   if (pub_debug_markers_->get_subscription_count() > 0) {
     const auto z = msg->points.empty() ? 0.0 : msg->points.front().pose.position.z;
-    auto debug_markers =
-      makeDebugMarkers(path_footprints, filtered_footprint, uncrossable_lines, predicted_paths, z);
-    visualization_msgs::msg::Marker m;
-    m.header.frame_id = "map";
-    m.type = visualization_msgs::msg::Marker::LINE_STRIP;
-    m.scale.x = 0.1;
-    m.color.a = 0.6;
-    m.color.r = 0.8;
-    for (const auto & ls : diff_ls) {
-      Point point;
-      for (const auto & p : ls) {
-        point.x = p.x();
-        point.y = p.y();
-        point.z = msg->points.front().pose.position.z;
-        m.points.push_back(point);
-      }
-      m.ns = "diff" + std::to_string(m.id);
-      debug_markers.markers.push_back(m);
-      m.points.clear();
-      m.id += 1;
-      m.color.b += 0.05;
-      m.color.g += 0.05;
-    }
+    auto debug_markers = makeDebugMarkers(
+      path_footprints, filtered_footprint, uncrossable_lines, predicted_paths, path.left_bound,
+      path.right_bound, z);
     pub_debug_markers_->publish(debug_markers);
   }
 }

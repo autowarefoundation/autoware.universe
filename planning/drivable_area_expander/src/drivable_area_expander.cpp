@@ -66,7 +66,7 @@ multipolygon_t filterFootprint(
   return filtered_footprints;
 }
 
-multilinestring_t expandDrivableArea(
+void expandDrivableArea(
   std::vector<Point> & left_bound, std::vector<Point> & right_bound,
   const multipolygon_t & footprint)
 {
@@ -154,27 +154,21 @@ multilinestring_t expandDrivableArea(
       for (auto i = 0lu; i <= rb_idx; ++i) right_indexes.push_back(i);
     }
   }
-  // TODO(Maxime): what about the z value ?
   Point point;
   left_bound.clear();
   right_bound.clear();
-  linestring_t debug_left_ls;
-  linestring_t debug_right_ls;
   for (const auto i : left_indexes) {
     const auto & p = extended_da_poly.outer()[i];
-    debug_left_ls.push_back(p);
     point.x = p.x();
     point.y = p.y();
     left_bound.push_back(point);
   }
   for (const auto i : right_indexes) {
     const auto & p = extended_da_poly.outer()[i];
-    debug_right_ls.push_back(p);
     point.x = p.x();
     point.y = p.y();
     right_bound.push_back(point);
   }
-  return {debug_left_ls, debug_right_ls};
 }
 
 std::vector<Footprint> createPathFootprints(const Path & path, const ExpansionParameters & params)

@@ -58,9 +58,23 @@ visualization_msgs::msg::Marker makePolygonMarker(const polygon_t & polygon, con
 visualization_msgs::msg::MarkerArray makeDebugMarkers(
   const std::vector<Footprint> & footprints, const multipolygon_t & filtered_footprints,
   const multilinestring_t & uncrossable_lines, const std::vector<Footprint> & predicted_paths,
+  const std::vector<Point> & left_bound, const std::vector<Point> & right_bound,
   const double marker_z)
 {
   visualization_msgs::msg::MarkerArray debug_markers;
+  visualization_msgs::msg::Marker marker;
+  marker.header.frame_id = "map";
+  marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
+  marker.scale.x = 0.1;
+  marker.color.a = 0.6;
+  marker.color.b = 0.8;
+  marker.ns = "left_bound";
+  marker.points = left_bound;
+  debug_markers.markers.push_back(marker);
+  marker.ns = "right_bound";
+  marker.points = right_bound;
+  debug_markers.markers.push_back(marker);
+
   auto line_id = 0lu;
   for (const auto & ls : uncrossable_lines) {
     auto marker = makeLinestringMarker(ls, marker_z);
@@ -106,7 +120,6 @@ visualization_msgs::msg::MarkerArray makeDebugMarkers(
   static auto prev_max_pred_id = 0lu;
   static auto prev_max_foot_id = 0lu;
   static auto prev_max_ffoot_id = 0lu;
-  visualization_msgs::msg::Marker marker;
   marker.action = visualization_msgs::msg::Marker::DELETE;
   marker.ns = "uncrossable_lines";
   for (auto delete_id = line_id; delete_id < prev_max_line_id; ++delete_id) {
