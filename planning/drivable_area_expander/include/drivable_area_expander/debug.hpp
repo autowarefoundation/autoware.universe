@@ -48,6 +48,7 @@ visualization_msgs::msg::Marker makePolygonMarker(const polygon_t & polygon, con
 visualization_msgs::msg::MarkerArray makeDebugMarkers(
   const std::vector<Footprint> & footprints, const multipolygon_t & filtered_footprints,
   const multilinestring_t & uncrossable_lines, const std::vector<Footprint> & predicted_paths,
+  const std::vector<Point> & left_bound, const std::vector<Point> & right_bound,
   const double marker_z);
 
 }  // namespace drivable_area_expander

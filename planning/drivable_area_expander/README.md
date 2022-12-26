@@ -32,6 +32,8 @@ This node allow expanding the drivable area contained in a `Path` message.
 
 ## Assumptions / Known limits
 
+The geometry operations used to expand the drivable area bounds assume that all points of the input paths lie between the left and right drivable area bounds.
+
 ## (Optional) Error detection and handling
 
 ## (Optional) Performance characterization
