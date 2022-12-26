@@ -136,9 +136,7 @@ private:
   void updateOccupancyGrid();
   void resetStatus();
 
-  bool isSafePath(const PathWithLaneId & path) const;
   bool checkCollision(const PathWithLaneId & path) const;
-  bool checkTerminalCollision(const Pose & ego_pose) const;
   bool hasEnoughDistance(const PullOverPath & pull_over_path) const;
 
   TurnSignalInfo calcTurnSignalInfo() const;

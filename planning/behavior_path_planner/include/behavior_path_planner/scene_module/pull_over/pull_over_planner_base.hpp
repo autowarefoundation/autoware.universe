@@ -43,11 +43,12 @@ enum class PullOverPlannerType {
 
 struct PullOverPath
 {
-  PullOverPlannerType type{};
+  PullOverPlannerType type{PullOverPlannerType::NONE};
   std::vector<PathWithLaneId> partial_paths{};
   Pose start_pose{};
   Pose end_pose{};
   std::vector<Pose> debug_poses{};
+  size_t goal_id{};
 
   PathWithLaneId getFullPath() const
   {

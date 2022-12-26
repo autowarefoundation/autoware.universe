@@ -134,32 +134,36 @@ void PullOverModule::onTimer()
   std::vector<PullOverPath> path_candidates{};
   std::optional<Pose> closest_start_pose{};
   double min_start_arc_length = std::numeric_limits<double>::max();
-  const auto planCandidatePaths =
-    [&](const std::shared_ptr<PullOverPlannerBase> & planner, const Pose & goal_pose) {
-      planner->setPlannerData(planner_data_);
-      const auto pull_over_path = planner->plan(goal_pose);
-      if (pull_over_path) {
-        path_candidates.push_back(*pull_over_path);
-        // calculate closest pull over start pose for stop path
-        const double start_arc_length =
-          lanelet::utils::getArcCoordinates(current_lanes, pull_over_path->start_pose).length;
-        if (start_arc_length < min_start_arc_length) {
-          min_start_arc_length = start_arc_length;
-          closest_start_pose = pull_over_path->start_pose;
-        }
+  const auto planCandidatePaths = [&](
+                                    const std::shared_ptr<PullOverPlannerBase> & planner,
+                                    const GoalCandidate & goal_candidate) {
+    planner->setPlannerData(planner_data_);
+    auto pull_over_path = planner->plan(goal_candidate.goal_pose);
+    pull_over_path->goal_id = goal_candidate.id;
+    if (pull_over_path) {
+      path_candidates.push_back(*pull_over_path);
+      // calculate closest pull over start pose for stop path
+      const double start_arc_length =
+        lanelet::utils::getArcCoordinates(current_lanes, pull_over_path->start_pose).length;
+      if (start_arc_length < min_start_arc_length) {
+        min_start_arc_length = start_arc_length;
+        // closeest start pose is stop point when not finding safe path
+        closest_start_pose = pull_over_path->start_pose;
       }
-    };
+    }
+  };
 
+  // plan candidate paths and set them to the member variable
   if (parameters_.search_priority == "efficient_path") {
     for (const auto & planner : pull_over_planners_) {
       for (const auto & goal_candidate : goal_candidates_) {
-        planCandidatePaths(planner, goal_candidate.goal_pose);
+        planCandidatePaths(planner, goal_candidate);
       }
     }
   } else if (parameters_.search_priority == "close_goal") {
     for (const auto & goal_candidate : goal_candidates_) {
       for (const auto & planner : pull_over_planners_) {
-        planCandidatePaths(planner, goal_candidate.goal_pose);
+        planCandidatePaths(planner, goal_candidate);
       }
     }
   } else {
@@ -436,13 +440,28 @@ BehaviorModuleOutput PullOverModule::plan()
     // select safe path from pull over path candidates
     status_.is_safe = false;
     mutex_.lock();
+    goal_searcher_->setPlannerData(planner_data_);
+    goal_searcher_->update(goal_candidates_);
     for (const auto & pull_over_path : pull_over_path_candidates_) {
-      if (hasEnoughDistance(pull_over_path) && isSafePath(pull_over_path.getParkingPath())) {
-        status_.is_safe = true;
-        status_.pull_over_path = pull_over_path;
-        modified_goal_pose_ = pull_over_path.getFullPath().points.back().point.pose;
-        break;
+      // check if goal is safe
+      const auto goal_candidate_it = std::find_if(
+        goal_candidates_.begin(), goal_candidates_.end(),
+        [pull_over_path](const auto & goal_candidate) {
+          return goal_candidate.id == pull_over_path.goal_id;
+        });
+      if (goal_candidate_it != goal_candidates_.end() && !goal_candidate_it->is_safe) {
+        continue;
       }
+
+      // check if path is valid and safe
+      if (!hasEnoughDistance(pull_over_path) || checkCollision(pull_over_path.getParkingPath())) {
+        continue;
+      }
+
+      status_.is_safe = true;
+      status_.pull_over_path = pull_over_path;
+      modified_goal_pose_ = pull_over_path.getFullPath().points.back().point.pose;
+      break;
     }
     mutex_.unlock();
 
@@ -859,20 +878,6 @@ void PullOverModule::setDebugData()
   }
 }
 
-bool PullOverModule::isSafePath(const PathWithLaneId & path) const
-{
-  const Pose & goal_pose = path.points.back().point.pose;
-  if (checkTerminalCollision(goal_pose)) {
-    return false;
-  }
-
-  if (checkCollision(path)) {
-    return false;
-  }
-
-  return true;
-}
-
 bool PullOverModule::checkCollision(const PathWithLaneId & path) const
 {
   if (parameters_.use_occupancy_grid || !occupancy_grid_map_) {
@@ -890,56 +895,6 @@ bool PullOverModule::checkCollision(const PathWithLaneId & path) const
     }
   }
 
-  return false;
-}
-
-bool PullOverModule::checkTerminalCollision(const Pose & ego_pose) const
-{
-  if (parameters_.use_occupancy_grid && parameters_.use_occupancy_grid_for_longitudinal_margin) {
-    constexpr bool check_out_of_range = false;
-    const double offset = std::max(
-      parameters_.longitudinal_margin - parameters_.occupancy_grid_collision_check_margin, 0.0);
-
-    // check forward collision
-    const Pose ego_pose_moved_forward = calcOffsetPose(ego_pose, offset, 0, 0);
-    const Pose forward_pose_grid_coords =
-      global2local(occupancy_grid_map_->getMap(), ego_pose_moved_forward);
-    const auto forward_idx = pose2index(
-      occupancy_grid_map_->getMap(), forward_pose_grid_coords,
-      occupancy_grid_map_->getParam().theta_size);
-    if (occupancy_grid_map_->detectCollision(forward_idx, check_out_of_range)) {
-      return true;
-    }
-
-    // check backward collision
-    const Pose ego_pose_moved_backward = calcOffsetPose(ego_pose, -offset, 0, 0);
-    const Pose backward_pose_grid_coords =
-      global2local(occupancy_grid_map_->getMap(), ego_pose_moved_backward);
-    const auto backward_idx = pose2index(
-      occupancy_grid_map_->getMap(), backward_pose_grid_coords,
-      occupancy_grid_map_->getParam().theta_size);
-    if (occupancy_grid_map_->detectCollision(backward_idx, check_out_of_range)) {
-      return true;
-    }
-  }
-
-  if (parameters_.use_object_recognition) {
-    // filter only objects in the shoulder lane that are in a straight line on ego
-    const auto shoulder_lane_objects =
-      util::filterObjectsByLanelets(*(planner_data_->dynamic_object), status_.pull_over_lanes);
-    constexpr bool filter_inside = true;
-    const auto target_objects = pull_over_utils::filterObjectsByLateralDistance(
-      ego_pose, planner_data_->parameters.vehicle_width, shoulder_lane_objects,
-      parameters_.object_recognition_collision_check_margin, filter_inside);
-
-    if (
-      util::calcLongitudinalDistanceFromEgoToObjects(
-        ego_pose, planner_data_->parameters.base_link2front,
-        planner_data_->parameters.base_link2rear,
-        target_objects) < parameters_.longitudinal_margin) {
-      return true;
-    }
-  }
   return false;
 }
 
