@@ -112,8 +112,8 @@ void HierarchicalCostMap::build_map(const Area & area)
   // TODO: We can speed up by skipping too far linesegments
   for (const auto pn : cloud_.value()) {
     if (height_) {
-      if (std::abs(pn.z - *height_) > 2) continue;
-      if (std::abs(pn.normal_z - *height_) > 2) continue;
+      if (std::abs(pn.z - *height_) > 4) continue;
+      if (std::abs(pn.normal_z - *height_) > 4) continue;
     }
 
     cv::Point2i from = cvPoint(pn.getVector3fMap());
