@@ -79,7 +79,7 @@ This PID logic has a maximum value for the output of each term. This is to preve
 - Large integral terms may cause unintended behavior by users.
 - Unintended noise may cause the output of the derivative term to be very large.
 
-Also, the integral term is not accumulated when the vehicle is stopped. This is to prevent unintended accumulation of the integral term in cases such as "Autoware assumes that the vehicle is engaged, but an external system has locked the vehicle to start.
+Also, the integral term is not accumulated when the vehicle is stopped. This is to prevent unintended accumulation of the integral term in cases such as Autoware assumes that the vehicle is engaged, but an external system has locked the vehicle to start.
 On the other hand, if the vehicle gets stuck in a depression in the road surface when starting, the vehicle will not start forever, which is currently being addressed by developers.
 
 At present, PID control is implemented from the viewpoint of trade-off between development/maintenance cost and performance.
@@ -125,14 +125,14 @@ There are two sources of the slope information, which can be switched by a param
 
 ### Input
 
-Set the following from the [controller_node](../../trajectory_follower_node/design/pid_longitudinal_controller-design.md)
+Set the following from the [controller_node](../trajectory_follower_node/README.md)
 
 - `autoware_auto_planning_msgs/Trajectory` : reference trajectory to follow.
 - `nav_msgs/Odometry`: current odometry
 
 ### Output
 
-Return LongitudinalOutput which contains the following to [controller_node](../../trajectory_follower_node/design/pid_longitudinal_controller-design.md)
+Return LongitudinalOutput which contains the following to the controller node
 
 - `autoware_auto_control_msgs/LongitudinalCommand`: command to control the longitudinal motion of the vehicle. It contains the target velocity and target acceleration.
 - LongitudinalSyncData

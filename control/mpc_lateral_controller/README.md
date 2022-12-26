@@ -58,7 +58,7 @@ The tracking is not accurate if the first point of the reference trajectory is a
 
 ### Inputs
 
-Set the following from the [controller_node](../../trajectory_follower_node/design/mpc_lateral_controller-design.md)
+Set the following from the [controller_node](../trajectory_follower_node/README.md)
 
 - `autoware_auto_planning_msgs/Trajectory` : reference trajectory to follow.
 - `nav_msgs/Odometry`: current odometry
@@ -66,7 +66,7 @@ Set the following from the [controller_node](../../trajectory_follower_node/desi
 
 ### Outputs
 
-Return LateralOutput which contains the following to [controller_node](../../trajectory_follower_node/design/mpc_lateral_controller-design.md)
+Return LateralOutput which contains the following to the controller node
 
 - `autoware_auto_control_msgs/AckermannLateralCommand`
 - LateralSyncData
