@@ -70,7 +70,6 @@ def launch_setup(context, *args, **kwargs):
     group = GroupAction(
         [
             PushRosNamespace(""),
-            # container,
             loader,
         ]
     )
