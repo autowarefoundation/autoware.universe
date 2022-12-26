@@ -6,12 +6,12 @@ The `roi_detected_object_fusion` is a package to overwrite labels of detected ob
 
 ## Inner-workings / Algorithms
 
-The algorithm is shown below and see `Parameters` for the meaning of each parameter :
+In what follows, we describe the algorithm utilized by `roi_detected_object_fusion` (the meaning of each parameter can be found in the `Parameters` section):
 
-1. If `existence_probability` of detected objects is greater than the threshold, they passthrough without doing anything.
-2. The rest of detected objects are projected onto image planes, and if ROIs are overlapped with them, they are output as fused objects. Intersection over Union (IoU) is used to determine if there are overlaps between them.
+1. If the `existence_probability` of a detected object is greater than the threshold, it is accepted without any further processing and published in `output`.
+2. The remaining detected objects are projected onto image planes, and if the resulting ROIs overlap with the ones from the 2D detector, they are published as fused objects in `output`. The Intersection over Union (IoU) is used to determine if there are overlaps between the detections from `input` and the ROIs from `input/rois`.
 
-The `DetectedObject` has three shape and the polygon vertices of a object are as below:
+The DetectedObject has three possible shape choices/implementations, where the polygon's vertices for each case are defined as follows:
 
 - `BOUNDING_BOX`: The 8 corners of a bounding box.
 - `CYLINDER`: The circle is approximated by a hexagon.
@@ -41,14 +41,14 @@ The `DetectedObject` has three shape and the polygon vertices of a object are as
 
 ### Core Parameters
 
-| Name                                            | Type   | Description                                                                                                  |
-| ----------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------ |
-| `rois_number`                                   | int    | the number of input rois                                                                                     |
-| `debug_mode`                                    | bool   | If `true`, subscribe and publish images for visualization.                                                   |
-| `min_iou_threshold`                             | double | If the iou between detected objects and rois is greater than threshold, the objects are classified as fused. |
-| `passthrough_lower_bound_probability_threshold` | double | If `existence_probability` of detected objects is greater than the threshold, they passthrough as outputs    |
-| `use_roi_probability`                           | float  | use `existence_probability` of ROIs to match with detected objects                                           |
-| `roi_probability_threshold`                     | double | If `existence_probability` of ROIs is greater than the threshold, matched detected objects are output        |
+| Name                                            | Type   | Description                                                                                                               |
+| ----------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------- |
+| `rois_number`                                   | int    | the number of input rois                                                                                                  |
+| `debug_mode`                                    | bool   | If set to `true`, the node subscribes to the image topic and publishes an image with debug drawings.                      |
+| `min_iou_threshold`                             | double | If the iou between detected objects and rois is greater than `min_iou_threshold`, the objects are classified as fused.    |
+| `passthrough_lower_bound_probability_threshold` | double | If the `existence_probability` of a detected object is greater than the threshold, it is published in output.             |
+| `use_roi_probability`                           | float  | If set to `true`, the algorithm uses `existence_probability` of ROIs to match with the that of detected objects.          |
+| `roi_probability_threshold`                     | double | If the `existence_probability` of ROIs is greater than the threshold, matched detected objects are published in `output`. |
 
 ## Assumptions / Known limits
 
