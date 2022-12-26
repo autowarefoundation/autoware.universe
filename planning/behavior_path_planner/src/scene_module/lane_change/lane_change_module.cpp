@@ -143,8 +143,9 @@ BT::NodeStatus LaneChangeModule::updateState()
 
 BehaviorModuleOutput LaneChangeModule::plan()
 {
-  constexpr double resample_interval{1.0};
-  auto path = util::resamplePathWithSpline(status_.lane_change_path.path, resample_interval);
+  resetPathCandidate();
+
+  auto path = status_.lane_change_path.path;
 
   if (!isValidPath(path)) {
     status_.is_safe = false;
@@ -202,7 +203,7 @@ BehaviorModuleOutput LaneChangeModule::planWaitingApproval()
   BehaviorModuleOutput out;
   out.path = std::make_shared<PathWithLaneId>(getReferencePath());
   const auto candidate = planCandidate();
-  out.path_candidate = std::make_shared<PathWithLaneId>(candidate.path_candidate);
+  path_candidate_ = std::make_shared<PathWithLaneId>(candidate.path_candidate);
   updateRTCStatus(candidate);
   waitApproval();
   return out;
@@ -264,10 +265,9 @@ PathWithLaneId LaneChangeModule::getReferencePath() const
       *route_handler, current_lanes, current_pose, common_parameters.backward_path_length,
       common_parameters.forward_path_length, common_parameters, optional_lengths);
   }
-  const double & buffer =
-    common_parameters.backward_length_buffer_for_end_of_lane;  // buffer for min_lane_change_length
+
   const double lane_change_buffer =
-    num_lane_change * (common_parameters.minimum_lane_change_length + buffer) + optional_lengths;
+    util::calcLaneChangeBuffer(common_parameters, num_lane_change, optional_lengths);
 
   reference_path = util::setDecelerationVelocity(
     *route_handler, reference_path, current_lanes, parameters_->lane_change_prepare_duration,
@@ -278,10 +278,8 @@ PathWithLaneId LaneChangeModule::getReferencePath() const
   const auto expanded_lanes = util::expandLanelets(
     shorten_lanes, parameters_->drivable_area_left_bound_offset,
     parameters_->drivable_area_right_bound_offset);
-
-  reference_path.drivable_area = util::generateDrivableArea(
-    reference_path, expanded_lanes, common_parameters.drivable_area_resolution,
-    common_parameters.vehicle_length, planner_data_);
+  util::generateDrivableArea(
+    reference_path, expanded_lanes, common_parameters.vehicle_length, planner_data_);
 
   return reference_path;
 }
@@ -416,9 +414,7 @@ bool LaneChangeModule::isValidPath(const PathWithLaneId & path) const
 bool LaneChangeModule::isNearEndOfLane() const
 {
   const auto & current_pose = getEgoPose();
-  const auto minimum_lane_change_length = planner_data_->parameters.minimum_lane_change_length;
-  const auto end_of_lane_buffer = planner_data_->parameters.backward_length_buffer_for_end_of_lane;
-  const double threshold = end_of_lane_buffer + minimum_lane_change_length;
+  const double threshold = util::calcTotalLaneChangeDistance(planner_data_->parameters);
 
   return std::max(0.0, util::getDistanceToEndOfLane(current_pose, status_.current_lanes)) <
          threshold;
@@ -625,10 +621,7 @@ void LaneChangeModule::generateExtendedDrivableArea(PathWithLaneId & path)
   const auto expanded_lanes = util::expandLanelets(
     shorten_lanes, parameters_->drivable_area_left_bound_offset,
     parameters_->drivable_area_right_bound_offset);
-
-  const double & resolution = common_parameters.drivable_area_resolution;
-  path.drivable_area = util::generateDrivableArea(
-    path, expanded_lanes, resolution, common_parameters.vehicle_length, planner_data_);
+  util::generateDrivableArea(path, expanded_lanes, common_parameters.vehicle_length, planner_data_);
 }
 
 void LaneChangeModule::updateOutputTurnSignal(BehaviorModuleOutput & output)
@@ -649,6 +642,7 @@ void LaneChangeModule::resetParameters()
   steering_factor_interface_ptr_->clearSteeringFactors();
   object_debug_.clear();
   debug_marker_.markers.clear();
+  resetPathCandidate();
 }
 
 void LaneChangeModule::acceptVisitor(const std::shared_ptr<SceneModuleVisitor> & visitor) const

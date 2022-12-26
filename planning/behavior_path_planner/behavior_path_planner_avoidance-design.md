@@ -422,6 +422,7 @@ The avoidance specific parameter configuration file can be located at `src/autow
 | enable_avoidance_over_same_direction       | [-]    | bool   | Extend avoidance trajectory to adjacent lanes that has same direction. If false, avoidance only happen in current lane.                          | true          |
 | enable_avoidance_over_opposite_direction   | [-]    | bool   | Extend avoidance trajectory to adjacent lanes that has opposite direction. `enable_avoidance_over_same_direction` must be `true` to take effects | true          |
 | enable_update_path_when_object_is_gone     | [-]    | bool   | Reset trajectory when avoided objects are gone. If false, shifted path points remain same even though the avoided objects are gone.              | false         |
+| enable_bound_clipping                      | `true` | bool   | Enable clipping left and right bound of drivable area when obstacles are in the drivable area                                                    | false         |
 
 (\*2) If there are multiple vehicles in a row to be avoided, no new avoidance path will be generated unless their lateral margin difference exceeds this value.
 
@@ -512,25 +513,3 @@ To print the debug message, just run the following
 ```bash
 ros2 topic echo /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/debug/avoidance_debug_message_array
 ```
-
-### Visualizing drivable area boundary
-
-Sometimes, the developers might get a different result between two maps that may look identical during visual inspection.
-
-For example, in the same area, one can perform avoidance and another cannot. This might be related to the drivable area issues due to the non-compliance vector map design from the user.
-
-To debug the issue, the drivable area boundary can be visualized.
-
-![drivable_area_boundary_marker1](./image/avoidance_design/drivable_area_boundary_marker_example1.png)
-
-![drivable_area_boundary_marker2](./image/avoidance_design/drivable_area_boundary_marker_example2.png)
-
-The boundary can be visualize by adding the marker from `/planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/drivable_area_boundary`
-
-### Visualizing drivable area
-
-The drivable area can be visualize by adding the drivable area plugin
-
-![drivable_area_plugin](./image/drivable_area_plugin.png)
-
-and then add `/planning/scenario_planning/lane_driving/behavior_planning/path` as the topic.

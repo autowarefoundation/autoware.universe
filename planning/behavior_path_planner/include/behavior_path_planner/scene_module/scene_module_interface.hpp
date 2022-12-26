@@ -62,9 +62,6 @@ struct BehaviorModuleOutput
   // path planed by module
   PlanResult path{};
 
-  // path candidate planed by module
-  PlanResult path_candidate{};
-
   TurnSignalInfo turn_signal_info{};
 };
 
@@ -107,6 +104,15 @@ public:
   virtual BT::NodeStatus updateState() = 0;
 
   /**
+   * @brief If the module plan customized reference path while waiting approval, it should output
+   * SUCCESS. Otherwise, it should output FAILURE to check execution request of next module.
+   */
+  virtual BT::NodeStatus getNodeStatusWhileWaitingApproval() const
+  {
+    return BT::NodeStatus::FAILURE;
+  }
+
+  /**
    * @brief Return true if the module has request for execution (not necessarily feasible)
    */
   virtual bool isExecutionRequested() const = 0;
@@ -130,7 +136,7 @@ public:
     BehaviorModuleOutput out;
     out.path = util::generateCenterLinePath(planner_data_);
     const auto candidate = planCandidate();
-    out.path_candidate = std::make_shared<PathWithLaneId>(candidate.path_candidate);
+    path_candidate_ = std::make_shared<PathWithLaneId>(candidate.path_candidate);
     return out;
   }
 
@@ -228,6 +234,10 @@ public:
 
   bool isWaitingApproval() const { return is_waiting_approval_; }
 
+  PlanResult getPathCandidate() const { return path_candidate_; }
+
+  void resetPathCandidate() { path_candidate_.reset(); }
+
   virtual void lockRTCCommand()
   {
     if (!rtc_interface_ptr_) {
@@ -258,6 +268,7 @@ protected:
   std::unique_ptr<SteeringFactorInterface> steering_factor_interface_ptr_;
   UUID uuid_;
   bool is_waiting_approval_;
+  PlanResult path_candidate_;
 
   void updateRTCStatus(const double start_distance, const double finish_distance)
   {
