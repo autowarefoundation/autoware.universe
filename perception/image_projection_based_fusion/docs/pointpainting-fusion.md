@@ -16,12 +16,10 @@ The lidar points are projected onto the output of an image-only 2d object detect
 
 | Name                     | Type                                                     | Description                                               |
 | ------------------------ | -------------------------------------------------------- | --------------------------------------------------------- |
-| `input`                  | `tier4_perception_msgs::msg::DetectedObjectsWithFeature` | clustered pointcloud                                      |
+| `input`                  | `sensor_msgs::msg::PointCloud2`                          | pointcloud                                                |
 | `input/camera_info[0-7]` | `sensor_msgs::msg::CameraInfo`                           | camera information to project 3d points onto image planes |
 | `input/rois[0-7]`        | `tier4_perception_msgs::msg::DetectedObjectsWithFeature` | ROIs from each image                                      |
 | `input/image_raw[0-7]`   | `sensor_msgs::msg::Image`                                | images for visualization                                  |
-
-| `
 
 ### Output
 
