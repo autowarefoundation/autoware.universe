@@ -66,16 +66,17 @@ multipolygon_t filterFootprint(
   return filtered_footprints;
 }
 
-void expandDrivableArea(
+bool expandDrivableArea(
   std::vector<Point> & left_bound, std::vector<Point> & right_bound,
   const multipolygon_t & footprint)
 {
-  const auto to_point = [](const auto & p) { return point_t{p.x, p.y}; };
+  const auto to_point_t = [](const auto & p) { return point_t{p.x, p.y}; };
+  const auto to_point = [](const auto & p) { return Point().set__x(p.x()).set__y(p.y()); };
   polygon_t original_da_poly;
   original_da_poly.outer().reserve(left_bound.size() + right_bound.size() + 1);
-  for (const auto & p : left_bound) original_da_poly.outer().push_back(to_point(p));
+  for (const auto & p : left_bound) original_da_poly.outer().push_back(to_point_t(p));
   for (auto it = right_bound.rbegin(); it != right_bound.rend(); ++it)
-    original_da_poly.outer().push_back(to_point(*it));
+    original_da_poly.outer().push_back(to_point_t(*it));
   original_da_poly.outer().push_back(original_da_poly.outer().front());
   // extend with filtered footprint
   multipolygon_t unions;
@@ -83,92 +84,67 @@ void expandDrivableArea(
   for (const auto & f : footprint) {
     unions.clear();
     boost::geometry::union_(extended_da_poly, f, unions);
-    // assumes that the footprints are not disjoint from the original drivable area
-    extended_da_poly = unions.front();
+    // algorithm only works if the footprints are not disjoint from the original drivable area
+    if (unions.size() != 1) {
+      return false;
+    } else {
+      extended_da_poly = unions.front();
+    }
   }
-  const auto left_front = to_point(left_bound.front());
-  const auto right_front = to_point(right_bound.front());
-  const auto left_back = to_point(left_bound.back());
-  const auto right_back = to_point(right_bound.back());
-  size_t lf_idx = 0;
-  double lf_min_dist = std::numeric_limits<double>::max();
-  size_t rf_idx = 0;
-  double rf_min_dist = std::numeric_limits<double>::max();
-  size_t lb_idx = 0;
-  double lb_min_dist = std::numeric_limits<double>::max();
-  size_t rb_idx = 0;
-  double rb_min_dist = std::numeric_limits<double>::max();
   boost::geometry::correct(extended_da_poly);
   // remove the duplicated point (front == back) to prevent issue when splitting into left/right
   extended_da_poly.outer().resize(extended_da_poly.outer().size() - 1);
-  for (auto i = 0lu; i < extended_da_poly.outer().size(); ++i) {
-    const auto & p = extended_da_poly.outer()[i];
-    const auto lf_dist = boost::geometry::distance(left_front, p);
-    const auto rf_dist = boost::geometry::distance(right_front, p);
-    const auto lb_dist = boost::geometry::distance(left_back, p);
-    const auto rb_dist = boost::geometry::distance(right_back, p);
+  // extract left and right bounds: find the points closest to the original start and end points
+  const auto begin = extended_da_poly.outer().begin();
+  const auto end = extended_da_poly.outer().end();
+  auto lf = end;
+  double lf_min_dist = std::numeric_limits<double>::max();
+  auto rf = end;
+  double rf_min_dist = std::numeric_limits<double>::max();
+  auto lb = end;
+  double lb_min_dist = std::numeric_limits<double>::max();
+  auto rb = end;
+  double rb_min_dist = std::numeric_limits<double>::max();
+  for (auto it = extended_da_poly.outer().begin(); it != extended_da_poly.outer().end(); ++it) {
+    const auto lf_dist = boost::geometry::distance(to_point_t(left_bound.front()), *it);
+    const auto rf_dist = boost::geometry::distance(to_point_t(right_bound.front()), *it);
+    const auto lb_dist = boost::geometry::distance(to_point_t(left_bound.back()), *it);
+    const auto rb_dist = boost::geometry::distance(to_point_t(right_bound.back()), *it);
     if (lf_dist < lf_min_dist) {
-      lf_idx = i;
+      lf = it;
       lf_min_dist = lf_dist;
     }
     if (rf_dist < rf_min_dist) {
-      rf_idx = i;
+      rf = it;
       rf_min_dist = rf_dist;
     }
     if (lb_dist < lb_min_dist) {
-      lb_idx = i;
+      lb = it;
       lb_min_dist = lb_dist;
     }
     if (rb_dist < rb_min_dist) {
-      rb_idx = i;
+      rb = it;
       rb_min_dist = rb_dist;
     }
   }
-  std::vector<size_t> left_indexes;
-  std::vector<size_t> right_indexes;
-  // NOTE: we use int when decreasing the index to avoid overflow after a value of 0
-  if (lf_idx < lb_idx) {
-    if (lf_idx < rb_idx && rb_idx < lb_idx) {  // [..., left front, ... right front, ..., right
-                                               // back, ..., left back, ...]
-      for (int i = lf_idx; i >= 0; --i) left_indexes.push_back(static_cast<size_t>(i));
-      for (int i = extended_da_poly.outer().size() - 1; i >= static_cast<int>(lb_idx); --i)
-        left_indexes.push_back(static_cast<size_t>(i));
-      for (auto i = rf_idx; i <= rb_idx; ++i) right_indexes.push_back(i);
-    } else {  // [..., right front, left front, ... left back, ..., right back, ..., ]
-      for (auto i = lf_idx; i <= lb_idx; ++i) left_indexes.push_back(i);
-      for (int i = rf_idx; i >= 0; --i) right_indexes.push_back(static_cast<size_t>(i));
-      for (int i = extended_da_poly.outer().size() - 1; i >= static_cast<int>(rb_idx); --i)
-        right_indexes.push_back(static_cast<size_t>(i));
-    }
-  } else {                                     // lb_idx < lf_idx
-    if (lb_idx < rb_idx && rb_idx < lf_idx) {  // [ ..., left back, ..., right back , ..., right
-                                               // front, ..., left front, ...]
-      for (auto i = lf_idx; i < extended_da_poly.outer().size(); ++i) left_indexes.push_back(i);
-      for (auto i = 0lu; i <= lb_idx; ++i) left_indexes.push_back(i);
-      for (int i = rf_idx; i >= static_cast<int>(rb_idx); --i)
-        right_indexes.push_back(static_cast<size_t>(i));
-    } else {  // [ ..., right back, ..., left back, ..., left front, ..., right front, ...]
-      for (int i = lf_idx; i >= static_cast<int>(lb_idx); --i)
-        left_indexes.push_back(static_cast<size_t>(i));
-      for (auto i = rf_idx; i < extended_da_poly.outer().size(); ++i) right_indexes.push_back(i);
-      for (auto i = 0lu; i <= rb_idx; ++i) right_indexes.push_back(i);
-    }
+  std::vector<Point> extended_left_bound;
+  std::vector<Point> extended_right_bound;
+  // NOTE: clockwise ordering -> positive increment for left bound, negative for right bound
+  if (lf < lb) {
+    for (auto it = lf; it <= lb; ++it) extended_left_bound.push_back(to_point(*it));
+  } else {  // loop back
+    for (auto it = lf; it != end; ++it) extended_left_bound.push_back(to_point(*it));
+    for (auto it = begin; it <= lb; ++it) extended_left_bound.push_back(to_point(*it));
   }
-  Point point;
-  left_bound.clear();
-  right_bound.clear();
-  for (const auto i : left_indexes) {
-    const auto & p = extended_da_poly.outer()[i];
-    point.x = p.x();
-    point.y = p.y();
-    left_bound.push_back(point);
+  if (rf > rb) {
+    for (auto it = rf; it >= rb; --it) extended_right_bound.push_back(to_point(*it));
+  } else {  // loop back
+    for (auto it = rf; it >= begin; --it) extended_right_bound.push_back(to_point(*it));
+    for (auto it = end - 1; it >= rb; --it) extended_right_bound.push_back(to_point(*it));
   }
-  for (const auto i : right_indexes) {
-    const auto & p = extended_da_poly.outer()[i];
-    point.x = p.x();
-    point.y = p.y();
-    right_bound.push_back(point);
-  }
+  left_bound = extended_left_bound;
+  right_bound = extended_right_bound;
+  return true;
 }
 
 std::vector<Footprint> createPathFootprints(const Path & path, const ExpansionParameters & params)

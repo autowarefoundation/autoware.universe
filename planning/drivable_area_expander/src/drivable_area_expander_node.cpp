@@ -138,7 +138,12 @@ void DrivableAreaExpanderNode::onPath(const Path::ConstSharedPtr msg)
   const auto filtered_footprint = filterFootprint(
     path_footprints, predicted_paths, uncrossable_lines, expansion_params_.avoid_linestring_dist);
 
-  expandDrivableArea(path.left_bound, path.right_bound, filtered_footprint);
+  const auto success = expandDrivableArea(path.left_bound, path.right_bound, filtered_footprint);
+  if (!success)
+    RCLCPP_ERROR(
+      get_logger(),
+      "Could not expand the drivable area. May be caused by path points outside of the drivable "
+      "area.");
   pub_path_->publish(path);
 
   const auto t_end = std::chrono::system_clock::now();
