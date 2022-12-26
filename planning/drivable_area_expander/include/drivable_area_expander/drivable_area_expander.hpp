@@ -41,7 +41,8 @@ multipolygon_t filterFootprint(
 /// @param[inout] left_bound left drivable area bound to expand
 /// @param[inout] right_bound right drivable area bound to expand
 /// @param[in] footprint polygon to make drivable
-void expandDrivableArea(
+/// @return false if the algorithm failed
+bool expandDrivableArea(
   std::vector<Point> & left_bound, std::vector<Point> & right_bound,
   const multipolygon_t & footprint);
 
