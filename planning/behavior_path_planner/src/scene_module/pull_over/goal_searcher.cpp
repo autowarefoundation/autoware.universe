@@ -126,7 +126,7 @@ void GoalSearcher::update(GoalCandidates & goal_candidates) const
       continue;
     }
 
-    // check margin with pull over lane obhects
+    // check margin with pull over lane objects
     const auto pull_over_lanes = pull_over_utils::getPullOverLanes(*(planner_data_->route_handler));
     const auto [shoulder_lane_objects, others] =
       util::separateObjectsByLanelets(*(planner_data_->dynamic_object), pull_over_lanes);
