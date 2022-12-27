@@ -438,18 +438,21 @@ BehaviorModuleOutput PullOverModule::plan()
     }
   } else {
     // select safe path from pull over path candidates
-    status_.is_safe = false;
-    mutex_.lock();
     goal_searcher_->setPlannerData(planner_data_);
+    mutex_.lock();
     goal_searcher_->update(goal_candidates_);
-    for (const auto & pull_over_path : pull_over_path_candidates_) {
+    const auto pull_over_path_candidates = pull_over_path_candidates_;
+    const auto goal_candidates = goal_candidates_;
+    mutex_.unlock();
+    status_.is_safe = false;
+    for (const auto & pull_over_path : pull_over_path_candidates) {
       // check if goal is safe
       const auto goal_candidate_it = std::find_if(
-        goal_candidates_.begin(), goal_candidates_.end(),
+        goal_candidates.begin(), goal_candidates.end(),
         [pull_over_path](const auto & goal_candidate) {
           return goal_candidate.id == pull_over_path.goal_id;
         });
-      if (goal_candidate_it != goal_candidates_.end() && !goal_candidate_it->is_safe) {
+      if (goal_candidate_it != goal_candidates.end() && !goal_candidate_it->is_safe) {
         continue;
       }
 
@@ -463,7 +466,6 @@ BehaviorModuleOutput PullOverModule::plan()
       modified_goal_pose_ = pull_over_path.getFullPath().points.back().point.pose;
       break;
     }
-    mutex_.unlock();
 
     // Decelerate before the minimum shift distance from the goal search area.
     if (status_.is_safe) {
