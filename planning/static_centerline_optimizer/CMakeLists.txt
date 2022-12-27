@@ -55,7 +55,7 @@ ament_auto_package(
 )
 
 if(BUILD_TESTING)
-  add_ros_test(
+  add_launch_test(
     test/test_static_centerline_optimizer.test.py
     TIMEOUT "30"
   )
