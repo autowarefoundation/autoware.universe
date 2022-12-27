@@ -134,35 +134,6 @@ private:
     is_waiting_approval_ = true;
   }
 
-  void updateRegisteredRTCStatus(const LaneChangePath & path)
-  {
-    const auto start_distance_to_path_change = motion_utils::calcSignedArcLength(
-      path.path.points, planner_data_->self_pose->pose.position, path.shift_line.start.position);
-
-    const auto finish_distance_to_path_change = motion_utils::calcSignedArcLength(
-      path.path.points, planner_data_->self_pose->pose.position, path.shift_line.end.position);
-
-    const auto & start_idx = path.shift_line.start_idx;
-    const auto & end_idx = path.shift_line.end_idx;
-    const auto lateral_shift =
-      path.shifted_path.shift_length.at(end_idx) - path.shifted_path.shift_length.at(start_idx);
-
-    if (lateral_shift > 0.0) {
-      rtc_interface_left_.updateCooperateStatus(
-        uuid_left_, isExecutionReady(), start_distance_to_path_change,
-        finish_distance_to_path_change, clock_->now());
-      candidate_uuid_ = uuid_left_;
-    } else {
-      rtc_interface_right_.updateCooperateStatus(
-        uuid_right_, isExecutionReady(), start_distance_to_path_change,
-        finish_distance_to_path_change, clock_->now());
-      candidate_uuid_ = uuid_right_;
-    }
-
-    RCLCPP_WARN_STREAM(
-      getLogger(), "Direction is UNKNOWN, start_distance = " << start_distance_to_path_change);
-  }
-
   void updateRTCStatus(const CandidateOutput & candidate)
   {
     if (candidate.lateral_shift > 0.0) {
@@ -189,15 +160,6 @@ private:
   {
     rtc_interface_left_.clearCooperateStatus();
     rtc_interface_right_.clearCooperateStatus();
-  }
-
-  void removeCandidateRTCStatus()
-  {
-    if (rtc_interface_left_.isRegistered(candidate_uuid_)) {
-      rtc_interface_left_.removeCooperateStatus(candidate_uuid_);
-    } else if (rtc_interface_right_.isRegistered(candidate_uuid_)) {
-      rtc_interface_right_.removeCooperateStatus(candidate_uuid_);
-    }
   }
 
   void removePreviousRTCStatusLeft()
@@ -236,14 +198,13 @@ private:
   bool isCurrentSpeedLow() const;
   bool isAbortConditionSatisfied();
   bool hasFinishedLaneChange() const;
-  bool isStopState() const;
   bool isAbortState() const;
 
   // getter
   Pose getEgoPose() const;
   Twist getEgoTwist() const;
   std_msgs::msg::Header getRouteHeader() const;
-  void resetPathIfAbort(PathWithLaneId & selected_path);
+  void resetPathIfAbort();
 
   // debug
   void setObjectDebugVisualization() const;

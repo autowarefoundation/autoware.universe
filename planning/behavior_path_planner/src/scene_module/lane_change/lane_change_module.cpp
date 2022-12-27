@@ -117,7 +117,9 @@ BT::NodeStatus LaneChangeModule::updateState()
   }
 
   if (isAbortConditionSatisfied()) {
-    if ((isNearEndOfLane() && isCurrentSpeedLow()) || isAbortState()) {
+    const auto is_within_current_lane = lane_change_utils::isEgoWithinOriginalLane(
+      status_.current_lanes, getEgoPose(), planner_data_->parameters);
+    if ((isNearEndOfLane() && isCurrentSpeedLow()) || !is_within_current_lane || isAbortState()) {
       current_state_ = BT::NodeStatus::RUNNING;
       return current_state_;
     }
@@ -137,42 +139,41 @@ BT::NodeStatus LaneChangeModule::updateState()
 BehaviorModuleOutput LaneChangeModule::plan()
 {
   resetPathCandidate();
-
   is_activated_ = isActivated();
 
-  PathWithLaneId selected_path = status_.lane_change_path.path;
-  PathWithLaneId path;
+  PathWithLaneId path = status_.lane_change_path.path;
+  if (!isValidPath(path)) {
+    status_.is_safe = false;
+    return BehaviorModuleOutput{};
+  }
+
+  if ((is_abort_condition_satisfied_ && isNearEndOfLane() && isCurrentSpeedLow())) {
+    const auto stop_point = util::insertStopPoint(0.1, &path);
+  }
+
+  if (isAbortState()) {
+    resetPathIfAbort();
+    if (is_activated_) {
+      path = abort_path_->path;
+    }
+  }
+
+  generateExtendedDrivableArea(path);
 
   if (!isAbortState()) {
-    path = selected_path;
-    if (!isValidPath(path)) {
-      status_.is_safe = false;
-      return BehaviorModuleOutput{};
-    }
-    generateExtendedDrivableArea(path);
     prev_approved_path_ = path;
-    if ((is_abort_condition_satisfied_ && isNearEndOfLane() && isCurrentSpeedLow())) {
-      const auto stop_point = util::insertStopPoint(0.1, &path);
-    }
-  } else {
-    resetPathIfAbort(selected_path);
-    path = selected_path;
-    generateExtendedDrivableArea(path);
   }
 
   BehaviorModuleOutput output;
   output.path = std::make_shared<PathWithLaneId>(path);
   updateOutputTurnSignal(output);
 
-  if (!isSafe()) {
-    current_state_ = BT::NodeStatus::SUCCESS;  // for breaking loop
-  }
   updateSteeringFactorPtr(output);
 
   return output;
 }
 
-void LaneChangeModule::resetPathIfAbort(PathWithLaneId & selected_path)
+void LaneChangeModule::resetPathIfAbort()
 {
   if (!is_abort_approval_requested_) {
     const auto lateral_shift = lane_change_utils::getLateralShift(*abort_path_);
@@ -183,15 +184,14 @@ void LaneChangeModule::resetPathIfAbort(PathWithLaneId & selected_path)
       removePreviousRTCStatusLeft();
       uuid_left_ = generateUUID();
     }
+    RCLCPP_ERROR(getLogger(), "[plan] uuid is reset to request abort approval.");
     is_abort_approval_requested_ = true;
     is_abort_path_approved_ = false;
-    RCLCPP_ERROR(getLogger(), "[plan] uuid is reset to request abort approval.");
     return;
   }
 
   if (isActivated()) {
     RCLCPP_INFO(getLogger(), "[plan] isActivated() is true. set is_abort_path_approved to true.");
-    selected_path = abort_path_->path;
     is_abort_path_approved_ = true;
     clearWaitingApproval();
   } else {
@@ -235,14 +235,15 @@ CandidateOutput LaneChangeModule::planCandidate() const
 
 BehaviorModuleOutput LaneChangeModule::planWaitingApproval()
 {
-  BehaviorModuleOutput out;
-  if (!isAbortState()) {
-    const auto lane_keeping_path = getReferencePath();
-    prev_approved_path_ = lane_keeping_path;
-    out.path = std::make_shared<PathWithLaneId>(lane_keeping_path);
-  } else {
-    out.path = std::make_shared<PathWithLaneId>(prev_approved_path_);
+  const auto is_within_current_lane = lane_change_utils::isEgoWithinOriginalLane(
+    status_.current_lanes, getEgoPose(), planner_data_->parameters);
+
+  if (is_within_current_lane) {
+    prev_approved_path_ = getReferencePath();
   }
+
+  BehaviorModuleOutput out;
+  out.path = std::make_shared<PathWithLaneId>(prev_approved_path_);
 
   const auto candidate = planCandidate();
   path_candidate_ = std::make_shared<PathWithLaneId>(candidate.path_candidate);
@@ -486,13 +487,12 @@ bool LaneChangeModule::isAbortConditionSatisfied()
   const auto is_path_safe = isApprovedPathSafe(ego_pose_before_collision);
 
   if (!is_path_safe) {
-    current_lane_change_state_ = LaneChangeStates::Cancel;
-
     const auto & common_parameters = planner_data_->parameters;
     const bool is_within_original_lane = lane_change_utils::isEgoWithinOriginalLane(
       status_.current_lanes, getEgoPose(), common_parameters);
 
     if (is_within_original_lane) {
+      current_lane_change_state_ = LaneChangeStates::Cancel;
       return true;
     }
 
@@ -503,7 +503,7 @@ bool LaneChangeModule::isAbortConditionSatisfied()
 
     if (!parameters_->enable_abort_lane_change) {
       current_lane_change_state_ = LaneChangeStates::Stop;
-      return true;
+      return false;
     }
 
     const auto found_abort_path = lane_change_utils::getAbortPaths(
@@ -529,23 +529,22 @@ bool LaneChangeModule::isAbortConditionSatisfied()
 
 bool LaneChangeModule::isAbortState() const
 {
-  if ((current_lane_change_state_ == LaneChangeStates::Abort) && abort_path_) {
-    RCLCPP_WARN_STREAM_THROTTLE(
-      getLogger(), *clock_, 1000,
-      "DANGER!!! Lane change transition to ABORT state, return path will be computed!");
-    return true;
+  if (!parameters_->enable_abort_lane_change) {
+    return false;
   }
-  return false;
-}
 
-bool LaneChangeModule::isStopState() const
-{
-  if (current_lane_change_state_ == LaneChangeStates::Stop) {
-    RCLCPP_WARN_STREAM_THROTTLE(
-      getLogger(), *clock_, 1000, "DANGER!!! Lane change transition to STOP state!");
-    return true;
+  if (current_lane_change_state_ != LaneChangeStates::Abort) {
+    return false;
   }
-  return false;
+
+  if (!abort_path_) {
+    return false;
+  }
+
+  RCLCPP_WARN_STREAM_THROTTLE(
+    getLogger(), *clock_, 1000,
+    "DANGER!!! Lane change transition to ABORT state, return path will be computed!");
+  return true;
 }
 
 bool LaneChangeModule::hasFinishedLaneChange() const
@@ -709,7 +708,7 @@ void LaneChangeModule::resetParameters()
   is_abort_path_approved_ = false;
   is_abort_approval_requested_ = false;
   current_lane_change_state_ = LaneChangeStates::Normal;
-  abort_path_.reset();
+  abort_path_ = nullptr;
 
   clearWaitingApproval();
   removeRTCStatus();
