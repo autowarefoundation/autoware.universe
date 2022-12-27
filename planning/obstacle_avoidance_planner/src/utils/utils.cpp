@@ -644,7 +644,7 @@ bool isOutsideDrivableArea(
   // ignore point in front of the front line
   const std::vector<geometry_msgs::msg::Point> front_bound = {left_start_point, right_start_point};
   const double lat_dist_to_front_bound = motion_utils::calcLateralOffset(front_bound, point);
-  if (lat_dist_to_front_bound > min_dist) {
+  if (lat_dist_to_front_bound < -min_dist) {
     return false;
   }
 
