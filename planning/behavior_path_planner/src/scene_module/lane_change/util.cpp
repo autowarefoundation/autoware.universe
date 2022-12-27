@@ -829,9 +829,14 @@ std::optional<LaneChangePath> getAbortPaths(
       common_param.backward_length_buffer_for_end_of_lane + common_param.minimum_lane_change_length;
 
     const double s_start = arc_position.length;
-    const double s_end =
+    double s_end =
       lanelet::utils::getLaneletLength2d(reference_lanelets) - minimum_lane_change_length;
 
+    if (route_handler->isInGoalRouteSection(selected_path.target_lanelets.back())) {
+      const auto goal_arc_coordinates = lanelet::utils::getArcCoordinates(
+        selected_path.target_lanelets, route_handler->getGoalPose());
+      s_end = std::min(s_end, goal_arc_coordinates.length) - minimum_lane_change_length;
+    }
     PathWithLaneId ref = route_handler->getCenterLinePath(reference_lanelets, s_start, s_end);
     ref.points.back().point.longitudinal_velocity_mps = std::min(
       ref.points.back().point.longitudinal_velocity_mps,
