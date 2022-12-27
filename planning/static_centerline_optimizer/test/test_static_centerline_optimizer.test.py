@@ -42,8 +42,8 @@ def generate_test_description():
             {"rviz": False},
             {"lanelet2_input_file_path": lanelet2_map_path},
             {"lanelet2_output_file_path": "/tmp/lanelet2_map.osm"},
-            {"start_lanelet_id": 125},
-            {"end_lanelet_id": 132},
+            {"start_lanelet_id": 215},
+            {"end_lanelet_id": 216},
             os.path.join(
                 get_package_share_directory("static_centerline_optimizer"),
                 "config/static_centerline_optimizer.param.yaml",
