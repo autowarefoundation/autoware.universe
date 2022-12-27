@@ -42,7 +42,6 @@ private:
   void onEnableService(
     const AutoMode::Request::SharedPtr request, const AutoMode::Response::SharedPtr response);
   AutoMode::Request createRequest(const AutoMode::Request::SharedPtr request) const;
-  AutoModeStatus auto_mode_status_;
   rclcpp::Client<AutoMode>::SharedPtr enable_cli_;
   rclcpp::Service<AutoMode>::SharedPtr enable_srv_;
 
