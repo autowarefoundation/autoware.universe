@@ -116,10 +116,15 @@ BT::NodeStatus LaneChangeModule::updateState()
     return current_state_;
   }
 
+  const auto is_within_current_lane = lane_change_utils::isEgoWithinOriginalLane(
+    status_.current_lanes, getEgoPose(), planner_data_->parameters);
+  if (isAbortState() && !is_within_current_lane) {
+    current_state_ = BT::NodeStatus::RUNNING;
+    return current_state_;
+  }
+
   if (isAbortConditionSatisfied()) {
-    const auto is_within_current_lane = lane_change_utils::isEgoWithinOriginalLane(
-      status_.current_lanes, getEgoPose(), planner_data_->parameters);
-    if ((isNearEndOfLane() && isCurrentSpeedLow()) || !is_within_current_lane || isAbortState()) {
+    if ((isNearEndOfLane() && isCurrentSpeedLow()) || !is_within_current_lane) {
       current_state_ = BT::NodeStatus::RUNNING;
       return current_state_;
     }
@@ -160,9 +165,7 @@ BehaviorModuleOutput LaneChangeModule::plan()
 
   generateExtendedDrivableArea(path);
 
-  if (!isAbortState()) {
-    prev_approved_path_ = path;
-  }
+  prev_approved_path_ = path;
 
   BehaviorModuleOutput output;
   output.path = std::make_shared<PathWithLaneId>(path);
