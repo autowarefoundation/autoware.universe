@@ -147,7 +147,7 @@ void PullOverModule::onTimer()
         lanelet::utils::getArcCoordinates(current_lanes, pull_over_path->start_pose).length;
       if (start_arc_length < min_start_arc_length) {
         min_start_arc_length = start_arc_length;
-        // closeest start pose is stop point when not finding safe path
+        // closest start pose is stop point when not finding safe path
         closest_start_pose = pull_over_path->start_pose;
       }
     }
