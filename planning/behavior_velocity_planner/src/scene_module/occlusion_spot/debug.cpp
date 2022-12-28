@@ -220,7 +220,8 @@ MarkerArray OcclusionSpotModule::createVirtualWallMarkerArray()
   MarkerArray wall_marker;
   std::string module_name = "occlusion_spot";
   for (size_t id = 0; id < debug_data_.debug_poses.size(); id++) {
-    const auto p_front = calcOffsetPose(debug_data_.debug_poses.at(id), debug_data_.baselink_to_front, 0.0, 0.0);
+    const auto p_front =
+      calcOffsetPose(debug_data_.debug_poses.at(id), debug_data_.baselink_to_front, 0.0, 0.0);
     appendMarkerArray(
       motion_utils::createSlowDownVirtualWallMarker(p_front, module_name, current_time, id),
       &wall_marker, current_time);
