@@ -76,7 +76,7 @@ private:
   PointCloud::ConstSharedPtr pointcloud_ptr_;
   lanelet::LaneletMapPtr lanelet_map_ptr_{new lanelet::LaneletMap};
   multilinestring_t static_map_obstacles_;
-  std::optional<Float> current_ego_velocity_;
+  nav_msgs::msg::Odometry::ConstSharedPtr current_odometry_ptr_;
 
   // parameters
   PreprocessingParameters preprocessing_params_;
