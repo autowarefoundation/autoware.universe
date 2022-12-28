@@ -9,8 +9,8 @@
       backward_length_buffer_for_end_of_lane: 2.0 # [m]
       lane_change_finish_judge_buffer: 3.0      # [m]
 
-      double lane_changing_lateral_jerk: 0.5    # [m/s3]
-      double lane_changing_lateral_acc: 0.5     # [m/s2]
+      lane_changing_lateral_jerk: 0.5           # [m/s3]
+      lane_changing_lateral_acc: 0.5            # [m/s2]
 
       minimum_lane_change_velocity: 2.778       # [m/s]
       prediction_time_resolution: 0.5           # [s]
