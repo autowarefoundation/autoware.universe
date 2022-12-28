@@ -71,6 +71,10 @@ public:
   bool isExecutionRequested() const override;
   bool isExecutionReady() const override;
   BT::NodeStatus updateState() override;
+  BT::NodeStatus getNodeStatusWhileWaitingApproval() const override
+  {
+    return BT::NodeStatus::SUCCESS;
+  }
   BehaviorModuleOutput plan() override;
   BehaviorModuleOutput planWaitingApproval() override;
   CandidateOutput planCandidate() const override;
@@ -114,6 +118,7 @@ private:
     const std::vector<Pose> & start_pose_candidates, const Pose & goal_pose);
   void planWithPriorityOnShortBackDistance(
     const std::vector<Pose> & start_pose_candidates, const Pose & goal_pose);
+  void generateStopPath();
   void updatePullOutStatus();
   static bool isOverlappedWithLane(
     const lanelet::ConstLanelet & candidate_lanelet,
