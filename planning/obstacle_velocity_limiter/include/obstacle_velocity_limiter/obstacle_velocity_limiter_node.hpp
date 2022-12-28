@@ -51,7 +51,6 @@ public:
 
 private:
   tier4_autoware_utils::TransformListener transform_listener_{this};
-  tier4_autoware_utils::SelfPoseListener self_pose_listener_{this};
   rclcpp::Publisher<Trajectory>::SharedPtr
     pub_trajectory_;  //!< @brief publisher for output trajectory
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr
