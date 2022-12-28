@@ -9,8 +9,8 @@
   <arg name="use_decompress" default="true" description="use image decompress"/>
 
   <node pkg="image_transport_decompressor" exec="image_transport_decompressor_node" name="image_transport_decompressor_node" if="$(var use_decompress)">
-    <remap from="~/input/compressed_image" to="$(var input/image)/compressed" />
-    <remap from="~/output/raw_image" to="$(var input/image)/raw" />
+    <remap from="~/input/compressed_image" to="$(var input/image)/compressed"/>
+    <remap from="~/output/raw_image" to="$(var input/image)/raw"/>
   </node>
 
   <node pkg="tensorrt_yolox" exec="tensorrt_yolox_node_exe" name="tensorrt_yolox" output="screen">
