@@ -187,18 +187,18 @@ void LaneChangeModule::resetPathIfAbort()
       removePreviousRTCStatusLeft();
       uuid_left_ = generateUUID();
     }
-    RCLCPP_ERROR(getLogger(), "[plan] uuid is reset to request abort approval.");
+    RCLCPP_DEBUG(getLogger(), "[abort] uuid is reset to request abort approval.");
     is_abort_approval_requested_ = true;
     is_abort_path_approved_ = false;
     return;
   }
 
   if (isActivated()) {
-    RCLCPP_INFO(getLogger(), "[plan] isActivated() is true. set is_abort_path_approved to true.");
+    RCLCPP_DEBUG(getLogger(), "[abort] isActivated() is true. set is_abort_path_approved to true.");
     is_abort_path_approved_ = true;
     clearWaitingApproval();
   } else {
-    RCLCPP_INFO(getLogger(), "[plan] isActivated() is False.");
+    RCLCPP_DEBUG(getLogger(), "[abort] isActivated() is False.");
     is_abort_path_approved_ = false;
     waitApproval();
   }
