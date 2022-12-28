@@ -139,11 +139,16 @@ visualization_msgs::msg::MarkerArray VirtualWallMarkerCreator::handleVirtualWall
   std::vector<geometry_msgs::msg::Pose> & previous_virtual_wall_poses,
   const double longitudinal_offset)
 {
+
   size_t id_to_create = id;
   size_t id_to_delete = id;
   visualization_msgs::msg::MarkerArray wall_marker;
 
-  for (const auto & p : previous_stop_poses_) {
+  if (poses.size() == 0 || previous_virtual_wall_poses.empty()) {
+    return wall_marker;
+  }
+
+  for (const auto & p : previous_virtual_wall_poses) {
     const bool previous_stop_pose_is_in_stop_pose =
       std::any_of(poses.begin(), poses.end(), [&](const geometry_msgs::msg::Pose & elem) {
         std::vector<Pose> poses;
