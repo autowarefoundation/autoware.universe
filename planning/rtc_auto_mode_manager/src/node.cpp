@@ -35,7 +35,7 @@ RTCAutoModeManagerNode::RTCAutoModeManagerNode(const rclcpp::NodeOptions & node_
   statuses_pub_ = create_publisher<AutoModeStatusArray>("output/auto_mode_statuses", 1);
   using std::chrono_literals::operator""ms;
   timer_ = rclcpp::create_timer(this, get_clock(), 100ms, [this] {
-    AutoModeStatus auto_mode_statuses;
+    AutoModeStatusArray auto_mode_statuses;
     for (const auto & m : managers_) {
       auto_mode_statuses.stamp = get_clock()->now();
       auto_mode_statuses.statuses.emplace_back(m->getAutoModeStatus());
