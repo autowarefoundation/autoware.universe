@@ -56,6 +56,7 @@ So for example, in order to stop at a stop line with the vehicles' front on the 
 | `launch_stop_line`      | bool   | whether to launch stop_line module                                                  |
 | `launch_occlusion_spot` | bool   | whether to launch occlusion_spot module                                             |
 | `launch_run_out`        | bool   | whether to launch run_out module                                                    |
+| `launch_speed_bump`     | bool   | whether to launch speed_bump module                                                 |
 | `forward_path_length`   | double | forward path length                                                                 |
 | `backward_path_length`  | double | backward path length                                                                |
 | `max_accel`             | double | (to be a global parameter) max acceleration of the vehicle                          |
