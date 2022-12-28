@@ -598,16 +598,79 @@ std::vector<size_t> filterObjectIndicesByLanelets(
   return indices;
 }
 
-PredictedObjects filterObjectsByLanelets(
+std::pair<std::vector<size_t>, std::vector<size_t>> separateObjectIndicesByLanelets(
   const PredictedObjects & objects, const lanelet::ConstLanelets & target_lanelets)
 {
-  PredictedObjects filtered_objects;
-  const auto indices = filterObjectIndicesByLanelets(objects, target_lanelets);
-  filtered_objects.objects.reserve(indices.size());
-  for (const size_t i : indices) {
-    filtered_objects.objects.push_back(objects.objects.at(i));
+  if (target_lanelets.empty()) {
+    return {};
   }
-  return filtered_objects;
+
+  std::vector<size_t> target_indices;
+  std::vector<size_t> other_indices;
+
+  for (size_t i = 0; i < objects.objects.size(); i++) {
+    // create object polygon
+    const auto & obj = objects.objects.at(i);
+    // create object polygon
+    Polygon2d obj_polygon;
+    if (!util::calcObjectPolygon(obj, &obj_polygon)) {
+      RCLCPP_ERROR_STREAM(
+        rclcpp::get_logger("behavior_path_planner").get_child("utilities"),
+        "Failed to calcObjectPolygon...!!!");
+      continue;
+    }
+
+    bool is_filtered_object = false;
+
+    for (const auto & llt : target_lanelets) {
+      // create lanelet polygon
+      const auto polygon2d = llt.polygon2d().basicPolygon();
+      if (polygon2d.empty()) {
+        // no lanelet polygon
+        continue;
+      }
+      Polygon2d lanelet_polygon;
+      for (const auto & lanelet_point : polygon2d) {
+        lanelet_polygon.outer().emplace_back(lanelet_point.x(), lanelet_point.y());
+      }
+      lanelet_polygon.outer().push_back(lanelet_polygon.outer().front());
+      // check the object does not intersect the lanelet
+      if (!boost::geometry::disjoint(lanelet_polygon, obj_polygon)) {
+        target_indices.push_back(i);
+        is_filtered_object = true;
+        break;
+      }
+    }
+
+    if (!is_filtered_object) {
+      other_indices.push_back(i);
+    }
+  }
+
+  return std::make_pair(target_indices, other_indices);
+}
+
+std::pair<PredictedObjects, PredictedObjects> separateObjectsByLanelets(
+  const PredictedObjects & objects, const lanelet::ConstLanelets & target_lanelets)
+{
+  PredictedObjects target_objects;
+  PredictedObjects other_objects;
+
+  const auto [target_indices, other_indices] =
+    separateObjectIndicesByLanelets(objects, target_lanelets);
+
+  target_objects.objects.reserve(target_indices.size());
+  other_objects.objects.reserve(other_indices.size());
+
+  for (const size_t i : target_indices) {
+    target_objects.objects.push_back(objects.objects.at(i));
+  }
+
+  for (const size_t i : other_indices) {
+    other_objects.objects.push_back(objects.objects.at(i));
+  }
+
+  return std::make_pair(target_objects, other_objects);
 }
 
 bool calcObjectPolygon(const PredictedObject & object, Polygon2d * object_polygon)
