@@ -102,6 +102,26 @@ double project_goal_to_map(
   return project.z();
 }
 
+geometry_msgs::msg::Pose get_closest_centerline_pose(
+        const lanelet::ConstLanelets road_lanelets, const geometry_msgs::msg::Pose & point)
+{
+    lanelet::Lanelet closest_lanelet;
+    lanelet::utils::query::getClosestLanelet(road_lanelets, point, &closest_lanelet);
+
+    const auto refined_center_line =
+            lanelet::utils::generateFineCenterline(closest_lanelet, 1.0);
+    closest_lanelet.setCenterline(refined_center_line);
+    auto nearest_idx = findNearestIndex(closest_lanelet.centerline(), point.position);
+
+    auto const nearest_point = closest_lanelet.centerline()[nearest_idx.get()];
+    auto const nearest_point_next = closest_lanelet.centerline()[nearest_idx.get() + 1];
+
+    auto const pose_orientation = getOrientation(nearest_point, nearest_point_next);
+    auto closest_pose = convertBasicPoint3dToPose(nearest_point, pose_orientation);
+    return closest_pose;
+
+}
+
 }  // anonymous namespace
 
 namespace mission_planner::lanelet2
@@ -380,18 +400,17 @@ PlannerPlugin::LaneletRoute DefaultPlanner::plan(const RoutePoints & points)
     const auto local_route_sections = route_handler_.createMapSegments(path_lanelets);
     route_sections = combine_consecutive_route_sections(route_sections, local_route_sections);
   }
-
-  if (!is_goal_valid(points.back(), all_route_lanelets)) {
+    const auto test_pose = get_closest_centerline_pose(road_lanelets_, points.back());
+    if (!is_goal_valid(test_pose, all_route_lanelets)) {
     RCLCPP_WARN(logger, "Goal is not valid! Please check position and angle of goal_pose");
     return route_msg;
   }
-
   if (route_handler_.isRouteLooped(route_sections)) {
     RCLCPP_WARN(logger, "Loop detected within route!");
     return route_msg;
   }
 
-  const auto refined_goal = refine_goal_height(points.back(), route_sections);
+  const auto refined_goal = refine_goal_height(test_pose, route_sections);
   RCLCPP_DEBUG(logger, "Goal Pose Z : %lf", refined_goal.position.z);
 
   // The header is assigned by mission planner.
