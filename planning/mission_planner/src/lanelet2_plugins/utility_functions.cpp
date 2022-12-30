@@ -114,23 +114,6 @@ boost::optional<size_t> findNearestIndex(
     return min_idx;
 }
 
-geometry_msgs::msg::Quaternion getOrientation(
-        const lanelet::BasicPoint3d & point, const lanelet::BasicPoint3d & next_point)
-{
-    auto angle = std::atan2(next_point.y() - point.y(), next_point.x() - point.x());
-
-    tf2::Quaternion tf2_q;
-    tf2_q.setRPY(0, 0, angle);
-
-    geometry_msgs::msg::Quaternion q;
-    q.w = tf2_q.getW();
-    q.x = tf2_q.getX();
-    q.y = tf2_q.getY();
-    q.z = tf2_q.getZ();
-
-    return q;
-}
-
 geometry_msgs::msg::Pose convertBasicPoint3dToPose(
         const lanelet::BasicPoint3d & point, const geometry_msgs::msg::Quaternion & quaternion)
 {
