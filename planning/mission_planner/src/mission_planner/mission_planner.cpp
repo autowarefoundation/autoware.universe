@@ -163,7 +163,7 @@ void MissionPlanner::on_set_route(
       ResponseCode::ERROR_PLANNER_UNREADY, "The vehicle pose is not received.");
   }
 
-  // Use temporary pose stapmed for transform.
+  // Use temporary pose stamped for transform.
   PoseStamped pose;
   pose.header = req->header;
   pose.pose = req->goal;
@@ -204,7 +204,7 @@ void MissionPlanner::on_set_route_points(
       ResponseCode::ERROR_PLANNER_UNREADY, "The vehicle pose is not received.");
   }
 
-  // Use temporary pose stapmed for transform.
+  // Use temporary pose stamped for transform.
   PoseStamped pose;
   pose.header = req->header;
 
