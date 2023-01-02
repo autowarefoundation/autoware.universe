@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PLANNING_VALIDATOR__INVALID_TRAJECTORY_PUBLISHER_HPP_
-#define PLANNING_VALIDATOR__INVALID_TRAJECTORY_PUBLISHER_HPP_
+#ifndef INVALID_TRAJECTORY_PUBLISHER__INVALID_TRAJECTORY_PUBLISHER_HPP_
+#define INVALID_TRAJECTORY_PUBLISHER__INVALID_TRAJECTORY_PUBLISHER_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -43,4 +43,4 @@ private:
 };
 }  // namespace planning_validator
 
-#endif  // PLANNING_VALIDATOR__INVALID_TRAJECTORY_PUBLISHER_HPP_
+#endif  // INVALID_TRAJECTORY_PUBLISHER__INVALID_TRAJECTORY_PUBLISHER_HPP_

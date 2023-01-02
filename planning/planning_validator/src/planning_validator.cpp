@@ -225,7 +225,8 @@ bool PlanningValidator::checkValidInterval(const Trajectory & trajectory)
   const auto interval_distances = calcIntervalDistance(trajectory);
   const auto [max_interval_distance, i] = getAbsMaxValAndIdx(interval_distances);
   validation_status_.max_interval_distance = max_interval_distance;
-//  std::cerr << "max_interval_distance = " << max_interval_distance << ", index = " << i << ", threshold = " << validation_params_.interval_threshold << std::endl;
+  //  std::cerr << "max_interval_distance = " << max_interval_distance << ", index = " << i << ",
+  //  threshold = " << validation_params_.interval_threshold << std::endl;
 
   if (max_interval_distance > validation_params_.interval_threshold) {
     // const auto &p = trajectory.points;

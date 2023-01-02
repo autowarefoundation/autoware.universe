@@ -15,9 +15,10 @@
 #ifndef TEST_PLANNING_VALIDATOR_HELPER_HPP_
 #define TEST_PLANNING_VALIDATOR_HELPER_HPP_
 
+#include <rclcpp/rclcpp.hpp>
+
 #include <autoware_auto_planning_msgs/msg/trajectory.hpp>
 #include <autoware_auto_planning_msgs/msg/trajectory_point.hpp>
-#include <rclcpp/rclcpp.hpp>
 
 constexpr double NOMINAL_INTERVAL = 1.0;
 constexpr double ERROR_INTERVAL = 1000.0;
@@ -34,6 +35,5 @@ Trajectory generateInfTrajectory();
 Trajectory generateBadCurvatureTrajectory();
 
 rclcpp::NodeOptions getNodeOptionsWithDefaultParams();
-
 
 #endif  // TEST_PLANNING_VALIDATOR_HELPER_HPP_

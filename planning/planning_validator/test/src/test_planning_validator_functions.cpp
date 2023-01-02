@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "planning_validator/planning_validator.hpp"
 #include "planning_validator/debug_marker.hpp"
+#include "planning_validator/planning_validator.hpp"
 #include "test_planning_validator_helper.hpp"
 
 #include <gtest/gtest.h>

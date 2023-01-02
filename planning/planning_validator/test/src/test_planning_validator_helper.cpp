@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "test_planning_validator_helper.hpp"
+
 #include <math.h>
 
 using autoware_auto_planning_msgs::msg::Trajectory;
