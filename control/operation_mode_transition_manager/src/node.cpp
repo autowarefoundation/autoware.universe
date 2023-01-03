@@ -38,7 +38,8 @@ OperationModeTransitionManager::OperationModeTransitionManager(const rclcpp::Nod
     const auto node = component_interface_utils::NodeAdaptor(this);
     node.init_srv(
       srv_autoware_control_, this, &OperationModeTransitionManager::onChangeAutowareControl);
-    node.init_srv(srv_operation_mode_, this, &OperationModeTransitionManager::onChangeOperationMode);
+    node.init_srv(
+      srv_operation_mode_, this, &OperationModeTransitionManager::onChangeOperationMode);
     node.init_pub(pub_operation_mode_);
   }
 
