@@ -106,6 +106,10 @@ struct StopParam
   // before the obstacle.
   double lateral_margin;
 
+  double pedestrian_lateral_margin;
+  double car_lateral_margin;
+  double unknown_lateral_margin;
+
   // =================================
   // params for trajectory pre-process
   // =================================
