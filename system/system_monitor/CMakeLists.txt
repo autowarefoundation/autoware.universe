@@ -114,7 +114,8 @@ ament_auto_add_executable(msr_reader
 )
 
 ament_auto_add_executable(hdd_reader
-  reader/hdd_reader/hdd_reader.cpp
+  reader/hdd_reader/hdd_reader_main.cpp
+  reader/hdd_reader/hdd_reader_service.cpp
 )
 
 ament_auto_add_executable(traffic_reader

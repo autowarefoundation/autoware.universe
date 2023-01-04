@@ -21,13 +21,10 @@
 
 #include "system_monitor/system_monitor_utility.hpp"
 
-#include <hdd_reader/hdd_reader.hpp>
-
 #include <boost/algorithm/string.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/process.hpp>
-#include <boost/serialization/vector.hpp>
 
 #include <fmt/format.h>
 #include <stdio.h>
@@ -42,60 +39,61 @@ namespace bp = boost::process;
 HddMonitor::HddMonitor(const rclcpp::NodeOptions & options)
 : Node("hdd_monitor", options),
   updater_(this),
-  hdd_reader_port_(declare_parameter<int>("hdd_reader_port", 7635)),
+  socket_path_(declare_parameter("socket_path", hdd_reader_service::socket_path)),
   last_hdd_stat_update_time_{0, 0, this->get_clock()->get_clock_type()}
 {
   using namespace std::literals::chrono_literals;
 
   gethostname(hostname_, sizeof(hostname_));
 
-  getHddParams();
+  // Get HDD parameters
+  get_hdd_params();
+
+  // Update HDD connections
+  update_hdd_connections();
+
+  // Get HDD information from HDD reader for the first time
+  update_hdd_info_list();
 
   updater_.setHardwareID(hostname_);
-  updater_.add("HDD Temperature", this, &HddMonitor::checkSmartTemperature);
-  updater_.add("HDD PowerOnHours", this, &HddMonitor::checkSmartPowerOnHours);
-  updater_.add("HDD TotalDataWritten", this, &HddMonitor::checkSmartTotalDataWritten);
-  updater_.add("HDD RecoveredError", this, &HddMonitor::checkSmartRecoveredError);
-  updater_.add("HDD Usage", this, &HddMonitor::checkUsage);
-  updater_.add("HDD ReadDataRate", this, &HddMonitor::checkReadDataRate);
-  updater_.add("HDD WriteDataRate", this, &HddMonitor::checkWriteDataRate);
-  updater_.add("HDD ReadIOPS", this, &HddMonitor::checkReadIops);
-  updater_.add("HDD WriteIOPS", this, &HddMonitor::checkWriteIops);
-  updater_.add("HDD Connection", this, &HddMonitor::checkConnection);
+  updater_.add("HDD Temperature", this, &HddMonitor::check_smart_temperature);
+  updater_.add("HDD PowerOnHours", this, &HddMonitor::check_smart_power_on_hours);
+  updater_.add("HDD TotalDataWritten", this, &HddMonitor::check_smart_total_data_written);
+  updater_.add("HDD RecoveredError", this, &HddMonitor::check_smart_recovered_error);
+  updater_.add("HDD Usage", this, &HddMonitor::check_usage);
+  updater_.add("HDD ReadDataRate", this, &HddMonitor::check_read_data_rate);
+  updater_.add("HDD WriteDataRate", this, &HddMonitor::check_write_data_rate);
+  updater_.add("HDD ReadIOPS", this, &HddMonitor::check_read_iops);
+  updater_.add("HDD WriteIOPS", this, &HddMonitor::check_write_iops);
+  updater_.add("HDD Connection", this, &HddMonitor::check_connection);
 
-  // get HDD connection status
-  updateHddConnections();
+  // Start HDD transfer measurement
+  start_hdd_transfer_measurement();
 
-  // get HDD information from HDD reader for the first time
-  updateHddInfoList();
-
-  // start HDD transfer measurement
-  startHddTransferMeasurement();
-
-  timer_ = rclcpp::create_timer(this, get_clock(), 1s, std::bind(&HddMonitor::onTimer, this));
+  timer_ = rclcpp::create_timer(this, get_clock(), 1s, std::bind(&HddMonitor::on_timer, this));
 }
 
-void HddMonitor::checkSmartTemperature(diagnostic_updater::DiagnosticStatusWrapper & stat)
+void HddMonitor::check_smart_temperature(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
-  checkSmart(stat, HddSmartInfoItem::TEMPERATURE);
+  check_smart(stat, HddSmartInfoItem::TEMPERATURE);
 }
 
-void HddMonitor::checkSmartPowerOnHours(diagnostic_updater::DiagnosticStatusWrapper & stat)
+void HddMonitor::check_smart_power_on_hours(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
-  checkSmart(stat, HddSmartInfoItem::POWER_ON_HOURS);
+  check_smart(stat, HddSmartInfoItem::POWER_ON_HOURS);
 }
 
-void HddMonitor::checkSmartTotalDataWritten(diagnostic_updater::DiagnosticStatusWrapper & stat)
+void HddMonitor::check_smart_total_data_written(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
-  checkSmart(stat, HddSmartInfoItem::TOTAL_DATA_WRITTEN);
+  check_smart(stat, HddSmartInfoItem::TOTAL_DATA_WRITTEN);
 }
 
-void HddMonitor::checkSmartRecoveredError(diagnostic_updater::DiagnosticStatusWrapper & stat)
+void HddMonitor::check_smart_recovered_error(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
-  checkSmart(stat, HddSmartInfoItem::RECOVERED_ERROR);
+  check_smart(stat, HddSmartInfoItem::RECOVERED_ERROR);
 }
 
-void HddMonitor::checkSmart(
+void HddMonitor::check_smart(
   diagnostic_updater::DiagnosticStatusWrapper & stat, HddSmartInfoItem item)
 {
   // Remember start time to measure elapsed time
@@ -128,82 +126,82 @@ void HddMonitor::checkSmart(
     }
 
     // Retrieve HDD information
-    auto hdd_itr = hdd_info_list_.find(itr->second.disk_device_);
+    auto hdd_itr = hdd_info_list_.find(itr->second.disk_device);
     if (hdd_itr == hdd_info_list_.end()) {
       stat.add(fmt::format("HDD {}: status", index), "hdd_reader error");
-      stat.add(fmt::format("HDD {}: name", index), itr->second.part_device_.c_str());
+      stat.add(fmt::format("HDD {}: name", index), itr->second.part_device.c_str());
       stat.add(fmt::format("HDD {}: hdd_reader", index), strerror(ENOENT));
       error_str = "hdd_reader error";
-      continue;
+       continue;
     }
 
-    if (hdd_itr->second.error_code_ != 0) {
+    if (hdd_itr->second.error_code != 0) {
       stat.add(fmt::format("HDD {}: status", index), "hdd_reader error");
-      stat.add(fmt::format("HDD {}: name", index), itr->second.part_device_.c_str());
-      stat.add(fmt::format("HDD {}: hdd_reader", index), strerror(hdd_itr->second.error_code_));
+      stat.add(fmt::format("HDD {}: name", index), itr->second.part_device.c_str());
+      stat.add(fmt::format("HDD {}: hdd_reader", index), strerror(hdd_itr->second.error_code));
       error_str = "hdd_reader error";
       continue;
     }
 
     switch (item) {
       case HddSmartInfoItem::TEMPERATURE: {
-        float temp = static_cast<float>(hdd_itr->second.temp_);
+        float temp = static_cast<float>(hdd_itr->second.temp);
 
         level = DiagStatus::OK;
-        if (temp >= itr->second.temp_error_) {
+        if (temp >= itr->second.temp_error) {
           level = DiagStatus::ERROR;
-        } else if (temp >= itr->second.temp_warn_) {
+        } else if (temp >= itr->second.temp_warn) {
           level = DiagStatus::WARN;
         }
         key_str = fmt::format("HDD {}: temperature", index);
-        if (hdd_itr->second.is_valid_temp_) {
+        if (hdd_itr->second.is_valid_temp) {
           val_str = fmt::format("{:.1f} DegC", temp);
         } else {
           val_str = "not available";
         }
       } break;
       case HddSmartInfoItem::POWER_ON_HOURS: {
-        int64_t power_on_hours = static_cast<int64_t>(hdd_itr->second.power_on_hours_);
+        int64_t power_on_hours = static_cast<int64_t>(hdd_itr->second.power_on_hours);
 
         level = DiagStatus::OK;
-        if (power_on_hours >= itr->second.power_on_hours_warn_) {
+        if (power_on_hours >= itr->second.power_on_hours_warn) {
           level = DiagStatus::WARN;
         }
         key_str = fmt::format("HDD {}: power on hours", index);
-        if (hdd_itr->second.is_valid_power_on_hours_) {
-          val_str = fmt::format("{} Hours", hdd_itr->second.power_on_hours_);
+        if (hdd_itr->second.is_valid_power_on_hours) {
+          val_str = fmt::format("{} Hours", hdd_itr->second.power_on_hours);
         } else {
           val_str = "not available";
         }
       } break;
       case HddSmartInfoItem::TOTAL_DATA_WRITTEN: {
-        uint64_t total_data_written = static_cast<uint64_t>(hdd_itr->second.total_data_written_);
+        uint64_t total_data_written = static_cast<uint64_t>(hdd_itr->second.total_data_written);
 
         level = DiagStatus::OK;
-        if (total_data_written >= itr->second.total_data_written_warn_) {
+        if (total_data_written >= itr->second.total_data_written_warn) {
           level = DiagStatus::WARN;
         }
         key_str = fmt::format("HDD {}: total data written", index);
-        if (hdd_itr->second.is_valid_total_data_written_) {
-          val_str = fmt::format("{}", hdd_itr->second.total_data_written_);
+        if (hdd_itr->second.is_valid_total_data_written) {
+          val_str = fmt::format("{}", hdd_itr->second.total_data_written);
         } else {
           val_str = "not available";
         }
       } break;
       case HddSmartInfoItem::RECOVERED_ERROR: {
-        int32_t recovered_error = static_cast<int32_t>(hdd_itr->second.recovered_error_);
+        int32_t recovered_error = static_cast<int32_t>(hdd_itr->second.recovered_error);
         if (initial_recovered_errors_.find(itr->first) == initial_recovered_errors_.end()) {
           initial_recovered_errors_[itr->first] = recovered_error;
         }
         recovered_error -= initial_recovered_errors_[itr->first];
 
         level = DiagStatus::OK;
-        if (recovered_error >= itr->second.recovered_error_warn_) {
+        if (recovered_error >= itr->second.recovered_error_warn) {
           level = DiagStatus::WARN;
         }
         key_str = fmt::format("HDD {}: recovered error", index);
-        if (hdd_itr->second.is_valid_recovered_error_) {
-          val_str = fmt::format("{}", hdd_itr->second.recovered_error_);
+        if (hdd_itr->second.is_valid_recovered_error) {
+          val_str = fmt::format("{}", hdd_itr->second.recovered_error);
         } else {
           val_str = "not available";
         }
@@ -214,9 +212,9 @@ void HddMonitor::checkSmart(
 
     stat.add(
       fmt::format("HDD {}: status", index), smart_dicts_[static_cast<uint32_t>(item)].at(level));
-    stat.add(fmt::format("HDD {}: name", index), itr->second.disk_device_.c_str());
-    stat.add(fmt::format("HDD {}: model", index), hdd_itr->second.model_.c_str());
-    stat.add(fmt::format("HDD {}: serial", index), hdd_itr->second.serial_.c_str());
+    stat.add(fmt::format("HDD {}: name", index), itr->second.disk_device.c_str());
+    stat.add(fmt::format("HDD {}: model", index), hdd_itr->second.model.c_str());
+    stat.add(fmt::format("HDD {}: serial", index), hdd_itr->second.serial.c_str());
     stat.addf(key_str, val_str.c_str());
 
     whole_level = std::max(whole_level, level);
@@ -232,7 +230,7 @@ void HddMonitor::checkSmart(
   SystemMonitorUtility::stopMeasurement(t_start, stat);
 }
 
-void HddMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
+void HddMonitor::check_usage(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
   // Remember start time to measure elapsed time
   const auto t_start = SystemMonitorUtility::startMeasurement();
@@ -250,8 +248,6 @@ void HddMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
     if (!hdd_connected_flags_[itr->first]) {
       continue;
     }
-
-    // Get summary of disk space usage of ext4
 
     // boost::process create file descriptor without O_CLOEXEC required for multithreading.
     // So create file descriptor with O_CLOEXEC and pass it to boost::process.
@@ -279,7 +275,7 @@ void HddMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
 
     // Invoke shell to use shell wildcard expansion
     bp::child c(
-      "/bin/sh", "-c", fmt::format("df -Pm {}*", itr->second.part_device_.c_str()),
+      "/bin/sh", "-c", fmt::format("df -Pm {}*", itr->second.part_device.c_str()),
       bp::std_out > is_out, bp::std_err > is_err);
     c.wait();
 
@@ -288,7 +284,7 @@ void HddMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
       is_err >> os.rdbuf();
       error_str = "df error";
       stat.add(fmt::format("HDD {}: status", hdd_index), "df error");
-      stat.add(fmt::format("HDD {}: name", hdd_index), itr->second.part_device_.c_str());
+      stat.add(fmt::format("HDD {}: name", hdd_index), itr->second.part_device.c_str());
       stat.add(fmt::format("HDD {}: df", hdd_index), os.str().c_str());
       continue;
     }
@@ -316,9 +312,9 @@ void HddMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
         stat.add(fmt::format("HDD {}: status", hdd_index), "avail string error");
       }
 
-      if (avail <= itr->second.free_error_) {
+      if (avail <= itr->second.free_error) {
         level = DiagStatus::ERROR;
-      } else if (avail <= itr->second.free_warn_) {
+      } else if (avail <= itr->second.free_warn) {
         level = DiagStatus::WARN;
       } else {
         level = DiagStatus::OK;
@@ -354,27 +350,27 @@ void HddMonitor::checkUsage(diagnostic_updater::DiagnosticStatusWrapper & stat)
   SystemMonitorUtility::stopMeasurement(t_start, stat);
 }
 
-void HddMonitor::checkReadDataRate(diagnostic_updater::DiagnosticStatusWrapper & stat)
+void HddMonitor::check_read_data_rate(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
-  checkStatistics(stat, HddStatItem::READ_DATA_RATE);
+  check_statistics(stat, HddStatItem::READ_DATA_RATE);
 }
 
-void HddMonitor::checkWriteDataRate(diagnostic_updater::DiagnosticStatusWrapper & stat)
+void HddMonitor::check_write_data_rate(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
-  checkStatistics(stat, HddStatItem::WRITE_DATA_RATE);
+  check_statistics(stat, HddStatItem::WRITE_DATA_RATE);
 }
 
-void HddMonitor::checkReadIops(diagnostic_updater::DiagnosticStatusWrapper & stat)
+void HddMonitor::check_read_iops(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
-  checkStatistics(stat, HddStatItem::READ_IOPS);
+  check_statistics(stat, HddStatItem::READ_IOPS);
 }
 
-void HddMonitor::checkWriteIops(diagnostic_updater::DiagnosticStatusWrapper & stat)
+void HddMonitor::check_write_iops(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
-  checkStatistics(stat, HddStatItem::WRITE_IOPS);
+  check_statistics(stat, HddStatItem::WRITE_IOPS);
 }
 
-void HddMonitor::checkStatistics(
+void HddMonitor::check_statistics(
   diagnostic_updater::DiagnosticStatusWrapper & stat, HddStatItem item)
 {
   // Remember start time to measure elapsed time
@@ -400,36 +396,36 @@ void HddMonitor::checkStatistics(
 
     switch (item) {
       case HddStatItem::READ_DATA_RATE: {
-        float read_data_rate = hdd_stats_[itr->first].read_data_rate_MBs_;
+        float read_data_rate = hdd_stats_[itr->first].read_data_rate_MBs;
 
-        if (read_data_rate >= itr->second.read_data_rate_warn_) {
+        if (read_data_rate >= itr->second.read_data_rate_warn) {
           level = DiagStatus::WARN;
         }
         key_str = fmt::format("HDD {}: data rate of read", hdd_index);
         val_str = fmt::format("{:.2f} MB/s", read_data_rate);
       } break;
       case HddStatItem::WRITE_DATA_RATE: {
-        float write_data_rate = hdd_stats_[itr->first].write_data_rate_MBs_;
+        float write_data_rate = hdd_stats_[itr->first].write_data_rate_MBs;
 
-        if (write_data_rate >= itr->second.write_data_rate_warn_) {
+        if (write_data_rate >= itr->second.write_data_rate_warn) {
           level = DiagStatus::WARN;
         }
         key_str = fmt::format("HDD {}: data rate of write", hdd_index);
         val_str = fmt::format("{:.2f} MB/s", write_data_rate);
       } break;
       case HddStatItem::READ_IOPS: {
-        float read_iops = hdd_stats_[itr->first].read_iops_;
+        float read_iops = hdd_stats_[itr->first].read_iops;
 
-        if (read_iops >= itr->second.read_iops_warn_) {
+        if (read_iops >= itr->second.read_iops_warn) {
           level = DiagStatus::WARN;
         }
         key_str = fmt::format("HDD {}: IOPS of read", hdd_index);
         val_str = fmt::format("{:.2f} IOPS", read_iops);
       } break;
       case HddStatItem::WRITE_IOPS: {
-        float write_iops = hdd_stats_[itr->first].write_iops_;
+        float write_iops = hdd_stats_[itr->first].write_iops;
 
-        if (write_iops >= itr->second.write_iops_warn_) {
+        if (write_iops >= itr->second.write_iops_warn) {
           level = DiagStatus::WARN;
         }
         key_str = fmt::format("HDD {}: IOPS of write", hdd_index);
@@ -439,15 +435,15 @@ void HddMonitor::checkStatistics(
         break;
     }
 
-    if (!hdd_stats_[itr->first].error_str_.empty()) {
-      error_str = hdd_stats_[itr->first].error_str_;
+    if (!hdd_stats_[itr->first].error_str.empty()) {
+      error_str = hdd_stats_[itr->first].error_str;
       stat.add(fmt::format("HDD {}: status", hdd_index), error_str);
-      stat.add(fmt::format("HDD {}: name", hdd_index), itr->second.disk_device_.c_str());
+      stat.add(fmt::format("HDD {}: name", hdd_index), itr->second.disk_device.c_str());
     } else {
       stat.add(
         fmt::format("HDD {}: status", hdd_index),
         stat_dicts_[static_cast<uint32_t>(item)].at(level));
-      stat.add(fmt::format("HDD {}: name", hdd_index), itr->second.disk_device_.c_str());
+      stat.add(fmt::format("HDD {}: name", hdd_index), itr->second.disk_device.c_str());
       stat.add(key_str, val_str.c_str());
     }
 
@@ -464,7 +460,7 @@ void HddMonitor::checkStatistics(
   SystemMonitorUtility::stopMeasurement(t_start, stat);
 }
 
-void HddMonitor::checkConnection(diagnostic_updater::DiagnosticStatusWrapper & stat)
+void HddMonitor::check_connection(diagnostic_updater::DiagnosticStatusWrapper & stat)
 {
   // Remember start time to measure elapsed time
   const auto t_start = SystemMonitorUtility::startMeasurement();
@@ -485,7 +481,7 @@ void HddMonitor::checkConnection(diagnostic_updater::DiagnosticStatusWrapper & s
     }
 
     stat.add(fmt::format("HDD {}: status", hdd_index), connection_dict_.at(level));
-    stat.add(fmt::format("HDD {}: name", hdd_index), itr->second.disk_device_);
+    stat.add(fmt::format("HDD {}: name", hdd_index), itr->second.disk_device);
     stat.add(fmt::format("HDD {}: mount point", hdd_index), itr->first.c_str());
 
     whole_level = std::max(whole_level, level);
@@ -497,7 +493,7 @@ void HddMonitor::checkConnection(diagnostic_updater::DiagnosticStatusWrapper & s
   SystemMonitorUtility::stopMeasurement(t_start, stat);
 }
 
-void HddMonitor::getHddParams()
+void HddMonitor::get_hdd_params()
 {
   const auto num_disks = this->declare_parameter("num_disks", 0);
   for (auto i = 0; i < num_disks; ++i) {
@@ -505,29 +501,29 @@ void HddMonitor::getHddParams()
     const auto mount_point = declare_parameter<std::string>(prefix + ".name", "/");
 
     HddParam param;
-    param.temp_warn_ = declare_parameter<float>(prefix + ".temp_warn", 55.0f);
-    param.temp_error_ = declare_parameter<float>(prefix + ".temp_error", 70.0f);
-    param.power_on_hours_warn_ = declare_parameter<int>(prefix + ".power_on_hours_warn", 3000000);
-    param.total_data_written_safety_factor_ =
+    param.temp_warn = declare_parameter<float>(prefix + ".temp_warn", 55.0f);
+    param.temp_error = declare_parameter<float>(prefix + ".temp_error", 70.0f);
+    param.power_on_hours_warn = declare_parameter<int>(prefix + ".power_on_hours_warn", 3000000);
+    param.total_data_written_safety_factor =
       declare_parameter<float>(prefix + ".total_data_written_safety_factor", 0.05f);
     int64_t total_data_written_warn_org =
       declare_parameter<int64_t>(prefix + ".total_data_written_warn", 4915200);
-    param.total_data_written_warn_ = static_cast<uint64_t>(
-      total_data_written_warn_org * (1.0f - param.total_data_written_safety_factor_));
-    param.recovered_error_warn_ = declare_parameter<int>(prefix + ".recovered_error_warn", 1);
-    param.free_warn_ = declare_parameter<int>(prefix + ".free_warn", 5120);
-    param.free_error_ = declare_parameter<int>(prefix + ".free_error", 100);
-    param.read_data_rate_warn_ = declare_parameter<float>(prefix + ".read_data_rate_warn", 360.0);
-    param.write_data_rate_warn_ = declare_parameter<float>(prefix + ".write_data_rate_warn", 103.5);
-    param.read_iops_warn_ = declare_parameter<float>(prefix + ".read_iops_warn", 63360.0);
-    param.write_iops_warn_ = declare_parameter<float>(prefix + ".write_iops_warn", 24120.0);
-    param.temp_attribute_id_ =
+    param.total_data_written_warn = static_cast<uint64_t>(
+      total_data_written_warn_org * (1.0f - param.total_data_written_safety_factor));
+    param.recovered_error_warn = declare_parameter<int>(prefix + ".recovered_error_warn", 1);
+    param.free_warn = declare_parameter<int>(prefix + ".free_warn", 5120);
+    param.free_error = declare_parameter<int>(prefix + ".free_error", 100);
+    param.read_data_rate_warn = declare_parameter<float>(prefix + ".read_data_rate_warn", 360.0);
+    param.write_data_rate_warn = declare_parameter<float>(prefix + ".write_data_rate_warn", 103.5);
+    param.read_iops_warn = declare_parameter<float>(prefix + ".read_iops_warn", 63360.0);
+    param.write_iops_warn = declare_parameter<float>(prefix + ".write_iops_warn", 24120.0);
+    param.temp_attribute_id =
       static_cast<uint8_t>(declare_parameter<int>(prefix + ".temp_attribute_id", 0xC2));
-    param.power_on_hours_attribute_id_ =
+    param.power_on_hours_attribute_id =
       static_cast<uint8_t>(declare_parameter<int>(prefix + ".power_on_hours_attribute_id", 0x09));
-    param.total_data_written_attribute_id_ = static_cast<uint8_t>(
+    param.total_data_written_attribute_id = static_cast<uint8_t>(
       declare_parameter<int>(prefix + ".total_data_written_attribute_id", 0xF1));
-    param.recovered_error_attribute_id_ =
+    param.recovered_error_attribute_id =
       static_cast<uint8_t>(declare_parameter<int>(prefix + ".recovered_error_attribute_id", 0xC3));
 
     hdd_params_[mount_point] = param;
@@ -537,10 +533,8 @@ void HddMonitor::getHddParams()
   }
 }
 
-std::string HddMonitor::getDeviceFromMountPoint(const std::string & mount_point)
+std::string HddMonitor::get_device_from_mount_point(const std::string & mount_point)
 {
-  std::string ret;
-
   // boost::process create file descriptor without O_CLOEXEC required for multithreading.
   // So create file descriptor with O_CLOEXEC and pass it to boost::process.
   int out_fd[2];
@@ -569,187 +563,189 @@ std::string HddMonitor::getDeviceFromMountPoint(const std::string & mount_point)
     return "";
   }
 
-  if (!std::getline(is_out, ret)) {
+  std::string line;
+  if (!std::getline(is_out, line)) {
     RCLCPP_ERROR(get_logger(), "Failed to find device name. %s", mount_point.c_str());
     return "";
   }
 
-  return ret;
+  return line;
 }
 
-void HddMonitor::onTimer()
+void HddMonitor::update_hdd_connections()
 {
-  updateHddConnections();
-  updateHddInfoList();
-  updateHddStatistics();
+  for (auto & hdd_param : hdd_params_) {
+    const auto mount_point = hdd_param.first;
+    hdd_connected_flags_[mount_point] = false;
+
+    // Get device name from mount point
+    hdd_param.second.part_device = get_device_from_mount_point(mount_point);
+    if (!hdd_param.second.part_device.empty()) {
+      // Check the existence of device file
+      std::error_code error_code;
+      if (std::filesystem::exists(hdd_param.second.part_device, error_code)) {
+        hdd_connected_flags_[mount_point] = true;
+
+        // Remove index number of partition for passing device name to hdd-reader
+        if (boost::starts_with(hdd_param.second.part_device, "/dev/sd")) {
+          const std::regex pattern("\\d+$");
+          hdd_param.second.disk_device =
+            std::regex_replace(hdd_param.second.part_device, pattern, "");
+        } else if (boost::starts_with(hdd_param.second.part_device, "/dev/nvme")) {
+          const std::regex pattern("p\\d+$");
+          hdd_param.second.disk_device =
+            std::regex_replace(hdd_param.second.part_device, pattern, "");
+        }
+
+        const std::regex raw_pattern(".*/");
+        hdd_stats_[mount_point].device =
+          std::regex_replace(hdd_param.second.disk_device, raw_pattern, "");
+      } else {
+        // Deal with the issue that file system remains mounted when a drive is actually
+        // disconnected.
+        if (unmount_device(hdd_param.second.part_device)) {
+          RCLCPP_ERROR(
+            get_logger(), "Failed to unmount device : %s", hdd_param.second.part_device.c_str());
+        }
+      }
+    }
+  }
 }
 
-void HddMonitor::updateHddInfoList()
+int HddMonitor::unmount_device(std::string & device)
 {
-  // Clear diagnostic of connection
+  // Connect to hdd-reader service
+  if (!connect_service()) {
+    connect_diag_.summary(DiagStatus::ERROR, "connect error");
+    close_connection();
+    return -1;
+  }
+
+  // Send data to hdd-reader service
+  if (!send_data_with_parameters(hdd_reader_service::Request::UNMOUNT_DEVICE, device)) {
+    close_connection();
+    connect_diag_.summary(DiagStatus::ERROR, "write error");
+    return -1;
+  }
+
+  // Receive data from hdd-reader service
+  int response;
+  receive_data(response);
+
+  // Close connection with hdd-reader service
+  close_connection();
+
+  return response;
+}
+
+void HddMonitor::on_timer()
+{
+  update_hdd_connections();
+  update_hdd_info_list();
+  update_hdd_statistics();
+}
+
+void HddMonitor::update_hdd_info_list()
+{
+  // Clear diagnostic information for connection
   connect_diag_.clear();
   connect_diag_.clearSummary();
 
-  // Create a new socket
-  int sock = socket(AF_INET, SOCK_STREAM, 0);
-  if (sock < 0) {
-    connect_diag_.summary(DiagStatus::ERROR, "socket error");
-    connect_diag_.add("socket", strerror(errno));
-    return;
-  }
-
-  // Specify the receiving timeouts until reporting an error
-  struct timeval tv;
-  tv.tv_sec = 10;
-  tv.tv_usec = 0;
-  int ret = setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
-  if (ret < 0) {
-    connect_diag_.summary(DiagStatus::ERROR, "setsockopt error");
-    connect_diag_.add("setsockopt", strerror(errno));
-    close(sock);
-    return;
-  }
-
-  // Connect the socket referred to by the file descriptor
-  sockaddr_in addr;
-  memset(&addr, 0, sizeof(sockaddr_in));
-  addr.sin_family = AF_INET;
-  addr.sin_port = htons(hdd_reader_port_);
-  addr.sin_addr.s_addr = htonl(INADDR_ANY);
-  ret = connect(sock, (struct sockaddr *)&addr, sizeof(addr));
-  if (ret < 0) {
-    connect_diag_.summary(DiagStatus::ERROR, "connect error");
-    connect_diag_.add("connect", strerror(errno));
-    close(sock);
-    return;
-  }
-
-  uint8_t request_id = HddReaderRequestId::GetHddInfo;
-  std::vector<HddDevice> hdd_devices;
-  for (auto itr = hdd_params_.begin(); itr != hdd_params_.end(); ++itr) {
-    if (!hdd_connected_flags_[itr->first]) {
+  hdd_reader_service::AttributeIdParameterList parameters;
+  for (const auto & hdd_param : hdd_params_) {
+    // Skip if device is disconnected
+    if (!hdd_connected_flags_[hdd_param.first]) {
       continue;
     }
 
-    HddDevice device;
-    device.name_ = itr->second.disk_device_;
-    device.temp_attribute_id_ = itr->second.temp_attribute_id_;
-    device.power_on_hours_attribute_id_ = itr->second.power_on_hours_attribute_id_;
-    device.total_data_written_attribute_id_ = itr->second.total_data_written_attribute_id_;
-    device.recovered_error_attribute_id_ = itr->second.recovered_error_attribute_id_;
+    // Create parameters for hdd-reader service
+    hdd_reader_service::AttributeIdParameter parameter;
+    parameter.temperature_id = hdd_param.second.temp_attribute_id;
+    parameter.power_on_hours_id = hdd_param.second.power_on_hours_attribute_id;
+    parameter.total_data_written_id = hdd_param.second.total_data_written_attribute_id;
+    parameter.recovered_error_id = hdd_param.second.recovered_error_attribute_id;
 
-    hdd_devices.push_back(device);
+    parameters[hdd_param.second.disk_device] = parameter;
   }
 
-  std::ostringstream oss;
-  boost::archive::text_oarchive oa(oss);
-  oa & request_id;
-  oa & hdd_devices;
+  // Connect to hdd-reader service
+  if (!connect_service()) {
+    connect_diag_.summary(DiagStatus::ERROR, "connect error");
+    close_connection();
+    return;
+  }
 
-  // Write list of devices to FD
-  ret = write(sock, oss.str().c_str(), oss.str().length());
-  if (ret < 0) {
+  // Send data to hdd-reader service
+  if (!send_data_with_parameters(hdd_reader_service::Request::GET_HDD_INFORMATION, parameters)) {
+    close_connection();
     connect_diag_.summary(DiagStatus::ERROR, "write error");
-    connect_diag_.add("write", strerror(errno));
-    RCLCPP_ERROR(get_logger(), "write error");
-    close(sock);
     return;
   }
 
-  // Receive messages from a socket
-  char buf[1024] = "";
-  ret = recv(sock, buf, sizeof(buf) - 1, 0);
-  if (ret < 0) {
-    connect_diag_.summary(DiagStatus::ERROR, "recv error");
-    connect_diag_.add("recv", strerror(errno));
-    close(sock);
-    return;
-  }
-  // No data received
-  if (ret == 0) {
-    connect_diag_.summary(DiagStatus::ERROR, "recv error");
-    connect_diag_.add("recv", "No data received");
-    close(sock);
-    return;
-  }
+  // Receive data from hdd-reader service
+  receive_data(hdd_info_list_);
 
-  // Close the file descriptor FD
-  ret = close(sock);
-  if (ret < 0) {
-    connect_diag_.summary(DiagStatus::ERROR, "close error");
-    connect_diag_.add("close", strerror(errno));
-    return;
-  }
-
-  // Restore HDD information list
-  try {
-    std::istringstream iss(buf);
-    boost::archive::text_iarchive oa(iss);
-    oa >> hdd_info_list_;
-  } catch (const std::exception & e) {
-    connect_diag_.summary(DiagStatus::ERROR, "recv error");
-    connect_diag_.add("recv", e.what());
-    return;
-  }
+  // Close connection with hdd-reader service
+  close_connection();
 }
 
-void HddMonitor::startHddTransferMeasurement()
+void HddMonitor::start_hdd_transfer_measurement()
 {
   for (auto & hdd_stat : hdd_stats_) {
-    hdd_stat.second.error_str_ = "";
+    hdd_stat.second.error_str = "";
 
     if (!hdd_connected_flags_[hdd_stat.first]) {
       continue;
     }
 
     SysfsDevStat sysfs_dev_stat;
-    if (readSysfsDeviceStat(hdd_stat.second.device_, sysfs_dev_stat)) {
-      hdd_stat.second.error_str_ = "stat file read error";
+    if (read_sysfs_device_stat(hdd_stat.second.device, sysfs_dev_stat)) {
+      hdd_stat.second.error_str = "stat file read error";
       continue;
     }
-    hdd_stat.second.last_sysfs_dev_stat_ = sysfs_dev_stat;
+    hdd_stat.second.last_sysfs_dev_stat = sysfs_dev_stat;
   }
 
   last_hdd_stat_update_time_ = this->now();
 }
 
-void HddMonitor::updateHddStatistics()
+void HddMonitor::update_hdd_statistics()
 {
   double duration_sec = (this->now() - last_hdd_stat_update_time_).seconds();
 
   for (auto & hdd_stat : hdd_stats_) {
-    hdd_stat.second.error_str_ = "";
+    hdd_stat.second.error_str = "";
 
     if (!hdd_connected_flags_[hdd_stat.first]) {
       continue;
     }
 
     SysfsDevStat sysfs_dev_stat;
-    if (readSysfsDeviceStat(hdd_stat.second.device_, sysfs_dev_stat)) {
-      hdd_stat.second.error_str_ = "stat file read error";
+    if (read_sysfs_device_stat(hdd_stat.second.device, sysfs_dev_stat)) {
+      hdd_stat.second.error_str = "stat file read error";
       continue;
     }
 
-    SysfsDevStat & last_sysfs_dev_stat = hdd_stat.second.last_sysfs_dev_stat_;
+    SysfsDevStat & last_sysfs_dev_stat = hdd_stat.second.last_sysfs_dev_stat;
 
-    hdd_stat.second.read_data_rate_MBs_ = getIncreaseSysfsDeviceStatValuePerSec(
-      sysfs_dev_stat.rd_sectors_, last_sysfs_dev_stat.rd_sectors_, duration_sec);
-    hdd_stat.second.read_data_rate_MBs_ /= 2048;
-    hdd_stat.second.write_data_rate_MBs_ = getIncreaseSysfsDeviceStatValuePerSec(
-      sysfs_dev_stat.wr_sectors_, last_sysfs_dev_stat.wr_sectors_, duration_sec);
-    hdd_stat.second.write_data_rate_MBs_ /= 2048;
-    hdd_stat.second.read_iops_ = getIncreaseSysfsDeviceStatValuePerSec(
-      sysfs_dev_stat.rd_ios_, last_sysfs_dev_stat.rd_ios_, duration_sec);
-    hdd_stat.second.write_iops_ = getIncreaseSysfsDeviceStatValuePerSec(
-      sysfs_dev_stat.wr_ios_, last_sysfs_dev_stat.wr_ios_, duration_sec);
+    hdd_stat.second.read_data_rate_MBs = get_increase_sysfs_device_stat_value_per_sec(
+      sysfs_dev_stat.rd_sectors, last_sysfs_dev_stat.rd_sectors, duration_sec);
+    hdd_stat.second.read_data_rate_MBs /= 2048;
+    hdd_stat.second.write_data_rate_MBs = get_increase_sysfs_device_stat_value_per_sec(
+      sysfs_dev_stat.wr_sectors, last_sysfs_dev_stat.wr_sectors, duration_sec);
+    hdd_stat.second.write_data_rate_MBs /= 2048;
+    hdd_stat.second.read_iops = get_increase_sysfs_device_stat_value_per_sec(
+      sysfs_dev_stat.rd_ios, last_sysfs_dev_stat.rd_ios, duration_sec);
+    hdd_stat.second.write_iops = get_increase_sysfs_device_stat_value_per_sec(
+      sysfs_dev_stat.wr_ios, last_sysfs_dev_stat.wr_ios, duration_sec);
 
-    hdd_stat.second.last_sysfs_dev_stat_ = sysfs_dev_stat;
+    hdd_stat.second.last_sysfs_dev_stat = sysfs_dev_stat;
   }
 
   last_hdd_stat_update_time_ = this->now();
 }
 
-double HddMonitor::getIncreaseSysfsDeviceStatValuePerSec(
+double HddMonitor::get_increase_sysfs_device_stat_value_per_sec(
   uint64_t cur_val, uint64_t last_val, double duration_sec)
 {
   if (cur_val > last_val && duration_sec > 0.0) {
@@ -758,7 +754,7 @@ double HddMonitor::getIncreaseSysfsDeviceStatValuePerSec(
   return 0.0;
 }
 
-int HddMonitor::readSysfsDeviceStat(const std::string & device, SysfsDevStat & sysfs_dev_stat)
+int HddMonitor::read_sysfs_device_stat(const std::string & device, SysfsDevStat & sysfs_dev_stat)
 {
   int ret = -1;
   unsigned int ios_pgr, tot_ticks, rq_ticks, wr_ticks;
@@ -779,10 +775,10 @@ int HddMonitor::readSysfsDeviceStat(const std::string & device, SysfsDevStat & s
     &tot_ticks, &rq_ticks, &dc_ios, &dc_merges, &dc_sec, &dc_ticks);
 
   if (i >= 7) {
-    sysfs_dev_stat.rd_ios_ = rd_ios;
-    sysfs_dev_stat.rd_sectors_ = rd_sec_or_wr_ios;
-    sysfs_dev_stat.wr_ios_ = wr_ios;
-    sysfs_dev_stat.wr_sectors_ = wr_sec;
+    sysfs_dev_stat.rd_ios = rd_ios;
+    sysfs_dev_stat.rd_sectors = rd_sec_or_wr_ios;
+    sysfs_dev_stat.wr_ios = wr_ios;
+    sysfs_dev_stat.wr_sectors = wr_sec;
     ret = 0;
   }
 
@@ -790,136 +786,141 @@ int HddMonitor::readSysfsDeviceStat(const std::string & device, SysfsDevStat & s
   return ret;
 }
 
-void HddMonitor::updateHddConnections()
+bool HddMonitor::connect_service()
 {
-  for (auto & hdd_param : hdd_params_) {
-    hdd_connected_flags_[hdd_param.first] = false;
+  local::stream_protocol::endpoint endpoint(socket_path_);
+  socket_ = std::make_unique<local::stream_protocol::socket>(io_service_);
 
-    // Get device name from mount point
-    hdd_param.second.part_device_ = getDeviceFromMountPoint(hdd_param.first);
-    if (!hdd_param.second.part_device_.empty()) {
-      // Check the existence of device file
-      std::error_code ec;
-      if (std::filesystem::exists(hdd_param.second.part_device_, ec)) {
-        hdd_connected_flags_[hdd_param.first] = true;
+  // Connect socket
+  boost::system::error_code error_code;
+  socket_->connect(endpoint, error_code);
 
-        // Remove index number of partition for passing device name to hdd-reader
-        if (boost::starts_with(hdd_param.second.part_device_, "/dev/sd")) {
-          const std::regex pattern("\\d+$");
-          hdd_param.second.disk_device_ =
-            std::regex_replace(hdd_param.second.part_device_, pattern, "");
-        } else if (boost::starts_with(hdd_param.second.part_device_, "/dev/nvme")) {
-          const std::regex pattern("p\\d+$");
-          hdd_param.second.disk_device_ =
-            std::regex_replace(hdd_param.second.part_device_, pattern, "");
-        }
+  if (error_code) {
+    RCLCPP_ERROR(get_logger(), "Failed to connect socket. %s", error_code.message().c_str());
+    return false;
+  }
 
-        const std::regex raw_pattern(".*/");
-        hdd_stats_[hdd_param.first].device_ =
-          std::regex_replace(hdd_param.second.disk_device_, raw_pattern, "");
-      } else {
-        // Deal with the issue that file system remains mounted when a drive is actually
-        // disconnected.
-        if (unmountDevice(hdd_param.second.part_device_)) {
-          RCLCPP_ERROR(
-            get_logger(), "Failed to unmount device : %s", hdd_param.second.part_device_.c_str());
-        }
-      }
-    }
+  return true;
+}
+
+bool HddMonitor::send_data(hdd_reader_service::Request request)
+{
+  std::ostringstream out_stream;
+  boost::archive::text_oarchive archive(out_stream);
+  archive & request;
+
+  // Write data to socket
+  boost::system::error_code error_code;
+  socket_->write_some(
+    boost::asio::buffer(out_stream.str().c_str(), out_stream.str().length()), error_code);
+
+  if (error_code) {
+    RCLCPP_ERROR(get_logger(), "Failed to write data to socket. %s", error_code.message().c_str());
+    return false;
+  }
+
+  return true;
+}
+
+bool HddMonitor::send_data_with_parameters(
+  hdd_reader_service::Request request, hdd_reader_service::AttributeIdParameterList & parameters)
+{
+  std::ostringstream out_stream;
+  boost::archive::text_oarchive archive(out_stream);
+  archive & request;
+  archive & parameters;
+
+  // Write data to socket
+  boost::system::error_code error_code;
+  socket_->write_some(
+    boost::asio::buffer(out_stream.str().c_str(), out_stream.str().length()), error_code);
+
+  if (error_code) {
+    RCLCPP_ERROR(get_logger(), "Failed to write data to socket. %s", error_code.message().c_str());
+    return false;
+  }
+
+  return true;
+}
+
+bool HddMonitor::send_data_with_parameters(
+  hdd_reader_service::Request request, std::string & parameter)
+{
+  std::ostringstream out_stream;
+  boost::archive::text_oarchive archive(out_stream);
+  archive & request;
+  archive & parameter;
+
+  // Write data to socket
+  boost::system::error_code error_code;
+  socket_->write_some(
+    boost::asio::buffer(out_stream.str().c_str(), out_stream.str().length()), error_code);
+
+  if (error_code) {
+    RCLCPP_ERROR(get_logger(), "Failed to write data to socket. %s", error_code.message().c_str());
+    return false;
+  }
+
+  return true;
+}
+
+void HddMonitor::receive_data(hdd_reader_service::HddInformationList & list)
+{
+  uint8_t request_id = hdd_reader_service::Request::NONE;
+
+  // Read data from socket
+  char buffer[10240]{};
+  boost::system::error_code error_code;
+  socket_->read_some(boost::asio::buffer(buffer, sizeof(buffer)), error_code);
+
+  if (error_code) {
+    RCLCPP_ERROR(
+      get_logger(), "Failed to read data from socket. %s\n", error_code.message().c_str());
+    return;
+  }
+
+  // Restore device status list
+  try {
+    std::istringstream in_stream(buffer);
+    boost::archive::text_iarchive archive(in_stream);
+    archive >> request_id;
+    archive >> list;
+
+  } catch (const std::exception & e) {
+    RCLCPP_ERROR(get_logger(), "Failed to restore message. %s\n", e.what());
   }
 }
 
-int HddMonitor::unmountDevice(std::string & device)
+void HddMonitor::receive_data(int & response)
 {
-  // Create a new socket
-  int sock = socket(AF_INET, SOCK_STREAM, 0);
-  if (sock < 0) {
-    RCLCPP_ERROR(get_logger(), "socket create error. %s", strerror(errno));
-    return -1;
+  uint8_t request_id = hdd_reader_service::Request::NONE;
+
+  // Read data from socket
+  char buffer[10240]{};
+  boost::system::error_code error_code;
+  socket_->read_some(boost::asio::buffer(buffer, sizeof(buffer)), error_code);
+
+  if (error_code) {
+    RCLCPP_ERROR(
+      get_logger(), "Failed to read data from socket. %s\n", error_code.message().c_str());
+    return;
   }
 
-  // Specify the receiving timeouts until reporting an error
-  struct timeval tv;
-  tv.tv_sec = 10;
-  tv.tv_usec = 0;
-  int ret = setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
-  if (ret < 0) {
-    RCLCPP_ERROR(get_logger(), "setsockopt error. %s", strerror(errno));
-    close(sock);
-    return -1;
-  }
-
-  // Connect the socket referred to by the file descriptor
-  sockaddr_in addr;
-  memset(&addr, 0, sizeof(sockaddr_in));
-  addr.sin_family = AF_INET;
-  addr.sin_port = htons(hdd_reader_port_);
-  addr.sin_addr.s_addr = htonl(INADDR_ANY);
-  ret = connect(sock, (struct sockaddr *)&addr, sizeof(addr));
-  if (ret < 0) {
-    RCLCPP_ERROR(get_logger(), "socket connect error. %s", strerror(errno));
-    close(sock);
-    return -1;
-  }
-
-  uint8_t request_id = HddReaderRequestId::UnmountDevice;
-  std::vector<UnmountDeviceInfo> umount_dev_infos;
-  UnmountDeviceInfo dev_info;
-
-  dev_info.part_device_ = device;
-  umount_dev_infos.push_back(dev_info);
-
-  std::ostringstream oss;
-  boost::archive::text_oarchive oa(oss);
-  oa & request_id;
-  oa & umount_dev_infos;
-
-  // Write list of devices to FD
-  ret = write(sock, oss.str().c_str(), oss.str().length());
-  if (ret < 0) {
-    RCLCPP_ERROR(get_logger(), "socket write error. %s", strerror(errno));
-    close(sock);
-    return -1;
-  }
-
-  // Receive messages from a socket
-  char buf[1024] = "";
-  ret = recv(sock, buf, sizeof(buf) - 1, 0);
-  if (ret < 0) {
-    RCLCPP_ERROR(get_logger(), "socket recv error. %s", strerror(errno));
-    close(sock);
-    return -1;
-  }
-  // No data received
-  if (ret == 0) {
-    RCLCPP_ERROR(get_logger(), "no data received from hdd_reader.");
-    close(sock);
-    return -1;
-  }
-
-  // Close the file descriptor FD
-  ret = close(sock);
-  if (ret < 0) {
-    RCLCPP_ERROR(get_logger(), "socket close error. %s", strerror(errno));
-    return -1;
-  }
-
-  std::vector<int> responses;
-
-  // Restore responses
+  // Restore device status list
   try {
-    std::istringstream iss(buf);
-    boost::archive::text_iarchive ia(iss);
-    ia >> responses;
+    std::istringstream in_stream(buffer);
+    boost::archive::text_iarchive archive(in_stream);
+    archive >> request_id;
+    archive >> response;
   } catch (const std::exception & e) {
-    RCLCPP_ERROR(get_logger(), "restore responses exception. %s", e.what());
-    return -1;
+    RCLCPP_ERROR(get_logger(), "Failed to restore message. %s\n", e.what());
   }
-  if (responses.empty()) {
-    RCLCPP_ERROR(get_logger(), "responses from hdd_reader is empty.");
-    return -1;
-  }
-  return responses[0];
+}
+
+void HddMonitor::close_connection()
+{
+  // Close socket
+  socket_->close();
 }
 
 #include <rclcpp_components/register_node_macro.hpp>
