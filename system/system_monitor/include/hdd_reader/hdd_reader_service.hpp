@@ -72,17 +72,14 @@ protected:
    */
   int get_hdd_information(boost::archive::text_iarchive & in, boost::archive::text_oarchive & out);
 
-  int get_ata(int fd, const AttributeIdParameter & parameter, HddInformation & info);
-
-  int get_nvme(int fd, HddInformation & info);
-
   /**
    * @brief unmount device with lazy option
    * @param [in] boost::archive::text_iarchive object
    * @param [out] boost::archive::text_oarchive object
    * @return 0 on success, otherwise error
    */
-  int unmount_device(boost::archive::text_iarchive & in, boost::archive::text_oarchive & out);
+  static int unmount_device(
+    boost::archive::text_iarchive & in, boost::archive::text_oarchive & out);
 
   void send_response(const std::ostringstream & out_stream);
 

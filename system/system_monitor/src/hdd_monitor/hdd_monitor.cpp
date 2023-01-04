@@ -27,9 +27,9 @@
 #include <boost/process.hpp>
 
 #include <fmt/format.h>
-#include <stdio.h>
 
 #include <algorithm>
+#include <cstdio>
 #include <filesystem>
 #include <string>
 #include <vector>
@@ -116,9 +116,9 @@ void HddMonitor::check_smart(
   int level = DiagStatus::OK;
   int whole_level = DiagStatus::OK;
   int index = 0;
-  std::string error_str = "";
-  std::string key_str = "";
-  std::string val_str = "";
+  std::string error_str;
+  std::string key_str;
+  std::string val_str;
 
   for (auto itr = hdd_params_.begin(); itr != hdd_params_.end(); ++itr, ++index) {
     if (!hdd_connected_flags_[itr->first]) {
@@ -132,7 +132,7 @@ void HddMonitor::check_smart(
       stat.add(fmt::format("HDD {}: name", index), itr->second.part_device.c_str());
       stat.add(fmt::format("HDD {}: hdd_reader", index), strerror(ENOENT));
       error_str = "hdd_reader error";
-       continue;
+      continue;
     }
 
     if (hdd_itr->second.error_code != 0) {
@@ -145,7 +145,7 @@ void HddMonitor::check_smart(
 
     switch (item) {
       case HddSmartInfoItem::TEMPERATURE: {
-        float temp = static_cast<float>(hdd_itr->second.temp);
+        auto temp = static_cast<float>(hdd_itr->second.temp);
 
         level = DiagStatus::OK;
         if (temp >= itr->second.temp_error) {
@@ -161,7 +161,7 @@ void HddMonitor::check_smart(
         }
       } break;
       case HddSmartInfoItem::POWER_ON_HOURS: {
-        int64_t power_on_hours = static_cast<int64_t>(hdd_itr->second.power_on_hours);
+        auto power_on_hours = static_cast<int64_t>(hdd_itr->second.power_on_hours);
 
         level = DiagStatus::OK;
         if (power_on_hours >= itr->second.power_on_hours_warn) {
@@ -175,7 +175,7 @@ void HddMonitor::check_smart(
         }
       } break;
       case HddSmartInfoItem::TOTAL_DATA_WRITTEN: {
-        uint64_t total_data_written = static_cast<uint64_t>(hdd_itr->second.total_data_written);
+        auto total_data_written = static_cast<uint64_t>(hdd_itr->second.total_data_written);
 
         level = DiagStatus::OK;
         if (total_data_written >= itr->second.total_data_written_warn) {
@@ -189,7 +189,7 @@ void HddMonitor::check_smart(
         }
       } break;
       case HddSmartInfoItem::RECOVERED_ERROR: {
-        int32_t recovered_error = static_cast<int32_t>(hdd_itr->second.recovered_error);
+        auto recovered_error = static_cast<int32_t>(hdd_itr->second.recovered_error);
         if (initial_recovered_errors_.find(itr->first) == initial_recovered_errors_.end()) {
           initial_recovered_errors_[itr->first] = recovered_error;
         }
@@ -305,7 +305,7 @@ void HddMonitor::check_usage(diagnostic_updater::DiagnosticStatusWrapper & stat)
       boost::split(list, line, boost::is_space(), boost::token_compress_on);
 
       try {
-        avail = std::stoi(list[3].c_str());
+        avail = std::stoi(list[3]);
       } catch (std::exception & e) {
         avail = -1;
         error_str = e.what();
@@ -326,14 +326,14 @@ void HddMonitor::check_usage(diagnostic_updater::DiagnosticStatusWrapper & stat)
       stat.add(fmt::format("HDD {}: used", hdd_index), (list[2] + " MiB").c_str());
       stat.add(fmt::format("HDD {}: avail", hdd_index), (list[3] + " MiB").c_str());
       stat.add(fmt::format("HDD {}: use", hdd_index), list[4].c_str());
-      std::string mounted_ = list[5];
+      std::string mounted = list[5];
       if (list.size() > 6) {
         std::string::size_type pos = line.find("% /");
         if (pos != std::string::npos) {
-          mounted_ = line.substr(pos + 2);  // 2 is "% " length
+          mounted = line.substr(pos + 2);  // 2 is "% " length
         }
       }
-      stat.add(fmt::format("HDD {}: mounted on", hdd_index), mounted_.c_str());
+      stat.add(fmt::format("HDD {}: mounted on", hdd_index), mounted.c_str());
 
       whole_level = std::max(whole_level, level);
       ++index;
@@ -383,9 +383,9 @@ void HddMonitor::check_statistics(
 
   int hdd_index = 0;
   int whole_level = DiagStatus::OK;
-  std::string error_str = "";
-  std::string key_str = "";
-  std::string val_str = "";
+  std::string error_str;
+  std::string key_str;
+  std::string val_str;
 
   for (auto itr = hdd_params_.begin(); itr != hdd_params_.end(); ++itr, ++hdd_index) {
     if (!hdd_connected_flags_[itr->first]) {
@@ -622,14 +622,14 @@ int HddMonitor::unmount_device(std::string & device)
   }
 
   // Send data to hdd-reader service
-  if (!send_data_with_parameters(hdd_reader_service::Request::UNMOUNT_DEVICE, device)) {
+  if (!send_data(hdd_reader_service::Request::UNMOUNT_DEVICE, device)) {
     close_connection();
     connect_diag_.summary(DiagStatus::ERROR, "write error");
     return -1;
   }
 
   // Receive data from hdd-reader service
-  int response;
+  int response = EXIT_SUCCESS;
   receive_data(response);
 
   // Close connection with hdd-reader service
@@ -659,7 +659,7 @@ void HddMonitor::update_hdd_info_list()
     }
 
     // Create parameters for hdd-reader service
-    hdd_reader_service::AttributeIdParameter parameter;
+    hdd_reader_service::AttributeIdParameter parameter{};
     parameter.temperature_id = hdd_param.second.temp_attribute_id;
     parameter.power_on_hours_id = hdd_param.second.power_on_hours_attribute_id;
     parameter.total_data_written_id = hdd_param.second.total_data_written_attribute_id;
@@ -676,7 +676,7 @@ void HddMonitor::update_hdd_info_list()
   }
 
   // Send data to hdd-reader service
-  if (!send_data_with_parameters(hdd_reader_service::Request::GET_HDD_INFORMATION, parameters)) {
+  if (!send_data(hdd_reader_service::Request::GET_HDD_INFORMATION, parameters)) {
     close_connection();
     connect_diag_.summary(DiagStatus::ERROR, "write error");
     return;
@@ -698,7 +698,7 @@ void HddMonitor::start_hdd_transfer_measurement()
       continue;
     }
 
-    SysfsDevStat sysfs_dev_stat;
+    SysfsDevStat sysfs_dev_stat{};
     if (read_sysfs_device_stat(hdd_stat.second.device, sysfs_dev_stat)) {
       hdd_stat.second.error_str = "stat file read error";
       continue;
@@ -720,7 +720,7 @@ void HddMonitor::update_hdd_statistics()
       continue;
     }
 
-    SysfsDevStat sysfs_dev_stat;
+    SysfsDevStat sysfs_dev_stat{};
     if (read_sysfs_device_stat(hdd_stat.second.device, sysfs_dev_stat)) {
       hdd_stat.second.error_str = "stat file read error";
       continue;
@@ -765,7 +765,7 @@ int HddMonitor::read_sysfs_device_stat(const std::string & device, SysfsDevStat 
   std::string filename("/sys/block/");
   filename += device + "/stat";
   FILE * fp = fopen(filename.c_str(), "r");
-  if (fp == NULL) {
+  if (fp == nullptr) {
     return ret;
   }
 
@@ -803,48 +803,8 @@ bool HddMonitor::connect_service()
   return true;
 }
 
-bool HddMonitor::send_data(hdd_reader_service::Request request)
-{
-  std::ostringstream out_stream;
-  boost::archive::text_oarchive archive(out_stream);
-  archive & request;
-
-  // Write data to socket
-  boost::system::error_code error_code;
-  socket_->write_some(
-    boost::asio::buffer(out_stream.str().c_str(), out_stream.str().length()), error_code);
-
-  if (error_code) {
-    RCLCPP_ERROR(get_logger(), "Failed to write data to socket. %s", error_code.message().c_str());
-    return false;
-  }
-
-  return true;
-}
-
-bool HddMonitor::send_data_with_parameters(
-  hdd_reader_service::Request request, hdd_reader_service::AttributeIdParameterList & parameters)
-{
-  std::ostringstream out_stream;
-  boost::archive::text_oarchive archive(out_stream);
-  archive & request;
-  archive & parameters;
-
-  // Write data to socket
-  boost::system::error_code error_code;
-  socket_->write_some(
-    boost::asio::buffer(out_stream.str().c_str(), out_stream.str().length()), error_code);
-
-  if (error_code) {
-    RCLCPP_ERROR(get_logger(), "Failed to write data to socket. %s", error_code.message().c_str());
-    return false;
-  }
-
-  return true;
-}
-
-bool HddMonitor::send_data_with_parameters(
-  hdd_reader_service::Request request, std::string & parameter)
+template <class T>
+bool HddMonitor::send_data(hdd_reader_service::Request request, T & parameter)
 {
   std::ostringstream out_stream;
   boost::archive::text_oarchive archive(out_stream);
@@ -864,7 +824,8 @@ bool HddMonitor::send_data_with_parameters(
   return true;
 }
 
-void HddMonitor::receive_data(hdd_reader_service::HddInformationList & list)
+template <class T>
+void HddMonitor::receive_data(T & received)
 {
   uint8_t request_id = hdd_reader_service::Request::NONE;
 
@@ -884,34 +845,7 @@ void HddMonitor::receive_data(hdd_reader_service::HddInformationList & list)
     std::istringstream in_stream(buffer);
     boost::archive::text_iarchive archive(in_stream);
     archive >> request_id;
-    archive >> list;
-
-  } catch (const std::exception & e) {
-    RCLCPP_ERROR(get_logger(), "Failed to restore message. %s\n", e.what());
-  }
-}
-
-void HddMonitor::receive_data(int & response)
-{
-  uint8_t request_id = hdd_reader_service::Request::NONE;
-
-  // Read data from socket
-  char buffer[10240]{};
-  boost::system::error_code error_code;
-  socket_->read_some(boost::asio::buffer(buffer, sizeof(buffer)), error_code);
-
-  if (error_code) {
-    RCLCPP_ERROR(
-      get_logger(), "Failed to read data from socket. %s\n", error_code.message().c_str());
-    return;
-  }
-
-  // Restore device status list
-  try {
-    std::istringstream in_stream(buffer);
-    boost::archive::text_iarchive archive(in_stream);
-    archive >> request_id;
-    archive >> response;
+    archive >> received;
   } catch (const std::exception & e) {
     RCLCPP_ERROR(get_logger(), "Failed to restore message. %s\n", e.what());
   }

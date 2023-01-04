@@ -31,6 +31,28 @@ class Nvme
 {
 public:
   /**
+   * @brief Get HDD information from NVMe drive
+   * @param [in] fd File descriptor to device
+   * @param [out] info HDD information
+   * @return 0 on success, otherwise error
+   */
+  static int get_nvme(int fd, HddInformation & info)
+  {
+    // Get Identify for NVMe drive
+    int ret = get_nvme_identify(fd, info);
+    if (ret != EXIT_SUCCESS) {
+      syslog(LOG_ERR, "Failed to get Identify for NVMe drive. %s\n", strerror(ret));
+      return ret;
+    }
+    // Get SMART / Health Information for NVMe drive
+    ret = get_nvme_smart_data(fd, info);
+    if (ret != EXIT_SUCCESS) {
+      syslog(LOG_ERR, "Failed to get SMART/Health Information for NVMe drive. %s\n", strerror(ret));
+    }
+    return ret;
+  }
+
+  /**
    * @brief Get Identify for NVMe drive
    * @param [in] fd File descriptor to device
    * @param [out] info HDD information

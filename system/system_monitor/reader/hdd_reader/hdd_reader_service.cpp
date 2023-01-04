@@ -156,12 +156,12 @@ int HddReaderService::get_hdd_information(
 
     // AHCI device
     if (boost::starts_with(name, "/dev/sd")) {
-      // Get IDENTIFY DEVICE for ATA drive
-      info.error_code = get_ata(fd, device.second, info);
+      // Get HDD information from ATA drive
+      info.error_code = Ata::get_ata(fd, device.second, info);
       // NVMe device
     } else if (boost::starts_with(name, "/dev/nvme")) {
-      // Get Identify for NVMe drive
-      info.error_code = get_nvme(fd, info);
+      // Get HDD information from NVMe drive
+      info.error_code = Nvme::get_nvme(fd, info);
     }
 
     // Close the file descriptor FD
@@ -172,45 +172,11 @@ int HddReaderService::get_hdd_information(
     }
 
     list[name] = info;
-    syslog(LOG_INFO, "name. %s\n", name);
   }
 
   out << list;
 
   return EXIT_SUCCESS;
-}
-
-int HddReaderService::get_ata(int fd, const AttributeIdParameter & parameter, HddInformation & info)
-{
-  // Get IDENTIFY DEVICE for ATA drive
-  int ret = Ata::get_ata_identify(fd, info);
-  if (ret != EXIT_SUCCESS) {
-    syslog(LOG_ERR, "Failed to get IDENTIFY DEVICE for ATA drive. %s\n", strerror(ret));
-    return ret;
-  }
-  // Get SMART DATA for ATA drive
-  ret = Ata::get_ata_smart_data(fd, parameter, info);
-  if (ret != EXIT_SUCCESS) {
-    syslog(LOG_ERR, "Failed to get SMART LOG for ATA drive. %s\n", strerror(ret));
-  }
-
-  return ret;
-}
-
-int HddReaderService::get_nvme(int fd, HddInformation & info)
-{
-  // Get Identify for NVMe drive
-  int ret = Nvme::get_nvme_identify(fd, info);
-  if (ret != EXIT_SUCCESS) {
-    syslog(LOG_ERR, "Failed to get Identify for NVMe drive. %s\n", strerror(ret));
-    return ret;
-  }
-  // Get SMART / Health Information for NVMe drive
-  ret = Nvme::get_nvme_smart_data(fd, info);
-  if (ret != EXIT_SUCCESS) {
-    syslog(LOG_ERR, "Failed to get SMART / Health Information for NVMe drive. %s\n", strerror(ret));
-  }
-  return ret;
 }
 
 int HddReaderService::unmount_device(

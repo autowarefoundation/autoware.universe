@@ -21,6 +21,7 @@
 
 #include <scsi/sg.h>
 #include <sys/ioctl.h>
+#include <syslog.h>
 
 #include <string>
 #include <utility>
@@ -124,6 +125,30 @@ struct SmartData
 class Ata
 {
 public:
+  /**
+   * @brief Get HDD information from ATA drive
+   * @param [in] fd File descriptor to device
+   * @param [in] parameter Device-specific attribute ID
+   * @param [out] info HDD information
+   * @return 0 on success, otherwise error
+   */
+  static int get_ata(int fd, const AttributeIdParameter & parameter, HddInformation & info)
+  {
+    // Get IDENTIFY DEVICE for ATA drive
+    int ret = get_ata_identify(fd, info);
+    if (ret != EXIT_SUCCESS) {
+      syslog(LOG_ERR, "Failed to get IDENTIFY DEVICE for ATA drive. %s\n", strerror(ret));
+      return ret;
+    }
+    // Get SMART DATA for ATA drive
+    ret = get_ata_smart_data(fd, parameter, info);
+    if (ret != EXIT_SUCCESS) {
+      syslog(LOG_ERR, "Failed to get SMART LOG for ATA drive. %s\n", strerror(ret));
+    }
+
+    return ret;
+  }
+
   /**
    * @brief Get IDENTIFY DEVICE for ATA drive
    * @param [in] fd File descriptor to device
@@ -235,24 +260,23 @@ public:
     info.is_valid_recovered_error = false;
 
     // Retrieve S.M.A.R.T. Informations
-    for (int i = 0; i < 30; ++i) {
+    for (const auto & entry : data.attribute_entry) {
       // Temperature - Device Internal
-      if (data.attribute_entry[i].attribute_id == parameter.temperature_id) {
-        info.temp = static_cast<uint8_t>(data.attribute_entry[i].data);
+      if (entry.attribute_id == parameter.temperature_id) {
+        info.temp = static_cast<uint8_t>(entry.data);
         info.is_valid_temp = true;
         // Power-on Hours Count
-      } else if (data.attribute_entry[i].attribute_id == parameter.power_on_hours_id) {
-        info.power_on_hours = data.attribute_entry[i].data;
+      } else if (entry.attribute_id == parameter.power_on_hours_id) {
+        info.power_on_hours = entry.data;
         info.is_valid_power_on_hours = true;
         // Total LBAs Written
-      } else if (data.attribute_entry[i].attribute_id == parameter.total_data_written_id) {
+      } else if (entry.attribute_id == parameter.total_data_written_id) {
         info.total_data_written =
-          (data.attribute_entry[i].data |
-           (static_cast<uint64_t>(data.attribute_entry[i].attribute_specific) << 32));
+          (entry.data | (static_cast<uint64_t>(entry.attribute_specific) << 32));
         info.is_valid_total_data_written = true;
         // Hardware ECC Recovered
-      } else if (data.attribute_entry[i].attribute_id == parameter.recovered_error_id) {
-        info.recovered_error = data.attribute_entry[i].data;
+      } else if (entry.attribute_id == parameter.recovered_error_id) {
+        info.recovered_error = entry.data;
         info.is_valid_recovered_error = true;
       }
     }

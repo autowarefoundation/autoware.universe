@@ -251,7 +251,7 @@ protected:
    * @param [in] duration_sec Duration in seconds
    * @return Increment value
    */
-  double get_increase_sysfs_device_stat_value_per_sec(
+  static double get_increase_sysfs_device_stat_value_per_sec(
     uint64_t cur_val, uint64_t last_val, double duration_sec);
 
   /**
@@ -260,7 +260,7 @@ protected:
    * @param [out] sysfs_dev_stat Statistics of sysfs device
    * @return result of success or failure
    */
-  int read_sysfs_device_stat(const std::string & device, SysfsDevStat & sysfs_dev_stat);
+  static int read_sysfs_device_stat(const std::string & device, SysfsDevStat & sysfs_dev_stat);
 
   /**
    * @brief Connect to hdd-reader service
@@ -269,41 +269,20 @@ protected:
   bool connect_service();
 
   /**
-   * @brief Send data to hdd-reader service
+   * @brief Send data to hdd-reader service with parameter
    * @param [in] request Request to hdd-reader service
+   * @param [in] parameter List of parameters
    * @return true on success, false on error
    */
-  bool send_data(hdd_reader_service::Request request);
-
-  /**
-   * @brief Send data to hdd-reader service with parameters
-   * @param [in] request Request to hdd-reader service
-   * @param [in] parameters List of parameters
-   * @return true on success, false on error
-   */
-  bool send_data_with_parameters(
-    hdd_reader_service::Request request, hdd_reader_service::AttributeIdParameterList & parameters);
-
-  /**
-   * @brief Send data to hdd-reader service with parameters
-   * @param [in] request Request to hdd-reader service
-   * @param [in] parameter Device name
-   * @return true on success, false on error
-   */
-  bool send_data_with_parameters(
-    hdd_reader_service::Request request, std::string & parameter);
+  template <class T>
+  bool send_data(hdd_reader_service::Request request, T & parameter);
 
   /**
    * @brief Receive data from hdd-reader service
-   * @param [out] list HDD information list
+   * @param [out] received Received data
    */
-  void receive_data(hdd_reader_service::HddInformationList & list);
-
-  /**
-   * @brief Receive data from hdd-reader service
-   * @param [out] response Error code
-   */
-  void receive_data(int & response);
+  template <class T>
+  void receive_data(T & received);
 
   /**
    * @brief Close connection with hdd-reader service
