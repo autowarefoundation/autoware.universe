@@ -44,6 +44,7 @@ namespace motion_planning
 using motion_utils::calcLongitudinalOffsetPose;
 using motion_utils::calcLongitudinalOffsetToSegment;
 using motion_utils::calcSignedArcLength;
+using motion_utils::findNearestIndex;
 using motion_utils::findFirstNearestIndexWithSoftConstraints;
 using motion_utils::findFirstNearestSegmentIndexWithSoftConstraints;
 using tier4_autoware_utils::calcDistance2d;
@@ -493,6 +494,22 @@ boost::optional<Point2d> findNearestCollisionPoint(
   return nearest_collision_point;
 }
 
+geometry_msgs::msg::Point findNearestPoint(
+  const TrajectoryPoints & trajectory_points,
+  const geometry_msgs::msg::Point & point)
+{
+  geometry_msgs::msg::Point nearest_point;
+  double min_dist = 0.0;
+  for (size_t i = 0; i < trajectory_points.size(); ++i) {
+    double dist = tier4_autoware_utils::calcDistance2d(trajectory_points.at(i).pose, point);
+    if (i == 0 || dist < min_dist) {
+      min_dist = dist;
+      nearest_point = trajectory_points.at(i).pose.position;
+    }
+  }
+  return nearest_point;
+}
+
 void ObstacleStopPlannerNode::searchObstacle(
   const TrajectoryPoints & decimate_trajectory, TrajectoryPoints & output,
   PlannerData & planner_data, const Header & trajectory_header, const VehicleInfo & vehicle_info,
@@ -523,20 +540,20 @@ void ObstacleStopPlannerNode::searchObstacle(
             object_polygon, one_step_move_vehicle_polygon);
 
           bg::intersection(object_polygon, one_step_move_vehicle_polygon, intersect);
-          PointCloud::Ptr collision_pointcloud_ptr(new PointCloud);
+          geometry_msgs::msg::Point point;
           for (const auto & p : intersect) {
-            pcl::PointXYZ point;
             point.x = p.x();
             point.y = p.y();
             point.z = 0.0;
-            collision_pointcloud_ptr->points.push_back(point);
           }
 
           if (planner_data.found_collision_points) {
             planner_data.decimate_trajectory_collision_index = i;
-            getNearestPoint(
-              *collision_pointcloud_ptr, p_front, &planner_data.nearest_collision_point,
-              &planner_data.nearest_collision_point_time);
+
+            std::cout << "p.x: " << findNearestPoint(output, point).x << "p.y: " << findNearestPoint(output, point).y << std::endl;
+//            getNearestPoint(
+//              *collision_pointcloud_ptr, p_front, &planner_data.nearest_collision_point,
+//              &planner_data.nearest_collision_point_time);
 
             debug_ptr_->pushObstaclePoint(planner_data.nearest_collision_point, PointType::Stop);
             planner_data.stop_require = planner_data.found_collision_points;
@@ -633,9 +650,11 @@ void ObstacleStopPlannerNode::searchObstacle(
 
           if (planner_data.found_collision_points) {
             planner_data.decimate_trajectory_collision_index = i;
-            getNearestPoint(
-              *collision_pointcloud_ptr, p_front, &planner_data.nearest_collision_point,
-              &planner_data.nearest_collision_point_time);
+
+
+//            getNearestPoint(
+//              *collision_pointcloud_ptr, p_front, &planner_data.nearest_collision_point,
+//              &planner_data.nearest_collision_point_time);
 
             debug_ptr_->pushObstaclePoint(planner_data.nearest_collision_point, PointType::Stop);
             planner_data.stop_require = planner_data.found_collision_points;
