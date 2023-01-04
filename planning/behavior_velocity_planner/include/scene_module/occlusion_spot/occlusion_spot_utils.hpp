@@ -194,6 +194,7 @@ struct DebugData
   std::vector<geometry_msgs::msg::Pose> debug_poses;
   void resetData()
   {
+    debug_poses.clear();
     close_partition.clear();
     detection_area_polygons.clear();
     parked_vehicle_point.clear();
