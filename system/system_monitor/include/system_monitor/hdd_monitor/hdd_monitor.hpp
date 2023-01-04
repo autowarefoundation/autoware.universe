@@ -290,8 +290,7 @@ protected:
    * @param [in] parameter Device name
    * @return true on success, false on error
    */
-  bool send_data_with_parameters(
-    hdd_reader_service::Request request, std::string & parameter);
+  bool send_data_with_parameters(hdd_reader_service::Request request, std::string & parameter);
 
   /**
    * @brief Receive data from hdd-reader service

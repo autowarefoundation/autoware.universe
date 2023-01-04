@@ -132,7 +132,7 @@ void HddMonitor::check_smart(
       stat.add(fmt::format("HDD {}: name", index), itr->second.part_device.c_str());
       stat.add(fmt::format("HDD {}: hdd_reader", index), strerror(ENOENT));
       error_str = "hdd_reader error";
-       continue;
+      continue;
     }
 
     if (hdd_itr->second.error_code != 0) {

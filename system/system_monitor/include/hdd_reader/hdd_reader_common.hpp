@@ -54,7 +54,7 @@ struct AttributeIdParameter
   template <typename archive>
   void serialize(archive & ar, const unsigned /*version*/)  // NOLINT(runtime/references)
   {
-     ar & temperature_id;
+    ar & temperature_id;
     ar & power_on_hours_id;
     ar & total_data_written_id;
     ar & recovered_error_id;
