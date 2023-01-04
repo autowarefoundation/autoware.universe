@@ -325,7 +325,7 @@ private:
 
   void updateEgoBehavior(const AvoidancePlanningData & data, ShiftedPath & path);
 
-  void insertWaitPoint(const bool hard_constraints, ShiftedPath & shifted_path) const;
+  void insertWaitPoint(const bool use_constraints_for_decel, ShiftedPath & shifted_path) const;
 
   void insertPrepareVelocity(const bool avoidable, ShiftedPath & shifted_path) const;
 

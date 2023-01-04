@@ -721,18 +721,18 @@ void AvoidanceModule::updateEgoBehavior(const AvoidancePlanningData & data, Shif
     }
     case AvoidanceState::YIELD: {
       insertYieldVelocity(path);
-      insertWaitPoint(parameters_->hard_constraints, path);
+      insertWaitPoint(parameters_->use_constraints_for_decel, path);
       removeAllRegisteredShiftPoints(path_shifter_);
       break;
     }
     case AvoidanceState::AVOID_PATH_NOT_READY: {
       insertPrepareVelocity(false, path);
-      insertWaitPoint(parameters_->hard_constraints, path);
+      insertWaitPoint(parameters_->use_constraints_for_decel, path);
       break;
     }
     case AvoidanceState::AVOID_PATH_READY: {
       insertPrepareVelocity(true, path);
-      insertWaitPoint(parameters_->hard_constraints, path);
+      insertWaitPoint(parameters_->use_constraints_for_decel, path);
       break;
     }
     case AvoidanceState::AVOID_EXECUTE: {
@@ -3566,7 +3566,8 @@ double AvoidanceModule::getMildDecelDistance(const double target_velocity) const
     getEgoSpeed(), target_velocity, a_now, a_lim, j_lim, -1.0 * j_lim);
 }
 
-void AvoidanceModule::insertWaitPoint(const bool hard_constraints, ShiftedPath & shifted_path) const
+void AvoidanceModule::insertWaitPoint(
+  const bool use_constraints_for_decel, ShiftedPath & shifted_path) const
 {
   const auto & p = parameters_;
   const auto & data = avoidance_data_;
@@ -3608,7 +3609,7 @@ void AvoidanceModule::insertWaitPoint(const bool hard_constraints, ShiftedPath &
     o_front.longitudinal -
     std::clamp(variable + constant, p->stop_min_distance, p->stop_max_distance);
 
-  if (!hard_constraints) {
+  if (!use_constraints_for_decel) {
     insertDecelPoint(
       getEgoPosition(), start_longitudinal, 0.0, shifted_path.path, debug_data_.stop_pose);
     return;

@@ -392,7 +392,7 @@ AvoidanceParameters BehaviorPathPlannerNode::getAvoidanceParam()
   // constraints
   {
     std::string ns = "avoidance.constraints.";
-    p.hard_constraints = declare_parameter<bool>(ns + "hard_constraints");
+    p.use_constraints_for_decel = declare_parameter<bool>(ns + "use_constraints_for_decel");
   }
 
   // constraints (longitudinal)

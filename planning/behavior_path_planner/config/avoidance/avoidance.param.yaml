@@ -87,8 +87,8 @@
         max_distance: 20.0                              # [m]
 
       constraints:
-        # constraints type
-        hard_constraints: false                         # [-]
+        # vehicle slows down under longitudinal constraints
+        use_constraints_for_decel: false                # [-]
 
         # lateral constraints
         lateral:

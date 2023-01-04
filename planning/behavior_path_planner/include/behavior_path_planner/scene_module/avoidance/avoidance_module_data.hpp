@@ -77,7 +77,7 @@ struct AvoidanceParameters
   bool enable_yield_maneuver{false};
 
   // constrains
-  bool hard_constraints{false};
+  bool use_constraints_for_decel{false};
 
   // max deceleration for
   double max_deceleration;
