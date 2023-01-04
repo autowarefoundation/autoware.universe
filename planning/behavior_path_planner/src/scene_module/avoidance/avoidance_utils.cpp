@@ -64,88 +64,115 @@ geometry_msgs::msg::Polygon toMsg(const tier4_autoware_utils::Polygon2d & polygo
   return ret;
 }
 
-bool validCheckDecelPlan(
-  const double v_end, const double a_end, const double v_target, const double a_target,
-  const double v_margin, const double a_margin)
+/**
+ * @brief update traveling distance, velocity and acceleration under constant jerk.
+ * @param (x) current traveling distance [m/s]
+ * @param (v) current velocity [m/s]
+ * @param (a) current acceleration [m/ss]
+ * @param (j) target jerk [m/sss]
+ * @param (t) time [s]
+ * @return updated traveling distance, velocity and acceleration
+ */
+std::tuple<double, double, double> update(
+  const double x, const double v, const double a, const double j, const double t)
 {
-  const double v_min = v_target - std::abs(v_margin);
-  const double v_max = v_target + std::abs(v_margin);
-  const double a_min = a_target - std::abs(a_margin);
-  const double a_max = a_target + std::abs(a_margin);
+  const double a_new = a + j * t;
+  const double v_new = v + a * t + 0.5 * j * t * t;
+  const double x_new = x + v * t + 0.5 * a * t * t + (1.0 / 6.0) * j * t * t * t;
 
-  if (v_end < v_min || v_max < v_end) {
-    RCLCPP_DEBUG_STREAM(
-      rclcpp::get_logger("validCheckDecelPlan"),
-      "[validCheckDecelPlan] valid check error! v_target = " << v_target << ", v_end = " << v_end);
-    return false;
-  }
-  if (a_end < a_min || a_max < a_end) {
-    RCLCPP_DEBUG_STREAM(
-      rclcpp::get_logger("validCheckDecelPlan"),
-      "[validCheckDecelPlan] valid check error! a_target = " << a_target << ", a_end = " << a_end);
-    return false;
-  }
-
-  return true;
+  return {x_new, v_new, a_new};
 }
 
 /**
- * @brief calculate distance until velocity is reached target velocity (TYPE1)
+ * @brief calculate distance until velocity is reached target velocity (TYPE: TRAPEZOID ACCELERATION
+ * PROFILE). this type of profile has ZERO JERK time.
+ *
+ * [ACCELERATION PROFILE]
+ *  a  ^
+ *     |
+ *  a0 *
+ *     |*
+ * ----+-*-------------------*------> t
+ *     |  *                 *
+ *     |   *               *
+ *     | a1 ***************
+ *     |
+ *
+ * [JERK PROFILE]
+ *  j  ^
+ *     |
+ *     |               ja ****
+ *     |                  *
+ * ----+----***************---------> t
+ *     |    *
+ *     |    *
+ *  jd ******
+ *     |
+ *
  * @param (v0) current velocity [m/s]
- * @param (vt) target velocity [m/s]
  * @param (a0) current acceleration [m/ss]
  * @param (am) minimum deceleration [m/ss]
  * @param (ja) maximum jerk [m/sss]
  * @param (jd) minimum jerk [m/sss]
  * @param (t_min) duration of constant deceleration [s]
  * @return moving distance until velocity is reached vt [m]
- * @detail TODO(Satoshi Ota)
  */
-boost::optional<double> calcDecelDistPlanType1(
-  const double v0, const double vt, const double a0, const double am, const double ja,
-  const double jd, const double t_min)
+double calcDecelDistPlanType1(
+  const double v0, const double a0, const double am, const double ja, const double jd,
+  const double t_min)
 {
   constexpr double epsilon = 1e-3;
 
+  // negative jerk time
   const double j1 = am < a0 ? jd : ja;
   const double t1 = epsilon < (am - a0) / j1 ? (am - a0) / j1 : 0.0;
-  const double a1 = a0 + j1 * t1;
-  const double v1 = v0 + a0 * t1 + 0.5 * j1 * t1 * t1;
-  const double x1 = v0 * t1 + 0.5 * a0 * t1 * t1 + (1.0 / 6.0) * j1 * t1 * t1 * t1;
+  const auto [x1, v1, a1] = update(0.0, v0, a0, j1, t1);
 
+  // zero jerk time
   const double t2 = epsilon < t_min ? t_min : 0.0;
-  const double a2 = a1;
-  const double v2 = v1 + a1 * t2;
-  const double x2 = x1 + v1 * t2 + 0.5 * a1 * t2 * t2;
+  const auto [x2, v2, a2] = update(x1, v1, a1, 0.0, t2);
 
+  // positive jerk time
   const double t3 = epsilon < (0.0 - am) / ja ? (0.0 - am) / ja : 0.0;
-  const double a3 = a2 + ja * t3;
-  const double v3 = v2 + a2 * t3 + 0.5 * ja * t3 * t3;
-  const double x3 = x2 + v2 * t3 + 0.5 * a2 * t3 * t3 + (1.0 / 6.0) * ja * t3 * t3 * t3;
-
-  const double a_target = 0.0;
-  const double v_margin = 0.3;  // [m/s]
-  const double a_margin = 0.1;  // [m/s^2]
-
-  if (!validCheckDecelPlan(v3, a3, vt, a_target, v_margin, a_margin)) {
-    return {};
-  }
+  const auto [x3, v3, a3] = update(x2, v2, a2, ja, t3);
 
   return x3;
 }
 
 /**
- * @brief calculate distance until velocity is reached target velocity (TYPE2)
+ * @brief calculate distance until velocity is reached target velocity (TYPE: TRIANGLE ACCELERATION
+ * PROFILE), This type of profile do NOT have ZERO JERK time.
+ *
+ * [ACCELERATION PROFILE]
+ *  a  ^
+ *     |
+ *  a0 *
+ *     |*
+ * ----+-*-----*--------------------> t
+ *     |  *   *
+ *     |   * *
+ *     | a1 *
+ *     |
+ *
+ * [JERK PROFILE]
+ *  j  ^
+ *     |
+ *     | ja ****
+ *     |    *
+ * ----+----*-----------------------> t
+ *     |    *
+ *     |    *
+ *  jd ******
+ *     |
+ *
  * @param (v0) current velocity [m/s]
- * @param (vt) target velocity [m/s]
  * @param (a0) current acceleration [m/ss]
  * @param (am) minimum deceleration [m/ss]
  * @param (ja) maximum jerk [m/sss]
  * @param (jd) minimum jerk [m/sss]
  * @return moving distance until velocity is reached vt [m]
- * @detail TODO(Satoshi Ota)
  */
-boost::optional<double> calcDecelDistPlanType2(
+double calcDecelDistPlanType2(
   const double v0, const double vt, const double a0, const double ja, const double jd)
 {
   constexpr double epsilon = 1e-3;
@@ -153,54 +180,54 @@ boost::optional<double> calcDecelDistPlanType2(
   const double a1_square = (vt - v0 - 0.5 * (0.0 - a0) / jd * a0) * (2.0 * ja * jd / (ja - jd));
   const double a1 = -std::sqrt(a1_square);
 
+  // negative jerk time
   const double t1 = epsilon < (a1 - a0) / jd ? (a1 - a0) / jd : 0.0;
-  const double v1 = v0 + a0 * t1 + 0.5 * jd * t1 * t1;
-  const double x1 = v0 * t1 + 0.5 * a0 * t1 * t1 + (1.0 / 6.0) * jd * t1 * t1 * t1;
+  const auto [x1, v1, no_use_a1] = update(0.0, v0, a0, jd, t1);
 
+  // positive jerk time
   const double t2 = epsilon < (0.0 - a1) / ja ? (0.0 - a1) / ja : 0.0;
-  const double a2 = a1 + ja * t2;
-  const double v2 = v1 + a1 * t2 + 0.5 * ja * t2 * t2;
-  const double x2 = x1 + v1 * t2 + 0.5 * a1 * t2 * t2 + (1.0 / 6.0) * ja * t2 * t2 * t2;
-
-  const double a_target = 0.0;
-  const double v_margin = 0.3;
-  const double a_margin = 0.1;
-
-  if (!validCheckDecelPlan(v2, a2, vt, a_target, v_margin, a_margin)) {
-    return {};
-  }
+  const auto [x2, v2, a2] = update(x1, v1, a1, ja, t2);
 
   return x2;
 }
 
 /**
- * @brief calculate distance until velocity is reached target velocity (TYPE3)
+ * @brief calculate distance until velocity is reached target velocity (TYPE: LINEAR ACCELERATION
+ * PROFILE). This type of profile has only positive jerk time.
+ *
+ * [ACCELERATION PROFILE]
+ *  a  ^
+ *     |
+ * ----+----*-----------------------> t
+ *     |   *
+ *     |  *
+ *     | *
+ *     |*
+ *  a0 *
+ *     |
+ *
+ * [JERK PROFILE]
+ *  j  ^
+ *     |
+ *  ja ******
+ *     |    *
+ *     |    *
+ * ----+----*-----------------------> t
+ *     |
+ *
  * @param (v0) current velocity [m/s]
- * @param (vt) target velocity [m/s]
  * @param (a0) current acceleration [m/ss]
  * @param (ja) maximum jerk [m/sss]
  * @return moving distance until velocity is reached vt [m]
- * @detail TODO(Satoshi Ota)
  */
-boost::optional<double> calcDecelDistPlanType3(
-  const double v0, const double vt, const double a0, const double ja)
+double calcDecelDistPlanType3(const double v0, const double a0, const double ja)
 {
   constexpr double epsilon = 1e-3;
 
+  // positive jerk time
   const double t_acc = (0.0 - a0) / ja;
-
   const double t1 = epsilon < t_acc ? t_acc : 0.0;
-  const double a1 = a0 + ja * t1;
-  const double v1 = v0 + a0 * t1 + 0.5 * ja * t1 * t1;
-  const double x1 = v0 * t1 + 0.5 * a0 * t1 * t1 + (1.0 / 6.0) * ja * t1 * t1 * t1;
-
-  const double a_target = 0.0;
-  const double v_margin = 0.3;
-  const double a_margin = 0.1;
-
-  if (!validCheckDecelPlan(v1, a1, vt, a_target, v_margin, a_margin)) {
-    return {};
-  }
+  const auto [x1, v1, a1] = update(0.0, v0, a0, ja, t1);
 
   return x1;
 }
@@ -704,7 +731,7 @@ lanelet::ConstLanelets getTargetLanelets(
   return target_lanelets;
 }
 
-boost::optional<double> calcDecelDistWithJerkAndAccConstraints(
+double calcDecelDistWithJerkAndAccConstraints(
   const double current_vel, const double target_vel, const double current_acc, const double acc_min,
   const double jerk_acc, const double jerk_dec)
 {
@@ -722,15 +749,12 @@ boost::optional<double> calcDecelDistWithJerkAndAccConstraints(
     0.5 * (0.0 - current_acc) / jerk_acc * current_acc > target_vel - current_vel;
 
   if (t_min > epsilon) {
-    return calcDecelDistPlanType1(
-      current_vel, target_vel, current_acc, acc_min, jerk_acc, jerk_dec, t_min);
+    return calcDecelDistPlanType1(current_vel, current_acc, acc_min, jerk_acc, jerk_dec, t_min);
   } else if (is_decel_needed || current_acc > epsilon) {
     return calcDecelDistPlanType2(current_vel, target_vel, current_acc, jerk_acc, jerk_dec);
-  } else {
-    return calcDecelDistPlanType3(current_vel, target_vel, current_acc, jerk_acc);
   }
 
-  return {};
+  return calcDecelDistPlanType3(current_vel, current_acc, jerk_acc);
 }
 
 void insertDecelPoint(
